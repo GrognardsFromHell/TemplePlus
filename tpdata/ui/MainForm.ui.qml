@@ -1,30 +1,44 @@
 import QtQuick 2.8
+import TemplePlus 1.0
 
-Rectangle {
+Item {
+    id: item1
     property alias mouseArea: mouseArea
-    property alias textEdit: textEdit
 
     width: 360
     height: 360
 
     MouseArea {
         id: mouseArea
+        anchors.rightMargin: 0
+        anchors.bottomMargin: 0
         anchors.fill: parent
     }
 
-    TextEdit {
-        id: textEdit
-        text: qsTr("Enter some text...")
-        verticalAlignment: Text.AlignVCenter
-        anchors.top: parent.top
+    Image {
+        x: 0
+        y: 0
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.topMargin: 20
-		selectByMouse: true
-        Rectangle {
-            anchors.fill: parent
-            anchors.margins: -10
-            color: "transparent"
-            border.width: 1
+        source: 'tio:///art/interface/mainmenu_ui/MainMenu_Title.img'
+    }
+
+
+    Column {
+        y: 292
+        height: 200
+        anchors.right: parent.right
+        anchors.left: parent.left
+        Repeater {
+            id: repeater
+            model: menuItems
+            delegate: Text {
+                text: model.name
+                width: contentWidth
+                height: 40
+                horizontalAlignment: Text.AlignHCenter
+                anchors.horizontalCenter: parent.horizontalCenter
+                color: "white"
+            }
         }
     }
 }

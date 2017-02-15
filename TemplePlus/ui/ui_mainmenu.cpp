@@ -1,6 +1,9 @@
 
 #include "stdafx.h"
 
+#include <QtQuick/QQuickView>
+#include <QtQml/QQmlContext>
+
 #include "ui_mainmenu.h"
 #include "ui_systems.h"
 #include "ui_legacysystems.h"
@@ -227,8 +230,11 @@ void UiMM::Show(MainMenuPage page)
 	mMainWidget->Show();
 	mMainWidget->BringToFront();
 
-	uiManager->AddQmlWindow(0, 0, 800, 600, "MainForm.ui.qml");
-
+	auto view = uiManager->AddQmlWindow(0, 0, 800, 600, "ui/MainForm.ui.qml");
+	QVariantList items;
+	items << "New Game" << "Load Game" << "Quit Game";
+	view->rootContext()->setContextProperty("menuItems", items);
+		
 	for (auto &entry : mPageWidgets) {
 		entry.second->SetVisible(entry.first == page);
 	}

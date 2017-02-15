@@ -1,0 +1,3 @@
+module TioIntegration
+plugin TioIntegration qtcreatorplugin.dll
+classname NetworkExtensionPlugin

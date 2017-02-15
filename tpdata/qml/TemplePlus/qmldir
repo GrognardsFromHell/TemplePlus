@@ -1,0 +1,4 @@
+module TemplePlus
+plugin templeplus
+classname TPQmlPlugin
+Dummy 1.0 Dummy.qml

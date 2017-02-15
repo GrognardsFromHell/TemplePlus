@@ -243,3 +243,5 @@ _Pvt_Extensions
 /Squirrel
 /TemplePlus.VC.db
 /dependencies.7z
+
+*.qmlc

@@ -209,6 +209,8 @@ inline int WidgetIdIndexOf(LgcyWidgetId widgetId, LgcyWidgetId* widgetlist, int 
 	return -1;
 }
 
+class QQuickView;
+
 class UiManager {
 public:
 
@@ -306,7 +308,7 @@ public:
 		}
 	}
 
-	LgcyWidgetId AddQmlWindow(int x, int y, int w, int h, const std::string &path);
+	QQuickView* AddQmlWindow(int x, int y, int w, int h, const std::string &path);
 
 private:
 	UiManager(UiManager&) = delete;

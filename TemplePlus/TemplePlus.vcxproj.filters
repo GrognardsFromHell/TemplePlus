@@ -535,6 +535,30 @@
     <ClCompile Include="qsgd3d11\qwindowskeymapper.cpp">
       <Filter>QSG D3D11</Filter>
     </ClCompile>
+    <ClCompile Include="qml\imageplugin.cpp">
+      <Filter>QML</Filter>
+    </ClCompile>
+    <ClCompile Include="qml\imageplugin_moc.cpp">
+      <Filter>QML</Filter>
+    </ClCompile>
+    <ClCompile Include="qml\legacytextitem.cpp">
+      <Filter>QML</Filter>
+    </ClCompile>
+    <ClCompile Include="qml\legacytextitem_moc.cpp">
+      <Filter>QML</Filter>
+    </ClCompile>
+    <ClCompile Include="qml\networkaccessmanager.cpp">
+      <Filter>QML</Filter>
+    </ClCompile>
+    <ClCompile Include="qml\imagehandler.cpp">
+      <Filter>QML</Filter>
+    </ClCompile>
+    <ClCompile Include="qml\qmlplugin.cpp">
+      <Filter>QML</Filter>
+    </ClCompile>
+    <ClCompile Include="qml\qmlplugin_moc.cpp">
+      <Filter>QML</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -1014,6 +1038,24 @@
     <ClInclude Include="qsgd3d11\qwindowskeymapper.h">
       <Filter>QSG D3D11</Filter>
     </ClInclude>
+    <ClInclude Include="qml\imageplugin.h">
+      <Filter>QML</Filter>
+    </ClInclude>
+    <ClInclude Include="qml\legacytextitem.h">
+      <Filter>QML</Filter>
+    </ClInclude>
+    <ClInclude Include="qml\networkaccessmanager.h">
+      <Filter>QML</Filter>
+    </ClInclude>
+    <ClInclude Include="qml\networkaccessmanager_moc.h">
+      <Filter>QML</Filter>
+    </ClInclude>
+    <ClInclude Include="qml\imagehandler.h">
+      <Filter>QML</Filter>
+    </ClInclude>
+    <ClInclude Include="qml\qmlplugin.h">
+      <Filter>QML</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">
@@ -1051,6 +1093,9 @@
     </Filter>
     <Filter Include="QSG D3D11\moc">
       <UniqueIdentifier>{3eb4d52a-a1ec-4ce2-a49b-d9eefd61def5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="QML">
+      <UniqueIdentifier>{bdaaa8e9-fa8e-42fd-b48c-fc75d0ec6326}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -1147,6 +1192,12 @@
     </None>
     <None Include="qsgd3d11\moc\qsgd3d11threadedrenderloop.moc">
       <Filter>QSG D3D11\moc</Filter>
+    </None>
+    <None Include="ui\tio.json">
+      <Filter>ui</Filter>
+    </None>
+    <None Include="qml\tpimageplugin.json">
+      <Filter>QML</Filter>
     </None>
   </ItemGroup>
 </Project>

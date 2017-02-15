@@ -16,104 +16,19 @@
 
 UiManager *uiManager;
 
-/**
- * Handles button click triggering.
- * When a button receives a mouse-down event, there are two possible behaviors:
- * - If the button is non-repeat, the button captures the mouse input
- *   - If the mouse button is released while the mouse is over the button, 
- *     an OnClick message is dispatched to that button.
- * - If the button is repeat, the button also captures the mouse input, and an OnClick
- *   msg is immediately dispatched.
- *  - The next trigger time is set to current-time + 500ms
- *  - When the mouse leaves the button's client area, the auto-repeat is suspended (next action time set to 0)
- *  - When the mouse button is released (regardless of where), the auto repeat is suspended
- *  - When the time update event is received, and the time for the next press elapsed, trigger an onclick msg
- */
-class ButtonClickBehavior {
-public:
-		
-	void UpdateTime(int newTime);
-	
-private:
-	int mNextClick = 0;
-	int mX;
-	int mY;
-	int mButtonDown = false;
-	LgcyWidgetId mReceiver = -1;
-};
-
-static ButtonClickBehavior buttonClickBehavior;
-
 #include <QtGui/QGuiApplication>
 #include <QtQuick/QQuickView>
 #include <QtQml/QQmlEngine>
 
 #include "ui_rendercontrol.h"
 
-class EventFilter : public QObject {
-public:
-	bool eventFilter(QObject *watched, QEvent *event) override {
-
-		if (event->type() != QEvent::MouseMove
-			&& event->type() != QEvent::MouseButtonPress
-			&& event->type() != QEvent::MouseButtonRelease) {
-			return false;
-		}
-
-		QString objName = QString::fromStdString(fmt::format("{}", (void*)watched));
-		if (!watched->objectName().isEmpty()) {
-			objName = watched->objectName();
-		}
-
-		qDebug() << "Event to " << watched->metaObject()->className() << " (" << objName << "): " << event;
-		
-		return false;
-	}
-};
-
 struct NewImpl {
-	int argc = 0;
-	
-	std::unique_ptr<QGuiApplication> guiApp;
 	std::unique_ptr<UiRenderControl> renderControl;
-	std::unique_ptr<QQmlEngine> engine;
 	
 	NewImpl() {
-
-		char *argv[] = {
-			"",
-			"-platform",
-			"offscreen"
-		};
-		argc = 3;
-
-		guiApp = std::make_unique<QGuiApplication>(argc, &argv[0]);
-		guiApp->installEventFilter(new EventFilter);
-
 		renderControl = std::make_unique<UiRenderControl>();
-
-		engine = std::make_unique<QQmlEngine>();
-
-		engine->setBaseUrl(QUrl::fromLocalFile("C:/TemplePlus/TemplePlus/tpdata/ui/"));
-		
-		QObject::connect(engine.get(), &QQmlEngine::warnings, [=](const QList<QQmlError> &warnings) {
-			for (auto &error : warnings) {
-				logger->warn("{}", error.toString().toStdString());
-			}
-		});
-		
-		auto view = new QQuickView(engine.get(), nullptr);
-
-		QObject::connect(view, &QQuickView::statusChanged, [=](QQuickView::Status status) {
-			if (status == QQuickView::Error) {
-				for (auto &error : view->errors()) {
-					logger->warn("{}", error.toString().toStdString());
-				}
-			}
-		});
-
-		guiApp->processEvents();
-
+	
+		renderControl->ProcessEvents();
 	}
 	
 };
@@ -955,7 +870,11 @@ bool UiManager::TranslateMouseMessage(const TigMouseMsg& mouseMsg)
 	if (mouseMsg.flags & (MouseStateFlags::MSF_LMB_DOWN | MouseStateFlags::MSF_MMB_DOWN | MouseStateFlags::MSF_RMB_DOWN)) {
 		auto view = (widIdAtCursor == -1) ? nullptr : mActiveWidgets[widIdAtCursor].view;
 		if (view != QGuiApplication::focusWindow()) {
-			view->requestActivate();
+			if (view) {
+				view->requestActivate();
+			} else {
+				QWindowSystemInterface::handleWindowActivated(nullptr);
+			}
 		}
 	}
 
@@ -1671,7 +1590,7 @@ bool UiManager::ProcessMessage(TigMsg &msg)
 
 }
 
-LgcyWidgetId UiManager::AddQmlWindow(int x, int y, int w, int h, const std::string & path)
+QQuickView* UiManager::AddQmlWindow(int x, int y, int w, int h, const std::string & path)
 {
 
 	LgcyWindow window;
@@ -1682,7 +1601,7 @@ LgcyWidgetId UiManager::AddQmlWindow(int x, int y, int w, int h, const std::stri
 
 	auto id = AddWindow(window);
 
-	auto view = new QQuickView(newImpl->engine.get(), nullptr);
+	auto view = newImpl->renderControl->CreateView(path);
 	view->setBaseSize(QSize(w, h));
 	view->setPosition(x, y);
 	view->setSource(QUrl::fromLocalFile(QString::fromStdString(path)));
@@ -1691,7 +1610,7 @@ LgcyWidgetId UiManager::AddQmlWindow(int x, int y, int w, int h, const std::stri
 
 	view->show();
 
-	return id;
+	return view;
 }
 
 bool UiManager::ProcessWidgetMessage(TigMsg & msg)
