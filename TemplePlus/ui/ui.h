@@ -133,22 +133,22 @@ enum LgcyButtonState : uint32_t
 };
 
 struct LgcyButton : public LgcyWidget {
-	int field7c;
-	int field80;
-	int field84;
-	int field88;
-	int field8C;
-	int field90;
+	int field7c = -1;
+	int field80 = -1;
+	int field84 = -1;
+	int field88 = -1;
+	int field8C = -1;
+	int field90 = -1;
 	LgcyButtonState buttonState = LgcyButtonState::Normal; // 1 - hovered 2 - down  3 - released 4 - disabled
 	int field98;
 	int field9C;
 	int fieldA0;
 	int fieldA4;
 	int fieldA8;
-	int sndDown;
-	int sndClick;
-	int sndHoverOn;
-	int sndHoverOff;
+	int sndDown = -1;
+	int sndClick = -1;
+	int sndHoverOn = -1;
+	int sndHoverOff = -1;
 	LgcyButton();
 	LgcyButton(char* ButtonName, int ParentId, int X, int Y, int Width, int Height);
 	LgcyButton(char* ButtonName, int ParentId, TigRect& rect);

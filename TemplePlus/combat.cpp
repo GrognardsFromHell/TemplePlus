@@ -1057,6 +1057,12 @@ int LegacyCombatSystem::GetClosestEnemy(AiTactic* aiTac, int selectionType)
 	return 0;
 }
 
+void LegacyCombatSystem::Brawl(objHndl a, objHndl b){
+
+	temple::GetRef<int>(0x102E7F38) = -1; // reset brawl state (fixes weird issues... also allows brawling to be reused)
+	_Brawl(a, b);
+}
+
 void LegacyCombatSystem::enterCombat(objHndl objHnd)
 {
 	_enterCombat(objHnd);

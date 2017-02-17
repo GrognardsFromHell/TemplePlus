@@ -770,8 +770,7 @@ bool UiManager::TranslateMouseMessage(const TigMouseMsg& mouseMsg)
 				auto prevHoveredWindow = (LgcyWindow*)globalWid;
 				if (prevHoveredWindow->mouseState == LgcyWindowMouseState::Pressed) {
 					prevHoveredWindow->mouseState = LgcyWindowMouseState::PressedOutside;
-				}
-				else if (prevHoveredWindow->mouseState != LgcyWindowMouseState::PressedOutside) {
+				} else if (prevHoveredWindow->mouseState != LgcyWindowMouseState::PressedOutside) {
 					prevHoveredWindow->mouseState = LgcyWindowMouseState::Outside;
 				}
 				enqueueExited = true;
@@ -818,7 +817,7 @@ bool UiManager::TranslateMouseMessage(const TigMouseMsg& mouseMsg)
 			auto widAtCursor = GetWidget(widIdAtCursor);
 			if (widAtCursor->type == LgcyWidgetType::Window)
 			{
-				auto widAtCursorWindow = GetWindow(widIdAtCursor);
+				auto widAtCursorWindow = (LgcyWindow*)widAtCursor;
 				if (widAtCursorWindow->mouseState == LgcyWindowMouseState::PressedOutside) {
 					widAtCursorWindow->mouseState = LgcyWindowMouseState::Pressed;
 				}
@@ -827,7 +826,7 @@ bool UiManager::TranslateMouseMessage(const TigMouseMsg& mouseMsg)
 				}
 			}
 			else if (widAtCursor->type == LgcyWidgetType::Button) {
-				auto buttonWid = GetButton(widIdAtCursor);
+				auto buttonWid = (LgcyButton*)widAtCursor;
 				if (buttonWid->buttonState != LgcyButtonState::Normal)
 				{
 					if (buttonWid->buttonState == LgcyButtonState::Released)

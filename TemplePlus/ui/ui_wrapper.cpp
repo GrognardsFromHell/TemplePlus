@@ -32,9 +32,22 @@ static int ui_add_button(LgcyButton *widget, size_t widgetSize, LgcyWidgetId *as
 	widget->type = LgcyWidgetType::Button;
 	assert(widget->GetSize() == widgetSize);
 
+	widget->sndHoverOn = -1;
+	widget->sndHoverOff = -1;
+	widget->sndClick = -1;
+	widget->sndDown = -1;
+
 	auto assignedId = uiManager->AddWidget(widget, sourceFile, lineNumber);
 	if (assignedIdOut) {
 		*assignedIdOut = assignedId;
+
+		widget->buttonState = LgcyButtonState::Normal;
+		widget->field7c = -1;
+		widget->field80 = -1;
+		widget->field84 = -1;
+		widget->field88 = -1;
+		widget->field8C = -1;
+		widget->field90 = -1;
 	}
 	return 0;
 }

@@ -95,7 +95,7 @@ class RadialMenuReplacements : public TempleFix
 	static int RmbReleasedHandler(TigMsg* msg);
 	void ReplaceStandardRadialNodes();
 
-
+	static RadialMenuNode* HookedGetActiveMenuNode(int nodeId);
 	void apply() override {
 
 
@@ -185,6 +185,15 @@ class RadialMenuReplacements : public TempleFix
 			return radialMenus.AddParentChildNode(handle, entry, parIdx);
 		});
 
+		// GetChild
+		replaceFunction<int(int,int)>(0x100F0890, [](int activeNodeIdx, int i)->int
+		{
+			return radialMenus.GetChild(activeNodeIdx,i);
+		});
+
+		//// GetActiveRadMenuNodeRegardMorph
+		redirectCall(0x1013C2ED, HookedGetActiveMenuNode);
+
 	}
 };
 
@@ -250,6 +259,10 @@ void RadialMenuReplacements::ReplaceStandardRadialNodes()
 
 	writeval = reinterpret_cast<int>(&RadialMenus::standardNodeIndices[10]) ;
 	write(0x100F2B71 + 2, &writeval, sizeof(int*));
+}
+
+RadialMenuNode * RadialMenuReplacements::HookedGetActiveMenuNode(int nodeId){
+	return radialMenus.GetActiveMenuNodeRegardMorph(nodeId);
 }
 
 RadialMenuReplacements radMenuReplace;
@@ -381,6 +394,11 @@ void RadialMenus::BuildStandardRadialMenu(objHndl handle){
 		RadialMenuEntryParent dism(5101);
 		SetStandardNode(handle, RadialMenuStandardNode::SpellsDismiss ,RadialMenuStandardNode::Spells);
 	}
+}
+
+bool RadialMenus::IsShiftPressed(){
+	auto shiftPressed = temple::GetRef<int>(0x10BD0234);
+	return shiftPressed != 0;
 }
 
 void RadialMenus::AssignMenu(objHndl handle)
@@ -611,6 +629,36 @@ int RadialMenus::GetSpellLevelNodeFromSpellClass(objHndl handle, int spellClass)
 
 	logger->warn("GetSpellMasterNodeFromSpellClass: No matching class found for memorized/known spell???");
 	return RadialMenuStandardNode::SpellsDomain + 1;
+}
+
+RadialMenuNode * RadialMenus::GetActiveMenuNodeRegardMorph(int nodeId){
+	auto activeMenu = GetActiveRadialMenu();
+	if (IsShiftPressed() && activeMenu->nodes[nodeId].morphsTo != -1){
+		nodeId = activeMenu->nodes[nodeId].morphsTo;
+	}
+
+	if (activeMenu->nodes[nodeId].entry.d20ActionType == D20A_PYTHON_ACTION){
+		lastPythonActionNode = nodeId;
+	}
+		
+
+	return &activeMenu->nodes[nodeId];
+}
+
+int RadialMenus::GetChild(int nodeId, int i){
+	auto activeMenu = GetActiveRadialMenu();
+	auto altNode = activeMenu->nodes[nodeId].morphsTo;
+
+	if (IsShiftPressed() && altNode != -1){
+		nodeId = activeMenu->nodes[nodeId].morphsTo;
+	}
+
+	auto result = activeMenu->nodes[nodeId].children[i];
+	if (IsShiftPressed() && activeMenu->nodes[result].morphsTo != -1){
+		result = activeMenu->nodes[result].morphsTo;
+	}
+
+	return result;
 }
 
 const RadialMenu* RadialMenus::GetForObj(objHndl handle) {

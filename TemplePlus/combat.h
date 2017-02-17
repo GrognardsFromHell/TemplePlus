@@ -77,7 +77,8 @@ struct LegacyCombatSystem : temple::AddressTable {
 	/*
 		Use for the non-lethal brawl.
 	*/
-	void (__cdecl *Brawl)(objHndl a, objHndl b);
+	void Brawl(objHndl a, objHndl b);
+	void (__cdecl *_Brawl)(objHndl a, objHndl b);
 	void enterCombat(objHndl objHnd);
 
 	void (__cdecl *AddToInitiative)(objHndl critter);
@@ -109,7 +110,7 @@ struct LegacyCombatSystem : temple::AddressTable {
 		rebase(GetInitiative, 0x100DEDB0);
 		rebase(SetInitiative, 0x100DF2E0);
 		rebase(_GetClosestEnemy, 0x100E2B80);
-		rebase(Brawl, 0x100EBD40);
+		rebase(_Brawl, 0x100EBD40);
 	}
 
 private:

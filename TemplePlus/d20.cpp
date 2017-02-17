@@ -573,7 +573,12 @@ std::string & LegacyD20System::GetPythonActionName(D20DispatcherKey key) const
 
 ActionErrorCode LegacyD20System::GetPyActionCost(D20Actn * d20a, TurnBasedStatus * tbStat, ActionCostPacket * acp){
 	
-	switch (pyactions[d20a->data1].costType){
+	auto actionKey = d20a->data1;
+	if (!actionKey){
+		actionKey = d20Sys.globD20ActionKey;
+	}
+
+	switch (pyactions[actionKey].costType){
 	
 		case ActionCostType::Null:
 			return d20Callbacks.ActionCostNull(d20a, tbStat, acp);
@@ -1238,7 +1243,7 @@ int LegacyD20System::TargetCheck(D20Actn* d20a)
 
 			if (!spellSys.spellRegistryCopy(spellEnum, &spellEntry))
 			{
-				logger->warn("Perform Cast Spell: failed to retrieve spell entry %d!\n", spellEnum);
+				logger->warn("Perform Cast Spell: failed to retrieve spell entry {}!\n", spellEnum);
 				return 1;
 			}
 			if (itemSpellData == 255)

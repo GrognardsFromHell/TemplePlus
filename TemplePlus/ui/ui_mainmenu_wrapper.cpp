@@ -8,6 +8,8 @@ static class UiMainMenuWrapper : public TempleFix {
 public:
 
 	void apply() override {
+		return; 
+
 		// ui_mm_is_visible
 		replaceFunction<BOOL()>(0x101157f0, []() {
 			return uiSystems->GetMM().IsVisible() ? TRUE : FALSE;

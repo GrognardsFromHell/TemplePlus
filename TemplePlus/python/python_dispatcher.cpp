@@ -251,16 +251,24 @@ PYBIND11_PLUGIN(tp_dispatcher){
 			.def("get_sum", &BonusList::GetEffectiveBonusSum)
 			.def("get_total", &BonusList::GetEffectiveBonusSum)
 			.def("add_zeroed", &BonusList::ZeroBonusSetMeslineNum, "Adds a zero-value bonus (usually to represent nullified bonuses)")
-			.def("add_cap", &BonusList::AddCap, "Adds cap for a particular bonus type");
+			.def("add_cap", [](BonusList & bonlist, int bonType, int value, int mesline) {
+				 bonlist.AddCap(bonType, value, mesline); }, "Adds cap for a particular bonus type")
+			.def("add_cap", [](BonusList & bonlist, int bonType, int value, int mesline, std::string &text) {
+					 bonlist.AddCapWithCustomDescr(bonType, value, mesline, text);
+				 }, "Adds cap for a particular bonus type")
+			;
 
-	py::class_<AttackPacket>(m, "AttackPacket")
+	 py::class_<AttackPacket>(m, "AttackPacket")
 		.def(py::init())
 		.def("get_weapon_used", &AttackPacket::GetWeaponUsed)
 		.def("is_offhand_attack", &AttackPacket::IsOffhandAttack)
 		.def_readwrite("attacker", &AttackPacket::attacker)
 		.def_readwrite("target", &AttackPacket::victim)
-		.def("get_flags", [](AttackPacket& pkt)->int{	return (int)pkt.flags;	}, "D20CAF flags")
-		.def("set_flags", [](AttackPacket& pkt, int flagsNew){	pkt.flags = (D20CAF)flagsNew;	}, "sets attack packet D20CAF flags to value specified");
+		.def("get_flags", [](AttackPacket& pkt)->int {	return (int)pkt.flags;	}, "D20CAF flags")
+		.def("set_flags", [](AttackPacket& pkt, int flagsNew) {	pkt.flags = (D20CAF)flagsNew;	}, "sets attack packet D20CAF flags to value specified")
+		.def_readwrite("action_type", &AttackPacket::d20ActnType)
+		.def_readwrite("event_key", &AttackPacket::dispKey)
+		;
 
 	py::class_<DamagePacket>(m, "DamagePacket")
 		.def(py::init())
@@ -299,6 +307,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def("get_spell_level", [](D20SpellData& spData)->int{	return spData.spellSlotLevel;	})
 		.def_readwrite("inven_idx", &D20SpellData::itemSpellData)
 		.def("get_spell_store", [](D20SpellData&spData)->SpellStoreData {	return spData.ToSpellStore();	})
+		.def("set_spell_class", [](D20SpellData& spData, int spClass) { spData.spellClassCode= spellSys.GetSpellClass(spClass);	})
 		;
 	#pragma endregion
 
@@ -374,6 +383,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.value("StandardAttack", D20ActionType::D20A_STANDARD_ATTACK)
 		.value("FullAttack", D20ActionType::D20A_FULL_ATTACK)
 		.value("StandardRangedAttack", D20ActionType::D20A_STANDARD_RANGED_ATTACK)
+		.value("StandUp", D20ActionType::D20A_STAND_UP)
 		.value("CastSpell", D20ActionType::D20A_CAST_SPELL)
 		.value("UseItem", D20ActionType::D20A_USE_ITEM)
 		.value("UsePotion", D20ActionType::D20A_USE_POTION)
