@@ -210,6 +210,7 @@ inline int WidgetIdIndexOf(LgcyWidgetId widgetId, LgcyWidgetId* widgetlist, int 
 }
 
 class QQuickView;
+class UiRenderControl;
 
 class UiManager {
 public:
@@ -320,6 +321,8 @@ private:
 	WidgetMap mActiveWidgets;
 	IdVector mActiveWindows;
 	int maxZIndex = 0;
+
+	std::unique_ptr<UiRenderControl> mRenderControl;
 
 	/*
 	This will sort the windows using their z-order in the order in which

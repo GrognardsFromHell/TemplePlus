@@ -14,23 +14,16 @@ void InitLogging(const std::wstring &logFile);
 // Defined in temple_main.cpp for now
 int TempleMain(HINSTANCE hInstance, const string& commandLine);
 
-// This is required to get "new style" common dialogs like message boxes
-#pragma comment(linker,"\"/manifestdependency:type='win32' \
-name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
-processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
-
 static void SetIniPath();
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int showCmd) {
+extern "C" int __declspec(dllexport) Startup(void* reservedMemory) {
 
-	/*VirtualAlloc(reinterpret_cast<void*>(0x10000000),
-		1,
-		MEM_RESERVE,
-		PAGE_NOACCESS);*/
-
-	// We reserve space for temple.dll as early as possible to avoid rebasing of temple.dll
+	HINSTANCE hInstance = GetModuleHandle(nullptr);
+	LPSTR lpCmdLine = GetCommandLineA();
+	
 	auto& dll = temple::Dll::GetInstance();
-	dll.ReserveMemoryRange();
+	// Make the space reserved in the launcher known to our DLL so it can free it before loading temple.dll
+	dll.SetReservedMemory(reservedMemory);
 
 	// Cannot get known folders without initializing COM sadly
 	ComInitializer comInitializer;
@@ -69,6 +62,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	auto result = TempleMain(hInstance, lpCmdLine);
 
 	config.Save();
+
+	dll.Unload();
 
 	return result;
 }

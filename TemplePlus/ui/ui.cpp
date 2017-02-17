@@ -22,24 +22,12 @@ UiManager *uiManager;
 
 #include "ui_rendercontrol.h"
 
-struct NewImpl {
-	std::unique_ptr<UiRenderControl> renderControl;
-	
-	NewImpl() {
-		renderControl = std::make_unique<UiRenderControl>();
-	
-		renderControl->ProcessEvents();
-	}
-	
-};
-
-static std::unique_ptr<NewImpl> newImpl;
-
 UiManager::UiManager() {
 	Expects(uiManager == nullptr);
 	uiManager = this;
 	
-	newImpl = std::make_unique<NewImpl>();	
+	mRenderControl = std::make_unique<UiRenderControl>();
+	mRenderControl->ProcessEvents();
 }
 
 UiManager::~UiManager() {
@@ -598,7 +586,7 @@ void UiManager::RemoveChildWidget(LgcyWidgetId id)
 void UiManager::Render()
 {
 
-	newImpl->renderControl->ProcessEvents();
+	mRenderControl->ProcessEvents();
 	
 	// Make a copy here since some vanilla logic will show/hide windows in their render callbacks
 	auto activeWindows(mActiveWindows);
@@ -607,7 +595,7 @@ void UiManager::Render()
 
 		auto view = mActiveWidgets[windowId].view;
 		if (view) {
-			newImpl->renderControl->Render(view);
+			mRenderControl->Render(view);
 			continue;
 		}
 
@@ -1601,7 +1589,7 @@ QQuickView* UiManager::AddQmlWindow(int x, int y, int w, int h, const std::strin
 
 	auto id = AddWindow(window);
 
-	auto view = newImpl->renderControl->CreateView(path);
+	auto view = mRenderControl->CreateView(path);
 	view->setBaseSize(QSize(w, h));
 	view->setPosition(x, y);
 	view->setSource(QUrl::fromLocalFile(QString::fromStdString(path)));

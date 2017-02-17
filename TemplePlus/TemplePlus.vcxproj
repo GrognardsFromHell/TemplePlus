@@ -567,7 +567,6 @@
     <ClInclude Include="quest.h" />
     <ClInclude Include="radialmenu.h" />
     <ClInclude Include="reputations.h" />
-    <ClInclude Include="resource.h" />
     <ClInclude Include="secret_door.h" />
     <ClInclude Include="skill.h" />
     <ClInclude Include="tab_file.h" />
@@ -644,12 +643,6 @@
     <ClInclude Include="ui\ui_mainmenu.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="resource.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="toee_gog_icon.ico" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\Infrastructure\Infrastructure.vcxproj">
       <Project>{006f5b8a-f75f-413c-ad3a-e004ca8ddf26}</Project>
     </ProjectReference>
@@ -662,9 +655,6 @@
     <ProjectReference Include="..\Temple\Temple.vcxproj">
       <Project>{a05549fb-a0d1-48aa-b586-fe333bbb4505}</Project>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Xml Include="manifest.xml" />
   </ItemGroup>
   <ItemGroup>
     <None Include="qml\tpimageplugin.json" />
@@ -706,19 +696,19 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -776,11 +766,12 @@
       </ModuleDefinitionFile>
       <AdditionalLibraryDirectories>$(SolutionDir)dependencies\lib;$(TargetDir)</AdditionalLibraryDirectories>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
-      <DelayLoadDLLs>d2d1.dll;psapi.dll;crypt32.dll;ws2_32.dll;oleaut32.dll;shell32.dll;advapi32.dll;gdi32.dll;user32.dll;tio.dll;winmm.dll;shlwapi.dll;ole32.dll;D3dcompiler_47.dll</DelayLoadDLLs>
+      <DelayLoadDLLs>tio.dll</DelayLoadDLLs>
     </Link>
     <Manifest>
       <EnableDpiAwareness>false</EnableDpiAwareness>
-      <AdditionalManifestFiles>manifest.xml</AdditionalManifestFiles>
+      <AdditionalManifestFiles>
+      </AdditionalManifestFiles>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">
@@ -832,11 +823,12 @@
       </ModuleDefinitionFile>
       <AdditionalLibraryDirectories>$(SolutionDir)dependencies\lib;$(TargetDir)</AdditionalLibraryDirectories>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
-      <DelayLoadDLLs>d2d1.dll;psapi.dll;crypt32.dll;ws2_32.dll;oleaut32.dll;shell32.dll;advapi32.dll;gdi32.dll;user32.dll;tio.dll;winmm.dll;shlwapi.dll;ole32.dll;D3dcompiler_47.dll</DelayLoadDLLs>
+      <DelayLoadDLLs>tio.dll</DelayLoadDLLs>
     </Link>
     <Manifest>
       <EnableDpiAwareness>false</EnableDpiAwareness>
-      <AdditionalManifestFiles>manifest.xml</AdditionalManifestFiles>
+      <AdditionalManifestFiles>
+      </AdditionalManifestFiles>
     </Manifest>
     <ProjectReference>
       <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>

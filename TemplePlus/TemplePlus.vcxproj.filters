@@ -962,7 +962,6 @@
     <ClInclude Include="python\python_integration_feat.h">
       <Filter>python</Filter>
     </ClInclude>
-    <ClInclude Include="resource.h" />
     <ClInclude Include="ui\ui_ingame.h" />
     <ClInclude Include="ui\ui_intgame_wrapper.h" />
     <ClInclude Include="ui\ui_turn_based.h">
@@ -1079,9 +1078,6 @@
     <Filter Include="utils">
       <UniqueIdentifier>{66b79c6d-b1d5-4441-b7c0-6af6c3fc49a8}</UniqueIdentifier>
     </Filter>
-    <Filter Include="resources">
-      <UniqueIdentifier>{c55bf3c4-caa1-41f3-8954-f4017d3b70e6}</UniqueIdentifier>
-    </Filter>
     <Filter Include="generic data structures">
       <UniqueIdentifier>{9fef2488-221b-44e8-90ae-f5cf72e4b8b1}</UniqueIdentifier>
     </Filter>
@@ -1103,19 +1099,6 @@
     <Filter Include="QML">
       <UniqueIdentifier>{bdaaa8e9-fa8e-42fd-b48c-fc75d0ec6326}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="toee_gog_icon.ico">
-      <Filter>resources</Filter>
-    </Image>
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="resource.rc">
-      <Filter>resources</Filter>
-    </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Xml Include="manifest.xml" />
   </ItemGroup>
   <ItemGroup>
     <None Include="qsgd3d11\ps_flatcolor.hlslh">
