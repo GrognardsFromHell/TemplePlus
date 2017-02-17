@@ -162,6 +162,7 @@ struct D20RadialMenuDef
 	Data driven functions for the radial menus.
 */
 class RadialMenus {
+	friend class  RadialMenuReplacements;
 public:
 
 	void BuildStandardRadialMenu(objHndl handle); // called from the RadialMenuGlobal dispatcher callback
@@ -201,6 +202,7 @@ public:
 	int RadialMenus::AddRootParentNode(objHndl obj, RadialMenuEntry* entry);
 	void SetMorphsTo(objHndl obj, int nodeIdx, int spontSpellNode);
 	void SetCallbackCopyEntryToSelected(RadialMenuEntry* radEntry);
+
 	int GetActiveRadialMenuNode();
 	BOOL ActiveRadialMenuHasActiveNode();
 	int MsgHandler(TigMsg* msg);
@@ -218,12 +220,21 @@ public:
 
 	std::map<int, std::string> radMenuStrings;
 
+	int lastPythonActionNode = -1; // node id of the last radial menu node accessed via GetActiveMenuNodeRegardMorph; used for communicating with the Python Action layer
+
 protected:
+	bool IsShiftPressed();
+
+
 	void AssignMenu(objHndl handle);
 	void SetStandardNode(objHndl handle, int stdNode , int specialParent);
+
 	int GetSpellClassFromSpecialNode(objHndl, int specialParent);
 	void AddSpell(objHndl handle, SpellStoreData &spData, int &specNode, RadialMenuEntry &spellEntryAction);
 	int GetSpellLevelNodeFromSpellClass(objHndl handle, int spellClass);
+
+	RadialMenuNode* GetActiveMenuNodeRegardMorph(int nodeId);
+	int GetChild(int parentId, int i);
 };
 
 extern RadialMenus radialMenus;

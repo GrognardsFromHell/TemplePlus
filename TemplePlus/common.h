@@ -104,7 +104,7 @@ struct BonusCap
 	int capValue;
 	int bonType;
 	char *bonCapperString;
-	char * bonCapDescr;
+	const char * bonCapDescr;
 };
 
 struct BonusList
@@ -157,6 +157,7 @@ struct BonusList
 
 	int AddCap(int capType, int capValue, uint32_t bonMesLineNum);
 	int AddCapWithDescr(int capType, int capValue, uint32_t bonMesLineNum, char* capDescr);
+	int AddCapWithCustomDescr(int capType, int capValue, uint32_t bonMesLineNum, std::string &textArg);
 
 	BOOL SetOverallCap(int BonFlags, int newCap, int newCapType, int newCapMesLineNum, char *capDescr = nullptr);
 	static const char* GetBonusMesLine(int lineNum);

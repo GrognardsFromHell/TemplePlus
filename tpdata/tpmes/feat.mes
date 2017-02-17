@@ -119,7 +119,7 @@
 {5669} Reckless Offense {When you use the attack action or full attack action in melee, you can take a penalty of -4 to your Armor Class and add a +2 bonus on your melee attack roll. The bonus on attack rolls and penalty to Armor Class last at least until the beginning of your next turn.}
 {5670} Knock-Down {Whenever you deal 10 or more points of damage to your opponent in melee, you make a trip attack as a free action against the same target if it is the same size category as yours or lower.}
 {5671} Superior Expertise {Eliminates the +5 maximum for the Combat Expertise feat.}
-{5672} Deadly Precision {Reroll any result of 1 on your sneak attack's extra damage dice. You must keep the result of the reroll, even if it is another 1.}
+{5672} Deadly Precision {Your sneak attack's damage roll will never be 1.}
 {5673} Persistent Spell {A persistent spell has a duration of 24 hours. The persistent spell must have a personal range or a fixed range. Uses up a spell slot six levels higher than the spell's actual level.}
 {5674} Power Critical {When using the weapon you selected, you gain a +4 bonus on the roll to confirm a threat.}
 {5675} Greater Rage {At 11th level, a barbarian's bonuses to Strength and Constitution during his rage each increase to +6, and his morale bonus on Will saves increases to +3. The penalty to AC remains at -2.}

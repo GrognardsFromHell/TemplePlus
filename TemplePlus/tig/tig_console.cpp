@@ -312,6 +312,25 @@ void Console::RenderCheatsMenu()
 			if (ImGui::MenuItem("UI System")) {
 				UIShowDebug();
 			}
+			
+			static char debugAddrText[10] = { 0, };
+			static int debugAddr;
+			static int debugValue = 0;
+			if (ImGui::Button("Debug Memory Value")){
+				if (debugAddr >= 0x10000000 && debugAddr <= 0x20000000){
+					debugValue = temple::GetRef<int>(debugAddr);
+				}
+			}
+			if (ImGui::InputText("##debugMemoryAddr", debugAddrText, 10)){
+				debugAddr = strtol(debugAddrText, NULL, 16);
+			}
+
+			if (debugAddr >= 0x10000000 && debugAddr <= 0x20000000){
+				ImGui::Text(fmt::format("{}", debugValue).c_str());
+			}
+			
+			
+
 			ImGui::EndMenu();
 		}
 		ImGui::EndMenuBar();

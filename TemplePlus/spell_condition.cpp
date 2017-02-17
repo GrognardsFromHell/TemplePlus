@@ -51,8 +51,12 @@ public:
 	static bool ShouldRemoveInvisibility(objHndl handle, DispIoD20Signal *evtObj, DispatcherCallbackArgs args);
 
 	static int InvisibilityAooWillTake(DispatcherCallbackArgs args);
+	static int AidOnAddTempHp(DispatcherCallbackArgs args);
 
 	void apply() override {
+
+		// Aid Spell fixed amount of HP gained to be 1d8 + 1/caster level
+		replaceFunction(0x100CBE00, AidOnAddTempHp);
 
 		// Invisibility Sphere lacking a Dismiss handler
 		{
@@ -734,5 +738,28 @@ int SpellConditionFixes::InvisibilityAooWillTake(DispatcherCallbackArgs args){
 		if (dispIo->return_val > 0) // vanilla forgot to check this before setting the value! It would cause infinite AoOs for Greater Invis. and Sleet Storm because it override the AOO condition's value, which would be 0 (is it even necessary???)
 			dispIo->return_val = 1;
 	}
+	return 0;
+}
+
+int SpellConditionFixes::AidOnAddTempHp(DispatcherCallbackArgs args){
+
+	auto spellId = args.GetCondArg(0);
+
+	SpellPacketBody spellPkt(spellId);
+	if (!spellPkt.spellEnum){
+		logger->error("AidOnAddTempHp: unable to get spell packet");
+		return 0;
+	}
+
+	auto tempHpAmt = Dice::Roll(1, 8);
+	if ((int)spellPkt.casterLevel > 0){
+		tempHpAmt += min(10, (int)spellPkt.casterLevel);
+	}
+
+	floatSys.FloatSpellLine(args.objHndCaller, 20005, FloatLineColor::White, fmt::format("[{}]", tempHpAmt).c_str(), nullptr); // %d Temp HP Gained
+	logger->debug("_begin_aid(): gained {} temporary hit points", tempHpAmt);
+
+	conds.AddTo(args.objHndCaller, "Temporary_Hit_Points", {spellId, args.GetCondArg(1), tempHpAmt});
+
 	return 0;
 }
