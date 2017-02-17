@@ -55,9 +55,10 @@ public:
 
 	void Measure(const TigFont &font, const TigTextStyle &style, TigFontMetrics &metrics);
 
+	static int GetGlyphIdx(char ch, const char *text);
+
 private:
 	void DrawBackgroundOrOutline(const TigRect& rect, const TigTextStyle& style);
-	static int GetGlyphIdx(char ch, const char *text);
 	ScanWordResult ScanWord(const char* text,
 		int firstIdx,
 		int textLength,

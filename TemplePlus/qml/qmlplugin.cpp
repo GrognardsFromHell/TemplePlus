@@ -9,6 +9,8 @@
 #include "legacytextitem.h"
 #include "networkaccessmanager.h"
 
+TPQmlPlugin::~TPQmlPlugin() = default;
+
 void TPQmlPlugin::initializeEngine(QQmlEngine *engine, const char *uri) {
 
 	// Add pre-defined fonts
@@ -23,6 +25,11 @@ void TPQmlPlugin::initializeEngine(QQmlEngine *engine, const char *uri) {
 			logger->warn("Unable to add font {}", filename);
 		}
 	}
+
+	// Also add the needed fonts to the legacy renderer
+	mLegacyTextRenderer = std::make_unique<LegacyTextRenderer>();
+	mLegacyTextRenderer->AddFont("Scurlock", "art/interface/FONTS/SCURLOCK/scurlock-48/scurlock-48.fnt");
+
 }
 
 void TPQmlPlugin::registerTypes(const char *uri) {

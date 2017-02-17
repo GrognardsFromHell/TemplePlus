@@ -559,6 +559,9 @@
     <ClCompile Include="qml\qmlplugin_moc.cpp">
       <Filter>QML</Filter>
     </ClCompile>
+    <ClCompile Include="qml\legacytextrenderer.cpp">
+      <Filter>QML</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -1054,6 +1057,9 @@
       <Filter>QML</Filter>
     </ClInclude>
     <ClInclude Include="qml\qmlplugin.h">
+      <Filter>QML</Filter>
+    </ClInclude>
+    <ClInclude Include="qml\legacytextrenderer.h">
       <Filter>QML</Filter>
     </ClInclude>
   </ItemGroup>

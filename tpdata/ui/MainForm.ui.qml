@@ -16,13 +16,20 @@ Item {
     }
 
     Image {
-        x: 0
-        y: 0
+        y: 30
         anchors.horizontalCenter: parent.horizontalCenter
-        source: 'tio:///art/interface/mainmenu_ui/MainMenu_Title.img'
+       // source: 'tio:///art/interface/mainmenu_ui/MainMenu_Title.img'
     }
 
+	Column {
+		anchors.bottom: parent.bottom
+		anchors.bottomMargin: 50
 
+		MainMenuButton {
+			text: "New Game"
+		}		
+	}
+	
     Column {
         y: 292
         height: 200

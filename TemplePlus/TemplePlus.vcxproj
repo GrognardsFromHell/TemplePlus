@@ -146,6 +146,11 @@
       <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">stdafx.h</ForcedIncludeFiles>
       <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">stdafx.h</ForcedIncludeFiles>
     </ClCompile>
+    <ClCompile Include="qml\legacytextrenderer.cpp">
+      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">stdafx.h</ForcedIncludeFiles>
+      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">stdafx.h</ForcedIncludeFiles>
+      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">stdafx.h</ForcedIncludeFiles>
+    </ClCompile>
     <ClCompile Include="qml\networkaccessmanager.cpp">
       <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">stdafx.h</ForcedIncludeFiles>
       <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">stdafx.h</ForcedIncludeFiles>
@@ -462,6 +467,7 @@
     <ClInclude Include="qml\imagehandler.h" />
     <ClInclude Include="qml\imageplugin.h" />
     <ClInclude Include="qml\legacytextitem.h" />
+    <ClInclude Include="qml\legacytextrenderer.h" />
     <ClInclude Include="qml\networkaccessmanager.h" />
     <ClInclude Include="qml\networkaccessmanager_moc.h" />
     <ClInclude Include="qml\qmlplugin.h" />
