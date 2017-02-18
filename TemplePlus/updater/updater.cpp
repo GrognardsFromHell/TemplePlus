@@ -67,7 +67,7 @@ void Updater::Impl::FindUpdater() {
 
 	// Update.exe is one folder up from our own binary in the directory layout
 	// used by squirrel
-	if (!QFile::exists(updateExe)) {
+	if (QFile::exists(updateExe)) {
 		updaterPath = updateExe.toStdWString();
 		logger->info("Update.exe found at {}", updateExe.toStdString());
 	} else {

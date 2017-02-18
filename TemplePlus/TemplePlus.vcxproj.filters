@@ -560,6 +560,7 @@
       <Filter>QML</Filter>
     </ClCompile>
     <ClCompile Include="util\time.cpp" />
+    <ClCompile Include="qml\mestranslator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -1057,6 +1058,7 @@
       <Filter>QML</Filter>
     </ClInclude>
     <ClInclude Include="util\time.h" />
+    <ClInclude Include="qml\mestranslator.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

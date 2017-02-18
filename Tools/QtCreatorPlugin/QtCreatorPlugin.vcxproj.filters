@@ -42,6 +42,9 @@
     <ClCompile Include="..\..\TemplePlus\qml\qmlplugin_moc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\TemplePlus\qml\mestranslator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\TemplePlus\qml\imagehandler.h">
@@ -64,6 +67,9 @@
     </ClInclude>
     <ClInclude Include="..\..\TemplePlus\qml\qmlplugin.h">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\TemplePlus\qml\mestranslator.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

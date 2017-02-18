@@ -1,8 +1,6 @@
 
 #define _CRT_SECURE_NO_WARNINGS
 
-#include <objbase.h>
-
 #include <QQmlEngine>
 #include <QFontDatabase>
 
@@ -12,6 +10,7 @@
 
 #include "legacytextitem.h"
 #include "networkaccessmanager.h"
+#include "mestranslator.h"
 
 #include <infrastructure/format.h>
 #include <infrastructure/logging.h>
@@ -30,6 +29,23 @@ TPQmlPlugin::~TPQmlPlugin() = default;
 
 #include <infrastructure/INI.h>
 typedef INI <std::string, std::string, std::string> ini_t;
+
+#include <objbase.h>
+
+// Bits of hacky Windows API to find the path to this plugin's DLL
+static QDir GetPluginPath() {
+	HMODULE module;
+	static int varHandle; // Just used for an address in this DLLs address space
+	GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCWSTR)&varHandle, &module);
+
+	wchar_t filename[MAX_PATH];
+	auto filenameSize = GetModuleFileName(module, filename, MAX_PATH);
+
+	QString dllFilename = QString::fromWCharArray(filename, filenameSize);
+
+	QFileInfo fileInfo(dllFilename);
+	return fileInfo.absoluteDir();
+}
 
 #endif
 
@@ -89,6 +105,23 @@ void TPQmlPlugin::initializeEngine(QQmlEngine *engine, const char *uri) {
 	tioVfs->AddPath(toeeDir.absoluteFilePath("ToEE4.dat").toStdString());
 	tioVfs->AddPath(toeeDir.absoluteFilePath("data").toStdString());
 
+	// Tough one... try finding tpdata heh
+	auto pluginPath = GetPluginPath();
+	if (!pluginPath.exists()) {
+		qDebug() << "Unable to determine path of QML plugin" << pluginPath;
+		return;
+	}
+	do {
+		
+		if (pluginPath.cd("tpdata")) {
+			break;
+		}
+
+	} while (pluginPath.cdUp());
+	
+	qDebug() << "Using tpdata path:" << pluginPath.absolutePath();
+	tioVfs->AddPath(pluginPath.absolutePath().toStdString());
+
 	// Init logging
 	spdlog::drop_all(); // Reset all previous loggers
 	auto nullSink = std::make_shared<spdlog::sinks::null_sink_mt>();
@@ -99,6 +132,9 @@ void TPQmlPlugin::initializeEngine(QQmlEngine *engine, const char *uri) {
 	engine->setNetworkAccessManagerFactory(&namFactory);
 
 #endif
+
+	// Install translator
+	QCoreApplication::installTranslator(new MesTranslator(engine));
 
 	// Add pre-defined fonts
 	auto fonts = vfs->Search("fonts/*.ttf");

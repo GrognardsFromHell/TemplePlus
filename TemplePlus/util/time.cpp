@@ -4,5 +4,5 @@
 #include <timeapi.h>
 
 uint32_t GetSystemTime() {
-	return GetSystemTime();
+	return timeGetTime();
 }

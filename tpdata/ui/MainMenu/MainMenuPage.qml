@@ -1,16 +1,15 @@
+
 import QtQuick 2.8
 
 Item {
-    id: item1
-    property alias mouseArea: mouseArea
+    property var buttons : []
+    property bool showLogo : true
 
     width: 800
     height: 600
 
+    // Prevent click-through for main menu
     MouseArea {
-        id: mouseArea
-        anchors.rightMargin: 0
-        anchors.bottomMargin: 0
         anchors.fill: parent
     }
 
@@ -18,20 +17,20 @@ Item {
         y: 30
         anchors.horizontalCenter: parent.horizontalCenter
         source: 'tio:///art/interface/mainmenu_ui/MainMenu_Title.img'
+        visible: showLogo
     }
 
     Column {
-        y: 292
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 50
         anchors.right: parent.right
         anchors.left: parent.left
         Repeater {
-            id: repeater
-            model: menuItems
+            model: buttons
             delegate: MainMenuButton {
-                text: model.name
+                text: modelData.text
                 anchors.horizontalCenter: parent.horizontalCenter
+                mouseArea.onClicked: buttons[index].onClick()
             }
         }
     }

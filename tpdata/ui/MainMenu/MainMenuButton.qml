@@ -2,6 +2,7 @@ import QtQuick 2.8
 import TemplePlus 1.0
 
 Item {
+    property alias mouseArea : mouseArea
     property string text : ""
 	width: normalText.implicitWidth
 	height: normalText.implicitHeight
