@@ -13,7 +13,7 @@
 #include "party.h"
 #include "python/python_integration_obj.h"
 #include "python/python_object.h"
-
+#include "util/time.h"
 
 #define PATH_CACHE_EXPIRATION_TIME 5000 // miliseconds
 
@@ -278,7 +278,7 @@ int Pathfinding::PathCacheGet(PathQuery* pq, Path* pathOut)
 
 		auto pathCacheQ = &pathCache[i];
 
-		if (!pathCacheQ->timeCached || pathCacheQ->timeCached < timeGetTime() - PATH_CACHE_EXPIRATION_TIME){
+		if (!pathCacheQ->timeCached || pathCacheQ->timeCached < GetSystemTime() - PATH_CACHE_EXPIRATION_TIME){
 			continue;
 		}
 
@@ -318,7 +318,7 @@ int Pathfinding::PathCacheGet(PathQuery* pq, Path* pathOut)
 void Pathfinding::PathCachePush(PathQuery* pq, Path* pqr)
 {
 	pathCache[pathCacheIdx].path = *pqr;
-	pathCache[pathCacheIdx].timeCached = timeGetTime();
+	pathCache[pathCacheIdx].timeCached = GetSystemTime();
 	memcpy(&pathCache[pathCacheIdx++], pq, sizeof(PathQuery));
 	
 
@@ -330,7 +330,7 @@ void Pathfinding::PathCachePush(PathQuery* pq, Path* pqr)
 int Pathfinding::PathSumTime()
 {
 	int totalTime = 0;
-	int now = timeGetTime();
+	int now = GetSystemTime();
 	for (int i = 0; i < 20; i++)
 	{
 		int astarIdx = aStarTimeIdx - i;
@@ -350,7 +350,7 @@ void Pathfinding::PathRecordTimeElapsed(int refTime)
 {
 	if (++aStarTimeIdx >= 20)
 		aStarTimeIdx = 0;
-	aStarTimeEnded[aStarTimeIdx] = timeGetTime();
+	aStarTimeEnded[aStarTimeIdx] = GetSystemTime();
 	aStarTimeElapsed[aStarTimeIdx] = aStarTimeEnded[aStarTimeIdx] - refTime;
 }
 
@@ -1097,7 +1097,7 @@ int Pathfinding::FindPathShortDistanceAdjRadius(PathQuery* pq, Path* pqr)
 		int attemptCount;
 		if (objects.GetType(pq->critter) == obj_t_npc)
 		{
-			if (npcPathFindRefTime && (timeGetTime() - npcPathFindRefTime) < 1000)
+			if (npcPathFindRefTime && (GetSystemTime() - npcPathFindRefTime) < 1000)
 			{
 				attemptCount = npcPathFindAttemptCount;
 				if (npcPathFindAttemptCount > 10 || npcPathTimeCumulative > 250)
@@ -1107,12 +1107,12 @@ int Pathfinding::FindPathShortDistanceAdjRadius(PathQuery* pq, Path* pqr)
 			}
 			else
 			{
-				npcPathFindRefTime = timeGetTime();
+				npcPathFindRefTime = GetSystemTime();
 				attemptCount = 0;
 				npcPathTimeCumulative = 0;
 			}
 			npcPathFindAttemptCount = attemptCount + 1;
-			referenceTime = timeGetTime();
+			referenceTime = GetSystemTime();
 		}
 	}
 
@@ -1160,7 +1160,7 @@ int Pathfinding::FindPathShortDistanceAdjRadius(PathQuery* pq, Path* pqr)
 	if (curIdx == -1)
 	{
 		if (referenceTime)
-			npcPathTimeCumulative += timeGetTime() - referenceTime;
+			npcPathTimeCumulative += GetSystemTime() - referenceTime;
 		return 0;
 	}
 
@@ -1219,7 +1219,7 @@ int Pathfinding::FindPathShortDistanceAdjRadius(PathQuery* pq, Path* pqr)
 		if (refererIdx == -1) 
 		{ // none found, return 0
 			if (referenceTime)
-				npcPathTimeCumulative += timeGetTime() - referenceTime;
+				npcPathTimeCumulative += GetSystemTime() - referenceTime;
 			return 0;
 		}
 			
@@ -1362,7 +1362,7 @@ int Pathfinding::FindPathShortDistanceAdjRadius(PathQuery* pq, Path* pqr)
 		if (curIdx == -1)
 		{
 			if (referenceTime)
-				npcPathTimeCumulative += timeGetTime() - referenceTime;
+				npcPathTimeCumulative += GetSystemTime() - referenceTime;
 			if (config.pathfindingDebugMode) {
 				logger->info("*** END OF PF ATTEMPT ADJ RADIUS - A* OPTIONS EXHAUSTED ***");
 			}
@@ -1384,7 +1384,7 @@ int Pathfinding::FindPathShortDistanceAdjRadius(PathQuery* pq, Path* pqr)
 	if (directionsCount > pq->maxShortPathFindLength)
 	{
 		if (referenceTime)
-			npcPathTimeCumulative += timeGetTime() - referenceTime;
+			npcPathTimeCumulative += GetSystemTime() - referenceTime;
 		return 0;
 	}
 
@@ -1398,7 +1398,7 @@ int Pathfinding::FindPathShortDistanceAdjRadius(PathQuery* pq, Path* pqr)
 	if (pq->flags & PQF_10)
 		--directionsCount;
 	if (referenceTime)
-		npcPathTimeCumulative += timeGetTime() - referenceTime;
+		npcPathTimeCumulative += GetSystemTime() - referenceTime;
 
 	// modify the destination to the found location
 	pqr->to = subPathFrom;
@@ -1423,7 +1423,7 @@ int Pathfinding::FindPathForcecdStraightLine(Path* pqr, PathQuery* pq)
 		if (objects.GetType(critter) == obj_t_npc)
 		{
 			if (npcPathTimeRef 
-				&& (timeGetTime() - npcPathTimeRef) < 1000)
+				&& (GetSystemTime() - npcPathTimeRef) < 1000)
 			{
 				
 				if (npcPathAttemps > 10	|| npcPathCumulativeTime > 250)
@@ -1433,7 +1433,7 @@ int Pathfinding::FindPathForcecdStraightLine(Path* pqr, PathQuery* pq)
 			{
 				npcPathAttemps = 1;
 				npcPathCumulativeTime = 0;
-				npcPathTimeRef = timeGetTime();
+				npcPathTimeRef = GetSystemTime();
 			}
 		}
 	}
@@ -1556,7 +1556,7 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 	}
 
 
-	refTime = timeGetTime();
+	refTime = GetSystemTime();
 	if (ShouldUsePathnodes(pqr, pq))
 	{
 		if (config.pathfindingDebugMode || !combatSys.isCombatActive())
@@ -1787,7 +1787,7 @@ int Pathfinding::FindPathShortDistanceSansTargetLegacy(PathQuery* pq, Path* pqr)
 		int attemptCount;
 		if (objects.GetType(pq->critter) == obj_t_npc)
 		{
-			if (npcPathFindRefTime && (timeGetTime() - npcPathFindRefTime) < 1000)
+			if (npcPathFindRefTime && (GetSystemTime() - npcPathFindRefTime) < 1000)
 			{
 				attemptCount = npcPathFindAttemptCount;
 				if (npcPathFindAttemptCount > 10 || npcPathTimeCumulative > 250)
@@ -1796,12 +1796,12 @@ int Pathfinding::FindPathShortDistanceSansTargetLegacy(PathQuery* pq, Path* pqr)
 				}
 			} else
 			{
-				npcPathFindRefTime = timeGetTime();
+				npcPathFindRefTime = GetSystemTime();
 				attemptCount = 0;
 				npcPathTimeCumulative = 0;
 			}
 			npcPathFindAttemptCount = attemptCount + 1;
-			referenceTime = timeGetTime();
+			referenceTime = GetSystemTime();
 		}
 	}
 
@@ -1988,7 +1988,7 @@ int Pathfinding::FindPathShortDistanceSansTargetLegacy(PathQuery* pq, Path* pqr)
 	if (directionsCount > pq->maxShortPathFindLength)
 	{
 	LABEL_74: if (referenceTime)
-		npcPathTimeCumulative += timeGetTime() - referenceTime;
+		npcPathTimeCumulative += GetSystemTime() - referenceTime;
 		return 0;
 	}
 	int lastIdx = idxTarget;
@@ -2002,7 +2002,7 @@ int Pathfinding::FindPathShortDistanceSansTargetLegacy(PathQuery* pq, Path* pqr)
 	if (pq->flags & PQF_10)
 		--directionsCount;
 	if (referenceTime)
-		npcPathTimeCumulative += timeGetTime() - referenceTime;
+		npcPathTimeCumulative += GetSystemTime() - referenceTime;
 
 	return directionsCount;
 	
@@ -2027,7 +2027,7 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 		int attemptCount;
 		if (objects.GetType(pq->critter) == obj_t_npc)
 		{
-			if (npcPathFindRefTime && (timeGetTime() - npcPathFindRefTime) < 1000  ) // && !pathNodeSys.hasClearanceData limits the number of attempt to 10 per second and cumulative time to 250 sec
+			if (npcPathFindRefTime && (GetSystemTime() - npcPathFindRefTime) < 1000  ) // && !pathNodeSys.hasClearanceData limits the number of attempt to 10 per second and cumulative time to 250 sec
 			{
 				attemptCount = npcPathFindAttemptCount;
 				if ( (npcPathFindAttemptCount > 10 + (40 * (pathNodeSys.hasClearanceData == true))  ) || npcPathTimeCumulative > 250)
@@ -2052,12 +2052,12 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 			}
 			else
 			{
-				npcPathFindRefTime = timeGetTime();
+				npcPathFindRefTime = GetSystemTime();
 				attemptCount = 0;
 				npcPathTimeCumulative = 0;
 			}
 			npcPathFindAttemptCount = attemptCount + 1;
-			referenceTime = timeGetTime();
+			referenceTime = GetSystemTime();
 		}
 	}
 
@@ -2131,7 +2131,7 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 	if (curIdx == -1)
 	{
 		if (referenceTime)
-			npcPathTimeCumulative += timeGetTime() - referenceTime;
+			npcPathTimeCumulative += GetSystemTime() - referenceTime;
 		if (config.pathfindingDebugMode)
 		{
 			pdbgDirectionsCount = 0;
@@ -2195,7 +2195,7 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 		if (refererIdx == -1)
 		{
 			if (referenceTime)
-				npcPathTimeCumulative += timeGetTime() - referenceTime;
+				npcPathTimeCumulative += GetSystemTime() - referenceTime;
 			if (config.pathfindingDebugMode) {
 				pdbgShortRangeError = -999;
 				logger->info("*** END OF PF ATTEMPT SANS TARGET - OPEN SET EMPTY; from {} to {} ***", pqr->from, pqr->to);
@@ -2322,7 +2322,7 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 		if (curIdx == -1)
 		{
 			if (referenceTime)
-				npcPathTimeCumulative += timeGetTime() - referenceTime;
+				npcPathTimeCumulative += GetSystemTime() - referenceTime;
 			if (config.pathfindingDebugMode){
 				logger->info("*** END OF PF ATTEMPT SANS TARGET - A* OPTIONS EXHAUSTED; from {} to {} ***", pqr->from, pqr->to);
 			}
@@ -2345,7 +2345,7 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 	if (directionsCount > pq->maxShortPathFindLength)
 	{
 		if (referenceTime)
-			npcPathTimeCumulative += timeGetTime() - referenceTime;
+			npcPathTimeCumulative += GetSystemTime() - referenceTime;
 		return 0;
 	}
 	int lastIdx = idxTarget;
@@ -2359,7 +2359,7 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 	if (pq->flags & PQF_10)
 		--directionsCount;
 	if (referenceTime)
-		npcPathTimeCumulative += timeGetTime() - referenceTime;
+		npcPathTimeCumulative += GetSystemTime() - referenceTime;
 
 	if (config.pathfindingDebugMode)
 	{

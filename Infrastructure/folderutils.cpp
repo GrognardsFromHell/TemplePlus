@@ -1,6 +1,20 @@
 
-#include "stdafx.h"
+#include <infrastructure/exception.h>
+#include <infrastructure/logging.h>
+#include <infrastructure/stringutil.h>
+
+#include <atlcomcli.h>
+
+#include "Shlobj.h"
+#include "Shobjidl.h"
+#pragma comment(lib, "shell32.lib")
+
+#include "Shlwapi.h"
+#pragma comment(lib, "shlwapi.lib")
+
 #include <VersionHelpers.h>
+
+using std::wstring;
 
 static IKnownFolderManager* GetFolderManager() {
 	static CComPtr<IKnownFolderManager> mgr;

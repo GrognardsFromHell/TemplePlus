@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <temple/dll.h>
+#include <QDir>
 
 ModSupport modSupport;
 
@@ -35,18 +36,15 @@ static struct GlobalFlagAddresses : temple::AddressTable {
 	}
 } modSupportAddresses;
 
-
 void ModSupport::DetectCo8ActiveModule(){
-
-	wchar_t tfexIniPath[MAX_PATH];
-	wcscpy_s(tfexIniPath, config.toeeDir.c_str());
-	PathAppend(tfexIniPath, L"TFE-X.ini");
+	QDir toeeDir(QString::fromStdWString(config.toeeDir));
+	QString tfexIniPath = toeeDir.absoluteFilePath("TFE-X.ini");
 	
-	if (!PathFileExists(tfexIniPath)) {
+	if (!QFile::exists(tfexIniPath)) {
 		return;
 	}
 
-	wfstream tfexIni(tfexIniPath);
+	wfstream tfexIni(tfexIniPath.toStdWString());
 	if (!tfexIni.is_open())
 		return;
 		

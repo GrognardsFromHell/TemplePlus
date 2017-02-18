@@ -1,6 +1,4 @@
 
-#include "stdafx.h"
-
 #include <QtCore/QMimeDatabase>
 #include <QtCore/QBuffer>
 #include <QtNetwork/QNetworkAccessManager>

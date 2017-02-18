@@ -3,8 +3,6 @@
 import QmlProject 1.1
 
 Project {
-    mainFile: "ui.qml"
-
     /* Include .qml, .js, and image files from current directory and subdirectories */
     QmlFiles {
         directory: "."
@@ -16,5 +14,5 @@ Project {
         directory: "."
     }
     /* List of plugin directories passed to QML runtime */
-    importPaths: [ "../../tools/QtCreatorPlugin" ]
+    importPaths: [ "../../Release" ]
 }

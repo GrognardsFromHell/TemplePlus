@@ -7,7 +7,19 @@
 #include <QPainter>
 
 #include "legacytextrenderer.h"
-#include "fonts/fonts.h"
+
+#include <infrastructure/exception.h>
+
+static int GetGlyphIdx(char ch, const char* text) {
+
+	// First character found in the FNT files
+	constexpr auto FirstFontChar = '!';
+
+	auto chUns = (unsigned char)ch;
+
+	return chUns - FirstFontChar;
+
+}
 
 std::unique_ptr<LegacyTextRenderer> legacyTextRenderer;
 
@@ -130,7 +142,7 @@ QSize LegacyTextRenderer::Measure(const std::string & text, const LegacyTextStyl
 			continue;
 		}
 
-		int glyphIdx = TextLayouter::GetGlyphIdx(ch, "");
+		int glyphIdx = GetGlyphIdx(ch, "");
 
 		if (glyphIdx >= font.glyphs.size()) {
 			continue;
@@ -200,7 +212,7 @@ void LegacyTextRenderer::RenderChar(QPoint &pos, char ch, const LegacyTextStyle 
 		return;
 	}
 
-	int glyphIdx = TextLayouter::GetGlyphIdx(ch, "");
+	int glyphIdx = GetGlyphIdx(ch, "");
 	
 	if (glyphIdx >= font.glyphs.size()) {
 		return; // Trying to render invalid character

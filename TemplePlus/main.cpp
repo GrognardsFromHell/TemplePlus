@@ -1,13 +1,15 @@
 #include "stdafx.h"
 
 #include <infrastructure/breakpad.h>
+#include <infrastructure/folderutils.h>
 
 #include "temple_functions.h"
 #include "util/fixes.h"
 #include "config/config.h"
-#include "util/folderutils.h"
 
 #include "util/datadump.h"
+
+#include <Shlwapi.h>
 
 void InitLogging(const std::wstring &logFile);
 

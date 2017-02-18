@@ -162,6 +162,7 @@
     <ClInclude Include="breakpad\minidump_format.h" />
     <ClInclude Include="breakpad\scoped_ptr.h" />
     <ClInclude Include="breakpad\string_utils-inl.h" />
+    <ClInclude Include="include\infrastructure\folderutils.h" />
     <ClInclude Include="include\graphics\bufferbinding.h" />
     <ClInclude Include="include\graphics\buffers.h" />
     <ClInclude Include="include\graphics\camera.h" />
@@ -239,6 +240,7 @@
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="folderutils.cpp" />
     <ClCompile Include="src\allocator.cpp" />
     <ClCompile Include="breakpad.cpp" />
     <ClCompile Include="breakpad\crash_generation_client.cc" />

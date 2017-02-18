@@ -1,7 +1,9 @@
 
 #pragma once
 
+#ifndef QTCREATORPLUGIN
 #define QT_STATICPLUGIN
+#endif
 
 #include <QQmlExtensionPlugin>
 

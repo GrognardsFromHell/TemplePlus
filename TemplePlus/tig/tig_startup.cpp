@@ -27,6 +27,8 @@
 #include <fstream>
 #include <mod_support.h>
 
+#include <Shlwapi.h>
+
 TigInitializer* tig = nullptr;
 
 using TigStartupFunction = int(const TigConfig*);

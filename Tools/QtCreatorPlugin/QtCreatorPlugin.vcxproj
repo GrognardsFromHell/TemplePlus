@@ -18,6 +18,38 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\TemplePlus\qml\imagehandler.cpp" />
+    <ClCompile Include="..\..\TemplePlus\qml\imageplugin.cpp" />
+    <ClCompile Include="..\..\TemplePlus\qml\imageplugin_moc.cpp" />
+    <ClCompile Include="..\..\TemplePlus\qml\legacytextitem.cpp" />
+    <ClCompile Include="..\..\TemplePlus\qml\legacytextitem_moc.cpp" />
+    <ClCompile Include="..\..\TemplePlus\qml\legacytextrenderer.cpp" />
+    <ClCompile Include="..\..\TemplePlus\qml\networkaccessmanager.cpp" />
+    <ClCompile Include="..\..\TemplePlus\qml\qmlplugin.cpp" />
+    <ClCompile Include="..\..\TemplePlus\qml\qmlplugin_moc.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\TemplePlus\qml\imagehandler.h" />
+    <ClInclude Include="..\..\TemplePlus\qml\imageplugin.h" />
+    <ClInclude Include="..\..\TemplePlus\qml\legacytextitem.h" />
+    <ClInclude Include="..\..\TemplePlus\qml\legacytextrenderer.h" />
+    <ClInclude Include="..\..\TemplePlus\qml\networkaccessmanager.h" />
+    <ClInclude Include="..\..\TemplePlus\qml\networkaccessmanager_moc.h" />
+    <ClInclude Include="..\..\TemplePlus\qml\qmlplugin.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\TemplePlus\qml\tpimageplugin.json" />
+    <CustomBuild Include="qmldir">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy %(Filename) $(OutDir)</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Copying qmldir file for QtCreatorPlugin</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)\%(Filename)</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy %(Filename) $(OutDir)</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Copying qmldir file for QtCreatorPlugin</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutDir)\%(Filename)</Outputs>
+    </CustomBuild>
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{0E38FAD2-5D3B-4C9F-881D-C520A274F92D}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
@@ -71,12 +103,16 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(SolutionDir)\TemplePlus;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <OutDir>$(SolutionDir)$(Configuration)\TemplePlus\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(SolutionDir)\TemplePlus;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <OutDir>$(SolutionDir)$(Configuration)\TemplePlus\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -87,11 +123,14 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;QTCREATORPLUGIN_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>QTCREATORPLUGIN;WIN32;_DEBUG;_WINDOWS;_USRDLL;QTCREATORPLUGIN_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(QTDIR)\include\;$(QTDIR)\include\QtQml;$(QTDIR)\include\QtQuick;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui\5.8.0\;$(QTDIR)\include\QtGui\5.8.0\QtGui;$(QTDIR)\include\QtQuick\5.8.0\;$(QTDIR)\include\QtQuick\5.8.0\QtQuick;$(QTDIR)\include\QtQml\5.8.0\;$(QTDIR)\include\QtQml\5.8.0\QtQml;$(QTDIR)\include\QtCore\5.8.0\;$(QTDIR)\include\QtCore\5.8.0\QtCore;$(QTDIR)\mkspecs\win32-msvc2015;$(SolutionDir)\Temple\include;$(SolutionDir)\Infrastructure\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>Temple.lib;TemplePlus.lib;Qt5Cored.lib;Qt5Qmld.lib;Qt5Guid.lib;Qt5Networkd.lib;Qt5Quickd.lib;Infrastructure.lib;turbojpeg-static_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)$(Configuration);$(QTDIR)\lib;$(SolutionDir)\dependencies\lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -115,13 +154,16 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;QTCREATORPLUGIN_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>QT_NO_DEBUG;QTCREATORPLUGIN;WIN32;NDEBUG;_WINDOWS;_USRDLL;QTCREATORPLUGIN_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(QTDIR)\include\;$(QTDIR)\include\QtQml;$(QTDIR)\include\QtQuick;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui\5.8.0\;$(QTDIR)\include\QtGui\5.8.0\QtGui;$(QTDIR)\include\QtQuick\5.8.0\;$(QTDIR)\include\QtQuick\5.8.0\QtQuick;$(QTDIR)\include\QtQml\5.8.0\;$(QTDIR)\include\QtQml\5.8.0\QtQml;$(QTDIR)\include\QtCore\5.8.0\;$(QTDIR)\include\QtCore\5.8.0\QtCore;$(QTDIR)\mkspecs\win32-msvc2015;$(SolutionDir)\Temple\include;$(SolutionDir)\Infrastructure\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>Temple.lib;TemplePlus.lib;Qt5Core.lib;Qt5Qml.lib;Qt5Gui.lib;Qt5Network.lib;Qt5Quick.lib;Infrastructure.lib;turbojpeg-static.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)$(Configuration);$(QTDIR)\lib;$(SolutionDir)\dependencies\lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -141,8 +183,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -10,7 +10,7 @@
 #include "critter.h"
 #include "pathfinding.h"
 #include "dice.h"
-#include "util/folderutils.h"
+#include <infrastructure/folderutils.h>
 
 #include <map>
 #include <set>

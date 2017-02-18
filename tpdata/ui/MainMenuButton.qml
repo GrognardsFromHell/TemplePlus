@@ -2,7 +2,7 @@ import QtQuick 2.8
 import TemplePlus 1.0
 
 Item {
-	property string text : ""
+    property string text : ""
 	width: normalText.implicitWidth
 	height: normalText.implicitHeight
 	

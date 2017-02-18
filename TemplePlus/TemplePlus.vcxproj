@@ -349,7 +349,6 @@
     <ClCompile Include="updater\updater.cpp" />
     <ClCompile Include="util\datadump.cpp" />
     <ClCompile Include="util\fixes.cpp" />
-    <ClCompile Include="util\folderutils.cpp" />
     <ClCompile Include="gamesystems\gamelib_load.cpp" />
     <ClCompile Include="gamesystems\gamelib_save.cpp" />
     <ClCompile Include="fixes\generalfixes.cpp" />
@@ -379,6 +378,7 @@
     <ClCompile Include="ui\ui_char_highresfix.cpp" />
     <ClCompile Include="util\savegame.cpp" />
     <ClCompile Include="util\streams.cpp" />
+    <ClCompile Include="util\time.cpp" />
     <ClCompile Include="weapon.cpp" />
     <ClCompile Include="ui\ui_render.cpp" />
     <ClCompile Include="worldmap.cpp" />
@@ -597,7 +597,6 @@
     <ClInclude Include="dispatcher.h" />
     <ClInclude Include="faction.h" />
     <ClInclude Include="feat.h" />
-    <ClInclude Include="util\folderutils.h" />
     <ClInclude Include="goalfuncnames.h" />
     <ClInclude Include="util\fixes.h" />
     <ClInclude Include="hashtable.h" />
@@ -638,6 +637,7 @@
     <ClInclude Include="ui\ui_item_creation.h" />
     <ClInclude Include="ui\ui_render.h" />
     <ClInclude Include="util\savegame.h" />
+    <ClInclude Include="util\time.h" />
     <ClInclude Include="weapon.h" />
     <ClInclude Include="xp.h" />
     <ClInclude Include="ui\ui_mainmenu.h" />

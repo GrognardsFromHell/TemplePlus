@@ -10,6 +10,7 @@
 #include "mainwindow.h"
 #include "tig/tig_startup.h"
 #include "messages/messagequeue.h"
+#include "util/time.h"
 
 struct WindowFuncs : temple::AddressTable {
 	void (*TigSoundSetActive)(BOOL active);
@@ -225,13 +226,13 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 		break;
 	case WM_KEYDOWN:
 		if (wparam >= VK_HOME && wparam <= VK_DOWN || wparam == VK_DELETE) {
-			tigMsg.createdMs = timeGetTime();
+			tigMsg.createdMs = GetSystemTime();
 			tigMsg.type = TigMsgType::KEYDOWN;
 			tigMsg.arg1 = wparam;
 			messageQueue->Enqueue(tigMsg);
 		}
 
-		tigMsg.createdMs = timeGetTime();
+		tigMsg.createdMs = GetSystemTime();
 		tigMsg.type = TigMsgType::KEYSTATECHANGE;
 		tigMsg.arg1 = ToDirectInputKey(wparam);
 		tigMsg.arg2 = 1; // Means it has changed to pressed
@@ -242,7 +243,7 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 		}
 		break;
 	case WM_SYSKEYDOWN:
-		tigMsg.createdMs = timeGetTime();
+		tigMsg.createdMs = GetSystemTime();
 		tigMsg.type = TigMsgType::KEYSTATECHANGE;
 		tigMsg.arg1 = ToDirectInputKey(wparam);
 		tigMsg.arg2 = 1; // Means it has changed to pressed
@@ -254,7 +255,7 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 		break;
 	case WM_KEYUP:
 	case WM_SYSKEYUP:
-		tigMsg.createdMs = timeGetTime();
+		tigMsg.createdMs = GetSystemTime();
 		tigMsg.type = TigMsgType::KEYSTATECHANGE;
 		tigMsg.arg1 = ToDirectInputKey(wparam);
 		tigMsg.arg2 = 0; // Means it has changed to unpressed
@@ -265,7 +266,7 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 		}
 		break;
 	case WM_CHAR:
-		tigMsg.createdMs = timeGetTime();
+		tigMsg.createdMs = GetSystemTime();
 		tigMsg.type = TigMsgType::CHAR;
 		tigMsg.arg1 = wparam;
 		tigMsg.arg3 = wparam;
@@ -281,7 +282,7 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 		windowFuncs.TigSoundSetActive(wparam == 1);
 		break;
 	case WM_CLOSE:
-		tigMsg.createdMs = timeGetTime();
+		tigMsg.createdMs = GetSystemTime();
 		tigMsg.type = TigMsgType::EXIT;
 		tigMsg.arg1 = 1;
 		messageQueue->Enqueue(tigMsg);

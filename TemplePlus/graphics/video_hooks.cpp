@@ -9,7 +9,7 @@
 #include <infrastructure/exception.h>
 #include <infrastructure/stringutil.h>
 #include <infrastructure/logging.h>
-#include <util/folderutils.h>
+#include <infrastructure/folderutils.h>
 
 #include "movies.h"
 #include "config/config.h"

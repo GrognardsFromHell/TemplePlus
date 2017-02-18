@@ -15,6 +15,7 @@
 #include <temple/aasrenderer.h>
 #include "../critter.h"
 #include <graphics/dynamictexture.h>
+#include "util/time.h"
 
 #include "froggrapplecontroller.h"
 
@@ -901,7 +902,7 @@ void MapObjectRenderer::RenderMirrorImages(objHndl obj,
 	static float rotation = 0;
 	if (lastRenderTime != -1)
 	{
-		float elapsedSecs = (timeGetTime() - lastRenderTime) / 1000.0f;
+		float elapsedSecs = (GetSystemTime() - lastRenderTime) / 1000.0f;
 		// One full rotation (2PI) in 16 seconds
 		rotation += elapsedSecs * XM_2PI / 16.0f;
 		
@@ -910,7 +911,7 @@ void MapObjectRenderer::RenderMirrorImages(objHndl obj,
 			rotation -= XM_2PI;
 		}
 	}
-	lastRenderTime = timeGetTime();
+	lastRenderTime = GetSystemTime();
 
 	// The images should partially overlap the actual model
 	auto radius = objects.GetRadius(obj) * 0.75f;

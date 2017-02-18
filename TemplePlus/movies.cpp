@@ -21,6 +21,7 @@
 #include "tig/tig_font.h"
 #include "tig/tig_startup.h"
 #include "temple_functions.h"
+#include "util/time.h"
 
 using namespace gfx;
 using namespace temple;
@@ -110,7 +111,7 @@ class SubtitleRenderer {
 public:
 	SubtitleRenderer(gfx::RenderingDevice &device, const SubtitleLine* firstLine) 
 		: mDevice(device), mLine(firstLine) {
-		mMovieStarted = timeGetTime();
+		mMovieStarted = GetSystemTime();
 		InitializeSubtitleStyle();
 	}
 
@@ -120,7 +121,7 @@ public:
 		}
 
 		// Update elapsed time
-		mElapsedTime = timeGetTime() - mMovieStarted;
+		mElapsedTime = GetSystemTime() - mMovieStarted;
 
 		// Update current line
 		AdvanceLine();

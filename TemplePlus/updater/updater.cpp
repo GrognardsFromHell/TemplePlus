@@ -2,6 +2,9 @@
 
 #include <thread>
 
+#include <QFileInfo>
+#include <QDir>
+
 #include "updater.h"
 #include "config/config.h"
 
@@ -56,18 +59,21 @@ void Updater::Impl::FindUpdater() {
 	wchar_t ownFilename[MAX_PATH];
 	GetModuleFileNameW(nullptr, &ownFilename[0], MAX_PATH);
 
+	QFileInfo self(QString::fromWCharArray(ownFilename));
+	QDir baseDir(self.dir());
+	baseDir.cdUp();
+
+	QString updateExe = baseDir.filePath("Update.exe");
+
 	// Update.exe is one folder up from our own binary in the directory layout
 	// used by squirrel
-	if (PathRemoveFileSpecW(&ownFilename[0]) && PathAppend(&ownFilename[0], L"..\\Update.exe")) {
-		if (PathFileExistsW(&ownFilename[0])) {
-			updaterPath = ownFilename;
-			logger->info("Update.exe found at {}", ucs2_to_utf8(updaterPath));
-		} else {
-			logger->info("No Update.exe found at {}", ucs2_to_utf8(updaterPath));
-		}
+	if (!QFile::exists(updateExe)) {
+		updaterPath = updateExe.toStdWString();
+		logger->info("Update.exe found at {}", updateExe.toStdString());
 	} else {
-		logger->info("Could not determine path to Update.exe, disabling auto update.");
+		logger->info("No Update.exe found at {}", updateExe.toStdString());
 	}
+
 }
 
 void Updater::Impl::StartUpdate() {

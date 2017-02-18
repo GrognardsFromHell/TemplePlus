@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <string>
+
 /*
 	Helpers for dealing with Windows folders.
 */

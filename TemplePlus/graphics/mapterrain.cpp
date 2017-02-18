@@ -10,6 +10,7 @@
 #include <util/fixes.h>
 #include <gamesystems/gamesystems.h>
 #include <gamesystems/timeevents.h>
+#include "util/time.h"
 
 TerrainSystem::TerrainSystem(gfx::RenderingDevice& device, gfx::ShapeRenderer2d& shapeRenderer)
 	: mDevice(device),mShapeRenderer(shapeRenderer) {
@@ -32,7 +33,7 @@ void TerrainSystem::Render() {
 
 	// Check the day<->night transition and stop if necessary
 	if (mIsTransitioning) {
-		auto timeSinceMapEntered = timeGetTime() - mTransitionStart;
+		auto timeSinceMapEntered = GetSystemTime() - mTransitionStart;
 		if (timeSinceMapEntered > TransitionTime) {
 			mIsTransitioning = false;
 		}
@@ -168,14 +169,14 @@ void TerrainSystem::UpdateDayNight() {
 		if (mIsNightTime) {
 			mIsTransitioning = true;
 			mIsNightTime = false;
-			mTransitionStart = timeGetTime();
+			mTransitionStart = GetSystemTime();
 		}
 	} else {
 		// Start the day -> night transition
 		if (!mIsNightTime) {
 			mIsTransitioning = true;
 			mIsNightTime = true;
-			mTransitionStart = timeGetTime();
+			mTransitionStart = GetSystemTime();
 		}
 	}
 }

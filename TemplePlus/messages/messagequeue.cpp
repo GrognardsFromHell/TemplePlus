@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "messagequeue.h"
 #include "ui/ui.h"
+#include "util/time.h"
 
 static struct MessageQueueFuncs : temple::AddressTable {
 	
@@ -84,7 +85,7 @@ void MessageQueue::PollExternalEvents()
 {
 	// TODO: Move these dependencies out and make it a parameterizable "external event producer"
 	static uint32_t& timePolled = temple::GetRef<uint32_t>(0x11E74578);
-	timePolled = timeGetTime();
+	timePolled = GetSystemTime();
 
 	// Previously DirectInput was polled here for events, but this all happens in the 
 	// Windows message loop now

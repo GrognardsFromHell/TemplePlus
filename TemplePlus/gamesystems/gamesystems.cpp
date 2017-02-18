@@ -28,6 +28,7 @@
 #include "gamesystems/objects/objsystem.h"
 #include "gamesystems/map/gmesh.h"
 #include "anim.h"
+#include "util/time.h"
 
 #include "mapsystem.h"
 #include <infrastructure/vfs.h>
@@ -421,7 +422,7 @@ int GameSystems::ResolveMaterial(const std::string& materialName) const {
 
 void GameSystems::AdvanceTime() {
 
-	auto now = timeGetTime();
+	auto now = GetSystemTime();
 
 	// This is used from somewhere in the object system
 	*gameSystemInitTable.lastAdvanceTime = now;
