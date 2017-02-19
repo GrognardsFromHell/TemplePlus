@@ -31,6 +31,10 @@ Item {
 		id: mouseArea
 		anchors.fill: parent
 		hoverEnabled: true
+        onEntered: playSound(3010)
+        onExited: playSound(3011)
+        onPressed: playSound(3012)
+        onClicked: playSound(3013)
 	}
 	
 }

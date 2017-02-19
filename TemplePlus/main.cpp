@@ -11,12 +11,19 @@
 
 #include <Shlwapi.h>
 
+#include <QGuiApplication>
+
 void InitLogging(const std::wstring &logFile);
 
 // Defined in temple_main.cpp for now
 int TempleMain(HINSTANCE hInstance, const string& commandLine);
 
 static void SetIniPath();
+
+// Forwards Qt logging events to our own logger
+void qtMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &message) {
+	logger->info("[{}] {}", context.category, message.toStdString());
+}
 
 extern "C" int __declspec(dllexport) Startup(void* reservedMemory) {
 
@@ -26,12 +33,12 @@ extern "C" int __declspec(dllexport) Startup(void* reservedMemory) {
 	auto& dll = temple::Dll::GetInstance();
 	// Make the space reserved in the launcher known to our DLL so it can free it before loading temple.dll
 	dll.SetReservedMemory(reservedMemory);
-
+	
 	// Cannot get known folders without initializing COM sadly
 	ComInitializer comInitializer;
-
+	
 	Breakpad breakpad(GetUserDataFolder());
-
+	
 	SetIniPath();
 
 	config.Load();
@@ -43,6 +50,17 @@ extern "C" int __declspec(dllexport) Startup(void* reservedMemory) {
 	logger->info("Starting Temple Plus");
 	logger->info("Version: {}", GetTemplePlusVersion());
 	logger->info("Commit: {}", GetTemplePlusCommitId());
+
+	auto orgHandler = qInstallMessageHandler(qtMessageHandler);
+
+	// Initialize Qt as an offscreen App
+	static char *argv[] = {
+		"",
+		"-platform",
+		"offscreen"
+	};
+	static int argc = 3;
+	QGuiApplication guiApp(argc, argv);
 
 	dll.Load(config.toeeDir);
 
@@ -62,10 +80,12 @@ extern "C" int __declspec(dllexport) Startup(void* reservedMemory) {
 	MH_EnableHook(MH_ALL_HOOKS);
 
 	auto result = TempleMain(hInstance, lpCmdLine);
-
+	
 	config.Save();
 
 	dll.Unload();
+
+	qInstallMessageHandler(orgHandler);
 
 	return result;
 }

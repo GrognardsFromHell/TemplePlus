@@ -8,6 +8,7 @@
 #include <QQmlExtensionPlugin>
 
 #include "legacytextrenderer.h"
+#include "qmlglobals.h"
 
 class TPQmlPlugin : public QQmlExtensionPlugin {
 	Q_OBJECT
@@ -21,5 +22,6 @@ public:
 	
 private:
 	std::unique_ptr<LegacyTextRenderer> mLegacyTextRenderer;
+	std::unique_ptr<TPQmlGlobals> mGlobals;
 
 };

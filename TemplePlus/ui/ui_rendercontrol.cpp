@@ -10,6 +10,7 @@
 #include <QPluginLoader>
 #include <QtPlugin>
 #include <QByteArray>
+#include <QLibraryInfo>
 #include <QStringList>
 #include "ui_rendercontrol.h"
 #include "../tig/tig_startup.h"
@@ -21,30 +22,7 @@
 #include <qpa/qplatformintegration.h>
 #include <qpa/qplatformfontdatabase.h>
 
-// Prints out information about events
-class DebugEventFilter : public QObject {
-public:
-	bool eventFilter(QObject *watched, QEvent *event) override {
-
-		if (event->type() != QEvent::MouseMove
-			&& event->type() != QEvent::MouseButtonPress
-			&& event->type() != QEvent::MouseButtonRelease) {
-			return false;
-		}
-
-		QString objName = QString::fromStdString(fmt::format("{}", (void*)watched));
-		if (!watched->objectName().isEmpty()) {
-			objName = watched->objectName();
-		}
-
-		qDebug() << "Event to " << watched->metaObject()->className() << " (" << objName << "): " << event;
-
-		return false;
-	}
-};
-
 struct UiRenderControl::Impl {
-	std::unique_ptr<QGuiApplication> guiApp;
 	std::unique_ptr<QQmlEngine> engine;
 	TPNetworkAccessManagerFactory namFactory;
 	
@@ -55,19 +33,11 @@ struct UiRenderControl::Impl {
 
 Q_IMPORT_PLUGIN(QSGD3D11Adaptation)
 
+#include <QtQml/5.8.0/QtQml/private/qqmlengine_p.h>
+#include <QtQml/5.8.0/QtQml/private/qqmlimport_p.h>
+
 UiRenderControl::UiRenderControl() : impl(std::make_unique<Impl>())
 {
-	
-	static char *argv[] = {
-		"",
-		"-platform",
-		"offscreen"
-	};
-	static int argc = 3;
-
-	impl->guiApp = std::make_unique<QGuiApplication>(argc, argv);
-	// impl->guiApp->installEventFilter(new DebugEventFilter);
-
 	QQuickWindow::setSceneGraphBackend("d3d11");
 	QQuickWindow::setDefaultAlphaBuffer(true);
 
@@ -82,8 +52,14 @@ UiRenderControl::UiRenderControl() : impl(std::make_unique<Impl>())
 	static TPNetworkAccessManagerFactory namFactory;
 	impl->engine->setNetworkAccessManagerFactory(&namFactory);
 	impl->engine->setBaseUrl(QUrl("tio:///"));
-	impl->engine->addImportPath("tio:///qml/");
-		
+
+	// This ensures we dont accidentally pick up the QtCreatorPlugin for the "TemplePlus" URI
+	// because by default the exe directory is also in the search path
+	QStringList importDirs = QStringList()
+		<< QLibraryInfo::location(QLibraryInfo::Qml2ImportsPath)
+		<< "tio:///qml/";
+	impl->engine->setImportPathList(importDirs);
+
 	QObject::connect(impl->engine.get(), &QQmlEngine::warnings, [=](const QList<QQmlError> &warnings) {
 		for (auto &error : warnings) {
 			logger->warn("{}", error.toString().toStdString());

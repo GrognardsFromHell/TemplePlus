@@ -28,7 +28,7 @@ $ui_moc = join-path $path qml_moc.cpp
 Remove-Item -ErrorAction SilentlyContinue $ui_moc
 
 # Generate the two plugins separately, they have conflicting declarations
-& "$moc" "-fqmlplugin.h" $(join-path $path qmlplugin.h) "-o" $(join-path $path qmlplugin_moc.cpp)
+& "$moc" "-Muri=TemplePlus" "-fqmlplugin.h" $(join-path $path qmlplugin.h) "-o" $(join-path $path qmlplugin_moc.cpp)
 & "$moc" "-fimageplugin.h" $(join-path $path imageplugin.h) "-o" $(join-path $path imageplugin_moc.cpp)
 
 ForEach ($header in $headers) {

@@ -51,12 +51,6 @@ UiMM::UiMM(const UiSystemConf &config) {
 	mView->setResizeMode(QQuickView::SizeRootObjectToView);
 	mView->resize(config.width, config.height);
 
-	auto m = metaObject();
-	while (m) {
-		qDebug() << m->className() << m->methodCount();
-		m = m->superClass();
-	}
-
 	auto root = mView->rootObject();
 	connect(root, SIGNAL(action(QString)), this, SLOT(action(QString)), Qt::DirectConnection);
 	

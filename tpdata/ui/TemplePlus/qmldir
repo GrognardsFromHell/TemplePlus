@@ -1,0 +1,4 @@
+module TemplePlus
+plugin QtCreatorPlugin
+classname TPQmlPlugin
+designersupported

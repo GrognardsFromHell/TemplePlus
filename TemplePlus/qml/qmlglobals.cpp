@@ -1,6 +1,8 @@
 
 #include "qmlglobals.h"
 
-void TPQmlGlobals::playSound(int soundId) {
+#include <sound.h>
 
+void TPQmlGlobals::playSound(int soundId) {
+	sound.MssPlaySound(soundId);
 }

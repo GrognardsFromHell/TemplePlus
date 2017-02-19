@@ -29,6 +29,7 @@
     <ClCompile Include="..\..\TemplePlus\qml\qmlplugin.cpp" />
     <ClCompile Include="..\..\TemplePlus\qml\qmlplugin_moc.cpp" />
     <ClCompile Include="..\..\TemplePlus\qml\qml_moc.cpp" />
+    <ClCompile Include="qmlglobals.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\TemplePlus\qml\imagehandler.h" />

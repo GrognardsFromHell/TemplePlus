@@ -2,11 +2,13 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <QQmlEngine>
+#include <QQmlContext>
 #include <QFontDatabase>
 
 #include <infrastructure/vfs.h>
 
 #include "qmlplugin.h"
+#include "qmlglobals.h"
 
 #include "legacytextitem.h"
 #include "networkaccessmanager.h"
@@ -152,6 +154,10 @@ void TPQmlPlugin::initializeEngine(QQmlEngine *engine, const char *uri) {
 	// Also add the needed fonts to the legacy renderer
 	mLegacyTextRenderer = std::make_unique<LegacyTextRenderer>();
 	mLegacyTextRenderer->AddFont("Scurlock", "art/interface/FONTS/SCURLOCK/scurlock-48/scurlock-48.fnt");
+
+	// Expose many global properties to QML
+	mGlobals = std::make_unique<TPQmlGlobals>();
+	engine->rootContext()->setContextObject(mGlobals.get());
 
 }
 
