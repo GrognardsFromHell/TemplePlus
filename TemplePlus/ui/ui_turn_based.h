@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ui.h"
 #include "ui_system.h"
 
 class UiTurnBased : public UiSystem {

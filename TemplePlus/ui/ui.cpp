@@ -1595,7 +1595,34 @@ QQuickView* UiManager::AddQmlWindow(int x, int y, int w, int h, const std::strin
 
 	mActiveWidgets[id].view = view;
 
-	view->show();
+	// Connect to several signals to update the lgcy widget state when the QQuickView is changed
+	QObject::connect(view, &QQuickView::widthChanged, [this, id](int newWidth) {
+		auto window = this->GetWindow(id);
+		if (window) {
+			window->width = newWidth;
+		}
+	});
+	QObject::connect(view, &QQuickView::heightChanged, [this, id](int newHeight) {
+		auto window = this->GetWindow(id);
+		if (window) {
+			window->height = newHeight;
+		}
+	});
+	QObject::connect(view, &QQuickView::xChanged, [this, id](int newX) {
+		auto window = this->GetWindow(id);
+		if (window) {
+			window->x = newX;
+		}
+	});
+	QObject::connect(view, &QQuickView::yChanged, [this, id](int newY) {
+		auto window = this->GetWindow(id);
+		if (window) {
+			window->y = newY;
+		}
+	});
+	QObject::connect(view, &QQuickView::visibleChanged, [this, id](bool newVisible) {
+		SetHidden(id, !newVisible);
+	});
 
 	return view;
 }

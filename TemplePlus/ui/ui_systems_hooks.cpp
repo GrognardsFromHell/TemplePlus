@@ -3,6 +3,7 @@
 
 #include <util/fixes.h>
 
+#include "ui.h"
 #include "ui_system.h"
 #include "ui_systems.h"
 

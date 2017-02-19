@@ -1,6 +1,9 @@
 
 #pragma once
 
+#include <QObject>
+#include <QString>
+
 #include "ui_system.h"
 #include "widgets/widgets.h"
 
@@ -47,8 +50,10 @@ enum class MainMenuPage {
 };
 
 class ViewCinematicsDialog;
+class QQuickView;
 
 class UiMM : public UiSystem {
+Q_OBJECT
 public:
 	static constexpr auto Name = "MM-UI";
 	UiMM(const UiSystemConf &config);
@@ -63,6 +68,7 @@ public:
 
 private:
 	// MainMenuPages &mPages = temple::GetRef<MainMenuPages>(0x10BD4F40);
+	QQuickView *mView;
 
 	MainMenuPage mCurrentPage = MainMenuPage::MainMenu;
 
@@ -78,4 +84,7 @@ private:
 	void LaunchTutorial();
 	void SetupTutorialMap();
 	void TransitionToMap(int mapId);
+
+private slots:
+	void action(QString action);
 };

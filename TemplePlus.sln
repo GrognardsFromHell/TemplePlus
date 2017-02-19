@@ -83,6 +83,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Configurator", "Configurator\Configurator.csproj", "{8A2D4F0B-65A5-48B9-89B9-0B57FB49658F}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "QtCreatorPlugin", "Tools\QtCreatorPlugin\QtCreatorPlugin.vcxproj", "{0E38FAD2-5D3B-4C9F-881D-C520A274F92D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{3E3B6C43-8C76-4CD5-BCF8-3F2B9C5178FE} = {3E3B6C43-8C76-4CD5-BCF8-3F2B9C5178FE}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TemplePlusLauncher", "TemplePlusLauncher\TemplePlusLauncher.vcxproj", "{EC2D5983-55B7-4C93-B74B-AEE8A236F294}"
 	ProjectSection(ProjectDependencies) = postProject

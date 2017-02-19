@@ -1287,6 +1287,7 @@ void QSGD3D11EnginePrivate::queueSetRenderTarget(uint id)
         RenderTarget &rt(renderTargets[idx]);
         rtvHandle = rt.rtv.Get();
         dsvHandle = rt.dsv.Get();
+		Q_ASSERT(rtvHandle);
 		drawContext->OMSetRenderTargets(1, &rtvHandle, dsvHandle);
 		currentRenderTarget = id;
     }

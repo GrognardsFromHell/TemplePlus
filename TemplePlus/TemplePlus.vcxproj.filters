@@ -561,6 +561,7 @@
     </ClCompile>
     <ClCompile Include="util\time.cpp" />
     <ClCompile Include="qml\mestranslator.cpp" />
+    <ClCompile Include="ui\ui_moc.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />

@@ -38,6 +38,7 @@ struct ShapeRenderer2d::Impl {
 
 	static Material CreateMaterial(RenderingDevice &device,
 		const char *pixelShaderName,
+		bool withTexture = false,
 		bool forLines = false,
 		bool blending = true);
 	static Material CreateOutlineMaterial(RenderingDevice &device);
@@ -47,10 +48,10 @@ struct ShapeRenderer2d::Impl {
 ShapeRenderer2d::Impl::Impl(RenderingDevice &device)
 	: device(device),
 	untexturedMaterial(CreateMaterial(device, "diffuse_only_ps")),
-	texturedMaterial(CreateMaterial(device, "textured_simple_ps")),
-	texturedWithoutBlendingMaterial(CreateMaterial(device, "textured_simple_ps", false, false)),
-	texturedWithMaskMaterial(CreateMaterial(device, "textured_two_ps")),
-	lineMaterial(CreateMaterial(device, "diffuse_only_ps", true)),
+	texturedMaterial(CreateMaterial(device, "textured_simple_ps", true)),
+	texturedWithoutBlendingMaterial(CreateMaterial(device, "textured_simple_ps", true, false, false)),
+	texturedWithMaskMaterial(CreateMaterial(device, "textured_two_ps", true)),
+	lineMaterial(CreateMaterial(device, "diffuse_only_ps", false, true)),
 	outlineMaterial(CreateOutlineMaterial(device)),
 	pieFillMaterial(CreatePieFillMaterial(device)),
 	bufferBinding(texturedMaterial.GetVertexShader()),
@@ -98,6 +99,7 @@ ShapeRenderer2d::Impl::Impl(RenderingDevice &device)
 
 Material ShapeRenderer2d::Impl::CreateMaterial(RenderingDevice &device,
 	const char *pixelShaderName,
+	bool withTexture,
 	bool forLine,
 	bool blending) {
 
@@ -114,8 +116,13 @@ Material ShapeRenderer2d::Impl::CreateMaterial(RenderingDevice &device,
 	auto vertexShader(device.GetShaders().LoadVertexShader("gui_vs", vsDefines));
 	auto pixelShader(device.GetShaders().LoadPixelShader(pixelShaderName));
 
+	std::vector<MaterialSamplerSpec> samplers;
+	if (withTexture) {
+		samplers.push_back({});
+	}
+
 	return device.CreateMaterial(blendSpec, depthStencilSpec, {},
-		{}, vertexShader, pixelShader);
+		samplers, vertexShader, pixelShader);
 
 }
 

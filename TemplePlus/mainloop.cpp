@@ -142,7 +142,7 @@ void GameLoop::Run() {
 		tig->GetDebugUI().NewFrame();
 
 		// Read user input and external system events (such as time)
-		messageQueue->PollExternalEvents();			
+		messageQueue->PollExternalEvents();
 		
 		mGameSystems.AdvanceTime();
 
@@ -214,6 +214,10 @@ void GameLoop::RenderFrame() {
 	
 	gfx::PerfGroup perfGroup(device, "Game Loop Rendering");
 
+	// This is not ideal, but for some reason, the QGuiApplication seems to be
+	// rendering things whenever it's processing messages, and this seems to happen
+	// outside of the intended location
+	device.RestoreState();
 	device.BeginFrame();
 
 	device.PushRenderTarget(mSceneColor, mSceneDepth);

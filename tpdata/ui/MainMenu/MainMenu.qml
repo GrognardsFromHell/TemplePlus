@@ -56,13 +56,13 @@ Item {
             {
                 text: qsTr("mainmenu:10"), // normal
                 onClick: function() {
-
+                    action("start_game_normal");
                 }
             },
             {
                 text: qsTr("mainmenu:11"), // ironman
                 onClick: function() {
-
+                    action("start_game_ironman");
                 }
             },
             {
@@ -75,6 +75,76 @@ Item {
     }
 
     MainMenuPage {
+        id: ingameMenuNormal
+        anchors.fill: parent
+        visible: page == 2
+
+        focus: true
+        Keys.onPressed: {
+            if (event.key === Qt.Key_Escape) {
+                action("ingame_close");
+            }
+        }
+
+        buttons: [
+            {
+                text: qsTr("mainmenu:20"), // load game
+                onClick: function() {
+                    action("ingame_normal_load_game");
+                }
+            },
+            {
+                text: qsTr("mainmenu:21"), // save game
+                onClick: function() {
+                    action("ingame_normal_save_game");
+                }
+            },
+            {
+                text: qsTr("mainmenu:22"), // return to game
+                onClick: function() {
+                    action("ingame_close");
+                }
+            },
+            {
+                text: qsTr("mainmenu:23"), // quit
+                onClick: function() {
+                    action("ingame_normal_quit");
+                }
+            }
+        ]
+
+    }
+
+    MainMenuPage {
+        id: ingameMenuIronman
+        anchors.fill: parent
+        visible: page == 3
+
+        focus: true
+        Keys.onPressed: {
+            if (event.key === Qt.Key_Escape) {
+                action("ingame_close");
+            }
+        }
+
+        buttons: [
+            {
+                text: qsTr("mainmenu:30"), // load game
+                onClick: function() {
+                    action("ingame_close");
+                }
+            },
+            {
+                text: qsTr("mainmenu:31"), // save game & quit
+                onClick: function() {
+                    action("ingame_ironman_save_and_quit");
+                }
+            }
+        ]
+
+    }
+
+    MainMenuPage {
         id: optionsPage
         anchors.fill: parent
         visible: page == 4
@@ -82,19 +152,19 @@ Item {
             {
                 text: qsTr("mainmenu:40"), // game options
                 onClick: function() {
-                    action("options");
+                    action("options_show");
                 }
             },
             {
                 text: qsTr("mainmenu:41"), // cinematics
                 onClick: function() {
-                    // TODO: cinematics
+                    action("options_view_cinematics");
                 }
             },
             {
                 text: qsTr("mainmenu:42"), // credits
                 onClick: function() {
-                    action("credits");
+                    action("options_credits");
                 }
             },
             {

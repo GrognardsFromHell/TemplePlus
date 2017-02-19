@@ -204,6 +204,7 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 	movie->SetVolume(binkVolume);
 
 	auto& device(tig->GetRenderingDevice());
+	device.RestoreState(); // might be called inadvertently from GUI rendering
 
 	// Do a one-time empty present to clear the screen quickly
 	device.ClearCurrentColorTarget(clearColor);
@@ -272,6 +273,9 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 				break;
 			}
 		}
+
+		// Sad state of affairs, but the poll external events might cause rendering on QML
+		device.RestoreState();
 	}
 	
 	// Unclear what this did (black out screen after last frame?)
@@ -293,6 +297,9 @@ int __cdecl HookedPlayMovieSlide(const char* imageFile, const char* soundFile, c
 	logger->info("Play Movie Slide {} {} {} {}", imageFile, soundFile, flags, soundtrackId);
 
 	auto &device = tig->GetRenderingDevice();
+
+	// TODO: Fix this by making sure that the QtQuick renderer *always* restores state after it's done
+	device.RestoreState();
 
 	auto texture(device.GetTextures().ResolveUncached(imageFile, false));
 	
@@ -362,6 +369,9 @@ int __cdecl HookedPlayMovieSlide(const char* imageFile, const char* soundFile, c
 				break;
 			}
 		}
+
+		// Sad state of affairs, but the poll external events might cause rendering on QML
+		device.RestoreState();
 	}
 
 	movieFuncs.MovieIsPlaying = false;

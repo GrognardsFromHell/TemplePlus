@@ -1,10 +1,10 @@
 
 #pragma once
 
-#include "tig/tig.h"
-#include "ui.h"
+#include <QObject>
 
 struct TioFile;
+struct UiResizeArgs;
 
 struct UiSaveFile {
 	uint32_t saveVersion;
@@ -26,10 +26,9 @@ public:
 
 inline SaveGameAwareUiSystem::~SaveGameAwareUiSystem() = default;
 
-class UiSystem {
+class UiSystem : public QObject {
+Q_OBJECT
 public:
-	virtual ~UiSystem() = 0;
-
 	virtual void Reset() {
 	}
 	virtual void LoadModule() {
@@ -41,5 +40,3 @@ public:
 
 	virtual const std::string &GetName() const = 0;
 };
-
-inline UiSystem::~UiSystem() = default;

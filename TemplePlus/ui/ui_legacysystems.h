@@ -4,6 +4,7 @@
 #include <string>
 #include <cstdint>
 
+#include "ui.h"
 #include "ui_system.h"
 #include "ui_ingame.h"
 #include "ui_item_creation.h"

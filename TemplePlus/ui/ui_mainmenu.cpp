@@ -1,8 +1,10 @@
 
 #include "stdafx.h"
 
-#include <QtQuick/QQuickView>
-#include <QtQml/QQmlContext>
+#include <QQuickView>
+#include <QQmlContext>
+#include <QQuickItem>
+#include <QQmlProperty>
 
 #include "ui_mainmenu.h"
 #include "ui_systems.h"
@@ -44,152 +46,27 @@ private:
 //*****************************************************************************
 
 UiMM::UiMM(const UiSystemConf &config) {
-	auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x10117370);
-	if (!startup(&config)) {
-		throw TempleException("Unable to initialize game system MM-UI");
+
+	mView = uiManager->AddQmlWindow(0, 0, 800, 600, "ui/MainMenu/MainMenu.qml");
+	mView->setResizeMode(QQuickView::SizeRootObjectToView);
+	mView->resize(config.width, config.height);
+
+	auto m = metaObject();
+	while (m) {
+		qDebug() << m->className() << m->methodCount();
+		m = m->superClass();
 	}
 
-	return;
+	auto root = mView->rootObject();
+	connect(root, SIGNAL(action(QString)), this, SLOT(action(QString)), Qt::DirectConnection);
 	
-	WidgetDoc widgetDoc(WidgetDoc::Load("templeplus/ui/main_menu.json"));
-	mMainWidget = widgetDoc.TakeRootContainer();
-
-	mViewCinematicsDialog = std::make_unique<ViewCinematicsDialog>();
-
-	// This eats all mouse messages that reach the full-screen main menu
-	mMainWidget->SetMouseMsgHandler([](auto msg) {
-		return true;
-	});
-	mMainWidget->SetWidgetMsgHandler([](auto msg) {
-		return true;
-	});
-	
-	mMainWidget->SetKeyStateChangeHandler([this](const TigKeyStateChangeMsg &msg) {
-		// Close the menu if it's the ingame menu
-		if (msg.key == DIK_ESCAPE && !msg.down) {
-			if (mCurrentPage == MainMenuPage::InGameNormal || mCurrentPage == MainMenuPage::InGameIronman) {
-				Hide();
-			}
-		}
-		return true;
-	});
-
-	mPagesWidget = widgetDoc.GetWindow("pages");
-
-	mPageWidgets[MainMenuPage::MainMenu] = widgetDoc.GetWindow("page-main-menu");
-	mPageWidgets[MainMenuPage::Difficulty] = widgetDoc.GetWindow("page-difficulty");
-	mPageWidgets[MainMenuPage::InGameNormal] = widgetDoc.GetWindow("page-ingame-normal");
-	mPageWidgets[MainMenuPage::InGameIronman] = widgetDoc.GetWindow("page-ingame-ironman");
-	mPageWidgets[MainMenuPage::Options] = widgetDoc.GetWindow("page-options");
-	mPageWidgets[MainMenuPage::SetPieces] = widgetDoc.GetWindow("page-set-pieces");
-
-	// Wire up buttons on the main menu
-	widgetDoc.GetButton("new-game")->SetClickHandler([this]() {
-		Show(MainMenuPage::Difficulty);
-	});
-	widgetDoc.GetButton("load-game")->SetClickHandler([this]() {
-		Hide();
-		uiSystems->GetLoadGame().Show(true);
-	});
-	widgetDoc.GetButton("set-pieces")->SetClickHandler([this]() {
-		Show(MainMenuPage::Options);
-	});
-	widgetDoc.GetButton("tutorial")->SetClickHandler([this]() {
-		LaunchTutorial();
-	});
-	widgetDoc.GetButton("options")->SetClickHandler([this]() {
-		Show(MainMenuPage::Options);
-	});
-	widgetDoc.GetButton("quit-game")->SetClickHandler([this]() {
-		Message msg;
-		msg.type = TigMsgType::EXIT;
-		msg.arg1 = 0;
-		messageQueue->Enqueue(msg);
-	});
-
-	// Wire up buttons on the difficulty selection page
-	widgetDoc.GetButton("difficulty-normal")->SetClickHandler([this]() {
-		gameSystems->SetIronman(false);
-		Hide();
-		uiSystems->GetPcCreation().Start();
-	});
-	widgetDoc.GetButton("difficulty-ironman")->SetClickHandler([this]() {
-		gameSystems->SetIronman(true);
-		Hide();
-		uiSystems->GetPcCreation().Start();
-	});
-	widgetDoc.GetButton("difficulty-exit")->SetClickHandler([this]() {
-		Show(MainMenuPage::MainMenu);
-	});
-
-	// Wire up buttons on the ingame menu (normal difficulty)
-	widgetDoc.GetButton("ingame-normal-load")->SetClickHandler([this]() {
-		Hide();
-		uiSystems->GetLoadGame().Show(false);
-	});
-	widgetDoc.GetButton("ingame-normal-save")->SetClickHandler([this]() {
-		Hide();
-		uiSystems->GetSaveGame().Show(true);
-	});
-	widgetDoc.GetButton("ingame-normal-close")->SetClickHandler([this]() {
-		Hide();
-	});
-	widgetDoc.GetButton("ingame-normal-quit")->SetClickHandler([this]() {
-		Hide();
-		gameSystems->ResetGame();
-		uiSystems->Reset();
-		Show(MainMenuPage::MainMenu);
-	});
-
-	// Wire up buttons on the ingame menu (ironman difficulty)
-	widgetDoc.GetButton("ingame-ironman-close")->SetClickHandler([this]() {
-		Hide();
-	});
-	widgetDoc.GetButton("ingame-ironman-save-quit")->SetClickHandler([this]() {
-		if (gameSystems->SaveGameIronman()) {
-			gameSystems->ResetGame();
-			uiSystems->Reset();
-			Show(MainMenuPage::MainMenu);
-		}
-	});
-
-	// Wire up buttons on the ingame menu (ironman difficulty)
-	widgetDoc.GetButton("options-show")->SetClickHandler([this]() {
-		Hide();
-		uiSystems->GetOptions().Show(true);
-	});
-	widgetDoc.GetButton("options-view-cinematics")->SetClickHandler([this]() {
-		Hide();
-		uiSystems->GetUtilityBar().Hide();
-		// TODO ui_mm_msg_ui4();
-		mViewCinematicsDialog->Show();
-	});	
-	widgetDoc.GetButton("options-credits")->SetClickHandler([this]() {
-		Hide();
-
-		static std::vector<int> creditsMovies{ 100, 110, 111, 112, 113 };
-		for (auto movieId : creditsMovies) {
-			movieFuncs.MovieQueueAdd(movieId);
-		}		
-		movieFuncs.MovieQueuePlay();
-
-		Show(MainMenuPage::Options);
-	});
-	widgetDoc.GetButton("options-back")->SetClickHandler([this]() {
-		Show(MainMenuPage::MainMenu);
-	});
-
-	RepositionWidgets(config.width, config.height);
 }
 UiMM::~UiMM() {
 	auto shutdown = temple::GetPointer<void()>(0x101164c0);
 	shutdown();
 }
 void UiMM::ResizeViewport(const UiResizeArgs& resizeArg) {
-	auto resize = temple::GetPointer<void(const UiResizeArgs*)>(0x101172c0);
-	resize(&resizeArg);
-
-	// RepositionWidgets(resizeArg.rect1.width, resizeArg.rect1.height);
+	mView->resize(resizeArg.rect1.width, resizeArg.rect1.height);
 }
 const std::string &UiMM::GetName() const {
 	static std::string name("MM-UI");
@@ -198,24 +75,11 @@ const std::string &UiMM::GetName() const {
 
 bool UiMM::IsVisible() const
 {
-	static auto ui_mm_is_visible = temple::GetPointer<int()>(0x101157f0);
-	return ui_mm_is_visible() != FALSE;
-
-	// The main menu is defined as visible, if any of the pages is visible
-	for (auto &entry : mPageWidgets) {
-		if (entry.second->IsVisible()) {
-			return true;
-		}
-	}
-	return false;
+	return mView->isVisible();
 }
 
 void UiMM::Show(MainMenuPage page)
 {
-	static auto ui_mm_show_page = temple::GetPointer<void(int page)>(0x10116500);
-	ui_mm_show_page((int)page);
-	return;
-	
 	// Was previously @ 0x10116500
 
 	// In case the main menu is shown in-game, we have to take care of some business
@@ -236,17 +100,10 @@ void UiMM::Show(MainMenuPage page)
 	uiSystems->GetUtilityBar().HideOpenedWindows(false);
 	uiSystems->GetChar().Hide();
 
-	mMainWidget->Show();
-	mMainWidget->BringToFront();
-
-	auto view = uiManager->AddQmlWindow(0, 0, 800, 600, "ui/MainForm.ui.qml");
-	QVariantList items;
-	items << "New Game" << "Load Game" << "Quit Game";
-	view->rootContext()->setContextProperty("menuItems", items);
-		
-	for (auto &entry : mPageWidgets) {
-		entry.second->SetVisible(entry.first == page);
-	}
+	mView->show();
+	// TODO: Bringt to front
+	auto root = mView->rootObject();
+	root->setProperty("page", (int) page);
 
 	if (page != MainMenuPage::InGameNormal) {
 		uiSystems->GetUtilityBar().Hide();
@@ -256,20 +113,13 @@ void UiMM::Show(MainMenuPage page)
 
 void UiMM::Hide()
 {
-	static auto ui_mm_hide = temple::GetPointer<void()>(0x10116220);
-	ui_mm_hide();
-	return;
-
 	if (IsVisible()) {
 		if (mCurrentPage == MainMenuPage::InGameNormal || mCurrentPage == MainMenuPage::InGameIronman) {
 			gameSystems->GetAnim().PopDisableFidget();
 		}
 	}
 
-	for (auto &entry : mPageWidgets) {
-		entry.second->SetVisible(false);
-	}
-	mMainWidget->Hide();
+	mView->hide();
 
 	if (mCurrentPage == MainMenuPage::InGameNormal) {
 		uiSystems->GetUtilityBar().Show();
@@ -278,8 +128,68 @@ void UiMM::Hide()
 
 void UiMM::RepositionWidgets(int width, int height)
 {
-	// Attach the pages to the bottom of the screen
-	mPagesWidget->SetY(height - mPagesWidget->GetHeight());
+}
+
+void UiMM::action(QString action) {
+	if (action == "load_game") {
+		Hide();
+		uiSystems->GetLoadGame().Show(true);
+	} else if (action == "tutorial") {
+		LaunchTutorial();
+	} else if (action == "quit") {
+		Message msg;
+		msg.type = TigMsgType::EXIT;
+		msg.arg1 = 0;
+		messageQueue->Enqueue(msg);
+	} else if (action == "start_game_normal") {
+		gameSystems->SetIronman(false);
+		Hide();
+		uiSystems->GetPcCreation().Start();
+	} else if (action == "start_game_ironman") {
+		gameSystems->SetIronman(true);
+		Hide();
+		uiSystems->GetPcCreation().Start();
+	} else if (action == "ingame_normal_load_game") {
+		Hide();
+		uiSystems->GetLoadGame().Show(false);
+	} else if (action == "ingame_normal_save_game") {
+		Hide();
+		uiSystems->GetSaveGame().Show(true);
+	} else if (action == "ingame_close") {
+		Hide();
+	} else if (action == "ingame_normal_quit") {
+		Hide();
+		gameSystems->ResetGame();
+		uiSystems->Reset();
+		Show(MainMenuPage::MainMenu);
+	} else if (action == "ingame_ironman_save_and_quit") {
+		if (gameSystems->SaveGameIronman()) {
+			gameSystems->ResetGame();
+			uiSystems->Reset();
+			Show(MainMenuPage::MainMenu);
+		}
+	} else if (action == "options_show") {
+		Hide();
+		uiSystems->GetOptions().Show(true);
+	} else if (action == "options_view_cinematics") {
+		Hide();
+		uiSystems->GetUtilityBar().Hide();
+		// TODO ui_mm_msg_ui4();
+		mViewCinematicsDialog->Show();
+	} else if (action == "options_credits") {
+		Hide();
+
+		static std::vector<int> creditsMovies{ 100, 110, 111, 112, 113 };
+		for (auto movieId : creditsMovies) {
+			movieFuncs.MovieQueueAdd(movieId);
+		}
+		movieFuncs.MovieQueuePlay();
+
+		Show(MainMenuPage::Options);
+	} else {
+		qDebug() << "Unknown action triggered by main menu:" << action;
+	}
+
 }
 
 void UiMM::LaunchTutorial()
@@ -389,3 +299,4 @@ void ViewCinematicsDialog::Show()
 
 	mWidget->Show();
 }
+
