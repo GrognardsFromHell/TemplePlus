@@ -41,10 +41,12 @@ private:
 //*****************************************************************************
 
 UiMM::UiMM(const UiSystemConf &config) {
-	/*auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x10117370);
+	auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x10117370);
 	if (!startup(&config)) {
 		throw TempleException("Unable to initialize game system MM-UI");
-	}*/
+	}
+
+	return;
 	
 	WidgetDoc widgetDoc(WidgetDoc::Load("templeplus/ui/main_menu.json"));
 	mMainWidget = widgetDoc.TakeRootContainer();
@@ -177,14 +179,14 @@ UiMM::UiMM(const UiSystemConf &config) {
 	RepositionWidgets(config.width, config.height);
 }
 UiMM::~UiMM() {
-	//auto shutdown = temple::GetPointer<void()>(0x101164c0);
-	//shutdown();
+	auto shutdown = temple::GetPointer<void()>(0x101164c0);
+	shutdown();
 }
 void UiMM::ResizeViewport(const UiResizeArgs& resizeArg) {
-	/*auto resize = temple::GetPointer<void(const UiResizeArgs*)>(0x101172c0);
-	resize(&resizeArg);*/
+	auto resize = temple::GetPointer<void(const UiResizeArgs*)>(0x101172c0);
+	resize(&resizeArg);
 
-	RepositionWidgets(resizeArg.rect1.width, resizeArg.rect1.height);
+	// RepositionWidgets(resizeArg.rect1.width, resizeArg.rect1.height);
 }
 const std::string &UiMM::GetName() const {
 	static std::string name("MM-UI");
@@ -193,6 +195,9 @@ const std::string &UiMM::GetName() const {
 
 bool UiMM::IsVisible() const
 {
+	static auto ui_mm_is_visible = temple::GetPointer<int()>(0x101157f0);
+	return ui_mm_is_visible() != FALSE;
+
 	// The main menu is defined as visible, if any of the pages is visible
 	for (auto &entry : mPageWidgets) {
 		if (entry.second->IsVisible()) {
@@ -204,6 +209,10 @@ bool UiMM::IsVisible() const
 
 void UiMM::Show(MainMenuPage page)
 {
+	static auto ui_mm_show_page = temple::GetPointer<void(int page)>(0x10116500);
+	ui_mm_show_page((int)page);
+	return;
+	
 	// Was previously @ 0x10116500
 
 	// In case the main menu is shown in-game, we have to take care of some business
@@ -239,6 +248,10 @@ void UiMM::Show(MainMenuPage page)
 
 void UiMM::Hide()
 {
+	static auto ui_mm_hide = temple::GetPointer<void()>(0x10116220);
+	ui_mm_hide();
+	return;
+
 	if (IsVisible()) {
 		if (mCurrentPage == MainMenuPage::InGameNormal || mCurrentPage == MainMenuPage::InGameIronman) {
 			gameSystems->GetAnim().PopDisableFidget();
