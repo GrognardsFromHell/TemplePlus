@@ -86,6 +86,7 @@ public:
 
 
 	// Action Cost
+	static ActionErrorCode ActionCostCastSpell(D20Actn* d20a, TurnBasedStatus *tbStat, ActionCostPacket *acp);
 	static ActionErrorCode ActionCostFullRound(D20Actn* d20a, TurnBasedStatus *tbStat, ActionCostPacket *acp);
 	static ActionErrorCode ActionCostFullAttack(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
 	static ActionErrorCode ActionCostPartialCharge(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
@@ -407,6 +408,7 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformCastSpell;
 	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckCastSpell;
 	d20Defs[d20Type].projectileHitFunc = d20Callbacks.ProjectileHitSpell;
+	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostCastSpell;
 
 	d20Type = D20A_USE_ITEM;
 	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqSpellCast;
@@ -2225,6 +2227,71 @@ ActionErrorCode D20ActionCallbacks::ActionCheckTripAttack(D20Actn* d20a, TurnBas
 	if (d20Sys.d20Query(d20a->d20ATarget, DK_QUE_Prone))
 		return AEC_INVALID_ACTION;
 
+	return AEC_OK;
+}
+
+ActionErrorCode D20ActionCallbacks::ActionCostCastSpell(D20Actn * d20a, TurnBasedStatus * tbStat, ActionCostPacket * acp){
+	acp->hourglassCost = 0;
+	acp->chargeAfterPicker = 0;
+	acp->moveDistCost = 0.0f;
+	auto flags = d20a->d20Caf;
+	if ( (flags & D20CAF_FREE_ACTION) || !combatSys.isCombatActive()){
+		return AEC_OK;
+	}
+
+	int spEnum, spellClass, spLvl, invIdx;
+	MetaMagicData mmData;
+	d20a->d20SpellData.Extract(&spEnum, nullptr, &spellClass, &spLvl, &invIdx, &mmData);
+
+	SpellEntry spEntry(spEnum);
+
+	// Metamagicked spontaneous casters always cost full round to cast
+	if (mmData && !spellSys.isDomainSpell(spellClass) 
+		&& d20ClassSys.IsNaturalCastingClass(spellSys.GetCastingClass(spellClass))){
+		acp->hourglassCost = 4;
+		return AEC_OK;
+	}
+
+	// Quicken Spell handling
+	auto tbsFlags = tbStat->tbsFlags;
+	if (mmData.metaMagicFlags & MetaMagicFlags::MetaMagic_Quicken){
+		if (!(tbsFlags & TurnBasedStatusFlags::TBSF_FreeActionSpellPerformed)){
+			tbStat->tbsFlags |= TurnBasedStatusFlags::TBSF_FreeActionSpellPerformed;
+			acp->hourglassCost = 0;
+			return AEC_OK;
+		}
+	}
+
+	tbStat->surplusMoveDistance = 0;
+	tbStat->numAttacks = 0;
+	tbStat->baseAttackNumCode = 0;
+	tbStat->numBonusAttacks = 0;
+	tbStat->attackModeCode = 0;
+
+	switch (spEntry.castingTimeType) {
+	case 0: // standard
+		acp->hourglassCost = 2;
+		return AEC_OK;
+	case 1: // full round
+		acp->hourglassCost = 4;
+		return AEC_OK;
+	case 2: // there was a check for combat here but it's done at the start of the function anyway, and it didn't do anything anyway except print "spells with casttime_out_of_combat need an 'action cost' > 'full_round'!"
+		return AEC_OK;
+	case 3:
+		return AEC_OUT_OF_COMBAT_ONLY;
+	case 4:
+		if (tbsFlags & TurnBasedStatusFlags::TBSF_FreeActionSpellPerformed){ // if already performed free action spell
+			acp->hourglassCost = 2;
+			return AEC_OK;
+		}
+		else{
+			tbStat->tbsFlags |= TurnBasedStatusFlags::TBSF_FreeActionSpellPerformed;
+			acp->hourglassCost = 0;
+			return AEC_OK;
+		}
+	default:
+		return AEC_OK;
+	}
 	return AEC_OK;
 }
 
