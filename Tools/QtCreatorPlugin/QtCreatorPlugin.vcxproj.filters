@@ -27,9 +27,6 @@
     <ClCompile Include="..\..\TemplePlus\qml\legacytextitem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\TemplePlus\qml\legacytextitem_moc.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\TemplePlus\qml\legacytextrenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -43,6 +40,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\TemplePlus\qml\mestranslator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\TemplePlus\qml\qml_moc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -60,9 +60,6 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\TemplePlus\qml\networkaccessmanager.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\TemplePlus\qml\networkaccessmanager_moc.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\TemplePlus\qml\qmlplugin.h">

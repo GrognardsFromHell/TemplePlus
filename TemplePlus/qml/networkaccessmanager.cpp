@@ -1,7 +1,6 @@
 
 #include <QtCore/QMimeDatabase>
 #include <QtCore/QBuffer>
-#include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkRequest>
 #include <QtNetwork/QNetworkReply>
 
@@ -10,16 +9,6 @@
 
 #include "networkaccessmanager.h"
 #include "imagehandler.h"
-
-/**
- * This extends the network access manager to retrieve content from TIO.
- */
-class TPNetworkAccessManager : public QNetworkAccessManager {
-public:
-	TPNetworkAccessManager(QObject *parent);
-protected:
-	QNetworkReply *createRequest(Operation op, const QNetworkRequest &req, QIODevice *outgoingData) override;
-};
 
 QNetworkAccessManager * TPNetworkAccessManagerFactory::create(QObject * parent)
 {

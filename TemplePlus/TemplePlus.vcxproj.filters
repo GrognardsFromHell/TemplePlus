@@ -535,13 +535,7 @@
     <ClCompile Include="qml\imageplugin.cpp">
       <Filter>QML</Filter>
     </ClCompile>
-    <ClCompile Include="qml\imageplugin_moc.cpp">
-      <Filter>QML</Filter>
-    </ClCompile>
     <ClCompile Include="qml\legacytextitem.cpp">
-      <Filter>QML</Filter>
-    </ClCompile>
-    <ClCompile Include="qml\legacytextitem_moc.cpp">
       <Filter>QML</Filter>
     </ClCompile>
     <ClCompile Include="qml\networkaccessmanager.cpp">
@@ -553,15 +547,16 @@
     <ClCompile Include="qml\qmlplugin.cpp">
       <Filter>QML</Filter>
     </ClCompile>
-    <ClCompile Include="qml\qmlplugin_moc.cpp">
-      <Filter>QML</Filter>
-    </ClCompile>
     <ClCompile Include="qml\legacytextrenderer.cpp">
       <Filter>QML</Filter>
     </ClCompile>
     <ClCompile Include="util\time.cpp" />
     <ClCompile Include="qml\mestranslator.cpp" />
     <ClCompile Include="ui\ui_moc.cpp" />
+    <ClCompile Include="qml\qmlglobals.cpp" />
+    <ClCompile Include="qml\qml_moc.cpp" />
+    <ClCompile Include="qml\qmlplugin_moc.cpp" />
+    <ClCompile Include="qml\imageplugin_moc.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -1046,9 +1041,6 @@
     <ClInclude Include="qml\networkaccessmanager.h">
       <Filter>QML</Filter>
     </ClInclude>
-    <ClInclude Include="qml\networkaccessmanager_moc.h">
-      <Filter>QML</Filter>
-    </ClInclude>
     <ClInclude Include="qml\imagehandler.h">
       <Filter>QML</Filter>
     </ClInclude>
@@ -1060,6 +1052,7 @@
     </ClInclude>
     <ClInclude Include="util\time.h" />
     <ClInclude Include="qml\mestranslator.h" />
+    <ClInclude Include="qml\qmlglobals.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

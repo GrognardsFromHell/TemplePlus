@@ -23,12 +23,12 @@
     <ClCompile Include="..\..\TemplePlus\qml\imageplugin.cpp" />
     <ClCompile Include="..\..\TemplePlus\qml\imageplugin_moc.cpp" />
     <ClCompile Include="..\..\TemplePlus\qml\legacytextitem.cpp" />
-    <ClCompile Include="..\..\TemplePlus\qml\legacytextitem_moc.cpp" />
     <ClCompile Include="..\..\TemplePlus\qml\legacytextrenderer.cpp" />
     <ClCompile Include="..\..\TemplePlus\qml\mestranslator.cpp" />
     <ClCompile Include="..\..\TemplePlus\qml\networkaccessmanager.cpp" />
     <ClCompile Include="..\..\TemplePlus\qml\qmlplugin.cpp" />
     <ClCompile Include="..\..\TemplePlus\qml\qmlplugin_moc.cpp" />
+    <ClCompile Include="..\..\TemplePlus\qml\qml_moc.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\TemplePlus\qml\imagehandler.h" />
@@ -37,7 +37,6 @@
     <ClInclude Include="..\..\TemplePlus\qml\legacytextrenderer.h" />
     <ClInclude Include="..\..\TemplePlus\qml\mestranslator.h" />
     <ClInclude Include="..\..\TemplePlus\qml\networkaccessmanager.h" />
-    <ClInclude Include="..\..\TemplePlus\qml\networkaccessmanager_moc.h" />
     <ClInclude Include="..\..\TemplePlus\qml\qmlplugin.h" />
   </ItemGroup>
   <ItemGroup>
