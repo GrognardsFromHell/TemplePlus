@@ -13,6 +13,7 @@
 #include "legacytextitem.h"
 #include "networkaccessmanager.h"
 #include "mestranslator.h"
+#include "qmlsystemfonts.h"
 
 #include <infrastructure/format.h>
 #include <infrastructure/logging.h>
@@ -137,6 +138,9 @@ void TPQmlPlugin::initializeEngine(QQmlEngine *engine, const char *uri) {
 
 	// Install translator
 	QCoreApplication::installTranslator(new MesTranslator(engine));
+
+	// Get Arial from the system instead of shipping it ourselves
+	InstallQmlSystemFonts();
 
 	// Add pre-defined fonts
 	auto fonts = vfs->Search("fonts/*.ttf");

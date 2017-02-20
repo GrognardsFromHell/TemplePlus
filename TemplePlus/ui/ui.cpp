@@ -1562,7 +1562,7 @@ bool UiManager::ProcessMessage(TigMsg &msg)
 			auto window = GetWidget(*it);
 			
 			auto view = mActiveWidgets[*it].view;
-			if (view && mapper.handleTigMsg(view, msg)) {
+			if (view && view->isVisible() && mapper.handleTigMsg(view, msg)) {
 				return true;
 			}
 

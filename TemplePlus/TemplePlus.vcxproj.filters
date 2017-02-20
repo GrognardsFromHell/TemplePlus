@@ -557,6 +557,7 @@
     <ClCompile Include="qml\qml_moc.cpp" />
     <ClCompile Include="qml\qmlplugin_moc.cpp" />
     <ClCompile Include="qml\imageplugin_moc.cpp" />
+    <ClCompile Include="qml\qmlsystemfonts.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -1053,6 +1054,7 @@
     <ClInclude Include="util\time.h" />
     <ClInclude Include="qml\mestranslator.h" />
     <ClInclude Include="qml\qmlglobals.h" />
+    <ClInclude Include="qml\qmlsystemfonts.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

@@ -48,6 +48,9 @@
     <ClCompile Include="qmlglobals.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\TemplePlus\qml\qmlsystemfonts.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\TemplePlus\qml\imagehandler.h">

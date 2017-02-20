@@ -32,14 +32,12 @@ bool MessageQueue::Process(Message &unhandledMsgOut) {
 
 	while (!mQueue.empty()) {
 		const auto& msg = mQueue.front();
+		mQueue.pop_front();
 
 		if (!HandleMessage(msg)) {
 			unhandledMsgOut = msg;
-			mQueue.pop_front();
 			return true;
 		}
-		
-		mQueue.pop_front();
 	}
 
 	return false;

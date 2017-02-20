@@ -28,6 +28,7 @@
     <ClCompile Include="..\..\TemplePlus\qml\networkaccessmanager.cpp" />
     <ClCompile Include="..\..\TemplePlus\qml\qmlplugin.cpp" />
     <ClCompile Include="..\..\TemplePlus\qml\qmlplugin_moc.cpp" />
+    <ClCompile Include="..\..\TemplePlus\qml\qmlsystemfonts.cpp" />
     <ClCompile Include="..\..\TemplePlus\qml\qml_moc.cpp" />
     <ClCompile Include="qmlglobals.cpp" />
   </ItemGroup>
@@ -131,7 +132,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Temple.lib;TemplePlus.lib;Qt5Cored.lib;Qt5Qmld.lib;Qt5Guid.lib;Qt5Networkd.lib;Qt5Quickd.lib;Infrastructure.lib;turbojpeg-static_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dwrite.lib;Temple.lib;TemplePlus.lib;Qt5Cored.lib;Qt5Qmld.lib;Qt5Guid.lib;Qt5Networkd.lib;Qt5Quickd.lib;Infrastructure.lib;turbojpeg-static_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)$(Configuration);$(QTDIR)\lib;$(SolutionDir)\dependencies\lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -164,7 +165,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Temple.lib;TemplePlus.lib;Qt5Core.lib;Qt5Qml.lib;Qt5Gui.lib;Qt5Network.lib;Qt5Quick.lib;Infrastructure.lib;turbojpeg-static.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dwrite.lib;Temple.lib;TemplePlus.lib;Qt5Core.lib;Qt5Qml.lib;Qt5Gui.lib;Qt5Network.lib;Qt5Quick.lib;Infrastructure.lib;turbojpeg-static.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)$(Configuration);$(QTDIR)\lib;$(SolutionDir)\dependencies\lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
