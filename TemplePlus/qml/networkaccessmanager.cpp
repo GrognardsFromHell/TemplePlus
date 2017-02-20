@@ -77,7 +77,7 @@ TioNetworkReply::TioNetworkReply(QObject * parent, const QNetworkRequest & req, 
 		try {
 			auto imgContent(vfs->ReadAsBinary(localName));
 
-			auto combinedImg = gfx::DecodeCombinedImage(localName, { (uint8_t*)imgContent.data(), (int) imgContent.size() });
+			auto combinedImg = gfx::DecodeCombinedImage(localName, { (uint8_t*)imgContent.data(), (int)imgContent.size() });
 
 			// write the decoded image raw to the network device, so it can be picked up 1:1 by the imageio plugin
 			mDecodedData.open(QIODevice::WriteOnly);
@@ -88,7 +88,32 @@ TioNetworkReply::TioNetworkReply(QObject * parent, const QNetworkRequest & req, 
 
 			contentType = "templeplus/img";
 			size = mDecodedData.size();
-		} catch (const std::exception &e) {
+		}
+		catch (const std::exception &e) {
+			const QString msg = QString("Unable to read %1: %2").arg(url.toString()).arg(e.what());
+			setError(QNetworkReply::ProtocolFailure, msg);
+			QMetaObject::invokeMethod(this, "error", Qt::QueuedConnection,
+				Q_ARG(QNetworkReply::NetworkError, QNetworkReply::ProtocolFailure));
+			QMetaObject::invokeMethod(this, "finished", Qt::QueuedConnection);
+			return;
+		}
+	} else if (filename.endsWith(".tga", Qt::CaseInsensitive)) {
+		try {
+			auto imgContent(vfs->ReadAsBinary(localName));
+
+			auto combinedImg = gfx::DecodeImage({ (uint8_t*)imgContent.data(), (int)imgContent.size() });
+
+			// write the decoded image raw to the network device, so it can be picked up 1:1 by the imageio plugin
+			mDecodedData.open(QIODevice::WriteOnly);
+			mDecodedData.seek(0);
+			TPImageHandler::EncodeDecodedImage(combinedImg, &mDecodedData);
+			mDecodedData.seek(0);
+			mDecodedData.open(QIODevice::ReadOnly);
+
+			contentType = "templeplus/img";
+			size = mDecodedData.size();
+		}
+		catch (const std::exception &e) {
 			const QString msg = QString("Unable to read %1: %2").arg(url.toString()).arg(e.what());
 			setError(QNetworkReply::ProtocolFailure, msg);
 			QMetaObject::invokeMethod(this, "error", Qt::QueuedConnection,

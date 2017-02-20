@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QString>
+#include <QVariant>
 
 #include "ui_system.h"
 #include "widgets/widgets.h"
@@ -69,22 +70,21 @@ public:
 private:
 	// MainMenuPages &mPages = temple::GetRef<MainMenuPages>(0x10BD4F40);
 	QQuickView *mView;
+	QQuickView *mViewCinematics;
 
 	MainMenuPage mCurrentPage = MainMenuPage::MainMenu;
-
-	std::unique_ptr<ViewCinematicsDialog> mViewCinematicsDialog;
-
+	
 	std::unique_ptr<WidgetContainer> mMainWidget;
 	std::map<MainMenuPage, WidgetContainer*> mPageWidgets;
 	// The widget that contains all pages
 	WidgetContainer *mPagesWidget;
-
-	void RepositionWidgets(int width, int height);
-
+	
 	void LaunchTutorial();
 	void SetupTutorialMap();
 	void TransitionToMap(int mapId);
 
 private slots:
 	void action(QString action);
+	void closeViewCinematics();
+
 };

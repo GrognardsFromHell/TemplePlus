@@ -156,7 +156,7 @@ void TPQmlPlugin::initializeEngine(QQmlEngine *engine, const char *uri) {
 	mLegacyTextRenderer->AddFont("Scurlock", "art/interface/FONTS/SCURLOCK/scurlock-48/scurlock-48.fnt");
 
 	// Expose many global properties to QML
-	mGlobals = std::make_unique<TPQmlGlobals>();
+	mGlobals = std::make_unique<TPQmlGlobals>(engine);
 	engine->rootContext()->setContextObject(mGlobals.get());
 
 }

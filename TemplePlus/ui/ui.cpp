@@ -1585,8 +1585,10 @@ QQuickView* UiManager::AddQmlWindow(int x, int y, int w, int h, const std::strin
 	window.y = y;
 	window.width = w;
 	window.height = h;
-
+	
 	auto id = AddWindow(window);
+
+	SetHidden(id, true); // Starts out as hidden
 
 	auto view = mRenderControl->CreateView(path);
 	view->setBaseSize(QSize(w, h));

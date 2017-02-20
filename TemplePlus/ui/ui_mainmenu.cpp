@@ -5,6 +5,7 @@
 #include <QQmlContext>
 #include <QQuickItem>
 #include <QQmlProperty>
+#include <QJSValue>
 
 #include "ui_mainmenu.h"
 #include "ui_systems.h"
@@ -51,8 +52,15 @@ UiMM::UiMM(const UiSystemConf &config) {
 	mView->setResizeMode(QQuickView::SizeRootObjectToView);
 	mView->resize(config.width, config.height);
 
+	mViewCinematics = uiManager->AddQmlWindow(0, 0, 800, 600, "ui/MainMenu/ViewCinematics.qml");
+	mViewCinematics->setResizeMode(QQuickView::SizeRootObjectToView);
+	mViewCinematics->resize(config.width, config.height);
+
+	auto cinView = mViewCinematics->rootObject();
+	connect(cinView, SIGNAL(close()), SLOT(closeViewCinematics()));
+
 	auto root = mView->rootObject();
-	connect(root, SIGNAL(action(QString)), this, SLOT(action(QString)), Qt::DirectConnection);
+	connect(root, SIGNAL(action(QString)), SLOT(action(QString)));
 	
 }
 UiMM::~UiMM() {
@@ -120,14 +128,10 @@ void UiMM::Hide()
 	}
 }
 
-void UiMM::RepositionWidgets(int width, int height)
-{
-}
-
 void UiMM::action(QString action) {
 	if (action == "load_game") {
 		Hide();
-		uiSystems->GetLoadGame().Show(true);
+		uiSystems->GetLoadGame().Show(true); 
 	} else if (action == "tutorial") {
 		LaunchTutorial();
 	} else if (action == "quit") {
@@ -169,7 +173,7 @@ void UiMM::action(QString action) {
 		Hide();
 		uiSystems->GetUtilityBar().Hide();
 		// TODO ui_mm_msg_ui4();
-		mViewCinematicsDialog->Show();
+		mViewCinematics->show();
 	} else if (action == "options_credits") {
 		Hide();
 
@@ -256,6 +260,12 @@ void UiMM::TransitionToMap(int mapId)
 	gameSystems->GetSoundGame().StopAll(false);
 	uiSystems->GetWMapRnd().StartRandomEncounterTimer();
 	gameSystems->GetAnim().PopDisableFidget();
+}
+
+void UiMM::closeViewCinematics()
+{
+	mViewCinematics->hide();
+	Show(MainMenuPage::Options);
 }
 
 ViewCinematicsDialog::ViewCinematicsDialog()
