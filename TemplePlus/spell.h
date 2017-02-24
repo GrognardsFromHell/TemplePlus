@@ -37,8 +37,8 @@ struct SpellEntry{
 	uint32_t spellSubSchoolEnum;
 	uint32_t spellDescriptorBitmask;
 	uint32_t spellComponentBitmask;
-	uint32_t costXP;
-	uint32_t costGP;
+	uint32_t costGp;
+	uint32_t costXp;
 	uint32_t castingTimeType;
 	SpellRangeType spellRangeType;
 	uint32_t spellRange;

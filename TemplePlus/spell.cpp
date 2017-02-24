@@ -1728,10 +1728,13 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 				break;
 			case 4:
 				spEntry.spellComponentBitmask |= value;
-				if (value == 4)
-					spEntry.costGP = value2;
-				else if (value == 8)
-					spEntry.costXP = value2;
+				if (value == 4){
+					spEntry.costXp = value2;
+				}
+				else if (value == 8){
+					spEntry.costGp = value2;
+				}
+					
 				break;
 			case 5:
 				spEntry.castingTimeType = value;

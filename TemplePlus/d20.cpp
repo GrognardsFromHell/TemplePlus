@@ -2665,9 +2665,9 @@ ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
 	}
 
 	// charge GP spell component
-	if (spellPkt.invIdx == INV_IDX_INVALID && spellEntry.costGP > 0){
+	if (spellPkt.invIdx == INV_IDX_INVALID && spellEntry.costGp > 0){
 		if (party.IsInParty(spellPkt.caster)){
-			party.DebitMoney(0, spellEntry.costGP, 0, 0);
+			party.DebitMoney(0, spellEntry.costGp, 0, 0);
 		}
 	}
 
@@ -2825,9 +2825,9 @@ ActionErrorCode D20ActionCallbacks::ActionCheckCastSpell(D20Actn* d20a, TurnBase
 		}
 		
 		// check GP requirement
-		if (spEntry.costGP > 0u && party.IsInParty(d20a->d20APerformer) 
+		if (spEntry.costGp > 0u && party.IsInParty(d20a->d20APerformer) 
 			&& party.GetMoney() >=0 
-			&& (uint32_t)party.GetMoney() < spEntry.costGP * 100) { // making sure that costGP is interpreted as unsigned in case of some crazy overflow scenario
+			&& (uint32_t)party.GetMoney() < spEntry.costGp * 100) { // making sure that costGp is interpreted as unsigned in case of some crazy overflow scenario
 			actSeqSpellResetter();
 			return AEC_CANNOT_CAST_NOT_ENOUGH_GP;
 		}
