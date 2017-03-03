@@ -529,6 +529,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 			.def_readwrite("spell_id", &SpellPacketBody::spellId)
 			.def_readwrite("caster_level", &SpellPacketBody::casterLevel)
 			.def_readwrite("loc", &SpellPacketBody::aoeCenter)
+			.def_readwrite("caster", &SpellPacketBody::caster)
 			.def("get_target",[](SpellPacketBody &pkt, int idx)->objHndl
 			{
 				if (idx < (int)pkt.targetCount)
@@ -671,6 +672,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 
 	py::class_<DispIoTypeImmunityTrigger>(m, "EventObjImmunityTrigger", "Used for triggering the immunity handling query", py::base<DispIO>())
 		.def_readwrite("should_perform_immunity_check", &DispIoTypeImmunityTrigger::interrupt)
+		.def_readwrite("immunity_key", &DispIoTypeImmunityTrigger::SDDKey1)
 		; // TODO
 
 	py::class_<DispIoImmunity>(m, "EventObjImmunityQuery", "Used for performing the immunity handling", py::base<DispIO>())

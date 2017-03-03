@@ -937,7 +937,7 @@ void _DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint3
 				_Dispatch62(dispatcher->objHnd, (DispIO*)&dispIoImmunity, 10);
 			}
 			
-			if (dispIoImmunity.interrupt == 1 && dispType != dispType63) {
+			if (dispIoImmunity.interrupt == 1 && dispType != dispType63) { // dispType63 is essentially <-> Minor globe of invulnerability
 				dispIoImmunity.interrupt = 0;
 				dispIoImmunity.val2 = 10;
 				_Dispatch63(dispatcher->objHnd, (DispIO*)&dispIoImmunity);
