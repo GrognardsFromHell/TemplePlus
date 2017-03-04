@@ -3,6 +3,7 @@
 #include "tig_shader.h"
 #include "tig_texture.h"
 #include "ui/ui_render.h"
+#include "tig/tig_msg.h"
 
 #include "tig/tig_startup.h"
 
@@ -11,7 +12,9 @@
 #include <vector>
 #include <atlcomcli.h>
 #include <util/fixes.h>
+#include "messages/messagequeue.h"
 #include <graphics/mdfmaterials.h>
+#include <util/time.h>
 
 MouseFuncs mouseFuncs;
 temple::GlobalStruct<TigMouseState, 0x10D25184> mouseState;
@@ -101,6 +104,79 @@ bool MouseFuncs::SetDraggedIcon(uint32_t textureId, int centerX, int centerY)
 {
 	static auto tig_mouse_set_dragged_icon = temple::GetPointer<signed int(int textureId, int draggedCenterX, int draggedCenterY)>(0x101dd500);
 	return tig_mouse_set_dragged_icon(textureId, centerX, centerY) == 0;
+}
+
+void MouseFuncs::SetButtonState(MouseButton button, bool pressed)
+{
+	auto buttonIndex = (uint32_t)button;
+
+	static auto &mouseState = temple::GetRef<TigMouseState>(0x10D25184);
+
+	static const int buttonStatePressed1[3] = { 0x2, 0x10, 0x80 };
+	static const int buttonStatePressed2[3] = { 0x4, 0x20, 0x100 };
+	static const int buttonStateReleased[3] = { 0x8, 0x40, 0x200 };
+	static const MouseStateFlags msgFlagButtonDown[3] = { MouseStateFlags::MSF_LMB_CLICK, MouseStateFlags::MSF_RMB_CLICK, MouseStateFlags::MSF_MMB_CLICK };
+	static const MouseStateFlags msgFlagButtonDownRepeat[3] = { MouseStateFlags::MSF_LMB_DOWN, MouseStateFlags::MSF_RMB_DOWN, MouseStateFlags::MSF_MMB_DOWN };
+	static const MouseStateFlags msgFlagButtonReleased[3] = { MouseStateFlags::MSF_LMB_RELEASED, MouseStateFlags::MSF_RMB_RELEASED, MouseStateFlags::MSF_MMB_RELEASED };
+
+	auto currentFlags = mouseState.flags;
+	mouseState.flags = 0;
+
+	static std::array<uint32_t, 3> buttonEventTimes{ 0, 0, 0 };
+	uint32_t now = GetSystemTime();
+
+	bool wasPressed = (currentFlags & (buttonStatePressed1[buttonIndex] | buttonStatePressed2[buttonIndex])) != 0;
+
+	logger->info("buttonState[{}] = {} (Before: {})", buttonIndex, pressed, wasPressed);
+
+	TigMsgMouse msg;
+	msg.type = TigMsgType::MOUSE;
+	msg.createdMs = now;
+	msg.x = mouseState.x;
+	msg.y = mouseState.y;
+	msg.arg3 = 0;
+	msg.buttonStateFlags = 0;
+
+	if (pressed)
+	{
+		// How is this even triggered... It's processing a state-change to "pressed" while it was already pressed
+		if (wasPressed)
+		{
+			mouseState.flags = buttonStatePressed2[buttonIndex];
+			// This might be mouse-button repeats (?) This would not trigger in windowed-mode however
+			if (now - buttonEventTimes[buttonIndex] > 250) {
+				mouseState.flags |= buttonStatePressed1[buttonIndex];
+				buttonEventTimes[buttonIndex] = now;
+				msg.buttonStateFlags = msgFlagButtonDownRepeat[buttonIndex];
+				logger->info("SENDING button down repeat");
+			}
+		}
+		else {
+			mouseState.flags = buttonStatePressed1[buttonIndex];
+			msg.buttonStateFlags = msgFlagButtonDown[buttonIndex];
+			buttonEventTimes[buttonIndex] = now;
+			logger->info("SENDING button down FIRST");
+		}
+	}
+	else
+	{
+		if (wasPressed) {
+			mouseState.flags = buttonStateReleased[buttonIndex];
+			buttonEventTimes[buttonIndex] = now;
+			msg.buttonStateFlags = msgFlagButtonReleased[buttonIndex];
+			logger->info("SENDING button UP");
+		}
+	}
+
+	// Restore the "mouse cursor hidden" flag
+	if (currentFlags & TigMouseFlags::MF_HIDE_CURSOR) {
+		mouseState.flags |= TigMouseFlags::MF_HIDE_CURSOR;
+	}
+
+	// Only send the msg if there's a state change
+	if (msg.buttonStateFlags) {
+		messageQueue->Enqueue(msg);
+	}
 }
 
 void MouseFuncs::SetCursorDrawCallback(CursorDrawCallback callback, uint32_t id)

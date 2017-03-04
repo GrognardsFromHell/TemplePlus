@@ -31,7 +31,6 @@ struct MouseFuncs : temple::AddressTable {
 	
 	static int (__cdecl SetCursor)(int shaderId);
 	static void(__cdecl ResetCursor)();
-	void (__cdecl *SetButtonState)(MouseButton button, bool pressed);
 	void (__cdecl *SetPos)(int x, int y, int wheelDelta);
 	void RefreshCursor();
 	int (__cdecl*GetState)(TigMouseState * mouseState);
@@ -75,8 +74,9 @@ struct MouseFuncs : temple::AddressTable {
 		mouseState->flags |= MF_HIDE_CURSOR;
 	}
 
+	void SetButtonState(MouseButton button, bool pressed);
+
 	MouseFuncs() {
-		rebase(SetButtonState, 0x101DD1B0);
 		rebase(SetPos,    0x101DD070);
 		rebase(SetBounds, 0x101DD010);
 		rebase(GetState,  0x101DDEA0);
@@ -107,6 +107,7 @@ private:
 	// This is sometimes queried by ToEE to check which callback is active
 	// It contains the callback function's address
 	uint32_t mCursorDrawCallbackId = 0;
+
 };
 
 extern MouseFuncs mouseFuncs;
