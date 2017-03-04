@@ -13,6 +13,7 @@
 
 #include "d20.h"
 #include "action_sequence.h"
+#include "float_line.h"
 
 namespace py = pybind11;
 using namespace pybind11;
@@ -160,8 +161,13 @@ ActionCostType PythonD20ActionIntegration::GetActionCostType(int actionEnum){
 ActionErrorCode PythonD20ActionIntegration::PyAddToSeq(int actionEnum, D20Actn * d20a, ActnSeq * actSeq, TurnBasedStatus * tbStat){
 
 	auto actionSpecEntry = mScripts.find(actionEnum);
-	if (actionSpecEntry == mScripts.end())
+	if (actionSpecEntry == mScripts.end()){
+		if (d20a->d20APerformer){
+			floatSys.floatMesLine(d20a->d20APerformer, 1, FloatLineColor::Red, fmt::format("Could not find script file {}", actionEnum).c_str());
+		}
 		return AEC_INVALID_ACTION;
+	}
+		
 
 	py::object pbD20A = py::cast(d20a);
 	py::object pbActSeq = py::cast(actSeq);

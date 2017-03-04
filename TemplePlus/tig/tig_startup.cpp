@@ -202,7 +202,7 @@ void TigInitializer::LoadDataFiles() {
 		logger->info("Registering archive {}", file.name);
 		int result = tio_path_add(file.name);
 		if (result != 0) {
-			logger->trace("Unable to add archive {}: {}", file.name, result);
+			logger->error("Unable to add archive {}: {}", file.name, result);
 		}
 	}
 
@@ -215,7 +215,7 @@ void TigInitializer::LoadDataFiles() {
 
 	logger->info("Registering tpdata\\tpgamefiles.dat");
 	if (tio_path_add(fmt::format("{}\\tpgamefiles.dat", tpDataPath).c_str())) {
-		logger->trace("Unable to add archive tpdata\\tpgamefiles.dat");
+		logger->error("Unable to add archive tpdata\\tpgamefiles.dat");
 	}
 
 	if (tio_path_add(tpDataPath.c_str())) {
@@ -237,7 +237,7 @@ void TigInitializer::LoadDataFiles() {
 	logger->info("Registering new pathfinding data tpdata\\clearances.dat");
 	auto result=  tio_path_add(fmt::format("{}\\clearances.dat", tpDataPath).c_str());
 	if (result != 0) {
-		logger->trace("Unable to add archive tpdata\\clearances.dat");
+		logger->error("Unable to add archive tpdata\\clearances.dat");
 	}
 
 	if (temple::Dll::GetInstance().HasCo8Hooks()){
@@ -247,14 +247,14 @@ void TigInitializer::LoadDataFiles() {
 			logger->info("KotB module detected; registering  kotbfixes.dat.");
 			result = tio_path_add(fmt::format("{}\\kotbfixes.dat", tpDataPath).c_str());
 			if (result != 0) {
-				logger->trace("Unable to add archive tpdata\\kotbfixes.dat");
+				logger->error("Unable to add archive tpdata\\kotbfixes.dat");
 			}
 		}
 		else {
 			logger->info("Registering Co8 infrastructure fixes tpdata\\co8infra.dat");
 			result = tio_path_add(fmt::format("{}\\co8infra.dat", tpDataPath).c_str());
 			if (result != 0) {
-				logger->trace("Unable to add archive tpdata\\co8fixes.dat");
+				logger->error("Unable to add archive tpdata\\co8fixes.dat");
 			}
 
 			if (modSupport.IsIWD()) {
@@ -265,7 +265,7 @@ void TigInitializer::LoadDataFiles() {
 				logger->info("Registering Co8 file fixes tpdata\\co8fixes.dat");
 				result = tio_path_add(fmt::format("{}\\co8fixes.dat", tpDataPath).c_str());
 				if (result != 0) {
-					logger->trace("Unable to add archive tpdata\\co8fixes.dat");
+					logger->error("Unable to add archive tpdata\\co8fixes.dat");
 				}
 			}
 		}
