@@ -310,6 +310,7 @@ public:
 	}
 
 	QQuickView* AddQmlWindow(int x, int y, int w, int h, const std::string &path);
+	QQuickView* GetQmlWindow(int widgetId);
 
 private:
 	UiManager(UiManager&) = delete;
@@ -332,7 +333,7 @@ private:
 
 	LgcyWidgetId& mMouseCaptureWidgetId = temple::GetRef<LgcyWidgetId>(0x11E74384);
 	int& mWidgetMouseHandlerWidgetId = temple::GetRef<int>(0x10301324);
-	int& mMouseButtonId = temple::GetRef<int>(0x10301328);
+	LgcyWidgetId mMouseButtonId = -1; // Previously @ 0x10301328
 	void(*mMouseMsgHandlerRenderTooltipCallback)(int x, int y, void* data) = temple::GetPointer<void(int x, int y, void* data)>(0x101F9870);
 
 	bool ProcessWidgetMessage(TigMsg &msg);

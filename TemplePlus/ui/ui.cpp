@@ -738,6 +738,90 @@ static Qt::KeyboardModifiers keyStateToModifiers(int wParam)
 	return mods;
 }
 
+static std::string GetMouseMsgFlags(int flags) {
+	std::string result;
+	
+	if (flags & MSF_LMB_CLICK) {
+		result.append("LMB_CLICK|");
+	}
+	if (flags & MSF_LMB_DOWN) {
+		result.append("LMB_DOWN|");
+	}
+	if (flags & MSF_LMB_RELEASED) {
+		result.append("LMB_RELEASED|");
+	}
+	if (flags & MSF_LMB_UNK) {
+		result.append("LMB_UNK|");
+	}
+
+	if (flags & MSF_RMB_CLICK) {
+		result.append("RMB_CLICK|");
+	}
+	if (flags & MSF_RMB_DOWN) {
+		result.append("RMB_DOWN|");
+	}
+	if (flags & MSF_RMB_RELEASED) {
+		result.append("RMB_RELEASED|");
+	}
+	if (flags & MSF_RMB_UNK) {
+		result.append("RMB_UNK|");
+	}
+
+	if (flags & MSF_MMB_CLICK) {
+		result.append("MMB_CLICK|");
+	}
+	if (flags & MSF_MMB_DOWN) {
+		result.append("MMB_DOWN|");
+	}
+	if (flags & MSF_MMB_RELEASED) {
+		result.append("MMB_RELEASED|");
+	}
+	if (flags & MSF_MMB_UNK) {
+		result.append("MMB_UNK|");
+	}
+
+	if (flags & MSF_POS_CHANGE) {
+		result.append("POS_CHANGE|");
+	}
+
+	if (flags & MSF_POS_CHANGE_SLOW) {
+		result.append("POS_CHANGE_SLOW|");
+	}
+
+	if (flags & MSF_SCROLLWHEEL_CHANGE) {
+		result.append("WHEEL_CHANGE|");
+	}
+
+	if (!result.empty()) {
+		result.pop_back(); // Remove last separator
+	}
+
+	return result;
+}
+
+static std::string GetWidgetDisplayId(int widgetId) {
+	auto widget = uiManager->GetWidget(widgetId);
+	if (!widget) {
+		return "null";
+	}
+	
+	auto view = uiManager->GetQmlWindow(widgetId);
+	if (view) {
+		return fmt::format("{} (QmlView)", widgetId);
+	}
+
+	switch (widget->type) {
+	case LgcyWidgetType::Window:
+		return fmt::format("{} (Window)", widgetId);
+	case LgcyWidgetType::Button:
+		return fmt::format("{} (Button)", widgetId);
+	case LgcyWidgetType::Scrollbar:
+		return fmt::format("{} (ScrollBar)", widgetId);
+	default:
+		return fmt::format("{} (Unknown)", widgetId);
+	}
+}
+
 bool UiManager::TranslateMouseMessage(const TigMouseMsg& mouseMsg)
 {
 	int flags = mouseMsg.flags;
@@ -752,6 +836,16 @@ bool UiManager::TranslateMouseMessage(const TigMouseMsg& mouseMsg)
 
 	int globalWidId = mWidgetMouseHandlerWidgetId;
 
+	logger->info("------");
+
+	// Prevent massive spam if msg is only a pos update
+	if (mouseMsg.flags != MSF_POS_CHANGE) {
+		logger->info("Translating Mouse Msg {} @ {},{} (Unk: {}). Current Hover: {}", GetMouseMsgFlags(mouseMsg.flags), mouseMsg.x, mouseMsg.y, mouseMsg.mouseStateField24, GetWidgetDisplayId(widIdAtCursor));
+	}
+	if (globalWidId != widIdAtCursor) {
+		logger->info("Hover Widget changed from {} to {}", GetWidgetDisplayId(globalWidId), GetWidgetDisplayId(widIdAtCursor));
+	}
+	
 	// moused widget changed
 	if ((flags & MSF_POS_CHANGE) && widIdAtCursor != globalWidId)
 	{
@@ -809,6 +903,7 @@ bool UiManager::TranslateMouseMessage(const TigMouseMsg& mouseMsg)
 				newTigMsg.widgetId = globalWidId;
 				newTigMsg.widgetEventType = TigMsgWidgetEvent::Exited;
 				messageQueue->Enqueue(newTigMsg);
+				logger->info("Sending Exited to {}", GetWidgetDisplayId(widIdAtCursor));
 			}
 		}
 
@@ -843,54 +938,55 @@ bool UiManager::TranslateMouseMessage(const TigMouseMsg& mouseMsg)
 			newTigMsg.widgetId = widIdAtCursor;
 			newTigMsg.widgetEventType = TigMsgWidgetEvent::Entered;
 			messageQueue->Enqueue(newTigMsg);
+			logger->info("Sending Entered to {}", GetWidgetDisplayId(widIdAtCursor));
 		}
 		globalWidId = mWidgetMouseHandlerWidgetId = widIdAtCursor;
 	}
 
-	if (mouseMsg.flags & MouseStateFlags::MSF_POS_CHANGE_SLOW && globalWidId != -1 && !mouseFuncs.GetCursorDrawCallbackId())
+	if (flags & MouseStateFlags::MSF_POS_CHANGE_SLOW && globalWidId != -1 && !mouseFuncs.GetCursorDrawCallbackId())
 	{
 		mouseFuncs.SetCursorDrawCallback([&](int x, int y) {
 			mMouseMsgHandlerRenderTooltipCallback(x, y, &mWidgetMouseHandlerWidgetId);
 		}, (uint32_t)mMouseMsgHandlerRenderTooltipCallback);
 	}
 
-	if (mouseMsg.flags & (MouseStateFlags::MSF_LMB_DOWN | MouseStateFlags::MSF_MMB_DOWN | MouseStateFlags::MSF_RMB_DOWN)) {
+	if (flags & (MouseStateFlags::MSF_LMB_DOWN | MouseStateFlags::MSF_MMB_DOWN | MouseStateFlags::MSF_RMB_DOWN)) {
 		auto view = (widIdAtCursor == -1) ? nullptr : mActiveWidgets[widIdAtCursor].view;
 		if (view != QGuiApplication::focusWindow()) {
 			if (view) {
+				logger->info("Activating {}", GetWidgetDisplayId(widIdAtCursor));
 				view->requestActivate();
 			} else {
+				logger->info("Deactivating Qt Window");
 				QWindowSystemInterface::handleWindowActivated(nullptr);
 			}
 		}
 	}
 
-	if (mouseMsg.flags & MouseStateFlags::MSF_LMB_CLICK)
+	if (widIdAtCursor != -1 && flags & MouseStateFlags::MSF_LMB_CLICK)
 	{
-		auto widIdAtCursor2 = GetWidgetAt(mouseMsg.x, mouseMsg.y); // probably redundant to do again, but just to be safe...
-		if (widIdAtCursor2 != -1)
+		auto button = GetButton(widIdAtCursor);
+		if (button)
 		{
-			auto button = GetButton(widIdAtCursor2);
-			if (button)
-			{
-				int buttonState = button->buttonState;
-				switch (button->buttonState) {
-				case LgcyButtonState::Hovered:
-					button->buttonState = LgcyButtonState::Down;
-					sound.MssPlaySound(button->sndDown);
-					break;
-				case LgcyButtonState::Disabled:
-					return 0;
-				}
+			switch (button->buttonState) {
+			case LgcyButtonState::Hovered:
+				button->buttonState = LgcyButtonState::Down;
+				sound.MssPlaySound(button->sndDown);
+				break;
+			case LgcyButtonState::Disabled:
+				return false; // Suppress mouse events for disabled buttons
 			}
-			newTigMsg.widgetEventType = TigMsgWidgetEvent::Clicked;
-			newTigMsg.widgetId = widIdAtCursor2;
-			mMouseButtonId = widIdAtCursor2;
-			messageQueue->Enqueue(newTigMsg);
 		}
+
+		// Send the initial button-down event, and store the button id to properly send a button-released event
+		newTigMsg.widgetEventType = TigMsgWidgetEvent::Clicked;
+		newTigMsg.widgetId = widIdAtCursor;
+		mMouseButtonId = widIdAtCursor;
+		messageQueue->Enqueue(newTigMsg);
+		logger->info("Sending ButtonDown to {}", GetWidgetDisplayId(widIdAtCursor));
 	}
 
-	if ((mouseMsg.flags & MouseStateFlags::MSF_LMB_RELEASED) && mMouseButtonId != -1)
+	if (mMouseButtonId != -1 && (flags & MouseStateFlags::MSF_LMB_RELEASED))
 	{
 		auto button = GetButton(mMouseButtonId);
 		if (button)
@@ -909,10 +1005,15 @@ bool UiManager::TranslateMouseMessage(const TigMouseMsg& mouseMsg)
 				return false;
 			}
 		}
-		auto widIdAtCursor2 = GetWidgetAt(mouseMsg.x, mouseMsg.y); // probably redundant to do again, but just to be safe...
+
 		newTigMsg.widgetId = mMouseButtonId;
-		newTigMsg.widgetEventType = (widIdAtCursor2 != mMouseButtonId) ? TigMsgWidgetEvent::MouseReleasedAtDifferentButton : TigMsgWidgetEvent::MouseReleased;
+		newTigMsg.widgetEventType = (widIdAtCursor != mMouseButtonId) ? TigMsgWidgetEvent::MouseReleasedAtDifferentButton : TigMsgWidgetEvent::MouseReleased;
 		messageQueue->Enqueue(newTigMsg);
+		if (widIdAtCursor != mMouseButtonId) {
+			logger->info("Sending ButtonReleasedOutside to {}", GetWidgetDisplayId(mMouseButtonId));			
+		} else {
+			logger->info("Sending ButtonReleased to {}", GetWidgetDisplayId(mMouseButtonId));
+		}
 		mMouseButtonId = -1;
 	}
 	
@@ -1627,6 +1728,15 @@ QQuickView* UiManager::AddQmlWindow(int x, int y, int w, int h, const std::strin
 	});
 
 	return view;
+}
+
+QQuickView * UiManager::GetQmlWindow(int widgetId)
+{
+	auto it = mActiveWidgets.find(widgetId);
+	if (it != mActiveWidgets.end()) {
+		return it->second.view;
+	}
+	return nullptr;
 }
 
 bool UiManager::ProcessWidgetMessage(TigMsg & msg)
