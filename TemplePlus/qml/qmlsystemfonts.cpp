@@ -3,13 +3,15 @@
 
 #include <QDebug>
 #include <QFontDatabase>
+#include <QGuiApplication>
+#include <QFont>
 
 #include <dwrite.h>
 #include <atlcomcli.h>
 
 void InstallQmlSystemFonts()
 {
-
+	
 	CComPtr<IDWriteFactory> factory;
 
 	HRESULT hr;
@@ -114,5 +116,8 @@ void InstallQmlSystemFonts()
 			QFontDatabase::addApplicationFont(fontPath);
 		}
 	}
+	
+	QFont font("Arial", 11);
+	QGuiApplication::setFont(font);
 
 }
