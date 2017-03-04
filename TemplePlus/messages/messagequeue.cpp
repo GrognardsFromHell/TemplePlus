@@ -31,7 +31,7 @@ void MessageQueue::Enqueue(const TigMsgBase& msg) {
 bool MessageQueue::Process(Message &unhandledMsgOut) {
 
 	while (!mQueue.empty()) {
-		const auto& msg = mQueue.front();
+		auto msg = mQueue.front();
 		mQueue.pop_front();
 
 		if (!HandleMessage(msg)) {
