@@ -54,6 +54,12 @@ Item {
         visible: page == 1
         buttons: [
             {
+                text: "Set Piece",
+                onClick: function() {
+                    action("load_game");
+                }
+            },
+            {
                 text: qsTr("mainmenu:10"), // normal
                 onClick: function() {
                     action("start_game_normal");
