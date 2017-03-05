@@ -338,8 +338,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="ui\ui_rendercontrol.cpp" />
-    <ClCompile Include="ui\widgets\widgets.cpp" />
-    <ClCompile Include="ui\widgets\widget_content.cpp" />
     <ClCompile Include="ui\ui_alert.cpp" />
     <ClCompile Include="ui\ui_assets.cpp" />
     <ClCompile Include="ui\ui_char.cpp" />
@@ -380,8 +378,6 @@
     <ClCompile Include="faction.cpp" />
     <ClCompile Include="feat.cpp" />
     <ClCompile Include="ui\ui_worldmap.cpp" />
-    <ClCompile Include="ui\widgets\widget_doc.cpp" />
-    <ClCompile Include="ui\widgets\widget_styles.cpp" />
     <ClCompile Include="updater\updater.cpp" />
     <ClCompile Include="util\datadump.cpp" />
     <ClCompile Include="util\fixes.cpp" />
@@ -535,8 +531,6 @@
     <ClInclude Include="tutorial.h" />
     <ClInclude Include="ui\ui_debug.h" />
     <ClInclude Include="ui\ui_rendercontrol.h" />
-    <ClInclude Include="ui\widgets\widgets.h" />
-    <ClInclude Include="ui\widgets\widget_content.h" />
     <ClInclude Include="ui\ui_alert.h" />
     <ClInclude Include="ui\ui_assets.h" />
     <ClInclude Include="ui\ui_ingame.h" />
@@ -549,8 +543,6 @@
     <ClInclude Include="ui\ui_system.h" />
     <ClInclude Include="ui\ui_systems.h" />
     <ClInclude Include="ui\ui_tooltip.h" />
-    <ClInclude Include="ui\widgets\widget_doc.h" />
-    <ClInclude Include="ui\widgets\widget_styles.h" />
     <ClInclude Include="updater\updater.h" />
     <ClInclude Include="ui\ui_party.h" />
     <ClInclude Include="util\datadump.h" />

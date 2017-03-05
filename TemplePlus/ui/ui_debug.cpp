@@ -2,7 +2,6 @@
 #include "stdafx.h"
 #include "ui.h"
 #include "ui_debug.h"
-#include "ui/widgets/widgets.h"
 #include "tig/tig_startup.h"
 #include <graphics/shaperenderer2d.h>
 
@@ -80,69 +79,10 @@ static void DrawLegacyWidgetTreeNode(LgcyWidget *widget) {
 
 }
 
-static void DrawAdvWidgetTreeNode(WidgetBase *widget) {
-	
-	std::string textEntry;
-	if (widget->IsContainer()) {
-		textEntry += "[cnt] ";
-	} else if (widget->IsButton()) {
-		textEntry += "[btn] ";
-	} else {
-		textEntry += "[unk] ";
-	}
-
-	textEntry += fmt::format("{} ", widget->GetWidgetId());
-
-	if (!widget->GetId().empty()) {
-		textEntry += widget->GetId();
-		textEntry.append(" ");
-	}
-
-	textEntry += widget->GetSourceURI();
-
-	bool opened = ImGui::TreeNode(textEntry.c_str());
-	
-	// Draw the widget outline regardless of whether the tree node is opend
-	if (ImGui::IsItemHovered()) {
-		auto contentArea = widget->GetContentArea();
-		tig->GetShapeRenderer2d().DrawRectangleOutline(
-			{ (float) contentArea.x, (float) contentArea.y },
-			{ (float) contentArea.x + contentArea.width, (float) contentArea.y + contentArea.height },
-			XMCOLOR(1, 1, 1, 1)
-		);
-	}
-
-	if (!opened) {
-		return;
-	}
-
-	ImGui::BulletText(" X:%d Y:%d W:%d H:%d", widget->GetX(), widget->GetY(), widget->GetWidth(), widget->GetHeight());
-	if (!widget->IsVisible()) {
-		ImGui::SameLine();
-		ImGui::TextColored({1, 0, 0, 1}, "[Hidden]");
-	}
-
-	if (widget->IsContainer()) {
-		auto window = (WidgetContainer*)widget;
-		for (auto &child : window->GetChildren()) {
-			DrawAdvWidgetTreeNode(child.get());
-		}
-	}
-
-	ImGui::TreePop();
-
-}
-
 static void DrawWidgetTreeNode(int widgetId) {
 	
 	auto widget = uiManager->GetWidget(widgetId);
-	auto advWidget = uiManager->GetAdvancedWidget(widgetId);
-
-	if (advWidget) {
-		DrawAdvWidgetTreeNode(advWidget);
-	} else {
-		DrawLegacyWidgetTreeNode(widget);
-	}
+	DrawLegacyWidgetTreeNode(widget);
 
 }
 

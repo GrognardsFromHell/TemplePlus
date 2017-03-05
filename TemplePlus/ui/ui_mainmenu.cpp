@@ -25,22 +25,7 @@
 #include "movies.h"
 #include "messages/messagequeue.h"
 
-#include "widgets/widget_content.h"
-#include "widgets/widget_doc.h"
-#include "widgets/widget_styles.h"
 #include "tig/tig_keyboard.h"
-
-class ViewCinematicsDialog {
-public:
-	ViewCinematicsDialog();
-
-	void Show();
-
-private:
-	std::unique_ptr<WidgetContainer> mWidget;
-
-	WidgetScrollView *mListBox;
-};
 
 //*****************************************************************************
 //* MM-UI
@@ -267,40 +252,3 @@ void UiMM::closeViewCinematics()
 	mViewCinematics->hide();
 	Show(MainMenuPage::Options);
 }
-
-ViewCinematicsDialog::ViewCinematicsDialog()
-{
-	WidgetDoc doc = WidgetDoc::Load("templeplus/ui/main_menu_cinematics.json");
-
-	doc.GetButton("view")->SetClickHandler([this]() {
-
-	});
-	doc.GetButton("cancel")->SetClickHandler([this]() {
-		mWidget->Hide();
-		uiSystems->GetMM().Show(MainMenuPage::Options);
-	});
-
-	mListBox = doc.GetScrollView("cinematicsList");
-
-	mWidget = std::move(doc.TakeRootContainer());
-	mWidget->Hide();
-}
-
-void ViewCinematicsDialog::Show()
-{
-	mListBox->Clear();
-
-	int y = 0;
-	for (int i = 0; i < 100; i++) {
-		auto button = std::make_unique<WidgetButton>();
-		button->SetText(fmt::format("Cinematic {}", i));
-		button->SetWidth(mListBox->GetInnerWidth());
-		button->SetStyle(widgetButtonStyles->GetStyle("mm-cinematics-list-button"));
-		button->SetY(y);
-		y += button->GetHeight();
-		mListBox->Add(std::move(button));
-	}
-
-	mWidget->Show();
-}
-

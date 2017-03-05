@@ -182,7 +182,6 @@ struct LgcyWidgetDeleter
 	void operator()(LgcyWidget *p);
 };
 
-class WidgetBase;
 class QQuickView;
 
 class ActiveLegacyWidget {
@@ -193,7 +192,6 @@ public:
 	const char *sourceFile;
 	uint32_t sourceLine;
 	unique_ptr<LgcyWidget, LgcyWidgetDeleter> widget;
-	WidgetBase *advancedWidget = nullptr;
 	QQuickView *view = nullptr;
 };
 
@@ -217,9 +215,6 @@ public:
 
 	UiManager();
 	~UiManager();
-		
-	void SetAdvancedWidget(LgcyWidgetId id, WidgetBase *widget);
-	WidgetBase *GetAdvancedWidget(LgcyWidgetId id) const;
 
 	LgcyWidgetId AddWindow(LgcyWindow& widget);
 	BOOL ButtonInit(LgcyButton * widg, char* buttonName, LgcyWidgetId parentId, int x, int y, int width, int height);

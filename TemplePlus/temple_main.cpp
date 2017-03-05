@@ -14,8 +14,7 @@
 #include "config/config.h"
 #include "updater/updater.h"
 #include "ui/ui_systems.h"
-#include "ui/widgets/widgets.h"
-#include "ui/widgets/widget_styles.h"
+#include "ui/ui_assets.h"
 
 class TempleMutex {
 public:
@@ -149,9 +148,6 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 	}
 
 	UiAssets uiAssets;
-
-	WidgetTextStyles widgetTextStyles;
-	WidgetButtonStyles widgetButtonStyles;
 		
 	UiSystems uiSystems(config.renderWidth, config.renderHeight);
 

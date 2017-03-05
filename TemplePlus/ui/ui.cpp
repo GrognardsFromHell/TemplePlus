@@ -7,7 +7,6 @@
 #include <tig/tig_font.h>
 #include <tig/tig_mouse.h>
 #include "messages/messagequeue.h"
-#include "widgets/widgets.h"
 
 #include <QEnterEvent>
 #include <QMouseEvent>
@@ -34,23 +33,6 @@ UiManager::~UiManager() {
 	if (uiManager == this) {
 		uiManager = nullptr;
 	}
-}
-
-void UiManager::SetAdvancedWidget(LgcyWidgetId id, WidgetBase * widget)
-{
-	auto it = mActiveWidgets.find(id);
-	if (it != mActiveWidgets.end()) {
-		it->second.advancedWidget = widget;
-	}
-}
-
-WidgetBase * UiManager::GetAdvancedWidget(LgcyWidgetId id) const
-{
-	auto it = mActiveWidgets.find(id);
-	if (it != mActiveWidgets.end()) {
-		return it->second.advancedWidget;
-	}
-	return nullptr;
 }
 
 class UiReplacement : TempleFix
@@ -503,13 +485,8 @@ void UiManager::SetHidden(LgcyWidgetId id, bool hidden)
 		widget->flags &= (~1);
 	} 
 
-	// New widgets are rendered recursively and dont need to be 
-	// in the top-level window list to be rendered if they are nested
-	// children
-	bool isNewWidget = GetAdvancedWidget(id) != nullptr;
-
 	// Update the top-level window list
-	if (widget->IsWindow() && (!isNewWidget || widget->parentId == -1)) {
+	if (widget->IsWindow() && widget->parentId == -1) {
 		if (hidden) {
 			RemoveWindow(id);
 		} else {
@@ -598,13 +575,6 @@ void UiManager::Render()
 			mRenderControl->Render(view);
 			continue;
 		}
-
-		// Our new widget system handles rendering itself
-		auto advWidget = GetAdvancedWidget(windowId);
-		if (advWidget) {
-			advWidget->Render();
-			continue;
-		}
 		
 		auto window = GetWindow(windowId);
 		if (window->IsHidden()) {
@@ -652,18 +622,6 @@ LgcyWidgetId UiManager::GetWidgetAt(int x, int y)
 		if (!window->IsHidden() && DoesWidgetContain(windowId, x, y)) {
 			result = windowId;
 			
-			auto advWidget = GetAdvancedWidget(windowId);
-			if (advWidget) {
-				int localX = x - window->x;
-				int localY = y - window->y;
-
-				auto in = advWidget->PickWidget(localX, localY);
-				if (in) {
-					return in->GetWidgetId();
-				}
-				break;
-			}
-
 			// Also in reverse order
 			for (int j = window->childrenCount - 1; j >= 0; --j) {
 				auto childId = window->children[j];
@@ -1621,15 +1579,6 @@ public:
 
 bool UiManager::ProcessMessage(TigMsg &msg)
 {
-	// Dispatch time update messages continuously to all advanced widgets
-	if (msg.type == TigMsgType::UPDATE_TIME) {
-		for (auto &entry : mActiveWidgets) {
-			if (entry.second.advancedWidget) {
-				entry.second.advancedWidget->OnUpdateTime(msg.createdMs);
-			}
-		}
-	}
-
 	static KeyMapper mapper;
 
 	switch (msg.type) {
@@ -1765,16 +1714,10 @@ bool UiManager::ProcessMouseMessage(TigMsg & msg)
 	// Handle if a widget requested mouse capture
 	if (mMouseCaptureWidgetId != -1)
 	{
-		auto advWidget = GetAdvancedWidget(mMouseCaptureWidgetId);
-		if (advWidget) {			
-			advWidget->HandleMessage(msg);
+		auto widget = GetWidget(mMouseCaptureWidgetId);
+		if (widget && widget->CanHandleMessage()) {
+			widget->HandleMessage(msg);
 			return true;
-		} else {
-			auto widget = GetWidget(mMouseCaptureWidgetId);
-			if (widget && widget->CanHandleMessage()) {
-				widget->HandleMessage(msg);
-				return true;
-			}
 		}
 		return false;
 	}

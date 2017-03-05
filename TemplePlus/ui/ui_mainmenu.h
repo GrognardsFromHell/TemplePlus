@@ -6,7 +6,6 @@
 #include <QVariant>
 
 #include "ui_system.h"
-#include "widgets/widgets.h"
 
 #include <temple/dll.h>
 
@@ -73,11 +72,6 @@ private:
 	QQuickView *mViewCinematics;
 
 	MainMenuPage mCurrentPage = MainMenuPage::MainMenu;
-	
-	std::unique_ptr<WidgetContainer> mMainWidget;
-	std::map<MainMenuPage, WidgetContainer*> mPageWidgets;
-	// The widget that contains all pages
-	WidgetContainer *mPagesWidget;
 	
 	void LaunchTutorial();
 	void SetupTutorialMap();
