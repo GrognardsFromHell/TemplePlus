@@ -835,17 +835,7 @@ bool UiManager::TranslateMouseMessage(const TigMouseMsg& mouseMsg)
 	int widIdAtCursor = GetWidgetAt(x, y);
 
 	int globalWidId = mWidgetMouseHandlerWidgetId;
-
-	logger->info("------");
-
-	// Prevent massive spam if msg is only a pos update
-	if (mouseMsg.flags != MSF_POS_CHANGE) {
-		logger->info("Translating Mouse Msg {} @ {},{} (Unk: {}). Current Hover: {}", GetMouseMsgFlags(mouseMsg.flags), mouseMsg.x, mouseMsg.y, mouseMsg.mouseStateField24, GetWidgetDisplayId(widIdAtCursor));
-	}
-	if (globalWidId != widIdAtCursor) {
-		logger->info("Hover Widget changed from {} to {}", GetWidgetDisplayId(globalWidId), GetWidgetDisplayId(widIdAtCursor));
-	}
-	
+		
 	// moused widget changed
 	if ((flags & MSF_POS_CHANGE) && widIdAtCursor != globalWidId)
 	{
@@ -903,7 +893,6 @@ bool UiManager::TranslateMouseMessage(const TigMouseMsg& mouseMsg)
 				newTigMsg.widgetId = globalWidId;
 				newTigMsg.widgetEventType = TigMsgWidgetEvent::Exited;
 				messageQueue->Enqueue(newTigMsg);
-				logger->info("Sending Exited to {}", GetWidgetDisplayId(widIdAtCursor));
 			}
 		}
 
@@ -938,7 +927,6 @@ bool UiManager::TranslateMouseMessage(const TigMouseMsg& mouseMsg)
 			newTigMsg.widgetId = widIdAtCursor;
 			newTigMsg.widgetEventType = TigMsgWidgetEvent::Entered;
 			messageQueue->Enqueue(newTigMsg);
-			logger->info("Sending Entered to {}", GetWidgetDisplayId(widIdAtCursor));
 		}
 		globalWidId = mWidgetMouseHandlerWidgetId = widIdAtCursor;
 	}
@@ -954,10 +942,8 @@ bool UiManager::TranslateMouseMessage(const TigMouseMsg& mouseMsg)
 		auto view = (widIdAtCursor == -1) ? nullptr : mActiveWidgets[widIdAtCursor].view;
 		if (view != QGuiApplication::focusWindow()) {
 			if (view) {
-				logger->info("Activating {}", GetWidgetDisplayId(widIdAtCursor));
 				view->requestActivate();
 			} else {
-				logger->info("Deactivating Qt Window");
 				QWindowSystemInterface::handleWindowActivated(nullptr);
 			}
 		}
@@ -983,7 +969,6 @@ bool UiManager::TranslateMouseMessage(const TigMouseMsg& mouseMsg)
 		newTigMsg.widgetId = widIdAtCursor;
 		mMouseButtonId = widIdAtCursor;
 		messageQueue->Enqueue(newTigMsg);
-		logger->info("Sending ButtonDown to {}", GetWidgetDisplayId(widIdAtCursor));
 	}
 
 	if (mMouseButtonId != -1 && (flags & MouseStateFlags::MSF_LMB_RELEASED))
@@ -1009,11 +994,6 @@ bool UiManager::TranslateMouseMessage(const TigMouseMsg& mouseMsg)
 		newTigMsg.widgetId = mMouseButtonId;
 		newTigMsg.widgetEventType = (widIdAtCursor != mMouseButtonId) ? TigMsgWidgetEvent::MouseReleasedAtDifferentButton : TigMsgWidgetEvent::MouseReleased;
 		messageQueue->Enqueue(newTigMsg);
-		if (widIdAtCursor != mMouseButtonId) {
-			logger->info("Sending ButtonReleasedOutside to {}", GetWidgetDisplayId(mMouseButtonId));			
-		} else {
-			logger->info("Sending ButtonReleased to {}", GetWidgetDisplayId(mMouseButtonId));
-		}
 		mMouseButtonId = -1;
 	}
 	

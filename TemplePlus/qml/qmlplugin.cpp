@@ -4,6 +4,7 @@
 #include <QQmlEngine>
 #include <QQmlContext>
 #include <QFontDatabase>
+#include <QGuiApplication>
 
 #include <infrastructure/vfs.h>
 
@@ -57,6 +58,8 @@ void TPQmlPlugin::initializeEngine(QQmlEngine *engine, const char *uri) {
 	qDebug() << "Starting QML plugin for TemplePlus";
 
 #ifdef QTCREATORPLUGIN
+
+	qDebug() << "*** RUNNING IN QTCREATOR MODE ***";
 
     // Initialize COM if it hasn't happened yet
     HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
@@ -133,6 +136,10 @@ void TPQmlPlugin::initializeEngine(QQmlEngine *engine, const char *uri) {
 	static TPNetworkAccessManagerFactory namFactory;
 
 	engine->setNetworkAccessManagerFactory(&namFactory);
+
+	// Set the same default font as in the core app
+	QFont font("Arial", 10);
+	QGuiApplication::setFont(font);
 
 #endif
 

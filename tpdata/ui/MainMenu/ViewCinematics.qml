@@ -1,5 +1,6 @@
 import QtQuick 2.0
 import TemplePlus 1.0
+import "../Common"
 
 Item {
     width: 800
@@ -10,7 +11,15 @@ Item {
 
     Component.onCompleted: {
         items = cinematics
-        console.log("Cinematics: ", JSON.stringify(items))
+
+        // Add 50 test items if in creator mode
+        if (qtCreator) {
+            var fakeItems = [];
+            for (var i = 0; i < 50; i++) {
+                fakeItems.push({id: i, name: "Cinematic " + i});
+            }
+            items = fakeItems;
+        }
     }
 
     Item {
@@ -27,7 +36,7 @@ Item {
 
         Component {
             id: cinematicSelector
-            Text {
+            Label {
                 height: 25
                 verticalAlignment: Text.AlignVCenter
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -70,13 +79,22 @@ Item {
                 var percentage = value / max;
                 handle.y = percentage * (track.height - handle.height);
                 if (dragArea.drag.active) {
-                    cinematicsList.contentY = value;
+                    updateContentY();
                 }
             }
 
-            Image {
+            function updateContentY() {
+                cinematicsList.contentY = value;
+            }
+
+            RepeatingButton {
                 id: scrollbarTop
                 source: "tio:///art/interface/SCROLLBAR/ScrollBar_Arrow_Top.tga"
+                pressedSource: "tio:///art/interface/SCROLLBAR/ScrollBar_Arrow_Top_Click.tga"
+                mouseArea.onClicked: {
+                    scrollbar.value = Math.max(0, scrollbar.value - scrollbar.max * 0.05)
+                    scrollbar.updateContentY();
+                }
             }
 
             Image {
@@ -152,10 +170,15 @@ Item {
                 }
             }
 
-            Image {
+            RepeatingButton {
                 id: scrollbarBottom
                 anchors.bottom: parent.bottom
                 source: "tio:///art/interface/SCROLLBAR/ScrollBar_Arrow_Bottom.tga"
+                pressedSource: "tio:///art/interface/SCROLLBAR/ScrollBar_Arrow_Bottom_Click.tga"
+                mouseArea.onClicked: {
+                    scrollbar.value = Math.min(scrollbar.max, scrollbar.value + scrollbar.max * 0.05)
+                    scrollbar.updateContentY();
+                }
             }
         }
 

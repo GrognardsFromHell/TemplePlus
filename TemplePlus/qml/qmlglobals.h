@@ -12,6 +12,7 @@
 class TPQmlGlobals : public QObject {
 Q_OBJECT
 Q_PROPERTY(QJSValue cinematics READ cinematics)
+Q_PROPERTY(bool qtCreator READ qtCreator)
 public:
 	TPQmlGlobals(QJSEngine *engine) : mEngine(engine) {}
 
@@ -20,6 +21,8 @@ public:
 	QJSValue cinematics();
 
 	Q_INVOKABLE void playCinematic(const QJSValue &cinematic);
+
+	bool qtCreator() const;
 
 private:
 	QJSEngine *mEngine;

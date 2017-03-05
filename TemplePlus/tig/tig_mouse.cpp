@@ -127,8 +127,6 @@ void MouseFuncs::SetButtonState(MouseButton button, bool pressed)
 
 	bool wasPressed = (currentFlags & (buttonStatePressed1[buttonIndex] | buttonStatePressed2[buttonIndex])) != 0;
 
-	logger->info("buttonState[{}] = {} (Before: {})", buttonIndex, pressed, wasPressed);
-
 	TigMsgMouse msg;
 	msg.type = TigMsgType::MOUSE;
 	msg.createdMs = now;
@@ -148,14 +146,12 @@ void MouseFuncs::SetButtonState(MouseButton button, bool pressed)
 				mouseState.flags |= buttonStatePressed1[buttonIndex];
 				buttonEventTimes[buttonIndex] = now;
 				msg.buttonStateFlags = msgFlagButtonDownRepeat[buttonIndex];
-				logger->info("SENDING button down repeat");
 			}
 		}
 		else {
 			mouseState.flags = buttonStatePressed1[buttonIndex];
 			msg.buttonStateFlags = msgFlagButtonDown[buttonIndex];
 			buttonEventTimes[buttonIndex] = now;
-			logger->info("SENDING button down FIRST");
 		}
 	}
 	else
@@ -164,7 +160,6 @@ void MouseFuncs::SetButtonState(MouseButton button, bool pressed)
 			mouseState.flags = buttonStateReleased[buttonIndex];
 			buttonEventTimes[buttonIndex] = now;
 			msg.buttonStateFlags = msgFlagButtonReleased[buttonIndex];
-			logger->info("SENDING button UP");
 		}
 	}
 

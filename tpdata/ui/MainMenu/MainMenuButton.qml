@@ -1,5 +1,6 @@
 import QtQuick 2.8
 import TemplePlus 1.0
+import "../Common"
 
 Item {
     property alias mouseArea : mouseArea
@@ -7,20 +8,20 @@ Item {
 	width: normalText.implicitWidth
 	height: normalText.implicitHeight
 	
-	LegacyText {
+    LegacyText {
 		id: normalText
 		text: parent.text
 		visible: !mouseArea.containsMouse && !mouseArea.containsPress
 	}
 
-	LegacyText {
+    LegacyText {
 		text: parent.text
 		color: "#01FFFF"
 		gradientColor: "#01D0FF"
 		visible: mouseArea.containsMouse && !mouseArea.containsPress
 	}
 
-	LegacyText {
+    LegacyText {
 		text: parent.text
 		color: "#EB1510"
 		gradientColor: "#DA5B61"

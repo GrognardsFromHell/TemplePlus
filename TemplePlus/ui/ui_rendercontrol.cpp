@@ -33,9 +33,6 @@ struct UiRenderControl::Impl {
 
 Q_IMPORT_PLUGIN(QSGD3D11Adaptation)
 
-#include <QtQml/5.8.0/QtQml/private/qqmlengine_p.h>
-#include <QtQml/5.8.0/QtQml/private/qqmlimport_p.h>
-
 UiRenderControl::UiRenderControl() : impl(std::make_unique<Impl>())
 {
 	QQuickWindow::setSceneGraphBackend("d3d11");
@@ -57,7 +54,8 @@ UiRenderControl::UiRenderControl() : impl(std::make_unique<Impl>())
 	// because by default the exe directory is also in the search path
 	QStringList importDirs = QStringList()
 		<< QLibraryInfo::location(QLibraryInfo::Qml2ImportsPath)
-		<< "tio:///qml/";
+		<< "tio:///qml/"
+		<< "tio:///ui/";
 	impl->engine->setImportPathList(importDirs);
 
 	QObject::connect(impl->engine.get(), &QQmlEngine::warnings, [=](const QList<QQmlError> &warnings) {

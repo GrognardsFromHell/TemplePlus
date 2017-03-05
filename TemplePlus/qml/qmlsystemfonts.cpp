@@ -117,7 +117,7 @@ void InstallQmlSystemFonts()
 		}
 	}
 	
-	QFont font("Arial", 11);
+	QFont font("Arial", 10);
 	QGuiApplication::setFont(font);
 
 }

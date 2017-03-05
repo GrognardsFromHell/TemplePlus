@@ -65,7 +65,7 @@ Item {
         visible: disabled
     }
 
-    Text {
+    Label {
         anchors.fill: parent
         verticalAlignment: Text.AlignVCenter
         horizontalAlignment: Text.AlignHCenter

@@ -25,3 +25,7 @@ QJSValue TPQmlGlobals::cinematics()
 void TPQmlGlobals::playCinematic(const QJSValue &value) {
 	qDebug() << "Playing cinematic";
 }
+
+bool TPQmlGlobals::qtCreator() const {
+	return true;
+}

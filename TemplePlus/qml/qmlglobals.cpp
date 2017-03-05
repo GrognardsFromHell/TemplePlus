@@ -87,3 +87,7 @@ void TPQmlGlobals::playCinematic(const QJSValue & cinematic)
 
 	movieFuncs.PlayMovieId(movieRecord.movieId, 0, 0);
 }
+
+bool TPQmlGlobals::qtCreator() const {
+	return false;
+}
