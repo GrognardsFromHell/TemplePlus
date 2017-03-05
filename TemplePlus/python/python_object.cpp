@@ -1000,6 +1000,30 @@ static PyObject* PyObjHandle_DivineSpellLevelCanCast(PyObject* obj, PyObject* ar
 	return PyInt_FromLong(divineSpellLvlMax);
 }
 
+
+static PyObject* PyObjHandle_SpontaneousSpellLevelCanCast(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	auto spontCastLvl = 0;
+
+	//critterSys.GetSpellLvlCanCast(self->handle, SpellSourceType::Arcane, SpellReadyingType::Any);
+
+	for (auto it : d20ClassSys.classEnums) {
+		auto classEnum = (Stat)it;
+		if (d20ClassSys.IsNaturalCastingClass(classEnum)) {
+			spontCastLvl = max(spontCastLvl, spellSys.GetMaxSpellLevel(self->handle, classEnum, 0));
+		}
+	}
+
+
+
+	return PyInt_FromLong(spontCastLvl);
+}
+
+
 static PyObject* PyObjHandle_Attack(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -3186,6 +3210,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "spells_pending_to_memorized", PyObjHandle_PendingToMemorized, METH_VARARGS, NULL },
 	{ "spells_cast_reset", PyObjHandle_SpellsCastReset, METH_VARARGS, NULL },
 	{ "spells_memorized_forget", PyObjHandle_MemorizedForget, METH_VARARGS, NULL },
+	{ "spontaneous_spell_level_can_cast", PyObjHandle_SpontaneousSpellLevelCanCast, METH_VARARGS, NULL },
 	{ "standpoint_set", PyObjHandle_StandpointSet, METH_VARARGS, NULL },
 	{"stat_level_get", PyObjHandle_StatLevelGet, METH_VARARGS, NULL},
 	{"stat_base_get", PyObjHandle_StatLevelGetBase, METH_VARARGS, NULL},

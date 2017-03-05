@@ -26,6 +26,7 @@
 #include "../config/config.h"
 #include <fstream>
 #include <mod_support.h>
+#include <winsock.h>
 
 TigInitializer* tig = nullptr;
 
@@ -216,6 +217,7 @@ void TigInitializer::LoadDataFiles() {
 	logger->info("Registering tpdata\\tpgamefiles.dat");
 	if (tio_path_add(fmt::format("{}\\tpgamefiles.dat", tpDataPath).c_str())) {
 		logger->error("Unable to add archive tpdata\\tpgamefiles.dat");
+		throw TempleException("Could not load tpgamefiles.dat!");
 	}
 
 	if (tio_path_add(tpDataPath.c_str())) {

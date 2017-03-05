@@ -3458,6 +3458,9 @@ ET_OnPythonReserved9 = 87
 ET_OnSpellListExtensionGet = 88
 ET_OnGetBaseCasterLevel = 89
 ET_OnLevelupSystemEvent = 90
+ET_OnDealingDamageWeaponlikeSpell = 91
+ET_OnActionCostMod = 92
+
 # Event Keys
 
 EK_NONE = 0x0
@@ -3877,3 +3880,6 @@ PQF_ALLOW_ALTERNATIVE_TARGET_TILE = 0x40000
 PQF_A_STAR_TIME_CAPPED = 0x80000
 PQF_IGNORE_CRITTERS_ON_DESTINATION = 0x800000
 PQF_AVOID_AOOS = 0x1000000 # NEW! Make the PF attempt avoid Aoos (using the ShouldIgnore function in combat.py to ignore insiginificant threats)
+
+
+TBSF_FreeActionSpellPerformed = 512
