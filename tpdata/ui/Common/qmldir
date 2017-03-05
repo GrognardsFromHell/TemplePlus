@@ -3,3 +3,4 @@ Label Label.qml
 StandardButton StandardButton.qml
 Button Button.qml
 RepeatingButton RepeatingButton.qml
+ScrollBar ScrollBar.qml
