@@ -1798,7 +1798,8 @@ enum enum_dispIO_type : uint32_t {
 	dispIOType31,
 	dispIOType32,
 	dispIOType33,
-	evtObjTypeSpellCaster // new! used for querying spell caster specs (caster level, learnable spells, etc.)
+	evtObjTypeSpellCaster, // new! used for querying spell caster specs (caster level, learnable spells, etc.)
+	evtObjTypeActionCost // new! used for modifying action cost
 
 };
 
@@ -1901,6 +1902,7 @@ enum enum_disp_type : uint32_t {
 
 
 	dispTypeDealingDamageWeaponlikeSpell,
+	dispTypeActionCostMod,
 	dispTypeCount // used just for size definition purposes
 
 

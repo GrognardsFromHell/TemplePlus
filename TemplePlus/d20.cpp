@@ -1248,10 +1248,15 @@ int LegacyD20System::TargetCheck(D20Actn* d20a)
 				logger->warn("Perform Cast Spell: failed to retrieve spell entry {}!\n", spellEnum);
 				return 1;
 			}
-			if (itemSpellData == 255)
+
+		// set caster level
+			if (itemSpellData == INV_IDX_INVALID){
 				spellSys.SpellPacketSetCasterLevel(&curSeq->spellPktBody);
-			else
-				curSeq->spellPktBody.casterLevel = max(1, 2 * static_cast<int>(spellSlotLevel) - 1);
+			}
+			else{ // item spell
+				curSeq->spellPktBody.casterLevel = max(1, 2 * static_cast<int>(spellSlotLevel) - 1); // todo special handling for Magic domain
+			}
+				
 
 			curSeq->spellPktBody.spellRange = spellSys.GetSpellRange(&spellEntry, curSeq->spellPktBody.casterLevel, curSeq->spellPktBody.caster);
 			

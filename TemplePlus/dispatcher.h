@@ -5,6 +5,7 @@
 
 #define DISPATCHER_MAX  250 // max num of simultaneous Dispatches going on (static int counter inside _DispatcherProcessor)
 #include "spell.h"
+
 //#include <pybind11/pybind11.h>
 //using namespace pybind11;
 
@@ -31,6 +32,7 @@ struct DispIoAttackDice; // 20
 struct DispIoImmunity; //23
 struct DispIoEffectTooltip; // 24
 struct EvtObjSpellCaster; // 34;
+struct EvtObjActionCost; // 35
 struct D20Actn;
 
 
@@ -519,6 +521,27 @@ struct EvtObjSpellCaster: DispIO // type 34 (NEW!)
 	int arg1;
 	SpellPacketBody* spellPkt;
 	EvtObjSpellCaster() { dispIOType = evtObjTypeSpellCaster; handle = objHndl::null; arg0 = 0; arg1 = 0; spellPkt = nullptr; };
+};
+
+struct EvtObjActionCost: DispIO
+{
+	ActionCostPacket acpOrig; // original
+	ActionCostPacket acpCur; // current
+	D20Actn *d20a;
+	TurnBasedStatus *tbStat;
+
+	EvtObjActionCost()
+	{
+		dispIOType = evtObjTypeActionCost;
+	};
+
+	EvtObjActionCost(ActionCostPacket acp, TurnBasedStatus *tbStatIn, D20Actn* d20aIn) : EvtObjActionCost(){
+		this->acpOrig = acp;
+		this->acpCur = acp;
+		this->d20a = d20aIn;
+		this->tbStat = tbStatIn;
+	}
+	void DispatchCost(D20DispatcherKey key = DK_NONE);
 };
 
 

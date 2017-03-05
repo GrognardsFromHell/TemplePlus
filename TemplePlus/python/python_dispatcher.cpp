@@ -294,8 +294,44 @@ PYBIND11_PLUGIN(tp_dispatcher){
 	py::class_<MetaMagicData>(m, "MetaMagicData")
 		.def(py::init<>())
 		.def("get_heighten_count", [](MetaMagicData& mmData)->int {	return mmData.metaMagicHeightenSpellCount;	})
-		.def("set_heighten_count", [](MetaMagicData& mmData, int heightenCnt)->int { return mmData.metaMagicHeightenSpellCount = heightenCnt;	}) 
-		// todo rest
+		.def("get_enlarge_count", [](MetaMagicData& mmData)->int {	return mmData.metaMagicEnlargeSpellCount;	})
+		.def("get_extend_count", [](MetaMagicData& mmData)->int {	return mmData.metaMagicExtendSpellCount;	})
+		.def("get_widen_count", [](MetaMagicData& mmData)->int {	return mmData.metaMagicWidenSpellCount;	})
+		.def("get_empower_count", [](MetaMagicData& mmData)->int {	return mmData.metaMagicEmpowerSpellCount;	})
+
+		.def("set_heighten_count", [](MetaMagicData& mmData, int newVal) {  mmData.metaMagicHeightenSpellCount = newVal;	})
+		.def("set_enlarge_count", [](MetaMagicData& mmData, int newVal) {  mmData.metaMagicEnlargeSpellCount = newVal;	})
+		.def("set_extend_count", [](MetaMagicData& mmData, int newVal) {  mmData.metaMagicExtendSpellCount = newVal;	})
+		.def("set_widen_count", [](MetaMagicData& mmData, int newVal) {  mmData.metaMagicWidenSpellCount = newVal;	})
+		.def("set_empower_count", [](MetaMagicData& mmData, int newVal) {  mmData.metaMagicEmpowerSpellCount = newVal;	})
+		.def("get_still", [](MetaMagicData& mmData)->bool {	return (mmData.metaMagicFlags & MetaMagic_Still) != 0;	})
+		.def("set_still", [](MetaMagicData& mmData, bool newVal) { 
+			if (newVal)
+				mmData.metaMagicFlags |= MetaMagic_Still;
+			else if (mmData.metaMagicFlags & MetaMagic_Still)
+				mmData.metaMagicFlags ^= MetaMagic_Still;
+		})
+		.def("get_quicken", [](MetaMagicData& mmData)->bool {	return (mmData.metaMagicFlags & MetaMagic_Quicken) != 0;	})
+		.def("set_quicken", [](MetaMagicData& mmData, bool newVal) {
+			if (newVal)
+				mmData.metaMagicFlags |= MetaMagic_Quicken;
+			else if (mmData.metaMagicFlags & MetaMagic_Quicken)
+				mmData.metaMagicFlags ^= MetaMagic_Quicken;
+		})
+		.def("get_silent", [](MetaMagicData& mmData)->bool {	return (mmData.metaMagicFlags & MetaMagic_Silent) != 0;	})
+		.def("set_silent", [](MetaMagicData& mmData, bool newVal) {
+			if (newVal)
+				mmData.metaMagicFlags |= MetaMagic_Silent;
+			else if (mmData.metaMagicFlags & MetaMagic_Silent)
+				mmData.metaMagicFlags ^= MetaMagic_Silent;
+		})
+		.def("get_maximize", [](MetaMagicData& mmData)->bool {	return (mmData.metaMagicFlags & MetaMagic_Maximize) != 0;	})
+		.def("set_maximize", [](MetaMagicData& mmData, bool newVal) {
+			if (newVal)
+				mmData.metaMagicFlags |= MetaMagic_Maximize;
+			else if (mmData.metaMagicFlags & MetaMagic_Maximize)
+				mmData.metaMagicFlags ^= MetaMagic_Maximize;
+		})
 		;
 
 	py::class_<D20SpellData>(m, "D20SpellData")
@@ -308,6 +344,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def_readwrite("inven_idx", &D20SpellData::itemSpellData)
 		.def("get_spell_store", [](D20SpellData&spData)->SpellStoreData {	return spData.ToSpellStore();	})
 		.def("set_spell_class", [](D20SpellData& spData, int spClass) { spData.spellClassCode= spellSys.GetSpellClass(spClass);	})
+		.def("get_metamagic_data", [](D20SpellData& spData)->MetaMagicData {return spData.metaMagicData; })
 		;
 	#pragma endregion
 
@@ -397,6 +434,10 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def_readwrite("surplus_move_dist", &TurnBasedStatus::surplusMoveDistance)
 		.def_readwrite("flags", &TurnBasedStatus::tbsFlags)
 		.def_readwrite("attack_mode_code", &TurnBasedStatus::attackModeCode, "0 - normal main hand, 99 - dual wielding, 999 - natural attack")
+		;
+	py::class_<ActionCostPacket>(m, "ActionCost")
+		.def_readwrite("action_cost", &ActionCostPacket::hourglassCost)
+		.def_readwrite("move_distance_cost", &ActionCostPacket::moveDistCost)
 		;
 	#pragma endregion
 
@@ -690,6 +731,13 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def_readwrite("arg1", &EvtObjSpellCaster::arg1)
 		.def_readwrite("spell_packet", &EvtObjSpellCaster::spellPkt)
 		;
+
+	py::class_<EvtObjActionCost>(m, "EventObjActionCost", "Used for modifying action cost", py::base<DispIO>())
+		.def_readwrite("cost_orig", &EvtObjActionCost::acpOrig)
+		.def_readwrite("cost_new", &EvtObjActionCost::acpCur)
+		.def_readwrite("d20a", &EvtObjActionCost::d20a)
+		.def_readwrite("turnbased_status", &EvtObjActionCost::tbStat)
+		;
 	//py::class_<DispatcherCallbackArgs>(m, "EventArgsD20Signal")
 	//	.def(py::init())
 	//	.def("__repr__", [](DispatcherCallbackArgs &args)->std::string {
@@ -936,6 +984,11 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 	case dispTypeLevelupSystemEvent:
 		pbEvtObj = py::cast(static_cast<EvtObjSpellCaster*>(args.dispIO));
 		break;
+
+	case dispTypeActionCostMod:
+		pbEvtObj = py::cast(static_cast<EvtObjActionCost*>(args.dispIO));
+		break;
+
 
 	case dispTypeConditionAdd: // these are actually null
 	case dispTypeConditionRemove:

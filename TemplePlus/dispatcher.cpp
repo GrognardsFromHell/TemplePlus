@@ -1012,6 +1012,18 @@ void DispIoEffectTooltip::Append(int effectTypeId, int spellEnum, const char* te
 	}
 }
 
+void EvtObjActionCost::DispatchCost(D20DispatcherKey key){
+	if (!d20a || !d20a->d20APerformer) {
+		return;
+	}
+
+	auto dispatcher = objects.GetDispatcher(d20a->d20APerformer);
+
+	if (dispatcher->IsValid()) {
+		dispatch.DispatcherProcessor(dispatcher, dispTypeActionCostMod, key, this);
+	}
+}
+
 bool Dispatcher::IsValid()
 {
 	return dispatch.dispatcherValid(this);

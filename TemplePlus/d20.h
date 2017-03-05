@@ -222,16 +222,15 @@ struct D20Actn{
 
 const auto TestSizeOfD20Action = sizeof(D20Actn); // should be 88 (0x58)
 
-struct ActionCostPacket
-{
-	int hourglassCost;
-	int chargeAfterPicker; // flag I think; is only set at stuff that requires using the picker it seems
-	float moveDistCost;
-};
-const auto TestSizeOfActionCostPacket = sizeof(ActionCostPacket); // should be 12 (0xC)
-
-
-
+//struct ActionCostPacket
+//{
+//	int hourglassCost;
+//	int chargeAfterPicker; // flag I think; is only set at stuff that requires using the picker it seems
+//	float moveDistCost;
+//	
+////	ActionCostPacket() { hourglassCost = 0; chargeAfterPicker = 0; moveDistCost = 0.0f; }
+//};
+////const auto TestSizeOfActionCostPacket = sizeof(ActionCostPacket); // should be 12 (0xC)
 
 struct D20ActionDef{
 	ActionErrorCode (__cdecl *addToSeqFunc)(D20Actn *d20a, ActnSeq *actSeq, TurnBasedStatus *tbStat);

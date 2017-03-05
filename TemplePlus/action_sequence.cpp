@@ -3159,8 +3159,12 @@ int ActionSequenceSystem::ActionCostProcess(TurnBasedStatus* tbStat, D20Actn* d2
 	int result = d20Sys.d20Defs[d20a->d20ActType].actionCost(d20a, tbStat, &actCost);
 	if (result)
 		return result;
-
 	
+	// Adding action cost modification facility
+	EvtObjActionCost evtObjActionCost(actCost, tbStat, d20a);
+	evtObjActionCost.DispatchCost();
+	actCost.hourglassCost = evtObjActionCost.acpCur.hourglassCost;
+
 	hourglassCost = actCost.hourglassCost;
 	if (tbStat->hourglassState == -1)
 		tbStat->hourglassState = -1;
