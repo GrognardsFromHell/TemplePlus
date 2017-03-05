@@ -9,6 +9,7 @@ install:
 build_script:
   - ps: .\UpdateVersion.ps1
   - set PATH=C:\Program Files (x86)\MSBuild\14.0\Bin;%PATH%
+  - set QTDIR=C:\Qt\5.8\msvc2015
   - nuget restore TemplePlus.sln
   - msbuild TemplePlus.sln /p:Configuration=Release /p:MSBuildDefines="_TP_VERSION=%APPVEYOR_BUILD_VERSION%;_TP_COMMIT=%APPVEYOR_REPO_COMMIT%;TP_RELEASE_BUILD" /verbosity:minimal
 
