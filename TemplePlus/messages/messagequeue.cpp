@@ -75,7 +75,7 @@ bool MessageQueue::HandleMessage(const Message& msg) {
 void MessageQueue::ProcessMessages()
 {
 	TigMsg msg;
-	while (!Process(msg))
+	while (!mQueue.empty() && !Process(msg))
 		;
 }
 
