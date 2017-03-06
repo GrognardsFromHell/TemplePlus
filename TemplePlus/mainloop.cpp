@@ -267,7 +267,7 @@ void GameLoop::RenderFrame() {
 		tig->GetShapeRenderer2d().DrawRectangle(0, 0, w, h, gfadeColor);
 	}
 	
-	ImGui::ShowTestWindow();
+	// ImGui::ShowTestWindow();
 
 	tig->GetConsole().Render();
 

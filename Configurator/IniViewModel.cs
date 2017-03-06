@@ -30,6 +30,9 @@ namespace TemplePlusConfig
         public static readonly DependencyProperty SoftShadowsProperty = DependencyProperty.Register(
             "SoftShadows", typeof (bool), typeof (IniViewModel), new PropertyMetadata(default(bool)));
 
+        public static readonly DependencyProperty WindowedLockCursorProperty = DependencyProperty.Register(
+           "WindowedLockCursor", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+        
         public static readonly DependencyProperty HpOnLevelUpProperty = DependencyProperty.Register(
             "HpOnLevelUp", typeof (HpOnLevelUpType), typeof (IniViewModel),
             new PropertyMetadata(default(HpOnLevelUpType)));
@@ -129,6 +132,12 @@ namespace TemplePlusConfig
         {
             get { return (bool) GetValue(SoftShadowsProperty); }
             set { SetValue(SoftShadowsProperty, value); }
+        }
+
+        public bool WindowedLockCursor
+        {
+            get { return (bool)GetValue(WindowedLockCursorProperty); }
+            set { SetValue(WindowedLockCursorProperty, value); }
         }
 
         public HpOnLevelUpType HpOnLevelUp
@@ -275,6 +284,7 @@ namespace TemplePlusConfig
             SoftShadows = tpData["softShadows"] == "true";
             AntiAliasing = tpData["antialiasing"] == "true";
             WindowedMode = tpData["windowed"] == "true";
+            WindowedLockCursor = tpData["windowedLockCursor"] == "true";
 
             int maxLevel;
             if (int.TryParse(tpData["maxLevel"], out maxLevel))
@@ -373,6 +383,7 @@ namespace TemplePlusConfig
             tpData["windowHeight"] = RenderHeight.ToString();
             tpData["antialiasing"] = AntiAliasing? "true" : "false";
             tpData["softShadows"] = SoftShadows ? "true" : "false";
+            tpData["windowedLockCursor"] = WindowedLockCursor ? "true" : "false";
             tpData["maxLevel"] = MaxLevel.ToString();
             tpData["allowXpOverflow"] = AllowXpOverflow ? "true" : "false";
             tpData["slowerLevelling"] = SlowerLevelling ? "true" : "false";

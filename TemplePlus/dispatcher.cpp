@@ -548,29 +548,31 @@ void DispatcherSystem::DispatchConditionRemove(Dispatcher* dispatcher, CondNode*
 {
 	for (auto subDispNode = dispatcher->subDispNodes[dispTypeConditionRemove]; subDispNode; subDispNode = subDispNode->next)
 	{
-		if (subDispNode->subDispDef->dispKey == 0)
-		{
-			DispatcherCallbackArgs dca;
-			dca.dispIO = nullptr;
-			dca.dispType = dispTypeConditionRemove;
-			dca.dispKey = 0;
-			dca.objHndCaller = dispatcher->objHnd;
-			dca.subDispNode = subDispNode;
-			subDispNode->subDispDef->dispCallback(dca.subDispNode, dca.objHndCaller, dca.dispType, dca.dispKey, dca.dispIO);
+		if (subDispNode->subDispDef->dispKey == 0){
+			if (!(subDispNode->condNode->flags & 1) && (subDispNode->condNode == cond)){
+				DispatcherCallbackArgs dca;
+				dca.dispIO = nullptr;
+				dca.dispType = dispTypeConditionRemove;
+				dca.dispKey = 0;
+				dca.objHndCaller = dispatcher->objHnd;
+				dca.subDispNode = subDispNode;
+				subDispNode->subDispDef->dispCallback(dca.subDispNode, dca.objHndCaller, dca.dispType, dca.dispKey, dca.dispIO);
+			}	
 		}
 	}
 
 	for (auto subDispNode = dispatcher->subDispNodes[dispTypeConditionRemove2]; subDispNode; subDispNode = subDispNode->next)
 	{
-		if (subDispNode->subDispDef->dispKey == 0)
-		{
-			DispatcherCallbackArgs dca;
-			dca.dispIO = nullptr;
-			dca.dispType = dispTypeConditionRemove2;
-			dca.dispKey = 0;
-			dca.objHndCaller = dispatcher->objHnd;
-			dca.subDispNode = subDispNode;
-			subDispNode->subDispDef->dispCallback(dca.subDispNode, dca.objHndCaller, dca.dispType, dca.dispKey, dca.dispIO);
+		if (subDispNode->subDispDef->dispKey == 0){
+			if (!(subDispNode->condNode->flags & 1) && (subDispNode->condNode == cond)) {
+				DispatcherCallbackArgs dca;
+				dca.dispIO = nullptr;
+				dca.dispType = dispTypeConditionRemove2;
+				dca.dispKey = 0;
+				dca.objHndCaller = dispatcher->objHnd;
+				dca.subDispNode = subDispNode;
+				subDispNode->subDispDef->dispCallback(dca.subDispNode, dca.objHndCaller, dca.dispType, dca.dispKey, dca.dispIO);
+			}
 		}
 	}
 	cond->flags |= 1;

@@ -1940,8 +1940,8 @@ uint32_t LegacySpellSystem::spellCanCast(objHndl objHnd, uint32_t spellEnum, uin
 				&& spellSys.GetCastingClass(classCodesVec[i] ) == classEnum
 				&& spellLevelsVec[i] <= (int)spellLevel)
 			{
-				if (spellLevelsVec[i] < (int)spellLevel)
-					logger->info("Natural Spell Caster spellCanCast check - spell known is lower level than spellCanCast queried spell. Is this ok?? (this is vanilla code here...)");
+				//if (spellLevelsVec[i] < (int)spellLevel)
+				//	logger->info("Natural Spell Caster spellCanCast check - spell known is lower level than spellCanCast queried spell. Is this ok?? (this is vanilla code here...)"); // yes
 				return 1;
 			}
 				
