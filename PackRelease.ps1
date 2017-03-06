@@ -35,6 +35,7 @@ copy Release\TemplePlus.dll dist
 copy -Recurse tpdata dist\tpdata
 copy -Recurse dependencies\python-lib dist\tpdata\python-lib
 copy dependencies\bin\d3dcompiler_47.dll dist
+copy $env:VCINSTALLDIR\redist\x86\Microsoft.VC140.CRT\* dist
 
 # Copy QT binaries
 copy $env:QTDIR\bin\Qt5Core.dll dist
