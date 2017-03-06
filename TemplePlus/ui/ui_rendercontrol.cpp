@@ -48,14 +48,14 @@ UiRenderControl::UiRenderControl() : impl(std::make_unique<Impl>())
 	impl->engine = std::make_unique<QQmlEngine>();
 	static TPNetworkAccessManagerFactory namFactory;
 	impl->engine->setNetworkAccessManagerFactory(&namFactory);
-	impl->engine->setBaseUrl(QUrl("tio:///"));
+	impl->engine->setBaseUrl(QUrl::fromLocalFile(QString::fromStdString(tig->GetDataDirectory() + "/")));
 
 	// This ensures we dont accidentally pick up the QtCreatorPlugin for the "TemplePlus" URI
 	// because by default the exe directory is also in the search path
 	QStringList importDirs = QStringList()
 		<< QLibraryInfo::location(QLibraryInfo::Qml2ImportsPath)
-		<< "tio:///qml/"
-		<< "tio:///ui/";
+		<< QString::fromStdString(tig->GetDataDirectory()) + "/qml"
+		<< QString::fromStdString(tig->GetDataDirectory()) + "/ui";
 	impl->engine->setImportPathList(importDirs);
 
 	QObject::connect(impl->engine.get(), &QQmlEngine::warnings, [=](const QList<QQmlError> &warnings) {

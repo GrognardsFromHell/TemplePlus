@@ -128,7 +128,13 @@ public:
 		return *mMovieSystem;
 	}
 
+	const std::string &GetDataDirectory() const {
+		return mDataDirectory;
+	}
+
 private:
+
+	std::string mDataDirectory; // Points to the on-disk location of tpdata
 
 	using TigSystemPtr = std::unique_ptr<class LegacyTigSystem>;
 

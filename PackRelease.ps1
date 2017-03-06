@@ -8,6 +8,11 @@ if (-Not(Test-Path Release\TemplePlus.exe)) {
     Exit
 }
 
+if (-Not(Test-Path env:QTDIR)) {
+    Write-Error "QTDIR environment variable is not defined"
+    Exit
+}
+
 # Create a ZIP file for portable distribution
 if (Test-Path dist) {
     Remove-Item -Recurse dist
@@ -26,9 +31,24 @@ copy Release\ICSharpCode.SharpZipLib.dll dist
 copy Release\FontAwesome.WPF.dll dist
 copy Release\DeltaCompressionDotNet*.dll dist
 copy Release\TemplePlus.exe dist
+copy Release\TemplePlus.dll dist
 copy -Recurse tpdata dist\tpdata
 copy -Recurse dependencies\python-lib dist\tpdata\python-lib
 copy dependencies\bin\d3dcompiler_47.dll dist
+
+# Copy QT binaries
+copy $env:QTDIR\bin\Qt5Core.dll dist
+copy $env:QTDIR\bin\Qt5Gui.dll dist
+copy $env:QTDIR\bin\Qt5Qml.dll dist
+copy $env:QTDIR\bin\Qt5Quick.dll dist
+copy $env:QTDIR\bin\Qt5Network.dll dist
+mkdir dist\platforms
+copy $env:QTDIR\plugins\platforms\qoffscreen.dll dist\platforms
+
+# Copy QML libraries
+mkdir dist\tpdata\qml\QtQuick.2
+copy $env:QTDIR\qml\QtQuick.2\qtquick2plugin.dll dist\tpdata\qml\QtQuick.2
+copy $env:QTDIR\qml\QtQuick.2\qmldir dist\tpdata\qml\QtQuick.2
 
 if (Test-Path env:\APPVEYOR_BUILD_VERSION) {
     $distZipFile = "TemplePlus-$($env:APPVEYOR_BUILD_VERSION).zip"
@@ -53,3 +73,4 @@ if (Test-Path env:\APPVEYOR_BUILD_VERSION) {
 }
 
 "Finished packing the release."
+

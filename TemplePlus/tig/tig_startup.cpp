@@ -82,6 +82,28 @@ static struct TigInternal : temple::AddressTable {
 
 static TigConfig createTigConfig(HINSTANCE hInstance);
 
+static std::string FindTpData() {
+	char ownFilename[MAX_PATH];
+	GetModuleFileNameA(nullptr, ownFilename, MAX_PATH);
+	PathRemoveFileSpecA(ownFilename);
+	PathAppendA(ownFilename, "tpdata");
+	if (PathIsDirectoryA(ownFilename)) {
+		return ownFilename;
+	}
+
+#ifndef TP_RELEASE_BUILD
+	GetModuleFileNameA(nullptr, ownFilename, MAX_PATH);
+	PathRemoveFileSpecA(ownFilename);
+	PathAppendA(ownFilename, "..\\tpdata");
+	if (PathIsDirectoryA(ownFilename)) {
+		return ownFilename;
+	}
+#endif
+
+	return "tpdata"; // Just fall back to this then...
+
+}
+
 TigInitializer::TigInitializer(HINSTANCE hInstance)
 	: mConfig(createTigConfig(hInstance)) {
 
@@ -90,6 +112,9 @@ TigInitializer::TigInitializer(HINSTANCE hInstance)
 
 	StopwatchReporter reporter("TIG initialized in {}");
 	logger->info("Initializing TIG");
+
+	mDataDirectory = FindTpData();
+	logger->info("Using tpdata from {}", mDataDirectory);
 
 	vfs = std::make_unique<temple::TioVfs>();
 
@@ -155,28 +180,6 @@ TigInitializer::TigInitializer(HINSTANCE hInstance)
 	*tigInternal.consoleDisabled = false; // tig init disables console by default
 }
 
-static std::string FindTpData() {
-	char ownFilename[MAX_PATH];
-	GetModuleFileNameA(nullptr, ownFilename, MAX_PATH);
-	PathRemoveFileSpecA(ownFilename);
-	PathAppendA(ownFilename, "tpdata");
-	if (PathIsDirectoryA(ownFilename)) {
-		return ownFilename;
-	}
-
-#ifndef TP_RELEASE_BUILD
-	GetModuleFileNameA(nullptr, ownFilename, MAX_PATH);
-	PathRemoveFileSpecA(ownFilename);
-	PathAppendA(ownFilename, "..\\tpdata");
-	if (PathIsDirectoryA(ownFilename)) {
-		return ownFilename;
-	}
-#endif
-
-	return "tpdata"; // Just fall back to this then...
-
-}
-
 #ifndef TP_RELEASE_BUILD
 static std::string FindPythonLibDir() {
 	char ownFilename[MAX_PATH];
@@ -213,7 +216,7 @@ void TigInitializer::LoadDataFiles() {
 	tio_mkdir("data");
 	tio_path_add("data");
 
-	std::string tpDataPath = FindTpData();
+	std::string tpDataPath = mDataDirectory;
 
 	logger->info("Registering tpdata\\tpgamefiles.dat");
 	if (tio_path_add(fmt::format("{}\\tpgamefiles.dat", tpDataPath).c_str())) {

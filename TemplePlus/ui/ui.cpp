@@ -1750,6 +1750,11 @@ bool UiManager::ProcessMouseMessage(TigMsg & msg)
 			if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_RMB_DOWN && !(mouseMsg.buttonStateFlags & MouseStateFlags::MSF_RMB_RELEASED)) {
 				buttons |= Qt::RightButton;
 			}
+
+			if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_SCROLLWHEEL_CHANGE) {
+				QWheelEvent evt(localPos, mouseMsg.arg3, buttons, Qt::NoModifier);
+				QGuiApplication::sendEvent(view, &evt);
+			}
 			
 			Qt::MouseButton button = Qt::NoButton;
 			QEvent::Type type;
