@@ -18,6 +18,10 @@ if (Test-Path dist) {
     Remove-Item -Recurse dist
 }
 
+function copyToDist($name) {
+	copy $name dist -PassThru | Set-ItemProperty -name isreadonly -Value $false
+}
+
 mkdir dist
 copy Release\TemplePlusConfig.exe dist
 copy Release\TemplePlusConfig.exe.config dist
@@ -35,7 +39,22 @@ copy Release\TemplePlus.dll dist
 copy -Recurse tpdata dist\tpdata
 copy -Recurse dependencies\python-lib dist\tpdata\python-lib
 copy dependencies\bin\d3dcompiler_47.dll dist
-copy $env:VCINSTALLDIR\redist\x86\Microsoft.VC140.CRT\* dist
+
+
+if (Test-Path env:\VCINSTALLDIR) {
+	$runtimeDir = join-path $env:VCINSTALLDIR redist\x86\Microsoft.VC140.CRT
+} else {
+	$runtimeDir = "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\\redist\x86\Microsoft.VC140.CRT\"
+}
+
+if (-Not(Test-Path $runtimeDir)) {
+	Write-Error "Unable to find VC runtime directory: $runtimeDir"
+	Exit
+}
+
+copyToDist $runtimeDir\concrt140.dll 
+copyToDist $runtimeDir\msvcp140.dll 
+copyToDist $runtimeDir\vcruntime140.dll 
 
 # Copy QT binaries
 copy $env:QTDIR\bin\Qt5Core.dll dist
