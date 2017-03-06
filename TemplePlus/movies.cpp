@@ -214,6 +214,8 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 
 	// Create the movie texture we write to
 	auto texture = device.CreateDynamicTexture(BufferFormat::X8R8G8B8, movie->GetWidth(), movie->GetHeight());
+
+	messageQueue->SetSkipProcessing(true); // We'll be the only consumer of input events
 	
 	messageQueue->ProcessMessages();
 
@@ -290,6 +292,8 @@ int HookedPlayMovieBink(const char* filename, const SubtitleLine* subtitles, int
 	movieFuncs.MovieIsPlaying = false;
 	device.ShowCursor();
 
+	messageQueue->SetSkipProcessing(false);
+
 	return 0;
 }
 
@@ -340,7 +344,8 @@ int __cdecl HookedPlayMovieSlide(const char* imageFile, const char* soundFile, c
 
 	auto &shapeRenderer2d = tig->GetShapeRenderer2d();
 	
-	
+	messageQueue->SetSkipProcessing(true); // We'll be the only consumer of input events
+
 	bool keyPressed = false;
 	while (!keyPressed && (!stream.IsValid() || stream.IsPlaying() || sw.GetElapsedMs() < 3000)) {
 		
@@ -378,6 +383,8 @@ int __cdecl HookedPlayMovieSlide(const char* imageFile, const char* soundFile, c
 	device.ShowCursor();
 
 	device.PopRenderTarget();
+
+	messageQueue->SetSkipProcessing(false);
 
 	return 0;
 }

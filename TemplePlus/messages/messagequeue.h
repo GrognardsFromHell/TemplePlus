@@ -20,8 +20,11 @@ public:
 
 	void PollExternalEvents();
 
+	void SetSkipProcessing(bool enable);
+
 private:
 	eastl::deque<Message> mQueue;
+	bool mSkipProcessing = false;
 };
 
 extern MessageQueue *messageQueue;

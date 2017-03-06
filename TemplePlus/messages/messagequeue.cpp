@@ -56,16 +56,18 @@ bool MessageQueue::HandleMessage(const Message& msg) {
 		return false;
 	}
 	
-	if (msg.type == TigMsgType::MOUSE && uiManager->TranslateMouseMessage((TigMouseMsg&)msg.arg1)) {
-		return true;
-	}
-
-	if (uiManager->ProcessMessage(const_cast<TigMsg&>(msg))) {
-		if (msg.type == TigMsgType::TMT_UNK7) {
-			return false;
+	if (!mSkipProcessing) {
+		if (msg.type == TigMsgType::MOUSE && uiManager->TranslateMouseMessage((TigMouseMsg&)msg.arg1)) {
+			return true;
 		}
 
-		return true;
+		if (uiManager->ProcessMessage(const_cast<TigMsg&>(msg))) {
+			if (msg.type == TigMsgType::TMT_UNK7) {
+				return false;
+			}
+
+			return true;
+		}
 	}
 	
 	return false;
@@ -93,6 +95,11 @@ void MessageQueue::PollExternalEvents()
 
 	static auto sound_process_loop = temple::GetPointer<void()>(0x101e4360);
 	sound_process_loop();
+}
+
+void MessageQueue::SetSkipProcessing(bool enable)
+{
+	mSkipProcessing = enable;
 }
 
 MessageQueue* messageQueue = nullptr;
