@@ -87,6 +87,10 @@ struct LgcyWidget {
 	}
 	
 	bool CanHandleMessage() const {
+		if (widgetId == -1){
+			auto dummy = 1;
+			return false;
+		}
 		return !!handleMessage;
 	}
 

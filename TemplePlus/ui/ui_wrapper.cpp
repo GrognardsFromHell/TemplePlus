@@ -67,6 +67,9 @@ static int ui_widget_set(LgcyWidgetId id, const LgcyWidget *widgetData) {
 		throw new TempleException(format("Trying to access widget id {} which does not exist.", id));
 	}
 	assert(widgetData->size == widget->size);
+	if (widgetData->widgetId == -1){
+		((LgcyWidget *)widgetData)->widgetId = id;
+	}
 	memcpy(widget, widgetData, widget->size);
 	return 0;
 }
