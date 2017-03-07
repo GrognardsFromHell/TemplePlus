@@ -65,8 +65,6 @@ QJSValue TPQmlGlobals::cinematics()
 	return arr;
 }
 
-#include <QtGui/5.8.0/QtGui/private/qguiapplication_p.h>
-
 void TPQmlGlobals::playCinematic(const QJSValue & cinematic)
 {
 	int index = cinematic.property("id").toInt();
@@ -78,9 +76,6 @@ void TPQmlGlobals::playCinematic(const QJSValue & cinematic)
 
 	qDebug() << "Playing cinematic" << movieRecord.movieId << "Sound" << movieRecord.soundId;
 	
-	// Strip window focus so key events go to us
-	QWindowSystemInterface::handleWindowActivated(nullptr);
-
 	if (movieRecord.soundId != -1) {
 		sound.PlaySound(movieRecord.soundId);
 	}	

@@ -34,6 +34,12 @@ Item {
             height: 357
         }
 
+        DialogTitle {
+            text: qsTr("mainmenu:1000")
+            anchors.horizontalCenter: parent.horizontalCenter
+            y:  20
+        }
+
         Component {
             id: cinematicSelector
             Label {

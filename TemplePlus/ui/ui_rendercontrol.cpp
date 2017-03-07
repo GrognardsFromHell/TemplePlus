@@ -35,6 +35,9 @@ Q_IMPORT_PLUGIN(QSGD3D11Adaptation)
 
 UiRenderControl::UiRenderControl() : impl(std::make_unique<Impl>())
 {
+	// Make sure it's using grayscale anti-aliasing
+	qputenv("QT_SUBPIXEL_AA_TYPE", "NONE");
+
 	QQuickWindow::setSceneGraphBackend("d3d11");
 	QQuickWindow::setDefaultAlphaBuffer(true);
 

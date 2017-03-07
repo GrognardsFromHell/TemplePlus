@@ -1,3 +1,4 @@
 {
-	"mainmenu": "mes/MainMenu.mes"
+	"mainmenu": "mes/MainMenu.mes",
+	"options": "mes/options_text.mes"
 }
