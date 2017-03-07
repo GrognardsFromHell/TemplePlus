@@ -178,7 +178,7 @@ public:
 	bool IsSelectingSpellsOnLevelup(objHndl handle, Stat classEnum);
 	void LevelupInitSpellSelection(objHndl handle, Stat classEnum, int classLvlNew = -1, int classLvlIncrease = 1);
 	bool LevelupSpellsCheckComplete(objHndl handle, Stat classEnum);
-	void LevelupSpellsFinalize(objHndl handle, Stat classEnum, int classLvlNew = -1);
+	void LevelupSpellsFinalize(objHndl handle, Stat classEnum, int classLvlNew = -1); // called with default arg (-1) for when the class isn't new. So the PRCs with args denoting chosen base classes won't get a classLvlNew arg (e.g. see Mystic Theurge which expects different args)
 	
 protected:
 	std::map<int, D20ClassSpec> classSpecs;
