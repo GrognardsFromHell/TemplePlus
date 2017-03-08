@@ -232,6 +232,19 @@ public:
 
 UiItemCreation::UiItemCreation(const UiSystemConf &config) {
 
+	for (int i = 0; i < 30; i++) {
+		GoldCraftCostVsEffectiveBonus[i] = 1000 * i*i;
+		GoldBaseWorthVsEffectiveBonus[i] = GoldCraftCostVsEffectiveBonus[i] * 2;
+	}
+
+	craftedItemExistingEffectiveBonus = -1; // stores the crafted item existing (pre-crafting) effective bonus
+											//craftingItemIdx = -1;
+
+	memset(numItemsCrafting, 0, sizeof(numItemsCrafting));
+	memset(craftedItemHandles, 0, sizeof(craftedItemHandles));
+	craftedItemNamePos = 0;
+	craftingWidgetId = -1;
+
 	LoadMaaSpecs();
 
 	mCreateBtnRect = TigRect(133, 339, 112, 22);
