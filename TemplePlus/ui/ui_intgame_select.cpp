@@ -164,3 +164,7 @@ int UiIntgameSelect::GetId()
 {
 	return *addresses.id;
 }
+
+int UiIntgameSelect::GetCastNowWndId(){
+	return temple::GetRef<int>(0x10BE5C54);
+}

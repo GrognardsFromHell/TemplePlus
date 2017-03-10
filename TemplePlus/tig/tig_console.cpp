@@ -306,6 +306,44 @@ void Console::RenderCheatsMenu()
 				ImGui::Text(cheatsInputDescr.c_str());
 			}
 
+			if (ImGui::BeginMenu("Speedup")){
+				auto speedupCb = [](int speedupVal) {
+					auto N_party = party.GroupListGetLen();
+					for (auto i = 0; i < N_party; i++) {
+						auto dude = party.GroupListGetMemberN(i);
+						if (!dude) continue;
+						auto speedRun = 1.0f;
+						if (speedupVal == 1) {
+							speedRun = 1.6f;
+						}
+						else if (speedupVal == 2)
+						{
+							speedRun = 3.0f;
+						}
+						else if (speedupVal == 4) {
+							speedRun = 5.0f;
+						}
+						objSystem->GetObject(dude)->SetFloat(obj_f_speed_run, speedRun);
+					}
+				};
+				if (ImGui::MenuItem("Normal")){
+					speedupCb(0);
+				}
+				if (ImGui::MenuItem("Faster")) {
+					speedupCb(1);
+				}
+				if (ImGui::MenuItem("Fast")) {
+					speedupCb(2);
+				}
+				if (ImGui::MenuItem("Cheetah")) {
+					speedupCb(4);
+				}
+				
+				ImGui::EndMenu();
+			}
+			if (ImGui::IsItemHovered())
+				ImGui::SetTooltip("Speeds up your party's walk speed.");
+
 			ImGui::EndMenu();
 		}
 		if (ImGui::BeginMenu("Debug")) {

@@ -218,6 +218,7 @@ BOOL UiPicker::FreeCurrentPicker() {
 	auto &picker = GetActivePicker();
 	picker.args.result.FreeObjlist();
 	uiManager->SetHidden(uiIntgameSelect.GetId(), true);
+	uiManager->SetHidden(uiIntgameSelect.GetCastNowWndId(), true);
 
 	if (picker.cursorStackCount_Maybe){
 		mouseFuncs.ResetCursor();
