@@ -644,6 +644,10 @@ PYBIND11_PLUGIN(tp_dispatcher){
 			SpellPacketBody* spPkt = (SpellPacketBody*)evtObj.data1;
 			return *spPkt;
 		}, "Used for CasterLevelMod callbacks to get a spellpacket from the data1 field")
+		.def("get_d20_action", [](DispIoD20Query& evtObj)->D20Actn& {
+			D20Actn* d20a= (D20Actn*)evtObj.data1;
+			return *d20a;
+		}, "Used for Q_IsActionInvalid_CheckAction callbacks to get a D20Action from the data1 field")
 		;
 
 	py::class_<DispIOTurnBasedStatus>(m, "EventObjTurnBasedStatus", py::base<DispIO>())

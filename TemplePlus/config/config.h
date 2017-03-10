@@ -84,6 +84,8 @@ struct TemplePlusConfig
 	bool tolerantNpcs = false; // NPCs tolerate monster party members
 	std::string fogOfWar = "Normal";
 	bool disableFogOfWar = false; // Previously: -nofog
+	double speedupFactor = 1.0;
+	bool equalizeMoveSpeed = true;
 
 	std::unordered_map<std::string, VanillaSetting> vanillaSettings;
 	void AddVanillaSetting(const std::string &name, 

@@ -4,13 +4,15 @@
 #include <temple/dll.h>
 #include <infrastructure/meshes.h>
 #include <graphics/math.h>
+#include "config/config.h"
 
 using DirectX::XMFLOAT4X3;
 
 #pragma pack(push, 8)
 
 using AasHandle = uint32_t;
-
+struct AnimatedModel;
+struct SkaAnimation;
 struct SkmFile {
 };
 
@@ -52,22 +54,48 @@ struct IAnimatedModel {
 	virtual void Method26() = 0;
 	virtual void HasBone() = 0;
 	virtual void AddReplacementMaterial() = 0;
-	virtual void GetDistPerSec() = 0;
+	virtual double GetDistPerSec() = 0;
 	virtual void GetRotationPerSec() = 0;
 };
 
 struct IAnimPlayer {
 	virtual ~IAnimPlayer() = 0;
+	virtual void GetDistPerSec(float* speedOut) = 0;
 };
 
 struct AnimPlayer : IAnimPlayer {
+	AnimatedModel * ownerAnim;
+	int boneIdx;
+	int fieldC;
+	float elapsedTimeRelated;
+	float field14;
+	int eventHandlingDepth;
+	AnimPlayer * nextRunningAnim;
+	AnimPlayer * prevRunningAnim;
+	SkaAnimation * skaAnimation;
+	int streamCount;
+	void * streams[4];
+	void * streamRelated[4];
+	int field4C;
+	int field50;
+	void* streamStuff;
+	int field58;
+	int currentTime;
+	int duration;
+	int frameRate;
+	float distancePerSecond;
+	void * eventListener;
+	int eventCount;
+	void*events;
 public:
 };
+
 
 struct VariationSelector {
 	int variationId;
 	float factor;
 };
+const int asdf = offsetof(AnimPlayer, field4C);
 
 struct AasClothSphere {
 	int boneId;
@@ -184,6 +212,22 @@ struct AasAnimation {
 	char* skmFilename;
 };
 
+struct SkaAnimation
+{
+	char name[64];
+	char driveType;
+	char loopable;
+	int16_t eventCount;
+	int eventOffset;
+	int streamCount;
+	int16_t frameCount;
+	int16_t variationId;
+	int frameRate;
+	int distancePerSecond;
+	int dataOffset;
+	char field5C[144];
+};
+
 static_assert(temple::validate_size<AasClothSphere, 0x6C>(), "AasClothSphere has the wrong size");
 static_assert(temple::validate_size<AasClothCylinder, 0x70>(), "AasClothCylinder has the wrong size");
 static_assert(temple::validate_size<AasSubmesh, 0x48>(), "AasSubmesh has the wrong size");
@@ -226,6 +270,62 @@ public:
 
 			                                             return AAS_OK;
 		                                             });
+
+		// AasAdvance
+		static int(__cdecl*orgAasAdvance)(AasHandle, float, float, float, void*, void*)	
+		= replaceFunction<int (__cdecl)(AasHandle, float, float, float, void*, void*)>(0x10262C10,
+			[](AasHandle handle, float timeAmt, float distAmt, float rotAmt, void* animParams, void* a6){
+			
+			if (distAmt > 0){
+				auto dummy = 1;
+			}
+			if (rotAmt != 0.0f)
+			{
+				auto dumy = 1;
+			}
+
+			return orgAasAdvance(handle, timeAmt, distAmt, rotAmt, animParams, a6);
+		});
+
+		// GetDistPerSec
+		static double (__cdecl*orgGetDistPerSec)(AasHandle) = replaceFunction<double(AasHandle)>(0x10263DA0, [](AasHandle handle)->double
+		{
+			if (!handle || handle >= sMaxAnims)
+				return 0.0;
+			auto &aasAnim = hooks.mAnims[handle];
+			if (aasAnim.freed & 1){
+				return 0.0;
+			}
+
+			auto model = aasAnim.model;
+			auto val = model->GetDistPerSec();
+
+			auto speed = 0.0f;
+			auto runningAnim = model->runningAnimsHead;
+			while (runningAnim){
+				auto nextRunningAnim = runningAnim->nextRunningAnim;
+				//runningAnim->GetDistPerSec(&speed);
+
+				if (runningAnim->skaAnimation->driveType == 1 && runningAnim->field14 > 0.0){
+					if (config.equalizeMoveSpeed)
+						speed = runningAnim->distancePerSecond; // *config.speedupFactor; // disregard scaling
+					else
+						speed = runningAnim->ownerAnim->scale * runningAnim->distancePerSecond;
+				}
+
+				runningAnim = nextRunningAnim;
+			}
+
+			// return val;
+			if (speed > 0)
+				return speed;
+			return val; // failsafe!
+		});
+
+		/*static void(__thiscall*orgGetDistPerSec_Class2_Impl)() = replaceFunction<void(__thiscall)()>(0x1026AB10, [](){
+			return orgGetDistPerSec_Class2_Impl();
+		});*/
+
 	}
 } hooks;
 

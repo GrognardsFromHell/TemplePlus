@@ -166,7 +166,8 @@ static ConfigSetting configSettings[] = {
 	CONF_BOOL(laxRules),
 	CONF_BOOL(nonCoreMaterials),
 	CONF_BOOL(tolerantNpcs),
-	CONF_STRING(fogOfWar)
+	CONF_STRING(fogOfWar),
+	CONF_DOUBLE(speedupFactor)
 };
 
 void TemplePlusConfig::Load() {

@@ -494,6 +494,7 @@ public:
 	static int __cdecl GoalStateFunc130(AnimSlot& slot);
 	static int __cdecl GoalStateFuncPickpocket(AnimSlot &slot);
 	
+	static float __cdecl HookedGetRunSpeed(objHndl handle, obj_f field);
 } gsFuncs;
 
 bool AnimationGoals::PushRotate(objHndl obj, float rotation) {
@@ -1456,6 +1457,8 @@ int GoalStateFuncs::GoalStateFuncPickpocket(AnimSlot & slot)
 	return TRUE;
 }
 
+
+
 int GoalStateFuncs::GoalStateFunc83(AnimSlot &slot) {
   //logger->debug("GSF83 for {}, current goal {} ({})", description.getDisplayName(slot.animObj), animGoalTypeNames[slot.pCurrentGoal->goalType], slot.currentGoal);
   auto flags = slot.flags;
@@ -1531,6 +1534,8 @@ public:
   static void RasterizeLineScreenspace(int64_t x, int64_t y, int64_t tgtX, int64_t tgtY, LineRasterPacket &s300, void(__cdecl*callback)(int64_t, int64_t, LineRasterPacket &));
 
   static BOOL TargetDistChecker(objHndl handle, objHndl tgt);
+
+  static float HookedGetRunSpeed(objHndl handle, obj_f field);
 
   void apply() override {
 
@@ -1690,6 +1695,8 @@ public:
 	// goal_is_critter_prone
 	replaceFunction<BOOL(AnimSlot&)>(0x1000E270, gsFuncs.GoalStateFuncIsCritterProne);
 
+
+	writeCall(0x100148EA, HookedGetRunSpeed);
 
     // Register a debug function for dumping the anims
     RegisterDebugFunction("dump_anim_goals", Dump);
@@ -2317,4 +2324,14 @@ BOOL AnimSystemHooks::TargetDistChecker(objHndl handle, objHndl tgt){
 	if (config.debugMessageEnable)
 		logger->debug("animpath failed!");
 	return FALSE;
+}
+
+float AnimSystemHooks::HookedGetRunSpeed(objHndl handle, obj_f field){ // this is not a good fix since halflings are pre-assigned a faster move speed factor in the Protos
+
+	auto obj = objSystem->GetObject(handle);
+	// auto modelScale = obj->GetInt32(obj_f_model_scale) / 100.0f;
+	auto val = obj->GetFloat(field);
+	if (config.equalizeMoveSpeed && party.IsInParty(handle))
+		return config.speedupFactor;
+	return val;
 }

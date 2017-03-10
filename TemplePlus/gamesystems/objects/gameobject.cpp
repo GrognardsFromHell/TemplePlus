@@ -43,6 +43,10 @@ int32_t GameObjectBody::GetInt32(obj_f field) const
 	if (field == obj_f_type) {
 		return type;
 	}
+	if (field == obj_f_model_scale)
+	{
+		auto dummy = 1;
+	}
 
 	// For 32-bit integers, instead of a pointer to the value, 
 	// the pointer itself is the 32-bit value
@@ -58,6 +62,11 @@ int32_t GameObjectBody::GetInt32(obj_f field) const
 float GameObjectBody::GetFloat(obj_f field) const
 {
 	Expects(objectFields.GetType(field) == ObjectFieldType::Float32);
+
+	if (field == obj_f_speed_run)
+	{
+		auto dummy = 1;
+	}
 
 	// For 32-bit floats, instead of a pointer to the value, 
 	// the pointer itself is the 32-bit float
