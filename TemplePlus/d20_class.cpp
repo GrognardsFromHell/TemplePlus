@@ -8,6 +8,7 @@
 #include "gamesystems/d20/d20stats.h"
 #include "gamesystems/legacysystems.h"
 #include "gamesystems/deity/legacydeitysystem.h"
+#include "ui/ui_char_editor.h"
 
 D20ClassSystem d20ClassSys;
 
@@ -27,6 +28,8 @@ struct D20ClassSystemAddresses : temple::AddressTable
 
 class D20ClassHooks : public TempleFix
 {
+
+	static int HookedLvl1SkillPts(int intMod);
 	void apply() override {
 
 		// GetClassHD
@@ -76,6 +79,10 @@ class D20ClassHooks : public TempleFix
 			result += d20ClassSys.GetSkillPts(classEnum);
 			return result;
 		});
+
+		writeNoops(0x10181441);
+		writeNoops(0x1018144E);
+		writeCall(0x10181436, HookedLvl1SkillPts);
 
 		// GetNumSpellsPerDayFromClass
 		replaceFunction<int(objHndl, Stat, int , int )>(0x100F5660, [](objHndl handle, Stat classCode, int spellLvl, int classLvl)
@@ -627,4 +634,13 @@ void D20ClassSystem::LevelupInitSpellSelection(objHndl handle, Stat classEnum, i
 		dispatch.DispatchLevelupSystemEvent(handle, classEnum, DK_LVL_Spells_Activate);
 	else
 		pythonClassIntegration.LevelupInitSpellSelection(handle, classEnum, classLvlNew);
+}
+
+int D20ClassHooks::HookedLvl1SkillPts(int intStatLvl){
+
+	auto result = (intStatLvl - 10) / 2;
+	auto &selPkt = chargen.GetCharEditorSelPacket();
+	auto classLevelled = selPkt.classCode;
+	result += d20ClassSys.GetSkillPts(classLevelled);
+	return result;
 }

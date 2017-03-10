@@ -579,6 +579,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 			} )
 			.def("set_projectile", [](SpellPacketBody &pkt, int idx, objHndl projectile){
 				if (idx >=0 && idx < 5){
+					spellSys.GetSpellPacketBody(pkt.spellId, &pkt);
 					pkt.projectiles[idx] = projectile;
 					if (pkt.projectileCount <= idx)
 						pkt.projectileCount = idx+1;
