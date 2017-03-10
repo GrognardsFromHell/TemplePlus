@@ -150,7 +150,7 @@ struct LegacyFeatSystem : temple::AddressTable
 	// weapon feats handling
 	WeaponTypes GetWeaponType(feat_enums feat); // gets the associated weapon type
 	uint32_t WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat classBeingLeveled, WeaponTypes wpnType);
-	feat_enums GetFeatForWeaponType(WeaponTypes wt, feat_enums baseFeat); // for stuff like Weapon Specialization/Focus etc.
+	feat_enums GetFeatForWeaponType(WeaponTypes wt, feat_enums baseFeat = FEAT_NONE); // for stuff like Weapon Specialization/Focus etc.
 
 	int IsFeatPartOfMultiselect(feat_enums feat); // hidden feats that are only selectable in a submenu
 	bool IsFeatMultiSelectMaster(feat_enums feat);

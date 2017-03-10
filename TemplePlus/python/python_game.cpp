@@ -500,6 +500,18 @@ PyObject* PyGame_GetWpnTypeForFeat(PyObject*, PyObject* args) {
 	return PyInt_FromLong(feats.GetWeaponType(featCode));
 }
 
+PyObject* PyGame_GetFeatForWpnType(PyObject*, PyObject* args) {
+	WeaponTypes wt;
+	feat_enums baseFeat = FEAT_NONE;
+	if (!PyArg_ParseTuple(args, "i|i:game.get_feat_for_weapon_type", &wt, &baseFeat)) {
+		return nullptr;
+	}
+
+	return PyInt_FromLong(feats.GetFeatForWeaponType(wt, baseFeat));
+}
+
+
+
 PyObject* PyGame_DamageTypeMatch(PyObject*, PyObject* args) {
 	DamageType dt1, dt2;
 	if (!PyArg_ParseTuple(args, "ii:game.damage_type_match", &dt1, &dt2)) {
@@ -1260,6 +1272,7 @@ static PyMethodDef PyGameMethods[]{
 	{"getproto", PyGame_GetProto, METH_VARARGS, NULL },
 	{"get_bab_for_class", PyGame_GetBabForClass,METH_VARARGS, NULL },
 	{ "get_weapon_type_for_feat", PyGame_GetWpnTypeForFeat,METH_VARARGS, NULL },
+	{ "get_feat_for_weapon_type", PyGame_GetFeatForWpnType,METH_VARARGS, NULL },
 	{ "get_weapon_damage_type", PyGame_GetWpnDamType,METH_VARARGS, NULL },
 	{"is_save_favored_for_class", PyGame_IsSaveFavoerdForClass,METH_VARARGS, NULL },
 	{ "is_lax_rules", PyGame_IsLaxRules,METH_VARARGS, NULL },

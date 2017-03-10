@@ -593,6 +593,14 @@ WeaponTypes LegacyFeatSystem::GetWeaponType(feat_enums feat){
 	else if (IsFeatPropertySet(feat, FPF_IMPR_CRIT_ITEM)) {
 		return (WeaponTypes)(wt_gauntlet + (feat - FEAT_IMPROVED_CRITICAL_GAUNTLET));
 	}
+	else if (IsFeatPropertySet(feat, FPF_MARTIAL_WEAP_ITEM)){
+		return (WeaponTypes(wt_throwing_axe + (feat - FEAT_MARTIAL_WEAPON_PROFICIENCY_THROWING_AXE)));
+	}
+	else if (IsFeatPropertySet(feat, FPF_EXOTIC_WEAP_ITEM)){
+		return (WeaponTypes)(wt_halfling_kama + (feat - FEAT_EXOTIC_WEAPON_PROFICIENCY_HALFLING_KAMA));
+	}
+
+	return wt_unarmed_strike_medium_sized_being;
 }
 
 uint32_t LegacyFeatSystem::WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat classBeingLeveled, WeaponTypes wpnType){
@@ -610,6 +618,15 @@ feat_enums LegacyFeatSystem::GetFeatForWeaponType(WeaponTypes wt, feat_enums bas
 			}
 		}
 		return FEAT_NONE;
+	}
+
+	if (baseFeat == FEAT_NONE){ // assume weapon proficiency
+		if (weapons.IsExotic(wt))
+			baseFeat = FEAT_EXOTIC_WEAPON_PROFICIENCY;
+		else if (weapons.IsMartial(wt))
+			baseFeat = FEAT_MARTIAL_WEAPON_PROFICIENCY;
+		else
+			baseFeat = FEAT_SIMPLE_WEAPON_PROFICIENCY;
 	}
 
 	if (baseFeat == FEAT_WEAPON_FOCUS) {
@@ -633,14 +650,19 @@ feat_enums LegacyFeatSystem::GetFeatForWeaponType(WeaponTypes wt, feat_enums bas
 			return (feat_enums)(FEAT_IMPROVED_CRITICAL_GAUNTLET + (wt - wt_gauntlet));
 	}
 	else if (baseFeat == FEAT_EXOTIC_WEAPON_PROFICIENCY){
-		
+		if (wt >= wt_halfling_kama && wt <= wt_net) {
+			return (feat_enums)(FEAT_EXOTIC_WEAPON_PROFICIENCY_HALFLING_KAMA + (wt - wt_halfling_kama));
+		}
 	}
 	else if (baseFeat == FEAT_MARTIAL_WEAPON_PROFICIENCY){
-		
+		if (wt >= wt_throwing_axe && wt <= wt_composite_longbow){
+			return (feat_enums)(FEAT_MARTIAL_WEAPON_PROFICIENCY_THROWING_AXE + (wt - wt_throwing_axe));
+		}
 	}
 	else if (baseFeat == FEAT_SIMPLE_WEAPON_PROFICIENCY){
-		
+		return FEAT_SIMPLE_WEAPON_PROFICIENCY;
 	}
+
 	return FEAT_NONE;
 }
 
