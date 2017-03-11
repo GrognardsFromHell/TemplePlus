@@ -9,7 +9,7 @@ static struct ObjListAddresses : temple::AddressTable {
 	void(__cdecl *ObjListTile)(locXY loc, int flags, ObjListResult &result);
 	void(__cdecl *ObjListRect)(TileRect &trect, ObjectListFilter olcCritters, ObjListResult& result);
 	void(__cdecl *ObjListVicinity)(locXY loc, int flags, ObjListResult &result);
-	void(__cdecl *ObjListRadius)(LocAndOffsets loc, float radius, float unk1, float unk2, int flags, ObjListResult &result);
+	void(__cdecl *ObjListRadius)(LocAndOffsets loc, float radius, float angleMin, float angleMax, int flags, ObjListResult &result);
 	void(__cdecl *ObjListFollowers)(objHndl critter, ObjListResult &result);
 	int(__cdecl *ObjListFree)(ObjListResult &result);
 	ObjListResultItem *(__cdecl*ObjlistPop)();
@@ -55,6 +55,10 @@ int ObjListResult::CountResults(){
 		node = node->next;
 	}
 	return count;
+}
+
+void ObjListResult::ListRadius(LocAndOffsets origin, float rangeInches, float angleMin, float angleSize, int filter){
+	addresses.ObjListRadius(origin, rangeInches, angleMin, angleSize, filter, *this);
 }
 
 ObjList::ObjList() {

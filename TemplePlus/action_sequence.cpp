@@ -424,14 +424,17 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 		auto curSeq = *actSeqSys.actSeqCur;
 		curSeq->spellPktBody.spellRange *= ((MetaMagicData)metaMagicData).metaMagicEnlargeSpellCount + 1;
 		SpellEntry spellEntry;
-		if (spellSys.spellRegistryCopy(spellEnum, &spellEntry))
-		{
+		if (spellSys.spellRegistryCopy(spellEnum, &spellEntry)){
 			spellEntry.radiusTarget *= ((MetaMagicData)metaMagicData).metaMagicWidenSpellCount + 1;
 		}
 		PickerArgs pickArgs;
 		spellSys.pickerArgsFromSpellEntry(&spellEntry, &pickArgs, curSeq->spellPktBody.caster, curSeq->spellPktBody.casterLevel);
 		pickArgs.spellEnum = spellEnum;
 		pickArgs.callback = [](const PickerResult & result, void* cbArgs) { actSeqSys.SpellPickerCallback(result, (SpellPacketBody*)cbArgs); };
+		// Modify the PickerArgs
+		if (d20Sys.globD20Action->d20ActType == D20A_PYTHON_ACTION)
+			pythonD20ActionIntegration.ModifyPicker(d20Sys.globD20Action->data1, &pickArgs);
+
 		*actSeqPickerActive = 1;
 		uiPicker.ShowPicker(pickArgs, &curSeq->spellPktBody);
 		*addresses.actSeqPickerAction = *d20Sys.globD20Action;

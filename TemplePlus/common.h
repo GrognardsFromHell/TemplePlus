@@ -250,7 +250,8 @@ enum class UiPickerType : uint64_t {
 	Any30Feet = 0x800,
 	Primary30Feet = 0x1000,
 	EndEarlyMulti = 0x2000,
-	LocIsClear = 0x4000
+	LocIsClear = 0x4000,
+	PickOrigin = 0x8000 // New! denotes that the spell's point of origin can be freely chosen
 };
 
 struct ObjListResultItem {
@@ -304,6 +305,7 @@ struct ObjListResult
 	void PrependHandle(objHndl handle);
 	void IncreaseObjListCount();
 	int CountResults();
+	void ListRadius(LocAndOffsets origin, float rangeInches, float angleMin, float angleMax, int filter);
 
 };
 

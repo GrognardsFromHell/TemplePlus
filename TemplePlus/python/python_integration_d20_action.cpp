@@ -14,6 +14,7 @@
 #include "d20.h"
 #include "action_sequence.h"
 #include "float_line.h"
+#include "ui/ui_picker.h"
 
 namespace py = pybind11;
 using namespace pybind11;
@@ -52,6 +53,29 @@ PYBIND11_PLUGIN(tp_actions) {
 		.def("add_action", [](ActnSeq & actSeq, D20Actn & d20a){
 			actSeq.d20ActArray[actSeq.d20ActArrayNum++] = d20a;
 		})
+		;
+
+	py::class_<PickerArgs>(m, "PickerArgs")
+		.def_readwrite("spell_enum", &PickerArgs::spellEnum)
+		.def_readwrite("caster", &PickerArgs::caster)
+		.def_readwrite("mode_target", &PickerArgs::modeTarget)
+		.def("get_base_mode_target", &PickerArgs::GetBaseModeTarget)
+		.def("set_mode_target_flag", &PickerArgs::SetModeTargetFlag)
+		.def("is_mode_target_flag_set", &PickerArgs::IsModeTargetFlagSet)
+			;
+
+	py::enum_<UiPickerType>(m, "ModeTarget")
+		.value("Single", UiPickerType::Single)
+		.value("Cone", UiPickerType::Cone)
+		.value("Area", UiPickerType::Area)
+		.value("Personal", UiPickerType::Personal)
+		.value("Ray", UiPickerType::Ray)
+		.value("Wall", UiPickerType::Wall)
+		.value("EndEarlyMulti", UiPickerType::EndEarlyMulti)
+		.value("OnceMulti", UiPickerType::OnceMulti)
+		.value("Any30Feet", UiPickerType::Any30Feet)
+		.value("PickOrigin", UiPickerType::PickOrigin)
+		.export_values()
 		;
 
 	m.def("add_to_seq", [](D20Actn & d20a, ActnSeq & actSeq){
@@ -154,6 +178,23 @@ int PythonD20ActionIntegration::GetTargetingClassification(int actionEnum){
 	return GetInt(actionEnum, D20ActionSpecFunc::GetTargetingClassification);
 }
 
+void PythonD20ActionIntegration::ModifyPicker(int actionEnum, PickerArgs * pickArgs){
+	auto actionSpecEntry = mScripts.find(actionEnum);
+	if (actionSpecEntry == mScripts.end()) {
+		return;
+	}
+
+	py::object pbPicker = py::cast(pickArgs);
+
+	auto dispPyArgs = Py_BuildValue("(O)", pbPicker.ptr());
+
+	auto result = (ActionErrorCode)RunScriptDefault0(actionSpecEntry->second.id, (EventId)D20ActionSpecFunc::ModifyPicker, dispPyArgs);
+
+	Py_DECREF(dispPyArgs);
+
+	return;
+}
+
 ActionCostType PythonD20ActionIntegration::GetActionCostType(int actionEnum){
 	return (ActionCostType)GetInt(actionEnum, D20ActionSpecFunc::GetActionCostType);
 }
@@ -218,6 +259,7 @@ static std::map<D20ActionSpecFunc, std::string> D20ActionSpecFunctions = {
 	{ D20ActionSpecFunc::GetTargetingClassification,"GetTargetingClassification" },
 	{ D20ActionSpecFunc::GetActionCostType,"GetActionCostType" },
 	{ D20ActionSpecFunc::AddToSequence,"AddToSequence" },
+	{ D20ActionSpecFunc::ModifyPicker,"ModifyPicker" },
 	{ D20ActionSpecFunc::ProjectileHit,"ProjectileHit" },
 	
 	

@@ -9,6 +9,7 @@ enum class D20ActionSpecFunc : int {
 	GetTargetingClassification,
 	GetActionCostType,
 	AddToSequence,
+	ModifyPicker,
 	ProjectileHit
 };
 
@@ -16,6 +17,7 @@ enum class D20ActionSpecFunc : int {
 struct D20Actn;
 struct ActnSeq;
 struct TurnBasedStatus;
+struct PickerArgs;
 enum ActionErrorCode : uint32_t;
 
 class PythonD20ActionIntegration : public PythonIntegration {
@@ -29,6 +31,7 @@ public:
 
 	int GetActionDefinitionFlags(int actionEnum);
 	int GetTargetingClassification(int actionEnum);
+	void ModifyPicker(int actionEnum, PickerArgs * pickArgs);
 	ActionCostType GetActionCostType(int actionEnum);
 
 

@@ -1098,7 +1098,24 @@ static PyObject* PySpellStore_IsAreaSpell(PyObject* obj, PyObject* args) {
 	}
 
 	return PyInt_FromLong(spEntry.IsBaseModeTarget(UiPickerType::Area));
+}
 
+static PyObject* PySpellStore_IsModeTarget(PyObject* obj, PyObject* args) {
+	auto self = (PySpellStore*)obj;
+	if (!self->spellData.spellEnum)
+		return PyInt_FromLong(0);
+
+	SpellEntry spEntry(self->spellData.spellEnum);
+	if (!spEntry.spellEnum) {
+		return PyInt_FromLong(0);
+	}
+
+	int modeTarget;
+	if (!PyArg_ParseTuple(args, "i:PySpellStore.is_mode_target", &modeTarget)) {
+		return PyInt_FromLong(0);
+	}
+
+	return PyInt_FromLong(spEntry.IsBaseModeTarget((UiPickerType)modeTarget));
 }
 
 static PyObject* PySpellStore_IsUsedUp(PyObject* obj, PyObject* args) {
@@ -1111,6 +1128,7 @@ static PyObject* PySpellStore_IsUsedUp(PyObject* obj, PyObject* args) {
 
 static PyMethodDef PySpellStoreMethods[] = {
 	{"is_area_spell", PySpellStore_IsAreaSpell, METH_VARARGS, NULL },
+	{"is_mode_target", PySpellStore_IsModeTarget, METH_VARARGS, NULL },
 	{"is_naturally_cast", PySpellStore_IsNaturallyCast, METH_VARARGS, NULL },
 	{"is_used_up", PySpellStore_IsUsedUp, METH_VARARGS, NULL },
 	{ NULL, NULL, NULL, NULL }

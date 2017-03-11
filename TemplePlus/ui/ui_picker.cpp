@@ -148,6 +148,12 @@ class UiPickerHooks : TempleFix
 			return uiPicker.FreeCurrentPicker();
 		});
 
+		// SetConeTargets
+		replaceFunction<BOOL(__cdecl)(LocAndOffsets *, PickerArgs*)>(0x100BA6A0, [](LocAndOffsets * mouseLoc, PickerArgs* args){
+			uiPicker.SetConeTargets(mouseLoc, args);
+			return 1;
+		});
+
 	}
 } uiPickerHooks;
 
@@ -252,9 +258,54 @@ uint32_t UiPicker::SetSingleTarget(objHndl objHnd, PickerArgs* pickerArgs)
 	return addresses.sub_100BA480(objHnd, pickerArgs);
 }
 
-void UiPicker::SetConeTargets(LocAndOffsets* locAndOffsets, PickerArgs* pickerArgs)
+void UiPicker::SetConeTargets(LocAndOffsets* mouseLoc, PickerArgs* pickerArgs)
 {
-	addresses.sub_100BA6A0(locAndOffsets, pickerArgs);
+	auto &pickRes = pickerArgs->result;
+	if (pickerArgs){
+		pickRes.FreeObjlist();
+	}
+
+	pickRes.flags |= (PickerResultFlags::PRF_HAS_LOCATION | PickerResultFlags::PRF_HAS_MULTI_OBJ);
+
+	auto originator = pickerArgs->caster;
+	LocAndOffsets originLoc;
+	locSys.getLocAndOff(originator, &originLoc);
+
+	auto dir = locSys.GetDirectionVector(originLoc, *mouseLoc);
+
+	auto coneTgtLoc = *mouseLoc;
+
+	auto coneOrigin = originLoc;
+	auto angleSize = pickerArgs->degreesTarget * M_PI / 180.0;
+	auto angleStart = atan2(dir.x, dir.y) - angleSize*0.5 + M_PI * 3 / 4;
+	auto rangeInches = pickerArgs->radiusTarget * INCH_PER_FEET;
+
+	if (pickerArgs->IsModeTargetFlagSet(UiPickerType::PickOrigin)){
+		// mouseLoc becomes the coneOrigin
+		auto newTgtLoc = *mouseLoc;
+		newTgtLoc.off_x += rangeInches * dir.x;
+		newTgtLoc.off_y += rangeInches * dir.y;
+		newTgtLoc.Regularize();
+		coneOrigin = *mouseLoc;
+		coneTgtLoc = newTgtLoc;
+	}
+
+	
+	if (!(pickerArgs->flagsTarget & UiPickerFlagsTarget::FixedRadius)){
+		rangeInches = locSys.Distance3d(coneTgtLoc, coneOrigin);
+	}
+	pickRes.objList.ListRadius(coneOrigin, rangeInches, angleStart, angleSize, OLC_ALL);
+
+	if (! (pickerArgs->flagsTarget & UiPickerFlagsTarget::Unknown80h)){
+		temple::GetRef<void(__cdecl)(LocAndOffsets &, PickerArgs*)>(0x100B9F60)(coneOrigin, pickerArgs); // raycasting etc.
+	}
+
+	
+	pickerArgs->DoExclusions();
+	
+
+
+//	addresses.sub_100BA6A0(locAndOffsets, pickerArgs);
 }
 
 uint32_t UiPicker::GetListRange(LocAndOffsets* locAndOffsets, PickerArgs* pickerArgs)
@@ -368,7 +419,7 @@ void UiPicker::RenderPickers(){
 	}
 
 	auto origObj = objSystem->GetObject(originator);
-	auto originiLoc = origObj->GetLocationFull();
+	auto originLoc = origObj->GetLocationFull();
 	auto originRadius = objects.GetRadius(originator);
 
 	tgt = pick.tgt; //just in case it got updated
@@ -385,7 +436,7 @@ void UiPicker::RenderPickers(){
 		}
 
 		float orgAbsX, orgAbsY, tgtAbsX, tgtAbsY;
-		locSys.GetOverallOffset(originiLoc, &orgAbsX, &orgAbsY);
+		locSys.GetOverallOffset(originLoc, &orgAbsX, &orgAbsY);
 		locSys.GetOverallOffset(tgtLoc, &tgtAbsX, &tgtAbsY);
 
 		auto areaRadiusInch = INCH_PER_FEET * pick.args.radiusTarget;
@@ -404,39 +455,52 @@ void UiPicker::RenderPickers(){
 			spellEffectPointerSize = 135.744f;
 		}
 
-		if (originRadius * 1.5f + areaRadiusInch  + spellEffectPointerSize < locSys.distBtwnLocAndOffs(tgtLoc, originiLoc)){
-			DrawSpellEffectPointer(tgtLoc, originiLoc, areaRadiusInch);
+		if (originRadius * 1.5f + areaRadiusInch  + spellEffectPointerSize < locSys.distBtwnLocAndOffs(tgtLoc, originLoc)){
+			DrawSpellEffectPointer(tgtLoc, originLoc, areaRadiusInch);
 		}	
 	}
 
 	else if (pick.args.IsBaseModeTarget(UiPickerType::Personal)){
 		if (tgt && (pick.args.flagsTarget &UiPickerFlagsTarget::Radius) && tgt != originator){
 
-			DrawCircleAoE(originiLoc, 1.0, INCH_PER_FEET * pick.args.radiusTarget, pick.args.spellEnum);
+			DrawCircleAoE(originLoc, 1.0, INCH_PER_FEET * pick.args.radiusTarget, pick.args.spellEnum);
 
 		}
 	}
 
 	else if (pick.args.IsBaseModeTarget(UiPickerType::Cone)) {
 		LocAndOffsets tgtLoc;
-		if (tgt) {
-			tgtLoc = tgtObj->GetLocationFull();
-		}
-		else {
-			locSys.GetLocFromScreenLocPrecise(pick.x, pick.y, tgtLoc);
-		}
-
-		if (pick.args.flagsTarget & UiPickerFlagsTarget::FixedRadius){
-			tgtLoc = locSys.TrimToLength(originiLoc, tgtLoc, pick.args.radiusTarget * INCH_PER_FEET);
-			
-		}
-
 		auto degreesTarget = pick.args.degreesTarget;
-		if (!(pick.args.flagsTarget & UiPickerFlagsTarget::Degrees)){
+		if (!(pick.args.flagsTarget & UiPickerFlagsTarget::Degrees)) {
 			degreesTarget = 60.0f;
 		}
 
-		DrawConeAoE(originiLoc, tgtLoc, degreesTarget, pick.args.spellEnum);
+
+		auto coneOrigin = originLoc;
+		if (pick.args.IsModeTargetFlagSet(UiPickerType::PickOrigin)){
+			locSys.GetLocFromScreenLocPrecise(pick.x, pick.y, coneOrigin);
+			auto dir = locSys.GetDirectionVector(originLoc, coneOrigin);
+
+			LocAndOffsets newTgtLoc = coneOrigin;
+			newTgtLoc.off_x += dir.x * 4000; newTgtLoc.off_y += dir.y * 4000;
+			newTgtLoc.Regularize();
+			tgtLoc = newTgtLoc;
+
+		}
+		else{ // normal cone emanating from caster
+			if (tgt) {
+				tgtLoc = tgtObj->GetLocationFull();
+			}
+			else {
+				locSys.GetLocFromScreenLocPrecise(pick.x, pick.y, tgtLoc);
+			}
+		}
+
+		if (pick.args.flagsTarget & UiPickerFlagsTarget::FixedRadius) {
+			tgtLoc = locSys.TrimToLength(coneOrigin, tgtLoc, pick.args.radiusTarget * INCH_PER_FEET);
+		}
+
+		DrawConeAoE(coneOrigin, tgtLoc, degreesTarget, pick.args.spellEnum);
 	}
 
 	else if (pick.args.IsBaseModeTarget(UiPickerType::Ray)){
@@ -447,7 +511,7 @@ void UiPicker::RenderPickers(){
 			auto rayWidth = pick.args.radiusTarget * INCH_PER_FEET / 2.0f;
 			auto rayLength = originRadius + pick.args.trimmedRangeInches;
 
-			DrawRectangleAoE(originiLoc, tgtLoc, rayWidth, rayLength, rayLength, pick.args.spellEnum);
+			DrawRectangleAoE(originLoc, tgtLoc, rayWidth, rayLength, rayLength, pick.args.spellEnum);
 		}
 	}
 
@@ -794,6 +858,10 @@ bool PickerArgs::IsBaseModeTarget(UiPickerType type){
 bool PickerArgs::IsModeTargetFlagSet(UiPickerType type)
 {
 	return (((uint64_t)modeTarget) & ((uint64_t)type)) == (uint64_t)type;
+}
+
+void PickerArgs::SetModeTargetFlag(UiPickerType type){
+	*(uint64_t*)(&(this->modeTarget)) |= (uint64_t)type;
 }
 
 UiPickerType PickerArgs::GetBaseModeTarget()

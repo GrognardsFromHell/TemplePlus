@@ -57,6 +57,8 @@ struct LocationSys : temple::AddressTable
 	*/
 	float AngleBetweenPoints(LocAndOffsets &fromPoint, LocAndOffsets &toPoint);
 
+	XMFLOAT2 GetDirectionVector(LocAndOffsets &fromPoint, LocAndOffsets &toPoint); // returns a normalized vector in the direction from -> to
+
 	LocationSys();
 };
 
