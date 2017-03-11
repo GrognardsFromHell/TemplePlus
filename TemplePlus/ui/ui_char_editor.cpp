@@ -1315,6 +1315,7 @@ void UiCharEditor::SpellsActivate() {
 
 	knSpInfo.clear();
 	avSpInfo.clear();
+	selPkt.spellEnumToRemove = 0;
 
 	d20ClassSys.LevelupInitSpellSelection(handle, selPkt.classCode);
 
