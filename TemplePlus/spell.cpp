@@ -691,7 +691,7 @@ const char* LegacySpellSystem::GetSpellEnumTAG(uint32_t spellEnum){
 
 const char* LegacySpellSystem::GetSpellName(uint32_t spellEnum) const
 {
-	if (spellEnum > SPELL_ENUM_MAX || static_cast<int>(spellEnum) <=0){
+	if (spellEnum > SPELL_ENUM_MAX_VANILLA || static_cast<int>(spellEnum) <=0){
 		logger->warn("Spell Enum outside expected range: {}", spellEnum);
 	}
 	return GetSpellMesline(spellEnum);
@@ -2263,6 +2263,18 @@ BOOL LegacySpellSystem::SpellHasAiType(unsigned spellEnum, AiSpellType aiSpellTy
 }
 
 BOOL LegacySpellSystem::IsSpellHarmful(int spellEnum, const objHndl& caster, const objHndl& tgt){
+
+	if (spellEnum > SPELL_ENUM_MAX_VANILLA){
+		SpellEntry spEntry(spellEnum);
+		if (!spEntry.spellEnum){
+			logger->warn("Invalid spellEnum in IsSpellHarmfull");
+			return FALSE;
+		}
+		if (spEntry.aiTypeBitmask & (1 << ai_action_offensive))
+			return TRUE;
+		return FALSE;
+	}
+
 	return temple::GetRef<BOOL(__cdecl)(int, objHndl, objHndl)>(0x100769F0)(spellEnum, caster, tgt);
 }
 

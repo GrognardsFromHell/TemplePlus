@@ -1,6 +1,6 @@
 #pragma once
 
-const uint32_t SPELL_ENUM_MAX = 802;
+const uint32_t SPELL_ENUM_MAX_VANILLA = 802;
 const uint32_t SPELL_ENUM_MAX_EXPANDED = 3999;
 
 #define NUM_SPELL_LEVELS 10 // spells are levels 0-9

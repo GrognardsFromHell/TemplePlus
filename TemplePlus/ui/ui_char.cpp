@@ -30,7 +30,7 @@ struct TigTextStyle;
 
 struct SpellList
 {
-	SpellStoreData spells[SPELL_ENUM_MAX];
+	SpellStoreData spells[SPELL_ENUM_MAX_VANILLA];
 	uint32_t count;
 };
 

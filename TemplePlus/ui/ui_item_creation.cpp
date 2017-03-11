@@ -387,8 +387,8 @@ int UiItemCreation::CraftedWandSpellLevel(objHndl objHndItem)
 
 	//// get data from caster - make this optional!
 
-	//uint32_t spellClassCodes[SPELL_ENUM_MAX] = { 0, };
-	//uint32_t spellLevels[SPELL_ENUM_MAX] = { 0, };
+	//uint32_t spellClassCodes[SPELL_ENUM_MAX_VANILLA] = { 0, };
+	//uint32_t spellLevels[SPELL_ENUM_MAX_VANILLA] = { 0, };
 	//uint32_t spellFoundNum = 0;
 	//int casterKnowsSpell = spellSys.spellKnownQueryGetData(itemCreationCrafter, spellData.spellEnum, spellClassCodes, spellLevels, &spellFoundNum);
 	//if (casterKnowsSpell){
@@ -924,8 +924,8 @@ void UiItemCreation::CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, o
 
 		// get data from caster - make this optional!
 
-		uint32_t classCodes[SPELL_ENUM_MAX] = { 0, };
-		uint32_t spellLevels[SPELL_ENUM_MAX] = { 0, };
+		uint32_t classCodes[SPELL_ENUM_MAX_VANILLA] = { 0, };
+		uint32_t spellLevels[SPELL_ENUM_MAX_VANILLA] = { 0, };
 		uint32_t spellFoundNum = 0;
 		int casterKnowsSpell = spellSys.spellKnownQueryGetData(objHndCrafter, spellData.spellEnum, classCodes, spellLevels, &spellFoundNum);
 		if (casterKnowsSpell){
@@ -999,8 +999,8 @@ bool UiItemCreation::CraftedWandSpellGet(objHndl item, SpellStoreData & spellDat
 
 
 	// get data from caster
-	uint32_t spellClassCodes[SPELL_ENUM_MAX] = { 0, };
-	uint32_t spellLevels[SPELL_ENUM_MAX] = { 0, };
+	uint32_t spellClassCodes[SPELL_ENUM_MAX_VANILLA] = { 0, };
+	uint32_t spellLevels[SPELL_ENUM_MAX_VANILLA] = { 0, };
 	uint32_t spellFoundNum = 0;
 	int casterKnowsSpell = spellSys.spellKnownQueryGetData(itemCreationCrafter, spellData.spellEnum, spellClassCodes, spellLevels, &spellFoundNum);
 	if (!casterKnowsSpell){
@@ -1584,8 +1584,8 @@ bool UiItemCreation::ScribedScrollSpellGet(objHndl item, SpellStoreData & spellD
 
 
 	// get data from caster
-	uint32_t spellClassCodes[SPELL_ENUM_MAX] = { 0, };
-	uint32_t spellLevels[SPELL_ENUM_MAX] = { 0, };
+	uint32_t spellClassCodes[SPELL_ENUM_MAX_VANILLA] = { 0, };
+	uint32_t spellLevels[SPELL_ENUM_MAX_VANILLA] = { 0, };
 	uint32_t spellFoundNum = 0;
 	int casterKnowsSpell = spellSys.spellKnownQueryGetData(itemCreationCrafter, spellData.spellEnum, spellClassCodes, spellLevels, &spellFoundNum);
 	if (!casterKnowsSpell) {

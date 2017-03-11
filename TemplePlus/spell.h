@@ -55,7 +55,7 @@ struct SpellEntry{
 	uint32_t maxTarget;
 	int radiusTarget; //note:	if it's negative, then its absolute value is used as SpellRangeType for mode_target personal; if it's positive, it's a specified number(in feet ? )
 	int degreesTarget;
-	uint32_t aiTypeBitmask;
+	uint32_t aiTypeBitmask; // see AiSpellType in spell_structs.h
 	uint32_t pad;
 
 	//UiPickerType GetModeTarget() const;

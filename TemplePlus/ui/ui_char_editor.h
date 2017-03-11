@@ -33,7 +33,7 @@ struct CharEditorSelectionPacket{
 	int skillPointsAdded[42]; // idx corresponds to skill enum
 	int skillPointsSpent;
 	int availableSkillPoints;
-	int spellEnums[SPELL_ENUM_MAX];
+	int spellEnums[SPELL_ENUM_MAX_VANILLA];
 	int spellEnumsAddedCount;
 	int spellEnumToRemove; // for sorcerers who swap out spells
 	int wizSchool;
