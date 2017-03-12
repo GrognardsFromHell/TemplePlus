@@ -127,7 +127,7 @@ enum class SpellListType : int {
 	Psionic, 
 	Ranger, // subset of divine
 	Special, // "independent" list
-	Theurge // adds to both divine and arcane classes!
+	Extender // extends an existing spell list
 };
 
 #pragma pack(push,4)

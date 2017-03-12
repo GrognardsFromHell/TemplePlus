@@ -1526,12 +1526,12 @@ BOOL UiCharEditor::FinishBtnMsg(int widId, TigMsg * msg){
 	auto charEdited = GetEditedChar();
 
 	// add spell casting condition
-	if (d20ClassSys.IsCastingClass(selPkt.classCode)){
-		auto spellcastCond = (std::string)d20ClassSys.GetSpellCastingCondition(selPkt.classCode);
-		if ( spellcastCond.size() ){
-			conds.AddTo(charEdited, spellcastCond, {0,0,0,0, 0,0,0,0});
-		}
+	
+	auto spellcastCond = (std::string)d20ClassSys.GetSpellCastingCondition(selPkt.classCode);
+	if ( spellcastCond.size() ){
+		conds.AddTo(charEdited, spellcastCond, {0,0,0,0, 0,0,0,0});
 	}
+	
 	return 1;
 }
 

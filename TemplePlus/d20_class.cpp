@@ -147,12 +147,15 @@ bool D20ClassSystem::IsVancianCastingClass(Stat classEnum, objHndl handle )
 	return classSpec->second.spellMemorizationType == SpellReadyingType::Vancian;
 }
 
-bool D20ClassSystem::IsCastingClass(Stat classEnum){
+bool D20ClassSystem::IsCastingClass(Stat classEnum, bool includeExtenders){
 	auto classSpec = classSpecs.find(classEnum);
 	if (classSpec == classSpecs.end())
 		return false;
 
-	if (classSpec->second.spellListType == SpellListType::None){
+	if (includeExtenders && classSpec->second.spellListType == SpellListType::Extender)
+		return true;
+
+	else if (classSpec->second.spellListType == SpellListType::None){
 		return false;
 	}
 

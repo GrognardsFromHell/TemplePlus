@@ -3343,7 +3343,7 @@ spell_list_type_paladin = 7
 spell_list_type_psionic = 8
 spell_list_type_ranger = 9
 spell_list_type_special = 10
-spell_list_type_theurge = 11
+spell_list_type_extender = 11
 
 spell_source_type_ability = 0
 spell_source_type_arcane = 1
