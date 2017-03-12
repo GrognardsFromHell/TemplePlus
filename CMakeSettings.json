@@ -1,0 +1,21 @@
+{
+    // See https://go.microsoft.com//fwlink//?linkid=834763 for more information about this file.
+    "configurations": [
+      {
+        "name": "Debug",
+        "generator": "Visual Studio 15 2017",
+        "configurationType": "Debug",
+        "buildRoot": "${env.LOCALAPPDATA}\\CMakeBuild\\${workspaceHash}\\build\\${name}",
+        "cmakeCommandArgs": "-T v140",
+        "buildCommandArgs": "-m -v:minimal"
+      },
+        {
+        "name": "Release",
+        "generator": "Visual Studio 15 2017",
+        "configurationType" : "Release",
+        "buildRoot":  "${env.LOCALAPPDATA}\\CMakeBuild\\${workspaceHash}\\build\\${name}",
+        "cmakeCommandArgs":  "-T v140",
+        "buildCommandArgs": "-m -v:minimal"
+        }
+    ]
+}
