@@ -45,6 +45,11 @@
 #include "ui/ui_systems.h"
 #include "ui/ui_legacysystems.h"
 
+#undef HAVE_ROUND
+#include <pybind11/pybind11.h>
+namespace py = pybind11;
+
+
 static PyObject *encounterQueue = nullptr;
 
 struct PyGameObject {
@@ -1209,7 +1214,16 @@ PyObject* PyGame_IsDaytime(PyObject*, PyObject* args) {
 	return PyInt_FromLong(gameSystems->GetTimeEvent().IsDaytime());
 }
 
+static PyObject *PySpell_SpellGetPickerEndPoint(PyObject*, PyObject *args) {
+
+	auto wallEndPt = uiPicker.GetWallEndPoint();
+	py::object blyat = py::cast(wallEndPt);
+	blyat.inc_ref();
+	return blyat.ptr();
+}
+
 static PyMethodDef PyGameMethods[]{
+	{ "get_wall_endpt", PySpell_SpellGetPickerEndPoint, METH_VARARGS, NULL },
 	{ "create_history_freeform", PyGame_CreateHistoryFreeform, METH_VARARGS, NULL },
 	{ "create_history_from_id", PyGame_CreateHistoryFromId, METH_VARARGS, NULL },
 	{"fade_and_teleport", PyGame_FadeAndTeleport, METH_VARARGS, NULL},

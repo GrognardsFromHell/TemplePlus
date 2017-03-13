@@ -306,6 +306,7 @@ struct ObjListResult
 	void IncreaseObjListCount();
 	int CountResults();
 	void ListRadius(LocAndOffsets origin, float rangeInches, float angleMin, float angleMax, int filter);
+	void ListRaycast(LocAndOffsets &origin, LocAndOffsets &endPt, float rangeInches, float radiusInches);
 
 };
 

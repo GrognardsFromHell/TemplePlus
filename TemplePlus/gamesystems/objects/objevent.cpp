@@ -102,12 +102,20 @@ int ObjEventSystem::ListRangeUpdate(ObjEventAoE& evt, int id, ObjEventListItem* 
 		LocAndOffsets locFull = obj->GetLocationFull();
 
 		if (evt.IsWall()){
-			// todo insert wall detection
+			
+			auto startPt = objSystem->GetObject(evt.aoeObj)->GetLocationFull();
+			LocAndOffsets endPt = startPt; // TODO
+			// use startPt + angleMin to find endPt
+			XMFLOAT2 dir( cos(evt.angleMin), sin(evt.angleMin) );
+			endPt.off_x += dir.x * evt.radiusInch;
+			endPt.off_y += dir.y * evt.radiusInch;
+			endPt.Regularize();
+
+			evt.objListResult.ListRaycast(startPt, endPt, evt.radiusInch, 5.0);
+
 		}
-		else
-		{
-			auto listRange = temple::GetRef<void(__cdecl)(LocAndOffsets, float, float, float, ObjectListFilter, ObjListResult*)>(0x10022E50);
-			listRange(locFull, evt.radiusInch, evt.angleMin, evt.angleSize, evt.filter, &evt.objListResult);
+		else{
+			evt.objListResult.ListRadius(locFull,evt.radiusInch, evt.angleMin, evt.angleSize, evt.filter);
 			objEvtTable->put(id, evt);
 		}
 
@@ -170,11 +178,9 @@ BOOL ObjEventSystem::ObjEventHandler(ObjEventAoE* const aoeEvt, int id,ObjEventL
 	auto onLeaveHandler = objEventHandlerFuncs[1]; // does  a dispatch for DK_OnLeaveAoE
 	auto onEnterHandler = objEventHandlerFuncs[0]; // does  a dispatch for DK_OnEnterAoE
 
-	auto isWallAoE = aoeEvt->IsWall();
-
 	if (aoeEvt->aoeObj != evt.obj)
 	{
-		// find the event obj in the aoeEvt list of previously appearing objects
+		// find the event obj in the aoeEvt list of previously appearing objects, to determine leaving / entering status
 		bool foundInNodes = false;
 		auto objNode = aoeEvt->objNodesPrev;
 		
@@ -206,7 +212,7 @@ BOOL ObjEventSystem::ObjEventHandler(ObjEventAoE* const aoeEvt, int id,ObjEventL
 		return 1;
 	}
 
-	// obj is aoeObj - iterate over the aoeEvt's objlist
+	// obj is aoeObj - i.e. the object itself moved. iterate over the aoeEvt's objlist
 	for (auto it = aoeEvt->objListResult.objects; it; it=it->next){
 		
 		bool foundInNodes = false;
@@ -446,6 +452,12 @@ bool ObjEventSystem::ObjEventLocIsInAoE(ObjEventAoE* const aoeEvt, LocAndOffsets
 	float aoeAbsX, aoeAbsY, absX, absY;
 	locSys.GetOverallOffset(aoeObjLoc, &aoeAbsX, &aoeAbsY);
 	locSys.GetOverallOffset(loc, &absX, &absY);
+
+	if (aoeEvt->IsWall()){
+		auto dummy = 1;
+		
+		// todo
+	}
 
 	auto radius = objRadius + aoeEvt->radiusInch;
 	auto deltaX = absX - aoeAbsX;

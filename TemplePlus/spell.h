@@ -71,6 +71,14 @@ struct SpellEntryExt {
 
 const uint32_t TestSizeOfSpellEntry = sizeof(SpellEntry); // should be 0xC0  ( 192 )
 
+
+struct SpellObj
+{
+	objHndl obj;
+	int partySysId;
+	int field_C;
+};
+
 struct SpellPacketBody{
 	uint32_t spellEnum;
 	uint32_t spellEnumOriginal; // used for spontaneous casting in order to debit the "original" spell
@@ -84,12 +92,7 @@ struct SpellPacketBody{
 	uint32_t dc;
 	int numSpellObjs;
 	objHndl aoeObj;
-	struct SpellObj
-	{
-		objHndl obj;
-		int partySysId;
-		int field_C;
-	}	spellObjs[128];
+	SpellObj spellObjs[128];
 	uint32_t orgTargetCount;
 	uint32_t targetCount;
 	objHndl targetListHandles[32];

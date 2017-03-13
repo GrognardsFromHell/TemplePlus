@@ -177,6 +177,7 @@ public:
 	// Wall mode
 	void WallStateReset() { mWallState = WallPicker_StartPoint; };
 	WallPickerState GetWallState() { return  mWallState ; };
+	LocAndOffsets GetWallEndPoint();
 
 	UiPicker();
 protected:
@@ -198,7 +199,7 @@ protected:
 	BOOL WallRmbReleased(TigMsg *msg);
 	void WallCursorText(int x, int y);
 	WallPickerState mWallState = WallPicker_StartPoint;
-
+	LocAndOffsets mWallEndPt = LocAndOffsets::null;
 
 	/*
 		Draws the rotating spiked circle for a valid target

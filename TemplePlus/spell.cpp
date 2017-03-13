@@ -1130,7 +1130,7 @@ int LegacySpellSystem::SpellSave(TioOutputStream& file)
 		}
 		return true;
 	};
-	static auto SerializeSpellObjsToFile = [](SpellPacketBody::SpellObj spellObjs[], uint32_t num, TioOutputStream&stream)
+	static auto SerializeSpellObjsToFile = [](SpellObj spellObjs[], uint32_t num, TioOutputStream&stream)
 	{
 		for (auto i = 0u; i < num; i++)
 		{

@@ -313,6 +313,10 @@ uint32_t UiPicker::GetListRange(LocAndOffsets* locAndOffsets, PickerArgs* picker
 	return addresses.sub_100BA540(locAndOffsets, pickerArgs);
 }
 
+LocAndOffsets UiPicker::GetWallEndPoint(){
+	return mWallEndPt;
+}
+
 UiPicker::UiPicker(){
 
 	InitWallSpec();
@@ -748,6 +752,10 @@ BOOL UiPicker::WallLmbReleased(TigMsg * msg)
 	}
 
 	else if (wallState == WallPicker_EndPoint){
+		auto msgMouse = (TigMsgMouse*)msg;
+		LocAndOffsets mouseLoc;
+		locSys.GetLocFromScreenLocPrecise(msgMouse->x, msgMouse->y, mouseLoc);
+		mWallEndPt = mouseLoc;
 		return pick.Finalize();
 	}
 
@@ -994,8 +1002,15 @@ BOOL PickerCacheEntry::Finalize(){
 		&& (!(flags & PRF_HAS_SINGLE_OBJ) || args.result.handle))	
 	{
 		SpellPacketBody *pkt = (SpellPacketBody*)callbackArgs;
+
+		if (this->args.IsBaseModeTarget(UiPickerType::Wall)){ // forgive me for this spaghetti
+			if (pkt->numSpellObjs < 127){
+				pkt->spellObjs[pkt->numSpellObjs++].obj = this->tgt;
+			}
+		}
+
 		if (args.callback)
-			args.callback(args.result, pkt);
+			args.callback(args.result, pkt); // ActionSequenceSystem::SpellPickerCallback
 		args.result.FreeObjlist();
 		return flags != 0;
 	}

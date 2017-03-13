@@ -19,6 +19,12 @@
 #include "ui/ui_systems.h"
 #include "ui/ui_legacysystems.h"
 
+#undef HAVE_ROUND
+#include <pybind11/pybind11.h>
+namespace py = pybind11;
+using namespace pybind11;
+using namespace pybind11::detail;
+
 struct PySpell;
 static PyObject *PySpellTargets_Create(PySpell *spell);
 
@@ -233,6 +239,18 @@ static PyObject *PySpell_SpellGetMenuArg(PyObject*, PyObject *args) {
 
 	return PyInt_FromLong(result);
 }
+
+
+static PyObject *PySpell_SpellGetPickerEndPoint(PyObject*, PyObject *args) {
+	
+	auto wallEndPt = uiPicker.GetWallEndPoint();
+	py::object blyat = py::cast(wallEndPt);
+	blyat.inc_ref();
+	return blyat.ptr();
+}
+
+
+
 static PyObject *PySpell_IsObjectSelected(PyObject *obj, PyObject *) {
 	auto self = (PySpell*)obj;
 	SpellPacketBody body;
@@ -326,6 +344,7 @@ static PyMethodDef PySpellMethods[] = {
 	{ "spell_remove", PySpell_SpellRemove, METH_VARARGS, NULL },
 	{ "spell_target_list_sort", PySpell_SpellTargetListSort, METH_VARARGS, NULL },
 	{ "spell_get_menu_arg", PySpell_SpellGetMenuArg, METH_VARARGS, NULL },
+	{ "spell_get_picker_end_point", PySpell_SpellGetPickerEndPoint, METH_VARARGS, NULL },
 	{ "is_object_selected", PySpell_IsObjectSelected, METH_VARARGS, NULL },
 	{ "summon_monsters", PySpell_SummonMonsters, METH_VARARGS, NULL },
 	{NULL, NULL, NULL, NULL}
@@ -411,6 +430,16 @@ static PyObject* PySpell_GetTargetLocOffZ(PyObject* obj, void*) {
 	auto self = (PySpell*)obj;
 	return PyFloat_FromDouble(self->targetLocation.off_z);
 }
+
+static PyObject* PySpell_GetTargetLocFull(PyObject* obj, void*) {
+	auto self = (PySpell*)obj;
+
+	py::object blyat = py::cast(self->targetLocation.location);
+	blyat.inc_ref();
+	return blyat.ptr();
+}
+
+
 
 static PyObject* PySpell_GetCasterLevel(PyObject* obj, void*) {
 	auto self = (PySpell*)obj;
@@ -548,6 +577,7 @@ static PyGetSetDef PySpellGetSet[] = {
 	{"target_loc_off_x", PySpell_GetTargetLocOffX, NULL, NULL},
 	{"target_loc_off_y", PySpell_GetTargetLocOffY, NULL, NULL},
 	{"target_loc_off_z", PySpell_GetTargetLocOffZ, NULL, NULL},
+	{"target_loc_full", PySpell_GetTargetLocFull, NULL, NULL },
 	{"caster_level", PySpell_GetCasterLevel, PySpell_SetCasterLevel, NULL},
 	{"dc", PySpell_GetDC, PySpell_SetDC, NULL},
 	{"id", PySpell_GetId, NULL, NULL},

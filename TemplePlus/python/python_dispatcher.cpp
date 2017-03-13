@@ -561,6 +561,8 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		})
 		;
 
+
+
 		py::class_<SpellPacketBody>(m, "SpellPacket")
 			.def(py::init<uint32_t>(), py::arg("spell_id"))
 			.def_readwrite("spell_enum", &SpellPacketBody::spellEnum)
@@ -591,6 +593,14 @@ PYBIND11_PLUGIN(tp_dispatcher){
 			})
 			.def("is_divine_spell", &SpellPacketBody::IsDivine)
 			.def("debit_spell", &SpellPacketBody::Debit)
+			.def("update_registry", [](SpellPacketBody &pkt){
+				spellSys.UpdateSpellPacket(pkt);
+				pySpellIntegration.UpdateSpell(pkt.spellId);
+			}, "Updates the changes made in this local copy in the active spell registry.")
+			.def("set_spell_object", [](SpellPacketBody&pkt, objHndl spellObj, int partsysId){
+				pkt.spellObjs[0].obj = spellObj;
+				pkt.spellObjs[0].partySysId = partsysId;
+			})
 			;
 
 	#pragma endregion 

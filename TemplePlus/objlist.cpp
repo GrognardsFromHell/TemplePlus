@@ -4,6 +4,7 @@
 
 #include <temple/dll.h>
 #include "gamesystems/objects/objsystem.h"
+#include "raycast.h"
 
 static struct ObjListAddresses : temple::AddressTable {
 	void(__cdecl *ObjListTile)(locXY loc, int flags, ObjListResult &result);
@@ -59,6 +60,27 @@ int ObjListResult::CountResults(){
 
 void ObjListResult::ListRadius(LocAndOffsets origin, float rangeInches, float angleMin, float angleSize, int filter){
 	addresses.ObjListRadius(origin, rangeInches, angleMin, angleSize, filter, *this);
+}
+
+void ObjListResult::ListRaycast(LocAndOffsets & origin, LocAndOffsets & endPt, float rangeInches, float radiusInches){
+	RaycastPacket rayPkt;
+	rayPkt.sourceObj = objHndl::null;
+	rayPkt.origin = origin;
+	rayPkt.rayRangeInches = rangeInches;
+	rayPkt.targetLoc = endPt;
+	rayPkt.radius = radiusInches;
+	rayPkt.flags = (RaycastFlags)(RaycastFlags::ExcludeItemObjects | RaycastFlags::HasRadius | RaycastFlags::HasRangeLimit);
+	rayPkt.Raycast();
+	this->Init();
+
+	if (rayPkt.resultCount) {
+		for (auto i = 0; i < rayPkt.resultCount; i++) {
+			auto &rayRes = rayPkt.results[i];
+			if (rayRes.obj) {
+				this->PrependHandle(rayRes.obj);
+			}
+		}
+	}
 }
 
 ObjList::ObjList() {
