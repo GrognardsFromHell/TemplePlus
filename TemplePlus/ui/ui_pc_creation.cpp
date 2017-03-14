@@ -383,9 +383,13 @@ public:
 	static BOOL StatsIncreaseBtnMsg(int widId, TigMsg* msg);
 	static BOOL StatsDecreaseBtnMsg(int widId, TigMsg* msg);
 	static BOOL StatsUpdateBtns();
+	static void AutoAddSpellsMemorizedToGroup();
 
 	void apply() override
 	{
+
+		replaceFunction(0x1011F290, AutoAddSpellsMemorizedToGroup);
+
 		static BOOL(__cdecl*orgStatsWndMsg)(int, TigMsg*) = replaceFunction<BOOL(int, TigMsg*)>(0x1018BA50, [](int widId, TigMsg*msg){
 			if (!uiPcCreation.StatsWndMsg(widId, msg))
 				return orgStatsWndMsg(widId, msg);
@@ -710,6 +714,14 @@ BOOL PcCreationHooks::StatsUpdateBtns(){
 	uiManager->SetHidden(rerollBtnId, isPointBuyMode != FALSE);
 
 	return isPointBuyMode;
+}
+
+void PcCreationHooks::AutoAddSpellsMemorizedToGroup(){
+	auto N = party.GroupPCsLen();
+	for (auto i=0u; i < N; i++){
+		auto dude = party.GroupPCsGetMemberN(i);
+		temple::GetRef<void(__cdecl)(objHndl)>(0x1011E920)(dude);
+	}
 }
 
 

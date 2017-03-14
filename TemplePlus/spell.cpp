@@ -76,6 +76,11 @@ public:
 	};
 
 	void apply() override {
+
+		replaceFunction<int(__cdecl(int, int))>(0x10076550, [](int spellEnum, int spellClass){
+			return spellSys.GetSpellLevelBySpellClass(spellEnum, spellClass);
+		});
+
 		// writeHex(0x100779DE + 2, "A0 0F"); // this prevents the crash from casting from scroll, but it fucks up normal spell casting... (can't go to radial menu to cast!)
 		replaceFunction(0x100FDEA0, _getWizSchool);
 		replaceFunction(0x100779A0, _getSpellEnum);
