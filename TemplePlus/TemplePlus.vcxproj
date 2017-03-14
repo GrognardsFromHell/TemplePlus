@@ -627,7 +627,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_SCL_SECURE_NO_WARNINGS;WIN32;NDEBUG;_WINDOWS;$(MSBuildDefines);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.;$(SolutionDir)dependencies\include;$(SolutionDir)MinHook\include;$(SolutionDir)Infrastructure\include;$(SolutionDir)D3D8Adapter\include</AdditionalIncludeDirectories>
-      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
