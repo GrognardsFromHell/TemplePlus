@@ -115,6 +115,7 @@ public:
 	static int __cdecl SpellDismissRadialSub(DispatcherCallbackArgs args); // allows dismissal of specific spells
 	static int __cdecl SpellAddDismissCondition(DispatcherCallbackArgs args); // prevents dups
 	static int __cdecl SpellDismissSignalHandler(DispatcherCallbackArgs args); // fixes issue with dismissing multiple spells
+	static int __cdecl DismissSignalHandler(DispatcherCallbackArgs args); // fixes issue with lingering Dismiss Spell holdouts
 
 	static int __cdecl SpellRemoveMod(DispatcherCallbackArgs args); // fixes issue with dismissing multiple spells
 
@@ -3119,6 +3120,7 @@ void ConditionFunctionReplacement::HookSpellCallbacks()
 
 		// signal handler
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100DE3F0, spCallbacks.SpellDismissSignalHandler);
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100E95C0, SpellCallbacks::DismissSignalHandler);
 	}
 
 	
@@ -3621,6 +3623,12 @@ int SpellCallbacks::SpellDismissRadialSub(DispatcherCallbackArgs args)
 	SpellPacketBody spPkt(spellId);
 	static auto helpId = ElfHash::Hash("TAG_DISMISS_SPELL");
 	RadialMenuEntryAction radEntry(-1, D20A_DISMISS_SPELLS, spellId, helpId);
+	if (!spPkt.spellEnum){
+		logger->warn("SpellDismissRadialSub: Caught ended spell, terminating.");
+		conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
+		return 0;
+	}
+
 	radEntry.text = (char*)spellSys.GetSpellMesline(spPkt.spellEnum);
 	if (spPkt.targetCount == 1 && spPkt.targetListHandles[0] != spPkt.caster && spPkt.targetListHandles[0] && objects.IsCritter(spPkt.targetListHandles[0])){
 		auto text = fmt::format("{} ({})", radEntry.text, description.getDisplayName(spPkt.targetListHandles[0]));
@@ -3669,6 +3677,38 @@ int SpellCallbacks::SpellDismissSignalHandler(DispatcherCallbackArgs args) {
 		spellModRemove(args);
 	}
 
+	return 0;
+}
+
+int SpellCallbacks::DismissSignalHandler(DispatcherCallbackArgs args){
+	GET_DISPIO(dispIoTypeSendSignal, DispIoD20Signal);
+	auto spellId = args.GetCondArg(0);
+	if (dispIo->data2 == 0 && spellId == dispIo->data1){ // used to check dispIo->data1 == 0 too; doesn't seem to make sense, why would spellId be 0?
+	
+		SpellPacketBody spPkt(spellId);
+		if (!spPkt.spellEnum){
+			conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
+			return 0;
+		}
+		if (spPkt.aoeObj){
+			d20Sys.d20SendSignal(spPkt.aoeObj, DK_SIG_Dismiss_Spells, spPkt.spellId, 0);
+		}
+		for (auto i=0u; i < spPkt.targetCount; i++){
+			d20Sys.d20SendSignal(spPkt.targetListHandles[i], DK_SIG_Dismiss_Spells, spPkt.spellId, 0);
+		}
+
+		// in case the dismiss didn't take care of that (e.g. grease)
+		if (spPkt.aoeObj) {
+			d20Sys.d20SendSignal(spPkt.aoeObj, DK_SIG_Spell_End, spPkt.spellId, 0);
+		}
+
+		// adding this speciically for grease because I want to be careful
+		auto SP_GREASE_ENUM = 260;
+		if (spPkt.spellEnum == SP_GREASE_ENUM){
+			conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
+		}
+		
+	}
 	return 0;
 }
 

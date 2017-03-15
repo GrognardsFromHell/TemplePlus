@@ -524,6 +524,12 @@ int SpellConditionFixes::GreaseSlippage(DispatcherCallbackArgs args){
 	auto spellId = args.GetCondArg(0);
 	SpellPacketBody spellPkt(spellId);
 	
+	if (!spellPkt.spellEnum){
+		logger->warn("sp-Grease hit: spell has ended, terminating!");
+		conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
+		return 0;
+	}
+
 	if (d20Sys.d20Query(args.objHndCaller, DK_QUE_Critter_Has_Freedom_of_Movement))
 		return 0;
 

@@ -2161,7 +2161,6 @@ ActionErrorCode D20ActionCallbacks::PerformDismissSpell(D20Actn * d20a){
 		d20Sys.d20SendSignal(spPkt.caster, DK_SIG_Dismiss_Spells, spellId, 0);
 	if (spPkt.aoeObj){
 		d20Sys.d20SendSignal(spPkt.aoeObj, DK_SIG_Dismiss_Spells, spellId, 0);
-		d20Sys.d20SendSignal(spPkt.aoeObj, DK_SIG_Spell_End, spellId, 0);
 	}
 		
 	for (auto i=0u; i < spPkt.targetCount; i++){
@@ -2169,6 +2168,12 @@ ActionErrorCode D20ActionCallbacks::PerformDismissSpell(D20Actn * d20a){
 		if (tgtHndl)
 			d20Sys.d20SendSignal(tgtHndl, DK_SIG_Dismiss_Spells, spellId, 0);
 	}
+
+	// in case the dismiss handlers didn't take care of this themselves: (e.g. Grease effect)
+	if (spPkt.aoeObj){
+		d20Sys.d20SendSignal(spPkt.aoeObj, DK_SIG_Spell_End, spellId, 0);
+	}
+
 	return AEC_OK;
 }
 
