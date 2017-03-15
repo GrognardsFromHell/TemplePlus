@@ -750,6 +750,7 @@ void UiIntgameTurnbased::CursorRenderUpdate(){
 	} 
 	else if ( (*actSeqSys.seqPickerD20ActnType == D20A_UNSPECIFIED_ATTACK) 
 		&& intgameTarget && cursorState
+		&& curSeq 
 		&& (curSeq->tbStatus.attackModeCode < curSeq->tbStatus.baseAttackNumCode + curSeq->tbStatus.numBonusAttacks))
 	{
 		mouseFuncs.SetCursorDrawCallback([](int x, int y) {temple::GetRef<void(__cdecl)(int, int, void*)>(0x1008A240)(x, y, nullptr); }, 0x1008A240);

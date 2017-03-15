@@ -3703,7 +3703,7 @@ int SpellCallbacks::DismissSignalHandler(DispatcherCallbackArgs args){
 		}
 
 		// adding this speciically for grease because I want to be careful
-		auto SP_GREASE_ENUM = 260;
+		auto SP_GREASE_ENUM = 200;
 		if (spPkt.spellEnum == SP_GREASE_ENUM){
 			conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
 		}
