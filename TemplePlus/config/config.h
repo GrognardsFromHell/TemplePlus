@@ -86,6 +86,7 @@ struct TemplePlusConfig
 	bool disableFogOfWar = false; // Previously: -nofog
 	double speedupFactor = 1.0;
 	bool equalizeMoveSpeed = true;
+	bool fastSneakAnim = false;
 
 	std::unordered_map<std::string, VanillaSetting> vanillaSettings;
 	void AddVanillaSetting(const std::string &name, 

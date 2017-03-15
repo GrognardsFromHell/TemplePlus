@@ -222,8 +222,8 @@ struct SkaAnimation
 	int streamCount;
 	int16_t frameCount;
 	int16_t variationId;
-	int frameRate;
-	int distancePerSecond;
+	float frameRate;
+	float distancePerSecond;
 	int dataOffset;
 	char field5C[144];
 };
@@ -301,16 +301,42 @@ public:
 			auto val = model->GetDistPerSec();
 
 			auto speed = 0.0f;
-			auto runningAnim = model->runningAnimsHead;
+			AnimPlayer* runningAnim = model->runningAnimsHead;
 			while (runningAnim){
 				auto nextRunningAnim = runningAnim->nextRunningAnim;
 				//runningAnim->GetDistPerSec(&speed);
 
 				if (runningAnim->skaAnimation->driveType == 1 && runningAnim->field14 > 0.0){
-					if (config.equalizeMoveSpeed)
-						speed = runningAnim->distancePerSecond; // *config.speedupFactor; // disregard scaling
-					else
-						speed = runningAnim->ownerAnim->scale * runningAnim->distancePerSecond;
+
+					auto isWalk = strstr(runningAnim->skaAnimation->name, "walk");
+					auto isSneak = strstr(runningAnim->skaAnimation->name, "sneak");
+
+					if (config.equalizeMoveSpeed){ // *config.speedupFactor; // disregard scaling, equalize across different models
+
+						// walking animations - leave as is
+						if (isWalk){
+							speed = runningAnim->distancePerSecond;
+						}
+						else if (isSneak){
+							if (config.fastSneakAnim)
+								speed = 190;
+							else
+								speed = runningAnim->distancePerSecond;
+						}
+						else{ // should be just running animations now
+							if (runningAnim->distancePerSecond < 180)
+								speed = 190; // to equalize with summoned monsters	
+						}								
+					}
+					else{
+						if (isSneak && config.fastSneakAnim){
+							speed = runningAnim->ownerAnim->scale * 190;
+						} 
+						else
+							speed = runningAnim->ownerAnim->scale * runningAnim->distancePerSecond;
+	
+					}
+						
 				}
 
 				runningAnim = nextRunningAnim;

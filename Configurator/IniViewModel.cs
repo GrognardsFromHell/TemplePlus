@@ -59,7 +59,9 @@ namespace TemplePlusConfig
         public static readonly DependencyProperty TransparentNpcStatsProperty = DependencyProperty.Register(
           "TransparentNpcStats", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
 
-        
+        public static readonly DependencyProperty FastSneakingProperty = DependencyProperty.Register(
+          "FastSneaking", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+
 
         public static readonly DependencyProperty NewClassesProperty = DependencyProperty.Register(
           "NewClasses", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
@@ -187,6 +189,13 @@ namespace TemplePlusConfig
             get { return (bool)GetValue(TransparentNpcStatsProperty); }
             set { SetValue(TransparentNpcStatsProperty, value); }
         }
+
+        public bool FastSneaking
+        {
+            get { return (bool)GetValue(FastSneakingProperty); }
+            set { SetValue(FastSneakingProperty, value); }
+        }
+
 
         public bool NewClasses
         {
@@ -317,6 +326,10 @@ namespace TemplePlusConfig
                 TransparentNpcStats = showNpcStats && showExactHPforNPCs;
             }
 
+            bool fastSneaking;
+            if (bool.TryParse(tpData["fastSneakAnim"], out fastSneaking)){
+                FastSneaking = fastSneaking;
+            }
 
 
             bool newClasses;
@@ -392,6 +405,7 @@ namespace TemplePlusConfig
             tpData["tolerantNpcs"] = TolerantTownsfolk? "true" : "false";
             tpData["showExactHPforNPCs"] = TransparentNpcStats? "true" : "false";
             tpData["showNpcStats"] = TransparentNpcStats ? "true" : "false";
+            tpData["fastSneakAnim"] = FastSneaking ? "true" : "false";
         }
     }
 

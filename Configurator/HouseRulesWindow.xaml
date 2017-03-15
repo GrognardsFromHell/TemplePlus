@@ -9,7 +9,7 @@
         WindowStartupLocation="CenterScreen"
         d:DataContext="{d:DesignInstance local:IniViewModel}">
     <Grid Margin="0,0,2,0">
-        <StackPanel HorizontalAlignment="Left" Height="119" VerticalAlignment="Top" Width="206" Margin="10,10,0,0">
+        <StackPanel HorizontalAlignment="Left" Height="137" VerticalAlignment="Top" Width="206" Margin="10,10,0,0">
             <Label VerticalAlignment="Center" Content="General" Margin="0,0,10,0" />
             <StackPanel Orientation="Horizontal">
                 <Label VerticalAlignment="Center" Content="Fog of War" />
@@ -17,6 +17,7 @@
             </StackPanel>
             <CheckBox VerticalAlignment="Center" Content="Tolerant Townsfolk" IsChecked="{Binding TolerantTownsfolk}" Margin="0,5,0,5" ToolTip="Townsfolk will be tolerant of monstrous party members and NPCs."/>
             <CheckBox VerticalAlignment="Center" Content="Transparent NPC Stats" IsChecked="{Binding TransparentNpcStats}" Margin="0,5,0,5" ToolTip="The game will show exact HPs for critters and your NPCs' stats."/>
+            <CheckBox VerticalAlignment="Center" Content="Fast Sneak Animation" IsChecked="{Binding FastSneaking}" Margin="0,5,0,5" ToolTip="Makes sneak animations as fast as your normal movement."/>
         </StackPanel>
         <Button x:Name="button" Content="Ok" HorizontalAlignment="Left" Margin="10,0,0,10" VerticalAlignment="Bottom" Width="75" Click="button_Click"/>
         <StackPanel HorizontalAlignment="Left" Height="107" VerticalAlignment="Top" Width="225" Margin="0,164,0,0">
