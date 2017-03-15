@@ -3,6 +3,30 @@
 
 #include "obj.h"
 
+
+struct MilesSoundSthg {
+	int field0;
+	int flags;
+	int field8;
+	int fieldC;
+	int field10;
+	int streamSthg;
+	int quickLoadMemSthg;
+	int m3dSampleSthg;
+	int field20;
+	int field24[65];
+	int field128;
+	int curVolume;
+	int field130;
+	int field134;
+	int field138;
+	int field13c;
+	int64_t x;
+	int64_t y;
+	int field150;
+	int field154;
+};
+
 /*
 	High level sound and music wrappers around tig_sound.
 */

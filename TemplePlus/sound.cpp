@@ -71,6 +71,27 @@ public:
 
 		// Find Sound
 		replaceFunction(0x1003B9E0, FindSound);
+
+
+		static void(__cdecl*orgMilesSoundSthg)(int, int) = replaceFunction<void(__cdecl)(int, int)>(0x101E3B60, [](int idx, int volume){
+			auto unk = temple::GetRef<int>(0x10EE7570);
+			if (!unk)
+				return;
+				
+			if (idx < 0 || idx >= 70){
+				return;
+			}
+				
+			auto &mss = temple::GetRef<MilesSoundSthg[]>(0x10EE7578)[idx];
+			auto flags = mss.flags;
+			if (flags & 1){
+				auto dummy = 1;
+			}
+			if (volume == 30){
+				auto dummy = 1;
+			}
+			 orgMilesSoundSthg(idx, volume);
+		});
 	}
 } soundHooks;
 

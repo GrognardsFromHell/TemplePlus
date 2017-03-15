@@ -326,6 +326,8 @@ public:
 						else{ // should be just running animations now
 							if (runningAnim->distancePerSecond < 180)
 								speed = 190; // to equalize with summoned monsters	
+							else
+								speed = runningAnim->distancePerSecond;
 						}								
 					}
 					else{
