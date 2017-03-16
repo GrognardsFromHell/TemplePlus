@@ -52,8 +52,10 @@ struct LocationSys : temple::AddressTable
 
 	/*
 	Calculates the angle in radians between two points in the tile coordinate system.
-	The angle can be used to make an object that is at fromPoint face the location at toPoint,
-	given that rotation 0 means "look directly north".
+	The angle can be used to make an object that is at fromPoint face the location at toPoint.
+	To convert to screen space rotation, which is defined as 0 when facing to the top of the screen and increasing ** clockwise **, do:
+	rotation = -angle + 5*pi/4 
+	         = -angle - 2.3561945f
 	*/
 	float AngleBetweenPoints(LocAndOffsets &fromPoint, LocAndOffsets &toPoint);
 

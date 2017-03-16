@@ -541,7 +541,10 @@ float Objects::GetRotationTowards(objHndl from, objHndl to) {
 	auto locFrom = GetLocationFull(from);
 	auto locTo = GetLocationFull(to);
 
-	return AngleBetweenPoints(locFrom, locTo);
+	auto rot = 5*M_PI/4 - AngleBetweenPoints(locFrom, locTo);
+	if (rot < 0)
+		rot = rot + 2 * M_PI;
+	return  rot;
 }
 
 void Objects::FadeTo(objHndl obj, int targetOpacity, int tickTimeMs, int tickOpacityQuantum, int callbackMode) const

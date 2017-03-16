@@ -277,7 +277,7 @@ void UiPicker::SetConeTargets(LocAndOffsets* mouseLoc, PickerArgs* pickerArgs)
 
 	auto coneOrigin = originLoc;
 	auto angleSize = pickerArgs->degreesTarget * M_PI / 180.0;
-	auto angleStart = atan2(dir.x, dir.y) - angleSize*0.5 + M_PI * 3 / 4;
+	auto angleStart = -atan2(dir.y, dir.x) - angleSize*0.5 + M_PI * 5 / 4;
 	auto rangeInches = pickerArgs->radiusTarget * INCH_PER_FEET;
 
 	if (pickerArgs->IsModeTargetFlagSet(UiPickerType::PickOrigin)){
@@ -718,7 +718,7 @@ BOOL UiPicker::WallPosChange(TigMsg * msg){
 		// get radius and range up to mouse (trimmed by walls and such)
 		auto radiusInch = pick.args.radiusTarget * INCH_PER_FEET / 2.0f;	
 		pick.args.GetTrimmedRange(pick.args.result.location, mouseLoc, radiusInch, maxRange);
-		pick.args.degreesTarget = locSys.AngleBetweenPoints(pick.args.result.location, mouseLoc);
+		pick.args.degreesTarget = 2.3561945f - locSys.AngleBetweenPoints(pick.args.result.location, mouseLoc); // putting this in radians, unlike the usual usage
 
 		pick.args.GetTargetsInPath(pick.args.result.location, mouseLoc, radiusInch);
 

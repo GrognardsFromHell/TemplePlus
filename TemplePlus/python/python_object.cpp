@@ -1072,8 +1072,12 @@ static PyObject* PyObjHandle_TurnTowards(PyObject* obj, PyObject* args) {
 		logger->warn("Python turn_towards called with OBJ_HANDLE_NULL target");
 		Py_RETURN_NONE;
 	}
-	auto targetRot = objects.GetRotationTowards(self->handle, target);
-	animationGoals.PushRotate(self->handle, targetRot);
+	auto relativeAngle = objects.GetRotationTowards(self->handle, target);
+	if (!objSystem->GetObject(self->handle)->IsCritter()){
+		objects.SetRotation(self->handle, relativeAngle);
+		Py_RETURN_NONE;
+	}
+	animationGoals.PushRotate(self->handle, relativeAngle);
 	Py_RETURN_NONE;
 }
 

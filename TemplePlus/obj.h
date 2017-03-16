@@ -172,6 +172,8 @@ struct Objects : temple::AddressTable {
 
 	/*
 		Calculates the rotation for obj from when it is facing object "to" directly.
+		The angle is defined differently than the normal x,y polar coordinate - 
+	    it increases ** clock wise **, and 0 is when the facing is towards the top of the screen.
 	*/
 	float GetRotationTowards(objHndl from, objHndl to);
 	
