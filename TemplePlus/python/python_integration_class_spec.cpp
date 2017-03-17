@@ -208,7 +208,7 @@ bool PythonClassSpecIntegration::ReqsMet(const objHndl & handle, int classEnum){
 	auto args = Py_BuildValue("(i)", objAlignment);
 	auto result = RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::IsAlignmentCompatible, args) != 0;
 	Py_DECREF(args);
-	if (!result && !config.laxRules)
+	if (!result && !config.disableAlignmentRestrictions)
 		return false;
 
 	auto attachee = PyObjHndl_Create(handle);

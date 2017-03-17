@@ -425,7 +425,7 @@ public:
 		replaceFunction(0x1018B940, StatsIncreaseBtnMsg);
 		replaceFunction(0x1018B9B0, StatsDecreaseBtnMsg);
 		replaceFunction(0x1018B570, StatsUpdateBtns);
-		replaceFunction<BOOL(Alignment, Alignment)>(0x1011B880, [](Alignment a, Alignment b)->BOOL { if (config.laxRules) return TRUE; return (BOOL)d20Stats.AlignmentsUnopposed(a, b); });
+		replaceFunction<BOOL(Alignment, Alignment)>(0x1011B880, [](Alignment a, Alignment b)->BOOL { if (config.disableAlignmentRestrictions) return TRUE; return (BOOL)d20Stats.AlignmentsUnopposed(a, b); });
 
 		// PC Creation UI Fixes
 		replaceFunction(0x10182E80, PcCreationFeatUiPrereqCheckUsercallWrapper);
@@ -2112,7 +2112,7 @@ bool UiPcCreation::IsCastingStatSufficient(Stat classEnum){
 
 bool UiPcCreation::IsAlignmentOk(Stat classCode){
 
-	if (!config.laxRules) {
+	if (!config.disableAlignmentRestrictions) {
 		auto hasOkAlignment = false;;
 		static std::vector<Alignment> alignments{
 			ALIGNMENT_LAWFUL_GOOD, ALIGNMENT_LAWFUL, ALIGNMENT_LAWFUL_EVIL,

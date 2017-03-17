@@ -396,7 +396,7 @@ void UiPicker::RenderPickers(){
 			auto handleObj = objSystem->GetObject(handle);
 			auto fogFlags = temple::GetRef<uint8_t(__cdecl)(LocAndOffsets)>(0x1002ECB0)(handleObj->GetLocationFull()) ;
 
-			if (config.laxRules || !critterSys.IsConcealed(handle) && (fogFlags & 1) ){ // fixed rendering for hidden critters
+			if (config.showTargetingCirclesInFogOfWar || !critterSys.IsConcealed(handle) && (fogFlags & 1) ){ // fixed rendering for hidden critters
 				DrawCircleValidTarget(handle, originator, pick.args.spellEnum);
 				temple::GetRef<void(objHndl, int)>(0x10108ED0)(handle, ++tgtCount); // text append	
 			}

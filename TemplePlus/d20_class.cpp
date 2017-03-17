@@ -120,7 +120,7 @@ bool D20ClassSystem::ReqsMet(const objHndl& handle, const Stat classCode){
 
 bool D20ClassSystem::IsCompatibleWithAlignment(Stat classEnum, Alignment al){
 
-	if (config.laxRules)
+	if (config.disableAlignmentRestrictions)
 		return true;
 
 	return temple::GetRef<BOOL(__cdecl)(Stat, Alignment)>(0x10188170)(classEnum, al);

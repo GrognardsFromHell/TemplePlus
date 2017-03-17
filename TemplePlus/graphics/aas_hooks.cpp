@@ -79,10 +79,10 @@ struct AnimPlayer : IAnimPlayer {
 	int field4C;
 	int field50;
 	void* streamStuff;
-	int field58;
-	int currentTime;
-	int duration;
-	int frameRate;
+	float field58;
+	float currentTime;
+	float duration;
+	float frameRate;
 	float distancePerSecond;
 	void * eventListener;
 	int eventCount;
@@ -282,6 +282,16 @@ public:
 			if (rotAmt != 0.0f)
 			{
 				auto dumy = 1;
+			}
+
+			if (handle >= 0 && handle < sMaxAnims){
+				auto &aasAnim = hooks.mAnims[handle];
+				auto model = aasAnim.model;
+				if (model){
+					AnimPlayer* runningAnim = model->runningAnimsHead;
+
+					auto dummy = 1;
+				}
 			}
 
 			return orgAasAdvance(handle, timeAmt, distAmt, rotAmt, animParams, a6);

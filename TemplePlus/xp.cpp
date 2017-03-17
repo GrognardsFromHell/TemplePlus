@@ -75,7 +75,7 @@ int XPAward::GetMulticlassXpReductionPercent(objHndl handle){
 	auto highestLvl = -1;
 	auto reductionPct = 0;
 
-	if (config.laxRules)
+	if (config.disableMulticlassXpPenalty)
 		return reductionPct;
 
 	for (auto it: d20ClassSys.baseClassEnums){

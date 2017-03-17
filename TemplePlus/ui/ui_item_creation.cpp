@@ -1364,7 +1364,7 @@ void UiItemCreation::LoadMaaSpecs()
 		}
 
 		// get spellReqs
-		if (!tabEntry.spellReqs.empty() && !config.laxRules)
+		if (!tabEntry.spellReqs.empty() && !config.disableCraftingSpellReqs)
 		{
 			StringTokenizer spellReqTok(tabEntry.spellReqs);
 			while (spellReqTok.next())
@@ -2686,7 +2686,7 @@ bool UiItemCreation::MaaCrafterMeetsReqs(int effIdx, objHndl crafter)
 					spellKnown = true;
 			}
 		}
-		if (!spellKnown && !config.laxRules)
+		if (!spellKnown && !config.disableCraftingSpellReqs)
 			return false;
 	}
 	
