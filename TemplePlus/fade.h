@@ -4,7 +4,9 @@
 enum FadeAndTeleportFlags : uint32_t {
 	ftf_play_movie = 1,
 	ftf_advance_time = 8,
-	ftf_play_sound = 0x10
+	ftf_play_sound = 0x10,
+	ftf_unk20 = 0x20,
+	ftf_unk80000000 = 0x80000000
 };
 
 #pragma pack(push, 1)

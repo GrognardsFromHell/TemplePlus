@@ -5,6 +5,7 @@
 #include "location.h"
 #include "util/fixes.h"
 #include "gamesystems/gamesystems.h"
+#include "fade.h"
 
 struct MapAddresses : temple::AddressTable {
 	
@@ -76,6 +77,31 @@ public:
 	void apply() override
 	{
 		orgField1C = replaceFunction(0x1006FC60, field1c); // doesn't seem to get called anywhere, not even when editor mode is enabled. Possibly ripped out code.
+
+		static void(__cdecl*orgTeleportProcess)(FadeAndTeleportArgs&) = replaceFunction<void(__cdecl)(FadeAndTeleportArgs&)>(0x10085AA0, [](FadeAndTeleportArgs &args)
+		{
+			orgTeleportProcess(args);
+		});
+
+		static int(__cdecl*orgFadeAndTeleport)(FadeAndTeleportArgs&) = replaceFunction<int(__cdecl)(FadeAndTeleportArgs&)>(0x10084A50, [](FadeAndTeleportArgs &args)
+		{
+
+			auto &fadeAndTeleportActive = temple::GetRef<BOOL>(0x10AB74C0);
+			auto &teleportPacket = temple::GetRef<FadeAndTeleportArgs>(0x10AB74C8);
+
+			return orgFadeAndTeleport(args);
+		});
+
+		// fix for Co8 bug with daynight transfer using map 5199 (placeholder) for the night map of 5189
+		static DayNightXfer* (__cdecl*orgDaynightListPop)() = replaceFunction< DayNightXfer*(__cdecl)()>(0x10084D00, []()
+		{
+			auto result = orgDaynightListPop();
+			if (result && result->defaultMapMaybe == 5199 && result->dayMapId == 5189){
+				result->defaultMapMaybe = 5189;
+			}
+			return result;
+		});
+			
 	}
 } gameSystemFix;
 

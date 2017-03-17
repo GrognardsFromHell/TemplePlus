@@ -20,6 +20,7 @@
 #include "d20/d20stats.h"
 #include "deity/legacydeitysystem.h"
 #include "ui/ui_systems.h"
+#include "fade.h"
 
 
 //*****************************************************************************
@@ -137,8 +138,28 @@ void TeleportSystem::Reset() {
 	reset();
 }
 void TeleportSystem::AdvanceTime(uint32_t time) {
-	auto advanceTime = temple::GetPointer<void(uint32_t)>(0x10086480);
-	advanceTime(time);
+	auto &fadeAndTeleportActive = temple::GetRef<BOOL>(0x10AB74C0);
+	if (!fadeAndTeleportActive)
+		return;
+
+	auto &teleportProcessActive = temple::GetRef<BOOL>(0x10AB74C0);
+	teleportProcessActive = 1;
+
+	auto teleportProcess = temple::GetRef<void(__cdecl)(FadeAndTeleportArgs&)>(0x10085AA0);
+	auto &teleportPacket = temple::GetRef<FadeAndTeleportArgs>(0x10AB74C8);
+	teleportProcess(teleportPacket);
+
+	teleportProcessActive = 0;
+	fadeAndTeleportActive = 0;
+	
+	if (teleportPacket.flags & FadeAndTeleportFlags::ftf_unk80000000){
+		if (teleportPacket.flags & FadeAndTeleportFlags::ftf_unk20){
+			temple::GetRef<void(__cdecl)()>(0x100027E0)(); // GameEnableDrawing
+		}
+	}
+
+	/*auto advanceTime = temple::GetPointer<void(uint32_t)>(0x10086480);
+	advanceTime(time);*/
 }
 const std::string &TeleportSystem::GetName() const {
 	static std::string name("Teleport");

@@ -9,6 +9,18 @@ struct JumpPoint {
 	int mapId;
 	locXY location;
 };
+struct DayNightXfer
+{
+	ObjectId objId;
+	int defaultMapMaybe; // possibly "initial map"
+	int dayMapId;
+	LocAndOffsets loc;
+	int nightMapId;
+	int field34;
+	LocAndOffsets nightLoc;
+	DayNightXfer* next;
+	int field4C;
+};
 
 class Maps {
 public:

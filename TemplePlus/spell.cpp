@@ -1086,8 +1086,12 @@ int LegacySpellSystem::SpellSave(TioOutputStream& file)
 		ObjectId objId;
 		if (obj)
 		{
+			auto isValidHandle = objSystem->IsValidHandle(obj);
+			if (!isValidHandle){
+				auto dummy = 1;
+			}
 			auto objBod = objSystem->GetObject(obj);
-			if (objBod)
+			if (objBod && isValidHandle)
 				objId = objSystem->GetObject(obj)->id;
 			else
 			{
