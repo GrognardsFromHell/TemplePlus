@@ -197,27 +197,42 @@ int PythonClassSpecIntegration::IsClassFeat(int classCode, int featEnum)
 	return result;
 }
 
+bool PythonClassSpecIntegration::IsAlignmentCompatible(const objHndl & handle, int classEnum)
+{
+	auto classSpecEntry = mScripts.find(classEnum);
+	if (classSpecEntry == mScripts.end())
+		return false;
+
+	if (config.laxRules && config.disableAlignmentRestrictions)
+		return true;
+
+	auto obj = gameSystems->GetObj().GetObject(handle);
+
+	
+	auto objAlignment = obj->GetInt32(obj_f_critter_alignment);
+	auto args = Py_BuildValue("(i)", objAlignment);
+	auto result = RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::IsAlignmentCompatible, args) != 0;
+	Py_DECREF(args);
+	
+	return result;
+
+}
+
 bool PythonClassSpecIntegration::ReqsMet(const objHndl & handle, int classEnum){
 	auto classSpecEntry = mScripts.find(classEnum);
 	if (classSpecEntry == mScripts.end())
 		return false;
 	
-	// check alignment
 	auto obj = gameSystems->GetObj().GetObject(handle);
-	auto objAlignment = obj->GetInt32(obj_f_critter_alignment);
-	auto args = Py_BuildValue("(i)", objAlignment);
-	auto result = RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::IsAlignmentCompatible, args) != 0;
-	Py_DECREF(args);
-	if (!result && !config.disableAlignmentRestrictions)
-		return false;
-
+	
+	
 	auto attachee = PyObjHndl_Create(handle);
-	args = Py_BuildValue("(O)", attachee);
+	auto args = Py_BuildValue("(O)", attachee);
 	Py_DECREF(attachee);
-	result = RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::ObjMeetsPrereqs, args) != 0;
+	auto result = RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::ObjMeetsPrereqs, args) != 0;
 	Py_DECREF(args);
 	return result;
-
+	
 }
 
 Stat PythonClassSpecIntegration::GetDeityClass(int classEnum){

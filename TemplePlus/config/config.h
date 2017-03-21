@@ -78,7 +78,7 @@ struct TemplePlusConfig
 	std::string hpOnLevelup = "Normal" ;
 	bool allowXpOverflow = false;
 	bool slowerLevelling = false;
-	bool laxRules = false; // Relaxed restrictions for various things
+	bool laxRules = false; // Relaxed restrictions for various things; this also acts as a master switch
 	bool disableMulticlassXpPenalty = false;
 	bool disableCraftingSpellReqs = false;
 	bool showTargetingCirclesInFogOfWar = false;

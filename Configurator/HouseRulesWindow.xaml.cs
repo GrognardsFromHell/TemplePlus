@@ -30,5 +30,31 @@ namespace TemplePlusConfig
             this.Close();
             
         }
+
+        private void CheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            this.Width = 670;
+        }
+
+        private void CheckBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            this.Width = 438;
+        }
+
+        private void CheckBox_Initialized(object sender, EventArgs e)
+        {
+
+            var chkbx = sender as CheckBox;
+           if (chkbx != null && chkbx.IsChecked != null){
+                if (chkbx.IsChecked == true){
+                    CheckBox_Checked(sender, null);
+                }
+                else
+                {
+                    CheckBox_Unchecked(sender, null);
+                }
+            }
+            
+        }
     }
 }

@@ -71,6 +71,15 @@ namespace TemplePlusConfig
 
         public static readonly DependencyProperty LaxRulesProperty = DependencyProperty.Register(
           "LaxRules", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+        public static readonly DependencyProperty DisableAlignmentRestrictionsProperty = DependencyProperty.Register(
+          "DisableAlignmentRestrictions", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+        public static readonly DependencyProperty DisableCraftingSpellReqsProperty = DependencyProperty.Register(
+          "DisableCraftingSpellReqs", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+        public static readonly DependencyProperty DisableMulticlassXpPenaltyProperty = DependencyProperty.Register(
+          "DisableMulticlassXpPenalty", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+        public static readonly DependencyProperty ShowTargetingCirclesInFogOfWarProperty = DependencyProperty.Register(
+          "ShowTargetingCirclesInFogOfWar", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+        
 
         public IEnumerable<HpOnLevelUpType> HpOnLevelUpTypes => Enum.GetValues(typeof (HpOnLevelUpType))
             .Cast<HpOnLevelUpType>();
@@ -214,6 +223,26 @@ namespace TemplePlusConfig
             get { return (bool)GetValue(LaxRulesProperty); }
             set { SetValue(LaxRulesProperty, value); }
         }
+        public bool DisableAlignmentRestrictions
+        {
+            get { return (bool)GetValue(DisableAlignmentRestrictionsProperty); }
+            set { SetValue(DisableAlignmentRestrictionsProperty, value); }
+        }
+        public bool DisableCraftingSpellReqs
+        {
+            get { return (bool)GetValue(DisableCraftingSpellReqsProperty); }
+            set { SetValue(DisableCraftingSpellReqsProperty, value); }
+        }
+        public bool DisableMulticlassXpPenalty
+        {
+            get { return (bool)GetValue(DisableMulticlassXpPenaltyProperty); }
+            set { SetValue(DisableMulticlassXpPenaltyProperty, value); }
+        }
+        public bool ShowTargetingCirclesInFogOfWar
+        {
+            get { return (bool)GetValue(ShowTargetingCirclesInFogOfWarProperty); }
+            set { SetValue(ShowTargetingCirclesInFogOfWarProperty, value); }
+        }
 
         /// <summary>
         /// Tries to find an installation directory based on common locations and the Windows registry.
@@ -344,10 +373,32 @@ namespace TemplePlusConfig
                 NonCore = nonCore;
             }
 
+
+            // Lax Rules
             bool laxRules;
             if (bool.TryParse(tpData["laxRules"], out laxRules))
             {
                 LaxRules = laxRules;
+            }
+            bool disableAlignmentRestrictions;
+            if (bool.TryParse(tpData["disableAlignmentRestrictions"], out disableAlignmentRestrictions))
+            {
+                DisableAlignmentRestrictions = disableAlignmentRestrictions;
+            }
+            bool disableCraftingSpellReqs;
+            if (bool.TryParse(tpData["disableCraftingSpellReqs"], out disableCraftingSpellReqs))
+            {
+                DisableCraftingSpellReqs = disableCraftingSpellReqs;
+            }
+            bool disableMulticlassXpPenalty;
+            if (bool.TryParse(tpData["disableMulticlassXpPenalty"], out disableMulticlassXpPenalty))
+            {
+                DisableMulticlassXpPenalty = disableMulticlassXpPenalty;
+            }
+            bool showTargetingCirclesInFogOfWar;
+            if (bool.TryParse(tpData["showTargetingCirclesInFogOfWar"], out showTargetingCirclesInFogOfWar))
+            {
+                ShowTargetingCirclesInFogOfWar = showTargetingCirclesInFogOfWar;
             }
 
         }
@@ -388,6 +439,13 @@ namespace TemplePlusConfig
                     break;
             }
             tpData["laxRules"] = LaxRules ? "true" : "false";
+
+            tpData["disableAlignmentRestrictions"] = DisableAlignmentRestrictions ? "true" : "false";
+            tpData["disableCraftingSpellReqs"] = DisableCraftingSpellReqs ? "true" : "false";
+            tpData["disableMulticlassXpPenalty"] = DisableMulticlassXpPenalty ? "true" : "false";
+            tpData["showTargetingCirclesInFogOfWar"] = ShowTargetingCirclesInFogOfWar ? "true" : "false";
+
+
             tpData["pointBuyPoints"] = PointBuyPoints.ToString();
             tpData["renderWidth"] = RenderWidth.ToString();
             tpData["renderHeight"] = RenderHeight.ToString();

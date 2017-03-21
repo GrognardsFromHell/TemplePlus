@@ -78,6 +78,7 @@ public:
 	bool IsClassSkill(int classCode, int skillEnum);
 	int IsClassFeat(int classCode, int featEnum);
 
+	bool IsAlignmentCompatible(const objHndl &handle, int classEnum); // checks if class is compatible with critter's alignment. Not relevant for character creation, only levelup (since alignment is determined after class selection)
 	bool ReqsMet(const objHndl &handle, int classEnum);
 
 	Stat GetDeityClass(int classEnum);

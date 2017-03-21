@@ -2879,7 +2879,7 @@ void UiCharEditor::ClassSetPermissibles(){
 		auto classCode = GetClassCodeFromWidgetAndPage(idx++, page);
 		if (classCode == (Stat)-1)
 			uiManager->SetButtonState(it, LgcyButtonState::Disabled);
-		else if (d20ClassSys.ReqsMet(handle, classCode)){
+		else if (d20ClassSys.ReqsMet(handle, classCode) && pythonClassIntegration.IsAlignmentCompatible(handle, classCode)){
 			uiManager->SetButtonState(it, LgcyButtonState::Normal);
 		}
 		else{
