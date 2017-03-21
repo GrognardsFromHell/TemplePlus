@@ -426,8 +426,10 @@ public:
 		replaceFunction(0x1018B9B0, StatsDecreaseBtnMsg);
 		replaceFunction(0x1018B570, StatsUpdateBtns);
 		replaceFunction<BOOL(Alignment, Alignment)>(0x1011B880, [](Alignment a, Alignment b)->BOOL { 
-			if (config.laxRules && config.disableAlignmentRestrictions) 
+			if (config.laxRules && config.disableAlignmentRestrictions){
 				return TRUE;
+			}
+				
 			return (BOOL)d20Stats.AlignmentsUnopposed(a, b); 
 		});
 

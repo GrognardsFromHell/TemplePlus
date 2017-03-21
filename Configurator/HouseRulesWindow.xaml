@@ -46,7 +46,7 @@
         </StackPanel>
         <GridSplitter x:Name="gridSplitter_Copy" HorizontalAlignment="Left" Height="286" Margin="431,0,0,0" VerticalAlignment="Top" Width="3"/>
         <StackPanel HorizontalAlignment="Left" Height="137" VerticalAlignment="Top" Width="206" Margin="450,10,0,0">
-            <Label VerticalAlignment="Center" Content="Lax Rules" Margin="0,0,10,0" />
+            <Label VerticalAlignment="Center" Content="Lax Rules Options" Margin="0,0,10,0" />
             <CheckBox VerticalAlignment="Center" Content="Disable Alignment Restrictions" IsChecked="{Binding DisableAlignmentRestrictions}" Margin="0,5,10,5" ToolTip="Alignment restrictions will not apply when choosing a class with respect to the critter's alignment, nor to the party alignment."/>
             <CheckBox VerticalAlignment="Center" Content="Disable Crafting Spell Reqs." IsChecked="{Binding DisableCraftingSpellReqs}" Margin="0,5,10,5" ToolTip="Crafting Magic Arms and Armor or Wondrous Items will ignore spell requirements. Scrolls/Wands still apply obviously."/>
             <CheckBox VerticalAlignment="Center" Content="Disable Multiclass XP Penalty" IsChecked="{Binding DisableMulticlassXpPenalty}" Margin="0,5,10,5" ToolTip="Does away with Experience Point penalties for multiclassed characters."/>

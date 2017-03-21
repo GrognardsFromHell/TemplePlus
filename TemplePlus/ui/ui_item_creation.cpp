@@ -126,6 +126,8 @@ public:
 
 	static int HookedStatLevelGetForItemCreationPrereq(objHndl handle);
 
+	static BOOL HookedIsSpellKnown(objHndl handle, int spellEnum); // for Lax Rules overriding of spell requirements in crafting Wondrous Item
+
 	void apply() override {
 		// auto system = UiSystem::getUiSystem("ItemCreation-UI");		
 		// system->init = systemInit;
@@ -222,6 +224,8 @@ public:
 
 
 		});
+
+		redirectCall(0x10150806, HookedIsSpellKnown);
 	}
 
 } itemCreationHooks;
@@ -1732,6 +1736,10 @@ UiItemCreation::UiItemCreation(){
 	craftedItemNamePos = 0;
 	craftingWidgetId = -1;
 
+}
+
+int UiItemCreation::GetItemCreationType(){
+	return mItemCreationType;
 }
 
 int UiItemCreation::GetSurplusXp(objHndl crafter){
@@ -3822,6 +3830,17 @@ int ItemCreationHooks::HookedStatLevelGetForItemCreationPrereq(objHndl handle){
 
 	result = critterSys.GetCasterLevel(handle);
 	return result;
+}
+
+BOOL ItemCreationHooks::HookedIsSpellKnown(objHndl handle, int spellEnum){
+
+	if (config.laxRules && config.disableCraftingSpellReqs){
+		auto icType = uiSystems->GetItemCreation().GetItemCreationType();
+		if (icType == ItemCreationType::CraftWondrous)
+			return TRUE;
+	}
+
+	return temple::GetRef<BOOL(__cdecl)(objHndl, int)>(0x10075B50)(handle, spellEnum);
 }
 
 int UiItemCreation::MaaCpCost(int effIdx){

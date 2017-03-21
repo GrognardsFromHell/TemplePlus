@@ -181,6 +181,8 @@ public:
 
 	UiItemCreation();
 
+	int GetItemCreationType();
+
 protected:
 
 	void ButtonStateInit(int wndId);
