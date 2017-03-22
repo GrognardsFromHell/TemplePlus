@@ -11,6 +11,7 @@
 #include "ui/ui_debug.h"
 #include "combat.h"
 #include "action_sequence.h"
+#include "dungeon_master.h"
 
 Console::Console() : mLog(1024), mCommandHistory(100), mCommandBuf(1024, '\0') {
 }
@@ -21,6 +22,7 @@ Console::~Console() {
 void Console::Render()
 {
 	UIRenderDebug();
+	dmSys.Render();
 
 	if (!mOpen) {
 		return;

@@ -20,6 +20,7 @@
     <ClCompile Include="common.cpp" />
     <ClCompile Include="config\config_hooks.cpp" />
     <ClCompile Include="diag\proto_cols.cpp" />
+    <ClCompile Include="dungeon_master.cpp" />
     <ClCompile Include="fixes\pointbuyconfig.cpp" />
     <ClCompile Include="d20_levelup.cpp" />
     <ClCompile Include="d20_obj_registry.cpp" />
@@ -293,6 +294,7 @@
     <ClInclude Include="diag\diag.h" />
     <ClInclude Include="dialog.h" />
     <ClInclude Include="dice.h" />
+    <ClInclude Include="dungeon_master.h" />
     <ClInclude Include="fade.h" />
     <ClInclude Include="float_line.h" />
     <ClInclude Include="fonts\fonts.h" />

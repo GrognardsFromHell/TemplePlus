@@ -10,6 +10,7 @@
 #include <condition.h>
 #include <tig/tig_tokenizer.h>
 #include "weapon.h"
+#include "dungeon_master.h"
 
 class ProtosHooks : public TempleFix{
 public: 
@@ -21,6 +22,32 @@ public:
 
 	void apply() override 
 	{
+
+		// protos.tab line parser; replaced for supporting extensions
+		static int(*orgProtoParser)(TigTabParser*, int, const char**) =
+			replaceFunction<int(__cdecl)(TigTabParser*, int, const char**)>(0x1003B640, [](TigTabParser* parser, int lineIdx, const char** cols)->int {
+
+			static std::vector<int> parsedProtoIds;
+
+			auto & parsedIds = parsedProtoIds;
+			auto protoNum = atol(cols[0]);
+			auto foundProto = std::find(parsedIds.begin(), parsedIds.end(), protoNum);
+			if (foundProto == parsedIds.end()) {
+				parsedIds.push_back(protoNum);
+				auto result = orgProtoParser(parser, lineIdx, cols);
+				dmSys.InitEntry(protoNum);
+				return result;
+			}
+			else
+			{
+				logger->info("Skipping duplicate proto {}", protoNum);
+			}
+
+			return 0;
+
+		});
+
+
 		// Fix for protos condition parser
 		replaceFunction<int(__cdecl)(int, objHndl, char*, int, int, int, int)>(0x10039E80, ParseCondition);
 
@@ -30,26 +57,7 @@ public:
 		// Hook the generic ParseType function
 		replaceFunction<int(__cdecl)(int, objHndl, char*, obj_f, int, char**)>(0x10039680, ParseType);
 
-		// replaces the proto parser for supporting extensions
-		static int (*orgProtoParser)(TigTabParser*, int, const char**) = 
-			replaceFunction<int(__cdecl)(TigTabParser*, int, const char**)>(0x1003B640, [](TigTabParser* parser, int lineIdx, const char** cols)->int{
-
-			static std::vector<int> parsedProtoIds;
-
-			auto & parsedIds = parsedProtoIds;
-			auto protoNum = atol(cols[0]);
-			auto foundProto = std::find(parsedIds.begin(), parsedIds.end(), protoNum);
-			if (foundProto == parsedIds.end()){
-				parsedIds.push_back(protoNum);
-				return orgProtoParser(parser, lineIdx, cols);
-			} else
-			{
-				logger->info("Skipping duplicate proto {}", protoNum);
-			}
-
-			return 0;
-			
-		});
+		
 	}
 } protosHooks;
 

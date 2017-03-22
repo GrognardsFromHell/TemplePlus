@@ -469,6 +469,9 @@
       <Filter>ui</Filter>
     </ClCompile>
     <ClCompile Include="rng.cpp" />
+    <ClCompile Include="dungeon_master.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -885,6 +888,9 @@
       <Filter>ui</Filter>
     </ClInclude>
     <ClInclude Include="rng.h" />
+    <ClInclude Include="dungeon_master.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">
