@@ -1837,8 +1837,30 @@ void UiPcCreation::SpellsPerDayUpdate()
 BOOL UiPcCreation::SpellsEntryBtnMsg(int widId, TigMsg * msg)
 {
 	if (msg->type != TigMsgType::WIDGET)
-		return 0;
-	return 0;
+		return FALSE;
+	auto widMsg = (TigMsgWidget*)msg;
+	if (widMsg->widgetEventType != TigMsgWidgetEvent::MouseReleased)
+		return FALSE;
+
+	auto widIdx = WidgetIdIndexOf(widId, &spellsChosenBtnIds[0], SPELLS_BTN_COUNT);
+	if (widIdx == -1)
+		return FALSE;
+
+	auto &knSpInfo = chargen.GetKnownSpellInfo();
+
+	auto spellIdx = widIdx + spellsScrollbar2Y;
+	if (spellIdx >= (int)knSpInfo.size())
+		return FALSE;
+
+	auto &spInfo = knSpInfo[spellIdx];
+	auto spEnum = spInfo.spEnum;
+	
+	if (spellSys.IsLabel(spEnum))
+		return FALSE;
+
+	spInfo.spEnum = SPELL_ENUM_VACANT;
+
+	return FALSE;
 }
 
 void UiPcCreation::SpellsEntryBtnRender(int widId)
