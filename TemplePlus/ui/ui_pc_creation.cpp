@@ -29,6 +29,7 @@
 #include <condition.h>
 #include <tig/tig_mouse.h>
 #include <gamesystems/deity/legacydeitysystem.h>
+#include <infrastructure/keyboard.h>
 
 
 enum ChargenStages : int {
@@ -407,6 +408,29 @@ public:
 		replaceFunction<void(__cdecl)()>(0x101B0620, []() {uiPcCreation.ClassCheckComplete(); });
 		replaceFunction<void(__cdecl)()>(0x10188260, []() {uiPcCreation.ClassBtnEntered(); });
 		
+		// Skill
+
+		// Hook for SkillIncreaseBtnMsg to raise 4 times when ctrl/alt is pressed
+		static BOOL(__cdecl*orgSkillIncBtnMsg)(int, TigMsg*) = replaceFunction<BOOL(__cdecl)(int,TigMsg*)>(0x101815C0, [](int widId, TigMsg* msg){
+			if (msg->type != TigMsgType::WIDGET)
+				return FALSE;
+			auto widMsg = (TigMsgWidget*)msg;
+			if (widMsg->widgetEventType != TigMsgWidgetEvent::MouseReleased)
+				return FALSE;
+
+			if (infrastructure::gKeyboard.IsKeyPressed(VK_CONTROL) || infrastructure::gKeyboard.IsKeyPressed(VK_LCONTROL)
+				|| infrastructure::gKeyboard.IsKeyPressed(VK_LMENU) || infrastructure::gKeyboard.IsKeyPressed(VK_RMENU)){
+				orgSkillIncBtnMsg(widId, msg);
+				int safetyCounter = 3;
+				while (uiManager->GetButtonState(widId) != LgcyButtonState::Disabled && safetyCounter >= 0){
+					orgSkillIncBtnMsg(widId, msg);
+					safetyCounter--;
+				}
+				return TRUE;
+			};
+			return orgSkillIncBtnMsg(widId, msg);
+		});
+
 		// Spell system
 		replaceFunction<void(__cdecl)(GameSystemConf&)>(0x101800E0, [](GameSystemConf& conf) {uiPcCreation.SpellsSystemInit(conf); });
 		replaceFunction<void(__cdecl)()>(0x1017F090, []() {uiPcCreation.SpellsFree(); });
