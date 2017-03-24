@@ -573,6 +573,9 @@ PYBIND11_PLUGIN(tp_dispatcher){
 			.def_readwrite("caster_level", &SpellPacketBody::casterLevel)
 			.def_readwrite("loc", &SpellPacketBody::aoeCenter)
 			.def_readwrite("caster", &SpellPacketBody::caster)
+			.def("get_metamagic_data", [](SpellPacketBody&pkt) {
+				return pkt.metaMagicData;
+			})
 			.def("get_target",[](SpellPacketBody &pkt, int idx)->objHndl
 			{
 				if (idx < (int)pkt.targetCount)
