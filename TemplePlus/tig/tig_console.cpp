@@ -375,6 +375,9 @@ void Console::RenderCheatsMenu()
 
 			ImGui::EndMenu();
 		}
+		if (ImGui::Button("DM")){
+			dmSys.Toggle();
+		}
 		ImGui::EndMenuBar();
 	}
 

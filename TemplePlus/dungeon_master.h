@@ -9,6 +9,10 @@ class DungeonMaster
 
 public:
 	bool IsActive();
+	void Show();
+	void Hide();
+	void Toggle();
+
 	void Render();
 
 
@@ -22,9 +26,11 @@ public:
 protected:
 	//bool mIsVisible = false;
 	// bool mIsActive = true;
-
+	bool mIsInited = false;
+	int mTexId;
 
 	std::map<int, Record > monsters;
+	std::map<int, Record > weapons;
 
 };
 
