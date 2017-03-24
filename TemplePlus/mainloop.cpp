@@ -452,6 +452,10 @@ public:
 			return 0;
 		});
 
+		replaceFunction<void(objHndl*)>(0x101140F0, [](objHndl* tgt) {
+			NormalLmbHandleTarget(tgt);
+		});
+
 	}
 } hooks;
 

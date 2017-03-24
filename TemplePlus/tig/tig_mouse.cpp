@@ -128,6 +128,38 @@ int MouseFuncs::SetCursor(int shaderId) {
 	return 0;
 }
 
+int(MouseFuncs::SetCursorFromMaterial)(std::string matName){
+	auto material = tig->GetMdfFactory().GetByName(matName);
+
+	if (!material) {
+		logger->error("Unable to get or load cursor material {}", matName);
+		return false;
+	}
+
+	auto primaryTexture = material->GetPrimaryTexture();
+
+	if (!primaryTexture) {
+		logger->error("Material {} has no texture and cannot be used as a cursor", material->GetName());
+		return false;
+	}
+
+	int hotspotX = 0;
+	int hotspotY = 0;
+
+	// Special handling for cursors that don't have their hotspot on 0,0
+	if (strstr(primaryTexture->GetName().c_str(), "Map_GrabHand_Closed.tga")
+		|| strstr(primaryTexture->GetName().c_str(), "Map_GrabHand_Open.tga")
+		|| strstr(primaryTexture->GetName().c_str(), "SlidePortraits.tga")) {
+		hotspotX = primaryTexture->GetContentRect().width / 2;
+		hotspotY = primaryTexture->GetContentRect().height / 2;
+	}
+
+	tig->GetRenderingDevice().SetCursor(hotspotX, hotspotY, primaryTexture);
+	auto shaderId = material->GetId();
+	stashedCursorShaderIds.push_back(shaderId);
+	return true;
+}
+
 void MouseFuncs::ResetCursor() {
 	// The back is the one on screen
 	if (!stashedCursorShaderIds.empty()) {

@@ -1094,6 +1094,16 @@ MonsterCategory LegacyCritterSystem::GetCategory(objHndl objHnd)
 	return mc_type_monstrous_humanoid; // default - so they have at least a weapons proficiency
 }
 
+MonsterSubcategoryFlag LegacyCritterSystem::GetSubcategoryFlags(objHndl objHnd){
+	if (objHnd && objects.IsCritter(objHnd)) {
+		auto monCat = objects.getInt64(objHnd, obj_f_critter_monster_category);
+		auto moncatSubtype = static_cast<MonsterSubcategoryFlag>(monCat >> 32);
+
+		return moncatSubtype;
+	}
+	return (MonsterSubcategoryFlag)0;
+}
+
 uint32_t LegacyCritterSystem::IsCategoryType(objHndl objHnd, MonsterCategory categoryType){
 	if (objHnd && objects.IsCritter(objHnd)) {
 		auto monCat = objects.getInt64(objHnd, obj_f_critter_monster_category);

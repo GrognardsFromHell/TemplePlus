@@ -301,6 +301,7 @@ struct LegacyCritterSystem : temple::AddressTable
 
 #pragma region Category
 	MonsterCategory GetCategory(objHndl objHnd);
+	MonsterSubcategoryFlag GetSubcategoryFlags(objHndl handle);
 	uint32_t IsCategoryType(objHndl objHnd, MonsterCategory categoryType);
 	uint32_t IsCategorySubtype(objHndl objHnd, MonsterSubcategoryFlag categoryType);
 	uint32_t IsUndead(objHndl objHnd);

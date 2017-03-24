@@ -96,6 +96,7 @@ namespace gfx {
 		~MdfMaterialFactory();
 
 		MdfRenderMaterialPtr GetById(int id);
+		MdfRenderMaterialPtr GetByName(const std::string &name);
 
 		MdfRenderMaterialPtr LoadMaterial(const std::string& name);
 

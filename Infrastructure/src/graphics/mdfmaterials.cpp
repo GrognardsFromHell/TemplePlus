@@ -288,6 +288,17 @@ namespace gfx {
 		return nullptr;
 	}
 
+	MdfRenderMaterialPtr MdfMaterialFactory::GetByName(const std::string &name){
+		auto nameLower = tolower(name);
+		auto it = mNameRegistry.find(nameLower);
+		if (it != mNameRegistry.end()) {
+			return it->second;
+		}
+		return nullptr;
+	}
+
+	
+
 	MdfRenderMaterialPtr MdfMaterialFactory::LoadMaterial(const std::string& name) {
 
 		auto nameLower = tolower(name);

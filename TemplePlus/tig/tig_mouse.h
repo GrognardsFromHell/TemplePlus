@@ -30,6 +30,7 @@ extern temple::GlobalStruct<TigMouseState, 0x10D25184> mouseState;
 struct MouseFuncs : temple::AddressTable {
 	
 	static int (__cdecl SetCursor)(int shaderId);
+	static int (__cdecl SetCursorFromMaterial)(std::string matName);
 	static void(__cdecl ResetCursor)();
 	void (__cdecl *SetButtonState)(MouseButton button, bool pressed);
 	void (__cdecl *SetPos)(int x, int y, int wheelDelta);
