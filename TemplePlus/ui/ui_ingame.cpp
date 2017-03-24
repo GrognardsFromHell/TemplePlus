@@ -16,6 +16,7 @@
 #include "radialmenu.h"
 #include "ai.h"
 #include "party.h"
+#include "dungeon_master.h"
 
 UiInGame::UiInGame(const UiSystemConf &config) {
 	auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x10112e70);
@@ -103,6 +104,10 @@ void UiInGame::ProcessMessage(const TigMsg & msg) {
 
 		static int* objRecovery_10BD3AFC = temple::GetPointer<int>(0x10BD3AFC);
 		static uint32_t &idx_10BD3B44 = temple::GetRef<uint32_t>(0x10BD3B44);
+
+		if (dmSys.IsActionActive()){
+			dmSys.HandleMsg(msg);
+		}
 
 		if (!objRecovery_10BD3AFC[idx_10BD3B44])
 		{
