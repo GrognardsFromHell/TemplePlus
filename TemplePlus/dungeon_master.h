@@ -11,6 +11,7 @@ class DungeonMaster
 
 public:
 	bool IsActive();
+	bool IsMinimized();
 	void Show();
 	void Hide();
 	void Toggle();

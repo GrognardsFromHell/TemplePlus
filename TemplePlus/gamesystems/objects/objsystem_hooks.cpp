@@ -125,6 +125,8 @@ public:
 
 		// obj_get_handle
 		replaceFunction<objHndl(objHndl, obj_f)>(0x1009e360, [](objHndl handle, obj_f field) {
+			if (!handle)
+				return objHndl::null;
 			return GetObj(handle)->GetObjHndl(field);
 		});
 

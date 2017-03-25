@@ -26,6 +26,7 @@
 #include "ui_render.h"
 #include <anim.h>
 #include <tig\tig_mouse.h>
+#include <dungeon_master.h>
 
 UiIntgameTurnbased uiIntgameTb;
 
@@ -358,6 +359,10 @@ void UiIntegameTurnbasedRepl::RestoreSeqBackup()
 
 int UiIntegameTurnbasedRepl::UiIntgameMsgHandler(int widId, TigMsg* msg) {
 	
+	if (msg->type == TigMsgType::MOUSE && dmSys.IsActive()  && !dmSys.IsMinimized()) {
+		return FALSE;
+	}
+
 	auto initialSeq = *actSeqSys.actSeqCur;
 	int result = 0;
 
@@ -389,7 +394,8 @@ int UiIntegameTurnbasedRepl::UiIntgameMsgHandler(int widId, TigMsg* msg) {
 		if (objects.IsPlayerControlled(intgameActor)){
 			auto tigMsgType = msg->type;
 			if (tigMsgType == TigMsgType::MOUSE){
-				if (msg->arg4 & MSF_LMB_CLICK){
+
+				if (msg->arg4 & MSF_LMB_CLICK) {
 					if (ToggleAcquisition(msg))
 						result = 1;
 				}
@@ -402,7 +408,7 @@ int UiIntegameTurnbasedRepl::UiIntgameMsgHandler(int widId, TigMsg* msg) {
 					if (intgameRMB(msg))
 						result = 1;
 				}
-				if (msg->arg4 & MSF_RMB_RELEASED){
+				if (msg->arg4 & MSF_RMB_RELEASED) {
 					if (ResetViaRmb(msg))
 						result = 1;
 				}
@@ -410,6 +416,7 @@ int UiIntegameTurnbasedRepl::UiIntgameMsgHandler(int widId, TigMsg* msg) {
 					if (IntgameValidateMouseSelection(reinterpret_cast<TigMsgMouse*>(msg)))
 						result = 1;
 				}
+				
 			} 
 			else { // widget or keyboard msg
 				if (tigMsgType == TigMsgType::KEYSTATECHANGE && (msg->arg2 & 0xFF)== 0)	{

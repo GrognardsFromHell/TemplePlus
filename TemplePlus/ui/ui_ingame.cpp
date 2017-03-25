@@ -73,6 +73,16 @@ void UiInGame::ProcessMessage(const TigMsg & msg) {
 	static auto doKeyboardScrolling = temple::GetPointer<void()>(0x10113fb0);
 	doKeyboardScrolling();
 
+
+	if (dmSys.IsActive() && !dmSys.IsMinimized()) {
+		if (dmSys.IsActionActive()) {
+			if (dmSys.HandleMsg(msg))
+				return;
+		}
+		return;
+	}
+	
+
 	if (HandleRadialMenuMessage(msg)) {
 		return;
 	}
@@ -105,10 +115,7 @@ void UiInGame::ProcessMessage(const TigMsg & msg) {
 		static int* objRecovery_10BD3AFC = temple::GetPointer<int>(0x10BD3AFC);
 		static uint32_t &idx_10BD3B44 = temple::GetRef<uint32_t>(0x10BD3B44);
 
-		if (dmSys.IsActionActive()){
-			dmSys.HandleMsg(msg);
-		}
-
+		
 		if (!objRecovery_10BD3AFC[idx_10BD3B44])
 		{
 			static bool combatModeMsg = false;

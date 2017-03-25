@@ -21,9 +21,14 @@ DungeonMaster dmSys;
 
 static bool isActive = true;
 static bool isActionActive = false;
+static bool isMinimized = false;
 
 bool DungeonMaster::IsActive(){
 	return isActive;
+}
+
+bool DungeonMaster::IsMinimized(){
+	return isMinimized;
 }
 
 void DungeonMaster::Show(){
@@ -56,92 +61,101 @@ void DungeonMaster::Render(){
 
 	auto rect = TigRect(0,0,96,96);
 	ImGui::Begin("Dungeon Master", &isActive);
-	auto wndPos = ImGui::GetWindowPos();
-	auto wndWidth = ImGui::GetWindowWidth();
-	rect.x = wndPos.x + wndWidth/2 - rect.width/2; rect.y = wndPos.y - rect.height;
+		isMinimized = ImGui::GetWindowCollapsed();
+		auto wndPos = ImGui::GetWindowPos();
+		auto wndWidth = ImGui::GetWindowWidth();
+		rect.x = wndPos.x + wndWidth/2 - rect.width/2; rect.y = wndPos.y - rect.height;
 	
 
-	if (ImGui::CollapsingHeader("Spawn Monster")) {
+		if (ImGui::CollapsingHeader("Monsters")) {
 		
-		const char* listbox_items[] = { "Any" , "Aberration", "Animal", "Beast", "Construct", "Dragon", "Elemental", "Fey", "Giant", "Humanoid" 
-			, "Magical Beast", "Monstrous Humanoid", "Ooze" , "Outsider" , "Plant" , "Shapechanger" , "Undead" , "Vermin"};
-		const char* subcatItems[] = { "Any", "Air", "Aquatic", "Extraplanar", "Cold", "Chaotic", "Demon", "Devil", "Dwarf", "Earth", "Electricity", "Elf", "Evil", "Fire", "Formian"
-			, "Gnoll" , "Gnome" , "Goblinoid" , "Good" , "Guardinal" , "Half Orc" , "Halfling" , "Human" , "Lawful" , "Incorporeal", "Orc", "Reptilian", "Slaadi", "Water" };
-		ImGui::Combo("Category", &mCategoryFilter, listbox_items, 18, 8);
-		ImGui::Combo("Subcategory", &mSubcategoryFilter, subcatItems, 29, 8);
+			const char* listbox_items[] = { "Any" , "Aberration", "Animal", "Beast", "Construct", "Dragon", "Elemental", "Fey", "Giant", "Humanoid" 
+				, "Magical Beast", "Monstrous Humanoid", "Ooze" , "Outsider" , "Plant" , "Shapechanger" , "Undead" , "Vermin"};
+			const char* subcatItems[] = { "Any", "Air", "Aquatic", "Extraplanar", "Cold", "Chaotic", "Demon", "Devil", "Dwarf", "Earth", "Electricity", "Elf", "Evil", "Fire", "Formian"
+				, "Gnoll" , "Gnome" , "Goblinoid" , "Good" , "Guardinal" , "Half Orc" , "Halfling" , "Human" , "Lawful" , "Incorporeal", "Orc", "Reptilian", "Slaadi", "Water" };
+			ImGui::Combo("Category", &mCategoryFilter, listbox_items, 18, 8);
+			ImGui::Combo("Subcategory", &mSubcategoryFilter, subcatItems, 29, 8);
 
-		for (auto it: monsters){
+			for (auto it: monsters){
 
-			if (FilterResult(it.second)){
+				if (FilterResult(it.second)){
 				
-				if (ImGui::CollapsingHeader(fmt::format("{} | {}", it.first, it.second.name.c_str()).c_str())) {
-					auto protHndl = objSystem->GetProtoHandle(it.first);
-					if (ImGui::Button("Spawn")) {
-						mObjSpawnProto = it.first;
-						isActionActive = true;
-						mActionTimeStamp = timeGetTime();
-						mouseFuncs.SetCursorFromMaterial("art\\interface\\cursors\\DungeonMaster.mdf");
+					if (ImGui::CollapsingHeader(fmt::format("{} | {}", it.first, it.second.name.c_str()).c_str())) {
+						auto protHndl = objSystem->GetProtoHandle(it.first);
+						if (ImGui::Button("Spawn")) {
+							mObjSpawnProto = it.first;
+							isActionActive = true;
+							mActionTimeStamp = timeGetTime();
+							mouseFuncs.SetCursorFromMaterial("art\\interface\\cursors\\DungeonMaster.mdf");
+						}
+
+						auto obj = objSystem->GetObject(protHndl);
+					
+						//auto hdNum = objects.GetHitDiceNum(protHndl);
+						auto hdNum = objects.GetHitDiceNum(protHndl);
+						auto lvls = objects.StatLevelGet(protHndl, stat_level);
+						ImGui::Text(fmt::format("HD {}  Class Levels {}", hdNum, lvls ).c_str());
 					}
 
-					auto obj = objSystem->GetObject(protHndl);
-					
-					//auto hdNum = objects.GetHitDiceNum(protHndl);
-					auto hdNum = objects.GetHitDiceNum(protHndl);
-					auto lvls = objects.StatLevelGet(protHndl, stat_level);
-					ImGui::Text(fmt::format("HD {}  Class Levels {}", hdNum, lvls ).c_str());
 				}
 
-			}
-
 			
+			}
 		}
-	}
 
-	if (ImGui::CollapsingHeader("Weapons")) {
+		if (ImGui::CollapsingHeader("Weapons")) {
 
-		for (auto it : weapons) {
-			ImGui::BulletText("%d | %s ", it.first, it.second.name.c_str());
+			for (auto it : weapons) {
+				ImGui::BulletText("%d | %s ", it.first, it.second.name.c_str());
+			}
 		}
-	}
 
 	ImGui::End();
 
-	UiRenderer::DrawTexture(mTexId, rect);
+	if (!isMinimized)
+		UiRenderer::DrawTexture(mTexId, rect);
 }
 
 bool DungeonMaster::HandleMsg(const TigMsg & msg){
 
-	if (msg.createdMs < mActionTimeStamp + 100) {
+	/*if (msg.createdMs < mActionTimeStamp + 100) {
 		return false;
-	}
+	}*/
 
 	if (msg.type == TigMsgType::MOUSE) {
 		auto &mouseMsg = *(TigMsgMouse*)&msg;
 
-		// RMB - release
-		if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_RMB_RELEASED) {
-			mObjSpawnProto = 0;
-			isActionActive = false;
-			return true;
+		// RMB - click (so it seizes the event and doesn't spawn a radial menu)
+		if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_RMB_CLICK) {
+			if (isActionActive) {
+				mObjSpawnProto = 0;
+				isActionActive = false;
+				mouseFuncs.ResetCursor();
+				return true;
+			}
 		}
 
 
-		if (!mObjSpawnProto)
-			return false;
+		if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_LMB_CLICK) {
+			if (!mObjSpawnProto)
+				return false;
 
-		objHndl protHndl = objSystem->GetProtoHandle(mObjSpawnProto);
-		if (!protHndl)
-			return false;
+			objHndl protHndl = objSystem->GetProtoHandle(mObjSpawnProto);
+			if (!protHndl)
+				return false;
 
-		LocAndOffsets mouseLoc;
-		locSys.GetLocFromScreenLocPrecise(mouseMsg.x,mouseMsg.y, mouseLoc);
+			LocAndOffsets mouseLoc;
+			locSys.GetLocFromScreenLocPrecise(mouseMsg.x, mouseMsg.y, mouseLoc);
 
-		auto newHndl = objSystem->CreateObject(protHndl, mouseLoc.location);
-		
-		mObjSpawnProto = 0;
-		isActionActive = false;
+			auto newHndl = objSystem->CreateObject(protHndl, mouseLoc.location);
 
-		return true;
+			mObjSpawnProto = 0;
+			isActionActive = false;
+			mouseFuncs.ResetCursor();
+
+			return true;
+		}
+
 
 	}
 
