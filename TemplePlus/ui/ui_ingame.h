@@ -40,6 +40,12 @@ public:
 	 */
 	void ResetInput();
 
+
+	/**
+	* Selects the topmost object under the given screen coordinate.
+	*/
+	objHndl PickObject(int x, int y, uint32_t flags); // flags - see RaycastFlags
+
 private:
 	bool mPrevMsgWasInCombat = false;
 	bool mPartyMembersMoving = false;
@@ -51,9 +57,6 @@ private:
 	
 	objHndl GetMouseTarget(int x, int y);
 	
-	/**
-	 * Selects the topmost object under the given screen coordinate.
-	 */
-	objHndl PickObject(int x, int y, uint32_t flags);
+	
 
 };

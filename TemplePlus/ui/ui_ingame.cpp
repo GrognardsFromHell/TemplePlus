@@ -75,10 +75,8 @@ void UiInGame::ProcessMessage(const TigMsg & msg) {
 
 
 	if (dmSys.IsActive() && !dmSys.IsMinimized()) {
-		if (dmSys.IsActionActive()) {
-			if (dmSys.HandleMsg(msg))
-				return;
-		}
+		dmSys.HandleMsg(msg);
+
 		return;
 	}
 	
