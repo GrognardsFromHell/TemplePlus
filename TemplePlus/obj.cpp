@@ -20,6 +20,7 @@
 #include <gamesystems/d20/d20stats.h>
 #include "python/python_integration_obj.h"
 #include <set>
+#include <config/config.h>
 
 Objects objects;
 

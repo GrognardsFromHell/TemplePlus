@@ -674,6 +674,13 @@ public:
 			}*/
 			return orgTimeEventSchedule(evt, timeDelta, timeAbsolute, timeResultOut);
 		});
+
+		static void(__cdecl*orgExpireLock)(TimeEvent*) = replaceFunction<void(TimeEvent*)>(0x10021230, [](TimeEvent* evt) {
+			if (!evt->params[0].handle) // fix for crash with null handle
+				return;
+
+			return orgExpireLock(evt);
+		});
 	}
 } hooks;
 
