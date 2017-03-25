@@ -83,6 +83,7 @@ struct TemplePlusConfig
 	bool disableCraftingSpellReqs = false;
 	bool showTargetingCirclesInFogOfWar = false;
 	bool disableAlignmentRestrictions = false;
+	bool disableDoorRelocking = false;
 	bool newClasses = false; // Prestige classes and such
 	bool nonCoreMaterials = false; // splatbooks, fan suggestions etc
 	bool tolerantNpcs = false; // NPCs tolerate monster party members

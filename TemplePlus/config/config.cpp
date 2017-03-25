@@ -167,6 +167,7 @@ static ConfigSetting configSettings[] = {
 	CONF_BOOL(disableAlignmentRestrictions),
 	CONF_BOOL(disableCraftingSpellReqs),
 	CONF_BOOL(disableMulticlassXpPenalty),
+	CONF_BOOL(disableDoorRelocking),
 	CONF_BOOL(showTargetingCirclesInFogOfWar),
 	CONF_BOOL(nonCoreMaterials),
 	CONF_BOOL(tolerantNpcs),

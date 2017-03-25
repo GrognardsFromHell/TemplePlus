@@ -833,7 +833,16 @@ public:
 		writeCall(0x10023F1F, HookedGetModelScale); // Render related
 		writeCall(0x10021E9F, HookedGetModelScale);
 		
-			
+		
+		static BOOL(__cdecl*orgRelockPortalSchedule)(objHndl, int) = replaceFunction<BOOL(__cdecl)(objHndl, int)>(0x1001FE40, [](objHndl handle, int isTimeEvent) {
+			if (!handle)
+				return FALSE;
+			if (config.disableDoorRelocking) {
+				return FALSE;
+			}
+			return orgRelockPortalSchedule(handle, isTimeEvent);
+		});
+
 }
 } objReplacements;
 

@@ -61,7 +61,11 @@ namespace TemplePlusConfig
 
         public static readonly DependencyProperty FastSneakingProperty = DependencyProperty.Register(
           "FastSneaking", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+        public static readonly DependencyProperty DisableDoorRelockingProperty = DependencyProperty.Register(
+          "DisableDoorRelocking", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
 
+
+        
 
         public static readonly DependencyProperty NewClassesProperty = DependencyProperty.Register(
           "NewClasses", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
@@ -204,7 +208,11 @@ namespace TemplePlusConfig
             get { return (bool)GetValue(FastSneakingProperty); }
             set { SetValue(FastSneakingProperty, value); }
         }
-
+        public bool DisableDoorRelocking
+        {
+            get { return (bool)GetValue(DisableDoorRelockingProperty); }
+            set { SetValue(DisableDoorRelockingProperty, value); }
+        }
 
         public bool NewClasses
         {
@@ -359,7 +367,11 @@ namespace TemplePlusConfig
             if (bool.TryParse(tpData["fastSneakAnim"], out fastSneaking)){
                 FastSneaking = fastSneaking;
             }
-
+            bool disableDoorRelocking;
+            if (bool.TryParse(tpData["disableDoorRelocking"], out disableDoorRelocking))
+            {
+                DisableDoorRelocking = disableDoorRelocking;
+            }
 
             bool newClasses;
             if (bool.TryParse(tpData["newClasses"], out newClasses))
@@ -464,6 +476,7 @@ namespace TemplePlusConfig
             tpData["showExactHPforNPCs"] = TransparentNpcStats? "true" : "false";
             tpData["showNpcStats"] = TransparentNpcStats ? "true" : "false";
             tpData["fastSneakAnim"] = FastSneaking ? "true" : "false";
+            tpData["disableDoorRelocking"] = DisableDoorRelocking? "true" : "false";
         }
     }
 
