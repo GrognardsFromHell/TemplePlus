@@ -204,7 +204,7 @@ void DungeonMaster::InitEntry(int protoNum){
 
 	if (!mIsInited) {
 		textureFuncs.RegisterTexture("art\\interface\\dungeon_master_ui\\DU.tga", &mTexId);
-		tig->GetMdfFactory().LoadMaterial("art\\interface\\cursors\\DungeonMaster.tga");
+		tig->GetMdfFactory().LoadMaterial("art\\interface\\cursors\\DungeonMaster.mdf");
 		mIsInited = true;
 	}
 }
