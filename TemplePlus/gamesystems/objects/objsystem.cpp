@@ -80,13 +80,17 @@ objHndl ObjSystem::GetHandleById(ObjectId id)
 	locXY loc;
 	loc.locx = pos.x;
 	loc.locy = pos.y;
-	list.ListTile(loc, 0x2000A);
-
+	list.ListTile(loc, OLC_IMMOBILE);
+	
 	for (auto i = 0; i < list.size(); ++i) {
 		auto candidate = list.get(i);
 		auto tempId = objects.GetTempId(candidate);
 		if (tempId == pos.tempId) {
 			mObjRegistry->AddToIndex(candidate, id);
+			/*if (!mObjRegistry->GetHandleById(id)) {
+				logger->debug("WTF; cannot find just added handle");
+				return objHndl::null;
+			}*/
 			return candidate;
 		}
 	}

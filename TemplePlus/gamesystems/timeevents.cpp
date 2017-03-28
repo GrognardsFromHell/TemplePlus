@@ -3,6 +3,8 @@
 #include <temple/dll.h>
 #include "gamesystems/timeevents.h"
 #include "gamesystems/gamesystems.h"
+#include "gamesystems/objects/objsystem.h"
+#include "gamesystems/mapsystem.h"
 #include <config/config.h>
 #include <description.h>
 
@@ -24,6 +26,15 @@ struct TimeEventSystemSpec {
 // Lives @ 0x102BD900
 struct TimeEventSystems {
 	TimeEventType systems[38];
+};
+
+// 0x102BDF98 [4]  one for each timer type
+struct TimeEventFlagPacket {
+	int field0;
+	int objRef;
+	int field8;
+	int fieldc;
+	int field10;
 };
 
 #pragma region Time Event Systems
@@ -595,26 +606,69 @@ class TimeEventHooks : public TempleFix
 public: 
 	void apply() override 
 	{
-		static int (*orgTimeEventValidate)(TimeEventListEntry* evt, int flag) = replaceFunction<int (__cdecl)(TimeEventListEntry*, int)>(0x10060430, [](TimeEventListEntry* evt, int flag)
+		static int (*orgTimeEventValidate)(TimeEventListEntry* evt, int flag) = replaceFunction<int (__cdecl)(TimeEventListEntry*, int)>(0x10060430, [](TimeEventListEntry* evt, int isLoadingMap)
 		{
-			/*if (evt->evt.system == TimeEventType::ObjFade)
-			{
-				int dummy = 1;
-				if (config.newFeatureTestMode)
-				{
-					if (evt->objects[1].guid.subtype == ObjectIdKind::Null)
-					{
-						int dsummy = 1;
-					}
-					logger->debug("TimeEventValidate: ObjFade evt id {} for obj {}", evt->evt.params[0].int32, description.getDisplayName(evt->evt.params[1].handle));
+			auto &timeEventFlagPackets = temple::GetRef<TimeEventFlagPacket[4]>(0x102BDF98);
+
+			auto handle = objHndl::null;
+
+			for (auto i = 0; i < 4; i++) {
+				auto objKind = evt->objects[i].guid.subtype;
+				auto isNull = evt->objects[i].guid.subtype == ObjectIdKind::Null;
+				if ((uint16_t)objKind >= 4 && (uint16_t)objKind < 0xFFFE) {
+					logger->debug("Illegal object Kind caught in TimeEventValidate");
 				}
-			} */
-			int result = orgTimeEventValidate(evt, flag);
-			if (!result)
-			{
+
+				auto &parVal = evt->evt.params[i];
+				handle = parVal.handle;
+				if (isNull) {
+					if (sTimeEventTypeSpecs[(int)evt->evt.system].argTypes[i] == TimeEventArgType::Object) {
+						evt->evt.params[i].handle = objHndl::null;
+					}
+					continue;
+				}
+
+				if (handle || isLoadingMap) {
+					if (gameSystems->GetMap().IsClearingMap()) {
+						return FALSE;
+					}
+					if (objSystem->IsValidHandle(handle)) {
+						if (!handle || objSystem->GetObject(handle)->GetFlags() & OF_DESTROYED) {
+							handle = objHndl::null;
+							// logger->debug("Destroyed object caught in TimeEvent IsValidHandle");
+							return FALSE;
+						}		
+						continue;
+					}
+
+					auto objValidateRecovery = temple::GetRef<BOOL(__cdecl)(objHndl&, TimeEventObjInfo&)>(0x10020610);
+					if (objValidateRecovery(handle, evt->objects[i])) {
+						evt->evt.params[i].handle = handle;
+
+						if (!handle || objSystem->GetObject(handle)->GetFlags() & OF_DESTROYED) {
+							// logger->debug("Destroyed object caught in validateRecovery");
+							return FALSE;
+						}
+						continue;
+					}
+					else {
+						auto tryAgain = objSystem->GetHandleById(evt->objects[i].guid);
+						evt->evt.params[i].handle = objHndl::null;
+						logger->debug("TImeEvent: Error: Object validate recovery Failed. TE-Type: {}", (int)evt->evt.system);
+						return FALSE;
+					}
+					
+				}
+
+			}
+
+			return TRUE;
+
+			/*int result = orgTimeEventValidate(evt, isLoadingMap);
+			if (!result){
 				logger->debug("Failed to validate time event. Event system {}, param0 {}", (int)evt->evt.system, evt->evt.params[0].int32);
 			}
-			return result;
+			return result;*/
 		});
 
 		static void (*orgTransparencySet)(objHndl , int) = replaceFunction<void(__cdecl)(objHndl, int)>(0x10020060, [](objHndl obj, int flag)
@@ -677,7 +731,10 @@ public:
 
 		static void(__cdecl*orgExpireLock)(TimeEvent*) = replaceFunction<void(TimeEvent*)>(0x10021230, [](TimeEvent* evt) {
 			if (!evt->params[0].handle) // fix for crash with null handle
+			{
 				return;
+			}
+			
 
 			return orgExpireLock(evt);
 		});
