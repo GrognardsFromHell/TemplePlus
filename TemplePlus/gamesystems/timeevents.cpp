@@ -624,8 +624,15 @@ public:
 				if (isNull) {
 					if (sTimeEventTypeSpecs[(int)evt->evt.system].argTypes[i] == TimeEventArgType::Object) {
 						evt->evt.params[i].handle = objHndl::null;
+						if (handle){
+							logger->warn("Non-null handle for ObjectIdKind::Null in TimeEventValidate: {}", handle);
+						}
 					}
 					continue;
+				}
+
+				if (sTimeEventTypeSpecs[(int)evt->evt.system].argTypes[i] == TimeEventArgType::Object && !handle){
+					logger->debug("Null object handle for GUID {}", evt->objects[i].guid);
 				}
 
 				if (handle || isLoadingMap) {
@@ -635,7 +642,7 @@ public:
 					if (objSystem->IsValidHandle(handle)) {
 						if (!handle || objSystem->GetObject(handle)->GetFlags() & OF_DESTROYED) {
 							handle = objHndl::null;
-							// logger->debug("Destroyed object caught in TimeEvent IsValidHandle");
+							logger->debug("Destroyed object caught in TimeEvent IsValidHandle");
 							return FALSE;
 						}		
 						continue;
@@ -732,6 +739,7 @@ public:
 		static void(__cdecl*orgExpireLock)(TimeEvent*) = replaceFunction<void(TimeEvent*)>(0x10021230, [](TimeEvent* evt) {
 			if (!evt->params[0].handle) // fix for crash with null handle
 			{
+				logger->debug("Caught ExpireLock event with null handle!");
 				return;
 			}
 			
