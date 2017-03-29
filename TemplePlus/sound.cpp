@@ -2,7 +2,7 @@
 #include "stdafx.h"
 #include "sound.h"
 #include "util/fixes.h"
-
+#include <tig/tig_sound.h>
 
 Sound sound;
 std::map<int, std::string> Sound::mUserSounds;
@@ -72,25 +72,93 @@ public:
 		// Find Sound
 		replaceFunction(0x1003B9E0, FindSound);
 
+		// Alloc Stream - hooked for feedback on errors
+		static int (__cdecl*orgAllocStream)(int*, int) = replaceFunction<int(__cdecl)(int*, int)>(0x101E45B0, [](int* streamId, int soundType){
+		
+			auto soundInited = temple::GetRef<int>(0x10EE7570);
+			if (!soundInited){
+				*streamId = -1;
+				return 1;
+			}
 
-		static void(__cdecl*orgMilesSoundSthg)(int, int) = replaceFunction<void(__cdecl)(int, int)>(0x101E3B60, [](int idx, int volume){
+			if (soundType != 1)	{
+				auto result = orgAllocStream(streamId, soundType);
+				if (result != 0) {
+					logger->debug("Failed to allocate stream! Stream ID {}, sound type {}", *streamId, soundType);
+				}
+				auto &mss = temple::GetRef<MilesSoundSthg[]>(0x10EE7578)[*streamId];
+				if (mss.streamSthg) {
+					logger->debug("Non-null mss_stream caught");
+				};
+				return result;
+			}
+
+			// Fix for allocating music
+			auto &streamSlots = temple::GetRef<MilesSoundSthg[]>(0x10EE7578);
+			auto newStreamId = -1;
+			
+			for (auto i=2; i <= 5; i++){
+				if (!streamSlots[i].isUsed){
+					newStreamId = i;
+					break;
+				}
+			}
+			
+			if (newStreamId == -1){
+				auto &ringBufferStreamId = temple::GetRef<int>(0x10EED5A0);
+				tigSoundAddresses.FreeStream(ringBufferStreamId);
+				newStreamId = ringBufferStreamId++;
+				if (ringBufferStreamId > 5)
+					ringBufferStreamId = 2;
+			}
+
+
+			if (newStreamId != -1){
+				memset(&streamSlots[newStreamId], 0, sizeof(MilesSoundSthg));
+				streamSlots[newStreamId].field20 = -1;
+				streamSlots[newStreamId].isUsed = 1;
+				streamSlots[newStreamId].flags = 0x100;
+				streamSlots[newStreamId].field10 = 1;
+				streamSlots[newStreamId].curVolume = 127;
+				streamSlots[newStreamId].field130 = 64;
+				*streamId = newStreamId;
+			}
+
+			if (newStreamId == -1){
+				logger->error("No Stream ID given for music track!");
+				*streamId = -1;
+				return 3;
+				
+			}
+
+			if (soundType == 1 && *streamId == 1){
+				logger->warn("Music stream given ID 1!");
+			}
+
+			auto &mss = temple::GetRef<MilesSoundSthg[]>(0x10EE7578)[*streamId];
+			if (mss.streamSthg){
+				logger->debug("Non-null mss_stream caught");
+			};
+
+			return 0;
+		});
+
+		static void(__cdecl*orgSetStreamVolume)(int, int) = replaceFunction<void(__cdecl)(int, int)>(0x101E3B60, [](int streamId, int volume){
 			auto unk = temple::GetRef<int>(0x10EE7570);
 			if (!unk)
 				return;
 				
-			if (idx < 0 || idx >= 70){
+			if (streamId < 0 || streamId >= 70){
 				return;
 			}
 				
-			auto &mss = temple::GetRef<MilesSoundSthg[]>(0x10EE7578)[idx];
+			auto &mss = temple::GetRef<MilesSoundSthg[]>(0x10EE7578)[streamId];
 			auto flags = mss.flags;
 			if (flags & 1){
-				auto dummy = 1;
+				auto asdf = mss.streamSthg;
+				logger->debug("Setting stream (ID {}) volume to {}, pointer to miles is {}", streamId, volume, asdf);
 			}
-			if (volume == 30){
-				auto dummy = 1;
-			}
-			 orgMilesSoundSthg(idx, volume);
+			orgSetStreamVolume(streamId, volume);
 		});
 	}
 } soundHooks;

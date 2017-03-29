@@ -5,12 +5,15 @@
 
 
 struct MilesSoundSthg {
-	int field0;
+	char isUsed;
+	char field1;
+	char field2;
+	char field3;
 	int flags;
 	int field8;
 	int fieldC;
 	int field10;
-	int streamSthg;
+	void* streamSthg;
 	int quickLoadMemSthg;
 	int m3dSampleSthg;
 	int field20;
