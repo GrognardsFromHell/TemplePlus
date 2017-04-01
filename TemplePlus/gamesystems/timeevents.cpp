@@ -7,6 +7,7 @@
 #include "gamesystems/mapsystem.h"
 #include <config/config.h>
 #include <description.h>
+#include <objlist.h>
 
 #include "anim.h"
 
@@ -15,12 +16,12 @@ Internal system specification used by the time event system
 */
 struct TimeEventSystemSpec {
 	char name[20];
-	int field_14;
-	int field_18;
+	int isPersistent;
+	int objrefFlags;
 	GameClockType clockType;
 	void(__cdecl *eventExpired)();
 	void(__cdecl *eventRemoved)();
-	int field_28;
+	BOOL (__cdecl* paramValidator)(TimeEventListEntry* timeEvtListEntry); // in principle checks if it's ok to serialize parameter to savegame file (but in practice the callback is always null)
 };
 
 // Lives @ 0x102BD900
@@ -604,8 +605,14 @@ const TimeEventTypeSpec& GetTimeEventTypeSpec(TimeEventType type) {
 class TimeEventHooks : public TempleFix
 {
 public: 
+
+	static BOOL LoadTimeEventObjInfoSafe(objHndl * handle, TimeEventObjInfo * evtInfo, TioFile* file);
+
 	void apply() override 
 	{
+
+		replaceFunction(0x10020370, LoadTimeEventObjInfoSafe);
+
 		static int (*orgTimeEventValidate)(TimeEventListEntry* evt, int flag) = replaceFunction<int (__cdecl)(TimeEventListEntry*, int)>(0x10060430, [](TimeEventListEntry* evt, int isLoadingMap)
 		{
 			auto &timeEventFlagPackets = temple::GetRef<TimeEventFlagPacket[4]>(0x102BDF98);
@@ -618,12 +625,17 @@ public:
 				if ((uint16_t)objKind >= 4 && (uint16_t)objKind < 0xFFFE) {
 					logger->debug("Illegal object Kind caught in TimeEventValidate");
 				}
-
+				
 				auto &parVal = evt->evt.params[i];
 				handle = parVal.handle;
 				if (isNull) {
 					if (sTimeEventTypeSpecs[(int)evt->evt.system].argTypes[i] == TimeEventArgType::Object) {
+						if (evt->evt.system == TimeEventType::Lock) {
+							auto dummy = 1;
+						}
 						evt->evt.params[i].handle = objHndl::null;
+						
+
 						if (handle){
 							logger->warn("Non-null handle for ObjectIdKind::Null in TimeEventValidate: {}", handle);
 						}
@@ -642,6 +654,9 @@ public:
 					if (objSystem->IsValidHandle(handle)) {
 						if (!handle || objSystem->GetObject(handle)->GetFlags() & OF_DESTROYED) {
 							handle = objHndl::null;
+							if (evt->evt.system == TimeEventType::Lock) {
+								auto dummy = 1;
+							}
 							logger->debug("Destroyed object caught in TimeEvent IsValidHandle");
 							return FALSE;
 						}		
@@ -651,7 +666,9 @@ public:
 					auto objValidateRecovery = temple::GetRef<BOOL(__cdecl)(objHndl&, TimeEventObjInfo&)>(0x10020610);
 					if (objValidateRecovery(handle, evt->objects[i])) {
 						evt->evt.params[i].handle = handle;
-
+						if (evt->evt.system == TimeEventType::Lock) {
+							auto dummy = 1;
+						}
 						if (!handle || objSystem->GetObject(handle)->GetFlags() & OF_DESTROYED) {
 							// logger->debug("Destroyed object caught in validateRecovery");
 							return FALSE;
@@ -659,6 +676,9 @@ public:
 						continue;
 					}
 					else {
+						if (evt->evt.system == TimeEventType::Lock) {
+							auto dummy = 1;
+						}
 						auto tryAgain = objSystem->GetHandleById(evt->objects[i].guid);
 						evt->evt.params[i].handle = objHndl::null;
 						logger->debug("TImeEvent: Error: Object validate recovery Failed. TE-Type: {}", (int)evt->evt.system);
@@ -871,4 +891,52 @@ bool TimeEventSystem::Schedule(TimeEvent * evt, const GameTime * delay, const Ga
 	static auto timeevent_add_ex = temple::GetPointer<ScheduleFn>(0x10060720);
 
 	return timeevent_add_ex(evt, delay, baseTime, triggerTimeOut, sourceFile, sourceLine) == TRUE;
+}
+
+BOOL TimeEventHooks::LoadTimeEventObjInfoSafe(objHndl * handleOut, TimeEventObjInfo * evtInfo, TioFile * file){
+	
+	if (!file || !handleOut) {
+		return FALSE;
+	}
+		
+	ObjectId objId;
+	locXY loc;
+	int mapNum;
+
+	if (!tio_fread(&objId, sizeof(ObjectId), 1, file)
+		|| !tio_fread(&loc, sizeof(locXY), 1, file)
+		|| !tio_fread(&mapNum, sizeof(int), 1, file)) {
+		return FALSE;
+	}
+	
+	if (objId.subtype != ObjectIdKind::Null) {
+		if (loc.locx || loc.locy) {
+			ObjList list;
+			list.ListTile(loc, OLC_ALL); // I think this is meant to "awaken" objects from the sector? otherwise thisis unused
+		}
+
+		auto handle = objSystem->GetHandleById(objId);
+		if (!handle) {
+			logger->debug("LoadTimeEventObjInfoSafe: Couldn't match ObjID to handle!");
+			logger->debug("Map number {}, location ({},{}), ID", mapNum, loc.locx, loc.locy, objId);
+		}
+		*handleOut = handle;
+		if (evtInfo) {
+			evtInfo->guid = objId;
+			evtInfo->mapNumber = mapNum;
+			evtInfo->location = loc;
+			return TRUE;
+		}
+	} 
+	else {
+		*handleOut = objHndl::null;
+		if (evtInfo) {
+			evtInfo->guid.subtype = ObjectIdKind::Null;
+			evtInfo->location.locx = 0;
+			evtInfo->location.locy = 0;
+			evtInfo->mapNumber = 0;
+		}
+	}
+
+	return TRUE;
 }
