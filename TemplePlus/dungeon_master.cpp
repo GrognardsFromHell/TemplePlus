@@ -21,6 +21,7 @@
 #include "ui/ui_systems.h"
 #include "ui/ui_ingame.h"
 #include "raycast.h"
+#include "gamesystems/d20/d20stats.h"
 
 DungeonMaster dmSys;
 
@@ -28,35 +29,12 @@ static bool isActive = true;
 static bool isActionActive = false;
 static bool isMinimized = false;
 
-bool DungeonMaster::IsActive(){
-	return isActive;
-}
-
-bool DungeonMaster::IsMinimized(){
-	return isMinimized;
-}
-
-void DungeonMaster::Show(){
-	isActive = true;
-}
-
-void DungeonMaster::Hide(){
-	isActive = false;
-}
-
-void DungeonMaster::Toggle(){
-	if (IsActive())
-		Hide();
-	else
-		Show();
-}
-
-
-
-bool DungeonMaster::IsActionActive(){
-	return isActionActive;
-}
-
+// monster modify
+DungeonMaster::CritterBooster critBoost;
+DungeonMaster::ObjEditor critEditor;
+static std::vector<std::string> classNames; // offset by 1 wrt the d20ClassSys.classEnums vector
+static int mMonModFactionNew;
+static bool mMonModFactionIsOverride = false;
 
 
 void DungeonMaster::Render(){
@@ -71,31 +49,25 @@ void DungeonMaster::Render(){
 		auto wndWidth = ImGui::GetWindowWidth();
 		rect.x = wndPos.x + wndWidth/2 - rect.width/2; rect.y = wndPos.y - rect.height;
 	
-
+		// Monster Tree
 		if (ImGui::TreeNodeEx("Monsters", ImGuiTreeNodeFlags_CollapsingHeader)) {
 		
-			if (ImGui::CollapsingHeader("Filter")){
-				const char* listbox_items[] = { "Any" , "Aberration", "Animal", "Beast", "Construct", "Dragon", "Elemental", "Fey", "Giant", "Humanoid"
-					, "Magical Beast", "Monstrous Humanoid", "Ooze" , "Outsider" , "Plant" , "Shapechanger" , "Undead" , "Vermin" };
-				const char* subcatItems[] = { "Any", "Air", "Aquatic", "Extraplanar", "Cold", "Chaotic", "Demon", "Devil", "Dwarf", "Earth", "Electricity", "Elf", "Evil", "Fire", "Formian"
-					, "Gnoll" , "Gnome" , "Goblinoid" , "Good" , "Guardinal" , "Half Orc" , "Halfling" , "Human" , "Lawful" , "Incorporeal", "Orc", "Reptilian", "Slaadi", "Water" };
-				ImGui::Combo("Category", &mCategoryFilter, listbox_items, 18, 8);
-				ImGui::Combo("Subcategory", &mSubcategoryFilter, subcatItems, 29, 8);
-				ImGui::InputInt("Faction", &mFactionFilter);
-			}
+			if (ImGui::CollapsingHeader("Filter"))
+				RenderMonsterFilter();
+			if (ImGui::CollapsingHeader("Modify"))
+				RenderMonsterModify();
 			
 			
 			for (auto it: monsters){
-
 				if (FilterResult(it.second)){
 					RenderMonster(it.second);
-
 				}
-
 			}
+
 			ImGui::TreePop();
 		}
 
+		// Weapons Tree
 		if (ImGui::TreeNodeEx("Weapons", ImGuiTreeNodeFlags_CollapsingHeader)) {
 
 			for (auto it : weapons) {
@@ -107,9 +79,10 @@ void DungeonMaster::Render(){
 	ImGui::End();
 
 	if (!isMinimized){
+		// render the dungeon master figurehead
 		UiRenderer::DrawTexture(mTexId, rect);
 
-
+		// render the name of the hovered item
 		if (mTgtObj && objSystem->IsValidHandle(mTgtObj)){
 			UiRenderer::PushFont(PredefinedFont::PRIORY_12);
 			tigFont.Draw(description.getDisplayName(mTgtObj), TigRect(rect.x+105, rect.y + 50,100,15), TigTextStyle::standardWhite);
@@ -121,6 +94,7 @@ void DungeonMaster::Render(){
 			mTgtObj = objHndl::null;
 		}
 
+		// render the object editing window
 		if (mEditedObj && objSystem->IsValidHandle(mEditedObj)){
 			RenderEditedObj();
 		} 
@@ -129,15 +103,8 @@ void DungeonMaster::Render(){
 		}
 	}
 	
-
-
 }
 
-void DungeonMaster::RenderEditedObj(){
-	ImGui::Begin("Edit Object");
-	ImGui::Text(fmt::format("Name: {}", description.getDisplayName(mEditedObj)).c_str());
-	ImGui::End();
-}
 
 bool DungeonMaster::HandleMsg(const TigMsg & msg){
 
@@ -195,6 +162,8 @@ bool DungeonMaster::HandleSpawning(const TigMsg& msg){
 
 			auto newHndl = objSystem->CreateObject(protHndl, mouseLoc.location);
 
+			ApplyMonsterModify(newHndl);
+
 			mObjSpawnProto = 0;
 			isActionActive = false;
 			mouseFuncs.ResetCursor();
@@ -213,6 +182,7 @@ bool DungeonMaster::HandleEditing(const TigMsg & msg){
 		// RMB - click (so it seizes the event and doesn't spawn a radial menu)
 		if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_RMB_CLICK) {
 			mEditedObj = mTgtObj;
+			SetObjEditor(mEditedObj);
 			return true;
 		}
 	}
@@ -287,6 +257,12 @@ void DungeonMaster::InitEntry(int protoNum){
 	if (!mIsInited) {
 		textureFuncs.RegisterTexture("art\\interface\\dungeon_master_ui\\DU.tga", &mTexId);
 		tig->GetMdfFactory().LoadMaterial("art\\interface\\cursors\\DungeonMaster.mdf");
+
+		classNames.push_back("");
+		for (auto it: d20ClassSys.classEnums){
+			classNames.push_back(d20Stats.GetStatName((Stat)it));
+		}
+
 		mIsInited = true;
 	}
 }
@@ -318,6 +294,80 @@ void DungeonMaster::RenderMonster(Record& record){
 		}
 	}
 }
+
+void DungeonMaster::RenderMonsterFilter(){
+	
+	const char* listbox_items[] = { "Any" , "Aberration", "Animal", "Beast", "Construct", "Dragon", "Elemental", "Fey", "Giant", "Humanoid"
+		, "Magical Beast", "Monstrous Humanoid", "Ooze" , "Outsider" , "Plant" , "Shapechanger" , "Undead" , "Vermin" };
+	const char* subcatItems[] = { "Any", "Air", "Aquatic", "Extraplanar", "Cold", "Chaotic", "Demon", "Devil", "Dwarf", "Earth", "Electricity", "Elf", "Evil", "Fire", "Formian"
+		, "Gnoll" , "Gnome" , "Goblinoid" , "Good" , "Guardinal" , "Half Orc" , "Halfling" , "Human" , "Lawful" , "Incorporeal", "Orc", "Reptilian", "Slaadi", "Water" };
+	ImGui::Combo("Category", &mCategoryFilter, listbox_items, 18, 8);
+	ImGui::Combo("Subcategory", &mSubcategoryFilter, subcatItems, 29, 8);
+	ImGui::InputInt("Faction", &mFactionFilter);
+	
+}
+
+void DungeonMaster::RenderMonsterModify(){
+	
+
+	// Faction
+	ImGui::PushItemWidth(79);
+	ImGui::InputInt("Faction", &mMonModFactionNew); 
+	ImGui::PopItemWidth();
+	ImGui::SameLine();  ImGui::Checkbox("Override", &mMonModFactionIsOverride);
+	ImGui::SameLine();
+	std::string factionBtnText = fmt::format("Add");
+	if (mMonModFactionIsOverride){
+		factionBtnText = fmt::format("Set");
+	}
+
+	if (ImGui::Button(factionBtnText.c_str())){
+		if (mMonModFactionIsOverride){
+			critBoost.factions.clear();
+			if (mMonModFactionNew >= 0)
+				critBoost.factions.push_back(mMonModFactionNew); // otherwise, it'll just have the null faction
+		}
+		else{
+			auto isFound = false;
+			for (auto it : critBoost.factions){
+				if (it == mMonModFactionNew)
+					isFound = true;
+			}
+			if (!isFound && mMonModFactionNew > 0)
+				critBoost.factions.push_back(mMonModFactionNew);
+		}
+	}
+
+	if (ImGui::Button("Clear")){
+		critBoost = DungeonMaster::CritterBooster();
+	}
+
+
+	if (critBoost.factions.size())
+		ImGui::Text(fmt::format("Added Factions: {}", critBoost.factions).c_str());
+
+}
+
+void DungeonMaster::ApplyMonsterModify(objHndl handle){
+	auto obj = objSystem->GetObject(handle);
+
+	// Factions
+	if (mMonModFactionIsOverride){
+		obj->ClearArray(obj_f_npc_faction);
+		obj->SetInt32(obj_f_npc_faction, 0, 0);
+		auto i = 0;
+		for (auto it: critBoost.factions){
+			obj->SetInt32(obj_f_npc_faction, i++, it);
+		}
+	} 
+	else if (critBoost.factions.size()){
+		auto i = obj->GetInt32Array(obj_f_npc_faction).GetSize();
+		for (auto it : critBoost.factions) {
+			obj->SetInt32(obj_f_npc_faction, i++, it);
+		}
+	}
+}
+
 
 bool DungeonMaster::FilterResult(Record & record){
 
@@ -353,4 +403,117 @@ bool DungeonMaster::FilterResult(Record & record){
 	return true;
 }
 
+
+// Object Editor
+void DungeonMaster::RenderEditedObj() {
+	ImGui::Begin("Edit Object");
+	ImGui::Text(fmt::format("Name: {}", critEditor.name).c_str());
+	ImGui::Text(fmt::format("Factions: {}", critEditor.factions).c_str());
+	if (ImGui::TreeNodeEx("Class Levels", ImGuiTreeNodeFlags_CollapsingHeader)){
+	//if (ImGui::CollapsingHeader("Class Levels")){
+		static int classCur = 0;
+		static auto classNameGetter = [](void*data, int idx, const char** outTxt)->bool
+		{
+			if (idx >= classNames.size())
+				return false;
+			*outTxt = classNames[idx].c_str();
+			return true;
+		};
+
+
+		std::vector<int> classLvlChang;
+		auto classIdx = 0;
+		for (auto it : critEditor.classLevels) {
+			classLvlChang.push_back(it.second);
+			if (ImGui::InputInt(fmt::format("{}", d20Stats.GetStatName(it.first)).c_str(), &classLvlChang[classIdx])) {
+				critEditor.classLevels[it.first] = classLvlChang[classIdx];
+			};
+			classIdx++;
+		}
+
+		ImGui::Combo("Add Class", &classCur, classNameGetter, nullptr, classNames.size(), 8);
+		ImGui::TreePop();
+	}
+
+	if (ImGui::Button("Apply")) {
+		ApplyObjEdit(mEditedObj);
+	}
+	ImGui::End();
+}
+
+void DungeonMaster::SetObjEditor(objHndl handle){
+	
+	critEditor = ObjEditor();
+
+	auto obj = objSystem->GetObject(handle);
+	if (!obj || !objSystem->IsValidHandle(handle)){
+		mEditedObj = objHndl::null;
+		return;
+	}
+		
+	critEditor.name = description.getDisplayName(handle);
+	auto facs = obj->GetInt32Array(obj_f_npc_faction);
+	for (auto i = 0; i < facs.GetSize(); i++){
+		critEditor.factions.push_back(facs[i]);
+	}
+
+	auto classLvls = obj->GetInt32Array(obj_f_critter_level_idx);
+	for (auto i = 0; i < classLvls.GetSize(); i++)
+		critEditor.classLevels[(Stat)classLvls[i]]++;
+}
+
+void DungeonMaster::ApplyObjEdit(objHndl handle){
+	auto obj = objSystem->GetObject(mEditedObj);
+	if (!obj  || !objSystem->IsValidHandle(mEditedObj))
+		return;
+
+	// Factions
+	if (obj->IsNPC()){
+		obj->ClearArray(obj_f_npc_faction);
+		obj->SetInt32(obj_f_npc_faction, 0, 0);
+		auto i = 0;
+		for (auto it : critEditor.factions) {
+			obj->SetInt32(obj_f_npc_faction, i++, it);
+		}
+	}
+	
+
+	// Class Levels
+	obj->ClearArray(obj_f_critter_level_idx);
+	for (auto it : critEditor.classLevels) {
+		for (auto i=0; i < it.second; i++)
+			obj->AppendInt32(obj_f_critter_level_idx, it.first); // todo: preserve order...
+	}
+
+
+	d20StatusSys.D20StatusRefresh(handle);
+}
+
+
+bool DungeonMaster::IsActive() {
+	return isActive;
+}
+
+bool DungeonMaster::IsMinimized() {
+	return isMinimized;
+}
+
+bool DungeonMaster::IsActionActive() {
+	return isActionActive;
+}
+
+void DungeonMaster::Show() {
+	isActive = true;
+}
+
+void DungeonMaster::Hide() {
+	isActive = false;
+}
+
+void DungeonMaster::Toggle() {
+	if (IsActive())
+		Hide();
+	else
+		Show();
+}
 
