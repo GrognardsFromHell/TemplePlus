@@ -10,6 +10,7 @@
 #include <objlist.h>
 
 #include "anim.h"
+#include <gamesystems\legacy.h>
 
 /*
 Internal system specification used by the time event system
@@ -607,11 +608,18 @@ class TimeEventHooks : public TempleFix
 public: 
 
 	static BOOL LoadTimeEventObjInfoSafe(objHndl * handle, TimeEventObjInfo * evtInfo, TioFile* file);
+	static void TimeEventObjInfoFromHandle(objHndl handle, TimeEventObjInfo * evtInfo);
+	static BOOL SaveTimeEventObjInfo(TimeEventArg & evtArg, TimeEventObjInfo * evtInfo, TioFile* file);
+	static BOOL TimeEventListEntryAdd(TimeEventListEntry * evt);
+	static BOOL TimeEventReadFromFile(TioFile * file, TimeEvent * evtOut);
 
 	void apply() override 
 	{
 
 		replaceFunction(0x10020370, LoadTimeEventObjInfoSafe);
+		replaceFunction(0x10020280, SaveTimeEventObjInfo);
+		replaceFunction(0x10020540, TimeEventObjInfoFromHandle);
+		replaceFunction(0x100607E0, TimeEventListEntryAdd);
 
 		static int (*orgTimeEventValidate)(TimeEventListEntry* evt, int flag) = replaceFunction<int (__cdecl)(TimeEventListEntry*, int)>(0x10060430, [](TimeEventListEntry* evt, int isLoadingMap)
 		{
@@ -756,6 +764,8 @@ public:
 			return orgTimeEventSchedule(evt, timeDelta, timeAbsolute, timeResultOut);
 		});
 
+		
+
 		static void(__cdecl*orgExpireLock)(TimeEvent*) = replaceFunction<void(TimeEvent*)>(0x10021230, [](TimeEvent* evt) {
 			if (!evt->params[0].handle) // fix for crash with null handle
 			{
@@ -788,12 +798,113 @@ void TimeEventSystem::Reset() {
 	reset();
 }
 bool TimeEventSystem::SaveGame(TioFile *file) {
-	auto save = temple::GetPointer<int(TioFile*)>(0x10061840);
-	return save(file) == 1;
+
+	if (!file)
+		return false;
+
+
+	auto &gameTimePlayed = temple::GetRef<GameTime>(0x10AA83B8);
+	auto &gameTimeElapsed = temple::GetRef<GameTime>(0x10AA83C0);
+	auto &gameTimeAnim = temple::GetRef<GameTime>(0x10AA83C8);
+	
+	if (!tio_fwrite(&gameTimePlayed, sizeof(GameTime), 1, file) 
+		|| !tio_fwrite(&gameTimeElapsed, sizeof(GameTime), 1, file)
+		|| !tio_fwrite(&gameTimeAnim, sizeof(GameTime), 1, file))
+		return false;
+	
+
+	TimeEventListEntry ** evtList;
+	uint64_t filePos = 0i64, filePos2 = 0i64;
+	for (auto clockType = 0; clockType < (int)GameClockType::GameTimeAnims; clockType++) {
+		evtList = &temple::GetRef<TimeEventListEntry*[]>(0x10AA73FC)[(int)clockType];
+		auto count = 0;
+		
+		tio_fgetpos(file, &filePos);
+		if (!tio_fwrite(&count, sizeof(int), 1, file))
+			return false;
+
+		while (*evtList) {
+			auto listNode = *evtList;
+			auto &sysSpec = sTimeEventTypeSpecs[(int)listNode->evt.system];
+			evtList = &(listNode->nextEvent);
+			if (sysSpec.persistent) {
+				if (!TimeEventParamSerializer(file, sysSpec, listNode))
+					return false;
+				count++;
+			}
+		}
+		// update the event count in the beginning
+		tio_fgetpos(file, &filePos2);
+		tio_fsetpos(file, &filePos);
+		tio_fwrite(&count, sizeof(int), 1, file);
+		tio_fsetpos(file, &filePos2);
+	}
+	
+
+
+
+	return true;
+
+
+
+	/*auto save = temple::GetPointer<int(TioFile*)>(0x10061840);
+	return save(file) == 1;*/
 }
 bool TimeEventSystem::LoadGame(GameSystemSaveFile* saveFile) {
-	auto load = temple::GetPointer<int(GameSystemSaveFile*)>(0x10061f90);
-	return load(saveFile) == 1;
+
+	auto count = 0;
+	auto file = saveFile->file;
+	if (!file)
+		return false;
+
+	auto &gameTimePlayed = temple::GetRef<GameTime>(0x10AA83B8);
+	auto &gameTimeElapsed = temple::GetRef<GameTime>(0x10AA83C0);
+
+	if (!tio_fread(&gameTimePlayed, sizeof(GameTime),1, file) || !tio_fread(&gameTimeElapsed, sizeof(GameTime), 1, file))
+		return false;
+
+	auto updateDaylight = temple::GetRef<void(__cdecl)()>(0x100A75E0);
+	updateDaylight();
+	auto mapGroundToggleDaynight = temple::GetRef<void(__cdecl)()>(0x1002D290);
+	mapGroundToggleDaynight();
+
+	auto &gameTimeAnim = temple::GetRef<GameTime>(0x10AA83C8);
+	if (!tio_fread(&gameTimeAnim, sizeof(GameTime), 1, file))
+		return false;
+	
+	for (auto clockType = 0; clockType <= (int)GameClockType::GameTimeAnims; clockType++) {
+
+		if (!tio_fread(&count, sizeof(int), 1, file) == 1)
+			return false;
+
+		for (auto i = 0; i < count; i++) {
+			TimeEvent evt;
+			if (!TimeEventReadFromFile(file, &evt))
+				return false;
+			if ((int)evt.system >(int)TimeEventType::PythonRealtime)
+				return false;
+			auto timeEvtIsEditor = temple::GetRef<int>(0x10AA73F4);
+			if (timeEvtIsEditor)
+				return false;
+			auto evtListEntry = new TimeEventListEntry;
+			evtListEntry->evt = evt;
+			evtListEntry->nextEvent = nullptr;
+			if (evt.system == TimeEventType::Lock) {
+				auto dummy = 1;
+			}
+			if (!TimeEventListEntryAdd(evtListEntry))
+				return false;
+		}
+
+	}
+	
+
+	return true;
+
+
+
+	/*auto load = temple::GetPointer<int(GameSystemSaveFile*)>(0x10061f90);
+	return load(saveFile) == 1;*/
 }
 void TimeEventSystem::AdvanceTime(uint32_t time) {
 	auto advanceTime = temple::GetPointer<void(uint32_t)>(0x100620c0);
@@ -893,12 +1004,186 @@ bool TimeEventSystem::Schedule(TimeEvent * evt, const GameTime * delay, const Ga
 	return timeevent_add_ex(evt, delay, baseTime, triggerTimeOut, sourceFile, sourceLine) == TRUE;
 }
 
-BOOL TimeEventHooks::LoadTimeEventObjInfoSafe(objHndl * handleOut, TimeEventObjInfo * evtInfo, TioFile * file){
-	
+BOOL TimeEventSystem::TimeEventListEntryAdd(TimeEventListEntry * evt){
+	if (!evt)
+		return FALSE;
+
+	auto subSys = evt->evt.system;
+	auto &sysSpec = sTimeEventTypeSpecs[(int)subSys];
+	auto clockType = sysSpec.clock;
+
+
+
+	TimeEventListEntry ** evtList;
+	auto isAdvancingTime = temple::GetRef<int>(0x10AA83DC);
+	if (isAdvancingTime)
+		evtList = &temple::GetRef<TimeEventListEntry*[]>(0x10AA73E8)[(int)clockType];
+	else
+		evtList = &temple::GetRef<TimeEventListEntry*[]>(0x10AA73FC)[(int)clockType];
+
+	// find where to insert the event
+	auto listNode = *evtList;
+	while (listNode) {
+		if (listNode->evt.time.timeInDays > evt->evt.time.timeInDays
+			|| listNode->evt.time.timeInDays >= evt->evt.time.timeInDays
+			&& listNode->evt.time.timeInMs >= evt->evt.time.timeInMs)
+			break;
+		evtList = &listNode->nextEvent;
+		listNode = listNode->nextEvent;
+	}
+
+	evt->nextEvent = *evtList;
+
+	for (auto i = 0; i < 4; i++) {
+		if (sysSpec.argTypes[i] == TimeEventArgType::Object) {
+			if (subSys == TimeEventType::Lock) {
+				auto dummy = 1;
+			}
+			TimeEventObjInfoFromHandle(evt->evt.params[i].handle, &evt->objects[i]);
+		}
+		else {
+			evt->objects[i].guid.subtype = ObjectIdKind::Null;
+		}
+	}
+
+	*evtList = evt;
+
+	return TRUE;
+}
+
+BOOL TimeEventSystem::TimeEventReadFromFile(TioFile * file, TimeEvent * evtOut){
+
+	if (!file)
+		return FALSE;
+
+	if (!tio_fread(&evtOut->time, sizeof(GameTime), 1, file)
+		|| !tio_fread(&evtOut->system, sizeof(int), 1, file))
+		return FALSE;
+
+	auto subSys = evtOut->system;
+	auto &sysSpec = sTimeEventTypeSpecs[(int)subSys];
+	objHndl handle;
+
+	for (auto i = 0; i < 4; i++) {
+		auto par = &evtOut->params[i];
+		switch (sysSpec.argTypes[i]) {
+		case TimeEventArgType::Int:
+			if (!tio_fread(par, sizeof(int), 1, file))
+				return FALSE;
+			break;
+		case TimeEventArgType::Float:
+			if (!tio_fread(par, sizeof(float), 1, file))
+				return FALSE;
+			break;
+		case TimeEventArgType::Location:
+			if (!tio_fread(par, sizeof(locXY), 1, file))
+				return FALSE;
+			break;
+		case TimeEventArgType::Object:
+			if (evtOut->system == TimeEventType::Lock) {
+				auto dmmy = 1;
+			}
+			if (!LoadTimeEventObjInfoSafe(&handle, nullptr, file)) {
+				return FALSE;
+			}
+			par->handle = handle;
+			break;
+		case TimeEventArgType::PythonObject:
+			if (!temple::GetRef<BOOL(__cdecl)(void*, TioFile*)>(0x100AD7C0)(par, file))
+				return FALSE;
+			break;
+		case TimeEventArgType::None:
+			break;
+		default:
+			logger->error("Undefined parameter type!");
+			break;
+		}
+	}
+
+	return TRUE;
+}
+
+BOOL TimeEventSystem::TimeEventParamSerializer(TioFile * file, const TimeEventTypeSpec & sysSpec, TimeEventListEntry * listEntry){
+
+	if (!file)
+		return FALSE;
+	if (!tio_fwrite(&listEntry->evt.time, sizeof(GameTime), 1, file)
+		|| !tio_fwrite(&listEntry->evt.system, sizeof(TimeEventType), 1, file))
+		return FALSE;
+
+	for (auto i = 0; i < 4; i++) {
+		auto &evtArg = listEntry->evt.params[i];
+		auto objInfo = &listEntry->objects[i];
+		switch (sysSpec.argTypes[i]) {
+			case TimeEventArgType::Int:
+			case TimeEventArgType::Float:
+				if (!tio_fwrite(&listEntry->evt.params[i], sizeof(int), 1, file))
+					return FALSE;
+				break;
+			case TimeEventArgType::Location:
+				if (!tio_fwrite(&listEntry->evt.params[i].location, sizeof(locXY), 1, file))
+					return FALSE;
+				break;
+			case TimeEventArgType::Object:
+				if (listEntry->evt.system == TimeEventType::Lock) {
+					auto dummy = 1;
+				}
+				if (!SaveTimeEventObjInfo(listEntry->evt.params[i], objInfo, file) )
+					return FALSE;
+				break;
+			case TimeEventArgType::PythonObject:
+				temple::GetRef<void(__cdecl)(PyObject*, TioFile *)>(0x100AD600)(listEntry->evt.params[i].pyobj, file);
+				break;
+			case TimeEventArgType::None:
+				break;
+			default:
+				logger->error("Undefined time event arg type");
+				break;
+		}
+	}
+
+	return TRUE;
+}
+
+BOOL TimeEventSystem::SaveTimeEventObjInfo(TimeEventArg & evtArg, TimeEventObjInfo * evtInfo, TioFile * file)
+{
+	if (!file)
+		return FALSE;
+
+	ObjectId objId = ObjectId::CreateNull();
+	locXY loc = locXY::fromField(0);
+	int mapNumber = 0;
+	auto handle = evtArg.handle;
+
+	if (!evtInfo) {
+		if (handle) {
+			objId = objSystem->GetIdByHandle(handle);
+			mapNumber = gameSystems->GetMap().GetCurrentMapId();
+			loc = objSystem->GetObject(handle)->GetLocation();
+		}
+		else {
+			logger->debug("SaveTimeEventObjInfo(): Caught null handle when serializing time event!");
+		}
+	}
+	else {
+		loc = evtInfo->location;
+		objId = evtInfo->guid;
+		mapNumber = evtInfo->mapNumber;
+	}
+
+	if (!tio_fwrite(&objId, sizeof(ObjectId), 1, file)
+		|| !tio_fwrite(&loc, sizeof(locXY), 1, file)
+		|| !tio_fwrite(&mapNumber, sizeof(int), 1, file))
+		return FALSE;
+
+	return TRUE;
+}
+
+BOOL TimeEventSystem::LoadTimeEventObjInfoSafe(objHndl * handleOut, TimeEventObjInfo * evtInfo, TioFile * file){
 	if (!file || !handleOut) {
 		return FALSE;
 	}
-		
+
 	ObjectId objId;
 	locXY loc;
 	int mapNum;
@@ -908,7 +1193,7 @@ BOOL TimeEventHooks::LoadTimeEventObjInfoSafe(objHndl * handleOut, TimeEventObjI
 		|| !tio_fread(&mapNum, sizeof(int), 1, file)) {
 		return FALSE;
 	}
-	
+
 	if (objId.subtype != ObjectIdKind::Null) {
 		if (loc.locx || loc.locy) {
 			ObjList list;
@@ -927,7 +1212,7 @@ BOOL TimeEventHooks::LoadTimeEventObjInfoSafe(objHndl * handleOut, TimeEventObjI
 			evtInfo->location = loc;
 			return TRUE;
 		}
-	} 
+	}
 	else {
 		*handleOut = objHndl::null;
 		if (evtInfo) {
@@ -939,4 +1224,53 @@ BOOL TimeEventHooks::LoadTimeEventObjInfoSafe(objHndl * handleOut, TimeEventObjI
 	}
 
 	return TRUE;
+}
+
+void TimeEventSystem::TimeEventObjInfoFromHandle(objHndl handle, TimeEventObjInfo * evtInfo){
+	if (!handle) {
+		evtInfo->guid.subtype = ObjectIdKind::Null;
+		evtInfo->location = locXY::fromField(0);
+		evtInfo->mapNumber = 0;
+		return;
+	}
+
+	auto obj = objSystem->GetObject(handle);
+	if (obj->GetFlags() & OF_DESTROYED) {
+		evtInfo->guid.body.guid.Data1 = 0xBEEFBEEF;
+		evtInfo->guid.subtype = ObjectIdKind::Null;
+		evtInfo->location = locXY::fromField(0);
+		evtInfo->mapNumber = 0;
+		return;
+	}
+
+	auto objId = objSystem->GetIdByHandle(handle);
+	evtInfo->guid = objId;
+	if (obj->IsStatic()) {
+		evtInfo->location = obj->GetLocation();
+		evtInfo->mapNumber = gameSystems->GetMap().GetCurrentMapId();
+	}
+	else {
+		evtInfo->location = locXY::fromField(0);
+		evtInfo->mapNumber = gameSystems->GetMap().GetCurrentMapId();
+	}
+}
+
+BOOL TimeEventHooks::LoadTimeEventObjInfoSafe(objHndl * handleOut, TimeEventObjInfo * evtInfo, TioFile * file){
+	return gameSystems->GetTimeEvent().LoadTimeEventObjInfoSafe(handleOut, evtInfo, file);
+}
+
+void TimeEventHooks::TimeEventObjInfoFromHandle(objHndl handle, TimeEventObjInfo * evtInfo){
+	gameSystems->GetTimeEvent().TimeEventObjInfoFromHandle(handle, evtInfo);
+}
+
+BOOL TimeEventHooks::SaveTimeEventObjInfo(TimeEventArg & evtArg, TimeEventObjInfo * evtInfo, TioFile * file){
+	return gameSystems->GetTimeEvent().SaveTimeEventObjInfo(evtArg, evtInfo, file);
+}
+
+BOOL TimeEventHooks::TimeEventListEntryAdd(TimeEventListEntry * evt) {
+	return gameSystems->GetTimeEvent().TimeEventListEntryAdd(evt);
+}
+
+BOOL TimeEventHooks::TimeEventReadFromFile(TioFile * file, TimeEvent * evtOut){
+	return gameSystems->GetTimeEvent().TimeEventReadFromFile(file, evtOut);
 }

@@ -122,7 +122,6 @@ struct TimeEventObjInfo {
 	int padding;
 };
 #pragma pack(pop)
-const int shit5 = offsetof(TimeEventObjInfo, location);
 
 struct TimeEvent {
 	GameTime time;
@@ -142,6 +141,7 @@ struct TimeEventListEntry {
 #pragma pack(pop)
 
 class TimeEventSystem : public GameSystem, public SaveGameAwareGameSystem, public ResetAwareGameSystem, public TimeAwareGameSystem {
+friend class TimeEventHooks;
 public:
 	static constexpr auto Name = "TimeEvent";
 	TimeEventSystem(const GameSystemConf &config);
@@ -197,4 +197,13 @@ private:
 	- sourceFile and sourceLine are not used.
 	*/
 	bool Schedule(TimeEvent *evt, const GameTime *delay, const GameTime *baseTime, GameTime *triggerTimeOut, const char *sourceFile, int sourceLine);
+
+	BOOL TimeEventListEntryAdd(TimeEventListEntry * evt);
+	
+	BOOL TimeEventParamSerializer(TioFile *file, const TimeEventTypeSpec &sysSpec, TimeEventListEntry *listNode);
+	BOOL SaveTimeEventObjInfo(TimeEventArg & evtArg, TimeEventObjInfo * evtInfo, TioFile * file);
+	
+	BOOL TimeEventReadFromFile(TioFile * file, TimeEvent * evtOut);
+	BOOL LoadTimeEventObjInfoSafe(objHndl * handle, TimeEventObjInfo * evtInfo, TioFile* file);
+	void TimeEventObjInfoFromHandle(objHndl handle, TimeEventObjInfo * evtInfo);
 };
