@@ -409,20 +409,31 @@ void DungeonMaster::RenderEditedObj() {
 	ImGui::Begin("Edit Object");
 	ImGui::Text(fmt::format("Name: {}", critEditor.name).c_str());
 	ImGui::Text(fmt::format("Factions: {}", critEditor.factions).c_str());
+	if (ImGui::TreeNodeEx("Class Levels", ImGuiTreeNodeFlags_CollapsingHeader)){
+	//if (ImGui::CollapsingHeader("Class Levels")){
+		static int classCur = 0;
+		static auto classNameGetter = [](void*data, int idx, const char** outTxt)->bool
+		{
+			if (idx >= classNames.size())
+				return false;
+			*outTxt = classNames[idx].c_str();
+			return true;
+		};
 
-	for (auto it: d20ClassSys.classEnums){
-		auto className = d20Stats.GetStatName((Stat)it);
+
+		std::vector<int> classLvlChang;
+		auto classIdx = 0;
+		for (auto it : critEditor.classLevels) {
+			classLvlChang.push_back(it.second);
+			if (ImGui::InputInt(fmt::format("{}", d20Stats.GetStatName(it.first)).c_str(), &classLvlChang[classIdx])) {
+				critEditor.classLevels[it.first] = classLvlChang[classIdx];
+			};
+			classIdx++;
+		}
+
+		ImGui::Combo("Add Class", &classCur, classNameGetter, nullptr, classNames.size(), 8);
+		ImGui::TreePop();
 	}
-
-	static int classCur = 0;
-	static auto classNameGetter = [](void*data, int idx, const char** outTxt)->bool
-	{
-		if (idx >= classNames.size())
-			return false;
-		*outTxt = classNames[idx].c_str();
-		return true;
-	};
-	ImGui::Combo("Add Class", &classCur, classNameGetter, nullptr, classNames.size(), 8);
 
 	if (ImGui::Button("Apply")) {
 		ApplyObjEdit(mEditedObj);
@@ -457,12 +468,25 @@ void DungeonMaster::ApplyObjEdit(objHndl handle){
 		return;
 
 	// Factions
-	obj->ClearArray(obj_f_npc_faction);
-	obj->SetInt32(obj_f_npc_faction, 0, 0);
-	auto i = 0;
-	for (auto it : critEditor.factions) {
-		obj->SetInt32(obj_f_npc_faction, i++, it);
+	if (obj->IsNPC()){
+		obj->ClearArray(obj_f_npc_faction);
+		obj->SetInt32(obj_f_npc_faction, 0, 0);
+		auto i = 0;
+		for (auto it : critEditor.factions) {
+			obj->SetInt32(obj_f_npc_faction, i++, it);
+		}
 	}
+	
+
+	// Class Levels
+	obj->ClearArray(obj_f_critter_level_idx);
+	for (auto it : critEditor.classLevels) {
+		for (auto i=0; i < it.second; i++)
+			obj->AppendInt32(obj_f_critter_level_idx, it.first); // todo: preserve order...
+	}
+
+
+	d20StatusSys.D20StatusRefresh(handle);
 }
 
 
