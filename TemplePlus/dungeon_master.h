@@ -41,14 +41,14 @@ public:
 
 	// describes how a critter is modified
 	struct CritterBooster{
+		std::vector<int> factions;
 		std::map<Stat, int> classLevels; // how many extra class levels to hand out for each class
 		std::vector<SpellStoreData> spellsKnown;
 		std::vector<SpellStoreData> spellsMemorized;
 	};
 
 
-	struct ObjEditor{
-		
+	struct ObjEditor : Record{
 	};
 
 protected:
@@ -56,6 +56,9 @@ protected:
 	// bool mIsActive = true;
 
 	void RenderMonster(Record& record);
+	void RenderMonsterFilter();
+	void RenderMonsterModify();
+	void ApplyMonsterModify(objHndl handle);
 
 	bool FilterResult(Record& record);
 	std::map<int, Record > humanoids;
@@ -75,6 +78,9 @@ protected:
 
 	objHndl mTgtObj = objHndl::null; // object under cursor
 	objHndl mEditedObj = objHndl::null; // object being edited
+
+	void SetObjEditor(objHndl handle);
+	void ApplyObjEdit(objHndl handle);
 };
 
 extern DungeonMaster dmSys;
