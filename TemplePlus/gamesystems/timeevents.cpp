@@ -815,7 +815,7 @@ bool TimeEventSystem::SaveGame(TioFile *file) {
 
 	TimeEventListEntry ** evtList;
 	uint64_t filePos = 0i64, filePos2 = 0i64;
-	for (auto clockType = 0; clockType < (int)GameClockType::GameTimeAnims; clockType++) {
+	for (auto clockType = 0; clockType <= (int)GameClockType::GameTimeAnims; clockType++) {
 		evtList = &temple::GetRef<TimeEventListEntry*[]>(0x10AA73FC)[(int)clockType];
 		auto count = 0;
 		
