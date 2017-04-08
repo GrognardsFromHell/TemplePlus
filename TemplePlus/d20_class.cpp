@@ -633,10 +633,14 @@ bool D20ClassSystem::IsSelectingSpellsOnLevelup(objHndl handle, Stat classEnum){
 }
 
 void D20ClassSystem::LevelupInitSpellSelection(objHndl handle, Stat classEnum, int classLvlNew, int classLvlIncrease){
-	if (objects.StatLevelGet(handle, classEnum) && classLvlNew == -1)
-		dispatch.DispatchLevelupSystemEvent(handle, classEnum, DK_LVL_Spells_Activate);
-	else
+	// default is -1 (is so when called from the UiCharEditor SpellsActivate)
+	auto existingClassLvl = objects.StatLevelGet(handle, classEnum);
+	if (classLvlNew == -1 && existingClassLvl )
+		dispatch.DispatchLevelupSystemEvent(handle, classEnum, DK_LVL_Spells_Activate); // when advancing the spell level
+	else {
 		pythonClassIntegration.LevelupInitSpellSelection(handle, classEnum, classLvlNew);
+	}
+		
 }
 
 int D20ClassHooks::HookedLvl1SkillPts(int intStatLvl){

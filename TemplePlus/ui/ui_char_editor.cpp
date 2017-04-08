@@ -36,6 +36,7 @@
 #include <tig/tig_mouse.h>
 #include <combat.h>
 #include "ui_assets.h"
+#include <infrastructure/keyboard.h>
 
 namespace py = pybind11;
 using namespace pybind11;
@@ -1317,6 +1318,10 @@ void UiCharEditor::SpellsActivate() {
 	avSpInfo.clear();
 	selPkt.spellEnumToRemove = 0;
 
+
+	/*auto newLvl = GetNewLvl(selPkt.classCode);
+	if (newLvl == 1)
+		newLvl = 0;*/
 	d20ClassSys.LevelupInitSpellSelection(handle, selPkt.classCode);
 
 	
@@ -2962,7 +2967,32 @@ class UiCharEditorHooks : public TempleFix {
 			return uiCharEditor.ClassCheckComplete();
 		});
 		
-		// feats
+
+		// Skill
+
+		// Hook for SkillIncreaseBtnMsg to raise 4 times when ctrl/alt is pressed
+		static BOOL(__cdecl*orgSkillIncBtnMsg)(int, TigMsg*) = replaceFunction<BOOL(__cdecl)(int, TigMsg*)>(0x101ABFA0, [](int widId, TigMsg* msg) {
+			if (msg->type != TigMsgType::WIDGET)
+				return FALSE;
+			auto widMsg = (TigMsgWidget*)msg;
+			if (widMsg->widgetEventType != TigMsgWidgetEvent::MouseReleased)
+				return FALSE;
+
+			if (infrastructure::gKeyboard.IsKeyPressed(VK_CONTROL) || infrastructure::gKeyboard.IsKeyPressed(VK_LCONTROL)
+				|| infrastructure::gKeyboard.IsKeyPressed(VK_LMENU) || infrastructure::gKeyboard.IsKeyPressed(VK_RMENU)) {
+				orgSkillIncBtnMsg(widId, msg);
+				int safetyCounter = 3;
+				while (uiManager->GetButtonState(widId) != LgcyButtonState::Disabled && safetyCounter >= 0) {
+					orgSkillIncBtnMsg(widId, msg);
+					safetyCounter--;
+				}
+				return TRUE;
+			};
+			return orgSkillIncBtnMsg(widId, msg);
+		});
+
+
+		// Feats
 		replaceFunction<BOOL(GameSystemConf&)>(0x101AAB80, [](GameSystemConf &conf) {
 			return uiCharEditor.FeatsSystemInit(conf);
 		});
