@@ -25,7 +25,7 @@
 
 DungeonMaster dmSys;
 
-static bool isActive = true;
+static bool isActive = false;
 static bool isActionActive = false;
 static bool isMinimized = false;
 

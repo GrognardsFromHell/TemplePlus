@@ -739,10 +739,8 @@ public:
 		// fix for Encumbered Complain on null handle crash (I think it happens if you encumber an NPC and leave the area / send him off from the party?)
 		static int (*orgEncumberedComplainTimeeventExpires)(TimeEvent* ) = replaceFunction<int(__cdecl)(TimeEvent*)>(0x10037DF0, [](TimeEvent*evt)	{
 			if (!evt->params[0].handle)	{
-				return 1;
+				return TRUE;
 			}
-				
-
 			return orgEncumberedComplainTimeeventExpires(evt);
 		});
 
@@ -766,16 +764,24 @@ public:
 
 		
 
-		static void(__cdecl*orgExpireLock)(TimeEvent*) = replaceFunction<void(TimeEvent*)>(0x10021230, [](TimeEvent* evt) {
+		static BOOL(__cdecl*orgExpireLock)(TimeEvent*) = replaceFunction<BOOL(TimeEvent*)>(0x10021230, [](TimeEvent* evt) {
 			if (!evt->params[0].handle) // fix for crash with null handle
 			{
 				logger->debug("Caught ExpireLock event with null handle!");
-				return;
+				return TRUE;
 			}
-			
-
 			return orgExpireLock(evt);
 		});
+
+
+		static BOOL(__cdecl*orgExpireAiDelay)(TimeEvent*) = replaceFunction<BOOL(TimeEvent*)>(0x100584B0, [](TimeEvent* evt) {
+			if (!evt->params[0].handle){ // fix for crash with null handle
+				logger->debug("Caught ExpireAiDelay event with null handle!");
+				return TRUE;
+			}
+			return orgExpireAiDelay(evt);
+		});
+
 	}
 } hooks;
 

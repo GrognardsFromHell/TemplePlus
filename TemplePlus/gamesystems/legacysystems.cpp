@@ -142,7 +142,7 @@ void TeleportSystem::AdvanceTime(uint32_t time) {
 	if (!fadeAndTeleportActive)
 		return;
 
-	auto &teleportProcessActive = temple::GetRef<BOOL>(0x10AB74C0);
+	auto &teleportProcessActive = temple::GetRef<BOOL>(0x10AB74B8);
 	teleportProcessActive = 1;
 
 	auto teleportProcess = temple::GetRef<void(__cdecl)(FadeAndTeleportArgs&)>(0x10085AA0);
