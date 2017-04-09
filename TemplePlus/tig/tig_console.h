@@ -55,6 +55,7 @@ public:
 private:
 	bool mOpen = false;
 	bool mScrollToBottom = false;
+	bool mJustOpened = false; // used for moving focus to the text line
 	std::string mCommandBuf;
 	std::function<void(const std::string&)> mInterpreter;
 

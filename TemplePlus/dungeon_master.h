@@ -49,11 +49,15 @@ public:
 
 
 	struct ObjEditor : Record{
+		std::vector<int> stats;
+		std::vector<SpellStoreData> spellsKnown;
+		std::vector<SpellStoreData> spellsMemorized;
 	};
 
 protected:
 	//bool mIsVisible = false;
 	// bool mIsActive = true;
+	bool mJustOpened = false;
 
 	void RenderMonster(Record& record);
 	void RenderMonsterFilter();

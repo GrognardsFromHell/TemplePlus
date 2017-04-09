@@ -90,6 +90,10 @@ void Console::Render()
 		// Refocus the control
 		ImGui::SetKeyboardFocusHere(-1);
 	}
+	if (mJustOpened) {
+		ImGui::SetKeyboardFocusHere(-1);
+		mJustOpened = false;
+	}
 
 	ImGui::End();
 }
@@ -128,15 +132,17 @@ void Console::RunBatchFile(const std::string & path)
 void Console::Show()
 {
 	mOpen = true;
+	mJustOpened = true;
 }
 
-void Console::Toggle()
-{
-	mOpen = !mOpen;
+void Console::Toggle(){
+	if (mOpen)
+		Hide();
+	else
+		Show();
 }
 
-void Console::Hide()
-{
+void Console::Hide(){
 	mOpen = false;
 }
 
