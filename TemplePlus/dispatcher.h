@@ -157,6 +157,7 @@ struct CondNode : temple::TempleAlloc {
 	uint32_t args[10];
 
 	explicit CondNode(CondStruct *cond);
+	bool IsExpired() { return (flags & 1) != 0; };
 };
 
 struct SubDispNode : temple::TempleAlloc {

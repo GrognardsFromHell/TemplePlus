@@ -22,11 +22,14 @@
 #include "ui/ui_ingame.h"
 #include "raycast.h"
 #include "gamesystems/d20/d20stats.h"
+#include <condition.h>
+#include <infrastructure\keyboard.h>
 
 DungeonMaster dmSys;
 
 static bool isActive = false;
 static bool isActionActive = false;
+
 static bool isMinimized = false;
 
 // monster modify
@@ -48,6 +51,9 @@ void DungeonMaster::Render(){
 		if (mJustOpened)
 			ImGui::SetWindowCollapsed(true);
 		isMinimized = ImGui::GetWindowCollapsed();
+		if (isMinimized && IsActionActive()) {
+			DeactivateAction();
+		}
 		auto wndPos = ImGui::GetWindowPos();
 		auto wndWidth = ImGui::GetWindowWidth();
 		rect.x = wndPos.x + wndWidth/2 - rect.width/2; rect.y = wndPos.y - rect.height;
@@ -127,9 +133,13 @@ bool DungeonMaster::HandleMsg(const TigMsg & msg){
 			mTgtObj = uiSystems->GetInGame().PickObject(mouseMsg.x,mouseMsg.y,RaycastFlags::HasRadius);
 		}
 
+		
 		if (HandleSpawning(msg))
 			return true;
 
+		if (HandleCloning(msg))
+			return true;
+		
 		if (HandleEditing(msg))
 			return true;
 	}
@@ -142,6 +152,9 @@ bool DungeonMaster::HandleSpawning(const TigMsg& msg){
 	if (!IsActionActive())
 		return false;
 
+	if (mActionType != DungeonMasterAction::Spawn)
+		return false;
+
 	if (msg.type == TigMsgType::MOUSE) {
 		auto &mouseMsg = *(TigMsgMouse*)&msg;
 
@@ -149,8 +162,7 @@ bool DungeonMaster::HandleSpawning(const TigMsg& msg){
 		if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_RMB_CLICK) {
 			if (IsActionActive()) {
 				mObjSpawnProto = 0;
-				isActionActive = false;
-				mouseFuncs.ResetCursor();
+				DeactivateAction();
 				return true;
 			}
 		}
@@ -172,9 +184,48 @@ bool DungeonMaster::HandleSpawning(const TigMsg& msg){
 			ApplyMonsterModify(newHndl);
 
 			mObjSpawnProto = 0;
-			isActionActive = false;
-			mouseFuncs.ResetCursor();
+			DeactivateAction();
 
+			return true;
+		}
+	}
+	return false;
+}
+
+bool DungeonMaster::HandleCloning(const TigMsg & msg){
+	if (!IsActionActive())
+		return false;
+
+	if (mActionType != DungeonMasterAction::Clone)
+		return false;
+
+	if (msg.type == TigMsgType::MOUSE) {
+		auto &mouseMsg = *(TigMsgMouse*)&msg;
+
+		// RMB - click (so it seizes the event and doesn't spawn a radial menu)
+		if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_RMB_CLICK) {
+			mCloningObj = objHndl::null;
+			DeactivateAction();
+			return true;
+		}
+
+		if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_LMB_CLICK) {
+			if (!mCloningObj || !objSystem->IsValidHandle(mCloningObj))
+				return false;
+
+			LocAndOffsets mouseLoc;
+			locSys.GetLocFromScreenLocPrecise(mouseMsg.x, mouseMsg.y, mouseLoc);
+
+			auto newHndl = objSystem->Clone(mCloningObj, mouseLoc.location);
+			if (!newHndl)
+				return false;
+
+			// if Alt key is pressed, keep the action active
+			if (!infrastructure::gKeyboard.IsKeyPressed(VK_LMENU) && !infrastructure::gKeyboard.IsKeyPressed(VK_RMENU)) {
+				mCloningObj = objHndl::null;
+				DeactivateAction();
+			}
+				
 			return true;
 		}
 	}
@@ -286,10 +337,7 @@ void DungeonMaster::RenderMonster(Record& record){
 	if (ImGui::TreeNode(fmt::format("{} | {} ({} HD)", record.protoId, record.name.c_str(), record.hitDice).c_str())) {
 		auto protHndl = objSystem->GetProtoHandle(record.protoId);
 		if (ImGui::Button("Spawn")) {
-			mObjSpawnProto = record.protoId;
-			isActionActive = true;
-			mActionTimeStamp = timeGetTime();
-			mouseFuncs.SetCursorFromMaterial("art\\interface\\cursors\\DungeonMaster.mdf");
+			ActivateSpawn(record.protoId);
 		}
 
 		auto obj = objSystem->GetObject(protHndl);
@@ -418,11 +466,41 @@ bool DungeonMaster::FilterResult(Record & record){
 	return true;
 }
 
+void DungeonMaster::ActivateAction(DungeonMasterAction actionType){
+	if (!isActionActive)
+		mouseFuncs.SetCursorFromMaterial("art\\interface\\cursors\\DungeonMaster.mdf");
+	isActionActive = true;
+	mActionTimeStamp = timeGetTime();
+	mActionType = actionType;
+}
+
+void DungeonMaster::DeactivateAction(){
+	if (isActionActive) {
+		mouseFuncs.ResetCursor();
+	}
+	isActionActive = false;
+	mActionType = DungeonMasterAction::None;
+}
+
+void DungeonMaster::ActivateSpawn(int protoId){
+	mObjSpawnProto = protoId;
+	ActivateAction(DungeonMasterAction::Spawn);
+}
+
+void DungeonMaster::ActivateClone(objHndl handle){
+	mCloningObj = handle;
+	ActivateAction(DungeonMasterAction::Clone);
+}
+
 
 // Object Editor
 void DungeonMaster::RenderEditedObj() {
 	ImGui::Begin("Edit Object");
 	ImGui::Text(fmt::format("Name: {}", critEditor.name).c_str());
+	ImGui::SameLine();
+	if (ImGui::Button("Clone"))
+		ActivateClone(mEditedObj);
+
 	ImGui::Text(fmt::format("Factions: {}", critEditor.factions).c_str());
 
 	// Stats
@@ -497,31 +575,45 @@ void DungeonMaster::RenderEditedObj() {
 			return true;
 		};
 
-		
+		// Add Spell
 		if (ImGui::TreeNodeEx("Add Spell", ImGuiTreeNodeFlags_CollapsingHeader)) {
 			static int spellCur = 0;
 			static int spLvl = 1;
 			static int spellClassIdx = 0;
 			static int spellClassCur = 0;
+			
+
+			auto getSpellEnum = []()->int {
+				auto it = spellNames.begin();
+				std::advance(it, spellCur);
+				if (it != spellNames.end())
+					return  it->first;
+				return 0;
+			};
+			auto getSpellLevelForClass = [](int spellEnum)->int {
+				SpellEntry spEntry(spellEnum);
+				return spEntry.SpellLevelForSpellClass(spellSys.GetSpellClass(spellClassCur));
+			};
+
+			auto spEnum = getSpellEnum();
+
 			if (ImGui::Combo("Spell", &spellCur, spellNameGetter, nullptr, spellNames.size(), 8)) {
+				spEnum = getSpellEnum();
+				auto spLvlSuggest = getSpellLevelForClass(spEnum);
+				if (spLvlSuggest != -1)
+					spLvl = spLvlSuggest;
 			}
 
 			
-			auto it = spellNames.begin();
-			std::advance(it, spellCur);
-			if (it != spellNames.end()) {
-				auto spEnum = it->first;
-				SpellEntry spEntry(it->first);
-
+			if (spEnum) {
+				// Spell Class
 				spellClassCur = d20ClassSys.classEnumsWithSpellLists[spellClassIdx];
 				if (ImGui::Combo("Class", &spellClassIdx, spellClassNameGetter, nullptr, d20ClassSys.classEnumsWithSpellLists.size(), 8)) {
-					
-					auto spLvlSuggest = spEntry.SpellLevelForSpellClass(spellSys.GetSpellClass(spellClassCur));
+					auto spLvlSuggest = getSpellLevelForClass(spEnum);
 					if (spLvlSuggest != -1)
 						spLvl = spLvlSuggest;
 				}
-
-				
+				// Spell Level
 				ImGui::InputInt("Level", &spLvl);
 
 				if (ImGui::Button("Add")) {
@@ -533,7 +625,7 @@ void DungeonMaster::RenderEditedObj() {
 			ImGui::TreePop();
 		}
 		
-
+		// Existing known spells
 		for (auto it : critEditor.spellsKnown) {
 			if (spellNames.find(it.spellEnum) == spellNames.end())
 				continue;
@@ -552,6 +644,44 @@ void DungeonMaster::RenderEditedObj() {
 
 		ImGui::TreePop();
 	}
+
+	// Modifiers & Conditions
+	if (ImGui::TreeNodeEx("Modifiers & Conditions", ImGuiTreeNodeFlags_CollapsingHeader)) {
+		auto obj = objSystem->GetObject(mEditedObj);
+		
+		auto displayCondUi = [](objHndl handle, Dispatcher * dispatcher ,obj_f fieldType) {
+			auto condTmp = dispatcher->conditions;
+			if (fieldType == obj_f_permanent_mods)
+				condTmp = dispatcher->permanentMods;
+
+			for (; condTmp; condTmp = condTmp->nextCondNode) {
+				if (condTmp->IsExpired())
+					continue;
+
+				// Condition details
+				if (ImGui::TreeNode(fmt::format("{}", condTmp->condStruct->condName).c_str())) {
+					// args
+					auto numArgs = condTmp->condStruct->numArgs;
+					ImGui::Text(fmt::format("Num args: {}", numArgs).c_str());
+					for (auto j = 0; j < numArgs; j++) {
+						ImGui::Text(fmt::format("Arg{}: {}", j, condTmp->args[j]).c_str());
+					}
+					// Remove
+					if (ImGui::Button("Remove")) {
+						conds.ConditionRemove(handle, condTmp);
+					}
+					ImGui::TreePop();
+				}
+			}
+		};
+
+		auto dispatcher = obj->GetDispatcher();
+		displayCondUi(mEditedObj, dispatcher, obj_f_conditions);
+		displayCondUi(mEditedObj, dispatcher, obj_f_permanent_mods);
+		
+		ImGui::TreePop();
+	}
+
 
 	if (ImGui::Button("Apply")) {
 		ApplyObjEdit(mEditedObj);
@@ -654,6 +784,7 @@ void DungeonMaster::Show() {
 
 void DungeonMaster::Hide() {
 	isActive = false;
+	DeactivateAction();
 	mEditedObj = objHndl::null;
 }
 

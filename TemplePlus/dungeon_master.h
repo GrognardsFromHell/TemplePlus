@@ -23,6 +23,7 @@ public:
 
 	bool HandleMsg(const TigMsg & msg);
 	bool HandleSpawning(const TigMsg & msg);
+	bool HandleCloning(const TigMsg& msg);
 	bool HandleEditing(const TigMsg & msg);
 
 	void InitEntry(int protoNum);
@@ -54,10 +55,17 @@ public:
 		std::vector<SpellStoreData> spellsMemorized;
 	};
 
+	enum DungeonMasterAction : int {
+		None,
+		Spawn,
+		Clone
+	};
+
 protected:
 	//bool mIsVisible = false;
 	// bool mIsActive = true;
 	bool mJustOpened = false;
+
 
 	void RenderMonster(Record& record);
 	void RenderMonsterFilter();
@@ -72,7 +80,14 @@ protected:
 	std::map<int, Record > monsters;
 	std::map<int, Record > weapons;
 
+	DungeonMasterAction mActionType = DungeonMasterAction::None;
+
+	void ActivateAction(DungeonMasterAction actionType);
+	void DeactivateAction();
+	void ActivateSpawn(int protoId);
+	void ActivateClone(objHndl handle);
 	int mObjSpawnProto = 0;
+	objHndl mCloningObj = objHndl::null;
 
 
 	int mCategoryFilter = 0;
