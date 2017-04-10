@@ -28,6 +28,9 @@ public:
 
 	void InitEntry(int protoNum);
 
+	void GotoArena();
+	void TransitionToMap(int mapId);
+
 	struct Record{
 		int protoId;
 		std::string name;
@@ -81,6 +84,7 @@ protected:
 	std::map<int, Record > weapons;
 
 	DungeonMasterAction mActionType = DungeonMasterAction::None;
+	bool PseudoLoad(std::string filename);
 
 	void ActivateAction(DungeonMasterAction actionType);
 	void DeactivateAction();

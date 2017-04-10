@@ -1,5 +1,8 @@
 
 #include "stdafx.h"
+
+#include <regex>
+
 #include "dungeon_master.h"
 #include <debugui.h>
 #include "gamesystems/objects/objsystem.h"
@@ -24,10 +27,26 @@
 #include "gamesystems/d20/d20stats.h"
 #include <condition.h>
 #include <infrastructure\keyboard.h>
+#include <infrastructure/vfs.h>
+
+
+#include <ui\ui_systems.h>
+#include <ui\ui_legacysystems.h>
+
+#include "anim.h"
+#include "critter.h"
+#include "party.h"
+#include "fade.h"
+
+#include "gamesystems/gamesystems.h"
+#include "gamesystems/mapsystem.h"
+#include "gamesystems/legacysystems.h"
+#include "gamesystems/objects/objsystem.h"
+#include <util\savegame.h>
 
 DungeonMaster dmSys;
 
-static bool isActive = false;
+static bool isActive = true;
 static bool isActionActive = false;
 
 static bool isMinimized = false;
@@ -37,44 +56,109 @@ DungeonMaster::CritterBooster critBoost;
 DungeonMaster::ObjEditor critEditor;
 static std::vector<std::string> classNames; // offset by 1 wrt the d20ClassSys.classEnums vector
 static std::map<int, std::string> spellNames;
+static std::map<int, std::string> mapNames;
 static int mMonModFactionNew;
 static bool mMonModFactionIsOverride = false;
 
 
-void DungeonMaster::Render(){
+void DungeonMaster::Render() {
 
 	if (!IsActive())
 		return;
 
-	auto rect = TigRect(0,0,96,96);
+	auto rect = TigRect(0, 0, 96, 96);
+
+	static std::vector<VfsSearchResult> flist;
+
 	ImGui::Begin("Dungeon Master", &isActive);
-		if (mJustOpened)
-			ImGui::SetWindowCollapsed(true);
-		isMinimized = ImGui::GetWindowCollapsed();
-		if (isMinimized && IsActionActive()) {
-			DeactivateAction();
-		}
-		auto wndPos = ImGui::GetWindowPos();
-		auto wndWidth = ImGui::GetWindowWidth();
-		rect.x = wndPos.x + wndWidth/2 - rect.width/2; rect.y = wndPos.y - rect.height;
-	
-		// Monster Tree
-		if (ImGui::TreeNodeEx("Monsters", ImGuiTreeNodeFlags_CollapsingHeader)) {
+	if (mJustOpened) {
+		ImGui::SetWindowCollapsed(true);
+		flist.clear();
+	}
 		
-			if (ImGui::CollapsingHeader("Filter"))
-				RenderMonsterFilter();
-			if (ImGui::CollapsingHeader("Modify"))
-				RenderMonsterModify();
-			
-			
-			for (auto it: monsters){
-				if (FilterResult(it.second)){
-					RenderMonster(it.second);
+	isMinimized = ImGui::GetWindowCollapsed();
+	if (isMinimized && IsActionActive()) {
+		DeactivateAction();
+	}
+	auto wndPos = ImGui::GetWindowPos();
+	auto wndWidth = ImGui::GetWindowWidth();
+	rect.x = wndPos.x + wndWidth / 2 - rect.width / 2; rect.y = wndPos.y - rect.height;
+
+
+	if (party.GetConsciousPartyLeader() && ImGui::TreeNodeEx("Maps", ImGuiTreeNodeFlags_CollapsingHeader)) {
+		static std::map<int, std::string> mapNames;
+		static std::map<int, std::vector<int>> mapsByArea;
+		static int areaFilter = -1;
+
+		// init
+		if (!mapNames.size()) {
+			for (auto i = 5001; i < gameSystems->GetMap().GetHighestMapId(); i++) {
+				auto mapName = gameSystems->GetMap().GetMapName(i);
+				if (mapName.size()) {
+					mapNames[i] = mapName;
+					auto mapArea = gameSystems->GetMap().GetArea(i);
+					mapsByArea[mapArea].push_back(i);
 				}
 			}
-
-			ImGui::TreePop();
 		}
+
+		auto mapIdx = 0;
+		for (auto it : mapNames) {
+			if (ImGui::TreeNode(fmt::format("{} {}", it.first, it.second).c_str())) {
+				ImGui::Text(fmt::format("Area: {}", gameSystems->GetMap().GetArea(it.first)).c_str());
+				if (ImGui::Button("Teleport")) {
+					TransitionToMap(it.first);
+				}
+				ImGui::TreePop();
+			}
+			mapIdx++;
+		}
+
+		ImGui::TreePop();
+	}
+
+	// Monster Tree
+	if (ImGui::TreeNodeEx("Monsters", ImGuiTreeNodeFlags_CollapsingHeader)) {
+
+		if (ImGui::CollapsingHeader("Filter"))
+			RenderMonsterFilter();
+		if (ImGui::CollapsingHeader("Modify"))
+			RenderMonsterModify();
+
+
+		for (auto it : monsters) {
+			if (FilterResult(it.second)) {
+				RenderMonster(it.second);
+			}
+		}
+
+		ImGui::TreePop();
+	}
+
+	// Spawn Party from Save
+	if (ImGui::TreeNodeEx("Vs. Party", ImGuiTreeNodeFlags_CollapsingHeader)){
+		
+		if (!flist.size())
+			flist = vfs->Search("Save\\slot*.gsi");
+
+		for (auto i = 0; i < flist.size(); i++) {
+			auto &fileEntry = flist[i];
+			regex saveFnameRegex("(slot\\d{4})(.*)\\.gsi", regex_constants::ECMAScript | regex_constants::icase);
+			smatch saveFnameMatch;
+			
+			if (!regex_match(fileEntry.filename, saveFnameMatch, saveFnameRegex)) {
+				continue;
+			}
+
+			std::string filename = fmt::format("slot0001");
+			if (ImGui::Button(fmt::format("Go {}", flist[i].filename).c_str())) {
+				PseudoLoad(filename);
+			}
+		}
+		
+		
+		ImGui::TreePop();
+	}
 
 		// Weapons Tree
 		if (ImGui::TreeNodeEx("Weapons", ImGuiTreeNodeFlags_CollapsingHeader)) {
@@ -466,6 +550,34 @@ bool DungeonMaster::FilterResult(Record & record){
 	return true;
 }
 
+bool DungeonMaster::PseudoLoad(std::string filename){
+
+	if (!vfs->DirExists("Save\\ArenaTmp")) {
+		vfs->MkDir("Save\\ArenaTmp");
+	}
+
+	if (!vfs->CleanDir("Save\\ArenaTmp")) {
+		logger->error("Error clearing folder Save\\ArenaTmp");
+		return false;
+	}
+	auto path = format("save\\{}", filename);
+	try {
+		SaveGameArchive::Unpack(path.c_str(), "Save\\ArenaTmp");
+	}
+	catch (const std::exception &e) {
+		logger->error("Error restoring savegame archive {} to Save\\ArenaTmp: {}", path, e.what());
+		return false;
+	}
+
+	auto file = tio_fopen("Save\\ArenaTmp\\data.sav", "rb");
+	if (!file) {
+		logger->error("Error reading data.sav\n");
+		return false;
+	}
+
+	return true;
+}
+
 void DungeonMaster::ActivateAction(DungeonMasterAction actionType){
 	if (!isActionActive)
 		mouseFuncs.SetCursorFromMaterial("art\\interface\\cursors\\DungeonMaster.mdf");
@@ -795,3 +907,61 @@ void DungeonMaster::Toggle() {
 		Show();
 }
 
+
+
+void DungeonMaster::GotoArena(){
+	
+	//velkorObj->SetInt32(obj_f_pc_voice_idx, 11);
+	//critterSys.GenerateHp(velkor);
+	//party.AddToPCGroup(velkor);
+
+	//static auto spawn_velkor_equipment = temple::GetPointer<void(objHndl)>(0x1006d300);
+	//spawn_velkor_equipment(velkor);
+
+	//auto anim = objects.GetAnimHandle(velkor);
+	//objects.UpdateRenderHeight(velkor, *anim);
+	//objects.UpdateRadius(velkor, *anim);
+
+	auto mapId = 5001;
+	TransitionToMap(mapId);
+
+	uiSystems->GetParty().UpdateAndShowMaybe();
+	Hide();
+	uiSystems->GetParty().Update();
+}
+
+
+void DungeonMaster::TransitionToMap(int mapId)
+{
+	FadeArgs fadeArgs;
+	fadeArgs.field0 = 0;
+	fadeArgs.color = 0;
+	fadeArgs.field8 = 1;
+	fadeArgs.transitionTime = 0;
+	fadeArgs.field10 = 0;
+	fade.PerformFade(fadeArgs);
+	gameSystems->GetAnim().StartFidgetTimer();
+
+	FadeAndTeleportArgs fadeTp;
+	fadeTp.destLoc = gameSystems->GetMap().GetStartPos(mapId);
+	fadeTp.destMap = mapId;
+	fadeTp.flags = 4;
+	fadeTp.somehandle = party.GetLeader();
+
+	auto enterMovie = gameSystems->GetMap().GetEnterMovie(mapId, true);
+	if (enterMovie) {
+		fadeTp.flags |= 1;
+		fadeTp.field20 = 0;
+		fadeTp.movieId = enterMovie;
+	}
+	fadeTp.field48 = 1;
+	fadeTp.field4c = 0xFF000000;
+	fadeTp.field50 = 64;
+	fadeTp.somefloat2 = 3.0;
+	fadeTp.field58 = 0;
+	fade.FadeAndTeleport(fadeTp);
+
+	gameSystems->GetSoundGame().StopAll(false);
+	uiSystems->GetWMapRnd().StartRandomEncounterTimer();
+	gameSystems->GetAnim().PopDisableFidget();
+}
