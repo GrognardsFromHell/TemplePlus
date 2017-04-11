@@ -336,7 +336,8 @@ bool MapSystem::SaveGame(TioFile *file) {
 }
 
 bool MapSystem::LoadGame(GameSystemSaveFile* saveFile) {
-	
+	// originally 10072C40
+
 	char filename[260];
 	if (!tio_fgets(filename, 260, saveFile->file)) {
 		logger->error("Unable to load current map data directory");
@@ -409,6 +410,125 @@ bool MapSystem::LoadGame(GameSystemSaveFile* saveFile) {
 const std::string &MapSystem::GetName() const {
 	static std::string name("Map");
 	return name;
+}
+
+bool MapSystem::PseudoLoad(GameSystemSaveFile * saveFile, std::string saveFolder)
+{
+	char filename[260];
+	if (!tio_fgets(filename, 260, saveFile->file)) {
+		logger->error("Unable to load current map data directory");
+		return false;
+	}
+	auto len = strnlen(filename, 259);
+	if (len > 0 && filename[len - 1] == '\n') {
+		filename[len - 1] = '\0';
+	}
+	else {
+		logger->error("Map data directory not correctly terminated.");
+		return false;
+	}
+
+	// Find the map entry corresponding to the map directory
+	auto lastBackslash = strrchr(filename, '\\');
+	const char* mapName;
+	if (lastBackslash)
+		mapName = lastBackslash + 1;
+	else
+		mapName = filename;
+
+	MapListEntry *mapEntry = nullptr;
+	for (auto& entry : mMaps) {
+		if (!_stricmp(entry.second.name.c_str(), mapName)) {
+			mapEntry = &entry.second;
+			break;
+		}
+	}
+	if (!mapEntry) {
+		logger->error("No map was found that matches {}", filename);
+		return false;
+	}
+
+	logger->info("Loading map id {}, name {}", mapEntry->id, mapEntry->name);
+
+	if (!tio_fgets(filename, 260, saveFile->file)) {
+		logger->error("Unable to load current map data directory");
+		return false;
+	}
+	len = strnlen(filename, 259);
+	if (len > 0 && filename[len - 1] == '\n') {
+		filename[len - 1] = '\0';
+	}
+	else {
+		logger->error("Map save directory not correctly terminated.");
+		return false;
+	}
+
+	// NOTE: save dir is ignored
+
+	auto visitedMaps = LoadIdxTable<int32_t>(saveFile->file);
+	if (saveFolder.size() < 2)
+		return false;
+
+	if (saveFolder[saveFolder.size() - 2] != '\\') {
+		saveFolder[saveFolder.size() - 2] = '\\';
+		saveFolder.resize(saveFolder.size() + 1);
+		saveFolder[saveFolder.size() - 1] = 0;
+	}
+	std::string mapfleeFile = fmt::format("{}map_mapflee.bin", saveFolder);
+	if (vfs->FileExists(mapfleeFile.c_str()) ) {
+		auto mapFleeFh = vfs->Open(mapfleeFile.c_str(), "rb");
+		MapFleeSaveData fleeData;
+		vfs->Read(&fleeData, sizeof(fleeData), mapFleeFh);
+		vfs->Close(mapFleeFh);
+	}
+
+	
+	// Pseudo Open Map
+
+	auto dataDir = fmt::format("maps\\{}", mapEntry->name);
+	auto saveDir = fmt::format("{}maps\\{}", saveFolder, mapEntry->name);
+
+	logger->info("Loading Map: {}", dataDir);
+
+	if (!vfs->DirExists(dataDir)) {
+		logger->error("Cannot open map '{}' because it doesn't exist.", dataDir);
+		return false;
+	}
+
+	vfs->MkDir(saveDir);
+
+	ReadMapMobiles(dataDir, saveDir);
+
+	// Post Process
+
+	objSystem->ForEachObj([&](objHndl handle, GameObjectBody& obj) {
+		if (!obj.IsStatic()) {
+			obj.UnfreezeIds();
+		}
+
+		if (obj.HasFlag(OF_TELEPORTED)) {
+			TimeEvent e;
+			e.system = TimeEventType::Teleported;
+			e.params[0].handle = handle;
+			gameSystems->GetTimeEvent().ScheduleNow(e);
+			obj.SetFlag(OF_TELEPORTED, false);
+			return;
+		}
+
+		// Initialize everything's D20 state
+		if (gameSystems->GetParty().IsInParty(handle)) {
+			return; // The party is initialized elsewhere (in the Party system)
+		}
+
+		// This logic is a bit odd really. Apparently obj_f_dispatcher will not be -1 for non-critters anyway?
+		if (obj.IsNPC() || obj.GetInt32(obj_f_dispatcher) == -1) {
+			d20Sys.d20Status->D20StatusInit(handle);
+		}
+
+	});
+
+	
+	return true;
 }
 
 void MapSystem::ResetFleeTo()
@@ -1191,7 +1311,7 @@ void MapSystem::MapLoadPostprocess()
 
 		// Initialize everything's D20 state
 		if (gameSystems->GetParty().IsInParty(handle)) {
-			return; // The party is initialized elsewhere apparently
+			return; // The party is initialized elsewhere (in the Party system)
 		}
 
 		// This logic is a bit odd really. Apparently obj_f_dispatcher will not be -1 for non-critters anyway?

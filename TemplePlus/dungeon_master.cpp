@@ -654,37 +654,45 @@ bool DungeonMaster::PseudoLoad(std::string filename){
 	if (!reportAfterLoad(file, startPos))
 		return false;
 
-	// Sector 10081D20
-	
+	// Sector
+	std::vector<SectorTime> sectorTimes;
+	if (!gameSystems->GetSector().ReadSectorTimes(&saveFile, sectorTimes))
+		return false;
+	if (!reportAfterLoad(file, startPos))
+		return false;
+
 	// Skill
+	int skillSysUnk;
+	if (!gameSystems->GetSkill().ReadUnknown(&saveFile, skillSysUnk))
+		return false;
+	if (!reportAfterLoad(file, startPos))
+		return false;
+
 	// Script
+	std::vector<int> globalVars;
+	std::vector<int> globalFlagsData;
+	int storyState;
+	if (!gameSystems->GetScript().ReadGlobalVars(&saveFile, globalVars, globalFlagsData, storyState))
+		return false;
+	// Script subsystem: Game
+	std::vector<int> encounterQueue;
+	if (!gameSystems->GetScript().ReadEncounterQueue(&saveFile, encounterQueue))
+		return false;
+	if (!reportAfterLoad(file, startPos))
+		return false;
+
 	// Map
-		// Tile
 		// o_name
 		// object_node
 		// obj
 		// proto
 		// object
+	if (!gameSystems->GetMap().PseudoLoad(&saveFile))
+		return false;
+	
+	
+	
 
-	// LightScheme
-	// Player // this is a dummy function (return_1)
-	// Area
-	// SoundGame
-	// Combat
-	// TimeEvent
-	// Rumor
-	// Quest
-	// Anim
-	// Reputation
-	// MonsterGen
-	// Party
-	// D20LoadSave
-	// ObjFade
-	// D20Rolls
-	// Secretdoor
-	// RandomEncounter
-	// ObjectEvent
-	// Formation
 	tio_fclose(file);
 	return true;
 }

@@ -69,6 +69,7 @@ public:
 	const std::string &GetName() const override;
 
 	void SetLimits(uint64_t limitX, uint64_t limitY);
+	bool ReadSectorTimes(GameSystemSaveFile *saveFile, std::vector<SectorTime> & sectorTimes);
 };
 
 class RandomSystem : public GameSystem {
@@ -117,6 +118,8 @@ public:
 	bool SaveGame(TioFile *file) override;
 	bool LoadGame(GameSystemSaveFile* saveFile) override;
 	const std::string &GetName() const override;
+
+	bool ReadUnknown(GameSystemSaveFile *saveFile, int& unk); // not sure what it reads, appears unused
 };
 
 class FeatSystem : public GameSystem {
@@ -158,6 +161,9 @@ public:
 	bool SaveGame(TioFile *file) override;
 	bool LoadGame(GameSystemSaveFile* saveFile) override;
 	const std::string &GetName() const override;
+
+	bool ReadGlobalVars(GameSystemSaveFile *saveFile, std::vector<int> & globalVars, std::vector<int> & globalFlagsData, int& storyState);
+	bool ReadEncounterQueue(GameSystemSaveFile *saveFile, std::vector<int> & encounterQueue);
 };
 
 class LevelSystem : public GameSystem {

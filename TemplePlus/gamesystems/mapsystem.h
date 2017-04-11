@@ -56,6 +56,8 @@ public:
 	bool LoadGame(GameSystemSaveFile* saveFile) override;
 	const std::string &GetName() const override;
 
+	bool PseudoLoad(GameSystemSaveFile* saveFile, std::string saveFolder);
+
 	void ResetFleeTo();
 	const MapFleeInfo &GetFleeInfo() const {
 		return mFleeInfo;

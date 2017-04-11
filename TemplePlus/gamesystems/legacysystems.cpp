@@ -102,7 +102,7 @@ bool DescriptionSystem::ReadCustomNames(GameSystemSaveFile * file, std::vector<s
 		auto nameLen = 0;
 		tio_fread(&nameLen, sizeof(int), 1, file->file);
 		std::string tmpStr;
-		tmpStr.reserve(nameLen+1);
+		tmpStr.resize(nameLen + 1);
 		tio_fread(&tmpStr[0], sizeof(char), nameLen, file->file);
 		tmpStr[nameLen] = 0;
 		customNamesOut.push_back(tmpStr);
@@ -224,6 +224,21 @@ void SectorSystem::SetLimits(uint64_t limitX, uint64_t limitY)
 	set_sector_limit(limitX, limitY);
 }
 
+bool SectorSystem::ReadSectorTimes(GameSystemSaveFile * saveFile, std::vector<SectorTime>& sectorTimes){
+	auto count = 0;
+	if (!tio_fread(&count, sizeof(int), 1, saveFile->file))
+		return false;
+	if (count > 2 * config.sectorCacheSize)
+		return false;
+	sectorTimes.resize(count);
+	if (!count)
+		return true;
+
+	if (tio_fread(&sectorTimes[0], sizeof(SectorTime), count, saveFile->file) != count)
+		return false;
+	return true;
+}
+
 //*****************************************************************************
 //* Random
 //*****************************************************************************
@@ -337,6 +352,10 @@ bool SkillSystem::LoadGame(GameSystemSaveFile* saveFile) {
 const std::string &SkillSystem::GetName() const {
 	static std::string name("Skill");
 	return name;
+}
+
+bool SkillSystem::ReadUnknown(GameSystemSaveFile * saveFile, int & unk){
+	return tio_fread(&unk, sizeof(int), 1, saveFile->file) == 1;
 }
 
 //*****************************************************************************
@@ -515,6 +534,31 @@ bool ScriptSystem::LoadGame(GameSystemSaveFile* saveFile) {
 const std::string &ScriptSystem::GetName() const {
 	static std::string name("Script");
 	return name;
+}
+
+bool ScriptSystem::ReadGlobalVars(GameSystemSaveFile * saveFile, std::vector<int>& globalVars, std::vector<int>& globalFlagsData, int & storyState){
+	globalVars.resize(2000);
+	globalFlagsData.resize(100);
+	if (!tio_fread(&globalVars[0], sizeof(int) * 2000, 1, saveFile->file)
+		|| !tio_fread(&globalFlagsData[0], sizeof(int) * 100, 1, saveFile->file)
+		|| !tio_fread(&storyState, sizeof(int), 1, saveFile->file)
+		)
+		return false;
+
+	return true;
+}
+
+bool ScriptSystem::ReadEncounterQueue(GameSystemSaveFile * saveFile, std::vector<int>& encounterQueue){
+	int count = 0;
+	if (!tio_fread(&count, sizeof(int), 1, saveFile->file))
+		return false;
+	encounterQueue.resize(count);
+	if (!count)
+		return true;
+
+	if (tio_fread(&encounterQueue[0], sizeof(int), count, saveFile->file) != count)
+		return false;
+	return true;
 }
 
 //*****************************************************************************
