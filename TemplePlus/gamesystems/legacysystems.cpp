@@ -90,6 +90,27 @@ const std::string &DescriptionSystem::GetName() const {
 	return name;
 }
 
+bool DescriptionSystem::ReadCustomNames(GameSystemSaveFile * file, std::vector<std::string>& customNamesOut){
+	auto count = 0;
+	if (!tio_fread(&count, sizeof(int), 1, file->file))
+		return false;
+
+	if (count <= 0)
+		return true;
+
+	for (auto i=0; i < count; i++){
+		auto nameLen = 0;
+		tio_fread(&nameLen, sizeof(int), 1, file->file);
+		std::string tmpStr;
+		tmpStr.reserve(nameLen+1);
+		tio_fread(&tmpStr[0], sizeof(char), nameLen, file->file);
+		tmpStr[nameLen] = 0;
+		customNamesOut.push_back(tmpStr);
+	}
+	return true;
+
+}
+
 //*****************************************************************************
 //* ItemEffect
 //*****************************************************************************

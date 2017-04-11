@@ -575,6 +575,117 @@ bool DungeonMaster::PseudoLoad(std::string filename){
 		return false;
 	}
 
+	int saveVersion;
+	if (tio_fread(&saveVersion, 4, 1, file) != 1) {
+		logger->error("Error reading save version");
+		tio_fclose(file);
+		return false;
+	}
+	if (saveVersion != 0) {
+		logger->error("Save game version mismatch error. Expected 0, read {}", saveVersion);
+		tio_fclose(file);
+		return false;
+	}
+
+	int ironmanFlag;
+	if (tio_fread(&ironmanFlag, 4, 1, file) != 1) {
+		logger->error("Unable to read ironman flag");
+		tio_fclose(file);
+		return false;
+	}
+
+	if (ironmanFlag) {
+		int ironmanSaverNumber;
+		if (tio_fread(&ironmanSaverNumber, 4, 1, file) != 1) {
+			logger->error("Unable to read ironman save number.");
+			tio_fclose(file);
+			return false;
+		}
+
+		int savenameSize;
+		if (tio_fread(&savenameSize, 4, 1, file) != 1) {
+			logger->error("Unable to read ironman savename size");
+			tio_fclose(file);
+			return false;
+		}
+
+		std::string ironmanSaveName;
+		ironmanSaveName.reserve(savenameSize + 1);
+
+		if (tio_fread(&ironmanSaveName[0], 1, savenameSize, file) != savenameSize) {
+			logger->error("Unable to read ironman savegame name.");
+			tio_fclose(file);
+			return false;
+		}
+		ironmanSaveName[savenameSize] = 0;
+	}
+
+	uint64_t startPos;
+	tio_fgetpos(file, &startPos);
+
+	GameSystemSaveFile saveFile;
+	saveFile.file = file;
+	saveFile.saveVersion = saveVersion;
+
+	auto reportAfterLoad = [](TioFile *file, uint64_t & startPos) {
+		// Report on the current file position
+		uint64_t afterPos;
+		tio_fgetpos(file, &afterPos);
+		logger->debug(" read {} bytes up to {}", afterPos - startPos, afterPos);
+		startPos = afterPos;
+		// Read the sentinel value
+		uint32_t sentinel;
+		if (tio_fread(&sentinel, 4, 1, file) != 1) {
+			logger->error("Unable to read the sentinel value.");
+			tio_fclose(file);
+			return false;
+		}
+		if (sentinel != 0xBEEFCAFE) {
+			logger->error("Invalid sentinel value read: 0x{:x}", sentinel);
+			tio_fclose(file);
+			return false;
+		}
+	};
+
+	// Description
+	std::vector<std::string> customNames;
+	if (!gameSystems->GetDescription().ReadCustomNames(&saveFile, customNames))
+		return false;
+	if (!reportAfterLoad(file, startPos))
+		return false;
+
+	// Sector 10081D20
+	
+	// Skill
+	// Script
+	// Map
+		// Tile
+		// o_name
+		// object_node
+		// obj
+		// proto
+		// object
+
+	// LightScheme
+	// Player // this is a dummy function (return_1)
+	// Area
+	// SoundGame
+	// Combat
+	// TimeEvent
+	// Rumor
+	// Quest
+	// Anim
+	// Reputation
+	// MonsterGen
+	// Party
+	// D20LoadSave
+	// ObjFade
+	// D20Rolls
+	// Secretdoor
+	// RandomEncounter
+	// ObjectEvent
+	// Formation
+	tio_fclose(file);
 	return true;
 }
 
