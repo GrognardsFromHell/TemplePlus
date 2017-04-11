@@ -150,8 +150,8 @@ void DungeonMaster::Render() {
 				continue;
 			}
 
-			std::string filename = fmt::format("slot0001");
-			if (ImGui::Button(fmt::format("Go {}", flist[i].filename).c_str())) {
+			std::string filename = fmt::format("{}", saveFnameMatch[1]);
+			if (ImGui::Button(fmt::format("Go {} {}", saveFnameMatch[1], saveFnameMatch[2]).c_str())) {
 				PseudoLoad(filename);
 			}
 		}
