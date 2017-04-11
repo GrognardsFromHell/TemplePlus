@@ -34,6 +34,8 @@ public:
 	bool SaveGame(TioFile *file) override;
 	bool LoadGame(GameSystemSaveFile* saveFile) override;
 	const std::string &GetName() const override;
+
+	bool ReadCustomNames(GameSystemSaveFile* file, std::vector<std::string> &customNamesOut); // deserializes custom names from save game file
 };
 
 class ItemEffectSystem : public GameSystem, public ModuleAwareGameSystem {
