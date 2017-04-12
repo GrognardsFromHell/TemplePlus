@@ -587,6 +587,12 @@ uint32_t LegacySpellSystem::spellRegistryCopy(uint32_t spellEnum, SpellEntry* sp
 	return spellEntryRegistry.copy(spellEnum, spellEntry);
 }
 
+void LegacySpellSystem::DoForSpellEntries(void(*cb)(SpellEntry & spellEntry)){
+	for (auto it : spellEntryRegistry) {
+		cb(*it.data);
+	}
+}
+
 int LegacySpellSystem::CopyLearnableSpells(objHndl& handle, int spellClass, std::vector<SpellEntry> &entries)
 {
 	auto &getterNum = temple::GetRef<int>(0x10AAF20C);

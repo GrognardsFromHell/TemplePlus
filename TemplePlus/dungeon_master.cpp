@@ -46,6 +46,8 @@
 
 DungeonMaster dmSys;
 
+static std::vector<VfsSearchResult> mFlist;
+
 static bool isActive = true;
 static bool isActionActive = false;
 
@@ -68,12 +70,10 @@ void DungeonMaster::Render() {
 
 	auto rect = TigRect(0, 0, 96, 96);
 
-	static std::vector<VfsSearchResult> flist;
-
 	ImGui::Begin("Dungeon Master", &isActive);
 	if (mJustOpened) {
 		ImGui::SetWindowCollapsed(true);
-		flist.clear();
+		mFlist.clear();
 	}
 		
 	isMinimized = ImGui::GetWindowCollapsed();
@@ -82,7 +82,7 @@ void DungeonMaster::Render() {
 	}
 	auto wndPos = ImGui::GetWindowPos();
 	auto wndWidth = ImGui::GetWindowWidth();
-	rect.x = wndPos.x + wndWidth / 2 - rect.width / 2; rect.y = wndPos.y - rect.height;
+	rect.x = (int)(wndPos.x + wndWidth / 2 - rect.width / 2); rect.y = (int)(wndPos.y - rect.height);
 
 
 	if (party.GetConsciousPartyLeader() && ImGui::TreeNodeEx("Maps", ImGuiTreeNodeFlags_CollapsingHeader)) {
@@ -137,26 +137,7 @@ void DungeonMaster::Render() {
 
 	// Spawn Party from Save
 	if (ImGui::TreeNodeEx("Vs. Party", ImGuiTreeNodeFlags_CollapsingHeader)){
-		
-		if (!flist.size())
-			flist = vfs->Search("Save\\slot*.gsi");
-
-		for (auto i = 0; i < flist.size(); i++) {
-			auto &fileEntry = flist[i];
-			regex saveFnameRegex("(slot\\d{4})(.*)\\.gsi", regex_constants::ECMAScript | regex_constants::icase);
-			smatch saveFnameMatch;
-			
-			if (!regex_match(fileEntry.filename, saveFnameMatch, saveFnameRegex)) {
-				continue;
-			}
-
-			std::string filename = fmt::format("{}", saveFnameMatch[1]);
-			if (ImGui::Button(fmt::format("Go {} {}", saveFnameMatch[1], saveFnameMatch[2]).c_str())) {
-				PseudoLoad(filename);
-			}
-		}
-		
-		
+		RenderVsParty();
 		ImGui::TreePop();
 	}
 
@@ -224,6 +205,9 @@ bool DungeonMaster::HandleMsg(const TigMsg & msg){
 		if (HandleCloning(msg))
 			return true;
 		
+		if (HandleMoving(msg))
+			return true;
+
 		if (HandleEditing(msg))
 			return true;
 	}
@@ -331,6 +315,45 @@ bool DungeonMaster::HandleEditing(const TigMsg & msg){
 	return false;
 }
 
+bool DungeonMaster::HandleMoving(const TigMsg & msg)
+{
+	if (!IsActionActive())
+		return false;
+
+	if (mActionType != DungeonMasterAction::Move)
+		return false;
+
+	if (msg.type == TigMsgType::MOUSE) {
+		auto &mouseMsg = *(TigMsgMouse*)&msg;
+
+		// RMB - click (so it seizes the event and doesn't spawn a radial menu)
+		if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_RMB_CLICK) {
+			mMovingObj = objHndl::null;
+			DeactivateAction();
+			return true;
+		}
+
+		if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_LMB_CLICK) {
+			if (!mMovingObj || !objSystem->IsValidHandle(mMovingObj))
+				return false;
+
+			LocAndOffsets mouseLoc;
+			locSys.GetLocFromScreenLocPrecise(mouseMsg.x, mouseMsg.y, mouseLoc);
+
+			objects.Move(mMovingObj, mouseLoc);
+			
+			// if Alt key is pressed, keep the action active
+			if (!infrastructure::gKeyboard.IsKeyPressed(VK_LMENU) && !infrastructure::gKeyboard.IsKeyPressed(VK_RMENU)) {
+				mCloningObj = objHndl::null;
+				DeactivateAction();
+			}
+
+			return true;
+		}
+	}
+	return false;
+}
+
 void DungeonMaster::InitEntry(int protoNum){
 	auto protHndl = objSystem->GetProtoHandle(protoNum);
 	if (!protHndl)
@@ -365,7 +388,7 @@ void DungeonMaster::InitEntry(int protoNum){
 
 		// class levels
 		auto levels = obj->GetInt32Array(obj_f_critter_level_idx);
-		for (auto i = 0; i < levels.GetSize(); i++) {
+		for (auto i = 0u; i < levels.GetSize(); i++) {
 			auto classLvl = (Stat)levels[i];
 			newRecord.classLevels[classLvl]++;
 		}
@@ -405,13 +428,13 @@ void DungeonMaster::InitEntry(int protoNum){
 			classNames.push_back(d20Stats.GetStatName((Stat)it));
 		}
 
-		for (auto i = 1; i < 3000; i++) {
-			SpellEntry spEntry(i);
-			if (!spEntry.spellEnum) continue;
-
-			spellNames[i] = spellSys.GetSpellName(i);
-		}
-
+		spellSys.DoForSpellEntries([](SpellEntry &spEntry) {
+			auto spEnum = spEntry.spellEnum;
+			if (spEnum  < 3000) { // the range above 3000 is reserved for class pseudo spells
+				spellNames[spEnum] = spellSys.GetSpellName(spEnum);
+			}
+		});
+		
 		mIsInited = true;
 	}
 }
@@ -645,6 +668,7 @@ bool DungeonMaster::PseudoLoad(std::string filename){
 			tio_fclose(file);
 			return false;
 		}
+		return true;
 	};
 
 	// Description
@@ -687,7 +711,7 @@ bool DungeonMaster::PseudoLoad(std::string filename){
 		// obj
 		// proto
 		// object
-	if (!gameSystems->GetMap().PseudoLoad(&saveFile))
+	if (!gameSystems->GetMap().PseudoLoad(&saveFile, "Save\\ArenaTmp", dynHandlesFromSave))
 		return false;
 	
 	
@@ -721,6 +745,11 @@ void DungeonMaster::ActivateSpawn(int protoId){
 void DungeonMaster::ActivateClone(objHndl handle){
 	mCloningObj = handle;
 	ActivateAction(DungeonMasterAction::Clone);
+}
+
+void DungeonMaster::ActivateMove(objHndl handle){
+	mMovingObj = handle;
+	ActivateAction(DungeonMasterAction::Move);
 }
 
 
@@ -788,7 +817,7 @@ void DungeonMaster::RenderEditedObj() {
 	if (ImGui::TreeNodeEx("Spells Known", ImGuiTreeNodeFlags_CollapsingHeader)) {
 
 		static auto spellNameGetter = [](void *data, int idx, const char** outTxt)->bool {
-			if (idx >= spellNames.size())
+			if ((size_t)idx >= spellNames.size())
 				return false;
 			auto it = spellNames.begin();
 			std::advance(it, idx);
@@ -800,7 +829,7 @@ void DungeonMaster::RenderEditedObj() {
 		};
 		static auto spellClassNameGetter = [](void*data, int idx, const char** outTxt)->bool
 		{
-			if (idx >= d20ClassSys.classEnumsWithSpellLists.size())
+			if ((size_t)idx >= d20ClassSys.classEnumsWithSpellLists.size())
 				return false;
 			*outTxt = d20Stats.GetStatName(d20ClassSys.classEnumsWithSpellLists[idx]);
 			return true;
@@ -920,6 +949,44 @@ void DungeonMaster::RenderEditedObj() {
 	ImGui::End();
 }
 
+void DungeonMaster::RenderVsParty(){
+
+	if (dynHandlesFromSave.size()) {
+		if (ImGui::TreeNodeEx("Assholes", ImGuiTreeNodeFlags_CollapsingHeader)) {
+			for (auto it : dynHandlesFromSave) {
+				auto dynObj = objSystem->GetObject(it);
+				if (dynObj->IsPC() && objSystem->IsValidHandle(it)) {
+					auto d = description.getDisplayName(it);
+					if (ImGui::Button(fmt::format("PC {}", d ? d : "Unknown").c_str())) {
+						mEditedObj = it;
+					};
+				}
+			}
+			ImGui::TreePop();
+		}
+	}
+
+	if (!mFlist.size())
+		mFlist = vfs->Search("Save\\slot*.gsi");
+
+	for (auto i = 0; i < mFlist.size(); i++) {
+		auto &fileEntry = mFlist[i];
+		regex saveFnameRegex("(slot\\d{4})(.*)\\.gsi", regex_constants::ECMAScript | regex_constants::icase);
+		smatch saveFnameMatch;
+
+		if (!regex_match(fileEntry.filename, saveFnameMatch, saveFnameRegex)) {
+			continue;
+		}
+
+		std::string filename = fmt::format("{}", saveFnameMatch[1]);
+		if (ImGui::Button(fmt::format("Go {} {}", saveFnameMatch[1], saveFnameMatch[2]).c_str())) {
+			PseudoLoad(filename);
+		}
+	}
+
+	
+}
+
 void DungeonMaster::SetObjEditor(objHndl handle){
 	
 	critEditor = ObjEditor();
@@ -932,23 +999,23 @@ void DungeonMaster::SetObjEditor(objHndl handle){
 		
 	critEditor.name = description.getDisplayName(handle);
 	auto facs = obj->GetInt32Array(obj_f_npc_faction);
-	for (auto i = 0; i < facs.GetSize(); i++){
+	for (auto i = 0u; i < facs.GetSize(); i++){
 		critEditor.factions.push_back(facs[i]);
 	}
 
 	// Class Levels
 	auto classLvls = obj->GetInt32Array(obj_f_critter_level_idx);
-	for (auto i = 0; i < classLvls.GetSize(); i++)
+	for (auto i = 0u; i < classLvls.GetSize(); i++)
 		critEditor.classLevels[(Stat)classLvls[i]]++;
 
 	// Stats
 	auto statScores = obj->GetInt32Array(obj_f_critter_abilities_idx);
-	for (auto i = 0; i < statScores.GetSize(); i++)
+	for (auto i = 0u; i < statScores.GetSize(); i++)
 		critEditor.stats.push_back(statScores[i]);
 
 	// Spells
 	auto spellsKnown = obj->GetSpellArray(obj_f_critter_spells_known_idx);
-	for (auto i = 0; i < spellsKnown.GetSize(); i++) {
+	for (auto i = 0u; i < spellsKnown.GetSize(); i++) {
 		critEditor.spellsKnown.push_back(spellsKnown[i]);
 	}
 

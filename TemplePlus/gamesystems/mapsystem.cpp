@@ -412,7 +412,7 @@ const std::string &MapSystem::GetName() const {
 	return name;
 }
 
-bool MapSystem::PseudoLoad(GameSystemSaveFile * saveFile, std::string saveFolder)
+bool MapSystem::PseudoLoad(GameSystemSaveFile * saveFile, std::string saveFolder, std::vector<objHndl> & dynHandles)
 {
 	char filename[260];
 	if (!tio_fgets(filename, 260, saveFile->file)) {
@@ -469,10 +469,9 @@ bool MapSystem::PseudoLoad(GameSystemSaveFile * saveFile, std::string saveFolder
 	if (saveFolder.size() < 2)
 		return false;
 
-	if (saveFolder[saveFolder.size() - 2] != '\\') {
-		saveFolder[saveFolder.size() - 2] = '\\';
+	if (saveFolder[saveFolder.size() - 1] != '\\') {
 		saveFolder.resize(saveFolder.size() + 1);
-		saveFolder[saveFolder.size() - 1] = 0;
+		saveFolder[saveFolder.size() - 1] = '\\';
 	}
 	std::string mapfleeFile = fmt::format("{}map_mapflee.bin", saveFolder);
 	if (vfs->FileExists(mapfleeFile.c_str()) ) {
@@ -497,7 +496,49 @@ bool MapSystem::PseudoLoad(GameSystemSaveFile * saveFile, std::string saveFolder
 
 	vfs->MkDir(saveDir);
 
-	ReadMapMobiles(dataDir, saveDir);
+
+	auto mdyFilename = fmt::format("{}\\mobile.mdy", saveDir);
+
+	if (!vfs->FileExists(mdyFilename)) {
+		logger->info("Skipping dynamic mobiles because {} doesn't exist.", mdyFilename);
+		return false;
+	}
+
+	logger->info("Loading dynamic mobiles from {}", mdyFilename);
+
+	auto mdyfh = tio_fopen(mdyFilename.c_str(), "rb");
+	if (!mdyfh) {
+		throw TempleException("Unable to open dynamic mobile file for reading: {}", mdyFilename);
+	}
+
+	dynHandles.clear();
+	while (true) {
+		try {
+			auto handle = objSystem->LoadFromFile(mdyfh);
+			auto d = description.getDisplayName(handle);
+			std::string handleDesc;
+			if (d)
+				handleDesc = fmt::format("{}", d);
+			else
+				handleDesc = fmt::format("Unnamed");
+			logger->debug("PseudoLoad: dynamic object {} ({})", handleDesc,	objSystem->GetObject(handle)->id.ToString());
+			dynHandles.push_back(handle);
+		}
+		catch (TempleException &e) {
+			logger->error("Unable to load object: {}", e.what());
+			break;
+		}
+		
+	}
+
+	if (!tio_feof(mdyfh)) {
+		tio_fclose(mdyfh);
+		throw TempleException("Error while reading dynamic mobile file {}", mdyFilename);
+	}
+
+	tio_fclose(mdyfh);
+
+	logger->info("Done reading dynamic mobiles.");
 
 	// Post Process
 
@@ -506,19 +547,19 @@ bool MapSystem::PseudoLoad(GameSystemSaveFile * saveFile, std::string saveFolder
 			obj.UnfreezeIds();
 		}
 
-		if (obj.HasFlag(OF_TELEPORTED)) {
+		/*if (obj.HasFlag(OF_TELEPORTED)) {
 			TimeEvent e;
 			e.system = TimeEventType::Teleported;
 			e.params[0].handle = handle;
 			gameSystems->GetTimeEvent().ScheduleNow(e);
 			obj.SetFlag(OF_TELEPORTED, false);
 			return;
-		}
+		}*/
 
-		// Initialize everything's D20 state
-		if (gameSystems->GetParty().IsInParty(handle)) {
-			return; // The party is initialized elsewhere (in the Party system)
-		}
+		//// Initialize everything's D20 state
+		//if (gameSystems->GetParty().IsInParty(handle)) {
+		//	return; // The party is initialized elsewhere (in the Party system)
+		//}
 
 		// This logic is a bit odd really. Apparently obj_f_dispatcher will not be -1 for non-critters anyway?
 		if (obj.IsNPC() || obj.GetInt32(obj_f_dispatcher) == -1) {

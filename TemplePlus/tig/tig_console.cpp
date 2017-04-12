@@ -328,7 +328,7 @@ void Console::RenderCheatsMenu()
 					else if (speedupVal == 4) {
 						speedRun = 5.0f;
 					}
-					for (auto i = 0; i < N_party; i++) {
+					for (auto i = 0u; i < N_party; i++) {
 						auto dude = party.GroupListGetMemberN(i);
 						if (!dude) continue;
 						

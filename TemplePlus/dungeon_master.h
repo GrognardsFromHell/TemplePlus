@@ -4,6 +4,9 @@
 #include "common.h"
 #include <tig/tig_msg.h>
 #include "spell_structs.h"
+//#include <infrastructure\vfs.h>
+
+//struct VfsSearchResult;
 
 class DungeonMaster
 {
@@ -20,11 +23,13 @@ public:
 	bool IsActionActive();
 	void Render();
 	void RenderEditedObj();
+	void RenderVsParty();
 
 	bool HandleMsg(const TigMsg & msg);
 	bool HandleSpawning(const TigMsg & msg);
 	bool HandleCloning(const TigMsg& msg);
 	bool HandleEditing(const TigMsg & msg);
+	bool HandleMoving(const TigMsg &msg);
 
 	void InitEntry(int protoNum);
 
@@ -61,7 +66,8 @@ public:
 	enum DungeonMasterAction : int {
 		None,
 		Spawn,
-		Clone
+		Clone,
+		Move
 	};
 
 protected:
@@ -78,6 +84,7 @@ protected:
 	bool FilterResult(Record& record);
 	std::map<int, Record > humanoids;
 	bool mIsInited = false;
+	//std::vector<VfsSearchResult> mFlist;
 	int mTexId;
 
 	std::map<int, Record > monsters;
@@ -85,15 +92,20 @@ protected:
 
 	DungeonMasterAction mActionType = DungeonMasterAction::None;
 	bool PseudoLoad(std::string filename);
+	std::vector<objHndl> dynHandlesFromSave;
 
 	void ActivateAction(DungeonMasterAction actionType);
 	void DeactivateAction();
 	void ActivateSpawn(int protoId);
 	void ActivateClone(objHndl handle);
+	void ActivateMove(objHndl handle);
+	
 	int mObjSpawnProto = 0;
 	objHndl mCloningObj = objHndl::null;
+	objHndl mMovingObj = objHndl::null;
 
 
+	// Filter
 	int mCategoryFilter = 0;
 	int mSubcategoryFilter = 0;
 	int mActionTimeStamp = 0;
