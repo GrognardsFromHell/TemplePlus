@@ -136,19 +136,19 @@ void DungeonMaster::Render() {
 	}
 
 	// Spawn Party from Save
-	if (ImGui::TreeNodeEx("Vs. Party", ImGuiTreeNodeFlags_CollapsingHeader)){
+	if (ImGui::TreeNodeEx("Import Rival Party", ImGuiTreeNodeFlags_CollapsingHeader)){
 		RenderVsParty();
 		ImGui::TreePop();
 	}
 
-		// Weapons Tree
-		if (ImGui::TreeNodeEx("Weapons", ImGuiTreeNodeFlags_CollapsingHeader)) {
+	//// Weapons Tree
+	//if (ImGui::TreeNodeEx("Weapons", ImGuiTreeNodeFlags_CollapsingHeader)) {
 
-			for (auto it : weapons) {
-				ImGui::BulletText("%d | %s ", it.first, it.second.name.c_str());
-			}
-			ImGui::TreePop();
-		}
+	//	for (auto it : weapons) {
+	//		ImGui::BulletText("%d | %s ", it.first, it.second.name.c_str());
+	//	}
+	//	ImGui::TreePop();
+	//}
 
 	ImGui::End();
 
@@ -760,6 +760,9 @@ void DungeonMaster::RenderEditedObj() {
 	ImGui::SameLine();
 	if (ImGui::Button("Clone"))
 		ActivateClone(mEditedObj);
+	ImGui::SameLine();
+	if (ImGui::Button("Move"))
+		ActivateMove(mEditedObj);
 
 	ImGui::Text(fmt::format("Factions: {}", critEditor.factions).c_str());
 
@@ -952,13 +955,14 @@ void DungeonMaster::RenderEditedObj() {
 void DungeonMaster::RenderVsParty(){
 
 	if (dynHandlesFromSave.size()) {
-		if (ImGui::TreeNodeEx("Assholes", ImGuiTreeNodeFlags_CollapsingHeader)) {
+		if (ImGui::TreeNodeEx("Rival PCs", ImGuiTreeNodeFlags_CollapsingHeader)) {
 			for (auto it : dynHandlesFromSave) {
 				auto dynObj = objSystem->GetObject(it);
 				if (dynObj->IsPC() && objSystem->IsValidHandle(it)) {
 					auto d = description.getDisplayName(it);
-					if (ImGui::Button(fmt::format("PC {}", d ? d : "Unknown").c_str())) {
-						mEditedObj = it;
+					if (ImGui::Button(fmt::format("{}", d ? d : "Unknown").c_str())) {
+						SetObjEditor(it);
+						ActivateMove(it);
 					};
 				}
 			}
@@ -969,20 +973,24 @@ void DungeonMaster::RenderVsParty(){
 	if (!mFlist.size())
 		mFlist = vfs->Search("Save\\slot*.gsi");
 
-	for (auto i = 0; i < mFlist.size(); i++) {
-		auto &fileEntry = mFlist[i];
-		regex saveFnameRegex("(slot\\d{4})(.*)\\.gsi", regex_constants::ECMAScript | regex_constants::icase);
-		smatch saveFnameMatch;
+	if (mFlist.size() && ImGui::TreeNodeEx("Save Games", ImGuiTreeNodeFlags_CollapsingHeader)) {
+		for (int i = (int)mFlist.size()-1; i >= 0; i--) {
+			auto &fileEntry = mFlist[i];
+			regex saveFnameRegex("(slot\\d{4})(.*)\\.gsi", regex_constants::ECMAScript | regex_constants::icase);
+			smatch saveFnameMatch;
 
-		if (!regex_match(fileEntry.filename, saveFnameMatch, saveFnameRegex)) {
-			continue;
-		}
+			if (!regex_match(fileEntry.filename, saveFnameMatch, saveFnameRegex)) {
+				continue;
+			}
 
-		std::string filename = fmt::format("{}", saveFnameMatch[1]);
-		if (ImGui::Button(fmt::format("Go {} {}", saveFnameMatch[1], saveFnameMatch[2]).c_str())) {
-			PseudoLoad(filename);
+			std::string filename = fmt::format("{}", saveFnameMatch[1]);
+			if (ImGui::Button(fmt::format("Go {} {}", saveFnameMatch[1], saveFnameMatch[2]).c_str())) {
+				PseudoLoad(filename);
+			}
 		}
+		ImGui::TreePop();
 	}
+	
 
 	
 }
