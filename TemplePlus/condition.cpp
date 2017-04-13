@@ -1943,6 +1943,19 @@ CondStruct* ConditionSystem::GetById(const int condId)
 	return hashmethods.GetCondStruct(condId);
 }
 
+void ConditionSystem::DoForAllCondStruct(void(*cb)(CondStruct &condStruct)){
+	uint32_t bitmask = (mCondStructHashtable->powerOfTwo - 1);
+
+	for (auto i = 0u; i < mCondStructHashtable->numItems; i++) {
+		auto idx = mCondStructHashtable->idxArray[i];
+		auto dataEntry = &mCondStructHashtable->dataArray[idx];
+		if (*dataEntry) {
+			cb(**dataEntry);
+		}
+	}
+	
+}
+
 void ConditionSystem::AddToItem(objHndl item, const CondStruct* cond, const vector<int>& args) {
 	assert(args.size() == cond->numArgs);
 

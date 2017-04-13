@@ -181,6 +181,9 @@ public:
 	*/
 	CondStruct *GetByName(const string &name);
 	CondStruct* GetById(const int condId);
+
+	void DoForAllCondStruct( void(__cdecl*cb)(CondStruct & condStruct));
+
 	/*
 		Adds a condition to an item's obj_f_item_pad_wielder_condition_array and 
 		obj_f_item_pad_wielder_argument_array.

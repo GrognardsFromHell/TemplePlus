@@ -59,6 +59,7 @@ DungeonMaster::ObjEditor critEditor;
 static std::vector<std::string> classNames; // offset by 1 wrt the d20ClassSys.classEnums vector
 static std::map<int, std::string> spellNames;
 static std::map<int, std::string> mapNames;
+static std::vector<CondStruct*> condStructs;
 static int mMonModFactionNew;
 static bool mMonModFactionIsOverride = false;
 
@@ -435,6 +436,17 @@ void DungeonMaster::InitEntry(int protoNum){
 			}
 		});
 		
+		conds.DoForAllCondStruct([](CondStruct& condStruct) {
+			condStructs.push_back(&condStruct);
+		});
+
+		std::sort(condStructs.begin(), condStructs.end(), [](const CondStruct * a, const CondStruct * b)->bool {
+			auto name1 = a->condName;
+			auto name2 = b->condName;
+			auto nameCmp = _strcmpi(name1, name2);
+			return nameCmp < 0;
+		});
+
 		mIsInited = true;
 	}
 }
@@ -912,6 +924,36 @@ void DungeonMaster::RenderEditedObj() {
 	if (ImGui::TreeNodeEx("Modifiers & Conditions", ImGuiTreeNodeFlags_CollapsingHeader)) {
 		auto obj = objSystem->GetObject(mEditedObj);
 		
+
+		static auto condNameGetter = [](void *data, int idx, const char** outTxt)->bool {
+			if ((size_t)idx >= condStructs.size())
+				return false;
+			
+			*outTxt = condStructs[idx]->condName;
+			return true;
+		};
+		 
+		if (ImGui::TreeNodeEx("Add New", ImGuiTreeNodeFlags_CollapsingHeader)) {
+
+			static int condCur = 0;
+			static int numArgs = 0;
+			if (ImGui::Combo("Select", &condCur, condNameGetter, nullptr, condStructs.size(), 8)) {
+				numArgs = condStructs[condCur]->numArgs;
+			}
+			ImGui::Text(fmt::format("Num args: {}", numArgs).c_str());
+
+			if (ImGui::Button("Add")) {
+				std::vector<int> condArgs;
+				if (numArgs >= 0)
+					condArgs.resize(numArgs);
+				else
+					condArgs.resize(0);
+				conds.AddTo(mEditedObj, condStructs[condCur]->condName, condArgs);
+			}
+
+			ImGui::TreePop();
+		}
+		
 		auto displayCondUi = [](objHndl handle, Dispatcher * dispatcher ,obj_f fieldType) {
 			auto condTmp = dispatcher->conditions;
 			if (fieldType == obj_f_permanent_mods)
@@ -983,6 +1025,7 @@ void DungeonMaster::RenderVsParty(){
 				continue;
 			}
 
+			// Load Mobiles from save
 			std::string filename = fmt::format("{}", saveFnameMatch[1]);
 			if (ImGui::Button(fmt::format("Go {} {}", saveFnameMatch[1], saveFnameMatch[2]).c_str())) {
 				PseudoLoad(filename);
