@@ -87,33 +87,7 @@ void DungeonMaster::Render() {
 
 
 	if (party.GetConsciousPartyLeader() && ImGui::TreeNodeEx("Maps", ImGuiTreeNodeFlags_CollapsingHeader)) {
-		static std::map<int, std::string> mapNames;
-		static std::map<int, std::vector<int>> mapsByArea;
-		static int areaFilter = -1;
-
-		// init
-		if (!mapNames.size()) {
-			for (auto i = 5001; i < gameSystems->GetMap().GetHighestMapId(); i++) {
-				auto mapName = gameSystems->GetMap().GetMapName(i);
-				if (mapName.size()) {
-					mapNames[i] = mapName;
-					auto mapArea = gameSystems->GetMap().GetArea(i);
-					mapsByArea[mapArea].push_back(i);
-				}
-			}
-		}
-
-		auto mapIdx = 0;
-		for (auto it : mapNames) {
-			if (ImGui::TreeNode(fmt::format("{} {}", it.first, it.second).c_str())) {
-				ImGui::Text(fmt::format("Area: {}", gameSystems->GetMap().GetArea(it.first)).c_str());
-				if (ImGui::Button("Teleport")) {
-					TransitionToMap(it.first);
-				}
-				ImGui::TreePop();
-			}
-			mapIdx++;
-		}
+		RenderMaps();
 
 		ImGui::TreePop();
 	}
@@ -181,6 +155,56 @@ void DungeonMaster::Render() {
 
 	if (mJustOpened) {
 		mJustOpened = false;
+	}
+}
+
+void DungeonMaster::RenderMaps(){
+	static std::map<int, std::string> mapNames;
+	static std::map<int, std::vector<int>> mapsByArea;
+	static int areaFilter = -1;
+
+	// init
+	if (!mapNames.size()) {
+		for (auto i = 5001; i < gameSystems->GetMap().GetHighestMapId(); i++) {
+			auto mapName = gameSystems->GetMap().GetMapDescription(i);
+			if (mapName.size()) {
+				mapNames[i] = mapName;
+				auto mapArea = gameSystems->GetMap().GetArea(i);
+				mapsByArea[mapArea].push_back(i);
+			}
+		}
+	}
+
+	// Area Filter
+
+	static int curArea=0;
+	static bool mapsOutdoorOnly = 0;
+	if (ImGui::TreeNodeEx("Filter", ImGuiTreeNodeFlags_CollapsingHeader)) {
+		ImGui::InputInt("Area", &curArea);
+
+		ImGui::Checkbox("Outdoors Only", &mapsOutdoorOnly);
+
+		ImGui::TreePop();
+	}
+	
+	auto mapIdx = 0;
+	for (auto it : mapNames) {
+
+		auto mapArea = gameSystems->GetMap().GetArea(it.first);
+		if (curArea && mapArea != curArea)
+			continue;
+
+		if (mapsOutdoorOnly && !gameSystems->GetMap().IsMapOutdoors(it.first))
+			continue;
+
+		if (ImGui::TreeNode(fmt::format("{} {}", it.first, it.second).c_str())) {
+			ImGui::Text(fmt::format("Area: {}", mapArea).c_str());
+			if (ImGui::Button("Teleport")) {
+				TransitionToMap(it.first);
+			}
+			ImGui::TreePop();
+		}
+		mapIdx++;
 	}
 }
 

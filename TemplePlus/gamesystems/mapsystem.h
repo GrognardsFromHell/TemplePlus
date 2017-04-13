@@ -122,6 +122,8 @@ public:
 	locXY GetStartPos(int mapId) const;
 
 	const std::string& GetMapName(int mapId);
+	const std::string& GetMapDescription(int mapId);
+	bool IsMapOutdoors(int mapId);
 
 	int GetEnterMovie(int mapId, bool ignoreVisited);
 

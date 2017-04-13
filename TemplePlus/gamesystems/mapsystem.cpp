@@ -38,6 +38,7 @@ struct MapListEntry {
 	int id;
 	int flags = 0;
 	std::string name;
+	std::string description;
 	int worldmap = 0;
 	int area = 0;
 	int movie = 0;
@@ -93,6 +94,7 @@ MapSystem::~MapSystem() {
 
 void MapSystem::LoadModule() {
 	auto mapList = MesFile::ParseFile("Rules\\MapList.mes");
+	auto mapNames = MesFile::ParseFile("mes\\map_names.mes");
 
 	std::vector<gsl::cstring_span<>> parts;
 
@@ -159,6 +161,10 @@ void MapSystem::LoadModule() {
 			
 		}
 		mMaps[line.first] = entry;
+	}
+
+	for (auto &line : mapNames) {
+		mMaps[line.first].description.assign( line.second  );
 	}
 
 }
@@ -848,6 +854,26 @@ const std::string & MapSystem::GetMapName(int mapId)
 
 	static std::string sEmptyName;
 	return sEmptyName;
+}
+
+const std::string & MapSystem::GetMapDescription(int mapId)
+{
+	auto it = mMaps.find(mapId);
+	if (it != mMaps.end()) {
+		return it->second.description;
+	}
+
+	static std::string sEmptyName;
+	return sEmptyName;
+}
+
+bool MapSystem::IsMapOutdoors(int mapId)
+{
+	auto it = mMaps.find(mapId);
+	if (it != mMaps.end()) {
+		return it->second.IsOutdoors();
+	}
+	return false;
 }
 
 int MapSystem::GetEnterMovie(int mapId, bool ignoreVisited)

@@ -22,6 +22,7 @@ public:
 
 	bool IsActionActive();
 	void Render();
+	void RenderMaps();
 	void RenderEditedObj();
 	void RenderVsParty();
 
@@ -84,28 +85,30 @@ protected:
 	bool FilterResult(Record& record);
 	std::map<int, Record > humanoids;
 	bool mIsInited = false;
-	//std::vector<VfsSearchResult> mFlist;
-	int mTexId;
+	int mTexId; // Raptor texture
 
 	std::map<int, Record > monsters;
 	std::map<int, Record > weapons;
 
-	DungeonMasterAction mActionType = DungeonMasterAction::None;
+	// Import from save internals
 	bool PseudoLoad(std::string filename);
 	std::vector<objHndl> dynHandlesFromSave;
 
+	// Actions
 	void ActivateAction(DungeonMasterAction actionType);
 	void DeactivateAction();
 	void ActivateSpawn(int protoId);
 	void ActivateClone(objHndl handle);
 	void ActivateMove(objHndl handle);
 	
+	// Action objects
+	DungeonMasterAction mActionType = DungeonMasterAction::None;
 	int mObjSpawnProto = 0;
 	objHndl mCloningObj = objHndl::null;
 	objHndl mMovingObj = objHndl::null;
 
 
-	// Filter
+	// Monster Filter
 	int mCategoryFilter = 0;
 	int mSubcategoryFilter = 0;
 	int mActionTimeStamp = 0;
