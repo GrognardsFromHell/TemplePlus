@@ -838,6 +838,22 @@ int LegacyCombatSystem::GetEnemiesCanMelee(objHndl obj, objHndl* canMeleeList)
 	return addresses.GetEnemiesCanMelee(obj, canMeleeList);
 }
 
+std::vector<objHndl> LegacyCombatSystem::GetEnemiesCanMelee(objHndl handle){
+	std::vector<objHndl> result;
+
+	auto N = combatSys.GetInitiativeListLength();
+	for (auto i = 0; i < N; i++) {
+		auto combatant = combatSys.GetInitiativeListMember(i);
+		if (!combatant || combatant == handle || critterSys.IsFriendly(handle, combatant))
+			continue;
+		if (!combatSys.CanMeleeTarget(combatant, handle))
+			continue;
+		result.push_back(combatant);
+	}
+
+	return result;
+}
+
 objHndl LegacyCombatSystem::GetWeapon(AttackPacket* attackPacket)
 {
 	D20CAF flags = attackPacket->flags;

@@ -760,6 +760,36 @@ int AiSystem::TargetClosest(AiTactic* aiTac)
 	return 0;
 }
 
+BOOL AiSystem::TargetDamaged(AiTactic * aiTac){
+
+	auto performer = aiTac->performer;
+	auto lowest = 1.1;
+	auto N = combatSys.GetInitiativeListLength();
+	for (auto i = 0; i < N; i++) {
+		auto combatant = combatSys.GetInitiativeListMember(i);
+		if (!combatant || combatant == aiTac->performer)
+			continue;
+
+		if (critterSys.IsDeadOrUnconscious(combatant) || critterSys.IsFriendly(performer, combatant))
+			continue;
+
+		auto hpCur = objects.StatLevelGet(combatant, stat_hp_current);
+		auto hpMax = objects.StatLevelGet(combatant, stat_hp_max);
+		auto hpPct = hpCur * 1.0 / hpMax;
+		auto priority = hpPct;
+		if (d20Sys.d20Query(combatant, DK_QUE_Critter_Is_Invisible)
+			&& !d20Sys.d20Query(performer, DK_QUE_Critter_Can_See_Invisible))
+			priority += 5.0;
+		if (priority < lowest) {
+			lowest = priority;
+			aiTac->target = combatant;
+		}
+			
+	}
+
+	return FALSE;
+}
+
 int AiSystem::TargetThreatened(AiTactic* aiTac)
 {
 	objHndl performer = aiTac->performer;
@@ -814,7 +844,60 @@ int AiSystem::TargetThreatened(AiTactic* aiTac)
 	
 
 	return 0;
-};
+}
+BOOL AiSystem::UsePotion(AiTactic * aiTac){
+
+	auto performer = aiTac->performer;
+	auto hpCur = objects.StatLevelGet(performer, stat_hp_current);
+	auto hpMax = objects.StatLevelGet(performer, stat_hp_max);
+	float hpPct = hpCur * 1.0 / hpMax;
+
+	auto objInventory =	inventory.GetInventory(performer);
+	if (!objInventory.size())
+		return FALSE;
+
+	// check if critter can get whacked by AoO
+	auto threateningCombatants = combatSys.GetEnemiesCanMelee(performer);
+	if (threateningCombatants.size()) {
+		logger->info("Skipping Use Potion action because threatened by critters.");
+		return FALSE;
+	}
+
+	for (auto itemHandle : objInventory) {
+		auto itemObj = objSystem->GetObject(itemHandle);
+		if (itemObj->type != obj_t_food)
+			continue;
+
+		if (!itemObj->GetSpellArray(obj_f_item_spell_idx).GetSize())
+			continue;
+
+		auto spData = itemObj->GetSpell(obj_f_item_spell_idx, 0);
+		auto spEnum = spData.spellEnum;
+
+		if (spEnum <= 0)
+			continue;
+
+		auto spellAiTypeIsHealing =
+			spellSys.SpellHasAiType(spEnum, AiSpellType::ai_action_heal_heavy)
+			|| spellSys.SpellHasAiType(spEnum, AiSpellType::ai_action_heal_light)
+			|| spellSys.SpellHasAiType(spEnum, AiSpellType::ai_action_heal_medium);
+		if (spellAiTypeIsHealing) {
+			if (hpPct >= 0.5)
+				continue;
+			// prevent usage of light healing when already fairly healthy...
+			if (spellSys.SpellHasAiType(spEnum, AiSpellType::ai_action_heal_light) && hpCur >= 25)
+				continue;
+		}
+		
+		auto doUseItemAction = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl, objHndl)>(0x10098C90);
+		if (doUseItemAction(performer, performer, itemHandle))
+			return TRUE;
+
+	}
+
+	return FALSE;
+}
+;
 
 int AiSystem::Approach(AiTactic* aiTac)
 {
@@ -1687,7 +1770,7 @@ int AiSystem::Flank(AiTactic* aiTac)
 int AiSystem::AttackThreatened(AiTactic* aiTac)
 {
 	if (!aiTac->target || !combatSys.CanMeleeTarget(aiTac->performer, aiTac->target))
-	return 0;
+		return FALSE;
 	return Default(aiTac);
 }
 
@@ -1835,11 +1918,18 @@ public:
 		});
 		
 		replaceFunction(0x100E3270, AiDefault);
+		replaceFunction<BOOL(__cdecl)(AiTactic*)>(0x100E4A40, [](AiTactic*aiTac)->BOOL {
+			return aiSys.UsePotion(aiTac);
+		});
 		replaceFunction(0x100E3A00, _AiTargetClosest);
 		replaceFunction(0x100E3B60, AiRage);
 		replaceFunction(0x100E43F0, AiCastParty);
 		replaceFunction(0x100E46C0, AiAttack);
 		replaceFunction(0x100E46D0, AiTargetThreatened);
+		replaceFunction<BOOL(__cdecl)(AiTactic*)>(0x100E37D0, [](AiTactic*aiTac)->BOOL {
+			return aiSys.TargetDamaged(aiTac);
+		});
+		replaceFunction(0x100E4680, AiAttackThreatened);
 		replaceFunction(0x100E48D0, _AiApproach);
 		replaceFunction(0x100E4BD0, _AiCharge);		
 		replaceFunction(0x100E5080, SetCritterStrategy);

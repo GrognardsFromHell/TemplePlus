@@ -167,6 +167,14 @@ void MapSystem::LoadModule() {
 		mMaps[line.first].description.assign( line.second  );
 	}
 
+	// get info from hardcoded map areas table (bleh)
+	for (auto &entry: mMaps) {
+		if (!entry.second.area) {
+			auto mapArea = temple::GetRef<int(__cdecl)(int)>(0x1006EC30)(entry.second.id);
+			entry.second.area = mapArea;
+		}
+	}
+
 }
 
 void MapSystem::UnloadModule() {

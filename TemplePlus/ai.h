@@ -182,7 +182,9 @@ struct AiSystem : temple::AddressTable
 	int PickUpWeapon(AiTactic* aiTac);	
 	int Sniper(AiTactic *aiTac);
 	int TargetClosest(AiTactic * aiTac);
+	BOOL TargetDamaged(AiTactic *aiTac);
 	int TargetThreatened(AiTactic * aiTac);
+	BOOL UsePotion(AiTactic *aiTac);
 
 	unsigned int Asplode(AiTactic * aiTactic);
 	unsigned int WakeFriend(AiTactic* aiTac);

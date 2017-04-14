@@ -460,6 +460,10 @@ int LegacyCritterSystem::MoneyAmount(objHndl handle){
 }
 
 uint32_t LegacyCritterSystem::IsFriendly(objHndl pc, objHndl npc) {
+
+	if (d20Sys.d20Query(pc, DK_QUE_Critter_Is_AIControlled) && d20Sys.d20Query(npc, DK_QUE_Critter_Is_AIControlled))
+		return true;
+
 	return addresses.IsFriendly(pc, npc);
 }
 

@@ -447,6 +447,30 @@ int InventorySystem::GetInventory(objHndl objHandle, objHndl ** inventoryArray){
 	return numItems;
 }
 
+std::vector<objHndl> InventorySystem::GetInventory(objHndl handle){
+	
+	std::vector<objHndl> result;
+
+	auto obj = objSystem->GetObject(handle);
+	auto invenNumField = obj_f_critter_inventory_num;
+	auto invenField = obj_f_critter_inventory_list_idx;
+
+	if (obj->type == obj_t_container)
+	{
+		invenNumField = obj_f_container_inventory_num;
+		invenField = obj_f_container_inventory_list_idx;
+	}
+	auto numItems = obj->GetInt32(invenNumField);
+	if (numItems <= 0) 
+		return result;
+
+	for (int i = 0; i < numItems; i++){
+		result.push_back(obj->GetObjHndl(invenField, i));
+	}
+
+	return result;
+}
+
 int InventorySystem::GetInventoryLocation(objHndl item)
 
 {

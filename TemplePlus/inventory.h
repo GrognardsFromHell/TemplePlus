@@ -100,6 +100,7 @@ struct InventorySystem : temple::AddressTable
 	bool IsRangedWeapon(objHndl weapon);
 	bool IsVisibleInventoryFull(objHndl obj);
 	int GetInventory(objHndl obj, objHndl** inventoryArray);
+	std::vector<objHndl> GetInventory(objHndl obj);
 	int GetInventoryLocation(objHndl item);
 	ItemFlag GetItemFlags(objHndl item);
 	int IsItemNonTransferable(objHndl item, objHndl receiver);

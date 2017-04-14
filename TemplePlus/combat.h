@@ -62,9 +62,11 @@ struct LegacyCombatSystem : temple::AddressTable {
 	*/
 	BOOL AffiliationSame(objHndl obj, objHndl obj2); 
 	/*
-		retrieves a list of enemies that the obj can melee with; return val is that number of such enemies
+		retrieves a list of enemies that can melee attack obj; return val is that number of such enemies
 	*/
 	int GetEnemiesCanMelee(objHndl obj, objHndl* canMeleeList);
+	std::vector<objHndl> GetEnemiesCanMelee(objHndl handle);
+
 	objHndl GetWeapon(AttackPacket* attackPacket);
 	static bool IsUnarmed(objHndl handle);
 	bool DisarmCheck(objHndl attacker, objHndl defender, D20Actn* d20a);
