@@ -274,7 +274,7 @@ struct AiTacticDef
 
 struct AiStrategy
 {
-	char * name;
+	std::string name;
 	AiTacticDef * aiTacDefs[20];
 	uint32_t field54[20];
 	SpellStoreData spellsKnown[20];

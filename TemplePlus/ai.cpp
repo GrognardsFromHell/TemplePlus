@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "common.h"
+#include <tig/tig_tabparser.h>
+
 #include "ai.h"
 #include "d20.h"
 #include "combat.h"
@@ -25,6 +27,7 @@
 #include "python/python_header.h"
 #include "condition.h"
 #include "rng.h"
+
 
 struct AiSystem aiSys;
 AiParamPacket * AiSystem::aiParams;
@@ -52,8 +55,6 @@ AiSystem::AiSystem()
 	actSeq = &actSeqSys;
 	spell = &spellSys;
 	pathfinding = &pathfindingSys;
-	rebase(aiStrategies,0x11868F3C); 
-	rebase(aiStrategiesNum,0x11868F40); 
 	rebase(aiTacticDefs,0x102E4398); 
 	rebase(_AiRemoveFromList, 0x1005A070);
 	rebase(_FleeAdd, 0x1005DE60);
@@ -91,7 +92,7 @@ uint32_t AiSystem::AiStrategyParse(objHndl objHnd, objHndl target)
 	combat->enterCombat(objHnd);
 	auto stratIdx = objects.getInt32(objHnd, obj_f_critter_strategy);
 	Expects(stratIdx >= 0);
-	AiStrategy* aiStrat = &(*aiStrategies)[stratIdx];
+	AiStrategy* aiStrat = &aiStrategies[stratIdx];
 	if (!actSeq->TurnBasedStatusInit(objHnd)) return 0;
 
 	actSeq->curSeqReset(objHnd);
@@ -194,8 +195,8 @@ uint32_t AiSystem::AiStrategDefaultCast(objHndl objHnd, objHndl target, D20Spell
 	AiTactic aiTac;
 	combat->enterCombat(objHnd);
 	auto stratIdx = objects.getInt32(objHnd, obj_f_critter_strategy);
-	Expects(stratIdx >= 0);
-	AiStrategy* aiStrat = &(*aiStrategies)[stratIdx];
+	Expects(stratIdx >= 0 && stratIdx < aiStrategies.size());
+	AiStrategy* aiStrat = &aiStrategies[stratIdx];
 	if (!actSeq->TurnBasedStatusInit(objHnd)) return 0;
 
 	actSeq->curSeqReset(objHnd);
@@ -1217,40 +1218,37 @@ void AiSystem::StrategyTabLineParseTactic(AiStrategy* aiStrat, char* tacName, ch
 	return;
 }
 
-int AiSystem::StrategyTabLineParser(TabFileStatus* tabFile, int n, char** strings)
+int AiSystem::StrategyTabLineParser(const TigTabParser* tabFile, int n, char** strings)
 {
-	AiStrategy *aiStrat; 
-	const char *v4; 
+	const char *snameEndPos; 
 	signed int i; 
 	char v6; 
 	char *stratName; 
-	unsigned int v8; 
+	unsigned int numCols; 
 	char **v9; 
-
-	aiStrat = *aiStrategies;
-	aiStrat = &aiStrat[n];
 	
-	v4 = *strings;
+	AiStrategy newStrategy;
+
+	snameEndPos = *strings;
 	i = 0;
 	do
-		v6 = *v4++;
+		v6 = *snameEndPos++;
 	while (v6);
-	stratName = (char *)malloc(v4 - ( (*strings )+ 1) + 1);
-	aiStrat->name = stratName;
+	newStrategy.name = fmt::format("{}", (*strings)+1);
 	strcpy((char *)stratName, *strings);
-	aiStrat->numTactics = 0;
-	v8 = 3;
+	newStrategy.numTactics = 0;
+	numCols = 3;
 	v9 = strings + 2;
 	do
 	{
-		if (tabFile->numTabsMax < v8)
+		if (numCols > tabFile->maxColumns )
 			break;
-		StrategyTabLineParseTactic(aiStrat, *(v9 - 1), *v9, v9[1]);
-		v8 += 3;
+		StrategyTabLineParseTactic(&newStrategy, *(v9 - 1), *v9, v9[1]);
+		numCols += 3;
 		v9 += 3;
 		++i;
 	} while (i < 20);
-	++(*aiStrategiesNum);
+	aiStrategies.push_back(newStrategy);
 	return 0;
 }
 
@@ -1262,9 +1260,8 @@ int AiSystem::AiOnInitiativeAdd(objHndl obj)
 
 	int critterStratIdx = objects.getInt32(obj, obj_f_critter_strategy);
 	
-	assert(critterStratIdx >= 0 && (uint32_t) critterStratIdx < *aiStrategiesNum);
-	AiStrategy *aiStrats = *aiStrategies;
-	AiStrategy * aiStrat = &aiStrats[critterStratIdx];
+	assert(critterStratIdx >= 0 && (uint32_t) critterStratIdx < aiStrategies.size());
+	AiStrategy * aiStrat = &aiStrategies[critterStratIdx];
 	AiTactic aiTac;
 	aiTac.performer = obj;
 
@@ -1386,9 +1383,8 @@ void AiSystem::RegisterNewAiTactics()
 int AiSystem::GetStrategyIdx(const char* stratName) const
 {
 	int result = -1;
-	for (auto i = 0u; i < *aiStrategiesNum; i++)
-	{
-		if (_stricmp(stratName, (*aiStrategies)[i].name) == 0)
+	for (auto i = 0u; i < aiStrategies.size(); i++){
+		if (_stricmp(stratName, aiStrategies[i].name.c_str()) == 0)
 		{
 			return i;
 		}
@@ -1813,10 +1809,10 @@ int _AiTargetClosest(AiTactic * aiTac)
 	return aiSys.TargetClosest(aiTac);
 }
 
-
-void _StrategyTabLineParser(TabFileStatus* tabFile, int n, char** strings)
+int _StrategyTabLineParser(const TigTabParser* tabFile, int n, char** strings)
 {
 	aiSys.StrategyTabLineParser(tabFile, n, strings);
+	return 0;
 }
 
 int _AiOnInitiativeAdd(objHndl obj)
@@ -1939,6 +1935,13 @@ public:
 			return aiSys.AiStrategDefaultCast(obj, target, spellData, spellPkt);
 		});
 		replaceFunction(0x100E5460, _AiOnInitiativeAdd);
+		replaceFunction<void(_cdecl)()>(0x100E5E40, []() { //Strategy.tab init
+			TigTabParser tabParse;
+			tabParse.Init(_StrategyTabLineParser);
+			tabParse.Open("Rules\\strategy.tab");
+			tabParse.Process();
+			tabParse.Close();
+		});
 		replaceFunction(0x100E5500, _StrategyTabLineParser);
 		replaceFunction(0x100E55A0, AiGoMelee);
 		replaceFunction(0x100E58D0, AiSniper);

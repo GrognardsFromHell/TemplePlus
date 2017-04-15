@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "tig\tig_mes.h"
+#include "tig\tig_tabparser.h"
 #include "d20.h"
 
 
@@ -101,7 +102,8 @@ enum AiFightStatus : uint32_t {
 
 struct AiSystem : temple::AddressTable
 {
-	AiStrategy ** aiStrategies;
+	//AiStrategy ** aiStrategies;
+	std::vector<AiStrategy> aiStrategies;
 	AiTacticDef * aiTacticDefs;
 	AiTacticDef aiTacticDefsNew[AI_TACTICS_NEW_SIZE];
 	static AiParamPacket * aiParams;
@@ -191,7 +193,7 @@ struct AiSystem : temple::AddressTable
 
 
 	void StrategyTabLineParseTactic(AiStrategy*, char * tacName, char * middleString, char* spellString);
-	int StrategyTabLineParser(TabFileStatus* tabFile, int n, char ** strings);
+	int StrategyTabLineParser(const TigTabParser* tabFile, int n, char ** strings);
 	int AiOnInitiativeAdd(objHndl obj);
 	AiCombatRole GetRole(objHndl obj);
 	BOOL AiFiveFootStepAttempt(AiTactic * aiTac);
