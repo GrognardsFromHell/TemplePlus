@@ -85,7 +85,7 @@ void AiSystem::aiTacticGetConfig(int tacIdx, AiTactic* aiTacOut, AiStrategy* aiS
 	}
 }
 
-uint32_t AiSystem::AiStrategyParse(objHndl objHnd, objHndl target)
+uint32_t AiSystem::StrategyParse(objHndl objHnd, objHndl target)
 {
 	#pragma region preamble
 	AiTactic aiTac;
@@ -485,7 +485,7 @@ int AiSystem::WillKos(objHndl aiHandle, objHndl triggerer){
 
 	if (!leader && !party.IsInParty(aiHandle)){
 		auto npcFlags = objSystem->GetObject(aiHandle)->GetNPCFlags();
-		if ((npcFlags & NpcFlag::ONF_KOS) && !(npcFlags & NpcFlag::ONF_KOS_OVERRIDE)) {
+		if (npcFlags & NpcFlag::ONF_KOS && !(npcFlags & NpcFlag::ONF_KOS_OVERRIDE)) {
 
 			if (!critterSys.AllegianceShared(aiHandle, triggerer) && (objSystem->GetObject(triggerer)->IsPC() || !factions.HasNullFaction(triggerer))) {
 				return 1;
@@ -681,7 +681,7 @@ void AiSystem::FleeProcess(objHndl obj, objHndl fleeingFrom)
 int AiSystem::TargetClosest(AiTactic* aiTac)
 {
 	objHndl performer = aiTac->performer;
-	int performerIsIntelligent = (objects.StatLevelGet(performer, stat_intelligence) >= 3);
+	int performerIsIntelligent = objects.StatLevelGet(performer, stat_intelligence) >= 3;
 	//objHndl target; 
 	LocAndOffsets performerLoc; 
 	float dist = 1000000000.0, reach = critterSys.GetReach(performer, D20A_UNSPECIFIED_ATTACK);
@@ -794,7 +794,7 @@ BOOL AiSystem::TargetDamaged(AiTactic * aiTac){
 int AiSystem::TargetThreatened(AiTactic* aiTac)
 {
 	objHndl performer = aiTac->performer;
-	int performerIsIntelligent = (objects.StatLevelGet(performer, stat_intelligence) >= 3);
+	int performerIsIntelligent = objects.StatLevelGet(performer, stat_intelligence) >= 3;
 //	objHndl target;
 	LocAndOffsets performerLoc;
 	float dist = 1000000000.0;
@@ -1182,6 +1182,7 @@ void AiSystem::StrategyTabLineParseTactic(AiStrategy* aiStrat, char* tacName, ch
 	int tacIdx = 0;
 	if (*tacName)
 	{
+		// first check the vanilla tactic defs (44 types)
 		for (int i = 0; i < 44 && _stricmp(tacName, aiTacticDefs[i].name); i++){
 			++tacIdx;
 		}
@@ -1195,13 +1196,14 @@ void AiSystem::StrategyTabLineParseTactic(AiStrategy* aiStrat, char* tacName, ch
 			++aiStrat->numTactics;
 			return;
 		}
+
+		// if none matched, try the new Temple+ tactics
 		tacIdx = 0;
 		for (int i = 0; i < 100 && aiTacticDefsNew[i].name && _stricmp(tacName, aiTacticDefsNew[i].name); i++)
 		{
 			tacIdx++;
 		}
-		if (aiTacticDefsNew[tacIdx].name && tacIdx < 100)
-		{
+		if (aiTacticDefsNew[tacIdx].name && tacIdx < 100){
 			aiStrat->aiTacDefs[aiStrat->numTactics] = &aiTacticDefsNew[tacIdx];
 			aiStrat->field54[aiStrat->numTactics] = 0;
 			aiStrat->spellsKnown[aiStrat->numTactics].spellEnum = -1;
@@ -1234,8 +1236,7 @@ int AiSystem::StrategyTabLineParser(const TigTabParser* tabFile, int n, char** s
 	do
 		v6 = *snameEndPos++;
 	while (v6);
-	newStrategy.name = fmt::format("{}", (*strings)+1);
-	strcpy((char *)stratName, *strings);
+	newStrategy.name = fmt::format("{}", *strings);
 	newStrategy.numTactics = 0;
 	numCols = 3;
 	v9 = strings + 2;
@@ -1250,6 +1251,27 @@ int AiSystem::StrategyTabLineParser(const TigTabParser* tabFile, int n, char** s
 	} while (i < 20);
 	aiStrategies.push_back(newStrategy);
 	return 0;
+}
+
+void AiSystem::InitCustomStrategies(){
+	
+	{
+		AiStrategy pcCaster;
+		pcCaster.numTactics = 0;
+		pcCaster.name = fmt::format("Charmed PC Caster");
+		StrategyTabLineParseTactic(&pcCaster, "target closest","","");
+		StrategyTabLineParseTactic(&pcCaster, "defaultCast", "", "");
+
+		aiStrategies.push_back(pcCaster);
+	}
+
+	{
+		AiStrategy pcFighter;
+		pcFighter.numTactics = 0;
+		pcFighter.name = fmt::format("Charmed PC Fighter");
+		StrategyTabLineParseTactic(&pcFighter, "target closest", "", "");
+		aiStrategies.push_back(pcFighter);
+	}
 }
 
 int AiSystem::AiOnInitiativeAdd(objHndl obj)
@@ -1410,7 +1432,7 @@ int AiSystem::GetAiSpells(AiSpellList* aiSpell, objHndl obj, AiSpellType aiSpell
 			continue;
 		if (spellEntry.aiTypeBitmask == 0)
 			continue;
-		if (!((spellEntry.aiTypeBitmask & (1 << aiSpellType)) == (1 << aiSpellType)))
+		if (!((spellEntry.aiTypeBitmask & 1 << aiSpellType) == 1 << aiSpellType))
 			continue;
 		
 		
@@ -1490,7 +1512,7 @@ unsigned AiSystem::WakeFriend(AiTactic* aiTac)
 {
 	objHndl performer = aiTac->performer;
 	objHndl sleeper = objHndl::null;
-	int performerIsIntelligent = (objects.StatLevelGet(performer, stat_intelligence) >= 3);
+	int performerIsIntelligent = objects.StatLevelGet(performer, stat_intelligence) >= 3;
 	if (!performerIsIntelligent)
 		return 0;
 
@@ -1550,7 +1572,7 @@ unsigned AiSystem::WakeFriend(AiTactic* aiTac)
 		}
 		delete [] enemies;
 		if (!isThreatened)
-			shouldWake = (rngSys.GetInt(1, 100) <= 40);
+			shouldWake = rngSys.GetInt(1, 100) <= 40;
 	}
 
 	if (!shouldWake)
@@ -1786,7 +1808,7 @@ int AiSystem::AiTimeEventExpires(TimeEvent* evt)
 
 uint32_t _aiStrategyParse(objHndl objHnd, objHndl target)
 {
-	return aiSys.AiStrategyParse(objHnd, target);
+	return aiSys.StrategyParse(objHnd, target);
 }
 
 int _AiCoupDeGrace(AiTactic* aiTac)
@@ -1941,6 +1963,8 @@ public:
 			tabParse.Open("Rules\\strategy.tab");
 			tabParse.Process();
 			tabParse.Close();
+
+			aiSys.InitCustomStrategies();
 		});
 		replaceFunction(0x100E5500, _StrategyTabLineParser);
 		replaceFunction(0x100E55A0, AiGoMelee);
@@ -1948,6 +1972,10 @@ public:
 		replaceFunction(0x100E5950, AiFlank);
 		replaceFunction(0x100E5DB0, _AiCoupDeGrace);
 		
+
+		replaceFunction<void(__cdecl)()>(0x100E27D0, [](){
+			// replace AiStrategyExit with a function that does nothing (since we no longer have to free aiStrategies and the names manually)
+		});
 
 		replaceFunction(0x1005B810, ChooseRandomSpellUsercallWrapper);
 
@@ -2128,12 +2156,24 @@ int __declspec(naked) AiReplacements::ChooseRandomSpellUsercallWrapper()
 
 void AiReplacements::SetCritterStrategy(objHndl obj, const char* stratName)
 {
+	auto objBody = objSystem->GetObject(obj);
+	if (objBody->IsPC()){
+		//auto critRole=  aiSys.GetRole(obj);
+		//auto idx = aiSys.GetStrategyIdx("default"); // default
+		//if (critRole == AiCombatRole::caster)
+		//	idx = aiSys.GetStrategyIdx("Charmed PC Caster");
+		//else
+		//	idx = aiSys.GetStrategyIdx("Charmed PC Fighter");
+		//objBody->SetInt32(obj_f_critter_strategy, idx);
+		//return;
+	}
+
 	auto idx = aiSys.GetStrategyIdx(stratName);
 	if (idx == -1)
 	{
 		idx = aiSys.GetStrategyIdx("default");
 	}
-	objSystem->GetObject(obj)->SetInt32(obj_f_critter_strategy, idx);
+	objBody->SetInt32(obj_f_critter_strategy, idx);
 }
 #pragma endregion 
 AiPacket::AiPacket(objHndl objIn)

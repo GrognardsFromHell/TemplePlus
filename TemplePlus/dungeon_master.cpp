@@ -43,12 +43,13 @@
 #include "gamesystems/legacysystems.h"
 #include "gamesystems/objects/objsystem.h"
 #include <util\savegame.h>
+#include "ai.h"
 
 DungeonMaster dmSys;
 
 static std::vector<VfsSearchResult> mFlist;
 
-static bool isActive = true;
+static bool isActive = false;
 static bool isActionActive = false;
 
 static bool isMinimized = false;
@@ -788,23 +789,51 @@ void DungeonMaster::ActivateMove(objHndl handle){
 	ActivateAction(DungeonMasterAction::Move);
 }
 
+void DungeonMaster::ActivateRivalPc(objHndl handle){
+	if (party.IsInParty(handle)) {
+		return;
+	}
+	
+	mMovingObj = handle;
+	auto obj = objSystem->GetObject(handle);
+	auto combatRole = aiSys.GetRole(handle);
+	if (combatRole == AiCombatRole::caster){
+		auto stratIdx = aiSys.GetStrategyIdx("Charmed PC Caster");
+		obj->SetInt32(obj_f_critter_strategy, stratIdx);
+	}
+	
+	if (!d20Sys.d20Query(handle, DK_QUE_Critter_Is_AIControlled))
+		conds.AddTo(handle, "AI Controlled", {0,0,0,0});
+
+	obj->SetInt32(obj_f_hp_damage, 0);
+
+	ActivateAction(DungeonMasterAction::Move);
+}
+
 
 // Object Editor
 void DungeonMaster::RenderEditedObj() {
 	ImGui::Begin("Edit Object");
+
+	auto obj = objSystem->GetObject(mEditedObj);
+	if (!obj)
+		return;
+
 	ImGui::Text(fmt::format("Name: {}", critEditor.name).c_str());
+	
 	ImGui::SameLine();
 	if (ImGui::Button("Clone"))
 		ActivateClone(mEditedObj);
 	ImGui::SameLine();
 	if (ImGui::Button("Move"))
 		ActivateMove(mEditedObj);
+	ImGui::Text(fmt::format("Location: {}", obj->GetLocationFull()).c_str());
 
 	ImGui::Text(fmt::format("Factions: {}", critEditor.factions).c_str());
 
 	// Stats
 	if (ImGui::TreeNodeEx("Stats", ImGuiTreeNodeFlags_CollapsingHeader)) {
-		const char *statNames[] = { "STR", "CON", "DEX", "INT", "WIS", "CHA" };
+		const char *statNames[] = { "STR", "DEX", "CON", "INT", "WIS", "CHA" };
 
 		std::vector<int> statsChang;
 		auto statIdx = 0;
@@ -946,9 +975,7 @@ void DungeonMaster::RenderEditedObj() {
 
 	// Modifiers & Conditions
 	if (ImGui::TreeNodeEx("Modifiers & Conditions", ImGuiTreeNodeFlags_CollapsingHeader)) {
-		auto obj = objSystem->GetObject(mEditedObj);
 		
-
 		static auto condNameGetter = [](void *data, int idx, const char** outTxt)->bool {
 			if ((size_t)idx >= condStructs.size())
 				return false;
@@ -1011,6 +1038,22 @@ void DungeonMaster::RenderEditedObj() {
 		ImGui::TreePop();
 	}
 
+	if (obj->IsNPC() || !objects.IsPlayerControlled(mEditedObj)){
+		auto curAiStartegyIdx = obj->GetInt32(obj_f_critter_strategy);
+		auto aiStratGetter = [](void*data, int idx, const char** outTxt)->bool{
+			if (idx >= aiSys.aiStrategies.size())
+				return false;
+
+			*outTxt = aiSys.aiStrategies[idx].name.c_str();
+			return true;
+		};
+
+		if (ImGui::Combo("AI Type", &curAiStartegyIdx, aiStratGetter, nullptr, aiSys.aiStrategies.size(), 8)){
+			if (curAiStartegyIdx >=0 && curAiStartegyIdx < aiSys.aiStrategies.size()){
+				obj->SetInt32(obj_f_critter_strategy, curAiStartegyIdx);
+			}
+		}
+	}
 
 	if (ImGui::Button("Apply")) {
 		ApplyObjEdit(mEditedObj);
@@ -1028,7 +1071,7 @@ void DungeonMaster::RenderVsParty(){
 					auto d = description.getDisplayName(it);
 					if (ImGui::Button(fmt::format("{}", d ? d : "Unknown").c_str())) {
 						SetObjEditor(it);
-						ActivateMove(it);
+						ActivateRivalPc(it);
 					};
 				}
 			}

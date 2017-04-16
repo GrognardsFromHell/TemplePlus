@@ -100,6 +100,7 @@ protected:
 	void ActivateSpawn(int protoId);
 	void ActivateClone(objHndl handle);
 	void ActivateMove(objHndl handle);
+	void ActivateRivalPc(objHndl handle);
 	
 	// Action objects
 	DungeonMasterAction mActionType = DungeonMasterAction::None;

@@ -21,6 +21,7 @@
 #include "python/python_integration_obj.h"
 #include <set>
 #include <config/config.h>
+#include "gamesystems/timeevents.h"
 
 Objects objects;
 
@@ -749,6 +750,10 @@ int Objects::GetAlpha(objHndl handle) {
 	return _GetInternalFieldInt32(handle, obj_f_transparency);
 }
 
+BOOL Objects::IsPortalLocked(const objHndl& handle){
+	return temple::GetRef<BOOL(__cdecl)(objHndl)>(0x1001FD70)(handle);
+}
+
 int Objects::IsCritterProne(objHndl handle){
 	auto obj = gameSystems->GetObj().GetObject(handle);
 	if (obj->GetFlags() & (OF_OFF | OF_DESTROYED))
@@ -834,14 +839,38 @@ public:
 		writeCall(0x10023F1F, HookedGetModelScale); // Render related
 		writeCall(0x10021E9F, HookedGetModelScale);
 		
-		
-		static BOOL(__cdecl*orgRelockPortalSchedule)(objHndl, int) = replaceFunction<BOOL(__cdecl)(objHndl, int)>(0x1001FE40, [](objHndl handle, int isTimeEvent) {
+		// RelockPortalSchedule
+		static BOOL(__cdecl*orgRelockPortalSchedule)(objHndl, int) = replaceFunction<BOOL(__cdecl)(objHndl, int)>(0x1001FE40, [](objHndl handle, int isTimeEvent)->BOOL {
 			if (!handle)
 				return FALSE;
-			if (config.disableDoorRelocking) {
+
+			auto obj = objSystem->GetObject(handle);
+			auto protoId = objSystem->GetProtoId(handle);
+			if (protoId == 1000  // generic door
+				|| (obj->type != obj_t_container && obj->type != obj_t_portal)){ 
 				return FALSE;
 			}
-			return orgRelockPortalSchedule(handle, isTimeEvent);
+
+			auto flagsField = obj_f_portal_flags;
+			if (obj->type == obj_t_container)
+				flagsField = obj_f_container_flags;
+
+			auto flags = obj->GetInt32(flagsField);
+			if (!config.disableDoorRelocking 
+				&&	flags & PortalFlag::OPF_LOCKED){ // this is the same enum value for container
+				TimeEvent evt;
+				evt.system = TimeEventType::Lock;
+				evt.params[0].handle = handle;
+				gameSystems->GetTimeEvent().Schedule(evt, 3600000);
+			}
+
+			flags &= ~OPF_LOCKED;
+			if (isTimeEvent && !config.disableDoorRelocking){
+				flags |= OPF_LOCKED;
+			}
+			obj->SetInt32(flagsField, flags);
+			
+			return objects.IsPortalLocked(handle);
 		});
 
 }

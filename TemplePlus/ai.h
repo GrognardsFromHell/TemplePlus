@@ -117,7 +117,7 @@ struct AiSystem : temple::AddressTable
 	AiSystem();
 
 	void aiTacticGetConfig(int i, AiTactic* aiTac, AiStrategy* aiStrat);
-	uint32_t AiStrategyParse(objHndl objHnd, objHndl target);
+	uint32_t StrategyParse(objHndl objHnd, objHndl target);
 	uint32_t AiStrategDefaultCast(objHndl objHnd, objHndl target, D20SpellData* spellData, SpellPacketBody* spellPkt);
 	
 	bool IsRunningOff(objHndl handle) const;
@@ -192,14 +192,18 @@ struct AiSystem : temple::AddressTable
 	unsigned int WakeFriend(AiTactic* aiTac);
 
 
+	// Init
 	void StrategyTabLineParseTactic(AiStrategy*, char * tacName, char * middleString, char* spellString);
 	int StrategyTabLineParser(const TigTabParser* tabFile, int n, char ** strings);
+	void InitCustomStrategies();
+
 	int AiOnInitiativeAdd(objHndl obj);
 	AiCombatRole GetRole(objHndl obj);
 	BOOL AiFiveFootStepAttempt(AiTactic * aiTac);
 
 	void RegisterNewAiTactics();
 	int GetStrategyIdx(const char* stratName) const; // get the strategy.tab index for given strategy name
+	
 	static int GetAiSpells(AiSpellList* aiSpell, objHndl obj, AiSpellType aiSpellType);
 	static int ChooseRandomSpell(AiPacket* aiPkt);
 	static int ChooseRandomSpellFromList(AiPacket* aiPkt, AiSpellList *);
