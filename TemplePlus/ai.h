@@ -179,6 +179,7 @@ struct AiSystem : temple::AddressTable
 	int CoupDeGrace(AiTactic * aiTac);
 	int ChargeAttack(AiTactic * aiTac);
 	int Default(AiTactic* aiTac);
+	BOOL DefaultCast(AiTactic *aiTac);
 	int Flank(AiTactic * aiTac);
 	int GoMelee(AiTactic* aiTac);
 	int PickUpWeapon(AiTactic* aiTac);	
@@ -207,6 +208,7 @@ struct AiSystem : temple::AddressTable
 	static int GetAiSpells(AiSpellList* aiSpell, objHndl obj, AiSpellType aiSpellType);
 	static int ChooseRandomSpell(AiPacket* aiPkt);
 	static int ChooseRandomSpellFromList(AiPacket* aiPkt, AiSpellList *);
+	static int ChooseRandomSpellFromList(AiTactic * aiTac, AiSpellList * aiSpellList);
 	
 	void AiProcess(objHndl obj);
 

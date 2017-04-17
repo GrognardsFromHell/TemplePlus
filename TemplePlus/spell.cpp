@@ -675,6 +675,18 @@ bool LegacySpellSystem::CheckAbilityScoreReqForSpell(objHndl handle, uint32_t sp
 	return temple::GetRef<BOOL(__cdecl)(objHndl, uint32_t, int)>(0x10075C60)(handle, spellEnum, statBeingRaised) != 0;
 }
 
+bool LegacySpellSystem::IsNaturalSpellsPerDayDepleted(const objHndl& handle, uint32_t spellLvl, uint32_t spellClass){
+
+	auto obj = objSystem->GetObject(handle);
+
+	auto classCode = spellSys.GetCastingClass(spellClass);
+
+	auto spellsPerDay = spellSys.GetNumSpellsPerDay(handle, classCode, spellLvl);
+	auto spellsCastNum = spellSys.NumSpellsInLevel(handle, obj_f_critter_spells_cast_idx, spellClass, spellLvl);
+
+	return spellsCastNum >= spellsPerDay;
+}
+
 int LegacySpellSystem::GetSpellClass(int classEnum, bool isDomain){
 	if (isDomain){
 		return classEnum;

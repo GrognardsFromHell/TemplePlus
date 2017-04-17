@@ -51,7 +51,6 @@ static std::vector<VfsSearchResult> mFlist;
 
 static bool isActive = false;
 static bool isActionActive = false;
-
 static bool isMinimized = false;
 
 // monster modify
@@ -66,6 +65,16 @@ static bool mMonModFactionIsOverride = false;
 
 
 void DungeonMaster::Render() {
+
+	constexpr auto dmToolbarWidgFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings;
+
+	if (ImGui::Begin("Toolbar Wnd", nullptr, dmToolbarWidgFlags)){
+		ImGui::SetNextWindowPos(ImVec2(100, 100));
+		if (ImGui::InvisibleButton(nullptr, ImVec2(10, 10))){
+			
+		}
+	}
+	
 
 	if (!IsActive())
 		return;
@@ -447,7 +456,9 @@ void DungeonMaster::InitEntry(int protoNum){
 
 	if (!mIsInited) {
 		textureFuncs.RegisterTexture("art\\interface\\dungeon_master_ui\\DU.tga", &mTexId);
+		textureFuncs.RegisterTexture("art\\interface\\dungeon_master_ui\\Toolbar_Icon.tga", &mIconTexId);
 		tig->GetMdfFactory().LoadMaterial("art\\interface\\cursors\\DungeonMaster.mdf");
+
 
 		classNames.push_back("");
 		for (auto it: d20ClassSys.classEnums){

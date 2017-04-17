@@ -179,7 +179,8 @@ struct ActionSequenceSystem : temple::AddressTable
 	bool SpellTargetsFilterInvalid(D20Actn &d20a);
 	int32_t InterruptNonCounterspell(D20Actn *d20a);
 	int32_t InterruptCounterspell(D20Actn *d20a);
-	
+	int32_t GetCurSeqD20ActionCount();
+
 	static int ReadyVsApproachOrWithdrawalCount();
 	static void ReadyVsRemoveForObj(objHndl obj);
 	static ReadiedActionPacket * ReadiedActionGetNext(ReadiedActionPacket * prevReadiedAction, D20Actn* d20a);

@@ -2156,6 +2156,13 @@ int32_t ActionSequenceSystem::InterruptCounterspell(D20Actn* d20a)
 
 }
 
+int32_t ActionSequenceSystem::GetCurSeqD20ActionCount(){
+	if (!(*actSeqCur))
+		return 0;
+
+	return (*actSeqCur)->d20ActArrayNum;
+}
+
 int ActionSequenceSystem::ReadyVsApproachOrWithdrawalCount()
 {
 	int result = 0;

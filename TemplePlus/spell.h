@@ -202,6 +202,7 @@ struct LegacySpellSystem : temple::AddressTable
 	const char* GetSpellMesline(uint32_t line) const;
 	const char* GetSpellDescription(uint32_t spellEnum) const;
 	bool CheckAbilityScoreReqForSpell(objHndl handle, uint32_t spellEnum, int statBeingRaised) const;
+	bool IsNaturalSpellsPerDayDepleted(const objHndl& handle, uint32_t spell_level, uint32_t spellClass);
 	static const char* GetSpellEnumTAG(uint32_t spellEnum);
 	const char* GetSpellName(uint32_t spellEnum) const;
 	

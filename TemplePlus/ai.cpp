@@ -1421,44 +1421,92 @@ int AiSystem::GetAiSpells(AiSpellList* aiSpell, objHndl obj, AiSpellType aiSpell
 	aiSpell->spellEnums.clear();
 	aiSpell->spellData.clear();
 	auto objBod = objSystem->GetObject(obj);
-	auto spellsMemo = objBod->GetSpellArray(obj_f_critter_spells_memorized_idx);
-	for (auto i = 0u; i < spellsMemo.GetSize(); i++)
 	{
-		auto spellData = spellsMemo[i];
-		if (spellData.spellStoreState.usedUp & 1)
-			continue;
-		SpellEntry spellEntry;
-		if (!spellSys.spellRegistryCopy(spellData.spellEnum, &spellEntry))
-			continue;
-		if (spellEntry.aiTypeBitmask == 0)
+		auto spellsMemo = objBod->GetSpellArray(obj_f_critter_spells_memorized_idx);
+		for (auto i = 0u; i < spellsMemo.GetSize(); i++)
+		{
+			auto spellData = spellsMemo[i];
+			if (spellData.spellStoreState.usedUp & 1)
+				continue;
+			SpellEntry spellEntry;
+			if (!spellSys.spellRegistryCopy(spellData.spellEnum, &spellEntry))
+				continue;
+			if (spellEntry.aiTypeBitmask == 0)
+				continue;
+			if (!((spellEntry.aiTypeBitmask & 1 << aiSpellType) == 1 << aiSpellType))
+				continue;
+
+
+			bool spellAlreadyFound = false;
+			for (auto j = 0u; j < aiSpell->spellEnums.size(); j++)
+			{
+				if (aiSpell->spellEnums[j] == spellData.spellEnum)
+				{
+					spellAlreadyFound = true;
+					break;
+				}
+			}
+
+			if (!spellAlreadyFound)
+			{
+				aiSpell->spellEnums.push_back(spellData.spellEnum);
+				D20SpellData d20SpellData;
+				d20SpellData.spellEnumOrg = spellData.spellEnum;
+				d20SpellData.spellClassCode = spellData.classCode;
+				d20SpellData.metaMagicData = spellData.metaMagicData;
+				d20SpellData.itemSpellData = -1;
+				d20SpellData.spellSlotLevel = spellData.spellLevel; // hey, I think this was missing / wrong in the original code!
+
+				aiSpell->spellData.push_back(d20SpellData);
+			}
+		}
+	}
+
+	auto spellsKnown = objBod->GetSpellArray(obj_f_critter_spells_known_idx);
+	for (auto i = 0u; i < spellsKnown.GetSize(); i++)
+	{
+		auto spellData = spellsKnown[i];
+
+		auto spEnum = spellData.spellEnum;
+		SpellEntry spellEntry(spEnum);
+		if (!spellEntry.spellEnum || spellEntry.aiTypeBitmask == 0)
 			continue;
 		if (!((spellEntry.aiTypeBitmask & 1 << aiSpellType) == 1 << aiSpellType))
 			continue;
-		
-		
+		if (spellSys.isDomainSpell(spellData.classCode))
+			continue;
+		auto casterClass = spellSys.GetCastingClass(spellData.classCode);
+		if (d20ClassSys.IsVancianCastingClass(casterClass))
+			continue;
+
 		bool spellAlreadyFound = false;
-		for (auto j = 0u; j < aiSpell->spellEnums.size();j++)
-		{
-			if (aiSpell->spellEnums[j] == spellData.spellEnum)
-			{
+		for (auto j = 0u; j < aiSpell->spellEnums.size(); j++){
+			if (aiSpell->spellEnums[j] == spEnum){
 				spellAlreadyFound = true;
 				break;
 			}
 		}
+		if (spellAlreadyFound)
+			continue;
 
-		if (!spellAlreadyFound)
-		{
-			aiSpell->spellEnums.push_back(spellData.spellEnum);
-			D20SpellData d20SpellData;
-			d20SpellData.spellEnumOrg = spellData.spellEnum;
-			d20SpellData.spellClassCode = spellData.classCode;
-			d20SpellData.metaMagicData = spellData.metaMagicData;
-			d20SpellData.itemSpellData = -1;
-			d20SpellData.spellSlotLevel = spellData.spellLevel; // hey, I think this was missing / wrong in the original code!
+		if (!spellSys.spellCanCast(obj, spEnum, spellData.classCode, spellData.spellLevel))
+			continue;
+		if (spellSys.IsNaturalSpellsPerDayDepleted(obj, spellData.spellLevel, spellData.classCode))
+			continue;
 
-			aiSpell->spellData.push_back(d20SpellData);
-		}
+		
+		aiSpell->spellEnums.push_back(spellData.spellEnum);
+		D20SpellData d20SpellData;
+		d20SpellData.spellEnumOrg = spellData.spellEnum;
+		d20SpellData.spellClassCode = spellData.classCode;
+		d20SpellData.metaMagicData = spellData.metaMagicData;
+		d20SpellData.itemSpellData = -1;
+		d20SpellData.spellSlotLevel = spellData.spellLevel; // hey, I think this was missing / wrong in the original code!
+
+		aiSpell->spellData.push_back(d20SpellData);
+		
 	}
+
 
 	return 1;
 }
@@ -1650,6 +1698,52 @@ int AiSystem::Default(AiTactic* aiTac)
 	return performError == AEC_OK && addToSeqError == AEC_OK;
 }
 
+BOOL AiSystem::DefaultCast(AiTactic* aiTac){
+	int N_before = actSeqSys.GetCurSeqD20ActionCount();
+	if (!aiTac->target)
+		return FALSE;
+
+	auto performer = aiTac->performer;
+
+	
+
+	if (!aiTac->d20SpellData.spellEnumOrg){
+		AiSpellList offensiveAiSpell;
+		AiSpellList defensiveAiSpell;
+		
+		GetAiSpells(&offensiveAiSpell, performer, AiSpellType::ai_action_offensive);
+		GetAiSpells(&defensiveAiSpell, performer, AiSpellType::ai_action_defensive);
+
+		if (!ChooseRandomSpellFromList(aiTac, &offensiveAiSpell)){
+			if (!ChooseRandomSpellFromList(aiTac, &defensiveAiSpell))
+				return FALSE;
+		}
+
+	}
+
+	aiSys.AiFiveFootStepAttempt(aiTac);
+	d20Sys.GlobD20ActnInit();
+	d20Sys.GlobD20ActnSetTypeAndData1(D20A_CAST_SPELL, 0);
+	actSeqSys.ActSeqCurSetSpellPacket(&aiTac->spellPktBody, 0);
+	d20Sys.GlobD20ActnSetSpellData(&aiTac->d20SpellData);
+
+	auto tgtObj = objSystem->GetObject(aiTac->target);
+	auto tgtLoc = tgtObj->GetLocationFull();
+	d20Sys.GlobD20ActnSetTarget(aiTac->target, &tgtLoc);
+
+	actSeqSys.ActionAddToSeq();
+	auto actCheck = actSeqSys.ActionSequenceChecksWithPerformerLocation();
+
+	if (actCheck != AEC_OK) {
+		auto actErrorStr = actSeqSys.ActionErrorString(actCheck);
+		logger->info("DefaultCast: caster {} cannot cast spell {} because reason: {}", aiTac->performer, spellSys.GetSpellName(aiTac->spellPktBody.spellEnum), actErrorStr);
+		actSeqSys.ActionSequenceRevertPath(N_before);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 int AiSystem::Flank(AiTactic* aiTac)
 {
 	auto initialActNum = (*actSeqSys.actSeqCur)->d20ActArrayNum; // used for resetting in case of failure
@@ -1718,26 +1812,26 @@ int AiSystem::Flank(AiTactic* aiTac)
 			continue;
 
 		LocAndOffsets allyLoc = objects.GetLocationFull(allies[i]);
-		float allyAbsX, allyAbsY, flankAbsX, flankAbsY, deltaX, deltaY, normalization;
+		float allyAbsX, allyAbsY;
 		// get the diametrically opposed location
 		locSys.GetOverallOffset(allyLoc, &allyAbsX, &allyAbsY);
-		deltaX = allyAbsX - tgtAbsX;
-		deltaY = allyAbsY - tgtAbsY;
-		normalization = 1.0f / sqrtf(deltaY*deltaY + deltaX*deltaX);
+		float deltaX = allyAbsX - tgtAbsX;
+		float deltaY = allyAbsY - tgtAbsY;
+		float normalization = 1.0f / sqrtf(deltaY*deltaY + deltaX*deltaX);
 		float xHat = deltaX * normalization, // components of unit vector from target to ally
 				yHat = deltaY * normalization;
 
-		flankAbsX = tgtAbsX - xHat * flankDist;
-		flankAbsY = tgtAbsY - yHat * flankDist;
+		float flankAbsX = tgtAbsX - xHat * flankDist;
+		float flankAbsY = tgtAbsY - yHat * flankDist;
 		auto flankLoc = LocAndOffsets::FromInches(flankAbsX, flankAbsY);
 		if (!pathfindingSys.PathDestIsClear(performer, &flankLoc))
 		{
 			bool foundFlankLoc = false;
 			// try to tweak the angle; the flank check looks for the range of 120 - 240°, so we'll try 135,165,195,225
 			float tweakAngles[4] = { -15.0, 15.0, -45.0, 45.0 };
-			for (int i = 0; i < 4; i++)
+			for (int j = 0; j < 4; j++)
 			{
-				float tweakAngle = tweakAngles[i] * (float)M_PI / 180.f;
+				float tweakAngle = tweakAngles[j] * (float)M_PI / 180.f;
 				float xHat2 = xHat * cosf(tweakAngle) + yHat * sinf(tweakAngle),
 					yHat2 =  -xHat * sinf(tweakAngle) + yHat * cosf(tweakAngle) ;
 				flankAbsX = tgtAbsX - xHat2 * flankDist;
@@ -1749,11 +1843,11 @@ int AiSystem::Flank(AiTactic* aiTac)
 					break;
 				}		
 			}
-			if (!foundFlankLoc)
-			{
+
+			if (!foundFlankLoc){
 				if (i == numAllies-1)
 					logger->info("No clear flanking position found; next ai tactic.");
-				return 0;
+				return FALSE;
 			}	
 		}
 		logger->info("Found flanking position: {} ; attempting move to position.", flankLoc);
@@ -1900,6 +1994,64 @@ int AiSystem::ChooseRandomSpellFromList(AiPacket* aiPkt, AiSpellList* aiSpells){
 	return 0;
 }
 
+int AiSystem::ChooseRandomSpellFromList(AiTactic * aiTac, AiSpellList* aiSpells)
+{
+	if (!aiSpells->spellEnums.size())
+		return 0;
+	
+	auto performer = aiTac->performer;
+
+	for (int i = 0; i < 5; i++) {
+		auto spellIdx = rngSys.GetInt(0, aiSpells->spellEnums.size() - 1);
+		spellSys.spellPacketBodyReset(&aiTac->spellPktBody);
+		unsigned int spellClass;
+		unsigned int spellLevels[2];
+		d20Sys.ExtractSpellInfo(&aiSpells->spellData[spellIdx],
+			&aiTac->spellPktBody.spellEnum,
+			nullptr, &spellClass, spellLevels, nullptr, nullptr);
+		auto spellEnum = aiTac->spellPktBody.spellEnum = aiSpells->spellEnums[spellIdx];
+		aiTac->spellPktBody.caster = performer;
+		aiTac->spellPktBody.spellEnumOriginal = spellEnum;
+		aiTac->spellPktBody.spellKnownSlotLevel = spellLevels[0];
+		aiTac->spellPktBody.spellClass = spellClass;
+		spellSys.SpellPacketSetCasterLevel(&aiTac->spellPktBody);
+
+		SpellEntry spellEntry;
+		spellSys.spellRegistryCopy(spellEnum, &spellEntry);
+		auto spellRange = spellSys.GetSpellRange(&spellEntry, aiTac->spellPktBody.casterLevel, aiTac->spellPktBody.caster);
+		aiTac->spellPktBody.spellRange = spellRange;
+		if (static_cast<UiPickerType>(spellEntry.modeTargetSemiBitmask & 0xFF) == UiPickerType::Area
+			&& spellEntry.spellRangeType == SpellRangeType::SRT_Personal) {
+			spellRange = spellEntry.radiusTarget;
+		}
+		auto tgt = aiTac->target;
+		if (objects.IsCritter(tgt)
+			&& d20Sys.d20Query(tgt, DK_QUE_Critter_Is_Grappling) == 1
+			|| d20Sys.d20Query(tgt, DK_QUE_Critter_Is_Charmed)) {
+			continue;
+		}
+
+		if (spellSys.spellCanCast(performer, spellEnum, spellClass, spellLevels[0])) {
+
+			if (!spellSys.GetSpellTargets(performer, tgt, &aiTac->spellPktBody, spellEnum))
+				continue;
+			if (locSys.DistanceToObj(performer, tgt)>spellRange
+				&& spellSys.SpellHasAiType(spellEnum, ai_action_offensive)
+				|| spellSys.SpellHasAiType(spellEnum, ai_action_defensive)) {
+				continue;
+			}
+			
+			aiTac->d20SpellData = aiSpells->spellData[spellIdx];
+			return 1;
+		}
+		else {
+			logger->debug("AiCheckSpells(): object {} cannot cast spell {}", performer, spellEnum);
+		}
+
+	}
+	return 0;
+}
+
 unsigned int _AiAsplode(AiTactic * aiTac)
 {
 	return aiSys.Asplode(aiTac);
@@ -1936,6 +2088,9 @@ public:
 		});
 		
 		replaceFunction(0x100E3270, AiDefault);
+		replaceFunction<BOOL(__cdecl)(AiTactic*)>(0x100E4310, [](AiTactic *aiTac){
+			return aiSys.DefaultCast(aiTac);
+		});
 		replaceFunction<BOOL(__cdecl)(AiTactic*)>(0x100E4A40, [](AiTactic*aiTac)->BOOL {
 			return aiSys.UsePotion(aiTac);
 		});
