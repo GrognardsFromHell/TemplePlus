@@ -44,6 +44,7 @@
 #include "gamesystems/objects/objsystem.h"
 #include <util\savegame.h>
 #include "ai.h"
+#include "mainwindow.h"
 
 DungeonMaster dmSys;
 
@@ -69,11 +70,20 @@ void DungeonMaster::Render() {
 	constexpr auto dmToolbarWidgFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings;
 
 	if (ImGui::Begin("Toolbar Wnd", nullptr, dmToolbarWidgFlags)){
-		ImGui::SetNextWindowPos(ImVec2(100, 100));
-		if (ImGui::InvisibleButton(nullptr, ImVec2(10, 10))){
+		ImGui::SetWindowPos(ImVec2(800, 100));
+		ImGui::SetWindowSize(ImVec2(100,100));
+
+		RECT winrect;
+		GetWindowRect(tig->GetMainWindow().GetHwnd(), &winrect);
+
+		if (ImGui::Button("asdf")){
 			
 		}
+		/*if (ImGui::InvisibleButton(nullptr, ImVec2(10, 10))){
+			
+		}*/
 	}
+	ImGui::End();
 	
 
 	if (!IsActive())
