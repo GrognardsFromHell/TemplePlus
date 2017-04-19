@@ -12,6 +12,7 @@
 #include "combat.h"
 #include "action_sequence.h"
 #include "dungeon_master.h"
+#include "gameview.h"
 
 Console::Console() : mLog(1024), mCommandHistory(100), mCommandBuf(1024, '\0') {
 }
@@ -31,11 +32,18 @@ void Console::Render()
 	constexpr auto consoleWidgeFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar;
 
 	auto size = ImGui::GetIO().DisplaySize;
+	ImVec2 consPos(0, 0);
+	if (gameView) {
+		auto sceneRect = gameView->GetSceneRect();
+		size.x = sceneRect.z;
+		size.y = sceneRect.w;
+		consPos.x = sceneRect.x;
+		consPos.y = sceneRect.y;
+	}
 	size.y = max(300.0f, size.y*0.4f);
 	ImGui::SetNextWindowSize(size);
-	ImGui::SetNextWindowPos(ImVec2(0, 0));
-	if (!ImGui::Begin("Console", &mOpen, consoleWidgeFlags))
-	{
+	ImGui::SetNextWindowPos(consPos);
+	if (!ImGui::Begin("Console", &mOpen, consoleWidgeFlags)){
 		ImGui::End();
 		return;
 	}

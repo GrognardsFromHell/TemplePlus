@@ -157,7 +157,6 @@ void GameLoop::Run() {
 			);
 		}
 		else if (config.windowed && config.windowedLockCursor) {
-			auto sceneRect = gameView.GetSceneRect();
 			RECT winrect;
 			GetWindowRect(tig->GetMainWindow().GetHwnd(), &winrect);
 			tig->GetMainWindow().LockCursor(
