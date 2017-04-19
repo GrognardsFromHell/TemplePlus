@@ -45,6 +45,8 @@
 #include <util\savegame.h>
 #include "ai.h"
 #include "mainwindow.h"
+#include "gameview.h"
+#include "ui/ui_mainmenu.h"
 
 DungeonMaster dmSys;
 
@@ -67,21 +69,24 @@ static bool mMonModFactionIsOverride = false;
 
 void DungeonMaster::Render() {
 
-	constexpr auto dmToolbarWidgFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings;
+	constexpr auto dmToolbarWidgFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse ;
+	
+	if (!gameView || !party.GetConsciousPartyLeader())
+		return;
+	
+	auto scRect = gameView->GetSceneRect();
 
 	if (ImGui::Begin("Toolbar Wnd", nullptr, dmToolbarWidgFlags)){
-		ImGui::SetWindowPos(ImVec2(800, 100));
-		ImGui::SetWindowSize(ImVec2(100,100));
+	
+		ImVec2 wndPos(scRect.x + scRect.z - 88, scRect.y + scRect.w - 102);
+		ImGui::SetWindowPos(wndPos );
 
-		RECT winrect;
-		GetWindowRect(tig->GetMainWindow().GetHwnd(), &winrect);
+		ImGui::SetWindowSize(ImVec2(1,1));
 
-		if (ImGui::Button("asdf")){
-			
+		UiRenderer::DrawTexture(mIconTexId, TigRect(scRect.z - 88, scRect.w - 102, 24, 20));
+		if (ImGui::InvisibleButton("dungeonMasterBtn", ImVec2(24, 20))){
+			Toggle();
 		}
-		/*if (ImGui::InvisibleButton(nullptr, ImVec2(10, 10))){
-			
-		}*/
 	}
 	ImGui::End();
 	
@@ -1215,7 +1220,7 @@ bool DungeonMaster::IsActionActive() {
 
 void DungeonMaster::Show() {
 	isActive = true;
-	isMinimized = true;
+	//isMinimized = true;
 	mJustOpened = true;
 }
 
