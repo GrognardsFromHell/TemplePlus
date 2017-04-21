@@ -32,6 +32,9 @@ namespace TemplePlusConfig
 
         public static readonly DependencyProperty WindowedLockCursorProperty = DependencyProperty.Register(
            "WindowedLockCursor", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+
+        public static readonly DependencyProperty DungeonMasterProperty = DependencyProperty.Register(
+           "DungeonMaster", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
         
         public static readonly DependencyProperty HpOnLevelUpProperty = DependencyProperty.Register(
             "HpOnLevelUp", typeof (HpOnLevelUpType), typeof (IniViewModel),
@@ -153,6 +156,12 @@ namespace TemplePlusConfig
         {
             get { return (bool)GetValue(WindowedLockCursorProperty); }
             set { SetValue(WindowedLockCursorProperty, value); }
+        }
+
+        public bool DungeonMaster
+        {
+            get { return (bool)GetValue(DungeonMasterProperty); }
+            set { SetValue(DungeonMasterProperty, value); }
         }
 
         public HpOnLevelUpType HpOnLevelUp
@@ -331,6 +340,7 @@ namespace TemplePlusConfig
             AntiAliasing = tpData["antialiasing"] == "true";
             WindowedMode = tpData["windowed"] == "true";
             WindowedLockCursor = tpData["windowedLockCursor"] == "true";
+            DungeonMaster = tpData["dungeonMaster"] == "true";
 
             int maxLevel;
             if (int.TryParse(tpData["maxLevel"], out maxLevel))
@@ -467,6 +477,7 @@ namespace TemplePlusConfig
             tpData["antialiasing"] = AntiAliasing? "true" : "false";
             tpData["softShadows"] = SoftShadows ? "true" : "false";
             tpData["windowedLockCursor"] = WindowedLockCursor ? "true" : "false";
+            tpData["dungeonMaster"] = DungeonMaster ? "true" : "false";
             tpData["maxLevel"] = MaxLevel.ToString();
             tpData["allowXpOverflow"] = AllowXpOverflow ? "true" : "false";
             tpData["slowerLevelling"] = SlowerLevelling ? "true" : "false";

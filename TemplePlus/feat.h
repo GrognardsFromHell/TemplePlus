@@ -81,7 +81,7 @@ extern uint32_t  featPropertiesTable[];
 extern FeatPrereqRow featPreReqTable[];
 extern MesHandle * featMes;
 extern MesHandle * featEnumsMes;
-extern char ** featNames;
+// extern char ** featNames;
 
 
 

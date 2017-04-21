@@ -47,6 +47,7 @@
 #include "mainwindow.h"
 #include "gameview.h"
 #include "ui/ui_mainmenu.h"
+#include "config/config.h"
 
 DungeonMaster dmSys;
 
@@ -55,12 +56,14 @@ static std::vector<VfsSearchResult> mFlist;
 static bool isActive = false;
 static bool isActionActive = false;
 static bool isMinimized = false;
+static bool isMoused = false;
 
 // monster modify
 DungeonMaster::CritterBooster critBoost;
 DungeonMaster::ObjEditor critEditor;
 static std::vector<std::string> classNames; // offset by 1 wrt the d20ClassSys.classEnums vector
 static std::map<int, std::string> spellNames;
+static std::map<int, std::string> featNames;
 static std::map<int, std::string> mapNames;
 static std::vector<CondStruct*> condStructs;
 static int mMonModFactionNew;
@@ -69,7 +72,7 @@ static bool mMonModFactionIsOverride = false;
 
 void DungeonMaster::Render() {
 
-	if (!gameView || !party.GetConsciousPartyLeader())
+	if (!gameView || !config.dungeonMaster || !party.GetConsciousPartyLeader())
 		return;
 	
 	RenderDmButton();
@@ -163,6 +166,11 @@ void DungeonMaster::Render() {
 
 	if (mJustOpened) {
 		mJustOpened = false;
+	}
+
+	isMoused = ImGui::IsMouseHoveringAnyWindow();
+	if (isMoused){
+		auto dummy = 1;
 	}
 }
 
@@ -920,6 +928,11 @@ void DungeonMaster::RenderEditedObj() {
 		ImGui::TreePop();
 	}
 
+	if (ImGui::TreeNodeEx("Feats", ImGuiTreeNodeFlags_CollapsingHeader)){
+
+		ImGui::TreePop();
+	}
+
 	// Spells Known
 	if (ImGui::TreeNodeEx("Spells Known", ImGuiTreeNodeFlags_CollapsingHeader)) {
 
@@ -1231,6 +1244,10 @@ bool DungeonMaster::IsActionActive() {
 	return isActionActive;
 }
 
+bool DungeonMaster::IsMoused(){
+	return isMoused;
+}
+
 void DungeonMaster::Show() {
 	isActive = true;
 	//isMinimized = true;
@@ -1239,6 +1256,7 @@ void DungeonMaster::Show() {
 
 void DungeonMaster::Hide() {
 	isActive = false;
+	isMoused = false;
 	DeactivateAction();
 	mEditedObj = objHndl::null;
 }

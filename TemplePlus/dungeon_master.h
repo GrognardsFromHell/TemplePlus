@@ -16,11 +16,13 @@ class DungeonMaster
 public:
 	bool IsActive();
 	bool IsMinimized();
+	bool IsMoused();
 	void Show();
 	void Hide();
 	void Toggle();
 
 	bool IsActionActive();
+
 	
 	void Render();
 	void RenderDmButton();
