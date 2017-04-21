@@ -373,6 +373,8 @@ public:
 
 	void Hide();
 	void Show();
+	bool IsRollHistoryVisible(); // is the roll history console visible
+
 };
 
 class UiTrack : public UiSystem {

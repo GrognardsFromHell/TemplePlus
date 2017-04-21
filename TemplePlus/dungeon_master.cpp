@@ -69,28 +69,11 @@ static bool mMonModFactionIsOverride = false;
 
 void DungeonMaster::Render() {
 
-	constexpr auto dmToolbarWidgFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse ;
-	
 	if (!gameView || !party.GetConsciousPartyLeader())
 		return;
 	
-	auto scRect = gameView->GetSceneRect();
-
-	if (ImGui::Begin("Toolbar Wnd", nullptr, dmToolbarWidgFlags)){
+	RenderDmButton();
 	
-		ImVec2 wndPos(scRect.x + scRect.z - 88, scRect.y + scRect.w - 102);
-		ImGui::SetWindowPos(wndPos );
-
-		ImGui::SetWindowSize(ImVec2(1,1));
-
-		UiRenderer::DrawTexture(mIconTexId, TigRect(scRect.z - 88, scRect.w - 102, 24, 20));
-		if (ImGui::InvisibleButton("dungeonMasterBtn", ImVec2(24, 20))){
-			Toggle();
-		}
-	}
-	ImGui::End();
-	
-
 	if (!IsActive())
 		return;
 
@@ -98,7 +81,7 @@ void DungeonMaster::Render() {
 
 	ImGui::Begin("Dungeon Master", &isActive);
 	if (mJustOpened) {
-		ImGui::SetWindowCollapsed(true);
+		//ImGui::SetWindowCollapsed(true);
 		mFlist.clear();
 	}
 		
@@ -181,6 +164,36 @@ void DungeonMaster::Render() {
 	if (mJustOpened) {
 		mJustOpened = false;
 	}
+}
+
+void DungeonMaster::RenderDmButton(){
+
+	constexpr auto dmToolbarWidgFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse;
+
+	auto scRect = gameView->GetSceneRect();
+
+	// set window background to transparent
+	auto &style = ImGui::GetStyle();
+	auto prevColor = style.Colors[ImGuiCol_WindowBg];
+	style.Colors[ImGuiCol_WindowBg] = ImVec4(0, 0, 0, 0);
+	
+	if (ImGui::Begin("DM Toolbar Wnd", nullptr, dmToolbarWidgFlags)) {
+
+		auto isHistMini = uiSystems->GetUtilityBar().IsRollHistoryVisible();
+
+		ImVec2 wndPos(scRect.x + scRect.z - 88, scRect.y + scRect.w - 102 -272*isHistMini);
+		ImGui::SetWindowPos(wndPos);
+
+		ImGui::SetWindowSize(ImVec2(1, 1));
+
+		UiRenderer::DrawTexture(mIconTexId, TigRect(scRect.z - 88, scRect.w - 102 - 272*isHistMini, 24, 20));
+		if (ImGui::InvisibleButton("dungeonMasterBtn", ImVec2(24, 20))) {
+			Toggle();
+		}
+
+	}
+	ImGui::End();
+	style.Colors[ImGuiCol_WindowBg] = prevColor;
 }
 
 void DungeonMaster::RenderMaps(){

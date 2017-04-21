@@ -707,6 +707,10 @@ void UiUtilityBar::Show()
 	ui_utility_bar_show();
 }
 
+bool UiUtilityBar::IsRollHistoryVisible(){
+	return temple::GetRef<int>(0x10BDDE5C) != 0;
+}
+
 //*****************************************************************************
 //* Track-UI
 //*****************************************************************************

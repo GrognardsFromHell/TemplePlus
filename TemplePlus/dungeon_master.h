@@ -21,7 +21,9 @@ public:
 	void Toggle();
 
 	bool IsActionActive();
+	
 	void Render();
+	void RenderDmButton();
 	void RenderMaps();
 	void RenderEditedObj();
 	void RenderVsParty();
