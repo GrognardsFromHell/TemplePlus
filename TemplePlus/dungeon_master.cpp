@@ -495,32 +495,40 @@ void DungeonMaster::InitEntry(int protoNum){
 		textureFuncs.RegisterTexture("art\\interface\\dungeon_master_ui\\Toolbar_Icon.tga", &mIconTexId);
 		tig->GetMdfFactory().LoadMaterial("art\\interface\\cursors\\DungeonMaster.mdf");
 
-
-		classNames.push_back("");
-		for (auto it: d20ClassSys.classEnums){
-			classNames.push_back(d20Stats.GetStatName((Stat)it));
-		}
-
-		spellSys.DoForSpellEntries([](SpellEntry &spEntry) {
-			auto spEnum = spEntry.spellEnum;
-			if (spEnum  < 3000) { // the range above 3000 is reserved for class pseudo spells
-				spellNames[spEnum] = spellSys.GetSpellName(spEnum);
-			}
-		});
+		InitCaches();
 		
-		conds.DoForAllCondStruct([](CondStruct& condStruct) {
-			condStructs.push_back(&condStruct);
-		});
-
-		std::sort(condStructs.begin(), condStructs.end(), [](const CondStruct * a, const CondStruct * b)->bool {
-			auto name1 = a->condName;
-			auto name2 = b->condName;
-			auto nameCmp = _strcmpi(name1, name2);
-			return nameCmp < 0;
-		});
-
 		mIsInited = true;
 	}
+}
+
+void DungeonMaster::InitCaches(){
+	classNames.push_back("");
+	for (auto it : d20ClassSys.classEnums) {
+		classNames.push_back(d20Stats.GetStatName((Stat)it));
+	}
+
+	spellSys.DoForSpellEntries([](SpellEntry &spEntry) {
+		auto spEnum = spEntry.spellEnum;
+		if (spEnum  < 3000) { // the range above 3000 is reserved for class pseudo spells
+			spellNames[spEnum] = spellSys.GetSpellName(spEnum);
+		}
+	});
+
+	feats.DoForAllFeats([](int featEnum) {
+		featNames[featEnum] = feats.GetFeatName(static_cast<feat_enums>(featEnum));
+	});
+
+	conds.DoForAllCondStruct([](CondStruct& condStruct) {
+		condStructs.push_back(&condStruct);
+	});
+
+	std::sort(condStructs.begin(), condStructs.end(), [](const CondStruct * a, const CondStruct * b)->bool {
+		auto name1 = a->condName;
+		auto name2 = b->condName;
+		auto nameCmp = _strcmpi(name1, name2);
+		return nameCmp < 0;
+	});
+
 }
 
 void DungeonMaster::RenderMonster(Record& record){
@@ -928,7 +936,67 @@ void DungeonMaster::RenderEditedObj() {
 		ImGui::TreePop();
 	}
 
+	// Feats
 	if (ImGui::TreeNodeEx("Feats", ImGuiTreeNodeFlags_CollapsingHeader)){
+
+		static auto featNameGetter = [](void*data, int idx, const char** outTxt)->bool
+		{
+			if (idx >= featNames.size())
+				return false;
+			auto it = featNames.begin();
+			std::advance(it, idx);
+			if (it == featNames.end())
+				return false;
+			if (feats.IsFeatPartOfMultiselect((feat_enums)it->first))
+				return false;
+
+			*outTxt = it->second.c_str();
+			return true;
+		};
+
+		// Add Feat
+		if (ImGui::TreeNodeEx("Add Feat", ImGuiTreeNodeFlags_CollapsingHeader)) {
+			static int featCur = 0;
+
+			auto getFeatEnum = []()->feat_enums {
+				auto it = featNames.begin();
+				std::advance(it, featCur);
+				if (it != spellNames.end())
+					return  (feat_enums)it->first;
+				return FEAT_NONE;
+			};
+
+			auto featEnum = getFeatEnum();
+
+			if (ImGui::Combo("Feat", &featCur, featNameGetter, nullptr, featNames.size(), 8)) {
+				featEnum = getFeatEnum();
+			}
+
+			if (featEnum) {
+				
+				if (feats.IsFeatMultiSelectMaster(featEnum)){
+					if (ImGui::Button("Multi select master")) {
+					}
+				}
+
+				if (ImGui::Button("Add")) {
+					feats.FeatAdd(mEditedObj, featEnum);
+					critEditor.feats.push_back(featEnum);
+				}
+			}
+
+
+			ImGui::TreePop();
+		}
+
+		// Existing feats
+		
+		for (auto it : critEditor.feats) {
+			if (featNames.find(it) == featNames.end())
+				continue;
+			ImGui::BulletText(fmt::format("{} ({})", featNames[it], it).c_str());
+		}
+
 
 		ImGui::TreePop();
 	}
@@ -1182,6 +1250,13 @@ void DungeonMaster::SetObjEditor(objHndl handle){
 	auto statScores = obj->GetInt32Array(obj_f_critter_abilities_idx);
 	for (auto i = 0u; i < statScores.GetSize(); i++)
 		critEditor.stats.push_back(statScores[i]);
+
+	// Feats
+	feats.DoForAllFeats([](int featEnum){
+		if (feats.HasFeatCount(dmSys.mEditedObj, (feat_enums)featEnum)){
+			critEditor.feats.push_back((feat_enums)featEnum);
+		}
+	});
 
 	// Spells
 	auto spellsKnown = obj->GetSpellArray(obj_f_critter_spells_known_idx);

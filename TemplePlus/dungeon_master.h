@@ -37,6 +37,7 @@ public:
 	bool HandleMoving(const TigMsg &msg);
 
 	void InitEntry(int protoNum);
+	void InitCaches();
 
 	void GotoArena();
 	void TransitionToMap(int mapId);
@@ -66,6 +67,8 @@ public:
 		std::vector<int> stats;
 		std::vector<SpellStoreData> spellsKnown;
 		std::vector<SpellStoreData> spellsMemorized;
+		std::vector<feat_enums> feats;
+		
 	};
 
 	enum DungeonMasterAction : int {

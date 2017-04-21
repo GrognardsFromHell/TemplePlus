@@ -1198,7 +1198,29 @@ bool LegacyFeatSystem::IsNonCore(feat_enums feat)
 {
 	return IsFeatPropertySet(feat, FPF_NON_CORE) != 0;
 }
-;
+
+void LegacyFeatSystem::DoForAllFeats(void(* cb)(int featEnum)){
+
+	for (auto i = 0u; i < NUM_FEATS; i++) {
+		auto feat = (feat_enums)i;
+		if (feat == FEAT_NONE)
+			continue;
+		if (!feats.IsFeatEnabled(feat))
+			continue;
+
+		cb(feat);
+	}
+	for (auto feat : feats.newFeats) {
+		if (feat == FEAT_NONE)
+			continue;
+		if (!feats.IsFeatEnabled(feat) )
+			continue;
+		if (!config.nonCoreMaterials && feats.IsNonCore(feat))
+			continue;
+
+		cb(feat);
+	}
+}
 
 #pragma endregion
 

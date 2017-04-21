@@ -359,18 +359,20 @@ void UiIntegameTurnbasedRepl::RestoreSeqBackup()
 
 int UiIntegameTurnbasedRepl::UiIntgameMsgHandler(int widId, TigMsg* msg) {
 
-	if (msg->type == TigMsgType::MOUSE && dmSys.IsMoused()) {// && !dmSys.IsMinimized()) {
-		return FALSE;
+	if (dmSys.IsActive() && !dmSys.IsMinimized()){
+		if (msg->type == TigMsgType::MOUSE)
+			
+			if (dmSys.IsMoused()){
+				return FALSE;
+			}
+			
+			auto mouseMsg =*(TigMsgMouse*)msg;
+			if ((mouseMsg.buttonStateFlags & MouseStateFlags::MSF_RMB_CLICK)
+				|| (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_RMB_RELEASED)) {
+				return FALSE;
+		}
 	}
-
-	//if (msg->type == TigMsgType::MOUSE && dmSys.IsActive()){// && !dmSys.IsMinimized()) {
-	//	return FALSE;
-	//}
-	//if (msg->type == TigMsgType::WIDGET && dmSys.IsActive() ){//&& !dmSys.IsMinimized()) {
-	//	return FALSE;
-	//}
-
-
+	
 
 	auto initialSeq = *actSeqSys.actSeqCur;
 	int result = 0;

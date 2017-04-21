@@ -158,6 +158,7 @@ struct LegacyFeatSystem : temple::AddressTable
 	void MultiselectGetChildren(feat_enums feat, std::vector<feat_enums>& out);
 
 	bool IsNonCore(feat_enums feat);
+	void DoForAllFeats(void (__cdecl*cb)(int featEnum));
 	uint32_t rangerArcheryFeats[4 * 2 + 100];
 	uint32_t rangerTwoWeaponFeats[4 * 2 + 100];
 

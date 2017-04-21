@@ -74,10 +74,26 @@ void UiInGame::ProcessMessage(const TigMsg & msg) {
 	doKeyboardScrolling();
 
 
-	if (dmSys.IsActive() && !dmSys.IsMinimized()) {
+	if (dmSys.IsActive()){
 		dmSys.HandleMsg(msg);
 
-		return;
+		if (dmSys.IsMoused()){
+			return;
+		}
+
+		if (msg.type == TigMsgType::MOUSE){
+			auto mouseMsg = *(TigMsgMouse*)&msg;
+			if ( (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_RMB_CLICK)
+				 || (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_RMB_RELEASED) ){
+				return;
+			}
+		}
+		if (msg.type == TigMsgType::WIDGET){
+			auto widMsg = *(TigMsgWidget*)&msg;
+		}
+		
+		 
+		
 	}
 	
 
