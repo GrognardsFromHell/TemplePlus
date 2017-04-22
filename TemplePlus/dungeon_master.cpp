@@ -64,6 +64,7 @@ DungeonMaster::ObjEditor critEditor;
 static std::vector<std::string> classNames; // offset by 1 wrt the d20ClassSys.classEnums vector
 static std::map<int, std::string> spellNames;
 static std::map<int, std::string> featNames;
+static std::vector<int> featSelectionList;
 static std::map<int, std::string> mapNames;
 static std::vector<CondStruct*> condStructs;
 static int mMonModFactionNew;
@@ -514,9 +515,34 @@ void DungeonMaster::InitCaches(){
 		}
 	});
 
+	// Feats
 	feats.DoForAllFeats([](int featEnum) {
-		featNames[featEnum] = feats.GetFeatName(static_cast<feat_enums>(featEnum));
+		auto feat = (feat_enums)featEnum;
+		featNames[featEnum] = feats.GetFeatName(feat);
+		if (feats.IsFeatMultiSelectMaster(feat)){
+			featSelectionList.push_back(featEnum);
+			return;
+		}
+		if (feats.IsFeatPartOfMultiselect(feat))
+			return;
+
+		featSelectionList.push_back(featEnum);
 	});
+	std::sort(featSelectionList.begin(), featSelectionList.end(), 
+		[](int first, int second){
+			
+			auto firstFeat = (feat_enums)first;
+			auto secFeat = (feat_enums)second;
+			if (feats.IsFeatRacialOrClassAutomatic(firstFeat) && !feats.IsFeatRacialOrClassAutomatic(secFeat))
+				return false;
+			if (!feats.IsFeatRacialOrClassAutomatic(firstFeat) && feats.IsFeatRacialOrClassAutomatic(secFeat))
+				return true;
+
+			auto firstName = feats.GetFeatName((feat_enums)first);
+			auto secondName = feats.GetFeatName((feat_enums)second);
+
+			return _stricmp(firstName, secondName) < 0;
+		});
 
 	conds.DoForAllCondStruct([](CondStruct& condStruct) {
 		condStructs.push_back(&condStruct);
@@ -941,47 +967,67 @@ void DungeonMaster::RenderEditedObj() {
 
 		static auto featNameGetter = [](void*data, int idx, const char** outTxt)->bool
 		{
-			if (idx >= featNames.size())
+			if (idx >= featSelectionList.size())
 				return false;
-			auto it = featNames.begin();
-			std::advance(it, idx);
-			if (it == featNames.end())
-				return false;
-			if (feats.IsFeatPartOfMultiselect((feat_enums)it->first))
-				return false;
-
-			*outTxt = it->second.c_str();
+			auto feat = static_cast<feat_enums>(featSelectionList[idx]);
+			*outTxt = feats.GetFeatName(feat);
 			return true;
 		};
+
 
 		// Add Feat
 		if (ImGui::TreeNodeEx("Add Feat", ImGuiTreeNodeFlags_CollapsingHeader)) {
 			static int featCur = 0;
+			static int subFeatCur = 0;
+			static feat_enums subFeat = FEAT_NONE;
+			static std::vector<feat_enums> childFeats;
 
 			auto getFeatEnum = []()->feat_enums {
-				auto it = featNames.begin();
-				std::advance(it, featCur);
-				if (it != spellNames.end())
-					return  (feat_enums)it->first;
-				return FEAT_NONE;
+				if (featCur < 0 || featCur > featSelectionList.size())
+					return FEAT_NONE;
+
+				return static_cast<feat_enums>(featSelectionList[featCur]);
 			};
 
 			auto featEnum = getFeatEnum();
 
-			if (ImGui::Combo("Feat", &featCur, featNameGetter, nullptr, featNames.size(), 8)) {
+			if (ImGui::Combo("Feat", &featCur, featNameGetter, nullptr, featSelectionList.size(), 16)) {
 				featEnum = getFeatEnum();
+				subFeatCur = 0;
+				if (feats.IsFeatMultiSelectMaster(featEnum)) {
+					subFeat = FEAT_NONE;
+					childFeats.clear();
+					feats.MultiselectGetChildren(featEnum, childFeats);
+					if (subFeatCur < childFeats.size())
+						subFeat = childFeats[subFeatCur];
+				}
 			}
 
-			if (featEnum) {
+			if (featEnum != FEAT_NONE) {
 				
-				if (feats.IsFeatMultiSelectMaster(featEnum)){
-					if (ImGui::Button("Multi select master")) {
+				if (!feats.IsFeatMultiSelectMaster(featEnum)){
+					if (ImGui::Button("Add")) {
+						feats.FeatAdd(mEditedObj, featEnum);
+						critEditor.feats.push_back(featEnum);
 					}
 				}
+				else{
+					
+					auto subfeatNameGetter = [](void*data, int idx, const char** outTxt)->bool	{
+						if (idx >= childFeats.size())
+							return false;
+						auto feat = static_cast<feat_enums>(childFeats[idx]);
+						*outTxt = feats.GetFeatName(feat);
+						return true;
+					};
 
-				if (ImGui::Button("Add")) {
-					feats.FeatAdd(mEditedObj, featEnum);
-					critEditor.feats.push_back(featEnum);
+					if (ImGui::Combo("Sub feat", &subFeatCur, subfeatNameGetter, nullptr, childFeats.size(), 8)) {
+						subFeat = childFeats[subFeatCur];
+					}
+					if (ImGui::Button("Add")) {
+						feats.FeatAdd(mEditedObj, subFeat);
+						critEditor.feats.push_back(subFeat);
+					}
 				}
 			}
 
@@ -1317,6 +1363,14 @@ bool DungeonMaster::IsMinimized() {
 
 bool DungeonMaster::IsActionActive() {
 	return isActionActive;
+}
+
+bool DungeonMaster::IsEditorActive(){
+	return mEditedObj != objHndl::null && objSystem->IsValidHandle(mEditedObj);
+}
+
+objHndl DungeonMaster::GetHoveredCritter(){
+	return (mTgtObj && objSystem->IsValidHandle(mTgtObj)) ? mTgtObj : objHndl::null;
 }
 
 bool DungeonMaster::IsMoused(){

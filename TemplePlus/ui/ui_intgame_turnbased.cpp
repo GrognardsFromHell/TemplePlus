@@ -368,8 +368,13 @@ int UiIntegameTurnbasedRepl::UiIntgameMsgHandler(int widId, TigMsg* msg) {
 			
 			auto mouseMsg =*(TigMsgMouse*)msg;
 			if ((mouseMsg.buttonStateFlags & MouseStateFlags::MSF_RMB_CLICK)
-				|| (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_RMB_RELEASED)) {
-				return FALSE;
+				|| (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_RMB_RELEASED)){
+
+				if (dmSys.IsEditorActive())
+					return FALSE;
+				if (dmSys.GetHoveredCritter())
+					return false;
+				
 		}
 	}
 	

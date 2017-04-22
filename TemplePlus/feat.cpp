@@ -1192,7 +1192,56 @@ feat_enums LegacyFeatSystem::MultiselectGetFirst(feat_enums feat)
 	}
 }
 void LegacyFeatSystem::MultiselectGetChildren(feat_enums feat, std::vector<feat_enums>& out){
-	out = mNewFeats[feat].children;
+
+	out.clear();
+
+	if (feat > NUM_FEATS){
+		out = mNewFeats[feat].children;
+		return;
+	}
+
+	// old shit
+	auto featIt = FEAT_ACROBATIC;
+	auto featProp = FPF_MULTI_SELECT_ITEM;
+	switch (feat) {
+		case FEAT_EXOTIC_WEAPON_PROFICIENCY:
+			featProp = FPF_EXOTIC_WEAP_ITEM;
+			break;
+		case FEAT_IMPROVED_CRITICAL:
+			featProp = FPF_IMPR_CRIT_ITEM;
+			break;
+		case FEAT_MARTIAL_WEAPON_PROFICIENCY:
+			featProp = FPF_MARTIAL_WEAP_ITEM;
+			break;
+		case FEAT_SKILL_FOCUS:
+			featProp = FPF_SKILL_FOCUS_ITEM;
+			break;
+		case FEAT_WEAPON_FINESSE:
+			featProp = FPF_WEAP_FINESSE_ITEM;
+			break;
+		case FEAT_WEAPON_FOCUS:
+			featProp = FPF_WEAP_FOCUS_ITEM;
+			break;
+		case FEAT_WEAPON_SPECIALIZATION:
+			featProp = FPF_WEAP_SPEC_ITEM;
+			break;
+		case FEAT_GREATER_WEAPON_FOCUS:
+			featProp = FPF_GREATER_WEAP_FOCUS_ITEM;
+			break;
+		case FEAT_GREATER_WEAPON_SPECIALIZATION:
+			featProp = FPF_GREAT_WEAP_SPEC_ITEM;
+			break;
+		default:
+			break;
+	}
+
+	for (auto ft = 0; ft < NUM_FEATS; ft++) {
+		featIt = (feat_enums)ft;
+		if (feats.IsFeatPropertySet(featIt, featProp) && feats.IsFeatEnabled(featIt)) {
+			out.push_back(featIt);
+		}
+	}
+	
 }
 bool LegacyFeatSystem::IsNonCore(feat_enums feat)
 {
@@ -1205,7 +1254,7 @@ void LegacyFeatSystem::DoForAllFeats(void(* cb)(int featEnum)){
 		auto feat = (feat_enums)i;
 		if (feat == FEAT_NONE)
 			continue;
-		if (!feats.IsFeatEnabled(feat))
+		if (!feats.IsFeatEnabled(feat) && !feats.IsFeatMultiSelectMaster(feat))
 			continue;
 
 		cb(feat);
@@ -1213,7 +1262,7 @@ void LegacyFeatSystem::DoForAllFeats(void(* cb)(int featEnum)){
 	for (auto feat : feats.newFeats) {
 		if (feat == FEAT_NONE)
 			continue;
-		if (!feats.IsFeatEnabled(feat) )
+		if (!feats.IsFeatEnabled(feat) && !feats.IsFeatMultiSelectMaster(feat))
 			continue;
 		if (!config.nonCoreMaterials && feats.IsNonCore(feat))
 			continue;

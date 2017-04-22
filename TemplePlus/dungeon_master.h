@@ -22,6 +22,8 @@ public:
 	void Toggle();
 
 	bool IsActionActive();
+	bool IsEditorActive();
+	objHndl GetHoveredCritter();
 
 	
 	void Render();

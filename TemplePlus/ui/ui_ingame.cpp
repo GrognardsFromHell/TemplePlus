@@ -85,14 +85,14 @@ void UiInGame::ProcessMessage(const TigMsg & msg) {
 			auto mouseMsg = *(TigMsgMouse*)&msg;
 			if ( (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_RMB_CLICK)
 				 || (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_RMB_RELEASED) ){
-				return;
+
+				if (dmSys.IsEditorActive()) // to release edited obj
+					return;
+				if (dmSys.GetHoveredCritter()) // to acquire edited obj
+					return;
 			}
 		}
-		if (msg.type == TigMsgType::WIDGET){
-			auto widMsg = *(TigMsgWidget*)&msg;
-		}
 		
-		 
 		
 	}
 	
