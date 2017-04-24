@@ -195,6 +195,7 @@ esd_load_result MapSystemHooks::fog_esd_load(uint64_t sectorLoc, explored_sector
 	auto state = gameSystems->GetMap().GetExplorationData({ sectorLoc }, &data);
 	switch (state) {
 	case SectorExplorationState::AllExplored:
+		buffer->allExplored = 1;
 		return esd_load_result::FULLY_EXPLORED;
 	case SectorExplorationState::PartiallyExplored:
 		for (size_t i = 0; i < sizeof(buffer->exploredBitmap); ++i) {
@@ -211,9 +212,18 @@ BOOL MapSystemHooks::fog_esd_save(uint64_t sectorLoc, explored_sector_data * fog
 {
 	SectorLoc loc{ sectorLoc };
 	SectorExplorationData data;
-	for (size_t i = 0; i < sizeof(fogSec->exploredBitmap); ++i) {
-		data.explorationBitmap[i] = fogSec->exploredBitmap[i];
+
+	if (fogSec->allExplored){
+		for (size_t i = 0; i < sizeof(fogSec->exploredBitmap); ++i) {
+			data.explorationBitmap[i] = 0xff;
+		}
 	}
+	else{
+		for (size_t i = 0; i < sizeof(fogSec->exploredBitmap); ++i) {
+			data.explorationBitmap[i] = fogSec->exploredBitmap[i];
+		}
+	}
+
 	gameSystems->GetMap().SetExplorationData(loc, data);
 	return TRUE;
 }
