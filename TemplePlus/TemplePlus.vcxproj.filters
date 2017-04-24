@@ -472,6 +472,9 @@
     <ClCompile Include="dungeon_master.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
+    <ClCompile Include="general_condition_fixes.cpp">
+      <Filter>Mods and Fixes\Condition Fixes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
