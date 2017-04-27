@@ -390,6 +390,7 @@ void Console::RenderCheatsMenu()
 			ImGui::EndMenu();
 		}
 		if (ImGui::Button("DM")){
+			config.dungeonMaster = true;
 			dmSys.Toggle();
 		}
 		ImGui::EndMenuBar();
