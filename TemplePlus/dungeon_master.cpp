@@ -73,6 +73,8 @@ static bool mMonModFactionIsOverride = false;
 
 void DungeonMaster::Render() {
 
+	isMoused = false;
+
 	if (!gameView || !config.dungeonMaster || !party.GetConsciousPartyLeader())
 		return;
 	
@@ -80,6 +82,8 @@ void DungeonMaster::Render() {
 	
 	if (!IsActive())
 		return;
+
+	
 
 	auto rect = TigRect(0, 0, 96, 96);
 
@@ -136,7 +140,7 @@ void DungeonMaster::Render() {
 	//	}
 	//	ImGui::TreePop();
 	//}
-
+	isMoused |= ImGui::IsWindowHovered();
 	ImGui::End();
 
 	if (!isMinimized){
@@ -169,10 +173,6 @@ void DungeonMaster::Render() {
 		mJustOpened = false;
 	}
 
-	isMoused = ImGui::IsMouseHoveringAnyWindow();
-	if (isMoused){
-		auto dummy = 1;
-	}
 }
 
 void DungeonMaster::RenderDmButton(){
@@ -201,6 +201,8 @@ void DungeonMaster::RenderDmButton(){
 		}
 
 	}
+	isMoused |= ImGui::IsWindowHovered();
+
 	ImGui::End();
 	style.Colors[ImGuiCol_WindowBg] = prevColor;
 }
@@ -1091,7 +1093,7 @@ void DungeonMaster::RenderEditedObj() {
 
 			auto spEnum = getSpellEnum();
 
-			if (ImGui::Combo("Spell", &spellCur, spellNameGetter, nullptr, spellNames.size(), 8)) {
+			if (ImGui::Combo("Spell", &spellCur, spellNameGetter, nullptr, spellNames.size(), 12)) {
 				spEnum = getSpellEnum();
 				auto spLvlSuggest = getSpellLevelForClass(spEnum);
 				if (spLvlSuggest != -1)
@@ -1224,6 +1226,8 @@ void DungeonMaster::RenderEditedObj() {
 	if (ImGui::Button("Apply")) {
 		ApplyObjEdit(mEditedObj);
 	}
+
+	isMoused |= ImGui::IsWindowHovered();
 	ImGui::End();
 }
 

@@ -403,6 +403,15 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformFullAttack;
 	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostFullAttack;
 
+	d20Type = D20A_MOVE;
+	d20Defs[d20Type].flags = static_cast<D20ADF>(d20Defs[d20Type].flags & ~(D20ADF::D20ADF_Breaks_Concentration));
+
+	d20Type = D20A_5FOOTSTEP;
+	d20Defs[d20Type].flags = static_cast<D20ADF>(d20Defs[d20Type].flags & ~(D20ADF::D20ADF_Breaks_Concentration));
+
+	d20Type = D20A_RUN;
+	d20Defs[d20Type].flags = static_cast<D20ADF>(d20Defs[d20Type].flags | (D20ADF::D20ADF_Breaks_Concentration));
+
 	d20Type = D20A_CAST_SPELL;
 	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqSpellCast;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformCastSpell;

@@ -10,6 +10,7 @@
 #include "mainwindow.h"
 #include "tig/tig_startup.h"
 #include "messages/messagequeue.h"
+#include "tig/tig_keyboard.h"
 
 struct WindowFuncs : temple::AddressTable {
 	void (*TigSoundSetActive)(BOOL active);
@@ -332,6 +333,12 @@ int MainWindow::ToDirectInputKey(int vk) {
 		return 0xC9; // DIK_PRIOR/* PgUp on arrow keypad */
 	case VK_NEXT:
 		return 0xD1; // DIK_NEXT/* PgDn on arrow keypad */
+	case VK_VOLUME_DOWN:
+		return DIK_VOLUMEDOWN;
+	case VK_VOLUME_UP:
+		return DIK_VOLUMEUP;
+	case VK_VOLUME_MUTE:
+		return DIK_MUTE;
 	default:
 		break;
 	}

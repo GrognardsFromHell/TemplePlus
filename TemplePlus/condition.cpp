@@ -95,6 +95,8 @@ public:
 	static int __cdecl SkillBonus(DispatcherCallbackArgs args);
 	static int __cdecl BeginHezrouStench(DispatcherCallbackArgs args);
 
+	static int __cdecl ConcentratingActionSequenceHandler(DispatcherCallbackArgs args); // handles "Stop Concentration" due to action taken
+
 	static int __cdecl EnlargePersonWeaponDice(DispatcherCallbackArgs args);
 
 	static int __cdecl HezrouStenchObjEvent(DispatcherCallbackArgs args);
@@ -3070,6 +3072,9 @@ int ConditionFunctionReplacement::RemoveDiseasePerform(DispatcherCallbackArgs ar
 
 void ConditionFunctionReplacement::HookSpellCallbacks()
 {
+
+	replaceFunction(0x100D3100, SpellCallbacks::ConcentratingActionSequenceHandler);
+
 	// QueryCritterHasCondition for sp-Spiritual Weapon
 	int writeVal = dispTypeD20Query;
 	SubDispDefNew sdd;
@@ -3243,6 +3248,40 @@ int SpellCallbacks::BeginHezrouStench(DispatcherCallbackArgs args){
 	pySpellIntegration.UpdateSpell(spellPkt.spellId);
 
 
+	return 0;
+}
+
+int SpellCallbacks::ConcentratingActionSequenceHandler(DispatcherCallbackArgs args){
+	GET_DISPIO(dispIoTypeSendSignal, DispIoD20Signal);
+	auto actSeq = (ActnSeq*)dispIo->data1;
+	if (!actSeq)
+		return 1;
+	auto spellId = args.GetCondArg(0);
+	SpellPacketBody spellPkt(spellId);
+	if (!spellPkt.spellEnum){
+		logger->debug("Cannot fetch spell packet");
+		return 0;
+	}
+
+	if (spellPkt.spellEnum == 303){ // Meld Into Stone hardcoding...
+		return 0;
+	}
+
+	for (auto i=0; i < actSeq->d20ActArrayNum; i++){
+		auto &d20a = actSeq->d20ActArray[i];
+		auto actionFlags = d20Sys.GetActionFlags(d20a.d20ActType);
+		if (!(actionFlags & D20ADF::D20ADF_Breaks_Concentration))
+			continue;
+		if (d20a.d20ActType == D20A_CAST_SPELL && d20a.spellId == spellId)
+			break;
+		DispatcherCallbackArgs dca;
+		dca.dispIO = nullptr;
+		dca.dispType = dispTypeD20Signal;
+		dca.dispKey = DK_SIG_Remove_Concentration;
+		dca.subDispNode = args.subDispNode;
+		dca.objHndCaller = args.objHndCaller;
+		SpellRemoveMod(dca);
+	}
 	return 0;
 }
 
@@ -3759,7 +3798,7 @@ int SpellCallbacks::SpellRemoveMod(DispatcherCallbackArgs args){
 	case 2:
 		if (args.dispKey == DK_SIG_Remove_Concentration){
 			if (spPkt.spellEnum != 0){
-				floatSys.FloatCombatLine(args.objHndCaller, 5060);
+				floatSys.FloatCombatLine(args.objHndCaller, 5060); // Stop Concentration
 				d20Sys.d20SendSignal(args.objHndCaller, DK_SIG_Concentration_Broken, spellId, 0);
 				for (auto i=0u; i < spPkt.targetCount; i++){
 					if (args.objHndCaller != spPkt.targetListHandles[i])
