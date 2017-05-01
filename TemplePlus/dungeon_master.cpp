@@ -75,7 +75,7 @@ void DungeonMaster::Render() {
 
 	isMoused = false;
 
-	if (!gameView || !config.dungeonMaster || !party.GetConsciousPartyLeader())
+	if (!gameView || !config.dungeonMaster || !party.GetConsciousPartyLeader() || !uiSystems->GetUtilityBar().IsVisible())
 		return;
 	
 	RenderDmButton();

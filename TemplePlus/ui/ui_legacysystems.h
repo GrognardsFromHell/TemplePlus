@@ -7,6 +7,8 @@
 #include "ui_system.h"
 #include "ui_ingame.h"
 #include "ui_item_creation.h"
+#include "config/config.h"
+#include "party.h"
 
 struct UiSystemConf {
 	BOOL editor = FALSE;
@@ -374,7 +376,7 @@ public:
 	void Hide();
 	void Show();
 	bool IsRollHistoryVisible(); // is the roll history console visible
-
+	bool IsVisible();
 };
 
 class UiTrack : public UiSystem {

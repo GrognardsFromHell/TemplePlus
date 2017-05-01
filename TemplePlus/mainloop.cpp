@@ -257,6 +257,11 @@ void GameLoop::RenderFrame() {
 		*mSceneColor
 	);
 
+	tig->GetConsole().Render();
+
+	// Render the Debug UI
+	tig->GetDebugUI().Render();
+
 	// Render "GFade" overlay
 	static auto& gfadeEnabled = temple::GetRef<BOOL>(0x10D25118);
 	static auto& gfadeColor = temple::GetRef<XMCOLOR>(0x10D24A28);
@@ -268,11 +273,6 @@ void GameLoop::RenderFrame() {
 	
 	// ImGui::ShowTestWindow();
 
-	tig->GetConsole().Render();
-
-	// Render the Debug UI
-	tig->GetDebugUI().Render();
-	
 	device.Present();
 
 	device.EndPerfGroup();

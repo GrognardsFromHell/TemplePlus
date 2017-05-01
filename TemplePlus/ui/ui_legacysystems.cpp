@@ -711,6 +711,10 @@ bool UiUtilityBar::IsRollHistoryVisible(){
 	return temple::GetRef<int>(0x10BDDE5C) != 0;
 }
 
+bool UiUtilityBar::IsVisible(){
+	return temple::GetRef<int>(0x10BD33F8) != 0;
+}
+
 //*****************************************************************************
 //* Track-UI
 //*****************************************************************************
