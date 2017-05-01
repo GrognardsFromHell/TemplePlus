@@ -712,8 +712,12 @@ uint32_t LegacyFeatSystem::FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, 
 		if (featReqCode == featReqCodeMinCasterLevel){
 			auto casterLevel = critterSys.GetCasterLevel(objHnd);
 
-			if (d20ClassSys.IsCastingClass(classCodeBeingLevelledUp, true))
-				casterLevel++;
+			if (d20ClassSys.IsCastingClass(classCodeBeingLevelledUp, true)){
+				auto classLeveledNew = critterSys.GetCasterLevelForClass(objHnd, classCodeBeingLevelledUp) + 1;
+				if (classLeveledNew > casterLevel)
+					casterLevel = classLeveledNew;
+			}
+				
 
 			if (casterLevel < featReqCodeArg)
 				return FALSE;
