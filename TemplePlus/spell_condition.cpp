@@ -35,6 +35,9 @@ public:
 
 	static int ImmunityCheckHandler(DispatcherCallbackArgs args);
 
+	static int CalmEmotionsActionInvalid(DispatcherCallbackArgs args);
+	static bool ShouldRemoveCalmEmotions(objHndl handle, DispIoD20Signal *evtObj, DispatcherCallbackArgs args);
+
 	static int StinkingCloudObjEvent(DispatcherCallbackArgs args);
 	static int GreaseSlippage(DispatcherCallbackArgs args);
 	static int ColorSprayUnconsciousOnAdd(DispatcherCallbackArgs args);
@@ -58,6 +61,9 @@ public:
 		// Aid Spell fixed amount of HP gained to be 1d8 + 1/caster level
 		replaceFunction(0x100CBE00, AidOnAddTempHp);
 
+		// Calm Emotions ActionInvalid check
+		replaceFunction(0x100C6630, CalmEmotionsActionInvalid);
+
 		// Invisibility Sphere lacking a Dismiss handler
 		{
 			SubDispDefNew sdd;
@@ -74,6 +80,7 @@ public:
 
 		static int(__cdecl*orgSpell_remove_spell)(DispatcherCallbackArgs) = replaceFunction<int(DispatcherCallbackArgs)>(0x100D7620, [](DispatcherCallbackArgs args) {
 			// fixes not removing Invisibility if target != caster
+			// fixes handling of Calm Emotions
 
 			DispIoD20Signal *evtObj = nullptr;
 			if (args.dispIO)
@@ -104,6 +111,54 @@ public:
 
 			auto spellId = args.GetCondArg(0);
 			SpellPacketBody spPkt(spellId);
+
+			if (!spPkt.spellEnum){
+				logger->error("Error getting spell packet ID {}", spellId);
+				return 0;
+			}
+
+			auto spellModRemove = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100CBAB0);
+
+			switch(spPkt.spellEnum){
+			case 37:
+				d20Sys.d20SendSignal(args.objHndCaller, DK_SIG_Spell_End, spellId, 0);
+				spPkt.EndPartsysForTgtObj(args.objHndCaller);
+				pySpellIntegration.SpellSoundPlay(&spPkt, SpellEvent::EndSpellCast);
+				if (!spPkt.RemoveObjFromTargetList(args.objHndCaller)) {
+					logger->error("Cannot END spell - could not remove target!");
+					return FALSE;
+				}
+				spellSys.SpellEnd(spellId, 0);
+				return 0;
+			default:
+				break;
+			}
+
+			if (spPkt.spellEnum == 48){ // Calm Emotions
+				if (!ShouldRemoveCalmEmotions(args.objHndCaller, evtObj, args))
+					return 0;
+
+				pySpellIntegration.SpellSoundPlay(&spPkt, SpellEvent::EndSpellCast);
+				d20Sys.d20SendSignal(spPkt.caster, DK_SIG_Spell_End, spellId, 0);
+				//spPkt.EndPartsysForTgtObj(args.objHndCaller);
+				gameSystems->GetParticleSys().End(spPkt.casterPartsysId);
+				gameSystems->GetParticleSys().CreateAtObj("sp-Calm Emotions-END", spPkt.caster);
+				spPkt.DoForTargetList([&](objHndl tgtHndl){
+					d20Sys.d20SendSignal(tgtHndl, DK_SIG_Spell_End, spellId, 0);
+					spPkt.EndPartsysForTgtObj(tgtHndl);
+					spPkt.RemoveObjFromTargetList(tgtHndl);
+				});
+				d20Sys.d20SendSignal(spPkt.caster, DK_SIG_Remove_Concentration, spellId, 0);
+				/*if (!spPkt.RemoveObjFromTargetList(args.objHndCaller)){
+					logger->error("Cannot END spell - could not remove target!");
+					return FALSE;
+				}*/
+				// todo: make this a template
+				spellSys.SpellEnd(spellId, 0);
+				spellModRemove(args);
+				return 0;
+			}
+
 			if (spPkt.spellEnum == 253){
 				if (ShouldRemoveInvisibility(args.objHndCaller, evtObj, args) && spPkt.targetCount && spPkt.targetListHandles[0])
 					d20Sys.d20SendSignal(spPkt.targetListHandles[0], DK_SIG_Spell_End, spellId, 0);
@@ -401,6 +456,66 @@ int SpellConditionFixes::ImmunityCheckHandler(DispatcherCallbackArgs args)
 	return 0;
 }
 
+int SpellConditionFixes::CalmEmotionsActionInvalid(DispatcherCallbackArgs args){
+	GET_DISPIO(dispIOTypeQuery, DispIoD20Query);
+	auto d20a = (D20Actn*)dispIo->data1;
+	if (!d20a)
+		return 0;
+	if (!d20Sys.IsActionOffensive(d20a->d20ActType, d20a->d20ATarget)){
+		return 0;
+	}
+	if (!critterSys.IsFriendly(d20a->d20APerformer, d20a->d20ATarget)){
+		dispIo->return_val = 1;
+		dispIo->data1 = 0;
+		dispIo->data2 = 0;
+	}
+	return 0;
+}
+
+bool SpellConditionFixes::ShouldRemoveCalmEmotions(objHndl handle, DispIoD20Signal* evtObj, DispatcherCallbackArgs args){
+	if (!evtObj){
+		if (args.dispType == dispTypeBeginRound || args.dispKey == DK_SIG_Dismiss_Spells
+			|| args.dispType == dispTypeConditionAddPre)
+			return true;
+		return false;
+	}
+	auto spellId = args.GetCondArg(0);
+	SpellPacketBody spellPkt(spellId);
+	if (!spellPkt.spellEnum){
+		return false;
+	}
+	if (args.dispKey == DK_SIG_Killed){
+		d20Sys.d20SendSignal(handle, DK_SIG_Spell_End, spellPkt.spellId, 0); // is this a bug???? todo
+		return true;
+	}
+	if (evtObj->dispIOType == dispIOTypeDispelCheck){
+		return true;
+	}
+
+	if (evtObj->dispIOType != dispIoTypeSendSignal) // e.g. for dispel
+		return false;
+
+	if (args.dispKey == DK_SIG_Concentration_Broken)
+		return true;
+
+	if (args.dispKey == DK_SIG_Action_Recipient){
+		auto d20a = (D20Actn*)evtObj->data1;
+		if (!d20a)
+			return true;
+		if (d20a->d20ActType == D20A_CAST_SPELL) { // bug? what about scrolls and such? should probably check spellId instead. TODO
+			auto actionSpellId = d20a->spellId;
+			return actionSpellId != spellId;
+		}
+
+		if (d20Sys.IsActionOffensive(d20a->d20ActType, d20a->d20ATarget)) {
+			if (!critterSys.IsFriendly(d20a->d20APerformer, d20a->d20ATarget))
+				return true;
+		}
+		return false;
+	}
+	
+	return true;
+}
 
 
 void PyPerformTouchAttack_PatchedCallToHitProcessing( D20Actn * pd20A, D20Actn d20A, uint32_t savedesi, uint32_t retaddr, PyObject * pyObjCaller, PyObject * pyTupleArgs)

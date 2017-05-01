@@ -2352,38 +2352,28 @@ uint32_t ActionSequenceSystem::curSeqNext()
 		curSeq->performer, (void*)curSeq);
 
 	int d20ActArrayNum = curSeq->d20ActArrayNum;
-	if (d20ActArrayNum > 0)
-	{
+	if (d20ActArrayNum > 0){
 		d20Sys.d20SendSignal(
-			(*actSeqCur)->d20ActArray[d20ActArrayNum - 1].d20APerformer,
-			DK_SIG_Sequence,
-			(int)*actSeqCur, 0);
+			(*actSeqCur)->d20ActArray[d20ActArrayNum - 1].d20APerformer,	DK_SIG_Sequence,	(int)*actSeqCur, 0);
 	}
 		
 
 	// do d20SendSignal for DK_SIG_Action_Recipient
-	for (int d20aIdx = 0; d20aIdx < (*actSeqCur)->d20ActArrayNum; d20aIdx++)
-	{
+	for (int d20aIdx = 0; d20aIdx < (*actSeqCur)->d20ActArrayNum; d20aIdx++){
 		D20Actn* d20a = &(*actSeqCur)->d20ActArray[d20aIdx];
 		auto d20aType = d20a->d20ActType;
-		if (d20aType == D20A_CAST_SPELL)
-		{
+		if (d20aType == D20A_CAST_SPELL){
 			auto spellId = d20a->spellId;
-			if (spellId)
-			{
-				if (spellSys.GetSpellPacketBody(spellId, &spellPktBody ))
-				{
-					for (auto i = 0u; i < spellPktBody.orgTargetCount; i++)
-					{
-						if (spellPktBody.targetListHandles[i])
-						{
-							d20Sys.d20SendSignal(spellPktBody.targetListHandles[i],
-								DK_SIG_Action_Recipient,
+			if (spellId){
+				if (spellSys.GetSpellPacketBody(spellId, &spellPktBody )){
+					for (auto i = 0u; i < spellPktBody.orgTargetCount; i++){
+						if (spellPktBody.targetListHandles[i]){
+							d20Sys.d20SendSignal(spellPktBody.targetListHandles[i],	DK_SIG_Action_Recipient,
 								(int)d20a,0);
 						}
 					}
-				} else
-				{
+				}
+				else{
 					logger->warn("CurSeqNext(): \t  unable to retrieve spell packet!");
 				}
 			}
@@ -2395,20 +2385,16 @@ uint32_t ActionSequenceSystem::curSeqNext()
 			bool triggersCombat = (actionFlag & D20ADF_TriggersCombat) != 0;
 			if (triggersCombat || (d20aType == D20A_LAY_ON_HANDS_USE && critterSys.IsUndead(d20aTarget)) )
 			{
-				if (d20aTarget)
-				{
-					d20Sys.d20SendSignal(d20aTarget,
-						DK_SIG_Action_Recipient,
-						(int)d20a, 0);
+				if (d20aTarget){
+					d20Sys.d20SendSignal(d20aTarget, DK_SIG_Action_Recipient,(int)d20a, 0);
 				}
 				if (critterSys.IsMovingSilently(performer)){
 					critterSys.SetMovingSilently(performer, FALSE);
 				}
 
-			} else
-			{
-				d20Sys.d20SendSignal((*actSeqCur)->performer, DK_SIG_Action_Recipient,
-					(int)d20a, 0);
+			} 
+			else{
+				d20Sys.d20SendSignal((*actSeqCur)->performer, DK_SIG_Action_Recipient,	(int)d20a, 0);
 			}
 		}
 

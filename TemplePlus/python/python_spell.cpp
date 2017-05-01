@@ -747,8 +747,7 @@ void PySpell_UpdatePacket(PyObject* pySpell) {
 		spell.targetListHandles[i] = self->targets[i].obj;
 		spell.targetListPartsysIds[i] = self->targets[i].partSysId;
 	}
-
-	spellSys.UpdateSpellPacket(spell);
+	spell.UpdateSpellsCastRegistry();
 }
 
 objHndl PySpell_GetTargetHandle(PyObject* spell, int targetIdx) {

@@ -55,7 +55,7 @@ BOOL XPAward::XpGainProcess(objHndl handle, int xpGainRaw){
 	if (curLvl >= config.maxLevel)
 		xpCap = d20LevelSys.GetXpRequireForLevel(config.maxLevel);
 
-	if (!config.allowXpOverflow && xpNew > xpCap)
+	if (!config.allowXpOverflow && xpNew > (int)xpCap)
 		xpNew = xpCap;
 
 	d20Sys.d20SendSignal(handle, DK_SIG_Experience_Awarded, xpNew, 0);

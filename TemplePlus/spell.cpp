@@ -457,6 +457,18 @@ void SpellPacketBody::Reset(){
 	spellSys.spellPacketBodyReset(this);
 }
 
+uint32_t SpellPacketBody::GetPartsysForObj(const objHndl& objHnd){
+
+	for (auto i=0; i < this->targetCount; i++){
+		if (this->targetListHandles[i] == objHnd){
+			return this->targetListPartsysIds[i];
+		}
+	}
+
+	logger->debug("No partsys for obj {} in spell target list. Returning 0.", objHnd);
+	return 0u;
+}
+
 SpellMapTransferInfo::SpellMapTransferInfo()
 {
 	//memset(this, 0, sizeof(SpellMapTransferInfo));
@@ -2535,6 +2547,62 @@ int LegacySpellSystem::SpellEnd(int spellId, int endDespiteTargetList) const
 
 
 #pragma region Hooks
+
+void SpellPacketBody::DoForTargetList(std::function<void(const objHndl& )> cb){
+	auto orgTgtCount = this->targetCount;
+	for (auto i=0; i < this->targetCount; ){
+		auto handle = this->targetListHandles[i];
+		if (!handle)
+			continue;
+		cb(handle);
+		// check if the current entry has been removed
+		if (this->targetCount < orgTgtCount){
+			orgTgtCount = this->targetCount;
+		}
+		else{ // otherwise advance to next one
+			i++;
+		}
+	}
+}
+
+bool SpellPacketBody::RemoveObjFromTargetList(const objHndl& handle){
+	// find the handle
+	auto idx = -1;
+	if (!this->FindObj(handle, &idx)){
+		logger->debug("RemoveObjFromTargetList: obj {} already removed.", handle);
+		return false;
+	}
+	
+	// remove the particle ID
+	if (idx < targetCount-1)
+		memcpy(&targetListPartsysIds[idx], &targetListPartsysIds[idx + 1], sizeof(int)*(targetCount - idx));
+	targetListPartsysIds[targetCount - 1] = 0;
+
+	// remove the handle
+	for (int i=idx; i < targetCount-1; i++){
+		targetListHandles[i] = targetListHandles[i + 1];
+	}
+	targetListHandles[targetCount - 1] = objHndl::null;
+	
+	targetCount--;
+
+	if (!this->UpdateSpellsCastRegistry()){
+		logger->error("RemoveObjFromTargetList: Unable to save update to spell registry.");
+		return false;
+	}
+		
+	pySpellIntegration.UpdateSpell(this->spellId);
+	return true;
+
+}
+
+bool SpellPacketBody::EndPartsysForTgtObj(const objHndl& handle){
+	auto partsysId = GetPartsysForObj(handle);
+	if (!partsysId)
+		return false;
+	gameSystems->GetParticleSys().End(partsysId);
+	return true;
+}
 
 uint32_t __cdecl _getWizSchool(objHndl objHnd)
 {

@@ -134,6 +134,10 @@ struct SpellPacketBody{
 	void Debit(); // debit from the caster's memorized / daily casted spells
 	void MemorizedUseUp(SpellStoreData &spellData); // mark memorized spell as used up
 	void Reset();
+	uint32_t GetPartsysForObj(const objHndl& objHnd);
+	void DoForTargetList(std::function<void(const objHndl& tgtHndl)> cb);
+	bool RemoveObjFromTargetList(const objHndl& objHnd);
+	bool EndPartsysForTgtObj(const objHndl& handle);
 };
 
 const uint32_t TestSizeOfSpellPacketBody = sizeof(SpellPacketBody); // should be 0xAE8  (2792)
