@@ -212,6 +212,9 @@ public:
 		
 		// Addendums to the item description box
 		static char* (*orgGetItemDescr)(objHndl, objHndl) = replaceFunction<char*(__cdecl)(objHndl, objHndl)>(0x10122DD0, [](objHndl obj, objHndl item){
+			// need to put this here
+			temple::GetRef<objHndl>(0x10BF07B8) = item;
+
 			auto result = orgGetItemDescr(obj, item);
 			std::string addonStr;
 			ItemGetDescrAddon(obj, item, addonStr);
@@ -221,6 +224,8 @@ public:
 		});
 
 		replaceFunction(0x10155D20, TotalWeightOutputBtnTooltip);
+
+
 
 	}
 } charUiSys;

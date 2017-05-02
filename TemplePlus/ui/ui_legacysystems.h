@@ -194,6 +194,10 @@ public:
 		SetInventoryObjectState(!!handle);
 	}
 
+	objHndl GetTooltipItem() const	{
+		return mTooltipItem;
+	}
+
 	// Was @ 10144030 (ui_char_has_current_critter)
 	bool IsVisible() const {
 		return !!mCurrentCritter;
@@ -235,6 +239,7 @@ private:
 	objHndl &mCurrentCritter = temple::GetRef<objHndl>(0x10BE9940);
 	UiCharDisplayType &mDisplayType = temple::GetRef<UiCharDisplayType>(0x10BE994C);
 	BOOL &mLooting = temple::GetRef<BOOL>(0x10BE6EE8);
+	objHndl &mTooltipItem = temple::GetRef<objHndl>(0x10BF07B8);
 };
 
 class UiToolTip : public UiSystem {
