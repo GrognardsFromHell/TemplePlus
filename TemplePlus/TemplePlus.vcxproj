@@ -115,6 +115,7 @@
     <ClCompile Include="messages\messagequeue.cpp" />
     <ClCompile Include="mod_support.cpp" />
     <ClCompile Include="obj_structs.cpp" />
+    <ClCompile Include="portrait.cpp" />
     <ClCompile Include="protos.cpp" />
     <ClCompile Include="python\python_bonus.cpp" />
     <ClCompile Include="python\python_integration_class_spec.cpp" />

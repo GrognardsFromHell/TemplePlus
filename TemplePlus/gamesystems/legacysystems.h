@@ -108,6 +108,24 @@ public:
 	PortraitSystem(const GameSystemConf &config);
 	~PortraitSystem();
 	const std::string &GetName() const override;
+
+	bool GetFirstId(objHndl handle, int* idxOut) const; // gets first valid portrait from portraits.mes
+	bool GetNextId(objHndl handle, int* idxOut) const;
+	int GetKeyFromId(int id) const;
+	std::string GetPortraitFileFromId(int id, int subId = 0);
+
+	static bool IsPortraitFilenameValid(objHndl handle, const char* filename);
+private:
+
+	const int PORTRAIT_MAX_ID = 65536;
+	
+	struct PortraitPack{
+		int key = 0;
+		std::string path;
+		std::map<int, std::string> packContents;
+	};
+	std::vector<PortraitPack> mPortraitPacks;
+	MesHandle & mPortraitsMes = temple::GetRef<MesHandle>(0x10AB7368);
 };
 
 class SkillSystem : public GameSystem, public SaveGameAwareGameSystem {

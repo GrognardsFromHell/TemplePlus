@@ -21,6 +21,10 @@
 #include "deity/legacydeitysystem.h"
 #include "ui/ui_systems.h"
 #include "fade.h"
+#include "objects/objsystem.h"
+#include "infrastructure/vfs.h"
+#include "infrastructure/elfhash.h"
+#include "infrastructure/mesparser.h"
 
 
 //*****************************************************************************
@@ -313,18 +317,238 @@ const std::string &ScriptNameSystem::GetName() const {
 //*****************************************************************************
 
 PortraitSystem::PortraitSystem(const GameSystemConf &config) {
-	auto startup = temple::GetPointer<int(const GameSystemConf*)>(0x1007de10);
-	if (!startup(&config)) {
+	//auto startup = temple::GetPointer<int(const GameSystemConf*)>(0x1007de10);
+	if (!mesFuncs.Open("art\\interface\\portraits\\portraits.mes", &mPortraitsMes)){
 		throw TempleException("Unable to initialize game system Portrait");
 	}
+
+	TioFileList flist;
+	tio_filelist_create(&flist, "art\\interface\\portraits\\*");
+
+	for (auto i=0; i < flist.count; i++){
+		auto &fentry = flist.files[i];
+		if (!(fentry.attribs & TioFileAttribs::TFA_SUBDIR))
+			continue;
+		if (!_strcmpi(fentry.name, ".") || !_strcmpi(fentry.name, ".."))
+			continue;
+
+		PortraitPack porPackNew;
+		porPackNew.path = fmt::format("art\\interface\\portraits\\{}", fentry.name);
+		porPackNew.key = ElfHash::Hash(fentry.name);
+		if (porPackNew.key > 0 && porPackNew.key <= PORTRAIT_MAX_ID){
+			porPackNew.key = ElfHash::Hash(fmt::format("{}a{}b{}c{}",fentry.name, fentry.name, fentry.name, fentry.name));
+		}
+
+
+		auto portFname = fmt::format("{}\\portraits.mes", porPackNew.path);
+		if (!tio_fileexists(portFname.c_str()))
+			continue;
+
+		auto mesContent = MesFile::ParseFile(portFname);
+
+		TioFileList portraitTgaFiles;
+		tio_filelist_create(&portraitTgaFiles, fmt::format("{}\\*.tga", porPackNew.path).c_str());
+		auto lastIdx = 0;
+		for (auto it: mesContent){
+			auto portraitFname = fmt::format("{}\\{}",porPackNew.path, it.second);
+			//if (!tio_fileexists(portraitFname.c_str())) // so it doesn't list non-existant entries (i.e. stuff that's not in the extension folder)
+			//	continue;
+			auto foundFile = false;
+			for (auto j= 0 ; j < portraitTgaFiles.count; j++){
+				if (!_strcmpi(portraitTgaFiles.files[ (j + lastIdx) % portraitTgaFiles.count].name, it.second.c_str())){
+					foundFile = true;
+					lastIdx = j + lastIdx + 1;
+					break;
+				}
+			}
+			if (!foundFile)
+				continue;
+
+			porPackNew.packContents[it.first] = it.second;
+		}
+
+		tio_filelist_destroy(&portraitTgaFiles);
+		mPortraitPacks.push_back(porPackNew);
+	}
+
+	tio_filelist_destroy(&flist);
 }
+
 PortraitSystem::~PortraitSystem() {
-	auto shutdown = temple::GetPointer<void()>(0x1007de30);
-	shutdown();
+	/*auto shutdown = temple::GetPointer<void()>(0x1007de30);
+	shutdown();*/
+	mesFuncs.Close(mPortraitsMes);
 }
 const std::string &PortraitSystem::GetName() const {
 	static std::string name("Portrait");
 	return name;
+}
+
+bool PortraitSystem::GetFirstId(objHndl handle, int* idxOut) const {
+	*idxOut = 0;
+
+	MesLine line;
+	if (!mesFuncs.GetFirstLine(mPortraitsMes, &line))
+		return false;
+	
+	auto mesFindLine = temple::GetRef<BOOL(__cdecl)(MesHandle, MesLine*)>(0x101E6650);
+
+	while (line.key % 10 || !IsPortraitFilenameValid(handle, line.value)){
+		if (!mesFindLine(mPortraitsMes, &line))
+			return false;
+	}
+
+	*idxOut = line.key;
+	return true;
+}
+
+bool PortraitSystem::GetNextId(objHndl handle, int* idxOut) const {
+	MesLine line(*idxOut);
+
+	auto findNextLine = temple::GetRef<BOOL(__cdecl)(MesHandle, MesLine*)>(0x101E6650);
+
+	MesHandle mh = mPortraitsMes;
+	auto packKey = GetKeyFromId(line.key);
+
+	auto moveToFirstPortraitPack = [&](){ // moves to first portrait pack (if any is found) after exhausting the "normal" portraits
+		if (!mPortraitPacks.size())
+			return false;
+		if (!mPortraitPacks[0].packContents.size())
+			return false;
+		
+		packKey = mPortraitPacks[0].key;
+		*idxOut = mPortraitPacks[0].packContents.begin()->first ^ packKey;
+		return true;
+	};
+
+	// normal portraits retrieval
+	if (packKey == 0){
+		if (!findNextLine(mh, &line)){
+			return moveToFirstPortraitPack();
+		}
+			
+		while (line.key % 10 || !IsPortraitFilenameValid(handle, line.value)) {
+			if (!findNextLine(mh, &line)){
+				return moveToFirstPortraitPack();
+			}			
+		}
+
+		*idxOut = (line.key ^ packKey);
+		return true;
+	}
+
+
+	auto moveToNextPortraitPack=  [&](){
+		auto isNextOne = false;
+		for (auto it : mPortraitPacks){
+			if (isNextOne) {
+				if (!it.packContents.size())
+					continue;
+
+				/// todo verify is multiple of 10
+				*idxOut = it.packContents.begin()->first ^ it.key;
+				return true;
+			}
+
+			if (it.key == packKey){
+				isNextOne = true;
+				continue;
+			}
+			
+		}
+		return false;
+	};
+
+	if (packKey != 0){
+		for (auto it: mPortraitPacks){
+			if (it.key != packKey)
+				continue;
+			// found the portrait pack from the id
+			
+			auto foundPortrait = false;
+
+			auto dekey = *idxOut ^ packKey;
+
+			auto nextId = it.packContents.find(dekey);
+			do	{
+				std::advance(nextId, 1);
+			} while (nextId != it.packContents.end() && (nextId->first % 10) );
+				
+
+			if (nextId == it.packContents.end()){
+				return moveToNextPortraitPack();
+			}
+				
+
+			auto result = nextId->first;
+
+			*idxOut = result ^ packKey;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+int PortraitSystem::GetKeyFromId(int id) const{
+	if (id < PORTRAIT_MAX_ID)
+		return 0;
+
+	for (auto it : mPortraitPacks){
+		auto dekey = (int)(id ^ it.key);
+		if (dekey > 0 && dekey < PORTRAIT_MAX_ID)
+			return it.key;
+	}
+	return 0;
+}
+
+std::string PortraitSystem::GetPortraitFileFromId(int id, int subId){
+	auto packKey = GetKeyFromId(id);
+	auto result = fmt::format("art\\interface\\portraits\\");
+
+	MesLine line(id + subId);
+	if(!packKey){ // normal portraits.mes
+		
+		if (!mesFuncs.GetLine(mPortraitsMes, &line)) { // If not found, use TempMan
+			line.key = 0 + subId; 
+			mesFuncs.GetLine(mPortraitsMes, &line);
+		}
+		result.append(line.value);
+		return result;
+	}
+
+	// get from new portrait pack
+	for (auto it: mPortraitPacks){
+		if (it.key != packKey)
+			continue;
+		auto dekey = id ^ packKey;
+		auto portFind = it.packContents.find(dekey + subId);
+
+		if (portFind == it.packContents.end()){ // not found, return TempMan
+			line.key = 0 + subId;
+			mesFuncs.GetLine(mPortraitsMes, &line);
+			result.append(line.value);
+			return result;
+		}
+
+		result = fmt::format("{}\\{}", it.path, portFind->second);
+		return result;
+	}
+
+	// failsafe
+	line.key = 0 + subId;
+	mesFuncs.GetLine(mPortraitsMes, &line);
+	result.append(line.value);
+	return result;
+}
+
+bool PortraitSystem::IsPortraitFilenameValid(objHndl handle, const char* filename) {
+	if (!filename || !*filename || !_strnicmp("TMP", filename, 3))
+		return false;
+	if (!_strnicmp("NPC", filename, 3) || !_strnicmp("MOO", filename, 3)) {
+		return objSystem->GetObject(handle)->IsNPC();
+	}
+	return true;
 }
 
 //*****************************************************************************

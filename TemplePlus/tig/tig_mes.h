@@ -43,6 +43,7 @@ struct MesFuncs : temple::AddressTable {
 	// reads a line based on its ordinal rather than its entry index
 	e.g. if the second line is index {1000}, you would use lineCount = 2 to retrieve it this way
 	*/
-	BOOL ReadLineDirect(MesHandle mesHandle, int lineCount, MesLine* mesLine); 
+	BOOL ReadLineDirect(MesHandle mesHandle, int lineCount, MesLine* mesLine);
+	bool GetFirstLine(MesHandle mesHandle, MesLine* lineOut);
 };
 extern MesFuncs mesFuncs;

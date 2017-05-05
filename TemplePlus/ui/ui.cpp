@@ -8,8 +8,11 @@
 #include <tig/tig_mouse.h>
 #include "messages/messagequeue.h"
 #include "widgets/widgets.h"
+#include "gamesystems/gamesystems.h"
+#include "gamesystems/legacysystems.h"
 
 UiManager *uiManager;
+
 
 /**
  * Handles button click triggering.
@@ -76,17 +79,36 @@ public:
 		 /*
 		 Hook for missing portraits (annoying logspam!)
 		 */
-		 static int(__cdecl*orgGetAsset)(int, int, void*, int) = replaceFunction<int(__cdecl)(int, int, void*, int)>(0x1004A360, [](int assetType, int id, void* out, int subId)
-		 {
-			 // portraits
-			 if (assetType == 0) {
-				 MesLine line;
-				 line.key = id + subId;
-				 auto uiArtMgrMesFiles = temple::GetRef<MesHandle*>(0x10AA31C8);
+		 static int(__cdecl*orgGetAsset)(UiAssetType, int, int*, int) = replaceFunction<int(__cdecl)(UiAssetType, int, int*, int)>(0x1004A360,
+			 [](UiAssetType assetType, int id, int* out, int subId) {
+			 
+			 // portraits todo: extend
+			 if (assetType == UiAssetType::Portraits){
 
-				 if (!mesFuncs.GetLine(uiArtMgrMesFiles[assetType], &line)){
-					 return orgGetAsset(assetType, 0, out, subId);
+				 auto uiArtManAssets_ = temple::GetRef<IdxTable<int>*>(0x10AA3220);
+				 IdxTableWrapper<int> uiPortraitTextures(&uiArtManAssets_[0]);
+
+				 auto textId = uiPortraitTextures.get(id + subId);
+				 if (textId){
+					 *out = *textId;
+					 return 0;
 				 }
+
+				 /*MesLine line;
+				 line.key = id + subId;
+*/
+				 auto porFile = gameSystems->GetPortrait().GetPortraitFileFromId(id, subId);
+
+				 if (textureFuncs.RegisterTexture(porFile.c_str(), out)){
+					 return 1;
+				 }
+
+				 uiPortraitTextures.put(id + subId, *out);
+				 //auto uiArtMgrMesFiles = temple::GetRef<MesHandle*>(0x10AA31C8);
+
+				 /*if (!mesFuncs.GetLine(uiArtMgrMesFiles[(int)assetType], &line)){
+					 return orgGetAsset(assetType, 0, out, subId);
+				 }*/
 			 }
 			 return orgGetAsset(assetType, id, out, subId);
 		 });

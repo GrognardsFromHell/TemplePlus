@@ -46,3 +46,8 @@ int MesFuncs::GetNumLines(MesHandle mesHandle){
 BOOL MesFuncs::ReadLineDirect(MesHandle mesHandle, int lineCount, MesLine* mesLine){
 	return temple::GetRef<BOOL(__cdecl)(MesHandle, int, MesLine*)>(0x101E6310)(mesHandle, lineCount, mesLine);
 }
+
+bool MesFuncs::GetFirstLine(MesHandle mesHandle, MesLine* lineOut){
+	// todo
+	return temple::GetRef<BOOL(__cdecl)(MesHandle, MesLine*)>(0x101E62B0)(mesHandle, lineOut) != FALSE;
+}
