@@ -3462,6 +3462,57 @@ static PyObject* PyObjHandle_GetCharacterClasses(PyObject* obj, void*) {
 	return  outTup;
 }
 
+static PyObject* PyObjHandle_GetHighestArcaneClass(PyObject* obj, void*) {
+	auto self = GetSelf(obj);
+	objHndl objHnd = self->handle;
+	if (!objHnd) {
+		return PyInt_FromLong(0);
+	}
+
+	auto highestClass = (Stat)0;
+	auto highestLvl = 0;
+
+	for (auto it : d20ClassSys.classEnumsWithSpellLists) {
+		auto classEnum = (Stat)it;
+		if (d20ClassSys.IsArcaneCastingClass(classEnum)) {
+			auto lvlThis = objects.StatLevelGet(objHnd, classEnum);
+			if (lvlThis > highestLvl) {
+				highestLvl = lvlThis;
+				highestClass = classEnum;
+			}
+		}
+	}
+
+	return PyInt_FromLong(highestClass);
+}
+
+
+static PyObject* PyObjHandle_GetHighestDivineClass(PyObject* obj, void*) {
+	auto self = GetSelf(obj);
+	objHndl objHnd = self->handle;
+	if (!objHnd) {
+		return PyInt_FromLong(0);
+	}
+
+	auto highestClass = (Stat)0;
+	auto highestLvl = 0;
+
+	for (auto it : d20ClassSys.classEnumsWithSpellLists) {
+		auto classEnum = (Stat)it;
+		if (d20ClassSys.IsDivineCastingClass(classEnum)) {
+			auto lvlThis = objects.StatLevelGet(objHnd, classEnum);
+			if (lvlThis > highestLvl){
+				highestLvl = lvlThis;
+				highestClass = classEnum;
+			}
+		}
+	}
+
+	return PyInt_FromLong(highestClass);
+}
+
+
+
 static PyObject* PyObjHandle_GetSpellsKnown(PyObject* obj, void*) {
 	auto self = GetSelf(obj);
 	if (!self->handle)
@@ -3515,6 +3566,8 @@ static PyObject* PyObjHandle_SafeForUnpickling(PyObject*, void*) {
 PyGetSetDef PyObjHandleGetSets[] = {
 	{ "area", PyObjHandle_GetArea, NULL, NULL, NULL },
 	{"char_classes", PyObjHandle_GetCharacterClasses, NULL, "a tuple containing the character classes array", NULL },
+	{ "highest_arcane_class", PyObjHandle_GetHighestArcaneClass, NULL, "Highest Arcane spell casting class", NULL },
+	{ "highest_divine_class", PyObjHandle_GetHighestDivineClass, NULL, "Highest Divine spell casting class", NULL },
 	{"description", PyObjHandle_GetDescription, NULL, NULL },
 	{"name", PyObjHandle_GetNameId, NULL, NULL},
 	{"location", PyObjHandle_GetLocation, NULL, NULL},
