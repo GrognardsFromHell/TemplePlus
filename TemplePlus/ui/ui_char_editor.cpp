@@ -155,9 +155,7 @@ public:
 	bool FeatCanPick(feat_enums feat);
 	bool IsSelectingRangerSpec();
 	bool IsClassBonusFeat(feat_enums feat);
-	bool IsBonusFeatDisregardingPrereqs(feat_enums feat);
 
-	void SetBonusFeats(std::vector<FeatInfo> & fti);
 	void FeatsSanitize();
 	void FeatsMultiSelectActivate(feat_enums feat);
 	feat_enums FeatsMultiGetFirst(feat_enums feat); // first alphabetical
@@ -272,7 +270,7 @@ private:
 	feat_enums featsMultiSelected = FEAT_NONE, mFeatsMultiMasterFeat = FEAT_NONE;
 
 	std::unique_ptr<CharEditorClassSystem> mClass;
-	std::vector<FeatInfo> mExistingFeats, mSelectableFeats, mMultiSelectFeats, mMultiSelectMasterFeats, mBonusFeats;
+	std::vector<FeatInfo> mExistingFeats, mSelectableFeats, mMultiSelectFeats, mMultiSelectMasterFeats; 
 	//std::unique_ptr<CharEditorStatsSystem> mStats;
 	//std::unique_ptr<CharEditorFeaturesSystem> mFeatures;
 	//std::unique_ptr<CharEditorSkillsSystem> mSkills;
@@ -385,7 +383,7 @@ PYBIND11_PLUGIN(tp_char_editor){
 		// methods
 	mm
 	.def("set_bonus_feats", [](std::vector<FeatInfo> & fti){
-		uiCharEditor.SetBonusFeats(fti);
+		chargen.SetBonusFeats(fti);
 	})
 	.def("get_spell_enums", []()->std::vector<KnownSpellInfo>& {
 		return chargen.GetKnownSpellInfo();
@@ -666,6 +664,7 @@ void UiCharEditor::ClassWidgetsFree(){
 }
 
 BOOL UiCharEditor::ClassShow(){
+	chargen.SetIsNewChar(false);
 	uiManager->SetHidden(classWndId, false);
 	uiManager->BringToFront(classWndId);
 	return 1;
@@ -1097,7 +1096,7 @@ void UiCharEditor::FeatsActivate(){
 	auto &selPkt = GetCharEditorSelPacket();
 
 	mIsSelectingBonusFeat = d20ClassSys.IsSelectingFeatsOnLevelup(handle, selPkt.classCode);
-	mBonusFeats.clear();
+	chargen.BonusFeatsClear();
 	if (mIsSelectingBonusFeat)
 		d20ClassSys.LevelupGetBonusFeats(handle, selPkt.classCode); // can call set_bonus_feats
 
@@ -2285,7 +2284,7 @@ bool UiCharEditor::FeatCanPick(feat_enums feat) {
 	if (IsSelectingBonusFeat() && IsClassBonusFeat(feat)){
 		if ( feats.IsFeatPropertySet(feat, FPF_ROGUE_BONUS))
 			return true;
-		if (uiCharEditor.IsBonusFeatDisregardingPrereqs(feat))
+		if (chargen.IsBonusFeatDisregardingPrereqs(feat))
 			return true;
 	}
 
@@ -2391,7 +2390,11 @@ bool UiCharEditor::IsSelectingRangerSpec()
 	return isRangerSpecial;
 }
 
-bool UiCharEditor::IsClassBonusFeat(feat_enums feat) {
+bool UiCharEditor::IsClassBonusFeat(feat_enums feat){
+	return chargen.IsClassBonusFeat(feat);
+}
+
+bool Chargen::IsClassBonusFeat(feat_enums feat) {
 	// mBonusFeats is delivered via the python class API
 	for (auto it : mBonusFeats) {
 		if (it.featEnum == feat)
@@ -2425,22 +2428,6 @@ bool UiCharEditor::IsClassBonusFeat(feat_enums feat) {
 	}
 }
 
-bool UiCharEditor::IsBonusFeatDisregardingPrereqs(feat_enums feat){
-	
-	for (auto it : mBonusFeats) {
-		if (it.featEnum == feat)
-			return (it.flag & FeatInfoFlag::DisregardPrereqs) != 0;
-	}
-
-	return false;
-}
-
-void UiCharEditor::SetBonusFeats(std::vector<FeatInfo>& fti) {
-	mBonusFeats.clear();
-	for (auto it : fti) {
-		uiCharEditor.mBonusFeats.push_back(it);
-	}
-}
 
 void UiCharEditor::FeatsSanitize() {
 	auto &selPkt = GetCharEditorSelPacket();
@@ -3127,6 +3114,11 @@ int Chargen::GetRolledStatIdx(int x, int y, int * xyOut)
 	return 0;
 }
 
+void Chargen::SetIsNewChar(bool state)
+{
+	mIsNewChar = state;
+}
+
 bool Chargen::SpellsNeedReset()
 {
 	return mSpellsNeedReset;
@@ -3167,5 +3159,33 @@ bool Chargen::SpellIsForbidden(int spEnum){
 		return true;
 	if (spellSys.IsForbiddenSchool(handle, spSchool))
 		return true;
+	return false;
+}
+
+void Chargen::BonusFeatsClear()
+{
+	mBonusFeats.clear();
+}
+
+void Chargen::SetBonusFeats(std::vector<FeatInfo>& fti)
+{
+	mBonusFeats.clear();
+	for (auto it : fti) {
+		mBonusFeats.push_back(it);
+	}
+}
+
+int Chargen::GetNewLvl(Stat classEnum)
+{
+	auto handle = GetEditedChar();
+	return objects.StatLevelGet(handle, classEnum) + 1;
+}
+
+bool Chargen::IsBonusFeatDisregardingPrereqs(feat_enums feat){
+	for (auto it : mBonusFeats) {
+		if (it.featEnum == feat)
+			return (it.flag & FeatInfoFlag::DisregardPrereqs) != 0;
+	}
+
 	return false;
 }

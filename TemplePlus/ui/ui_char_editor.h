@@ -127,6 +127,8 @@ public:
 	int * GetRolledStats();
 	int GetRolledStatIdx(int x, int y, int *xyOut = nullptr); // gets the index of the Rolled Stats button according to the mouse position. Returns -1 if none.
 
+	void SetIsNewChar(bool state);
+
 	bool SpellsNeedReset();
 	void SpellsNeedResetSet(bool value);
 
@@ -134,6 +136,13 @@ public:
 	bool SpellIsAlreadyKnown(int spEnum, int spellClass);
 	bool SpellIsForbidden(int spEnum);
 
+
+	void BonusFeatsClear();
+	void SetBonusFeats(std::vector<FeatInfo> & fti);
+	
+	int GetNewLvl(Stat classCode = stat_level);
+	bool IsClassBonusFeat(feat_enums feat);
+	bool IsBonusFeatDisregardingPrereqs(feat_enums feat);
 
 	eastl::vector<string> levelLabels;
 	eastl::vector<string> spellLevelLabels;
@@ -144,6 +153,8 @@ protected:
 	std::vector<FeatInfo> mExistingFeats, mSelectableFeats, mMultiSelectFeats, mMultiSelectMasterFeats, mBonusFeats;
 
 	bool mSpellsNeedReset;
+
+	bool mIsNewChar = false; // used in differentiating new character generation vs. levelup
 };
 
 extern Chargen chargen;

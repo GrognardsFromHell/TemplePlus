@@ -25,6 +25,11 @@ public:
 	 */
 	XMINT2 MapToScene(int x, int y) const;
 
+	/*
+	 * maps from scene coordinates to window coordinates
+	 */
+	XMINT2 MapFromScene(int x, int y) const;
+
 private:
 	gfx::ResizeListenerRegistration mResizeListener;
 	MainWindow &mMainWindow;

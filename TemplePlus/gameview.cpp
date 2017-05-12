@@ -75,6 +75,18 @@ XMINT2 GameView::MapToScene(int x, int y) const
 	return{ (int) localX, (int) localY };
 }
 
+XMINT2 GameView::MapFromScene(int x, int y) const{
+
+	auto localX = x * mSceneScale;
+	auto localY = y * mSceneScale;
+	
+	// move it into the scene rectangle coordinate space
+	localX += mSceneRect.x+1;
+	localY += mSceneRect.y+1;
+
+	return{ (int)localX, (int)localY };
+}
+
 void GameView::Resize(int width, int height)
 {
 	auto widthFactor = (float) width / (float)mWidth;

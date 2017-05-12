@@ -179,8 +179,6 @@ void DungeonMaster::RenderDmButton(){
 
 	constexpr auto dmToolbarWidgFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse;
 
-	auto scRect = gameView->GetSceneRect();
-
 	// set window background to transparent
 	auto &style = ImGui::GetStyle();
 	auto prevColor = style.Colors[ImGuiCol_WindowBg];
@@ -190,13 +188,18 @@ void DungeonMaster::RenderDmButton(){
 
 		auto isHistMini = uiSystems->GetUtilityBar().IsRollHistoryVisible();
 
-		ImVec2 wndPos(scRect.x + scRect.z - 88, scRect.y + scRect.w - 102 -272*isHistMini);
+		auto blyat = gameView->MapFromScene(config.renderWidth - 88, config.renderHeight - 102 - 272 * isHistMini);
+		auto cyka  = gameView->MapFromScene(config.renderWidth - 88 + 24, config.renderHeight - 102 - 272 * isHistMini + 20);
+		auto w = cyka.x - blyat.x;
+		auto h = cyka.y - blyat.y;
+		ImVec2 wndPos(blyat.x-4, blyat.y-4);
 		ImGui::SetWindowPos(wndPos);
 
 		ImGui::SetWindowSize(ImVec2(1, 1));
 
-		UiRenderer::DrawTexture(mIconTexId, TigRect(scRect.z - 88, scRect.w - 102 - 272*isHistMini, 24, 20));
-		if (ImGui::InvisibleButton("dungeonMasterBtn", ImVec2(24, 20))) {
+		
+		UiRenderer::DrawTexture(mIconTexId, TigRect(blyat.x, blyat.y, w, h));
+		if (ImGui::InvisibleButton("dungeonMasterBtn", ImVec2(w, h))) {
 			Toggle();
 		}
 
