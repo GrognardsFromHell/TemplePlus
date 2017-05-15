@@ -211,6 +211,7 @@ public:
 
 	// feats
 	bool IsSelectingNormalFeat(); // the normal feat you get every 3rd level in 3.5ed
+	bool IsSelectingSecondFeat(); // currently racial bonus for humans
 	bool IsSelectingBonusFeat(); // selecting a class bonus feat
 
 	// deity
@@ -251,7 +252,7 @@ public:
 	int featsMultiCenterX, featsMultiCenterY;
 	TigRect featMultiOkRect, featMultiOkTextRect, featMultiCancelRect, featMultiCancelTextRect, featMultiTitleRect;
 	TigRect featsAvailTitleRect, featsTitleRect, featsExistingTitleRect, featsClassBonusRect;
-	TigRect featsSelectedBorderRect, featsClassBonusBorderRect, feat0TextRect, feat1TextRect, feat2TextRect;
+	TigRect featsSelectedBorderRect, featsSelected2BorderRect, featsClassBonusBorderRect, feat0TextRect, feat1TextRect, feat2TextRect;
 
 	int featsMainWndId = 0, featsMultiSelectWndId = 0;
 	int featsScrollbarId = 0, featsExistingScrollbarId = 0, featsMultiSelectScrollbarId = 0;
@@ -260,9 +261,9 @@ public:
 	LgcyScrollBar featsScrollbar, featsExistingScrollbar, featsMultiSelectScrollbar;
 	eastl::vector<int> featsAvailBtnIds, featsExistingBtnIds, featsMultiSelectBtnIds;
 	int featsMultiOkBtnId = 0, featsMultiCancelBtnId = 0;
-	const int FEATS_AVAIL_BTN_COUNT = 17; // vanilla 18
+	const int FEATS_AVAIL_BTN_COUNT = 15; // vanilla 15
 	const int FEATS_AVAIL_BTN_HEIGHT = 12; // vanilla 11
-	const int FEATS_EXISTING_BTN_COUNT = 10; // vanilla 11
+	const int FEATS_EXISTING_BTN_COUNT = 7; // vanilla 8
 	const int FEATS_EXISTING_BTN_HEIGHT = 13; // vanilla 12
 	const int FEATS_MULTI_BTN_COUNT = 15;
 	const int FEATS_MULTI_BTN_HEIGHT = 12;
@@ -305,6 +306,7 @@ public:
 	ColorRect genericShadowColor = ColorRect(0xFF000000);
 	ColorRect whiteColorRect = ColorRect(0xFFFFffff);
 	ColorRect blueColorRect = ColorRect(0xFF0000ff);
+	ColorRect darkGreenColorRect = ColorRect(0xFF006003);
 	ColorRect classBtnShadowColor = ColorRect(0xFF000000);
 	ColorRect classBtnColorRect = ColorRect(0xFFFFffff);
 	TigTextStyle whiteTextGenericStyle;
@@ -1117,6 +1119,8 @@ BOOL UiPcCreation::FeatsSystemInit(GameSystemConf& conf){
 
 	featsCenteredStyle = featsGreyedStyle = featsNormalTextStyle = featsExistingTitleStyle = featsGoldenStyle = featsClassStyle = baseStyle;
 
+	featsClassStyle.textColor = featsClassStyle.colors2 = featsClassStyle.colors4 = &darkGreenColorRect;
+
 	featsCenteredStyle.flags = 0x10;
 
 	static ColorRect goldenColor(0xFFFFD919);
@@ -1131,8 +1135,8 @@ BOOL UiPcCreation::FeatsSystemInit(GameSystemConf& conf){
 	mesFuncs.GetLine_Safe(pcCreationMes, &mesline);
 	featsAvailTitleString.append(mesline.value);
 
-	// Existing Feats title
-	mesline.key = 19005;
+	// Class Feats title
+	mesline.key = 19002;
 	mesFuncs.GetLine_Safe(pcCreationMes, &mesline);
 	featsExistingTitleString.append(mesline.value);
 
@@ -1174,7 +1178,7 @@ BOOL UiPcCreation::FeatsSystemInit(GameSystemConf& conf){
 }
 
 BOOL UiPcCreation::FeatsWidgetsInit(int w, int h){
-	featsMainWnd = LgcyWindow(259, 117, 405, 271);
+	featsMainWnd = LgcyWindow(325, 151, 431, 250);
 	featsMainWnd.flags = 1;
 	featsMainWnd.render = [](int widId) {uiPcCreation.FeatsWndRender(widId); };
 	featsMainWnd.handleMessage = [](int widId, TigMsg*msg) { return uiPcCreation.FeatsWndMsg(widId, msg); };
@@ -1239,16 +1243,16 @@ BOOL UiPcCreation::FeatsWidgetsInit(int w, int h){
 		featsMultiBtnRects.push_back(TigRect(featMultiBtn.x, featMultiBtn.y, featMultiBtn.width, featMultiBtn.height));
 	}
 
-	featsAvailTitleRect = TigRect(17, 21, 185, 10);
-	featsTitleRect = TigRect(206, 27, 185, 10);
-	featsExistingTitleRect = TigRect(206, 103, 185, 10);
-	featsClassBonusRect = TigRect(206, 65, 185, 10);
+	featsAvailTitleRect = TigRect(17, 17, 185, 10);
+	featsTitleRect = TigRect(220, 19, 185, 10);
+	featsExistingTitleRect = TigRect(220, 122, 185, 10);
+	featsClassBonusRect = TigRect(220, 78, 185, 10);
 
 	// Selectable feats
 	featsAvailBtnIds.clear();
 	featsBtnRects.clear();
 	for (auto i = 0; i < FEATS_AVAIL_BTN_COUNT; i++) {
-		LgcyButton featsAvailBtn("Feats Available btn", featsMainWndId, 7, 38 + i*(FEATS_AVAIL_BTN_HEIGHT + 1), 169, FEATS_AVAIL_BTN_HEIGHT);
+		LgcyButton featsAvailBtn("Feats Available btn", featsMainWndId, 20, 33 + i*(FEATS_AVAIL_BTN_HEIGHT + 1), 169, FEATS_AVAIL_BTN_HEIGHT);
 
 		featsAvailBtn.x += featsMainWnd.x; featsAvailBtn.y += featsMainWnd.y;
 		featsAvailBtn.render = [](int id) {uiPcCreation.FeatsEntryBtnRender(id); };
@@ -1259,7 +1263,7 @@ BOOL UiPcCreation::FeatsWidgetsInit(int w, int h){
 		featsBtnRects.push_back(TigRect(featsAvailBtn.x - featsMainWnd.x, featsAvailBtn.y - featsMainWnd.y, featsAvailBtn.width, featsAvailBtn.height));
 	}
 	//scrollbar
-	featsScrollbar.Init(186, 35, 230);
+	featsScrollbar.Init(191, 31, 201);
 	featsScrollbar.parentId = featsMainWndId;
 	featsScrollbar.x += featsMainWnd.x;
 	featsScrollbar.y += featsMainWnd.y;
@@ -1270,7 +1274,7 @@ BOOL UiPcCreation::FeatsWidgetsInit(int w, int h){
 	featsExistingBtnIds.clear();
 	featsExistingBtnRects.clear();
 	for (auto i = 0; i < FEATS_EXISTING_BTN_COUNT; i++) {
-		LgcyButton featsExistingBtn("Feats Existing btn", featsMainWndId, 212, 121 + i*(FEATS_EXISTING_BTN_HEIGHT + 1), 175, FEATS_EXISTING_BTN_HEIGHT);
+		LgcyButton featsExistingBtn("Feats Existing btn", featsMainWndId, 225, 140 + i*(FEATS_EXISTING_BTN_HEIGHT + 1), 175, FEATS_EXISTING_BTN_HEIGHT);
 
 		featsExistingBtn.x += featsMainWnd.x; featsExistingBtn.y += featsMainWnd.y;
 		featsExistingBtn.render = [](int id) {uiPcCreation.FeatsExistingBtnRender(id); };
@@ -1281,17 +1285,18 @@ BOOL UiPcCreation::FeatsWidgetsInit(int w, int h){
 		featsExistingBtnRects.push_back(TigRect(featsExistingBtn.x - featsMainWnd.x, featsExistingBtn.y - featsMainWnd.y, featsExistingBtn.width, featsExistingBtn.height));
 	}
 	//scrollbar
-	featsExistingScrollbar.Init(381, 117, 148);
+	featsExistingScrollbar.Init(395, 137, 95);
 	featsExistingScrollbar.parentId = featsMainWndId;
 	featsExistingScrollbar.x += featsMainWnd.x;
 	featsExistingScrollbar.y += featsMainWnd.y;
 	featsExistingScrollbarId = uiManager->AddScrollBar(featsExistingScrollbar, featsMainWndId);
 
-	featsSelectedBorderRect = TigRect(featsMainWnd.x + 207, featsMainWnd.y + 42, 185, 19);
-	featsClassBonusBorderRect = TigRect(featsMainWnd.x + 221, featsMainWnd.y + 86, 185, 19);
-	feat0TextRect = TigRect(209, 46, 185, 12);
-	feat1TextRect = TigRect(209, 46 + 21, 185, 12);
-	feat2TextRect = TigRect(209, 85, 185, 12);
+	featsSelectedBorderRect = TigRect(featsMainWnd.x + 220, featsMainWnd.y + 34, 185, 19);
+	featsSelected2BorderRect = TigRect(featsMainWnd.x + 220, featsMainWnd.y + 34 + 20, 185, 19);
+	featsClassBonusBorderRect = TigRect(featsMainWnd.x + 220, featsMainWnd.y + 97, 185, 19);
+	feat0TextRect = TigRect(223, 35, 185, 12);
+	feat1TextRect = TigRect(223, 35 + 21, 185, 12);
+	feat2TextRect = TigRect(223, 98, 185, 12);
 
 	return 1;
 }
@@ -1435,6 +1440,9 @@ BOOL UiPcCreation::FeatsCheckComplete()
 
 	// is a 3rd level and no feat chosen
 	if (IsSelectingNormalFeat() && selPkt.feat0 == FEAT_NONE)
+		return FALSE;
+
+	if (IsSelectingSecondFeat() && selPkt.feat1 == FEAT_NONE)
 		return FALSE;
 
 	if (IsSelectingBonusFeat() && selPkt.feat2 == FEAT_NONE) // the logic will be handled in the msg callbacks & Python API now
@@ -2124,7 +2132,15 @@ BOOL UiPcCreation::FeatsWndMsg(int widId, TigMsg* msg){
 				putFeat = true;
 				break;
 			}
-			else if (IsSelectingBonusFeat() && IsClassBonusFeat(feat) && selPkt.feat2 == FEAT_NONE)
+			
+			if(IsSelectingSecondFeat() && selPkt.feat1 == FEAT_NONE)
+			{
+				selPkt.feat1 = feat;
+				putFeat = true;
+				break;
+			}
+			
+			if (IsSelectingBonusFeat() && IsClassBonusFeat(feat) && selPkt.feat2 == FEAT_NONE)
 			{
 				selPkt.feat2 = feat;
 				putFeat = true;
@@ -2146,6 +2162,9 @@ BOOL UiPcCreation::FeatsWndMsg(int widId, TigMsg* msg){
 
 		else if (featsSelectedBorderRect.ContainsPoint(msgM->x, msgM->y)) {
 			selPkt.feat0 = FEAT_NONE;
+		}
+		else if (featsSelected2BorderRect.ContainsPoint(msgM->x, msgM->y)) {
+			selPkt.feat1 = FEAT_NONE;
 		}
 		else if (featsClassBonusBorderRect.ContainsPoint(msgM->x, msgM->y) && IsSelectingBonusFeat()) {
 			selPkt.feat2 = FEAT_NONE;
@@ -2194,6 +2213,12 @@ void UiPcCreation::FeatsWndRender(int widId)
 			UiRenderer::DrawTextInWidget(widId, GetFeatName(selPkt.feat0), feat0TextRect, GetFeatStyle(selPkt.feat0));
 		}
 	}
+	if (IsSelectingSecondFeat()){
+		RenderHooks::RenderRectInt(featsSelected2BorderRect.x, featsSelected2BorderRect.y, featsSelected2BorderRect.width, featsSelected2BorderRect.height, 0xFFFFffff);
+		if (selPkt.feat1 != FEAT_NONE) {
+			UiRenderer::DrawTextInWidget(widId, GetFeatName(selPkt.feat1), feat1TextRect, GetFeatStyle(selPkt.feat1));
+		}
+	}
 
 	// Class Bonus Feat slot
 	if (IsSelectingBonusFeat()) {
@@ -2206,8 +2231,8 @@ void UiPcCreation::FeatsWndRender(int widId)
 		}
 	}
 
-	// Existing Feats title
-	RenderHooks::RenderRectInt(featsMainWnd.x + 207, featsMainWnd.y + 118, 185, 145, 0xFF5D5D5D);
+	// Class Feats rect+title
+	RenderHooks::RenderRectInt(featsMainWnd.x + 220, featsMainWnd.y + 138, 186, 92, 0xFF5D5D5D);
 	UiRenderer::DrawTextInWidget(widId, featsExistingTitleString, featsExistingTitleRect, featsExistingTitleStyle);
 
 	StateTitleRender(widId);
@@ -2265,6 +2290,11 @@ BOOL UiPcCreation::FeatsEntryBtnMsg(int widId, TigMsg* msg)
 			if (feats.IsFeatMultiSelectMaster(feat))
 				FeatsMultiSelectActivate(feat);
 		}
+		else if (IsSelectingSecondFeat() && featsSelected2BorderRect.ContainsPoint(msgW->x, msgW->y)){
+			selPkt.feat1 = feat;
+			if (feats.IsFeatMultiSelectMaster(feat))
+				FeatsMultiSelectActivate(feat);
+		}
 		// check if inserted into the bonus slot
 		else if (IsSelectingBonusFeat()
 			&& featsClassBonusBorderRect.ContainsPoint(msgW->x, msgW->y) && IsClassBonusFeat(feat)) {
@@ -2279,8 +2309,9 @@ BOOL UiPcCreation::FeatsEntryBtnMsg(int widId, TigMsg* msg)
 		FeatsSanitize();
 		return TRUE;
 	case TigMsgWidgetEvent::Entered:
-		temple::GetRef<void(int, char*, size_t)>(0x10162A10)(FeatsMultiGetFirst(feat), temple::GetRef<char[1024]>(0x10C76B48), 1024u); // UiTooltipSetForFeat
-		temple::GetRef<void(char*)>(0x10162C00)(temple::GetRef<char[1024]>(0x10C76B48)); // UiCharTextboxSet
+		//temple::GetRef<void(int, char*, size_t)>(0x10162A10)(FeatsMultiGetFirst(feat), temple::GetRef<char[1024]>(0x10C76B48), 1024u); // UiTooltipSetForFeat
+		//temple::GetRef<void(char*)>(0x10162C00)(temple::GetRef<char[1024]>(0x10C76B48)); // UiCharTextboxSet
+		temple::GetRef<void(__cdecl)(feat_enums)>(0x1011BB50)(FeatsMultiGetFirst(feat));
 		return TRUE;
 	case TigMsgWidgetEvent::Exited:
 		temple::GetRef<void(__cdecl)(char *)>(0x10162C00)(""); // UiCharTextboxSet
@@ -2328,8 +2359,7 @@ BOOL UiPcCreation::FeatsExistingBtnMsg(int widId, TigMsg* msg)
 
 	switch (msgW->widgetEventType) {
 	case TigMsgWidgetEvent::Entered:
-		temple::GetRef<void(int, char*, size_t)>(0x10162A10)(FeatsMultiGetFirst(feat), temple::GetRef<char[1024]>(0x10C76B48), 1024u); // UiTooltipSetForFeat
-		temple::GetRef<void(char*)>(0x10162C00)(temple::GetRef<char[1024]>(0x10C76B48)); // UiCharTextboxSet
+		temple::GetRef<void(__cdecl)(feat_enums)>(0x1011BB50)(FeatsMultiGetFirst(feat));
 		return TRUE;
 	case TigMsgWidgetEvent::Exited:
 		temple::GetRef<void(__cdecl)(char *)>(0x10162C00)(""); // UiCharTextboxSet
@@ -3085,6 +3115,12 @@ bool UiPcCreation::IsSelectingNormalFeat(){
 	return true;
 }
 
+bool UiPcCreation::IsSelectingSecondFeat()
+{
+	auto &selPkt = GetCharEditorSelPacket();
+	return selPkt.raceId == race_human;
+}
+
 bool UiPcCreation::IsSelectingBonusFeat()
 {
 	return mIsSelectingBonusFeat;
@@ -3229,7 +3265,7 @@ bool UiPcCreation::FeatCanPick(feat_enums feat)
 
 
 	if (!feats.IsFeatMultiSelectMaster(feat)) {
-		return feats.FeatPrereqsCheck(handle, feat, featsPicked.size() > 0 ? &featsPicked[0] : nullptr, featsPicked.size(), selPkt.classCode, selPkt.statBeingRaised) != FALSE;
+		return feats.FeatPrereqsCheck(handle, feat, featsPicked.size() > 0 ? &featsPicked[0] : nullptr, featsPicked.size(), (Stat)0, selPkt.statBeingRaised) != FALSE;
 	}
 
 
@@ -3241,16 +3277,16 @@ bool UiPcCreation::FeatCanPick(feat_enums feat)
 	bool hasFocus = false;
 	switch (feat) {
 	case FEAT_EXOTIC_WEAPON_PROFICIENCY:
-		return critterSys.GetBaseAttackBonus(handle, selPkt.classCode) >= 1;
+		return critterSys.GetBaseAttackBonus(handle) >= 1;
 	case FEAT_IMPROVED_CRITICAL:
-		return critterSys.GetBaseAttackBonus(handle, selPkt.classCode) >= 8;
+		return critterSys.GetBaseAttackBonus(handle) >= 8;
 
 	case FEAT_MARTIAL_WEAPON_PROFICIENCY:
 	case FEAT_SKILL_FOCUS:
 		return true;
 
 	case FEAT_WEAPON_FINESSE:
-		if (critterSys.GetBaseAttackBonus(handle, selPkt.classCode) < 1)
+		if (critterSys.GetBaseAttackBonus(handle) < 1)
 			return false;
 		for (auto i = (int)FEAT_WEAPON_FINESSE_GAUNTLET; i <= FEAT_WEAPON_FINESSE_NET; i++) {
 			if (feats.HasFeatCountByClass(handle, (feat_enums)i, (Stat)0, 0))
@@ -3263,7 +3299,7 @@ bool UiPcCreation::FeatCanPick(feat_enums feat)
 		return true;
 
 	case FEAT_WEAPON_FOCUS:
-		return critterSys.GetBaseAttackBonus(handle, selPkt.classCode) >= 1;
+		return critterSys.GetBaseAttackBonus(handle) >= 1;
 
 	case FEAT_WEAPON_SPECIALIZATION:
 
