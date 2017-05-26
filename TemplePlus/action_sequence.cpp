@@ -1999,11 +1999,9 @@ int32_t ActionSequenceSystem::DoAoosByAdjcentEnemies(objHndl obj)
 {
 	int status = 0;
 
-	objHndl enemies[40];
+	auto enemies = combatSys.GetEnemiesCanMelee(obj);
 
-	int numEnemies = combatSys.GetEnemiesCanMelee(obj, enemies);
-
-	for (int i = 0; i < numEnemies; i++)
+	for (int i = 0; i < enemies.size(); i++)
 	{
 		auto enemy = enemies[i];
 		bool okToAoo = true;

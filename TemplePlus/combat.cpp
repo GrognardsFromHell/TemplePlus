@@ -448,8 +448,7 @@ objHndl * LegacyCombatSystem::GetHostileCombatantList(objHndl obj, int * count)
 	for (int i = 0; i < initListLen; i++)
 	{
 		auto combatant = GetInitiativeListMember(i);
-		if (obj != combatant && !critterSys.IsFriendly(obj,combatant))
-		{
+		if (combatant && obj != combatant && !critterSys.IsFriendly(obj,combatant)){
 			hostileTempList[hostileCount++] = combatant;
 		}
 	}

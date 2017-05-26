@@ -50,8 +50,25 @@ void MainWindow::LockCursor(int x, int y, int w, int h) const {
 	auto &device(tig->GetRenderingDevice());
 
 	RECT rect{ x, y, x + w, y + h };
+
+	static bool unsetClip = false;
+
 	if (isForeground) {
 		ClipCursor(&rect);
+		unsetClip = false;
+	}
+	else // Unset the CursorClip  (was supposed to happen naturally when alt-tabbing, but sometimes it requires hitting a keystroke before it takes effect so adding it here too)
+	{
+		// Check if already unset the CursorClip so it doesn't cause interference in case some other app is trying to clip the cursor...
+		if (unsetClip) 
+			return;
+		unsetClip = true;
+
+		auto screenWidth = GetSystemMetrics(SM_CXSCREEN);
+		auto screenHeight = GetSystemMetrics(SM_CYSCREEN);
+		RECT unClip{0 ,0 , screenWidth, screenHeight};
+		ClipCursor(&unClip);
+		
 	}
 }
 
