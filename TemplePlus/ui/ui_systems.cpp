@@ -43,6 +43,7 @@ UiSystems::UiSystems(int width, int height)
 	mItemCreation = InitializeSystem<UiItemCreation>(config);
 	mSkillMastery = InitializeSystem<UiSkillMastery>(config);
 	mUtilityBar = InitializeSystem<UiUtilityBar>(config);
+	mDungeonMaster = InitializeSystem<UiDM>(config);
 	mTrack = InitializeSystem<UiTrack>(config);
 	mPartyPool = InitializeSystem<UiPartyPool>(config);
 	mPccPortrait = InitializeSystem<UiPccPortrait>(config);

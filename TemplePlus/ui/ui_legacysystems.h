@@ -384,6 +384,24 @@ public:
 	bool IsVisible();
 };
 
+class UiDM : public UiSystem {
+public:
+	static constexpr auto Name = "DM-UI";
+	UiDM(const UiSystemConf &config);
+	~UiDM();
+	void Reset() override;
+	void ResizeViewport(const UiResizeArgs &resizeArgs) override;
+	const std::string &GetName() const override;
+
+
+	bool IsVisible();
+	void Show();
+	void Hide();
+	void Toggle();
+	void HideButton();
+	void ShowButton();
+};
+
 class UiTrack : public UiSystem {
 public:
     static constexpr auto Name = "Track-UI";

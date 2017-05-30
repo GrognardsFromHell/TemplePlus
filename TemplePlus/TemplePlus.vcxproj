@@ -174,7 +174,9 @@
     <ClCompile Include="traps.cpp" />
     <ClCompile Include="tutorial.cpp" />
     <ClCompile Include="ui\ui_debug.cpp" />
+    <ClCompile Include="ui\ui_dm.cpp" />
     <ClCompile Include="ui\ui_mainmenu_wrapper.cpp" />
+    <ClCompile Include="ui\ui_utility_bar.cpp" />
     <ClCompile Include="ui\widgets\widgets.cpp" />
     <ClCompile Include="ui\widgets\widget_content.cpp" />
     <ClCompile Include="ui\ui_alert.cpp" />
@@ -343,6 +345,7 @@
     <ClInclude Include="tig\tig_keyboard.h" />
     <ClInclude Include="tutorial.h" />
     <ClInclude Include="ui\ui_debug.h" />
+    <ClInclude Include="ui\ui_dm.h" />
     <ClInclude Include="ui\widgets\widgets.h" />
     <ClInclude Include="ui\widgets\widget_content.h" />
     <ClInclude Include="ui\ui_alert.h" />

@@ -43,6 +43,7 @@ public:
 
 	void GotoArena();
 	void TransitionToMap(int mapId);
+	objHndl GetTgtObj() { return mTgtObj;  };
 
 	struct Record{
 		int protoId;
@@ -94,8 +95,6 @@ protected:
 	bool FilterResult(Record& record);
 	std::map<int, Record > humanoids;
 	bool mIsInited = false;
-	int mTexId; // Raptor texture
-	int mIconTexId; // Raptor texture
 
 	std::map<int, Record > monsters;
 	std::map<int, Record > weapons;

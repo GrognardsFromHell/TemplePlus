@@ -211,6 +211,10 @@ void UiMM::Show(MainMenuPage page)
 {
 	static auto ui_mm_show_page = temple::GetPointer<void(int page)>(0x10116500);
 	ui_mm_show_page((int)page);
+
+
+	if (!uiSystems->GetUtilityBar().IsVisible())
+		uiSystems->GetDM().Hide();
 	return;
 	
 	// Was previously @ 0x10116500
@@ -250,6 +254,8 @@ void UiMM::Hide()
 {
 	static auto ui_mm_hide = temple::GetPointer<void()>(0x10116220);
 	ui_mm_hide();
+	if (uiSystems->GetUtilityBar().IsVisible())
+		uiSystems->GetDM().Show();
 	return;
 
 	if (IsVisible()) {

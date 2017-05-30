@@ -35,6 +35,7 @@ class UiHelp;
 class UiItemCreation;
 class UiSkillMastery;
 class UiUtilityBar;
+class UiDM;
 class UiTrack;
 class UiPartyPool;
 class UiPccPortrait;
@@ -171,6 +172,10 @@ public:
 		Expects(!!mUtilityBar);
 		return *mUtilityBar;
 	}
+	UiDM & GetDM() const {
+		Expects(!!mDungeonMaster);
+		return *mDungeonMaster;
+	}
 	UiTrack& GetTrack() const {
 		Expects(!!mTrack);
 		return *mTrack;
@@ -274,6 +279,7 @@ private:
 	std::unique_ptr<UiItemCreation> mItemCreation;
 	std::unique_ptr<UiSkillMastery> mSkillMastery;
 	std::unique_ptr<UiUtilityBar> mUtilityBar;
+	std::unique_ptr<UiDM> mDungeonMaster;
 	std::unique_ptr<UiTrack> mTrack;
 	std::unique_ptr<UiPartyPool> mPartyPool;
 	std::unique_ptr<UiPccPortrait> mPccPortrait;

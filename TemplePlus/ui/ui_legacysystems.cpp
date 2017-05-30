@@ -8,6 +8,8 @@
 #include "tig/tig_msg.h"
 #include "party.h"
 #include "ui_systems.h"
+#include "dungeon_master.h"
+#include "ui_dm.h"
 
 //*****************************************************************************
 //* MainMenu-UI
@@ -716,6 +718,56 @@ bool UiUtilityBar::IsVisible(){
 }
 
 //*****************************************************************************
+//*DM-UI
+//*****************************************************************************
+
+
+UiDM::UiDM(const UiSystemConf& config){
+	uiDm.DmWidgetsInit(config);
+}
+
+UiDM::~UiDM()
+{
+}
+
+void UiDM::Reset()
+{
+}
+
+void UiDM::ResizeViewport(const UiResizeArgs& resizeArgs)
+{
+}
+
+const std::string& UiDM::GetName() const{
+	return Name;
+}
+
+bool UiDM::IsVisible(){
+	return dmSys.IsActive();
+}
+
+void UiDM::Show(){
+	if (config.dungeonMaster)
+		dmSys.Show();
+}
+
+void UiDM::Hide(){
+	dmSys.Hide();
+}
+
+void UiDM::Toggle(){
+	dmSys.Toggle();
+}
+
+void UiDM::HideButton() {
+	uiDm.SetButtonVis(false);
+}
+
+void UiDM::ShowButton() {
+	uiDm.SetButtonVis(true);
+}
+
+//*****************************************************************************
 //* Track-UI
 //*****************************************************************************
 
@@ -1374,3 +1426,4 @@ const std::string &UiCharmap::GetName() const {
     static std::string name("charmap_ui");
     return name;
 }
+

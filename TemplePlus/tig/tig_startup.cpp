@@ -274,7 +274,7 @@ void TigInitializer::LoadDataFiles() {
 		
 	}
 
-	// overrides for testing (mainly for co8fixes so there's no need to repack the archive)
+	// overrides for testing (mainly for co8fixes so there's no need to repack the archive). Also for user mods.
 	tio_mkdir(fmt::format("overrides").c_str());
 	tio_path_add(fmt::format("overrides").c_str());
 

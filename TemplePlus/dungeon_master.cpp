@@ -48,6 +48,7 @@
 #include "gameview.h"
 #include "ui/ui_mainmenu.h"
 #include "config/config.h"
+#include "ui/ui_dm.h"
 
 DungeonMaster dmSys;
 
@@ -85,7 +86,7 @@ void DungeonMaster::Render() {
 
 	
 
-	auto rect = TigRect(0, 0, 96, 96);
+	auto dmPortraitRect = TigRect(0, 0, 96, 96);
 
 	ImGui::Begin("Dungeon Master", &isActive);
 	if (mJustOpened) {
@@ -99,7 +100,13 @@ void DungeonMaster::Render() {
 	}
 	auto wndPos = ImGui::GetWindowPos();
 	auto wndWidth = ImGui::GetWindowWidth();
-	rect.x = (int)(wndPos.x + wndWidth / 2 - rect.width / 2); rect.y = (int)(wndPos.y - rect.height);
+	dmPortraitRect.x = (int)(wndPos.x + wndWidth / 2 - dmPortraitRect.width / 2); dmPortraitRect.y = (int)(wndPos.y - dmPortraitRect.height);
+
+	auto blyat = gameView->MapToScene(dmPortraitRect.x, dmPortraitRect.y);//gameView->MapFromScene(config.renderWidth - dmPortraitRect.x     , config.renderHeight - -dmPortraitRect.y);
+	auto cyka  = gameView->MapToScene(dmPortraitRect.x + 96, dmPortraitRect.y + 96);//gameView->MapFromScene(config.renderWidth - dmPortraitRect.x + 96, config.renderHeight - -dmPortraitRect.y +96);
+
+	TigRect adjDmPortrait(blyat.x, blyat.y+1, cyka.x - blyat.x, cyka.y - blyat.y);
+	uiDm.SetDmPortraitRect(adjDmPortrait);
 
 
 	if (party.GetConsciousPartyLeader() && ImGui::TreeNodeEx("Maps", ImGuiTreeNodeFlags_CollapsingHeader)) {
@@ -144,16 +151,13 @@ void DungeonMaster::Render() {
 	ImGui::End();
 
 	if (!isMinimized){
-		// render the dungeon master figurehead
-		UiRenderer::DrawTexture(mTexId, rect);
-
 		// render the name of the hovered item
 		if (mTgtObj && objSystem->IsValidHandle(mTgtObj)){
 			UiRenderer::PushFont(PredefinedFont::PRIORY_12);
-			tigFont.Draw(description.getDisplayName(mTgtObj), TigRect(rect.x+105, rect.y + 50,100,15), TigTextStyle::standardWhite);
+			tigFont.Draw(description.getDisplayName(mTgtObj), TigRect(dmPortraitRect.x+105, dmPortraitRect.y + 50,100,15), TigTextStyle::standardWhite);
 			UiRenderer::PopFont();
-			auto loc = objSystem->GetObject(mTgtObj)->GetLocationFull();
-			uiIntgameTb.RenderPositioningBlueCircle(loc, mTgtObj);
+			// auto loc = objSystem->GetObject(mTgtObj)->GetLocationFull();
+			// uiIntgameTb.RenderPositioningBlueCircle(loc, mTgtObj);
 		}
 		else{
 			mTgtObj = objHndl::null;
@@ -177,37 +181,14 @@ void DungeonMaster::Render() {
 
 void DungeonMaster::RenderDmButton(){
 
-	constexpr auto dmToolbarWidgFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse;
+	//	auto w = cyka.x - blyat.x;
+	//	auto h = cyka.y - blyat.y;
+	//	ImVec2 wndPos(blyat.x-4, blyat.y-4);
+	//	ImGui::SetWindowPos(wndPos);
 
-	// set window background to transparent
-	auto &style = ImGui::GetStyle();
-	auto prevColor = style.Colors[ImGuiCol_WindowBg];
-	style.Colors[ImGuiCol_WindowBg] = ImVec4(0, 0, 0, 0);
 	
-	if (ImGui::Begin("DM Toolbar Wnd", nullptr, dmToolbarWidgFlags)) {
-
-		auto isHistMini = uiSystems->GetUtilityBar().IsRollHistoryVisible();
-
-		auto blyat = gameView->MapFromScene(config.renderWidth - 88, config.renderHeight - 102 - 272 * isHistMini);
-		auto cyka  = gameView->MapFromScene(config.renderWidth - 88 + 24, config.renderHeight - 102 - 272 * isHistMini + 20);
-		auto w = cyka.x - blyat.x;
-		auto h = cyka.y - blyat.y;
-		ImVec2 wndPos(blyat.x-4, blyat.y-4);
-		ImGui::SetWindowPos(wndPos);
-
-		ImGui::SetWindowSize(ImVec2(1, 1));
-
-		
-		UiRenderer::DrawTexture(mIconTexId, TigRect(blyat.x, blyat.y, w, h));
-		if (ImGui::InvisibleButton("dungeonMasterBtn", ImVec2(w, h))) {
-			Toggle();
-		}
-
-	}
-	isMoused |= ImGui::IsWindowHovered();
-
-	ImGui::End();
-	style.Colors[ImGuiCol_WindowBg] = prevColor;
+	//	UiRenderer::DrawTexture(mIconTexId, TigRect(blyat.x, blyat.y, w, h));
+	//}
 }
 
 void DungeonMaster::RenderMaps(){
@@ -496,15 +477,6 @@ void DungeonMaster::InitEntry(int protoNum){
 		weapons[protoNum] = newRecord;
 	}
 
-	if (!mIsInited) {
-		textureFuncs.RegisterTexture("art\\interface\\dungeon_master_ui\\DU.tga", &mTexId);
-		textureFuncs.RegisterTexture("art\\interface\\dungeon_master_ui\\Toolbar_Icon.tga", &mIconTexId);
-		tig->GetMdfFactory().LoadMaterial("art\\interface\\cursors\\DungeonMaster.mdf");
-
-		InitCaches();
-		
-		mIsInited = true;
-	}
 }
 
 void DungeonMaster::InitCaches(){
