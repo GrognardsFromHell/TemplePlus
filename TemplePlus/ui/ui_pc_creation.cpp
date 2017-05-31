@@ -1178,7 +1178,9 @@ BOOL UiPcCreation::FeatsSystemInit(GameSystemConf& conf){
 }
 
 BOOL UiPcCreation::FeatsWidgetsInit(int w, int h){
-	featsMainWnd = LgcyWindow(325, 151, 431, 250);
+
+	auto &pcCreationWnd = temple::GetRef<LgcyWindow>(0x11E73E40);
+	featsMainWnd = LgcyWindow(pcCreationWnd.x + 219, pcCreationWnd.y + 50, 431, 250);
 	featsMainWnd.flags = 1;
 	featsMainWnd.render = [](int widId) {uiPcCreation.FeatsWndRender(widId); };
 	featsMainWnd.handleMessage = [](int widId, TigMsg*msg) { return uiPcCreation.FeatsWndMsg(widId, msg); };
