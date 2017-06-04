@@ -194,7 +194,7 @@ void GameLoop::Run() {
 			if (mainLoop.sub_10113D40(unk)) {
 				DoMouseScrolling();
 			}
-	}
+		}
 
 		
 }
@@ -282,6 +282,14 @@ void GameLoop::DoMouseScrolling() {
 
 	if (config.windowed && mouseFuncs.MouseOutsideWndGet())
 		return;
+
+	static auto sysRefTime = 0;
+	auto now = timeGetTime();
+	if (sysRefTime && (now  < sysRefTime + 16) ){
+			return;
+	}
+	
+	sysRefTime = now;
 
 	POINT mousePt = mouseFuncs.GetPos();
 	POINT mmbRef = mouseFuncs.GetMmbReference();
@@ -453,6 +461,12 @@ public:
 
 		replaceFunction<void(objHndl*)>(0x101140F0, [](objHndl* tgt) {
 			NormalLmbHandleTarget(tgt);
+		});
+
+		static void(__cdecl*orgUiIntgame1C)(void* ) = replaceFunction<void(__cdecl)(void*)>(0x10112EC0, [](void* arf){
+			auto dummy = -1;
+			orgUiIntgame1C(arf);
+
 		});
 
 	}

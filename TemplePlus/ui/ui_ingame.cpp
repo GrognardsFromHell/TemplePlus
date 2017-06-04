@@ -70,8 +70,7 @@ void UiInGame::SetFocusObject(objHndl handle)
 }
 
 void UiInGame::ProcessMessage(const TigMsg & msg) {
-	static auto doKeyboardScrolling = temple::GetPointer<void()>(0x10113fb0);
-	doKeyboardScrolling();
+	DoKeyboardScrolling();
 
 
 	if (dmSys.IsActive()){
@@ -259,6 +258,20 @@ objHndl UiInGame::GetMouseTarget(int x, int y)
 	}
 
 	return mousedOver;
+}
+
+void UiInGame::DoKeyboardScrolling(){
+	
+	static auto scrollRefTime = timeGetTime();
+	auto now = timeGetTime();
+	if (now < scrollRefTime + 16){
+		return;
+	}
+	scrollRefTime = now;
+
+	static auto doKeyboardScrolling = temple::GetPointer<void()>(0x10113fb0);
+	doKeyboardScrolling();
+
 }
 
 objHndl UiInGame::PickObject(int x, int y, uint32_t flags)

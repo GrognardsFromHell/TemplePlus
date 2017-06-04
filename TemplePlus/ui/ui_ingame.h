@@ -58,5 +58,5 @@ private:
 	objHndl GetMouseTarget(int x, int y);
 	
 	
-
+	void DoKeyboardScrolling();
 };
