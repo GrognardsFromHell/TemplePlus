@@ -6,6 +6,7 @@
 #include "util/fixes.h"
 #include "gamesystems/gamesystems.h"
 #include "fade.h"
+#include "gamesystems/legacymapsystems.h"
 
 struct MapAddresses : temple::AddressTable {
 	
@@ -101,7 +102,12 @@ public:
 			}
 			return result;
 		});
-			
+
+
+		replaceFunction<void(__cdecl)(locXY)>(0x10005BC0, [](locXY locXy){
+			gameSystems->GetLocation().CenterOnSmooth(locXy.locx, locXy.locy);
+		});
+
 	}
 } gameSystemFix;
 

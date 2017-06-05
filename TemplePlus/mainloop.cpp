@@ -463,9 +463,11 @@ public:
 			NormalLmbHandleTarget(tgt);
 		});
 
-		static void(__cdecl*orgUiIntgame1C)(void* ) = replaceFunction<void(__cdecl)(void*)>(0x10112EC0, [](void* arf){
+
+		static void(__cdecl*orgScrollToPartyLeader)() = replaceFunction<void(__cdecl)()>(0x10113CE0, []() {
 			auto dummy = -1;
-			orgUiIntgame1C(arf);
+			party.GetConsciousPartyLeader();
+			orgScrollToPartyLeader();
 
 		});
 
