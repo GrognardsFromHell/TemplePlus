@@ -100,6 +100,7 @@ uint32_t AiSystem::StrategyParse(objHndl objHnd, objHndl target)
 	spell->spellPacketBodyReset(&aiTac.spellPktBody);
 	aiTac.performer = objHnd;
 	aiTac.target = target;
+
 	#pragma endregion
 
 	AiCombatRole role = GetRole(objHnd);
@@ -907,6 +908,9 @@ int AiSystem::Approach(AiTactic* aiTac)
 		return 0;
 	if (combatSys.IsWithinReach(aiTac->performer, aiTac->target))
 		return 0;
+
+	auto isWorth = Is5FootStepWorth(aiTac);
+
 	actSeqSys.curSeqReset(aiTac->performer);
 	d20Sys.GlobD20ActnInit();
 	d20Sys.GlobD20ActnSetTypeAndData1(D20A_UNSPECIFIED_MOVE, 0);
@@ -1657,7 +1661,9 @@ int AiSystem::Default(AiTactic* aiTac)
 		int dummy = 1;
 		//return 0;
 	}
-		
+	
+	auto isWorth = Is5FootStepWorth(aiTac);
+
 	auto curSeq = *actSeqSys.actSeqCur;
 	d20Sys.GlobD20ActnInit();
 	d20Sys.GlobD20ActnSetTypeAndData1(D20A_UNSPECIFIED_ATTACK, 0);
@@ -1669,7 +1675,7 @@ int AiSystem::Default(AiTactic* aiTac)
 	//}
 	int performError = actSeqSys.ActionSequenceChecksWithPerformerLocation();
 	if (performError == AEC_OK && addToSeqError == AEC_OK){
-		return 1;
+		return TRUE;
 	} 
 	else{
 		logger->info("AI Default SequenceCheck failed, error codes are AddToSeq :{}, Location Checs: {}", static_cast<int>(addToSeqError), static_cast<int>(performError));
@@ -2050,6 +2056,40 @@ int AiSystem::ChooseRandomSpellFromList(AiTactic * aiTac, AiSpellList* aiSpells)
 
 	}
 	return 0;
+}
+
+bool AiSystem::Is5FootStepWorth(AiTactic* aiTac){
+	// when is it worth taking a 5' step to your target?
+	// b. when you can path to it in a 5' step (and thus let you take advantage of full attack)
+	// c. when approaching your target otherwise would incur AoOs (regard tumbling here...)
+	// todo advanced - consider spring attack...
+
+	if (!aiTac->target)
+		return false;
+
+	auto initialActNum = (*actSeqSys.actSeqCur)->d20ActArrayNum;
+
+	// a. when you've used up your full round action and it's the only thing left to do
+	auto &tbStat = (*actSeqSys.actSeqCur)->tbStatus;
+	if (tbStat.hourglassState == 0 && !(tbStat.tbsFlags & (TBSF_Movement | TBSF_Movement2)) ){
+		return true;
+	}
+
+	{
+		auto canDoStep = false;
+		d20Sys.GlobD20ActnSetTypeAndData1(D20A_5FOOTSTEP, 0);
+		d20Sys.GlobD20ActnSetTarget(aiTac->target, nullptr);
+		if (actSeqSys.ActionAddToSeq() == AEC_OK
+			&& !actSeqSys.ActionSequenceChecksWithPerformerLocation())
+		{
+			canDoStep = true;
+		}
+		actSeqSys.ActionSequenceRevertPath(initialActNum);
+		if (canDoStep)
+			return true;
+	}
+
+	return false;
 }
 
 unsigned int _AiAsplode(AiTactic * aiTac)

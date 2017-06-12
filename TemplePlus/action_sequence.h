@@ -112,7 +112,7 @@ struct ActionSequenceSystem : temple::AddressTable
 
 	void ActionTypeAutomatedSelection(objHndl handle);
 	void TurnStart(objHndl obj);
-	int ActionAddToSeq();
+	int ActionAddToSeq(); // ActionErrorCode
 	
 		uint32_t addD20AToSeq(D20Actn * d20a, ActnSeq * actSeq);
 		ActionErrorCode AddToSeqSimple(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
@@ -125,7 +125,7 @@ struct ActionSequenceSystem : temple::AddressTable
 
 	int StdAttackTurnBasedStatusCheck(D20Actn *d20a, TurnBasedStatus *tbStat);
 	uint32_t isPerforming(objHndl objHnd);
-	uint32_t MoveSequenceParse(D20Actn * d20aIn, ActnSeq* actSeq, TurnBasedStatus *actnSthg, float distSthg, float reach, int a5);
+	uint32_t MoveSequenceParse(D20Actn * d20aIn, ActnSeq* actSeq, TurnBasedStatus* tbStat, float distToTgtMin, float reach, int nonspecificMoveType);
 		void releasePath(PathQueryResult*);
 		void addReadiedInterrupts(ActnSeq* actSeq, CmbtIntrpts * intrpts);
 		void updateDistTraversed(ActnSeq* actSeq);

@@ -220,6 +220,7 @@ private:
 	void (__cdecl *_FleeAdd)(objHndl npc, objHndl target);
 	void (__cdecl *_AiSetCombatStatus)(objHndl npc, int status, objHndl target, int unk);
 	void (__cdecl *_StopAttacking)(objHndl npc);
+	bool Is5FootStepWorth(AiTactic * aiTac);
 	
 };
 
