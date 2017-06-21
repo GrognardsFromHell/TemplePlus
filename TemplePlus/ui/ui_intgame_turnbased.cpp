@@ -373,9 +373,12 @@ int UiIntegameTurnbasedRepl::UiIntgameMsgHandler(int widId, TigMsg* msg) {
 				if (dmSys.IsEditorActive())
 					return FALSE;
 				if (dmSys.GetHoveredCritter())
-					return false;
+					return FALSE;
 				
 		}
+
+		if (dmSys.IsActionActive())
+			return FALSE;
 	}
 	
 

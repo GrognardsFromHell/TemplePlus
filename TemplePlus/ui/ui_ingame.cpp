@@ -92,7 +92,8 @@ void UiInGame::ProcessMessage(const TigMsg & msg) {
 			}
 		}
 		
-		
+		if (dmSys.IsActionActive())
+			return;
 	}
 	
 

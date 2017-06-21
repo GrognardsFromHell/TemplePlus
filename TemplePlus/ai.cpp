@@ -1661,10 +1661,22 @@ int AiSystem::Default(AiTactic* aiTac)
 		int dummy = 1;
 		//return 0;
 	}
-	
-	auto isWorth = Is5FootStepWorth(aiTac);
 
 	auto curSeq = *actSeqSys.actSeqCur;
+	auto initialActNum = curSeq->d20ActArrayNum;
+
+	auto isWorth = Is5FootStepWorth(aiTac);
+
+	if (isWorth){
+		d20Sys.GlobD20ActnSetTypeAndData1(D20A_5FOOTSTEP, 0);
+		d20Sys.GlobD20ActnSetTarget(aiTac->target, nullptr);
+		if (actSeqSys.ActionAddToSeq() == AEC_OK
+			&& !actSeqSys.ActionSequenceChecksWithPerformerLocation())
+			return TRUE;
+		actSeqSys.ActionSequenceRevertPath(initialActNum);
+	}
+
+	
 	d20Sys.GlobD20ActnInit();
 	d20Sys.GlobD20ActnSetTypeAndData1(D20A_UNSPECIFIED_ATTACK, 0);
 	d20Sys.GlobD20ActnSetTarget(aiTac->target, 0);
@@ -1687,7 +1699,7 @@ int AiSystem::Default(AiTactic* aiTac)
 
 		logger->info("AI Action Perform: Resetting sequence; Do Unspecified Move Action");
 		actSeqSys.curSeqReset(aiTac->performer);
-		auto initialActNum = curSeq->d20ActArrayNum;
+		initialActNum = curSeq->d20ActArrayNum;
 		d20Sys.GlobD20ActnInit();
 		d20Sys.GlobD20ActnSetTypeAndData1(D20A_UNSPECIFIED_MOVE, 0);
 		d20Sys.GlobD20ActnSetTarget(aiTac->target, 0);
@@ -2060,9 +2072,9 @@ int AiSystem::ChooseRandomSpellFromList(AiTactic * aiTac, AiSpellList* aiSpells)
 
 bool AiSystem::Is5FootStepWorth(AiTactic* aiTac){
 	// when is it worth taking a 5' step to your target?
-	// b. when you can path to it in a 5' step (and thus let you take advantage of full attack)
-	// c. when approaching your target otherwise would incur AoOs (regard tumbling here...)
-	// todo advanced - consider spring attack...
+	
+	
+	
 
 	if (!aiTac->target)
 		return false;
@@ -2075,19 +2087,42 @@ bool AiSystem::Is5FootStepWorth(AiTactic* aiTac){
 		return true;
 	}
 
+	// b. when you can path to it in a 5' step (and thus let you take advantage of full attack)
+	// check if 5' step is possible, and if so whether you can reach the target with it
+	auto distToTgt = locSys.DistanceToObj(aiTac->performer, aiTac->target);
+	auto canReachTgtWithStep = false;
 	{
 		auto canDoStep = false;
 		d20Sys.GlobD20ActnSetTypeAndData1(D20A_5FOOTSTEP, 0);
 		d20Sys.GlobD20ActnSetTarget(aiTac->target, nullptr);
+		
 		if (actSeqSys.ActionAddToSeq() == AEC_OK
 			&& !actSeqSys.ActionSequenceChecksWithPerformerLocation())
 		{
 			canDoStep = true;
+
+			auto &fiveFootAction = (*actSeqSys.actSeqCur)->d20ActArray[initialActNum];
+			auto pqr = fiveFootAction.path;
+			if (pqr && !(fiveFootAction.d20Caf & D20CAF_TRUNCATED)){
+				if (critterSys.GetReach(aiTac->performer, D20A_STANDARD_ATTACK) + 5.0 >= distToTgt)
+					canReachTgtWithStep = true;
+			}
+
 		}
 		actSeqSys.ActionSequenceRevertPath(initialActNum);
-		if (canDoStep)
-			return true;
+		if (!canDoStep)
+			return false;
 	}
+
+	// if target is reachable with 5' step, then hell yeah!
+	if (canReachTgtWithStep)
+		return true;
+
+	// c. when approaching your target otherwise would incur AoOs (regard tumbling here...)
+	// todo
+
+
+	// todo advanced - consider spring attack...
 
 	return false;
 }
