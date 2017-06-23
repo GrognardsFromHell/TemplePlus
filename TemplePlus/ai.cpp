@@ -811,6 +811,8 @@ int AiSystem::TargetThreatened(AiTactic* aiTac)
 	auto args = PyTuple_New(2);
 	PyTuple_SET_ITEM(args, 0, PyObjHndl_Create(performer));
 	
+	objHndl ignoredTarget = objHndl::null;
+	float ignoredDist = 1000000000.0;
 	for (int i = 0; i < objlist.size(); i++)
 	{
 		objHndl dude = objlist.get(i);
@@ -820,20 +822,33 @@ int AiSystem::TargetThreatened(AiTactic* aiTac)
 		int ignoreTarget = PyInt_AsLong(result);
 		Py_DECREF(result);
 		
-
 		if (!critterSys.IsFriendly(dude, performer)
 			&& !critterSys.IsDeadNullDestroyed(dude)
-			&& locSys.DistanceToObj(performer, dude)  < dist
 			&& combatSys.IsWithinReach(performer, dude) 
-			&& !ignoreTarget)
+			)
 		{
-			aiTac->target = dude;
-			dist = locSys.DistanceToObj(performer, dude);
+			if (!ignoreTarget && locSys.DistanceToObj(performer, dude)  < dist){
+				aiTac->target = dude;
+				dist = locSys.DistanceToObj(performer, dude);
+			}
+			else if (ignoreTarget && locSys.DistanceToObj(performer, dude)  < ignoredDist){
+				ignoredTarget = dude;
+				ignoredDist = locSys.DistanceToObj(performer, dude);
+			}
 		}
 	}
 	Py_DECREF(args);
 	if (dist > 900000000.0)
 	{
+		// check if already moved - if so, use the threatened target (todo: regard spellcasting)
+		auto curSeq = *actSeqSys.actSeqCur;
+		if (curSeq->tbStatus.tbsFlags & (TBSF_Movement | TBSF_Movement2) == (TBSF_Movement | TBSF_Movement2)){
+			if (ignoredTarget){
+				aiTac->target = ignoredTarget;
+				logger->info("{} targeted because there was no other legit target and am out of moves.", objects.description.getDisplayName(aiTac->target, aiTac->performer));
+				return FALSE;
+			}
+		}
 		aiTac->target = 0;
 		//hooked_print_debug_message(" no target found. Attempting Target Closest instead.");
 		logger->info("no target found. ");
@@ -845,7 +860,7 @@ int AiSystem::TargetThreatened(AiTactic* aiTac)
 	}
 	
 
-	return 0;
+	return FALSE;
 }
 BOOL AiSystem::UsePotion(AiTactic * aiTac){
 
@@ -909,19 +924,28 @@ int AiSystem::Approach(AiTactic* aiTac)
 	if (combatSys.IsWithinReach(aiTac->performer, aiTac->target))
 		return 0;
 
+	// check if 5' step is a good choice
 	auto isWorth = Is5FootStepWorth(aiTac);
+
+	if (isWorth) {
+		d20Sys.GlobD20ActnSetTypeAndData1(D20A_5FOOTSTEP, 0);
+		d20Sys.GlobD20ActnSetTarget(aiTac->target, nullptr);
+		if (actSeqSys.ActionAddToSeq() == AEC_OK
+			&& !actSeqSys.ActionSequenceChecksWithPerformerLocation())
+			return TRUE;
+		actSeqSys.ActionSequenceRevertPath(initialActNum);
+	}
 
 	actSeqSys.curSeqReset(aiTac->performer);
 	d20Sys.GlobD20ActnInit();
 	d20Sys.GlobD20ActnSetTypeAndData1(D20A_UNSPECIFIED_MOVE, 0);
 	d20Sys.GlobD20ActnSetTarget(aiTac->target, 0);
 	actSeqSys.ActionAddToSeq();
-	if (actSeqSys.ActionSequenceChecksWithPerformerLocation())
-	{
+	if (actSeqSys.ActionSequenceChecksWithPerformerLocation() != AEC_OK){
 		actSeqSys.ActionSequenceRevertPath(initialActNum);
-		return 0;
+		return FALSE;
 	}
-	return 1;
+	return TRUE;
 }
 
 int AiSystem::CastParty(AiTactic* aiTac)
@@ -1315,8 +1339,31 @@ BOOL AiSystem::AiFiveFootStepAttempt(AiTactic* aiTac)
 {
 	objHndl threateners[40];
 	auto actNum = (*actSeqSys.actSeqCur)->d20ActArrayNum;
-	if (!combatSys.GetEnemiesCanMelee(aiTac->performer, threateners))
-		return 1;
+	auto numThreateners = combatSys.GetEnemiesCanMelee(aiTac->performer, threateners);
+	if (!numThreateners)
+		return TRUE;
+
+	// check if those threateners are ignorable
+	auto shouldIgnoreThreateners = true;
+	auto args = PyTuple_New(2);
+	PyTuple_SET_ITEM(args, 0, PyObjHndl_Create(aiTac->performer));
+	for (auto i=0; i < numThreateners; i++){
+		PyTuple_SET_ITEM(args, 1, PyObjHndl_Create(threateners[i]));
+
+		auto result = pythonObjIntegration.ExecuteScript("combat", "ShouldIgnoreTarget", args);
+		int ignoreTarget = PyInt_AsLong(result);
+		Py_DECREF(result);
+
+		if (!ignoreTarget){
+			shouldIgnoreThreateners = false;
+			break;
+		}
+	}
+
+	if (shouldIgnoreThreateners)
+		return TRUE;
+
+	// got a reason to be afraid!
 	float overallOffX, overallOffY;
 	LocAndOffsets loc;
 	locSys.getLocAndOff(aiTac->performer, &loc);
@@ -1338,7 +1385,7 @@ BOOL AiSystem::AiFiveFootStepAttempt(AiTactic* aiTac)
 				&& actSeqSys.GetPathTargetLocFromCurD20Action(&fiveFootLoc)
 				&& !combatSys.GetThreateningCrittersAtLoc(aiTac->performer, &fiveFootLoc, threateners)
 				&& !actSeqSys.ActionSequenceChecksWithPerformerLocation())
-				return 1;
+				return TRUE;
 			actSeqSys.ActionSequenceRevertPath(actNum);
 		}
 	}
@@ -1665,17 +1712,6 @@ int AiSystem::Default(AiTactic* aiTac)
 	auto curSeq = *actSeqSys.actSeqCur;
 	auto initialActNum = curSeq->d20ActArrayNum;
 
-	auto isWorth = Is5FootStepWorth(aiTac);
-
-	if (isWorth){
-		d20Sys.GlobD20ActnSetTypeAndData1(D20A_5FOOTSTEP, 0);
-		d20Sys.GlobD20ActnSetTarget(aiTac->target, nullptr);
-		if (actSeqSys.ActionAddToSeq() == AEC_OK
-			&& !actSeqSys.ActionSequenceChecksWithPerformerLocation())
-			return TRUE;
-		actSeqSys.ActionSequenceRevertPath(initialActNum);
-	}
-
 	
 	d20Sys.GlobD20ActnInit();
 	d20Sys.GlobD20ActnSetTypeAndData1(D20A_UNSPECIFIED_ATTACK, 0);
@@ -1700,6 +1736,22 @@ int AiSystem::Default(AiTactic* aiTac)
 		logger->info("AI Action Perform: Resetting sequence; Do Unspecified Move Action");
 		actSeqSys.curSeqReset(aiTac->performer);
 		initialActNum = curSeq->d20ActArrayNum;
+
+		auto isWorth = Is5FootStepWorth(aiTac);
+
+		if (isWorth) {
+			logger->info("AI Default: 5' step deemed worthwhile");
+			d20Sys.GlobD20ActnSetTypeAndData1(D20A_5FOOTSTEP, 0);
+			d20Sys.GlobD20ActnSetTarget(aiTac->target, nullptr);
+			if (actSeqSys.ActionAddToSeq() == AEC_OK
+				&& actSeqSys.ActionSequenceChecksWithPerformerLocation() == AEC_OK){
+				logger->info("AI Default: Doing 5' step");
+				return TRUE;
+			}
+			logger->info("AI Default: Cancelling 5' step");
+			actSeqSys.ActionSequenceRevertPath(initialActNum);
+		}
+
 		d20Sys.GlobD20ActnInit();
 		d20Sys.GlobD20ActnSetTypeAndData1(D20A_UNSPECIFIED_MOVE, 0);
 		d20Sys.GlobD20ActnSetTarget(aiTac->target, 0);
@@ -1710,7 +1762,7 @@ int AiSystem::Default(AiTactic* aiTac)
 		{
 			logger->info("AI Default: Unspecified Move failed. AddToSeqError: {}  Location Checks Error: {}", addToSeqError, performError);
 			actSeqSys.ActionSequenceRevertPath(initialActNum);
-			return 0;
+			return FALSE;
 		}
 	}
 	return performError == AEC_OK && addToSeqError == AEC_OK;
