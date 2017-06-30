@@ -180,6 +180,7 @@ struct ActionSequenceSystem : temple::AddressTable
 	int32_t InterruptNonCounterspell(D20Actn *d20a);
 	int32_t InterruptCounterspell(D20Actn *d20a);
 	int32_t GetCurSeqD20ActionCount();
+	objHndl getNextSimulsPerformer(); // returns next simultaneous action performer
 
 	static int ReadyVsApproachOrWithdrawalCount();
 	static void ReadyVsRemoveForObj(objHndl obj);

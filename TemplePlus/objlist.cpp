@@ -127,6 +127,19 @@ void ObjList::ListRange(LocAndOffsets loc, float radius, float angleMin, float a
 	mHasToFree = true;
 }
 
+void ObjList::ListRangeTiles(objHndl handle, int rangeTiles, ObjectListFilter filter){
+	if (!handle){
+		logger->error("Null handle given in ObjList::ListRangeTiles");
+		return;
+	}
+		
+	auto objBody = objSystem->GetObject(handle);
+	auto loc = objBody->GetLocationFull();
+	auto rangeInches = rangeTiles *INCH_PER_TILE; //28.284271; ;
+	ListRadius(loc, rangeInches, filter);
+
+}
+
 void ObjList::ListCone(LocAndOffsets loc, float radius, float coneStartAngleRad, float coneArcRad, int flags) {
 	FreeResult();
 	addresses.ObjListRadius(loc, radius, coneStartAngleRad, coneArcRad, flags, mResult);
@@ -146,6 +159,19 @@ int ObjList::size() {
 	mSize = CountObjects();
 	mSizeValid = true;
 	return mSize;
+}
+
+std::vector<objHndl> ObjList::GetListResult(){
+	std::vector<objHndl> result;
+	if (!mResult.objects) {
+		return result;
+	}
+	auto item = mResult.objects;
+	while (item) {
+		result.push_back(item->handle);
+		item = item->next;
+	}
+	return result;
 }
 
 int ObjList::CountObjects() const {

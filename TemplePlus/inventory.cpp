@@ -161,6 +161,10 @@ objHndl InventorySystem::FindMatchingStackableItem(objHndl receiver, objHndl ite
 	return objHndl::null;
 }
 
+void InventorySystem::WieldBest(objHndl handle, int invSlot, objHndl target){
+	temple::GetRef<void(__cdecl)(objHndl, int, objHndl)>(0x1006CCC0)(handle, invSlot, target);
+}
+
 int InventorySystem::GetItemWieldCondArg(objHndl item, uint32_t condId, int argOffset)
 {
 	// loops through the item wielder conditions to find condId

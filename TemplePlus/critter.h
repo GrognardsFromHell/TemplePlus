@@ -316,6 +316,8 @@ struct LegacyCritterSystem : temple::AddressTable
 	// bonus to hit from size
 	int GetCritterDamageDice(objHndl obj, int attackIdx);
 	DamageType GetCritterAttackDamageType(objHndl obj, int attackIdx);
+	bool IsSleeping(objHndl hndl);
+	int GetHpPercent(const objHndl& handle);
 	static int GetCritterNumNaturalAttacks(objHndl obj);
 	int GetCritterAttackType(objHndl obj, int attackIdx);
 	int GetBaseAttackBonus(const objHndl& handle, Stat classBeingLeveld = Stat::stat_strength);

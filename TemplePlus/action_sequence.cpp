@@ -2161,6 +2161,11 @@ int32_t ActionSequenceSystem::GetCurSeqD20ActionCount(){
 	return (*actSeqCur)->d20ActArrayNum;
 }
 
+objHndl ActionSequenceSystem::getNextSimulsPerformer(){
+	auto getNextSimulsActor = temple::GetRef<objHndl(__cdecl)()>(0x100920E0);
+	return getNextSimulsActor();
+}
+
 int ActionSequenceSystem::ReadyVsApproachOrWithdrawalCount()
 {
 	int result = 0;

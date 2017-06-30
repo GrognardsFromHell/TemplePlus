@@ -585,8 +585,7 @@ void LegacyCombatSystem::TurnProcessAi(objHndl obj)
 {
 	//return addresses.TurnProcessing_100635E0(obj);
 	auto actor = tbSys.turnBasedGetCurrentActor();
-	static auto getNextSimulsActor = temple::GetRef<objHndl(__cdecl)()>(0x100920E0);
-	if (obj != actor && obj != getNextSimulsActor())
+	if (obj != actor && obj != actSeqSys.getNextSimulsPerformer())
 	{
 		logger->warn("Not AI processing {} (wrong turn...)", description.getDisplayName(obj));
 		return;
@@ -813,6 +812,10 @@ BOOL LegacyCombatSystem::IsBrawlInProgress()
 	if (brawlOpponent)
 		return true;
 	return false;
+}
+
+void LegacyCombatSystem::CritterExitCombatMode(objHndl handle){
+	temple::GetRef<void(__cdecl)(objHndl)>(0x100630F0)(handle);
 }
 
 bool LegacyCombatSystem::isCombatActive()

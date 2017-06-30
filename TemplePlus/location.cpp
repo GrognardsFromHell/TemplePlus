@@ -200,6 +200,10 @@ float LocationSys::DistanceToLocFeet(objHndl obj, LocAndOffsets* loc)
 }
 
 
+int64_t LocationSys::GetTileDeltaMaxBtwnLocs(locXY loc1, locXY loc2){
+	return temple::GetRef<int64_t(__cdecl)(locXY, locXY)>(0x1002A030)(loc1, loc2);
+}
+
 float LocationSys::InchesToFeet(float inches) {
 	return inches / 12.0f;
 }

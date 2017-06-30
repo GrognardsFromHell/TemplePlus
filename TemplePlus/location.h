@@ -42,6 +42,7 @@ struct LocationSys : temple::AddressTable
 		e.g. if deltaX = 15 and deltaY = -17 it will return 17
 	*/
 	int64_t (__cdecl*GetTileDeltaMax)(objHndl obj, objHndl obj2);
+	int64_t GetTileDeltaMaxBtwnLocs(locXY loc1, locXY loc2);
 
 	float InchesToFeet(float inches);
 

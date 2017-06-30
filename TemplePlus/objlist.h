@@ -71,6 +71,11 @@ public:
 	*/
 	void ListRange(LocAndOffsets loc, float radius, float angleMin, float angleMax, int flags);
 
+	/*
+	Lists objects in a tile radius.
+	*/
+	void ListRangeTiles(objHndl handle, int rangeTiles, ObjectListFilter filter);
+
 
 	/*
 		Lists objects in a cone. This seems to be the radius in the X,Y 3D coordinate
@@ -94,6 +99,8 @@ public:
 	objHndl operator[](int idx) {
 		return get(idx);
 	}
+
+	std::vector<objHndl> GetListResult();
 
 
 private:

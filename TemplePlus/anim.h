@@ -132,6 +132,11 @@ friend class AnimSystemHooks;
 public:
 
 	/*
+	   Pushes fidget anim goal
+	 */
+	BOOL PushFidget(objHndl handle);
+
+	/*
 		Pushes a goal for the obj that will rotate it to the given rotation using its rotation speed.
 		Please note that the target rotation is absolute, not relative.
 	*/
@@ -181,6 +186,7 @@ public:
 
 	void Debug();
 	const AnimGoal* GetGoal(AnimGoalType goalType);
+	
 
 private:
 	BOOL GetSlot(AnimSlotId* runId, AnimSlot **runSlotOut);
@@ -193,8 +199,35 @@ struct AnimActionCallback {
 	uint32_t uniqueId;
 };
 
+struct AnimPath
+{
+	int flags;
+	int8_t deltas[200]; // xy delta pairs describing deltas for drawing a line in screenspace
+	int range;
+	int fieldD0;
+	int fieldD4;
+	int fieldD8;
+	int fieldDC;
+	int pathLength;
+	int fieldE4;
+	locXY objLoc;
+	locXY tgtLoc;
+};
 
+const int testSizeofAnimPath = sizeof(AnimPath); //should be 248 (0xF8)
 
+struct AnimPathSpec
+{
+	objHndl handle;
+	locXY srcLoc;
+	locXY destLoc;
+	int size;
+	int8_t * deltas;
+	int flags;
+	int distTiles;
+
+	BOOL PathSearch();
+};
 
 using AnimSlotArray = AnimSlot[512];
 using AnimGoalArray = const AnimGoal*[82];
@@ -221,6 +254,9 @@ public:
 	void PopDisableFidget();
 
 	void StartFidgetTimer();
+	int GetRunSlotIdForObj(objHndl handle);
+	AnimSlot & GetRunSlot(int slotId);
+	BOOL GetRunSlotId(objHndl handle, AnimSlotId *);
 
 private:
 	/*

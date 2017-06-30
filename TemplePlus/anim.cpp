@@ -83,22 +83,6 @@ struct AnimSlotGoalStackEntry {
 const auto testSizeofTimeEventObjInfo = sizeof(TimeEventObjInfo); // should be 40
 const auto TestSizeOfAnimSlotGoalStackEntry = sizeof(AnimSlotGoalStackEntry); // should be 544 (0x220)
 
-struct AnimPath
-{
-	int flags;
-	int8_t deltas[200]; // xy delta pairs describing deltas for drawing a line in screenspace
-	int range;
-	int fieldD0;
-	int fieldD4;
-	int fieldD8;
-	int fieldDC;
-	int pathLength;
-	int fieldE4;
-	locXY objLoc;
-	locXY tgtLoc;
-};
-
-const int testSizeofAnimPath = sizeof(AnimPath); //should be 248 (0xF8)
 
 struct LineRasterPacket{
 	int counter; 
@@ -299,6 +283,29 @@ ostream &operator<<(ostream &str, AnimGoalType type) {
     str << fmt::format("Unknown Goal Type [{}]", i);
   }
   return str;
+}
+
+BOOL AnimationGoals::PushFidget(objHndl handle){
+
+	if (!handle){
+		logger->error("PushFidget: Null handle");
+		return FALSE;
+	}
+
+	auto objBody = objSystem->GetObject(handle);
+	if (!objBody)
+		return FALSE;
+
+	if (!objBody->IsCritter())
+		return FALSE;
+
+	if (!(objBody->GetInt32(obj_f_critter_flags2) & OCF2_AUTO_ANIMATES))
+		return FALSE;
+
+	if (combatSys.isCombatActive())
+		return FALSE;
+
+	return temple::GetRef<BOOL(__cdecl)(objHndl)>(0x10015D70)(handle);
 }
 
 enum AnimGoalDataItem {
@@ -687,6 +694,10 @@ BOOL AnimationGoals::GetSlot(AnimSlotId * runId, AnimSlot **runSlotOut){
 //*****************************************************************************
 //* Anim
 //*****************************************************************************
+
+BOOL AnimPathSpec::PathSearch(){
+	return temple::GetRef<BOOL(__cdecl)(AnimPathSpec*)>(0x1003FCA0)(this);
+}
 
 AnimSystem::AnimSystem(const GameSystemConf &config) {
   auto startup = temple::GetPointer<int(const GameSystemConf *)>(0x10016bb0);
@@ -1085,6 +1096,21 @@ void AnimSystem::StartFidgetTimer()
 {
 	static auto queue_fidget_anim_event = temple::GetPointer<BOOL()>(0x100146c0);
 	queue_fidget_anim_event();
+}
+
+int AnimSystem::GetRunSlotIdForObj(objHndl handle){
+	return animAddresses.anim_first_run_idx_for_obj(handle);
+}
+
+AnimSlot& AnimSystem::GetRunSlot(int slotId){
+	return mSlots[slotId];
+}
+
+BOOL AnimSystem::GetRunSlotId(objHndl handle, AnimSlotId* runId){
+	auto lastSlot = -1;
+	auto slotId = GetRunSlotIdForObj(handle);
+
+	return temple::GetRef<BOOL(__cdecl)(objHndl, AnimSlotId*)>(0x1000C430)(handle, runId);
 }
 
 void AnimSystem::ProcessActionCallbacks() {

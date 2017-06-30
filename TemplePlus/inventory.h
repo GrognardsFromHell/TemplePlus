@@ -54,8 +54,9 @@ struct InventorySystem : temple::AddressTable
 	objHndl(__cdecl *GetSubstituteInventory)  (objHndl);
 	objHndl(__cdecl *GetItemAtInvIdx)(objHndl, uint32_t nIdx); // returns the item at obj_f_critter_inventory subIdx nIdx  (or obj_f_container_inventory for containers); Note the difference to ItemWornAt! (this is a more low level function)
 	objHndl FindMatchingStackableItem(objHndl objHndReceiver, objHndl objHndItem);
-	
-	
+	void WieldBest(objHndl handle, int invSlot, objHndl target);
+
+
 	void (__cdecl *sub_100FF500)(Dispatcher *dispatcher, objHndl objHndItem, uint32_t itemInvLocation);
 	uint32_t(__cdecl *IsItemEffectingConditions)(objHndl objHndItem, uint32_t itemInvLocation);
 	
@@ -157,7 +158,7 @@ struct InventorySystem : temple::AddressTable
 	/*
 		Tries to wield the best items, unclear what the optional item argument does.
 	*/
-	void (__cdecl *WieldBestAll)(objHndl critter, objHndl item);
+	void (__cdecl *WieldBestAll)(objHndl critter, objHndl tgt);
 
 	/*
 		Clears the inventory of the given object. Keeps items that have the PERSISTENT flag set if

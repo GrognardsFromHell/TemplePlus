@@ -27,6 +27,12 @@
 #include "python/python_header.h"
 #include "condition.h"
 #include "rng.h"
+#include "turn_based.h"
+#include "gamesystems/mapsystem.h"
+#include "anim.h"
+#include "gamesystems/legacysystems.h"
+#include "ui/ui_systems.h"
+#include "ui/ui_legacysystems.h"
 
 
 struct AiSystem aiSys;
@@ -47,6 +53,10 @@ struct AiSystemAddresses : temple::AddressTable
 
 	
 }addresses;
+
+void AiParamPacket::GetForCritter(objHndl handle){
+	*this = aiSys.GetAiParams(handle);
+}
 
 AiSystem::AiSystem()
 {
@@ -349,6 +359,18 @@ void AiSystem::ProvokeHostility(objHndl agitator, objHndl provokedNpc, int range
 	temple::GetRef<void(__cdecl)(objHndl, objHndl, int, int)>(0x1005E8D0)(agitator, provokedNpc, rangeType, flags);
 }
 
+BOOL AiSystem::RefuseFollowCheck(objHndl handle, objHndl leader){
+	auto objBody = objSystem->GetObject(handle);
+	if (objBody->GetInt32(obj_f_spell_flags) & SpellFlags::SF_SPELL_FLEE
+		&& critterSys.GetLeaderForNpc(handle)
+		|| (critterSys.GetLeader(handle), objBody->GetNPCFlags() & ONF_FORCED_FOLLOWER) ){
+		return FALSE;	
+	}
+	auto aiParams = aiSys.GetAiParams(handle);
+	auto reactionLvl = critterSys.GetReaction(handle, leader);
+	return reactionLvl > aiParams.reactionLvlToRefuseFollowingPc ? 0 : 3;
+}
+
 int AiSystem::GetAllegianceStrength(objHndl aiHandle, objHndl tgt){
 	if (aiHandle == tgt)
 		return 4;
@@ -440,6 +462,116 @@ BOOL AiSystem::ConsiderTarget(objHndl obj, objHndl tgt)
 			return 0;
 	}
 	return 1;
+}
+
+objHndl AiSystem::FindSuitableTarget(objHndl handle){
+	auto & aiSearchingTgt = temple::GetRef<BOOL>(0x10AA73B4);
+	if (aiSearchingTgt)
+		return objHndl::null;
+
+	// begin search section
+	aiSearchingTgt = 1;
+
+	auto objToTurnTowards = objHndl::null;
+	ObjList objList;
+	objList.ListRangeTiles(handle, 18, OLC_CRITTERS);
+
+	auto numCritters = objList.size();
+	auto critterList = objList.GetListResult();
+	std::vector<int64_t> tileDeltas;
+	tileDeltas.resize(numCritters);
+
+	auto leader = critterSys.GetLeader(handle);
+
+	// sort by distance?
+	if (numCritters > 1){
+		for (auto i=0; i < numCritters; i++){
+			auto dude = critterList[i];
+			auto tileDelta = locSys.GetTileDeltaMax(handle, dude);
+			tileDeltas[i] = tileDelta;
+			if (critterSys.IsDeadOrUnconscious(dude))
+				tileDeltas[i] += 1000;
+		}
+		for (auto i=1; i < numCritters; i++){
+			auto target = critterList[i];
+			auto tileDelta = tileDeltas[i];
+			auto j = i;
+			for ( ; j > 0; j--){
+
+				if (tileDeltas[j-1] <= tileDelta)
+					break;
+				tileDeltas[j] = tileDeltas[j - 1];
+				critterList[j] = critterList[j - 1];
+			}
+			tileDeltas[j] = tileDelta;
+			critterList[j] = target;
+		}
+	}
+
+	auto kosCandidate = objHndl::null;
+	for (auto i =0; i < numCritters; i++){
+		auto target = critterList[i];
+		int isUnconcealed = !critterSys.IsMovingSilently(target) 
+			&& !critterSys.IsConcealed(target);
+
+		if (!aiSys.CannotHear(handle, target, isUnconcealed)
+			|| !critterSys.HasLineOfSight(handle, target)){
+			
+			auto tgtObj = objSystem->GetObject(target);
+			if (tgtObj->IsPC() && !isUnconcealed){
+				objToTurnTowards = target;
+			}
+			if (aiSys.WillKos(handle, target)){
+				kosCandidate = target;
+				break;
+			}
+
+			if (tgtObj->IsNPC()) {
+				AiFightStatus aifs;
+				objHndl targetsFocus = objHndl::null;
+				aiSys.GetAiFightStatus(target, &aifs, &targetsFocus);
+				if (aiSys.ConsiderTarget(handle, targetsFocus)
+					&& (aifs == AIFS_FIGHTING || aifs == AIFS_FLEEING || aifs == AIFS_SURRENDERED)){
+					auto allegianceStr = aiSys.GetAllegianceStrength(handle, target);
+
+					if (allegianceStr && !aiSys.CannotHate(handle, targetsFocus, leader)){
+						isUnconcealed =  !critterSys.IsMovingSilently(targetsFocus)
+							&& !critterSys.IsConcealed(targetsFocus);
+						if (!aiSys.CannotHear(handle, targetsFocus, isUnconcealed)
+							|| !critterSys.HasLineOfSight(handle, targetsFocus)) {
+							kosCandidate = targetsFocus;
+							break;
+						}
+					}
+			
+				}
+			}
+		}
+
+		target = temple::GetRef<objHndl(__cdecl)(objHndl, objHndl)>(0x1005CB60)(handle, target);
+		if (target){
+			isUnconcealed = !critterSys.IsMovingSilently(target)
+				&& !critterSys.IsConcealed(target);
+			if (!aiSys.CannotHear(handle, target, isUnconcealed)
+				|| !critterSys.HasLineOfSight(handle, target)){
+				kosCandidate = target;
+				break;
+			}
+		}
+	}
+
+
+	if (!kosCandidate){
+		if (objToTurnTowards){
+			auto rotationTo = objects.GetRotationTowards(handle, objToTurnTowards);
+			animationGoals.PushRotate(handle, rotationTo);
+		}
+	}
+
+	aiSearchingTgt = 0;
+
+	return kosCandidate;
+
 }
 
 int AiSystem::CannotHate(objHndl aiHandle, objHndl triggerer, objHndl aiLeader){
@@ -1956,9 +2088,61 @@ int AiSystem::AttackThreatened(AiTactic* aiTac)
 	return Default(aiTac);
 }
 
-void AiSystem::AiProcess(objHndl obj)
-{
-	return addresses.AiProcess(obj);
+void AiSystem::AiProcess(objHndl obj){
+
+	// Check if Player Controlled (if so, skip)
+	if (objects.IsPlayerControlled(obj))
+		return;
+
+	auto isCombatActive = combatSys.isCombatActive();
+
+	if ( isCombatActive 
+		&& critterSys.isCritterCombatModeActive(obj)
+		&& tbSys.turnBasedGetCurrentActor() != obj
+		&& actSeqSys.getNextSimulsPerformer() != obj){
+		return;
+	}
+
+	if (aiSys.IsPcUnderAiControl(obj)){
+		auto aiProcessPc = temple::GetRef<int(__cdecl)(objHndl)>(0x1005AE10);
+		if (!aiProcessPc(obj)){
+			logger->debug("Combat for {} ending turn (script)...", obj);
+		}
+		return;
+	}
+
+	if (d20Sys.d20Query(obj, DK_QUE_AI_Has_Spell_Override)){ // from Confusion Spell
+		int confusionState = d20Sys.d20QueryReturnData(obj, DK_QUE_AI_Has_Spell_Override);
+		if (confusionState > 0 && confusionState <15){
+			return addresses.AiProcess(obj); // todo replace this
+		}
+	}
+
+	if (gameSystems->GetMap().IsClearingMap())
+		return;
+
+	if (critterSys.IsDeadOrUnconscious(obj)){
+		logger->info("AI for {} ending turn (unconscious)...", obj);
+		combatSys.CombatAdvanceTurn(obj);
+		return;
+	}
+
+	AiPacket aiPacket(obj);
+	if (!aiPacket.PacketCreate())
+		return;
+
+	auto isCombat = combatSys.isCombatActive();
+	auto curActor = tbSys.turnBasedGetCurrentActor();
+	auto nextSimuls = actSeqSys.getNextSimulsPerformer();
+
+	if (isCombat && !critterSys.IsCombatModeActive(obj)
+		&& curActor != obj && nextSimuls != obj){
+		combatSys.enterCombat(obj);
+		return;
+	} 
+	
+	aiPacket.ProcessCombat();
+	
 }
 
 int AiSystem::AiTimeEventExpires(TimeEvent* evt)
@@ -2120,6 +2304,42 @@ int AiSystem::ChooseRandomSpellFromList(AiTactic * aiTac, AiSpellList* aiSpells)
 
 	}
 	return 0;
+}
+
+BOOL AiSystem::IsPcUnderAiControl(objHndl handle){
+	
+	if (!handle)
+		return FALSE;
+
+	// must be a PC that is not player controlled
+
+	if (objects.IsPlayerControlled(handle))
+		return FALSE;
+
+	auto obj = objSystem->GetObject(handle);
+	if (!obj->IsPC())
+		return FALSE;
+
+	// must be charmed, AI Controlled or Afraid
+	auto queryAiControl =
+		d20Sys.d20Query(handle, DK_QUE_Critter_Is_Charmed)
+	|| d20Sys.d20Query(handle, DK_QUE_Critter_Is_AIControlled)
+	|| d20Sys.d20Query(handle, DK_QUE_Critter_Is_Afraid);
+	if (!queryAiControl)
+		return FALSE;
+
+	if (d20Sys.d20Query(handle, DK_QUE_Critter_Is_Afraid)){
+		objHndl fearedObj;
+		fearedObj.handle = d20Sys.d20QueryReturnData(handle, DK_QUE_Critter_Is_Afraid);
+		if (!fearedObj)
+			return FALSE;
+		if (locSys.DistanceToObj(handle, fearedObj) > 40.0)
+			return FALSE;
+		if (!combatSys.HasLineOfAttack(fearedObj, handle))
+			return FALSE;
+	}
+
+	return TRUE;
 }
 
 bool AiSystem::Is5FootStepWorth(AiTactic* aiTac){
@@ -2469,5 +2689,569 @@ AiPacket::AiPacket(objHndl objIn)
 	scratchObj = 0i64;
 	leader = critterSys.GetLeader(objIn);
 	aiSys.GetAiFightStatus(objIn, reinterpret_cast<AiFightStatus*>(&this->aiFightStatus), &this->target);
-	field30 = -1;
+	soundMap = -1;
+}
+
+BOOL AiPacket::PacketCreate(){
+	if (!WieldBestItem())
+		return FALSE;
+
+	if (d20Sys.d20Query(this->obj, DK_QUE_Critter_Is_Afraid)){
+		objHndl fearedObj;
+		fearedObj.handle = d20Sys.d20QueryReturnData(this->obj, DK_QUE_Critter_Is_Afraid);
+		this->target = fearedObj;
+		this->aiFightStatus = aiSys.UpdateAiFlags(this->obj, AiFightStatus::AIFS_FLEEING, fearedObj, &this->soundMap);
+		return TRUE;
+	}
+
+	if (SelectHealSpell()) // select heal spell & target from: self, leader, leader's followers
+		return TRUE;
+
+	if (!LookForEquipment()){
+		FightStatusUpdate();
+	}
+
+	return TRUE;
+}
+
+BOOL AiPacket::WieldBestItem(){
+	if (critterSys.IsDeadOrUnconscious(obj))
+		return FALSE;
+	
+	if (!critterSys.IsSleeping(obj) && objSystem->GetObject(obj)->GetFlags() & (OF_DONTDRAW | OF_OFF))
+		return FALSE;
+	auto pc0 = party.GroupPCsGetMemberN(0);
+	if (objSystem->GetObject(pc0)->GetFlags() & OF_OFF)
+		return FALSE;
+	if (objSystem->GetObject(obj)->GetInt32(obj_f_spell_flags) & SpellFlags::SF_10000)
+		return FALSE;
+
+	auto critterFlags = critterSys.GetCritterFlags(obj);
+	if (critterFlags & CritterFlag::OCF_STUNNED)
+		return FALSE;
+
+	auto getDlgTarget = temple::GetPointer<objHndl(objHndl)>(0x10053CA0);
+	if (getDlgTarget(obj))
+		return FALSE;
+
+	auto getAnimPriority = temple::GetRef<int(__cdecl)(objHndl)>(0x1000C500);
+	auto animPriority = getAnimPriority(obj);
+	if (animPriority != 7 && animPriority > 2)
+		return FALSE;
+
+	if (critterSys.IsDeadOrUnconscious(obj))
+		return FALSE;
+
+	auto npcFlags = objSystem->GetObject(obj)->GetNPCFlags();
+	if (npcFlags & ONF_GENERATOR)
+		return FALSE;
+
+	auto aiFlags =  objSystem->GetObject(obj)->GetInt64(obj_f_npc_ai_flags64);
+	if (aiFlags & AiFlag::RunningOff)
+		return FALSE;
+
+	if (aiFlags & AiFlag::CheckWield && !combatSys.isCombatActive()){
+		inventory.WieldBestAll(obj, target);
+	    aiFlags =	objSystem->GetObject(obj)->GetInt64(obj_f_npc_ai_flags64);
+		aiFlags &= ~(AiFlag::CheckWeapon | AiFlag::CheckWield);
+		objSystem->GetObject(obj)->SetInt64(obj_f_npc_ai_flags64, aiFlags);
+	}
+	else if (aiFlags & AiFlag::CheckWeapon){
+		inventory.WieldBest(obj, 200 + EquipSlot::WeaponPrimary, target);
+		aiFlags = objSystem->GetObject(obj)->GetInt64(obj_f_npc_ai_flags64);
+		aiFlags &= ~(AiFlag::CheckWeapon );
+		objSystem->GetObject(obj)->SetInt64(obj_f_npc_ai_flags64, aiFlags);;
+	}
+
+	if (npcFlags & ONF_DEMAINTAIN_SPELLS){
+		auto leader = critterSys.GetLeader(obj);
+		if (!leader || critterSys.IsDeadNullDestroyed(leader) || !critterSys.IsCombatModeActive(leader))
+			objSystem->GetObject(obj)->SetInt32(obj_f_npc_flags, npcFlags & ~(ONF_DEMAINTAIN_SPELLS));
+	}
+
+	return TRUE;
+
+}
+
+BOOL AiPacket::SelectHealSpell(){
+	if (critterSys.IsSleeping(obj) || aiFightStatus == AIFS_FLEEING)
+		return FALSE;
+
+	auto doHealSpell = 1;
+	if (critterSys.IsCombatModeActive(obj)){
+		AiParamPacket aiParams;
+		aiParams.GetForCritter(obj);
+		if (rngSys.GetInt(1, 100) > aiParams.healSpellChance)
+			doHealSpell = 0;
+	}
+
+	if (ShouldUseHealSpellOn(obj, doHealSpell))
+		return TRUE;
+
+	auto leader = critterSys.GetLeaderForNpc(obj);
+	if (leader || (leader = this->leader, leader)){
+		if (ShouldUseHealSpellOn(leader, doHealSpell))
+			return TRUE;
+	}
+	else
+	{
+		leader = obj;
+	}
+
+	ObjList objList;
+	objList.ListFollowers(leader);
+
+	if (!objList.size())
+		return FALSE;
+
+	for (auto i=0; i < objList.size(); i++){
+		auto follower = objList.get(i);
+		if (follower && follower != obj && ShouldUseHealSpellOn(follower, doHealSpell))
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
+bool AiPacket::ShouldUseHealSpellOn(objHndl handle, BOOL healSpellRecommended){
+	target = handle;
+	AiSpellList aiSpells;
+
+	if (critterSys.IsDeadNullDestroyed(handle)){
+		
+		aiSys.GetAiSpells(&aiSpells, obj, AiSpellType::ai_action_resurrect);
+		if (aiSys.ChooseRandomSpellFromList(this, &aiSpells))
+			return true;
+	}
+
+	auto hpPct = critterSys.GetHpPercent(handle);
+	if (hpPct > 30 && !healSpellRecommended)
+		return false;
+
+	if (hpPct < 40){
+		aiSys.GetAiSpells(&aiSpells, obj, AiSpellType::ai_action_heal_heavy);
+		if (aiSys.ChooseRandomSpellFromList(this, &aiSpells))
+			return true;
+	}
+	if (hpPct < 55){
+		aiSys.GetAiSpells(&aiSpells, obj, AiSpellType::ai_action_heal_medium);
+		if (aiSys.ChooseRandomSpellFromList(this, &aiSpells))
+			return true;
+	}
+	if (d20Sys.d20Query(handle, DK_QUE_Critter_Is_Poisoned)){
+		aiSys.GetAiSpells(&aiSpells, obj, AiSpellType::ai_action_cure_poison);
+		if (aiSys.ChooseRandomSpellFromList(this, &aiSpells))
+			return true;
+	}
+	if (hpPct < 70 || aiFightStatus == AIFS_NONE && hpPct < 90){
+		aiSys.GetAiSpells(&aiSpells, obj, AiSpellType::ai_action_heal_light);
+		if (aiSys.ChooseRandomSpellFromList(this, &aiSpells))
+			return true;
+	}
+
+	return false;
+}
+
+BOOL AiPacket::LookForEquipment(){
+
+	if (critterSys.IsSleeping(obj))
+		return FALSE;
+	auto critterFlags = critterSys.GetCritterFlags(obj);
+	if (critterFlags & CritterFlag::OCF_FATIGUE_LIMITING)
+		return FALSE;
+	auto unk = temple::GetRef<int(__cdecl)()>(0x1009A660)();
+	if (unk)
+		return FALSE;
+
+	auto lookForAndPickupItem = temple::GetRef<BOOL(__cdecl)(objHndl, ObjectListFilter)>(0x1005B1D0);
+
+	auto aiFlags = objSystem->GetObject(obj)->GetInt64(obj_f_npc_ai_flags64);
+	if (aiFlags & AiFlag::LookForAmmo){
+		aiFlags &= ~(AiFlag::LookForAmmo);
+		objSystem->GetObject(obj)->SetInt64(obj_f_npc_ai_flags64, aiFlags);
+		if (lookForAndPickupItem(obj, OLC_AMMO))
+			return TRUE;
+	}
+	if (aiFlags & AiFlag::LookForWeapon) {
+		aiFlags &= ~(AiFlag::LookForWeapon);
+		objSystem->GetObject(obj)->SetInt64(obj_f_npc_ai_flags64, aiFlags);
+		if (lookForAndPickupItem(obj, OLC_WEAPON))
+			return TRUE;
+	}
+	if (aiFlags & AiFlag::LookForArmor) {
+		aiFlags &= ~(AiFlag::LookForArmor);
+		objSystem->GetObject(obj)->SetInt64(obj_f_npc_ai_flags64, aiFlags);
+		if (lookForAndPickupItem(obj, OLC_ARMOR))
+			return TRUE;
+	}
+
+
+	return FALSE;
+}
+
+void AiPacket::FightStatusUpdate(){
+	if (critterSys.IsSleeping(obj))
+		return;
+	objHndl focus = objHndl::null;
+	auto considerCombatFocs = temple::GetRef < objHndl(__cdecl)(objHndl) >(0x1005D580);
+	switch (aiFightStatus){
+
+	case AIFS_FINDING_HELP: // for AI with scout points
+		focus = considerCombatFocs(obj);
+		if (focus){
+			this->target = focus;
+			if (!ScoutPointSetState()){
+				this->aiFightStatus = aiSys.UpdateAiFlags(obj, AIFS_FIGHTING, target, &this->soundMap);
+				return;
+			}
+			break;
+		}
+		// slide into next case if focus == null
+	case AIFS_NONE:
+		focus = aiSys.FindSuitableTarget(obj);
+		if (focus){
+			this->target = focus;
+			if (HasScoutStandpoint()){
+				ScoutPointSetState();
+				this->aiFightStatus = aiSys.UpdateAiFlags(obj, AIFS_FIGHTING, target, &this->soundMap);
+				return;
+			}
+			ChooseRandomSpell_RegardInvulnerableStatus();
+			this->aiFightStatus = aiSys.UpdateAiFlags(obj, AIFS_FIGHTING, target, &this->soundMap);
+			break;
+		}
+		break;
+	case AIFS_FIGHTING:
+		focus = considerCombatFocs(obj);
+		if (focus){
+			this->target = focus;
+			ChooseRandomSpell_RegardInvulnerableStatus();
+			this->aiFightStatus = aiSys.UpdateAiFlags(obj, AIFS_FIGHTING, target, &this->soundMap);
+			return;
+		}
+		focus = objSystem->GetObject(obj)->GetObjHndl(obj_f_npc_who_hit_me_last);
+		this->target = focus;
+		if (aiSys.ConsiderTarget(obj, focus)){
+			ChooseRandomSpell_RegardInvulnerableStatus();
+			this->aiFightStatus = aiSys.UpdateAiFlags(obj, AIFS_FIGHTING, target, &this->soundMap);
+			return;
+		} 
+		
+		focus = PickRandomFromAiList();
+		if (!focus){
+			this->aiFightStatus = aiSys.UpdateAiFlags(obj, AIFS_NONE, objHndl::null, &this->soundMap);
+			return;
+		}
+		ChooseRandomSpell_RegardInvulnerableStatus();
+		this->aiFightStatus = aiSys.UpdateAiFlags(obj, AIFS_FIGHTING, target, &this->soundMap);
+		return;
+	case AIFS_FLEEING:
+		if (!this->target)
+			this->aiFightStatus = aiSys.UpdateAiFlags(obj, AIFS_NONE, objHndl::null, &this->soundMap);
+		break;
+	case AIFS_SURRENDERED:
+		if (critterSys.GetHpPercent(obj) >= 80 && rngSys.GetInt(1,500) == 1){
+			this->aiFightStatus = aiSys.UpdateAiFlags(obj, AIFS_NONE, objHndl::null, &this->soundMap);
+		}
+		break;
+	default:
+		return;
+	}
+}
+
+bool AiPacket::HasScoutStandpoint(){
+	auto standPt = critterSys.GetStandPoint(obj, StandPointType::Scout);
+	return standPt.location.location.locx != 0 || standPt.location.location.locy != 0;
+}
+
+bool AiPacket::ScoutPointSetState(){
+
+	if (!HasScoutStandpoint())
+		return false;
+
+	auto standPt = critterSys.GetStandPoint(obj, StandPointType::Scout);
+	auto objLoc = objSystem->GetObject(obj)->GetLocationFull();
+	if (locSys.GetTileDeltaMaxBtwnLocs(objLoc.location, standPt.location.location) <= 3){
+		this->aiState2 = 5;
+		return true;
+	}
+	this->aiState2 = 4;
+	return true;
+}
+
+void AiPacket::ChooseRandomSpell_RegardInvulnerableStatus(){
+	auto objBody = objSystem->GetObject(obj);
+	if (objBody->GetFlags() & OF_INVULNERABLE){
+		this->aiState2 = 0;
+		return;
+	}
+
+	auto critFlags2 = objBody->GetInt32(obj_f_critter_flags2);
+	if (critFlags2 & CritterFlags2::OCF2_NIGH_INVULNERABLE){
+		this->aiState2 = 0;
+		return;
+	}
+
+	if (!aiSys.ChooseRandomSpell(this)){
+		this->aiState2 = 0;
+		return;
+	}
+
+}
+
+objHndl AiPacket::PickRandomFromAiList(){
+	auto result = temple::GetRef<objHndl(__cdecl)(objHndl)>(0x1005D620)(obj);
+	return result;
+}
+
+void AiPacket::ProcessCombat(){
+	auto isCombat = combatSys.isCombatActive();
+	auto curActor = tbSys.turnBasedGetCurrentActor();
+	auto nextSimuls = actSeqSys.getNextSimulsPerformer();
+
+	if (!isCombat || curActor == obj || nextSimuls == obj) {
+		auto objBod = objSystem->GetObject(obj);
+		if (objBod->GetNPCFlags() & ONF_BACKING_OFF){
+			ProcessBackingOff();
+		}
+		else{
+			auto aiState2 = this->aiState2;
+			switch (aiState2){
+			case 1:
+				ThrowSpell();
+				break;
+			case 2:
+				UseItem();
+				break;
+			case 3:
+				animationGoals.PushUseSkillOn(obj, target, this->skillEnum, this->scratchObj, 0);
+				break;
+			case 4:
+				MoveToScoutPoint();
+				break;
+			case 5:
+				ScoutPointAttack();
+				break;
+			default:
+				switch(this->aiFightStatus){
+				case AIFS_NONE:
+					DoWaypoints();
+					break;
+				case AIFS_FLEEING:
+					temple::GetRef<void(__cdecl)(objHndl, objHndl)>(0x1005A1F0)(obj, target); // process fleeing
+					break;
+				case AIFS_FIGHTING:
+					ProcessFighting();
+					break;
+				case AIFS_SURRENDERED:
+					FleeingStatusRefresh();
+					break;
+				default:
+					break;
+				}
+			}
+		}
+	}
+
+	if (!combatSys.isCombatActive())
+		return;
+	auto curSeq = *(actSeqSys.actSeqCur);
+	if (!curSeq){
+		logger->error("NULL STATUS???");
+		return;
+	}
+	curActor = tbSys.turnBasedGetCurrentActor();
+	if (curActor != obj || actSeqSys.isPerforming(obj))
+		return;
+	if (!actSeqSys.IsSimulsCompleted())
+		return;
+	if (!actSeqSys.IsLastSimultPopped(obj)){
+		logger->debug("AI for {} ending turn...");
+		combatSys.CombatAdvanceTurn(obj);
+	}
+}
+
+void AiPacket::ProcessBackingOff(){
+	AiParamPacket aiParams;
+	aiParams.GetForCritter(obj);
+	auto objBody = objSystem->GetObject(obj);
+	auto npcFlags = objBody->GetNPCFlags();
+	if (!(npcFlags & ONF_BACKING_OFF))
+		return;
+	auto minDistFeet = 12.0f;
+	if (aiParams.combatMinDistanceFeet > 1)
+		minDistFeet = aiParams.combatMinDistanceFeet;
+
+	if (locSys.DistanceToObj(obj, target) >= minDistFeet){
+		objBody->SetInt32(obj_f_npc_flags, npcFlags & ~(ONF_BACKING_OFF));
+		return;
+	}
+
+	AnimPathSpec animPathSpec;
+	animPathSpec.handle = obj;
+	animPathSpec.srcLoc = objBody->GetLocation();
+	animPathSpec.flags = 0x800;
+	animPathSpec.size = 100;
+	animPathSpec.distTiles = (int)( minDistFeet * 0.4246407);
+	int8_t deltas[100];
+	animPathSpec.deltas = deltas;
+	animPathSpec.destLoc = objSystem->GetObject(target)->GetLocation();
+	if (!animPathSpec.PathSearch()){
+		objBody->SetInt32(obj_f_npc_flags, npcFlags & ~(ONF_BACKING_OFF));
+		return;
+	}
+
+	if (actSeqSys.TurnBasedStatusInit(obj)) {
+		actSeqSys.curSeqReset(obj);
+		d20Sys.GlobD20ActnInit();
+		d20Sys.GlobD20ActnSetTypeAndData1(D20ActionType::D20A_UNSPECIFIED_MOVE, 0);
+		d20Sys.GlobD20ActnSetTarget(obj, nullptr); // bug???? todo
+		actSeqSys.ActionAddToSeq();
+		actSeqSys.sequencePerform();
+	}
+}
+
+void AiPacket::ThrowSpell(){
+	if (combatSys.isCombatActive()){
+		if (actSeqSys.TurnBasedStatusInit(obj)){
+			actSeqSys.curSeqReset(obj);
+			aiSys.AiStrategDefaultCast(obj, target, &this->spellData, &this->spellPktBod);
+		}
+		return;
+	}
+
+	if (!spellSys.IsSpellHarmful(this->spellData.spellEnumOrg, obj, target))
+		return;
+
+
+	combatSys.enterCombat(obj);
+
+	if (!party.IsInParty(obj) && !party.IsInParty(target))
+		return;
+		
+	combatSys.enterCombat(target);
+	if (critterSys.CanSense(target, obj)) {
+		combatSys.StartCombat(obj, 0);
+	}
+	else{
+		combatSys.StartCombat(obj, 1);
+	}
+}
+
+void AiPacket::UseItem(){
+	if (!this->spellEnum)
+		return;
+	if (!actSeqSys.TurnBasedStatusInit(obj))
+		return;
+	actSeqSys.curSeqReset(obj);
+	d20Sys.GlobD20ActnInit();
+	d20Sys.GlobD20ActnSetTypeAndData1(D20ActionType::D20A_USE_ITEM, 0);
+	d20Sys.GlobD20ActnSetSpellData(&this->spellData);
+	actSeqSys.ActionAddToSeq();
+	actSeqSys.sequencePerform();
+}
+
+void AiPacket::MoveToScoutPoint(){
+	auto standPt = critterSys.GetStandPoint(obj, StandPointType::Scout);
+	if (!actSeqSys.TurnBasedStatusInit(obj))
+		return;
+	actSeqSys.curSeqReset(obj);
+	d20Sys.GlobD20ActnInit();
+	d20Sys.GlobD20ActnSetTypeAndData1(D20ActionType::D20A_UNSPECIFIED_MOVE, 0);
+	d20Sys.GlobD20ActnSetTarget(obj, &standPt.location);
+	actSeqSys.ActionAddToSeq();
+	actSeqSys.sequencePerform();
+}
+
+void AiPacket::ScoutPointAttack(){
+	aiSys.ProvokeHostility(target, obj, 3, 0);
+	auto objBody = objSystem->GetObject(obj);
+	auto aiFlags = objBody->GetInt64(obj_f_npc_ai_flags64);
+	objBody->SetInt64(obj_f_npc_ai_flags64, aiFlags & ~(AiFlag::FindingHelp));
+	aiSys.UpdateAiFlags(obj, AIFS_FIGHTING, target, &this->soundMap);
+}
+
+void AiPacket::DoWaypoints(){
+	combatSys.CritterExitCombatMode(obj);
+	if (d20Sys.d20Query(obj, DK_QUE_Prone) && !d20Sys.d20Query(obj, DK_QUE_Unconscious)){
+		actSeqSys.TurnBasedStatusInit(obj);
+		d20Sys.GlobD20ActnInit();
+		d20Sys.GlobD20ActnSetTypeAndData1(D20ActionType::D20A_STAND_UP, 0);
+		actSeqSys.ActionAddToSeq();
+		actSeqSys.sequencePerform();
+		return;
+	}
+
+	auto objBody = objSystem->GetObject(obj);
+	auto npcFlags = objBody->GetNPCFlags();
+
+	if (!this->leader){
+		if (npcFlags& ONF_USE_ALERTPOINTS){
+			
+			if (!!temple::GetRef<BOOL(__cdecl)(objHndl, int)>(0x1005BC00)(obj, 0)){
+				animationGoals.PushFidget(obj);
+				temple::GetRef<void(__cdecl)(objHndl)>(0x10015FD0)(obj);
+			}
+		}
+		else if (!temple::GetRef<BOOL(__cdecl)(objHndl, int)>(0x1005B950)(obj, 0) // waypoint sthg
+			&& !temple::GetRef<BOOL(__cdecl)(objHndl, int)>(0x1005BC00)(obj, 0)) // npc wander sthg
+		{
+			animationGoals.PushFidget(obj);
+			temple::GetRef<void(__cdecl)(objHndl)>(0x10015FD0)(obj);
+		}
+		return;
+	}
+
+	if (npcFlags && ONF_AI_WAIT_HERE)
+		return;
+
+	if (gameSystems->GetAnim().GetRunSlotId(obj, nullptr))
+		return;
+
+	if (aiSys.RefuseFollowCheck(this->obj, this->leader) && critterSys.RemoveFollower(obj, 0)){
+		uiSystems->GetParty().Update();
+		npcFlags = objBody->GetNPCFlags();
+		objBody->SetInt32(obj_f_npc_flags, npcFlags | ONF_JILTED);
+		// looks like there was some commented out code here for playing some sound
+	}
+	else if (npcFlags & ONF_CHECK_LEADER){
+		objBody->SetInt32(obj_f_npc_flags, npcFlags & ~ONF_CHECK_LEADER);
+		// looks like there was some commented out code here for playing some sound
+	}
+}
+
+void AiPacket::ProcessFighting(){
+	if (combatSys.isCombatActive()){
+		if (actSeqSys.curSeqGetTurnBasedStatus() && actSeqSys.TurnBasedStatusInit(obj)){
+			actSeqSys.curSeqReset(obj);
+			aiSys.StrategyParse(obj, target);
+		}
+		return;
+	}
+
+	if (party.ObjIsAIFollower(obj) || locSys.DistanceToObj(obj, target) > 75.0)
+		return;
+
+	if (!party.IsInParty(obj) && party.IsInParty(target)){
+		target = pathfindingSys.CanPathToParty(obj);
+		if (!target)
+			return;
+	}
+	combatSys.enterCombat(obj);
+	if (party.IsInParty(obj) || party.IsInParty(target)){
+		combatSys.enterCombat(target);
+		if (critterSys.CanSense(target, obj))
+			combatSys.StartCombat(obj, 0);
+		else
+			combatSys.StartCombat(obj, 1);
+	}
+
+}
+
+void AiPacket::FleeingStatusRefresh(){
+	auto objBody = objSystem->GetObject(obj);
+	auto fleeingFrom = objBody->GetObjHndl(obj_f_critter_fleeing_from);
+	if (!fleeingFrom || !objSystem->IsValidHandle(fleeingFrom)
+		|| critterSys.IsDeadNullDestroyed(fleeingFrom) || critterSys.IsDeadOrUnconscious(fleeingFrom))
+		this->aiFightStatus = aiSys.UpdateAiFlags(obj, AIFS_NONE, objHndl::null, nullptr);
 }

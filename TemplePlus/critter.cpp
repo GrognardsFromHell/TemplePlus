@@ -1252,6 +1252,26 @@ DamageType LegacyCritterSystem::GetCritterAttackDamageType(objHndl obj, int atta
 	return damType[x];
 }
 
+bool LegacyCritterSystem::IsSleeping(objHndl hndl)
+{
+	if (!hndl)
+		return false;
+	auto obj = objSystem->GetObject(hndl);
+	if (!obj->IsCritter())
+		return false;
+	return ( obj->GetInt32(obj_f_critter_flags) & CritterFlag::OCF_SLEEPING) != 0;
+	}
+
+int LegacyCritterSystem::GetHpPercent(const objHndl& handle)
+{
+	auto maxHp = objects.StatLevelGet(handle, Stat::stat_hp_max);
+	auto curHp = objects.GetHPCur(handle);
+	auto subdualDam = objects.StatLevelGet(handle, Stat::stat_subdual_damage);
+	if (maxHp <= 0)
+		return 0;
+	return (curHp - subdualDam) / maxHp;
+}
+
 int LegacyCritterSystem::GetCritterAttackType(objHndl obj, int attackIdx)
 {
 	int damageIdx = GetDamageIdx(obj, attackIdx);

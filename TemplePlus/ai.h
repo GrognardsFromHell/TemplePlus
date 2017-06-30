@@ -33,12 +33,39 @@ struct AiPacket
 	SkillEnum skillEnum;
 	objHndl scratchObj;
 	objHndl leader;
-	int field30;
+	int soundMap;
 	D20SpellData spellData;
 	int field3C;
 	SpellPacketBody spellPktBod;
 
 	AiPacket(objHndl objIn);
+
+	BOOL PacketCreate();
+	BOOL WieldBestItem();
+	BOOL SelectHealSpell();
+	bool ShouldUseHealSpellOn(objHndl handle, BOOL healSpellRecommended);
+	BOOL LookForEquipment();
+
+
+	
+	void FightStatusUpdate();
+		bool HasScoutStandpoint();
+		bool ScoutPointSetState();
+		void ChooseRandomSpell_RegardInvulnerableStatus();
+		objHndl PickRandomFromAiList();
+
+
+	
+	void ProcessCombat();
+		void ProcessBackingOff();
+		void ThrowSpell();
+		void UseItem();
+		void MoveToScoutPoint();
+		void ScoutPointAttack();
+
+		void DoWaypoints();
+		void ProcessFighting();
+		void FleeingStatusRefresh();
 };
 struct AiParamPacket
 { // most of this stuff is arcanum leftovers
@@ -56,9 +83,11 @@ struct AiParamPacket
 	int unused12;
 	int offensiveSpellChance;
 	int defensiveSpellChance;
-	int healSpellChange;
+	int healSpellChance;
 	int combatMinDistanceFeet;
 	int canOpenPortals;
+
+	void GetForCritter(objHndl handle);
 };
 
 enum AiFlag : uint64_t {
@@ -132,11 +161,12 @@ struct AiSystem : temple::AddressTable
 	void FleeAdd(objHndl npc, objHndl target);
 	void StopAttacking(objHndl npc);
 	void ProvokeHostility(objHndl agitator, objHndl provokedNpc, int rangeType, int flags); // rangeType - 0 is for 5 tiles, 1 is for 10 tiles, 2 is for 20 tiles, and 3 is unlimited
-	
+	BOOL RefuseFollowCheck(objHndl handle, objHndl leader);
 
 	objHndl GetCombatFocus(objHndl npc);
 	objHndl GetWhoHitMeLast(objHndl npc);
 	BOOL ConsiderTarget(objHndl obj, objHndl tgt); // checks if it's a good target
+	objHndl FindSuitableTarget(objHndl handle);
 	int CannotHate(objHndl aiHandle, objHndl triggerer, objHndl aiLeader);
 	int WillKos(objHndl aiHandle, objHndl triggerer); // does the triggerer provoke KOS hostility
 	/*
@@ -205,11 +235,13 @@ struct AiSystem : temple::AddressTable
 	void RegisterNewAiTactics();
 	int GetStrategyIdx(const char* stratName) const; // get the strategy.tab index for given strategy name
 	
+
 	static int GetAiSpells(AiSpellList* aiSpell, objHndl obj, AiSpellType aiSpellType);
 	static int ChooseRandomSpell(AiPacket* aiPkt);
 	static int ChooseRandomSpellFromList(AiPacket* aiPkt, AiSpellList *);
 	static int ChooseRandomSpellFromList(AiTactic * aiTac, AiSpellList * aiSpellList);
-	
+
+	BOOL IsPcUnderAiControl(objHndl handle);
 	void AiProcess(objHndl obj);
 
 	int AiTimeEventExpires(TimeEvent* evt);
