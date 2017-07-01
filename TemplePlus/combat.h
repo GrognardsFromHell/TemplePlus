@@ -5,7 +5,7 @@
 
 
 /*
-	Maximum distance for NPCs to execute the "EnterCombat" function
+	Maximum distance for NPCs to execute the "EnterCombat" function (18 tiles)
 	Unfortunately increasing this only makes you bump into the pathfinding
 	limitation
 */

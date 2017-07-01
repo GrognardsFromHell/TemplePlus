@@ -354,8 +354,18 @@ void AiSystem::StopAttacking(objHndl npc) {
 	_StopAttacking(npc);
 }
 
-void AiSystem::ProvokeHostility(objHndl agitator, objHndl provokedNpc, int rangeType, int flags)
-{
+void AiSystem::ProvokeHostility(objHndl agitator, objHndl provokedNpc, int rangeType, int flags){
+
+	if (!agitator || !provokedNpc)
+		return;
+
+	auto provokedObj = objSystem->GetObject(provokedNpc);
+	if (provokedObj->IsCritter()){
+		auto critFlags2 = provokedObj->GetInt32(obj_f_critter_flags2);
+		if ( (critFlags2 & CritterFlags2::OCF2_NIGH_INVULNERABLE) || critterSys.IsDeadNullDestroyed(provokedNpc))
+			return;
+	}
+
 	temple::GetRef<void(__cdecl)(objHndl, objHndl, int, int)>(0x1005E8D0)(agitator, provokedNpc, rangeType, flags);
 }
 

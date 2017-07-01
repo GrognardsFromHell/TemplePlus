@@ -379,6 +379,11 @@ int UiIntegameTurnbasedRepl::UiIntgameMsgHandler(int widId, TigMsg* msg) {
 
 		if (dmSys.IsActionActive())
 			return FALSE;
+
+		if (dmSys.IsHandlingMsg()){
+			return FALSE;
+		}
+			
 	}
 	
 

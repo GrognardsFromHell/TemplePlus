@@ -24,8 +24,9 @@ public:
 	bool IsActionActive();
 	bool IsEditorActive();
 	objHndl GetHoveredCritter();
+	bool IsHandlingMsg();
+	void SetIsHandlingMsg(bool b);;
 
-	
 	void Render();
 	void RenderDmButton();
 	void RenderMaps();
@@ -43,7 +44,8 @@ public:
 
 	void GotoArena();
 	void TransitionToMap(int mapId);
-	objHndl GetTgtObj() { return mTgtObj;  };
+	objHndl GetTgtObj() { return mTgtObj;  }
+	
 
 	struct Record{
 		int protoId;

@@ -74,7 +74,14 @@ void UiInGame::ProcessMessage(const TigMsg & msg) {
 
 
 	if (dmSys.IsActive()){
-		dmSys.HandleMsg(msg);
+
+		auto actionWasActive = dmSys.IsActionActive();
+
+		if (dmSys.HandleMsg(msg)){
+			return;
+		}
+		dmSys.SetIsHandlingMsg(false);
+			
 
 		if (dmSys.IsMoused()){
 			return;
@@ -94,7 +101,12 @@ void UiInGame::ProcessMessage(const TigMsg & msg) {
 		
 		if (dmSys.IsActionActive())
 			return;
+
+		if (actionWasActive) {
+			auto asd = 1;
+		}
 	}
+	
 	
 
 	if (HandleRadialMenuMessage(msg)) {

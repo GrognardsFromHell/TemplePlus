@@ -560,8 +560,7 @@ void LegacyCombatSystem::AddToInitiativeWithinRect(objHndl handle) const
 		if (resObj->GetFlags() & ( OF_OFF | OF_DESTROYED | OF_DONTDRAW ))
 			continue;
 
-		if (critterSys.IsDeadOrUnconscious(resHandle))
-		{
+		if (critterSys.IsDeadOrUnconscious(resHandle)){
 			continue;
 		}
 			
@@ -719,23 +718,113 @@ void LegacyCombatSystem::CombatSubturnEnd()
 
 void LegacyCombatSystem::Subturn()
 {
-	addresses.Subturn();
+	
+	auto actor = tbSys.turnBasedGetCurrentActor();
 
-	//auto actor = tbSys.turnBasedGetCurrentActor();
+	if (!actSeqSys.isPerforming(actor) ){
+		if (party.IsInParty(actor))
+			combatSys.AddToInitiativeWithinRect(actor);
+		else{
+			ObjList objList;
+			objList.ListRangeTiles(actor, 12, OLC_CRITTERS);
+			for (auto i=0; i< objList.size(); i++){
+				auto resHandle = objList[i];
+				if (!resHandle)
+					break;
+
+				auto resObj = gameSystems->GetObj().GetObject(resHandle);
+				if (resObj->GetFlags() & (OF_OFF | OF_DESTROYED | OF_DONTDRAW))
+					continue;
+				if (critterSys.IsDeadOrUnconscious(resHandle)) {
+					continue;
+				}
+
+				if (party.IsInParty(actor))
+					continue;
+
+				if (critterSys.HasLineOfSight(actor, resHandle) && critterSys.HasLineOfSight(resHandle, actor)){
+					continue;
+				}
+					
 
 
-	//if (party.IsInParty(actor) && !actSeqSys.isPerforming(actor)) {
-	//	static auto addToInitiativeWithinRect = temple::GetRef<void(__cdecl)(objHndl)>(0x10062AC0);
-	//	addToInitiativeWithinRect(actor);
-	//}
+				if (!tbSys.IsInInitiativeList(resHandle)) {
+					if (!critterSys.IsCombatModeActive(resHandle) && resObj->IsNPC()){
+						auto partyLeader = party.GetConsciousPartyLeader();
+						if (aiSys.WillKos(resHandle, partyLeader ))
+							aiSys.ProvokeHostility(partyLeader, resHandle, 3, 0);
+					}
+				}
+/*
+				auto critFlags = critterSys.GetCritterFlags(resHandle);
+				if (critFlags & OCF_COMBAT_MODE_ACTIVE) {
+					tbSys.AddToInitiative(resHandle);
+				}*/
 
-	//if (!actor){
-	//	logger->error("Combat Subturn: Coudn't start TB combat Turn due to no Active Critters!");
-	//	static auto combatEnd = temple::GetRef<int(__cdecl)()>(0x10062A30);
-	//	combatEnd();
-	//}
+			}
+			auto dummy = 1;
+		}
+	}
 
-	//auto 
+	if (!actor){
+		logger->error("Combat Subturn: Coudn't start TB combat Turn due to no Active Critters!");
+		static auto combatEnd = temple::GetRef<int(__cdecl)()>(0x10062A30);
+		combatEnd();
+		return;
+	}
+
+	auto & combatSubturnTimeEvent = temple::GetRef<int>(0x10AA8420);
+	combatSubturnTimeEvent = 10;
+	static auto uiCombatInitiativePortraitsReset = temple::GetRef<int(__cdecl*)(int)>(0x10AA83FC);
+	party.CurrentlySelectedClear();
+
+	if (objects.IsPlayerControlled(actor)){
+		
+		uiCombatInitiativePortraitsReset(combatSubturnTimeEvent);
+
+		party.AddToCurrentlySelected(actor);
+		temple::GetRef<objHndl>(0x10AA8430) = actor; // looks like a write-only debug thing?
+
+		// there was a call to some nullsub here
+
+		auto combatSubturnCallback = temple::GetRef<void(__cdecl*)(objHndl)>(0x10AA8400);
+		if (combatSubturnCallback){
+			combatSubturnCallback(actor);
+		}
+
+		if (maps.GetCurrentMapId() == 5118 && scriptSys.GetGlobalFlag(7)
+			&& objSystem->GetObject(actor)->IsPC()) {
+			if (!tutorial.IsTutorialActive()) {
+				tutorial.Toggle();
+			}
+			tutorial.ShowTopic(31);
+			scriptSys.SetGlobalFlag(7, 0);
+		}
+		return;
+	}
+
+	// non-player controlled
+
+	uiCombatInitiativePortraitsReset(0);
+	temple::GetRef<objHndl>(0x10AA8430) = actor; // looks like a write-only debug thing?
+	auto combatSubturnCallback = temple::GetRef<void(__cdecl*)(objHndl)>(0x10AA8400);
+	if (combatSubturnCallback) {
+		combatSubturnCallback(actor);
+	}
+
+	if (actSeqSys.isPerforming(actor))
+		return;
+
+	if (!pythonObjIntegration.ExecuteObjectScript(actor, actor, ObjScriptEvent::StartCombat)){
+		logger->info("Skipping AI Process for {} (script)", actor);
+		combatSys.CombatAdvanceTurn(actor);
+		return;
+	}
+	
+	logger->info("Calling AI Process for {}", actor);
+	combatSys.TurnProcessAi(actor);
+
+	// addresses.Subturn();
 }
 
 void LegacyCombatSystem::TurnStart2(int initiativeIdx)
@@ -1081,9 +1170,34 @@ void LegacyCombatSystem::Brawl(objHndl a, objHndl b){
 	_Brawl(a, b);
 }
 
-void LegacyCombatSystem::enterCombat(objHndl objHnd)
-{
-	_enterCombat(objHnd);
+void LegacyCombatSystem::enterCombat(objHndl objHnd){
+
+	if (!d20Sys.d20Query(objHnd, DK_QUE_EnterCombat))
+		return;
+
+	if (!combatSys.IsCloseToParty(objHnd))
+		return;
+
+
+	if (objects.IsPlayerControlled(objHnd)){
+		
+		auto partyCount = party.GroupListGetLen();
+		for (auto i=0; i < partyCount; i++){
+			auto partyMember = party.GroupListGetMemberN(i);
+			if (!critterSys.IsCombatModeActive(partyMember)){
+				temple::GetRef<void(__cdecl)(objHndl)>(0x10062740)(partyMember); // set combat mode active and force spreadout
+			}
+		}
+
+	}
+	else if (!critterSys.IsCombatModeActive(objHnd)){
+		auto partyMember0 = party.GroupListGetMemberN(0);
+		inventory.WieldBestAll(objHnd, partyMember0);
+		temple::GetRef<void(__cdecl)(objHndl)>(0x10062740)(objHnd); // set combat mode active and force spreadout
+		temple::GetRef<void(__cdecl)(objHndl)>(0x1003C770)(objHnd); // turn combat music on
+	}
+
+	//_enterCombat(objHnd);
 }
 
 int LegacyCombatSystem::DispelRoll(objHndl obj, BonusList* bonlist, int modifier, int dc, const char* text, int *rollHistId){

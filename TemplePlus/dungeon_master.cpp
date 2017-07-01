@@ -58,6 +58,7 @@ static bool isActive = false;
 static bool isActionActive = false;
 static bool isMinimized = false;
 static bool isMoused = false;
+static bool isHandlingMsg = false;
 
 // monster modify
 DungeonMaster::CritterBooster critBoost;
@@ -294,7 +295,7 @@ bool DungeonMaster::HandleSpawning(const TigMsg& msg){
 		}
 
 
-		if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_LMB_CLICK) {
+		if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_LMB_RELEASED) {
 			if (!mObjSpawnProto)
 				return false;
 
@@ -311,6 +312,8 @@ bool DungeonMaster::HandleSpawning(const TigMsg& msg){
 
 			mObjSpawnProto = 0;
 			DeactivateAction();
+
+			dmSys.SetIsHandlingMsg(true);
 
 			return true;
 		}
@@ -335,7 +338,7 @@ bool DungeonMaster::HandleCloning(const TigMsg & msg){
 			return true;
 		}
 
-		if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_LMB_CLICK) {
+		if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_LMB_RELEASED) {
 			if (!mCloningObj || !objSystem->IsValidHandle(mCloningObj))
 				return false;
 
@@ -352,6 +355,8 @@ bool DungeonMaster::HandleCloning(const TigMsg & msg){
 				DeactivateAction();
 			}
 				
+			dmSys.SetIsHandlingMsg(true);
+
 			return true;
 		}
 	}
@@ -391,7 +396,7 @@ bool DungeonMaster::HandleMoving(const TigMsg & msg)
 			return true;
 		}
 
-		if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_LMB_CLICK) {
+		if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_LMB_RELEASED) {
 			if (!mMovingObj || !objSystem->IsValidHandle(mMovingObj))
 				return false;
 
@@ -405,6 +410,8 @@ bool DungeonMaster::HandleMoving(const TigMsg & msg)
 				mCloningObj = objHndl::null;
 				DeactivateAction();
 			}
+
+			dmSys.SetIsHandlingMsg(true);
 
 			return true;
 		}
@@ -1350,6 +1357,14 @@ bool DungeonMaster::IsEditorActive(){
 
 objHndl DungeonMaster::GetHoveredCritter(){
 	return (mTgtObj && objSystem->IsValidHandle(mTgtObj)) ? mTgtObj : objHndl::null;
+}
+
+bool DungeonMaster::IsHandlingMsg(){
+	return isHandlingMsg;
+}
+
+void DungeonMaster::SetIsHandlingMsg(bool b){
+	isHandlingMsg = b;
 }
 
 bool DungeonMaster::IsMoused(){
