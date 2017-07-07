@@ -147,34 +147,6 @@ public:
 		replaceFunction(0x100999E0, GreybarReset);
 		replaceFunction(0x10099CF0, PerformOnAnimComplete);
 
-		// AddToSeqSpellCast
-		replaceFunction<ActionErrorCode(D20Actn*, ActnSeq*, TurnBasedStatus*)>(0x100958A0,[](D20Actn* d20a, ActnSeq* seq, TurnBasedStatus* tbStat)->ActionErrorCode
-		{
-			if (d20Sys.d20Query(d20a->d20APerformer, DK_QUE_Prone))
-			{
-				D20Actn d20aGetup = *d20a;
-				d20aGetup.d20ActType = D20A_STAND_UP;
-				seq->d20ActArray[ seq->d20ActArrayNum++] = d20aGetup;
-			}
-
-			uint32_t spellEnum;
-			d20Sys.ExtractSpellInfo(&d20a->d20SpellData, &spellEnum, nullptr, nullptr, nullptr, nullptr ,nullptr);
-			SpellEntry spellEntry;
-			auto srcResult = spellSys.spellRegistryCopy(spellEnum, &spellEntry);
-			if (srcResult
-				&& spellEntry.spellRangeType == SpellRangeType::SRT_Touch
-				&& static_cast<UiPickerType>(spellEntry.modeTargetSemiBitmask) == UiPickerType::Single
-				&& !(seq->ignoreLos & 1)
-			)
-			{
-				int dummy = 1;
-				return (ActionErrorCode)actSeqSys.AddToSeqWithTarget(d20a, seq, tbStat);
-			}
-			seq->d20ActArray[seq->d20ActArrayNum++] = *d20a;
-			return ActionErrorCode::AEC_OK;
-			
-		});
-		
 		replaceFunction<void(__cdecl)(objHndl)>(0x100934E0, [](objHndl handle)
 		{
 			actSeqSys.ActionTypeAutomatedSelection(handle);

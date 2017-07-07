@@ -2145,13 +2145,16 @@ void AiSystem::AiProcess(objHndl obj){
 	auto curActor = tbSys.turnBasedGetCurrentActor();
 	auto nextSimuls = actSeqSys.getNextSimulsPerformer();
 
-	if (isCombat && !critterSys.IsCombatModeActive(obj)
-		&& curActor != obj && nextSimuls != obj){
-		combatSys.enterCombat(obj);
+	if (!isCombat
+		|| critterSys.IsCombatModeActive(obj)
+		|| curActor == obj 
+		|| nextSimuls == obj){
+		aiPacket.ProcessCombat();
 		return;
 	} 
 	
-	aiPacket.ProcessCombat();
+	if (aiPacket.aiFightStatus == AIFS_FIGHTING && locSys.DistanceToObj(obj , aiPacket.target) <= 75.0 )
+		combatSys.enterCombat(obj);
 	
 }
 
@@ -3076,7 +3079,7 @@ void AiPacket::ProcessCombat(){
 	if (!actSeqSys.IsSimulsCompleted())
 		return;
 	if (!actSeqSys.IsLastSimultPopped(obj)){
-		logger->debug("AI for {} ending turn...");
+		logger->debug("AI for {} ending turn...", obj);
 		combatSys.CombatAdvanceTurn(obj);
 	}
 }

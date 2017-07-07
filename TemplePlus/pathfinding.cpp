@@ -1622,31 +1622,44 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 
 }
 
+bool Pathfinding::CanPathTo(objHndl obj, objHndl target, PathQueryFlags flags){
+	auto from = objects.GetLocationFull(obj);
+	
+	auto partyMember = target;
+	PathQueryResult path;
+	memset(&path, 0, sizeof(PathQueryResult));
+	PathQuery pathQ;
+	pathQ.from = from;
+	pathQ.flags = flags;
+	auto reach = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK);
+	pathQ.tolRadius = reach * 12.0f - 8.0f;
+	pathQ.targetObj = target;
+	if (config.pathfindingDebugMode)
+		logger->info("PF attempt to party member: {}", target);
+	pathQ.critter = obj;
+	pathQ.distanceToTargetMin = reach;
+	
+
+	if (FindPath(&pathQ, &path)){
+		return true;
+	}
+	
+	
+}
+
 objHndl Pathfinding::CanPathToParty(objHndl obj)
 {
 	if (party.IsInParty(obj))
 		return objHndl::null;
 	auto from = objects.GetLocationFull(obj);
 	int partySize = party.GroupListGetLen();
-	for (int i = 0; i < partySize; i++)
-	{
+	for (int i = 0; i < partySize; i++){
+
 		auto partyMember = party.GroupListGetMemberN(i);
-		PathQueryResult path;
-		memset(&path, 0, sizeof(PathQueryResult));
-		PathQuery pathQ;
-		pathQ.from = from;
-		pathQ.flags = static_cast<PathQueryFlags>(PQF_HAS_CRITTER | PQF_TO_EXACT | PQF_800 | PQF_ADJ_RADIUS_REQUIRE_LOS | PQF_ADJUST_RADIUS | PQF_TARGET_OBJ);
-		auto reach = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK);
-		pathQ.tolRadius = reach * 12.0f - 8.0f;
-		pathQ.targetObj = partyMember;
-		if (config.pathfindingDebugMode)
-			logger->info("PF attempt to party member: {}", description.getDisplayName(partyMember));
-		pathQ.critter = obj;
-		pathQ.distanceToTargetMin = 0;
-		if (FindPath(&pathQ, &path))
-{
+
+		if (CanPathTo(obj, partyMember)){
 			return partyMember;
-		}
+		}		
 	}
 	return objHndl::null;
 	//return addresses.canPathToParty(objHnd);

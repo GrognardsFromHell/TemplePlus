@@ -1189,6 +1189,11 @@ int GenericCallbacks::CastDefensivelySpellInterrupted(DispatcherCallbackArgs arg
 	if (!combatSys.isCombatActive())
 		return 0; // forego this outside of combat
 
+	// check if no threatening melee enemies - if so, disregard casting defensively (since it's just annoying micromanagement!!!)
+	auto enemiesCanMelee = combatSys.GetEnemiesCanMelee(args.objHndCaller);
+	if (!enemiesCanMelee.size())
+		return FALSE;
+
 	auto spellData = (D20SpellData*)(dispIo->data1);
 	if (!spellData)
 		return 0;

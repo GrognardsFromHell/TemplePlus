@@ -29,6 +29,7 @@
 #include "ui/ui_systems.h"
 #include "ui/ui_legacysystems.h"
 #include "rng.h"
+#include "weapon.h"
 
 static struct CritterAddresses : temple::AddressTable {
 
@@ -1157,21 +1158,14 @@ float LegacyCritterSystem::GetReach(objHndl obj, D20ActionType actType) {
 	if (actType != D20A_TOUCH_ATTACK)
 	{
 		objHndl weapon = inventory.GetItemAtInvIdx(obj, 203);
-		if (weapon)
-		{
+		// todo: handle cases where enlarged creatures dual wield polearms ><
+		if (weapon){
 			auto weapType = objects.GetWeaponType(weapon);
-			switch (weapType)
-			{
-			case wt_glaive:
-			case wt_guisarme:
-			case wt_longspear:
-			case wt_ranseur:
-			case wt_spike_chain:
+			if (weapons.IsReachWeaponType(weapType)){
 				return naturalReach + 3.0f; // +5.0 - 2.0
-			default:
-				return naturalReach - 2.0f;
 			}
-				
+			
+			return naturalReach - 2.0f;
 		}
 	}
 	return naturalReach - 2.0f;

@@ -331,6 +331,19 @@ bool WeaponSystem::AmmoMatchesWeapon(objHndl weapon, objHndl ammoItem)
 	return ammoType == objects.getInt32(ammoItem, obj_f_ammo_type);
 }
 
+bool WeaponSystem::IsReachWeaponType(WeaponTypes weapType){
+	switch (weapType){
+	case wt_glaive:
+	case wt_guisarme:
+	case wt_longspear:
+	case wt_ranseur:
+	case wt_spike_chain:
+		return true;
+	default:
+		return false;
+	}
+}
+
 WeaponSystem::WeaponSystem(){
 	wpnProps[wt_javelin].damType = DamageType::Piercing;
 	wpnProps[wt_dagger].damType = DamageType::PiercingAndSlashing;

@@ -442,7 +442,7 @@ public:
 		replaceFunction<void(__cdecl)()>(0x101880F0, []() {uiPcCreation.ClassShow(); });
 		replaceFunction<void(__cdecl)()>(0x101880D0, []() {uiPcCreation.ClassHide(); });
 		replaceFunction<void(__cdecl)(CharEditorSelectionPacket& , objHndl& )>(0x10188110, [](CharEditorSelectionPacket& selPkt, objHndl& handle) {uiPcCreation.ClassFinalize(selPkt, handle); });
-		replaceFunction<void(__cdecl)()>(0x101B0620, []() {uiPcCreation.ClassCheckComplete(); });
+		// replaceFunction<void(__cdecl)()>(0x101B0620, []() {uiPcCreation.ClassCheckComplete(); }); // same function as ui_char_editor, already replaced
 		replaceFunction<void(__cdecl)()>(0x10188260, []() {uiPcCreation.ClassBtnEntered(); });
 		
 		// Skill

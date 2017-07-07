@@ -246,6 +246,9 @@ int LegacyCombatSystem::IsWithinReach(objHndl attacker, objHndl target)
 
 BOOL LegacyCombatSystem::CanMeleeTargetAtLocRegardItem(objHndl obj, objHndl weapon, objHndl target, LocAndOffsets* loc)
 {
+	if (!obj || critterSys.IsDeadOrUnconscious(obj))
+		return FALSE;
+
 	if (weapon)
 	{
 		if (objects.GetType(weapon) != obj_t_weapon)
@@ -263,11 +266,14 @@ BOOL LegacyCombatSystem::CanMeleeTargetAtLocRegardItem(objHndl obj, objHndl weap
 	auto distToLoc = max((float)0.0,locSys.DistanceToLocFeet(obj, loc));
 	if (tgtRadius + objReach < distToLoc)
 		return 0;
-	return 1;
+	return TRUE;
 }
 
-BOOL LegacyCombatSystem::CanMeleeTargetAtLoc(objHndl obj, objHndl target, LocAndOffsets* loc)
-{
+BOOL LegacyCombatSystem::CanMeleeTargetAtLoc(objHndl obj, objHndl target, LocAndOffsets* loc){
+
+	if (!obj || critterSys.IsDeadOrUnconscious(obj))
+		return FALSE;
+
 	objHndl weapon = critterSys.GetWornItem(obj, EquipSlot::WeaponPrimary);
 	if (!combatSys.CanMeleeTargetAtLocRegardItem(obj, weapon, target, loc))
 	{
@@ -729,7 +735,7 @@ void LegacyCombatSystem::Subturn()
 			objList.ListRangeTiles(actor, 12, OLC_CRITTERS);
 			for (auto i=0; i< objList.size(); i++){
 				auto resHandle = objList[i];
-				if (!resHandle)
+				if (!resHandle || resHandle == actor)
 					break;
 
 				auto resObj = gameSystems->GetObj().GetObject(resHandle);
@@ -742,27 +748,29 @@ void LegacyCombatSystem::Subturn()
 				if (party.IsInParty(actor))
 					continue;
 
-				if (critterSys.HasLineOfSight(actor, resHandle) && critterSys.HasLineOfSight(resHandle, actor)){
+				if (tbSys.IsInInitiativeList(resHandle) || critterSys.IsCombatModeActive(resHandle) || !resObj->IsNPC())
 					continue;
-				}
-					
 
+				if (!combatSys.HasLineOfAttack(resHandle, actor)){
 
-				if (!tbSys.IsInInitiativeList(resHandle)) {
-					if (!critterSys.IsCombatModeActive(resHandle) && resObj->IsNPC()){
-						auto partyLeader = party.GetConsciousPartyLeader();
-						if (aiSys.WillKos(resHandle, partyLeader ))
-							aiSys.ProvokeHostility(partyLeader, resHandle, 3, 0);
-					}
+					// check pathfinding short distances
+					auto pathFlags = static_cast<PathQueryFlags>(PathQueryFlags::PQF_TO_EXACT | PathQueryFlags::PQF_HAS_CRITTER | PathQueryFlags::PQF_800
+						| PathQueryFlags::PQF_TARGET_OBJ | PathQueryFlags::PQF_ADJUST_RADIUS | PathQueryFlags::PQF_ADJ_RADIUS_REQUIRE_LOS
+						| PathQueryFlags::PQF_DONT_USE_PATHNODES | PathQueryFlags::PQF_A_STAR_TIME_CAPPED);
+					if (!pathfindingSys.CanPathTo(actor, resHandle, pathFlags)){
+						continue;
+					}	
 				}
-/*
-				auto critFlags = critterSys.GetCritterFlags(resHandle);
-				if (critFlags & OCF_COMBAT_MODE_ACTIVE) {
-					tbSys.AddToInitiative(resHandle);
-				}*/
+				
+				
+				auto partyLeader = party.GetConsciousPartyLeader();
+				if (aiSys.WillKos(resHandle, partyLeader ))
+					aiSys.ProvokeHostility(partyLeader, resHandle, 3, 0);
+				
+				
 
 			}
-			auto dummy = 1;
+			 
 		}
 	}
 

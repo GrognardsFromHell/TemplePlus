@@ -78,6 +78,7 @@ public:
 	static ActionErrorCode ActionCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat);
 	static ActionErrorCode ActionCheckDivineMight(D20Actn* d20a, TurnBasedStatus* tbStat);
 	static ActionErrorCode ActionCheckEmptyBody(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode ActionCheckFiveFootStep(D20Actn* d20a, TurnBasedStatus* tbStat);
 	static ActionErrorCode ActionCheckPython(D20Actn* d20a, TurnBasedStatus* tbStat);  // calls python script
 	static ActionErrorCode ActionCheckQuiveringPalm(D20Actn* d20a, TurnBasedStatus* tbStat);
 	static ActionErrorCode ActionCheckSneak(D20Actn* d20a, TurnBasedStatus* tbStat);
@@ -407,6 +408,7 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Defs[d20Type].flags = static_cast<D20ADF>(d20Defs[d20Type].flags & ~(D20ADF::D20ADF_Breaks_Concentration));
 
 	d20Type = D20A_5FOOTSTEP;
+	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckFiveFootStep;
 	d20Defs[d20Type].flags = static_cast<D20ADF>(d20Defs[d20Type].flags & ~(D20ADF::D20ADF_Breaks_Concentration));
 
 	d20Type = D20A_RUN;
@@ -1896,6 +1898,19 @@ ActionErrorCode D20ActionCallbacks::ActionCheckEmptyBody(D20Actn* d20a, TurnBase
 		d20a->data1 = numRounds;
 	}
 
+	return AEC_OK;
+}
+
+ActionErrorCode D20ActionCallbacks::ActionCheckFiveFootStep(D20Actn* d20a, TurnBasedStatus* tbStat){
+	if (!combatSys.isCombatActive())
+		return AEC_OK;
+	if (d20a->d20Caf & D20CAF_ALTERNATE)
+		return AEC_TARGET_BLOCKED;
+	auto moveSpeed = dispatch.Dispatch29hGetMoveSpeed(d20a->d20APerformer, nullptr);
+	if (moveSpeed < 0.1){
+		return AEC_TARGET_TOO_FAR;
+	}
+	
 	return AEC_OK;
 }
 

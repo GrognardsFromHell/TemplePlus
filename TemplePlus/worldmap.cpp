@@ -11,7 +11,12 @@ public:
 	static int CanAccessWorldmap();
 	
 	void apply() override {
-
+		replaceFunction<int(int)>(0x10160450, [](int locationIdx){
+			auto &unk = temple::GetRef<int>(0x102FB3E8);
+			auto &someTable = temple::GetRef<int[]>(0x11EA3610);
+			unk = someTable[locationIdx];
+			return temple::GetRef<int(__cdecl)(int)>(0x1015F140)(2);
+		});
 	}
 
 } worldmapFix;
