@@ -39,6 +39,7 @@ struct LegacyCombatSystem : temple::AddressTable {
 	objHndl CheckRangedWeaponAmmo(objHndl obj); // checks if the ammo slot item matches a wielded weapon (primary or secondary), and if so, returns it
 	bool AmmoMatchesItemAtSlot(objHndl obj, EquipSlot equipSlot);
 	objHndl * GetHostileCombatantList(objHndl obj, int* count); // gets a list from the combat initiative
+	std::vector<objHndl> GetHostileCombatantList(objHndl handle); // gets a list from the combat initiative
 	void GetEnemyListInRange(objHndl obj, float rangeFeet, std::vector<objHndl> & enemies);
 	bool HasLineOfAttack(objHndl obj, objHndl target); // can shoot or attack target (i.e. target isn't behind a wall or sthg)
 
@@ -83,8 +84,7 @@ struct LegacyCombatSystem : temple::AddressTable {
 	void Brawl(objHndl a, objHndl b);
 	void (__cdecl *_Brawl)(objHndl a, objHndl b);
 	void enterCombat(objHndl objHnd);
-
-	void (__cdecl *AddToInitiative)(objHndl critter);
+	void AddToInitiative(objHndl critter);
 	void (__cdecl *RemoveFromInitiative)(objHndl critter);
 
 	int (__cdecl *GetInitiative)(objHndl critter);
@@ -108,7 +108,7 @@ struct LegacyCombatSystem : temple::AddressTable {
 		rebase(IsFlankedBy, 0x100B9200);
 		rebase(_GetInitiativeListLength, 0x100DEDA0);
 		rebase(_GetInitiativeListMember, 0x100DEDF0);
-		rebase(AddToInitiative, 0x100DF1E0);
+		
 		rebase(RemoveFromInitiative, 0x100DF530);
 		rebase(GetInitiative, 0x100DEDB0);
 		rebase(SetInitiative, 0x100DF2E0);

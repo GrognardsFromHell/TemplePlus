@@ -569,6 +569,7 @@ public:
 	void SaveExploredTileData(int mapId);
 	
 	void SaveEsd();
+	void PerformCheckForCritter(objHndl handle, int idx);
 
 private:
 
@@ -585,7 +586,8 @@ private:
 
 	BOOL& mFoggingEnabled = temple::GetRef<BOOL>(0x108254A0);
 	uint8_t*& mFogCheckData = temple::GetRef<uint8_t*>(0x108A5498);
-	void** mFogBuffers = temple::GetPointer<void*>(0x10824470); // 8 entries
+	void** mFogBuffers = temple::GetPointer<void*>(0x10824470); // 8 entries, one for each controllable party member
+	
 
 	SectorLoc* mEsdSectorLocs = temple::GetPointer<SectorLoc>(0x108EC598); // 32 entries
 	uint32_t& mEsdLoaded = temple::GetRef<uint32_t>(0x108EC6B0);

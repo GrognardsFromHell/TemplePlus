@@ -152,42 +152,7 @@ enum D20STD_F : uint32_t {
 	D20STD_F_CHARM = 2, // 0x2
 	D20STD_F_TRAP = 3,  // 0x4
 	D20STD_F_POISON = 4, // 0x8
-
-	/*
-	v7 = flags | 0x10; <-- marks it as a spell like effect i'd wager
-	switch ( v10.SpellSchoolIdx )
-	{
-	case 1:
-	v7 = flags | 0x30;
-	break;
-	case 2:
-	v7 = flags | 0x50;
-	break;
-	case 3:
-	v7 = flags | 0x90;
-	break;
-	case 4:
-	v7 = flags | 0x110;
-	break;
-	case 5:
-	v7 = flags | 0x210;
-	break;
-	case 6:
-	v7 = flags | 0x410;
-	break;
-	case 7:
-	v7 = flags | 0x810;
-	break;
-	case 8:
-	v7 = flags | 0x1010;
-	break;
-	default:
-	break;
-	}
-	v8 = 0;
-	*/
-
-	D20STD_F_SPELL_LIKE_EFFECT = 0x10,
+	D20STD_F_SPELL_LIKE_EFFECT = 5,
 	D20STD_F_SPELL_SCHOOL_ABJURATION = 6, // 0x20 for the flags
 	D20STD_F_SPELL_SCHOOL_CONJURATION = 7, // 0x40
 	D20STD_F_SPELL_SCHOOL_DIVINATION = 8, // 0x80
@@ -209,7 +174,7 @@ enum D20STD_F : uint32_t {
 											  }
 											  while ( v8 < 21 );
 											  */
-	D20STD_F_SPELL_DESCRIPTOR_ACID = 0x2000,
+	D20STD_F_SPELL_DESCRIPTOR_ACID = 14, // 0x2000
 	D20STD_F_SPELL_DESCRIPTOR_CHAOTIC = 15, // 0x4000
 	D20STD_F_SPELL_DESCRIPTOR_COLD = 16, // 0x8000
 	D20STD_F_SPELL_DESCRIPTOR_DARKNESS = 17, // 0x10000

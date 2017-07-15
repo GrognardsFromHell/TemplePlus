@@ -56,7 +56,12 @@ public:
 	static int InvisibilityAooWillTake(DispatcherCallbackArgs args);
 	static int AidOnAddTempHp(DispatcherCallbackArgs args);
 
+	static int GhoulTouchAttackHandler(DispatcherCallbackArgs args);
+
 	void apply() override {
+
+		// Ghoul touch - not allowing saving throw
+		replaceFunction(0x100D4A00, GhoulTouchAttackHandler);
 
 		// Aid Spell fixed amount of HP gained to be 1d8 + 1/caster level
 		replaceFunction(0x100CBE00, AidOnAddTempHp);
@@ -883,4 +888,75 @@ int SpellConditionFixes::AidOnAddTempHp(DispatcherCallbackArgs args){
 	conds.AddTo(args.objHndCaller, "Temporary_Hit_Points", {spellId, args.GetCondArg(1), tempHpAmt});
 
 	return 0;
+}
+
+int SpellConditionFixes::GhoulTouchAttackHandler(DispatcherCallbackArgs args){
+	GET_DISPIO(dispIoTypeSendSignal, DispIoD20Signal);
+	auto d20a = (D20Actn*)dispIo->data1;
+	
+	if (!d20a)
+		return 0;
+
+	if (!(d20a->d20Caf & D20CAF_HIT)){
+		combatSys.FloatCombatLine(args.objHndCaller, 69);
+		return 0;
+	}
+
+	auto spellId = args.GetCondArg(0);
+	SpellPacketBody spellPkt(spellId);
+	if (!spellPkt.spellEnum)
+		return 0;
+
+	pySpellIntegration.SpellSoundPlay(&spellPkt, SpellEvent::AreaOfEffectHit);
+	combatSys.FloatCombatLine(args.objHndCaller, 68);
+	pySpellIntegration.SpellSoundPlay(&spellPkt, SpellEvent::SpellStruck);
+	
+	
+	auto tgt = d20a->d20ATarget;
+	
+	if (spellSys.CheckSpellResistance(&spellPkt, tgt) == TRUE){
+		args.RemoveSpellMod();
+		args.RemoveCondition();
+		return 0;
+	}
+
+	// Fixed target not getting a saving throw
+	if (spellPkt.SavingThrow(tgt, D20SavingThrowFlag::D20STF_SPELL_SCHOOL_NECROMANCY)){
+		args.RemoveSpellMod();
+		args.RemoveCondition();
+		return 0;
+	}
+
+	auto duration = Dice::Roll(1, 6, 2);
+	spellPkt.duration = duration;
+	if (!conds.AddTo(tgt, "sp-Ghoul Touch Paralyzed", { spellId, duration, 0 })){
+		logger->debug("GhoulTouchAttackHandler: unable to add condition");
+		return 0;
+	}
+
+	auto gtParticles = gameSystems->GetParticleSys().CreateAtObj("sp-Ghoul Touch", tgt);
+	if (!conds.AddTo(tgt, "sp-Ghoul Touch Stench", {spellId, duration, 0 , gtParticles })){
+		logger->debug("GhoulTouchAttackHandler: unable to add condition");
+	}
+
+	auto casterParticles = spellPkt.targetListPartsysIds[0];
+	
+
+	spellPkt.targetListHandles[0] = tgt;
+	spellPkt.targetListPartsysIds[0] = gtParticles;
+	if (!spellPkt.UpdateSpellsCastRegistry()){
+		logger->debug("GhoulTouchAttackHandler: Unable to save spell packet.");
+		return 0;
+	}
+
+	spellPkt.UpdatePySpell();
+
+	// the following also updates the spell packet
+	gameSystems->GetParticleSys().End(casterParticles);
+	args.RemoveSpellMod();
+	args.RemoveCondition();
+	if (!spellPkt.RemoveObjFromTargetList(args.objHndCaller)){
+		logger->debug("GhoulTouchAttackHandler: Cannot remove target");
+		return 0;
+	}
 }

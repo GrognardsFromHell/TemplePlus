@@ -537,7 +537,62 @@ bool Damage::SavingThrow(objHndl obj, objHndl attacker, int dc, SavingThrowType 
 }
 
 bool Damage::SavingThrowSpell(objHndl obj, objHndl attacker, int dc, SavingThrowType type, int flags, int spellId) {
-	return addresses.SavingThrowSpell(obj, attacker, dc, type, flags, spellId);
+
+	auto result = false;
+	SpellPacketBody spPkt(spellId);
+	if (!spPkt.spellEnum)
+		return false;
+
+	SpellEntry spEntry(spPkt.spellEnum);
+	auto flagsModified = flags | D20STF_SPELL_LIKE_EFFECT;
+	switch (spEntry.spellSchoolEnum){
+	case SpellSchools::School_Abjuration:
+		flagsModified |= D20SavingThrowFlag::D20STF_SPELL_SCHOOL_ABJURATION;
+		break;
+	case SpellSchools::School_Conjuration:
+		flagsModified |= D20SavingThrowFlag::D20STF_SPELL_SCHOOL_CONJURATION;
+		break;
+	case SpellSchools::School_Divination:
+		flagsModified |= D20SavingThrowFlag::D20STF_SPELL_SCHOOL_DIVINATION;
+		break;
+	case SpellSchools::School_Enchantment:
+		flagsModified |= D20SavingThrowFlag::D20STF_SPELL_SCHOOL_ENCHANTMENT;
+		break;
+	case SpellSchools::School_Evocation:
+		flagsModified |= D20SavingThrowFlag::D20STF_SPELL_SCHOOL_EVOCATION;
+		break;
+	case SpellSchools::School_Illusion:
+		flagsModified |= D20SavingThrowFlag::D20STF_SPELL_SCHOOL_ILLUSION;
+		break;
+	case SpellSchools::School_Necromancy:
+		flagsModified |= D20SavingThrowFlag::D20STF_SPELL_SCHOOL_NECROMANCY;
+		break;
+	case SpellSchools::School_Transmutation:
+		flagsModified |= D20SavingThrowFlag::D20STF_SPELL_SCHOOL_TRANSMUTATION;
+		break;
+	default:
+		break;
+	}
+
+	for (auto i=0; i < 21; i++){ // i=0 -> 1 -> acid;  1<<13 -> 0x2000  (D20STF_SPELL_DESCRIPTOR_ACID)
+		if (spEntry.spellDescriptorBitmask & (1<<i) == (1<<i)){
+			flagsModified |= 1 << (i + 13);
+		}
+	}
+
+	// fix for spell descriptor parsing that mapped "fortitude" to value 3
+	if (type == (SavingThrowType)3){
+		type = SavingThrowType::Fortitude;
+	}
+	result = damage.SavingThrow(obj, attacker, dc, type, flagsModified);
+	spPkt.savingThrowResult = result;
+	if (!spPkt.UpdateSpellsCastRegistry()){
+		logger->debug("SavingThrowSpell: Unable to save spell pkt");
+		return false;
+	}
+	spPkt.UpdatePySpell();
+	return result;
+	// return addresses.SavingThrowSpell(obj, attacker, dc, type, flags, spellId);
 }
 
 bool Damage::ReflexSaveAndDamage(objHndl obj, objHndl attacker, int dc, int reduction, int flags, const Dice& dice, DamageType damageType, int attackPower, D20ActionType actionType, int spellId) {

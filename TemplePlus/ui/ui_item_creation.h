@@ -138,7 +138,7 @@ public:
 
 
 	
-	void UiItemCreationWidgetsInit(int width, int height);
+	void UiItemCreationWidgetsInit(int width, int height); // Item creation (scribe scroll etc.) widgets
 	void MaaWidgetsInit(int width, int height);
 	void MaaWidgetsExit(int widId);
 	void ItemCreationWidgetsExit(int widId);

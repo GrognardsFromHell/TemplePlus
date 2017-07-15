@@ -728,6 +728,74 @@ void AiSystem::GetAiFightStatus(objHndl handle, AiFightStatus* status, objHndl* 
 	return;
 }
 
+void AiSystem::AlertAllies(objHndl handle, objHndl alertFrom, int rangeIdx){
+
+	auto rangeTiles = temple::GetRef<int[]>(0x102BD4D0)[rangeIdx];
+	auto tileDelta = locSys.GetTileDeltaMax(alertFrom, handle);
+
+	const int aiTileDeltaMax = 20;
+
+	// alert around the attacked critter
+	if (tileDelta < 2 * aiTileDeltaMax){
+		ObjList objList;
+		objList.ListRangeTiles(alertFrom, rangeTiles, OLC_NPC);
+		for (auto i=0; i < objList.size(); i++){
+			auto resHandle = objList[i];
+			if (!resHandle)
+				continue;
+			if (rangeIdx != 3 || combatSys.HasLineOfAttack(handle, resHandle)){
+				aiSys.AlertAlly(resHandle, alertFrom, handle, rangeIdx);
+			}
+		}
+	}
+
+	// alert around the attacker
+	if (tileDelta > 1){
+		ObjList objList;
+		objList.ListRangeTiles(handle, rangeTiles, OLC_NPC);
+		for (auto i = 0; i < objList.size(); i++) {
+			auto resHandle = objList[i];
+			if (!resHandle)
+				continue;
+			if (rangeIdx != 3 || combatSys.HasLineOfAttack(handle, resHandle)) {
+				aiSys.AlertAlly(resHandle, alertFrom, handle, rangeIdx);
+			}
+		}
+	}
+}
+
+void AiSystem::AlertAlly(objHndl handle, objHndl alertFrom, objHndl alertDispatcher, int rangeIdx){
+	if (handle == alertDispatcher || handle == alertFrom)
+		return;
+
+	if (aiSys.GetAllegianceStrength(handle, alertDispatcher)){
+		if (!critterSys.HasLineOfSight(handle, alertDispatcher)
+			|| !aiSys.CannotHear(handle, alertDispatcher, rangeIdx) || rangeIdx == 3){
+			aiSys.FightStatusProcess(handle, alertFrom);
+		}
+		return;
+	}
+
+	if (aiSys.GetAllegianceStrength(handle, alertFrom)){
+		if (!critterSys.HasLineOfSight(handle, alertFrom)
+			|| !aiSys.CannotHear(handle, alertFrom, rangeIdx)) {
+			aiSys.FightStatusProcess(handle, alertDispatcher);
+		}
+		return;
+	}
+
+	if ( !( objSystem->GetObject(handle)->GetInt32(obj_f_critter_flags) & OCF_NO_FLEE)){
+		AiFightStatus aifs;
+		aiSys.GetAiFightStatus(handle, &aifs, nullptr);
+		if (aifs == AIFS_NONE){
+			if (!critterSys.HasLineOfSight(handle, alertDispatcher)
+				|| !aiSys.CannotHear(handle, alertDispatcher, rangeIdx)){
+				aiSys.UpdateAiFlags(handle, AIFS_FLEEING, alertFrom, nullptr);
+			}
+		}
+	}
+}
+
 void AiSystem::FightOrFlight(objHndl obj, objHndl tgt)
 {
 	auto shouldFlee = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x1005C570);
@@ -742,8 +810,7 @@ void AiSystem::FightOrFlight(objHndl obj, objHndl tgt)
 
 void AiSystem::FightStatusProcess(objHndl obj, objHndl newTgt)
 {
-	if (critterSys.IsDeadNullDestroyed(obj))
-	{
+	if (critterSys.IsDeadNullDestroyed(obj)){
 		return;
 	}
 
@@ -1267,6 +1334,25 @@ int AiSystem::Sniper(AiTactic* aiTac)
 	return Default(aiTac);
 }
 
+BOOL AiSystem::ImprovePosition(AiTactic* aiTac){
+
+	if (!aiTac->target)
+		return FALSE;
+
+	auto performer = aiTac->performer;
+	auto tgt = aiTac->target;
+
+	auto hasLineOfAttack = combatSys.HasLineOfAttack(performer, tgt);
+
+	return FALSE;
+
+	// need to get a map of LOS to critter
+	// basically a fog of war map for an individual...
+	// use this map for pathfinding (rather than making a LOS check for every A* step...)
+	// 
+	return TRUE;
+}
+
 int AiSystem::CoupDeGrace(AiTactic* aiTac){
 	int actNum; 
 	objHndl origTarget = aiTac->target;
@@ -1342,9 +1428,115 @@ int AiSystem::ChargeAttack(AiTactic* aiTac)
 }
 
 
-int AiSystem::UpdateAiFlags(objHndl obj, AiFightStatus aiFightStatus, objHndl target, int* soundMap)
-{
-	return addresses.UpdateAiFlags(obj, aiFightStatus, target, soundMap);
+int AiSystem::UpdateAiFlags(objHndl handle, AiFightStatus aiFightStatus, objHndl target, int* soundMap){
+
+	auto obj = objSystem->GetObject(handle);
+
+	auto critterFlags = obj->GetInt32(obj_f_critter_flags);
+	auto critterFlags2 = obj->GetInt32(obj_f_critter_flags2);
+	auto npcFlags = obj->GetNPCFlags();
+	auto aiFlags = obj->GetInt64(obj_f_npc_ai_flags64);
+
+	auto cheatsAiNpcIsFightingAllowed = temple::GetRef<BOOL>(0x102BD4E0);
+
+
+	// handle Fleeing / Surrendered first because they may be converted to Fighting
+	if (aiFightStatus == AIFS_FLEEING || aiFightStatus == AIFS_SURRENDERED){
+
+		if (aiFightStatus == AIFS_FLEEING
+			&& critterFlags & CritterFlag::OCF_NO_FLEE 
+			&& !d20Sys.d20Query(handle, DK_QUE_Critter_Is_Afraid)){
+			aiFightStatus = AIFS_FIGHTING;
+		}
+		else{
+			auto dialogPlayer = temple::GetRef<void(__cdecl*)(objHndl, objHndl, char*, int)>(0x10AA73B0);
+			if (dialogPlayer && !(critterFlags & (OCF_SURRENDERED | OCF_FLEEING))
+				&& !critterSys.IsDeadOrUnconscious(handle)){
+				auto getFleeVoiceLine = temple::GetRef<void(__cdecl)(objHndl, objHndl, char*, int*)>(0x100374E0);
+				char fleeText[1000];
+				int soundId;
+				getFleeVoiceLine(handle, target, fleeText, &soundId);
+				dialogPlayer(handle, target, fleeText, soundId);
+			}
+			critterFlags &= ~(OCF_SURRENDERED | OCF_FLEEING);
+			if (aiFightStatus == AIFS_FLEEING)
+				critterFlags |= OCF_FLEEING;
+			else{
+				critterFlags |= OCF_SURRENDERED;
+				combatSys.CritterExitCombatMode(handle);
+			}
+			obj->SetObjHndl(obj_f_critter_fleeing_from, target);
+		}
+	}
+
+	if (aiFightStatus == AIFS_FIGHTING){
+		if (!cheatsAiNpcIsFightingAllowed || (npcFlags & ONF_NO_ATTACK))
+			aiFightStatus = AIFS_NONE;
+	}
+
+	if (aiFightStatus != AIFS_SURRENDERED && aiFightStatus != AIFS_FLEEING){
+		critterFlags &= ~(OCF_SURRENDERED | OCF_FLEEING);
+		aiFlags &= ~(AiFlag::HasSpokenFlee);
+	}
+
+	// update the flags
+	obj->SetInt32(obj_f_critter_flags, critterFlags);
+	obj->SetInt64(obj_f_npc_ai_flags64, aiFlags);
+
+	if (aiFightStatus != AIFS_FIGHTING){
+		if (aiFightStatus == AIFS_FINDING_HELP && !(aiFlags & AiFlag::FindingHelp)){
+			obj->SetObjHndl(obj_f_npc_combat_focus, target);
+			aiFlags |= AiFlag::FindingHelp;
+			obj->SetInt64(obj_f_npc_ai_flags64, aiFlags);
+		}
+		if (npcFlags & ONF_BACKING_OFF ){
+			npcFlags &= ~(ONF_BACKING_OFF);
+			obj->SetInt32(obj_f_npc_flags, npcFlags);
+		}
+		if (aiFlags & AiFlag::Fighting){
+			aiFlags &= ~(AiFlag::Fighting);
+			obj->SetInt64(obj_f_npc_ai_flags64, aiFlags);
+		}
+		if (aiFightStatus != AIFS_FLEEING){
+			obj->SetInt32(obj_f_npc_flags, npcFlags | ONF_DEMAINTAIN_SPELLS);
+		}
+		pythonObjIntegration.ExecuteObjectScript(target, handle, ObjScriptEvent::ExitCombat);
+		return aiFightStatus;
+	}
+	
+	// AIFS_FIGHTING
+	if (critterFlags2 & OCF2_TARGET_LOCK){
+		return AIFS_FIGHTING;
+	}
+	if (!(aiFlags & AiFlag::Fighting)){
+		aiFlags |= AiFlag::CheckWield | AiFlag::CheckGrenade | AiFlag::Fighting;
+		obj->SetInt64(obj_f_npc_ai_flags64, aiFlags);
+		pythonObjIntegration.ExecuteObjectScript(target, handle, ObjScriptEvent::EnterCombat);
+		if (obj->GetFlags() & OF_OFF)
+			return AIFS_NONE;
+		if (soundMap){
+			*soundMap = critterSys.SoundmapCritter(handle, 5);
+		}
+	}
+	if (obj->IsPC()){ // set reaction level to hostility level
+		auto reactionLvl = critterSys.GetReaction(handle, target);
+		auto aiParams = GetAiParams(handle);
+		if (reactionLvl > aiParams.hostilityThreshold){
+			objects.AdjustReaction(handle, target, aiParams.hostilityThreshold - reactionLvl);
+		}
+	}
+	obj->SetObjHndl(obj_f_npc_combat_focus, target);
+
+	static bool isAlertingAllies = false;
+	if (!isAlertingAllies){
+		isAlertingAllies = true;
+		aiSys.AlertAllies(target, handle, 1);
+		isAlertingAllies = false;
+	}
+
+	return aiFightStatus;
+
+	//return addresses.UpdateAiFlags(handle, aiFightStatus, target, soundMap);
 }
 
 void AiSystem::StrategyTabLineParseTactic(AiStrategy* aiStrat, char* tacName, char* middleString, char* spellString)
@@ -2441,6 +2633,20 @@ public:
 	void apply() override 
 	{
 		logger->info("Replacing AI functions...");
+
+		// AiFightStatusProcess
+		replaceFunction<void(__cdecl)(objHndl, objHndl)>(0x1005CD50, [](objHndl handle, objHndl newTgt){
+			aiSys.FightStatusProcess(handle, newTgt);
+		});
+
+		// UpdateAiFlags
+		replaceFunction<int(__cdecl)(objHndl, AiFightStatus, objHndl, int*)>(0x1005DA00, [](objHndl handle, AiFightStatus aiFightStatus, objHndl target, int* soundMap){
+			return aiSys.UpdateAiFlags(handle, aiFightStatus, target, soundMap);
+		});
+
+		replaceFunction<void(__cdecl)(objHndl)>(0x1005EEC0, [](objHndl handle){
+			aiSys.AiProcess(handle);
+		});
 
 		// Will KOS
 		replaceFunction<int(__cdecl)(objHndl, objHndl)>(0x1005C920, [](objHndl aiHandle, objHndl triggerer){

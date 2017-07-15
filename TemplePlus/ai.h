@@ -182,6 +182,9 @@ struct AiSystem : temple::AddressTable
 	void SetCombatFocus(objHndl npc, objHndl target);
 	void SetWhoHitMeLast(objHndl npc, objHndl target);
 	void GetAiFightStatus(objHndl obj, AiFightStatus* status, objHndl * target);
+	
+	void AlertAllies(objHndl handle, objHndl alertFrom, int rangeIdx);
+		void AlertAlly(objHndl handle, objHndl alertFrom, objHndl alertDispatcher, int rangeIdx);
 	/*
 	 updates AI flags based on a "Should flee" check
 	 originally 10057A70
@@ -198,6 +201,7 @@ struct AiSystem : temple::AddressTable
 			Plays the "Fleeing" voice line, and sequences a move action away from the fleeingFrom object
 		*/
 		void FleeProcess(objHndl obj, objHndl fleeingFrom);
+	
 		int UpdateAiFlags(objHndl ObjHnd, AiFightStatus aiFightStatus, objHndl target, int *soundMap);
 
 	// AI Tactic functions
@@ -214,6 +218,7 @@ struct AiSystem : temple::AddressTable
 	int GoMelee(AiTactic* aiTac);
 	int PickUpWeapon(AiTactic* aiTac);	
 	int Sniper(AiTactic *aiTac);
+	BOOL ImprovePosition(AiTactic *aiTac);
 	int TargetClosest(AiTactic * aiTac);
 	BOOL TargetDamaged(AiTactic *aiTac);
 	int TargetThreatened(AiTactic * aiTac);

@@ -25,6 +25,7 @@
 #include "infrastructure/vfs.h"
 #include "infrastructure/elfhash.h"
 #include "infrastructure/mesparser.h"
+#include "legacymapsystems.h"
 
 
 //*****************************************************************************
@@ -1866,6 +1867,55 @@ void MapFoggingSystem::SaveExploredTileData(int mapId) {
 void MapFoggingSystem::SaveEsd() {
 	static auto map_flush_esd = temple::GetPointer<void()>(0x10030f40);
 	map_flush_esd();
+}
+
+void MapFoggingSystem::PerformCheckForCritter(objHndl handle, int idx){
+	memset(&mFogBuffers[idx], 0, 4 * sFogBufferDim* sFogBufferDim);
+	auto obj = objSystem->GetObject(handle);
+	auto objLoc = obj->GetLocation();
+
+	auto fogBufferDim_div3 = sFogBufferDim / 3;
+	int64_t (& objsRelX)[] = temple::GetRef<int64_t[]>(0x1080FB88);
+	int64_t (& objsRelY)[] = temple::GetRef<int64_t[]>(0x108EC550);
+
+	objsRelX[idx] = objLoc.locx - fogBufferDim_div3;
+	objsRelY[idx] = objLoc.locy - fogBufferDim_div3;
+
+	TileRect tiles;
+	tiles.x1 = objLoc.locx - fogBufferDim_div3;
+	tiles.x2 = objLoc.locx + fogBufferDim_div3;
+	tiles.y1 = objLoc.locy - fogBufferDim_div3;
+	tiles.y2 = objLoc.locy + fogBufferDim_div3;
+
+	auto sectorList = sectorSys.BuildSectorList(&tiles);
+	if (!sectorList)
+		return;
+
+	auto listNode = sectorList;
+
+	while (listNode){
+
+		Sector *sect;
+		if (!sectorSys.SectorLock(listNode->sector, &sect)){
+			listNode = listNode->next;
+			continue;
+		}
+		auto secLoc = listNode->sector;
+		auto baseTile=secLoc.GetBaseTile();
+
+		auto svb = gameSystems->GetSectorVB().GetSvb(secLoc);
+		auto relX = objsRelX[idx];
+		auto relY = objsRelY[idx];
+
+
+		// unlock sector TODO svb
+		sectorSys.SectorUnlock(listNode->sector);
+
+		listNode = listNode->next;
+	}
+
+	sectorSys.SectorListReturnToPool(sectorList);
+
 }
 
 void MapFoggingSystem::InitScreenBuffers() {

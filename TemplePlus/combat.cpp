@@ -32,6 +32,8 @@
 
 struct CombatSystemAddresses : temple::AddressTable
 {
+	void(__cdecl *AddToInitiative)(objHndl critter);
+
 	int(__cdecl* GetEnemiesCanMelee)(objHndl obj, objHndl* canMeleeList);
 	void(__cdecl*CombatTurnProcessAi)(objHndl obj);
 	void(__cdecl*CombatTurnAdvance)(objHndl obj);
@@ -61,6 +63,8 @@ struct CombatSystemAddresses : temple::AddressTable
 		rebase(combatActor, 0x10AA8438);
 		rebase(combatTimeEventSthg, 0x10AA8440);
 		rebase(combatTimeEventIndicator, 0x10AA8444);
+
+		rebase(AddToInitiative, 0x100DF1E0);
 	}
 
 	void (*Subturn)();
@@ -284,9 +288,14 @@ BOOL LegacyCombatSystem::CanMeleeTargetAtLoc(objHndl obj, objHndl target, LocAnd
 				return 0;
 			float objReach = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK);
 			float tgtRadius = objects.GetRadius(target) / 12.0f;
-			if (max<float>(0.0f,
-				locSys.DistanceToLocFeet(obj, loc)) - tgtRadius > objReach)
+			auto distToLoc = locSys.DistanceToLocFeet(obj, loc);
+			if (distToLoc < 0)
+				distToLoc = 0;
+
+			if (distToLoc - tgtRadius > objReach){
 				return 0;
+			}
+			
 		}
 	}
 	return 1;
@@ -461,6 +470,18 @@ objHndl * LegacyCombatSystem::GetHostileCombatantList(objHndl obj, int * count)
 	objHndl *result = new objHndl[hostileCount];
 	memcpy(result, hostileTempList, hostileCount * sizeof(objHndl));
 	*count = hostileCount;
+	return result;
+}
+
+std::vector<objHndl> LegacyCombatSystem::GetHostileCombatantList(objHndl handle){
+	int initListLen = GetInitiativeListLength();
+	std::vector<objHndl> result;
+	for (int i = 0; i < initListLen; i++){
+		auto combatant = GetInitiativeListMember(i);
+		if (combatant && handle != combatant && !critterSys.IsFriendly(handle, combatant)) {
+			result.push_back(combatant);
+		}
+	}
 	return result;
 }
 
@@ -766,7 +787,6 @@ void LegacyCombatSystem::Subturn()
 				auto partyLeader = party.GetConsciousPartyLeader();
 				if (aiSys.WillKos(resHandle, partyLeader ))
 					aiSys.ProvokeHostility(partyLeader, resHandle, 3, 0);
-				
 				
 
 			}
@@ -1206,6 +1226,10 @@ void LegacyCombatSystem::enterCombat(objHndl objHnd){
 	}
 
 	//_enterCombat(objHnd);
+}
+
+void LegacyCombatSystem::AddToInitiative(objHndl critter){
+	tbSys.AddToInitiative(critter);
 }
 
 int LegacyCombatSystem::DispelRoll(objHndl obj, BonusList* bonlist, int modifier, int dc, const char* text, int *rollHistId){

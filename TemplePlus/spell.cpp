@@ -251,6 +251,10 @@ bool SpellPacketBody::UpdateSpellsCastRegistry() const
 	return false;
 }
 
+void SpellPacketBody::UpdatePySpell(){
+	pySpellIntegration.UpdateSpell(this->spellId);
+}
+
 bool SpellPacketBody::FindObj(objHndl obj, int* idx) const
 {
 	for (auto i = 0u; i < targetCount; i++) {
@@ -1717,7 +1721,7 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 
 		else if (!_strnicmp(textBuf, "Saving Throw", 12)) {
 			static std::map<string, int> saveThrowStrings = {
-				{ "fortitude", 3 }, // lol bug
+				{ "fortitude", 3 }, // lol bug; fixed inside SavingThrowSpell
 				{ "willpower", (int)SavingThrowType::Will },
 				{ "will", (int)SavingThrowType::Will },
 				{ "reflex", (int)SavingThrowType::Reflex },

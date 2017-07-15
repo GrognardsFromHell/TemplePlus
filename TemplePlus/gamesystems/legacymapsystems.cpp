@@ -455,6 +455,13 @@ void SectorVBSystem::SetDirectories(const std::string & dataDir, const std::stri
 	map_sectorvb_set_dirs(dataDir.c_str(), saveDir.c_str());
 }
 
+SectorVB * SectorVBSystem::GetSvb(SectorLoc secLoc){
+	auto result = temple::GetRef<SectorVB*(__cdecl)(SectorLoc)>(0x100AA650)(secLoc);
+	if (result)
+		result->refCnt++;
+	return result;
+}
+
 //*****************************************************************************
 //* TextBubble
 //*****************************************************************************

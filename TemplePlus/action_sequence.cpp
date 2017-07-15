@@ -931,18 +931,17 @@ void ActionSequenceSystem::ProcessPathForAoOs(objHndl obj, PathQueryResult* pqr,
 	//truncateLengthFeet = pathLength;
 	LocAndOffsets truncatedLoc;
 	pathfindingSys.TruncatePathToDistance(aooPacket->path, &truncatedLoc, truncateLengthFeet); // this is the first possible distance where an Aoo might occur
-	int enemyCount = 0;
-	objHndl* enemies = combatSys.GetHostileCombatantList(obj, &enemyCount );
 
-	while (truncateLengthFeet <  pathLength - 2.0)
-	{
+	auto enemies = combatSys.GetHostileCombatantList(obj);
+	
+	while (truncateLengthFeet <  pathLength - 2.0){
 
 		// obj is moving away from truncatedLoc
 		// if an enemy can hit you from when you're in the current truncatedLoc
 		// it means you incur an AOO
 
 		// loop over enemies to catch interceptions
-		for (int enemyIdx = 0; enemyIdx < enemyCount; enemyIdx++)
+		for (int enemyIdx = 0; enemyIdx < enemies.size(); enemyIdx++)
 		{
 			auto enemy = enemies[enemyIdx];
 			auto interrupterIdx = 0u;
@@ -989,7 +988,6 @@ void ActionSequenceSystem::ProcessPathForAoOs(objHndl obj, PathQueryResult* pqr,
 		
 			
 	}
-	delete [] enemies;
 	
 	return;
 }

@@ -117,6 +117,8 @@ struct SpellPacketBody{
 	// updates the spell in the SpellsCast registry *if it is still active*
 	*/
 	bool UpdateSpellsCastRegistry() const;
+	void UpdatePySpell();
+
 	bool FindObj(objHndl obj, int* idx) const;
 	bool InsertToPartsysList(uint32_t idx, int partsysId);
 	bool InsertToTargetList(uint32_t idx, objHndl tgt);
@@ -138,6 +140,7 @@ struct SpellPacketBody{
 	void DoForTargetList(std::function<void(const objHndl& tgtHndl)> cb);
 	bool RemoveObjFromTargetList(const objHndl& objHnd);
 	bool EndPartsysForTgtObj(const objHndl& handle);
+	
 };
 
 const uint32_t TestSizeOfSpellPacketBody = sizeof(SpellPacketBody); // should be 0xAE8  (2792)

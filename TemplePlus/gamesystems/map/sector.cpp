@@ -89,10 +89,25 @@ BOOL(__cdecl * LegacySectorSystem::orgSectorCacheFind)(SectorLoc secLoc, int * s
 
 class SectorHooks : TempleFix
 {
+public:
 	static int SectorTileIsBlocking_OldVersion(locXY loc, int isFlag8);
+	static int HookedBuildClampedTileList(int64_t, int64_t, int , int64_t*);
 	void apply() override {
 
 		replaceFunction(0x100AC570, SectorTileIsBlocking_OldVersion);
+		// replaces BuildClampedTileList in case there is a bug with the input coordinates (will probably crash elsewhere now...)
+		redirectCall(0x100824FA, HookedBuildClampedTileList);
+		redirectCall(0x1008252A, HookedBuildClampedTileList);
+		static SectorList * (__cdecl*orgBuildSectorList)(TileRect *) = 
+			replaceFunction<SectorList * (__cdecl)(TileRect *)>(0x10084650, [](TileRect * tiles)->SectorList*{
+			auto result = sectorSys.BuildSectorList(tiles);
+			//auto result = orgBuildSectorList(tiles);
+			return result;
+		});
+
+		replaceFunction<void(__cdecl)(SectorList*)>(0x10081A30, [](SectorList* list){
+			sectorSys.SectorListReturnToPool(list);
+		});
 	}
 } sectorHooks;
 
@@ -111,6 +126,70 @@ TileFlags Sector::GetTileFlags(LocAndOffsets* loc)
 BOOL LegacySectorSystem::BuildTileListFromRect(TileRect* tileRect, TileListEntry* tle)
 {
 	return addresses.BuildTileListFromRect(tileRect, tle);
+}
+
+SectorList* LegacySectorSystem::BuildSectorList(TileRect* tileRect){
+	auto xs = temple::GetRef<int64_t*>(0x10AB7488);
+	auto ys = temple::GetRef<int64_t*>(0x10AB7404);
+	auto Nx = SectorHooks::HookedBuildClampedTileList(tileRect->x1, tileRect->x2 + 1, 64, xs);
+	if (Nx <= 1)
+		return nullptr;
+	auto Ny = SectorHooks::HookedBuildClampedTileList(tileRect->y1, tileRect->y2 + 1, 64, ys);
+	if (Ny <= 1)
+		return nullptr;
+
+	SectorList *prevEntry =nullptr, *entry= nullptr;
+	SectorList * result = nullptr;
+	auto &sectorList = temple::GetRef<SectorList*>(0x10AB7424);
+	entry = sectorList;
+
+	for (auto i_y = 0; i_y < Ny-1; i_y++){
+
+		for (auto i_x = 0; i_x < Nx - 1; i_x++) {
+
+			if (!entry) {
+				// prepend 4 new nodes
+				for (auto i = 0; i < 4; i++) {
+					entry = new SectorList;
+					entry->next = sectorList;
+					sectorList = entry;
+				}
+			}
+			sectorList = entry->next;
+			entry->next = prevEntry; //pops the head node of sectorList
+			result = entry;
+			locXY loc;
+			loc.locy = ys[i_y];
+			loc.locx = xs[i_x];
+			entry->cornerTile = loc;
+			SectorLoc secLoc;
+			secLoc.GetFromLoc(loc);
+			entry->sector = secLoc;
+			entry->extent.locx = xs[i_x + 1] - xs[i_x];
+			entry->extent.locy = ys[i_y + 1] - ys[i_y];
+			prevEntry = entry;
+			entry = sectorList;
+			
+		}
+	}
+	
+
+	return result;
+}
+
+void LegacySectorSystem::SectorListReturnToPool(SectorList* secList){
+	auto &sectorListPool = temple::GetRef<SectorList*>(0x10AB7424);
+
+	auto next = &secList->next;
+	SectorList * lastNode = secList;
+
+	while (*next){
+		lastNode = *next;
+		next = &lastNode->next;
+	}
+	lastNode->next = sectorListPool;
+	sectorListPool = secList;
+	
 }
 
 uint64_t LegacySectorSystem::GetSectorLimitX()
@@ -527,4 +606,24 @@ int SectorHooks::SectorTileIsBlocking_OldVersion(locXY loc, int regardSinks){
 		
 
 	return 0;
+}
+
+int SectorHooks::HookedBuildClampedTileList(int64_t startLoc, int64_t endLoc, int increment, int64_t* locsOut){
+	locsOut[0] = startLoc;
+	auto nextLoc = (startLoc / increment + 1)*increment;
+	auto locsOutIterator = locsOut+1;
+
+	if (endLoc > startLoc + 5*increment){
+		logger->warn("Large endLoc detected! ({}). Truncating.", endLoc);
+		endLoc = startLoc + 4 * increment;
+	}
+
+	while (nextLoc < endLoc){
+		*locsOutIterator = nextLoc;
+		locsOutIterator++;
+		nextLoc += increment;
+	}
+	*locsOutIterator = endLoc;
+	auto diff = (int)locsOutIterator - (int)locsOut + 8;
+	return  diff / 8;
 }

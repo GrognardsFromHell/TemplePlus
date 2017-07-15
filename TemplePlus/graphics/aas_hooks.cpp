@@ -258,18 +258,18 @@ public:
 
 		// AasAnimatedModelGetSubmeshes
 		replaceFunction<int(AasHandle, int**, int*)>(0x10263a50, [](AasHandle handle, int** submeshMaterials, int* submeshCountOut) {
-			                                             if (!instance->IsValidHandle(handle)) {
-				                                             return AAS_ERROR;
-			                                             }
+			    if (!instance->IsValidHandle(handle)) {
+				    return AAS_ERROR;
+			    }
 
-			                                             *submeshCountOut = 25;
-			                                             static int sSubmeshMaterials[25];
-			                                             auto& anim = instance->mAnims[handle];
-			                                             anim.model->GetSubmeshes(submeshCountOut, &sSubmeshMaterials[0]);
-			                                             *submeshMaterials = &sSubmeshMaterials[0];
+			    *submeshCountOut = 25;
+			    static int sSubmeshMaterials[25];
+			    auto& anim = instance->mAnims[handle];
+			    anim.model->GetSubmeshes(submeshCountOut, &sSubmeshMaterials[0]);
+			    *submeshMaterials = &sSubmeshMaterials[0];
 
-			                                             return AAS_OK;
-		                                             });
+			    return AAS_OK;
+		    });
 
 		// AasAdvance
 		static int(__cdecl*orgAasAdvance)(AasHandle, float, float, float, void*, void*)	

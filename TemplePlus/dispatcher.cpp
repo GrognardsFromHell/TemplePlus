@@ -1208,6 +1208,15 @@ void DispatcherCallbackArgs::SetCondArg(uint32_t argIdx, int value)
 	conds.CondNodeSetArg(subDispNode->condNode, argIdx, value);
 }
 
+void DispatcherCallbackArgs::RemoveCondition(){
+	conds.ConditionRemove(this->objHndCaller, this->subDispNode->condNode);
+}
+
+void DispatcherCallbackArgs::RemoveSpellMod(){
+	auto removeSpellMod = temple::GetRef<void(__cdecl)(DispatcherCallbackArgs)>(0x100CBAB0);
+	removeSpellMod(*this);
+}
+
 DispIoAttackBonus::DispIoAttackBonus(){
 	dispIOType = dispIOTypeAttackBonus;
 	this->attackPacket.dispKey = 1;

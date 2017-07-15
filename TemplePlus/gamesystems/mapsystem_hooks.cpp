@@ -148,6 +148,11 @@ static class MapSystemHooks : public TempleFix {
 		// replaceFunction(0x10072370, _map_open);
 		replaceFunction(0x10072a90, map_open_in_game);
 
+		static void (__cdecl*orgCheckFogForCritter)(objHndl , int) = replaceFunction<void(__cdecl)(objHndl, int)>(0x100327A0, [](objHndl handle, int idx){
+
+			orgCheckFogForCritter(handle, idx);
+		});
+
 	}
 	
 } hooks;

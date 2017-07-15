@@ -26,6 +26,7 @@
 #include "lightningrenderer.h"
 #include "ui_intgame_renderer.h"
 #include "fogrenderer.h"
+#include "map/sector.h"
 
 using namespace gfx;
 using namespace temple;
@@ -34,13 +35,7 @@ using namespace particles;
 GameRenderer *gameRenderer = nullptr;
 
 #pragma pack(push, 1)
-struct SectorList {
-  locationSec sector;
-  locXY someTile;      // tile coords
-  locXY someTileInSec; // coords in sector
-  SectorList *next;
-  // There is 4 bytes padding here but we dont rely on the size here
-};
+
 
 struct RenderUnknown {
   int v[114];
@@ -224,7 +219,7 @@ void GameRenderer::Render() {
 
     PreciseSectorRows *list = reinterpret_cast<PreciseSectorRows *>(&unk);
 
-    auto sectorList = renderFuncs.SectorListBuild(tiles);
+	auto sectorList = sectorSys.BuildSectorList(&tiles);
 
     RenderWorldInfo renderInfo;
     renderInfo.sectors = sectorList;
@@ -242,7 +237,7 @@ void GameRenderer::Render() {
 
     RenderWorld(&renderInfo);
 
-    renderFuncs.SectorListFree(sectorList);
+	sectorSys.SectorListReturnToPool(sectorList);
   }
 }
 
