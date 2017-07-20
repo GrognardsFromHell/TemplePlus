@@ -70,7 +70,6 @@ AiSystem::AiSystem()
 	rebase(_FleeAdd, 0x1005DE60);
 	rebase(_ShitlistAdd, 0x1005CC10);
 	rebase(_StopAttacking, 0x1005E6A0);
-	rebase(_AiSetCombatStatus, 0x1005DA00);
 	rebase(aiParams, 0x10AA4BD0);
 	RegisterNewAiTactics();
 }
@@ -314,7 +313,7 @@ void AiSystem::ShitlistRemove(objHndl npc, objHndl target) {
 		SetWhoHitMeLast(npc, objHndl::null);
 	}
 
-	_AiSetCombatStatus(npc, 0, objHndl::null, 0); // I think this means stop attacking?
+	aiSys.UpdateAiFlags(npc, AIFS_NONE, objHndl::null, nullptr);
 }
 
 BOOL AiSystem::AiListFind(objHndl aiHandle, objHndl tgt, int typeToFind){
@@ -366,7 +365,171 @@ void AiSystem::ProvokeHostility(objHndl agitator, objHndl provokedNpc, int range
 			return;
 	}
 
-	temple::GetRef<void(__cdecl)(objHndl, objHndl, int, int)>(0x1005E8D0)(agitator, provokedNpc, rangeType, flags);
+	if (provokedObj->GetFlags() & (OF_INVULNERABLE | OF_DONTDRAW | OF_OFF)
+		|| provokedObj->GetInt32(obj_f_name) == 6719
+		|| agitator == provokedNpc || combatSys.IsBrawlInProgress()){
+		return;
+	}
+
+	auto agitatorObj = objSystem->GetObject(agitator);
+
+	if (agitatorObj->IsPC() && provokedObj->IsPC())
+		return;
+
+	if (!agitatorObj->IsCritter()){ 
+		aiSys.UpdateAiFlags(provokedNpc, AIFS_FIGHTING, agitator, nullptr);
+		return;
+	}
+
+	if (flags & 4){ // never happens AFAIK
+		auto agitatorLeader = critterSys.GetLeader(agitator);
+		if (agitatorLeader){
+			aiSys.TryLockOnTarget(agitator, agitatorLeader, provokedNpc, 1, 0, 1);
+		}
+		return;
+	}
+
+	if (!(flags & 2) && agitator != provokedNpc){
+		ObjList objList;
+		objList.ListFollowers(agitator);
+		for (auto i=0; i < objList.size(); i++){
+			auto follower = objList[i];
+			if (!follower) continue;
+			aiSys.TryLockOnTarget(follower, agitator, provokedNpc, 1, flags & 1, 0);
+		}
+	}
+
+	if (!provokedObj->IsCritter())
+		return;
+
+	auto provokedNpcLeader = critterSys.GetLeaderForNpc(provokedNpc);
+	if (!provokedNpcLeader){
+		provokedNpcLeader = provokedNpc;
+	}
+	if (critterSys.IsConcealed(provokedNpcLeader)){
+		critterSys.SetConcealedWithFollowers(provokedNpcLeader, 0);
+	}
+
+	if (provokedObj->IsNPC()){
+		auto npcFlags = provokedObj->GetNPCFlags();
+		npcFlags &= (~(ONF_KOS_OVERRIDE));
+		provokedObj->SetNPCFlags( npcFlags );
+	}
+
+	if (!(flags & 2)){
+		if (provokedObj->IsPC()){
+			temple::GetRef<void(__cdecl)(objHndl, objHndl)>(0x10057790)(provokedNpc, agitator);
+		}
+
+		if (!(flags & 1)){
+			aiSys.AlertAllies(provokedNpc, agitator, rangeType);
+		}
+	}
+
+	if (!provokedObj->IsNPC()){
+		return;
+	}
+
+	provokedNpcLeader = critterSys.GetLeader(provokedNpc);
+	if (!(flags & 1) && agitator!= provokedNpcLeader) // todo should it begetLeaderFprNpc? is in partt?
+	{
+		provokedObj->SetObjHndl(obj_f_npc_who_hit_me_last, agitator);
+	}
+	auto aiShitlistAddWithFollowers = temple::GetRef<void(__cdecl)(objHndl, objHndl)>(0x1005CCA0);
+	aiShitlistAddWithFollowers(provokedNpc, agitator);
+	if (agitatorObj->IsNPC()) {
+		aiShitlistAddWithFollowers(agitator, provokedNpc);
+	}
+	else if (agitatorObj->IsPC()) {
+
+		auto aiPar = aiSys.GetAiParams(provokedNpc);
+
+		if (provokedNpcLeader == agitator) {
+			auto npcRefuseFollowingCheck = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x10058A30);
+			if (npcRefuseFollowingCheck(provokedNpc, agitator) && critterSys.RemoveFollower(agitator, 0))
+			{
+				uiSystems->GetParty().Update();
+				auto npcFlags = provokedObj->GetInt32(obj_f_npc_flags);
+				agitatorObj->SetNPCFlags(npcFlags | ONF_JILTED);
+			}
+			else if (rngSys.GetInt(1, 3) == 1 && !critterSys.IsDeadOrUnconscious(provokedNpc))
+			{
+				auto uiDlgSoundPlayer = temple::GetRef<void(__cdecl*)(objHndl, objHndl, char*, int)>(0x10AA73B0);
+				if (uiDlgSoundPlayer)
+				{
+					char ffText[1000]; int soundId;
+					auto getFriendlyFireVoiceLine = temple::GetRef<void(__cdecl)(objHndl, objHndl, char*, int*)>(0x10037450);
+					getFriendlyFireVoiceLine(provokedNpc, agitator, ffText, &soundId);
+					uiDlgSoundPlayer(provokedNpc, agitator, ffText, soundId);
+				}
+			}
+		}
+		else if (flags & 1)
+		{
+			objects.AdjustReaction(provokedNpc, agitator, -10);
+		}
+		else
+		{
+			auto curReaction = objects.GetReaction(provokedNpc, agitator);
+			if (curReaction > aiPar.hostilityThreshold)
+				objects.AdjustReaction(provokedNpc, agitator, aiPar.hostilityThreshold - curReaction);
+		}
+	}
+
+	if (!(flags & 1) || !critterSys.AllegianceShared(agitator, provokedNpc) && agitator != provokedNpcLeader)
+	{
+		aiSys.FightStatusProcess(provokedNpc, agitator);
+	}
+
+	
+	// legacy: temple::GetRef<void(__cdecl)(objHndl, objHndl, int, int)>(0x1005E8D0)(agitator, provokedNpc, rangeType, flags);
+}
+
+void AiSystem::TryLockOnTarget(objHndl handle, objHndl leader, objHndl tgt, int isAlways1, int someFlag, int skipAiStatusUpdate){
+	if (leader == tgt)
+		return;
+	auto tgtObj = objSystem->GetObject(tgt);
+	if (tgtObj->IsCritter()){
+		if (handle == tgt || critterSys.IsDeadNullDestroyed(handle))
+			return;
+
+		if (aiSys.CannotHate(handle, tgt, leader)){
+			if (isAlways1 && !critterSys.IsCombatModeActive(tgt) && !someFlag){
+				auto uiDlgSoundPlayer = temple::GetRef<void*>(0x10AA73B0);
+				if (uiDlgSoundPlayer){
+					// had a floating "IsConcious" check here...
+					objects.AdjustReaction(handle, leader, -5);
+				}
+			}
+			return;
+		}
+
+		if (someFlag){
+			if (!isAlways1){
+				objects.AdjustReaction(handle, leader, -5);
+			}
+			return;
+		}
+
+		if (!skipAiStatusUpdate){
+			aiSys.FightStatusProcess(handle, tgt);
+			return;
+		}
+	}
+	else{ // trap object can apply here I think
+		if (someFlag){
+			return;
+		}
+			
+		if (!skipAiStatusUpdate){
+			aiSys.UpdateAiFlags(handle, AIFS_FIGHTING, tgt, nullptr);
+			return;
+		}
+	}
+
+	auto lockOnTarget = temple::GetRef<void(__cdecl)(objHndl, objHndl)>(0x1005DF80);
+	lockOnTarget(handle, tgt);
+
 }
 
 BOOL AiSystem::RefuseFollowCheck(objHndl handle, objHndl leader){
@@ -783,8 +946,8 @@ void AiSystem::AlertAlly(objHndl handle, objHndl alertFrom, objHndl alertDispatc
 		}
 		return;
 	}
-
-	if ( !( objSystem->GetObject(handle)->GetInt32(obj_f_critter_flags) & OCF_NO_FLEE)){
+	/*
+	 if ( !( objSystem->GetObject(handle)->GetInt32(obj_f_critter_flags) & OCF_NO_FLEE)){
 		AiFightStatus aifs;
 		aiSys.GetAiFightStatus(handle, &aifs, nullptr);
 		if (aifs == AIFS_NONE){
@@ -794,6 +957,8 @@ void AiSystem::AlertAlly(objHndl handle, objHndl alertFrom, objHndl alertDispatc
 			}
 		}
 	}
+	 */
+	
 }
 
 void AiSystem::FightOrFlight(objHndl obj, objHndl tgt)
@@ -1051,7 +1216,7 @@ int AiSystem::TargetThreatened(AiTactic* aiTac)
 	{
 		// check if already moved - if so, use the threatened target (todo: regard spellcasting)
 		auto curSeq = *actSeqSys.actSeqCur;
-		if (curSeq->tbStatus.tbsFlags & (TBSF_Movement | TBSF_Movement2) == (TBSF_Movement | TBSF_Movement2)){
+		if ( (curSeq->tbStatus.tbsFlags & (TBSF_Movement | TBSF_Movement2)) == (TBSF_Movement | TBSF_Movement2)){
 			if (ignoredTarget){
 				aiTac->target = ignoredTarget;
 				logger->info("{} targeted because there was no other legit target and am out of moves.", objects.description.getDisplayName(aiTac->target, aiTac->performer));
@@ -1429,9 +1594,12 @@ int AiSystem::ChargeAttack(AiTactic* aiTac)
 
 
 int AiSystem::UpdateAiFlags(objHndl handle, AiFightStatus aiFightStatus, objHndl target, int* soundMap){
-
+	logger->debug("{} entering ai state: {}, target: {}", handle, (int)aiFightStatus, target);
 	auto obj = objSystem->GetObject(handle);
-
+	if (aiFightStatus == AIFS_NONE)
+	{
+		auto asdf = 1;
+	}
 	auto critterFlags = obj->GetInt32(obj_f_critter_flags);
 	auto critterFlags2 = obj->GetInt32(obj_f_critter_flags2);
 	auto npcFlags = obj->GetNPCFlags();
@@ -1496,11 +1664,11 @@ int AiSystem::UpdateAiFlags(objHndl handle, AiFightStatus aiFightStatus, objHndl
 		if (aiFlags & AiFlag::Fighting){
 			aiFlags &= ~(AiFlag::Fighting);
 			obj->SetInt64(obj_f_npc_ai_flags64, aiFlags);
+			if (aiFightStatus != AIFS_FLEEING) {
+				obj->SetInt32(obj_f_npc_flags, npcFlags | ONF_DEMAINTAIN_SPELLS);
+			}
+			pythonObjIntegration.ExecuteObjectScript(target, handle, ObjScriptEvent::ExitCombat);
 		}
-		if (aiFightStatus != AIFS_FLEEING){
-			obj->SetInt32(obj_f_npc_flags, npcFlags | ONF_DEMAINTAIN_SPELLS);
-		}
-		pythonObjIntegration.ExecuteObjectScript(target, handle, ObjScriptEvent::ExitCombat);
 		return aiFightStatus;
 	}
 	
@@ -1535,8 +1703,6 @@ int AiSystem::UpdateAiFlags(objHndl handle, AiFightStatus aiFightStatus, objHndl
 	}
 
 	return aiFightStatus;
-
-	//return addresses.UpdateAiFlags(handle, aiFightStatus, target, soundMap);
 }
 
 void AiSystem::StrategyTabLineParseTactic(AiStrategy* aiStrat, char* tacName, char* middleString, char* spellString)

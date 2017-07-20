@@ -161,6 +161,7 @@ struct AiSystem : temple::AddressTable
 	void FleeAdd(objHndl npc, objHndl target);
 	void StopAttacking(objHndl npc);
 	void ProvokeHostility(objHndl agitator, objHndl provokedNpc, int rangeType, int flags); // rangeType - 0 is for 5 tiles, 1 is for 10 tiles, 2 is for 20 tiles, and 3 is unlimited
+	void TryLockOnTarget(objHndl handle, objHndl leader, objHndl target, int isAlways1, int isFlags1Set, int skipAiStatusUpdate);
 	BOOL RefuseFollowCheck(objHndl handle, objHndl leader);
 
 	objHndl GetCombatFocus(objHndl npc);
@@ -255,7 +256,6 @@ private:
 	void (__cdecl *_ShitlistAdd)(objHndl npc, objHndl target);
 	void (__cdecl *_AiRemoveFromList)(objHndl npc, objHndl target, int listType);	
 	void (__cdecl *_FleeAdd)(objHndl npc, objHndl target);
-	void (__cdecl *_AiSetCombatStatus)(objHndl npc, int status, objHndl target, int unk);
 	void (__cdecl *_StopAttacking)(objHndl npc);
 	bool Is5FootStepWorth(AiTactic * aiTac);
 	

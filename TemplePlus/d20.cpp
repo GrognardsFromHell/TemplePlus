@@ -2750,7 +2750,7 @@ ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
 		if (!tgtObj->IsCritter())
 			continue;
 		if (spellSys.IsSpellHarmful(curSeq->spellPktBody.spellEnum, curSeq->spellPktBody.caster, tgt)){
-			critterSys.Attack(curSeq->spellPktBody.caster, tgt, 1, 0);
+			aiSys.ProvokeHostility(curSeq->spellPktBody.caster, tgt, 1, 0);
 		}
 	}
 

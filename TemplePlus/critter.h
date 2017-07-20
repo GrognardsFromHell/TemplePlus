@@ -128,7 +128,7 @@ struct LegacyCritterSystem : temple::AddressTable
 
 
 
-	void Attack(objHndl target, objHndl attacker, int n1, int n2);
+	void Attack(objHndl provoked, objHndl attacker, int rangeType, int flags);
 
 	/*
 		does the gameplay logic for pickpocketing (this gets called at the end of the pickpocket animation)

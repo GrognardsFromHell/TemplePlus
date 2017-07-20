@@ -575,7 +575,6 @@ static PyObject* PyObjHandle_CanFindPathToObj(PyObject* obj, PyObject* args) {
 	auto handle = self->handle;
 
 	objHndl tgtObj;
-	LocAndOffsets tgtLoc;
 	int flags;
 
 	PathQuery pathQ;
