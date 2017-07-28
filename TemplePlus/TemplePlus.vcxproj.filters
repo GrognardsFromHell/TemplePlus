@@ -484,6 +484,7 @@
     <ClCompile Include="ui\ui_utility_bar.cpp">
       <Filter>ui</Filter>
     </ClCompile>
+    <ClCompile Include="gamesystems\objfade.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -906,6 +907,7 @@
     <ClInclude Include="ui\ui_dm.h">
       <Filter>ui</Filter>
     </ClInclude>
+    <ClInclude Include="gamesystems\objfade.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

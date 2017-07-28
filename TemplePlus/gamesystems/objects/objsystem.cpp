@@ -312,7 +312,10 @@ objHndl ObjSystem::LoadFromFile(TioFile* file) {
 	if (tio_fread(&protoId, sizeof(protoId), 1, file) != 1) {
 		throw TempleException("Couldn't read the prototype id.");
 	}
-
+	/*if(protoId.body.protoId == 2038)
+	{
+		auto fg = 3;
+	}*/
 	if (!protoId.IsPrototype()) {
 		throw TempleException("Expected a prototype id, but got type {} instead.", (int)protoId.subtype);
 	}
@@ -321,7 +324,7 @@ objHndl ObjSystem::LoadFromFile(TioFile* file) {
 	if (tio_fread(&objId, sizeof(objId), 1, file) != 1) {
 		throw TempleException("Couldn't read the object id.");
 	}
-
+	
 	// Null IDs are allowed for sector objects
 	if (!objId.IsPermanent() && !objId.IsNull()) {
 		throw TempleException("Expected an object id of type Permanent, but got type {} instead.", (int)objId.subtype);
@@ -330,6 +333,10 @@ objHndl ObjSystem::LoadFromFile(TioFile* file) {
 	uint32_t typeCode;
 	if (tio_fread(&typeCode, sizeof(typeCode), 1, file) != 1) {
 		throw TempleException("Unable to read object type");
+	}
+
+	if (typeCode == (int)ObjectIdKind::Null &&objId.body.guid.Data2== 3517 && objId.body.guid.Data3 == 16641){
+		auto ff = 1;
 	}
 
 	auto obj = std::make_unique<GameObjectBody>();
@@ -442,7 +449,9 @@ objHndl ObjSystem::LoadFromBuffer(void* bufferPtr) {
 	}
 
 	auto typeCode = buffer.Read<uint32_t>();
-
+	if (typeCode == (int)ObjectIdKind::Null &&objId.body.guid.Data2 == 3517 && objId.body.guid.Data3 == 16641) {
+		auto ff = 1;
+	}
 	auto obj = std::make_unique<GameObjectBody>();
 	obj->protoId = protoId;
 	obj->id = objId;

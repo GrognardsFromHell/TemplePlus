@@ -83,6 +83,7 @@
     </ClCompile>
     <ClCompile Include="gamesystems\objects\objsystem.cpp" />
     <ClCompile Include="gamesystems\objects\objsystem_hooks.cpp" />
+    <ClCompile Include="gamesystems\objfade.cpp" />
     <ClCompile Include="gamesystems\particlesystems.cpp" />
     <ClCompile Include="gamesystems\partsystemsrenderer.cpp" />
     <ClCompile Include="gamesystems\staticmeshes.cpp" />
@@ -328,6 +329,7 @@
     <ClInclude Include="gamesystems\objects\objfind.h" />
     <ClInclude Include="gamesystems\objects\objregistry.h" />
     <ClInclude Include="gamesystems\objects\objsystem.h" />
+    <ClInclude Include="gamesystems\objfade.h" />
     <ClInclude Include="gamesystems\ui_intgame_renderer.h" />
     <ClInclude Include="gameview.h" />
     <ClInclude Include="InfinityEngine.h" />

@@ -68,7 +68,8 @@ enum class TimeEventType : uint32_t {
 	IntgameTurnbased = 34,
 	PythonDialog = 35,
 	EncumberedComplain = 36,
-	PythonRealtime = 37
+	PythonRealtime = 37,
+	TimeEventSystemCount
 };
 
 enum class TimeEventArgType {
@@ -197,6 +198,7 @@ private:
 	- sourceFile and sourceLine are not used.
 	*/
 	bool Schedule(TimeEvent *evt, const GameTime *delay, const GameTime *baseTime, GameTime *triggerTimeOut, const char *sourceFile, int sourceLine);
+	bool ScheduleInternal(GameTime * time, TimeEvent *evt, GameTime *triggerTimeOut);
 
 	BOOL TimeEventListEntryAdd(TimeEventListEntry * evt);
 	
@@ -206,4 +208,5 @@ private:
 	BOOL TimeEventReadFromFile(TioFile * file, TimeEvent * evtOut);
 	BOOL LoadTimeEventObjInfoSafe(objHndl * handle, TimeEventObjInfo * evtInfo, TioFile* file);
 	void TimeEventObjInfoFromHandle(objHndl handle, TimeEventObjInfo * evtInfo);
+	bool IsInAdvanceTime();
 };

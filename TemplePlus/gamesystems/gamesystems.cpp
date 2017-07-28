@@ -25,6 +25,7 @@
 #include "particlesystems.h"
 #include "clipping/clipping.h"
 #include "gamesystems/timeevents.h"
+#include "gamesystems/objfade.h"
 #include "gamesystems/objects/objsystem.h"
 #include "gamesystems/map/gmesh.h"
 #include "anim.h"

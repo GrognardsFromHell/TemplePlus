@@ -495,16 +495,6 @@ public:
 	const std::string &GetName() const override;
 };
 
-class ObjFadeSystem : public GameSystem, public SaveGameAwareGameSystem, public ResetAwareGameSystem {
-public:
-	static constexpr auto Name = "ObjFade";
-	ObjFadeSystem(const GameSystemConf &config);
-	~ObjFadeSystem();
-	void Reset() override;
-	bool SaveGame(TioFile *file) override;
-	bool LoadGame(GameSystemSaveFile* saveFile) override;
-	const std::string &GetName() const override;
-};
 
 class DeitySystem : public GameSystem {
 public:

@@ -22,6 +22,8 @@
 #include <set>
 #include <config/config.h>
 #include "gamesystems/timeevents.h"
+#include "gamesystems/legacysystems.h"
+#include "gamesystems/objfade.h"
 
 Objects objects;
 
@@ -70,6 +72,14 @@ int32_t Objects::getArrayFieldInt32(objHndl obj, obj_f field, uint32_t index) {
 
 objHndl Objects::getArrayFieldObj(objHndl obj, obj_f field, uint32_t index) {
 	return objSystem->GetObject(obj)->GetObjHndl(field, index);
+}
+
+int Objects::GetAasHandle(objHndl handle){
+	auto model(GetAnimHandle(handle));
+	if (model) {
+		return model->GetHandle();
+	}
+	return 0;
 }
 
 gfx::AnimatedModelPtr Objects::GetAnimHandle(objHndl obj)
@@ -549,9 +559,35 @@ float Objects::GetRotationTowards(objHndl from, objHndl to) {
 	return  rot;
 }
 
-void Objects::FadeTo(objHndl obj, int targetOpacity, int tickTimeMs, int tickOpacityQuantum, int callbackMode) const
+void Objects::FadeTo(objHndl handle, int targetOpacity, int tickTimeMs, int tickOpacityQuantum, int callbackMode) const
 {
-	_FadeTo(obj, targetOpacity, tickTimeMs, tickOpacityQuantum, callbackMode);
+	auto obj = objSystem->GetObject(handle);
+	auto cur = obj->GetInt32(obj_f_transparency);
+	if (cur != targetOpacity){
+
+		gameSystems->GetObjFade().SetValidationObj(handle);
+
+		gameSystems->GetTimeEvent().Remove(TimeEventType::ObjFade, [](const TimeEvent & evt){
+			if (evt.params[1].handle != gameSystems->GetObjFade().GetValidationObj())
+				return false;
+			gameSystems->GetObjFade().RemoveFromTable(evt.params[0].int32);
+			return true;
+		});
+
+		auto newId = gameSystems->GetObjFade().AppendToTable(tickOpacityQuantum, cur, targetOpacity, tickTimeMs, callbackMode);
+		GameTime evtTime(0, tickTimeMs);
+		TimeEvent evt;
+		evt.system = TimeEventType::ObjFade;
+		evt.params[0].int32 = newId;
+		evt.params[1].handle = handle;
+		gameSystems->GetTimeEvent().Schedule(evt, tickTimeMs);
+	}
+	return; // TRUE
+}
+
+void Objects::SetTransparency(objHndl handle, int amt)
+{
+	temple::GetRef<void(__cdecl)(objHndl, int)>(0x10020060)(handle, amt);
 }
 
 void Objects::Move(objHndl handle, LocAndOffsets toLocation) {

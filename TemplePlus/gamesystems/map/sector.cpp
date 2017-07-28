@@ -9,6 +9,7 @@
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/mapsystem.h"
 #include "gamesystems/timeevents.h"
+#include "gamesystems/objects/objsystem.h"
 
 static_assert(temple::validate_size<SectorTilePacket, 66052>::value, "SectorTilePacket has incorrect size");
 static_assert(temple::validate_size<TileListEntry, 112>::value, "TileListEntry has incorrect size");
@@ -31,7 +32,10 @@ struct LegacySectorAddresses : temple::AddressTable
 
 	BOOL(_cdecl**SectorSaveFunc)(Sector* sect);
 	BOOL(_cdecl**SectorLoadFunc)(SectorLoc secLoc, Sector* sect);
+	BOOL(_cdecl*SectorLoadFunc_GameMode)(SectorLoc secLoc, Sector* sect);
+	BOOL(_cdecl*SectorLoadFunc_EditorMode)(SectorLoc secLoc, Sector* sect);
 
+	
 	BOOL(__cdecl* GetPointAlongSegmentNearestToOriginDistanceRfromV)(float absVx, float absVy, float radiusAdjAmt, RaycastPointSearchPacket * srchPkt, PointAlongSegment* pnt);
 	BOOL(__cdecl* IsPointCloseToSegment)(float absVx, float absVy, float radiusAdjAmt, RaycastPointSearchPacket * srchPkt);
 
@@ -71,6 +75,9 @@ struct LegacySectorAddresses : temple::AddressTable
 		rebase(sectorCache,				0x10AB7408);
 		rebase(sectorLockSerial,		0x10AB7410);
 		rebase(SectorLoadFunc,			0x10AB7420);
+		rebase(SectorLoadFunc_GameMode, 0x10083210);
+		rebase(SectorLoadFunc_EditorMode, 0x10082E00);
+		
 		rebase(sectorCacheIndicesCurIdx,	0x10AB7430);
 		rebase(sectorCacheLockedCount,	0x10AB7434);
 		rebase(sectorCacheSize, 		0x10AB7450);
@@ -108,6 +115,14 @@ public:
 		replaceFunction<void(__cdecl)(SectorList*)>(0x10081A30, [](SectorList* list){
 			sectorSys.SectorListReturnToPool(list);
 		});
+
+		static BOOL(__cdecl*orgSectorLoadObjs)(SectorObjects*, TioFile *, SectorLoc)
+		=replaceFunction<BOOL(__cdecl)(SectorObjects* , TioFile* , SectorLoc )>(0x100C1B20,
+			[](SectorObjects* secObjs, TioFile* file, SectorLoc sectorLoc) {
+			//return orgSectorLoadObjs(secObjs, file, sectorLoc);
+			return sectorSys.SectorLoadObjects(secObjs, file, sectorLoc);
+		});
+		
 	}
 } sectorHooks;
 
@@ -274,6 +289,71 @@ void LegacySectorSystem::SectorSave(Sector* sect)
 BOOL LegacySectorSystem::SectorLoad(SectorLoc secLoc, Sector* sect)
 {
 	return (*addresses.SectorLoadFunc)(secLoc, sect);
+}
+
+BOOL LegacySectorSystem::SectorLoadObjects(SectorObjects* secObjs, TioFile* file, SectorLoc sectorLoc){
+
+	auto initPos = tio_ftell(file);
+	if (initPos == -1)
+		return 0;
+	int32_t objCount = 0;
+	tio_fseek(file, -4, 2);
+	if ( tio_fread(&objCount, 4, 1, file) != 1)
+		return 0;
+	tio_fseek(file, initPos, 0);
+
+	
+	secObjs->objectsRead = 0;
+	if((int64_t)sectorLoc.raw == -1){
+		
+	}else{
+		auto dummy=- 1;
+	}
+	auto numRead = 0;
+	for (auto i=0; i < objCount; i++){
+		objHndl handle;
+		try{
+		 handle = objSystem->LoadFromFile(file);
+		}
+		catch ( TempleException &e) {
+			break;
+		}
+		if ((int64_t)sectorLoc.raw!= -1){
+			auto loc = objects.getInt64(handle, obj_f_location);
+		/*	v12 = GetSectorTileCoords(v11, SBYTE4(v11));
+			BYTE4(v7) = v12;
+			v13 = _longint_mul(__PAIR__(v9, v10) + (v12 >> 6), 0x100000000i64);
+			v17 = HIDWORD(v13);
+			v14 = BYTE4(v7);
+			HIDWORD(v7) = v20;
+			setInt64(handle, obj_f_location, (v7 + (v14 & 0x3F)) | v13);
+			PropCollectionReset(handle);
+			v6 = sectorLoc;
+			*/
+		}
+		objSystem->UnfreezeIds(handle);
+		objects.setInt32(handle, obj_f_temp_id, secObjs->objectsRead);
+		auto ObjlistInsertInternal = temple::GetRef<BOOL(__cdecl)(SectorObjects*, objHndl)>(0x100C1A20);
+		if (!ObjlistInsertInternal(secObjs, handle))
+		{
+			break;
+		}
+			
+		++secObjs->objectsRead;
+	}
+	if (tio_fread(&objCount, 4, 1, file) != 1)
+	{
+		return 0;
+	}
+		
+
+	if (secObjs->objectsRead != objCount){
+		auto destryObjList=temple::GetRef<void(__cdecl)(SectorObjects*)>(0x100C1360);
+		destryObjList(secObjs);
+		return FALSE;
+	}
+	secObjs->staticObjsDirty = 0;
+	return TRUE;
 }
 
 bool LegacySectorSystem::SectorFileExists(SectorLoc secLoc)
@@ -521,7 +601,7 @@ SectorObjectsNode* LockedMapSector::GetObjectsAt(int x, int y) const {
 	Expects(x >= 0 && x < 64);
 	Expects(y >= 0 && y < 64);
 
-	return mSector->objects.tiles[x][y];
+	return mSector->objects.tiles[x + y * SECTOR_SIDE_SIZE];
 }
 
 SectorLightIterator LockedMapSector::GetLights() {

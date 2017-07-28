@@ -621,7 +621,8 @@ public:
 		replaceFunction(0x10020540, TimeEventObjInfoFromHandle);
 		replaceFunction(0x100607E0, TimeEventListEntryAdd);
 
-		static int (*orgTimeEventValidate)(TimeEventListEntry* evt, int flag) = replaceFunction<int (__cdecl)(TimeEventListEntry*, int)>(0x10060430, [](TimeEventListEntry* evt, int isLoadingMap)
+		static int (*orgTimeEventValidate)(TimeEventListEntry* evt, int flag) = 
+			replaceFunction<int (__cdecl)(TimeEventListEntry*, int)>(0x10060430, [](TimeEventListEntry* evt, int isLoadingMap)
 		{
 			auto &timeEventFlagPackets = temple::GetRef<TimeEventFlagPacket[4]>(0x102BDF98);
 
@@ -637,18 +638,27 @@ public:
 				auto &parVal = evt->evt.params[i];
 				handle = parVal.handle;
 				if (isNull) {
+					auto hasValidHandleAnyway = false;
 					if (sTimeEventTypeSpecs[(int)evt->evt.system].argTypes[i] == TimeEventArgType::Object) {
-						if (evt->evt.system == TimeEventType::Lock) {
+						if (evt->evt.system == TimeEventType::ObjFade) {
 							auto dummy = 1;
 						}
 						evt->evt.params[i].handle = objHndl::null;
-						
 
 						if (handle){
 							logger->warn("Non-null handle for ObjectIdKind::Null in TimeEventValidate: {}", handle);
+							if (objSystem->IsValidHandle(handle))
+							{
+								hasValidHandleAnyway = true;
+								evt->evt.params[i].handle = handle;
+							}
 						}
 					}
-					continue;
+					if (!hasValidHandleAnyway)
+					{
+						continue;
+					}
+					
 				}
 
 				if (sTimeEventTypeSpecs[(int)evt->evt.system].argTypes[i] == TimeEventArgType::Object && !handle){
@@ -1002,12 +1012,114 @@ void TimeEventSystem::Remove(TimeEventType type, Predicate predicate)
 	sPredicate = nullptr;
 }
 
-bool TimeEventSystem::Schedule(TimeEvent * evt, const GameTime * delay, const GameTime * baseTime, GameTime * triggerTimeOut, const char * sourceFile, int sourceLine)
-{
-	using ScheduleFn = BOOL(TimeEvent* createArgs, const GameTime *time, const GameTime *curTime, GameTime *pTriggerTimeOut, const char *sourceFile, int sourceLine);
-	static auto timeevent_add_ex = temple::GetPointer<ScheduleFn>(0x10060720);
+bool TimeEventSystem::Schedule(TimeEvent * evt, const GameTime * delay, const GameTime * baseTime, GameTime * triggerTimeOut, const char * sourceFile, int sourceLine){
 
-	return timeevent_add_ex(evt, delay, baseTime, triggerTimeOut, sourceFile, sourceLine) == TRUE;
+	if (!evt)
+		return false;
+
+	if ((int)evt->system > (int)TimeEventType::TimeEventSystemCount)
+		return false;
+
+
+	GameTime time;
+	auto clockType = sTimeEventTypeSpecs[(int)evt->system].clock;
+
+	if (baseTime && (baseTime->timeInDays ||baseTime->timeInMs)){
+		time.timeInDays = baseTime->timeInDays;
+		time.timeInMs = baseTime->timeInMs;
+	} 
+	else{
+		if (clockType == GameClockType::RealTime){
+			auto &gameTimePlayed = temple::GetRef<GameTime>(0x10AA83B8);
+			time = gameTimePlayed;
+		}
+		else if (clockType == GameClockType::GameTime){
+			auto &gameTimeElapsed = temple::GetRef<GameTime>(0x10AA83C0);
+			time = gameTimeElapsed;
+		}
+		else if (clockType == GameClockType::GameTimeAnims){
+			auto &gameTimeAnim = temple::GetRef<GameTime>(0x10AA83C8);
+			time = gameTimeAnim;
+		}
+	}
+
+	time.timeInDays += delay->timeInDays;
+	time.timeInMs   += delay->timeInMs;
+	if (time.timeInMs >= 86400000){ // 1 or more days in msec
+		time.timeInDays += time.timeInMs / 86400000;
+		time.timeInMs %= 86400000;
+	}
+
+	return  ScheduleInternal(&time, evt, triggerTimeOut);
+	//using ScheduleFn = BOOL(TimeEvent* createArgs, const GameTime *time, const GameTime *curTime, GameTime *pTriggerTimeOut, const char *sourceFile, int sourceLine);
+	//static auto timeevent_add_ex = temple::GetPointer<ScheduleFn>(0x10060720);
+
+	//return timeevent_add_ex(evt, delay, baseTime, triggerTimeOut, sourceFile, sourceLine) == TRUE;
+}
+
+bool TimeEventSystem::ScheduleInternal(GameTime * time, TimeEvent * evt, GameTime * triggerTimeOut){
+	
+
+	if (!evt)
+		return false;
+
+	if ((int)evt->system > (int)TimeEventType::TimeEventSystemCount)
+		return false;
+
+	auto timeEvtIsEditor = temple::GetRef<int>(0x10AA73F4);
+	if (timeEvtIsEditor)
+		return false;
+
+	if (time->timeInMs==0){
+		time->timeInMs = 1;
+	}
+	auto &sysSpec = sTimeEventTypeSpecs[(int)evt->system];
+
+	auto newEntry = new TimeEventListEntry;
+	if (!newEntry) exit(1);
+	// build the new entry
+	newEntry->evt = *evt;
+	// store object references
+	for (auto i = 0; i < 4; i++) {
+		if (sysSpec.argTypes[i] != TimeEventArgType::Object) {
+			newEntry->objects[i].guid.subtype = ObjectIdKind::Null;
+			continue;
+		}
+		if (evt->system == TimeEventType::ObjFade) {
+			auto dummy = 1;
+		}
+		TimeEventObjInfoFromHandle(evt->params[i].handle, &newEntry->objects[i]);
+	}
+
+
+	
+	TimeEventListEntry**  evtList = &temple::GetRef<TimeEventListEntry*[]>(0x10AA73FC)[(int)sysSpec.clock];
+	
+	auto isSpecialScheduling = temple::GetRef<BOOL>(0x10AA83E0);
+	if (IsInAdvanceTime() && !isSpecialScheduling){
+		evtList = &temple::GetRef<TimeEventListEntry*[]>(0x10AA73E8)[(int)sysSpec.clock];
+	}
+
+	// insert event to the list (sorting from earliest to latest)
+	while (*evtList){
+		auto node = *evtList;
+		if (node->evt.time.timeInDays > evt->time.timeInDays
+			|| (node->evt.time.timeInDays >= evt->time.timeInDays) 
+			&& node->evt.time.timeInMs >= evt->time.timeInMs){
+			break;
+		}
+		evtList = &node->nextEvent;
+	}
+	newEntry->nextEvent = *evtList;
+	*evtList = newEntry;
+
+	
+	
+	if (triggerTimeOut){
+		*triggerTimeOut = evt->time;
+	}
+
+	return true;
 }
 
 BOOL TimeEventSystem::TimeEventListEntryAdd(TimeEventListEntry * evt){
@@ -1259,6 +1371,11 @@ void TimeEventSystem::TimeEventObjInfoFromHandle(objHndl handle, TimeEventObjInf
 		evtInfo->location = locXY::fromField(0);
 		evtInfo->mapNumber = gameSystems->GetMap().GetCurrentMapId();
 	}
+}
+
+bool TimeEventSystem::IsInAdvanceTime()
+{
+	return temple::GetRef<BOOL>(0x10AA83DC)!=0;
 }
 
 BOOL TimeEventHooks::LoadTimeEventObjInfoSafe(objHndl * handleOut, TimeEventObjInfo * evtInfo, TioFile * file){

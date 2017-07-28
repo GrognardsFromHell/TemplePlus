@@ -26,6 +26,7 @@
 #include "infrastructure/elfhash.h"
 #include "infrastructure/mesparser.h"
 #include "legacymapsystems.h"
+#include "infrastructure/meshes.h"
 
 
 //*****************************************************************************
@@ -1645,36 +1646,7 @@ const std::string &GameInitSystem::GetName() const {
 	return name;
 }
 
-//*****************************************************************************
-//* ObjFade
-//*****************************************************************************
 
-ObjFadeSystem::ObjFadeSystem(const GameSystemConf &config) {
-	auto startup = temple::GetPointer<int(const GameSystemConf*)>(0x1004c130);
-	if (!startup(&config)) {
-		throw TempleException("Unable to initialize game system ObjFade");
-	}
-}
-ObjFadeSystem::~ObjFadeSystem() {
-	auto shutdown = temple::GetPointer<void()>(0x1004c170);
-	shutdown();
-}
-void ObjFadeSystem::Reset() {
-	auto reset = temple::GetPointer<void()>(0x1004c190);
-	reset();
-}
-bool ObjFadeSystem::SaveGame(TioFile *file) {
-	auto save = temple::GetPointer<int(TioFile*)>(0x1004c1c0);
-	return save(file) == 1;
-}
-bool ObjFadeSystem::LoadGame(GameSystemSaveFile* saveFile) {
-	auto load = temple::GetPointer<int(GameSystemSaveFile*)>(0x1004c220);
-	return load(saveFile) == 1;
-}
-const std::string &ObjFadeSystem::GetName() const {
-	static std::string name("ObjFade");
-	return name;
-}
 
 //*****************************************************************************
 //* Deity
@@ -1906,6 +1878,48 @@ void MapFoggingSystem::PerformCheckForCritter(objHndl handle, int idx){
 		auto svb = gameSystems->GetSectorVB().GetSvb(secLoc);
 		auto relX = objsRelX[idx];
 		auto relY = objsRelY[idx];
+
+		auto cornerX = listNode->cornerTile.locx;
+		auto cornerY = listNode->cornerTile.locy;
+
+		auto deltaX = cornerX - baseTile.locx;
+		auto deltaY = cornerY - baseTile.locy;
+		
+
+		auto &objNodes = sect->objects;
+		auto objNode = objNodes.tiles[deltaX + (deltaY << 6)];
+
+		for (; objNode != nullptr; objNode = objNode->next) {
+
+			auto objNodeItem = objNode->handle;
+			if (!objNodeItem){
+				continue;
+			}
+
+			auto objNodeObj = objSystem->GetObject(objNodeItem);
+
+			if (objNodeObj->type != obj_t_portal)
+				continue;
+
+			auto aasParams = objects.GetAnimParams(objNodeItem);
+			auto model     = objects.GetAnimHandle(objNodeItem);
+			auto submeshes = model->GetSubmeshes();
+			
+			for (auto i_submesh=0; i_submesh<submeshes.size(); i_submesh++){
+				auto doorSubmesh = model->GetSubmesh(aasParams, submeshes[i_submesh]);
+				auto vertPos   = doorSubmesh->GetPositions();
+				auto indices   = doorSubmesh->GetIndices();
+				auto primCount = doorSubmesh->GetPrimitiveCount();
+
+				for (auto i_prim = 0; i_prim < primCount; i_prim++){
+					// todo: fill triangle with value 8 
+				}
+
+			}
+			
+
+		}
+
 
 
 		// unlock sector TODO svb

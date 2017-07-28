@@ -39,6 +39,7 @@ struct Objects : temple::AddressTable {
 	void setInt32(objHndl obj, obj_f field, uint32_t dataIn);
 	int32_t getArrayFieldInt32(objHndl obj, obj_f field, uint32_t index);
 	objHndl getArrayFieldObj(objHndl obj, obj_f field, uint32_t index);
+	int GetAasHandle(objHndl handle);
 	gfx::AnimatedModelPtr GetAnimHandle(objHndl obj);
 	gfx::AnimatedModelParams GetAnimParams(objHndl obj);
 	void SetAnimId(objHndl obj, gfx::EncodedAnimId id);
@@ -186,7 +187,7 @@ struct Objects : temple::AddressTable {
 		3 - (should be as 1, but isn't??), will also poop items
 	*/
 	void FadeTo(objHndl obj, int targetOpacity, int tickTimeMs, int tickQuantum, int callbackMode = 0) const;
-	
+	void SetTransparency(objHndl handle, int amt);
 	void SetFlag(objHndl obj, ObjectFlag flag) {
 		_SetFlag(obj, flag);
 	}

@@ -241,11 +241,11 @@ struct SectorTilePacket{
 };
 
 struct SectorObjects {
-	SectorObjectsNode* tiles[SECTOR_SIDE_SIZE][SECTOR_SIDE_SIZE];
+	SectorObjectsNode* tiles[SECTOR_SIDE_SIZE * SECTOR_SIDE_SIZE];
 	BOOL staticObjsDirty;
 	int objectsRead;
 };
-
+const int testSizeofSectorObjects = sizeof SectorObjects; // should be 16392 (0x4008)
 struct SectorVB{
 	SectorLoc secLoc;
 	int flags;
@@ -382,6 +382,7 @@ public:
 	NOTE: will return TRUE for non-existant file! (it just won't load any actual data)
 	*/
 	static BOOL SectorLoad(SectorLoc secLoc, Sector* sect);
+	static BOOL SectorLoadObjects(SectorObjects* secObjs,TioFile* file, SectorLoc secLoc );
 	static bool SectorFileExists(SectorLoc secLoc);
 
 	static void SectorCacheEntryFree(Sector* sect);
