@@ -1644,7 +1644,7 @@ bool Pathfinding::CanPathTo(objHndl obj, objHndl target, PathQueryFlags flags){
 		return true;
 	}
 	
-	
+	return false;
 }
 
 objHndl Pathfinding::CanPathToParty(objHndl obj)

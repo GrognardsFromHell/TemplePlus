@@ -5,10 +5,26 @@
 #include <infrastructure/meshes.h>
 #include <graphics/math.h>
 #include "config/config.h"
+#include "common.h"
 
 using DirectX::XMFLOAT4X3;
 
 #pragma pack(push, 8)
+
+struct Matrix3x4 {
+	float r00;
+	float r01;
+	float r02;
+	float t0;
+	float mr0;
+	float r11;
+	float r12;
+	float t1;
+	float r20;
+	float r21;
+	float r22;
+	float t2;
+};
 
 using AasHandle = uint32_t;
 struct AnimatedModel;
@@ -16,7 +32,15 @@ struct SkaAnimation;
 struct SkmFile {
 };
 
-struct SkaFile {
+struct LgcySkaFile {
+	int boneCount;
+	int boneDataStart;
+	int variationCount;
+	int variationDataStart;
+	int animationcCount;
+	int animationDataStart;
+	int unks[19];
+
 };
 
 struct IAasEventListener {
@@ -27,7 +51,7 @@ struct IAasEventListener {
 // Pure virtual interface to generate a compatible vtable API for AasClass2
 struct IAnimatedModel {
 	virtual ~IAnimatedModel() = 0;
-	virtual int SetSkaFile(SkaFile* skaData, int a3, int a4) = 0;
+	virtual int SetSkaFile(LgcySkaFile* skaData, int a3, int a4) = 0;
 	virtual void SetScale(float scale) = 0;
 	virtual int GetBoneCount() = 0;
 	virtual char* GetBoneName(int idx) = 0;
@@ -43,8 +67,8 @@ struct IAnimatedModel {
 	virtual int HasAnimation(char* anim) = 0;
 	virtual int SetAnimIdx(int animIdx) = 0;
 	virtual void Advance(const XMFLOAT4X3* worldMatrix, float deltaTime, float deltaDistance, float deltaRotation) = 0;
-	virtual void SetWorldMatrix(const XMFLOAT4X3* worldMatrix) = 0;
-	virtual void Method19() = 0;
+	virtual void SetWorldMatrix(const Matrix3x4* worldMatrix) = 0;
+	virtual void Method19() = 0; // SetBoneMatrices maybe
 	virtual void SetTime() = 0;
 	virtual void Method21() = 0;
 	virtual void GetSubmesh(int submeshIdx, int* vertexCountOut, float** posOut, float** normalsOut, float** uvOut, int* primCountOut, uint16_t** indicesOut) = 0;
@@ -166,13 +190,13 @@ struct AasSubmesh {
 	int* otherMaterialId;
 };
 
-struct AnimatedModel : IAnimatedModel {
+struct AnimatedModel : IAnimatedModel { // aas_class2
 	AnimPlayer* runningAnimsHead;
 	AnimPlayer* newestRunningAnim;
 	bool submeshesValid;
 	float scale;
 	float scaleInv;
-	SkaFile* skaData;
+	LgcySkaFile* skaData;
 	uint32_t variationCount;
 	VariationSelector variations[8];
 	bool hasClothBones;
@@ -189,9 +213,9 @@ struct AnimatedModel : IAnimatedModel {
 	float timeRel2;
 	float drivenDistance;
 	float drivenRotation;
-	XMFLOAT4X3 someMatrix;
-	XMFLOAT4X3 worldMatrix;
-	XMFLOAT4X3* boneMatrices;
+	Matrix3x4 someMatrix;
+	Matrix3x4 worldMatrix;
+	Matrix3x4* boneMatrices;
 	uint32_t field_F8;
 	uint32_t field_FC;
 };
@@ -204,7 +228,7 @@ struct AasAnimation {
 	uint32_t timeLoaded;
 	AnimatedModel* model;
 	SkmFile* skmFile;
-	SkaFile* skaFile;
+	LgcySkaFile* skaFile;
 	uint32_t addMeshCount;
 	void* addMeshData[32];
 	char* addMeshNames[32];
@@ -251,6 +275,9 @@ public:
 		return handle < sMaxAnims && !mAnims[handle].freed;
 	}
 
+	static int sub_10268910_naked();
+	//static Matrix3x4* sub_10268910(Matrix3x4* transformationMat, char* boneName, AnimatedModel* aasObj);
+
 	void apply() override {
 		static auto instance = this;
 
@@ -285,7 +312,7 @@ public:
 			}
 
 			if (handle >= 0 && handle < sMaxAnims){
-				auto &aasAnim = hooks.mAnims[handle];
+				auto &aasAnim = aasHooks.mAnims[handle];
 				auto model = aasAnim.model;
 				if (model){
 					AnimPlayer* runningAnim = model->runningAnimsHead;
@@ -302,7 +329,7 @@ public:
 		{
 			if (!handle || handle >= sMaxAnims)
 				return 0.0;
-			auto &aasAnim = hooks.mAnims[handle];
+			auto &aasAnim = aasHooks.mAnims[handle];
 			if (aasAnim.freed & 1){
 				return 0.0;
 			}
@@ -364,6 +391,60 @@ public:
 			return orgGetDistPerSec_Class2_Impl();
 		});*/
 
+		/*static BOOL(__cdecl*orgAas_10263400)(uint32_t, void**, void*) =	replaceFunction<BOOL(__cdecl)(uint32_t , void** , void* )>(0x10263400, 
+				[](uint32_t aasHndl, void** aasUnk1C, void* animState){
+			return orgAas_10263400(aasHndl, aasUnk1C, animState);
+		});*/
+
+		//replaceFunction(0x10268910, sub_10268910_naked); // causes crashes, unknown reason
+
+
 	}
-} hooks;
+} aasHooks;
+
+
+Matrix3x4*  sub_10268910(Matrix3x4* transformationMat, char* boneName, AnimatedModel* aasObj) {
+	
+	auto skaData = aasObj->skaData;
+	auto boneIdx = -1;
+
+	for (auto i=0; i < skaData->boneCount; i++){
+		auto asdf = skaData[i];
+		auto boneNameIt = (const char*)&skaData[i].boneDataStart + skaData->boneDataStart;
+		if (!_stricmp(boneName, boneNameIt)){
+			boneIdx = i;
+			break;
+		}
+	}
+	if (boneIdx == -1){
+		auto defaultTransMat = temple::GetRef<Matrix3x4>(0x11069E58);
+		*transformationMat = defaultTransMat;
+		return transformationMat;
+	}
+
+	aasObj->Method19();
+	*transformationMat = aasObj->boneMatrices[boneIdx];
+	return transformationMat;
+}
+
+int __declspec(naked) AasHooks::sub_10268910_naked(){
+
+	macAsmProl; // esp + 16, arg1 is esp+20
+	__asm {
+		push ecx; // AasClass2 *     // arg1 is esp +24
+		mov eax, [esp + 28];
+		push eax;      // arg1 is esp +28
+		mov eax, [esp + 28];   
+		push eax;
+		mov edi, sub_10268910;
+		call edi;
+		add esp, 12;
+
+	};
+
+	macAsmEpil;
+	__asm retn;
+};
+
+
 

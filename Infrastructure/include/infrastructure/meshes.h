@@ -381,7 +381,7 @@ namespace gfx {
 
 	};
 
-	struct AnimatedModelParams {
+	struct AnimatedModelParams { // see: objects.GetAnimParams(handle)
 		uint32_t x = 0;
 		uint32_t y = 0;
 		float offsetX = 0;

@@ -2481,8 +2481,9 @@ void AiSystem::AiProcess(objHndl obj){
 
 	if (d20Sys.d20Query(obj, DK_QUE_AI_Has_Spell_Override)){ // from Confusion Spell
 		int confusionState = d20Sys.d20QueryReturnData(obj, DK_QUE_AI_Has_Spell_Override);
-		if (confusionState > 0 && confusionState <15){
-			return addresses.AiProcess(obj); // todo replace this
+		if (confusionState > 0 && confusionState < 15){
+			if (aiSys.AiProcessHandleConfusion(obj, confusionState))
+				return;
 		}
 	}
 
@@ -2514,6 +2515,94 @@ void AiSystem::AiProcess(objHndl obj){
 	if (aiPacket.aiFightStatus == AIFS_FIGHTING && locSys.DistanceToObj(obj , aiPacket.target) <= 75.0 )
 		combatSys.enterCombat(obj);
 	
+}
+
+bool AiSystem::AiProcessHandleConfusion(objHndl handle, int confusionState){
+	if (!d20Sys.d20Query(handle, DK_QUE_Critter_Is_Confused))
+		return false;
+
+	auto spellId = (int)d20Sys.d20QueryReturnData(handle, DK_QUE_Critter_Is_Confused);
+	SpellPacketBody spPkt(spellId);
+	if (!spPkt.spellEnum)
+		return false;
+
+	if (confusionState == 11){
+		switch (Dice::Roll(1,6)-1){
+		case 1:
+			confusionState = 6; break;
+		case 2:
+			confusionState = 7; break;
+		case 3:
+			confusionState = 8; break;
+		case 4:
+			confusionState = 9; break;
+		case 5:
+			confusionState = 12; break;
+		default:
+			confusionState = 5; break;
+		}
+	}
+
+	auto confusionTgt = objHndl::null;
+	ObjList objList;
+	switch(confusionState){
+	case 5:
+		aiSys.FleeProcess(handle, spPkt.caster);
+		break;
+	case 7:
+		if (!combatSys.isCombatActive()){
+			aiSys.FleeProcess(handle, spPkt.caster);
+		}
+		else{
+			aiSys.FleeProcess(handle, combatSys.GetInitiativeListMember(rngSys.GetInt(0, combatSys.GetInitiativeListLength())));
+		}
+		break;
+	case 8: 
+		objList.ListVicinity(handle, OLC_CRITTERS);
+		for (auto i=0; i <objList.size(); i++){
+			if (objList[i]){
+				confusionTgt = objList[i];
+				break;
+			}
+		}
+		break;
+	case 9: 
+		objList.ListVicinity(handle, OLC_CRITTERS);
+		for (auto i = 0; i <objList.size(); i++) {
+			if (critterSys.IsDeadNullDestroyed(objList[i]))
+				continue;
+			if (!confusionTgt ||
+					locSys.DistanceToObj(handle, objList[i]) < locSys.DistanceToObj(handle, confusionTgt)){
+					confusionTgt = objList[i];
+			}
+			
+		}
+		break;
+	case 12: 
+		confusionTgt = handle;
+		break;
+	case 6: // do whatever was doing last I guess
+	case 10:
+	case 11:
+		break;
+	default:
+		return false;
+	}
+
+	if (confusionTgt){
+		aiSys.StrategyParse(handle, confusionTgt);
+	}
+	
+
+	if (combatSys.isCombatActive()){
+		auto curActor = tbSys.turnBasedGetCurrentActor();
+		if (curActor == handle && !actSeqSys.isPerforming(curActor) && actSeqSys.IsSimulsCompleted() && !actSeqSys.IsLastSimultPopped(curActor)){
+			logger->info("AI for {} ending turn (confusion while simuls)", curActor);
+			combatSys.CombatAdvanceTurn(curActor);
+		}
+	}
+		
+	return true;
 }
 
 int AiSystem::AiTimeEventExpires(TimeEvent* evt)
