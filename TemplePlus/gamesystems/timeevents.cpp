@@ -1361,7 +1361,7 @@ void TimeEventSystem::TimeEventObjInfoFromHandle(objHndl handle, TimeEventObjInf
 		return;
 	}
 
-	auto objId = objSystem->GetIdByHandle(handle);
+	auto objId = objSystem->GetPersistableId(handle);
 	evtInfo->guid = objId;
 	if (obj->IsStatic()) {
 		evtInfo->location = obj->GetLocation();
