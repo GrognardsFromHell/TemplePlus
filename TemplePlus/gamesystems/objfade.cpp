@@ -2,6 +2,10 @@
 #include <temple/dll.h>
 #include <gamesystems/objfade.h>
 #include "idxtables.h"
+#include "timeevents.h"
+#include "obj.h"
+#include "objects/objsystem.h"
+#include "gamesystems.h"
 
 //*****************************************************************************
 //* ObjFade
@@ -58,6 +62,7 @@ int ObjFadeSystem::AppendToTable(int quantum, int initialOpacity, int goalOpacit
 	objFadeArgs.goalOpacity = goalOpacity;
 	objFadeArgs.tickQuantum = quantum;
 	objFadeArgs.flags = flags;
+	objFadeArgs.tickMs = tickTimeMs;
 
 	objFadeTable.put(objFadeArgs.id, objFadeArgs);
 
@@ -68,4 +73,45 @@ int ObjFadeSystem::AppendToTable(int quantum, int initialOpacity, int goalOpacit
 
 void ObjFadeSystem::RemoveFromTable(int id){
 	objFadeTable.remove(id);
+}
+
+int ObjFadeSystem::TimeEventExpired(const TimeEvent * evt){
+
+	auto id = evt->params[0].int32;
+	auto handle = evt->params[1].handle;
+	auto fadeArgs = objFadeTable.get(id);
+	if (!fadeArgs){
+		logger->error("ObjFadeSystem::TimeEventExpired: Unknown fade id {}", id);
+		return TRUE;
+	}
+
+	auto curOpacity = objSystem->GetObject(handle)->GetInt32(obj_f_transparency);
+	auto goalOpacity = fadeArgs->goalOpacity;
+
+	int newOpacity;
+	if (fadeArgs->initialOpacity <= goalOpacity){
+		newOpacity = curOpacity + fadeArgs->tickQuantum;
+		if (newOpacity >= goalOpacity){
+			objects.SetTransparency(handle, goalOpacity);
+			return TRUE;
+		}
+	}
+	else{
+		newOpacity = curOpacity - fadeArgs->tickQuantum;
+		if (newOpacity <= goalOpacity) {
+			objects.SetTransparency(handle, goalOpacity);
+			return TRUE;
+		}
+	}
+
+	TimeEvent newEvt;
+	newEvt.system = TimeEventType::ObjFade;
+	newEvt.params[0].int32 = id;
+	newEvt.params[1].handle = handle;
+	
+	
+	gameSystems->GetTimeEvent().Schedule(newEvt, fadeArgs->tickMs);
+	objects.SetTransparency(handle, newOpacity);
+	return TRUE;
+
 }

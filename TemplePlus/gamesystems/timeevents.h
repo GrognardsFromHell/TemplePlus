@@ -24,7 +24,9 @@ enum class GameClockType : uint32_t {
 		Advances as long as the dialog UI is not visible, but not while the
 		game is otherwise paused.
 	*/
-	GameTimeAnims
+	GameTimeAnims,
+
+	ClockTypeCount // number of clock types
 };
 
 /*
@@ -137,6 +139,9 @@ struct TimeEventListEntry {
 	TimeEventObjInfo objects[4];
 	// Linked list ptr to next entry
 	TimeEventListEntry* nextEvent;
+
+	bool ObjHandlesValid();
+	bool IsValid(int isLoadingMap); // can do object handle recovery
 };
 
 #pragma pack(pop)
@@ -209,4 +214,5 @@ private:
 	BOOL LoadTimeEventObjInfoSafe(objHndl * handle, TimeEventObjInfo * evtInfo, TioFile* file);
 	void TimeEventObjInfoFromHandle(objHndl handle, TimeEventObjInfo * evtInfo);
 	bool IsInAdvanceTime();
+
 };

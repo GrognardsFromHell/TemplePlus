@@ -11,6 +11,12 @@
 
 #include "anim.h"
 #include <gamesystems\legacy.h>
+#include "legacysystems.h"
+#include "ui/ui_systems.h"
+#include "ui/ui_legacysystems.h"
+#include "combat.h"
+#include "graphics/mapterrain.h"
+#include "objfade.h"
 
 /*
 Internal system specification used by the time event system
@@ -201,6 +207,10 @@ static BOOL ExpireRandomEncounters(const TimeEvent* event) {
 
 static BOOL ExpireObjfade(const TimeEvent* event) {
 	static auto callback = temple::GetPointer<LegacyExpireFunc>(0x1004c490);
+	return callback(event);
+}
+static BOOL RemoveObjfade(const TimeEvent* event) {
+	static auto callback = temple::GetPointer<LegacyExpireFunc>(0x1004C570);
 	return callback(event);
 }
 
@@ -529,7 +539,7 @@ static const TimeEventTypeSpec sTimeEventTypeSpecs[] = {
 	TimeEventTypeSpec(
 		GameClockType::GameTimeAnims,
 		ExpireObjfade,
-		nullptr,
+		RemoveObjfade,
 		true,
 		TimeEventArgType::Int,
 		TimeEventArgType::Object
@@ -622,93 +632,9 @@ public:
 		replaceFunction(0x100607E0, TimeEventListEntryAdd);
 
 		static int (*orgTimeEventValidate)(TimeEventListEntry* evt, int flag) = 
-			replaceFunction<int (__cdecl)(TimeEventListEntry*, int)>(0x10060430, [](TimeEventListEntry* evt, int isLoadingMap)
-		{
-			auto &timeEventFlagPackets = temple::GetRef<TimeEventFlagPacket[4]>(0x102BDF98);
-
-			auto handle = objHndl::null;
-
-			for (auto i = 0; i < 4; i++) {
-				auto objKind = evt->objects[i].guid.subtype;
-				auto isNull = evt->objects[i].guid.subtype == ObjectIdKind::Null;
-				if ((uint16_t)objKind >= 4 && (uint16_t)objKind < 0xFFFE) {
-					logger->debug("Illegal object Kind caught in TimeEventValidate");
-				}
-				
-				auto &parVal = evt->evt.params[i];
-				handle = parVal.handle;
-				if (isNull) {
-					auto hasValidHandleAnyway = false;
-					if (sTimeEventTypeSpecs[(int)evt->evt.system].argTypes[i] == TimeEventArgType::Object) {
-						if (evt->evt.system == TimeEventType::ObjFade) {
-							auto dummy = 1;
-						}
-						evt->evt.params[i].handle = objHndl::null;
-
-						if (handle){
-							logger->warn("Non-null handle for ObjectIdKind::Null in TimeEventValidate: {}", handle);
-							if (objSystem->IsValidHandle(handle))
-							{
-								hasValidHandleAnyway = true;
-								evt->evt.params[i].handle = handle;
-							}
-						}
-					}
-					if (!hasValidHandleAnyway)
-					{
-						continue;
-					}
-					
-				}
-
-				if (sTimeEventTypeSpecs[(int)evt->evt.system].argTypes[i] == TimeEventArgType::Object && !handle){
-					logger->debug("Null object handle for GUID {}", evt->objects[i].guid);
-				}
-
-				if (handle || isLoadingMap) {
-					if (gameSystems->GetMap().IsClearingMap()) {
-						return FALSE;
-					}
-					if (objSystem->IsValidHandle(handle)) {
-						if (!handle || objSystem->GetObject(handle)->GetFlags() & OF_DESTROYED) {
-							handle = objHndl::null;
-							if (evt->evt.system == TimeEventType::Lock) {
-								auto dummy = 1;
-							}
-							logger->debug("Destroyed object caught in TimeEvent IsValidHandle");
-							return FALSE;
-						}		
-						continue;
-					}
-
-					auto objValidateRecovery = temple::GetRef<BOOL(__cdecl)(objHndl&, TimeEventObjInfo&)>(0x10020610);
-					if (objValidateRecovery(handle, evt->objects[i])) {
-						evt->evt.params[i].handle = handle;
-						if (evt->evt.system == TimeEventType::Lock) {
-							auto dummy = 1;
-						}
-						if (!handle || objSystem->GetObject(handle)->GetFlags() & OF_DESTROYED) {
-							// logger->debug("Destroyed object caught in validateRecovery");
-							return FALSE;
-						}
-						continue;
-					}
-					else {
-						if (evt->evt.system == TimeEventType::Lock) {
-							auto dummy = 1;
-						}
-						auto tryAgain = objSystem->GetHandleById(evt->objects[i].guid);
-						evt->evt.params[i].handle = objHndl::null;
-						logger->debug("TImeEvent: Error: Object validate recovery Failed. TE-Type: {}", (int)evt->evt.system);
-						return FALSE;
-					}
-					
-				}
-
-			}
-
-			return TRUE;
-
+			replaceFunction<int (__cdecl)(TimeEventListEntry*, int)>(0x10060430, [](TimeEventListEntry* evt, int isLoadingMap){
+			
+			return (BOOL)evt->IsValid(isLoadingMap);
 			/*int result = orgTimeEventValidate(evt, isLoadingMap);
 			if (!result){
 				logger->debug("Failed to validate time event. Event system {}, param0 {}", (int)evt->evt.system, evt->evt.params[0].int32);
@@ -737,13 +663,15 @@ public:
 
 		static int (*orgObjfadeTimeeventExpires)(TimeEvent* ) = replaceFunction<int(__cdecl)(TimeEvent*)>(0x1004C490, [](TimeEvent*evt)
 		{
-			auto param1 = evt->params[1];
-			auto param0 = evt->params[0];
-			if (!param1.handle)
-			{
-				int dummy = 1;
+			auto handle = evt->params[1].handle;
+			auto id = evt->params[0].int32;
+			
+			if (!handle){
+				return FALSE;
 			}
-			return orgObjfadeTimeeventExpires(evt);
+
+			return gameSystems->GetObjFade().TimeEventExpired(evt);
+			// return orgObjfadeTimeeventExpires(evt);
 		});
 
 		// fix for Encumbered Complain on null handle crash (I think it happens if you encumber an NPC and leave the area / send him off from the party?)
@@ -755,9 +683,153 @@ public:
 		});
 
 
-		static int (*orgAdvanceTime)(int ) = replaceFunction<int (__cdecl)(int)>(0x100620C0, [](int timeMsec)
-		{
-			return orgAdvanceTime(timeMsec);
+		static void (*orgAdvanceTime)(uint32_t ) = replaceFunction<void (__cdecl)(uint32_t)>(0x100620C0, [](uint32_t newTimeMs){
+			// obsolete, replaced
+			auto &timePlayed = temple::GetRef<GameTime>(0x10AA83B8);
+			auto &gameTimeElapsed = temple::GetRef<GameTime>(0x10AA83C0);
+			auto &animTime = temple::GetRef<GameTime>(0x10AA83C8);
+			
+			auto & lastPingMs = temple::GetRef<uint32_t>(0x10AA83D0);
+			auto timeDeltaMs = newTimeMs - lastPingMs;
+			
+			// limit time step to 250ms
+			if (timeDeltaMs > 250){
+				timeDeltaMs = 250;
+			}
+
+			// update last ping
+			lastPingMs = newTimeMs; 
+
+			// mark that we are currently in time event advance time, so that new time events get appended in a special list (see TimeEventSystem::ScheduleInternal)
+			auto isInAdvanceTime = temple::GetRef<BOOL>(0x10AA83DC);
+			isInAdvanceTime = TRUE;
+
+
+
+			// advance the time played
+			
+			timePlayed.timeInMs += timeDeltaMs;
+
+			if (timePlayed.timeInMs > 86400000){
+				timePlayed.timeInDays += timePlayed.timeInMs / 86400000;
+				timePlayed.timeInMs = timePlayed.timeInMs % 86400000;
+			}
+
+			// advanced time elapsed and anim time
+			auto timeEventUnk10AA83D8 = temple::GetRef<int>(0x10AA83D8); // something related to UI
+
+			
+			if (!timeEventUnk10AA83D8){
+
+				if (!uiSystems->GetDlg().IsActive() && !combatSys.isCombatActive()){
+						
+					
+					gameTimeElapsed.timeInMs += timeDeltaMs;
+
+					if (gameTimeElapsed.timeInMs > 86400000) {
+						gameTimeElapsed.timeInDays += gameTimeElapsed.timeInMs / 86400000;
+						gameTimeElapsed.timeInMs = gameTimeElapsed.timeInMs % 86400000;
+					}
+
+					auto updateDaylight = temple::GetRef<void(__cdecl)()>(0x100A75E0);
+					updateDaylight();
+					gameSystems->GetTerrain().UpdateDayNight();
+
+				}
+			}
+
+			
+			if (!timeEventUnk10AA83D8 || uiSystems->GetDlg().IsActive() ){
+				
+				animTime.timeInMs += timeDeltaMs;
+
+				if (animTime.timeInMs > 86400000) {
+					animTime.timeInDays += animTime.timeInMs / 86400000;
+					animTime.timeInMs = animTime.timeInMs % 86400000;
+				}
+			}
+
+			// expire events whose time has come (executing their expired callback)
+
+			auto expiredCount = 0;
+			TimeEventListEntry lastValid;
+			for (auto clockType = 0; clockType < (int)GameClockType::ClockTypeCount; clockType++){
+				GameTime * time;
+				switch ((GameClockType)clockType){
+				case GameClockType::RealTime:
+					time = &timePlayed; break;
+				case GameClockType::GameTime:
+					time = &gameTimeElapsed;
+					break;
+				case GameClockType::GameTimeAnims:
+				default:
+					time = &animTime; 
+					break;
+				}
+
+				TimeEventListEntry **evtListEntry = &temple::GetRef<TimeEventListEntry*[]>(0x10AA73FC)[clockType];
+				while (*evtListEntry){
+					auto node = *evtListEntry;
+					auto nextNode = node->nextEvent;
+
+					if (node->evt.time.timeInDays > time->timeInDays
+						|| (node->evt.time.timeInDays >= time->timeInDays
+							&& node->evt.time.timeInMs > time->timeInMs)) {
+						break;
+					}
+
+					// Expire event
+					*evtListEntry = nextNode;
+
+					auto sysSpec = GetTimeEventTypeSpec(node->evt.system);
+
+					if (node->IsValid(0)){
+						lastValid = *node;
+						sysSpec.expiredCallback(&node->evt);
+					}
+
+					if (sysSpec.removedCallback){
+						sysSpec.removedCallback(&node->evt);
+					}
+					free(node);
+
+					expiredCount++;
+					if (expiredCount >= 500){
+						logger->error("TimeEvent::AdvanceTime: Suspected Infinite Loop Caugt: Last Type: {}", (int)node->evt.system);
+						expiredCount = 0;
+						break;
+					}
+
+				}
+			}
+
+
+
+			// unmark isInAdvanceTime
+			isInAdvanceTime = FALSE;
+
+
+
+			// append events that were added during this function call
+			for (auto clockType = 0; clockType < (int)GameClockType::ClockTypeCount; clockType++){
+				TimeEventListEntry** evtListInAdvanceTime = &temple::GetRef<TimeEventListEntry*[]>(0x10AA73E8)[clockType];
+				
+				while (*evtListInAdvanceTime){
+					auto node = *evtListInAdvanceTime;
+					auto nextNode = node->nextEvent;
+					
+					if (node->ObjHandlesValid()){
+						gameSystems->GetTimeEvent().TimeEventListEntryAdd(node);
+					}
+					else{
+						free(node);
+					}
+
+					*evtListInAdvanceTime = nextNode;
+				}
+			}
+
+			// return orgAdvanceTime(timeMsec);
 		});
 
 		static int (*orgTimeEventSchedule)(TimeEvent*, GameTime*, GameTime*, GameTime*) = replaceFunction<int(__cdecl)(TimeEvent*, GameTime*, GameTime*, GameTime*)>(0x10060720, [](TimeEvent* evt, GameTime* timeDelta, GameTime* timeAbsolute, GameTime* timeResultOut)
@@ -922,9 +994,154 @@ bool TimeEventSystem::LoadGame(GameSystemSaveFile* saveFile) {
 	/*auto load = temple::GetPointer<int(GameSystemSaveFile*)>(0x10061f90);
 	return load(saveFile) == 1;*/
 }
-void TimeEventSystem::AdvanceTime(uint32_t time) {
-	auto advanceTime = temple::GetPointer<void(uint32_t)>(0x100620c0);
-	advanceTime(time);
+void TimeEventSystem::AdvanceTime(uint32_t newTimeMs) {
+	//auto advanceTime = temple::GetPointer<void(uint32_t)>(0x100620c0);
+	//advanceTime(time);
+
+	auto &timePlayed = temple::GetRef<GameTime>(0x10AA83B8);
+	auto &gameTimeElapsed = temple::GetRef<GameTime>(0x10AA83C0);
+	auto &animTime = temple::GetRef<GameTime>(0x10AA83C8);
+
+	auto & lastPingMs = temple::GetRef<uint32_t>(0x10AA83D0);
+	auto timeDeltaMs = newTimeMs - lastPingMs;
+
+	// limit time step to 250ms
+	if (timeDeltaMs > 250) {
+		timeDeltaMs = 250;
+	}
+
+	// update last ping
+	lastPingMs = newTimeMs;
+
+	// mark that we are currently in time event advance time, so that new time events get appended in a special list (see TimeEventSystem::ScheduleInternal)
+	auto isInAdvanceTime = temple::GetRef<BOOL>(0x10AA83DC);
+	isInAdvanceTime = TRUE;
+
+
+
+	// advance the time played
+
+	timePlayed.timeInMs += timeDeltaMs;
+
+	if (timePlayed.timeInMs > 86400000) {
+		timePlayed.timeInDays += timePlayed.timeInMs / 86400000;
+		timePlayed.timeInMs = timePlayed.timeInMs % 86400000;
+	}
+
+	// advanced time elapsed and anim time
+	auto timeEventUnk10AA83D8 = temple::GetRef<int>(0x10AA83D8); // something related to UI
+
+
+	if (!timeEventUnk10AA83D8) {
+
+		if (!uiSystems->GetDlg().IsActive() && !combatSys.isCombatActive()) {
+
+
+			gameTimeElapsed.timeInMs += timeDeltaMs;
+
+			if (gameTimeElapsed.timeInMs > 86400000) {
+				gameTimeElapsed.timeInDays += gameTimeElapsed.timeInMs / 86400000;
+				gameTimeElapsed.timeInMs = gameTimeElapsed.timeInMs % 86400000;
+			}
+
+			auto updateDaylight = temple::GetRef<void(__cdecl)()>(0x100A75E0);
+			updateDaylight();
+			gameSystems->GetTerrain().UpdateDayNight();
+
+		}
+	}
+
+
+	if (!timeEventUnk10AA83D8 || uiSystems->GetDlg().IsActive()) {
+
+		animTime.timeInMs += timeDeltaMs;
+
+		if (animTime.timeInMs > 86400000) {
+			animTime.timeInDays += animTime.timeInMs / 86400000;
+			animTime.timeInMs = animTime.timeInMs % 86400000;
+		}
+	}
+
+	// expire events whose time has come (executing their expired callback)
+
+	auto expiredCount = 0;
+	TimeEventListEntry lastValid;
+	for (auto clockType = 0; clockType < (int)GameClockType::ClockTypeCount; clockType++) {
+		GameTime * time;
+		switch ((GameClockType)clockType) {
+		case GameClockType::RealTime:
+			time = &timePlayed; break;
+		case GameClockType::GameTime:
+			time = &gameTimeElapsed;
+			break;
+		case GameClockType::GameTimeAnims:
+		default:
+			time = &animTime;
+			break;
+		}
+
+		TimeEventListEntry **evtListEntry = &temple::GetRef<TimeEventListEntry*[]>(0x10AA73FC)[clockType];
+		while (*evtListEntry) {
+			auto node = *evtListEntry;
+			auto nextNode = node->nextEvent;
+
+			if (node->evt.time.timeInDays > time->timeInDays
+				|| (node->evt.time.timeInDays >= time->timeInDays
+					&& node->evt.time.timeInMs > time->timeInMs)) {
+				break;
+			}
+
+			// Expire event
+			*evtListEntry = nextNode;
+
+			auto sysSpec = GetTimeEventTypeSpec(node->evt.system);
+
+			if (node->IsValid(0)) {
+				lastValid = *node;
+				sysSpec.expiredCallback(&node->evt);
+			}
+
+			if (sysSpec.removedCallback) {
+				sysSpec.removedCallback(&node->evt);
+			}
+			free(node);
+
+			expiredCount++;
+			if (expiredCount >= 500) {
+				logger->error("TimeEvent::AdvanceTime: Suspected Infinite Loop Caugt: Last Type: {}", (int)node->evt.system);
+				expiredCount = 0;
+				break;
+			}
+
+		}
+	}
+
+
+
+	// unmark isInAdvanceTime
+	isInAdvanceTime = FALSE;
+
+
+
+	// append events that were added during this function call
+	for (auto clockType = 0; clockType < (int)GameClockType::ClockTypeCount; clockType++) {
+		TimeEventListEntry** evtListInAdvanceTime = &temple::GetRef<TimeEventListEntry*[]>(0x10AA73E8)[clockType];
+
+		while (*evtListInAdvanceTime) {
+			auto node = *evtListInAdvanceTime;
+			auto nextNode = node->nextEvent;
+
+			if (node->ObjHandlesValid()) {
+				gameSystems->GetTimeEvent().TimeEventListEntryAdd(node);
+			}
+			else {
+				free(node);
+			}
+
+			*evtListInAdvanceTime = nextNode;
+		}
+	}
+
 }
 const std::string &TimeEventSystem::GetName() const {
 	static std::string name("TimeEvent");
@@ -1075,6 +1292,8 @@ bool TimeEventSystem::ScheduleInternal(GameTime * time, TimeEvent * evt, GameTim
 	}
 	auto &sysSpec = sTimeEventTypeSpecs[(int)evt->system];
 
+	evt->time = *time;
+
 	auto newEntry = new TimeEventListEntry;
 	if (!newEntry) exit(1);
 	// build the new entry
@@ -1127,7 +1346,7 @@ BOOL TimeEventSystem::TimeEventListEntryAdd(TimeEventListEntry * evt){
 		return FALSE;
 
 	auto subSys = evt->evt.system;
-	auto &sysSpec = sTimeEventTypeSpecs[(int)subSys];
+	auto &sysSpec = GetTimeEventTypeSpec(subSys);
 	auto clockType = sysSpec.clock;
 
 
@@ -1152,11 +1371,9 @@ BOOL TimeEventSystem::TimeEventListEntryAdd(TimeEventListEntry * evt){
 
 	evt->nextEvent = *evtList;
 
+	// convert obj handles to persistable references
 	for (auto i = 0; i < 4; i++) {
 		if (sysSpec.argTypes[i] == TimeEventArgType::Object) {
-			if (subSys == TimeEventType::Lock) {
-				auto dummy = 1;
-			}
 			TimeEventObjInfoFromHandle(evt->evt.params[i].handle, &evt->objects[i]);
 		}
 		else {
@@ -1396,4 +1613,97 @@ BOOL TimeEventHooks::TimeEventListEntryAdd(TimeEventListEntry * evt) {
 
 BOOL TimeEventHooks::TimeEventReadFromFile(TioFile * file, TimeEvent * evtOut){
 	return gameSystems->GetTimeEvent().TimeEventReadFromFile(file, evtOut);
+}
+
+bool TimeEventListEntry::ObjHandlesValid(){
+	auto sysSpec = sTimeEventTypeSpecs[(int)this->evt.system];
+
+	for (auto i=0; i < 4; i++){
+		if (sysSpec.argTypes[i] != TimeEventArgType::Object)
+			continue;
+		if (!objSystem->IsValidHandle(this->evt.params[i].handle))
+			return false;
+	}
+
+	return true;
+}
+
+bool TimeEventListEntry::IsValid(int isLoadingMap){
+
+	auto evt = this;
+
+	auto handle = objHndl::null;
+
+	for (auto i = 0; i < 4; i++) {
+		auto objKind = evt->objects[i].guid.subtype;
+		auto isNull = evt->objects[i].guid.subtype == ObjectIdKind::Null;
+		if ((uint16_t)objKind >= 4 && (uint16_t)objKind < 0xFFFE) {
+			logger->debug("Illegal object Kind caught in TimeEventValidate");
+		}
+
+		auto &parVal = evt->evt.params[i];
+		handle = parVal.handle;
+		if (isNull) {
+			// auto hasValidHandleAnyway = false;
+			if (sTimeEventTypeSpecs[(int)evt->evt.system].argTypes[i] == TimeEventArgType::Object) {
+				evt->evt.params[i].handle = objHndl::null;
+
+				if (handle) {
+					logger->warn("Non-null handle for ObjectIdKind::Null in TimeEventValidate: {}", handle);
+					/*if (objSystem->IsValidHandle(handle)){
+					hasValidHandleAnyway = true;
+					evt->evt.params[i].handle = handle;
+					}*/
+				}
+			}
+			continue;
+		}
+
+		if (sTimeEventTypeSpecs[(int)evt->evt.system].argTypes[i] == TimeEventArgType::Object && !handle) {
+			logger->debug("Null object handle for GUID {}", evt->objects[i].guid);
+		}
+
+		if (handle || isLoadingMap) {
+			if (gameSystems->GetMap().IsClearingMap()) {
+				return false;
+			}
+			if (objSystem->IsValidHandle(handle)) {
+				if (!handle || objSystem->GetObject(handle)->GetFlags() & OF_DESTROYED) {
+					handle = objHndl::null;
+					if (evt->evt.system == TimeEventType::ObjFade) {
+						auto dummy = 1;
+					}
+					logger->debug("Destroyed object caught in TimeEvent IsValidHandle");
+					return false;
+				}
+				continue;
+			}
+
+			auto objValidateRecovery = temple::GetRef<BOOL(__cdecl)(objHndl&, TimeEventObjInfo&)>(0x10020610);
+			if (objValidateRecovery(handle, evt->objects[i])) {
+				evt->evt.params[i].handle = handle;
+				if (evt->evt.system == TimeEventType::Lock) {
+					auto dummy = 1;
+				}
+				if (!handle || objSystem->GetObject(handle)->GetFlags() & OF_DESTROYED) {
+					// logger->debug("Destroyed object caught in validateRecovery");
+					return false;
+				}
+				continue;
+			}
+			else {
+				if (evt->evt.system == TimeEventType::Lock) {
+					auto dummy = 1;
+				}
+				auto tryAgain = objSystem->GetHandleById(evt->objects[i].guid);
+				evt->evt.params[i].handle = objHndl::null;
+				logger->debug("TImeEvent: Error: Object validate recovery Failed. TE-Type: {}", (int)evt->evt.system);
+				return false;
+			}
+
+		}
+
+	}
+
+	return true;
 }

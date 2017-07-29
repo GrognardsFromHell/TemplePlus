@@ -60,10 +60,9 @@ public:
 
 			for (auto i=0; i<29;i++)
 			{
-				auto boneName = fmt::format("effect-secretdoor-%02d", i);
+				auto boneName = fmt::format("effect-secretdoor-{:02d}", i);
 				auto hasBone = temple::GetRef<BOOL(__cdecl)(int, const char*)>(0x10263A10);
-				if (!hasBone(aasHndl, boneName.c_str() ))
-				{
+				if (hasBone(aasHndl, boneName.c_str() )){
 					gameSystems->GetParticleSys().CreateAtObj(boneName, sd);
 				}
 			}

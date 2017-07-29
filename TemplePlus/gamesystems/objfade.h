@@ -2,7 +2,7 @@
 #include "gametime.h"
 #include "gamesystem.h"
 struct GameSystemConf;
-
+struct TimeEvent;
 
 struct ObjFadeArgs
 {
@@ -29,4 +29,6 @@ public:
 	objHndl GetValidationObj();
 	int AppendToTable(int quantum, int initialOpacity, int goalOpacity, int tickTimeMs, int flags);
 	void RemoveFromTable(int id);
+
+	int TimeEventExpired(const TimeEvent *evt);
 };
