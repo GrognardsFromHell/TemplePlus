@@ -824,11 +824,20 @@ bool UiItemCreation::ItemWielderCondsContainEffect(int effIdx, objHndl item)
 		return false;
 
 
-	if (!IsWeaponBonus(effIdx)){  // a +x WEAPON bonus
+	if (!IsWeaponBonus(effIdx)){  // not a +x WEAPON bonus
 
 		for (auto i = 0u; i < condArray.GetSize(); i++){
 			auto condArrayIt = condArray[i];
 			if (condArrayIt  == condId)	{
+
+				if (itemObj->type == obj_t_armor){
+					// ensure that shield bonuses don't get applied to normal armors (e.g. so Armor Spell Resistance doesn't appear twice)
+					auto armorFlags = itemObj->GetInt32(obj_f_armor_flags);
+					if ((itEnh.flags & IESF_SHIELD) && inventory.GetArmorType(armorFlags) != ARMOR_TYPE_SHIELD )
+						return false;
+				}
+				
+
 				if ( itEnh.flags & (IESF_ENH_BONUS | IESF_INCREMENTAL ) ){
 					return itEnh.data.enhBonus <= inventory.GetItemWieldCondArg(item, condId, 0);
 				}
@@ -2449,6 +2458,8 @@ void UiItemCreation::CreateItemFinalize(objHndl crafter, objHndl item){
 
 	if (icType == ItemCreationType::CraftMagicArmsAndArmor){
 
+		effBonus = MaaGetTotalEffectiveBonus(CRAFT_EFFECT_INVALID);
+
 		auto itemObj = gameSystems->GetObj().GetObject(item);
 		for (auto it : appliedBonusIndices){
 			auto effIdx = it;
@@ -2460,13 +2471,13 @@ void UiItemCreation::CreateItemFinalize(objHndl crafter, objHndl item){
 
 			if (ItemWielderCondsContainEffect(effIdx, item)){
 				
-				if (itEnh.flags & IESF_ENH_BONUS) {
+				/*if (itEnh.flags & IESF_ENH_BONUS) {
 					effBonus += itEnh.effectiveBonus;
-				}
+				}*/
 				continue;
 			}
 			
-			effBonus += itEnh.effectiveBonus;
+			//effBonus += itEnh.effectiveBonus;
 			
 
 
@@ -2518,12 +2529,10 @@ void UiItemCreation::CreateItemFinalize(objHndl crafter, objHndl item){
 
 
 		auto itemWorthDelta = 100;
-		if (itemObj->type == obj_t_weapon)
-		{
+		if (itemObj->type == obj_t_weapon){
 			itemWorthDelta *= GoldBaseWorthVsEffectiveBonus[effBonus] - GoldBaseWorthVsEffectiveBonus[craftedItemExistingEffectiveBonus];
 		}
-		else
-		{
+		else{
 			itemWorthDelta *= GoldCraftCostVsEffectiveBonus[effBonus] - GoldCraftCostVsEffectiveBonus[craftedItemExistingEffectiveBonus];
 		}
 
