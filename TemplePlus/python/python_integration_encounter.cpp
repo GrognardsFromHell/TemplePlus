@@ -4,6 +4,7 @@
 #include "python_integration_obj.h"
 #include <structmember.h>
 #include <party.h>
+#include <gamesystems/random_encounter.h>
 
 static struct PyRandomEncounterAddresses : temple::AddressTable {
 	int* sleepStatus;
@@ -162,30 +163,6 @@ PyRandomEncounter *PyRandomEncounter_Create() {
 	self->location.locy = 0;
 	return self;
 }
-
-#pragma pack(push, 1)
-struct RandomEncounterEnemy {
-	int protoId;
-	int count;
-	
-};
-struct RandomEncounter {
-	int id;
-	int flags;
-	int title;
-	int dc;
-	int map;
-	int field14;
-	locXY location;
-	int enemiesCount;
-	RandomEncounterEnemy *enemies;
-};
-struct RandomEncounterSetup {
-	int flags;
-	int padding;
-	locXY location;
-};
-#pragma pack(pop)
 
 /*
 	Calls into random_encounter.encounter_create.

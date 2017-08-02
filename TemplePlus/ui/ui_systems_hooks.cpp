@@ -5,6 +5,7 @@
 
 #include "ui_system.h"
 #include "ui_systems.h"
+#include "ui_legacysystems.h"
 
 static class UiSystemHooks : public TempleFix {
 public:
@@ -22,6 +23,11 @@ public:
 		});
 		
 		// HookUiOptions();
+
+		// Camp
+		replaceFunction<BOOL(int)>(0x1010EF00, [](int hoursToRest){
+			return uiSystems->GetCamping().Camp(hoursToRest);
+		});
 
 	}
 

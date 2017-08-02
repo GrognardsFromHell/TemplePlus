@@ -315,11 +315,11 @@ PyObject* PyGame_Fade(PyObject*, PyObject* args) {
 
 	// Trigger the fade out immediately
 	FadeArgs fadeArgs;
-	fadeArgs.field0 = 0;
+	fadeArgs.flags = 0;
 	fadeArgs.field10 = 0;
 	fadeArgs.color = XMCOLOR(0, 0, 0, 1);
 	fadeArgs.transitionTime = 2.0f;
-	fadeArgs.field8 = 48;
+	fadeArgs.countSthgUsually48 = 48;
 	fade.PerformFade(fadeArgs);
 
 	textBubbles.HideAll();
@@ -352,7 +352,7 @@ PyObject* PyGame_Fade(PyObject*, PyObject* args) {
 		evt.params[3].int32 = 48;
 		gameSystems->GetTimeEvent().Schedule(evt, fadeOutTime);
 	} else {
-		fadeArgs.field0 = 1;
+		fadeArgs.flags = 1;
 		fade.PerformFade(fadeArgs);
 	}
 

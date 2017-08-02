@@ -1418,9 +1418,9 @@ void DungeonMaster::GotoArena(){
 void DungeonMaster::TransitionToMap(int mapId)
 {
 	FadeArgs fadeArgs;
-	fadeArgs.field0 = 0;
+	fadeArgs.flags = 0;
 	fadeArgs.color = 0;
-	fadeArgs.field8 = 1;
+	fadeArgs.countSthgUsually48 = 1;
 	fadeArgs.transitionTime = 0;
 	fadeArgs.field10 = 0;
 	fade.PerformFade(fadeArgs);

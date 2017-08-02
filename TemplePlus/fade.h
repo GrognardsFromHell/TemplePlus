@@ -42,13 +42,13 @@ struct FadeAndTeleportArgs {
 };
 
 struct FadeArgs {
-	int field0;
+	int flags;
 	XMCOLOR color;
-	int field8;
+	int countSthgUsually48;
 	float transitionTime;
 	int field10;
 	int field14;
-	int field18;
+	int hoursToPass;
 };
 #pragma pack(pop)
 

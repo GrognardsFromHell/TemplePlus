@@ -10,6 +10,15 @@
 #include "ui_systems.h"
 #include "dungeon_master.h"
 #include "ui_dm.h"
+#include "fade.h"
+#include "gamesystems/gamesystems.h"
+#include "gamesystems/mapsystem.h"
+#include "legacyscriptsystem.h"
+#include "tutorial.h"
+#include "gamesystems/random_encounter.h"
+#include "gamesystems/objects/objsystem.h"
+#include "damage.h"
+#include "critter.h"
 
 //*****************************************************************************
 //* MainMenu-UI
@@ -1141,6 +1150,123 @@ bool UiCamping::LoadGame(const UiSaveFile &save) {
 const std::string &UiCamping::GetName() const {
     static std::string name("Camping-UI");
     return name;
+}
+
+BOOL UiCamping::Camp(int hoursToRest){
+
+	auto restedCount = 0;
+	auto canHeal = true;
+	auto completedSuccessfully = TRUE;
+
+	if (hoursToRest > 0) {
+
+
+		auto getSleepStatus = temple::GetRef<int(__cdecl)()>(0x10045BB0);
+		auto sleepStatus = getSleepStatus();
+		auto healerMod = 0;
+
+		if (sleepStatus  <= 1){ // safe resting place or camping in wilderness
+
+			// find someone who can cast heal spells
+			for (auto partyIdx = 0; partyIdx < party.GroupListGetLen(); partyIdx++) {
+				auto partyMember = party.GroupListGetMemberN(partyIdx);
+
+				auto maxClrSpellLvl = spellSys.GetMaxSpellLevel(partyMember, stat_level_cleric);
+				auto maxDrdSpellLvl = spellSys.GetMaxSpellLevel(partyMember, stat_level_druid);
+				healerMod = max(healerMod, max(maxClrSpellLvl*5, maxDrdSpellLvl*4));
+			}
+		}
+
+
+		while (restedCount < hoursToRest){
+			
+			auto addTime = temple::GetRef<void(__cdecl)(unsigned int)>(0x10062390);
+			addTime(3600000u);
+			RandomEncounterSetup randEncSetup;
+			RandomEncounter *randEncOut;
+			if (getSleepStatus() == 1){
+				randEncSetup.flags = 1; // sleep encounter
+				randEncSetup.location.locx = 0;
+				randEncSetup.location.locy = 0;
+
+				auto encounterExists = temple::GetRef < BOOL(__cdecl)(RandomEncounterSetup*, RandomEncounter**)>(0x100461E0);
+				if (encounterExists(&randEncSetup, &randEncOut)){
+					completedSuccessfully = FALSE;
+					auto createEncounter = temple::GetRef<void(__cdecl)(RandomEncounter*)>(0x100462F0);
+					createEncounter(randEncOut);
+					break;
+				}
+			}
+
+			restedCount++;
+		}
+
+		if (restedCount >= 8){
+			if (getSleepStatus() == 3){
+				canHeal = false;
+			}
+
+			auto restPeriods = (restedCount - 8) / 24 + 1;
+			if (gameSystems->GetMap().IsCurrentMapBedrest()){
+				restPeriods *= 2;
+			}
+
+
+			for (auto partyIdx = 0; partyIdx < party.GroupListGetLen(); partyIdx++){
+				auto partyMember = party.GroupListGetMemberN(partyIdx);
+				auto partyMemLvl = objects.StatLevelGet(partyMember, stat_level);
+				auto hdCount = objects.GetHitDiceNum(partyMember);
+				auto healQuantum = max(hdCount, partyMemLvl);
+
+				auto healAmt = healQuantum * restPeriods;
+				if (restedCount >= 24){
+					healAmt += healerMod * restPeriods;
+				}
+
+				if (canHeal){
+					spellSys.SanitizeSpellSlots(partyMember);
+					spellSys.spellsPendingToMemorized(partyMember);
+					objSystem->GetObject(partyMember)->ClearArray(obj_f_critter_spells_cast_idx);
+					damage.Heal(partyMember, partyMember, Dice(0, 0, healAmt), D20A_NONE);
+
+				}
+				// heal subdual
+				damage.HealSubdual(partyMember, healAmt);
+				
+				// dispatch NewDayRest event(s)
+				if (canHeal){
+					auto dispatcher = objSystem->GetObject(partyMember)->GetDispatcher();
+					if (dispatcher->IsValid()){
+						dispatcher->Process(enum_disp_type::dispTypeNewDay, DK_NEWDAY_REST, nullptr);
+						for (auto iRestPeriod = 1; iRestPeriod < restPeriods; iRestPeriod++) {
+							dispatcher->Process(enum_disp_type::dispTypeNewDay, DK_NEWDAY_REST, nullptr);
+						}
+					}
+				}
+			}
+
+		}
+
+	}
+
+
+	auto sleepStatusUpdate = temple::GetRef<void(__cdecl)()>(0x10045850);
+	sleepStatusUpdate();
+	FadeArgs fadeArgs;
+	fadeArgs.flags = 1;
+	fadeArgs.countSthgUsually48 = 48;
+	fadeArgs.transitionTime = 1.0;
+	fade.PerformFade(fadeArgs);
+
+	const int TUTORIAL_MAP_ID = 5117;
+	if (gameSystems->GetMap().GetCurrentMapId() == TUTORIAL_MAP_ID && !scriptSys.GetGlobalFlag(3)){
+		if (!tutorial.IsTutorialActive()){
+			tutorial.Toggle();
+		}
+		tutorial.ShowTopic(20);
+		scriptSys.SetGlobalFlag(3, 1);
+	}
+	return completedSuccessfully;
 }
 
 //*****************************************************************************

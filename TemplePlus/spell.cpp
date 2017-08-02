@@ -875,6 +875,74 @@ uint32_t LegacySpellSystem::getStatModBonusSpellCount(objHndl objHnd, uint32_t c
 	return result;
 }
 
+
+void removeSurplusSpells(int surplus, objHndl objHnd, uint32_t classCode, int slotLvl){
+	auto obj = objSystem->GetObject(objHnd);
+
+	auto numMemorized = obj->GetSpellArray(obj_f_critter_spells_memorized_idx).GetSize();
+
+	for (size_t i = numMemorized - 1; i >= 0 && surplus > 0; i--)
+	{
+		auto spellData = obj->GetSpell(obj_f_critter_spells_memorized_idx, i);
+		if (spellData.classCode == (classCode | 0x80) && slotLvl == spellData.spellLevel)
+		{
+			spellSys.spellRemoveFromStorage(objHnd, obj_f_critter_spells_memorized_idx, &spellData, 0);
+			surplus--;
+		}
+	}
+
+}
+
+int getMemorizedSpells(objHndl objHnd, uint32_t classCode, int slotLvl)
+{
+	int numMemorizedThisLvl = 0;
+
+	auto obj = objSystem->GetObject(objHnd);
+	auto memorizedTotal = obj->GetSpellArray(obj_f_critter_spells_memorized_idx).GetSize();
+	auto spellClassCode = spellSys.GetSpellClass(classCode);
+
+	for (size_t i = 0; i < memorizedTotal; i++)
+	{
+		auto spellData = obj->GetSpell(obj_f_critter_spells_memorized_idx, i);
+		if (spellData.classCode == spellClassCode  && spellData.spellLevel == slotLvl)
+		{
+			numMemorizedThisLvl++;
+		}
+	}
+	return numMemorizedThisLvl;
+}
+void doSanitize(objHndl objHnd, uint32_t classCode, uint32_t classLvl)
+{
+	uint32_t maxSpells = 0;
+	uint32_t numSpells = 0;
+	for (auto slotLvl = 1; slotLvl < 10; slotLvl++){
+		
+		maxSpells = spellSys.GetNumSpellsPerDay(objHnd, (Stat)classCode, slotLvl); 
+		
+		if (maxSpells >= 0) {
+			if (spellSys.getWizSchool(objHnd)) {
+				maxSpells++;
+			}
+		}
+
+		numSpells = getMemorizedSpells(objHnd, classCode, slotLvl);
+		if (numSpells > maxSpells){
+			removeSurplusSpells(numSpells - maxSpells, objHnd, classCode, slotLvl);
+		}
+	};
+}
+
+
+void LegacySpellSystem::SanitizeSpellSlots(objHndl objHnd){
+
+	for (auto it:d20ClassSys.classEnumsWithSpellLists){
+		if (!d20ClassSys.IsVancianCastingClass(it))
+			continue;
+		auto classLvl = objects.StatLevelGet(objHnd, it);
+		doSanitize(objHnd, it, classLvl);
+	}
+}
+
 void LegacySpellSystem::spellPacketBodyReset(SpellPacketBody* spellPktBody)
 {
 	_spellPacketBodyReset(spellPktBody);

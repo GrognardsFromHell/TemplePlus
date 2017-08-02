@@ -908,6 +908,7 @@
       <Filter>ui</Filter>
     </ClInclude>
     <ClInclude Include="gamesystems\objfade.h" />
+    <ClInclude Include="gamesystems\random_encounter.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

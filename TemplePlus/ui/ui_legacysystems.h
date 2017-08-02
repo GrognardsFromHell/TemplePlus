@@ -525,6 +525,8 @@ public:
     bool LoadGame(const UiSaveFile &saveGame) override;
     void ResizeViewport(const UiResizeArgs &resizeArgs) override;
     const std::string &GetName() const override;
+
+	BOOL Camp(int hourToRest);
 };
 
 class UiHelpInventory : public UiSystem {
