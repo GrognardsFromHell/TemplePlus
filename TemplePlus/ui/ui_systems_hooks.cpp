@@ -29,6 +29,12 @@ public:
 			return uiSystems->GetCamping().Camp(hoursToRest);
 		});
 
+		// SetHoursToRestUntilHealed
+		replaceFunction<void()>(0x1012EC70, []() {
+			uiSystems->GetCamping().SetTimeUntilHealed();
+		});
+		
+
 	}
 
 private:

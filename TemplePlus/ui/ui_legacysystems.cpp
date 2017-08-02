@@ -1160,23 +1160,9 @@ BOOL UiCamping::Camp(int hoursToRest){
 
 	if (hoursToRest > 0) {
 
-
-		auto getSleepStatus = temple::GetRef<int(__cdecl)()>(0x10045BB0);
-		auto sleepStatus = getSleepStatus();
-		auto healerMod = 0;
-
-		if (sleepStatus  <= 1){ // safe resting place or camping in wilderness
-
-			// find someone who can cast heal spells
-			for (auto partyIdx = 0; partyIdx < party.GroupListGetLen(); partyIdx++) {
-				auto partyMember = party.GroupListGetMemberN(partyIdx);
-
-				auto maxClrSpellLvl = spellSys.GetMaxSpellLevel(partyMember, stat_level_cleric);
-				auto maxDrdSpellLvl = spellSys.GetMaxSpellLevel(partyMember, stat_level_druid);
-				healerMod = max(healerMod, max(maxClrSpellLvl*5, maxDrdSpellLvl*4));
-			}
-		}
-
+		auto sleepStatus = GetSleepStatus();
+		auto healerMod = GetHealingAmountMod();
+		
 
 		while (restedCount < hoursToRest){
 			
@@ -1184,7 +1170,7 @@ BOOL UiCamping::Camp(int hoursToRest){
 			addTime(3600000u);
 			RandomEncounterSetup randEncSetup;
 			RandomEncounter *randEncOut;
-			if (getSleepStatus() == 1){
+			if (GetSleepStatus() == 1){
 				randEncSetup.flags = 1; // sleep encounter
 				randEncSetup.location.locx = 0;
 				randEncSetup.location.locy = 0;
@@ -1201,35 +1187,34 @@ BOOL UiCamping::Camp(int hoursToRest){
 			restedCount++;
 		}
 
+		// apply healing
 		if (restedCount >= 8){
-			if (getSleepStatus() == 3){
+			if (GetSleepStatus() == 3){
 				canHeal = false;
 			}
 
 			auto restPeriods = (restedCount - 8) / 24 + 1;
+			auto restPeriodsOrg = restPeriods;
 			if (gameSystems->GetMap().IsCurrentMapBedrest()){
 				restPeriods *= 2;
 			}
 
-
 			for (auto partyIdx = 0; partyIdx < party.GroupListGetLen(); partyIdx++){
 				auto partyMember = party.GroupListGetMemberN(partyIdx);
-				auto partyMemLvl = objects.StatLevelGet(partyMember, stat_level);
-				auto hdCount = objects.GetHitDiceNum(partyMember);
-				auto healQuantum = max(hdCount, partyMemLvl);
-
-				auto healAmt = healQuantum * restPeriods;
-				if (restedCount >= 24){
-					healAmt += healerMod * restPeriods;
+				
+				auto healAmt = GetHealingAmount(partyMember, restPeriods);
+				if (restedCount >= 24) {
+					healAmt += healerMod * restPeriodsOrg;
 				}
 
+				// heal damage
 				if (canHeal){
 					spellSys.SanitizeSpellSlots(partyMember);
 					spellSys.spellsPendingToMemorized(partyMember);
 					objSystem->GetObject(partyMember)->ClearArray(obj_f_critter_spells_cast_idx);
 					damage.Heal(partyMember, partyMember, Dice(0, 0, healAmt), D20A_NONE);
-
 				}
+
 				// heal subdual
 				damage.HealSubdual(partyMember, healAmt);
 				
@@ -1238,15 +1223,13 @@ BOOL UiCamping::Camp(int hoursToRest){
 					auto dispatcher = objSystem->GetObject(partyMember)->GetDispatcher();
 					if (dispatcher->IsValid()){
 						dispatcher->Process(enum_disp_type::dispTypeNewDay, DK_NEWDAY_REST, nullptr);
-						for (auto iRestPeriod = 1; iRestPeriod < restPeriods; iRestPeriod++) {
+						for (auto iRestPeriod = 1; iRestPeriod < restPeriodsOrg; iRestPeriod++) {
 							dispatcher->Process(enum_disp_type::dispTypeNewDay, DK_NEWDAY_REST, nullptr);
 						}
 					}
 				}
 			}
-
 		}
-
 	}
 
 
@@ -1267,6 +1250,87 @@ BOOL UiCamping::Camp(int hoursToRest){
 		scriptSys.SetGlobalFlag(3, 1);
 	}
 	return completedSuccessfully;
+}
+
+void UiCamping::SetTimeUntilHealed(){
+
+	auto &campingMode = temple::GetRef<int>(0x10BE2B38);
+	auto &hoursToRest = temple::GetRef<int>(0x10BE28FC);
+	auto &daysToRest  = temple::GetRef<int>(0x10BE2AF0);
+	
+	campingMode = 1;
+	hoursToRest = 0;
+	daysToRest = 0;
+
+	auto drawTimeToRest = temple::GetRef<void(__cdecl)()>(0x1012EA20);
+
+	if (GetSleepStatus() == 3){
+		drawTimeToRest();
+		return;
+	}
+
+
+	auto healMod = GetHealingAmountMod();
+	for (auto partyIdx =0; partyIdx < party.GroupListGetLen(); partyIdx++)
+	{
+		auto handle = party.GroupListGetMemberN(partyIdx);
+		if (!handle) continue;
+		auto curHp = objects.GetHPCur(handle);
+		auto maxHp = objects.StatLevelGet(handle, stat_hp_max);
+		auto healQuantum = GetHealingAmount(handle, 1) + healMod;
+		
+
+		auto hours = 24 * ((healQuantum - curHp + maxHp - 1) / healQuantum );
+		if (curHp < maxHp && hours < 24){
+			hours = 24;
+		}
+		if (hours > hoursToRest){
+			hoursToRest = hours;
+		}
+	}
+
+	daysToRest = hoursToRest / 24;
+	hoursToRest %= 24;
+	
+	drawTimeToRest();
+}
+
+int UiCamping::GetHealingAmount(objHndl handle, int restPeriods){
+
+	auto healAmt = 0;
+	
+	auto lvl = objects.StatLevelGet(handle, stat_level);
+	auto hdCount = objects.GetHitDiceNum(handle);
+	auto healQuantum = max(hdCount, lvl);
+
+	auto healerMod = GetHealingAmountMod();
+
+	healAmt = healQuantum * restPeriods;
+	
+
+	return healAmt;
+}
+
+int UiCamping::GetHealingAmountMod(){
+
+	auto healerMod = 0;
+	if (GetSleepStatus()<= 1) { // safe resting place or camping in wilderness
+
+							// find someone who can cast heal spells
+		for (auto partyIdx = 0; partyIdx < party.GroupListGetLen(); partyIdx++) {
+			auto partyMember = party.GroupListGetMemberN(partyIdx);
+
+			auto maxClrSpellLvl = spellSys.GetMaxSpellLevel(partyMember, stat_level_cleric);
+			auto maxDrdSpellLvl = spellSys.GetMaxSpellLevel(partyMember, stat_level_druid);
+			healerMod = max(healerMod, max(maxClrSpellLvl * 5, maxDrdSpellLvl * 4));
+		}
+	}
+
+	return healerMod;
+}
+
+int UiCamping::GetSleepStatus(){
+	return temple::GetRef<int(__cdecl)()>(0x10045BB0)();
 }
 
 //*****************************************************************************

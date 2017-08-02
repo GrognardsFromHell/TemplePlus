@@ -527,6 +527,13 @@ public:
     const std::string &GetName() const override;
 
 	BOOL Camp(int hourToRest);
+
+	void SetTimeUntilHealed();
+
+protected:
+	int GetHealingAmount(objHndl handle, int restPeriods);
+	int GetHealingAmountMod();
+	int GetSleepStatus();
 };
 
 class UiHelpInventory : public UiSystem {
