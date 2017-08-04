@@ -323,10 +323,69 @@ uint32_t LegacyCritterSystem::IsFriendly(objHndl pc, objHndl npc) {
 	return addresses.IsFriendly(pc, npc);
 }
 
-BOOL LegacyCritterSystem::AllegianceShared(objHndl obj, objHndl obj2)
-{
-	auto allegShared = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x10080A70);
-	return allegShared(obj, obj2);
+BOOL LegacyCritterSystem::NpcAllegianceShared(objHndl handle, objHndl handle2){
+
+	const int FACTION_ARRAY_MAX = 50;
+
+	auto obj = objSystem->GetObject(handle);
+	auto obj2 = objSystem->GetObject(handle2);
+	auto npc = handle;
+	auto pc = handle2;
+	
+
+	if (obj->IsPC()) {
+		if ( obj2->IsPC() )
+			return FALSE;
+		pc = handle;
+		npc = handle2;
+	}
+	// handle1 is NPC
+	else if (obj2->IsNPC()){  // handle2 is also NPC
+
+		auto objLeader = critterSys.GetLeaderForNpc(handle);
+		auto obj2Leader = critterSys.GetLeaderForNpc(handle2);
+
+		// check leaders:
+		// if one is the leader of the other, or their leaders are identical (and not null) - TRUE
+		if ( (objLeader && objLeader == obj2Leader)
+			|| objLeader == handle2 
+			|| obj2Leader == handle){
+			return TRUE;
+		}
+
+		// check joint factions
+		for (auto factionIdx = 0; factionIdx < FACTION_ARRAY_MAX; factionIdx++){
+			auto objFaction = obj->GetInt32(obj_f_npc_faction, factionIdx);
+			if (!objFaction)
+				return FALSE;
+			if (factions.FactionHas(handle2, objFaction))
+				return TRUE;
+		}
+
+		// If no joint factions - return FALSE
+		return FALSE;
+	}
+	else{ // handle2 is PC
+		pc = handle2;
+		npc = handle;
+	}
+
+	auto leader = critterSys.GetLeaderForNpc(npc);
+	if (pc == leader)
+		return TRUE;
+
+	auto npcObj = objSystem->GetObject(npc);
+	for (auto factionIdx = 0; factionIdx < FACTION_ARRAY_MAX; factionIdx++) {
+		auto objFaction = npcObj->GetInt32(obj_f_npc_faction, factionIdx);
+		if (!objFaction)
+			return FALSE;
+		if (factions.PCHasFactionFromReputation(pc, objFaction))
+			return TRUE;
+	}
+	return FALSE;
+
+	//auto allegShared = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x10080A70);
+	//return allegShared(handle, handle2);
 }
 
 int LegacyCritterSystem::GetReaction(objHndl of, objHndl towards){

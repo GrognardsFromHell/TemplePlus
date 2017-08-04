@@ -1742,7 +1742,7 @@ ActionErrorCode D20ActionCallbacks::PerformSneak(D20Actn* d20a){
 			if (!combatant || combatant == performer)
 				continue;
 			
-			if (critterSys.IsFriendly(combatant, performer) || critterSys.AllegianceShared(combatant, performer))
+			if (critterSys.IsFriendly(combatant, performer) || critterSys.NpcAllegianceShared(combatant, performer))
 				continue;
 
 			if (critterSys.HasLineOfSight(combatant, performer) == 0)	{ // note: the function actually returns obstacles

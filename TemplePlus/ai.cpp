@@ -476,7 +476,7 @@ void AiSystem::ProvokeHostility(objHndl agitator, objHndl provokedNpc, int range
 		}
 	}
 
-	if (!(flags & 1) || !critterSys.AllegianceShared(agitator, provokedNpc) && agitator != provokedNpcLeader)
+	if (!(flags & 1) || !critterSys.NpcAllegianceShared(agitator, provokedNpc) && agitator != provokedNpcLeader)
 	{
 		aiSys.FightStatusProcess(provokedNpc, agitator);
 	}
@@ -555,7 +555,7 @@ int AiSystem::GetAllegianceStrength(objHndl aiHandle, objHndl tgt){
 	else{
 		if (objSystem->GetObject(aiHandle)->GetInt32(obj_f_spell_flags) & SpellFlags::SF_SPELL_FLEE || d20Sys.d20Query(aiHandle, DK_QUE_Critter_Is_Charmed))
 			return 0;
-		if (critterSys.AllegianceShared(aiHandle, tgt))
+		if (critterSys.NpcAllegianceShared(aiHandle, tgt))
 			return 1;
 		return 0;
 		// there's a stub here for value 2
@@ -755,7 +755,7 @@ int AiSystem::CannotHate(objHndl aiHandle, objHndl triggerer, objHndl aiLeader){
 		return 0;
 	if (critterSys.GetLeader(triggerer) == aiLeader)
 		return 4;
-	if (critterSys.AllegianceShared(aiHandle, triggerer))
+	if (critterSys.NpcAllegianceShared(aiHandle, triggerer))
 		return 3;
 	if (d20Sys.d20QueryWithData(aiHandle, DK_QUE_Critter_Has_Condition, conds.GetByName("sp-Sanctuary Save Failed"), 0) != TRUE
 		|| d20Sys.d20QueryWithData(triggerer, DK_QUE_Critter_Has_Condition, conds.GetByName("sp-Sanctuary"), 0) != TRUE)
@@ -793,7 +793,7 @@ int AiSystem::WillKos(objHndl aiHandle, objHndl triggerer){
 		auto npcFlags = objSystem->GetObject(aiHandle)->GetNPCFlags();
 		if (npcFlags & NpcFlag::ONF_KOS && !(npcFlags & NpcFlag::ONF_KOS_OVERRIDE)) {
 
-			if (!critterSys.AllegianceShared(aiHandle, triggerer) && (objSystem->GetObject(triggerer)->IsPC() || !factions.HasNullFaction(triggerer))) {
+			if (!critterSys.NpcAllegianceShared(aiHandle, triggerer) && (objSystem->GetObject(triggerer)->IsPC() || !factions.HasNullFaction(triggerer))) {
 				return 1;
 			}
 

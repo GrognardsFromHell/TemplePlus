@@ -2636,7 +2636,7 @@ static PyObject* PyObjHandle_AllegianceShared(PyObject* obj, PyObject* args) {
 		return 0;
 	}
 
-	return PyInt_FromLong(critterSys.AllegianceShared(self->handle, target));
+	return PyInt_FromLong(critterSys.NpcAllegianceShared(self->handle, target));
 }
 
 

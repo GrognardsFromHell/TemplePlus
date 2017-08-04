@@ -499,7 +499,7 @@ void LegacyCombatSystem::GetEnemyListInRange(objHndl performer, float rangeFeet,
 		if (critterSys.IsDeadNullDestroyed(resHandle))
 			continue;
 
-		if (resHandle != performer && !critterSys.AllegianceShared(resHandle, performer) && !critterSys.IsFriendly(performer, resHandle)) {
+		if (resHandle != performer && !critterSys.NpcAllegianceShared(resHandle, performer) && !critterSys.IsFriendly(performer, resHandle)) {
 			enemiesOut.push_back(resHandle);
 		}
 	}
@@ -766,7 +766,7 @@ void LegacyCombatSystem::Subturn()
 					continue;
 				}
 
-				if (party.IsInParty(actor))
+				if (party.IsInParty(resHandle))
 					continue;
 
 				if (tbSys.IsInInitiativeList(resHandle) || critterSys.IsCombatModeActive(resHandle) || !resObj->IsNPC())
@@ -783,11 +783,18 @@ void LegacyCombatSystem::Subturn()
 					}	
 				}
 				
-				
 				auto partyLeader = party.GetConsciousPartyLeader();
-				if (aiSys.WillKos(resHandle, partyLeader ))
+
+				if (aiSys.GetAllegianceStrength(resHandle, actor)){ // check that they have a faction in common
 					aiSys.ProvokeHostility(partyLeader, resHandle, 3, 0);
-				
+					continue;
+				}
+
+				if (factions.HasNullFaction(resHandle) && factions.HasNullFaction(actor)){
+					if (aiSys.WillKos(resHandle, partyLeader)) {
+						aiSys.ProvokeHostility(partyLeader, resHandle, 3, 0);
+					}
+				}
 
 			}
 			 

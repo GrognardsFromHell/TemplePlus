@@ -250,7 +250,7 @@ void Damage::DealSpellDamage(objHndl tgt, objHndl attacker, const Dice& dice, Da
 	if (!tgt)
 		return;
 
-	if (attacker && attacker != tgt && critterSys.AllegianceShared(tgt, attacker))
+	if (attacker && attacker != tgt && critterSys.NpcAllegianceShared(tgt, attacker))
 		floatSys.FloatCombatLine(tgt, 107); // friendly fire
 
 	aiSys.ProvokeHostility(attacker, tgt, 1, 0);
@@ -356,7 +356,7 @@ int Damage::DealAttackDamage(objHndl attacker, objHndl tgt, int d20Data, D20CAF 
 		return -1;
 	}
 
-	if (tgt && attacker && critterSys.AllegianceShared(tgt, attacker) && combatSys.AffiliationSame(tgt, attacker)){
+	if (tgt && attacker && critterSys.NpcAllegianceShared(tgt, attacker) && combatSys.AffiliationSame(tgt, attacker)){
 		floatSys.FloatCombatLine(tgt, 107); // Friendly Fire
 	}
 
@@ -423,7 +423,7 @@ int Damage::DealWeaponlikeSpellDamage(objHndl tgt, objHndl attacker, const Dice 
 	if (!tgt)
 		return -1;
 
-	if (attacker && attacker != tgt && critterSys.AllegianceShared(tgt, attacker))
+	if (attacker && attacker != tgt && critterSys.NpcAllegianceShared(tgt, attacker))
 		floatSys.FloatCombatLine(tgt, 107); // friendly fire
 
 	aiSys.ProvokeHostility(attacker, tgt, 1, 0);

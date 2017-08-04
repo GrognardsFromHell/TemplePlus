@@ -151,7 +151,7 @@ struct LegacyCritterSystem : temple::AddressTable
 		 - one is the other's leader
 		 - both share a faction (including factions from reputations for PCs)
 	*/
-	BOOL AllegianceShared(objHndl obj, objHndl obj2);
+	BOOL NpcAllegianceShared(objHndl obj, objHndl obj2);
 	int GetReaction(objHndl of, objHndl towards); // gets npc reaction towards
 
 

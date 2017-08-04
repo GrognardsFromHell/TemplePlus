@@ -594,7 +594,7 @@ void ActionSequenceSystem::ActionTypeAutomatedSelection(objHndl handle)
 
 	auto d20a = d20Sys.globD20Action;
 	auto performer = d20a->d20APerformer;
-	if (critterSys.IsFriendly(handle,performer) || critterSys.AllegianceShared(handle, performer))
+	if (critterSys.IsFriendly(handle,performer) || critterSys.NpcAllegianceShared(handle, performer))
 	{
 		if (!d20Sys.d20Query(performer, DK_QUE_HoldingCharge)) {
 			setGlobD20Action(D20A_UNSPECIFIED_MOVE, 0);
@@ -2066,7 +2066,7 @@ int32_t ActionSequenceSystem::InterruptNonCounterspell(D20Actn* d20a)
 			if (d20a->d20ActType == D20A_CAST_SPELL){
 				if (d20a->d20APerformer && readiedAction->interrupter){
 					auto isFriendly = critterSys.IsFriendly(readiedAction->interrupter, d20a->d20APerformer);
-					auto sharedAlleg = critterSys.AllegianceShared(readiedAction->interrupter, d20a->d20APerformer);
+					auto sharedAlleg = critterSys.NpcAllegianceShared(readiedAction->interrupter, d20a->d20APerformer);
 					if (!sharedAlleg && !isFriendly)
 						break;
 				}	
@@ -2075,7 +2075,7 @@ int32_t ActionSequenceSystem::InterruptNonCounterspell(D20Actn* d20a)
 			if (d20a->d20ActType == D20A_READIED_INTERRUPT ) {
 				if (d20a->d20ATarget && readiedAction->interrupter) {
 					auto isFriendly = critterSys.IsFriendly(readiedAction->interrupter, d20a->d20ATarget);
-					auto sharedAlleg = critterSys.AllegianceShared(readiedAction->interrupter, d20a->d20ATarget);
+					auto sharedAlleg = critterSys.NpcAllegianceShared(readiedAction->interrupter, d20a->d20ATarget);
 					if (!sharedAlleg && !isFriendly)
 						break;
 				}
