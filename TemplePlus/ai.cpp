@@ -946,6 +946,7 @@ void AiSystem::AlertAlly(objHndl handle, objHndl alertFrom, objHndl alertDispatc
 		}
 		return;
 	}
+	// the code below caused problems when attacking Mickey in the Tavern (made everyone go hostile on you)
 	/*
 	 if ( !( objSystem->GetObject(handle)->GetInt32(obj_f_critter_flags) & OCF_NO_FLEE)){
 		AiFightStatus aifs;

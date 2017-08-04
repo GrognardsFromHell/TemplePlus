@@ -98,6 +98,9 @@ void Console::Render()
 		// Refocus the control
 		ImGui::SetKeyboardFocusHere(-1);
 	}
+	mIsInputActive = ImGui::IsItemActive();
+
+
 	if (mJustOpened) {
 		ImGui::SetKeyboardFocusHere(-1);
 		mJustOpened = false;
@@ -173,6 +176,10 @@ void Console::SetCheats(Cheat * cheats, size_t count)
 void Console::SetCommandInterpreter(std::function<void(const std::string&)> interpreter)
 {
 	mInterpreter = interpreter;
+}
+
+bool Console::InputIsActive(){
+	return mIsInputActive && IsOpen();
 }
 
 bool Console::ExecuteCheat(const std::string & command)

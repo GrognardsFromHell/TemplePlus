@@ -573,7 +573,7 @@ PyObject* PyGame_ObjListRange(PyObject*, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "Lii:game.obj_list_range", &loc.location, &radius, &flags)) {
 		return 0;
 	}
-
+	loc.off_x = 0; loc.off_y = 0;
 	float radiusArg = radius * 12.0f; // Apparently a shoddy conversion to coordinate space
 
 	ObjList objList;

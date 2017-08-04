@@ -5,6 +5,7 @@
 #include <EASTL/vector.h>
 #include <string>
 #include <functional>
+#include "tig_startup.h"
 
 struct ImGuiTextEditCallbackData;
 
@@ -51,11 +52,14 @@ public:
 
 	void SetCheats(Cheat *cheats, size_t count);
 	void SetCommandInterpreter(std::function<void(const std::string&)> interpreter);
+	bool InputIsActive();
 
 private:
 	bool mOpen = false;
 	bool mScrollToBottom = false;
 	bool mJustOpened = false; // used for moving focus to the text line
+	bool mIsInputActive = false;
+
 	std::string mCommandBuf;
 	std::function<void(const std::string&)> mInterpreter;
 

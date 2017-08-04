@@ -753,7 +753,7 @@ void LegacyCombatSystem::Subturn()
 			combatSys.AddToInitiativeWithinRect(actor);
 		else{
 			ObjList objList;
-			objList.ListRangeTiles(actor, 12, OLC_CRITTERS);
+			objList.ListRangeTiles(actor, 15, OLC_CRITTERS);
 			for (auto i=0; i< objList.size(); i++){
 				auto resHandle = objList[i];
 				if (!resHandle || resHandle == actor)
@@ -775,8 +775,9 @@ void LegacyCombatSystem::Subturn()
 				if (!combatSys.HasLineOfAttack(resHandle, actor)){
 
 					// check pathfinding short distances
-					auto pathFlags = static_cast<PathQueryFlags>(PathQueryFlags::PQF_TO_EXACT | PathQueryFlags::PQF_HAS_CRITTER | PathQueryFlags::PQF_800
-						| PathQueryFlags::PQF_TARGET_OBJ | PathQueryFlags::PQF_ADJUST_RADIUS | PathQueryFlags::PQF_ADJ_RADIUS_REQUIRE_LOS
+					auto pathFlags = static_cast<PathQueryFlags>(PathQueryFlags::PQF_TO_EXACT | PathQueryFlags::PQF_HAS_CRITTER | PQF_IGNORE_CRITTERS 
+						|PathQueryFlags::PQF_800 | PathQueryFlags::PQF_TARGET_OBJ
+						 | PathQueryFlags::PQF_ADJUST_RADIUS | PathQueryFlags::PQF_ADJ_RADIUS_REQUIRE_LOS
 						| PathQueryFlags::PQF_DONT_USE_PATHNODES | PathQueryFlags::PQF_A_STAR_TIME_CAPPED);
 					if (!pathfindingSys.CanPathTo(actor, resHandle, pathFlags)){
 						continue;

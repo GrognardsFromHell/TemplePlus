@@ -17,6 +17,8 @@
 #include "ai.h"
 #include "party.h"
 #include "dungeon_master.h"
+#include "tig/tig_loadingscreen.h"
+#include "tig/tig_console.h"
 
 UiInGame::UiInGame(const UiSystemConf &config) {
 	auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x10112e70);
@@ -281,7 +283,11 @@ void UiInGame::DoKeyboardScrolling(){
 		return;
 	}
 	scrollRefTime = now;
-
+	auto &console =tig->GetConsole();
+	if (console.IsOpen() && console.InputIsActive()){
+		return;
+	}
+	
 	static auto doKeyboardScrolling = temple::GetPointer<void()>(0x10113fb0);
 	doKeyboardScrolling();
 
