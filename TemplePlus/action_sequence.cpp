@@ -925,7 +925,7 @@ void ActionSequenceSystem::ProcessPathForAoOs(objHndl obj, PathQueryResult* pqr,
 	aooPacket->obj = obj;
 	aooPacket->path = pqr;
 	aooPacket->numAoOs = 0;
-	auto pathLength = pathfindingSys.pathLength(pqr);
+	auto pathLength = pathfindingSys.GetPathLength(pqr);
 	if (aooFreeDistFeet > pathLength)
 		return;
 	//truncateLengthFeet = pathLength;
@@ -1099,7 +1099,7 @@ uint32_t ActionSequenceSystem::MoveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 		}
 	}
 
-	auto pathLength = pathfinding->pathLength(pqResult);
+	auto pathLength = pathfinding->GetPathLength(pqResult);
 	d20aCopy.destLoc = pqResult->to;
 	d20aCopy.distTraversed = pathLength;
 
@@ -1218,7 +1218,7 @@ void ActionSequenceSystem::updateDistTraversed(ActnSeq* actSeq)
 	for (int i = 0; i < numd20s; i++)
 	{
 		path = actSeq->d20ActArray[i].path;
-		if (path){	actSeq->d20ActArray[i].distTraversed = pathfinding->pathLength(path);	}
+		if (path){	actSeq->d20ActArray[i].distTraversed = pathfinding->GetPathLength(path);	}
 	}
 }
 
@@ -1623,7 +1623,7 @@ void ActionSequenceSystem::ProcessSequenceForAoOs(ActnSeq* actSeq, D20Actn* d20a
 	D20Actn d20aAoOMovement(D20A_AOO_MOVEMENT);
 	LocAndOffsets truncLoc;
 	pathfindingSys.TruncatePathToDistance(pqr, &truncLoc, 0.0);
-	float startDistFeet = 0.0, endDistFeet = pathfindingSys.pathLength(d20a->path), aooDistFeet;
+	float startDistFeet = 0.0, endDistFeet = pathfindingSys.GetPathLength(d20a->path), aooDistFeet;
 	PathQueryResult * pqrTrunc;
 	for (auto i = 0u; i < aooPacket.numAoOs;i++)
 	{
@@ -1643,7 +1643,7 @@ void ActionSequenceSystem::ProcessSequenceForAoOs(ActnSeq* actSeq, D20Actn* d20a
 			}
 			startDistFeet = aooPacket.aooDistFeet[i];
 			d20aAoOMovement.destLoc = aooPacket.aooLocs[i];
-			d20aAoOMovement.distTraversed = pathfindingSys.pathLength(pqrTrunc);
+			d20aAoOMovement.distTraversed = pathfindingSys.GetPathLength(pqrTrunc);
 			actSeq->d20ActArray[actSeq->d20ActArrayNum] = d20aAoOMovement;
 			if (!addingAoOStatus)
 				actSeq->d20ActArray[actSeq->d20ActArrayNum].d20ActType = d20ActionTypePostAoO;
@@ -1684,7 +1684,7 @@ void ActionSequenceSystem::ProcessSequenceForAoOs(ActnSeq* actSeq, D20Actn* d20a
 		return;
 	}
 	d20aAoOMovement.destLoc = d20a->destLoc;
-	d20aAoOMovement.distTraversed = pathfindingSys.pathLength(pqrLastStretch);
+	d20aAoOMovement.distTraversed = pathfindingSys.GetPathLength(pqrLastStretch);
 	if (!addingAoOStatus)
 		d20aAoOMovement.d20ActType = d20ActionTypePostAoO;
 	actSeq->d20ActArray[actSeq->d20ActArrayNum++] = d20aAoOMovement;

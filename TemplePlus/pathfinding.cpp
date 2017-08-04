@@ -218,7 +218,7 @@ public:
 	}
 } pathFindingReplacements;
 
-float Pathfinding::pathLength(Path* path)
+float Pathfinding::GetPathLength(Path* path)
 {
 	float distTot;
 	if (path->flags & PF_STRAIGHT_LINE_SUCCEEDED)	return loc->distBtwnLocAndOffs(path->to, path->from) / 12.0f;
@@ -1622,7 +1622,7 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 
 }
 
-bool Pathfinding::CanPathTo(objHndl obj, objHndl target, PathQueryFlags flags){
+bool Pathfinding::CanPathTo(objHndl obj, objHndl target, PathQueryFlags flags, float maxDistanceFeet){
 	auto from = objects.GetLocationFull(obj);
 	
 	auto partyMember = target;
@@ -1640,11 +1640,18 @@ bool Pathfinding::CanPathTo(objHndl obj, objHndl target, PathQueryFlags flags){
 	pathQ.distanceToTargetMin = reach;
 	
 
-	if (FindPath(&pathQ, &path)){
-		return true;
+	if (!FindPath(&pathQ, &path)){
+		return false;
 	}
 	
-	return false;
+	if (maxDistanceFeet > 0){
+		auto pathDist = path.GetPathResultLength();
+		if (pathDist > maxDistanceFeet)
+			return false;
+
+	}
+
+	return true;
 }
 
 objHndl Pathfinding::CanPathToParty(objHndl obj)
@@ -2415,3 +2422,6 @@ void _aStarSettingChanged()
 	pathfindingSys.AStarSettingChanged();
 }
 
+float Path::GetPathResultLength(){
+	return pathfindingSys.GetPathLength(this);
+}

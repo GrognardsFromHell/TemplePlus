@@ -49,6 +49,7 @@ struct TimeEventFlagPacket {
 
 using LegacyExpireFunc = BOOL(const TimeEvent*);
 
+#pragma region Expire Funcs
 static BOOL ExpireDebug(const TimeEvent* event) {
 	static auto callback = temple::GetPointer<LegacyExpireFunc>(0x10061250);
 	return callback(event);
@@ -243,8 +244,9 @@ static BOOL ExpirePythonRealtime(const TimeEvent* event) {
 	static auto callback = temple::GetPointer<LegacyExpireFunc>(0x100ad560);
 	return callback(event);
 }
+#pragma endregion
 
-
+#pragma region System Specs
 static const TimeEventTypeSpec sTimeEventTypeSpecs[] = {
 	// Debug
 	TimeEventTypeSpec(
@@ -605,7 +607,7 @@ static const TimeEventTypeSpec sTimeEventTypeSpecs[] = {
 		),
 
 };
-
+#pragma endregion
 const TimeEventTypeSpec& GetTimeEventTypeSpec(TimeEventType type) {
 	return sTimeEventTypeSpecs[(size_t)type];
 }
@@ -683,154 +685,154 @@ public:
 		});
 
 
-		static void (*orgAdvanceTime)(uint32_t ) = replaceFunction<void (__cdecl)(uint32_t)>(0x100620C0, [](uint32_t newTimeMs){
-			// obsolete, replaced
-			auto &timePlayed = temple::GetRef<GameTime>(0x10AA83B8);
-			auto &gameTimeElapsed = temple::GetRef<GameTime>(0x10AA83C0);
-			auto &animTime = temple::GetRef<GameTime>(0x10AA83C8);
-			
-			auto & lastPingMs = temple::GetRef<uint32_t>(0x10AA83D0);
-			auto timeDeltaMs = newTimeMs - lastPingMs;
-			
-			// limit time step to 250ms
-			if (timeDeltaMs > 250){
-				timeDeltaMs = 250;
-			}
+		//static void (*orgAdvanceTime)(uint32_t ) = replaceFunction<void (__cdecl)(uint32_t)>(0x100620C0, [](uint32_t newTimeMs){
+		//	// obsolete, replaced
+		//	auto &timePlayed = temple::GetRef<GameTime>(0x10AA83B8);
+		//	auto &gameTimeElapsed = temple::GetRef<GameTime>(0x10AA83C0);
+		//	auto &animTime = temple::GetRef<GameTime>(0x10AA83C8);
+		//	
+		//	auto & lastPingMs = temple::GetRef<uint32_t>(0x10AA83D0);
+		//	auto timeDeltaMs = newTimeMs - lastPingMs;
+		//	
+		//	// limit time step to 250ms
+		//	if (timeDeltaMs > 250){
+		//		timeDeltaMs = 250;
+		//	}
 
-			// update last ping
-			lastPingMs = newTimeMs; 
+		//	// update last ping
+		//	lastPingMs = newTimeMs; 
 
-			// mark that we are currently in time event advance time, so that new time events get appended in a special list (see TimeEventSystem::ScheduleInternal)
-			auto isInAdvanceTime = temple::GetRef<BOOL>(0x10AA83DC);
-			isInAdvanceTime = TRUE;
-
-
-
-			// advance the time played
-			
-			timePlayed.timeInMs += timeDeltaMs;
-
-			if (timePlayed.timeInMs > 86400000){
-				timePlayed.timeInDays += timePlayed.timeInMs / 86400000;
-				timePlayed.timeInMs = timePlayed.timeInMs % 86400000;
-			}
-
-			// advanced time elapsed and anim time
-			auto timeEventUnk10AA83D8 = temple::GetRef<int>(0x10AA83D8); // something related to UI
-
-			
-			if (!timeEventUnk10AA83D8){
-
-				if (!uiSystems->GetDlg().IsActive() && !combatSys.isCombatActive()){
-						
-					
-					gameTimeElapsed.timeInMs += timeDeltaMs;
-
-					if (gameTimeElapsed.timeInMs > 86400000) {
-						gameTimeElapsed.timeInDays += gameTimeElapsed.timeInMs / 86400000;
-						gameTimeElapsed.timeInMs = gameTimeElapsed.timeInMs % 86400000;
-					}
-
-					auto updateDaylight = temple::GetRef<void(__cdecl)()>(0x100A75E0);
-					updateDaylight();
-					gameSystems->GetTerrain().UpdateDayNight();
-
-				}
-			}
-
-			
-			if (!timeEventUnk10AA83D8 || uiSystems->GetDlg().IsActive() ){
-				
-				animTime.timeInMs += timeDeltaMs;
-
-				if (animTime.timeInMs > 86400000) {
-					animTime.timeInDays += animTime.timeInMs / 86400000;
-					animTime.timeInMs = animTime.timeInMs % 86400000;
-				}
-			}
-
-			// expire events whose time has come (executing their expired callback)
-
-			auto expiredCount = 0;
-			TimeEventListEntry lastValid;
-			for (auto clockType = 0; clockType < (int)GameClockType::ClockTypeCount; clockType++){
-				GameTime * time;
-				switch ((GameClockType)clockType){
-				case GameClockType::RealTime:
-					time = &timePlayed; break;
-				case GameClockType::GameTime:
-					time = &gameTimeElapsed;
-					break;
-				case GameClockType::GameTimeAnims:
-				default:
-					time = &animTime; 
-					break;
-				}
-
-				TimeEventListEntry **evtListEntry = &temple::GetRef<TimeEventListEntry*[]>(0x10AA73FC)[clockType];
-				while (*evtListEntry){
-					auto node = *evtListEntry;
-					auto nextNode = node->nextEvent;
-
-					if (node->evt.time.timeInDays > time->timeInDays
-						|| (node->evt.time.timeInDays >= time->timeInDays
-							&& node->evt.time.timeInMs > time->timeInMs)) {
-						break;
-					}
-
-					// Expire event
-					*evtListEntry = nextNode;
-
-					auto sysSpec = GetTimeEventTypeSpec(node->evt.system);
-
-					if (node->IsValid(0)){
-						lastValid = *node;
-						sysSpec.expiredCallback(&node->evt);
-					}
-
-					if (sysSpec.removedCallback){
-						sysSpec.removedCallback(&node->evt);
-					}
-					free(node);
-
-					expiredCount++;
-					if (expiredCount >= 500){
-						logger->error("TimeEvent::AdvanceTime: Suspected Infinite Loop Caugt: Last Type: {}", (int)node->evt.system);
-						expiredCount = 0;
-						break;
-					}
-
-				}
-			}
+		//	// mark that we are currently in time event advance time, so that new time events get appended in a special list (see TimeEventSystem::ScheduleInternal)
+		//	auto isInAdvanceTime = temple::GetRef<BOOL>(0x10AA83DC);
+		//	isInAdvanceTime = TRUE;
 
 
 
-			// unmark isInAdvanceTime
-			isInAdvanceTime = FALSE;
+		//	// advance the time played
+		//	
+		//	timePlayed.timeInMs += timeDeltaMs;
+
+		//	if (timePlayed.timeInMs > 86400000){
+		//		timePlayed.timeInDays += timePlayed.timeInMs / 86400000;
+		//		timePlayed.timeInMs = timePlayed.timeInMs % 86400000;
+		//	}
+
+		//	// advanced time elapsed and anim time
+		//	auto timeEventUnk10AA83D8 = temple::GetRef<int>(0x10AA83D8); // something related to UI
+
+		//	
+		//	if (!timeEventUnk10AA83D8){
+
+		//		if (!uiSystems->GetDlg().IsActive() && !combatSys.isCombatActive()){
+		//				
+		//			
+		//			gameTimeElapsed.timeInMs += timeDeltaMs;
+
+		//			if (gameTimeElapsed.timeInMs > 86400000) {
+		//				gameTimeElapsed.timeInDays += gameTimeElapsed.timeInMs / 86400000;
+		//				gameTimeElapsed.timeInMs = gameTimeElapsed.timeInMs % 86400000;
+		//			}
+
+		//			auto updateDaylight = temple::GetRef<void(__cdecl)()>(0x100A75E0);
+		//			updateDaylight();
+		//			gameSystems->GetTerrain().UpdateDayNight();
+
+		//		}
+		//	}
+
+		//	
+		//	if (!timeEventUnk10AA83D8 || uiSystems->GetDlg().IsActive() ){
+		//		
+		//		animTime.timeInMs += timeDeltaMs;
+
+		//		if (animTime.timeInMs > 86400000) {
+		//			animTime.timeInDays += animTime.timeInMs / 86400000;
+		//			animTime.timeInMs = animTime.timeInMs % 86400000;
+		//		}
+		//	}
+
+		//	// expire events whose time has come (executing their expired callback)
+
+		//	auto expiredCount = 0;
+		//	TimeEventListEntry lastValid;
+		//	for (auto clockType = 0; clockType < (int)GameClockType::ClockTypeCount; clockType++){
+		//		GameTime * time;
+		//		switch ((GameClockType)clockType){
+		//		case GameClockType::RealTime:
+		//			time = &timePlayed; break;
+		//		case GameClockType::GameTime:
+		//			time = &gameTimeElapsed;
+		//			break;
+		//		case GameClockType::GameTimeAnims:
+		//		default:
+		//			time = &animTime; 
+		//			break;
+		//		}
+
+		//		TimeEventListEntry **evtListEntry = &temple::GetRef<TimeEventListEntry*[]>(0x10AA73FC)[clockType];
+		//		while (*evtListEntry){
+		//			auto node = *evtListEntry;
+		//			auto nextNode = node->nextEvent;
+
+		//			if (node->evt.time.timeInDays > time->timeInDays
+		//				|| (node->evt.time.timeInDays >= time->timeInDays
+		//					&& node->evt.time.timeInMs > time->timeInMs)) {
+		//				break;
+		//			}
+
+		//			// Expire event
+		//			*evtListEntry = nextNode;
+
+		//			auto sysSpec = GetTimeEventTypeSpec(node->evt.system);
+
+		//			if (node->IsValid(0)){
+		//				lastValid = *node;
+		//				sysSpec.expiredCallback(&node->evt);
+		//			}
+
+		//			if (sysSpec.removedCallback){
+		//				sysSpec.removedCallback(&node->evt);
+		//			}
+		//			free(node);
+
+		//			expiredCount++;
+		//			if (expiredCount >= 500){
+		//				logger->error("TimeEvent::AdvanceTime: Suspected Infinite Loop Caugt: Last Type: {}", (int)node->evt.system);
+		//				expiredCount = 0;
+		//				break;
+		//			}
+
+		//		}
+		//	}
 
 
 
-			// append events that were added during this function call
-			for (auto clockType = 0; clockType < (int)GameClockType::ClockTypeCount; clockType++){
-				TimeEventListEntry** evtListInAdvanceTime = &temple::GetRef<TimeEventListEntry*[]>(0x10AA73E8)[clockType];
-				
-				while (*evtListInAdvanceTime){
-					auto node = *evtListInAdvanceTime;
-					auto nextNode = node->nextEvent;
-					
-					if (node->ObjHandlesValid()){
-						gameSystems->GetTimeEvent().TimeEventListEntryAdd(node);
-					}
-					else{
-						free(node);
-					}
+		//	// unmark isInAdvanceTime
+		//	isInAdvanceTime = FALSE;
 
-					*evtListInAdvanceTime = nextNode;
-				}
-			}
 
-			// return orgAdvanceTime(timeMsec);
-		});
+
+		//	// append events that were added during this function call
+		//	for (auto clockType = 0; clockType < (int)GameClockType::ClockTypeCount; clockType++){
+		//		TimeEventListEntry** evtListInAdvanceTime = &temple::GetRef<TimeEventListEntry*[]>(0x10AA73E8)[clockType];
+		//		
+		//		while (*evtListInAdvanceTime){
+		//			auto node = *evtListInAdvanceTime;
+		//			auto nextNode = node->nextEvent;
+		//			
+		//			if (node->ObjHandlesValid()){
+		//				gameSystems->GetTimeEvent().TimeEventListEntryAdd(node);
+		//			}
+		//			else{
+		//				free(node);
+		//			}
+
+		//			*evtListInAdvanceTime = nextNode;
+		//		}
+		//	}
+
+		//	// return orgAdvanceTime(timeMsec);
+		//});
 
 		static int (*orgTimeEventSchedule)(TimeEvent*, GameTime*, GameTime*, GameTime*) = replaceFunction<int(__cdecl)(TimeEvent*, GameTime*, GameTime*, GameTime*)>(0x10060720, [](TimeEvent* evt, GameTime* timeDelta, GameTime* timeAbsolute, GameTime* timeResultOut)
 		{
@@ -996,27 +998,31 @@ bool TimeEventSystem::LoadGame(GameSystemSaveFile* saveFile) {
 }
 void TimeEventSystem::AdvanceTime(uint32_t newTimeMs) {
 	//auto advanceTime = temple::GetPointer<void(uint32_t)>(0x100620c0);
-	//advanceTime(time);
 
 	auto &timePlayed = temple::GetRef<GameTime>(0x10AA83B8);
 	auto &gameTimeElapsed = temple::GetRef<GameTime>(0x10AA83C0);
 	auto &animTime = temple::GetRef<GameTime>(0x10AA83C8);
 
 	auto & lastPingMs = temple::GetRef<uint32_t>(0x10AA83D0);
+
 	auto timeDeltaMs = newTimeMs - lastPingMs;
 
 	// limit time step to 250ms
 	if (timeDeltaMs > 250) {
 		timeDeltaMs = 250;
 	}
+	auto expiredCount = 0;
+
+	//advanceTime(newTimeMs);
+	//return;
+
 
 	// update last ping
 	lastPingMs = newTimeMs;
 
 	// mark that we are currently in time event advance time, so that new time events get appended in a special list (see TimeEventSystem::ScheduleInternal)
-	auto isInAdvanceTime = temple::GetRef<BOOL>(0x10AA83DC);
+	auto &isInAdvanceTime = temple::GetRef<BOOL>(0x10AA83DC);
 	isInAdvanceTime = TRUE;
-
 
 
 	// advance the time played
@@ -1029,7 +1035,7 @@ void TimeEventSystem::AdvanceTime(uint32_t newTimeMs) {
 	}
 
 	// advanced time elapsed and anim time
-	auto timeEventUnk10AA83D8 = temple::GetRef<int>(0x10AA83D8); // something related to UI
+	auto &timeEventUnk10AA83D8 = temple::GetRef<int>(0x10AA83D8); // something related to UI
 
 
 	if (!timeEventUnk10AA83D8) {
@@ -1064,8 +1070,9 @@ void TimeEventSystem::AdvanceTime(uint32_t newTimeMs) {
 
 	// expire events whose time has come (executing their expired callback)
 
-	auto expiredCount = 0;
+	
 	TimeEventListEntry lastValid;
+	expiredCount = 0;
 	for (auto clockType = 0; clockType < (int)GameClockType::ClockTypeCount; clockType++) {
 		GameTime * time;
 		switch ((GameClockType)clockType) {
@@ -1081,19 +1088,19 @@ void TimeEventSystem::AdvanceTime(uint32_t newTimeMs) {
 		}
 
 		TimeEventListEntry **evtListEntry = &temple::GetRef<TimeEventListEntry*[]>(0x10AA73FC)[clockType];
-		while (*evtListEntry) {
-			auto node = *evtListEntry;
-			auto nextNode = node->nextEvent;
-
+		auto node = *evtListEntry;
+		while (node){
+			
 			if (node->evt.time.timeInDays > time->timeInDays
 				|| (node->evt.time.timeInDays >= time->timeInDays
 					&& node->evt.time.timeInMs > time->timeInMs)) {
 				break;
 			}
+			auto nextNode = node->nextEvent;
 
-			// Expire event
 			*evtListEntry = nextNode;
 
+			// Expire event
 			auto sysSpec = GetTimeEventTypeSpec(node->evt.system);
 
 			if (node->IsValid(0)) {
@@ -1104,18 +1111,22 @@ void TimeEventSystem::AdvanceTime(uint32_t newTimeMs) {
 			if (sysSpec.removedCallback) {
 				sysSpec.removedCallback(&node->evt);
 			}
+
+			auto evtSystemId = node->evt.system;
 			free(node);
 
 			expiredCount++;
 			if (expiredCount >= 500) {
-				logger->error("TimeEvent::AdvanceTime: Suspected Infinite Loop Caugt: Last Type: {}", (int)node->evt.system);
+				logger->error("TimeEvent::AdvanceTime: Suspected Infinite Loop Caugt: Last Type: {}", (int)evtSystemId);
 				expiredCount = 0;
 				break;
 			}
 
+			node = *evtListEntry;
 		}
 	}
-
+	/*if (expiredCount)
+		logger->debug("Expired {} events", expiredCount);*/
 
 
 	// unmark isInAdvanceTime
@@ -1303,9 +1314,6 @@ bool TimeEventSystem::ScheduleInternal(GameTime * time, TimeEvent * evt, GameTim
 		if (sysSpec.argTypes[i] != TimeEventArgType::Object) {
 			newEntry->objects[i].guid.subtype = ObjectIdKind::Null;
 			continue;
-		}
-		if (evt->system == TimeEventType::ObjFade) {
-			auto dummy = 1;
 		}
 		TimeEventObjInfoFromHandle(evt->params[i].handle, &newEntry->objects[i]);
 	}

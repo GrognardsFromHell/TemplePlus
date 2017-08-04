@@ -122,6 +122,8 @@ struct Path {
 	int currentNode;
 	int field_1a10;
 	int field_1a14;
+
+	float GetPathResultLength();
 };
 
 struct PathQueryResult : Path {
@@ -172,7 +174,7 @@ struct Pathfinding : temple::AddressTable {
 	PathQueryResult* FetchAvailablePQRCacheSlot();
 	uint32_t * rollbackSequenceFlag;
 
-	float pathLength(Path *path); // path length in feet; note: unlike the ToEE function, returns a float (and NOT to the FPU!)
+	float GetPathLength(Path *path); // path length in feet; note: unlike the ToEE function, returns a float (and NOT to the FPU!)
 
 
 	Pathfinding();
@@ -203,9 +205,9 @@ struct Pathfinding : temple::AddressTable {
 	bool TargetSurrounded(Path* pqr, PathQuery* pq);
 
 	int FindPath(PathQuery* pq, PathQueryResult* result);
-	void (__cdecl *ToEEpathDistBtwnToAndFrom)(Path *path); // outputs to FPU (st0);  apparently distance in feet (since it divides by 12)
+	
 
-	bool CanPathTo(objHndl handle, objHndl target, PathQueryFlags flags = static_cast<PathQueryFlags>(PQF_HAS_CRITTER | PQF_TO_EXACT | PQF_800 | PQF_ADJ_RADIUS_REQUIRE_LOS | PQF_ADJUST_RADIUS | PQF_TARGET_OBJ));
+	bool CanPathTo(objHndl handle, objHndl target, PathQueryFlags flags = static_cast<PathQueryFlags>(PQF_HAS_CRITTER | PQF_TO_EXACT | PQF_800 | PQF_ADJ_RADIUS_REQUIRE_LOS | PQF_ADJUST_RADIUS | PQF_TARGET_OBJ), float maxDistance = -1);
 	objHndl CanPathToParty(objHndl objHnd);
 	BOOL PathStraightLineIsClear(Path* pqr, PathQuery* pq, LocAndOffsets subPathFrom, LocAndOffsets subPathTo); // including static obstacles it seems
 	BOOL PathAdjRadiusLosClear(Path* pqr, PathQuery* pq, LocAndOffsets subPathFrom, LocAndOffsets subPathTo);
@@ -236,6 +238,8 @@ protected:
 	int FindPathShortDistanceAdjRadius(PathQuery* pq, Path* pqr);
 	int FindPathForcecdStraightLine(Path* pqr, PathQuery* pq);
 	int FindPathSansNodes(PathQuery* pq, Path* pqr);
+
+	void(__cdecl *ToEEpathDistBtwnToAndFrom)(Path *path); // outputs to FPU (st0);  apparently distance in feet (since it divides by 12)
 } ;
 
 extern Pathfinding pathfindingSys;

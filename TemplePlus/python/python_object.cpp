@@ -604,7 +604,7 @@ static PyObject* PyObjHandle_CanFindPathToObj(PyObject* obj, PyObject* args) {
 
 	auto nodeCount = pathfindingSys.FindPath(&pathQ, &pqr);
 	
-	auto pathLen = pathfindingSys.pathLength(&pqr);
+	auto pathLen = pathfindingSys.GetPathLength(&pqr);
 
 	return PyInt_FromLong(pathLen);
 }
