@@ -747,17 +747,21 @@ void LegacyCombatSystem::Subturn()
 {
 	
 	auto actor = tbSys.turnBasedGetCurrentActor();
+	auto partyLeader = party.GetConsciousPartyLeader();
 
 	if (!actSeqSys.isPerforming(actor) ){
 		if (party.IsInParty(actor))
 			combatSys.AddToInitiativeWithinRect(actor);
-		else{
+		else if (!critterSys.IsFriendly(actor, partyLeader)){
+	
 			ObjList objList;
-			objList.ListRangeTiles(actor, 47, OLC_CRITTERS);
+			objList.ListRangeTiles(actor, 19, OLC_CRITTERS);
 			for (auto i=0; i< objList.size(); i++){
 				auto resHandle = objList[i];
-				if (!resHandle || resHandle == actor)
+				if (!resHandle)
 					break;
+				if (resHandle == actor)
+					continue;
 
 				auto resObj = gameSystems->GetObj().GetObject(resHandle);
 				if (resObj->GetFlags() & (OF_OFF | OF_DESTROYED | OF_DONTDRAW))
@@ -769,7 +773,7 @@ void LegacyCombatSystem::Subturn()
 				if (party.IsInParty(resHandle))
 					continue;
 
-				if (tbSys.IsInInitiativeList(resHandle) || critterSys.IsCombatModeActive(resHandle) || !resObj->IsNPC())
+				if (tbSys.IsInInitiativeList(resHandle) || critterSys.IsCombatModeActive(resHandle))
 					continue;
 
 				if (!combatSys.HasLineOfAttack(resHandle, actor)){
@@ -784,8 +788,6 @@ void LegacyCombatSystem::Subturn()
 						continue;
 					}	
 				}
-				
-				auto partyLeader = party.GetConsciousPartyLeader();
 
 				if (aiSys.GetAllegianceStrength(resHandle, actor)){ // check that they have a faction in common
 					aiSys.ProvokeHostility(partyLeader, resHandle, 3, 0);
