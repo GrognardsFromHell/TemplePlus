@@ -6,6 +6,7 @@
 #include <graphics/math.h>
 #include "config/config.h"
 #include "common.h"
+#include "tig/tig_mes.h"
 
 using DirectX::XMFLOAT4X3;
 
@@ -398,7 +399,19 @@ public:
 
 		//replaceFunction(0x10268910, sub_10268910_naked); // causes crashes, unknown reason
 
-
+		replaceFunction<BOOL(int, char*)>(0x100041E0, [](int id, char* fileOut)
+		{
+			MesLine line(id);
+			
+			auto mesFile = temple::GetRef<MesHandle>(0x10307168);
+			if (mesFuncs.GetLine(mesFile, &line))
+			{
+				_snprintf(fileOut, 260, "art\\meshes\\%s.skm", line.value);
+				return FALSE;
+			}
+			return TRUE;
+		});
+		
 	}
 } aasHooks;
 

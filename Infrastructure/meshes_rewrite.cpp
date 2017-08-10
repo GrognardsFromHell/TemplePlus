@@ -5,7 +5,7 @@
 #include "infrastructure/vfs.h"
 #include "graphics/math.h"
 #include "infrastructure/logging.h"
-#include "infrastructure/exception.h"
+#include "infrastructure/exception.h" 
 
 using namespace DirectX;
 

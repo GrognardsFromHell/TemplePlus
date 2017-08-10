@@ -11,6 +11,7 @@
 #include "gamesystems/objects/objsystem.h"
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/particlesystems.h"
+#include "action_sequence.h"
 
 // Ability Condition Fixes (for buggy abilities, including monster abilities)
 class AbilityConditionFixes : public TempleFix {
@@ -75,19 +76,36 @@ public:
 		});
 
 		// fixes Opportunist getting an AOO for your own attack...
-		HOOK_ORG(OpportuninstBroadcast)(0x100FADF0, [](DispatcherCallbackArgs args)->int
-		{
+		replaceFunction<int(__cdecl)(DispatcherCallbackArgs)>(0x100FADF0, [](DispatcherCallbackArgs args){
 			auto numAvail = args.GetCondArg(0);
-			if (numAvail){
-				GET_DISPIO(dispIoTypeSendSignal, DispIoD20Signal);
-				auto d20a = (D20Actn*)dispIo->data1;
-				if (d20a->d20APerformer != args.objHndCaller)
-					return orgOpportuninstBroadcast(args);
-			}
+			if (!numAvail)
+				return 0;
+			
+			GET_DISPIO(dispIoTypeSendSignal, DispIoD20Signal);
+			auto d20a = (D20Actn*)dispIo->data1;
+			if (d20a->d20APerformer == args.objHndCaller) // fixes vanilla bug where you got an AOO for your making your own attack
+				return 0;
+			
+			auto tgt = d20a->d20ATarget;
+			if (!tgt) // fixed missing check on target (e.g. this would fire on move actions)
+				return 0;
+
+			if (!d20Sys.d20QueryWithData(args.objHndCaller, DK_QUE_AOOPossible, tgt))
+				return 0;
+			if (!d20Sys.d20QueryWithData(args.objHndCaller, DK_QUE_AOOWillTake, tgt))
+				return 0;
+			if (combatSys.AffiliationSame(args.objHndCaller, tgt))
+				return 0;
+			if (!combatSys.CanMeleeTarget(args.objHndCaller, tgt))
+				return 0;
+
+			if (!d20a->IsMeleeHit())
+				return 0;
+			args.SetCondArg(0, numAvail - 1);
+			actSeqSys.DoAoo(args.objHndCaller, tgt);
 			return 0;
 		});
-	
-
+		
 		// Banshee Charisma Drain (fixes uninitialized values used when saving throw is successful)
 		HOOK_ORG(BansheeCharismaDrain)(0x100F67D0, [](DispatcherCallbackArgs args)->int {
 			GET_DISPIO(dispIOTypeDamage, DispIoDamage);

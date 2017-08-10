@@ -898,7 +898,7 @@ void AiSystem::AlertAllies(objHndl handle, objHndl alertFrom, int rangeIdx){
 
 	const int aiTileDeltaMax = 20;
 
-	// alert around the attacked critter
+	// alert around the attacked critter (alertFrom object)
 	if (tileDelta < 2 * aiTileDeltaMax){
 		ObjList objList;
 		objList.ListRangeTiles(alertFrom, rangeTiles, OLC_NPC);

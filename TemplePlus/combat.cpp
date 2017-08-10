@@ -346,6 +346,8 @@ bool LegacyCombatSystem::CanMeleeTargetFromLocRegardItem(objHndl obj, objHndl we
 }
 
 BOOL LegacyCombatSystem::CanMeleeTarget(objHndl obj, objHndl target){
+	if (!target)
+		return 0;
 	if (objects.GetFlags(obj) & (OF_OFF | OF_DESTROYED))
 		return 0;
 	auto targetObjFlags = objects.GetFlags(target);
@@ -755,7 +757,7 @@ void LegacyCombatSystem::Subturn()
 		else if (!critterSys.IsFriendly(actor, partyLeader)){
 	
 			ObjList objList;
-			objList.ListRangeTiles(actor, 19, OLC_CRITTERS);
+			objList.ListRangeTiles(actor, 24, OLC_CRITTERS);
 			for (auto i=0; i< objList.size(); i++){
 				auto resHandle = objList[i];
 				if (!resHandle)
@@ -763,6 +765,7 @@ void LegacyCombatSystem::Subturn()
 				if (resHandle == actor)
 					continue;
 
+				
 				auto resObj = gameSystems->GetObj().GetObject(resHandle);
 				if (resObj->GetFlags() & (OF_OFF | OF_DESTROYED | OF_DONTDRAW))
 					continue;
@@ -776,19 +779,25 @@ void LegacyCombatSystem::Subturn()
 				if (tbSys.IsInInitiativeList(resHandle) || critterSys.IsCombatModeActive(resHandle))
 					continue;
 
+				auto objDesc = description.getDisplayName(resHandle);
+
 				if (!combatSys.HasLineOfAttack(resHandle, actor)){
 
+
+					if (locSys.DistanceToObj(actor, resHandle) > 40){
+						continue;
+					}
 					// check pathfinding short distances
 					auto pathFlags = static_cast<PathQueryFlags>(PathQueryFlags::PQF_HAS_CRITTER | PQF_IGNORE_CRITTERS 
 						|PathQueryFlags::PQF_800 | PathQueryFlags::PQF_TARGET_OBJ
 						 | PathQueryFlags::PQF_ADJUST_RADIUS | PathQueryFlags::PQF_ADJ_RADIUS_REQUIRE_LOS
 						| PathQueryFlags::PQF_DONT_USE_PATHNODES | PathQueryFlags::PQF_A_STAR_TIME_CAPPED);
 					if (!pathfindingSys.CanPathTo(actor, resHandle, pathFlags, 40)){
-						logger->debug("Failed to alert {} because of PF distance", resHandle);
+						//logger->debug("Failed to alert {} because of PF distance", resHandle);
 						continue;
 					}	
 				}
-
+				
 				if (aiSys.GetAllegianceStrength(resHandle, actor)){ // check that they have a faction in common
 					aiSys.ProvokeHostility(partyLeader, resHandle, 3, 0);
 					continue;

@@ -3298,3 +3298,7 @@ int D20Actn::FilterSpellTargets(SpellPacketBody & spellPkt){
 D20ADF D20Actn::GetActionDefinitionFlags(){
 	return d20Sys.GetActionFlags(this->d20ActType);
 }
+
+bool D20Actn::IsMeleeHit(){
+	return ((d20Caf & D20CAF_HIT) && !(d20Caf & D20CAF_RANGED));
+}
