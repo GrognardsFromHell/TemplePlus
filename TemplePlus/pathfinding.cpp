@@ -1704,7 +1704,7 @@ BOOL Pathfinding::PathStraightLineIsClear(Path* pqr, PathQuery* pq, LocAndOffset
 			if (! (objFlags & OF_NO_BLOCK))
 			{
 				auto pathFlags = pq->flags;
-				if ( (pathFlags & PQF_DOORS_ARE_BLOCKING) || objType)
+				if ( (pathFlags & PQF_DOORS_ARE_BLOCKING) || objType != obj_t_portal)
 				{
 					if (objType != obj_t_pc && objType != obj_t_npc)
 						break;

@@ -66,9 +66,11 @@ namespace TemplePlusConfig
           "FastSneaking", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
         public static readonly DependencyProperty DisableDoorRelockingProperty = DependencyProperty.Register(
           "DisableDoorRelocking", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
-
+        public static readonly DependencyProperty AlertAiThroughDoorsProperty = DependencyProperty.Register(
+          "AlertAiThroughDoors", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
 
         
+
 
         public static readonly DependencyProperty NewClassesProperty = DependencyProperty.Register(
           "NewClasses", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
@@ -222,6 +224,12 @@ namespace TemplePlusConfig
             get { return (bool)GetValue(DisableDoorRelockingProperty); }
             set { SetValue(DisableDoorRelockingProperty, value); }
         }
+        public bool AlertAiThroughDoors
+        {
+            get { return (bool)GetValue(AlertAiThroughDoorsProperty); }
+            set { SetValue(AlertAiThroughDoorsProperty, value); }
+        }
+        
 
         public bool NewClasses
         {
@@ -382,6 +390,13 @@ namespace TemplePlusConfig
             {
                 DisableDoorRelocking = disableDoorRelocking;
             }
+            bool alertAiThroughDoors;
+            if (bool.TryParse(tpData["alertAiThroughDoors"], out alertAiThroughDoors))
+            {
+                AlertAiThroughDoors = alertAiThroughDoors;
+            }
+
+            
 
             bool newClasses;
             if (bool.TryParse(tpData["newClasses"], out newClasses))
@@ -488,6 +503,8 @@ namespace TemplePlusConfig
             tpData["showNpcStats"] = TransparentNpcStats ? "true" : "false";
             tpData["fastSneakAnim"] = FastSneaking ? "true" : "false";
             tpData["disableDoorRelocking"] = DisableDoorRelocking? "true" : "false";
+            tpData["alertAiThroughDoors"] = AlertAiThroughDoors ? "true" : "false";
+            
         }
     }
 

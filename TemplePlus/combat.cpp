@@ -28,6 +28,7 @@
 #include "ui/ui_dialog.h"
 #include "condition.h"
 #include "legacyscriptsystem.h"
+#include "config/config.h"
 
 
 struct CombatSystemAddresses : temple::AddressTable
@@ -788,11 +789,16 @@ void LegacyCombatSystem::Subturn()
 						continue;
 					}
 					// check pathfinding short distances
-					auto pathFlags = static_cast<PathQueryFlags>(PathQueryFlags::PQF_HAS_CRITTER | PQF_IGNORE_CRITTERS 
+					auto pathFlags = PathQueryFlags::PQF_HAS_CRITTER | PQF_IGNORE_CRITTERS 
 						|PathQueryFlags::PQF_800 | PathQueryFlags::PQF_TARGET_OBJ
 						 | PathQueryFlags::PQF_ADJUST_RADIUS | PathQueryFlags::PQF_ADJ_RADIUS_REQUIRE_LOS
-						| PathQueryFlags::PQF_DONT_USE_PATHNODES | PathQueryFlags::PQF_A_STAR_TIME_CAPPED);
-					if (!pathfindingSys.CanPathTo(actor, resHandle, pathFlags, 40)){
+						| PathQueryFlags::PQF_DONT_USE_PATHNODES | PathQueryFlags::PQF_A_STAR_TIME_CAPPED;
+
+					if (!config.alertAiThroughDoors){
+						pathFlags |= PathQueryFlags::PQF_DOORS_ARE_BLOCKING;
+					}
+
+					if (!pathfindingSys.CanPathTo(actor, resHandle, (PathQueryFlags)pathFlags, 40)){
 						//logger->debug("Failed to alert {} because of PF distance", resHandle);
 						continue;
 					}	

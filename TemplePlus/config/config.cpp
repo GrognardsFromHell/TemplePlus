@@ -174,7 +174,8 @@ static ConfigSetting configSettings[] = {
 	CONF_BOOL(tolerantNpcs),
 	CONF_STRING(fogOfWar),
 	CONF_DOUBLE(speedupFactor),
-	CONF_BOOL(fastSneakAnim)
+	CONF_BOOL(fastSneakAnim),
+	CONF_BOOL(alertAiThroughDoors)
 };
 
 void TemplePlusConfig::Load() {

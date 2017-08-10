@@ -9,7 +9,7 @@
         WindowStartupLocation="CenterScreen"
         d:DataContext="{d:DesignInstance local:IniViewModel}">
     <Grid Margin="0,0,2,0">
-        <StackPanel HorizontalAlignment="Left" Height="154" VerticalAlignment="Top" Width="206" Margin="10,10,0,0">
+        <StackPanel HorizontalAlignment="Left" Height="174" VerticalAlignment="Top" Width="206" Margin="10,10,0,0">
             <Label VerticalAlignment="Center" Content="General" Margin="0,0,10,0" />
             <StackPanel Orientation="Horizontal">
                 <Label VerticalAlignment="Center" Content="Fog of War" />
@@ -19,9 +19,10 @@
             <CheckBox VerticalAlignment="Center" Content="Transparent NPC Stats" IsChecked="{Binding TransparentNpcStats}" Margin="0,5,0,5" ToolTip="The game will show exact HPs for critters and your NPCs' stats."/>
             <CheckBox VerticalAlignment="Center" Content="Fast Sneak Animation" IsChecked="{Binding FastSneaking}" Margin="0,5,0,5" ToolTip="Makes sneak animations as fast as your normal movement."/>
             <CheckBox VerticalAlignment="Center" Content="Disable Door Re-Locking" IsChecked="{Binding DisableDoorRelocking}" Margin="0,5,0,5" ToolTip="Doors that were unlocked via the Open Lock skill will no longer become re-locked when you come back again."/>
+            <CheckBox VerticalAlignment="Center" Content="Alert AI across rooms" IsChecked="{Binding AlertAiThroughDoors}" Margin="0,5,0,5" ToolTip="AIs will alert each other even through closed doors. It's more realistic, but be aware that it may cause some fights to involve a larger number of combatants than before! Range is up to 40ft (of travel distance)."/>
         </StackPanel>
         <Button x:Name="button" Content="Ok" HorizontalAlignment="Left" Margin="10,0,0,10" VerticalAlignment="Bottom" Width="75" Click="button_Click"/>
-        <StackPanel HorizontalAlignment="Left" Height="92" VerticalAlignment="Top" Width="225" Margin="0,179,0,0">
+        <StackPanel HorizontalAlignment="Left" Height="75" VerticalAlignment="Top" Width="215" Margin="10,189,0,0">
             <Label VerticalAlignment="Center" Content="Extra Content" Margin="0,0,10,0" Height="24" />
             <CheckBox VerticalAlignment="Center" Content="Non-Core Materials" IsChecked="{Binding NonCore}" Margin="0,5,0,5" ToolTip="Enables content from outside the core DnD rules, such as from splatbooks and fan suggestions."/>
             <CheckBox VerticalAlignment="Center" Content="Prestige Classes" IsChecked="{Binding NewClasses}" Margin="0,5,0,5" ToolTip="Enables Prestige Classes."/>
