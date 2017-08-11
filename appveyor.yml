@@ -5,7 +5,7 @@ os: Visual Studio 2015
 install:
   - appveyor DownloadFile https://github.com/GrognardsFromHell/TemplePlusDependencies/releases/download/v1.7/dependencies.7z
   - 7z x dependencies.7z
-  - ps: .\InstallSquirrel.ps1
+  - nuget install Squirrel.Windows -OutputDirectory Squirrel -Verbosity Detailed
 
 build_script:
   - ps: .\UpdateVersion.ps1
