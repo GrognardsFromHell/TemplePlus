@@ -194,6 +194,10 @@ protected:
 	static int GetSurplusXp(objHndl crafter);
 	bool ItemWielderCondsHasAntecedent(int effIdx, objHndl item);
 
+	bool ItemCreationParseMesfileEntry(objHndl crafter, objHndl item);
+	const char* GetItemCreationRulesMesLine(int key);
+	bool ItemCreationRulesParseReqText(objHndl crafter, const char* reqTxt);
+
 	int mItemCreationType = 9;
 	objHndl mItemCreationCrafter;
 	int mCraftingItemIdx = -1;

@@ -229,7 +229,7 @@ struct LegacySpellSystem : temple::AddressTable
 	void UpdateSpellPacket(const SpellPacketBody &spellPktBody);
 	uint32_t spellKnownQueryGetData(objHndl objHnd, uint32_t spellEnum, uint32_t* classCodesOut, uint32_t* slotLevelsOut, uint32_t* count);
 	bool SpellKnownQueryGetData(objHndl objHnd, uint32_t spellEnum, std::vector<int> & classCodesOut, std::vector<int> & spellLevels); // returns the information of spell known by the caster; retruns false if unknown
-	bool IsSpellKnown(objHndl handle, int spEnum, int spClass);
+	bool IsSpellKnown(objHndl handle, int spEnum, int spClass = -1);
 	uint32_t spellCanCast(objHndl objHnd, uint32_t spellEnum, uint32_t spellClassCode, uint32_t spellLevel);
 	int NumSpellsInLevel(objHndl handle, obj_f spellField, int spellClass, int spellLvl);
 	uint32_t spellMemorizedQueryGetData(objHndl objHnd, uint32_t spellEnum, uint32_t* classCodesOut, uint32_t* slotLevelsOut, uint32_t* count);

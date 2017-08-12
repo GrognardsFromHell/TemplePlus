@@ -2003,7 +2003,7 @@ bool LegacySpellSystem::IsSpellKnown(objHndl handle, int spEnum, int spClass){
 	uint32_t n;
 	spellKnownQueryGetData(handle, spEnum, classCodes, nullptr, &n );
 	for (auto i = 0u; i < n; i++){
-		if ((int)classCodes[i] == spClass)
+		if ((int)classCodes[i] == spClass || spClass == -1)
 			return true;
 	}
 	return false;

@@ -499,7 +499,8 @@ bool UiItemCreation::CreateItemResourceCheck(objHndl crafter, objHndl objHndItem
 	// Scrolls, Wands and Potions:
 	if ( itemCreationType != CraftMagicArmsAndArmor){
 		// check requirements from rules\\item_creation.mes
-		if ( temple::GetRef<int(__cdecl)(objHndl, objHndl)>(0x10152280)(crafter, objHndItem) == 0){ 
+		//if ( temple::GetRef<int(__cdecl)(objHndl, objHndl)>(0x10152280)(crafter, objHndItem) == 0){ 
+		if (!ItemCreationParseMesfileEntry(crafter, objHndItem)){
 			*insuffPrereqs = 1;
 			canCraft = 0;
 		}
@@ -1765,6 +1766,121 @@ bool UiItemCreation::ItemWielderCondsHasAntecedent(int effIdx, objHndl item){
 		else 
 			return ItemWielderCondsHasAntecedent(itEnh.downgradesTo, item);
 	}
+	return false;
+}
+
+bool UiItemCreation::ItemCreationParseMesfileEntry(objHndl crafter, objHndl item){
+	
+	auto itemObj = objSystem->GetObject(item);
+	auto protoId = 0;
+	if (itemObj->IsProto()) {
+		protoId = itemObj->id.GetPrototypeId();
+	}
+	else
+		protoId = itemObj->protoId.GetPrototypeId();
+
+	auto line = GetItemCreationRulesMesLine(protoId);
+	if (!line)
+		return true;
+
+	StringTokenizer tok(line);
+	while (tok.next()){
+		
+		if (tok.token().type != StringTokenType::Identifier && tok.token().type != StringTokenType::QuotedString)
+			continue;
+		if (!ItemCreationRulesParseReqText(crafter, tok.token().text))
+			return false;
+
+	}
+	
+	return true;
+}
+
+const char * UiItemCreation::GetItemCreationRulesMesLine(int key){
+
+	auto mesHnd = temple::GetRef<MesHandle>(0x10BEDA90);
+	MesLine line(key);
+	mesFuncs.GetLine(mesHnd, &line);
+	return line.value;
+}
+
+bool UiItemCreation::ItemCreationRulesParseReqText(objHndl crafter, const char * reqTxt){
+
+	if (!reqTxt)
+		return true;
+
+	auto firstChar = *reqTxt;
+	firstChar = toupper(firstChar);
+
+	// alignment
+	if (firstChar == 'A'){
+		if (config.laxRules && config.disableAlignmentRestrictions){
+			return true;
+		}
+
+		auto algn = objects.StatLevelGet(crafter, stat_alignment);
+		if (!_stricmp(reqTxt+1, "good")){
+			return (algn & ALIGNMENT_GOOD) != 0;
+		}
+		if (!_stricmp(reqTxt + 1, "evil")) {
+			return (algn & ALIGNMENT_EVIL) != 0;
+		}
+		if (!_stricmp(reqTxt + 1, "lawful")) {
+			return (algn & ALIGNMENT_LAWFUL) != 0;
+		}
+		if (!_stricmp(reqTxt + 1, "chaotic")) {
+			return (algn & ALIGNMENT_CHAOTIC) != 0;
+		}
+		return true;
+	}
+
+	// caster level
+	if (firstChar == 'C'){
+		auto clReq = atol(reqTxt + 1);
+		return critterSys.GetCasterLevel(crafter) >= clReq;
+	}
+
+	// feat
+	if (firstChar == 'F'){
+		auto getFeatEnumByName = temple::GetRef<feat_enums(__cdecl)(const char*)>(0x1007BB50);
+		return feats.HasFeatCountByClass(crafter, getFeatEnumByName(reqTxt + 1));
+	}
+
+	// Race
+	if (firstChar == 'R'){
+		auto raceEnum = temple::GetRef<Race(__cdecl)(const char*)>(0x10073B70)(reqTxt + 1);
+		return objects.StatLevelGet(crafter, stat_race) == raceEnum;
+	}
+
+	// Spell
+	if (firstChar == 'S'){
+		if (config.laxRules && config.disableCraftingSpellReqs){
+			if (GetItemCreationType() == ItemCreationType::CraftWondrous)
+				return true;
+		}
+		auto spEnum = spellSys.getSpellEnum(reqTxt + 1);
+		if (!spEnum)
+			spEnum = atol(reqTxt + 1);
+		return spellSys.IsSpellKnown(crafter, spEnum);
+	}
+
+	// OR condition
+	if (firstChar == 'O'){
+		StringTokenizer tok(reqTxt + 1);
+		while (tok.next()){
+
+			if (tok.token().type != StringTokenType::Identifier 
+				&& tok.token().type != StringTokenType::QuotedString)
+				continue;
+
+			if (ItemCreationRulesParseReqText(crafter, tok.token().text))
+				return true;
+		}
+		return false;
+	}
+	
+	
+
 	return false;
 }
 
