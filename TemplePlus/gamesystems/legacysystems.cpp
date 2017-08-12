@@ -544,6 +544,10 @@ std::string PortraitSystem::GetPortraitFileFromId(int id, int subId){
 	return result;
 }
 
+bool PortraitSystem::IsModularId(int id){
+	return ((unsigned int)id) >= PORTRAIT_MAX_ID;
+}
+
 bool PortraitSystem::IsPortraitFilenameValid(objHndl handle, const char* filename) {
 	if (!filename || !*filename || !_strnicmp("TMP", filename, 3))
 		return false;

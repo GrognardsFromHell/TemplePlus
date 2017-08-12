@@ -82,33 +82,36 @@ public:
 		 static int(__cdecl*orgGetAsset)(UiAssetType, int, int*, int) = replaceFunction<int(__cdecl)(UiAssetType, int, int*, int)>(0x1004A360,
 			 [](UiAssetType assetType, int id, int* out, int subId) {
 			 
-			 // portraits todo: extend
 			 if (assetType == UiAssetType::Portraits){
 
 				 auto uiArtManAssets_ = temple::GetRef<IdxTable<int>*>(0x10AA3220);
 				 IdxTableWrapper<int> uiPortraitTextures(&uiArtManAssets_[0]);
 
-				 auto textId = uiPortraitTextures.get(id + subId);
+				 auto compositeId = id + subId;
+				 if (gameSystems->GetPortrait().IsModularId( id)){
+					 auto portpackKey = gameSystems->GetPortrait().GetKeyFromId(id);
+					 auto dekey = id ^ portpackKey;
+					 dekey += subId;
+					 auto newCompositeId = dekey ^ portpackKey;
+					 if (compositeId != newCompositeId){
+						 auto dbgBp = 1;
+					 }
+					 compositeId = newCompositeId;
+				 }
+
+				 auto textId = uiPortraitTextures.get(compositeId);
 				 if (textId){
 					 *out = *textId;
 					 return 0;
 				 }
-
-				 /*MesLine line;
-				 line.key = id + subId;
-*/
+				
 				 auto porFile = gameSystems->GetPortrait().GetPortraitFileFromId(id, subId);
 
 				 if (textureFuncs.RegisterTexture(porFile.c_str(), out)){
 					 return 1;
 				 }
 
-				 uiPortraitTextures.put(id + subId, *out);
-				 //auto uiArtMgrMesFiles = temple::GetRef<MesHandle*>(0x10AA31C8);
-
-				 /*if (!mesFuncs.GetLine(uiArtMgrMesFiles[(int)assetType], &line)){
-					 return orgGetAsset(assetType, 0, out, subId);
-				 }*/
+				 uiPortraitTextures.put(compositeId, *out);
 			 }
 			 return orgGetAsset(assetType, id, out, subId);
 		 });

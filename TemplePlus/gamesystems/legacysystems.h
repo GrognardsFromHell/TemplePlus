@@ -113,6 +113,7 @@ public:
 	bool GetNextId(objHndl handle, int* idxOut) const;
 	int GetKeyFromId(int id) const;
 	std::string GetPortraitFileFromId(int id, int subId = 0);
+	bool IsModularId(int id);
 
 	static bool IsPortraitFilenameValid(objHndl handle, const char* filename);
 private:
