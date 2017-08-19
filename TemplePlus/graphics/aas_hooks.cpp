@@ -14,6 +14,8 @@
 
 using DirectX::XMFLOAT4X3;
 
+#pragma region Structs
+
 #pragma pack(push, 8)
 
 struct Matrix3x4 {
@@ -35,6 +37,7 @@ using AasHandle = uint32_t;
 struct AnimatedModel;
 struct SkaAnimation;
 struct LgcySkaFile;
+struct AnimPlayer;
 
 
 struct SkmFile {
@@ -84,7 +87,7 @@ struct IAnimatedModel {
 	virtual void SetTime() = 0;
 	virtual void Method21() = 0;
 	virtual void GetSubmesh(int submeshIdx, int* vertexCountOut, float** posOut, float** normalsOut, float** uvOut, int* primCountOut, uint16_t** indicesOut) = 0;
-	virtual void AddRunningAnim() = 0;
+	virtual int AddRunningAnim(AnimPlayer* ra, int boneCountSthg) = 0;
 	virtual void RemoveRunningAnim() = 0;
 	virtual void Method25() = 0;
 	virtual void Method26() = 0;
@@ -98,16 +101,12 @@ struct IAnimPlayer {
 	virtual ~IAnimPlayer() = 0;
 	virtual void GetDistPerSec(float* speedOut) = 0;
 };
-
+#pragma pack(push, 1)
 struct AnimPlayerStreamHeader {
-	AnimPlayerStreamHeader* header;
-	LgcySkaFile* skaFile;
-	SkaAnimation* anim;
-	int variationId;
-	float scaleFactor;
-	float translationFactor;
-	float currentFrame;
-	void* keyframePtr;
+	int field0;
+	int field1;
+	int field2;
+	int8_t pad[3];
 };
 
 struct AnimPlayerStreamBone
@@ -127,14 +126,31 @@ struct AnimPlayerStreamBone
 	int field6C;
 };
 
-struct AnimPlayerStream : AnimPlayerStreamHeader {
-	AnimPlayerStreamBone bones[2]; //at least - set according to skafile bone count
+struct AnimPlayerStream {
+	AnimPlayerStreamHeader* header;
+	LgcySkaFile* skaFile;
+	SkaAnimation* anim;
+	int variationId;
+	float scaleFactor;
+	float translationFactor;
+	float currentFrame;
+	void* keyframePtr;
+	AnimPlayerStreamBone bones[1]; //set according to skafile bone count
 };
+
+struct AnimPlayerStreamWhole
+{
+	AnimPlayerStreamHeader header;
+	AnimPlayerStream body;
+};
+
+const auto asdf = sizeof AnimPlayerStreamWhole;
+#pragma pack(pop)
 
 struct AnimPlayer : IAnimPlayer {
 	AnimatedModel * ownerAnim;
 	int boneIdx;
-	int fieldC;
+	char fieldC[4];
 	float elapsedTimeRelated;
 	float field14;
 	int eventHandlingDepth;
@@ -142,17 +158,17 @@ struct AnimPlayer : IAnimPlayer {
 	AnimPlayer * prevRunningAnim;
 	SkaAnimation * skaAnimation;
 	int streamCount;
-	void * streams[4];
-	void * streamRelated[4];
-	int8_t streamVariations[8];
-	void* streamStuff;
+	AnimPlayerStream * streams[4];
+	float streamRelated[4]; // maybe fps
+	int8_t streamVariationIndices[8]; // indices into streamVariationIds
+	int8_t streamVariationIds[4];
 	float field58;
 	float currentTime;
 	float duration;
 	float frameRate;
 	float distancePerSecond;
 	void * eventListener;
-	int eventCount;
+	int8_t eventCount[4];
 	void*events;
 public:
 };
@@ -302,7 +318,7 @@ struct AnimatedModel : IAnimatedModel { // aas_class2
 	virtual void SetTime(){};
 	virtual void Method21(){};
 	virtual void GetSubmesh(int submeshIdx, int* vertexCountOut, float** posOut, float** normalsOut, float** uvOut, int* primCountOut, uint16_t** indicesOut){};
-	virtual void AddRunningAnim(){};
+	virtual int AddRunningAnim(AnimPlayer* ra, int boneCountSthg) { return 0; };
 	virtual void RemoveRunningAnim(){};
 	virtual void Method25(){};
 	virtual void Method26(){};
@@ -343,8 +359,13 @@ struct SkaAnimHeader {
 	uint8_t loopable;
 	uint16_t eventCount;
 	uint32_t eventOffset;
-	uint32_t streamCount;
+	uint16_t streamCount;
+	uint16_t unk;
 	SkaAnimStream streams[10];
+
+	void* GetEventData(){
+		return (void*)(((char*)this) + eventOffset);
+	}
 };
 
 struct SkaAnimation : SkaAnimHeader{
@@ -371,11 +392,15 @@ struct LgcySkaFile {
 	int variationCount;
 	int variationDataStart;
 	int animationcCount;
-	SkaAnimHeader* animationDataStart;
+	int animationDataStart;
 	int unks[19];
 
 	SkaBone* GetSkaBoneData(){
 		return (SkaBone*)( ( (char*)this ) + boneDataStart);
+	};
+
+	SkaAnimation* GetSkaAnimationData(){
+		return (SkaAnimation*)(((char*)this) + animationDataStart);
 	};
 
 };
@@ -388,6 +413,8 @@ static_assert(temple::validate_size<AasClothStuff1, 0x1C>(), "AasClothStuff1 has
 static_assert(temple::validate_size<AasClothStuff, 0x38>(), "AasClothStuff has the wrong size");
 
 #pragma pack(pop)
+
+#pragma endregion
 
 static class AasHooks : public TempleFix {
 public:
@@ -404,25 +431,35 @@ public:
 		return handle < sMaxAnims && !mAnims[handle].freed;
 	}
 
-	static int GetSkaFileContents(LgcySkaFile**, const char*);
-	static int GetSkmFileContents(SkmFile**, const char*);
+	static int CreateModelByIds(int skmId, int skaId, int idleAnimId, temple::AasAnimParams* animState, int* handleOut);
 
-	static void SkaFileEntryRelease(LgcySkaFile *);
-	static int __stdcall SetSubmesh(AasSubmeshWithMaterial* submesh, SkmFile* skmData, int materialIdx);
+		static int GetSkaFileContents(LgcySkaFile**, const char*);
+		static int GetSkmFileContents(SkmFile**, const char*);
 
-	static int SetSkaFile(LgcySkaFile* skaFile, int, int);
+		static void SkaFileEntryRelease(LgcySkaFile *);
+		static int __stdcall SetSubmesh(AasSubmeshWithMaterial* submesh, SkmFile* skmData, int materialIdx);
+
+		static int SetSkaFile(LgcySkaFile* skaFile, int, int);
+
+		static int SetAnimIdx_Impl(AnimatedModel* aasObj, int a3, int animIdx, IAasEventListener* evtLisnr);
 
 	static int sub_10268910_naked();
 	//static Matrix3x4* sub_10268910(Matrix3x4* transformationMat, char* boneName, AnimatedModel* aasObj);
 
 	void apply() override {
 
+		static auto instance = this;
+		mAnims = temple::GetPointer<AasAnimation>(0x10EFB900);
+
+
 		replaceFunction(0x10266810, SetSkaFile);
 		replaceFunction(0x102665E0, SetSubmesh);
+		replaceFunction(0x1026A680, SetAnimIdx_Impl);
+		
+		//AasCreateModelByIds
+		replaceFunction(0x102641B0, CreateModelByIds);
 
-		static auto instance = this;
 
-		mAnims = temple::GetPointer<AasAnimation>(0x10EFB900);
 
 		// AasAnimatedModelGetSubmeshes
 		replaceFunction<int(AasHandle, int**, int*)>(0x10263a50, [](AasHandle handle, int** submeshMaterials, int* submeshCountOut) {
@@ -553,92 +590,6 @@ public:
 		});
 
 
-		//AasCreateModelByIds
-		replaceFunction<int(__cdecl)(int, int, int, temple::AasAnimParams* , int*)>(0x102641B0, [](int skmId, int skaId, int idleAnimId, temple::AasAnimParams* animState, int* handleOut){
-			
-			auto animHandle = 1;
-			auto foundHandle = false;
-
-			auto animations = aasHooks.mAnims;
-
-			for (auto i=1; i < sMaxAnims; i++){
-				if (animations[i].freed & 1){
-					animHandle = i;
-					foundHandle = true;
-					break;
-				}
-			}
-			if (!foundHandle){
-				logger->error("AAS: SEVERE ERROR: max number of animations exceeded ({}).", sMaxAnims);
-				return AAS_ERROR;
-			}
-
-			AasAnimation &anim = animations[animHandle];
-
-			animations[animHandle].freed = 0;
-			animations[animHandle].animId = gfx::EncodedAnimId(gfx::WeaponAnim::None);
-			animations[animHandle].floatconst = 6.3940001f;
-			animations[animHandle].addMeshCount = 0;
-			animations[animHandle].id = animHandle;
-
-			// Get SKA data
-			{
-				auto getSkaFile = temple::GetRef<BOOL(__cdecl*)(int, const char*)>(0x11069C60);
-				char skaFilename[260];
-				if (getSkaFile(skaId, skaFilename)){
-					logger->error("AAS: Could not build anim file for meshes.mes entry {}", skaId);
-					return AAS_ERROR;
-				}
-
-				auto result = GetSkaFileContents(&anim.skaFile, skaFilename);
-				if (result != AAS_OK)
-					return result;
-				anim.skaFilename = _strdup(skaFilename);
-			}
-
-			// Get SKM data
-			{
-				auto getSkmFile = temple::GetRef<BOOL(__cdecl*)(int, const char*)>(0x11069C74);
-				char skmFilename[260];
-				if (getSkmFile(skmId, skmFilename))
-				{
-					logger->error("AAS: Could not build model file for meshes.mes entry {}", skmId);
-					SkaFileEntryRelease(anim.skaFile);
-					return AAS_ERROR;
-				}
-				if (GetSkmFileContents(&anim.skmFile, skmFilename)!= AAS_OK)
-				{
-					SkaFileEntryRelease(anim.skaFile);
-					return AAS_ERROR;
-				}
-				anim.skmFilename = _strdup(skmFilename);
-			}
-
-			anim.model = new AnimatedModel;
-			anim.model->SetSkaFile(anim.skaFile, 0, 0);
-			anim.model->SetSkmFile(anim.skmFile, temple::GetRef<int(__cdecl*)(const char*)>(0x10EFB8F4), 0);
-			anim.model->SetEventListener(temple::GetRef<IAasEventListener*>(0x11069C70));
-			anim.timeLoaded = timeGetTime();
-
-			auto aasAnimSet = temple::GetRef<void(__cdecl)(int, int)>(0x10262540);
-			aasAnimSet(anim.id, idleAnimId);
-
-			int asdf;
-			auto unk = temple::GetRef<void(__cdecl)(int, int, int, int, temple::AasAnimParams*, int*)>(0x10262C10);
-			unk(anim.id, 0,0,0, animState, &asdf);
-
-			/*std::vector<AasSubmeshWithMaterial> asdf2;
-			for (auto i=0; i<anim.model->submeshCount; i++){
-				asdf2.push_back(anim.model->submeshes[i]);
-			}*/
-			
-			//asdf.push_back(anim.model->submeshes[0]);
-			*handleOut = anim.id;
-
-			return AAS_OK;
-
-		});
-		
 	}
 } aasHooks;
 
@@ -668,6 +619,91 @@ Matrix3x4*  sub_10268910(Matrix3x4* transformationMat, char* boneName, AnimatedM
 	aasObj->Method19();
 	*transformationMat = aasObj->boneMatrices[boneIdx];
 	return transformationMat;
+}
+
+int AasHooks::CreateModelByIds(int skmId, int skaId, int idleAnimId, temple::AasAnimParams * animState, int * handleOut){
+
+	auto animHandle = 1;
+	auto foundHandle = false;
+
+	auto animations = aasHooks.mAnims;
+
+	for (auto i = 1; i < sMaxAnims; i++) {
+		if (animations[i].freed & 1) {
+			animHandle = i;
+			foundHandle = true;
+			break;
+		}
+	}
+	if (!foundHandle) {
+		logger->error("AAS: SEVERE ERROR: max number of animations exceeded ({}).", sMaxAnims);
+		return AAS_ERROR;
+	}
+
+	AasAnimation &anim = animations[animHandle];
+
+	animations[animHandle].freed = 0;
+	animations[animHandle].animId = gfx::EncodedAnimId(gfx::WeaponAnim::None);
+	animations[animHandle].floatconst = 6.3940001f;
+	animations[animHandle].addMeshCount = 0;
+	animations[animHandle].id = animHandle;
+
+	// Get SKA data
+	{
+		auto getSkaFile = temple::GetRef<BOOL(__cdecl*)(int, const char*)>(0x11069C60);
+		char skaFilename[260];
+		if (getSkaFile(skaId, skaFilename)) {
+			logger->error("AAS: Could not build anim file for meshes.mes entry {}", skaId);
+			return AAS_ERROR;
+		}
+
+		auto result = GetSkaFileContents(&anim.skaFile, skaFilename);
+		if (result != AAS_OK)
+			return result;
+		anim.skaFilename = _strdup(skaFilename);
+	}
+
+	// Get SKM data
+	{
+		auto getSkmFile = temple::GetRef<BOOL(__cdecl*)(int, const char*)>(0x11069C74);
+		char skmFilename[260];
+		if (getSkmFile(skmId, skmFilename))
+		{
+			logger->error("AAS: Could not build model file for meshes.mes entry {}", skmId);
+			SkaFileEntryRelease(anim.skaFile);
+			return AAS_ERROR;
+		}
+		if (GetSkmFileContents(&anim.skmFile, skmFilename) != AAS_OK)
+		{
+			SkaFileEntryRelease(anim.skaFile);
+			return AAS_ERROR;
+		}
+		anim.skmFilename = _strdup(skmFilename);
+	}
+
+	anim.model = new AnimatedModel;
+	anim.model->SetSkaFile(anim.skaFile, 0, 0);
+	anim.model->SetSkmFile(anim.skmFile, temple::GetRef<int(__cdecl*)(const char*)>(0x10EFB8F4), 0);
+	anim.model->SetEventListener(temple::GetRef<IAasEventListener*>(0x11069C70));
+	anim.timeLoaded = timeGetTime();
+
+	auto aasAnimSet = temple::GetRef<void(__cdecl)(int, int)>(0x10262540);
+	aasAnimSet(anim.id, idleAnimId);
+
+	int asdf;
+	auto unk = temple::GetRef<void(__cdecl)(int, int, int, int, temple::AasAnimParams*, int*)>(0x10262C10);
+	unk(anim.id, 0, 0, 0, animState, &asdf);
+
+	/*std::vector<AasSubmeshWithMaterial> asdf2;
+	for (auto i=0; i<anim.model->submeshCount; i++){
+	asdf2.push_back(anim.model->submeshes[i]);
+	}*/
+
+	//asdf.push_back(anim.model->submeshes[0]);
+	*handleOut = anim.id;
+
+	return AAS_OK;
+
 }
 
 int AasHooks::GetSkaFileContents(LgcySkaFile **skaFile , const char *filename)
@@ -925,13 +961,158 @@ int __cdecl SetSkaFile_(AnimatedModel* aasObj, LgcySkaFile* skaFile){
 int __declspec(naked) AasHooks::SetSkaFile(LgcySkaFile * skaFile, int, int)
 {
 	__asm {
-		push[esp + 4];
+		push[esp + 4]; // skaFile  (note: the other 2 args aren't used)
 		mov eax, ecx; // AnimatedModel*
 		push eax;
 		mov eax, SetSkaFile_;
 		call eax;
 		add esp, 8;
-		ret 0xC;
+		ret 0xC; // due to __stdcall convention
+	}
+}
+
+
+AnimPlayerStream * CreateAnimPlayerStream(LgcySkaFile* skaFile){
+	auto wholeResult = (AnimPlayerStreamWhole*)malloc(sizeof(AnimPlayerStreamBone) * skaFile->boneCount + 47);
+	if (!wholeResult)
+		return nullptr;
+
+	auto result = &wholeResult->body;
+
+	result->skaFile = skaFile;
+	result->header = &wholeResult->header;
+	result->anim = nullptr;
+	
+	return result;
+}
+
+
+int SetAnimIdx_Impl_(AnimPlayer *ra, AnimatedModel * aasObj, int boneCountSthg, int animIdx, IAasEventListener * evtLisnr) {
+
+	if (ra->streamCount || ra->ownerAnim || !aasObj){
+		return -1;
+	}
+	
+	auto skaData = aasObj->skaData;
+	if (!skaData || boneCountSthg < -1 || boneCountSthg >= skaData->boneCount || animIdx < 0 || animIdx >= skaData->animationcCount)
+		return -1;
+
+	auto skaAnim = &skaData->GetSkaAnimationData()[animIdx];
+
+	ra->skaAnimation = skaAnim;
+	ra->distancePerSecond = skaAnim->streams[0].dps;
+	ra->frameRate = skaAnim->streams[0].frameRate;
+
+	ra->eventListener = evtLisnr;
+	ra->eventCount[0] = skaAnim->eventCount;
+	if(ra->eventCount[0]){
+		ra->events = skaAnim->GetEventData();
+	}
+	else{
+		ra->events = nullptr;
+	}
+
+	auto variationCount = aasObj->variationCount;
+
+	ra->streamCount = 0;
+
+
+	//
+	const int sStreamVariationsMax = 4;
+	int streamVariations[sStreamVariationsMax];
+	for (auto i = 0; i <variationCount; i++){
+		auto variationSel = aasObj->variations[i];
+		auto variationId = -1;
+
+		for (auto j = 0; j < skaAnim->streamCount; j++){
+			if (skaAnim->streams[j].variationId == variationSel.variationId 
+				|| variationId < 0  && skaAnim->streams[j].variationId == -1){
+				variationId = j;
+			}
+		}
+
+		ra->streamVariationIndices[i] = 4; // default value?
+
+		if (variationId < 0){
+			continue;
+		}
+
+		auto variationIdIndex = 0;
+		for (; variationIdIndex < ra->streamCount; variationIdIndex++){
+			if (streamVariations[variationIdIndex] == variationId){
+				break;
+			}
+		}
+		ra->streamVariationIndices[i] = variationIdIndex;
+
+		// if not found in stream variations
+		if (variationIdIndex == ra->streamCount && ra->streamCount < 4){ 
+			streamVariations[variationIdIndex] = variationId;
+			
+			auto newRunningAnimStream = CreateAnimPlayerStream(skaData);
+			ra->streams[variationIdIndex] = newRunningAnimStream;
+			if (!newRunningAnimStream)
+				return -1;
+			auto animPlayerStreamInit = temple::GetRef<void(__cdecl)(AnimPlayerStream*, SkaAnimation*, int)>(0x1026B110);
+			animPlayerStreamInit(newRunningAnimStream, skaAnim, variationId);
+			ra->streamRelated[variationIdIndex] = 0;
+			ra->streamVariationIds[variationIdIndex] = skaAnim->streams[variationIdIndex].variationId;
+			ra->streamCount++;
+		}
+
+	}
+
+
+	// set the running anim duration
+	for (auto i=0; i < variationCount; i++){
+
+		auto streamSelect = ra->streamVariationIndices[i];
+		auto factor = aasObj->variations[i].factor;
+
+		if (streamSelect < sStreamVariationsMax){
+			auto frames = ra->skaAnimation->streams[streamVariations[streamSelect]].frames;
+			auto frameRate = ra->skaAnimation->streams[streamVariations[streamSelect]].frameRate;
+			if (frames > 1 && frameRate > 0.0){
+				ra->duration = (frames - 1) / frameRate * factor + (1.0 - factor) * ra->duration;
+			}
+		}
+	}
+
+	// set stream fps
+	if (ra->duration > 0.0){
+		for (auto i=0; i < ra->streamCount; i++){
+			auto frames = ra->skaAnimation->streams[streamVariations[i]].frames;
+			if (frames > 1){
+				ra->streamRelated[i] = (frames - 1) / ra->duration;
+			}
+		}
+	}
+
+	// add running anim
+	if (aasObj->AddRunningAnim(ra, boneCountSthg))
+		return -1;
+
+	// que??
+	if (boneCountSthg == -1){
+		ra->fieldC[1] = 1;
+	}
+
+	return 0;
+}
+
+int __declspec(naked) AasHooks::SetAnimIdx_Impl(AnimatedModel * aasObj, int a3, int animIdx, IAasEventListener * evtLisnr){
+
+	__asm {
+		push[esp + 16];
+		push[esp + 16];
+		push[esp + 16];
+		push[esp + 16];
+		mov eax, ecx; // AasRunningAnim*
+		push eax;
+		mov eax, SetAnimIdx_Impl_;
+		call eax;
+		add esp, 20;
+		ret 0x10; // due to __stdcall convention
 	}
 }
 
