@@ -30,10 +30,10 @@ public:
 				dispIo->Append(args.GetData1(), -1, nullptr);
 				return 0;
 			};
-
+			sdd.data1.sVal = 0xAF;
 			write(0x102E7400, &sdd, sizeof(sdd));
 		}
-
+		
 		replaceFunction(0x100FF670, WeaponKeenQuery);
 
 	}
