@@ -582,6 +582,9 @@ void Objects::FadeTo(objHndl handle, int targetOpacity, int tickTimeMs, int tick
 		evt.params[1].handle = handle;
 		gameSystems->GetTimeEvent().Schedule(evt, tickTimeMs);
 	}
+	if (callbackMode == 3){
+		temple::GetRef<int(__cdecl)(objHndl, int)>(0x1006D890)(handle, 1);
+	}
 	return; // TRUE
 }
 

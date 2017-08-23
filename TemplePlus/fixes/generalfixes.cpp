@@ -119,7 +119,7 @@ class SpellSlingerGeneralFixes : public TempleFix
 public:
 
 	
-
+	static int EncumbranceNextWeight(int strScore, int encumLevel);
 	void apply() override{
 		// breakfree_on_entanglement_fix.txt
 		writeHex(0x100D4259, "90 90 90 90  90 90");
@@ -175,6 +175,10 @@ public:
 				return 0;
 			return orgEncumbranceQuery(args);
 		});
+
+
+		// fixes hangup when equipping item with really high STR
+		replaceFunction(0x100EBB20, EncumbranceNextWeight);
 
 	}
 } spellSlingerGeneralFixes;
@@ -561,4 +565,39 @@ int BardicInspireCourageFix::BardicInspiredCourageDamBon(DispatcherCallbackArgs 
 	}
 	dispIo->damage.AddDamageBonus(bonVal, 13, 191);
 	return 0;
+}
+
+int SpellSlingerGeneralFixes::EncumbranceNextWeight(int strScore, int encumLevel)
+{
+	auto result = 0;
+	if (strScore <=0){
+		if (encumLevel == 1)
+			return 0;
+		if (encumLevel == 2)
+			return 1;
+		if (encumLevel == 3)
+			return 2;
+	}
+	if (strScore >= 29)
+	{
+		if (strScore >= 80)
+			return 1000 * 1000;
+		result = 4 * EncumbranceNextWeight(strScore - 10, encumLevel);
+	}
+	else
+	{
+		switch (encumLevel)
+		{
+		case 1:
+			result = temple::GetRef<int[]>(0x102E4904)[strScore];
+			break;
+		case 2:
+			result = temple::GetRef<int[]>(0x102E497C)[strScore];
+			break;
+		case 3:
+			result = temple::GetRef<int[]>(0x102E49F4)[strScore];
+			break;
+		}
+	}
+	return result;
 }
