@@ -58,6 +58,12 @@ struct SkaFileEntry
 	LgcySkaFile * fileContents;
 };
 
+struct SkaEvent{
+	int16_t frameId;
+	char type[48];
+	char action[128];
+};
+
 struct IAasEventListener {
 	virtual void Handle() = 0;
 	virtual ~IAasEventListener() = 0;
@@ -136,6 +142,9 @@ struct AnimPlayerStream {
 	float currentFrame;
 	void* keyframePtr;
 	AnimPlayerStreamBone bones[1]; //set according to skafile bone count
+
+	void SetFrame(float frame);
+	void ResetBones(SkaAnimation * anim, int variationId);
 };
 
 struct AnimPlayerStreamWhole
@@ -162,14 +171,14 @@ struct AnimPlayer : IAnimPlayer {
 	float streamRelated[4]; // maybe fps
 	int8_t streamVariationIndices[8]; // indices into streamVariationIds
 	int8_t streamVariationIds[4];
-	float field58;
+	float field58; // time related
 	float currentTime;
 	float duration;
 	float frameRate;
 	float distancePerSecond;
 	void * eventListener;
 	int8_t eventCount[4];
-	void*events;
+	SkaEvent*events;
 public:
 };
 
@@ -363,8 +372,8 @@ struct SkaAnimHeader {
 	uint16_t unk;
 	SkaAnimStream streams[10];
 
-	void* GetEventData(){
-		return (void*)(((char*)this) + eventOffset);
+	SkaEvent* GetEventData(){
+		return (SkaEvent*)(((char*)this) + eventOffset);
 	}
 };
 
@@ -442,6 +451,8 @@ public:
 		static int SetSkaFile(LgcySkaFile* skaFile, int, int);
 
 		static int SetAnimIdx_Impl(AnimatedModel* aasObj, int a3, int animIdx, IAasEventListener* evtLisnr);
+		static void SetStreamFrame(AnimPlayerStream* stream, float frame);
+
 
 	static int sub_10268910_naked();
 	//static Matrix3x4* sub_10268910(Matrix3x4* transformationMat, char* boneName, AnimatedModel* aasObj);
@@ -455,7 +466,7 @@ public:
 		replaceFunction(0x10266810, SetSkaFile);
 		replaceFunction(0x102665E0, SetSubmesh);
 		replaceFunction(0x1026A680, SetAnimIdx_Impl);
-		
+		replaceFunction(0x1026B740, SetStreamFrame);
 		//AasCreateModelByIds
 		replaceFunction(0x102641B0, CreateModelByIds);
 
@@ -1013,13 +1024,13 @@ int SetAnimIdx_Impl_(AnimPlayer *ra, AnimatedModel * aasObj, int boneCountSthg, 
 	}
 
 	auto variationCount = aasObj->variationCount;
-
 	ra->streamCount = 0;
 
 
-	//
+	//create the streams according to the variations
 	const int sStreamVariationsMax = 4;
 	int streamVariations[sStreamVariationsMax];
+
 	for (auto i = 0; i <variationCount; i++){
 		auto variationSel = aasObj->variations[i];
 		auto variationId = -1;
@@ -1116,6 +1127,10 @@ int __declspec(naked) AasHooks::SetAnimIdx_Impl(AnimatedModel * aasObj, int a3, 
 	}
 }
 
+void AasHooks::SetStreamFrame(AnimPlayerStream * stream, float frame){
+	stream->SetFrame(frame);
+}
+
 
 int __declspec(naked) AasHooks::sub_10268910_naked(){
 
@@ -1165,4 +1180,127 @@ AnimatedModel::AnimatedModel(){
 
 AnimatedModel::~AnimatedModel()
 {
+}
+
+void AnimPlayerStream::SetFrame(float frame){
+	auto frameRounded = floor(frame);
+	if (floor(this->currentFrame) == frameRounded) {
+		this->currentFrame = frame;
+		return;
+	}
+
+	if (frame < this->currentFrame) {
+		SetFrame(32766.0); // run to end
+		ResetBones(this->anim, this->variationId);
+	}
+
+	// set currentFrame
+	this->currentFrame = frame;
+	if (frameRounded >= 32767)
+		frameRounded = 32766;
+
+	auto sFactor = this->scaleFactor;
+	auto tFactor = this->translationFactor;
+	const auto rFactor = 1 / 32767.0;
+
+	int16_t* keyframeData = (int16_t*)this->keyframePtr;
+	auto keyframeFrame = (*(uint16_t*)keyframeData)  / 2;
+	
+	// advance the frames
+	while (keyframeFrame <= frameRounded){
+		
+		keyframeData++;
+		auto flags = *(uint16_t*)keyframeData;
+		while (flags & 1){
+
+			auto boneId = flags >> 4;
+			auto &tBone = this->bones[boneId];
+			keyframeData++;
+
+			if (!(flags & 0xE)){
+				flags = *(uint16_t*)keyframeData;
+				continue;
+			}
+
+			if (flags & 8) // scale
+			{
+				tBone.scaleFrame = keyframeFrame;
+				tBone.scaleNextFrame = *keyframeData;
+				tBone.prevScale = tBone.scale;
+
+				keyframeData++;
+				tBone.scale.x = (*keyframeData) * sFactor;
+				keyframeData++;
+				tBone.scale.y = (*keyframeData) * sFactor;
+				keyframeData++;
+				tBone.scale.z = (*keyframeData) * sFactor;
+
+				auto one_over_frame_delta = 0.0;
+				if (keyframeFrame < tBone.scaleNextFrame)
+					one_over_frame_delta = 1.0 / (tBone.scaleNextFrame - keyframeFrame);
+				tBone.prevScale.w = one_over_frame_delta;
+
+				keyframeData++;
+			}
+
+			if (flags & 4) // rotation
+			{
+				tBone.rotationFrame = keyframeFrame;
+				tBone.rotationNextFrame = *keyframeData;
+				tBone.prevRotation = tBone.rotation;
+				
+				keyframeData++;
+				tBone.rotation.x = (*keyframeData) * rFactor;
+				keyframeData++;
+				tBone.rotation.y = (*keyframeData) * rFactor;
+				keyframeData++;
+				tBone.rotation.z = (*keyframeData) * rFactor;
+				keyframeData++;
+				tBone.rotation.w = (*keyframeData) * rFactor;
+
+				auto one_over_frame_delta = 0.0;
+				if (keyframeFrame < tBone.rotationNextFrame)
+					one_over_frame_delta = 1.0 / (tBone.rotationNextFrame - keyframeFrame);
+				tBone.scale.w = one_over_frame_delta;
+
+				keyframeData++;
+			}
+
+			if (flags & 2) // translation
+			{
+				tBone.translationFrame = keyframeFrame;
+				tBone.translationNextFrame = *keyframeData;
+				tBone.prevTranslation.x = tBone.translation.x;
+				tBone.prevTranslation.y = tBone.translation.y;
+				tBone.prevTranslation.z = tBone.translation.z;
+
+				keyframeData++;
+				int transX = (*keyframeData);
+				tBone.translation.x = transX * tFactor;
+				keyframeData++;
+				int transY = (*keyframeData);
+				tBone.translation.y = transY * tFactor;
+				keyframeData++;
+				int transZ = (*keyframeData);
+				tBone.translation.z = transZ * tFactor;
+
+				auto one_over_frame_delta = 0.0;
+				if (keyframeFrame < tBone.translationNextFrame)
+					one_over_frame_delta = 1.0 / (tBone.translationNextFrame - keyframeFrame);
+				tBone.translation.w = one_over_frame_delta;
+
+				keyframeData++;
+			}
+
+			flags = *(uint16_t*)keyframeData;
+		}
+
+		this->keyframePtr = keyframeData;
+		keyframeFrame = (*(uint16_t*)keyframeData) / 2;
+	}
+
+}
+
+void AnimPlayerStream::ResetBones(SkaAnimation * anim, int variationId){
+	temple::GetRef<void(__cdecl)(AnimPlayerStream*, SkaAnimation *,int)>(0x1026B110)(this, anim, variationId);
 }
