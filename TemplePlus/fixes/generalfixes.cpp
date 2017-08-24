@@ -580,7 +580,7 @@ int SpellSlingerGeneralFixes::EncumbranceNextWeight(int strScore, int encumLevel
 	}
 	if (strScore >= 29)
 	{
-		if (strScore >= 80)
+		if (strScore >= 80) // fixed so it doesn't exponentially explode... (for cheat characters)
 			return 1000 * 1000;
 		result = 4 * EncumbranceNextWeight(strScore - 10, encumLevel);
 	}

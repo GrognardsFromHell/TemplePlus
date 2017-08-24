@@ -753,6 +753,20 @@ int Objects::StatLevelGetBase(objHndl obj, Stat stat)
 	return _StatLevelGetBase(obj, stat);
 }
 
+int Objects::StatLevelGetBaseWithModifiers(objHndl handle, Stat stat, DispIoBonusList*evtObj){
+
+	auto objBody = objSystem->GetObject(handle);
+	auto dispatcher = objBody->GetDispatcher();
+	if (dispatcher->IsValid()){
+		return dispatch.DispatchForCritter(handle, evtObj, dispTypeStatBaseGet, (D20DispatcherKey)(stat + 1));
+	}
+	else{
+		return objects.StatLevelGetBase(handle, stat);
+	}
+
+	return 0;
+}
+
 int Objects::StatLevelSetBase(objHndl obj, Stat stat, int value)
 {
 	return _StatLevelSetBase(obj, stat, value);

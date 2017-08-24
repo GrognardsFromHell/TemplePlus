@@ -40,6 +40,10 @@ namespace TemplePlusConfig
             "HpOnLevelUp", typeof (HpOnLevelUpType), typeof (IniViewModel),
             new PropertyMetadata(default(HpOnLevelUpType)));
 
+        public static readonly DependencyProperty MaxHpForNpcHitdiceProperty = DependencyProperty.Register(
+            "MaxHpForNpcHitdice", typeof(bool), typeof(IniViewModel),
+            new PropertyMetadata(default(bool)));
+        
         public static readonly DependencyProperty FogOfWarProperty = DependencyProperty.Register(
             "FogOfWar", typeof(FogOfWarType), typeof(IniViewModel),
             new PropertyMetadata(default(FogOfWarType)));
@@ -171,6 +175,13 @@ namespace TemplePlusConfig
             get { return (HpOnLevelUpType) GetValue(HpOnLevelUpProperty); }
             set { SetValue(HpOnLevelUpProperty, value); }
         }
+
+        public bool MaxHpForNpcHitdice
+        {
+            get { return (bool)GetValue(MaxHpForNpcHitdiceProperty); }
+            set { SetValue(MaxHpForNpcHitdiceProperty, value); }
+        }
+        
 
         public FogOfWarType FogOfWar
         {
@@ -310,7 +321,7 @@ namespace TemplePlusConfig
                         break;
                 }
             }
-
+            MaxHpForNpcHitdice = tpData["maxHpForNpcHitdice"] == "true";
             if (tpData["fogOfWar"] != null)
             {
                 switch (tpData["fogOfWar"].ToLowerInvariant())
@@ -463,6 +474,7 @@ namespace TemplePlusConfig
                     tpData["hpOnLevelup"] = "normal";
                     break;
             }
+            tpData["maxHpForNpcHitdice"] = MaxHpForNpcHitdice ? "true" : "false";
             switch (FogOfWar)
             {
                 case FogOfWarType.Unfogged:

@@ -109,6 +109,11 @@ class CritterReplacements : public TempleFix
 			return critterSys.GetReach(handle, d20aType);
 		});
 
+		// CritterGenerateHp
+		replaceFunction<void(objHndl)>(0x1007F720, [](objHndl handle){
+			critterSys.GenerateHp(handle);
+		});
+
 		// something used in the anim goals
 		replaceFunction<int(objHndl, objHndl)>(0x10065C30, [](objHndl item, objHndl parent)->int{
 
@@ -416,8 +421,65 @@ StandPoint LegacyCritterSystem::GetStandPoint(objHndl critter, StandPointType ty
 	return result;
 }
 
-void LegacyCritterSystem::GenerateHp(objHndl critter){
-	temple::GetRef<void(__cdecl)(objHndl)>(0x1007F720)(critter);
+void LegacyCritterSystem::GenerateHp(objHndl handle){
+	if (!handle){
+		return;
+	}
+
+	auto hpPts = 0;
+	auto critterLvlIdx = 0;
+	auto obj = objSystem->GetObject(handle);
+
+	auto conMod = 0;
+	if (!d20Sys.d20Query(handle, DK_QUE_Critter_Has_No_Con_Score)){
+		auto conScore = objects.StatLevelGetBaseWithModifiers(handle, stat_constitution);
+		conMod = objects.GetModFromStatLevel(conScore);
+	}
+
+	auto numLvls = obj->GetInt32Array(obj_f_critter_level_idx).GetSize();
+	for (auto i=0; i < numLvls; i++)
+	{
+		auto classType = (Stat)obj->GetInt32(obj_f_critter_level_idx, i);
+		auto classHd = d20ClassSys.GetClassHitDice(classType);
+		if (i == 0){
+			hpPts = classHd; // first class level gets full HP
+		}
+		else
+		{
+			auto hdRoll = Dice::Roll(1, classHd, 0);
+			auto cfgLower(tolower(config.hpOnLevelup));
+			if (!_stricmp(cfgLower.c_str(), "max")) {
+				hdRoll = classHd;
+			}
+			else if (!_stricmp(cfgLower.c_str(), "average")) {
+				hdRoll = classHd/ 2 + rngSys.GetInt(0, 1); // hit die are always even numbered so randomize the roundoff
+			}
+			
+
+			if (hdRoll + conMod < 1)
+				hdRoll = 1 - conMod; // note: the con mod is applied separately! This just makes sure it doesn't dip to negatives
+			hpPts += hdRoll;
+		}
+	}
+
+	if (obj->IsNPC()){
+
+		auto numDice = obj->GetInt32(obj_f_npc_hitdice_idx, 0);
+		auto npcHd = Dice(numDice, obj->GetInt32(obj_f_npc_hitdice_idx, 1),obj->GetInt32(obj_f_npc_hitdice_idx, 2));
+		auto npcHdVal = npcHd.Roll();
+		if (config.maxHpForNpcHitdice){
+			npcHdVal = numDice * (npcHd.GetSides() + npcHd.GetModifier());
+		}
+		if (npcHdVal + conMod*numDice < 1)
+			npcHdVal = numDice*(1 - conMod);
+		hpPts += npcHdVal;
+	}
+
+	if (hpPts < 1)
+		hpPts = 1;
+	obj->SetInt32(obj_f_hp_pts, hpPts);
+
+	//temple::GetRef<void(__cdecl)(objHndl)>(0x1007F720)(handle);
 }
 
 void LegacyCritterSystem::SetSubdualDamage(objHndl critter, int damage) {

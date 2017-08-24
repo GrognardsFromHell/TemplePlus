@@ -358,9 +358,11 @@ struct SkaAnimStream {
 	int16_t variationId;
 	float frameRate;
 	float dps;
-	// Offset to the start of the key-frame stream in relation to animationStart
+	// Offset to the start of the key-frame stream in relation to SkaAnimation start
 	uint32_t dataOffset;
 };
+
+struct SkaAnimStreamData;
 
 struct SkaAnimHeader {
 	char name[64];
@@ -375,6 +377,30 @@ struct SkaAnimHeader {
 	SkaEvent* GetEventData(){
 		return (SkaEvent*)(((char*)this) + eventOffset);
 	}
+
+	SkaAnimStreamData* GetSkaAnimStreamData(int variationId = 0){
+		return (SkaAnimStreamData*)(((char*)this) + streams[variationId].dataOffset);
+	}
+};
+
+struct SkaAnimStreamFrameData{
+	int16_t boneId; 
+	int16_t scaleX; 
+	int16_t scaleY; 
+	int16_t scaleZ; 
+	int16_t rotationX; 
+	int16_t rotationY; 
+	int16_t rotationZ; 
+	int16_t rotationW; 
+	int16_t translationX; 
+	int16_t translationY; 
+	int16_t translationZ; 
+};
+
+struct SkaAnimStreamData{
+	float scaleFactor; 
+	float translationFactor; 
+	SkaAnimStreamFrameData frameData[1]; // array for initial positions, terminated by boneId = -1; after that the keyframe data begins
 };
 
 struct SkaAnimation : SkaAnimHeader{
@@ -383,17 +409,14 @@ struct SkaAnimation : SkaAnimHeader{
 struct SkaBone{
 	int16_t flags;
 	int16_t parentId;
-	char name[60];
-	int field40;
-	float field44;
-	int field48;
-	int field4C;
-	float field50;
-	int field54;
-	int field58;
-	int field5C;
-	int field60;
+	char name[40];
+	int field_2C;
+	float field_30;
+	XMFLOAT4 scale;
+	XMFLOAT4 rotation;
+	XMFLOAT4 translation;
 };
+const int testSizeofSkaBone = sizeof SkaBone; // 100 (0x64)
 
 struct LgcySkaFile {
 	int boneCount;
@@ -1201,7 +1224,7 @@ void AnimPlayerStream::SetFrame(float frame){
 
 	auto sFactor = this->scaleFactor;
 	auto tFactor = this->translationFactor;
-	const auto rFactor = 1 / 32767.0;
+	const auto rFactor = 1.0 / 32767.0;
 
 	int16_t* keyframeData = (int16_t*)this->keyframePtr;
 	auto keyframeFrame = (*(uint16_t*)keyframeData)  / 2;
@@ -1302,5 +1325,69 @@ void AnimPlayerStream::SetFrame(float frame){
 }
 
 void AnimPlayerStream::ResetBones(SkaAnimation * anim, int variationId){
-	temple::GetRef<void(__cdecl)(AnimPlayerStream*, SkaAnimation *,int)>(0x1026B110)(this, anim, variationId);
+
+	this->anim = anim;
+	this->variationId = variationId;
+
+	auto skaFile = this->skaFile;
+	auto boneCount = skaFile->boneCount;
+	auto skaBones = skaFile->GetSkaBoneData();
+	auto streamBones = this->bones;
+
+	for (auto i=0; i <boneCount; i++){
+		auto &sBone = streamBones[i];
+		auto &fBone = skaBones[i];
+		sBone.scale = fBone.scale;
+		sBone.prevScale = sBone.scale;
+
+		sBone.rotation = fBone.rotation;
+		sBone.prevRotation = sBone.rotation;
+
+		sBone.translation = fBone.translation;
+		sBone.prevTranslation = sBone.translation;
+
+		sBone.scaleFrame = sBone.scaleNextFrame = sBone.translationFrame = sBone.translationNextFrame = 0;
+		sBone.rotationFrame = sBone.rotationNextFrame = 0;
+		sBone.field6C = 0;
+	}
+
+	auto streamData = anim->GetSkaAnimStreamData(variationId);
+
+	auto sFactor = streamData->scaleFactor;
+	auto tFactor = streamData->translationFactor;
+	auto rFactor = 1.0/32767.0;
+	this->scaleFactor = sFactor;
+	this->translationFactor = tFactor;
+	auto frameData = streamData->frameData;
+	for (; frameData->boneId >= 0; frameData++) {
+		auto boneId = frameData->boneId;
+		auto &sBone = streamBones[boneId];
+		sBone.scale.x = sFactor * frameData->scaleX;
+		sBone.scale.y = sFactor * frameData->scaleY;
+		sBone.scale.z = sFactor * frameData->scaleZ;
+		sBone.prevScale.x = sBone.scale.x;
+		sBone.prevScale.y = sBone.scale.y;
+		sBone.prevScale.z = sBone.scale.z;
+
+		sBone.translation.x = tFactor * frameData->translationX;
+		sBone.translation.y = tFactor * frameData->translationY;
+		sBone.translation.z = tFactor * frameData->translationZ;
+		sBone.prevTranslation.x = sBone.translation.x;
+		sBone.prevTranslation.y = sBone.translation.y;
+		sBone.prevTranslation.z = sBone.translation.z;
+
+		sBone.rotation.x = rFactor * frameData->rotationX;
+		sBone.rotation.y = rFactor * frameData->rotationY;
+		sBone.rotation.z = rFactor * frameData->rotationZ;
+		sBone.rotation.w = rFactor * frameData->rotationW;
+		sBone.prevRotation.x = sBone.rotation.x;
+		sBone.prevRotation.y = sBone.rotation.y;
+		sBone.prevRotation.z = sBone.rotation.z;
+	}
+
+	this->currentFrame = -1.0;
+	this->keyframePtr = ((int16_t*)frameData) + 1;
+	SetFrame(0.0);
+
+	// temple::GetRef<void(__cdecl)(AnimPlayerStream*, SkaAnimation *,int)>(0x1026B110)(this, anim, variationId);
 }
