@@ -286,6 +286,8 @@ void GameLoop::DoMouseScrolling() {
 	static auto sysRefTime = 0;
 	auto now = timeGetTime();
 	if (sysRefTime && (now  < sysRefTime + 16) ){
+		auto scrollButter = temple::GetRef<int>(0x102AC238);
+		if (!scrollButter)
 			return;
 	}
 	

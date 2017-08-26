@@ -280,7 +280,9 @@ void UiInGame::DoKeyboardScrolling(){
 	static auto scrollRefTime = timeGetTime();
 	auto now = timeGetTime();
 	if (now < scrollRefTime + 16){
-		return;
+		auto scrollButter = temple::GetRef<int>(0x102AC238);
+		if (!scrollButter)
+			return;
 	}
 	scrollRefTime = now;
 	auto &console =tig->GetConsole();
