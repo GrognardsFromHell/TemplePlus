@@ -1355,10 +1355,14 @@ void AnimPlayerStream::ResetBones(SkaAnimation * anim, int variationId){
 
 	auto sFactor = streamData->scaleFactor;
 	auto tFactor = streamData->translationFactor;
-	auto rFactor = 1.0/32767.0;
+	const auto rFactor = 1.0/32767.0;
 	this->scaleFactor = sFactor;
 	this->translationFactor = tFactor;
 	auto frameData = streamData->frameData;
+
+	//std::vector<AnimPlayerStreamBone> bonesRef;
+	//std::vector<int> boneIds;
+
 	for (; frameData->boneId >= 0; frameData++) {
 		auto boneId = frameData->boneId;
 		auto &sBone = streamBones[boneId];
@@ -1380,14 +1384,56 @@ void AnimPlayerStream::ResetBones(SkaAnimation * anim, int variationId){
 		sBone.rotation.y = rFactor * frameData->rotationY;
 		sBone.rotation.z = rFactor * frameData->rotationZ;
 		sBone.rotation.w = rFactor * frameData->rotationW;
-		sBone.prevRotation.x = sBone.rotation.x;
-		sBone.prevRotation.y = sBone.rotation.y;
-		sBone.prevRotation.z = sBone.rotation.z;
+		sBone.prevRotation = sBone.rotation;
+
+		//boneIds.push_back(boneId);
 	}
 
 	this->currentFrame = -1.0;
 	this->keyframePtr = ((int16_t*)frameData) + 1;
 	SetFrame(0.0);
 
-	// temple::GetRef<void(__cdecl)(AnimPlayerStream*, SkaAnimation *,int)>(0x1026B110)(this, anim, variationId);
+
+	/*for (auto it: boneIds){
+		bonesRef.push_back(streamBones[it]);
+	}*/
+
+	//auto savedKeyframePtr = this->keyframePtr;
+
+	//temple::GetRef<void(__cdecl)(AnimPlayerStream*, SkaAnimation *,int)>(0x1026B110)(this, anim, variationId);
+
+	/*if (savedKeyframePtr != this->keyframePtr)
+	{
+		auto asdf = 1;
+	}
+
+	for (auto i = 0; i < boneCount; i++) {
+		for (auto j = 0; j < boneIds.size(); j++) {
+			if (boneIds[j] == i){
+				auto compareBone = streamBones[i];
+				auto savedBone = bonesRef[j];
+				if (fabs(savedBone.translation.x - compareBone.translation.x ) > 0.001
+					|| fabs(savedBone.translation.y - compareBone.translation.y) > 0.001
+					|| fabs(savedBone.translation.z - compareBone.translation.z) > 0.001)
+				{
+					auto autoasdf = 1;
+				}
+				if (fabs(savedBone.rotation.x - compareBone.rotation.x) > 0.001
+					|| fabs(savedBone.rotation.y - compareBone.rotation.y) > 0.001
+					|| fabs(savedBone.rotation.z - compareBone.rotation.z) > 0.001
+					|| fabs(savedBone.rotation.w - compareBone.rotation.w) > 0.001)
+				{
+					auto asdf = 1;
+				}
+				if (fabs(savedBone.scale.x - compareBone.scale.x) > 0.001
+					|| fabs(savedBone.scale.y - compareBone.scale.y) > 0.001
+					|| fabs(savedBone.scale.z - compareBone.scale.z) > 0.001
+					|| fabs(savedBone.scale.w - compareBone.scale.w) > 0.001)
+				{
+					auto asdf = 1;
+				}
+				break;
+			}
+		}
+	}*/
 }
