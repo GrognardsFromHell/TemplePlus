@@ -1284,8 +1284,10 @@ void DungeonMaster::SetObjEditor(objHndl handle){
 		critEditor.stats.push_back(statScores[i]);
 
 	// Feats
+	static objHndl thisHandle  ;
+	thisHandle = handle;
 	feats.DoForAllFeats([](int featEnum){
-		if (feats.HasFeatCount(dmSys.mEditedObj, (feat_enums)featEnum)){
+		if (feats.HasFeatCount(thisHandle, (feat_enums)featEnum)){
 			critEditor.feats.push_back((feat_enums)featEnum);
 		}
 	});
