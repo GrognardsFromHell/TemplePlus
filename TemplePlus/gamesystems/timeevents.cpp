@@ -63,6 +63,13 @@ static BOOL ExpireAnimEvent(const TimeEvent* event)
 
 static BOOL ExpireBkgAnim(const TimeEvent* event) {
 	static auto callback = temple::GetPointer<LegacyExpireFunc>(0x101f5850);
+
+	if (temple::GetRef<int>(0x10AA83D4))
+	{
+		static auto actualGameCallback = temple::GetPointer<LegacyExpireFunc>(0x10173830);
+		return actualGameCallback(event);
+	}
+
 	return callback(event);
 }
 
@@ -123,6 +130,12 @@ static BOOL ExpireTBCombat(const TimeEvent* event) {
 
 static BOOL ExpireAmbientLighting(const TimeEvent* event) {
 	static auto callback = temple::GetPointer<LegacyExpireFunc>(0x101f5850);
+
+	if (temple::GetRef<int>(0x10AA83D4)){
+		static auto actualGameCallback = temple::GetPointer<LegacyExpireFunc>(0x101739C0);
+		return actualGameCallback(event);
+	}
+
 	return callback(event);
 }
 
@@ -148,6 +161,12 @@ static BOOL ExpireNPCWaitHere(const TimeEvent* event) {
 
 static BOOL ExpireMainMenu(const TimeEvent* event) {
 	static auto callback = temple::GetPointer<LegacyExpireFunc>(0x101f5850);
+
+	if (temple::GetRef<int>(0x10AA83D4)) {
+		static auto actualGameCallback = temple::GetPointer<LegacyExpireFunc>(0x101119B0);
+		return actualGameCallback(event);
+	}
+	
 	return callback(event);
 }
 
