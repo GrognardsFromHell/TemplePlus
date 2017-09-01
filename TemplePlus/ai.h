@@ -250,6 +250,7 @@ struct AiSystem : temple::AddressTable
 	BOOL IsPcUnderAiControl(objHndl handle);
 	void AiProcess(objHndl obj);
 	bool AiProcessHandleConfusion(objHndl handle, int confusionState);
+	bool AiProcessPc(objHndl handle);
 
 	int AiTimeEventExpires(TimeEvent* evt);
 	

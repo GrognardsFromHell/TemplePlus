@@ -717,18 +717,16 @@ void LegacyCombatSystem::EndTurn()
 		actSeqSys.TurnStart(tbSys.turnBasedGetCurrentActor());
 	}
 
-	static auto combatantsFarFromParty = temple::GetRef<int(__cdecl)()>(0x10062CB0);
-	static auto combatEnd = temple::GetRef<int(__cdecl)(objHndl)>(0x100630F0);
 	static auto allPcsUnconscious = temple::GetRef<int(__cdecl)()>(0x10062D60);
-	
-	if (combatantsFarFromParty()){
+
+	if (AllCombatantsFarFromParty()){
 		logger->info("Ending combat (enemies far from party)");
 		auto leader = party.GetConsciousPartyLeader();
-		combatEnd(leader);
+		combatSys.CritterExitCombatMode(leader);
 	} else if (allPcsUnconscious())
 	{
 		auto leader = party.GetConsciousPartyLeader();
-		combatEnd(leader);
+		combatSys.CritterExitCombatMode(leader);
 	}
 	//addresses.EndTurn();
 }
@@ -957,13 +955,89 @@ BOOL LegacyCombatSystem::IsBrawlInProgress()
 	return false;
 }
 
-void LegacyCombatSystem::CritterExitCombatMode(objHndl handle){
-	temple::GetRef<void(__cdecl)(objHndl)>(0x100630F0)(handle);
+void LegacyCombatSystem::CritterExitCombatMode(objHndl handle) {
+
+	if (!objects.IsPlayerControlled(handle)) {
+		auto critterFlags = critterSys.GetCritterFlags(handle);
+		if (critterFlags & OCF_COMBAT_MODE_ACTIVE) {
+			objSystem->GetObject(handle)->SetInt32(obj_f_critter_flags, critterFlags & ~OCF_COMBAT_MODE_ACTIVE);
+		}
+		return;
+	}
+
+	if (!isCombatActive())
+		return;
+
+	if (party.GetConsciousPartyLeader() != handle){
+		return;
+	}
+
+	if (critterSys.IsDeadNullDestroyed(handle)){
+		if (party.GetLivingPartyMemberCount() >= 1)
+			return;
+	}
+
+	static auto combatEnd = temple::GetRef<int(__cdecl)()>(0x10062A30);
+	if (!combatEnd())
+		return;
+
+	static auto uiCombatResetCallback = temple::GetRef<int(__cdecl*)()>(0x10AA83F8);
+	uiCombatResetCallback();
+
+	static auto combatMusicEnd = temple::GetRef<void(__cdecl)(objHndl)>(0x1003C8B0);
+	combatMusicEnd(handle);
+
+	auto N = party.GroupListGetLen();
+	for (auto i=0; i < N; i++){
+		auto partyMem = party.GroupListGetMemberN(i);
+		auto critterFlags = critterSys.GetCritterFlags(partyMem);
+		if (critterFlags & OCF_COMBAT_MODE_ACTIVE){
+			objSystem->GetObject(partyMem)->SetInt32(obj_f_critter_flags, critterFlags & ~OCF_COMBAT_MODE_ACTIVE);
+		}
+	}
+
+	// temple::GetRef<void(__cdecl)(objHndl)>(0x100630F0)(handle);
 }
 
 bool LegacyCombatSystem::isCombatActive()
 {
 	return *combatSys.combatModeActive != 0;
+}
+
+bool LegacyCombatSystem::AllCombatantsFarFromParty()
+{
+	const double PEACEOUT_DISTANCE = 125.0;
+
+	if (!isCombatActive())
+		return true;
+
+	auto N = GetInitiativeListLength();
+
+	for (auto i=0; i < N; i++){
+		auto combatant = GetInitiativeListMember(i);
+		if (party.IsInParty(combatant))
+			continue;
+		if (critterSys.IsDeadOrUnconscious(combatant))
+			continue;
+		if (critterSys.IsConcealed(combatant)){
+			continue; // TODO maybe revamp this condition?
+		}
+
+		auto Nparty = party.GroupListGetLen();
+		for (auto j=0; j < Nparty; j++){
+			auto partyMem = party.GroupListGetMemberN(j);
+			if (locSys.DistanceToObj(combatant, partyMem) < PEACEOUT_DISTANCE){
+				return false;
+			}
+				
+		}
+	}
+
+	return true;
+
+//	static auto combatantsFarFromParty = temple::GetRef<int(__cdecl)()>(0x10062CB0);
+	//return combatantsFarFromParty();
+
 }
 
 uint32_t LegacyCombatSystem::IsCloseToParty(objHndl objHnd)

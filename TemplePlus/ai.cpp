@@ -2473,8 +2473,7 @@ void AiSystem::AiProcess(objHndl obj){
 	}
 
 	if (aiSys.IsPcUnderAiControl(obj)){
-		auto aiProcessPc = temple::GetRef<int(__cdecl)(objHndl)>(0x1005AE10);
-		if (!aiProcessPc(obj)){
+		if (!AiProcessPc(obj)){
 			logger->debug("Combat for {} ending turn (script)...", obj);
 		}
 		return;
@@ -2604,6 +2603,95 @@ bool AiSystem::AiProcessHandleConfusion(objHndl handle, int confusionState){
 	}
 		
 	return true;
+}
+
+bool AiSystem::AiProcessPc(objHndl handle)
+{
+
+	auto leader = objHndl::null;
+	auto fearer = objHndl::null;
+	auto tgt = objHndl::null;
+
+	auto findUnfriendly = [](objHndl leader)->objHndl{
+		ObjList objList;
+		objList.ListVicinity(leader, OLC_CRITTERS);
+		for (auto i=0; i <objList.size(); i++){
+			auto critter = objList[i];
+			if (!critter)
+				break;
+			if (critterSys.IsFriendly(leader, critter))
+				continue;
+			return critter;
+		}
+		return objHndl::null;
+	};
+
+
+	auto isCharmed = d20Sys.d20Query(handle, DK_QUE_Critter_Is_Charmed);
+	auto checkFlee = !isCharmed;
+
+	if (!checkFlee && isCharmed){ // check if the leader is hostile (is this a proper check...?)
+		leader = d20Sys.d20QueryReturnData(handle, DK_QUE_Critter_Is_Charmed);
+		if (leader &&!critterSys.IsFriendly(handle, leader)){
+			checkFlee = true;
+		}
+	}
+
+	auto isFleeing = false;
+	if (checkFlee){
+		if (d20Sys.d20Query(handle, DK_QUE_Critter_Is_Afraid)) {
+			fearer = d20Sys.d20QueryReturnData(handle, DK_QUE_Critter_Is_Afraid);
+			FleeProcess(handle, fearer);
+			isFleeing = true;
+		}
+	}
+
+
+	if (!isFleeing){
+
+		// check for a leader critter
+		if (isCharmed)
+			leader = d20Sys.d20QueryReturnData(handle, DK_QUE_Critter_Is_Charmed);
+
+		if (!leader && d20Sys.d20Query(handle, DK_QUE_Critter_Is_AIControlled))
+			leader = d20Sys.d20QueryReturnData(handle, DK_QUE_Critter_Is_AIControlled);
+
+		if (leader && objSystem->IsValidHandle(leader)){ // if has a valid leader, try to target its foe
+			auto leaderObj = objSystem->GetObject(leader);
+			if (leaderObj->IsNPC()){ // inherit the leader's combat focus if any
+				auto leaderCombatFocus = objSystem->GetObject(leader)->GetObjHndl(obj_f_npc_combat_focus);
+				if (leaderCombatFocus)
+					tgt = leaderCombatFocus;
+			}
+			if (!tgt){
+				tgt = findUnfriendly(leader);
+			}
+		}
+		
+		// default - find a target for yourself
+		if (!tgt || tgt == handle){
+			tgt = findUnfriendly(handle);
+		}
+
+		if (!tgt) {
+			logger->debug("AiProcessPc: unable to find a target for AI PC = {}", handle);
+		}
+		StrategyParse(handle, tgt);
+	}
+
+	if (!combatSys.isCombatActive())
+		return true;
+
+	auto curActor = tbSys.turnBasedGetCurrentActor();
+	if (curActor == handle && !actSeqSys.isPerforming(handle)){
+		if (actSeqSys.IsSimulsCompleted() && !actSeqSys.IsLastSimultPopped(handle)){
+			logger->info("AI for {} ending turn (simuls unended)...", handle);
+			combatSys.CombatAdvanceTurn(handle);
+		}
+	}
+
+	return true;
+	// auto aiProcessPc = temple::GetRef<int(__cdecl)(objHndl)>(0x1005AE10);
 }
 
 int AiSystem::AiTimeEventExpires(TimeEvent* evt)

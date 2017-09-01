@@ -24,6 +24,7 @@
 #include "gamesystems/timeevents.h"
 #include "gamesystems/legacysystems.h"
 #include "gamesystems/objfade.h"
+#include "party.h"
 
 Objects objects;
 
@@ -712,9 +713,56 @@ int32_t Objects::GetHPCur(objHndl obj)
 	return _StatLevelGet(obj, stat_hp_current);
 }
 
-bool Objects::IsPlayerControlled(objHndl obj)
-{
-	return _IsPlayerControlled(obj);
+bool Objects::IsPlayerControlled(objHndl handle){
+
+	if (!handle)
+		return false;
+
+	if (!party.IsInParty(handle)) {
+		return false;
+	}
+
+	auto obj = objSystem->GetObject(handle);
+
+	auto partyCount = party.GetLivingPartyMemberCount();
+
+	if (obj->IsPC()){
+		if (partyCount <= 1){ 		// ha! vanilla only checked this
+			if (party.IsInParty(handle)) // vanilla didn't check this
+				return true;
+		}
+	}
+
+	if (party.ObjIsAIFollower(handle))
+		return false;
+
+	// check if charmed by someone
+	auto leader = objHndl::null;
+	if (d20Sys.d20Query(handle, DK_QUE_Critter_Is_Charmed)){
+		leader = d20Sys.d20QueryReturnData(handle, DK_QUE_Critter_Is_Charmed);
+		if (leader && !party.IsInParty(leader))
+			return false;
+	}
+
+	// checked if afraid of someone & can see them
+	if (d20Sys.d20Query(handle, DK_QUE_Critter_Is_Afraid)){
+		objHndl fearer;
+		fearer = d20Sys.d20QueryReturnData(handle, DK_QUE_Critter_Is_Afraid);
+		if (fearer && locSys.DistanceToObj(handle, fearer) < 40.0 
+			&& combatSys.HasLineOfAttack(fearer, handle)){
+			return false;
+		}
+	}
+
+	if (d20Sys.d20Query(handle, DK_QUE_Critter_Is_AIControlled)
+		|| d20Sys.d20Query(handle, DK_QUE_Critter_Is_Confused)){
+		return false;
+	}
+
+	
+
+	return true;
+	//return _IsPlayerControlled(handle);
 }
 
 string Objects::GetDisplayName(objHndl obj, objHndl observer) {

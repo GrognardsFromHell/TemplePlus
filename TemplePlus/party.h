@@ -21,6 +21,7 @@ struct LegacyPartySystem : temple::AddressTable
 	uint32_t(__cdecl *GroupPCsLen)();
 	objHndl(__cdecl *GroupListGetMemberN)(uint32_t nIdx);
 	uint32_t(__cdecl *GroupListGetLen)();
+	uint32_t GetLivingPartyMemberCount();
 	uint32_t(__cdecl *ObjIsInGroupArray)(GroupArray *, objHndl);
 	uint32_t(__cdecl *ObjIsAIFollower)(objHndl);
 	bool (__cdecl *IsInParty)(objHndl critter);

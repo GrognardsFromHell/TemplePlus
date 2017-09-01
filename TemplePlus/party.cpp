@@ -107,6 +107,18 @@ void LegacyPartySystem::ApplyConditionAround(const objHndl& obj, double range, c
 	}
 }
 
+uint32_t LegacyPartySystem::GetLivingPartyMemberCount()
+{
+	auto N = GroupListGetLen();
+	auto result = 0u;
+	for (auto i=0; i < N; i++){
+		auto partyMem = GroupListGetMemberN(i);
+		if (!critterSys.IsDeadNullDestroyed(partyMem))
+			result++;
+	}
+	return result;
+}
+
 uint32_t LegacyPartySystem::AddToPCGroup(objHndl objHnd)
 {
 	auto npcFollowers = GroupNPCFollowersLen();
