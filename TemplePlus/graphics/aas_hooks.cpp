@@ -421,7 +421,7 @@ const int testSizeofSkaBone = sizeof SkaBone; // 100 (0x64)
 struct LgcySkaFile {
 	int boneCount;
 	int boneDataStart;
-	int variationCount;
+	int variationCount; // seems to be always 0 as far as I can tell
 	int variationDataStart;
 	int animationcCount;
 	int animationDataStart;
@@ -488,8 +488,8 @@ public:
 
 		replaceFunction(0x10266810, SetSkaFile);
 		replaceFunction(0x102665E0, SetSubmesh);
-		replaceFunction(0x1026A680, SetAnimIdx_Impl);
-		replaceFunction(0x1026B740, SetStreamFrame);
+		//replaceFunction(0x1026A680, SetAnimIdx_Impl);
+		//replaceFunction(0x1026B740, SetStreamFrame);
 		//AasCreateModelByIds
 		replaceFunction(0x102641B0, CreateModelByIds);
 
