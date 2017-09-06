@@ -149,6 +149,24 @@ void GameLoop::Run() {
 		// This locks the cursor to our window if we are in the foreground and it's enabled
 		if (!config.windowed && config.lockCursor){
 			auto sceneRect = gameView.GetSceneRect();
+
+			// Take care of roundoff issues
+			// Otherwise the cursor can be 1 pixel beyond the border
+			// TODO should this be generalizedinto GetSceneRect?
+			// test Upper Left corner mapping for roundoff errors
+			auto ul = gameView.MapToScene(sceneRect.x, sceneRect.y);
+			if (ul.x < 0)
+				sceneRect.x = ceil(sceneRect.x);
+			if (ul.y < 0)
+				sceneRect.y = ceil(sceneRect.y);
+
+			// test Bottom Right corner mapping for roundoff errors
+			auto br = gameView.MapToScene(sceneRect.x + sceneRect.z, sceneRect.y + sceneRect.w);
+			if (br.x >= config.renderWidth)
+				sceneRect.z = floor(sceneRect.z);
+			if (br.y >= config.renderHeight)
+				sceneRect.w = floor(sceneRect.w);
+
 			tig->GetMainWindow().LockCursor(
 				(int) sceneRect.x,
 				(int) sceneRect.y,

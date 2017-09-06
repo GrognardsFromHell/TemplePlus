@@ -18,7 +18,7 @@ GameView::GameView(MainWindow &mainWindow, gfx::RenderingDevice &device, int wid
 		auto pos = MapToScene(x, y);
 		x = pos.x;
 		y = pos.y;
-
+		
 		// Account for a resized screen
 		if (x < 0 || y < 0 || x >= mWidth || y >= mHeight)
 		{
@@ -43,6 +43,11 @@ GameView::GameView(MainWindow &mainWindow, gfx::RenderingDevice &device, int wid
 					mouseFuncs.MouseOutsideWndSet(true);
 				}
 			}
+			else
+			{
+				logger->info("Mouse outside resized window: x: {}, y: {}, wheel: {}", x, y, wheelDelta);
+			}
+
 			return;
 		}
 		mouseFuncs.MouseOutsideWndSet(false);
