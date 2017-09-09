@@ -61,7 +61,12 @@ public:
 
 	static int GhoulTouchAttackHandler(DispatcherCallbackArgs args);
 
+	static int DivinePowerToHitAsFighter(DispatcherCallbackArgs args);
+
 	void apply() override {
+
+		// Divine Power To Hit as fighter
+		replaceFunction(0x100C7390, DivinePowerToHitAsFighter);
 
 		// Ghoul touch - not allowing saving throw
 		replaceFunction(0x100D4A00, GhoulTouchAttackHandler);
@@ -292,11 +297,6 @@ public:
 			}, 52, 0);
 			write(0x102D2318, &sdd, sizeof(SubDispDefNew));
 		}
-	
-		// Divine Power BAB bouns type change from 12 to 40 so it stacks with Weapon Enh Bonus but doesn't stack with itself
-		char divPowWriteVal = 40;
-		write(0x100C7426 + 1, &divPowWriteVal, 1);
-
 
 		redirectCall(0x100D56A3, MindFogSaveThrowHook);
 
@@ -982,4 +982,24 @@ int SpellConditionFixes::GhoulTouchAttackHandler(DispatcherCallbackArgs args){
 		logger->debug("GhoulTouchAttackHandler: Cannot remove target");
 		return 0;
 	}
+}
+
+int SpellConditionFixes::DivinePowerToHitAsFighter(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIOTypeAttackBonus, DispIoAttackBonus);
+	auto charLvl = critterSys.GetLevel(args.objHndCaller);
+	auto fighterBab = d20ClassSys.GetBaseAttackBonus(stat_level_fighter, charLvl );
+	
+	dispIo->bonlist.AddCap(1, 0, args.GetData2()); // caps the initial value to 0
+
+	auto overallBon = dispIo->bonlist.GetEffectiveBonusSum();
+	if (overallBon < fighterBab)
+	{
+		fighterBab -= overallBon;
+	}
+	else
+		return 0; // fixed vanilla bug that would cause it to virtually stack with the pre-existing bonus
+	dispIo->bonlist.AddBonus(fighterBab, 40, args.GetData2()); // Divine Power BAB bouns type change from 12 to 40 so it stacks with Weapon Enh Bonus but doesn't stack with itself
+		
+	return 0;
 }
