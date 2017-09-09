@@ -19,6 +19,7 @@
 #include "anim.h"
 #include "float_line.h"
 #include "action_sequence.h"
+#include "ai.h"
 
 
 void PyPerformTouchAttack_PatchedCallToHitProcessing(D20Actn * pd20A, D20Actn d20A, uint32_t savedesi, uint32_t retaddr, PyObject * pyObjCaller, PyObject * pyTupleArgs);
@@ -37,6 +38,8 @@ public:
 
 	static int CalmEmotionsActionInvalid(DispatcherCallbackArgs args);
 	static bool ShouldRemoveCalmEmotions(objHndl handle, DispIoD20Signal *evtObj, DispatcherCallbackArgs args);
+
+	static int EmotionBeginSpell(DispatcherCallbackArgs args);
 
 	static int StinkingCloudObjEvent(DispatcherCallbackArgs args);
 	static int GreaseSlippage(DispatcherCallbackArgs args);
@@ -68,6 +71,9 @@ public:
 
 		// Calm Emotions ActionInvalid check
 		replaceFunction(0x100C6630, CalmEmotionsActionInvalid);
+
+		// Good Hope / Crushing Despair fix for concentration check requirement
+		replaceFunction(0x100CD390, EmotionBeginSpell);
 
 		// Invisibility Sphere lacking a Dismiss handler
 		{
@@ -520,6 +526,23 @@ bool SpellConditionFixes::ShouldRemoveCalmEmotions(objHndl handle, DispIoD20Sign
 	}
 	
 	return true;
+}
+
+int SpellConditionFixes::EmotionBeginSpell(DispatcherCallbackArgs args){
+
+	auto spellId = args.GetCondArg(0);
+
+	SpellPacketBody spellPkt(spellId);
+	if (!spellPkt.spellEnum)
+		return 0;
+
+	if (args.GetData2() == 82) { // Emotion: Fear
+		aiSys.FleeAdd(args.objHndCaller, spellPkt.caster);
+	}
+
+	// removed the part of adding sp-Concentrating - was 3.0ed holdover
+
+	return 0;
 }
 
 

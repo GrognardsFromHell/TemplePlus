@@ -346,7 +346,11 @@ BOOL AiSystem::AiListFind(objHndl aiHandle, objHndl tgt, int typeToFind){
 }
 
 void AiSystem::FleeAdd(objHndl npc, objHndl target) {
-	_FleeAdd(npc, target);
+	auto obj = objSystem->GetObject(npc);
+	if (!obj->IsNPC())
+		return;
+
+	UpdateAiFlags(npc, AIFS_FLEEING, target, nullptr);
 }
 
 void AiSystem::StopAttacking(objHndl npc) {

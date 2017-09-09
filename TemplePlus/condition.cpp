@@ -96,6 +96,8 @@ public:
 	static int __cdecl BeginHezrouStench(DispatcherCallbackArgs args);
 
 	static int __cdecl ConcentratingActionSequenceHandler(DispatcherCallbackArgs args); // handles "Stop Concentration" due to action taken
+	static int __cdecl ConcentratingActionRecipientHandler(DispatcherCallbackArgs args); // handles "Stop Concentration" due to action received
+
 
 	static int __cdecl EnlargePersonWeaponDice(DispatcherCallbackArgs args);
 
@@ -156,6 +158,7 @@ public:
 	static int __cdecl ImprovedTripBonus(DispatcherCallbackArgs args);
 
 	static int __cdecl PowerAttackDamageBonus(DispatcherCallbackArgs args);
+	static int __cdecl PowerAttackToHitPenalty(DispatcherCallbackArgs args);
 	static int __cdecl GlobalWieldedTwoHandedQuery(DispatcherCallbackArgs args);
 
 	static int __cdecl GlobalHpChanged(DispatcherCallbackArgs args);
@@ -349,8 +352,9 @@ public:
 		// Enlarge Person weapon damage dice modification
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100CA2B0, spCallbacks.EnlargePersonWeaponDice);
 
-		// power attack damage bonus
+		// power attack damage bonus and To Hit penalty
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100F8540, genericCallbacks.PowerAttackDamageBonus);
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100F84C0, genericCallbacks.PowerAttackToHitPenalty);
 
 		// Use Item ActionCheck & Radial
 		replaceFunction<int(DispatcherCallbackArgs)>(0x10100B60, itemCallbacks.UseableItemActionCheck);
@@ -876,7 +880,7 @@ int GenericCallbacks::PowerAttackDamageBonus(DispatcherCallbackArgs args)
 	// check offhand
 	auto offhandWeapon = inventory.ItemWornAt(args.objHndCaller, EquipSlot::WeaponSecondary);
 	auto shield = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Shield);
-	auto regardOffhand = (offhandWeapon || shield && !inventory.IsBuckler(shield)) ?true:false;
+	auto regardOffhand = (offhandWeapon || shield && !inventory.IsBuckler(shield)) ?true:false; // is there an offhand item (weapon/non-buckler shield)
 
 	// case 1
 	switch (wieldType)
@@ -980,6 +984,58 @@ int GenericCallbacks::PowerAttackDamageBonus(DispatcherCallbackArgs args)
 	//dispIo->damage.bonuses.AddBonusFromFeat(bonAmt, 0, 114, FEAT_POWER_ATTACK);
 	//
 	//return 0;
+}
+
+int GenericCallbacks::PowerAttackToHitPenalty(DispatcherCallbackArgs args)
+{
+	auto powerAttackAmt = args.GetCondArg(0);
+
+	if (!powerAttackAmt)
+		return 0;
+
+	GET_DISPIO(dispIOTypeAttackBonus, DispIoAttackBonus);
+	
+	// ignore ranged weapons
+	if (dispIo->attackPacket.flags & D20CAF_RANGED)
+		return 0;
+
+	// get wield type
+	auto weaponUsed = dispIo->attackPacket.GetWeaponUsed();
+	auto wieldType = inventory.GetWieldType(args.objHndCaller, weaponUsed, true);
+	auto wieldTypeWeaponModified = inventory.GetWieldType(args.objHndCaller, weaponUsed, false); // the wield type if the weapon is not enlarged along with the critter
+	auto modifiedByEnlarge = wieldType != wieldTypeWeaponModified;
+
+	
+
+	dispIo->bonlist.AddBonusFromFeat(-powerAttackAmt, 0, 114, FEAT_POWER_ATTACK); // todo convenience disabling of to hit penalty when not dual wielding
+	return 0;
+
+	//switch (wieldType)
+	//{
+	//case 0: // light weapon
+	//	switch (wieldTypeWeaponModified)
+	//	{
+	//	case 0:
+	//		// is light weapon either way, so no malus (and no damage bonus) applied
+	//		return 0;
+	//	case 1: // benefitting from enlargement of weapon - so apply to hit malus
+	//	case 2:
+	//	default:
+	//		// add penalty
+	//		dispIo->bonlist.AddBonusFromFeat(-powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
+	//		return 0;
+	//	}
+	//case 1: // single handed wield if weapon is unaffected; 
+	//case 2: // two handed wield if weapon is unaffected
+	//case 3:
+	//case 4:
+	//default:
+	//	// add penalty
+	//	dispIo->bonlist.AddBonusFromFeat(-powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
+	//	return 0;
+	//}
+
+	return 0;
 }
 
 int GenericCallbacks::GlobalWieldedTwoHandedQuery(DispatcherCallbackArgs args)
@@ -3079,6 +3135,7 @@ void ConditionFunctionReplacement::HookSpellCallbacks()
 {
 
 	replaceFunction(0x100D3100, SpellCallbacks::ConcentratingActionSequenceHandler);
+	replaceFunction(0x100D32B0, SpellCallbacks::ConcentratingActionRecipientHandler);
 
 	// QueryCritterHasCondition for sp-Spiritual Weapon
 	int writeVal = dispTypeD20Query;
@@ -3287,6 +3344,65 @@ int SpellCallbacks::ConcentratingActionSequenceHandler(DispatcherCallbackArgs ar
 		dca.objHndCaller = args.objHndCaller;
 		SpellRemoveMod(dca);
 	}
+	return 0;
+}
+
+int SpellCallbacks::ConcentratingActionRecipientHandler(DispatcherCallbackArgs args)
+{
+	if (!args.dispIO){
+		return args.dispType == dispTypeBeginRound;
+	}
+
+	if (args.dispKey == DK_SIG_Killed){
+		return 1;
+	}
+		
+	if (args.dispIO->dispIOType != enum_dispIO_type::dispIoTypeSendSignal)
+		return 0;
+
+	GET_DISPIO(dispIoTypeSendSignal, DispIoD20Signal);
+	auto d20a = (D20Actn*)dispIo->data1;
+	auto spellId = args.GetCondArg(0);
+	if (!d20a)
+		return 1;
+
+	if (d20a->d20ActType != D20A_CAST_SPELL)
+		return 0;
+
+	auto d20aSpellId = d20a->spellId;
+	if (spellId == d20aSpellId)
+		return 0;
+
+	SpellPacketBody spellPkt(d20aSpellId);
+	if (!spellPkt.spellEnum){
+		logger->debug("ConcentratingActionRecipientHandler: error, unable to retrieve spell packet");
+		return 0;
+	}
+
+	SpellPacketBody conceSpellPkt(spellId);
+	if (!conceSpellPkt.spellEnum) {
+		logger->debug("ConcentratingActionRecipientHandler: error, unable to retrieve spell packet of concentrated spell");
+		return 0;
+	}
+
+	if (conceSpellPkt.spellEnum == 303) //meld into stone hack
+	{
+		return 0;
+	}
+
+	if (skillSys.SkillRoll(args.objHndCaller, SkillEnum::skill_concentration, spellPkt.dc,nullptr, 1)){
+		return 0;
+	}
+
+	histSys.CreateRollHistoryLineFromMesfile(32, args.objHndCaller, objHndl::null);
+	combatSys.FloatCombatLine(args.objHndCaller, 54);
+	auto args2 = args;
+	args2.dispKey = DK_SIG_Remove_Concentration;
+	args2.dispIO = nullptr;
+	args2.dispType = enum_disp_type::dispTypeD20Signal;
+	args2.RemoveSpellMod();
+
+
 	return 0;
 }
 
