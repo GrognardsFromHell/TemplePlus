@@ -306,6 +306,7 @@ public:
 		replaceFunction(0x100E2560, _ConditionAdd_NumArgs3);
 		replaceFunction(0x100E2590, _ConditionAdd_NumArgs4);
 		replaceFunction(0x100E25C0, InitCondFromCondStructAndArgs);
+		replaceFunction(0x100ED030, ConditionRemoveCallback);
 		
 		replaceFunction(0x100EABB0, BarbarianRageStatBonus);
 		replaceFunction(0x100EABE0, BarbarianRageSaveBonus);
@@ -5153,7 +5154,7 @@ int ClassAbilityCallbacks::BardMusicActionFrame(DispatcherCallbackArgs args){
 		auto partsysId = args.GetCondArg(5);
 		gameSystems->GetParticleSys().End(partsysId);
 		auto objHnd = args.GetCondArgObjHndl(3);
-		if (gameSystems->GetObj().IsValidHandle(objHnd)){
+		if (gameSystems->GetObj().IsValidHandle(objHnd) && bmType != BM_SUGGESTION){ // make an exception for Suggestion since it shouldn't abort the Fascinate song
 			d20Sys.d20SendSignal(objHnd, DK_SIG_Bardic_Music_Completed, 0,0);
 		}
 	}
