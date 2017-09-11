@@ -10,6 +10,7 @@
 #include "config/config.h"
 #include "util/fixes.h"
 #include "rng.h"
+#include <dungeon_master.h>
 
 TempleFuncs templeFuncs;
 
@@ -25,9 +26,28 @@ class TempleFuncReplacements : public TempleFix
 
 int32_t TempleFuncs::diceRoll(uint32_t dieNum, uint32_t dieType, int32_t dieBonus)
 {
+	auto dmFudge = dmSys.GetDiceRollForcing();
 	int32_t result = dieBonus;
-	for (uint32_t i = 0; i < dieNum; i++)
-	{
+
+	switch (dmFudge){
+	case 0:
+		for (uint32_t i = 0; i < dieNum; i++) {
+			result += rngSys.GetInt(1, dieType);
+		}
+		return result;
+	case 1:
+		result += 1 * dieNum;
+		return result;
+	case 2:
+		result +=  (int)ceil( ( (1.0 + dieType) * dieNum) / 2); // average, rounded up for even dice
+		return result;
+	case 3:
+		result += dieNum * dieType;
+		return result;
+	default: 
+		break;
+	}
+	for (uint32_t i = 0; i < dieNum; i++){
 		result += rngSys.GetInt(1, dieType);
 	}
 	return result;

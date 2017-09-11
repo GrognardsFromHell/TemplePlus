@@ -116,6 +116,13 @@ void DungeonMaster::Render() {
 		ImGui::TreePop();
 	}
 
+	// Roll Fudger
+	if (ImGui::TreeNodeEx("Fudge Rolls", ImGuiTreeNodeFlags_CollapsingHeader)) {
+
+		RenderFudgeRolls();
+		ImGui::TreePop();
+	}
+
 	// Monster Tree
 	if (ImGui::TreeNodeEx("Monsters", ImGuiTreeNodeFlags_CollapsingHeader)) {
 
@@ -1257,6 +1264,17 @@ void DungeonMaster::RenderVsParty(){
 	
 }
 
+void DungeonMaster::RenderFudgeRolls(){
+	
+	ImGui::Text("Force dice roll results:");
+	ImGui::RadioButton("Normal", &mForceRollType, 0); ImGui::SameLine();
+	ImGui::RadioButton("Min", &mForceRollType, 1); ImGui::SameLine();
+	ImGui::RadioButton("Avg", &mForceRollType, 2); ImGui::SameLine();
+	ImGui::RadioButton("Max", &mForceRollType, 3);
+
+
+}
+
 void DungeonMaster::SetObjEditor(objHndl handle){
 	
 	critEditor = ObjEditor();
@@ -1367,6 +1385,10 @@ bool DungeonMaster::IsHandlingMsg(){
 
 void DungeonMaster::SetIsHandlingMsg(bool b){
 	isHandlingMsg = b;
+}
+
+int DungeonMaster::GetDiceRollForcing(){
+	return mForceRollType;
 }
 
 bool DungeonMaster::IsMoused(){

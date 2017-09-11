@@ -27,11 +27,14 @@ public:
 	bool IsHandlingMsg();
 	void SetIsHandlingMsg(bool b);;
 
+	int GetDiceRollForcing();
+
 	void Render();
 	void RenderDmButton();
 	void RenderMaps();
 	void RenderEditedObj();
 	void RenderVsParty();
+	void RenderFudgeRolls();
 
 	bool HandleMsg(const TigMsg & msg);
 	bool HandleSpawning(const TigMsg & msg);
@@ -88,6 +91,7 @@ protected:
 	// bool mIsActive = true;
 	bool mJustOpened = false;
 
+	int mForceRollType; // 0 - normal, 1 - rolls 1s, 2 - roll 10s, 3 - rolls 20s
 
 	void RenderMonster(Record& record);
 	void RenderMonsterFilter();
