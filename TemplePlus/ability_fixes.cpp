@@ -28,7 +28,14 @@ public:
 	static int BootsOfSpeedNewday(DispatcherCallbackArgs args);
 	static int BootsOfSpeedBeginRound(DispatcherCallbackArgs args);
 
+	static int CombatExpertiseAcBonus(DispatcherCallbackArgs args);
+	static int TacticalAbusePrevention(DispatcherCallbackArgs args); // Combat Expertise / Fight Defensively
+	
+
 	void apply() override {
+
+		replaceFunction(0x100F7ED0, TacticalAbusePrevention);
+		replaceFunction(0x100F7E70, CombatExpertiseAcBonus);
 
 		replaceFunction(0x100CB890, GrappledMoveSpeed); // fixed Grappled when the frog is dead
 		{
@@ -331,5 +338,34 @@ int AbilityConditionFixes::BootsOfSpeedBeginRound(DispatcherCallbackArgs args){
 	
 	auto partsysId = args.GetCondArg(4);
 	gameSystems->GetParticleSys().End(partsysId);
+	return 0;
+}
+
+int AbilityConditionFixes::CombatExpertiseAcBonus(DispatcherCallbackArgs args){
+
+	auto expertiseAmt = args.GetCondArg(0);
+	if (!expertiseAmt){
+		return 0;
+	}
+
+	auto attackMade = args.GetCondArg(1);
+	if (!attackMade){
+		return 0;
+	}
+
+	GET_DISPIO(dispIOTypeAttackBonus, DispIoAttackBonus);
+	dispIo->bonlist.AddBonusFromFeat(expertiseAmt, 8, 114, FEAT_COMBAT_EXPERTISE);
+
+	return 0;
+}
+
+int AbilityConditionFixes::TacticalAbusePrevention(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIoTypeSendSignal, DispIoD20Signal);
+	auto damPkt = (DispIoDamage*)dispIo->data1;
+	if (damPkt->attackPacket.flags & D20CAF_RANGED){
+		return 0;
+	}
+	args.SetCondArg(1, 1);
 	return 0;
 }

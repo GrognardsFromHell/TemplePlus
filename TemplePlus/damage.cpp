@@ -407,6 +407,7 @@ int Damage::DealAttackDamage(objHndl attacker, objHndl tgt, int d20Data, D20CAF 
 		temple::GetRef<void(__cdecl)(objHndl, DamageType, int)>(0x10016A90)(tgt, evtObjDam.damage.dice[i].type, evtObjDam.damage.dice[i].rolledDamage);
 	}
 
+	d20Sys.d20SendSignal(attacker, DK_SIG_Attack_Made, (int)&evtObjDam, 0);
 
 	// signal events
 	if (!isUnconsciousAlready && critterSys.IsDeadOrUnconscious(tgt)){
