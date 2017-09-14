@@ -4,12 +4,14 @@
 
 #include "config/config.h"
 #include "tig/tig_mouse.h"
+#include "gamesystems/gamerenderer.h"
 
 GameView::GameView(MainWindow &mainWindow, gfx::RenderingDevice &device, int width, int height)
     : mMainWindow(mainWindow), mDevice(device), mWidth(width), mHeight(height),
       mResizeListener(device.AddResizeListener(
           [this](int w, int h) { this->Resize(w, h); })) {
 	
+	mZoomFactor = 1.0;
 	auto &camera = device.GetCamera();
 	Resize((int) camera.GetScreenWidth(), (int) camera.GetScreenHeight());
 
@@ -92,11 +94,25 @@ XMINT2 GameView::MapFromScene(int x, int y) const{
 	return{ (int)localX, (int)localY };
 }
 
+void GameView::SetZoom(float zoomFactor){
+	if (zoomFactor < 1.0 || zoomFactor > 2.0)
+		return;
+	mZoomFactor = zoomFactor;
+	mSceneScale = mSceneScaleOrg * zoomFactor;
+
+	gameRenderer->SetZoom(zoomFactor);
+}
+
+float GameView::GetZoom()
+{
+	return mZoomFactor;
+}
+
 void GameView::Resize(int width, int height)
 {
 	auto widthFactor = (float) width / (float)mWidth;
 	auto heightFactor = (float) height / (float)mHeight;
-	mSceneScale = std::min<float>(widthFactor, heightFactor);
+	mSceneScaleOrg = mSceneScale = std::min<float>(widthFactor, heightFactor);
 
 	// Calculate the rectangle on the back buffer where the scene will
 	// be stretched to

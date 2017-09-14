@@ -109,10 +109,18 @@ void DungeonMaster::Render() {
 	TigRect adjDmPortrait(blyat.x, blyat.y+1, cyka.x - blyat.x, cyka.y - blyat.y);
 	uiDm.SetDmPortraitRect(adjDmPortrait);
 
-
+	// Maps
 	if (party.GetConsciousPartyLeader() && ImGui::TreeNodeEx("Maps", ImGuiTreeNodeFlags_CollapsingHeader)) {
 		RenderMaps();
 
+		ImGui::TreePop();
+	}
+
+	if (ImGui::TreeNodeEx("Zoomm", ImGuiTreeNodeFlags_CollapsingHeader)) {
+		static float zoomFactor = 1.0;
+		if (ImGui::InputFloat("Zoom", &zoomFactor, 0.1, 0.2)){
+			gameView->SetZoom(zoomFactor);
+		}
 		ImGui::TreePop();
 	}
 

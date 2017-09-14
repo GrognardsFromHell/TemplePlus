@@ -27,6 +27,7 @@
 #include "ui_intgame_renderer.h"
 #include "fogrenderer.h"
 #include "map/sector.h"
+#include "gameview.h"
 
 using namespace gfx;
 using namespace temple;
@@ -205,11 +206,13 @@ void GameRenderer::Render() {
     return;
   }
 
+  auto zoomFactor = gameView->GetZoom();
+
   TigRect viewportSize;
   viewportSize.y = -256;
-  viewportSize.width = config.renderWidth + 512;
+  viewportSize.width = config.renderWidth / zoomFactor + 512;
   viewportSize.x = -256;
-  viewportSize.height = config.renderHeight + 512;
+  viewportSize.height = config.renderHeight / zoomFactor + 512;
 
   TileRect tiles;
 
@@ -229,8 +232,9 @@ void GameRenderer::Render() {
 
     // I think this maybe a 2D arcanum leftover when the map could be
     // incrementally drawn based on "dirty rects"
+	
     TigRectList dirtyList;
-    dirtyList.rect = TigRect(0, 0, config.renderWidth, config.renderHeight);
+    dirtyList.rect = TigRect(0, 0, config.renderWidth / zoomFactor , config.renderHeight / zoomFactor);
     dirtyList.next = nullptr;
     TigRectList *dirtyRectPtr = &dirtyList;
     renderInfo.rectList = &dirtyRectPtr;
@@ -239,6 +243,12 @@ void GameRenderer::Render() {
 
 	sectorSys.SectorListReturnToPool(sectorList);
   }
+}
+
+void GameRenderer::SetZoom(float zoomFactor){
+	if (zoomFactor < 1.0 || zoomFactor > 2.0)
+		return;
+	mRenderingDevice.GetCamera().SetScale(zoomFactor);
 }
 
 void GameRenderer::RenderWorld(RenderWorldInfo *info) {

@@ -30,6 +30,12 @@ public:
 	 */
 	XMINT2 MapFromScene(int x, int y) const;
 
+	/*
+	 * Changes zoom in on the scene
+	 */
+	void SetZoom(float zoomFactor);
+	float GetZoom();
+
 private:
 	gfx::ResizeListenerRegistration mResizeListener;
 	MainWindow &mMainWindow;
@@ -37,6 +43,8 @@ private:
 	int mWidth;
 	int mHeight;
 	float mSceneScale;
+	float mZoomFactor;
+	float mSceneScaleOrg;
 	XMFLOAT4 mSceneRect;
 
 	void Resize(int width, int height);

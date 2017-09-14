@@ -40,6 +40,8 @@ public:
 		return *mMapObjectRenderer;
 	}
 
+	void SetZoom(float zoomFactor);
+
 private:
 
 	void RenderWorld(RenderWorldInfo *info);

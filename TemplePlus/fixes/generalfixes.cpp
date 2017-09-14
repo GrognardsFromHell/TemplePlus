@@ -332,6 +332,9 @@ public:
 
 		void apply() override
 		{
+			static void (__cdecl* orgPartySelectedStandAndMove)(LocAndOffsets, BOOL) = replaceFunction<void(LocAndOffsets, BOOL)>(0x10113010, [](LocAndOffsets loc, BOOL walkFlag){
+				orgPartySelectedStandAndMove(loc, TRUE);
+			});
 		//	replaceFunction(0x100FD1C0, sub_100FD1C0);
 		//orgSub_100437F0 = replaceFunction(0x100437F0, Sub_100437F0);
 		//orgShouldRun = replaceFunction(0x10014750, ShouldRun);

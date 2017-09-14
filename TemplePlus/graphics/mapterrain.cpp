@@ -10,6 +10,7 @@
 #include <util/fixes.h>
 #include <gamesystems/gamesystems.h>
 #include <gamesystems/timeevents.h>
+#include "gameview.h"
 
 TerrainSystem::TerrainSystem(gfx::RenderingDevice& device, gfx::ShapeRenderer2d& shapeRenderer)
 	: mDevice(device),mShapeRenderer(shapeRenderer) {
@@ -40,8 +41,10 @@ void TerrainSystem::Render() {
 		mTransitionProgress = timeSinceMapEntered / (float)TransitionTime;
 	}
 
-	auto viewportWidth = config.renderWidth;
-	auto viewportHeight = config.renderHeight;
+	auto zoomFactor = gameView->GetZoom();
+
+	auto viewportWidth = config.renderWidth / zoomFactor;
+	auto viewportHeight = config.renderHeight / zoomFactor;
 
 	// The terrain is centered on the center tile of the map
 	// This is 480,480 for all vanilla maps, but theoretically it 
@@ -58,28 +61,30 @@ void TerrainSystem::Render() {
 	terrainOriginX -= MapWidthPixels / 2 - 40;
 	terrainOriginY -= MapHeightPixels / 2 - 14;
 
-	auto startX = - terrainOriginX / TileSize;
-	auto startY = - terrainOriginY / TileSize;
+	auto tileSizeZoom = TileSize *zoomFactor;
+
+	auto startX = (int)(-terrainOriginX / tileSizeZoom);//TileSize / zoomFactor;
+	auto startY = (int)(-terrainOriginY / tileSizeZoom);//TileSize;
 
 	for (auto y = startY; y < MapHeightTiles; ++y) {
 		TigRect destRect;
-		destRect.y = terrainOriginY + y * TileSize;
-		destRect.height = TileSize;
+		destRect.y = terrainOriginY + y * tileSizeZoom;//TileSize;
+		destRect.height = TileSize * zoomFactor;
 		for (auto x = startX; x < MapWidthTiles; ++x) {
-			destRect.x = terrainOriginX + x * TileSize;
-			destRect.width = TileSize;
+			destRect.x = terrainOriginX + x * tileSizeZoom; //TileSize;
+			destRect.width = TileSize * zoomFactor;
 
 			// Get the correct texture for this tile
 			RenderTile(x, y, destRect);
 
 			// The next column would be out of view
-			if (destRect.x + TileSize >= viewportWidth) {
+			if (destRect.x + tileSizeZoom >= viewportWidth) {
 				break;
 			}
 		}
 
 		// The next column would be out of view
-		if (destRect.y + TileSize >= viewportHeight) {
+		if (destRect.y + tileSizeZoom >= viewportHeight) {
 			break;
 		}
 	}
