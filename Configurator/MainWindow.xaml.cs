@@ -6,7 +6,6 @@ using System.Text;
 using System.Windows;
 using IniParser;
 using IniParser.Model;
-using Microsoft.WindowsAPICodePack.Shell;
 using System.Reflection;
 using System.Diagnostics;
 
@@ -19,7 +18,6 @@ namespace TemplePlusConfig
     {
         // INI file is encoded in UTF-8 without a byte order mark
         
-
         public MainWindow()
         {
             App._iniParser = new FileIniDataParser();
@@ -34,7 +32,7 @@ namespace TemplePlusConfig
 
             DataContext = App._iniViewModel;
 
-            var saveGameFolder = KnownFolders.SavedGames.Path;
+            var saveGameFolder = SaveGameFolder.Path;
             App._iniPath = Path.Combine(saveGameFolder, "TemplePlus", "TemplePlus.ini");
 
             if (File.Exists(App._iniPath))
