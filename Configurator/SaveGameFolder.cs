@@ -20,11 +20,13 @@ namespace TemplePlusConfig
         static SaveGameFolder()
         {
             int hresult;
-            if ((hresult = SHGetKnownFolderPath(SavedGames, 0, IntPtr.Zero, out IntPtr pszPath)) == 0)
+            IntPtr pszPath;
+            if ((hresult = SHGetKnownFolderPath(SavedGames, 0, IntPtr.Zero, out pszPath)) == 0)
             {
                 Path = Marshal.PtrToStringUni(pszPath);
                 Marshal.FreeCoTaskMem(pszPath);
-            } else
+            }
+            else
             {
                 throw new COMException("Unable to determine location of save game folder.", hresult);
             }
