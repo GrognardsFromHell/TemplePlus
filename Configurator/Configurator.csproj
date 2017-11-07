@@ -136,6 +136,7 @@
       <DependentUpon>InstalledNotifWnd.xaml</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
+    <Compile Include="SaveGameFolder.cs" />
     <Compile Include="ScreenResolution.cs" />
     <Compile Include="TempleDllVersion.cs" />
     <Page Include="HouseRulesWindow.xaml">
