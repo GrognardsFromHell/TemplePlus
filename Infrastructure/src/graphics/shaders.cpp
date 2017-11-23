@@ -67,7 +67,7 @@ namespace gfx {
 
 	template <>
 	void Shader<ID3D11VertexShader>::Unbind() {
-		mDevice.mContext->PSSetShader(nullptr, nullptr, 0);
+		mDevice.mContext->VSSetShader(nullptr, nullptr, 0);
 	}
 
 	template<typename T>
