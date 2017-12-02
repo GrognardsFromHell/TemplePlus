@@ -58,6 +58,7 @@ struct LegacyCombatSystem : temple::AddressTable {
 	uint32_t* combatModeActive;
 	bool isCombatActive();
 	bool AllCombatantsFarFromParty();
+	bool AllPcsUnconscious(); // true if all party PCs are unconscious
 	uint32_t IsCloseToParty(objHndl objHnd);
 	/*
 	// in vanilla, checks if obj are both in the party or both NOT in the party; kinda used like IsFriendly in the code, so be careful!

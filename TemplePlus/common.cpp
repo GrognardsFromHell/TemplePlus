@@ -338,3 +338,9 @@ const char* BonusList::GetBonusMesLine(int lineNum) {
 
 	return mesLine.value;
 }
+
+void GroupArray::Reset(){
+	this->GroupSize = 0;
+	memset(this->GroupMembers, 0, sizeof(this->GroupMembers));
+	this->sortFunc = nullptr;
+}

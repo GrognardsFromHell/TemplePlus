@@ -24,7 +24,7 @@ struct LegacyPartySystem : temple::AddressTable
 	uint32_t GetLivingPartyMemberCount();
 	uint32_t(__cdecl *ObjIsInGroupArray)(GroupArray *, objHndl);
 	uint32_t(__cdecl *ObjIsAIFollower)(objHndl);
-	bool (__cdecl *IsInParty)(objHndl critter);
+	bool IsInParty(objHndl critter);
 	uint32_t(__cdecl * ObjFindInGroupArray)(GroupArray *, objHndl); // returns index
 	uint32_t(__cdecl * ObjRemoveFromAllGroupArrays)(objHndl);
 	uint32_t(__cdecl *ObjAddToGroupArray)(GroupArray *, objHndl);
@@ -69,7 +69,7 @@ struct LegacyPartySystem : temple::AddressTable
 		rebase(ObjRemoveFromAllGroupArrays, 0x1002BD00);
 		rebase(ObjAddToGroupArray, 0x100DF990);
 		//rebase(AddToPCGroup, 0x1002BBE0);
-		rebase(IsInParty, 0x1002B1B0);
+		//rebase(IsInParty, 0x1002B1B0);
 		rebase(RumorLogAdd, 0x1005FC20);
 		rebase(GetStoryState, 0x10006A20);
 		rebase(SetStoryState, 0x10006A30);

@@ -76,6 +76,8 @@ struct GroupArray {
 	objHndl GroupMembers[32];
 	uint32_t GroupSize;
 	int (__cdecl*sortFunc)(void*, void*); // used for comparing two items (e.g. alphabetic sorting)
+
+	void Reset(); // clears members and sorter func
 };
 
 struct JumpPointPacket {

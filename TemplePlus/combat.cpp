@@ -674,6 +674,10 @@ void LegacyCombatSystem::TurnProcessAi(objHndl obj)
 BOOL LegacyCombatSystem::StartCombat(objHndl combatInitiator, int setToFirstInitiativeFlag){
 
 	if (!*combatModeActive){
+
+		if (AllPcsUnconscious())
+			return FALSE;
+
 		return temple::GetRef<BOOL(__cdecl)(objHndl, int)>(0x100639A0)(combatInitiator, setToFirstInitiativeFlag);
 	}
 	return TRUE;
@@ -717,13 +721,11 @@ void LegacyCombatSystem::EndTurn()
 		actSeqSys.TurnStart(tbSys.turnBasedGetCurrentActor());
 	}
 
-	static auto allPcsUnconscious = temple::GetRef<int(__cdecl)()>(0x10062D60);
-
 	if (AllCombatantsFarFromParty()){
 		logger->info("Ending combat (enemies far from party)");
 		auto leader = party.GetConsciousPartyLeader();
 		combatSys.CritterExitCombatMode(leader);
-	} else if (allPcsUnconscious())
+	} else if (AllPcsUnconscious())
 	{
 		auto leader = party.GetConsciousPartyLeader();
 		combatSys.CritterExitCombatMode(leader);
@@ -1038,6 +1040,20 @@ bool LegacyCombatSystem::AllCombatantsFarFromParty()
 //	static auto combatantsFarFromParty = temple::GetRef<int(__cdecl)()>(0x10062CB0);
 	//return combatantsFarFromParty();
 
+}
+
+bool LegacyCombatSystem::AllPcsUnconscious(){
+
+	auto N = party.GroupPCsLen();
+	for (auto i=0; i < N; i++){
+		auto pc = party.GroupPCsGetMemberN(i);
+		if (!pc)
+			continue;
+		if (!critterSys.IsDeadOrUnconscious(pc))
+			return false;
+	}
+
+	return true;
 }
 
 uint32_t LegacyCombatSystem::IsCloseToParty(objHndl objHnd)

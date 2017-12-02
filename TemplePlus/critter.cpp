@@ -320,12 +320,150 @@ int LegacyCritterSystem::MoneyAmount(objHndl handle){
 	return temple::GetRef<int(__cdecl)(objHndl)>(0x1007F880)(handle);
 }
 
-uint32_t LegacyCritterSystem::IsFriendly(objHndl pc, objHndl npc) {
+uint32_t LegacyCritterSystem::IsFriendly(objHndl critter1, objHndl critter2) {
 
-	if (d20Sys.d20Query(pc, DK_QUE_Critter_Is_AIControlled) && d20Sys.d20Query(npc, DK_QUE_Critter_Is_AIControlled))
-		return true;
+	if (!critter1 || !critter2)
+		return FALSE;
 
-	return addresses.IsFriendly(pc, npc);
+	if (critter1 == critter2)
+		return TRUE;
+
+	// added to account for both being AI controlled (assumed friendly - TODO overhaul in the future!)
+	if (d20Sys.d20Query(critter1, DK_QUE_Critter_Is_AIControlled) && d20Sys.d20Query(critter2, DK_QUE_Critter_Is_AIControlled))
+		return TRUE;
+
+	static auto checkNotCharmedPartyMember = [](objHndl handle) { // returns false if is in party, is charmed, and charmed is out of party
+		auto isInParty = party.IsInParty(handle);
+		if (!isInParty)
+			return true;
+		if (!d20Sys.d20Query(handle, DK_QUE_Critter_Is_Charmed))
+			return true;
+
+		objHndl charmer;
+		charmer.handle = d20Sys.d20QueryReturnData(handle, DK_QUE_Critter_Is_Charmed);
+		if (!charmer)
+			return true;
+		if (party.IsInParty(charmer))
+			return true;
+
+		return false;
+	};
+
+	auto critter1_in_party = party.IsInParty(critter1);
+	auto critter2_in_party = party.IsInParty(critter2);
+	auto critter1_leader = critterSys.GetLeader(critter1);
+	auto critter2_leader = critterSys.GetLeader(critter2);
+
+	// if both are in party, or critter2's leader is in party
+	if ((critter1_in_party && critter2_in_party)
+		|| (party.IsInParty(critter2_leader) && critter1_in_party)
+		|| (party.IsInParty(critter1_leader) && critter2_in_party)) { // added the flip condition too () - was missing in vanilla, looked like a bug
+
+		if (checkNotCharmedPartyMember(critter2) && checkNotCharmedPartyMember(critter1))
+			return TRUE;
+	}
+	//else{
+	//	// bug? was in vanilla code...
+	//	if (critter1_in_party && party.IsInParty(critter2_leader)){
+	//		if (checkNotCharmedPartyMember(critter2) && checkNotCharmedPartyMember(critter1))
+	//			return TRUE;
+	//	}
+	//}
+
+	auto obj1 = objSystem->GetObject(critter1);
+	auto obj2 = objSystem->GetObject(critter2);
+	
+	// if both are NPCs:
+	if (obj1->IsNPC() && obj2->IsNPC()) {
+
+		if (!d20Sys.d20Query(critter1, DK_QUE_Critter_Is_Charmed)) {
+			if (critter1_leader == critter2) {
+				return TRUE;
+			}
+			if (critter2_leader == critter1 
+				|| critterSys.NpcAllegianceShared(critter1, critter2)
+				|| critterSys.HasNoFaction(critter1) || critterSys.HasNoFaction(critter2)) {
+				return TRUE;
+			}
+		}
+
+		return FALSE;
+	}
+
+
+	// in this section, at least one of the critters is a PC
+	auto pc = critter1;
+	auto npc = critter2;
+
+	if (!objSystem->GetObject(pc)->IsPC()){
+		pc = critter2;
+		npc = critter1;
+		// they can't be both NPCs at this point - if they were, it'd have returned in the previous section.
+	}
+
+	if (!objSystem->GetObject(pc)->IsPC()) {
+		return FALSE; // just in case something that's not even a critter somehow got here
+	}
+	
+	if (!d20Sys.d20Query(pc, DK_QUE_Critter_Is_Charmed))
+		return FALSE;
+	objHndl charmer;
+	charmer.handle = d20Sys.d20QueryReturnData(pc, DK_QUE_Critter_Is_Charmed);
+	if (charmer != npc)
+		return FALSE;
+	return TRUE;
+
+
+
+	//// check if the other one is a PC
+	//if (!objSystem->GetObject(npc)->IsPC()) {
+	//	return FALSE;
+	//}
+
+	//if (!objSystem->GetObject(critter1)->IsNPC()){
+
+	//	if (objSystem->GetObject(critter1)->IsPC()){
+	//		if (!d20Sys.d20Query(critter1, DK_QUE_Critter_Is_Charmed))
+	//			return FALSE;
+	//		objHndl charmer;
+	//		charmer.handle = d20Sys.d20QueryReturnData(critter1, DK_QUE_Critter_Is_Charmed);
+	//		if (charmer != critter2)
+	//			return FALSE;
+	//		return TRUE;
+
+	//	}
+
+	//	if (!objSystem->GetObject(critter2)->IsPC()) {
+	//		return FALSE;
+	//	}
+
+	//	if (!d20Sys.d20Query(critter2, DK_QUE_Critter_Is_Charmed))
+	//		return FALSE;
+	//	objHndl charmer;
+	//	charmer.handle = d20Sys.d20QueryReturnData(critter2, DK_QUE_Critter_Is_Charmed);
+	//	if (charmer != critter1)
+	//		return FALSE;
+	//	return TRUE;
+	//}
+
+	//if (objSystem->GetObject(critter2)->IsNPC()) {
+	//	
+	//	if (!d20Sys.d20Query(critter1, DK_QUE_Critter_Is_Charmed)){
+	//		auto critter1_leader = critterSys.GetLeader(critter1);
+	//		if (critter1_leader == critter2_leader)
+	//			return TRUE;
+	//		if (critter2_leader == critter1
+	//			|| critterSys.NpcAllegianceShared(critter1, critter2)
+	//			|| critterSys.HasNoFaction(critter1) && critterSys.HasNoFaction(critter2) ){
+	//			return TRUE;
+	//		}
+	//			
+	//	}
+	//	return FALSE;
+	//}
+	//
+
+	//return addresses.IsFriendly(critter1, critter2);
 }
 
 BOOL LegacyCritterSystem::NpcAllegianceShared(objHndl handle, objHndl handle2){
@@ -391,6 +529,23 @@ BOOL LegacyCritterSystem::NpcAllegianceShared(objHndl handle, objHndl handle2){
 
 	//auto allegShared = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x10080A70);
 	//return allegShared(handle, handle2);
+}
+
+bool LegacyCritterSystem::HasNoFaction(objHndl handle){
+	if (!handle)
+		return true;
+
+	auto obj = objSystem->GetObject(handle);
+	
+	if (obj->IsPC())
+		return true;
+	
+	if (party.IsInParty(handle))
+		return false;
+
+	auto result = obj->GetInt32(obj_f_npc_faction, 0) == 0;
+
+	return result;
 }
 
 int LegacyCritterSystem::GetReaction(objHndl of, objHndl towards){

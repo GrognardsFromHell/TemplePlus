@@ -152,6 +152,7 @@ struct LegacyCritterSystem : temple::AddressTable
 		 - both share a faction (including factions from reputations for PCs)
 	*/
 	BOOL NpcAllegianceShared(objHndl obj, objHndl obj2);
+	bool HasNoFaction(objHndl handle); // returns true for all PCs; returns false for NPCs in party
 	int GetReaction(objHndl of, objHndl towards); // gets npc reaction towards
 
 

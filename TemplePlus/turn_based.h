@@ -20,11 +20,13 @@ struct TurnBasedSys : temple::AddressTable
 	void InitiativeListNextActor(); // move initiative to next actor
 	int GetInitiativeListIdx() const;
 
-	void AddToInitiative(objHndl handle) const;
+	void AddToInitiative(objHndl handle) ;
 		void AddToInitiativeGroup(objHndl handle) const;
-		void ArbitrateInitiativeConflicts() const;
+		void ArbitrateInitiativeConflicts() ;
 	
 	bool IsInInitiativeList(objHndl handle) const;
+
+	void CreateInitiativeListWithParty(); // resets initiative list and fills it with the party.
 };
 
 extern TurnBasedSys tbSys;

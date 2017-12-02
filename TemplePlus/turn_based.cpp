@@ -14,6 +14,8 @@
 #include "ai.h"
 #include "condition.h"
 #include "rng.h"
+#include "tutorial.h"
+#include "legacyscriptsystem.h"
 
 class TurnBasedReplacements : public TempleFix
 {
@@ -37,6 +39,9 @@ public:
 		orgPortraitDragChangeInitiative = replaceFunction(0x100DF5A0, PortraitDragChangeInitiative);
 		replaceFunction<void(__cdecl)(objHndl)>(0x100DF1E0, [](objHndl handle){
 			tbSys.AddToInitiative(handle);
+		});
+		replaceFunction<void(__cdecl)()>(0x100DF450, [](){
+			tbSys.CreateInitiativeListWithParty();
 		});
 	}
 } tbReplacements;
@@ -146,13 +151,44 @@ void TurnBasedSys::AddToInitiativeGroup(objHndl handle) const
 	party.ObjAddToGroupArray(groupInitiativeList, handle);
 }
 
-void TurnBasedSys::ArbitrateInitiativeConflicts() const
-{
-	auto arbConf = temple::GetRef<void(__cdecl)()>(0x100DEFA0);
-	arbConf();
+void TurnBasedSys::ArbitrateInitiativeConflicts()  {
+
+	auto N = GetInitiativeListLength();
+	if (N <= 1)
+		return;
+
+	for (auto i=0; i < N; i++){
+		auto combatant    = combatSys.GetInitiativeListMember(i);
+		if (!combatant){
+			continue;
+		}
+		auto combatantObj = objSystem->GetObject(combatant);
+		auto initiative = combatantObj->GetInt32(obj_f_initiative);
+		auto subinitiative = combatantObj->GetInt32(obj_f_subinitiative);
+
+		for (auto j= i + 1; j < N; j++){
+			auto combatant2 = combatSys.GetInitiativeListMember(j);
+			if (!combatant2){
+				continue;
+			}
+				
+			auto combatantObj2 = objSystem->GetObject(combatant2);
+			auto initiative2 = combatantObj2->GetInt32(obj_f_initiative);
+			if (initiative != initiative2)
+				break;
+
+			auto subinitiative2 = combatantObj2->GetInt32(obj_f_subinitiative);
+			if (subinitiative != subinitiative2)
+				break;
+			combatantObj2->SetInt32(obj_f_subinitiative, subinitiative2 - 1);
+		}
+	}
+
+	/*auto arbConf = temple::GetRef<void(__cdecl)()>(0x100DEFA0);
+	arbConf();*/
 }
 
-void TurnBasedSys::AddToInitiative(objHndl handle) const
+void TurnBasedSys::AddToInitiative(objHndl handle) 
 {
 	if (IsInInitiativeList(handle))
 		return;
@@ -197,6 +233,27 @@ void TurnBasedSys::AddToInitiative(objHndl handle) const
 bool TurnBasedSys::IsInInitiativeList(objHndl handle) const   // 0x100DEDD0
 {
 	return party.ObjIsInGroupArray(groupInitiativeList, handle) != 0;
+}
+
+void TurnBasedSys::CreateInitiativeListWithParty(){
+	groupInitiativeList->Reset();
+	groupInitiativeList->sortFunc = temple::GetRef<int(__cdecl)(void*, void*)>(0x100DEF20);
+
+	if (tutorial.IsTutorialActive() && scriptSys.GetGlobalFlag(4)){
+		tutorial.ShowTopic(11);
+	}
+
+	auto N = party.GroupListGetLen();
+	for (auto i=0; i < N; i++){
+		auto partyMember = party.GroupListGetMemberN(i);
+		if (d20Sys.d20Query(partyMember, DK_QUE_EnterCombat)){
+			AddToInitiative(partyMember);
+		}
+	}
+
+	auto newTBActor = combatSys.GetInitiativeListMember(0);
+	turnBasedSetCurrentActor(newTBActor);
+	temple::GetRef<int>(0x10BCAD80) = objSystem->GetObject(newTBActor)->GetInt32(obj_f_initiative);
 }
 
 void _turnBasedSetCurrentActor(objHndl objHnd)

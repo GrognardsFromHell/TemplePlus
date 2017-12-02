@@ -119,6 +119,12 @@ uint32_t LegacyPartySystem::GetLivingPartyMemberCount()
 	return result;
 }
 
+bool LegacyPartySystem::IsInParty(objHndl critter){
+	if (!critter)
+		return false;
+	return party.ObjIsInGroupArray(addresses.groupList, critter);
+}
+
 uint32_t LegacyPartySystem::AddToPCGroup(objHndl objHnd)
 {
 	auto npcFollowers = GroupNPCFollowersLen();

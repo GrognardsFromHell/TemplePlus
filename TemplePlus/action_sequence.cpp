@@ -594,12 +594,16 @@ void ActionSequenceSystem::ActionTypeAutomatedSelection(objHndl handle)
 
 	auto d20a = d20Sys.globD20Action;
 	auto performer = d20a->d20APerformer;
-	if (critterSys.IsFriendly(handle,performer) || critterSys.NpcAllegianceShared(handle, performer))
-	{
-		if (!d20Sys.d20Query(performer, DK_QUE_HoldingCharge)) {
-			setGlobD20Action(D20A_UNSPECIFIED_MOVE, 0);
-			return;
+	if (critterSys.IsFriendly(handle,performer)){ // || critterSys.NpcAllegianceShared(handle, performer)){ // NpcAllegianceShared check is currently not a good idea since ToEE has poor Friend or Foe tracking when it comes to faction mates...
+		
+		auto performerLeader = critterSys.GetLeader(performer);
+		if (!performerLeader || critterSys.IsFriendly(handle, performerLeader)){
+			if (!d20Sys.d20Query(performer, DK_QUE_HoldingCharge)) {
+				setGlobD20Action(D20A_UNSPECIFIED_MOVE, 0);
+				return;
+			}
 		}
+		
 	} else if (critterSys.IsDeadNullDestroyed(handle) && temple::GetRef<BOOL(__cdecl)(objHndl)>(0x101391C0)(handle))
 	{
 		setGlobD20Action(D20A_OPEN_CONTAINER, 0);
