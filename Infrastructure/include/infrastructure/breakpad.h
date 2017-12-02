@@ -14,6 +14,16 @@ class Breakpad {
 public:
 	Breakpad(const std::wstring &crashDumpFolder);
 	~Breakpad();
+
+	void setExtraMessage(const std::wstring &extraMessage) {
+		mExtraMessage = extraMessage;
+	}
+	const std::wstring &extraMessage() const {
+		return mExtraMessage;
+	}
+
 private:
 	std::unique_ptr<google_breakpad::ExceptionHandler> mHandler;
+
+	std::wstring mExtraMessage;
 };
