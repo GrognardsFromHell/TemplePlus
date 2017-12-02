@@ -13,7 +13,7 @@ static bool HandleCrashCallbackDelegate(const wchar_t* dump_path,
 	auto breakpad = (Breakpad*)context;
 	
 	auto msg = fmt::format(L"Sorry! TemplePlus seems to have crashed. A crash report was written to {}\\{}.dmp.\n\n"
-		L"If you want to report this issue, please make sure to attach this file.",
+		L"If you want to report this issue, please make sure to attach this file.\nPlease also attach your savegame file from your ToEE folder under modules\\ToEE\\Save. Be sure to include the .tfaf, .tfai and .gsi files.",
 		dump_path,
 		minidump_id);
 	
