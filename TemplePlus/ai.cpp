@@ -3477,6 +3477,7 @@ void AiPacket::FightStatusUpdate(){
 		} 
 		
 		focus = PickRandomFromAiList();
+		this->target = focus;
 		if (!focus){
 			this->aiFightStatus = aiSys.UpdateAiFlags(obj, AIFS_NONE, objHndl::null, &this->soundMap);
 			return;
