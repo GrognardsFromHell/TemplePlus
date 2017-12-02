@@ -42,6 +42,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	config.Load();
 	config.Save();
 
+	// Append the savegame folder to the crash messages
+	breakpad.setExtraMessage(fmt::format(L"\n\nSave Game Folder: {}\\Modules\\ToEE\\Save", config.toeeDir));
+
 	auto logFile = GetUserDataFolder() + L"TemplePlus.log";
 	InitLogging(logFile);
 
