@@ -19,7 +19,7 @@ after_build:
   
   # Package the symbol files
   - dump_syms.exe Release\TemplePlus.pdb > TemplePlus.sym
-  - 7z a TemplePlusSymbols-%APPVEYOR_BUILD_VERSION%.zip TemplePlus.sym
+  - 7z a TemplePlusSymbols-%APPVEYOR_BUILD_VERSION%.zip TemplePlus.sym Release\TemplePlus.pdb
 
   # Release Full with tools and all binaries
   - rd /s /q dist || cd .
