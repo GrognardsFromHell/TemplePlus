@@ -2,7 +2,21 @@
 
 #include "common.h"
 
-enum RaycastFlags : uint32_t
+enum GameRaycastFlags : uint32_t // these flags are generated based on picker specs and used inside the raycast function in 10022360
+{
+	GRF_AltPressed = 1,
+	GRF_2 = 2, // this is set as a default
+	GRF_4 = 4, // this is set as a default - looks like "Get radius from Aas"
+	GRF_ExcludeScenery = 8,
+	GRF_ExcludeItems = 16,
+	GRF_ExcludePortals = 32,
+	GRF_ExcludeContainers = 64,
+	GRF_ExcludeCritters = 0x80,
+	GRF_ExcludeDead = 0x100,
+	GRF_ExcludeUnconscious = 0x200,
+};
+
+enum RaycastFlags : uint32_t // used in the ObjIterator
 {
 	HasToBeCleared = 1,
 	HasRadius = 2,

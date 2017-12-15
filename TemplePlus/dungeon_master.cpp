@@ -261,7 +261,7 @@ bool DungeonMaster::HandleMsg(const TigMsg & msg){
 
 		// acquire target from cursor
 		if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_POS_CHANGE){
-			mTgtObj = uiSystems->GetInGame().PickObject(mouseMsg.x,mouseMsg.y,RaycastFlags::HasRadius);
+			mTgtObj = uiSystems->GetInGame().PickObject(mouseMsg.x,mouseMsg.y,GameRaycastFlags::GRF_4 | GameRaycastFlags::GRF_2);
 		}
 
 		
@@ -902,6 +902,24 @@ void DungeonMaster::RenderEditedObj() {
 	ImGui::Text(fmt::format("Location: {}", obj->GetLocationFull()).c_str());
 
 	ImGui::Text(fmt::format("Factions: {}", critEditor.factions).c_str());
+
+	auto curHp = objects.GetHPCur(mEditedObj);
+	auto maxHp = objects.StatLevelGet(mEditedObj, Stat::stat_hp_max);
+	ImGui::Text(fmt::format("HP: {}/{}", curHp, maxHp).c_str());
+	ImGui::SameLine();
+	auto hpDmg = obj->GetInt32(obj_f_hp_damage);
+	ImGui::PushItemWidth(85);
+	if (ImGui::InputInt("Damage: ", &hpDmg)){
+		if (hpDmg >=0 ){
+			obj->SetInt32(obj_f_hp_damage, hpDmg);
+		}
+	}
+	ImGui::PopItemWidth();
+	ImGui::SameLine();
+	if (ImGui::Button("Heal")){
+		obj->SetInt32(obj_f_hp_damage, 0);
+	}
+	
 
 	// Stats
 	if (ImGui::TreeNodeEx("Stats", ImGuiTreeNodeFlags_CollapsingHeader)) {
