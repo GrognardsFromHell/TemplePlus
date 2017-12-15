@@ -199,6 +199,7 @@ uint32_t __cdecl HookedFragarachAnswering(DispatcherCallbackArgs args) {
 	{
 		logger->info("Prevented Scather AoO bug! TB Actor is {}, Attachee is {},  target is {}", 
 			description.getDisplayName(curActor), description.getDisplayName(attachee), description.getDisplayName(tgtObj) );
+		// got a crash report once from the getDisplayName here when triggered by a trap apparently, so disabling it
 		return 0;
 	}
 

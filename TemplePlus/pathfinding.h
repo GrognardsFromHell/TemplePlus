@@ -208,7 +208,7 @@ struct Pathfinding : temple::AddressTable {
 	
 
 	bool CanPathTo(objHndl handle, objHndl target, PathQueryFlags flags = static_cast<PathQueryFlags>(PQF_HAS_CRITTER | PQF_TO_EXACT | PQF_800 | PQF_ADJ_RADIUS_REQUIRE_LOS | PQF_ADJUST_RADIUS | PQF_TARGET_OBJ), float maxDistance = -1);
-	objHndl CanPathToParty(objHndl objHnd);
+	objHndl CanPathToParty(objHndl objHnd, bool excludeUnconscious = true);
 	BOOL PathStraightLineIsClear(Path* pqr, PathQuery* pq, LocAndOffsets subPathFrom, LocAndOffsets subPathTo); // including static obstacles it seems
 	BOOL PathAdjRadiusLosClear(Path* pqr, PathQuery* pq, LocAndOffsets subPathFrom, LocAndOffsets subPathTo);
 	ScreenDirections GetDirection(int a1, int a2, int a3);

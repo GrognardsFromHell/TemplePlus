@@ -881,13 +881,13 @@ void LegacyCombatSystem::Subturn()
 	// addresses.Subturn();
 }
 
-void LegacyCombatSystem::TurnStart2(int initiativeIdx)
+void LegacyCombatSystem::TurnStart2(int prevInitiativeIdx)
 {
 	auto actor = tbSys.turnBasedGetCurrentActor();
 	int curActorInitIdx = tbSys.GetInitiativeListIdx();
-	if (initiativeIdx > curActorInitIdx)
+	if (prevInitiativeIdx > curActorInitIdx)
 	{
-		logger->debug("TurnStart2: \t End Subturn. Cur Actor: {} ({}), Initiative Idx: {}; New Initiative Idx: {} ", description.getDisplayName(actor), actor, curActorInitIdx, initiativeIdx);
+		logger->debug("TurnStart2: \t End Subturn. Cur Actor: {} ({}), Initiative Idx: {}; Prev Initiative Idx: {} ", description.getDisplayName(actor), actor, curActorInitIdx, prevInitiativeIdx);
 		CombatSubturnEnd();
 	}
 

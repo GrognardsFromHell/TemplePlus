@@ -1654,7 +1654,7 @@ bool Pathfinding::CanPathTo(objHndl obj, objHndl target, PathQueryFlags flags, f
 	return true;
 }
 
-objHndl Pathfinding::CanPathToParty(objHndl obj)
+objHndl Pathfinding::CanPathToParty(objHndl obj, bool excludeUnconscious)
 {
 	if (party.IsInParty(obj))
 		return objHndl::null;
@@ -1663,7 +1663,8 @@ objHndl Pathfinding::CanPathToParty(objHndl obj)
 	for (int i = 0; i < partySize; i++){
 
 		auto partyMember = party.GroupListGetMemberN(i);
-
+		if (excludeUnconscious && critterSys.IsDeadOrUnconscious(partyMember))
+			continue;
 		if (CanPathTo(obj, partyMember)){
 			return partyMember;
 		}		
