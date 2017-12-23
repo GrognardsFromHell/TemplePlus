@@ -219,7 +219,6 @@ static struct LegacyD20SystemAddresses : temple::AddressTable {
 	ActionErrorCode (__cdecl*ActionCostStandardAttack)(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp);
 	uint32_t(__cdecl*_PickerFuncTooltipToHitChance)(D20Actn * d20a, int flags);
 	uint32_t(__cdecl*AddToSeqStdAttack)(D20Actn*, ActnSeq*, TurnBasedStatus*);
-	uint32_t(__cdecl*AiCheckStdAttack)(D20Actn*, TurnBasedStatus*);
 	uint32_t(__cdecl*ActionCheckStdAttack)(D20Actn*, TurnBasedStatus*);
 	int(__cdecl*TargetWithinReachOfLoc)(objHndl obj, objHndl target, LocAndOffsets* loc);
 	int * actSeqTargetsIdx;
@@ -232,7 +231,6 @@ static struct LegacyD20SystemAddresses : temple::AddressTable {
 		rebase(ActionCostStandardAttack, 0x100910F0);
 		rebase(_PickerFuncTooltipToHitChance, 0x1008EDF0);
 		rebase(AddToSeqStdAttack, 0x100955E0);
-		rebase(AiCheckStdAttack, 0x1008C4F0);
 		rebase(ActionCheckStdAttack, 0x1008C910);
 
 		rebase(TargetWithinReachOfLoc, 0x100B86C0);

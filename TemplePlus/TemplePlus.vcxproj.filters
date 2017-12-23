@@ -485,6 +485,7 @@
       <Filter>ui</Filter>
     </ClCompile>
     <ClCompile Include="gamesystems\objfade.cpp" />
+    <ClCompile Include="d20_defs.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
