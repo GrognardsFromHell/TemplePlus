@@ -8,6 +8,7 @@
 #include "python_dice.h"
 #include "../dice.h"
 #include "../dispatcher.h"
+#include "../pathfinding.h"
 #include "../common.h"
 #include <infrastructure/elfhash.h>
 #include "python_object.h"
