@@ -1,10 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25123.0
+# Visual Studio 15
+VisualStudioVersion = 15.0.27130.2010
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MinHook", "MinHook\MinHook.vcxproj", "{23AD6E36-FA90-4A0D-A1F4-6BFCDBCBDC7C}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Infrastructure", "Infrastructure\Infrastructure.vcxproj", "{006F5B8A-F75F-413C-AD3A-E004CA8DDF26}"
 	ProjectSection(ProjectDependencies) = postProject
 		{613B84BF-C64E-4107-80B2-D4C1215999BB} = {613B84BF-C64E-4107-80B2-D4C1215999BB}
@@ -89,12 +87,6 @@ Global
 		TestWithIda|Win32 = TestWithIda|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{23AD6E36-FA90-4A0D-A1F4-6BFCDBCBDC7C}.Debug|Win32.ActiveCfg = Debug|Win32
-		{23AD6E36-FA90-4A0D-A1F4-6BFCDBCBDC7C}.Debug|Win32.Build.0 = Debug|Win32
-		{23AD6E36-FA90-4A0D-A1F4-6BFCDBCBDC7C}.Release|Win32.ActiveCfg = Release|Win32
-		{23AD6E36-FA90-4A0D-A1F4-6BFCDBCBDC7C}.Release|Win32.Build.0 = Release|Win32
-		{23AD6E36-FA90-4A0D-A1F4-6BFCDBCBDC7C}.TestWithIda|Win32.ActiveCfg = Release|Win32
-		{23AD6E36-FA90-4A0D-A1F4-6BFCDBCBDC7C}.TestWithIda|Win32.Build.0 = Release|Win32
 		{006F5B8A-F75F-413C-AD3A-E004CA8DDF26}.Debug|Win32.ActiveCfg = Debug|Win32
 		{006F5B8A-F75F-413C-AD3A-E004CA8DDF26}.Debug|Win32.Build.0 = Debug|Win32
 		{006F5B8A-F75F-413C-AD3A-E004CA8DDF26}.Release|Win32.ActiveCfg = Release|Win32
@@ -207,5 +199,8 @@ Global
 		{23DA24F5-0DF5-4BAF-A8FA-A5B3A22D62D9} = {891A4D44-5530-47B8-9E9A-16ED21527718}
 		{4653B906-F9C5-465C-AF27-84F39D6C9F7A} = {891A4D44-5530-47B8-9E9A-16ED21527718}
 		{8A2D4F0B-65A5-48B9-89B9-0B57FB49658F} = {891A4D44-5530-47B8-9E9A-16ED21527718}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {07FBE575-2993-46F8-822F-FD9C558C4F58}
 	EndGlobalSection
 EndGlobal

@@ -40,9 +40,6 @@
     <ProjectReference Include="..\Infrastructure\Infrastructure.vcxproj">
       <Project>{006f5b8a-f75f-413c-ad3a-e004ca8ddf26}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\MinHook\MinHook.vcxproj">
-      <Project>{23ad6e36-fa90-4a0d-a1f4-6bfcdbcbdc7c}</Project>
-    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{A05549FB-A0D1-48AA-B586-FE333BBB4505}</ProjectGuid>
@@ -97,10 +94,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(SolutionDir)\EASTL\include;$(SolutionDir)\MinHook\include;$(SolutionDir)\Infrastructure\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)\EASTL\include;$(SolutionDir)\Infrastructure\include;$(SolutionDir)dependencies\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)dependencies\lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(SolutionDir)\EASTL\include;$(SolutionDir)\MinHook\include;$(SolutionDir)\Infrastructure\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)\EASTL\include;$(SolutionDir)\Infrastructure\include;$(SolutionDir)dependencies\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)dependencies\lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -118,7 +117,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalDependencies>Infrastructure.lib;MinHook.lib</AdditionalDependencies>
+      <AdditionalDependencies>Infrastructure.lib;minhook_d.lib</AdditionalDependencies>
     </Lib>
     <Lib>
       <AdditionalLibraryDirectories>$(OutDir)</AdditionalLibraryDirectories>
@@ -157,7 +156,7 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <Lib>
-      <AdditionalDependencies>Infrastructure.lib;MinHook.lib</AdditionalDependencies>
+      <AdditionalDependencies>Infrastructure.lib;minhook.lib</AdditionalDependencies>
     </Lib>
     <Lib>
       <AdditionalLibraryDirectories>$(OutDir)</AdditionalLibraryDirectories>
