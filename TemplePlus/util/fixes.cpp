@@ -4,8 +4,8 @@
 #include <temple/dll.h>
 
 #include "util/fixes.h"
-#include "../src/trampoline.h"
-#include "../src/HDE/hde32.h"
+#include "trampoline.h"
+#include "hde/hde32.h"
 
 vector<TempleFix*> &TempleFixes::fixes() {
 	static vector<TempleFix*> activeFixes;

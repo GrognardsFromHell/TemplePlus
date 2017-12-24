@@ -10,7 +10,7 @@
 #include <infrastructure/logging.h>
 #include <infrastructure/stringutil.h>
 
-#include "../src/hde/hde32.h"
+#include "hde/hde32.h"
 
 #include "temple/dll.h"
 
