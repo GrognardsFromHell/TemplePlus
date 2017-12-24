@@ -6,7 +6,7 @@ if ($env:APPVEYOR_REPO_TAG -ne "true") {
 
 if (-Not(Test-Path .\Squirrel\squirrel.windows.*)) {
     "Installing Squirrel"
-    .\.nuget\nuget.exe install Squirrel.Windows -OutputDirectory Squirrel
+    nuget.exe install Squirrel.Windows -OutputDirectory Squirrel
 }
 
 ## download the last release locally so we can build a delta against it
