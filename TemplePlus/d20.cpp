@@ -82,9 +82,14 @@ public:
 	static ActionErrorCode ActionCheckPython(D20Actn* d20a, TurnBasedStatus* tbStat);  // calls python script
 	static ActionErrorCode ActionCheckQuiveringPalm(D20Actn* d20a, TurnBasedStatus* tbStat);
 	static ActionErrorCode ActionCheckSneak(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode ActionCheckStdAttack(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode ActionCheckStdRangedAttack(D20Actn* d20a, TurnBasedStatus* tbStat);
 	static ActionErrorCode ActionCheckSunder(D20Actn* d20a, TurnBasedStatus* tbStat);
 	static ActionErrorCode ActionCheckTripAttack(D20Actn* d20a, TurnBasedStatus* tbStat);
 
+
+	// Target Check
+	//static ActionErrorCode TargetCheckStandardAttack(D20Actn* d20a, TurnBasedStatus* tbStat);
 
 	// Action Cost
 	static ActionErrorCode ActionCostCastSpell(D20Actn* d20a, TurnBasedStatus *tbStat, ActionCostPacket *acp);
@@ -397,6 +402,15 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformStandardAttack;
 	d20Defs[d20Type].actionFrameFunc = d20Callbacks.ActionFrameStandardAttack;
 	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToStandardAttack;
+	d20Defs[d20Type].turnBasedStatusCheck = d20Callbacks.StdAttackTurnBasedStatusCheck;
+	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostStandardAttack;
+	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckStdAttack;
+
+	d20Type = D20A_STANDARD_RANGED_ATTACK;
+	d20Defs[d20Type].turnBasedStatusCheck = d20Callbacks.StdAttackTurnBasedStatusCheck;
+	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostStandardAttack;
+	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckStdRangedAttack;
+	//d20Defs[d20Type].actionCost = d20Callbacks.TargetCheckStandardAttack;
 
 	d20Type = D20A_FULL_ATTACK;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformFullAttack;
@@ -834,6 +848,10 @@ void LegacyD20System::globD20ActnSetPerformer(objHndl objHnd)
 int LegacyD20System::GlobD20ActnSetTarget(objHndl objHnd, LocAndOffsets * loc)
 {
 	return addresses.GlobD20ActnSetTarget(objHnd, loc);
+}
+
+void LegacyD20System::GlobD20ActnSetD20CAF(D20CAF d20_caf){
+	globD20Action->d20Caf |= d20_caf;
 }
 
 void LegacyD20System::GlobD20ActnInit()
@@ -1948,6 +1966,30 @@ ActionErrorCode D20ActionCallbacks::ActionCheckSneak(D20Actn* d20a, TurnBasedSta
 		return AEC_OK;
 
 	return AEC_OK; // used to be possible only outside of combat, but now you can attempt it in combat too
+}
+
+ActionErrorCode D20ActionCallbacks::ActionCheckStdAttack(D20Actn * d20a, TurnBasedStatus * tbStat){
+	
+	/*auto tgt = d20a->d20ATarget;
+	if (*actSeqSys.performingDefaultAction && tgt && critterSys.IsDeadOrUnconscious(tgt)
+		&& (d20a->d20ActType == D20A_STANDARD_ATTACK || d20a->d20ActType == D20A_STANDARD_RANGED_ATTACK)) {
+		return AEC_TARGET_INVALID;
+	}*/ // not a good solution - blocks Cleave attacks
+
+	return AEC_OK;
+}
+
+ActionErrorCode D20ActionCallbacks::ActionCheckStdRangedAttack(D20Actn * d20a, TurnBasedStatus * tbStat)
+{
+	//auto tgt = d20a->d20ATarget;
+	//if (*actSeqSys.performingDefaultAction && tgt && critterSys.IsDeadOrUnconscious(tgt)
+	//	&& (d20a->d20ActType == D20A_STANDARD_ATTACK || d20a->d20ActType == D20A_STANDARD_RANGED_ATTACK)) {
+	//	return AEC_TARGET_INVALID;
+	//}
+
+	auto orgCheck = temple::GetRef<ActionErrorCode(__cdecl)(D20Actn*, TurnBasedStatus*)>(0x1008EE60);
+
+	return orgCheck(d20a, tbStat);
 }
 
 ActionErrorCode D20ActionCallbacks::PerformCharge(D20Actn* d20a){
@@ -3149,7 +3191,8 @@ ActionErrorCode D20ActionCallbacks::ActionCostPython(D20Actn* d20a, TurnBasedSta
 ActionErrorCode D20ActionCallbacks::ActionCostStandardAttack(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp){
 
 	if ( d20Sys.d20Query(d20a->d20APerformer, DK_QUE_HoldingCharge)
-		 && (tbStat->tbsFlags & TBSF_TouchAttack)	&& !(d20a->d20Caf & D20CAF_FREE_ACTION)){
+		 && (tbStat->tbsFlags & TBSF_TouchAttack)	
+		 && !(d20a->d20Caf & D20CAF_FREE_ACTION)){
 		acp->hourglassCost = 0;
 		return AEC_OK;
 	}
@@ -3161,13 +3204,20 @@ ActionErrorCode D20ActionCallbacks::ActionCostStandardAttack(D20Actn* d20a, Turn
 	if (!(d20a->d20Caf & D20CAF_FREE_ACTION) && combatSys.isCombatActive())
 	{
 		acp->chargeAfterPicker = 1;
-		if ( (!feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_SHOT_ON_THE_RUN)
-			   || d20a->d20ActType != D20A_STANDARD_RANGED_ATTACK)
-		&&   (!feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_SPRING_ATTACK)
-				|| d20a->d20ActType != D20A_STANDARD_ATTACK ))
-		{
+
+		auto retainSurplusMoveDist = false;
+		
+		if (d20a->d20ActType == D20A_STANDARD_RANGED_ATTACK &&
+			feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_SHOT_ON_THE_RUN))
+			retainSurplusMoveDist = true;
+		if (d20a->d20ActType == D20A_STANDARD_ATTACK &&
+			feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_SPRING_ATTACK))
+			retainSurplusMoveDist = true;
+
+		if (!retainSurplusMoveDist){
 			tbStat->surplusMoveDistance = 0;
 		}
+
 	}
 	return AEC_OK;
 }

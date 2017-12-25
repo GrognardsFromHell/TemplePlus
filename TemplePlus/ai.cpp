@@ -2226,12 +2226,12 @@ int AiSystem::Default(AiTactic* aiTac)
 	//{
 	//	logger->info("AI Default failed, error code: {}", (int)addToSeqError);
 	//}
-	int performError = actSeqSys.ActionSequenceChecksWithPerformerLocation();
+	auto performError = actSeqSys.ActionSequenceChecksWithPerformerLocation();
 	if (performError == AEC_OK && addToSeqError == AEC_OK){
 		return TRUE;
 	} 
 	else{
-		logger->info("AI Default SequenceCheck failed, error codes are AddToSeq :{}, Location Checs: {}", static_cast<int>(addToSeqError), static_cast<int>(performError));
+		logger->info("AI Default SequenceCheck failed, error codes are AddToSeq: {}, Location Checs: {}", addToSeqError, performError);
 	}
 	if (!critterSys.IsWieldingRangedWeapon(aiTac->performer))
 	{

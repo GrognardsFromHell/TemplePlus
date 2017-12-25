@@ -79,6 +79,7 @@ struct LegacyD20System : temple::AddressTable
 	int D20QueryPython(const objHndl& handle, const std::string& queryKey, int arg1 = 0, int arg2 = 0);
 
 	D20ADF GetActionFlags(D20ActionType d20ActionType);
+	
 
 	static bool D20QueryWithDataDefaultTrue(objHndl obj, D20DispatcherKey dispKey, const D20Actn * d20a, int arg2);
 
@@ -86,6 +87,7 @@ struct LegacyD20System : temple::AddressTable
 	void GlobD20ActnSetTypeAndData1(D20ActionType d20type, uint32_t data1);
 	void globD20ActnSetPerformer(objHndl objHnd);
 	int GlobD20ActnSetTarget(objHndl objHnd, LocAndOffsets * loc);
+	void GlobD20ActnSetD20CAF(D20CAF d20_caf); // OR's flags
 	void GlobD20ActnInit();
 	void d20aTriggerCombatCheck(ActnSeq* actSeq, int32_t idx);//1008AE90    ActnSeq * @<eax>
 	int D20ActionTriggersAoO(D20Actn* d20a, TurnBasedStatus* tbStat);// 1008A9C0

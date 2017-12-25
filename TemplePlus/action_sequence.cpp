@@ -539,6 +539,7 @@ void ActionSequenceSystem::ActionTypeAutomatedSelection(objHndl handle)
 		case obj_t_pc:
 		case obj_t_npc:
 			targetingType = D20TC_SingleExcSelf;
+			break;
 		default:
 			targetingType = D20TC_Movement;
 			break;
@@ -1735,9 +1736,8 @@ uint32_t ActionSequenceSystem::TurnBasedStatusUpdate(D20Actn* d20a, TurnBasedSta
 	TurnBasedStatus tbStatCopy = *tbStatus;
 	
 
-	int actProcResult = ActionCostProcess(&tbStatCopy, d20a);
-	if (!actProcResult)
-	{
+	auto actProcResult = (ActionErrorCode)ActionCostProcess(&tbStatCopy, d20a);
+	if (actProcResult == AEC_OK){
 		memcpy(tbStatus, &tbStatCopy, sizeof(TurnBasedStatus));
 		return 0;
 	}
@@ -1749,11 +1749,10 @@ uint32_t ActionSequenceSystem::TurnBasedStatusUpdate(D20Actn* d20a, TurnBasedSta
 		{
 			return actProcResult;
 		}
-		actProcResult = ActionCostProcess(&tbStatCopy, d20a);
+		actProcResult = (ActionErrorCode)ActionCostProcess(&tbStatCopy, d20a);
 	}
 
-	if (!actProcResult)
-	{
+	if (actProcResult == AEC_OK){
 		memcpy(tbStatus, &tbStatCopy, sizeof(TurnBasedStatus));
 		return 0;
 	}
@@ -2584,7 +2583,23 @@ void ActionSequenceSystem::ActionPerform()
 			break;
 		}
 
+
+		//if (*performingDefaultAction &&
+	
+		//}
+
+
 		if (*performingDefaultAction){
+
+			if (d20a->d20ActType == D20A_STANDARD_ATTACK || d20a->d20ActType == D20A_STANDARD_RANGED_ATTACK) {
+				if (d20a->d20ATarget && critterSys.IsDeadOrUnconscious(d20a->d20ATarget)) {
+					*performedDefaultAction = 0;
+					curSeq->d20ActArrayNum = curSeq->d20aCurIdx;
+					//curSeq->tbStatus.tbsFlags |= TBSF_FullAttack;
+					break;
+				}
+			}
+
 			*performedDefaultAction = 1;
 		}
 
@@ -2612,10 +2627,9 @@ void ActionSequenceSystem::ActionPerform()
 				curSeq->tbStatus = tbStatus;
 				*(uint32_t*)(&curSeq->tbStatus.tbsFlags) |= TBSF_HasActedThisRound;
 				InterruptCounterspell(d20a);
-				logger->debug("ActionPerform: \t Performing action for {} ({}): {}",
-					description.getDisplayName(d20a->d20APerformer), 
+				logger->debug("ActionPerform: \t Performing action for {}: {}",
 					d20a->d20APerformer,
-					(int)d20a->d20ActType);
+					d20a->d20ActType);
 
 
 				/*if (config.newFeatureTestMode && d20a->path != nullptr)
@@ -2631,20 +2645,6 @@ void ActionSequenceSystem::ActionPerform()
 						logger->debug("Move Action: {} going from {} to {}, nodes used: {}", description.getDisplayName(d20a->path->mover), d20a->path->from, d20a->path->to, directionsDebug);
 				}*/
 
-
-				if (*performingDefaultAction &&
-					(d20a->d20ActType == D20A_STANDARD_ATTACK || d20a->d20ActType == D20A_STANDARD_RANGED_ATTACK)){
-					if (d20a->d20ATarget && critterSys.IsDeadOrUnconscious(d20a->d20ATarget)){
-						*performedDefaultAction = 0;
-						curSeq->d20ActArrayNum = curSeq->d20aCurIdx;
-						//curSeq->tbStatus.tbsFlags |= TBSF_FullAttack;
-						if (curSeq->tbStatus.attackModeCode > 0) // not the case for bonus attacks
-							curSeq->tbStatus.attackModeCode--;
-						else
-							curSeq->tbStatus.numBonusAttacks++;
-						break;
-					}
-				}
 
 				ActionErrorCode performResult = static_cast<ActionErrorCode>(d20->d20Defs[d20a->d20ActType].performFunc(d20a));
 				InterruptNonCounterspell(d20a);
@@ -3315,7 +3315,7 @@ int ActionSequenceSystem::UnspecifiedAttackAddToSeq(D20Actn* d20a, ActnSeq* actS
 		}
 		d20aCopy = *d20a;
 		d20aCopy.d20ActType = inventory.IsThrowingWeapon(weapon) != 0 ? D20A_THROW : D20A_STANDARD_RANGED_ATTACK;
-		int result = TurnBasedStatusUpdate(&tbStatCopy, &d20aCopy);
+		int result = TurnBasedStatusUpdate(&d20aCopy, &tbStatCopy);
 		if (!result)
 		{
 			int attackCode = tbStatCopy.attackModeCode;
@@ -3402,7 +3402,12 @@ int ActionSequenceSystem::StdAttackTurnBasedStatusCheck(D20Actn* d20a, TurnBased
 	if (tbStat->attackModeCode < tbStat->baseAttackNumCode || hgState < 2)
 		return AEC_NOT_ENOUGH_TIME1; // Not enough time error
 	
-	
+	auto tgt = d20a->d20ATarget;
+	if (*actSeqSys.performingDefaultAction && tgt && critterSys.IsDeadOrUnconscious(tgt)
+	&& (d20a->d20ActType == D20A_STANDARD_ATTACK || d20a->d20ActType == D20A_STANDARD_RANGED_ATTACK)) {
+	return AEC_TARGET_INVALID;
+	}
+
 	if (hgState != -1)
 		hgState = turnBasedStatusTransitionMatrix[hgState][2];
 	tbStat->hourglassState = hgState;
@@ -3414,7 +3419,7 @@ int ActionSequenceSystem::StdAttackTurnBasedStatusCheck(D20Actn* d20a, TurnBased
 	tbStat->baseAttackNumCode = tbStat->attackModeCode + 1;
 	tbStat->numBonusAttacks = 0;
 	tbStat->numAttacks = 0;
-	return 0;
+	return AEC_OK;
 }
 #pragma endregion
 
@@ -3874,4 +3879,47 @@ void ActnSeqReplacements::NaturalAttackOverwrites()
 	// 10099C2E projectilePerformFunc
 	writeVal = (int)&d20Sys.d20Defs[0].projectileHitFunc;
 	write(0x10099C2E + 2, &writeVal, sizeof(int));
+}
+
+
+const char*actionErrorCodeStrings[] =
+{
+	"AEC_OK", //0
+	"AEC_NOT_ENOUGH_TIME1",
+	"AEC_NOT_ENOUGH_TIME2",
+	"AEC_NOT_ENOUGH_TIME3",
+	"AEC_ALREADY_MOVED",
+	"AEC_TARGET_OUT_OF_RANGE",
+	"AEC_TARGET_TOO_CLOSE",
+	"AEC_TARGET_BLOCKED",
+	"AEC_TARGET_TOO_FAR",
+	"AEC_TARGET_INVALID",
+	"AEC_NO_LOS",
+	"AEC_OUT_OF_AMMO",
+	"AEC_NEED_MELEE_WEAPON",
+	"AEC_CANT_WHILE_PRONE",
+	"AEC_INVALID_ACTION",
+	"AEC_CANNOT_CAST_SPELLS",
+	"AEC_OUT_OF_CHARGES",
+	"AEC_WRONG_WEAPON_TYPE",
+	"AEC_CANNOT_CAST_OUT_OF_AVAILABLE_SPELLS",
+	"AEC_CANNOT_CAST_NOT_ENOUGH_XP",
+	"AEC_CANNOT_CAST_NOT_ENOUGH_GP",
+	"AEC_OUT_OF_COMBAT_ONLY",
+	"AEC_CANNOT_USE_MUST_USE_BEFORE_ATTACKING",
+	"AEC_NEED_A_STRAIGHT_LINE",
+	"AEC_NO_ACTIONS",
+	"AEC_NOT_IN_COMBAT",
+	"AEC_AREA_NOT_SAFE"
+};
+ostream & operator<<(ostream & str, ActionErrorCode aec)
+{
+	size_t i = (size_t)aec;
+	if (i <= AEC_AREA_NOT_SAFE) {
+		str << actionErrorCodeStrings[i];
+	}
+	else {
+		str << fmt::format("Unknown Action Error Code [{}]", i);
+	}
+	return str;
 }
