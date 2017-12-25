@@ -47,9 +47,9 @@ $srcDir = Join-Path (pwd) "dist"
 
 # Create the nuget package (with the right version number)
 if (Test-Path env:\APPVEYOR_BUILD_VERSION) {
-    .\.nuget\nuget.exe pack -Version $env:APPVEYOR_BUILD_VERSION TemplePlus.nuspec
+    nuget.exe pack -Version $env:APPVEYOR_BUILD_VERSION TemplePlus.nuspec
 } else {
-    .\.nuget\nuget.exe pack TemplePlus.nuspec
+    nuget.exe pack TemplePlus.nuspec
 }
 
 "Finished packing the release."

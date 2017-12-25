@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -506,9 +506,6 @@
     <ProjectReference Include="..\Infrastructure\Infrastructure.vcxproj">
       <Project>{006f5b8a-f75f-413c-ad3a-e004ca8ddf26}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\MinHook\MinHook.vcxproj">
-      <Project>{23ad6e36-fa90-4a0d-a1f4-6bfcdbcbdc7c}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\ParticleSystems\ParticleSystems.vcxproj">
       <Project>{a806cafa-9ff2-42dc-a02f-7e57ef2ab867}</Project>
     </ProjectReference>
@@ -524,25 +521,25 @@
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>TemplePlus</RootNamespace>
     <ProjectName>TemplePlus</ProjectName>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.14393.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -593,7 +590,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>d2d1.lib;dwrite.lib;dxguid.lib;d3d11.lib;dxgi.lib;d3dcompiler.lib;EASTL.lib;psapi.lib;turbojpeg-static_d.lib;particlesystems.lib;temple.lib;tio\tio.lib;MinHook.lib;Infrastructure.lib;winmm.lib;d3d9.lib;ws2_32.lib;Crypt32.lib;ssleay32.lib;libeay32.lib;python27_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d2d1.lib;dwrite.lib;dxguid.lib;d3d11.lib;dxgi.lib;d3dcompiler.lib;EASTL.lib;psapi.lib;turbojpeg-static_d.lib;particlesystems.lib;temple.lib;tio\tio.lib;Infrastructure.lib;winmm.lib;d3d9.lib;ws2_32.lib;Crypt32.lib;ssleay32.lib;libeay32.lib;python27_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
       <AdditionalLibraryDirectories>$(SolutionDir)dependencies\lib;$(TargetDir)</AdditionalLibraryDirectories>
@@ -651,7 +648,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>d2d1.lib;dwrite.lib;dxguid.lib;d3d11.lib;dxgi.lib;d3dcompiler.lib;EASTL.lib;psapi.lib;turbojpeg-static.lib;particlesystems.lib;temple.lib;tio\tio.lib;MinHook.lib;Infrastructure.lib;winmm.lib;ws2_32.lib;Crypt32.lib;ssleay32.lib;libeay32.lib;python27.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d2d1.lib;dwrite.lib;dxguid.lib;d3d11.lib;dxgi.lib;d3dcompiler.lib;EASTL.lib;psapi.lib;turbojpeg-static.lib;particlesystems.lib;temple.lib;tio\tio.lib;Infrastructure.lib;winmm.lib;ws2_32.lib;Crypt32.lib;ssleay32.lib;libeay32.lib;python27.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
