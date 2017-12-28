@@ -1,10 +1,10 @@
 
-import boto3
 import sys
 import os.path
 import lzma
 import time
 import os
+import subprocess
 
 if "APPVEYOR" in os.environ and "APPVEYOR_REPO_TAG" not in os.environ:
     print("Not uploading symbols since we're not building a tag")
@@ -39,10 +39,9 @@ print("Compressed symbol data (ratio %d%%) in %fs" % (compression_ratio, time.pe
 
 print("Uploading symbols to ", target_path)
 
-symbol_bucket = boto3.resource('s3').Bucket('templeplus-symbols')
-symbol_bucket.put_object(
-    Key=target_path,
-    Body=compressed_symbols
-)
+with open("TemplePlus.sym.xz", "wb") as fh:
+    fh.write(compressed_symbols)
+
+subprocess.run(["aws", "s3", "cp", "TemplePlus.sym.xz", "s3://templeplus-symbols/" + target_path], check=True, shell=True)
 
 print("Uploaded symbols to S3.")
