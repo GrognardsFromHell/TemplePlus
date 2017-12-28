@@ -20,7 +20,8 @@ after_build:
   - ps: .\BuildRelease.ps1
   
   # Package the symbol files
-  - dump_syms.exe Release\TemplePlus.pdb > TemplePlus.sym
+  - dependencies\bin\dump_syms.exe Release\TemplePlus.pdb > TemplePlus.sym
+  - C:\Python36\python -u deploy_symbols_s3.py TemplePlus.sym
   - 7z a TemplePlusSymbols-%APPVEYOR_BUILD_VERSION%.zip TemplePlus.sym Release\TemplePlus.pdb
 
   # Release Full with tools and all binaries
