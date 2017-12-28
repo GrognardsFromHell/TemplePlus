@@ -6,10 +6,6 @@ import time
 import os
 import subprocess
 
-if "APPVEYOR" in os.environ and "APPVEYOR_REPO_TAG" not in os.environ:
-    print("Not uploading symbols since we're not building a tag")
-    sys.exit(0)
-
 symbol_filename = sys.argv[1]
 
 with open(symbol_filename, "rt") as fh:
