@@ -331,8 +331,12 @@ PyObject *PyDebug_PathTo(PyObject*, PyObject* args)
 	return PyLong_FromLongLong(result);
 }
 
+static void PyDebug_Crash() {
+	*(reinterpret_cast<int*>(0)) = 1;
+}
 
 static PyMethodDef PyDebug_Methods[] = {
+	{ "crash", (PyCFunction)PyDebug_Crash, METH_NOARGS, NULL },
 	{ "dump_conds", (PyCFunction) PyDebug_DumpConds, METH_NOARGS, NULL },
 	{ "dump_radial", (PyCFunction) PyDebug_DumpRadial, METH_NOARGS, NULL },
 	{ "dump_feats", (PyCFunction)PyDebug_DumpFeats, METH_NOARGS, NULL },

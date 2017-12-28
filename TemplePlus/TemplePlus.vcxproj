@@ -589,7 +589,7 @@
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <AdditionalDependencies>d2d1.lib;dwrite.lib;dxguid.lib;d3d11.lib;dxgi.lib;d3dcompiler.lib;EASTL.lib;psapi.lib;turbojpeg-static_d.lib;particlesystems.lib;temple.lib;tio\tio.lib;Infrastructure.lib;winmm.lib;d3d9.lib;ws2_32.lib;Crypt32.lib;ssleay32.lib;libeay32.lib;python27_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>

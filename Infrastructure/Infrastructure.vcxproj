@@ -93,8 +93,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalDependencies>
-      </AdditionalDependencies>
+      <AdditionalDependencies>crash_reporting_d.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -129,8 +128,7 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <Lib>
-      <AdditionalDependencies>
-      </AdditionalDependencies>
+      <AdditionalDependencies>crash_reporting.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -241,9 +239,6 @@
   <ItemGroup>
     <ClCompile Include="src\allocator.cpp" />
     <ClCompile Include="breakpad.cpp" />
-    <ClCompile Include="breakpad\crash_generation_client.cc" />
-    <ClCompile Include="breakpad\exception_handler.cc" />
-    <ClCompile Include="breakpad\guid_string.cc" />
     <ClCompile Include="crypto.cpp" />
     <ClCompile Include="d3d.cpp" />
     <ClCompile Include="format.cc" />
