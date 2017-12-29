@@ -7,6 +7,8 @@ namespace google_breakpad {
 #include <memory>
 #include <string>
 
+class InProcessCrashReporting;
+
 /*
 	Abstracts the interface to Google breakpad
 */
@@ -23,7 +25,7 @@ public:
 	}
 
 private:
-	std::unique_ptr<google_breakpad::ExceptionHandler> mHandler;
+	std::unique_ptr<InProcessCrashReporting> mHandler;
 
 	std::wstring mExtraMessage;
 };

@@ -284,12 +284,6 @@
     <ClCompile Include="logging.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="breakpad\exception_handler.cc">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="breakpad\crash_generation_client.cc">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="breakpad.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -381,9 +375,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="meshes_animfallbacks.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="breakpad\guid_string.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\allocator.cpp">
