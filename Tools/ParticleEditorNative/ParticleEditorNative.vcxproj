@@ -22,7 +22,7 @@
     <ProjectGuid>{76A16770-4B67-46E0-94F9-27677924B9C6}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>ParticleEditorNative</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.14393.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

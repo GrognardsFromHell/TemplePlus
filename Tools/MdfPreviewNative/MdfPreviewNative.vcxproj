@@ -22,7 +22,7 @@
     <ProjectGuid>{4653B906-F9C5-465C-AF27-84F39D6C9F7A}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>MdfPreviewNative</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.14393.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
