@@ -192,6 +192,20 @@ void UiInGame::HandleCombatMessage(const TigMsg & msg)
 
 void UiInGame::HandleNonCombatMessage(const TigMsg & msg)
 {
+	auto checkCritterWithInventoryOpen = temple::GetRef<BOOL(__cdecl)()>(0x10144030);
+	if (checkCritterWithInventoryOpen() && msg.type == TigMsgType::MOUSE)
+		return;
+
+	if (msg.type == TigMsgType::KEYSTATECHANGE) {
+		return temple::GetRef<void(__cdecl)(const TigMsg&)>(0x101130B0)(msg); // normal keystate change handler
+	}
+
+	if (msg.type == TigMsgType::MOUSE) {
+
+
+
+	}
+
 	static auto NormalMsgHandler = temple::GetPointer<void(const TigMsg &msg)>(0x10114e30);
 	NormalMsgHandler(msg);
 }

@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include <infrastructure\keyboard.h>
 #include "anim.h"
 #include "util/fixes.h"
 #include "temple_functions.h"
@@ -73,10 +74,10 @@ struct AnimSlotGoalStackEntry {
   TimeEventObjInfo parentTracking;
 
   BOOL InitWithInterrupt(objHndl obj, AnimGoalType goalType);
-  BOOL Push(AnimSlotId* idNew);
+  bool Push(AnimSlotId* idNew);
   BOOL Init(objHndl handle, AnimGoalType, BOOL withInterrupt = 0);
 
-  AnimSlotGoalStackEntry(objHndl handle, AnimGoalType, BOOL withInterrupt);
+  AnimSlotGoalStackEntry(objHndl handle, AnimGoalType, BOOL withInterrupt = FALSE);
   AnimSlotGoalStackEntry() { memset(this, 0, sizeof(AnimSlotGoalStackEntry)); };
 };
 
@@ -522,31 +523,135 @@ bool AnimationGoals::PushRunNearTile(objHndl actor, LocAndOffsets target,
 bool AnimationGoals::PushRunToTile(objHndl handle, LocAndOffsets loc, PathQueryResult * pqr)
 {
 
-	// To DO!
+	//return temple::GetRef<BOOL(__cdecl)(objHndl, LocAndOffsets, PathQueryResult*)>(0x1001A2E0)(handle, loc, pqr);
+	
 	if (!handle
 		|| critterSys.IsDeadOrUnconscious(handle) 
 		|| (!critterSys.IsPC(handle) && temple::GetRef<objHndl(__cdecl)(objHndl)>(0x10053CA0)(handle))  ) // npc is conversing with pc
 		return false;
 
 
-	AnimSlotGoalStackEntry goalData;
+	AnimSlotGoalStackEntry goalData(handle, ag_run_to_tile);
 	AnimSlot *runSlot;
+	AnimSlotId * animIdGlobal = addresses.animIdGlobal;
 
-	if (temple::GetRef<BOOL(__cdecl)(objHndl, AnimGoalType, AnimSlotId&)>(0x10054F30)(handle, ag_run_to_tile, *addresses.animIdGlobal)){ // is obj doing related goal?
-		goalData.Init(handle, ag_run_to_tile, 0);
+	if (IsObjDoingRelatedGoal(handle, ag_run_to_tile, *animIdGlobal)){ // is obj doing related goal?
 		goalData.targetTile.location = loc;
 		if ( !animationGoals.Interrupt(handle, AnimGoalPriority::AGP_3, 0)
-			 || !goalData.Push(addresses.animIdGlobal)
-			 || !GetSlot(addresses.animIdGlobal, &runSlot)){
+			 || !goalData.Push(animIdGlobal)
+			 || !GetSlot(animIdGlobal, &runSlot)){
 			return true;
 		};
+		if (!pqr) {
+			runSlot->path.flags &= ~PF_COMPLETE;
+		}
 	} 
 	else{
-		goalData.Init(handle, ag_run_to_tile, 0);
-		// To DO!
+		if (pqr) {
+			goalData.targetTile.location = pqr->to;
+		}
+		else {
+			goalData.targetTile.location = loc;
+		}
+		if (!animationGoals.Interrupt(handle, AnimGoalPriority::AGP_3, 0) || !goalData.Push(animIdGlobal))
+			return false;
+		if (!GetSlot(animIdGlobal, &runSlot)) {
+			return true;
+		}
+		if (!pqr) {
+			runSlot->path.flags = 0;
+		}
 	}
 	
+	if (pqr) {
+		*(Path*)(&runSlot->path) = *(Path*)pqr;
+		auto goalDestAdd = temple::GetRef<void(__cdecl)(objHndl, LocAndOffsets)>(0x100BAC20);
+		goalDestAdd(runSlot->path.mover, runSlot->path.to);
+		runSlot->field_14 = 0;
+	}
+	else {
+		auto goalDestRemove = temple::GetRef<void(__cdecl)(objHndl)>(0x100BAC20);
+		goalDestRemove(runSlot->path.mover);
+	}
+
+	return true;
+}
+
+bool AnimationGoals::ShouldRun(objHndl handle){
+
+	auto isAlwaysRun = config.GetVanillaInt("always run") != 0;
+	auto isInParty = party.IsInParty(handle);
+	if (!isInParty)
+		return isAlwaysRun;
+
+	auto isCtrlPressed = infrastructure::gKeyboard.IsKeyPressed(VK_LCONTROL);
+
+	if (isAlwaysRun) {
+		if (isCtrlPressed || infrastructure::gKeyboard.IsKeyPressed(VK_RCONTROL))
+			return false;
+	}
+	else {
+		if (isCtrlPressed || infrastructure::gKeyboard.IsKeyPressed(VK_RCONTROL))
+			return true;
+		if (infrastructure::gKeyboard.IsModifierActive(VK_NUMLOCK))
+			return true;
+	}
+
+	return isAlwaysRun;
+}
+
+bool AnimationGoals::PushMoveToTile(objHndl handle, LocAndOffsets loc){
+
+	if (!handle || critterSys.IsDeadOrUnconscious(handle))
+		return FALSE;
+
+	if (!critterSys.IsPC(handle)) {
+		auto getDlgTarget = temple::GetRef<objHndl(__cdecl)(objHndl)>(0x10053CA0);
+		if (getDlgTarget(handle) != objHndl::null)
+			return FALSE;
+	}
+
+	// if (critterSys.IsPC(handle) && ShouldRun(handle)) {
+	if (party.IsInParty(handle) && ShouldRun(handle)) {
+		return PushRunToTile(handle, loc);
+	}
+
+	AnimSlotId &animIdGlobal = temple::GetRef<AnimSlotId>(0x102AC880);
+	if (!animationGoals.IsObjDoingRelatedGoal(handle, ag_move_to_tile, animIdGlobal)) {
+		AnimSlotGoalStackEntry goalData(handle, ag_move_to_tile);
+		goalData.targetTile.location = loc;
+		if (Interrupt(handle, AnimGoalPriority::AGP_3, false))
+			if (goalData.Push(&animIdGlobal)) {
+				return true;
+			}
+		return false;
+	}
+
+	AnimSlotGoalStackEntry goalData(handle, ag_move_to_tile);
+	goalData.targetTile.location = loc;
+	if (!Interrupt(handle, AnimGoalPriority::AGP_3, false))
+		return true;
+	goalData.Push(&animIdGlobal);
+	return true;
+}
+
+bool AnimationGoals::PushWalkToTile(objHndl handle, LocAndOffsets loc){
+	PushMoveToTile(handle, loc);
+	SetRunningState(false);
 	return false;
+}
+
+void AnimationGoals::SetRunningState(bool state){
+	AnimSlotId *runId = addresses.animIdGlobal;
+	AnimSlot *runInfo;
+	if (GetSlot(runId, &runInfo)) {
+		if (state) {
+			runInfo->flags |= ASF_RUNNING;
+		}
+		else {
+			runInfo->flags &= ~ASF_RUNNING;
+		}
+	}
 }
 
 bool AnimationGoals::PushUnconceal(objHndl actor) {
@@ -555,7 +660,9 @@ bool AnimationGoals::PushUnconceal(objHndl actor) {
 
 bool AnimationGoals::Interrupt(objHndl actor, AnimGoalPriority priority,
                                bool all) {
-  return addresses.Interrupt(actor, priority, all);
+	
+	return gameSystems->GetAnim().Interrupt(actor, priority, all);
+  //return addresses.Interrupt(actor, priority, all);
 }
 
 void AnimationGoals::PushFallDown(objHndl actor, int unk) {
@@ -651,6 +758,10 @@ void AnimationGoals::PushForMouseTarget(objHndl handle, AnimGoalType type, objHn
 
 	AnimSlotGoalStackEntry goalData;
 	temple::GetRef<void(__cdecl)(AnimSlotGoalStackEntry&, objHndl, AnimGoalType, objHndl, locXY, objHndl, int)>(0x10113470)(goalData, handle, type, tgt, loc, scratchObj, someFlag);
+}
+
+BOOL AnimationGoals::IsObjDoingRelatedGoal(objHndl handle, AnimGoalType type, AnimSlotId & slotId){
+	return temple::GetRef<BOOL(__cdecl)(objHndl, AnimGoalType, AnimSlotId&)>(0x10054F30)(handle, type, slotId);
 }
 
 void AnimationGoals::Debug(){
@@ -1139,6 +1250,140 @@ void AnimSystem::PushActionCallback(AnimSlot &slot) {
   mActionCallbacks.push_back({slot.animObj, slot.uniqueActionId});
 }
 
+bool AnimSystem::PushGoal(AnimSlotGoalStackEntry * gdata, AnimSlotId * slotId){
+	if (temple::GetRef<int>(0x10AA4BC4)) // animPrivEditorMode
+		return false;
+
+	if (config.debugMessageEnable)
+		logger->debug("Goal pushed: {}", gdata->goalType);
+	return PushGoalImpl(gdata, slotId, 1, 0);
+	//return temple::GetRef<BOOL(__cdecl)(AnimSlotGoalStackEntry*, AnimSlotId*, int, int)>(0x10056600)(gdata, slotId, 1, 0); // Push Goal Impl
+}
+
+BOOL AnimSystem::PushGoalImpl(AnimSlotGoalStackEntry * gdata, AnimSlotId * slotId, int a3, int flags)
+{
+	if (!gdata) {
+		logger->debug("Null goal data!");
+		addresses.Debug();
+	}
+	if (gdata->goalType >= ag_count) {
+		logger->debug("invalid goalType!");
+		addresses.Debug();
+	}
+
+	auto animSysIsLoading = temple::GetRef<int>(0x10AA4BB8);
+	if (animSysIsLoading)
+		return FALSE;
+
+	auto handle = gdata->self.obj;
+	if (objects.getInt32(handle, obj_f_flags) & OF_DESTROYED)
+		return FALSE;
+
+	AnimSlotId & pushedId = temple::GetRef<AnimSlotId>(0x102B2648);
+
+	auto animRunIdForObj = temple::GetRef<BOOL(__cdecl)(objHndl, AnimSlotId&)>(0x1000C430);
+	auto timeEventObjInfoFromHandle = temple::GetRef<void(__cdecl)(objHndl, TimeEventObjInfo*)>(0x10020540);
+	auto addGoal = temple::GetRef<void(__cdecl)(AnimSlot*, const AnimGoal*)>(0x10055BF0);
+
+	AnimSlot *runInfo;
+	auto curGoal = 0;
+	if (animRunIdForObj(handle, pushedId)) {
+		if (animationGoals.GetSlot(&pushedId, &runInfo)) {
+			curGoal = runInfo->currentGoal;
+			if (runInfo->goals[curGoal].goalType == ag_anim_idle) {
+				auto result = FALSE;
+				if (curGoal >= 7) {
+					logger->debug("Anim: ERROR: Attempt to PushGoal: Goal Stack too LARGE!!! Killing the Animation Slot: AnimID: {}", pushedId.ToString());
+					logger->debug("Anim: Current SubGoal Stack is:");
+
+					for (auto i = 0; i < runInfo->currentGoal; i++) {
+						logger->debug("[{}]: Goal: {}", i, runInfo->goals[i].goalType);
+					}
+
+					runInfo->flags |= ASF_STOP_PROCESSING;
+					runInfo->currentState = 0;
+					result = FALSE;
+				}
+				else {
+					runInfo->currentState = 0;
+					runInfo->pCurrentGoal = &runInfo->goals[++runInfo->currentGoal];
+					*runInfo->pCurrentGoal = *gdata;
+
+					addGoal(runInfo, mGoals[gdata->goalType]);
+					if (slotId)
+						*slotId = pushedId;
+
+					auto curGoal2 = runInfo->currentGoal;
+					auto animParamPointer = &runInfo->goals[curGoal2].self;
+					auto timeEvtPoionter = &runInfo->goals[curGoal2].selfTracking;
+					for (auto i = 0; i < 5; i++) {
+						timeEventObjInfoFromHandle(animParamPointer[i].obj, &timeEvtPoionter[i]);
+					}
+
+					runInfo->uniqueActionId = 0;
+					result = TRUE;
+				}
+				return result;
+			}
+		}
+	}
+
+	if (a3) {
+		if (!temple::GetRef<BOOL(__cdecl)(AnimSlotId*)>(0x10055470)(&pushedId))
+			return FALSE;
+		if (slotId)
+			*slotId = pushedId;
+	}
+	else {
+		if (!slotId) {
+			logger->debug("Null slot ID ptr!");
+			addresses.Debug();
+		}
+		pushedId = *slotId;
+		auto allocateThisRunIdx = temple::GetRef<BOOL(__cdecl)(AnimSlotId&)>(0x10056480);
+		if (!allocateThisRunIdx(pushedId))
+			return FALSE;
+	}
+
+	if (pushedId.slotIndex == -1) {
+		if (slotId)
+			*slotId = pushedId;
+		return FALSE;
+	}
+
+	runInfo = &mSlots[pushedId.slotIndex];
+	runInfo->currentGoal = 0;
+	runInfo->currentState = 0;
+	runInfo->field_14 = -1;
+	runInfo->animObj = gdata->self.obj;
+	runInfo->flags |= flags;
+	runInfo->pCurrentGoal = &runInfo->goals[runInfo->currentGoal];
+	*runInfo->pCurrentGoal = *gdata;
+	auto animParamPointer = &runInfo->pCurrentGoal->self;
+	auto timeEvtPoionter = &runInfo->pCurrentGoal->selfTracking;
+	for (auto i = 0; i < 5; i++) {
+		timeEventObjInfoFromHandle(animParamPointer[i].obj, &timeEvtPoionter[i]);
+	}
+	addGoal(runInfo, mGoals[runInfo->pCurrentGoal->goalType]);
+
+	if (gdata->goalType == ag_attack || gdata->goalType == ag_attempt_attack) {
+		if (party.IsInParty(runInfo->animObj)) {
+			temple::GetRef<void(__cdecl)(objHndl)>(0x1009A410)(runInfo->goals[0].target.obj);
+		}
+	}
+
+	runInfo->uniqueActionId = 0;
+	
+	TimeEvent evt;
+	evt.system = TimeEventType::Anim;
+	evt.params[0].int32 = pushedId.slotIndex;
+	evt.params[1].int32 = pushedId.uniqueId;
+	evt.params[2].int32 = 3333;
+
+	return gameSystems->GetTimeEvent().Schedule(evt, 5);
+
+}
+
 void AnimSystem::PopGoal(AnimSlot &slot, uint32_t popFlags,
                          const AnimGoal **newGoal,
                          AnimSlotGoalStackEntry **newCurrentGoal,
@@ -1225,6 +1470,35 @@ void AnimSystem::GoalDestinationsRemove(objHndl obj) {
   static auto goal_destinations_remove =
       temple::GetPointer<void(objHndl)>(0x100bac80);
   goal_destinations_remove(obj);
+}
+
+bool AnimSystem::Interrupt(objHndl actor, AnimGoalPriority priority, bool all)
+{
+	auto lastSlot = -1;
+	if (priority < AGP_NONE || priority >= AGP_MAX) {
+		logger->debug("Invalid priority provided: {}", (int)priority);
+		addresses.Debug();
+	}
+
+	if (all) {
+		priority = AGP_NONE;
+	}
+
+	auto slotIdx = GetRunSlotIdForObj(actor);
+	if (slotIdx == -1)
+		return true;
+
+	auto animSlotInterruptGoals = temple::GetRef<BOOL(__cdecl)()>(0x10056090);
+	while (slotIdx != lastSlot) {
+		lastSlot = slotIdx;
+		if (slotIdx != -1 && !InterruptGoals(mSlots[slotIdx], priority)) {
+			return false;
+		}
+		slotIdx = temple::GetRef<int(__cdecl)(int, objHndl)>(0x10054E70)(slotIdx, actor); // FindNextSlotIdx
+		if (slotIdx == -1)
+			return true;
+	}
+	return false;
 }
 
 bool AnimSystem::InterruptGoals(AnimSlot &slot, AnimGoalPriority priority) {
@@ -1585,16 +1859,20 @@ public:
 	  });
 
 	  // Push Goal
-	  replaceFunction<BOOL(__cdecl)(AnimSlotGoalStackEntry*, AnimSlotId*)>(0x10056D20, [](AnimSlotGoalStackEntry* gdata, AnimSlotId*runId){
-		  if (temple::GetRef<int>(0x10AA4BC4)) // animPrivEditorMode
-			  return FALSE;
+	  replaceFunction<BOOL(__cdecl)(AnimSlotGoalStackEntry*, AnimSlotId*)>(0x10056D20, [](AnimSlotGoalStackEntry* gdata, AnimSlotId*slotId){
+		  return gameSystems->GetAnim().PushGoal(gdata, slotId)?TRUE:FALSE;
+	  });
 
-		  if (config.debugMessageEnable)
-			  logger->debug("Goal pushed: {}", gdata->goalType);
-		  return temple::GetRef<BOOL(__cdecl)(AnimSlotGoalStackEntry*, AnimSlotId*, int, int)>(0x10056600)(gdata, runId, 1, 0); // Push Goal Impl
+	  // Push Goal Impl
+	  replaceFunction<BOOL(__cdecl)(AnimSlotGoalStackEntry*, AnimSlotId*, int, int)>(0x10056600, [](AnimSlotGoalStackEntry* gdata, AnimSlotId*slotId, int a3, int flags) {
+		  return gameSystems->GetAnim().PushGoalImpl(gdata, slotId, a3, flags);
 	  });
 
 	 
+	  replaceFunction<BOOL(__cdecl)(objHndl, LocAndOffsets, PathQueryResult*)>(0x1001A2E0, [](objHndl handle, LocAndOffsets loc, PathQueryResult* pqr) {
+		  return animationGoals.PushRunToTile(handle, loc, pqr)?TRUE:FALSE;
+	  });
+
 	static int (*orgProcessAnimEvt)(const TimeEvent*)	=  replaceFunction<int(const TimeEvent *)>(
 			  0x1001B830, [](const TimeEvent *evt) -> int {
 		auto result = 0;
@@ -1851,8 +2129,8 @@ BOOL AnimSlotGoalStackEntry::InitWithInterrupt(objHndl obj, AnimGoalType goalTyp
 	return temple::GetRef<BOOL(AnimSlotGoalStackEntry *, objHndl, AnimGoalType )>(0x100556C0)(this, obj, goalType);
 }
 
-BOOL AnimSlotGoalStackEntry::Push(AnimSlotId* idNew){
-	return temple::GetRef<BOOL(__cdecl)(AnimSlotGoalStackEntry *, AnimSlotId*)>(0x10056D20)(this, idNew);
+bool AnimSlotGoalStackEntry::Push(AnimSlotId* idNew){
+	return gameSystems->GetAnim().PushGoal(this, idNew);
 }
 
 BOOL AnimSlotGoalStackEntry::Init(objHndl handle, AnimGoalType goalType, BOOL withInterrupt){
@@ -1901,8 +2179,8 @@ BOOL AnimSlotGoalStackEntry::Init(objHndl handle, AnimGoalType goalType, BOOL wi
 	return TRUE;
 }
 
-AnimSlotGoalStackEntry::AnimSlotGoalStackEntry(objHndl handle, AnimGoalType, BOOL withInterrupt){
-	Init(handle, goalType, withInterrupt);
+AnimSlotGoalStackEntry::AnimSlotGoalStackEntry(objHndl handle, AnimGoalType GoalType, BOOL withInterrupt){
+	Init(handle, GoalType, withInterrupt);
 }
 
 int GoalStateFuncs::GoalStateFunc35(AnimSlot& slot)

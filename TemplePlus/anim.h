@@ -129,6 +129,7 @@ enum AnimGoalPriority {
 
 class AnimationGoals {
 friend class AnimSystemHooks;
+friend class AnimSystem;
 public:
 
 	/*
@@ -152,7 +153,12 @@ public:
 	*/
 	bool PushRunNearTile(objHndl actor, LocAndOffsets target, int radiusFeet);
 
-	bool PushRunToTile(objHndl handle, LocAndOffsets loc, PathQueryResult *pqr);
+	bool PushRunToTile(objHndl handle, LocAndOffsets loc, PathQueryResult *pqr = nullptr);
+
+	bool ShouldRun(objHndl handle); // should critter use ag_run_to_tile?
+	bool PushMoveToTile(objHndl handle, LocAndOffsets loc);
+	bool PushWalkToTile(objHndl handle, LocAndOffsets loc);
+	void SetRunningState(bool state); // sets ASF_RUNNING on/off on the last anim slot (i.e. should characters use running animation, as opposed to walking)
 
 	/*
 		Pushes a goal to play the unconceal animation and unconceal the critter.
@@ -183,6 +189,8 @@ public:
 		used by the general out-of-combat mouse LMB click handler
 	*/
 	void PushForMouseTarget(objHndl handle, AnimGoalType type, objHndl tgt, locXY loc, objHndl scratchObj, int someFlag);
+
+	BOOL IsObjDoingRelatedGoal(objHndl handle, AnimGoalType type, AnimSlotId& slotId);
 
 	void Debug();
 	const AnimGoal* GetGoal(AnimGoalType goalType);
@@ -236,6 +244,7 @@ struct TimeEvent;
 class AnimSystem : public GameSystem, public SaveGameAwareGameSystem, public ResetAwareGameSystem {
 friend class AnimSystemHooks;
 friend class AnimationGoals;
+friend class AnimSlotGoalStackEntry;
 public:
 	static constexpr auto Name = "Anim";
 	AnimSystem(const GameSystemConf &config);
@@ -273,11 +282,15 @@ private:
 	void ProcessActionCallbacks();
 	void PushActionCallback(AnimSlot &slot);
 
+	bool PushGoal(AnimSlotGoalStackEntry *gdata, AnimSlotId* slotId);
+	BOOL PushGoalImpl(AnimSlotGoalStackEntry *goalData, AnimSlotId * slotId, int a3, int flags);
 	void PopGoal(AnimSlot & slot, uint32_t popFlags, const AnimGoal** newGoal, AnimSlotGoalStackEntry** newCurrentGoal, bool* stopProcessing);
 
 	BOOL RescheduleEvent(int delayMs, AnimSlot &slot, const TimeEvent *oldEvt);
 
 	void GoalDestinationsRemove(objHndl obj);
+
+	bool Interrupt(objHndl actor, AnimGoalPriority priority, bool all);
 
 	bool InterruptGoals(AnimSlot &slot, AnimGoalPriority priority);
 	
