@@ -25,9 +25,9 @@
 #include "python_integration_d20_action.h"
 #include "python_integration_feat.h"
 
-extern "C" PyObject *inittp_dispatcher();
-extern "C" PyObject *inittp_char_editor();
-extern "C" PyObject *inittp_actions();
+#include <pybind11/embed.h>
+
+namespace py = pybind11;
 
 static PyObject *MainModule;
 PyObject *MainModuleDict;
@@ -58,11 +58,16 @@ void PythonPrepareGlobalNamespace() {
 
 static bool __cdecl PythonInit(GameSystemConf *conf) {
 
+	static char* sArgv = "";
+
 	Py_OptimizeFlag++;
 	Py_VerboseFlag++;
 	Py_NoSiteFlag++;
 	Py_SetProgramName("TemplePlus.exe");
+
 	Py_Initialize();
+
+	PySys_SetArgv(0, &sArgv);
 	
 	PySys_SetObject("stderr", PyTempleConsoleOut_New());
 	PySys_SetObject("stdout", PyTempleConsoleOut_New());
@@ -93,11 +98,7 @@ static bool __cdecl PythonInit(GameSystemConf *conf) {
 	pythonClassIntegration.LoadScripts();
 	pythonD20ActionIntegration.LoadScripts(); 
 	pyFeatIntegration.LoadScripts();
-
-	inittp_dispatcher();
-	inittp_char_editor();
-	inittp_actions();
-
+	
 	// tpModifiers is imported in conditions.cpp since it needs the condition hashtable
 
 	return true;

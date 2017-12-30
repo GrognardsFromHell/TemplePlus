@@ -6,9 +6,6 @@
 #define DISPATCHER_MAX  250 // max num of simultaneous Dispatches going on (static int counter inside _DispatcherProcessor)
 #include "spell.h"
 
-//#include <pybind11/pybind11.h>
-//using namespace pybind11;
-
 struct CondStructNew;
 struct BuffDebuffPacket;
 struct DispIO;

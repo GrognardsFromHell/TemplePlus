@@ -109,24 +109,24 @@ struct RadialMenuEntrySlider : RadialMenuEntry{
 struct RadialMenuEntryAction : RadialMenuEntry
 {
 	RadialMenuEntryAction(int combatMesLine, D20ActionType d20aType, int data1,  uint32_t helpId);
-	RadialMenuEntryAction(int combatMesLine, D20ActionType d20aType, int data1, const char helpId[]);
-	RadialMenuEntryAction(int combatMesLine, int d20aType, int data1, const char helpId[]);
+	RadialMenuEntryAction(int combatMesLine, D20ActionType d20aType, int data1, const char *helpId);
+	RadialMenuEntryAction(int combatMesLine, int d20aType, int data1, const char *helpId);
 	RadialMenuEntryAction(std::string & text, int d20aType, int data1, std::string & helpId);
 	RadialMenuEntryAction(SpellStoreData &spData);
 };
 
 struct RadialMenuEntryPythonAction : RadialMenuEntryAction
 {
-	RadialMenuEntryPythonAction(int combatMesLine, int d20aType, int d20aKey, int data1, const char helpId[]);
-	RadialMenuEntryPythonAction(int combatMesLine, int d20aType, const char d20aKey [], int data1, const char helpId[]);
-	RadialMenuEntryPythonAction(std::string & text, int d20aType, int d20aKey, int data1, const char helpId[]);
-	RadialMenuEntryPythonAction(SpellStoreData& spData, int d20aType, int d20aKey, int data1, const char helpId[] = "");
+	RadialMenuEntryPythonAction(int combatMesLine, int d20aType, int d20aKey, int data1, const char *helpId);
+	RadialMenuEntryPythonAction(int combatMesLine, int d20aType, const char *d20aKey, int data1, const char *helpId);
+	RadialMenuEntryPythonAction(std::string & text, int d20aType, int d20aKey, int data1, const char *helpId);
+	RadialMenuEntryPythonAction(SpellStoreData& spData, int d20aType, int d20aKey, int data1, const char *helpId = "");
 };
 
 struct RadialMenuEntryToggle : RadialMenuEntry
 {
-	RadialMenuEntryToggle(int combatMesLine, void* actualArg, const char helpId[]);
-	RadialMenuEntryToggle(std::string &, const char helpId[]);
+	RadialMenuEntryToggle(int combatMesLine, void* actualArg, const char *helpId);
+	RadialMenuEntryToggle(std::string &, const char *helpId);
 };
 
 const auto TestSizeOfRadialMenuEntry = sizeof(RadialMenuEntry); // should be 72 (0x48)
@@ -227,7 +227,7 @@ protected:
 
 
 	void AssignMenu(objHndl handle);
-	void SetStandardNode(objHndl handle, int stdNode , int specialParent);
+	void SetStandardNode(objHndl handle, int stdNode, int specialParent);
 
 	int GetSpellClassFromSpecialNode(objHndl, int specialParent);
 	void AddSpell(objHndl handle, SpellStoreData &spData, int &specNode, RadialMenuEntry &spellEntryAction);

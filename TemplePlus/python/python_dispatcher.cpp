@@ -15,10 +15,7 @@
 #include "python_dice.h"
 #include "python_dispatcher.h"
 
-#undef HAVE_ROUND
-#define PYBIND11_EXPORT
-#include <pybind11/pybind11.h>
-#include <pybind11/common.h>
+#include <pybind11/embed.h>
 #include <pybind11/cast.h>
 #include <pybind11/stl.h>
 #include <radialmenu.h>
@@ -34,10 +31,8 @@
 #include "rng.h"
 
 namespace py = pybind11;
-using namespace pybind11;
-using namespace pybind11::detail;
 
-template <> class type_caster<objHndl> {
+template <> class py::detail::type_caster<objHndl> {
 public:
 	bool load(handle src, bool) {
 		value = PyObjHndl_AsObjHndl(src.ptr());
@@ -53,7 +48,7 @@ public:
 protected:
 	bool success = false;
 };
-template <> class type_caster<Dice> {
+template <> class py::detail::type_caster<Dice> {
 public:
 	bool load(handle src, bool) {
 		Dice dice;
@@ -72,7 +67,7 @@ protected:
 	bool success = false;
 };
 
-template <> class type_caster<SpellStoreData> {
+template <> class py::detail::type_caster<SpellStoreData> {
 public:
 	bool load(handle src, bool) {
 		SpellStoreData spData;
@@ -100,8 +95,9 @@ void AddPyHook(CondStructNew& condStr, uint32_t dispType, uint32_t dispKey, PyOb
 	condStr.subDispDefs[condStr.numHooks++] = { (enum_disp_type)dispType, (D20DispatcherKey)dispKey, PyModHookWrapper, (uint32_t)pycallback, (uint32_t)pydataTuple };
 }
 
-PYBIND11_PLUGIN(tp_dispatcher){
-	py::module m("tpdp", "Temple+ Dispatcher module, used for creating modifier extensions.");
+PYBIND11_EMBEDDED_MODULE(tpdp, m) {
+
+	m.doc() = "Temple+ Dispatcher module, used for creating modifier extensions.";
 
 	m.def("hash", [](std::string &text){
 		return ElfHash::Hash(text);
@@ -170,10 +166,6 @@ PYBIND11_PLUGIN(tp_dispatcher){
 				condStr.AddHook(dispTypeItemForceRemove, DK_NONE, temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x10104410));
 		})
 		;
-		
-		
-		
-			
 
 	py::class_<DispIO>(m, "EventObj", "The base Event Object")
 		.def_readwrite("evt_obj_type", &DispIO::dispIOType)
@@ -181,7 +173,6 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		return fmt::format("EventObj: Type {}", dispIo.dispIOType);
 		})
 		;
-
 
 	py::class_<DispatcherCallbackArgs>(m, "EventArgs")
 		.def(py::init())
@@ -383,8 +374,8 @@ PYBIND11_PLUGIN(tp_dispatcher){
 			
 			// if missed, randomize the target location a bit
 			if (!(d20a.d20Caf & D20CAF_HIT)){
-				endLoc.off_x = rngSys.GetInt(-30, 30);
-				endLoc.off_y = rngSys.GetInt(-30, 30);
+				endLoc.off_x = static_cast<float>(rngSys.GetInt(-30, 30));
+				endLoc.off_y = static_cast<float>(rngSys.GetInt(-30, 30));
 			}
 			auto startLoc = objSystem->GetObject(d20a.d20APerformer)->GetLocationFull();
 			return createProjAndThrow(startLoc.location, protoNum, 0,0, endLoc, d20a.d20APerformer, d20a.d20ATarget);
@@ -404,8 +395,8 @@ PYBIND11_PLUGIN(tp_dispatcher){
 
 			// if missed, randomize the target location a bit
 			if (!(d20a.d20Caf & D20CAF_HIT)) {
-				endLoc.off_x = rngSys.GetInt(-30, 30);
-				endLoc.off_y = rngSys.GetInt(-30, 30);
+				endLoc.off_x = static_cast<float>(rngSys.GetInt(-30, 30));
+				endLoc.off_y = static_cast<float>(rngSys.GetInt(-30, 30));
 				endLoc.Regularize();
 			}
 			auto startLoc = objSystem->GetObject(d20a.d20APerformer)->GetLocationFull();
@@ -462,24 +453,6 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.export_values()
 		;
 
-	py::enum_<UiPickerType>(m, "ModeTarget")
-		.value("Single", UiPickerType::Single)
-		.value("Multi", UiPickerType::Multi)
-		.value("Cone", UiPickerType::Cone)
-		.value("Area", UiPickerType::Area)
-		.value("Location", UiPickerType::Location)
-		.value("Personal", UiPickerType::Personal)
-		.value("InventoryItem", UiPickerType::InventoryItem)
-		.value("Ray", UiPickerType::Ray)
-		// flags
-		.value("BecomeTouch", UiPickerType::BecomeTouch)
-		.value("AreaOrObj", UiPickerType::AreaOrObj)
-		.value("OnceMulti", UiPickerType::OnceMulti)
-		.value("Any30Feet", UiPickerType::Any30Feet)
-		.value("Primary30Feet", UiPickerType::Primary30Feet)
-		.value("EndEarlyMulti", UiPickerType::EndEarlyMulti)
-		.value("LocIsClear", UiPickerType::LocIsClear)
-		;
 	#pragma endregion 
 
 	#pragma region Radial Menu Entries
@@ -492,8 +465,8 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def_readwrite("max_arg", &RadialMenuEntry::maxArg)
 		;
 
-	py::class_<RadialMenuEntryAction>(m, "RadialMenuEntryAction", py::base<RadialMenuEntry>())
-		.def(py::init<int, int, int, const char[]>(), py::arg("combesMesLine"), py::arg("action_type"), py::arg("data1"), py::arg("helpTopic"))
+	py::class_<RadialMenuEntryAction, RadialMenuEntry>(m, "RadialMenuEntryAction")
+		.def(py::init<int, int, int, const char*>(), py::arg("combesMesLine"), py::arg("action_type"), py::arg("data1"), py::arg("helpTopic"))
 		.def(py::init<std::string&, int, int, std::string&>(), py::arg("radialText"), py::arg("action_type"), py::arg("data1"), py::arg("helpTopic"))
 		.def(py::init<SpellStoreData&>(), py::arg("spell_data"))
 		.def("set_spell_data", [](RadialMenuEntryAction & entry, D20SpellData& spellData){
@@ -501,15 +474,15 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		})
 		;
 
-	py::class_<RadialMenuEntryPythonAction>(m, "RadialMenuEntryPythonAction", py::base<RadialMenuEntryAction>())
-		.def(py::init<int, int, int, int, const char[]>(), py::arg("combatMesLine"), py::arg("action_type"), py::arg("action_id"), py::arg("data1"), py::arg("helpTopic"))
-		.def(py::init<int, int, const char[], int, const char[]>(), py::arg("combatMesLine"), py::arg("action_type"), py::arg("action_name"), py::arg("data1"), py::arg("helpTopic"))
-		.def(py::init<std::string&, int, int, int, const char[]>(), py::arg("radialText"), py::arg("action_type"), py::arg("action_id"), py::arg("data1"), py::arg("helpTopic"))
-		.def(py::init<SpellStoreData&, int, int, int, const char[]>(), py::arg("spell_store"), py::arg("action_type"), py::arg("action_id"), py::arg("data1"), py::arg("helpTopic")="")
+	py::class_<RadialMenuEntryPythonAction, RadialMenuEntryAction>(m, "RadialMenuEntryPythonAction")
+		.def(py::init<int, int, int, int, const char*>(), py::arg("combatMesLine"), py::arg("action_type"), py::arg("action_id"), py::arg("data1"), py::arg("helpTopic"))
+		.def(py::init<int, int, const char*, int, const char*>(), py::arg("combatMesLine"), py::arg("action_type"), py::arg("action_name"), py::arg("data1"), py::arg("helpTopic"))
+		.def(py::init<std::string&, int, int, int, const char*>(), py::arg("radialText"), py::arg("action_type"), py::arg("action_id"), py::arg("data1"), py::arg("helpTopic"))
+		.def(py::init<SpellStoreData&, int, int, int, const char*>(), py::arg("spell_store"), py::arg("action_type"), py::arg("action_id"), py::arg("data1"), py::arg("helpTopic")="")
 		;
 
-	py::class_<RadialMenuEntryToggle>(m, "RadialMenuEntryToggle", py::base<RadialMenuEntry>())
-		.def(py::init<std::string&, const char[]>(), py::arg("radialText"), py::arg("helpTopic"))
+	py::class_<RadialMenuEntryToggle, RadialMenuEntry>(m, "RadialMenuEntryToggle")
+		.def(py::init<std::string&, const char*>(), py::arg("radialText"), py::arg("helpTopic"))
 		.def("link_to_args", [](RadialMenuEntryToggle & entry, DispatcherCallbackArgs &args, int argIdx)
 		{
 			entry.actualArg = (int)args.GetCondArgPtr(argIdx);
@@ -539,7 +512,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 	#pragma region Spell stuff
 	py::class_<SpellEntry>(m, "SpellEntry")
 		.def(py::init())
-		.def(py::init<int>(), py::arg("spell_enum"))
+		.def(py::init<uint32_t>(), py::arg("spell_enum"))
 		.def_readwrite("spell_enum", &SpellEntry::spellEnum)
 		.def_readwrite("casting_time", &SpellEntry::castingTimeType)
 		.def_readwrite("saving_throw_type", &SpellEntry::savingThrowType)
@@ -587,7 +560,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 				if (idx >=0 && idx < 5){
 					spellSys.GetSpellPacketBody(pkt.spellId, &pkt);
 					pkt.projectiles[idx] = projectile;
-					if (pkt.projectileCount <= idx)
+					if (pkt.projectileCount <= (uint32_t) idx)
 						pkt.projectileCount = idx+1;
 
 					// update the spell repositories
@@ -613,7 +586,7 @@ PYBIND11_PLUGIN(tp_dispatcher){
 
 	
 
-	py::class_<DispIoCondStruct>(m, "EventObjModifier", "Used for checking modifiers before applying them", py::base<DispIO>())
+	py::class_<DispIoCondStruct, DispIO>(m, "EventObjModifier", "Used for checking modifiers before applying them")
 		.def(py::init())
 		.def_readwrite("retun_val", &DispIoCondStruct::outputFlag)
 		.def_readwrite("arg1", &DispIoCondStruct::arg1, "First modifier argument")
@@ -621,36 +594,36 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def_readwrite("modifier_spec", &DispIoCondStruct::condStruct, "Modifier Spec (DO NOT ADD HOOKS FROM HERE! Due to different format for vanilla ToEE and Temple+ modifier specs.)");
 
 
-	py::class_<DispIoBonusList>(m, "EventObjBonusList", "Used for fetching ability score levels and cur/max HP", py::base<DispIO>())
+	py::class_<DispIoBonusList, DispIO>(m, "EventObjBonusList", "Used for fetching ability score levels and cur/max HP")
 		.def(py::init())
 		.def_readwrite("flags", &DispIoBonusList::flags)
 		.def_readwrite("bonus_list", &DispIoBonusList::bonlist);
 
-	py::class_<DispIoSavingThrow>(m, "EventObjSavingThrow", "Used for fetching saving throw bonuses", py::base<DispIO>())
+	py::class_<DispIoSavingThrow, DispIO>(m, "EventObjSavingThrow", "Used for fetching saving throw bonuses")
 		.def_readwrite("bonus_list", &DispIoSavingThrow::bonlist)
 		.def_readwrite("return_val", &DispIoSavingThrow::returVal)
 		.def_readwrite("obj", &DispIoSavingThrow::obj)
 		.def_readwrite("flags", &DispIoSavingThrow::flags);
 
-	py::class_<DispIoDamage>(m, "EventObjDamage", "Used for damage dice and such", py::base<DispIO>())
+	py::class_<DispIoDamage, DispIO>(m, "EventObjDamage", "Used for damage dice and such")
 		.def_readwrite("attack_packet", &DispIoDamage::attackPacket)
 		.def_readwrite("damage_packet", &DispIoDamage::damage)
 		;
 
 
-	py::class_<DispIoAttackBonus>(m, "EventObjAttack", "Used for fetching attack or AC bonuses", py::base<DispIO>())
+	py::class_<DispIoAttackBonus, DispIO>(m, "EventObjAttack", "Used for fetching attack or AC bonuses")
 		.def(py::init())
 		.def_readwrite("bonus_list", &DispIoAttackBonus::bonlist)
 		.def_readwrite("attack_packet", &DispIoAttackBonus::attackPacket);
 
-	py::class_<DispIoD20Signal>(m, "EventObjD20Signal", py::base<DispIO>())
+	py::class_<DispIoD20Signal, DispIO>(m, "EventObjD20Signal")
 		.def(py::init())
 		.def_readwrite("return_val", &DispIoD20Signal::return_val)
 		.def_readwrite("data1", &DispIoD20Signal::data1)
 		.def_readwrite("data2", &DispIoD20Signal::data2)
 		;
 
-	py::class_<DispIoD20Query>(m, "EventObjD20Query", py::base<DispIO>())
+	py::class_<DispIoD20Query, DispIO>(m, "EventObjD20Query")
 		.def(py::init())
 		.def_readwrite("return_val", &DispIoD20Query::return_val)
 		.def_readwrite("data1", &DispIoD20Query::data1)
@@ -665,40 +638,40 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		}, "Used for Q_IsActionInvalid_CheckAction callbacks to get a D20Action from the data1 field")
 		;
 
-	py::class_<DispIOTurnBasedStatus>(m, "EventObjTurnBasedStatus", py::base<DispIO>())
+	py::class_<DispIOTurnBasedStatus, DispIO>(m, "EventObjTurnBasedStatus")
 		.def(py::init())
 		.def_readwrite("tb_status", &DispIOTurnBasedStatus::tbStatus);
 
 
-	py::class_<DispIoTooltip>(m, "EventObjTooltip", "Tooltip event for mouse-overed objects.", py::base<DispIO>())
+	py::class_<DispIoTooltip, DispIO>(m, "EventObjTooltip", "Tooltip event for mouse-overed objects.")
 		.def("append", &DispIoTooltip::Append, "Appends a string")
 		.def_readwrite("num_strings", &DispIoTooltip::numStrings);
 
-	py::class_<DispIoObjBonus>(m, "EventObjObjectBonus", "Used for Item Bonuses, initiative modifiers and others.", py::base<DispIO>())
+	py::class_<DispIoObjBonus, DispIO>(m, "EventObjObjectBonus", "Used for Item Bonuses, initiative modifiers and others.")
 		.def_readwrite("bonus_list", &DispIoObjBonus::bonOut)
 		.def_readwrite("return_val", &DispIoObjBonus::returnVal);
 
-	py::class_<DispIoDispelCheck>(m, "EventObjDispelCheck", "Dispel Check Event", py::base<DispIO>())
+	py::class_<DispIoDispelCheck, DispIO>(m, "EventObjDispelCheck", "Dispel Check Event")
 		.def_readwrite("return_val", &DispIoDispelCheck::returnVal)
 		.def_readwrite("flags", &DispIoDispelCheck::flags)
 		.def_readwrite("spell_id", &DispIoDispelCheck::spellId);
 
-	py::class_<DispIoD20ActionTurnBased>(m, "EventObjD20Action", "Used for D20 Action Checks/Performance events and obtaining number of attacks (base/bonus/natural)", py::base<DispIO>())
+	py::class_<DispIoD20ActionTurnBased, DispIO>(m, "EventObjD20Action", "Used for D20 Action Checks/Performance events and obtaining number of attacks (base/bonus/natural)")
 		.def_readwrite("return_val", &DispIoD20ActionTurnBased::returnVal)
 		.def_readwrite("d20a", &DispIoD20ActionTurnBased::d20a)
 		.def_readwrite("turnbased_status", &DispIoD20ActionTurnBased::tbStatus);
 
-	py::class_<DispIoMoveSpeed>(m, "EventObjMoveSpeed", "Used for getting move speed, and also for model size scaling with Temple+.", py::base<DispIO>())
+	py::class_<DispIoMoveSpeed, DispIO>(m, "EventObjMoveSpeed", "Used for getting move speed, and also for model size scaling with Temple+.")
 		.def_readwrite("factor", &DispIoMoveSpeed::factor)
 		.def_readwrite("bonus_list", &DispIoMoveSpeed::bonlist)
 		;
 
-	py::class_<DispIOBonusListAndSpellEntry>(m, "EventObjSpellEntry", "Used for Spell DC and Spell Resistance Mod", py::base<DispIO>())
+	py::class_<DispIOBonusListAndSpellEntry, DispIO>(m, "EventObjSpellEntry", "Used for Spell DC and Spell Resistance Mod")
 		.def_readwrite("bonus_list", &DispIOBonusListAndSpellEntry::bonList)
 		.def_readwrite("spell_entry", &DispIOBonusListAndSpellEntry::spellEntry)
 		;
 
-	py::class_<DispIoReflexThrow>(m, "EventObjReflexSaveThrow", "Used for Reflex Save throws that reduce damage", py::base<DispIO>())
+	py::class_<DispIoReflexThrow, DispIO>(m, "EventObjReflexSaveThrow", "Used for Reflex Save throws that reduce damage")
 		.def_readwrite("attack_type", &DispIoReflexThrow::attackType)
 		.def_readwrite("effective_reduction", &DispIoReflexThrow::effectiveReduction)
 		.def_readwrite("reduction", &DispIoReflexThrow::reduction, "0,1,2 for None,Half,Quarter respectively")
@@ -707,21 +680,21 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def_readwrite("flags", &DispIoReflexThrow::flags, "D20STD_ flags")
 		;
 
-	py::class_<DispIoObjEvent>(m, "EventObjObjectEvent", "Used for Object Events (triggered by entering/leaveing AoE)", py::base<DispIO>())
+	py::class_<DispIoObjEvent, DispIO>(m, "EventObjObjectEvent", "Used for Object Events (triggered by entering/leaveing AoE)")
 		.def_readwrite("target", &DispIoObjEvent::tgt, "The critter affected by the AoE")
 		.def_readwrite("aoe_obj", &DispIoObjEvent::aoeObj, "The origin of the AoE effect")
 		.def_readwrite("evt_id", &DispIoObjEvent::evtId)
 		;
 
 
-	py::class_<DispIoAbilityLoss>(m, "EventObjGetAbilityLoss", "Used for Ability Loss status", py::base<DispIO>())
+	py::class_<DispIoAbilityLoss, DispIO>(m, "EventObjGetAbilityLoss", "Used for Ability Loss status")
 		.def_readwrite("flags", &DispIoAbilityLoss::flags)
 		.def_readwrite("spell_id", &DispIoAbilityLoss::spellId)
 		.def_readwrite("stat_damaged", &DispIoAbilityLoss::statDamaged)
 		.def_readwrite("result", &DispIoAbilityLoss::result)
 		;
 
-	py::class_<DispIoAttackDice>(m, "EventObjGetAttackDice", "Used for getting the critter's attack dice", py::base<DispIO>())
+	py::class_<DispIoAttackDice, DispIO>(m, "EventObjGetAttackDice", "Used for getting the critter's attack dice")
 		.def_readwrite("flags", &DispIoAttackDice::flags, "D20CAF_ ")
 		.def_readwrite("damage_type", &DispIoAttackDice::attackDamageType, "D20DT_")
 		.def_readwrite("bonus_list", &DispIoAttackDice::bonlist)
@@ -730,17 +703,17 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def_readwrite("wielder", &DispIoAttackDice::wielder)
 		;
 
-	py::class_<DispIoTypeImmunityTrigger>(m, "EventObjImmunityTrigger", "Used for triggering the immunity handling query", py::base<DispIO>())
+	py::class_<DispIoTypeImmunityTrigger, DispIO>(m, "EventObjImmunityTrigger", "Used for triggering the immunity handling query")
 		.def_readwrite("should_perform_immunity_check", &DispIoTypeImmunityTrigger::interrupt)
 		.def_readwrite("immunity_key", &DispIoTypeImmunityTrigger::SDDKey1)
 		; // TODO
 
-	py::class_<DispIoImmunity>(m, "EventObjImmunityQuery", "Used for performing the immunity handling", py::base<DispIO>())
+	py::class_<DispIoImmunity, DispIO>(m, "EventObjImmunityQuery", "Used for performing the immunity handling")
 		.def_readwrite("spell_entry", &DispIoImmunity::spellEntry)
 		.def_readwrite("spell_packet", &DispIoImmunity::spellPkt)
 		;
 
-	py::class_<DispIoEffectTooltip>(m, "EventObjEffectTooltip", "Used for tooltips when hovering over the status effect indicators in the party portrait row", py::base<DispIO>())
+	py::class_<DispIoEffectTooltip, DispIO>(m, "EventObjEffectTooltip", "Used for tooltips when hovering over the status effect indicators in the party portrait row")
 		.def("append", &DispIoEffectTooltip::Append)
 		;
 
@@ -751,23 +724,13 @@ PYBIND11_PLUGIN(tp_dispatcher){
 		.def_readwrite("spell_packet", &EvtObjSpellCaster::spellPkt)
 		;
 
-	py::class_<EvtObjActionCost>(m, "EventObjActionCost", "Used for modifying action cost", py::base<DispIO>())
+	py::class_<EvtObjActionCost, DispIO>(m, "EventObjActionCost", "Used for modifying action cost")
 		.def_readwrite("cost_orig", &EvtObjActionCost::acpOrig)
 		.def_readwrite("cost_new", &EvtObjActionCost::acpCur)
 		.def_readwrite("d20a", &EvtObjActionCost::d20a)
 		.def_readwrite("turnbased_status", &EvtObjActionCost::tbStat)
 		;
-	//py::class_<DispatcherCallbackArgs>(m, "EventArgsD20Signal")
-	//	.def(py::init())
-	//	.def("__repr__", [](DispatcherCallbackArgs &args)->std::string {
-	//	return fmt::format("EventArgsD20Signal: Type = {} , Key = {}", args.dispType, args.dispKey);
-	//})
-	//	.def("get_arg", &DispatcherCallbackArgs::GetCondArg)
-	//	.def("set_arg", &DispatcherCallbackArgs::SetCondArg)
-	//	//	.def_readwrite("evt_obj", &DispatcherCallbackArgs::dispIO)
-	//	;
-	
-	return m.ptr();
+
 }
 
 

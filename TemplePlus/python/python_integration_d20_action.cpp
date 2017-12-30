@@ -5,10 +5,7 @@
 #include "python_object.h"
 #include "python/python_integration_spells.h"
 
-#undef HAVE_ROUND
-#define PYBIND11_EXPORT
-#include <pybind11/pybind11.h>
-#include <pybind11/common.h>
+#include <pybind11/embed.h>
 #include <pybind11/cast.h>
 
 #include "d20.h"
@@ -17,10 +14,8 @@
 #include "ui/ui_picker.h"
 
 namespace py = pybind11;
-using namespace pybind11;
-using namespace pybind11::detail;
 
-template <> class type_caster<objHndl> {
+template <> class py::detail::type_caster<objHndl> {
 public:
 	bool load(handle src, bool) {
 		value = PyObjHndl_AsObjHndl(src.ptr());
@@ -39,11 +34,10 @@ protected:
 PythonD20ActionIntegration pythonD20ActionIntegration;
 
 
-PYBIND11_PLUGIN(tp_actions) {
-	py::module m("tpactions", "Temple+ D20 Actions module, used for handling of D20 actions & action sequencing.");
+PYBIND11_EMBEDDED_MODULE(tpactions, m) {
+	m.doc() = "Temple+ D20 Actions module, used for handling of D20 actions & action sequencing.";
 
-	//py:class_<ActnSeq>(m, "");
-	py::class_<ActnSeq>(m,"ActionSequence")
+	py::class_<ActnSeq>(m, "ActionSequence", R"(Describes a D20 action sequence.)")
 		.def_readwrite("cur_idx", &ActnSeq::d20aCurIdx)
 		.def_readwrite("performer", &ActnSeq::performer)
 		.def_readwrite("tb_status", &ActnSeq::tbStatus)
@@ -64,7 +58,7 @@ PYBIND11_PLUGIN(tp_actions) {
 		.def("is_mode_target_flag_set", &PickerArgs::IsModeTargetFlagSet)
 			;
 
-	py::enum_<UiPickerType>(m, "ModeTarget")
+	py::enum_<UiPickerType>(m, "ModeTarget", py::module_local())
 		.value("Single", UiPickerType::Single)
 		.value("Cone", UiPickerType::Cone)
 		.value("Area", UiPickerType::Area)
@@ -75,7 +69,6 @@ PYBIND11_PLUGIN(tp_actions) {
 		.value("OnceMulti", UiPickerType::OnceMulti)
 		.value("Any30Feet", UiPickerType::Any30Feet)
 		.value("PickOrigin", UiPickerType::PickOrigin)
-		.export_values()
 		;
 
 	m.def("add_to_seq", [](D20Actn & d20a, ActnSeq & actSeq){
@@ -138,7 +131,6 @@ PYBIND11_PLUGIN(tp_actions) {
 		return **actSeqSys.actSeqCur;
 	});
 
-	return m.ptr();
 }
 
 PythonD20ActionIntegration::PythonD20ActionIntegration()

@@ -1010,12 +1010,12 @@ RadialMenuEntryAction::RadialMenuEntryAction(int combatMesLine, D20ActionType d2
 	d20ActionData1 = data1;
 }
 
-RadialMenuEntryAction::RadialMenuEntryAction(int combatMesLine, D20ActionType d20aType, int data1, const char helpId[]): RadialMenuEntryAction(combatMesLine, d20aType, data1, ElfHash::Hash(helpId))
+RadialMenuEntryAction::RadialMenuEntryAction(int combatMesLine, D20ActionType d20aType, int data1, const char *helpId): RadialMenuEntryAction(combatMesLine, d20aType, data1, ElfHash::Hash(helpId))
 {
 
 }
 
-RadialMenuEntryAction::RadialMenuEntryAction(int combatMesLine, int d20aType, int data1, const char helpId[]):RadialMenuEntryAction(combatMesLine, static_cast<D20ActionType>(d20aType), data1, ElfHash::Hash(helpId))
+RadialMenuEntryAction::RadialMenuEntryAction(int combatMesLine, int d20aType, int data1, const char *helpId):RadialMenuEntryAction(combatMesLine, static_cast<D20ActionType>(d20aType), data1, ElfHash::Hash(helpId))
 {
 }
 
@@ -1047,7 +1047,7 @@ RadialMenuEntryAction::RadialMenuEntryAction(SpellStoreData & spData){
 	this->d20SpellData.Set(spData.spellEnum, spData.classCode, spData.spellLevel, -1, spData.metaMagicData);
 }
 
-RadialMenuEntryToggle::RadialMenuEntryToggle(int combatMesLine, void* ActualArg, const char HelpId[]): RadialMenuEntry()
+RadialMenuEntryToggle::RadialMenuEntryToggle(int combatMesLine, void* ActualArg, const char *HelpId): RadialMenuEntry()
 {
 	type = RadialMenuEntryType::Toggle;
 	text = combatSys.GetCombatMesLine(combatMesLine);
@@ -1057,7 +1057,7 @@ RadialMenuEntryToggle::RadialMenuEntryToggle(int combatMesLine, void* ActualArg,
 	maxArg = 1;
 	actualArg = reinterpret_cast<int>(ActualArg);
 }
-RadialMenuEntryToggle::RadialMenuEntryToggle(std::string & textArg, const char HelpId[]): RadialMenuEntry()
+RadialMenuEntryToggle::RadialMenuEntryToggle(std::string & textArg, const char *HelpId): RadialMenuEntry()
 {
 	type = RadialMenuEntryType::Toggle;
 	auto textId = ElfHash::Hash(textArg);
@@ -1106,7 +1106,7 @@ int RadialMenuEntryParent::AddAsChild(objHndl handle, int parentId) {
 	return radialMenus.AddParentChildNode(handle, this, parentId);
 }
 
-RadialMenuEntryPythonAction::RadialMenuEntryPythonAction(int combatMesLine, int d20aType, int d20aKey, int data1, const char helpId[]): RadialMenuEntryAction(1, d20aType, data1, helpId) {
+RadialMenuEntryPythonAction::RadialMenuEntryPythonAction(int combatMesLine, int d20aType, int d20aKey, int data1, const char *helpId): RadialMenuEntryAction(1, d20aType, data1, helpId) {
 	if (combatMesLine == -1){
 		this->text = (char*)(d20Sys.GetPythonActionName((D20DispatcherKey)d20aKey).c_str());
 	} else
@@ -1117,12 +1117,12 @@ RadialMenuEntryPythonAction::RadialMenuEntryPythonAction(int combatMesLine, int 
 	this->callback = [](objHndl handle, RadialMenuEntry* entry) { return radialMenus.PythonActionCallback(handle, entry); };
 }
 
-RadialMenuEntryPythonAction::RadialMenuEntryPythonAction(int combatMesLine, int d20aType, const char d20aKey[], int data1, const char helpId[]):RadialMenuEntryAction(combatMesLine, d20aType, data1, helpId) {
+RadialMenuEntryPythonAction::RadialMenuEntryPythonAction(int combatMesLine, int d20aType, const char *d20aKey, int data1, const char *helpId):RadialMenuEntryAction(combatMesLine, d20aType, data1, helpId) {
 	this->dispKey = ElfHash::Hash(d20aKey);
 	this->callback = [](objHndl handle, RadialMenuEntry* entry) { return radialMenus.PythonActionCallback(handle, entry); };
 }
 
-RadialMenuEntryPythonAction::RadialMenuEntryPythonAction(std::string & textArg, int d20aType, int d20aKey, int data1, const char helpId[]) : RadialMenuEntryAction(1, d20aType, data1, helpId)
+RadialMenuEntryPythonAction::RadialMenuEntryPythonAction(std::string & textArg, int d20aType, int d20aKey, int data1, const char *helpId) : RadialMenuEntryAction(1, d20aType, data1, helpId)
 {
 	auto textId = ElfHash::Hash(textArg);
 	auto textCache = radialMenus.radMenuStrings.find(textId);
@@ -1138,7 +1138,7 @@ RadialMenuEntryPythonAction::RadialMenuEntryPythonAction(std::string & textArg, 
 	this->dispKey = d20aKey;
 }
 
-RadialMenuEntryPythonAction::RadialMenuEntryPythonAction(SpellStoreData & spData, int d20aType, int d20aKey, int data1, const char helpId[]):RadialMenuEntryAction(spData){
+RadialMenuEntryPythonAction::RadialMenuEntryPythonAction(SpellStoreData & spData, int d20aType, int d20aKey, int data1, const char *helpId):RadialMenuEntryAction(spData){
 	this->d20ActionType = (D20ActionType)d20aType;
 	if (helpId && *helpId){
 		this->helpId = ElfHash::Hash(helpId);

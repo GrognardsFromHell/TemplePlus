@@ -19,11 +19,8 @@
 #include "ui/ui_systems.h"
 #include "ui/ui_legacysystems.h"
 
-#undef HAVE_ROUND
-#include <pybind11/pybind11.h>
+#include <pybind11/embed.h>
 namespace py = pybind11;
-using namespace pybind11;
-using namespace pybind11::detail;
 
 struct PySpell;
 static PyObject *PySpellTargets_Create(PySpell *spell);
