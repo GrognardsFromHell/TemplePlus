@@ -38,6 +38,11 @@ protected:
 	void redirectCall(uint32_t offset, void* redirectTo);
 	void redirectJump(uint32_t offset, void* redirectTo);
 
+	template<typename T>
+	void redirectToLambda(uint32_t offset, T* redirectTo) {
+		redirectCall(offset, redirectTo);
+	};
+
 	// Intelligently replaces the instruction at the given offset with noops
 	void writeNoops(uint32_t offset);
 	

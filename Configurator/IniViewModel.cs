@@ -68,6 +68,9 @@ namespace TemplePlusConfig
 
         public static readonly DependencyProperty FastSneakingProperty = DependencyProperty.Register(
           "FastSneaking", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+        public static readonly DependencyProperty WalkDistanceFtProperty = DependencyProperty.Register(
+            "WalkDistanceFt", typeof(int), typeof(IniViewModel), new PropertyMetadata(default(int)));
+
         public static readonly DependencyProperty DisableDoorRelockingProperty = DependencyProperty.Register(
           "DisableDoorRelocking", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
         public static readonly DependencyProperty AlertAiThroughDoorsProperty = DependencyProperty.Register(
@@ -106,6 +109,7 @@ namespace TemplePlusConfig
             RenderHeight = (int)screenSize.Height;
             PointBuyPoints = 25;
             MaxLevel = 10;
+            WalkDistanceFt = 0;
             SlowerLevelling = false;
             AllowXpOverflow = false;
         }
@@ -230,6 +234,16 @@ namespace TemplePlusConfig
             get { return (bool)GetValue(FastSneakingProperty); }
             set { SetValue(FastSneakingProperty, value); }
         }
+
+        public int WalkDistanceFt
+        {
+            get { return (int)GetValue(WalkDistanceFtProperty); }
+            set { if (value < 0)
+                    SetValue(WalkDistanceFtProperty, 0);
+                else
+                    SetValue(WalkDistanceFtProperty, value ); }
+        }
+
         public bool DisableDoorRelocking
         {
             get { return (bool)GetValue(DisableDoorRelockingProperty); }
@@ -396,6 +410,14 @@ namespace TemplePlusConfig
             if (bool.TryParse(tpData["fastSneakAnim"], out fastSneaking)){
                 FastSneaking = fastSneaking;
             }
+            int walkDistFt;
+            if (int.TryParse(tpData["walkDistanceFt"], out walkDistFt))
+            {
+                if (walkDistFt < 0)
+                    walkDistFt = 0;
+                WalkDistanceFt = walkDistFt;
+            }
+
             bool disableDoorRelocking;
             if (bool.TryParse(tpData["disableDoorRelocking"], out disableDoorRelocking))
             {
@@ -514,6 +536,8 @@ namespace TemplePlusConfig
             tpData["showExactHPforNPCs"] = TransparentNpcStats? "true" : "false";
             tpData["showNpcStats"] = TransparentNpcStats ? "true" : "false";
             tpData["fastSneakAnim"] = FastSneaking ? "true" : "false";
+            if (WalkDistanceFt < 0) WalkDistanceFt = 0;
+            tpData["walkDistanceFt"] =WalkDistanceFt.ToString();
             tpData["disableDoorRelocking"] = DisableDoorRelocking? "true" : "false";
             tpData["alertAiThroughDoors"] = AlertAiThroughDoors ? "true" : "false";
             

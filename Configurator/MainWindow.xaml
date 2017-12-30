@@ -40,6 +40,10 @@
                     <Label VerticalAlignment="Center" Content="Max Level:"/>
                     <TextBox Width="50" VerticalAlignment="Center" Text="{Binding MaxLevel}" />
                 </StackPanel>
+                <StackPanel Orientation="Horizontal"  Margin="0,5,0,5">
+                    <Label VerticalAlignment="Center" Content="Walk Distance (feet)" ToolTip="Your characters will walk instead of running up to this distance. You can also force run by holding the Control key."/>
+                    <TextBox Width="50" VerticalAlignment="Center" Text="{Binding WalkDistanceFt}" ToolTip="Your characters will walk instead of running up to this distance. You can also force run by holding the Control key."/>
+                </StackPanel>
                 <Button x:Name="HouseRulesBtn" Content="House Rules" HorizontalAlignment="Left" Width="84" Margin="55,15,0,0" Click="HousRulesBtnClick" Height="27"/>
             </StackPanel>
 

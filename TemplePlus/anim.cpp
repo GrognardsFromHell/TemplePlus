@@ -565,13 +565,11 @@ bool AnimationGoals::PushRunToTile(objHndl handle, LocAndOffsets loc, PathQueryR
 	
 	if (pqr) {
 		*(Path*)(&runSlot->path) = *(Path*)pqr;
-		auto goalDestAdd = temple::GetRef<void(__cdecl)(objHndl, LocAndOffsets)>(0x100BAC20);
-		goalDestAdd(runSlot->path.mover, runSlot->path.to);
+		GoalDestinationAdd(runSlot->path.mover, runSlot->path.to);
 		runSlot->field_14 = 0;
 	}
 	else {
-		auto goalDestRemove = temple::GetRef<void(__cdecl)(objHndl)>(0x100BAC20);
-		goalDestRemove(runSlot->path.mover);
+		GoalDestinationRemove(runSlot->path.mover);
 	}
 
 	return true;
@@ -580,6 +578,9 @@ bool AnimationGoals::PushRunToTile(objHndl handle, LocAndOffsets loc, PathQueryR
 bool AnimationGoals::ShouldRun(objHndl handle){
 
 	auto isAlwaysRun = config.GetVanillaInt("always run") != 0;
+	if (config.walkDistanceFt > 0) // adding support for "Walk Distance" option
+		isAlwaysRun = false;
+
 	auto isInParty = party.IsInParty(handle);
 	if (!isInParty)
 		return isAlwaysRun;
@@ -637,6 +638,11 @@ bool AnimationGoals::PushMoveToTile(objHndl handle, LocAndOffsets loc){
 
 bool AnimationGoals::PushWalkToTile(objHndl handle, LocAndOffsets loc){
 	PushMoveToTile(handle, loc);
+	AnimSlotId *runId = addresses.animIdGlobal;
+	AnimSlot *runSlot;
+	GetSlot(runId, &runSlot);
+	runSlot->path.flags &= ~PF_COMPLETE;
+	GoalDestinationRemove(handle);
 	SetRunningState(false);
 	return false;
 }
@@ -772,6 +778,31 @@ const AnimGoal* AnimationGoals::GetGoal(AnimGoalType goalType)
 {
 	auto gArray = *gameSystems->GetAnim().mGoals;
 	return &gArray[goalType];
+}
+
+struct GoalDestination {
+	objHndl handle;
+	LocAndOffsets loc;
+};
+const int sGoalDestinationCap = 20;
+
+void AnimationGoals::GoalDestinationRemove(objHndl handle){
+	auto gd = temple::GetRef<GoalDestination[]>(0x10BCA8C0);
+	for (auto i = 0; i < sGoalDestinationCap; i++) {
+		if (gd[i].handle == handle) {
+			gd[i].handle = objHndl::null;
+		}
+	}
+}
+
+void AnimationGoals::GoalDestinationAdd(objHndl handle, LocAndOffsets loc){
+	auto gd = temple::GetRef<GoalDestination[]>(0x10BCA8C0);
+	auto &gdIdx = temple::GetRef<int>(0x10BCAAA0);
+	gd[gdIdx].handle = handle;
+	gd[gdIdx].loc = loc;
+	gdIdx++;
+	if (gdIdx == sGoalDestinationCap)
+		gdIdx = 0;
 }
 
 BOOL AnimationGoals::GetSlot(AnimSlotId * runId, AnimSlot **runSlotOut){

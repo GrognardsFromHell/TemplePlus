@@ -195,7 +195,8 @@ public:
 	void Debug();
 	const AnimGoal* GetGoal(AnimGoalType goalType);
 	
-
+	void GoalDestinationRemove(objHndl);
+	void GoalDestinationAdd(objHndl handle, LocAndOffsets loc);
 private:
 	BOOL GetSlot(AnimSlotId* runId, AnimSlot **runSlotOut);
 };

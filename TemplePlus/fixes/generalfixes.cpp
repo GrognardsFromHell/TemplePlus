@@ -17,6 +17,8 @@
 #include "ui/ui_systems.h"
 #include "ui/ui_legacysystems.h"
 #include "anim.h"
+#include <gamesystems\objects\objsystem.h>
+#include <location.h>
 
 struct TigTextStyle;
 
@@ -316,19 +318,35 @@ class WalkOnShortDistanceMod : public TempleFix
 public: 
 
 	static int(__cdecl*orgPartySelectedStandUpAndMoveToPosition)(LocAndOffsets loc, int walkFlag);
-	static int PartySelectedStandUpAndMoveToPosition(LocAndOffsets loc, int runFlag)
-	{
-		return orgPartySelectedStandUpAndMoveToPosition(loc, runFlag);
+	static int PartySelectedStandUpAndMoveToPosition(LocAndOffsets loc, int isNotAlwaysRun){
+
+		isWalkOverride = true;
+		auto N = party.CurrentlySelectedNum();
+		for (auto i = 0; i < N; i++) {
+			auto dude = party.GetCurrentlySelected(i);
+			if (!dude)
+				continue;
+			if (locSys.DistanceToLoc(dude, loc) > INCH_PER_FEET * config.walkDistanceFt) {
+				isWalkOverride = false;
+			}
+		}
+
+		return orgPartySelectedStandUpAndMoveToPosition(loc, isWalkOverride);
 	};
+
+	static bool isWalkOverride;
 
 		void apply() override
 		{
+			isWalkOverride = false;
 
-			static BOOL(__cdecl*orgAnimPushMoveToTile)(objHndl, LocAndOffsets) = 
-				replaceFunction<BOOL(__cdecl)(objHndl, LocAndOffsets)>(0x1001D060, 	[](objHndl handle, LocAndOffsets loc) {
-				//return animationGoals.PushMoveToTile(handle, loc)?TRUE:FALSE;
-				return animationGoals.PushWalkToTile(handle, loc)?TRUE:FALSE;
+			redirectToLambda<BOOL(__cdecl)(objHndl, LocAndOffsets)>(0x10044995, [](objHndl handle, LocAndOffsets loc) {
+				if (isWalkOverride)
+					return animationGoals.PushWalkToTile(handle, loc) ? TRUE : FALSE; 
+				else
+					return animationGoals.PushRunToTile(handle, loc) ? TRUE : FALSE;
 			});
+			
 		//	replaceFunction(0x100FD1C0, sub_100FD1C0);
 		orgPartySelectedStandUpAndMoveToPosition = replaceFunction(0x100437F0, PartySelectedStandUpAndMoveToPosition);
 		//writeHex(0x1001A922, "90 90 90 90");
@@ -337,7 +355,7 @@ public:
 		//writeHex(0x1001A346 + 1, "03");
 		}
 } walkOnShortDistMod;
-
+bool WalkOnShortDistanceMod::isWalkOverride = false;
 int(__cdecl*WalkOnShortDistanceMod::orgPartySelectedStandUpAndMoveToPosition)(LocAndOffsets loc, int walkFlag);
 
 // PartyPool UI Fix

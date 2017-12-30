@@ -95,6 +95,7 @@ struct TemplePlusConfig
 	bool equalizeMoveSpeed = true;
 	bool fastSneakAnim = false;
 	bool alertAiThroughDoors = false;
+	int walkDistanceFt = 0;
 
 	std::unordered_map<std::string, VanillaSetting> vanillaSettings;
 	void AddVanillaSetting(const std::string &name, 
