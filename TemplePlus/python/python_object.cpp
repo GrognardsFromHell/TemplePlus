@@ -41,17 +41,12 @@
 #include "ui/ui_legacysystems.h"
 #include "pathfinding.h"
 
-#undef HAVE_ROUND
-#define PYBIND11_EXPORT
-#include <pybind11/pybind11.h>
-#include <pybind11/common.h>
+#include <pybind11/embed.h>
 #include <pybind11/cast.h>
 #include <pybind11/stl.h>
 #include "python_spell.h"
 
 namespace py = pybind11;
-using namespace pybind11;
-using namespace pybind11::detail;
 
 
 struct PyObjHandle {

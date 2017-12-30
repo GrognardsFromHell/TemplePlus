@@ -21,12 +21,10 @@
 #include "graphics/render_hooks.h"
 #include <python/python_integration_class_spec.h>
 
-#undef HAVE_ROUND
-#define PYBIND11_EXPORT
-#include <pybind11/pybind11.h>
-#include <pybind11/common.h>
+#include <pybind11/embed.h>
 #include <pybind11/cast.h>
 #include <pybind11/stl.h>
+
 #include <python/python_object.h>
 #include <radialmenu.h>
 #include <action_sequence.h>
@@ -39,8 +37,6 @@
 #include <infrastructure/keyboard.h>
 
 namespace py = pybind11;
-using namespace pybind11;
-using namespace pybind11::detail;
 
 Chargen chargen;
 
@@ -279,7 +275,7 @@ private:
 } uiCharEditor;
 
 
-template <> class type_caster<objHndl> {
+template <> class py::detail::type_caster<objHndl> {
 public:
 	bool load(handle src, bool) {
 		value = PyObjHndl_AsObjHndl(src.ptr());
@@ -298,10 +294,10 @@ protected:
 
 
 
-PYBIND11_PLUGIN(tp_char_editor){
-	py::module mm("char_editor", "Temple+ Char Editor, used for extending the ToEE character editor.");
-
-
+PYBIND11_EMBEDDED_MODULE(char_editor, mm) {
+	
+	mm.doc() = "Temple+ Char Editor, used for extending the ToEE character editor.";
+	
 	#pragma region KnownSpellInfo
 	py::class_<KnownSpellInfo>(mm, "KnownSpellInfo")
 		.def(py::init())
@@ -502,7 +498,7 @@ PYBIND11_PLUGIN(tp_char_editor){
 		//.def_readwrite("spells", (int CharEditorSelectionPacket::*) &CharEditorSelectionPacket::spellEnums, "Spell enums available for learning")
 		//.def_readwrite("spells_count", &CharEditorSelectionPacket::spellEnumsAddedCount, "Number of Spell enums available for learning")
 		;
-	return mm.ptr();
+
 }
 
 

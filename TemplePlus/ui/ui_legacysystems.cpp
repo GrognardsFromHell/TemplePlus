@@ -748,7 +748,8 @@ void UiDM::ResizeViewport(const UiResizeArgs& resizeArgs)
 }
 
 const std::string& UiDM::GetName() const{
-	return Name;
+	static std::string name(Name);
+	return name;
 }
 
 bool UiDM::IsVisible(){

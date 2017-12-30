@@ -391,9 +391,6 @@
     <ClCompile Include="ui\ui_char_editor.cpp">
       <Filter>ui</Filter>
     </ClCompile>
-    <ClCompile Include="python\python_ui.cpp">
-      <Filter>python</Filter>
-    </ClCompile>
     <ClCompile Include="python\python_integration_class_spec.cpp">
       <Filter>python</Filter>
     </ClCompile>
