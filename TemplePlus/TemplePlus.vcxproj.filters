@@ -808,9 +808,6 @@
     <ClInclude Include="python\python_integration_spells.h">
       <Filter>python</Filter>
     </ClInclude>
-    <ClInclude Include="python\python_module.h">
-      <Filter>python</Filter>
-    </ClInclude>
     <ClInclude Include="python\python_object.h">
       <Filter>python</Filter>
     </ClInclude>

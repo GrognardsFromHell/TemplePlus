@@ -19,7 +19,7 @@ int Dice::Roll(int count, int sides, int modifier) {
 	return addresses.DiceRoller(count, sides, modifier);
 }
 
-int Dice::Roll() {
+int Dice::Roll() const {
 	return Roll(mCount, mSides, mModifier);
 }
 
@@ -39,6 +39,15 @@ bool Dice::Parse(const char* diceStr, int& count, int& sides, int& modifier) {
 		return true;
 	}
 	return false;
+}
+
+std::string Dice::ToString() const
+{
+	if (mModifier == 0) {
+		return format("{}d{}", mCount, mSides);
+	} else {
+		return format("{}d{}{:+d}", mCount, mSides, mModifier);
+	}
 }
 
 int RandomIntRange(int from, int to) {

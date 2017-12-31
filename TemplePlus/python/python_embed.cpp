@@ -17,7 +17,6 @@
 #include <set>
 #include <string>
 #include <functional>
-#include "python_module.h"
 #include "python_dispatcher.h"
 
 #include "../gamesystems/gamesystems.h"
@@ -79,7 +78,6 @@ PythonScripting::PythonScripting()
 	PySys_SetObject("stdout", PyTempleConsoleOut_New());
 
 	PyTempleImporter_Install();
-	PyToeeInitModule();
 	PyDebug_Init();
 
 	MainModule = PyImport_ImportModule("__main__");

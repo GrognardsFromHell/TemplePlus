@@ -1,143 +1,59 @@
 
 #include "stdafx.h"
 #include "python_dice.h"
-#include <structmember.h>
 #include "../dice.h"
 
-struct PyDice {
-	PyObject_HEAD;
-	int number;
-	int size;
-	int bonus;
-};
-
-PyObject *PyDice_Repr(PyObject *obj) {
-	auto self = (PyDice*) obj;
-	string text;
-	if (self->bonus == 0) {
-		text = format("{}d{}", self->number, self->size);
-	} else {
-		text = format("{}d{}{:+d}", self->number, self->size, self->bonus);
-	}
-	return PyString_FromString(text.c_str());
-}
-
-PyObject *PyDice_Clone(PyObject *obj, PyObject *args) {
-	auto self = (PyDice*)obj;
-	auto result = PyObject_New(PyDice, obj->ob_type);
-	result->number = self->number;
-	result->size = self->size;
-	result->bonus = self->bonus;
-	return (PyObject*) result;
-}
-
-PyObject *PyDice_Roll(PyObject *obj, PyObject *args) {
-	auto self = (PyDice*)obj;
-	auto result = Dice::Roll(self->number, self->size, self->bonus);
-	return PyInt_FromLong(result);
-}
-
-int PyDice_Init(PyObject *obj, PyObject *args, PyObject *kwds) {
-	auto self = (PyDice*)obj;
-	if (PyTuple_Size(args) == 1) {
-		// Form: PyDice("1d2+3") etc.
-		const char *diceSpec;
-		if (!PyArg_ParseTuple(args, "s:PyDice", &diceSpec)) {
-			return -1;
-		}
-		if (!Dice::Parse(diceSpec, self->number, self->size, self->bonus)) {
-			PyErr_SetString(PyExc_RuntimeError, "The given dice string is invalid");
-			return -1;
-		}
-	} else {
-		self->bonus = 0; // Initialize since it's optional
-		// Form: PyDice(1, 2[, 3]) for 1d2+3 etc.
-		if (!PyArg_ParseTuple(args, "ii|:PyDice", &self->number, &self->size, &self->bonus)) {
-			return -1;
-		}
-	}
-	return 0;
-}
-
-PyObject *PyDice_New(PyTypeObject *subtype, PyObject *args, PyObject *kwds) {
-	auto self = PyObject_New(PyDice, &PyDiceType);
-	self->bonus = 0;
-	self->number = 0;
-	self->size = 0;
-	return (PyObject*) self;
-}
-
-static PyMemberDef PyDice_Members[] = {
-	{ "number", T_INT, offsetof(PyDice, number), 0, NULL },
-	{ "size", T_INT, offsetof(PyDice, size), 0, NULL },
-	{ "bonus", T_INT, offsetof(PyDice, bonus), 0, NULL },
-	{ "num", T_INT, offsetof(PyDice, number), 0, NULL }, // because a few spell scripts use this, guess it's accepted because originally it did an _strnicmp using the input length
-	{NULL, NULL, NULL, NULL, NULL }
-};
-
-static PyMethodDef PyDice_Methods[] = {
-	{ "clone", PyDice_Clone, METH_VARARGS, NULL },
-	{ "roll", PyDice_Roll, METH_VARARGS, NULL },
-	{ NULL, NULL, NULL, NULL }
-};
-
-PyTypeObject PyDiceType = {
-	PyObject_HEAD_INIT(NULL)
-	0,                         /*ob_size*/
-	"PyDice",                  /*tp_name*/
-	sizeof(PyDice),     	   /*tp_basicsize*/
-	0,                         /*tp_itemsize*/
-	(destructor)PyObject_Del,  /*tp_dealloc*/
-	0,                         /*tp_print*/
-	0,                         /*tp_getattr*/
-	0,                         /*tp_setattr*/
-	0,                         /*tp_compare*/
-	PyDice_Repr,               /*tp_repr*/
-	0,                         /*tp_as_number*/
-	0,                         /*tp_as_sequence*/
-	0,                         /*tp_as_mapping*/
-	0,                         /*tp_hash */
-	0,                         /*tp_call*/
-	0,                         /*tp_str*/
-	PyObject_GenericGetAttr,   /*tp_getattro*/
-	PyObject_GenericSetAttr,   /*tp_setattro*/
-	0,                         /*tp_as_buffer*/
-	Py_TPFLAGS_DEFAULT,        /*tp_flags*/
-	0,			               /* tp_doc */
-	0,						   /* tp_traverse */
-	0,						   /* tp_clear */
-	0,						   /* tp_richcompare */
-	0,						   /* tp_weaklistoffset */
-	0,						   /* tp_iter */
-	0,						   /* tp_iternext */
-	PyDice_Methods,            /* tp_methods */
-	PyDice_Members,            /* tp_members */
-	0,                   	   /* tp_getset */
-	0,                         /* tp_base */
-	0,                         /* tp_dict */
-	0,                         /* tp_descr_get */
-	0,                         /* tp_descr_set */
-	0,                         /* tp_dictoffset */
-	PyDice_Init,               /* tp_init */
-	0,                         /* tp_alloc */
-	PyDice_New,                /* tp_new */
-};
+namespace py = pybind11;
+using namespace pybind11::literals;
 
 PyObject* PyDice_FromDice(const Dice& dice) {
-	auto self = PyObject_New(PyDice, &PyDiceType);
-	self->number = dice.GetCount();
-	self->size = dice.GetSides();
-	self->bonus = dice.GetModifier();
-	return (PyObject*) self;
+	auto dice_obj = py::cast(dice);
+	dice_obj.inc_ref();
+	return dice_obj.ptr();
 }
 
 bool ConvertDice(PyObject* obj, Dice* pDiceOut) {
-	if (obj->ob_type != &PyDiceType) {
-		PyErr_SetString(PyExc_TypeError, "Expected a dice.");
+	try {
+		auto dice = py::cast<Dice>(obj);
+		*pDiceOut = dice;
+		return true;
+	} catch (py::cast_error&) {
 		return false;
 	}
+}
 
-	auto pyDice = (PyDice*)obj;
-	*pDiceOut = Dice(pyDice->number, pyDice->size, pyDice->bonus);
-	return true;
+void init_dice_class(pybind11::module &m)
+{
+
+	auto dice_class = py::class_<Dice>(m, "Dice", R"(Represents a dice roll template (i.e. 2d6+5)")
+		
+		.def(py::init<int, int, int>(), "dice"_a, "sides"_a, "bonus"_a=0,
+			R"(Creates a dice object that represents a dice roll with 'dice' (the number of dice to roll), 'sides' (the number of sides that the dice have), and an optional bonus that is added to the dice roll result.)")
+		
+		.def(py::init([](const char *diceStr){
+			int count, sides, modifier = 0;
+			Dice::Parse(diceStr, count, sides, modifier);
+			return std::make_unique<Dice>(count, sides, modifier);
+		}), "dice_spec"_a, R"(Creates a new dice object from a standard D&D dice specification. Such as: 2d6+2 or 2d6-1 or 1d4)")
+		
+		.def_property("number", &Dice::GetCount, &Dice::SetCount, R"(The number of dice to roll.)")
+		.def_property("size", &Dice::GetSides, &Dice::SetSides, R"(The type of dice to roll, expressed as it's sides.)")
+		.def_property("bonus", &Dice::GetModifier, &Dice::SetModifier, R"(The bonus to add to the final result. Can be negative.)")
+		
+		// because a few spell scripts use this, guess it's accepted because originally it did an _strnicmp using the input length
+		.def_property("num", &Dice::GetCount, &Dice::SetCount, R"(Deprecated and only provided for backwards compatibility with vanilla scripts.)")
+
+		.def("roll", [](const Dice &dice) {
+			return dice.Roll();
+		}, R"(Rolls the dice and returns the result of the roll.)")
+		
+		.def("clone", [](const Dice &dice) {
+			return dice;
+		}, R"(Returns an independent copy of this dice object.)")
+
+		.def("__repr__", &Dice::ToString);
+
+	// Scripts usually create dice objects using the dice_new alias.
+	m.attr("dice_new") = dice_class;
+
 }

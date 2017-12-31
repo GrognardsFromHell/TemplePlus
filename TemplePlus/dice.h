@@ -23,7 +23,7 @@ public:
 	*/
 	static int Roll(int count, int sides, int modifier = 0);
 
-	int Roll();
+	int Roll() const;
 
 	/*
 		Parses a dice string (i.e. 2d5+1) into its components and returns true
@@ -35,14 +35,26 @@ public:
 		return mCount;
 	}
 
+	void SetCount(int count) {
+		mCount = count;
+	}
+
 	int GetSides() const {
 		return mSides;
+	}
+
+	void SetSides(int sides) {
+		mSides = sides;
 	}
 
 	int GetModifier() const {
 		return mModifier;
 	}
 
+	void SetModifier(int modifier) {
+		mModifier = modifier;
+	}
+	
 	// Convert to a packed ToEE dice
 	uint32_t ToPacked() const {
 		uint32_t result = (mCount & 0x7F) | ((mSides & 0x7F) << 7);
@@ -66,6 +78,8 @@ public:
 
 		return Dice(count, sides, mod);
 	}
+
+	std::string ToString() const;
 
 private:
 	int mCount = 0;

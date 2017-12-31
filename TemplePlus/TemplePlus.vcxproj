@@ -406,7 +406,6 @@
     <ClInclude Include="python\python_integration.h" />
     <ClInclude Include="python\python_integration_obj.h" />
     <ClInclude Include="python\python_integration_spells.h" />
-    <ClInclude Include="python\python_module.h" />
     <ClInclude Include="python\python_object.h" />
     <ClInclude Include="python\python_objectscripts.h" />
     <ClInclude Include="python\python_quests.h" />

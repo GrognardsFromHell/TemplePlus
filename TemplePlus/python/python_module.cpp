@@ -1,6 +1,5 @@
 
 #include "stdafx.h"
-#include "python_module.h"
 #include "python_game.h"
 #include "python_object.h"
 #include "python_dice.h"
@@ -9,59 +8,45 @@
 #include "python_dispatcher.h"
 #include "python_spell.h"
 
-static PyObject *Anyone(PyObject *obj, PyObject *args) {
-	PyObject *targetObjs;
-	PyObject *methodName;
-	PyObject *methodArg;
-	if (!PyArg_ParseTuple(args, "O!SO", &PyTuple_Type, &targetObjs, &methodName, &methodArg)) {
-		return nullptr;
-	}
+#include <pybind11/embed.h>
 
-	auto size = PyTuple_Size(targetObjs);
-	for (ssize_t i = 0; i < size; ++i) {
-		auto targetObj = PyTuple_GET_ITEM(targetObjs, i);
-		auto result = PyObject_CallMethodObjArgs(targetObj, methodName, methodArg, NULL);
-		if (!result) {
-			PyErr_Print();
-			auto methodNameStr = PyString_AsString(methodName);
-			auto targetObjStrObj = PyObject_Str(targetObj);
-			auto targetObjStr = PyString_AsString(targetObjStrObj);
-			logger->error("Calling function {} for obj {} failed in anyone.", methodNameStr, targetObjStr);
-			Py_DECREF(targetObjStrObj);
-		} else {
-			if (PyObject_IsTrue(result)) {
-				return result;
+namespace py = pybind11;
+using namespace pybind11::literals;
+
+PYBIND11_EMBEDDED_MODULE(toee, m) {
+
+	m.def("anyone", [](const py::iterable &target_objs, const char *method_name, const py::object &method_arg) {
+		for (auto &obj : target_objs) {
+			auto method = obj.attr(method_name);
+			auto result = method.call(method_arg);
+			if (result.cast<bool>()) {
+				return true;
 			}
-			Py_DECREF(result);
 		}
-	}
+		return false;
+	}, "target_objs"_a, "method_name"_a, "method_arg"_a, R"(
+	Calls the method 'method_name' on each object in the target_objs list with the given method_arg and 
+    returns true as soon as the method returns true for any of the objects.
 
-	Py_RETURN_FALSE;
-}
+    Example:
+    toee.anyone(game.party, "has_follower", 123)
+)");
 
-static PyMethodDef pyToeeMethods[] = {
-	{ "anyone", Anyone, METH_VARARGS, NULL },
-	{ NULL, NULL, NULL, NULL }
-};
+	init_dice_class(m);
 
-void PyToeeInitModule() {
-
-	auto module = Py_InitModule("toee", pyToeeMethods); // Borrowed ref
+	auto module = Py_InitModule("toee", nullptr); // Borrowed ref
 	auto dict = PyModule_GetDict(module); // Borrowed ref
 
 	// The null object (pointless by the way, since it implements IsTrue)
 	auto nullHandle = PyObjHndl_CreateNull();
 	PyDict_SetItemString(dict, "OBJ_HANDLE_NULL", nullHandle);
 	Py_DECREF(nullHandle);
-	
+
 	// The game object, which behaves more like a module, but has getter/setter based properties
 	auto pyGame = PyGame_Create(); // New ref
 	PyDict_SetItemString(dict, "game", pyGame);
 	Py_DECREF(pyGame);
 
-	if (PyType_Ready(&PyDiceType)) {
-		PyErr_Print();
-	}
 	if (PyType_Ready(&PyObjHandleType)) {
 		PyErr_Print();
 	}
@@ -79,8 +64,7 @@ void PyToeeInitModule() {
 	}
 
 	// This is critical for unpickling object handles stored in timed events
-	PyDict_SetItemString(dict, "PyObjHandle", (PyObject*) &PyObjHandleType);
-	PyDict_SetItemString(dict, "dice_new", (PyObject*) &PyDiceType);
+	PyDict_SetItemString(dict, "PyObjHandle", (PyObject*)&PyObjHandleType);
 	PyDict_SetItemString(dict, "PySpellStore", (PyObject*)&PySpellStoreType);
 	PyDict_SetItemString(dict, "PyBonusList", (PyObject*)&PyBonusListType);
 	PyDict_SetItemString(dict, "PyDamagePacket", (PyObject*)&PyDamagePacketType);
@@ -93,5 +77,5 @@ void PyToeeInitModule() {
 	}
 	PyDict_Merge(dict, PyModule_GetDict(constantsMod), 0);
 	Py_DECREF(constantsMod);
-	
+
 }

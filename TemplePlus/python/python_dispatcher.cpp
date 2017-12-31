@@ -48,24 +48,6 @@ public:
 protected:
 	bool success = false;
 };
-template <> class py::detail::type_caster<Dice> {
-public:
-	bool load(handle src, bool) {
-		Dice dice;
-		ConvertDice(src.ptr(), &dice);
-		value = dice;
-		success = true;
-		return true;
-	}
-
-	static handle cast(const Dice &src, return_value_policy /* policy */, handle /* parent */) {
-		return PyDice_FromDice(src);
-	}
-
-	PYBIND11_TYPE_CASTER(Dice, _("PyDice"));
-protected:
-	bool success = false;
-};
 
 template <> class py::detail::type_caster<SpellStoreData> {
 public:
