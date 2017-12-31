@@ -94,9 +94,6 @@ static struct PyGameAddresses : temple::AddressTable {
 		rebase(SetPartyAlignment, 0x1002B720);
 		rebase(GetPartyAlignment, 0x1002B730);
 
-		rebase(SetStoryState, 0x10006A30);
-		rebase(GetStoryState, 0x10006A20);
-
 		rebase(PartyGetSelectedCount, 0x1002B5C0);
 		rebase(PartyGetSelectedByIdx, 0x1002B5D0);
 
@@ -221,11 +218,11 @@ static PyObject* PyGame_GetPartyAlignment(PyObject *obj, void*) {
 }
 
 static PyObject* PyGame_GetStoryState(PyObject *obj, void*) {
-	return PyInt_FromLong(pyGameAddresses.GetStoryState());
+	return PyInt_FromLong(gameSystems->GetScript().GetStoryState());
 }
 
 static int PyGame_SetStoryState(PyObject *obj, PyObject *value, void*) {
-	pyGameAddresses.SetStoryState(PyInt_AsLong(value));
+	gameSystems->GetScript().SetStoryState(PyInt_AsLong(value));
 	return 0;
 }
 

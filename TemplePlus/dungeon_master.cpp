@@ -25,6 +25,7 @@
 #include "ui/ui_ingame.h"
 #include "raycast.h"
 #include "gamesystems/d20/d20stats.h"
+#include "gamesystems/scripting.h"
 #include <condition.h>
 #include <infrastructure\keyboard.h>
 #include <infrastructure/vfs.h>

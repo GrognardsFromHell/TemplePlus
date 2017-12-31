@@ -2,7 +2,8 @@
 #include "tutorial.h"
 #include <temple/dll.h>
 #include "maps.h"
-#include "legacyscriptsystem.h"
+#include "gamesystems/gamesystems.h"
+#include "gamesystems/scripting.h"
 
 
 Tutorial tutorial;
@@ -29,23 +30,23 @@ int Tutorial::ShowTopic(int topicId) const
 void Tutorial::CastingSpells(int spellEnum){
 
 	if (maps.GetCurrentMapId() == 5118) { // tutorial map
-		if (spellEnum == 288 && scriptSys.GetGlobalFlag(6)) { // Magic Missile
+		if (spellEnum == 288 && gameSystems->GetScript().GetGlobalFlag(6)) { // Magic Missile
 
 			if (!tutorial.IsTutorialActive()) {
 				tutorial.Toggle();
 			}
 			tutorial.ShowTopic(30);
-			scriptSys.SetGlobalFlag(6, 0);
-			scriptSys.SetGlobalFlag(7, 1);
+			gameSystems->GetScript().SetGlobalFlag(6, 0);
+			gameSystems->GetScript().SetGlobalFlag(7, 1);
 
 		}
 
-		else if (spellEnum == 171 && scriptSys.GetGlobalFlag(9)) { // Fireball
+		else if (spellEnum == 171 && gameSystems->GetScript().GetGlobalFlag(9)) { // Fireball
 			if (!tutorial.IsTutorialActive()) {
 				tutorial.Toggle();
 			}
 			tutorial.ShowTopic(36);
-			scriptSys.SetGlobalFlag(9, 0);
+			gameSystems->GetScript().SetGlobalFlag(9, 0);
 		}
 	}
 }

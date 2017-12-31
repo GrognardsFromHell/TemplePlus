@@ -5,36 +5,10 @@
 #include <iostream>
 #include <temple/dll.h>
 
+#include "gamesystems/gamesystems.h"
+#include "gamesystems/scripting.h"
+
 ModSupport modSupport;
-
-
-static struct GlobalFlagAddresses : temple::AddressTable {
-	int **globalFlags;
-
-	bool Get(int flagIdx) {
-		int idx = flagIdx / 32;
-		uint32_t bit = flagIdx % 32;
-		int flagWord = (*globalFlags)[idx];
-		return (flagWord & (1 << bit)) != 0;
-	}
-	void Set(int flagIdx, bool value) {
-		int idx = flagIdx / 32;
-		int bit = flagIdx % 32;
-		int &flagWord = (*globalFlags)[idx];
-		uint32_t mask = (1 << bit);
-		if (value) {
-			flagWord |= mask;
-		}
-		else {
-			flagWord &= ~mask;
-		}
-	}
-
-	GlobalFlagAddresses() {
-		rebase(globalFlags, 0x103073A8);
-	}
-} modSupportAddresses;
-
 
 void ModSupport::DetectCo8ActiveModule(){
 
@@ -91,6 +65,6 @@ bool ModSupport::IsCo8() const
 	return mIsCo8;
 }
 
-void ModSupport::SetNCGameFlag(bool value){
-	modSupportAddresses.Set(500, value);
+void ModSupport::SetNCGameFlag(bool value) {
+	gameSystems->GetScript().SetGlobalFlag(500, value);
 }

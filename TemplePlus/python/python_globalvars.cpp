@@ -2,23 +2,17 @@
 #include "stdafx.h"
 #include "python_globalvars.h"
 #include <temple/dll.h>
+#include "gamesystems/scripting.h"
+#include "gamesystems/gamesystems.h"
 
 const int GlobalVarCount = 2000; // see script_init
-
-static struct GlobalVarAddresses : temple::AddressTable {
-	int **globalVars;
-
-	GlobalVarAddresses() {
-		rebase(globalVars, 0x103073B8);
-	}
-} addresses;
 
 static PyObject *PyGlobalVars_GetItem(PyObject*, Py_ssize_t index) {
 	if (index < 0 || index >= GlobalVarCount) {
 		PyErr_Format(PyExc_IndexError, "Global variable index %d is out of range.", index);
 		return 0;
 	}
-	return PyInt_FromLong((*addresses.globalVars)[index]);
+	return PyInt_FromLong(gameSystems->GetScript().GetGlobalVar(index));
 }
 
 static int PyGlobalVars_SetItem(PyObject *, Py_ssize_t index, PyObject *item) {
@@ -32,7 +26,7 @@ static int PyGlobalVars_SetItem(PyObject *, Py_ssize_t index, PyObject *item) {
 	}
 
 	auto value = PyInt_AsLong(item);
-	(*addresses.globalVars)[index] = value;
+	gameSystems->GetScript().SetGlobalVar(index, value);
 	return 0;
 }
 

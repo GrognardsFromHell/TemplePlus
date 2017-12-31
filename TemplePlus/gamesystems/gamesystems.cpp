@@ -26,6 +26,7 @@
 #include "clipping/clipping.h"
 #include "gamesystems/timeevents.h"
 #include "gamesystems/objfade.h"
+#include "gamesystems/scripting.h"
 #include "gamesystems/objects/objsystem.h"
 #include "gamesystems/map/gmesh.h"
 #include "anim.h"
@@ -614,7 +615,7 @@ void GameSystems::InitializeSystems(LoadingScreen& loadingScreen) {
 	mStat = InitializeSystem<StatSystem>(loadingScreen, mConfig);
 	// Loading Screen ID: 12
 	loadingScreen.SetProgress(14 / 79.0f);
-	mScript = InitializeSystem<ScriptSystem>(loadingScreen, mConfig);
+	mScript = InitializeSystem<ScriptingSystem>(loadingScreen);
 	loadingScreen.SetProgress(15 / 79.0f);
 	mLevel = InitializeSystem<LevelSystem>(loadingScreen, mConfig);
 	loadingScreen.SetProgress(16 / 79.0f);

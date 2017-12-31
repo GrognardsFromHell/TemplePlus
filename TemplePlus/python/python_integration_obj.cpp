@@ -9,6 +9,8 @@
 #include <util/fixes.h>
 #include <infrastructure/mesparser.h>
 
+#include "gamesystems/scripting.h"
+
 PythonObjIntegration pythonObjIntegration;
 
 static struct IntegrationAddresses : temple::AddressTable {
@@ -125,38 +127,28 @@ static BOOL IsPythonScript(int scriptNumber) {
 	return pythonObjIntegration.IsValidScriptId(scriptNumber);
 }
 
-struct ObjScriptInvocation {
-	ObjectScript* script;
-	int field4;
-	objHndl triggerer;
-	objHndl attachee;
-	int spellId;
-	int arg4;
-	ObjScriptEvent evt;
-};
-
-static int RunPythonObjScript(ObjScriptInvocation* invoc) {
+static int RunPythonObjScript(ScriptInvocation* invoc) {
 
 	// This seems to be primarily used by the CounterArray
-	pythonObjIntegration.SetCounterContext(invoc->attachee, invoc->script->scriptId, invoc->evt);
+	pythonObjIntegration.SetCounterContext(invoc->attachee, invoc->script->scriptId, invoc->event);
 	pythonObjIntegration.SetInObjInvocation(true);
 
 	PyObject* args;
 	auto triggerer = PyObjHndl_Create(invoc->triggerer);
 
 	// Expected arguments depend on the event type
-	if (invoc->evt == ObjScriptEvent::SpellCast) {
+	if (invoc->event == ObjScriptEvent::SpellCast) {
 		auto attachee = PyObjHndl_Create(invoc->attachee);
-		auto spell = PySpell_Create(invoc->spellId);
+		auto spell = PySpell_Create(invoc->spell_id);
 		args = Py_BuildValue("OOO", attachee, triggerer, spell);
 		Py_DECREF(spell);
 		Py_DECREF(attachee);
-	} else if (invoc->evt == ObjScriptEvent::Trap) {
+	} else if (invoc->event == ObjScriptEvent::Trap) {
 		auto attachee = PyTrap_Create(invoc->attachee);
 		args = Py_BuildValue("OO", attachee, triggerer);
 		Py_DECREF(attachee);
 	} else {
-		if (invoc->evt == ObjScriptEvent::FirstHeartbeat){
+		if (invoc->event == ObjScriptEvent::FirstHeartbeat){
 			int dumy = 1;
 		}
 		auto attachee = PyObjHndl_Create(invoc->attachee);
@@ -165,7 +157,7 @@ static int RunPythonObjScript(ObjScriptInvocation* invoc) {
 	}
 
 	auto result = pythonObjIntegration.RunScript(invoc->script->scriptId,
-	                                             (PythonIntegration::EventId) invoc->evt,
+	                                             (PythonIntegration::EventId) invoc->event,
 	                                             args);
 	
 	Py_DECREF(args);

@@ -3,40 +3,17 @@
 #include "python_globalflags.h"
 #include <temple/dll.h>
 
+#include "gamesystems/gamesystems.h"
+#include "gamesystems/scripting.h"
+
 const int GlobalFlagCount = 3200; // see script_init
-
-static struct GlobalFlagAddresses : temple::AddressTable {
-	int **globalFlags;
-
-	bool Get(int flagIdx) {
-		int idx = flagIdx / 32;
-		uint32_t bit = flagIdx % 32;
-		int flagWord = (*globalFlags)[idx];
-		return (flagWord & (1 << bit)) != 0;
-	}
-	void Set(int flagIdx, bool value) {
-		int idx = flagIdx / 32;
-		int bit = flagIdx % 32;
-		int &flagWord = (*globalFlags)[idx];
-		uint32_t mask = (1 << bit);
-		if (value) {
-			flagWord |= mask;
-		} else {
-			flagWord &= ~mask;
-		}
-	}
-
-	GlobalFlagAddresses() {
-		rebase(globalFlags, 0x103073A8);
-	}
-} addresses;
 
 static PyObject *PyGlobalFlags_GetItem(PyObject*, Py_ssize_t index) {
 	if (index < 0 || index >= GlobalFlagCount) {
 		PyErr_Format(PyExc_IndexError, "Global flag index %d is out of range.", index);
 		return 0;
 	}
-	return PyInt_FromLong(addresses.Get(index));
+	return PyInt_FromLong(gameSystems->GetScript().GetGlobalFlag(index) ? 1 : 0);
 }
 
 static int PyGlobalFlags_SetItem(PyObject *, Py_ssize_t index, PyObject *item) {
@@ -45,7 +22,7 @@ static int PyGlobalFlags_SetItem(PyObject *, Py_ssize_t index, PyObject *item) {
 		return -1;
 	}
 	auto val = PyObject_IsTrue(item) != 0;
-	addresses.Set(index, val);
+	gameSystems->GetScript().SetGlobalFlag(index, val);
 	return 0;
 }
 

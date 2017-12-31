@@ -13,7 +13,7 @@
 #include "fade.h"
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/mapsystem.h"
-#include "legacyscriptsystem.h"
+#include "gamesystems/scripting.h"
 #include "tutorial.h"
 #include "gamesystems/random_encounter.h"
 #include "gamesystems/objects/objsystem.h"
@@ -1243,12 +1243,12 @@ BOOL UiCamping::Camp(int hoursToRest){
 	fade.PerformFade(fadeArgs);
 
 	const int TUTORIAL_MAP_ID = 5117;
-	if (gameSystems->GetMap().GetCurrentMapId() == TUTORIAL_MAP_ID && !scriptSys.GetGlobalFlag(3)){
+	if (gameSystems->GetMap().GetCurrentMapId() == TUTORIAL_MAP_ID && !gameSystems->GetScript().GetGlobalFlag(3)){
 		if (!tutorial.IsTutorialActive()){
 			tutorial.Toggle();
 		}
 		tutorial.ShowTopic(20);
-		scriptSys.SetGlobalFlag(3, 1);
+		gameSystems->GetScript().SetGlobalFlag(3, 1);
 	}
 	return completedSuccessfully;
 }

@@ -445,7 +445,6 @@
       <Filter>ui</Filter>
     </ClCompile>
     <ClCompile Include="gamesystems\d20\d20_help.cpp" />
-    <ClCompile Include="legacyscriptsystem.cpp" />
     <ClCompile Include="gamesystems\deity\legacydeitysystem.cpp" />
     <ClCompile Include="InfinityEngine.cpp" />
     <ClCompile Include="python\python_integration_feat.cpp">
@@ -483,6 +482,9 @@
     </ClCompile>
     <ClCompile Include="gamesystems\objfade.cpp" />
     <ClCompile Include="d20_defs.cpp" />
+    <ClCompile Include="gamesystems\scripting.cpp">
+      <Filter>Game Systems</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -877,7 +879,6 @@
       <Filter>ui</Filter>
     </ClInclude>
     <ClInclude Include="gamesystems\d20\d20_help.h" />
-    <ClInclude Include="legacyscriptsystem.h" />
     <ClInclude Include="gamesystems\deity\legacydeitysystem.h" />
     <ClInclude Include="InfinityEngine.h" />
     <ClInclude Include="python\python_integration_feat.h">
@@ -907,6 +908,9 @@
     </ClInclude>
     <ClInclude Include="gamesystems\objfade.h" />
     <ClInclude Include="gamesystems\random_encounter.h" />
+    <ClInclude Include="gamesystems\scripting.h">
+      <Filter>Game Systems</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">
@@ -935,6 +939,9 @@
     </Filter>
     <Filter Include="Mods and Fixes\Condition Fixes">
       <UniqueIdentifier>{0e53287e-d500-4b3d-a274-09c4e0cf6dbf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game Systems">
+      <UniqueIdentifier>{21b6aedc-5071-4a51-a160-f42a461b0c44}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

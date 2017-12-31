@@ -11,7 +11,6 @@
 #include <critter.h>
 #include "ui_render.h"
 #include <tutorial.h>
-#include <legacyscriptsystem.h>
 #include <tig/tig_mouse.h>
 #include <config/config.h>
 #include "raycast.h"

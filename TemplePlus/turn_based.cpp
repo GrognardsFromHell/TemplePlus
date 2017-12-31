@@ -15,7 +15,7 @@
 #include "condition.h"
 #include "rng.h"
 #include "tutorial.h"
-#include "legacyscriptsystem.h"
+#include "gamesystems/scripting.h"
 
 class TurnBasedReplacements : public TempleFix
 {
@@ -239,7 +239,7 @@ void TurnBasedSys::CreateInitiativeListWithParty(){
 	groupInitiativeList->Reset();
 	groupInitiativeList->sortFunc = temple::GetRef<int(__cdecl)(void*, void*)>(0x100DEF20);
 
-	if (tutorial.IsTutorialActive() && scriptSys.GetGlobalFlag(4)){
+	if (tutorial.IsTutorialActive() && gameSystems->GetScript().GetGlobalFlag(4)){
 		tutorial.ShowTopic(11);
 	}
 

@@ -3,51 +3,7 @@
 
 #include "python_integration.h"
 
-enum class ObjScriptEvent : uint32_t {
-	Examine = 0,
-	Use,
-	Destroy,
-	Unlock,
-	Get,
-	Drop,
-	Throw,
-	Hit,
-	Miss,
-	Dialog = 9,
-	FirstHeartbeat,
-	CatchingThiefPc,
-	Dying,
-	EnterCombat,
-	ExitCombat,
-	StartCombat,
-	EndCombat,
-	BuyObject,
-	Resurrect,
-	Heartbeat,
-	LeaderKilling,
-	InsertItem,
-	WillKos,
-	TakingDamage,
-	WieldOn,
-	WieldOff,
-	CritterHits,
-	NewSector,
-	RemoveItem,
-	LeaderSleeping,
-	Bust,
-	DialogOverride,
-	Transfer,
-	CaughtThief,
-	CriticalHit,
-	CriticalMiss,
-	Join,
-	Disband,
-	NewMap,
-	Trap,
-	TrueSeeing,
-	SpellCast,
-	UnlockAttempt
-};
+#include "gamesystems/scripting.h"
 
 class PythonObjIntegration : public PythonIntegration {
 public:

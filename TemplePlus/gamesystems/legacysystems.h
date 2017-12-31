@@ -169,22 +169,6 @@ public:
 	const std::string &GetName() const override;
 };
 
-class ScriptSystem : public GameSystem, public SaveGameAwareGameSystem, public ModuleAwareGameSystem, public ResetAwareGameSystem {
-public:
-	static constexpr auto Name = "Script";
-	ScriptSystem(const GameSystemConf &config);
-	~ScriptSystem();
-	void LoadModule() override;
-	void UnloadModule() override;
-	void Reset() override;
-	bool SaveGame(TioFile *file) override;
-	bool LoadGame(GameSystemSaveFile* saveFile) override;
-	const std::string &GetName() const override;
-
-	bool ReadGlobalVars(GameSystemSaveFile *saveFile, std::vector<int> & globalVars, std::vector<int> & globalFlagsData, int& storyState);
-	bool ReadEncounterQueue(GameSystemSaveFile *saveFile, std::vector<int> & encounterQueue);
-};
-
 class LevelSystem : public GameSystem {
 public:
 	static constexpr auto Name = "Level";

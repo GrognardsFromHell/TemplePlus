@@ -27,6 +27,11 @@
 
 #include <pybind11/embed.h>
 
+#include "python_embed.h"
+#include "python_object.h"
+#include "python_spell.h"
+#include "python_trap.h"
+
 namespace py = pybind11;
 
 static PyObject *MainModule;
@@ -56,7 +61,8 @@ void PythonPrepareGlobalNamespace() {
 	Py_DECREF(cheats);
 }
 
-static bool __cdecl PythonInit(GameSystemConf *conf) {
+PythonScripting::PythonScripting()
+{
 
 	static char* sArgv = "";
 
@@ -65,13 +71,13 @@ static bool __cdecl PythonInit(GameSystemConf *conf) {
 	Py_NoSiteFlag++;
 	Py_SetProgramName("TemplePlus.exe");
 
-	Py_Initialize();
+	py::initialize_interpreter();
 
 	PySys_SetArgv(0, &sArgv);
-	
+
 	PySys_SetObject("stderr", PyTempleConsoleOut_New());
 	PySys_SetObject("stdout", PyTempleConsoleOut_New());
-		
+
 	PyTempleImporter_Install();
 	PyToeeInitModule();
 	PyDebug_Init();
@@ -81,7 +87,7 @@ static bool __cdecl PythonInit(GameSystemConf *conf) {
 	Py_INCREF(MainModuleDict); // "GLOBALS"
 
 	PythonPrepareGlobalNamespace();
-	
+
 	auto m = PyImport_ImportModule("site");
 	if (!m) {
 		PyErr_Print();
@@ -96,27 +102,15 @@ static bool __cdecl PythonInit(GameSystemConf *conf) {
 	pythonObjIntegration.LoadScripts();
 	pySpellIntegration.LoadScripts();
 	pythonClassIntegration.LoadScripts();
-	pythonD20ActionIntegration.LoadScripts(); 
+	pythonD20ActionIntegration.LoadScripts();
 	pyFeatIntegration.LoadScripts();
-	
+
 	// tpModifiers is imported in conditions.cpp since it needs the condition hashtable
 
-	return true;
 }
 
-static BOOL __cdecl PythonSaveGame(TioFile *file) {
-	return PyGame_Save(file) ? TRUE : FALSE;
-}
-
-static BOOL __cdecl PythonLoadGame(GameSystemSaveFile *file) {
-	return PyGame_Load(file) ? TRUE : FALSE;
-}
-
-static void __cdecl PythonReset() {
-	PyGame_Reset();
-}
-
-static void __cdecl PythonExit() {
+PythonScripting::~PythonScripting()
+{
 	pythonObjIntegration.UnloadScripts();
 	pySpellIntegration.UnloadScripts();
 	pythonClassIntegration.UnloadScripts();
@@ -127,16 +121,82 @@ static void __cdecl PythonExit() {
 
 	PyGame_Exit();
 
-	Py_Finalize();
+	py::finalize_interpreter();
 }
 
-static void breakIt() {
-	_CrtDbgBreak();
+void PythonScripting::Reset() {
+	PyGame_Reset();
+}
+
+bool PythonScripting::SaveGame(TioFile *file) {
+	return PyGame_Save(file);
+}
+
+bool PythonScripting::LoadGame(GameSystemSaveFile * save_file)
+{
+	return PyGame_Load(save_file);
+}
+
+bool PythonScripting::IsPythonScriptId(int script_id)
+{
+	return pythonObjIntegration.IsValidScriptId(script_id);
+}
+
+int PythonScripting::InvokePythonScript(const ScriptInvocation & invocation)
+{
+
+	// This seems to be primarily used by the CounterArray
+	pythonObjIntegration.SetCounterContext(invocation.attachee, invocation.script->scriptId, invocation.event);
+	pythonObjIntegration.SetInObjInvocation(true);
+
+	PyObject* args;
+	auto triggerer = PyObjHndl_Create(invocation.triggerer);
+
+	// Expected arguments depend on the event type
+	if (invocation.event == ObjScriptEvent::SpellCast) {
+		auto attachee = PyObjHndl_Create(invocation.attachee);
+		auto spell = PySpell_Create(invocation.spell_id);
+		args = Py_BuildValue("OOO", attachee, triggerer, spell);
+		Py_DECREF(spell);
+		Py_DECREF(attachee);
+	}
+	else if (invocation.event == ObjScriptEvent::Trap) {
+		auto attachee = PyTrap_Create(invocation.attachee);
+		args = Py_BuildValue("OO", attachee, triggerer);
+		Py_DECREF(attachee);
+	}
+	else {
+		if (invocation.event == ObjScriptEvent::FirstHeartbeat) {
+			int dumy = 1;
+		}
+		auto attachee = PyObjHndl_Create(invocation.attachee);
+		args = Py_BuildValue("OO", attachee, triggerer);
+		Py_DECREF(attachee);
+	}
+
+	auto result = pythonObjIntegration.RunScript(invocation.script->scriptId,
+		(PythonIntegration::EventId) invocation.event,
+		args);
+
+	Py_DECREF(args);
+
+	auto newSid = pythonObjIntegration.GetNewSid();
+	if (newSid != -1 && newSid != invocation.script->scriptId) {
+		invocation.script->scriptId = newSid;
+	}
+	pythonObjIntegration.SetInObjInvocation(false);
+
+	return result;
 }
 
 // Python Script Extensions
 static class PythonEngineReplacement : public TempleFix {
 public:
+
+	static void breakIt() {
+		throw TempleException("A function has been called that was stubbed out because it was replaced by TemplePlus. This is a TemplePlus bug.");
+	}
+
 	void apply() override {
 		// Overwrite all imports from pytoee22.dll with our break function to catch all errors
 		uint32_t firstImportAt = 0x1026C294;
@@ -146,11 +206,11 @@ public:
 			write(importAddr, &newCallTo, 4);
 		}
 
-		replaceFunction(0x100AC960, PythonSaveGame);
-		replaceFunction(0x100AC920, PythonLoadGame);
-		replaceFunction(0x100ADDD0, PythonReset);
-		replaceFunction(0x100AD4C0, PythonExit);
-		replaceFunction(0x100ADA30, PythonInit);
+		replaceFunction(0x100AC960, breakIt);
+		replaceFunction(0x100AC920, breakIt);
+		replaceFunction(0x100ADDD0, breakIt);
+		replaceFunction(0x100AD4C0, breakIt);
+		replaceFunction(0x100ADA30, breakIt);
 	}
 
 } pythonEngineReplacement;

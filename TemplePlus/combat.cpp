@@ -27,8 +27,9 @@
 #include "objlist.h"
 #include "ui/ui_dialog.h"
 #include "condition.h"
-#include "legacyscriptsystem.h"
+#include "gamesystems/scripting.h"
 #include "config/config.h"
+#include "gamesystems/scripting.h"
 
 
 struct CombatSystemAddresses : temple::AddressTable
@@ -639,12 +640,12 @@ void LegacyCombatSystem::TurnProcessAi(objHndl obj)
 	if (isPcUnderAiControl(obj)){
 
 		// tutorial shite
-		if (maps.GetCurrentMapId() == 5118 && scriptSys.GetGlobalFlag(7))	{
+		if (maps.GetCurrentMapId() == 5118 && gameSystems->GetScript().GetGlobalFlag(7))	{
 			if (!tutorial.IsTutorialActive()){
 				tutorial.Toggle();
 			}
 			tutorial.ShowTopic(31);
-			scriptSys.SetGlobalFlag(7, 0);
+			gameSystems->GetScript().SetGlobalFlag(7, 0);
 		}
 		if (!aiProcessPc(obj)){
 			logger->info("Combat for {} ending turn (ai fail).", description.getDisplayName(obj));
@@ -846,13 +847,13 @@ void LegacyCombatSystem::Subturn()
 			combatSubturnCallback(actor);
 		}
 
-		if (maps.GetCurrentMapId() == 5118 && scriptSys.GetGlobalFlag(7)
+		if (maps.GetCurrentMapId() == 5118 && gameSystems->GetScript().GetGlobalFlag(7)
 			&& objSystem->GetObject(actor)->IsPC()) {
 			if (!tutorial.IsTutorialActive()) {
 				tutorial.Toggle();
 			}
 			tutorial.ShowTopic(31);
-			scriptSys.SetGlobalFlag(7, 0);
+			gameSystems->GetScript().SetGlobalFlag(7, 0);
 		}
 		return;
 	}

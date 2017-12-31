@@ -54,7 +54,7 @@ class SkillSystem;
 class FeatSystem;
 class SpellSystem;
 class StatSystem;
-class ScriptSystem;
+class ScriptingSystem;
 class LevelSystem;
 class D20System;
 class MapSystem;
@@ -182,7 +182,7 @@ public:
 		Expects(!!mStat);
 		return *mStat;
 	}
-	ScriptSystem& GetScript() const {
+	ScriptingSystem& GetScript() const {
 		Expects(!!mScript);
 		return *mScript;
 	}
@@ -549,7 +549,7 @@ private:
 	std::unique_ptr<FeatSystem> mFeat;
 	std::unique_ptr<SpellSystem> mSpell;
 	std::unique_ptr<StatSystem> mStat;
-	std::unique_ptr<ScriptSystem> mScript;
+	std::unique_ptr<ScriptingSystem> mScript;
 	std::unique_ptr<LevelSystem> mLevel;
 	// The D20 system actually holds on to object handles until it's destroyed,
 	// which is why this system has to be here instead of where it originally was
