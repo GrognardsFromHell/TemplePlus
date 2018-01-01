@@ -49,50 +49,6 @@
 namespace py = pybind11;
 using namespace py::literals;
 
-//
-//PyTypeObject PyObjHandleType = {
-//	PyObject_HEAD_INIT(NULL)
-//	0, /*ob_size*/
-//	"toee.PyObjHandle", /*tp_name*/
-//	sizeof(PyObjHandle), /*tp_basicsize*/
-//	0, /*tp_itemsize*/
-//	(destructor)PyObject_Del, /*tp_dealloc*/
-//	0, /*tp_print*/
-//	0, /*tp_getattr*/
-//	0, /*tp_setattr*/
-//	PyObjHandle_Cmp, /*tp_compare*/
-//	PyObjHandle_Repr, /*tp_repr*/
-//	0, /*tp_as_number*/
-//	0, /*tp_as_sequence*/
-//	0, /*tp_as_mapping*/
-//	0, /*tp_hash */
-//	0, /*tp_call*/
-//	0, /*tp_str*/
-//	PyObject_GenericGetAttr, /*tp_getattro*/
-//	PyObject_GenericSetAttr, /*tp_setattro*/
-//	0, /*tp_as_buffer*/
-//	Py_TPFLAGS_DEFAULT, /*tp_flags*/
-//	0, /* tp_doc */
-//	0, /* tp_traverse */
-//	0, /* tp_clear */
-//	0, /* tp_richcompare */
-//	0, /* tp_weaklistoffset */
-//	0, /* tp_iter */
-//	0, /* tp_iternext */
-//	PyObjHandleMethods, /* tp_methods */
-//	0, /* tp_members */
-//	0, /* tp_getset */
-//	0, /* tp_base */
-//	0, /* tp_dict */
-//	0, /* tp_descr_get */
-//	0, /* tp_descr_set */
-//	0, /* tp_dictoffset */
-//	PyObjHandle_Init, /* tp_init */
-//	0, /* tp_alloc */
-//	PyObjHandle_New, /* tp_new */
-//};
-
-
 class objScriptsWrapper {
 	// TODO
 };
@@ -2160,9 +2116,6 @@ void init_objhndl_class(pybind11::module &m)
 	// Workaround for pybind11 Python 2.7 issue
 	obj_class.attr("__setstate__") = obj_class.attr("setstate");
 
-	/*
-{ "__safe_for_unpickling__", PyObjHandle_SafeForUnpickling, NULL, NULL },
-*/
 	m.attr("OBJ_HANDLE_NULL") = objHndlWrapper(objHndl::null);
 
 }
