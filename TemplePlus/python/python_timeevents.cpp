@@ -5,6 +5,9 @@
 #include "python_tio.h"
 #include <util/fixes.h>
 #include <tio/tio.h>
+#include <pybind11/pybind11.h>
+
+namespace py = pybind11;
 
 const uint32_t startSentinel = 0xADD2DECA;
 const uint32_t endSentinel = 0x9BADDAD5;
@@ -101,44 +104,30 @@ static int DeserializeEvent(PyObject **pOut, TioFile *file) {
 		return 0;
 	}
 
-	auto pickleModule = PyImport_ImportModule("templeplus.legacypickle");
-	if (!pickleModule) {
-		PyErr_Print();
-		return FALSE;
-	}
-	auto pickleDict = PyModule_GetDict(pickleModule);
+	auto pickle_module = py::module::import("templeplus.legacypickle");
+	
+	auto load_func = pickle_module.attr("load");
 
-	auto loadFunc = PyDict_GetItemString(pickleDict, "load");
+	auto file_wrapper = PyTioFile_FromTioFile(file);
 
-	if (loadFunc) {
-		auto fileWrapper = PyTioFile_FromTioFile(file);
-		
-		auto res = PyObject_CallFunctionObjArgs(loadFunc, fileWrapper, NULL);
-		*pOut = res;
+	auto unpickle_result = load_func(py::handle(file_wrapper));
+	unpickle_result.inc_ref();
+	*pOut = unpickle_result.ptr();
 
-		if (!res) {
-			logger->error("Unable to unpickle python arg to time event.");
-			PyErr_Print();
-		} else {
-			if (tio_fread(&sentinel, 4, 1, file) == 1) {
-				if (sentinel != endSentinel) {
-					logger->error("Python time event sentinel is wrong: {:x} != {:x}", sentinel, endSentinel);
-					Py_XDECREF(*pOut);
-					*pOut = nullptr;
-				}
-			} else {
-				logger->error("Unable to read python time event end sentinel.");
-				Py_XDECREF(*pOut);
-				*pOut = nullptr;
-			}			
+	if (tio_fread(&sentinel, 4, 1, file) == 1) {
+		if (sentinel != endSentinel) {
+			logger->error("Python time event sentinel is wrong: {:x} != {:x}", sentinel, endSentinel);
+			Py_XDECREF(*pOut);
+			*pOut = nullptr;
 		}
-
-		PyTioFile_Invalidate(fileWrapper);
-		Py_DECREF(fileWrapper);
+	} else {
+		logger->error("Unable to read python time event end sentinel.");
+		Py_XDECREF(*pOut);
+		*pOut = nullptr;
 	}
 
-	Py_DECREF(pickleModule);
-
+	PyTioFile_Invalidate(file_wrapper);
+	
 	return *pOut != nullptr;
 }
 

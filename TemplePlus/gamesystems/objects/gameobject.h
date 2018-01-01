@@ -179,6 +179,9 @@ struct GameObjectBody {
 	std::unique_ptr<GameObjectBody> Clone() const;
 
 #pragma region Object Field Getters and Setters
+	ObjectType GetType() const {
+		return (ObjectType) GetInt32(obj_f_type);
+	}
 	ObjectFlag GetFlags() const {
 		return (ObjectFlag) GetInt32(obj_f_flags);
 	}
@@ -194,6 +197,9 @@ struct GameObjectBody {
 		} else {
 			SetFlags((ObjectFlag)((int32_t)GetFlags() & ~ (int32_t)flag));
 		}
+	}
+	int GetName() const {
+		return GetInt32(obj_f_name);
 	}
 
 	ItemFlag GetItemFlags() const {

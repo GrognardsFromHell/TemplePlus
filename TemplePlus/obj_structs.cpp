@@ -26,3 +26,32 @@ std::ostream &operator <<(std::ostream &out, const objHndl &handle) {
 	}
 	return out;
 }
+
+std::ostream & operator<<(std::ostream & out, ObjectIdKind kind)
+{
+	switch (kind) {
+	case ObjectIdKind::Null:
+		out << "Null";
+		break;
+	case ObjectIdKind::Prototype:
+		out << "Prototype";
+		break;
+	case ObjectIdKind::Permanent:
+		out << "Permanent";
+		break;
+	case ObjectIdKind::Positional:
+		out << "Positional";
+		break;
+	case ObjectIdKind::Handle:
+		out << "Handle";
+		break;
+	case ObjectIdKind::Blocked:
+		out << "Blocked";
+		break;
+	default:
+		out << "Unknown";
+		break;
+	}
+	
+	return out;
+}

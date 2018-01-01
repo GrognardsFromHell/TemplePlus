@@ -166,4 +166,6 @@ struct ObjectId {
 };
 #pragma pack(pop)
 
+std::ostream &operator <<(std::ostream &out, ObjectIdKind kind);
+
 const int testSizeofObjectId = sizeof(ObjectId); // should be 24

@@ -33,23 +33,21 @@ PYBIND11_EMBEDDED_MODULE(toee, m) {
 )");
 
 	init_dice_class(m);
+	init_objhndl_class(m);
 
 	auto module = Py_InitModule("toee", nullptr); // Borrowed ref
 	auto dict = PyModule_GetDict(module); // Borrowed ref
 
 	// The null object (pointless by the way, since it implements IsTrue)
-	auto nullHandle = PyObjHndl_CreateNull();
+	/*auto nullHandle = PyObjHndl_CreateNull();
 	PyDict_SetItemString(dict, "OBJ_HANDLE_NULL", nullHandle);
-	Py_DECREF(nullHandle);
+	Py_DECREF(nullHandle);*/
 
 	// The game object, which behaves more like a module, but has getter/setter based properties
 	auto pyGame = PyGame_Create(); // New ref
 	PyDict_SetItemString(dict, "game", pyGame);
 	Py_DECREF(pyGame);
 
-	if (PyType_Ready(&PyObjHandleType)) {
-		PyErr_Print();
-	}
 	if (PyType_Ready(&PySpellStoreType)) {
 		PyErr_Print();
 	}
@@ -64,7 +62,7 @@ PYBIND11_EMBEDDED_MODULE(toee, m) {
 	}
 
 	// This is critical for unpickling object handles stored in timed events
-	PyDict_SetItemString(dict, "PyObjHandle", (PyObject*)&PyObjHandleType);
+	// PyDict_SetItemString(dict, "PyObjHandle", (PyObject*)&PyObjHandleType);
 	PyDict_SetItemString(dict, "PySpellStore", (PyObject*)&PySpellStoreType);
 	PyDict_SetItemString(dict, "PyBonusList", (PyObject*)&PyBonusListType);
 	PyDict_SetItemString(dict, "PyDamagePacket", (PyObject*)&PyDamagePacketType);
