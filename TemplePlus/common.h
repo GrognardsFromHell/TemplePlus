@@ -77,6 +77,7 @@ struct GroupArray {
 	uint32_t GroupSize;
 	int (__cdecl*sortFunc)(void*, void*); // used for comparing two items (e.g. alphabetic sorting)
 
+	void Clear(); // clears members
 	void Reset(); // clears members and sorter func
 };
 

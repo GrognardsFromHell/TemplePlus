@@ -1047,7 +1047,7 @@ static PyObject* PyObjHandle_Attack(PyObject* obj, PyObject* args) {
 			}
 		}
 	}
-
+	
 	Py_RETURN_NONE;
 }
 

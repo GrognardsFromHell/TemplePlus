@@ -54,9 +54,11 @@ struct LegacyCombatSystem : temple::AddressTable {
 	void CombatAdvanceTurn(objHndl obj);
 	BOOL IsBrawlInProgress();
 	void CritterExitCombatMode(objHndl handle);
+	
 
 	uint32_t* combatModeActive;
 	bool isCombatActive();
+	bool IsAutoAttack();
 	bool AllCombatantsFarFromParty();
 	bool AllPcsUnconscious(); // true if all party PCs are unconscious
 	uint32_t IsCloseToParty(objHndl objHnd);

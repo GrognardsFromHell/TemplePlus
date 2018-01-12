@@ -1006,6 +1006,12 @@ bool LegacyCombatSystem::isCombatActive()
 	return *combatSys.combatModeActive != 0;
 }
 
+bool LegacyCombatSystem::IsAutoAttack(){
+	if (isCombatActive())
+		return false;
+	return config.GetVanillaInt("auto attack") != 0;
+}
+
 bool LegacyCombatSystem::AllCombatantsFarFromParty()
 {
 	const double PEACEOUT_DISTANCE = 125.0;
