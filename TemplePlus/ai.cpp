@@ -1048,7 +1048,10 @@ void AiSystem::FightStatusProcess(objHndl obj, objHndl newTgt)
 	default:
 		break;
 	}
-	combatSys.AddToInitiative(obj);
+	if (!objects.GetFlags(obj) & (OF_OFF | OF_DESTROYED)
+		 && combatSys.isCombatActive() && !critterSys.IsDeadNullDestroyed(obj)){
+		combatSys.AddToInitiative(obj);
+	}
 	return;
 }
 
