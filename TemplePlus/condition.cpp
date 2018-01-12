@@ -288,9 +288,9 @@ public:
 	static int TurnUndeadHook(objHndl, Stat shouldBeClassCleric, DispIoD20ActionTurnBased* evtObj);
 	void apply() override {
 		logger->info("Replacing Condition-related Functions");
-		
+
 		//conds.RegisterNewConditions();
-		
+
 
 		replaceFunction(0x100E19C0, _CondStructAddToHashtable);
 		replaceFunction(0x100E1A80, _GetCondStructFromHashcode);
@@ -299,12 +299,24 @@ public:
 		replaceFunction(0x100E1DD0, _CondNodeAddToSubDispNodeArray);
 
 		replaceFunction(0x100E22D0, _ConditionAddDispatch);
-		replaceFunction(0x100E24C0, _ConditionAddToAttribs_NumArgs0);
-		replaceFunction(0x100E2500, _ConditionAddToAttribs_NumArgs2);
-		replaceFunction(0x100E24E0, _ConditionAdd_NumArgs0);
-		replaceFunction(0x100E2530, _ConditionAdd_NumArgs2);
-		replaceFunction(0x100E2560, _ConditionAdd_NumArgs3);
-		replaceFunction(0x100E2590, _ConditionAdd_NumArgs4);
+		replaceFunction<uint32_t(__cdecl)(Dispatcher*, CondStruct*)>(0x100E24C0, [](Dispatcher* dis, CondStruct* cond) {
+			return _ConditionAddToAttribs_NumArgs0(dis, cond, false);
+		});
+		replaceFunction<uint32_t(__cdecl)(Dispatcher*, CondStruct*, int, int)>(0x100E2500, [](Dispatcher* dis, CondStruct* cond, int arg1, int arg2) {
+			return _ConditionAddToAttribs_NumArgs2(dis, cond, arg1, arg2, false);
+		});
+		replaceFunction<uint32_t(__cdecl)(Dispatcher*, CondStruct*)>(0x100E24E0, [](Dispatcher* dis, CondStruct* cond) {
+			return _ConditionAdd_NumArgs0(dis, cond, false);
+		});
+		replaceFunction<uint32_t(__cdecl)(Dispatcher*, CondStruct*, int, int)>(0x100E2530, [](Dispatcher* dis, CondStruct* cond, int arg1, int arg2) {
+			return _ConditionAdd_NumArgs2(dis, cond, arg1, arg2, false);
+		});
+		replaceFunction<uint32_t(__cdecl)(Dispatcher*, CondStruct*, int, int, int)>(0x100E2560, [](Dispatcher* dis, CondStruct* cond, int arg1, int arg2, int arg3)	{
+			return 	_ConditionAdd_NumArgs3(dis, cond, arg1, arg2, arg3, false);
+		});
+		replaceFunction<uint32_t(__cdecl)(Dispatcher*, CondStruct*, int, int, int, int)>(0x100E2590, [](Dispatcher* dis, CondStruct* cond, int arg1, int arg2, int arg3, int arg4){
+			return _ConditionAdd_NumArgs4(dis, cond, arg1, arg2, arg3, arg4, false);
+		});
 		replaceFunction(0x100E25C0, InitCondFromCondStructAndArgs);
 		replaceFunction(0x100ED030, ConditionRemoveCallback);
 		
@@ -560,31 +572,52 @@ void _CondNodeAddToSubDispNodeArray(Dispatcher* dispatcher, CondNode* condNode) 
 };
 
 
-uint32_t _ConditionAddToAttribs_NumArgs0(Dispatcher* dispatcher, CondStruct* condStruct) {
+CondStruct* _getCondStruct_RegardVanillaHook(CondStruct* condStruct, bool isInternalUse){
+	if (!isInternalUse) {
+		// this section is meant for vanilla conditions that may be added by their direct address.
+		// The hooked function will go here, whereas internal Temple+ usage won't.
+		auto condStructNew = conds.GetByName(condStruct->condName);
+		if (condStructNew != condStruct) {
+			return condStructNew;
+		}
+	}
+	return condStruct;
+}
+
+uint32_t _ConditionAddToAttribs_NumArgs0(Dispatcher* dispatcher, CondStruct* condStruct, bool isInternalUse) {
+
+	condStruct = _getCondStruct_RegardVanillaHook(condStruct, isInternalUse);
 	return _ConditionAddDispatch(dispatcher, &dispatcher->permanentMods, condStruct, 0, 0, 0, 0);
 };
 
-uint32_t _ConditionAddToAttribs_NumArgs2(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2) {
+uint32_t _ConditionAddToAttribs_NumArgs2(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, bool isInternalUse) {
+
+	condStruct = _getCondStruct_RegardVanillaHook(condStruct, isInternalUse);
 	return _ConditionAddDispatch(dispatcher, &dispatcher->permanentMods, condStruct, arg1, arg2, 0, 0);
 };
 
-uint32_t _ConditionAdd_NumArgs0(Dispatcher* dispatcher, CondStruct* condStruct) {
+uint32_t _ConditionAdd_NumArgs0(Dispatcher* dispatcher, CondStruct* condStruct, bool isInternalUse) {
+	condStruct = _getCondStruct_RegardVanillaHook(condStruct, isInternalUse);
 	return _ConditionAddDispatch(dispatcher, &dispatcher->conditions, condStruct, 0, 0, 0, 0);
 };
 
-uint32_t _ConditionAdd_NumArgs1(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1) {
+uint32_t _ConditionAdd_NumArgs1(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, bool isInternalUse) {
+	condStruct = _getCondStruct_RegardVanillaHook(condStruct, isInternalUse);
 	return _ConditionAddDispatch(dispatcher, &dispatcher->conditions, condStruct, arg1, 0, 0, 0);
 };
 
-uint32_t _ConditionAdd_NumArgs2(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2) {
+uint32_t _ConditionAdd_NumArgs2(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, bool isInternalUse) {
+	condStruct = _getCondStruct_RegardVanillaHook(condStruct, isInternalUse);
 	return _ConditionAddDispatch(dispatcher, &dispatcher->conditions, condStruct, arg1, arg2, 0, 0);
 };
 
-uint32_t _ConditionAdd_NumArgs3(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3) {
+uint32_t _ConditionAdd_NumArgs3(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, bool isInternalUse) {
+	condStruct = _getCondStruct_RegardVanillaHook(condStruct, isInternalUse);
 	return _ConditionAddDispatch(dispatcher, &dispatcher->conditions, condStruct, arg1, arg2, arg3, 0);
 };
 
-uint32_t _ConditionAdd_NumArgs4(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4) {
+uint32_t _ConditionAdd_NumArgs4(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4, bool isInternalUse) {
+	condStruct = _getCondStruct_RegardVanillaHook(condStruct, isInternalUse);
 	return _ConditionAddDispatch(dispatcher, &dispatcher->conditions, condStruct, arg1, arg2, arg3, arg4);
 }
 

@@ -17,8 +17,8 @@ void D20StatusSystem::initRace(objHndl objHnd)
 	if (objects.IsCritter(objHnd))
 	{
 		Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
-		if (critterSys.IsUndead(objHnd))
-		{
+		if (critterSys.IsUndead(objHnd)){
+
 			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionMonsterUndead);
 		}
 
