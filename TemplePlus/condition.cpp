@@ -3897,10 +3897,13 @@ int SpellCallbacks::DismissSignalHandler(DispatcherCallbackArgs args){
 			conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
 			return 0;
 		}
-		if (spPkt.aoeObj){
+		if (spPkt.aoeObj && spPkt.aoeObj != args.objHndCaller){
 			d20Sys.d20SendSignal(spPkt.aoeObj, DK_SIG_Dismiss_Spells, spPkt.spellId, 0);
 		}
 		for (auto i=0u; i < spPkt.targetCount; i++){
+			auto tgt = spPkt.targetListHandles[i];
+			if (!tgt || tgt == args.objHndCaller)
+				continue;
 			d20Sys.d20SendSignal(spPkt.targetListHandles[i], DK_SIG_Dismiss_Spells, spPkt.spellId, 0);
 		}
 
