@@ -11,7 +11,7 @@ Breakpad::Breakpad(const std::wstring &crashDumpFolder)
 	mHandler = std::make_unique<InProcessCrashReporting>(crashDumpFolder, [this](const std::wstring &minidump_path) {
 
 		auto msg = fmt::format(L"Sorry! TemplePlus seems to have crashed. A crash report was written to {}.\n\n"
-			L"If you want to report this issue, please make sure to attach this file.\nPlease also attach your savegame file from your ToEE folder under modules\\ToEE\\Save. Be sure to include the .tfaf, .tfai and .gsi files.",
+			L"If you want to report this issue, please contact us on our forums at RPGCodex or send an email to templeplushelp@gmail.com.",
 			minidump_path);
 		if (!extraMessage().empty()) {
 			msg.append(extraMessage());
