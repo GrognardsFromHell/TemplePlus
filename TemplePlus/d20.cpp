@@ -716,9 +716,8 @@ void LegacyD20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, in
 	}
 	DispIoD20Signal dispIO;
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
-	if (!dispatch.dispatcherValid(dispatcher))
-	{
-		logger->info("d20SendSignal(): Object {} ({}) lacks a Dispatcher", description._getDisplayName(objHnd, objHnd), objHnd);
+	if (!dispatch.dispatcherValid(dispatcher)){
+		logger->info("d20SendSignal(): Object {} lacks a Dispatcher", objHnd);
 		return;
 	}
 	dispIO.dispIOType = dispIoTypeSendSignal;
@@ -737,7 +736,7 @@ void LegacyD20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, D2
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 	if (!dispatch.dispatcherValid(dispatcher))
 	{
-		logger->info("d20SendSignal(): Object {} ({}) lacks a Dispatcher", description._getDisplayName(objHnd, objHnd), objHnd);
+		logger->info("d20SendSignal(): Object {} lacks a Dispatcher", objHnd);
 		return;
 	}
 	dispIO.dispIOType = dispIoTypeSendSignal;
@@ -755,7 +754,7 @@ void LegacyD20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, ob
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 	if (!dispatch.dispatcherValid(dispatcher))
 	{
-		logger->info("d20SendSignal(): Object {} ({}) lacks a Dispatcher", description._getDisplayName(objHnd, objHnd), objHnd);
+		logger->info("d20SendSignal(): Object {} lacks a Dispatcher", objHnd);
 		return;
 	}
 	dispIO.dispIOType = dispIoTypeSendSignal;

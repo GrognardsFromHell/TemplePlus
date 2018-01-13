@@ -1675,7 +1675,7 @@ const char *getProtoName(objHndl protoHandle) {
   if ( tig_mes_get_line(ui_itemcreation_names, &line) )
     result = line.value;
   else
-    result = objects.description._getDisplayName((objHndl)protoHandle, (objHndl)protoHandle);
+    result = objects.description.getDisplayName(protoHandle);
   return result;
   */
 

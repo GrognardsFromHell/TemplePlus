@@ -191,7 +191,7 @@ public:
 			rh->Clear();
 			/*
 			auto observer = party.GetConsciousPartyLeader();
-			auto descr = description._getDisplayName(hist->obj, observer);
+			auto descr = description.getDisplayName(hist->obj, observer);
 			histSys.GetRollUiString();
 			if (hist3->rollResult == 1) {
 				
@@ -214,7 +214,7 @@ public:
 				return 	 orgPrintHistoryEntryToD20Console(histId, textOut);
 
 			auto observer = party.GetConsciousPartyLeader();
-			auto descr = description._getDisplayName(hist->obj, observer);
+			auto descr = description.getDisplayName(hist->obj, observer);
 			auto saveTypeString = combatSys.GetCombatMesLine(hist3->saveType + 500);
 			auto text = fmt::format("{} {} {} {} - {}", descr, histSys.GetRollUiString(26), saveTypeString, histSys.GetRollUiString(18), histSys.GetRollUiString(20 + (hist3->rollResult != 20) ));
 			if (hist3->rollResult == 20){

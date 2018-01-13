@@ -1292,10 +1292,10 @@ uint32_t ActionSequenceSystem::AssignSeq(objHndl objHnd)
 		{
 			if (prevSeq != nullptr)
 			{
-				logger->debug("Pushing sequence from {} ({}) to {} ({})", object->description.getDisplayName(prevSeq->performer), prevSeq->performer, object->description._getDisplayName(objHnd, objHnd), objHnd);
+				logger->debug("Pushing sequence from {} to {}", prevSeq->performer, objHnd);
 			} else
 			{
-				logger->debug("Allocated sequence for {} ({}) ", object->description.getDisplayName(objHnd), objHnd, objHnd);
+				logger->debug("Allocated sequence for {}", objHnd);
 			}
 		}
 		(*actSeqCur)->prevSeq = prevSeq;
@@ -1414,7 +1414,7 @@ BOOL ActionSequenceSystem::SequenceSwitch(objHndl obj)
 
 	if (seqIdx >= 0)
 	{
-		logger->debug("SequenceSwitch: \t doing for {} ({}). Previous Current Seq: {}", description.getDisplayName(obj), obj, (void*)(*actSeqCur));
+		logger->debug("SequenceSwitch: \t doing for {}. Previous Current Seq: {}", obj, (void*)(*actSeqCur));
 		*actSeqCur = &actSeqArray[seqIdx];
 		logger->debug("SequenceSwitch: \t new Current Seq: {}", (void*)(*actSeqCur));
 		return 1;
@@ -1429,7 +1429,7 @@ void ActionSequenceSystem::GreybarReset()
 	auto actor = tbSys.turnBasedGetCurrentActor();
 	if ( !isPerforming(actor) && IsSimulsCompleted() && !IsLastSimultPopped(actor))
 	{
-		logger->debug("GREYBAR DEHANGER for {} ({}) ending turn...", description.getDisplayName(actor), actor);
+		logger->debug("GREYBAR DEHANGER for {} ending turn...", actor);
 		combatSys.CombatAdvanceTurn(actor);
 		return;
 	}
@@ -2323,9 +2323,7 @@ uint32_t ActionSequenceSystem::curSeqNext()
 	objHndl performer = curSeq->performer;
 	SpellPacketBody spellPktBody;
 	curSeq->seqOccupied &= 0xffffFFFE; //unset "occupied" flag
-	logger->debug("CurSeqNext: \t Sequence Completed for {} ({}) (sequence {})",
-		description._getDisplayName(curSeq->performer, curSeq->performer),
-		curSeq->performer, (void*)curSeq);
+	logger->debug("CurSeqNext: \t Sequence Completed for {} (sequence {})", curSeq->performer, (void*)curSeq);
 
 	int d20ActArrayNum = curSeq->d20ActArrayNum;
 	if (d20ActArrayNum > 0){
@@ -2559,7 +2557,7 @@ void ActionSequenceSystem::ActionPerform()
 		if (critterSys.IsDeadOrUnconscious(performer)){
 
 			curSeq->d20ActArrayNum = curSeq->d20aCurIdx;
-			logger->debug("ActionPerform: \t Unconscious actor {} - cutting sequence", objects.description._getDisplayName(performer, performer));
+			logger->debug("ActionPerform: \t Unconscious actor {} - cutting sequence", performer);
 		}
 
 		// if have finished up the actions - do CurSeqNext
@@ -2619,7 +2617,7 @@ void ActionSequenceSystem::ActionPerform()
 		else{
 
 			if ( d20->D20ActionTriggersAoO(d20a, &tbStatus) && DoAoosByAdjcentEnemies(d20a->d20APerformer))	{
-				logger->debug("ActionPerform: \t Sequence Preempted {} ({})", description._getDisplayName(d20a->d20APerformer, d20a->d20APerformer), d20a->d20APerformer);
+				logger->debug("ActionPerform: \t Sequence Preempted {}", d20a->d20APerformer);
 				--*(curIdx);
 				sequencePerform();
 			} 
@@ -2627,10 +2625,7 @@ void ActionSequenceSystem::ActionPerform()
 				curSeq->tbStatus = tbStatus;
 				*(uint32_t*)(&curSeq->tbStatus.tbsFlags) |= TBSF_HasActedThisRound;
 				InterruptCounterspell(d20a);
-				logger->debug("ActionPerform: \t Performing action for {}: {}",
-					d20a->d20APerformer,
-					d20a->d20ActType);
-
+				logger->debug("ActionPerform: \t Performing action for {}: {}",	d20a->d20APerformer,d20a->d20ActType);
 
 				/*if (config.newFeatureTestMode && d20a->path != nullptr)
 				{
@@ -2991,7 +2986,7 @@ uint32_t ActionSequenceSystem::simulsAbort(objHndl objHnd)
 			else{
 				*numSimultPerformers = *simulsIdx;
 				memcpy(tbStatus118CD3C0, &(*actSeqCur)->tbStatus, sizeof(TurnBasedStatus));
-				logger->debug("Simul aborted {} ({})", description._getDisplayName(objHnd, objHnd), *simulsIdx);
+				logger->debug("Simul aborted {} ({})", objHnd, *simulsIdx);
 				return 1;
 			}
 		}
