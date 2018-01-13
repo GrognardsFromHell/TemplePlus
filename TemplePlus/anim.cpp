@@ -594,7 +594,7 @@ bool AnimationGoals::ShouldRun(objHndl handle){
 	else {
 		if (isCtrlPressed || infrastructure::gKeyboard.IsKeyPressed(VK_RCONTROL))
 			return true;
-		if (infrastructure::gKeyboard.IsModifierActive(VK_NUMLOCK))
+		if (config.walkDistanceFt == 0 && infrastructure::gKeyboard.IsModifierActive(VK_NUMLOCK))
 			return true;
 	}
 
@@ -763,7 +763,38 @@ BOOL AnimationGoals::PushSpellInterrupt(const objHndl& caster, objHndl item, Ani
 void AnimationGoals::PushForMouseTarget(objHndl handle, AnimGoalType type, objHndl tgt, locXY loc, objHndl scratchObj, int someFlag){
 
 	AnimSlotGoalStackEntry goalData;
+
 	temple::GetRef<void(__cdecl)(AnimSlotGoalStackEntry&, objHndl, AnimGoalType, objHndl, locXY, objHndl, int)>(0x10113470)(goalData, handle, type, tgt, loc, scratchObj, someFlag);
+	return;
+
+	// rewriting function in p[rogress..
+	if (!goalData.Init(handle, type))
+		return;
+	goalData.target.obj = tgt;
+
+	
+	if (loc) {
+		goalData.targetTile.location.location = loc;
+		goalData.targetTile.location.off_x = goalData.targetTile.location.off_y = 0;
+	}
+	if (scratchObj) {
+		goalData.scratch.obj = scratchObj;
+	}
+	
+	static auto isActionPaused = [](objHndl handle, int actionIdx) {
+		if (!handle)
+			return false;
+		auto critterFlags2 = objects.getInt32(handle, obj_f_critter_flags2);
+		return ((CritterFlags2::OCF2_ACTION0_PAUSED << actionIdx) & critterFlags2) != 0;
+	};
+	if (type == ag_attack || type == ag_attempt_attack || isActionPaused(handle, 0)) {
+			return;
+	}
+
+	/*if (!combatSys.IsAutoAttack()){
+		if (gameSystems->GetAnim().())
+	}*/
+	
 }
 
 BOOL AnimationGoals::IsObjDoingRelatedGoal(objHndl handle, AnimGoalType type, AnimSlotId & slotId){
