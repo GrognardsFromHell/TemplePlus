@@ -53,6 +53,7 @@ struct AiPacket
 		bool ScoutPointSetState();
 		void ChooseRandomSpell_RegardInvulnerableStatus();
 		objHndl PickRandomFromAiList();
+		objHndl ConsiderCombatFocus();
 
 
 	
@@ -162,6 +163,7 @@ struct AiSystem : temple::AddressTable
 	void StopAttacking(objHndl npc);
 	void ProvokeHostility(objHndl agitator, objHndl provokedNpc, int rangeType, int flags); // rangeType - 0 is for 5 tiles, 1 is for 10 tiles, 2 is for 20 tiles, and 3 is unlimited
 	void TryLockOnTarget(objHndl handle, objHndl leader, objHndl target, int isAlways1, int isFlags1Set, int skipAiStatusUpdate);
+	void TargetLockUnset(objHndl handle);
 	BOOL RefuseFollowCheck(objHndl handle, objHndl leader);
 
 	objHndl GetCombatFocus(objHndl npc);
@@ -240,7 +242,9 @@ struct AiSystem : temple::AddressTable
 
 	void RegisterNewAiTactics();
 	int GetStrategyIdx(const char* stratName) const; // get the strategy.tab index for given strategy name
+	void AiListRemove(const objHndl& handle, const objHndl& tgt, int aiType);
 	
+
 
 	static int GetAiSpells(AiSpellList* aiSpell, objHndl obj, AiSpellType aiSpellType);
 	static int ChooseRandomSpell(AiPacket* aiPkt);

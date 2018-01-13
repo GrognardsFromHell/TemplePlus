@@ -536,6 +536,19 @@ void AiSystem::TryLockOnTarget(objHndl handle, objHndl leader, objHndl tgt, int 
 
 }
 
+void AiSystem::TargetLockUnset(objHndl handle){
+	if (!handle)
+		return;
+	auto obj = objSystem->GetObject(handle);
+	if (!obj->IsNPC())
+		return;
+	auto critFlags2 = obj->GetInt32(obj_f_critter_flags2);
+	if (critFlags2 & CritterFlags2::OCF2_TARGET_LOCK){
+		critFlags2 &= ~OCF2_TARGET_LOCK;
+		obj->SetInt32(obj_f_critter_flags2, critFlags2);
+	}
+}
+
 BOOL AiSystem::RefuseFollowCheck(objHndl handle, objHndl leader){
 	auto objBody = objSystem->GetObject(handle);
 	if (objBody->GetInt32(obj_f_spell_flags) & SpellFlags::SF_SPELL_FLEE
@@ -1973,6 +1986,31 @@ int AiSystem::GetStrategyIdx(const char* stratName) const
 
 	return result;
 	
+}
+
+void AiSystem::AiListRemove(const objHndl & handle, const objHndl & tgt, int aiType){
+	auto obj = objSystem->GetObject(handle);
+	auto aiList = obj->GetObjectIdArray(obj_f_npc_ai_list_idx);
+	int aiListCount = aiList.GetSize();
+	auto lastIdx = aiListCount - 1;
+	for (int i=0; i < aiListCount; i++){
+
+		auto aiListItem     = obj->GetObjHndl(obj_f_npc_ai_list_idx, i);
+		auto aiListItemType = obj->GetInt32(obj_f_npc_ai_list_type_idx, i);
+
+		if (!(aiListItem == tgt && aiListItemType == aiType || !aiListItem))
+			continue;
+
+		if (i < lastIdx){
+			auto lastItem      = obj->GetObjHndl(obj_f_npc_ai_list_idx, lastIdx);
+			auto lastItemType  = obj->GetInt32(obj_f_npc_ai_list_type_idx, lastIdx);
+			obj->SetObjHndl(obj_f_npc_ai_list_idx, i, lastItem);
+			obj->SetInt32(obj_f_npc_ai_list_type_idx, i, lastItemType);
+		}
+		obj->RemoveObjectId(obj_f_npc_ai_list_idx, lastIdx);
+		obj->RemoveInt32(obj_f_npc_ai_list_type_idx, lastIdx--);
+		aiListCount--; i--;
+	}
 }
 
 int AiSystem::GetAiSpells(AiSpellList* aiSpell, objHndl obj, AiSpellType aiSpellType)
@@ -3435,11 +3473,10 @@ void AiPacket::FightStatusUpdate(){
 	if (critterSys.IsSleeping(obj))
 		return;
 	objHndl focus = objHndl::null;
-	auto considerCombatFocs = temple::GetRef < objHndl(__cdecl)(objHndl) >(0x1005D580);
 	switch (aiFightStatus){
 
 	case AIFS_FINDING_HELP: // for AI with scout points
-		focus = considerCombatFocs(obj);
+		focus = ConsiderCombatFocus();
 		if (focus){
 			this->target = focus;
 			if (!ScoutPointSetState()){
@@ -3464,7 +3501,7 @@ void AiPacket::FightStatusUpdate(){
 		}
 		break;
 	case AIFS_FIGHTING:
-		focus = considerCombatFocs(obj);
+		focus = ConsiderCombatFocus();
 		if (focus){
 			this->target = focus;
 			ChooseRandomSpell_RegardInvulnerableStatus();
@@ -3543,8 +3580,44 @@ void AiPacket::ChooseRandomSpell_RegardInvulnerableStatus(){
 }
 
 objHndl AiPacket::PickRandomFromAiList(){
-	auto result = temple::GetRef<objHndl(__cdecl)(objHndl)>(0x1005D620)(obj);
+	aiSys.AiListRemove(obj, objHndl::null, 0);
+	
+	auto objBody = objSystem->GetObject(obj);
+	auto aiListCount = objBody->GetObjectIdArray(obj_f_npc_ai_list_idx).GetSize();
+
+	auto randIdx = rngSys.GetInt(0, aiListCount - 1);
+	auto result = objHndl::null;
+
+	for (auto i = 0; i < aiListCount; i++, randIdx++){
+		auto aiListItem = objBody->GetObjHndl(obj_f_npc_ai_list_idx, (randIdx )% aiListCount);
+		auto aiListItemType = objBody->GetInt32(obj_f_npc_ai_list_type_idx, (randIdx) % aiListCount);
+		if (aiListItemType == 0){
+			if (aiSys.ConsiderTarget(obj, aiListItem)){
+				return aiListItem;
+			}
+		}
+	}
+
 	return result;
+
+	//auto result = temple::GetRef<objHndl(__cdecl)(objHndl)>(0x1005D620)(obj);
+	//return result;
+}
+
+objHndl AiPacket::ConsiderCombatFocus(){
+
+	auto objBody = objSystem->GetObject(obj);
+	auto curCombatFocus = objBody->GetObjHndl(obj_f_npc_combat_focus);
+	if (aiSys.ConsiderTarget(obj, curCombatFocus)){
+		return curCombatFocus;
+	}
+	
+	aiSys.TargetLockUnset(obj);
+	return aiSys.FindSuitableTarget(obj);
+
+	//auto considerCombatFocs = temple::GetRef < objHndl(__cdecl)(objHndl) >(0x1005D580);
+	//return considerCombatFocs(obj);
+	
 }
 
 void AiPacket::ProcessCombat(){

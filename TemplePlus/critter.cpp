@@ -382,7 +382,7 @@ uint32_t LegacyCritterSystem::IsFriendly(objHndl critter1, objHndl critter2) {
 			}
 			if (critter2_leader == critter1 
 				|| critterSys.NpcAllegianceShared(critter1, critter2)
-				|| critterSys.HasNoFaction(critter1) || critterSys.HasNoFaction(critter2)) {
+				|| critterSys.HasNoFaction(critter1) && critterSys.HasNoFaction(critter2)  ) {
 				return TRUE;
 			}
 		}
