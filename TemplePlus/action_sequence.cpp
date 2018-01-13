@@ -1133,39 +1133,58 @@ uint32_t ActionSequenceSystem::MoveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 	/*
 	this is 0 for specific move action types like 5' step, Move, Run, Withdraw; 
 	*/
-	if (nonspecificMoveType) 
-	{
+	if (nonspecificMoveType){
+		auto chosenActionType = D20A_MOVE;
+		
 		float baseMoveDist = dispatch.Dispatch29hGetMoveSpeed(d20aCopy.d20APerformer, nullptr);
-		if (!(d20aCopy.d20Caf & D20CAF_CHARGE))
-		{
-			if (pathLength > (long double)tbStatCopy.surplusMoveDistance)
-			{
-				if ( 2*baseMoveDist + tbStatCopy.surplusMoveDistance < (long double)pathLength){ releasePath(pqResult); return 8; }
-				if (tbStatCopy.surplusMoveDistance + baseMoveDist < (long double)pathLength){ d20aCopy.d20ActType = D20A_DOUBLE_MOVE; goto LABEL_53; }
-				else if (pathLength <= 5.0)
-				{
+		if (!(d20aCopy.d20Caf & D20CAF_CHARGE))	{
+			if (pathLength > (long double)tbStatCopy.surplusMoveDistance){
+
+				// distance greater than twice base distance -> cannot do
+				if ( 2*baseMoveDist + tbStatCopy.surplusMoveDistance < (long double)pathLength){
+					releasePath(pqResult); 
+					return AEC_TARGET_TOO_FAR;
+				}
+				// distance greater than base move distance -> do double move
+				if (tbStatCopy.surplusMoveDistance + baseMoveDist < (long double)pathLength){
+					chosenActionType = D20A_DOUBLE_MOVE;
+				}
+
+				// check if under 5'
+				else if (pathLength <= 5.0)	{
+
 					if (d20a->d20ActType != D20A_UNSPECIFIED_MOVE)
 					{
 						d20->d20Defs[d20a->d20ActType].actionCost(d20a, &tbStatCopy, &actCost);
-						if (actCost.hourglassCost == 4 || !tbStatCopy.hourglassState) 
-						{
-							d20aCopy.d20ActType = D20A_5FOOTSTEP; goto LABEL_53;
+						
+						if (actCost.hourglassCost == 4 || !tbStatCopy.hourglassState) {
+							chosenActionType = D20A_5FOOTSTEP;
 						}
-					} else if (!tbStatCopy.hourglassState)
-					{
-						d20aCopy.d20ActType = D20A_5FOOTSTEP;
-						if (!(tbStatCopy.tbsFlags & (TBSF_Movement | TBSF_Movement2))){	goto LABEL_53; }
+					} 
+					else {
+						if (!tbStatCopy.hourglassState || 	tbStatCopy.hourglassState == 4 && !objects.IsPlayerControlled(d20a->d20APerformer)) { // added for AI to take 5' steps when it still has full round action to exploit
+							chosenActionType = D20A_5FOOTSTEP;
+							if ( (tbStatCopy.tbsFlags & (TBSF_Movement | TBSF_Movement2)) != 0) {
+								chosenActionType = D20A_MOVE;
+							}
+						}
 					}
 				}
 
 			}
-			d20aCopy.d20ActType = D20A_MOVE;
+
+			d20aCopy.d20ActType = chosenActionType;
 		} 
-		else if ( 2* baseMoveDist >= (long double)pathLength) d20aCopy.d20ActType = D20A_RUN;	
-		else	{	releasePath(pqResult); return AEC_TARGET_TOO_FAR;	}
+		else if ( 2* baseMoveDist >= (long double)pathLength) 
+			chosenActionType = D20A_RUN;
+		else{
+			releasePath(pqResult);
+			return AEC_TARGET_TOO_FAR;
+		}
+
+		d20aCopy.d20ActType = chosenActionType;
 	}
 
-LABEL_53:
 	if (config.pathfindingDebugMode)
 	{
 		if (!critterSys.IsPC(d20a->d20APerformer))
