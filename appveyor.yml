@@ -52,7 +52,7 @@ deploy:
     draft: true
     prerelease: false
     auth_token:
-      secure: T28WPYKs67i0QYfOs716oPCtbbGk0ZL2J2KyELYp2ln1VTuYJ7g+t3x9uwPb6TbS
+      secure: Jj836IHtiNEIIYc5FDuGyuBqxQQpii4hv/0KUO2QReGSWq+7VR6XZ5+zaD627upT
     on:
       branch: master
       appveyor_repo_tag: true
