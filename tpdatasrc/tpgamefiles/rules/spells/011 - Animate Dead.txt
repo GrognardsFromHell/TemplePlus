@@ -1,0 +1,24 @@
+School: Necromancy
+Descriptor: Evil
+Level: Clr 3
+Level: Death 3
+Level: Sor 4
+Level: Wiz 4
+Component: V
+Component: S
+Component: GP 25
+Casting Time: 1 action
+Range: Touch
+Saving Throw: None
+Spell Resistance: No
+Projectile: No
+flags_Target: Range
+inc_flags_Target: Dead
+exc_flags_Target: Self
+exc_flags_Target: Non-critter
+mode_Target: Single
+min_Target: 1
+max_Target: 1
+radius_Target: 0
+ai_type: ai_action_summon
+choices: 201 202

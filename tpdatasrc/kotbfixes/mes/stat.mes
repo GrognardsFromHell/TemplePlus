@@ -1,0 +1,384 @@
+// Stat Names Go Between 0-999
+{0}{Strength}
+{1}{Dexterity}
+{2}{Constitution}
+{3}{Intelligence}
+{4}{Wisdom}
+{5}{Charisma}
+   
+{6}{stat_level}
+{7}{Barbarian}
+{8}{Bard}
+{9}{Cleric}
+{10}{Druid}
+{11}{Fighter}
+{12}{Monk}
+{13}{Paladin}
+{14}{Ranger}
+{15}{Rogue}
+{16}{Sorcerer}
+{17}{Wizard}
+
+{18}{stat_level_prestige_}
+{19}{stat_level_prestige_}
+{20}{stat_level_prestige_}
+{21}{stat_level_prestige_}
+{22}{stat_level_prestige_}
+{23}{stat_level_prestige_}
+{24}{stat_level_prestige_}
+{25}{stat_level_prestige_}
+{26}{stat_level_prestige_}
+{27}{stat_level_prestige_}
+
+{228}{HP}
+{229}{HP}
+
+{230}{Race}
+{231}{Category}
+{232}{Gender}
+{233}{Age}
+{234}{Height}
+{235}{Weight}
+{236}{Size}
+{237}{Experience}
+
+{238}{Alignment}
+{239}{Deity}
+{240}{Domain 1}
+{241}{Domain 2}
+{242}{Alignment Choice}
+
+{243}{Favored Enemies}
+
+{244}{Known Spells}
+{245}{Memorized Spells}
+{246}{Spells per Day}
+{247}{School Specialization}
+{248}{School Prohibited}
+
+{249}{Money}
+{250}{Platinum Pieces}
+{251}{Gold Pieces}
+{252}{Electrum Pieces}
+{253}{Silver Pieces}
+{254}{Copper Pieces}
+
+{255}{Strength Modifier}
+{256}{Dexterity Modifier}	
+{257}{Constitution Modifier}
+{258}{Intelligence Modifier}
+{259}{Wisdom Modifier}
+{260}{Charisma Modifier}
+
+{261}{Armor Class}
+
+{262}{}
+{263}{Reflexes}
+{264}{Fortitude}
+{265}{Willpower}
+{266}{Attack Bonus}
+{267}{Damage Bonus}
+
+{268}{Carried Weight}
+{269}{}
+{270}{Run Speed}
+{271}{Carrying Load}
+
+{272}{Nonlethal Damage}
+
+{273}{Caster Level}
+{274}{Barbarian Caster Level}
+{275}{Bard Caster Level}
+{276}{Cleric Caster Level}
+{277}{Druid Caster Level}
+{278}{Fighter Caster Level}
+{279}{Monk Caster Level}
+{280}{Paladin Caster Level}
+{281}{Ranger Caster Level}
+{282}{Rogue Caster Level}
+{283}{Sorcerer Caster Level}
+{284}{Wizard Caster Level}
+
+{285}{Subrace}
+
+{286}{Melee Attack Bonus}
+{287}{Ranged Attack Bonus}
+
+// Stat Short Names Go Between 1000-1999
+{1000}{STR}
+{1001}{DEX}
+{1002}{CON}
+{1003}{INT}
+{1004}{WIS}
+{1005}{CHA}
+   
+{1006}{}
+{1007}{Bbn}
+{1008}{Brd}
+{1009}{Clr}
+{1010}{Drd}
+{1011}{Ftr}
+{1012}{Mnk}
+{1013}{Pal}
+{1014}{Rgr}
+{1015}{Rog}
+{1016}{Sor}
+{1017}{Wiz}
+
+{1018}{stat_level_prestige_}
+{1019}{stat_level_prestige_}
+{1020}{stat_level_prestige_}
+{1021}{stat_level_prestige_}
+{1022}{stat_level_prestige_}
+{1023}{stat_level_prestige_}
+{1024}{stat_level_prestige_}
+{1025}{stat_level_prestige_}
+{1026}{stat_level_prestige_}
+{1027}{stat_level_prestige_}
+
+{1228}{HP_max}
+{1229}{}
+
+{1230}{RACE}
+{1231}{CAT}
+{1232}{GEN}
+{1233}{AGE}
+{1234}{}
+{1235}{}
+{1236}{SIZE}
+{1237}{}
+
+{1238}{ALN}
+{1239}{DTY}
+{1240}{DOM 1}
+{1241}{DOM 2}
+{1242}{ALN CHCE}
+
+{1243}{FAV EN}
+
+{1244}{KNWN SPLS}
+{1245}{MEM SPLS}
+{1246}{SPLS PER DAY}
+{1247}{SCHL SPEC}
+{1248}{SCHL PROH}
+
+{1249}{MON}
+{1250}{PP}
+{1251}{GP}
+{1252}{EP}
+{1253}{SP}
+{1254}{CP}
+
+{1255}{STR MOD}
+{1256}{DEX MOD}
+{1257}{CON MOD}
+{1258}{INT MOD}
+{1259}{WIS MOD}
+{1260}{CHA MOD}
+
+{1261}{}
+
+{1262}{INIT}
+{1263}{}
+{1264}{}
+{1265}{}
+{1266}{ATK}
+{1267}{DMG}
+
+{1268}{CARRD WT}
+{1269}{SPD}
+{1270}{RUN}
+{1271}{LOAD}
+
+{1272}{Sub}
+{1273}{CSTR LVL}
+{1274}{BAR CSTR LVL}
+{1275}{BRD CSTR LVL}
+{1276}{CLR CSTR LVL}
+{1277}{DRD CSTR LVL}
+{1278}{FTR CSTR LVL}
+{1279}{MNK CSTR LVL}
+{1280}{PAL CSTR LVL}
+{1281}{RGR CSTR LVL}
+{1282}{ROG CSTR LVL}
+{1283}{SOR CSTR LVL}
+{1284}{WIZ CSTR LVL}
+
+{1285}{Sub}
+
+{1286}{}
+{1287}{}
+
+// Race Names Go Between 2000-2999
+{2000}{Human}
+{2001}{Dwarf}
+{2002}{Elf}
+{2003}{Gnome}
+{2004}{Half-Elf}
+{2005}{Half-Orc}
+{2006}{Halfling}
+
+{2033}{Deep Dwarf}
+{2034}{Aquatic Elf}
+{2035}{Svirfneblin}
+{2038}{Tallfellow}
+{2065}{Derro}
+{2066}{Drow}
+{2067}{Forest Gnome}
+{2070}{Deep Halfling}
+{2097}{Duergar}
+{2098}{Gray Elf}
+{2129}{Mountain Dwarf}
+{2130}{Wild Elf}
+{2162}{Wood Elf}
+
+// Race Abbreviations Go Between 3000-3999
+{3000}{HUM}
+{3001}{DWF}
+{3002}{ELF}
+{3003}{GNO}
+{3004}{HEF}
+{3005}{HOR}
+{3006}{HFL}
+
+{3033}{DDW}
+{3034}{AQE}
+{3035}{SVI}
+{3038}{TLF}
+{3065}{DER}
+{3066}{DRW}
+{3067}{FGN}
+{3070}{DHL}
+{3097}{DUE}
+{3098}{GRE}
+{3129}{MDW}
+{3130}{WIE}
+{3162}{WOE}
+
+
+// Gender Names Go Between 4000-4999
+{4000}{Female}
+{4001}{Male}
+
+// Size Names Go Between 5000-5999
+{5000}{None}
+{5001}{Fine}
+{5002}{Diminutive}
+{5003}{Tiny}
+{5004}{Small}
+{5005}{Medium}
+{5006}{Large}
+{5007}{Huge}
+{5008}{Gargantuan}
+{5009}{Clossal}
+
+{6000}{True Neutral}
+{6001}{Lawful Neut.}
+{6002}{Chaotic Neut.}
+
+{6004}{Neutral Good}
+{6005}{Lawful Good}
+{6006}{Chaotic Good}
+
+{6008}{Neutral Evil}
+{6009}{Lawful Evil}
+{6010}{Chaotic Evil}
+
+// HTN - 6/10/03, all entries in the 7000 range occur AFTER text-lock!!!
+{7000}{Aberration}
+{7001}{Animal}
+{7002}{Beast}
+{7003}{Construct}
+{7004}{Dragon}
+{7005}{Elemental}
+{7006}{Fey}
+{7007}{Giant}
+{7008}{Humanoid}
+{7009}{Magical Beast}
+{7010}{Monstrous Humanoid}
+{7011}{Ooze}
+{7012}{Outsider}
+{7013}{Plant}
+{7014}{Shapechanger}
+{7015}{Undead}
+{7016}{Vermin}
+
+// HTN - 6/10/03, all entries in the 8000 range occur AFTER text-lock!!!
+{8000}{Air}
+{8001}{Aquatic}
+{8002}{Extraplanar}
+{8003}{Cold}
+{8004}{Chaotic}
+{8005}{Demon}
+{8006}{Devil}
+{8007}{Dwarf}
+{8008}{Earth}
+{8009}{Electricity}
+{8010}{Elf}
+{8011}{Evil}
+{8012}{Fire}
+{8013}{Formian}
+{8014}{Gnoll}
+{8015}{Gnome}
+{8016}{Goblinoid}
+{8017}{Good}
+{8018}{Guardinal}
+{8019}{Half Orc}
+{8020}{Halfling}
+{8021}{Human}
+{8022}{Lawful}
+{8023}{Incorporeal}
+{8024}{Orc}
+{8025}{Reptilian}
+{8026}{Slaadi}
+{8027}{Water}
+
+
+// Race Short Help Goes Between 12000-12999
+{12000} Human {Human alignments vary greatly, their most commonly worshipped deity is Pelor, and their favored class is Any. Humans receive 1 extra feat and 4 extra skill points at 1st level and one additional skill point at every level thereafter.}
+{12001} Dwarf {Dwarves are usually lawful, their chief deity is Moradin, and their favored class is Fighter. Dwarf racial traits include: +2 Constitution, -2 Charisma, +2 on saving throws against poisons, +2 on saving throws against spells, and +4 dodge bonus to AC against giants.}
+{12002} Elf {Elves lean towards the gentler aspects of the chaotic alignment, their chief deity is Corellon Larethian, and their favored class is Wizard. Elf racial traits include: +2 Dexterity, -2 Constitution, immunity to magic sleep, +2 on saving throws against enchantment spells or effects, +2 on Listen, Search, and Spot checks.}
+{12003} Gnome {Gnomes are most often good, their chief deity is Garl Glittergold, and their favored class is Bard. Gnome racial traits include: +2 Constitution, -2 Strength, +1 size bonus to AC, +1 on attack rolls, +4 bonus on Hide checks, +2 on saving throws against illusions, +1 to DC for all saving throws against illusion spells cast by gnomes, +1 against goblinoids, +4 dodge bonus to AC against giants, +2 on Listen checks.}
+{12004} Half-elf {Half-elves share the chaotic bent of elves, but may tend toward any alignment, like humans. Their chief deities are Corellon Larethian and Ehlonna, and their favored class is Any. Half-elf racial traits include: immunity to sleep spells, +2 on saving throws against enchantment spells or effects, +1 on Listen, Search, and Spot checks, +2 on Diplomacy and Gather Information checks.}
+{12005} Half-orc {Half-orcs inherit a tendency toward chaos from their orc parents, but favor good and evil alignments equally, as humans do. Their chief deity is Gruumsh and their favored class is Barbarian. Orc racial traits include: +2 Strength, -2 Intelligence, -2 Charisma.}
+{12006} Halfling {Halflings tend to be neutral, their chief deity is Yondalla, and their favored class is Rogue. Halfling racial traits include: +2 Dexterity, -2 Strength, +1 size bonus to AC, +1 size bonus on attack rolls, +4 size bonus on Hide checks, +2 on Move Silently checks, +1 bonus on all saving throws, +2 morale bonus on saving throws against fear, +1 attack bonus with thrown weapons and slings, +2 on Listen checks. }
+
+// Class Short Help Goes Between 13000-13099
+{13000} Barbarian {A ferocious warrior who uses fury and instinct to bring down foes.}
+{13001} Bard {A performer whose music works magic-a wanderer, a tale-teller, and a jack-of-all-trades.}
+{13002} Cleric {A master of divine magic, a healer, and a capable warrior as well.}
+{13003} Druid {One who draws energy from the natural world to cast divine spells and gain magical powers.}
+{13004} Fighter {A warrior with exceptional combat capability and unequaled skill with weapons.}
+{13005} Monk {A lawful martial artist whose unarmed strikes hit fast and hard-a master of exotic powers.}
+{13006} Paladin {A champion of justice and destroyer of evil, protected and strengthened by an array of divine powers.}
+{13007} Ranger {A cunning, skilled warrior of the wilderness.}
+{13008} Rogue {A tricky, skillful scout and spy who wins the battle by stealth rather than brute force.}
+{13009} Sorcerer {A charismatic spellcaster with inborn magical ability.}
+{13010} Wizard {A potent spellcaster schooled in the arcane arts.}
+
+// Cannot Pick Class Short Help Goes Between 13100-13199
+{13100} Barbarian {Barbarian cannot be selected if alignment is lawful.}
+{13101} Bard {Bard cannot be selected if alignment is lawful.}
+{13102} Cleric {Cleric cannot be selected if your character's Wisdom is less than 11.}
+{13103} Druid {Druid cannot be selected if your character's Wisdom is less than 11 or if their alignment is not Neutral.}
+{13104} Fighter {}
+{13105} Monk {Monk can only be selected if alignment is lawful.}
+{13106} Paladin {Paladin can only be selected with if alignment is Lawful Good.}
+{13107} Ranger {}
+{13108} Rogue {}
+{13109} Sorcerer {Sorcerer cannot be selected if your character's Charisma is less than 11.}
+{13110} Wizard {Wizard cannot be selected if your character's Intelligence is less than 11.}
+
+
+// Alignment Short Help Goes Between 16000-16999
+{16000} True Neutral {A True Neutral character acts without prejudice or compulsion and doesn't feel strongly one way or the other towards good vs. evil or law vs. chaos.}
+{16001} Lawful Neutral {A Lawful Neutral character acts as law, tradition, or a personal code directs him or her.}
+{16002} Chaotic Neutral {A Chaotic Neutral character is an individualist that follows personal whims, without being motivated by either good or evil.}
+
+{16004} Neutral Good {A Neutral Good character does the best that a good person can do, without bias for or against order.}
+{16005} Lawful Good {A Lawful Good character combines a commitment to oppose evil with the structured discipline to fight relentlessly.}
+{16006} Chaotic Good {A Chaotic Good character is kind and benevolent, but believes in freedom and following their own moral compass without the restriction of laws and regulations.}
+
+{16008} Neutral Evil {A Neutral Evil character is out purely for himself or herself, committing evil simply for the sake of doing so.}
+{16009} Lawful Evil {A Lawful Evil character methodically takes what is desired within the limits of a code of conduct, without regard for whom it hurts.}
+{16010} Chaotic Evil {A Chaotic Evil character is driven by greed, hatred, and lust for destruction in the most unpredictable, hapharzard manner possible.}

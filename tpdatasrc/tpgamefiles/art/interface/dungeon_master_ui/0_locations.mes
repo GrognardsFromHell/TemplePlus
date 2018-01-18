@@ -1,0 +1,33 @@
+// 0_history.mes
+// format is: (x), (y), (width), (height)
+// default path is: "art\\interface\\logbook_ui\\"
+
+--- main_window(invisible; must encompass maximize and minimize) ---
+{020} {-62}      ; x
+{021} {-374}      ; y
+{022} {62}     ; width
+{023} {292}     ; height
+
+--- minimize_window --- (relative to the bottom right corner)
+{024} {-36}      ; x
+{025} {-374}      ; y
+{026} {24}     ; width
+{027} {20}     ; height
+
+--- maximize_window --- (relative to the bottom right corner)
+{028} {-36}      ; x
+{029} {-102}      ; y
+{030} {24}     ; width
+{031} {20}     ; height
+
+--- maximize_dialog --- (relative to the bottom right corner)
+{032} {-62}		; x
+{033} {-102}	; y
+{034} {24}		; width
+{035} {20}		; height
+
+--- minimize_dialog --- (relative to bottom right corner)
+{036} {-62}		; x
+{037} {-374}	; y
+{038} {24}		; width
+{039} {20}		; height

@@ -1,0 +1,20 @@
+School: None
+Casting Time: 1 action
+Range: Long
+Saving Throw: Willpower
+Spell Resistance: No
+Projectile: Yes
+flags_Target: Min
+flags_Target: Max
+flags_Target: Range
+exc_flags_Target: Self
+inc_flags_Target: Other
+exc_flags_Target: Dead
+exc_flags_Target: Non-critter
+mode_Target: Multi
+mode_Target: Once-Multi
+mode_Target: End Early Multi
+min_Target: 1
+max_Target: -011
+radius_Target: 100
+ai_type: ai_action_offensive

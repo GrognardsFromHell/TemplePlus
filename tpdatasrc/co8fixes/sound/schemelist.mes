@@ -1,0 +1,412 @@
+//
+// Scheme List file
+// 04/20/00
+//
+// See the SCHEMEINDEX.MES file that points into this file.
+//
+// SPECIFYING SOUND FILES:
+// ~~~~~~~~~~~~~~~~~~~~~~~
+//	Specify sound file with either .WAV or .mp3 /VOL:60 extension
+//	SOON:  it will assume .WAV files
+//	SOON:  you can specify a sound file by #soundid# and it will look
+/		it up in the SND_*.MES file for you (as indexed by SND_00INDEX.MES).
+//
+// OPTIONS:
+// ~~~~~~~~
+// PARSE RULES:
+// ~~~~~~~~~~~~
+// 1. There sound's name or #Sound_ID must appear first
+// 2. Options must appear AFTER a single SPACE
+// 3. Options must have one space between each of them
+// 4. Options must have ZERO spaces within them (i.e.,:  /FREQ:50)
+// 5. See examples below
+// ACTUAL OPTIONS:
+// ~~~~~~~~~~~~~~~
+//	/LOOP - causes the sound to loop indefinitely (until that scheme is exited)
+//		(loop is exclusive of all other controls except VOL and TIME)
+//	/ANCHOR - this is a one-off song, play it immediately at the start of
+//		this scheme, do not continue playing it or anything.	
+//	/OVER - this is a one-off-song, and at its termination, it brings back
+//		the previously-playing scheme.
+//		WARNINGS:
+//			You can only have ONE /over type sound per scheme.  If you
+//			have multiple ones, the FIRST one that ends will cause the
+//			previous scheme to reload.
+//	/COMBATINTRO - this specifies the song to play once, when combat begins (it's never looped)
+//	/COMBATMUSIC - this specifies the song to play during combat (it's always looped)
+//		WARNINGS:
+//			/combatintro and /combatmusic do not combine with any other
+//			options, and there can be only one per scheme
+//	/FREQ: - frequency of occurrence (0-100)             (default:  50)
+//			/FREQ:1			; very rare occurrence
+//			/FREQ:100		; very frequent occurrence
+//	/TIME: - range of times (in 24-hr units)             (default: 0-23 inclusive)
+//			/TIME:6-8		; from 6am to 8am
+//			/TIME:19-21		; from 7pm to 9pm
+//			/TIME:12		; only during the hour of noon
+//	/BAL:  - range of balance ((L)0-100(R))              (default:  50)
+//			/BAL:50			; always centered
+//			/BAL:30-70		; range from left to right a bit
+//			/BAL:0-100		; can scatter left/right anywhere
+//	/VOL:  - range of volume (0-100)                     (default: 100)
+//			/VOL:10-50		; ranges from pretty quiet to half-loud
+//			/VOL:80-100		; ranges from pretty loud to full volume
+//	/SCATTER: - range of scatter (sets /BAL and /VOL)    (default:  50)
+//			/SCATTER:0		; equivalent to:  /VOL:100 and /BAL:50 (this is default anyway)
+//			/SCATTER:50		; equivalent to:  /vol:50-100 and /BAL:25-75
+//			/SCATTER:100	; equivalent to:  /vol:50-100 and /BAL:0-100
+//			<programmer note: to change the above defaults, look for 
+//								"SCATTERCOMMAND" in SoundGame.C>
+//
+
+{0}{dummy - none}
+
+§§§ HOMMLET INTERIOR §§§
+
+{100}{music\Hommlet_Level_loop.mp3 /VOL:50 /loop}
+{101}{music\hommlet_combat_Rev1_loop.mp3 /VOL:50 /combatmusic}
+
+§§§ NULB INTERIOR §§§
+
+{200}{music\nulb_level_looped.mp3 /VOL:50 /loop}
+{201}{music\Moathouse_Combat_Loop.mp3 /VOL:50 /combatmusic}
+
+§§§ MOATHOUSE EXTERIOR SCRUB §§§
+
+{300}{music\moathouse_exterior_level.mp3 /VOL:50 /loop}
+{301}{ambient\insects1.wav /scatter:50 /freq:50 /time:6-17}
+{302}{ambient\insects2.wav /scatter:50 /freq:50 /time:6-17}
+{303}{music\Moathouse_combat_R3.mp3 /VOL:50 /combatmusic}
+
+§§§ MOATHOUSE EXTERIOR SWAMP §§§
+
+{400}{music\moathouse_exterior_level.mp3 /VOL:50 /loop}
+{401}{ambient\insects1.wav /scatter:50 /freq:90 /time:6-17}
+{402}{ambient\insects2.wav /scatter:50 /freq:90 /time:6-17}
+{403}{ambient\frogs_croaking2.wav /loop /vol:20}
+{404}{ambient\frogs_croaking1.wav /scatter:50 /freq:10}
+{405}{music\Moathouse_combat_R3.mp3 /VOL:50 /combatmusic}
+
+§§§ MOATHOUSE INTERIOR DUNGEON §§§
+
+{500}{music\Moathouse_exterior_level.mp3 /VOL:50 /loop}
+{501}{ambient\water_drip2.wav /scatter /freq:5}
+{502}{music\Moathouse_combat_R3.mp3 /VOL:50 /combatmusic}
+
+§§§ AIR NODE §§§
+
+{600}{music\elemental_air_loop.mp3 /VOL:50 /loop}
+{601}{music\elemental_combat_intro.mp3 /VOL:50 /combatintro}
+{602}{music\Elemental_combat_loop.mp3 /VOL:50 /combatmusic}
+{603}{ambient\wind_strong.wav /loop}
+
+§§§ TEMPLE TOPSIDE §§§
+
+{700}{music\temple_topside_level_loop.mp3 /VOL:50 /loop}
+{701}{music\temple_top_combat_intro.mp3 /VOL:50 /combatintro}
+{702}{music\temple_topside_combat.mp3 /VOL:50 /combatmusic}
+
+§§§ TEMPLE DUNGEON LEVEL 1 & 2 §§§
+
+{800}{music\temple_topside_level_loop.mp3 /VOL:50 /loop}
+{801}{ambient\yelling.wav /scatter /freq:1}
+{802}{ambient\yelling2.wav /scatter /freq:1}
+{803}{ambient\yelling3.wav /scatter /freq:1}
+{804}{ambient\scream_male.wav /scatter /freq:1}
+{805}{ambient\scream_male01.wav /scatter /freq:1}
+{806}{ambient\Footsteps_hallway.wav /scatter /freq:1}
+{807}{ambient\Scratching_at_door.wav /scatter /freq:1}
+{808}{music\temple_top_combat_intro.mp3 /VOL:50 /combatintro}
+{809}{music\temple_topside_combat.mp3 /VOL:50 /combatmusic}
+
+§§§ EARTH NODE §§§
+
+{900}{music\elemental_earth_loop.mp3 /VOL:50 /loop}
+{901}{music\elemental_combat_intro.mp3 /VOL:50 /combatintro}
+{902}{music\Elemental_combat_loop.mp3 /VOL:50 /combatmusic}
+
+§§§ FIRE NODE §§§
+
+{1000}{music\elemental_fire_loop.mp3 /VOL:50 /loop}
+{1001}{music\elemental_combat_intro.mp3 /VOL:50 /combatintro}
+{1002}{music\Elemental_combat_loop.mp3 /VOL:50 /combatmusic}
+
+§§§ WATER NODE §§§
+
+{1100}{music\Elemental_Water_loop.mp3 /VOL:50 /loop}
+{1101}{music\elemental_combat_intro.mp3 /VOL:50 /combatintro}
+{1102}{music\Elemental_combat_loop.mp3 /VOL:50 /combatmusic}
+{1103}{ambient\water_drip1.wav /scatter /freq:5}
+{1104}{ambient\water_drip2.wav /scatter /freq:5}
+{1105}{ambient\moaning_wind.wav /loop}
+
+§§§ TEMPLE DUNGEON LEVEL 3 & 4 §§§
+
+{1200}{music\Hommlet_temple.mp3 /VOL:50 /loop}
+{1201}{ambient\yelling.wav /scatter /freq:1}
+{1202}{ambient\yelling2.wav /scatter /freq:1}
+{1203}{ambient\yelling3.wav /scatter /freq:1}
+{1204}{ambient\scream_male.wav /scatter /freq:1}
+{1205}{ambient\scream_male01.wav /scatter /freq:1}
+{1206}{ambient\Footsteps_hallway.wav /scatter /freq:1}
+{1207}{ambient\Scratching_at_door.wav /scatter /freq:1}
+{1208}{music\temple_top_combat_intro.mp3 /VOL:50 /combatintro}
+{1209}{music\temple_topside_combat.mp3 /VOL:50 /combatmusic}
+
+§§§ 3D Test §§§
+
+{1300}{ambient\bird1.wav /scatter /freq:20}
+{1301}{ambient\bird2.wav /scatter /freq:20}
+{1302}{ambient\bird3.wav /scatter /freq:20}
+{1303}{ambient\bird4.wav /scatter /freq:20}
+{1304}{ambient\bird5.wav /scatter /freq:20}
+{1305}{ambient\bird6.wav /scatter /freq:20}
+
+§§§ PREGAME CREDITS §§§
+
+{1400}{music\pregame_credits_loop.mp3 /VOL:60 /loop}
+
+§§§ SCRUB RANDOM ENCOUNTERS §§§
+
+{1500}{music\moathouse_first_exterior.mp3 /VOL:50 /loop}
+{1501}{ambient\strange_howl.wav /scatter /freq:1 /time:18-23}
+{1502}{ambient\strange_howl.wav /scatter /freq:1 /time:0-5}
+{1503}{ambient\hawk_cry.wav /scatter /freq:1 /time:6-17}
+{1504}{ambient\crickets.wav /VOL:50 /loop /time:18-23}
+{1505}{ambient\crickets.wav /VOL:50 /loop /time:0-5}
+{1506}{ambient\bird3.wav /scatter /freq:10 /time:6-17}
+{1507}{ambient\bird5.wav /scatter /freq:10 /time:6-17}
+{1508}{ambient\wolf_howl.wav /scatter /freq:1 /time:18-23}
+{1509}{ambient\wolf_howl.wav /scatter /freq:1 /time:0-5}
+{1510}{music\combatintro.mp3 /VOL:50 /combatintro}
+{1511}{music\combatmusic.mp3 /VOL:50 /combatmusic}
+
+§§§ FOREST RANDOM ENCOUNTERS §§§
+
+{1600}{music\moathouse_first_exterior.mp3 /VOL:50 /loop}
+{1601}{ambient\bird3.wav /scatter /freq:10 /time:6-17}
+{1602}{ambient\bird5.wav /scatter /freq:10 /time:6-17}
+{1603}{ambient\hawk_cry.wav /scatter /freq:10 /time:6-17}
+{1604}{ambient\strange_howl.wav /scatter /freq:1 /time:18-23}
+{1605}{ambient\strange_howl.wav /scatter /freq:1 /time:0-5}
+{1606}{ambient\wolf_howl.wav /scatter /freq:1 /time:18-23}
+{1607}{ambient\wolf_howl.wav /scatter /freq:1 /time:0-5}
+{1608}{ambient\owl_hoot.wav /scatter /freq:1 /time:18-23}
+{1609}{ambient\owl_hoot.wav /scatter /freq:1 /time:0-5}
+{1610}{music\combatintro.mp3 /VOL:50 /combatintro}
+{1611}{music\combatmusic.mp3 /VOL:50 /combatmusic}
+
+§§§ SWAMP RANDOM ENCOUNTERS §§§
+
+{1700}{music\moathouse_first_exterior.mp3 /VOL:40 /loop}
+{1701}{ambient\insects1.wav /scatter /freq:10 /time:6-17}
+{1702}{ambient\insects2.wav /scatter /freq:10 /time:6-17}
+{1703}{ambient\frogs_croaking1.wav /freq:20}
+{1704}{ambient\bubbling_swamp.wav /loop}
+{1705}{music\combatintro.mp3 /VOL:50 /combatintro}
+{1706}{music\combatmusic.mp3 /VOL:50 /combatmusic}
+
+§§§ RIVER RANDOM ENCOUNTERS §§§
+
+{1800}{music\moathouse_first_exterior.mp3 /VOL:50 /loop}
+{1801}{ambient\seagull.wav /scatter /freq:10 /time:6-17}
+{1802}{ambient\bird1.wav /scatter /freq:10 /time:6-17}
+{1803}{ambient\bird3.wav /scatter /freq:10 /time:6-17}
+{1804}{ambient\bird5.wav /scatter /freq:10 /time:6-17}
+{1805}{music\combatintro.mp3 /VOL:50 /combatintro}
+{1806}{music\combatmusic.mp3 /VOL:50 /combatmusic}
+
+§§§ HICKORY BRANCH INTERIOR §§§
+
+{1900}{music\moathouse_first_exterior.mp3 /VOL:50 /loop}
+{1901}{music\combatintro.mp3 /VOL:50 /combatintro}
+{1902}{music\combatmusic.mp3 /VOL:50 /combatmusic}
+
+§§§ HOMMLET EXTERIOR §§§
+
+{2000}{music\Hommlet_Level_loop.mp3 /VOL:50 /loop}
+{2001}{ambient\dog_bark.wav /scatter /freq:5 /vol:50 /time:6-17}
+{2002}{ambient\sheep_baaing.wav /scatter /freq:5 /vol:50 /time:6-17}
+{2003}{ambient\rooster_crow.wav /scatter /freq:1 /time:6-7}
+{2004}{ambient\crickets.wav /VOL:25 /loop /time:18-23}
+{2005}{ambient\crickets.wav /VOL:25 /loop /time:0-5}
+{2006}{music\hommlet_combat_Rev1_loop.mp3 /VOL:60 /combatmusic}
+
+§§§ NULB EXTERIOR §§§
+
+{2100}{music\nulb_level_looped.mp3 /VOL:50 /loop}
+{2101}{music\Moathouse_Combat_Loop.mp3 /VOL:50 /combatmusic}
+{2102}{ambient\seagull.wav /scatter /freq:10 /time:6-17}
+{2103}{ambient\frogs_croaking1.wav /scatter /freq:10}
+{2104}{ambient\frogs_croaking3.wav /vol:25 /loop /time:18-23}
+{2105}{ambient\frogs_croaking3.wav /vol:25 /loop /time:0-5}
+{2106}{ambient\frogs_croaking2.wav /vol:25 /loop /time:6-17}
+
+§§§ HOMMLET INN §§§
+
+{2200}{music\Hommlet_Level_loop.mp3 /VOL:40 /loop}
+{2201}{ambient\inn_ambience_nice.wav /VOL:60 /loop}
+{2202}{music\hommlet_combat_Rev1_loop.mp3 /VOL:50 /combatmusic}
+
+§§§ NULB INN §§§
+
+{2300}{music\nulb_level_looped.mp3 /VOL:40 /loop}
+{2301}{music\Moathouse_Combat_Loop.mp3 /VOL:50 /combatmusic}
+{2302}{ambient\inn_ambience_hostile.wav /VOL:50 /loop}
+
+§§§ ZUGGTMOY LAIR §§§
+
+{2400}{music\Zuggtmoy_Level.mp3 /VOL:50 /loop}
+{2401}{music\Zuggtmoy_Combat.mp3 /VOL:50 /combatmusic}
+
+§§§ VERBOBONC INTERIOR §§§
+
+{2500}{music\good_vignette.mp3 /VOL:50 /loop}
+{2501}{music\combatintro.mp3 /VOL:50 /combatintro}
+{2502}{music\combatmusic.mp3 /VOL:50 /combatmusic}
+
+§§§ UNDERDARK §§§
+
+{2600}{music\Evil_vignette_loop.mp3 /VOL:50 /loop}
+{2601}{music\combatintro.mp3 /VOL:50 /combatintro}
+{2602}{music\combatmusic.mp3 /VOL:50 /combatmusic}
+
+§§§ WELKWOOD BOG §§§
+
+{2700}{music\neutral_vignette_loop.mp3 /VOL:50 /loop}
+{2701}{music\combatintro.mp3 /VOL:50 /combatintro}
+{2702}{music\combatmusic.mp3 /VOL:50 /combatmusic}
+
+§§§ PLEASANT NATURE SOUNDS §§§
+
+{2800}{ambient\owl_hoot.wav /scatter /freq:5 /time:18-23}
+{2801}{ambient\owl_hoot.wav /scatter /freq:5 /time:0-5}
+{2802}{ambient\crickets.wav /VOL:50 /loop /time:18-23}
+{2803}{ambient\crickets.wav /VOL:50 /loop /time:0-5}
+{2804}{ambient\bird1.wav /scatter /freq:10 /time:6-17}
+{2805}{ambient\bird2.wav /scatter /freq:10 /time:6-17}
+{2806}{ambient\bird4.wav /scatter /freq:10 /time:6-17}
+{2807}{ambient\bird6.wav /scatter /freq:10 /time:6-17}
+
+§§§ SHOP MAP MAIN MENU §§§
+
+{2900}{music\pregame_credits_loop.mp3 /VOL:50 /loop}
+
+§§§ COLISEUM §§§
+
+{3000}{music\good_vignette.mp3 /VOL:50 /loop}
+{3001}{music\combatintro.mp3 /VOL:50 /combatintro}
+{3002}{music\combatmusic.mp3 /VOL:50 /combatmusic}
+
+§§§ WELKWOOD EXTERIOR FX §§§
+
+{3700}{ambient\strange_howl.wav /FREQ:5 /TIME:0-5 /BAL:0-100 /VOL:0-50}
+{3701}{ambient\crow.mp3 /FREQ:5 /TIME:6-17 /BAL:0-100 /VOL:0-50}
+{3702}{ambient\raven.mp3 /FREQ:5 /TIME:6-17 /BAL:0-100 /VOL:0-50}
+{3703}{ambient\strange_howl.wav /FREQ:5 /TIME:18-23 /BAL:0-100 /VOL:0-50}
+
+§§§ MOATHOUSE INTERIOR TOPSIDE §§§
+
+{3800}{music\Moathouse_exterior_level.mp3 /VOL:50 /loop}
+{3801}{music\Moathouse_combat_R3.mp3 /VOL:50 /combatmusic}
+
+§§§ WELKWOOD INTERIOR TUNNEL FX §§§
+
+{3900}{ambient\fire.wav /LOOP}
+{3901}{ambient\water.wav /LOOP}
+
+§§§ VERBOBONC INN §§§
+
+{4000}{music\good_vignette.mp3 /VOL:40 /loop}
+{4001}{ambient\inn_ambience_nice.wav /VOL:60 /loop}
+{4002}{music\combatintro.mp3 /VOL:50 /combatintro}
+{4003}{music\combatmusic.mp3 /VOL:50 /combatmusic}
+
+§§§ CRACKLING FIRE FX §§§
+
+{4100}{ambient\fire.wav /LOOP}
+
+§§§ EMRIDY MEADOWS FX §§§
+
+{4200}{music\emridy_loop.mp3 /VOL:100 /loop}
+{4201}{music\combatintro.mp3 /VOL:50 /combatintro}
+{4202}{music\combatmusic.mp3 /VOL:50 /combatmusic}
+
+§§§ HICKORY BRANCH EXTERIOR §§§
+
+{4300}{music\moathouse_first_exterior.mp3 /VOL:50 /loop}
+{4301}{ambient\bird3.wav /scatter /freq:10 /time:6-17}
+{4302}{ambient\bird5.wav /scatter /freq:10 /time:6-17}
+{4303}{ambient\hawk_cry.wav /scatter /freq:10 /time:6-17}
+{4304}{ambient\strange_howl.wav /scatter /freq:1 /time:18-23}
+{4305}{ambient\strange_howl.wav /scatter /freq:1 /time:0-5}
+{4306}{ambient\wolf_howl.wav /scatter /freq:1 /time:18-23}
+{4307}{ambient\wolf_howl.wav /scatter /freq:1 /time:0-5}
+{4308}{ambient\owl_hoot.wav /scatter /freq:1 /time:18-23}
+{4309}{ambient\owl_hoot.wav /scatter /freq:1 /time:0-5}
+{4310}{music\combatintro.mp3 /VOL:50 /combatintro}
+{4311}{music\combatmusic.mp3 /VOL:50 /combatmusic}
+
+§§§ TEMPLE TOPSIDE EXTERIOR §§§
+
+{4400}{music\temple_topside_level_loop.mp3 /VOL:50 /loop}
+{4401}{ambient\strange_howl.wav /FREQ:5 /TIME:0-5 /BAL:0-100 /VOL:0-50}
+{4402}{ambient\crow.mp3 /FREQ:5 /TIME:6-17 /BAL:0-100 /VOL:0-50}
+{4403}{ambient\raven.mp3 /FREQ:5 /TIME:6-17 /BAL:0-100 /VOL:0-50}
+{4404}{ambient\strange_howl.wav /FREQ:5 /TIME:18-23 /BAL:0-100 /VOL:0-50}
+{4405}{music\temple_top_combat_intro.mp3 /VOL:50 /combatintro}
+{4406}{music\temple_topside_combat.mp3 /VOL:50 /combatmusic}
+
+§§§ DEKLO GROVE §§§
+
+{4500}{music\Hommlet_Level_loop.mp3 /VOL:50 /loop}
+{4501}{ambient\bird3.wav /scatter /freq:10 /time:6-17}
+{4502}{ambient\bird5.wav /scatter /freq:10 /time:6-17}
+{4503}{ambient\hawk_cry.wav /scatter /freq:10 /time:6-17}
+{4504}{ambient\strange_howl.wav /scatter /freq:1 /time:18-23}
+{4505}{ambient\strange_howl.wav /scatter /freq:1 /time:0-5}
+{4506}{ambient\wolf_howl.wav /scatter /freq:1 /time:18-23}
+{4507}{ambient\wolf_howl.wav /scatter /freq:1 /time:0-5}
+{4508}{ambient\owl_hoot.wav /scatter /freq:1 /time:18-23}
+{4509}{ambient\owl_hoot.wav /scatter /freq:1 /time:0-5}
+{4511}{music\hommlet_combat_Rev1_loop.mp3 /VOL:50 /combatmusic}
+
+§§§ IMERYDS RUN §§§
+
+{4600}{music\nulb_level_looped.mp3 /VOL:50 /loop}
+{4601}{ambient\insects1.wav /scatter /freq:10 /time:6-17}
+{4602}{ambient\insects2.wav /scatter /freq:10 /time:6-17}
+{4603}{ambient\frogs_croaking1.wav /freq:20}
+{4604}{ambient\bubbling_swamp.wav /loop}
+{4605}{music\Moathouse_Combat_Loop.mp3 /VOL:50 /combatmusic}
+
+§§§ VERBOBONC EXTERIOR §§§
+
+{4700}{music\good_vignette.mp3 /VOL:50 /loop}
+{4701}{ambient\owl_hoot.wav /scatter /freq:5 /time:18-23}
+{4702}{ambient\owl_hoot.wav /scatter /freq:5 /time:0-5}
+{4703}{ambient\crickets.wav /VOL:50 /loop /time:18-23}
+{4704}{ambient\crickets.wav /VOL:50 /loop /time:0-5}
+{4705}{ambient\bird1.wav /scatter /freq:10 /time:6-17}
+{4706}{ambient\bird2.wav /scatter /freq:10 /time:6-17}
+{4707}{ambient\bird4.wav /scatter /freq:10 /time:6-17}
+{4708}{ambient\bird6.wav /scatter /freq:10 /time:6-17}
+{4709}{music\combatintro.mp3 /VOL:50 /combatintro}
+{4710}{music\combatmusic.mp3 /VOL:50 /combatmusic}
+
+§§§ GENERIC §§§
+
+{4800}{music\moathouse_first_exterior.mp3 /VOL:50 /loop}
+{4801}{music\combatintro.mp3 /VOL:50 /combatintro}
+{4802}{music\combatmusic.mp3 /VOL:50 /combatmusic}
+
+§§§ NULB INTERIOR POISONED §§§
+
+{4900}{music\nulb_level_looped_loopy.mp3 /VOL:50 /loop}
+{4901}{music\Moathouse_Combat_Loop.mp3 /VOL:50 /combatmusic}
+
+§§§ VERBOBONC DRAINAGE TUNNELS §§§
+
+{5000}{ambient\sewer.wav /LOOP}
+{5001}{music\combatintro.mp3 /VOL:50 /combatintro}
+{5002}{music\combatmusic.mp3 /VOL:50 /combatmusic}

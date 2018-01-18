@@ -1,0 +1,5 @@
+name: Rapid Metamagic
+flags: 12582912
+prereqs: 
+description: When you apply a metamagic feat to a spontaneously cast spell, the spell takes only its normal casting time.
+prereq descr: Spellcraft 12 ranks, ability to spontaneously cast spells.

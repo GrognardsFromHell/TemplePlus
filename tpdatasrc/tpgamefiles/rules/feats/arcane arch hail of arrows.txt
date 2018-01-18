@@ -1,0 +1,5 @@
+name: Hail of Arrows
+flags: 8
+prereqs:
+description: Once per day you may fire an arrow at each and every target within range, up to a maximum of your Arcane Archer level.
+prereq descr: Arcane Archer level 8.

@@ -1,0 +1,5 @@
+name: Enhance Arrow
+flags: 8
+prereqs:
+description: Every arrow you fire becomes magical, gaining a +1 enhancement bonus. The bonus increases by +1 for every two Arcane Archer levels past 1.
+prereq descr: Arcane Archer level 1.
