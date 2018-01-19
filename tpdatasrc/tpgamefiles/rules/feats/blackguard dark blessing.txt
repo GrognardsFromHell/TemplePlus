@@ -1,0 +1,5 @@
+name: Dark Blessing
+flags: 8
+prereqs:
+description: A blackguard applies his Charisma modifier (if positive) as a bonus on all saving throws.
+prereq descr: Blackguard level 2.

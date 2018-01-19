@@ -1,0 +1,62 @@
+// Stat Names Go Between 0-999
+//core 3.5 Prestige classes
+{18}{Arcane Archer}
+{19}{Arcane Trickster}
+{20}{Archmage}
+{21}{Assassin}
+{22}{Blackguard}
+{23}{Dragon Disciple}
+{24}{Duelist}
+{25}{Dwarven Defender}
+{26}{Eldritch Knight}
+{27}{Hierophant}
+{28}{Horizon Walker}
+{29}{Loremaster}
+{30}{Mystic Theurge}
+{31}{Shadowdancer}
+{32}{Thaumaturgist}
+
+{33}{Warlock}
+{34}{Favored Soul}
+{35}{Red Avenger}
+{36}{Iaijutsu Master}
+{37}{Sacred Fist}
+{38}{Stormlord}
+{39}{Elemental Savant}
+{40}{Blood Magus}
+{41}{Beastmaster}
+{42}{Cryokineticist}
+{43}{Frost Mage}
+{44}{Artificer}
+{45}{Abjurant Champion}
+
+// Psionic Classes
+{58}{Psion}
+{59}{Psychic Warrior}
+{60}{Soulknife}
+{61}{Wilder}
+{62}{Cerebmancer}
+{63}{Elocator}
+{64}{Metamind}
+{65}{Psion Uncarnate}
+{66}{Psionic Fist}
+{67}{Pyrokineticist}
+{68}{Slayer}
+{69}{Thrallherd}
+{70}{War Mind}
+
+// Tome of Battle
+{71}{Crusader}
+{72}{Swordsage}
+{73}{Warblade}
+{74}{Bloodclaw Master}
+{75}{Bloodstorm Blade}
+{76}{Deepstone Sentinel}
+{77}{Eternal Blade}
+{78}{Jade Phoenix Mage}
+{79}{Master of Nine}
+{80}{Ruby Knight Vindicator}
+{81}{Shadow Sun Ninja}
+
+{300}{Psi Points} // max
+{301}{Psi Points} // cur

@@ -1,0 +1,282 @@
+{1}{Greetings, fellow traveler. My name is Zaxis.}{Greetings, fellow traveler. My name is Zaxis.}{}{}{}{game.global_vars[117] = 1}
+{2}{Hello, Zaxis. I am @pcname@.}{}{8}{}{10}{}
+{3}{Hi Zee Asses. Me @pcname@.}{}{-7}{}{10}{}
+{4}{Well met, Zaxis, but I have no time to talk. I must be on my way.}{}{8}{}{40}{}
+{5}{Hi Zee Asses. Me busy and got to go!}{}{-7}{}{40}{}
+{6}{Step out of my way, Zaxis. I have no time for this.}{}{8}{}{70}{}
+{7}{Move, Zee Asses! Me not talk!}{}{-7}{}{70}{}
+
+{10}{Nice to meet you, @pcname@. I am a traveling bard. I am searching the whole Flanaess, high and low, far and wide.}{Nice to meet you, @pcname@. I am a traveling bard. I am searching the whole Flanaess, high and low, far and wide.}{}{}{}{}
+{11}{What do you search for, Zaxis?}{}{8}{}{20}{}
+{12}{What you look for, Zee Asses?}{}{-7}{}{20}{}
+{13}{Hmm, I don't seem to get away from this area much.}{}{8}{}{20}{}
+{14}{Me look around here for stuff.}{}{-7}{}{20}{}
+{15}{I need to continue on my way, Zaxis.}{}{8}{}{40}{}
+{16}{OK, nice. Me go now.}{}{-7}{}{40}{}
+
+{20}{I am seeking my sister, who left home many years ago. My parents and I haven't heard from her, and we fear for her safety.}{I am seeking my sister, who left home many years ago. My parents and I haven't heard from her, and we fear for her safety.}{}{}{}{}
+{21}{What is her name?}{}{8}{}{30}{}
+{22}{What her name?}{}{-7}{}{30}{}
+{23}{I don't think I've met her.}{}{8}{}{30}{}
+{24}{Me not think me meet a girl who look like you.}{}{-7}{}{30}{}
+
+{30}{Her name is Ima. She is half-elven, like myself. She is a wizard by trade, and she has specialized in the college of illusion.}{Her name is Ima. She is half-elven, like myself. She is a wizard by trade, and she has specialized in the college of illusion.}{}{}{}{}
+{31}{I have never met her. Good luck finding her.}{}{8}{npc.leader_get() == OBJ_HANDLE_NULL}{40}{}
+{32}{Nope, me not know her. Me go now.}{}{-7}{npc.leader_get() == OBJ_HANDLE_NULL}{40}{}
+{33}{You seek her alone? That is not safe.}{}{8}{npc.leader_get() == OBJ_HANDLE_NULL}{50}{}
+{34}{You by yourself? That not safe.}{}{-7}{npc.leader_get() == OBJ_HANDLE_NULL}{50}{}
+{35}{I am afraid I have some bad news for you.}{}{8}{anyone( pc.group_list(), "has_item", 11008) and game.global_flags[880] == 0}{600}{}
+{36}{Me owns bad news.}{}{-7}{anyone( pc.group_list(), "has_item", 11008) and game.global_flags[880] == 0}{600}{}
+{37}{K:}{}{1}{npc.leader_get() != OBJ_HANDLE_NULL}{80}{}
+
+{40}{May I ask where you are headed?}{May I ask where you are headed?}{}{}{}{}
+{41}{I am just exploring the area, Zaxis.}{}{8}{}{50}{}
+{42}{Me just look around here.}{}{-7}{}{50}{}
+{43}{I'd prefer not to say.}{}{8}{}{50}{}
+{44}{That not your business.}{}{-7}{}{50}{}
+
+{50}{May I join you? There are rumors of bandits on these roads, and there's safety in numbers.}{May I join you? There are rumors of bandits on these roads, and there's safety in numbers.}{}{}{}{}
+{51}{I agree. Yes, please join me. We can travel together.}{}{8}{not pc.follower_atmax()}{60}{}
+{52}{Yup, bandits are bad. OK, you can come.}{}{-7}{not pc.follower_atmax()}{60}{}
+{53}{I have enough people already. I don't think I'd like a larger group.}{}{8}{pc.follower_atmax()}{70}{}
+{54}{Me got too many people already, Zee Asses. Me not want more.}{}{-7}{pc.follower_atmax()}{70}{}
+{55}{Hmm, not right now, Zaxis. Perhaps if we meet again.}{}{8}{}{70}{}
+{56}{Nah, me not want to.}{}{-7}{}{70}{}
+
+{60}{Excellent, @pcname@. I will begin to write a tune about our adventures! Hmm, what rhymes with @pcname@?}{Excellent, @pcname@. I will begin to write a tune about our adventures! Hmm, what rhymes with @pcname@?}{}{}{}{game.global_flags[879] = 1; pc.follower_add(npc)}
+{61}{Alright. Let's go!}{}{8}{}{0}{}
+{62}{Me not know. Let's go now!}{}{-7}{}{0}{}
+{70}{I understand, @pcname@. I will continue my travels across Oerth by myself, and perhaps we will meet each other again, one day.}{I understand, @pcname@. I will continue my travels across Oerth by myself, and perhaps we will meet each other again, one day.}{}{}{}{}
+{71}{E:}{}{1}{game.global_flags[879] == 0}{0}{zaxis_runs_off(npc,pc)}
+{72}{E:}{}{1}{game.global_flags[879] == 1}{0}{}
+
+
+
+{80}{Yes, @pcname@?}{Yes, @pcname@?}{}{}{}{}
+{81}{Why are you out adventuring?}{}{8}{game.global_flags[880] == 0}{20}{}
+{82}{Why you leave home?}{}{-7}{game.global_flags[880] == 0}{20}{}
+{83}{I think I want you to leave the group.}{}{8}{game.global_flags[880] == 0}{90}{}
+{84}{Me want you out of group.}{}{-7}{game.global_flags[880] == 0}{90}{}
+{85}{How's the song coming along?}{}{8}{}{110}{}
+{86}{Me want to hear my song!}{}{-7}{}{110}{}
+{87}{We need to talk about your equipment?}{}{8}{npc.leader_get() != OBJ_HANDLE_NULL}{500}{}
+{88}{Me talk about Axes stuffs?}{}{-7}{npc.leader_get() != OBJ_HANDLE_NULL}{500}{}
+{89}{F:}{}{1}{}{0}{}
+{90}{Are you sure, @pcname@? If I leave, I plan to continue my search for my sister elsewhere.}{Are you sure, @pcname@? If I leave, I plan to continue my search for my sister elsewhere.}{}{}{}{}
+{91}{Yes, I am sure. Please go.}{}{8}{}{70}{pc.follower_remove(npc)}
+{92}{Yup, me sure. You go now!}{}{-7}{}{70}{pc.follower_remove(npc)}
+{93}{Hmm, never mind. Stay for now.}{}{8}{}{100}{}
+{94}{Me change mind! You stay!}{}{-7}{}{100}{}
+{100}{As you wish, @pcname@.}{As you wish, @pcname@.}{}{}{}{}
+{101}{K:}{}{1}{}{80}{}
+{102}{[exit]}{}{1}{}{0}{}
+{110}{I must confess I am finding it difficult to find consistent thematic elements in your adventures, @pcname@.}{I must confess I am finding it difficult to find consistent thematic elements in your adventures, @pcname@.}{}{}{}{}
+{111}{Huh?}{}{-7}{}{120}{}
+{112}{Can't find a rhyme for Zuggtmoy, huh?}{}{8}{game.story_state == 6}{140}{}
+{113}{You could use "fish bulb" as a rhyme for Nulb!}{}{8}{game.story_state >= 3}{160}{}
+{114}{Can't you just make a rhyme with the name of someone I have met?}{}{8}{game.quests[18].state > qs_unknown}{180}{}
+{115}{Would it help if I only attacked monosyllabic monsters, like orcs or grues?}{}{8}{}{130}{}
+{120}{Your leitmotif is too obscure for conventional musical composition.}{Your leitmotif is too obscure for conventional musical composition.}{}{}{}{}
+{121}{My what is too what now?}{}{-7}{}{130}{}
+{130}{Never mind. I'll let you know when the song is done.}{Never mind. I'll let you know when the song is done.}{}{}{}{}
+{131}{K:}{}{1}{}{80}{}
+{132}{E:}{}{1}{}{0}{}
+{140}{[He hangs his head] No, I can't.}{[He hangs his head] No, I can't.}{}{}{}{}
+{141}{Don't worry. Your muse will come.}{}{8}{}{150}{}
+{142}{That's OK. I don't know what rhymes with Zaxis.}{}{8}{}{150}{}
+{143}{You could always call her "Fungus Queen" Lots of words rhyme with "Fungus Queen".}{}{8}{}{150}{}
+{150}{You are too kind, @pcname@.}{You are too kind, @pcname@.}{}{}{}{}
+{151}{K:}{}{1}{}{80}{}
+{152}{E:}{}{1}{}{0}{}
+{160}{And what, pray tell, is a "fish bulb"?}{And what, pray tell, is a "fish bulb"?}{}{}{}{}
+{161}{Hmm, you are not nearly as well-traveled as I was led to believe, Zaxis.}{}{8}{}{170}{}
+{170}{I see.}{I see.}{}{}{}{}
+{171}{K:}{}{1}{}{80}{}
+{172}{E:}{}{1}{}{0}{}
+{180}{But everyone you meet has such horrible names! "Ostler Gundigoot"? Please!}{But everyone you meet has such horrible names! "Ostler Gundigoot"? Please!}{}{}{}{}
+{181}{Hmm, that is a tough name to rhyme, huh?}{}{8}{}{190}{}
+{190}{Let's just continue along. Hopefully, you will meet someone with a more conventional appellation.}{Let's just continue along. Hopefully, you will meet someone with a more conventional appellation.}{}{}{}{}
+{191}{K:}{}{1}{}{80}{}
+{192}{OK. Let's go.}{}{1}{}{0}{}
+
+{200}{Greetings, fellow traveler... Oh, you. I see. Is it not odd that our paths cross again? How interesting! What brings you to the Snake Pit?}{Greetings, fellow traveler... Oh, you. I see. Is it not odd that our paths cross again? How interesting! What brings you to the Snake Pit?}{}{}{}{}
+{201}{We've met before?}{}{8}{}{210}{}
+{202}{Me nose you?}{}{-7}{}{210}{}
+{203}{What are you doing here?}{}{8}{}{240}{}
+{204}{Why you hear?}{}{-7}{}{240}{}
+{205}{That's really none of your business. Goodbye.}{}{8}{}{0}{}
+{206}{Me no tells. Bye-bye.}{}{-7}{}{0}{}
+
+{210}{Why yes, of course. On the open road. I never forget a face. My name is Zaxis.}{Why yes, of course. On the open road. I never forget a face. My name is Zaxis.}{}{}{}{}
+{211}{What are you doing here?}{}{8}{}{240}{}
+{212}{Why you hear?}{}{-7}{}{240}{}
+
+{220}{Hmmm, well, I am seeking my sister, who left home many years ago. My parents and I haven't heard from her, and we fear for her safety.}{Hmmm, well, I am seeking my sister, who left home many years ago. My parents and I haven't heard from her, and we fear for her safety.}{}{}{}{}
+{221}{What is her name?}{}{8}{}{230}{}
+{222}{What her name?}{}{-7}{}{230}{}
+{223}{I don't think I've met her.}{}{8}{game.global_flags[878] == 0}{230}{}
+{224}{Me not think me meet a girl who look like you.}{}{-7}{game.global_flags[878] == 0}{230}{}
+
+{230}{Her name is Ima. She is half-elven, like myself. She is a wizard by trade, and she has specialized in the college of illusion.}{Her name is Ima. She is half-elven, like myself. She is a wizard by trade, and she has specialized in the college of illusion.}{}{}{}{}
+{231}{I have never met her. Good luck finding her.}{}{8}{}{270}{}
+{232}{Nope, me not know her. Me go now.}{}{-7}{}{270}{}
+{233}{You seek her alone?}{}{8}{not pc.follower_atmax()}{260}{}
+{234}{You by yourself?}{}{-7}{not pc.follower_atmax()}{260}{}
+{235}{You seek her alone?}{}{8}{pc.follower_atmax()}{250}{}
+{236}{You by yourself?}{}{-7}{pc.follower_atmax()}{250}{}
+{237}{I am afraid I have some bad news for you.}{}{8}{anyone( pc.group_list(), "has_item", 11008) and game.global_flags[880] == 0}{600}{}
+{238}{Me owns bad news.}{}{-7}{anyone( pc.group_list(), "has_item", 11008) and game.global_flags[880] == 0}{600}{}
+
+{240}{I only recently heard of this fine establishment, and I thought to... [coughing] Of course! I am here looking for information regarding my sister's whereabouts!}{I only recently heard of this fine establishment, and I thought to... [coughing] Of course! I am here looking for information regarding my sister's whereabouts!}{}{}{}{}
+{241}{Your sister?}{}{8}{}{220}{}
+{242}{Sistar?}{}{-7}{}{220}{}
+{243}{Any luck finding your sister?}{}{8}{npc.has_met(pc)}{300}{}
+{244}{Finds sistar?}{}{-7}{npc.has_met(pc)}{300}{}
+
+{250}{Yes, to my dismay I am alone on this adventure. I hope to find allies here in Nulb. I fear that without aid I may fail in my search.}{Yes, to my dismay I am alone on this adventure. I hope to find allies here in Nulb. I fear that without aid I may fail in my search.}{}{}{}{}
+{251}{Good luck, Zaxis. I need to get going now.}{}{8}{}{270}{}
+{252}{Lucks to ya. Me go now.}{}{-7}{}{270}{}
+
+{260}{Yes, to my dismay I am alone on this adventure. I hope to find allies here in Nulb. I fear that without aid I may fail in my search... speaking of which, it appears to me that you have extra room in your grand party! Perhaps you have need of my songs?}{Yes, to my dismay I am alone on this adventure. I hope to find allies here in Nulb. I fear that without aid I may fail in my search... speaking of which, it appears to me that you have extra room in your grand party! Perhaps you have need of my songs?}{}{}{}{}
+{261}{Indeed! Please join me. We can travel together.}{}{8}{}{60}{}
+{262}{Yup, you comes.}{}{-7}{}{60}{}
+{263}{Sorry, Zaxis. Not at the moment.}{}{8}{}{275}{}
+{264}{Lucks to ya. Me go now.}{}{-7}{}{275}{}
+
+{270}{Good luck, friend. I bid you a fine goodbye. I shall continue forth with my search!}{Good luck, friend. I bid you a fine goodbye. I shall continue forth with my search!}{}{}{}{}
+{271}{E:}{}{1}{}{0}{}
+
+{275}{I understand.}{I understand.}{}{}{}{}
+{276}{E:}{}{1}{}{0}{}
+
+{280}{Greetings, @pcname@.}{Greetings, @pcname@.}{}{}{}{}
+{281}{Any luck finding your sister?}{}{8}{}{300}{}
+{282}{Find sistar?}{}{-7}{}{300}{}
+{283}{What are you doing here?}{}{8}{pc.map == 5057}{240}{}
+{284}{Why you hear?}{}{-7}{npc.map == 5057}{240}{}
+{285}{Perhaps we can look together?}{}{8}{not pc.follower_atmax()}{60}{}
+{286}{Joins me?}{}{-7}{not pc.follower_atmax()}{60}{}
+{287}{I am afraid I have some bad news for you.}{}{8}{anyone( pc.group_list(), "has_item", 11008) and game.global_flags[880] == 0}{600}{}
+{288}{Me owns bad news.}{}{-7}{anyone( pc.group_list(), "has_item", 11008) and game.global_flags[880] == 0}{600}{}
+
+{295}{Never mind. Goodbye.}{}{8}{}{270}{}
+{296}{Bye-bye.}{}{-7}{}{270}{}
+
+{300}{No, not yet. But I remain confident. Trust me, @pcname@, hope lives on!}{No, not yet. But I remain confident. Trust me, @pcname@, hope lives on!}{}{}{}{}
+{301}{Perhaps we can look together?}{}{8}{not pc.follower_atmax()}{60}{}
+{302}{Joins me?}{}{-7}{not pc.follower_atmax()}{60}{}
+{303}{E:}{}{1}{}{0}{}
+
+
+
+
+
+
+
+{500}{Yes?}{Yes?}{}{}{}{}
+{501}{Will you please sell me your equipment? I'll gladly give you 1700gp for that magic armour and other quality gear.}{}{8}{npc.hit_dice_num > 5 and npc.item_find(6091)}{550}{}
+{502}{Me buy stuffs?}{}{-7}{npc.hit_dice_num > 5 and npc.item_find(6091)}{550}{}
+{503}{Would you like to sell me your equipment?}{}{8}{npc.hit_dice_num == 5}{560}{}
+{504}{Give me your stuffs.}{}{-7}{npc.hit_dice_num == 5}{560}{}
+{510}{Never mind.}{}{8}{}{}{}
+{511}{Me forgets sumthan.}{}{-7}{}{}{}
+{550}{As you wish.}{As you wish.}{}{}{}{}
+{551}{Thanks Zaxis. [Do the trade.]}{}{8}{pc.money_get() >= 170000}{}{pc.money_adj(-170000); equip_transfer( npc, pc )}
+{552}{Thanks Axes. [Do the trade.]}{}{-7}{pc.money_get() >= 170000}{}{pc.money_adj(-170000); equip_transfer( npc, pc )}
+{553}{I can't afford it!}{}{1}{}{0}{}
+{560}{I can't do that.}{I can't do that.}{}{}{}{}
+{561}{Well, maybe when we know each other better.}{}{1}{}{0}{}
+
+
+{600}{Bad news?! What is it! Out with it! I beg you!}{Bad news?! What is it! Out with it! I beg you!}{}{}{}{}
+{601}{[give the note to Zaxis]}{}{1}{}{610}{party_transfer_to( npc, 11008 ); game.global_flags[880] = 1}
+{610}{[Zaxis takes a moment to read the note]}{[Zaxis takes a moment to read the note]}{}{}{}{}
+{611}{[wait]}{}{1}{npc.leader_get() == OBJ_HANDLE_NULL}{613}{}
+{612}{[wait]}{}{1}{npc.leader_get() != OBJ_HANDLE_NULL}{660}{}
+
+{613}{This is grave news. [Zaxis becomes very serious] I must avenge her death. Where did you find this note?}{This is grave news. [Zaxis becomes very serious] I must avenge her death. Where did you find this note?}{}{}{}{}
+{614}{I found it in the deepest levels of the Temple of Elemental Evil.}{}{8}{pc.follower_atmax()}{620}{}
+{615}{Me find paper in Temple of Ailments Avail.}{}{-7}{pc.follower_atmax()}{620}{}
+
+{616}{I found it in the deepest levels of the Temple of Elemental Evil.}{}{8}{not pc.follower_atmax()}{630}{}
+{617}{Me find paper in Temple of Ailments Avail.}{}{-7}{not pc.follower_atmax()}{630}{}
+
+
+{620}{First I will return home to tell my parents of Ima's demise. And then I shall find those responsible. They will pay.}{First I will return home to tell my parents of Ima's demise. And then I shall find those responsible. They will pay.}{}{}{}{}
+{621}{E:}{}{1}{}{0}{zaxis_runs_off2(npc,pc)}
+
+{630}{I need your help. Please join with me so that I can seek my revenge on those responsible.}{I need your help. Please join with me so that I can seek my revenge on those responsible.}{}{}{}{}
+{631}{I will help you.}{}{8}{}{640}{}
+{632}{Me helps Axes.}{}{-7}{}{640}{}
+{633}{No thanks. You're on your own.}{}{8}{}{650}{}
+{634}{Me nose helps you.}{}{-7}{}{650}{}
+
+{640}{Songs can be used to bring joy, but they can also be used to cause pain. Now is the time for pain. [with a grim look upon his face] Ima, I swear to Fharlanghn that I will avenge your death.}{Songs can be used to bring joy, but they can also be used to cause pain. Now is the time for pain. [with a grim look upon his face] Ima, I swear to Fharlanghn that I will avenge your death.}{}{}{}{game.global_flags[879] = 1; pc.follower_add(npc)}
+{641}{Alright. Let's go!}{}{8}{}{0}{}
+{642}{Let's go now!}{}{-7}{}{0}{}
+
+{650}{No matter, I will go alone. First I will return home to tell my parents of Ima's demise. And then I shall find those responsible. They will pay.}{No matter, I will go alone. First I will return home to tell my parents of Ima's demise. And then I shall find those responsible. They will pay.}{}{}{}{pc.follower_remove(npc)}
+{651}{E:}{}{1}{}{0}{zaxis_runs_off2(npc,pc)}
+
+{660}{This is grave news. [Zaxis becomes very serious] I must avenge her death. We must find those responsible. Songs can be used to bring joy, but they can also be used to cause pain. Now is the time for pain. [with a grim look upon his face] Ima, I swear to Fharlanghn that I will avenge your death.}{This is grave news. [Zaxis becomes very serious] I must avenge her death. We must find those responsible. Songs can be used to bring joy, but they can also be used to cause pain. Now is the time for pain. [with a grim look upon his face] Ima, I swear to Fharlanghn that I will avenge your death.}{}{}{}{}
+{661}{I think I want you to leave the group.}{}{8}{}{650}{}
+{662}{Me want you out of group.}{}{-7}{}{650}{}
+{663}{Alright. Let's go!}{}{8}{}{0}{}
+{664}{Let's go now!}{}{-7}{}{0}{}
+
+
+
+{5000}{It must have been those gnolls that we encountered back in the moathouse. Maybe paying them off wasn't such a good idea.}{It must have been those gnolls that we encountered back in the moathouse. Maybe paying them off wasn't such a good idea.}{}{}{}{}
+{5001}{S:}{}{1}{}{}{}
+{5002}{E:}{}{1}{}{}{}
+{5003}{Y:}{}{1}{}{}{}
+
+
+
+
+{12014}{No. . .must. . .find. . .sister.}{No. . .must. . .find. . .sister.}{}{}{}{}
+{12020}{Alright.}{Alright.}{}{}{}{}
+{12021}{I can't do that.}{I can't do that.}{}{}{}{}
+{12022}{Hey, stop that!}{Hey, stop that!}{}{}{}{}
+{12023}{Who said bards are wimps?!}{Who said bards are wimps?!}{}{}{}{}
+{12024}{Ooh, this part of the battle is not going into my song.}{Ooh, this part of the battle is not going into my song.}{}{}{}{}
+{12029}{Remember, he who runs away lives to fight another day. Some other scared bard said that once.}{Remember, she who runs away lives to fight another day. Some other scared bard said that once.}{}{}{}{}
+{12039}{Don't behave like that again. I don't like it.}{Don't behave like that again. I don't like it.}{}{}{}{}
+{12046}{Here, let me do that. I'm pretty good at it, actually.}{Here, let me do that. I'm pretty good at it, actually.}{}{}{}{}
+{12054}{Hey, can anyone send some of that healing love my way?}{Hey, can anyone send some of that healing love my way?}{}{}{}{}
+{12055}{My possessions are weighing heavily on my soul, not to mention my back.}{My possessions are weighing heavily on my soul, not to mention my back.}{}{}{}{}
+{12056}{No, @pcname@! The song doesn't end here!}{No, @pcname@! The song doesn't end here!}{}{}{}{}
+{12057}{Cry "Havoc", and let slip the dogs of war!}{Cry "Havoc", and let slip the dogs of war!}{}{}{}{}
+{12058}{Oof! I have now experienced agonizing pain. My songs should improve.}{Oof! I have now experienced agonizing pain. My songs should improve.}{}{}{}{}
+{12059}{Every adventure should include finds like this!}{Every adventure should include finds like this!}{}{}{}{}
+{12060}{Ah. I have always enjoyed seeing new places.}{Ah. I have always enjoyed seeing new places.}{}{}{}{}
+{12062}{How nice. We are visiting a swamp. Such grand adventurers are we.}{How nice. We are visiting a swamp. Such grand adventurers are we.}{}{}{}{}
+{12063}{Hmm, this village seems to be built on top of a swamp. Lovely.}{Hmm, this village seems to be built on top of a swamp. Lovely.}{}{}{}{}
+{12064}{Ah, now this appears to be a foray into evil's stronghold. Let's see, what rhymes with "foray"?}{Ah, now this appears to be a foray into evil's stronghold. Let's see, what rhymes with "foray"?}{}{}{}{}
+{12065}{This is an historical landmark! The famous Battle of Emridy Meadows, where good overcame evil. It's so exciting just to be here!}{This is an historical landmark! The famous Battle of Emridy Meadows, where good overcame evil. It's so exciting just to be here!}{}{}{}{}
+{12066}{This is a river? It looks like a swamp.}{This is a river? It looks like a swamp.}{}{}{}{}
+{12067}{And now the brave adventurers approach the abandoned farmhouse. . .}{And now the brave adventurers approach the abandoned farmhouse. . .}{}{}{}{}
+{12069}{That looks like a big cave. You go first.}{That looks like a big cave. You go first.}{}{}{}{}
+{12070}{I've seen a lot of forests in my day, and this is certainly one of the most creepy.}{I've seen a lot of forests in my day, and this is certainly one of the most creepy.}{}{}{}{}
+{12071}{By the gods, we are in hell! What an epic poem this would make!}{By the gods, we are in hell! What an epic poem this would make!}{}{}{}{}
+{12072}{What frozen wastes have we reached now?}{What frozen wastes have we reached now?}{}{}{}{}
+{12073}{Oh no, I don't handle heights well. Can we go back?}{Oh no, I don't handle heights well. Can we go back?}{}{}{}{}
+{12074}{I like seeing new places, but I do not like this place.}{I like seeing new places, but I do not like this place.}{}{}{}{}
+{12080}{I am certainly going to write about this!}{I am certainly going to write about this!}{}{}{}{}
+{12090}{Hmm, what is that?}{Hmm, what is that?}{}{}{}{}
+{12091}{I sense a great power at work here. And luckily lots of words rhyme with "door".}{I sense a great power at work here. And luckily lots of words rhyme with "door".}{}{}{}{}
+{12092}{Let's take this bull by the horns.}{Let's take this bull by the horns.}{}{}{}{}
+{12093}{Statues? That's suspicious. Look out for basilisks.}{Statues? That's suspicious. Look out for basilisks.}{}{}{}{}
+{12094}{This place looks magical. Look at that statue!}{This place looks magical. Look at that statue!}{}{}{}{}
+{12095}{And the brave adventurers descend into the depths. What horrors await them below?}{And the brave adventurers descend into the depths. What horrors await them below?}{}{}{}{}
+{12096}{By the gods, it's Prince Thrommel. No one has seen him in years!}{By the gods, it's Prince Thrommel. No one has seen him in years!}{}{}{}{}
+{12097}{This is a BIG room. This can't be good.}{This is a BIG room. This can't be good.}{}{}{}{}
+{12098}{It's getting hot in here.}{It's getting hot in here.}{}{}{}{}
+{12099}{The air is so humid here.}{The air is so humid here.}{}{}{}{}
+{12100}{Do you hear something, like a low moan? Perhaps it's just the wind.}{Do you hear something, like a low moan? Perhaps it's just the wind.}{}{}{}{}
+{12101}{Would you look at that throne? I wonder why it wasn't destroyed when the temple was sacked ten years ago.}{Would you look at that throne? I wonder why it wasn't destroyed when the temple was sacked ten years ago.}{}{}{}{}
+{12102}{You can feel the power in this room.}{You can feel the power in this room.}{}{}{}{}
+{12103}{There is an odor here, a scent of death. Perhaps we should go back.}{There is an odor here, a scent of death. Perhaps we should go back.}{}{}{}{}
+{12104}{Reserved}{Reserved}{}{}{}{}
+{12200}{By Fharlanghn, let's get moving!}{By Fharlanghn, let's get moving!}{}{}{}{}
+

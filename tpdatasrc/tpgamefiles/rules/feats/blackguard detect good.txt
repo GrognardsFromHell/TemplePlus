@@ -1,0 +1,5 @@
+name: Detect Good
+flags: 8
+prereqs:
+description: At will, a blackguard can use detect good as a spell-like ability, duplicating the effect of the detect good spell.
+prereq descr: Blackguard level 1.

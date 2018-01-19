@@ -1,0 +1,447 @@
+{1}{[surprised] Wha...How did you get here? This is all wrong. You should not have come here.}{[surprised] Wha...How did you get here? This is all wrong. You should not have come here.}{}{1}{}{}
+{2}{Why, what is this place?}{}{8}{}{10}{}
+{3}{And by the hells, who are you?}{}{8}{}{10}{}
+{4}{[showing a brown robe] Actually, I think I belong here. I am a new recruit.}{}{8}{anyone( pc.group_list(), "has_item", 3010 )}{30}{}
+{5}{Who you be?}{}{-7}{}{10}{}
+{6}{[showing a brown robe] Me should be here. Me new guard.}{}{-7}{anyone( pc.group_list(), "has_item", 3010 )}{30}{}
+{7}{I am here to rid this place of all evil and I shall begin with you! Prepare to die! [attack]}{}{8}{}{0}{npc.attack( pc )}
+{8}{Me kill bad man! Me kill you! [attack]}{}{-7}{}{0}{npc.attack( pc )}
+
+
+{10}{[sighs] Not another adventurer. Damn! Maybe the others are right to be one floor down. I am Romag, chief cleric of the Earth Temple here. This really is no place for adventurers. You have no idea what's going on here.}{[sighs] Not another adventurer. Damn! Maybe the others are right to be one floor down. I am Romag, chief cleric of the Earth Temple here. This really is no place for adventurers. You have no idea what's going on here.}{}{10}{}{game.story_state = 5}
+{11}{And what is going on here?}{}{8}{}{20}{}
+{12}{You tell me what happen here?}{}{-7}{}{20}{}
+{13}{Perhaps I could be of some service to you.}{}{8}{}{30}{}
+{14}{Me work for Romag!}{}{-7}{}{30}{}
+
+
+{20}{[shakes his head] Just like all the rest. They all come here. They all want the same things...fame, wealth, rewards...whatever. You're going to die. That's what's going to happen. And not pleasantly either.}{[shakes his head] Just like all the rest. They all come here. They all want the same things...fame, wealth, rewards...whatever. You're going to die. That's what's going to happen. And not pleasantly either.}{}{20}{}{}
+{21}{Is that a threat, Romag?}{}{8}{}{50}{}
+{22}{You gonna kill me?}{}{-7}{}{50}{}
+{23}{That sounds ominous. And how can you be so certain of my imminent death?}{}{8}{}{60}{}
+{24}{Why you think me die?}{}{-7}{}{60}{}
+{25}{To the hells with you. You can die by my sword right now! [attack]}{}{8}{}{0}{npc.attack( pc )}
+{26}{Me no waste more time with you. You die. [attack]}{}{-7}{}{0}{npc.attack( pc )}
+
+
+{30}{Ah, yet another recruit then. Perhaps this is not so bad being up here. I get all the fresh meat this way. [looks back at you] I mean, quality recruits, of course. Please report through the door here to my commander.}{Ah, yet another recruit then. Perhaps this is not so bad being up here. I get all the fresh meat this way. [looks back at you] I mean, quality recruits, of course. Please report through the door here to my commander.}{}{30}{}{}
+{31}{I am not just another recruit, Romag! I am looking for more sophisticated work.}{}{8}{pc.skill_level_get(npc, skill_diplomacy) >= 5}{80}{}
+{32}{Me do more than just be meat. Me do better than that!}{}{-7}{pc.skill_level_get(npc, skill_diplomacy) >= 5}{80}{}
+{33}{My sword is for hire, Romag. But not as a lowly guard. Now am I with you or against you?!}{}{8}{pc.skill_level_get(npc, skill_intimidate) >= 8}{40}{}
+{34}{Me only report to you. Now you want me or you fight me?}{}{-7}{pc.skill_level_get(npc, skill_intimidate) >= 8}{40}{}
+{35}{Okay, I'll go talk to the Commander then.}{}{8}{}{0}{game.global_flags[111] = 1;  switch_to_gatekeeper(pc, 1800)}
+{36}{Me go talk Commander.}{}{-7}{}{0}{game.global_flags[111] = 1;  switch_to_gatekeeper(pc, 1800)}
+
+
+{40}{I am really getting tired of all these interruptions! Now if you think you can take me, bring it on! But I do like your spirit. Yeah, I could use you for some "special" jobs I need doing.}{I am really getting tired of all these interruptions! Now if you think you can take me, bring it on! But I do like your spirit. Yeah, I could use you for some "special" jobs I need doing.}{}{40}{}{}
+{41}{I don't need to take jobs from the likes of you. Prepare to die! [attack]}{}{8}{}{0}{npc.attack( pc )}
+{42}{Me just kill you then! [attack]}{}{-7}{}{0}{npc.attack( pc )}
+{43}{Please tell me. What jobs can I do for you?}{}{8}{}{110}{}
+{44}{Me take jobs. You tell me what to do.}{}{-7}{}{110}{}
+{45}{On second thought, I'd prefer to just get back to my adventuring.}{}{8}{}{70}{}
+{46}{Me just want to go back to adventures.}{}{-7}{}{70}{}
+
+
+{50}{No, I don't intend to kill you. Not that I couldn't if I wanted to mind you. I'm just busy here. I have plans to make. I don't have time for all these interruptions.}{No, I don't intend to kill you. Not that I couldn't if I wanted to mind you. I'm just busy here. I have plans to make. I don't have time for all these interruptions.}{}{50}{}{}
+{51}{So why are you so sure I am going to die then?}{}{8}{}{60}{}
+{52}{Why me die then?}{}{-7}{}{60}{}
+{53}{You are wrong, Romag. You can't kill me. But I can kill YOU! [attack]}{}{8}{}{0}{npc.attack( pc )}
+{54}{You no kill me. Me kill you! [attack]}{}{-7}{}{0}{npc.attack( pc )}
+
+
+{60}{There are things going on down here that are beyond your puny comprehension. Some are lucky enough to find their way into the service of the Temple. But most just end up in our jails or worse, getting sacrificed to the nodes.}{There are things going on down here that are beyond your puny comprehension. Some are lucky enough to find their way into the service of the Temple. But most just end up in our jails or worse, getting sacrificed to the nodes.}{}{60}{}{}
+{61}{I guess I wouldn't mind joining with the Temple.}{}{8}{}{30}{}
+{62}{Me want to join Temple.}{}{-7}{}{30}{}
+{63}{What are the nodes?}{}{1}{}{90}{}
+{64}{I don't get into trouble. I serve it up. Now I think it's time I get back to my exploring.}{}{8}{}{70}{}
+{65}{Me no get in trouble. Me go look around some more.}{}{-7}{}{70}{}
+
+
+{70}{Ah, that's what they all say. Just get back to the adventuring. Well if you plan on stirring up trouble, please not on my floor. Take your little urge to explore down to the next level. Make as much of a mess as you want down there.}{Ah, that's what they all say. Just get back to the adventuring. Well if you plan on stirring up trouble, please not on my floor. Take your little urge to explore down to the next level. Make as much of a mess as you want down there.}{}{70}{}{}
+{71}{Actually, I think I'll start by making a mess of your head...right now! [attack]}{}{8}{}{0}{npc.attack( pc )}
+{72}{Me start by killing you! [attack]}{}{-7}{}{0}{npc.attack( pc )}
+{73}{All right, then. I will head on out of here.}{}{8}{}{0}{switch_to_gatekeeper(pc, 1800)}
+{74}{Me just go then.}{}{-7}{}{0}{switch_to_gatekeeper(pc, 1800)}
+
+
+{80}{[sizing you up] Yes, I can see that you are a step about the usual riff raff that comes down here. Hmm, yes. I could use you for some "special" work I suppose.}{[sizing you up] Yes, I can see that you are a step about the usual riff raff that comes down here. Hmm, yes. I could use you for some "special" work I suppose.}{}{80}{}{}
+{81}{I am several steps about riff raff, Romag. And I will prove it by killing you now! [attack]}{}{8}{}{0}{npc.attack( pc )}
+{82}{Me not riff raff. Me kill you now! [attack]}{}{-7}{}{0}{npc.attack( pc )}
+{83}{Please tell me. What jobs can I do for you?}{}{8}{}{110}{}
+{84}{Me take jobs. You tell me what to do.}{}{-7}{}{110}{}
+{85}{On second thought, I'd prefer to just get back to my adventuring.}{}{8}{}{70}{}
+{86}{Me just want to go back to adventures.}{}{-7}{}{70}{}
+
+
+{90}{Ah the nodes. Some place you'll likely see for yourself if you continue on here. As you progress on your way through, you will undoubtedly be captured if you're not killed. You may be imprisoned, or sacrificed to the nodes. Pray for a quick death.}{Ah the nodes. Some place you'll likely see for yourself if you continue on here. As you progress on your way through, you will undoubtedly be captured if you're not killed. You may be imprisoned, or sacrificed to the nodes. Pray for a quick death.}{}{90}{}{}
+{91}{I'll take my chances, Romag. Now it's time to get back to adventuring.}{}{8}{}{70}{}
+{92}{Me no care about nodes. Me go back to adventures.}{}{-7}{}{70}{}
+{93}{Sounds like I better sign up with your Earth Temple.}{}{8}{}{30}{}
+{94}{Me want to join Temple.}{}{-7}{}{30}{}
+
+
+{100}{Welcome to the Earth Temple. I am Romag, the chief cleric here. If Rentsch sent you down, then I know you must be good. He doesn't waste his time with losers. Are you ready for some work?}{Welcome to the Earth Temple. I am Romag, the chief cleric here. If Rentsch sent you down, then I know you must be good. He doesn't waste his time with losers. Are you ready for some work?}{}{100}{}{game.story_state = 5}
+{101}{Yes, and I'll start by killing you. Farewell Romag, chief cleric of the Earth Temple. [attack]}{}{8}{}{0}{npc.attack( pc )}
+{102}{Me kill you for first job! [attack]}{}{-7}{}{0}{npc.attack( pc )}
+{103}{I am ready to begin work, Romag.}{}{8}{}{110}{}
+{104}{Me start work for Romag now.}{}{-7}{}{110}{}
+
+
+{110}{I have a small [gritting his teeth] but irritating task I need you to do for me. You see, due to our superior numbers, [proudly] and the fact that we are the favored Temple here, we have victory banquets often in a large room to the west of here.}{I have a small [gritting his teeth] but irritating task I need you to do for me. You see, due to our superior numbers, [proudly] and the fact that we are the favored Temple here, we have victory banquets often in a large room to the west of here.}{}{110}{}{}
+{111}{I'm sorry, Romag, but I'm no serving boy. I can't cook much either.}{}{8}{pc.stat_level_get( stat_gender ) == gender_male}{120}{}
+{112}{Me no serve at banquet!}{}{-7}{}{120}{}
+{113}{I'm sorry, Romag, but I'm no serving wench. I can't cook much either.}{}{8}{pc.stat_level_get( stat_gender ) == gender_female}{120}{}
+
+
+{120}{No, no. It's nothing like that. A giant snake has made its way into the kitchen off to the side of the room. The beast killed my best ogre chef. And now the rest of the ogres won't even go near there.}{No, no. It's nothing like that. A giant snake has made its way into the kitchen off to the side of the room. The beast killed my best ogre chef. And now the rest of the ogres won't even go near there.}{}{120}{}{game.quests[43].state = qs_mentioned}
+{121}{So you want me to take out this snake?}{}{8}{}{130}{}
+{122}{Me no cook either. Me no mind snake, but me no cook!}{}{-7}{}{140}{}
+{123}{Yeah, I know that snake. It's dead now.}{}{8}{game.global_flags[117] == 1}{150}{game.quests[43].state = qs_completed; game.global_flags[347] = 1; record_time_stamp(468)}
+{124}{Me kill that big snake in kitchen. It safe for ogres now.}{}{-7}{game.global_flags[117] == 1}{150}{game.quests[43].state = qs_completed; game.global_flags[347] = 1; record_time_stamp(468)}
+
+
+{130}{Precisely. Finally, we could get a nice cooked meal again. It would mean a lot to the troops, too. It just shows how superior we really are here at the Earth Temple. No wonder everyone wants to join us.}{Precisely. Finally, we could get a nice cooked meal again. It would mean a lot to the troops, too. It just shows how superior we really are here at the Earth Temple. No wonder everyone wants to join us.}{}{130}{}{}
+{131}{Okay. I'll kill the snake for you.}{}{1}{}{160}{record_time_stamp(467)}
+{132}{Belsornig thinks HE has the best Temple.}{}{8}{game.quests[46].state >= qs_mentioned and game.global_flags[105] == 0}{170}{}
+{133}{What's in it for me?}{}{1}{}{180}{}
+
+
+{140}{No, you won't have to cook, either. I need you to kill that snake? You got it?! Kill the snake in the kitchen.}{No, you won't have to cook, either. I need you to kill that snake? You got it?! Kill the snake in the kitchen.}{}{140}{}{}
+{141}{Okay. Me kill snakey.}{}{1}{}{160}{}
+
+
+{150}{Ah, I had not heard that yet. Well that is good news, then. Well on to my next task, I guess.}{Ah, I had not heard that yet. Well that is good news, then. Well on to my next task, I guess.}{}{150}{}{}
+{151}{How many of these "tasks" do I have to do?}{}{8}{}{230}{}
+{152}{Me do how many tasks?}{}{-7}{}{230}{}
+{153}{No more tasks from you. Just death to Romag. [attack]}{}{8}{}{0}{npc.attack( pc )}
+{154}{Me no do more. Me just come to kill you. [attack]}{}{-7}{}{0}{npc.attack( pc )}
+
+
+{160}{Excellent. I knew you would be a fine recruit. Now come back here when it's dead and we can talk some more.}{Excellent. I knew you would be a fine recruit. Now come back here when it's dead and we can talk some more.}{}{160}{}{game.global_flags[347] = 1; game.quests[43].state = qs_accepted; record_time_stamp(467)}
+{161}{E:}{}{1}{}{0}{switch_to_gatekeeper(pc, 1800)}
+
+
+{170}{Bah! Not him again! I tire of his games and threats! I don't care what he says. I have more troops than he does and I have the entire floor here! He is a fool and not nearly as wise as he pretends.}{Bah! Not him again! I tire of his games and threats! I don't care what he says. I have more troops than he does and I have the entire floor here! He is a fool and not nearly as wise as he pretends.}{}{170}{}{}
+{171}{Whatever. I'll go take care of that snake for you now.}{}{1}{}{160}{}
+{172}{He can be rather persuasive, though. So what's in it for me if I kill this snake for you?}{}{1}{}{180}{}
+
+
+{180}{Fools! You know not the ultimate reward? You will be initiated into the Greater Temple. I will personally lead you down for introductions.}{Fools! You know not the ultimate reward? You will be initiated into the Greater Temple. I will personally lead you down for introductions.}{}{180}{}{}
+{181}{I'm not looking for that! I just want treasure.}{}{8}{}{190}{}
+{182}{Me no want do that. Me just go now.}{}{-7}{}{190}{}
+{183}{Okay. I will go and kill that snake for you then.}{}{8}{}{160}{}
+{184}{Me go kill snakey now.}{}{-7}{}{160}{}
+
+
+{190}{Then perhaps I have misjudged you. And you have wasted my time! Now leave and take your little adventures down off my floor to the next level.}{Then perhaps I have misjudged you. And you have wasted my time! Now leave and take your little adventures down off my floor to the next level.}{}{190}{}{}
+{191}{E:}{}{1}{}{0}{game.global_vars[454] |= ( (game.global_vars[454] & (2**8)) != 0) * (2**9); switch_to_gatekeeper(pc, 1900)}
+
+
+{200}{Stop this insanity! You have proven your worthiness. The Temple could use a force like yourself. The rewards would be great, more than you can imagine. Will you not consider this?}{Stop this insanity! You have proven your worthiness. The Temple could use a force like yourself. The rewards would be great, more than you can imagine. Will you not consider this?}{}{200}{}{}
+{201}{No, I want to kill you. Now let's finish this! [attack]}{}{8}{not npc.has_met( pc )}{0}{npc.attack( pc )}
+{202}{Me want kill you. Me kill you now. [attack]}{}{-7}{not npc.has_met( pc )}{0}{npc.attack( pc )}
+{203}{Okay. I will consider. What can you offer?}{}{8}{not npc.has_met( pc )}{210}{}
+{204}{Me imagine lots. What you offer?}{}{-7}{not npc.has_met( pc )}{210}{}
+{205}{I no longer care what you have to say. So long, Romag! [attack]}{}{8}{npc.has_met( pc )}{0}{npc.attack( pc )}
+{206}{Me not care what you say. You die now. [attack]}{}{-7}{npc.has_met( pc )}{0}{npc.attack( pc )}
+
+
+{210}{I can offer you initiation into the Greater Temple. You can rise in power to the level of Barkinar himself!}{I can offer you initiation into the Greater Temple. You can rise in power to the level of Barkinar himself!}{}{210}{}{}
+{211}{That would not interest me. Now prepare to die! [attack]}{}{8}{}{0}{npc.attack( pc )}
+{212}{Me no want that. Me kill you now! [attack]}{}{-7}{}{0}{npc.attack( pc )}
+{213}{I could be interested in that. How do I get in?}{}{8}{}{220}{}
+{214}{Me want that. How me get in?}{}{-7}{}{220}{}
+{215}{Who is Barkinar?}{}{1}{}{450}{}
+
+
+{220}{I am Romag, chief cleric of the Earth Temple here. And first you must prove yourself worthy of the Greater Temple. I have some tasks I need done for me first. Then I can show you to the Greater Temple.}{I am Romag, chief cleric of the Earth Temple here. And first you must prove yourself worthy of the Greater Temple. I have some tasks I need done for me first. Then I can show you to the Greater Temple.}{}{220}{}{game.story_state = 5}
+{221}{So what is this that needs doing?}{}{8}{}{110}{}
+{222}{What you need me to do?}{}{-7}{}{110}{}
+
+
+{230}{Great news! I have just two more tasks to ask of you. Then you will be ready for initiation into the Greater Temple.}{Great news! I have just two more tasks to ask of you. Then you will be ready for initiation into the Greater Temple.}{}{230}{}{pc.reputation_add( 11 )}
+{231}{All right. So what is the next task?}{}{8}{}{240}{}
+{232}{You tell me what next.}{}{-7}{}{240}{}
+
+
+{240}{This should not be too difficult. I need you to deliver this sealed note to Rentsch up at the Waterside Hostel in Nulb. And make sure it remains sealed!}{This should not be too difficult. I need you to deliver this sealed note to Rentsch up at the Waterside Hostel in Nulb. And make sure it remains sealed!}{}{240}{}{game.areas[3] = 1; game.quests[44].state = qs_mentioned}
+{241}{Okay. Give me the message. I'll take it to Rentsch.}{}{8}{}{250}{game.quests[44].state = qs_accepted; record_time_stamp(469)}
+{242}{Give me message. Me give to Rentsch.}{}{-7}{}{250}{game.quests[44].state = qs_accepted; record_time_stamp(469)}
+{243}{Let me think about this one, Romag.}{}{8}{}{260}{}
+{244}{Me think. Let you know later.}{}{-7}{}{260}{}
+{245}{Rentsch lies dead as we speak.}{}{8}{game.global_flags[88] == 1}{270}{}
+{246}{Rentsch is dead!}{}{-7}{game.global_flags[88] == 1}{270}{}
+
+
+{250}{Here's the letter. Come back here when it's delivered so that I can give you your final task.}{Here's the letter. Come back here when it's delivered so that I can give you your final task.}{}{250}{}{npc.item_transfer_to( pc, 5807 )}
+{251}{E:}{}{1}{}{0}{switch_to_gatekeeper(pc, 1800)}
+
+
+{260}{You need to think about delivering a letter?! Bah! Well let me know when you decide then.}{You need to think about delivering a letter?! Bah! Well let me know when you decide then.}{}{260}{}{}
+{261}{E:}{}{1}{}{0}{switch_to_gatekeeper(pc, 1800)}
+
+
+{270}{That is awful news indeed! I told him not to trust that sneaky Wat! I'm sure Alrrem had Wat just outright kill him! I must have revenge! Alrrem must pay!}{That is awful news indeed! I told him not to trust that sneaky Wat! I'm sure Alrrem had Wat just outright kill him! I must have revenge! Alrrem must pay!}{}{270}{}{}
+{271}{What would you have done?}{}{8}{game.global_flags[107] == 0}{280}{}
+{272}{What you need doing?}{}{-7}{game.global_flags[107] == 0}{280}{}
+{273}{Who is Alrrem?}{}{8}{game.quests[52].state == qs_unknown and game.global_flags[107] == 0}{410}{}
+{274}{What be All Rum?}{}{-7}{game.quests[52].state == qs_unknown and game.global_flags[107] == 0}{410}{}
+{275}{Don't forget, Alrrem's already dead.}{}{1}{game.global_flags[107] == 1}{660}{}
+
+
+{280}{Let's see. [scheming] I want Alrrem's two under-priests dead. Both of them! He must learn not to mess with the Earth Temple. This will teach him I think!}{Let's see. [scheming] I want Alrrem's two under-priests dead. Both of them! He must learn not to mess with the Earth Temple. This will teach him I think!}{}{280}{}{game.global_flags[119] = 1; game.quests[94].state = qs_mentioned; game.quests[44].state = qs_botched}
+{281}{I already killed those under-priests.}{}{8}{game.global_flags[115] == 1 and game.global_flags[116] == 1}{360}{game.quests[94].state = qs_completed; record_time_stamp(470)}
+{282}{Me kill those guys already.}{}{-7}{game.global_flags[115] == 1 and game.global_flags[116] == 1}{360}{game.quests[94].state = qs_completed; record_time_stamp(470)}
+{283}{No problem, Romag. Those under-priests are as good as dead.}{}{8}{game.global_flags[115] == 0 and game.global_flags[116] == 0}{290}{game.quests[94].state = qs_accepted; record_time_stamp(469)}
+{284}{Me go kill All Rum's priest undies.}{}{-7}{game.global_flags[115] == 0 and game.global_flags[116] == 0}{290}{game.quests[94].state = qs_accepted; record_time_stamp(469)}
+{285}{Kill, huh? I'm not sure I'm ready to kill for you yet.}{}{8}{game.global_flags[115] == 0 and game.global_flags[116] == 0}{370}{}
+{286}{Me no want to kill. Me need to think about it.}{}{-7}{game.global_flags[115] == 0 and game.global_flags[116] == 0}{370}{}
+{287}{Don't forget, Alrrem's already dead.}{}{1}{game.global_flags[107] == 1}{660}{}
+
+
+{290}{That's what I like to hear. Go make them dead! Then return here for your final task when they breathe no more.}{That's what I like to hear. Go make them dead! Then return here for your final task when they breathe no more.}{}{290}{}{}
+{291}{E:}{}{1}{}{0}{switch_to_gatekeeper(pc, 1800)}
+
+
+{300}{Ah, so the wandering son has returned. What have you for me this time?}{Ah! So the wandering daughter has returned. What have you for me this time?}{}{300}{}{}
+{301}{I have decided I would like to join the Earth Temple.}{}{8}{game.quests[43].state == qs_unknown and game.global_flags[111] == 0}{30}{}
+{302}{Me want to join Temple.}{}{-7}{game.quests[43].state == qs_unknown and game.global_flags[111] == 0}{30}{}
+{303}{Just passing through, Romag. See you later.}{}{8}{}{0}{switch_to_gatekeeper(pc, 1800)}
+{304}{Me just move along now.}{}{-7}{}{0}{switch_to_gatekeeper(pc, 1800)}
+{305}{I am here to kill you, Romag. Prepare to die! [attack]}{}{8}{}{0}{npc.attack( pc )}
+{306}{Me want you dead. Now die! [attack]}{}{-7}{}{0}{npc.attack( pc )}
+{307}{I've changed my mind. I will go kill that snake for you.}{}{8}{game.quests[43].state == qs_mentioned and game.global_flags[117] == 0}{160}{game.quests[43].state = qs_accepted; record_time_stamp(467)}
+{308}{Me decide me go kill snakey for Romag.}{}{-7}{game.quests[43].state == qs_mentioned and game.global_flags[117] == 0}{160}{game.quests[43].state = qs_accepted; record_time_stamp(467)}
+{309}{I have done as you asked. The snake is dead!}{}{8}{game.global_flags[117] == 1 and game.quests[43].state == qs_accepted}{230}{game.quests[43].state = qs_completed; record_time_stamp(468)}
+{310}{Me kill snakey. What next?}{}{-7}{game.global_flags[117] == 1 and game.quests[43].state == qs_accepted}{230}{game.quests[43].state = qs_completed; record_time_stamp(468)}
+{311}{Your silly little snake is dead!}{}{8}{game.global_flags[117] == 1 and game.quests[43].state == qs_mentioned}{230}{game.quests[43].state = qs_completed; record_time_stamp(468)}
+{312}{Snakey is dead.}{}{-7}{game.global_flags[117] == 1 and game.quests[43].state == qs_mentioned}{230}{game.quests[43].state = qs_completed; record_time_stamp(468)}
+{313}{Okay, Romag. I'll deliver your little note to Rentsch now.}{}{8}{game.quests[44].state == qs_mentioned and game.global_flags[119] == 0}{250}{game.quests[44].state = qs_accepted; record_time_stamp(469)}
+{314}{Me give note to Rentsch now for you.}{}{-7}{game.quests[44].state == qs_mentioned and game.global_flags[119] == 0}{250}{game.quests[44].state = qs_accepted; record_time_stamp(468)}
+{315}{I tried to deliver your note to Rentsch, but Rentsch is dead!}{}{8}{( game.global_flags[119] == 0 and game.global_flags[88] == 1 and game.quests[44].state == qs_accepted ) or game.global_flags[124] == 1}{380}{}
+{316}{Me try give note to Rentsch but me find Rentsch dead.}{}{-7}{( game.global_flags[119] == 0 and game.global_flags[88] == 1 and game.quests[44].state == qs_accepted ) or game.global_flags[124] == 1}{380}{}
+{317}{It wasn't easy, but I've assassinated Alrrem's two under-priests for you.}{}{8}{game.global_flags[115] == 1 and game.global_flags[116] == 1 and game.global_flags[119] == 1 and game.quests[45].state == qs_unknown}{350}{game.quests[94].state = qs_completed; record_time_stamp(470)}
+{318}{Me kill All Rum's undies. What now?}{}{-7}{game.global_flags[115] == 1 and game.global_flags[116] == 1 and game.global_flags[119] == 1 and game.quests[45].state == qs_unknown}{350}{game.quests[94].state = qs_completed; record_time_stamp(470)}
+{319}{I've delivered the note to Rentsch now. Have anything more challenging this time?}{}{8}{game.global_flags[120] == 1 and game.quests[44].state == qs_accepted}{340}{game.quests[44].state = qs_completed; record_time_stamp(470)}
+{320}{Me gave note to Rentsch. That too easy. Me prove self with something hard!}{}{-7}{game.global_flags[120] == 1 and game.quests[44].state == qs_accepted}{340}{game.quests[44].state = qs_completed; record_time_stamp(470)}
+{321}{No one's going to be giving Rentsch any messages now. He's dead!}{}{8}{game.global_flags[119] == 0 and game.global_flags[88] == 1 and game.quests[44].state == qs_mentioned}{270}{}
+{322}{No notes for Rentsch now. He dead!}{}{-7}{game.global_flags[119] == 0 and game.global_flags[88] == 1 and game.quests[44].state == qs_mentioned}{270}{}
+{323}{All right, Romag. I'll kill those under-priests for you.}{}{8}{game.quests[94].state == qs_mentioned and game.global_flags[119] == 1}{290}{game.quests[94].state = qs_accepted; record_time_stamp(469)}
+{324}{Me kill All Rum's undies for you next, then.}{}{-7}{game.quests[94].state == qs_mentioned and game.global_flags[119] == 1}{290}{game.quests[94].state = qs_accepted; record_time_stamp(469)}
+{325}{I changed my mind, Romag. I don't want to work for your Commander. I want to work for you.}{}{8}{game.quests[43].state == qs_unknown and game.global_flags[111] == 1}{460}{}
+{326}{Me not want work for Commander. Me want work for you.}{}{-7}{game.quests[43].state == qs_unknown and game.global_flags[111] == 1}{460}{}
+{327}{Bad news Romag. I lost the letter to Rentsch!}{}{8}{( game.global_flags[119] == 0 ) and ( game.quests[44].state == qs_accepted ) and ( not anyone( pc.group_list(), "has_item", 5807 ) ) and ( game.global_flags[120] == 0 )}{480}{}
+{328}{Me lose letter to Rentsch.}{}{-7}{( game.global_flags[119] == 0 ) and ( game.quests[44].state == qs_accepted ) and ( not anyone( pc.group_list(), "has_item", 5807 ) ) and ( game.global_flags[120] == 0 )}{480}{}
+{329}{Okay, Romag. I have decided I will kill Belsornig for you.}{}{8}{game.quests[45].state == qs_mentioned}{440}{game.quests[45].state = qs_accepted; record_time_stamp(471)}
+{330}{Me go kill Big Sore Neck Guy now.}{}{-7}{game.quests[45].state == qs_mentioned}{440}{game.quests[45].state = qs_accepted; record_time_stamp(471)}
+{331}{It is done, Romag. Belsornig is no longer.}{}{8}{(game.quests[45].state == qs_accepted or game.quests[45].state == qs_mentioned) and game.global_flags[105] == 1}{520}{game.quests[45].state = qs_completed; record_time_stamp(472)}
+{332}{Big Sore Neck guy dead just like you say.}{}{-7}{(game.quests[45].state == qs_accepted or game.quests[45].state == qs_mentioned) and game.global_flags[105] == 1}{520}{game.quests[45].state = qs_completed; record_time_stamp(472)}
+{333}{I am ready to go to the Greater Temple now.}{}{8}{game.quests[45].state == qs_completed}{540}{}
+{334}{You take me to Great Temple now.}{}{-7}{game.quests[45].state == qs_completed}{540}{}
+
+
+{340}{Don't worry. I've been saving the best for last. This final test will once and for all prove your value to the Greater Temple.}{Don't worry. I've been saving the best for last. This final test will once and for all prove your value to the Greater Temple.}{}{340}{}{}
+{341}{What is it, then?}{}{8}{}{400}{}
+{342}{Me want know what it is.}{}{-7}{}{400}{}
+
+
+{350}{Very good. Very good indeed. That should teach Alrrem not to mess with the best. He needs to understand that we need to ally against Belsornig. He's the real threat here.}{Very good. Very good indeed. That should teach Alrrem not to mess with the best. He needs to understand that we need to ally against Belsornig. He's the real threat here.}{}{350}{}{}
+{351}{Who's Belsornig?}{}{8}{game.quests[46].state == qs_unknown and game.global_flags[105] == 0}{420}{}
+{352}{So what is the final task, then?}{}{8}{}{400}{}
+{353}{Me want know what is next.}{}{-7}{}{400}{}
+{354}{Who this Big Sore Neck guy?}{}{-7}{game.quests[46].state == qs_unknown and game.global_flags[105] == 0}{420}{}
+
+
+{360}{Such a resourceful young man. Alrrem needed to pay for his crimes. Well, I guess that just leaves one final task before your initiation into the Greater Temple can begin.}{Such a resourceful young lass. Alrrem needed to pay for his crimes. Well, I guess that just leaves one final task before your initiation into the Greater Temple can begin.}{}{360}{}{}
+{361}{And what would this final task be?}{}{8}{}{400}{}
+{362}{So what last thing you need done?}{}{-7}{}{400}{}
+
+
+{370}{You don't strike me as the indecisive type. But take whatever time you need, then. Come back when you appreciate the power of the Earth Temple and would like to continue with your rising fame.}{You don't strike me as the indecisive type. But take whatever time you need, then. Come back when you appreciate the power of the Earth Temple and would like to continue with your rising fame.}{}{370}{}{}
+{371}{E:}{}{1}{}{0}{switch_to_gatekeeper(pc, 1800)}
+
+
+{380}{That's terrible news! Give me back that note. This must be Alrrem's doing. He probably just had that stupid Wat kill Rentsch outright. Not a smart move, Alrrem!}{That's terrible news! Give me back that note. This must be Alrrem's doing. He probably just had that stupid Wat kill Rentsch outright. Not a smart move, Alrrem!}{}{380}{}{}
+{381}{Here's the note. What should I do next?}{}{8}{anyone( pc.group_list(), "has_item", 5807 )}{280}{party_transfer_to( npc, 5807 )}
+{382}{Me give you note back. What I do?}{}{-7}{anyone( pc.group_list(), "has_item", 5807 )}{280}{party_transfer_to( npc, 5807 )}
+{383}{I got rid of the note, Romag.}{}{8}{not anyone( pc.group_list(), "has_item", 5807 )}{390}{}
+{384}{Me get rid of note.}{}{-7}{not anyone( pc.group_list(), "has_item", 5807 )}{390}{}
+{385}{Who is Alrrem?}{}{8}{game.quests[52].state == qs_unknown and game.global_flags[107] == 0}{410}{}
+{386}{Who be this All Rum person?}{}{-7}{game.quests[52].state == qs_unknown and game.global_flags[107] == 0}{410}{}
+{387}{Don't forget, Alrrem's already dead.}{}{1}{game.global_flags[107] == 1}{660}{}
+
+
+{390}{Fool! That note was for Rentsch's eyes only. Well, I hope that it was disposed of properly at least. It cannot fall into Alrrem's hands.}{Fool! That note was for Rentsch's eyes only. Well, I hope that it was disposed of properly at least. It cannot fall into Alrrem's hands.}{}{390}{}{}
+{391}{So what do I do now?}{}{8}{game.global_flags[107] == 0}{280}{}
+{392}{How me tested now?}{}{-7}{game.global_flags[107] == 0}{280}{}
+{393}{Who is this Alrrem person you keep talking about?}{}{8}{game.quests[52].state == qs_unknown and game.global_flags[107] == 0}{410}{}
+{394}{What is an All Rum?}{}{-7}{game.quests[52].state == qs_unknown and game.global_flags[107] == 0}{410}{}
+{395}{Don't forget, he's already dead.}{}{1}{game.global_flags[107] == 1}{660}{}
+
+
+{400}{Belsornig needs to die. I cannot tolerate his little games any longer. And now he thinks to challenge me?! His Water Temple may be strengthening, but it cannot compete with me...at least not yet. And so he must die!}{Belsornig needs to die. I cannot tolerate his little games any longer. And now he thinks to challenge me?! His Water Temple may be strengthening, but it cannot compete with me...at least not yet. And so he must die!}{}{400}{}{game.quests[45].state = qs_mentioned}
+{401}{Well then I guess I will head down and kill him for you.}{}{8}{game.global_flags[105] == 0}{440}{game.quests[45].state = qs_accepted; record_time_stamp(471)}
+{402}{Me go kill Big Sore Neck then for you now.}{}{-7}{game.global_flags[105] == 0}{440}{game.quests[45].state = qs_accepted; record_time_stamp(471)}
+{403}{Assassination? I'm not sure I can do that.}{}{8}{game.quests[94].state == qs_completed and game.global_flags[119] == 1 and game.global_flags[105] == 0}{490}{}
+{404}{Me not killer.}{}{-7}{game.quests[94].state == qs_completed and game.global_flags[119] == 1 and game.global_flags[105] == 0}{490}{}
+{405}{I'm going to have to think about this one.}{}{8}{game.global_flags[105] == 0}{500}{}
+{406}{Me have to think about this.}{}{-7}{game.global_flags[105] == 0}{500}{}
+{407}{Assassination? I'm not sure I can do that.}{}{8}{game.quests[44].state == qs_completed and game.global_flags[119] == 0 and game.global_flags[105] == 0}{500}{}
+{408}{Me not killer.}{}{-7}{game.quests[44].state == qs_completed and game.global_flags[119] == 0 and game.global_flags[105] == 0}{500}{}
+{409}{Romag, he is already dead!}{}{1}{game.global_flags[105] == 1}{670}{game.quests[45].state = qs_accepted; game.quests[45].state = qs_completed; record_time_stamp(472)}
+
+
+{410}{Alrrem is the chief cleric of the Fire Temple and quite insane mind you. He had his own brother sacrificed to the nodes. Now he wants an alliance with me as he's fallen on hard times having been the lead at the Battle of Emridy Meadows.}{Alrrem is the chief cleric of the Fire Temple and quite insane mind you. He had his own brother sacrificed to the nodes. Now he wants an alliance with me as he's fallen on hard times having been the lead at the Battle of Emridy Meadows.}{}{410}{}{}
+{411}{So here's your note to Rentsch, then. What's next?}{}{8}{anyone( pc.group_list(), "has_item", 5807 )}{280}{party_transfer_to( npc, 5807 )}
+{412}{Me give you note back now. What do next?}{}{-7}{anyone( pc.group_list(), "has_item", 5807 )}{280}{party_transfer_to( npc, 5807 )}
+{413}{So how can we avenge this little transgression of his?}{}{8}{}{280}{}
+{414}{How we get back at Alrrem then?}{}{-7}{}{280}{}
+
+
+{420}{Belsornig? [spits] I do not like to even mention his name. Don't ever trust him, I can tell you that. He likes to think he's clever, and that his Water Temple has favor with the Greater Temple. But I know that is not the case.}{Belsornig? [spits] I do not like to even mention his name. Don't ever trust him, I can tell you that. He likes to think he's clever, and that his Water Temple has favor with the Greater Temple. But I know that is not the case.}{}{420}{}{}
+{421}{You want me to just kill this guy? It sounds like he needs to be "removed from office."}{}{8}{}{430}{}
+{422}{Me go kill Big Sore Neck for you?}{}{-7}{}{430}{}
+
+
+{430}{Yes. In fact, that was the final task I was going to ask of you. He needs to be killed, badly. I cannot tolerate his manipulative games any longer.}{Yes. In fact, that was the final task I was going to ask of you. He needs to be killed, badly. I cannot tolerate his manipulative games any longer.}{}{430}{}{game.quests[45].state = qs_mentioned}
+{431}{No problem. Belsornig will die.}{}{8}{}{440}{game.quests[45].state = qs_accepted; record_time_stamp(471)}
+{432}{Me go kill Big Sore Neck guy then.}{}{-7}{}{440}{game.quests[45].state = qs_accepted; record_time_stamp(471)}
+{433}{I'm going to have to think about this one.}{}{8}{}{500}{}
+{434}{Me have to think about this.}{}{-7}{}{500}{}
+
+
+{440}{Excellent, excellent! His death will secure me as the strongest Temple once and for all. And they will see that I am as strong a leader if not better than Barkinar. Come back here when it is done for your initiation into the Greater Temple.}{Excellent, excellent! His death will secure me as the strongest Temple once and for all. And they will see that I am as strong a leader if not better than Barkinar. Come back here when it is done for your initiation into the Greater Temple.}{}{440}{}{}
+{441}{Who is Barkinar?}{}{1}{}{450}{}
+{442}{E:}{}{1}{}{0}{switch_to_gatekeeper(pc, 1800)}
+
+
+{450}{Ah, Barkinar was the leader of the Earth Temple before me. Through all of our efforts, we have grown to be the favored Temple here. And he was promoted to a high rank within the Greater Temple. But it was not all his doing...no it was not.}{Ah, Barkinar was the leader of the Earth Temple before me. Through all of our efforts, we have grown to be the favored Temple here. And he was promoted to a high rank within the Greater Temple. But it was not all his doing...no it was not.}{}{450}{}{}
+{451}{E:}{}{1}{}{0}{switch_to_gatekeeper(pc, 1800)}
+{452}{So how can I join up?}{}{8}{game.quests[43].state == qs_unknown}{220}{}
+{453}{Me want to join Temple.}{}{-7}{game.quests[43].state == qs_unknown}{220}{}
+
+
+{460}{[distracted] I do not have time to waste with you. Now go!}{[distracted] I do not have time to waste with you. Now go!}{}{460}{}{}
+{461}{Okay. I will go.}{}{8}{}{0}{game.global_vars[454] |= ( (game.global_vars[454] & (2**8)) != 0) * (2**9); switch_to_gatekeeper(pc, 1900)}
+{462}{Me sad then. Me just go.}{}{-7}{}{0}{game.global_vars[454] |= ( (game.global_vars[454] & (2**8)) != 0) * (2**9); switch_to_gatekeeper(pc, 1900)}
+{463}{I guess I'm going to have to go volunteer down with one of the other temples, then.}{}{8}{pc.skill_level_get(npc, skill_bluff) >= 12}{470}{}
+{464}{Me go sign on with another Temple.}{}{-7}{pc.skill_level_get(npc, skill_bluff) >= 12}{470}{}
+
+
+{470}{[looks at you with what can only be viewed as a tiny bit of newfound respect] Well, we can't have you doing that now can we. All right, I suppose I could use you for some little tasks around here.}{[looks at you with what can only be viewed as a tiny bit of newfound respect] Well, we can't have you doing that now can we. All right, I suppose I could use you for some little tasks around here.}{}{470}{}{}
+{471}{I am ready to begin work, Romag.}{}{8}{}{110}{}
+{472}{Me start work for Romag now.}{}{-7}{}{110}{}
+
+
+{480}{You IDIOT! There was very sensitive information in that letter. Now you FIND that letter and get it back to Rentsch. I don't care what you have to do, but do NOT return here until that letter is delivered!}{You IDIOT! There was very sensitive information in that letter. Now you FIND that letter and get it back to Rentsch. I don't care what you have to do, but do NOT return here until that letter is delivered!}{}{480}{}{}
+{481}{Forget this. I will just kill you. [attack]}{}{8}{}{0}{npc.attack( pc )}
+{482}{Me not need this. Me just kill you. [attack]}{}{-7}{}{0}{npc.attack( pc )}
+{483}{Okay. I will find that letter, Romag.}{}{8}{}{0}{switch_to_gatekeeper(pc, 1800)}
+{484}{Me go find that letter, Romag.}{}{-7}{}{0}{switch_to_gatekeeper(pc, 1800)}
+
+
+{490}{It didn't seem to be a problem for you when you killed Alrrem's under-priests. You scared of Belsornig?}{It didn't seem to be a problem for you when you killed Alrrem's under-priests. You scared of Belsornig?}{}{490}{}{}
+{491}{You are correct. I am not afraid of anyone. I will go kill him, then.}{}{8}{}{440}{game.quests[45].state = qs_accepted; record_time_stamp(471)}
+{492}{Yes, me kill All Rum's undies. Now me go and kill Big Sore Neck.}{}{-7}{}{440}{game.quests[45].state = qs_accepted; record_time_stamp(471)}
+
+
+{500}{Well you go think about this. The Great Temple awaits, but it will not tolerate those who are not certain of their path. Choose wisely and return when your mind is better focused.}{Well you go think about this. The Great Temple awaits, but it will not tolerate those who are not certain of their path. Choose wisely and return when your mind is better focused.}{}{500}{}{}
+{501}{E:}{}{1}{}{0}{switch_to_gatekeeper(pc, 1800)}
+
+
+{510}{What? Belsornig is dead? Oh, this is a happy day indeed! Well you have certainly proven yourself worthy...and then some!}{What? Belsornig is dead? Oh, this is a happy day indeed! Well you have certainly proven yourself worthy...and then some!}{}{510}{}{}
+{511}{So what happens next?}{}{8}{}{530}{}
+{512}{What me do now?}{}{-7}{}{530}{}
+
+
+{520}{Well praise the Lady of Fungi herself! That is most excellent news indeed. You have certainly proven yourself worthy of the Greater Temple.}{Well praise the Lady of Fungi herself! That is most excellent news indeed. You have certainly proven yourself worthy of the Greater Temple.}{}{520}{}{}
+{521}{So what happens next?}{}{8}{}{530}{}
+{522}{What me do now?}{}{-7}{}{530}{}
+
+
+{530}{I will lead you down to the Greater Temple for a meeting with the High Priest, Hedrack. He will guide you from there.}{I will lead you down to the Greater Temple for a meeting with the High Priest, Hedrack. He will guide you from there.}{}{530}{}{}
+{531}{All right. Let's go.}{}{1}{}{540}{}
+{532}{I really need some more time to prepare for this. I'll be back.}{}{8}{}{500}{}
+{533}{Me need more time. Me prepare first.}{}{-7}{}{500}{}
+
+
+{540}{I will need to blindfold you for the trip down. Are you ready?}{I will need to blindfold you for the trip down. Are you ready?}{}{540}{}{}
+{541}{Why the blindfold?}{}{1}{game.global_vars[454] & (2**8) == 0}{560}{}
+{542}{Okay. Let's go.}{}{1}{}{550}{}
+{543}{Sheesh, you and your blindfolds. Why is it necessary?}{}{1}{game.global_vars[454] & (2**8) != 0}{560}{}
+
+{550}{[blindfolds you] I will guide you down, then. Hold on to this rope. [hands you a rope]}{[blindfolds you] I will guide you down, then. Hold on to this rope. [hands you a rope]}{}{550}{}{}
+{551}{[grab onto rope and follow behind]}{}{1}{}{0}{escort_below(npc, pc)}
+
+
+{560}{The entrance to the Greater Temple is known to only a few. Hedrack would like to keep it that way.}{The entrance to the Greater Temple is known to only a few. Hedrack would like to keep it that way.}{}{560}{}{}
+{561}{Then bring on the blindfold. I'm ready.}{}{8}{}{550}{}
+{562}{Give me blindfold. Me go.}{}{-7}{}{550}{}
+{563}{I really need some more time to prepare for this. I'll be back.}{}{8}{}{500}{}
+{564}{Me need more time. Me prepare first.}{}{-7}{}{500}{}
+
+
+{570}{[bowing before Hedrack] Lord, mighty Belsornig has been slain! This was no accident, I assure you. Worthiness and value have been shown beyond any shadow of a doubt.}{[bowing before Hedrack] Lord, mighty Belsornig has been slain! This was no accident, I assure you. Worthiness and value have been shown beyond any shadow of a doubt.}{}{570}{}{}
+{571}{[bow slightly to Romag]}{}{1}{}{0}{talk_Hedrack(npc,pc, 90)}
+
+
+{580}{Farewell, @pcname@. I leave you here to find Hedrack on your own now. [Romag disappears]}{Farewell, @pcname@. I leave you here to find Hedrack on your own now. [Romag disappears]}{}{580}{}{}
+{581}{Wait! [noticing he is gone] Okay. Farewell, where ever you are.}{}{8}{}{0}{npc.object_flag_set(OF_OFF)}
+{582}{Okay.}{}{-7}{}{0}{npc.object_flag_set(OF_OFF)}
+
+
+{590}{[An assertive looking man in a dull brown robe gazes at you intently]}{[An assertive looking man in a dull brown robe gazes at you intently]}{}{590}{}{}
+{591}{[continue]}{}{1}{game.global_flags[107] == 1 or game.global_flags[105] == 1 or game.global_flags[106] == 1}{600}{}
+{592}{[continue]}{}{1}{game.global_flags[107] == 0 and game.global_flags[105] == 0 and game.global_flags[106] == 0}{680}{} // must have done some other damage to Earth temple
+
+
+{600}{Ah. Welcome to the Earth Temple. I am Romag, the chief cleric here. I can see that you are a step above the usual riff raff that comes down here.}{Ah. Welcome to the Earth Temple. I am Romag, the chief cleric here. I can see that you are a step above the usual riff raff that comes down here.}{}{600}{}{game.story_state = 5}
+{601}{Why? Have you knowledge of my exploits?}{}{1}{game.global_flags[107] == 1 and game.global_flags[105] == 0}{610}{}
+{602}{Why? Have you knowledge of my exploits?}{}{1}{game.global_flags[107] == 0 and game.global_flags[105] == 1}{620}{}
+{603}{Why? Have you knowledge of my exploits?}{}{1}{game.global_flags[107] == 1 and game.global_flags[105] == 1}{610}{}
+{604}{Why, because I wasted Kelno? That was child's play.}{}{1}{game.global_flags[107] == 0 and game.global_flags[105] == 0}{650}{}
+
+
+{610}{Yeah. Alrrem has been slain. That is most excellent indeed. He was a fool, and quite insane, mind you.}{Yeah. Alrrem has been slain. That is most excellent indeed. He was a fool, and quite insane, mind you.}{}{610}{}{}
+{611}{Alrrem is not the only one.}{}{1}{game.global_flags[107] == 1 and game.global_flags[105] == 1}{620}{}
+{612}{Yes, Alrrem is dead. You are next, Romag.}{}{1}{game.global_flags[107] == 1 and game.global_flags[105] == 0}{630}{}
+{613}{Yes. But What of you and I?}{}{1}{game.global_flags[107] == 1 and game.global_flags[105] == 0}{650}{}
+
+
+{620}{Yes. You killed Belsornig. [sarcastic] Damn, that is awful news indeed. Yep...you have no idea.}{Yes. You killed Belsornig. [sarcastic] Damn, that is awful news indeed. Yep...you have no idea.}{}{620}{}{}
+{621}{Yes, Belsornig is dead. You are next, Romag.}{}{1}{game.global_flags[107] == 0 and game.global_flags[105] == 1}{630}{}
+{622}{Yes, Alrrem and Belsornig are dead. You are next, Romag.}{}{1}{game.global_flags[106] == 0 and game.global_flags[107] == 1 and game.global_flags[105] == 1}{630}{}
+{623}{Yes, Alrrem and Belsornig are dead. Not to mention Kelno. You are next, Romag.}{}{1}{game.global_flags[106] == 1 and game.global_flags[107] == 1 and game.global_flags[105] == 1}{630}{}
+{624}{Yes. But What of you and I?}{}{1}{game.global_flags[107] == 0 and game.global_flags[105] == 1}{650}{}
+{625}{Yes. But enough of them. What of you and I?}{}{1}{game.global_flags[107] == 1 and game.global_flags[105] == 1}{650}{}
+
+
+{630}{Hah! Fools! I am really getting tired of these threats. I do not have time to waste with you.}{Hah! Fools! I am really getting tired of these threats. I do not have time to waste with you.}{}{630}{}{}
+{631}{You're going to have to make time, Romag. Right now.}{}{1}{}{640}{}
+
+
+{640}{No, no. You're going to die. That's what's going to happen. And not pleasantly, either.}{No, no. You're going to die. That's what's going to happen. And not pleasantly, either.}{}{640}{}{}
+{641}{[attack]}{}{1}{}{0}{npc.attack( pc )}
+
+
+{650}{Well, I could use you for some "special" jobs I need doing. Yeah.}{Well, I could use you for some "special" jobs I need doing. Yeah.}{}{650}{}{}
+{651}{I don't need to take jobs from the likes of you. Prepare to die! [attack]}{}{8}{}{0}{npc.attack( pc )}
+{652}{Me just kill you then! [attack]}{}{-7}{}{0}{npc.attack( pc )}
+{653}{And what jobs might those be?}{}{8}{}{110}{}
+{654}{Me take jobs. You tell me what to do.}{}{-7}{}{110}{}
+{655}{On second thought, I'd prefer to just get back to my adventuring.}{}{8}{}{70}{}
+{656}{Me just want to go back to adventures.}{}{-7}{}{70}{}
+
+
+{660}{[smiles] Ah...yeah.}{[smiles] Ah...yeah.}{}{660}{}{}
+{661}{So what now?}{}{1}{}{340}{}
+
+
+{670}{[smiles] Ah...yeah.}{[smiles] Ah...yeah.}{}{670}{}{}
+{671}{So what now?}{}{1}{}{530}{}
+
+
+{680}{[Clearly distraught from the havoc you wrought] I am really getting tired of you... [a nervous twitch crosses his face] stirring up trouble! But I do like you spirit. [a deep frown reappears] But do *not* mess with the Earth Temple!}{[Clearly distraught from the havoc you wrought] I am really getting tired of you... [a nervous twitch crosses his face] stirring up trouble! But I do like you spirit. [a deep frown reappears] But do *not* mess with the Earth Temple!}{}{680}{}{}
+{681}{I take it you forgive me?}{}{1}{}{650}{}
+
+{1000}{Guards!}{Guards!}{}{1000}{}{}

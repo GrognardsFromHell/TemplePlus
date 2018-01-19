@@ -1,0 +1,891 @@
+0	DO NOT USE	0	0	0
+1	Hommlet - map1-int01-ext-prosperous-farm	5001	717	486
+2	Hommlet - map1-int02-ext-modest-farmhouse	5001	763	433
+3	Hommlet - map1-int03-ext-woodcutter	5001	733	381
+4	Hommlet - map1-int04-ext-well-kept-farm	5001	676	507
+5	Hommlet - map1-int05-ext-prosperous-farmhouse	5001	658	448
+6	Hommlet - map1-int06-ext-leatherworker	5001	634	450
+7	Hommlet - map1-int07-ext-inn	5001	627	401
+8	Hommlet - map1-int08-ext-blacksmith	5001	562	444
+9	Hommlet - map1-int09-ext-new-building	5001	575	409
+10	Hommlet - map1-int10-ext-weaver	5001	548	409
+11	Hommlet - map1-int11-ext-tailor	5001	539	380
+12	Hommlet - map1-int12-ext-strapping-farmer	5001	524	393
+13	Hommlet - map1-int13-ext-trading-post	5001	516	329
+14	Hommlet - map1-int14-ext-teamster	5001	448	321
+15	Hommlet - map1-int15-ext-moneychanger	5001	548	332
+16	Hommlet - map1-int16-ext-cabinet-maker	5001	562	293
+17	Hommlet - map1-int17-ext-potter	5001	588	298
+18	Hommlet - map1-int18-ext-brewhouse	5001	642	327
+19	Hommlet - map1-int19-ext-modest-cottage	5001	548	242
+20	Hommlet - map1-int20-ext-church	5001	495	231
+21	Hommlet - map1-int21-ext-cheesemaker	5001	445	368
+22	Hommlet - map1-int22-ext-mill	5001	448	410
+23	Hommlet - map1-int23-ext-reclusive-farmer	5001	397	413
+24	Hommlet - map1-int24-ext-grove	5001	621	520
+25	Hommlet - map1-int25-ext-herdsman	5001	592	473
+26	Hommlet - map1-int26-ext-wainwright	5001	558	484
+27	Hommlet - map1-int27-ext-village-elder	5001	496	463
+28	Hommlet - map1-int28-ext-carpenter	5001	523	508
+29	Hommlet - map1-int29-ext-stone-mason	5001	452	517
+30	Hommlet - map1-int31-ext-tower	5001	449	607
+31	Hommlet - map1-int03-int-woodcutter	5022	483	483
+32	Hommlet - map1-int04-int-well-kept-farm	5023	471	486
+33	Hommlet - map1-int04-stairbase1-well-kept-farm	5023	471	477
+34	Hommlet - map1-int04-stairtop2-well-kept-farm	5024	471	471
+35	Hommlet - map1-int05-int-prosperous-farmhouse	5025	487	489
+36	Hommlet - map1-int06-int-leatherworker	5026	492	485
+37	Hommlet - map1-int02-int-modest-farmhouse	5063	475	472
+38	Hommlet - map-3-int-InnFirst	5007	485	486
+39	Hommlet - Map-3-left-stairbase1	5007	496	480
+40	Hommlet - Map-3-right-stairbase1	5007	468	480
+41	Hommlet - Map-3-secret-stairtop1	5007	463	475
+42	Hommlet - Map-3-left-stairtop1	5007	496	474
+43	Hommlet - Map-3-left-stairbase0	5006	496	480
+44	Hommlet - Map-3-secret-stairbase0	5006	463	485
+45	Hommlet - Map-3-left-stairtop2	5008	495	474
+46	Hommlet - Map-3-right-stairtop2	5008	464	480
+47	Hommlet - map1-int08-int-blacksmith	5027	483	481
+48	Hommlet - map1-int09-int-new-building	5048	476	486
+49	Hommlet - map1-int10-int-weaver	5028	493	489
+50	Hommlet - map1-int10-stairbase1	5028	495	495
+51	Hommlet - map1-int10-stairtop2	5029	488	494
+52	Hommlet - map1-int11-int-tailor	5030	490	486
+53	Hommlet - map1-int12-int-strapping-farmer	5031	481	484
+54	Hommlet - map1-int13-ext-traders-barn	5001	488	309
+55	Hommlet - Map-4-int-right	5010	481	481
+56	Hommlet - Map-4-int-left	5010	481	478
+57	Hommlet - Map-4-int-top	5010	480	475
+58	Hommlet - map1-int13-ext-side-trading-post	5001	519	302
+59	Hommlet - map1-int13-ext-barn-trading-post	5001	493	309
+60	Hommlet - Map-4-int-right	5009	480	488
+61	Hommlet - Map-4-int-left	5009	494	485
+62	Hommlet - Map-4-int-top	5009	469	481
+63	Hommlet - map1-int13-ext-left-traders-barn	5001	492	295
+64	Hommlet - map1-int13-ext-right	5001	460	314
+65	Hommlet - map1-int14-int-teamster	5032	481	483
+66	Hommlet - map1-int15-int-right-Moneychanger	5033	472	491
+67	Hommlet - map1-int15-int-left-Moneychanger	5033	483	491
+68	Hommlet - map1-int15-ext-left-Moneychanger	5001	559	325
+69	Hommlet - map1-int17-int-potter	5036	480	476
+70	Hommlet - map1-int18-int-right-brewhouse	5037	463	489
+71	Hommlet - map1-int18-int-left-brewhouse	5037	478	490
+72	Hommlet - map1-int18-ext-left-brewhouse	5001	647	324
+73	Hommlet - map1-int19-int-modest-cottage	5038	488	486
+74	Hommlet - Map-5-int-Main-Floor	5012	484	487
+75	Hommlet - Map-5-stairbase1	5012	497	474
+76	Hommlet - Map-5-stairtop1	5012	497	495
+77	Hommlet - Map-5-stairbase0	5013	494	487
+78	Hommlet - Map-5-stairtop2	5011	491	469
+79	Hommlet - map1-int01-int-prosperous-farmer	5020	477	483
+80	Hommlet - map1-int01-stairbase1	5020	470	484
+81	Hommlet - map1-int01-stairtop2	5021	486	490
+82	Hommlet - map1-int16-ext-middle-cabinet-maker	5001	569	284
+83	Hommlet - map1-int16-ext-left-cabinet-maker	5001	572	275
+84	Hommlet - map1-int16-int-cabinet-maker	5034	472	483
+85	Hommlet - map1-int16-int-middle-cabinet-maker	5034	486	479
+86	Hommlet - map1-int16-int-left-cabinet-maker	5034	492	479
+87	Hommlet - map1-int16-stairbase1	5034	477	474
+88	Hommlet - map1-int16-stairtop2	5035	471	474
+89	Hommlet - map1-int21-int-cheesemaker	5039	477	480
+90	Hommlet - map1-int22-int-mill	5040	497	489
+91	Hommlet - map1-int23-int-reclusive-farmer	5041	484	483
+92	Hommlet - map1-int24-int-the-grove	5042	494	476
+93	Hommlet - map1-int25-ext-herdsman-right-barn	5001	577	492
+94	Hommlet - map1-int25-int-herdsman-barn	5043	493	478
+95	Hommlet - map1-int25-int-right-herdsman-barn	5043	486	491
+96	Hommlet - map1-int25-int-top-hersman-barn	5043	481	475
+97	Hommlet - map1-int25-ext-top-hersman-barn	5001	563	474
+98	Hommlet - map1-int26-int-wainwright	5044	495	488
+99	Hommlet - map1-int27-int-village-elder	5045	484	476
+100	Hommlet - map1-int27-stairbase1	5045	484	470
+101	Hommlet - map1-int27-stairtop2	5046	478	471
+102	Hommlet - map1-int27-ext-back-village-elder	5001	469	453
+103	Hommlet - map1-int28-int-carpenter	5047	477	472
+104	Hommlet - map1-int29-int-stone-mason	5049	481	484
+105	Hommlet - Map-6-int-Tower	5016	478	490
+106	Hommlet - Map-6-stairtop2	5016	483	473
+107	Hommlet - Map-6-stairbase2	5016	472	479
+108	Hommlet - Map-6-stairtop1	5015	484	474
+109	Hommlet - Map-6-stairbase1	5015	472	479
+110	Hommlet - Map-6-stairbase0	5014	472	479
+111	Hommlet - Map-6-stairtop3	5018	483	473
+112	Hommlet - Map-6-ladderbase3	5018	479	474
+113	Hommlet - Map-6-int-Parapet	5019	482	477
+114	Hommlet - Map-6-ext-Parapet	5017	470	461
+115	Moathouse - Map-7-ext-spider-tower	5002	483	469
+116	Moathouse - Map-7-ext-ruins	5002	464	449
+117	Moathouse - Map-7-ext-brigand-escape	5002	437	445
+118	Moathouse - Map-7-ruins-stairtop1	5004	489	471
+119	Moathouse - Map-7-int-ruins	5004	483	484
+120	Moathouse - Map-7-int-ruins-brigand-escape	5004	461	471
+121	Moathouse - Map-7-int-spider-tower	5003	466	489
+122	Moathouse - Map-8-stairbase0	5005	427	406
+123	Nulb - Map-9-Nulb-ext-The-Water-Hostel	5051	550	453
+124	Nulb - Map-9-Nulb-ext-left-The-Water-Hostel	5051	558	448
+125	Nulb - Map-9-Nulb-ext-Snake-Brothel	5051	556	529
+126	Nulb - Map-9-Nulb-ext-Mother-Screng	5051	546	558
+127	Nulb - Map-9-Nulb-ext-Smithy	5051	494	510
+128	Nulb - Map-9-Nulb-ext-right-Boatmen	5051	395	522
+129	Nulb - Map-9-Nulb-ext-left-Boatmen	5051	403	512
+130	Nulb - Map-9-Nulb-int-Boatman	5052	481	492
+131	Nulb - Map-9-Nulb-int-Mother-Screng	5053	484	485
+132	Nulb - Map-9-stairbase1-Mother-Screng	5053	485	480
+133	Nulb - Map-9-Nulb-stairbase2-Mother-Screng	5054	487	482
+134	Nulb - Map-9-Nulb-stairtop2-Mother-Screng	5054	477	482
+135	Nulb - Map-9-Nulb-stairtop3-Mother-Screng	5055	471	473
+136	Nulb - Map-9-Nulb-int-Smithy	5056	493	487
+137	Nulb - Map-9-Nulb-int-Snake-Brothel	5057	497	490
+138	Nulb - Map-9-Nulb-stairbase1-Snake-Brothel	5057	492	489
+139	Nulb - Map-9-Nulb-stairtop2-Snake-Brothel	5058	492	480
+140	Nulb - Map-9-Nulb-stairbase2-Snake-Brothel	5058	495	479
+141	Nulb - Map-9-Nulb-stairtop3-Snake-Brothel	5059	486	489
+142	Nulb - Map-9-Nulb-int-The-Water-Hostel	5060	484	500
+143	Nulb - Map-9-Nulb-stairbase1-The-Water-Hostel	5060	483	488
+144	Nulb - Map-9-Nulb-stairtop2-The-Water-Hostel	5061	474	490
+145	Temple - Map-11-ext-Temple-Exterior	5062	512	449
+146	Temple - Map-11-ext-Tower-Ruins	5111	479	490
+147	Temple - Map-10-int-Tower-Ruins	5065	485	494
+148	Temple - Map-11-int-Temple-Interior	5064	500	577
+149	Temple - Map-11-left-stairtop-temple-interior	5064	561	523
+150	Temple - Map-11-right-stairtop-temple-interior	5064	420	521
+151	Temple - Map-11-well-stairtop-temple-interior	5064	483	484
+152	Temple - Map-12-lower-left-stairbase-temple-dungeon-level-1	5066	551	589
+153	Temple - Map-12-lower-right-stairbase-temple-dungeon-level-1	5066	416	589
+154	Temple - Map-12-lower-middle-stairtop-temple-dungeon-level-1	5066	484	573
+155	Temple - Map-12-top-left-stairtop-temple-dungeon-level-1	5066	554	392
+156	Temple - Map-13-air-temple-pit	5067	488	506
+157	Temple - Map-13-middle-stairbase	5067	487	559
+158	Temple - Map-13-lower-left-stairtop	5067	578	585
+159	Temple - Map-13-middle-left-stairtop	5067	532	477
+160	Temple - Map-13-middle-right-stairtop	5067	382	449
+161	Temple - Map-13-upper-left-stairbase	5067	562	370
+162	Hommlet - Braumeister Apprentice Night Drinking Spot	5007	473	488
+163	Hommlet - Braumeister Apprentice Day Work Spot	5037	474	485
+164	Hommlet - Teamster Son Day Stand	5032	470	482
+165	Hommlet - Teamster Son Night Stand	5001	561	223
+166	Temple - Map-14-lower-left-stairbase	5105	617	602
+167	Temple - Map-14-bottom-left-stairtop	5105	523	618
+168	Temple - Map-14-bottom-right-stairtop	5105	462	607
+169	Temple - Map-13-lower-middle-left-stairtop	5067	516	511
+170	Temple - Map-14-lower-middle-left-stairbase	5105	519	516
+171	Temple - Map-14-middle-left-stairbase	5105	552	487
+172	Temple - Map-14-middle-right-stairbase	5105	407	437
+173	Temple - Map-15-bottom-left-stairbase	5080	486	597
+174	Temple - Map-15-bottom-right-stairbase	5080	471	596
+175	Nulb - Map-9-Nulb-ext-generic-01	5051	481	446
+176	Nulb - Map-9-Nulb-ext-generic-02	5051	465	457
+177	Nulb - Map-9-Nulb-ext-generic-03	5051	450	476
+178	Nulb - Map-9-Nulb-ext-generic-04	5051	483	580
+179	Nulb - Map-9-Nulb-int-generic-01	5085	474	496
+180	Nulb - Map-9-Nulb-int-generic-02	5086	471	494
+181	Nulb - Map-9-Nulb-int-generic-03	5087	469	494
+182	Nulb - Map-9-Nulb-int-generic-04	5088	473	493
+183	HB Ravine ettin 01 alt	5095	499	443
+184	HB Ravine ettin 02 alt	5095	499	447
+185	Moathouse - Moathouse-exit-tunnel-ext	5091	492	477
+186	Moathouse - Moathouse-exit-tunnel-int	5005	532	560
+187	Temple - Temple-escape-tunnel-cave-ladder	5092	470	467
+188	Temple - Map-10-Tower-Ruins-ladder	5065	477	480
+189	Temple - Temple-deserted-farm-ext	5112	496	478
+190	Temple - Map14-dungeon-level-03-escape	5105	641	446
+191	Temple - air-node-entrance	5081	477	484
+192	Temple - earth-node-entrance	5082	484	473
+193	Temple - fire-node-entrance	5083	505	496
+194	Temple - water-node-entrance	5084	453	473
+195	Temple - level-4-earth-exit	5080	433	503
+196	Temple - level-4-air-exit	5080	399	447
+197	Temple - level-4-fire-exit	5080	371	426
+198	Temple - level-4-water-exit	5080	411	391
+199	Temple - temple-dungeon-level-3-gate-exit	5080	478	353
+200	Temple - temple-dungeon-level-3-gate-entrance	5079	414	513
+201	Temple - Temple-escape-tunnel-left	5092	491	455
+202	Temple - Temple-escape-tunnel-right	5092	453	491
+203	Hommlet - Valden-Night-Stand	5007	479	479
+204	Hommlet - Elmo-Night-Stand	5007	475	483
+205	Hommlet - Zert-Night-Stand	5007	479	488
+206	Hommlet - Zert-Day-Stand	5008	464	485
+207	Hommlet - Valden-Day-Stand	5044	490	494
+208	Hommlet - Elmo-Day-Stand	5001	617	398
+209	Hommlet - Black-Jay-Day-Stand	5001	559	245
+210	Hommlet - Black-Jay-Night-Stand	5038	484	484
+211	Hommlet - Tarim-Night-Stand	5022	482	477
+212	Hommlet - Tarim-Day-Stand	5001	727	384
+213	Hommlet - Widow Grandchild Night 1	5024	470	472
+214	Hommlet - Widow Grandchild Night 2	5024	469	473
+215	Hommlet - Widow Grandchild Night 3	5024	468	474
+216	Hommlet - Widow Grandchild Night 4	5024	469	476
+217	Hommlet - Widow Grandchild Night 5	5024	467	477
+218	Hommlet - Widow Grandchild Night 6	5024	469	479
+219	Hommlet - Widow Grandchild Night 7	5024	466	478
+220	Hommlet - Widow Grandchild Night 8	5024	468	480
+221	Hommlet - Widow Grandchild Day 1	5001	672	512
+222	Hommlet - Widow Grandchild Day 2	5001	676	513
+223	Hommlet - Widow Grandchild Day 3	5001	673	516
+224	Hommlet - Widow Grandchild Day 4	5001	677	519
+225	Hommlet - Widow Grandchild Day 5	5001	667	514
+226	Hommlet - Widow Grandchild Day 6	5001	665	516
+227	Hommlet - Widow Grandchild Day 7	5001	671	520
+228	Hommlet - Widow Grandchild Day 8	5001	668	522
+229	Hommlet - Otello-Day-Stand	5001	497	396
+230	Hommlet - Otello-Night-Stand	5031	481	480
+231	Hommlet - Teamster-Day-Stand	5001	451	316
+232	Hommlet - Teamster-Night-Stand	5032	474	474
+233	Hommlet - Stone-Mason-Kid-Night-1	5049	467	477
+234	Hommlet - Stone-Mason-Kid-Night-2	5049	469	470
+235	Hommlet - Stone-Mason-Kid-Day-1	5001	455	504
+236	Hommlet - Stone-Mason-Kid-Day-2	5001	458	509
+237	Nulb - Tolub-Night-Stand	5052	482	477
+238	Nulb - Tolub-Day-Stand	5051	367	482
+239	Moathouse - Moathouse-Secret-Stairs-bottom	5005	419	451
+240	Moathouse - Moathouse-Secret-Tunnel-top	5005	446	431
+241	Moathouse - Moathouse-Secret-Tunnel-bottom	5005	497	456
+242	Temple - Temple-Dungeon-3-Tunnel-top	5105	632	486
+243	Temple - Temple-Dungeon-3-Tunnel-bottom	5105	598	522
+244	Temple - Air-Shaft-level-2-exit	5067	480	503
+245	Temple - Air-Shaft-temple-interior-exit	5064	484	483
+246	Temple - Air-Shaft-ledge	5106	479	476
+247	Temple - Air-Shaft-level-1-exit	5066	485	514
+248	Temple - Temple-entrance-from-tower	5062	394	467
+249	Temple - Temple-entrance-from-house	5062	556	473
+250	Temple - Temple-house-from-entrance	5110	467	529
+251	Temple - Temple-tower-from-entrance	5111	494	555
+252	Temple - Ogre-Cave-Ext	5113	485	511
+253	Temple - Ogre-Cave-Int	5114	485	481
+254	Temple - Wonnilon - Hideout	5066	418	374
+255	Hommlet - Mickey - Day	5037	482	487
+256	Nulb - Mickey - Night	5060	482	507
+257	Hommlet - Paida - Rescued	5044	478	496
+258	Temple - Wicked - set free	5080	378	553
+259	Temple - temple-interior-near-throne	5064	490	409
+260	Temple - Temple-level-3-upper-throne	5079	477	491
+261	Hommlet - map1-int25-herdsman-house-int	5050	488	472
+262	Tutorial Level 2	5117	496	483
+263	Tutorial Level 3	5118	532	485
+264	Temple - Romag's Scout point	5080	481	439
+265	Hommlet - Burne Home	5016	478	476
+266	Hommlet - Rufus Home	5016	483	476
+267	Temple - Romag Escort	5080	482	447
+268	Tutorial Lev 1	5116	438	490
+269	Up to Tutorial Lev 2	5117	462	482
+270	Hommlet - Otello Stealing	5001	657	420
+271	Moathouse - Gnoll Patrol #1	5005	492	502
+272	Moathouse - Gnoll Patrol #1	5005	485	486
+273	Temple - Gnoll Patrol #2	5066	509	539
+274	Temple - Gnoll Patrol #2	5066	508	548
+275	Temple - Gnoll Patrol #2	5066	520	547
+276	Temple - Gnoll Patrol #2	5066	495	535
+277	Temple - Gnoll Patrol #2	5066	519	533
+278	Hommlet - Widow Grandchild	5001	647	497
+279	Hommlet - Widow Grandchild	5001	622	510
+280	Hommlet - Widow Grandchild	5001	635	490
+281	Hommlet - Widow Grandchild	5001	604	546
+282	Hommlet - Widow Grandchild	5001	694	513
+283	Hommlet - Widow Grandchild	5001	646	498
+284	Hommlet - Widow Grandchild	5001	623	511
+285	Hommlet - Widow Grandchild	5001	636	489
+286	Hommlet - Widow Grandchild	5001	606	545
+287	Hommlet - Widow Grandchild	5001	697	547
+288	Temple - Goblin Patrol	5066	461	541
+289	Temple - Goblin Patrol	5066	472	531
+290	Temple - Goblin Patrol	5066	446	532
+291	Hommlet - Amii-day	5001	728	387
+292	HB Ravine orc shaman 02 alt	5095	503	446
+293	HB Ravine orc archer 04 alt	5095	491	471
+294	HB Ravine orc sniper 03 alt	5095	497	465
+295	HB Ravine orc bowman 03 alt	5095	495	467
+296	HB Ravine orc archer 05 alt	5095	493	469
+297	HB North 01 orc murderer 01 alt	5095	506	369
+298	HB North 01 orc sergeant 01 alt	5095	513	369
+299	HB North 01 ogre 01 alt	5095	509	372
+300	HB North 01 orc theurgist 01 alt	5095	509	367
+301	Verbobonc - Asherah's Estate from Exterior	5122	481	475
+302	Verbobonc - Exterior from Asherah's Estate	5121	633	271
+303	Verbobonc - Gnome Quarter 1 from Exterior	5123	481	482
+304	Verbobonc - Exterior from Gnome Quarter 1	5121	603	234
+305	Verbobonc - Gnome Quarter 2 from Exterior	5124	475	481
+306	Verbobonc - Exterior from Gnome Quarter 2	5121	567	208
+307	Verbobonc - Gnome Quarter 3 from Exterior	5125	482	480
+308	Verbobonc - Exterior from Gnome Quarter 3	5121	520	192
+309	Verbobonc - Gnome Quarter 4 from Exterior	5126	486	490
+310	Verbobonc - Exterior from Gnome Quarter 4	5121	454	211
+311	Verbobonc - Gnome Quarter 4 from Gnome Tunnels 1	5126	487	483
+312	Verbobonc - Gnome Tunnels 1 from Gnome Quarter 4	5127	529	460
+313	Verbobonc - Gnome Tunnels 1 from Gnome Tunnels 2	5127	429	490
+314	Verbobonc - Gnome Tunnels 2 from Gnome Tunnels 1	5128	497	482
+315	Verbobonc - Gnome Tunnels 2 from Gnome Tunnels 3	5128	453	482
+316	Verbobonc - Gnome Tunnels 3 from Gnome Tunnels 2	5129	534	485
+317	Verbobonc - Gnome Tunnels 3 from Gnome Tunnels 4	5129	428	490
+318	Verbobonc - Gnome Tunnels 4 from Gnome Tunnels 3	5130	492	449
+319	Verbobonc - Gnome Tunnels 4 from Gnome Tunnels 5	5130	466	485
+320	Verbobonc - Gnome Tunnels 5 from Gnome Tunnels 4	5131	503	450
+321	Verbobonc - Gnome Tunnels 5 from Cave Exit	5131	484	482
+322	Hommlet - Hommlet well	5001	647	504
+323	Verbobonc - Cave Exit from Gnome Tunnels 5	5132	478	504
+324	Verbobonc - Gnome Quarter 5 from Exterior	5133	472	478
+325	Verbobonc - Exterior from Gnome Quarter 5	5121	430	231
+326	Verbobonc - Gnome Quarter 6 from Exterior	5134	491	486
+327	Verbobonc - Exterior from Gnome Quarter 6	5121	408	266
+328	Verbobonc - Viscount Residence from Exterior	5135	493	489
+329	Verbobonc - Exterior from Viscount Residence	5121	390	318
+330	Moathouse - Hommlet from Gnarley Forest	5001	508	401
+331	Hickory Branch - Exterior from Crypt	5095	559	515
+332	Hickory Branch - Crypt from Exterior	5191	485	459
+333	HB North 01 orc marksman 01 alt	5095	508	361
+334	Welkwood Bog - Run from Exterior	5192	492	451
+335	Welkwood Bog - Run from Crypt	5192	451	492
+336	HB North 01 orc sniper 01 alt	5095	511	364
+337	Verbobonc - Church Pelor Main from Exterior	5137	484	485
+338	Verbobonc - Church Pelor Main from Church Pelor Upper	5137	494	475
+339	Verbobonc - Church Pelor Upper from Church Pelor Main	5138	492	472
+340	Verbobonc - Exterior from Church Pelor Main	5121	480	339
+341	Welkwood Bog - Exterior from Crypt	5093	462	599
+342	Welkwood Bog - Exterior from Run	5093	517	468
+343	Verbobonc - Ruined Church Main from Exterior	5139	476	479
+344	Welkwood Bog - Crypt from Exterior and Run	5193	511	482
+345	Verbobonc - Ruined Church Main from Ruined Church Lower	5139	474	477
+346	Verbobonc - Ruined Church Lower from Ruined Church Main	5140	472	477
+347	Verbobonc - Ruined Church Lower from Ruined Church Tunnel	5140	483	497
+348	Verbobonc - Drainage Tunnels from Ruined Church Lower	5141	535	300
+349	Verbobonc - Drainage Tunnels from Castle Basement	5141	707	416
+350	Verbobonc - Exterior from Ruined Church Main	5121	553	304
+351	Verbobonc - Rabbit Hole from Castle Basement	5142	387	379
+352	Verbobonc - Castle Basement from Ruined Church Tunnel	5143	483	498
+353	Verbobonc - Castle Basement from Castle Dormitories and Rabbit Hole	5143	501	501
+354	Verbobonc - Castle Dormitories from Castle Basement and Castle Main Hall	5144	496	496
+355	Verbobonc - Castle Main Hall from Castle Upper Hall	5145	481	468
+356	Verbobonc - Castle Main Hall from Castle Dormitories	5145	479	488
+357	Verbobonc - Castle Main Hall from Exterior	5145	486	511
+358	Verbobonc - Castle Upper Hall from Castle Parapet	5146	488	471
+359	Verbobonc - Castle Upper Hall from Castle Main Hall	5146	479	461
+360	Verbobonc - Castle Parapet from Castle Upper Hall	5147	476	468
+361	Verbobonc - Exterior from Castle Main Hall	5121	703	439
+362	Hickory Branch - Hickory Branch Convergence	5095	402	554
+363	Verbobonc - Exterior from Gnome Quarter 4 well	5121	476	177
+364	Verbobonc - Castle Outbuilding 1 from Exterior	5148	488	484
+365	Verbobonc - Exterior from Castle Outbuilding 1	5121	696	371
+366	Verbobonc - Castle Outbuilding 2 from Exterior	5149	472	492
+367	Verbobonc - Exterior from Gnome Quarter 5 well	5121	404	229
+368	Verbobonc - Maroon Moon Third - Lerrik night-stand	5160	481	474
+369	Hommlet - Map-3-InnSecond Turuko day-stand	5008	491	474
+370	Hommlet - Map-3-InnSecond Kobort day-stand	5008	493	474
+371	Verbobonc - Exterior from Viscount Residence well	5121	363	309
+372	Verbobonc - Exterior from Watch Post well	5121	134	504
+373	Verbobonc - Exterior from City Block 1 well	5121	187	557
+374	Verbobonc - Exterior from Gnome Quarter 2 well	5121	587	204
+375	Verbobonc - Exterior from Church Pelor well	5121	460	296
+376	Verbobonc - Exterior from Guard Shack East well	5121	431	358
+377	Verbobonc - Exterior from Wharves well	5121	324	478
+378	Verbobonc - Exterior from City Block 2 well	5121	256	539
+379	Verbobonc - Exterior from City Block 3 well	5121	211	580
+380	Verbobonc - Exterior from Waterfront well	5121	398	472
+381	Verbobonc - Exterior from Asherah Estate well	5121	604	289
+382	Verbobonc - Exterior from Guard Shack West well	5121	564	363
+383	Verbobonc - Exterior from City Block 4 well	5121	280	621
+384	Verbobonc - Exterior from Private Residence 1 well	5121	313	671
+385	Verbobonc - Exterior from Merchant Row well	5121	437	559
+386	Verbobonc - Exterior from Lhizeas hole	5121	581	372
+387	Hommlet - Map-3-InnSecond Spugnoir night-stand	5008	465	485
+388	Verbobonc - Exterior from Spruce Goose well	5121	525	492
+389	Verbobonc - Exterior from Archer Eye well	5121	378	640
+390	Verbobonc - Exterior from Private Residence 4 well	5121	353	721
+391	Verbobonc - Exterior from Apartments well	5121	438	682
+392	Hommlet - map1-int01-prosperous-farmer-upstairs Boy 01 night-stand	5021	495	490
+393	Hommlet - map1-int01-prosperous-farmer-upstairs Boy 02 night-stand	5021	492	490
+394	Hommlet - map1-int01-prosperous-farmer-upstairs Boy 03 night-stand	5021	490	488
+395	Hommlet - map1-int01-prosperous-farmer-upstairs Boy 04 night-stand	5021	491	492
+396	Verbobonc - Exterior from Castle Outbuilding 3 well	5121	685	464
+397	Verbobonc - Exterior from Tenements well	5121	437	808
+398	Verbobonc - Exterior from Courtyard well	5121	485	758
+399	Verbobonc - Exterior from Warehouse District well	5121	647	619
+400	Hommlet - map1-int04-well-kept-farm-upstairs Widow Mathilde night-stand	5024	471	486
+401	Hommlet - map1-int04-well-kept-farm-upstairs Man 01 night-stand	5024	463	482
+402	Hommlet - map1-int04-well-kept-farm-upstairs Woman 01 night-stand	5024	462	484
+403	Hommlet - map1-int04-well-kept-farm-upstairs Boy 01 night-stand	5024	465	479
+404	HB North 01 orc sniper 02 alt	5095	506	364
+405	HB North 02 orc theurgist 01 alt	5095	509	367
+406	HB North 02 orc assassin 01 alt	5095	509	373
+407	Hommlet - map1-int04-well-kept-farm-upstairs Kent night-stand	5024	467	477
+408	HB North 02 orc fighter 01 alt	5095	514	370
+409	HB North 02 orc fighter 02 alt	5095	513	373
+410	HB North 02 orc fighter 03 alt	5095	511	370
+411	HB North 02 orc fighter 04 alt	5095	507	370
+412	Hommlet - map1-int10-weaver Ganna day-stand	5028	475	497
+413	HB North 02 orc fighter 05 alt	5095	505	373
+414	Hommlet - map1-int25-herdsman-house Laszlo night-stand	5050	478	469
+415	Hommlet - map1-int25-herdsman-house Eddie night-stand	5050	478	474
+416	Hommlet - map1-int25-herdsman-house Boy 01 night-stand	5050	475	474
+417	HB North 02 orc fighter 06 alt	5095	504	370
+418	Hommlet - map1-int25-herdsman-house Boy 02 night-stand	5050	472	476
+419	HB North 02 orc sniper 01 alt	5095	511	364
+420	HB North 02 orc sniper 02 alt	5095	506	364
+421	HB North 02 orc marksman 01 alt	5095	508	361
+422	HB Ergo runoff standpoint	5095	582	481
+423	Hommlet - map1-int05-prosperous-farmhouse Manservant day-stand	5025	495	487
+424	HB Kallop runoff standpoint	5095	414	476
+425	HB Boonthag runoff standpoint	5095	378	498
+426	HB Krunch and Ruff runoff standpoint	5095	510	368
+427	HB Krunch and Ruff cave position standpoint	5095	510	377
+428	Hommlet - map1-int16-cabinet-maker-upstairs Woman 01 night-stand	5035	475	482
+429	Hommlet - map1-int16-cabinet-maker-upstairs Girl 01 night-stand	5035	471	484
+430	Hommlet - map1-int16-cabinet-maker-upstairs Girl 02 night-stand	5035	471	482
+431	Hommlet - map1-int16-cabinet-maker-upstairs Girl 03 night-stand	5035	471	480
+432	HB East orc rundor decoy 01 runoff standpoint	5095	442	402
+433	HB East orc rundor decoy 02 runoff standpoint	5095	444	384
+434	HB Angra Mainyu runoff standpoint	5095	481	477
+435	HB Cave - Boonthag greet standpoint	5115	485	466
+436	HB Cave - bugbear troop 01 greet standpoint	5115	479	466
+437	HB Cave - orc fighter 02 greet standpoint	5115	482	466
+438	HB Cave - Kallop greet standpoint	5115	499	470
+439	Hommlet - Map-6-Upper-Hall Rufus night-stand	5018	481	483
+440	Nulb - Map-9-Nulb-Interior-Generic-Nulb-2nd-fl Preston night-stand	5087	464	487
+441	Hommlet - Map-6-Parapet-Interior Pishella night-stand	5019	476	480
+442	Hommlet - map1-int10-weaver-upstairs Girl 01 night-stand	5029	495	490
+443	Hommlet - map1-int10-weaver-upstairs Girl 02 night-stand	5029	492	490
+444	Hommlet - map1-int10-weaver-upstairs Boy 01 night-stand	5029	488	490
+445	Hommlet - map1-int10-weaver-upstairs Boy 02 night-stand	5029	485	490
+446	Verbobonc - Exterior from Castle Outbuilding 2	5121	733	375
+447	Verbobonc - Castle Outbuilding 3 from Exterior	5150	481	476
+448	Verbobonc - Exterior from Castle Outbuilding 3	5121	693	475
+449	Verbobonc - Spruce Goose First from Exterior	5151	497	490
+450	Verbobonc - Spruce Goose First from Spruce Goose Second	5151	492	490
+451	Verbobonc - Spruce Goose Second from Spruce Goose First	5152	493	477
+452	Nulb - Map-9-Nulb-Interior-Snake-Brothel-1st-fl Man 01 night-stand	5057	487	482
+453	Nulb - Map-9-Nulb-Interior-Snake-Brothel-1st-fl Man 01 night-stand	5057	483	487
+454	Nulb - Map-9-Nulb-Interior-Snake-Brothel-1st-fl Man 01 night-stand	5057	480	491
+455	Nulb - Map-9-Nulb-Interior-Generic-Nulb-3rd-fl Grud night-stand	5087	466	486
+456	Nulb - Map-9-Nulb-Interior-Mona's Store	5089	478	493
+457	Nulb - Map-9-Nulb-ext-from-Mona's Store	5051	515	566
+458	Nulb - Riana day-night-stand after disband	5089	465	486
+459	Nulb - Serena day-night-stand after disband	5089	465	488
+460	Nulb - Map-9-Nulb-Interior-Generic-Nulb-3rd-fl Man 01 night-stand	5087	465	489
+461	Nulb - Map-9-Nulb-Interior-Generic-Nulb-3rd-fl Man 02 night-stand	5087	468	488
+462	Hickory Branch - Exterior from Cave	5095	509	367
+463	Hickory Branch - Cave from Exterior	5115	483	486
+464	Hommlet - Brother Smyth day	5001	571	434
+465	Hommlet - Brother Smyth night	5001	567	427
+466	Verbobonc - Exterior from Spruce Goose First	5121	532	521
+467	Verbobonc - Coliseum Tower West from Exterior	5153	492	485
+468	Quarry - Interior from Exterior	5109	482	506
+469	Quarry - Exterior from Interior	5108	488	482
+470	Verbobonc - Coliseum Tower West from Coliseum Interior	5153	478	489
+471	Verbobonc - Drainage Tunnels from City Hall	5141	183	485
+472	Verbobonc - Exterior from Coliseum Tower West	5121	596	613
+473	Verbobonc - Coliseum Tower South from Exterior	5154	484	493
+474	Verbobonc - Church of Pelor Upper Cleric 01 night-stand	5138	496	480
+475	Verbobonc - Church of Pelor Upper Cleric 02 night-stand	5138	500	482
+476	Verbobonc - Church of Pelor Upper Cleric 03 night-stand	5138	498	486
+477	Verbobonc - Church of Pelor Main Cleric 04 night-stand	5137	497	488
+478	Verbobonc - Coliseum Tower South from Coliseum Interior	5154	488	479
+479	Verbobonc - Drainage Tunnels from Lhizeas hole	5141	594	364
+480	Verbobonc - Warehouse Office from Exterior	5155	483	482
+481	Verbobonc - Exterior from Warehouse Office	5121	667	607
+482	Verbobonc - Warehouse 1 from Exterior	5156	486	489
+483	Verbobonc - Exterior from Warehouse 1	5121	635	632
+484	Verbobonc - Warehouse 2 from Exterior	5157	494	486
+485	Verbobonc - Exterior from Warehouse 2	5121	297	416
+486	Verbobonc - Maroon Moon First from Exterior	5158	484	485
+487	Verbobonc - Maroon Moon First from Maroon Moon Second	5158	485	480
+488	Verbobonc - Maron Moon Second from Maroon Moon First	5159	478	486
+489	Verbobonc - Maroon Moon Second from Maroon Moon Third	5159	487	483
+490	Verbobonc - Maroon Moon Third from Maroon Moon Second	5160	471	474
+491	Verbobonc - Exterior from Maroon Moon First	5121	234	604
+492	Verbobonc - Archer's Eye 1 from Exterior	5161	475	472
+493	Verbobonc - Exterior from Archer's Eye 1 	5121	421	630
+494	Verbobonc - Archer's Eye 2 from Exterior	5162	470	488
+495	Verbobonc - Exterior from Archer's Eye 2	5121	376	635
+496	Verbobonc - Archer's Eye 3 from Exterior	5163	473	484
+497	Verbobonc - Exterior from Archer's Eye 3	5121	358	648
+498	Verbobonc - Archer's Eye 4 from Exterior	5164	484	478
+499	Verbobonc - Exterior from Archer's Eye 4	5121	352	630
+500	Verbobonc - Residence 1 from Exterior	5165	480	484
+501	Verbobonc - Exterior from Residence 1	5121	332	681
+502	Verbobonc - Residence 2 from Exterior	5166	487	484
+503	Verbobonc - Exterior from Residence 2	5121	354	724
+504	Verbobonc - Residence 3 from Exterior	5167	480	480
+505	Verbobonc - Exterior from Residence 3	5121	377	738
+506	Verbobonc - Residence 4 from Exterior	5168	475	472
+507	Verbobonc - Exterior from residence 4	5121	390	760
+508	Verbobonc - City Hall Main from Exterior	5169	490	581
+509	Verbobonc - City Hall Main from Watch Post Lower	5169	426	528
+510	Verbobonc - City Hall Main from City Hall Viscount	5169	469	412
+511	Verbobonc - City Hall Viscount from City Hall Main	5170	501	484
+512	Verbobonc - Watch Post Main from Exterior S	5171	478	493
+513	Verbobonc - Watch Post Main from Exterior W	5171	488	479
+514	Verbobonc - Watch Post Main from Watch Post Lower	5171	488	495
+515	Verbobonc - Watch Post Lower from Watch Post Main	5172	493	488
+516	Verbobonc - Watch Post Lower from City Hall Main	5172	495	468
+517	Verbobonc - Exterior S from Watch Post Main	5121	157	512
+518	Verbobonc - Exterior W from Watch Post Main	5121	161	484
+519	Verbobonc - Exterior from City Hall Main	5121	204	516
+520	Verbobonc - Jylee's Inn First W top from Exterior	5173	492	489
+521	Verbobonc - Jylee's Inn First W bottom from Exterior	5173	493	497
+522	Verbobonc - Jylee's Inn First S left from Exterior	5173	486	496
+523	Verbobonc - Jylee's Inn First S right from Exterior	5173	476	496
+524	Verbobonc - Jylee's Inn First from Jylee's Inn Second N	5173	487	484
+525	Verbobonc - Jylee's Inn First from Jylee's Inn Second S	5173	495	497
+526	Verbobonc - Jylee's Inn Second N from Jylee's Inn First	5174	493	475
+527	Verbobonc - Jylee's Inn Second S from Jylee's Inn First	5174	486	492
+528	Verbobonc - Exterior from Jylee's Inn First W top	5121	298	464
+529	Verbobonc - Exterior from Jylee's Inn First W bottom	5121	298	476
+530	Verbobonc - Exterior from Jylee's Inn First S left	5121	287	485
+531	Verbobonc - Exterior from Jylee's Inn First S right	5121	276	485
+532	Verbobonc - Merchant's Row 1 right top from Exterior	5178	453	462
+533	Verbobonc - Exterior from Merchant's Row 1 right top	5121	452	506
+534	Verbobonc - Merchant's Row 1 left top from Exterior	5178	494	458
+535	Verbobonc - Exterior from Merchant's Row 1 left top	5121	482	505
+536	Verbobonc - Merchant's Row 1 left middle from Exterior	5178	496	492
+537	Verbobonc - Exterior from Merchant's Row 1 left middle	5121	481	519
+538	Verbobonc - Merchant's Row 1 left bottom from Exterior	5178	498	527
+539	Verbobonc - Exterior from Merchant's Row 1 left bottom	5121	481	534
+540	Verbobonc - Merchant's Row 2 right top from Exterior	5179	469	448
+541	Verbobonc - Exterior from Merchant's Row 2 right top	5121	452	518
+542	Verbobonc - Merchant's Row 2 right middle from Exterior	5179	467	478
+543	Verbobonc - Exterior from Merchant's Row 2 right middle	5121	452	530
+544	Verbobonc - Merchant's Row 2 right bottom from Exterior	5179	465	508
+545	Hommlet - Map-6-Main-Hall Burne night-stand	5016	472	479
+546	Nulb - Map-9-Nulb-Interior-Smithy Otis night-stand	5056	482	491
+547	Verbobonc - Exterior from Merchant's Row 2 right bottom	5121	451	543
+548	Verbobonc - Merchant's Row 2 left bottom from Exterior	5179	501	518
+549	Verbobonc - Exterior from Merchant's Row 2 left bottom	5121	481	547
+550	Verbobonc - Merchant's Row 3 top left from Exterior	5180	507	466
+551	Verbobonc - Exterior from Merchant's Row 3 top left	5121	426	565
+552	Verbobonc - Merchant's Row 3 top middle from Exterior	5180	477	469
+553	Verbobonc - Exterior from Merchant's Row 3 top middle	5121	414	565
+554	Verbobonc - Merchant's Row 3 top right from Exterior	5180	448	471
+555	Verbobonc - Exterior from Merchant's Row 3 top right	5121	401	565
+556	Verbobonc - Merchant's Row 3 bottom left from Exterior	5180	517	502
+557	Verbobonc - Exterior from Merchant's Row 3 bottom left	5121	434	595
+558	Verbobonc - Merchant's Row 3 bottom middle from Exterior	5180	487	504
+559	Verbobonc - Exterior from Merchant's Row 3 bottom middle	5121	421	595
+560	Verbobonc - Merchant's Row 3 bottom right from Exterior	5180	457	506
+561	Verbobonc - Exterior from Merchant's Row 3 bottom right	5121	408	596
+562	Verbobonc - Merchant's Row 4 top from Exterior	5181	461	454
+563	Verbobonc - Exterior from Merchant's Row 4 top	5121	389	565
+564	Verbobonc - Merchant's Row 4 bottom from Exterior	5181	457	495
+565	Verbobonc - Exterior from Merchant's Row 4 bottom	5121	383	596
+566	Verbobonc - Exterior from Coliseum Tower South	5121	499	709
+567	Verbobonc - Exterior from Castle Outbuilding 1 well	5121	706	362
+568	Verbobonc - Coliseum Interior from Coliseum Tower West	5121	543	608
+569	Verbobonc - City Hall from Drainage Tunnels	5169	482	566
+570	Verbobonc - Coliseum Interior from Coliseum Tower South	5121	495	656
+571	HB South 03 worg 02 alt e	5095	405	521
+572	HB South 03 worg 03 alt e	5095	401	521
+573	HB South 03 worg 04 alt e	5095	397	521
+574	HB Ravine gnoll 01 alt	5095	496	433
+575	HB Ravine gnoll 02 alt	5095	494	435
+576	HB Ravine gnoll 03 alt	5095	492	437
+577	Temple - Temple Broken Tower from Temple House	5111	545	499
+578	Temple - Temple House from Temple Broken Tower	5110	427	488
+579	HB Ravine gnoll 04 alt	5095	490	439
+580	HB Ravine gnoll 05 alt	5095	488	441
+581	HB Ravine bugbear 01 alt	5095	486	443
+582	HB Ravine bugbear 02 alt	5095	484	445
+583	HB Ravine bugbear 03 alt	5095	482	447
+584	HB Ravine bugbear 04 alt	5095	480	449
+585	HB Ravine ogre 01 alt	5095	489	436
+586	HB Ravine ogre 02 alt	5095	487	438
+587	HB Ravine ogre 03 alt	5095	485	440
+588	HB Ravine worg 01 alt	5095	484	452
+589	HB Ravine shaman 01 alt	5095	487	434
+590	HB Ravine medium 01 alt	5095	484	437
+591	HB Ravine orc bowman 01 alt	5095	476	449
+592	HB Ravine orc archer 01 alt	5095	474	450
+593	HB Ravine orc sniper 01 alt	5095	472	450
+594	HB Ravine orc marksman 01 alt	5095	470	451
+595	HB Ravine orc sniper 02 alt	5095	468	451
+596	HB Ravine orc archer 02 alt	5095	466	452
+597	HB Ravine orc sergeant 02 alt	5095	496	436
+598	HB Ravine bugbear 06 alt	5095	496	439
+599	HB Ravine bugbear 07 alt	5095	496	442
+600	HB Ravine bugbear 08 alt	5095	496	445
+601	HB South 01 orc sergeant 01 alt	5095	453	559
+602	HB South 01 orc dominator 01 alt	5095	451	561
+603	HB South 01 orc rundor 01 alt	5095	455	563
+604	HB South 01 orc rundor 02 alt	5095	453	563
+605	HB South 01 orc rundor 03 alt	5095	451	563
+606	HB South 01 orc bowman 01 alt	5095	452	567
+607	HB South 01 orc bowman 02 alt	5095	452	569
+608	HB South 01 orc archer 01 alt	5095	454	567
+609	HB South 01 orc archer 02 alt	5095	454	569
+610	HB South 01 orc sniper 01 alt	5095	455	561
+611	HB South 01 hill giant 01 alt	5095	444	565
+612	HB South 01 hill giant 02 alt	5095	444	568
+613	HB South 01 hill giant 03 alt	5095	444	571
+614	HB South 01 hill giant 04 alt	5095	444	574
+615	HB South 01 hill giant 05 alt	5095	444	577
+616	HB South 01 orc shaman 01 alt	5095	441	566
+617	HB South 01 orc medium 01 alt	5095	441	569
+618	HB South 02 ogre 01 alt	5095	407	541
+619	HB South 02 ettin 01 alt	5095	414	537
+620	HB South 02 ettin 02 alt	5095	417	540
+621	HB South 02 ettin 03 alt	5095	414	543
+622	HB South 02 ettin 04 alt	5095	417	546
+623	HB South 02 ettin 05 alt	5095	414	549
+624	HB South 02 orc bowman 01 alt	5095	408	538
+625	HB South 02 orc bowman 01 alt	5095	410	540
+626	HB South 02 orc archer 01 alt	5095	406	536
+627	HB South 02 orc shaman 01 alt	5095	410	546
+628	HB South 02 orc medium 01 alt	5095	410	544
+629	HB Naig Lliht runoff standpoint	5095	451	551
+630	HB South 03 orc trainer 01 alt w	5095	443	510
+631	HB South 03 dire wolf 01 alt w	5095	440	510
+632	HB South 03 fiendish dire wolf 01 alt w	5095	447	513
+633	HB South 03 fiendish dire wolf 02 alt w	5095	443	513
+634	HB South 03 fiendish dire wolf 03 alt w	5095	439	513
+635	HB South 03 worg 01 alt w	5095	445	522
+636	HB South 03 worg 02 alt w	5095	445	516
+637	Lareth Corridor Guardsmen 1 New Spot	5005	483	541
+638	Lareth Corridor Guardsmen 2 New Spot	5005	481	530
+639	Lareth Corridor Guardsmen 3 New Spot	5005	495	534
+640	Glora's new spot	5007	488	478
+641	Ostler's Away Jumppoint	5007	476	445
+642	HB South 03 worg 03 alt w	5095	441	516
+643	HB South 03 worg 04 alt w	5095	441	523
+644	HB South 03 orc trainer 01 alt e	5095	403	515
+645	HB South 03 dire wolf 01 alt e	5095	400	515
+646	HB South 03 fiendish dire wolf 01 alt e	5095	407	518
+647	HB South 03 fiendish dire wolf 02 alt e	5095	403	518
+648	HB South 03 fiendish dire wolf 03 alt e	5095	399	518
+649	HB South 03 worg 01 alt e	5095	412	525
+650	Earth Bugbear 1 New Spot	5066	479	387
+651	Earth Bugbear 2 New Spot	5066	490	383
+652	Earth Bugbear 3 New Spot	5066	475	394
+653	#Earth Bugbear 4 New Spot	5066	480	419
+654	#Earth Bugbear 5 New Spot	5066	480	419
+655	#Earth Bugbear 6 New Spot	5066	480	419
+656	#Earth Bugbear 7 New Spot	5066	480	419
+657	#Earth Bugbear 8 New Spot	5066	480	419
+658	Earth Ogre 1 New Spot	5066	491	389
+659	Earth Ogre 2 New Spot	5066	474	388
+660	Earth Barbarian Gnoll 1	5066	488	381
+661	Earth Fore Sentry 1 New Spot	5066	497	381
+662	Earth Fore Sentry 2 New Spot	5066	470	384
+663	Earth Back Sentry 1 New Spot	5066	493	403
+664	Earth Back Sentry 2 New Spot	5066	471	399
+665	Earth Robe Guard 1 New Spot	5066	480	422
+666	Earth Robe Guard 2 New Spot	5066	493	423
+667	Earth Robe Guard 3 New Spot	5066	474	433
+668	#Earth Robe Guard 4 New Spot	5066	480	419
+669	Earth Archer 1 New Spot	5066	473	405
+670	Earth Archer 2 New Spot	5066	491	397
+671	Earth Archer 3 New Spot	5066	493	432
+672	#Earth Archer 4 New Spot	5066	480	419
+673	#Earth Archer 5 New Spot	5066	480	419
+674	#Earth Guard 1 New Spot	5066	480	419
+675	#Earth Guard 2 New Spot	5066	480	419
+676	#Earth Guard 3 New Spot	5066	480	419
+677	#Earth Guard 4 New Spot	5066	480	419
+678	#Earth Guard 5 New Spot	5066	480	419
+679	#Earth Guard 6 New Spot	5066	480	419
+680	#Earth Guard 7 New Spot	5066	480	419
+681	#Earth Guard 8 New Spot	5066	480	419
+682	#Earth Guard 9 New Spot	5066	480	419
+683	Earth Troop Commander New Spot	5066	497	386
+684	Earth Elemental Medium1 New Spot	5066	495	412
+685	Earth Elemental Medium2 New Spot	5066	470	394
+686	Earth Elemental Large Pseudo New Spot	5066	492	393
+687	Earth Ogre Chief New Spot	5066	467	385
+688	Romag New Spot	5066	482	398
+689	Hartsch New Spot	5066	470	403
+690	Earth Gnoll Leader New Spot	5066	496	402
+691	Earth Lieutenant 1 New Spot	5066	470	390
+692	Earth Fighter 1 New Spot	5066	485	387
+693	Earth Fighter 2 New Spot	5066	479	385
+694	Earth Fighter 3 New Spot	5066	481	391
+695	HB Ravine bugbear 09 alt	5095	496	448
+696	HB Ravine gnoll 06 alt	5095	496	451
+697	HB Ravine gnoll 07 alt	5095	496	454
+698	HB Ravine gnoll 08 alt	5095	488	459
+699	HB Ravine gnoll 09 alt	5095	496	460
+700	Kelno's New Spot	5067	480	494
+701	Air Bugbear 1 New Spot	5067	477	496
+702	Air Bugbear 2 New Spot	5067	475	506
+703	Air Bugbear 3 New Spot	5067	482	500
+704	Air Bugbear 4 New Spot	5067	484	496
+705	Air Bugbear 5 New Spot	5067	475	497
+706	Air Bugbear 6 New Spot	5067	471	493
+707	Air Bugbear 7 New Spot	5067	474	489
+708	Air Bugbear 8 New Spot	5067	481	487
+709	Air Bugbear 9 New Spot	5067	488	496
+710	Air Bugbear 10 New Spot	5067	491	493
+711	Air Bugbear 11 New Spot	5067	484	493
+712	Air Bugbear 12 New Spot	5067	487	488
+713	Air Bugbear Defector 1 New Spot	5067	486	495
+714	Air Bugbear Defector 2 New Spot	5067	488	492
+715	Air Bugbear Defector 3 New Spot	5067	475	492
+716	Air Bugbear Defector 4 New Spot	5067	480	516
+717	Air Bugbear Defector Chief New Spot	5067	492	486
+718	Air Elemental 1 New Spot	5067	478	494
+719	Air Elemental 2 New Spot	5067	483	490
+720	Air Elemental Large 1 New Spot	5067	495	504
+721	Air Kitchener 1 New Spot	5067	501	504
+722	Air Kitchener 2 New Spot	5067	477	509
+723	Air Kitchener 3 New Spot	5067	495	497
+724	Air Kitchener 4 New Spot	5067	470	508
+725	Air Kitchener 5 New Spot	5067	497	507
+726	Air Kitchener 6 New Spot	5067	485	516
+727	Air Kitchener 7 New Spot	5067	499	494
+728	Air Kitchener 8 New Spot	5067	495	490
+729	Air Kitchener 9 New Spot	5067	502	513
+730	Air Kitchener 10 New Spot	5067	497	511
+731	Air Kitchener 11 New Spot	5067	474	502
+732	Air Kitchener 12 New Spot	5067	496	513
+733	Air Kitchener 13 New Spot	5067	496	515
+734	Air Kitchener 14 New Spot	5067	503	510
+735	Air Kitchener 15 New Spot	5067	496	485
+736	HB Cave - gnoll troop 01 greet standpoint	5115	503	474
+737	HB Cave - orc fighter 01 greet standpoint	5115	501	472
+738	HB Cave - Hungous greet standpoint	5115	483	486
+739	HB Cave - Krunch greet standpoint	5115	487	485
+740	HB Cave - orc theurgist 02 greet standpoint	5115	481	483
+741	HB Cave - Ruff greet standpoint	5115	484	483
+742	Tutorial Level 2	5117	496	483
+743	Tutorial Level 3	5118	532	485
+744	Tutorial Lev 1	5116	438	490
+745	Up to Tutorial Lev 2	5117	462	482
+746	Placeholder	5001	480	480
+747	Placeholder	5001	480	480
+748	Placeholder	5001	480	480
+749	Placeholder	5001	480	480
+750	Belsornig New Spot	5067	550	583
+751	Juggernaut New Spot	5067	539	573
+752	Gargoyle 1 New Spot	5067	532	566
+753	Gargoyle 2 New Spot	5067	536	561
+754	Gargoyle 3 New Spot	5067	545	562
+755	Gargoyle 4 New Spot	5067	547	565
+756	Water Bugbear 1 New Spot	5067	531	573
+757	Water Bugbear 2 New Spot	5067	539	564
+758	Nalorrem New Spot	5067	546	586
+759	Merrolan New Spot	5067	533	584
+760	Water Bugbear Defector 1 Leader New Spot	5067	547	577
+761	Water Bugbear Defector 2 New Spot	5067	526	581
+762	Water Bugbear Defector 3 New Spot	5067	531	578
+763	Water Bugbear Defector 4 New Spot	5067	534	577
+764	Water Bugbear Defector 5 New Spot	5067	537	580
+765	Owlbear New Spot	5067	531	570
+766	Kelleen New Spot	5067	533	568
+767	Oohlgrist New Spot	5067	546	568
+768	Troll 1 New Spot	5067	544	567
+769	Troll 2 New Spot	5067	544	571
+770	Watersnake 1 New Spot	5067	532	587
+771	Watersnake 2 New Spot	5067	528	584
+772	Watersnake 3 New Spot	5067	553	580
+773	Watersnake 4 New Spot	5067	547	583
+774	Placeholder	5001	480	480
+775	Placeholder	5001	480	480
+776	Placeholder	5001	480	480
+777	Placeholder	5001	480	480
+778	Placeholder	5001	480	480
+779	Placeholder	5001	480	480
+780	Placeholder	5001	480	480
+781	Placeholder	5001	480	480
+782	Placeholder	5001	480	480
+783	Placeholder	5001	480	480
+784	Placeholder	5001	480	480
+785	Placeholder	5001	480	480
+786	Placeholder	5001	480	480
+787	Placeholder	5001	480	480
+788	Placeholder	5001	480	480
+789	Placeholder	5001	480	480
+790	Placeholder	5001	480	480
+791	Placeholder	5001	480	480
+792	Placeholder	5001	480	480
+793	Placeholder	5001	480	480
+794	Placeholder	5001	480	480
+795	Placeholder	5001	480	480
+796	Placeholder	5001	480	480
+797	Placeholder	5001	480	480
+798	Placeholder	5001	480	480
+799	Placeholder	5001	480	480
+800	Earth Altar Swarming Spot 1	5067	470	389
+801	Earth Altar Swarming Spot 2	5067	473	389
+802	Earth Altar Swarming Spot 3	5067	476	389
+803	Earth Altar Swarming Spot 4	5067	479	389
+804	Earth Altar Swarming Spot 5	5067	482	389
+805	Earth Altar Swarming Spot 6	5067	485	389
+806	Earth Altar Swarming Spot 7	5067	488	389
+807	Earth Altar Swarming Spot 8	5067	491	389
+808	Earth Altar Swarming Spot 9	5067	471	392
+809	Earth Altar Swarming Spot 10	5067	474	392
+810	Earth Altar Swarming Spot 11	5067	477	392
+811	Earth Altar Swarming Spot 12	5067	480	392
+812	Earth Altar Swarming Spot 13	5067	483	392
+813	Earth Altar Swarming Spot 14	5067	486	392
+814	Earth Altar Swarming Spot 15	5067	489	392
+815	Earth Altar Swarming Spot 16	5067	472	394
+816	Earth Altar Swarming Spot 17	5067	475	394
+817	Earth Altar Swarming Spot 18	5067	478	394
+818	Earth Altar Swarming Spot 19	5067	481	394
+819	Earth Altar Swarming Spot 20	5067	484	394
+820	Earth Altar Swarming Spot 21	5067	487	394
+821	Earth Altar Swarming Spot 22	5067	490	394
+822	Earth Altar Swarming Spot 23	5067	470	396
+823	Earth Altar Swarming Spot 24	5067	473	396
+824	Earth Altar Swarming Spot 25	5067	476	396
+825	Earth Altar Swarming Spot 26	5067	479	396
+826	Earth Altar Swarming Spot 27	5067	482	396
+827	Earth Altar Swarming Spot 28	5067	485	396
+828	Earth Altar Swarming Spot 29	5067	488	396
+829	Earth Altar Swarming Spot 30	5067	491	396
+830	Earth Altar Swarming Spot 31	5067	471	398
+831	Earth Altar Swarming Spot 32	5067	474	398
+832	Earth Altar Swarming Spot 33	5067	477	398
+833	Earth Altar Swarming Spot 34	5067	480	398
+834	Earth Altar Swarming Spot 35	5067	483	398
+835	Earth Altar Swarming Spot 36	5067	486	398
+836	Earth Altar Swarming Spot 37	5067	489	398
+837	Earth Altar Swarming Spot 38	5067	492	400
+838	Earth Altar Swarming Spot 39	5067	475	400
+839	Earth Altar Swarming Spot 40	5067	478	400
+840	Earth Altar Swarming Spot 41	5067	481	400
+841	Earth Altar Swarming Spot 42	5067	484	385
+842	Earth Altar Swarming Spot 43	5067	495	384
+843	Earth Altar Swarming Spot 44	5067	496	383
+844	Earth Altar Swarming Spot 45	5067	471	400
+845	Earth Altar Swarming Spot 46	5067	470	402
+846	Earth Altar Swarming Spot 47	5067	473	402
+847	Earth Altar Swarming Spot 48	5067	476	402
+848	Earth Altar Swarming Spot 49	5067	479	402
+849	Earth Altar Swarming Spot 50	5067	482	402
+850	Earth Altar Swarming Spot 51	5067	483	395
+851	Earth Altar Swarming Spot 52	5067	484	395
+852	Earth Altar Swarming Spot 53	5067	485	395
+853	Earth Altar Swarming Spot 54	5067	486	395
+854	Earth Altar Swarming Spot 55	5067	487	395
+855	Earth Altar Swarming Spot 56	5067	488	395
+856	Earth Altar Swarming Spot 57	5067	489	395
+857	Earth Altar Swarming Spot 58	5067	490	395
+858	Earth Altar Swarming Spot 59	5067	482	396
+859	Earth Altar Swarming Spot 60	5067	483	396
+860	Earth Altar Swarming Spot 61	5067	484	396
+861	Earth Altar Swarming Spot 62	5067	485	396
+862	Placeholder	5001	480	480
+863	Placeholder	5001	480	480
+864	Placeholder	5001	480	480
+865	Placeholder	5001	480	480
+866	Placeholder	5001	480	480
+867	Placeholder	5001	480	480
+868	Placeholder	5001	480	480
+869	Placeholder	5001	480	480
+870	Fire Temple Bugbear 1	5067	418	487
+871	Fire Temple Bugbear 2	5067	411	511
+872	Fire Temple Bugbear 3	5067	424	498
+873	Fire Temple Bugbear 4	5067	415	488
+874	Fire Temple Bugbear 5	5067	415	499
+875	Fire Temple Bugbear 6	5067	420	510
+876	Fire Temple Bugbear 7	5067	420	501
+877	Fire Temple Bugbear 8	5067	420	501
+878	Fire Temple Bugbear 9	5067	420	501
+879	Alrrem New SP	5067	419	494
+880	Fire Hydra	5067	416	507
+881	Aern	5067	414	503
+882	Fire_Oohlgrist	5067	413	509
+883	Oohlgrist Minion for fire 1	5067	413	483
+884	Oohlgrist Minion for fire 2	5067	414	492
+885	Werewolf 1	5067	410	483
+886	Werewolf 2	5067	421	507
+887	HB Ravine ettin 03 alt	5095	499	451
+888	HB Ravine dire wolf 01 alt	5095	502	454
+889	HB Ravine fiendish dire wolf 01 alt	5095	502	457
+890	HB Ravine orc medium 02 alt	5095	503	450

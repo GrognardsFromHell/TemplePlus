@@ -1,0 +1,5 @@
+name: Favored Soul Cold Resistance
+flags: 8
+prereqs:
+description: At 5th level, a favored soul chooses an energy type and gains energy resistance 10 against that type. At 10th level and 15th level, the character gains resistance 10 against another type.
+prereq descr: Favored Soul level 5.

@@ -1,0 +1,257 @@
+// Stat Names Go Between 0-999
+//core 3.5 Prestige classes
+{18}{Arcane Archer}
+{19}{Arcane Trickster}
+{20}{Archmage}
+{21}{Assassin}
+{22}{Blackguard}
+{23}{Dragon Disciple}
+{24}{Duelist}
+{25}{Dwarven Defender}
+{26}{Eldritch Knight}
+{27}{Hierophant}
+{28}{Horizon Walker}
+{29}{Loremaster}
+{30}{Mystic Theurge}
+{31}{Shadowdancer}
+{32}{Thaumaturgist}
+
+// Other supplemental stuff for 3.5 ed
+{33}{Warlock}
+{34}{Favored Soul}
+{35}{Red Avenger}
+{36}{Iaijutsu Master}
+{37}{Sacred Fist}
+{38}{Stormlord}
+{39}{Elemental Savant}
+{40}{Blood Magus}
+{41}{Beastmaster}
+{42}{Cryokineticist}
+{43}{Frost Mage}
+{44}{Artificer}
+{45}{Abjurant Champion}
+
+// Psionic Classes
+{58}{Psion}
+{59}{Psychic Warrior}
+{60}{Soulknife}
+{61}{Wilder}
+{62}{Cerebmancer}
+{63}{Elocator}
+{64}{Metamind}
+{65}{Psion Uncarnate}
+{66}{Psionic Fist}
+{67}{Pyrokineticist}
+{68}{Slayer}
+{69}{Thrallherd}
+{70}{War Mind}
+
+// Tome of Battle
+{71}{Crusader}
+{72}{Swordsage}
+{73}{Warblade}
+{74}{Bloodclaw Master}
+{75}{Bloodstorm Blade}
+{76}{Deepstone Sentinel}
+{77}{Eternal Blade}
+{78}{Jade Phoenix Mage}
+{79}{Master of Nine}
+{80}{Ruby Knight Vindicator}
+{81}{Shadow Sun Ninja}
+
+{300}{Psi Points} // max
+{301}{Psi Points} // cur
+
+// Stat Short Names Go Between 1000-1999  
+{1018}{Aarc}
+{1019}{Atrk}
+{1020}{Amag}
+{1021}{Assn}
+{1022}{Blkg}
+{1023}{Drds}
+{1024}{Dlst}
+{1025}{Dwdf}
+{1026}{Edkn}
+{1027}{Hier}
+{1028}{Horw}
+{1029}{Lore}
+{1030}{Msth}
+{1031}{Sdwd}
+{1032}{Thmg}
+
+{1033}{Wrlk}
+{1034}{Fvrd}
+{1035}{}
+{1036}{}
+{1037}{}
+{1038}{}
+{1039}{}
+{1040}{}
+{1041}{}
+{1042}{}
+{1043}{}
+{1044}{}
+{1045}{}
+{1046}{}
+{1047}{}
+{1048}{}
+{1049}{}
+{1050}{}
+{1051}{}
+{1052}{}
+{1053}{}
+{1054}{}
+{1055}{}
+{1056}{}
+{1057}{}
+{1058}{}
+{1059}{}
+{1060}{}
+{1061}{}
+{1062}{}
+{1063}{}
+{1064}{}
+{1065}{}
+{1066}{}
+{1067}{}
+{1068}{}
+{1069}{}
+{1070}{}
+
+{1071}{Crus}
+{1072}{Swsg}
+{1073}{Warb}
+{1074}{Bcwm}
+{1075}{Blmg}
+{1076}{Dpstn}
+{1077}{Etbl}
+{1078}{Jpmg}
+{1079}{Mo9}
+{1080}{Rkvn}
+{1081}{Ssnj}
+
+
+
+
+{1300}{Psi}
+{1301}{Psi}
+
+// Race Names Go Between 2000-2999
+
+// Race Abbreviations Go Between 3000-3999
+
+
+// Race Short Help Goes Between 12000-12999
+
+// Class Short Help Goes Between 13000-13099
+{13011}Arcane Archer{The arcane archer is an Elven warrior skilled in using magic to supplement their combat prowess.
+
+Requirements: Elf or half-elf. BAB +6.
+Feats: Point Blank Shot, Precise Shot, Weapon Focus (longbow or shortbow).
+Spells: Ability to cast 1st-level arcane spells.
+}
+
+
+{13012}Arcane Trickster{Arcane tricksters combine their knowledge of spells with a taste for intrigue, larceny, or just plain mischief.
+
+Requirements: Nonlawful, Sneak attack +2d6.
+Skill ranks: Disable Device 7
+Spells: Ability to cast an arcane spell of 3rd level+.
+}
+
+
+{13013}Archmage{--COMING SOON-- An advanced practitioner of the Art, who gains strange powers and the ability to alter spells in remarkable ways.
+
+Requirements: Ability to cast 7-th level arcane spells
+Skill ranks: Spellcraft 15
+Feats: Skill Focus (Spellcraft), Spell Focus in two schools of magic}
+
+
+{13014}Assassin{A master of dealing quick, lethal blows, whose training allows to carry out missions of death with shocking, terrifying precision.
+
+Requirements: Evil alignment.
+Skill ranks: Hide 8, Move Silently 8
+} // The character must kill someone just for joining the assassins.
+
+
+{13015}Blackguard{The quintessential black knight. Also called by some an anti-paladin.
+
+Requirements: Evil alignment. BAB +6.
+Skill ranks: Hide 5
+Feats: Cleave, Power Attack
+} // Special: Contact with an evil summoned outsider.
+
+
+{13016}Dragon Disciple{--NOT COMING SOON-- A descendant of dragonkind who uses their innate magical power as a catalyst to ignite their dragon blood.
+
+Requirements
+Race: Any nondragon.
+Spellcasting: Ability to cast arcane spells without preparation.}
+
+
+{13017}Duelist{A nimble, intelligent fighter trained in making precise attacks with light weapons, such as the rapier. Also known as a swashbuckler.
+
+Requirements: BAB +6
+Skill ranks: Perform 3, Tumble 5
+Feats: Dodge, Mobility, Weapon Finesse
+}
+
+
+{13018}Dwarven Defender{A sponsored champion of a dwarven cause, trained in the arts of defense.
+
+Requirements: Dwarven race. Lawful alignment. BAB +7.
+Feats: Dodge, Toughness
+}
+
+
+{13019}Eldritch Knight{A versatile combatant who studies the martial and arcane arts to equal degree.
+
+Requirements: Able to cast 3rd-level arcane spells.
+Weapon Proficiency: Must be proficient with all martial weapons.
+}
+
+
+
+{13020}Hierophant{--NOT COMING SOON-- A divine spellcaster who rises high in the service of their deity, gaining access to spells and abilities of which lesser faithful can only dream.
+
+Requirements
+Feats: Any metamagic feat.
+Spells: Able to cast 7th-level divine spells.}
+{13021}Horizon Walker{--NOT COMING SOON-- An unceasing traveller to the universe's most dangerous places.
+
+Requirements
+derp}
+
+
+
+{13022}Loremaster{--NOT COMING SOON-- A spellcaster who concentrates on knowledge, unconvering secrets that they then use to better themselves mentally, physically and spiritually.
+
+Requirements
+Feats: Any three metamagic or item creation feats.
+Spells: Able to cast seven different divination spells, one of which must be 3rd level or higher.
+}
+{13023}Mystic Theurge{A mystic theurge walks two roads at once, simulatenously mastering spells common to clerics and wizards.
+
+Requirements: Able to cast 2nd-level divine spells and 2nd-level arcane spells.
+}
+{13024}Shadowdancer{--NOT COMING SOON-- A numble artist of deception operating in the border between light and darkness.
+
+Requirements
+Skill ranks: Move Silently 8, Hide 10, Perform 5
+Feats: Combat Reflexes, Dodge, Mobility}
+
+{13025}Thaumaturgist{One who reaches out with divine power to other planes of existence, calling creatures there to do their bidding.
+
+Requirements
+Feats: Spell Focus (conjuration).
+Spells: Able to cast lesser planar ally.}
+
+{13027}Favored Soul{Favored souls cast divine spells by means of an innate connection rather than through laborious training and prayer, so their divine connection is natural rather than learned.}
+
+// Cannot Pick Class Short Help Goes in the range of 20007+
+{20007} Arcane Archer{Arcane Archer requirements:
+Race: Elf or half-elf.
+Base Attack Bonus: +6
+Feats: Point Blank Shot, Precise Shot, Weapon Focus (longbow or shortbow)
+Spells: Ability to cast 1st level arcane spells.}
+

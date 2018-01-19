@@ -600,6 +600,9 @@
       <EnableDpiAwareness>false</EnableDpiAwareness>
       <AdditionalManifestFiles>manifest.xml</AdditionalManifestFiles>
     </Manifest>
+    <PostBuildEvent>
+      <Command>"$(ProjectDir)\..\tpdatasrc\PackFiles.bat"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">
     <ClCompile>
@@ -625,6 +628,9 @@
       <EnableDpiAwareness>false</EnableDpiAwareness>
       <AdditionalManifestFiles>manifest.xml</AdditionalManifestFiles>
     </Manifest>
+    <PostBuildEvent>
+      <Command>"$(ProjectDir)\..\tpdatasrc\PackFiles.bat"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -659,6 +665,9 @@
       <EnableDpiAwareness>false</EnableDpiAwareness>
       <AdditionalManifestFiles>manifest.xml</AdditionalManifestFiles>
     </Manifest>
+    <PostBuildEvent>
+      <Command>"$(ProjectDir)\..\tpdatasrc\PackFiles.bat"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
