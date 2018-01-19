@@ -2,6 +2,11 @@
 #include "common.h"
 #include "util/fixes.h"
 #include "maps.h"
+#include "ui/ui_systems.h"
+#include "ui/ui_legacysystems.h"
+
+
+void UiWorldmapMakeTripWrapper();
 
 // Worldmap extension by Spellslinger
 class WorldmapFix: TempleFix
@@ -11,12 +16,16 @@ public:
 	static int CanAccessWorldmap();
 	
 	void apply() override {
-		replaceFunction<int(int)>(0x10160450, [](int locationIdx){
-			auto &unk = temple::GetRef<int>(0x102FB3E8);
-			auto &someTable = temple::GetRef<int[]>(0x11EA3610);
-			unk = someTable[locationIdx];
-			return temple::GetRef<int(__cdecl)(int)>(0x1015F140)(2);
+		replaceFunction<void(int)>(0x10160450, [](int destArea){
+			auto &uiWorldmapDestLocId = temple::GetRef<int>(0x102FB3E8);
+			auto &uiWorldmapAreaToLocId_Table = temple::GetRef<int[]>(0x11EA3610);
+			
+			uiWorldmapDestLocId = uiWorldmapAreaToLocId_Table[destArea];
+
+			uiSystems->GetWorldmap().Show(2);
 		});
+
+		//replaceFunction<void()>(0x1015EA20, UiWorldmapMakeTripWrapper);
 	}
 
 } worldmapFix;
@@ -208,3 +217,20 @@ int WorldmapFix::CanAccessWorldmap()
 	}
 	return result;
 }
+
+void UiWorldmapMakeTripCdecl(int fromId, int toId){
+	auto asdf = 1;
+}
+
+void __declspec(naked) UiWorldmapMakeTripWrapper(){
+	macAsmProl; // esp = esp0 - 16
+	__asm {
+		push eax; // esp = esp0 - 20
+		push ecx; // esp = esp0 - 24
+		mov esi, UiWorldmapMakeTripCdecl;
+		call esi;
+		add esp, 8;
+	}
+	macAsmEpil;
+	__asm retn;
+};
