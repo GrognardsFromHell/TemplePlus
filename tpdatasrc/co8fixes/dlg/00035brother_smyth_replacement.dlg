@@ -1,0 +1,342 @@
+{1}{G:}{G:}{}{}{}{}
+{2}{Hello. I am @pcname@.}{}{1}{not npc.has_met( pc ) and game.global_flags[979] != 1}{10}{}
+{3}{B:I'd like to browse your wares.}{}{1}{npc.has_met( pc )}{0}{pc.barter(npc)}
+{4}{Are you still offering the masterwork weapons deal?}{}{1}{game.quests[100].state == qs_mentioned}{470}{}
+{5}{I have brought you the head of a giant!}{}{1}{anyone( pc.group_list(), "has_item", 12602 ) and game.quests[100].state == qs_accepted}{80}{}
+{6}{K:}{}{1}{npc.has_met( pc ) or game.global_flags[979] == 1}{20}{}
+{7}{E:}{}{1}{npc.has_met( pc )}{0}{}
+
+
+{10}{Well met, @pcname@. I am Brother Smyth, the village blacksmith.}{Well met, @pcname@. I am Brother Smyth, the village blacksmith.}{}{}{}{}
+{11}{Do you make armor?}{}{8}{}{30}{}
+{12}{You make black stuff?}{}{-7}{}{30}{}
+{13}{B:}{}{1}{}{0}{pc.barter(npc)}
+{14}{K:}{}{1}{}{20}{}
+{15}{E:}{}{1}{}{0}{}
+
+
+{20}{What would you like to know?}{What would you like to know?}{}{}{}{}
+{21}{Why are you called Brother?}{}{1}{game.global_vars[36] == 0}{120}{}
+{22}{Can I get a healing?}{}{1}{game.global_vars[36] == 1}{210}{}
+{23}{Are you a masterwork quality artisan?}{}{1}{game.quests[100].state == qs_unknown}{40}{}
+{24}{Would you happen to know where the village of Nulb is?}{}{1}{game.areas[3] == 0 and game.story_state >= 2}{110}{}
+{25}{B:I'd like to browse your wares.}{}{1}{}{0}{pc.barter(npc)}
+{26}{I'm looking for something different.}{}{1}{game.quests[73].state != qs_completed and game.quests[65].state != qs_completed and game.global_flags[500] == 1}{480}{}
+{27}{E:}{}{1}{}{0}{}
+
+
+{30}{Indeed, I do. All sorts of metalwork, including helmets and shields. And I buy and sell a wide variety of armor and weapons.}{Indeed, I do. All sorts of metalwork, including helmets and shields. And I buy and sell a wide variety of armor and weapons.}{}{}{}{}
+{31}{B:}{}{1}{}{0}{pc.barter(npc)}
+{32}{Are you a masterwork quality artisan?}{}{8}{}{40}{}
+{33}{You make really good stuff?}{}{-7}{}{40}{}
+{34}{K:}{}{1}{}{20}{}
+{35}{E:}{}{1}{}{0}{}
+
+
+{40}{Why yes, sir, I am able to make masterwork items.}{Why yes, ma'am, I am able to make masterwork items.}{}{}{}{}
+{41}{That's interesting. What do you have for sale?}{}{8}{}{50}{}
+{42}{Dat gud! What ya sells me?}{}{-7}{}{50}{}
+
+
+{50}{Hmmm...I'm not quite sure you're cut out for that sort of equipment.}{Hmmm...I'm not quite sure you're cut out for that sort of equipment.}{}{}{}{}
+{51}{What's that supposed to mean?}{}{8}{}{60}{}
+{52}{Huh?}{}{-7}{}{60}{}
+
+
+{60}{Well to be honest, you look like the type who'd do just as well with the toy items. I've got a few customers in Verbobonc and elsewhere who can actually use that special gear, and I don't particularly care to cheat honest folk out of their hard-earned coin for something they'll never use, so...maybe it's best if you just stick with my normal stock.}{Well to be honest, you look like the type who'd do just as well with the toy items. I've got a few customers in Verbobonc and elsewhere who can actually use that special gear, and I don't particularly care to cheat honest folk out of their hard-earned coin for something they'll never use, so...maybe it's best if you just stick with my normal stock.}{}{}{}{}
+{61}{I'm not sure I agree with your assessment. Perhaps you should reconsider.}{}{8}{}{70}{}
+{62}{Nuh-uh!}{}{-7}{}{70}{}
+
+
+{70}{Fine, fine. Tell you what. Bring me the head of a giant to show me your worth as an adventurer, and I'll gladly make my masterwork gear available to you. Is that fair?}{Fine, fine. Tell you what. Bring me the head of a giant to show me your worth as an adventurer, and I'll gladly make my masterwork gear available to you. Is that fair?}{}{}{}{game.quests[100].state = qs_mentioned}
+{71}{Very well. I shall bring you the head of a giant.}{}{8}{game.party_alignment == LAWFUL_GOOD or game.party_alignment == NEUTRAL_GOOD or game.party_alignment == CHAOTIC_GOOD}{0}{game.quests[100].state = qs_accepted}
+{72}{Indeed. I'll bring you one.}{}{8}{game.party_alignment == LAWFUL_NEUTRAL or game.party_alignment == TRUE_NEUTRAL or game.party_alignment == CHAOTIC_NEUTRAL}{0}{game.quests[100].state = qs_accepted}
+{73}{Your smithy skills had better be worth it. I will return with a giant's head.}{}{8}{game.party_alignment == LAWFUL_EVIL or game.party_alignment == NEUTRAL_EVIL or game.party_alignment == CHAOTIC_EVIL}{0}{game.quests[100].state = qs_accepted}
+{74}{Ugh. Dat all? Me do it.}{}{-7}{}{0}{game.quests[100].state = qs_accepted}
+{75}{I'm afraid that's quite unreasonable. Good day.}{}{8}{game.party_alignment == LAWFUL_GOOD or game.party_alignment == NEUTRAL_GOOD or game.party_alignment == CHAOTIC_GOOD}{0}{}
+{76}{I don't care to be patronized like this. Never mind.}{}{8}{game.party_alignment == LAWFUL_NEUTRAL or game.party_alignment == TRUE_NEUTRAL or game.party_alignment == CHAOTIC_NEUTRAL}{0}{}
+{77}{Yeah, sure. And what do you want next, unicorn blood? Forget it.}{}{8}{game.party_alignment == LAWFUL_EVIL or game.party_alignment == NEUTRAL_EVIL or game.party_alignment == CHAOTIC_EVIL}{0}{}
+{78}{@pcname@ not get crushed under giant club fer ya!}{}{-7}{}{0}{}
+{79}{That's all? I've already got the damned thing.}{}{1}{pc.item_find(12602) != OBJ_HANDLE_NULL}{80}{game.quests[100].state = qs_accepted}
+
+
+{80}{You really have a giant's head?}{You really have a giant's head?}{}{}{}{}
+{81}{Yes. [Show the head to Brother Smyth.]}{}{8}{game.party_alignment == LAWFUL_GOOD or game.party_alignment == NEUTRAL_GOOD or game.party_alignment == CHAOTIC_GOOD}{90}{game.quests[100].state = qs_completed}
+{82}{Well of course. [Show the head to Brother Smyth.]}{}{8}{game.party_alignment == LAWFUL_NEUTRAL or game.party_alignment == TRUE_NEUTRAL or game.party_alignment ==  CHAOTIC_NEUTRAL}{90}{game.quests[100].state = qs_completed}
+{83}{Yes. See? [Waive the giant's head before Brother Smyth.]}{}{8}{game.party_alignment == LAWFUL_EVIL or game.party_alignment == NEUTRAL_EVIL or game.party_alignment == CHAOTIC_EVIL}{90}{game.quests[100].state = qs_completed}
+{84}{Ug! [Waive the giant's head before Brother Smyth.]}{}{-7}{}{90}{game.quests[100].state = qs_completed}
+
+
+{90}{To be honest, I didn't think you would be foolhardy enough to hunt a giant, and I certainly did not expect you to kill one!}{To be honest, I didn't think you would be foolhardy enough to hunt a giant, and I certainly did not expect you to kill one!}{}{}{}{}
+{91}{Well I did. So you can show me these masterwork items of yours now.}{}{8}{}{100}{party_transfer_to( npc, 12602 )}
+{92}{Show da master stuffs!}{}{-7}{}{100}{party_transfer_to( npc, 12602 )}
+
+
+{100}{Well I don't have it all here on display, as you can see. [He gestures around at his normal gear.] And I can't leave the smithy right now. Come back tomorrow and see me and I will try to have it all out for you.}{Well I don't have it all here on display, as you can see. [He gestures around at his normal gear.] And I can't leave the smithy right now. Come back tomorrow and see me and I will try to have it all out for you.}{}{}{}{game.global_flags[979] = 1}
+{101}{Very well. I'll check back later.}{}{8}{game.party_alignment == LAWFUL_GOOD or game.party_alignment == NEUTRAL_GOOD or game.party_alignment == CHAOTIC_GOOD}{0}{}
+{102}{I hope so. I'll check back later then.}{}{8}{game.party_alignment == LAWFUL_NEUTRAL or game.party_alignment == TRUE_NEUTRAL or game.party_alignment == CHAOTIC_NEUTRAL}{0}{}
+{103}{Fine. This had better be worth it.}{}{8}{game.party_alignment == LAWFUL_EVIL or game.party_alignment == NEUTRAL_EVIL or game.party_alignment == CHAOTIC_EVIL}{0}{}
+{104}{Me come back.}{}{-7}{}{0}{}
+
+
+{110}{Yes, I know where Nulb is. Here, I shall mark its location on your map for you.}{Yes, I know where Nulb is. Here, I shall mark its location on your map for you.}{}{}{}{game.areas[3] = 1; game.story_state = 3}
+{111}{A:}{}{1}{}{0}{}
+{112}{Thank you. I will go there right now. [Travel immediately to Nulb.]}{}{8}{}{0}{game.worldmap_travel_by_dialog(3)}
+{113}{Thanks. Me go there now. [Travel immediately to Nulb.]}{}{-7}{}{0}{game.worldmap_travel_by_dialog(3)}
+{114}{K:}{}{1}{}{20}{}
+{115}{E:}{}{1}{}{0}{}
+
+
+{120}{I am called Brother because I am the understudy of Jaroo, the village druid. My abilities are few, but I do what I can when called upon to help. Like Jaroo, I follow the Old Faith. It is the way of balance in all things.}{I am called Brother because I am the understudy of Jaroo, the village druid. My abilities are few, but I do what I can when called upon to help. Like Jaroo, I follow the Old Faith. It is the way of balance in all things.}{}{}{}{}
+{121}{Why are you a blacksmith? Shouldn't you be studying under Jaroo?}{}{1}{}{130}{}
+{122}{E:}{}{1}{}{0}{}
+
+
+{130}{Hommlet needed a blacksmith, so I became a blacksmith. When Jaroo decides to leave Hommlet, or Mother forbid, he passes, then I will step up as the spiritual advisor for the village.}{Hommlet needed a blacksmith, so I became a blacksmith. When Jaroo decides to leave Hommlet, or Mother forbid, he passes, then I will step up as the spiritual advisor for the village.}{}{}{}{}
+{131}{Do you think the Old Faith is dying out in the face of newer religions?}{}{1}{}{140}{}
+{132}{E:}{}{1}{}{0}{}
+
+
+{140}{No. Do you?}{No. Do you?}{}{}{}{}
+{141}{Yes, I do.}{}{1}{}{150}{npc.reaction_adj( pc,-5)}
+{142}{I don't know.}{}{1}{}{150}{}
+{143}{No. I was just wondering.}{}{1}{}{150}{}
+{144}{E:}{}{1}{}{0}{}
+
+
+{150}{That's the wonderful thing about the Old Faith. You can have your opinion, and I can have mine, and there is balance.}{That's the wonderful thing about the Old Faith. You can have your opinion, and I can have mine, and there is balance.}{}{}{}{}
+{151}{I see. So Brothers can be shopkeepers too?}{}{1}{}{160}{}
+{152}{E:}{}{1}{}{0}{}
+
+
+{160}{Yes, a follower of the Old Faith can do anything he likes, and usually does what is needed. I am a shopkeeper, yes, but I give most of my money to charity. This way, I provide a needed service, and the needy can benefit.}{Yes, a follower of the Old Faith can do anything he likes, and usually does what is needed. I am a shopkeeper, yes, but I give most of my money to charity. This way, I provide a needed service, and the needy can benefit.}{}{}{}{}
+{161}{I see. Are you able to perform healing?}{}{8}{}{170}{}
+{162}{You fix ouchies?}{}{-7}{}{180}{}
+{163}{E:}{}{1}{}{0}{}
+
+
+{170}{Yes, I can cure light wounds.}{Yes, I can cure light wounds.}{}{}{}{game.global_vars[36] = 1}
+{171}{That's good to know.}{}{8}{}{190}{}
+{172}{Can I get a healing now?}{}{8}{}{210}{}
+{173}{E:}{}{1}{}{0}{}
+
+
+{180}{Um, yes, I can fix "ouchies." Have you suffered a head injury, perhaps?}{Um, yes, I can fix "ouchies." Have you suffered a head injury, perhaps?}{}{}{}{game.global_vars[36] = 1}
+{181}{No, me always like this.}{}{-7}{}{190}{}
+{182}{No, but me need ouchies fixed now.}{}{-7}{}{210}{}
+{183}{E:}{}{1}{}{0}{}
+
+
+{190}{Is there anything else I can do for you, sir?}{Is there anything else I can do for you, miss?}{}{}{}{}
+{191}{K:}{}{1}{}{20}{}
+{192}{N:}{}{1}{}{200}{}
+
+
+{200}{Good journeys to you then.}{Good journeys to you then.}{}{}{}{}
+{201}{A:}{}{1}{}{0}{}
+
+
+{210}{Of course. Who is in need of Cure Light Wounds?}{Of course. Who is in need of Cure Light Wounds?}{}{}{}{game.picker( npc, spell_cure_light_wounds, should_heal_hp_on, [ 220, 0, 230 ] )}
+{211}{}{}{}{}{}{}
+
+
+{220}{That person is not in need of healing.}{That person is not in need of healing.}{}{}{}{}
+{221}{Let's try this again.}{}{8}{}{210}{}
+{222}{Me do again!}{}{-7}{}{210}{}
+{223}{F:}{}{1}{}{0}{}
+
+
+{230}{The cost to Cure Light Wounds will be 100 gold pieces}{The cost to Cure Light Wounds will be 100 gold pieces}{}{}{}{}
+{231}{Very well. Here it is.}{}{8}{pc.money_get() >= 10000}{240}{pc.money_adj(-10000); npc.cast_spell( spell_cure_light_wounds, picker_obj )}
+{232}{I don't have enough money. I'll come back later.}{}{8}{pc.money_get() < 10000}{0}{}
+{233}{Me pay now.}{}{-7}{pc.money_get() >= 10000}{240}{pc.money_adj(-10000); npc.cast_spell( spell_cure_light_wounds, picker_obj )}
+{234}{Not have money. Me go.}{}{-7}{pc.money_get() < 10000}{0}{}
+{235}{F:}{}{1}{}{0}{}
+
+
+{240}{I have performed the healing.}{I have performed the healing.}{}{}{}{npc.spells_pending_to_memorized()}
+{241}{I still need more healing,}{}{8}{}{210}{}
+{242}{More please.}{}{-7}{}{210}{}
+{243}{K:}{}{1}{}{20}{}
+{244}{A:}{}{1}{}{0}{}
+
+
+{250}{Ah good, you're back. I was hoping you would return. I could use your help.}{Ah good, you're back. I was hoping you would return. I could use your help.}{}{}{}{game.global_vars[705] = 1}
+{251}{What do you need?}{}{8}{}{260}{game.global_vars[974] = 1}
+{252}{Me?}{}{-7}{}{260}{game.global_vars[974] = 1}
+
+
+{260}{Well, a certain friend of mine has contracted me to open this chest. He lost the key, and he needs a particular item from within. I've tried everything to break into the chest, but the metal was infused with some magical properties, making it near indestructible.}{Well, a certain friend of mine has contracted me to open this chest. He lost the key, and he needs a particular item from within. I've tried everything to break into the chest, but the metal was infused with some magical properties, making it near indestructible.}{}{}{}{}
+{261}{And you want me to pick the lock?}{}{8}{pc.stat_level_get(stat_level_rogue) >= 1}{270}{}
+{262}{Me open lock?}{}{-7}{pc.stat_level_get(stat_level_rogue) >= 1}{270}{}
+{263}{I don't know anything about locks. What do you expect me to do?}{}{8}{pc.stat_level_get(stat_level_rogue) < 1}{280}{}
+{264}{Huh?}{}{-7}{pc.stat_level_get(stat_level_rogue) < 1}{280}{}
+
+
+{270}{Exactly. You seem the sort that might know his way around the tumblers. Be a good fellow and pop this lock for me and I promise to make it worth your while.}{Exactly. You seem the sort that might know her way around the tumblers. Be a good lass and pop this lock for me and I promise to make it worth your while.}{}{}{}{}
+{271}{Okay, I'll try.}{}{8}{}{290}{}
+{272}{Me do.}{}{-7}{}{290}{}
+{273}{No thanks. I'm not interested.}{}{8}{}{300}{}
+{274}{Me no do.}{}{-7}{}{300}{}
+{275}{What exactly do you mean when you say "worth my while?"}{}{8}{}{310}{}
+
+
+{280}{I am confident that you might know someone that can do the job. Be a good fellow and arrange it for me and I promise to make it worth your while.}{I am confident that you might know someone that can do the job. Be a good lass and arrange it for me and I promise to make it worth your while.}{}{}{}{}
+{281}{Okay, I'll see what I can do.}{}{8}{}{290}{}
+{282}{Me do.}{}{-7}{}{290}{}
+{283}{No thanks. I'm not interested.}{}{8}{}{300}{}
+{284}{Me no do.}{}{-7}{}{300}{}
+{285}{What exactly do you mean when you say "worth my while?"}{}{8}{}{310}{}
+
+
+{290}{Excellent. Let me know when the job is done. Now, is there anything else I can do for you?}{Excellent. Let me know when the job is done. Now, is there anything else I can do for you?}{}{}{}{}
+{291}{K:}{}{1}{}{20}{}
+{292}{N:}{}{1}{}{0}{}
+
+
+{300}{Well, the chest is right there, so if you change your mind feel free to give it a shot. Now, is there anything else I can do for you?}{Well, the chest is right there, so if you change your mind feel free to give it a shot. Now, is there anything else I can do for you?}{}{}{}{}
+{301}{K:}{}{1}{}{20}{}
+{302}{N:}{}{1}{}{0}{}
+
+
+{310}{As I said, my friend is only looking for the one item. So I'll tell you what: if you can open the lock then you can have whatever else we find inside. That seems more than fair to me. Okay?}{As I said, my friend is only looking for the one item. So I'll tell you what: if you can open the lock then you can have whatever else we find inside. That seems more than fair to me. Okay?}{}{}{}{}
+{311}{That sounds good to me.}{}{8}{}{290}{}
+{312}{Me do.}{}{-7}{}{290}{}
+{313}{That's not good enough. You need to offer more.}{}{8}{(pc.skill_level_get(npc,skill_intimidate) >= 8) and (game.party_alignment == NEUTRAL_EVIL or game.party_alignment == CHAOTIC_EVIL)}{320}{}
+{314}{That hardly seems fair. The chest might be empty. Can't you offer a bit more?}{}{8}{(pc.skill_level_get(npc,skill_diplomacy) >= 8) and (game.party_alignment == CHAOTIC_GOOD or game.party_alignment == CHAOTIC_NEUTRAL)}{320}{}
+{315}{No thanks. I'm not interested.}{}{8}{}{300}{}
+{316}{Me no do.}{}{-7}{}{300}{}
+
+
+{320}{That's the best I can do. The chest is right there, so if you change your mind feel free to give it a shot. Now, is there anything else I can do for you?}{That's the best I can do. The chest is right there, so if you change your mind feel free to give it a shot. Now, is there anything else I can do for you?}{}{}{}{}
+{321}{K:}{}{1}{}{20}{}
+{322}{N:}{}{1}{}{0}{}
+
+
+{330}{Quite the locksmith! Yes, quite the locksmith indeed!! Now step aside and let me take a look inside.}{Quite the locksmith! Yes, quite the locksmith indeed!! Now step aside and let me take a look inside.}{}{}{}{game.global_vars[705] = 2}
+{331}{[You step aside.]}{}{1}{}{340}{}
+{332}{Now hold on, friend. How about we talk about the reward first?}{}{8}{(pc.skill_level_get(npc,skill_diplomacy) >= 8) and (game.party_alignment == CHAOTIC_GOOD or game.party_alignment == CHAOTIC_NEUTRAL)}{350}{}
+{333}{[Block the way.] Not so fast. We need to talk about the reward first.}{}{8}{(pc.skill_level_get(npc,skill_intimidate) >= 8) and (game.party_alignment == NEUTRAL_EVIL or game.party_alignment == CHAOTIC_EVIL)}{360}{}
+
+
+{340}{[Brother Smyth examines the contents of the chest.] Ah, yes, that's what I was looking for. My friend will be pleased.}{[Brother Smyth examines the contents of the chest.] Ah, yes, that's what I was looking for. My friend will be pleased.}{}{}{}{}
+{341}{[Wait.]}{}{1}{game.global_flags[500] == 0}{370}{}
+{342}{And the reward you promised?}{}{8}{game.global_flags[500] == 0}{370}{}
+{343}{Me want sumthan!}{}{-7}{game.global_flags[500] == 0}{370}{}
+{344}{[Wait.]}{}{1}{game.global_flags[500] == 1}{490}{}
+{345}{And the reward you promised?}{}{8}{game.global_flags[500] == 1}{490}{}
+{346}{Me want sumthan!}{}{-7}{game.global_flags[500] == 1}{490}{}
+
+
+{350}{Don't worry. You will be paid in full. Nothing more and nothing less than what you deserve. Balance in all things.}{Don't worry. You will be paid in full. Nothing more and nothing less than what you deserve. Balance in all things.}{}{}{}{}
+{351}{[Step aside.]}{}{1}{}{340}{}
+{352}{[Attack Brother Smyth.]}{}{1}{}{}{npc.attack( pc )}
+
+
+{360}{[Brother Smyth looks at you with sudden gravity.] Son, I suggest you step out of my way.}{[Brother Smyth looks at you with sudden gravity.] Daughter, I suggest you step out of my way.}{}{}{}{}
+{361}{[Step aside.]}{}{1}{}{340}{}
+{362}{[Attack Brother Smyth.]}{}{1}{}{}{npc.attack( pc )}
+
+
+{370}{I only need this one item. Everything else is yours, though unfortunately there's not much here. Just a few coins and this old horn. You can have them.}{I only need this one item. Everything else is yours, though unfortunately there's not much here. Just a few coins and this old horn. You can have them.}{}{}{}{pc.money_adj(13072); create_item_in_inventory(12589,pc)}
+{371}{Thank you.}{}{8}{}{380}{}
+{372}{Not much of a reward, but I guess it is better than nothing.}{}{8}{game.party_alignment == CHAOTIC_GOOD or game.party_alignment == CHAOTIC_NEUTRAL}{380}{}
+{373}{[Stare at Brother Smyth in silent animosity.]}{}{8}{game.party_alignment == NEUTRAL_EVIL or game.party_alignment == CHAOTIC_EVIL}{380}{}
+{374}{Okay. Me take stuffs.}{}{-7}{}{380}{}
+{375}{I don't like being cheated. [Attack Brother Smyth.]}{}{8}{game.party_alignment == NEUTRAL_EVIL or game.party_alignment == CHAOTIC_EVIL}{}{npc.attack( pc )}
+{376}{No cheat me!! }{}{-7}{game.party_alignment == NEUTRAL_EVIL or game.party_alignment == CHAOTIC_EVIL}{}{npc.attack( pc )}
+
+
+{380}{Anything else?}{Anything else?}{}{}{}{}
+{381}{K:}{}{1}{}{20}{}
+{382}{N:}{}{1}{}{0}{}
+
+
+{390}{[Brother Smyth sizes you up critically.] Action? What do you mean by that?}{[Brother Smyth sizes you up critically.] Action? What do you mean by that?}{}{}{}{game.global_vars[970] = 1}
+{391}{I mean something more exciting than simply meddling in everyone's personal affairs here.}{}{1}{}{400}{}
+
+
+{400}{I see. And what do you mean by exciting? Are you looking for whores or something like that? If so, you'll have to look elsewhere. I don't arrange that kind of thing.}{I see. And what do you mean by exciting? Are you looking for whores or something like that? If so, you'll have to look elsewhere. I don't arrange that kind of thing.}{}{}{}{}
+{401}{No, no whores. I'd like to help this area in a more meaningful way than just dealing with the minor personal crises of its citizens. Isn't there anything going on around here that's more of a threat than the typical day-to-day trivialities of a small village?}{}{1}{game.party_alignment == LAWFUL_GOOD or game.party_alignment == NEUTRAL_GOOD or game.party_alignment == CHAOTIC_GOOD}{410}{}
+{402}{I'm not looking for whores particularly, no. To be frank, I'm anxious for an opportunity to test my skills in battle. Isn't there anything going on around here that's more of a problem than the typical day-to-day trivialities of a small village?}{}{1}{game.party_alignment == LAWFUL_NEUTRAL or game.party_alignment == TRUE_NEUTRAL or game.party_alignment == CHAOTIC_NEUTRAL}{410}{}
+{403}{Duly noted. Perhaps your local village elder can help me with that later. But at the moment I'm looking moreso to put steel to the innards of some beast. Isn't there anything going on around here that's more of a challenge than the typical day-to-day trivialities of a small village?}{}{1}{game.party_alignment == LAWFUL_EVIL or game.party_alignment == NEUTRAL_EVIL or game.party_alignment == CHAOTIC_EVIL}{410}{}
+
+
+{410}{[Brother Smyth laughs.] So...the restless adventurer wants to sally forth into something perhaps beyond his understanding. What makes you think you can handle anything more serious than running local errands?}{[Brother Smyth laughs.] So...the restless adventurer wants to sally forth into something perhaps beyond her understanding. What makes you think you can handle anything more serious than running local errands?}{}{}{}{}
+{411}{I have already put stop to a merchant caravan slaughter. I wouldn't be here if I were no more capable than what you suggest.}{}{1}{game.party_alignment == LAWFUL_GOOD}{420}{}
+{412}{I have already brought swift justice to a murderer. I wouldn't be here if I were no more capable than what you suggest.}{}{1}{game.party_alignment == NEUTRAL_GOOD}{420}{}
+{413}{The high elf nobles of Celene apparently do not find me wanting. I wouldn't be here if I were no more capable than what you suggest.}{}{1}{game.party_alignment == CHAOTIC_GOOD}{420}{}
+{414}{The Lord Mayor of Greyhawk apparently does not find me wanting. I wouldn't be here if I were no more capable than what you suggest.}{}{1}{game.party_alignment == LAWFUL_NEUTRAL}{420}{}
+{415}{The powerful druid Hrudek apparently does not find me wanting, Brother. I wouldn't be here if I were no more capable than what you suggest.}{}{1}{game.party_alignment == TRUE_NEUTRAL}{420}{}
+{416}{I'm no newcomer when it comes to exploration of dangerous places. I wouldn't be here if I were no more capable than what you suggest.}{}{1}{game.party_alignment == CHAOTIC_NEUTRAL}{420}{}
+{417}{Certain personages of greater significance than you apparently don't find me wanting. I wouldn't be here if I were no more capable than what you suggest.}{}{1}{game.party_alignment == LAWFUL_EVIL}{420}{}
+{418}{I have already carried out certain acts that put shame to what you seem to wish to hide from me. I wouldn't be here if I were no more capable than what you suggest.}{}{1}{game.party_alignment == NEUTRAL_EVIL}{420}{}
+{419}{You could inquire of certain others I've already met along the way, if not for their...unavailability. I wouldn't be here if I were no more capable than what you suggest.}{}{1}{game.party_alignment == CHAOTIC_EVIL}{420}{}
+
+
+{420}{Perhaps. [Brother Smyth considers.] Do you think you really understand death, son?}{Perhaps. [Brother Smyth considers.] Do you think you really understand death, daughter?}{}{}{}{}
+{421}{What's that supposed to mean?}{}{1}{}{430}{}
+
+
+{430}{Death. Surely you've heard of it. Among other things, it's what happens after some creature tears your entrails out and feasts on them while you're still breathing. Do you think you understand that?}{Death. Surely you've heard of it. Among other things, it's what happens after some creature tears your entrails out and feasts on them while you're still breathing. Do you think you understand that?}{}{}{}{}
+{431}{Yes, I do. You underestimate me.}{}{1}{}{440}{}
+{432}{I don't know. But I'm sure I'll find out sooner or later.}{}{1}{}{440}{}
+
+
+{440}{[Brother Smyth waves a hand dismissively]  I don't think you're serious. The death you should seek is that of old age.}{[Brother Smyth waves a hand dismissively]  I don't think you're serious. The death you should seek is that of old age.}{}{}{}{}
+{441}{Listen, Brother. If you know something, tell me. The actions I seek to take are my own affair, as are my motivations and my ability to carry them out. If I should perish, what is it to you in the end?}{}{1}{game.party_alignment == LAWFUL_GOOD or game.party_alignment == NEUTRAL_GOOD or game.party_alignment == CHAOTIC_GOOD}{450}{}
+{442}{Listen, Brother. If you know something, tell me. Or am I just waisting my time with a would-be village druid who spends his days hammering on an empty anvil?}{}{1}{game.party_alignment == LAWFUL_NEUTRAL or game.party_alignment == TRUE_NEUTRAL or game.party_alignment == CHAOTIC_NEUTRAL}{450}{}
+{443}{Listen, Brother. If you know something, tell me. I have been known to employ other types of persuasion to get what I want, and your condescending attitude is starting to make me want to experiment.}{}{1}{game.party_alignment == LAWFUL_EVIL or game.party_alignment == NEUTRAL_EVIL or game.party_alignment == CHAOTIC_EVIL}{450}{}
+
+
+{450}{Ha! Bold to the end. Very well. But I wonder...would you change your mind if you were forced to consider UN-death? [He pauses and shakes his head.] No matter. Perhaps Captain Renton can explain that concept to you in greater detail. I'll leave it to him, though I make no guarantees that he'll be any more impressed with you than I am. He lives on the southwest edge of town.}{Ha! Bold to the end. Very well. But I wonder...would you change your mind if you were forced to consider UN-death? [He pauses and shakes his head.] No matter. Perhaps Captain Renton can explain that concept to you in greater detail. I'll leave it to him, though I make no guarantees that he'll be any more impressed with you than I am. He lives on the southwest edge of town.}{}{}{}{game.quests[104].state = qs_mentioned}
+{451}{That's a fairly cryptic message, Brother.}{}{1}{}{460}{}
+
+
+{460}{Cryptic? And you the 'worldly' adventurer. Go see the Captain. He just may provide you with what it is you think you're looking for.}{Cryptic? And you the 'worldly' adventurer. Go see the Captain. He just may provide you with what it is you think you're looking for.}{}{}{}{game.quests[73].state = qs_mentioned}
+{461}{A:}{}{1}{}{0}{}
+
+
+{470}{Certainly. Bring me the head of a giant and I'll show you my masterwork selection.}{Certainly. Bring me the head of a giant and I'll show you my masterwork selection.}{}{}{}{}
+{471}{Very well. I shall bring you the head of a giant.}{}{8}{game.party_alignment == LAWFUL_GOOD or game.party_alignment == NEUTRAL_GOOD or game.party_alignment == CHAOTIC_GOOD}{0}{game.quests[100].state = qs_accepted}
+{472}{Fine. I'll bring you one.}{}{8}{game.party_alignment == LAWFUL_NEUTRAL or game.party_alignment == TRUE_NEUTRAL or game.party_alignment == CHAOTIC_NEUTRAL}{0}{game.quests[100].state = qs_accepted}
+{473}{I will return with a giant's head. And you had better honor your end of the agreement.}{}{8}{game.party_alignment == LAWFUL_EVIL or game.party_alignment == NEUTRAL_EVIL or game.party_alignment == CHAOTIC_EVIL}{0}{game.quests[100].state = qs_accepted}
+{474}{Me do it.}{}{-7}{}{0}{game.quests[100].state = qs_accepted}
+{475}{Well I happen to have it already.}{}{8}{(pc.item_find(12602) != OBJ_HANDLE_NULL) and (game.party_alignment == LAWFUL_GOOD or game.party_alignment == NEUTRAL_GOOD or game.party_alignment == CHAOTIC_GOOD)}{80}{game.quests[100].state = qs_accepted}
+{476}{Fabulous. Here it is.}{}{8}{(pc.item_find(12602) != OBJ_HANDLE_NULL) and (game.party_alignment == LAWFUL_NEUTRAL or game.party_alignment == TRUE_NEUTRAL or game.party_alignment == CHAOTIC_NEUTRAL)}{80}{game.quests[100].state = qs_accepted}
+{477}{Well imagine that - I've already got the damned thing.}{}{8}{(pc.item_find(12602) != OBJ_HANDLE_NULL) and (game.party_alignment == LAWFUL_EVIL or game.party_alignment == NEUTRAL_EVIL or game.party_alignment == CHAOTIC_EVIL)}{80}{game.quests[100].state = qs_accepted}
+{478}{Me give head!}{}{-7}{pc.item_find(12602) != OBJ_HANDLE_NULL}{80}{game.quests[100].state = qs_accepted}
+{479}{E:}{}{1}{}{0}{}
+
+
+{480}{What might that be?}{What might that be?}{}{}{}{}
+{481}{No offense, but this seems like a boring town. Would you know of anywhere else I can find some real action?}{}{1}{game.global_vars[970] == 0}{390}{}
+{482}{I should probably handle that business with the chest before I do anything else, shouldn't I?}{}{1}{game.global_vars[705] != 2 and game.global_vars[974] == 1}{0}{}
+{483}{I should probably have a closer look at that book that was in the chest before I do anything else, shouldn't I?}{}{1}{game.global_vars[705] == 2 and game.global_vars[974] == 1}{0}{}
+{484}{K:}{}{1}{}{20}{}
+{485}{F:}{}{1}{}{0}{}
+
+
+{490}{I only need this one item. Everything else is yours, though unfortunately there's not much here. Just a few coins, this old book, and this old horn. You can have them.}{I only need this one item. Everything else is yours, though unfortunately there's not much here. Just a few coins, this old book, and this old horn. You can have them.}{}{}{}{pc.money_adj(13072); create_item_in_inventory(12589,pc); create_item_in_inventory(11050,pc)}
+{491}{Thank you.}{}{8}{}{380}{}
+{492}{Not much of a reward, but I guess it is better than nothing.}{}{8}{game.party_alignment == CHAOTIC_GOOD or game.party_alignment == CHAOTIC_NEUTRAL}{380}{}
+{493}{[Stare at Brother Smyth in silent animosity.]}{}{8}{game.party_alignment == NEUTRAL_EVIL or game.party_alignment == CHAOTIC_EVIL}{380}{}
+{494}{Okay. Me take stuffs.}{}{-7}{}{380}{}
+{495}{I don't like being cheated. [Attack Brother Smyth.]}{}{8}{game.party_alignment == NEUTRAL_EVIL or game.party_alignment == CHAOTIC_EVIL}{}{npc.attack( pc )}
+{496}{No cheat me!! }{}{-7}{game.party_alignment == NEUTRAL_EVIL or game.party_alignment == CHAOTIC_EVIL}{}{npc.attack( pc )}
+
+
+{1000}{Beory help me, I really don't want that item of yours. It is tainted with raw evil.}{Beory help me, I really don't want that item of yours.}{}{}{}{}
+{1001}{Alright, but what am I supposed to do with it now?}{}{8}{}{1020}{}
+{1002}{Uhh.}{}{-7}{}{0}{}
+
+{1020}{Maybe the traders up north will take it off your hands, they never struck me as squeamish when it comes to business.}{Maybe the traders up north will take it off your hands, they never struck me as squeamish when it comes to business.}{}{}{}{}
+{1021}{Look, they have really lousy markups, and you're the only one who pays full price for metal items. Can't you just smelt it?}{}{8}{}{1030}{}
+{1022}{Thanks.}{}{8}{}{0}{}
+
+{1030}{If you insist. But at least spare me the boots, I don't need both smelly and evil. Hah!}{If you insist. But at least spare me the boots, I don't need both smelly and evil. Hah!}{}{}{}{}
+{1031}{Much better.}{}{8}{}{0}{}
+{1032}{F:}{}{8}{}{0}{}
+
+{1050}{Come on!}{Come on!}{}{}{}{}
+{1051}{F:}{}{1}{}{0}{}

@@ -1,0 +1,5 @@
+name: Arrow of Death
+flags: 8
+prereqs:
+description: Once per day you may fire an arrow an arrow of death that forces the target, if damaged by the arrow's attack, to make a DC 20 Fort save or be slain.
+prereq descr: Arcane Archer level 10.

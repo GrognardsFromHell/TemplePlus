@@ -1,0 +1,288 @@
+{1}{Ahoy, lad.}{Ahoy, lass.}{}{}{}{}
+{2}{Hello, I am @pcname@.}{}{8}{not npc.has_met(pc)}{10}{}
+{3}{Hi, me @pcname@.}{}{-7}{not npc.has_met(pc)}{10}{}
+{4}{You still brawling at the tavern every night?}{}{8}{game.global_vars[10] == 1}{20}{}
+{5}{You still fight at bar a lot?}{}{-7}{game.global_vars[10] == 1}{20}{}
+{6}{Can I speak to you about Bertram?}{}{8}{npc.has_met(pc) and game.quests[36].state == qs_accepted}{40}{}
+{7}{Me want to talk about Bertie.}{}{-7}{npc.has_met(pc) and game.quests[36].state == qs_accepted}{40}{}
+{8}{So you're the pirate leader?}{}{1}{npc.has_met(pc) and game.global_flags[290] == 0}{350}{}
+{9}{E:}{}{1}{}{0}{}
+
+
+{10}{Aye, matey, and me name is Tolub. I'm the leader of the scurvy dogs ye be seeing in these parts.}{Aye, matey, and me name is Tolub. I'm the leader of the scurvy dogs ye be seeing in these parts.}{}{}{}{}
+{11}{Oh, so you are the leader of the river pirates?}{}{8}{game.global_flags[290] == 0}{350}{}
+{12}{You leader of river pirates?}{}{-7}{game.global_flags[290] == 0}{350}{}
+{13}{I need to talk to you about one of your men, Bertram.}{}{8}{game.quests[36].state == qs_accepted}{40}{}
+{14}{Me need to talk to you about Bertie.}{}{-7}{game.quests[36].state == qs_accepted}{40}{}
+{15}{E:}{}{1}{}{0}{}
+
+
+{20}{Aye, lad, come by tonight if ye think ye can take me!}{Aye, lass, come by tonight if ye think ye can take me! I have no qualms about hitting a woman! [He laughs]}{}{}{}{}
+{21}{Um, can we talk about Bertram instead?}{}{8}{game.quests[36].state == qs_accepted}{40}{}
+{22}{Er, me talk about Bertie with you?}{}{-7}{game.quests[36].state == qs_accepted}{40}{}
+{23}{E:}{}{1}{}{0}{}
+
+
+{30}{[The pirate eyes you] Say, ye look like a tough one. We brawl for doubloons each night at the tavern. Ye should try for the gold! No prey, no pay!}{[The pirate eyes you] Say, ye look like a tough one. We brawl for doubloons each night at the tavern. Ye should try for the gold! No prey, no pay!}{}{}{}{}
+{31}{You fight every night at the tavern?}{}{1}{}{20}{}
+{32}{Never mind about that, what about Bertram?}{}{8}{game.quests[36].state == qs_accepted}{40}{}
+{33}{Me not care about that. Me want to talk about Bertie.}{}{-7}{game.quests[36].state == qs_accepted}{40}{}
+{34}{E:}{}{1}{}{0}{}
+
+
+{40}{Blimey! What do ye want with that scallywag?}{Blimey! What do ye want with that scallywag?}{}{}{}{}
+{41}{I don't think he's cut out for life as a river pirate.}{}{8}{pc.skill_level_get(npc, skill_diplomacy) >= 11}{50}{}
+{42}{I'm curious if you were willing to sell him.}{}{8}{}{60}{}
+{43}{I'm going to take him with me, away from you.}{}{8}{}{140}{}
+{44}{I can see why he finds you attractive.}{}{8}{}{170}{}
+{45}{Me not think he want to be river pirate.}{}{-7}{pc.skill_level_get(npc, skill_diplomacy) >= 11}{50}{}
+{46}{Me want to know if you sell him.}{}{-7}{}{60}{}
+{47}{Me gonna take him!}{}{-7}{}{140}{}
+{48}{Me see why Bertie like you.}{}{-7}{}{170}{}
+{49}{F:}{}{1}{}{0}{}
+
+
+{50}{Heave to, matey! Bertram may not have his sea legs, but he's better than a bilge rat, if ye know what I mean! [He laughs]}{Heave to, matey! Bertram may not have his sea legs, but he's better than a bilge rat, if ye know what I mean! [He laughs]}{}{}{}{}
+{51}{Bertram hates life onboard ship. And you must admit that he's not much of a pirate.}{}{8}{}{120}{}
+{52}{Bertie hate living on ship. And he not act like pirate!}{}{-7}{}{120}{}
+
+
+{60}{Shiver me timbers! Ye actually want to buy that lily livered landlubber?!}{Shiver me timbers! Ye actually want to buy that lily livered landlubber?!}{}{}{}{}
+{61}{Yes, how much?}{}{1}{}{70}{}
+
+
+{70}{Sink me, ye seem serious! Well, I'd want some serious brass for him. Say, 1000 doubloons.}{Sink me, ye seem serious! Well, I'd want some serious brass for him. Say, 1000 doubloons.}{}{}{}{}
+{71}{OK. Here's 1000 gold. Bertram is mine.}{}{8}{pc.money_get() >= 100000}{80}{pc.money_adj(-100000)}
+{72}{OK, me give you 1000 gold. Me own Bertram now.}{}{-7}{pc.money_get() >= 100000}{80}{pc.money_adj(-100000)}
+{73}{Hmm, that's more than I have.}{}{8}{pc.money_get() < 100000}{90}{}
+{74}{Me not have that much gold!}{}{-7}{pc.money_get() < 100000}{90}{}
+{75}{I'll have to think about this. I'll come back later.}{}{8}{}{0}{}
+{76}{Me need to think. Me come back.}{}{-7}{}{0}{}
+
+
+{80}{He's yours, bucko. Now gangway, I'm counting me booty!}{He's yours, bucko. Now gangway, I'm counting me booty!}{}{}{}{game.quests[36].state = qs_completed}
+{81}{E:}{}{1}{}{0}{}
+
+
+{90}{Belay the sale. The pollywog stays mine!}{Belay the sale. The pollywog stays mine!}{}{}{}{}
+{91}{I'll come back.}{}{8}{}{0}{}
+{92}{Me come back.}{}{-7}{}{0}{}
+
+
+{100}{[He rubs his chin] Aye, he's a might strange.}{[He rubs his chin] Aye, he's a might strange.}{}{}{}{}
+{101}{And how do you think he makes your whole band look?}{}{8}{}{110}{}
+{102}{And he make your band look, well, you know.}{}{-7}{}{110}{}
+
+
+{110}{What do ye mean?}{What do ye mean?}{}{}{}{}
+{111}{Well, he's a bit different, so it makes you all look different.}{}{8}{}{120}{}
+{112}{Bertie different, so you look different too.}{}{-7}{}{120}{}
+
+
+{120}{Aye, I think ye speak the truth. I always did think he was too much of a landlubber.}{Aye, I think ye speak the truth. I always did think he was too much of a landlubber.}{}{}{}{}
+{121}{So just let Bertram come with me. He wants it. You want it. It's the perfect solution.}{}{8}{}{130}{}
+{122}{So Bertie can come with me. He want. You want. Perfect.}{}{-7}{}{130}{}
+
+
+{130}{Take him, handsomely now. And good riddance.}{Take him, handsomely now. And good riddance.}{}{}{}{game.quests[36].state = qs_completed}
+{131}{A:}{}{1}{}{0}{}
+
+
+{140}{Avast! Ye'll find me in Davy Jones' locker before I let ye walk off with Bertram.}{Avast! Ye'll find me in Davy Jones' locker before I let ye walk off with Bertram.}{}{}{}{}
+{141}{I don't want to have to kill you, Tolub.}{}{8}{game.global_vars[10] <= 1}{150}{}
+{142}{Me not want to kill you, Tolub.}{}{-7}{game.global_vars[10] <= 1}{150}{}
+{143}{I better start telling people your new address then.}{}{8}{}{160}{}
+{144}{Me tell people where to find you!}{}{-7}{}{160}{}
+{145}{F:}{}{1}{}{0}{}
+
+
+{150}{Then meet me at the tavern tonight, and I'll brawl ye for him.}{Meet me at the tavern tonight, and I'll brawl ye for him.}{}{}{}{game.quests[40].state = qs_mentioned}
+{151}{OK.}{}{1}{}{0}{}
+{152}{Brawling is for children. I guess I will have to kill you and brag about it.}{}{8}{}{160}{}
+{153}{Brawling is for kiddies. I will kill you and tell everyone how easy it was.}{}{-7}{}{160}{}
+
+
+{160}{Dead men tell no tales, lad. [He attacks]}{Dead men tell no tales, lass. [He attacks]}{}{}{}{}
+{161}{[continue]}{}{1}{}{0}{npc.attack(pc)}
+
+
+{170}{Avast ye! Don't ye be runnin' a rig on me! I don't play that way in town!}{Avast ye! Don't ye be runnin' a rig on me! I got me a sweet honey here in Nulb.}{}{}{}{}
+{171}{So you are not interested in me?}{}{8}{}{180}{}
+{172}{So you not want me?}{}{-7}{}{180}{}
+
+
+{180}{My girl Lodriss would have me dancin' the hempen jig! Now gangway, lad!}{My girl Lodriss would have me dancin' the hempen jig! Now gangway, lass!}{}{}{}{}
+{181}{E:}{}{1}{}{0}{}
+
+
+{190}{Who wants to brawl?}{Who wants to brawl?}{}{}{}{}
+
+
+{191}{Whoever can beat me in a brawl wins a sack of doubloons!}{Whoever can beat me in a brawl wins a sack of doubloons!}{}{}{}{}
+
+
+{192}{Come on, ye scurvy dogs! Someone take me on!}{Come on, ye scurvy dogs! Someone take me on!}{}{}{}{}
+
+
+{193}{Any takers at all? Anyone want to brawl?}{Any takers at all? Anyone want to brawl?}{}{}{}{}
+
+
+{194}{Cowards! No one dares take me on!}{Cowards! No one dares take me on!}{}{}{}{}
+
+
+{195}{}{}{}{}{}{}
+
+
+{196}{}{}{}{}{}{}
+
+
+{197}{}{}{}{}{}{}
+
+
+{198}{}{}{}{}{}{}
+
+
+{199}{}{}{}{}{}{}
+
+
+{200}{Aye, ye be wantin' to brawl with me, landlubber?}{Aye, ye be wantin' to brawl with me, lassie? I don't go easy on the ladyfolk, ye know.}{}{}{}{game.quests[40].state = qs_mentioned}
+{201}{Yes, I'll take you on.}{}{8}{game.global_vars[10] == 0}{250}{}
+{202}{Yes, I'll take you on.}{}{8}{game.global_vars[10] == 1}{250}{}
+{203}{Yes, I'll take you on again, and this time I'll beat you.}{}{8}{game.global_vars[10] == 2}{230}{}
+{204}{Yes, I'll take you on again and beat you again.}{}{8}{game.global_vars[10] == 3}{220}{}
+{205}{No, I don't want to fight.}{}{8}{game.global_vars[10] == 0}{240}{}
+{206}{No, I told you no before!}{}{8}{game.global_vars[10] == 1}{240}{}
+{207}{No, you already beat me once.}{}{8}{game.global_vars[10] == 2}{230}{}
+{208}{No, I already beat you. No need to do so again.}{}{8}{game.global_vars[10] == 3}{220}{}
+{209}{Yup, me fight you.}{}{-7}{game.global_vars[10] == 0}{250}{}
+{210}{Yup, me fight you.}{}{-7}{game.global_vars[10] == 1}{250}{}
+{211}{Yup, me fight you again.}{}{-7}{game.global_vars[10] == 2}{230}{}
+{212}{Yup, me beat you again.}{}{-7}{game.global_vars[10] == 3}{220}{}
+{213}{Nope, me not want to fight.}{}{-7}{game.global_vars[10] == 0}{240}{}
+{214}{Nope, me already tell you me not want to.}{}{-7}{game.global_vars[10] == 1}{240}{}
+{215}{Nope, me not want to lose again.}{}{-7}{game.global_vars[10] == 2}{230}{}
+{216}{Nope, me already beat you.}{}{-7}{game.global_vars[10] == 3}{220}{}
+
+
+{220}{Once is enough, matey. Ye beat me fair and square.}{Once is enough, lass. Ye beat me fair and square, and I admit it in front of all.}{}{}{}{}
+{221}{I need to speak to you about Bertram.}{}{8}{game.quests[36].state == qs_accepted}{40}{}
+{222}{Me want to talk about Bertram.}{}{-7}{game.quests[36].state == qs_accepted}{40}{}
+{223}{E:}{}{1}{}{0}{}
+
+
+{230}{Heave to, matey. I proved I can beat ye already.}{Heave to, lass. I proved I can beat ye already.}{}{}{}{}
+{231}{I need to speak to you about Bertram.}{}{8}{game.quests[36].state == qs_accepted}{40}{}
+{232}{Me want to talk about Bertram.}{}{-7}{game.quests[36].state == qs_accepted}{40}{}
+{233}{E:}{}{1}{}{0}{}
+
+
+{240}{Bah, lily livered, ye are.}{Bah, lily livered, ye are.}{}{}{}{game.global_vars[10] = 1}
+{241}{I need to speak to you about Bertram.}{}{8}{game.quests[36].state == qs_accepted}{40}{}
+{242}{Me want to talk about Bertram.}{}{-7}{game.quests[36].state == qs_accepted}{40}{}
+{243}{E:}{}{1}{}{0}{}
+
+
+{250}{There ye go, man! We fight hand to hand, no weapons, no bloomin' magic. Neither side gets help from his friends. First one to knock out his fellow wins.}{There ye go, lass! We fight hand to hand, no weapons, no bloomin' magic. Neither side gets help from his or her friends. First one to knock out his or her fellow wins.}{}{}{}{}
+{251}{What do I win?}{}{8}{}{260}{}
+{252}{What me win?}{}{-7}{}{260}{}
+
+
+{260}{Har har, IF ye win, ye get a sack of a hundred gold doubloons!}{Har har, IF ye win, ye get a sack of a hundred gold doubloons!}{}{}{}{}
+{261}{OK. Let's do this thing.}{}{8}{}{0}{game.quests[40].state = qs_accepted; brawl(npc,pc)}
+{262}{OK. Me ready.}{}{-7}{}{0}{game.quests[40].state = qs_accepted; brawl(npc,pc)}
+{263}{No, I have changed my mind. I don't want to fight.}{}{8}{}{240}{}
+{264}{No, me change mind. Me no fight.}{}{-7}{}{240}{}
+{265}{Wait. I'll make a new wager. If I win, I get Bertram.}{}{8}{game.quests[36].state == qs_accepted}{270}{}
+{266}{Wait! Me have new bet! If me win, me get Bertie!}{}{-7}{game.quests[36].state == qs_accepted}{270}{}
+
+
+{270}{Blimey! Ye want to fight over that cur?}{Blimey! Ye want to fight over that cur?}{}{}{}{}
+{271}{Yes, and if I win, I get to keep him, Agreed?}{}{8}{}{280}{}
+{272}{Yup, and if me win, I take him. OK?}{}{-7}{}{280}{}
+
+
+{280}{Agreed, lad. But ye should have tried for the doubloons! [He laughs]}{Agreed, lass. But ye should have tried for the doubloons! [He laughs]}{}{}{}{game.global_flags[101] = 1}
+{281}{OK. Let's do this thing.}{}{8}{}{0}{game.quests[40].state = qs_accepted; brawl(npc,pc)}
+{282}{OK. Me ready.}{}{-7}{}{0}{game.quests[40].state = qs_accepted; brawl(npc,pc)}
+
+
+{290}{Cheater! All bets be off! Like yer head!}{Cheater! All bets be off! Like yer head!}{}{}{}{game.quests[40].state = qs_botched}
+
+
+{291}{}{}{}{}{}{}
+
+
+{300}{Avast lad! Ye beat me!}{Avast lass! Ye beat me!}{}{}{}{game.global_vars[10] = 3; game.quests[40].state = qs_completed; pc.reputation_add( 14 )}
+{301}{Yeah, now pay up, Tolub!}{}{1}{game.global_flags[101] == 0}{310}{}
+{302}{Yeah, now I get to collect Bertram!}{}{8}{game.global_flags[101] == 1}{320}{}
+{303}{Yeah, now me get Bertie!}{}{-7}{game.global_flags[101] == 1}{320}{}
+
+
+{310}{Aye, here's your booty, fair and square. [He hands you the sack of gold coins]}{Aye, here's your booty, fair and square. [He hands you the sack of gold coins]}{}{}{}{}
+{311}{A:}{}{1}{}{0}{pc.money_adj(10000)}
+
+
+{320}{Aye, he's yours! Go take the cur and good riddance to both of ye.}{Aye, he's yours! Go take the cur and good riddance to both of ye.}{}{}{}{}
+{321}{E:}{}{1}{}{0}{game.quests[36].state = qs_completed}
+
+
+{330}{Har, lad, I beat ye fair and square.}{Har, lad, I beat ye fair and square.}{}{}{}{game.global_vars[10] = 2; game.quests[40].state = qs_botched}
+{331}{Yes, you did.}{}{8}{}{340}{}
+{332}{Yup, you good.}{}{-7}{}{340}{}
+{333}{What about Bertram?}{}{8}{game.quests[36].state == qs_accepted}{40}{}
+{334}{What about Bertie?}{}{-7}{game.quests[36].state == qs_accepted}{40}{}
+
+
+{340}{No hard feelings, lad? Ye did ye best.}{No hard feelings, lass? Ye did ye best.}{}{}{}{}
+{341}{Yeah, good fight Tolub. Bye.}{}{8}{}{0}{}
+{342}{Yup, it good fight. Bye.}{}{-7}{}{0}{}
+
+
+{350}{Aye, lad! Were ye expecting a letter of marque now, like we were soldiers all legal-like? Nay, I killed the whole lot of the former pirate wags and got their boat! That's how ye become a pirate, lad!}{Aye, lass! Were ye expecting a letter of marque now, like we were soldiers all legal-like? Nay, I killed the whole lot of the former pirate wags and got their boat! That's how ye become a pirate, lass!}{}{}{}{game.global_flags[290] = 1}
+{351}{I see.}{}{8}{game.global_vars[10] == 0}{30}{}
+{352}{Me understand.}{}{-7}{game.global_vars[10] == 0}{30}{}
+{353}{E:}{}{1}{}{0}{}
+
+
+{400}{Avast! Be ye lily livered scoundrel trying to pull a fast one on me?}{Avast! Be ye lily livered scoundrel trying to pull a fast one on me?}{}{}{}{game.global_vars[10] = 4}
+{401}{You are mistaken, I do not cheat.}{}{8}{}{410}{}
+{402}{Me not cheats!}{}{-7}{}{410}{}
+{403}{You're just afraid to lose, aren't you?}{}{8}{}{430}{}
+{404}{Me not see pirate chicken before.}{}{-7}{}{430}{}
+
+
+{410}{Ye be lucky I am in a good mood, landlubber! Now gangway, before I change me mind!}{Ye be lucky I am in a good mood, landlubber! Now gangway, before I change me mind!}{}{}{}{}
+{411}{E:}{}{1}{}{0}{}
+
+
+{430}{Arrr! All bets be off, cheater! Like yer head!}{Arrr! All bets be off, cheater! Like yer head!}{}{}{}{}
+{431}{[the pirates attack]}{}{1}{}{0}{game.quests[40].state = qs_botched; npc.attack(pc)}
+
+
+{500}{Ye are testing my patience, and I have little for the likes of ye!}{Ye are testing my patience, and I have little for the likes ye!}{}{}{}{}
+{501}{I just want to talk about Bertram.}{}{8}{game.global_flags[101] == 0 and game.quests[36].state == qs_accepted}{510}{}
+{502}{Since the fight is off, I'll just buy Bertram off of you instead.}{}{8}{game.global_flags[101] == 1 and game.quests[36].state == qs_accepted}{520}{}
+{503}{Me want to talk about Bertie.}{}{-7}{game.global_flags[101] == 0 and game.quests[36].state == qs_accepted}{510}{}
+{504}{Me buy Bertie because we no fight.}{}{-7}{game.global_flags[101] == 1 and game.quests[36].state == qs_accepted}{520}{}
+{505}{E:}{}{1}{}{0}{}
+
+
+{510}{Blimey! What do ye want with that scallywag?}{Blimey! What do ye want with that scallywag?}{}{}{}{}
+{511}{I want to buy him.}{}{8}{}{520}{}
+{512}{I'm going to take him with me, away from you.}{}{8}{}{140}{}
+{513}{Me want to know if you sell him.}{}{-7}{}{520}{}
+{514}{Me gonna take him!}{}{-7}{}{140}{}
+{515}{F:}{}{1}{}{0}{}
+
+
+{520}{Shiver me timbers! Ye actually want to buy that lily livered landlubber?!}{Shiver me timbers! Ye actually want to buy that lily livered landlubber?!}{}{}{}{}
+{521}{Yes, how much?}{}{1}{}{530}{}
+
+
+{530}{Sink me, ye seem serious! Well, I'd want some serious brass for him. Say, 1000 doubloons.}{Sink me, ye seem serious! Well, I'd want some serious brass for him. Say, 1000 doubloons.}{}{}{}{}
+{531}{OK. Here's 1000 gold. Bertram is mine.}{}{8}{pc.money_get() >= 100000}{80}{pc.money_adj(-100000)}
+{532}{OK, me give you 1000 gold. Me own Bertram now.}{}{-7}{pc.money_get() >= 100000}{80}{pc.money_adj(-100000)}
+{533}{Hmm, that's more than I have.}{}{8}{pc.money_get() < 100000}{90}{}
+{534}{Me not have that much gold!}{}{-7}{pc.money_get() < 100000}{90}{}
+{535}{I'll have to think about this. I'll come back later.}{}{8}{}{0}{}
+{536}{Me need to think. Me come back.}{}{-7}{}{0}{}

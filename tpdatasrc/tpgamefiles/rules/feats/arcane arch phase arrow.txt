@@ -1,0 +1,5 @@
+name: Phase Arrow
+flags: 8
+prereqs:
+description: Once per day you may launch an arrow to a known target. The arrow travels in a straight path, passing through any nonmagical barrier.
+prereq descr: Arcane Archer level 6.

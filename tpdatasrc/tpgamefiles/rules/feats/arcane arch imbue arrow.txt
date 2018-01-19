@@ -1,0 +1,5 @@
+name: Imbue Arrow
+flags: 8
+prereqs:
+description: Allows you to place an area spell upon an arrow and fire it in the same round.
+prereq descr: Arcane Archer level 2.

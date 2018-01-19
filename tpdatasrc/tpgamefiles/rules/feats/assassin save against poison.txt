@@ -1,0 +1,5 @@
+name: Save Bonus against Poison
+flags: 8
+prereqs:
+description: You gain a natural saving throw bonus to all poisons. For every two additional assassin levels above 2, the bonus increases by 1.
+prereq descr: Assassin level 2.

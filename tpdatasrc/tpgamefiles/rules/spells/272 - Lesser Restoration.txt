@@ -1,0 +1,23 @@
+School: Conjuration
+Subschool: Healing
+Level: Clr 2
+Level: Drd 2
+Level: Pal 1
+Component: V
+Component: S
+Casting Time: Out of Combat
+Range: Touch
+Saving Throw: Willpower
+Spell Resistance: Yes
+Projectile: No
+flags_Target: Range
+inc_flags_Target: Self
+inc_flags_Target: Other
+exc_flags_Target: Dead
+exc_flags_Target: Non-critter
+mode_Target: Single
+min_Target: 1
+max_Target: 1
+radius_Target: 0
+ai_type: ai_action_defensive
+choices: 161 162 163 164 165 166
