@@ -207,6 +207,9 @@ def InitSpellSelection( obj, classLvlNew = -1, classLvlIncrement = 1):
 def LevelupCheckSpells( obj):
 	spell_enums = char_editor.get_spell_enums()
 	for spInfo in spell_enums:
+		spClass = spInfo.get_casting_class()
+		if spClass != stat_level_bard:
+			continue
 		if spInfo.spell_enum == spell_vacant:
 			return 0
 	return 1
