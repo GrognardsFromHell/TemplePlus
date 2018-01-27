@@ -27,6 +27,7 @@
 #include "infrastructure/mesparser.h"
 #include "legacymapsystems.h"
 #include "infrastructure/meshes.h"
+#include "turn_based.h"
 
 
 //*****************************************************************************
@@ -171,6 +172,8 @@ void TeleportSystem::AdvanceTime(uint32_t time) {
 
 	auto &teleportProcessActive = temple::GetRef<BOOL>(0x10AB74B8);
 	teleportProcessActive = 1;
+
+	tbSys.groupInitiativeList->Clear(); // fix for common crash - sometimes initiative list isn't cleared and then some other processes get invalid crap
 
 	auto teleportProcess = temple::GetRef<void(__cdecl)(FadeAndTeleportArgs&)>(0x10085AA0);
 	auto &teleportPacket = temple::GetRef<FadeAndTeleportArgs>(0x10AB74C8);
