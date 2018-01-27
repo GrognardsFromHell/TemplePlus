@@ -477,7 +477,7 @@ public:
 		replaceFunction<void(__cdecl)()>(0x10181F80, []() {uiPcCreation.FeatsShow(); });
 		replaceFunction<void(__cdecl)()>(0x10181F60, []() {uiPcCreation.FeatsHide(); });
 		replaceFunction<void(__cdecl)(CharEditorSelectionPacket&, objHndl&)>(0x10181FE0, [](CharEditorSelectionPacket& selPkt, objHndl& handle) {uiPcCreation.FeatsFinalize(selPkt, handle); });
-		replaceFunction<void(__cdecl)()>(0x10181FA0, []() {uiPcCreation.FeatsCheckComplete(); });
+		replaceFunction<BOOL(__cdecl)()>(0x10181FA0, []() {return uiPcCreation.FeatsCheckComplete(); });
 
 		// Spell system
 		replaceFunction<void(__cdecl)(GameSystemConf&)>(0x101800E0, [](GameSystemConf& conf) {uiPcCreation.SpellsSystemInit(conf); });
@@ -488,7 +488,7 @@ public:
 		replaceFunction<void(__cdecl)()>(0x1017EB60, []() {uiPcCreation.SpellsShow(); });
 		replaceFunction<void(__cdecl)()>(0x1017EB40, []() {uiPcCreation.SpellsHide(); });
 		replaceFunction<void(__cdecl)(CharEditorSelectionPacket&, objHndl&)>(0x1017F0A0, [](CharEditorSelectionPacket& selPkt, objHndl& handle) {uiPcCreation.SpellsFinalize(); });
-		replaceFunction<void(__cdecl)()>(0x1017EB80, []() {uiPcCreation.SpellsCheckComplete(); });
+		replaceFunction<BOOL(__cdecl)()>(0x1017EB80, []() {return uiPcCreation.SpellsCheckComplete(); });
 
 		// Deity
 		replaceFunction<void(__cdecl)()>(0x10187340, []() {uiPcCreation.DeitySetPermissibles(); });
