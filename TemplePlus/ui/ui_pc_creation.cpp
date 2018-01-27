@@ -477,7 +477,9 @@ public:
 		replaceFunction<void(__cdecl)()>(0x10181F80, []() {uiPcCreation.FeatsShow(); });
 		replaceFunction<void(__cdecl)()>(0x10181F60, []() {uiPcCreation.FeatsHide(); });
 		replaceFunction<void(__cdecl)(CharEditorSelectionPacket&, objHndl&)>(0x10181FE0, [](CharEditorSelectionPacket& selPkt, objHndl& handle) {uiPcCreation.FeatsFinalize(selPkt, handle); });
-		replaceFunction<void(__cdecl)()>(0x10181FA0, []() {uiPcCreation.FeatsCheckComplete(); });
+		replaceFunction<void(__cdecl)()>(0x10181FA0, [](){
+			uiPcCreation.FeatsCheckComplete();
+		});
 
 		// Spell system
 		replaceFunction<void(__cdecl)(GameSystemConf&)>(0x101800E0, [](GameSystemConf& conf) {uiPcCreation.SpellsSystemInit(conf); });
@@ -889,6 +891,11 @@ Alignment UiPcCreation::GetPartyAlignment(){
 }
 
 void UiPcCreation::PrepareNextStages(){
+}
+
+void UiPcCreation::BtnStatesUpdate(int systemId)
+{
+	// was it the missing definition that did this???
 }
 
 void UiPcCreation::ResetNextStages(int systemId){
@@ -1449,6 +1456,7 @@ BOOL UiPcCreation::FeatsCheckComplete()
 
 	if (IsSelectingBonusFeat() && selPkt.feat2 == FEAT_NONE) // the logic will be handled in the msg callbacks & Python API now
 		return FALSE;
+
 
 	return TRUE;
 }
