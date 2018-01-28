@@ -24,8 +24,7 @@ BOOL TigTabParser::Open(const char* filenameIn)
 		free(filename);
 	if (fileContent)
 		free(fileContent);
-	filename = new char[strlen(filenameIn) + 1];
-	strcpy(filename, filenameIn);
+	filename = _strdup(filenameIn);
 	auto file = tio_fopen(filenameIn, "rb");
 	if (!file)
 		return 17;
@@ -34,6 +33,7 @@ BOOL TigTabParser::Open(const char* filenameIn)
 	auto fileLen = tio_filelength(file);
 	fileContent = new char[fileLen + 1];
 	fileContentEndPos = &fileContent[tio_fread(fileContent, 1, fileLen, file)];
+	fileContent[fileLen] = '\0'; // Ensure nul-termination of file
 	tio_fclose(file);
 
 
@@ -125,6 +125,9 @@ void TigTabParser::Process()
 				}
 				if (curPosChar == '\t')
 				{
+					break;
+				}
+				if (curPos >= endPos) {
 					break;
 				}
 			}
