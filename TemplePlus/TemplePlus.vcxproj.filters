@@ -483,6 +483,9 @@
     </ClCompile>
     <ClCompile Include="gamesystems\objfade.cpp" />
     <ClCompile Include="d20_defs.cpp" />
+    <ClCompile Include="ui\ui_pc_creation_hooks.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -907,6 +910,9 @@
     </ClInclude>
     <ClInclude Include="gamesystems\objfade.h" />
     <ClInclude Include="gamesystems\random_encounter.h" />
+    <ClInclude Include="ui\ui_pc_creation.h">
+      <Filter>ui</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">
