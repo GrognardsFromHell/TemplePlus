@@ -9,8 +9,8 @@ struct TabFileStatus
 	uint32_t numLines;
 	uint32_t numTabsMax; //per line
 	uint32_t numLinesParsed;
-	const char * fileContentsRaw;
-	const char * endOfString;
+	char * fileContentsRaw;
+	char * endOfString;
 	uint32_t(__cdecl * lineParser)(TabFileStatus * tab, uint32_t numLinesParsed, const char ** tokens);
 };
 

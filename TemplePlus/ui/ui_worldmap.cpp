@@ -25,6 +25,7 @@ UiWorldmap::UiWorldmap(int width, int height) {
 	if (!startup(&lgcyConf)) {
 		throw TempleException("Unable to initialize game system Worldmap-UI");
 	}
+
 }
 UiWorldmap::~UiWorldmap() {
 	auto shutdown = temple::GetPointer<void()>(0x1015e060);
@@ -100,6 +101,9 @@ public:
 
 			ui_worldmap().Show(2);
 		});
+
+		// This fixes an out of bounds write caused by spell slinger hacks
+		writeNoops(0x10159ABC);
 
 		//replaceFunction<void()>(0x1015EA20, UiWorldmapMakeTripWrapper);
 	}
