@@ -202,7 +202,6 @@
     <ClCompile Include="diag\diag.cpp" />
     <ClCompile Include="messages\messagequeue.cpp" />
     <ClCompile Include="fixes\messages.cpp" />
-    <ClCompile Include="worldmap.cpp" />
     <ClCompile Include="fixes\pointbuyconfig.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
@@ -913,6 +912,7 @@
     <ClInclude Include="ui\ui_pc_creation.h">
       <Filter>ui</Filter>
     </ClInclude>
+    <ClInclude Include="ui\ui_worldmap.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

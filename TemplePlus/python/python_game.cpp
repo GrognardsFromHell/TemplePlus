@@ -44,6 +44,7 @@
 #include <weapon.h>
 #include "ui/ui_systems.h"
 #include "ui/ui_legacysystems.h"
+#include "ui/ui_worldmap.h"
 
 #include <pybind11/embed.h>
 namespace py = pybind11;
@@ -901,7 +902,7 @@ PyObject* PyGame_UiShowWorldmap(PyObject*, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "i:game.ui_show_worldmap", &mode)) {
 		return 0;
 	}
-	uiSystems->GetWorldmap().Show(mode);
+	ui_worldmap().Show(mode);
 	Py_RETURN_NONE;
 }
 
@@ -910,7 +911,7 @@ PyObject* PyGame_WorldmapTravelByDialog(PyObject*, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "i:game.ui_worldmap_travel_by_dialog(area)", &area)) {
 		return 0;
 	}
-	uiSystems->GetWorldmap().TravelToArea(area);
+	ui_worldmap().TravelToArea(area);
 	Py_RETURN_NONE;
 }
 

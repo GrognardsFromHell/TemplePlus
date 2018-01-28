@@ -5,6 +5,7 @@
 #include "ui_legacysystems.h"
 #include "ui_turn_based.h"
 #include "ui_mainmenu.h"
+#include "ui_worldmap.h"
 
 UiSystems* uiSystems = nullptr;
 
@@ -37,7 +38,7 @@ UiSystems::UiSystems(int width, int height)
 	mPopup = InitializeSystem<UiPopup>(config);
 	mTextDialog = InitializeSystem<UiTextDialog>(config);
 	mFocusManager = InitializeSystem<UiFocusManager>(config);
-	mWorldmap = InitializeSystem<UiWorldmap>(config);
+	mWorldmap = InitializeSystem<UiWorldmap>(config.width, config.height);
 	mRandomEncounter = InitializeSystem<UiRandomEncounter>(config);
 	mHelp = InitializeSystem<UiHelp>(config);
 	mItemCreation = InitializeSystem<UiItemCreation>(config);

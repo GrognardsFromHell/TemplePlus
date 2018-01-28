@@ -558,53 +558,6 @@ const std::string &UiFocusManager::GetName() const {
 }
 
 //*****************************************************************************
-//* Worldmap-UI
-//*****************************************************************************
-
-UiWorldmap::UiWorldmap(const UiSystemConf &config) {
-    auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x10160470);
-    if (!startup(&config)) {
-        throw TempleException("Unable to initialize game system Worldmap-UI");
-    }
-}
-UiWorldmap::~UiWorldmap() {
-    auto shutdown = temple::GetPointer<void()>(0x1015e060);
-    shutdown();
-}
-void UiWorldmap::ResizeViewport(const UiResizeArgs& resizeArg) {
-    auto resize = temple::GetPointer<void(const UiResizeArgs*)>(0x101599c0);
-    resize(&resizeArg);
-}
-void UiWorldmap::Reset() {
-    auto reset = temple::GetPointer<void()>(0x101597b0);
-    reset();
-}
-bool UiWorldmap::SaveGame(TioFile *file) {
-        auto save = temple::GetPointer<int(TioFile*)>(0x101598b0);
-        return save(file) == 1;
-}
-bool UiWorldmap::LoadGame(const UiSaveFile &save) {
-        auto load = temple::GetPointer<int(const UiSaveFile*)>(0x1015e0f0);
-        return load(&save) == 1;
-}
-const std::string &UiWorldmap::GetName() const {
-    static std::string name("Worldmap-UI");
-    return name;
-}
-
-void UiWorldmap::Show(int mode)
-{
-	static auto ui_show_worldmap = temple::GetPointer<void(int mode)>(0x1015f140);
-	ui_show_worldmap(mode);
-}
-
-void UiWorldmap::TravelToArea(int area)
-{
-	static auto ui_worldmap_travel_by_dialog = temple::GetPointer<void(int)>(0x10160450);
-	ui_worldmap_travel_by_dialog(area);
-}
-
-//*****************************************************************************
 //* RandomEncounter-UI
 //*****************************************************************************
 
