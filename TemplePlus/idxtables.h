@@ -277,4 +277,5 @@ private:
 	IdxTable<T>* mTable;
 };
 
-extern temple::GlobalPrimitive<IdxTableListsNode*, 0x10EF2E70> idxTablesList;
+//extern temple::GlobalPrimitive<IdxTableListsNode*, 0x10EF2E70> idxTablesList;
+extern IdxTableListsNode* idxTablesList;
