@@ -9,6 +9,14 @@ struct JumpPoint {
 	int mapId;
 	locXY location;
 };
+
+struct LgcyJumpPoint {
+	int id;
+	char* mapName;
+	int mapId;
+	locXY location;
+};
+
 struct DayNightXfer
 {
 	ObjectId objId;

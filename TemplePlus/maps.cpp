@@ -7,6 +7,8 @@
 #include "gamesystems/gamesystems.h"
 #include "fade.h"
 #include "gamesystems/legacymapsystems.h"
+#include "infrastructure/tabparser.h"
+#include "tig/tig_tabparser.h"
 
 struct MapAddresses : temple::AddressTable {
 	
@@ -75,12 +77,13 @@ public:
 		return orgField1C(conf);
 	};
 
-	static int JumpPointReset();
+	static int JumpPointModLoad();
+	static int JumpPointInit();
 
 	void apply() override
 	{
 
-		replaceFunction(0x100BDFE0, JumpPointReset);
+		replaceFunction(0x100BDFE0, JumpPointModLoad);
 
 		orgField1C = replaceFunction(0x1006FC60, field1c); // doesn't seem to get called anywhere, not even when editor mode is enabled. Possibly ripped out code.
 
@@ -172,11 +175,11 @@ bool Maps::GetJumpPoint(int id, JumpPoint& jumpPoint, bool withMapName) {
 	return result;
 }
 
-int GameSystemReplacements::JumpPointReset(){
+int GameSystemReplacements::JumpPointModLoad(){
 
-	auto jmpPntTable = temple::GetPointer<IdxTable<JumpPoint>>(0x10BCAAA4);
+	auto jmpPntTable = temple::GetPointer<IdxTable<LgcyJumpPoint>>(0x10BCAAA4);
 
-	auto makeNewIdxTable = temple::GetRef<void(__cdecl)(IdxTable<JumpPoint>*, int, const char*, int)>(0x101EC620); 
+	auto makeNewIdxTable = temple::GetRef<void(__cdecl)(IdxTable<LgcyJumpPoint>*, int, const char*, int)>(0x101EC620);
 
 	makeNewIdxTable(jmpPntTable, 0x18, "jumppoint.c", 117);
 
@@ -187,4 +190,41 @@ int GameSystemReplacements::JumpPointReset(){
 	}
 
 	return res;
+}
+
+
+IdxTableWrapper<LgcyJumpPoint> jmpPointIdxTable(0x10BCAAA4);
+int GameSystemReplacements::JumpPointInit(){
+
+	for (auto it: jmpPointIdxTable){
+		auto data = it.data;
+		free(data->mapName);
+	}
+
+	auto jmpPntTable = temple::GetPointer<IdxTable<LgcyJumpPoint>>(0x10BCAAA4);
+	/*auto idxTableFree = temple::GetRef<void(__cdecl)(IdxTable<LgcyJumpPoint>*)>(0x101EC690);
+	auto makeNewIdxTable = temple::GetRef<void(__cdecl)(IdxTable<LgcyJumpPoint>*, int, const char*, int)>(0x101EC620);
+*/
+	jmpPointIdxTable.free();
+	jmpPointIdxTable.newTable(sizeof LgcyJumpPoint, "jumppoint.c", 97);
+
+	TigTabParser tabFile;
+	auto jmpPtParser = temple::GetRef<TigTabLineParser>(0x100BDE90);
+	tabFile.Init(jmpPtParser);
+	tabFile.Open("rules\\jumppoint.tab");
+	tabFile.Process();
+
+	auto &jmpPointMaxId = temple::GetRef<int>(0x10BCAAB8);
+	jmpPointMaxId = 0;
+
+	for (auto it:jmpPointIdxTable){
+		auto data = it.data;
+		if (data->id > jmpPointMaxId){
+			jmpPointMaxId = data->id;
+		}
+	}
+
+	tabFile.Close();
+	
+	return 1;
 }
