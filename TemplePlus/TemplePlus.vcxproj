@@ -258,7 +258,6 @@
     <ClCompile Include="util\streams.cpp" />
     <ClCompile Include="weapon.cpp" />
     <ClCompile Include="ui\ui_render.cpp" />
-    <ClCompile Include="worldmap.cpp" />
     <ClCompile Include="xp.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -351,6 +350,7 @@
     <ClInclude Include="ui\ui_debug.h" />
     <ClInclude Include="ui\ui_dm.h" />
     <ClInclude Include="ui\ui_pc_creation.h" />
+    <ClInclude Include="ui\ui_worldmap.h" />
     <ClInclude Include="ui\widgets\widgets.h" />
     <ClInclude Include="ui\widgets\widget_content.h" />
     <ClInclude Include="ui\ui_alert.h" />

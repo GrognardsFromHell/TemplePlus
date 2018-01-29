@@ -245,7 +245,7 @@ struct TimeEvent;
 class AnimSystem : public GameSystem, public SaveGameAwareGameSystem, public ResetAwareGameSystem {
 friend class AnimSystemHooks;
 friend class AnimationGoals;
-friend class AnimSlotGoalStackEntry;
+friend struct AnimSlotGoalStackEntry;
 public:
 	static constexpr auto Name = "Anim";
 	AnimSystem(const GameSystemConf &config);
