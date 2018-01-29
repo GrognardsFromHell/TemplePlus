@@ -14,6 +14,7 @@ struct LgcyJumpPoint {
 	int id;
 	char* mapName;
 	int mapId;
+	uint32_t field_C;
 	locXY location;
 };
 
