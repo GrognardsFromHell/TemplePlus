@@ -66,6 +66,9 @@ void IdxTableHooks::IdxTableShutdown(){
 
 void IdxTableHooks::IdxTableFree(IdxTable<void*>* mTable) {
 
+	if (mTable->itemSize == 24){
+		auto asdf = 1;
+	}
 
 	for (auto i = 0; i < mTable->bucketCount; i++) {
 		auto buckets = mTable->buckets;
@@ -86,6 +89,7 @@ void IdxTableHooks::IdxTableFree(IdxTable<void*>* mTable) {
 
 	if ( reinterpret_cast<int>(node->table) == reinterpret_cast<int>(mTable)) {
 		nodeList = node->next;
+		logger->debug("Freeing idx table: {}({})", node->sourceFile, node->lineNumber);
 		free(node);
 		return;
 	}
@@ -102,6 +106,7 @@ void IdxTableHooks::IdxTableFree(IdxTable<void*>* mTable) {
 
 
 		prevNode->next = node->next;
+		logger->debug("Freeing idx table: {}({})", node->sourceFile, node->lineNumber);
 		free(node);
 		return;
 	}
@@ -109,6 +114,7 @@ void IdxTableHooks::IdxTableFree(IdxTable<void*>* mTable) {
 
 void IdxTableHooks::IdxTableNew(IdxTable<void*>* mTable, size_t size, const char * filename, int line){
 
+	logger->debug("Starting new idx table: {}({})", filename, line);
 	mTable->bucketCount = BUCKET_COUNT;
 
 	auto buckets = (IdxTableNode<void*>**)malloc(4 * BUCKET_COUNT);

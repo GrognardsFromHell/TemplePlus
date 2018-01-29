@@ -75,8 +75,13 @@ public:
 		return orgField1C(conf);
 	};
 
+	static int JumpPointReset();
+
 	void apply() override
 	{
+
+		replaceFunction(0x100BDFE0, JumpPointReset);
+
 		orgField1C = replaceFunction(0x1006FC60, field1c); // doesn't seem to get called anywhere, not even when editor mode is enabled. Possibly ripped out code.
 
 		static void(__cdecl*orgTeleportProcess)(FadeAndTeleportArgs&) = replaceFunction<void(__cdecl)(FadeAndTeleportArgs&)>(0x10085AA0, [](FadeAndTeleportArgs &args)
@@ -107,6 +112,8 @@ public:
 		replaceFunction<void(__cdecl)(locXY)>(0x10005BC0, [](locXY locXy){
 			gameSystems->GetLocation().CenterOnSmooth(locXy.locx, locXy.locy);
 		});
+
+
 
 	}
 } gameSystemFix;
@@ -163,4 +170,21 @@ bool Maps::GetJumpPoint(int id, JumpPoint& jumpPoint, bool withMapName) {
 		jumpPoint.mapName = mapName;
 	}
 	return result;
+}
+
+int GameSystemReplacements::JumpPointReset(){
+
+	auto jmpPntTable = temple::GetPointer<IdxTable<JumpPoint>>(0x10BCAAA4);
+
+	auto makeNewIdxTable = temple::GetRef<void(__cdecl)(IdxTable<JumpPoint>*, int, const char*, int)>(0x101EC620); 
+
+	makeNewIdxTable(jmpPntTable, 0x18, "jumppoint.c", 117);
+
+	auto initJumpTable = temple::GetRef<int(__cdecl)()>(0x100BDF50);
+	auto res = initJumpTable();
+	if (initJumpTable()){
+		temple::GetRef<int>(0x10BCAAB4) = 1; // jump point inited
+	}
+
+	return res;
 }
