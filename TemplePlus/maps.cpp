@@ -82,7 +82,7 @@ public:
 
 	void apply() override
 	{
-
+		replaceFunction(0x100BDF50, JumpPointInit);
 		replaceFunction(0x100BDFE0, JumpPointModLoad);
 
 		orgField1C = replaceFunction(0x1006FC60, field1c); // doesn't seem to get called anywhere, not even when editor mode is enabled. Possibly ripped out code.
