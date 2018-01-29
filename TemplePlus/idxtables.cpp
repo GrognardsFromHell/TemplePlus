@@ -56,9 +56,10 @@ void IdxTableHooks::IdxTableShutdown(){
 	for (auto node = idxTablesList; node; node= idxTablesList){
 		
 		logger->error("{}({}): unreleased idx table.", node->sourceFile, node->lineNumber);
-		idxTablesList = node->next;
-		free(node->table);
-		free(node);
+		IdxTableFree(reinterpret_cast<IdxTable<void*>*>(node->table));
+		//idxTablesList = node->next;
+		//free(node->table);
+		//free(node);
 	}
 
 }
