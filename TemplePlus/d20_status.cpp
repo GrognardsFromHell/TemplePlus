@@ -81,6 +81,10 @@ void D20StatusSystem::initClass(objHndl objHnd){
 			_ConditionAddToAttribs_NumArgs2(dispatcher, conds.GetByName("Turn Undead"), 0, 0);
 		}
 
+		if (feats.HasFeatCountByClass(objHnd, FEAT_BARBARIAN_RAGE)) {
+			_ConditionAddToAttribs_NumArgs2(dispatcher, conds.GetByName("Barbarian_Rage"), 0, 0);
+		}
+
 		if (objects.StatLevelGet(objHnd, stat_level_bard) >= 1){
 			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.GetByName("Bardic Music"));
 		}
