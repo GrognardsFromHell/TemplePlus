@@ -153,13 +153,19 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("name", &CondStructNew::condName)
 		.def("extend_existing", [](CondStructNew &condStr, std::string condName){
 				auto cond = (CondStructNew*)conds.GetByName(condName);
-				if (cond){
-					for (auto i = 0; i < 100 && cond->subDispDefs[i].dispType != 0; i++){
+				if (cond) {
+					for (auto i = 0; i < 100 && cond->subDispDefs[i].dispType != 0; i++) {
 						condStr.subDispDefs[condStr.numHooks++] = cond->subDispDefs[i];
 					}
 					condStr.numArgs = cond->numArgs;
 					condStr.condName = cond->condName;
 					condStr.Register();
+				} else {
+					std::stringstream s;
+					s << "Extend Existing Error:  Condition ";
+				    s << condName;
+				    s << " does not exist!";
+					logger->info(s.str().c_str());
 				}
 			})
 		.def("add_item_force_remove_callback", [](CondStructNew &condStr){
