@@ -1217,7 +1217,7 @@ bool TimeEventSystem::IsDaytime() {
 	return Is_Daytime() == TRUE;
 }
 
-void TimeEventSystem::AdvanceTime(const GameTime & advanceBy) {
+void TimeEventSystem::GameTimeAdd(const GameTime & advanceBy) {
 	static auto GameTime_Advance = temple::GetPointer<BOOL(const GameTime*)>(0x10060c90);
 	GameTime_Advance(&advanceBy);
 }
