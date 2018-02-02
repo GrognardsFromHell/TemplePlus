@@ -843,7 +843,7 @@ int CharUiSystem::InventorySlotMsg(int widId, TigMsg* msg)
 							if (!inventory.GetItemAtInvIdx(critterLooted, itemIdx))
 								break;
 						}
-						if (itemIdx < 200)
+						if (itemIdx < INVENTORY_WORN_IDX_START)
 							itemTransferError = inventory.TransferWithFlags(item, critterLooted, itemIdx, 1 + 2 + 4 + 8 , objHndl::null);
 						if (itemTransferError == IEC_OK && uiSystems->GetChar().IsBartering()) {
 							objSystem->GetObject(item)->SetItemFlag(OIF_IDENTIFIED, 1);

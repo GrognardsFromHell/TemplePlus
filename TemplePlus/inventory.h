@@ -9,6 +9,7 @@ enum EquipSlot : uint32_t;
 #define CRITTER_INVENTORY_SLOT_COUNT 24 // amount of inventory slots visible
 #define INVENTORY_WORN_IDX_START 200 // the first inventory index for worn items
 #define INVENTORY_WORN_IDX_END 216 // the last index for worn items
+#define INVENTORY_WORN_IDX_COUNT 16
 
 enum ItemErrorCode: uint32_t
 {
@@ -110,7 +111,7 @@ struct InventorySystem : temple::AddressTable
 	objHndl GetParent(objHndl item);
 	int SetItemParent(objHndl item, objHndl parent, int flags);
 	int SetItemParent(objHndl item, objHndl receiver, ItemInsertFlags flags);
-	ItemErrorCode TransferWithFlags(objHndl item, objHndl receiver, int invenInt, char flags, objHndl bag);
+	ItemErrorCode TransferWithFlags(objHndl item, objHndl receiver, int invenInt, char flags, objHndl bag); // see ItemInsertFlags
 	void ItemPlaceInIdx(objHndl item, int idx);
 	int ItemInsertGetLocation(objHndl item, objHndl receiver, int* itemInsertLocation, objHndl bag, char flags);
 	void InsertAtLocation(objHndl item, objHndl receiver, int itemInsertLocation);

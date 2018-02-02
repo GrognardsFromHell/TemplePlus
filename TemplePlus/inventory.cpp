@@ -139,7 +139,7 @@ objHndl InventorySystem::FindMatchingStackableItem(objHndl receiver, objHndl ite
 
 		// if item worn - ensure is ammo
 		auto invenItemLoc = invenItemObj->GetInt32(obj_f_item_inv_location);
-		if (invenItemLoc >= 200 && invenItemLoc <= 216){
+		if (inventory.IsInvIdxWorn(invenItemLoc)){
 			if (invenItemObj->type != obj_t_ammo)
 				continue;
 		}
@@ -519,6 +519,21 @@ int InventorySystem::ItemInsertGetLocation(objHndl item, objHndl receiver, int* 
 		return IEC_Cannot_Use_While_Polymorphed;
 
 
+	auto isUseWieldSlots = (flags & IIF_Use_Wield_Slots) != 0;
+
+	if (parentObj->IsCritter() && itemInsertLocation != nullptr){
+		
+		if (flags & IIF_Allow_Swap 
+			|| (!inventory.IsInvIdxWorn(*itemInsertLocation) && !isUseWieldSlots)
+			){
+			if (isUseWieldSlots){
+				for (auto i=0; i < INVENTORY_WORN_IDX_COUNT; i++){
+					
+				}
+			}
+		}
+
+	}
 
 	return addresses.ItemInsertGetLocation(item, receiver, itemInsertLocation, bag, flags);
 }
@@ -577,7 +592,7 @@ int InventorySystem::Wield(objHndl critter, objHndl item, EquipSlot slot){
 	return TRUE;
 }
 
-ItemErrorCode InventorySystem::TransferWithFlags(objHndl item, objHndl receiver, int invenIdx, char flags, objHndl bag)
+ItemErrorCode InventorySystem::TransferWithFlags(objHndl item, objHndl receiver, int invenIdx, char flags, objHndl bag) // see ItemInsertFlags
 {
 	return addresses.TransferWithFlags(item, receiver, invenIdx, flags, bag);
 }
@@ -927,7 +942,7 @@ BOOL InventorySystem::ItemGetAdvanced(objHndl item, objHndl parent, int invIdx, 
 }
 
 bool InventorySystem::ItemCanBePickpocketed(objHndl item){
-	if (GetParent(item) && GetInventoryLocation(item) >= 200 || ItemWeight(item) > 1)
+	if (GetParent(item) && GetInventoryLocation(item) >= INVENTORY_WORN_IDX_START || ItemWeight(item) > 1)
 		return false;
 
 	if (objSystem->GetObject(item)->GetItemFlags() & OIF_NO_PICKPOCKET)
@@ -960,7 +975,7 @@ const std::string & InventorySystem::GetAttachBone(objHndl handle)
 		"" // misc (thieves' tools, belt etc)
 	};
 
-	if (slot < 200) {
+	if (slot < INVENTORY_WORN_IDX_START) {
 		return sNoBone; // Apparently not equipped
 	}
 
@@ -974,7 +989,7 @@ const std::string & InventorySystem::GetAttachBone(objHndl handle)
 		return sBoneLeftForearm;
 	}
 
-	return sBoneNames[slot - 200];
+	return sBoneNames[slot - INVENTORY_WORN_IDX_START];
 }
 
 int InventorySystem::GetSoundIdForItemEvent(objHndl item, objHndl wielder, objHndl tgt, int eventType)

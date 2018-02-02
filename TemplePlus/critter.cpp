@@ -1198,7 +1198,7 @@ bool LegacyCritterSystem::IsLootableCorpse(objHndl critter)
 	for (size_t i = 0; i < invenCount; ++i) {
 		auto item = objects.getArrayFieldObj(critter, obj_f_critter_inventory_list_idx, i);
 		auto invLocation = objects.GetItemInventoryLocation(item);
-		if (invLocation >= 200 && invLocation <= 216) {
+		if (inventory.IsInvIdxWorn(invLocation) ) {
 			continue; // Currently equipped on the corpse
 		}
 
