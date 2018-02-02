@@ -8,8 +8,10 @@ enum EquipSlot : uint32_t;
 
 #define CRITTER_INVENTORY_SLOT_COUNT 24 // amount of inventory slots visible
 #define INVENTORY_WORN_IDX_START 200 // the first inventory index for worn items
-#define INVENTORY_WORN_IDX_END 216 // the last index for worn items
+#define INVENTORY_WORN_IDX_END 216 // the last index for worn items (non-inclusive, actually)
 #define INVENTORY_WORN_IDX_COUNT 16
+#define INVENTORY_BAG_IDX_START 217
+#define INVENTORY_BAG_IDX_END 221
 
 enum ItemErrorCode: uint32_t
 {
@@ -214,7 +216,14 @@ private:
 	objHndl(__cdecl *_ItemWornAt)(objHndl, EquipSlot nItemSlot);
 	int(__cdecl *_GetWieldType)(objHndl wielder, objHndl item);
 
-	int InvIdxForSlot(EquipSlot slot);
+	int InvIdxForSlot(EquipSlot slot); // converts EquipSlot to inventory index
+	int InvIdxForSlot(int slot); // converts EquipSlot to inventory index
+
+	int FindEmptyInvIdx(objHndl item, objHndl parent, int idxMin, int idxMax); // finds empty slot between idxMin and idxMax (not including idxMax, but including idxMin)
+	objHndl BagFindLast(objHndl parent); // gets the highest index bag
+	int BagFindInvenIdx(objHndl parent, objHndl receiverBag); // finds the index of receiverBag inside parent's inventory
+	int BagGetContentStartIdx(objHndl receiver, objHndl receiverBag);
+	int BagGetContentMaxIdx(objHndl receiver, objHndl receiverBag);
 };
 
 extern InventorySystem inventory;
