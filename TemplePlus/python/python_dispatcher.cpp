@@ -161,11 +161,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 					condStr.condName = cond->condName;
 					condStr.Register();
 				} else {
-					std::stringstream s;
-					s << "Extend Existing Error:  Condition ";
-				    s << condName;
-				    s << " does not exist!";
-					logger->info(s.str().c_str());
+					logger->info("Extend Existing Error: Condition {} does not exist!", condName);
 				}
 			})
 		.def("add_item_force_remove_callback", [](CondStructNew &condStr){
