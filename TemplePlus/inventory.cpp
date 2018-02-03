@@ -10,6 +10,8 @@
 #include <python/python_integration_obj.h>
 #include "float_line.h"
 
+#define INVENTORY_IDX_UNDEFINED -1
+
 InventorySystem inventory;
 
 struct InventorySystemAddresses : temple::AddressTable
@@ -33,7 +35,14 @@ struct InventorySystemAddresses : temple::AddressTable
 
 static class InventoryHooks : public TempleFix {
 public: 
+
+	static int (__cdecl*orgItemInsertGetLocation)(objHndl, objHndl, int*, objHndl, int);
+
 	void apply() override 	{
+		orgItemInsertGetLocation = replaceFunction<int(__cdecl)(objHndl, objHndl, int*, objHndl, int)>(0x10069000, [](objHndl item, objHndl receiver, int* itemInsertLoc, objHndl bag, int flags){
+			return inventory.ItemInsertGetLocation(item, receiver, itemInsertLoc, bag, flags);
+		});
+
 		// PoopItems
 		replaceFunction<void (objHndl, int)>(0x1006DA00, [](objHndl obj, int unflagNoTransfer)	{
 			auto objType = objects.GetType(obj);
@@ -92,6 +101,8 @@ public:
 
 	
 } hooks;
+int(__cdecl*InventoryHooks::orgItemInsertGetLocation)(objHndl, objHndl, int*, objHndl, int);
+
 
 bool InventorySystem::IsInvIdxWorn(int invIdx){
 	return invIdx >= INVENTORY_WORN_IDX_START && invIdx <= INVENTORY_WORN_IDX_END;
@@ -139,7 +150,7 @@ objHndl InventorySystem::FindMatchingStackableItem(objHndl receiver, objHndl ite
 
 		// if item worn - ensure is ammo
 		auto invenItemLoc = invenItemObj->GetInt32(obj_f_item_inv_location);
-		if (invenItemLoc >= 200 && invenItemLoc <= 216){
+		if (inventory.IsInvIdxWorn(invenItemLoc)){
 			if (invenItemObj->type != obj_t_ammo)
 				continue;
 		}
@@ -382,9 +393,9 @@ int InventorySystem::SetItemParent(objHndl item, objHndl receiver, ItemInsertFla
 	}
 	
 	if ( gameSystems->GetObj().GetProtoId(item) == 6239){ // Darley's Neckalce special casing
-		return ItemGetAdvanced(item, receiver, 201, flags);
+		return ItemGetAdvanced(item, receiver, 201, flags); // EquipSlot::Necklace + 200
 	}
-
+	
 	return ItemGetAdvanced(item, receiver, -1, flags);
 	
 }
@@ -512,15 +523,176 @@ int InventorySystem::IsItemNonTransferable(objHndl item, objHndl receiver)
 
 int InventorySystem::ItemInsertGetLocation(objHndl item, objHndl receiver, int* itemInsertLocation, objHndl bag, char flags){
 
+	auto hasLocationOutput = itemInsertLocation != nullptr;
 	auto parentObj = objSystem->GetObject(receiver);
-	auto invIdx = -1;
+	auto invIdx = INVENTORY_IDX_UNDEFINED;
 
 	if (d20Sys.d20Query(receiver, DK_QUE_Polymorphed))
 		return IEC_Cannot_Use_While_Polymorphed;
 
 
+	auto isUseWieldSlots = (flags & IIF_Use_Wield_Slots) != 0;
 
-	return addresses.ItemInsertGetLocation(item, receiver, itemInsertLocation, bag, flags);
+	auto itemSthg_10067F90 = temple::GetRef<ItemErrorCode(__cdecl)(objHndl, int, objHndl)>(0x10067F90);
+	auto itemCheckSlotAndWieldFlags = temple::GetRef<ItemErrorCode(__cdecl)(objHndl, objHndl, int)>(0x10067680);
+
+	if (parentObj->IsCritter() && hasLocationOutput){
+		
+		if (flags & IIF_Allow_Swap 	|| (!IsInvIdxWorn(*itemInsertLocation) && !isUseWieldSlots)	)
+		{
+			if (isUseWieldSlots){
+				for (auto equipSlot=0; equipSlot < INVENTORY_WORN_IDX_COUNT; equipSlot++){
+
+					auto itemWornAtSlot = ItemWornAt(receiver, equipSlot);
+					auto itemFlagCheck = itemCheckSlotAndWieldFlags(item, receiver, InvIdxForSlot(equipSlot)) == IEC_OK;
+					auto slotIsOccupied = 
+						*itemInsertLocation == INVENTORY_IDX_UNDEFINED 
+					    && isUseWieldSlots
+						&& itemWornAtSlot != objHndl::null
+						&& itemFlagCheck;
+
+					if (slotIsOccupied){
+						if (ItemWornAt(receiver, equipSlot) != item){
+							*itemInsertLocation = InvIdxForSlot(equipSlot);
+							return IEC_Wield_Slot_Occupied;
+						}
+					}
+					else if (itemWornAtSlot == objHndl::null
+						     && itemFlagCheck
+						     && itemWornAtSlot != item){
+						*itemInsertLocation = InvIdxForSlot(equipSlot);
+						return IEC_OK;
+					}
+				}
+			}
+		}
+		else{
+
+		//	auto res = InventoryHooks::orgItemInsertGetLocation(item, receiver, itemInsertLocation, bag, flags);//addresses.ItemInsertGetLocation(item, receiver, itemInsertLocation, bag, flags);
+		//	return res;
+
+			auto shouldTrySlots = true;
+			auto result = IEC_Wrong_Type_For_Slot;
+			if (*itemInsertLocation != INVENTORY_IDX_UNDEFINED) {
+				result = itemSthg_10067F90(item, *itemInsertLocation, receiver);
+				if (result == IEC_OK){
+					shouldTrySlots = false;
+					invIdx = *itemInsertLocation;
+				}
+				else{
+					if (result != IEC_Wrong_Type_For_Slot && result != IEC_Wield_Slot_Occupied)
+						return result;
+				}
+			}
+
+			if (shouldTrySlots){
+				auto found = false;
+				for (auto i = 0; i < INVENTORY_WORN_IDX_COUNT; i++){
+					auto equipSlot = (EquipSlot)i;
+					if (!ItemWornAt(receiver, equipSlot)){
+						result = itemSthg_10067F90(item, i + INVENTORY_WORN_IDX_START, receiver);
+						if (result == IEC_OK){
+							found = true;
+							invIdx = i + INVENTORY_WORN_IDX_START;
+							break;
+						}
+					}
+				}
+				if (!found)
+					return result;
+			}
+
+		} 
+		// TODO
+		//return addresses.ItemInsertGetLocation(item, receiver, itemInsertLocation, bag, flags);
+	}
+
+	auto itemObj = objSystem->GetObject(item);
+	
+
+	// handling for stackable items, and money for PCs
+	if (itemObj->IsStackable() && FindMatchingStackableItem(receiver, item) // this is vanilla; I suppose it doesn't matter, since it'll stack it anyway in the calling function (but I wonder if it isn't better to return the stackable item's index?)
+		|| itemObj->type == obj_t_money && parentObj->IsPC()){
+		if (hasLocationOutput)
+			*itemInsertLocation = 0; 
+		return IEC_OK;
+	}
+
+	// if already found it in the above section
+	if (invIdx != INVENTORY_IDX_UNDEFINED){
+		if (hasLocationOutput)
+			*itemInsertLocation = invIdx;
+		return IEC_OK;
+	}
+	
+
+	auto tmp = INVENTORY_IDX_UNDEFINED;
+	if (!hasLocationOutput) {
+		itemInsertLocation = &tmp;
+	}
+	auto maxSlot = 120;
+
+	// already provided with designated location
+	if (*itemInsertLocation != INVENTORY_IDX_UNDEFINED && IsInvIdxWorn(*itemInsertLocation)){
+		invIdx = *itemInsertLocation;
+	}
+	// Containers
+	else if (!parentObj->IsCritter()){
+		if (!parentObj->IsContainer())
+			return IEC_No_Room_For_Item;
+
+		if (*itemInsertLocation != INVENTORY_IDX_UNDEFINED && !GetItemAtInvIdx(receiver, *itemInsertLocation)){
+			invIdx = *itemInsertLocation;
+			if (hasLocationOutput)
+				*itemInsertLocation = invIdx;
+			return IEC_OK;
+		}
+		maxSlot = 120;
+		if (flags & IIF_Use_Max_Idx_200) // fix - vanilla lacked this line
+			maxSlot = INVENTORY_WORN_IDX_START;
+		invIdx = FindEmptyInvIdx(item, receiver, 0, maxSlot);
+	}
+	// Critters
+	else if (*itemInsertLocation != INVENTORY_IDX_UNDEFINED	&& !GetItemAtInvIdx(receiver, *itemInsertLocation)){
+		invIdx = *itemInsertLocation;
+	}
+	else {
+
+		if (flags & IIF_Use_Max_Idx_200){
+			maxSlot = INVENTORY_WORN_IDX_START;
+			invIdx = FindEmptyInvIdx(item, receiver, 0, maxSlot);
+		}
+		else if (flags & IIF_Use_Bags){
+			auto receiverBag = BagFindLast(receiver);
+			if (receiverBag){
+				auto bagMaxIdx = BagGetContentMaxIdx(receiver, receiverBag);
+				invIdx = FindEmptyInvIdx(item, receiver, 0, bagMaxIdx); // todo BUG!
+			}
+		}
+		else if(flags & IIF_Allow_Swap){// bug?
+			if (*itemInsertLocation != INVENTORY_IDX_UNDEFINED)
+				return IEC_Wield_Slot_Occupied;
+			return IEC_No_Room_For_Item;
+		}
+		else if (bag){
+			auto bagMaxIdx = BagGetContentMaxIdx(receiver, bag);
+			auto bagBaseIdx = BagGetContentStartIdx(receiver, bag);
+			invIdx = FindEmptyInvIdx(item, receiver, bagBaseIdx, bagMaxIdx);
+		}
+		else{
+			maxSlot = CRITTER_INVENTORY_SLOT_COUNT;
+			invIdx = FindEmptyInvIdx(item, receiver, 0, maxSlot);
+		}
+	}
+		
+	if (invIdx != INVENTORY_IDX_UNDEFINED) {
+		if (hasLocationOutput)
+			*itemInsertLocation = invIdx;
+		return IEC_OK;
+	}
+	return IEC_No_Room_For_Item;
+
+	//return addresses.ItemInsertGetLocation(item, receiver, itemInsertLocation, bag, flags);
 }
 
 void InventorySystem::InsertAtLocation(objHndl item, objHndl receiver, int itemInsertLocation)
@@ -577,7 +749,7 @@ int InventorySystem::Wield(objHndl critter, objHndl item, EquipSlot slot){
 	return TRUE;
 }
 
-ItemErrorCode InventorySystem::TransferWithFlags(objHndl item, objHndl receiver, int invenIdx, char flags, objHndl bag)
+ItemErrorCode InventorySystem::TransferWithFlags(objHndl item, objHndl receiver, int invenIdx, char flags, objHndl bag) // see ItemInsertFlags
 {
 	return addresses.TransferWithFlags(item, receiver, invenIdx, flags, bag);
 }
@@ -927,7 +1099,7 @@ BOOL InventorySystem::ItemGetAdvanced(objHndl item, objHndl parent, int invIdx, 
 }
 
 bool InventorySystem::ItemCanBePickpocketed(objHndl item){
-	if (GetParent(item) && GetInventoryLocation(item) >= 200 || ItemWeight(item) > 1)
+	if (GetParent(item) && GetInventoryLocation(item) >= INVENTORY_WORN_IDX_START || ItemWeight(item) > 1)
 		return false;
 
 	if (objSystem->GetObject(item)->GetItemFlags() & OIF_NO_PICKPOCKET)
@@ -960,7 +1132,7 @@ const std::string & InventorySystem::GetAttachBone(objHndl handle)
 		"" // misc (thieves' tools, belt etc)
 	};
 
-	if (slot < 200) {
+	if (slot < INVENTORY_WORN_IDX_START) {
 		return sNoBone; // Apparently not equipped
 	}
 
@@ -974,7 +1146,7 @@ const std::string & InventorySystem::GetAttachBone(objHndl handle)
 		return sBoneLeftForearm;
 	}
 
-	return sBoneNames[slot - 200];
+	return sBoneNames[slot - INVENTORY_WORN_IDX_START];
 }
 
 int InventorySystem::GetSoundIdForItemEvent(objHndl item, objHndl wielder, objHndl tgt, int eventType)
@@ -984,4 +1156,73 @@ int InventorySystem::GetSoundIdForItemEvent(objHndl item, objHndl wielder, objHn
 
 int InventorySystem::InvIdxForSlot(EquipSlot slot){
 	return slot + INVENTORY_WORN_IDX_START;
+}
+
+int InventorySystem::InvIdxForSlot(int slot){
+	return InvIdxForSlot(static_cast<EquipSlot>(slot));
+}
+
+int InventorySystem::FindEmptyInvIdx(objHndl item, objHndl parent, int idxMin, int idxMax){
+
+	for (auto i=idxMin; i < idxMax; i++){
+		if (GetItemAtInvIdx(parent, i) == objHndl::null)
+			return i;
+	}
+
+	return INVENTORY_IDX_UNDEFINED;
+}
+
+objHndl InventorySystem::BagFindLast(objHndl parent){
+
+	for (auto i = INVENTORY_BAG_IDX_END; i >= INVENTORY_BAG_IDX_START; i--){
+		auto res = GetItemAtInvIdx(parent, i);
+		if (res)
+			return res;
+	}
+
+	return objHndl::null;
+}
+
+int InventorySystem::BagFindInvenIdx(objHndl parent, objHndl receiverBag){
+	for (auto i=INVENTORY_BAG_IDX_START; i <= INVENTORY_BAG_IDX_END; i++){
+		if (GetItemAtInvIdx(parent, i) == receiverBag)
+			return i;
+	}
+	return INVENTORY_IDX_UNDEFINED;
+}
+
+int InventorySystem::BagGetContentStartIdx(objHndl parent, objHndl receiverBag){
+
+	auto bagIdx = BagFindInvenIdx(parent, receiverBag);
+	return 24 * (bagIdx - INVENTORY_BAG_IDX_START);
+}
+
+int InventorySystem::BagGetContentMaxIdx(objHndl parent, objHndl receiverBag){
+
+	auto bagContentStartIdx = BagGetContentStartIdx(parent, receiverBag);
+
+
+	auto bagSize = objSystem->GetObject(receiverBag)->GetInt32(obj_f_bag_size);
+
+	auto bagRows = 0;
+	switch (bagSize){
+	case 1:
+		bagRows = 4;
+		break;
+	case 2:
+		bagRows = 2;
+		break;
+	default:
+		bagRows = 0;
+		break;
+	}
+	
+	if (bagSize == 1){
+		return bagContentStartIdx + 6 * bagRows;
+	}
+	else if (bagSize == 2){
+		return bagContentStartIdx + 4 * bagRows;
+	}
+	
+	return bagContentStartIdx;
 }

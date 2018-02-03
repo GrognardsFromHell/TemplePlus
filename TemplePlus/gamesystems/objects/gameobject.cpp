@@ -36,6 +36,31 @@ bool GameObjectBody::IsProto() const
 	return protoId.IsBlocked();
 }
 
+bool GameObjectBody::IsStackable() const{
+	auto flags = 0;
+	switch(type){
+	
+		case obj_t_weapon:
+			return GetInt32(obj_f_weapon_type) == wt_shuriken;
+		case obj_t_food:
+			flags = GetItemFlags();
+			if ( (flags & OIF_IS_MAGICAL) && (flags & OIF_EXPIRES_AFTER_USE) )
+				return true;
+			break;
+		case obj_t_generic:
+			return GetInt32(obj_f_category) == 5; // jewelry / gems
+		case obj_t_armor:
+			return GetInt32(obj_f_category) == 17; // necklaces
+		case obj_t_ammo:
+		case obj_t_money:
+		case obj_t_scroll:
+			return true;
+		default:
+			return false;
+	}
+
+}
+
 int32_t GameObjectBody::GetInt32(obj_f field) const
 {
 	Expects(objectFields.GetType(field) == ObjectFieldType::Int32);

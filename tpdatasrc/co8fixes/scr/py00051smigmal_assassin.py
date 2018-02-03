@@ -34,6 +34,8 @@ def san_start_combat( attachee, triggerer ):
 
 def san_heartbeat( attachee, triggerer ):
 	#if (not attachee.has_wielded(4500) or not attachee.has_wielded(4112)):
+	if attachee in game.party: # fixes huge lag when charmed (due to doing repeated item_wield_best_all() at high frequency)
+		return RUN_DEFAULT
 	if (not attachee.has_wielded(4500) or not attachee.has_wielded(4701)):
 		attachee.item_wield_best_all()
 		attachee.item_wield_best_all()

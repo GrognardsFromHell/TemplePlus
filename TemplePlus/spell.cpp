@@ -688,7 +688,64 @@ const char * LegacySpellSystem::GetSpellDescription(uint32_t spellEnum) const
 
 bool LegacySpellSystem::CheckAbilityScoreReqForSpell(objHndl handle, uint32_t spellEnum, int statBeingRaised) const
 {
-	return temple::GetRef<BOOL(__cdecl)(objHndl, uint32_t, int)>(0x10075C60)(handle, spellEnum, statBeingRaised) != 0;
+
+	SpellEntry spEntry(spellEnum);
+	if (!spEntry.spellEnum)
+		return false;
+
+	auto statLvl = 0;
+	auto spellStat = stat_wisdom;
+	for (auto i = 0u; i<spEntry.spellLvlsNum; i++) {
+		auto &lvlSpec = spEntry.spellLvls[i];
+
+		// normal spell
+		if (!spellSys.isDomainSpell(lvlSpec.spellClass)){
+			auto classEnum = spellSys.GetCastingClass(lvlSpec.spellClass);
+			spellStat = d20ClassSys.GetSpellStat(classEnum);
+		}
+		else // domain spell
+		{
+			auto obj = objSystem->GetObject(handle);
+
+			// if is Cleric or NPC and the spell spec is Domain Special
+			if (objects.StatLevelGet(handle, stat_level_cleric) <= 0
+				&& (obj->IsNPC() && lvlSpec.spellClass != Domain_Special)
+				){
+				continue;
+			}
+			
+			spellStat = stat_wisdom;
+		}
+		
+		statLvl = dispatch.Dispatch10AbilityScoreLevelGet(handle, spellStat, nullptr);
+		if (statBeingRaised == spellStat)
+			++statLvl;
+
+		if (statLvl >= lvlSpec.slotLevel + 10)
+			return true;
+	}
+
+	auto spExtFind = spellSys.mSpellEntryExt.find(spellEnum);
+	if (spExtFind != spellSys.mSpellEntryExt.end()) {
+		for (auto lvlSpec : spExtFind->second.levelSpecs) {
+			// TODO: domain extension for PrCs (Domain Wizard?)
+			{
+
+				auto classEnum = spellSys.GetCastingClass(lvlSpec.spellClass);
+				spellStat = d20ClassSys.GetSpellStat(classEnum);
+				statLvl = dispatch.Dispatch10AbilityScoreLevelGet(handle, spellStat, nullptr);
+				if (statBeingRaised == spellStat)
+					++statLvl;
+
+				if (statLvl >= lvlSpec.slotLevel + 10)
+					return true;
+			}
+
+		}
+	}
+
+	return false;
+	//return temple::GetRef<BOOL(__cdecl)(objHndl, uint32_t, int)>(0x10075C60)(handle, spellEnum, statBeingRaised) != 0;
 }
 
 bool LegacySpellSystem::IsNaturalSpellsPerDayDepleted(const objHndl& handle, uint32_t spellLvl, uint32_t spellClass){
@@ -2132,10 +2189,9 @@ bool LegacySpellSystem::numSpellsMemorizedTooHigh(objHndl objHnd)
 	return 0;
 }
 
-bool LegacySpellSystem::isDomainSpell(uint32_t spellClassCode)
-{
-	if (spellClassCode & 0x80) return 0;
-	return 1;
+bool LegacySpellSystem::isDomainSpell(uint32_t spellClassCode){
+	if (spellClassCode & 0x80) return true;
+	return false;
 }
 
 Stat LegacySpellSystem::GetCastingClass(uint32_t spellClassCode){

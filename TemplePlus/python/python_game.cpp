@@ -326,7 +326,7 @@ PyObject* PyGame_Fade(PyObject*, PyObject* args) {
 
 	if (timeToAdvance > 0) {
 		auto time = GameTime::FromSeconds(timeToAdvance);
-		gameSystems->GetTimeEvent().AdvanceTime(time);
+		gameSystems->GetTimeEvent().GameTimeAdd(time);
 	}
 
 	if (movieId) {

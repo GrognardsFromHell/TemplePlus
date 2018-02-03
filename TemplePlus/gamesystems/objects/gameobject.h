@@ -82,6 +82,7 @@ struct GameObjectBody {
 	bool IsNPC() const {
 		return type == obj_t_npc;
 	}
+	bool IsStackable() const;
 #pragma endregion
 
 	int32_t GetInt32(obj_f field) const;

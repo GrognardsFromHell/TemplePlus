@@ -174,10 +174,10 @@ public:
 
 	bool IsDaytime();
 
-	void AdvanceTime(const GameTime &advanceBy);
+	void GameTimeAdd(const GameTime &advanceBy);
 
-	// This odd, at a glance it seems to do the same as the previous, but if more than a day is passed
-	// additional dispatcher functions are called for the party...???
+	// It does the same as the previous, but if more than a day is passed
+	// additional dispatcher functions are called for the party (DK_NEWDAY_CALENDARICAL)
 	void AddTime(int timeInMs);
 
 	string FormatTime(const GameTime &time);
