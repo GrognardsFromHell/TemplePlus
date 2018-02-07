@@ -2190,8 +2190,7 @@ bool LegacySpellSystem::numSpellsMemorizedTooHigh(objHndl objHnd)
 }
 
 bool LegacySpellSystem::isDomainSpell(uint32_t spellClassCode){
-	if (spellClassCode & 0x80) return true;
-	return false;
+	return (spellClassCode & 0x80) == 0;
 }
 
 Stat LegacySpellSystem::GetCastingClass(uint32_t spellClassCode){
