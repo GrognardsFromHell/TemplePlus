@@ -1531,7 +1531,10 @@ BOOL UiCharEditor::FinishBtnMsg(int widId, TigMsg * msg){
 	if ( spellcastCond.size() ){
 		conds.AddTo(charEdited, spellcastCond, {0,0,0,0, 0,0,0,0});
 	}
-	
+
+	// Final refresh once alignment_choice has been set
+	d20StatusSys.D20StatusRefresh(charEdited);
+
 	return 1;
 }
 
