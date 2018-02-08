@@ -75,13 +75,14 @@ void D20StatusSystem::initClass(objHndl objHnd){
 			_D20StatusInitDomains(objHnd);
 		}
 
-		if (feats.HasFeatCountByClass(objHnd, FEAT_REBUKE_UNDEAD)){
+		if (feats.HasFeatCountByClass(objHnd, FEAT_REBUKE_UNDEAD)) {
 			_ConditionAddToAttribs_NumArgs2(dispatcher, conds.GetByName("Turn Undead"), 1, 0);
+		} else if (feats.HasFeatCountByClass(objHnd, FEAT_TURN_UNDEAD)) {
+			_ConditionAddToAttribs_NumArgs2(dispatcher, conds.GetByName("Turn Undead"), 0, 0);
 		}
 
-		if (objects.StatLevelGet(objHnd, stat_level_paladin) >= 3)
-		{
-			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.GetByName("Turn Undead"));
+		if (feats.HasFeatCountByClass(objHnd, FEAT_BARBARIAN_RAGE)) {
+			_ConditionAddToAttribs_NumArgs2(dispatcher, conds.GetByName("Barbarian_Rage"), 0, 0);
 		}
 
 		if (objects.StatLevelGet(objHnd, stat_level_bard) >= 1){
@@ -211,7 +212,7 @@ void D20StatusSystem::initDomains(objHndl objHnd)
 		uint32_t arg2 = *(conds.ConditionArrayDomainsArg2 + 3 * domain_1);
 		if (condStructDomain1 != nullptr)
 		{
-			_ConditionAddToAttribs_NumArgs2(dispatcher, condStructDomain1, arg1, arg2);
+		    _ConditionAddToAttribs_NumArgs2(dispatcher, condStructDomain1, arg1, arg2);
 		}
 	}
 
@@ -222,18 +223,8 @@ void D20StatusSystem::initDomains(objHndl objHnd)
 		uint32_t arg2 = *(conds.ConditionArrayDomainsArg2 + 3 * domain_2);
 		if (condStructDomain2 != nullptr)
 		{
-			_ConditionAddToAttribs_NumArgs2(dispatcher, condStructDomain2, arg1, arg2);
+		    _ConditionAddToAttribs_NumArgs2(dispatcher, condStructDomain2, arg1, arg2);
 		}
-	}
-
-	auto alignmentchoice = objects.getInt32(objHnd, obj_f_critter_alignment_choice);
-	if (alignmentchoice == 2)
-	{
-		_ConditionAddToAttribs_NumArgs2(dispatcher, conds.ConditionTurnUndead, 1, 0);
-	}
-	else
-	{
-		_ConditionAddToAttribs_NumArgs2(dispatcher, conds.ConditionTurnUndead, 0, 0);
 	}
 }
 
