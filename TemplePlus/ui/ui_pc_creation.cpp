@@ -85,7 +85,7 @@ struct ChargenSystem{ // incomplete
 	void(__cdecl *hide)();
 	void(__cdecl *show)();
 	int(__cdecl *checkComplete)(); // checks if the char editing stage is complete (thus allowing you to move on to the next stage). This is checked at every render call.
-	int field24;
+	void(__cdecl* finalize)(CharEditorSelectionPacket & charSpec, objHndl & handle);
 	void(__cdecl *buttonExited)();
 };
 
