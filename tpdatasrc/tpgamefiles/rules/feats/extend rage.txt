@@ -1,4 +1,5 @@
 name: Extend Rage
-flags: 12582912
+flags: 12582913
 prereqs: 
 description: Each of your rages lasts 5 rounds longer than its normal duration.
+prereq descr: Barbarian rage ability.
