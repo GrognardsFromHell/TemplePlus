@@ -47,7 +47,8 @@ struct LegacyPartySystem : temple::AddressTable
 	void (__cdecl *SetStoryState)(int newState);
 
 	objHndl GetLeader();
-	objHndl(__cdecl*GetConsciousPartyLeader)();
+	objHndl GetConsciousPartyLeader();
+	objHndl(__cdecl*_GetConsciousPartyLeader)();
 	objHndl PartyMemberWithHighestSkill(SkillEnum skillEnum);
 	int MoneyAdj(int plat, int gold, int silver, int copper); // this is a direct manipulator which doesn't convert currencies
 	void DebitMoney(int plat, int gold, int silver, int copper);
@@ -62,7 +63,7 @@ struct LegacyPartySystem : temple::AddressTable
 		rebase(GroupPCsLen, 0x1002B370);
 		rebase(GroupListGetMemberN, 0x1002B150);
 		rebase(GroupListGetLen, 0x1002B2B0);
-		rebase(GetConsciousPartyLeader, 0x1002BE60);
+		rebase(_GetConsciousPartyLeader, 0x1002BE60);
 		rebase(ObjFindInGroupArray, 0x100DF780);
 		rebase(ObjIsInGroupArray, 0x100DF960);
 		rebase(ObjIsAIFollower, 0x1002B220);

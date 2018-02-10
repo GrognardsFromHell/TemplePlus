@@ -9,6 +9,8 @@
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/objects/objsystem.h"
 #include "condition.h"
+#include "combat.h"
+#include "turn_based.h"
 
 struct LegacyPartySystemAddresses : temple::AddressTable
 {
@@ -53,6 +55,10 @@ public:
 			if (config.tolerantNpcs)
 				return FALSE;
 			return orgFearfulResponse(handle);
+		});
+
+		replaceFunction<objHndl()>(0x1002BE60, [](){
+			return party.GetConsciousPartyLeader();
 		});
 	}
 } partyHacks;
@@ -209,6 +215,38 @@ objHndl LegacyPartySystem::GetLeader()
 		leader = GetConsciousPartyLeader();
 	}
 	return leader;
+}
+
+objHndl LegacyPartySystem::GetConsciousPartyLeader(){
+
+	auto selectedCount = CurrentlySelectedNum();
+	for (auto i=0; i <selectedCount; i++){
+		auto dude = GetCurrentlySelected(i);
+		if (!dude) continue;
+		if (!critterSys.IsDeadOrUnconscious(dude))
+			return dude;
+	}
+	
+	// added fix in case the leader is not currently selected and is in combat
+	if (combatSys.isCombatActive()){
+		auto curActor = tbSys.turnBasedGetCurrentActor();
+		if (IsInParty(curActor))
+			return curActor;
+	}
+
+	auto partySize = GroupListGetLen();
+	for (auto i=0; i <partySize; i++){
+		auto dude = GroupListGetMemberN(i);
+		if (!dude)continue;
+		if (!critterSys.IsDeadOrUnconscious(dude))
+			return dude;
+	}
+
+	// still none found:
+	if (partySize)
+		return GroupListGetMemberN(0);
+
+	return objHndl::null;
 }
 
 objHndl LegacyPartySystem::PartyMemberWithHighestSkill(SkillEnum skillEnum)
