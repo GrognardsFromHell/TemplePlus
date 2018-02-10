@@ -173,7 +173,8 @@ public:
 
 	static int __cdecl MonsterRegenerationOnDamage(DispatcherCallbackArgs args);
 
-
+	static int __cdecl PreferOneHandedWieldRadialMenu(DispatcherCallbackArgs args);
+	static int __cdecl PreferOneHandedWieldQuery(DispatcherCallbackArgs args);
 
 } genericCallbacks;
 
@@ -1095,13 +1096,19 @@ int GenericCallbacks::GlobalWieldedTwoHandedQuery(DispatcherCallbackArgs args)
 
 	auto offhandWeapon = inventory.ItemWornAt(args.objHndCaller, EquipSlot::WeaponSecondary);
 	auto shield = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Shield);
-	auto regardOffhand = (offhandWeapon || shield && !inventory.IsBuckler(shield)) ? true : false;
+	auto isShieldAlloingTwoHandedWield = (shield != objHndl::null) && inventory.IsBuckler(shield); // are you holding the weapon with your buckler hand?
+	if (isShieldAlloingTwoHandedWield){
+		if (d20Sys.d20Query(args.objHndCaller, DK_QUE_Is_Preferring_One_Handed_Wield))
+			isShieldAlloingTwoHandedWield = false;
+	}
+	auto hasInterferingOffhand = (offhandWeapon != objHndl::null 
+								  || (shield != objHndl::null && !isShieldAlloingTwoHandedWield)) ? true : false;
 
 	auto wieldType = inventory.GetWieldType(args.objHndCaller, weaponUsed, true);
 	auto wieldTypeWeaponModified = inventory.GetWieldType(args.objHndCaller, weaponUsed, false); // the wield type if the weapon is not enlarged along with the critter
+	
 
-
-	bool isTwohandedWieldable = !regardOffhand ;
+	bool isTwohandedWieldable = !hasInterferingOffhand;
 
 	switch (wieldType)
 	{
@@ -1132,7 +1139,7 @@ int GenericCallbacks::GlobalWieldedTwoHandedQuery(DispatcherCallbackArgs args)
 		case 1: // only in reduce person
 			break;
 		case 2:
-			if (regardOffhand) // shouldn't really be possible... maybe if player is cheating
+			if (hasInterferingOffhand) // shouldn't really be possible to hold two Two Handed Weapons... maybe if player is cheating
 			{
 				logger->warn("Illegally wielding weapon along withoffhand!");
 			}
@@ -1369,6 +1376,26 @@ int GenericCallbacks::MonsterRegenerationOnDamage(DispatcherCallbackArgs args){
 	}
 	if (replacedDice)
 		dispIo->damage.bonuses.ZeroBonusSetMeslineNum(322);
+	return 0;
+}
+
+int GenericCallbacks::PreferOneHandedWieldRadialMenu(DispatcherCallbackArgs args)
+{
+	auto shield = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Shield);
+	if (!inventory.IsBuckler(shield))
+		return 0;
+
+	RadialMenuEntryToggle radEntry(5124, args.GetCondArgPtr(0), "TAG_RADIAL_MENU_PREFER_ONE_HANDED_WIELD");
+	radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Options);
+	return 0;
+}
+
+int GenericCallbacks::PreferOneHandedWieldQuery(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIOTypeQuery, DispIoD20Query);
+	auto isCurrentlyOn = args.GetCondArg(0);
+
+	dispIo->return_val = isCurrentlyOn;
 	return 0;
 }
 
@@ -2435,6 +2462,9 @@ void ConditionSystem::RegisterNewConditions()
 
 #pragma endregion
 
+	static CondStructNew preferOneHanded("Prefer One Handed Wield", 1);
+	preferOneHanded.AddHook(dispTypeD20Query, DK_QUE_Is_Preferring_One_Handed_Wield, genericCallbacks.PreferOneHandedWieldQuery);
+	preferOneHanded.AddHook(dispTypeRadialMenuEntry, DK_NONE, genericCallbacks.PreferOneHandedWieldRadialMenu);
 
 	//mCondCraftWandLevelSet = 
 	static CondStructNew craftWandSetLev("Craft Wand Level Set", 2);
@@ -2644,7 +2674,6 @@ int* ConditionSystem::CondNodeGetArgPtr(CondNode* condNode, uint32_t argIdx)
 }
 
 #pragma region NewConditionCallbacks
-
  int __cdecl AoODisableRadialMenuInit(DispatcherCallbackArgs args)
 {
 	RadialMenuEntry radEntry;

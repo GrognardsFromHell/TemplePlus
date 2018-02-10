@@ -1738,6 +1738,7 @@ enum D20DispatcherKey : uint32_t {
 	DK_QUE_Quivering_Palm_Can_Perform = 0x147,
 	DK_QUE_Trip_AOO = 0x148,
 	DK_QUE_Get_Arcane_Spell_Failure = 0x149, // returns additive spell failure chance
+	DK_QUE_Is_Preferring_One_Handed_Wield = 0x14A, // e.g. a character with a Buckler can opt to wield a sword one handed so as to not take the -1 to hit penalty
 
 
 	DK_LVL_Stats_Activate = 100,

@@ -260,6 +260,7 @@ void D20StatusSystem::initFeats(objHndl objHnd)
 	_ConditionAddToAttribs_NumArgs0(dispatcher, (CondStruct*)conds.mConditionDisableAoO);
 	_ConditionAddToAttribs_NumArgs0(dispatcher, (CondStruct*)&conds.mCondDisarm);
 	_ConditionAddToAttribs_NumArgs0(dispatcher, (CondStruct*)conds.mCondAidAnother);
+	_ConditionAddToAttribs_NumArgs0(dispatcher, conds.GetByName("Prefer One Handed Wield"));
 	//addToDispatcher("Trip Attack Of Opportunity"); // decided to incorporate this in Improved Trip to prevent AoOs on AoOs
 }
 
