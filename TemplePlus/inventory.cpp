@@ -39,6 +39,11 @@ public:
 	static int (__cdecl*orgItemInsertGetLocation)(objHndl, objHndl, int*, objHndl, int);
 
 	void apply() override 	{
+
+		replaceFunction<int(__cdecl)(objHndl, objHndl, int)>(0x1006B6C0, [](objHndl item, objHndl receiver, int flags){
+			return inventory.SetItemParent(item, receiver, flags);
+		});
+
 		orgItemInsertGetLocation = replaceFunction<int(__cdecl)(objHndl, objHndl, int*, objHndl, int)>(0x10069000, [](objHndl item, objHndl receiver, int* itemInsertLoc, objHndl bag, int flags){
 			return inventory.ItemInsertGetLocation(item, receiver, itemInsertLoc, bag, flags);
 		});
@@ -662,7 +667,7 @@ int InventorySystem::ItemInsertGetLocation(objHndl item, objHndl receiver, int* 
 			maxSlot = INVENTORY_WORN_IDX_START;
 			invIdx = FindEmptyInvIdx(item, receiver, 0, maxSlot);
 		}
-		else if (flags & IIF_Use_Bags){
+		else if ( (flags & IIF_Use_Bags) && BagFindLast(receiver) != objHndl::null){
 			auto receiverBag = BagFindLast(receiver);
 			if (receiverBag){
 				auto bagMaxIdx = BagGetContentMaxIdx(receiver, receiverBag);
