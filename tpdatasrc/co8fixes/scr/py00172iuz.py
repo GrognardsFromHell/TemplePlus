@@ -26,7 +26,7 @@ def san_start_combat( attachee, triggerer ):
 	print "Iuz start combat"
 	game.global_vars[32] = game.global_vars[32] + 1
 	if (game.global_flags[328] == 1):
-	## cuthbert has already appeared and iuz shouldn't be there
+	## cuthbert has already talked and iuz shouldn't be there
 		attachee.remove_from_initiative()
 		attachee.object_flag_set(OF_OFF)
 		game.particles( "sp-Magic Circle against Good-END", attachee )
@@ -35,10 +35,17 @@ def san_start_combat( attachee, triggerer ):
 	else:
 	## cuthbert has not appeared
 		if (find_npc_near( triggerer, 8032 ) != OBJ_HANDLE_NULL):
+			print("py00172iuz: Found Hedrack nearby")
 		## hedrack is near
 			if (game.global_vars[32] >= 4 and attachee.d20_query(Q_Prone) == 0):
+				print("py00172iuz: 4th round or higher and is not prone")
 			## 4th round of combat or higher and Iuz is not prone
-				cuthbert = game.obj_create( 14267, attachee.location-2 )
+				ST_CUTHBERT_PROTO = 14267
+				ST_CUTHBERT_NAME  = 8043
+				cuthbert = find_npc_near(attachee, ST_CUTHBERT_NAME)
+				if (cuthbert == OBJ_HANDLE_NULL):
+					print("py00172iuz: Cuthbert not nearby, spawning")
+					cuthbert = game.obj_create( ST_CUTHBERT_PROTO, attachee.location-2 )
 				game.particles( "hit-LAW-medium", cuthbert )
 				attachee.turn_towards(cuthbert)
 				cuthbert.turn_towards(attachee)
