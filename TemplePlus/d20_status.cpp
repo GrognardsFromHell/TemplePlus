@@ -81,6 +81,10 @@ void D20StatusSystem::initClass(objHndl objHnd){
 			_ConditionAddToAttribs_NumArgs2(dispatcher, conds.GetByName("Turn Undead"), 0, 0);
 		}
 
+		if (feats.HasFeatCountByClass(objHnd, FEAT_SMITE_EVIL)) {
+			_ConditionAddToAttribs_NumArgs2(dispatcher, conds.GetByName("Smite Evil"), 0, 0);
+		}
+
 		if (feats.HasFeatCountByClass(objHnd, FEAT_BARBARIAN_RAGE)) {
 			_ConditionAddToAttribs_NumArgs2(dispatcher, conds.GetByName("Barbarian_Rage"), 0, 0);
 		}
@@ -205,25 +209,25 @@ void D20StatusSystem::initDomains(objHndl objHnd)
 	uint32_t domain_1 = objects.getInt32(objHnd, obj_f_critter_domain_1);
 	uint32_t domain_2 = objects.getInt32(objHnd, obj_f_critter_domain_2);
 
-	if (domain_1)
-	{
-		CondStruct * condStructDomain1 = *(conds.ConditionArrayDomains + 3 * domain_1);
-		uint32_t arg1 = *(conds.ConditionArrayDomainsArg1 + 3 * domain_1);
-		uint32_t arg2 = *(conds.ConditionArrayDomainsArg2 + 3 * domain_1);
-		if (condStructDomain1 != nullptr)
-		{
-		    _ConditionAddToAttribs_NumArgs2(dispatcher, condStructDomain1, arg1, arg2);
-		}
-	}
+	initDomain(dispatcher, domain_1);
+	initDomain(dispatcher, domain_2);
+}
 
-	if (domain_2)
-	{
-		CondStruct * condStructDomain2 = *(conds.ConditionArrayDomains + 3 * domain_2);
-		uint32_t arg1 = *(conds.ConditionArrayDomainsArg1 + 3 * domain_2);
-		uint32_t arg2 = *(conds.ConditionArrayDomainsArg2 + 3 * domain_2);
-		if (condStructDomain2 != nullptr)
+void D20StatusSystem::initDomain(Dispatcher * dispatcher, uint32_t domain)
+{
+	if (domain) {
+		CondStruct * condStructDomain = *(conds.ConditionArrayDomains + 3 * domain);
+		uint32_t arg1 = *(conds.ConditionArrayDomainsArg1 + 3 * domain);
+		uint32_t arg2 = *(conds.ConditionArrayDomainsArg2 + 3 * domain);
+		if (condStructDomain != nullptr)
 		{
-		    _ConditionAddToAttribs_NumArgs2(dispatcher, condStructDomain2, arg1, arg2);
+			//Check if the domain should be retrieved from the condition system 
+			if (domain != Domain_Destruction) {
+				_ConditionAddToAttribs_NumArgs2(dispatcher, condStructDomain, arg1, arg2);
+			}
+			else {
+				_ConditionAddToAttribs_NumArgs2(dispatcher, conds.GetByName(condStructDomain->condName), arg1, arg2);
+			}
 		}
 	}
 }
