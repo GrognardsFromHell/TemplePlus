@@ -127,6 +127,7 @@ struct LegacyFeatSystem : temple::AddressTable
 
 	uint32_t racialFeats[ 10 * NUM_RACES ];
 	uint32_t HasFeatCount(objHndl objHnd, feat_enums featEnum);
+	uint32_t HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classEnum, uint32_t rangerSpecializationFeat, uint32_t newDomain1, uint32_t newDomain2, uint32_t alignmentChoiceNew);
 	uint32_t HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classEnum, uint32_t rangerSpecializationFeat);
 	uint32_t HasFeatCountByClass(objHndl objHnd, feat_enums featEnum);
 	uint32_t FeatListElective(objHndl objHnd, feat_enums * listOut);

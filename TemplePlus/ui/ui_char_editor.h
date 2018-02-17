@@ -60,7 +60,7 @@ struct KnownSpellInfo {
 
 enum FeatInfoFlag
 {
-	None = 0, 
+	NoFeatInfoFlag = 0, 
 	DisregardPrereqs = 4 
 };
 struct FeatInfo {
@@ -128,6 +128,8 @@ public:
 	int GetRolledStatIdx(int x, int y, int *xyOut = nullptr); // gets the index of the Rolled Stats button according to the mouse position. Returns -1 if none.
 
 	void SetIsNewChar(bool state);
+	bool IsNewChar(void);
+	bool IsSelectingFeats();
 
 	bool SpellsNeedReset();
 	void SpellsNeedResetSet(bool value);
