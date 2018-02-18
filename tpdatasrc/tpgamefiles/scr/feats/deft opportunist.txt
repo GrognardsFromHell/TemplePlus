@@ -1,5 +1,5 @@
 name: Deft Opportunist
 flags: 4194304
-prereqs: 1013 1 stat_dexterity 15
+prereqs: 1580 1 stat_dexterity 15
 description: You get a +4 bonus on attack rolls when making attacks of opportunity.
 prereq descr: Combat Reflexes, DEX 15
