@@ -10,7 +10,6 @@ def VFing(attachee, args, evt_obj):
 
 	if attachee.has_feat("Vexing Flanker") != 0:
 		#Vexing Flanker
-		target = evt_obj.attack_packet.target
 		if evt_obj.attack_packet.get_flags() & D20CAF_FLANKED:
 			evt_obj.bonus_list.add(2, 0, "Target Vexing flanker bonus")
 
