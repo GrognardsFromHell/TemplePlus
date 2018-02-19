@@ -1,4 +1,5 @@
 name: Craven
 flags: 8388608
 prereqs: 
-description: 1 extra damage per HD upon sneak attack
+description: 1 extra damage per Character Level for sneak attacks
+prereq descr: Sneak Attack, Can't be immune to fear
