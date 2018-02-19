@@ -1,0 +1,4 @@
+name: Craven
+flags: 8388608
+prereqs: 
+description: 1 extra damage per HD upon sneak attack
