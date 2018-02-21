@@ -39,6 +39,7 @@
 #include <gamesystems/objects/objevent.h>
 #include "ui/ui_systems.h"
 #include "ui/ui_legacysystems.h"
+#include "ui/ui_char_editor.h"
 #include "pathfinding.h"
 
 #include <pybind11/embed.h>
@@ -48,6 +49,14 @@
 
 namespace py = pybind11;
 
+// Helper function for checking if information should be updated with chargen packet info
+bool UpdateWithChargenPacketInfo(objHndl handle) {
+
+	// Check that the query: 1) is for the character being edited, 2) is not about a new character (snice the changes
+	// would already be added in that case) and 3) that the feat page is up (info from the packet should only affect
+	// the availability of feats not which character classes are available)
+	return (handle == chargen.GetEditedChar() && !chargen.IsNewChar() && chargen.IsSelectingFeats());
+}
 
 struct PyObjHandle {
 	PyObject_HEAD;
@@ -595,13 +604,13 @@ static PyObject* PyObjHandle_CanFindPathToObj(PyObject* obj, PyObject* args) {
 	auto reach = critterSys.GetReach(self->handle, D20A_UNSPECIFIED_MOVE);
 	if (reach < 0.1) { reach = 3.0; }
 	pathQ.distanceToTargetMin = 0.0;
-	pathQ.tolRadius = reach * 12.0 - fourPointSevenPlusEight;
+	pathQ.tolRadius = reach * 12.0f - fourPointSevenPlusEight;
 
 	auto nodeCount = pathfindingSys.FindPath(&pathQ, &pqr);
 	
 	auto pathLen = pathfindingSys.GetPathLength(&pqr);
 
-	return PyInt_FromLong(pathLen);
+	return PyInt_FromLong(static_cast<long>(pathLen));
 }
 
 
@@ -625,6 +634,14 @@ static PyObject* PyObjHandle_SkillLevelGet(PyObject* obj, PyObject* args) {
 
 	auto skillLevel = dispatch.dispatch1ESkillLevel(self->handle, skillId, nullptr, handle, 1);
 
+	// Add additional skill points from the character editor if necessary
+	if (UpdateWithChargenPacketInfo(self->handle)) {
+		auto charPkt = chargen.GetCharEditorSelPacket();
+		if (skillId < skill_count) {
+			skillLevel += charPkt.skillPointsAdded[skillId];
+		}
+	}
+
 	return PyInt_FromLong(skillLevel);
 }
 
@@ -641,9 +658,17 @@ static PyObject* PyObjHandle_SkillRanksGet(PyObject* obj, PyObject* args) {
 		return 0;
 	}
 	
-	auto skillLevel = critterSys.SkillBaseGet(self->handle, skillId);
+	auto skillRanks = critterSys.SkillBaseGet(self->handle, skillId);
 
-	return PyInt_FromLong(skillLevel);
+	// Add additional skill points from the character editor if necessary
+	if (UpdateWithChargenPacketInfo(self->handle)) {
+		auto charPkt = chargen.GetCharEditorSelPacket();
+		if (skillId < skill_count) {
+			skillRanks += charPkt.skillPointsAdded[skillId];
+		}
+	}
+
+	return PyInt_FromLong(skillRanks);
 }
 
 static PyObject* PyObjHandle_SkillRoll(PyObject* obj, PyObject* args) {
@@ -717,7 +742,20 @@ static PyObject* PyObjHandle_GetBaseAttackBonus(PyObject* obj, PyObject* args) {
 		return PyInt_FromLong(0);
 	}
 
-	return PyInt_FromLong(critterSys.GetBaseAttackBonus(self->handle) );
+	auto bab = critterSys.GetBaseAttackBonus(self->handle);
+
+	// Recalculate bab based on new class level from character editor if necessary
+	if (UpdateWithChargenPacketInfo(self->handle)) {
+		auto charPkt = chargen.GetCharEditorSelPacket();
+		
+		// Subtract the current base attack bouns for that character level from the new and add to the bab
+		int levelupClassLevel = objects.StatLevelGet(self->handle, charPkt.classCode);
+		int babCur = d20ClassSys.GetBaseAttackBonus(charPkt.classCode, levelupClassLevel);
+		int babNext = d20ClassSys.GetBaseAttackBonus(charPkt.classCode, levelupClassLevel+1);
+		int babDelta = babNext - babCur;
+		bab += babDelta;
+	}
+	return PyInt_FromLong(bab);
 }
 
 static PyObject* PyObjHandle_StatLevelGet(PyObject* obj, PyObject* args) {
@@ -734,7 +772,25 @@ static PyObject* PyObjHandle_StatLevelGet(PyObject* obj, PyObject* args) {
 	if (PyTuple_Size(args) >=2)
 		return PyInt_FromLong(objects.StatLevelGet(self->handle, stat, statArg)); // WIP currently just handles stat_caster_level expansion
 
-	return PyInt_FromLong(objects.StatLevelGet(self->handle, stat));
+	auto statLevel = objects.StatLevelGet(self->handle, stat);
+
+	// Check on raising attribute or character level
+	if (UpdateWithChargenPacketInfo(self->handle)) {
+		auto charPkt = chargen.GetCharEditorSelPacket();
+		
+		// Increase character level if appropriate
+		if (charPkt.classCode == stat) {
+			statLevel++;
+		}
+
+		// Report 1 higher if the stat is being raised
+		if (stat == charPkt.statBeingRaised) {
+			statLevel++;
+		}
+
+	}
+
+	return PyInt_FromLong(statLevel);
 }
 
 static PyObject* PyObjHandle_StatLevelGetBase(PyObject* obj, PyObject* args) {
@@ -1951,9 +2007,9 @@ static PyObject* PyObjHandle_DistanceTo(PyObject* obj, PyObject* args) {
 			PyObject* offxArg = PyTuple_GET_ITEM(args, 1);
 			PyObject* offyArg = PyTuple_GET_ITEM(args, 2);
 			if (PyFloat_Check(offxArg))
-				off_x = PyFloat_AsDouble(offxArg);
+				off_x = static_cast<float>(PyFloat_AsDouble(offxArg));
 			if (PyFloat_Check(offyArg))
-				off_y = PyFloat_AsDouble(offyArg);
+				off_y = static_cast<float>(PyFloat_AsDouble(offyArg));
 		}
 		targetLoc.off_x = off_x;
 		targetLoc.off_y = off_y;
@@ -2388,6 +2444,36 @@ static PyObject* PyObjHandle_GetInt(PyObject* obj, PyObject* args) {
 	if (objectFields.GetType(field) == ObjectFieldType::Int32)
 	{
 		value = objects.getInt32(self->handle, field);
+
+		if (UpdateWithChargenPacketInfo(self->handle)) {
+			auto charPkt = chargen.GetCharEditorSelPacket();
+
+			// If this is the first level of cleric, return the selected alignmetn choice
+			if (field == stat_alignment_choice) {
+				if (charPkt.classCode == stat_level_cleric) {
+					int clericLevel = objects.StatLevelGet(self->handle, charPkt.classCode);
+					if (clericLevel == 1) {
+						value = charPkt.alignmentChoice;
+					}
+				}
+			}
+
+			// Check if this character is being edited, if so take that into account
+			if (UpdateWithChargenPacketInfo(self->handle)) {
+				if (charPkt.classCode == stat_level_cleric) {
+					int clericLevel = objects.StatLevelGet(self->handle, charPkt.classCode);
+					if (clericLevel == 0) {  //Must be the first cleric level
+						if (field == obj_f_critter_domain_1) {
+							value = charPkt.domain1;
+						}
+						if (field == obj_f_critter_domain_2) {
+							value = charPkt.domain2;
+						}
+					}
+				}
+			}
+		}
+
 	} else if (objectFields.GetType(field) == ObjectFieldType::Float32)
 	{
 		value = (int) objSystem->GetObject(self->handle)->GetFloat(field);
@@ -2477,7 +2563,24 @@ static PyObject* PyObjHandle_HasFeat(PyObject* obj, PyObject* args) {
 		return 0;
 	}
 
-	auto result = _HasFeatCountByClass(self->handle, feat, (Stat) 0, 0);
+	Stat levelRaised = (Stat)0;
+	uint32_t domain1 = 0;
+	uint32_t domain2 = 0;
+	uint32_t alignmentChoice = 0;
+
+	// Update domains and alignment choice with info from the character editor if appropriate
+	if (UpdateWithChargenPacketInfo(self->handle)) {
+		auto charPkt = chargen.GetCharEditorSelPacket();
+		levelRaised = charPkt.classCode;
+		if (levelRaised == stat_level_cleric) {
+			domain1 = charPkt.domain1;
+			domain2 = charPkt.domain2;
+			alignmentChoice = charPkt.alignmentChoice;
+		}
+	}
+
+	auto result = feats.HasFeatCountByClass(self->handle, feat, levelRaised, 0, domain1, domain2, alignmentChoice);
+
 	return PyInt_FromLong(result);
 }
 
@@ -2488,7 +2591,7 @@ static PyObject * PyObjHandle_FeatAdd(PyObject* obj, PyObject * args){
 	}
 
 	if (PyTuple_GET_SIZE(args) < 1) {
-		PyErr_SetString(PyExc_RuntimeError, "has_feat called with no arguments!");
+		PyErr_SetString(PyExc_RuntimeError, "feat_add called with no arguments!");
 		return PyInt_FromLong(0);
 	}
 

@@ -1933,7 +1933,10 @@ void _FeatConditionsRegister()
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionAnimalCompanionAnimal);
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionAutoendTurn);
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionTurnUndead);
-
+	
+	// Add the destruction domain to the condition table so it can be accessed in python
+	CondStruct * pDestructionDomain = *(conds.ConditionArrayDomains + 3 * Domain_Destruction);
+	conds.hashmethods.CondStructAddToHashtable(pDestructionDomain);
 
 	// Craft Wand
 	static CondStructNew craftWand("Craft Wand", 0);

@@ -47,7 +47,6 @@ public:
 	objHndl GetEditedChar();
 	CharEditorSelectionPacket & GetCharEditorSelPacket();
 
-
 	void PrepareNextStages();
 	void BtnStatesUpdate(int systemId);
 
@@ -68,6 +67,7 @@ public:
 	void FeatsFree();
 	void FeatWidgetsFree();
 	BOOL FeatsWidgetsResize(UiResizeArgs &args);
+	bool IsSelectingFeats();
 	BOOL FeatsShow();
 	BOOL FeatsHide();
 	void FeatsActivate();
@@ -1070,6 +1070,17 @@ void UiCharEditor::FeatWidgetsFree(){
 BOOL UiCharEditor::FeatsWidgetsResize(UiResizeArgs & args){
 	FeatWidgetsFree();
 	return FeatsWidgetsInit(args.rect1.width, args.rect1.height);
+}
+
+bool UiCharEditor::IsSelectingFeats()
+{
+	bool bRes = false;
+
+	if (uiManager) {
+		bRes = !uiManager->IsHidden(featsMainWndId);
+	}
+
+	return bRes;
 }
 
 BOOL UiCharEditor::FeatsShow(){
@@ -3113,9 +3124,19 @@ int Chargen::GetRolledStatIdx(int x, int y, int * xyOut)
 	return 0;
 }
 
+bool Chargen::IsSelectingFeats()
+{
+	return uiCharEditor.IsSelectingFeats();
+}
+
 void Chargen::SetIsNewChar(bool state)
 {
 	mIsNewChar = state;
+}
+
+bool Chargen::IsNewChar()
+{
+	return mIsNewChar;
 }
 
 bool Chargen::SpellsNeedReset()
