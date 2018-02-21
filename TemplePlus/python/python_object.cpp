@@ -51,6 +51,10 @@ namespace py = pybind11;
 
 // Helper function for checking if information should be updated with chargen packet info
 bool UpdateWithChargenPacketInfo(objHndl handle) {
+
+	// Check that the query: 1) is for the character being edited, 2) is not about a new character (snice the changes
+	// would already be added in that case) and 3) that the feat page is up (info from the packet should only affect
+	// the availability of feats not which character classes are available)
 	return (handle == chargen.GetEditedChar() && !chargen.IsNewChar() && chargen.IsSelectingFeats());
 }
 
