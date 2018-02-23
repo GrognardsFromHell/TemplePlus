@@ -6,9 +6,9 @@ struct DialogState {
 	int dialogHandle;
 	int unk;
 	objHndl pc;
-	char padding1[40];
+	char padding1[40]; // TimeEventObjInfo for PC
 	objHndl npc;
-	char field_40[40];
+	char field_40[40]; // TimeEventObjInfo for NPC
 	int reqNpcLineId;
 	int dialogScriptId; // current known use is for speech
 	char npcLineText[1000];
@@ -24,35 +24,32 @@ struct DialogState {
 	char pcLineText3[1000];
 	char pcLineText4[1000];
 	char pcLineText5[1000];
-	int field_17E8;
-	int field_17EC;
-	int field_17F0;
-	int field_17F4;
-	int field_17F8;
-	int field_17FC;
+	int pcLineSkillUse[5]; // 0 - none, 1 - bluff, 2 -diplo, 3 - intimidate, 4 - sense motive, 5 - gather info
+	/*
+	   determined by the reply Op Code
+		0 - normal
+		1 - exit 
+		2 - barter
+		3 - Exit with bubble
+		7 - something deprecated I think
+		4,5,6,8 - ??
+	 */
+	int actionType;
 	int lineNumber;
-	int field_1804;
-	int field_1808;
-	int field_180C;
-	int field_1810;
-	int field_1814;
-	int field_1818;
-	int field_181C;
-	int field_1820;
-	int field_1824;
-	int field_1828;
-	int field_182C;
-	int field_1830;
-	int field_1834;
-	int field_1838;
-	int field_183C;
-	int field_1840;
-	int field_1844;
-	int field_1848;
-	int field_184C;
-	int field_1850;
+	/*
+	     for regular lines: depends on NPC response ID to the line.
+				answer ID = 0 then 1 (exit);  
+				answer ID > 0 then 0 (normal go to line); 
+				answer ID < 0 then 2 (normal go to line, but skip effect)
+		 for barter lines : 3 (26 if NPC has to sell equipment first)
+		 for rumor lines  : 8
+	 */
+	int pcReplyOpcode[5]; 
+	int npcReplyIds[5]; // the ID of the NPC response to each PC line
+	int field_182C[5];     // I'm guessing this was the test field for each line, but no reason to replicate it here since these are already compiled from actually possible responses
+	char* effectFields[5]; // python commands to run for each line
 	int answerLineId;
-	int field_1858;
+	int rngSeed;
 	int field_185C;
 };
 
