@@ -10,6 +10,7 @@ public:
 	void initClass(objHndl objHnd);
 	void D20StatusInit(objHndl objHnd);
 	void D20StatusRefresh(objHndl objHnd);
+	void initDomain(Dispatcher * dispatcher, uint32_t domain);
 	void initDomains(objHndl objHnd);
 	void initFeats(objHndl objHnd);
 	void initItemConditions(objHndl objHnd);
