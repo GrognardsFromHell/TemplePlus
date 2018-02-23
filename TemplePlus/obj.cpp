@@ -820,6 +820,38 @@ int Objects::StatLevelSetBase(objHndl obj, Stat stat, int value)
 	return _StatLevelSetBase(obj, stat, value);
 }
 
+int32_t Objects::GetMoneyAmount(objHndl handle){
+
+	if (!handle)
+		return 0;
+
+	auto obj = objSystem->GetObject(handle);
+
+	
+	switch(obj->type){
+	case obj_t_money:
+		return obj->GetInt32(obj_f_money_quantity) * inventory.GetCoinWorth( obj->GetInt32(obj_f_money_type));
+	case obj_t_pc:
+		return party.GetMoney();	
+	}
+
+	if (obj->IsNPC())
+		return critterSys.MoneyAmount(handle);
+
+	if (obj->IsContainer()){
+		auto items = inventory.GetInventory(handle);
+		auto totalWorth = 0;
+		for (auto item: items){
+			auto itemObj = objSystem->GetObject(item);
+			if (itemObj->type == obj_t_money)
+				totalWorth += GetMoneyAmount(item);
+		}
+		return totalWorth;
+	}
+
+	return 0;
+}
+
 
 Dispatcher * Objects::GetDispatcher(objHndl obj)
 {

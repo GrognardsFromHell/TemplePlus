@@ -266,6 +266,7 @@ struct Objects : temple::AddressTable {
 	int StatLevelGetBase(objHndl obj, Stat stat); // can return floating point numbers too (e.g. movement speed)
 	int StatLevelGetBaseWithModifiers(objHndl obj, Stat stat, DispIoBonusList*evtObj = nullptr); // this returns the base stat including racial modifiers and such
 	int StatLevelSetBase(objHndl obj, Stat stat, int value);
+	int32_t GetMoneyAmount(objHndl handle); // get total money amount, in Copper Pieces; for PCs, returns party money, for containers, gets total money inside, and for coins, gets the quantity and multiplies by worth
 #pragma endregion
 
 #pragma region Dispatcher Stuff
@@ -280,6 +281,7 @@ struct Objects : temple::AddressTable {
 	int GetTempId(objHndl handle);
 	int GetAlpha(objHndl handle);
 	
+
 	static int IsCritterProne(objHndl handle);
 #pragma endregion
 
