@@ -19,6 +19,7 @@
 #include "gamesystems/objects/objsystem.h"
 #include "damage.h"
 #include "critter.h"
+#include "combat.h"
 
 //*****************************************************************************
 //* MainMenu-UI
@@ -390,6 +391,17 @@ void UiChar::Show(UiCharDisplayType type)
 {
 	static auto ui_show_charui = temple::GetPointer<void(UiCharDisplayType)>(0x10148e20);
 	ui_show_charui(type);
+}
+
+void UiChar::ShowForCritter(UiCharDisplayType type, objHndl handle){
+	mCurrentCritter = handle;
+	Show(type);
+	SetCritter(handle);
+}
+
+void UiChar::SetCritter(objHndl handle){
+	static auto ui_show_charui = temple::GetPointer<void(objHndl)>(0x101499E0);
+	ui_show_charui(handle);
 }
 
 //*****************************************************************************
@@ -1471,6 +1483,39 @@ bool UiKeyManager::HandleKeyEvent(const InGameKeyEvent & msg)
 {
 	static auto UiManagerKeyEventHandler = temple::GetPointer<BOOL(const InGameKeyEvent &kbMsg)>(0x10143d60);
 	return UiManagerKeyEventHandler(msg) != 0;
+}
+
+bool UiKeyManager::CharacterSelect(const InGameKeyEvent& msg, int modifier, int keyEvt){
+
+	if (mDoYouWantToQuitActive)
+		return true;
+
+	auto charNumber = (uint32_t)(keyEvt - 29);
+	if (charNumber >= party.GroupListGetLen() 
+		|| combatSys.isCombatActive())
+		return true;
+
+	auto isDlgActive = temple::GetRef<int(__cdecl)()>(0x1014BAC0);
+	if (isDlgActive())
+		return true;
+
+	auto dude = party.GroupListGetMemberN( charNumber);
+	if (party.ObjIsAIFollower(dude))
+		return true;
+
+	auto uiCharState = uiSystems->GetChar().GetDisplayType();
+	if (uiCharState == UiCharDisplayType::LevelUp)
+		return true;
+
+
+	if (uiSystems->GetChar().IsVisible()){
+		uiSystems->GetChar().ShowForCritter(uiCharState, dude);
+		return true;
+	}
+
+	party.CurrentlySelectedClear();
+	party.AddToCurrentlySelected(dude);
+	return true;
 }
 
 //*****************************************************************************

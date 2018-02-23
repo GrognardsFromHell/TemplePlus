@@ -203,7 +203,8 @@ public:
 		return !!mCurrentCritter;
 	}
 
-	UiCharDisplayType GetDisplayType() const {
+	// Was 0x101441B0
+	UiCharDisplayType GetDisplayType() const { 
 		return mDisplayType;
 	}
 
@@ -228,6 +229,9 @@ public:
 		4 means opening for spells targeting inventory items
 	*/
 	void Show(UiCharDisplayType type);
+
+	void ShowForCritter(UiCharDisplayType type, objHndl handle);
+	void SetCritter(objHndl handle);
 
 	void Hide() {
 		Show(UiCharDisplayType::Hidden);
@@ -637,9 +641,11 @@ public:
 	}
 
 	bool HandleKeyEvent(const InGameKeyEvent &msg);
+	bool CharacterSelect(const InGameKeyEvent &msg, int modifier, int keyEvt);
 
 private:
 	uint32_t &mState = temple::GetRef<uint32_t>(0x10BE8CF4);
+	uint32_t &mDoYouWantToQuitActive = temple::GetRef<uint32_t>(0x10BE8CF0);
 };
 
 class UiHelpManager : public UiSystem, public SaveGameAwareUiSystem {
