@@ -1,6 +1,7 @@
 
 #pragma once
 #include "obj.h"
+#include "gametime.h"
 
 struct DialogState {
 	int dialogHandle;
@@ -52,7 +53,26 @@ struct DialogState {
 	int rngSeed;
 	int field_185C;
 };
-
+struct DialogLine
+{
+	int key;
+	char *txt;
+	char *genderField; // -1 for NPC lines
+	int minIq;
+	char *testField;  // condition script that determines whether to display the line
+	int answerLineId; // NPC line to display next
+	char *effectField;// script line to run
+};
+struct DialogFile
+{
+	char filename[260];
+	int refCount;
+	GameTime lastTimeLoaded;
+	int lineCount;
+	int lineCapacity;
+	DialogLine* lines;
+	int unk11C;
+};
 // Subsystem for handling dialog parsing and logic
 class DialogScripts {
 public:

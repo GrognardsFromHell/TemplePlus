@@ -22,6 +22,23 @@ static struct DialogScriptsAddresses : temple::AddressTable {
 	}
 } addresses;
 
+
+class DialogHooks : public TempleFix
+{
+public:
+	
+	
+	void apply() override {
+
+		static BOOL (__cdecl*orgLoadDialogFile)(char*, int*) = 
+			replaceFunction<BOOL(__cdecl)(char*, int*)>(0x10036600, [](char* filename, int* dlgFileHandle){
+			return orgLoadDialogFile(filename, dlgFileHandle);
+		});
+
+	}
+} dialogHooks;
+
+
 string DialogScripts::GetFilename(int scriptId) {
 	char filename[MAX_PATH];
 	if (addresses.GetFilename(scriptId, filename)) {
