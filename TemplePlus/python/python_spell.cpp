@@ -983,7 +983,7 @@ static PyObject *PySpellTargets_GetItem(PyObject *obj, Py_ssize_t index) {
 }
 
 static PySequenceMethods PySpellTargetsSequence = {
-	0,
+	PySpellTargets_Len,
 	0,
 	0,
 	PySpellTargets_GetItem,
