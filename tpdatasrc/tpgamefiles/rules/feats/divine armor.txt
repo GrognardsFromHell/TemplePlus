@@ -1,0 +1,5 @@
+name: Divine Armor
+flags: 12582912
+prereqs: 
+description: As a free action, you can expend a turn or rebuke undead attempt to gain damage reduction 5/- until the start of your next turn.
+prereq descr: Ability to turn or rebuke undead, Divine caster level 5th
