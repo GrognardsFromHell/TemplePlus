@@ -297,52 +297,78 @@ bool DlgParser::GetSingleLine(DialogLineNew& line, int& fileLine){
 	line.key = atol(bracketContent.c_str());
 
 	if (!GetBracketContent(fileLine)){
-		logger->error("Missing text on line: {} (dialog line {})", line.key, fileLine);
+		logger->error("Missing text on line: {} (dialog line {})", fileLine, line.key);
 		return false;
 	}
 	line.txt = bracketContent;
 
 	if (!GetBracketContent(fileLine)) {
-		logger->error("Missing gender field on line: {} (dialog line {})", line.key, fileLine);
+		logger->error("Missing gender field on line: {} (dialog line {})", fileLine, line.key);
 		return false;
 	}
 	line.genderField = bracketContent;
 
 	if (!GetBracketContent(fileLine)) {
-		logger->error("Missing minimum IQ value on line: {} (dialog line {})", line.key, fileLine);
+		logger->error("Missing minimum IQ value on line: {} (dialog line {})", fileLine, line.key);
 		return false;
 	}
 	auto minIq = atol(bracketContent.c_str());
 	if (!minIq && bracketContent.size()) {
-		logger->error("Invalid minimum IQ value on line: {} (dialog line {}). Must be blank (for an NPC) or non-zero (for a PC)", line.key, fileLine);
+		logger->error("Invalid minimum IQ value on line: {} (dialog line {}). Must be blank (for an NPC) or non-zero (for a PC)", fileLine, line.key);
 		return false;
 	}
 	line.minIq = minIq;
 	
 	if (!GetBracketContent(fileLine)) {
-		logger->error("Missing test field on line: {} (dialog line {})", line.key, fileLine);
+		logger->error("Missing test field on line: {} (dialog line {})", fileLine, line.key);
 		return false;
 	}
 	line.testField = bracketContent;
 
 	if (!GetBracketContent(fileLine)) {
-		logger->error("Missing response value on line: {} (dialog line {})", line.key, fileLine);
+		logger->error("Missing response value on line: {} (dialog line {})", fileLine, line.key);
 		return false;
 	}
 	if (bracketContent[0] == '#'){
-		logger->error("Saw a # in a response value on line: {} (dialog line {})", line.key, fileLine);
+		logger->error("Saw a # in a response value on line: {} (dialog line {})", fileLine, line.key);
 		return 0;
 	}
 	line.answerLineId = atol(bracketContent.c_str());
 
 
 	if (!GetBracketContent(fileLine)) {
-		logger->error("Missing effect field on line: {} (dialog line {})", line.key, fileLine);
+		logger->error("Missing effect field on line: {} (dialog line {})", fileLine, line.key);
 		return false;
 	}
 	line.effectField = bracketContent;
 
-	// todo check non-blank gender field for NPC lines
+	// check non-blank gender field for NPC lines
+	if (line.IsNpcLine()){
+
+		auto fieldIsBlank= true;
+		for (auto i = 0u; i < line.genderField.size(); i++) {
+			if (!isspace(line.genderField[i])) {
+				fieldIsBlank = false;
+				break;
+			}
+		}
+
+		// if it's blank, check that the txt field isn't also blank (e.g. when using the picker stuff)
+		if (fieldIsBlank){
+
+			fieldIsBlank = true;
+			for (auto i = 0u; i < line.txt.size(); i++) {
+				if (!isspace(line.txt[i])) {
+					fieldIsBlank = false;
+					break;
+				}
+			}
+
+			if (!fieldIsBlank)
+				logger->warn("Missing NPC response line for females: {} (dialog line {})", fileLine, line.key);
+		}
+	}
+	
 	return true;
 }
 
@@ -358,6 +384,10 @@ bool DlgParser::GetBracketContent(int &fileLine){
 	// count how many newlines
 	for (auto nl = strchr(brBuf.c_str(), '\n'); nl; fileLine++) {
 		nl = strchr(nl + 1, '\n');
+	}
+	auto rb = strchr(brBuf.c_str(), '}');
+	if (rb){
+		logger->warn("Possible missing left brace on or before line {}", fileLine);
 	}
 	
 	
