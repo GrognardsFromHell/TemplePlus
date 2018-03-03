@@ -1,7 +1,7 @@
 #pragma once
 
 #define VANILLA_NUM_CLASSES  (stat_level_wizard - stat_level_barbarian + 1)
-#define NUM_RACES 7
+#define VANILLA_NUM_RACES 7
 
 
 

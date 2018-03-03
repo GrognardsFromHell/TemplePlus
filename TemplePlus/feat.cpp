@@ -140,7 +140,7 @@ LegacyFeatSystem::LegacyFeatSystem()
 	rebase(ToEE_WeaponFeatCheck, 0x1007C4F0);
 	rebase(FeatAdd, 0x1007CF30);
 
-	int _racialFeatsTable[NUM_RACES * 10] = { -1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	int _racialFeatsTable[VANILLA_NUM_RACES * 10] = { -1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		FEAT_SIMPLE_WEAPON_PROFICIENCY_ELF, -1, 0, 0, 0, 0, 0, 0, 0, 0,
 		-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
