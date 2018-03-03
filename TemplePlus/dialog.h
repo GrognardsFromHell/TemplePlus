@@ -3,6 +3,8 @@
 #include "obj.h"
 #include "gametime.h"
 
+struct DialogLineNew;
+
 struct DialogState {
 	int dialogHandle;
 	int unk;
@@ -57,12 +59,33 @@ struct DialogLine
 {
 	int key;
 	char *txt;
-	char *genderField; // -1 for NPC lines
-	int minIq;
+	char *genderField; // set to -1 for PC lines
+	int minIq;         // 0 for NPC lines
 	char *testField;  // condition script that determines whether to display the line
 	int answerLineId; // NPC line to display next
 	char *effectField;// script line to run
+
+	bool IsPcLine();
+	bool IsNpcLine();
+
+	DialogLine & operator =(DialogLineNew&);
 };
+
+struct DialogLineNew
+{
+	int key;
+	std::string txt;
+	std::string genderField; // set to -1 for PC lines
+	int minIq;         // 0 for NPC lines
+	std::string testField;  // condition script that determines whether to display the line
+	int answerLineId; // NPC line to display next
+	std::string effectField;// script line to run
+	
+	bool IsPcLine();
+	bool IsNpcLine();
+
+};
+
 struct DialogFile
 {
 	char filename[260];
@@ -72,6 +95,7 @@ struct DialogFile
 	int lineCapacity;
 	DialogLine* lines;
 	int unk11C;
+	void GetLinesFromFile();
 };
 // Subsystem for handling dialog parsing and logic
 class DialogScripts {
@@ -102,6 +126,15 @@ public:
 	*/
 	void Free(int dlgHandle);
 
+	/*
+	 retrieves a dialog file entry by handle
+	 */
+	DialogFile *GetDialogFileEntry(int dlgHandle);
+
+	void SaveToFile(int dlgHandle);
+
+protected:
+	bool GetFileEntryByFilename(const std::string &filename, int &dlgHandleOut);
 };
 
 extern DialogScripts dialogScripts;

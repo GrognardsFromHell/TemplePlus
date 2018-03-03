@@ -18,6 +18,19 @@ struct GameTime {
 	GameTime(int days, int ms) : timeInDays(days), timeInMs(ms) {
 	}
 
+	// return 1 if t > t2, -1 if t < t2, 0 if equal
+	static int Compare(const GameTime& t, const GameTime& t2){
+		if (t2.timeInDays > t.timeInDays)
+			return -1;
+		if (t2.timeInDays < t.timeInDays)
+			return 1;
+		
+		// days is equal, compare msec
+		if (t2.timeInMs > t.timeInMs)
+			return -1;
+		return (t2.timeInMs < t.timeInMs) ? 1 : 0;
+	};
+
 	static GameTime FromSeconds(int seconds) {
 		if (seconds == 0) {
 			return{ 0, 1 };
