@@ -40,6 +40,10 @@ class D20StatsHooks : public TempleFix{
 			return d20Stats.GetLevelStat(handle, stat);
 		});
 
+		static int (__cdecl*orgStatBaseGetType3)(objHndl, Stat) = replaceFunction<int(objHndl, Stat)>(0x10074B30, [](objHndl handle, Stat stat){
+			return d20Stats.GetType3StatBase(handle, stat);
+		});
+
 		// StatLevelGetBase
 		static int(__cdecl*orgGetLevelBase)(objHndl, Stat) = replaceFunction<int(objHndl, Stat)>(0x10074CF0, [](objHndl handle, Stat stat)->int {
 			auto statType = d20Stats.GetType(stat);
@@ -52,6 +56,10 @@ class D20StatsHooks : public TempleFix{
 
 			if (statType == StatType::Feat)
 				return feats.HasFeatCountByClass(handle, (feat_enums)(stat - 1000));
+			
+			if (statType == StatType::Combat) {
+				return d20Stats.GetType3StatBase(handle, stat);
+			}
 
 			if (statType == StatType::Psi)
 				return d20Stats.GetPsiStatBase(handle, stat);
@@ -62,10 +70,13 @@ class D20StatsHooks : public TempleFix{
 		// StatLevelGet
 		static int(__cdecl*orgGetLevel)(objHndl, Stat)  = replaceFunction<int(objHndl, Stat)>(0x10074800, [](objHndl handle, Stat stat)->int {
 			auto statType = d20Stats.GetType(stat);
-			if (statType== StatType::Level )
+			if (statType == StatType::Level)
 				return d20Stats.GetValue(handle, stat);
 			if (statType == StatType::SpellCasting)
 				return d20Stats.GetValue(handle, stat);
+			if (statType == StatType::Combat && (stat == stat_race ||stat == stat_subrace)){
+				return d20Stats.GetType3StatBase(handle, stat);
+			}
 			if (statType == StatType::Psi)
 				return d20Stats.GetPsiStat(handle, stat);
 			
@@ -230,6 +241,41 @@ int D20StatsSystem::GetPsiStatBase(const objHndl & handle, Stat stat, int statAr
 	if (stat == stat_psi_points_cur) {
 		return d20Sys.D20QueryPython(handle, "Current Psi");
 	}
+	return 0;
+}
+
+int D20StatsSystem::GetType3StatBase(const objHndl & handle, Stat stat) const
+{
+	switch(stat){
+	case stat_weight:
+		return (int)(objects.getInt32(handle, obj_f_critter_weight));
+	case stat_height:
+		return (int)(objects.getInt32(handle, obj_f_critter_height));
+	case stat_deity:
+		return (int)(objects.getInt32(handle, obj_f_critter_deity));
+	case stat_race:
+		return (int)(objects.getInt32(handle, obj_f_critter_race) & 0xFFFF); // changed bitmask to expand range of races up to 65536 races
+	case stat_subrace:
+		return (int)(objects.getInt32(handle, obj_f_critter_race) >> 16); // vanilla didn't bitshift
+	case stat_gender:
+		return (int)(objects.getInt32(handle, obj_f_critter_gender));
+	case stat_size:
+		return dispatch.DispatchGetSizeCategory(handle);
+	case stat_alignment:
+		return (int)(objects.getInt32(handle, obj_f_critter_alignment));
+	case stat_experience:
+		return (int)(objects.getInt32(handle, obj_f_critter_experience));
+	case stat_attack_bonus:
+		return critterSys.GetBaseAttackBonus(handle);
+	case stat_melee_attack_bonus:
+		return critterSys.GetBaseAttackBonus(handle) + objects.GetModFromStatLevel( objects.StatLevelGet(handle, stat_strength) );
+	case stat_ranged_attack_bonus:
+		return critterSys.GetBaseAttackBonus(handle) + objects.GetModFromStatLevel( objects.StatLevelGet(handle, stat_dexterity));
+	default:
+		return 0;
+		break;
+	}
+	
 	return 0;
 }
 

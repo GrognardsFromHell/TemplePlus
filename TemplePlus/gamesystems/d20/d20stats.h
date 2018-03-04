@@ -43,7 +43,7 @@ public:
 	int GetBaseAttackBonus(const objHndl &handle, Stat classLeveled) const;
 	int GetPsiStat(const objHndl &handle, Stat stat, int statArg = -1) const;
 	int GetPsiStatBase(const objHndl &handle, Stat stat, int statArg = -1) const;
-
+	int GetType3StatBase(const objHndl &handle, Stat stat) const;
 	bool AlignmentsUnopposed(Alignment a, Alignment b, bool strictCheck = false);
 
 private:
