@@ -20,5 +20,12 @@
     "pointSize": 12,
     "foreground": "#ffffff",
     "align": "center"
+  },
+  {
+    "id": "chargen-button-text",
+    "fontFamily": "Priory",
+    "pointSize": 12,
+    "foreground": "#ffffff",
+    "align": "center"
   }
 ]

@@ -211,6 +211,14 @@ public:
 	bool IsDisabled() const {
 		return mDisabled;
 	}
+
+	void SetActive(bool isActive){
+		mActive = isActive;
+	}
+	bool IsActive() const{
+		return mActive;
+	}
+
 	void SetClickHandler(std::function<void()> handler) {
 		mClickHandler = [=](int, int) { handler(); };
 	}
@@ -240,6 +248,7 @@ public:
 protected:
 	LgcyButton *mButton;
 	bool mDisabled = false;
+	bool mActive = false; // is the state associated with the button active? Note: this is separate from mDisabled, which determines if the button itself is disabled or not
 	bool mRepeat = false;
 	uint32_t mRepeatInterval = 200;
 	uint32_t mLastClickTriggered = 0;
@@ -249,9 +258,11 @@ protected:
 
 struct WidgetButtonStyle {
 	std::string normalImagePath;
+	std::string activatedImagePath;
 	std::string hoverImagePath;
 	std::string pressedImagePath;
 	std::string disabledImagePath;
+
 	std::string textStyleId;
 	std::string hoverTextStyleId;
 	std::string pressedTextStyleId;
@@ -296,6 +307,7 @@ private:
 	void UpdateAutoSize();
 
 	std::unique_ptr<WidgetImage> mNormalImage;
+	std::unique_ptr<WidgetImage> mActivatedImage;
 	std::unique_ptr<WidgetImage> mHoverImage;
 	std::unique_ptr<WidgetImage> mPressedImage;
 	std::unique_ptr<WidgetImage> mDisabledImage;

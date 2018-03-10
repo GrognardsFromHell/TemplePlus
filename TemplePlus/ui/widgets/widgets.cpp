@@ -482,7 +482,34 @@ void WidgetButton::Render()
 			} else {
 				mLabel.SetStyleId(mStyle.textStyleId);
 			}
-		} else if (mButton->buttonState == LgcyButtonState::Hovered 
+		} 
+		else if (IsActive()){
+			// Activated, else Pressed, else Hovered, (else Normal)
+			if (mActivatedImage){
+				image = mActivatedImage.get();
+			}
+			else if (mPressedImage){
+				image = mPressedImage.get();
+			}
+			else if (mHoverImage){
+				image = mHoverImage.get();
+			}
+
+
+			if (mButton->buttonState == LgcyButtonState::Hovered
+				|| mButton->buttonState == LgcyButtonState::Released){
+				if (!mStyle.hoverTextStyleId.empty()) {
+					mLabel.SetStyleId(mStyle.hoverTextStyleId);
+				}
+				else {
+					mLabel.SetStyleId(mStyle.textStyleId);
+				}
+			}
+			else {
+				mLabel.SetStyleId(mStyle.textStyleId);
+			}
+		}
+		else if (mButton->buttonState == LgcyButtonState::Hovered 
 			|| mButton->buttonState == LgcyButtonState::Released) {
 			if (mHoverImage) {
 				image = mHoverImage.get();
@@ -524,6 +551,13 @@ void WidgetButton::UpdateContent()
 		mNormalImage = std::make_unique<WidgetImage>(mStyle.normalImagePath);
 	} else {
 		mNormalImage.reset();
+	}
+
+	if (!mStyle.activatedImagePath.empty()) {
+		mActivatedImage = std::make_unique<WidgetImage>(mStyle.activatedImagePath);
+	}
+	else {
+		mActivatedImage.reset();
 	}
 
 	if (!mStyle.hoverImagePath.empty()) {

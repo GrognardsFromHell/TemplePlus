@@ -152,6 +152,10 @@ static std::unique_ptr<WidgetBase> LoadWidgetButton(const json11::Json &jsonObj,
 		buttonStyle.disabledImagePath = obj["disabledImage"].string_value();
 	}
 
+	if (obj.find("activatedImage") != obj.end()) {
+		buttonStyle.activatedImagePath = obj["activatedImage"].string_value();
+	}
+
 	if (obj.find("normalImage") != obj.end()) {
 		buttonStyle.normalImagePath = obj["normalImage"].string_value();
 	}
