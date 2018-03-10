@@ -485,6 +485,9 @@
     <ClCompile Include="ui\ui_pc_creation_hooks.cpp">
       <Filter>ui</Filter>
     </ClCompile>
+    <ClCompile Include="d20_race.cpp">
+      <Filter>Mods and Fixes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -913,6 +916,12 @@
       <Filter>ui</Filter>
     </ClInclude>
     <ClInclude Include="ui\ui_worldmap.h" />
+    <ClInclude Include="d20_race.h">
+      <Filter>Mods and Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ui_chargen.h">
+      <Filter>ui</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

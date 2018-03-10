@@ -45,7 +45,7 @@ public:
 		});
 
 		// Chargen Class system
-		replaceFunction<void(__cdecl)(GameSystemConf&)>(0x10188910, [](GameSystemConf& conf) {uiPcCreation.ClassSystemInit(conf); });
+		replaceFunction<void(__cdecl)(UiSystemConf&)>(0x10188910, [](UiSystemConf& conf) {uiPcCreation.ClassSystemInit(conf); });
 		replaceFunction<void(__cdecl)()>(0x101885E0, []() {uiPcCreation.ClassWidgetsFree(); });
 		replaceFunction<void(__cdecl)()>(0x101885D0, []() {uiPcCreation.ClassActivate(); });
 		replaceFunction<void(__cdecl)(UiResizeArgs&)>(0x101889F0, [](UiResizeArgs& args) {uiPcCreation.ClassWidgetsResize(args); });
@@ -79,7 +79,7 @@ public:
 		});
 
 		// Feats
-		replaceFunction<void(__cdecl)(GameSystemConf&)>(0x101847F0, [](GameSystemConf& conf) {uiPcCreation.FeatsSystemInit(conf); });
+		replaceFunction<void(__cdecl)(UiSystemConf&)>(0x101847F0, [](UiSystemConf& conf) {uiPcCreation.FeatsSystemInit(conf); });
 		replaceFunction<void(__cdecl)()>(0x10182D30, []() {uiPcCreation.FeatsFree(); });
 		replaceFunction<void(__cdecl)()>(0x10182A30, []() {uiPcCreation.FeatsActivate(); });
 		replaceFunction<void(__cdecl)(CharEditorSelectionPacket&)>(0x10181F40, [](CharEditorSelectionPacket& selPkt) {uiPcCreation.FeatsReset(selPkt); });
@@ -90,7 +90,7 @@ public:
 		replaceFunction<BOOL(__cdecl)()>(0x10181FA0, []() {return uiPcCreation.FeatsCheckComplete(); });
 
 		// Spell system
-		replaceFunction<void(__cdecl)(GameSystemConf&)>(0x101800E0, [](GameSystemConf& conf) {uiPcCreation.SpellsSystemInit(conf); });
+		replaceFunction<void(__cdecl)(UiSystemConf&)>(0x101800E0, [](UiSystemConf& conf) {uiPcCreation.SpellsSystemInit(conf); });
 		replaceFunction<void(__cdecl)()>(0x1017F090, []() {uiPcCreation.SpellsFree(); });
 		replaceFunction<void(__cdecl)()>(0x101804A0, []() {uiPcCreation.SpellsActivate(); });
 		replaceFunction<void(__cdecl)()>(0x1017EAE0, []() {uiPcCreation.SpellsReset(); });

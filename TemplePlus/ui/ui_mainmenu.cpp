@@ -23,6 +23,7 @@
 #include "widgets/widget_doc.h"
 #include "widgets/widget_styles.h"
 #include "tig/tig_keyboard.h"
+#include "ui_pc_creation.h"
 
 class ViewCinematicsDialog {
 public:

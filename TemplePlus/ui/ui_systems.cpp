@@ -6,6 +6,7 @@
 #include "ui_turn_based.h"
 #include "ui_mainmenu.h"
 #include "ui_worldmap.h"
+#include "ui_pc_creation.h"
 
 UiSystems* uiSystems = nullptr;
 

@@ -33,6 +33,11 @@
 #include "combat.h"
 #include "ui_assets.h"
 #include "ui_pc_creation.h"
+#include "d20_race.h"
+#include "widgets/widgets.h"
+#include "ui_legacysystems.h"
+
+const int RACE_INVALID = 32;
 
 enum ChargenStages : int {
 	CG_Stage_Stats = 0,
@@ -75,19 +80,6 @@ struct PartyCreationPc
 
 const int testSizeOfCreationPc = sizeof(PartyCreationPc); // 344  0x158
 
-struct ChargenSystem{ // incomplete
-	const char* name;
-	void(__cdecl *reset)(CharEditorSelectionPacket & charSpec);
-	void(__cdecl *activate)();
-	BOOL(__cdecl *systemInit)(GameSystemConf *);
-	void(__cdecl*free)();
-	int (__cdecl*resize)(UiResizeArgs &resizeArgs);
-	void(__cdecl *hide)();
-	void(__cdecl *show)();
-	int(__cdecl *checkComplete)(); // checks if the char editing stage is complete (thus allowing you to move on to the next stage). This is checked at every render call.
-	void(__cdecl* finalize)(CharEditorSelectionPacket & charSpec, objHndl & handle);
-	void(__cdecl *buttonExited)();
-};
 
 UiPcCreation uiPcCreation;
 
@@ -250,20 +242,99 @@ void UiPcCreation::ToggleClassRelatedStages(){
 
 }
 
-BOOL UiPcCreation::ClassSystemInit(GameSystemConf & conf){
+
+
+BOOL UiPcCreation::RaceSystemInit(UiSystemConf & conf)
+{
+	mRace->SystemInit(&conf);
+	if (textureFuncs.RegisterTexture("art\\interface\\pc_creation\\racebox.tga", &buttonBox))
+		return FALSE;
+
+	return RaceWidgetsInit();
+}
+
+BOOL UiPcCreation::RaceWidgetsInit(){
+	static LgcyWindow raceWnd(219, 50, 431, 250);
+	raceWnd.x = GetPcCreationWnd().x + 219;
+	raceWnd.y = GetPcCreationWnd().y + 50;
+	raceWnd.render = [](int id) { uiPcCreation.RaceWndRender(id); };
+	raceWndId = uiManager->AddWindow(raceWnd);
+	
+
+	int coloff = 0, rowoff = 0;
+
+	for (auto it : d20RaceSys.vanillaRaceEnums) {
+		// race buttons
+		LgcyButton raceBtn("Race btn", raceWndId, 81 + coloff, 42 + rowoff, 130, 20);
+		coloff = 139 - coloff;
+		if (!coloff)
+			rowoff += 29;
+		if (rowoff == 5 * 29) // the bottom button
+			coloff = 69;
+
+		raceBtnRects.push_back(TigRect(raceBtn.x, raceBtn.y, raceBtn.width, raceBtn.height));
+		raceBtn.x += raceWnd.x; raceBtn.y += raceWnd.y;
+		raceBtn.render = [](int id) {uiPcCreation.RaceBtnRender(id); };
+		raceBtn.handleMessage = [](int id, TigMsg* msg) { return uiPcCreation.RaceBtnMsg(id, msg); };
+		raceBtn.SetDefaultSounds();
+		raceBtnIds.push_back(uiManager->AddButton(raceBtn, raceWndId));
+
+		//rects
+		raceBtnFrameRects.push_back(TigRect(raceBtn.x - 5, raceBtn.y - 5, raceBtn.width + 10, raceBtn.height + 10));
+
+
+		UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+		auto raceMeasure = UiRenderer::MeasureTextSize(raceNamesUppercase[it].c_str(), bigBtnTextStyle);
+		TigRect rect(raceBtn.x + (110 - raceMeasure.width) / 2 - raceWnd.x,
+			raceBtn.y + (20 - raceMeasure.height) / 2 - raceWnd.y,
+			raceMeasure.width, raceMeasure.height);
+		raceTextRects.push_back(rect);
+		UiRenderer::PopFont();
+	}
+
+	const int nextBtnXoffset = 329;
+	const int nextBtnYoffset = 205;
+	const int prevBtnXoffset = 38;
+	raceNextBtnTextRect = raceNextBtnRect = TigRect(raceWnd.x + nextBtnXoffset, raceWnd.y + nextBtnYoffset, 55, 20);
+	racePrevBtnTextRect = racePrevBtnRect = TigRect(raceWnd.x + prevBtnXoffset, raceWnd.y + nextBtnYoffset, 55, 20);
+	raceNextBtnFrameRect = TigRect(raceWnd.x + nextBtnXoffset - 3, raceWnd.y + nextBtnYoffset - 5, 55 + 6, 20 + 10);
+	racePrevBtnFrameRect = TigRect(raceWnd.x + prevBtnXoffset - 3, raceWnd.y + nextBtnYoffset - 5, 55 + 6, 20 + 10);
+	raceNextBtnTextRect.x -= raceWnd.x; raceNextBtnTextRect.y -= raceWnd.y;
+	racePrevBtnTextRect.x -= raceWnd.x; racePrevBtnTextRect.y -= raceWnd.y;
+
+	LgcyButton nextBtn("Race Next Button", raceWndId, raceWnd.x + nextBtnXoffset, raceWnd.y + nextBtnYoffset - 4, 55, 20);
+	//nextBtn.handleMessage = [](int widId, TigMsg*msg)->BOOL {
+	//	if (uiPcCreation.raceWndPage < uiPcCreation.mRacePageCount)
+	//		uiPcCreation.classWndPage++;
+	//	//uiPcCreation.ClassSetPermissibles();
+	//	return 1; };
+	nextBtn.render = [](int id) { uiPcCreation.RaceNextBtnRender(id); };
+	nextBtn.handleMessage = [](int widId, TigMsg*msg)->BOOL {	return uiPcCreation.RaceNextBtnMsg(widId, msg); };
+	nextBtn.SetDefaultSounds();
+	raceNextBtn = uiManager->AddButton(nextBtn, raceWndId);
+
+	LgcyButton prevBtn("Race Prev. Button", raceWndId, raceWnd.x + prevBtnXoffset, raceWnd.y + nextBtnYoffset - 4, 55, 20);
+	prevBtn.render = [](int id) { uiPcCreation.RacePrevBtnRender(id); };
+	prevBtn.handleMessage = [](int widId, TigMsg*msg)->BOOL {	return uiPcCreation.RacePrevBtnMsg(widId, msg); };
+	prevBtn.SetDefaultSounds();
+	racePrevBtn = uiManager->AddButton(prevBtn, raceWndId);
+
+	return TRUE;
+}
+
+void UiPcCreation::RaceReset(CharEditorSelectionPacket & selPkt) {
+	selPkt.raceId = RACE_INVALID;
+}
+
+BOOL UiPcCreation::RaceCheckComplete()
+{
+	auto &selPkt = uiPcCreation.GetCharEditorSelPacket();
+	return selPkt.raceId != RACE_INVALID;
+}
+
+BOOL UiPcCreation::ClassSystemInit(UiSystemConf & conf){
 	if (textureFuncs.RegisterTexture("art\\interface\\pc_creation\\buttonbox.tga", &buttonBox))
 		return 0;
-
-	classBtnTextStyle.flags = 8;
-	classBtnTextStyle.field2c = -1;
-	classBtnTextStyle.textColor = &classBtnColorRect;
-	classBtnTextStyle.shadowColor = &classBtnShadowColor;
-	classBtnTextStyle.colors4 = &classBtnColorRect;
-	classBtnTextStyle.colors2 = &classBtnColorRect;
-	classBtnTextStyle.field0 = 0;
-	classBtnTextStyle.kerning = 1;
-	classBtnTextStyle.leading = 0;
-	classBtnTextStyle.tracking = 3;
 
 	for (auto it : d20ClassSys.baseClassEnums) {
 		auto className = _strdup(d20Stats.GetStatName((Stat)it));
@@ -311,7 +382,7 @@ BOOL UiPcCreation::ClassWidgetsInit(){
 
 
 		UiRenderer::PushFont(PredefinedFont::PRIORY_12);
-		auto classMeasure = UiRenderer::MeasureTextSize(classNamesUppercase[it].c_str(), classBtnTextStyle);
+		auto classMeasure = UiRenderer::MeasureTextSize(classNamesUppercase[it].c_str(), bigBtnTextStyle);
 		TigRect rect(classBtn.x + (110 - classMeasure.width) / 2 - classWnd.x,
 			classBtn.y + (20 - classMeasure.height) / 2 - classWnd.y,
 			classMeasure.width, classMeasure.height);
@@ -413,7 +484,7 @@ void UiPcCreation::ClassFinalize(CharEditorSelectionPacket & selPkt, objHndl & h
 	critterSys.GenerateHp(handle);
 }
 
-BOOL UiPcCreation::FeatsSystemInit(GameSystemConf& conf){
+BOOL UiPcCreation::FeatsSystemInit(UiSystemConf& conf){
 
 	auto pcCreationMes = temple::GetRef<MesHandle>(0x11E72EF0);
 	MesLine mesline;
@@ -794,7 +865,7 @@ void UiPcCreation::FeatsReset(CharEditorSelectionPacket& selPkt)
 	mMultiSelectFeats.clear();
 }
 
-BOOL UiPcCreation::SpellsSystemInit(GameSystemConf & conf)
+BOOL UiPcCreation::SpellsSystemInit(UiSystemConf & conf)
 {
 	auto pcCreationMes = temple::GetRef<MesHandle>(0x11E72EF0);
 	MesLine mesline;
@@ -1165,6 +1236,10 @@ BOOL UiPcCreation::StatsWndMsg(int widId, TigMsg * msg){
 	return FALSE;
 }
 
+void UiPcCreation::RaceWndRender(int widId){
+	StateTitleRender(widId);
+}
+
 void UiPcCreation::ClassBtnRender(int widId){
 	auto idx = WidgetIdIndexOf(widId, &classBtnIds[0], classBtnIds.size());
 	if (idx == -1)
@@ -1196,12 +1271,12 @@ void UiPcCreation::ClassBtnRender(int widId){
 	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
 	auto textt = classNamesUppercase[classCode].c_str();
 
-	auto textMeas = UiRenderer::MeasureTextSize(textt, classBtnTextStyle);
+	auto textMeas = UiRenderer::MeasureTextSize(textt, bigBtnTextStyle);
 	TigRect classTextRect(rect.x + (rect.width - textMeas.width) / 2,
 		rect.y + (rect.height - textMeas.height) / 2,
 		textMeas.width, textMeas.height);
 
-	UiRenderer::DrawTextInWidget(classWndId, textt, classTextRect, classBtnTextStyle);
+	UiRenderer::DrawTextInWidget(classWndId, textt, classTextRect, bigBtnTextStyle);
 	UiRenderer::PopFont();
 }
 
@@ -1371,11 +1446,11 @@ void UiPcCreation::ClassNextBtnRender(int widId){
 
 	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
 	auto textt = fmt::format("NEXT");
-	auto textMeas = UiRenderer::MeasureTextSize(textt, classBtnTextStyle);
+	auto textMeas = UiRenderer::MeasureTextSize(textt, bigBtnTextStyle);
 	TigRect textRect(classNextBtnTextRect.x + (classNextBtnTextRect.width - textMeas.width) / 2,
 		classNextBtnTextRect.y + (classNextBtnTextRect.height - textMeas.height) / 2,
 		textMeas.width, textMeas.height);
-	UiRenderer::DrawTextInWidget(classWndId, textt, textRect, classBtnTextStyle);
+	UiRenderer::DrawTextInWidget(classWndId, textt, textRect, bigBtnTextStyle);
 	UiRenderer::PopFont();
 
 }
@@ -1398,11 +1473,11 @@ void UiPcCreation::ClassPrevBtnRender(int widId){
 
 	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
 	auto textt = fmt::format("PREV");
-	auto textMeas = UiRenderer::MeasureTextSize(textt, classBtnTextStyle);
+	auto textMeas = UiRenderer::MeasureTextSize(textt, bigBtnTextStyle);
 	TigRect textRect(classPrevBtnTextRect.x + (classPrevBtnTextRect.width - textMeas.width) / 2,
 		classPrevBtnTextRect.y + (classPrevBtnTextRect.height - textMeas.height) / 2,
 		textMeas.width, textMeas.height);
-	UiRenderer::DrawTextInWidget(classWndId, textt, textRect, classBtnTextStyle);
+	UiRenderer::DrawTextInWidget(classWndId, textt, textRect, bigBtnTextStyle);
 	UiRenderer::PopFont();
 }
 
@@ -2361,6 +2436,13 @@ void UiPcCreation::SpellsAvailableEntryBtnRender(int widId)
 	UiRenderer::PopFont();
 }
 
+int UiPcCreation::GetRaceWndPage()
+{
+	return 0;
+}
+
+
+
 int UiPcCreation::GetClassWndPage(){
 	return classWndPage;
 }
@@ -2796,4 +2878,78 @@ feat_enums UiPcCreation::FeatsMultiGetFirst(feat_enums feat)
 
 int &UiPcCreation::GetDeityBtnId(int deityId){
 	return temple::GetRef<int[20]>(0x10C3EE80)[deityId];
+}
+
+
+
+template <typename Type, typename... Args>
+std::unique_ptr<Type> UiPcCreation::InitializeSystem(Args&&... args) {
+	logger->info("Loading PC Creation system {}", Type::Name);
+
+	auto result(std::make_unique<Type>(std::forward<Args>(args)...));
+
+	return std::move(result);
+}
+
+void ChargenBigButton::SetActivationState(ChargenButtonActivationState st){
+	mActivationState = st;
+}
+
+ChargenBigButton::ChargenBigButton() : WidgetButton(){
+	
+}
+
+UiPcCreation::UiPcCreation(const UiSystemConf &config) {
+	auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x10120420);
+	if (!startup(&config)) {
+		throw TempleException("Unable to initialize game system pc_creation");
+	}
+
+	mRace = InitializeSystem<RaceChargen>(config);
+	mClass = InitializeSystem<ClassChargen>(config);
+}
+UiPcCreation::~UiPcCreation() {
+	auto shutdown = temple::GetPointer<void()>(0x1011ebc0);
+	shutdown();
+
+	mRace->Reset( GetCharEditorSelPacket());
+	//mClass->Reset(GetCharEditorSelPacket());
+}
+void UiPcCreation::ResizeViewport(const UiResizeArgs& resizeArg) {
+	auto resize = temple::GetPointer<void(const UiResizeArgs*)>(0x10120b30);
+	resize(&resizeArg);
+}
+const std::string &UiPcCreation::GetName() const {
+	static std::string name("pc_creation");
+	return name;
+}
+
+void UiPcCreation::Start()
+{
+	static auto ui_pc_creation_start = temple::GetPointer<int()>(0x1011fdc0);
+	ui_pc_creation_start();
+}
+
+//PagianatedChargenSystem::PagianatedChargenSystem(UiSystemConf & conf){
+//	
+//}
+
+//RaceChargen::RaceChargen(UiSystemConf & conf):ChargenSystem(),PagianatedChargenSystem(conf){
+RaceChargen::RaceChargen(const UiSystemConf & conf) :ChargenSystem() {
+	
+	SystemInit(&conf);
+}
+
+BOOL RaceChargen::SystemInit(const UiSystemConf *conf){
+	ChargenSystem::SystemInit(conf);
+	WidgetsInit(conf->width, conf->height);
+
+	return TRUE;
+}
+
+bool RaceChargen::WidgetsInit(int w, int h){
+	return true;
+}
+
+ClassChargen::ClassChargen(const UiSystemConf & conf){
 }

@@ -332,35 +332,6 @@ bool UiDlg::IsActive() const
 }
 
 //*****************************************************************************
-//* pc_creation
-//*****************************************************************************
-
-UiPcCreation::UiPcCreation(const UiSystemConf &config) {
-    auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x10120420);
-    if (!startup(&config)) {
-        throw TempleException("Unable to initialize game system pc_creation");
-    }
-}
-UiPcCreation::~UiPcCreation() {
-    auto shutdown = temple::GetPointer<void()>(0x1011ebc0);
-    shutdown();
-}
-void UiPcCreation::ResizeViewport(const UiResizeArgs& resizeArg) {
-    auto resize = temple::GetPointer<void(const UiResizeArgs*)>(0x10120b30);
-    resize(&resizeArg);
-}
-const std::string &UiPcCreation::GetName() const {
-    static std::string name("pc_creation");
-    return name;
-}
-
-void UiPcCreation::Start()
-{
-	static auto ui_pc_creation_start = temple::GetPointer<int()>(0x1011fdc0);
-	ui_pc_creation_start();
-}
-
-//*****************************************************************************
 //* Char-UI
 //*****************************************************************************
 
@@ -1165,7 +1136,7 @@ BOOL UiCamping::Camp(int hoursToRest){
 				restPeriods *= 2;
 			}
 
-			for (auto partyIdx = 0; partyIdx < party.GroupListGetLen(); partyIdx++){
+			for (auto partyIdx = 0u; partyIdx < party.GroupListGetLen(); partyIdx++){
 				auto partyMember = party.GroupListGetMemberN(partyIdx);
 				
 				auto healAmt = GetHealingAmount(partyMember, restPeriods);
@@ -1237,7 +1208,7 @@ void UiCamping::SetTimeUntilHealed(){
 
 
 	auto healMod = GetHealingAmountMod();
-	for (auto partyIdx =0; partyIdx < party.GroupListGetLen(); partyIdx++)
+	for (auto partyIdx =0u; partyIdx < party.GroupListGetLen(); partyIdx++)
 	{
 		auto handle = party.GroupListGetMemberN(partyIdx);
 		if (!handle) continue;
@@ -1283,7 +1254,7 @@ int UiCamping::GetHealingAmountMod(){
 	if (GetSleepStatus()<= 1) { // safe resting place or camping in wilderness
 
 							// find someone who can cast heal spells
-		for (auto partyIdx = 0; partyIdx < party.GroupListGetLen(); partyIdx++) {
+		for (auto partyIdx = 0u; partyIdx < party.GroupListGetLen(); partyIdx++) {
 			auto partyMember = party.GroupListGetMemberN(partyIdx);
 
 			auto maxClrSpellLvl = spellSys.GetMaxSpellLevel(partyMember, stat_level_cleric);

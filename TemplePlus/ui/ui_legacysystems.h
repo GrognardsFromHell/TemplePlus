@@ -137,19 +137,6 @@ private:
 	LgcyWidgetId& mWindowId = temple::GetRef<LgcyWidgetId>(0x10BEA2E4);
 };
 
-class UiPcCreation : public UiSystem {
-public:
-    static constexpr auto Name = "pc_creation";
-    UiPcCreation(const UiSystemConf &config);
-    ~UiPcCreation();
-    void ResizeViewport(const UiResizeArgs &resizeArgs) override;
-    const std::string &GetName() const override;
-
-	/**
-	 * Will immediately start a new game if the default party was set.
-	 */
-	void Start();
-};
 
 /**
  * For which purpose has the inventory screen been opened?
