@@ -8,6 +8,8 @@
 #include "obj.h"
 #include "critter.h"
 #include "action_sequence.h"
+#include "ui/ui_systems.h"
+#include "ui/ui_legacysystems.h"
 
 HotkeySystem hotkeys;
 
@@ -63,6 +65,10 @@ public:
 		replaceFunction(0x100F4030, HotkeyAssignCallback);
 		replaceFunction(0x100F0380, HotkeyCompare);
 		replaceFunction(0x100F0B80, HotkeyActivate);
+
+		replaceFunction<int(InGameKeyEvent &, int , int )>(0x10143450, [](InGameKeyEvent &msg, int modifier, int keyEvt){
+			return uiSystems->GetManager().CharacterSelect(msg, modifier, keyEvt)? TRUE: FALSE;
+		});
 	}
 } hotkeyReplacements;
 
