@@ -52,7 +52,7 @@ BOOL XPAward::XpGainProcess(objHndl handle, int xpGainRaw){
 	auto curLvl = objects.StatLevelGet(handle, stat_level);
 	
 	auto xpCap = d20LevelSys.GetXpRequireForLevel(curLvl + 2) - 1;
-	if (curLvl >= config.maxLevel)
+	if (curLvl >= (int)config.maxLevel)
 		xpCap = d20LevelSys.GetXpRequireForLevel(config.maxLevel);
 
 	if (!config.allowXpOverflow && xpNew > (int)xpCap)

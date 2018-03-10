@@ -332,7 +332,7 @@ BOOL AiSystem::AiListFind(objHndl aiHandle, objHndl tgt, int typeToFind){
 	auto aiListCount = obj->GetObjectIdArray(obj_f_npc_ai_list_idx).GetSize();
 	auto N = min(aiListCount, typeListCount);
 
-	for (auto i=0; i < N; i++){
+	for (auto i=0u; i < N; i++){
 		auto aiListType = obj->GetInt32(obj_f_npc_ai_list_type_idx, i);
 		if (aiListType != typeToFind)
 			continue;
@@ -1263,7 +1263,7 @@ BOOL AiSystem::UsePotion(AiTactic * aiTac){
 	auto performer = aiTac->performer;
 	auto hpCur = objects.StatLevelGet(performer, stat_hp_current);
 	auto hpMax = objects.StatLevelGet(performer, stat_hp_max);
-	float hpPct = hpCur * 1.0 / hpMax;
+	auto hpPct = hpCur * 1.0 / hpMax;
 
 	auto objInventory =	inventory.GetInventory(performer);
 	if (!objInventory.size())
@@ -1773,16 +1773,14 @@ void AiSystem::StrategyTabLineParseTactic(AiStrategy* aiStrat, char* tacName, ch
 int AiSystem::StrategyTabLineParser(const TigTabParser* tabFile, int n, char** strings)
 {
 	const char *snameEndPos; 
-	signed int i; 
 	char v6; 
-	char *stratName; 
-	unsigned int numCols; 
+	int numCols; 
 	char **v9; 
 	
 	AiStrategy newStrategy;
 
 	snameEndPos = *strings;
-	i = 0;
+	auto i = 0;
 	do
 		v6 = *snameEndPos++;
 	while (v6);
@@ -2526,7 +2524,7 @@ void AiSystem::AiProcess(objHndl obj){
 	}
 
 	if (d20Sys.d20Query(obj, DK_QUE_AI_Has_Spell_Override)){ // from Confusion Spell
-		int confusionState = d20Sys.d20QueryReturnData(obj, DK_QUE_AI_Has_Spell_Override);
+		int confusionState = (int)d20Sys.d20QueryReturnData(obj, DK_QUE_AI_Has_Spell_Override);
 		if (confusionState > 0 && confusionState < 15){
 			if (aiSys.AiProcessHandleConfusion(obj, confusionState))
 				return;
@@ -3589,7 +3587,7 @@ objHndl AiPacket::PickRandomFromAiList(){
 	auto randIdx = rngSys.GetInt(0, aiListCount - 1);
 	auto result = objHndl::null;
 
-	for (auto i = 0; i < aiListCount; i++, randIdx++){
+	for (auto i = 0u; i < aiListCount; i++, randIdx++){
 		auto aiListItem = objBody->GetObjHndl(obj_f_npc_ai_list_idx, (randIdx )% aiListCount);
 		auto aiListItemType = objBody->GetInt32(obj_f_npc_ai_list_type_idx, (randIdx) % aiListCount);
 		if (aiListItemType == 0){

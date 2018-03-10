@@ -946,7 +946,7 @@ void ActionSequenceSystem::ProcessPathForAoOs(objHndl obj, PathQueryResult* pqr,
 		// it means you incur an AOO
 
 		// loop over enemies to catch interceptions
-		for (int enemyIdx = 0; enemyIdx < enemies.size(); enemyIdx++)
+		for (auto enemyIdx = 0u; enemyIdx < enemies.size(); enemyIdx++)
 		{
 			auto enemy = enemies[enemyIdx];
 			auto interrupterIdx = 0u;
@@ -1042,8 +1042,8 @@ uint32_t ActionSequenceSystem::MoveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 		
 		if (reach < 0.1){ reach = 3.0; }
 		actSeq->targetObj = d20a->d20ATarget;
-		pathQ.distanceToTargetMin = distToTgtMin * 12.0;
-		pathQ.tolRadius = reach * 12.0 - fourPointSevenPlusEight;
+		pathQ.distanceToTargetMin = distToTgtMin * 12.0f;
+		pathQ.tolRadius = reach * 12.0f - fourPointSevenPlusEight;
 	} else
 	{
 		pathQ.to = d20aIn->destLoc;
@@ -1993,7 +1993,7 @@ int32_t ActionSequenceSystem::DoAoosByAdjcentEnemies(objHndl obj)
 
 	auto enemies = combatSys.GetEnemiesCanMelee(obj);
 
-	for (int i = 0; i < enemies.size(); i++)
+	for (auto i = 0u; i < enemies.size(); i++)
 	{
 		auto enemy = enemies[i];
 		bool okToAoo = true;
@@ -2930,7 +2930,7 @@ uint32_t ActionSequenceSystem::ShouldTriggerCombat(ActnSeq* actSeq)
 	auto &spPkt = actSeq->spellPktBody;
 	if (!spPkt.spellEnum)
 		return FALSE;
-	for (auto i=0; i<spPkt.targetCount; i++){
+	for (auto i=0u; i<spPkt.targetCount; i++){
 		auto spTgt = spPkt.targetListHandles[i];
 		if (!spTgt)
 			continue;

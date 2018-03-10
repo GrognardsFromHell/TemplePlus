@@ -592,7 +592,7 @@ void LegacyCritterSystem::GenerateHp(objHndl handle){
 	}
 
 	auto numLvls = obj->GetInt32Array(obj_f_critter_level_idx).GetSize();
-	for (auto i=0; i < numLvls; i++)
+	for (auto i=0u; i < numLvls; i++)
 	{
 		auto classType = (Stat)obj->GetInt32(obj_f_critter_level_idx, i);
 		auto classHd = d20ClassSys.GetClassHitDice(classType);
