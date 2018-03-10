@@ -40,5 +40,32 @@
 	{
 		"id": "scrollbar-track",
 		"normalImage": "art/scrollbar/empty.tga"
-	}
+	},
+	{
+      "id": "chargen-button",
+	    "inherit": "default-sounds",
+      "textStyle": "default-button-text",
+      "normalImage": "art/interface/pc_creation/button_active_normal.tga",
+      "hoverImage": "art/interface/generic/button_active_hover.tga",
+      "pressedImage": "art/interface/generic/button_active_click.tga",
+      "disabledImage": "art/interface/generic/button_active_disabled.tga"
+    },
+	{
+      "id": "chargen-disabled-button",
+	    "inherit": "default-sounds",
+      "textStyle": "default-button-text",
+      "normalImage": "art/interface/pc_creation/button_disabled_normal.tga",
+      "hoverImage": "art/interface/generic/button_disabled_hover.tga",
+      "pressedImage": "art/interface/generic/button_disabled_click.tga",
+      "disabledImage": "art/interface/generic/button_disabled.tga"
+    },
+	{
+      "id": "chargen-active-button",
+	    "inherit": "default-sounds",
+      "textStyle": "default-button-text",
+      "normalImage": "art/interface/pc_creation/button_active_activated.tga",
+      "hoverImage": "art/interface/generic/button_active_activated.tga",
+      "pressedImage": "art/interface/generic/button_active_click.tga",
+      "disabledImage": "art/interface/generic/button_active_disabled.tga"
+    }
 ]

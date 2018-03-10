@@ -267,7 +267,15 @@ public:
 
 	WidgetButton();
 
+	/*
+	 central style definitions:
+	 templeplus/button_styles.json
+	 */
 	void SetStyle(const WidgetButtonStyle &style);
+	/*
+	 directly fetch style from widgetButtonStyles
+	 */
+	void SetStyle(const eastl::string& styleName);
 	const WidgetButtonStyle &GetStyle() 
 	{
 		return mStyle;
@@ -280,6 +288,10 @@ public:
 private:
 	WidgetButtonStyle mStyle;
 
+	/*
+	  1. updates the WidgetImage pointers below, using WidgetButtonStyle file paths
+	  2. Updates mLabel
+	 */
 	void UpdateContent();
 	void UpdateAutoSize();
 

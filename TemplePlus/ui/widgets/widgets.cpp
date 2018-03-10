@@ -442,6 +442,10 @@ void WidgetButton::SetStyle(const WidgetButtonStyle & style)
 	UpdateContent();
 }
 
+void WidgetButton::SetStyle(const eastl::string & styleName){
+	widgetButtonStyles->GetStyle(styleName);
+}
+
 void WidgetButton::Render()
 {
 	auto contentArea = GetContentArea();
