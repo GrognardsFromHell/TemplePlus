@@ -85,12 +85,12 @@ def DivineArmorEffectTooltip(attachee, args, evt_obj):
 	evt_obj.append(tpdp.hash("DIVINE_ARMOR"), -2, "")
 	return 0
 
-#Hookup Setup the feat
+#Setup the feat
 divineArmorFeat = PythonModifier("Divine Armor Feat", 2) 
 divineArmorFeat.MapToFeat("Divine Armor")
 divineArmorFeat.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, DivineArmorRadial, ())
 
-#Setup the radial button
+#Setup the effect
 divineArmorEffect = PythonModifier("Divine Armor Effect", 2)
 divineArmorEffect.AddHook(ET_OnD20PythonActionCheck, divineArmorEnum, OnDivineArmorCheck, ())
 divineArmorEffect.AddHook(ET_OnD20PythonActionPerform, divineArmorEnum, OnDivineArmorPerform, ())
