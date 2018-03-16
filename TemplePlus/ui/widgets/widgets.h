@@ -118,7 +118,13 @@ public:
 		mSizeToParent = enable;
 	}
 
-	TigRect GetContentArea() const;
+	/*
+	 Returns the {x,y,w,h} rect, but regards modification from parent and subtracts the margins.
+	 Content area controls:
+	 - Mouse handling active area
+	 - Rendering area
+	 */
+	TigRect GetContentArea(bool includingMargins = false) const; 
 	TigRect GetVisibleArea() const;
 
 	void SetMouseMsgHandler(std::function<bool(const TigMouseMsg &msg)> handler) {
@@ -158,6 +164,7 @@ protected:
 	bool mSizeToParent = false;
 	bool mAutoSizeWidth = true;
 	bool mAutoSizeHeight = true;
+	RECT mMargins;
 	std::function<bool(const TigMouseMsg &msg)> mMouseMsgHandler;
 	std::function<bool(const TigMsgWidget &msg)> mWidgetMsgHandler;
 	std::function<bool(const TigKeyStateChangeMsg &msg)> mKeyStateChangeHandler;
@@ -262,6 +269,7 @@ struct WidgetButtonStyle {
 	std::string hoverImagePath;
 	std::string pressedImagePath;
 	std::string disabledImagePath;
+	std::string frameImagePath;
 
 	std::string textStyleId;
 	std::string hoverTextStyleId;
@@ -311,9 +319,11 @@ private:
 	std::unique_ptr<WidgetImage> mHoverImage;
 	std::unique_ptr<WidgetImage> mPressedImage;
 	std::unique_ptr<WidgetImage> mDisabledImage;
+	std::unique_ptr<WidgetImage> mFrameImage;
 	WidgetText mLabel;
 	
 };
+
 
 class WidgetScrollBarHandle;
 

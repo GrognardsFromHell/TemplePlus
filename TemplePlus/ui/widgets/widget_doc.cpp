@@ -168,6 +168,11 @@ static std::unique_ptr<WidgetBase> LoadWidgetButton(const json11::Json &jsonObj,
 		buttonStyle.pressedImagePath = obj["pressedImage"].string_value();
 	}
 
+	if (obj.find("frameImage") != obj.end()) {
+		buttonStyle.frameImagePath = obj["frameImage"].string_value();
+	}
+
+
 	if (obj.find("textStyle") != obj.end()) {
 		buttonStyle.textStyleId = obj["textStyle"].string_value();
 	}

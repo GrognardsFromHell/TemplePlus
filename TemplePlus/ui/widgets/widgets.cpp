@@ -107,9 +107,11 @@ void WidgetBase::Render()
 			contentArea.width = std::max(contentArea.width, preferred.width);
 			contentArea.height = std::max(contentArea.height, preferred.height);
 		}
+
+		// set widget size (adding up the margins in addition to the content dimensions, since the overall size should include the margins)
 		if (contentArea.width != 0 && contentArea.height != 0) {
-			mWidget->width = contentArea.width;
-			mWidget->height = contentArea.height;
+			mWidget->width = contentArea.width + mMargins.left + mMargins.right;
+			mWidget->height = contentArea.height + mMargins.top + mMargins.bottom;
 		}
 	}
 	
@@ -189,6 +191,10 @@ gfx::Size WidgetBase::GetSize() const
 	return{ (int)mWidget->width, (int)mWidget->height };
 }
 
+/*
+Basically gets a TigRect of x,y,w,h.
+Can modify based on parent.
+ */
 static TigRect GetContentArea(LgcyWidgetId id) {
 	
 	auto widget = uiManager->GetWidget(id);
@@ -229,9 +235,24 @@ static TigRect GetContentArea(LgcyWidgetId id) {
 	return bounds;
 }
 
-TigRect WidgetBase::GetContentArea() const
+TigRect WidgetBase::GetContentArea(bool includingMargins) const
 {
-	return ::GetContentArea(mWidget->widgetId);
+	auto res = ::GetContentArea(mWidget->widgetId);
+
+	// if margins not included, subtract them
+	if (!includingMargins){
+		if (res.width != 0 && res.height != 0) {
+			res.x += mMargins.left;
+			res.width -= mMargins.left + mMargins.right;
+			res.y += mMargins.bottom;
+			res.height -= mMargins.bottom + mMargins.top;
+			if (res.width < 0) res.width = 0;
+			if (res.height< 0) res.height = 0;
+		}
+	}
+	
+	
+	return res;
 }
 
 TigRect WidgetBase::GetVisibleArea() const
@@ -443,7 +464,7 @@ void WidgetButton::SetStyle(const WidgetButtonStyle & style)
 }
 
 void WidgetButton::SetStyle(const eastl::string & styleName){
-	widgetButtonStyles->GetStyle(styleName);
+	SetStyle(widgetButtonStyles->GetStyle(styleName));
 }
 
 void WidgetButton::Render()
@@ -533,6 +554,13 @@ void WidgetButton::Render()
 		image->SetContentArea(contentArea);
 		image->Render();
 	}
+
+	auto fr = mFrameImage.get();
+	if (fr){
+		auto contentAreaWithMargins = GetContentArea(true);
+		fr->SetContentArea(contentAreaWithMargins);
+		fr->Render();
+	}
 	
 	mLabel.SetContentArea(contentArea);
 	mLabel.Render();
@@ -578,11 +606,19 @@ void WidgetButton::UpdateContent()
 		mDisabledImage.reset();
 	}
 
+	if (!mStyle.frameImagePath.empty()) {
+		mFrameImage = std::make_unique<WidgetImage>(mStyle.frameImagePath);
+	}
+	else {
+		mFrameImage.reset();
+	}
+
 	mLabel.SetStyleId(mStyle.textStyleId);
 	
 	UpdateAutoSize();
 
 }
+
 
 void WidgetButton::UpdateAutoSize()
 {
@@ -594,6 +630,23 @@ void WidgetButton::UpdateAutoSize()
 		} else {
 			prefSize = mLabel.GetPreferredSize();
 		}
+
+		if (mFrameImage){ // update margins from frame size
+			auto framePrefSize = mFrameImage->GetPreferredSize();
+			auto marginW = framePrefSize.width  - prefSize.width;
+			auto marginH = framePrefSize.height - prefSize.height;
+			if (marginW > 0){
+				mMargins.right = marginW / 2;
+				mMargins.left  = marginW - mMargins.right;
+			}
+			if (marginH > 0){
+				mMargins.bottom = marginH / 2;
+				mMargins.top    = marginH - mMargins.bottom;
+			}
+		}
+
+		prefSize.height += mMargins.bottom + mMargins.top;
+		prefSize.width  += mMargins.left   + mMargins.right;
 
 		if (mAutoSizeWidth && mAutoSizeHeight) {
 			SetSize(prefSize);
@@ -846,3 +899,4 @@ void WidgetScrollView::UpdateLayout()
 	mContainer->SetY(mPadding);
 	mContainer->SetHeight(GetInnerHeight());
 }
+
