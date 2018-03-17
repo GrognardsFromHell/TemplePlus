@@ -717,12 +717,18 @@ bool UiManager::DoesWidgetContain(LgcyWidgetId id, int x, int y)
 	}
 
 	auto widget = GetWidget(id);
+	TigRect rect(widget->x, widget->y, widget->width, widget->height);
+
+	auto advWidget = GetAdvancedWidget(id);
+	if (advWidget != nullptr){
+		rect = advWidget->GetContentArea();
+	}
 
 	return widget
-		&& x >= widget->x
-		&& y >= widget->y
-		&& x < (int)(widget->x + widget->width)
-		&& y < (int)(widget->y + widget->height);
+		&& x >= rect.x
+		&& y >= rect.y
+		&& x < (int)(rect.x + rect.width)
+		&& y < (int)(rect.y + rect.height);
 }
 
 void UiManager::RefreshMouseOverState()

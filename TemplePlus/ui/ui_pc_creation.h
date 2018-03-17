@@ -10,32 +10,55 @@
 struct UiSystemConf;
 class CombinedImgFile;
 
-class ChargenBigButton : WidgetButton
+class ChargenBigButton : public WidgetButton
 {
-
+public:
 	enum class ChargenButtonActivationState
 	{
-		Activated = 0,
-		Disabled = 1,
-		Normal = 2
+		/*
+		Note on Active: 
+		This is not to be confused with WidgetButtonBase's mActivated, which designates 
+		that some associated state is currently active (e.g. choosing Class in char creation).
+		Whereas Active in this case means the button is not Disabled or Done. Perhaps a better
+		name would be "Normal", but we're sticking with ToEE nomenclature here.
+		 */
+		Active = 0,
+		Disabled,
+		Done,
 	};
 	void SetActivationState(ChargenButtonActivationState st);
+	void UpdateStyleByActivationState();
+	void Render() override;
 
 	ChargenBigButton();
+	
 
 protected:
-	eastl::string s;
-	TigRect frameRect;
-	TigRect rect;
-	TigRect textRect;
 	int datum; // which piece of data does this item represent? influences hovering state
-	ChargenButtonActivationState mActivationState;
+	ChargenButtonActivationState mActivationState = ChargenButtonActivationState::Active;
 };
 
-class PageDependantButton
+// Interface for paged buttons
+class IPagedButton
 {
+public:
+	void SetPage(int page) { mCurPage = page;  };
+	void SetPageText(int page, const string &text) { pagedText[page] = text; }
+	void SetPageDatum(int page, int datum) { pagedData[page] = datum; }
+
+	int GetPage() { return mCurPage; };
+	int GetDatum() { return pagedData[mCurPage]; }
+	string GetText() { return pagedText[mCurPage]; }
+
 protected:
-	std::map<int, int> data; // mapping of page number :  datum
+	int mCurPage = 0;
+	std::map<int, int> pagedData; // mapping of page number :  datum
+	std::map<int, string> pagedText; // mapping of page number : text
+};
+
+class ChargenPagedButton : public ChargenBigButton, public IPagedButton
+{
+	
 };
 
 class ChargenSystem {
@@ -43,7 +66,7 @@ public:
 	virtual std::string GetName() = 0;
 	virtual void Reset(CharEditorSelectionPacket & charSpec) {};
 	virtual void Activate() {};
-	virtual BOOL SystemInit(const UiSystemConf *) { return TRUE; };
+	virtual BOOL SystemInit(const UiSystemConf *);
 	virtual void Free(){};
 	virtual BOOL Resize(UiResizeArgs &resizeArgs) { return TRUE; };
 	virtual void Hide(){};
@@ -55,7 +78,7 @@ public:
 protected:
 	virtual bool WidgetsInit(int w, int h) { return true; };
 	std::unique_ptr<WidgetContainer> mWnd;
-	eastl::vector<ChargenBigButton> bigButtons;
+	eastl::vector<std::unique_ptr<ChargenBigButton>> mBigButtons;
 };
 
 class PagianatedChargenSystem
@@ -91,16 +114,19 @@ public:
 	static constexpr auto Name = "chargen_class";
 
 	ClassChargen(const UiSystemConf & conf);
+	virtual void Reset(CharEditorSelectionPacket & charSpec) override {
+
+	};
 };
 
-class UiPcCreation : public UiSystem {
+class UiPcCreationSys : public UiSystem {
 	friend class PcCreationHooks;
 
 public:
 
 	static constexpr auto Name = "pc_creation";
-	UiPcCreation(const UiSystemConf &config);
-	~UiPcCreation();
+	UiPcCreationSys(const UiSystemConf &config);
+	~UiPcCreationSys();
 	void ResizeViewport(const UiResizeArgs &resizeArgs) override;
 	const std::string &GetName() const override;
 
@@ -110,6 +136,26 @@ public:
 	void Start();
 
 
+	ClassChargen& GetClass() const {
+		Expects(!!mClass);
+		return *mClass;
+	}
+	RaceChargen& GetRace() const {
+		Expects(!!mClass);
+		return *mRace;
+	}
+
+protected:
+	std::unique_ptr<ClassChargen> mClass;
+	std::unique_ptr<RaceChargen> mRace;
+
+	template<typename T, typename... TArgs>
+	std::unique_ptr<T> InitializeSystem(TArgs&&... args);
+};
+
+class UiPcCreation {
+	friend class PcCreationHooks;
+public:
 	objHndl GetEditedChar();
 	CharEditorSelectionPacket & GetCharEditorSelPacket();
 	LgcyWindow &GetPcCreationWnd();
@@ -373,15 +419,6 @@ public:
 	CombinedImgFile* levelupSpellbar, *featsbackdrop;
 
 
-	ClassChargen& GetClass() const {
-		Expects(!!mClass);
-		return *mClass;
-	}
-	RaceChargen& GetRace() const {
-		Expects(!!mClass);
-		return *mRace;
-	}
-
 	UiPcCreation() {
 		TigTextStyle baseStyle;
 		baseStyle.flags = 0x4000;
@@ -411,18 +448,12 @@ public:
 
 private:
 
-	template<typename T, typename... TArgs>
-	std::unique_ptr<T> InitializeSystem(TArgs&&... args);
-
 	int mPageCount = 0;
 
 	bool mFeatsActivated = false;
 	bool mIsSelectingBonusFeat = false;
 	bool mBonusFeatOk = false;
 	feat_enums featsMultiSelected = FEAT_NONE, mFeatsMultiMasterFeat = FEAT_NONE;
-
-	std::unique_ptr<ClassChargen> mClass;
-	std::unique_ptr<RaceChargen> mRace;
 
 	std::vector<FeatInfo> mExistingFeats, mSelectableFeats, mMultiSelectFeats, mMultiSelectMasterFeats;
 

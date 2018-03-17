@@ -30,7 +30,7 @@ UiSystems::UiSystems(int width, int height)
 	mCombat = InitializeSystem<UiCombat>(config);
 	mSlide = InitializeSystem<UiSlide>();
 	mDlg = InitializeSystem<UiDlg>(config);
-	mPcCreation = InitializeSystem<UiPcCreation>(config);
+	mPcCreation = InitializeSystem<UiPcCreationSys>(config);
 	mChar = InitializeSystem<UiChar>(config);
 	mToolTip = InitializeSystem<UiToolTip>(config);
 	mLogbook = InitializeSystem<UiLogbook>(config);

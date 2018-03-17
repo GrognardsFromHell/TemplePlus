@@ -20,7 +20,7 @@ class UiWMapRnd;
 class UiCombat;
 class UiSlide;
 class UiDlg;
-class UiPcCreation;
+class UiPcCreationSys;
 class UiChar;
 class UiToolTip;
 class UiLogbook;
@@ -112,7 +112,7 @@ public:
 		Expects(!!mDlg);
 		return *mDlg;
 	}
-	UiPcCreation& GetPcCreation() const {
+	UiPcCreationSys& GetPcCreation() const {
 		Expects(!!mPcCreation);
 		return *mPcCreation;
 	}
@@ -264,7 +264,7 @@ private:
 	std::unique_ptr<UiCombat> mCombat;
 	std::unique_ptr<UiSlide> mSlide;
 	std::unique_ptr<UiDlg> mDlg;
-	std::unique_ptr<UiPcCreation> mPcCreation;
+	std::unique_ptr<UiPcCreationSys> mPcCreation;
 	std::unique_ptr<UiChar> mChar;
 	std::unique_ptr<UiToolTip> mToolTip;
 	std::unique_ptr<UiLogbook> mLogbook;

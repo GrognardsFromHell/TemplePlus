@@ -35,6 +35,7 @@ public:
 	const char* GetStatEnumString(Stat stat) const; // not really needed - just used for the python layer (replaced in constants.py)
 	const char* GetStatRulesString(Stat stat) const;
 	const char* GetClassShortDesc(Stat stat) const;
+	const char* GetRaceName(Race race);
 	const char* GetCannotPickClassHelp(Stat stat) const;
 
 	int GetValue(const objHndl &handle, Stat stat, int statArg = -1) const;
@@ -45,6 +46,7 @@ public:
 	int GetPsiStatBase(const objHndl &handle, Stat stat, int statArg = -1) const;
 	int GetType3StatBase(const objHndl &handle, Stat stat) const;
 	bool AlignmentsUnopposed(Alignment a, Alignment b, bool strictCheck = false);
+	
 
 private:
 

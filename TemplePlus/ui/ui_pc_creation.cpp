@@ -246,7 +246,7 @@ void UiPcCreation::ToggleClassRelatedStages(){
 
 BOOL UiPcCreation::RaceSystemInit(UiSystemConf & conf)
 {
-	mRace->SystemInit(&conf);
+	//mRace->SystemInit(&conf);
 	if (textureFuncs.RegisterTexture("art\\interface\\pc_creation\\racebox.tga", &buttonBox))
 		return FALSE;
 
@@ -2883,7 +2883,7 @@ int &UiPcCreation::GetDeityBtnId(int deityId){
 
 
 template <typename Type, typename... Args>
-std::unique_ptr<Type> UiPcCreation::InitializeSystem(Args&&... args) {
+std::unique_ptr<Type> UiPcCreationSys::InitializeSystem(Args&&... args) {
 	logger->info("Loading PC Creation system {}", Type::Name);
 
 	auto result(std::make_unique<Type>(std::forward<Args>(args)...));
@@ -2893,13 +2893,36 @@ std::unique_ptr<Type> UiPcCreation::InitializeSystem(Args&&... args) {
 
 void ChargenBigButton::SetActivationState(ChargenButtonActivationState st){
 	mActivationState = st;
+	UpdateStyleByActivationState();
+}
+
+void ChargenBigButton::UpdateStyleByActivationState()
+{
+	switch (mActivationState) {
+
+	case ChargenButtonActivationState::Active:
+		SetStyle("chargen-active-button");
+		break;
+	case ChargenButtonActivationState::Disabled:
+		SetStyle("chargen-disabled-button");
+		break;
+	case ChargenButtonActivationState::Done:
+		SetStyle("chargen-done-button");
+		break;
+	default:
+		SetStyle("chargen-button");
+	}
+}
+
+void ChargenBigButton::Render(){
+	WidgetButton::Render(); // do normal rendering
 }
 
 ChargenBigButton::ChargenBigButton() : WidgetButton(){
-	
+	SetCenterVertically(true);
 }
 
-UiPcCreation::UiPcCreation(const UiSystemConf &config) {
+UiPcCreationSys::UiPcCreationSys(const UiSystemConf &config) {
 	auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x10120420);
 	if (!startup(&config)) {
 		throw TempleException("Unable to initialize game system pc_creation");
@@ -2908,33 +2931,30 @@ UiPcCreation::UiPcCreation(const UiSystemConf &config) {
 	mRace = InitializeSystem<RaceChargen>(config);
 	mClass = InitializeSystem<ClassChargen>(config);
 }
-UiPcCreation::~UiPcCreation() {
+UiPcCreationSys::~UiPcCreationSys() {
 	auto shutdown = temple::GetPointer<void()>(0x1011ebc0);
 	shutdown();
+	this;
 
-	mRace->Reset( GetCharEditorSelPacket());
-	//mClass->Reset(GetCharEditorSelPacket());
+	mRace->Reset( uiPcCreation.GetCharEditorSelPacket());
+	mClass->Reset(uiPcCreation.GetCharEditorSelPacket());
 }
-void UiPcCreation::ResizeViewport(const UiResizeArgs& resizeArg) {
+void UiPcCreationSys::ResizeViewport(const UiResizeArgs& resizeArg) {
 	auto resize = temple::GetPointer<void(const UiResizeArgs*)>(0x10120b30);
 	resize(&resizeArg);
 }
-const std::string &UiPcCreation::GetName() const {
+const std::string &UiPcCreationSys::GetName() const {
 	static std::string name("pc_creation");
 	return name;
 }
 
-void UiPcCreation::Start()
+void UiPcCreationSys::Start()
 {
 	static auto ui_pc_creation_start = temple::GetPointer<int()>(0x1011fdc0);
 	ui_pc_creation_start();
 }
 
-//PagianatedChargenSystem::PagianatedChargenSystem(UiSystemConf & conf){
-//	
-//}
 
-//RaceChargen::RaceChargen(UiSystemConf & conf):ChargenSystem(),PagianatedChargenSystem(conf){
 RaceChargen::RaceChargen(const UiSystemConf & conf) :ChargenSystem() {
 	
 	SystemInit(&conf);
@@ -2948,8 +2968,47 @@ BOOL RaceChargen::SystemInit(const UiSystemConf *conf){
 }
 
 bool RaceChargen::WidgetsInit(int w, int h){
+
+	mWnd = make_unique<WidgetContainer>(431, 250);
+	auto wndX = 219 + (w - 788) / 2, wndY = 50;
+	wndY += (h <= 600) ? 12 : ((h - 497) / 2);
+	mWnd->SetPos(wndX, wndY);
+	
+	auto x = 156, y = 24;
+	for (auto it: d20RaceSys.vanillaRaceEnums){
+		auto newBtn = make_unique<ChargenPagedButton>();
+		auto race = (Race)it;
+		auto raceName = toupper(d20Stats.GetRaceName(race));
+		newBtn->SetPos(x, y);
+		
+		newBtn->SetText(raceName);
+		newBtn->SetPageText(0,raceName);
+		newBtn->SetPageDatum(0, it);
+		
+
+		newBtn->SetActivationState(ChargenBigButton::ChargenButtonActivationState::Active);
+		//newBtn->Hide();
+		mWnd->Add(std::move(newBtn));
+		y += 29;
+	}
+
+	for (auto &it: mWnd->GetChildren()){
+		if (it->IsButton()){
+			auto btn = uiManager->GetAdvancedWidget(it->GetWidgetId());
+			auto isConv = std::is_convertible<WidgetBase, ChargenPagedButton>();
+			if (isConv){
+				btn->Hide();
+			}
+			
+		}
+	}
+
 	return true;
 }
 
 ClassChargen::ClassChargen(const UiSystemConf & conf){
+}
+
+BOOL ChargenSystem::SystemInit(const UiSystemConf *) {
+	return TRUE;
 }
