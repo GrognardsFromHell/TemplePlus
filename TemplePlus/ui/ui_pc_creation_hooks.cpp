@@ -12,11 +12,13 @@
 #include "gamesystems/d20/d20stats.h"
 #include "mod_support.h"
 #include "party.h"
+#include "ui_systems.h"
 
 int PcCreationFeatUiPrereqCheckUsercallWrapper();
 int HookedUsercallFeatMultiselectSub_101822A0();
 int(__cdecl * OrgFeatMultiselectSub_101822A0)();
 int HookedFeatMultiselectSub_101822A0(feat_enums feat);
+
 
 class PcCreationHooks : TempleFix
 {
@@ -43,6 +45,19 @@ public:
 				return orgStatsWndMsg(widId, msg);
 			return TRUE;
 		});
+
+		// Update title
+		replaceFunction<void(__cdecl)()>(0x1011C470, []() { ChargenSystem::UpdateDescriptionBox(); });
+
+		replaceFunction<void(__cdecl)(int widgetId)>(0x1011ED80, [](int id){
+			uiPcCreation.MainWndRender(id);
+		});
+
+		// Chargen Race System
+		replaceFunction<void(__cdecl)()>(0x1018A7D0, [](){	uiSystems->GetPcCreation().GetRace().Show();	});
+		replaceFunction<void(__cdecl)()>(0x1018A7B0, []() {	uiSystems->GetPcCreation().GetRace().Hide();	});
+		replaceFunction<void(__cdecl)(CharEditorSelectionPacket&)>(0x1018A590, [](CharEditorSelectionPacket& pkt) {	uiSystems->GetPcCreation().GetRace().Reset(pkt);	});
+		replaceFunction<void(__cdecl)()>(0x1018A5A0, []() {	uiSystems->GetPcCreation().GetRace().CheckComplete();	});
 
 		// Chargen Class system
 		replaceFunction<void(__cdecl)(UiSystemConf&)>(0x10188910, [](UiSystemConf& conf) {uiPcCreation.ClassSystemInit(conf); });

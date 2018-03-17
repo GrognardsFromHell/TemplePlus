@@ -3,7 +3,7 @@
 #include <map>
 
 #define DEITY_COUNT_VANILLA 28 // includes non-selectable ones like Ralishaz and Zuggtmoy
-
+#define DEITY_COUNT_SELECTABLE_VANILLA 20 // the number of deities selectable in vanilla ToEE
 enum SkillEnum : uint32_t;
 
 struct LegacyDeitySpec{
@@ -37,6 +37,7 @@ public:
 	WeaponTypes GetDeityFavoredWeapon(int deityId);
 	bool IsDomainSkill(objHndl handle, SkillEnum skill);
 	bool IsDomainSkill(SkillEnum skill, Domain dom);
+	const char* GetName(int deityId);
 
 protected:
 	DeitySpec &GetDeitySpec(int id);

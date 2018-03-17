@@ -9,9 +9,10 @@
 
 struct UiSystemConf;
 class CombinedImgFile;
-
+class LgcyChargenSystem;
 
 class ChargenSystem {
+	friend class PcCreationHooks;
 public:
 	virtual std::string GetName() = 0;
 	virtual void Reset(CharEditorSelectionPacket & charSpec) {};
@@ -19,20 +20,24 @@ public:
 	virtual BOOL SystemInit(const UiSystemConf *);
 	virtual void Free(){};
 	virtual BOOL Resize(UiResizeArgs &resizeArgs) { return TRUE; };
-	virtual void Hide(){};
-	virtual void Show(){};
+	virtual void Hide() { mWnd->Hide(); };
+	virtual void Show(){ mWnd->Show();	mWnd->BringToFront();	};
 	virtual BOOL CheckComplete() { return TRUE; }; // checks if the char editing stage is complete (thus allowing you to move on to the next stage). This is checked at every render call.
 	virtual void Finalize(CharEditorSelectionPacket & charSpec, objHndl & handle){};
 	virtual void ButtonExited(){};
 
+	static void UpdateDescriptionBox(); // updates the description of the character being created
+
 protected:
+	
+
 	virtual bool WidgetsInit(int w, int h) { return true; };
 	std::unique_ptr<WidgetContainer> mWnd;
 	eastl::vector<LgcyWidgetId> mBigButtons;
 };
 
 
-class RaceChargen : ChargenSystem , PagianatedChargenSystem
+class RaceChargen : public ChargenSystem , PagianatedChargenSystem
 {
 public:
 	static constexpr auto Name = "chargen_race";
@@ -42,13 +47,14 @@ public:
 	
 	virtual BOOL SystemInit(const UiSystemConf *) override;
 	virtual bool WidgetsInit(int w, int h) override;
-	virtual void Reset(CharEditorSelectionPacket & charSpec) override{
-		
-	};
+	virtual void Reset(CharEditorSelectionPacket & charSpec) override;
+	virtual BOOL CheckComplete() override; // checks if the char editing stage is complete (thus allowing you to move on to the next stage). This is checked at every render call.
 protected:
 	void SetScrollboxText(Race race);
 	void UpdateScrollbox();
+	void UpdateActiveRace();
 };
+
 class ClassChargen : ChargenSystem, PagianatedChargenSystem
 {
 public:
@@ -83,13 +89,17 @@ public:
 		return *mClass;
 	}
 	RaceChargen& GetRace() const {
-		Expects(!!mClass);
+		Expects(!!mRace);
 		return *mRace;
 	}
+
+	bool IsVisible();
 
 protected:
 	std::unique_ptr<ClassChargen> mClass;
 	std::unique_ptr<RaceChargen> mRace;
+
+	BOOL &mIsHidden = temple::GetRef<BOOL>(0x102F7BF0);
 
 	template<typename T, typename... TArgs>
 	std::unique_ptr<T> InitializeSystem(TArgs&&... args);
@@ -103,6 +113,7 @@ public:
 	LgcyWindow &GetPcCreationWnd();
 	LgcyWindow &GetStatsWnd();
 	int &GetState();
+	int &GetStatesComplete();
 	Alignment GetPartyAlignment();
 
 	void PrepareNextStages();
@@ -111,17 +122,6 @@ public:
 	void ToggleClassRelatedStages(); // Spell Selection and Class Features
 
 #pragma region Systems
-
-	// Race
-	void RaceReset(CharEditorSelectionPacket & selPkt);
-	BOOL RaceSystemInit(UiSystemConf & conf);
-	BOOL RaceWidgetsInit();
-	void RaceWidgetsFree();
-	BOOL RaceWidgetsResize(UiResizeArgs & args);
-	BOOL RaceHide();
-	BOOL RaceShow();
-	BOOL RaceCheckComplete();
-	void RaceBtnEntered();
 
 	// Class
 	BOOL ClassSystemInit(UiSystemConf & conf);
@@ -166,7 +166,7 @@ public:
 #pragma region Widget callbacks
 	void StateTitleRender(int widId);
 	BOOL FinishBtnMsg(int widId, TigMsg* msg); // goes after the original FinishBtnMsg
-
+	void MainWndRender(int id);
 
 	// stats
 	int GetRolledStatIdx(int x, int y, int *xyOut = nullptr); // gets the index of the Rolled Stats button according to the mouse position. Returns -1 if none.
@@ -174,13 +174,7 @@ public:
 
 	// Race
 	void RaceWndRender(int widId);
-	void RaceBtnRender(int widId){};
-	BOOL RaceBtnMsg(int widId, TigMsg* msg) { return TRUE; };
-	BOOL RaceNextBtnMsg(int widId, TigMsg* msg) { return TRUE; };
-	BOOL RacePrevBtnMsg(int widId, TigMsg* msg) { return TRUE; };
-	void RaceNextBtnRender(int widId){};
-	void RacePrevBtnRender(int widId){};
-
+	
 	// class
 	void ClassBtnRender(int widId);
 	BOOL ClassBtnMsg(int widId, TigMsg* msg);
@@ -224,12 +218,10 @@ public:
 	int raceWndPage = 0;
 	eastl::vector<int> raceBtnMapping; // used as an index of choosable character classes
 	int GetRaceWndPage();
-	Stat GetRaceCodeFromWidgetAndPage(int idx, int page);
 
 	eastl::vector<int> classBtnMapping; // used as an index of choosable character classes
 	int GetClassWndPage();
 	Stat GetClassCodeFromWidgetAndPage(int idx, int page);
-	int GetStatesComplete();
 
 #pragma region logic 
 	// class
@@ -276,8 +268,6 @@ public:
 	eastl::vector<int> classBtnIds;
 
 	// geometry
-	TigRect raceNextBtnRect, raceNextBtnFrameRect, raceNextBtnTextRect,
-		racePrevBtnRect, racePrevBtnFrameRect, racePrevBtnTextRect;
 	TigRect classNextBtnRect, classNextBtnFrameRect, classNextBtnTextRect,
 		classPrevBtnRect, classPrevBtnFrameRect, classPrevBtnTextRect;
 	TigRect spellsChosenTitleRect, spellsAvailTitleRect;
@@ -321,11 +311,6 @@ public:
 
 
 	// caches
-	eastl::hash_map<int, eastl::string> raceNamesUppercase;
-	eastl::vector<TigRect> raceBtnFrameRects;
-	eastl::vector<TigRect> raceBtnRects;
-	eastl::vector<TigRect> raceTextRects;
-
 	eastl::hash_map<int, eastl::string> classNamesUppercase;
 	eastl::vector<TigRect> classBtnFrameRects;
 	eastl::vector<TigRect> classBtnRects;
@@ -407,3 +392,19 @@ private:
 int __cdecl PcCreationFeatUiPrereqCheck(feat_enums feat);
 
 extern UiPcCreation uiPcCreation;
+
+
+class LgcyChargenSystem {
+public:
+	const char* name;
+	void(*Reset)(CharEditorSelectionPacket & charSpec);
+	void(*Activate)();
+	BOOL(*SystemInit)(const UiSystemConf *);
+	void(*Free)();
+	BOOL(*Resize)(UiResizeArgs &resizeArgs);
+	void(*Hide)();
+	void(*Show)();
+	BOOL(*CheckComplete)(); // checks if the char editing stage is complete (thus allowing you to move on to the next stage). This is checked at every render call.
+	void(*Finalize)(CharEditorSelectionPacket & charSpec, objHndl & handle);
+	void(*ButtonExited)();
+};

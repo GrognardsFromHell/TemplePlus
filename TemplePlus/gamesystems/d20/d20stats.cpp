@@ -131,6 +131,10 @@ const char* D20StatsSystem::GetClassShortDesc(Stat stat) const{
 	return line.value;
 }
 
+const char * D20StatsSystem::GetAlignmentName(Alignment alignment) {
+	return temple::GetRef<const char*[]>(0x10AAE89C)[alignment];
+}
+
 const char * D20StatsSystem::GetRaceName(Race race) {
 
 	if (race < VANILLA_NUM_RACES){
@@ -143,6 +147,10 @@ const char * D20StatsSystem::GetRaceName(Race race) {
 	mesFuncs.GetLine_Safe(statMesExt, &line);
 	return line.value;
 
+}
+
+const char * D20StatsSystem::GetGenderName(int genderId) {
+	return temple::GetRef<const char*[]>(0x10AAE410)[genderId];
 }
 
 const char* D20StatsSystem::GetCannotPickClassHelp(Stat stat) const{

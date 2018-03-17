@@ -36,6 +36,7 @@
 #include "d20_race.h"
 #include "widgets/widgets.h"
 #include "ui_legacysystems.h"
+#include "ui_systems.h"
 
 const Race RACE_INVALID = (Race)32;
 
@@ -79,7 +80,7 @@ struct PartyCreationPc
 };
 
 const int testSizeOfCreationPc = sizeof(PartyCreationPc); // 344  0x158
-
+temple::GlobalStruct<LgcyChargenSystem, 0x102F7938> lgcySystems;
 
 UiPcCreation uiPcCreation;
 
@@ -133,7 +134,55 @@ struct PcCreationUiAddresses : temple::AddressTable
 } addresses;
 
 
+#pragma region PC Creation System
 
+template <typename Type, typename... Args>
+std::unique_ptr<Type> UiPcCreationSys::InitializeSystem(Args&&... args) {
+	logger->info("Loading PC Creation system {}", Type::Name);
+
+	auto result(std::make_unique<Type>(std::forward<Args>(args)...));
+
+	return std::move(result);
+}
+
+
+UiPcCreationSys::UiPcCreationSys(const UiSystemConf &config) {
+	auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x10120420);
+	if (!startup(&config)) {
+		throw TempleException("Unable to initialize game system pc_creation");
+	}
+
+	mRace = InitializeSystem<RaceChargen>(config);
+	//mClass = InitializeSystem<ClassChargen>(config);
+}
+UiPcCreationSys::~UiPcCreationSys() {
+	auto shutdown = temple::GetPointer<void()>(0x1011ebc0);
+	shutdown();
+	this;
+
+	mRace->Reset(uiPcCreation.GetCharEditorSelPacket());
+	//mClass->Reset(uiPcCreation.GetCharEditorSelPacket());
+}
+void UiPcCreationSys::ResizeViewport(const UiResizeArgs& resizeArg) {
+	auto resize = temple::GetPointer<void(const UiResizeArgs*)>(0x10120b30);
+	resize(&resizeArg);
+}
+const std::string &UiPcCreationSys::GetName() const {
+	static std::string name("pc_creation");
+	return name;
+}
+
+void UiPcCreationSys::Start()
+{
+	static auto ui_pc_creation_start = temple::GetPointer<int()>(0x1011fdc0);
+	ui_pc_creation_start();
+}
+
+bool UiPcCreationSys::IsVisible() {
+	return mIsHidden == 0;
+}
+
+#pragma endregion
 
 int __cdecl PcCreationFeatUiPrereqCheck(feat_enums feat)
 {
@@ -188,6 +237,7 @@ LgcyWindow & UiPcCreation::GetStatsWnd(){
 int & UiPcCreation::GetState(){
 	return temple::GetRef<int>(0x102F7D68);
 }
+
 
 Alignment UiPcCreation::GetPartyAlignment(){
 	return temple::GetRef<Alignment>(0x11E741A8);
@@ -245,15 +295,6 @@ void UiPcCreation::ToggleClassRelatedStages(){
 }
 
 
-void UiPcCreation::RaceReset(CharEditorSelectionPacket & selPkt) {
-	selPkt.raceId = RACE_INVALID;
-}
-
-BOOL UiPcCreation::RaceCheckComplete()
-{
-	auto &selPkt = uiPcCreation.GetCharEditorSelPacket();
-	return selPkt.raceId != RACE_INVALID;
-}
 
 #pragma region Class
 BOOL UiPcCreation::ClassSystemInit(UiSystemConf & conf){
@@ -2680,6 +2721,51 @@ BOOL UiPcCreation::FinishBtnMsg(int widId, TigMsg * msg)
 	return TRUE;
 }
 
+void UiPcCreation::MainWndRender(int id) {
+	if (!uiSystems->GetPcCreation().IsVisible()) return;
+
+	auto stage = 0;
+	auto &mStagesComplete = GetStatesComplete();
+	auto &mActiveStage = GetState();
+	auto &selPkt = GetCharEditorSelPacket();
+
+	for (stage = 0; stage < std::min(mStagesComplete + 1, (int)ChargenStages::CG_STAGE_COUNT); stage++){
+		auto &sys = lgcySystems[stage];
+		if (!sys.CheckComplete)
+			break;
+		if (!sys.CheckComplete())
+			break;
+	}
+
+	if (stage != mStagesComplete){
+		mStagesComplete = stage;
+		if (mActiveStage > stage)
+			mActiveStage = stage;
+		
+		// reset the next stages
+		for (auto nextStage = stage + 1; nextStage < ChargenStages::CG_STAGE_COUNT; nextStage++){
+			if (lgcySystems[nextStage].Reset){
+				lgcySystems[nextStage].Reset(selPkt);
+			}
+		}
+		ChargenSystem::UpdateDescriptionBox();
+	}
+
+	auto wnd = uiManager->GetWindow(id);
+	RenderHooks::RenderImgFile(temple::GetRef<ImgFile*>(0x10BDAFE0), wnd->x, wnd->y);
+
+	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+
+	UiRenderer::DrawTextInWidget(id, 
+		temple::GetRef<char[] >(0x10BDB100), 
+		temple::GetRef<TigRect>(0x10BDB004), 
+		temple::GetRef<TigTextStyle>(0x10BDDCC8));
+	UiRenderer::PopFont();
+
+	auto renderCharModel = temple::GetRef<void(__cdecl)(int)>(0x1011C320);
+	renderCharModel(id);
+}
+
 
 
 int UiPcCreation::GetRaceWndPage()
@@ -2688,7 +2774,7 @@ int UiPcCreation::GetRaceWndPage()
 }
 
 
-int UiPcCreation::GetStatesComplete(){
+int& UiPcCreation::GetStatesComplete(){
 	return temple::GetRef<int>(0x10BDD5D4);
 }
 
@@ -2818,50 +2904,7 @@ int &UiPcCreation::GetDeityBtnId(int deityId){
 	return temple::GetRef<int[20]>(0x10C3EE80)[deityId];
 }
 
-
-
-template <typename Type, typename... Args>
-std::unique_ptr<Type> UiPcCreationSys::InitializeSystem(Args&&... args) {
-	logger->info("Loading PC Creation system {}", Type::Name);
-
-	auto result(std::make_unique<Type>(std::forward<Args>(args)...));
-
-	return std::move(result);
-}
-
-
-UiPcCreationSys::UiPcCreationSys(const UiSystemConf &config) {
-	auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x10120420);
-	if (!startup(&config)) {
-		throw TempleException("Unable to initialize game system pc_creation");
-	}
-
-	mRace = InitializeSystem<RaceChargen>(config);
-	mClass = InitializeSystem<ClassChargen>(config);
-}
-UiPcCreationSys::~UiPcCreationSys() {
-	auto shutdown = temple::GetPointer<void()>(0x1011ebc0);
-	shutdown();
-	this;
-
-	mRace->Reset( uiPcCreation.GetCharEditorSelPacket());
-	mClass->Reset(uiPcCreation.GetCharEditorSelPacket());
-}
-void UiPcCreationSys::ResizeViewport(const UiResizeArgs& resizeArg) {
-	auto resize = temple::GetPointer<void(const UiResizeArgs*)>(0x10120b30);
-	resize(&resizeArg);
-}
-const std::string &UiPcCreationSys::GetName() const {
-	static std::string name("pc_creation");
-	return name;
-}
-
-void UiPcCreationSys::Start()
-{
-	static auto ui_pc_creation_start = temple::GetPointer<int()>(0x1011fdc0);
-	ui_pc_creation_start();
-}
-
+#pragma region Race
 
 RaceChargen::RaceChargen(const UiSystemConf & conf) :ChargenSystem() {
 	
@@ -2882,6 +2925,8 @@ bool RaceChargen::WidgetsInit(int w, int h){
 	wndY += (h <= 600) ? 12 : ((h - 497) / 2);
 	mWnd->SetPos(wndX, wndY);
 	
+	// todo state title...
+
 	auto x = 156, y = 24;
 	for (auto it: d20RaceSys.vanillaRaceEnums){
 		auto newBtn = make_unique<ChargenPagedButton>();
@@ -2899,7 +2944,9 @@ bool RaceChargen::WidgetsInit(int w, int h){
 			}
 			auto &selPkt = uiPcCreation.GetCharEditorSelPacket();
 			selPkt.raceId = race;
+			UpdateDescriptionBox();
 			uiPcCreation.ResetNextStages(ChargenStages::CG_Stage_Race);
+			UpdateActiveRace();
 		});
 		newBtn->SetMouseMsgHandler([=](const TigMouseMsg&msg){
 			return true;
@@ -2911,6 +2958,7 @@ bool RaceChargen::WidgetsInit(int w, int h){
 			}
 			if (msg.widgetEventType == TigMsgWidgetEvent::Exited) {
 				UpdateScrollbox();
+				return true;
 			}
 			return true;
 		});
@@ -2919,10 +2967,19 @@ bool RaceChargen::WidgetsInit(int w, int h){
 		mWnd->Add(std::move(newBtn));
 		y += 29;
 	}
-	//mWnd->Hide();
+	mWnd->Hide();
 
 	return true;
 }
+
+void RaceChargen::Reset(CharEditorSelectionPacket & charSpec) {
+	charSpec.raceId = RACE_INVALID;
+}
+
+BOOL RaceChargen::CheckComplete(){
+	return (uiPcCreation.GetCharEditorSelPacket().raceId != RACE_INVALID)?TRUE:FALSE;
+}
+
 
 void RaceChargen::SetScrollboxText(Race race)
 {
@@ -2940,9 +2997,76 @@ void RaceChargen::UpdateScrollbox()
 	}
 }
 
+void RaceChargen::UpdateActiveRace()
+{
+	auto &selPkt = uiPcCreation.GetCharEditorSelPacket();
+	for (auto it: mBigButtons){
+		auto btn = dynamic_cast<ChargenPagedButton*>(uiManager->GetAdvancedWidget(it));
+		if (!btn) continue;
+		auto isActive = selPkt.raceId == btn->GetDatum();
+		btn->SetActive(isActive);
+	}
+}
+
+#pragma endregion
+
 ClassChargen::ClassChargen(const UiSystemConf & conf){
 }
 
 BOOL ChargenSystem::SystemInit(const UiSystemConf *) {
 	return TRUE;
+}
+
+void ChargenSystem::UpdateDescriptionBox() {
+	//temple::GetRef<void(__cdecl)()>(0x1011C470)();
+
+	auto &textBuffer = temple::GetRef<char[2000]>(0x10BDB100);
+	auto &selPkt = uiPcCreation.GetCharEditorSelPacket();
+	
+	std::string desc;
+	
+	// Alignment
+	if (selPkt.alignment != -1){
+		auto s = d20Stats.GetAlignmentName(selPkt.alignment);
+		if (s)
+			desc.append(s);
+		desc.append(" ");
+	}
+	// Gender
+	if (selPkt.genderId != 2){
+		auto s = d20Stats.GetGenderName(selPkt.genderId);
+		if (s)
+			desc.append(s);
+		desc.append(" ");
+	}
+	// Race
+	if (selPkt.raceId != RACE_INVALID){
+		auto s = d20Stats.GetRaceName(selPkt.raceId);
+		if (s)
+			desc.append(s);
+		desc.append(" ");
+	}
+	// Deity
+	if (selPkt.deityId != DEITY_COUNT_SELECTABLE_VANILLA){
+		desc.append("@1");
+		desc.append(temple::GetRef<const char*>(0x10BDA76C)); // "Worships"
+		desc.append("@0");
+		desc.append(deitySys.GetName(selPkt.deityId));
+	}
+
+	// copy string to dislpay buffer
+	memcpy(textBuffer, desc.c_str(), desc.size());
+	textBuffer[desc.size()] = '\0';
+
+	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+
+	auto met = UiRenderer::MeasureTextSize(desc, temple::GetRef<TigTextStyle>(0x10BDDCC8));
+
+	UiRenderer::PopFont();
+
+	auto &rect = temple::GetRef<TigRect>(0x10BDB004);
+	rect.x = (439 - met.width) / 2 + 215;
+	rect.y = (16 - met.height) / 2 + 28;
+	rect.height = met.height;
+	rect.width = met.width;
 }
