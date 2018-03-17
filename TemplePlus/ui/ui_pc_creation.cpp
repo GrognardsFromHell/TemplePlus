@@ -37,7 +37,7 @@
 #include "widgets/widgets.h"
 #include "ui_legacysystems.h"
 
-const int RACE_INVALID = 32;
+const Race RACE_INVALID = (Race)32;
 
 enum ChargenStages : int {
 	CG_Stage_Stats = 0,
@@ -61,19 +61,19 @@ enum ChargenStages : int {
 struct PartyCreationPc
 {
 	int flags;
-	int field4;
-	int* field8;
+	int dataSize;
+	int* data;
 	int fieldC;
 	ObjectId objId;
-	int field28;
-	char* nameMaybe;
+	int nameSize;
+	char* name;
 	char fileName[260];
-	int field134;
-	int field138;
-	int objTypeMaybe;
-	int field140;
+	int portraitId;
+	int gender;
+	int classEnum;
+	int race;
 	Alignment alignment;
-	int field148;
+	int hpMax;
 	int field14C;
 	objHndl handle;
 };
@@ -131,6 +131,8 @@ struct PcCreationUiAddresses : temple::AddressTable
 	}
 
 } addresses;
+
+
 
 
 int __cdecl PcCreationFeatUiPrereqCheck(feat_enums feat)
@@ -243,85 +245,6 @@ void UiPcCreation::ToggleClassRelatedStages(){
 }
 
 
-
-BOOL UiPcCreation::RaceSystemInit(UiSystemConf & conf)
-{
-	//mRace->SystemInit(&conf);
-	if (textureFuncs.RegisterTexture("art\\interface\\pc_creation\\racebox.tga", &buttonBox))
-		return FALSE;
-
-	return RaceWidgetsInit();
-}
-
-BOOL UiPcCreation::RaceWidgetsInit(){
-	static LgcyWindow raceWnd(219, 50, 431, 250);
-	raceWnd.x = GetPcCreationWnd().x + 219;
-	raceWnd.y = GetPcCreationWnd().y + 50;
-	raceWnd.render = [](int id) { uiPcCreation.RaceWndRender(id); };
-	raceWndId = uiManager->AddWindow(raceWnd);
-	
-
-	int coloff = 0, rowoff = 0;
-
-	for (auto it : d20RaceSys.vanillaRaceEnums) {
-		// race buttons
-		LgcyButton raceBtn("Race btn", raceWndId, 81 + coloff, 42 + rowoff, 130, 20);
-		coloff = 139 - coloff;
-		if (!coloff)
-			rowoff += 29;
-		if (rowoff == 5 * 29) // the bottom button
-			coloff = 69;
-
-		raceBtnRects.push_back(TigRect(raceBtn.x, raceBtn.y, raceBtn.width, raceBtn.height));
-		raceBtn.x += raceWnd.x; raceBtn.y += raceWnd.y;
-		raceBtn.render = [](int id) {uiPcCreation.RaceBtnRender(id); };
-		raceBtn.handleMessage = [](int id, TigMsg* msg) { return uiPcCreation.RaceBtnMsg(id, msg); };
-		raceBtn.SetDefaultSounds();
-		raceBtnIds.push_back(uiManager->AddButton(raceBtn, raceWndId));
-
-		//rects
-		raceBtnFrameRects.push_back(TigRect(raceBtn.x - 5, raceBtn.y - 5, raceBtn.width + 10, raceBtn.height + 10));
-
-
-		UiRenderer::PushFont(PredefinedFont::PRIORY_12);
-		auto raceMeasure = UiRenderer::MeasureTextSize(raceNamesUppercase[it].c_str(), bigBtnTextStyle);
-		TigRect rect(raceBtn.x + (110 - raceMeasure.width) / 2 - raceWnd.x,
-			raceBtn.y + (20 - raceMeasure.height) / 2 - raceWnd.y,
-			raceMeasure.width, raceMeasure.height);
-		raceTextRects.push_back(rect);
-		UiRenderer::PopFont();
-	}
-
-	const int nextBtnXoffset = 329;
-	const int nextBtnYoffset = 205;
-	const int prevBtnXoffset = 38;
-	raceNextBtnTextRect = raceNextBtnRect = TigRect(raceWnd.x + nextBtnXoffset, raceWnd.y + nextBtnYoffset, 55, 20);
-	racePrevBtnTextRect = racePrevBtnRect = TigRect(raceWnd.x + prevBtnXoffset, raceWnd.y + nextBtnYoffset, 55, 20);
-	raceNextBtnFrameRect = TigRect(raceWnd.x + nextBtnXoffset - 3, raceWnd.y + nextBtnYoffset - 5, 55 + 6, 20 + 10);
-	racePrevBtnFrameRect = TigRect(raceWnd.x + prevBtnXoffset - 3, raceWnd.y + nextBtnYoffset - 5, 55 + 6, 20 + 10);
-	raceNextBtnTextRect.x -= raceWnd.x; raceNextBtnTextRect.y -= raceWnd.y;
-	racePrevBtnTextRect.x -= raceWnd.x; racePrevBtnTextRect.y -= raceWnd.y;
-
-	LgcyButton nextBtn("Race Next Button", raceWndId, raceWnd.x + nextBtnXoffset, raceWnd.y + nextBtnYoffset - 4, 55, 20);
-	//nextBtn.handleMessage = [](int widId, TigMsg*msg)->BOOL {
-	//	if (uiPcCreation.raceWndPage < uiPcCreation.mRacePageCount)
-	//		uiPcCreation.classWndPage++;
-	//	//uiPcCreation.ClassSetPermissibles();
-	//	return 1; };
-	nextBtn.render = [](int id) { uiPcCreation.RaceNextBtnRender(id); };
-	nextBtn.handleMessage = [](int widId, TigMsg*msg)->BOOL {	return uiPcCreation.RaceNextBtnMsg(widId, msg); };
-	nextBtn.SetDefaultSounds();
-	raceNextBtn = uiManager->AddButton(nextBtn, raceWndId);
-
-	LgcyButton prevBtn("Race Prev. Button", raceWndId, raceWnd.x + prevBtnXoffset, raceWnd.y + nextBtnYoffset - 4, 55, 20);
-	prevBtn.render = [](int id) { uiPcCreation.RacePrevBtnRender(id); };
-	prevBtn.handleMessage = [](int widId, TigMsg*msg)->BOOL {	return uiPcCreation.RacePrevBtnMsg(widId, msg); };
-	prevBtn.SetDefaultSounds();
-	racePrevBtn = uiManager->AddButton(prevBtn, raceWndId);
-
-	return TRUE;
-}
-
 void UiPcCreation::RaceReset(CharEditorSelectionPacket & selPkt) {
 	selPkt.raceId = RACE_INVALID;
 }
@@ -332,6 +255,7 @@ BOOL UiPcCreation::RaceCheckComplete()
 	return selPkt.raceId != RACE_INVALID;
 }
 
+#pragma region Class
 BOOL UiPcCreation::ClassSystemInit(UiSystemConf & conf){
 	if (textureFuncs.RegisterTexture("art\\interface\\pc_creation\\buttonbox.tga", &buttonBox))
 		return 0;
@@ -484,6 +408,235 @@ void UiPcCreation::ClassFinalize(CharEditorSelectionPacket & selPkt, objHndl & h
 	critterSys.GenerateHp(handle);
 }
 
+void UiPcCreation::ClassBtnRender(int widId) {
+	auto idx = WidgetIdIndexOf(widId, &classBtnIds[0], classBtnIds.size());
+	if (idx == -1)
+		return;
+
+	auto page = GetClassWndPage();
+	auto classCode = GetClassCodeFromWidgetAndPage(idx, page);
+	if (classCode == (Stat)-1)
+		return;
+
+	static TigRect srcRect(1, 1, 120, 30);
+	UiRenderer::DrawTexture(buttonBox, classBtnFrameRects[idx], srcRect);
+
+	auto btnState = uiManager->GetButtonState(widId);
+	if (btnState != LgcyButtonState::Disabled && btnState != LgcyButtonState::Down)
+	{
+		auto &selPkt = GetCharEditorSelPacket();
+		if (selPkt.classCode == classCode)
+			btnState = LgcyButtonState::Released;
+		else
+			btnState = btnState == LgcyButtonState::Hovered ? LgcyButtonState::Hovered : LgcyButtonState::Normal;
+	}
+
+	auto texId = temple::GetRef<int[15]>(0x11E74140)[(int)btnState];
+	static TigRect srcRect2(1, 1, 110, 20);
+	auto &rect = classBtnRects[idx];
+	UiRenderer::DrawTextureInWidget(classWndId, texId, rect, srcRect2);
+
+	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+	auto textt = classNamesUppercase[classCode].c_str();
+
+	auto textMeas = UiRenderer::MeasureTextSize(textt, bigBtnTextStyle);
+	TigRect classTextRect(rect.x + (rect.width - textMeas.width) / 2,
+		rect.y + (rect.height - textMeas.height) / 2,
+		textMeas.width, textMeas.height);
+
+	UiRenderer::DrawTextInWidget(classWndId, textt, classTextRect, bigBtnTextStyle);
+	UiRenderer::PopFont();
+}
+
+BOOL UiPcCreation::ClassBtnMsg(int widId, TigMsg * msg) {
+
+	if (msg->type != TigMsgType::WIDGET)
+		return 0;
+
+	auto idx = WidgetIdIndexOf(widId, &classBtnIds[0], classBtnIds.size());
+	if (idx == -1)
+		return 0;
+
+	auto _msg = (TigMsgWidget*)msg;
+	auto classCode = GetClassCodeFromWidgetAndPage(idx, GetClassWndPage());
+	if (classCode == (Stat)-1)
+		return 0;
+
+	auto handle = GetEditedChar();
+	auto obj = objSystem->GetObject(handle);
+
+	if (_msg->widgetEventType == TigMsgWidgetEvent::MouseReleased) {
+
+		if (helpSys.IsClickForHelpActive()) {
+			helpSys.PresentWikiHelp(HELP_IDX_CLASSES + classCode - stat_level_barbarian, D20HelpType::Classes);
+			return TRUE;
+		}
+		GetCharEditorSelPacket().classCode = classCode;
+		obj->ClearArray(obj_f_critter_level_idx);
+		obj->SetInt32(obj_f_critter_level_idx, 0, classCode);
+		d20StatusSys.D20StatusRefresh(handle);
+		critterSys.GenerateHp(handle);
+
+		ToggleClassRelatedStages();
+		ResetNextStages(CG_Stage_Class);
+		return TRUE;
+	}
+
+	if (_msg->widgetEventType == TigMsgWidgetEvent::Exited) {
+		ClassBtnEntered();
+		return TRUE;
+	}
+
+	if (_msg->widgetEventType == TigMsgWidgetEvent::Entered) {
+
+		auto isValid = true;
+		if (!IsCastingStatSufficient(classCode)) {
+			isValid = false;
+		}
+
+		if (!IsAlignmentOk(classCode))
+			isValid = false;
+
+		if (!isValid) {
+			temple::GetRef<void(__cdecl)(Stat)>(0x1011B990)(classCode); // sets text in the scrollbox for why you can't pick the class 
+			return TRUE;
+		}
+
+
+		ClassScrollboxTextSet(classCode); // ChargenClassScrollboxTextSet  (class short description)
+		return TRUE;
+	}
+
+
+	return 0;
+}
+
+BOOL UiPcCreation::ClassNextBtnMsg(int widId, TigMsg * msg) {
+
+	if (!config.nonCoreMaterials)
+		return FALSE;
+
+	if (msg->type != TigMsgType::WIDGET)
+		return FALSE;
+
+	auto _msg = (TigMsgWidget*)msg;
+
+	if (_msg->widgetEventType == TigMsgWidgetEvent::Clicked) {
+		if (classWndPage < mPageCount - 1)
+			classWndPage++;
+		ClassSetPermissibles();
+		return TRUE;
+	}
+
+	/*if (_msg->widgetEventType == TigMsgWidgetEvent::Exited) {
+	temple::GetRef<void(__cdecl)(const char*)>(0x10162C00)("");
+	return 1;
+	}
+
+	if (_msg->widgetEventType == TigMsgWidgetEvent::Entered) {
+	auto textboxText = fmt::format("Prestige Classes");
+	if (textboxText.size() >= 1024)
+	textboxText[1023] = 0;
+	strcpy(temple::GetRef<char[1024]>(0x10C80CC0), &textboxText[0]);
+	temple::GetRef<void(__cdecl)(const char*)>(0x10162C00)(temple::GetRef<char[1024]>(0x10C80CC0));
+	return 1;
+	}*/
+
+	return FALSE;
+}
+
+BOOL UiPcCreation::ClassPrevBtnMsg(int widId, TigMsg * msg)
+{
+
+	if (!config.nonCoreMaterials)
+		return FALSE;
+
+	if (msg->type != TigMsgType::WIDGET)
+		return 0;
+
+	auto _msg = (TigMsgWidget*)msg;
+
+	if (_msg->widgetEventType == TigMsgWidgetEvent::Clicked) {
+		if (classWndPage > 0)
+			classWndPage--;
+		ClassSetPermissibles();
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+
+void UiPcCreation::ClassNextBtnRender(int widId) {
+	if (!config.nonCoreMaterials)
+		return;
+
+	static TigRect srcRect(1, 1, 120, 30);
+	UiRenderer::DrawTexture(buttonBox, classNextBtnFrameRect, srcRect);
+
+	auto btnState = uiManager->GetButtonState(widId);
+	if (btnState != LgcyButtonState::Disabled && btnState != LgcyButtonState::Down) {
+		btnState = btnState == LgcyButtonState::Hovered ? LgcyButtonState::Hovered : LgcyButtonState::Normal;
+	}
+
+	auto texId = temple::GetRef<int[15]>(0x11E74140)[(int)btnState];
+	static TigRect srcRect2(1, 1, 110, 20);
+	UiRenderer::DrawTexture(texId, classNextBtnRect, srcRect2);
+
+	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+	auto textt = fmt::format("NEXT");
+	auto textMeas = UiRenderer::MeasureTextSize(textt, bigBtnTextStyle);
+	TigRect textRect(classNextBtnTextRect.x + (classNextBtnTextRect.width - textMeas.width) / 2,
+		classNextBtnTextRect.y + (classNextBtnTextRect.height - textMeas.height) / 2,
+		textMeas.width, textMeas.height);
+	UiRenderer::DrawTextInWidget(classWndId, textt, textRect, bigBtnTextStyle);
+	UiRenderer::PopFont();
+
+}
+
+void UiPcCreation::ClassPrevBtnRender(int widId) {
+	if (!config.nonCoreMaterials)
+		return;
+
+	static TigRect srcRect(1, 1, 120, 30);
+	UiRenderer::DrawTexture(buttonBox, classPrevBtnFrameRect, srcRect);
+
+	auto btnState = uiManager->GetButtonState(widId);
+	if (btnState != LgcyButtonState::Disabled && btnState != LgcyButtonState::Down) {
+		btnState = btnState == LgcyButtonState::Hovered ? LgcyButtonState::Hovered : LgcyButtonState::Normal;
+	}
+
+	auto texId = temple::GetRef<int[15]>(0x11E74140)[(int)btnState];
+	static TigRect srcRect2(1, 1, 110, 20);
+	UiRenderer::DrawTexture(texId, classPrevBtnRect, srcRect2);
+
+	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+	auto textt = fmt::format("PREV");
+	auto textMeas = UiRenderer::MeasureTextSize(textt, bigBtnTextStyle);
+	TigRect textRect(classPrevBtnTextRect.x + (classPrevBtnTextRect.width - textMeas.width) / 2,
+		classPrevBtnTextRect.y + (classPrevBtnTextRect.height - textMeas.height) / 2,
+		textMeas.width, textMeas.height);
+	UiRenderer::DrawTextInWidget(classWndId, textt, textRect, bigBtnTextStyle);
+	UiRenderer::PopFont();
+}
+
+int UiPcCreation::GetClassWndPage() {
+	return classWndPage;
+}
+
+Stat UiPcCreation::GetClassCodeFromWidgetAndPage(int idx, int page) {
+	if (page == 0)
+		return (Stat)(stat_level_barbarian + idx);
+
+	auto idx2 = idx + page * 11u;
+	if (idx2 >= classBtnMapping.size())
+		return (Stat)-1;
+	return (Stat)classBtnMapping[idx2];
+}
+
+#pragma endregion
+
+#pragma region Feats
 BOOL UiPcCreation::FeatsSystemInit(UiSystemConf& conf){
 
 	auto pcCreationMes = temple::GetRef<MesHandle>(0x11E72EF0);
@@ -865,623 +1018,7 @@ void UiPcCreation::FeatsReset(CharEditorSelectionPacket& selPkt)
 	mMultiSelectFeats.clear();
 }
 
-BOOL UiPcCreation::SpellsSystemInit(UiSystemConf & conf)
-{
-	auto pcCreationMes = temple::GetRef<MesHandle>(0x11E72EF0);
-	MesLine mesline;
-
-	TigTextStyle baseStyle;
-	baseStyle.flags = 0;
-	baseStyle.field2c = -1;
-	baseStyle.shadowColor = &genericShadowColor;
-	baseStyle.field0 = 0;
-	baseStyle.kerning = 1;
-	baseStyle.leading = 0;
-	baseStyle.tracking = 3;
-	baseStyle.textColor = baseStyle.colors2 = baseStyle.colors4 = &whiteColorRect;
-
-
-	spellsTitleStyle = baseStyle;
-
-	// generic spells text style
-	spellsTextStyle = baseStyle;
-
-	// Spell Level Label Style
-	spellLevelLabelStyle = baseStyle;
-	static ColorRect spellLevelLabelColor(0xFF43586E);
-	spellLevelLabelStyle.textColor = spellLevelLabelStyle.colors2 = spellLevelLabelStyle.colors4 = &spellLevelLabelColor;
-
-	// Spells Available Btn Style
-	spellsAvailBtnStyle = baseStyle;
-	static ColorRect spellsAvailColor1(0x0FF5D5D5D);
-	spellsAvailBtnStyle.textColor = &spellsAvailColor1;
-	spellsAvailBtnStyle.colors2 = &spellsAvailColor1;
-	spellsAvailBtnStyle.colors4 = &spellsAvailColor1;
-
-
-	// Spells Per Day style
-	spellsPerDayStyle = baseStyle;
-
-	spellsPerDayTitleStyle = baseStyle;
-
-	// Spells Available title
-	mesline.key = 21000;
-	mesFuncs.GetLine_Safe(pcCreationMes, &mesline);
-	spellsAvailLabel.append(mesline.value);
-
-	// Spells Chosen title
-	mesline.key = 21001;
-	mesFuncs.GetLine_Safe(pcCreationMes, &mesline);
-	spellsChosenLabel.append(mesline.value);
-
-	// Spells Per Day title
-	mesline.key = 21002;
-	mesFuncs.GetLine_Safe(pcCreationMes, &mesline);
-	spellsPerDayLabel.append(mesline.value);
-
-	// Spell Level label texts
-	MesLine line(21100), line2(21200);
-	mesFuncs.GetLine_Safe(pcCreationMes, &line);
-	mesFuncs.GetLine_Safe(pcCreationMes, &line2);
-
-
-	for (auto i = 0; i < NUM_SPELL_LEVELS; i++) {
-		std::string text;
-		text.append(line2.value);
-		text[text.size() - 1] = '0' + i;
-		chargen.levelLabels.push_back(text);
-
-		text.clear();
-		text.append(line.value);
-		text[text.size() - 1] = '0' + i;
-
-		chargen.spellLevelLabels.push_back(text);
-	}
-
-	for (auto i = 0; i < SPELLS_PER_DAY_BOXES_COUNT; i++) {
-		spellsPerDayTextRects.push_back(TigRect());
-	}
-
-	levelupSpellbar = new CombinedImgFile("art\\interface\\pc_creation\\levelup_spellbar.img");
-	if (!levelupSpellbar)
-		return 0;
-
-	// Widgets
-	return SpellsWidgetsInit();
-}
-
-void UiPcCreation::SpellsFree(){
-	SpellsWidgetsFree();
-}
-
-BOOL UiPcCreation::SpellsWidgetsInit(){
-
-	auto &pcWnd = GetPcCreationWnd();
-
-	const int spellsWndX = 219, spellsWndY = 50, spellsWndW = 431, spellsWndH = 250;
-	spellsWnd = LgcyWindow(pcWnd.x + spellsWndX, pcWnd.y + spellsWndY, spellsWndW, spellsWndH);
-	spellsWnd.flags = 1;
-	spellsWnd.render = [](int widId) {uiPcCreation.SpellsWndRender(widId); };
-	spellsWnd.handleMessage = [](int widId, TigMsg*msg) { return uiPcCreation.SpellsWndMsg(widId, msg); };
-	spellsWndId = uiManager->AddWindow(spellsWnd);
-
-	// Available Spells Scrollbar
-	spellsScrollbar.Init(201, 34, 152);
-	spellsScrollbar.parentId = spellsWndId;
-	spellsScrollbar.x += spellsWnd.x;
-	spellsScrollbar.y += spellsWnd.y;
-	spellsScrollbarId = uiManager->AddScrollBar(spellsScrollbar, spellsWndId);
-
-	// Spell selection scrollbar
-	spellsScrollbar2.Init(415, 34, 152);
-	spellsScrollbar2.parentId = spellsWndId;
-	spellsScrollbar2.x += spellsWnd.x;
-	spellsScrollbar2.y += spellsWnd.y;
-	spellsScrollbar2Id = uiManager->AddScrollBar(spellsScrollbar2, spellsWndId);
-
-	int rowOff = 38;
-	for (auto i = 0; i < SPELLS_BTN_COUNT; i++, rowOff += SPELLS_BTN_HEIGHT) {
-
-		LgcyButton spellAvailBtn("Spell Available btn", spellsWndId, 4, rowOff, 193, SPELLS_BTN_HEIGHT);
-
-		spellAvailBtn.x += spellsWnd.x; spellAvailBtn.y += spellsWnd.y;
-		spellAvailBtn.render = [](int id) {uiPcCreation.SpellsAvailableEntryBtnRender(id); };
-		spellAvailBtn.handleMessage = [](int id, TigMsg* msg) { return uiPcCreation.SpellsAvailableEntryBtnMsg(id, msg); };
-		spellAvailBtn.renderTooltip = nullptr;
-		spellAvailBtn.SetDefaultSounds();
-		spellsAvailBtnIds.push_back(uiManager->AddButton(spellAvailBtn, spellsWndId));
-
-		LgcyButton spellChosenBtn("Spell Chosen btn", spellsWndId, 221, rowOff, 193, SPELLS_BTN_HEIGHT);
-
-		spellChosenBtn.x += spellsWnd.x; spellChosenBtn.y += spellsWnd.y;
-		spellChosenBtn.render = [](int id) {uiPcCreation.SpellsEntryBtnRender(id); };
-		spellChosenBtn.handleMessage = [](int id, TigMsg* msg) { return uiPcCreation.SpellsEntryBtnMsg(id, msg); };
-		spellChosenBtn.renderTooltip = nullptr;
-		spellChosenBtn.SetDefaultSounds();
-		spellsChosenBtnIds.push_back(uiManager->AddButton(spellChosenBtn, spellsWndId));
-
-	}
-
-	// titles
-	spellsAvailTitleRect.x = 5;
-	spellsAvailTitleRect.y = 20;
-	spellsChosenTitleRect.x = 219;
-	spellsChosenTitleRect.y = 20;
-	UiRenderer::PushFont("priory-12", 12);
-
-	// Spells Per Day title
-	auto spellsPerDayMeasure = UiRenderer::MeasureTextSize(spellsPerDayLabel, spellsTextStyle);
-	spellsPerDayTitleRect = TigRect(5, 205, 99, 12);
-	spellsPerDayTitleRect.x += (spellsPerDayTitleRect.width - spellsPerDayMeasure.width) / 2;
-	spellsPerDayTitleRect.width = spellsPerDayMeasure.width;
-	spellsPerDayTitleRect.height = spellsPerDayMeasure.height;
-
-	// Spell Level labels
-	spellsPerDayBorderRects.clear();
-	spellsLevelLabelRects.clear();
-	
-	for (auto lvl = 0u; lvl < NUM_SPELL_LEVELS; lvl++) {
-		auto textMeas = UiRenderer::MeasureTextSize(chargen.levelLabels[lvl].c_str(), spellLevelLabelStyle);
-		spellsPerDayBorderRects.push_back(TigRect(105 + lvl * 51, 201, 29, 25));
-		spellsLevelLabelRects.push_back(TigRect(spellsPerDayBorderRects[lvl].x + spellsPerDayBorderRects[lvl].width / 2 - textMeas.width / 2,
-			spellsPerDayBorderRects[lvl].y - textMeas.height - 2, textMeas.width, textMeas.height));
-	}
-	UiRenderer::PopFont();
-	return 1;
-}
-
-void UiPcCreation::SpellsReset(){
-	chargen.SpellsNeedResetSet(true);
-	chargen.GetKnownSpellInfo().clear();
-}
-
-void UiPcCreation::SpellsWidgetsFree(){
-	for (auto i = 0; i < SPELLS_BTN_COUNT; i++) {
-		uiManager->RemoveChildWidget(spellsChosenBtnIds[i]);
-		uiManager->RemoveChildWidget(spellsAvailBtnIds[i]);
-	}
-	spellsChosenBtnIds.clear();
-	spellsAvailBtnIds.clear();
-	uiManager->RemoveWidget(spellsWndId);
-}
-
-BOOL UiPcCreation::SpellsShow()
-{
-	uiManager->SetHidden(spellsWndId, false);
-	uiManager->BringToFront(spellsWndId);
-	return 1;
-}
-
-BOOL UiPcCreation::SpellsHide()
-{
-	uiManager->SetHidden(spellsWndId, true);
-	return 0;
-}
-
-BOOL UiPcCreation::SpellsWidgetsResize(UiResizeArgs & args)
-{
-	SpellsWidgetsFree();
-	SpellsWidgetsInit();
-	return 0;
-}
-
-void UiPcCreation::SpellsActivate()
-{
-	auto handle = chargen.GetEditedChar();
-	auto obj = gameSystems->GetObj().GetObject(handle);
-	auto &selPkt = chargen.GetCharEditorSelPacket();
-	auto &avSpInfo = chargen.GetAvailableSpells();
-	auto &knSpInfo = chargen.GetKnownSpellInfo();
-
-	// get the new caster level for the levelled class (1 indicates a newly taken class)
-	auto casterLvlNew = 1;
-	auto classLeveled = selPkt.classCode;
-	
-	auto needsReset = chargen.SpellsNeedReset();
-
-	static auto setScrollbars = []() {
-		auto sbId = uiPcCreation.spellsScrollbarId;
-		uiManager->ScrollbarSetY(sbId, 0);
-		int numEntries = (int)chargen.GetAvailableSpells().size();
-		uiManager->ScrollbarSetYmax(sbId, max(0, numEntries - uiPcCreation.SPELLS_BTN_COUNT));
-		uiPcCreation.spellsScrollbar = *uiManager->GetScrollBar(sbId);
-		uiPcCreation.spellsScrollbar.y = 0;
-		uiPcCreation.spellsScrollbarY = 0;
-
-		auto &charEdSelPkt = chargen.GetCharEditorSelPacket();
-		auto sbAddedId = uiPcCreation.spellsScrollbar2Id;
-		int numAdded = (int)chargen.GetKnownSpellInfo().size();
-		uiManager->ScrollbarSetY(sbAddedId, 0);
-		uiManager->ScrollbarSetYmax(sbAddedId, max(0, numAdded - uiPcCreation.SPELLS_BTN_COUNT));
-		uiPcCreation.spellsScrollbar2 = *uiManager->GetScrollBar(sbAddedId);
-		uiPcCreation.spellsScrollbar2.y = 0;
-		uiPcCreation.spellsScrollbar2Y = 0;
-	};
-
-	if (!needsReset) {
-		setScrollbars();
-		return;
-	}
-
-
-	knSpInfo.clear();
-	avSpInfo.clear();
-
-	d20ClassSys.LevelupInitSpellSelection(handle, selPkt.classCode, 1);
-
-
-	for (auto i = 0u; i < knSpInfo.size(); i++) {
-		auto spEnum = knSpInfo[i].spEnum;
-		if (spellSys.IsNewSlotDesignator(spEnum)) {
-			knSpInfo[i].spEnum = 802;
-			knSpInfo[i].spFlag = 3;
-		}
-	}
-
-	SpellsPerDayUpdate();
-
-	setScrollbars();
-	chargen.SpellsNeedResetSet(false);
-}
-
-BOOL UiPcCreation::SpellsCheckComplete()
-{
-	auto selPkt = GetCharEditorSelPacket();
-	auto handle = GetEditedChar();
-	if (!d20ClassSys.IsSelectingSpellsOnLevelup(handle, selPkt.classCode))
-		return true;
-
-	if (chargen.SpellsNeedReset())
-		return false;
-
-	return d20ClassSys.LevelupSpellsCheckComplete(GetEditedChar(), selPkt.classCode);
-}
-
-void UiPcCreation::SpellsFinalize(){
-	auto charEdited = GetEditedChar();
-	auto &selPkt = GetCharEditorSelPacket();
-
-	d20ClassSys.LevelupSpellsFinalize(charEdited, selPkt.classCode, 1);
-}
-
-void UiPcCreation::SpellsReset(CharEditorSelectionPacket & selPkt)
-{
-	temple::GetRef<int>(0x10C4D4C4) = 1; // needsPopulateEntries
-	chargen.GetKnownSpellInfo().clear();
-	chargen.GetAvailableSpells().clear();
-}
-
-void UiPcCreation::StateTitleRender(int widId){
-	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
-	int state = GetState();
-	auto &selPkt = GetCharEditorSelPacket();
-	auto &stateTitles = temple::GetRef<const char*[14]>(0x10BDAE28);
-	auto &altStateTitles = temple::GetRef<const char*[14]>(0x10BDAE60);
-
-
-	auto &rect = temple::GetRef<TigRect>(0x10BDB8E8);
-	auto &style = temple::GetRef<TigTextStyle>(0x10BDD638);
-	if (!selPkt.isPointbuy)
-		UiRenderer::DrawTextInWidget(widId, stateTitles[state], rect, style);
-	else
-		UiRenderer::DrawTextInWidget(widId, altStateTitles[state], rect, style);
-	UiRenderer::PopFont();
-}
-
-int UiPcCreation::GetRolledStatIdx(int x, int y, int * xyOut){
-
-	auto &statsWnd = GetStatsWnd();
-
-	auto relX = x - statsWnd.x;
-	auto relY = y - statsWnd.y;
-
-	auto idx = 0;
-	const int y0 = 71;
-	const int x0 = 203, xMax = 241;
-	const int yBtnSize = 31;
-
-	if (relX < x0 || relX > xMax)
-		return -1;
-
-	auto btnY = y0;
-	auto foundIt = false;
-	for (auto i=0; i < 6; i++){
-
-		if ( relY <= btnY && relY >= btnY - 27){
-			foundIt = true;
-			idx = i;
-			break;
-		}
-
-		btnY += 31;
-	}
-
-	if (!foundIt)
-		return -1;
-
-	if (xyOut){
-		xyOut[0] = relX - x0;
-		xyOut[1] = relY - yBtnSize*idx - 44;
-	}
-	return idx;
-}
-
-BOOL UiPcCreation::StatsWndMsg(int widId, TigMsg * msg){
-	// returning FALSE indicates it should pass the handling on to the original handler
-
-	if (msg->type != TigMsgType::MOUSE)
-		return FALSE;
-
-	auto msgMouse = (TigMsgMouse*)msg;
-	if (msgMouse->buttonStateFlags & MouseStateFlags::MSF_RMB_RELEASED){
-		auto rolledStatIdx = GetRolledStatIdx(msgMouse->x, msgMouse->y);
-		if (rolledStatIdx == -1)
-			return FALSE;
-
-		auto rolledStats = chargen.GetRolledStats();
-		if (rolledStats[rolledStatIdx] <= 0)
-			return FALSE;
-
-		auto &selPkt = chargen.GetCharEditorSelPacket();
-		for (auto i = 0; i < 6; i++) {
-			if (selPkt.abilityStats[i] <= 0){
-				selPkt.abilityStats[i] = rolledStats[rolledStatIdx];
-				rolledStats[rolledStatIdx] = -1;
-				return TRUE;
-			}
-		}
-	}
-		
-
-	return FALSE;
-}
-
-void UiPcCreation::RaceWndRender(int widId){
-	StateTitleRender(widId);
-}
-
-void UiPcCreation::ClassBtnRender(int widId){
-	auto idx = WidgetIdIndexOf(widId, &classBtnIds[0], classBtnIds.size());
-	if (idx == -1)
-		return;
-
-	auto page = GetClassWndPage();
-	auto classCode = GetClassCodeFromWidgetAndPage(idx, page);
-	if (classCode == (Stat)-1)
-		return;
-
-	static TigRect srcRect(1, 1, 120, 30);
-	UiRenderer::DrawTexture(buttonBox, classBtnFrameRects[idx], srcRect);
-
-	auto btnState = uiManager->GetButtonState(widId);
-	if (btnState != LgcyButtonState::Disabled && btnState != LgcyButtonState::Down)
-	{
-		auto &selPkt = GetCharEditorSelPacket();
-		if (selPkt.classCode == classCode)
-			btnState = LgcyButtonState::Released;
-		else
-			btnState = btnState == LgcyButtonState::Hovered ? LgcyButtonState::Hovered : LgcyButtonState::Normal;
-	}
-
-	auto texId = temple::GetRef<int[15]>(0x11E74140)[(int)btnState];
-	static TigRect srcRect2(1, 1, 110, 20);
-	auto &rect = classBtnRects[idx];
-	UiRenderer::DrawTextureInWidget(classWndId, texId, rect, srcRect2);
-
-	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
-	auto textt = classNamesUppercase[classCode].c_str();
-
-	auto textMeas = UiRenderer::MeasureTextSize(textt, bigBtnTextStyle);
-	TigRect classTextRect(rect.x + (rect.width - textMeas.width) / 2,
-		rect.y + (rect.height - textMeas.height) / 2,
-		textMeas.width, textMeas.height);
-
-	UiRenderer::DrawTextInWidget(classWndId, textt, classTextRect, bigBtnTextStyle);
-	UiRenderer::PopFont();
-}
-
-BOOL UiPcCreation::ClassBtnMsg(int widId, TigMsg * msg){
-
-	if (msg->type != TigMsgType::WIDGET)
-		return 0;
-
-	auto idx = WidgetIdIndexOf(widId, &classBtnIds[0], classBtnIds.size());
-	if (idx == -1)
-		return 0;
-
-	auto _msg = (TigMsgWidget*)msg;
-	auto classCode = GetClassCodeFromWidgetAndPage(idx, GetClassWndPage());
-	if (classCode == (Stat)-1)
-		return 0;
-
-	auto handle = GetEditedChar();
-	auto obj = objSystem->GetObject(handle);
-
-	if (_msg->widgetEventType == TigMsgWidgetEvent::MouseReleased) {
-
-		if (helpSys.IsClickForHelpActive()){
-			helpSys.PresentWikiHelp(HELP_IDX_CLASSES + classCode - stat_level_barbarian, D20HelpType::Classes);
-			return TRUE;
-		}
-		GetCharEditorSelPacket().classCode = classCode;
-		obj->ClearArray(obj_f_critter_level_idx);
-		obj->SetInt32(obj_f_critter_level_idx, 0, classCode);
-		d20StatusSys.D20StatusRefresh(handle);
-		critterSys.GenerateHp(handle);
-
-		ToggleClassRelatedStages();
-		ResetNextStages(CG_Stage_Class);
-		return TRUE;
-	}
-
-	if (_msg->widgetEventType == TigMsgWidgetEvent::Exited) {
-		ClassBtnEntered();
-		return TRUE;
-	}
-
-	if (_msg->widgetEventType == TigMsgWidgetEvent::Entered) {
-
-		auto isValid = true;
-		if (!IsCastingStatSufficient(classCode)){
-			isValid = false;
-		}
-
-		if (!IsAlignmentOk(classCode))
-			isValid = false;
-		
-		if (!isValid){
-			temple::GetRef<void(__cdecl)(Stat)>(0x1011B990)(classCode); // sets text in the scrollbox for why you can't pick the class 
-			return TRUE;
-		}
-		
-
-		ClassScrollboxTextSet(classCode); // ChargenClassScrollboxTextSet  (class short description)
-		return TRUE;
-	}
-
-
-	return 0;
-}
-
-BOOL UiPcCreation::ClassNextBtnMsg(int widId, TigMsg * msg){
-
-	if (!config.nonCoreMaterials)
-		return FALSE;
-
-	if (msg->type != TigMsgType::WIDGET)
-		return FALSE;
-
-	auto _msg = (TigMsgWidget*)msg;
-
-	if (_msg->widgetEventType == TigMsgWidgetEvent::Clicked) {
-		if (classWndPage < mPageCount - 1)
-			classWndPage++;
-		ClassSetPermissibles();
-		return TRUE;
-	}
-
-	/*if (_msg->widgetEventType == TigMsgWidgetEvent::Exited) {
-		temple::GetRef<void(__cdecl)(const char*)>(0x10162C00)("");
-		return 1;
-	}
-
-	if (_msg->widgetEventType == TigMsgWidgetEvent::Entered) {
-		auto textboxText = fmt::format("Prestige Classes");
-		if (textboxText.size() >= 1024)
-			textboxText[1023] = 0;
-		strcpy(temple::GetRef<char[1024]>(0x10C80CC0), &textboxText[0]);
-		temple::GetRef<void(__cdecl)(const char*)>(0x10162C00)(temple::GetRef<char[1024]>(0x10C80CC0));
-		return 1;
-	}*/
-
-	return FALSE;
-}
-
-BOOL UiPcCreation::ClassPrevBtnMsg(int widId, TigMsg * msg)
-{
-
-	if (!config.nonCoreMaterials)
-		return FALSE;
-
-	if (msg->type != TigMsgType::WIDGET)
-		return 0;
-
-	auto _msg = (TigMsgWidget*)msg;
-
-	if (_msg->widgetEventType == TigMsgWidgetEvent::Clicked) {
-		if (classWndPage > 0)
-			classWndPage--;
-		ClassSetPermissibles();
-		return TRUE;
-	}
-
-	return FALSE;
-}
-
-BOOL UiPcCreation::FinishBtnMsg(int widId, TigMsg * msg)
-{
-	if (msg->type == TigMsgType::MOUSE)
-		return TRUE;
-
-	if (msg->type != TigMsgType::WIDGET)
-		return FALSE;
-
-	auto _msg = (TigMsgWidget*)msg;
-
-	if (_msg->widgetEventType != TigMsgWidgetEvent::MouseReleased)
-		return TRUE;
-
-	auto stComplete = GetStatesComplete();
-	if (stComplete != CG_STAGE_COUNT)
-		return TRUE;
-
-	auto &selPkt = GetCharEditorSelPacket();
-	auto charEdited = GetEditedChar();
-
-	// add spell casting condition
-	if (d20ClassSys.IsCastingClass(selPkt.classCode)) {
-		auto spellcastCond = (std::string)d20ClassSys.GetSpellCastingCondition(selPkt.classCode);
-		if (spellcastCond.size()) {
-			conds.AddTo(charEdited, spellcastCond, { 0,0,0,0, 0,0,0,0 });
-		}
-	}
-	return TRUE;
-}
-
-void UiPcCreation::ClassNextBtnRender(int widId){
-	if (!config.nonCoreMaterials)
-		return;
-
-	static TigRect srcRect(1, 1, 120, 30);
-	UiRenderer::DrawTexture(buttonBox, classNextBtnFrameRect, srcRect);
-
-	auto btnState = uiManager->GetButtonState(widId);
-	if (btnState != LgcyButtonState::Disabled && btnState != LgcyButtonState::Down) {
-		btnState = btnState == LgcyButtonState::Hovered ? LgcyButtonState::Hovered : LgcyButtonState::Normal;
-	}
-
-	auto texId = temple::GetRef<int[15]>(0x11E74140)[(int)btnState];
-	static TigRect srcRect2(1, 1, 110, 20);
-	UiRenderer::DrawTexture(texId, classNextBtnRect, srcRect2);
-
-	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
-	auto textt = fmt::format("NEXT");
-	auto textMeas = UiRenderer::MeasureTextSize(textt, bigBtnTextStyle);
-	TigRect textRect(classNextBtnTextRect.x + (classNextBtnTextRect.width - textMeas.width) / 2,
-		classNextBtnTextRect.y + (classNextBtnTextRect.height - textMeas.height) / 2,
-		textMeas.width, textMeas.height);
-	UiRenderer::DrawTextInWidget(classWndId, textt, textRect, bigBtnTextStyle);
-	UiRenderer::PopFont();
-
-}
-
-void UiPcCreation::ClassPrevBtnRender(int widId){
-	if (!config.nonCoreMaterials)
-		return;
-
-	static TigRect srcRect(1, 1, 120, 30);
-	UiRenderer::DrawTexture(buttonBox, classPrevBtnFrameRect, srcRect);
-
-	auto btnState = uiManager->GetButtonState(widId);
-	if (btnState != LgcyButtonState::Disabled && btnState != LgcyButtonState::Down) {
-		btnState = btnState == LgcyButtonState::Hovered ? LgcyButtonState::Hovered : LgcyButtonState::Normal;
-	}
-
-	auto texId = temple::GetRef<int[15]>(0x11E74140)[(int)btnState];
-	static TigRect srcRect2(1, 1, 110, 20);
-	UiRenderer::DrawTexture(texId, classPrevBtnRect, srcRect2);
-
-	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
-	auto textt = fmt::format("PREV");
-	auto textMeas = UiRenderer::MeasureTextSize(textt, bigBtnTextStyle);
-	TigRect textRect(classPrevBtnTextRect.x + (classPrevBtnTextRect.width - textMeas.width) / 2,
-		classPrevBtnTextRect.y + (classPrevBtnTextRect.height - textMeas.height) / 2,
-		textMeas.width, textMeas.height);
-	UiRenderer::DrawTextInWidget(classWndId, textt, textRect, bigBtnTextStyle);
-	UiRenderer::PopFont();
-}
-
-BOOL UiPcCreation::FeatsWndMsg(int widId, TigMsg* msg){
+BOOL UiPcCreation::FeatsWndMsg(int widId, TigMsg* msg) {
 	if (msg->type == TigMsgType::WIDGET) {
 		auto msgW = (TigMsgWidget*)msg;
 		if (msgW->widgetEventType == TigMsgWidgetEvent::Scrolled) {
@@ -1520,14 +1057,14 @@ BOOL UiPcCreation::FeatsWndMsg(int widId, TigMsg* msg){
 				putFeat = true;
 				break;
 			}
-			
-			if(IsSelectingSecondFeat() && selPkt.feat1 == FEAT_NONE)
+
+			if (IsSelectingSecondFeat() && selPkt.feat1 == FEAT_NONE)
 			{
 				selPkt.feat1 = feat;
 				putFeat = true;
 				break;
 			}
-			
+
 			if (IsSelectingBonusFeat() && IsClassBonusFeat(feat) && selPkt.feat2 == FEAT_NONE)
 			{
 				selPkt.feat2 = feat;
@@ -1601,7 +1138,7 @@ void UiPcCreation::FeatsWndRender(int widId)
 			UiRenderer::DrawTextInWidget(widId, GetFeatName(selPkt.feat0), feat0TextRect, GetFeatStyle(selPkt.feat0));
 		}
 	}
-	if (IsSelectingSecondFeat()){
+	if (IsSelectingSecondFeat()) {
 		RenderHooks::RenderRectInt(featsSelected2BorderRect.x, featsSelected2BorderRect.y, featsSelected2BorderRect.width, featsSelected2BorderRect.height, 0xFFFFffff);
 		if (selPkt.feat1 != FEAT_NONE) {
 			UiRenderer::DrawTextInWidget(widId, GetFeatName(selPkt.feat1), feat1TextRect, GetFeatStyle(selPkt.feat1));
@@ -1678,7 +1215,7 @@ BOOL UiPcCreation::FeatsEntryBtnMsg(int widId, TigMsg* msg)
 			if (feats.IsFeatMultiSelectMaster(feat))
 				FeatsMultiSelectActivate(feat);
 		}
-		else if (IsSelectingSecondFeat() && featsSelected2BorderRect.ContainsPoint(msgW->x, msgW->y)){
+		else if (IsSelectingSecondFeat() && featsSelected2BorderRect.ContainsPoint(msgW->x, msgW->y)) {
 			selPkt.feat1 = feat;
 			if (feats.IsFeatMultiSelectMaster(feat))
 				FeatsMultiSelectActivate(feat);
@@ -2022,6 +1559,590 @@ BOOL UiPcCreation::FeatsMultiBtnMsg(int widId, TigMsg* msg)
 	return FALSE;
 }
 
+std::string UiPcCreation::GetFeatName(feat_enums feat)
+{
+	if (feat >= FEAT_EXOTIC_WEAPON_PROFICIENCY && feat <= FEAT_GREATER_WEAPON_FOCUS)
+		return featsMasterFeatStrings[feat];
+
+	return std::string(feats.GetFeatName(feat));
+}
+
+TigTextStyle& UiPcCreation::GetFeatStyle(feat_enums feat, bool allowMultiple)
+{
+	auto &selPkt = GetCharEditorSelPacket();
+	auto newLvl = 1;
+
+	if ((allowMultiple || !uiPcCreation.FeatAlreadyPicked(feat))
+		&& uiPcCreation.FeatCanPick(feat))
+	{
+		if (uiPcCreation.featsMultiSelected == feat) {
+			return uiPcCreation.blueTextStyle;
+		}
+
+		if (uiPcCreation.IsClassBonusFeat(feat)) {  // is choosing class bonus right now 
+			return uiPcCreation.featsGoldenStyle;
+		}
+		else if (feats.IsClassFeat(feat))// class Specific feat
+		{
+			return uiPcCreation.featsClassStyle;
+		}
+		else
+			return uiPcCreation.featsNormalTextStyle;
+	}
+
+	return uiPcCreation.featsGreyedStyle;
+}
+
+bool UiPcCreation::FeatAlreadyPicked(feat_enums feat) {
+	if (feats.IsFeatPropertySet(feat, 0x1)  // can be gained multiple times
+		|| feats.IsFeatMultiSelectMaster(feat))
+		return false;
+	auto &selPkt = GetCharEditorSelPacket();
+	if (selPkt.feat0 == feat || selPkt.feat1 == feat || selPkt.feat2 == feat)
+		return true;
+
+	auto handle = GetEditedChar();
+
+	auto isRangerSpecial = IsSelectingRangerSpec();
+	return feats.HasFeatCountByClass(handle, feat, selPkt.classCode, isRangerSpecial ? selPkt.feat2 : FEAT_ACROBATIC) != 0;
+}
+
+bool UiPcCreation::FeatCanPick(feat_enums feat)
+{
+	std::vector<feat_enums> featsPicked;
+	auto &selPkt = GetCharEditorSelPacket();
+	auto handle = GetEditedChar();
+
+	if (selPkt.feat0 != FEAT_NONE) {
+		featsPicked.push_back(selPkt.feat0);
+	}
+	if (selPkt.feat1 != FEAT_NONE) {
+		featsPicked.push_back(selPkt.feat1);
+	}
+	if (selPkt.feat2 != FEAT_NONE) {
+		featsPicked.push_back(selPkt.feat2);
+	}
+
+	if (IsSelectingBonusFeat() && IsClassBonusFeat(feat)) {
+		if (feats.IsFeatPropertySet(feat, FPF_ROGUE_BONUS))
+			return true;
+		if (uiPcCreation.IsBonusFeatDisregardingPrereqs(feat))
+			return true;
+	}
+
+
+	if (!feats.IsFeatMultiSelectMaster(feat)) {
+		return feats.FeatPrereqsCheck(handle, feat, featsPicked.size() > 0 ? &featsPicked[0] : nullptr, featsPicked.size(), (Stat)0, selPkt.statBeingRaised) != FALSE;
+	}
+
+
+	// Multiselect Master feats
+
+	auto ftrLvl = objects.StatLevelGet(handle, stat_level_fighter);
+
+
+	bool hasFocus = false;
+	switch (feat) {
+	case FEAT_EXOTIC_WEAPON_PROFICIENCY:
+		return critterSys.GetBaseAttackBonus(handle) >= 1;
+	case FEAT_IMPROVED_CRITICAL:
+		return critterSys.GetBaseAttackBonus(handle) >= 8;
+
+	case FEAT_MARTIAL_WEAPON_PROFICIENCY:
+	case FEAT_SKILL_FOCUS:
+		return true;
+
+	case FEAT_WEAPON_FINESSE:
+		if (critterSys.GetBaseAttackBonus(handle) < 1)
+			return false;
+		for (auto i = (int)FEAT_WEAPON_FINESSE_GAUNTLET; i <= FEAT_WEAPON_FINESSE_NET; i++) {
+			if (feats.HasFeatCountByClass(handle, (feat_enums)i, (Stat)0, 0))
+				return false;
+		}
+		for (auto it : featsPicked) {
+			if (feats.IsFeatPropertySet(it, FPF_WEAP_FINESSE_ITEM))
+				return false;
+		}
+		return true;
+
+	case FEAT_WEAPON_FOCUS:
+		return critterSys.GetBaseAttackBonus(handle) >= 1;
+
+	case FEAT_WEAPON_SPECIALIZATION:
+
+		return (ftrLvl >= 4);
+
+
+	case FEAT_GREATER_WEAPON_FOCUS:
+		if (ftrLvl < 8)
+			return false;
+
+
+		// check if has weapon focus
+
+		for (auto i = (int)FEAT_WEAPON_FOCUS_GAUNTLET; i <= FEAT_WEAPON_FOCUS_RAY; i++) {
+			if (feats.HasFeatCountByClass(handle, (feat_enums)i, (Stat)0, 0)) {
+				return true;
+			}
+			// if not, check if it's one of the picked ones
+			for (auto it : featsPicked) {
+				if (it == (feat_enums)i)
+					return true;
+			}
+		}
+		return false;
+
+	case FEAT_GREATER_WEAPON_SPECIALIZATION:
+		if (ftrLvl < 12)
+			return false;
+
+		for (auto i = (int)FEAT_GREATER_WEAPON_FOCUS_GAUNTLET; i <= FEAT_GREATER_WEAPON_FOCUS_RAY; i++) {
+			hasFocus = false;
+			if (feats.HasFeatCountByClass(handle, (feat_enums)i, (Stat)0, 0)) {
+				hasFocus = true;
+			}
+			// if not, check if it's one of the picked ones
+			for (auto it : featsPicked) {
+				if (it == (feat_enums)i)
+					hasFocus = true;
+				break;
+			}
+			// if has Greater Weapon Focus, check for Weapon Specialization
+			if (hasFocus) {
+
+				for (auto j = (int)FEAT_WEAPON_SPECIALIZATION_GAUNTLET; j <= FEAT_WEAPON_SPECIALIZATION_GRAPPLE; j++) {
+					if (feats.HasFeatCountByClass(handle, (feat_enums)j, (Stat)0, 0))
+						return true;
+				}
+			}
+		}
+
+	default:
+		return true;
+	}
+}
+
+bool UiPcCreation::IsSelectingNormalFeat() {
+	return true;
+}
+
+bool UiPcCreation::IsSelectingSecondFeat()
+{
+	auto &selPkt = GetCharEditorSelPacket();
+	return selPkt.raceId == race_human;
+}
+
+bool UiPcCreation::IsSelectingBonusFeat()
+{
+	return mIsSelectingBonusFeat;
+}
+
+bool UiPcCreation::IsClassBonusFeat(feat_enums feat)
+{
+	return chargen.IsClassBonusFeat(feat);
+}
+
+bool UiPcCreation::IsBonusFeatDisregardingPrereqs(feat_enums feat)
+{
+	return chargen.IsBonusFeatDisregardingPrereqs(feat);
+}
+
+
+void UiPcCreation::FeatsSanitize()
+{
+	auto &selPkt = GetCharEditorSelPacket();
+
+	for (auto i = 0; i < 3; i++) { // check if any of the feat now lack the prereq (due to user removal). loop three times to ensure up-to-date state.
+		if (selPkt.feat0 != FEAT_NONE && !FeatCanPick(selPkt.feat0))
+			selPkt.feat0 = FEAT_NONE;
+		if (selPkt.feat1 != FEAT_NONE && !FeatCanPick(selPkt.feat1)) {
+			selPkt.feat1 = FEAT_NONE;
+		}
+		if (selPkt.feat2 != FEAT_NONE && !FeatCanPick(selPkt.feat2) && !IsSelectingRangerSpec())
+			selPkt.feat2 = FEAT_NONE;
+	}
+}
+
+void UiPcCreation::FeatsMultiSelectActivate(feat_enums feat)
+{
+	if (!FeatCanPick(feat))
+		return;
+
+	auto &selPkt = GetCharEditorSelPacket();
+	if (feat == FEAT_WEAPON_FINESSE) {
+		if (selPkt.feat0 == FEAT_WEAPON_FINESSE)
+			selPkt.feat0 = FEAT_WEAPON_FINESSE_DAGGER;
+		if (selPkt.feat1 == FEAT_WEAPON_FINESSE)
+			selPkt.feat1 = FEAT_WEAPON_FINESSE_DAGGER;
+		if (selPkt.feat2 == FEAT_WEAPON_FINESSE)
+			selPkt.feat2 = FEAT_WEAPON_FINESSE_DAGGER;
+		return;
+	}
+
+	mFeatsMultiMasterFeat = feat;
+	featsMultiSelected = FEAT_NONE;
+
+	// populate list
+	mMultiSelectFeats.clear();
+
+	if (feat >NUM_FEATS) {
+		std::vector<feat_enums> tmp;
+		feats.MultiselectGetChildren(feat, tmp);
+		for (auto it : tmp) {
+			mMultiSelectFeats.push_back(FeatInfo(it));
+		}
+	}
+	else {
+		auto featIt = FEAT_ACROBATIC;
+		auto featProp = 0x100;
+		switch (feat) {
+		case FEAT_EXOTIC_WEAPON_PROFICIENCY:
+			featProp = FPF_EXOTIC_WEAP_ITEM;
+			break;
+		case FEAT_IMPROVED_CRITICAL:
+			featProp = FPF_IMPR_CRIT_ITEM;
+			break;
+		case FEAT_MARTIAL_WEAPON_PROFICIENCY:
+			featProp = FPF_MARTIAL_WEAP_ITEM;
+			break;
+		case FEAT_SKILL_FOCUS:
+			featProp = FPF_SKILL_FOCUS_ITEM;
+			break;
+		case FEAT_WEAPON_FINESSE:
+			featProp = FPF_WEAP_FINESSE_ITEM;
+			break;
+		case FEAT_WEAPON_FOCUS:
+			featProp = FPF_WEAP_FOCUS_ITEM;
+			break;
+		case FEAT_WEAPON_SPECIALIZATION:
+			featProp = FPF_WEAP_SPEC_ITEM;
+			break;
+		case FEAT_GREATER_WEAPON_FOCUS:
+			featProp = FPF_GREATER_WEAP_FOCUS_ITEM;
+			break;
+		case FEAT_GREATER_WEAPON_SPECIALIZATION:
+			featProp = FPF_GREAT_WEAP_SPEC_ITEM;
+			break;
+		default:
+			break;
+		}
+
+		for (auto ft = 0; ft < NUM_FEATS; ft++) {
+			featIt = (feat_enums)ft;
+			if (feats.IsFeatPropertySet(featIt, featProp) && feats.IsFeatEnabled(featIt)) {
+				mMultiSelectFeats.push_back(FeatInfo(ft));
+			}
+		}
+	}
+
+
+
+	featsMultiSelectScrollbar = *uiManager->GetScrollBar(featsMultiSelectScrollbarId);
+	featsMultiSelectScrollbar.scrollbarY = 0;
+	featsMultiSelectScrollbarY = 0;
+	featsMultiSelectScrollbar.yMax = max(0, (int)mMultiSelectFeats.size() - FEATS_MULTI_BTN_COUNT);
+	featsMultiSelectScrollbar = *uiManager->GetScrollBar(featsMultiSelectScrollbarId);
+	uiManager->SetButtonState(featsMultiOkBtnId, LgcyButtonState::Disabled);
+
+	uiManager->SetHidden(featsMultiSelectWndId, false);
+	uiManager->BringToFront(featsMultiSelectWndId);
+}
+
+feat_enums UiPcCreation::FeatsMultiGetFirst(feat_enums feat)
+{
+	return feats.MultiselectGetFirst(feat);
+}
+
+#pragma endregion
+
+#pragma region Spells
+
+BOOL UiPcCreation::SpellsSystemInit(UiSystemConf & conf)
+{
+	auto pcCreationMes = temple::GetRef<MesHandle>(0x11E72EF0);
+	MesLine mesline;
+
+	TigTextStyle baseStyle;
+	baseStyle.flags = 0;
+	baseStyle.field2c = -1;
+	baseStyle.shadowColor = &genericShadowColor;
+	baseStyle.field0 = 0;
+	baseStyle.kerning = 1;
+	baseStyle.leading = 0;
+	baseStyle.tracking = 3;
+	baseStyle.textColor = baseStyle.colors2 = baseStyle.colors4 = &whiteColorRect;
+
+
+	spellsTitleStyle = baseStyle;
+
+	// generic spells text style
+	spellsTextStyle = baseStyle;
+
+	// Spell Level Label Style
+	spellLevelLabelStyle = baseStyle;
+	static ColorRect spellLevelLabelColor(0xFF43586E);
+	spellLevelLabelStyle.textColor = spellLevelLabelStyle.colors2 = spellLevelLabelStyle.colors4 = &spellLevelLabelColor;
+
+	// Spells Available Btn Style
+	spellsAvailBtnStyle = baseStyle;
+	static ColorRect spellsAvailColor1(0x0FF5D5D5D);
+	spellsAvailBtnStyle.textColor = &spellsAvailColor1;
+	spellsAvailBtnStyle.colors2 = &spellsAvailColor1;
+	spellsAvailBtnStyle.colors4 = &spellsAvailColor1;
+
+
+	// Spells Per Day style
+	spellsPerDayStyle = baseStyle;
+
+	spellsPerDayTitleStyle = baseStyle;
+
+	// Spells Available title
+	mesline.key = 21000;
+	mesFuncs.GetLine_Safe(pcCreationMes, &mesline);
+	spellsAvailLabel.append(mesline.value);
+
+	// Spells Chosen title
+	mesline.key = 21001;
+	mesFuncs.GetLine_Safe(pcCreationMes, &mesline);
+	spellsChosenLabel.append(mesline.value);
+
+	// Spells Per Day title
+	mesline.key = 21002;
+	mesFuncs.GetLine_Safe(pcCreationMes, &mesline);
+	spellsPerDayLabel.append(mesline.value);
+
+	// Spell Level label texts
+	MesLine line(21100), line2(21200);
+	mesFuncs.GetLine_Safe(pcCreationMes, &line);
+	mesFuncs.GetLine_Safe(pcCreationMes, &line2);
+
+
+	for (auto i = 0; i < NUM_SPELL_LEVELS; i++) {
+		std::string text;
+		text.append(line2.value);
+		text[text.size() - 1] = '0' + i;
+		chargen.levelLabels.push_back(text);
+
+		text.clear();
+		text.append(line.value);
+		text[text.size() - 1] = '0' + i;
+
+		chargen.spellLevelLabels.push_back(text);
+	}
+
+	for (auto i = 0; i < SPELLS_PER_DAY_BOXES_COUNT; i++) {
+		spellsPerDayTextRects.push_back(TigRect());
+	}
+
+	levelupSpellbar = new CombinedImgFile("art\\interface\\pc_creation\\levelup_spellbar.img");
+	if (!levelupSpellbar)
+		return 0;
+
+	// Widgets
+	return SpellsWidgetsInit();
+}
+
+void UiPcCreation::SpellsFree(){
+	SpellsWidgetsFree();
+}
+
+BOOL UiPcCreation::SpellsWidgetsInit(){
+
+	auto &pcWnd = GetPcCreationWnd();
+
+	const int spellsWndX = 219, spellsWndY = 50, spellsWndW = 431, spellsWndH = 250;
+	spellsWnd = LgcyWindow(pcWnd.x + spellsWndX, pcWnd.y + spellsWndY, spellsWndW, spellsWndH);
+	spellsWnd.flags = 1;
+	spellsWnd.render = [](int widId) {uiPcCreation.SpellsWndRender(widId); };
+	spellsWnd.handleMessage = [](int widId, TigMsg*msg) { return uiPcCreation.SpellsWndMsg(widId, msg); };
+	spellsWndId = uiManager->AddWindow(spellsWnd);
+
+	// Available Spells Scrollbar
+	spellsScrollbar.Init(201, 34, 152);
+	spellsScrollbar.parentId = spellsWndId;
+	spellsScrollbar.x += spellsWnd.x;
+	spellsScrollbar.y += spellsWnd.y;
+	spellsScrollbarId = uiManager->AddScrollBar(spellsScrollbar, spellsWndId);
+
+	// Spell selection scrollbar
+	spellsScrollbar2.Init(415, 34, 152);
+	spellsScrollbar2.parentId = spellsWndId;
+	spellsScrollbar2.x += spellsWnd.x;
+	spellsScrollbar2.y += spellsWnd.y;
+	spellsScrollbar2Id = uiManager->AddScrollBar(spellsScrollbar2, spellsWndId);
+
+	int rowOff = 38;
+	for (auto i = 0; i < SPELLS_BTN_COUNT; i++, rowOff += SPELLS_BTN_HEIGHT) {
+
+		LgcyButton spellAvailBtn("Spell Available btn", spellsWndId, 4, rowOff, 193, SPELLS_BTN_HEIGHT);
+
+		spellAvailBtn.x += spellsWnd.x; spellAvailBtn.y += spellsWnd.y;
+		spellAvailBtn.render = [](int id) {uiPcCreation.SpellsAvailableEntryBtnRender(id); };
+		spellAvailBtn.handleMessage = [](int id, TigMsg* msg) { return uiPcCreation.SpellsAvailableEntryBtnMsg(id, msg); };
+		spellAvailBtn.renderTooltip = nullptr;
+		spellAvailBtn.SetDefaultSounds();
+		spellsAvailBtnIds.push_back(uiManager->AddButton(spellAvailBtn, spellsWndId));
+
+		LgcyButton spellChosenBtn("Spell Chosen btn", spellsWndId, 221, rowOff, 193, SPELLS_BTN_HEIGHT);
+
+		spellChosenBtn.x += spellsWnd.x; spellChosenBtn.y += spellsWnd.y;
+		spellChosenBtn.render = [](int id) {uiPcCreation.SpellsEntryBtnRender(id); };
+		spellChosenBtn.handleMessage = [](int id, TigMsg* msg) { return uiPcCreation.SpellsEntryBtnMsg(id, msg); };
+		spellChosenBtn.renderTooltip = nullptr;
+		spellChosenBtn.SetDefaultSounds();
+		spellsChosenBtnIds.push_back(uiManager->AddButton(spellChosenBtn, spellsWndId));
+
+	}
+
+	// titles
+	spellsAvailTitleRect.x = 5;
+	spellsAvailTitleRect.y = 20;
+	spellsChosenTitleRect.x = 219;
+	spellsChosenTitleRect.y = 20;
+	UiRenderer::PushFont("priory-12", 12);
+
+	// Spells Per Day title
+	auto spellsPerDayMeasure = UiRenderer::MeasureTextSize(spellsPerDayLabel, spellsTextStyle);
+	spellsPerDayTitleRect = TigRect(5, 205, 99, 12);
+	spellsPerDayTitleRect.x += (spellsPerDayTitleRect.width - spellsPerDayMeasure.width) / 2;
+	spellsPerDayTitleRect.width = spellsPerDayMeasure.width;
+	spellsPerDayTitleRect.height = spellsPerDayMeasure.height;
+
+	// Spell Level labels
+	spellsPerDayBorderRects.clear();
+	spellsLevelLabelRects.clear();
+	
+	for (auto lvl = 0u; lvl < NUM_SPELL_LEVELS; lvl++) {
+		auto textMeas = UiRenderer::MeasureTextSize(chargen.levelLabels[lvl].c_str(), spellLevelLabelStyle);
+		spellsPerDayBorderRects.push_back(TigRect(105 + lvl * 51, 201, 29, 25));
+		spellsLevelLabelRects.push_back(TigRect(spellsPerDayBorderRects[lvl].x + spellsPerDayBorderRects[lvl].width / 2 - textMeas.width / 2,
+			spellsPerDayBorderRects[lvl].y - textMeas.height - 2, textMeas.width, textMeas.height));
+	}
+	UiRenderer::PopFont();
+	return 1;
+}
+
+void UiPcCreation::SpellsReset(){
+	chargen.SpellsNeedResetSet(true);
+	chargen.GetKnownSpellInfo().clear();
+}
+
+void UiPcCreation::SpellsWidgetsFree(){
+	for (auto i = 0; i < SPELLS_BTN_COUNT; i++) {
+		uiManager->RemoveChildWidget(spellsChosenBtnIds[i]);
+		uiManager->RemoveChildWidget(spellsAvailBtnIds[i]);
+	}
+	spellsChosenBtnIds.clear();
+	spellsAvailBtnIds.clear();
+	uiManager->RemoveWidget(spellsWndId);
+}
+
+BOOL UiPcCreation::SpellsShow()
+{
+	uiManager->SetHidden(spellsWndId, false);
+	uiManager->BringToFront(spellsWndId);
+	return 1;
+}
+
+BOOL UiPcCreation::SpellsHide()
+{
+	uiManager->SetHidden(spellsWndId, true);
+	return 0;
+}
+
+BOOL UiPcCreation::SpellsWidgetsResize(UiResizeArgs & args)
+{
+	SpellsWidgetsFree();
+	SpellsWidgetsInit();
+	return 0;
+}
+
+void UiPcCreation::SpellsActivate()
+{
+	auto handle = chargen.GetEditedChar();
+	auto obj = gameSystems->GetObj().GetObject(handle);
+	auto &selPkt = chargen.GetCharEditorSelPacket();
+	auto &avSpInfo = chargen.GetAvailableSpells();
+	auto &knSpInfo = chargen.GetKnownSpellInfo();
+
+	// get the new caster level for the levelled class (1 indicates a newly taken class)
+	auto casterLvlNew = 1;
+	auto classLeveled = selPkt.classCode;
+	
+	auto needsReset = chargen.SpellsNeedReset();
+
+	static auto setScrollbars = []() {
+		auto sbId = uiPcCreation.spellsScrollbarId;
+		uiManager->ScrollbarSetY(sbId, 0);
+		int numEntries = (int)chargen.GetAvailableSpells().size();
+		uiManager->ScrollbarSetYmax(sbId, max(0, numEntries - uiPcCreation.SPELLS_BTN_COUNT));
+		uiPcCreation.spellsScrollbar = *uiManager->GetScrollBar(sbId);
+		uiPcCreation.spellsScrollbar.y = 0;
+		uiPcCreation.spellsScrollbarY = 0;
+
+		auto &charEdSelPkt = chargen.GetCharEditorSelPacket();
+		auto sbAddedId = uiPcCreation.spellsScrollbar2Id;
+		int numAdded = (int)chargen.GetKnownSpellInfo().size();
+		uiManager->ScrollbarSetY(sbAddedId, 0);
+		uiManager->ScrollbarSetYmax(sbAddedId, max(0, numAdded - uiPcCreation.SPELLS_BTN_COUNT));
+		uiPcCreation.spellsScrollbar2 = *uiManager->GetScrollBar(sbAddedId);
+		uiPcCreation.spellsScrollbar2.y = 0;
+		uiPcCreation.spellsScrollbar2Y = 0;
+	};
+
+	if (!needsReset) {
+		setScrollbars();
+		return;
+	}
+
+
+	knSpInfo.clear();
+	avSpInfo.clear();
+
+	d20ClassSys.LevelupInitSpellSelection(handle, selPkt.classCode, 1);
+
+
+	for (auto i = 0u; i < knSpInfo.size(); i++) {
+		auto spEnum = knSpInfo[i].spEnum;
+		if (spellSys.IsNewSlotDesignator(spEnum)) {
+			knSpInfo[i].spEnum = 802;
+			knSpInfo[i].spFlag = 3;
+		}
+	}
+
+	SpellsPerDayUpdate();
+
+	setScrollbars();
+	chargen.SpellsNeedResetSet(false);
+}
+
+BOOL UiPcCreation::SpellsCheckComplete()
+{
+	auto selPkt = GetCharEditorSelPacket();
+	auto handle = GetEditedChar();
+	if (!d20ClassSys.IsSelectingSpellsOnLevelup(handle, selPkt.classCode))
+		return true;
+
+	if (chargen.SpellsNeedReset())
+		return false;
+
+	return d20ClassSys.LevelupSpellsCheckComplete(GetEditedChar(), selPkt.classCode);
+}
+
+void UiPcCreation::SpellsFinalize(){
+	auto charEdited = GetEditedChar();
+	auto &selPkt = GetCharEditorSelPacket();
+
+	d20ClassSys.LevelupSpellsFinalize(charEdited, selPkt.classCode, 1);
+}
+
+void UiPcCreation::SpellsReset(CharEditorSelectionPacket & selPkt)
+{
+	temple::GetRef<int>(0x10C4D4C4) = 1; // needsPopulateEntries
+	chargen.GetKnownSpellInfo().clear();
+	chargen.GetAvailableSpells().clear();
+}
+
 void UiPcCreation::SpellsWndRender(int widId)
 {
 	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
@@ -2033,7 +2154,7 @@ void UiPcCreation::SpellsWndRender(int widId)
 
 
 	// RenderSpellsPerDay
-	
+
 	UiRenderer::DrawTextInWidget(widId, spellsPerDayLabel, spellsPerDayTitleRect, spellsTextStyle);
 	UiRenderer::PopFont();
 
@@ -2041,12 +2162,12 @@ void UiPcCreation::SpellsWndRender(int widId)
 	for (auto i = 0; i < SPELLS_PER_DAY_BOXES_COUNT; i++) {
 		RenderHooks::RenderRectInt(spellsWnd.x + spellsPerDayBorderRects[i].x, spellsWnd.y + spellsPerDayBorderRects[i].y, spellsPerDayBorderRects[i].width, spellsPerDayBorderRects[i].height, 0xFF43586E);
 		UiRenderer::DrawTextInWidget(widId, spellsPerDayTexts[i], spellsPerDayTextRects[i], spellsPerDayStyle);
-		
+
 	}
 	UiRenderer::PopFont();
 
 	// Rects
-	RenderHooks::RenderRectInt(spellsWnd.x + 5  , spellsWnd.y + 35, 207, 149, 0xFF5D5D5D);
+	RenderHooks::RenderRectInt(spellsWnd.x + 5, spellsWnd.y + 35, 207, 149, 0xFF5D5D5D);
 	RenderHooks::RenderRectInt(spellsWnd.x + 219, spellsWnd.y + 35, 207, 149, 0xFF5D5D5D);
 
 	StateTitleRender(widId);
@@ -2211,7 +2332,7 @@ BOOL UiPcCreation::SpellsEntryBtnMsg(int widId, TigMsg * msg)
 
 	auto &spInfo = knSpInfo[spellIdx];
 	auto spEnum = spInfo.spEnum;
-	
+
 	if (spellSys.IsLabel(spEnum))
 		return FALSE;
 
@@ -2436,26 +2557,136 @@ void UiPcCreation::SpellsAvailableEntryBtnRender(int widId)
 	UiRenderer::PopFont();
 }
 
+
+#pragma endregion
+
+void UiPcCreation::StateTitleRender(int widId){
+	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+	int state = GetState();
+	auto &selPkt = GetCharEditorSelPacket();
+	auto &stateTitles = temple::GetRef<const char*[14]>(0x10BDAE28);
+	auto &altStateTitles = temple::GetRef<const char*[14]>(0x10BDAE60);
+
+
+	auto &rect = temple::GetRef<TigRect>(0x10BDB8E8);
+	auto &style = temple::GetRef<TigTextStyle>(0x10BDD638);
+	if (!selPkt.isPointbuy)
+		UiRenderer::DrawTextInWidget(widId, stateTitles[state], rect, style);
+	else
+		UiRenderer::DrawTextInWidget(widId, altStateTitles[state], rect, style);
+	UiRenderer::PopFont();
+}
+
+int UiPcCreation::GetRolledStatIdx(int x, int y, int * xyOut){
+
+	auto &statsWnd = GetStatsWnd();
+
+	auto relX = x - statsWnd.x;
+	auto relY = y - statsWnd.y;
+
+	auto idx = 0;
+	const int y0 = 71;
+	const int x0 = 203, xMax = 241;
+	const int yBtnSize = 31;
+
+	if (relX < x0 || relX > xMax)
+		return -1;
+
+	auto btnY = y0;
+	auto foundIt = false;
+	for (auto i=0; i < 6; i++){
+
+		if ( relY <= btnY && relY >= btnY - 27){
+			foundIt = true;
+			idx = i;
+			break;
+		}
+
+		btnY += 31;
+	}
+
+	if (!foundIt)
+		return -1;
+
+	if (xyOut){
+		xyOut[0] = relX - x0;
+		xyOut[1] = relY - yBtnSize*idx - 44;
+	}
+	return idx;
+}
+
+BOOL UiPcCreation::StatsWndMsg(int widId, TigMsg * msg){
+	// returning FALSE indicates it should pass the handling on to the original handler
+
+	if (msg->type != TigMsgType::MOUSE)
+		return FALSE;
+
+	auto msgMouse = (TigMsgMouse*)msg;
+	if (msgMouse->buttonStateFlags & MouseStateFlags::MSF_RMB_RELEASED){
+		auto rolledStatIdx = GetRolledStatIdx(msgMouse->x, msgMouse->y);
+		if (rolledStatIdx == -1)
+			return FALSE;
+
+		auto rolledStats = chargen.GetRolledStats();
+		if (rolledStats[rolledStatIdx] <= 0)
+			return FALSE;
+
+		auto &selPkt = chargen.GetCharEditorSelPacket();
+		for (auto i = 0; i < 6; i++) {
+			if (selPkt.abilityStats[i] <= 0){
+				selPkt.abilityStats[i] = rolledStats[rolledStatIdx];
+				rolledStats[rolledStatIdx] = -1;
+				return TRUE;
+			}
+		}
+	}
+		
+
+	return FALSE;
+}
+
+void UiPcCreation::RaceWndRender(int widId){
+	StateTitleRender(widId);
+}
+
+
+BOOL UiPcCreation::FinishBtnMsg(int widId, TigMsg * msg)
+{
+	if (msg->type == TigMsgType::MOUSE)
+		return TRUE;
+
+	if (msg->type != TigMsgType::WIDGET)
+		return FALSE;
+
+	auto _msg = (TigMsgWidget*)msg;
+
+	if (_msg->widgetEventType != TigMsgWidgetEvent::MouseReleased)
+		return TRUE;
+
+	auto stComplete = GetStatesComplete();
+	if (stComplete != CG_STAGE_COUNT)
+		return TRUE;
+
+	auto &selPkt = GetCharEditorSelPacket();
+	auto charEdited = GetEditedChar();
+
+	// add spell casting condition
+	if (d20ClassSys.IsCastingClass(selPkt.classCode)) {
+		auto spellcastCond = (std::string)d20ClassSys.GetSpellCastingCondition(selPkt.classCode);
+		if (spellcastCond.size()) {
+			conds.AddTo(charEdited, spellcastCond, { 0,0,0,0, 0,0,0,0 });
+		}
+	}
+	return TRUE;
+}
+
+
+
 int UiPcCreation::GetRaceWndPage()
 {
 	return 0;
 }
 
-
-
-int UiPcCreation::GetClassWndPage(){
-	return classWndPage;
-}
-
-Stat UiPcCreation::GetClassCodeFromWidgetAndPage(int idx, int page){
-	if (page == 0)
-		return (Stat)(stat_level_barbarian + idx);
-
-	auto idx2 = idx + page * 11u;
-	if (idx2 >= classBtnMapping.size())
-		return (Stat)-1;
-	return (Stat)classBtnMapping[idx2];
-}
 
 int UiPcCreation::GetStatesComplete(){
 	return temple::GetRef<int>(0x10BDD5D4);
@@ -2506,20 +2737,6 @@ void UiPcCreation::ClassSetPermissibles(){
 		uiManager->SetButtonState(classNextBtn, LgcyButtonState::Disabled);
 }
 
-bool UiPcCreation::IsSelectingNormalFeat(){
-	return true;
-}
-
-bool UiPcCreation::IsSelectingSecondFeat()
-{
-	auto &selPkt = GetCharEditorSelPacket();
-	return selPkt.raceId == race_human;
-}
-
-bool UiPcCreation::IsSelectingBonusFeat()
-{
-	return mIsSelectingBonusFeat;
-}
 
 void UiPcCreation::DeitySetPermissibles(){
 	for (auto i = 0; i < DEITY_BTN_COUNT; i++){
@@ -2576,179 +2793,15 @@ void UiPcCreation::ButtonEnteredHandler(int helpId){
 	temple::GetRef<void(__cdecl)(int)>(0x1011B890)(helpId);
 }
 
-int UiPcCreation::GetNewLvl(Stat classEnum)
+void UiPcCreation::ButtonEnteredHandler(const std::string &s)
 {
+	ButtonEnteredHandler(ElfHash::Hash(s));
+}
+
+int UiPcCreation::GetNewLvl(Stat classEnum) {
 	return 1;
-	/*
-	 *
-	 
-	auto handle = GetEditedChar();
-	return objects.StatLevelGet(handle, classEnum) + 1;
-	*/
 }
 
-std::string UiPcCreation::GetFeatName(feat_enums feat)
-{
-	if (feat >= FEAT_EXOTIC_WEAPON_PROFICIENCY && feat <= FEAT_GREATER_WEAPON_FOCUS)
-		return featsMasterFeatStrings[feat];
-
-	return std::string(feats.GetFeatName(feat));
-}
-
-TigTextStyle& UiPcCreation::GetFeatStyle(feat_enums feat, bool allowMultiple)
-{
-	auto &selPkt = GetCharEditorSelPacket();
-	auto newLvl = 1;
-
-	if ((allowMultiple || !uiPcCreation.FeatAlreadyPicked(feat))
-		&& uiPcCreation.FeatCanPick(feat))
-	{
-		if (uiPcCreation.featsMultiSelected == feat) {
-			return uiPcCreation.blueTextStyle;
-		}
-
-		if (uiPcCreation.IsClassBonusFeat(feat)) {  // is choosing class bonus right now 
-			return uiPcCreation.featsGoldenStyle;
-		}
-		else if (feats.IsClassFeat(feat))// class Specific feat
-		{
-			return uiPcCreation.featsClassStyle;
-		}
-		else
-			return uiPcCreation.featsNormalTextStyle;
-	}
-
-	return uiPcCreation.featsGreyedStyle;
-}
-
-bool UiPcCreation::FeatAlreadyPicked(feat_enums feat){
-	if (feats.IsFeatPropertySet(feat, 0x1)  // can be gained multiple times
-		|| feats.IsFeatMultiSelectMaster(feat))
-		return false;
-	auto &selPkt = GetCharEditorSelPacket();
-	if (selPkt.feat0 == feat || selPkt.feat1 == feat || selPkt.feat2 == feat)
-		return true;
-
-	auto handle = GetEditedChar();
-
-	auto isRangerSpecial = IsSelectingRangerSpec();
-	return feats.HasFeatCountByClass(handle, feat, selPkt.classCode, isRangerSpecial ? selPkt.feat2 : FEAT_ACROBATIC) != 0;
-}
-
-bool UiPcCreation::FeatCanPick(feat_enums feat)
-{
-	std::vector<feat_enums> featsPicked;
-	auto &selPkt = GetCharEditorSelPacket();
-	auto handle = GetEditedChar();
-
-	if (selPkt.feat0 != FEAT_NONE) {
-		featsPicked.push_back(selPkt.feat0);
-	}
-	if (selPkt.feat1 != FEAT_NONE) {
-		featsPicked.push_back(selPkt.feat1);
-	}
-	if (selPkt.feat2 != FEAT_NONE) {
-		featsPicked.push_back(selPkt.feat2);
-	}
-
-	if (IsSelectingBonusFeat() && IsClassBonusFeat(feat)) {
-		if (feats.IsFeatPropertySet(feat, FPF_ROGUE_BONUS))
-			return true;
-		if (uiPcCreation.IsBonusFeatDisregardingPrereqs(feat))
-			return true;
-	}
-
-
-	if (!feats.IsFeatMultiSelectMaster(feat)) {
-		return feats.FeatPrereqsCheck(handle, feat, featsPicked.size() > 0 ? &featsPicked[0] : nullptr, featsPicked.size(), (Stat)0, selPkt.statBeingRaised) != FALSE;
-	}
-
-
-	// Multiselect Master feats
-
-	auto ftrLvl = objects.StatLevelGet(handle, stat_level_fighter);
-	
-
-	bool hasFocus = false;
-	switch (feat) {
-	case FEAT_EXOTIC_WEAPON_PROFICIENCY:
-		return critterSys.GetBaseAttackBonus(handle) >= 1;
-	case FEAT_IMPROVED_CRITICAL:
-		return critterSys.GetBaseAttackBonus(handle) >= 8;
-
-	case FEAT_MARTIAL_WEAPON_PROFICIENCY:
-	case FEAT_SKILL_FOCUS:
-		return true;
-
-	case FEAT_WEAPON_FINESSE:
-		if (critterSys.GetBaseAttackBonus(handle) < 1)
-			return false;
-		for (auto i = (int)FEAT_WEAPON_FINESSE_GAUNTLET; i <= FEAT_WEAPON_FINESSE_NET; i++) {
-			if (feats.HasFeatCountByClass(handle, (feat_enums)i, (Stat)0, 0))
-				return false;
-		}
-		for (auto it : featsPicked) {
-			if (feats.IsFeatPropertySet(it, FPF_WEAP_FINESSE_ITEM))
-				return false;
-		}
-		return true;
-
-	case FEAT_WEAPON_FOCUS:
-		return critterSys.GetBaseAttackBonus(handle) >= 1;
-
-	case FEAT_WEAPON_SPECIALIZATION:
-
-		return (ftrLvl >= 4);
-
-
-	case FEAT_GREATER_WEAPON_FOCUS:
-		if (ftrLvl < 8)
-			return false;
-
-
-		// check if has weapon focus
-
-		for (auto i = (int)FEAT_WEAPON_FOCUS_GAUNTLET; i <= FEAT_WEAPON_FOCUS_RAY; i++) {
-			if (feats.HasFeatCountByClass(handle, (feat_enums)i, (Stat)0, 0)) {
-				return true;
-			}
-			// if not, check if it's one of the picked ones
-			for (auto it : featsPicked) {
-				if (it == (feat_enums)i)
-					return true;
-			}
-		}
-		return false;
-
-	case FEAT_GREATER_WEAPON_SPECIALIZATION:
-		if (ftrLvl < 12)
-			return false;
-
-		for (auto i = (int)FEAT_GREATER_WEAPON_FOCUS_GAUNTLET; i <= FEAT_GREATER_WEAPON_FOCUS_RAY; i++) {
-			hasFocus = false;
-			if (feats.HasFeatCountByClass(handle, (feat_enums)i, (Stat)0, 0)) {
-				hasFocus = true;
-			}
-			// if not, check if it's one of the picked ones
-			for (auto it : featsPicked) {
-				if (it == (feat_enums)i)
-					hasFocus = true;
-				break;
-			}
-			// if has Greater Weapon Focus, check for Weapon Specialization
-			if (hasFocus) {
-
-				for (auto j = (int)FEAT_WEAPON_SPECIALIZATION_GAUNTLET; j <= FEAT_WEAPON_SPECIALIZATION_GRAPPLE; j++) {
-					if (feats.HasFeatCountByClass(handle, (feat_enums)j, (Stat)0, 0))
-						return true;
-				}
-			}
-		}
-
-	default:
-		return true;
-	}
-}
 
 bool UiPcCreation::IsSelectingRangerSpec()
 {
@@ -2760,121 +2813,6 @@ bool UiPcCreation::IsSelectingRangerSpec()
 	*/
 }
 
-bool UiPcCreation::IsClassBonusFeat(feat_enums feat)
-{
-	return chargen.IsClassBonusFeat(feat);
-}
-
-bool UiPcCreation::IsBonusFeatDisregardingPrereqs(feat_enums feat)
-{
-	return chargen.IsBonusFeatDisregardingPrereqs(feat);
-}
-
-
-void UiPcCreation::FeatsSanitize()
-{
-	auto &selPkt = GetCharEditorSelPacket();
-
-	for (auto i = 0; i < 3; i++) { // check if any of the feat now lack the prereq (due to user removal). loop three times to ensure up-to-date state.
-		if (selPkt.feat0 != FEAT_NONE && !FeatCanPick(selPkt.feat0))
-			selPkt.feat0 = FEAT_NONE;
-		if (selPkt.feat1 != FEAT_NONE && !FeatCanPick(selPkt.feat1)) {
-			selPkt.feat1 = FEAT_NONE;
-		}
-		if (selPkt.feat2 != FEAT_NONE && !FeatCanPick(selPkt.feat2) && !IsSelectingRangerSpec())
-			selPkt.feat2 = FEAT_NONE;
-	}
-}
-
-void UiPcCreation::FeatsMultiSelectActivate(feat_enums feat)
-{
-	if (!FeatCanPick(feat))
-		return;
-
-	auto &selPkt = GetCharEditorSelPacket();
-	if (feat == FEAT_WEAPON_FINESSE) {
-		if (selPkt.feat0 == FEAT_WEAPON_FINESSE)
-			selPkt.feat0 = FEAT_WEAPON_FINESSE_DAGGER;
-		if (selPkt.feat1 == FEAT_WEAPON_FINESSE)
-			selPkt.feat1 = FEAT_WEAPON_FINESSE_DAGGER;
-		if (selPkt.feat2 == FEAT_WEAPON_FINESSE)
-			selPkt.feat2 = FEAT_WEAPON_FINESSE_DAGGER;
-		return;
-	}
-
-	mFeatsMultiMasterFeat = feat;
-	featsMultiSelected = FEAT_NONE;
-
-	// populate list
-	mMultiSelectFeats.clear();
-
-	if (feat >NUM_FEATS) {
-		std::vector<feat_enums> tmp;
-		feats.MultiselectGetChildren(feat, tmp);
-		for (auto it : tmp) {
-			mMultiSelectFeats.push_back(FeatInfo(it));
-		}
-	}
-	else {
-		auto featIt = FEAT_ACROBATIC;
-		auto featProp = 0x100;
-		switch (feat) {
-		case FEAT_EXOTIC_WEAPON_PROFICIENCY:
-			featProp = FPF_EXOTIC_WEAP_ITEM;
-			break;
-		case FEAT_IMPROVED_CRITICAL:
-			featProp = FPF_IMPR_CRIT_ITEM;
-			break;
-		case FEAT_MARTIAL_WEAPON_PROFICIENCY:
-			featProp = FPF_MARTIAL_WEAP_ITEM;
-			break;
-		case FEAT_SKILL_FOCUS:
-			featProp = FPF_SKILL_FOCUS_ITEM;
-			break;
-		case FEAT_WEAPON_FINESSE:
-			featProp = FPF_WEAP_FINESSE_ITEM;
-			break;
-		case FEAT_WEAPON_FOCUS:
-			featProp = FPF_WEAP_FOCUS_ITEM;
-			break;
-		case FEAT_WEAPON_SPECIALIZATION:
-			featProp = FPF_WEAP_SPEC_ITEM;
-			break;
-		case FEAT_GREATER_WEAPON_FOCUS:
-			featProp = FPF_GREATER_WEAP_FOCUS_ITEM;
-			break;
-		case FEAT_GREATER_WEAPON_SPECIALIZATION:
-			featProp = FPF_GREAT_WEAP_SPEC_ITEM;
-			break;
-		default:
-			break;
-		}
-
-		for (auto ft = 0; ft < NUM_FEATS; ft++) {
-			featIt = (feat_enums)ft;
-			if (feats.IsFeatPropertySet(featIt, featProp) && feats.IsFeatEnabled(featIt)) {
-				mMultiSelectFeats.push_back(FeatInfo(ft));
-			}
-		}
-	}
-
-
-
-	featsMultiSelectScrollbar = *uiManager->GetScrollBar(featsMultiSelectScrollbarId);
-	featsMultiSelectScrollbar.scrollbarY = 0;
-	featsMultiSelectScrollbarY = 0;
-	featsMultiSelectScrollbar.yMax = max(0, (int)mMultiSelectFeats.size() - FEATS_MULTI_BTN_COUNT);
-	featsMultiSelectScrollbar = *uiManager->GetScrollBar(featsMultiSelectScrollbarId);
-	uiManager->SetButtonState(featsMultiOkBtnId, LgcyButtonState::Disabled);
-
-	uiManager->SetHidden(featsMultiSelectWndId, false);
-	uiManager->BringToFront(featsMultiSelectWndId);
-}
-
-feat_enums UiPcCreation::FeatsMultiGetFirst(feat_enums feat)
-{
-	return feats.MultiselectGetFirst(feat);
-}
 
 int &UiPcCreation::GetDeityBtnId(int deityId){
 	return temple::GetRef<int[20]>(0x10C3EE80)[deityId];
@@ -2891,36 +2829,6 @@ std::unique_ptr<Type> UiPcCreationSys::InitializeSystem(Args&&... args) {
 	return std::move(result);
 }
 
-void ChargenBigButton::SetActivationState(ChargenButtonActivationState st){
-	mActivationState = st;
-	UpdateStyleByActivationState();
-}
-
-void ChargenBigButton::UpdateStyleByActivationState()
-{
-	switch (mActivationState) {
-
-	case ChargenButtonActivationState::Active:
-		SetStyle("chargen-active-button");
-		break;
-	case ChargenButtonActivationState::Disabled:
-		SetStyle("chargen-disabled-button");
-		break;
-	case ChargenButtonActivationState::Done:
-		SetStyle("chargen-done-button");
-		break;
-	default:
-		SetStyle("chargen-button");
-	}
-}
-
-void ChargenBigButton::Render(){
-	WidgetButton::Render(); // do normal rendering
-}
-
-ChargenBigButton::ChargenBigButton() : WidgetButton(){
-	SetCenterVertically(true);
-}
 
 UiPcCreationSys::UiPcCreationSys(const UiSystemConf &config) {
 	auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x10120420);
@@ -2984,26 +2892,52 @@ bool RaceChargen::WidgetsInit(int w, int h){
 		newBtn->SetText(raceName);
 		newBtn->SetPageText(0,raceName);
 		newBtn->SetPageDatum(0, it);
-		
-
+		newBtn->SetClickHandler([=](){
+			if (helpSys.IsClickForHelpActive()){
+				helpSys.PresentWikiHelp(101 + race);
+				return;
+			}
+			auto &selPkt = uiPcCreation.GetCharEditorSelPacket();
+			selPkt.raceId = race;
+			uiPcCreation.ResetNextStages(ChargenStages::CG_Stage_Race);
+		});
+		newBtn->SetMouseMsgHandler([=](const TigMouseMsg&msg){
+			return true;
+		});
+		newBtn->SetWidgetMsgHandler([=](const TigMsgWidget &msg){
+			if (msg.widgetEventType == TigMsgWidgetEvent::Entered){
+				SetScrollboxText(race);
+				return true;
+			}
+			if (msg.widgetEventType == TigMsgWidgetEvent::Exited) {
+				UpdateScrollbox();
+			}
+			return true;
+		});
 		newBtn->SetActivationState(ChargenBigButton::ChargenButtonActivationState::Active);
-		//newBtn->Hide();
+		mBigButtons.push_back(newBtn->GetWidgetId());
 		mWnd->Add(std::move(newBtn));
 		y += 29;
 	}
-
-	for (auto &it: mWnd->GetChildren()){
-		if (it->IsButton()){
-			auto btn = uiManager->GetAdvancedWidget(it->GetWidgetId());
-			auto isConv = std::is_convertible<WidgetBase, ChargenPagedButton>();
-			if (isConv){
-				btn->Hide();
-			}
-			
-		}
-	}
+	//mWnd->Hide();
 
 	return true;
+}
+
+void RaceChargen::SetScrollboxText(Race race)
+{
+	temple::GetRef<void(__cdecl)(Race)>(0x1011BAE0)(race);
+}
+
+void RaceChargen::UpdateScrollbox()
+{
+	auto &selPkt = uiPcCreation.GetCharEditorSelPacket();
+	if (selPkt.raceId == RACE_INVALID){
+		uiPcCreation.ButtonEnteredHandler("TAG_CHARGEN_RACE");
+	}
+	else{
+		SetScrollboxText(selPkt.raceId);
+	}
 }
 
 ClassChargen::ClassChargen(const UiSystemConf & conf){

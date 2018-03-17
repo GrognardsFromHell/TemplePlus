@@ -1,6 +1,8 @@
 #pragma once
 #include "common.h"
+#include "widgets/widgets.h"
 
+class ChargenBigButton;
 
 struct CharEditorSelectionPacket {
 	int abilityStats[6];
@@ -8,7 +10,7 @@ struct CharEditorSelectionPacket {
 	int isPointbuy;
 	char rerollString[128];
 	Stat statBeingRaised;
-	int raceId; // 7 is considered invalid
+	Race raceId; // 7 is considered invalid
 	int genderId; // 2 is considered invalid
 	int height0;
 	int height1;
@@ -47,4 +49,68 @@ struct FeatInfo {
 	int minLevel = 1;
 	FeatInfo(int FeatEnum) : featEnum(FeatEnum) {};
 	FeatInfo(std::string &featName);
+};
+
+
+class PagianatedChargenSystem
+{
+public:
+	//PagianatedChargenSystem(UiSystemConf & conf);
+	int GetPage() { return mWndPage; }
+	void SetPageCount(int pageCount) { mPageCount = pageCount; }
+protected:
+	int mWndPage = 0;
+	int mPageCount = 0;
+	std::unique_ptr<ChargenBigButton> prevBtn, nextBtn;
+};
+
+class ChargenBigButton : public WidgetButton
+{
+public:
+	enum class ChargenButtonActivationState
+	{
+		/*
+		Note on Active:
+		This is not to be confused with WidgetButtonBase's mActivated, which designates
+		that some associated state is currently active (e.g. choosing Class in char creation).
+		Whereas Active in this case means the button is not Disabled or Done. Perhaps a better
+		name would be "Normal", but we're sticking with ToEE nomenclature here.
+		*/
+		Active = 0,
+		Disabled,
+		Done,
+	};
+	void SetActivationState(ChargenButtonActivationState st);
+	void UpdateStyleByActivationState();
+	void Render() override;
+
+	ChargenBigButton();
+
+
+protected:
+	int datum; // which piece of data does this item represent? influences hovering state
+	ChargenButtonActivationState mActivationState = ChargenButtonActivationState::Active;
+};
+
+// Interface for paged buttons
+class IPagedButton
+{
+public:
+	void SetPage(int page) { mCurPage = page; };
+	void SetPageText(int page, const string &text) { pagedText[page] = text; }
+	void SetPageDatum(int page, int datum) { pagedData[page] = datum; }
+
+	int GetPage() { return mCurPage; };
+	int GetDatum() { return pagedData[mCurPage]; }
+	string GetText() { return pagedText[mCurPage]; }
+
+protected:
+	int mCurPage = 0;
+	std::map<int, int> pagedData; // mapping of page number :  datum
+	std::map<int, string> pagedText; // mapping of page number : text
+};
+
+class ChargenPagedButton : public ChargenBigButton, public IPagedButton
+{
+
 };
