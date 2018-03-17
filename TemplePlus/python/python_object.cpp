@@ -1943,6 +1943,24 @@ static PyObject* PyObjHandle_D20QueryWithData(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(result);
 }
 
+
+static PyObject* PyObjHandle_D20QueryWithObject(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		Py_RETURN_NONE;
+	}
+
+	int queryKey;
+	objHndl queryObject;
+	if (!PyArg_ParseTuple(args, "iO&:objhndl.d20_query_with_object", &queryKey, &ConvertObjHndl, &queryObject)) {
+		return 0;
+	}
+	auto dispatcherKey = (D20DispatcherKey)(DK_QUE_Helpless + queryKey);
+	auto result = d20Sys.d20QueryWithData(self->handle, dispatcherKey, queryObject);
+	return PyInt_FromLong(result);
+}
+
+
 static PyObject* PyObjHandle_D20QueryTestData(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -3170,6 +3188,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "d20_query", PyObjHandle_D20Query, METH_VARARGS, NULL },
 	{ "d20_query_has_spell_condition", PyObjHandle_D20QueryHasSpellCond, METH_VARARGS, NULL },
 	{ "d20_query_with_data", PyObjHandle_D20QueryWithData, METH_VARARGS, NULL },
+    { "d20_query_with_object", PyObjHandle_D20QueryWithObject, METH_VARARGS, NULL },
 	{ "d20_query_test_data", PyObjHandle_D20QueryTestData, METH_VARARGS, NULL },
 	{ "d20_query_get_data", PyObjHandle_D20QueryGetData, METH_VARARGS, NULL },
 	{ "d20_send_signal", PyObjHandle_D20SendSignal, METH_VARARGS, NULL },
