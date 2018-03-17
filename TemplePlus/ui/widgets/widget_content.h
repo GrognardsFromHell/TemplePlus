@@ -91,12 +91,15 @@ public:
 	void SetStyle(const gfx::TextStyle &style);
 	const gfx::TextStyle &GetStyle() const;
 
+	void SetCenterVertically(bool isCentered);
+
 	void Render() override;
 
 private:
 	gfx::FormattedText mText;
 	std::string mStyleId;
 	bool mWordWrap = false;
+	bool mCenterVertically = false;
 
 	void UpdateBounds();
 };

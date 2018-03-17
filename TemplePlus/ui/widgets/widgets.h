@@ -164,7 +164,7 @@ protected:
 	bool mSizeToParent = false;
 	bool mAutoSizeWidth = true;
 	bool mAutoSizeHeight = true;
-	RECT mMargins;
+	RECT mMargins = {0,0,0,0};
 	std::function<bool(const TigMouseMsg &msg)> mMouseMsgHandler;
 	std::function<bool(const TigMsgWidget &msg)> mWidgetMsgHandler;
 	std::function<bool(const TigKeyStateChangeMsg &msg)> mKeyStateChangeHandler;

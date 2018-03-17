@@ -28,7 +28,10 @@ WidgetBase * WidgetBase::PickWidget(int x, int y)
 		return nullptr;
 	}
 
-	if (x >= 0 && y >= 0 && x < (int) mWidget->width && y < (int) mWidget->height) {
+	if (x >= mMargins.left && 
+		y >= mMargins.bottom && 
+		x < (int) (mWidget->width - mMargins.right)
+		&& y < (int) mWidget->height - mMargins.top) {
 		return this;
 	}
 	return nullptr;
@@ -451,6 +454,7 @@ void WidgetButtonBase::OnUpdateTime(uint32_t timeMs)
 
 WidgetButton::WidgetButton()
 {
+	
 }
 
 void WidgetButton::SetStyle(const WidgetButtonStyle & style)
@@ -550,18 +554,18 @@ void WidgetButton::Render()
 		}
 	}
 
+	auto fr = mFrameImage.get();
+	if (fr) {
+		auto contentAreaWithMargins = GetContentArea(true);
+		fr->SetContentArea(contentAreaWithMargins);
+		fr->Render();
+	}
+
 	if (image) {
 		image->SetContentArea(contentArea);
 		image->Render();
 	}
 
-	auto fr = mFrameImage.get();
-	if (fr){
-		auto contentAreaWithMargins = GetContentArea(true);
-		fr->SetContentArea(contentAreaWithMargins);
-		fr->Render();
-	}
-	
 	mLabel.SetContentArea(contentArea);
 	mLabel.Render();
 }
@@ -614,7 +618,7 @@ void WidgetButton::UpdateContent()
 	}
 
 	mLabel.SetStyleId(mStyle.textStyleId);
-	
+	mLabel.SetCenterVertically(true);
 	UpdateAutoSize();
 
 }

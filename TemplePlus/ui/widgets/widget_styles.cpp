@@ -304,6 +304,10 @@ void WidgetButtonStyles::LoadStyles(const json11::Json & jsonStyleArray)
 		buttonStyle.normalImagePath = style["normalImage"].string_value();
 		buttonStyle.hoverImagePath = style["hoverImage"].string_value();
 		buttonStyle.pressedImagePath = style["pressedImage"].string_value();
+		buttonStyle.frameImagePath = style["frameImage"].string_value();
+		buttonStyle.activatedImagePath = style["activatedImage"].string_value();
+		
+
 		if (style["soundEnter"].is_number()) {
 			buttonStyle.soundEnter = (int) style["soundEnter"].number_value();
 		}

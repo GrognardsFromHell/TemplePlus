@@ -126,6 +126,20 @@ inline std::string tolower(const std::string &s) {
 	}
 }
 
+inline std::string toupper(const std::string &s) {
+	auto needsConversion = std::any_of(s.begin(), s.end(), [](char a) {
+		return std::toupper(a) != a;
+	});
+	if (needsConversion) {
+		std::string result = s;
+		std::transform(result.begin(), result.end(), result.begin(), [](char ch) { return std::toupper((int)ch); });
+		return result;
+	}
+	else {
+		return s;
+	}
+}
+
 // Nice to have operator for serializing vectors in the logger
 template<typename T>
 std::ostream &operator <<(std::ostream &os, const std::vector<T> &v) {
