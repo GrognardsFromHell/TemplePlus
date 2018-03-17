@@ -101,7 +101,7 @@ def DivineVigorMoveSpeed(attachee, args, evt_obj):
 		return 0
 		
 	#Movement speed increased by 10 feet (enhancement bonus)
-	evt_obj.bonus_list.add(10, 12, 137)
+	evt_obj.bonus_list.add(10, 12, "Divine Vigor Feat")
 	return 0
 	
 def DivineVigorTakingDamage2(attachee, args, evt_obj):
