@@ -68,6 +68,8 @@ static void DrawLegacyWidgetTreeNode(LgcyWidget *widget) {
 	}
 
 	ImGui::BulletText(" X:%d Y:%d W:%d H:%d", widget->x, widget->y, widget->width, widget->height);
+	ImGui::BulletText(" Renderer: %x", widget->render);
+	ImGui::BulletText(" Msg Handler: %x", widget->handleMessage);
 
 	if (widget->IsWindow()) {
 		auto window = (LgcyWindow*)widget;

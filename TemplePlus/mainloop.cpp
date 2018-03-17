@@ -39,6 +39,7 @@
 #include "ui/ui_systems.h"
 #include "ui/ui_legacysystems.h"
 #include "ui/ui_mainmenu.h"
+#include "ui/ui_debug.h"
 
 static GameLoop *gameLoop = nullptr;
 
@@ -199,6 +200,7 @@ void GameLoop::Run() {
 				&& msg.arg1 == 0x44
 				&& msg.arg2 == 1) {
 				mDiagScreen->Toggle();
+				UIShowDebug();
 			}
 
 			// I have not found any place where message type 7 is queued,
