@@ -168,6 +168,19 @@ public:
 	BOOL FinishBtnMsg(int widId, TigMsg* msg); // goes after the original FinishBtnMsg
 	void MainWndRender(int id);
 
+
+	
+	void RenderCharInfos(int widId);
+	void RenderCharStatTexts(int stat, int widId); // Labels
+	void RenderCharStats(int stat, int widId); // Stat levels (modified by race) + modifier
+	void RenderCharDimensions(int widId); // Height, Weight
+	void RenderCharExpLvl(int widId); // XP, Level
+	void RenderCharSavingThrows(int widId); // Saving Throws
+	void RenderCharHpAc(int widId); // HP AC
+	void RenderCharMovementInit(int widId); // Movement speed, Initiative
+	void RenderCharToHitBonus(int widId); // Melee, Ranged To Hit Bonuses
+	void DrawTextInWidgetCentered(int widgetId, const string & text, const TigRect & rect, const TigTextStyle & style);
+
 	// stats
 	int GetRolledStatIdx(int x, int y, int *xyOut = nullptr); // gets the index of the Rolled Stats button according to the mouse position. Returns -1 if none.
 	BOOL StatsWndMsg(int widId, TigMsg *msg);
@@ -328,13 +341,14 @@ public:
 	// art assets
 	int buttonBox = 0;
 	int raceBox = 0; // the 7 race buttons background
-	ColorRect genericShadowColor = ColorRect(0xFF000000);
+	ColorRect blackColorRect = ColorRect(0xFF000000);
 	ColorRect whiteColorRect = ColorRect(0xFFFFffff);
 	ColorRect blueColorRect = ColorRect(0xFF0000ff);
 	ColorRect darkGreenColorRect = ColorRect(0xFF006003);
 	ColorRect classBtnShadowColor = ColorRect(0xFF000000);
 	ColorRect classBtnColorRect = ColorRect(0xFFFFffff);
 	TigTextStyle whiteTextGenericStyle;
+	TigTextStyle blackTextGenericStyle;
 	TigTextStyle blueTextStyle;
 	TigTextStyle bigBtnTextStyle; // text style for stuff like Race / Class buttons
 	TigTextStyle featsGreyedStyle, featsBonusTextStyle, featsNormalTextStyle, featsExistingTitleStyle, featsGoldenStyle, featsClassStyle, featsCenteredStyle;
@@ -351,7 +365,7 @@ public:
 		TigTextStyle baseStyle;
 		baseStyle.flags = 0x4000;
 		baseStyle.field2c = -1;
-		baseStyle.shadowColor = &genericShadowColor;
+		baseStyle.shadowColor = &blackColorRect;
 		baseStyle.field0 = 0;
 		baseStyle.kerning = 1;
 		baseStyle.leading = 0;
@@ -361,6 +375,12 @@ public:
 
 		blueTextStyle = baseStyle;
 		blueTextStyle.colors4 = blueTextStyle.colors2 = blueTextStyle.textColor = &blueColorRect;
+
+		
+		blackTextGenericStyle = baseStyle;
+		blackTextGenericStyle.flags = 0;
+		blackTextGenericStyle.colors4 = blackTextGenericStyle.colors2 = blackTextGenericStyle.textColor = &blackColorRect;
+		blackTextGenericStyle.shadowColor = &whiteColorRect;
 
 		bigBtnTextStyle.flags = 8;
 		bigBtnTextStyle.field2c = -1;

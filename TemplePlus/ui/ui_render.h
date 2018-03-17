@@ -55,6 +55,12 @@ public:
 	static bool DrawTextInWidget(int widgetId, const string &text, const TigRect &rect, const TigTextStyle &style);
 
 	/*
+	Draws text positioned relative to widget.
+	Will center the text relative to the specified rect.
+	*/
+	static bool DrawTextInWidgetCentered(int widgetId, const string &text, const TigRect &rect, const TigTextStyle &style);
+
+	/*
 		Draws text positioned in screen coordinates. Width of rectangle may be 0 to cause automatic
 		measurement of the text.
 	*/

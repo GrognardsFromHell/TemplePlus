@@ -322,7 +322,7 @@ struct LegacyCritterSystem : temple::AddressTable
 	static int GetCritterNumNaturalAttacks(objHndl obj);
 	int GetCritterAttackType(objHndl obj, int attackIdx);
 	int GetBaseAttackBonus(const objHndl& handle, Stat classBeingLeveld = Stat::stat_strength);
-	int GetArmorClass(objHndl obj, DispIoAttackBonus *dispIo);
+	int GetArmorClass(objHndl obj, DispIoAttackBonus *dispIo = nullptr);
 #pragma endregion
 
 #pragma region Spellcasting

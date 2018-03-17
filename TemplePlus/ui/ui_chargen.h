@@ -10,11 +10,11 @@ struct CharEditorSelectionPacket {
 	int isPointbuy;
 	char rerollString[128];
 	Stat statBeingRaised;
-	Race raceId; // 7 is considered invalid
+	Race raceId; // RACE_INVALID is considered invalid
 	int genderId; // 2 is considered invalid
-	int height0;
-	int height1;
-	int modelScale;
+	int height;
+	int weight;
+	float modelScale; // 0.0 is considered invalid
 	int hair0;
 	int hair1;
 	Stat classCode;

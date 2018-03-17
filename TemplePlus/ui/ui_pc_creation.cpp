@@ -686,7 +686,7 @@ BOOL UiPcCreation::FeatsSystemInit(UiSystemConf& conf){
 	TigTextStyle baseStyle;
 	baseStyle.flags = 0x4000;
 	baseStyle.field2c = -1;
-	baseStyle.shadowColor = &genericShadowColor;
+	baseStyle.shadowColor = &blackColorRect;
 	baseStyle.field0 = 0;
 	baseStyle.kerning = 1;
 	baseStyle.leading = 0;
@@ -1906,7 +1906,7 @@ BOOL UiPcCreation::SpellsSystemInit(UiSystemConf & conf)
 	TigTextStyle baseStyle;
 	baseStyle.flags = 0;
 	baseStyle.field2c = -1;
-	baseStyle.shadowColor = &genericShadowColor;
+	baseStyle.shadowColor = &blackColorRect;
 	baseStyle.field0 = 0;
 	baseStyle.kerning = 1;
 	baseStyle.leading = 0;
@@ -2753,7 +2753,7 @@ void UiPcCreation::MainWndRender(int id) {
 
 	auto wnd = uiManager->GetWindow(id);
 	RenderHooks::RenderImgFile(temple::GetRef<ImgFile*>(0x10BDAFE0), wnd->x, wnd->y);
-
+	RenderCharInfos(id);
 	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
 
 	UiRenderer::DrawTextInWidget(id, 
@@ -2766,6 +2766,243 @@ void UiPcCreation::MainWndRender(int id) {
 	renderCharModel(id);
 }
 
+void UiPcCreation::RenderCharInfos(int widId){
+	
+	for (auto stat = 0; stat <= Stat::stat_charisma; stat++){
+		RenderCharStatTexts(stat, widId);
+		RenderCharStats(stat, widId);
+	}
+	RenderCharDimensions(widId);
+	RenderCharExpLvl(widId);
+	RenderCharSavingThrows(widId);
+	RenderCharHpAc(widId);
+	RenderCharMovementInit(widId);
+	RenderCharToHitBonus(widId);
+}
+
+void UiPcCreation::RenderCharStatTexts(int stat, int widId) {
+	auto &selPkt = GetCharEditorSelPacket();
+	if (selPkt.abilityStats[stat] == -1){
+		UiRenderer::DrawTextureInWidget(widId, temple::GetRef<int>(0x10BDD688),
+			TigRect(26, 289 + 15*stat, 99, 14), TigRect(1, 1, 99, 14));
+	}
+	else{
+		if (!modSupport.IsCo8()){ // Disable text draw (because Co8 has repalced it with a background)
+			DrawTextInWidgetCentered(widId,
+				d20Stats.GetStatShortName((Stat)stat),
+				TigRect(25, 288 + 15 * stat, 37, 14), blackTextGenericStyle);
+		}
+	}
+}
+
+void UiPcCreation::RenderCharStats(int stat, int widId)
+{
+	auto &selPkt = GetCharEditorSelPacket();
+	auto abilityStat = selPkt.abilityStats[stat];
+	if (abilityStat == -1)
+		return;
+	
+	if (selPkt.raceId != RACE_INVALID){
+		abilityStat += d20RaceSys.GetStatModifier(selPkt.raceId, stat);
+	}
+	if (abilityStat < 3)
+		abilityStat = 3;
+
+	DrawTextInWidgetCentered(widId, fmt::format("{}", abilityStat),
+		TigRect(67, 15 * stat + 288, 26, 14), whiteTextGenericStyle);
+
+	auto modFromStat = objects.GetModFromStatLevel(abilityStat);
+	std::string modString;
+	if (modFromStat >= 0)
+		modString.append("+");
+	modString.append(fmt::format("{}", modFromStat));
+	DrawTextInWidgetCentered(widId, modString,
+		TigRect(98, 15 * stat + 288, 26, 14), whiteTextGenericStyle);
+
+}
+
+void UiPcCreation::RenderCharDimensions(int widId){
+	auto &selPkt = GetCharEditorSelPacket();
+	if (selPkt.modelScale == 0.0){
+		UiRenderer::DrawTextureInWidget(widId, temple::GetRef<int>(0x10BDA760),
+			TigRect(26, 419 , 87, 14), TigRect(1, 1, 87, 14));
+		UiRenderer::DrawTextureInWidget(widId, temple::GetRef<int>(0x10BDA760),
+			TigRect(117, 419, 87, 14), TigRect(1, 1, 87, 14));
+	}
+	else{
+		DrawTextInWidgetCentered(widId,
+			d20Stats.GetStatShortName(Stat::stat_height),
+			TigRect(25, 418, 47, 14), blackTextGenericStyle);
+		DrawTextInWidgetCentered(widId,
+			fmt::format("{}'{}\"", selPkt.height / 12, selPkt.height % 12),
+			TigRect(78, 419, 33, 12), whiteTextGenericStyle);
+
+		DrawTextInWidgetCentered(widId,
+			d20Stats.GetStatShortName(Stat::stat_weight),
+			TigRect(116, 418, 47, 14), blackTextGenericStyle);
+		DrawTextInWidgetCentered(widId,
+			fmt::format("{}",selPkt.weight),
+			TigRect(169, 419, 32, 12), whiteTextGenericStyle);
+	}
+}
+
+void UiPcCreation::RenderCharExpLvl(int widId) {
+	auto &selPkt = GetCharEditorSelPacket();
+
+	if (GetEditedChar() && GetStatesComplete() >= ChargenStages::CG_Stage_Class && selPkt.classCode){
+		if (!modSupport.IsCo8()){ // Co8 replaced the text with the background image
+			DrawTextInWidgetCentered(widId,
+				d20Stats.GetStatShortName(Stat::stat_experience),
+				TigRect(25, 268, 37, 14), blackTextGenericStyle);
+		}
+		DrawTextInWidgetCentered(widId,
+			"0", TigRect(68, 269, 57, 12), whiteTextGenericStyle);
+
+		DrawTextInWidgetCentered(widId,
+			d20Stats.GetStatShortName(Stat::stat_level),
+			TigRect(134, 268, 37, 14), blackTextGenericStyle);
+		DrawTextInWidgetCentered(widId,
+			"1", TigRect(177, 269, 24, 12), whiteTextGenericStyle);
+	}
+	else {
+		UiRenderer::DrawTextureInWidget(widId, temple::GetRef<int>(0x10BDD41C),
+			TigRect(26, 269, 99, 14), TigRect(1, 1, 99, 14));
+		UiRenderer::DrawTextureInWidget(widId, temple::GetRef<int>(0x10BDAE0C),
+			TigRect(135, 269, 68, 14), TigRect(1, 1, 68, 14));
+	}
+}
+
+void UiPcCreation::RenderCharSavingThrows(int widId){
+	auto &selPkt = GetCharEditorSelPacket();
+	auto editedChar = GetEditedChar();
+	if (editedChar && GetStatesComplete() >= ChargenStages::CG_Stage_Class && selPkt.classCode) {
+		auto fortThrow = objects.StatLevelGet(editedChar, Stat::stat_save_fortitude);
+		auto refThrow = objects.StatLevelGet(editedChar, Stat::stat_save_reflexes);
+		auto willThrow = objects.StatLevelGet(editedChar, Stat::stat_save_willpower);
+		DrawTextInWidgetCentered(widId,
+			d20Stats.GetStatShortName(Stat::stat_save_fortitude),
+			TigRect(134, 330, 37, 14), blackTextGenericStyle);
+		DrawTextInWidgetCentered(widId,
+			d20Stats.GetStatShortName(Stat::stat_save_reflexes),
+			TigRect(134, 345, 37, 14), blackTextGenericStyle);
+		DrawTextInWidgetCentered(widId,
+			d20Stats.GetStatShortName(Stat::stat_save_willpower),
+			TigRect(134, 360, 37, 14), blackTextGenericStyle);
+
+		DrawTextInWidgetCentered(widId, fmt::format("{}", fortThrow), 
+			TigRect(177, 331, 24, 12), whiteTextGenericStyle);
+		DrawTextInWidgetCentered(widId, fmt::format("{}", refThrow),
+			TigRect(177, 346, 24, 12), whiteTextGenericStyle);
+		DrawTextInWidgetCentered(widId, fmt::format("{}", willThrow),
+			TigRect(177, 361, 24, 12), whiteTextGenericStyle);
+	}
+	else{
+		UiRenderer::DrawTextureInWidget(widId, temple::GetRef<int>(0x10BDB928),
+			TigRect(135, 331, 68, 14), TigRect(1, 1, 68, 14));
+		UiRenderer::DrawTextureInWidget(widId, temple::GetRef<int>(0x10BDB928),
+			TigRect(135, 361, 68, 14), TigRect(1, 1, 68, 14));
+		UiRenderer::DrawTextureInWidget(widId, temple::GetRef<int>(0x10BDB928),
+			TigRect(135, 346, 68, 14), TigRect(1, 1, 68, 14));
+	}
+}
+
+void UiPcCreation::RenderCharHpAc(int widId){
+	auto &selPkt = GetCharEditorSelPacket();
+	auto editedChar = GetEditedChar();
+	if (editedChar && GetStatesComplete() > ChargenStages::CG_Stage_Class) {
+		DrawTextInWidgetCentered(widId,
+			d20Stats.GetStatShortName(Stat::stat_hp_current),
+			TigRect(134, 291, 23, 14), blackTextGenericStyle);
+		DrawTextInWidgetCentered(widId,
+			d20Stats.GetStatShortName(Stat::stat_ac),
+			TigRect(134, 306, 23, 14), blackTextGenericStyle);
+		
+		DrawTextInWidgetCentered(widId, fmt::format("{}", objects.StatLevelGet(editedChar, Stat::stat_hp_max)),
+			TigRect(165, 292, 37, 12), whiteTextGenericStyle);
+		DrawTextInWidgetCentered(widId, fmt::format("{}", critterSys.GetArmorClass(editedChar)),
+			TigRect(165, 307, 37, 12), whiteTextGenericStyle);
+	}
+	else {
+		UiRenderer::DrawTextureInWidget(widId, temple::GetRef<int>(0x10BDA730),
+			TigRect(135, 292, 68, 14), TigRect(1, 1, 68, 14));
+		UiRenderer::DrawTextureInWidget(widId, temple::GetRef<int>(0x10BDA730),
+			TigRect(135, 307, 68, 14), TigRect(1, 1, 68, 14));
+	}
+}
+
+void UiPcCreation::RenderCharMovementInit(int widId) {
+	auto &selPkt = GetCharEditorSelPacket();
+	auto editedChar = GetEditedChar();
+	if (editedChar && GetStatesComplete() > ChargenStages::CG_Stage_Class) {
+		if (!modSupport.IsCo8()){
+			DrawTextInWidgetCentered(widId,
+				d20Stats.GetStatShortName(Stat::stat_movement_speed),
+				TigRect(25, 398, 56, 14), blackTextGenericStyle);
+			DrawTextInWidgetCentered(widId,
+				d20Stats.GetStatShortName(Stat::stat_initiative_bonus),
+				TigRect(25, 383, 56, 14), blackTextGenericStyle);
+		}
+		auto moveSpeed = objects.StatLevelGet(editedChar, Stat::stat_movement_speed);
+		DrawTextInWidgetCentered(widId, fmt::format("{}", moveSpeed),
+			TigRect(87, 399, 24, 12), whiteTextGenericStyle);
+		DrawTextInWidgetCentered(widId, fmt::format("{}", objects.StatLevelGet(editedChar, Stat::stat_initiative_bonus)),
+			TigRect(87, 384, 24, 12), whiteTextGenericStyle);
+	}
+	else {
+		UiRenderer::DrawTextureInWidget(widId, temple::GetRef<int>(0x10BDAEEC),
+			TigRect(26, 399, 87, 14), TigRect(1, 1, 87, 14));
+		UiRenderer::DrawTextureInWidget(widId, temple::GetRef<int>(0x10BDAEEC),
+			TigRect(26, 384, 87, 14), TigRect(1, 1, 87, 14));
+	}
+}
+
+void UiPcCreation::RenderCharToHitBonus(int widId){
+	auto &selPkt = GetCharEditorSelPacket();
+	auto editedChar = GetEditedChar();
+
+
+	if (!modSupport.IsCo8()) {
+		DrawTextInWidgetCentered(widId,
+			d20Stats.GetStatShortName(Stat::stat_melee_attack_bonus),
+			TigRect(116, 383, 56, 14), blackTextGenericStyle);
+		DrawTextInWidgetCentered(widId,
+			d20Stats.GetStatShortName(Stat::stat_ranged_attack_bonus),
+			TigRect(116, 398, 56, 14), blackTextGenericStyle);
+	}
+
+	if (editedChar && GetStatesComplete() > ChargenStages::CG_Stage_Class) {
+		
+		auto meleeBonus = objects.StatLevelGet(editedChar, Stat::stat_melee_attack_bonus);
+		auto rangedBonus = objects.StatLevelGet(editedChar, Stat::stat_ranged_attack_bonus);
+
+		std::string s;
+		if (meleeBonus >= 0)
+			s.append("+");
+		s.append(fmt::format("{}", meleeBonus));
+		DrawTextInWidgetCentered(widId, s,
+			TigRect(178, 384, 24, 12), whiteTextGenericStyle);
+
+		s.clear();
+		if (rangedBonus >= 0)
+			s.append("+");
+		s.append(fmt::format("{}", rangedBonus));
+		DrawTextInWidgetCentered(widId, s,
+			TigRect(178, 399, 24, 12), whiteTextGenericStyle);
+	}
+	else {
+		UiRenderer::DrawTextureInWidget(widId, temple::GetRef<int>(0x10BDAEEC),
+			TigRect(117, 399, 87, 14), TigRect(1, 1, 87, 14));
+		UiRenderer::DrawTextureInWidget(widId, temple::GetRef<int>(0x10BDAEEC),
+			TigRect(117, 384, 87, 14), TigRect(1, 1, 87, 14));
+	}
+}
+
+void UiPcCreation::DrawTextInWidgetCentered(int widgetId, const string & text, const TigRect & rect, const TigTextStyle & style)
+{
+	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+	UiRenderer::DrawTextInWidgetCentered(widgetId, text, rect, style);
+	UiRenderer::PopFont();
+}
 
 
 int UiPcCreation::GetRaceWndPage()
