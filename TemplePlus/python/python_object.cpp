@@ -3091,6 +3091,17 @@ static PyObject* PyObjHandle_IsUnconscious(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(result);
 }
 
+
+static PyObject* PyObjHandle_IsBuckler(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(1);
+	}
+	auto result = inventory.IsBuckler(self->handle);
+	return PyInt_FromLong(result);
+}
+
+
 static PyObject * PyObjHandle_MakeWizard(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	uint32_t level;
@@ -3244,6 +3255,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "is_flanked_by", PyObjHandle_IsFlankedBy, METH_VARARGS, NULL },
 	{ "is_friendly", PyObjHandle_IsFriendly, METH_VARARGS, NULL },
 	{ "is_unconscious", PyObjHandle_IsUnconscious, METH_VARARGS, NULL },
+	{ "is_buckler", PyObjHandle_IsBuckler, METH_VARARGS, NULL },
 	{ "item_condition_add_with_args", PyObjHandle_ItemConditionAdd, METH_VARARGS, NULL },
 	{ "item_find", PyObjHandle_ItemFind, METH_VARARGS, NULL },
 	{ "item_get", PyObjHandle_ItemGet, METH_VARARGS, NULL },
