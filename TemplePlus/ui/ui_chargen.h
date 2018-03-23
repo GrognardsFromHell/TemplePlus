@@ -15,8 +15,8 @@ struct CharEditorSelectionPacket {
 	int height;
 	int weight;
 	float modelScale; // 0.0 is considered invalid
-	int hair0;
-	int hair1;
+	int hairStyle;
+	int hairColor;
 	Stat classCode;
 	int deityId;
 	int domain1;

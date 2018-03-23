@@ -13,6 +13,7 @@
 #include "mod_support.h"
 #include "party.h"
 #include "ui_systems.h"
+#include "d20_race.h"
 
 int PcCreationFeatUiPrereqCheckUsercallWrapper();
 int HookedUsercallFeatMultiselectSub_101822A0();
@@ -46,6 +47,19 @@ public:
 			return TRUE;
 		});
 
+		// Hair
+		// Update Hair
+		replaceFunction<void(__cdecl)()>(0x10188B70, [](){uiPcCreation.HairUpdate(); });
+		replaceFunction<void(__cdecl)()>(0x10188BD0, [](){uiPcCreation.HairUpdateStyleBtnTextures(); });
+
+		replaceFunction<int(Race, int, int, int, int)>(0x100E17B0, [](Race race, int gender, int hairType, int hairColor, int helmMod){
+			return ((int)d20RaceSys.GetHairStyle(race) & 7) 
+			| ((gender & 1) << 3)
+			| ((hairType & 7) << 4)
+			| ((hairColor & 7) << 7)
+			| ((helmMod & 3) << 10);
+		});
+
 		// Update title
 		replaceFunction<void(__cdecl)()>(0x1011C470, []() { ChargenSystem::UpdateDescriptionBox(); });
 
@@ -58,6 +72,9 @@ public:
 		replaceFunction<void(__cdecl)()>(0x1018A7B0, []() {	uiSystems->GetPcCreation().GetRace().Hide();	});
 		replaceFunction<void(__cdecl)(CharEditorSelectionPacket&)>(0x1018A590, [](CharEditorSelectionPacket& pkt) {	uiSystems->GetPcCreation().GetRace().Reset(pkt);	});
 		replaceFunction<void(__cdecl)()>(0x1018A5A0, []() {	uiSystems->GetPcCreation().GetRace().CheckComplete();	});
+		replaceFunction<void(__cdecl)()>(0x1018A7F0, []() { RaceChargen::UpdateScrollbox(); });
+
+		replaceFunction<void(__cdecl)(CharEditorSelectionPacket&, objHndl&)>(0x10189CD0, [](CharEditorSelectionPacket&selPkt, objHndl&handle) {uiPcCreation.GenderFinalize(selPkt, handle); });
 
 		// Chargen Class system
 		replaceFunction<void(__cdecl)(UiSystemConf&)>(0x10188910, [](UiSystemConf& conf) {uiPcCreation.ClassSystemInit(conf); });

@@ -2,7 +2,7 @@
   {
     "id": "default",
     "inherit": null,
-    "fontFace": "Junicode",
+    "fontFamily": "Junicode",
     "pointSize": 12,
     "bold": false,
     "align": "left",
@@ -15,6 +15,14 @@
     "dropShadowBrush": "#00000000"
   },
   {
+    "id": "arial-10-title-text",
+    "fontFamily": "Arial-Bold-ToEE",
+	"bold": true,
+    "pointSize": 10,
+    "foreground": "#ffffff",
+    "align": "center"
+  },
+  {
     "id": "default-button-text",
     "fontFamily": "Arial",
     "pointSize": 12,
@@ -23,6 +31,13 @@
   },
   {
     "id": "chargen-button-text",
+    "fontFamily": "Priory-12",
+    "pointSize": 12,
+    "foreground": "#ffffff",
+    "align": "center"
+  },
+  {
+    "id": "priory-title",
     "fontFamily": "Priory-12",
     "pointSize": 12,
     "foreground": "#ffffff",

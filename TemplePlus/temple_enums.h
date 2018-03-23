@@ -2241,14 +2241,8 @@ enum Alignment : uint32_t {
 enum Race : uint32_t
 {
 	race_human = 0,
-	race_deep_dwarf = 0,
-	race_derro = 1,
 	race_dwarf = 1,
-	race_duergar = 1,
-	race_mountain_dwarf = 1,
 	race_elf = 2,
-	race_aquatic_elf = 2,
-	race_drow = 2,
 	race_gnome = 3,
 	race_halfelf = 4,
 	race_half_elf = 4,
@@ -2256,15 +2250,54 @@ enum Race : uint32_t
 	race_half_orc = 5,
 	race_halfling = 6,
 
-	race_gray_elf = 6,
-	race_wild_elf = 7,
-	race_wood_elf = 8,
-	race_svirfneblin = 9,
-	race_forest_gnome = 10,
-	race_tallfellow = 11,
-	race_deep_halfling = 12,
+	// Dwarf subraces
+	race_deep_dwarf = 1,
+	race_derro = 1,
+	race_duergar = 1,
+	race_mountain_dwarf = 1,
+	// Elf subraces
+	race_aquatic_elf = 2,
+	race_drow = 2,
+	race_gray_elf = 2,
+	race_wild_elf = 2,
+	race_wood_elf = 2,
+	// Gnome subraces
+	race_svirfneblin = 3,
+	race_forest_gnome = 3,
+	// Halfling subraces
+	race_tallfellow = 6,
+	race_deep_halfling = 6,
 };
 
+enum Subrace : uint32_t
+{
+	subrace_none = 0, // default
+
+	//Human subraces
+	subrace_aasumar = 1,
+	subrace_tiefling = 2,
+
+	// Dwarf subraces
+	subrace_deep_dwarf = 1,
+	subrace_derro = 2,
+	subrace_duergar = 3,
+	subrace_mountain_dwarf = 4,
+
+	// Elf
+	subrace_aquatic_elf = 1,
+	subrace_drow = 2,
+	subrace_gray_elf = 3,
+	subrace_wild_elf = 4,
+	subrace_wood_elf = 5,
+	
+	// Gnomes
+	subrace_svirfneblin = 1,
+	subrace_forest_gnome = 2,
+
+	// Halflings
+	subrace_tallfellow = 1,
+	subrace_deep_halfling = 2,
+};
 
 enum NpcFlag : uint32_t
 {

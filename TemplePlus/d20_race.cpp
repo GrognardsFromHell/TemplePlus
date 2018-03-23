@@ -50,6 +50,28 @@ int D20RaceSys::GetStatModifier(Race race, int stat) {
 	return 0;
 }
 
+HairStyleRace D20RaceSys::GetHairStyle(Race race){
+
+	switch (race){
+	case race_human:
+		return HairStyleRace::Human;
+	case race_dwarf:
+		return HairStyleRace::Dwarf;
+	case race_elf:
+		return HairStyleRace::Elf;
+	case race_gnome:
+		return HairStyleRace::Gnome;
+	case race_half_elf:
+		return HairStyleRace::HalfElf;
+	case race_half_orc:
+		return HairStyleRace::HalfOrc;
+	case race_halfling:
+		return HairStyleRace::Halfling;
+	default:
+		return HairStyleRace::Human;
+	}
+}
+
 RaceSpec& D20RaceSys::GetRaceSpec(Race race){
 	if (mRaceSpecs.find(race) != mRaceSpecs.end()) {
 		return mRaceSpecs[race];

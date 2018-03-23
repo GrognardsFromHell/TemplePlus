@@ -18,6 +18,7 @@
 // Render this font using the old engine
 static eastl::string sScurlockFont = "Scurlock";
 static eastl::string sPriory12 = "Priory-12";
+static eastl::string sArialBold10 = "Arial-Bold-ToEE";
 
 static TigTextStyle GetScurlockStyle(const gfx::Brush &brush) {
 	static ColorRect sColorRect;
@@ -59,9 +60,34 @@ static TigTextStyle GetPrioryStyle(const gfx::Brush &brush) {
 	static ColorRect sShadowColor(XMCOLOR{ 0, 0, 0, 0.5 });
 
 	TigTextStyle textStyle(&sColorRect);
-	textStyle.leading = 1;
+	textStyle.leading = 0;
 	textStyle.kerning = 1;
-	textStyle.tracking = 10;
+	textStyle.tracking = 3;
+	textStyle.flags = TTSF_DROP_SHADOW;
+	textStyle.shadowColor = &sShadowColor;
+
+	return textStyle;
+}
+
+static TigTextStyle GetArialBoldStyle(const gfx::Brush &brush) {
+	static ColorRect sColorRect;
+	sColorRect.topLeft = brush.primaryColor;
+	sColorRect.topRight = brush.primaryColor;
+	if (brush.gradient) {
+		sColorRect.bottomLeft = brush.secondaryColor;
+		sColorRect.bottomRight = brush.secondaryColor;
+	}
+	else {
+		sColorRect.bottomLeft = brush.primaryColor;
+		sColorRect.bottomRight = brush.primaryColor;
+	}
+
+	static ColorRect sShadowColor(XMCOLOR{ 0, 0, 0, 0.5 });
+
+	TigTextStyle textStyle(&sColorRect);
+	textStyle.leading = 0;
+	textStyle.kerning = 1;
+	textStyle.tracking = 3;
 	textStyle.flags = TTSF_DROP_SHADOW;
 	textStyle.shadowColor = &sShadowColor;
 
@@ -173,6 +199,25 @@ void WidgetText::Render()
 		if (mText.defaultStyle.align == gfx::TextAlign::Center) {
 			textStyle.flags |= TTSF_CENTER;
 			if (mCenterVertically){
+				auto textMeas = UiRenderer::MeasureTextSize(text, textStyle);
+				area = TigRect(area.x + (area.width - textMeas.width) / 2,
+					area.y + (area.height - textMeas.height) / 2,
+					textMeas.width, textMeas.height);
+			}
+		}
+		tigFont.Draw(text.c_str(), area, textStyle);
+
+		UiRenderer::PopFont();
+	}
+	else if (mText.defaultStyle.fontFace == sArialBold10){
+		UiRenderer::PushFont(PredefinedFont::ARIAL_BOLD_10);
+
+		auto textStyle = GetArialBoldStyle(mText.defaultStyle.foreground);
+		auto text = ucs2_to_local(mText.text);
+
+		if (mText.defaultStyle.align == gfx::TextAlign::Center) {
+			textStyle.flags |= TTSF_CENTER;
+			if (mCenterVertically) {
 				auto textMeas = UiRenderer::MeasureTextSize(text, textStyle);
 				area = TigRect(area.x + (area.width - textMeas.width) / 2,
 					area.y + (area.height - textMeas.height) / 2,

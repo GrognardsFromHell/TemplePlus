@@ -279,9 +279,9 @@ int D20StatsSystem::GetType3StatBase(const objHndl & handle, Stat stat) const
 	case stat_deity:
 		return (int)(objects.getInt32(handle, obj_f_critter_deity));
 	case stat_race:
-		return (int)(objects.getInt32(handle, obj_f_critter_race) & 0xFFFF); // changed bitmask to expand range of races up to 65536 races
+		return (int)(objects.getInt32(handle, obj_f_critter_race) & 0x1F);
 	case stat_subrace:
-		return (int)(objects.getInt32(handle, obj_f_critter_race) >> 16); // vanilla didn't bitshift
+		return (int)(objects.getInt32(handle, obj_f_critter_race) >> 5); // vanilla didn't bitshift
 	case stat_gender:
 		return (int)(objects.getInt32(handle, obj_f_critter_gender));
 	case stat_size:

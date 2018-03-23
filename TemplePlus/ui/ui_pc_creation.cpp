@@ -37,8 +37,13 @@
 #include "widgets/widgets.h"
 #include "ui_legacysystems.h"
 #include "ui_systems.h"
+#include "widgets/widget_styles.h"
+#include "temple/meshes.h"
+#include "anim.h"
+
 
 const Race RACE_INVALID = (Race)32;
+const int GENDER_INVALID = 2;
 
 enum ChargenStages : int {
 	CG_Stage_Stats = 0,
@@ -2690,6 +2695,74 @@ void UiPcCreation::RaceWndRender(int widId){
 	StateTitleRender(widId);
 }
 
+void UiPcCreation::GenderFinalize(CharEditorSelectionPacket& selPkt, objHndl& handle){
+	int protoId = uiPcCreation.GetProtoIdByRaceGender(selPkt.raceId, selPkt.genderId);
+	auto protoHandle = objSystem->GetProtoHandle(protoId);
+
+	auto loc = locXY{ 480, 480 };
+	handle = objSystem->CreateObject(protoHandle, loc);
+	if (!handle){
+		logger->error("pc_creation: FATAL ERROR, could not create player!");
+		exit(0);
+	}
+	
+	for (auto i=0; i <= Stat::stat_charisma; i++){
+		objects.StatLevelSetBase(handle, (Stat)i, selPkt.abilityStats[i]);
+	}
+
+	auto animHandle = objects.GetAnimHandle(handle);
+	auto aasAdvance = temple::GetRef<void(__cdecl)(int, float, int, int, temple::AasAnimParams*, int*)>(0x10262C10);
+	temple::AasAnimParams animParams;
+	int sthg = 0;
+	aasAdvance(animHandle->GetHandle(), 1.0, 0, 0, &animParams, &sthg);
+
+	if (selPkt.isPointbuy){
+		objects.setInt32(handle, obj_f_pc_roll_count, -25);
+	}
+	else{
+		objects.setInt32(handle, obj_f_pc_roll_count, selPkt.numRerolls);
+	}
+
+}
+
+void UiPcCreation::HairUpdate(){
+	auto &selPkt = GetCharEditorSelPacket();
+	if (selPkt.raceId != RACE_INVALID && selPkt.genderId != GENDER_INVALID){
+		HairStyle hairStyle;
+		hairStyle.size = HairStyleSize::Big;
+		hairStyle.race = d20RaceSys.GetHairStyle(selPkt.raceId);
+		hairStyle.gender = (Gender)selPkt.genderId;
+		hairStyle.color = selPkt.hairColor;
+		hairStyle.style = selPkt.hairStyle;
+		
+		auto critter = GetEditedChar();
+		objSystem->GetObject(critter)->SetInt32(obj_f_critter_hair_style, hairStyle.Pack());
+		critterSys.UpdateModelEquipment(critter);
+	}
+}
+
+void UiPcCreation::HairUpdateStyleBtnTextures(){
+	auto &selPkt = GetCharEditorSelPacket();
+	if (selPkt.raceId != RACE_INVALID && selPkt.genderId != GENDER_INVALID) {
+
+		HairStyle hairStyle;
+		hairStyle.size = HairStyleSize::Small;
+		hairStyle.race = d20RaceSys.GetHairStyle(selPkt.raceId);
+		hairStyle.gender = (Gender)selPkt.genderId;
+		hairStyle.color = selPkt.hairColor;
+		hairStyle.style = selPkt.hairStyle;
+
+		auto &hairStyleBtnTextures = temple::GetRef<int[]>(0x10C42788);
+
+		for (auto i=0; i < 8; i++){
+			hairStyle.style = i;
+			auto s = critterSys.GetHairStylePreviewTexture(hairStyle);
+			textureFuncs.RegisterTexture(s.c_str(), &hairStyleBtnTextures[i]);
+		}
+
+	}
+}
+
 
 BOOL UiPcCreation::FinishBtnMsg(int widId, TigMsg * msg)
 {
@@ -3125,6 +3198,11 @@ int UiPcCreation::GetNewLvl(Stat classEnum) {
 	return 1;
 }
 
+int UiPcCreation::GetProtoIdByRaceGender(Race race, int genderId)
+{
+	return obj_t_pc*1000 + 1 + 2*race - genderId;
+}
+
 
 bool UiPcCreation::IsSelectingRangerSpec()
 {
@@ -3162,7 +3240,20 @@ bool RaceChargen::WidgetsInit(int w, int h){
 	wndY += (h <= 600) ? 12 : ((h - 497) / 2);
 	mWnd->SetPos(wndX, wndY);
 	
-	// todo state title...
+	auto stateTitle = make_unique<WidgetText>();
+	stateTitle->SetX(4); stateTitle->SetY(4);
+	stateTitle->SetFixedHeight(14);
+	stateTitle->SetCenterVertically(true);
+	if (modSupport.IsCo8()){
+		stateTitle->SetStyle(widgetTextStyles->GetTextStyle("priory-title"));
+	}
+	else{
+		stateTitle->SetStyle(widgetTextStyles->GetTextStyle("arial-10-title-text"));
+		stateTitle->SetFixedHeight(14);
+	}
+	auto &stateTitles = temple::GetRef<const char*[14]>(0x10BDAE28);
+	stateTitle->SetText(stateTitles[ChargenStages::CG_Stage_Race]);
+	mWnd->AddContent(std::move(stateTitle));
 
 	auto x = 156, y = 24;
 	for (auto it: d20RaceSys.vanillaRaceEnums){
@@ -3174,7 +3265,9 @@ bool RaceChargen::WidgetsInit(int w, int h){
 		newBtn->SetText(raceName);
 		newBtn->SetPageText(0,raceName);
 		newBtn->SetPageDatum(0, it);
-		newBtn->SetClickHandler([=](){
+		auto &pbtn = *newBtn;
+		newBtn->SetClickHandler([&](){
+			auto race = (Race)pbtn.GetDatum();
 			if (helpSys.IsClickForHelpActive()){
 				helpSys.PresentWikiHelp(101 + race);
 				return;
@@ -3188,7 +3281,8 @@ bool RaceChargen::WidgetsInit(int w, int h){
 		newBtn->SetMouseMsgHandler([=](const TigMouseMsg&msg){
 			return true;
 		});
-		newBtn->SetWidgetMsgHandler([=](const TigMsgWidget &msg){
+		newBtn->SetWidgetMsgHandler([&](const TigMsgWidget &msg){
+			auto race = (Race)pbtn.GetDatum();
 			if (msg.widgetEventType == TigMsgWidgetEvent::Entered){
 				SetScrollboxText(race);
 				return true;
@@ -3204,6 +3298,7 @@ bool RaceChargen::WidgetsInit(int w, int h){
 		mWnd->Add(std::move(newBtn));
 		y += 29;
 	}
+	
 	mWnd->Hide();
 
 	return true;

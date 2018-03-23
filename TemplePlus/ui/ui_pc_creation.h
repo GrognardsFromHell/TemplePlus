@@ -39,6 +39,7 @@ protected:
 
 class RaceChargen : public ChargenSystem , PagianatedChargenSystem
 {
+	friend class PcCreationHooks;
 public:
 	static constexpr auto Name = "chargen_race";
 	RaceChargen(const UiSystemConf & conf);
@@ -50,8 +51,8 @@ public:
 	virtual void Reset(CharEditorSelectionPacket & charSpec) override;
 	virtual BOOL CheckComplete() override; // checks if the char editing stage is complete (thus allowing you to move on to the next stage). This is checked at every render call.
 protected:
-	void SetScrollboxText(Race race);
-	void UpdateScrollbox();
+	static void SetScrollboxText(Race race);
+	static void UpdateScrollbox();
 	void UpdateActiveRace();
 };
 
@@ -187,7 +188,14 @@ public:
 
 	// Race
 	void RaceWndRender(int widId);
-	
+
+	// Gender
+	void GenderFinalize(CharEditorSelectionPacket& selPkt, objHndl& handle);
+
+	// Hair
+	void HairUpdate();
+	void HairUpdateStyleBtnTextures();
+
 	// class
 	void ClassBtnRender(int widId);
 	BOOL ClassBtnMsg(int widId, TigMsg* msg);
@@ -223,6 +231,7 @@ public:
 
 	BOOL SpellsAvailableEntryBtnMsg(int widId, TigMsg* msg);
 	void SpellsAvailableEntryBtnRender(int widId);
+	
 #pragma endregion
 
 
@@ -256,6 +265,7 @@ public:
 	void ButtonEnteredHandler(int helpId);
 	void ButtonEnteredHandler(const std::string&);
 	int GetNewLvl(Stat classEnum = stat_level);
+	int GetProtoIdByRaceGender(Race race, int genderId);// get protos.tab id by race and gender
 
 
 	// Feat Utilities
