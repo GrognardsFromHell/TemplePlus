@@ -37,7 +37,7 @@ feat_snatch_arrows, feat_shot_on_the_run, feat_ride_by_attack, feat_rapid_reload
 feat_rapid_shot, feat_quick_draw, feat_precise_shot, feat_point_blank_shot, feat_manyshot,
 feat_mounted_combat, feat_mounted_archery, feat_far_shot, feat_improved_bull_rush,
 feat_weapon_focus_head, feat_weapon_specialization_head, feat_greater_weapon_focus_head, feat_greater_weapon_specialization,
-			   "Melee Weapon Mastery"]
+			   "Melee Weapon Mastery", "Vexing Flanker"]
 
 class_skills = (skill_climb, skill_craft, skill_handle_animal, skill_intimidate, skill_jump, skill_ride, skill_swim)
 
