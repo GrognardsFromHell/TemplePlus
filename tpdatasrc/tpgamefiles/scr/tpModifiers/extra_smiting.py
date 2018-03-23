@@ -9,14 +9,10 @@ import tpdp
 print "Registering Extra Smiting"
 
 def ExtraSmitingNewDayDestructionDomain(attachee, args, evt_obj):
-	print "Destruction Domain Extra Smiting"
-
 	ExtraSmiting = attachee.has_feat("Extra Smiting")
 	
 	#Extra Smiting grants 2 additional uses of smite each time the feat is taken
 	args.set_arg(0, args.get_arg(0) + 2 * ExtraSmiting)
-	
-	print args.get_arg(0) 
 	
 	return 0
 
@@ -25,8 +21,6 @@ extendDestructionDomain.ExtendExisting("Destruction Domain")
 extendDestructionDomain.AddHook(ET_OnNewDay, EK_NEWDAY_REST, ExtraSmitingNewDayDestructionDomain, ())
 
 def ExtraSmitingNewDaySmiteEvil(attachee, args, evt_obj):
-	print "Smite Evil Extra Smiting"
-
 	ExtraSmiting = attachee.has_feat("Extra Smiting")
 	
 	#Extra Smiting grants 2 additional uses of smite each time the feat is taken

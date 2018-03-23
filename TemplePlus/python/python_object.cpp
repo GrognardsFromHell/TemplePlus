@@ -1943,6 +1943,24 @@ static PyObject* PyObjHandle_D20QueryWithData(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(result);
 }
 
+
+static PyObject* PyObjHandle_D20QueryWithObject(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		Py_RETURN_NONE;
+	}
+
+	int queryKey;
+	objHndl queryObject;
+	if (!PyArg_ParseTuple(args, "iO&:objhndl.d20_query_with_object", &queryKey, &ConvertObjHndl, &queryObject)) {
+		return 0;
+	}
+	auto dispatcherKey = (D20DispatcherKey)(DK_QUE_Helpless + queryKey);
+	auto result = d20Sys.d20QueryWithData(self->handle, dispatcherKey, queryObject);
+	return PyInt_FromLong(result);
+}
+
+
 static PyObject* PyObjHandle_D20QueryTestData(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -3073,6 +3091,17 @@ static PyObject* PyObjHandle_IsUnconscious(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(result);
 }
 
+
+static PyObject* PyObjHandle_IsBuckler(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(1);
+	}
+	auto result = inventory.IsBuckler(self->handle);
+	return PyInt_FromLong(result);
+}
+
+
 static PyObject * PyObjHandle_MakeWizard(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	uint32_t level;
@@ -3170,6 +3199,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "d20_query", PyObjHandle_D20Query, METH_VARARGS, NULL },
 	{ "d20_query_has_spell_condition", PyObjHandle_D20QueryHasSpellCond, METH_VARARGS, NULL },
 	{ "d20_query_with_data", PyObjHandle_D20QueryWithData, METH_VARARGS, NULL },
+    { "d20_query_with_object", PyObjHandle_D20QueryWithObject, METH_VARARGS, NULL },
 	{ "d20_query_test_data", PyObjHandle_D20QueryTestData, METH_VARARGS, NULL },
 	{ "d20_query_get_data", PyObjHandle_D20QueryGetData, METH_VARARGS, NULL },
 	{ "d20_send_signal", PyObjHandle_D20SendSignal, METH_VARARGS, NULL },
@@ -3225,6 +3255,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "is_flanked_by", PyObjHandle_IsFlankedBy, METH_VARARGS, NULL },
 	{ "is_friendly", PyObjHandle_IsFriendly, METH_VARARGS, NULL },
 	{ "is_unconscious", PyObjHandle_IsUnconscious, METH_VARARGS, NULL },
+	{ "is_buckler", PyObjHandle_IsBuckler, METH_VARARGS, NULL },
 	{ "item_condition_add_with_args", PyObjHandle_ItemConditionAdd, METH_VARARGS, NULL },
 	{ "item_find", PyObjHandle_ItemFind, METH_VARARGS, NULL },
 	{ "item_get", PyObjHandle_ItemGet, METH_VARARGS, NULL },
@@ -3609,6 +3640,49 @@ static PyObject* PyObjHandle_GetHighestDivineClass(PyObject* obj, void*) {
 }
 
 
+//Gets the highest divine caster level
+static PyObject* PyObjHandle_GetHighestDivineCasterLevel(PyObject* obj, void*) {
+	auto self = GetSelf(obj);
+	objHndl objHnd = self->handle;
+	if (!objHnd) {
+		return PyInt_FromLong(0);
+	}
+
+	int highestCasterLvl = 0;
+
+	for (auto it : d20ClassSys.classEnumsWithSpellLists) {
+		auto classEnum = (Stat)it;
+		if (d20ClassSys.IsDivineCastingClass(classEnum)) {
+			auto currentCasterLevel = objects.StatLevelGet(objHnd, stat_caster_level, classEnum);
+			highestCasterLvl = std::max(highestCasterLvl, currentCasterLevel);
+		}
+	}
+
+	return PyInt_FromLong(highestCasterLvl);
+}
+
+
+//Gets the highest arcane caster level
+static PyObject* PyObjHandle_GetHighestArcaneCasterLevel(PyObject* obj, void*) {
+	auto self = GetSelf(obj);
+	objHndl objHnd = self->handle;
+	if (!objHnd) {
+		return PyInt_FromLong(0);
+	}
+
+	int highestCasterLvl = 0;
+
+	for (auto it : d20ClassSys.classEnumsWithSpellLists) {
+		auto classEnum = (Stat)it;
+		if (d20ClassSys.IsArcaneCastingClass(classEnum)) {
+			auto currentCasterLevel = objects.StatLevelGet(objHnd, stat_caster_level, classEnum);
+			highestCasterLvl = std::max(highestCasterLvl, currentCasterLevel);
+		}
+	}
+
+	return PyInt_FromLong(highestCasterLvl);
+}
+
 
 static PyObject* PyObjHandle_GetSpellsKnown(PyObject* obj, void*) {
 	auto self = GetSelf(obj);
@@ -3665,6 +3739,8 @@ PyGetSetDef PyObjHandleGetSets[] = {
 	{"char_classes", PyObjHandle_GetCharacterClasses, NULL, "a tuple containing the character classes array", NULL },
 	{ "highest_arcane_class", PyObjHandle_GetHighestArcaneClass, NULL, "Highest Arcane spell casting class", NULL },
 	{ "highest_divine_class", PyObjHandle_GetHighestDivineClass, NULL, "Highest Divine spell casting class", NULL },
+    { "highest_arcane_caster_level", PyObjHandle_GetHighestArcaneCasterLevel, NULL, "Highest Arcane caster level", NULL },
+    { "highest_divine_caster_level", PyObjHandle_GetHighestDivineCasterLevel, NULL, "Highest Divine caster level", NULL },
 	{"description", PyObjHandle_GetDescription, NULL, NULL },
 	{"name", PyObjHandle_GetNameId, NULL, NULL},
 	{"location", PyObjHandle_GetLocation, NULL, NULL},

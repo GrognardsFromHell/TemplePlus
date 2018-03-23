@@ -227,18 +227,19 @@ int D20StatsSystem::GetLevelStat(const objHndl &handle, Stat stat) const
 
 int D20StatsSystem::GetSpellCastingStat(const objHndl & handle, Stat stat, int statArg) const
 {
-	if (stat == stat_caster_level && statArg != -1){
-		return critterSys.GetCasterLevelForClass(handle, (Stat)statArg);
+	int ret = 0;
+
+	if (stat == stat_caster_level && statArg != -1) {
+		Stat statCheck = static_cast<Stat>(statArg);
+		ret = critterSys.GetCasterLevelForClass(handle, statCheck);
+	} else if (stat >= stat_caster_level_barbarian && stat <= stat_caster_level_wizard) {
+		// Convert stat from stat_caster_level_X to stat_level_X since the function  GetCasterLevelForClass talkes the later
+	    Stat statCheck = static_cast<Stat>(static_cast<int>(stat) - static_cast<int>(stat_caster_level_barbarian) + static_cast<int>(stat_level_barbarian));
+		ret = critterSys.GetCasterLevelForClass(handle, statCheck);
+	} else if (stat == stat_spell_list_level && statArg != -1){
+		ret = objects.StatLevelGet(handle, (Stat)statArg) + critterSys.GetSpellListLevelExtension(handle, (Stat)statArg);
 	}
-	else if (stat>= stat_caster_level_barbarian 
-		&& stat <= stat_caster_level_wizard)
-	{
-		return critterSys.GetCasterLevelForClass(handle, stat);
-	}
-	else if (stat == stat_spell_list_level && statArg != -1){
-		return objects.StatLevelGet(handle, (Stat)statArg) + critterSys.GetSpellListLevelExtension(handle, (Stat)statArg);
-	}
-	return 0;
+	return ret;
 }
 
 int D20StatsSystem::GetBaseAttackBonus(const objHndl & handle, Stat classLeveled) const

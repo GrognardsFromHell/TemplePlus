@@ -5467,6 +5467,8 @@ int ClassAbilityCallbacks::SneakAttackDamage(DispatcherCallbackArgs args) {
 	{
 		// get sneak attack dice (NEW! now via query, for prestige class modularity)
 		auto sneakAttackDice = d20Sys.D20QueryPython(args.objHndCaller, fmt::format("Sneak Attack Dice"));
+		auto sneakAttackDmgBonus = d20Sys.D20QueryPython(args.objHndCaller, fmt::format("Sneak Attack Bonus"));
+
 		if (sneakAttackDice <= 0)
 			return 0;
 
@@ -5476,9 +5478,9 @@ int ClassAbilityCallbacks::SneakAttackDamage(DispatcherCallbackArgs args) {
 		}
 
 		
-		auto sneakDmgDice = Dice(sneakAttackDice, 6, 0);
+		auto sneakDmgDice = Dice(sneakAttackDice, 6, sneakAttackDmgBonus);
 		if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_DEADLY_PRECISION)) {
-			sneakDmgDice = Dice(sneakAttackDice, 5, 1*sneakAttackDice);
+			sneakDmgDice = Dice(sneakAttackDice, 5, 1*sneakAttackDice + sneakAttackDmgBonus);
 		}
 		dispIo->damage.AddDamageDice(sneakDmgDice.ToPacked(), DamageType::Unspecified, 106);
 		floatSys.FloatCombatLine(args.objHndCaller, 90); // Sneak Attack!
