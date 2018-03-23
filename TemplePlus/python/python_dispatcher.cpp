@@ -276,10 +276,14 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def("add_physical_damage_res", [](DamagePacket& damPkt, int amount, int bypassingAttackPower, int damMesLine){
 			damPkt.AddPhysicalDR(amount, bypassingAttackPower, damMesLine);
 		}, "Adds physical (Slashing/Piercing/Crushing) damage resistance.")
+		.def("add_damage_bonus", [](DamagePacket& damPkt, int32_t damBonus, int bonType, int bonMesline) {
+			damPkt.AddDamageBonus(damBonus, bonType, bonMesline);  //Note:  Description string not supported now
+		}, "Adds a damage Bonus.")
 		.def("add_damage_resistance", [](DamagePacket& damPkt, int amount, int damType, int damMesLine) {
 			auto _damType = (DamageType)damType;
 			damPkt.AddDR(amount, _damType, damMesLine);
 		}, "Adds damage resistance.")
+		.def_readwrite("final_damage", &DamagePacket::finalDamage, "Final Damage Value")
 		.def_readwrite("flags", &DamagePacket::flags, "1 - maximized, 2 - empowered")
 		.def_readwrite("bonus_list", &DamagePacket::bonuses)
 		.def_readwrite("critical_multiplier", &DamagePacket::critHitMultiplier, "1 by default, gets increased by various things")
