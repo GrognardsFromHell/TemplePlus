@@ -114,6 +114,7 @@ TigInitializer::TigInitializer(HINSTANCE hInstance)
 
 	mMdfFactory = std::make_unique<gfx::MdfMaterialFactory>(*mRenderingDevice);
 	mMdfFactory->LoadReplacementSets("rules\\materials.mes");
+	mMdfFactory->LoadReplacementSets("rules\\materials_ext.mes"); // material extension file
 	mShapeRenderer2d = std::make_unique<gfx::ShapeRenderer2d>(*mRenderingDevice);
 	mShapeRenderer3d = std::make_unique<gfx::ShapeRenderer3d>(*mRenderingDevice);
 	mTextLayouter = std::make_unique<TextLayouter>(*mRenderingDevice, *mShapeRenderer2d);

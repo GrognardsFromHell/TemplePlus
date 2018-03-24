@@ -42,27 +42,9 @@
 #include "anim.h"
 
 
-const Race RACE_INVALID = (Race)32;
+const Race RACE_INVALID = (Race)0xFFFFFFFF;
 const int GENDER_INVALID = 2;
 
-enum ChargenStages : int {
-	CG_Stage_Stats = 0,
-	CG_Stage_Race,
-	CG_Stage_Gender,
-	CG_Stage_Height,
-	CG_Stage_Hair,
-	CG_Stage_Class,
-	CG_Stage_Alignment,
-	CG_Stage_Deity,
-	CG_Stage_Abilities,
-	CG_Stage_Feats,
-	CG_Stage_Skills,
-	CG_Stage_Spells,
-	CG_Stage_Portrait,
-	CG_Stage_Voice,
-
-	CG_STAGE_COUNT
-};
 
 struct PartyCreationPc
 {
@@ -302,6 +284,26 @@ void UiPcCreation::ToggleClassRelatedStages(){
 
 
 #pragma region Class
+void UiPcCreation::HeightShow() {
+	static auto updateMinMaxHeights = temple::GetRef<void(__cdecl)(int, int)>(0x10189350);
+	auto &selPkt = CharEditorSelectionPacket();
+	auto minHeight = d20RaceSys.GetMinHeight(selPkt.raceId, (Gender)selPkt.genderId);
+	auto maxHeight = d20RaceSys.GetMaxHeight(selPkt.raceId, (Gender)selPkt.genderId);
+	updateMinMaxHeights(minHeight, maxHeight);
+
+	auto minWeight = d20RaceSys.GetMinWeight(selPkt.raceId, (Gender)selPkt.genderId);
+	auto maxWeight = d20RaceSys.GetMaxWeight(selPkt.raceId, (Gender)selPkt.genderId);
+	temple::GetRef<int>(0x10C42E24) = minWeight;
+	temple::GetRef<int>(0x10C42E08) = maxWeight;
+	static auto updateCharHeight = temple::GetRef<void(__cdecl)()>(0x10189530);
+	updateCharHeight();
+
+	auto wndId = temple::GetRef<LgcyWidgetId>(0x10C43160);
+	uiManager->SetHidden(wndId, false);
+	uiManager->BringToFront(wndId);
+	
+}
+
 BOOL UiPcCreation::ClassSystemInit(UiSystemConf & conf){
 	if (textureFuncs.RegisterTexture("art\\interface\\pc_creation\\buttonbox.tga", &buttonBox))
 		return 0;
@@ -2736,7 +2738,8 @@ void UiPcCreation::HairUpdate(){
 		hairStyle.style = selPkt.hairStyle;
 		
 		auto critter = GetEditedChar();
-		objSystem->GetObject(critter)->SetInt32(obj_f_critter_hair_style, hairStyle.Pack());
+		auto hairPacked = hairStyle.Pack();
+		objSystem->GetObject(critter)->SetInt32(obj_f_critter_hair_style, hairPacked);
 		critterSys.UpdateModelEquipment(critter);
 	}
 }
@@ -3200,7 +3203,8 @@ int UiPcCreation::GetNewLvl(Stat classEnum) {
 
 int UiPcCreation::GetProtoIdByRaceGender(Race race, int genderId)
 {
-	return obj_t_pc*1000 + 1 + 2*race - genderId;
+	auto raceProto = d20RaceSys.GetProtoId(race);
+	return raceProto + (1 - genderId);
 }
 
 
@@ -3221,45 +3225,30 @@ int &UiPcCreation::GetDeityBtnId(int deityId){
 
 #pragma region Race
 
-RaceChargen::RaceChargen(const UiSystemConf & conf) :ChargenSystem() {
-	
+RaceChargen::RaceChargen(const UiSystemConf & conf) : ChargenSystem(){
+	mStage = ChargenStages::CG_Stage_Race;
 	SystemInit(&conf);
 }
 
 BOOL RaceChargen::SystemInit(const UiSystemConf *conf){
 	ChargenSystem::SystemInit(conf);
 	WidgetsInit(conf->width, conf->height);
-
 	return TRUE;
 }
 
 bool RaceChargen::WidgetsInit(int w, int h){
 
-	mWnd = make_unique<WidgetContainer>(431, 250);
-	auto wndX = 219 + (w - 788) / 2, wndY = 50;
-	wndY += (h <= 600) ? 12 : ((h - 497) / 2);
+	mWnd->SetSize({ 431, 250 });
+	auto wndX = 219 + ((w - 788) / 2);
+	auto wndY = 50  + ((h <= 600) ? 12 : ((h - 497) / 2));
 	mWnd->SetPos(wndX, wndY);
 	
-	auto stateTitle = make_unique<WidgetText>();
-	stateTitle->SetX(4); stateTitle->SetY(4);
-	stateTitle->SetFixedHeight(14);
-	stateTitle->SetCenterVertically(true);
-	if (modSupport.IsCo8()){
-		stateTitle->SetStyle(widgetTextStyles->GetTextStyle("priory-title"));
-	}
-	else{
-		stateTitle->SetStyle(widgetTextStyles->GetTextStyle("arial-10-title-text"));
-		stateTitle->SetFixedHeight(14);
-	}
-	auto &stateTitles = temple::GetRef<const char*[14]>(0x10BDAE28);
-	stateTitle->SetText(stateTitles[ChargenStages::CG_Stage_Race]);
-	mWnd->AddContent(std::move(stateTitle));
-
+	// Race Buttons
 	auto x = 156, y = 24;
 	for (auto it: d20RaceSys.vanillaRaceEnums){
 		auto newBtn = make_unique<ChargenPagedButton>();
-		auto race = (Race)it;
-		auto raceName = toupper(d20Stats.GetRaceName(race));
+		auto race = (RaceBase)it;
+		auto raceName = toupper(d20Stats.GetRaceName((Race)race));
 		newBtn->SetPos(x, y);
 		
 		newBtn->SetText(raceName);
@@ -3267,16 +3256,18 @@ bool RaceChargen::WidgetsInit(int w, int h){
 		newBtn->SetPageDatum(0, it);
 		auto &pbtn = *newBtn;
 		newBtn->SetClickHandler([&](){
-			auto race = (Race)pbtn.GetDatum();
+			auto raceBase = (RaceBase)pbtn.GetDatum();
+			auto race = (Race)raceBase;
 			if (helpSys.IsClickForHelpActive()){
 				helpSys.PresentWikiHelp(101 + race);
 				return;
 			}
 			auto &selPkt = uiPcCreation.GetCharEditorSelPacket();
-			selPkt.raceId = race;
+			selPkt.raceId = (Race)race;
 			UpdateDescriptionBox();
 			uiPcCreation.ResetNextStages(ChargenStages::CG_Stage_Race);
 			UpdateActiveRace();
+
 		});
 		newBtn->SetMouseMsgHandler([=](const TigMouseMsg&msg){
 			return true;
@@ -3299,6 +3290,57 @@ bool RaceChargen::WidgetsInit(int w, int h){
 		y += 29;
 	}
 	
+	// Subrace Buttons
+	x = 306; y = 24;
+	for (auto it : {0,1,2,3,4,5,6}) {
+		auto newBtn = make_unique<ChargenPagedButton>();
+		auto race = (Race)it;
+		auto raceName = toupper(d20Stats.GetRaceName(race));
+		newBtn->SetPos(x, y);
+
+		if (it == 0){
+			newBtn->SetText("COMMON");
+		} else
+			newBtn->SetText("SUBRACE");
+		
+		newBtn->SetPageText(0, raceName);
+		newBtn->SetPageDatum(0, it);
+		auto &pbtn = *newBtn;
+		newBtn->SetClickHandler([&]() {
+			auto race = (Race)pbtn.GetDatum();
+			if (helpSys.IsClickForHelpActive()) {
+				helpSys.PresentWikiHelp(101 + race);
+				return;
+			}
+			auto &selPkt = uiPcCreation.GetCharEditorSelPacket();
+			selPkt.raceId = race;
+			UpdateDescriptionBox();
+			uiPcCreation.ResetNextStages(ChargenStages::CG_Stage_Race);
+			UpdateActiveRace();
+		});
+		newBtn->SetMouseMsgHandler([=](const TigMouseMsg&msg) {
+			return true;
+		});
+		newBtn->SetWidgetMsgHandler([&](const TigMsgWidget &msg) {
+			auto race = (Race)pbtn.GetDatum();
+			if (msg.widgetEventType == TigMsgWidgetEvent::Entered) {
+				SetScrollboxText(race);
+				return true;
+			}
+			if (msg.widgetEventType == TigMsgWidgetEvent::Exited) {
+				UpdateScrollbox();
+				return true;
+			}
+			return true;
+		});
+		newBtn->SetActivationState(ChargenBigButton::ChargenButtonActivationState::Active);
+		newBtn->Hide();
+		mSubraceBtns.push_back(newBtn->GetWidgetId());
+
+		mWnd->Add(std::move(newBtn));
+		y += 29;
+	}
+
 	mWnd->Hide();
 
 	return true;
@@ -3306,6 +3348,7 @@ bool RaceChargen::WidgetsInit(int w, int h){
 
 void RaceChargen::Reset(CharEditorSelectionPacket & charSpec) {
 	charSpec.raceId = RACE_INVALID;
+	UpdateSubraceButtons((RaceBase)RACE_INVALID);
 }
 
 BOOL RaceChargen::CheckComplete(){
@@ -3332,7 +3375,16 @@ void RaceChargen::UpdateScrollbox()
 void RaceChargen::UpdateActiveRace()
 {
 	auto &selPkt = uiPcCreation.GetCharEditorSelPacket();
+	auto raceBase = d20RaceSys.GetBaseRace(selPkt.raceId);
+	UpdateSubraceButtons(raceBase);
+
 	for (auto it: mBigButtons){
+		auto btn = dynamic_cast<ChargenPagedButton*>(uiManager->GetAdvancedWidget(it));
+		if (!btn) continue;
+		auto isActive = raceBase == btn->GetDatum();
+		btn->SetActive(isActive);
+	}
+	for (auto it: mSubraceBtns){
 		auto btn = dynamic_cast<ChargenPagedButton*>(uiManager->GetAdvancedWidget(it));
 		if (!btn) continue;
 		auto isActive = selPkt.raceId == btn->GetDatum();
@@ -3340,12 +3392,51 @@ void RaceChargen::UpdateActiveRace()
 	}
 }
 
+void RaceChargen::UpdateSubraceButtons(RaceBase raceBase)
+{
+	auto race = (Race)raceBase;
+	for (auto it: mSubraceBtns){
+		auto subraceBtn = (ChargenPagedButton*)uiManager->GetAdvancedWidget(it);
+		subraceBtn->Hide();
+	}
+
+	if (raceBase == RACE_INVALID)
+		return;
+
+	if (!d20RaceSys.HasSubrace(race))
+		return;
+	
+	auto subraceBtn = (ChargenPagedButton*)uiManager->GetAdvancedWidget(mSubraceBtns[0]);
+	subraceBtn->SetPageDatum(0, raceBase);
+	subraceBtn->Show();
+
+
+	auto &subraces = d20RaceSys.GetSubraces(raceBase);
+	auto i = 1;
+	for (auto it : subraces) {
+		auto subrace = it;
+		auto subraceBtn = (ChargenPagedButton*)uiManager->GetAdvancedWidget(mSubraceBtns[i]);
+		subraceBtn->SetPageDatum(0, it);
+		auto raceName = toupper(d20Stats.GetRaceName(subrace));
+		subraceBtn->SetText(raceName);
+		subraceBtn->Show();
+		i++;
+	}
+
+	
+}
+
 #pragma endregion
 
 ClassChargen::ClassChargen(const UiSystemConf & conf){
 }
 
+
 BOOL ChargenSystem::SystemInit(const UiSystemConf *) {
+
+	mWnd = make_unique<WidgetContainer>(431, 250);
+
+	MakeStateTitle();
 	return TRUE;
 }
 
@@ -3401,4 +3492,22 @@ void ChargenSystem::UpdateDescriptionBox() {
 	rect.y = (16 - met.height) / 2 + 28;
 	rect.height = met.height;
 	rect.width = met.width;
+}
+
+void ChargenSystem::MakeStateTitle()
+{
+	auto stateTitle = make_unique<WidgetText>();
+	stateTitle->SetX(4); stateTitle->SetY(4);
+	stateTitle->SetFixedHeight(14);
+	stateTitle->SetCenterVertically(true);
+	if (modSupport.IsCo8()) {
+		stateTitle->SetStyle(widgetTextStyles->GetTextStyle("priory-title"));
+	}
+	else {
+		stateTitle->SetStyle(widgetTextStyles->GetTextStyle("arial-10-title-text"));
+		stateTitle->SetFixedHeight(14);
+	}
+	auto &stateTitles = temple::GetRef<const char*[14]>(0x10BDAE28);
+	stateTitle->SetText(stateTitles[mStage]);
+	mWnd->AddContent(std::move(stateTitle));
 }

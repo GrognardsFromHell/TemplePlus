@@ -11,6 +11,7 @@
 #include <tig/tig_tokenizer.h>
 #include "weapon.h"
 #include "dungeon_master.h"
+#include "d20_race.h"
 
 class ProtosHooks : public TempleFix{
 public: 
@@ -19,6 +20,7 @@ public:
 	static int ParseCondition(int colIdx, objHndl handle, char* content, int condIdx, int stage, int unused, int unused2);
 	static int ParseMonsterSubcategory(int colIdx, objHndl handle, char* content, obj_f field, int arrayLen, char** strings);
 	static int ParseType(int colIdx, objHndl handle, char* content, obj_f field, int arrayLen, char** strings);
+	static int ParseRace(int colIdx, objHndl handle, char* content, obj_f field, int arrayLen, char** strings);
 
 	void apply() override 
 	{
@@ -57,7 +59,7 @@ public:
 		// Hook the generic ParseType function
 		replaceFunction<int(__cdecl)(int, objHndl, char*, obj_f, int, char**)>(0x10039680, ParseType);
 
-		
+		replaceFunction<int(__cdecl)(int, objHndl, char*, obj_f, int, char**)>(0x10039B40, ParseRace);
 	}
 } protosHooks;
 
@@ -370,4 +372,13 @@ int ProtosHooks::ParseType(int colIdx, objHndl handle, char * content, obj_f fie
 
 	
 	return foundType ? TRUE : FALSE;
+}
+
+int ProtosHooks::ParseRace(int colIdx, objHndl handle, char * content, obj_f field, int arrayLen, char ** strings)
+{
+	if (content && *content){
+		auto race = d20RaceSys.GetRaceEnum(content);
+		objSystem->GetObject(handle)->SetInt32(field, race);
+	}
+	return 1;
 }

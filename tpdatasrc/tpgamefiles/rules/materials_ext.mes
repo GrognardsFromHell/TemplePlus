@@ -1,0 +1,36 @@
+// Each material swap is allocated into banks of 100
+// where each offset into that 100 is a different creature
+// type. Known creature types are:
+
+//  14 - Drow Male
+//  15 - Drow Female
+
+// The material banks below 1000 are reserved for the
+// naked (or nonexistant) version of the item. These
+// are swapped in whenever an item is removed.
+
+// BASE PC SKIN
+
+// 000 - 099: no helmet
+
+{014}{HEAD:art\meshes\PCs\PC_Drow_Male\drow_head.mdf}
+{015}{HEAD:art\meshes\PCs\PC_Drow_Female\female_drow_head.mdf}
+
+
+// 200 - 299: no gloves
+
+{214}{GLOVES:art\meshes\PCs\PC_Drow_Male\drow_hands.mdf}
+{215}{GLOVES:art\meshes\PCs\PC_Drow_Female\female_drow_hands.mdf}
+
+
+// 500 - 599: no armor
+
+
+{514}{CHEST:art\meshes\PCs\PC_Drow_Male\drow_chest.mdf}
+{515}{CHEST:art\meshes\PCs\PC_Drow_Female\female_drow_chest.mdf}
+
+
+// 800 - 899: no boots
+
+{814}{BOOTS:art\meshes\PCs\PC_Drow_Male\drow_feet.mdf}
+{815}{BOOTS:art\meshes\PCs\PC_Drow_Female\female_drow_feet.mdf}

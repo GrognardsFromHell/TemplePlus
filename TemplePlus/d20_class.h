@@ -6,8 +6,6 @@
 #include "skill.h"
 #include "obj.h"
 
-//#include <EASTL/hash_map.h>
-
 
 enum BardicMusicSongType : int {
 	BM_INSPIRE_COURAGE = 1,

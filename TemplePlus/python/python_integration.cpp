@@ -244,6 +244,53 @@ std::map<int, std::vector<int>> PythonIntegration::RunScriptMapResult(ScriptId s
 	return result;
 }
 
+std::vector<int> PythonIntegration::RunScriptVectorResult(ScriptId scriptId, EventId evt, PyObject * args)
+{
+	auto result = std::vector<int>();
+	ScriptRecord script;
+	if (!LoadScript(scriptId, script)) {
+		return result;
+	}
+
+	auto dict = PyModule_GetDict(script.module);
+	auto eventName = GetFunctionName(evt);
+	auto callback = PyDict_GetItemString(dict, eventName);
+
+	if (!callback || !PyCallable_Check(callback)) {
+		logger->error("Script {} attached as {} is missing the corresponding function.",
+			script.filename, eventName);
+		return result;
+	}
+
+	auto resultObj = PyObject_CallObject(callback, args);
+
+	if (!resultObj) {
+		logger->error("An error occurred while calling event {} for script {}.", eventName, script.filename);
+		PyErr_Print();
+		return result;
+	}
+
+	if (!PyList_Check(resultObj)){
+		return result;
+	}
+
+	PyObject *pyvalue;
+	Py_ssize_t pos = 0;
+
+	auto listSize = PyList_Size(resultObj);
+	for (auto i=0; i < listSize; i++){
+		pyvalue = PyList_GetItem(resultObj, i);
+		if (!PyInt_Check(pyvalue)){
+			logger->warn("RunScriptVectorResult: Invalid python value");
+			continue;
+		}
+		result.push_back(PyInt_AsLong(pyvalue));
+	}
+
+	Py_DECREF(resultObj);
+	return result;
+}
+
 bool PythonIntegration::LoadScript(int scriptId, ScriptRecord &scriptOut) {
 	auto it = mScripts.find(scriptId);
 	if (it == mScripts.end()) {

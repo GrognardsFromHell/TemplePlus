@@ -11,6 +11,25 @@ struct UiSystemConf;
 class CombinedImgFile;
 class LgcyChargenSystem;
 
+enum ChargenStages : int {
+	CG_Stage_Stats = 0,
+	CG_Stage_Race,
+	CG_Stage_Gender,
+	CG_Stage_Height,
+	CG_Stage_Hair,
+	CG_Stage_Class,
+	CG_Stage_Alignment,
+	CG_Stage_Deity,
+	CG_Stage_Abilities,
+	CG_Stage_Feats,
+	CG_Stage_Skills,
+	CG_Stage_Spells,
+	CG_Stage_Portrait,
+	CG_Stage_Voice,
+
+	CG_STAGE_COUNT
+};
+
 class ChargenSystem {
 	friend class PcCreationHooks;
 public:
@@ -28,12 +47,17 @@ public:
 
 	static void UpdateDescriptionBox(); // updates the description of the character being created
 
+	ChargenSystem(){};
+
 protected:
 	
 
 	virtual bool WidgetsInit(int w, int h) { return true; };
 	std::unique_ptr<WidgetContainer> mWnd;
 	eastl::vector<LgcyWidgetId> mBigButtons;
+
+	ChargenStages mStage;
+	void MakeStateTitle();
 };
 
 
@@ -44,16 +68,20 @@ public:
 	static constexpr auto Name = "chargen_race";
 	RaceChargen(const UiSystemConf & conf);
 
-	virtual std::string GetName() { return "Chargen: Race"; };
+	virtual std::string GetName() { return "Chargen: Race"; }
+	
 	
 	virtual BOOL SystemInit(const UiSystemConf *) override;
 	virtual bool WidgetsInit(int w, int h) override;
 	virtual void Reset(CharEditorSelectionPacket & charSpec) override;
 	virtual BOOL CheckComplete() override; // checks if the char editing stage is complete (thus allowing you to move on to the next stage). This is checked at every render call.
 protected:
+	eastl::vector<LgcyWidgetId> mSubraceBtns;
+
 	static void SetScrollboxText(Race race);
 	static void UpdateScrollbox();
 	void UpdateActiveRace();
+	void UpdateSubraceButtons(RaceBase raceBase);
 };
 
 class ClassChargen : ChargenSystem, PagianatedChargenSystem
@@ -66,6 +94,8 @@ public:
 	virtual void Reset(CharEditorSelectionPacket & charSpec) override {
 
 	};
+protected:
+	
 };
 
 class UiPcCreationSys : public UiSystem {
@@ -123,6 +153,9 @@ public:
 	void ToggleClassRelatedStages(); // Spell Selection and Class Features
 
 #pragma region Systems
+
+	// Height
+	void HeightShow();
 
 	// Class
 	BOOL ClassSystemInit(UiSystemConf & conf);
@@ -232,6 +265,7 @@ public:
 	BOOL SpellsAvailableEntryBtnMsg(int widId, TigMsg* msg);
 	void SpellsAvailableEntryBtnRender(int widId);
 	
+
 #pragma endregion
 
 

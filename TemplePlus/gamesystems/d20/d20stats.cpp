@@ -32,6 +32,9 @@ class D20StatsHooks : public TempleFix{
 		replaceFunction<const char*(Race)>(0x10073A50, [](Race race)->const char*{
 			return d20Stats.GetRaceName(race);
 		});
+		replaceFunction<const char*(Race)>(0x10073AB0, [](Race race)->const char* {
+			return d20Stats.GetRaceShortDesc(race);
+		});
 		replaceFunction<const char*(Stat)>(0x10073AE0, [](Stat stat)->const char* {
 			return d20Stats.GetClassShortDesc(stat);
 		});
@@ -147,6 +150,16 @@ const char * D20StatsSystem::GetRaceName(Race race) {
 	mesFuncs.GetLine_Safe(statMesExt, &line);
 	return line.value;
 
+}
+
+const char * D20StatsSystem::GetRaceShortDesc(Race race)
+{
+	MesLine line(12000 + race);
+	if (race <= VANILLA_NUM_RACES)
+		mesFuncs.GetLine_Safe(statMes, &line);
+	else
+		mesFuncs.GetLine_Safe(statMesExt, &line);
+	return line.value;
 }
 
 const char * D20StatsSystem::GetGenderName(int genderId) {

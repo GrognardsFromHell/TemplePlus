@@ -712,6 +712,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 	py::class_<DispIoTypeImmunityTrigger, DispIO>(m, "EventObjImmunityTrigger", "Used for triggering the immunity handling query")
 		.def_readwrite("should_perform_immunity_check", &DispIoTypeImmunityTrigger::interrupt)
 		.def_readwrite("immunity_key", &DispIoTypeImmunityTrigger::SDDKey1)
+		//.def()
 		; // TODO
 
 	py::class_<DispIoImmunity, DispIO>(m, "EventObjImmunityQuery", "Used for performing the immunity handling")

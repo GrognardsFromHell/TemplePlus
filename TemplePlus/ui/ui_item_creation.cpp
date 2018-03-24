@@ -38,6 +38,7 @@
 #include "ui_systems.h"
 #include <infrastructure/tabparser.h>
 #include "ui_assets.h"
+#include "d20_race.h"
 
 #define NUM_ITEM_ENHANCEMENT_SPECS 41
 #define NUM_APPLIED_BONUSES_MAX 9 // number of bonuses that can be applied on item creation
@@ -1848,7 +1849,7 @@ bool UiItemCreation::ItemCreationRulesParseReqText(objHndl crafter, const char *
 
 	// Race
 	if (firstChar == 'R'){
-		auto raceEnum = temple::GetRef<Race(__cdecl)(const char*)>(0x10073B70)(reqTxt + 1);
+		auto raceEnum = d20RaceSys.GetRaceEnum(reqTxt + 1);
 		return objects.StatLevelGet(crafter, stat_race) == raceEnum;
 	}
 

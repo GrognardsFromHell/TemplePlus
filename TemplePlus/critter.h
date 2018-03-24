@@ -77,10 +77,10 @@ struct HairStyle {
 
 	uint32_t Pack() const {
 		return ((int)race & 7)
-			| ((int)gender) & 1 << 3
-			| ((int)size) & 3 << 10
-			| style & 7 << 4
-			| color & 7 << 7;
+			| (((int)gender) & 1) << 3
+			| (((int)size) & 3) << 10
+			| (style & 7) << 4
+			| (color & 7) << 7;
 	}
 };
 
@@ -244,7 +244,7 @@ struct LegacyCritterSystem : temple::AddressTable
 
 	int SkillLevel(objHndl critter, SkillEnum skill);
 
-	Race GetRace(objHndl critter);
+	Race GetRace(objHndl critter, bool getBaseRace = true);
 
 	Gender GetGender(objHndl critter);
 
@@ -352,7 +352,7 @@ struct LegacyCritterSystem : temple::AddressTable
 
 
 private:
-	int GetModelRaceOffset(objHndl obj);
+	int GetModelRaceOffset(objHndl obj, bool useBaseRace = true);
 	void UpdateAddMeshes(objHndl obj);
 	void ApplyReplacementMaterial(gfx::AnimatedModelPtr model, int mesId);
 

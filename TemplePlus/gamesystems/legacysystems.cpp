@@ -28,6 +28,7 @@
 #include "legacymapsystems.h"
 #include "infrastructure/meshes.h"
 #include "turn_based.h"
+#include "d20_race.h"
 
 
 //*****************************************************************************
@@ -825,6 +826,7 @@ D20System::D20System(const GameSystemConf &config) {
 	conds.RegisterNewConditions();
 	d20ClassSys.GetClassSpecs();
 	d20LevelSys.GenerateSpellsPerLevelTables();
+	d20RaceSys.GetRaceSpecsFromPython();
 	damage.Init();
 	d20Sys.GetPythonActionSpecs();
 }

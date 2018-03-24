@@ -26,6 +26,7 @@
 #include "python_integration_feat.h"
 
 #include <pybind11/embed.h>
+#include "python_integration_race.h"
 
 namespace py = pybind11;
 
@@ -95,6 +96,7 @@ static bool __cdecl PythonInit(GameSystemConf *conf) {
 	// don't forget PyTempleImporter_Install (when adding new python integrations, for example...)
 	pythonObjIntegration.LoadScripts();
 	pySpellIntegration.LoadScripts();
+	pythonRaceIntegration.LoadScripts();
 	pythonClassIntegration.LoadScripts();
 	pythonD20ActionIntegration.LoadScripts(); 
 	pyFeatIntegration.LoadScripts();
@@ -119,6 +121,7 @@ static void __cdecl PythonReset() {
 static void __cdecl PythonExit() {
 	pythonObjIntegration.UnloadScripts();
 	pySpellIntegration.UnloadScripts();
+	pythonRaceIntegration.UnloadScripts();
 	pythonClassIntegration.UnloadScripts();
 	pythonD20ActionIntegration.UnloadScripts();
 

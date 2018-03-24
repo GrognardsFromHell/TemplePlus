@@ -112,5 +112,5 @@ protected:
 
 class ChargenPagedButton : public ChargenBigButton, public IPagedButton
 {
-
+	
 };

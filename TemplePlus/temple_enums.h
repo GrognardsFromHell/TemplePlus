@@ -2238,6 +2238,27 @@ enum Alignment : uint32_t {
 	ALIGNMENT_CHAOTIC_EVIL = 10,
 };
 
+enum RaceBase
+{
+	race_base_human = 0,
+	race_base_dwarf = 1,
+	race_base_elf = 2,
+	race_base_gnome = 3,
+	race_base_halfelf = 4,
+	race_base_half_elf = 4,
+	race_base_halforc = 5,
+	race_base_half_orc = 5,
+	race_base_halfling = 6,
+
+	race_base_goblin = 7,
+	race_base_bugbear = 8,
+	race_base_gnoll = 9,
+	race_base_hill_giant = 10,
+	race_base_troll = 11,
+	race_base_hobgoblin = 12,
+	race_base_lizardman = 13,
+};
+
 enum Race : uint32_t
 {
 	race_human = 0,
@@ -2249,6 +2270,14 @@ enum Race : uint32_t
 	race_halforc = 5,
 	race_half_orc = 5,
 	race_halfling = 6,
+
+	race_goblin = 7,
+	race_bugbear = 8,
+	race_gnoll = 9,
+	race_hill_giant = 10,
+	race_troll = 11,
+	race_hobgoblin = 12,
+	race_lizardman = 13,
 
 	// Dwarf subraces
 	race_deep_dwarf = 1,

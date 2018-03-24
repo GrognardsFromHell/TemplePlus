@@ -126,6 +126,7 @@
     <ClCompile Include="python\python_dispatcher.cpp" />
     <ClCompile Include="python\python_integration_d20_action.cpp" />
     <ClCompile Include="python\python_integration_feat.cpp" />
+    <ClCompile Include="python\python_integration_race.cpp" />
     <ClCompile Include="raycast.cpp" />
     <ClCompile Include="obj_hooks.cpp" />
     <ClCompile Include="particles.cpp" />
@@ -346,6 +347,7 @@
     <ClInclude Include="python\python_integration_class_spec.h" />
     <ClInclude Include="python\python_integration_d20_action.h" />
     <ClInclude Include="python\python_integration_feat.h" />
+    <ClInclude Include="python\python_integration_race.h" />
     <ClInclude Include="rng.h" />
     <ClInclude Include="tig\tig_console.h" />
     <ClInclude Include="tig\tig_keyboard.h" />

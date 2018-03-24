@@ -7,7 +7,7 @@
 #include "d20_obj_registry.h"
 #include "gamesystems/objects/objsystem.h"
 #include <gamesystems/gamesystems.h>
-
+#include "d20_race.h"
 
 
 D20StatusSystem d20StatusSys;
@@ -22,10 +22,9 @@ void D20StatusSystem::initRace(objHndl objHnd)
 			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionMonsterUndead);
 		}
 
-		static std::vector<std::string> raceCondNames = {"Human", "Dwarf", "Elf", "Gnome", "Halfelf", "Halforc", "Halfling"};
-
-		uint32_t objRace = critterSys.GetRace(objHnd);
-		_ConditionAddToAttribs_NumArgs0(dispatcher, conds.GetByName(raceCondNames[objRace]));
+		auto race = critterSys.GetRace(objHnd, false);
+		auto raceCond = d20RaceSys.GetRaceCondition(race);
+		_ConditionAddToAttribs_NumArgs0(dispatcher, conds.GetByName(raceCond));
 
 		if (critterSys.IsSubtypeFire(objHnd))
 		{

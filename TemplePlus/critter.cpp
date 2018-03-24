@@ -31,6 +31,7 @@
 #include "ui/ui_legacysystems.h"
 #include "rng.h"
 #include "weapon.h"
+#include "d20_race.h"
 
 static struct CritterAddresses : temple::AddressTable {
 
@@ -756,8 +757,12 @@ int LegacyCritterSystem::SkillLevel(objHndl critter, SkillEnum skill){
 	return dispatch.dispatch1ESkillLevel(critter, skill, nullptr, critter, 1);
 }
 
-Race LegacyCritterSystem::GetRace(objHndl critter) {
-	return (Race)objects.StatLevelGet(critter, stat_race);
+Race LegacyCritterSystem::GetRace(objHndl critter, bool getBaseRace) {
+	auto race = objects.StatLevelGet(critter, stat_race);
+	if (!getBaseRace){
+		race += objects.StatLevelGet(critter, stat_subrace) << 5;
+	}
+	return (Race)race;
 }
 
 Gender LegacyCritterSystem::GetGender(objHndl critter) {
@@ -786,7 +791,7 @@ gfx::EncodedAnimId LegacyCritterSystem::GetAnimId(objHndl critter, gfx::WeaponAn
 	return gfx::EncodedAnimId(rawAnimId);
 }
 
-int LegacyCritterSystem::GetModelRaceOffset(objHndl obj)
+int LegacyCritterSystem::GetModelRaceOffset(objHndl obj, bool useBaseRace)
 {
 	// Meshes above 1000 are monsters, they dont get a creature type
 	auto meshId = objects.getInt32(obj, obj_f_base_mesh);
@@ -794,43 +799,16 @@ int LegacyCritterSystem::GetModelRaceOffset(objHndl obj)
 		return -1;
 	}
 
-	auto race = GetRace(obj);
+	auto race = GetRace(obj, useBaseRace);
 	auto gender = GetGender(obj);
 	bool isMale = (gender == Gender::Male);
 
 	/*
-		The following table comes from materials.mes, where
+		The following table comes from materials.mes (or materials_ext.mes), where
 		the offsets into the materials and addmesh table are listed.
 	*/
-	int result;
-	switch (race)
-	{
-	case race_human:
-		result = (isMale ? 0 : 1);
-		break;
-	case race_elf:
-		result = (isMale ? 2 : 3);
-		break;
-	case race_halforc:
-		result = (isMale ? 4 : 5);
-		break;
-	case race_dwarf:
-		result = (isMale ? 6 : 7);
-		break;
-	case race_gnome:
-		result = (isMale ? 8 : 9);
-		break;
-	case race_halfelf:
-		result = (isMale ? 10 : 11);
-		break;
-	case race_halfling:
-		result = (isMale ? 12 : 13);
-		break;
-	default:
-		result = 0;
-		break;
-	}
-
+	int result = d20RaceSys.GetRaceMaterialOffset(race) + (isMale? 0:1);
+	
 	return result;
 }
 
@@ -1092,7 +1070,7 @@ void LegacyCritterSystem::UpdateModelEquipment(objHndl obj)
 {
 
 	UpdateAddMeshes(obj);
-	auto raceOffset = GetModelRaceOffset(obj);
+	auto raceOffset = GetModelRaceOffset(obj, false);
 	if (raceOffset == -1) {
 		return;
 	}
@@ -1115,7 +1093,9 @@ void LegacyCritterSystem::UpdateModelEquipment(objHndl obj)
 	ApplyReplacementMaterial(model, 500 + raceOffset); // Armor
 	ApplyReplacementMaterial(model, 800 + raceOffset); // Boots
 	
+
 	// Now apply it for the actual equipment
+	raceOffset = GetModelRaceOffset(obj, true); // use base race for equipment because holy crap ToEE has an entry for each race!!!
 	for (uint32_t slotId = 0; slotId < (uint32_t)EquipSlot::Count; ++slotId) {
 		auto slot = (EquipSlot) slotId;
 		auto item = GetWornItem(obj, slot);

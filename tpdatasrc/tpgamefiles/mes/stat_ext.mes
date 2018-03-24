@@ -138,10 +138,25 @@
 
 // Race Names Go Between 2000-2999
 
+{2033}{Deep Dwarf}
+{2034}{Aquatic Elf}
+{2035}{Svirfneblin}
+{2038}{Tallfellow}
+{2065}{Derro}
+{2066}{Drow}
+{2067}{Forest Gnome}
+{2070}{Deep Halfling}
+{2097}{Duergar}
+{2098}{Gray Elf}
+{2129}{Mountain Dwarf}
+{2130}{Wild Elf}
+{2162}{Wood Elf}
+
 // Race Abbreviations Go Between 3000-3999
 
 
 // Race Short Help Goes Between 12000-12999
+{12066} Drow {Drow are a depraved and evil subterranean offshoot, their chief deity is Lolth, and their favored class is Cleric (females) and Wizard (males). In addition to elven racial traits, the Drow feature: +2 Intelligence, +2 Charisma, Spell Resistance equal to 11 + class levels, and +2 on Will saves against spells and spell-like effects.}
 
 // Class Short Help Goes Between 13000-13099
 {13011}Arcane Archer{The arcane archer is an Elven warrior skilled in using magic to supplement their combat prowess.

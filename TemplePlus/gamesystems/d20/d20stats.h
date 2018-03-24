@@ -37,6 +37,7 @@ public:
 	const char* GetClassShortDesc(Stat stat) const;
 	const char* GetAlignmentName(Alignment alignment);
 	const char* GetRaceName(Race race);
+	const char* GetRaceShortDesc(Race race);
 	const char* GetGenderName(int genderId);
 	const char* GetCannotPickClassHelp(Stat stat) const;
 
