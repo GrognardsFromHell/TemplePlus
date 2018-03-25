@@ -492,6 +492,7 @@
       <Filter>ui</Filter>
     </ClCompile>
     <ClCompile Include="python\python_integration_race.cpp" />
+    <ClCompile Include="ui\ui_chargen.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />

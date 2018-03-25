@@ -2248,7 +2248,7 @@ race_mountain_dwarf = 3
 race_halfelf = 4
 race_aquatic_elf = 4
 race_halforc = 5
-race_drow = 5
+race_drow = 66
 race_halfling = 6
 race_gray_elf = 6
 race_wild_elf = 7
@@ -2257,6 +2257,8 @@ race_svirfneblin = 9
 race_forest_gnome = 10
 race_tallfellow = 11
 race_deep_halfling = 12
+
+race_troll = 11
 
 san_dialog = 9
 san_first_heartbeat = 10

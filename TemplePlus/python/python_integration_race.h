@@ -44,7 +44,7 @@ public:
 	int GetProtoId(int raceEnum);
 
 	int GetInt(int raceEnum, RaceSpecFunc specType, int defaultVal = 0);
-	
+	int GetLevelModifier(int raceEnum);
 
 
 protected:

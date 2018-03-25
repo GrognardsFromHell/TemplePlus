@@ -213,7 +213,7 @@ public:
 	bool HandleMessage(const TigMsg &msg);
 
 	void SetDisabled(bool disabled) {
-		mDisabled = true;
+		mDisabled = disabled;
 	}
 	bool IsDisabled() const {
 		return mDisabled;

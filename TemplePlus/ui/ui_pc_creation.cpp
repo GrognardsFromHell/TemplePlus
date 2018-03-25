@@ -286,7 +286,7 @@ void UiPcCreation::ToggleClassRelatedStages(){
 #pragma region Class
 void UiPcCreation::HeightShow() {
 	static auto updateMinMaxHeights = temple::GetRef<void(__cdecl)(int, int)>(0x10189350);
-	auto &selPkt = CharEditorSelectionPacket();
+	auto &selPkt = uiPcCreation.GetCharEditorSelPacket();
 	auto minHeight = d20RaceSys.GetMinHeight(selPkt.raceId, (Gender)selPkt.genderId);
 	auto maxHeight = d20RaceSys.GetMaxHeight(selPkt.raceId, (Gender)selPkt.genderId);
 	updateMinMaxHeights(minHeight, maxHeight);
@@ -3242,18 +3242,25 @@ bool RaceChargen::WidgetsInit(int w, int h){
 	auto wndX = 219 + ((w - 788) / 2);
 	auto wndY = 50  + ((h <= 600) ? 12 : ((h - 497) / 2));
 	mWnd->SetPos(wndX, wndY);
+
+	AddPageButtonsToWnd(mWnd);
+	SetPageCount(2);
 	
 	// Race Buttons
 	auto x = 156, y = 24;
 	for (auto it: d20RaceSys.vanillaRaceEnums){
 		auto newBtn = make_unique<ChargenPagedButton>();
-		auto race = (RaceBase)it;
-		auto raceName = toupper(d20Stats.GetRaceName((Race)race));
 		newBtn->SetPos(x, y);
 		
-		newBtn->SetText(raceName);
-		newBtn->SetPageText(0,raceName);
-		newBtn->SetPageDatum(0, it);
+		for (auto i= it; i < d20RaceSys.baseRaceEnums.size(); i+= 7){
+			auto race = (RaceBase)d20RaceSys.baseRaceEnums[i];
+			auto raceName = toupper(d20Stats.GetRaceName((Race)race));
+			if (i == it)
+				newBtn->SetText(raceName);
+			newBtn->SetPageText(i/7, raceName);
+			newBtn->SetPageDatum(i/7, d20RaceSys.baseRaceEnums[i]);
+		}
+		
 		auto &pbtn = *newBtn;
 		newBtn->SetClickHandler([&](){
 			auto raceBase = (RaceBase)pbtn.GetDatum();
@@ -3305,6 +3312,7 @@ bool RaceChargen::WidgetsInit(int w, int h){
 		
 		newBtn->SetPageText(0, raceName);
 		newBtn->SetPageDatum(0, it);
+
 		auto &pbtn = *newBtn;
 		newBtn->SetClickHandler([&]() {
 			auto race = (Race)pbtn.GetDatum();
@@ -3340,6 +3348,21 @@ bool RaceChargen::WidgetsInit(int w, int h){
 		mWnd->Add(std::move(newBtn));
 		y += 29;
 	}
+
+	SetPageUpdateHandler([&](){
+		for (auto it:mBigButtons){
+			auto btn = (ChargenPagedButton*)uiManager->GetAdvancedWidget(it);
+			if (!btn) continue;
+			auto curPage = GetPage();
+			if (curPage >= btn->GetPageCount() ){
+				btn->Hide();
+				continue;
+			}
+			btn->Show();
+			btn->SetPage(curPage);
+			btn->SetText(btn->GetText());
+		}
+	});
 
 	mWnd->Hide();
 

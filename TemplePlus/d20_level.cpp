@@ -6,6 +6,7 @@
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/objects/objsystem.h"
 #include "gamesystems/deity/legacydeitysystem.h"
+#include "d20_race.h"
 
 
 D20LevelSystem d20LevelSys;
@@ -65,8 +66,8 @@ uint32_t D20LevelSystem::GetLevelPacket(Stat classEnum, objHndl objHnd, uint32_t
 bool D20LevelSystem::CanLevelup(objHndl objHnd)
 {
 	auto lvl = objects.StatLevelGet(objHnd, stat_level);
-	if (d20Sys.d20Query(objHnd, DK_QUE_ExperienceExempt) || lvl >= (int)config.maxLevel)
-	{
+	auto lvlAdj = d20RaceSys.GetLevelAdjustment(objHnd);
+	if (d20Sys.d20Query(objHnd, DK_QUE_ExperienceExempt) || lvl >= (int)config.maxLevel){
 		return 0;
 	}
 	return objects.getInt32(objHnd, obj_f_critter_experience) >= xpReqTable[lvl + 1];

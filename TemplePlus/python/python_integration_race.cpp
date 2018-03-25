@@ -86,6 +86,10 @@ int PythonRaceIntegration::GetInt(int raceEnum, RaceSpecFunc specType, int defau
 	return RunScriptDefault0(raceSpecEntry->second.id, (EventId)specType, nullptr);
 }
 
+int PythonRaceIntegration::GetLevelModifier(int raceEnum){
+	return static_cast<int>(GetInt(raceEnum, RaceSpecFunc::GetLevelModifier, 0));
+}
+
 static std::map<PythonRaceIntegration::RaceSpecFunc, std::string> raceSpecFunctions = {
 	// race spec fetchers
 	{ PythonRaceIntegration::RaceSpecFunc::GetConditionName,"GetConditionName" },

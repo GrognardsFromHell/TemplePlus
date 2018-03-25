@@ -95,7 +95,7 @@ void D20RaceSys::GetRaceSpecsFromPython(){
 
 		raceSpec.flags = pythonRaceIntegration.GetRaceDefinitionFlags(it);
 		raceSpec.statModifiers = pythonRaceIntegration.GetStatModifiers(race);
-
+		raceSpec.effectiveLevel = pythonRaceIntegration.GetLevelModifier(it);
 		raceSpec.protoId = pythonRaceIntegration.GetProtoId(race);
 		raceSpec.materialOffset = pythonRaceIntegration.GetMaterialOffset(race);
 		auto minMaxHeightWeight = pythonRaceIntegration.GetMinMaxHeightWeight(race);
@@ -112,8 +112,10 @@ void D20RaceSys::GetRaceSpecsFromPython(){
 		}
 
 		
-		if (raceSpec.isBaseRace)
+		if (raceSpec.isBaseRace){
 			baseRaceEnums.push_back(it);
+		}
+			
 
 		
 		
@@ -124,6 +126,13 @@ void D20RaceSys::GetRaceSpecsFromPython(){
 		}*/
 
 	}
+
+	baseRaceEnums.insert(baseRaceEnums.end() -1, race_dwarf);
+	baseRaceEnums.insert(baseRaceEnums.end() - 1, race_elf);
+	baseRaceEnums.insert(baseRaceEnums.end() - 1, race_gnome);
+	baseRaceEnums.insert(baseRaceEnums.end() - 1, race_half_elf);
+	baseRaceEnums.insert(baseRaceEnums.end() - 1, race_half_orc);
+	baseRaceEnums.insert(baseRaceEnums.end() - 1, race_halfling);
 
 	// Compile subrace lists
 	for (auto it : mRaceSpecs){
@@ -280,6 +289,14 @@ std::string D20RaceSys::GetRaceCondition(Race race){
 
 	auto &raceSpec = GetRaceSpec(race);
 	return raceSpec.conditionName;
+}
+
+int D20RaceSys::GetLevelAdjustment(objHndl & objHnd)
+{
+	auto race = critterSys.GetRace(objHnd, false);
+	auto &raceSpec = GetRaceSpec(race);
+	auto lvlAdj = raceSpec.effectiveLevel;
+	return lvlAdj;
 }
 
 RaceSpec& D20RaceSys::GetRaceSpec(Race race){

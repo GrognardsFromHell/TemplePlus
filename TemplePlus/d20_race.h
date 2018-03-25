@@ -42,6 +42,7 @@ public:
 	float GetModelScale(Race race, int genderId);
 	int GetRaceMaterialOffset(Race race); // index into rules/material.mes  (or rules/material_ext.mes for non-vanilla races)
 	std::string GetRaceCondition(Race race);
+	int GetLevelAdjustment( objHndl& objHnd);
 
 protected:
 	RaceSpec & GetRaceSpec(Race race);

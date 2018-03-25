@@ -58,10 +58,14 @@ public:
 	//PagianatedChargenSystem(UiSystemConf & conf);
 	int GetPage() { return mWndPage; }
 	void SetPageCount(int pageCount) { mPageCount = pageCount; }
+	void SetPage(int page);
+	void AddPageButtonsToWnd( unique_ptr<WidgetContainer> &);
+	void SetPageUpdateHandler(std::function<void()> updateHandler);
 protected:
 	int mWndPage = 0;
 	int mPageCount = 0;
-	std::unique_ptr<ChargenBigButton> prevBtn, nextBtn;
+	LgcyWidgetId mPrevBtnId, mNextBtnId;
+	std::function<void()> mPageUpdateHandler;
 };
 
 class ChargenBigButton : public WidgetButton
@@ -101,6 +105,7 @@ public:
 	void SetPageDatum(int page, int datum) { pagedData[page] = datum; }
 
 	int GetPage() { return mCurPage; };
+	int GetPageCount() { return pagedData.size(); }
 	int GetDatum() { return pagedData[mCurPage]; }
 	string GetText() { return pagedText[mCurPage]; }
 

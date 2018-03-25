@@ -177,6 +177,7 @@
     <ClCompile Include="traps.cpp" />
     <ClCompile Include="tutorial.cpp" />
     <ClCompile Include="ui\ui_charegen.cpp" />
+    <ClCompile Include="ui\ui_chargen.cpp" />
     <ClCompile Include="ui\ui_debug.cpp" />
     <ClCompile Include="ui\ui_dm.cpp" />
     <ClCompile Include="ui\ui_mainmenu_wrapper.cpp" />
