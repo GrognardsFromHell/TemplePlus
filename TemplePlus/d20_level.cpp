@@ -67,6 +67,7 @@ bool D20LevelSystem::CanLevelup(objHndl objHnd)
 {
 	auto lvl = objects.StatLevelGet(objHnd, stat_level);
 	auto lvlAdj = d20RaceSys.GetLevelAdjustment(objHnd);
+	lvl += lvlAdj;
 	if (d20Sys.d20Query(objHnd, DK_QUE_ExperienceExempt) || lvl >= (int)config.maxLevel){
 		return 0;
 	}

@@ -14,6 +14,7 @@
 #include "dungeon_master.h"
 #include "gameview.h"
 #include "dialog.h"
+#include "d20_race.h"
 
 Console::Console() : mLog(1024), mCommandHistory(100), mCommandBuf(1024, '\0') {
 }
@@ -223,6 +224,7 @@ void Console::RenderCheatsMenu()
 						auto obj = gameSystems->GetObj().GetObject(handle);
 
 						auto curLvl = objects.StatLevelGet(handle, stat_level);
+						curLvl += d20RaceSys.GetLevelAdjustment(handle);
 						auto xpReq = d20LevelSys.GetXpRequireForLevel(curLvl + 1);
 
 						auto curXp = obj->GetInt32(obj_f_critter_experience);
