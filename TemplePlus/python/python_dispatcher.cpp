@@ -594,10 +594,20 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 
 	py::class_<DispIoCondStruct, DispIO>(m, "EventObjModifier", "Used for checking modifiers before applying them")
 		.def(py::init())
-		.def_readwrite("retun_val", &DispIoCondStruct::outputFlag)
+		.def_readwrite("return_val", &DispIoCondStruct::outputFlag)
 		.def_readwrite("arg1", &DispIoCondStruct::arg1, "First modifier argument")
 		.def_readwrite("arg2", &DispIoCondStruct::arg2, "Second modifier argument")
-		.def_readwrite("modifier_spec", &DispIoCondStruct::condStruct, "Modifier Spec (DO NOT ADD HOOKS FROM HERE! Due to different format for vanilla ToEE and Temple+ modifier specs.)");
+		.def_readwrite("modifier_spec", &DispIoCondStruct::condStruct, "Modifier Spec (DO NOT ADD HOOKS FROM HERE! Due to different format for vanilla ToEE and Temple+ modifier specs.)")
+		.def("is_modifier", [](DispIoCondStruct& evtObj, std::string& s)->int {
+			auto cond = conds.GetByName(s);
+			if (!cond){
+				logger->error("Unknown Modifier specified: {}", s);
+				return 0;
+			}
+			auto isEqual = evtObj.condStruct == cond;
+			return isEqual ? TRUE : FALSE;
+		}, "Used for checking condition equality. The condition to be checked against is specified by its string ID")
+		;
 
 
 	py::class_<DispIoBonusList, DispIO>(m, "EventObjBonusList", "Used for fetching ability score levels and cur/max HP")

@@ -1197,7 +1197,16 @@ PyObject* PyGame_CreateHistoryFromId(PyObject*, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+PyObject* PyGame_CreateHistoryFromPattern(PyObject*, PyObject* args) {
 
+	int patternId;
+	objHndl handle, handle2;
+	if (!PyArg_ParseTuple(args, "iO&O&:game.create_history_from_pattern", &patternId, &ConvertObjHndl, &handle, &ConvertObjHndl, &handle2)) {
+		Py_RETURN_NONE;
+	}
+	histSys.CreateRollHistoryLineFromMesfile(patternId, handle, handle2);
+	Py_RETURN_NONE;
+}
 
 
 PyObject* PyGame_WrittenUiShow(PyObject*, PyObject* args) {
@@ -1226,6 +1235,7 @@ static PyMethodDef PyGameMethods[]{
 	{ "get_wall_endpt", PySpell_SpellGetPickerEndPoint, METH_VARARGS, NULL },
 	{ "create_history_freeform", PyGame_CreateHistoryFreeform, METH_VARARGS, NULL },
 	{ "create_history_from_id", PyGame_CreateHistoryFromId, METH_VARARGS, NULL },
+	{ "create_history_from_pattern", PyGame_CreateHistoryFromPattern, METH_VARARGS, NULL },
 	{"fade_and_teleport", PyGame_FadeAndTeleport, METH_VARARGS, NULL},
 	{"fade", PyGame_Fade, METH_VARARGS, NULL},
 	{ "fnn", PyGame_FindNpcNear, METH_VARARGS, NULL },
