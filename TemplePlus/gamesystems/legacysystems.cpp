@@ -823,10 +823,11 @@ D20System::D20System(const GameSystemConf &config) {
 	if (!startup(&config)) {
 		throw TempleException("Unable to initialize game system D20");
 	}
-	conds.RegisterNewConditions();
+	d20RaceSys.GetRaceSpecsFromPython();
+	conds.RegisterNewConditions(); // also initializes tpdp and race_defs modules
+	
 	d20ClassSys.GetClassSpecs();
 	d20LevelSys.GenerateSpellsPerLevelTables();
-	d20RaceSys.GetRaceSpecsFromPython();
 	damage.Init();
 	d20Sys.GetPythonActionSpecs();
 }

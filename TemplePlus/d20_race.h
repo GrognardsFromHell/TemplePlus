@@ -15,20 +15,22 @@ public:
 	enum RaceDefinitionFlags
 	{
 		RDF_Vanilla = 1,
-		RDF_
+		RDF_Monstrous = 2,
 	};
 
 	int vanillaRaceEnums[VANILLA_NUM_RACES];
 	std::vector<int> raceEnums;
 	std::vector<int> baseRaceEnums;
 
+	// initialization
 	D20RaceSys();
-	void GetRaceSpecsFromPython(); // gets race specs from python files
+	void GetRaceSpecsFromPython();
+	void RegisterRace(const RaceSpec& spec, int raceEnum); // used by the Python layer to add a RaceSpec object to the registry
+
+
 
 	int GetStatModifier(Race race, int stat); // e.g. +2 CON for Dwarves
-
 	HairStyleRace GetHairStyle(Race race); // get racial hair style from among those available in ToEE
-
 	RaceBase GetBaseRace(Race race); // Gets base race enum from compound race ID
 	Subrace GetSubrace(Race race); // Gets subrace enum from compound race ID
 	int GetProtoId(Race race);
@@ -43,6 +45,9 @@ public:
 	int GetRaceMaterialOffset(Race race); // index into rules/material.mes  (or rules/material_ext.mes for non-vanilla races)
 	std::string GetRaceCondition(Race race);
 	int GetLevelAdjustment( objHndl& objHnd);
+	Dice GetHitDice(Race race);
+	bool IsVanillaRace(Race race);
+	std::vector<int> GetStatModifiers(Race race);
 
 protected:
 	RaceSpec & GetRaceSpec(Race race);

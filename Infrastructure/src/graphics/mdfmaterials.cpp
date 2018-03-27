@@ -396,7 +396,7 @@ namespace gfx {
 
 	}
 
-	const MdfMaterialFactory::ReplacementSet &MdfMaterialFactory::GetReplacementSet(uint32_t id)
+	const MdfMaterialFactory::ReplacementSet &MdfMaterialFactory::GetReplacementSet(uint32_t id, int fallbackId)
 	{
 		static const ReplacementSet sEmptyResult;
 
@@ -404,6 +404,13 @@ namespace gfx {
 
 		if (it != mReplacementSets.end()) {
 			return it->second;
+		}
+
+		if (fallbackId != -1){
+			it = mReplacementSets.find((uint32_t) fallbackId);
+			if (it != mReplacementSets.end()) {
+				return it->second;
+			}
 		}
 
 		return sEmptyResult;

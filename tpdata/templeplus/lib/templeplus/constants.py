@@ -2246,8 +2246,10 @@ race_elf = 2
 race_gnome = 3
 race_mountain_dwarf = 3
 race_halfelf = 4
+race_half_elf = 4
 race_aquatic_elf = 4
 race_halforc = 5
+race_half_orc = 5
 race_drow = 66
 race_halfling = 6
 race_gray_elf = 6
@@ -3325,6 +3327,11 @@ stat_spell_list_level = 288 # new - used for getting the effective level for tak
 
 stat_psi_points_max = 300 # new!
 stat_psi_points_cur = 301 # new!
+
+# Race Definition Flags
+RDF_None = 0
+RDF_Vanilla = 1   # Vanilla ToEE race
+RDF_Monstrous = 2 # Monster races e.g. Trolls
 
 CDF_None = 0
 CDF_BaseClass = 1 # denotes class is base class (can be taken at level 1, and factors into multiclass calculations; unlike Prestige Classes for instance)

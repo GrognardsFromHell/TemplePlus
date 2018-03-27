@@ -618,8 +618,10 @@ void LegacyCritterSystem::GenerateHp(objHndl handle){
 		}
 	}
 
-	if (obj->IsNPC()){
+	Dice racialHd = d20RaceSys.GetHitDice(critterSys.GetRace(handle, false));
+	hpPts += racialHd.Roll();
 
+	if (obj->IsNPC()){
 		auto numDice = obj->GetInt32(obj_f_npc_hitdice_idx, 0);
 		auto npcHd = Dice(numDice, obj->GetInt32(obj_f_npc_hitdice_idx, 1),obj->GetInt32(obj_f_npc_hitdice_idx, 2));
 		auto npcHdVal = npcHd.Roll();
@@ -924,9 +926,9 @@ const std::vector<std::string>& LegacyCritterSystem::GetAddMeshes(int matIdx, in
 	return sEmptyAddMeshes;
 }
 
-void LegacyCritterSystem::ApplyReplacementMaterial(gfx::AnimatedModelPtr model, int mesId)
+void LegacyCritterSystem::ApplyReplacementMaterial(gfx::AnimatedModelPtr model, int mesId, int fallbackMesId)
 {
-	auto& replacementSet = tig->GetMdfFactory().GetReplacementSet(mesId);
+	auto& replacementSet = tig->GetMdfFactory().GetReplacementSet(mesId, fallbackMesId);
 	for (auto& entry : replacementSet) {
 		model->AddReplacementMaterial(entry.first, entry.second);
 	}
@@ -1095,14 +1097,14 @@ void LegacyCritterSystem::UpdateModelEquipment(objHndl obj)
 	
 
 	// Now apply it for the actual equipment
-	raceOffset = GetModelRaceOffset(obj, true); // use base race for equipment because holy crap ToEE has an entry for each race!!!
+	auto baseRaceOffset = GetModelRaceOffset(obj, true); // use base race for equipment because holy crap ToEE has an entry for each race!!!
 	for (uint32_t slotId = 0; slotId < (uint32_t)EquipSlot::Count; ++slotId) {
 		auto slot = (EquipSlot) slotId;
 		auto item = GetWornItem(obj, slot);
 		if (item) {
 			auto materialSlot = objects.getInt32(item, obj_f_item_material_slot);
 			if (materialSlot != -1) {
-				ApplyReplacementMaterial(model, materialSlot + raceOffset);
+				ApplyReplacementMaterial(model, materialSlot + raceOffset, materialSlot + baseRaceOffset);
 			}
 		}
 	}

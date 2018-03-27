@@ -354,7 +354,7 @@ struct LegacyCritterSystem : temple::AddressTable
 private:
 	int GetModelRaceOffset(objHndl obj, bool useBaseRace = true);
 	void UpdateAddMeshes(objHndl obj);
-	void ApplyReplacementMaterial(gfx::AnimatedModelPtr model, int mesId);
+	void ApplyReplacementMaterial(gfx::AnimatedModelPtr model, int mesId, int fallbackMesId = -1);
 
 	std::string GetHairStyleFile(HairStyle style, const char *extension);
 

@@ -377,6 +377,7 @@ PYBIND11_EMBEDDED_MODULE(char_editor, mm) {
 		.def_readwrite("feat_status_flags", &FeatInfo::flag, "0 - normal, 1 - automatic class feat, 2 - bonus selectable feat, 4 - selectable feat (disregard reqs)")
 		;
 		// methods
+#pragma region methods
 	mm
 	.def("set_bonus_feats", [](std::vector<FeatInfo> & fti){
 		chargen.SetBonusFeats(fti);
@@ -484,7 +485,7 @@ PYBIND11_EMBEDDED_MODULE(char_editor, mm) {
 		}
 	})
 	;
-
+#pragma endregion
 
 	py::class_<CharEditorSelectionPacket>(mm, "CharEdSpecs", "Holds the character editing specs.")
 		.def_readwrite("class_code", &CharEditorSelectionPacket::classCode, "Chosen class")
