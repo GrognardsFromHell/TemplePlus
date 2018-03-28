@@ -168,9 +168,11 @@ struct SpellStoreData
 		metaMagicData = mmData;
 		spellStoreState = SpellStoreState(0);
 	}
-
+	bool operator < (const SpellStoreData& b);
 	SpellComponentFlag GetSpellComponentFlags(); // regards metamagic data
 };
+
+bool operator < (const SpellStoreData& sp1, const SpellStoreData& sp2);
 const auto TestSizeOfSpellStoreData = sizeof(SpellStoreData);
 #pragma pack(pop)
 

@@ -48,6 +48,7 @@ public:
 	Dice GetHitDice(Race race);
 	bool IsVanillaRace(Race race);
 	std::vector<int> GetStatModifiers(Race race);
+	bool HasFeat(Race race, feat_enums featEnum);
 
 protected:
 	RaceSpec & GetRaceSpec(Race race);

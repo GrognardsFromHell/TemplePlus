@@ -223,8 +223,7 @@ void Console::RenderCheatsMenu()
 					if (!party.ObjIsAIFollower(handle) && !d20LevelSys.CanLevelup(handle)) {
 						auto obj = gameSystems->GetObj().GetObject(handle);
 
-						auto curLvl = objects.StatLevelGet(handle, stat_level);
-						curLvl += d20RaceSys.GetLevelAdjustment(handle);
+						auto curLvl = critterSys.GetEffectiveLevel(handle);
 						auto xpReq = d20LevelSys.GetXpRequireForLevel(curLvl + 1);
 
 						auto curXp = obj->GetInt32(obj_f_critter_experience);

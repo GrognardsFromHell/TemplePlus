@@ -16,6 +16,7 @@
 #include "ui/ui.h"
 #include <infrastructure/elfhash.h>
 #include "python/python_integration_feat.h"
+#include "d20_race.h"
 
 TabFileStatus featPropertiesTabFile;
 uint32_t featPropertiesTable[NUM_FEATS + 1000];
@@ -369,14 +370,9 @@ uint32_t LegacyFeatSystem::HasFeatCountByClass(objHndl objHnd, feat_enums featEn
 
 
 	// Race feats
-	uint32_t objRace = objects.StatLevelGet(objHnd, stat_race);
-	uint32_t * racialFeat = &(feats.racialFeats[objRace * 10]);
-	while (*racialFeat != -1)
-	{
-		if (*racialFeat == featEnum) {
-			return 1;
-		}
-		racialFeat++;
+	auto objRace = critterSys.GetRace(objHnd, false);
+	if (d20RaceSys.HasFeat(objRace, featEnum)){
+		return TRUE;
 	}
 
 	// Class automatic feats
@@ -558,7 +554,7 @@ uint32_t LegacyFeatSystem::HasFeatCountByClass(objHndl objHnd, feat_enums featEn
 
 uint32_t LegacyFeatSystem::HasFeatCountByClass(objHndl objHnd, feat_enums featEnum)
 {
-	return _HasFeatCountByClass(objHnd, featEnum, (Stat)0, 0);
+	return HasFeatCountByClass(objHnd, featEnum, (Stat)0, 0,0,0,0);
 };
 
 uint32_t LegacyFeatSystem::FeatListGet(objHndl objHnd, feat_enums* listOut, Stat classBeingLevelled, feat_enums rangerSpecFeat)

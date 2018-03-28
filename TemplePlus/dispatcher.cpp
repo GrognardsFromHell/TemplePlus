@@ -181,24 +181,6 @@ float DispatcherSystem::Dispatch29hGetMoveSpeed(objHndl objHnd, DispIoMoveSpeed 
 
 	result = moveTot * dispIo.factor;
 
-
-	/*uint32_t objHndLo = (uint32_t)(objHnd & 0xffffFFFF);
-	uint32_t objHndHi = (uint32_t)((objHnd >>32) & 0xffffFFFF);
-	macAsmProl;
-	__asm{
-		mov ecx, this;
-		mov esi, [ecx]._Dispatch29hMovementSthg;
-		mov eax, iO;
-		push eax;
-		mov eax, objHndHi;
-		push eax;
-		mov eax, objHndLo;
-		push eax;
-		call esi;
-		add esp, 12;
-		fstp result;
-	}
-	macAsmEpil*/
 	return result;
 }
 

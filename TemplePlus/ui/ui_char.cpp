@@ -22,6 +22,7 @@
 
 #include "ui/ui_legacysystems.h"
 #include "ui/ui_systems.h"
+#include "d20_race.h"
 
 #define NUM_SPELLBOOK_SLOTS 18 // 18 in vanilla
 
@@ -87,6 +88,7 @@ class CharUiSystem : TempleFix
 public: 
 	#pragma region Main Wnd
 	static void ClassLevelBtnRender(int widId);
+	static void AlignGenderRaceBtnRender(int widId);
 	#pragma endregion 
 
 	#pragma region Spellbook functions
@@ -132,6 +134,7 @@ public:
 	{
 
 		replaceFunction(0x10144B40, ClassLevelBtnRender);
+		replaceFunction(0x10145020, AlignGenderRaceBtnRender);
 
 		if (temple::Dll::GetInstance().HasCo8Hooks()) {
 			writeHex(0x1011DD4D, "90 90 90 90 90"); // disabling stat text draw calls
@@ -317,6 +320,91 @@ void CharUiSystem::ClassLevelBtnRender(int widId){
 		x -= 20;
 	}
 
+	TigRect rect(x, btn->y, textMeas.width, textMeas.height);
+	UiRenderer::RenderText(text, rect, style);
+	UiRenderer::PopFont();
+}
+
+void CharUiSystem::AlignGenderRaceBtnRender(int widId){
+	auto btn = uiManager->GetButton(widId);
+	const int maxWidth = 200;
+	UiRenderer::PushFont(temple::GetRef<char*>(0x10BE9394), temple::GetRef<int>(0x10BE9390));
+
+	TigTextStyle style;
+	auto txtR = temple::GetRef<int>(0x10BE9360);
+	auto txtG = temple::GetRef<int>(0x10BE9364);
+	auto txtB = temple::GetRef<int>(0x10BE9368);
+	auto txtA = temple::GetRef<int>(0x10BE936C);
+
+	ColorRect textColor(XMCOLOR((float)txtR, (float)txtG, (float)txtB, (float)txtA));
+	ColorRect shadowColor(XMCOLOR(0, 0, 0, 255));
+	style.textColor = &textColor;
+	style.shadowColor = &shadowColor;
+	style.flags = 8;
+	style.kerning = 1;
+	style.tracking = 2;
+
+	auto dude = charUiSys.GetCurrentCritter();
+	if (!dude)
+		return;
+
+	auto obj = gameSystems->GetObj().GetObject(dude);
+	auto objType = obj->type;
+
+	std::string text;
+	static auto charUiTextMes = temple::GetRef<MesHandle>(0x10BE963C);
+
+	// Alignment
+	if (objType == obj_t_pc || config.showNpcStats){
+		auto alignment = (Alignment)objects.StatLevelGet(dude, stat_alignment);
+		auto alignmentName = d20Stats.GetAlignmentName(alignment);
+		text.append(fmt::format("{} ", alignmentName));
+	}
+	// Subtype
+	
+	if (objType == obj_t_npc){
+		auto isHuman = critterSys.IsCategorySubtype(dude, mc_subtype_human) && critterSys.IsCategoryType(dude, MonsterCategory::mc_type_humanoid);
+		
+		for (auto i = 0; (1 << i) <= MonsterSubcategoryFlag::mc_subtype_water; i += 1) {
+			auto monSubcat = (MonsterSubcategoryFlag)(1 << i);
+			if (monSubcat == mc_subtype_human && isHuman) continue; // skip silly string of "Human Humanoid"
+			if (critterSys.IsCategorySubtype(dude, monSubcat)) {
+				text.append(fmt::format("{} ", d20Stats.GetMonsterSubcategoryName(i)));
+			}
+		}
+		
+	}
+
+	auto gender = objects.StatLevelGet(dude, stat_gender);
+	auto genderName = d20Stats.GetGenderName(gender);
+
+	if (objType == obj_t_pc) {
+		auto race = critterSys.GetRace(dude, false); 
+		auto raceName = d20Stats.GetRaceName(race);
+		text.append(fmt::format("{} {}", genderName, raceName));
+	}
+	else {
+		auto moncat = critterSys.GetCategory(dude);
+		auto monsterCatName = d20Stats.GetMonsterCategoryName(moncat);
+
+		text.append(fmt::format("{} {}", genderName, monsterCatName));
+
+		//MesLine line;
+		//mesFuncs.ReadLineDirect(charUiTextMes, 11, &line); // NPC
+		//text.append(fmt::format("({})", line.value));
+	}
+
+	auto textMeas = UiRenderer::MeasureTextSize(text, style);
+	if (textMeas.width > maxWidth) {
+		style.flags |= 0x4000; // truncation
+		textMeas = UiRenderer::MeasureTextSize(text, style, maxWidth);
+	}
+
+	auto x = btn->x + abs((int)btn->width - textMeas.width);
+	/*if (textMeas.width > 290) {
+		x -= 20;
+	}
+*/
 	TigRect rect(x, btn->y, textMeas.width, textMeas.height);
 	UiRenderer::RenderText(text, rect, style);
 	UiRenderer::PopFont();

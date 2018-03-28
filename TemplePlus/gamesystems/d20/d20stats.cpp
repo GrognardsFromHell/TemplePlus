@@ -47,6 +47,8 @@ class D20StatsHooks : public TempleFix{
 		});
 
 		static int (__cdecl*orgStatBaseGetType3)(objHndl, Stat) = replaceFunction<int(objHndl, Stat)>(0x10074B30, [](objHndl handle, Stat stat){
+			if (!handle)
+				return 0;
 			return d20Stats.GetType3StatBase(handle, stat);
 		});
 
@@ -159,6 +161,18 @@ const char * D20StatsSystem::GetRaceShortDesc(Race race)
 		mesFuncs.GetLine_Safe(statMes, &line);
 	else
 		mesFuncs.GetLine_Safe(statMesExt, &line);
+	return line.value;
+}
+
+const char* D20StatsSystem::GetMonsterSubcategoryName(int monsterSubcat){
+	MesLine line(8000 + monsterSubcat);
+	mesFuncs.GetLine_Safe(statMes, &line);
+	return line.value;
+}
+
+const char* D20StatsSystem::GetMonsterCategoryName(int monsterCat){
+	MesLine line(7000 + monsterCat);
+	mesFuncs.GetLine_Safe(statMes, &line);
 	return line.value;
 }
 

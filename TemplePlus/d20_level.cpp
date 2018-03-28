@@ -65,13 +65,12 @@ uint32_t D20LevelSystem::GetLevelPacket(Stat classEnum, objHndl objHnd, uint32_t
 
 bool D20LevelSystem::CanLevelup(objHndl objHnd)
 {
-	auto lvl = objects.StatLevelGet(objHnd, stat_level);
-	auto lvlAdj = d20RaceSys.GetLevelAdjustment(objHnd);
-	lvl += lvlAdj;
-	if (d20Sys.d20Query(objHnd, DK_QUE_ExperienceExempt) || lvl >= (int)config.maxLevel){
+	auto ecl = critterSys.GetEffectiveLevel(objHnd);
+	
+	if (d20Sys.d20Query(objHnd, DK_QUE_ExperienceExempt) || ecl >= (int)config.maxLevel){
 		return 0;
 	}
-	return objects.getInt32(objHnd, obj_f_critter_experience) >= xpReqTable[lvl + 1];
+	return objects.getInt32(objHnd, obj_f_critter_experience) >= xpReqTable[ecl + 1];
 		//addresses.xpReqTable[lvl + 1];
 
 }
@@ -113,7 +112,7 @@ uint32_t D20LevelSystem::GetXpRequireForLevel(uint32_t level)
 }
 
 int D20LevelSystem::GetSurplusXp(objHndl handle){
-	int xpReq = (int)GetXpRequireForLevel(objects.StatLevelGet(handle, stat_level));
+	int xpReq = (int)GetXpRequireForLevel(critterSys.GetEffectiveLevel(handle));
 	return gameSystems->GetObj().GetObject(handle)->GetInt32(obj_f_critter_experience) - xpReq;
 }
 

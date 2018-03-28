@@ -1385,6 +1385,23 @@ int LegacyCritterSystem::GetHpPercent(const objHndl& handle)
 	return (curHp - subdualDam) / maxHp;
 }
 
+int LegacyCritterSystem::GetEffectiveLevel(objHndl & objHnd)
+{
+	if (!objHnd) return 1;
+	auto lvl = objects.StatLevelGet(objHnd, stat_level);
+	auto lvlAdj = d20RaceSys.GetLevelAdjustment(objHnd);
+	auto racialHdCount = 0;
+	if (objSystem->GetObject(objHnd)->IsPC()) {
+		Dice racialHd = d20RaceSys.GetHitDice(critterSys.GetRace(objHnd, false));
+		racialHdCount = racialHd.GetCount();
+	}
+	else { // NPC
+		auto numDice = objSystem->GetObject(objHnd)->GetInt32(obj_f_npc_hitdice_idx, 0);
+	}
+	lvl += lvlAdj + racialHdCount;
+	return lvl;
+}
+
 int LegacyCritterSystem::GetCritterAttackType(objHndl obj, int attackIdx)
 {
 	int damageIdx = GetDamageIdx(obj, attackIdx);

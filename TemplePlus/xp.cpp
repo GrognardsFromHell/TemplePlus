@@ -49,7 +49,7 @@ BOOL XPAward::XpGainProcess(objHndl handle, int xpGainRaw){
 	histSys.CreateFromFreeText( (text + "\n").c_str());
 
 	auto xpNew = obj->GetInt32(obj_f_critter_experience) + xpGain;
-	auto curLvl = objects.StatLevelGet(handle, stat_level);
+	auto curLvl = critterSys.GetEffectiveLevel(handle);
 	
 	auto xpCap = d20LevelSys.GetXpRequireForLevel(curLvl + 2) - 1;
 	if (curLvl >= (int)config.maxLevel)

@@ -38,6 +38,8 @@ public:
 	const char* GetAlignmentName(Alignment alignment);
 	const char* GetRaceName(Race race);
 	const char* GetRaceShortDesc(Race race);
+	const char* GetMonsterSubcategoryName(int monsterSubcat);
+	const char* GetMonsterCategoryName(int monsterCat);
 	const char* GetGenderName(int genderId);
 	const char* GetCannotPickClassHelp(Stat stat) const;
 

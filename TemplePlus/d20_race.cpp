@@ -8,6 +8,7 @@
 #include <pybind11/stl.h>
 #include "python/python_object.h"
 #include "python/python_dice.h"
+#include "ui/ui_char_editor.h"
 
 namespace py = pybind11;
 
@@ -19,6 +20,9 @@ public:
 	std::string helpTopic;  // helpsystem id ("TAG_xxx")
 	int flags;              // D20RaceSys::RaceDefinitionFlags 
 	Dice hitDice;
+	std::vector<int> feats; // feat enums; for entering new-style feats in python, use tpdp.hash
+	std::map<SpellStoreData, int> spellLikeAbilities;
+
 	int protoId;            // protos.tab entry (male; female is +1)
 	int materialOffset = 0; // offset for rules/materials.mes (or materials_ext.mes for non-vanilla races)
 
@@ -40,6 +44,7 @@ public:
 	RaceSpec(){
 		statModifiers = { 0,0,0,0,0,0 };
 		hitDice = Dice(0, 0, 0);
+		
 	}
 };
 
@@ -112,6 +117,8 @@ PYBIND11_EMBEDDED_MODULE(race_defs, m) {
 		.def_readwrite("help_topic", &RaceSpec::helpTopic)
 		.def_readwrite("proto_id", &RaceSpec::protoId)
 		.def_readwrite("material_offset", &RaceSpec::materialOffset)
+		.def_readwrite("feats", &RaceSpec::feats)
+		.def_readwrite("spell_like_abilities", &RaceSpec::spellLikeAbilities)
 		//.def_readwrite("", &RaceSpec::)
 		.def("register", [](RaceSpec& spec, int raceEnum){
 		d20RaceSys.RegisterRace(spec, raceEnum);
@@ -151,71 +158,7 @@ D20RaceSys::D20RaceSys()
 void D20RaceSys::GetRaceSpecsFromPython(){
 	auto racesModule = PyImport_ImportModule("races");
 
-	std::vector<int> _raceEnums;
-	pythonRaceIntegration.GetRaceEnums(_raceEnums);
-	std::sort(_raceEnums.begin(), _raceEnums.end());
-	/*
-	for (auto it : _raceEnums) {
-
-		//if (!pythonRaceIntegration.IsEnabled(it))
-		//	continue;
-
-		raceEnums.push_back(it);
-		auto race = (Race)it;
-		RaceSpec &raceSpec = mRaceSpecs[race];
-
-		raceSpec.baseRace = GetBaseRace(race);
-		raceSpec.subrace = GetSubrace(race);
-		raceSpec.isBaseRace = raceSpec.subrace == subrace_none;
-		raceSpec.helpTopic = pythonRaceIntegration.GetRaceHelpTopic(it);
-
-		// get class condition from py file
-		raceSpec.conditionName = fmt::format("{}", pythonRaceIntegration.GetConditionName(it));
-		if (raceSpec.conditionName.size() == 0) { // if none specified, get it from the pre-defined table for base races (applicable for vanilla races only...)
-			raceSpec.conditionName = d20StatusSys.raceCondMap[(Race)raceSpec.baseRace];
-		}
-		else if (d20StatusSys.raceCondMap.find(race) == d20StatusSys.raceCondMap.end()) { // if condition name is specified, and was not found in the d20Status mapping , update it
-			d20StatusSys.raceCondMap[race] = raceSpec.conditionName;
-		}
-
-		raceSpec.flags = pythonRaceIntegration.GetRaceDefinitionFlags(it);
-		raceSpec.statModifiers = pythonRaceIntegration.GetStatModifiers(race);
-		raceSpec.effectiveLevel = pythonRaceIntegration.GetLevelModifier(it);
-		raceSpec.protoId = pythonRaceIntegration.GetProtoId(race);
-		raceSpec.materialOffset = pythonRaceIntegration.GetMaterialOffset(race);
-		auto minMaxHeightWeight = pythonRaceIntegration.GetMinMaxHeightWeight(race);
-		if (minMaxHeightWeight.size() >= 8) {
-			raceSpec.heightMale[0] = minMaxHeightWeight[0];
-			raceSpec.heightMale[1] = minMaxHeightWeight[1];
-			raceSpec.heightFemale[0] = minMaxHeightWeight[2];
-			raceSpec.heightFemale[1] = minMaxHeightWeight[3];
-
-			raceSpec.weightMale[0] = minMaxHeightWeight[4];
-			raceSpec.weightMale[1] = minMaxHeightWeight[5];
-			raceSpec.weightFemale[0] = minMaxHeightWeight[6];
-			raceSpec.weightFemale[1] = minMaxHeightWeight[7];
-		}
-
-		
-		if (raceSpec.isBaseRace){
-			baseRaceEnums.push_back(it);
-		}
-			
-
-		
-		
-
-		// skills
-		//for (auto skillEnum = static_cast<int>(skill_appraise); skillEnum < skill_count; skillEnum++) {
-		//	raceSpec.classSkills[(SkillEnum)skillEnum] = pythonClassIntegration.IsClassSkill(it, (SkillEnum)skillEnum);
-		//}
-
-	}
-	*/
 	
-	baseRaceEnums.insert(baseRaceEnums.end() - 1, race_half_orc);
-	baseRaceEnums.insert(baseRaceEnums.end() - 1, race_halfling);
-
 	std::sort(raceEnums.begin(), raceEnums.end());
 
 	// Compile subrace lists
@@ -417,6 +360,15 @@ std::vector<int> D20RaceSys::GetStatModifiers(Race race)
 {
 	auto &raceSpec = GetRaceSpec(race);
 	return raceSpec.statModifiers;
+}
+
+bool D20RaceSys::HasFeat(Race race, feat_enums featEnum){
+	auto &raceSpec = GetRaceSpec(race);
+	for (auto &it:raceSpec.feats){
+		if (it == featEnum)
+			return true;
+	}
+	return false;
 }
 
 void D20RaceSys::RegisterRace(const RaceSpec & spec, int raceEnum){

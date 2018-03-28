@@ -1754,7 +1754,7 @@ int UiItemCreation::GetItemCreationType(){
 }
 
 int UiItemCreation::GetSurplusXp(objHndl crafter){
-	auto level = objects.StatLevelGet(crafter, stat_level);
+	auto level = critterSys.GetEffectiveLevel(crafter);
 	auto xpReq = d20LevelSys.GetXpRequireForLevel(level);
 	return gameSystems->GetObj().GetObject(crafter)->GetInt32(obj_f_critter_experience) - xpReq;
 }

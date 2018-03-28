@@ -240,6 +240,7 @@ struct LegacyCritterSystem : temple::AddressTable
 	*/
 	bool CanSense(objHndl critter, objHndl tgt); 
 
+	int GetEffectiveLevel(objHndl& objHnd); // Get Effective Character Level (used for determining XP gain / requirements)
 	int GetLevel(objHndl critter);
 
 	int SkillLevel(objHndl critter, SkillEnum skill);
