@@ -50,6 +50,7 @@ public:
 	bool IsVanillaRace(Race race);
 	std::vector<int> GetStatModifiers(Race race);
 	bool HasFeat(Race race, feat_enums featEnum);
+	int GetNaturalArmor(Race race);
 
 protected:
 	RaceSpec & GetRaceSpec(Race race);

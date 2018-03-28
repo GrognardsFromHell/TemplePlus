@@ -21,6 +21,7 @@ public:
 	std::string helpTopic;  // helpsystem id ("TAG_xxx")
 	int flags;              // D20RaceSys::RaceDefinitionFlags 
 	Dice hitDice;
+	int naturalArmor = 0;
 	std::vector<int> feats; // feat enums; for entering new-style feats in python, use tpdp.hash
 	std::map<SpellStoreData, int> spellLikeAbilities;
 
@@ -41,6 +42,7 @@ public:
 	Subrace subrace = subrace_none;
 
 	std::string conditionName;
+	
 
 	RaceSpec(){
 		statModifiers = { 0,0,0,0,0,0 };
@@ -117,6 +119,7 @@ PYBIND11_EMBEDDED_MODULE(race_defs, m) {
 		.def_readwrite("weight_male", &RaceSpec::weightMale)
 		.def_readwrite("weight_female", &RaceSpec::weightFemale)
 		.def_readwrite("stat_modifiers", &RaceSpec::statModifiers)
+		.def_readwrite("natural_armor", &RaceSpec::naturalArmor)
 		.def_readwrite("help_topic", &RaceSpec::helpTopic)
 		.def_readwrite("proto_id", &RaceSpec::protoId)
 		.def_readwrite("material_offset", &RaceSpec::materialOffset)
@@ -399,6 +402,11 @@ bool D20RaceSys::HasFeat(Race race, feat_enums featEnum){
 			return true;
 	}
 	return false;
+}
+
+int D20RaceSys::GetNaturalArmor(Race race){
+	auto &raceSpec = GetRaceSpec(race);
+	return raceSpec.naturalArmor;
 }
 
 void D20RaceSys::RegisterRace(const RaceSpec & spec, int raceEnum){

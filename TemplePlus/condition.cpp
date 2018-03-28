@@ -34,6 +34,7 @@
 #include "sound.h"
 #include "d20_class.h"
 #include "gamesystems/d20/d20stats.h"
+#include "d20_race.h"
 
 #define CB int(__cdecl)(DispatcherCallbackArgs)
 using DispCB = int(__cdecl )(DispatcherCallbackArgs);
@@ -1617,6 +1618,10 @@ int GlobalGetArmorClass(DispatcherCallbackArgs args) // the basic AC value (init
 		if (objects.GetType(args.objHndCaller) == obj_t_npc || polymorphedTo)
 		{
 			bonusSys.bonusAddToBonusList(bonlist, objects.getInt32(defender, obj_f_npc_ac_bonus), 9, 123);
+		} else{
+			auto race = critterSys.GetRace(defender, false);
+			auto racialAcBonus = d20RaceSys.GetNaturalArmor(race);
+			bonlist->AddBonus(racialAcBonus, 9, 123);
 		}
 	}
 
