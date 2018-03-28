@@ -47,3 +47,14 @@ void PagianatedChargenSystem::AddPageButtonsToWnd(unique_ptr<WidgetContainer>& w
 void PagianatedChargenSystem::SetPageUpdateHandler(std::function<void()> updateHandler){
 	mPageUpdateHandler = updateHandler;
 }
+
+void PagianatedChargenSystem::SetPageCount(int pageCount){
+	mPageCount = pageCount;
+	if (mPageCount < 2){
+		auto prevBtn = (WidgetButton*)uiManager->GetAdvancedWidget(mPrevBtnId);
+		auto nextBtn = (WidgetButton*)uiManager->GetAdvancedWidget(mNextBtnId);
+		prevBtn->Hide();
+		nextBtn->Hide();
+	}
+	
+}

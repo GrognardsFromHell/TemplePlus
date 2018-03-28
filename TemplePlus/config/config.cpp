@@ -165,6 +165,8 @@ static ConfigSetting configSettings[] = {
 	CONF_INT(msaaQuality),
 	CONF_BOOL(showNpcStats),
 	CONF_BOOL(newClasses),
+	CONF_BOOL(newRaces),
+	CONF_BOOL(monstrousRaces),
 	CONF_BOOL(laxRules),
 	CONF_BOOL(disableAlignmentRestrictions),
 	CONF_BOOL(disableCraftingSpellReqs),

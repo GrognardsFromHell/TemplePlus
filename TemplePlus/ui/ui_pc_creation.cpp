@@ -3244,7 +3244,9 @@ bool RaceChargen::WidgetsInit(int w, int h){
 	mWnd->SetPos(wndX, wndY);
 
 	AddPageButtonsToWnd(mWnd);
-	SetPageCount(2);
+	auto numSelectables = d20RaceSys.selectableBaseRaces.size();
+	auto numPages = (numSelectables / 7) + ((numSelectables % 7)?1:0);
+	SetPageCount(numPages);
 	
 	// Race Buttons
 	auto x = 156, y = 24;
@@ -3252,13 +3254,13 @@ bool RaceChargen::WidgetsInit(int w, int h){
 		auto newBtn = make_unique<ChargenPagedButton>();
 		newBtn->SetPos(x, y);
 		
-		for (auto i= it; i < d20RaceSys.baseRaceEnums.size(); i+= 7){
-			auto race = (RaceBase)d20RaceSys.baseRaceEnums[i];
+		for (auto i= it; i < d20RaceSys.selectableBaseRaces.size(); i+= 7){
+			auto race = (RaceBase)d20RaceSys.selectableBaseRaces[i];
 			auto raceName = toupper(d20Stats.GetRaceName((Race)race));
 			if (i == it)
 				newBtn->SetText(raceName);
 			newBtn->SetPageText(i/7, raceName);
-			newBtn->SetPageDatum(i/7, d20RaceSys.baseRaceEnums[i]);
+			newBtn->SetPageDatum(i/7, d20RaceSys.selectableBaseRaces[i]);
 		}
 		
 		auto &pbtn = *newBtn;
@@ -3363,7 +3365,7 @@ bool RaceChargen::WidgetsInit(int w, int h){
 			btn->SetText(btn->GetText());
 		}
 	});
-
+	
 	mWnd->Hide();
 
 	return true;

@@ -21,6 +21,7 @@ public:
 	int vanillaRaceEnums[VANILLA_NUM_RACES];
 	std::vector<int> raceEnums;
 	std::vector<int> baseRaceEnums;
+	std::vector<int> selectableBaseRaces;
 
 	// initialization
 	D20RaceSys();
@@ -40,7 +41,7 @@ public:
 	int GetMinWeight(Race race, Gender genderId);
 	int GetMaxWeight(Race race, Gender genderId);
 	bool HasSubrace(Race race);
-	const std::vector<Race>& GetSubraces(RaceBase raceBase);
+	const std::vector<Race> GetSubraces(RaceBase raceBase);
 	float GetModelScale(Race race, int genderId);
 	int GetRaceMaterialOffset(Race race); // index into rules/material.mes  (or rules/material_ext.mes for non-vanilla races)
 	std::string GetRaceCondition(Race race);

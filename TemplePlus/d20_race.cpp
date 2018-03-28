@@ -9,6 +9,7 @@
 #include "python/python_object.h"
 #include "python/python_dice.h"
 #include "ui/ui_char_editor.h"
+#include "config/config.h"
 
 namespace py = pybind11;
 
@@ -46,6 +47,8 @@ public:
 		hitDice = Dice(0, 0, 0);
 		
 	}
+
+	bool IsEnabled();
 };
 
 D20RaceSys d20RaceSys;
@@ -168,6 +171,25 @@ void D20RaceSys::GetRaceSpecsFromPython(){
 
 		mRaceSpecs[(Race)entry.baseRace].subraces.push_back(it.first);
 	}
+
+	for (auto it : baseRaceEnums){
+		auto &entry = mRaceSpecs[(Race)it];
+		auto isOk = false;
+		if (entry.flags & RDF_Vanilla)
+			isOk = true;
+		else {
+			if ( (entry.flags & RDF_Monstrous) && !config.monstrousRaces){
+				continue;
+			}
+			if (!config.newRaces){
+				continue;
+			}
+			isOk = true;
+		}
+			
+		if (isOk) selectableBaseRaces.push_back(it);
+	}
+
 }
 
 int D20RaceSys::GetStatModifier(Race race, int stat) {
@@ -277,16 +299,24 @@ bool D20RaceSys::HasSubrace(Race race){
 	if (!raceSpec.isBaseRace){
 		return false;
 	}
-		
-	return raceSpec.subraces.size() > 0;
+	for (auto it : raceSpec.subraces) {
+		if (mRaceSpecs[it].IsEnabled())
+			return true;
+	}
+	return false;
 }
 
-const std::vector<Race>& D20RaceSys::GetSubraces(RaceBase raceBase)
+const std::vector<Race> D20RaceSys::GetSubraces(RaceBase raceBase)
 {
 	auto race = (Race)raceBase;
 	auto &raceSpec = GetRaceSpec(race);
+	auto result = std::vector<Race>();
+	for (auto it: raceSpec.subraces){
+		if (mRaceSpecs[it].IsEnabled())
+			result.push_back(it);
+	}
 
-	return raceSpec.subraces;
+	return result;
 }
 
 float D20RaceSys::GetModelScale(Race race, int genderId){
@@ -408,4 +438,13 @@ RaceSpec& D20RaceSys::GetRaceSpec(Race race){
 	}
 	logger->error(fmt::format("Bad race input {}, returning human instead", (int)race).c_str());
 	return mRaceSpecs[Race::race_human];
+}
+
+bool RaceSpec::IsEnabled()
+{
+	if (flags && D20RaceSys::RaceDefinitionFlags::RDF_Vanilla)
+		return true;
+	if (flags && D20RaceSys::RaceDefinitionFlags::RDF_Monstrous && !config.monstrousRaces)
+		return false;
+	return config.newRaces;
 }

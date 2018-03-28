@@ -57,7 +57,7 @@ class PagianatedChargenSystem
 public:
 	//PagianatedChargenSystem(UiSystemConf & conf);
 	int GetPage() { return mWndPage; }
-	void SetPageCount(int pageCount) { mPageCount = pageCount; }
+	void SetPageCount(int pageCount);
 	void SetPage(int page);
 	void AddPageButtonsToWnd( unique_ptr<WidgetContainer> &);
 	void SetPageUpdateHandler(std::function<void()> updateHandler);

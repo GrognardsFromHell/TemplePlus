@@ -87,6 +87,8 @@ struct TemplePlusConfig
 	bool disableAlignmentRestrictions = false;
 	bool disableDoorRelocking = false;
 	bool newClasses = false; // Prestige classes and such
+	bool newRaces = false; // Drow etc.
+	bool monstrousRaces = false; // monstrous races. unbalanced as hell ><
 	bool nonCoreMaterials = false; // splatbooks, fan suggestions etc
 	bool tolerantNpcs = false; // NPCs tolerate monster party members
 	std::string fogOfWar = "Normal";
