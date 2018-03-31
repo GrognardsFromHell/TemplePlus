@@ -113,6 +113,14 @@ void D20StatusSystem::initClass(objHndl objHnd){
 			_ConditionAddToAttribs_NumArgs2(dispatcher, conds.GetByName("Barbarian_Rage"), 0, 0);
 		}
 
+		if (feats.HasFeatCountByClass(objHnd, FEAT_RAPID_SHOT)) {
+			_ConditionAddToAttribs_NumArgs2(dispatcher, conds.GetByName("Rapid_Shot"), 0, 0);
+		}
+
+		if (feats.HasFeatCountByClass(objHnd, FEAT_RANGER_RAPID_SHOT)) {
+			_ConditionAddToAttribs_NumArgs2(dispatcher, conds.GetByName("Rapid_Shot_Ranger"), 0, 0);
+		}
+
 		if (objects.StatLevelGet(objHnd, stat_level_bard) >= 1){
 			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.GetByName("Bardic Music"));
 		}

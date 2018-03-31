@@ -1,0 +1,5 @@
+name: Improved Rapid Shot
+flags: 12582928
+prereqs: 
+description: When using the Rapid Shot feat, you ignore the -2 penalty on all your ranged attack rolls.
+prereq descr: Manyshot, Point Blank Shot and Rapid Shot.

@@ -2599,6 +2599,23 @@ static PyObject* PyObjHandle_HasFeat(PyObject* obj, PyObject* args) {
 
 	auto result = feats.HasFeatCountByClass(self->handle, feat, levelRaised, 0, domain1, domain2, alignmentChoice);
 
+	//Incriment the feat count if the feat has been selected on the levelup interface
+	if (UpdateWithChargenPacketInfo(self->handle)) {
+		auto charPkt = chargen.GetCharEditorSelPacket();
+		if (feat == charPkt.feat0) {
+			result++;
+		}
+		if (feat == charPkt.feat1) {
+			result++;
+		}
+		if (feat == charPkt.feat2) {
+			result++;
+		}
+		if (feat == charPkt.feat3) {
+			result++;
+		}
+	}
+
 	return PyInt_FromLong(result);
 }
 
