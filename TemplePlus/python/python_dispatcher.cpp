@@ -250,6 +250,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			.def("add_cap", [](BonusList & bonlist, int bonType, int value, int mesline, std::string &text) {
 					 bonlist.AddCapWithCustomDescr(bonType, value, mesline, text);
 				 }, "Adds cap for a particular bonus type")
+			.def_readwrite("flags", &BonusList::bonFlags)
 			;
 
 	 py::class_<AttackPacket>(m, "AttackPacket")
@@ -665,7 +666,10 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 
 	py::class_<DispIoObjBonus, DispIO>(m, "EventObjObjectBonus", "Used for Item Bonuses, initiative modifiers and others.")
 		.def_readwrite("bonus_list", &DispIoObjBonus::bonOut)
-		.def_readwrite("return_val", &DispIoObjBonus::returnVal);
+		.def_readwrite("flags", &DispIoObjBonus::flags)
+		.def_readwrite("return_val", &DispIoObjBonus::flags) // I think that field is also used for return_val somewhere... not 100% sure though. also leaving it for backward compatibility
+		.def_readwrite("obj", &DispIoObjBonus::obj)
+		;
 
 	py::class_<DispIoDispelCheck, DispIO>(m, "EventObjDispelCheck", "Dispel Check Event")
 		.def_readwrite("return_val", &DispIoDispelCheck::returnVal)

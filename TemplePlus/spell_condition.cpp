@@ -982,6 +982,7 @@ int SpellConditionFixes::GhoulTouchAttackHandler(DispatcherCallbackArgs args){
 		logger->debug("GhoulTouchAttackHandler: Cannot remove target");
 		return 0;
 	}
+	return 0;
 }
 
 int SpellConditionFixes::DivinePowerToHitAsFighter(DispatcherCallbackArgs args)

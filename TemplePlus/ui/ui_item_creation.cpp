@@ -1387,7 +1387,7 @@ void UiItemCreation::LoadMaaSpecs()
 				auto& tok = spellReqTok.token();
 				if (tok.type != StringTokenType::QuotedString)
 					continue;
-				auto spellEnum = spellSys.getSpellEnum(tok.text);
+				auto spellEnum = spellSys.GetSpellEnum(tok.text);
 				if (spellEnum){
 					itEnh.reqs.spells[0].push_back(spellEnum);
 				}
@@ -1859,7 +1859,7 @@ bool UiItemCreation::ItemCreationRulesParseReqText(objHndl crafter, const char *
 			if (GetItemCreationType() == ItemCreationType::CraftWondrous)
 				return true;
 		}
-		auto spEnum = spellSys.getSpellEnum(reqTxt + 1);
+		auto spEnum = spellSys.GetSpellEnum(reqTxt + 1);
 		if (!spEnum)
 			spEnum = atol(reqTxt + 1);
 		return spellSys.IsSpellKnown(crafter, spEnum);

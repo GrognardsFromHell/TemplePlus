@@ -334,7 +334,7 @@ const auto TestSizeOfDispIoTooltip = sizeof(DispIoTooltip); // should be 2568  (
 
 struct DispIoObjBonus : DispIO // type 10
 {
-	uint32_t returnVal;
+	uint32_t flags;
 	BonusList * bonOut;
 	uint32_t pad;
 	objHndl obj; //optional

@@ -10,6 +10,7 @@
 #include "python/python_dice.h"
 #include "ui/ui_char_editor.h"
 #include "config/config.h"
+#include "python/python_spell.h"
 
 namespace py = pybind11;
 
@@ -73,6 +74,26 @@ protected:
 	bool success = false;
 };
 
+template <> class py::detail::type_caster<SpellStoreData> {
+public:
+	bool load(handle src, bool) {
+		SpellStoreData spData;
+		ConvertSpellStore(src.ptr(), &spData);
+		value = spData;
+		success = true;
+		return true;
+	}
+
+	static handle cast(const SpellStoreData& src, return_value_policy
+		/* policy */, handle
+	/* parent */) {
+		return PySpellStore_Create(src);
+	}
+
+	PYBIND11_TYPE_CASTER(SpellStoreData, _("PySpellStore"));
+protected:
+	bool success = false;
+};
 
 PYBIND11_EMBEDDED_MODULE(race_defs, m) {
 
@@ -203,7 +224,9 @@ int D20RaceSys::GetStatModifier(Race race, int stat) {
 }
 
 HairStyleRace D20RaceSys::GetHairStyle(Race race){
-
+	if (race >= VANILLA_NUM_RACES){
+		race = (Race)GetBaseRace(race);
+	}
 	switch (race){
 	case race_human:
 		return HairStyleRace::Human;
@@ -329,7 +352,7 @@ float D20RaceSys::GetModelScale(Race race, int genderId){
 
 	auto raceBase = GetBaseRace(race);
 	if (raceBase < VANILLA_NUM_RACES && raceBase >= 0)
-		return GetModelScale((Race)raceBase, 0);
+		return GetModelScale((Race)raceBase, genderId);
 
 	return 1.0f;
 }
@@ -407,6 +430,11 @@ bool D20RaceSys::HasFeat(Race race, feat_enums featEnum){
 int D20RaceSys::GetNaturalArmor(Race race){
 	auto &raceSpec = GetRaceSpec(race);
 	return raceSpec.naturalArmor;
+}
+
+std::map<SpellStoreData, int> D20RaceSys::GetSpellLikeAbilities(Race race){
+	auto &raceSpec = GetRaceSpec(race);
+	return raceSpec.spellLikeAbilities;
 }
 
 void D20RaceSys::RegisterRace(const RaceSpec & spec, int raceEnum){

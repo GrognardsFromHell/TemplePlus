@@ -886,7 +886,7 @@ int GenericCallbacks::TripAooQuery(DispatcherCallbackArgs args)
 int GenericCallbacks::ImprovedTripBonus(DispatcherCallbackArgs args)
 {
 	auto dispIo = dispatch.DispIoCheckIoType10(args.dispIO);
-	if (dispIo->returnVal & 1){
+	if (dispIo->flags & 1){
 		dispIo->bonOut->AddBonusWithDesc(4, 0, 114, feats.GetFeatName(FEAT_IMPROVED_TRIP));
 	}
 	return 0;

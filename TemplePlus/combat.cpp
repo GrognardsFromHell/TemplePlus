@@ -1610,7 +1610,7 @@ bool LegacyCombatSystem::TripCheck(objHndl handle, objHndl target){
 		if (!dispatcher->IsValid())
 			return 0;
 		dispIo.bonOut = bonlist;
-		dispIo.returnVal = flags;
+		dispIo.flags = flags;
 		dispIo.obj = opponent;
 		dispatch.DispatcherProcessor(dispatcher, dispTypeAbilityCheckModifier, DK_STAT_STRENGTH + statUsed, &dispIo);
 		return dispIo.bonOut->GetEffectiveBonusSum();

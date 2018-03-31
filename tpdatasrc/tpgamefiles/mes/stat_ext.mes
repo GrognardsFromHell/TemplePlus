@@ -137,7 +137,13 @@
 {1301}{Psi}
 
 // Race Names Go Between 2000-2999
-
+{2007}{Goblin}
+{2008}{Bugbear}
+{2009}{Gnoll}
+{2010}{Hill Giant}
+{2011}{Troll}
+{2012}{Hobgoblin}
+{2013}{Lizardman}
 {2033}{Deep Dwarf}
 {2034}{Aquatic Elf}
 {2035}{Svirfneblin}
@@ -156,6 +162,9 @@
 
 
 // Race Short Help Goes Between 12000-12999
+{12007} goblin {}
+{12010} Hill Giant {Reckless brutes of incredible strength but little wit. +14 Strength, -2 Dexterity, +8 Constitution, -4 Intelligence, -4 Charisma.}
+{12011} Troll {Trolls have no fear of death: They launch themselves into combat without hesitation. +12 Strength, +4 Dexterity, +12 Constitution, -4 Intelligence, -2 Wisdom, -4 Charisma.}
 {12066} Drow {Drow are a depraved and evil subterranean offshoot, their chief deity is Lolth, and their favored class is Cleric (females) and Wizard (males). In addition to elven racial traits, the Drow feature: +2 Intelligence, +2 Charisma, Spell Resistance equal to 11 + class levels, and +2 on Will saves against spells and spell-like effects.}
 
 // Class Short Help Goes Between 13000-13099

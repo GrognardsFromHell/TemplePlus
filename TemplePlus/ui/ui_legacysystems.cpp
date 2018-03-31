@@ -1147,7 +1147,7 @@ BOOL UiCamping::Camp(int hoursToRest){
 				// heal damage
 				if (canHeal){
 					spellSys.SanitizeSpellSlots(partyMember);
-					spellSys.spellsPendingToMemorized(partyMember);
+					spellSys.SpellsPendingToMemorized(partyMember);
 					objSystem->GetObject(partyMember)->ClearArray(obj_f_critter_spells_cast_idx);
 					damage.Heal(partyMember, partyMember, Dice(0, 0, healAmt), D20A_NONE);
 				}

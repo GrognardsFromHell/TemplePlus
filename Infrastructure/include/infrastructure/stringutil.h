@@ -126,6 +126,25 @@ inline std::string tolower(const std::string &s) {
 	}
 }
 
+inline std::string tounderscore(const std::string &s) {
+	auto needsConversion = std::any_of(s.begin(), s.end(), [](char a) {
+		return a == ' ';
+	});
+	if (needsConversion) {
+		std::string result = s;
+		std::transform(result.begin(), result.end(), result.begin(), [](char ch){
+			if (ch == ' '){
+				return '_';
+			}
+			return ch;
+		});
+		return result;
+	}
+	else {
+		return s;
+	}
+}
+
 inline std::string toupper(const std::string &s) {
 	auto needsConversion = std::any_of(s.begin(), s.end(), [](char a) {
 		return std::toupper(a) != a;

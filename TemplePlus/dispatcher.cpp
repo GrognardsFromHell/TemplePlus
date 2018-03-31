@@ -139,7 +139,7 @@ int32_t DispatcherSystem::dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, 
 	if (!dispatcherValid(dispatcher)) return 0;
 
 	dispIO.dispIOType = dispIoTypeObjBonus;
-	dispIO.returnVal = flag;
+	dispIO.flags = flag;
 	dispIO.bonOut = bonOut;
 	dispIO.obj = objHnd2;
 	if (!bonOut)
@@ -1221,7 +1221,7 @@ DispIoObjBonus::DispIoObjBonus()
 	dispIOType = dispIoTypeObjBonus;
 	obj = 0i64;
 	pad = 0;
-	returnVal = 0;
+	flags = 0;
 	bonOut = &bonlist;
 }
 

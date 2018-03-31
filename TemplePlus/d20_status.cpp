@@ -14,28 +14,54 @@ D20StatusSystem d20StatusSys;
 
 void D20StatusSystem::initRace(objHndl objHnd)
 {
-	if (objects.IsCritter(objHnd))
-	{
-		Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
-		if (critterSys.IsUndead(objHnd)){
+	if (!objects.IsCritter(objHnd))
+		return;
 
-			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionMonsterUndead);
+	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
+	if (critterSys.IsUndead(objHnd)){
+
+		_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionMonsterUndead);
+	}
+
+	auto race = critterSys.GetRace(objHnd, false);
+	auto raceCond = d20RaceSys.GetRaceCondition(race);
+	_ConditionAddToAttribs_NumArgs0(dispatcher, conds.GetByName(raceCond));
+
+		
+	auto racialSpells = d20RaceSys.GetSpellLikeAbilities(race);
+	auto spellsMemorized = objSystem->GetObject(objHnd)->GetSpellArray(obj_f_critter_spells_memorized_idx);
+	for (auto it: racialSpells){
+		auto &spell = it.first;
+		auto count = 0;
+		auto specifiedCount = it.second;
+
+		for (auto i = 0; i < spellsMemorized.GetSize(); i++) {
+			auto &memSpell = spellsMemorized[i];
+			if (memSpell.classCode == spell.classCode && memSpell.spellLevel == spell.spellLevel && memSpell.spellEnum == spell.spellEnum && memSpell.padSpellStore == race){
+				count++;
+				if (count >= specifiedCount){
+					break;
+				}
+			}
 		}
-
-		auto race = critterSys.GetRace(objHnd, false);
-		auto raceCond = d20RaceSys.GetRaceCondition(race);
-		_ConditionAddToAttribs_NumArgs0(dispatcher, conds.GetByName(raceCond));
-
-		if (critterSys.IsSubtypeFire(objHnd))
-		{
-			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionSubtypeFire);
-		}
-
-		if (critterSys.IsOoze(objHnd))
-		{
-			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionMonsterOoze);
+		auto spData = spell;
+		spData.padSpellStore = race;
+		auto spellStoreData = *(int*)(&spData.spellStoreState);
+		for (auto i = 0 ; i < specifiedCount - count; i++){
+			spellSys.SpellMemorizedAdd(objHnd, spell.spellEnum, spell.classCode, spell.spellLevel, spellStoreData, 0);
 		}
 	}
+
+	if (critterSys.IsSubtypeFire(objHnd))
+	{
+		_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionSubtypeFire);
+	}
+
+	if (critterSys.IsOoze(objHnd))
+	{
+		_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionMonsterOoze);
+	}
+	
 }
 
 void D20StatusSystem::initClass(objHndl objHnd){

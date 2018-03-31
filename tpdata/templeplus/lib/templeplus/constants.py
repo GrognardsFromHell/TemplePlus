@@ -54,6 +54,7 @@ trickery = 20
 war = 21
 water = 22
 special = 23
+domain_special = 23
 
 # Genders
 gender_female = 0

@@ -2649,7 +2649,7 @@ static PyObject* PyObjHandle_SpellKnownAdd(PyObject* obj, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "iii:objhndl.spell_known_add", &spellIdx, &spellClassCode, &slotLevel)) {
 		return 0;
 	}
-	spellSys.SpellKnownAdd(self->handle, spellIdx, spellClassCode & 0x7F | 0x80, slotLevel, 1, 0);
+	spellSys.SpellKnownAdd(self->handle, spellIdx, (spellClassCode & 0x7F) | 0x80, slotLevel, 1, 0);
 	Py_RETURN_NONE;
 }
 
@@ -2664,7 +2664,7 @@ static PyObject* PyObjHandle_SpellMemorizedAdd(PyObject* obj, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "iii:objhndl.spell_memorized_add", &spellIdx, &spellClassCode, &slotLevel)) {
 		return 0;
 	}
-	spellSys.SpellKnownAdd(self->handle, spellIdx, spellClassCode & 0x7F | 0x80, slotLevel, 2, 0);
+	spellSys.SpellMemorizedAdd(self->handle, spellIdx, (spellClassCode & 0x7F) | 0x80, slotLevel, 2, 0);
 	Py_RETURN_NONE;
 }
 
@@ -3024,7 +3024,7 @@ static PyObject* PyObjHandle_PendingToMemorized(PyObject* obj, PyObject* args) {
 	}
 
 	if (classEnum == (Stat)-1)
-		spellSys.spellsPendingToMemorized(self->handle);
+		spellSys.SpellsPendingToMemorized(self->handle);
 	else
 		spellSys.SpellsPendingToMemorizedByClass(self->handle, classEnum);
 	

@@ -42,7 +42,7 @@ public:
 
 
 objHndl __cdecl ItemWornAtModifiedForTumlbeCheck(objHndl objHnd, uint32_t itemWornSlot)
-{
+{ // hook inside 0x1008AA90 ; will also affect dwarf subraces
 	if (critterSys.GetRace(objHnd) == race_dwarf)
 	{
 		return objHndl::null;

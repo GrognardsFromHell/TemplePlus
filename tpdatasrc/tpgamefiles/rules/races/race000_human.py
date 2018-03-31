@@ -1,51 +1,24 @@
 from toee import *
-
+import race_defs
 ###################################################
 
-def GetConditionName(): # used by API
-	return "Human"
-
-def GetCategory():
-	return "Core 3.5 Ed Races"
-
-def GetRaceDefFlags():
-	return 1
-
-def GetRaceHelpTopic():
-	return "TAG_HUMAN"
-	
 raceEnum = race_human
 
+
+raceSpec = race_defs.RaceSpec()
+raceSpec.hit_dice        = dice_new("0d0")
+raceSpec.level_modifier  = 0
+raceSpec.help_topic      = "TAG_HUMANS"
+raceSpec.flags           = 1
+raceSpec.modifier_name   = "Human"
+raceSpec.height_male     = [58, 78]
+raceSpec.height_female   = [53, 73]
+raceSpec.weight_male     = [124, 200]
+raceSpec.weight_female   = [89, 165]
+raceSpec.stat_modifiers  = [0, 0, 0, 0, 0, 0]   # str, dex, con, int, wis, cha
+raceSpec.proto_id        = 13000
+raceSpec.material_offset = 0         # offset into rules/material_ext.mes file
+
 ###################################################
-
-
-
-def GetProtoId():
-	return 13000
-
-def GetMaterialOffset():
-	return 0
-
-def GetStatModifiers():
-	return [0, 0, 0, 0, 0, 0]
-
-def GetFavoredClass(obj = OBJ_HANDLE_NULL):
-	return -1
-	
-def GetLevelModifier(obj = OBJ_HANDLE_NULL):
-	return 0
-	
-def GetMinMaxHeightWeight():
-	minHeightMale = 58
-	maxHeightMale = 78
-	
-	minHeightFemale = 53
-	maxHeightFemale = 73
-	
-	minWeightMale = 124
-	maxWeightMale = 200
-	
-	minWeightFemale = 89
-	maxWeightFemale = 165
-	
-	return [minHeightMale, maxHeightMale, minHeightFemale, maxHeightFemale, minWeightMale, maxWeightMale, minWeightFemale, maxWeightFemale]
+def RegisterRace():
+	raceSpec.register(raceEnum)

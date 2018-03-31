@@ -51,6 +51,7 @@ public:
 	std::vector<int> GetStatModifiers(Race race);
 	bool HasFeat(Race race, feat_enums featEnum);
 	int GetNaturalArmor(Race race);
+	std::map<SpellStoreData, int> GetSpellLikeAbilities(Race race);
 
 protected:
 	RaceSpec & GetRaceSpec(Race race);

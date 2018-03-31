@@ -70,6 +70,11 @@ const int testSizeofPyspell = sizeof PySpell; // should be 680 (due to HEAD_EXTR
 typedef unordered_map<int, PySpell*> ActiveSpellMap;
 static ActiveSpellMap activeSpells;
 
+/******************************************************************************
+* PySpell
+******************************************************************************/
+#pragma region PySpell
+
 static PyObject* PySpell_Repr(PyObject* obj) {
 	auto self = (PySpell*)obj;
 	return PyString_FromFormat("Spell(%d)", self->spellEnum);
@@ -752,10 +757,13 @@ objHndl PySpell_GetTargetHandle(PyObject* spell, int targetIdx) {
 	return self->targets[targetIdx].obj;
 }
 
+#pragma endregion
 
 /******************************************************************************
 * Spell Target
 ******************************************************************************/
+
+#pragma region Spell Target
 
 static PyObject* PySpellTargets_Repr(PyObject* obj);
 
@@ -871,10 +879,12 @@ static PyObject *PySpellTargetsEntry_Create(PySpell *spell, int targetIdx) {
 	return (PyObject*) result;
 }
 
+#pragma endregion
+
 /******************************************************************************
  * Spell Target Array
  ******************************************************************************/
-
+#pragma region Spell Target Array
 struct PySpellTargets {
 	PyObject_HEAD;
 	PySpell *spell;
@@ -1050,13 +1060,14 @@ BOOL ConvertTargetArray(PyObject* obj, PySpell** pySpellOut) {
 	*pySpellOut = ((PySpellTargets*)obj)->spell;
 	return TRUE;
 }
-
+#pragma endregion
 
 
 /******************************************************************************
 * Spell Store
 ******************************************************************************/
 
+#pragma region Spell Store
 BOOL ConvertSpellStore(PyObject * obj, SpellStoreData * pSpellStoreOut)
 {
 	if (obj == Py_None) {
@@ -1073,6 +1084,23 @@ BOOL ConvertSpellStore(PyObject * obj, SpellStoreData * pSpellStoreOut)
 
 	*pSpellStoreOut = ((PySpellStore*)obj)->spellData;
 	return TRUE;
+}
+
+
+static int PySpellStore_Init(PyObject* obj, PyObject* args, PyObject* kwargs) {
+	auto self = (PySpellStore*)obj;
+
+	if (!PyArg_ParseTuple(args, "|iii:PySpellStore", &self->spellData.spellEnum, &self->spellData.classCode, &self->spellData.spellLevel)) {
+		return -1;
+	}
+
+	return 0;
+}
+
+static PyObject* PySpellStore_New(PyTypeObject*, PyObject*, PyObject*) {
+	auto self = PyObject_New(PySpellStore, &PySpellStoreType);
+	self->spellData = SpellStoreData();
+	return (PyObject*)self;
 }
 
 PyObject* PySpellStore_Create(const SpellStoreData& spellData){
@@ -1257,7 +1285,9 @@ PyTypeObject PySpellStoreType = {
 	0, /* tp_descr_get */
 	0, /* tp_descr_set */
 	0, /* tp_dictoffset */
-	0, /* tp_init */
+	PySpellStore_Init, /* tp_init */
 	0, /* tp_alloc */
-	0, /* tp_new */
+	PySpellStore_New, /* tp_new */
 };
+
+#pragma endregion
