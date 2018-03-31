@@ -80,14 +80,14 @@ def OnAbilityModCheckStabilityBonus(attachee, args, evt_obj):
 		evt_obj.bonus_list.add(4, 22, BONUS_MES_STABILITY)
 	return 0
 
-
-def CastInvisibility(attachee, args, evt_obj):
-	radial_action = tpdp.RadialMenuEntryAction("Invisibility", D20A_CAST_SPELL, 0, "TAG_INTERFACE_HELP")
-	spell_data = tpdp.D20SpellData(152)
-	spell_data.set_spell_level(2)
-	spell_data.spell_class = domain_special
-	radial_action.set_spell_data(spell_data)
-	radial_action.add_child_to_standard(attachee, tpdp.RadialMenuStandardNode.Feats)
+def CasterLevelRacialSpell(attachee, args, evt_obj):
+	# Set caster level for racial spells to 2x character level (minimum 3)
+	sp_pkt = evt_obj.get_spell_packet()
+	if sp_pkt.spell_class != domain_special:
+		return 0
+	caster_level = max(3, 2 * attachee.stat_level_get(stat_level))
+	if evt_obj.return_val < caster_level:
+		evt_obj.return_val = caster_level
 	return 0
 ##########################################################
 
@@ -107,4 +107,4 @@ raceSpecObj.AddHook(ET_OnConditionAddPre, EK_NONE,           ConditionImmunityOn
 raceSpecObj.AddHook(ET_OnToHitBonus2,     EK_NONE,           OnGetToHitBonusVsOrcsAndGoblins, ())
 raceSpecObj.AddHook(ET_OnGetAC,           EK_NONE,           OnGetArmorClassBonusVsGiants, ())
 raceSpecObj.AddHook(ET_OnGetAbilityCheckModifier, EK_NONE,   OnAbilityModCheckStabilityBonus, ())
-raceSpecObj.AddHook(ET_OnBuildRadialMenuEntry   , EK_NONE,   CastInvisibility, ())
+raceSpecObj.AddHook(ET_OnGetCasterLevelMod,       EK_NONE,   CasterLevelRacialSpell, ())

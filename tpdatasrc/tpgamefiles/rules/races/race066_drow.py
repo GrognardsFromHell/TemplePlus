@@ -23,6 +23,7 @@ raceSpec.feats           = [feat_exotic_weapon_proficiency_hand_crossbow, feat_m
 
 ###################################################
 def RegisterRace():
+	raceSpec.spell_like_abilities = GetSpellLikeAbilities()
 	raceSpec.register(raceEnum)
 
 def GetFavoredClass(obj = OBJ_HANDLE_NULL):
@@ -32,3 +33,7 @@ def GetFavoredClass(obj = OBJ_HANDLE_NULL):
 
 def GetLevelModifier(obj = OBJ_HANDLE_NULL):
 	return 2
+
+def GetSpellLikeAbilities(obj = OBJ_HANDLE_NULL):
+	spFaerie   = PySpellStore(spell_faerie_fire, domain_special, 1)
+	return {spFaerie: 3, }

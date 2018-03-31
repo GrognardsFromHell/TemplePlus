@@ -16,12 +16,13 @@ raceSpec.height_female   = [43, 51]
 raceSpec.weight_male     = [148, 178]
 raceSpec.weight_female   = [104, 134]
 raceSpec.stat_modifiers  = [0, 0, 2, 0, 0, -4]   # str, dex, con, int, wis, cha
-raceSpec.proto_id        = 13002
+raceSpec.proto_id        = 13020
 raceSpec.material_offset = 6         # offset into rules/material_ext.mes file
 
 ###################################################
 def RegisterRace():
 	print "Registering race: Duergar"
+	raceSpec.spell_like_abilities = GetSpellLikeAbilities()
 	raceSpec.register(raceEnum)
 
 def GetFavoredClass(obj = OBJ_HANDLE_NULL):
@@ -29,3 +30,8 @@ def GetFavoredClass(obj = OBJ_HANDLE_NULL):
 
 def GetLevelModifier(obj = OBJ_HANDLE_NULL):
 	return 1
+
+def GetSpellLikeAbilities(obj = OBJ_HANDLE_NULL):
+	spInvis   = PySpellStore(spell_invisibility, domain_special, 2)
+	spEnlarge = PySpellStore(spell_enlarge     , domain_special, 1)
+	return {spInvis: 1, spEnlarge: 1}
