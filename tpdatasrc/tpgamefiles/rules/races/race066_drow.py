@@ -36,4 +36,4 @@ def GetLevelModifier(obj = OBJ_HANDLE_NULL):
 
 def GetSpellLikeAbilities(obj = OBJ_HANDLE_NULL):
 	spFaerie   = PySpellStore(spell_faerie_fire, domain_special, 1)
-	return {spFaerie: 3, }
+	return {spFaerie: 1, }
