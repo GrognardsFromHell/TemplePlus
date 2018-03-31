@@ -975,7 +975,7 @@ void UiPcCreation::FeatsActivate()
 	featsExistingScrollbar.scrollbarY = 0;
 	featsExistingScrollbarY = 0;
 	featsExistingScrollbar.yMax = max((int)mExistingFeats.size() - FEATS_EXISTING_BTN_COUNT, 0);
-	featsExistingScrollbar = *uiManager->GetScrollBar(featsExistingScrollbarId);
+	*uiManager->GetScrollBar(featsExistingScrollbarId) = featsExistingScrollbar;
 
 	// Available feats
 	mSelectableFeats.clear();
@@ -1015,7 +1015,7 @@ void UiPcCreation::FeatsActivate()
 	featsScrollbar.scrollbarY = 0;
 	featsScrollbarY = 0;
 	featsScrollbar.yMax = max((int)mSelectableFeats.size() - FEATS_AVAIL_BTN_COUNT, 0);
-	featsScrollbar = *uiManager->GetScrollBar(featsScrollbarId);
+	*uiManager->GetScrollBar(featsScrollbarId) = featsScrollbar;
 }
 
 BOOL UiPcCreation::FeatsCheckComplete()
