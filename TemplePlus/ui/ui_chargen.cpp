@@ -37,6 +37,7 @@ void PagianatedChargenSystem::AddPageButtonsToWnd(unique_ptr<WidgetContainer>& w
 	prevBtn->SetClickHandler([&]() {
 		SetPage(GetPage() - 1);
 	});
+	prevBtn->SetDisabled(true);
 	mPrevBtnId = prevBtn->GetWidgetId();
 	prevBtn->SetActivationState(ChargenBigButton::ChargenButtonActivationState::Active);
 

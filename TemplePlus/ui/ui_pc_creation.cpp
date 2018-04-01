@@ -3373,6 +3373,8 @@ bool RaceChargen::WidgetsInit(int w, int h){
 
 void RaceChargen::Reset(CharEditorSelectionPacket & charSpec) {
 	charSpec.raceId = RACE_INVALID;
+	SetPage(0);
+	UpdateActiveRace();
 	UpdateSubraceButtons((RaceBase)RACE_INVALID);
 }
 
@@ -3401,6 +3403,10 @@ void RaceChargen::UpdateActiveRace()
 {
 	auto &selPkt = uiPcCreation.GetCharEditorSelPacket();
 	auto raceBase = d20RaceSys.GetBaseRace(selPkt.raceId);
+	if (selPkt.raceId == RACE_INVALID){
+		raceBase = (RaceBase)RACE_INVALID;
+	}
+	 
 	UpdateSubraceButtons(raceBase);
 
 	for (auto it: mBigButtons){
