@@ -62,7 +62,7 @@ def OnGetToHitBonusVsOrcsAndGoblins(attachee, args, evt_obj):
 	target = evt_obj.attack_packet.target
 	if target == OBJ_HANDLE_NULL:
 		return 0
-	if taget.is_cateogry_subtype(mc_subtype_half_orc) or target.is_cateogry_subtype(mc_subtype_goblinoid) or target.is_cateogry_subtype(mc_subtype_orc):
+	if target.is_category_subtype(mc_subtype_half_orc) or target.is_category_subtype(mc_subtype_goblinoid) or target.is_category_subtype(mc_subtype_orc):
 		evt_obj.bonus_list.add(1, 0, BONUS_MES_RACIAL_BONUS)
 	return 0
 

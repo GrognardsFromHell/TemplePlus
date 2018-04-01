@@ -112,7 +112,11 @@ uint32_t D20LevelSystem::GetXpRequireForLevel(uint32_t level)
 }
 
 int D20LevelSystem::GetSurplusXp(objHndl handle){
-	int xpReq = (int)GetXpRequireForLevel(critterSys.GetEffectiveLevel(handle));
+	auto lvl = objects.StatLevelGet(handle, stat_level);
+	if (lvl > 1){
+		lvl = critterSys.GetEffectiveLevel(handle);
+	}
+	int xpReq = (int)GetXpRequireForLevel(lvl);
 	return gameSystems->GetObj().GetObject(handle)->GetInt32(obj_f_critter_experience) - xpReq;
 }
 
