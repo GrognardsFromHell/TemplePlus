@@ -234,6 +234,7 @@ struct DispatcherCallbackArgs {
 	int GetData1() const; // gets the data1 value from the subDispDef
 	int GetData2() const;
 	void SetCondArg(uint32_t argIdx, int value);
+	void SetCondArgObjHndl(uint32_t argIdx, const objHndl& handle);
 	void RemoveCondition(); // note: this is the low level function
 	void RemoveSpellMod();
 	

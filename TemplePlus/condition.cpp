@@ -3128,7 +3128,10 @@ int RendOnDamage(DispatcherCallbackArgs args)
 
 	DamagePacket * dmgPacket = &dispIo->damage;
 	auto attackDescr = dmgPacket->dice[0].typeDescription; // e.g. Claw etc.
-	if (conds.CondNodeGetArg(args.subDispNode->condNode, 0) && attackDescr == (char*)conds.CondNodeGetArg(args.subDispNode->condNode, 1))
+	auto hasDeliveredDamage = args.GetCondArg(0);
+	auto previousAttackDescr = (char*)args.GetCondArg(1);
+	auto previousTarget = args.GetCondArgObjHndl(2);
+	if (hasDeliveredDamage && attackDescr == previousAttackDescr && previousTarget == dispIo->attackPacket.victim)
 	{
 		Dice dice(2, 6, 9);
 		dispIo->damage.AddDamageDice(dice.ToPacked(), DamageType::PiercingAndSlashing, 133);
@@ -3138,8 +3141,9 @@ int RendOnDamage(DispatcherCallbackArgs args)
 	}
 	else
 	{
-		conds.CondNodeSetArg(args.subDispNode->condNode, 0, 1);
-		conds.CondNodeSetArg(args.subDispNode->condNode, 1, (int)attackDescr);
+		args.SetCondArg(0, 1);
+		args.SetCondArg(1, (int)attackDescr);
+		args.SetCondArgObjHndl(2, dispIo->attackPacket.victim);
 	}
 		
 	return 0;

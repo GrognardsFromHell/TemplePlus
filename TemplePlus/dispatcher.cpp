@@ -1190,6 +1190,13 @@ void DispatcherCallbackArgs::SetCondArg(uint32_t argIdx, int value)
 	conds.CondNodeSetArg(subDispNode->condNode, argIdx, value);
 }
 
+void DispatcherCallbackArgs::SetCondArgObjHndl(uint32_t argIdx, const objHndl& handle){
+	if (argIdx +1 < this->subDispNode->condNode->condStruct->numArgs){
+		SetCondArg(argIdx, handle.GetHandleUpper());
+		SetCondArg(argIdx + 1, handle.GetHandleLower());
+	}
+}
+
 void DispatcherCallbackArgs::RemoveCondition(){
 	conds.ConditionRemove(this->objHndCaller, this->subDispNode->condNode);
 }
