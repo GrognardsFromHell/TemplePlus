@@ -210,6 +210,15 @@ inline int WidgetIdIndexOf(LgcyWidgetId widgetId, LgcyWidgetId* widgetlist, int 
 
 	return -1;
 }
+inline int WidgetIdIndexOf(LgcyWidgetId widgetId, LgcyWindow** widgetlist, int size)
+{
+	for (int i = 0; i < size; i++) {
+		if (widgetlist[i]->widgetId == widgetId)
+			return i;
+	}
+
+	return -1;
+}
 
 class UiManager {
 public:

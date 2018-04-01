@@ -23,6 +23,7 @@
 #include "ui/ui_legacysystems.h"
 #include "ui/ui_systems.h"
 #include "d20_race.h"
+#include "gamesystems/d20/d20_help.h"
 
 #define NUM_SPELLBOOK_SLOTS 18 // 18 in vanilla
 
@@ -92,9 +93,7 @@ public:
 	#pragma endregion 
 
 	#pragma region Spellbook functions
-	static BOOL MemorizeSpellMsg(int widId, TigMsg* tigMsg){
-		return orgMemorizeSpellMsg(widId, tigMsg);
-	};
+	static BOOL MemorizeSpellMsg(int widId, TigMsg* tigMsg);
 	static BOOL (*orgMemorizeSpellMsg)(int widId, TigMsg* tigMsg);
 
 	static BOOL SpellbookSpellsMsg(int widId, TigMsg* tigMsg){
@@ -174,7 +173,7 @@ public:
 
 
 		//orgSpellbookSpellsMsg = replaceFunction(0x101B8F10, SpellbookSpellsMsg);
-		//orgMemorizeSpellMsg= replaceFunction(   0x101B9360, MemorizeSpellMsg);
+		orgMemorizeSpellMsg= replaceFunction(   0x101B9360, MemorizeSpellMsg);
 		replaceFunction(0x101B2EE0, IsSpecializationSchoolSlot);
 		orgSpellsShow = replaceFunction(0x101B5D80, SpellsShow);
 		
@@ -408,6 +407,45 @@ void CharUiSystem::AlignGenderRaceBtnRender(int widId){
 	TigRect rect(x, btn->y, textMeas.width, textMeas.height);
 	UiRenderer::RenderText(text, rect, style);
 	UiRenderer::PopFont();
+}
+
+BOOL CharUiSystem::MemorizeSpellMsg(int widId, TigMsg* tigMsg){
+
+	auto charSpellPackets = addresses.uiCharSpellPackets;
+	auto& uiCharSpellsNavClassTabIdx = temple::GetRef<int>(0x10D18F68);
+
+	auto &curSpellPacket = charSpellPackets[uiCharSpellsNavClassTabIdx];
+
+	auto widIdx = WidgetIdIndexOf(widId, &curSpellPacket.memorizeSpellWnds[0], NUM_SPELLBOOK_SLOTS);
+	auto scrollbarId = curSpellPacket.memorizeScrollbar->widgetId;
+	auto scrollbar = uiManager->GetScrollBar(scrollbarId);
+	auto scrollbarY = scrollbar?scrollbar->GetY(): 0;
+	auto &spData = curSpellPacket.spellsMemorized.spells[widIdx + scrollbarY];
+
+	if (spData.classCode == Domain::Domain_Special){
+		if (tigMsg->type == TigMsgType::MOUSE){
+			auto tigMouseMsg = (TigMsgMouse*)(tigMsg);
+			if (tigMouseMsg->buttonStateFlags & MouseStateFlags::MSF_LMB_RELEASED){
+				if (!helpSys.IsClickForHelpActive())
+					return TRUE;
+			}
+			if (tigMouseMsg->buttonStateFlags & MouseStateFlags::MSF_LMB_CLICK) {
+				if (!helpSys.IsClickForHelpActive())
+					return TRUE;
+			}
+		}
+		else if (tigMsg->type == TigMsgType::WIDGET){
+			auto tigWidgetMsg = (TigMsgWidget*)(tigMsg);
+			if (tigWidgetMsg->widgetEventType == TigMsgWidgetEvent::MouseReleased){
+				return TRUE;
+			}
+			if (tigWidgetMsg->widgetEventType == TigMsgWidgetEvent::Clicked) {
+				return TRUE;
+			}
+		}
+	}
+
+	return orgMemorizeSpellMsg(widId, tigMsg);
 }
 
 void CharUiSystem::SpellsShow(objHndl obj)
