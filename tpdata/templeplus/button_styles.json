@@ -42,6 +42,14 @@
 		"normalImage": "art/scrollbar/empty.tga"
 	},
 	{
+      "id": "action-pointer-next",
+	    "inherit": "default-sounds",
+      "normalImage": "art/interface/char_ui/char_looting_ui/ActionPointer.tga",
+	  "hoverImage": "art/interface/char_ui/char_looting_ui/ActionPointerHovered.tga",
+	  "pressedImage": "art/interface/char_ui/char_looting_ui/ActionPointerClicked.tga",
+	  "disabledImage": "art/interface/char_ui/char_looting_ui/ActionPointerDisabled.tga"
+    },
+	{
       "id": "chargen-button",
 	    "inherit": "default-sounds",
       "textStyle": "chargen-button-text",

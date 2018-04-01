@@ -114,6 +114,12 @@ public:
 	static objHndl GetCritterLooted(); // this may be a substitute inventory object when buying from NPCs with shops
 	static objHndl GetVendor();
 
+	BOOL CharLootingWidgetsInit();
+	void CharLootingShow();
+	void CharLootingHide();
+	void LootNextBtnRender(int id);
+	
+
 	static int InventorySlotMsg(int widId, TigMsg* msg);
 	static BOOL (*orgInventorySlotMsg)(int widId, TigMsg* msg);
 	static char* HookedItemDescriptionBarter(objHndl obj, objHndl item);
@@ -127,109 +133,12 @@ public:
 #pragma region Feats
 	static void FeatsShow();
 #pragma endregion 
-
-
-	void apply() override 
-	{
-
-		replaceFunction(0x10144B40, ClassLevelBtnRender);
-		replaceFunction(0x10145020, AlignGenderRaceBtnRender);
-
-		if (temple::Dll::GetInstance().HasCo8Hooks()) {
-			writeHex(0x1011DD4D, "90 90 90 90 90"); // disabling stat text draw calls
-		}
-
-		if (config.showNpcStats){
-			writeNoops(0x101C2247); // str output btn
-			writeNoops(0x101C2529); // dex output btn
-			writeNoops(0x101C2809); // con output btn
-			writeNoops(0x101C2AE9); // int output btn
-			writeNoops(0x101C2DC9); // wis output btn
-			writeNoops(0x101C30A9); // cha output btn
-
-			writeNoops(0x101C4D5A); // str mod btn
-			writeNoops(0x101C4F4A); // dex mod btn
-			writeNoops(0x101C513A); // con mod btn
-			writeNoops(0x101C532A); // int mod btn
-			writeNoops(0x101C551A); // wis mod btn
-			writeNoops(0x101C570A); // cha mod btn
-			
-		}
-
-
-
-		int charSheetAttackCodeForAttackBonusDisplay = 1 + ATTACK_CODE_OFFHAND;
-		write(0x101C45F3 + 7, &charSheetAttackCodeForAttackBonusDisplay, sizeof(int));
-		write(0x101C8C7B + 4, &charSheetAttackCodeForAttackBonusDisplay, sizeof(int));
-
-		charSheetAttackCodeForAttackBonusDisplay = 1 + ATTACK_CODE_OFFHAND + 1; //the offhand
-		write(0x101C491B + 7, &charSheetAttackCodeForAttackBonusDisplay, sizeof(int));
-		write(0x101C8D74 + 4, &charSheetAttackCodeForAttackBonusDisplay, sizeof(int));
-		
-
-		// Feats
-		replaceFunction(0x101BBDB0, FeatsShow);
-
-
-
-		//orgSpellbookSpellsMsg = replaceFunction(0x101B8F10, SpellbookSpellsMsg);
-		orgMemorizeSpellMsg= replaceFunction(   0x101B9360, MemorizeSpellMsg);
-		replaceFunction(0x101B2EE0, IsSpecializationSchoolSlot);
-		orgSpellsShow = replaceFunction(0x101B5D80, SpellsShow);
-		
-		// UiCharSpellGetScrollbarY  has bug when called from Spellbook, it receives the first tab's scrollbar always
-		writeCall(0x101BA5D9, HookedCharSpellGetSpellbookScrollbarY);
-		
-		writeNoops(0x101B957E); // so it doesn't decrement the spells memorized num (this causes weirdness in right clicking from the spellbook afterwards)
-
-		static BOOL (__cdecl* orgUiCharLootingLootWndMsg)(int , TigMsg* ) = replaceFunction<BOOL(__cdecl)(int , TigMsg* ) >(0x101406D0, [](int widId, TigMsg* msg){
-
-
-			if (msg->type == TigMsgType::WIDGET) {
-
-				auto msg_ = (TigMsgWidget*)msg;
-				if (msg_->widgetEventType == TigMsgWidgetEvent::Clicked
-					&& (infrastructure::gKeyboard.IsKeyPressed(VK_LSHIFT) || infrastructure::gKeyboard.IsKeyPressed(VK_RSHIFT))) {
-
-					objHndl critterLooted = GetCritterLooted(); // may be substitute inventory object (i.e. a container)
-					auto invenIdx = temple::GetRef<int(__cdecl)(int)>(0x1013F9C0)(widId);
-
-					auto item = inventory.GetItemAtInvIdx(critterLooted, invenIdx);
-					if (item && inventory.IsIdentified(item) && description.LongDescriptionHas(item)) {
-						charUiSys.LongDescriptionPopupCreate(item);
-						return TRUE;
-					}
-
-				}
-
-			}
-			
-			return orgUiCharLootingLootWndMsg(widId, msg);
-		});
-
-		writeCall(0x10140134, HookedItemDescriptionBarter);
-		writeCall(0x1014016B, HookedItemDescriptionBarter);
-
-		orgInventorySlotMsg = replaceFunction<int(__cdecl)(int, TigMsg*) >(0x10157DC0, InventorySlotMsg);
-		
-		// Addendums to the item description box
-		static char* (*orgGetItemDescr)(objHndl, objHndl) = replaceFunction<char*(__cdecl)(objHndl, objHndl)>(0x10122DD0, [](objHndl obj, objHndl item){
-			// need to put this here
-			temple::GetRef<objHndl>(0x10BF07B8) = item;
-
-			auto result = orgGetItemDescr(obj, item);
-			std::string addonStr;
-			ItemGetDescrAddon(obj, item, addonStr);
-			sprintf(result, "%s\n%s",result, addonStr.c_str());
-			
-			return result;
-		});
-
-		replaceFunction(0x10155D20, TotalWeightOutputBtnTooltip);
-
-
-
-	}
+protected:
+	int mNextLooteeBtnId = -1;
+	std::unique_ptr<WidgetContainer> mWnd;
+	std::vector<objHndl> mCrittersLootedList; // list of adjacent critters you can loot
+	void apply() override;
+	
 } charUiSys;
 
 void CharUiSystem::ClassLevelBtnRender(int widId){
@@ -925,6 +834,43 @@ objHndl CharUiSystem::GetVendor()
 	return temple::GetRef<objHndl>(0x10BE6EC8);
 }
 
+BOOL CharUiSystem::CharLootingWidgetsInit(){
+	auto wnd = temple::GetRef<LgcyWindow*>(0x10BE6EA0);
+	auto wndId = wnd->widgetId;
+
+	mWnd = std::make_unique<WidgetContainer>(332,332);
+	mWnd->SetPos(wnd->x + 90, wnd->y + 60);
+	auto mNextBtn = std::make_unique<WidgetButton>();
+	mNextBtn->SetPos(0,0);
+	mNextBtn->SetStyle("action-pointer-next");
+	mNextBtn->SetClickHandler([](){
+		auto asdf = 1;
+	});
+	mNextBtn->Show();
+	mWnd->Add(std::move(mNextBtn));
+	mWnd->Hide();
+	return TRUE;
+}
+
+void CharUiSystem::CharLootingShow(){
+	if (uiSystems->GetChar().GetDisplayType() != UiCharDisplayType::Looting){
+		mWnd->Hide();
+		return;
+	}
+	auto lootedCritter = uiSystems->GetChar().GetLootedObject();
+
+	mWnd->Show();
+	mWnd->BringToFront();
+}
+
+void CharUiSystem::CharLootingHide(){
+	mWnd->Hide();
+}
+
+void CharUiSystem::LootNextBtnRender(int id){
+	
+}
+
 int CharUiSystem::InventorySlotMsg(int widId, TigMsg* msg)
 {
 	// Alt-click to Quicksell
@@ -1226,6 +1172,122 @@ void CharUiSystem::FeatsShow(){
 	auto featsWnd = temple::GetRef<LgcyWindow*>(0x10D19DB0);
 	uiManager->SetHidden(featsWnd->widgetId, false); // FeatsMainWnd
 	uiManager->BringToFront(featsWnd->widgetId);
+}
+
+void CharUiSystem::apply(){
+	
+	replaceFunction(0x10144B40, ClassLevelBtnRender);
+	replaceFunction(0x10145020, AlignGenderRaceBtnRender);
+
+	if (temple::Dll::GetInstance().HasCo8Hooks()) {
+		writeHex(0x1011DD4D, "90 90 90 90 90"); // disabling stat text draw calls
+	}
+
+	if (config.showNpcStats) {
+		writeNoops(0x101C2247); // str output btn
+		writeNoops(0x101C2529); // dex output btn
+		writeNoops(0x101C2809); // con output btn
+		writeNoops(0x101C2AE9); // int output btn
+		writeNoops(0x101C2DC9); // wis output btn
+		writeNoops(0x101C30A9); // cha output btn
+
+		writeNoops(0x101C4D5A); // str mod btn
+		writeNoops(0x101C4F4A); // dex mod btn
+		writeNoops(0x101C513A); // con mod btn
+		writeNoops(0x101C532A); // int mod btn
+		writeNoops(0x101C551A); // wis mod btn
+		writeNoops(0x101C570A); // cha mod btn
+
+	}
+
+
+
+	int charSheetAttackCodeForAttackBonusDisplay = 1 + ATTACK_CODE_OFFHAND;
+	write(0x101C45F3 + 7, &charSheetAttackCodeForAttackBonusDisplay, sizeof(int));
+	write(0x101C8C7B + 4, &charSheetAttackCodeForAttackBonusDisplay, sizeof(int));
+
+	charSheetAttackCodeForAttackBonusDisplay = 1 + ATTACK_CODE_OFFHAND + 1; //the offhand
+	write(0x101C491B + 7, &charSheetAttackCodeForAttackBonusDisplay, sizeof(int));
+	write(0x101C8D74 + 4, &charSheetAttackCodeForAttackBonusDisplay, sizeof(int));
+
+
+	// Feats
+	replaceFunction(0x101BBDB0, FeatsShow);
+
+
+
+	//orgSpellbookSpellsMsg = replaceFunction(0x101B8F10, SpellbookSpellsMsg);
+	orgMemorizeSpellMsg = replaceFunction(0x101B9360, MemorizeSpellMsg);
+	replaceFunction(0x101B2EE0, IsSpecializationSchoolSlot);
+	orgSpellsShow = replaceFunction(0x101B5D80, SpellsShow);
+
+	// UiCharSpellGetScrollbarY  has bug when called from Spellbook, it receives the first tab's scrollbar always
+	writeCall(0x101BA5D9, HookedCharSpellGetSpellbookScrollbarY);
+
+	writeNoops(0x101B957E); // so it doesn't decrement the spells memorized num (this causes weirdness in right clicking from the spellbook afterwards)
+
+	static BOOL(__cdecl* orgUiCharLootingWidgetsInit)() = replaceFunction<BOOL(__cdecl)()>(0x10140CF0, []()->BOOL {
+		auto result = orgUiCharLootingWidgetsInit();
+		charUiSys.CharLootingWidgetsInit();
+		return result;
+	});
+
+	static void(__cdecl* orgCharLootingShow)(objHndl) = replaceFunction<void(__cdecl)(objHndl)>(0x1013F6C0, [](objHndl handle) {
+		orgCharLootingShow(handle);
+		charUiSys.CharLootingShow();
+	});
+
+	static void(__cdecl* orgCharLootingHide)() = replaceFunction<void(__cdecl)()>(0x1013F880, []() {
+		orgCharLootingHide();
+		charUiSys.CharLootingHide();
+	});
+	
+
+	static BOOL(__cdecl* orgUiCharLootingLootWndMsg)(int, TigMsg*) = replaceFunction<BOOL(__cdecl)(int, TigMsg*) >(0x101406D0, [](int widId, TigMsg* msg) {
+
+
+		if (msg->type == TigMsgType::WIDGET) {
+
+			auto msg_ = (TigMsgWidget*)msg;
+			if (msg_->widgetEventType == TigMsgWidgetEvent::Clicked
+				&& (infrastructure::gKeyboard.IsKeyPressed(VK_LSHIFT) || infrastructure::gKeyboard.IsKeyPressed(VK_RSHIFT))) {
+
+				objHndl critterLooted = GetCritterLooted(); // may be substitute inventory object (i.e. a container)
+				auto invenIdx = temple::GetRef<int(__cdecl)(int)>(0x1013F9C0)(widId);
+
+				auto item = inventory.GetItemAtInvIdx(critterLooted, invenIdx);
+				if (item && inventory.IsIdentified(item) && description.LongDescriptionHas(item)) {
+					charUiSys.LongDescriptionPopupCreate(item);
+					return TRUE;
+				}
+
+			}
+
+		}
+
+		return orgUiCharLootingLootWndMsg(widId, msg);
+	});
+
+	writeCall(0x10140134, HookedItemDescriptionBarter);
+	writeCall(0x1014016B, HookedItemDescriptionBarter);
+
+	orgInventorySlotMsg = replaceFunction<int(__cdecl)(int, TigMsg*) >(0x10157DC0, InventorySlotMsg);
+
+	// Addendums to the item description box
+	static char* (*orgGetItemDescr)(objHndl, objHndl) = replaceFunction<char*(__cdecl)(objHndl, objHndl)>(0x10122DD0, [](objHndl obj, objHndl item) {
+		// need to put this here
+		temple::GetRef<objHndl>(0x10BF07B8) = item;
+
+		auto result = orgGetItemDescr(obj, item);
+		std::string addonStr;
+		ItemGetDescrAddon(obj, item, addonStr);
+		sprintf(result, "%s\n%s", result, addonStr.c_str());
+
+		return result;
+	});
+
+	replaceFunction(0x10155D20, TotalWeightOutputBtnTooltip);
+
 }
 
 BOOL(*CharUiSystem::orgSpellbookSpellsMsg)(int widId, TigMsg* tigMsg);

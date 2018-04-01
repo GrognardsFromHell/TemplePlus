@@ -206,6 +206,12 @@ public:
 	bool IsLootingActive() const {
 		return mLooting != FALSE;
 	}
+	/*
+	 The critter or chest being looted or bartered with
+	 */
+	objHndl GetLootedObject() const{
+		return mLootedObj;
+	}
 
 	/*
 		This is actually used to *hide* the char ui if param is 0.
@@ -226,6 +232,7 @@ public:
 	
 private:
 	objHndl &mInventoryObj = temple::GetRef<objHndl>(0x10BEECC0);
+	objHndl &mLootedObj = temple::GetRef<objHndl>(0x10BE6EC0);
 	BOOL &mInventoryObjState = temple::GetRef<BOOL>(0x10EF97C4);
 	objHndl &mCurrentCritter = temple::GetRef<objHndl>(0x10BE9940);
 	UiCharDisplayType &mDisplayType = temple::GetRef<UiCharDisplayType>(0x10BE994C);
