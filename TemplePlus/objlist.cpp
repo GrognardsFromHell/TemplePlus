@@ -114,9 +114,9 @@ void ObjList::ListVicinity(objHndl handle, int flags){
 	ListVicinity(objSystem->GetObject(handle)->GetLocation(), flags);
 }
 
-void ObjList::ListRadius(LocAndOffsets loc, float radius, int flags) {
+void ObjList::ListRadius(LocAndOffsets loc, float radiusInches, int flags) {
 	FreeResult();
-	addresses.ObjListRadius(loc, radius, 0.0f, (float)(M_PI * 2), flags, mResult);
+	addresses.ObjListRadius(loc, radiusInches, 0.0f, (float)(M_PI * 2), flags, mResult);
 	mHasToFree = true;
 }
 

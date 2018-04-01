@@ -24,6 +24,8 @@
 #include "ui/ui_systems.h"
 #include "d20_race.h"
 #include "gamesystems/d20/d20_help.h"
+#include "objlist.h"
+#include "pathfinding.h"
 
 #define NUM_SPELLBOOK_SLOTS 18 // 18 in vanilla
 
@@ -115,6 +117,7 @@ public:
 	static objHndl GetVendor();
 
 	BOOL CharLootingWidgetsInit();
+	std::vector<objHndl> GetNearbyLootableCritters(const objHndl& objHndl);
 	void CharLootingShow();
 	void CharLootingHide();
 	void LootNextBtnRender(int id);
@@ -137,6 +140,7 @@ protected:
 	int mNextLooteeBtnId = -1;
 	std::unique_ptr<WidgetContainer> mWnd;
 	std::vector<objHndl> mCrittersLootedList; // list of adjacent critters you can loot
+	int mCrittersLootedIdx = 0;
 	void apply() override;
 	
 } charUiSys;
@@ -838,18 +842,43 @@ BOOL CharUiSystem::CharLootingWidgetsInit(){
 	auto wnd = temple::GetRef<LgcyWindow*>(0x10BE6EA0);
 	auto wndId = wnd->widgetId;
 
-	mWnd = std::make_unique<WidgetContainer>(332,332);
+	mWnd = std::make_unique<WidgetContainer>(32,32);
 	mWnd->SetPos(wnd->x + 90, wnd->y + 60);
 	auto mNextBtn = std::make_unique<WidgetButton>();
 	mNextBtn->SetPos(0,0);
 	mNextBtn->SetStyle("action-pointer-next");
 	mNextBtn->SetClickHandler([](){
-		auto asdf = 1;
+		auto &lootedCritter = uiSystems->GetChar().GetLootedObject();
+		charUiSys.mCrittersLootedIdx++;
+		if (charUiSys.mCrittersLootedIdx >= charUiSys.mCrittersLootedList.size())
+			charUiSys.mCrittersLootedIdx = 0;
+		auto nextCritter = charUiSys.mCrittersLootedList[charUiSys.mCrittersLootedIdx];
+		uiSystems->GetChar().SetLootedObject(nextCritter);
+		auto resetLootIcons = temple::GetRef<void(__cdecl)()>(0x1013DD20);
+		resetLootIcons();
 	});
-	mNextBtn->Show();
 	mWnd->Add(std::move(mNextBtn));
 	mWnd->Hide();
 	return TRUE;
+}
+
+std::vector<objHndl> CharUiSystem::GetNearbyLootableCritters(const objHndl& handle){
+
+	auto result = std::vector<objHndl>();
+	result.push_back(handle);
+	if (!handle)
+		return result;
+	auto obj = objSystem->GetObject(handle);
+	ObjList objList;
+	objList.ListRadius(obj->GetLocationFull(), INCH_PER_TILE * 10, ObjectListFilter::OLC_CRITTERS);
+
+	for (auto i = 0; i < objList.size(); i++) {
+		auto corpse = objList[i];
+		if (corpse != handle && critterSys.IsLootableCorpse(corpse) && !party.IsInParty(corpse) && pathfindingSys.CanPathTo(handle, corpse))
+			result.push_back(corpse);
+	}
+
+	return result;
 }
 
 void CharUiSystem::CharLootingShow(){
@@ -858,6 +887,18 @@ void CharUiSystem::CharLootingShow(){
 		return;
 	}
 	auto lootedCritter = uiSystems->GetChar().GetLootedObject();
+	if (!lootedCritter || !objects.IsCritter(lootedCritter)){
+		mWnd->Hide();
+		return;
+	}
+
+	mCrittersLootedList = GetNearbyLootableCritters(lootedCritter);
+	mCrittersLootedIdx = 0;
+
+	if (mCrittersLootedList.size() <= 1){
+		mWnd->Hide();
+		return;
+	}
 
 	mWnd->Show();
 	mWnd->BringToFront();
@@ -1231,7 +1272,7 @@ void CharUiSystem::apply(){
 		charUiSys.CharLootingWidgetsInit();
 		return result;
 	});
-
+	
 	static void(__cdecl* orgCharLootingShow)(objHndl) = replaceFunction<void(__cdecl)(objHndl)>(0x1013F6C0, [](objHndl handle) {
 		orgCharLootingShow(handle);
 		charUiSys.CharLootingShow();

@@ -63,11 +63,11 @@ public:
 		Lists objects in a radius. This seems to be the radius in the X,Y 3D coordinate
 		space.
 	*/
-	void ListRadius(LocAndOffsets loc, float radius, int flags);
+	void ListRadius(LocAndOffsets loc, float radiusInches, int flags);
 
 	/*
 	Lists objects in a radius + angles. This seems to be the radius in the X,Y 3D coordinate
-	space.
+	space. flags - ObjectListFilter
 	*/
 	void ListRange(LocAndOffsets loc, float radius, float angleMin, float angleMax, int flags);
 

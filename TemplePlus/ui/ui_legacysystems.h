@@ -212,6 +212,9 @@ public:
 	objHndl GetLootedObject() const{
 		return mLootedObj;
 	}
+	void SetLootedObject(objHndl & handle) const {
+		mLootedObj = handle;
+	}
 
 	/*
 		This is actually used to *hide* the char ui if param is 0.
