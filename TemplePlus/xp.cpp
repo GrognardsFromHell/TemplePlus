@@ -222,7 +222,7 @@ void XPTableForHighLevels::GiveXPAwards(){
 		if (d20Sys.d20Query(objHnd, DK_QUE_ExperienceExempt)) { continue; };
 		if (party.ObjIsAIFollower(objHnd)) { continue; };
 
-		int level = objects.StatLevelGet(objHnd, stat_level);
+		int level = critterSys.GetEffectiveLevel(objHnd);
 		if (level <= 0) { continue; };
 
 		int xpGainRaw = 0; // raw means it's prior to applying multiclass penalties, which  is Someone Else's Problem :P
