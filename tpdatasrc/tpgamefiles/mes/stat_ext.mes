@@ -148,10 +148,12 @@
 {2034}{Aquatic Elf}
 {2035}{Svirfneblin}
 {2038}{Tallfellow}
+{2064}{Aasimar}
 {2065}{Derro}
 {2066}{Drow}
 {2067}{Forest Gnome}
 {2070}{Deep Halfling}
+{2096}{Tiefling}
 {2097}{Duergar}
 {2098}{Gray Elf}
 {2129}{Mountain Dwarf}
@@ -165,8 +167,11 @@
 {12007} goblin {}
 {12010} Hill Giant {Reckless brutes of incredible strength but little wit. +14 Strength, -2 Dexterity, +8 Constitution, -4 Intelligence, -4 Charisma.}
 {12011} Troll {Trolls have no fear of death: They launch themselves into combat without hesitation. +12 Strength, +4 Dexterity, +12 Constitution, -4 Intelligence, -2 Wisdom, -4 Charisma.}
+{12064} Aasimar {Aasimars are humans with some trace of celestial blood in their veins, and their favored class is Paladin. They possess the following traits: +2 Wisdom, +2 Charisma, Resistance 5 to acid, cold and electricity, and +2 on Spot and Listen checks. Level adjustment: +1.}
 {12066} Drow {Drow are a depraved and evil subterranean offshoot, their chief deity is Lolth, and their favored class is Cleric (females) and Wizard (males). In addition to elven racial traits, the Drow feature: +2 Intelligence, +2 Charisma, Spell Resistance equal to 11 + class levels, and +2 on Will saves against spells and spell-like effects. Level adjustment: +2.}
 {12097} Duergar {Duergar are evil beings that dwell in the underground. Their favored class is Fighter. In addition to dwarven racial traits, the Duergar feature: -4 Charisma, immunity to poison and paralysis, +2 on saves vs. spells and spell-like effects, +4 on Move Silently checks, 1/day enlarge person and invisibility. Level adjustment: +1.}
+
+
 // Class Short Help Goes Between 13000-13099
 {13011}Arcane Archer{The arcane archer is an Elven warrior skilled in using magic to supplement their combat prowess.
 
@@ -278,5 +283,6 @@ Race: Elf or half-elf.
 Base Attack Bonus: +6
 Feats: Point Blank Shot, Precise Shot, Weapon Focus (longbow or shortbow)
 Spells: Ability to cast 1st level arcane spells.}
+
 {20034} Favored Soul {Favored Soul requirements:
 Charisma: 11 or higher.}
