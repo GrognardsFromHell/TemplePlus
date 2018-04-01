@@ -3268,7 +3268,7 @@ bool RaceChargen::WidgetsInit(int w, int h){
 			auto raceBase = (RaceBase)pbtn.GetDatum();
 			auto race = (Race)raceBase;
 			if (helpSys.IsClickForHelpActive()){
-				helpSys.PresentWikiHelp(101 + race);
+				helpSys.PresentWikiHelp(101 + race, D20HelpType::Races);
 				return;
 			}
 			auto &selPkt = uiPcCreation.GetCharEditorSelPacket();
@@ -3319,7 +3319,7 @@ bool RaceChargen::WidgetsInit(int w, int h){
 		newBtn->SetClickHandler([&]() {
 			auto race = (Race)pbtn.GetDatum();
 			if (helpSys.IsClickForHelpActive()) {
-				helpSys.PresentWikiHelp(101 + race);
+				helpSys.PresentWikiHelp(101 + race, D20HelpType::Races);
 				return;
 			}
 			auto &selPkt = uiPcCreation.GetCharEditorSelPacket();

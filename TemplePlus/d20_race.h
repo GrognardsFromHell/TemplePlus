@@ -35,6 +35,7 @@ public:
 	RaceBase GetBaseRace(Race race); // Gets base race enum from compound race ID
 	Subrace GetSubrace(Race race); // Gets subrace enum from compound race ID
 	int GetProtoId(Race race);
+	std::string& GetHelpTopic(Race race);
 	Race GetRaceEnum(const std::string& raceName);
 	int GetMinHeight(Race race, Gender genderId);
 	int GetMaxHeight(Race race, Gender genderId);
@@ -52,6 +53,7 @@ public:
 	bool HasFeat(Race race, feat_enums featEnum);
 	int GetNaturalArmor(Race race);
 	std::map<SpellStoreData, int> GetSpellLikeAbilities(Race race);
+	
 
 protected:
 	RaceSpec & GetRaceSpec(Race race);

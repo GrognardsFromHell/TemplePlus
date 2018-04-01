@@ -265,6 +265,11 @@ int D20RaceSys::GetProtoId(Race race){
 	return raceSpec.protoId;
 }
 
+std::string& D20RaceSys::GetHelpTopic(Race race){
+	auto &raceSpec = GetRaceSpec(race);
+	return raceSpec.helpTopic;
+}
+
 Race D20RaceSys::GetRaceEnum(const std::string & raceName)
 {
 	for (auto it : mRaceSpecs){
