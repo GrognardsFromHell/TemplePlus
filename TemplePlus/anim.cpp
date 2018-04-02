@@ -660,6 +660,10 @@ void AnimationGoals::SetRunningState(bool state){
 	}
 }
 
+void AnimationGoals::TurnOnRunning(){
+	SetRunningState(true);
+}
+
 bool AnimationGoals::PushUnconceal(objHndl actor) {
   return addresses.PushUnconceal(actor);
 }
@@ -859,7 +863,8 @@ BOOL AnimationGoals::GetSlot(AnimSlotId * runId, AnimSlot **runSlotOut){
 		}
 	}
 
-	return TRUE;
+	*runSlotOut = nullptr;
+	return FALSE;
 }
 
 
@@ -1933,6 +1938,10 @@ public:
 	 
 	  replaceFunction<BOOL(__cdecl)(objHndl, LocAndOffsets, PathQueryResult*)>(0x1001A2E0, [](objHndl handle, LocAndOffsets loc, PathQueryResult* pqr) {
 		  return animationGoals.PushRunToTile(handle, loc, pqr)?TRUE:FALSE;
+	  });
+
+	  replaceFunction<void(__cdecl)()>(0x1001A930, [](){
+		  animationGoals.TurnOnRunning();
 	  });
 
 	static int (*orgProcessAnimEvt)(const TimeEvent*)	=  replaceFunction<int(const TimeEvent *)>(

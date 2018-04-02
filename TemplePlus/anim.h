@@ -159,6 +159,7 @@ public:
 	bool PushMoveToTile(objHndl handle, LocAndOffsets loc);
 	bool PushWalkToTile(objHndl handle, LocAndOffsets loc);
 	void SetRunningState(bool state); // sets ASF_RUNNING on/off on the last anim slot (i.e. should characters use running animation, as opposed to walking)
+	void TurnOnRunning(); // same as SetRunningState, except for the global anim
 
 	/*
 		Pushes a goal to play the unconceal animation and unconceal the critter.

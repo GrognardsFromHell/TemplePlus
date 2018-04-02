@@ -193,8 +193,7 @@ void UiInGame::HandleCombatMessage(const TigMsg & msg)
 
 void UiInGame::HandleNonCombatMessage(const TigMsg & msg)
 {
-	auto checkCritterWithInventoryOpen = temple::GetRef<BOOL(__cdecl)()>(0x10144030);
-	if (checkCritterWithInventoryOpen() && msg.type == TigMsgType::MOUSE)
+	if (uiSystems->GetChar().IsVisible() && msg.type == TigMsgType::MOUSE)
 		return;
 
 	if (msg.type == TigMsgType::KEYSTATECHANGE) {
@@ -203,12 +202,23 @@ void UiInGame::HandleNonCombatMessage(const TigMsg & msg)
 
 	if (msg.type == TigMsgType::MOUSE) {
 
-
-
+		auto tigMsgMouse = (TigMsgMouse&)msg;
+		auto mouseFlags = tigMsgMouse.buttonStateFlags;
+		if (mouseFlags & MSF_LMB_RELEASED){
+			return temple::GetRef<void(__cdecl)(const TigMsg&)>(0x10114AF0)(msg); // normal LMB released handler
+		}
+		else if (mouseFlags & MSF_LMB_CLICK || mouseFlags & (MSF_POS_CHANGE | MSF_LMB_DOWN)){
+			return temple::GetRef<void(__cdecl)(const TigMsg&)>(0x101148B0)(msg); // LMB drag handler
+		}
+		else if (mouseFlags & MSF_RMB_CLICK){
+			return temple::GetRef<void(__cdecl)(const TigMsg&)>(0x10114D90)(msg); // RMB handler
+		}
+		else if (mouseFlags & (MSF_POS_CHANGE) || mouseFlags & (MSF_POS_CHANGE_SLOW)){
+			static auto NormalMsgHandler = temple::GetPointer<void(const TigMsg &msg)>(0x10114e30);
+			NormalMsgHandler(msg);
+		}
 	}
 
-	static auto NormalMsgHandler = temple::GetPointer<void(const TigMsg &msg)>(0x10114e30);
-	NormalMsgHandler(msg);
 }
 
 void UiInGame::HandleCombatKeyStateChange(const TigMsg & msg)

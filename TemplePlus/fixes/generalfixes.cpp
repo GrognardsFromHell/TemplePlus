@@ -317,8 +317,9 @@ class WalkOnShortDistanceMod : public TempleFix
 {
 public: 
 
-	static int(__cdecl*orgPartySelectedStandUpAndMoveToPosition)(LocAndOffsets loc, int walkFlag);
-	static int PartySelectedStandUpAndMoveToPosition(LocAndOffsets loc, int isNotAlwaysRun){
+	static int PartySelectedStandUpAndMoveToPosition(LocAndOffsets loc, int walkFlag);
+	static int(__cdecl*orgPartySelectedFormationMoveToPosition)(LocAndOffsets loc, int walkFlag);
+	static int PartySelectedFormationMoveToPosition(LocAndOffsets loc, int isNotAlwaysRun){
 
 		isWalkOverride = true;
 		auto N = party.CurrentlySelectedNum();
@@ -331,7 +332,7 @@ public:
 			}
 		}
 
-		return orgPartySelectedStandUpAndMoveToPosition(loc, isWalkOverride);
+		return orgPartySelectedFormationMoveToPosition(loc, isWalkOverride);
 	};
 
 	static bool isWalkOverride;
@@ -347,8 +348,8 @@ public:
 					return animationGoals.PushRunToTile(handle, loc) ? TRUE : FALSE;
 			});
 			
-		//	replaceFunction(0x100FD1C0, sub_100FD1C0);
-		orgPartySelectedStandUpAndMoveToPosition = replaceFunction(0x100437F0, PartySelectedStandUpAndMoveToPosition);
+		replaceFunction(0x10113010, PartySelectedStandUpAndMoveToPosition);
+		orgPartySelectedFormationMoveToPosition = replaceFunction(0x100437F0, PartySelectedFormationMoveToPosition);
 		//writeHex(0x1001A922, "90 90 90 90");
 		//writeHex(0x1001A98F, "90 90 90 90");
 		//writeHex(0x1001A338 + 1, "05");
@@ -356,7 +357,7 @@ public:
 		}
 } walkOnShortDistMod;
 bool WalkOnShortDistanceMod::isWalkOverride = false;
-int(__cdecl*WalkOnShortDistanceMod::orgPartySelectedStandUpAndMoveToPosition)(LocAndOffsets loc, int walkFlag);
+int(__cdecl*WalkOnShortDistanceMod::orgPartySelectedFormationMoveToPosition)(LocAndOffsets loc, int walkFlag);
 
 // PartyPool UI Fix
 static class PartyPoolUiLagFix : public TempleFix {
@@ -576,6 +577,23 @@ int BardicInspireCourageFix::BardicInspiredCourageDamBon(DispatcherCallbackArgs 
 	}
 	dispIo->damage.AddDamageBonus(bonVal, 13, 191);
 	return 0;
+}
+
+int WalkOnShortDistanceMod::PartySelectedStandUpAndMoveToPosition(LocAndOffsets loc, int walkFlag){
+	// make Prone party members do a Stand Up action first if they're prone
+	auto N = party.GroupListGetLen();
+	for (auto i=0u; i < N; i++){
+		auto partyMember = party.GroupListGetMemberN(i);
+		if (!d20Sys.d20Query(partyMember, DK_QUE_Prone))
+			continue;
+		actSeqSys.TurnBasedStatusInit(partyMember);
+		actSeqSys.curSeqReset(partyMember);
+		d20Sys.GlobD20ActnInit();
+		d20Sys.GlobD20ActnSetTypeAndData1(D20A_STAND_UP, 0);
+		actSeqSys.ActionAddToSeq();
+		actSeqSys.sequencePerform();
+	}
+	return PartySelectedFormationMoveToPosition(loc, walkFlag);
 }
 
 int SpellSlingerGeneralFixes::EncumbranceNextWeight(int strScore, int encumLevel)
