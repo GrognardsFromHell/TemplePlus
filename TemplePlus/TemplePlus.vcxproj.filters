@@ -930,6 +930,9 @@
     <ClInclude Include="python\python_integration_race.h">
       <Filter>python</Filter>
     </ClInclude>
+    <ClInclude Include="ui\ui_char.h">
+      <Filter>ui</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

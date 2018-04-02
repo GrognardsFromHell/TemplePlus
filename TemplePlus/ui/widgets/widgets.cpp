@@ -80,7 +80,7 @@ DirectX::XMINT2 WidgetBase::GetPos() const
 
 WidgetBase::~WidgetBase()
 {
-	if (mWidget->parentId != -1) {
+	if (mWidget && mWidget->parentId != -1){
 		uiManager->RemoveChildWidget(GetWidgetId());
 	}
 	if (mParent) {

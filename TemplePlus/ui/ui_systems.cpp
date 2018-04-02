@@ -7,7 +7,7 @@
 #include "ui_mainmenu.h"
 #include "ui_worldmap.h"
 #include "ui_pc_creation.h"
-
+#include "ui_char.h"
 UiSystems* uiSystems = nullptr;
 
 UiSystems::UiSystems(int width, int height)

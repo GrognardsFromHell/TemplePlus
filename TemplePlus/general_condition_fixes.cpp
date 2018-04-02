@@ -6,6 +6,7 @@
 #include "gamesystems/objects/objsystem.h"
 #include "ui/ui_systems.h"
 #include "ui/ui_legacysystems.h"
+#include "ui/ui_char.h"
 
 #define CONDFIX(fname) static int fname ## (DispatcherCallbackArgs args);
 #define HOOK_ORG(fname) static int (__cdecl* org ##fname)(DispatcherCallbackArgs) = replaceFunction<int(__cdecl)(DispatcherCallbackArgs)>

@@ -45,6 +45,7 @@
 #include "ui/ui_systems.h"
 #include "ui/ui_legacysystems.h"
 #include "ui/ui_worldmap.h"
+#include "ui/ui_char.h"
 
 #include <pybind11/embed.h>
 namespace py = pybind11;

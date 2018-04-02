@@ -20,6 +20,7 @@
 #include "damage.h"
 #include "critter.h"
 #include "combat.h"
+#include "ui_char.h"
 
 //*****************************************************************************
 //* MainMenu-UI
@@ -331,49 +332,7 @@ bool UiDlg::IsActive() const
 	return !(mFlags & 1) || !uiManager->IsHidden(mWindowId);
 }
 
-//*****************************************************************************
-//* Char-UI
-//*****************************************************************************
 
-UiChar::UiChar(const UiSystemConf &config) {
-    auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x1014b900);
-    if (!startup(&config)) {
-        throw TempleException("Unable to initialize game system Char-UI");
-    }
-}
-UiChar::~UiChar() {
-    auto shutdown = temple::GetPointer<void()>(0x10149820);
-    shutdown();
-}
-void UiChar::ResizeViewport(const UiResizeArgs& resizeArg) {
-    auto resize = temple::GetPointer<void(const UiResizeArgs*)>(0x1014ba20);
-    resize(&resizeArg);
-}
-void UiChar::Reset() {
-    auto reset = temple::GetPointer<void()>(0x10143f80);
-    reset();
-}
-const std::string &UiChar::GetName() const {
-    static std::string name("Char-UI");
-    return name;
-}
-
-void UiChar::Show(UiCharDisplayType type)
-{
-	static auto ui_show_charui = temple::GetPointer<void(UiCharDisplayType)>(0x10148e20);
-	ui_show_charui(type);
-}
-
-void UiChar::ShowForCritter(UiCharDisplayType type, objHndl handle){
-	mCurrentCritter = handle;
-	Show(type);
-	SetCritter(handle);
-}
-
-void UiChar::SetCritter(objHndl handle){
-	static auto ui_show_charui = temple::GetPointer<void(objHndl)>(0x101499E0);
-	ui_show_charui(handle);
-}
 
 //*****************************************************************************
 //* ToolTip-UI

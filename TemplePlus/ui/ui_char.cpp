@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "ui_char.h"
 #include "common.h"
 #include "config/config.h"
 #include "d20.h"
@@ -86,6 +87,8 @@ struct UiCharAddresses : temple::AddressTable
 	}
 } addresses;
 
+
+
 class CharUiSystem : TempleFix
 {
 public: 
@@ -116,13 +119,6 @@ public:
 	static objHndl GetCritterLooted(); // this may be a substitute inventory object when buying from NPCs with shops
 	static objHndl GetVendor();
 
-	BOOL CharLootingWidgetsInit();
-	std::vector<objHndl> GetNearbyLootableCritters(const objHndl& objHndl);
-	void CharLootingShow();
-	void CharLootingHide();
-	void LootNextBtnRender(int id);
-	
-
 	static int InventorySlotMsg(int widId, TigMsg* msg);
 	static BOOL (*orgInventorySlotMsg)(int widId, TigMsg* msg);
 	static char* HookedItemDescriptionBarter(objHndl obj, objHndl item);
@@ -137,10 +133,6 @@ public:
 	static void FeatsShow();
 #pragma endregion 
 protected:
-	int mNextLooteeBtnId = -1;
-	std::unique_ptr<WidgetContainer> mWnd;
-	std::vector<objHndl> mCrittersLootedList; // list of adjacent critters you can loot
-	int mCrittersLootedIdx = 0;
 	void apply() override;
 	
 } charUiSys;
@@ -838,31 +830,30 @@ objHndl CharUiSystem::GetVendor()
 	return temple::GetRef<objHndl>(0x10BE6EC8);
 }
 
-BOOL CharUiSystem::CharLootingWidgetsInit(){
+void UiChar::LootingWidgetsInit(){
 	auto wnd = temple::GetRef<LgcyWindow*>(0x10BE6EA0);
 	auto wndId = wnd->widgetId;
 
-	mWnd = std::make_unique<WidgetContainer>(32,32);
-	mWnd->SetPos(wnd->x + 90, wnd->y + 60);
+	mLootingWnd = std::make_unique<WidgetContainer>(32,32);
+	mLootingWnd->SetPos(wnd->x + 90, wnd->y + 60);
 	auto mNextBtn = std::make_unique<WidgetButton>();
 	mNextBtn->SetPos(0,0);
 	mNextBtn->SetStyle("action-pointer-next");
-	mNextBtn->SetClickHandler([](){
+	mNextBtn->SetClickHandler([&](){
 		auto &lootedCritter = uiSystems->GetChar().GetLootedObject();
-		charUiSys.mCrittersLootedIdx++;
-		if (charUiSys.mCrittersLootedIdx >= charUiSys.mCrittersLootedList.size())
-			charUiSys.mCrittersLootedIdx = 0;
-		auto nextCritter = charUiSys.mCrittersLootedList[charUiSys.mCrittersLootedIdx];
+		mCrittersLootedIdx++;
+		if (mCrittersLootedIdx >= mCrittersLootedList.size())
+			mCrittersLootedIdx = 0;
+		auto nextCritter = mCrittersLootedList[mCrittersLootedIdx];
 		uiSystems->GetChar().SetLootedObject(nextCritter);
 		auto resetLootIcons = temple::GetRef<void(__cdecl)()>(0x1013DD20);
 		resetLootIcons();
 	});
-	mWnd->Add(std::move(mNextBtn));
-	mWnd->Hide();
-	return TRUE;
+	mLootingWnd->Add(std::move(mNextBtn));
+	mLootingWnd->Hide();
 }
 
-std::vector<objHndl> CharUiSystem::GetNearbyLootableCritters(const objHndl& handle){
+std::vector<objHndl> UiChar::GetNearbyLootableCritters(const objHndl& handle){
 
 	auto result = std::vector<objHndl>();
 	result.push_back(handle);
@@ -881,14 +872,14 @@ std::vector<objHndl> CharUiSystem::GetNearbyLootableCritters(const objHndl& hand
 	return result;
 }
 
-void CharUiSystem::CharLootingShow(){
+void UiChar::ShowLooting(){
 	if (uiSystems->GetChar().GetDisplayType() != UiCharDisplayType::Looting){
-		mWnd->Hide();
+		mLootingWnd->Hide();
 		return;
 	}
 	auto lootedCritter = uiSystems->GetChar().GetLootedObject();
 	if (!lootedCritter || !objects.IsCritter(lootedCritter)){
-		mWnd->Hide();
+		mLootingWnd->Hide();
 		return;
 	}
 
@@ -896,21 +887,18 @@ void CharUiSystem::CharLootingShow(){
 	mCrittersLootedIdx = 0;
 
 	if (mCrittersLootedList.size() <= 1){
-		mWnd->Hide();
+		mLootingWnd->Hide();
 		return;
 	}
 
-	mWnd->Show();
-	mWnd->BringToFront();
+	mLootingWnd->Show();
+	mLootingWnd->BringToFront();
 }
 
-void CharUiSystem::CharLootingHide(){
-	mWnd->Hide();
+void UiChar::HideLooting(){
+	mLootingWnd->Hide();
 }
 
-void CharUiSystem::LootNextBtnRender(int id){
-	
-}
 
 int CharUiSystem::InventorySlotMsg(int widId, TigMsg* msg)
 {
@@ -1215,6 +1203,53 @@ void CharUiSystem::FeatsShow(){
 	uiManager->BringToFront(featsWnd->widgetId);
 }
 
+
+
+//*****************************************************************************
+//* Char-UI
+//*****************************************************************************
+
+UiChar::UiChar(const UiSystemConf &config) {
+	auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x1014b900);
+	if (!startup(&config)) {
+		throw TempleException("Unable to initialize game system Char-UI");
+	}
+	LootingWidgetsInit();
+}
+UiChar::~UiChar() {
+	auto shutdown = temple::GetPointer<void()>(0x10149820);
+	shutdown();
+}
+void UiChar::ResizeViewport(const UiResizeArgs& resizeArg) {
+	auto resize = temple::GetPointer<void(const UiResizeArgs*)>(0x1014ba20);
+	resize(&resizeArg);
+}
+void UiChar::Reset() {
+	auto reset = temple::GetPointer<void()>(0x10143f80);
+	reset();
+}
+const std::string &UiChar::GetName() const {
+	static std::string name("Char-UI");
+	return name;
+}
+
+void UiChar::Show(UiCharDisplayType type)
+{
+	static auto ui_show_charui = temple::GetPointer<void(UiCharDisplayType)>(0x10148e20);
+	ui_show_charui(type);
+}
+
+void UiChar::ShowForCritter(UiCharDisplayType type, objHndl handle) {
+	mCurrentCritter = handle;
+	Show(type);
+	SetCritter(handle);
+}
+
+void UiChar::SetCritter(objHndl handle) {
+	static auto ui_show_charui = temple::GetPointer<void(objHndl)>(0x101499E0);
+	ui_show_charui(handle);
+}
+
 void CharUiSystem::apply(){
 	
 	replaceFunction(0x10144B40, ClassLevelBtnRender);
@@ -1267,20 +1302,15 @@ void CharUiSystem::apply(){
 
 	writeNoops(0x101B957E); // so it doesn't decrement the spells memorized num (this causes weirdness in right clicking from the spellbook afterwards)
 
-	static BOOL(__cdecl* orgUiCharLootingWidgetsInit)() = replaceFunction<BOOL(__cdecl)()>(0x10140CF0, []()->BOOL {
-		auto result = orgUiCharLootingWidgetsInit();
-		charUiSys.CharLootingWidgetsInit();
-		return result;
-	});
 	
 	static void(__cdecl* orgCharLootingShow)(objHndl) = replaceFunction<void(__cdecl)(objHndl)>(0x1013F6C0, [](objHndl handle) {
 		orgCharLootingShow(handle);
-		charUiSys.CharLootingShow();
+		uiSystems->GetChar().ShowLooting();
 	});
 
 	static void(__cdecl* orgCharLootingHide)() = replaceFunction<void(__cdecl)()>(0x1013F880, []() {
 		orgCharLootingHide();
-		charUiSys.CharLootingHide();
+		uiSystems->GetChar().HideLooting();
 	});
 	
 
