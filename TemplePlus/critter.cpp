@@ -1180,14 +1180,17 @@ bool LegacyCritterSystem::IsLootableCorpse(objHndl critter)
 	for (size_t i = 0; i < invenCount; ++i) {
 		auto item = objects.getArrayFieldObj(critter, obj_f_critter_inventory_list_idx, i);
 		auto invLocation = objects.GetItemInventoryLocation(item);
-		if (inventory.IsInvIdxWorn(invLocation) ) {
-			continue; // Currently equipped on the corpse
-		}
 
 		auto itemFlags = objects.GetItemFlags(item);
 		if (itemFlags & OIF_NO_LOOT) {
 			continue; // Flagged as unlootable
 		}
+
+		//if (inventory.IsInvIdxWorn(invLocation) ) {
+		//	continue; // Currently equipped on the corpse
+		//} // removing this condition - why should worn items be excluded??
+
+		
 
 		return true; // Found an item that is lootable
 	}

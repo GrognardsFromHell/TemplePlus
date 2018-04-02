@@ -835,7 +835,7 @@ void UiChar::LootingWidgetsInit(){
 	auto wndId = wnd->widgetId;
 
 	mLootingWnd = std::make_unique<WidgetContainer>(32,32);
-	mLootingWnd->SetPos(wnd->x + 90, wnd->y + 60);
+	mLootingWnd->SetPos(wnd->x + 90, wnd->y + 50);
 	auto mNextBtn = std::make_unique<WidgetButton>();
 	mNextBtn->SetPos(0,0);
 	mNextBtn->SetStyle("action-pointer-next");
