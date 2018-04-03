@@ -170,7 +170,10 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def("add_spell_countdown_standard", [](CondStructNew &condStr){
 			condStr.AddHook(dispTypeBeginRound, DK_NONE, temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100DC100));
 		})
-		;
+		.def("add_aoe_spell_ender", [](CondStructNew &condStr) {
+			condStr.AddAoESpellRemover();
+		})
+			;
 
 	py::class_<DispIO>(m, "EventObj", "The base Event Object")
 		.def_readwrite("evt_obj_type", &DispIO::dispIOType)

@@ -10,4 +10,6 @@ class PythonModifier(tpdp.ModifierSpec):
     def MapToFeat(self, feat_enum, feat_list_max = -1, feat_cond_arg2 = 0):
         self.add_to_feat_dict(feat_enum, feat_list_max, feat_cond_arg2)
     def AddSpellCountdownStandardHook(self):
-        self.add_spell_countdown_standard()
+        self.add_spell_countdown_standard()    
+    def AddAoESpellEndStandardHook(self):
+        self.add_aoe_spell_ender()

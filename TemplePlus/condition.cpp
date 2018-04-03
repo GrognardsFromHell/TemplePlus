@@ -123,8 +123,9 @@ public:
 	static int __cdecl DismissSignalHandler(DispatcherCallbackArgs args); // fixes issue with lingering Dismiss Spell holdouts
 
 	static int __cdecl SpellRemoveMod(DispatcherCallbackArgs args); // fixes issue with dismissing multiple spells
+	static int __cdecl AoeSpellRemove(DispatcherCallbackArgs args);
 
-
+	
 } spCallbacks;
 
 
@@ -4026,6 +4027,53 @@ int SpellCallbacks::SpellRemoveMod(DispatcherCallbackArgs args){
 	return 0;
 }
 
+int SpellCallbacks::AoeSpellRemove(DispatcherCallbackArgs args){
+	auto spellId = args.GetCondArg(0);
+	SpellPacketBody pkt(spellId);
+	if (!pkt.spellEnum)
+		return 0;
+
+	auto partsysIdToPlay = -1;
+	switch (args.GetData1()){
+	case 0x26:
+		gameSystems->GetParticleSys().CreateAtObj("sp-consecrate-END", args.objHndCaller);
+		break;
+	case 0x35:
+		gameSystems->GetParticleSys().CreateAtObj("sp-Desecrate-END", args.objHndCaller);
+		break;
+	case 0x66:
+		gameSystems->GetParticleSys().CreateAtObj("sp-Fog Cloud-END", args.objHndCaller);
+		break;
+	case 0x8B:
+		gameSystems->GetParticleSys().CreateAtObj("sp-Invisibility Sphere-END", args.objHndCaller);
+		break;
+	case 0x9D:
+		gameSystems->GetParticleSys().CreateAtObj("sp-Minor Globe of Invulnerability-END", args.objHndCaller);
+		break;
+	case 0x9F:
+		gameSystems->GetParticleSys().CreateAtObj("sp-Mind Fog-END", args.objHndCaller);
+		break;
+	case 0xD2:
+		gameSystems->GetParticleSys().CreateAtObj("sp-Solid Fog-END", args.objHndCaller);
+		break;
+	case 0xED:
+		gameSystems->GetParticleSys().CreateAtObj("sp-Wind Wall-END", args.objHndCaller);
+		break;
+	default:
+		break;
+	}
+
+	gameSystems->GetParticleSys().End(pkt.spellObjs[0].partySysId);
+	for (auto i = 1; i < pkt.numSpellObjs; i++){
+		gameSystems->GetParticleSys().End(pkt.spellObjs[i].partySysId);
+	}
+
+	auto evtId = args.GetCondArg(2);
+	objEvents.objEvtTable->remove(evtId);
+	args.RemoveSpellMod();
+	return 0;
+}
+
 
 #pragma endregion
 
@@ -5774,4 +5822,8 @@ int RaceAbilityCallbacks::HalflingThrownWeaponAndSlingBonus(DispatcherCallbackAr
 
 
 	return 0;
+}
+
+void CondStructNew::AddAoESpellRemover() {
+	AddHook(dispTypeD20Signal, DK_SIG_Spell_End, spCallbacks.AoeSpellRemove);
 }

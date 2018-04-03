@@ -220,6 +220,9 @@ struct CondStructNew{
 	//void AddPyHook(enum_disp_type dispType, D20DispatcherKey dispKey, pybind11::function pycallback, pybind11::tuple pydataTuple);
 	void Register();
 	void AddToFeatDictionary(feat_enums feat, feat_enums featEnumMax = FEAT_INVALID, uint32_t condArg2Offset = 0);
+
+	// standard callbacks
+	void AddAoESpellRemover();
 };
 
 struct DispatcherCallbackArgs {

@@ -1,24 +1,91 @@
 from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
-
+from utilities import *
 print "Registering sp-Wall of Fire"
 
+# args: (0-7)
+# 0 - spell_id
+# 1 - duration
+# 2 - event ID
+# 3 - angle (milli radians)
+# 4 - length (milli feet)
 
 def WallOfFireOnAdd(attachee, args, evt_obj):
-    spell_id = args.get_arg(0)
-    spell_packet = tpdp.SpellPacket(spell_id)
+	spell_id = args.get_arg(0)
+	wall_angle_mrad = args.get_arg(3)
+	wall_length_mft = args.get_arg(4)
+	wall_angle_rad = wall_angle_mrad / 1000.0
+	wall_length_ft = wall_length_mft / 1000.0
+	evt_id = attachee.object_event_append_wall(OLC_CRITTERS, wall_length_ft, wall_angle_rad)
+	args.set_arg(2, evt_id) # store the event ID
+	
+	# Update the spell packet
+	spell_packet = tpdp.SpellPacket(spell_id)
+	
+	spell_obj = attachee
+	#x,y = location_to_axis(spell_obj.location)
+	#print "spell_obj loc x,y: " + str(x) + " " + str(y)
+	#print "spell_obj loc off_x: " + str(spell_obj.off_x)
+	#print "spell_obj loc off_y: " + str(spell_obj.off_y)
+	spell_partsys_id = game.particles('sp-Wall of Fire3', spell_obj)
+	spell_packet.add_spell_object(spell_obj, spell_partsys_id) # store the spell obj and the particle sys
+	
+	origin_loc = attachee.location_full
+	
+	N_sections = int(round(wall_length_ft / 5.0))
+	#print "Wall length(ft): " + str(wall_length_ft) + "  sections: " + str(N_sections)
+	for p in range(1, N_sections):
+		spell_obj_loc = origin_loc.get_offset_loc(wall_angle_rad, p*5.0)
+		spell_obj = game.obj_create(OBJECT_SPELL_GENERIC, spell_obj_loc.get_location(), spell_obj_loc.off_x, spell_obj_loc.off_y)
+		spell_obj.move(spell_obj_loc.get_location(), spell_obj_loc.off_x, spell_obj_loc.off_y)
+		spell_obj.turn_towards(attachee)
+		spell_obj.rotation += 3.1415
+		x,y = location_to_axis(spell_obj.location)
+		#print "spell_obj loc x,y: " + str(x) + " " + str(y)
+		#print "spell_obj loc off_x: " + str(spell_obj.off_x)
+		#print "spell_obj loc off_y: " + str(spell_obj.off_y)
+		spell_partsys_id = game.particles('sp-Wall of Fire3', spell_obj)
+		spell_packet.add_spell_object( spell_obj, spell_partsys_id) # store the spell obj and the particle sys
+	
+	spell_packet.update_registry()
+	return 0
 
-    wall_length_ft = 5.0
-    wall_angle_rad = 1.5
-    evt_id = attachee.object_event_append_wall(OLC_CRITTERS, wall_length_ft, 10)
-    args.set_arg(2, evt_id) # store the event ID
-    spell_packet.set_spell_object(attachee, args.get_arg(3)) # store the spell obj and the particle sys
-    spell_packet.update_registry()
-    return 0
+
+def OnWallAoEEntered(attachee, args, evt_obj):
+	#print "Wall of Fire entered event"
+	obj_evt_id = args.get_arg(2)
+	spell_id = args.get_arg(0)
+	spell_packet = tpdp.SpellPacket(spell_id)
+	caster = spell_packet.caster
+	if obj_evt_id != evt_obj.evt_id:
+		#print "Aura of Despair Entered: ID mismatch " + str(evt_obj.evt_id) + ", stored was: " + str(obj_evt_id)
+		return 0
+	
+	#print "Wall of Fire Entered, event ID: " + str(obj_evt_id)
+	tgt = evt_obj.target
+	if tgt == OBJ_HANDLE_NULL:
+		return 0
+	if attachee == OBJ_HANDLE_NULL:
+		return 0
+	print str(tgt)
+	
+	damage_dice = dice_new( '2d6' )
+	damage_dice.bonus = min( 1 * spell_packet.caster_level, 20 )
+	undead_dice = dice_new('4d6')
+	undead_dice.bonus = min( 2 * spell_packet.caster_level, 40 )
+	
+	if tgt.is_category_type( mc_type_undead ):
+		tgt.spell_damage(caster, D20DT_FIRE, undead_dice, D20DAP_UNSPECIFIED, D20A_CAST_SPELL, spell_id)
+	else:
+		tgt.spell_damage(caster, D20DT_FIRE, damage_dice, D20DAP_UNSPECIFIED, D20A_CAST_SPELL, spell_id)
+	return 0
+
 
 wallOfFire = PythonModifier("sp-Wall of Fire", 8)
 wallOfFire.AddHook(ET_OnConditionAdd, EK_NONE, WallOfFireOnAdd, ())
-
+wallOfFire.AddHook(ET_OnObjectEvent, EK_OnEnterAoE, OnWallAoEEntered, ())
+wallOfFire.AddSpellCountdownStandardHook()
+wallOfFire.AddAoESpellEndStandardHook()
 
 

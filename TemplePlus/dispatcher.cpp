@@ -18,6 +18,8 @@
 class DispatcherReplacements : public TempleFix {
 public:
 
+	static int Dispatch54AoE(objHndl, DispIO *, D20DispatcherKey);
+
 	void apply() override {
 		logger->info("Replacing basic Dispatcher functions");
 		
@@ -56,9 +58,18 @@ public:
 			return dispatch.DispatchD20ActionCheck(d20a, tbStat, dispType);
 		});
 		
- 
+		replaceFunction(0x1004D360, Dispatch54AoE);
 	}
 } dispatcherReplacements;
+
+int DispatcherReplacements::Dispatch54AoE(objHndl handle, DispIO* evtObj, D20DispatcherKey dispKey){
+	if (!handle) return 0;
+	auto obj = objSystem->GetObject(handle);
+	auto dispatcher = obj->GetDispatcher();
+	if (!dispatcher->IsValid())
+		return 0;
+	dispatcher->Process(dispTypeObjectEvent, dispKey, evtObj);
+}
 
 struct DispatcherSystemAddresses : temple::AddressTable
 {
