@@ -36,3 +36,17 @@ RaycastPacket::~RaycastPacket()
 {
 	addresses.RaycastPacketClear(this);
 }
+
+RaycastPointSearchPacket::RaycastPointSearchPacket(const XMFLOAT2& origin, const XMFLOAT2& endPt){
+	originAbsX = origin.x;
+	originAbsY = origin.y;
+	targetAbsX = endPt.x;
+	targetAbsY = endPt.y;
+	auto deltaX = targetAbsX - originAbsX;
+	auto deltaY = targetAbsY - originAbsY;
+	this->range = sqrt(deltaX*deltaX + deltaY * deltaY);
+	auto rangeInverse = 1.0 / range;
+	this->ux = deltaX * rangeInverse;
+	this->uy = deltaY * rangeInverse;
+	this->absOdotU = ux * originAbsX + uy * originAbsY;
+}

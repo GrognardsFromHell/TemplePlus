@@ -3416,6 +3416,17 @@ static PyObject* PyObjHandle_GetLocation(PyObject* obj, void*) {
 	}
 	return PyLong_FromLongLong(objects.GetLocation(self->handle));
 }
+static PyObject* PyObjHandle_GetLocationFull(PyObject* obj, void*) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		logger->warn("obj.location called with null handle!");
+		return PyLong_FromLongLong(0);
+	}
+	auto locFull = objects.GetLocationFull(self->handle);
+	py::object pyLoc = py::cast(locFull);
+	pyLoc.inc_ref();
+	return pyLoc.ptr();
+}
 
 static PyObject* PyObjHandle_GetType(PyObject* obj, void*) {
 	auto self = GetSelf(obj);
@@ -3761,6 +3772,7 @@ PyGetSetDef PyObjHandleGetSets[] = {
 	{"description", PyObjHandle_GetDescription, NULL, NULL },
 	{"name", PyObjHandle_GetNameId, NULL, NULL},
 	{"location", PyObjHandle_GetLocation, NULL, NULL},
+	{ "location_full", PyObjHandle_GetLocationFull, NULL, NULL },
 	{"type", PyObjHandle_GetType, NULL, NULL},
 	{"radius", PyObjHandle_GetRadius, PyObjHandle_SetRadius, NULL},
 	{"height", PyObjHandle_GetRenderHeight, PyObjHandle_SetRenderHeight, NULL},

@@ -97,6 +97,8 @@ struct RaycastPointSearchPacket
 	float range;
 	float absOdotU; // dot product of the origin point and the direction vector, normalized by the direction vector norm
 	float radius;
+
+	RaycastPointSearchPacket(const XMFLOAT2 &origin, const XMFLOAT2 &endPt);
 };
 
 struct PointAlongSegment

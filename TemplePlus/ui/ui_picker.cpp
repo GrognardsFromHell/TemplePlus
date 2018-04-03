@@ -717,7 +717,7 @@ BOOL UiPicker::WallPosChange(TigMsg * msg){
 
 		// get radius and range up to mouse (trimmed by walls and such)
 		auto radiusInch = pick.args.radiusTarget * INCH_PER_FEET / 2.0f;	
-		pick.args.GetTrimmedRange(pick.args.result.location, mouseLoc, radiusInch, maxRange);
+		pick.args.GetTrimmedRange(pick.args.result.location, mouseLoc, radiusInch, maxRange, INCH_PER_FEET * 5.0);
 		pick.args.degreesTarget = 2.3561945f - locSys.AngleBetweenPoints(pick.args.result.location, mouseLoc); // putting this in radians, unlike the usual usage
 
 		pick.args.GetTargetsInPath(pick.args.result.location, mouseLoc, radiusInch);
@@ -755,7 +755,9 @@ BOOL UiPicker::WallLmbReleased(TigMsg * msg)
 		auto msgMouse = (TigMsgMouse*)msg;
 		LocAndOffsets mouseLoc;
 		locSys.GetLocFromScreenLocPrecise(msgMouse->x, msgMouse->y, mouseLoc);
-		mWallEndPt = mouseLoc;
+		auto mouseLocTrim = locSys.TrimToLength(pick.args.result.location, mouseLoc, pick.args.trimmedRangeInches);
+		mWallEndPt = mouseLocTrim;
+		
 		return pick.Finalize();
 	}
 
@@ -877,13 +879,13 @@ UiPickerType PickerArgs::GetBaseModeTarget()
 	return (UiPickerType) (((uint64_t)this->modeTarget) & 0xFF);
 }
 
-void PickerArgs::GetTrimmedRange(LocAndOffsets &originLoc, LocAndOffsets &tgtLoc, float radiusInch, float maxRange){
-	this->trimmedRangeInches = maxRange;
+void PickerArgs::GetTrimmedRange(LocAndOffsets &originLoc, LocAndOffsets &tgtLoc, float radiusInch, float maxRangeInch, float incrementInches){
+	this->trimmedRangeInches = maxRangeInch;
 
 	RaycastPacket rayPkt;
 	rayPkt.sourceObj = objHndl::null;
 	rayPkt.origin = originLoc;
-	rayPkt.rayRangeInches = maxRange;
+	rayPkt.rayRangeInches = maxRangeInch;
 	rayPkt.targetLoc = tgtLoc;
 	rayPkt.radius = radiusInch;
 	rayPkt.flags = (RaycastFlags)(RaycastFlags::ExcludeItemObjects | RaycastFlags::HasRadius | RaycastFlags::HasRangeLimit);
@@ -896,6 +898,10 @@ void PickerArgs::GetTrimmedRange(LocAndOffsets &originLoc, LocAndOffsets &tgtLoc
 			if (dist < this->trimmedRangeInches)
 				this->trimmedRangeInches = dist;
 		}
+	}
+
+	if (incrementInches > 0){
+		this->trimmedRangeInches = ceil(this->trimmedRangeInches / incrementInches) * incrementInches;
 	}
 }
 
@@ -1002,12 +1008,6 @@ BOOL PickerCacheEntry::Finalize(){
 		&& (!(flags & PRF_HAS_SINGLE_OBJ) || args.result.handle))	
 	{
 		SpellPacketBody *pkt = (SpellPacketBody*)callbackArgs;
-
-		if (this->args.IsBaseModeTarget(UiPickerType::Wall)){ // forgive me for this spaghetti
-			if (pkt->numSpellObjs < 127){
-				pkt->spellObjs[pkt->numSpellObjs++].obj = this->tgt;
-			}
-		}
 
 		if (args.callback)
 			args.callback(args.result, pkt); // ActionSequenceSystem::SpellPickerCallback

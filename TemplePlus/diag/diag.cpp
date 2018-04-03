@@ -14,6 +14,7 @@
 #include "../gamesystems/partsystemsrenderer.h"
 #include "../gamesystems/clipping/clipping.h"
 #include <tig/tig_mouse.h>
+#include "location.h"
 
 using namespace gfx;
 
@@ -63,9 +64,12 @@ void DiagScreen::Render() {
 	std::vector<std::string> lines;
 
 	POINT mousePt = mouseFuncs.GetPos();
+	LocAndOffsets mouseLoc;
+	locSys.GetLocFromScreenLocPrecise(mousePt.x, mousePt.y, mouseLoc);
 	lines.push_back(fmt::format("#Mouse"));
 	lines.push_back(fmt::format("x: {} y: {}", mousePt.x, mousePt.y));
-
+	lines.push_back(fmt::format("Location: {}", mouseLoc));
+	
 	lines.push_back(fmt::format("#Textures"));
 	lines.push_back(fmt::format("{} of {} loaded", loaded, registered));
 	lines.push_back(fmt::format("Memory Budget: {}", FormatMemSize(textureManager.GetMemoryBudget())));

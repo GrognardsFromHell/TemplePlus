@@ -246,9 +246,9 @@ static PyObject *PySpell_SpellGetMenuArg(PyObject*, PyObject *args) {
 static PyObject *PySpell_SpellGetPickerEndPoint(PyObject*, PyObject *args) {
 	
 	auto wallEndPt = uiPicker.GetWallEndPoint();
-	py::object blyat = py::cast(wallEndPt);
-	blyat.inc_ref();
-	return blyat.ptr();
+	py::object pyLoc = py::cast(wallEndPt);
+	pyLoc.inc_ref();
+	return pyLoc.ptr();
 }
 
 

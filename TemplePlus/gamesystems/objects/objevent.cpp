@@ -11,6 +11,7 @@
 #include <location.h>
 #include <gamesystems/legacy.h>
 #include <maps.h>
+#include "raycast.h"
 
 
 struct ObjEventListItem
@@ -104,13 +105,7 @@ int ObjEventSystem::ListRangeUpdate(ObjEventAoE& evt, int id, ObjEventListItem* 
 		if (evt.IsWall()){
 			
 			auto startPt = objSystem->GetObject(evt.aoeObj)->GetLocationFull();
-			LocAndOffsets endPt = startPt; // TODO
-			// use startPt + angleMin to find endPt
-			XMFLOAT2 dir( cos(evt.angleMin), sin(evt.angleMin) );
-			endPt.off_x += dir.x * evt.radiusInch;
-			endPt.off_y += dir.y * evt.radiusInch;
-			endPt.Regularize();
-
+			LocAndOffsets endPt = evt.GetWallEndpoint();
 			evt.objListResult.ListRaycast(startPt, endPt, evt.radiusInch, 5.0);
 
 		}
@@ -454,9 +449,13 @@ bool ObjEventSystem::ObjEventLocIsInAoE(ObjEventAoE* const aoeEvt, LocAndOffsets
 	locSys.GetOverallOffset(loc, &absX, &absY);
 
 	if (aoeEvt->IsWall()){
-		auto dummy = 1;
-		
-		// todo
+		auto wallEndpt = aoeEvt->GetWallEndpoint();
+		float wallEndX, wallEndY;
+		locSys.GetOverallOffset(wallEndpt, &wallEndX, &wallEndY);
+		RaycastPointSearchPacket srchPkt({ aoeAbsX , aoeAbsY }, { wallEndX , wallEndY});
+		srchPkt.radius = 5.0f;
+		auto result = sectorSys.IsPointInterceptedBySegment(absX, absY, objRadius, &srchPkt);
+		return result;
 	}
 
 	auto radius = objRadius + aoeEvt->radiusInch;
@@ -503,4 +502,18 @@ bool ObjEventSystem::ObjEventLocIsInAoE(ObjEventAoE* const aoeEvt, LocAndOffsets
 
 bool ObjEventAoE::IsWall(){
 	return this->onEnterFuncIdx == OBJ_EVENT_WALL_ENTERED_HANDLER_ID && this->onLeaveFuncIdx == OBJ_EVENT_WALL_EXITED_HANDLER_ID;
+}
+
+LocAndOffsets ObjEventAoE::GetWallEndpoint(){
+	auto aoeObjBody = gameSystems->GetObj().GetObject(this->aoeObj);
+	auto aoeObjLoc = aoeObjBody->GetLocationFull();
+
+	auto wallEndpt = aoeObjLoc;
+	// use startPt + angleMin to find endPt
+	auto vectorAngle = 5 * M_PI / 4 - angleMin;
+	XMFLOAT2 dir(cos(vectorAngle), sin(vectorAngle));
+	wallEndpt.off_x += dir.x * radiusInch;
+	wallEndpt.off_y += dir.y * radiusInch;
+	wallEndpt.Regularize();
+	return wallEndpt;
 }

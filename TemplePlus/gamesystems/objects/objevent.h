@@ -24,6 +24,7 @@ struct ObjEventAoE
 	ObjListResult objListResult; // result for the current time tick; is copied to objNodesPrev at the end of the tick
 
 	bool IsWall();
+	LocAndOffsets GetWallEndpoint();
 };
 struct LocAndOffsets;
 

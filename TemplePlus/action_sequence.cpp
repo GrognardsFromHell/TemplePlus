@@ -264,7 +264,7 @@ uint32_t ActionSequenceSystem::GetRemainingMaxMoveLength(D20Actn* d20a, TurnBase
 		return TRUE;
 	}
 
-	if (d20a->d20ActType == D20A_5FOOTSTEP && tbStat->tbsFlags & (TBSF_Movement | TBSF_Movement2)){
+	if (d20a->d20ActType == D20A_5FOOTSTEP && !(tbStat->tbsFlags & (TBSF_Movement | TBSF_Movement2))){
 		if (surplusMoves <= 0.001){
 			*moveLen = 5.0f;
 			return TRUE;

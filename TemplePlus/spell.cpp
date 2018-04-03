@@ -1482,7 +1482,8 @@ bool LegacySpellSystem::GetSpellPacketFromTransferInfo(unsigned& spellId, SpellP
 		if (!mtInfo.spellObjs[i].IsNull()) {
 			auto spellObjHandle = objSystem->GetHandleById(mtInfo.spellObjs[i]);
 			spellPkt.spellPktBody.spellObjs[i].obj = spellObjHandle;
-
+			if (!spellObjHandle)
+				continue;
 			if (!mtInfo.spellObjPartsys[i].empty()) {
 				auto partSysHandle = gameSystems->GetParticleSys().CreateAtObj(mtInfo.spellObjPartsys[i], spellObjHandle);
 				spellPkt.spellPktBody.spellObjs[i].partySysId = partSysHandle;

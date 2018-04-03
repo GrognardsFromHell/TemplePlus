@@ -165,7 +165,10 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 				}
 			})
 		.def("add_item_force_remove_callback", [](CondStructNew &condStr){
-				condStr.AddHook(dispTypeItemForceRemove, DK_NONE, temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x10104410));
+			condStr.AddHook(dispTypeItemForceRemove, DK_NONE, temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x10104410));
+		})
+		.def("add_spell_countdown_standard", [](CondStructNew &condStr){
+			condStr.AddHook(dispTypeBeginRound, DK_NONE, temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100DC100));
 		})
 		;
 
@@ -215,6 +218,19 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("off_y", &LocAndOffsets::off_y)
 		.def("get_location", [](LocAndOffsets& loc)->int64_t{
 			return (int64_t)loc.location;
+		})
+		.def("distance_to", [](LocAndOffsets& src, LocAndOffsets& dest)-> float {
+			return locSys.Distance3d(src, dest) / INCH_PER_FEET;
+		})
+		.def("get_offset_loc", [](LocAndOffsets& src, float angleRad, float rangeFt)-> LocAndOffsets{
+			auto absX = 0.0f, absY = 0.0f;
+			locSys.GetOverallOffset(src, &absX, &absY);
+			auto vectorAngleRad = 5 * M_PI / 4 - angleRad;
+			auto result = src;
+			result.off_x += rangeFt * INCH_PER_FEET * cos(vectorAngleRad);
+			result.off_y += rangeFt * INCH_PER_FEET * sin(vectorAngleRad);
+			locSys.RegularizeLoc(&result);
+			return result;
 		})
 		;
 		py::class_<LocFull>(m, "LocFull")
@@ -581,9 +597,17 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 				spellSys.UpdateSpellPacket(pkt);
 				pySpellIntegration.UpdateSpell(pkt.spellId);
 			}, "Updates the changes made in this local copy in the active spell registry.")
-			.def("set_spell_object", [](SpellPacketBody&pkt, objHndl spellObj, int partsysId){
-				pkt.spellObjs[0].obj = spellObj;
-				pkt.spellObjs[0].partySysId = partsysId;
+			.def("set_spell_object", [](SpellPacketBody&pkt, int idx,  objHndl spellObj, int partsysId){
+				pkt.spellObjs[idx].obj = spellObj;
+				pkt.spellObjs[idx].partySysId = partsysId;
+			})
+			.def("add_spell_object", [](SpellPacketBody&pkt, objHndl spellObj, int partsysId) {
+				auto idx = pkt.numSpellObjs;
+				if (idx >= 128)
+					return;
+				pkt.spellObjs[idx].obj = spellObj;
+				pkt.spellObjs[idx].partySysId = partsysId;
+				pkt.numSpellObjs++;
 			})
 			;
 
