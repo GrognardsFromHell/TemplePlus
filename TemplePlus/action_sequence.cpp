@@ -86,6 +86,14 @@ static struct ActnSeqAddresses : temple::AddressTable {
 }addresses;
 
 
+enum HourglassState : int
+{
+	HOURGLASS_EMPTY = 0, 
+	HOURGLASS_MOVE = 1, // move action
+	HOURGLASS_STD = 2, // standard action
+	HOURGLASS_FULL = 4, // full round action
+};
+
 static class ActnSeqReplacements : public TempleFix
 {
 public:
@@ -203,7 +211,7 @@ ActionSequenceSystem::ActionSequenceSystem()
 	rebase(_actionPerformProjectile, 0x1008AC70);
 	rebase(_actSeqSpellHarmful, 0x1008AD10);
 	rebase(_sub_1008BB40, 0x1008BB40);
-	rebase(getRemainingMaxMoveLength, 0x1008B8A0);
+	//rebase(GetRemainingMaxMoveLength, 0x1008B8A0);
 	//rebase(TrimPathToRemainingMoveLength, 0x1008B9A0);
 
 	rebase(_CrossBowSthgReload_1008E8A0, 0x1008E8A0);
@@ -238,6 +246,43 @@ ActionSequenceSystem::ActionSequenceSystem()
 		5, 2, 2, -1, 0,
 		6, 5, 2, -1, 3 };
 	memcpy(turnBasedStatusTransitionMatrix, _transMatrix, sizeof(turnBasedStatusTransitionMatrix));
+}
+
+uint32_t ActionSequenceSystem::GetRemainingMaxMoveLength(D20Actn* d20a, TurnBasedStatus* tbStat, float* moveLen){
+	auto surplusMoves = tbStat->surplusMoveDistance;
+	auto moveSpeed = dispatch.Dispatch29hGetMoveSpeed(d20a->d20APerformer);
+	if (d20a->d20ActType == D20A_UNSPECIFIED_MOVE){
+		if (tbStat->hourglassState >= HOURGLASS_FULL){
+			*moveLen = 2 * moveSpeed + surplusMoves;
+			return TRUE;
+		}
+		if (tbStat->hourglassState >= HOURGLASS_MOVE) {
+			*moveLen = moveSpeed + surplusMoves;
+			return TRUE;
+		}
+		*moveLen = surplusMoves;
+		return TRUE;
+	}
+
+	if (d20a->d20ActType == D20A_5FOOTSTEP && tbStat->tbsFlags & (TBSF_Movement | TBSF_Movement2)){
+		if (surplusMoves <= 0.001){
+			*moveLen = 5.0f;
+			return TRUE;
+		}
+		*moveLen = surplusMoves;
+		return TRUE;
+	}
+	
+	if (d20a->d20ActType == D20A_MOVE){
+		*moveLen = moveSpeed + surplusMoves;
+		return TRUE;
+	}
+	if (d20a->d20ActType == D20A_DOUBLE_MOVE) {
+		*moveLen = 2*moveSpeed + surplusMoves;
+		return TRUE;
+	}
+
+	return FALSE;
 }
 
 
@@ -1117,7 +1162,7 @@ uint32_t ActionSequenceSystem::MoveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 	if (!combat->isCombatActive()){	d20aCopy.distTraversed = 0;		pathLength = 0.0;	}
 
 	float remainingMaxMoveLength = 0;
-	if (getRemainingMaxMoveLength(d20a, &tbStatCopy, &remainingMaxMoveLength)) // deducting moves that have already been spent, but also a raw calculation (not taking 5' step and such into account)
+	if (GetRemainingMaxMoveLength(d20a, &tbStatCopy, &remainingMaxMoveLength)) // deducting moves that have already been spent, but also a raw calculation (not taking 5' step and such into account)
 	{
 		if (remainingMaxMoveLength < 0.1)	{releasePath(d20aCopy.path);	return AEC_TARGET_TOO_FAR;	}
 		if (static_cast<long double>(remainingMaxMoveLength) < pathLength)
@@ -1125,6 +1170,7 @@ uint32_t ActionSequenceSystem::MoveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 			auto temp = 1;;
 			if (TrimPathToRemainingMoveLength(&d20aCopy, remainingMaxMoveLength, &pathQ)){ releasePath(d20aCopy.path); return temp; }
 			pqResult = d20aCopy.path;
+			pathLength = pathfinding->GetPathLength(pqResult);
 			pathLength = remainingMaxMoveLength;
 		}
 	}
@@ -2084,8 +2130,12 @@ int32_t ActionSequenceSystem::InterruptNonCounterspell(D20Actn* d20a)
 	while (1){
 		
 		if (readiedAction->readyType != RV_Counterspell) {
-
-			if (d20a->d20ActType == D20A_CAST_SPELL){
+			auto isInterruptibleAction = d20a->d20ActType == D20A_CAST_SPELL;
+			// added interruption to use of scrolls and such
+			if (d20a->d20ActType == D20A_USE_ITEM && d20a->d20SpellData.spellEnumOrg != 0){
+				isInterruptibleAction = true;
+			}
+			if (isInterruptibleAction){
 				if (d20a->d20APerformer && readiedAction->interrupter){
 					auto isFriendly = critterSys.IsFriendly(readiedAction->interrupter, d20a->d20APerformer);
 					auto sharedAlleg = critterSys.NpcAllegianceShared(readiedAction->interrupter, d20a->d20APerformer);
