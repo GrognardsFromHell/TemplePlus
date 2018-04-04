@@ -94,11 +94,12 @@ struct RaycastPointSearchPacket
 	float targetAbsY;
 	float ux; //normalized direction x component
 	float uy;
-	float range;
+	float rangeInch;
 	float absOdotU; // dot product of the origin point and the direction vector, normalized by the direction vector norm
 	float radius;
 
 	RaycastPointSearchPacket(const XMFLOAT2 &origin, const XMFLOAT2 &endPt);
+	bool IsPointInterceptedBySegment(const XMFLOAT2 &v, float objRadius);
 };
 
 struct PointAlongSegment

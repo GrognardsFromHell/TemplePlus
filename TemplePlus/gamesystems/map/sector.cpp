@@ -546,7 +546,8 @@ BOOL LegacySectorSystem::GetSegmentInterception(float absVx, float absVy, float 
 
 BOOL LegacySectorSystem::IsPointInterceptedBySegment(float absVx, float absVy, float radiusAdjAmt, RaycastPointSearchPacket* srchPkt)
 {
-	return addresses.IsPointCloseToSegment(absVx, absVy, radiusAdjAmt, srchPkt);
+	//return addresses.IsPointCloseToSegment(absVx, absVy, radiusAdjAmt, srchPkt);
+	return srchPkt->IsPointInterceptedBySegment({ absVx, absVy }, radiusAdjAmt);
 }
 
 TileFlags LegacySectorSystem::GetTileFlags(LocAndOffsets loc)

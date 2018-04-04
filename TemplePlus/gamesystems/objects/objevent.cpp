@@ -106,7 +106,7 @@ int ObjEventSystem::ListRangeUpdate(ObjEventAoE& evt, int id, ObjEventListItem* 
 			
 			auto startPt = objSystem->GetObject(evt.aoeObj)->GetLocationFull();
 			LocAndOffsets endPt = evt.GetWallEndpoint();
-			evt.objListResult.ListRaycast(startPt, endPt, evt.radiusInch, 5.0);
+			evt.objListResult.ListRaycast(startPt, endPt, evt.radiusInch, 5.0f * INCH_PER_FEET / 2.0f);
 
 		}
 		else{
@@ -284,7 +284,9 @@ void ObjEventSystem::AdvanceTime()
 	auto objEvtUpdater = temple::GetRef<int(__cdecl)(ObjEventAoE*, int id)>(0x100450B0);
 	for (auto it : *objEvents.objEvtTable){
 		ObjEventAoE* data = it.data;
-		objEvtUpdater(data, it.id );
+		//objEvtUpdater(data, it.id );
+		data->UpdateObjectNodes();
+		//objEvents.objEvtTable->put(it.id, *data);
 	}
 }
 
@@ -453,8 +455,9 @@ bool ObjEventSystem::ObjEventLocIsInAoE(ObjEventAoE* const aoeEvt, LocAndOffsets
 		float wallEndX, wallEndY;
 		locSys.GetOverallOffset(wallEndpt, &wallEndX, &wallEndY);
 		RaycastPointSearchPacket srchPkt({ aoeAbsX , aoeAbsY }, { wallEndX , wallEndY});
-		srchPkt.radius = 5.0f;
-		auto result = sectorSys.IsPointInterceptedBySegment(absX, absY, objRadius, &srchPkt);
+		srchPkt.radius = 5.0f * INCH_PER_FEET / 2.0f;
+		
+		auto result = srchPkt.IsPointInterceptedBySegment({ absX, absY }, objRadius);
 		return result;
 	}
 
@@ -516,4 +519,28 @@ LocAndOffsets ObjEventAoE::GetWallEndpoint(){
 	wallEndpt.off_y += dir.y * radiusInch;
 	wallEndpt.Regularize();
 	return wallEndpt;
+}
+
+void ObjEventAoE::UpdateObjectNodes(){
+	// Free previous nodes
+	auto prevNode = this->objNodesPrev;
+	if (prevNode){
+		if (prevNode->next)
+			prevNode->next->FreeRecursive();
+		free(prevNode);
+	}
+	
+	// Copy objlist to objNodesPrev
+	auto objNode = objListResult.objects;
+	prevNode = nullptr;
+	while (objNode){
+		auto newNode = new ObjListResultItem();
+		newNode->next = prevNode;
+		newNode->handle = objNode->handle;
+		prevNode = newNode;
+		objNode = objNode->next;
+	}
+	this->objNodesPrev = prevNode;
+	this->objListResult.Free();
+
 }

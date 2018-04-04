@@ -25,6 +25,7 @@ struct ObjEventAoE
 
 	bool IsWall();
 	LocAndOffsets GetWallEndpoint();
+	void UpdateObjectNodes(); // copies current objlist results to objNodesPrev and clears
 };
 struct LocAndOffsets;
 

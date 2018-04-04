@@ -206,6 +206,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		{
 			conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
 		})
+		.def("remove_spell_mod", &DispatcherCallbackArgs::RemoveSpellMod);
 		;
 
 	#pragma endregion 
