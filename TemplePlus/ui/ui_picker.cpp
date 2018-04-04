@@ -334,6 +334,7 @@ void UiPicker::InitWallSpec(){
 	mWallSpec.idx = (int)UiPickerType::Wall;
 	mWallSpec.cursorTextDraw = [](int x, int y, void*) { uiPicker.WallCursorText(x, y); };
 	mWallMsgHandlers.posChange = [](TigMsg*msg) {return uiPicker.WallPosChange(msg); };
+	mWallMsgHandlers.lmbClick = [](TigMsg*msg) {return TRUE; }; // just so it eats the message; otherwise the game things you're doing drag select
 	mWallMsgHandlers.lmbReleased = [](TigMsg*msg) {return uiPicker.WallLmbReleased(msg); };
 	mWallMsgHandlers.rmbReleased = [](TigMsg*msg) {return uiPicker.WallRmbReleased(msg); };
 

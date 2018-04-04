@@ -57,18 +57,69 @@ def OnWallAoEEntered(attachee, args, evt_obj):
 	obj_evt_id = args.get_arg(2)
 	spell_id = args.get_arg(0)
 	spell_packet = tpdp.SpellPacket(spell_id)
+	duration = args.get_arg(1)
 	caster = spell_packet.caster
 	if obj_evt_id != evt_obj.evt_id:
-		#print "Aura of Despair Entered: ID mismatch " + str(evt_obj.evt_id) + ", stored was: " + str(obj_evt_id)
+		#print "Wall of Fire Entered: ID mismatch " + str(evt_obj.evt_id) + ", stored was: " + str(obj_evt_id)
 		return 0
 	
 	#print "Wall of Fire Entered, event ID: " + str(obj_evt_id)
 	tgt = evt_obj.target
-	if tgt == OBJ_HANDLE_NULL:
+	if tgt == OBJ_HANDLE_NULL or attachee == OBJ_HANDLE_NULL or tgt == attachee:
 		return 0
-	if attachee == OBJ_HANDLE_NULL:
+	
+	#print str(tgt) + " hit by wall of fire"
+	
+	if spell_packet.check_spell_resistance(tgt):
 		return 0
-	print str(tgt)
+	
+	# apply sp-Wall of Fire hit condition (applies damage on beginning of round)
+	tgt.condition_add_with_args('sp-Wall of Fire hit', spell_id, duration, obj_evt_id)
+	
+	return 0
+
+
+wallOfFire = PythonModifier("sp-Wall of Fire", 8)
+wallOfFire.AddHook(ET_OnConditionAdd, EK_NONE, WallOfFireOnAdd, ())
+wallOfFire.AddHook(ET_OnObjectEvent, EK_OnEnterAoE, OnWallAoEEntered, ())
+wallOfFire.AddSpellCountdownStandardHook()
+wallOfFire.AddAoESpellEndStandardHook()
+
+
+##################################################
+# sp-Wall of fire hit
+# does damage at the beginning of round
+##################################################
+
+def EndSpellMod(attachee, args, evt_obj):
+	spell_id = args.get_arg(0)
+	if evt_obj.data1 == spell_id:
+		print "Ending mod for spell ID: " + str(spell_id)
+		args.remove_spell_mod() # does a .condition_remove() with some safety checks
+	return 0
+
+
+def WallOfFireBeginRound(attachee, args, evt_obj):
+	print "Wall of Fire begin round"
+	tgt = attachee
+	spell_id = args.get_arg(0)
+	spell_packet = tpdp.SpellPacket(spell_id)
+	caster = spell_packet.caster
+	damage_dice = dice_new( '2d4' )
+	undead_dice = dice_new('4d4')
+	
+	if tgt.is_category_type( mc_type_undead ):
+		tgt.spell_damage(caster, D20DT_FIRE, undead_dice, D20DAP_UNSPECIFIED, D20A_CAST_SPELL, spell_id)
+	else:
+		tgt.spell_damage(caster, D20DT_FIRE, damage_dice, D20DAP_UNSPECIFIED, D20A_CAST_SPELL, spell_id)
+	return 0
+
+def WallOfFireHitDamage(attachee, args, evt_obj):
+	print "Wall of Fire hit damage"
+	tgt = attachee
+	spell_id = args.get_arg(0)
+	spell_packet = tpdp.SpellPacket(spell_id)
+	caster = spell_packet.caster
 	
 	damage_dice = dice_new( '2d6' )
 	damage_dice.bonus = min( 1 * spell_packet.caster_level, 20 )
@@ -81,11 +132,18 @@ def OnWallAoEEntered(attachee, args, evt_obj):
 		tgt.spell_damage(caster, D20DT_FIRE, damage_dice, D20DAP_UNSPECIFIED, D20A_CAST_SPELL, spell_id)
 	return 0
 
+def OnWallAoEExit(attachee, args, evt_obj):
+	evt_id = args.get_arg(2)
+	if evt_id != evt_obj.evt_id:
+		return 0
+	print "Removing sp-Wall of fire hit on " + str(attachee)
+	args.remove_spell_mod()
+	return 0
 
-wallOfFire = PythonModifier("sp-Wall of Fire", 8)
-wallOfFire.AddHook(ET_OnConditionAdd, EK_NONE, WallOfFireOnAdd, ())
-wallOfFire.AddHook(ET_OnObjectEvent, EK_OnEnterAoE, OnWallAoEEntered, ())
-wallOfFire.AddSpellCountdownStandardHook()
-wallOfFire.AddAoESpellEndStandardHook()
-
-
+wallOfFireHit = PythonModifier("sp-Wall of Fire hit", 8)
+wallOfFireHit.AddHook(ET_OnBeginRound, EK_NONE, WallOfFireBeginRound, ())
+wallOfFireHit.AddHook(ET_OnConditionAdd, EK_NONE, WallOfFireHitDamage, ())
+wallOfFireHit.AddHook(ET_OnD20Signal, EK_S_Spell_End, EndSpellMod, ())
+wallOfFireHit.AddHook(ET_OnD20Signal, EK_S_Killed, EndSpellMod, ())
+wallOfFireHit.AddHook(ET_OnObjectEvent, EK_OnLeaveAoE, OnWallAoEExit, ())
+wallOfFireHit.AddSpellCountdownStandardHook()

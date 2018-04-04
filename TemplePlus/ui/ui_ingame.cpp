@@ -141,11 +141,11 @@ void UiInGame::ProcessMessage(const TigMsg & msg) {
 			mouseFuncs.SetDraggedIcon(0, 0, 0);
 		}
 
-		static int* objRecovery_10BD3AFC = temple::GetPointer<int>(0x10BD3AFC);
-		static uint32_t &idx_10BD3B44 = temple::GetRef<uint32_t>(0x10BD3B44);
+		static int* viewportIds = temple::GetPointer<int>(0x10BD3AF8);
+		static uint32_t &viewportIdx = temple::GetRef<uint32_t>(0x10BD3B44);
 
 		
-		if (!objRecovery_10BD3AFC[idx_10BD3B44])
+		if (!viewportIds[viewportIdx+1])
 		{
 			static bool combatModeMsg = false;
 			if (combatSys.isCombatActive())

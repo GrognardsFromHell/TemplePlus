@@ -69,7 +69,10 @@ void DiagScreen::Render() {
 	lines.push_back(fmt::format("#Mouse"));
 	lines.push_back(fmt::format("x: {} y: {}", mousePt.x, mousePt.y));
 	lines.push_back(fmt::format("Location: {}", mouseLoc));
-	
+	auto dragSelect = temple::GetRef<int>(0x10BD3B60);
+	auto lmbClicked = temple::GetRef<int>(0x10BD3B5C);
+	lines.push_back(fmt::format("Drag Select: {} LMB clicked: {}", dragSelect, lmbClicked));
+
 	lines.push_back(fmt::format("#Textures"));
 	lines.push_back(fmt::format("{} of {} loaded", loaded, registered));
 	lines.push_back(fmt::format("Memory Budget: {}", FormatMemSize(textureManager.GetMemoryBudget())));

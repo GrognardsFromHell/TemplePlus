@@ -323,6 +323,10 @@ bool SpellPacketBody::SavingThrow(objHndl target, D20SavingThrowFlag flags) {
 	return damage.SavingThrowSpell(target, caster, dc, (SavingThrowType)spEntry.savingThrowType, flags, spellId );
 }
 
+bool SpellPacketBody::CheckSpellResistance(objHndl tgt){
+	return spellSys.CheckSpellResistance(this, tgt) != FALSE;
+}
+
 const char* SpellPacketBody::GetName(){
 	return spellSys.GetSpellName(spellEnum);
 }
@@ -463,7 +467,7 @@ void SpellPacketBody::Reset(){
 
 uint32_t SpellPacketBody::GetPartsysForObj(const objHndl& objHnd){
 
-	for (auto i=0; i < this->targetCount; i++){
+	for (auto i=0u; i < this->targetCount; i++){
 		if (this->targetListHandles[i] == objHnd){
 			return this->targetListPartsysIds[i];
 		}
@@ -693,7 +697,7 @@ bool LegacySpellSystem::CheckAbilityScoreReqForSpell(objHndl handle, uint32_t sp
 	if (!spEntry.spellEnum)
 		return false;
 
-	auto statLvl = 0;
+	auto statLvl = 0u;
 	auto spellStat = stat_wisdom;
 	for (auto i = 0u; i<spEntry.spellLvlsNum; i++) {
 		auto &lvlSpec = spEntry.spellLvls[i];
@@ -2619,55 +2623,58 @@ int LegacySpellSystem::CheckSpellResistance(SpellPacketBody* spellPkt, objHndl h
 	}
 	
 	// obtain bonuses
-	DispIOBonusListAndSpellEntry dispIoBon;
-	BonusList bonlist;
 
-	auto casterLvlMod = dispatch.Dispatch35CasterLevelModify(handle, spellPkt);
+	// Defender bonus
+	DispIOBonusListAndSpellEntry dispIoBon;
+	dispIoBon.spellEntry = &dispIo.spellEntry;
+	int srMod = dispatch.Dispatch45SpellResistanceMod(handle, &dispIoBon);
+	if (srMod <= 0){
+		return 0;
+	}
+
+	BonusList bonlist;
+	auto caster = spellPkt->caster;
+
+	auto casterLvlMod = dispatch.Dispatch35CasterLevelModify(caster, spellPkt);
 	bonlist.AddBonus(casterLvlMod, 0, 203);
 
-
-	if (feats.HasFeatCountByClass(handle, FEAT_SPELL_PENETRATION)){
+	if (feats.HasFeatCountByClass(caster, FEAT_SPELL_PENETRATION)){
 		auto featName=  feats.GetFeatName(FEAT_SPELL_PENETRATION);
 		bonlist.AddBonusWithDesc(2,0,114, featName);
 	}
-	if (feats.HasFeatCountByClass(handle, FEAT_GREATER_SPELL_PENETRATION)){
+	if (feats.HasFeatCountByClass(caster, FEAT_GREATER_SPELL_PENETRATION)){
 		auto featName = feats.GetFeatName(FEAT_GREATER_SPELL_PENETRATION);
 		bonlist.AddBonusWithDesc(2, 0, 114, featName);
 	}
-	dispIoBon.spellEntry = &dispIo.spellEntry;
-
-	int srMod = dispatch.Dispatch45SpellResistanceMod(handle, &dispIoBon);
+	
 
 	// do the roll and log the result to the D20 window
-	int rollResult = 0;
+	int dispelSpellResistanceResult = 0;
 	if (srMod > 0){
 		auto Spell_Resistance = combatSys.GetCombatMesLine(5048);
 		int rollHistId;
-		rollResult = spellSys.DispelRoll(spellPkt->caster, &bonlist, 0, srMod, Spell_Resistance, &rollHistId);
-		char * outcomeText1, outcomeText2;
-		if (rollResult <=0)	{
+		dispelSpellResistanceResult = spellSys.DispelRoll(spellPkt->caster, &bonlist, 0, srMod, Spell_Resistance, &rollHistId);
+		char *outcomeText1, *outcomeText2;
+		if (dispelSpellResistanceResult <=0)	{
 			auto spellName = GetSpellName(spellPkt->spellEnum);
 			logger->info("CheckSpellResistance: Spell {} cast by {} resisted by target {}.", spellName, description.getDisplayName(spellPkt->caster), description.getDisplayName(handle));
 			floatSys.FloatSpellLine(handle, 30008, FloatLineColor::White);
 			PlayFizzle(handle);
 			outcomeText1 = combatSys.GetCombatMesLine(119); // Spell ~fails~[ROLL_
-			outcomeText1 = combatSys.GetCombatMesLine(120); // ] to overcome Spell Resistance
+			outcomeText2 = combatSys.GetCombatMesLine(120); // ] to overcome Spell Resistance
 
 		} else
 		{
 			floatSys.FloatSpellLine(handle, 30009, FloatLineColor::Red);
 			outcomeText1 = combatSys.GetCombatMesLine(121); // Spell ~overcomes~[ROLL_
-			outcomeText1 = combatSys.GetCombatMesLine(122); // ] Spell Resistance
+			outcomeText2 = combatSys.GetCombatMesLine(122); // ] Spell Resistance
 		}
 
 		auto histText = std::string(fmt::format("{}{}{}\n\n", outcomeText1, rollHistId, outcomeText2));
 		histSys.CreateFromFreeText(histText.c_str());
 	}
 
-	
-
-
-	return rollResult;
+	return dispelSpellResistanceResult <= 0 ? TRUE: FALSE;
 
 }
 

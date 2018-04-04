@@ -173,7 +173,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def("add_aoe_spell_ender", [](CondStructNew &condStr) {
 			condStr.AddAoESpellRemover();
 		})
-			;
+		;
 
 	py::class_<DispIO>(m, "EventObj", "The base Event Object")
 		.def_readwrite("evt_obj_type", &DispIO::dispIOType)
@@ -612,6 +612,9 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 				pkt.spellObjs[idx].obj = spellObj;
 				pkt.spellObjs[idx].partySysId = partsysId;
 				pkt.numSpellObjs++;
+			})
+			.def("check_spell_resistance", [](SpellPacketBody&pkt, objHndl tgt){
+				return pkt.CheckSpellResistance(tgt);
 			})
 			;
 

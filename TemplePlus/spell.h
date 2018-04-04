@@ -125,6 +125,7 @@ struct SpellPacketBody{
 	// fetches from the SpellsCastRegistry. If it fails, the spellId will be 0 (as in the Reset function)
 	bool AddTarget(objHndl tgt, int partsysId, int replaceExisting); // will add target (or replace its partsys if it already exists)
 	bool SavingThrow(objHndl target, D20SavingThrowFlag flags);
+	bool CheckSpellResistance(objHndl tgt);
 	const char* GetName(); // get the spell name
 
 	bool IsVancian();

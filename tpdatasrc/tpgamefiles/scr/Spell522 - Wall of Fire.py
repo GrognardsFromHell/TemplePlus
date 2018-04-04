@@ -33,7 +33,6 @@ def OnSpellEffect( spell ):
 	#print "Src loc off_y: " + str(spell_obj.off_y)
 	
 	# Create 2nd spell object at wall end point
-	
 	wall_end_point = spell.spell_get_picker_end_point()
 	
 	x,y = location_to_axis(wall_end_point.get_location())
