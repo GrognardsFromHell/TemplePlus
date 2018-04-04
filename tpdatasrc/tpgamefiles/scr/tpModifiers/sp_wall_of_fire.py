@@ -84,6 +84,7 @@ wallOfFire.AddHook(ET_OnConditionAdd, EK_NONE, WallOfFireOnAdd, ())
 wallOfFire.AddHook(ET_OnObjectEvent, EK_OnEnterAoE, OnWallAoEEntered, ())
 wallOfFire.AddSpellCountdownStandardHook()
 wallOfFire.AddAoESpellEndStandardHook()
+wallOfFire.AddSpellDismissStandardHook()
 
 
 ##################################################
@@ -100,7 +101,7 @@ def EndSpellMod(attachee, args, evt_obj):
 
 
 def WallOfFireBeginRound(attachee, args, evt_obj):
-	print "Wall of Fire begin round"
+	#print "Wall of Fire begin round"
 	tgt = attachee
 	spell_id = args.get_arg(0)
 	spell_packet = tpdp.SpellPacket(spell_id)
@@ -115,7 +116,7 @@ def WallOfFireBeginRound(attachee, args, evt_obj):
 	return 0
 
 def WallOfFireHitDamage(attachee, args, evt_obj):
-	print "Wall of Fire hit damage"
+	#print "Wall of Fire hit damage"
 	tgt = attachee
 	spell_id = args.get_arg(0)
 	spell_packet = tpdp.SpellPacket(spell_id)
@@ -136,7 +137,7 @@ def OnWallAoEExit(attachee, args, evt_obj):
 	evt_id = args.get_arg(2)
 	if evt_id != evt_obj.evt_id:
 		return 0
-	print "Removing sp-Wall of fire hit on " + str(attachee)
+	#print "Removing sp-Wall of fire hit on " + str(attachee)
 	args.remove_spell_mod()
 	return 0
 

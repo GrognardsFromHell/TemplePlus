@@ -3919,12 +3919,11 @@ int SpellCallbacks::SpellDismissSignalHandler(DispatcherCallbackArgs args) {
 		return 0;
 
 	auto spellRemove = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100D7620);
-	auto spellModRemove = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100CBAB0);
 	
 	if (spPkt.spellEnum == 315 || args.GetData1() == 1 || spPkt.targetCount > 0){
 		floatSys.FloatSpellLine(args.objHndCaller, 20000, FloatLineColor::White); // a spell has expired
 		spellRemove(args);
-		spellModRemove(args);
+		args.RemoveSpellMod();
 	}
 
 	return 0;
@@ -3953,6 +3952,13 @@ int SpellCallbacks::DismissSignalHandler(DispatcherCallbackArgs args){
 		// in case the dismiss didn't take care of that (e.g. grease)
 		if (spPkt.aoeObj) {
 			d20Sys.d20SendSignal(spPkt.aoeObj, DK_SIG_Spell_End, spPkt.spellId, 0);
+		}
+
+		// Spell objects. Added in Temple+ for Wall spells
+		for (auto i = 0u; i < spPkt.numSpellObjs && i < 128; i++) {
+			auto spellObj = spPkt.spellObjs[i].obj;
+			if (!spellObj) continue;
+			d20Sys.d20SendSignal(spellObj, DK_SIG_Spell_End, spPkt.spellId, 0);
 		}
 
 		// adding this speciically for grease because I want to be careful

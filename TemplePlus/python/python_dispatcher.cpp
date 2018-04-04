@@ -173,6 +173,9 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def("add_aoe_spell_ender", [](CondStructNew &condStr) {
 			condStr.AddAoESpellRemover();
 		})
+		.def("add_spell_dismiss_hook", [](CondStructNew &condStr){
+			condStr.AddHook(dispTypeConditionAdd, DK_NONE, temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100CBD60));
+		})
 		;
 
 	py::class_<DispIO>(m, "EventObj", "The base Event Object")
