@@ -1,0 +1,5 @@
+name: Improved Favored Enemy
+flags: 12582912
+prereqs: 
+description: You deal an extra 3 points of damage to your favored enemies. This benefit stacks with any existing favored enemy bonus gained from another class.
+prereq descr: Base attack bonus +5 and favored enemy ability,

@@ -1434,6 +1434,136 @@ static PyObject* PyObjHandle_ConditionAddWithArgs(PyObject* obj, PyObject* args)
 	return PyInt_FromLong(result);
 }
 
+static PyObject* PyObjHandle_FavoredEnemy(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle)
+		return PyInt_FromLong(0);
+
+	objHndl critter;
+	if (!PyArg_ParseTuple(args, "O&:objhndl.is_favored_enemy", &ConvertObjHndl, &critter)) {
+		return 0;
+	}
+
+	if (!critter)
+		return PyInt_FromLong(0);
+
+	auto category = critterSys.GetCategory(critter);
+	int result = 0;
+
+	switch (category) {
+		case mc_type_aberration:
+			result = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_ABERRATION);
+			break;
+		case mc_type_animal:
+			result = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_ANIMAL);
+			break;
+		case mc_type_beast:
+			result = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_BEAST);
+			break;
+		case mc_type_construct:
+			result = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_CONSTRUCT);
+			break;
+		case mc_type_elemental:
+			result = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_ELEMENTAL);
+			break;
+		case mc_type_giant:
+			result = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_GIANT);
+			break;
+		case mc_type_humanoid:
+			{
+				//Check the subtype (be careful since it could fall into more than one category, if so return the highest feat count)
+				int flags = critterSys.GetSubcategoryFlags(critter);
+				if (flags & mc_subtype_goblinoid) {
+					int count = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_HUMANOID_GOBLINOID);
+					if (count > result) result = count;
+				}
+				if (flags & mc_subtype_reptilian) {
+					int count = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_HUMANOID_REPTILIAN);
+					if (count > result) result = count;
+				}
+				if (flags & mc_subtype_dwarf) {
+					int count = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_HUMANOID_DWARF);
+					if (count > result) result = count;
+				}
+				if (flags & mc_subtype_elf) {
+					int count = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_HUMANOID_ELF);
+					if (count > result) result = count;
+				}
+				if (flags & mc_subtype_gnoll) {
+					int count = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_HUMANOID_GNOLL);
+					if (count > result) result = count;
+				}
+				if (flags & mc_subtype_gnome) {
+					int count = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_HUMANOID_GNOME);
+					if (count > result) result = count;
+				}
+				if (flags & mc_subtype_halfling) {
+					int count = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_HUMANOID_HALFLING);
+					if (count > result) result = count;
+				}
+				if (flags & mc_subtype_orc) {
+					int count = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_HUMANOID_ORC);
+					if (count > result) result = count;
+				}
+				if (flags & mc_subtype_human) {
+					int count = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_HUMANOID_HUMAN);
+					if (count > result) result = count;
+				}
+			}
+			break;
+		case mc_type_ooze:
+			result = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_OOZE);
+			break;
+		case mc_type_plant:
+			result = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_PLANT);
+			break;
+		case mc_type_shapechanger:
+			result = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_SHAPECHANGER);
+			break;
+		case mc_type_vermin:
+			result = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_VERMIN);
+			break;
+		case mc_type_dragon:
+			result = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_DRAGON);
+			break;
+		case mc_type_magical_beast:
+			result = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_BEAST);
+			break;
+		case mc_type_monstrous_humanoid:
+			result = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_MONSTROUS_HUMANOID);
+			break;
+		case mc_type_outsider:
+			{
+				//Check the subtype (since it could fall into more than one category be careful to return the highest count)
+				int flags = critterSys.GetSubcategoryFlags(critter);
+				if (flags & mc_subtype_evil) {
+					int count = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_OUTSIDER_EVIL);
+					if (count > result) result = count;
+				}
+				if (flags & mc_subtype_good) {
+					int count = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_OUTSIDER_GOOD);
+					if (count > result) result = count;
+				}
+				if (flags & mc_subtype_lawful) {
+					int count = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_OUTSIDER_LAWFUL);
+					if (count > result) result = count;
+				}
+				if (flags & mc_subtype_chaotic) {
+					int count = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_OUTSIDER_CHAOTIC);
+					if (count > result) result = count;
+				}
+			}
+			break;
+		case mc_type_fey:
+			result = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_FEY);
+			break;
+		case mc_type_undead:
+			result = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_UNDEAD);
+			break;
+	}
+	
+	return PyInt_FromLong(result);
+}
 
 static PyObject* PyObjHandle_IsFlankedBy(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
@@ -3269,6 +3399,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "is_active_combatant", PyObjHandle_IsActiveCombatant, METH_VARARGS, NULL },
 	{ "is_category_type", PyObjHandle_IsCategoryType, METH_VARARGS, NULL },
 	{ "is_category_subtype", PyObjHandle_IsCategorySubtype, METH_VARARGS, NULL },
+	{ "is_favored_enemy", PyObjHandle_FavoredEnemy, METH_VARARGS, NULL },
 	{ "is_flanked_by", PyObjHandle_IsFlankedBy, METH_VARARGS, NULL },
 	{ "is_friendly", PyObjHandle_IsFriendly, METH_VARARGS, NULL },
 	{ "is_unconscious", PyObjHandle_IsUnconscious, METH_VARARGS, NULL },
