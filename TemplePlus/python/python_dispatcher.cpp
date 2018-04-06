@@ -29,6 +29,7 @@
 #include "python_integration_spells.h"
 #include "temple_functions.h"
 #include "rng.h"
+#include "float_line.h"
 
 namespace py = pybind11;
 
@@ -209,12 +210,15 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		{
 			conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
 		})
-		.def("remove_spell_mod", &DispatcherCallbackArgs::RemoveSpellMod);
+		.def("remove_spell_mod", &DispatcherCallbackArgs::RemoveSpellMod)
+		.def("remove_spell", &DispatcherCallbackArgs::RemoveSpell)
 		;
 
 	#pragma endregion 
 
 	#pragma region useful data types
+
+	#pragma region Location
 		py::class_<locXY>(m, "LocXY")
 		.def_readwrite("x", &locXY::locx)
 		.def_readwrite("y", &locXY::locy)
@@ -234,8 +238,8 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			locSys.GetOverallOffset(src, &absX, &absY);
 			auto vectorAngleRad = 5 * M_PI / 4 - angleRad;
 			auto result = src;
-			result.off_x += rangeFt * INCH_PER_FEET * cos(vectorAngleRad);
-			result.off_y += rangeFt * INCH_PER_FEET * sin(vectorAngleRad);
+			result.off_x += (float)(rangeFt * INCH_PER_FEET * cos(vectorAngleRad));
+			result.off_y += (float)(rangeFt * INCH_PER_FEET * sin(vectorAngleRad));
 			locSys.RegularizeLoc(&result);
 			return result;
 		})
@@ -243,6 +247,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		py::class_<LocFull>(m, "LocFull")
 		.def_readwrite("loc_and_offsets", &LocFull::location)
 		;
+	#pragma endregion
 
 	#pragma region Bonuslist etc
 	py::class_<BonusList>(m, "BonusList")
@@ -616,8 +621,26 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 				pkt.spellObjs[idx].partySysId = partsysId;
 				pkt.numSpellObjs++;
 			})
+			.def("add_target",[](SpellPacketBody&pkt, objHndl handle, int partsysId)->bool{
+				return pkt.AddTarget(handle, partsysId, false);
+			})
+			.def("end_target_particles", [](SpellPacketBody&pkt, objHndl handle){
+				pkt.EndPartsysForTgtObj(handle);
+			})
+			.def("remove_target", [](SpellPacketBody&pkt, objHndl handle){
+				pkt.RemoveObjFromTargetList(handle);
+			})
 			.def("check_spell_resistance", [](SpellPacketBody&pkt, objHndl tgt){
 				return pkt.CheckSpellResistance(tgt);
+			})
+			.def("trigger_aoe_hit", [](SpellPacketBody&pkt) {
+				if (!pkt.spellEnum)
+					return;
+				pySpellIntegration.SpellTrigger(pkt.spellId, SpellEvent::AreaOfEffectHit);
+			})
+			.def("float_spell_line", [](SpellPacketBody& pkt, objHndl handle, int lineId, int color){
+				auto color_ = (FloatLineColor)color;
+				floatSys.FloatSpellLine(handle, lineId, color_);
 			})
 			;
 

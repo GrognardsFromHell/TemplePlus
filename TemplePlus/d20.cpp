@@ -48,6 +48,7 @@ static_assert(sizeof(D20ActionDef) == 0x30, "D20ActionDef struct has the wrong s
 int (__cdecl *OrgD20Init)(GameSystemConf* conf);
 
 class D20ActionCallbacks {
+	// see NewD20ActionsInit
 public:
 #define ActionCheck(fname) static ActionErrorCode  ActionCheck ## fname ## (D20Actn* d20a, TurnBasedStatus* tbStat)
 #define AddToSeq(fname) static ActionErrorCode AddToSeq ## fname ## (D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
@@ -123,6 +124,7 @@ public:
 	static ActionErrorCode PerformQuiveringPalm(D20Actn* d20a);
 	static ActionErrorCode PerformSneak(D20Actn* d20a);
 	static ActionErrorCode PerformStandardAttack(D20Actn* d20a);
+	static ActionErrorCode PerformStopConcentration(D20Actn* d20a);
 	static ActionErrorCode PerformTripAttack(D20Actn* d20a);
 	static ActionErrorCode PerformUseItem(D20Actn* d20a);
 
@@ -432,6 +434,8 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckCastSpell;
 	d20Defs[d20Type].projectileHitFunc = d20Callbacks.ProjectileHitSpell;
 	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostCastSpell;
+	d20Defs[d20Type].flags = static_cast<D20ADF>(d20Defs[d20Type].flags | (D20ADF::D20ADF_Breaks_Concentration)); // casting spells should break concentration since active concentration requires a standard action!
+
 
 	d20Type = D20A_USE_ITEM;
 	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqSpellCast;
@@ -452,6 +456,8 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Type = D20A_DISMISS_SPELLS;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformDismissSpell;
 
+	d20Type = D20A_STOP_CONCENTRATION;
+	d20Defs[d20Type].performFunc = d20Callbacks.PerformStopConcentration;
 
 	d20Type = D20A_BARDIC_MUSIC;
 	d20Defs[d20Type].flags = (D20ADF)( D20ADF_MagicEffectTargeting | D20ADF_Breaks_Concentration );
@@ -1136,6 +1142,11 @@ ActionErrorCode D20ActionCallbacks::PerformStandardAttack(D20Actn* d20a)
 		d20a->animID = animationGoals.GetActionAnimId(d20a->d20APerformer);
 		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
 	}
+	return AEC_OK;
+}
+
+ActionErrorCode D20ActionCallbacks::PerformStopConcentration(D20Actn* d20a){
+	d20Sys.d20SendSignal(d20a->d20APerformer, DK_SIG_Remove_Concentration, d20a->d20APerformer);
 	return AEC_OK;
 }
 
@@ -2803,6 +2814,8 @@ ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
 		d20Sys.d20SendSignal(tgt, DK_SIG_Spell_Cast, spellId, 0);
 	}
 	
+	d20Sys.d20SendSignal(d20a->d20APerformer, DK_SIG_Remove_Concentration, 0, 0);
+
 	/*if (party.IsInParty(d20a->d20APerformer)){
 		auto dummy = 1;
 	} else

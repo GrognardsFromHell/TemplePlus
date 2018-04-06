@@ -29,6 +29,8 @@
 #include "condition.h"
 #include "legacyscriptsystem.h"
 #include "config/config.h"
+#include "d20_obj_registry.h"
+#include "anim.h"
 
 
 struct CombatSystemAddresses : temple::AddressTable
@@ -131,6 +133,9 @@ public:
 		orgActionBarResetCallback = replaceFunction(0x10062E60, ActionBarResetCallback);
 		orgTurnStart2 = replaceFunction(0x100638F0, TurnStart2);
 		orgCombatTurnAdvance = replaceFunction(0x100634E0, CombatTurnAdvance);
+		replaceFunction<BOOL(__cdecl)()>(0x10062A30, [](){ // Combat End
+			return combatSys.CombatEnd()?TRUE:FALSE;
+		});
 
 		orgCheckRangedWeaponAmmo = replaceFunction(0x100654E0, CheckRangedWeaponAmmo);
 		
@@ -822,8 +827,7 @@ void LegacyCombatSystem::Subturn()
 
 	if (!actor){
 		logger->error("Combat Subturn: Coudn't start TB combat Turn due to no Active Critters!");
-		static auto combatEnd = temple::GetRef<int(__cdecl)()>(0x10062A30);
-		combatEnd();
+		CombatEnd();
 		return;
 	}
 
@@ -979,8 +983,7 @@ void LegacyCombatSystem::CritterExitCombatMode(objHndl handle) {
 			return;
 	}
 
-	static auto combatEnd = temple::GetRef<int(__cdecl)()>(0x10062A30);
-	if (!combatEnd())
+	if (!CombatEnd())
 		return;
 
 	static auto uiCombatResetCallback = temple::GetRef<int(__cdecl*)()>(0x10AA83F8);
@@ -1001,9 +1004,39 @@ void LegacyCombatSystem::CritterExitCombatMode(objHndl handle) {
 	// temple::GetRef<void(__cdecl)(objHndl)>(0x100630F0)(handle);
 }
 
+bool LegacyCombatSystem::CombatEnd(){
+	//static auto combatEnd = temple::GetRef<int(__cdecl)()>(0x10062A30);
+	if (!isCombatActive() )
+		return true;
+
+	d20ObjRegistrySys.D20ObjRegistrySendSignalAll(DK_SIG_Combat_End, 0, 0);
+	*combatSys.combatModeActive = 0;
+	animationGoals.SetRuninfoDeallocCallback(nullptr);
+	if (!animationGoals.InterruptAllForTbCombat()){
+		logger->debug("CombatEnd: Anim goal interrupt FAILED!");
+	}
+	static auto actSeqResetOnCombatEnd = temple::GetRef<void(__cdecl)()>(0x10097BE0);
+	actSeqResetOnCombatEnd();
+	auto &mResettingCombatSystem = temple::GetRef<BOOL>(0x10AA8448);
+	if (!mResettingCombatSystem)
+		tbSys.ExecuteExitCombatScriptForInitiativeList();
+	tbSys.TbCombatEnd();
+	if (!mResettingCombatSystem){
+		auto N = party.GroupListGetLen();
+		for (auto i=0; i < N; i++){
+			auto partyMember = party.GroupListGetMemberN(i);
+			temple::GetRef<void(__cdecl)(objHndl)>(0x100B70A0)(partyMember);
+		}
+		auto combatGiveXp = temple::GetRef<void(__cdecl)()>(0x100B88C0);
+		combatGiveXp();
+	}
+	return true;
+}
+
 bool LegacyCombatSystem::isCombatActive()
 {
-	return *combatSys.combatModeActive != 0;
+	auto isActive = *combatSys.combatModeActive;
+	return isActive != 0;
 }
 
 bool LegacyCombatSystem::IsAutoAttack(){

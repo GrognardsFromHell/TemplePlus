@@ -49,6 +49,8 @@ def WallOfFireOnAdd(attachee, args, evt_obj):
 		spell_packet.add_spell_object( spell_obj, spell_partsys_id) # store the spell obj and the particle sys
 	
 	spell_packet.update_registry()
+	
+	spell_packet.caster.condition_add_with_args('sp-Concentrating', spell_id)
 	return 0
 
 
@@ -69,22 +71,49 @@ def OnWallAoEEntered(attachee, args, evt_obj):
 		return 0
 	
 	#print str(tgt) + " hit by wall of fire"
+	spell_packet.trigger_aoe_hit()
 	
 	if spell_packet.check_spell_resistance(tgt):
 		return 0
 	
 	# apply sp-Wall of Fire hit condition (applies damage on beginning of round)
-	tgt.condition_add_with_args('sp-Wall of Fire hit', spell_id, duration, obj_evt_id)
-	
+	partsys_id = game.particles( "sp-Wall of Fire-hit", tgt )
+	if spell_packet.add_target(tgt, partsys_id):
+		tgt.condition_add_with_args('sp-Wall of Fire hit', spell_id, duration, obj_evt_id)
 	return 0
 
+
+def OnConcentrationBroken(attachee, args, evt_obj):
+	#print "Concentration broken"
+	spellId = args.get_arg(0)
+	spell_packet = tpdp.SpellPacket(spellId)
+	if spell_packet.spell_enum == 0:
+		return 0
+	args.remove_spell()
+	#args.remove_spell_mod()
+	return 0
+
+def OnCombatEnd(attachee, args, evt_obj):
+	#print "Combat End"
+	spellId = args.get_arg(0)
+	spell_packet = tpdp.SpellPacket(spellId)
+	if spell_packet.spell_enum == 0:
+		return
+	if spell_packet.caster != OBJ_HANDLE_NULL:
+		spell_packet.float_spell_line(spell_packet.caster, 20000, tf_white)
+	args.remove_spell()
+	args.remove_spell_mod()
+	return 0
 
 wallOfFire = PythonModifier("sp-Wall of Fire", 8)
 wallOfFire.AddHook(ET_OnConditionAdd, EK_NONE, WallOfFireOnAdd, ())
 wallOfFire.AddHook(ET_OnObjectEvent, EK_OnEnterAoE, OnWallAoEEntered, ())
+wallOfFire.AddHook(ET_OnD20Signal, EK_S_Concentration_Broken, OnConcentrationBroken, ())
+wallOfFire.AddHook(ET_OnD20Signal, EK_S_Combat_End, OnCombatEnd, ())
 wallOfFire.AddSpellCountdownStandardHook()
 wallOfFire.AddAoESpellEndStandardHook()
-wallOfFire.AddSpellDismissStandardHook()
+
+#wallOfFire.AddSpellDismissStandardHook() # oops, Wall of Fire doesn't have Dismiss (but it does have COncentration...)
 
 
 ##################################################
@@ -137,7 +166,11 @@ def OnWallAoEExit(attachee, args, evt_obj):
 	evt_id = args.get_arg(2)
 	if evt_id != evt_obj.evt_id:
 		return 0
-	#print "Removing sp-Wall of fire hit on " + str(attachee)
+	print "Removing sp-Wall of fire hit on " + str(attachee)
+	spell_id = args.get_arg(0)
+	spell_packet = tpdp.SpellPacket(spell_id)
+	spell_packet.end_target_particles(attachee)
+	spell_packet.remove_target(attachee)
 	args.remove_spell_mod()
 	return 0
 
@@ -147,4 +180,5 @@ wallOfFireHit.AddHook(ET_OnConditionAdd, EK_NONE, WallOfFireHitDamage, ())
 wallOfFireHit.AddHook(ET_OnD20Signal, EK_S_Spell_End, EndSpellMod, ())
 wallOfFireHit.AddHook(ET_OnD20Signal, EK_S_Killed, EndSpellMod, ())
 wallOfFireHit.AddHook(ET_OnObjectEvent, EK_OnLeaveAoE, OnWallAoEExit, ())
+wallOfFireHit.AddHook(ET_OnD20Signal, EK_S_Concentration_Broken, EndSpellMod, ())
 wallOfFireHit.AddSpellCountdownStandardHook()

@@ -840,6 +840,15 @@ void AnimationGoals::GoalDestinationAdd(objHndl handle, LocAndOffsets loc){
 		gdIdx = 0;
 }
 
+void AnimationGoals::SetRuninfoDeallocCallback(void(* cb)()){
+	temple::GetRef<void(__cdecl*)()>(0x10AA4BB4) = cb;
+}
+
+bool AnimationGoals::InterruptAllForTbCombat(){
+	static auto interruptAllForTbCombat = temple::GetRef<BOOL(__cdecl)()>(0x1000C950);
+	return interruptAllForTbCombat();
+}
+
 BOOL AnimationGoals::GetSlot(AnimSlotId * runId, AnimSlot **runSlotOut){
 	if (!runId){
 		logger->error("Null runId in GetSlot()");

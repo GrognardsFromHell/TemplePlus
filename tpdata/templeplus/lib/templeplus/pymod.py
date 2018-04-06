@@ -11,8 +11,18 @@ class PythonModifier(tpdp.ModifierSpec):
         self.add_to_feat_dict(feat_enum, feat_list_max, feat_cond_arg2)
     # Spell related standard hooks
     def AddSpellCountdownStandardHook(self):
+        # adds an ET_OnBeginRound handler that (normally) does:
+        # If countdown expired: (<0)
+        #   1. Float text "Spell Expired"
+        #   2. RemoveSpell() (has case-by-case handlers for Spell_End; Temple+ adds generic handling for wall spells here)
+        #   3. RemoveSpellMod()
+        # Else:
+        #   Decrement count, update spell packet duration
         self.add_spell_countdown_standard()    
-    def AddAoESpellEndStandardHook(self):
+    def AddAoESpellEndStandardHook(self): 
+        # adds a EK_S_Spell_End handler that:
+        # 1. Ends particles for all spell objects
+        # 2. RemoveSpellMod()
         self.add_aoe_spell_ender()
     def AddSpellDismissStandardHook(self):
         self.add_spell_dismiss_hook()

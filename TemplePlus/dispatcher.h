@@ -240,6 +240,7 @@ struct DispatcherCallbackArgs {
 	void SetCondArgObjHndl(uint32_t argIdx, const objHndl& handle);
 	void RemoveCondition(); // note: this is the low level function
 	void RemoveSpellMod();
+	void RemoveSpell(); // general spell remover
 	
 };
 

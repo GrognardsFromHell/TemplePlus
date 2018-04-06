@@ -97,6 +97,7 @@ public:
 			spellSys.SpellBeginRound(handle);
 		});
 
+		// SpellEntriesInit
 		replaceFunction<BOOL(__cdecl)(const char*)>(0x1007B5B0, [](const char* spellRulesFolder)->BOOL
 		{
 			return spellSys.SpellEntriesInit(spellRulesFolder);
@@ -137,6 +138,9 @@ public:
 		// GetSpellMesline
 		replaceFunction<const char*(__cdecl)(uint32_t)>(0x1007AD80, [](uint32_t spellEnum) {
 			return spellSys.GetSpellMesline(spellEnum);
+		});
+		replaceFunction<void(__cdecl)(objHndl, uint32_t, FloatLineColor, const char*, const char*)>(0x10076820, [](objHndl handle, uint32_t lineId, FloatLineColor color, const char* prefix, const char* suffix){
+			floatSys.FloatSpellLine(handle, lineId, color, prefix, suffix);
 		});
 		// GetSpellDescription	
 		replaceFunction<const char*(__cdecl)(uint32_t)>(0x10077910, [](uint32_t spellEnum) {

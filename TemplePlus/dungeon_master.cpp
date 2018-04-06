@@ -942,7 +942,7 @@ void DungeonMaster::RenderEditedObj() {
 		static int classCur = 0;
 		static auto classNameGetter = [](void*data, int idx, const char** outTxt)->bool
 		{
-			if (idx >= classNames.size())
+			if ((uint32_t)idx >= classNames.size())
 				return false;
 			*outTxt = classNames[idx].c_str();
 			return true;

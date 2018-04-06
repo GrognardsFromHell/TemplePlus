@@ -54,6 +54,7 @@ struct LegacyCombatSystem : temple::AddressTable {
 	void CombatAdvanceTurn(objHndl obj);
 	BOOL IsBrawlInProgress();
 	void CritterExitCombatMode(objHndl handle);
+	bool CombatEnd(); // ends combat mode
 	
 
 	uint32_t* combatModeActive;

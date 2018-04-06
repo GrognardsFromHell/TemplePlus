@@ -198,6 +198,8 @@ public:
 	
 	void GoalDestinationRemove(objHndl);
 	void GoalDestinationAdd(objHndl handle, LocAndOffsets loc);
+	void SetRuninfoDeallocCallback(void(__cdecl* cb)());
+	bool InterruptAllForTbCombat();
 private:
 	BOOL GetSlot(AnimSlotId* runId, AnimSlot **runSlotOut);
 };

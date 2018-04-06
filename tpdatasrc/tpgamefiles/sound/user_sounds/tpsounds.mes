@@ -1,0 +1,11 @@
+
+// [522] *[Wall of Fire]
+{16440}{} // spell begin
+{16441}{} // spell end
+{16442}{spells\sp_protect_fr_el_fire.WAV} // spell effect
+{16443}{} // spell new round
+{16444}{} // spell projectile begin
+{16445}{} // spell projectile end
+{16446}{} // spell projectile in-flight
+{16447}{spells\sp_FireTrap_indication.WAV} // spell hit
+{16448}{} // spell struck

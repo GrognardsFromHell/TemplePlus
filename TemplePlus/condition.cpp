@@ -73,7 +73,7 @@ CondStructNew ConditionSystem::mCondHezrouStenchHit;
 
 struct ConditionSystemAddresses : temple::AddressTable
 {
-	void(__cdecl* SetPermanentModArgsFromDataFields)(Dispatcher* dispatcher, CondStruct* condStruct, int* condArgs);
+	void(__cdecl*SetPermanentModArgsFromDataFields)(Dispatcher* dispatcher, CondStruct* condStruct, int* condArgs);
 	int(__cdecl*RemoveSpellCondition)(DispatcherCallbackArgs args); 
 	int(__cdecl*RemoveSpellMod)(DispatcherCallbackArgs args);
 	ConditionSystemAddresses()
@@ -690,8 +690,8 @@ int RemoveSpellConditionAndMod(DispatcherCallbackArgs args)
 {
 	auto argsCopy = args;
 	argsCopy.dispKey = DK_SIG_Action_Recipient;
-	addresses.RemoveSpellCondition(argsCopy);
-	addresses.RemoveSpellMod(argsCopy);
+	argsCopy.RemoveSpell();
+	argsCopy.RemoveSpellMod();
 	return 0;
 };
 
@@ -3413,6 +3413,8 @@ int SpellCallbacks::ConcentratingActionSequenceHandler(DispatcherCallbackArgs ar
 			continue;
 		if (d20a.d20ActType == D20A_CAST_SPELL && d20a.spellId == spellId)
 			break;
+		if (d20a.d20Caf & D20CAF_FREE_ACTION) // added in Temple+ - free actions won't take up your standard action
+			continue;
 		DispatcherCallbackArgs dca;
 		dca.dispIO = nullptr;
 		dca.dispType = dispTypeD20Signal;
@@ -3918,11 +3920,9 @@ int SpellCallbacks::SpellDismissSignalHandler(DispatcherCallbackArgs args) {
 	if (dispIo->data1 != spellId)
 		return 0;
 
-	auto spellRemove = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100D7620);
-	
 	if (spPkt.spellEnum == 315 || args.GetData1() == 1 || spPkt.targetCount > 0){
 		floatSys.FloatSpellLine(args.objHndCaller, 20000, FloatLineColor::White); // a spell has expired
-		spellRemove(args);
+		args.RemoveSpell();
 		args.RemoveSpellMod();
 	}
 
@@ -3942,6 +3942,13 @@ int SpellCallbacks::DismissSignalHandler(DispatcherCallbackArgs args){
 		if (spPkt.aoeObj && spPkt.aoeObj != args.objHndCaller){
 			d20Sys.d20SendSignal(spPkt.aoeObj, DK_SIG_Dismiss_Spells, spPkt.spellId, 0);
 		}
+		// Spell objects. Added in Temple+ for Wall spells
+		for (auto i = 0u; i < spPkt.numSpellObjs && i < 128; i++) {
+			auto spellObj = spPkt.spellObjs[i].obj;
+			if (!spellObj || spellObj == args.objHndCaller) continue;
+			d20Sys.d20SendSignal(spellObj, DK_SIG_Dismiss_Spells, spPkt.spellId, 0);
+		}
+
 		for (auto i=0u; i < spPkt.targetCount; i++){
 			auto tgt = spPkt.targetListHandles[i];
 			if (!tgt || tgt == args.objHndCaller)
@@ -3961,14 +3968,22 @@ int SpellCallbacks::DismissSignalHandler(DispatcherCallbackArgs args){
 			d20Sys.d20SendSignal(spellObj, DK_SIG_Spell_End, spPkt.spellId, 0);
 		}
 
+		
 		// adding this speciically for grease because I want to be careful
 		auto SP_GREASE_ENUM = 200;
 		if (spPkt.spellEnum == SP_GREASE_ENUM){
 			conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
 		}
 		
+		// By now all effects should have been removed. Cross your fingers!
+		d20Sys.d20SendSignal(args.objHndCaller, DK_SIG_Spell_End, spPkt.spellId, 0);
+
 	}
 	return 0;
+}
+
+void DispatcherCallbackArgs::RemoveSpellMod() {
+	spCallbacks.SpellRemoveMod(*this);
 }
 
 int SpellCallbacks::SpellRemoveMod(DispatcherCallbackArgs args){
@@ -3992,6 +4007,7 @@ int SpellCallbacks::SpellRemoveMod(DispatcherCallbackArgs args){
 	case DK_SIG_TouchAttackAdded:
 	case DK_SIG_Teleport_Prepare:
 	case DK_SIG_Teleport_Reconnect:
+	case DK_SIG_Combat_End:
 		break;
 	default:
 		if (evtObj && evtObj->data1 != args.GetCondArg(0))
@@ -4007,9 +4023,20 @@ int SpellCallbacks::SpellRemoveMod(DispatcherCallbackArgs args){
 			if (spPkt.spellEnum != 0){
 				floatSys.FloatCombatLine(args.objHndCaller, 5060); // Stop Concentration
 				d20Sys.d20SendSignal(args.objHndCaller, DK_SIG_Concentration_Broken, spellId, 0);
+
+				if (spPkt.caster && spPkt.caster != args.objHndCaller){
+					d20Sys.d20SendSignal(spPkt.caster, DK_SIG_Concentration_Broken, spellId, 0);
+				}
+
 				for (auto i=0u; i < spPkt.targetCount; i++){
 					if (args.objHndCaller != spPkt.targetListHandles[i])
 						d20Sys.d20SendSignal(spPkt.targetListHandles[i], DK_SIG_Concentration_Broken, spellId, 0);
+				}
+				// added in Temple+: Concentration_Broken on the spell objects
+				for (auto i=0; i < spPkt.numSpellObjs && i < 128; i++){
+					auto spObj = spPkt.spellObjs[i].obj;
+					if (!spObj || spObj == args.objHndCaller) continue;
+						d20Sys.d20SendSignal(spObj, DK_SIG_Concentration_Broken, spellId, 0);
 				}
 			}
 		}

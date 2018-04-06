@@ -65,3 +65,6 @@ def OnBeginRound( spell ):
 
 def OnEndSpellCast( spell ):
 	print "Wall of Fire OnEndSpellCast"
+
+def OnAreaOfEffectHit( spell ):
+	print "Wall of Fire OnAreaOfEffectHit"

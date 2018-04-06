@@ -47,6 +47,27 @@ void FloatLineSystem::FloatCombatLineWithExtraString(const objHndl& obj, int com
 	floatMesLine(obj, 1, floatColor, text.c_str());
 }
 
+void FloatLineSystem::FloatSpellLine(objHndl target, int lineId, FloatLineColor color, const char* prefix,
+	const char* suffix){
+	char text[1024] = {0,};
+	auto line = spellSys.GetSpellMesline(lineId);
+	if (prefix){
+		if (suffix){
+			sprintf(text, "%s%s%s", prefix, line, suffix);
+		}
+		else{
+			sprintf(text, "%s%s", prefix, line);
+		}
+	}
+	else if (suffix){
+		sprintf(text, "%s%s", line, suffix);
+	}
+	else{
+		sprintf(text, "%s", line);
+	}
+	floatMesLine(target, 1, color, text);
+}
+
 FloatLineSystem::FloatLineSystem()
 {
 	

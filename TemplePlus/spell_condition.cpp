@@ -117,6 +117,7 @@ public:
 			case DK_SIG_TouchAttackAdded:
 			case DK_SIG_Teleport_Prepare:
 			case DK_SIG_Teleport_Reconnect:
+			case DK_SIG_Combat_End:
 				break;
 			default:
 				if (evtObj && evtObj->data1 != args.GetCondArg(0))
@@ -133,9 +134,9 @@ public:
 				return 0;
 			}
 
-			auto spellModRemove = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100CBAB0);
-
+			
 			switch(spPkt.spellEnum){
+			//Bless
 			case 37:
 				d20Sys.d20SendSignal(args.objHndCaller, DK_SIG_Spell_End, spellId, 0);
 				spPkt.EndPartsysForTgtObj(args.objHndCaller);
@@ -150,7 +151,8 @@ public:
 				break;
 			}
 
-			if (spPkt.spellEnum == 48){ // Calm Emotions
+			// Calm Emotions
+			if (spPkt.spellEnum == 48){ 
 				if (!ShouldRemoveCalmEmotions(args.objHndCaller, evtObj, args))
 					return 0;
 
@@ -171,13 +173,43 @@ public:
 				}*/
 				// todo: make this a template
 				spellSys.SpellEnd(spellId, 0);
-				spellModRemove(args);
+				args.RemoveSpellMod();
 				return 0;
 			}
 
-			if (spPkt.spellEnum == 253){
+			// Invisibility
+			if (spPkt.spellEnum == 253){ 
 				if (ShouldRemoveInvisibility(args.objHndCaller, evtObj, args) && spPkt.targetCount && spPkt.targetListHandles[0])
 					d20Sys.d20SendSignal(spPkt.targetListHandles[0], DK_SIG_Spell_End, spellId, 0);
+			}
+			
+			SpellEntry spEntry(spPkt.spellEnum);
+			if (spEntry.IsBaseModeTarget(UiPickerType::Wall)){
+				
+				if (spPkt.caster && spPkt.caster != args.objHndCaller) {
+					d20Sys.d20SendSignal(spPkt.caster, DK_SIG_Spell_End, spellId, 0);
+				}
+				if (spPkt.aoeObj && spPkt.aoeObj != args.objHndCaller){
+					d20Sys.d20SendSignal(spPkt.aoeObj, DK_SIG_Spell_End, spellId, 0);
+				}
+
+				spPkt.DoForTargetList([&](const objHndl &handle){
+					spPkt.EndPartsysForTgtObj(handle);
+					d20Sys.d20SendSignal(handle, DK_SIG_Spell_End, spellId, 0);
+					spPkt.RemoveObjFromTargetList(handle);
+				});
+
+				for (auto i=1; i < spPkt.numSpellObjs; i++){
+					auto spObj = spPkt.spellObjs[i].obj;
+					if (!spObj)continue;
+					d20Sys.d20SendSignal(spObj, DK_SIG_Spell_End, spellId, 0);
+				}
+				pySpellIntegration.SpellSoundPlay(&spPkt, SpellEvent::EndSpellCast);
+
+				d20Sys.d20SendSignal(args.objHndCaller, DK_SIG_Spell_End, spellId, 0);
+				if (spPkt.caster && args.dispKey != DK_SIG_Concentration_Broken)
+					d20Sys.d20SendSignal(spPkt.caster, DK_SIG_Remove_Concentration, spellId, 0);
+				spellSys.SpellEnd(spellId, 0);
 			}
 			return orgSpell_remove_spell(args);
 
@@ -792,13 +824,10 @@ int SpellConditionFixes::InvisibSphereDismiss(DispatcherCallbackArgs args){
 	if (dispIo->data1 != spellId)
 		return 0;
 
-	auto spellRemove = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100D7620);
-	auto spellModRemove = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100CBAB0);
-
 	if (spPkt.spellEnum == 315 || args.GetData1() == 1 || spPkt.targetCount > 0) {
 		floatSys.FloatSpellLine(args.objHndCaller, 20000, FloatLineColor::White); // a spell has expired
-		spellRemove(args);
-		spellModRemove(args);
+		args.RemoveSpell();
+		args.RemoveSpellMod();
 	}
 
 	return 0;

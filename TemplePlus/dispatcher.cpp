@@ -1212,9 +1212,9 @@ void DispatcherCallbackArgs::RemoveCondition(){
 	conds.ConditionRemove(this->objHndCaller, this->subDispNode->condNode);
 }
 
-void DispatcherCallbackArgs::RemoveSpellMod(){
-	auto removeSpellMod = temple::GetRef<void(__cdecl)(DispatcherCallbackArgs)>(0x100CBAB0);
-	removeSpellMod(*this);
+void DispatcherCallbackArgs::RemoveSpell(){
+	auto removeSpell = temple::GetRef<void(__cdecl)(DispatcherCallbackArgs)>(0x100D7620);
+	removeSpell(*this);
 }
 
 DispIoAttackBonus::DispIoAttackBonus(){
