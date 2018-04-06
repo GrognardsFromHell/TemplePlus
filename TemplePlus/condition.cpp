@@ -5187,10 +5187,13 @@ int ClassAbilityCallbacks::BardMusicRadial(DispatcherCallbackArgs args){
 	if (!bardLvl || perfSkill < 3)
 		return 0;
 
+	//Ask python for the maximum number of uses of bardic music
+	int nMaxBardicMusic = d20Sys.D20QueryPython(args.objHndCaller, "Max Bardic Music");
+
 	RadialMenuEntryParent bmusic(5039);
 	bmusic.flags |= 0x6;
 	bmusic.minArg = args.GetCondArg(0);
-	bmusic.maxArg = bardLvl;
+	bmusic.maxArg = nMaxBardicMusic;
 	auto bmusicId = bmusic.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Class);
 
 	RadialMenuEntryAction insCourage(5040, D20A_BARDIC_MUSIC, BM_INSPIRE_COURAGE, "TAG_CLASS_FEATURES_BARD_INSPIRE_COURAGE");
