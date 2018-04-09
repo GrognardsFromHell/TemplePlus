@@ -109,14 +109,14 @@ enum AiFlag : uint64_t {
 enum AiCombatRole: int32_t
 {
 	general = 0,
-	fighter = 1,
-	defender = 2,
-	caster = 3,
-	healer = 4,
-	flanker = 5,
-	sniper = 6,
-	magekiller = 7,
-	berzerker = 8,
+	fighter ,
+	defender ,
+	caster ,
+	healer ,
+	flanker ,
+	sniper ,
+	magekiller ,
+	berzerker ,
 	tripper,
 	special
 };

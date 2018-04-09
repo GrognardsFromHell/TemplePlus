@@ -568,6 +568,58 @@ bool LegacyCombatSystem::HasLineOfAttack(objHndl obj, objHndl target)
 	return 0;
 }
 
+bool LegacyCombatSystem::HasLineOfAttackFromPosition(LocAndOffsets fromPosition, objHndl target){
+	RaycastPacket objIt;
+	objIt.origin = fromPosition;
+	LocAndOffsets tgtLoc = objects.GetLocationFull(target);
+	objIt.targetLoc = tgtLoc;
+	objIt.flags = static_cast<RaycastFlags>(RaycastFlags::StopAfterFirstBlockerFound | RaycastFlags::ExcludeItemObjects | RaycastFlags::HasTargetObj | RaycastFlags::HasSourceObj | RaycastFlags::HasRadius);
+	objIt.radius = static_cast<float>(0.1);
+	bool blockerFound = false;
+	if (objIt.Raycast())
+	{
+		auto results = objIt.results;
+		for (auto i = 0; i < objIt.resultCount; i++)
+		{
+			objHndl resultObj = results[i].obj;
+			if (!resultObj)
+			{
+				if (results[i].flags & RaycastResultFlags::BlockerSubtile)
+				{
+					blockerFound = true;
+				}
+				continue;
+			}
+
+			auto objType = objects.GetType(resultObj);
+			if (objType == obj_t_portal)
+			{
+				if (!objects.IsPortalOpen(resultObj))
+				{
+					blockerFound = 1;
+				}
+				continue;
+			}
+			if (objType == obj_t_pc || objType == obj_t_npc)
+			{
+				if (critterSys.IsDeadOrUnconscious(resultObj)
+					|| d20Sys.d20Query(resultObj, DK_QUE_Prone))
+				{
+					continue;
+				}
+				// TODO: flag for Cover 
+			}
+		}
+	}
+	objIt.RaycastPacketFree();
+	if (!blockerFound)
+	{
+		return true;
+	}
+
+	return false;
+}
+
 void LegacyCombatSystem::AddToInitiativeWithinRect(objHndl handle) const
 {
 

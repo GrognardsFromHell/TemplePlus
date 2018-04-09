@@ -123,7 +123,7 @@ uint32_t AiSystem::StrategyParse(objHndl objHnd, objHndl target)
 			if (PickUpWeapon(&aiTac))
 			{
 				actSeq->sequencePerform();
-				return 1;
+				return TRUE;
 			}
 		}
 
@@ -131,7 +131,7 @@ uint32_t AiSystem::StrategyParse(objHndl objHnd, objHndl target)
 		if (WakeFriend(&aiTac))
 		{
 			actSeq->sequencePerform();
-			return 1;
+			return TRUE;
 		}
 
 	}
@@ -146,13 +146,12 @@ uint32_t AiSystem::StrategyParse(objHndl objHnd, objHndl target)
 		if (aiFunc(&aiTac)) {
 			logger->info("AiStrategy: \t AI tactic succeeded; performing.");
 			actSeq->sequencePerform();
-			return 1;
+			return TRUE;
 		}
 	}
 
 	// if no tactics defined (e.g. frogs), do target closest first to avoid all kinds of sillyness
-	if (aiStrat->numTactics == 0)
-	{
+	if (aiStrat->numTactics == 0){
 		TargetClosest(&aiTac);
 	}
 
@@ -167,7 +166,7 @@ uint32_t AiSystem::StrategyParse(objHndl objHnd, objHndl target)
 	if (Default(&aiTac))
 	{
 		actSeq->sequencePerform();
-		return 1;
+		return TRUE;
 	}
 
 	if (!aiTac.target || !combatSys.IsWithinReach(objHnd, aiTac.target)){
@@ -176,28 +175,33 @@ uint32_t AiSystem::StrategyParse(objHndl objHnd, objHndl target)
 		if (pathablePartyMember)
 		{
 			aiTac.target = pathablePartyMember;
-			if (aiTac.aiTac->aiFunc(&aiTac))
-			{
+			logger->info("New target: {}", pathablePartyMember);
+			if (aiTac.aiTac->aiFunc(&aiTac)){
 				logger->info("AiStrategy: \t Default tactic succeeded; performing.");
 				actSeq->sequencePerform();
-				return 1;
+				return TRUE;
 			}
 		}
 	}
 	
-
 	// if that doesn't work either, try to Break Free (NPC might be held back by Web / Entangle)
 	if (d20Sys.d20Query(aiTac.performer, DK_QUE_Is_BreakFree_Possible))
 	{
 		logger->info("AiStrategy: \t {} attempting to break free...", description.getDisplayName(objHnd));
-		if (BreakFree(&aiTac))
-		{
+		if (BreakFree(&aiTac)){
 			actSeq->sequencePerform();
-			return 1;
+			return TRUE;
 		}
 	}
 
-	return 0;
+	// if that's not the issue either:
+	if (role == AiCombatRole::sniper){
+		if (ImprovePosition(&aiTac)){
+			actSeq->sequencePerform();
+			return TRUE;
+		}
+	}
+	return FALSE;
 }
 
 uint32_t AiSystem::AiStrategDefaultCast(objHndl objHnd, objHndl target, D20SpellData* spellData, SpellPacketBody* spellPkt)
@@ -731,6 +735,27 @@ objHndl AiSystem::FindSuitableTarget(objHndl handle){
 							|| !critterSys.HasLineOfSight(handle, targetsFocus)) {
 							kosCandidate = targetsFocus;
 							break;
+						} else{
+							// check pathfinding short distances
+							auto pathFlags = PathQueryFlags::PQF_HAS_CRITTER | PQF_IGNORE_CRITTERS
+								| PathQueryFlags::PQF_800 | PathQueryFlags::PQF_TARGET_OBJ
+								| PathQueryFlags::PQF_ADJUST_RADIUS | PathQueryFlags::PQF_ADJ_RADIUS_REQUIRE_LOS
+								| PathQueryFlags::PQF_DONT_USE_PATHNODES | PathQueryFlags::PQF_A_STAR_TIME_CAPPED;
+
+							if (!config.alertAiThroughDoors) {
+								pathFlags |= PathQueryFlags::PQF_DOORS_ARE_BLOCKING;
+							}
+
+							if (pathfindingSys.CanPathTo(handle, targetsFocus, (PathQueryFlags)pathFlags, 40)) {
+								kosCandidate = targetsFocus;
+								break;
+							} else if (!party.IsInParty(handle)){
+								auto partyTgt = pathfindingSys.CanPathToParty(handle);
+								if (partyTgt){
+									kosCandidate = partyTgt;
+									break;
+								}
+							}
 						}
 					}
 			
@@ -770,7 +795,7 @@ int AiSystem::CannotHate(objHndl aiHandle, objHndl triggerer, objHndl aiLeader){
 		return 0;
 	if (!triggerer || !objSystem->GetObject(triggerer)->IsCritter())
 		return 0;
-	if (critterSys.GetLeader(triggerer) == aiLeader)
+	if (aiLeader && critterSys.GetLeader(triggerer) == aiLeader)
 		return 4;
 	if (critterSys.NpcAllegianceShared(aiHandle, triggerer))
 		return 3;
@@ -1530,13 +1555,91 @@ BOOL AiSystem::ImprovePosition(AiTactic* aiTac){
 	auto tgt = aiTac->target;
 
 	auto hasLineOfAttack = combatSys.HasLineOfAttack(performer, tgt);
-
-	return FALSE;
+	if (hasLineOfAttack)
+		return FALSE;
 
 	// need to get a map of LOS to critter
 	// basically a fog of war map for an individual...
 	// use this map for pathfinding (rather than making a LOS check for every A* step...)
 	// 
+	auto curSeq = *actSeqSys.actSeqCur;
+	actSeqSys.curSeqReset(aiTac->performer);
+	auto initialActNum = curSeq->d20ActArrayNum;
+
+	d20Sys.GlobD20ActnInit();
+	d20Sys.GlobD20ActnSetTypeAndData1(D20A_UNSPECIFIED_MOVE, 0);
+	d20Sys.GlobD20ActnSetTarget(aiTac->target, 0);
+	auto addToSeqError = (ActionErrorCode)actSeqSys.ActionAddToSeq();
+
+	auto curNum = curSeq->d20ActArrayNum;
+
+	if (addToSeqError == AEC_OK ){
+
+		// Check if AoO's were added - if so cut the movement before reaching those
+		for (auto i = initialActNum; i < curNum; i++) {
+			auto &d20a = curSeq->d20ActArray[i];
+			if (d20a.d20ActType == D20A_AOO_MOVEMENT) {
+				curNum = i;
+				actSeqSys.ActionSequenceRevertPath(i);
+				break;
+			}
+		}
+
+		// in addition, truncate the path to the least amount necessary to achieve LOS
+		if (curNum > 0) {
+
+			auto path = curSeq->d20ActArray[curSeq->d20ActArrayNum - 1].path;
+
+			auto lowerBound = 0.0f;
+			auto upperBound = path->GetPathResultLength();
+
+			auto truncationDistance = upperBound;
+			auto newDest = path->to;
+			hasLineOfAttack = combatSys.HasLineOfAttackFromPosition(newDest, tgt);
+
+			if (hasLineOfAttack) {
+				while (upperBound > lowerBound + 2.0f) {
+					truncationDistance = (upperBound + lowerBound) / 2;
+					pathfindingSys.TruncatePathToDistance(path, &newDest, truncationDistance);
+					hasLineOfAttack = combatSys.HasLineOfAttackFromPosition(newDest, tgt);
+					if (hasLineOfAttack) {
+						upperBound = truncationDistance;
+					}
+					else {
+						lowerBound = truncationDistance;
+					}
+				}
+
+				auto truncPath = pathfindingSys.FetchAvailablePQRCacheSlot();
+				if (pathfindingSys.GetPartialPath(path, truncPath, 0, upperBound)) {
+					logger->info("ImprovePosition: truncated path to length {} ft", upperBound);
+					path->occupiedFlag &= ~1;
+					curSeq->d20ActArray[curSeq->d20ActArrayNum - 1].path = truncPath;
+					curSeq->d20ActArray[curSeq->d20ActArrayNum - 1].destLoc = truncPath->to;
+				}
+				else {
+					truncPath->occupiedFlag &= ~1;
+				}
+
+			}
+
+		}
+
+	}
+		
+	
+
+	auto performError = actSeqSys.ActionSequenceChecksWithPerformerLocation();
+
+	if (addToSeqError != AEC_OK || performError != AEC_OK)
+	{
+		logger->info("ImprovePosition: Unspecified Move failed. AddToSeqError: {}  Location Checks Error: {}", addToSeqError, performError);
+		actSeqSys.ActionSequenceRevertPath(initialActNum);
+		return FALSE;
+	}
+	if (curSeq->d20ActArray[curSeq->d20ActArrayNum - 1].path){
+		logger->info("{} improving position to {} ({} to {})", performer, tgt, curSeq->d20ActArray[curSeq->d20ActArrayNum - 1].path->from, curSeq->d20ActArray[curSeq->d20ActArrayNum - 1].path->to);
+	}
 	return TRUE;
 }
 
@@ -1852,6 +1955,8 @@ AiCombatRole AiSystem::GetRole(objHndl obj)
 {
 	if (critterSys.IsCaster(obj))
 		return AiCombatRole::caster;
+	if (critterSys.IsWieldingRangedWeapon(obj))
+		return AiCombatRole::sniper;
 	return AiCombatRole::general;
 }
 
