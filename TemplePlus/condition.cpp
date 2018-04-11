@@ -3943,7 +3943,7 @@ int SpellCallbacks::DismissSignalHandler(DispatcherCallbackArgs args){
 			d20Sys.d20SendSignal(spPkt.aoeObj, DK_SIG_Dismiss_Spells, spPkt.spellId, 0);
 		}
 		// Spell objects. Added in Temple+ for Wall spells
-		for (auto i = 0u; i < spPkt.numSpellObjs && i < 128; i++) {
+		for (auto i = 0u; i < static_cast<unsigned int>(spPkt.numSpellObjs) && i < 128; i++) {
 			auto spellObj = spPkt.spellObjs[i].obj;
 			if (!spellObj || spellObj == args.objHndCaller) continue;
 			d20Sys.d20SendSignal(spellObj, DK_SIG_Dismiss_Spells, spPkt.spellId, 0);
@@ -3962,7 +3962,7 @@ int SpellCallbacks::DismissSignalHandler(DispatcherCallbackArgs args){
 		}
 
 		// Spell objects. Added in Temple+ for Wall spells
-		for (auto i = 0u; i < spPkt.numSpellObjs && i < 128; i++) {
+		for (auto i = 0u; i < static_cast<unsigned int>(spPkt.numSpellObjs) && i < 128; i++) {
 			auto spellObj = spPkt.spellObjs[i].obj;
 			if (!spellObj) continue;
 			d20Sys.d20SendSignal(spellObj, DK_SIG_Spell_End, spPkt.spellId, 0);
@@ -5553,10 +5553,20 @@ int ClassAbilityCallbacks::SneakAttackDamage(DispatcherCallbackArgs args) {
 	if (locSys.DistanceToObj(args.objHndCaller, tgt) > 30)
 		return 0;
 
+	// See if it is a critical and if criticals cause sneak attacks
+	bool sneakAttackFromCrit = false;
+	if (atkPkt.flags & D20CAF_CRITICAL) {
+		auto result = d20Sys.D20QueryPython(args.objHndCaller, "Sneak Attack Critical");
+		if (result > 0) {
+			sneakAttackFromCrit = true;
+		}
+	}
+
 	if (atkPkt.flags & D20CAF_FLANKED
 		|| d20Sys.d20Query(tgt, DK_QUE_SneakAttack)
 		|| d20Sys.d20QueryWithData(atkPkt.attacker, DK_QUE_OpponentSneakAttack, (uint32_t)dispIo, 0)
-		|| !critterSys.CanSense(tgt, atkPkt.attacker))
+		|| !critterSys.CanSense(tgt, atkPkt.attacker)
+		|| sneakAttackFromCrit)
 	{
 		// get sneak attack dice (NEW! now via query, for prestige class modularity)
 		auto sneakAttackDice = d20Sys.D20QueryPython(args.objHndCaller, fmt::format("Sneak Attack Dice"));
