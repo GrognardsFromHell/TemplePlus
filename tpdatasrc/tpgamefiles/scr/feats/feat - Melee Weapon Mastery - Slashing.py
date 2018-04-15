@@ -1,5 +1,5 @@
 from toee import *
-
+import char_editor
 featDamType = D20DT_SLASHING
 
 def CheckPrereq(attachee, classLevelled, abilityScoreRaised):

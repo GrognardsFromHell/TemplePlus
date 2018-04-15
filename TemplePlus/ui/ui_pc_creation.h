@@ -9,7 +9,6 @@
 
 struct UiSystemConf;
 class CombinedImgFile;
-class LgcyChargenSystem;
 
 enum ChargenStages : int {
 	CG_Stage_Stats = 0,
@@ -456,19 +455,3 @@ private:
 int __cdecl PcCreationFeatUiPrereqCheck(feat_enums feat);
 
 extern UiPcCreation uiPcCreation;
-
-
-class LgcyChargenSystem {
-public:
-	const char* name;
-	void(*Reset)(CharEditorSelectionPacket & charSpec);
-	void(*Activate)();
-	BOOL(*SystemInit)(const UiSystemConf *);
-	void(*Free)();
-	BOOL(*Resize)(UiResizeArgs &resizeArgs);
-	void(*Hide)();
-	void(*Show)();
-	BOOL(*CheckComplete)(); // checks if the char editing stage is complete (thus allowing you to move on to the next stage). This is checked at every render call.
-	void(*Finalize)(CharEditorSelectionPacket & charSpec, objHndl & handle);
-	void(*ButtonExited)();
-};

@@ -3,6 +3,7 @@
 #include "widgets/widgets.h"
 
 class ChargenBigButton;
+struct UiSystemConf;
 
 struct CharEditorSelectionPacket {
 	int abilityStats[6];
@@ -118,4 +119,33 @@ protected:
 class ChargenPagedButton : public ChargenBigButton, public IPagedButton
 {
 	
+};
+
+class LgcyChargenSystem {
+public:
+	const char* name;
+	void(*Reset)(CharEditorSelectionPacket & charSpec);
+	void(*Activate)();
+	BOOL(*SystemInit)(const UiSystemConf *);
+	void(*Free)();
+	BOOL(*Resize)(UiResizeArgs &resizeArgs);
+	void(*Hide)();
+	void(*Show)();
+	BOOL(*CheckComplete)(); // checks if the char editing stage is complete (thus allowing you to move on to the next stage). This is checked at every render call.
+	void(*Finalize)(CharEditorSelectionPacket & charSpec, objHndl & handle);
+	void(*ButtonExited)();
+};
+
+struct LegacyCharEditorSystem {
+	const char* name;
+	BOOL(__cdecl *systemInit)(GameSystemConf *);
+	BOOL(__cdecl *systemResize)(void *);
+	int systemReset; // unused
+	void(__cdecl *free)();
+	void(__cdecl *hide)();
+	void(__cdecl *show)();
+	BOOL(__cdecl *checkComplete)(); // checks if the char editing stage is complete (thus allowing you to move on to the next stage). This is checked at every render call.
+	void(__cdecl *finalize)(CharEditorSelectionPacket &selPkt, objHndl &handle); //applies the configuration when clicking the "finish" button
+	void(__cdecl *reset)(CharEditorSelectionPacket & editSpec);
+	BOOL(__cdecl *activate)(); // inits values and sets appropriate states for buttons based on gameplay logic (e.g. stuff exclusive to certain classes etc.)
 };

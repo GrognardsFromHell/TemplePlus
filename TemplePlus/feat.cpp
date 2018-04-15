@@ -935,7 +935,7 @@ uint32_t LegacyFeatSystem::FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, 
 		// Class Level
 		else if (featReqCode >= stat_level_barbarian && featReqCode <= stat_level_shadow_sun_ninja)	{
 			if (classCodeBeingLevelledUp == featReqCode) { featReqCodeArg--; }
-			if ((int)objects.StatLevelGet(objHnd, (Stat)featReqCode) < featReqCodeArg) { return 0; }
+			if (objects.StatLevelGet(objHnd, (Stat)featReqCode) < featReqCodeArg) { return 0; }
 		}
 		// BAB
 		else if (featReqCode == stat_attack_bonus){

@@ -28,20 +28,16 @@ enum FeatInfoFlag
 };
 
 
-struct LegacyCharEditorSystem{
-	const char* name;
-	BOOL(__cdecl *systemInit)(GameSystemConf *);
-	BOOL(__cdecl *systemResize)(void *);
-	int systemReset; // unused
-	void(__cdecl *free)();
-	void(__cdecl *hide)();
-	void(__cdecl *show)();
-	BOOL(__cdecl *checkComplete)(); // checks if the char editing stage is complete (thus allowing you to move on to the next stage). This is checked at every render call.
-	void(__cdecl *finalize)(CharEditorSelectionPacket &selPkt, objHndl &handle); //applies the configuration when clicking the "finish" button
-	void(__cdecl *reset)(CharEditorSelectionPacket & editSpec);
-	BOOL(__cdecl *activate)(); // inits values and sets appropriate states for buttons based on gameplay logic (e.g. stuff exclusive to certain classes etc.)
-};
 
+enum CharEditorStages : int {
+	CE_Stage_Class = 0,
+	CE_Stage_Stats,
+	CE_Stage_Features,
+	CE_Stage_Skills,
+	CE_Stage_Feats,
+	CE_Stage_Spells,
+	CE_STAGE_COUNT
+};
 
 class CharEditorSystem {
 public:

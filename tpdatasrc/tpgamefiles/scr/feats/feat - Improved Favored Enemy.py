@@ -1,5 +1,5 @@
 from toee import *
-
+import char_editor
 
 def CheckPrereq(attachee, classLevelled, abilityScoreRaised):
 
@@ -9,7 +9,7 @@ def CheckPrereq(attachee, classLevelled, abilityScoreRaised):
 	
 	#Check for any favored enemy feat
 	for i in range (feat_favored_enemy_aberration , feat_favored_enemy_humanoid_human):
-		if attachee.has_feat(i):
+		if char_editor.has_feat(i):
 			return 1
 	
 	return 0

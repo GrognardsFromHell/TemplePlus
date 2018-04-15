@@ -53,7 +53,7 @@ struct ClassFeatTable
 
 struct FeatPrereq
 {
-	int featPrereqCode;
+	int featPrereqCode; // see feat_requirement_codes
 	int featPrereqCodeArg;
 };
 
