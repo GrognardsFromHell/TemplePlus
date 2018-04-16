@@ -765,8 +765,15 @@ void LegacyCombatSystem::EndTurn()
 		auto combatant = tbSys.groupInitiativeList->GroupMembers[i];
 		auto combatantObj = gameSystems->GetObj().GetObject(combatant);
 		
-		if (critterSys.IsDeadNullDestroyed(combatant) 
-			|| (combatantObj->GetFlags() & OF_OFF)) {
+		auto shouldRemove = critterSys.IsDeadNullDestroyed(combatant) || (combatantObj->GetFlags() & OF_OFF);
+		if (!shouldRemove && combatantObj->IsNPC() && !party.IsInParty(combatant)){
+			auto aifs = AIFS_NONE;
+			aiSys.GetAiFightStatus(combatant, &aifs, nullptr);
+			if (aifs == AIFS_NONE){
+				shouldRemove = true;
+			}
+		}
+		if (shouldRemove) {
 			static auto removeFromInitiative = temple::GetRef<int(__cdecl)(objHndl)>(0x100DF530);
 			removeFromInitiative(combatant);
 		}
