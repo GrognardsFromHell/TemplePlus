@@ -3,9 +3,9 @@ import char_editor
 
 def CheckPrereq(attachee, classLevelled, abilityScoreRaised):
 
-	#Return zero if base attack bonus is too low
-	if attachee.get_base_attack_bonus() < 4:
-		return 0
+	# BAB requirement is enforced via the feat requirement field (266, 4) to reflect updated BAB value
+	#if attachee.get_base_attack_bonus() < 4:
+	#	return 0
 	
 	if char_editor.has_feat(feat_power_attack) == 0:
 		return 0
