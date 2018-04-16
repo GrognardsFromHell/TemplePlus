@@ -348,6 +348,12 @@ WidgetBase * WidgetContainer::PickWidget(int x, int y)
 
 		int localX = x - child->GetPos().x;
 		int localY = y - child->GetPos().y + mScrollOffsetY;
+		if (localY < 0 || localY >= child->GetHeight()){
+			continue;
+		}
+		if (localX < 0 || localX >= child->GetWidth()){
+			continue;
+		}
 		
 		auto result = child->PickWidget(localX, localY);
 		if (result) {
@@ -811,7 +817,8 @@ void WidgetScrollBar::Render()
 	mTrack->SetY(mUpButton->GetHeight());
 	mTrack->SetHeight(GetHeight() - mUpButton->GetHeight() - mDownButton->GetHeight());
 
-	int handleOffset = (int)(((mValue - mMin) / (float)mMax) * GetScrollRange());
+	auto scrollRange = GetScrollRange();
+	int handleOffset = (int)(((mValue - mMin) / (float)mMax) * scrollRange);
 	mHandleButton->SetY(mUpButton->GetHeight() + handleOffset);
 	mHandleButton->SetHeight(GetHandleHeight());
 
@@ -825,7 +832,9 @@ int WidgetScrollBar::GetHandleHeight() const
 
 int WidgetScrollBar::GetScrollRange() const
 {
-	return GetTrackHeight() - GetHandleHeight();
+	auto trackHeight = GetTrackHeight();
+	auto handleHeight = GetHandleHeight();
+	return trackHeight - handleHeight;
 }
 
 int WidgetScrollBar::GetTrackHeight() const
@@ -853,6 +862,7 @@ WidgetScrollView::WidgetScrollView(int width, int height) : WidgetContainer(widt
 
 void WidgetScrollView::Add(std::unique_ptr<WidgetBase> childWidget)
 {
+	UpdateInnerHeight();
 	mContainer->Add(std::move(childWidget));
 }
 
@@ -883,11 +893,27 @@ int WidgetScrollView::GetPadding() const
 	return mPadding;
 }
 
+bool WidgetScrollView::HandleMouseMessage(const TigMouseMsg& msg){
+
+	if (WidgetContainer::HandleMouseMessage(msg))
+		return true;
+
+	if (msg.flags & MSF_SCROLLWHEEL_CHANGE){
+		auto curPos = mScrollBar->GetValue();
+		auto newPos = curPos - msg.mouseStateField24 / 10;
+		mScrollBar->SetValue(newPos);
+	}
+
+	return true;
+}
+
 void WidgetScrollView::UpdateInnerHeight()
 {
 	int innerHeight = 0;
 	for (auto &child : mContainer->GetChildren()) {
-		auto bottom = child->GetY() + child->GetHeight();
+		auto childY = child->GetY();
+		auto childH = child->GetHeight();
+		auto bottom = childY + childH;
 		if (bottom > innerHeight) {
 			innerHeight = bottom;
 		}

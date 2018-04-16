@@ -386,16 +386,16 @@ private:
 
 	int mValue = 0;
 	int mMin = 0;
-	int mMax = 100;
+	int mMax = 150;
 
 	WidgetButton *mUpButton;
 	WidgetButton *mDownButton;
 	WidgetButton *mTrack;
 	WidgetScrollBarHandle *mHandleButton;
 
-	int GetHandleHeight() const;
-	int GetScrollRange() const;
-	int GetTrackHeight() const;
+	int GetHandleHeight() const; // gets height of handle button (scaled according to Min/Max values)
+	int GetScrollRange() const; // gets range of possible values for Handle Button position
+	int GetTrackHeight() const; // gets height of track area
 
 };
 
@@ -415,6 +415,8 @@ public:
 
 	void SetPadding(int padding);
 	int GetPadding() const;
+
+	bool HandleMouseMessage(const TigMouseMsg &msg) override;
 
 private:
 	WidgetContainer *mContainer;
