@@ -31,11 +31,26 @@ public:
 	ViewCinematicsDialog();
 
 	void Show();
-
+	void Select(int i); // changes scrollbox selection
+	bool IsMovieSeen(int movieId);
 private:
+	int mSelection = 0;
 	std::unique_ptr<WidgetContainer> mWidget;
-
+	MesFile::Content mMovieNames;
 	WidgetScrollView *mListBox;
+	std::vector<LgcyWidgetId> btnIds;
+	std::vector<int> seenIndices; // indices into movieIds / mMovieNames
+
+	std::vector<int> movieIds = { 
+	1000,	1009,	1007, 
+	1012 ,	1002,	1015,
+	1005,      1010,      1004,
+	1013,      1006,      1016,
+	1001,      1011,      1008,
+	1014,      1003,      1017,
+	304,       300,       303,
+	301,       302,      1009
+	};
 };
 
 //*****************************************************************************
@@ -44,11 +59,25 @@ private:
 
 UiMM::UiMM(const UiSystemConf &config) {
 	auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x10117370);
-	if (!startup(&config)) {
-		throw TempleException("Unable to initialize game system MM-UI");
-	}
 
-	return;
+	if (!USE_NEW_WIDGETS){
+		if (!startup(&config)) {
+			throw TempleException("Unable to initialize game system MM-UI");
+		}
+
+		return;
+	}
+	
+	auto mmRulesMesfile = MesFile::ParseFile("rules\\mainmenu.mes");
+	auto mmTitleImg = uiAssets->LoadImg(mmRulesMesfile[10000].c_str());
+	temple::GetRef<ImgFile*>(0x10BD4DB0) = mmTitleImg;
+	auto mmImageX = atol(mmRulesMesfile[10001].c_str());
+	auto mmImageY = atol(mmRulesMesfile[10002].c_str());
+	if (!mmImageX){
+		mmImageX = (config.width - mmTitleImg->width) / 2;
+	}
+	temple::GetRef<int>(0x10BD48F0) = mmImageX;
+	temple::GetRef<int>(0x10BD4998) = mmImageY;
 	
 	WidgetDoc widgetDoc(WidgetDoc::Load("templeplus/ui/main_menu.json"));
 	mMainWidget = widgetDoc.TakeRootContainer();
@@ -182,13 +211,18 @@ UiMM::UiMM(const UiSystemConf &config) {
 }
 UiMM::~UiMM() {
 	auto shutdown = temple::GetPointer<void()>(0x101164c0);
-	shutdown();
+	if (!USE_NEW_WIDGETS){
+		shutdown();
+	}
 }
 void UiMM::ResizeViewport(const UiResizeArgs& resizeArg) {
 	auto resize = temple::GetPointer<void(const UiResizeArgs*)>(0x101172c0);
-	resize(&resizeArg);
-
-	// RepositionWidgets(resizeArg.rect1.width, resizeArg.rect1.height);
+	if (!USE_NEW_WIDGETS){
+		resize(&resizeArg);
+		return;
+	}
+	
+	RepositionWidgets(resizeArg.rect1.width, resizeArg.rect1.height);
 }
 const std::string &UiMM::GetName() const {
 	static std::string name("MM-UI");
@@ -198,7 +232,8 @@ const std::string &UiMM::GetName() const {
 bool UiMM::IsVisible() const
 {
 	static auto ui_mm_is_visible = temple::GetPointer<int()>(0x101157f0);
-	return ui_mm_is_visible() != FALSE;
+	if (!USE_NEW_WIDGETS)
+		return ui_mm_is_visible() != FALSE;
 
 	// The main menu is defined as visible, if any of the pages is visible
 	for (auto &entry : mPageWidgets) {
@@ -212,12 +247,13 @@ bool UiMM::IsVisible() const
 void UiMM::Show(MainMenuPage page)
 {
 	static auto ui_mm_show_page = temple::GetPointer<void(int page)>(0x10116500);
-	ui_mm_show_page((int)page);
 
-
-	if (!uiSystems->GetUtilityBar().IsVisible())
-		uiSystems->GetDM().Hide();
-	return;
+	if (!USE_NEW_WIDGETS){
+		ui_mm_show_page((int)page);
+		if (!uiSystems->GetUtilityBar().IsVisible())
+			uiSystems->GetDM().Hide();
+		return;
+	}
 	
 	// Was previously @ 0x10116500
 
@@ -250,15 +286,21 @@ void UiMM::Show(MainMenuPage page)
 		uiSystems->GetUtilityBar().Hide();
 	}    
 	uiSystems->GetInGame().ResetInput();
+
+	if (!uiSystems->GetUtilityBar().IsVisible())
+		uiSystems->GetDM().Hide();
 }
 
 void UiMM::Hide()
 {
 	static auto ui_mm_hide = temple::GetPointer<void()>(0x10116220);
-	ui_mm_hide();
-	if (uiSystems->GetUtilityBar().IsVisible())
-		uiSystems->GetDM().Show();
-	return;
+	if (!USE_NEW_WIDGETS){
+		ui_mm_hide();
+		if (uiSystems->GetUtilityBar().IsVisible())
+			uiSystems->GetDM().Show();
+		return;
+	}
+	
 
 	if (IsVisible()) {
 		if (mCurrentPage == MainMenuPage::InGameNormal || mCurrentPage == MainMenuPage::InGameIronman) {
@@ -274,6 +316,9 @@ void UiMM::Hide()
 	if (mCurrentPage == MainMenuPage::InGameNormal) {
 		uiSystems->GetUtilityBar().Show();
 	}
+
+	if (uiSystems->GetUtilityBar().IsVisible())
+		uiSystems->GetDM().Show();
 }
 
 void UiMM::RepositionWidgets(int width, int height)
@@ -359,7 +404,13 @@ ViewCinematicsDialog::ViewCinematicsDialog()
 	WidgetDoc doc = WidgetDoc::Load("templeplus/ui/main_menu_cinematics.json");
 
 	doc.GetButton("view")->SetClickHandler([this]() {
-
+		if (mSelection < 0 || mSelection >= seenIndices.size())
+			return;
+		auto movieIdx = seenIndices[mSelection];
+		if (movieIdx < 0 || movieIdx >= movieIds.size())
+			return;
+		auto movieId = movieIds[movieIdx];
+		movieFuncs.PlayMovieId(movieId, 0, 0);
 	});
 	doc.GetButton("cancel")->SetClickHandler([this]() {
 		mWidget->Hide();
@@ -370,22 +421,68 @@ ViewCinematicsDialog::ViewCinematicsDialog()
 
 	mWidget = std::move(doc.TakeRootContainer());
 	mWidget->Hide();
+
+	auto mmMes = MesFile::ParseFile("mes\\mainmenu.mes");
+	for (auto i = 0; i < 24; i++){
+		mMovieNames[i] = mmMes[2000 + i];
+	}
+	
 }
 
 void ViewCinematicsDialog::Show()
 {
 	mListBox->Clear();
+	btnIds.clear();
+	seenIndices.clear();
+
+
+	for (auto i = 0; i < movieIds.size(); i++) {
+		if (IsMovieSeen(movieIds[i])){
+			seenIndices.push_back(i);
+		}
+	}
 
 	int y = 0;
-	for (int i = 0; i < 100; i++) {
+	for (int i = 0; i < seenIndices.size(); i++) {
+		auto movieInd = seenIndices[i];
+
 		auto button = std::make_unique<WidgetButton>();
-		button->SetText(fmt::format("Cinematic {}", i));
-		button->SetWidth(mListBox->GetInnerWidth());
-		button->SetStyle(widgetButtonStyles->GetStyle("mm-cinematics-list-button"));
+		button->SetText(mMovieNames[movieInd]);
+		button->SetId(mMovieNames[movieInd]);
+		auto innerWidth = mListBox->GetInnerWidth();
+		button->SetWidth(innerWidth);
+		button->SetAutoSizeWidth(false);
+		button->SetStyle("mm-cinematics-list-button");
 		button->SetY(y);
+		//auto pBtn = button.get();
+		btnIds.push_back(button->GetWidgetId());
+		button->SetClickHandler([i, this](){
+			Select(i);
+		});
 		y += button->GetHeight();
 		mListBox->Add(std::move(button));
 	}
-
+	
 	mWidget->Show();
+}
+
+void ViewCinematicsDialog::Select(int idx){
+	
+	for (auto it: btnIds){
+		auto pBtn = (WidgetButton*)uiManager->GetAdvancedWidget(it);
+		pBtn->SetStyle("mm-cinematics-list-button");
+	}
+
+	mSelection = idx;
+	if (mSelection >= 0 && mSelection < btnIds.size()) {
+	auto pBtn = (WidgetButton*)uiManager->GetAdvancedWidget(btnIds[mSelection]);
+	pBtn->SetStyle("mm-cinematics-list-button-selected");
+	}
+	
+}
+
+bool ViewCinematicsDialog::IsMovieSeen(int movieId){
+	auto moviesSeen = config.GetVanillaString("movies_seen");
+	auto movieStr = fmt::format("({},-1)", movieId);
+	return strstr(moviesSeen.c_str(), movieStr.c_str()) != nullptr;
 }

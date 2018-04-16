@@ -47,8 +47,9 @@ enum class MainMenuPage {
 };
 
 class ViewCinematicsDialog;
-
+// mainmenu
 class UiMM : public UiSystem {
+	friend class UiMainMenuWrapper;
 public:
 	static constexpr auto Name = "MM-UI";
 	UiMM(const UiSystemConf &config);
@@ -62,6 +63,7 @@ public:
 	void Hide();
 
 private:
+	const bool USE_NEW_WIDGETS = true; // override vanilla ToEE MM widgets
 	// MainMenuPages &mPages = temple::GetRef<MainMenuPages>(0x10BD4F40);
 
 	MainMenuPage mCurrentPage = MainMenuPage::MainMenu;
