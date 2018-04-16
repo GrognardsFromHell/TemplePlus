@@ -2,9 +2,9 @@ from toee import *
 import char_editor
 
 def CheckPrereq(attachee, classLevelled, abilityScoreRaised):
-	#Return zero if base attack bonus is too low
-	if attachee.get_base_attack_bonus() < 4:
-		return 0
+	# BAB enforced via prefeq properties
+	#if attachee.get_base_attack_bonus() < 4:
+	#	return 0
 	
 	#Paladin Smite Evil Check
 	if char_editor.has_feat(feat_smite_evil):

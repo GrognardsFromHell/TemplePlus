@@ -1,5 +1,5 @@
 name: Extra Smiting
 flags: 12582913
-prereqs: 
+prereqs: 266 4
 description: You smite two more times per day than you otherwise could.
 prereq descr: Paladin Smite Evil, Destruction Domain Smite or Black Guard Smite Good and Base Attack Bonus +4.
