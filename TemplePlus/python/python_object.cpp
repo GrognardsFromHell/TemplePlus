@@ -711,6 +711,7 @@ static PyObject* PyObjHandle_GroupList(PyObject* obj, PyObject* args) {
 	return result;
 }
 
+// turns out you could already get this via .stat_base_get(stat_attack_bonus). Leaving it for backward compatibility...
 static PyObject* PyObjHandle_GetBaseAttackBonus(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
