@@ -1,5 +1,5 @@
 name: Favored Power Attack
 flags: 12582912
-prereqs: 
+prereqs: 266 4
 description: When you use the Power Attack feat against a favored enemy, you may subtract a number from your melee attack rolls and add twice that number to your melee damage rolls. If you attack with a weapon in two hands, add three times the number. The normal restrictions of the Power Attack feat apply.
 prereq descr: Base attack bonus +4, favored enemy ability and power attack feat.
