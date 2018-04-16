@@ -1,0 +1,5 @@
+name: Telling Blow
+flags: 12582913
+prereqs: 
+description: When you score a critical hit against a target, you deal your sneak attack damage in addition to the damage from your critical hit. Your critical multiplier applies only to your normal damage, not your sneak attack damage. This benefit affects both melee and ranged attacks.
+prereq descr: Sneak attack ability.
