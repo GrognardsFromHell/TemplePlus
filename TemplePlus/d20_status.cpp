@@ -69,20 +69,6 @@ void D20StatusSystem::initClass(objHndl objHnd){
 	{
 		Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 
-		CondStruct ** condStructClass = conds.ConditionArrayClasses;
-
-		/*uint32_t stat = stat_level_barbarian;
-		for (uint32_t i = 0; i < VANILLA_NUM_CLASSES; i++)
-		{
-			if (objects.StatLevelGet(objHnd, (Stat)stat) > 0
-				&& *condStructClass != nullptr)
-			{
-				_ConditionAddToAttribs_NumArgs0(dispatcher, *condStructClass);
-			};
-
-			condStructClass += 1;
-			stat += 1;
-		}*/
 		for (auto classCode: d20ClassSys.classEnums){
 			if (objects.StatLevelGet(objHnd, (Stat)classCode) <= 0)
 				continue;
@@ -91,8 +77,6 @@ void D20StatusSystem::initClass(objHndl objHnd){
 				continue;
 			_ConditionAddToAttribs_NumArgs0(dispatcher, condStructClass);
 		}
-		
-			
 		
 
 		if (objects.StatLevelGet(objHnd, stat_level_cleric) >= 1){
@@ -103,22 +87,6 @@ void D20StatusSystem::initClass(objHndl objHnd){
 			_ConditionAddToAttribs_NumArgs2(dispatcher, conds.GetByName("Turn Undead"), 1, 0);
 		} else if (feats.HasFeatCountByClass(objHnd, FEAT_TURN_UNDEAD)) {
 			_ConditionAddToAttribs_NumArgs2(dispatcher, conds.GetByName("Turn Undead"), 0, 0);
-		}
-
-		if (feats.HasFeatCountByClass(objHnd, FEAT_SMITE_EVIL)) {
-			_ConditionAddToAttribs_NumArgs2(dispatcher, conds.GetByName("Smite Evil"), 0, 0);
-		}
-
-		if (feats.HasFeatCountByClass(objHnd, FEAT_BARBARIAN_RAGE)) {
-			_ConditionAddToAttribs_NumArgs2(dispatcher, conds.GetByName("Barbarian_Rage"), 0, 0);
-		}
-
-		if (feats.HasFeatCountByClass(objHnd, FEAT_RAPID_SHOT)) {
-			_ConditionAddToAttribs_NumArgs2(dispatcher, conds.GetByName("Rapid_Shot"), 0, 0);
-		}
-
-		if (feats.HasFeatCountByClass(objHnd, FEAT_RANGER_RAPID_SHOT)) {
-			_ConditionAddToAttribs_NumArgs2(dispatcher, conds.GetByName("Rapid_Shot_Ranger"), 0, 0);
 		}
 
 		if (objects.StatLevelGet(objHnd, stat_level_bard) >= 1){
@@ -146,9 +114,7 @@ void D20StatusSystem::D20StatusInit(objHndl objHnd)
 
 	objects.dispatch.DispatcherClearPermanentMods(dispatcher);
 
-	if (objects.IsCritter(objHnd))
-	{
-	//	hooked_print_debug_message("D20Status Init for %s", description.getDisplayName(objHnd));
+	if (objects.IsCritter(objHnd)){
 
 		auto psiptsCondStruct = conds.GetByName("Psi Points");
 		if (psiptsCondStruct){
