@@ -10,6 +10,7 @@ def RapidShotEnabled(attachee, args, evt_obj):
 	
 rapidShotRangerExtender = PythonModifier()
 rapidShotRangerExtender.ExtendExisting("Rapid_Shot_Ranger")
+rapidShotRangerExtender.MapToFeat(feat_ranger_rapid_shot)
 rapidShotRangerExtender.AddHook(ET_OnD20PythonQuery, "Rapid Shot Ranger Enabled", RapidShotEnabled, ())
 
 

@@ -29,4 +29,5 @@ def ExtraSmitingNewDaySmiteEvil(attachee, args, evt_obj):
 
 extendSmiteEvil = PythonModifier()
 extendSmiteEvil.ExtendExisting("Smite Evil")
+extendSmiteEvil.MapToFeat(feat_smite_evil)
 extendSmiteEvil.AddHook(ET_OnNewDay, EK_NEWDAY_REST, ExtraSmitingNewDaySmiteEvil, ())

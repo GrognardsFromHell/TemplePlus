@@ -15,4 +15,5 @@ def ExtraRageNewDay(attachee, args, evt_obj):
 
 extendRageFeat = PythonModifier()
 extendRageFeat.ExtendExisting("Barbarian_Rage")
+extendRageFeat.MapToFeat(feat_barbarian_rage)
 extendRageFeat.AddHook(ET_OnNewDay, EK_NEWDAY_REST, ExtraRageNewDay, ())

@@ -10,4 +10,5 @@ def PowerAttackValue(attachee, args, evt_obj):
 
 powerAttackExtender = PythonModifier()
 powerAttackExtender.ExtendExisting("Power Attack")
+powerAttackExtender.MapToFeat(feat_power_attack)
 powerAttackExtender.AddHook(ET_OnD20PythonQuery, "Power Attack Value", PowerAttackValue, ())
