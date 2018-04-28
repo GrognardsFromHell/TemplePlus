@@ -8,7 +8,7 @@ import race_defs
 def OnGetAbilityScore(attachee, args, evt_obj):
 	statType = args.get_param(0)
 	statMod = args.get_param(1)
-	if attachee.d20_query(EK_Q_Polymorphed):
+	if attachee.d20_query(Q_Polymorphed):
 		if (statType == stat_strength) or (statType == stat_constitution) or (statType == stat_dexterity):
 			return 0
 	newValue = statMod + evt_obj.bonus_list.get_sum()
