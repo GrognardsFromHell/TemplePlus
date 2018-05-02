@@ -325,6 +325,7 @@ public:
 		
 		replaceFunction(0x100EABB0, BarbarianRageStatBonus);
 		replaceFunction(0x100EABE0, BarbarianRageSaveBonus);
+		replaceFunction(0x100EAC10, BarbarianRageACPenalty);
 		
 		replaceFunction(0x100ECF30, ConditionPrevent);
 		replaceFunction(0x100EE050, GlobalGetArmorClass);
@@ -2930,12 +2931,34 @@ int CombatExpertiseSet(DispatcherCallbackArgs args)
 int BarbarianRageStatBonus(DispatcherCallbackArgs args)
 {
 	DispIoBonusList * dispIo = dispatch.DispIoCheckIoType2(args.dispIO);
-	if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_MIGHTY_RAGE, (Stat)0, 0))
-		bonusSys.bonusAddToBonusList(&dispIo->bonlist, 8, 0, 339); // Greater Rage
-	else if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_GREATER_RAGE, (Stat)0, 0))
-		bonusSys.bonusAddToBonusList(&dispIo->bonlist, 6, 0, 338); // Greater Rage
-	else
-		bonusSys.bonusAddToBonusList(&dispIo->bonlist, 4, 0, 195); // normal rage
+	if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_MIGHTY_RAGE, (Stat)0, 0)) {
+		int nBonus = 8;
+		nBonus += d20Sys.D20QueryPython(args.objHndCaller, "Additional Rage Stat Bonus");
+		bonusSys.bonusAddToBonusList(&dispIo->bonlist, nBonus, 0, 339); // Greater Rage
+	}
+	else if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_GREATER_RAGE, (Stat)0, 0)) {
+		int nBonus = 6;
+		nBonus += d20Sys.D20QueryPython(args.objHndCaller, "Additional Rage Stat Bonus");
+		bonusSys.bonusAddToBonusList(&dispIo->bonlist, nBonus, 0, 338); // Greater Rage
+	}
+	else {
+		int nBonus = 4;
+		nBonus += d20Sys.D20QueryPython(args.objHndCaller, "Additional Rage Stat Bonus");
+		bonusSys.bonusAddToBonusList(&dispIo->bonlist, nBonus, 0, 195); // normal rage
+	}
+	return 0;
+}
+
+int BarbarianRageACPenalty(DispatcherCallbackArgs args)
+{
+	DispIoAttackBonus * dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
+
+	int nPenalty = -2;
+
+	//Value needs to be negated (it is a penalty) since qureies can't return negative values
+	nPenalty += -1 * d20Sys.D20QueryPython(args.objHndCaller, "Additional Rage AC Penalty");
+
+	bonusSys.bonusAddToBonusList(&dispIo->bonlist, nPenalty, 0, 195);  //rage ac penalty
 	return 0;
 }
 
