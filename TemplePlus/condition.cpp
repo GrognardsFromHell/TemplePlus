@@ -190,6 +190,7 @@ public:
 	static int __cdecl UseableItemActionCheck(DispatcherCallbackArgs args);
 
 	static int __cdecl BucklerToHitPenalty(DispatcherCallbackArgs args);
+	static int __cdecl BucklerAcPenalty(DispatcherCallbackArgs args);
 	static int __cdecl WeaponMerciful(DispatcherCallbackArgs);
 	static int __cdecl WeaponSeekingAttackerConcealmentMissChance(DispatcherCallbackArgs args);
 	static int __cdecl WeaponSpeed(DispatcherCallbackArgs args);
@@ -385,6 +386,9 @@ public:
 
 		// buckler to-hit penalty
 		replaceFunction<int(DispatcherCallbackArgs)>(0x10104DA0, itemCallbacks.BucklerToHitPenalty);
+
+		// buckler AC penalty
+		replaceFunction<int(DispatcherCallbackArgs)>(0x10104E40, itemCallbacks.BucklerAcPenalty);
 
 
 
@@ -4415,6 +4419,42 @@ int ItemCallbacks::BucklerToHitPenalty(DispatcherCallbackArgs args)
 
 	return 0;
 }
+
+
+int __cdecl ItemCallbacks::BucklerAcPenalty(DispatcherCallbackArgs args)
+{
+	//Check if the penalty is turned off through python
+	if (d20Sys.D20QueryPython(args.objHndCaller, "Disable Buckler Penalty") == 0) {
+
+		auto dispIo = static_cast<DispIoAttackBonus*>(args.dispIO);
+		dispIo->AssertType(dispIOTypeAttackBonus);
+
+		auto weaponUsed = dispIo->attackPacket.GetWeaponUsed();
+
+		if ((dispIo->attackPacket.flags & D20CAF_RANGED))
+			return 0;
+
+		if (!weaponUsed)
+			return 0;
+
+		auto offhandObject = inventory.ItemWornAt(args.objHndCaller, EquipSlot::WeaponSecondary);
+
+		if (offhandObject) {
+			auto objectFlag = objects.getInt32(offhandObject, obj_f_type);
+			if (objectFlag == obj_t_weapon) {
+				args.SetCondArg(1, 1);  //Two Weapon Fighting, remove buckler bonus
+			}
+		} else {
+			auto twoHanded = d20Sys.d20QueryWithData(args.objHndCaller, DK_QUE_WieldedTwoHanded, reinterpret_cast<uint32_t>(dispIo), 0);
+			if (twoHanded) {
+				args.SetCondArg(1, 1);  //Using a two handed weapon or using a one handed weapon in two hands, remove buckler bonus
+			}
+		}
+	}
+
+	return 0;
+}
+
 
 int ItemCallbacks::WeaponMerciful(DispatcherCallbackArgs args){
 	GET_DISPIO(dispIOTypeDamage, DispIoDamage);
