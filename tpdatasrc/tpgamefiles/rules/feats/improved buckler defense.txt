@@ -1,0 +1,5 @@
+name: Improved Buckler Defense
+flags: 12582928
+prereqs: 
+description: When you attack with a weapon in your off hand, you may still apply your buckler's shield bonus to your Armor Class.  Note:  Does not apply to wielding a two-handed weapon.
+prereq descr: Shield Proficiency

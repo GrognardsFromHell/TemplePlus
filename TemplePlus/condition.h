@@ -335,6 +335,7 @@ int CombatExpertiseSet(DispatcherCallbackArgs args);
 
 int BarbarianRageStatBonus(DispatcherCallbackArgs args);
 int BarbarianRageSaveBonus(DispatcherCallbackArgs args);
+int BarbarianRageACPenalty(DispatcherCallbackArgs args);
 int BarbarianDamageResistance(DispatcherCallbackArgs args);
 
 int DisarmedOnAdd(DispatcherCallbackArgs args);
