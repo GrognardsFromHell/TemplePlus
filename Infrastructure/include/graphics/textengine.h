@@ -97,6 +97,12 @@ namespace gfx {
 
 		void AddFont(const std::string &filename);
 
+		/**
+		 * Checks if this text engine can provide the given font family. If false, it means it would
+		 * use a fallback font.
+		 */
+		bool HasFontFamily(const std::string &name);
+
 		void SetScissorRect(const TigRect &rect);
 		void ResetScissorRect();
 
