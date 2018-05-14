@@ -252,14 +252,33 @@ void WidgetText::UpdateBounds()
 		}
 		UiRenderer::PushFont(PredefinedFont::SCURLOCK_48);
 		auto rect = UiRenderer::MeasureTextSize(ucs2_to_local(mText.text), textStyle, 0, 0);
-		UiRenderer::PopFont();		
+		UiRenderer::PopFont();
 		if (mText.defaultStyle.align == gfx::TextAlign::Center) {
 			// Return 0 here to be in sync with the new renderer
 			mPreferredSize.width = 0;
-		} else {
+		}
+		else {
 			mPreferredSize.width = rect.width;
 		}
 		mPreferredSize.height = rect.height;
+	}
+	else if (mText.defaultStyle.fontFace == sPriory12) {
+		auto textStyle = GetPrioryStyle(mText.defaultStyle.foreground);
+		if (mText.defaultStyle.align == gfx::TextAlign::Center) {
+			textStyle.flags |= TTSF_CENTER;
+		}
+		UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+		auto rect = UiRenderer::MeasureTextSize(ucs2_to_local(mText.text), textStyle, 0, 0);
+		UiRenderer::PopFont();
+		if (mText.defaultStyle.align == gfx::TextAlign::Center) {
+			// Return 0 here to be in sync with the new renderer
+			mPreferredSize.width = 0;
+		}
+		else {
+			mPreferredSize.width = rect.width;
+		}
+		mPreferredSize.height = rect.height;
+
 	} else {
 		gfx::TextMetrics textMetrics;
 		tig->GetRenderingDevice().GetTextEngine().MeasureText(mText, textMetrics);
