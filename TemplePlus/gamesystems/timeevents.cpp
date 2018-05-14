@@ -1054,10 +1054,10 @@ void TimeEventSystem::AdvanceTime(uint32_t newTimeMs) {
 	}
 
 	// advanced time elapsed and anim time
-	auto &timeEventUnk10AA83D8 = temple::GetRef<int>(0x10AA83D8); // something related to UI
+	auto &timeAdvanceBlockerCount = temple::GetRef<int>(0x10AA83D8); // count of windows that block fidget animations / time advance
 
 
-	if (!timeEventUnk10AA83D8) {
+	if (!timeAdvanceBlockerCount) {
 
 		if (!uiSystems->GetDlg().IsActive() && !combatSys.isCombatActive()) {
 
@@ -1077,7 +1077,7 @@ void TimeEventSystem::AdvanceTime(uint32_t newTimeMs) {
 	}
 
 
-	if (!timeEventUnk10AA83D8 || uiSystems->GetDlg().IsActive()) {
+	if (!timeAdvanceBlockerCount || uiSystems->GetDlg().IsActive()) {
 
 		animTime.timeInMs += timeDeltaMs;
 
@@ -1242,6 +1242,11 @@ std::string TimeEventSystem::FormatTime(const GameTime& time) {
 void TimeEventSystem::RemoveAll(TimeEventType type) {
 	static auto timeevent_remove_all = temple::GetPointer<signed int(int systemType)>(0x10060970);
 	timeevent_remove_all((int)type);
+}
+
+void TimeEventSystem::PushDisableAdvance(){
+	static auto call = temple::GetPointer<void()>(0x100603F0);
+	call();
 }
 
 void TimeEventSystem::Remove(TimeEventType type, Predicate predicate)

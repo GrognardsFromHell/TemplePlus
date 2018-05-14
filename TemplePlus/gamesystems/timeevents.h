@@ -186,6 +186,7 @@ public:
 	 * Removes all time events of the given system type without calling their expiry function.
 	 */
 	void RemoveAll(TimeEventType type);
+	void PushDisableAdvance(); // increases the lock count on time advance
 
 	/**
 	 * Removes all time events to which the given predicate applies.

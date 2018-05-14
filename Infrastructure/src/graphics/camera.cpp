@@ -138,6 +138,17 @@ namespace gfx {
 		return result;
 	}
 
+	// replaces 10028EC0
+	XMFLOAT3 WorldCamera::TileToWorld(locXY tilePos)
+	{
+		auto result = XMFLOAT3();
+		result.x = (tilePos.locy - tilePos.locx - 1) * 20;
+		result.y = (tilePos.locy + tilePos.locx ) * 14;
+		result.z = 0;
+
+		return result;
+	}
+
 	void WorldCamera::CenterOn(float x, float y, float z) {
 
 		mDirty = true;

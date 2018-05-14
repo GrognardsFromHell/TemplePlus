@@ -96,6 +96,7 @@ namespace gfx {
 		XMFLOAT2 ScreenToTileLegacy(int x, int y);
 
 		LocAndOffsets ScreenToTile(int screenX, int screenY);
+		XMFLOAT3 TileToWorld(locXY tilePos);
 
 		void CenterOn(float x, float y, float z);
 

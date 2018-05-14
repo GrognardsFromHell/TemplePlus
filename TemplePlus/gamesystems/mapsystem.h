@@ -28,7 +28,8 @@ enum class MapType : uint32_t {
 	None,
 	StartMap,
 	ShoppingMap,
-	TutorialMap
+	TutorialMap,
+	ArenaMap // new in Temple+
 };
 
 struct SectorExplorationData {
