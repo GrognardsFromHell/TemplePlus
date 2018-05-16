@@ -173,64 +173,23 @@ void WidgetText::SetCenterVertically(bool isCentered) {
 
 void WidgetText::Render()
 {
-	auto area = mContentArea; // Will be modified below
 	if (mText.defaultStyle.fontFace == sScurlockFont) {
-		auto textStyle = GetScurlockStyle(mText.defaultStyle.foreground);
-		
-		if (mText.defaultStyle.align == gfx::TextAlign::Center) {
-			textStyle.flags |= TTSF_CENTER;
-		}
 
-		UiRenderer::PushFont(PredefinedFont::SCURLOCK_48);
+		RenderWithPredefinedFont(PredefinedFont::SCURLOCK_48, GetScurlockStyle(mText.defaultStyle.foreground));
 
-		auto text = ucs2_to_local(mText.text);
-		auto &textLayouter = tig->GetTextLayouter();
-		tigFont.Draw(text.c_str(), area, textStyle);
+	} else if (mText.defaultStyle.fontFace == sPriory12) {
 
-		UiRenderer::PopFont();
-	} 
-	else if (mText.defaultStyle.fontFace == sPriory12){
+		RenderWithPredefinedFont(PredefinedFont::PRIORY_12, GetPrioryStyle(mText.defaultStyle.foreground));
 
-		UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+	} else if (mText.defaultStyle.fontFace == sArialBold10) {
 
-		auto textStyle = GetPrioryStyle(mText.defaultStyle.foreground);
-		auto text = ucs2_to_local(mText.text);
+		RenderWithPredefinedFont(PredefinedFont::ARIAL_BOLD_10, GetArialBoldStyle(mText.defaultStyle.foreground));
 
-		if (mText.defaultStyle.align == gfx::TextAlign::Center) {
-			textStyle.flags |= TTSF_CENTER;
-			if (mCenterVertically){
-				auto textMeas = UiRenderer::MeasureTextSize(text, textStyle);
-				area = TigRect(area.x + (area.width - textMeas.width) / 2,
-					area.y + (area.height - textMeas.height) / 2,
-					textMeas.width, textMeas.height);
-			}
-		}
-		tigFont.Draw(text.c_str(), area, textStyle);
+	} else {
 
-		UiRenderer::PopFont();
-	}
-	else if (mText.defaultStyle.fontFace == sArialBold10){
-		UiRenderer::PushFont(PredefinedFont::ARIAL_BOLD_10);
+		auto area = mContentArea; // Will be modified below
 
-		auto textStyle = GetArialBoldStyle(mText.defaultStyle.foreground);
-		auto text = ucs2_to_local(mText.text);
-
-		if (mText.defaultStyle.align == gfx::TextAlign::Center) {
-			textStyle.flags |= TTSF_CENTER;
-			if (mCenterVertically) {
-				auto textMeas = UiRenderer::MeasureTextSize(text, textStyle);
-				area = TigRect(area.x + (area.width - textMeas.width) / 2,
-					area.y + (area.height - textMeas.height) / 2,
-					textMeas.width, textMeas.height);
-			}
-		}
-		tigFont.Draw(text.c_str(), area, textStyle);
-
-		UiRenderer::PopFont();
-	}
-	else {
-
-		if (mCenterVertically){
+		if (mCenterVertically) {
 			gfx::TextMetrics metrics;
 			tig->GetRenderingDevice().GetTextEngine().MeasureText(mText, metrics);
 			area = TigRect(area.x,
@@ -239,32 +198,71 @@ void WidgetText::Render()
 		}
 		
 		tig->GetRenderingDevice().GetTextEngine().RenderText(area, mText);
+
 	}
 }
 
 void WidgetText::UpdateBounds()
 {
-
 	if (mText.defaultStyle.fontFace == sScurlockFont) {
-		auto textStyle = GetScurlockStyle(mText.defaultStyle.foreground);
-		if (mText.defaultStyle.align == gfx::TextAlign::Center) {
-			textStyle.flags |= TTSF_CENTER;
-		}
-		UiRenderer::PushFont(PredefinedFont::SCURLOCK_48);
-		auto rect = UiRenderer::MeasureTextSize(ucs2_to_local(mText.text), textStyle, 0, 0);
-		UiRenderer::PopFont();		
-		if (mText.defaultStyle.align == gfx::TextAlign::Center) {
-			// Return 0 here to be in sync with the new renderer
-			mPreferredSize.width = 0;
-		} else {
-			mPreferredSize.width = rect.width;
-		}
-		mPreferredSize.height = rect.height;
+
+		UpdateBoundsWithPredefinedFont(PredefinedFont::SCURLOCK_48, GetScurlockStyle(mText.defaultStyle.foreground));
+
+	} else if (mText.defaultStyle.fontFace == sPriory12) {
+
+		UpdateBoundsWithPredefinedFont(PredefinedFont::PRIORY_12, GetPrioryStyle(mText.defaultStyle.foreground));
+
+	} else if (mText.defaultStyle.fontFace == sArialBold10) {
+
+		UpdateBoundsWithPredefinedFont(PredefinedFont::ARIAL_BOLD_10, GetArialBoldStyle(mText.defaultStyle.foreground));
+
 	} else {
 		gfx::TextMetrics textMetrics;
 		tig->GetRenderingDevice().GetTextEngine().MeasureText(mText, textMetrics);
 		mPreferredSize.width = textMetrics.width;
 		mPreferredSize.height = textMetrics.height;
 	}
+
+}
+
+void WidgetText::RenderWithPredefinedFont(PredefinedFont font, TigTextStyle textStyle)
+{
+	auto area = mContentArea; // Will be modified below
+
+	UiRenderer::PushFont(font);
+
+	auto text = ucs2_to_local(mText.text);
+
+	if (mText.defaultStyle.align == gfx::TextAlign::Center) {
+		textStyle.flags |= TTSF_CENTER;
+		if (mCenterVertically) {
+			auto textMeas = UiRenderer::MeasureTextSize(text, textStyle);
+			area = TigRect(area.x + (area.width - textMeas.width) / 2,
+				area.y + (area.height - textMeas.height) / 2,
+				textMeas.width, textMeas.height);
+		}
+	}
+	tigFont.Draw(text.c_str(), area, textStyle);
+
+	UiRenderer::PopFont();
+}
+
+void WidgetText::UpdateBoundsWithPredefinedFont(PredefinedFont font, TigTextStyle textStyle)
+{
+
+	if (mText.defaultStyle.align == gfx::TextAlign::Center) {
+		textStyle.flags |= TTSF_CENTER;
+	}
+	UiRenderer::PushFont(font);
+	auto rect = UiRenderer::MeasureTextSize(ucs2_to_local(mText.text), textStyle, 0, 0);
+	UiRenderer::PopFont();
+	if (mText.defaultStyle.align == gfx::TextAlign::Center) {
+		// Return 0 here to be in sync with the new renderer
+		mPreferredSize.width = 0;
+	}
+	else {
+		mPreferredSize.width = rect.width;
+	}
+	mPreferredSize.height = rect.height;
 
 }

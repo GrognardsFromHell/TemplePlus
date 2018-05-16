@@ -463,6 +463,25 @@ namespace gfx {
 		mImpl->textFormats.clear();
 	}
 
+	bool TextEngine::HasFontFamily(const std::string & name)
+	{
+		if (!mImpl->fontCollection) {
+			mImpl->LoadFontCollection();
+		}
+
+		auto requested_font_family = utf8_to_ucs2(name);
+		UINT index;
+		BOOL exists;
+		auto result = mImpl->fontCollection->FindFamilyName(requested_font_family.c_str(), &index, &exists);
+		if (!SUCCEEDED(result)) {
+			logger->warn("Unable to query font collection for family '{}': {:x}", name, result);
+			return false;
+		}
+
+		return exists == TRUE;
+
+	}
+
 	void TextEngine::SetScissorRect(const TigRect & rect)
 	{
 		mImpl->enableClipRect = true;
