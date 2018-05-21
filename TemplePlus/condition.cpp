@@ -190,6 +190,7 @@ public:
 	static int __cdecl UseableItemActionCheck(DispatcherCallbackArgs args);
 
 	static int __cdecl BucklerToHitPenalty(DispatcherCallbackArgs args);
+	static int __cdecl BucklerAcPenalty(DispatcherCallbackArgs args);
 	static int __cdecl WeaponMerciful(DispatcherCallbackArgs);
 	static int __cdecl WeaponSeekingAttackerConcealmentMissChance(DispatcherCallbackArgs args);
 	static int __cdecl WeaponSpeed(DispatcherCallbackArgs args);
@@ -325,6 +326,7 @@ public:
 		
 		replaceFunction(0x100EABB0, BarbarianRageStatBonus);
 		replaceFunction(0x100EABE0, BarbarianRageSaveBonus);
+		replaceFunction(0x100EAC10, BarbarianRageACPenalty);
 		
 		replaceFunction(0x100ECF30, ConditionPrevent);
 		replaceFunction(0x100EE050, GlobalGetArmorClass);
@@ -384,6 +386,9 @@ public:
 
 		// buckler to-hit penalty
 		replaceFunction<int(DispatcherCallbackArgs)>(0x10104DA0, itemCallbacks.BucklerToHitPenalty);
+
+		// buckler AC penalty
+		replaceFunction<int(DispatcherCallbackArgs)>(0x10104E40, itemCallbacks.BucklerAcPenalty);
 
 
 
@@ -2930,12 +2935,34 @@ int CombatExpertiseSet(DispatcherCallbackArgs args)
 int BarbarianRageStatBonus(DispatcherCallbackArgs args)
 {
 	DispIoBonusList * dispIo = dispatch.DispIoCheckIoType2(args.dispIO);
-	if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_MIGHTY_RAGE, (Stat)0, 0))
-		bonusSys.bonusAddToBonusList(&dispIo->bonlist, 8, 0, 339); // Greater Rage
-	else if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_GREATER_RAGE, (Stat)0, 0))
-		bonusSys.bonusAddToBonusList(&dispIo->bonlist, 6, 0, 338); // Greater Rage
-	else
-		bonusSys.bonusAddToBonusList(&dispIo->bonlist, 4, 0, 195); // normal rage
+	if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_MIGHTY_RAGE, (Stat)0, 0)) {
+		int nBonus = 8;
+		nBonus += d20Sys.D20QueryPython(args.objHndCaller, "Additional Rage Stat Bonus");
+		bonusSys.bonusAddToBonusList(&dispIo->bonlist, nBonus, 0, 339); // Greater Rage
+	}
+	else if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_GREATER_RAGE, (Stat)0, 0)) {
+		int nBonus = 6;
+		nBonus += d20Sys.D20QueryPython(args.objHndCaller, "Additional Rage Stat Bonus");
+		bonusSys.bonusAddToBonusList(&dispIo->bonlist, nBonus, 0, 338); // Greater Rage
+	}
+	else {
+		int nBonus = 4;
+		nBonus += d20Sys.D20QueryPython(args.objHndCaller, "Additional Rage Stat Bonus");
+		bonusSys.bonusAddToBonusList(&dispIo->bonlist, nBonus, 0, 195); // normal rage
+	}
+	return 0;
+}
+
+int BarbarianRageACPenalty(DispatcherCallbackArgs args)
+{
+	DispIoAttackBonus * dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
+
+	int nPenalty = -2;
+
+	//Value needs to be negated (it is a penalty) since qureies can't return negative values
+	nPenalty += -1 * d20Sys.D20QueryPython(args.objHndCaller, "Additional Rage AC Penalty");
+
+	bonusSys.bonusAddToBonusList(&dispIo->bonlist, nPenalty, 0, 195);  //rage ac penalty
 	return 0;
 }
 
@@ -4392,6 +4419,42 @@ int ItemCallbacks::BucklerToHitPenalty(DispatcherCallbackArgs args)
 
 	return 0;
 }
+
+
+int __cdecl ItemCallbacks::BucklerAcPenalty(DispatcherCallbackArgs args)
+{
+	//Check if the penalty is turned off through python
+	if (d20Sys.D20QueryPython(args.objHndCaller, "Disable Buckler Penalty") == 0) {
+
+		auto dispIo = static_cast<DispIoAttackBonus*>(args.dispIO);
+		dispIo->AssertType(dispIOTypeAttackBonus);
+
+		auto weaponUsed = dispIo->attackPacket.GetWeaponUsed();
+
+		if ((dispIo->attackPacket.flags & D20CAF_RANGED))
+			return 0;
+
+		if (!weaponUsed)
+			return 0;
+
+		auto offhandObject = inventory.ItemWornAt(args.objHndCaller, EquipSlot::WeaponSecondary);
+
+		if (offhandObject) {
+			auto objectFlag = objects.getInt32(offhandObject, obj_f_type);
+			if (objectFlag == obj_t_weapon) {
+				args.SetCondArg(1, 1);  //Two Weapon Fighting, remove buckler bonus
+			}
+		} else {
+			auto twoHanded = d20Sys.d20QueryWithData(args.objHndCaller, DK_QUE_WieldedTwoHanded, reinterpret_cast<uint32_t>(dispIo), 0);
+			if (twoHanded) {
+				args.SetCondArg(1, 1);  //Using a two handed weapon or using a one handed weapon in two hands, remove buckler bonus
+			}
+		}
+	}
+
+	return 0;
+}
+
 
 int ItemCallbacks::WeaponMerciful(DispatcherCallbackArgs args){
 	GET_DISPIO(dispIOTypeDamage, DispIoDamage);

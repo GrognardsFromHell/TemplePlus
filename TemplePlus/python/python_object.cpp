@@ -2803,6 +2803,18 @@ static PyObject* PyObjHandle_GetDeity(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(objects.GetDeity(self->handle));
 }
 
+
+static PyObject* PyObjHandle_GetWeaponType(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	auto result = objects.GetWeaponType(self->handle);
+
+	return PyInt_FromLong(result);
+}
+
 static PyObject* PyObjHandle_GetWieldType(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -3269,6 +3281,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "get_category_type", PyObjHandle_GetCategoryType, METH_VARARGS, NULL },
 	{ "get_initiative", PyObjHandle_GetInitiative, METH_VARARGS, NULL },
 	{ "get_deity", PyObjHandle_GetDeity, METH_VARARGS, NULL },
+	{ "get_weapon_type", PyObjHandle_GetWeaponType, METH_VARARGS, NULL },
 	{ "get_wield_type", PyObjHandle_GetWieldType, METH_VARARGS, NULL },
 	{ "get_weapon_projectile_proto", PyObjHandle_GetWeaponProjectileProto, METH_VARARGS, NULL },
 	{ "group_list", PyObjHandle_GroupList, METH_VARARGS, NULL },

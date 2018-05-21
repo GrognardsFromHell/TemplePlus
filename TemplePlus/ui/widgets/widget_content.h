@@ -8,6 +8,9 @@
 #include <graphics/textengine.h>
 #include "ui/ui_assets.h"
 
+enum class PredefinedFont;
+struct TigTextStyle;
+
 class WidgetContent {
 public:
 	WidgetContent();
@@ -102,4 +105,8 @@ private:
 	bool mCenterVertically = false;
 
 	void UpdateBounds();
+
+	void RenderWithPredefinedFont(PredefinedFont font, TigTextStyle textStyle);
+	void UpdateBoundsWithPredefinedFont(PredefinedFont font, TigTextStyle textStyle);
+
 };
