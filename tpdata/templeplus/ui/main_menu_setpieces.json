@@ -6,35 +6,35 @@
   "height": 357,
   "__styles": [
     {
-      "id": "mm-dialog-title",
+      "id": "mm-setpieces-dialog-title",
       "fontFamily": "Priory-12",
       "pointSize": 12,
       "foreground": "#ffffff",
       "align": "center"
     },
     {
-      "id": "mm-cinematics-list-button",
+      "id": "mm-setpieces-list-button",
       "fontFamily": "Priory-12",
       "pointSize": 12,
       "foreground": "#ffffff",
 	  "align": "center"
     },
     {
-      "id": "mm-cinematics-list-button-selected",
+      "id": "mm-setpieces-list-button-selected",
       "fontFamily": "Priory-12",
       "pointSize": 12,
-      "foreground": "#3a58ff",
+      "foreground": "#0000ff",
 	  "align": "center"
     }
   ],
   "__buttonStyles": [
     {
-      "id": "mm-cinematics-list-button",
-      "textStyle": "mm-cinematics-list-button"
+      "id": "mm-setpieces-list-button",
+      "textStyle": "mm-setpieces-list-button"
     },
 	{
-      "id": "mm-cinematics-list-button-selected",
-      "textStyle": "mm-cinematics-list-button-selected"
+      "id": "mm-setpieces-list-button-selected",
+      "textStyle": "mm-setpieces-list-button-selected"
     }
   ],
   "content": [
@@ -44,16 +44,16 @@
     },
     {
       "type": "text",
-      "text": "#{main_menu:1000}",
-      "style": "mm-dialog-title",
+      "text": "Coming soon",
+      "style": "mm-setpieces-dialog-title",
       "y": 20
     }
   ],
   "children": [
     {
-      "id": "view",
+      "id": "go",
       "type": "button",
-      "text": "#{main_menu:1001}",
+      "text": "Accept",
       "x": 28,
       "y": 306,
       "style": "accept-button"
@@ -67,7 +67,7 @@
       "style": "cancel-button"
     },
     {
-      "id":  "cinematicsList",
+      "id":  "scenariosList",
       "type": "scrollView",
       "x": 22,
       "y": 71,

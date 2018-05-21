@@ -25,6 +25,7 @@
 #include "tig/tig_keyboard.h"
 #include "ui_pc_creation.h"
 #include "ui/ui_char.h"
+#include "python/python_integration_obj.h"
 
 class ViewCinematicsDialog {
 public:
@@ -53,10 +54,27 @@ private:
 	};
 };
 
+class SetPiecesDialog
+{
+public:
+	SetPiecesDialog();
+
+	void Select(int i);
+	void Show();
+	void LaunchScenario();
+	void TransitionToMap(int destMap);
+	void SetupScenario();
+private:
+	int mSelection = 0;
+	std::unique_ptr<WidgetContainer> mWidget;
+	WidgetScrollView *mListBox;
+	std::vector<LgcyWidgetId> btnIds;
+};
+
 //*****************************************************************************
 //* MM-UI
 //*****************************************************************************
-
+#pragma region MM-UI
 UiMM::UiMM(const UiSystemConf &config) {
 	auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x10117370);
 
@@ -83,6 +101,7 @@ UiMM::UiMM(const UiSystemConf &config) {
 	mMainWidget = widgetDoc.TakeRootContainer();
 
 	mViewCinematicsDialog = std::make_unique<ViewCinematicsDialog>();
+	mSetPiecesDialog = std::make_unique<SetPiecesDialog>();
 
 	// This eats all mouse messages that reach the full-screen main menu
 	mMainWidget->SetMouseMsgHandler([](auto msg) {
@@ -109,7 +128,7 @@ UiMM::UiMM(const UiSystemConf &config) {
 	mPageWidgets[MainMenuPage::InGameNormal] = widgetDoc.GetWindow("page-ingame-normal");
 	mPageWidgets[MainMenuPage::InGameIronman] = widgetDoc.GetWindow("page-ingame-ironman");
 	mPageWidgets[MainMenuPage::Options] = widgetDoc.GetWindow("page-options");
-	mPageWidgets[MainMenuPage::SetPieces] = widgetDoc.GetWindow("page-set-pieces");
+	//mPageWidgets[MainMenuPage::SetPieces] = widgetDoc.GetWindow("page-set-pieces");
 
 	// Wire up buttons on the main menu
 	widgetDoc.GetButton("new-game")->SetClickHandler([this]() {
@@ -120,7 +139,8 @@ UiMM::UiMM(const UiSystemConf &config) {
 		uiSystems->GetLoadGame().Show(true);
 	});
 	widgetDoc.GetButton("set-pieces")->SetClickHandler([this]() {
-		Show(MainMenuPage::Options);
+		Hide();
+		mSetPiecesDialog->Show();
 	});
 	widgetDoc.GetButton("tutorial")->SetClickHandler([this]() {
 		LaunchTutorial();
@@ -317,8 +337,8 @@ void UiMM::Hide()
 		uiSystems->GetUtilityBar().Show();
 	}
 
-	if (uiSystems->GetUtilityBar().IsVisible())
-		uiSystems->GetDM().Show();
+	//if (uiSystems->GetUtilityBar().IsVisible())
+	//	uiSystems->GetDM().Show();
 }
 
 void UiMM::RepositionWidgets(int width, int height)
@@ -398,6 +418,10 @@ void UiMM::TransitionToMap(int mapId)
 	uiSystems->GetWMapRnd().StartRandomEncounterTimer();
 	gameSystems->GetAnim().PopDisableFidget();
 }
+
+#pragma endregion
+
+#pragma region ViewCinematicsDialog
 
 ViewCinematicsDialog::ViewCinematicsDialog()
 {
@@ -485,4 +509,127 @@ bool ViewCinematicsDialog::IsMovieSeen(int movieId){
 	auto moviesSeen = config.GetVanillaString("movies_seen");
 	auto movieStr = fmt::format("({},-1)", movieId);
 	return strstr(moviesSeen.c_str(), movieStr.c_str()) != nullptr;
+}
+
+#pragma endregion
+
+SetPiecesDialog::SetPiecesDialog(){
+	WidgetDoc doc = WidgetDoc::Load("templeplus/ui/main_menu_setpieces.json");
+
+	doc.GetButton("go")->SetClickHandler([this]() {
+		mWidget->Hide();
+		LaunchScenario();
+	});
+	doc.GetButton("cancel")->SetClickHandler([this]() {
+		mWidget->Hide();
+		uiSystems->GetMM().Show(MainMenuPage::MainMenu);
+	});
+
+	mListBox = doc.GetScrollView("scenariosList");
+
+	mWidget = std::move(doc.TakeRootContainer());
+	mWidget->Hide();
+
+}
+
+void SetPiecesDialog::Select(int i)
+{
+	mSelection = i;
+}
+
+void SetPiecesDialog::Show(){
+	mListBox->Clear();
+
+	int y = 0;
+#define NUM_SCENARIOS 0
+	for (int i = 0; i < NUM_SCENARIOS; i++) {
+		
+		auto button = std::make_unique<WidgetButton>();
+		button->SetText("Arena");
+		button->SetId("Arena");
+		auto innerWidth = mListBox->GetInnerWidth();
+		button->SetWidth(innerWidth);
+		button->SetAutoSizeWidth(false);
+		button->SetStyle("mm-setpieces-list-button");
+		button->SetY(y);
+		//auto pBtn = button.get();
+		btnIds.push_back(button->GetWidgetId());
+		button->SetClickHandler([i, this]() {
+			Select(i);
+		});
+		y += button->GetHeight();
+		mListBox->Add(std::move(button));
+	}
+
+	mWidget->Show();
+}
+
+void SetPiecesDialog::LaunchScenario(){
+	
+	auto velkorProto = objSystem->GetProtoHandle(13105);
+
+	auto velkor = objSystem->CreateObject(velkorProto, locXY{ 480, 40 });
+	auto velkorObj = objSystem->GetObject(velkor);
+	velkorObj->SetInt32(obj_f_pc_voice_idx, 11);
+	critterSys.GenerateHp(velkor);
+	party.AddToPCGroup(velkor);
+
+	static auto spawn_velkor_equipment = temple::GetPointer<void(objHndl)>(0x1006d300);
+	spawn_velkor_equipment(velkor);
+
+	auto anim = objects.GetAnimHandle(velkor);
+	objects.UpdateRenderHeight(velkor, *anim);
+	objects.UpdateRadius(velkor, *anim);
+
+	SetupScenario();
+	uiSystems->GetParty().UpdateAndShowMaybe();
+	uiSystems->GetMM().Hide();
+	uiSystems->GetParty().Update();
+
+}
+
+void SetPiecesDialog::TransitionToMap(int mapId){
+	FadeArgs fadeArgs;
+	fadeArgs.flags = 0;
+	fadeArgs.color = 0;
+	fadeArgs.countSthgUsually48 = 1;
+	fadeArgs.transitionTime = 0;
+	fadeArgs.field10 = 0;
+	fade.PerformFade(fadeArgs);
+	gameSystems->GetAnim().StartFidgetTimer();
+
+	FadeAndTeleportArgs fadeTp;
+	fadeTp.destLoc = gameSystems->GetMap().GetStartPos(mapId);
+	fadeTp.destMap = mapId;
+	fadeTp.flags = 4;
+	fadeTp.somehandle = party.GetLeader();
+
+	auto enterMovie = gameSystems->GetMap().GetEnterMovie(mapId, true);
+	if (enterMovie) {
+		fadeTp.flags |= 1;
+		fadeTp.field20 = 0;
+		fadeTp.movieId = enterMovie;
+	}
+	fadeTp.field48 = 1;
+	fadeTp.field4c = 0xFF000000;
+	fadeTp.field50 = 64;
+	fadeTp.somefloat2 = 3.0;
+	fadeTp.field58 = 0;
+	fade.FadeAndTeleport(fadeTp);
+
+	gameSystems->GetSoundGame().StopAll(false);
+	uiSystems->GetWMapRnd().StartRandomEncounterTimer();
+	gameSystems->GetAnim().PopDisableFidget();
+}
+
+void SetPiecesDialog::SetupScenario(){
+	
+	auto destMap = gameSystems->GetMap().GetMapIdByType(MapType::ArenaMap);
+	TransitionToMap(destMap);
+
+	auto args = PyTuple_New(0);
+
+	auto result = pythonObjIntegration.ExecuteScript("arena_script", "OnStartup", args);
+	Py_DECREF(result);
+	Py_DECREF(args);
 }
