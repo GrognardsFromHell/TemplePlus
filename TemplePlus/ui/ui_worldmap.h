@@ -18,6 +18,7 @@ public:
 
 	// Called by the dialog scripts to travel to an area based on a dialog choice
 	void TravelToArea(int area);
+	bool NeedToClearEncounterMap();
 };
 
 UiWorldmap &ui_worldmap();

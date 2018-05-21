@@ -64,6 +64,11 @@ void UiWorldmap::TravelToArea(int area)
 	ui_worldmap_travel_by_dialog(area);
 }
 
+bool UiWorldmap::NeedToClearEncounterMap(){
+	static auto uiWorldmapNeedToClearEncounterMap = temple::GetRef<BOOL(__cdecl)()>(0x10159790);
+	return (uiWorldmapNeedToClearEncounterMap() != FALSE) ? true: false;
+}
+
 // UI crash at exit fix
 class UiExitCrashFix : TempleFix
 {

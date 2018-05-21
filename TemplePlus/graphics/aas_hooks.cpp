@@ -1241,8 +1241,8 @@ AnimatedModel::~AnimatedModel()
 }
 
 void AnimPlayerStream::SetFrame(float frame){
-	auto frameRounded = floor(frame);
-	if (floor(this->currentFrame) == frameRounded) {
+	auto frameRounded = (int)floor(frame);
+	if ( (int)(floor(this->currentFrame)) == frameRounded) {
 		this->currentFrame = frame;
 		return;
 	}
@@ -1267,13 +1267,18 @@ void AnimPlayerStream::SetFrame(float frame){
 	// structure:
 	// uint16_t keyframeFrame
 	// uint16_t flags_and_bone_id  (first 4 bits are flags, bone_id is rest)
+	// ... variable length data (including uint16_t nextFrame at each one)...
+
 
 	// advance the frames
 	while (keyframeFrame <= frameRounded){
 		
 		keyframeData++;
-		auto flags = *(uint16_t*)keyframeData;
-		while (flags & 1){
+		auto data_header = *(uint16_t*)keyframeData;
+
+		while (data_header & 1){
+
+			auto flags = data_header & 0xF;
 
 			auto boneId = flags >> 4;
 			auto &tBone = this->bones[boneId];
@@ -1354,7 +1359,7 @@ void AnimPlayerStream::SetFrame(float frame){
 				keyframeData++;
 			}
 
-			flags = *(uint16_t*)keyframeData;
+			data_header = *(uint16_t*)keyframeData;
 		}
 
 		this->keyframePtr = keyframeData;

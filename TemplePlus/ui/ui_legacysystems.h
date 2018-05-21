@@ -175,25 +175,6 @@ public:
     const std::string &GetName() const override;
 };
 
-class UiTownmap : public UiSystem, public SaveGameAwareUiSystem {
-public:
-    static constexpr auto Name = "Townmap-UI";
-    UiTownmap(const UiSystemConf &config);
-    ~UiTownmap();
-    void Reset() override;
-    bool SaveGame(TioFile *file) override;
-    bool LoadGame(const UiSaveFile &saveGame) override;
-    void ResizeViewport(const UiResizeArgs &resizeArgs) override;
-    const std::string &GetName() const override;
-
-	// Was @ 10128B60 (ui_townmap_is_visible)
-	bool IsVisible() const {
-		return mVisible != 0;
-	}
-
-private:
-	BOOL &mVisible = temple::GetRef<BOOL>(0x10BE1F28);
-};
 
 class UiPopup : public UiSystem {
 public:
@@ -226,6 +207,8 @@ public:
     ~UiRandomEncounter();
     void ResizeViewport(const UiResizeArgs &resizeArgs) override;
     const std::string &GetName() const override;
+	bool HasPermissionToExit();
+	void ShowExitWnd();
 };
 
 class UiHelp : public UiSystem {
