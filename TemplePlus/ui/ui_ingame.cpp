@@ -20,6 +20,7 @@
 #include "tig/tig_loadingscreen.h"
 #include "tig/tig_console.h"
 #include "ui_char.h"
+#include "ui_townmap.h"
 
 UiInGame::UiInGame(const UiSystemConf &config) {
 	auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x10112e70);

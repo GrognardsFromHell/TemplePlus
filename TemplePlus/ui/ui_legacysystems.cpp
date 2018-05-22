@@ -407,40 +407,6 @@ const std::string &UiScrollpane::GetName() const {
     return name;
 }
 
-//*****************************************************************************
-//* Townmap-UI
-//*****************************************************************************
-
-UiTownmap::UiTownmap(const UiSystemConf &config) {
-    auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x1012e1c0);
-    if (!startup(&config)) {
-        throw TempleException("Unable to initialize game system Townmap-UI");
-    }
-}
-UiTownmap::~UiTownmap() {
-    auto shutdown = temple::GetPointer<void()>(0x1012bbe0);
-    shutdown();
-}
-void UiTownmap::ResizeViewport(const UiResizeArgs& resizeArg) {
-    auto resize = temple::GetPointer<void(const UiResizeArgs*)>(0x10128450);
-    resize(&resizeArg);
-}
-void UiTownmap::Reset() {
-    auto reset = temple::GetPointer<void()>(0x1012bb40);
-    reset();
-}
-bool UiTownmap::SaveGame(TioFile *file) {
-        auto save = temple::GetPointer<int(TioFile*)>(0x10128650);
-        return save(file) == 1;
-}
-bool UiTownmap::LoadGame(const UiSaveFile &save) {
-        auto load = temple::GetPointer<int(const UiSaveFile*)>(0x101288f0);
-        return load(&save) == 1;
-}
-const std::string &UiTownmap::GetName() const {
-    static std::string name("Townmap-UI");
-    return name;
-}
 
 //*****************************************************************************
 //* Popup-UI
@@ -520,6 +486,27 @@ void UiRandomEncounter::ResizeViewport(const UiResizeArgs& resizeArg) {
 const std::string &UiRandomEncounter::GetName() const {
     static std::string name("RandomEncounter-UI");
     return name;
+}
+
+bool UiRandomEncounter::HasPermissionToExit(){
+	static auto hasPermissionToExit = temple::GetRef<BOOL(__cdecl)()>(0x1016CEB0);
+	return (hasPermissionToExit() != FALSE) ? true : false;
+}
+
+void UiRandomEncounter::ShowExitWnd(){
+	struct UiRndEncExitWidgets
+	{
+		LgcyWindow *wnd;
+		LgcyButton *okBtn;
+		LgcyButton *cancelBtn;
+		LgcyButton *cancelBtn2;
+	};
+	auto exitWidgets = temple::GetRef<UiRndEncExitWidgets*>(0x10BF3550);
+	auto wnd = exitWidgets->wnd;
+	if (wnd){
+		uiManager->SetHidden(wnd->widgetId, false);
+	}
+	temple::GetRef<int>(0x10BF3788) = 1;
 }
 
 //*****************************************************************************

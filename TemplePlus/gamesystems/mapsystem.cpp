@@ -691,6 +691,9 @@ int MapSystem::GetMapIdByType(MapType type)
 			return entry.first;
 		}
 	}
+	if (type == MapType::ArenaMap){
+		return 5119;
+	}
 	return 0;
 }
 

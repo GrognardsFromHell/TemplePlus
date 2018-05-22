@@ -40,13 +40,38 @@ struct LgcySkaFile;
 struct AnimPlayer;
 
 
-struct SkmFile {
+#pragma pack(push, 1)
+struct SkmVertex {
+	static constexpr size_t sMaxBoneAttachments = 6;
+	XMFLOAT4 pos;
+	XMFLOAT4 normal;
+	XMFLOAT2 uv;
+	uint16_t padding;
+	uint16_t attachmentCount;
+	uint16_t attachmentBone[sMaxBoneAttachments];
+	float attachmentWeight[sMaxBoneAttachments];
+};
+const int testSizeofSkmVertex = sizeof SkmVertex;
+struct SkmMaterial {
+	char id[128];
+};
+#pragma pack(pop)
+
+struct SkmFace
+{
+	int16_t materialId;
+	int16_t vertexIds[3];
+};
+
+struct SkmFile { // see Infrastructure : meshes_rewrite.cpp : SkmFile
 	int boneCount;
-	void* boneDataStart;
-	int variationCount;
-	void* variationDataStart;
-	int animationCount;
-	void* animationDataStart;
+	void *boneDataStart;
+	int materialCount;
+	SkmMaterial *materialDataStart;
+	int vertexCount;
+	SkmVertex *vertexDataStart;
+	int faceCount;
+	SkmFace* faceDataStart;
 	int data;
 };
 
@@ -353,7 +378,7 @@ struct AasAnimation {
 	char* skmFilename;
 };
 
-struct SkaAnimStream {
+struct SkaAnimStream { // SkaAnimStreamHeader
 	uint16_t frames;
 	int16_t variationId;
 	float frameRate;
@@ -420,11 +445,11 @@ const int testSizeofSkaBone = sizeof SkaBone; // 100 (0x64)
 
 struct LgcySkaFile {
 	int boneCount;
-	int boneDataStart;
+	int boneDataStart; // SkaBone*
 	int variationCount; // seems to be always 0 as far as I can tell
 	int variationDataStart;
 	int animationcCount;
-	int animationDataStart;
+	int animationDataStart; // SkaAnimation*
 	int unks[19];
 
 	SkaBone* GetSkaBoneData(){
@@ -471,6 +496,7 @@ public:
 		static void SkaFileEntryRelease(LgcySkaFile *);
 		static int __stdcall SetSubmesh(AasSubmeshWithMaterial* submesh, SkmFile* skmData, int materialIdx);
 
+		
 		static int SetSkaFile(LgcySkaFile* skaFile, int, int);
 
 		static int SetAnimIdx_Impl(AnimatedModel* aasObj, int a3, int animIdx, IAasEventListener* evtLisnr);
@@ -891,6 +917,15 @@ int __stdcall AasHooks::SetSubmesh(AasSubmeshWithMaterial * submesh, SkmFile * s
 	return 0;
 }
 
+int __cdecl SetSkmFile_(AnimatedModel* aasObj, SkmFile* skmFile, int(__cdecl*matResolver)(char*), int a4){
+	aasObj->ResetSubmeshes();
+	auto vtxCount = skmFile->vertexCount;
+	if (aasObj->hasClothBones){
+		
+	}
+	return 0;
+}
+
 int __cdecl SetSkaFile_(AnimatedModel* aasObj, LgcySkaFile* skaFile){
 	
 	if (aasObj->skaData)
@@ -1206,8 +1241,8 @@ AnimatedModel::~AnimatedModel()
 }
 
 void AnimPlayerStream::SetFrame(float frame){
-	auto frameRounded = floor(frame);
-	if (floor(this->currentFrame) == frameRounded) {
+	auto frameRounded = (int)floor(frame);
+	if ( (int)(floor(this->currentFrame)) == frameRounded) {
 		this->currentFrame = frame;
 		return;
 	}
@@ -1227,14 +1262,23 @@ void AnimPlayerStream::SetFrame(float frame){
 	const auto rFactor = 1.0 / 32767.0;
 
 	int16_t* keyframeData = (int16_t*)this->keyframePtr;
-	auto keyframeFrame = (*(uint16_t*)keyframeData)  / 2;
+	uint16_t keyframeFrame = (*(uint16_t*)keyframeData)  / 2;
 	
+	// structure:
+	// uint16_t keyframeFrame
+	// uint16_t flags_and_bone_id  (first 4 bits are flags, bone_id is rest)
+	// ... variable length data (including uint16_t nextFrame at each one)...
+
+
 	// advance the frames
 	while (keyframeFrame <= frameRounded){
 		
 		keyframeData++;
-		auto flags = *(uint16_t*)keyframeData;
-		while (flags & 1){
+		auto data_header = *(uint16_t*)keyframeData;
+
+		while (data_header & 1){
+
+			auto flags = data_header & 0xF;
 
 			auto boneId = flags >> 4;
 			auto &tBone = this->bones[boneId];
@@ -1315,7 +1359,7 @@ void AnimPlayerStream::SetFrame(float frame){
 				keyframeData++;
 			}
 
-			flags = *(uint16_t*)keyframeData;
+			data_header = *(uint16_t*)keyframeData;
 		}
 
 		this->keyframePtr = keyframeData;

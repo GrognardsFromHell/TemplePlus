@@ -43,10 +43,10 @@ enum class MainMenuPage {
 	InGameNormal,
 	InGameIronman,
 	Options,
-	SetPieces
 };
 
 class ViewCinematicsDialog;
+class SetPiecesDialog;
 // mainmenu
 class UiMM : public UiSystem {
 	friend class UiMainMenuWrapper;
@@ -69,6 +69,7 @@ private:
 	MainMenuPage mCurrentPage = MainMenuPage::MainMenu;
 
 	std::unique_ptr<ViewCinematicsDialog> mViewCinematicsDialog;
+	std::unique_ptr<SetPiecesDialog> mSetPiecesDialog;
 
 	std::unique_ptr<WidgetContainer> mMainWidget;
 	std::map<MainMenuPage, WidgetContainer*> mPageWidgets;

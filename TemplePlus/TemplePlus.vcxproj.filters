@@ -985,6 +985,9 @@
     <ClInclude Include="tig\tig_sound.h">
       <Filter>tig</Filter>
     </ClInclude>
+    <ClInclude Include="ui\ui_townmap.h">
+      <Filter>ui</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">
