@@ -448,6 +448,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.value("FullAttack", D20ActionType::D20A_FULL_ATTACK)
 		.value("StandardRangedAttack", D20ActionType::D20A_STANDARD_RANGED_ATTACK)
 		.value("StandUp", D20ActionType::D20A_STAND_UP)
+		.value("TurnUndead", D20ActionType::D20A_TURN_UNDEAD)
 		.value("CastSpell", D20ActionType::D20A_CAST_SPELL)
 		.value("UseItem", D20ActionType::D20A_USE_ITEM)
 		.value("UsePotion", D20ActionType::D20A_USE_POTION)
