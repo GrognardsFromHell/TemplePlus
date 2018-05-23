@@ -1,0 +1,5 @@
+name: Quicken Turning
+flags: 12582912
+prereqs: 
+description: You can turn or rebuke undead as a free action. You may still make only one turning attempt per round.
+prereq descr: Ability to turn or rebuke undead
