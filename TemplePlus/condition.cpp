@@ -290,6 +290,12 @@ public:
 	static int RemoveDiseasePerform(DispatcherCallbackArgs arg); // also used in WholenessOfBodyPerform
 	void HookSpellCallbacks();
 	static int TurnUndeadHook(objHndl, Stat shouldBeClassCleric, DispIoD20ActionTurnBased* evtObj);
+	static int TurnUndeadCheck(DispatcherCallbackArgs args);
+	static int TurnUndeadPerform(DispatcherCallbackArgs args);
+	
+	//Old version of the function to be used within the replacement
+	int (*oldTurnUndeadPerform)(DispatcherCallbackArgs) = nullptr;
+	
 	void apply() override {
 		logger->info("Replacing Condition-related Functions");
 
@@ -426,6 +432,11 @@ public:
 
 		// Turn Undead extension
 		redirectCall(0x1004AF5F, TurnUndeadHook);
+		oldTurnUndeadPerform = replaceFunction(0x1004AEB0, TurnUndeadPerform);
+
+		replaceFunction<int(DispatcherCallbackArgs)>(0x1004ADE0, TurnUndeadCheck);
+
+
 
 
 		// racial callbacks
@@ -434,7 +445,6 @@ public:
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100CBAB0, spCallbacks.SpellRemoveMod);
 	}
 } condFuncReplacement;
-
 
 
 CondNode::CondNode(CondStruct *cond) {
@@ -3319,6 +3329,43 @@ int ConditionFunctionReplacement::TurnUndeadHook(objHndl handle, Stat shouldBeCl
 	result += d20Sys.D20QueryPython(handle, "Turn Undead Level", turnType);
 
 	return result;
+}
+
+int ConditionFunctionReplacement::TurnUndeadPerform(DispatcherCallbackArgs args)
+{
+	auto turnType = args.GetCondArg(0);
+
+	d20Sys.D20SignalPython(args.objHndCaller, "Turn Undead Perform", turnType);
+
+	return condFuncReplacement.oldTurnUndeadPerform(args);  //Just call the old version now
+}
+
+int ConditionFunctionReplacement::TurnUndeadCheck(DispatcherCallbackArgs args)
+{
+	auto dispIo = static_cast<DispIoD20ActionTurnBased*>(args.dispIO);
+	dispIo->AssertType(dispIOTypeD20ActionTurnBased);
+
+	auto d20a = dispIo->d20a;
+	auto turnType = args.GetCondArg(0);
+
+	if (turnType == d20a->data1) {
+		auto charges = args.GetCondArg(1);
+
+		// Check if the turn undead ability has been disabled in python
+		auto result = d20Sys.D20QueryPython(args.objHndCaller, "Turn Undead Disabled");
+		if (result > 0) {
+			dispIo->returnVal = dispIo->returnVal = AEC_INVALID_ACTION;
+		} else {
+			if (charges > 0) {
+				dispIo->returnVal = 0;
+			}
+			else {
+				dispIo->returnVal = dispIo->returnVal = AEC_OUT_OF_CHARGES;
+			}
+		}
+	}
+
+	return 0;
 }
 
 #pragma region Spell Callbacks
