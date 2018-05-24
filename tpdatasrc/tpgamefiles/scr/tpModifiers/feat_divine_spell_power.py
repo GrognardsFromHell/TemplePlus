@@ -62,11 +62,16 @@ def OnDivineSpellPowerPerform(attachee, args, evt_obj):
 def DivineSpellPowerBeginRound(attachee, args, evt_obj):
 	args.set_arg(0, 0) # always remove at the begining of the round
 	args.set_arg(1, 0) # set to zero bonus
+	args.set_arg(2, 0) # set spell cast count to zero
 	return 0
 
 def DivineSpellPowerCasterLevelBonus(attachee, args, evt_obj):
 	# not active, do nothing
 	if not args.get_arg(0): 
+		return 0
+		
+	#If this is the second spell cast with spellpower, don't apply the bonus
+	if args.get_arg(2) > 0: 
 		return 0
 	
 	spellPkt = evt_obj.get_spell_packet()
@@ -92,9 +97,24 @@ def DivineSpellPowerEffectTooltip(attachee, args, evt_obj):
 	# not active, do nothing
 	if not args.get_arg(0):
 		return 0
+	
+	#Once a spell has been cast disable the tooltip
+	if args.get_arg(2):
+		return 0
 
 	# Set the tooltip
 	evt_obj.append(tpdp.hash("DIVINE_SPELL_POWER"), -2, " (caster level bonus: " + str(args.get_arg(1)) + ")")
+	return 0
+	
+def DivineSpellPowerCastSpell(attachee, args, evt_obj):
+	# not active, do nothing
+	if not args.get_arg(0):
+		return 0
+	
+	#Incriment the spell cast with spell power count
+	sepllCastCount = args.get_arg(2)
+	args.set_arg(2, sepllCastCount + 1)
+	
 	return 0
 
 #Setup the feat
@@ -110,3 +130,4 @@ DivineSpellPowerEffect.AddHook(ET_OnBeginRound, EK_NONE, DivineSpellPowerBeginRo
 DivineSpellPowerEffect.AddHook(ET_OnGetTooltip, EK_NONE, DivineSpellPowerTooltip, ())
 DivineSpellPowerEffect.AddHook(ET_OnGetCasterLevelMod, EK_NONE, DivineSpellPowerCasterLevelBonus, ())
 DivineSpellPowerEffect.AddHook(ET_OnGetEffectTooltip, EK_NONE, DivineSpellPowerEffectTooltip, ())
+DivineSpellPowerEffect.AddHook(ET_OnD20Signal, EK_S_Spell_Cast, DivineSpellPowerCastSpell, ()) 
