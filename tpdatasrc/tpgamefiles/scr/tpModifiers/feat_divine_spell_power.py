@@ -118,7 +118,7 @@ def DivineSpellPowerCastSpell(attachee, args, evt_obj):
 	return 0
 
 #Setup the feat
-DivineSpellPowerFeat = PythonModifier("Divine Spell Power Feat", 2) 
+DivineSpellPowerFeat = PythonModifier("Divine Spell Power Feat", 4) 
 DivineSpellPowerFeat.MapToFeat("Divine Spell Power")
 DivineSpellPowerFeat.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, DivineSpellPowerRadial, ())
 
