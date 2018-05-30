@@ -893,7 +893,7 @@ void LegacyD20System::d20aTriggerCombatCheck(ActnSeq* actSeq, int32_t idx)
 
 		auto caster = spellPkt.caster;
 		auto tgtCount = spellPkt.targetCount;
-		for (auto i=0; i<tgtCount; i++){
+		for (uint32_t i=0; i<tgtCount; i++){
 			auto spTgt = spellPkt.targetListHandles[i];
 			if (!spTgt)
 				break;
@@ -1640,14 +1640,11 @@ ActionErrorCode D20ActionCallbacks::PerformDivineMight(D20Actn* d20a)
 	dispIo.returnVal = 0;
 	dispIo.d20a = d20a;
 	dispIo.tbStatus = nullptr;
-	auto dispatcher = objects.GetDispatcher(d20a->d20APerformer);
-	if (dispatch.dispatcherValid(dispatcher))
-	{
-		dispatch.DispatcherProcessor(dispatcher, dispTypeD20ActionPerform, DK_D20A_DIVINE_MIGHT, &dispIo); // reduces the turn undead charge by 1
-	}
+	d20Sys.D20SignalPython(d20a->d20APerformer, "Deduct Turn Undead Charge");  //Deduct a turn undead charge for divine might
 
 	auto chaScore = objects.StatLevelGet(d20a->d20APerformer, stat_charisma);
 	auto chaMod = objects.GetModFromStatLevel(chaScore);
+	
 	conds.AddTo(d20a->d20APerformer, "Divine Might Bonus", { chaMod, 0 });
 	
 	return static_cast<ActionErrorCode>(dispIo.returnVal);
@@ -3082,7 +3079,7 @@ ActionErrorCode D20ActionCallbacks::AddToSeqWhirlwindAttack(D20Actn* d20a, ActnS
 	auto perfSizeFeet = objects.GetRadius(performer)/INCH_PER_FEET;
 
 	std::vector<objHndl> enemies;
-	combatSys.GetEnemyListInRange(performer, 1.0 + perfSizeFeet + reach, enemies);
+	combatSys.GetEnemyListInRange(performer, 1.0f + perfSizeFeet + reach, enemies);
 	
 	for (auto i=0u; i<enemies.size(); i++){
 		if (locSys.DistanceToObj(performer, enemies[i]) <= reach) {
@@ -3281,9 +3278,9 @@ ActionErrorCode D20ActionCallbacks::ActionCostWhirlwindAttack(D20Actn* d20a, Tur
 		auto perfSizeFeet = objects.GetRadius(performer) / INCH_PER_FEET;
 
 		std::vector<objHndl> enemies;
-		combatSys.GetEnemyListInRange(performer, 1.0 + perfSizeFeet + reach, enemies);
+		combatSys.GetEnemyListInRange(performer, 1.0f + perfSizeFeet + reach, enemies);
 		auto numEnemies = 0;
-		for (auto i=0; i<enemies.size(); i++){
+		for (size_t i=0; i<enemies.size(); i++){
 			if (locSys.DistanceToObj(performer, enemies[i] ) < reach)
 				numEnemies++;
 		}

@@ -1954,6 +1954,7 @@ void _FeatConditionsRegister()
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionAnimalCompanionAnimal);
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionAutoendTurn);
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionTurnUndead);
+	conds.hashmethods.CondStructAddToHashtable(conds.ConditionGreaterTurning);
 	
 	// Add the destruction domain to the condition table so it can be accessed in python
 	CondStruct * pDestructionDomain = *(conds.ConditionArrayDomains + 3 * Domain_Destruction);
@@ -2293,9 +2294,6 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 1, dispTypeConditionAdd, 0, CondNodeSetArg0FromSubDispDef, 1, 0);
 	DispatcherHookInit(cond, 2, dispTypeRadialMenuEntry, 0, DivineMightRadial, 0, 0);
 
-	DispatcherHookInit((CondStructNew*)ConditionTurnUndead, 6, dispTypeD20ActionPerform, DK_D20A_DIVINE_MIGHT, CondArgDecrement, 1, 0); // decrement the number of turn charges remaining; 
-	DispatcherHookInit((CondStructNew*)ConditionGreaterTurning, 6, dispTypeD20ActionPerform, DK_D20A_DIVINE_MIGHT, CondArgDecrement, 1, 0); // decrement the number of turn charges remaining
-					
 	// Divine Might Bonus (gets activated when you choose the action from the Radial Menu)
 	mCondDivineMightBonus = &condDivineMightBonus;
 	cond = mCondDivineMightBonus; 	condName = mCondDivineMightBonusName;
@@ -3333,11 +3331,19 @@ int ConditionFunctionReplacement::TurnUndeadHook(objHndl handle, Stat shouldBeCl
 
 int ConditionFunctionReplacement::TurnUndeadPerform(DispatcherCallbackArgs args)
 {
+	auto dispIo = static_cast<DispIoD20ActionTurnBased*>(args.dispIO);
+	dispIo->AssertType(dispIOTypeD20ActionTurnBased);
+
 	auto turnType = args.GetCondArg(0);
 
-	d20Sys.D20SignalPython(args.objHndCaller, "Turn Undead Perform", turnType);
+	auto result = condFuncReplacement.oldTurnUndeadPerform(args);  //Just call the old version now
 
-	return condFuncReplacement.oldTurnUndeadPerform(args);  //Just call the old version now
+	// Send the signal if this was the turn type used
+	if (dispIo->d20a->data1 == turnType) {
+		d20Sys.D20SignalPython(args.objHndCaller, "Turn Undead Perform", turnType);
+	}
+
+	return result;
 }
 
 int ConditionFunctionReplacement::TurnUndeadCheck(DispatcherCallbackArgs args)

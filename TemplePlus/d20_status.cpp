@@ -220,7 +220,7 @@ void D20StatusSystem::initDomain(Dispatcher * dispatcher, uint32_t domain)
 		if (condStructDomain != nullptr)
 		{
 			//Check if the domain should be retrieved from the condition system 
-			if (domain != Domain_Destruction) {
+			if (domain != Domain_Destruction && domain != Domain_Sun) {
 				_ConditionAddToAttribs_NumArgs2(dispatcher, condStructDomain, arg1, arg2);
 			}
 			else {
