@@ -5,7 +5,7 @@
 #include <unordered_map>
 
 #include <DirectXMath.h>
-#include <gsl/span.h>
+#include <gsl/span>
 
 enum AasEventFlag;
 

@@ -980,8 +980,8 @@ void MapObjectRenderer::RenderShadowMapShadow(objHndl obj,
 	}
 
 	mAasRenderer.RenderShadowMapShadow(
-		gsl::as_span(&models[0], modelCount),
-		gsl::as_span(&params[0], modelCount),
+		gsl::span(&models[0], modelCount),
+		gsl::span(&params[0], modelCount),
 		worldPos,
 		radius,
 		height,

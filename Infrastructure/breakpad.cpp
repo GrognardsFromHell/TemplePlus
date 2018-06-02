@@ -2,7 +2,7 @@
 #include "crash_reporting.h"
 
 #include "infrastructure/breakpad.h"
-#include "infrastructure/format.h"
+#include <fmt/format.h>
 #include "platform/windows.h"
 
 Breakpad::Breakpad(const std::wstring &crashDumpFolder)

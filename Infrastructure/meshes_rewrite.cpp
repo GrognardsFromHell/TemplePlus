@@ -1,6 +1,6 @@
 #include <chrono>
 
-#include "gsl/gsl.h"
+#include <gsl/gsl>
 #include "infrastructure/meshes.h"
 #include "infrastructure/vfs.h"
 #include "graphics/math.h"

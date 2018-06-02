@@ -5,10 +5,9 @@
 #include <infrastructure/json11.hpp>
 #include <infrastructure/vfs.h>
 
-namespace std {
-	ostream &operator <<(ostream &out, const eastl::string &text) {
-		out << text.c_str();
-		return out;
+namespace eastl {
+	void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const string &text) {
+		f.writer().write("{}", text.c_str());
 	}
 }
 

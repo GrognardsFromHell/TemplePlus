@@ -593,7 +593,7 @@ void TextLayouter::LayoutAndDrawVanilla(gsl::cstring_span<> text, const TigFont 
 
 			// We're on the last line, the word has been truncated, ellipsis needs to be drawn
 			if (lastLine && style.flags & 0x4000 && wordInfo.drawEllipsis) {
-				mRenderer.RenderRun(as_span(sEllipsis, strlen(sEllipsis)),
+				mRenderer.RenderRun(span(sEllipsis, strlen(sEllipsis)),
 					extents.x + currentX,
 					currentY,
 					extents,

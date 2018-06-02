@@ -1,10 +1,10 @@
 
 #pragma once
 
-#include "../gsl/gsl.h"
+#include <gsl/gsl>
 
 #include "exception.h"
-#include "format.h"
+#include <fmt/format.h>
 #include "mathutil.h"
 #include "stringutil.h"
 #include "version.h"

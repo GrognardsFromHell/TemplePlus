@@ -3,6 +3,7 @@
 #include "obj.h"
 #include "skill.h"
 #include "gamesystems/gamesystem.h"
+#include <fmt/format.h>
 
 struct AnimPath;
 struct AnimSlot;
@@ -21,7 +22,9 @@ struct AnimSlotId {
 #pragma pack(pop)
 
 // Allows for direct use of AnimSlotId in format() strings
-ostream &operator<<(ostream &str, const AnimSlotId &id);
+inline void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const AnimSlotId &id) {
+	f.writer().write("{}", id.ToString());
+}
 
 enum AnimGoalType : uint32_t {
 	ag_animate = 0x0,

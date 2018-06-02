@@ -1,8 +1,7 @@
 
 #include <vector>
 
-#include "gsl/string_span.h"
-using gsl::cstring_span;
+#include <gsl/string_span>
 
 #include "infrastructure/tabparser.h"
 #include "infrastructure/stringutil.h"
@@ -10,7 +9,7 @@ using gsl::cstring_span;
 
 std::string TabFileRecord::mMissingColumn;
 
-using strview = cstring_span<gsl::dynamic_range>;
+using strview = gsl::cstring_span<gsl::dynamic_extent>;
 
 static strview PostProcessColumn(strview column);
 

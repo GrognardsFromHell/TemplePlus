@@ -1,6 +1,6 @@
 #include <cctype>
 
-#include "gsl/gsl.h"
+#include <gsl/gsl>
 #include "infrastructure/tokenizer.h"
 #include "infrastructure/exception.h"
 

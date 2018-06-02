@@ -262,12 +262,6 @@ const char *animGoalTypeNames[ag_count] = {
     "ag_use_disable_device_skill_on_data"
 };
 
-
-ostream &operator<<(ostream &str, const AnimSlotId &id) {
-  str << id.ToString();
-  return str;
-}
-
 std::string GetAnimGoalTypeName(AnimGoalType type) {
   auto i = (size_t)type;
   if (type < ag_count) {

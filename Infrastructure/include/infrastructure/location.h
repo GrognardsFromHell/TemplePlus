@@ -2,7 +2,8 @@
 
 #include <graphics/math.h>
 
-#include <iosfwd>
+#include <fmt/format.h>
+
 #include <cstdint>
 
 // This is the number of pixels per tile on the x and y axis. Equal to sqrt(800) (which is sqrt(20 * 20 + 20 * 20))
@@ -77,7 +78,7 @@ struct LocFull {
 
 #pragma pack(pop)
 
-std::ostream& operator<<(std::ostream& os, const locXY& loc);
-std::ostream& operator<<(std::ostream& os, const LocAndOffsets& loc);
-std::ostream& operator<<(std::ostream& os, const LocFull& loc);
+void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const locXY &loc);
+void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const LocAndOffsets &loc);
+void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const LocFull &loc);
 
