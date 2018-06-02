@@ -6,7 +6,7 @@
 #include <set>
 #include <map>
 
-#include <gsl/gsl.h>
+#include <gsl/gsl>
 
 #include <gamesystems/map/sector.h>
 

@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <gsl/gsl.h>
+#include <gsl/gsl>
 
 struct ScanWordResult;
 struct GlyphVertex2d;

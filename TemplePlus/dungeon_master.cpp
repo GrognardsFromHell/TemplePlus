@@ -1270,8 +1270,8 @@ void DungeonMaster::RenderVsParty(){
 			}
 
 			// Load Mobiles from save
-			std::string filename = fmt::format("{}", saveFnameMatch[1]);
-			if (ImGui::Button(fmt::format("Go {} {}", saveFnameMatch[1], saveFnameMatch[2]).c_str())) {
+			std::string filename = fmt::format("{}", saveFnameMatch[1].str());
+			if (ImGui::Button(fmt::format("Go {} {}", saveFnameMatch[1].str(), saveFnameMatch[2].str()).c_str())) {
 				PseudoLoad(filename);
 			}
 		}

@@ -3,7 +3,7 @@
 
 #include <memory>
 
-#include "../gsl/gsl.h"
+#include <gsl/gsl>
 #include "../platform/d3d.h"
 #include "../infrastructure/macros.h"
 
@@ -38,7 +38,7 @@ public:
 
 	template <typename T>
 	void Update(gsl::span<T> data) {
-		Update(gsl::as_span(reinterpret_cast<const uint8_t*>(&data[0]), data.size_bytes()));
+		Update(gsl::span(reinterpret_cast<const uint8_t*>(&data[0]), data.size_bytes()));
 	}
 
 	NO_COPY_OR_MOVE(VertexBuffer);

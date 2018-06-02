@@ -78,6 +78,9 @@ struct LogAppender : spdlog::sinks::base_sink<std::mutex>
 		}
 		logLines.append(msg.formatted.str());
 	}
+
+	void _flush() override {}
+
 };
 
 struct MdfPreviewNative {

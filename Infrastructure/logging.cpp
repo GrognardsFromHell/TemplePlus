@@ -1,19 +1,11 @@
 #include "infrastructure/logging.h"
-#include "infrastructure/format.h"
+#include <fmt/format.h>
 #include "spdlog/spdlog.h"
+#include "spdlog/sinks/msvc_sink.h"
 #include "include/spdlog/sinks/null_sink.h"
 #include "infrastructure/stringutil.h"
 
 std::shared_ptr<spdlog::logger> logger;
-
-struct OutputDebugStringSink : spdlog::sinks::base_sink<std::mutex>
-{
-protected:
-	void _sink_it(const spdlog::details::log_msg& msg) override
-	{
-		OutputDebugStringA(msg.formatted.c_str());
-	}
-};
 
 /*
 	Initializes the shared pointer above to at least a null sink so logging calls
@@ -38,7 +30,7 @@ void InitLogging(const std::wstring &logFile)
 		// Always log to a file
 		DeleteFile(logFile.c_str());
 		auto fileSink = std::make_shared<spdlog::sinks::simple_file_sink_mt>(ucs2_to_local(logFile), true);
-		auto debugSink = std::make_shared<OutputDebugStringSink>();
+		auto debugSink = std::make_shared<spdlog::sinks::msvc_sink_mt>();
 		spdlog::drop_all(); // Reset all previous loggers
 		logger = spdlog::create("core", {fileSink, debugSink});
 	}

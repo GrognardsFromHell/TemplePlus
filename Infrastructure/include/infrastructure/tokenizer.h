@@ -2,7 +2,7 @@
 #pragma once
 
 #include <sstream>
-#include <gsl/string_span.h>
+#include <gsl/string_span>
 
 /*
 	String tokenizer that works like the ToEE vanilla one.

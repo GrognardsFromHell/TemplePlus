@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <gsl/gsl.h>
+#include <gsl/gsl>
 
 /*
 	Helper class for reading structured binary data from a 

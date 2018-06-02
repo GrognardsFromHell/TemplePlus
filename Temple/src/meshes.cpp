@@ -1,4 +1,3 @@
-#define _CRT_SECURE_NO_WARNINGS
 
 #include <infrastructure/meshes.h>
 #include <infrastructure/exception.h>
@@ -10,7 +9,7 @@
 
 #include "temple/dll.h"
 #include "temple/meshes.h"
-#include <gsl/gsl.h>
+#include <gsl/gsl>
 
 namespace temple {
 
@@ -193,21 +192,21 @@ namespace temple {
 
 		gsl::span<DirectX::XMFLOAT4> GetPositions() override {
 			auto data = reinterpret_cast<DirectX::XMFLOAT4*>(mSubmesh->positions);
-			return gsl::as_span(data, GetVertexCount());
+			return gsl::span(data, GetVertexCount());
 		}
 
 		gsl::span<DirectX::XMFLOAT4> GetNormals() override {
 			auto data = reinterpret_cast<DirectX::XMFLOAT4*>(mSubmesh->normals);
-			return gsl::as_span(data, GetVertexCount());
+			return gsl::span(data, GetVertexCount());
 		}
 
 		gsl::span<DirectX::XMFLOAT2> GetUV() override {
 			auto data = reinterpret_cast<DirectX::XMFLOAT2*>(mSubmesh->uv);
-			return gsl::as_span(data, GetVertexCount());
+			return gsl::span(data, GetVertexCount());
 		}
 
 		gsl::span<uint16_t> GetIndices() override {
-			return gsl::as_span(mSubmesh->indices, GetPrimitiveCount() * 3);
+			return gsl::span(mSubmesh->indices, GetPrimitiveCount() * 3);
 		}
 
 	private:

@@ -27,43 +27,41 @@ ResourceListenerRegistration::~ResourceListenerRegistration() {
   mDevice.RemoveResourceListener(mListener);
 }
 
-std::ostream &operator<<(std::ostream &out, BufferFormat format) {
+void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const BufferFormat &format) {
 	switch (format) {
 	case BufferFormat::A8:
-		out << "A8";
+		f.writer() << "A8";
 	case BufferFormat::A8R8G8B8:
-		out << "A8R8G8B8";
+		f.writer() << "A8R8G8B8";
 	case BufferFormat::X8R8G8B8:
-		out << "X8R8G8B8";
+		f.writer() << "X8R8G8B8";
 	}
-	return out;
 }
 
-std::ostream &operator<<(std::ostream &out, D3D_FEATURE_LEVEL level) {
-  switch (level) {
-  case D3D_FEATURE_LEVEL_9_1:
-    out << "D3D_FEATURE_LEVEL_9_1";
-    break;
-  case D3D_FEATURE_LEVEL_9_2:
-    out << "D3D_FEATURE_LEVEL_9_2";
-    break;
-  case D3D_FEATURE_LEVEL_9_3:
-    out << "D3D_FEATURE_LEVEL_9_3";
-    break;
-  case D3D_FEATURE_LEVEL_10_0:
-    out << "D3D_FEATURE_LEVEL_10_0";
-    break;
-  case D3D_FEATURE_LEVEL_10_1:
-    out << "D3D_FEATURE_LEVEL_10_1";
-    break;
-  case D3D_FEATURE_LEVEL_11_0:
-    out << "D3D_FEATURE_LEVEL_11_0";
-    break;
-  case D3D_FEATURE_LEVEL_11_1:
-    out << "D3D_FEATURE_LEVEL_11_1";
-    break;
-  }
-  return out;
+void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const D3D_FEATURE_LEVEL &level) {
+	switch (level) {
+	case D3D_FEATURE_LEVEL_9_1:
+		f.writer() << "D3D_FEATURE_LEVEL_9_1";
+		break;
+	case D3D_FEATURE_LEVEL_9_2:
+		f.writer() << "D3D_FEATURE_LEVEL_9_2";
+		break;
+	case D3D_FEATURE_LEVEL_9_3:
+		f.writer() << "D3D_FEATURE_LEVEL_9_3";
+		break;
+	case D3D_FEATURE_LEVEL_10_0:
+		f.writer() << "D3D_FEATURE_LEVEL_10_0";
+		break;
+	case D3D_FEATURE_LEVEL_10_1:
+		f.writer() << "D3D_FEATURE_LEVEL_10_1";
+		break;
+	case D3D_FEATURE_LEVEL_11_0:
+		f.writer() << "D3D_FEATURE_LEVEL_11_0";
+		break;
+	case D3D_FEATURE_LEVEL_11_1:
+		f.writer() << "D3D_FEATURE_LEVEL_11_1";
+		break;
+	}
 }
 
 struct RenderingDevice::Impl {
@@ -304,7 +302,7 @@ MappedIndexBuffer RenderingDevice::Map(IndexBuffer &buffer, gfx::MapMode mode) {
 
   D3D11_MAPPED_SUBRESOURCE mapped;
   D3DVERIFY(mContext->Map(buffer.mBuffer, 0, mapMode, 0, &mapped));
-  auto data = gsl::as_span((uint16_t *)mapped.pData, buffer.mCount);
+  auto data = gsl::span((uint16_t *)mapped.pData, buffer.mCount);
 
   return MappedIndexBuffer(buffer, *this, data, 0);
 }
@@ -320,7 +318,7 @@ MappedTexture RenderingDevice::Map(DynamicTexture &texture, gfx::MapMode mode) {
   D3DVERIFY(mContext->Map(texture.mTexture, 0, mapMode, 0, &mapped));
   auto size = texture.GetSize().width * texture.GetSize().height *
               texture.GetBytesPerPixel();
-  auto data = gsl::as_span((uint8_t *)mapped.pData, size);
+  auto data = gsl::span((uint8_t *)mapped.pData, size);
   auto rowPitch = mapped.RowPitch;
 
   return MappedTexture(texture, *this, data, rowPitch);
@@ -337,7 +335,7 @@ gsl::span<uint8_t> RenderingDevice::MapVertexBufferRaw(VertexBuffer &buffer,
   D3D11_MAPPED_SUBRESOURCE mapped;
   D3DVERIFY(mContext->Map(buffer.mBuffer, 0, mapMode, 0, &mapped));
 
-  return gsl::as_span((uint8_t *)mapped.pData, buffer.mSize);
+  return gsl::span((uint8_t *)mapped.pData, buffer.mSize);
 }
 
 void RenderingDevice::Unmap(VertexBuffer &buffer) {

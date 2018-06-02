@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "gsl/span.h"
+#include <gsl/span>
 
 struct VfsSearchResult {
 	std::string filename;

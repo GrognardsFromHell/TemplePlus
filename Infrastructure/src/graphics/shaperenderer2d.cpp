@@ -8,7 +8,7 @@
 #include "graphics/textures.h"
 #include "graphics/shaperenderer2d.h"
 
-#include "gsl/gsl.h"
+#include <gsl/gsl>
 
 namespace gfx {
 struct ShapeRenderer2d::Impl {
