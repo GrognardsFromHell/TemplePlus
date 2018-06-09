@@ -2701,6 +2701,9 @@ ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
 	auto &curSeq = *actSeqSys.actSeqCur;
 	auto &spellPkt = curSeq->spellPktBody;
 
+	// Update the metamagic data if necessary
+	spellPkt.metaMagicData = dispatch.DispatchMetaMagicModify(d20a->d20APerformer, &spellPkt);
+
 	// if it's an item spell
 	if (invIdx != INV_IDX_INVALID){
 		spellPkt.invIdx = invIdx;

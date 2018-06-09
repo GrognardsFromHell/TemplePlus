@@ -571,6 +571,19 @@ void DispatcherSystem::DispatchConditionRemove(Dispatcher* dispatcher, CondNode*
 	cond->flags |= 1;
 }
 
+unsigned int  DispatcherSystem::DispatchMetaMagicModify(objHndl obj, SpellPacketBody* spellPkt)
+{
+	auto _dispatcher = objects.GetDispatcher(obj);
+	if (!dispatch.dispatcherValid(_dispatcher))
+		return 0;
+	DispIoD20Query dispIo;
+	dispIo.return_val = spellPkt->metaMagicData;
+	dispIo.data1 = reinterpret_cast<uint32_t>(spellPkt);
+	dispIo.data2 = 0;
+	DispatcherProcessor(_dispatcher, dispTypeMetaMagicMod, 0, &dispIo);
+	return dispIo.return_val;
+}
+
 unsigned DispatcherSystem::Dispatch35CasterLevelModify(objHndl obj, SpellPacketBody* spellPkt)
 {
 	auto _dispatcher = objects.GetDispatcher(obj);

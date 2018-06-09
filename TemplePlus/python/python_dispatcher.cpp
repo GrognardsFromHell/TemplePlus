@@ -960,6 +960,7 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 	case dispTypeBaseCasterLevelMod:
 	case dispTypeWeaponGlowType:
 	case dispTypeGetSizeCategory:
+	case dispTypeMetaMagicMod:
 		pbEvtObj = py::cast(static_cast<DispIoD20Query*>(args.dispIO));
 		break;
 
