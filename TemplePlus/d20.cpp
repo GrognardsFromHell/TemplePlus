@@ -2692,17 +2692,17 @@ ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
 	
 	int spellEnum = 0, spellClass, spellLvl, invIdx;
 	MetaMagicData mmData;
-	d20a->d20SpellData.Extract(&spellEnum, nullptr, &spellClass, &spellLvl, &invIdx, &mmData);
-	SpellStoreData spellData(spellEnum, spellLvl, spellClass, mmData );
-
-	objHndl item = objHndl::null;
 	
-
 	auto &curSeq = *actSeqSys.actSeqCur;
 	auto &spellPkt = curSeq->spellPktBody;
 
 	// Update the metamagic data if necessary
-	spellPkt.metaMagicData = dispatch.DispatchMetaMagicModify(d20a->d20APerformer, &spellPkt);
+	d20a->d20SpellData.metaMagicData = dispatch.DispatchMetaMagicModify(d20a->d20APerformer, &spellPkt);
+	
+	d20a->d20SpellData.Extract(&spellEnum, nullptr, &spellClass, &spellLvl, &invIdx, &mmData);
+	SpellStoreData spellData(spellEnum, spellLvl, spellClass, mmData );
+
+	objHndl item = objHndl::null;
 
 	// if it's an item spell
 	if (invIdx != INV_IDX_INVALID){
