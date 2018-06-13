@@ -33,21 +33,19 @@ def OnMetamagicUpdate(attachee, args, evt_obj):
 	#Check if sudden extend is turned on
 	if not args.get_arg(1):
 		return 0
-		
-	metaMagicData = evt_obj.return_val
 	
-	#Unpack the extend count forom the metamagic data
-	extendCount = (metaMagicData & 0xF000) >> 12
+	#Get a metamagic class for the metamagic data
+	metaMagicData = tpdp.MetaMagicData(evt_obj.return_val)
 	
 	#Don't Extend more than once
-	if extendCount < 1:
-
-		evt_obj.return_val = metaMagicData | (1 << 12)
+	if metaMagicData.get_extend_count() < 1:
+		metaMagicData.set_extend_count(1)
+		evt_obj.return_val = metaMagicData.get_raw_value()
 	
 		#Decriment the charges
 		charges = charges - 1
 		args.set_arg(0, charges)
-	
+
 	return 0
 
 
