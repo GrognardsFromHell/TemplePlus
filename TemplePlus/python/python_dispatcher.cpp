@@ -320,6 +320,8 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 
 	py::class_<MetaMagicData>(m, "MetaMagicData")
 		.def(py::init<>())
+		.def(py::init<unsigned int>(), py::arg("value"))
+		.def("get_raw_value", [](MetaMagicData& mmData)->unsigned int {	return mmData;	})
 		.def("get_heighten_count", [](MetaMagicData& mmData)->int {	return mmData.metaMagicHeightenSpellCount;	})
 		.def("get_enlarge_count", [](MetaMagicData& mmData)->int {	return mmData.metaMagicEnlargeSpellCount;	})
 		.def("get_extend_count", [](MetaMagicData& mmData)->int {	return mmData.metaMagicExtendSpellCount;	})
