@@ -34,17 +34,17 @@ def OnMetamagicUpdate(attachee, args, evt_obj):
 	if not args.get_arg(1):
 		return 0
 	
-	#Get a metamagic class for the metamagic data
-	metaMagicData = tpdp.MetaMagicData(evt_obj.return_val)
+	#Get the metamagic info
+	metaMagicData = evt_obj.meta_magic
 	
 	#Don't Extend more than once
 	if metaMagicData.get_extend_count() < 1:
 		metaMagicData.set_extend_count(1)
-		evt_obj.return_val = metaMagicData.get_raw_value()
 	
 		#Decriment the charges
 		charges = charges - 1
 		args.set_arg(0, charges)
+		
 
 	return 0
 
