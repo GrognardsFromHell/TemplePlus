@@ -813,6 +813,10 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("turnbased_status", &EvtObjActionCost::tbStat)
 		;
 
+	py::class_<EvtObjMetaMagic, DispIO>(m, "EvtObjMetaMagic", "Used for modifying metamagic data")
+		.def_readwrite("meta_magic", &EvtObjMetaMagic::mmData)
+		;
+
 }
 
 
@@ -962,7 +966,6 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 	case dispTypeBaseCasterLevelMod:
 	case dispTypeWeaponGlowType:
 	case dispTypeGetSizeCategory:
-	case dispTypeMetaMagicMod:
 		pbEvtObj = py::cast(static_cast<DispIoD20Query*>(args.dispIO));
 		break;
 
@@ -1052,6 +1055,10 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 
 	case dispTypeActionCostMod:
 		pbEvtObj = py::cast(static_cast<EvtObjActionCost*>(args.dispIO));
+		break;
+
+	case dispTypeMetaMagicMod:
+		pbEvtObj = py::cast(static_cast<EvtObjMetaMagic*>(args.dispIO));
 		break;
 
 
