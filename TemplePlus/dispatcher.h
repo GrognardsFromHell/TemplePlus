@@ -104,6 +104,7 @@ struct DispatcherSystem : temple::AddressTable
 	int DispatchGetSizeCategory(objHndl objHndCaller);
 	void DispatchConditionRemove(Dispatcher* dispatcher, CondNode* cond);
 	unsigned int Dispatch35CasterLevelModify(objHndl obj, SpellPacketBody* spellPkt);
+	void DispatchMetaMagicModify(objHndl obj, MetaMagicData& mmData);
 	int DispatchSpellListLevelExtension(objHndl obj, Stat casterClass);
 	int DispatchGetBaseCasterLevel(objHndl obj, Stat casterClass);
 
@@ -526,6 +527,11 @@ struct EvtObjSpellCaster: DispIO // type 34 (NEW!)
 	int arg1;
 	SpellPacketBody* spellPkt;
 	EvtObjSpellCaster() { dispIOType = evtObjTypeSpellCaster; handle = objHndl::null; arg0 = 0; arg1 = 0; spellPkt = nullptr; };
+};
+
+struct EvtObjMetaMagic : DispIO // type 35 (NEW!)
+{
+	MetaMagicData mmData;
 };
 
 struct EvtObjActionCost: DispIO
