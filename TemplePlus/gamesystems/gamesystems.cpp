@@ -390,6 +390,7 @@ void GameSystems::InitAnimationSystem() {
 	config.fastSneakAnim = ::config.fastSneakAnim;
 	config.equalizeMovementSpeed = ::config.equalizeMoveSpeed;
 	if (::config.newAnimSystem) {
+		logger->info("Enabling new animation system.");
 		// Additionally, redirect all the old functions
 		AasHooks hooks;
 		hooks.apply();

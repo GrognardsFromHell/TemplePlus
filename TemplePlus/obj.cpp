@@ -573,7 +573,7 @@ float Objects::GetRotationTowards(objHndl from, objHndl to) {
 	auto rot = 5*M_PI/4 - AngleBetweenPoints(locFrom, locTo);
 	if (rot < 0)
 		rot = rot + 2 * M_PI;
-	return  rot;
+	return (float) rot;
 }
 
 void Objects::FadeTo(objHndl handle, int targetOpacity, int tickTimeMs, int tickOpacityQuantum, int callbackMode) const
@@ -975,6 +975,12 @@ public:
 			if (anim) {
 				objects.UpdateRadius(objId, *anim);
 			}
+		});
+
+		// anim_obj_set_aas_anim_id
+		replaceFunction<int(objHndl, gfx::EncodedAnimId)>(0x10021d50, [](objHndl objId, gfx::EncodedAnimId animId) {
+			objects.SetAnimId(objId, animId);
+			return 0;
 		});
 
 		replaceFunction(0x1004E7F0, _abilityScoreLevelGet);
