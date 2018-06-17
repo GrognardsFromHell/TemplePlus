@@ -5,7 +5,7 @@
 #include <graphics/mdfmaterials.h>
 #include <graphics/shaperenderer2d.h>
 #include <fonts/fonts.h>
-#include <temple/aasrenderer.h>
+#include <aas/aas_renderer.h>
 #include <temple/dll.h>
 #include <particles/render.h>
 #include <particles/instances.h>
@@ -136,7 +136,7 @@ GameRenderer::GameRenderer(TigInitializer &tig,
 
 	Expects(!gameRenderer);
 
-	mAasRenderer = std::make_unique<temple::AasRenderer>(
+	mAasRenderer = std::make_unique<aas::Renderer>(
 		gameSystems.GetAAS(), 
 		tig.GetRenderingDevice(),
 		tig.GetShapeRenderer2d(),

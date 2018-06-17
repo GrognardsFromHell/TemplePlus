@@ -304,6 +304,11 @@ namespace gfx {
 		virtual gsl::span<uint16_t> GetIndices() = 0;
 	};
 
+	class IRenderState {
+	public:
+		virtual ~IRenderState() = default;
+	};
+
 	class AnimatedModel {
 	public:
 		virtual ~AnimatedModel() {
@@ -376,6 +381,27 @@ namespace gfx {
 			Scale is model scale in percent.
 		*/
 		virtual float GetRadius(int scale = 100) = 0;
+
+		/**
+		 * Sets a custom render state pointer that will be freed when this model is freed.
+		 */
+		virtual void SetRenderState(std::unique_ptr<IRenderState> renderState) = 0;
+
+		/**
+		 * Returns the currently assigned render state or null.
+		 */
+		virtual IRenderState *GetRenderState() const = 0;
+
+		template<typename T>
+		T &GetOrCreateRenderState() {
+			auto current = GetRenderState();
+			if (!current) {
+				auto newState = std::make_unique<T>();
+				current = newState.get();
+				SetRenderState(std::move(newState));
+			}
+			return (T&) *current;
+		}
 
 	};
 

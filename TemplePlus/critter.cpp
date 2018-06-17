@@ -1085,7 +1085,7 @@ void LegacyCritterSystem::UpdateModelEquipment(objHndl obj)
 	// This is a bit shit but since AAS will just splice the
 	// add meshes into the list of model parts, 
 	// we have to reset the render buffers
-	gameSystems->GetAAS().InvalidateBuffers(model->GetHandle());
+	model->SetRenderState(nullptr);
 
 	// Apply the naked replacement materials for
 	// equipment slots that support them

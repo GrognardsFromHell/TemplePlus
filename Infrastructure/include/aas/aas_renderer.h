@@ -3,7 +3,6 @@
 
 #include <graphics/materials.h>
 #include <infrastructure/meshes.h>
-#include <temple/meshes.h>
 
 namespace gfx {
 	class RenderingDevice;
@@ -13,21 +12,21 @@ namespace gfx {
 	class ShapeRenderer3d;
 }
 
-namespace temple {
+namespace aas {
 
 	using AasStatePtr = std::unique_ptr<struct AasRenderData>;
 
 	struct AasRenderSubmeshData;
 
-	class AasRenderer : public gfx::AnimatedModelRenderer {
+	class Renderer : public gfx::AnimatedModelRenderer {
 	public:
-		AasRenderer(
-			AasAnimatedModelFactory &aasFactory,
+		Renderer(
+			gfx::AnimatedModelFactory &aasFactory,
 			gfx::RenderingDevice &device,
 			gfx::ShapeRenderer2d &shapeRenderer2d,
 			gfx::ShapeRenderer3d &shapeRenderer3d,
 			gfx::MdfMaterialFactory &mdfFactory);
-		~AasRenderer();
+		~Renderer();
 
 		void Render(gfx::AnimatedModel *model,
 			const gfx::AnimatedModelParams& params,
@@ -52,14 +51,12 @@ namespace temple {
 			bool softShadows);
 
 	private:
-		AasAnimatedModelFactory &mAasFactory;
+		gfx::AnimatedModelFactory &mAasFactory;
 		gfx::RenderingDevice &mDevice;
 		gfx::ShapeRenderer2d &mShapeRenderer2d;
 		gfx::ShapeRenderer3d &mShapeRenderer3d;
 		gfx::Material mGeometryShadowMaterial;
 		gfx::MdfMaterialFactory &mMdfFactory;
-		AasFreeListenerHandle mListenerHandle;
-		std::unordered_map<AasHandle, AasStatePtr> mRenderDataCache;
 		
 		// Shadow map related state
 		gfx::RenderTargetTexturePtr mShadowTarget; // Shadow map texture

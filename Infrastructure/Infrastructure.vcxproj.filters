@@ -321,6 +321,9 @@
     <ClInclude Include="include\fmt\string.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\aas\aas_renderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="version.cpp">
@@ -450,6 +453,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="include\fmt\printf.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\aas\aas_renderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -12,7 +12,7 @@
 #include <infrastructure/images.h>
 #include <graphics/shaperenderer3d.h>
 #include <graphics/shaperenderer2d.h>
-#include <temple/aasrenderer.h>
+#include <aas/aas_renderer.h>
 #include "../critter.h"
 #include <graphics/dynamictexture.h>
 
@@ -49,7 +49,7 @@ static struct MapRenderAddresses : temple::AddressTable {
 MapObjectRenderer::MapObjectRenderer(GameSystems& gameSystems, 
 	gfx::RenderingDevice& device, 
 	gfx::MdfMaterialFactory &mdfFactory,
-	temple::AasRenderer &aasRenderer)
+	aas::Renderer &aasRenderer)
 	: mGameSystems(gameSystems),
 	  mDevice(device),
 	  mAasRenderer(aasRenderer) {

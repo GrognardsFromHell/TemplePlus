@@ -17,9 +17,6 @@ namespace temple {
 		std::function<int(const std::string&)> resolveMaterial;
 	};
 
-	using AasFreeListener = std::function<void(AasHandle)>;
-	using AasFreeListenerHandle = std::list<AasFreeListener>::iterator;
-
 	class AasAnimatedModelFactory : public gfx::AnimatedModelFactory {
 	public:
 		explicit AasAnimatedModelFactory(const AasConfig &config);
@@ -45,11 +42,6 @@ namespace temple {
 		*/
 		std::unique_ptr<gfx::AnimatedModel> BorrowByHandle(AasHandle handle) override;
 
-		AasFreeListenerHandle AddFreeListener(AasFreeListener listener);
-		void RemoveFreeListener(AasFreeListenerHandle handle);
-
-		void InvalidateBuffers(AasHandle handle);
-
 		void FreeHandle(uint32_t handle) override;
 
 		void FreeAll() override;
@@ -59,7 +51,8 @@ namespace temple {
 		using FnAasModelFree = int(temple::AasHandle);
 		FnAasModelFree* mOrgModelFree;
 		static AasAnimatedModelFactory *sInstance;
-		std::list<AasFreeListener> mListeners;
+
+		std::unique_ptr<gfx::IRenderState> mRenderStates[5000];
 
 		// This is the mapping loaded from meshes.mes
 		std::unordered_map<int, std::string> mMapping;
