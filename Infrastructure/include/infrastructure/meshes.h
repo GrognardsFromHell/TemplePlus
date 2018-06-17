@@ -392,6 +392,7 @@ namespace gfx {
 		float rotationYaw = 0;
 		AnimatedModelPtr parentAnim;
 		std::string attachedBoneName;
+		bool rotation3d = false; // Enables use of rotationRoll/rotationPitch/rotationYaw
 	};
 
 	class AnimatedModelFactory {

@@ -216,7 +216,7 @@ void AasRenderer::Render(gfx::AnimatedModel *model,
 	auto materialIds(model->GetSubmeshes());
 	for (size_t i = 0; i < materialIds.size(); ++i) {
 		auto materialId = materialIds[i];
-		auto submesh(model->GetSubmesh(params, i));
+		auto submesh(params.rotation3d ? model->GetSubmeshForParticles(params, i) : model->GetSubmesh(params, i));
 		
 		// Remove special material marker in the upper byte and only 
 		// use the actual shader registration id
