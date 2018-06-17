@@ -662,6 +662,11 @@ namespace temple {
 		}
 	}
 
+	void AasAnimatedModelFactory::FreeHandle(uint32_t handle)
+	{
+		functions.Free(handle);
+	}
+
 	void AasAnimatedModelFactory::FreeAll()
 	{
 		functions.FreeAll();
