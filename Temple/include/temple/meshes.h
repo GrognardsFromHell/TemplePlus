@@ -61,7 +61,7 @@ namespace temple {
 
 		// This is the mapping loaded from meshes.mes
 		std::unordered_map<int, std::string> mMapping;
-		
+
 		static int __stdcall AasResolveMaterial(const char *filename, int, int);
 		static int AasFreeModel(temple::AasHandle handle);
 

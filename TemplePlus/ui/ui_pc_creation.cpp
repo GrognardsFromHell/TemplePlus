@@ -2713,10 +2713,8 @@ void UiPcCreation::GenderFinalize(CharEditorSelectionPacket& selPkt, objHndl& ha
 	}
 
 	auto animHandle = objects.GetAnimHandle(handle);
-	auto aasAdvance = temple::GetRef<void(__cdecl)(int, float, int, int, temple::AasAnimParams*, int*)>(0x10262C10);
-	temple::AasAnimParams animParams;
-	int sthg = 0;
-	aasAdvance(animHandle->GetHandle(), 1.0, 0, 0, &animParams, &sthg);
+	gfx::AnimatedModelParams animParams;
+	animHandle->Advance(1.0, 0, 0, animParams);
 
 	if (selPkt.isPointbuy){
 		objects.setInt32(handle, obj_f_pc_roll_count, -25);

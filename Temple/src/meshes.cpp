@@ -32,7 +32,7 @@ namespace temple {
 	/*
 	Bitfield that indicates once-per-animation events that happened
 	during advancing the animation's time.
-*/
+	*/
 	enum AasEventFlag : uint32_t {
 		AEF_NONE = 0,
 		AEF_ACTION = 1,
@@ -40,7 +40,7 @@ namespace temple {
 	};
 
 	/*
-		Configuration for the overall system
+	Configuration for the overall system
 	*/
 	typedef AasStatus(*FnAasGetFilename)(int meshId, char* filenameOut);
 	typedef AasStatus(*FnAasGetAnimName)(int animid, char* nameOut);
@@ -136,14 +136,14 @@ namespace temple {
 		Not sure what this does, but it only does something if the animated model has
 		cloth bones. Otherwise it's a noop. So presumably, it has something to do
 		with cloth simulation.
-	*/
+		*/
 		int(__cdecl *SetClothFlagSth)(AasHandle aasHandle);
 
 		/*
-	Used by the particle system model renderer before getting the submesh.
-	animTime in this case is the particle's lifetime, for which the model is
-	to be rendered.
-	*/
+		Used by the particle system model renderer before getting the submesh.
+		animTime in this case is the particle's lifetime, for which the model is
+		to be rendered.
+		*/
 		int(__cdecl *SetTime)(AasHandle aasHandle, float time, const AasAnimParams* params);
 
 		AasFunctions() {
