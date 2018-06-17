@@ -115,6 +115,11 @@ class CritterReplacements : public TempleFix
 			critterSys.GenerateHp(handle);
 		});
 
+		// CritterGetWeaponAnimId
+		replaceFunction<int(objHndl, gfx::WeaponAnim)>(0x10020c60, [](objHndl handle, gfx::WeaponAnim animId) {
+			return (int) critterSys.GetAnimId(handle, animId);
+		});
+
 		// something used in the anim goals
 		replaceFunction<int(objHndl, objHndl)>(0x10065C30, [](objHndl item, objHndl parent)->int{
 
@@ -1068,6 +1073,7 @@ std::string LegacyCritterSystem::GetHairStyleFile(HairStyle style, const char * 
 	return std::string();
 }
 
+// Originally @ 1007E9D0
 void LegacyCritterSystem::UpdateModelEquipment(objHndl obj)
 {
 
@@ -1094,7 +1100,6 @@ void LegacyCritterSystem::UpdateModelEquipment(objHndl obj)
 	ApplyReplacementMaterial(model, 200 + raceOffset); // Gloves
 	ApplyReplacementMaterial(model, 500 + raceOffset); // Armor
 	ApplyReplacementMaterial(model, 800 + raceOffset); // Boots
-	
 
 	// Now apply it for the actual equipment
 	auto baseRaceOffset = GetModelRaceOffset(obj, true); // use base race for equipment because holy crap ToEE has an entry for each race!!!

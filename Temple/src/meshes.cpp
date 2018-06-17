@@ -559,6 +559,46 @@ namespace temple {
 		return 0;
 	}
 
+	float AasAnimatedModelFactory::AasGetDistPerSec(temple::AasHandle handle)
+	{
+		// Get the original movement speed
+		float moveSpeed = sInstance->mOrgGetDistPerSec(handle);
+
+		if (moveSpeed == 0.0f) {
+			return moveSpeed;
+		}
+
+		auto model = sInstance->BorrowByHandle(handle);
+
+		auto mainAnim = model->GetAnimId();
+
+		if (!mainAnim.IsWeaponAnim()) {
+			return moveSpeed;
+		}
+
+		bool walk = mainAnim.GetWeaponAnim() == gfx::WeaponAnim::Walk;
+		bool sneak = mainAnim.GetWeaponAnim() == gfx::WeaponAnim::Sneak;
+
+		if (sInstance->mConfig.equalizeMovementSpeed) { // *config.speedupFactor; // disregard scaling, equalize across different models
+			if (sneak) {
+				if (sInstance->mConfig.fastSneakAnim) {
+					moveSpeed = 190;
+				}
+			} else if (!walk) { // should be just running animations now
+				if (moveSpeed < 180) {
+					moveSpeed = 190; // to equalize with summoned monsters
+				}
+			}
+		} else {
+			if (sneak && sInstance->mConfig.fastSneakAnim) {
+				moveSpeed = moveSpeed * 190;
+			}
+		}
+
+		return moveSpeed;
+
+	}
+
 	int AasAnimatedModelFactory::AasFreeModel(temple::AasHandle handle)
 	{
 		if (handle >= 1 && handle < 5000) {
@@ -610,6 +650,11 @@ namespace temple {
 		// The MDF resolver is not configurable, so we have to set it here manually
 		MH_CreateHook(temple::GetPointer<void*>(0x10269430), &AasResolveMaterial, nullptr);
 		MH_CreateHook(functions.Free, &AasFreeModel, (void**)&mOrgModelFree);
+
+		if (config.equalizeMovementSpeed || config.fastSneakAnim) {
+			MH_CreateHook(temple::GetPointer<void*>(0x10263DA0), &AasGetDistPerSec, (void**)&mOrgGetDistPerSec);
+		}
+
 		MH_EnableHook(nullptr);
 
 		auto meshesMapping = MesFile::ParseFile("art/meshes/meshes.mes");

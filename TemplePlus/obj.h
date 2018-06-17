@@ -42,7 +42,9 @@ struct Objects : temple::AddressTable {
 	int GetAasHandle(objHndl handle);
 	gfx::AnimatedModelPtr GetAnimHandle(objHndl obj);
 	gfx::AnimatedModelParams GetAnimParams(objHndl obj);
+	void ClearAnim(objHndl handle);
 	void SetAnimId(objHndl obj, gfx::EncodedAnimId id);
+	bool HasAnimId(objHndl obj, gfx::EncodedAnimId id);
 	gfx::EncodedAnimId GetIdleAnim(objHndl obj);
 	bool IsDoorOpen(objHndl obj);
 	PortalFlag GetPortalFlags(objHndl obj) {

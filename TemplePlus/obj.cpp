@@ -199,6 +199,16 @@ gfx::AnimatedModelParams Objects::GetAnimParams(objHndl handle)
 	return result;
 	}
 
+void Objects::ClearAnim(objHndl handle)
+{
+	auto obj = gameSystems->GetObj().GetObject(handle);
+	auto animHandle = obj->GetInt32(obj_f_animation_handle);
+	if (animHandle) {
+		gameSystems->GetAAS().FreeHandle(animHandle);
+		obj->SetInt32(obj_f_animation_handle, 0);
+	}
+}
+
 void Objects::SetAnimId(objHndl obj, gfx::EncodedAnimId animId) {
 
 	// Propagate animations to main/off hand equipment for critters
@@ -212,9 +222,9 @@ void Objects::SetAnimId(objHndl obj, gfx::EncodedAnimId animId) {
 		// Apparently certain anim IDs cause weapons to disappear, 
 		// possibly skill use/casting?
 		int opacity = 0;
-		if (animId & 0xC0000000) {
+		if (animId.IsSpecialAnim()) {
 			opacity = 255;
-	}
+		}
 
 		if (mainHand) {
 			FadeTo(mainHand, opacity, 10, 16, 0);
@@ -229,6 +239,12 @@ void Objects::SetAnimId(objHndl obj, gfx::EncodedAnimId animId) {
 	auto model = GetAnimHandle(obj);
 	model->SetAnimId(animId);
 
+}
+
+bool Objects::HasAnimId(objHndl obj, gfx::EncodedAnimId animId)
+{
+	auto model = GetAnimHandle(obj);
+	return model->HasAnim(animId);
 }
 
 gfx::EncodedAnimId Objects::GetIdleAnim(objHndl obj)

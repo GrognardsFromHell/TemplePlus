@@ -2,6 +2,7 @@
 #include "stdafx.h"
 
 #include <graphics/math.h>
+#include <infrastructure/meshes.h>
 
 #include "common.h"
 #include "dispatcher.h"
@@ -5023,13 +5024,7 @@ int ClassAbilityCallbacks::DruidWildShapeReset(DispatcherCallbackArgs args){
 	args.SetCondArg(0, numTimes);
 	if (args.GetCondArg(2)) {
 		args.SetCondArg(2, 0);
-		auto obj = gameSystems->GetObj().GetObject(args.objHndCaller);
-		auto animHandle = obj->GetInt32(obj_f_animation_handle);
-		if (animHandle) {
-			auto freeAasModel = temple::GetPointer<void(int)>(0x10264510);
-			freeAasModel(animHandle);
-			obj->SetInt32(obj_f_animation_handle, 0);
-		}
+		objects.ClearAnim(args.objHndCaller);
 
 		gameSystems->GetParticleSys().CreateAtObj("sp-animal shape", args.objHndCaller);
 		d20StatusSys.initItemConditions(args.objHndCaller);
@@ -5167,13 +5162,7 @@ int ClassAbilityCallbacks::DruidWildShapePerform(DispatcherCallbackArgs args){
 
 
 	auto initObj = [args](int protoId) {
-		auto obj = gameSystems->GetObj().GetObject(args.objHndCaller);
-		auto animHandle = obj->GetInt32(obj_f_animation_handle);
-		if (animHandle) {
-			auto freeAasModel = temple::GetPointer<void(int)>(0x10264510);
-			freeAasModel(animHandle);
-			obj->SetInt32(obj_f_animation_handle, 0);
-		}
+		objects.ClearAnim(args.objHndCaller);
 		if (protoId) {
 			auto lvl = objects.StatLevelGet(args.objHndCaller, stat_level);
 			damage.Heal(args.objHndCaller, args.objHndCaller, Dice(0, 0, lvl), D20A_CLASS_ABILITY_SA);

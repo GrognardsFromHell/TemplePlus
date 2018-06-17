@@ -94,7 +94,6 @@
     <ClCompile Include="general_condition_fixes.cpp" />
     <ClCompile Include="InfinityEngine.cpp" />
     <ClCompile Include="legacyscriptsystem.cpp" />
-    <ClCompile Include="graphics\aas_hooks.cpp" />
     <ClCompile Include="graphics\imgfile.cpp" />
     <ClCompile Include="graphics\loadingscreen.cpp" />
     <ClCompile Include="graphics\mapterrain.cpp" />

@@ -276,7 +276,6 @@
     <ClCompile Include="ui\ui_char_editor_feats.cpp">
       <Filter>ui</Filter>
     </ClCompile>
-    <ClCompile Include="graphics\aas_hooks.cpp" />
     <ClCompile Include="gamesystems\objects\objevent.cpp" />
     <ClCompile Include="ui\ui_party.cpp">
       <Filter>ui</Filter>

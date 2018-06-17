@@ -15,6 +15,9 @@ namespace temple {
 		std::function<std::string(int)> resolveSkmFile;
 		std::function<void(const std::string&)> runScript;
 		std::function<int(const std::string&)> resolveMaterial;
+
+		bool equalizeMovementSpeed = false;
+		bool fastSneakAnim = false;
 	};
 
 	class AasAnimatedModelFactory : public gfx::AnimatedModelFactory {
@@ -50,6 +53,10 @@ namespace temple {
 		AasConfig mConfig;
 		using FnAasModelFree = int(temple::AasHandle);
 		FnAasModelFree* mOrgModelFree;
+
+		using FnAasGetDistPerSec = float(temple::AasHandle);
+		FnAasGetDistPerSec* mOrgGetDistPerSec = nullptr;
+
 		static AasAnimatedModelFactory *sInstance;
 
 		std::unique_ptr<gfx::IRenderState> mRenderStates[5000];
@@ -58,6 +65,7 @@ namespace temple {
 		std::unordered_map<int, std::string> mMapping;
 
 		static int __stdcall AasResolveMaterial(const char *filename, int, int);
+		static float AasGetDistPerSec(temple::AasHandle handle);
 		static int AasFreeModel(temple::AasHandle handle);
 
 	};

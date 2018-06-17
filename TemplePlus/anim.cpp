@@ -2411,21 +2411,19 @@ int GoalStateFuncs::GoalStateFunc65(AnimSlot& slot)
 
 	auto newRotAdj = newRot - M_PI / 4;
 
-	auto weaponIdParam = 10;
+	gfx::WeaponAnim weaponIdParam = gfx::WeaponAnim::FrontHit;
 	if (newRotAdj < M_PI / 4)
-		weaponIdParam = 10;
+		weaponIdParam = gfx::WeaponAnim::FrontHit;
 	else if (newRotAdj < M_PI*3/4)
-		weaponIdParam = 13;
+		weaponIdParam = gfx::WeaponAnim::LeftHit;
 	else if (newRotAdj < M_PI * 5 / 4)
-		weaponIdParam = 19;
+		weaponIdParam = gfx::WeaponAnim::BackHit;
 	else if (newRotAdj < M_PI * 7 / 4)
-		weaponIdParam = 16;
+		weaponIdParam = gfx::WeaponAnim::RightHit;
 
-	auto critterGetWeaponAnimId = temple::GetRef<int(__cdecl)(objHndl, int)>(0x10020C60);
-	auto weaponAnimId = critterGetWeaponAnimId(slot.param1.obj, weaponIdParam);
+	auto weaponAnimId = critterSys.GetAnimId(slot.param1.obj, weaponIdParam);
+	objects.SetAnimId(slot.param1.obj, weaponAnimId);
 
-	auto anim_obj_set_aas_anim_id = temple::GetRef<int(__cdecl)(objHndl, int)>(0x10021D50);
-	anim_obj_set_aas_anim_id(slot.param1.obj, weaponAnimId);
 	return TRUE;
 
 }
