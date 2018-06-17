@@ -43,14 +43,16 @@ namespace temple {
 		The returned model will not free the actual animation when it is
 		destroyed.
 		*/
-		std::unique_ptr<gfx::AnimatedModel> BorrowByHandle(AasHandle handle);
+		std::unique_ptr<gfx::AnimatedModel> BorrowByHandle(AasHandle handle) override;
 
 		AasFreeListenerHandle AddFreeListener(AasFreeListener listener);
 		void RemoveFreeListener(AasFreeListenerHandle handle);
 
 		void InvalidateBuffers(AasHandle handle);
 
-		void FreeAll();
+		void FreeHandle(uint32_t handle) override;
+
+		void FreeAll() override;
 
 	private:
 		AasConfig mConfig;

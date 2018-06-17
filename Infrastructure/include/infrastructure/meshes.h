@@ -412,6 +412,13 @@ namespace gfx {
 			EncodedAnimId idleAnimId,
 			const AnimatedModelParams& params) = 0;
 
+		virtual std::unique_ptr<gfx::AnimatedModel> BorrowByHandle(uint32_t handle) = 0;
+
+		virtual void FreeHandle(uint32_t handle) = 0;
+
+		virtual void FreeAll() = 0;
+
+
 	};
 
 	class AnimatedModelRenderer {
