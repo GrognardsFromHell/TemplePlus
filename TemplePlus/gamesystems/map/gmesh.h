@@ -2,7 +2,7 @@
 #pragma once
 
 #include <infrastructure/meshes.h>
-#include <temple/aasrenderer.h>
+#include <aas/aas_renderer.h>
 
 #include "../../common.h"
 
@@ -47,14 +47,14 @@ private:
 
 class GMeshRenderer {
 public:
-	GMeshRenderer(temple::AasRenderer &aasRenderer,
+	GMeshRenderer(aas::Renderer &aasRenderer,
 		MapObjectRenderer &mapObjRenderer,
 		GMeshSystem &gmeshSystem);
 
 	void Render();
 
 private:
-	temple::AasRenderer &mAasRenderer;
+	aas::Renderer &mAasRenderer;
 	MapObjectRenderer &mMapObjRenderer;
 	GMeshSystem &mGmeshSystem;
 };

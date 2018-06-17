@@ -11,13 +11,11 @@
 #include <graphics/mdfmaterials.h>
 #include <graphics/dynamictexture.h>
 
-#include "temple/aasrenderer.h"
+#include "aas/aas_renderer.h"
 
 using namespace gfx;
 
-namespace temple {
-
-static AasRenderer* aasRenderer = nullptr;
+namespace aas {
 
 // Data to be stored for an AAS model so it can be rendered 
 // more efficiently
@@ -35,14 +33,14 @@ struct AasRenderSubmeshData {
 	NO_COPY_OR_MOVE(AasRenderSubmeshData);
 };
 
-struct AasRenderData {
+struct AasRenderData : public gfx::IRenderState {
 	std::array<std::unique_ptr<AasRenderSubmeshData>, 16> submeshes;
 
 	AasRenderData() = default;
 	NO_COPY_OR_MOVE(AasRenderData);
 };
 
-AasRenderer::AasRenderer(AasAnimatedModelFactory &aasFactory, 
+Renderer::Renderer(gfx::AnimatedModelFactory &aasFactory,
 						 RenderingDevice& device, 
 						 ShapeRenderer2d &shapeRenderer2d,
 						 ShapeRenderer3d &shapeRenderer3d,
@@ -58,27 +56,11 @@ AasRenderer::AasRenderer(AasAnimatedModelFactory &aasFactory,
 	  mShadowMapMaterial(CreateShadowMapMaterial(device)),
 	  mGaussBlurHor(CreateGaussBlurMaterial(device, mShadowTarget, true)),
 	  mGaussBlurVer(CreateGaussBlurMaterial(device, mShadowTargetTmp, false)) {
-	Expects(!aasRenderer);
-
-	/*
-		When an AAS handle is freed by the factory, remove all associated
-		rendering data here as well.
-	*/
-	mListenerHandle = aasFactory.AddFreeListener([&](AasHandle handle) {
-		auto it = mRenderDataCache.find(handle);
-		if (it != mRenderDataCache.end()) {
-			mRenderDataCache.erase(it);
-		}
-	});
-
 }
 
-AasRenderer::~AasRenderer() {
-	aasRenderer = nullptr;
-	mAasFactory.RemoveFreeListener(mListenerHandle);
-}
+Renderer::~Renderer() = default;
 
-AasRenderSubmeshData& AasRenderer::GetSubmeshData(AasRenderData& renderData, int submeshId, Submesh & submesh)
+AasRenderSubmeshData& Renderer::GetSubmeshData(AasRenderData& renderData, int submeshId, Submesh & submesh)
 {
 	if (!renderData.submeshes[submeshId]) {
 		renderData.submeshes[submeshId] = std::make_unique<AasRenderSubmeshData>(mDevice);
@@ -107,7 +89,7 @@ AasRenderSubmeshData& AasRenderer::GetSubmeshData(AasRenderData& renderData, int
 	return submeshData;
 }
 
-Material AasRenderer::CreateGeometryShadowMaterial(gfx::RenderingDevice &device)
+Material Renderer::CreateGeometryShadowMaterial(gfx::RenderingDevice &device)
 {
 	BlendSpec blendState;
 	blendState.blendEnable = true;
@@ -124,7 +106,7 @@ Material AasRenderer::CreateGeometryShadowMaterial(gfx::RenderingDevice &device)
 	return device.CreateMaterial(blendState, depthStencilState, rasterizerState, {}, vs, ps);
 }
 
-Material AasRenderer::CreateShadowMapMaterial(gfx::RenderingDevice &device) {
+Material Renderer::CreateShadowMapMaterial(gfx::RenderingDevice &device) {
 	DepthStencilSpec depthStencilState;
 	depthStencilState.depthEnable = false;
 	auto vs{ device.GetShaders().LoadVertexShader("shadowmap_geom_vs") };
@@ -140,7 +122,7 @@ Material AasRenderer::CreateShadowMapMaterial(gfx::RenderingDevice &device) {
 	return device.CreateMaterial(blendSpec, depthStencilState, {}, {}, vs, ps);
 }
 
-Material AasRenderer::CreateGaussBlurMaterial(gfx::RenderingDevice &device, const gfx::RenderTargetTexturePtr &texturePtr, bool horizontal) {
+Material Renderer::CreateGaussBlurMaterial(gfx::RenderingDevice &device, const gfx::RenderTargetTexturePtr &texturePtr, bool horizontal) {
 	BlendSpec blendState;
 	SamplerSpec samplerState;
 	samplerState.addressU = TextureAddress::Clamp;
@@ -166,7 +148,7 @@ Material AasRenderer::CreateGaussBlurMaterial(gfx::RenderingDevice &device, cons
 	return device.CreateMaterial(blendState, depthStencilState, rasterizerState, samplers, vs, ps);
 }
 
-void AasRenderer::RecalcNormals(int vertexCount, const XMFLOAT4* pos, XMFLOAT4* normals, int primCount, const uint16_t* indices) {
+void Renderer::RecalcNormals(int vertexCount, const XMFLOAT4* pos, XMFLOAT4* normals, int primCount, const uint16_t* indices) {
 	static XMFLOAT4 recalcNormalsBuffer[0x8000];
 	memset(recalcNormalsBuffer, 0, vertexCount * sizeof(XMFLOAT4));
 
@@ -202,16 +184,12 @@ void AasRenderer::RecalcNormals(int vertexCount, const XMFLOAT4* pos, XMFLOAT4* 
 	}
 }
 
-void AasRenderer::Render(gfx::AnimatedModel *model,
+void Renderer::Render(gfx::AnimatedModel *model,
 	const gfx::AnimatedModelParams& params,
 	gsl::span<Light3d> lights,
 	const MdfRenderOverrides *materialOverrides) {
 
-	// Find or create render caching data for the model
-	auto &renderData = mRenderDataCache[model->GetHandle()];
-	if (!renderData) {
-		renderData = std::make_unique<AasRenderData>();
-	}
+	auto &renderData = model->GetOrCreateRenderState<AasRenderData>();
 	
 	auto materialIds(model->GetSubmeshes());
 	for (size_t i = 0; i < materialIds.size(); ++i) {
@@ -253,7 +231,7 @@ void AasRenderer::Render(gfx::AnimatedModel *model,
 			);
 		}
 
-		auto &submeshData = GetSubmeshData(*renderData, i, *submesh);
+		auto &submeshData = GetSubmeshData(renderData, i, *submesh);
 		submeshData.binding.Bind();
 
 		mDevice.SetIndexBuffer(*submeshData.idxBuffer);
@@ -264,20 +242,16 @@ void AasRenderer::Render(gfx::AnimatedModel *model,
 
 }
 
-void AasRenderer::RenderWithoutMaterial(gfx::AnimatedModel *model, 
+void Renderer::RenderWithoutMaterial(gfx::AnimatedModel *model, 
 	const gfx::AnimatedModelParams& params) {
 
-	// Find or create render caching data for the model
-	auto &renderData = mRenderDataCache[model->GetHandle()];
-	if (!renderData) {
-		renderData = std::make_unique<AasRenderData>();
-	}
+	auto &renderData = model->GetOrCreateRenderState<AasRenderData>();
 
 	auto materialIds(model->GetSubmeshes());
 	for (size_t i = 0; i < materialIds.size(); ++i) {
 		auto submesh(model->GetSubmesh(params, i));
 
-		auto &submeshData = GetSubmeshData(*renderData, i, *submesh);
+		auto &submeshData = GetSubmeshData(renderData, i, *submesh);
 		submeshData.binding.Bind();
 
 		mDevice.SetIndexBuffer(*submeshData.idxBuffer);
@@ -296,17 +270,13 @@ struct ShadowGlobals {
 	XMFLOAT4 alpha;
 };
 
-void AasRenderer::RenderGeometryShadow(gfx::AnimatedModel * model, 
+void Renderer::RenderGeometryShadow(gfx::AnimatedModel * model, 
 	const gfx::AnimatedModelParams & params, 
 	const gfx::Light3d & globalLight,
 	float alpha)
 {
 	
-	// Find or create render caching data for the submesh
-	auto &renderData = mRenderDataCache[model->GetHandle()];
-	if (!renderData) {
-		renderData = std::make_unique<AasRenderData>();
-	}
+	auto &renderData = model->GetOrCreateRenderState<AasRenderData>();
 
 	mDevice.SetMaterial(mGeometryShadowMaterial);
 
@@ -321,7 +291,7 @@ void AasRenderer::RenderGeometryShadow(gfx::AnimatedModel * model,
 	for (size_t i = 0; i < materialIds.size(); ++i) {
 		auto submesh(model->GetSubmesh(params, i));
 		
-		auto &submeshData = GetSubmeshData(*renderData, i, *submesh);
+		auto &submeshData = GetSubmeshData(renderData, i, *submesh);
 		submeshData.binding.Bind();
 			
 		mDevice.SetIndexBuffer(*submeshData.idxBuffer);
@@ -340,7 +310,7 @@ struct ShadowShaderGlobals {
 	XMFLOAT4 color;
 };
 
-void AasRenderer::RenderShadowMapShadow(gsl::span<gfx::AnimatedModel*> models,
+void Renderer::RenderShadowMapShadow(gsl::span<gfx::AnimatedModel*> models,
 										gsl::span<const gfx::AnimatedModelParams*> modelParams,
 										const XMFLOAT3 &center,
 										float radius,

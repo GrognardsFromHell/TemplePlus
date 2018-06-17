@@ -228,13 +228,12 @@ namespace temple {
 		}
 	}
 
+	using RenderStateHolder = std::unique_ptr<gfx::IRenderState>&;
+
 	class AasAnimatedModel : public gfx::AnimatedModel {
 	public:
 
-		explicit AasAnimatedModel(AasHandle handle) : mHandle(handle) {
-		}
-
-		AasAnimatedModel(AasHandle handle, bool borrowed) : mHandle(handle), mBorrowed(borrowed) {
+		AasAnimatedModel(AasHandle handle, RenderStateHolder renderStateHolder, bool borrowed) : mHandle(handle), mRenderStateHolder(renderStateHolder), mBorrowed(borrowed) {
 		}
 
 		~AasAnimatedModel();
@@ -268,10 +267,19 @@ namespace temple {
 		float GetRadius(int scale) override;
 
 		static AasAnimParams Convert(const gfx::AnimatedModelParams& params);
+		/**
+		* Sets a custom render state pointer that will be freed when this model is freed.
+		*/
+		virtual void SetRenderState(std::unique_ptr<gfx::IRenderState> renderState) override;
 
+		/**
+		* Returns the currently assigned render state or null.
+		*/
+		virtual gfx::IRenderState *GetRenderState() const override;
 	private:
 		AasHandle mHandle;
 		bool mBorrowed = false;
+		RenderStateHolder mRenderStateHolder;
 	};
 
 	AasAnimParams AasAnimatedModel::Convert(const gfx::AnimatedModelParams& params) {
@@ -300,6 +308,16 @@ namespace temple {
 			result.flags = 1;
 		}
 		return result;
+	}
+
+	void AasAnimatedModel::SetRenderState(std::unique_ptr<gfx::IRenderState> renderState)
+	{
+		mRenderStateHolder = std::move(renderState);
+	}
+
+	gfx::IRenderState * AasAnimatedModel::GetRenderState() const
+	{
+		return mRenderStateHolder.get();
 	}
 
 	AasAnimatedModel::~AasAnimatedModel() {
@@ -543,8 +561,8 @@ namespace temple {
 
 	int AasAnimatedModelFactory::AasFreeModel(temple::AasHandle handle)
 	{
-		for (auto &listener : sInstance->mListeners) {
-			listener(handle);
+		if (handle >= 1 && handle < 5000) {
+			sInstance->mRenderStates[handle].reset();
 		}
 
 		return sInstance->mOrgModelFree(handle);
@@ -620,7 +638,7 @@ namespace temple {
 			throw TempleException("Could not load model {} with skeleton {}.", meshId, skeletonId);
 		}
 
-		return std::make_shared<AasAnimatedModel>(handle, borrow);
+		return std::make_shared<AasAnimatedModel>(handle, mRenderStates[handle], borrow);
 
 	}
 
@@ -635,31 +653,12 @@ namespace temple {
 			throw TempleException("Could not load model {} with skeleton {}.", meshFilename, skeletonFilename);
 		}
 
-		return std::make_shared<AasAnimatedModel>(handle);
+		return std::make_shared<AasAnimatedModel>(handle, mRenderStates[handle], false);
 
 	}
 
 	std::unique_ptr<gfx::AnimatedModel> AasAnimatedModelFactory::BorrowByHandle(AasHandle handle) {
-		return std::make_unique<AasAnimatedModel>(handle, true);
-	}
-
-	AasFreeListenerHandle AasAnimatedModelFactory::AddFreeListener(AasFreeListener listener)
-	{
-		mListeners.push_back(listener);
-		auto it = mListeners.end();
-		--it;
-		return it;
-	}
-
-	void AasAnimatedModelFactory::RemoveFreeListener(AasFreeListenerHandle it)
-	{
-		mListeners.erase(it);
-	}
-
-	void AasAnimatedModelFactory::InvalidateBuffers(AasHandle handle) {
-		for (auto &listener : sInstance->mListeners) {
-			listener(handle);
-		}
+		return std::make_unique<AasAnimatedModel>(handle, mRenderStates[handle], true);
 	}
 
 	void AasAnimatedModelFactory::FreeHandle(uint32_t handle)

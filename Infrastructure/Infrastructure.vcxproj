@@ -162,6 +162,7 @@
     <ClInclude Include="breakpad\minidump_format.h" />
     <ClInclude Include="breakpad\scoped_ptr.h" />
     <ClInclude Include="breakpad\string_utils-inl.h" />
+    <ClInclude Include="include\aas\aas_renderer.h" />
     <ClInclude Include="include\fmt\container.h" />
     <ClInclude Include="include\fmt\format.h" />
     <ClInclude Include="include\fmt\ostream.h" />
@@ -259,6 +260,7 @@
     <ClCompile Include="include\fmt\ostream.cc" />
     <ClCompile Include="include\fmt\posix.cc" />
     <ClCompile Include="include\fmt\printf.cc" />
+    <ClCompile Include="src\aas\aas_renderer.cpp" />
     <ClCompile Include="src\allocator.cpp" />
     <ClCompile Include="breakpad.cpp" />
     <ClCompile Include="crypto.cpp" />

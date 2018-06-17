@@ -2,7 +2,7 @@
 #include <particles/instances.h>
 #include <particles/render.h>
 #include <graphics/device.h>
-#include <temple/aasrenderer.h>
+#include <aas/aas_renderer.h>
 #include <atlcomcli.h>
 #include <Shlwapi.h>
 

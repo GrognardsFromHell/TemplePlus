@@ -85,7 +85,7 @@ void GMeshSystem::CloseMap() {
 	mFiles.clear();
 }
 
-GMeshRenderer::GMeshRenderer(temple::AasRenderer& aasRenderer, MapObjectRenderer& mapObjRenderer, GMeshSystem& gmeshSystem)
+GMeshRenderer::GMeshRenderer(aas::Renderer& aasRenderer, MapObjectRenderer& mapObjRenderer, GMeshSystem& gmeshSystem)
 	: mAasRenderer(aasRenderer), mMapObjRenderer(mapObjRenderer), mGmeshSystem(gmeshSystem) {
 }
 

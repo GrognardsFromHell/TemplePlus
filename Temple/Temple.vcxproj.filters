@@ -30,9 +30,6 @@
     <ClInclude Include="include\temple\vfs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\temple\aasrenderer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\temple\moviesystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -48,9 +45,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\vfs.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\aasrenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\moviesystem.cpp">

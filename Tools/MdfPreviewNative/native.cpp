@@ -8,7 +8,7 @@
 #include <temple/vfs.h>
 #include <temple/dll.h>
 #include <temple/meshes.h>
-#include <temple/aasrenderer.h>
+#include <aas/aas_renderer.h>
 #include <graphics/buffers.h>
 #include <graphics/textures.h>
 #include <graphics/shaperenderer2d.h>
@@ -93,7 +93,7 @@ struct MdfPreviewNative {
 	std::unique_ptr<AasAnimatedModelFactory> aasFactory;
 	std::unique_ptr<ShapeRenderer2d> shapeRenderer2d;
 	std::unique_ptr<ShapeRenderer3d> shapeRenderer3d;
-	std::unique_ptr<AasRenderer> aasRenderer;
+	std::unique_ptr<aas::Renderer> aasRenderer;
 	std::unique_ptr<particles::PartSysParser> parser;
 	std::unique_ptr<particles::ParticleRendererManager> partSysRenderers;
 	std::unique_ptr<PartSysExternal> partSysExternal;
@@ -232,7 +232,7 @@ API void MdfPreviewNative_InitDevice(MdfPreviewNative *native,
 	native->shapeRenderer2d = std::make_unique<ShapeRenderer2d>(*native->device);
 	native->shapeRenderer3d = std::make_unique<ShapeRenderer3d>(*native->device);
 
-	native->aasRenderer = std::make_unique<AasRenderer>(*native->aasFactory, 
+	native->aasRenderer = std::make_unique<aas::Renderer>(*native->aasFactory, 
 		*native->device, 
 		*native->shapeRenderer2d,
 		*native->shapeRenderer3d,
