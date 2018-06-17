@@ -290,6 +290,12 @@ public:
 	static int RemoveDiseasePerform(DispatcherCallbackArgs arg); // also used in WholenessOfBodyPerform
 	void HookSpellCallbacks();
 	static int TurnUndeadHook(objHndl, Stat shouldBeClassCleric, DispIoD20ActionTurnBased* evtObj);
+	static int TurnUndeadCheck(DispatcherCallbackArgs args);
+	static int TurnUndeadPerform(DispatcherCallbackArgs args);
+	
+	//Old version of the function to be used within the replacement
+	int (*oldTurnUndeadPerform)(DispatcherCallbackArgs) = nullptr;
+	
 	void apply() override {
 		logger->info("Replacing Condition-related Functions");
 
@@ -426,6 +432,11 @@ public:
 
 		// Turn Undead extension
 		redirectCall(0x1004AF5F, TurnUndeadHook);
+		oldTurnUndeadPerform = replaceFunction(0x1004AEB0, TurnUndeadPerform);
+
+		replaceFunction<int(DispatcherCallbackArgs)>(0x1004ADE0, TurnUndeadCheck);
+
+
 
 
 		// racial callbacks
@@ -434,7 +445,6 @@ public:
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100CBAB0, spCallbacks.SpellRemoveMod);
 	}
 } condFuncReplacement;
-
 
 
 CondNode::CondNode(CondStruct *cond) {
@@ -1944,6 +1954,7 @@ void _FeatConditionsRegister()
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionAnimalCompanionAnimal);
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionAutoendTurn);
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionTurnUndead);
+	conds.hashmethods.CondStructAddToHashtable(conds.ConditionGreaterTurning);
 	
 	// Add the destruction domain to the condition table so it can be accessed in python
 	CondStruct * pDestructionDomain = *(conds.ConditionArrayDomains + 3 * Domain_Destruction);
@@ -2283,9 +2294,6 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 1, dispTypeConditionAdd, 0, CondNodeSetArg0FromSubDispDef, 1, 0);
 	DispatcherHookInit(cond, 2, dispTypeRadialMenuEntry, 0, DivineMightRadial, 0, 0);
 
-	DispatcherHookInit((CondStructNew*)ConditionTurnUndead, 6, dispTypeD20ActionPerform, DK_D20A_DIVINE_MIGHT, CondArgDecrement, 1, 0); // decrement the number of turn charges remaining; 
-	DispatcherHookInit((CondStructNew*)ConditionGreaterTurning, 6, dispTypeD20ActionPerform, DK_D20A_DIVINE_MIGHT, CondArgDecrement, 1, 0); // decrement the number of turn charges remaining
-					
 	// Divine Might Bonus (gets activated when you choose the action from the Radial Menu)
 	mCondDivineMightBonus = &condDivineMightBonus;
 	cond = mCondDivineMightBonus; 	condName = mCondDivineMightBonusName;
@@ -3319,6 +3327,51 @@ int ConditionFunctionReplacement::TurnUndeadHook(objHndl handle, Stat shouldBeCl
 	result += d20Sys.D20QueryPython(handle, "Turn Undead Level", turnType);
 
 	return result;
+}
+
+int ConditionFunctionReplacement::TurnUndeadPerform(DispatcherCallbackArgs args)
+{
+	auto dispIo = static_cast<DispIoD20ActionTurnBased*>(args.dispIO);
+	dispIo->AssertType(dispIOTypeD20ActionTurnBased);
+
+	auto turnType = args.GetCondArg(0);
+
+	auto result = condFuncReplacement.oldTurnUndeadPerform(args);  //Just call the old version now
+
+	// Send the signal if this was the turn type used
+	if (dispIo->d20a->data1 == turnType) {
+		d20Sys.D20SignalPython(args.objHndCaller, "Turn Undead Perform", turnType);
+	}
+
+	return result;
+}
+
+int ConditionFunctionReplacement::TurnUndeadCheck(DispatcherCallbackArgs args)
+{
+	auto dispIo = static_cast<DispIoD20ActionTurnBased*>(args.dispIO);
+	dispIo->AssertType(dispIOTypeD20ActionTurnBased);
+
+	auto d20a = dispIo->d20a;
+	auto turnType = args.GetCondArg(0);
+
+	if (turnType == d20a->data1) {
+		auto charges = args.GetCondArg(1);
+
+		// Check if the turn undead ability has been disabled in python
+		auto result = d20Sys.D20QueryPython(args.objHndCaller, "Turn Undead Disabled");
+		if (result > 0) {
+			dispIo->returnVal = dispIo->returnVal = AEC_INVALID_ACTION;
+		} else {
+			if (charges > 0) {
+				dispIo->returnVal = 0;
+			}
+			else {
+				dispIo->returnVal = dispIo->returnVal = AEC_OUT_OF_CHARGES;
+			}
+		}
+	}
+
+	return 0;
 }
 
 #pragma region Spell Callbacks

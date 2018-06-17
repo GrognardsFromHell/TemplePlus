@@ -1,0 +1,5 @@
+name: Staggering Strike
+flags: 12582912
+prereqs: 266 6
+description: If you deal damage with a melee sneak attack, you can also deliver a wound that limits your foe's mobility. For 1 round (or until the target is the beneficiary of any magical healing that restores at least 1 hit point, whichever comes first), your target is treated as if it were staggered, even if its nonlethal damage doesn't exactly equal its current hit points. A target can resist this effect by making a successful Fortitude save (DC equal to damage dealt). Multiple staggering strikes on the same creature do not stack. This feat has no effect on creatures not subject to sneak attack damage.
+prereq descr: Base attack bonus +6, sneak attack

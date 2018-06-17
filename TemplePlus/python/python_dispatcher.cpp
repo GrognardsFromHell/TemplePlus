@@ -320,6 +320,8 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 
 	py::class_<MetaMagicData>(m, "MetaMagicData")
 		.def(py::init<>())
+		.def(py::init<unsigned int>(), py::arg("value"))
+		.def("get_raw_value", [](MetaMagicData& mmData)->unsigned int {	return mmData;	})
 		.def("get_heighten_count", [](MetaMagicData& mmData)->int {	return mmData.metaMagicHeightenSpellCount;	})
 		.def("get_enlarge_count", [](MetaMagicData& mmData)->int {	return mmData.metaMagicEnlargeSpellCount;	})
 		.def("get_extend_count", [](MetaMagicData& mmData)->int {	return mmData.metaMagicExtendSpellCount;	})
@@ -448,6 +450,8 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.value("FullAttack", D20ActionType::D20A_FULL_ATTACK)
 		.value("StandardRangedAttack", D20ActionType::D20A_STANDARD_RANGED_ATTACK)
 		.value("StandUp", D20ActionType::D20A_STAND_UP)
+		.value("TurnUndead", D20ActionType::D20A_TURN_UNDEAD)
+		.value("ClassAbility", D20ActionType::D20A_CLASS_ABILITY_SA)
 		.value("CastSpell", D20ActionType::D20A_CAST_SPELL)
 		.value("UseItem", D20ActionType::D20A_USE_ITEM)
 		.value("UsePotion", D20ActionType::D20A_USE_POTION)
@@ -809,6 +813,10 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("turnbased_status", &EvtObjActionCost::tbStat)
 		;
 
+	py::class_<EvtObjMetaMagic, DispIO>(m, "EvtObjMetaMagic", "Used for modifying metamagic data")
+		.def_readwrite("meta_magic", &EvtObjMetaMagic::mmData)
+		;
+
 }
 
 
@@ -1047,6 +1055,10 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 
 	case dispTypeActionCostMod:
 		pbEvtObj = py::cast(static_cast<EvtObjActionCost*>(args.dispIO));
+		break;
+
+	case dispTypeMetaMagicMod:
+		pbEvtObj = py::cast(static_cast<EvtObjMetaMagic*>(args.dispIO));
 		break;
 
 
