@@ -270,7 +270,6 @@
     <ClCompile Include="images_jpeg.cpp" />
     <ClCompile Include="mdfparser.cpp" />
     <ClCompile Include="meshes_animfallbacks.cpp" />
-    <ClCompile Include="meshes_rewrite.cpp" />
     <ClCompile Include="src\debugui\debugui.cpp" />
     <ClCompile Include="src\debugui\imgui\imgui.cpp" />
     <ClCompile Include="src\debugui\imgui\imgui_demo.cpp" />

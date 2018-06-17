@@ -413,9 +413,6 @@
     <ClCompile Include="src\location.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="meshes_rewrite.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\meshes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
