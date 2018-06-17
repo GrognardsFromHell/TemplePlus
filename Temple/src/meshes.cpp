@@ -42,9 +42,9 @@ namespace temple {
 	/*
 		Configuration for the overall system
 	*/
-	typedef AasStatus (*FnAasGetFilename)(int meshId, char* filenameOut);
-	typedef AasStatus (*FnAasGetAnimName)(int animid, char* nameOut);
-	typedef void (*FnAasRunScript)(const char* script);
+	typedef AasStatus(*FnAasGetFilename)(int meshId, char* filenameOut);
+	typedef AasStatus(*FnAasGetAnimName)(int animid, char* nameOut);
+	typedef void(*FnAasRunScript)(const char* script);
 
 	struct LegacyAasConfig {
 		float scaleX = 28.284271f;
@@ -61,90 +61,90 @@ namespace temple {
 
 	static struct AasFunctions : AddressTable {
 
-		int (*Init)(const LegacyAasConfig* config);
-		int (*Exit)();
+		int(*Init)(const LegacyAasConfig* config);
+		int(*Exit)();
 
-		int (__cdecl *FreeSubmesh)(AasSubmesh* submesh);
+		int(__cdecl *FreeSubmesh)(AasSubmesh* submesh);
 
-		AasStatus (__cdecl *CreateModelByIds)(int skmId, int skaId, int idleAnimId, const AasAnimParams* animState, AasHandle* aasHandleOut);
+		AasStatus(__cdecl *CreateModelByIds)(int skmId, int skaId, int idleAnimId, const AasAnimParams* animState, AasHandle* aasHandleOut);
 
-		AasStatus (__cdecl *CreateModelByNames)(const char* skmFilename,
-		                                        const char* skaFilename,
-		                                        int idleType,
-		                                        const AasAnimParams* animState,
-		                                        AasHandle* aasHandleOut);
+		AasStatus(__cdecl *CreateModelByNames)(const char* skmFilename,
+			const char* skaFilename,
+			int idleType,
+			const AasAnimParams* animState,
+			AasHandle* aasHandleOut);
 
-		int (__cdecl *GetSubmesh)(AasHandle aasHandle, AasSubmesh** submeshOut, const AasAnimParams* animState, int submeshIdx);
+		int(__cdecl *GetSubmesh)(AasHandle aasHandle, AasSubmesh** submeshOut, const AasAnimParams* animState, int submeshIdx);
 
-		int (__cdecl *GetSubmeshForParticles)(AasHandle aasHandle, AasSubmesh** submeshOut, const AasAnimParams* animState, int submeshIdx);
+		int(__cdecl *GetSubmeshForParticles)(AasHandle aasHandle, AasSubmesh** submeshOut, const AasAnimParams* animState, int submeshIdx);
 
-		int (__cdecl *GetSubmeshes)(AasHandle aasHandle, int** submeshMaterials, int* pSubmeshCountOut);
+		int(__cdecl *GetSubmeshes)(AasHandle aasHandle, int** submeshMaterials, int* pSubmeshCountOut);
 
-		int (__cdecl *AddAddMesh)(AasHandle aasHandle, const char* addMeshName);
+		int(__cdecl *AddAddMesh)(AasHandle aasHandle, const char* addMeshName);
 
-		int (__cdecl *ClearAddMeshes)(AasHandle aasHandle);
+		int(__cdecl *ClearAddMeshes)(AasHandle aasHandle);
 
-		int (__cdecl *Advance)(AasHandle aasHandle,
-		                       float deltaTime,
-		                       float deltaDistance,
-		                       float deltaRotation,
-		                       const AasAnimParams* params,
-		                       AasEventFlag* eventOut);
+		int(__cdecl *Advance)(AasHandle aasHandle,
+			float deltaTime,
+			float deltaDistance,
+			float deltaRotation,
+			const AasAnimParams* params,
+			AasEventFlag* eventOut);
 
 		AasStatus(__cdecl *Free)(AasHandle aasHandle);
-		
-		void (__cdecl *FreeAll)();
 
-		int (__cdecl *GetAnimId)(AasHandle aasHandle, int* animIdOut);
+		void(__cdecl *FreeAll)();
 
-		int (__cdecl *GetBoneCount)(AasHandle aasHandle);
+		int(__cdecl *GetAnimId)(AasHandle aasHandle, int* animIdOut);
+
+		int(__cdecl *GetBoneCount)(AasHandle aasHandle);
 
 		const char*(__cdecl *GetBoneNameById)(AasHandle aasHandle, int boneId);
 
-		int (__cdecl *GetBoneParentId)(AasHandle aasHandle, int boneId);
+		int(__cdecl *GetBoneParentId)(AasHandle aasHandle, int boneId);
 
-		int (__cdecl *GetBoneWorldMatrixByName)(AasHandle aasHandle,
-		                                        const AasAnimParams* params,
-												DirectX::XMFLOAT4X4* worldMatrixOut,
-		                                        const char* boneName);
+		int(__cdecl *GetBoneWorldMatrixByName)(AasHandle aasHandle,
+			const AasAnimParams* params,
+			DirectX::XMFLOAT4X4* worldMatrixOut,
+			const char* boneName);
 
-		int (__cdecl *GetBoneWorldMatrixByNameForChild)(AasHandle parentAasHandle,
-		                                                AasHandle childAasHandle,
-		                                                const AasAnimParams* params,
-														DirectX::XMFLOAT4X4* worldMatrixOut,
-		                                                const char* boneName);
+		int(__cdecl *GetBoneWorldMatrixByNameForChild)(AasHandle parentAasHandle,
+			AasHandle childAasHandle,
+			const AasAnimParams* params,
+			DirectX::XMFLOAT4X4* worldMatrixOut,
+			const char* boneName);
 
-		float (__cdecl *GetDistPerSec)(AasHandle handle);
+		float(__cdecl *GetDistPerSec)(AasHandle handle);
 
-		float (__cdecl *GetRotationPerSec)(AasHandle handle);
+		float(__cdecl *GetRotationPerSec)(AasHandle handle);
 
 		/*
 		Since this actually sets the anim ID returned by "GetAnimId", this might
 		not just check that an anim is supported, but it definetly doesn't "start"
 		the animation right away as SetAnimId does.
 		*/
-		int (__cdecl *HasAnimId)(AasHandle handle, int animId);
+		int(__cdecl *HasAnimId)(AasHandle handle, int animId);
 
 
-		int (__cdecl *HasBone)(AasHandle aasHandle, const char* boneName);
+		int(__cdecl *HasBone)(AasHandle aasHandle, const char* boneName);
 
-		int (__cdecl *ReplaceSpecialMaterial)(AasHandle aasHandle, int materialId);
+		int(__cdecl *ReplaceSpecialMaterial)(AasHandle aasHandle, int materialId);
 
-		int (__cdecl *SetAnimId)(AasHandle aasHandle, int animId);
+		int(__cdecl *SetAnimId)(AasHandle aasHandle, int animId);
 
 		/*
 		Not sure what this does, but it only does something if the animated model has
-		cloth bones. Otherwise it's a noop. So presumably, it has something to do 
+		cloth bones. Otherwise it's a noop. So presumably, it has something to do
 		with cloth simulation.
 	*/
-		int (__cdecl *SetClothFlagSth)(AasHandle aasHandle);
+		int(__cdecl *SetClothFlagSth)(AasHandle aasHandle);
 
 		/*
 	Used by the particle system model renderer before getting the submesh.
 	animTime in this case is the particle's lifetime, for which the model is
 	to be rendered.
 	*/
-		int (__cdecl *SetTime)(AasHandle aasHandle, float time, const AasAnimParams* params);
+		int(__cdecl *SetTime)(AasHandle aasHandle, float time, const AasAnimParams* params);
 
 		AasFunctions() {
 			rebase(Init, 0x102640B0);
@@ -210,13 +210,14 @@ namespace temple {
 		}
 
 	private:
-		AasSubmesh* mSubmesh = nullptr;
+		AasSubmesh * mSubmesh = nullptr;
 	};
 
 	AasSubmeshAdapter::AasSubmeshAdapter(AasHandle aasHandle, const AasAnimParams& params, int submeshIdx, bool forParticles) {
 		if (!forParticles) {
 			functions.GetSubmesh(aasHandle, &mSubmesh, &params, submeshIdx);
-		} else {
+		}
+		else {
 			functions.GetSubmeshForParticles(aasHandle, &mSubmesh, &params, submeshIdx);
 		}
 	}
@@ -267,7 +268,7 @@ namespace temple {
 		float GetRadius(int scale) override;
 
 		static AasAnimParams Convert(const gfx::AnimatedModelParams& params);
-		
+
 	private:
 		AasHandle mHandle;
 		bool mBorrowed = false;
@@ -293,7 +294,8 @@ namespace temple {
 		if (parentAnim) {
 			result.parentAnim = parentAnim->mHandle;
 			result.flags = 2;
-		} else {
+		}
+		else {
 			result.parentAnim = 0;
 			result.flags = 1;
 		}
@@ -343,8 +345,8 @@ namespace temple {
 		return functions.GetBoneParentId(mHandle, boneId);
 	}
 
-	bool AasAnimatedModel::GetBoneWorldMatrixByName(const gfx::AnimatedModelParams& params, 
-		const std::string& boneName, 
+	bool AasAnimatedModel::GetBoneWorldMatrixByName(const gfx::AnimatedModelParams& params,
+		const std::string& boneName,
 		DirectX::XMFLOAT4X4* worldMatrixOut) {
 		auto aasParams(Convert(params));
 		return functions.GetBoneWorldMatrixByName(mHandle, &aasParams, worldMatrixOut, boneName.c_str()) == AAS_OK;
@@ -433,9 +435,9 @@ namespace temple {
 		SetClothFlag();
 
 		gfx::AnimatedModelParams animParams;
-		memset(&animParams, 0, sizeof(animParams));		
+		memset(&animParams, 0, sizeof(animParams));
 		animParams.scale = scale / 100.0f;
-	
+
 		Advance(0.0f, 0.0f, 0.0f, animParams);
 
 		auto materialIds = GetSubmeshes();
@@ -463,13 +465,14 @@ namespace temple {
 
 		if (maxHeight == -10000.0f) {
 			maxHeight = defaultHeight;
-		} else if (maxHeight <= 0) {
+		}
+		else if (maxHeight <= 0) {
 			maxHeight = maxHeight - minHeight;
 			if (maxHeight <= 0.01f) {
 				maxHeight = defaultHeight;
 			}
 		}
-		
+
 		return maxHeight;
 	}
 
@@ -506,13 +509,14 @@ namespace temple {
 		// No idea how they arrived at this value
 		if (maxRadiusSquared <= 0) {
 			return 0;
-		} else {
+		}
+		else {
 			return sqrtf(maxRadiusSquared);
 		}
 	}
 
 	AasAnimatedModelFactory* AasAnimatedModelFactory::sInstance = nullptr;
-	
+
 	int __stdcall AasAnimatedModelFactory::AasResolveMaterial(const char *filename, int, int) {
 
 		std::string name(filename);
@@ -520,11 +524,14 @@ namespace temple {
 		// Handle material replacement slots
 		if (name == "HEAD") {
 			return 0x84000000;
-		} else if (name == "GLOVES") {
+		}
+		else if (name == "GLOVES") {
 			return 0x88000000;
-		} else if (name == "CHEST") {
+		}
+		else if (name == "CHEST") {
 			return 0x90000000;
-		} else if (name == "BOOTS") {
+		}
+		else if (name == "BOOTS") {
 			return 0xA0000000;
 		}
 
@@ -589,7 +596,7 @@ namespace temple {
 
 		auto meshesMapping = MesFile::ParseFile("art/meshes/meshes.mes");
 		mMapping.insert(meshesMapping.begin(), meshesMapping.end());
-		logger->debug("Loaded mapping for {} meshes from art/meshes/meshes.mes", 
+		logger->debug("Loaded mapping for {} meshes from art/meshes/meshes.mes",
 			meshesMapping.size());
 
 	}
@@ -602,10 +609,10 @@ namespace temple {
 	}
 
 	gfx::AnimatedModelPtr AasAnimatedModelFactory::FromIds(int meshId,
-	                                                       int skeletonId,
-	                                                       gfx::EncodedAnimId idleAnimId,
-	                                                       const gfx::AnimatedModelParams& params,
-														   bool borrow) {
+		int skeletonId,
+		gfx::EncodedAnimId idleAnimId,
+		const gfx::AnimatedModelParams& params,
+		bool borrow) {
 
 		AasHandle handle;
 		auto aasParams(AasAnimatedModel::Convert(params));
@@ -618,9 +625,9 @@ namespace temple {
 	}
 
 	gfx::AnimatedModelPtr AasAnimatedModelFactory::FromFilenames(const std::string& meshFilename,
-	                                                             const std::string& skeletonFilename,
-	                                                             gfx::EncodedAnimId idleAnimId,
-	                                                             const gfx::AnimatedModelParams& params) {
+		const std::string& skeletonFilename,
+		gfx::EncodedAnimId idleAnimId,
+		const gfx::AnimatedModelParams& params) {
 
 		AasHandle handle;
 		auto aasParams(AasAnimatedModel::Convert(params));
