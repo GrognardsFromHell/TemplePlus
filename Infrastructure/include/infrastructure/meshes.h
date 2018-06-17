@@ -7,8 +7,6 @@
 #include <DirectXMath.h>
 #include <gsl/span>
 
-enum AasEventFlag;
-
 namespace gfx {
 
 	struct Light3d;
@@ -264,7 +262,7 @@ namespace gfx {
 	private:
 		// Indicates that an animation id uses the encoded format
 		static constexpr int sWeaponAnimFlag = 1 << 30;
-		static constexpr int sBardInstrumentAnimFlag = 2 << 30;
+		static constexpr int sBardInstrumentAnimFlag = 1 << 31;
 
 		int mId;
 	};
@@ -354,7 +352,7 @@ namespace gfx {
 		virtual void AddReplacementMaterial(gfx::MaterialPlaceholderSlot slot,
 			const gfx::MdfRenderMaterialPtr &material) = 0;
 
-		virtual void SetAnimId(int animId) = 0;
+		virtual void SetAnimId(EncodedAnimId animId) = 0;
 
 		// This seems to reset cloth simulation state
 		virtual void SetClothFlag() = 0;
