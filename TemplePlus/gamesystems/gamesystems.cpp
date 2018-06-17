@@ -39,6 +39,7 @@
 #include <graphics/device.h>
 #include "graphics/mapterrain.h"
 #include "ui/ui_systems.h"
+#include <aas/aas_model_factory.h>
 
 using namespace gfx;
 
@@ -367,6 +368,8 @@ void GameSystems::InitBufferStuff(const GameSystemConf& conf) {
 	*/
 }
 
+#include "gamesystems/aas_hooks.h"
+
 void GameSystems::InitAnimationSystem() {
 	
 	mMeshesById = MesFile::ParseFile("art\\meshes\\meshes.mes");
@@ -384,8 +387,23 @@ void GameSystems::InitAnimationSystem() {
 	config.resolveMaterial = [=](const std::string &material) {
 		return ResolveMaterial(material);
 	};
+	config.fastSneakAnim = ::config.fastSneakAnim;
+	config.equalizeMovementSpeed = ::config.equalizeMoveSpeed;
+	if (::config.newAnimSystem) {
+		// Additionally, redirect all the old functions
+		AasHooks hooks;
+		hooks.apply();
+		MH_EnableHook(nullptr);
 
-	mAAS = std::make_unique<temple::AasAnimatedModelFactory>(config);
+		mAAS = std::make_unique<aas::AnimatedModelFactory>(
+			config.resolveSkaFile,
+			config.resolveSkmFile,
+			config.runScript,
+			config.resolveMaterial
+		);
+	} else {
+		mAAS = std::make_unique<temple::AasAnimatedModelFactory>(config);
+	}
 
 }
 

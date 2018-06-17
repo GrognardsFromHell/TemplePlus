@@ -146,6 +146,21 @@ void TempleFix::writeNoops(uint32_t offset) {
 
 }
 
+void TempleFix::breakRegion(uint32_t from, uint32_t to)
+{
+	size_t size = to - from;
+
+	Expects(to > from);
+
+	// Unprotect the entire area
+	MemoryUnprotector unprotector(from, size);
+
+	// Fill with INT 3 instructions (which trigger breakpoints)
+	auto realFrom = reinterpret_cast<char*>(temple::Dll::GetInstance().GetAddress(from));
+	memset(realFrom, 0xCC, size);
+
+}
+
 void TempleFix::writeCall(uint32_t offset, void* redirectTo) {
 	CALL_REL call = {
 		0xE8,                   // E8 xxxxxxxx: CALL +5+xxxxxxxx

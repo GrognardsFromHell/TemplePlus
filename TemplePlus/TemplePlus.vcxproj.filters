@@ -520,6 +520,7 @@
     <ClCompile Include="tig\tig_sound.cpp">
       <Filter>tig</Filter>
     </ClCompile>
+    <ClCompile Include="gamesystems\aas_hooks.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -987,6 +988,7 @@
     <ClInclude Include="ui\ui_townmap.h">
       <Filter>ui</Filter>
     </ClInclude>
+    <ClInclude Include="gamesystems\aas_hooks.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

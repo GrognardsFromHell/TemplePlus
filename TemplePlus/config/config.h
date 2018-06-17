@@ -51,6 +51,7 @@ struct TemplePlusConfig
 	bool debugPartSys = false;
 	bool debugClipping = true;
 	bool drawObjCylinders = false;
+	bool newAnimSystem = false;
 
 	bool autoUpdate = true;
 	std::string autoUpdateFeed = "https://templeplus.org/update-feeds/stable/";
