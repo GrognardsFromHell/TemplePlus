@@ -33,6 +33,7 @@ namespace particles {
 		auto totalCount = emitter.GetActiveCount();
 
 		AnimatedModelParams animParams;
+		animParams.rotation3d = true;
 
 		// Lazily initialize render state
 		if (!emitter.HasRenderState()) {
@@ -67,6 +68,10 @@ namespace particles {
 		overrides.ignoreLighting = true;
 		overrides.overrideDiffuse = true;
 		
+		auto yaw = emitter.GetParamState(PartSysParamId::part_yaw);
+		auto pitch = emitter.GetParamState(PartSysParamId::part_pitch);
+		auto roll = emitter.GetParamState(PartSysParamId::part_roll);
+
 		while (it.HasNext()) {
 			auto particleIdx = it.Next();
 			auto age = emitter.GetParticleAge(particleIdx);
@@ -78,6 +83,16 @@ namespace particles {
 			animParams.offsetX = particleState.GetState(PSF_POS_VAR_X, particleIdx);
 			animParams.offsetY = particleState.GetState(PSF_POS_VAR_Z, particleIdx);
 			animParams.offsetZ = particleState.GetState(PSF_POS_VAR_Y, particleIdx);
+
+			if (yaw) {
+				animParams.rotationYaw = DirectX::XMConvertToRadians(yaw->GetValue(&emitter, particleIdx, age));
+			}
+			if (pitch) {
+				animParams.rotationPitch = DirectX::XMConvertToRadians(pitch->GetValue(&emitter, particleIdx, age));
+			}
+			if (roll) {
+				animParams.rotationRoll = DirectX::XMConvertToRadians(roll->GetValue(&emitter, particleIdx, age));
+			}
 
 			renderState.model->SetTime(animParams, age);
 
