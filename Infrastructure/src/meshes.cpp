@@ -1,4 +1,4 @@
-#include "..\include\infrastructure\meshes.h"
+
 #include "infrastructure/meshes.h"
 #include <fmt/format.h>
 
@@ -42,7 +42,7 @@ static const char* sWeaponTypeNames[] = {
 };
 
 static const char* sWeaponAnimNames[] = {
-	"none"
+	"none",
 	"rattack",
 	"rattack2",
 	"rattack3",
@@ -91,7 +91,7 @@ static const char* sWeaponAnimNames[] = {
 };
 
 static const char* sNormalAnimNames[] = {
-	"falldown"
+	"falldown",
 	"prone_idle",
 	"prone_fidget",
 	"getup",
@@ -184,8 +184,8 @@ static const char* GetNormalAnimTypeName(NormalAnimType animType) {
 	return sNormalAnimNames[idx];
 }
 
-static const char* GetWeaponAnimName(WeaponAnim weaponAnime) {
-	return sWeaponAnimNames[(int)weaponAnime];
+static const char* GetWeaponAnimName(WeaponAnim weaponAnim) {
+	return sWeaponAnimNames[(int)weaponAnim];
 }
 
 static const char* GetWeaponTypeName(WeaponAnimType weaponAnimType) {
@@ -223,7 +223,7 @@ bool EncodedAnimId::IsConjuireAnimation() const
 	}
 }
 
-inline std::string EncodedAnimId::GetName() const {
+std::string gfx::EncodedAnimId::GetName() const {
 
 	static std::string sUnknown = "<unknown>";
 
