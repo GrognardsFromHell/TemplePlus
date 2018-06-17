@@ -19,7 +19,7 @@ namespace temple {
 
 	using AasFreeListener = std::function<void(AasHandle)>;
 	using AasFreeListenerHandle = std::list<AasFreeListener>::iterator;
-	
+
 	class AasAnimatedModelFactory : public gfx::AnimatedModelFactory {
 	public:
 		explicit AasAnimatedModelFactory(const AasConfig &config);
@@ -39,9 +39,9 @@ namespace temple {
 			const gfx::AnimatedModelParams& params) override;
 
 		/*
-			Gets an existing animated model by its handle.
-			The returned model will not free the actual animation when it is
-			destroyed.
+		Gets an existing animated model by its handle.
+		The returned model will not free the actual animation when it is
+		destroyed.
 		*/
 		std::unique_ptr<gfx::AnimatedModel> BorrowByHandle(AasHandle handle);
 

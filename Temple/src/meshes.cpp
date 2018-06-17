@@ -259,7 +259,7 @@ namespace temple {
 		bool HasBone(const ::std::string& boneName) const override;
 		void AddReplacementMaterial(gfx::MaterialPlaceholderSlot slot,
 			const gfx::MdfRenderMaterialPtr &material) override;
-		void SetAnimId(int animId) override;
+		void SetAnimId(gfx::EncodedAnimId animId) override;
 		void SetClothFlag() override;
 		std::vector<int> GetSubmeshes() override;
 		std::unique_ptr<gfx::Submesh> GetSubmesh(const ::gfx::AnimatedModelParams& params, int submeshIdx) override;
@@ -402,7 +402,7 @@ namespace temple {
 		functions.ReplaceSpecialMaterial(mHandle, materialId);
 	}
 
-	void AasAnimatedModel::SetAnimId(int animId) {
+	void AasAnimatedModel::SetAnimId(gfx::EncodedAnimId animId) {
 		functions.SetAnimId(mHandle, animId);
 	}
 
