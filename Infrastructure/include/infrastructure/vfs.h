@@ -29,27 +29,27 @@ public:
 	/*
 		Reads a file fully into a string.
 	*/
-	std::string ReadAsString(const std::string& filename);
+	std::string ReadAsString(std::string_view filename);
 
 	/*
-		Reads a binary file fully into a vector of uint8_t.
+	Reads a binary file fully into a vector of uint8_t.
 	*/
-	std::vector<uint8_t> ReadAsBinary(const std::string& filename);
+	std::vector<uint8_t> ReadAsBinary(std::string_view filename);
 
 	/**
 	 * Does the file exist?
 	 */
-	virtual bool FileExists(const std::string& path) = 0;
+	virtual bool FileExists(std::string_view path) = 0;
 
 	/**
 	 * Does the directory exist?
 	 */
-	virtual bool DirExists(const std::string& path) = 0;
+	virtual bool DirExists(std::string_view path) = 0;
 
 	/**
 	 * Creates a directory.
 	 */
-	virtual bool MkDir(const std::string& path) = 0;
+	virtual bool MkDir(std::string_view path) = 0;
 
 	/**
 	 * Will return all files and directories that match the given glob pattern, which
@@ -57,35 +57,35 @@ public:
 	 * Example: mes\*.mes will return the names of all files in mes (not full paths) that
 	            end with .mes.
 	 */
-	virtual std::vector<VfsSearchResult> Search(const std::string& globPattern) = 0;
+	virtual std::vector<VfsSearchResult> Search(std::string_view globPattern) = 0;
 
 	/**
 	 * Removes an empty directory.
 	 */
-	virtual bool RemoveDir(const std::string& path) = 0;
+	virtual bool RemoveDir(std::string_view path) = 0;
 
 	/**
 	 * Removes a file (no directories).
 	 */
-	virtual bool RemoveFile(const std::string& path) = 0;
+	virtual bool RemoveFile(std::string_view path) = 0;
 
 	/**
 	* Deletes all files and dirctories within the given directory.
 	*/
-	bool CleanDir(const std::string& path);
+	bool CleanDir(std::string_view path);
 
 	/**
 	 * Returns true if the given directory does not contain anything.
 	 */
-	bool IsDirEmpty(const std::string& path);
+	bool IsDirEmpty(std::string_view path);
 
 	/**
 	 * Writes binary data to a file.
 	 */
-	void WriteBinaryFile(const std::string &path, gsl::span<uint8_t> data);
+	void WriteBinaryFile(std::string_view path, gsl::span<uint8_t> data);
 
 	using FileHandle = void*;
-	virtual FileHandle Open(const char* name, const char* mode) = 0;
+	virtual FileHandle Open(std::string_view name, std::string_view mode) = 0;
 	virtual size_t Read(void* buffer, size_t size, FileHandle handle) = 0;
 	virtual size_t Write(const void* buffer, size_t size, FileHandle handle) = 0;
 	virtual size_t Length(FileHandle handle) = 0;
@@ -98,8 +98,8 @@ class Path {
 public:
 	Path() = delete;
 
-	static bool IsFileSystem(const std::string& path);
-	static std::string Concat(const std::string& a, const std::string& b);
+	static bool IsFileSystem(std::string_view path);
+	static std::string Concat(std::string_view a, std::string_view b);
 };
 
 extern std::unique_ptr<Vfs> vfs;
