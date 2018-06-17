@@ -179,7 +179,8 @@ static ConfigSetting configSettings[] = {
 	CONF_DOUBLE(speedupFactor),
 	CONF_BOOL(fastSneakAnim),
 	CONF_BOOL(alertAiThroughDoors),
-	CONF_INT(walkDistanceFt)
+	CONF_INT(walkDistanceFt),
+	CONF_BOOL(newAnimSystem)
 };
 
 void TemplePlusConfig::Load() {

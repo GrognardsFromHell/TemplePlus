@@ -2,7 +2,7 @@
 #include "stdafx.h"
 
 #include <temple/dll.h>
-#include "../util/fixes.h"
+#include "util/fixes.h"
 #include "config.h"
 
 struct GameConfig;
