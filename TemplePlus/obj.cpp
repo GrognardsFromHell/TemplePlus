@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "obj.h"
+#include "ai.h"
 #include <temple/dll.h>
 #include <temple/meshes.h>
 #include "d20.h"
@@ -13,6 +14,7 @@
 #include "float_line.h"
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/objects/objsystem.h"
+#include "gamesystems/legacymapsystems.h"
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -33,12 +35,10 @@ static_assert(temple::validate_size<CondNode, 52>::value, "Condition node struct
 struct ObjectSystemAddresses : temple::AddressTable
 {
 
-	int8_t(*SectorGetElevation)(LocAndOffsets forLocation);
 	int(*GetAasHandle)(objHndl obj);
 	
 	ObjectSystemAddresses()
 	{
-		rebase(SectorGetElevation, 0x100A8CB0);
 		rebase(GetAasHandle, 0x10021A40);
 	}
 } addresses;
@@ -163,9 +163,9 @@ gfx::AnimatedModelParams Objects::GetAnimParams(objHndl handle)
 					result.offsetX = parentLoc.off_x;
 					result.offsetY = parentLoc.off_y;
 
-					auto elevation = addresses.SectorGetElevation(parentLoc);
+					auto depth = gameSystems->GetHeight().GetDepth(parentLoc);
 					auto offsetZ = objects.GetOffsetZ(parent);
-					result.offsetZ = offsetZ - elevation;
+					result.offsetZ = offsetZ - depth;
 
 					result.rotation = objects.GetRotation(parent);
 					result.rotationPitch = objects.GetRotationPitch(parent);
@@ -188,11 +188,11 @@ gfx::AnimatedModelParams Objects::GetAnimParams(objHndl handle)
 	result.offsetY = loc.off_y;
 	
 	auto flags = objects.GetFlags(handle);
-	int8_t elevation = 0; // TODO: This may be "depth" instead of elevation.
+	int8_t depth = 0;
 	if (!(flags & OF_NOHEIGHT)) {
-		elevation = addresses.SectorGetElevation(loc);
-}
-	result.offsetZ = objects.GetOffsetZ(handle) - elevation;
+		depth = gameSystems->GetHeight().GetDepth(loc);
+	}
+	result.offsetZ = objects.GetOffsetZ(handle) - depth;
 	result.rotation = objects.GetRotation(handle);
 	result.rotationPitch = objects.GetRotationPitch(handle);
 
@@ -642,10 +642,10 @@ void Objects::Destroy(objHndl ObjHnd) {
 
 	auto moveContentToLoc = temple::GetPointer<void(objHndl, BOOL)>(0x1006DB80);
 
-	auto type = _GetInternalFieldInt32(ObjHnd, obj_f_type);
-	if (type != obj_t_pc && type != obj_t_npc)
+	auto type = GetType(ObjHnd);
+	if (!IsCritterType(type))
 	{
-		if (type >= obj_t_weapon && type <= obj_t_generic || type == obj_t_bag)
+		if (IsEquipmentType(type))
 		{
 			auto parentObj = inventory.GetParent(ObjHnd);
 			if (parentObj)
@@ -657,10 +657,10 @@ void Objects::Destroy(objHndl ObjHnd) {
 			}
 		}
 		if (type == obj_t_container)
-{
+		{
 			moveContentToLoc(ObjHnd, 1);
 		}
-}
+	}
 	else
 	{
 		auto removeFromGroups = temple::GetPointer<int(objHndl)>(0x10080DA0);
@@ -792,14 +792,29 @@ bool Objects::IsStatic(objHndl handle) {
 	auto type = GetType(handle);
 	if (type == obj_t_projectile 
 		|| type == obj_t_container 
-		|| type == obj_t_pc 
-		|| type == obj_t_npc 
-		|| type >= obj_t_weapon && type <= obj_t_generic 
-		|| type == obj_t_bag)
+		|| IsCritterType(type)
+		|| IsEquipmentType(type))
 		return false;
 	
 	return (GetFlags(handle) & OF_DYNAMIC) == 0;
 
+}
+
+bool Objects::IsUntargetable(objHndl handle)
+{
+	if (GetFlags(handle) & (OF_OFF | OF_CLICK_THROUGH | OF_DONTDRAW)) {
+		return true;
+	}
+
+	if (IsUndetectedSecretDoor(handle)) {
+		return true;
+	}
+
+	if (aiSys.IsRunningOff(handle)) {
+		return true;
+	}
+
+	return false;
 }
 
 int Objects::StatLevelGet(objHndl obj, Stat stat)
@@ -977,10 +992,20 @@ public:
 			}
 		});
 
+		// ObjIsUntargetable
+		replaceFunction<BOOL(objHndl)>(0x1001fcb0, [](objHndl obj) {
+			return objects.IsUntargetable(obj) ? TRUE : FALSE;
+		});
+
 		// anim_obj_set_aas_anim_id
 		replaceFunction<int(objHndl, gfx::EncodedAnimId)>(0x10021d50, [](objHndl objId, gfx::EncodedAnimId animId) {
 			objects.SetAnimId(objId, animId);
 			return 0;
+		});
+
+		// obj_has_anim
+		replaceFunction<int(objHndl, gfx::EncodedAnimId)>(0x10021d20, [](objHndl handle, gfx::EncodedAnimId animId) {
+			return objects.HasAnimId(handle, animId) ? 1 : 0;
 		});
 
 		replaceFunction(0x1004E7F0, _abilityScoreLevelGet);

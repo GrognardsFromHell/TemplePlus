@@ -22,12 +22,6 @@ public:
 	void apply() override
 	{
 		replaceFunction(0x10114EF0, ui_intgame_handle_msg);
-
-		// ObjIsUntargetable
-		replaceFunction<BOOL(objHndl)>(0x1001fcb0, [](objHndl obj) {
-			return uiSystems->GetInGame().IsUntargetable(obj) ? TRUE : FALSE;
-		});
-
 	}
 
 } uiInGameWrapper;

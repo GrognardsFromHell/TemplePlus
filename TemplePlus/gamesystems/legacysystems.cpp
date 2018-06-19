@@ -1942,6 +1942,12 @@ void MapFoggingSystem::PerformCheckForCritter(objHndl handle, int idx){
 
 }
 
+int MapFoggingSystem::IsPosExplored(LocAndOffsets location)
+{
+	static auto is_pos_explored = temple::GetPointer<int(LocAndOffsets)>(0x1002ecb0);
+	return is_pos_explored(location);
+}
+
 void MapFoggingSystem::InitScreenBuffers() {
 
 	mScreenWidth = config.renderWidth;

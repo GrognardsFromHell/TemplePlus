@@ -4,6 +4,8 @@
 #include "api.h"
 #include <infrastructure/stringutil.h>
 
+using namespace DirectX;
+
 float EditorExternal::mX = 0;
 float EditorExternal::mY = 0;
 float EditorExternal::mZ = 0;

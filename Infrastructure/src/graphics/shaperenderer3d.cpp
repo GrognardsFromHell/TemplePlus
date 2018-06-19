@@ -5,6 +5,8 @@
 // When drawing circles, how many segments do we use?
 constexpr static int sCircleSegments = 74;
 
+using namespace DirectX;
+
 namespace gfx {	
 	
 	struct ShapeRenderer3d::Impl : ResourceListener {

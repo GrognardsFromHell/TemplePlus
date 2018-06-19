@@ -165,6 +165,7 @@
     <ClInclude Include="include\aas\aas.h" />
     <ClInclude Include="include\aas\aas_model_factory.h" />
     <ClInclude Include="include\aas\aas_renderer.h" />
+    <ClInclude Include="include\graphics\collision.h" />
     <ClInclude Include="src\aas\aas_anim_events.h" />
     <ClInclude Include="src\aas\aas_anim_player.h" />
     <ClInclude Include="src\aas\aas_anim_player_stream.h" />

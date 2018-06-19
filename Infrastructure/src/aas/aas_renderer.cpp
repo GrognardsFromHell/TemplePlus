@@ -14,6 +14,7 @@
 #include "aas/aas_renderer.h"
 
 using namespace gfx;
+using namespace DirectX;
 
 namespace aas {
 

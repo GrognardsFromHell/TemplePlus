@@ -31,10 +31,13 @@ enum ObjectListFilter {
 	OLC_PATH_BLOCKER = 0x18006 // added for pathfinding purposes
 };
 
-#pragma pack(push, 1)
-
-
-#pragma pack(pop)
+inline ObjectListFilter operator &(ObjectListFilter l, int r) {
+	return (ObjectListFilter)(static_cast<uint32_t>(l) & static_cast<uint32_t>(r));
+}
+inline ObjectListFilter &operator &=(ObjectListFilter &l, int r) {
+	l = (l & r);
+	return l;
+}
 
 class ObjList {
 public:

@@ -22,6 +22,7 @@
 
 using namespace gfx;
 using namespace temple;
+using namespace DirectX;
 
 static struct MapRenderAddresses : temple::AddressTable {
 	uint8_t (*GetFogStatus)(locXY loc, float offsetX, float offsetY);

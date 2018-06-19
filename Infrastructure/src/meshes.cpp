@@ -1,8 +1,12 @@
 
 #include "infrastructure/meshes.h"
 #include <fmt/format.h>
+#include "graphics/collision.h"
+
+#include <DirectXCollision.h>
 
 using namespace gfx;
+using namespace DirectX;
 
 static const char* sBardInstrumentTypeNames[] = {
 	"bard_flute",
@@ -243,3 +247,37 @@ std::string gfx::EncodedAnimId::GetName() const {
 
 }
 
+bool gfx::AnimatedModel::HitTestRay(const AnimatedModelParams & params, const Ray3d & ray, float &hitDistance)
+{
+	
+	auto origin = XMLoadFloat3(&ray.origin);
+	auto direction = XMVector3Normalize(XMLoadFloat3(&ray.direction));
+
+	auto submeshes = GetSubmeshes();
+
+	bool hit = false;
+	hitDistance = std::numeric_limits<float>::max();
+
+	for (size_t i = 0; i < submeshes.size(); i++) {
+		auto submesh = GetSubmesh(params, i);
+		auto positions = submesh->GetPositions();
+		auto indices = submesh->GetIndices();
+
+		for (int j = 0; j < submesh->GetPrimitiveCount(); j++) {
+			
+			auto v0 = XMLoadFloat4(&positions[indices[j * 3]]);
+			auto v1 = XMLoadFloat4(&positions[indices[j * 3 + 1]]);
+			auto v2 = XMLoadFloat4(&positions[indices[j * 3 + 2]]);
+
+			float dist;
+			if (TriangleTests::Intersects(origin, direction, v0, v1, v2, dist) && dist < hitDistance) {
+				hitDistance = dist;
+				hit = true;
+			}
+		}
+	}
+
+
+	return hit;
+
+}

@@ -1,5 +1,7 @@
 #include "graphics/camera.h"
 
+using namespace DirectX;
+
 namespace gfx {
 
 	constexpr float INCH_PER_TILE = 28.284271247461900976033774484194f;
@@ -102,6 +104,53 @@ namespace gfx {
 		XMStoreFloat3(&result, worldFar - worldRay * dist);
 
 		return result;
+	}
+
+	Ray3d WorldCamera::GetPickRay(float x, float y) {
+		auto screenVecFar(XMVectorSet(x, y, 0, 1));
+		auto worldFar(XMVector3Unproject(
+			screenVecFar,
+			0,
+			0,
+			mScreenWidth,
+			mScreenHeight,
+			zNear,
+			zFar,
+			XMLoadFloat4x4(&mProjection),
+			XMLoadFloat4x4(&mView),
+			XMMatrixIdentity()
+		));
+
+		auto screenVecClose(XMVectorSet(x, y, 1, 1));
+		auto worldClose(XMVector3Unproject(
+			screenVecClose,
+			0,
+			0,
+			mScreenWidth,
+			mScreenHeight,
+			zNear,
+			zFar,
+			XMLoadFloat4x4(&mProjection),
+			XMLoadFloat4x4(&mView),
+			XMMatrixIdentity()
+		));
+
+		auto worldRay(worldFar - worldClose);
+		auto dist = XMVectorGetY(worldFar) / XMVectorGetY(worldRay);
+
+		// calculate the position on the ground (y=0) and then move
+		// along the screen vector 250 units below ground and 500 above ground
+		// to build the ray. This is not really correct.
+		auto onGround = worldFar - worldRay * dist;
+		worldRay = XMVector3Normalize(worldRay);
+		auto belowGround = onGround - worldRay * 250.0f;
+		auto aboveGround = onGround + worldRay * 500.0f;
+
+		XMFLOAT3 from, dir;
+		XMStoreFloat3(&from, aboveGround);
+		XMStoreFloat3(&dir, belowGround - aboveGround);
+
+		return Ray3d{ from, dir };
 	}
 
 	// TODO: See if this can just be replaced by the proper version used below

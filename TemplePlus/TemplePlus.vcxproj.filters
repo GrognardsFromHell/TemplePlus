@@ -521,6 +521,7 @@
       <Filter>tig</Filter>
     </ClCompile>
     <ClCompile Include="gamesystems\aas_hooks.cpp" />
+    <ClCompile Include="raycast_hooks.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />

@@ -562,6 +562,8 @@ public:
 	void SaveEsd();
 	void PerformCheckForCritter(objHndl handle, int idx);
 
+	int IsPosExplored(LocAndOffsets location);
+
 private:
 
 	gfx::RenderingDevice &mDevice;

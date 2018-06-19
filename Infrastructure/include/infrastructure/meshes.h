@@ -7,6 +7,8 @@
 #include <DirectXMath.h>
 #include <gsl/span>
 
+struct Ray3d;
+
 namespace gfx {
 
 	struct Light3d;
@@ -367,6 +369,8 @@ namespace gfx {
 		virtual std::unique_ptr<Submesh> GetSubmesh(const AnimatedModelParams& params, int submeshIdx) = 0;
 
 		virtual std::unique_ptr<Submesh> GetSubmeshForParticles(const AnimatedModelParams& params, int submeshIdx) = 0;
+
+		bool HitTestRay(const AnimatedModelParams& params, const Ray3d &ray, float &hitDistance);
 
 		/**
 			This calculates the effective height in world coordinate units of the model in its current

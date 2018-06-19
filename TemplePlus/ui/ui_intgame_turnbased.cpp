@@ -28,11 +28,11 @@
 #include <tig\tig_mouse.h>
 #include <dungeon_master.h>
 #include "gamesystems/objects/objsystem.h"
+#include "raycast.h"
 
 UiIntgameTurnbased uiIntgameTb;
 
 struct UiIntgameTurnbasedAddresses : temple::AddressTable {
-	BOOL (__cdecl*GameRayCast)(int x, int y, objHndl* obj, int flags);
 	void (__cdecl *CursorRenderUpdate)();
 	int (__cdecl *AooIndicatorDraw)(LocAndOffsets*, int shaderId);
 	int (__cdecl *GetHourglassDepletionState)();
@@ -77,9 +77,6 @@ struct UiIntgameTurnbasedAddresses : temple::AddressTable {
 	int64_t* screenYfromMouseEvent;
 
 	UiIntgameTurnbasedAddresses() {
-		rebase(GameRayCast, 0x10022360);
-
-
 		rebase(CursorRenderUpdate, 0x10097060);
 
 
@@ -167,7 +164,7 @@ public:
 		static bool ResetViaRmb(TigMsg* msg);
 	static int (__cdecl*orgUiIntgameMsgHandler)(int widId, TigMsg* msg);
 
-	static BOOL UiIntgameRaycast(objHndl* obj, int x, int y, int flags);
+	static BOOL UiIntgameRaycast(objHndl* obj, int x, int y, GameRaycastFlags flags);
 	static int IntgameValidateMouseSelection(TigMsgMouse* msg);
 
 	static void RenderAooIndicator(const LocAndOffsets& location, int materialId);
@@ -392,9 +389,9 @@ void UiIntegameTurnbasedRepl::UiIntgameGenerateSequence(int isUnnecessary) {
 		}
 		else {
 			auto raycastFlags = GameRaycastFlags::GRF_ExcludeUnconscious | GameRaycastFlags::GRF_ExcludePortals |
-				GameRaycastFlags::GRF_ExcludeItems | GameRaycastFlags::GRF_AltPressed;
+				GameRaycastFlags::GRF_ExcludeItems | GameRaycastFlags::GRF_HITTEST_SEL_CIRCLE;
 
-			if (!intgameAddresses.GameRayCast(x, y, &objFromRaycast, raycastFlags)){
+			if (!PickObjectOnScreen(x, y, &objFromRaycast, raycastFlags)){
 				objFromRaycast = objHndl::null;
 				locSys.GetLocFromScreenLocPrecise(x, y, locFromScreenLoc);
 				actionLoc = locFromScreenLoc;
@@ -413,9 +410,9 @@ void UiIntegameTurnbasedRepl::UiIntgameGenerateSequence(int isUnnecessary) {
 	}
 
 	else{
-		auto raycastFlags = GameRaycastFlags::GRF_2 | GameRaycastFlags::GRF_4 | GameRaycastFlags::GRF_ExcludePortals;
+		auto raycastFlags = GameRaycastFlags::GRF_HITTEST_3D | GameRaycastFlags::GRF_ExcludePortals;
 
-		if (!intgameAddresses.GameRayCast(x, y, &objFromRaycast, raycastFlags)) {
+		if (!PickObjectOnScreen(x, y, &objFromRaycast, raycastFlags)) {
 			objFromRaycast = objHndl::null;
 			locSys.GetLocFromScreenLocPrecise(x, y, locFromScreenLoc);
 			actionLoc = *intgameAddresses.locFromScreenLoc;
@@ -805,12 +802,12 @@ bool UiIntegameTurnbasedRepl::ResetViaRmb(TigMsg* msg)
 
 }
 
-BOOL UiIntegameTurnbasedRepl::UiIntgameRaycast(objHndl* obj, int x, int y, int flags) {
+BOOL UiIntegameTurnbasedRepl::UiIntgameRaycast(objHndl* obj, int x, int y, GameRaycastFlags flags) {
 	if (*intgameAddresses.uiIntgameTargetObjFromPortraits) {
 		*obj = *intgameAddresses.uiIntgameTargetObjFromPortraits;
 		return 1;
 	} else {
-		return intgameAddresses.GameRayCast(x, y, obj, flags);
+		return PickObjectOnScreen(x, y, obj, flags);
 	}
 }
 
@@ -832,7 +829,7 @@ int UiIntegameTurnbasedRepl::IntgameValidateMouseSelection(TigMsgMouse* msg) {
 	LocAndOffsets locFromScreen;
 	PointNode prevPntNode, pntNode;
 	float distSqr;
-	if (UiIntgameRaycast(&obj, msg->x, msg->y, 6)) {
+	if (UiIntgameRaycast(&obj, msg->x, msg->y, GRF_HITTEST_3D)) {
 		objFromRaycast = obj;
 	} else {
 		locSys.GetLocFromScreenLocPrecise(msg->x, msg->y, locFromScreen);

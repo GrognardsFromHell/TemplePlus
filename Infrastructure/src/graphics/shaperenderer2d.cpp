@@ -10,6 +10,8 @@
 
 #include <gsl/gsl>
 
+using namespace DirectX;
+
 namespace gfx {
 struct ShapeRenderer2d::Impl {
 	Impl(RenderingDevice &device);

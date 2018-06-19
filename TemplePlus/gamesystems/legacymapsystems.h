@@ -181,6 +181,8 @@ public:
 	void SetDataDirs(const std::string &dataDir, const std::string &saveDir);
 
 	void Clear();
+
+	int8_t GetDepth(LocAndOffsets location);
 };
 
 class PathNodeSystem : public GameSystem, public ResetAwareGameSystem {

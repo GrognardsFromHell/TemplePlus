@@ -261,7 +261,7 @@ bool DungeonMaster::HandleMsg(const TigMsg & msg){
 
 		// acquire target from cursor
 		if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_POS_CHANGE){
-			mTgtObj = uiSystems->GetInGame().PickObject(mouseMsg.x,mouseMsg.y,GameRaycastFlags::GRF_4 | GameRaycastFlags::GRF_2);
+			mTgtObj = uiSystems->GetInGame().PickObject(mouseMsg.x, mouseMsg.y);
 		}
 
 		

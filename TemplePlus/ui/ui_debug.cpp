@@ -4,6 +4,7 @@
 #include "ui_debug.h"
 #include "ui/widgets/widgets.h"
 #include "tig/tig_startup.h"
+#include "config/config.h"
 #include <graphics/shaperenderer2d.h>
 
 #include <debugui.h>
@@ -153,7 +154,7 @@ void UIRenderDebug()
 	if (!debugUiVisible) {
 		return;
 	}
-	ImGui::Begin("UI System", &debugUiVisible);
+	ImGui::Begin("Debug Info", &debugUiVisible);
 
 	if (ImGui::CollapsingHeader("Top Level Windows (Bottom to Top)")) {
 
@@ -161,6 +162,10 @@ void UIRenderDebug()
 			DrawWidgetTreeNode(widgetId);
 		}
 
+	}
+
+	if (ImGui::CollapsingHeader("Rendering Debugging")) {
+		ImGui::Checkbox("Draw Cylinder Hitboxes", &config.drawObjCylinders);
 	}
 
 	ImGui::End();

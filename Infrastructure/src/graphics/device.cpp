@@ -550,7 +550,7 @@ void RenderingDevice::ClearCurrentColorTarget(XMCOLOR color) {
 
   // Clear the current render target view
   XMFLOAT4 clearColorVec;
-  XMStoreFloat4(&clearColorVec, PackedVector::XMLoadColor(&color));
+  XMStoreFloat4(&clearColorVec, XMLoadColor(&color));
 
   mContext->ClearRenderTargetView(target->mRtView, &clearColorVec.x);
 }
