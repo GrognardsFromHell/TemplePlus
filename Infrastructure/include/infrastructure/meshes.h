@@ -373,6 +373,11 @@ namespace gfx {
 		bool HitTestRay(const AnimatedModelParams& params, const Ray3d &ray, float &hitDistance);
 
 		/**
+		 * Find the closest distance that the given point is away from the surface of this mesh.
+		 */
+		float GetDistanceToMesh(const AnimatedModelParams &params, DirectX::XMFLOAT3 pos);
+
+		/**
 			This calculates the effective height in world coordinate units of the model in its current
 			state. Scale is the model scale in percent.
 		*/

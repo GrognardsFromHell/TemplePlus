@@ -281,3 +281,114 @@ bool gfx::AnimatedModel::HitTestRay(const AnimatedModelParams & params, const Ra
 	return hit;
 
 }
+
+// Compute barycentric coordinates (u, v, w) for
+// point p with respect to triangle (a, b, c)
+static void Barycentric(XMVECTOR p, XMVECTOR a, XMVECTOR b, XMVECTOR c, float &u, float &v, float &w)
+{
+	using namespace DirectX;
+	auto v0 = b - a, v1 = c - a, v2 = p - a;
+	auto d00 = v0 * v0;
+	auto d01 = v0 * v1;
+	auto d11 = v1 * v1;
+	auto d20 = v2 * v0;
+	auto d21 = v2 * v1;
+	auto denom = d00 * d11 - d01 * d01;
+	v = XMVectorGetX((d11 * d20 - d01 * d21) / denom);
+	w = XMVectorGetX((d00 * d21 - d01 * d20) / denom);
+	u = 1.0f - v - w;
+}
+
+static bool IsInTriangle(XMVECTOR p, XMVECTOR a, XMVECTOR b, XMVECTOR c) {
+	float u, v, w;
+	Barycentric(p, a, b, c, u, v, w);
+	return u >= 0 && u <= 1
+		&& v >= 0 && v <= 1
+		&& w >= 0 && w <= 1;
+}
+
+// Returns the distance of "p" from the line p1->p2
+static float DistanceFromLine(XMVECTOR p1, XMVECTOR p2, XMVECTOR p) {
+	// Project the point P onto the line going through V0V1
+	auto edge1 = p2 - p1;
+	auto edge1LenVec = XMVector3Length(edge1);
+	auto edge1Norm = edge1 / edge1LenVec;
+	auto projFactor = XMVectorGetX((p - p1) * edge1Norm);
+	if (projFactor >= 0 && projFactor < XMVectorGetX(edge1LenVec)) {
+		// If projFactor < 0 or > the length of V0V1, it's outside the line
+		auto pp = p1 + projFactor * edge1Norm;
+		return XMVectorGetX(XMVector3Length(pp - p));
+	} else {
+		return std::numeric_limits<float>::max();
+	}
+}
+
+// Originally @ 0x1001E220
+float gfx::AnimatedModel::GetDistanceToMesh(const AnimatedModelParams & params, DirectX::XMFLOAT3 pos)
+{
+	using namespace DirectX;
+
+	float closestDist = std::numeric_limits<float>::max();
+
+	auto p = XMLoadFloat3(&pos);
+	
+	auto submeshes = GetSubmeshes();
+
+	for (size_t i = 0; i < submeshes.size(); i++) {
+		auto submesh = GetSubmesh(params, i);
+		auto positions = submesh->GetPositions();
+		auto indices = submesh->GetIndices();
+
+		// Get the closest distance to any of the vertices
+		for (auto &vertexPos : positions) {
+			auto vertexDist = XMVectorGetX(XMVector3Length(XMLoadFloat4(&vertexPos) - p));
+			if (vertexDist < closestDist) {
+				closestDist = vertexDist;
+			}
+		}
+
+		for (auto j = 0; j < submesh->GetPrimitiveCount(); j++) {
+			auto v0 = XMLoadFloat4(&positions[indices[j * 3]]);
+			auto v1 = XMLoadFloat4(&positions[indices[j * 3 + 1]]);
+			auto v2 = XMLoadFloat4(&positions[indices[j * 3 + 2]]);
+
+			// Compute the surface normal
+			auto n = XMVector3Normalize(XMVector3Cross(v1 - v0, v2 - v0));
+
+			// Project the point into the plane of the triangle
+			auto distFromPlaneVec = ((p - v0) * n);
+			auto distFromPlane = XMVectorGetX(distFromPlaneVec);
+			auto projectedPos = p - distFromPlane * n;
+
+			// If the point is within the triangle when projected onto it using the
+			// plane's normal, then use the distance from the plane as the distance
+			if (IsInTriangle(projectedPos, v0, v1, v2)) {
+				if (distFromPlane < closestDist) {
+					closestDist = fabsf(distFromPlane);
+				}
+			} else {
+
+				// Project the point P onto the line going through V0V1
+				float edge1Dist = DistanceFromLine(v0, v1, p);
+				if (edge1Dist < closestDist) {
+					closestDist = edge1Dist;
+				}
+
+				float edge2Dist = DistanceFromLine(v0, v2, p);
+				if (edge2Dist < closestDist) {
+					closestDist = edge2Dist;
+				}
+
+				float edge3Dist = DistanceFromLine(v2, v1, p);
+				if (edge3Dist < closestDist) {
+					closestDist = edge3Dist;
+				}
+			}
+			
+		}
+
+	}
+
+	return closestDist;
+
+}
