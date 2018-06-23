@@ -11,7 +11,7 @@
 #include "history.h"
 #include "float_line.h"
 #include "sound.h"
-#include "anim.h"
+#include "animgoals/anim.h"
 #include "ui/ui_logbook.h"
 #include "party.h"
 

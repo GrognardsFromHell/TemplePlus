@@ -30,7 +30,7 @@
 #include "legacyscriptsystem.h"
 #include "config/config.h"
 #include "d20_obj_registry.h"
-#include "anim.h"
+#include "animgoals/anim.h"
 
 
 struct CombatSystemAddresses : temple::AddressTable

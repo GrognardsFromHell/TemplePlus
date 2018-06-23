@@ -12,7 +12,7 @@
 #include <combat.h>
 #include <ui/ui.h>
 #include <condition.h>
-#include <anim.h>
+#include "animgoals/anim.h"
 #include <gamesystems/gamesystems.h>
 #include <gamesystems/objects/objsystem.h>
 #include <ui/ui_picker.h>

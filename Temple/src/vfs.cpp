@@ -117,6 +117,8 @@ namespace temple {
 		// Returns current pos of file handle
 		int(*Tell)(TioFile *file);
 
+		int(*Seek)(TioFile*file, int offset, int origin);
+
 		TioVfsImpl() {
 			Resolve("tio_path_add", AddPath);
 			Resolve("tio_path_remove", RemovePath);
@@ -135,6 +137,7 @@ namespace temple {
 			// Resolve("tio_pack_funcs", TioPackFuncs);
 			// Resolve("tio_pack", TioPack);
 			Resolve("tio_ftell", Tell);
+			Resolve("tio_fseek", Seek);
 		}
 
 		/*
@@ -311,5 +314,10 @@ namespace temple {
 	size_t TioVfs::Tell(FileHandle handle) {
 		auto tioFile = static_cast<TioFile*>(handle);
 		return mImpl->Tell(tioFile);
+	}
+
+	void TioVfs::Seek(FileHandle handle, int offset, SeekDir dir) {
+		auto tioFile = static_cast<TioFile*>(handle);
+		mImpl->Seek(tioFile, offset, (int) dir);
 	}
 }

@@ -33,7 +33,7 @@
 #include <ui\ui_systems.h>
 #include <ui\ui_legacysystems.h>
 
-#include "anim.h"
+#include "animgoals/anim.h"
 #include "critter.h"
 #include "party.h"
 #include "fade.h"

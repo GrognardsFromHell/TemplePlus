@@ -28,7 +28,7 @@
 #include "gamesystems/objfade.h"
 #include "gamesystems/objects/objsystem.h"
 #include "gamesystems/map/gmesh.h"
-#include "anim.h"
+#include "animgoals/anim.h"
 
 #include "mapsystem.h"
 #include <infrastructure/vfs.h>
@@ -483,8 +483,8 @@ void GameSystems::LoadModule(const std::string& moduleName) {
 void GameSystems::AddModulePaths(const std::string& moduleName) {
 
 	std::string moduleBase;
-	if (!Path::IsFileSystem(moduleName)) {
-		moduleBase = Path::Concat(".\\Modules\\", moduleName);
+	if (!VfsPath::IsFileSystem(moduleName)) {
+		moduleBase = VfsPath::Concat(".\\Modules\\", moduleName);
 	} else {
 		moduleBase = moduleName;
 	}

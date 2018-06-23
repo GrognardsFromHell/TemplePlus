@@ -11,7 +11,7 @@
 #include <gamesystems/map/sector.h>
 
 #include "streams.h"
-#include "anim.h"
+#include "animgoals/anim.h"
 
 struct QuestSave {
 	GameTime acceptedTime;

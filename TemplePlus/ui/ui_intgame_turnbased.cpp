@@ -24,7 +24,7 @@
 #include <graphics/shaperenderer2d.h>
 #include "ui_tooltip.h"
 #include "ui_render.h"
-#include <anim.h>
+#include "animgoals/anim.h"
 #include <tig\tig_mouse.h>
 #include <dungeon_master.h>
 #include "gamesystems/objects/objsystem.h"

@@ -39,7 +39,7 @@
 #include "ui_systems.h"
 #include "widgets/widget_styles.h"
 #include "temple/meshes.h"
-#include "anim.h"
+#include "animgoals/anim.h"
 
 
 const Race RACE_INVALID = (Race)0xFFFFFFFF;

@@ -22,6 +22,7 @@ namespace gfx {
 	class EncodedAnimId;
 	}
 
+
 struct Objects : temple::AddressTable {
 	friend struct LegacyCritterSystem;
 
@@ -233,6 +234,7 @@ struct Objects : temple::AddressTable {
 	}
 
 	void Destroy(objHndl obj);
+
 
 #pragma region Common
 	ObjectId GetId(objHndl handle);

@@ -13,8 +13,11 @@
 #include "pathfinding.h"
 #include "float_line.h"
 #include "gamesystems/gamesystems.h"
+#include "gamesystems/mapsystem.h"
 #include "gamesystems/objects/objsystem.h"
 #include "gamesystems/legacymapsystems.h"
+
+#include <infrastructure/vfs.h>
 
 #define _USE_MATH_DEFINES
 #include <math.h>

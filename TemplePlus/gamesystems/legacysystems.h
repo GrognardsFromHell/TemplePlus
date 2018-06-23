@@ -56,6 +56,8 @@ public:
 	void Reset() override;
 	void AdvanceTime(uint32_t time) override;
 	const std::string &GetName() const override;
+
+	bool IsObjectTeleporting(objHndl handle) const;
 };
 
 class SectorSystem : public GameSystem, public SaveGameAwareGameSystem, public ResetAwareGameSystem {

@@ -20,7 +20,6 @@
     <ClCompile Include="bonusspells.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
-    <ClCompile Include="anim.cpp" />
     <ClCompile Include="pathfinding.cpp" />
     <ClCompile Include="mainloop.cpp" />
     <ClCompile Include="feat.cpp">
@@ -522,6 +521,11 @@
     </ClCompile>
     <ClCompile Include="gamesystems\aas_hooks.cpp" />
     <ClCompile Include="raycast_hooks.cpp" />
+    <ClCompile Include="animgoals\animgoals.cpp" />
+    <ClCompile Include="animgoals\anim.cpp" />
+    <ClCompile Include="animgoals\animgoals_hooks.cpp" />
+    <ClCompile Include="frozen_obj_ref.cpp" />
+    <ClCompile Include="frozen_obj_ref_hooks.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -532,7 +536,6 @@
     <ClInclude Include="xp.h">
       <Filter>Mods and Fixes</Filter>
     </ClInclude>
-    <ClInclude Include="anim.h" />
     <ClInclude Include="pathfinding.h" />
     <ClInclude Include="mainloop.h" />
     <ClInclude Include="feat.h">
@@ -990,6 +993,9 @@
       <Filter>ui</Filter>
     </ClInclude>
     <ClInclude Include="gamesystems\aas_hooks.h" />
+    <ClInclude Include="animgoals\animgoal.h" />
+    <ClInclude Include="animgoals\anim.h" />
+    <ClInclude Include="frozen_obj_ref.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

@@ -16,7 +16,7 @@
 #include <damage.h>
 #include "ui/ui_systems.h"
 #include "ui/ui_legacysystems.h"
-#include "anim.h"
+#include "animgoals/anim.h"
 #include <gamesystems\objects\objsystem.h>
 #include <location.h>
 

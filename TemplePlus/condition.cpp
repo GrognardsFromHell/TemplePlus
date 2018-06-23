@@ -27,7 +27,7 @@
 #include <infrastructure/elfhash.h>
 #include "particles.h"
 #include "gamesystems/particlesystems.h"
-#include "anim.h"
+#include "animgoals/anim.h"
 #include "python/python_integration_spells.h"
 #include "history.h"
 #include "gamesystems/objects/objevent.h"

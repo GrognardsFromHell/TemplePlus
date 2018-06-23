@@ -41,6 +41,23 @@ protected:
 		fclose((FILE*)handle);
 	}
 
+	virtual void Seek(FileHandle handle, int position, SeekDir dir) override {
+		int origin;
+		switch (dir) {
+		default:
+		case SeekDir::Start:
+			origin = SEEK_SET;
+			break;
+		case SeekDir::Current:
+			origin = SEEK_CUR;
+			break;
+		case SeekDir::End:
+			origin = SEEK_END;
+			break;
+		}
+
+		fseek((FILE*)handle, position, origin);
+	}
 
 public:
 	bool MkDir(std::string_view path) override {
@@ -120,7 +137,7 @@ bool Vfs::IsDirEmpty(std::string_view path) {
 		return false;
 	}
 
-	auto globPattern(Path::Concat(path, "*.*"));
+	auto globPattern(VfsPath::Concat(path, "*.*"));
 	return Search(globPattern).empty();
 }
 
@@ -143,8 +160,8 @@ bool Vfs::CleanDir(std::string_view path) {
 
 	auto result = true;
 
-	for (const auto &entry : Search(Path::Concat(path, "*.*"))) {
-		auto fullPath(Path::Concat(path, entry.filename));
+	for (const auto &entry : Search(VfsPath::Concat(path, "*.*"))) {
+		auto fullPath(VfsPath::Concat(path, entry.filename));
 
 		if (!entry.dir) {
 			result &= RemoveFile(fullPath);
@@ -158,7 +175,7 @@ bool Vfs::CleanDir(std::string_view path) {
 	return result;
 }
 
-bool Path::IsFileSystem(std::string_view path) {
+bool VfsPath::IsFileSystem(std::string_view path) {
 
 	if (path.empty()) {
 		return false;
@@ -176,7 +193,7 @@ bool Path::IsFileSystem(std::string_view path) {
 
 }
 
-std::string Path::Concat(std::string_view a, std::string_view b) {
+std::string VfsPath::Concat(std::string_view a, std::string_view b) {
 
 	std::string result;
 	result.reserve(a.length() + b.length() + 1);
@@ -191,4 +208,3 @@ std::string Path::Concat(std::string_view a, std::string_view b) {
 	return result;
 
 }
-

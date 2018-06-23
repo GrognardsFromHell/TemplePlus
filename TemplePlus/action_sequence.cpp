@@ -23,7 +23,7 @@
 #include "ai.h"
 #include "ui/ui_intgame_turnbased.h"
 #include "d20_obj_registry.h"
-#include "anim.h"
+#include "animgoals/anim.h"
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/objects/objsystem.h"
 #include "python/python_integration_d20_action.h"

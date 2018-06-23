@@ -17,6 +17,8 @@
   <ItemGroup>
     <ClCompile Include="ability_fixes.cpp" />
     <ClCompile Include="action_sequence.cpp" />
+    <ClCompile Include="animgoals\animgoals.cpp" />
+    <ClCompile Include="animgoals\animgoals_hooks.cpp" />
     <ClCompile Include="common.cpp" />
     <ClCompile Include="config\config_hooks.cpp" />
     <ClCompile Include="d20_defs.cpp" />
@@ -46,6 +48,8 @@
     <ClCompile Include="fonts\fonts_layout.cpp" />
     <ClCompile Include="fonts\fonts_mapping.cpp" />
     <ClCompile Include="fonts\fonts_render.cpp" />
+    <ClCompile Include="frozen_obj_ref.cpp" />
+    <ClCompile Include="frozen_obj_ref_hooks.cpp" />
     <ClCompile Include="gamesystems\aas_hooks.cpp" />
     <ClCompile Include="gamesystems\clipping\clippingmesh.cpp" />
     <ClCompile Include="gamesystems\clipping\clipping_hooks.cpp" />
@@ -213,7 +217,7 @@
     <ClCompile Include="ui\ui_char_editor_feats.cpp" />
     <ClCompile Include="ui\ui_intgame_turnbased.cpp" />
     <ClCompile Include="ui\ui_pc_creation.cpp" />
-    <ClCompile Include="anim.cpp" />
+    <ClCompile Include="animgoals\anim.cpp" />
     <ClCompile Include="animalcompanion.cpp" />
     <ClCompile Include="attackrollcpp.cpp" />
     <ClCompile Include="bonusspells.cpp" />
@@ -293,6 +297,7 @@
   <ItemGroup>
     <ClInclude Include="action_sequence.h" />
     <ClInclude Include="ai.h" />
+    <ClInclude Include="animgoals\animgoal.h" />
     <ClInclude Include="bonus.h" />
     <ClInclude Include="d20_class.h" />
     <ClInclude Include="critter.h" />
@@ -310,6 +315,7 @@
     <ClInclude Include="float_line.h" />
     <ClInclude Include="fonts\fonts.h" />
     <ClInclude Include="fonts\fonts_mapping.h" />
+    <ClInclude Include="frozen_obj_ref.h" />
     <ClInclude Include="gamesystems\aas_hooks.h" />
     <ClInclude Include="gamesystems\clipping\clippingmesh.h" />
     <ClInclude Include="gamesystems\clipping\clipping.h" />
@@ -453,7 +459,7 @@
     <ClInclude Include="ui\ui_picker.h" />
     <ClInclude Include="ui\ui_char_editor.h" />
     <ClInclude Include="ui\ui_intgame_turnbased.h" />
-    <ClInclude Include="anim.h" />
+    <ClInclude Include="animgoals\anim.h" />
     <ClInclude Include="combat.h" />
     <ClInclude Include="common.h" />
     <ClInclude Include="condition.h" />

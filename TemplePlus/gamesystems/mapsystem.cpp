@@ -15,7 +15,7 @@
 
 #include <tio/tio.h>
 
-#include "anim.h"
+#include "animgoals/anim.h"
 #include "map/sector.h"
 #include "obj.h"
 #include "gamesystems/legacysystems.h"

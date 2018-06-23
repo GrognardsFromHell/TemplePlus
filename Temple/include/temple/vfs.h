@@ -41,6 +41,7 @@ namespace temple {
 		size_t Length(FileHandle handle) override;
 		void Close(FileHandle handle) override;
 		size_t Tell(FileHandle handle) override;
+		void Seek(FileHandle handle, int position, SeekDir dir = SeekDir::Start) override;
 	private:
 
 		std::unique_ptr<class TioVfsImpl> mImpl;

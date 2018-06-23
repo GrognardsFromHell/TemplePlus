@@ -197,6 +197,13 @@ const std::string &TeleportSystem::GetName() const {
 	return name;
 }
 
+// Originally @ 0x10084af0
+bool TeleportSystem::IsObjectTeleporting(objHndl handle) const
+{
+	static auto orgMethod = temple::GetPointer<BOOL(objHndl)>(0x10084af0);
+	return orgMethod(handle) == 1;
+}
+
 //*****************************************************************************
 //* Sector
 //*****************************************************************************

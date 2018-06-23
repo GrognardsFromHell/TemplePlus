@@ -16,7 +16,7 @@
 #include "gamesystems/objects/objevent.h"
 #include "gamesystems/particlesystems.h"
 #include "damage.h"
-#include "anim.h"
+#include "animgoals/anim.h"
 #include "float_line.h"
 #include "action_sequence.h"
 #include "ai.h"

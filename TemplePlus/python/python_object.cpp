@@ -7,7 +7,7 @@
 #include "../gamesystems/gamesystems.h"
 #include "../reputations.h"
 #include "../critter.h"
-#include "../anim.h"
+#include "../animgoals/anim.h"
 #include "../ai.h"
 #include "../combat.h"
 #include "../dispatcher.h"

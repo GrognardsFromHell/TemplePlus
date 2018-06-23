@@ -13,6 +13,12 @@ struct VfsSearchResult {
 	uint32_t lastModified;
 };
 
+enum class SeekDir {
+	Start = 0,
+	Current = 1,
+	End = 2
+};
+
 /*
 	Abstractions for accessing files in the virtual file system.
 	The virtual file system is backed by TIO in a normal game,
@@ -90,13 +96,14 @@ public:
 	virtual size_t Write(const void* buffer, size_t size, FileHandle handle) = 0;
 	virtual size_t Length(FileHandle handle) = 0;
 	virtual size_t Tell(FileHandle handle) = 0;
+	virtual void Seek(FileHandle handle, int position, SeekDir dir = SeekDir::Start) = 0;
 	virtual void Close(FileHandle handle) = 0;
 	
 };
 
-class Path {
+class VfsPath {
 public:
-	Path() = delete;
+	VfsPath() = delete;
 
 	static bool IsFileSystem(std::string_view path);
 	static std::string Concat(std::string_view a, std::string_view b);
