@@ -1,0 +1,5 @@
+name: Sudden Enlarge
+flags: 4325376
+prereqs: 
+description: Once per day, you may apply the Enlarge Spell feat to any spell you cast, without increasing the level of the spell or specially preparing it ahead of time. You may still use the Enlarge Spell feat normally, if you have it.  Note:  The ability will be wasted if a spell that cannot be extended is cast.
+prereq descr:  
