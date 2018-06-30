@@ -146,7 +146,6 @@ public:
 
   int (*anim_first_run_idx_for_obj)(objHndl obj);
   BOOL (*anim_run_id_for_obj)(objHndl obj, AnimSlotId *slotIdOut);
-  BOOL(*anim_frame_advance_maybe)(objHndl, AnimSlot& runSlot, uint32_t animHandle, uint32_t* eventOut);
   AnimSlotId tmpId;
 
   AnimAddressTable() {
@@ -156,7 +155,6 @@ public:
     rebase(customDelayInMs, 0x10307534);
 
     rebase(PushGoalDying, 0x100157B0);
-    rebase(anim_frame_advance_maybe, 0x10016530);
     rebase(InterruptAllForTbCombat, 0x1000C950);
 
     rebase(anim_first_run_idx_for_obj, 0x10054E20);
@@ -228,22 +226,6 @@ class GoalStateFuncs
 {
 #define GoalStateFunc(fname) static int __cdecl GoalStateFunc ## fname ## (AnimSlot& slot);
 public:
-
-    static int __cdecl GoalStateFunc35(AnimSlot& ars);
-    static int __cdecl GoalStateFunc54(AnimSlot& slot); // used in ag_attempt_attack
-    static int __cdecl GoalStateFunc133(AnimSlot& slot);
-    static int __cdecl GoalStateFuncIsCritterProne(AnimSlot& slot);
-    static int __cdecl GoalStateFuncIsParam1Concealed(AnimSlot& slot);
-    static int __cdecl GoalStateFunc78_IsHeadingOk(AnimSlot &slot);
-    static int __cdecl GoalStateFunc82(AnimSlot& slot);
-    static int __cdecl GoalStateFunc83(AnimSlot& slot);
-    static int __cdecl GoalStateFunc65(AnimSlot& slot); // belongs in ag_hit_by_weapon
-    static int __cdecl GoalStateFunc70(AnimSlot& slot); // 
-    static int __cdecl GoalStateFunc100_IsCurrentPathValid(AnimSlot& slot);
-    static int __cdecl GoalStateFunc106(AnimSlot& slot);
-    static int __cdecl GoalStateFunc130(AnimSlot& slot);
-    static int __cdecl GoalStateFuncPickpocket(AnimSlot &slot);
-    
     static float __cdecl HookedGetRunSpeed(objHndl handle, obj_f field);
 } gsFuncs;
 
@@ -1976,207 +1958,6 @@ std::string AnimSlotId::ToString() const {
   return format("[{}:{}r{}]", slotIndex, uniqueId, field_8);
 }
 
-int GoalStateFuncs::GoalStateFunc106(AnimSlot &slot) {
-    //logger->debug("GSF 106 for {}, goal {}, flags {:x}, currentState {:x}", description.getDisplayName(slot.animObj), animGoalTypeNames[slot.pCurrentGoal->goalType], (uint32_t)slot.flags, (uint32_t)slot.currentState);
-  auto obj = slot.param1.obj;
-  assert(slot.param1.obj);
-
-  auto aasHandle = objects.GetAnimHandle(obj);
-  assert(aasHandle);
-
-  if (objects.getInt32(obj, obj_f_spell_flags) & SpellFlags::SF_10000) {
-      //logger->debug("GSF 106: return FALSE due to obj_f_spell_flags 0x10000");
-    return FALSE;
-  }
-
-  auto animId = aasHandle->GetAnimId();
-
-  if ((!objects.IsCritter(obj) ||
-       !(objects.getInt32(obj, obj_f_critter_flags) &
-         (OCF_PARALYZED | OCF_STUNNED)) ||
-       !animId.IsWeaponAnim() &&
-           (animId.GetNormalAnimType() == gfx::NormalAnimType::Death ||
-            animId.GetNormalAnimType() == gfx::NormalAnimType::Death2 ||
-            animId.GetNormalAnimType() == gfx::NormalAnimType::Death3))) {
-    static auto anim_frame_advance_maybe =
-        temple::GetPointer<BOOL(objHndl , AnimSlot & runSlot,
-                                uint32_t animHandle, uint32_t * eventOut)>(
-            0x10016530);
-    uint32_t eventOut = 0;
-    anim_frame_advance_maybe(obj, slot, aasHandle->GetHandle(), &eventOut);
-
-    // This is the ACTION trigger
-    if (eventOut & 1) {
-      slot.flags |= AnimSlotFlag::ASF_UNK3;
-      //logger->debug("GSF 106: Set flag 4, returned TRUE");
-      return TRUE;
-    }
-
-    // If the animation is a looping animation, it does NOT have a
-    // defined end, so we just trigger the end here anyway otherwise
-    // this'll loop endlessly
-    bool looping = false;
-    /*if (animId.IsWeaponAnim() && ( animId.GetWeaponAnim() == gfx::WeaponAnim::Idle || animId.GetWeaponAnim() == gfx::WeaponAnim::CombatIdle)) {*/
-
-    
-
-    if (animId.IsWeaponAnim() && (animId.GetWeaponAnim() == gfx::WeaponAnim::Idle )) {
-    //	// We will continue anyway down below, because the character is idling, so log a message
-        if (!(eventOut & 2)) {
-            logger->info("Ending wait for animation action/end in goal {}, because the idle animation would never end.",
-                slot.pCurrentGoal->goalType);
-        }
-        looping = true;
-    }
-
-    // This is the END trigger
-    if (!looping && !(eventOut & 2))
-    {
-        //logger->debug("GSF 106: eventOut & 2, returned TRUE");
-        return TRUE;
-    }
-      
-
-    // Clears WaypointDelay flag
-    auto gameObj = objSystem->GetObject(obj);
-    if (objects.IsNPC(obj)) {
-      auto flags = gameObj->GetInt64(obj_f_npc_ai_flags64);
-      gameObj->SetInt64(obj_f_npc_ai_flags64, flags & 0xFFFFFFFFFFFFFFFDui64);
-    }
-
-    // Clear 0x10 slot flag
-    slot.flags &= ~AnimSlotFlag::ASF_UNK5;
-  }
-  //logger->debug("GSF 106: returned FALSE");
-  return FALSE;
-}
-
-int GoalStateFuncs::GoalStateFunc130(AnimSlot& slot)
-{
-    //logger->debug("GSF 130");
-    uint32_t eventOut = 0;
-    auto handle = slot.param1.obj;
-    if (!handle)
-    {
-        logger->warn("Missing anim object!");
-        return FALSE;
-    }
-
-    auto obj = gameSystems->GetObj().GetObject(handle);
-    auto aasHandle = objects.GetAnimHandle(handle);
-    if (!aasHandle || !aasHandle->GetHandle())
-    {
-        logger->warn("No aas handle!");
-        return FALSE;
-    }
-
-    if (obj->GetInt32(obj_f_spell_flags) & SpellFlags::SF_10000)
-        return FALSE;
-    
-    if (obj->IsCritter())
-    {
-        if (obj->GetInt32(obj_f_critter_flags) & (OCF_PARALYZED | OCF_STUNNED))
-            return FALSE;
-    }
-    animAddresses.anim_frame_advance_maybe(handle, slot, aasHandle->GetHandle(), &eventOut);
-
-    if (eventOut & 1)
-        slot.flags |= AnimSlotFlag::ASF_UNK3;
-
-    if (eventOut & 2) {
-        slot.flags &= ~(AnimSlotFlag::ASF_UNK5);
-        return FALSE;
-    }
-    return TRUE;
-}
-
-int GoalStateFuncs::GoalStateFuncPickpocket(AnimSlot & slot)
-{
-
-    auto tgt = slot.param2.obj;
-    auto handle = slot.param1.obj;
-    int gotCaught = 0;
-
-    
-    if ( !tgt 
-        || (objects.GetFlags(handle) & (OF_OFF | OF_DESTROYED))
-        || (objects.GetFlags(tgt) & (OF_OFF | OF_DESTROYED)) )
-        return FALSE;
-
-    critterSys.Pickpocket(handle, tgt, gotCaught);
-    if (!gotCaught){
-        slot.flags |= AnimSlotFlag::ASF_UNK12;
-    }
-    return TRUE;
-}
-
-
-
-int GoalStateFuncs::GoalStateFunc83(AnimSlot &slot) {
-  //logger->debug("GSF83 for {}, current goal {} ({})", description.getDisplayName(slot.animObj), animGoalTypeNames[slot.pCurrentGoal->goalType], slot.currentGoal);
-  auto flags = slot.flags;
-  if (flags & AnimSlotFlag::ASF_UNK3 && !(flags & AnimSlotFlag::ASF_UNK4)) {
-    slot.flags = flags | AnimSlotFlag::ASF_UNK4;
-    //logger->debug("GSF83 return TRUE");
-    return TRUE;
-  } else {
-    return FALSE;
-  }
-}
-
-static BOOL goalstatefunc_45(AnimSlot &slot) {
-    //logger->debug("GSF45");
-  auto obj = slot.param1.obj;
-  assert(obj);
-  auto aasHandle = objects.GetAnimHandle(obj);
-  assert(aasHandle);
-
-  auto animId = aasHandle->GetAnimId();
-  return animId.IsConjuireAnimation() ? TRUE : FALSE;
-}
-
-static BOOL goalstatefunc_41(AnimSlot &slot) {
-    //logger->debug("GSF41");
-  auto spell = spellsCastRegistry.get(slot.param1.number);
-  return FALSE;
-}
-
-static BOOL goalstatefunc_42(AnimSlot &slot) {
-    //logger->debug("GSF42");
-  auto obj = slot.param1.obj;
-  assert(obj);
-
-  auto spellId = slot.param2.number;
-  slot.flags |= 0xCu; // Sets 8 and 4
-
-  if (spellId) {
-    actSeqSys.ActionFrameProcess(obj);
-    pySpellIntegration.SpellTrigger(spellId, SpellEvent::SpellEffect);
-
-    auto spell = spellsCastRegistry.get(spellId);
-    if (spell) {
-      auto targetCount = spell->spellPktBody.targetCount;
-      bool found = false;
-      for (uint32_t i = 0; i < targetCount; i++) {
-        if (spell->spellPktBody.targetListHandles[i] ==
-            spell->spellPktBody.caster) {
-          found = true;
-          break;
-        }
-      }
-
-      if (found) {
-        DispIOTurnBasedStatus dispIo;
-        dispIo.tbStatus = actSeqSys.curSeqGetTurnBasedStatus();
-        dispatch.dispatchTurnBasedStatusInit(spell->spellPktBody.caster,
-                                             &dispIo);
-      }
-    }
-  }
-
-  return TRUE;
-}
-
 static class AnimSystemHooks : public TempleFix {
 public:
 	
@@ -2190,53 +1971,15 @@ public:
 
   void apply() override {
 
-
       // Animation pathing stuff
       replaceFunction(0x1003DF30, RasterPoint);
 
       replaceFunction(0x1003FB40, RasterizeLineBetweenLocs);
 
-      static BOOL(__cdecl *orgGoalstate_20)(AnimSlot&) = replaceFunction<BOOL(__cdecl)(AnimSlot &)>(0x1000EC10, [](AnimSlot &runSlot)  {
-          return orgGoalstate_20(runSlot);
-      });
       //static bool useNew = false;
 
 
       replaceFunction(0x10017BF0, TargetDistChecker);
-
-    // goalstatefunc_133
-    replaceFunction<BOOL(AnimSlot &)>(0x1001C100, gsFuncs.GoalStateFunc133);
-    // goalstatefunc_106
-    replaceFunction<BOOL(AnimSlot &)>(0x100185e0, gsFuncs.GoalStateFunc106);
-    // goalstatefunc_100
-    replaceFunction<BOOL(AnimSlot &)>(0x1000D150, gsFuncs.GoalStateFunc100_IsCurrentPathValid);
-    // goalstatefunc_83_checks_flag4_set_flag8
-    replaceFunction<BOOL(AnimSlot &)>(0x10012c80, gsFuncs.GoalStateFunc83);
-    // goalstatefunc_82
-    replaceFunction<BOOL(AnimSlot &)>(0x10012C70, gsFuncs.GoalStateFunc82);
-    //goalstatefunc_78_isheadingok
-    replaceFunction<BOOL(AnimSlot &)>(0x100125F0, gsFuncs.GoalStateFunc78_IsHeadingOk);
-    //goalstatefunc_70
-//	replaceFunction<BOOL(AnimSlot &)>(0x10011D40, gsFuncs.GoalStateFunc70);  // not sure this is correct, not needed anyway right now
-    // goalstatefunc_65
-    replaceFunction<BOOL(AnimSlot &)>(0x10011880, gsFuncs.GoalStateFunc65);
-    // gsf54
-    replaceFunction<BOOL(AnimSlot &)>(0x10010D60, gsFuncs.GoalStateFunc54);
-    // goalstatefunc_48
-    replaceFunction<BOOL(AnimSlot &)>(0x100107E0, gsFuncs.GoalStateFuncPickpocket);
-    // goalstatefunc_45
-    replaceFunction<BOOL(AnimSlot &)>(0x10010520, goalstatefunc_45);
-    // goalstatefunc_41
-    replaceFunction<BOOL(AnimSlot &)>(0x10010290, goalstatefunc_41);
-    // goalstatefunc_42
-    replaceFunction<BOOL(AnimSlot &)>(0x100102c0, goalstatefunc_42);
-    //goalstatefunc_35
-    replaceFunction<BOOL(AnimSlot&)>(0x1000FF10, gsFuncs.GoalStateFunc35);
-    //goalstate is concealed
-    replaceFunction<BOOL(AnimSlot&)>(0x1000E250, gsFuncs.GoalStateFuncIsParam1Concealed);
-    // goal_is_critter_prone
-    replaceFunction<BOOL(AnimSlot&)>(0x1000E270, gsFuncs.GoalStateFuncIsCritterProne);
-
 
     writeCall(0x100148EA, HookedGetRunSpeed);
 
@@ -2359,201 +2102,6 @@ static json11::Json::object StateToJson(const AnimGoalState &state,
   }
 
   return result;
-}
-
-int GoalStateFuncs::GoalStateFunc35(AnimSlot& slot)
-{
-    //logger->debug("GoalStateFunc35");
-    if (slot.param1.obj)
-    {
-        if (!gameSystems->GetObj().GetObject(slot.param1.obj)->IsCritter()
-            || !critterSys.IsDeadNullDestroyed(slot.param1.obj))
-            return 1;
-    }
-
-    return 0;
-}
-
-int GoalStateFuncs::GoalStateFunc54(AnimSlot& slot){
-    //logger->debug("GSF54 ag_attempt_attack action frame");
-    assert(slot.param1.obj);
-    assert(slot.param2.obj);
-
-    if (! (gameSystems->GetObj().GetObject(slot.param2.obj)->GetFlags() & (OF_OFF | OF_DESTROYED)) )
-    {
-        actSeqSys.ActionFrameProcess(slot.param1.obj);
-    }
-    return TRUE;
-}
-
-int GoalStateFuncs::GoalStateFunc133(AnimSlot& slot)
-{
-    // 1001C100
-    //logger->debug("GoalStateFunc133");
-    auto sub_10017BF0 = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x10017BF0);
-    auto result = sub_10017BF0(slot.param1.obj, slot.param2.obj);
-    if (!result)
-    {
-        if (combatSys.isCombatActive())
-        {
-            logger->debug("Anim sys for {} ending turn...", description.getDisplayName(slot.param1.obj));
-            combatSys.CombatAdvanceTurn(slot.param1.obj);
-        }
-    }
-
-    return result;
-}
-
-int GoalStateFuncs::GoalStateFuncIsCritterProne(AnimSlot& slot)
-{
-    // 1000E270
-    //logger->debug("GoalStateFunc IsCritterProne");
-    if (slot.param1.obj){
-        return objects.IsCritterProne(slot.param1.obj);
-    }
-
-    logger->debug("Anim Assertion failed: obj != OBJ_HANDLE_NULL");
-    return FALSE;
-}
-
-int GoalStateFuncs::GoalStateFuncIsParam1Concealed(AnimSlot& slot)
-{
-    //logger->debug("GoalState IsConcealed");
-    return (critterSys.IsConcealed(slot.param1.obj));
-}
-
-int GoalStateFuncs::GoalStateFunc78_IsHeadingOk(AnimSlot & slot){
-    if (!slot.pCurrentGoal) {
-        slot.pCurrentGoal = &slot.goals[slot.currentGoal];
-    }
-
-    if (slot.path.nodeCount <= 0)
-        return 1;
-
-    // get the mover's location
-    auto obj = gameSystems->GetObj().GetObject(slot.param1.obj);
-    auto objLoc = obj->GetLocationFull();
-    float objAbsX, objAbsY;
-    locSys.GetOverallOffset(objLoc, &objAbsX, &objAbsY);
-
-    // get node loc
-    if (slot.path.currentNode > 200 || slot.path.currentNode < 0) {
-        logger->info("Anim: Illegal current node detected!");
-        return 1;
-    }
-
-    auto nodeLoc = slot.path.nodes[slot.path.currentNode];
-    float nodeAbsX, nodeAbsY;
-    locSys.GetOverallOffset(nodeLoc, &nodeAbsX, &nodeAbsY);
-
-    if (objAbsX == nodeAbsX && objAbsY == nodeAbsY) {
-        if (slot.path.currentNode + 1 >= slot.path.nodeCount)
-            return 1;
-        nodeLoc = slot.path.nodes[slot.path.currentNode + 1];
-        locSys.GetOverallOffset(nodeLoc, &nodeAbsX, &nodeAbsY);
-    }
-
-    auto &rot = slot.pCurrentGoal->scratchVal2.floatNum;
-    rot = (float)(M_PI_2 + M_PI * 0.75 - atan2(nodeAbsY - objAbsY, nodeAbsX - objAbsX) );
-    if (rot < 0.0) {
-        rot += (float)6.2831853;//M_PI * 2;
-    }
-    if (rot > 6.2831853) {
-        rot -= (float) 6.2831853;//M_PI * 2;
-    }
-
-    
-    auto objRot = obj->GetFloat(obj_f_rotation);
-
-
-    if (sin(objRot - rot) > 0.017453292)    // 1 degree
-        return 0;
-    
-    if (cos(objRot) - cos(rot) > 0.017453292) // in case it's a 180 degrees difference
-        return 0;
-
-    return 1;
-}
-
-int GoalStateFuncs::GoalStateFunc82(AnimSlot& slot)
-{ //10012C70
-    /*if (slot.pCurrentGoal && slot.pCurrentGoal->goalType != ag_anim_idle) {
-        logger->debug("GSF82 for {}, current goal {} ({}). Flags: {:x}, currentState: {:x}", description.getDisplayName(slot.animObj), animGoalTypeNames[slot.pCurrentGoal->goalType], slot.currentGoal, slot.flags, slot.currentState);
-        if(slot.pCurrentGoal->goalType == ag_hit_by_weapon)
-        {
-            int u = 1;
-        }
-    }*/
-    //return (slot.flags & AnimSlotFlag::ASF_UNK5) == 0? TRUE: FALSE;
-    return (~(slot.flags >> 4)) & 1;
-    //return ~(slot.flags >> 4) & 1;
-}
-
-int GoalStateFuncs::GoalStateFunc65(AnimSlot& slot)
-{
-    //logger->debug("GSF65");
-    if (!slot.param1.obj)
-    {
-        logger->warn("Error in GSF65");
-        return FALSE;
-    }
-    auto obj = gameSystems->GetObj().GetObject(slot.param1.obj);
-    auto locFull = obj->GetLocationFull();
-    float worldX, worldY;
-    locSys.GetOverallOffset(locFull, &worldX, &worldY);
-    
-    auto obj2 = gameSystems->GetObj().GetObject(slot.param2.obj);
-    auto loc2 = obj2->GetLocationFull();
-    float worldX2, worldY2;
-    locSys.GetOverallOffset(loc2, &worldX2, &worldY2);
-
-    auto rot = obj->GetFloat(obj_f_rotation);
-
-    auto newRot = atan2(worldY2 - worldY, worldX2 - worldX) + M_PI * 3 / 4 - rot;
-    while (newRot > M_PI * 2) newRot -= M_PI * 2;
-    while (newRot < 0) newRot += M_PI * 2;
-
-    auto newRotAdj = newRot - M_PI / 4;
-
-    gfx::WeaponAnim weaponIdParam = gfx::WeaponAnim::FrontHit;
-    if (newRotAdj < M_PI / 4)
-        weaponIdParam = gfx::WeaponAnim::FrontHit;
-    else if (newRotAdj < M_PI*3/4)
-        weaponIdParam = gfx::WeaponAnim::LeftHit;
-    else if (newRotAdj < M_PI * 5 / 4)
-        weaponIdParam = gfx::WeaponAnim::BackHit;
-    else if (newRotAdj < M_PI * 7 / 4)
-        weaponIdParam = gfx::WeaponAnim::RightHit;
-
-    auto weaponAnimId = critterSys.GetAnimId(slot.param1.obj, weaponIdParam);
-    objects.SetAnimId(slot.param1.obj, weaponAnimId);
-
-    return TRUE;
-
-}
-
-int GoalStateFuncs::GoalStateFunc70(AnimSlot & slot)
-{
-    auto someGoal = slot.stateFlagData;
-
-    if (someGoal == -1){
-        SpellPacketBody spPkt;
-        spellSys.GetSpellPacketBody(slot.param1.number, &spPkt);
-        if (spPkt.animFlags & 8){
-            slot.pCurrentGoal->animId.number = spPkt.spellRange; // weird shit!
-            return TRUE;
-        }
-        return FALSE;
-    } 
-    else{
-        slot.pCurrentGoal->animId.number = someGoal;
-        return TRUE;
-    }
-}
-
-int GoalStateFuncs::GoalStateFunc100_IsCurrentPathValid(AnimSlot & slot)
-{
-    return slot.path.flags & PathFlags::PF_COMPLETE;
 }
 
 void AnimSystemHooks::RasterPoint(int64_t x, int64_t y, LineRasterPacket & rast)

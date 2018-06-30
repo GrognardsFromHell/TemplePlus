@@ -19,6 +19,7 @@
     <ClCompile Include="action_sequence.cpp" />
     <ClCompile Include="animgoals\animgoal.cpp" />
     <ClCompile Include="animgoals\animgoals.cpp" />
+    <ClCompile Include="animgoals\animgoals_callbacks.cpp" />
     <ClCompile Include="animgoals\animgoals_debugrenderer.cpp" />
     <ClCompile Include="animgoals\animgoals_hooks.cpp" />
     <ClCompile Include="animgoals\animgoals_stackentry.cpp" />
@@ -302,6 +303,7 @@
     <ClInclude Include="ai.h" />
     <ClInclude Include="animgoals\animgoal.h" />
     <ClInclude Include="animgoals\animgoals.h" />
+    <ClInclude Include="animgoals\animgoals_callbacks.h" />
     <ClInclude Include="animgoals\animgoals_debugrenderer.h" />
     <ClInclude Include="animgoals\animgoals_stackentry.h" />
     <ClInclude Include="animgoals\anim_slot.h" />

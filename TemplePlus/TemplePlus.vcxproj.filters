@@ -529,6 +529,7 @@
     <ClCompile Include="animgoals\animgoals_stackentry.cpp" />
     <ClCompile Include="animgoals\animgoal.cpp" />
     <ClCompile Include="animgoals\animgoals_debugrenderer.cpp" />
+    <ClCompile Include="animgoals\animgoals_callbacks.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -1003,6 +1004,7 @@
     <ClInclude Include="animgoals\animgoals.h" />
     <ClInclude Include="animgoals\animgoals_debugrenderer.h" />
     <ClInclude Include="animgoals\anim_slot.h" />
+    <ClInclude Include="animgoals\animgoals_callbacks.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

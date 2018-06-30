@@ -4,6 +4,7 @@
 #include <fmt/format.h>
 
 #include "animgoals.h"
+#include "animgoals_callbacks.h"
 
 static const char *animGoalTypeNames[ag_count] = {
 	"ag_animate",
@@ -234,13 +235,13 @@ AnimationGoals::AnimationGoals()
 	static auto GoalTargetLocWithinRadius = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000cf10);
 	static auto GoalStateCallback7 = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000cfe0);
 	static auto GoalStateCallback8 = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000d060);
-	static auto GoalIsCurrentPathValid = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000d150);
+	// static auto GoalIsCurrentPathValid = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000d150);
 	static auto GoalCalcPathToTarget = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000d560);
 	static auto GoalCalcPathToTarget2 = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000db30);
 	static auto GoalKnockbackFunc = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000dca0);
 	static auto GoalMoveAwayFromObj = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000dd80);
-	static auto GoalIsConcealed = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000e250);
-	static auto GoalIsProne = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000e270);
+	// static auto GoalIsConcealed = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000e250);
+	// static auto GoalIsProne = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000e270);
 	static auto GoalStunnedExpire = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000e2c0);
 	static auto GoalHasDoorInPath = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000e4f0);
 	static auto GoalFindPathNear = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000e6f0);
@@ -260,21 +261,21 @@ AnimationGoals::AnimationGoals()
 	static auto GoalUseItemOnLoc = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000fbc0);
 	static auto GoalUseItemOnLocWithSkillDummy = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000fce0);
 	static auto GoalSetNoFlee = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000fec0);
-	static auto GoalIsAlive = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000ff10);
+	// static auto GoalIsAlive = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000ff10);
 	static auto GoalPlaySoundScratch5 = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000ff60);
 	static auto GoalAttemptAttackCheck = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000fff0);
 	static auto GoalCritterShouldNotAutoAnimate = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10010160);
 	static auto GoalAttackerHasRangedWeapon = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100101d0);
 	static auto GoalReturnTrue = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10010250);
-	static auto GoalReturnFalse = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10010290);
-	static auto GoalAttemptSpell = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100102c0);
+	// static auto GoalReturnFalse = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10010290);
+	// static auto GoalAttemptSpell = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100102c0);
 	static auto GoalCastConjureEnd = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10010410);
 	static auto GoalDestroyParam1 = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100104a0);
 	static auto GoalWasInterrupted = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10010500);
-	static auto GoalIsAnimatingConjuration = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10010520);
+	// static auto GoalIsAnimatingConjuration = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10010520);
 	static auto GoalStartConjurationAnim = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100105f0);
 	static auto GoalAreOnSameTile = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10010760);
-	static auto GoalPickpocketPerform = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100107e0);
+	// static auto GoalPickpocketPerform = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100107e0);
 	static auto GoalActionPerform = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10010aa0);
 	static auto GoalCheckSlotFlag40000 = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10010b50);
 	static auto GoalCheckParam2AgainstStateFlagData = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10010b70);
@@ -293,7 +294,7 @@ AnimationGoals::AnimationGoals()
 	static auto GoalSetRunningFlag = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10011600);
 	static auto GoalEnterCombat = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10011660);
 	static auto GoalLeaveCombat = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100117f0);
-	static auto GoalPlayGetHitAnim = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10011880);
+	// static auto GoalPlayGetHitAnim = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10011880);
 	static auto GoalPlayDodgeAnim = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10011a30);
 	static auto GoalPlayAnim = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10011be0);
 	static auto GoalSaveParam1InScratch = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10011cf0);
@@ -306,13 +307,13 @@ AnimationGoals::AnimationGoals()
 	static auto GoalTurnTowardsOrAway = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10012040);
 	static auto GoalPlayRotationAnim = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100121b0);
 	static auto GoalRotate = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100122a0);
-	static auto GoalIsRotatedTowardNextPathNode = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100125f0);
+	// static auto GoalIsRotatedTowardNextPathNode = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100125f0);
 	static auto GoalIsRotatedTowardTarget = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100127b0);
 	static auto GoalSetRotationToParam2 = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10012910);
 	static auto GoalSetRotationToFaceTargetObj = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10012a00);
 	static auto GoalSetRotationToFaceTargetLoc = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10012b60);
-	static auto GoalIsSlotFlag10NotSet = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10012c70);
-	static auto GoalSlotFlagSet8If4AndNotSetYet = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10012c80);
+	// static auto GoalIsSlotFlag10NotSet = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10012c70);
+	// static auto GoalSlotFlagSet8If4AndNotSetYet = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10012c80);
 	static auto GoalProjectileCleanup = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10012ca0);
 	static auto GoalAnimateCleanup = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10012cf0);
 	static auto GoalAnimateForever = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10012d10);
@@ -343,7 +344,7 @@ AnimationGoals::AnimationGoals()
 	static auto GoalResetToIdleAnimUnstun = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10018160);
 	static auto GoalThrowItemCleanup = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10018290);
 	static auto GoalThrowItemPlayAnim = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10018400);
-	static auto GoalUnconcealAnimate = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100185e0);
+	// static auto GoalUnconcealAnimate = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100185e0);
 	static auto GoalStartIdleAnimIfCloseToParty = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10018730);
 	static auto GoalStartFidgetAnimIfCloseToParty = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10018810);
 	static auto GoalContinueWithAnim = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100188f0);
@@ -371,7 +372,7 @@ AnimationGoals::AnimationGoals()
 	static auto GoalAttackContinueWithAnim = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1001a080);
 	static auto GoalAttackPlayIdleAnim = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1001a170);
 	static auto GoalMoveNearUpdateRadiusToReach = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1001bf70);
-	static auto GoalAttackEndTurnIfUnreachable = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1001c100);
+	// static auto GoalAttackEndTurnIfUnreachable = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1001c100);
 	static auto AlwaysSucceed = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x101f5850);
 	static auto AlwaysFail = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10262530);
 	// ag_animate
