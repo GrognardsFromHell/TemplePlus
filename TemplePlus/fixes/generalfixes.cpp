@@ -19,6 +19,7 @@
 #include "animgoals/anim.h"
 #include <gamesystems\objects\objsystem.h>
 #include <location.h>
+#include "gamesystems/gamesystems.h"
 
 struct TigTextStyle;
 
@@ -343,9 +344,9 @@ public:
 
 			redirectToLambda<BOOL(__cdecl)(objHndl, LocAndOffsets)>(0x10044995, [](objHndl handle, LocAndOffsets loc) {
 				if (isWalkOverride)
-					return animationGoals.PushWalkToTile(handle, loc) ? TRUE : FALSE; 
+					return gameSystems->GetAnim().PushWalkToTile(handle, loc) ? TRUE : FALSE; 
 				else
-					return animationGoals.PushRunToTile(handle, loc) ? TRUE : FALSE;
+					return gameSystems->GetAnim().PushRunToTile(handle, loc) ? TRUE : FALSE;
 			});
 			
 		replaceFunction(0x10113010, PartySelectedStandUpAndMoveToPosition);

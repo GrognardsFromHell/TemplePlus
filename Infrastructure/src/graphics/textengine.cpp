@@ -712,7 +712,7 @@ namespace gfx {
 			trimming.delimiterCount = 0;
 			textLayout->SetTrimming(&trimming, trimmingSign);
 		}
-
+		
 		for (auto &range : formatted.formats) {
 			DWRITE_TEXT_RANGE textRange;
 			textRange.startPosition = range.startChar;

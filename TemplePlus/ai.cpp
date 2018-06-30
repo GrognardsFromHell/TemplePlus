@@ -780,7 +780,7 @@ objHndl AiSystem::FindSuitableTarget(objHndl handle){
 	if (!kosCandidate){
 		if (objToTurnTowards){
 			auto rotationTo = objects.GetRotationTowards(handle, objToTurnTowards);
-			animationGoals.PushRotate(handle, rotationTo);
+			gameSystems->GetAnim().PushRotate(handle, rotationTo);
 		}
 	}
 
@@ -3744,7 +3744,7 @@ void AiPacket::ProcessCombat(){
 				UseItem();
 				break;
 			case 3:
-				animationGoals.PushUseSkillOn(obj, target, this->skillEnum, this->scratchObj, 0);
+				gameSystems->GetAnim().PushUseSkillOn(obj, target, this->skillEnum, this->scratchObj, 0);
 				break;
 			case 4:
 				MoveToScoutPoint();
@@ -3909,14 +3909,14 @@ void AiPacket::DoWaypoints(){
 		if (npcFlags& ONF_USE_ALERTPOINTS){
 			
 			if (!!temple::GetRef<BOOL(__cdecl)(objHndl, int)>(0x1005BC00)(obj, 0)){
-				animationGoals.PushFidget(obj);
+				gameSystems->GetAnim().PushFidget(obj);
 				temple::GetRef<void(__cdecl)(objHndl)>(0x10015FD0)(obj);
 			}
 		}
 		else if (!temple::GetRef<BOOL(__cdecl)(objHndl, int)>(0x1005B950)(obj, 0) // waypoint sthg
 			&& !temple::GetRef<BOOL(__cdecl)(objHndl, int)>(0x1005BC00)(obj, 0)) // npc wander sthg
 		{
-			animationGoals.PushFidget(obj);
+			gameSystems->GetAnim().PushFidget(obj);
 			temple::GetRef<void(__cdecl)(objHndl)>(0x10015FD0)(obj);
 		}
 		return;

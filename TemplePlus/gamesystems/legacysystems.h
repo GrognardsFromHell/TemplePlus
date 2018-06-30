@@ -225,6 +225,8 @@ public:
 	void SetLightScheme(int schemeId, int hour);
 	int GetHourOfDay();
 
+	bool IsUpdating() const;
+
 
 };
 

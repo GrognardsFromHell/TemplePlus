@@ -17,8 +17,11 @@
   <ItemGroup>
     <ClCompile Include="ability_fixes.cpp" />
     <ClCompile Include="action_sequence.cpp" />
+    <ClCompile Include="animgoals\animgoal.cpp" />
     <ClCompile Include="animgoals\animgoals.cpp" />
+    <ClCompile Include="animgoals\animgoals_debugrenderer.cpp" />
     <ClCompile Include="animgoals\animgoals_hooks.cpp" />
+    <ClCompile Include="animgoals\animgoals_stackentry.cpp" />
     <ClCompile Include="common.cpp" />
     <ClCompile Include="config\config_hooks.cpp" />
     <ClCompile Include="d20_defs.cpp" />
@@ -298,6 +301,10 @@
     <ClInclude Include="action_sequence.h" />
     <ClInclude Include="ai.h" />
     <ClInclude Include="animgoals\animgoal.h" />
+    <ClInclude Include="animgoals\animgoals.h" />
+    <ClInclude Include="animgoals\animgoals_debugrenderer.h" />
+    <ClInclude Include="animgoals\animgoals_stackentry.h" />
+    <ClInclude Include="animgoals\anim_slot.h" />
     <ClInclude Include="bonus.h" />
     <ClInclude Include="d20_class.h" />
     <ClInclude Include="critter.h" />

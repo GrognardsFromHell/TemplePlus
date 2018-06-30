@@ -928,6 +928,12 @@ int LightSchemeSystem::GetHourOfDay()
 	return lightscheme_get_hour();
 }
 
+bool LightSchemeSystem::IsUpdating() const
+{
+	static auto lightscheme_is_updating = temple::GetPointer<int()>(0x1006f0c0);
+	return lightscheme_is_updating() == 1;
+}
+
 //*****************************************************************************
 //* Player
 //*****************************************************************************

@@ -273,7 +273,7 @@ static PyObject * PyObjHandle_FallDown(PyObject* obj, PyObject* args)
 		return 0;
 	}
 	if (fallDownArg > 75 || fallDownArg < 73) fallDownArg = 73;
-	animationGoals.PushFallDown(self->handle, fallDownArg);
+	gameSystems->GetAnim().PushFallDown(self->handle, fallDownArg);
 	Py_RETURN_NONE;
 }
 	
@@ -1076,7 +1076,7 @@ static PyObject* PyObjHandle_TurnTowards(PyObject* obj, PyObject* args) {
 		objects.SetRotation(self->handle, relativeAngle);
 		Py_RETURN_NONE;
 	}
-	animationGoals.PushRotate(self->handle, relativeAngle);
+	gameSystems->GetAnim().PushRotate(self->handle, relativeAngle);
 	Py_RETURN_NONE;
 }
 
@@ -1285,7 +1285,7 @@ static PyObject* PyObjHandle_StealFrom(PyObject* obj, PyObject* args) {
 		return 0;
 	}
 
-	animationGoals.PushUseSkillOn(self->handle, target, skill_pick_pocket);
+	gameSystems->GetAnim().PushUseSkillOn(self->handle, target, skill_pick_pocket);
 	Py_RETURN_NONE;
 }
 
@@ -2176,7 +2176,7 @@ static PyObject* PyObjHandle_AnimGoalInterrupt(PyObject* obj, PyObject* args) {
 	if (!self->handle) {
 		return PyInt_FromLong(0);
 	}
-	animationGoals.Interrupt(self->handle, AGP_HIGHEST, false);
+	gameSystems->GetAnim().Interrupt(self->handle, AGP_HIGHEST, false);
 	Py_RETURN_NONE;
 }
 
@@ -2191,7 +2191,7 @@ static PyObject* PyObjHandle_AnimGoalPushAttack(PyObject* obj, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "O&|iii:objhndl.anim_goal_push_attack", &ConvertObjHndl, &tgt, &animIdx, &isCrit, &isSecondary)) {
 		return 0;
 	}
-	return PyInt_FromLong(animationGoals.PushAttackAnim(self->handle, tgt, -1, animIdx, isCrit, isSecondary));
+	return PyInt_FromLong(gameSystems->GetAnim().PushAttackAnim(self->handle, tgt, -1, animIdx, isCrit, isSecondary));
 }
 
 static PyObject* PyObjHandle_AnimGoalGetNewId(PyObject* obj, PyObject* args) {
@@ -2199,7 +2199,7 @@ static PyObject* PyObjHandle_AnimGoalGetNewId(PyObject* obj, PyObject* args) {
 	if (!self->handle) {
 		return PyInt_FromLong(0);
 	}
-	return PyInt_FromLong(animationGoals.GetActionAnimId(self->handle));
+	return PyInt_FromLong(gameSystems->GetAnim().GetActionAnimId(self->handle));
 }
 
 
@@ -2288,7 +2288,7 @@ static PyObject* PyObjHandle_RunOff(PyObject* obj, PyObject* args) {
 	objects.SetFlag(self->handle, OF_CLICK_THROUGH);
 	aiSys.SetAiFlag(self->handle, AiFlag::RunningOff);
 	objects.FadeTo(self->handle, 0, 25, 5, 2);
-	animationGoals.PushRunNearTile(self->handle, loc, 5);
+	gameSystems->GetAnim().PushRunNearTile(self->handle, loc, 5);
 	Py_RETURN_NONE;
 }
 
@@ -2303,7 +2303,7 @@ static PyObject* PyObjHandle_RunTo(PyObject* obj, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "L|ff:objhndl.runoff", &loc.location, &loc.off_x, &loc.off_y)) {
 		return 0;
 	}
-	animationGoals.PushRunNearTile(self->handle, loc, 5);
+	gameSystems->GetAnim().PushRunNearTile(self->handle, loc, 5);
 	Py_RETURN_NONE;
 }
 
@@ -3060,7 +3060,7 @@ static PyObject* PyObjHandle_Unconceal(PyObject* obj, PyObject* args) {
 	if (!self->handle) {
 		return PyInt_FromLong(0);
 	}
-	auto result = animationGoals.PushUnconceal(self->handle);
+	auto result = gameSystems->GetAnim().PushUnconceal(self->handle);
 	return PyInt_FromLong(result);
 }
 

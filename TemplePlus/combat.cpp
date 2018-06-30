@@ -1070,8 +1070,8 @@ bool LegacyCombatSystem::CombatEnd(){
 
 	d20ObjRegistrySys.D20ObjRegistrySendSignalAll(DK_SIG_Combat_End, 0, 0);
 	*combatSys.combatModeActive = 0;
-	animationGoals.SetRuninfoDeallocCallback(nullptr);
-	if (!animationGoals.InterruptAllForTbCombat()){
+	gameSystems->GetAnim().SetRuninfoDeallocCallback(nullptr);
+	if (!gameSystems->GetAnim().InterruptAllForTbCombat()){
 		logger->debug("CombatEnd: Anim goal interrupt FAILED!");
 	}
 	static auto actSeqResetOnCombatEnd = temple::GetRef<void(__cdecl)()>(0x10097BE0);

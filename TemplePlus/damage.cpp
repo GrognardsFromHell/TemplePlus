@@ -4,6 +4,7 @@
 #include "dice.h"
 #include "bonus.h"
 #include "ai.h"
+#include "gamesystems/gamesystems.h"
 #include "gamesystems/objects/objsystem.h"
 #include "critter.h"
 #include "weapon.h"
@@ -351,7 +352,7 @@ int Damage::DealAttackDamage(objHndl attacker, objHndl tgt, int d20Data, D20CAF 
 
 		// dodge animation
 		if (!critterSys.IsDeadOrUnconscious(tgt) && !critterSys.IsProne(tgt)){
-			animationGoals.PushDodge(attacker, tgt);
+			gameSystems->GetAnim().PushDodge(attacker, tgt);
 		}
 		return -1;
 	}
@@ -475,7 +476,7 @@ int Damage::DealWeaponlikeSpellDamage(objHndl tgt, objHndl attacker, const Dice 
 
 		// dodge animation
 		if (!critterSys.IsDeadOrUnconscious(tgt) && !critterSys.IsProne(tgt)) {
-			animationGoals.PushDodge(attacker, tgt);
+			gameSystems->GetAnim().PushDodge(attacker, tgt);
 		}
 		return -1;
 	}

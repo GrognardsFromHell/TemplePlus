@@ -1219,7 +1219,7 @@ int GenericCallbacks::GlobalHpChanged(DispatcherCallbackArgs args){
 		d20Sys.D20SignalPython(handle, "Knocked Unconscious");
 		if (!isUncon){
 			auto animId = Dice::Roll(1, 3, 72); // roll number between 73-75
-			animationGoals.PushFallDown(handle, animId);
+			gameSystems->GetAnim().PushFallDown(handle, animId);
 		}
 		if (isDying){
 			conds.AddTo(handle, "Dying", {});
@@ -3213,16 +3213,16 @@ int ConditionFunctionReplacement::LayOnHandsPerform(DispatcherCallbackArgs args)
 		if (d20a->d20Caf & D20CAF_RANGED)
 			return 0;
 		d20Sys.ToHitProc(d20a);
-		animResult = animationGoals.PushAttemptAttack(d20a->d20APerformer, d20a->d20ATarget) != 0;
+		animResult = gameSystems->GetAnim().PushAttemptAttack(d20a->d20APerformer, d20a->d20ATarget) != 0;
 	} else	{
-		animResult = animationGoals.PushAnimate(d20a->d20APerformer, 86) != 0;
+		animResult = gameSystems->GetAnim().PushAnimate(d20a->d20APerformer, 86) != 0;
 	}
 
 	
 	if (animResult)
 	{
 		// fixes lack of animation ID
-		d20a->animID = animationGoals.GetActionAnimId(d20a->d20APerformer);
+		d20a->animID = gameSystems->GetAnim().GetActionAnimId(d20a->d20APerformer);
 		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
 	}
 		
@@ -3234,11 +3234,11 @@ int ConditionFunctionReplacement::RemoveDiseasePerform(DispatcherCallbackArgs ar
 {
 	auto dispIo = dispatch.DispIoCheckIoType12(args.dispIO);
 	auto d20a = dispIo->d20a;
-	auto animResult = animationGoals.PushAnimate(d20a->d20APerformer, 86);
+	auto animResult = gameSystems->GetAnim().PushAnimate(d20a->d20APerformer, 86);
 	
 	if (animResult){
 		// fixes lack of animation ID
-		d20a->animID = animationGoals.GetActionAnimId(d20a->d20APerformer);
+		d20a->animID = gameSystems->GetAnim().GetActionAnimId(d20a->d20APerformer);
 		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
 	}
 	return 0;

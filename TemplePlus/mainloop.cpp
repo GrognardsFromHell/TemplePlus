@@ -649,7 +649,7 @@ void MainLoopHooks::NormalLmbHandleTarget(objHndl * tgt)
 			return;
 
 		chosenOne = selectedClosest;
-		animationGoals.PushForMouseTarget(chosenOne, goalType, tgtHndl, tgtLoc, objHndl::null, someFlag);
+		gameSystems->GetAnim().PushForMouseTarget(chosenOne, goalType, tgtHndl, tgtLoc, objHndl::null, someFlag);
 
 
 	}

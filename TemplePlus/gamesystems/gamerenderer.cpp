@@ -12,6 +12,7 @@
 #include "ui/ui_render.h"
 #include "tig/tig_font.h"
 #include "particlesystems.h"
+#include "animgoals/animgoals_debugrenderer.h"
 
 #include "tig/tig_startup.h"
 #include "temple_functions.h"
@@ -279,6 +280,9 @@ void GameRenderer::RenderWorld(RenderWorldInfo *info) {
     renderFuncs.RenderUiRelated(info);
     renderFuncs.RenderTextBubbles(info);
     renderFuncs.RenderTextFloaters(info);
+
+	AnimGoalsDebugRenderer::RenderAllAnimGoals((int)info->tiles->x1, (int)info->tiles->x2, (int)info->tiles->y1,
+		(int)info->tiles->y2);
 
     mRenderingDevice.Present();
   }

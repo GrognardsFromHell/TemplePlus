@@ -16,6 +16,7 @@
 #include "gamesystems/mapsystem.h"
 #include "gamesystems/objects/objsystem.h"
 #include "gamesystems/legacymapsystems.h"
+#include "animgoals/anim.h"
 
 #include <infrastructure/vfs.h>
 
@@ -684,8 +685,7 @@ void Objects::Destroy(objHndl ObjHnd) {
 		moveContentToLoc(ObjHnd, 1);
 }
 
-	auto cancelAnims = temple::GetPointer<void(objHndl)>(0x1000C760);
-	cancelAnims(ObjHnd);
+	gameSystems->GetAnim().ClearForObject(ObjHnd);
 	
 	if (combatSys.isCombatActive())
 {

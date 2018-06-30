@@ -673,8 +673,8 @@ int UiIntegameTurnbasedRepl::UiIntgameMsgHandler(int widId, TigMsg* msg) {
 							panic.push_back(1);
 						if (panic.size() >= 4)
 						{
-							animationGoals.Interrupt(leader, AnimGoalPriority::AGP_HIGHEST, true);
-							animationGoals.Interrupt(leader, AnimGoalPriority::AGP_1, true);
+							gameSystems->GetAnim().Interrupt(leader, AnimGoalPriority::AGP_HIGHEST, true);
+							gameSystems->GetAnim().Interrupt(leader, AnimGoalPriority::AGP_1, true);
 							(*actSeqSys.actSeqCur)->seqOccupied = 0;
 						}
 						return 1;

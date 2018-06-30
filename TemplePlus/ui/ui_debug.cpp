@@ -6,6 +6,7 @@
 #include "tig/tig_startup.h"
 #include "config/config.h"
 #include <graphics/shaperenderer2d.h>
+#include "animgoals/animgoals_debugrenderer.h"
 
 #include <debugui.h>
 
@@ -162,6 +163,12 @@ void UIRenderDebug()
 			DrawWidgetTreeNode(widgetId);
 		}
 
+	}
+
+	if (ImGui::CollapsingHeader("Anim Goals Debugging")) {
+		static bool checked;
+		ImGui::Checkbox("Render Current Goals", &checked);
+		AnimGoalsDebugRenderer::Enable(checked);
 	}
 
 	if (ImGui::CollapsingHeader("Rendering Debugging")) {

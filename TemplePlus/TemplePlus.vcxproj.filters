@@ -526,6 +526,9 @@
     <ClCompile Include="animgoals\animgoals_hooks.cpp" />
     <ClCompile Include="frozen_obj_ref.cpp" />
     <ClCompile Include="frozen_obj_ref_hooks.cpp" />
+    <ClCompile Include="animgoals\animgoals_stackentry.cpp" />
+    <ClCompile Include="animgoals\animgoal.cpp" />
+    <ClCompile Include="animgoals\animgoals_debugrenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -996,6 +999,10 @@
     <ClInclude Include="animgoals\animgoal.h" />
     <ClInclude Include="animgoals\anim.h" />
     <ClInclude Include="frozen_obj_ref.h" />
+    <ClInclude Include="animgoals\animgoals_stackentry.h" />
+    <ClInclude Include="animgoals\animgoals.h" />
+    <ClInclude Include="animgoals\animgoals_debugrenderer.h" />
+    <ClInclude Include="animgoals\anim_slot.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

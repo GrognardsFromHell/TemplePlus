@@ -700,7 +700,7 @@ void ActionSequenceSystem::TurnStart(objHndl obj)
 				auto d20SpellData = &d20a->d20SpellData;
 				if (d20Sys.d20QueryWithData(actSeq->performer, DK_QUE_SpellInterrupted, d20SpellData, 0)) {
 					d20a->d20Caf &= ~D20CAF_NEED_ANIM_COMPLETED;
-					animationGoals.Interrupt(actSeq->performer, AnimGoalPriority::AGP_5, 0);
+					gameSystems->GetAnim().Interrupt(actSeq->performer, AnimGoalPriority::AGP_5, 0);
 				}
 			}
 		}
