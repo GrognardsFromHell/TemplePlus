@@ -434,9 +434,12 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 	if (tgtClassif == D20TC_CastSpell){
 
 		unsigned int spellEnum, spellClass, spellLevel, metaMagicData;
+
+		//Modify the metamagic data before targeting for enlarge and widen 
+		dispatch.DispatchMetaMagicModify(d20Sys.globD20Action->d20APerformer, d20Sys.globD20Action->d20SpellData.metaMagicData);
+
 		D20SpellDataExtractInfo(&d20Sys.globD20Action->d20SpellData,
 			&spellEnum, nullptr, &spellClass, &spellLevel,nullptr,&metaMagicData);
-
 
 		auto curSeq = *actSeqSys.actSeqCur;
 		curSeq->spellPktBody.spellRange *= ((MetaMagicData)metaMagicData).metaMagicEnlargeSpellCount + 1;
