@@ -709,7 +709,7 @@ BOOL AnimSystem::ProcessAnimEvent(const TimeEvent *evt) {
   AnimSlotId triggerId = {evt->params[0].int32, evt->params[1].int32,
                           evt->params[2].int32};
 
-  assert(triggerId.slotIndex < 512);
+  Expects(triggerId.slotIndex >= 0 && triggerId.slotIndex < 512);
 
   auto &slot = mSlots[triggerId.slotIndex];
 
@@ -1012,21 +1012,9 @@ BOOL AnimSystem::ProcessAnimEvent(const TimeEvent *evt) {
     // preserve the values i case the slot gets deallocated below
     auto animObj = slot.animObj;
     auto actionAnimId = slot.uniqueActionId;
-    //logger->debug("ProcessAnimEvent: Interrupting goals.");
-    // Interrupt everything for the slot
     result = InterruptGoals(slot, AGP_HIGHEST);
 
-    if (!slot.animObj)
-    {
-        int aha = 0;
-    }
-
     if (animObj && objects.IsCritter(animObj)) {
-      //PushActionCallback(slot);
-        if (!actionAnimId)
-        {
-            int dummy = 1;
-        }
         mActionCallbacks.push_back({ animObj, actionAnimId });
     }
   }

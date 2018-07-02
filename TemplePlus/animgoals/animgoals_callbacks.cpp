@@ -12,6 +12,8 @@
 #include "combat.h"
 #include "location.h"
 
+using GoalCallback = int(__cdecl *)(AnimSlot&);
+
 static bool ContinueWithAnimation(objHndl handle, AnimSlot &slot, int animHandle, int *eventOut = nullptr) {
 	static auto anim_continue_with_animation = temple::GetPointer<BOOL(objHndl objHandle, AnimSlot *runSlot, int animHandle, int *eventOut)>(0x10016530);
 	int eventOutDummy = 0;
@@ -86,6 +88,10 @@ int GoalIsConcealed(AnimSlot& slot)
 
 // Originally @ 0x100125F0
 int GoalIsRotatedTowardNextPathNode(AnimSlot & slot) {
+
+	static auto GoalIsRotatedTowardNextPathNode = temple::GetPointer<int(AnimSlot *slot)>(0x100125f0);
+	return GoalIsRotatedTowardNextPathNode(&slot);
+
 	if (!slot.pCurrentGoal) {
 		slot.pCurrentGoal = &slot.goals[slot.currentGoal];
 	}
@@ -408,4 +414,797 @@ int GoalAttemptSpell(AnimSlot &slot) {
 	}
 
 	return TRUE;
+}
+
+
+// Originally @ 0x1000c9c0
+int GoalStateCallback1(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000c9c0);
+	return org(slot);
+}
+
+// Originally @ 0x1000ccf0
+int GoalStateCallback3(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000ccf0);
+	return org(slot);
+}
+
+// Originally @ 0x1000ce10
+int GoalSetOffAndDestroyParam1(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000ce10);
+	return org(slot);
+}
+
+// Originally @ 0x1000ce60
+int GoalParam1ObjCloseToParam2Loc(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000ce60);
+	return org(slot);
+}
+
+// Originally @ 0x1000cf10
+int GoalTargetLocWithinRadius(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000cf10);
+	return org(slot);
+}
+
+// Originally @ 0x1000cfe0
+int GoalStateCallback7(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000cfe0);
+	return org(slot);
+}
+
+// Originally @ 0x1000d060
+int GoalStateCallback8(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000d060);
+	return org(slot);
+}
+
+// Originally @ 0x1000d560
+int GoalCalcPathToTarget(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000d560);
+	return org(slot);
+}
+
+// Originally @ 0x1000db30
+int GoalCalcPathToTarget2(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000db30);
+	return org(slot);
+}
+
+// Originally @ 0x1000dca0
+int GoalKnockbackFunc(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000dca0);
+	return org(slot);
+}
+
+// Originally @ 0x1000dd80
+int GoalMoveAwayFromObj(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000dd80);
+	return org(slot);
+}
+
+// Originally @ 0x1000e2c0
+int GoalStunnedExpire(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000e2c0);
+	return org(slot);
+}
+
+// Originally @ 0x1000e4f0
+int GoalHasDoorInPath(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000e4f0);
+	return org(slot);
+}
+
+// Originally @ 0x1000e6f0
+int GoalFindPathNear(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000e6f0);
+	return org(slot);
+}
+
+// Originally @ 0x1000e8b0
+int GoalFindPathNearObject(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000e8b0);
+	return org(slot);
+}
+
+// Originally @ 0x1000ec10
+int GoalFindPathNearObjectCombat(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000ec10);
+	return org(slot);
+}
+
+// Originally @ 0x1000efb0
+int GoalIsParam1Door(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000efb0);
+	return org(slot);
+}
+
+// Originally @ 0x1000f000
+int GoalPlayDoorLockedSound(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000f000);
+	return org(slot);
+}
+
+// Originally @ 0x1000f0d0
+int GoalIsDoorMagicallyHeld(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000f0d0);
+	return org(slot);
+}
+
+// Originally @ 0x1000f140
+int GoalAttemptOpenDoor(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000f140);
+	return org(slot);
+}
+
+// Originally @ 0x1000f2c0
+int GoalIsDoorLocked(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000f2c0);
+	return org(slot);
+}
+
+// Originally @ 0x1000f350
+int GoalDoorAlwaysFalse(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000f350);
+	return org(slot);
+}
+
+// Originally @ 0x1000f400
+int GoalIsDoorUnlocked(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000f400);
+	return org(slot);
+}
+
+// Originally @ 0x1000f490
+int GoalSetRadiusTo2(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000f490);
+	return org(slot);
+}
+
+// Originally @ 0x1000f550
+int GoalUseObject(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000f550);
+	return org(slot);
+}
+
+// Originally @ 0x1000f860
+int GoalUseItemOnObj(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000f860);
+	return org(slot);
+}
+
+// Originally @ 0x1000f9a0
+int GoalUseItemOnObjWithSkillDummy(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000f9a0);
+	return org(slot);
+}
+
+// Originally @ 0x1000fbc0
+int GoalUseItemOnLoc(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000fbc0);
+	return org(slot);
+}
+
+// Originally @ 0x1000fce0
+int GoalUseItemOnLocWithSkillDummy(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000fce0);
+	return org(slot);
+}
+
+// Originally @ 0x1000fec0
+int GoalSetNoFlee(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000fec0);
+	return org(slot);
+}
+
+// Originally @ 0x1000ff60
+int GoalPlaySoundScratch5(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000ff60);
+	return org(slot);
+}
+
+// Originally @ 0x1000fff0
+int GoalAttemptAttackCheck(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000fff0);
+	return org(slot);
+}
+
+// Originally @ 0x10010160
+int GoalCritterShouldNotAutoAnimate(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10010160);
+	return org(slot);
+}
+
+// Originally @ 0x100101d0
+int GoalAttackerHasRangedWeapon(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100101d0);
+	return org(slot);
+}
+
+// Originally @ 0x10010250
+int GoalReturnTrue(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10010250);
+	return org(slot);
+}
+
+// Originally @ 0x10010410
+int GoalCastConjureEnd(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10010410);
+	return org(slot);
+}
+
+// Originally @ 0x100104a0
+int GoalDestroyParam1(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100104a0);
+	return org(slot);
+}
+
+// Originally @ 0x10010500
+int GoalWasInterrupted(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10010500);
+	return org(slot);
+}
+
+// Originally @ 0x100105f0
+int GoalStartConjurationAnim(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100105f0);
+	return org(slot);
+}
+
+// Originally @ 0x10010760
+int GoalAreOnSameTile(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10010760);
+	return org(slot);
+}
+
+// Originally @ 0x10010aa0
+int GoalActionPerform(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10010aa0);
+	return org(slot);
+}
+
+// Originally @ 0x10010b50
+int GoalCheckSlotFlag40000(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10010b50);
+	return org(slot);
+}
+
+// Originally @ 0x10010b70
+int GoalCheckParam2AgainstStateFlagData(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10010b70);
+	return org(slot);
+}
+
+// Originally @ 0x10010b90
+int GoalPickLock(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10010b90);
+	return org(slot);
+}
+
+// Originally @ 0x10010cd0
+int GoalAttemptTrapDisarm(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10010cd0);
+	return org(slot);
+}
+
+// Originally @ 0x10010e00
+int GoalHasReachWithMainWeapon(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10010e00);
+	return org(slot);
+}
+
+// Originally @ 0x10010f70
+int GoalThrowItem(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10010f70);
+	return org(slot);
+}
+
+// Originally @ 0x100110a0
+int GoalNotPreventedFromTalking(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100110a0);
+	return org(slot);
+}
+
+// Originally @ 0x100111e0
+int GoalIsWithinTalkingDistance(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100111e0);
+	return org(slot);
+}
+
+// Originally @ 0x100112d0
+int GoalInitiateDialog(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100112d0);
+	return org(slot);
+}
+
+// Originally @ 0x10011370
+int GoalOpenDoorCleanup(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10011370);
+	return org(slot);
+}
+
+// Originally @ 0x10011420
+int GoalCloseDoorCleanup(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10011420);
+	return org(slot);
+}
+
+// Originally @ 0x100114d0
+int GoalIsDoorSticky(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100114d0);
+	return org(slot);
+}
+
+// Originally @ 0x10011530
+int GoalIsLiveCritterNear(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10011530);
+	return org(slot);
+}
+
+// Originally @ 0x10011600
+int GoalSetRunningFlag(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10011600);
+	return org(slot);
+}
+
+// Originally @ 0x10011660
+int GoalEnterCombat(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10011660);
+	return org(slot);
+}
+
+// Originally @ 0x100117f0
+int GoalLeaveCombat(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100117f0);
+	return org(slot);
+}
+
+// Originally @ 0x10011a30
+int GoalPlayDodgeAnim(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10011a30);
+	return org(slot);
+}
+
+// Originally @ 0x10011be0
+int GoalPlayAnim(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10011be0);
+	return org(slot);
+}
+
+// Originally @ 0x10011cf0
+int GoalSaveParam1InScratch(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10011cf0);
+	return org(slot);
+}
+
+// Originally @ 0x10011d20
+int GoalSaveStateDataInSkillData(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10011d20);
+	return org(slot);
+}
+
+// Originally @ 0x10011d40
+int GoalSaveStateDataOrSpellRangeInRadius(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10011d40);
+	return org(slot);
+}
+
+// Originally @ 0x10011dc0
+int GoalSetTargetLocFromObj(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10011dc0);
+	return org(slot);
+}
+
+// Originally @ 0x10011e70
+int GoalSetRadiusTo4(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10011e70);
+	return org(slot);
+}
+
+// Originally @ 0x10011e90
+int GoalSetRadiusToAiSpread(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10011e90);
+	return org(slot);
+}
+
+// Originally @ 0x10011f20
+int GoalIsCloserThanDesiredSpread(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10011f20);
+	return org(slot);
+}
+
+// Originally @ 0x10012040
+int GoalTurnTowardsOrAway(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10012040);
+	return org(slot);
+}
+
+// Originally @ 0x100121b0
+int GoalPlayRotationAnim(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100121b0);
+	return org(slot);
+}
+
+// Originally @ 0x100122a0
+int GoalRotate(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100122a0);
+	return org(slot);
+}
+
+// Originally @ 0x100127b0
+int GoalIsRotatedTowardTarget(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100127b0);
+	return org(slot);
+}
+
+// Originally @ 0x10012910
+int GoalSetRotationToParam2(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10012910);
+	return org(slot);
+}
+
+// Originally @ 0x10012a00
+int GoalSetRotationToFaceTargetObj(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10012a00);
+	return org(slot);
+}
+
+// Originally @ 0x10012b60
+int GoalSetRotationToFaceTargetLoc(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10012b60);
+	return org(slot);
+}
+
+// Originally @ 0x10012ca0
+int GoalProjectileCleanup(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10012ca0);
+	return org(slot);
+}
+
+// Originally @ 0x10012cf0
+int GoalAnimateCleanup(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10012cf0);
+	return org(slot);
+}
+
+// Originally @ 0x10012d10
+int GoalAnimateForever(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10012d10);
+	return org(slot);
+}
+
+// Originally @ 0x10012fa0
+int GoalLoopWhileCloseToParty(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10012fa0);
+	return org(slot);
+}
+
+// Originally @ 0x10013080
+int GoalFreeSoundHandle(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10013080);
+	return org(slot);
+}
+
+// Originally @ 0x100130f0
+int GoalIsAliveAndConscious(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100130f0);
+	return org(slot);
+}
+
+// Originally @ 0x10013250
+int GoalBeginMoveStraight(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10013250);
+	return org(slot);
+}
+
+// Originally @ 0x10013af0
+int GoalUpdateMoveStraight(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10013af0);
+	return org(slot);
+}
+
+// Originally @ 0x100140c0
+int GoalSetNoBlockIfNotInParty(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100140c0);
+	return org(slot);
+}
+
+// Originally @ 0x10014170
+int GoalDyingCleanup(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10014170);
+	return org(slot);
+}
+
+// Originally @ 0x100147d0
+int GoalMoveAlongPath(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100147d0);
+	return org(slot);
+}
+
+// Originally @ 0x10014f10
+int GoalIsNotStackFlagsData20(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10014f10);
+	return org(slot);
+}
+
+// Originally @ 0x10014f30
+int GoalJiggleAlongYAxis(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10014f30);
+	return org(slot);
+}
+
+// Originally @ 0x10014ff0
+int GoalStartJigglingAlongYAxis(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10014ff0);
+	return org(slot);
+}
+
+// Originally @ 0x100150a0
+int GoalEndJigglingAlongYAxis(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100150a0);
+	return org(slot);
+}
+
+// Originally @ 0x10015150
+int GoalIsNotStackFlagsData40(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10015150);
+	return org(slot);
+}
+
+// Originally @ 0x10015170
+int GoalSetSlotFlags4(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10015170);
+	return org(slot);
+}
+
+// Originally @ 0x10015240
+int GoalActionPerform3(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10015240);
+	return org(slot);
+}
+
+// Originally @ 0x10017100
+int GoalSpawnFireball(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10017100);
+	return org(slot);
+}
+
+// Originally @ 0x10017170
+int GoalPleaseMove(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10017170);
+	return org(slot);
+}
+
+// Originally @ 0x10017460
+int GoalIsTargetWithinRadius(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10017460);
+	return org(slot);
+}
+
+// Originally @ 0x10017570
+int GoalWander(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10017570);
+	return org(slot);
+}
+
+// Originally @ 0x10017810
+int GoalWanderSeekDarkness(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10017810);
+	return org(slot);
+}
+
+// Originally @ 0x10017b30
+int GoalIsDoorFullyClosed(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10017b30);
+	return org(slot);
+}
+
+// Originally @ 0x10017dd0
+int GoalTriggerSpell(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10017dd0);
+	return org(slot);
+}
+
+// Originally @ 0x10017f80
+int GoalUnconcealCleanup(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10017f80);
+	return org(slot);
+}
+
+// Originally @ 0x10018050
+int GoalResetToIdleAnim(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10018050);
+	return org(slot);
+}
+
+// Originally @ 0x10018160
+int GoalResetToIdleAnimUnstun(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10018160);
+	return org(slot);
+}
+
+// Originally @ 0x10018290
+int GoalThrowItemCleanup(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10018290);
+	return org(slot);
+}
+
+// Originally @ 0x10018400
+int GoalThrowItemPlayAnim(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10018400);
+	return org(slot);
+}
+
+// Originally @ 0x10018730
+int GoalStartIdleAnimIfCloseToParty(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10018730);
+	return org(slot);
+}
+
+// Originally @ 0x10018810
+int GoalStartFidgetAnimIfCloseToParty(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10018810);
+	return org(slot);
+}
+
+// Originally @ 0x100188f0
+int GoalContinueWithAnim(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100188f0);
+	return org(slot);
+}
+
+// Originally @ 0x100189b0
+int GoalContinueWithAnim2(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100189b0);
+	return org(slot);
+}
+
+// Originally @ 0x10018a70
+int GoalPlayDoorOpenAnim(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10018a70);
+	return org(slot);
+}
+
+// Originally @ 0x10018b90
+int GoalContinueWithDoorOpenAnim(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10018b90);
+	return org(slot);
+}
+
+// Originally @ 0x10018c50
+int GoalPlayDoorCloseAnim(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10018c50);
+	return org(slot);
+}
+
+// Originally @ 0x10018d40
+int GoalContinueWithDoorCloseAnim(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10018d40);
+	return org(slot);
+}
+
+// Originally @ 0x10018e00
+int GoalPickLockPlayPushDoorOpenAnim(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10018e00);
+	return org(slot);
+}
+
+// Originally @ 0x10018ee0
+int GoalPickLockContinueWithAnim(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10018ee0);
+	return org(slot);
+}
+
+// Originally @ 0x10018fa0
+int GoalDyingPlaySoundAndRipples(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10018fa0);
+	return org(slot);
+}
+
+// Originally @ 0x10019070
+int GoalDyingContinueAnim(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10019070);
+	return org(slot);
+}
+
+// Originally @ 0x10019130
+int GoalAnimateFireDmgContinueAnim(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10019130);
+	return org(slot);
+}
+
+// Originally @ 0x100191f0
+int GoalStunnedPlayAnim(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100191f0);
+	return org(slot);
+}
+
+// Originally @ 0x10019330
+int GoalStunnedContinueAnim(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10019330);
+	return org(slot);
+}
+
+// Originally @ 0x10019470
+int GoalPlayGetUpAnim(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10019470);
+	return org(slot);
+}
+
+// Originally @ 0x10019540
+int GoalPlayUnconcealAnim(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10019540);
+	return org(slot);
+}
+
+// Originally @ 0x10019630
+int GoalPlayMoveAnim(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10019630);
+	return org(slot);
+}
+
+// Originally @ 0x10019920
+int GoalPlayWaterRipples(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10019920);
+	return org(slot);
+}
+
+// Originally @ 0x100199b0
+int GoalContinueMoveStraight(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100199b0);
+	return org(slot);
+}
+
+// Originally @ 0x10019c20
+int GoalApplyKnockback(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10019c20);
+	return org(slot);
+}
+
+// Originally @ 0x10019e10
+int GoalDyingReturnTrue(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10019e10);
+	return org(slot);
+}
+
+// Originally @ 0x10019e70
+int GoalAttemptMoveCleanup(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10019e70);
+	return org(slot);
+}
+
+// Originally @ 0x10019f00
+int GoalAttackPlayWeaponHitEffect(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10019f00);
+	return org(slot);
+}
+
+// Originally @ 0x1001a080
+int GoalAttackContinueWithAnim(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1001a080);
+	return org(slot);
+}
+
+// Originally @ 0x1001a170
+int GoalAttackPlayIdleAnim(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1001a170);
+	return org(slot);
+}
+
+// Originally @ 0x1001bf70
+int GoalMoveNearUpdateRadiusToReach(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1001bf70);
+	return org(slot);
+}
+
+// Originally @ 0x101f5850
+int AlwaysSucceed(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x101f5850);
+	return org(slot);
+}
+
+// Originally @ 0x10262530
+int AlwaysFail(AnimSlot &slot) {
+	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10262530);
+	return org(slot);
 }

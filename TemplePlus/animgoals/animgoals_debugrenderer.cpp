@@ -61,6 +61,7 @@ void AnimGoalsDebugRenderer::RenderAnimGoals(objHndl handle)
 
 	auto &animSystem = gameSystems->GetAnim();
 
+	std::vector<int> slotIdsPerLine;
 	std::vector<std::string> lines;
 	std::vector<uint32_t> lineHeights;
 	uint32_t overallHeight = 0;
@@ -81,6 +82,7 @@ void AnimGoalsDebugRenderer::RenderAnimGoals(objHndl handle)
 			} else {
 				lines.push_back(std::string(goalName));
 			}
+			slotIdsPerLine.push_back(slotIdx);
 			gfx::TextMetrics metrics;
 			metrics.width = 120;
 			metrics.height = 500;
@@ -95,10 +97,37 @@ void AnimGoalsDebugRenderer::RenderAnimGoals(objHndl handle)
 	int y = (int)(topOfObjectInUi.y - overallHeight);
 
 	// Draw in reverse because the stack is actually ordered the other way around
+	int prevSlotIdx = -1;
 	for (int i = lines.size() - 1; i >= 0; i--) {
 		auto lineHeight = lineHeights[i];
 		auto line = lines[i];
+		auto slotIdx = slotIdsPerLine[i];
 		renderer2d.DrawRectangle((float) x, (float) y, 120.0f, (float) lineHeight, 0x7F7F7F7F);
+
+		// When starting rendering info about a new slot, draw a border at the top
+		// and draw the slot idx on the left, outside of the text box
+		if (slotIdx != prevSlotIdx) {
+			prevSlotIdx = slotIdx;
+			XMFLOAT2 from{ (float) x, y - 1.0f };
+			XMFLOAT2 to{ x + 120.0f, y - 1.0f };
+			gfx::Line2d line(from, to, XMCOLOR(0xFFFFFFFF));
+			renderer2d.DrawLines(gsl::span(&line, 1));
+
+			gfx::FormattedText t;
+			t.defaultStyle = textStyle;
+			t.defaultStyle.align = gfx::TextAlign::Left;
+			t.text = fmt::format(L"#{}", slotIdx);
+
+			gfx::TextMetrics metrics;
+			textEngine.MeasureText(t, metrics);
+
+			TigRect rect;
+			rect.x = x - metrics.width - 2;
+			rect.y = y + (lineHeight - metrics.lineHeight) / 2;
+			rect.width = metrics.width;
+			rect.height = metrics.height;
+			textEngine.RenderText(rect, t);
+		}
 		
 		gfx::FormattedText t;
 		t.defaultStyle = textStyle;

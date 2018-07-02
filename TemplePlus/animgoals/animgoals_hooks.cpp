@@ -333,10 +333,19 @@ public:
 		using AnimGoalArray = const AnimGoal*[82];
 		AnimGoalArray& goals = temple::GetRef<AnimGoalArray>(0x102BD1B0);
 
+
 		auto fh = fopen("anim_goal_setup.cpp", "wt");
 
 		for (auto entry : goalfunc_names) {
-			fmt::print(fh, "static auto {} = temple::GetRef<GoalCallback>(0x{:x});\n", entry.second, entry.first);
+			fmt::print(fh, "int {}(AnimSlot &slot); // Originally @ 0x{:x}\n", entry.second, entry.first);
+		}
+
+		for (auto entry : goalfunc_names) {
+			fmt::print(fh, "\n// Originally @ 0x{:x}\n", entry.first);
+			fmt::print(fh, "int {}(AnimSlot &slot) {{\n", entry.second);
+			fmt::print(fh, "\tstatic org = temple::GetRef<GoalCallback>(0x{:x});\n", entry.first);
+			fmt::print(fh, "\treturn org(slot);\n");
+			fmt::print(fh, "}}\n");
 		}
 
 		for (int i = 0; i < ag_count; i++) {
