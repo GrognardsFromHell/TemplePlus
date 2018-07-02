@@ -12,6 +12,7 @@
 #include <graphics/textengine.h>
 #include "gamesystems/map/sector.h"
 #include "gamesystems/gamesystems.h"
+#include "gamesystems/objects/objsystem.h"
 #include "animgoals/anim.h"
 #include "animgoals.h"
 #include "anim_slot.h"
@@ -20,6 +21,7 @@
 #include "obj.h"
 
 bool AnimGoalsDebugRenderer::enabled_ = false;
+bool AnimGoalsDebugRenderer::showObjectNames_ = false;
 
 void AnimGoalsDebugRenderer::RenderAllAnimGoals(int tileX1, int tileX2, int tileY1, int tileY2)
 {
@@ -98,6 +100,32 @@ void AnimGoalsDebugRenderer::RenderAnimGoals(objHndl handle)
 
 	int x = (int)(topOfObjectInUi.x - 60);
 	int y = (int)(topOfObjectInUi.y - overallHeight);
+
+	// Render the object name above the goal list
+	if (showObjectNames_) {
+		gfx::FormattedText t;
+		t.defaultStyle = textStyle;
+		t.defaultStyle.align = gfx::TextAlign::Center;
+		t.defaultStyle.dropShadow = true;
+		auto protoNum = gameSystems->GetObj().GetProtoId(handle);
+		auto displayName = objects.GetDisplayName(handle, handle);
+		t.text = local_to_ucs2(fmt::format("{} #{}", displayName, protoNum));
+		auto &nameStyle = t.formats.push_back();
+		nameStyle.startChar = 0;
+		nameStyle.length = displayName.size();
+		nameStyle.style = t.defaultStyle;
+		nameStyle.style.bold = true;
+
+		gfx::TextMetrics nameMetrics;
+		textEngine.MeasureText(t, nameMetrics);
+
+		TigRect nameRect;
+		nameRect.x = x - 60;
+		nameRect.width = 240;
+		nameRect.y = y - nameMetrics.lineHeight - 2;
+		nameRect.height = nameMetrics.lineHeight;
+		textEngine.RenderText(nameRect, t);
+	}
 
 	// Draw in reverse because the stack is actually ordered the other way around
 	int prevSlotIdx = -1;

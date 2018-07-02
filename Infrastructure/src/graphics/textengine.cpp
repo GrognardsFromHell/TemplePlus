@@ -496,6 +496,14 @@ namespace gfx {
 		mImpl->enableClipRect = false;
 	}
 
+	static DWRITE_FONT_STYLE GetFontStyle(const TextStyle &textStyle) {
+		return textStyle.italic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL;
+	}
+
+	static DWRITE_FONT_WEIGHT GetFontWeight(const TextStyle &textStyle) {
+		return textStyle.bold ? DWRITE_FONT_WEIGHT_BOLD : DWRITE_FONT_WEIGHT_NORMAL;
+	}
+
 	IDWriteTextFormat* TextEngine::Impl::GetTextFormat(const TextStyle &textStyle)
 	{
 		auto it = textFormats.find(textStyle);
@@ -503,15 +511,8 @@ namespace gfx {
 			return it->second;
 		}
 		
-		auto fontWeight = DWRITE_FONT_WEIGHT_NORMAL;
-		auto fontStyle = DWRITE_FONT_STYLE_NORMAL;
-
-		if (textStyle.bold) {
-			fontWeight = DWRITE_FONT_WEIGHT_BOLD;
-		}
-		if (textStyle.italic) {
-			fontStyle = DWRITE_FONT_STYLE_ITALIC;
-		}
+		auto fontWeight = GetFontWeight(textStyle);
+		auto fontStyle = GetFontStyle(textStyle);
 
 		CComPtr<IDWriteTextFormat> textFormat;
 
@@ -717,6 +718,13 @@ namespace gfx {
 			DWRITE_TEXT_RANGE textRange;
 			textRange.startPosition = range.startChar;
 			textRange.length = range.length;
+
+			if (range.style.bold != formatted.defaultStyle.bold) {
+				textLayout->SetFontWeight(GetFontWeight(range.style), textRange);
+			}
+			if (range.style.italic != formatted.defaultStyle.italic) {
+				textLayout->SetFontStyle(GetFontStyle(range.style), textRange);
+			}
 
 			// This will collide with drop shadow drawing for example
 			if (!skipDrawingEffects) {

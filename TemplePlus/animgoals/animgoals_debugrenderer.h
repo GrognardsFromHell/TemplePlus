@@ -13,10 +13,16 @@ public:
 		enabled_ = enable;
 	}
 
+	static void EnableObjectNames(bool enable) {
+		showObjectNames_ = enable;
+	}
+
 private:
 
 	static void RenderCurrentGoalPath(objHndl handle);
 
 	static bool enabled_;
+
+	static bool showObjectNames_;
 
 };

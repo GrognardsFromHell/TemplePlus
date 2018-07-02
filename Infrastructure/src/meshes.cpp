@@ -363,7 +363,7 @@ float gfx::AnimatedModel::GetDistanceToMesh(const AnimatedModelParams & params, 
 			// If the point is within the triangle when projected onto it using the
 			// plane's normal, then use the distance from the plane as the distance
 			if (IsInTriangle(projectedPos, v0, v1, v2)) {
-				if (distFromPlane < closestDist) {
+				if (fabsf(distFromPlane) < closestDist) {
 					closestDist = fabsf(distFromPlane);
 				}
 			} else {

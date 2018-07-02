@@ -492,6 +492,9 @@ int GoalStunnedExpire(AnimSlot &slot) {
 
 // Originally @ 0x1000e4f0
 int GoalHasDoorInPath(AnimSlot &slot) {
+	/*static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000e4f0);
+	return org(slot);*/
+
 	auto obj = slot.param1.obj;
 	Expects(obj);
 
@@ -528,7 +531,6 @@ int GoalHasDoorInPath(AnimSlot &slot) {
 			auto doorAnimParams = objects.GetAnimParams(doorObj);
 
 			auto distFromDoor = doorModel->GetDistanceToMesh(doorAnimParams, testPos);
-			logger->info("Dist from door: {}", distFromDoor);
 			if (distFromDoor < radius) {
 				// Store the door we will collide with in the scratchObj slot
 				slot.pCurrentGoal->scratch.obj = doorObj;
@@ -539,9 +541,6 @@ int GoalHasDoorInPath(AnimSlot &slot) {
 	}
 
 	return 0;
-
-	/*static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000e4f0);
-	return org(slot);*/
 }
 
 // Originally @ 0x1000e6f0

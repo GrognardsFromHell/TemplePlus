@@ -166,9 +166,13 @@ void UIRenderDebug()
 	}
 
 	if (ImGui::CollapsingHeader("Anim Goals Debugging")) {
-		static bool checked;
-		ImGui::Checkbox("Render Current Goals", &checked);
-		AnimGoalsDebugRenderer::Enable(checked);
+		static bool showGoalsChecked;
+		ImGui::Checkbox("Render Current Goals", &showGoalsChecked);
+		AnimGoalsDebugRenderer::Enable(showGoalsChecked);
+
+		static bool showNamesChecked;
+		ImGui::Checkbox("Render Object Names", &showNamesChecked);
+		AnimGoalsDebugRenderer::EnableObjectNames(showNamesChecked);
 	}
 
 	if (ImGui::CollapsingHeader("Rendering Debugging")) {
