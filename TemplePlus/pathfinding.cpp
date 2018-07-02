@@ -2426,3 +2426,21 @@ void _aStarSettingChanged()
 float Path::GetPathResultLength(){
 	return pathfindingSys.GetPathLength(this);
 }
+
+// Originally @ 0x1003ff30
+std::optional<LocAndOffsets> Path::GetNextNode() const
+{
+	if (!IsComplete()) {
+		return {};
+	}
+	
+	if (flags & PF_STRAIGHT_LINE_SUCCEEDED) {
+		return to;
+	} else {
+		if (currentNode + 1 < nodeCount) {
+			return nodes[currentNode];
+		}
+
+		return to;
+	}
+}

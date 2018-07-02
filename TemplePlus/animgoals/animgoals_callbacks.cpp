@@ -11,6 +11,7 @@
 #include "action_sequence.h"
 #include "combat.h"
 #include "location.h"
+#include "objlist.h"
 
 using GoalCallback = int(__cdecl *)(AnimSlot&);
 
@@ -491,8 +492,56 @@ int GoalStunnedExpire(AnimSlot &slot) {
 
 // Originally @ 0x1000e4f0
 int GoalHasDoorInPath(AnimSlot &slot) {
-	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000e4f0);
-	return org(slot);
+	auto obj = slot.param1.obj;
+	Expects(obj);
+
+	auto nextPathPos = slot.path.GetNextNode();
+	if (!nextPathPos) {
+		return 0;
+	}
+
+	// There's no real rhyme or reason to this constant
+	auto testHeight = 36.0f;
+
+	using namespace DirectX;
+	auto nextPathPosWorld = XMLoadFloat3(&nextPathPos->ToInches3D(testHeight));
+
+	auto currentPos = objects.GetLocationFull(obj);
+	auto radius = objects.GetRadius(obj);
+
+	auto currentPosWorld = XMLoadFloat3(&currentPos.ToInches3D(testHeight));
+
+	// Effectively this builds a world position that is one tile ahead of the current
+	// position along the critter's trajectory
+	auto testPosVec = currentPosWorld + INCH_PER_TILE * XMVector2Normalize(nextPathPosWorld - currentPosWorld);
+	XMFLOAT3 testPos;
+	XMStoreFloat3(&testPos, testPosVec);
+
+	// List every door in a certain radius
+	ObjList doorSearch;
+	doorSearch.ListRadius(currentPos, radius + 150.0f, OLC_PORTAL);
+
+	for (auto doorObj : doorSearch) {
+
+		auto doorModel = objects.GetAnimHandle(doorObj);
+		if (doorModel) {
+			auto doorAnimParams = objects.GetAnimParams(doorObj);
+
+			auto distFromDoor = doorModel->GetDistanceToMesh(doorAnimParams, testPos);
+			logger->info("Dist from door: {}", distFromDoor);
+			if (distFromDoor < radius) {
+				// Store the door we will collide with in the scratchObj slot
+				slot.pCurrentGoal->scratch.obj = doorObj;
+				return 1;
+			}
+		}
+
+	}
+
+	return 0;
+
+	/*static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x1000e4f0);
+	return org(slot);*/
 }
 
 // Originally @ 0x1000e6f0
@@ -1208,3 +1257,4 @@ int AlwaysFail(AnimSlot &slot) {
 	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10262530);
 	return org(slot);
 }
+ 

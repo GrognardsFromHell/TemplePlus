@@ -1016,6 +1016,9 @@ public:
 		//orgMove = replaceFunction(0x10025950, Move);
 		//orgMoveUpdateLoc = replaceFunction(0x100C1990, MoveUpdateLoc);
 
+		// obj_get_closest_distance_from_mesh
+		// The respective goal function that called this function was replaced and now calls AAS directly
+		breakRegion(0x10022a30, 0x10022BB6);
 
 		writeCall(0x10022AEF, HookedGetModelScale); 
 		writeCall(0x100228A5, HookedGetModelScale); // RayCast

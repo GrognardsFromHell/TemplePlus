@@ -105,6 +105,38 @@ public:
 
 	std::vector<objHndl> GetListResult();
 
+	class iterator {
+	public:
+		explicit iterator(const ObjListResultItem *item) : item_(item) {
+		}
+
+		objHndl operator *() const { 
+			Expects(item_);
+			return item_->handle;
+		}
+
+		const iterator &operator ++() {
+			item_ = item_->next;
+			return *this; 
+		}
+
+		bool operator ==(const iterator &other) const { 
+			return item_ == other.item_; 
+		}
+		bool operator !=(const iterator &other) const { 
+			return item_ != other.item_;
+		}
+	private:
+		const ObjListResultItem* item_;
+	};
+
+	iterator begin() const {
+		return iterator(mResult.objects);
+	}
+
+	iterator end() const {
+		return iterator(nullptr);
+	}
 
 private:
 	ObjListResult mResult;

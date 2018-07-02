@@ -15,6 +15,8 @@ public:
 
 private:
 
+	static void RenderCurrentGoalPath(objHndl handle);
+
 	static bool enabled_;
 
 };

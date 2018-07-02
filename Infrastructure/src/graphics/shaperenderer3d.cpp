@@ -315,6 +315,23 @@ namespace gfx {
 
 	}
 
+	void ShapeRenderer3d::DrawLineWithoutDepth(const XMFLOAT3& from, const XMFLOAT3& to, XMCOLOR color) {
+
+		std::array<XMFLOAT3, 2> positions{
+			from,
+			to
+		};
+
+		mImpl->lineVertexBuffer->Update<XMFLOAT3>(positions);
+		mImpl->lineBinding.Bind();
+		mImpl->BindLineMaterial(color);
+		mImpl->device.Draw(gfx::PrimitiveType::LineList, 2);
+
+		mImpl->BindLineMaterial(color, true);
+		mImpl->device.Draw(gfx::PrimitiveType::LineList, 2);
+
+	}
+
 	void ShapeRenderer3d::DrawFilledCircle(const XMFLOAT3& center, float radius, XMCOLOR borderColor, XMCOLOR fillColor, bool occludedOnly) {
 
 		// The positions array contains the following:

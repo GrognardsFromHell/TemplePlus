@@ -8,6 +8,7 @@
 #include <graphics/device.h>
 #include <graphics/camera.h>
 #include <graphics/shaperenderer2d.h>
+#include <graphics/shaperenderer3d.h>
 #include <graphics/textengine.h>
 #include "gamesystems/map/sector.h"
 #include "gamesystems/gamesystems.h"
@@ -51,9 +52,11 @@ void AnimGoalsDebugRenderer::RenderAllAnimGoals(int tileX1, int tileX2, int tile
 void AnimGoalsDebugRenderer::RenderAnimGoals(objHndl handle)
 {
 
-	auto worldLoc = objects.GetLocationFull(handle).ToInches3D(objects.GetRenderHeight(handle));
+	RenderCurrentGoalPath(handle);
 
-	auto topOfObjectInUi = tig->GetRenderingDevice().GetCamera().WorldToScreenUi(worldLoc);
+	auto worldLocAboveHead = objects.GetLocationFull(handle).ToInches3D(objects.GetRenderHeight(handle));
+
+	auto topOfObjectInUi = tig->GetRenderingDevice().GetCamera().WorldToScreenUi(worldLocAboveHead);
 
 	auto &renderer2d = tig->GetShapeRenderer2d();
 
@@ -142,5 +145,42 @@ void AnimGoalsDebugRenderer::RenderAnimGoals(objHndl handle)
 
 		y += lineHeight + 1;
 	}
+
+}
+
+void AnimGoalsDebugRenderer::RenderCurrentGoalPath(objHndl handle)
+{
+	auto &animSystem = gameSystems->GetAnim();
+	auto slotIdx = animSystem.GetFirstRunSlotIdxForObj(handle);
+	if (slotIdx == -1) {
+		return;
+	}
+
+	auto &slot = animSystem.mSlots[slotIdx];
+	if (!slot.path.IsComplete()) {
+		return;
+	}
+
+	auto &renderer3d = tig->GetShapeRenderer3d();
+
+	XMCOLOR color(1.0f, 1.0f, 1.0f, 0.5f);
+	XMCOLOR circleBorderColor(1.0f, 1.0f, 1.0f, 1.0f);
+	XMCOLOR circleFillColor(0.0f, 0.0f, 0.0f, 0.0f);
+
+	auto currentPos = objects.GetLocationFull(handle).ToInches3D();
+	
+	for (int i = slot.path.currentNode; i + 1 < slot.path.nodeCount; i++) {
+		auto nextPos = slot.path.nodes[i].ToInches3D();
+		renderer3d.DrawLineWithoutDepth(currentPos, nextPos, color);
+		renderer3d.DrawFilledCircle(nextPos, 4, circleBorderColor, circleFillColor, false);
+		renderer3d.DrawFilledCircle(nextPos, 4, circleBorderColor, circleFillColor, true);
+		currentPos = nextPos;
+	}
+
+	// Draw the last path node
+	auto pathTo = slot.path.to.ToInches3D();
+	renderer3d.DrawLineWithoutDepth(currentPos, pathTo, color);
+	renderer3d.DrawFilledCircle(pathTo, 4, circleBorderColor, circleFillColor, false);
+	renderer3d.DrawFilledCircle(pathTo, 4, circleBorderColor, circleFillColor, true);
 
 }
