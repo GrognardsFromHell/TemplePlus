@@ -40,14 +40,20 @@ def OnMetamagicUpdate(attachee, args, evt_obj):
 	#Don't Extend more than once
 	if metaMagicData.get_extend_count() < 1:
 		metaMagicData.set_extend_count(1)
-	
-		#Decriment the charges
-		charges = charges - 1
-		args.set_arg(0, charges)
 		
+	return 0
+	
+def SuddenMetamagicDeductCharge(attachee, args, evt_obj):
+	#Check for a charge and the enable flag
+	charges = args.get_arg(0)
+	if charges < 1 or not args.get_arg(1):	
+		return 0
+		
+	#Decriment the charges
+	charges = charges - 1
+	args.set_arg(0, charges)
 
 	return 0
-
 
 #Setup the feat
 suddenExtendFeat = PythonModifier("Sudden Extend Feat", 4) #Charges, Toggeled On, Spare, Spare
@@ -55,3 +61,4 @@ suddenExtendFeat.MapToFeat("Sudden Extend")
 suddenExtendFeat.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, SuddenExtendRadial, ())
 suddenExtendFeat.AddHook(ET_OnNewDay, EK_NEWDAY_REST, SuddenExtendNewDay, ())
 suddenExtendFeat.AddHook(ET_OnMetaMagicMod, EK_NONE, OnMetamagicUpdate, ())
+suddenExtendFeat.AddHook(ET_OnD20PythonSignal, "Sudden Metamagic Deduct Charge", SuddenMetamagicDeductCharge, ())
