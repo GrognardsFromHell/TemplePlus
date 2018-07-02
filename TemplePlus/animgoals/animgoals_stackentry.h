@@ -51,6 +51,7 @@ struct AnimSlotGoalStackEntry {
 	bool Push(AnimSlotId* idNew);
 	bool Init(objHndl handle, AnimGoalType, bool withInterrupt = 0);
 	void FreezeObjectRefs();
+	bool ValidateObjectRefs();
 
 	AnimSlotGoalStackEntry(objHndl handle, AnimGoalType, bool withInterrupt = false);
 	AnimSlotGoalStackEntry() { memset(this, 0, sizeof(AnimSlotGoalStackEntry)); };

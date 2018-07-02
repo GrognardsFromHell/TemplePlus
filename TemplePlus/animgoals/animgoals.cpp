@@ -2726,3 +2726,8 @@ const AnimGoal & AnimationGoals::GetByType(AnimGoalType type) const
 	}
 	throw TempleException("Unknown anim goal type {}", type);
 }
+
+bool AnimationGoals::IsValidType(AnimGoalType type) const
+{
+	return type >= 0 && type < ag_count;
+}

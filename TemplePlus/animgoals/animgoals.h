@@ -103,6 +103,8 @@ public:
 	
 	const AnimGoal &GetByType(AnimGoalType type) const;
 
+	bool IsValidType(AnimGoalType type) const;
+
 private:
 	std::unordered_map<AnimGoalType, AnimGoal> goals_;
 };

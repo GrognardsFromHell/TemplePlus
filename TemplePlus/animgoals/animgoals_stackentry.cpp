@@ -4,6 +4,8 @@
 #include <temple/dll.h>
 
 #include "gamesystems/gamesystems.h"
+#include "gamesystems/objects/objsystem.h"
+#include "gamesystems/mapsystem.h"
 #include "animgoals_stackentry.h"
 
 static_assert(temple::validate_size<AnimSlotGoalStackEntry, 0x220>::value);
@@ -15,9 +17,10 @@ bool AnimSlotGoalStackEntry::InitWithInterrupt(objHndl handle, AnimGoalType goal
 }
 
 bool AnimSlotGoalStackEntry::Push(AnimSlotId* idNew) {
-	return gameSystems->GetAnim().PushGoal(this, idNew);
+	return gameSystems->GetAnim().PushGoal(*this, idNew);
 }
 
+// Originally @ 0x10055570
 bool AnimSlotGoalStackEntry::Init(objHndl handle, AnimGoalType goalType, bool withInterrupt) {
 	auto gdata = this;
 
@@ -71,6 +74,47 @@ void AnimSlotGoalStackEntry::FreezeObjectRefs()
 	blockTracking = FrozenObjRef::Freeze(block.obj);
 	scratchTracking = FrozenObjRef::Freeze(scratch.obj);
 	parentTracking = FrozenObjRef::Freeze(parent.obj);
+}
+
+static bool ValidateObjectRef(objHndl &handle, const FrozenObjRef &frozenRef) {
+	if (!objSystem->IsValidHandle(handle)) {
+		if (FrozenObjRef::Unfreeze(frozenRef, &handle)) {
+			logger->error("Failed to recover object reference in anim goal");
+			handle = objHndl::null;
+			return false;
+		}
+	}
+	return true;
+}
+
+bool AnimSlotGoalStackEntry::ValidateObjectRefs()
+{
+	if (gameSystems->GetMap().IsClearingMap()) {
+		self.obj = objHndl::null;
+		target.obj = objHndl::null;
+		block.obj = objHndl::null;
+		scratch.obj = objHndl::null;
+		parent.obj = objHndl::null;
+		return false;
+	}
+
+	if (!ValidateObjectRef(self.obj, selfTracking)) {
+		return false;
+	}
+	if (!ValidateObjectRef(target.obj, targetTracking)) {
+		return false;
+	}
+	if (!ValidateObjectRef(block.obj, blockTracking)) {
+		return false;
+	}
+	if (!ValidateObjectRef(scratch.obj, scratchTracking)) {
+		return false;
+	}
+	if (!ValidateObjectRef(parent.obj, parentTracking)) {
+		return false;
+	}
+
+	return true;
 }
 
 AnimSlotGoalStackEntry::AnimSlotGoalStackEntry(objHndl handle, AnimGoalType GoalType, bool withInterrupt) {

@@ -14,6 +14,7 @@ struct AnimGoal;
 struct AnimSlotGoalStackEntry;
 struct AnimGoalState;
 class AnimationGoals;
+union AnimParam;
 
 #pragma pack(push, 1)
 struct AnimSlotId {
@@ -26,6 +27,10 @@ struct AnimSlotId {
 		slotIndex = -1;
 		uniqueId = -1;
 		field_8 = 0;
+	}
+
+	bool IsNull() const {
+		return slotIndex == -1;
 	}
 };
 #pragma pack(pop)
@@ -127,7 +132,7 @@ public:
 
 	void InterruptAllGoalsUpToPriority(AnimGoalPriority priority);
 
-	bool AddSubGoal(const AnimSlotId &id, AnimSlotGoalStackEntry &stackEntry);
+	bool AddSubGoal(const AnimSlotId &id, const AnimSlotGoalStackEntry &stackEntry);
 
 	/*
 	Pushes fidget anim goal
@@ -192,6 +197,17 @@ public:
 	void SetRuninfoDeallocCallback(void(__cdecl* cb)());
 	bool InterruptAllForTbCombat();
 
+	/**
+	 * Is the animation system currently processing an animation event?
+	 */
+	bool IsProcessing() const {
+		return mCurrentlyProcessingSlotIdx != -1;
+	}
+
+	AnimSlotId GetLastSlotPushedTo() const {
+		return lastSlotPushedTo_;
+	}
+
 private:
 	friend class AnimGoalsHooks;
 	std::unique_ptr<AnimationGoals> animationGoals_;
@@ -212,12 +228,22 @@ private:
 
 	// Fixed size array of 512 slots
 	AnimSlotArray& mSlots = temple::GetRef<AnimSlotArray>(0x118CE520);
+
+	AnimSlotId* &animIdGlobal = temple::GetRef<AnimSlotId*>(0x102AC880);
+
+	int &animSysIsLoading = temple::GetRef<int>(0x10AA4BB8);
+
+	// The last slot that a goal was pushed to
+	AnimSlotId lastSlotPushedTo_{};
 	
 	void ProcessActionCallbacks();
 	void PushActionCallback(AnimSlot &slot);
 
-	bool PushGoal(AnimSlotGoalStackEntry *gdata, AnimSlotId* slotId);
-	BOOL PushGoalImpl(AnimSlotGoalStackEntry *goalData, AnimSlotId * slotId, int a3, int flags);
+	bool PushGoal(const AnimSlotGoalStackEntry &gdata, AnimSlotId* slotId);
+	bool PushGoalInternal(const AnimSlotGoalStackEntry &goalData, AnimSlotId * slotIdOut, int flags);
+
+	bool PushFidgetInternal(objHndl handle);
+	bool CritterCanAnimate(objHndl handle) const;
 	
 	void PopGoal(AnimSlot & slot, uint32_t popFlags, const AnimGoal** newGoal, AnimSlotGoalStackEntry** newCurrentGoal, bool* stopProcessing);
 
@@ -235,6 +261,7 @@ private:
 		only the object references will be validated.
 	*/
 	bool PrepareSlotForGoalState(AnimSlot &slot, const AnimGoalState *state);
+	AnimParam GetAnimParam(const AnimSlot &slot, AnimGoalProperty property) const;
 
 	/**
 	 * Find the anim slot for the given obj that has a goal of the same (or related) type running

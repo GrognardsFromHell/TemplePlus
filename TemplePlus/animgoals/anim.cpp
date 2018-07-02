@@ -37,7 +37,7 @@
 
 #define ANIM_RUN_SLOT_CAP 512
 
-BOOL AnimSystem::PushFidget(objHndl handle){
+BOOL AnimSystem::PushFidget(objHndl handle) {
 
     if (!handle){
         logger->error("PushFidget: Null handle");
@@ -57,9 +57,48 @@ BOOL AnimSystem::PushFidget(objHndl handle){
     if (combatSys.isCombatActive())
         return FALSE;
 
-    return temple::GetRef<BOOL(__cdecl)(objHndl)>(0x10015D70)(handle);
+	return PushFidgetInternal(handle) ? 1 : 0;
 }
 
+// Originally @ 0x10015BB0
+bool AnimSystem::PushFidgetInternal(objHndl handle) {
+
+	if (!handle) {
+		return false;
+	}
+
+	if (!objects.IsCritter(handle)) {
+		return false;
+	}
+
+	if (!CritterCanAnimate(handle) 
+		|| DoesObjHaveGoal(handle, ag_anim_fidget) 
+		|| GetFirstRunSlotId(handle)) {
+		return false;
+	}
+
+	auto aasHandle = objects.GetAnimHandle(handle);
+	auto currentAnim = aasHandle->GetAnimId();
+
+	// Only fidget if the current animation is an idle animation
+	if (currentAnim.IsWeaponAnim() && currentAnim.GetWeaponAnim() == gfx::WeaponAnim::Idle
+		|| !currentAnim.IsSpecialAnim() && currentAnim.GetNormalAnimType() == gfx::NormalAnimType::ItemIdle) {
+		
+		AnimSlotGoalStackEntry goalData;
+		if (!goalData.InitWithInterrupt(handle, ag_anim_fidget))
+			return false;
+		return goalData.Push(animIdGlobal);
+	}
+
+	return false;
+	
+}
+
+// Originally @ 100154A0
+bool AnimSystem::CritterCanAnimate(objHndl handle) const
+{
+	return handle && !critterSys.IsDeadOrUnconscious(handle);
+}
 
 enum AnimGoalDataType {
     AGDT_INT = 0,
@@ -340,8 +379,7 @@ bool AnimSystem::PushMoveToTile(objHndl handle, LocAndOffsets loc){
     if (party.IsInParty(handle) && ShouldRun(handle)) {
         return PushRunToTile(handle, loc);
     }
-
-    auto animIdGlobal = temple::GetPointer<AnimSlotId>(0x102AC880);
+	    
     if (!gameSystems->GetAnim().DoesObjHaveGoal(handle, ag_move_to_tile, animIdGlobal)) {
         AnimSlotGoalStackEntry goalData(handle, ag_move_to_tile);
         goalData.targetTile.location = loc;
@@ -463,8 +501,7 @@ BOOL AnimSystem::PushSpellCast(SpellPacketBody & spellPkt, objHndl item)
         goalData.animIdPrevious.number = temple::GetRef<int(__cdecl)(int)>(0x100757B0)(spEntry.spellSchoolEnum); // GetSpellSchoolAnimId
     }
 
-    AnimSlotId slotIdNew;
-    return goalData.Push(&slotIdNew);
+    return goalData.Push(nullptr);
 }
 
 BOOL AnimSystem::PushSpellInterrupt(const objHndl& caster, objHndl item, AnimGoalType animGoalType, int spellSchool){
@@ -477,8 +514,7 @@ BOOL AnimSystem::PushSpellInterrupt(const objHndl& caster, objHndl item, AnimGoa
     else
         goalData.animIdPrevious.number = temple::GetRef<int(__cdecl)(int)>(0x100757B0)(spellSchool); // GetSpellSchoolAnimId
     
-    AnimSlotId idNew;
-    return goalData.Push(&idNew);
+    return goalData.Push(nullptr);
 }
 
 void AnimSystem::PushForMouseTarget(objHndl handle, AnimGoalType type, objHndl tgt, locXY loc, objHndl scratchObj, int someFlag){
@@ -1300,7 +1336,7 @@ bool AnimSystem::ClearForObject(objHndl handle)
 // Originally @ 0x10016C40
 AnimSlot * AnimSystem::GetSlot(const AnimSlotId & id)
 {
-	if (id.slotIndex == -1) {
+	if (id.IsNull()) {
 		return nullptr;
 	}
 
@@ -1468,121 +1504,93 @@ void AnimSystem::PushActionCallback(AnimSlot &slot) {
   mActionCallbacks.push_back({slot.animObj, slot.uniqueActionId});
 }
 
-bool AnimSystem::PushGoal(AnimSlotGoalStackEntry * gdata, AnimSlotId * slotId){
-    if (temple::GetRef<int>(0x10AA4BC4)) // animPrivEditorMode
-        return false;
-
-    if (config.debugMessageEnable)
-        logger->debug("Goal pushed: {}", gdata->goalType);
-    return PushGoalImpl(gdata, slotId, 1, 0);
+bool AnimSystem::PushGoal(const AnimSlotGoalStackEntry &stackEntry, AnimSlotId * slotId) {
+    return PushGoalInternal(stackEntry, slotId, 0);
 }
 
 // Originally @ 0x10056600
-BOOL AnimSystem::PushGoalImpl(AnimSlotGoalStackEntry * gdata, AnimSlotId * slotId, int a3, int flags)
+bool AnimSystem::PushGoalInternal(const AnimSlotGoalStackEntry &stackEntry, AnimSlotId * slotIdOut, int flags)
 {
-    if (!gdata) {
-        logger->debug("Null goal data!");
-        addresses.Debug();
-    }
-    if (gdata->goalType >= ag_count) {
-        logger->debug("invalid goalType!");
-        addresses.Debug();
-    }
+	Expects(animationGoals_->IsValidType(stackEntry.goalType));
 
-    auto animSysIsLoading = temple::GetRef<int>(0x10AA4BB8);
-    if (animSysIsLoading)
-        return FALSE;
+	// Don't push new goals while animations are loaded from the savegame
+	if (animSysIsLoading) {
+		return false;
+	}
 
-    auto handle = gdata->self.obj;
-    if (objects.getInt32(handle, obj_f_flags) & OF_DESTROYED)
-        return FALSE;
-
-    AnimSlotId & pushedId = temple::GetRef<AnimSlotId>(0x102B2648);
-
+	// Don't push goals for destroyed objects
+    auto handle = stackEntry.self.obj;
+	if (objects.getInt32(handle, obj_f_flags) & OF_DESTROYED) {
+		return false;
+	}
+	
 	auto previousSlotId = GetFirstRunSlotId(handle);
-		    
-    auto curGoal = 0;
     if (previousSlotId) {
-		pushedId = *previousSlotId;
-		auto runInfo = GetSlot(pushedId);
-        if (runInfo) {
-            curGoal = runInfo->currentGoal;
-            if (runInfo->goals[curGoal].goalType == ag_anim_idle) {
-                auto result = FALSE;
-                if (runInfo->IsStackFull()) {
-                    logger->debug("Anim: ERROR: Attempt to PushGoal: Goal Stack too LARGE!!! Killing the Animation Slot: AnimID: {}", pushedId.ToString());
-                    logger->debug("Anim: Current SubGoal Stack is:");
+		auto runInfo = GetSlot(*previousSlotId);
+        if (runInfo && runInfo->pCurrentGoal->goalType == ag_anim_idle) {
+			lastSlotPushedTo_ = *previousSlotId;
 
-                    for (auto i = 0; i < runInfo->currentGoal; i++) {
-                        logger->debug("[{}]: Goal: {}", i, runInfo->goals[i].goalType);
-                    }
-
-                    runInfo->flags |= ASF_STOP_PROCESSING;
-                    runInfo->currentState = 0;
-                    result = FALSE;
+            if (runInfo->IsStackFull()) {
+                logger->error("Anim: ERROR: Attempt to PushGoal: Goal Stack too LARGE!!! Killing the Animation Slot: AnimID: {}", lastSlotPushedTo_.ToString());
+                logger->error("Anim: Current SubGoal Stack is:");
+                for (auto i = 0; i <= runInfo->currentGoal; i++) {
+                    logger->error("[{}]: Goal: {}", i, runInfo->goals[i].goalType);
                 }
-                else {
-                    runInfo->currentState = 0;
-                    runInfo->pCurrentGoal = &runInfo->goals[++runInfo->currentGoal];
-                    *runInfo->pCurrentGoal = *gdata;
 
-                    IncreaseActiveGoalCount(*runInfo, animationGoals_->GetByType(gdata->goalType));
-                    if (slotId)
-                        *slotId = pushedId;
-
-					runInfo->pCurrentGoal->FreezeObjectRefs();
-
-                    runInfo->uniqueActionId = 0;
-                    result = TRUE;
-                }
-                return result;
+                runInfo->flags |= ASF_STOP_PROCESSING;
+                runInfo->currentState = 0;
+				return FALSE;
             }
+
+            runInfo->currentState = 0;
+            runInfo->pCurrentGoal = &runInfo->goals[++runInfo->currentGoal];
+            *runInfo->pCurrentGoal = stackEntry;
+
+            IncreaseActiveGoalCount(*runInfo, animationGoals_->GetByType(stackEntry.goalType));
+			if (slotIdOut) {
+				*slotIdOut = lastSlotPushedTo_;
+			}
+
+			runInfo->pCurrentGoal->FreezeObjectRefs();
+
+            runInfo->uniqueActionId = 0;
+			return TRUE;
         }
     }
 
-    if (a3) {
-		auto newSlotId = AllocSlot();
-        if (!newSlotId)
-            return FALSE;
-		pushedId = *newSlotId;
-        if (slotId)
-            *slotId = pushedId;
-    }
-    else {
-        if (!slotId) {
-            logger->debug("Null slot ID ptr!");
-            addresses.Debug();
-        }
-        pushedId = *slotId;
-        auto allocateThisRunIdx = temple::GetRef<BOOL(__cdecl)(AnimSlotId&)>(0x10056480);
-        if (!allocateThisRunIdx(pushedId))
-            return FALSE;
-    }
+	auto newSlotId = AllocSlot();
+	if (!newSlotId) {
+		lastSlotPushedTo_.Clear();
+		if (slotIdOut) {
+			slotIdOut->Clear();
+		}
+		return false;
+	}
 
-    if (pushedId.slotIndex == -1) {
-        if (slotId)
-            *slotId = pushedId;
-        return FALSE;
-    }
-
-    auto runInfo = &mSlots[pushedId.slotIndex];
+	lastSlotPushedTo_ = *newSlotId;
+	if (slotIdOut) {
+		*slotIdOut = lastSlotPushedTo_;
+	}
+    
+    auto runInfo = &mSlots[lastSlotPushedTo_.slotIndex];
     runInfo->currentGoal = 0;
     runInfo->currentState = 0;
     runInfo->field_14 = -1;
-    runInfo->animObj = gdata->self.obj;
+    runInfo->animObj = stackEntry.self.obj;
     runInfo->flags |= flags;
     runInfo->pCurrentGoal = &runInfo->goals[runInfo->currentGoal];
-    *runInfo->pCurrentGoal = *gdata;
+    *runInfo->pCurrentGoal = stackEntry;
 	runInfo->pCurrentGoal->FreezeObjectRefs();
 
     IncreaseActiveGoalCount(*runInfo, animationGoals_->GetByType(runInfo->pCurrentGoal->goalType));
 
     runInfo->uniqueActionId = 0;
     
+	// Schedule time events for this new slot
     TimeEvent evt;
     evt.system = TimeEventType::Anim;
-    evt.params[0].int32 = pushedId.slotIndex;
-    evt.params[1].int32 = pushedId.uniqueId;
+    evt.params[0].int32 = lastSlotPushedTo_.slotIndex;
+    evt.params[1].int32 = lastSlotPushedTo_.uniqueId;
     evt.params[2].int32 = 3333;
 
     return gameSystems->GetTimeEvent().Schedule(evt, 5);
@@ -1832,13 +1840,12 @@ void AnimSystem::InterruptAllGoalsUpToPriority(AnimGoalPriority priority)
 }
 
 // Originally @ 0x10056a50
-bool AnimSystem::AddSubGoal(const AnimSlotId & id, AnimSlotGoalStackEntry & stackEntry)
+bool AnimSystem::AddSubGoal(const AnimSlotId & id, const AnimSlotGoalStackEntry & stackEntry)
 {
 	Expects(stackEntry.goalType >= 0 && stackEntry.goalType < ag_count);
-
-	if (id.slotIndex == -1) {
-		return PushGoalImpl(&stackEntry, nullptr, 0, 0);
-	}
+	// Previously, ToEE had a failsafe here which might actually not have worked anyway (for null anim ids)
+	// But checking the code, this function is never called with a null anim id anyway
+	Expects(!id.IsNull());
 
 	auto slot = GetSlot(id);
 	if (!slot) {
@@ -1873,12 +1880,129 @@ bool AnimSystem::AddSubGoal(const AnimSlotId & id, AnimSlotGoalStackEntry & stac
 	return true;
 }
 
+// Originally @ 0x10055700
 bool AnimSystem::PrepareSlotForGoalState(AnimSlot &slot,
                                          const AnimGoalState *state) {
-  static auto anim_prepare_run_for_goalstate =
-      temple::GetPointer<int(AnimSlot * runSlot, const AnimGoalState *)>(
-          0x10055700);
-  return anim_prepare_run_for_goalstate(&slot, state) == TRUE;
+	
+	if (!slot.pCurrentGoal->ValidateObjectRefs()) {
+		slot.animObj = objHndl::null;
+		return false;
+	}
+	
+	// sets the animObj of the slot to the self-obj of the goal
+	slot.animObj = slot.pCurrentGoal->self.obj;
+	if (!state) {
+		return true; // Only validation was requested
+	}
+
+	slot.stateFlagData = state->flagsData;
+	slot.param1 = GetAnimParam(slot, (AnimGoalProperty) state->argInfo1);
+	slot.param2 = GetAnimParam(slot, (AnimGoalProperty) state->argInfo2);
+	return true;
+}
+
+AnimParam AnimSystem::GetAnimParam(const AnimSlot & slot, AnimGoalProperty property) const
+{
+	AnimParam result;
+	if (property == -1) {
+		result.number = 0;
+		return result;
+	}
+
+	auto &currentStack = *slot.pCurrentGoal;
+
+	switch (property) {
+	case SELF_OBJ_PRECISE_LOC:
+		result.location = objects.GetLocationFull(currentStack.self.obj);
+		break;
+	case TARGET_OBJ_PRECISE_LOC:
+		if (objects.IsEquipment(currentStack.target.obj)) {
+			auto parent = inventory.GetParent(currentStack.target.obj);
+			if (parent) {
+				result.location = objects.GetLocationFull(parent);
+				break;
+			}
+		}
+		result.location = objects.GetLocationFull(currentStack.target.obj);
+		break;
+	case NULL_HANDLE:
+		result.obj = objHndl::null;
+		break;
+	case TARGET_LOC_PRECISE:
+		if (currentStack.targetTile.location.location.locx || currentStack.targetTile.location.location.locy) {
+			result.location = currentStack.targetTile.location;
+		} else {
+			if (currentStack.target.obj) {
+				currentStack.targetTile.location = objects.GetLocationFull(currentStack.target.obj);
+			}
+			result.location = currentStack.targetTile.location;
+		}
+		break;
+	case AGDATA_SELF_OBJ:
+		result.obj = currentStack.self.obj;
+		break;
+	case AGDATA_TARGET_OBJ:
+		result.obj = currentStack.target.obj;
+		break;
+	case AGDATA_BLOCK_OBJ:
+		result.obj = currentStack.block.obj;
+		break;
+	case AGDATA_SCRATCH_OBJ:
+		result.obj = currentStack.scratch.obj;
+		break;
+	case AGDATA_PARENT_OBJ:
+		result.obj = currentStack.parent.obj;
+		break;
+	case AGDATA_TARGET_TILE:
+		result.location = currentStack.targetTile.location;
+		break;
+	case AGDATA_RANGE_DATA:
+		result.location = currentStack.range.location;
+		break;
+	case AGDATA_ANIM_ID:
+		result.number = currentStack.animId.number;
+		break;
+	case AGDATA_ANIM_ID_PREV:
+		result.number = currentStack.animIdPrevious.number;
+		break;
+	case AGDATA_ANIM_DATA:
+		result.number = currentStack.animData.number;
+		break;
+	case AGDATA_SPELL_DATA:
+		result.number = currentStack.spellData.number;
+		break;
+	case AGDATA_SKILL_DATA:
+		result.number = currentStack.skillData.number;
+		break;
+	case AGDATA_FLAGS_DATA:
+		result.number = currentStack.flagsData.number;
+		break;
+	case AGDATA_SCRATCH_VAL1:
+		result.number = currentStack.scratchVal1.number;
+		break;
+	case AGDATA_SCRATCH_VAL2:
+		result.number = currentStack.scratchVal2.number;
+		break;
+	case AGDATA_SCRATCH_VAL3:
+		result.number = currentStack.scratchVal2.number;
+		break;
+	case AGDATA_SCRATCH_VAL4:
+		result.number = currentStack.scratchVal4.number;
+		break;
+	case AGDATA_SCRATCH_VAL5:
+		result.number = currentStack.scratchVal5.number;
+		break;
+	case AGDATA_SCRATCH_VAL6:
+		result.number = currentStack.scratchVal6.number;
+		break;
+	case AGDATA_SOUND_HANDLE:
+		result.number = currentStack.soundHandle.number;
+		break;
+	default:
+		throw TempleException("Unknown data type: {}", property);
+	}
+
+	return result;
 }
 
 bool AnimSystem::IsEquivalentGoalType(AnimGoalType expected, AnimGoalType actual) const {
@@ -2115,8 +2239,8 @@ void AnimSystemHooks::RasterPoint(int64_t x, int64_t y, LineRasterPacket & rast)
     rast.counter++;
 
     if (rast.counter == rast.interval) {
-        rast.deltaXY[someIdx] = x - rast.x;
-        rast.deltaXY[rast.deltaIdx + 1] = y - rast.y;
+		rast.deltaXY[someIdx] = (int8_t)(x - rast.x);
+		rast.deltaXY[rast.deltaIdx + 1] = (int8_t)(y - rast.y);
         rast.x = x;
         rast.y = y;
         rast.deltaIdx += 2;
@@ -2261,6 +2385,6 @@ float AnimSystemHooks::HookedGetRunSpeed(objHndl handle, obj_f field){ // this i
     // auto modelScale = obj->GetInt32(obj_f_model_scale) / 100.0f;
     auto val = obj->GetFloat(field);
     if (config.equalizeMoveSpeed && party.IsInParty(handle))
-        return config.speedupFactor;
+        return (float) config.speedupFactor;
     return val;
 }

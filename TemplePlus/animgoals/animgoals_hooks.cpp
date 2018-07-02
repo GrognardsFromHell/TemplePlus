@@ -550,8 +550,12 @@ public:
 		});
 
 		// Push Goal Impl
-		replaceFunction<BOOL(__cdecl)(AnimSlotGoalStackEntry*, AnimSlotId*, int, int)>(0x10056600, [](AnimSlotGoalStackEntry* gdata, AnimSlotId*slotId, int a3, int flags) {
-			return gameSystems->GetAnim().PushGoalImpl(gdata, slotId, a3, flags);
+		replaceFunction<BOOL(__cdecl)(AnimSlotGoalStackEntry*, AnimSlotId*, int, int)>(0x10056600, [](AnimSlotGoalStackEntry* gdata, AnimSlotId*slotId, int allocSlot, int flags) {
+			Expects(gdata);
+			if (allocSlot != 1) {
+				throw TempleException("Push Goal should never be called with allocSlot=false");
+			}
+			return gameSystems->GetAnim().PushGoalInternal(*gdata, slotId, flags) ? 1 : 0;
 		});
 
 		// animNumActiveGoals_inc
@@ -579,7 +583,8 @@ public:
 
 		// Push Goal
 		replaceFunction<BOOL(__cdecl)(AnimSlotGoalStackEntry*, AnimSlotId*)>(0x10056D20, [](AnimSlotGoalStackEntry* gdata, AnimSlotId*slotId) {
-			return gameSystems->GetAnim().PushGoal(gdata, slotId) ? TRUE : FALSE;
+			Expects(gdata);
+			return gameSystems->GetAnim().PushGoal(*gdata, slotId) ? TRUE : FALSE;
 		});
 
 		replaceFunction<void()>(0x10016A30, []() {
@@ -595,6 +600,24 @@ public:
 			} else {
 				return 0;
 			}
+		});
+
+		// anim_is_processing
+		replaceFunction<int()>(0x10054e10, []() {
+			return gameSystems->GetAnim().IsProcessing() ? 1 : 0;
+		});
+
+		// anim_push_fidget
+		replaceFunction<int(objHndl)>(0x10015d70, [](objHndl handle) {
+			return gameSystems->GetAnim().PushFidget(handle);
+		});
+
+		// anim_get_last_anim_run_id_pushed_to
+		replaceFunction<int(AnimSlotId *)>(0x10054ee0, [](AnimSlotId *slotIdOut) {
+			if (slotIdOut) {
+				*slotIdOut = gameSystems->GetAnim().GetLastSlotPushedTo();
+			}
+			return 1;
 		});
 
 	}
