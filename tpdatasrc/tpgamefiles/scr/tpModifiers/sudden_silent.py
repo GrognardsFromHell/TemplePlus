@@ -23,7 +23,7 @@ def SuddenSilentNewDay(attachee, args, evt_obj):
 	
 	return 0
 
-def OnMetamagicUpdate(attachee, args, evt_obj):
+def SuddenSilentMetamagicUpdate(attachee, args, evt_obj):
 	
 	#Check for a charge
 	charges = args.get_arg(0)
@@ -43,7 +43,7 @@ def OnMetamagicUpdate(attachee, args, evt_obj):
 	
 	return 0
 
-def SuddenMetamagicDeductCharge(attachee, args, evt_obj):
+def SuddenSlientDeductCharge(attachee, args, evt_obj):
 	#Check for a charge and the enable flag
 	charges = args.get_arg(0)
 	if charges < 1 or not args.get_arg(1):	
@@ -56,9 +56,10 @@ def SuddenMetamagicDeductCharge(attachee, args, evt_obj):
 	return 0
 	
 #Setup the feat
+tpdp.register_metamagic_feat("Sudden Silent")
 suddenSilentFeat = PythonModifier("Sudden Silent Feat", 4) #Charges, Toggeled On, Spare, Spare
 suddenSilentFeat.MapToFeat("Sudden Silent")
 suddenSilentFeat.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, SuddenSilentRadial, ())
 suddenSilentFeat.AddHook(ET_OnNewDay, EK_NEWDAY_REST, SuddenSilentNewDay, ())
-suddenSilentFeat.AddHook(ET_OnMetaMagicMod, EK_NONE, OnMetamagicUpdate, ())
-suddenSilentFeat.AddHook(ET_OnD20PythonSignal, "Sudden Metamagic Deduct Charge", SuddenMetamagicDeductCharge, ())
+suddenSilentFeat.AddHook(ET_OnMetaMagicMod, EK_NONE, SuddenSilentMetamagicUpdate, ())
+suddenSilentFeat.AddHook(ET_OnD20PythonSignal, "Sudden Metamagic Deduct Charge", SuddenSlientDeductCharge, ())

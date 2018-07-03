@@ -1,0 +1,5 @@
+name: Sudden Maximize
+flags: 12713984
+prereqs: 
+description: Once per day, you can apply the effect of the Maximize Spell feat to any spell you cast without increasing the level of the spell or specially preparing it ahead of time. You can still use Maximize Spell normally if you have it.  Note:  The ability will be wasted if a spell that cannot be extended is cast.
+prereq descr:  

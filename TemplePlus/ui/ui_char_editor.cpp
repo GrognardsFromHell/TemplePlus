@@ -491,6 +491,39 @@ PYBIND11_EMBEDDED_MODULE(char_editor, mm) {
 		return result;
 
 	})
+
+	.def("has_metamagic_feat", []()->int {
+		int featCount = 0;
+		auto handle = chargen.GetEditedChar();
+		auto &charPkt = chargen.GetCharEditorSelPacket();
+
+		auto featList = feats.GetFeats(handle);
+
+		bool hasMMFeat = false;
+		for (auto feat : featList) {
+			if (feats.IsMetamagicFeat(feat)) {
+				featCount++;
+			}
+		}
+
+		if (feats.IsMetamagicFeat(charPkt.feat0)) {
+			featCount++;
+		}
+
+		if (feats.IsMetamagicFeat(charPkt.feat1)) {
+			featCount++;
+		}
+
+		if (feats.IsMetamagicFeat(charPkt.feat2)) {
+			featCount++;
+		}
+
+		if (feats.IsMetamagicFeat(charPkt.feat3)) {
+			featCount++;
+		}
+
+		return featCount;
+	})
 	
 	.def("set_bonus_feats", [](std::vector<FeatInfo> & fti){
 		chargen.SetBonusFeats(fti);

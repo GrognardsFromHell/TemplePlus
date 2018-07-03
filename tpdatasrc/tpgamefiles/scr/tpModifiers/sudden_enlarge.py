@@ -23,7 +23,7 @@ def SuddenEnlargeNewDay(attachee, args, evt_obj):
 	
 	return 0
 
-def OnMetamagicUpdate(attachee, args, evt_obj):
+def SuddenEnlargeMetamagicUpdate(attachee, args, evt_obj):
 	
 	#Check for a charge
 	charges = args.get_arg(0)
@@ -43,7 +43,7 @@ def OnMetamagicUpdate(attachee, args, evt_obj):
 	
 	return 0
 	
-def SuddenMetamagicDeductCharge(attachee, args, evt_obj):
+def SuddenEnlargeDeductCharge(attachee, args, evt_obj):
 	#Check for a charge and the enable flag
 	charges = args.get_arg(0)
 	if charges < 1 or not args.get_arg(1):	
@@ -56,9 +56,10 @@ def SuddenMetamagicDeductCharge(attachee, args, evt_obj):
 	return 0
 
 #Setup the feat
+tpdp.register_metamagic_feat("Sudden Enlarge")
 suddenEnlargeFeat = PythonModifier("Sudden Enlarge Feat", 4) #Charges, Toggeled On, Spare, Spare
 suddenEnlargeFeat.MapToFeat("Sudden Enlarge")
 suddenEnlargeFeat.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, SuddenEnlargeRadial, ())
 suddenEnlargeFeat.AddHook(ET_OnNewDay, EK_NEWDAY_REST, SuddenEnlargeNewDay, ())
-suddenEnlargeFeat.AddHook(ET_OnMetaMagicMod, EK_NONE, OnMetamagicUpdate, ())
-suddenEnlargeFeat.AddHook(ET_OnD20PythonSignal, "Sudden Metamagic Deduct Charge", SuddenMetamagicDeductCharge, ())
+suddenEnlargeFeat.AddHook(ET_OnMetaMagicMod, EK_NONE, SuddenEnlargeMetamagicUpdate, ())
+suddenEnlargeFeat.AddHook(ET_OnD20PythonSignal, "Sudden Metamagic Deduct Charge", SuddenEnlargeDeductCharge, ())

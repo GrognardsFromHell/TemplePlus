@@ -5,6 +5,7 @@
 #define NUM_FEATS 750 // vanilla was 649 (and Moebius hack increased this to 664 I think)
 #include "tig/tig_mes.h"
 #include <map>
+#include <unordered_set>
 
 enum FeatPropertyFlag : uint32_t {
 	FPF_CAN_GAIN_MULTIPLE_TIMES = 0x1,
@@ -124,6 +125,7 @@ struct LegacyFeatSystem : temple::AddressTable
 	Stat * charEditorClassCode;
 	char emptyString[1000] ;
 	char featPrereqDescrBuffer[5000];
+	std::unordered_set<feat_enums> metamagicFeats;
 
 	uint32_t racialFeats[ 10 * VANILLA_NUM_RACES ];
 	uint32_t HasFeatCount(objHndl objHnd, feat_enums featEnum);
@@ -143,6 +145,10 @@ struct LegacyFeatSystem : temple::AddressTable
 	int IsFeatEnabled(feat_enums feat);
 	int IsMagicFeat(feat_enums feat); // crafting / metamagic feats (that Wiz/Sorcs can pick as bonus feats)
 	
+	//Metamgic feats (subset of magic feats)
+	void AddMetamagicFeat(feat_enums feat);
+	bool IsMetamagicFeat(feat_enums feat);
+
 	int IsFeatRacialOrClassAutomatic(feat_enums feat);  // feats automatically granted (cannot be manually selected at levelup)
 	int IsClassFeat(feat_enums feat);
 	int IsFighterFeat(feat_enums feat); // feats that fighters can select as bonus feats
