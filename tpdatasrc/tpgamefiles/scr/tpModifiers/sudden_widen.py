@@ -23,7 +23,7 @@ def SuddenWidenNewDay(attachee, args, evt_obj):
 	
 	return 0
 
-def OnMetamagicUpdate(attachee, args, evt_obj):
+def SuddenWidenMetamagicUpdate(attachee, args, evt_obj):
 	
 	#Check for a charge
 	charges = args.get_arg(0)
@@ -44,7 +44,7 @@ def OnMetamagicUpdate(attachee, args, evt_obj):
 	return 0
 	
 	
-def SuddenMetamagicDeductCharge(attachee, args, evt_obj):
+def SuddenWidenDeductCharge(attachee, args, evt_obj):
 	#Check for a charge and the enable flag
 	charges = args.get_arg(0)
 	if charges < 1 or not args.get_arg(1):
@@ -57,9 +57,10 @@ def SuddenMetamagicDeductCharge(attachee, args, evt_obj):
 	return 0
 
 #Setup the feat
+tpdp.register_metamagic_feat("Sudden Widen")
 suddenWidenFeat = PythonModifier("Sudden Widen Feat", 4) #Charges, Toggeled On, Spare, Spare
 suddenWidenFeat.MapToFeat("Sudden Widen")
 suddenWidenFeat.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, SuddenWidenRadial, ())
 suddenWidenFeat.AddHook(ET_OnNewDay, EK_NEWDAY_REST, SuddenWidenNewDay, ())
-suddenWidenFeat.AddHook(ET_OnMetaMagicMod, EK_NONE, OnMetamagicUpdate, ())
-suddenWidenFeat.AddHook(ET_OnD20PythonSignal, "Sudden Metamagic Deduct Charge", SuddenMetamagicDeductCharge, ())
+suddenWidenFeat.AddHook(ET_OnMetaMagicMod, EK_NONE, SuddenWidenMetamagicUpdate, ())
+suddenWidenFeat.AddHook(ET_OnD20PythonSignal, "Sudden Metamagic Deduct Charge", SuddenWidenDeductCharge, ())

@@ -2325,6 +2325,9 @@ ActionErrorCode D20ActionCallbacks::ActionCostCastSpell(D20Actn * d20a, TurnBase
 	MetaMagicData mmData;
 	d20a->d20SpellData.Extract(&spEnum, nullptr, &spellClass, &spLvl, &invIdx, &mmData);
 
+	//Modify metamagic information for quicken if necessary
+	dispatch.DispatchMetaMagicModify(d20Sys.globD20Action->d20APerformer, mmData);
+
 	SpellEntry spEntry(spEnum);
 
 	// Metamagicked spontaneous casters always cost full round to cast
@@ -2692,14 +2695,17 @@ ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
 	int spellEnum = 0, spellClass, spellLvl, invIdx;
 	MetaMagicData mmData;
 
-	// Now the deduct charge signal should be sent since the spell can no longer be aborted (but it can fail)
-	d20Sys.D20SignalPython(d20a->d20APerformer, "Sudden Metamagic Deduct Charge");
-
 	auto &curSeq = *actSeqSys.actSeqCur;
 	auto &spellPkt = curSeq->spellPktBody;
 
+	//Get the metamagic data
+	dispatch.DispatchMetaMagicModify(d20Sys.globD20Action->d20APerformer, d20a->d20SpellData.metaMagicData);
+	
 	// Make sure the spell packet has the correct meta magic data (it will not if metamagic data has been modified)
 	spellPkt.metaMagicData = d20a->d20SpellData.metaMagicData;
+
+	// Now the deduct charge signal should be sent since the spell can no longer be aborted (but it can fail)
+	d20Sys.D20SignalPython(d20a->d20APerformer, "Sudden Metamagic Deduct Charge");
 
 	d20a->d20SpellData.Extract(&spellEnum, nullptr, &spellClass, &spellLvl, &invIdx, &mmData);
 	SpellStoreData spellData(spellEnum, spellLvl, spellClass, mmData );

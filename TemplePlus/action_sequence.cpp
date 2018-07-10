@@ -433,19 +433,21 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 
 	if (tgtClassif == D20TC_CastSpell){
 
-		unsigned int spellEnum, spellClass, spellLevel, metaMagicData;
-
-		//Modify the metamagic data before targeting for enlarge and widen 
-		dispatch.DispatchMetaMagicModify(d20Sys.globD20Action->d20APerformer, d20Sys.globD20Action->d20SpellData.metaMagicData);
+		unsigned int spellEnum, spellClass, spellLevel, metamagicValue;
 
 		D20SpellDataExtractInfo(&d20Sys.globD20Action->d20SpellData,
-			&spellEnum, nullptr, &spellClass, &spellLevel,nullptr,&metaMagicData);
+			&spellEnum, nullptr, &spellClass, &spellLevel,nullptr,&metamagicValue);
+
+		MetaMagicData metaMagicData = metamagicValue;
+
+		//Modify metamagic data for enlarge and widen 
+		dispatch.DispatchMetaMagicModify(d20Sys.globD20Action->d20APerformer, metaMagicData);
 
 		auto curSeq = *actSeqSys.actSeqCur;
-		curSeq->spellPktBody.spellRange *= ((MetaMagicData)metaMagicData).metaMagicEnlargeSpellCount + 1;
+		curSeq->spellPktBody.spellRange *= metaMagicData.metaMagicEnlargeSpellCount + 1;
 		SpellEntry spellEntry;
 		if (spellSys.spellRegistryCopy(spellEnum, &spellEntry)){
-			spellEntry.radiusTarget *= ((MetaMagicData)metaMagicData).metaMagicWidenSpellCount + 1;
+			spellEntry.radiusTarget *= metaMagicData.metaMagicWidenSpellCount + 1;
 		}
 		PickerArgs pickArgs;
 		spellSys.pickerArgsFromSpellEntry(&spellEntry, &pickArgs, curSeq->spellPktBody.caster, curSeq->spellPktBody.casterLevel);

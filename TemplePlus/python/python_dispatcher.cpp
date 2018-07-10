@@ -104,6 +104,11 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		return ElfHash::Hash(text);
 	});
 
+	m.def("register_metamagic_feat", [](std::string &text) {
+		auto feat = ElfHash::Hash(text);
+		feats.AddMetamagicFeat(static_cast<feat_enums>(feat));
+	});
+
 	m.def("GetModifierFileList", [](){
 		auto result = std::vector<std::string>();
 		TioFileList flist;

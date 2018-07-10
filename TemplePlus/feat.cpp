@@ -161,6 +161,17 @@ LegacyFeatSystem::LegacyFeatSystem()
 
 	memset(emptyString, 0, 1);
 
+	//Add standard metamagic feats to the list
+	metamagicFeats.insert(FEAT_EMPOWER_SPELL);
+	metamagicFeats.insert(FEAT_ENLARGE_SPELL);
+	metamagicFeats.insert(FEAT_EXTEND_SPELL);
+	metamagicFeats.insert(FEAT_HEIGHTEN_SPELL);
+	metamagicFeats.insert(FEAT_WIDEN_SPELL);
+	metamagicFeats.insert(FEAT_MAXIMIZE_SPELL);
+	metamagicFeats.insert(FEAT_QUICKEN_SPELL);
+	metamagicFeats.insert(FEAT_STILL_SPELL);
+	metamagicFeats.insert(FEAT_SILENT_SPELL);
+
 }
 BOOL LegacyFeatSystem::FeatSystemInit()
 {
@@ -1107,6 +1118,18 @@ int LegacyFeatSystem::IsMagicFeat(feat_enums feat)
 		return (featFind->second.flags & FPF_WIZARD_BONUS) != 0;
 	}
 	return (m_featPropertiesTable[feat] & FPF_WIZARD_BONUS) != 0;
+}
+
+void LegacyFeatSystem::AddMetamagicFeat(feat_enums feat)
+{
+	//Add Metamagic feat to the list
+	metamagicFeats.insert(feat);
+}
+
+bool LegacyFeatSystem::IsMetamagicFeat(feat_enums feat)
+{
+	//Search for the feat in the matamgic list
+	return metamagicFeats.find(feat) != metamagicFeats.end();
 }
 
 int LegacyFeatSystem::IsFeatPartOfMultiselect(feat_enums feat)
