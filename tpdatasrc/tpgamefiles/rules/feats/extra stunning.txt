@@ -1,0 +1,5 @@
+name: Extra Stunning
+flags: 12582913
+prereqs: 266 2
+description: You gain the ability to make three extra stunning attacks per day.
+prereq descr: Stunning Fist, Base Attack Bonus +2.
