@@ -1,4 +1,4 @@
-#Extend Rage:  Complete Warrior, p. 98
+#Extra Stunning:  Complete Warrior, p. 98
 
 from templeplus.pymod import PythonModifier
 from toee import *
