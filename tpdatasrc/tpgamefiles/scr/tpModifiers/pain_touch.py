@@ -74,6 +74,11 @@ def PainTouchEffectGetEffectTooltip(attachee, args, evt_obj):
 	evt_obj.append(tpdp.hash("PAIN_TOUCH"), -2, "")
 	return 0
 
+def PainTouchEffectAOOPossible(attachee, args, evt_obj):
+	# No making AOOs when Nauseated
+	evt_obj.return_val = 0
+	return 0
+	
 #Setup the feat
 PainTouchFeat = PythonModifier("Pain Touch Feat", 2) #Extra, Extra
 PainTouchFeat.MapToFeat("Pain Touch")
@@ -85,3 +90,5 @@ PainTouchEffect.AddHook(ET_OnTurnBasedStatusInit, EK_NONE, PainTouchEffectTurnBa
 PainTouchEffect.AddHook(ET_OnBeginRound, EK_NONE, PainTouchEffectBeginRound, ())
 PainTouchEffect.AddHook(ET_OnGetTooltip, EK_NONE, PainTouchEffectGetTooltip, ())
 PainTouchEffect.AddHook(ET_OnGetEffectTooltip, EK_NONE, PainTouchEffectGetEffectTooltip, ())
+PainTouchEffect.AddHook(ET_OnD20Query, EK_Q_AOOPossible, PainTouchEffectAOOPossible, ())
+
