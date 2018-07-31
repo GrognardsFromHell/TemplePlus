@@ -46,8 +46,6 @@ struct DispatcherCallbackArgs;
 struct Dispatcher;
 
 
-
-
 struct DispatcherSystem : temple::AddressTable
 {
 	Dispatcher* DispatcherInit(objHndl objHnd);
@@ -105,6 +103,7 @@ struct DispatcherSystem : temple::AddressTable
 	void DispatchConditionRemove(Dispatcher* dispatcher, CondNode* cond);
 	unsigned int Dispatch35CasterLevelModify(objHndl obj, SpellPacketBody* spellPkt);
 	void DispatchMetaMagicModify(objHndl obj, MetaMagicData& mmData);
+	void DispatchSpecialAttack(objHndl obj, int attack, objHndl target);
 	int DispatchSpellListLevelExtension(objHndl obj, Stat casterClass);
 	int DispatchGetBaseCasterLevel(objHndl obj, Stat casterClass);
 
@@ -532,6 +531,14 @@ struct EvtObjSpellCaster: DispIO // type 34 (NEW!)
 struct EvtObjMetaMagic : DispIO // type 35 (NEW!)
 {
 	MetaMagicData mmData;
+};
+
+struct EvtObjSpecialAttack : DispIO // type 36 (NEW!)
+{
+	enum AttackType {STUNNING_FIST=1, NUM_EFFECTS};
+
+	int attack;  //Uses the attack enum but unfortunately the enum can't be passed through to python
+	objHndl target;
 };
 
 struct EvtObjActionCost: DispIO
