@@ -293,6 +293,8 @@ public:
 	static int TurnUndeadHook(objHndl, Stat shouldBeClassCleric, DispIoD20ActionTurnBased* evtObj);
 	static int TurnUndeadCheck(DispatcherCallbackArgs args);
 	static int TurnUndeadPerform(DispatcherCallbackArgs args);
+
+	static bool StunningFistHook(objHndl objHnd, objHndl caster, int DC, int saveType, int flags);
 	
 	//Old version of the function to be used within the replacement
 	int (*oldTurnUndeadPerform)(DispatcherCallbackArgs) = nullptr;
@@ -444,6 +446,9 @@ public:
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FDC70, raceCallbacks.HalflingThrownWeaponAndSlingBonus);
 
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100CBAB0, spCallbacks.SpellRemoveMod);
+
+		// Stunning Fist extension
+		redirectCall(0x100E84B0, StunningFistHook);
 	}
 } condFuncReplacement;
 
@@ -3320,6 +3325,22 @@ void ConditionFunctionReplacement::HookSpellCallbacks()
 	
 }
 
+
+bool ConditionFunctionReplacement::StunningFistHook(objHndl objHnd, objHndl caster, int DC, int saveType, int flags)
+{
+
+	//Preform the saving throw and return the result
+	bool result = damage.SavingThrow(objHnd, caster, DC, static_cast<SavingThrowType>(saveType), flags);
+
+	if (!result) {
+		//On a failed saving throw send the signal that a stunning fist effect was applied
+		dispatch.DispatchSpecialAttack(caster, static_cast<int>(EvtObjSpecialAttack::STUNNING_FIST), objHnd);
+	}
+
+	return result;
+}
+
+
 int ConditionFunctionReplacement::TurnUndeadHook(objHndl handle, Stat shouldBeClassCleric, DispIoD20ActionTurnBased * evtObj){
 
 	auto turnType = evtObj->d20a->data1;
@@ -5019,7 +5040,11 @@ int ClassAbilityCallbacks::DruidWildShapeReset(DispatcherCallbackArgs args){
 			numTimes += (1 << 8);
 	}
 
-	
+	//See if any bonus uses should be added
+	auto extraWildShape = d20Sys.D20QueryPython(args.objHndCaller, "Extra Wildshape Uses");
+	auto extraElementalWildShape = d20Sys.D20QueryPython(args.objHndCaller, "Extra Wildshape Elemental Uses");
+	numTimes += extraWildShape;
+	numTimes += (1 << 8) * extraElementalWildShape;
 	
 	args.SetCondArg(0, numTimes);
 	if (args.GetCondArg(2)) {

@@ -3471,6 +3471,7 @@ ET_OnLevelupSystemEvent = 90
 ET_OnDealingDamageWeaponlikeSpell = 91
 ET_OnActionCostMod = 92
 ET_OnMetaMagicMod = 93
+ET_OnSpecialAttack = 94
 
 # Event Keys
 

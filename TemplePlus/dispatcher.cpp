@@ -582,6 +582,16 @@ void DispatcherSystem::DispatchMetaMagicModify(objHndl obj, MetaMagicData& mmDat
 	mmData = dispIo.mmData;
 }
 
+void DispatcherSystem::DispatchSpecialAttack(objHndl obj, int attack, objHndl target)
+{
+	auto _dispatcher = objects.GetDispatcher(obj);
+	if (!dispatch.dispatcherValid(_dispatcher)) return;
+	EvtObjSpecialAttack dispIo;
+	dispIo.target = target;
+	dispIo.attack = static_cast<EvtObjSpecialAttack::AttackType>(attack);
+	DispatcherProcessor(_dispatcher, dispTypeSpecialAttack, 0, &dispIo);
+}
+
 unsigned DispatcherSystem::Dispatch35CasterLevelModify(objHndl obj, SpellPacketBody* spellPkt)
 {
 	auto _dispatcher = objects.GetDispatcher(obj);

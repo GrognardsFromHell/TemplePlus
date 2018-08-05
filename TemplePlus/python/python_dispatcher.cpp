@@ -822,6 +822,11 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("meta_magic", &EvtObjMetaMagic::mmData)
 		;
 
+	py::class_<EvtObjSpecialAttack, DispIO>(m, "EvtObjSpecialAttack", "Used for applying effects")
+		.def_readwrite("attack", &EvtObjSpecialAttack::attack)
+		.def_readwrite("target", &EvtObjSpecialAttack::target)
+		;
+
 }
 
 
@@ -1062,9 +1067,11 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 		pbEvtObj = py::cast(static_cast<EvtObjActionCost*>(args.dispIO));
 		break;
 
-	case dispTypeMetaMagicMod:
-		pbEvtObj = py::cast(static_cast<EvtObjMetaMagic*>(args.dispIO));
+	case dispTypeSpecialAttack:
+		pbEvtObj = py::cast(static_cast<EvtObjSpecialAttack*>(args.dispIO));
 		break;
+
+
 
 
 	case dispTypeConditionAdd: // these are actually null
