@@ -1,6 +1,5 @@
 import tpdp
 
-
 print "Attempting import of tpModifiers"
 flist = tpdp.GetModifierFileList()
 

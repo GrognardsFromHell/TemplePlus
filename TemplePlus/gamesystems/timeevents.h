@@ -2,6 +2,7 @@
 
 #include "gametime.h"
 #include "gamesystem.h"
+#include "frozen_obj_ref.h"
 
 struct GameSystemConf;
 
@@ -117,15 +118,6 @@ union TimeEventArg {
 	LocAndOffsets location;
 };
 
-#pragma pack(push, 1)
-struct TimeEventObjInfo {
-	ObjectId guid;
-	locXY location;
-	int mapNumber;
-	int padding;
-};
-#pragma pack(pop)
-
 struct TimeEvent {
 	GameTime time;
 	TimeEventType system;
@@ -136,7 +128,7 @@ struct TimeEvent {
 struct TimeEventListEntry {
 	TimeEvent evt;
 	// Keeps track of objs referenced in the time event
-	TimeEventObjInfo objects[4];
+	FrozenObjRef objects[4];
 	// Linked list ptr to next entry
 	TimeEventListEntry* nextEvent;
 
@@ -186,6 +178,7 @@ public:
 	 * Removes all time events of the given system type without calling their expiry function.
 	 */
 	void RemoveAll(TimeEventType type);
+	void PushDisableAdvance(); // increases the lock count on time advance
 
 	/**
 	 * Removes all time events to which the given predicate applies.
@@ -205,14 +198,12 @@ private:
 	bool Schedule(TimeEvent *evt, const GameTime *delay, const GameTime *baseTime, GameTime *triggerTimeOut, const char *sourceFile, int sourceLine);
 	bool ScheduleInternal(GameTime * time, TimeEvent *evt, GameTime *triggerTimeOut);
 
+	BOOL TimeEventReadFromFile(TioFile * file, TimeEvent * evtOut);
+
 	BOOL TimeEventListEntryAdd(TimeEventListEntry * evt);
 	
 	BOOL TimeEventParamSerializer(TioFile *file, const TimeEventTypeSpec &sysSpec, TimeEventListEntry *listNode);
-	BOOL SaveTimeEventObjInfo(TimeEventArg & evtArg, TimeEventObjInfo * evtInfo, TioFile * file);
 	
-	BOOL TimeEventReadFromFile(TioFile * file, TimeEvent * evtOut);
-	BOOL LoadTimeEventObjInfoSafe(objHndl * handle, TimeEventObjInfo * evtInfo, TioFile* file);
-	void TimeEventObjInfoFromHandle(objHndl handle, TimeEventObjInfo * evtInfo);
 	bool IsInAdvanceTime();
 
 };

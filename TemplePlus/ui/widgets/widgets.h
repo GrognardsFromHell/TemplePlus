@@ -118,7 +118,13 @@ public:
 		mSizeToParent = enable;
 	}
 
-	TigRect GetContentArea() const;
+	/*
+	 Returns the {x,y,w,h} rect, but regards modification from parent and subtracts the margins.
+	 Content area controls:
+	 - Mouse handling active area
+	 - Rendering area
+	 */
+	TigRect GetContentArea(bool includingMargins = false) const; 
 	TigRect GetVisibleArea() const;
 
 	void SetMouseMsgHandler(std::function<bool(const TigMouseMsg &msg)> handler) {
@@ -158,6 +164,7 @@ protected:
 	bool mSizeToParent = false;
 	bool mAutoSizeWidth = true;
 	bool mAutoSizeHeight = true;
+	RECT mMargins = {0,0,0,0};
 	std::function<bool(const TigMouseMsg &msg)> mMouseMsgHandler;
 	std::function<bool(const TigMsgWidget &msg)> mWidgetMsgHandler;
 	std::function<bool(const TigKeyStateChangeMsg &msg)> mKeyStateChangeHandler;
@@ -206,11 +213,19 @@ public:
 	bool HandleMessage(const TigMsg &msg);
 
 	void SetDisabled(bool disabled) {
-		mDisabled = true;
+		mDisabled = disabled;
 	}
 	bool IsDisabled() const {
 		return mDisabled;
 	}
+
+	void SetActive(bool isActive){
+		mActive = isActive;
+	}
+	bool IsActive() const{
+		return mActive;
+	}
+
 	void SetClickHandler(std::function<void()> handler) {
 		mClickHandler = [=](int, int) { handler(); };
 	}
@@ -240,6 +255,7 @@ public:
 protected:
 	LgcyButton *mButton;
 	bool mDisabled = false;
+	bool mActive = false; // is the state associated with the button active? Note: this is separate from mDisabled, which determines if the button itself is disabled or not
 	bool mRepeat = false;
 	uint32_t mRepeatInterval = 200;
 	uint32_t mLastClickTriggered = 0;
@@ -249,9 +265,12 @@ protected:
 
 struct WidgetButtonStyle {
 	std::string normalImagePath;
+	std::string activatedImagePath;
 	std::string hoverImagePath;
 	std::string pressedImagePath;
 	std::string disabledImagePath;
+	std::string frameImagePath;
+
 	std::string textStyleId;
 	std::string hoverTextStyleId;
 	std::string pressedTextStyleId;
@@ -267,7 +286,15 @@ public:
 
 	WidgetButton();
 
+	/*
+	 central style definitions:
+	 templeplus/button_styles.json
+	 */
 	void SetStyle(const WidgetButtonStyle &style);
+	/*
+	 directly fetch style from widgetButtonStyles
+	 */
+	void SetStyle(const eastl::string& styleName);
 	const WidgetButtonStyle &GetStyle() 
 	{
 		return mStyle;
@@ -280,16 +307,23 @@ public:
 private:
 	WidgetButtonStyle mStyle;
 
+	/*
+	  1. updates the WidgetImage pointers below, using WidgetButtonStyle file paths
+	  2. Updates mLabel
+	 */
 	void UpdateContent();
 	void UpdateAutoSize();
 
 	std::unique_ptr<WidgetImage> mNormalImage;
+	std::unique_ptr<WidgetImage> mActivatedImage;
 	std::unique_ptr<WidgetImage> mHoverImage;
 	std::unique_ptr<WidgetImage> mPressedImage;
 	std::unique_ptr<WidgetImage> mDisabledImage;
+	std::unique_ptr<WidgetImage> mFrameImage;
 	WidgetText mLabel;
 	
 };
+
 
 class WidgetScrollBarHandle;
 
@@ -352,16 +386,16 @@ private:
 
 	int mValue = 0;
 	int mMin = 0;
-	int mMax = 100;
+	int mMax = 150;
 
 	WidgetButton *mUpButton;
 	WidgetButton *mDownButton;
 	WidgetButton *mTrack;
 	WidgetScrollBarHandle *mHandleButton;
 
-	int GetHandleHeight() const;
-	int GetScrollRange() const;
-	int GetTrackHeight() const;
+	int GetHandleHeight() const; // gets height of handle button (scaled according to Min/Max values)
+	int GetScrollRange() const; // gets range of possible values for Handle Button position
+	int GetTrackHeight() const; // gets height of track area
 
 };
 
@@ -381,6 +415,8 @@ public:
 
 	void SetPadding(int padding);
 	int GetPadding() const;
+
+	bool HandleMouseMessage(const TigMouseMsg &msg) override;
 
 private:
 	WidgetContainer *mContainer;

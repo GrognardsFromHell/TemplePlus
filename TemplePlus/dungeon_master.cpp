@@ -33,7 +33,7 @@
 #include <ui\ui_systems.h>
 #include <ui\ui_legacysystems.h>
 
-#include "anim.h"
+#include "animgoals/anim.h"
 #include "critter.h"
 #include "party.h"
 #include "fade.h"
@@ -261,7 +261,7 @@ bool DungeonMaster::HandleMsg(const TigMsg & msg){
 
 		// acquire target from cursor
 		if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_POS_CHANGE){
-			mTgtObj = uiSystems->GetInGame().PickObject(mouseMsg.x,mouseMsg.y,GameRaycastFlags::GRF_4 | GameRaycastFlags::GRF_2);
+			mTgtObj = uiSystems->GetInGame().PickObject(mouseMsg.x, mouseMsg.y);
 		}
 
 		
@@ -942,7 +942,7 @@ void DungeonMaster::RenderEditedObj() {
 		static int classCur = 0;
 		static auto classNameGetter = [](void*data, int idx, const char** outTxt)->bool
 		{
-			if (idx >= classNames.size())
+			if ((uint32_t)idx >= classNames.size())
 				return false;
 			*outTxt = classNames[idx].c_str();
 			return true;
@@ -976,7 +976,7 @@ void DungeonMaster::RenderEditedObj() {
 
 		static auto featNameGetter = [](void*data, int idx, const char** outTxt)->bool
 		{
-			if (idx >= featSelectionList.size())
+			if (idx >= (int)featSelectionList.size())
 				return false;
 			auto feat = static_cast<feat_enums>(featSelectionList[idx]);
 			*outTxt = feats.GetFeatName(feat);
@@ -992,7 +992,7 @@ void DungeonMaster::RenderEditedObj() {
 			static std::vector<feat_enums> childFeats;
 
 			auto getFeatEnum = []()->feat_enums {
-				if (featCur < 0 || featCur > featSelectionList.size())
+				if (featCur < 0 || featCur > (int)featSelectionList.size())
 					return FEAT_NONE;
 
 				return static_cast<feat_enums>(featSelectionList[featCur]);
@@ -1194,7 +1194,7 @@ void DungeonMaster::RenderEditedObj() {
 					// args
 					auto numArgs = condTmp->condStruct->numArgs;
 					ImGui::Text(fmt::format("Num args: {}", numArgs).c_str());
-					for (auto j = 0; j < numArgs; j++) {
+					for (auto j = 0u; j < numArgs; j++) {
 						ImGui::Text(fmt::format("Arg{}: {}", j, condTmp->args[j]).c_str());
 					}
 					// Remove
@@ -1216,7 +1216,7 @@ void DungeonMaster::RenderEditedObj() {
 	if (obj->IsNPC() || !objects.IsPlayerControlled(mEditedObj)){
 		auto curAiStartegyIdx = obj->GetInt32(obj_f_critter_strategy);
 		auto aiStratGetter = [](void*data, int idx, const char** outTxt)->bool{
-			if (idx >= aiSys.aiStrategies.size())
+			if (idx >= (int)aiSys.aiStrategies.size())
 				return false;
 
 			*outTxt = aiSys.aiStrategies[idx].name.c_str();
@@ -1224,7 +1224,7 @@ void DungeonMaster::RenderEditedObj() {
 		};
 
 		if (ImGui::Combo("AI Type", &curAiStartegyIdx, aiStratGetter, nullptr, aiSys.aiStrategies.size(), 8)){
-			if (curAiStartegyIdx >=0 && curAiStartegyIdx < aiSys.aiStrategies.size()){
+			if (curAiStartegyIdx >=0 && curAiStartegyIdx < (int)aiSys.aiStrategies.size()){
 				obj->SetInt32(obj_f_critter_strategy, curAiStartegyIdx);
 			}
 		}
@@ -1270,8 +1270,8 @@ void DungeonMaster::RenderVsParty(){
 			}
 
 			// Load Mobiles from save
-			std::string filename = fmt::format("{}", saveFnameMatch[1]);
-			if (ImGui::Button(fmt::format("Go {} {}", saveFnameMatch[1], saveFnameMatch[2]).c_str())) {
+			std::string filename = fmt::format("{}", saveFnameMatch[1].str());
+			if (ImGui::Button(fmt::format("Go {} {}", saveFnameMatch[1].str(), saveFnameMatch[2].str()).c_str())) {
 				PseudoLoad(filename);
 			}
 		}

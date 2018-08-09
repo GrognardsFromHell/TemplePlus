@@ -49,10 +49,10 @@ BOOL XPAward::XpGainProcess(objHndl handle, int xpGainRaw){
 	histSys.CreateFromFreeText( (text + "\n").c_str());
 
 	auto xpNew = obj->GetInt32(obj_f_critter_experience) + xpGain;
-	auto curLvl = objects.StatLevelGet(handle, stat_level);
+	auto curLvl = critterSys.GetEffectiveLevel(handle);
 	
 	auto xpCap = d20LevelSys.GetXpRequireForLevel(curLvl + 2) - 1;
-	if (curLvl >= config.maxLevel)
+	if (curLvl >= (int)config.maxLevel)
 		xpCap = d20LevelSys.GetXpRequireForLevel(config.maxLevel);
 
 	if (!config.allowXpOverflow && xpNew > (int)xpCap)
@@ -222,7 +222,7 @@ void XPTableForHighLevels::GiveXPAwards(){
 		if (d20Sys.d20Query(objHnd, DK_QUE_ExperienceExempt)) { continue; };
 		if (party.ObjIsAIFollower(objHnd)) { continue; };
 
-		int level = objects.StatLevelGet(objHnd, stat_level);
+		int level = critterSys.GetEffectiveLevel(objHnd);
 		if (level <= 0) { continue; };
 
 		int xpGainRaw = 0; // raw means it's prior to applying multiclass penalties, which  is Someone Else's Problem :P

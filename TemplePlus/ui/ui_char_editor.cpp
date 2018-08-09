@@ -35,18 +35,18 @@
 #include <combat.h>
 #include "ui_assets.h"
 #include <infrastructure/keyboard.h>
+#include "gamesystems/deity/legacydeitysystem.h"
 
 namespace py = pybind11;
 
 Chargen chargen;
-
+temple::GlobalStruct<LegacyCharEditorSystem, 0x102FA6C8> lgcySystems;
 class UiCharEditor {
 	friend class UiCharEditorHooks;
 public:
 
 	objHndl GetEditedChar();
 	CharEditorSelectionPacket & GetCharEditorSelPacket();
-
 
 	void PrepareNextStages();
 	void BtnStatesUpdate(int systemId);
@@ -68,6 +68,7 @@ public:
 	void FeatsFree();
 	void FeatWidgetsFree();
 	BOOL FeatsWidgetsResize(UiResizeArgs &args);
+	bool IsSelectingFeats();
 	BOOL FeatsShow();
 	BOOL FeatsHide();
 	void FeatsActivate();
@@ -93,6 +94,9 @@ public:
 
 #pragma region Widget callbacks
 	void StateTitleRender(int widId);
+	void MainWndRender(int widId);
+
+
 	void ClassBtnRender(int widId);
 	BOOL ClassBtnMsg(int widId, TigMsg* msg);
 	BOOL ClassNextBtnMsg(int widId, TigMsg* msg);
@@ -134,10 +138,11 @@ public:
 	eastl::vector<int> classBtnMapping; // used as an index of choosable character classes
 	int GetClassWndPage();
 	Stat GetClassCodeFromWidgetAndPage(int idx, int page);
-	int GetStatesComplete();
+	int &GetStatesComplete();
 
 	// logic
 	void ClassSetPermissibles();
+	bool ClassSanitize(); // re-check class requirements. Returns true if re-evaluation is required.
 	bool IsSelectingNormalFeat(); // the normal feat you get every 3rd level in 3.5ed
 	bool IsSelectingBonusFeat(); // selecting a class bonus feat
 
@@ -275,6 +280,46 @@ private:
 } uiCharEditor;
 
 
+// Helper function for the python character editor
+int hasFeat(int feat) {
+	auto handle = chargen.GetEditedChar();
+	auto &charPkt = chargen.GetCharEditorSelPacket();
+
+	auto levelRaised = charPkt.classCode;
+	if (chargen.IsNewChar())
+		levelRaised = (Stat)0;
+
+	uint32_t domain1 = Domain_None;
+	uint32_t domain2 = Domain_None;
+	uint32_t alignmentChoice = 0;
+
+	if (!chargen.IsNewChar()) {
+		if (levelRaised == stat_level_cleric) {
+			domain1 = charPkt.domain1;
+			domain2 = charPkt.domain2;
+			alignmentChoice = charPkt.alignmentChoice;
+		}
+	}
+
+	auto result = feats.HasFeatCountByClass(handle, static_cast<feat_enums>(feat), levelRaised, 0, domain1, domain2, alignmentChoice);
+
+	if (feat == charPkt.feat0) {
+		result++;
+	}
+	if (feat == charPkt.feat1) {
+		result++;
+	}
+	if (feat == charPkt.feat2) {
+		result++;
+	}
+	if (feat == charPkt.feat3) {
+		result++;
+	}
+
+	return result;
+}
+
+
 template <> class py::detail::type_caster<objHndl> {
 public:
 	bool load(handle src, bool) {
@@ -377,7 +422,117 @@ PYBIND11_EMBEDDED_MODULE(char_editor, mm) {
 		.def_readwrite("feat_status_flags", &FeatInfo::flag, "0 - normal, 1 - automatic class feat, 2 - bonus selectable feat, 4 - selectable feat (disregard reqs)")
 		;
 		// methods
+#pragma region methods
 	mm
+	.def("stat_level_get", [](int statEnum, int statArg)->int{
+		auto stat = (Stat)statEnum;
+		auto handle = chargen.GetEditedChar();
+		auto &charPkt = chargen.GetCharEditorSelPacket();
+
+		auto statLvl = 0;
+		if (statArg != -1)
+			statLvl = objects.StatLevelGet(handle, stat, statArg);
+		else
+			statLvl = objects.StatLevelGet(handle, stat);
+
+		// Increase character level if appropriate
+		if (!chargen.IsNewChar()){
+			if (charPkt.classCode == stat) {
+				statLvl++;
+			}
+			// Report 1 higher if the stat is being raised
+			if (stat == charPkt.statBeingRaised) {
+				statLvl++;
+			}
+		}
+		
+		return statLvl;
+	}, py::arg("stat"), py::arg("stat_arg") = -1)
+	.def("skill_level_get", [](int skillEnum)->int {
+		auto skill = (SkillEnum)skillEnum;
+		auto handle = chargen.GetEditedChar();
+		auto &charPkt = chargen.GetCharEditorSelPacket();
+
+		auto skillLevel = critterSys.SkillLevel(handle, skill);
+		
+		// Add additional skill points from the character editor if necessary
+
+		if (!chargen.IsNewChar()) {
+			auto levelRaised = charPkt.classCode;
+			auto pointsSpent = 0;
+			if (skill >= 0 && skill < skill_count) {
+				pointsSpent += charPkt.skillPointsAdded[skill];
+			}
+			// Check if class skill - if not, halve their contribution (TODO sucks if skillLevel itself was rounded down :( )
+			auto numAdded = pointsSpent/2;
+			if (d20ClassSys.IsClassSkill(skill, levelRaised) ||
+				(levelRaised == stat_level_cleric && deitySys.IsDomainSkill(handle, skill))
+				|| d20Sys.D20QueryPython(handle, "Is Class Skill", skill)) {
+				numAdded = pointsSpent;
+			}
+
+			skillLevel += numAdded;
+			
+		}
+		return skillLevel;
+	})
+	.def("skill_ranks_get", [](int skillEnum)->int {
+		auto skill = (SkillEnum)skillEnum;
+		auto handle = chargen.GetEditedChar();
+		auto &charPkt = chargen.GetCharEditorSelPacket();
+
+		// Add additional skill points from the character editor if necessary
+		auto skillRanks = critterSys.SkillBaseGet(handle, skill);
+
+		if (!chargen.IsNewChar()){
+			if (skill < skill_count) {
+				skillRanks += charPkt.skillPointsAdded[skill];
+			}
+		}
+		return skillRanks;
+	})
+	.def("has_feat", [](std::string featString)->int {
+		auto feat = ElfHash::Hash(featString);
+		return hasFeat(feat);
+	})
+	.def("has_feat", [](int featEnum)->int{
+		auto feat = (feat_enums)featEnum;
+		return hasFeat(feat);
+	})
+
+	.def("has_metamagic_feat", []()->int {
+		int featCount = 0;
+		auto handle = chargen.GetEditedChar();
+		auto &charPkt = chargen.GetCharEditorSelPacket();
+
+		auto featList = feats.GetFeats(handle);
+
+		bool hasMMFeat = false;
+		for (auto feat : featList) {
+			if (feats.IsMetamagicFeat(feat)) {
+				featCount++;
+			}
+		}
+
+		if (feats.IsMetamagicFeat(charPkt.feat0)) {
+			featCount++;
+		}
+
+		if (feats.IsMetamagicFeat(charPkt.feat1)) {
+			featCount++;
+		}
+
+		if (feats.IsMetamagicFeat(charPkt.feat2)) {
+			featCount++;
+		}
+
+		if (feats.IsMetamagicFeat(charPkt.feat3)) {
+			featCount++;
+		}
+
+		return featCount;
+	})
+	
 	.def("set_bonus_feats", [](std::vector<FeatInfo> & fti){
 		chargen.SetBonusFeats(fti);
 	})
@@ -484,7 +639,7 @@ PYBIND11_EMBEDDED_MODULE(char_editor, mm) {
 		}
 	})
 	;
-
+#pragma endregion
 
 	py::class_<CharEditorSelectionPacket>(mm, "CharEdSpecs", "Holds the character editing specs.")
 		.def_readwrite("class_code", &CharEditorSelectionPacket::classCode, "Chosen class")
@@ -1072,6 +1227,17 @@ BOOL UiCharEditor::FeatsWidgetsResize(UiResizeArgs & args){
 	return FeatsWidgetsInit(args.rect1.width, args.rect1.height);
 }
 
+bool UiCharEditor::IsSelectingFeats()
+{
+	auto result = false;
+
+	if (uiManager) {
+		result = !uiManager->IsHidden(featsMainWndId);
+	}
+
+	return result;
+}
+
 BOOL UiCharEditor::FeatsShow(){
 	featsMultiSelected = FEAT_NONE;
 	uiManager->SetHidden(featsMainWndId, false);
@@ -1123,7 +1289,7 @@ void UiCharEditor::FeatsActivate(){
 	featsExistingScrollbar.scrollbarY = 0;
 	featsExistingScrollbarY = 0;
 	featsExistingScrollbar.yMax = max((int)mExistingFeats.size() - FEATS_EXISTING_BTN_COUNT, 0);
-	featsExistingScrollbar = *uiManager->GetScrollBar(featsExistingScrollbarId);
+	*uiManager->GetScrollBar(featsExistingScrollbarId) = featsExistingScrollbar;
 
 	// Available feats
 	mSelectableFeats.clear();
@@ -1163,7 +1329,7 @@ void UiCharEditor::FeatsActivate(){
 	featsScrollbar.scrollbarY = 0;
 	featsScrollbarY= 0;
 	featsScrollbar.yMax = max((int)mSelectableFeats.size() - FEATS_AVAIL_BTN_COUNT, 0);
-	featsScrollbar = *uiManager->GetScrollBar(featsScrollbarId);
+	*uiManager->GetScrollBar(featsScrollbarId) = featsScrollbar ;
 }
 
 BOOL UiCharEditor::SpellsWidgetsInit(){
@@ -1376,6 +1542,48 @@ void UiCharEditor::StateTitleRender(int widId){
 	UiRenderer::PopFont();
 }
 
+void UiCharEditor::MainWndRender(int widId){
+	auto &dword_10BE9970 = temple::GetRef<int>(0x10BE9970);
+	if (!dword_10BE9970){
+		auto statesComplete = 0;
+
+		auto stage = 0;
+		auto &mStagesComplete = GetStatesComplete();
+		auto &selPkt = GetCharEditorSelPacket();
+		auto &mActiveStage = GetState();
+
+
+		for (stage = 0; stage < std::min(mStagesComplete + 1, (int)CharEditorStages::CE_STAGE_COUNT); stage++) {
+			auto &sys = lgcySystems[stage];
+			if (!sys.checkComplete)
+				break;
+			if (!sys.checkComplete())
+				break;
+		}
+
+		if (stage != mStagesComplete) {
+			mStagesComplete = stage;
+			if (mActiveStage > stage)
+				mActiveStage = stage;
+
+			// reset the next stages
+			for (auto nextStage = stage + 1; nextStage < CharEditorStages::CE_STAGE_COUNT; nextStage++) {
+				if (lgcySystems[nextStage].reset) {
+					lgcySystems[nextStage].reset(selPkt);
+				}
+			}
+		}
+	}
+
+	auto wnd = uiManager->GetWindow(widId);
+	RenderHooks::RenderImgFile(temple::GetRef<ImgFile*>(0x10BE9974), wnd->x, wnd->y);
+	
+	UiRenderer::DrawTextureInWidget( widId, temple::GetRef<int>(0x10BE993C),
+		{406, 15, 120, 227} , { 1,1,120,227 });
+	
+
+}
+
 void UiCharEditor::ClassBtnRender(int widId){
 	auto idx = WidgetIdIndexOf(widId, &classBtnIds[0], classBtnIds.size());
 	if (idx == -1)
@@ -1438,6 +1646,10 @@ BOOL UiCharEditor::ClassBtnMsg(int widId, TigMsg * msg){
 		GetCharEditorSelPacket().classCode = classCode;
 		PrepareNextStages();
 		temple::GetRef<void(__cdecl)(int)>(0x10143FF0)(0); // resets all the next systems in case of change
+		if (ClassSanitize()) { // resets the chosen class in case the user cheats (e.g. by selecting skills up ahead)
+			PrepareNextStages();
+			temple::GetRef<void(__cdecl)(int)>(0x10143FF0)(0); // resets all the next systems in case of change
+		}
 		return 1;
 	}
 
@@ -2858,7 +3070,7 @@ Stat UiCharEditor::GetClassCodeFromWidgetAndPage(int idx, int page){
 	return (Stat)classBtnMapping[idx2];
 }
 
-int UiCharEditor::GetStatesComplete(){
+int& UiCharEditor::GetStatesComplete(){
 	return temple::GetRef<int>(0x10BE8D38);
 }
 
@@ -2896,6 +3108,18 @@ void UiCharEditor::ClassSetPermissibles(){
 		uiManager->SetButtonState(classNextBtn, LgcyButtonState::Disabled);
 }
 
+bool UiCharEditor::ClassSanitize(){
+	auto handle = GetEditedChar();
+	auto &selPkt = GetCharEditorSelPacket();
+	auto classCode = selPkt.classCode;
+	if (!d20ClassSys.ReqsMet(handle, classCode) || !pythonClassIntegration.IsAlignmentCompatible(handle, classCode)){
+		selPkt.classCode = (Stat)0;
+		return true;
+	}
+
+	return false;
+}
+
 
 int UiCharEditor::GetNewLvl(Stat classEnum){ // default is classEnum  = stat_level i.e. get the overall new level
 	auto handle = GetEditedChar();
@@ -2910,6 +3134,10 @@ class UiCharEditorHooks : public TempleFix {
 	void apply() override {
 
 		// general
+		replaceFunction<void(int)>(0x10148880, [](int widId){
+			uiCharEditor.MainWndRender(widId);
+		});
+
 		replaceFunction<void()>(0x101B0760, []() {
 			uiCharEditor.PrepareNextStages();
 		});
@@ -3113,9 +3341,19 @@ int Chargen::GetRolledStatIdx(int x, int y, int * xyOut)
 	return 0;
 }
 
+bool Chargen::IsSelectingFeats()
+{
+	return uiCharEditor.IsSelectingFeats();
+}
+
 void Chargen::SetIsNewChar(bool state)
 {
 	mIsNewChar = state;
+}
+
+bool Chargen::IsNewChar()
+{
+	return mIsNewChar;
 }
 
 bool Chargen::SpellsNeedReset()

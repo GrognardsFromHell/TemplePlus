@@ -6,8 +6,6 @@
 #include "skill.h"
 #include "obj.h"
 
-//#include <EASTL/hash_map.h>
-
 
 enum BardicMusicSongType : int {
 	BM_INSPIRE_COURAGE = 1,
@@ -120,6 +118,7 @@ public:
 	int GetSkillPts(Stat classEnum);
 	int GetClassHitDice(Stat classEnum);
 	
+	int GetClassEnum(const std::string &s); // gets class enum from string (based on Class Condition). Case insensitive.
 
 	const char* GetClassShortHelp(Stat classCode);
 	std::string &GetClassHelpTopic(Stat classEnum); // the TAG_XXX help ID

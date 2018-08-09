@@ -1,26 +1,7 @@
-/*************************************************************************/
-/* spdlog - an extremely fast and easy to use c++11 logging library.     */
-/* Copyright (c) 2014 Gabi Melman.                                       */
-/*                                                                       */
-/* Permission is hereby granted, free of charge, to any person obtaining */
-/* a copy of this software and associated documentation files (the       */
-/* "Software"), to deal in the Software without restriction, including   */
-/* without limitation the rights to use, copy, modify, merge, publish,   */
-/* distribute, sublicense, and/or sell copies of the Software, and to    */
-/* permit persons to whom the Software is furnished to do so, subject to */
-/* the following conditions:                                             */
-/*                                                                       */
-/* The above copyright notice and this permission notice shall be        */
-/* included in all copies or substantial portions of the Software.       */
-/*                                                                       */
-/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
-/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
-/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
-/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
-/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
-/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
-/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
-/*************************************************************************/
+//
+// Copyright(c) 2015 Gabi Melman.
+// Distributed under the MIT License (http://opensource.org/licenses/MIT)
+//
 
 #pragma once
 
@@ -32,56 +13,60 @@
 //    1. Checks if its log level is enough to log the message
 //    2. Push a new copy of the message to a queue (or block the caller until space is available in the queue)
 //    3. will throw spdlog_ex upon log exceptions
-// Upong destruction, logs all remaining messages in the queue before destructing..
+// Upon destruction, logs all remaining messages in the queue before destructing..
+
+#include "common.h"
+#include "logger.h"
 
 #include <chrono>
 #include <functional>
-#include "common.h"
-#include "logger.h"
-#include "spdlog.h"
+#include <memory>
+#include <string>
 
+namespace spdlog {
 
-namespace spdlog
-{
-
-namespace details
-{
+namespace details {
 class async_log_helper;
 }
 
-class async_logger :public logger
+class async_logger SPDLOG_FINAL : public logger
 {
 public:
     template<class It>
-    async_logger(const std::string& name,
-                 const It& begin,
-                 const It& end,
-                 size_t queue_size,
-                 const async_overflow_policy overflow_policy =  async_overflow_policy::block_retry,
-                 const std::function<void()>& worker_warmup_cb = nullptr);
+    async_logger(const std::string &logger_name, const It &begin, const It &end, size_t queue_size,
+        const async_overflow_policy overflow_policy = async_overflow_policy::block_retry,
+        const std::function<void()> &worker_warmup_cb = nullptr,
+        const std::chrono::milliseconds &flush_interval_ms = std::chrono::milliseconds::zero(),
+        const std::function<void()> &worker_teardown_cb = nullptr);
 
-    async_logger(const std::string& logger_name,
-                 sinks_init_list sinks,
-                 size_t queue_size,
-                 const async_overflow_policy overflow_policy = async_overflow_policy::block_retry,
-                 const std::function<void()>& worker_warmup_cb = nullptr);
+    async_logger(const std::string &logger_name, sinks_init_list sinks, size_t queue_size,
+        const async_overflow_policy overflow_policy = async_overflow_policy::block_retry,
+        const std::function<void()> &worker_warmup_cb = nullptr,
+        const std::chrono::milliseconds &flush_interval_ms = std::chrono::milliseconds::zero(),
+        const std::function<void()> &worker_teardown_cb = nullptr);
 
-    async_logger(const std::string& logger_name,
-                 sink_ptr single_sink,
-                 size_t queue_size,
-                 const async_overflow_policy overflow_policy =  async_overflow_policy::block_retry,
-                 const std::function<void()>& worker_warmup_cb = nullptr);
+    async_logger(const std::string &logger_name, sink_ptr single_sink, size_t queue_size,
+        const async_overflow_policy overflow_policy = async_overflow_policy::block_retry,
+        const std::function<void()> &worker_warmup_cb = nullptr,
+        const std::chrono::milliseconds &flush_interval_ms = std::chrono::milliseconds::zero(),
+        const std::function<void()> &worker_teardown_cb = nullptr);
 
+    // Wait for the queue to be empty, and flush synchronously
+    // Warning: this can potentially last forever as we wait it to complete
+    void flush() override;
+
+    // Error handler
+    void set_error_handler(log_err_handler) override;
+    log_err_handler error_handler() override;
 
 protected:
-    void _log_msg(details::log_msg& msg) override;
+    void _sink_it(details::log_msg &msg) override;
     void _set_formatter(spdlog::formatter_ptr msg_formatter) override;
-    void _set_pattern(const std::string& pattern) override;
+    void _set_pattern(const std::string &pattern, pattern_time_type pattern_time) override;
 
 private:
     std::unique_ptr<details::async_log_helper> _async_log_helper;
 };
-}
+} // namespace spdlog
 
-
-#include "./details/async_logger_impl.h"
+#include "details/async_logger_impl.h"

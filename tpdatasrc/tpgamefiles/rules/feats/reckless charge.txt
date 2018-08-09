@@ -1,0 +1,5 @@
+name: Reckless Charge
+flags: 4194320
+prereqs: 266 1
+description: When you charge, before making your attack roll, you may choose to take a -4 penalty to Armor Class until the start of your next turn to gain a +4 bonus on your attack roll.
+prereq descr: Base attack bonus +1

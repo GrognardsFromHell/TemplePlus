@@ -2,6 +2,7 @@
 #include "stdafx.h"
 
 #include <graphics/math.h>
+#include <infrastructure/meshes.h>
 
 #include "common.h"
 #include "dispatcher.h"
@@ -26,7 +27,7 @@
 #include <infrastructure/elfhash.h>
 #include "particles.h"
 #include "gamesystems/particlesystems.h"
-#include "anim.h"
+#include "animgoals/anim.h"
 #include "python/python_integration_spells.h"
 #include "history.h"
 #include "gamesystems/objects/objevent.h"
@@ -34,6 +35,7 @@
 #include "sound.h"
 #include "d20_class.h"
 #include "gamesystems/d20/d20stats.h"
+#include "d20_race.h"
 
 #define CB int(__cdecl)(DispatcherCallbackArgs)
 using DispCB = int(__cdecl )(DispatcherCallbackArgs);
@@ -72,7 +74,7 @@ CondStructNew ConditionSystem::mCondHezrouStenchHit;
 
 struct ConditionSystemAddresses : temple::AddressTable
 {
-	void(__cdecl* SetPermanentModArgsFromDataFields)(Dispatcher* dispatcher, CondStruct* condStruct, int* condArgs);
+	void(__cdecl*SetPermanentModArgsFromDataFields)(Dispatcher* dispatcher, CondStruct* condStruct, int* condArgs);
 	int(__cdecl*RemoveSpellCondition)(DispatcherCallbackArgs args); 
 	int(__cdecl*RemoveSpellMod)(DispatcherCallbackArgs args);
 	ConditionSystemAddresses()
@@ -122,8 +124,9 @@ public:
 	static int __cdecl DismissSignalHandler(DispatcherCallbackArgs args); // fixes issue with lingering Dismiss Spell holdouts
 
 	static int __cdecl SpellRemoveMod(DispatcherCallbackArgs args); // fixes issue with dismissing multiple spells
+	static int __cdecl AoeSpellRemove(DispatcherCallbackArgs args);
 
-
+	
 } spCallbacks;
 
 
@@ -188,6 +191,7 @@ public:
 	static int __cdecl UseableItemActionCheck(DispatcherCallbackArgs args);
 
 	static int __cdecl BucklerToHitPenalty(DispatcherCallbackArgs args);
+	static int __cdecl BucklerAcPenalty(DispatcherCallbackArgs args);
 	static int __cdecl WeaponMerciful(DispatcherCallbackArgs);
 	static int __cdecl WeaponSeekingAttackerConcealmentMissChance(DispatcherCallbackArgs args);
 	static int __cdecl WeaponSpeed(DispatcherCallbackArgs args);
@@ -287,6 +291,14 @@ public:
 	static int RemoveDiseasePerform(DispatcherCallbackArgs arg); // also used in WholenessOfBodyPerform
 	void HookSpellCallbacks();
 	static int TurnUndeadHook(objHndl, Stat shouldBeClassCleric, DispIoD20ActionTurnBased* evtObj);
+	static int TurnUndeadCheck(DispatcherCallbackArgs args);
+	static int TurnUndeadPerform(DispatcherCallbackArgs args);
+
+	static bool StunningFistHook(objHndl objHnd, objHndl caster, int DC, int saveType, int flags);
+	
+	//Old version of the function to be used within the replacement
+	int (*oldTurnUndeadPerform)(DispatcherCallbackArgs) = nullptr;
+	
 	void apply() override {
 		logger->info("Replacing Condition-related Functions");
 
@@ -323,6 +335,7 @@ public:
 		
 		replaceFunction(0x100EABB0, BarbarianRageStatBonus);
 		replaceFunction(0x100EABE0, BarbarianRageSaveBonus);
+		replaceFunction(0x100EAC10, BarbarianRageACPenalty);
 		
 		replaceFunction(0x100ECF30, ConditionPrevent);
 		replaceFunction(0x100EE050, GlobalGetArmorClass);
@@ -383,6 +396,9 @@ public:
 		// buckler to-hit penalty
 		replaceFunction<int(DispatcherCallbackArgs)>(0x10104DA0, itemCallbacks.BucklerToHitPenalty);
 
+		// buckler AC penalty
+		replaceFunction<int(DispatcherCallbackArgs)>(0x10104E40, itemCallbacks.BucklerAcPenalty);
+
 
 
 		// Druid wild shape
@@ -419,15 +435,22 @@ public:
 
 		// Turn Undead extension
 		redirectCall(0x1004AF5F, TurnUndeadHook);
+		oldTurnUndeadPerform = replaceFunction(0x1004AEB0, TurnUndeadPerform);
+
+		replaceFunction<int(DispatcherCallbackArgs)>(0x1004ADE0, TurnUndeadCheck);
+
+
 
 
 		// racial callbacks
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FDC70, raceCallbacks.HalflingThrownWeaponAndSlingBonus);
 
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100CBAB0, spCallbacks.SpellRemoveMod);
+
+		// Stunning Fist extension
+		redirectCall(0x100E84B0, StunningFistHook);
 	}
 } condFuncReplacement;
-
 
 
 CondNode::CondNode(CondStruct *cond) {
@@ -688,8 +711,8 @@ int RemoveSpellConditionAndMod(DispatcherCallbackArgs args)
 {
 	auto argsCopy = args;
 	argsCopy.dispKey = DK_SIG_Action_Recipient;
-	addresses.RemoveSpellCondition(argsCopy);
-	addresses.RemoveSpellMod(argsCopy);
+	argsCopy.RemoveSpell();
+	argsCopy.RemoveSpellMod();
 	return 0;
 };
 
@@ -885,7 +908,7 @@ int GenericCallbacks::TripAooQuery(DispatcherCallbackArgs args)
 int GenericCallbacks::ImprovedTripBonus(DispatcherCallbackArgs args)
 {
 	auto dispIo = dispatch.DispIoCheckIoType10(args.dispIO);
-	if (dispIo->returnVal & 1){
+	if (dispIo->flags & 1){
 		dispIo->bonOut->AddBonusWithDesc(4, 0, 114, feats.GetFeatName(FEAT_IMPROVED_TRIP));
 	}
 	return 0;
@@ -1201,7 +1224,7 @@ int GenericCallbacks::GlobalHpChanged(DispatcherCallbackArgs args){
 		d20Sys.D20SignalPython(handle, "Knocked Unconscious");
 		if (!isUncon){
 			auto animId = Dice::Roll(1, 3, 72); // roll number between 73-75
-			animationGoals.PushFallDown(handle, animId);
+			gameSystems->GetAnim().PushFallDown(handle, animId);
 		}
 		if (isDying){
 			conds.AddTo(handle, "Dying", {});
@@ -1617,6 +1640,10 @@ int GlobalGetArmorClass(DispatcherCallbackArgs args) // the basic AC value (init
 		if (objects.GetType(args.objHndCaller) == obj_t_npc || polymorphedTo)
 		{
 			bonusSys.bonusAddToBonusList(bonlist, objects.getInt32(defender, obj_f_npc_ac_bonus), 9, 123);
+		} else{
+			auto race = critterSys.GetRace(defender, false);
+			auto racialAcBonus = d20RaceSys.GetNaturalArmor(race);
+			bonlist->AddBonus(racialAcBonus, 9, 123);
 		}
 	}
 
@@ -1933,7 +1960,11 @@ void _FeatConditionsRegister()
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionAnimalCompanionAnimal);
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionAutoendTurn);
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionTurnUndead);
-
+	conds.hashmethods.CondStructAddToHashtable(conds.ConditionGreaterTurning);
+	
+	// Add the destruction domain to the condition table so it can be accessed in python
+	CondStruct * pDestructionDomain = *(conds.ConditionArrayDomains + 3 * Domain_Destruction);
+	conds.hashmethods.CondStructAddToHashtable(pDestructionDomain);
 
 	// Craft Wand
 	static CondStructNew craftWand("Craft Wand", 0);
@@ -2269,9 +2300,6 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 1, dispTypeConditionAdd, 0, CondNodeSetArg0FromSubDispDef, 1, 0);
 	DispatcherHookInit(cond, 2, dispTypeRadialMenuEntry, 0, DivineMightRadial, 0, 0);
 
-	DispatcherHookInit((CondStructNew*)ConditionTurnUndead, 6, dispTypeD20ActionPerform, DK_D20A_DIVINE_MIGHT, CondArgDecrement, 1, 0); // decrement the number of turn charges remaining; 
-	DispatcherHookInit((CondStructNew*)ConditionGreaterTurning, 6, dispTypeD20ActionPerform, DK_D20A_DIVINE_MIGHT, CondArgDecrement, 1, 0); // decrement the number of turn charges remaining
-					
 	// Divine Might Bonus (gets activated when you choose the action from the Radial Menu)
 	mCondDivineMightBonus = &condDivineMightBonus;
 	cond = mCondDivineMightBonus; 	condName = mCondDivineMightBonusName;
@@ -2921,12 +2949,34 @@ int CombatExpertiseSet(DispatcherCallbackArgs args)
 int BarbarianRageStatBonus(DispatcherCallbackArgs args)
 {
 	DispIoBonusList * dispIo = dispatch.DispIoCheckIoType2(args.dispIO);
-	if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_MIGHTY_RAGE, (Stat)0, 0))
-		bonusSys.bonusAddToBonusList(&dispIo->bonlist, 8, 0, 339); // Greater Rage
-	else if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_GREATER_RAGE, (Stat)0, 0))
-		bonusSys.bonusAddToBonusList(&dispIo->bonlist, 6, 0, 338); // Greater Rage
-	else
-		bonusSys.bonusAddToBonusList(&dispIo->bonlist, 4, 0, 195); // normal rage
+	if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_MIGHTY_RAGE, (Stat)0, 0)) {
+		int nBonus = 8;
+		nBonus += d20Sys.D20QueryPython(args.objHndCaller, "Additional Rage Stat Bonus");
+		bonusSys.bonusAddToBonusList(&dispIo->bonlist, nBonus, 0, 339); // Greater Rage
+	}
+	else if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_GREATER_RAGE, (Stat)0, 0)) {
+		int nBonus = 6;
+		nBonus += d20Sys.D20QueryPython(args.objHndCaller, "Additional Rage Stat Bonus");
+		bonusSys.bonusAddToBonusList(&dispIo->bonlist, nBonus, 0, 338); // Greater Rage
+	}
+	else {
+		int nBonus = 4;
+		nBonus += d20Sys.D20QueryPython(args.objHndCaller, "Additional Rage Stat Bonus");
+		bonusSys.bonusAddToBonusList(&dispIo->bonlist, nBonus, 0, 195); // normal rage
+	}
+	return 0;
+}
+
+int BarbarianRageACPenalty(DispatcherCallbackArgs args)
+{
+	DispIoAttackBonus * dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
+
+	int nPenalty = -2;
+
+	//Value needs to be negated (it is a penalty) since qureies can't return negative values
+	nPenalty += -1 * d20Sys.D20QueryPython(args.objHndCaller, "Additional Rage AC Penalty");
+
+	bonusSys.bonusAddToBonusList(&dispIo->bonlist, nPenalty, 0, 195);  //rage ac penalty
 	return 0;
 }
 
@@ -3120,7 +3170,10 @@ int RendOnDamage(DispatcherCallbackArgs args)
 
 	DamagePacket * dmgPacket = &dispIo->damage;
 	auto attackDescr = dmgPacket->dice[0].typeDescription; // e.g. Claw etc.
-	if (conds.CondNodeGetArg(args.subDispNode->condNode, 0) && attackDescr == (char*)conds.CondNodeGetArg(args.subDispNode->condNode, 1))
+	auto hasDeliveredDamage = args.GetCondArg(0);
+	auto previousAttackDescr = (char*)args.GetCondArg(1);
+	auto previousTarget = args.GetCondArgObjHndl(2);
+	if (hasDeliveredDamage && attackDescr == previousAttackDescr && previousTarget == dispIo->attackPacket.victim)
 	{
 		Dice dice(2, 6, 9);
 		dispIo->damage.AddDamageDice(dice.ToPacked(), DamageType::PiercingAndSlashing, 133);
@@ -3130,8 +3183,9 @@ int RendOnDamage(DispatcherCallbackArgs args)
 	}
 	else
 	{
-		conds.CondNodeSetArg(args.subDispNode->condNode, 0, 1);
-		conds.CondNodeSetArg(args.subDispNode->condNode, 1, (int)attackDescr);
+		args.SetCondArg(0, 1);
+		args.SetCondArg(1, (int)attackDescr);
+		args.SetCondArgObjHndl(2, dispIo->attackPacket.victim);
 	}
 		
 	return 0;
@@ -3164,16 +3218,16 @@ int ConditionFunctionReplacement::LayOnHandsPerform(DispatcherCallbackArgs args)
 		if (d20a->d20Caf & D20CAF_RANGED)
 			return 0;
 		d20Sys.ToHitProc(d20a);
-		animResult = animationGoals.PushAttemptAttack(d20a->d20APerformer, d20a->d20ATarget) != 0;
+		animResult = gameSystems->GetAnim().PushAttemptAttack(d20a->d20APerformer, d20a->d20ATarget) != 0;
 	} else	{
-		animResult = animationGoals.PushAnimate(d20a->d20APerformer, 86) != 0;
+		animResult = gameSystems->GetAnim().PushAnimate(d20a->d20APerformer, 86) != 0;
 	}
 
 	
 	if (animResult)
 	{
 		// fixes lack of animation ID
-		d20a->animID = animationGoals.GetActionAnimId(d20a->d20APerformer);
+		d20a->animID = gameSystems->GetAnim().GetActionAnimId(d20a->d20APerformer);
 		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
 	}
 		
@@ -3185,11 +3239,11 @@ int ConditionFunctionReplacement::RemoveDiseasePerform(DispatcherCallbackArgs ar
 {
 	auto dispIo = dispatch.DispIoCheckIoType12(args.dispIO);
 	auto d20a = dispIo->d20a;
-	auto animResult = animationGoals.PushAnimate(d20a->d20APerformer, 86);
+	auto animResult = gameSystems->GetAnim().PushAnimate(d20a->d20APerformer, 86);
 	
 	if (animResult){
 		// fixes lack of animation ID
-		d20a->animID = animationGoals.GetActionAnimId(d20a->d20APerformer);
+		d20a->animID = gameSystems->GetAnim().GetActionAnimId(d20a->d20APerformer);
 		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
 	}
 	return 0;
@@ -3271,6 +3325,22 @@ void ConditionFunctionReplacement::HookSpellCallbacks()
 	
 }
 
+
+bool ConditionFunctionReplacement::StunningFistHook(objHndl objHnd, objHndl caster, int DC, int saveType, int flags)
+{
+
+	//Preform the saving throw and return the result
+	bool result = damage.SavingThrow(objHnd, caster, DC, static_cast<SavingThrowType>(saveType), flags);
+
+	if (!result) {
+		//On a failed saving throw send the signal that a stunning fist effect was applied
+		dispatch.DispatchSpecialAttack(caster, static_cast<int>(EvtObjSpecialAttack::STUNNING_FIST), objHnd);
+	}
+
+	return result;
+}
+
+
 int ConditionFunctionReplacement::TurnUndeadHook(objHndl handle, Stat shouldBeClassCleric, DispIoD20ActionTurnBased * evtObj){
 
 	auto turnType = evtObj->d20a->data1;
@@ -3279,6 +3349,51 @@ int ConditionFunctionReplacement::TurnUndeadHook(objHndl handle, Stat shouldBeCl
 	result += d20Sys.D20QueryPython(handle, "Turn Undead Level", turnType);
 
 	return result;
+}
+
+int ConditionFunctionReplacement::TurnUndeadPerform(DispatcherCallbackArgs args)
+{
+	auto dispIo = static_cast<DispIoD20ActionTurnBased*>(args.dispIO);
+	dispIo->AssertType(dispIOTypeD20ActionTurnBased);
+
+	auto turnType = args.GetCondArg(0);
+
+	auto result = condFuncReplacement.oldTurnUndeadPerform(args);  //Just call the old version now
+
+	// Send the signal if this was the turn type used
+	if (dispIo->d20a->data1 == turnType) {
+		d20Sys.D20SignalPython(args.objHndCaller, "Turn Undead Perform", turnType);
+	}
+
+	return result;
+}
+
+int ConditionFunctionReplacement::TurnUndeadCheck(DispatcherCallbackArgs args)
+{
+	auto dispIo = static_cast<DispIoD20ActionTurnBased*>(args.dispIO);
+	dispIo->AssertType(dispIOTypeD20ActionTurnBased);
+
+	auto d20a = dispIo->d20a;
+	auto turnType = args.GetCondArg(0);
+
+	if (turnType == d20a->data1) {
+		auto charges = args.GetCondArg(1);
+
+		// Check if the turn undead ability has been disabled in python
+		auto result = d20Sys.D20QueryPython(args.objHndCaller, "Turn Undead Disabled");
+		if (result > 0) {
+			dispIo->returnVal = dispIo->returnVal = AEC_INVALID_ACTION;
+		} else {
+			if (charges > 0) {
+				dispIo->returnVal = 0;
+			}
+			else {
+				dispIo->returnVal = dispIo->returnVal = AEC_OUT_OF_CHARGES;
+			}
+		}
+	}
+
+	return 0;
 }
 
 #pragma region Spell Callbacks
@@ -3400,6 +3515,8 @@ int SpellCallbacks::ConcentratingActionSequenceHandler(DispatcherCallbackArgs ar
 			continue;
 		if (d20a.d20ActType == D20A_CAST_SPELL && d20a.spellId == spellId)
 			break;
+		if (d20a.d20Caf & D20CAF_FREE_ACTION) // added in Temple+ - free actions won't take up your standard action
+			continue;
 		DispatcherCallbackArgs dca;
 		dca.dispIO = nullptr;
 		dca.dispType = dispTypeD20Signal;
@@ -3905,13 +4022,10 @@ int SpellCallbacks::SpellDismissSignalHandler(DispatcherCallbackArgs args) {
 	if (dispIo->data1 != spellId)
 		return 0;
 
-	auto spellRemove = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100D7620);
-	auto spellModRemove = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100CBAB0);
-	
 	if (spPkt.spellEnum == 315 || args.GetData1() == 1 || spPkt.targetCount > 0){
 		floatSys.FloatSpellLine(args.objHndCaller, 20000, FloatLineColor::White); // a spell has expired
-		spellRemove(args);
-		spellModRemove(args);
+		args.RemoveSpell();
+		args.RemoveSpellMod();
 	}
 
 	return 0;
@@ -3930,6 +4044,13 @@ int SpellCallbacks::DismissSignalHandler(DispatcherCallbackArgs args){
 		if (spPkt.aoeObj && spPkt.aoeObj != args.objHndCaller){
 			d20Sys.d20SendSignal(spPkt.aoeObj, DK_SIG_Dismiss_Spells, spPkt.spellId, 0);
 		}
+		// Spell objects. Added in Temple+ for Wall spells
+		for (auto i = 0u; i < static_cast<unsigned int>(spPkt.numSpellObjs) && i < 128; i++) {
+			auto spellObj = spPkt.spellObjs[i].obj;
+			if (!spellObj || spellObj == args.objHndCaller) continue;
+			d20Sys.d20SendSignal(spellObj, DK_SIG_Dismiss_Spells, spPkt.spellId, 0);
+		}
+
 		for (auto i=0u; i < spPkt.targetCount; i++){
 			auto tgt = spPkt.targetListHandles[i];
 			if (!tgt || tgt == args.objHndCaller)
@@ -3942,14 +4063,29 @@ int SpellCallbacks::DismissSignalHandler(DispatcherCallbackArgs args){
 			d20Sys.d20SendSignal(spPkt.aoeObj, DK_SIG_Spell_End, spPkt.spellId, 0);
 		}
 
+		// Spell objects. Added in Temple+ for Wall spells
+		for (auto i = 0u; i < static_cast<unsigned int>(spPkt.numSpellObjs) && i < 128; i++) {
+			auto spellObj = spPkt.spellObjs[i].obj;
+			if (!spellObj) continue;
+			d20Sys.d20SendSignal(spellObj, DK_SIG_Spell_End, spPkt.spellId, 0);
+		}
+
+		
 		// adding this speciically for grease because I want to be careful
 		auto SP_GREASE_ENUM = 200;
 		if (spPkt.spellEnum == SP_GREASE_ENUM){
 			conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
 		}
 		
+		// By now all effects should have been removed. Cross your fingers!
+		d20Sys.d20SendSignal(args.objHndCaller, DK_SIG_Spell_End, spPkt.spellId, 0);
+
 	}
 	return 0;
+}
+
+void DispatcherCallbackArgs::RemoveSpellMod() {
+	spCallbacks.SpellRemoveMod(*this);
 }
 
 int SpellCallbacks::SpellRemoveMod(DispatcherCallbackArgs args){
@@ -3973,6 +4109,7 @@ int SpellCallbacks::SpellRemoveMod(DispatcherCallbackArgs args){
 	case DK_SIG_TouchAttackAdded:
 	case DK_SIG_Teleport_Prepare:
 	case DK_SIG_Teleport_Reconnect:
+	case DK_SIG_Combat_End:
 		break;
 	default:
 		if (evtObj && evtObj->data1 != args.GetCondArg(0))
@@ -3988,9 +4125,20 @@ int SpellCallbacks::SpellRemoveMod(DispatcherCallbackArgs args){
 			if (spPkt.spellEnum != 0){
 				floatSys.FloatCombatLine(args.objHndCaller, 5060); // Stop Concentration
 				d20Sys.d20SendSignal(args.objHndCaller, DK_SIG_Concentration_Broken, spellId, 0);
+
+				if (spPkt.caster && spPkt.caster != args.objHndCaller){
+					d20Sys.d20SendSignal(spPkt.caster, DK_SIG_Concentration_Broken, spellId, 0);
+				}
+
 				for (auto i=0u; i < spPkt.targetCount; i++){
 					if (args.objHndCaller != spPkt.targetListHandles[i])
 						d20Sys.d20SendSignal(spPkt.targetListHandles[i], DK_SIG_Concentration_Broken, spellId, 0);
+				}
+				// added in Temple+: Concentration_Broken on the spell objects
+				for (auto i=0; i < spPkt.numSpellObjs && i < 128; i++){
+					auto spObj = spPkt.spellObjs[i].obj;
+					if (!spObj || spObj == args.objHndCaller) continue;
+						d20Sys.d20SendSignal(spObj, DK_SIG_Concentration_Broken, spellId, 0);
 				}
 			}
 		}
@@ -4011,6 +4159,53 @@ int SpellCallbacks::SpellRemoveMod(DispatcherCallbackArgs args){
 
 	conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
 	
+	return 0;
+}
+
+int SpellCallbacks::AoeSpellRemove(DispatcherCallbackArgs args){
+	auto spellId = args.GetCondArg(0);
+	SpellPacketBody pkt(spellId);
+	if (!pkt.spellEnum)
+		return 0;
+
+	auto partsysIdToPlay = -1;
+	switch (args.GetData1()){
+	case 0x26:
+		gameSystems->GetParticleSys().CreateAtObj("sp-consecrate-END", args.objHndCaller);
+		break;
+	case 0x35:
+		gameSystems->GetParticleSys().CreateAtObj("sp-Desecrate-END", args.objHndCaller);
+		break;
+	case 0x66:
+		gameSystems->GetParticleSys().CreateAtObj("sp-Fog Cloud-END", args.objHndCaller);
+		break;
+	case 0x8B:
+		gameSystems->GetParticleSys().CreateAtObj("sp-Invisibility Sphere-END", args.objHndCaller);
+		break;
+	case 0x9D:
+		gameSystems->GetParticleSys().CreateAtObj("sp-Minor Globe of Invulnerability-END", args.objHndCaller);
+		break;
+	case 0x9F:
+		gameSystems->GetParticleSys().CreateAtObj("sp-Mind Fog-END", args.objHndCaller);
+		break;
+	case 0xD2:
+		gameSystems->GetParticleSys().CreateAtObj("sp-Solid Fog-END", args.objHndCaller);
+		break;
+	case 0xED:
+		gameSystems->GetParticleSys().CreateAtObj("sp-Wind Wall-END", args.objHndCaller);
+		break;
+	default:
+		break;
+	}
+
+	gameSystems->GetParticleSys().End(pkt.spellObjs[0].partySysId);
+	for (auto i = 1; i < pkt.numSpellObjs; i++){
+		gameSystems->GetParticleSys().End(pkt.spellObjs[i].partySysId);
+	}
+
+	auto evtId = args.GetCondArg(2);
+	objEvents.objEvtTable->remove(evtId);
+	args.RemoveSpellMod();
 	return 0;
 }
 
@@ -4299,6 +4494,42 @@ int ItemCallbacks::BucklerToHitPenalty(DispatcherCallbackArgs args)
 
 	return 0;
 }
+
+
+int __cdecl ItemCallbacks::BucklerAcPenalty(DispatcherCallbackArgs args)
+{
+	//Check if the penalty is turned off through python
+	if (d20Sys.D20QueryPython(args.objHndCaller, "Disable Buckler Penalty") == 0) {
+
+		auto dispIo = static_cast<DispIoAttackBonus*>(args.dispIO);
+		dispIo->AssertType(dispIOTypeAttackBonus);
+
+		auto weaponUsed = dispIo->attackPacket.GetWeaponUsed();
+
+		if ((dispIo->attackPacket.flags & D20CAF_RANGED))
+			return 0;
+
+		if (!weaponUsed)
+			return 0;
+
+		auto offhandObject = inventory.ItemWornAt(args.objHndCaller, EquipSlot::WeaponSecondary);
+
+		if (offhandObject) {
+			auto objectFlag = objects.getInt32(offhandObject, obj_f_type);
+			if (objectFlag == obj_t_weapon) {
+				args.SetCondArg(1, 1);  //Two Weapon Fighting, remove buckler bonus
+			}
+		} else {
+			auto twoHanded = d20Sys.d20QueryWithData(args.objHndCaller, DK_QUE_WieldedTwoHanded, reinterpret_cast<uint32_t>(dispIo), 0);
+			if (twoHanded) {
+				args.SetCondArg(1, 1);  //Using a two handed weapon or using a one handed weapon in two hands, remove buckler bonus
+			}
+		}
+	}
+
+	return 0;
+}
+
 
 int ItemCallbacks::WeaponMerciful(DispatcherCallbackArgs args){
 	GET_DISPIO(dispIOTypeDamage, DispIoDamage);
@@ -4809,18 +5040,16 @@ int ClassAbilityCallbacks::DruidWildShapeReset(DispatcherCallbackArgs args){
 			numTimes += (1 << 8);
 	}
 
-	
+	//See if any bonus uses should be added
+	auto extraWildShape = d20Sys.D20QueryPython(args.objHndCaller, "Extra Wildshape Uses");
+	auto extraElementalWildShape = d20Sys.D20QueryPython(args.objHndCaller, "Extra Wildshape Elemental Uses");
+	numTimes += extraWildShape;
+	numTimes += (1 << 8) * extraElementalWildShape;
 	
 	args.SetCondArg(0, numTimes);
 	if (args.GetCondArg(2)) {
 		args.SetCondArg(2, 0);
-		auto obj = gameSystems->GetObj().GetObject(args.objHndCaller);
-		auto animHandle = obj->GetInt32(obj_f_animation_handle);
-		if (animHandle) {
-			auto freeAasModel = temple::GetPointer<void(int)>(0x10264510);
-			freeAasModel(animHandle);
-			obj->SetInt32(obj_f_animation_handle, 0);
-		}
+		objects.ClearAnim(args.objHndCaller);
 
 		gameSystems->GetParticleSys().CreateAtObj("sp-animal shape", args.objHndCaller);
 		d20StatusSys.initItemConditions(args.objHndCaller);
@@ -4958,13 +5187,7 @@ int ClassAbilityCallbacks::DruidWildShapePerform(DispatcherCallbackArgs args){
 
 
 	auto initObj = [args](int protoId) {
-		auto obj = gameSystems->GetObj().GetObject(args.objHndCaller);
-		auto animHandle = obj->GetInt32(obj_f_animation_handle);
-		if (animHandle) {
-			auto freeAasModel = temple::GetPointer<void(int)>(0x10264510);
-			freeAasModel(animHandle);
-			obj->SetInt32(obj_f_animation_handle, 0);
-		}
+		objects.ClearAnim(args.objHndCaller);
 		if (protoId) {
 			auto lvl = objects.StatLevelGet(args.objHndCaller, stat_level);
 			damage.Heal(args.objHndCaller, args.objHndCaller, Dice(0, 0, lvl), D20A_CLASS_ABILITY_SA);
@@ -5094,10 +5317,13 @@ int ClassAbilityCallbacks::BardMusicRadial(DispatcherCallbackArgs args){
 	if (!bardLvl || perfSkill < 3)
 		return 0;
 
+	//Ask python for the maximum number of uses of bardic music
+	int nMaxBardicMusic = d20Sys.D20QueryPython(args.objHndCaller, "Max Bardic Music");
+
 	RadialMenuEntryParent bmusic(5039);
 	bmusic.flags |= 0x6;
 	bmusic.minArg = args.GetCondArg(0);
-	bmusic.maxArg = bardLvl;
+	bmusic.maxArg = nMaxBardicMusic;
 	auto bmusicId = bmusic.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Class);
 
 	RadialMenuEntryAction insCourage(5040, D20A_BARDIC_MUSIC, BM_INSPIRE_COURAGE, "TAG_CLASS_FEATURES_BARD_INSPIRE_COURAGE");
@@ -5457,10 +5683,20 @@ int ClassAbilityCallbacks::SneakAttackDamage(DispatcherCallbackArgs args) {
 	if (locSys.DistanceToObj(args.objHndCaller, tgt) > 30)
 		return 0;
 
+	// See if it is a critical and if criticals cause sneak attacks
+	bool sneakAttackFromCrit = false;
+	if (atkPkt.flags & D20CAF_CRITICAL) {
+		auto result = d20Sys.D20QueryPython(args.objHndCaller, "Sneak Attack Critical");
+		if (result > 0) {
+			sneakAttackFromCrit = true;
+		}
+	}
+
 	if (atkPkt.flags & D20CAF_FLANKED
 		|| d20Sys.d20Query(tgt, DK_QUE_SneakAttack)
 		|| d20Sys.d20QueryWithData(atkPkt.attacker, DK_QUE_OpponentSneakAttack, (uint32_t)dispIo, 0)
-		|| !critterSys.CanSense(tgt, atkPkt.attacker))
+		|| !critterSys.CanSense(tgt, atkPkt.attacker)
+		|| sneakAttackFromCrit)
 	{
 		// get sneak attack dice (NEW! now via query, for prestige class modularity)
 		auto sneakAttackDice = d20Sys.D20QueryPython(args.objHndCaller, fmt::format("Sneak Attack Dice"));
@@ -5762,4 +5998,8 @@ int RaceAbilityCallbacks::HalflingThrownWeaponAndSlingBonus(DispatcherCallbackAr
 
 
 	return 0;
+}
+
+void CondStructNew::AddAoESpellRemover() {
+	AddHook(dispTypeD20Signal, DK_SIG_Spell_End, spCallbacks.AoeSpellRemove);
 }

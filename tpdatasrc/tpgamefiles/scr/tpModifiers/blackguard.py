@@ -143,7 +143,13 @@ def SmiteGoodReset(attachee, args, evt_obj):
 		timesPerDay += 1
 
 	timesPerDay += bonusFromPal
+	
+	#Add bonus uses from extra smiting feat
+	if (timesPerDay > 0):
+		timesPerDay += 2 * attachee.has_feat("Extra Smiting");
+	
 	args.set_arg(0, timesPerDay)
+	
 	return 0
 
 smiteGoodEnum = 2201

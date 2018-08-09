@@ -152,6 +152,10 @@ static std::unique_ptr<WidgetBase> LoadWidgetButton(const json11::Json &jsonObj,
 		buttonStyle.disabledImagePath = obj["disabledImage"].string_value();
 	}
 
+	if (obj.find("activatedImage") != obj.end()) {
+		buttonStyle.activatedImagePath = obj["activatedImage"].string_value();
+	}
+
 	if (obj.find("normalImage") != obj.end()) {
 		buttonStyle.normalImagePath = obj["normalImage"].string_value();
 	}
@@ -163,6 +167,11 @@ static std::unique_ptr<WidgetBase> LoadWidgetButton(const json11::Json &jsonObj,
 	if (obj.find("pressedImage") != obj.end()) {
 		buttonStyle.pressedImagePath = obj["pressedImage"].string_value();
 	}
+
+	if (obj.find("frameImage") != obj.end()) {
+		buttonStyle.frameImagePath = obj["frameImage"].string_value();
+	}
+
 
 	if (obj.find("textStyle") != obj.end()) {
 		buttonStyle.textStyleId = obj["textStyle"].string_value();

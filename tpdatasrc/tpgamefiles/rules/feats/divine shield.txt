@@ -1,0 +1,5 @@
+name: Divine Shield
+flags: 12582912
+prereqs: 
+description: As a standard action, spend one of your turn or rebuke undead attempts to channel energy into your shield, granting it a bonus equal to your Charisma modifier. This bonus applies to the shield's bonus to Armor Class and lasts for a number of rounds equal to half your character level.
+prereq descr: Proficiency with a shield, turn or rebuke undead ability.

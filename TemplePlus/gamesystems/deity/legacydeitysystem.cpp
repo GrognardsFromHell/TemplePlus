@@ -130,6 +130,13 @@ bool LegacyDeitySystem::IsDomainSkill(SkillEnum skill, Domain dom){
 	return false;
 }
 
+const char* LegacyDeitySystem::GetName(int deityId){
+	MesLine line(deityId);
+	auto mesHandle = temple::GetRef<MesHandle>(0x10AA3228);
+	mesFuncs.GetLine_Safe(mesHandle, &line);
+	return line.value;
+}
+
 DeitySpec & LegacyDeitySystem::GetDeitySpec(int id){
 	return mDeitySpecs[id];
 }

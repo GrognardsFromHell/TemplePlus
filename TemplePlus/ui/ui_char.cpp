@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "ui_char.h"
 #include "common.h"
 #include "config/config.h"
 #include "d20.h"
@@ -22,6 +23,10 @@
 
 #include "ui/ui_legacysystems.h"
 #include "ui/ui_systems.h"
+#include "d20_race.h"
+#include "gamesystems/d20/d20_help.h"
+#include "objlist.h"
+#include "pathfinding.h"
 
 #define NUM_SPELLBOOK_SLOTS 18 // 18 in vanilla
 
@@ -82,17 +87,18 @@ struct UiCharAddresses : temple::AddressTable
 	}
 } addresses;
 
+
+
 class CharUiSystem : TempleFix
 {
 public: 
 	#pragma region Main Wnd
 	static void ClassLevelBtnRender(int widId);
+	static void AlignGenderRaceBtnRender(int widId);
 	#pragma endregion 
 
 	#pragma region Spellbook functions
-	static BOOL MemorizeSpellMsg(int widId, TigMsg* tigMsg){
-		return orgMemorizeSpellMsg(widId, tigMsg);
-	};
+	static BOOL MemorizeSpellMsg(int widId, TigMsg* tigMsg);
 	static BOOL (*orgMemorizeSpellMsg)(int widId, TigMsg* tigMsg);
 
 	static BOOL SpellbookSpellsMsg(int widId, TigMsg* tigMsg){
@@ -126,108 +132,9 @@ public:
 #pragma region Feats
 	static void FeatsShow();
 #pragma endregion 
-
-
-	void apply() override 
-	{
-
-		replaceFunction(0x10144B40, ClassLevelBtnRender);
-
-		if (temple::Dll::GetInstance().HasCo8Hooks()) {
-			writeHex(0x1011DD4D, "90 90 90 90 90"); // disabling stat text draw calls
-		}
-
-		if (config.showNpcStats){
-			writeNoops(0x101C2247); // str output btn
-			writeNoops(0x101C2529); // dex output btn
-			writeNoops(0x101C2809); // con output btn
-			writeNoops(0x101C2AE9); // int output btn
-			writeNoops(0x101C2DC9); // wis output btn
-			writeNoops(0x101C30A9); // cha output btn
-
-			writeNoops(0x101C4D5A); // str mod btn
-			writeNoops(0x101C4F4A); // dex mod btn
-			writeNoops(0x101C513A); // con mod btn
-			writeNoops(0x101C532A); // int mod btn
-			writeNoops(0x101C551A); // wis mod btn
-			writeNoops(0x101C570A); // cha mod btn
-			
-		}
-
-
-
-		int charSheetAttackCodeForAttackBonusDisplay = 1 + ATTACK_CODE_OFFHAND;
-		write(0x101C45F3 + 7, &charSheetAttackCodeForAttackBonusDisplay, sizeof(int));
-		write(0x101C8C7B + 4, &charSheetAttackCodeForAttackBonusDisplay, sizeof(int));
-
-		charSheetAttackCodeForAttackBonusDisplay = 1 + ATTACK_CODE_OFFHAND + 1; //the offhand
-		write(0x101C491B + 7, &charSheetAttackCodeForAttackBonusDisplay, sizeof(int));
-		write(0x101C8D74 + 4, &charSheetAttackCodeForAttackBonusDisplay, sizeof(int));
-		
-
-		// Feats
-		replaceFunction(0x101BBDB0, FeatsShow);
-
-
-
-		//orgSpellbookSpellsMsg = replaceFunction(0x101B8F10, SpellbookSpellsMsg);
-		//orgMemorizeSpellMsg= replaceFunction(   0x101B9360, MemorizeSpellMsg);
-		replaceFunction(0x101B2EE0, IsSpecializationSchoolSlot);
-		orgSpellsShow = replaceFunction(0x101B5D80, SpellsShow);
-		
-		// UiCharSpellGetScrollbarY  has bug when called from Spellbook, it receives the first tab's scrollbar always
-		writeCall(0x101BA5D9, HookedCharSpellGetSpellbookScrollbarY);
-		
-		writeNoops(0x101B957E); // so it doesn't decrement the spells memorized num (this causes weirdness in right clicking from the spellbook afterwards)
-
-		static BOOL (__cdecl* orgUiCharLootingLootWndMsg)(int , TigMsg* ) = replaceFunction<BOOL(__cdecl)(int , TigMsg* ) >(0x101406D0, [](int widId, TigMsg* msg){
-
-
-			if (msg->type == TigMsgType::WIDGET) {
-
-				auto msg_ = (TigMsgWidget*)msg;
-				if (msg_->widgetEventType == TigMsgWidgetEvent::Clicked
-					&& (infrastructure::gKeyboard.IsKeyPressed(VK_LSHIFT) || infrastructure::gKeyboard.IsKeyPressed(VK_RSHIFT))) {
-
-					objHndl critterLooted = GetCritterLooted(); // may be substitute inventory object (i.e. a container)
-					auto invenIdx = temple::GetRef<int(__cdecl)(int)>(0x1013F9C0)(widId);
-
-					auto item = inventory.GetItemAtInvIdx(critterLooted, invenIdx);
-					if (item && inventory.IsIdentified(item) && description.LongDescriptionHas(item)) {
-						charUiSys.LongDescriptionPopupCreate(item);
-						return TRUE;
-					}
-
-				}
-
-			}
-			
-			return orgUiCharLootingLootWndMsg(widId, msg);
-		});
-
-		writeCall(0x10140134, HookedItemDescriptionBarter);
-		writeCall(0x1014016B, HookedItemDescriptionBarter);
-
-		orgInventorySlotMsg = replaceFunction<int(__cdecl)(int, TigMsg*) >(0x10157DC0, InventorySlotMsg);
-		
-		// Addendums to the item description box
-		static char* (*orgGetItemDescr)(objHndl, objHndl) = replaceFunction<char*(__cdecl)(objHndl, objHndl)>(0x10122DD0, [](objHndl obj, objHndl item){
-			// need to put this here
-			temple::GetRef<objHndl>(0x10BF07B8) = item;
-
-			auto result = orgGetItemDescr(obj, item);
-			std::string addonStr;
-			ItemGetDescrAddon(obj, item, addonStr);
-			sprintf(result, "%s\n%s",result, addonStr.c_str());
-			
-			return result;
-		});
-
-		replaceFunction(0x10155D20, TotalWeightOutputBtnTooltip);
-
-
-
-	}
+protected:
+	void apply() override;
+	
 } charUiSys;
 
 void CharUiSystem::ClassLevelBtnRender(int widId){
@@ -320,6 +227,130 @@ void CharUiSystem::ClassLevelBtnRender(int widId){
 	TigRect rect(x, btn->y, textMeas.width, textMeas.height);
 	UiRenderer::RenderText(text, rect, style);
 	UiRenderer::PopFont();
+}
+
+void CharUiSystem::AlignGenderRaceBtnRender(int widId){
+	auto btn = uiManager->GetButton(widId);
+	const int maxWidth = 200;
+	UiRenderer::PushFont(temple::GetRef<char*>(0x10BE9394), temple::GetRef<int>(0x10BE9390));
+
+	TigTextStyle style;
+	auto txtR = temple::GetRef<int>(0x10BE9360);
+	auto txtG = temple::GetRef<int>(0x10BE9364);
+	auto txtB = temple::GetRef<int>(0x10BE9368);
+	auto txtA = temple::GetRef<int>(0x10BE936C);
+
+	ColorRect textColor(XMCOLOR((float)txtR, (float)txtG, (float)txtB, (float)txtA));
+	ColorRect shadowColor(XMCOLOR(0, 0, 0, 255));
+	style.textColor = &textColor;
+	style.shadowColor = &shadowColor;
+	style.flags = 8;
+	style.kerning = 1;
+	style.tracking = 2;
+
+	auto dude = charUiSys.GetCurrentCritter();
+	if (!dude)
+		return;
+
+	auto obj = gameSystems->GetObj().GetObject(dude);
+	auto objType = obj->type;
+
+	std::string text;
+	static auto charUiTextMes = temple::GetRef<MesHandle>(0x10BE963C);
+
+	// Alignment
+	if (objType == obj_t_pc || config.showNpcStats){
+		auto alignment = (Alignment)objects.StatLevelGet(dude, stat_alignment);
+		auto alignmentName = d20Stats.GetAlignmentName(alignment);
+		text.append(fmt::format("{} ", alignmentName));
+	}
+	// Subtype
+	
+	if (objType == obj_t_npc){
+		auto isHuman = critterSys.IsCategorySubtype(dude, mc_subtype_human) && critterSys.IsCategoryType(dude, MonsterCategory::mc_type_humanoid);
+		
+		for (auto i = 0; (1 << i) <= MonsterSubcategoryFlag::mc_subtype_water; i += 1) {
+			auto monSubcat = (MonsterSubcategoryFlag)(1 << i);
+			if (monSubcat == mc_subtype_human && isHuman) continue; // skip silly string of "Human Humanoid"
+			if (critterSys.IsCategorySubtype(dude, monSubcat)) {
+				text.append(fmt::format("{} ", d20Stats.GetMonsterSubcategoryName(i)));
+			}
+		}
+		
+	}
+
+	auto gender = objects.StatLevelGet(dude, stat_gender);
+	auto genderName = d20Stats.GetGenderName(gender);
+
+	if (objType == obj_t_pc) {
+		auto race = critterSys.GetRace(dude, false); 
+		auto raceName = d20Stats.GetRaceName(race);
+		text.append(fmt::format("{} {}", genderName, raceName));
+	}
+	else {
+		auto moncat = critterSys.GetCategory(dude);
+		auto monsterCatName = d20Stats.GetMonsterCategoryName(moncat);
+
+		text.append(fmt::format("{} {}", genderName, monsterCatName));
+
+		//MesLine line;
+		//mesFuncs.ReadLineDirect(charUiTextMes, 11, &line); // NPC
+		//text.append(fmt::format("({})", line.value));
+	}
+
+	auto textMeas = UiRenderer::MeasureTextSize(text, style);
+	if (textMeas.width > maxWidth) {
+		style.flags |= 0x4000; // truncation
+		textMeas = UiRenderer::MeasureTextSize(text, style, maxWidth);
+	}
+
+	auto x = btn->x + abs((int)btn->width - textMeas.width);
+	/*if (textMeas.width > 290) {
+		x -= 20;
+	}
+*/
+	TigRect rect(x, btn->y, textMeas.width, textMeas.height);
+	UiRenderer::RenderText(text, rect, style);
+	UiRenderer::PopFont();
+}
+
+BOOL CharUiSystem::MemorizeSpellMsg(int widId, TigMsg* tigMsg){
+
+	auto charSpellPackets = addresses.uiCharSpellPackets;
+	auto& uiCharSpellsNavClassTabIdx = temple::GetRef<int>(0x10D18F68);
+
+	auto &curSpellPacket = charSpellPackets[uiCharSpellsNavClassTabIdx];
+
+	auto widIdx = WidgetIdIndexOf(widId, &curSpellPacket.memorizeSpellWnds[0], NUM_SPELLBOOK_SLOTS);
+	auto scrollbarId = curSpellPacket.memorizeScrollbar->widgetId;
+	auto scrollbar = uiManager->GetScrollBar(scrollbarId);
+	auto scrollbarY = scrollbar?scrollbar->GetY(): 0;
+	auto &spData = curSpellPacket.spellsMemorized.spells[widIdx + scrollbarY];
+
+	if (spData.classCode == Domain::Domain_Special){
+		if (tigMsg->type == TigMsgType::MOUSE){
+			auto tigMouseMsg = (TigMsgMouse*)(tigMsg);
+			if (tigMouseMsg->buttonStateFlags & MouseStateFlags::MSF_LMB_RELEASED){
+				if (!helpSys.IsClickForHelpActive())
+					return TRUE;
+			}
+			if (tigMouseMsg->buttonStateFlags & MouseStateFlags::MSF_LMB_CLICK) {
+				if (!helpSys.IsClickForHelpActive())
+					return TRUE;
+			}
+		}
+		else if (tigMsg->type == TigMsgType::WIDGET){
+			auto tigWidgetMsg = (TigMsgWidget*)(tigMsg);
+			if (tigWidgetMsg->widgetEventType == TigMsgWidgetEvent::MouseReleased){
+				return TRUE;
+			}
+			if (tigWidgetMsg->widgetEventType == TigMsgWidgetEvent::Clicked) {
+				return TRUE;
+			}
+		}
+	}
+
+	return orgMemorizeSpellMsg(widId, tigMsg);
 }
 
 void CharUiSystem::SpellsShow(objHndl obj)
@@ -799,6 +830,76 @@ objHndl CharUiSystem::GetVendor()
 	return temple::GetRef<objHndl>(0x10BE6EC8);
 }
 
+void UiChar::LootingWidgetsInit(){
+	auto wnd = temple::GetRef<LgcyWindow*>(0x10BE6EA0);
+	auto wndId = wnd->widgetId;
+
+	mLootingWnd = std::make_unique<WidgetContainer>(32,32);
+	mLootingWnd->SetPos(wnd->x + 90, wnd->y + 50);
+	auto mNextBtn = std::make_unique<WidgetButton>();
+	mNextBtn->SetPos(0,0);
+	mNextBtn->SetStyle("action-pointer-next");
+	mNextBtn->SetClickHandler([&](){
+		auto &lootedCritter = uiSystems->GetChar().GetLootedObject();
+		mCrittersLootedIdx++;
+		if (mCrittersLootedIdx >= mCrittersLootedList.size())
+			mCrittersLootedIdx = 0;
+		auto nextCritter = mCrittersLootedList[mCrittersLootedIdx];
+		uiSystems->GetChar().SetLootedObject(nextCritter);
+		auto resetLootIcons = temple::GetRef<void(__cdecl)()>(0x1013DD20);
+		resetLootIcons();
+	});
+	mLootingWnd->Add(std::move(mNextBtn));
+	mLootingWnd->Hide();
+}
+
+std::vector<objHndl> UiChar::GetNearbyLootableCritters(const objHndl& handle){
+
+	auto result = std::vector<objHndl>();
+	result.push_back(handle);
+	if (!handle)
+		return result;
+	auto obj = objSystem->GetObject(handle);
+	ObjList objList;
+	objList.ListRadius(obj->GetLocationFull(), INCH_PER_TILE * 10, ObjectListFilter::OLC_CRITTERS);
+
+	for (auto i = 0; i < objList.size(); i++) {
+		auto corpse = objList[i];
+		if (corpse != handle && critterSys.IsLootableCorpse(corpse) && !party.IsInParty(corpse) && pathfindingSys.CanPathTo(handle, corpse))
+			result.push_back(corpse);
+	}
+
+	return result;
+}
+
+void UiChar::ShowLooting(){
+	if (uiSystems->GetChar().GetDisplayType() != UiCharDisplayType::Looting){
+		mLootingWnd->Hide();
+		return;
+	}
+	auto lootedCritter = uiSystems->GetChar().GetLootedObject();
+	if (!lootedCritter || !objects.IsCritter(lootedCritter)){
+		mLootingWnd->Hide();
+		return;
+	}
+
+	mCrittersLootedList = GetNearbyLootableCritters(lootedCritter);
+	mCrittersLootedIdx = 0;
+
+	if (mCrittersLootedList.size() <= 1){
+		mLootingWnd->Hide();
+		return;
+	}
+
+	mLootingWnd->Show();
+	mLootingWnd->BringToFront();
+}
+
+void UiChar::HideLooting(){
+	mLootingWnd->Hide();
+}
+
+
 int CharUiSystem::InventorySlotMsg(int widId, TigMsg* msg)
 {
 	// Alt-click to Quicksell
@@ -1100,6 +1201,164 @@ void CharUiSystem::FeatsShow(){
 	auto featsWnd = temple::GetRef<LgcyWindow*>(0x10D19DB0);
 	uiManager->SetHidden(featsWnd->widgetId, false); // FeatsMainWnd
 	uiManager->BringToFront(featsWnd->widgetId);
+}
+
+
+
+//*****************************************************************************
+//* Char-UI
+//*****************************************************************************
+
+UiChar::UiChar(const UiSystemConf &config) {
+	auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x1014b900);
+	if (!startup(&config)) {
+		throw TempleException("Unable to initialize game system Char-UI");
+	}
+	LootingWidgetsInit();
+}
+UiChar::~UiChar() {
+	auto shutdown = temple::GetPointer<void()>(0x10149820);
+	shutdown();
+}
+void UiChar::ResizeViewport(const UiResizeArgs& resizeArg) {
+	auto resize = temple::GetPointer<void(const UiResizeArgs*)>(0x1014ba20);
+	resize(&resizeArg);
+}
+void UiChar::Reset() {
+	auto reset = temple::GetPointer<void()>(0x10143f80);
+	reset();
+}
+const std::string &UiChar::GetName() const {
+	static std::string name("Char-UI");
+	return name;
+}
+
+void UiChar::Show(UiCharDisplayType type)
+{
+	static auto ui_show_charui = temple::GetPointer<void(UiCharDisplayType)>(0x10148e20);
+	ui_show_charui(type);
+}
+
+void UiChar::ShowForCritter(UiCharDisplayType type, objHndl handle) {
+	mCurrentCritter = handle;
+	Show(type);
+	SetCritter(handle);
+}
+
+void UiChar::SetCritter(objHndl handle) {
+	static auto ui_show_charui = temple::GetPointer<void(objHndl)>(0x101499E0);
+	ui_show_charui(handle);
+}
+
+void CharUiSystem::apply(){
+	
+	replaceFunction(0x10144B40, ClassLevelBtnRender);
+	replaceFunction(0x10145020, AlignGenderRaceBtnRender);
+
+	if (temple::Dll::GetInstance().HasCo8Hooks()) {
+		writeHex(0x1011DD4D, "90 90 90 90 90"); // disabling stat text draw calls
+	}
+
+	if (config.showNpcStats) {
+		writeNoops(0x101C2247); // str output btn
+		writeNoops(0x101C2529); // dex output btn
+		writeNoops(0x101C2809); // con output btn
+		writeNoops(0x101C2AE9); // int output btn
+		writeNoops(0x101C2DC9); // wis output btn
+		writeNoops(0x101C30A9); // cha output btn
+
+		writeNoops(0x101C4D5A); // str mod btn
+		writeNoops(0x101C4F4A); // dex mod btn
+		writeNoops(0x101C513A); // con mod btn
+		writeNoops(0x101C532A); // int mod btn
+		writeNoops(0x101C551A); // wis mod btn
+		writeNoops(0x101C570A); // cha mod btn
+
+	}
+
+
+
+	int charSheetAttackCodeForAttackBonusDisplay = 1 + ATTACK_CODE_OFFHAND;
+	write(0x101C45F3 + 7, &charSheetAttackCodeForAttackBonusDisplay, sizeof(int));
+	write(0x101C8C7B + 4, &charSheetAttackCodeForAttackBonusDisplay, sizeof(int));
+
+	charSheetAttackCodeForAttackBonusDisplay = 1 + ATTACK_CODE_OFFHAND + 1; //the offhand
+	write(0x101C491B + 7, &charSheetAttackCodeForAttackBonusDisplay, sizeof(int));
+	write(0x101C8D74 + 4, &charSheetAttackCodeForAttackBonusDisplay, sizeof(int));
+
+
+	// Feats
+	replaceFunction(0x101BBDB0, FeatsShow);
+
+
+
+	//orgSpellbookSpellsMsg = replaceFunction(0x101B8F10, SpellbookSpellsMsg);
+	orgMemorizeSpellMsg = replaceFunction(0x101B9360, MemorizeSpellMsg);
+	replaceFunction(0x101B2EE0, IsSpecializationSchoolSlot);
+	orgSpellsShow = replaceFunction(0x101B5D80, SpellsShow);
+
+	// UiCharSpellGetScrollbarY  has bug when called from Spellbook, it receives the first tab's scrollbar always
+	writeCall(0x101BA5D9, HookedCharSpellGetSpellbookScrollbarY);
+
+	writeNoops(0x101B957E); // so it doesn't decrement the spells memorized num (this causes weirdness in right clicking from the spellbook afterwards)
+
+	
+	static void(__cdecl* orgCharLootingShow)(objHndl) = replaceFunction<void(__cdecl)(objHndl)>(0x1013F6C0, [](objHndl handle) {
+		orgCharLootingShow(handle);
+		uiSystems->GetChar().ShowLooting();
+	});
+
+	static void(__cdecl* orgCharLootingHide)() = replaceFunction<void(__cdecl)()>(0x1013F880, []() {
+		orgCharLootingHide();
+		uiSystems->GetChar().HideLooting();
+	});
+	
+
+	static BOOL(__cdecl* orgUiCharLootingLootWndMsg)(int, TigMsg*) = replaceFunction<BOOL(__cdecl)(int, TigMsg*) >(0x101406D0, [](int widId, TigMsg* msg) {
+
+
+		if (msg->type == TigMsgType::WIDGET) {
+
+			auto msg_ = (TigMsgWidget*)msg;
+			if (msg_->widgetEventType == TigMsgWidgetEvent::Clicked
+				&& (infrastructure::gKeyboard.IsKeyPressed(VK_LSHIFT) || infrastructure::gKeyboard.IsKeyPressed(VK_RSHIFT))) {
+
+				objHndl critterLooted = GetCritterLooted(); // may be substitute inventory object (i.e. a container)
+				auto invenIdx = temple::GetRef<int(__cdecl)(int)>(0x1013F9C0)(widId);
+
+				auto item = inventory.GetItemAtInvIdx(critterLooted, invenIdx);
+				if (item && inventory.IsIdentified(item) && description.LongDescriptionHas(item)) {
+					charUiSys.LongDescriptionPopupCreate(item);
+					return TRUE;
+				}
+
+			}
+
+		}
+
+		return orgUiCharLootingLootWndMsg(widId, msg);
+	});
+
+	writeCall(0x10140134, HookedItemDescriptionBarter);
+	writeCall(0x1014016B, HookedItemDescriptionBarter);
+
+	orgInventorySlotMsg = replaceFunction<int(__cdecl)(int, TigMsg*) >(0x10157DC0, InventorySlotMsg);
+
+	// Addendums to the item description box
+	static char* (*orgGetItemDescr)(objHndl, objHndl) = replaceFunction<char*(__cdecl)(objHndl, objHndl)>(0x10122DD0, [](objHndl obj, objHndl item) {
+		// need to put this here
+		temple::GetRef<objHndl>(0x10BF07B8) = item;
+
+		auto result = orgGetItemDescr(obj, item);
+		std::string addonStr;
+		ItemGetDescrAddon(obj, item, addonStr);
+		sprintf(result, "%s\n%s", result, addonStr.c_str());
+
+		return result;
+	});
+
+	replaceFunction(0x10155D20, TotalWeightOutputBtnTooltip);
+
 }
 
 BOOL(*CharUiSystem::orgSpellbookSpellsMsg)(int widId, TigMsg* tigMsg);

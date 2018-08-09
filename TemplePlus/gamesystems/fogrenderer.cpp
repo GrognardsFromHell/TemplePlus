@@ -127,7 +127,7 @@ void FogOfWarRenderer::Render() {
 	auto mFogOriginX = (uint32_t) fogMinX;
 	auto mFogOriginY = (uint32_t) fogMinY;
 
-	mBlurredFogTexture->Update<uint8_t>(gsl::as_span(&mBlurredFog[0], mBlurredFog.size()));
+	mBlurredFogTexture->Update<uint8_t>(gsl::span(&mBlurredFog[0], mBlurredFog.size()));
 
 	// Use only the relevant subportion of the texture
 	auto umin = 2.5f / (float)mBlurredFogWidth;

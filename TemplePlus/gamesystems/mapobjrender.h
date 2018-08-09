@@ -11,8 +11,8 @@ namespace gfx {
 	using MdfRenderMaterialPtr = std::shared_ptr<class MdfRenderMaterial>;
 	using RenderTargetTexturePtr = std::shared_ptr<class RenderTargetTexture>;
 }
-namespace temple {
-	class AasRenderer;
+namespace aas {
+	class Renderer;
 }
 
 class GameSystems;
@@ -29,7 +29,7 @@ public:
 	MapObjectRenderer(GameSystems& gameSystems, 
 		gfx::RenderingDevice& device, 
 		gfx::MdfMaterialFactory &mdfFactory,
-		temple::AasRenderer &aasRenderer);
+		aas::Renderer &aasRenderer);
 	~MapObjectRenderer();
 
 	void RenderMapObjects(int tileX1, int tileX2, int tileY1, int tileY2);
@@ -66,7 +66,7 @@ public:
 private:
 	GameSystems& mGameSystems;
 	gfx::RenderingDevice& mDevice;
-	temple::AasRenderer &mAasRenderer;
+	aas::Renderer &mAasRenderer;
 	ShadowType mShadowType = ShadowType::ShadowMap;
 	gfx::MdfRenderMaterialPtr mBlobShadowMaterial;
 	gfx::MdfRenderMaterialPtr mHighlightMaterial;

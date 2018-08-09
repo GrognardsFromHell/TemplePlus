@@ -12,6 +12,7 @@ enum EquipSlot : uint32_t;
 #define INVENTORY_WORN_IDX_COUNT 16
 #define INVENTORY_BAG_IDX_START 217
 #define INVENTORY_BAG_IDX_END 221
+#define INVENTORY_IDX_UNDEFINED -1
 
 enum ItemErrorCode: uint32_t
 {
@@ -49,6 +50,16 @@ enum ItemInsertFlags : uint8_t {
 	IIF_80 = 0x80
 };
 
+enum NpcLootingType : uint32_t
+{
+	NLT_Normal =0,
+	NLT_HalfShareMoneyOnly,
+	NLT_ArcaneScrollsOnly,
+	NLT_ThirdOfAll,
+	NLT_FifthOfAll,
+	NLT_Nothing
+};
+
 struct InventorySystem : temple::AddressTable
 {
 	
@@ -58,7 +69,7 @@ struct InventorySystem : temple::AddressTable
 	objHndl(__cdecl *GetItemAtInvIdx)(objHndl, uint32_t nIdx); // returns the item at obj_f_critter_inventory subIdx nIdx  (or obj_f_container_inventory for containers); Note the difference to ItemWornAt! (this is a more low level function)
 	objHndl FindMatchingStackableItem(objHndl objHndReceiver, objHndl objHndItem);
 	void WieldBest(objHndl handle, int invSlot, objHndl target);
-
+	
 
 	void (__cdecl *sub_100FF500)(Dispatcher *dispatcher, objHndl objHndItem, uint32_t itemInvLocation);
 	uint32_t(__cdecl *IsItemEffectingConditions)(objHndl objHndItem, uint32_t itemInvLocation);
@@ -94,9 +105,15 @@ struct InventorySystem : temple::AddressTable
 	static bool IsTripWeapon(objHndl weapon);
 	ArmorType GetArmorType(int armorFlags);
 	
+	// handling for items with quantities
 	BOOL GetQuantityField(const objHndl item, obj_f * qtyField); // gets the relevant quantity field for the item ; returns 0 if irrelevant
 	int GetQuantity(objHndl item); // note: returns 0 for items with no quantity fields!
 	void QuantitySet(const objHndl& item, int qtyNew);
+	/*
+	 // if item is "stackable", and has more than 1 piece, 
+	    clones it to specified location and reduces the original's amount by 1.
+	 */
+	objHndl SplitObjFromStack(objHndl item, locXY& loc); 
 
 	int ItemWeight(objHndl item); // returns weight of item (or item stack if applicable)
 
@@ -114,6 +131,7 @@ struct InventorySystem : temple::AddressTable
 	int SetItemParent(objHndl item, objHndl parent, int flags);
 	int SetItemParent(objHndl item, objHndl receiver, ItemInsertFlags flags);
 	ItemErrorCode TransferWithFlags(objHndl item, objHndl receiver, int invenInt, char flags, objHndl bag); // see ItemInsertFlags
+	bool ItemTransferTo(objHndl item, objHndl receiver, int invIdx = INVENTORY_IDX_UNDEFINED); // this is a more low level function relative to ItemTransferWithFlags
 	void ItemPlaceInIdx(objHndl item, int idx);
 	int ItemInsertGetLocation(objHndl item, objHndl receiver, int* itemInsertLocation, objHndl bag, char flags);
 	void InsertAtLocation(objHndl item, objHndl receiver, int itemInsertLocation);
@@ -143,7 +161,8 @@ struct InventorySystem : temple::AddressTable
 	*/
 	int GetAppraisedWorth(objHndl item, objHndl appraiser, objHndl vendor, SkillEnum skillEnum);
 	void MoneyToCoins(int appraisedWorth, int* plat, int* gold, int* silver, int* copper);
-	
+	int32_t GetCoinWorth(int32_t coinType);
+
 	/*
 		0 - light weapon; 1 - can wield one handed; 2 - must wield two handed; 3 (???)
 		if regardEnlargement is true:
@@ -172,6 +191,10 @@ struct InventorySystem : temple::AddressTable
 
 	bool ItemCanBePickpocketed(objHndl item); // checks if the item is lightweight, unequipped, and not marked OIF_NO_PICKPOCKET
 	
+	bool NpcCanLoot(objHndl npc); // can the npc loot items?
+	bool NpcWillLoot(objHndl item, NpcLootingType lootType); // does the npc want to loot this item?
+	bool DoNpcLooting(objHndl opener, objHndl container); // divide loot to NPC party members first
+
 	// When equipped, which bone of the parent obj does this item attach to?
 	const std::string &GetAttachBone(objHndl item);
 

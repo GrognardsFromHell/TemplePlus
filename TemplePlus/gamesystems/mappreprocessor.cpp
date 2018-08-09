@@ -5,7 +5,7 @@
 
 void MapMobilePreprocessor::Preprocess(const std::string& mapName) const {
 
-	auto cachePath = Path::Concat("maps\\", EncodeMapCacheFilename(mapName));
+	auto cachePath = VfsPath::Concat("maps\\", EncodeMapCacheFilename(mapName));
 
 	if (IsValidCacheFile(cachePath)) {
 		return;

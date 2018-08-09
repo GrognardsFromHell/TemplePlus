@@ -186,23 +186,6 @@ TigTabParserFuncs::TigTabParserFuncs() {
 	rebase(Close, 0x101F2C30);
 }
 
-class TigTabReplacements: TempleFix{
-public:
-	static void FormatRawString(TigTabParser* tab);
-
-	static void(__cdecl*orgFormatRawString)(TigTabParser* tab);
-	void apply() override {
-		orgFormatRawString = replaceFunction(0x101F2DC0, FormatRawString);
-	}
-} tigTabReplacements;
-
-void TigTabReplacements::FormatRawString(TigTabParser* tab)
-{
-	orgFormatRawString(tab);
-	int dummy = 1;
-}
-
-void(__cdecl*TigTabReplacements::orgFormatRawString)(TigTabParser* tab);
 
 
 void TigRect::FitInto(const TigRect& boundingRect) {

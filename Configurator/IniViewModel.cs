@@ -84,6 +84,11 @@ namespace TemplePlusConfig
 
         public static readonly DependencyProperty NonCoreProperty = DependencyProperty.Register(
           "NonCore", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+        public static readonly DependencyProperty NewRacesProperty = DependencyProperty.Register(
+          "NewRaces", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+        public static readonly DependencyProperty MonstrousRacesProperty = DependencyProperty.Register(
+          "MonstrousRaces", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+
 
         public static readonly DependencyProperty LaxRulesProperty = DependencyProperty.Register(
           "LaxRules", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
@@ -268,6 +273,17 @@ namespace TemplePlusConfig
             set { SetValue(NonCoreProperty, value); }
         }
 
+        public bool NewRaces
+        {
+            get { return (bool)GetValue(NewRacesProperty); }
+            set { SetValue(NewRacesProperty, value); }
+        }
+        public bool MonstrousRaces
+        {
+            get { return (bool)GetValue(MonstrousRacesProperty); }
+            set { SetValue(MonstrousRacesProperty, value); }
+        }
+
         public bool LaxRules
         {
             get { return (bool)GetValue(LaxRulesProperty); }
@@ -442,7 +458,16 @@ namespace TemplePlusConfig
             {
                 NonCore = nonCore;
             }
-
+            bool newRaces;
+            if (bool.TryParse(tpData["newRaces"], out newRaces))
+            {
+                NewRaces = newRaces;
+            }
+            bool monstrousRaces;
+            if (bool.TryParse(tpData["monstrousRaces"], out monstrousRaces))
+            {
+                MonstrousRaces = monstrousRaces;
+            }
 
             // Lax Rules
             bool laxRules;
@@ -531,6 +556,8 @@ namespace TemplePlusConfig
             tpData["allowXpOverflow"] = AllowXpOverflow ? "true" : "false";
             tpData["slowerLevelling"] = SlowerLevelling ? "true" : "false";
             tpData["newClasses"] = NewClasses? "true" : "false";
+            tpData["newRaces"] = NewRaces? "true" : "false";
+            tpData["monstrousRaces"] = MonstrousRaces? "true" : "false";
             tpData["nonCoreMaterials"] = NonCore ? "true" : "false";
             tpData["tolerantNpcs"] = TolerantTownsfolk? "true" : "false";
             tpData["showExactHPforNPCs"] = TransparentNpcStats? "true" : "false";

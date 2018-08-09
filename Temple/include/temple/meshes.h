@@ -15,11 +15,11 @@ namespace temple {
 		std::function<std::string(int)> resolveSkmFile;
 		std::function<void(const std::string&)> runScript;
 		std::function<int(const std::string&)> resolveMaterial;
+
+		bool equalizeMovementSpeed = false;
+		bool fastSneakAnim = false;
 	};
 
-	using AasFreeListener = std::function<void(AasHandle)>;
-	using AasFreeListenerHandle = std::list<AasFreeListener>::iterator;
-	
 	class AasAnimatedModelFactory : public gfx::AnimatedModelFactory {
 	public:
 		explicit AasAnimatedModelFactory(const AasConfig &config);
@@ -39,30 +39,33 @@ namespace temple {
 			const gfx::AnimatedModelParams& params) override;
 
 		/*
-			Gets an existing animated model by its handle.
-			The returned model will not free the actual animation when it is
-			destroyed.
+		Gets an existing animated model by its handle.
+		The returned model will not free the actual animation when it is
+		destroyed.
 		*/
-		std::unique_ptr<gfx::AnimatedModel> BorrowByHandle(AasHandle handle);
+		std::unique_ptr<gfx::AnimatedModel> BorrowByHandle(AasHandle handle) override;
 
-		AasFreeListenerHandle AddFreeListener(AasFreeListener listener);
-		void RemoveFreeListener(AasFreeListenerHandle handle);
+		void FreeHandle(uint32_t handle) override;
 
-		void InvalidateBuffers(AasHandle handle);
-
-		void FreeAll();
+		void FreeAll() override;
 
 	private:
 		AasConfig mConfig;
 		using FnAasModelFree = int(temple::AasHandle);
 		FnAasModelFree* mOrgModelFree;
+
+		using FnAasGetDistPerSec = float(temple::AasHandle);
+		FnAasGetDistPerSec* mOrgGetDistPerSec = nullptr;
+
 		static AasAnimatedModelFactory *sInstance;
-		std::list<AasFreeListener> mListeners;
+
+		std::unique_ptr<gfx::IRenderState> mRenderStates[5000];
 
 		// This is the mapping loaded from meshes.mes
 		std::unordered_map<int, std::string> mMapping;
-		
+
 		static int __stdcall AasResolveMaterial(const char *filename, int, int);
+		static float AasGetDistPerSec(temple::AasHandle handle);
 		static int AasFreeModel(temple::AasHandle handle);
 
 	};

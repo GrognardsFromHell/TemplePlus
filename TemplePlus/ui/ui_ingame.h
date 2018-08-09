@@ -2,6 +2,7 @@
 #pragma once
 
 #include "ui_system.h"
+#include "raycast.h"
 
 struct objHndl;
 struct TigMsg;
@@ -27,12 +28,6 @@ public:
 
 	bool HandleRadialMenuMessage(const TigMsg &msg);
 	bool HandlePickerMessage(const TigMsg &msg);
-	
-	/**
-	 * Is the object not targetable by mouse?
-	 * Was @ 1001FCB0
-	 */
-	bool IsUntargetable(objHndl obj);
 
 	/**
 	 * Seems to reset any input focus the ingame UI might have. Used
@@ -44,7 +39,7 @@ public:
 	/**
 	* Selects the topmost object under the given screen coordinate.
 	*/
-	objHndl PickObject(int x, int y, uint32_t flags); // flags - see RaycastFlags
+	objHndl PickObject(int x, int y, GameRaycastFlags flags = GRF_HITTEST_3D); // flags - see RaycastFlags
 
 private:
 	bool mPrevMsgWasInCombat = false;

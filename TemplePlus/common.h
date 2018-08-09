@@ -260,6 +260,13 @@ enum class UiPickerType : uint64_t {
 struct ObjListResultItem {
 	objHndl handle;
 	ObjListResultItem *next;
+
+	void FreeRecursive(){
+		if (next)
+			next->FreeRecursive();
+		free(this);
+	}
+	
 };
 
 struct ObjListResult

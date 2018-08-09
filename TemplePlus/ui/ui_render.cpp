@@ -139,6 +139,15 @@ bool UiRenderer::DrawTextInWidget(int widgetId, const string &text, const TigRec
 	// return uiRenderFuncs.DrawTextInWidget(widgetId, text.c_str(), rect, style);
 }
 
+bool UiRenderer::DrawTextInWidgetCentered(int widgetId, const string & text, const TigRect & rect, const TigTextStyle & style)
+{
+	auto meas = MeasureTextSize(text, style);
+	TigRect rect2( (rect.width - meas.width)/2 + rect.x, 
+				   (rect.height - meas.height) / 2 + rect.y,
+					meas.width, meas.height);
+	return DrawTextInWidget(widgetId, text, rect2, style);
+}
+
 bool UiRenderer::RenderText(const string &text, TigRect &rect, const TigTextStyle &style) {
 	return tigFont.Draw(text.c_str(), rect, style) == 0;
 }

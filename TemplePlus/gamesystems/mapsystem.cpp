@@ -15,7 +15,7 @@
 
 #include <tio/tio.h>
 
-#include "anim.h"
+#include "animgoals/anim.h"
 #include "map/sector.h"
 #include "obj.h"
 #include "gamesystems/legacysystems.h"
@@ -690,6 +690,9 @@ int MapSystem::GetMapIdByType(MapType type)
 		if (entry.second.type == type) {
 			return entry.first;
 		}
+	}
+	if (type == MapType::ArenaMap){
+		return 5119;
 	}
 	return 0;
 }

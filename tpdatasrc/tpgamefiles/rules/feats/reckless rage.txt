@@ -1,0 +1,5 @@
+name: Reckless Rage
+flags: 12582912
+prereqs: 
+description: Whenever you activate your rage ability, you take an additional -2 penalty to your Armor Class, but you gain an additional +2 bonus to Strength and Constitution. These bonuses and penalties stack with the effects of rage, greater rage, and mighty rage.
+prereq descr: Con 13, Rage Ability

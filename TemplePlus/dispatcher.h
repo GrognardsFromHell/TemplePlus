@@ -46,8 +46,6 @@ struct DispatcherCallbackArgs;
 struct Dispatcher;
 
 
-
-
 struct DispatcherSystem : temple::AddressTable
 {
 	Dispatcher* DispatcherInit(objHndl objHnd);
@@ -104,6 +102,8 @@ struct DispatcherSystem : temple::AddressTable
 	int DispatchGetSizeCategory(objHndl objHndCaller);
 	void DispatchConditionRemove(Dispatcher* dispatcher, CondNode* cond);
 	unsigned int Dispatch35CasterLevelModify(objHndl obj, SpellPacketBody* spellPkt);
+	void DispatchMetaMagicModify(objHndl obj, MetaMagicData& mmData);
+	void DispatchSpecialAttack(objHndl obj, int attack, objHndl target);
 	int DispatchSpellListLevelExtension(objHndl obj, Stat casterClass);
 	int DispatchGetBaseCasterLevel(objHndl obj, Stat casterClass);
 
@@ -220,6 +220,9 @@ struct CondStructNew{
 	//void AddPyHook(enum_disp_type dispType, D20DispatcherKey dispKey, pybind11::function pycallback, pybind11::tuple pydataTuple);
 	void Register();
 	void AddToFeatDictionary(feat_enums feat, feat_enums featEnumMax = FEAT_INVALID, uint32_t condArg2Offset = 0);
+
+	// standard callbacks
+	void AddAoESpellRemover();
 };
 
 struct DispatcherCallbackArgs {
@@ -234,8 +237,10 @@ struct DispatcherCallbackArgs {
 	int GetData1() const; // gets the data1 value from the subDispDef
 	int GetData2() const;
 	void SetCondArg(uint32_t argIdx, int value);
+	void SetCondArgObjHndl(uint32_t argIdx, const objHndl& handle);
 	void RemoveCondition(); // note: this is the low level function
 	void RemoveSpellMod();
+	void RemoveSpell(); // general spell remover
 	
 };
 
@@ -334,7 +339,7 @@ const auto TestSizeOfDispIoTooltip = sizeof(DispIoTooltip); // should be 2568  (
 
 struct DispIoObjBonus : DispIO // type 10
 {
-	uint32_t returnVal;
+	uint32_t flags;
 	BonusList * bonOut;
 	uint32_t pad;
 	objHndl obj; //optional
@@ -521,6 +526,19 @@ struct EvtObjSpellCaster: DispIO // type 34 (NEW!)
 	int arg1;
 	SpellPacketBody* spellPkt;
 	EvtObjSpellCaster() { dispIOType = evtObjTypeSpellCaster; handle = objHndl::null; arg0 = 0; arg1 = 0; spellPkt = nullptr; };
+};
+
+struct EvtObjMetaMagic : DispIO // type 35 (NEW!)
+{
+	MetaMagicData mmData;
+};
+
+struct EvtObjSpecialAttack : DispIO // type 36 (NEW!)
+{
+	enum AttackType {STUNNING_FIST=1, NUM_EFFECTS};
+
+	int attack;  //Uses the attack enum but unfortunately the enum can't be passed through to python
+	objHndl target;
 };
 
 struct EvtObjActionCost: DispIO

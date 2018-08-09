@@ -25,7 +25,7 @@ struct HistorySystem : temple::AddressTable
 
 
 	static void CreateFromFreeText(const char *);
-	void PrintSpellCast(objHndl caster, int spEnum);
+	void PrintSpellCast(objHndl caster, int spEnum); // [ACTOR] casts [SPELL NAME]!
 
 	HistoryEntry* HistoryFind(int histId);
 	void AppendHistoryId(int histId);

@@ -14,6 +14,8 @@ def	OnSpellEffect( spell ):
 	damage_dice = dice_new( '5d6' )
 	duration_dice = dice_new( '2d6' )
 	spell.duration = duration_dice.roll()
+	earth_dam = dice_new ( '1d6' )
+	earth_dam.number = min( 15, spell.caster_level )
 
 	game.particles( 'sp-Shout', spell.caster )
 

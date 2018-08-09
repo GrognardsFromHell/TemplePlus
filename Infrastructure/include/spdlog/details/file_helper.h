@@ -1,140 +1,151 @@
-/*************************************************************************/
-/* spdlog - an extremely fast and easy to use c++11 logging library.     */
-/* Copyright (c) 2014 Gabi Melman.                                       */
-/*                                                                       */
-/* Permission is hereby granted, free of charge, to any person obtaining */
-/* a copy of this software and associated documentation files (the       */
-/* "Software"), to deal in the Software without restriction, including   */
-/* without limitation the rights to use, copy, modify, merge, publish,   */
-/* distribute, sublicense, and/or sell copies of the Software, and to    */
-/* permit persons to whom the Software is furnished to do so, subject to */
-/* the following conditions:                                             */
-/*                                                                       */
-/* The above copyright notice and this permission notice shall be        */
-/* included in all copies or substantial portions of the Software.       */
-/*                                                                       */
-/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
-/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
-/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
-/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
-/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
-/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
-/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
-/*************************************************************************/
+//
+// Copyright(c) 2015 Gabi Melman.
+// Distributed under the MIT License (http://opensource.org/licenses/MIT)
+//
 
 #pragma once
 
 // Helper class for file sink
 // When failing to open a file, retry several times(5) with small delay between the tries(10 ms)
-// Can be set to auto flush on every line
 // Throw spdlog_ex exception on errors
 
+#include "../details/log_msg.h"
+#include "../details/os.h"
+
+#include <cerrno>
+#include <chrono>
+#include <cstdio>
 #include <string>
 #include <thread>
-#include <chrono>
-#include "os.h"
+#include <tuple>
 
-
-
-
-namespace spdlog
-{
-namespace details
-{
+namespace spdlog {
+namespace details {
 
 class file_helper
 {
+
 public:
     const int open_tries = 5;
     const int open_interval = 10;
 
-    explicit file_helper(bool force_flush):
-        _fd(nullptr),
-        _force_flush(force_flush)
-    {}
+    explicit file_helper() = default;
 
-    file_helper(const file_helper&) = delete;
-    file_helper& operator=(const file_helper&) = delete;
+    file_helper(const file_helper &) = delete;
+    file_helper &operator=(const file_helper &) = delete;
 
     ~file_helper()
     {
         close();
     }
 
-
-    void open(const std::string& fname, bool truncate=false)
+    void open(const filename_t &fname, bool truncate = false)
     {
-
         close();
-        const char* mode = truncate ? "wb" : "ab";
+        auto *mode = truncate ? SPDLOG_FILENAME_T("wb") : SPDLOG_FILENAME_T("ab");
         _filename = fname;
         for (int tries = 0; tries < open_tries; ++tries)
         {
-            if(!os::fopen_s(&_fd, fname, mode))
+            if (!os::fopen_s(&_fd, fname, mode))
+            {
                 return;
+            }
 
-            std::this_thread::sleep_for(std::chrono::milliseconds(open_interval));
+            details::os::sleep_for_millis(open_interval);
         }
 
-        throw spdlog_ex("Failed opening file " + fname + " for writing");
+        throw spdlog_ex("Failed opening file " + os::filename_to_str(_filename) + " for writing", errno);
     }
 
     void reopen(bool truncate)
     {
-        if(_filename.empty())
+        if (_filename.empty())
+        {
             throw spdlog_ex("Failed re opening file - was not opened before");
+        }
         open(_filename, truncate);
+    }
 
+    void flush()
+    {
+        std::fflush(_fd);
     }
 
     void close()
     {
-        if (_fd)
+        if (_fd != nullptr)
         {
             std::fclose(_fd);
             _fd = nullptr;
         }
     }
 
-    void write(const log_msg& msg)
+    void write(const log_msg &msg)
     {
-
-        size_t size = msg.formatted.size();
+        size_t msg_size = msg.formatted.size();
         auto data = msg.formatted.data();
-        if(std::fwrite(data, 1, size, _fd) != size)
-            throw spdlog_ex("Failed writing to file " + _filename);
-
-        if(_force_flush)
-            std::fflush(_fd);
-
+        if (std::fwrite(data, 1, msg_size, _fd) != msg_size)
+        {
+            throw spdlog_ex("Failed writing to file " + os::filename_to_str(_filename), errno);
+        }
     }
 
-    const std::string& filename() const
+    size_t size() const
+    {
+        if (_fd == nullptr)
+        {
+            throw spdlog_ex("Cannot use size() on closed file " + os::filename_to_str(_filename));
+        }
+        return os::filesize(_fd);
+    }
+
+    const filename_t &filename() const
     {
         return _filename;
     }
 
-    static bool file_exists(const std::string& name)
+    static bool file_exists(const filename_t &fname)
     {
-        FILE* file;
-        if (!os::fopen_s(&file, name.c_str(), "r"))
+        return os::file_exists(fname);
+    }
+
+    //
+    // return file path and its extension:
+    //
+    // "mylog.txt" => ("mylog", ".txt")
+    // "mylog" => ("mylog", "")
+    // "mylog." => ("mylog.", "")
+    // "/dir1/dir2/mylog.txt" => ("/dir1/dir2/mylog", ".txt")
+    //
+    // the starting dot in filenames is ignored (hidden files):
+    //
+    // ".mylog" => (".mylog". "")
+    // "my_folder/.mylog" => ("my_folder/.mylog", "")
+    // "my_folder/.mylog.txt" => ("my_folder/.mylog", ".txt")
+    static std::tuple<filename_t, filename_t> split_by_extenstion(const spdlog::filename_t &fname)
+    {
+        auto ext_index = fname.rfind('.');
+
+        // no valid extension found - return whole path and empty string as extension
+        if (ext_index == filename_t::npos || ext_index == 0 || ext_index == fname.size() - 1)
         {
-            fclose(file);
-            return true;
+            return std::make_tuple(fname, spdlog::filename_t());
         }
-        else
+
+        // treat casese like "/etc/rc.d/somelogfile or "/abc/.hiddenfile"
+        auto folder_index = fname.rfind(details::os::folder_sep);
+        if (folder_index != fname.npos && folder_index >= ext_index - 1)
         {
-            return false;
+            return std::make_tuple(fname, spdlog::filename_t());
         }
+
+        // finally - return a valid base and extension tuple
+        return std::make_tuple(fname.substr(0, ext_index), fname.substr(ext_index));
     }
 
 private:
-    FILE* _fd;
-    std::string _filename;
-    bool _force_flush;
-
-
+    FILE *_fd{nullptr};
+    filename_t _filename;
 };
-}
-}
-
+} // namespace details
+} // namespace spdlog

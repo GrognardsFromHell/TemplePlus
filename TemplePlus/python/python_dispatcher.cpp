@@ -29,6 +29,7 @@
 #include "python_integration_spells.h"
 #include "temple_functions.h"
 #include "rng.h"
+#include "float_line.h"
 
 namespace py = pybind11;
 
@@ -103,6 +104,11 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		return ElfHash::Hash(text);
 	});
 
+	m.def("register_metamagic_feat", [](std::string &text) {
+		auto feat = ElfHash::Hash(text);
+		feats.AddMetamagicFeat(static_cast<feat_enums>(feat));
+	});
+
 	m.def("GetModifierFileList", [](){
 		auto result = std::vector<std::string>();
 		TioFileList flist;
@@ -165,7 +171,16 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 				}
 			})
 		.def("add_item_force_remove_callback", [](CondStructNew &condStr){
-				condStr.AddHook(dispTypeItemForceRemove, DK_NONE, temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x10104410));
+			condStr.AddHook(dispTypeItemForceRemove, DK_NONE, temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x10104410));
+		})
+		.def("add_spell_countdown_standard", [](CondStructNew &condStr){
+			condStr.AddHook(dispTypeBeginRound, DK_NONE, temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100DC100));
+		})
+		.def("add_aoe_spell_ender", [](CondStructNew &condStr) {
+			condStr.AddAoESpellRemover();
+		})
+		.def("add_spell_dismiss_hook", [](CondStructNew &condStr){
+			condStr.AddHook(dispTypeConditionAdd, DK_NONE, temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100CBD60));
 		})
 		;
 
@@ -200,11 +215,15 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		{
 			conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
 		})
+		.def("remove_spell_mod", &DispatcherCallbackArgs::RemoveSpellMod)
+		.def("remove_spell", &DispatcherCallbackArgs::RemoveSpell)
 		;
 
 	#pragma endregion 
 
 	#pragma region useful data types
+
+	#pragma region Location
 		py::class_<locXY>(m, "LocXY")
 		.def_readwrite("x", &locXY::locx)
 		.def_readwrite("y", &locXY::locy)
@@ -216,10 +235,24 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def("get_location", [](LocAndOffsets& loc)->int64_t{
 			return (int64_t)loc.location;
 		})
+		.def("distance_to", [](LocAndOffsets& src, LocAndOffsets& dest)-> float {
+			return locSys.Distance3d(src, dest) / INCH_PER_FEET;
+		})
+		.def("get_offset_loc", [](LocAndOffsets& src, float angleRad, float rangeFt)-> LocAndOffsets{
+			auto absX = 0.0f, absY = 0.0f;
+			locSys.GetOverallOffset(src, &absX, &absY);
+			auto vectorAngleRad = 5 * M_PI / 4 - angleRad;
+			auto result = src;
+			result.off_x += (float)(rangeFt * INCH_PER_FEET * cos(vectorAngleRad));
+			result.off_y += (float)(rangeFt * INCH_PER_FEET * sin(vectorAngleRad));
+			locSys.RegularizeLoc(&result);
+			return result;
+		})
 		;
 		py::class_<LocFull>(m, "LocFull")
 		.def_readwrite("loc_and_offsets", &LocFull::location)
 		;
+	#pragma endregion
 
 	#pragma region Bonuslist etc
 	py::class_<BonusList>(m, "BonusList")
@@ -250,6 +283,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			.def("add_cap", [](BonusList & bonlist, int bonType, int value, int mesline, std::string &text) {
 					 bonlist.AddCapWithCustomDescr(bonType, value, mesline, text);
 				 }, "Adds cap for a particular bonus type")
+			.def_readwrite("flags", &BonusList::bonFlags)
 			;
 
 	 py::class_<AttackPacket>(m, "AttackPacket")
@@ -276,10 +310,14 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def("add_physical_damage_res", [](DamagePacket& damPkt, int amount, int bypassingAttackPower, int damMesLine){
 			damPkt.AddPhysicalDR(amount, bypassingAttackPower, damMesLine);
 		}, "Adds physical (Slashing/Piercing/Crushing) damage resistance.")
+		.def("add_damage_bonus", [](DamagePacket& damPkt, int32_t damBonus, int bonType, int bonMesline) {
+			damPkt.AddDamageBonus(damBonus, bonType, bonMesline);  //Note:  Description string not supported now
+		}, "Adds a damage Bonus.")
 		.def("add_damage_resistance", [](DamagePacket& damPkt, int amount, int damType, int damMesLine) {
 			auto _damType = (DamageType)damType;
 			damPkt.AddDR(amount, _damType, damMesLine);
 		}, "Adds damage resistance.")
+		.def_readwrite("final_damage", &DamagePacket::finalDamage, "Final Damage Value")
 		.def_readwrite("flags", &DamagePacket::flags, "1 - maximized, 2 - empowered")
 		.def_readwrite("bonus_list", &DamagePacket::bonuses)
 		.def_readwrite("critical_multiplier", &DamagePacket::critHitMultiplier, "1 by default, gets increased by various things")
@@ -287,6 +325,8 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 
 	py::class_<MetaMagicData>(m, "MetaMagicData")
 		.def(py::init<>())
+		.def(py::init<unsigned int>(), py::arg("value"))
+		.def("get_raw_value", [](MetaMagicData& mmData)->unsigned int {	return mmData;	})
 		.def("get_heighten_count", [](MetaMagicData& mmData)->int {	return mmData.metaMagicHeightenSpellCount;	})
 		.def("get_enlarge_count", [](MetaMagicData& mmData)->int {	return mmData.metaMagicEnlargeSpellCount;	})
 		.def("get_extend_count", [](MetaMagicData& mmData)->int {	return mmData.metaMagicExtendSpellCount;	})
@@ -415,6 +455,8 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.value("FullAttack", D20ActionType::D20A_FULL_ATTACK)
 		.value("StandardRangedAttack", D20ActionType::D20A_STANDARD_RANGED_ATTACK)
 		.value("StandUp", D20ActionType::D20A_STAND_UP)
+		.value("TurnUndead", D20ActionType::D20A_TURN_UNDEAD)
+		.value("ClassAbility", D20ActionType::D20A_CLASS_ABILITY_SA)
 		.value("CastSpell", D20ActionType::D20A_CAST_SPELL)
 		.value("UseItem", D20ActionType::D20A_USE_ITEM)
 		.value("UsePotion", D20ActionType::D20A_USE_POTION)
@@ -576,9 +618,38 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 				spellSys.UpdateSpellPacket(pkt);
 				pySpellIntegration.UpdateSpell(pkt.spellId);
 			}, "Updates the changes made in this local copy in the active spell registry.")
-			.def("set_spell_object", [](SpellPacketBody&pkt, objHndl spellObj, int partsysId){
-				pkt.spellObjs[0].obj = spellObj;
-				pkt.spellObjs[0].partySysId = partsysId;
+			.def("set_spell_object", [](SpellPacketBody&pkt, int idx,  objHndl spellObj, int partsysId){
+				pkt.spellObjs[idx].obj = spellObj;
+				pkt.spellObjs[idx].partySysId = partsysId;
+			})
+			.def("add_spell_object", [](SpellPacketBody&pkt, objHndl spellObj, int partsysId) {
+				auto idx = pkt.numSpellObjs;
+				if (idx >= 128)
+					return;
+				pkt.spellObjs[idx].obj = spellObj;
+				pkt.spellObjs[idx].partySysId = partsysId;
+				pkt.numSpellObjs++;
+			})
+			.def("add_target",[](SpellPacketBody&pkt, objHndl handle, int partsysId)->bool{
+				return pkt.AddTarget(handle, partsysId, false);
+			})
+			.def("end_target_particles", [](SpellPacketBody&pkt, objHndl handle){
+				pkt.EndPartsysForTgtObj(handle);
+			})
+			.def("remove_target", [](SpellPacketBody&pkt, objHndl handle){
+				pkt.RemoveObjFromTargetList(handle);
+			})
+			.def("check_spell_resistance", [](SpellPacketBody&pkt, objHndl tgt){
+				return pkt.CheckSpellResistance(tgt);
+			})
+			.def("trigger_aoe_hit", [](SpellPacketBody&pkt) {
+				if (!pkt.spellEnum)
+					return;
+				pySpellIntegration.SpellTrigger(pkt.spellId, SpellEvent::AreaOfEffectHit);
+			})
+			.def("float_spell_line", [](SpellPacketBody& pkt, objHndl handle, int lineId, int color){
+				auto color_ = (FloatLineColor)color;
+				floatSys.FloatSpellLine(handle, lineId, color_);
 			})
 			;
 
@@ -590,10 +661,20 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 
 	py::class_<DispIoCondStruct, DispIO>(m, "EventObjModifier", "Used for checking modifiers before applying them")
 		.def(py::init())
-		.def_readwrite("retun_val", &DispIoCondStruct::outputFlag)
+		.def_readwrite("return_val", &DispIoCondStruct::outputFlag)
 		.def_readwrite("arg1", &DispIoCondStruct::arg1, "First modifier argument")
 		.def_readwrite("arg2", &DispIoCondStruct::arg2, "Second modifier argument")
-		.def_readwrite("modifier_spec", &DispIoCondStruct::condStruct, "Modifier Spec (DO NOT ADD HOOKS FROM HERE! Due to different format for vanilla ToEE and Temple+ modifier specs.)");
+		.def_readwrite("modifier_spec", &DispIoCondStruct::condStruct, "Modifier Spec (DO NOT ADD HOOKS FROM HERE! Due to different format for vanilla ToEE and Temple+ modifier specs.)")
+		.def("is_modifier", [](DispIoCondStruct& evtObj, std::string& s)->int {
+			auto cond = conds.GetByName(s);
+			if (!cond){
+				logger->error("Unknown Modifier specified: {}", s);
+				return 0;
+			}
+			auto isEqual = evtObj.condStruct == cond;
+			return isEqual ? TRUE : FALSE;
+		}, "Used for checking condition equality. The condition to be checked against is specified by its string ID")
+		;
 
 
 	py::class_<DispIoBonusList, DispIO>(m, "EventObjBonusList", "Used for fetching ability score levels and cur/max HP")
@@ -651,7 +732,10 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 
 	py::class_<DispIoObjBonus, DispIO>(m, "EventObjObjectBonus", "Used for Item Bonuses, initiative modifiers and others.")
 		.def_readwrite("bonus_list", &DispIoObjBonus::bonOut)
-		.def_readwrite("return_val", &DispIoObjBonus::returnVal);
+		.def_readwrite("flags", &DispIoObjBonus::flags)
+		.def_readwrite("return_val", &DispIoObjBonus::flags) // I think that field is also used for return_val somewhere... not 100% sure though. also leaving it for backward compatibility
+		.def_readwrite("obj", &DispIoObjBonus::obj)
+		;
 
 	py::class_<DispIoDispelCheck, DispIO>(m, "EventObjDispelCheck", "Dispel Check Event")
 		.def_readwrite("return_val", &DispIoDispelCheck::returnVal)
@@ -708,6 +792,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 	py::class_<DispIoTypeImmunityTrigger, DispIO>(m, "EventObjImmunityTrigger", "Used for triggering the immunity handling query")
 		.def_readwrite("should_perform_immunity_check", &DispIoTypeImmunityTrigger::interrupt)
 		.def_readwrite("immunity_key", &DispIoTypeImmunityTrigger::SDDKey1)
+		//.def()
 		; // TODO
 
 	py::class_<DispIoImmunity, DispIO>(m, "EventObjImmunityQuery", "Used for performing the immunity handling")
@@ -731,6 +816,15 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("cost_new", &EvtObjActionCost::acpCur)
 		.def_readwrite("d20a", &EvtObjActionCost::d20a)
 		.def_readwrite("turnbased_status", &EvtObjActionCost::tbStat)
+		;
+
+	py::class_<EvtObjMetaMagic, DispIO>(m, "EvtObjMetaMagic", "Used for modifying metamagic data")
+		.def_readwrite("meta_magic", &EvtObjMetaMagic::mmData)
+		;
+
+	py::class_<EvtObjSpecialAttack, DispIO>(m, "EvtObjSpecialAttack", "Used for applying effects")
+		.def_readwrite("attack", &EvtObjSpecialAttack::attack)
+		.def_readwrite("target", &EvtObjSpecialAttack::target)
 		;
 
 }
@@ -972,6 +1066,12 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 	case dispTypeActionCostMod:
 		pbEvtObj = py::cast(static_cast<EvtObjActionCost*>(args.dispIO));
 		break;
+
+	case dispTypeSpecialAttack:
+		pbEvtObj = py::cast(static_cast<EvtObjSpecialAttack*>(args.dispIO));
+		break;
+
+
 
 
 	case dispTypeConditionAdd: // these are actually null

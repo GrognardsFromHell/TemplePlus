@@ -6,7 +6,9 @@
 #include "ui_turn_based.h"
 #include "ui_mainmenu.h"
 #include "ui_worldmap.h"
-
+#include "ui_pc_creation.h"
+#include "ui_char.h"
+#include "ui_townmap.h"
 UiSystems* uiSystems = nullptr;
 
 UiSystems::UiSystems(int width, int height)
@@ -29,7 +31,7 @@ UiSystems::UiSystems(int width, int height)
 	mCombat = InitializeSystem<UiCombat>(config);
 	mSlide = InitializeSystem<UiSlide>();
 	mDlg = InitializeSystem<UiDlg>(config);
-	mPcCreation = InitializeSystem<UiPcCreation>(config);
+	mPcCreation = InitializeSystem<UiPcCreationSys>(config);
 	mChar = InitializeSystem<UiChar>(config);
 	mToolTip = InitializeSystem<UiToolTip>(config);
 	mLogbook = InitializeSystem<UiLogbook>(config);

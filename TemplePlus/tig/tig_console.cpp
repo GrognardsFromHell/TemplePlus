@@ -13,6 +13,8 @@
 #include "action_sequence.h"
 #include "dungeon_master.h"
 #include "gameview.h"
+#include "dialog.h"
+#include "d20_race.h"
 
 Console::Console() : mLog(1024), mCommandHistory(100), mCommandBuf(1024, '\0') {
 }
@@ -221,7 +223,7 @@ void Console::RenderCheatsMenu()
 					if (!party.ObjIsAIFollower(handle) && !d20LevelSys.CanLevelup(handle)) {
 						auto obj = gameSystems->GetObj().GetObject(handle);
 
-						auto curLvl = objects.StatLevelGet(handle, stat_level);
+						auto curLvl = critterSys.GetEffectiveLevel(handle);
 						auto xpReq = d20LevelSys.GetXpRequireForLevel(curLvl + 1);
 
 						auto curXp = obj->GetInt32(obj_f_critter_experience);
@@ -393,6 +395,50 @@ void Console::RenderCheatsMenu()
 			}
 			
 			
+
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginMenu("Edit")){
+
+			static char dialogHandleInput[256] = { 0, };
+			static std::string dialogFilename;
+			static int dlgHandle = -1;
+			auto editDialogHandleInputCallback = [](ImGuiTextEditCallbackData *self) -> int {
+				int dlgHandleTmp = 0;
+				sscanf(dialogHandleInput, "%d", &dlgHandleTmp);
+				if (!strlen(dialogHandleInput))
+					return 0;
+				auto dlgFileEntry = dialogScripts.GetDialogFileEntry(dlgHandleTmp);
+				if (!dlgFileEntry){
+					dlgHandle = -1;
+					dialogFilename.clear();
+					return 0;
+				}
+				
+				dlgHandle = dlgHandleTmp;
+
+				dialogFilename.clear();
+				auto desc = dlgFileEntry->filename;
+				if (desc) {
+					dialogFilename = desc;
+				}
+				return 0;
+			};
+			ImGui::PushItemWidth(100);
+			if (ImGui::InputText("##giveProtoId", &dialogHandleInput[0], 256, ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory, editDialogHandleInputCallback, (void*)this))
+			{
+				editDialogHandleInputCallback(nullptr);
+			}
+
+			if (!dialogFilename.empty()) {
+				ImGui::SameLine();
+				ImGui::Text(dialogFilename.c_str());
+			}
+
+			ImGui::SameLine();
+			if (ImGui::Button("Save")) {
+				dialogScripts.SaveToFile(dlgHandle);
+			}
 
 			ImGui::EndMenu();
 		}

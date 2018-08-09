@@ -28,7 +28,7 @@
 #include "tig/tig_keyboard.h"
 #include "party.h"
 #include "critter.h"
-#include "anim.h"
+#include "animgoals/anim.h"
 #include "gamesystems/objects/objsystem.h"
 #include "combat.h"
 #include "turn_based.h"
@@ -39,6 +39,7 @@
 #include "ui/ui_systems.h"
 #include "ui/ui_legacysystems.h"
 #include "ui/ui_mainmenu.h"
+#include "ui/ui_debug.h"
 
 static GameLoop *gameLoop = nullptr;
 
@@ -199,6 +200,7 @@ void GameLoop::Run() {
 				&& msg.arg1 == 0x44
 				&& msg.arg2 == 1) {
 				mDiagScreen->Toggle();
+				UIShowDebug();
 			}
 
 			// I have not found any place where message type 7 is queued,
@@ -647,7 +649,7 @@ void MainLoopHooks::NormalLmbHandleTarget(objHndl * tgt)
 			return;
 
 		chosenOne = selectedClosest;
-		animationGoals.PushForMouseTarget(chosenOne, goalType, tgtHndl, tgtLoc, objHndl::null, someFlag);
+		gameSystems->GetAnim().PushForMouseTarget(chosenOne, goalType, tgtHndl, tgtLoc, objHndl::null, someFlag);
 
 
 	}

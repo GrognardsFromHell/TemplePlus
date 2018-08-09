@@ -28,7 +28,10 @@ WidgetBase * WidgetBase::PickWidget(int x, int y)
 		return nullptr;
 	}
 
-	if (x >= 0 && y >= 0 && x < (int) mWidget->width && y < (int) mWidget->height) {
+	if (x >= mMargins.left && 
+		y >= mMargins.bottom && 
+		x < (int) (mWidget->width - mMargins.right)
+		&& y < (int) mWidget->height - mMargins.top) {
 		return this;
 	}
 	return nullptr;
@@ -77,7 +80,7 @@ DirectX::XMINT2 WidgetBase::GetPos() const
 
 WidgetBase::~WidgetBase()
 {
-	if (mWidget->parentId != -1) {
+	if (mWidget && mWidget->parentId != -1){
 		uiManager->RemoveChildWidget(GetWidgetId());
 	}
 	if (mParent) {
@@ -107,9 +110,11 @@ void WidgetBase::Render()
 			contentArea.width = std::max(contentArea.width, preferred.width);
 			contentArea.height = std::max(contentArea.height, preferred.height);
 		}
+
+		// set widget size (adding up the margins in addition to the content dimensions, since the overall size should include the margins)
 		if (contentArea.width != 0 && contentArea.height != 0) {
-			mWidget->width = contentArea.width;
-			mWidget->height = contentArea.height;
+			mWidget->width = contentArea.width + mMargins.left + mMargins.right;
+			mWidget->height = contentArea.height + mMargins.top + mMargins.bottom;
 		}
 	}
 	
@@ -189,6 +194,10 @@ gfx::Size WidgetBase::GetSize() const
 	return{ (int)mWidget->width, (int)mWidget->height };
 }
 
+/*
+Basically gets a TigRect of x,y,w,h.
+Can modify based on parent.
+ */
 static TigRect GetContentArea(LgcyWidgetId id) {
 	
 	auto widget = uiManager->GetWidget(id);
@@ -229,9 +238,24 @@ static TigRect GetContentArea(LgcyWidgetId id) {
 	return bounds;
 }
 
-TigRect WidgetBase::GetContentArea() const
+TigRect WidgetBase::GetContentArea(bool includingMargins) const
 {
-	return ::GetContentArea(mWidget->widgetId);
+	auto res = ::GetContentArea(mWidget->widgetId);
+
+	// if margins not included, subtract them
+	if (!includingMargins){
+		if (res.width != 0 && res.height != 0) {
+			res.x += mMargins.left;
+			res.width -= mMargins.left + mMargins.right;
+			res.y += mMargins.bottom;
+			res.height -= mMargins.bottom + mMargins.top;
+			if (res.width < 0) res.width = 0;
+			if (res.height< 0) res.height = 0;
+		}
+	}
+	
+	
+	return res;
 }
 
 TigRect WidgetBase::GetVisibleArea() const
@@ -324,6 +348,12 @@ WidgetBase * WidgetContainer::PickWidget(int x, int y)
 
 		int localX = x - child->GetPos().x;
 		int localY = y - child->GetPos().y + mScrollOffsetY;
+		if (localY < 0 || localY >= child->GetHeight()){
+			continue;
+		}
+		if (localX < 0 || localX >= child->GetWidth()){
+			continue;
+		}
 		
 		auto result = child->PickWidget(localX, localY);
 		if (result) {
@@ -430,6 +460,7 @@ void WidgetButtonBase::OnUpdateTime(uint32_t timeMs)
 
 WidgetButton::WidgetButton()
 {
+	
 }
 
 void WidgetButton::SetStyle(const WidgetButtonStyle & style)
@@ -440,6 +471,10 @@ void WidgetButton::SetStyle(const WidgetButtonStyle & style)
 	mButton->sndDown = style.soundDown;
 	mButton->sndClick = style.soundClick;
 	UpdateContent();
+}
+
+void WidgetButton::SetStyle(const eastl::string & styleName){
+	SetStyle(widgetButtonStyles->GetStyle(styleName));
 }
 
 void WidgetButton::Render()
@@ -478,7 +513,34 @@ void WidgetButton::Render()
 			} else {
 				mLabel.SetStyleId(mStyle.textStyleId);
 			}
-		} else if (mButton->buttonState == LgcyButtonState::Hovered 
+		} 
+		else if (IsActive()){
+			// Activated, else Pressed, else Hovered, (else Normal)
+			if (mActivatedImage){
+				image = mActivatedImage.get();
+			}
+			else if (mPressedImage){
+				image = mPressedImage.get();
+			}
+			else if (mHoverImage){
+				image = mHoverImage.get();
+			}
+
+
+			if (mButton->buttonState == LgcyButtonState::Hovered
+				|| mButton->buttonState == LgcyButtonState::Released){
+				if (!mStyle.hoverTextStyleId.empty()) {
+					mLabel.SetStyleId(mStyle.hoverTextStyleId);
+				}
+				else {
+					mLabel.SetStyleId(mStyle.textStyleId);
+				}
+			}
+			else {
+				mLabel.SetStyleId(mStyle.textStyleId);
+			}
+		}
+		else if (mButton->buttonState == LgcyButtonState::Hovered 
 			|| mButton->buttonState == LgcyButtonState::Released) {
 			if (mHoverImage) {
 				image = mHoverImage.get();
@@ -498,11 +560,18 @@ void WidgetButton::Render()
 		}
 	}
 
+	auto fr = mFrameImage.get();
+	if (fr) {
+		auto contentAreaWithMargins = GetContentArea(true);
+		fr->SetContentArea(contentAreaWithMargins);
+		fr->Render();
+	}
+
 	if (image) {
 		image->SetContentArea(contentArea);
 		image->Render();
 	}
-	
+
 	mLabel.SetContentArea(contentArea);
 	mLabel.Render();
 }
@@ -520,6 +589,13 @@ void WidgetButton::UpdateContent()
 		mNormalImage = std::make_unique<WidgetImage>(mStyle.normalImagePath);
 	} else {
 		mNormalImage.reset();
+	}
+
+	if (!mStyle.activatedImagePath.empty()) {
+		mActivatedImage = std::make_unique<WidgetImage>(mStyle.activatedImagePath);
+	}
+	else {
+		mActivatedImage.reset();
 	}
 
 	if (!mStyle.hoverImagePath.empty()) {
@@ -540,11 +616,19 @@ void WidgetButton::UpdateContent()
 		mDisabledImage.reset();
 	}
 
+	if (!mStyle.frameImagePath.empty()) {
+		mFrameImage = std::make_unique<WidgetImage>(mStyle.frameImagePath);
+	}
+	else {
+		mFrameImage.reset();
+	}
+
 	mLabel.SetStyleId(mStyle.textStyleId);
-	
+	mLabel.SetCenterVertically(true);
 	UpdateAutoSize();
 
 }
+
 
 void WidgetButton::UpdateAutoSize()
 {
@@ -556,6 +640,23 @@ void WidgetButton::UpdateAutoSize()
 		} else {
 			prefSize = mLabel.GetPreferredSize();
 		}
+
+		if (mFrameImage){ // update margins from frame size
+			auto framePrefSize = mFrameImage->GetPreferredSize();
+			auto marginW = framePrefSize.width  - prefSize.width;
+			auto marginH = framePrefSize.height - prefSize.height;
+			if (marginW > 0){
+				mMargins.right = marginW / 2;
+				mMargins.left  = marginW - mMargins.right;
+			}
+			if (marginH > 0){
+				mMargins.bottom = marginH / 2;
+				mMargins.top    = marginH - mMargins.bottom;
+			}
+		}
+
+		prefSize.height += mMargins.bottom + mMargins.top;
+		prefSize.width  += mMargins.left   + mMargins.right;
 
 		if (mAutoSizeWidth && mAutoSizeHeight) {
 			SetSize(prefSize);
@@ -716,7 +817,8 @@ void WidgetScrollBar::Render()
 	mTrack->SetY(mUpButton->GetHeight());
 	mTrack->SetHeight(GetHeight() - mUpButton->GetHeight() - mDownButton->GetHeight());
 
-	int handleOffset = (int)(((mValue - mMin) / (float)mMax) * GetScrollRange());
+	auto scrollRange = GetScrollRange();
+	int handleOffset = (int)(((mValue - mMin) / (float)mMax) * scrollRange);
 	mHandleButton->SetY(mUpButton->GetHeight() + handleOffset);
 	mHandleButton->SetHeight(GetHandleHeight());
 
@@ -730,7 +832,9 @@ int WidgetScrollBar::GetHandleHeight() const
 
 int WidgetScrollBar::GetScrollRange() const
 {
-	return GetTrackHeight() - GetHandleHeight();
+	auto trackHeight = GetTrackHeight();
+	auto handleHeight = GetHandleHeight();
+	return trackHeight - handleHeight;
 }
 
 int WidgetScrollBar::GetTrackHeight() const
@@ -758,6 +862,7 @@ WidgetScrollView::WidgetScrollView(int width, int height) : WidgetContainer(widt
 
 void WidgetScrollView::Add(std::unique_ptr<WidgetBase> childWidget)
 {
+	UpdateInnerHeight();
 	mContainer->Add(std::move(childWidget));
 }
 
@@ -788,11 +893,27 @@ int WidgetScrollView::GetPadding() const
 	return mPadding;
 }
 
+bool WidgetScrollView::HandleMouseMessage(const TigMouseMsg& msg){
+
+	if (WidgetContainer::HandleMouseMessage(msg))
+		return true;
+
+	if (msg.flags & MSF_SCROLLWHEEL_CHANGE){
+		auto curPos = mScrollBar->GetValue();
+		auto newPos = curPos - msg.mouseStateField24 / 10;
+		mScrollBar->SetValue(newPos);
+	}
+
+	return true;
+}
+
 void WidgetScrollView::UpdateInnerHeight()
 {
 	int innerHeight = 0;
 	for (auto &child : mContainer->GetChildren()) {
-		auto bottom = child->GetY() + child->GetHeight();
+		auto childY = child->GetY();
+		auto childH = child->GetHeight();
+		auto bottom = childY + childH;
 		if (bottom > innerHeight) {
 			innerHeight = bottom;
 		}
@@ -808,3 +929,4 @@ void WidgetScrollView::UpdateLayout()
 	mContainer->SetY(mPadding);
 	mContainer->SetHeight(GetInnerHeight());
 }
+

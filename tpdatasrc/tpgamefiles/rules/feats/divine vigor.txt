@@ -1,0 +1,5 @@
+name: Divine Vigor
+flags: 12582912
+prereqs: 
+description: As a standard action, spend one of your turn or rebuke undead attempts to increase your base speed by 10 feet and gain +2 temporary hit points per character level. These effects last for a number of minutes equal to your Charisma modifier.
+prereq descr: Ability to turn or rebuke undead

@@ -98,25 +98,14 @@ void LocAndOffsets::Regularize(){
 //	off_y = offy;
 //}
 
-std::ostream& operator<<(std::ostream& os, const locXY& loc) {
-	return os
-		<< std::to_string(loc.locx)
-		+ "," + std::to_string(loc.locy);
+void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const locXY &loc) {
+	f.writer().write("{},{}", loc.locx, loc.locy);
 }
 
-std::ostream& operator<<(std::ostream& os, const LocAndOffsets& loc) {
-	return os
-		<< std::to_string(loc.location.locx)
-		+ "," + std::to_string(loc.location.locy)
-		+ "," + std::to_string(loc.off_x)
-		+ "," + std::to_string(loc.off_y);
+void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const LocAndOffsets &loc) {
+	f.writer().write("{},{},{}", loc.location, loc.off_x, loc.off_y);
 }
 
-std::ostream& operator<<(std::ostream& os, const LocFull& loc) {
-	return os
-		<< std::to_string(loc.location.location.locx)
-		+ "," + std::to_string(loc.location.location.locy)
-		+ "," + std::to_string(loc.location.off_x)
-		+ "," + std::to_string(loc.location.off_y)
-		+ "," + std::to_string(loc.off_z);
+void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const LocFull &loc) {
+	f.writer().write("{},{}", loc.location, loc.off_z);
 }

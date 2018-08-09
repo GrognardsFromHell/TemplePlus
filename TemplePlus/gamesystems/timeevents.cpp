@@ -9,7 +9,7 @@
 #include <description.h>
 #include <objlist.h>
 
-#include "anim.h"
+#include "animgoals/anim.h"
 #include <gamesystems\legacy.h>
 #include "legacysystems.h"
 #include "ui/ui_systems.h"
@@ -637,19 +637,12 @@ const TimeEventTypeSpec& GetTimeEventTypeSpec(TimeEventType type) {
 class TimeEventHooks : public TempleFix
 {
 public: 
-
-	static BOOL LoadTimeEventObjInfoSafe(objHndl * handle, TimeEventObjInfo * evtInfo, TioFile* file);
-	static void TimeEventObjInfoFromHandle(objHndl handle, TimeEventObjInfo * evtInfo);
-	static BOOL SaveTimeEventObjInfo(TimeEventArg & evtArg, TimeEventObjInfo * evtInfo, TioFile* file);
 	static BOOL TimeEventListEntryAdd(TimeEventListEntry * evt);
 	static BOOL TimeEventReadFromFile(TioFile * file, TimeEvent * evtOut);
 
 	void apply() override 
 	{
 
-		replaceFunction(0x10020370, LoadTimeEventObjInfoSafe);
-		replaceFunction(0x10020280, SaveTimeEventObjInfo);
-		replaceFunction(0x10020540, TimeEventObjInfoFromHandle);
 		replaceFunction(0x100607E0, TimeEventListEntryAdd);
 
 		static int (*orgTimeEventValidate)(TimeEventListEntry* evt, int flag) = 
@@ -1054,10 +1047,10 @@ void TimeEventSystem::AdvanceTime(uint32_t newTimeMs) {
 	}
 
 	// advanced time elapsed and anim time
-	auto &timeEventUnk10AA83D8 = temple::GetRef<int>(0x10AA83D8); // something related to UI
+	auto &timeAdvanceBlockerCount = temple::GetRef<int>(0x10AA83D8); // count of windows that block fidget animations / time advance
 
 
-	if (!timeEventUnk10AA83D8) {
+	if (!timeAdvanceBlockerCount) {
 
 		if (!uiSystems->GetDlg().IsActive() && !combatSys.isCombatActive()) {
 
@@ -1077,7 +1070,7 @@ void TimeEventSystem::AdvanceTime(uint32_t newTimeMs) {
 	}
 
 
-	if (!timeEventUnk10AA83D8 || uiSystems->GetDlg().IsActive()) {
+	if (!timeAdvanceBlockerCount || uiSystems->GetDlg().IsActive()) {
 
 		animTime.timeInMs += timeDeltaMs;
 
@@ -1244,6 +1237,11 @@ void TimeEventSystem::RemoveAll(TimeEventType type) {
 	timeevent_remove_all((int)type);
 }
 
+void TimeEventSystem::PushDisableAdvance(){
+	static auto call = temple::GetPointer<void()>(0x100603F0);
+	call();
+}
+
 void TimeEventSystem::Remove(TimeEventType type, Predicate predicate)
 {
 	static std::function<bool(const TimeEvent&)> sPredicate;
@@ -1334,10 +1332,8 @@ bool TimeEventSystem::ScheduleInternal(GameTime * time, TimeEvent * evt, GameTim
 			newEntry->objects[i].guid.subtype = ObjectIdKind::Null;
 			continue;
 		}
-		TimeEventObjInfoFromHandle(evt->params[i].handle, &newEntry->objects[i]);
+		newEntry->objects[i] = FrozenObjRef::Freeze(evt->params[i].handle);
 	}
-
-
 	
 	TimeEventListEntry**  evtList = &temple::GetRef<TimeEventListEntry*[]>(0x10AA73FC)[(int)sysSpec.clock];
 	
@@ -1401,9 +1397,8 @@ BOOL TimeEventSystem::TimeEventListEntryAdd(TimeEventListEntry * evt){
 	// convert obj handles to persistable references
 	for (auto i = 0; i < 4; i++) {
 		if (sysSpec.argTypes[i] == TimeEventArgType::Object) {
-			TimeEventObjInfoFromHandle(evt->evt.params[i].handle, &evt->objects[i]);
-		}
-		else {
+			evt->objects[i] = FrozenObjRef::Freeze(evt->evt.params[i].handle);
+		} else {
 			evt->objects[i].guid.subtype = ObjectIdKind::Null;
 		}
 	}
@@ -1445,7 +1440,7 @@ BOOL TimeEventSystem::TimeEventReadFromFile(TioFile * file, TimeEvent * evtOut){
 			if (evtOut->system == TimeEventType::Lock) {
 				auto dmmy = 1;
 			}
-			if (!LoadTimeEventObjInfoSafe(&handle, nullptr, file)) {
+			if (!FrozenObjRef::Load(&handle, nullptr, file)) {
 				return FALSE;
 			}
 			par->handle = handle;
@@ -1490,7 +1485,7 @@ BOOL TimeEventSystem::TimeEventParamSerializer(TioFile * file, const TimeEventTy
 				if (listEntry->evt.system == TimeEventType::Lock) {
 					auto dummy = 1;
 				}
-				if (!SaveTimeEventObjInfo(listEntry->evt.params[i], objInfo, file) )
+				if (!FrozenObjRef::Save(listEntry->evt.params[i].handle, objInfo, file) )
 					return FALSE;
 				break;
 			case TimeEventArgType::PythonObject:
@@ -1507,131 +1502,9 @@ BOOL TimeEventSystem::TimeEventParamSerializer(TioFile * file, const TimeEventTy
 	return TRUE;
 }
 
-BOOL TimeEventSystem::SaveTimeEventObjInfo(TimeEventArg & evtArg, TimeEventObjInfo * evtInfo, TioFile * file)
-{
-	if (!file)
-		return FALSE;
-
-	ObjectId objId = ObjectId::CreateNull();
-	locXY loc = locXY::fromField(0);
-	int mapNumber = 0;
-	auto handle = evtArg.handle;
-
-	if (!evtInfo) {
-		if (handle) {
-			objId = objSystem->GetIdByHandle(handle);
-			mapNumber = gameSystems->GetMap().GetCurrentMapId();
-			loc = objSystem->GetObject(handle)->GetLocation();
-		}
-		else {
-			logger->debug("SaveTimeEventObjInfo(): Caught null handle when serializing time event!");
-		}
-	}
-	else {
-		loc = evtInfo->location;
-		objId = evtInfo->guid;
-		mapNumber = evtInfo->mapNumber;
-	}
-
-	if (!tio_fwrite(&objId, sizeof(ObjectId), 1, file)
-		|| !tio_fwrite(&loc, sizeof(locXY), 1, file)
-		|| !tio_fwrite(&mapNumber, sizeof(int), 1, file))
-		return FALSE;
-
-	return TRUE;
-}
-
-BOOL TimeEventSystem::LoadTimeEventObjInfoSafe(objHndl * handleOut, TimeEventObjInfo * evtInfo, TioFile * file){
-	if (!file || !handleOut) {
-		return FALSE;
-	}
-
-	ObjectId objId;
-	locXY loc;
-	int mapNum;
-
-	if (!tio_fread(&objId, sizeof(ObjectId), 1, file)
-		|| !tio_fread(&loc, sizeof(locXY), 1, file)
-		|| !tio_fread(&mapNum, sizeof(int), 1, file)) {
-		return FALSE;
-	}
-
-	if (objId.subtype != ObjectIdKind::Null) {
-		if (loc.locx || loc.locy) {
-			ObjList list;
-			list.ListTile(loc, OLC_ALL); // I think this is meant to "awaken" objects from the sector? otherwise thisis unused
-		}
-
-		auto handle = objSystem->GetHandleById(objId);
-		if (!handle) {
-			logger->debug("LoadTimeEventObjInfoSafe: Couldn't match ObjID to handle!");
-			logger->debug("Map number {}, location ({},{}), ID", mapNum, loc.locx, loc.locy, objId);
-		}
-		*handleOut = handle;
-		if (evtInfo) {
-			evtInfo->guid = objId;
-			evtInfo->mapNumber = mapNum;
-			evtInfo->location = loc;
-			return TRUE;
-		}
-	}
-	else {
-		*handleOut = objHndl::null;
-		if (evtInfo) {
-			evtInfo->guid.subtype = ObjectIdKind::Null;
-			evtInfo->location.locx = 0;
-			evtInfo->location.locy = 0;
-			evtInfo->mapNumber = 0;
-		}
-	}
-
-	return TRUE;
-}
-
-void TimeEventSystem::TimeEventObjInfoFromHandle(objHndl handle, TimeEventObjInfo * evtInfo){
-	if (!handle) {
-		evtInfo->guid.subtype = ObjectIdKind::Null;
-		evtInfo->location = locXY::fromField(0);
-		evtInfo->mapNumber = 0;
-		return;
-	}
-
-	auto obj = objSystem->GetObject(handle);
-	if (obj->GetFlags() & OF_DESTROYED) {
-		evtInfo->guid.body.guid.Data1 = 0xBEEFBEEF;
-		evtInfo->guid.subtype = ObjectIdKind::Null;
-		evtInfo->location = locXY::fromField(0);
-		evtInfo->mapNumber = 0;
-		return;
-	}
-
-	auto objId = objSystem->GetPersistableId(handle);
-	evtInfo->guid = objId;
-	if (obj->IsStatic()) {
-		evtInfo->location = obj->GetLocation();
-		evtInfo->mapNumber = gameSystems->GetMap().GetCurrentMapId();
-	}
-	else {
-		evtInfo->location = locXY::fromField(0);
-		evtInfo->mapNumber = gameSystems->GetMap().GetCurrentMapId();
-	}
-}
-
 bool TimeEventSystem::IsInAdvanceTime()
 {
 	return temple::GetRef<BOOL>(0x10AA83DC)!=0;
-}
-
-BOOL TimeEventHooks::LoadTimeEventObjInfoSafe(objHndl * handleOut, TimeEventObjInfo * evtInfo, TioFile * file){
-	return gameSystems->GetTimeEvent().LoadTimeEventObjInfoSafe(handleOut, evtInfo, file);
-}
-
-void TimeEventHooks::TimeEventObjInfoFromHandle(objHndl handle, TimeEventObjInfo * evtInfo){
-	gameSystems->GetTimeEvent().TimeEventObjInfoFromHandle(handle, evtInfo);
-}
-
-BOOL TimeEventHooks::SaveTimeEventObjInfo(TimeEventArg & evtArg, TimeEventObjInfo * evtInfo, TioFile * file){
-	return gameSystems->GetTimeEvent().SaveTimeEventObjInfo(evtArg, evtInfo, file);
 }
 
 BOOL TimeEventHooks::TimeEventListEntryAdd(TimeEventListEntry * evt) {
@@ -1706,8 +1579,7 @@ bool TimeEventListEntry::IsValid(int isLoadingMap){
 				continue;
 			}
 
-			auto objValidateRecovery = temple::GetRef<BOOL(__cdecl)(objHndl&, TimeEventObjInfo&)>(0x10020610);
-			if (objValidateRecovery(handle, evt->objects[i])) {
+			if (FrozenObjRef::Unfreeze(evt->objects[i], &handle)) {
 				evt->evt.params[i].handle = handle;
 				if (evt->evt.system == TimeEventType::Lock) {
 					auto dummy = 1;

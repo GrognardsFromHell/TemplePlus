@@ -28,7 +28,7 @@
 #include "gamesystems/objfade.h"
 #include "gamesystems/objects/objsystem.h"
 #include "gamesystems/map/gmesh.h"
-#include "anim.h"
+#include "animgoals/anim.h"
 
 #include "mapsystem.h"
 #include <infrastructure/vfs.h>
@@ -39,6 +39,7 @@
 #include <graphics/device.h>
 #include "graphics/mapterrain.h"
 #include "ui/ui_systems.h"
+#include <aas/aas_model_factory.h>
 
 using namespace gfx;
 
@@ -367,6 +368,8 @@ void GameSystems::InitBufferStuff(const GameSystemConf& conf) {
 	*/
 }
 
+#include "gamesystems/aas_hooks.h"
+
 void GameSystems::InitAnimationSystem() {
 	
 	mMeshesById = MesFile::ParseFile("art\\meshes\\meshes.mes");
@@ -384,8 +387,24 @@ void GameSystems::InitAnimationSystem() {
 	config.resolveMaterial = [=](const std::string &material) {
 		return ResolveMaterial(material);
 	};
+	config.fastSneakAnim = ::config.fastSneakAnim;
+	config.equalizeMovementSpeed = ::config.equalizeMoveSpeed;
+	if (::config.newAnimSystem) {
+		logger->info("Enabling new animation system.");
+		// Additionally, redirect all the old functions
+		AasHooks hooks;
+		hooks.apply();
+		MH_EnableHook(nullptr);
 
-	mAAS = std::make_unique<temple::AasAnimatedModelFactory>(config);
+		mAAS = std::make_unique<aas::AnimatedModelFactory>(
+			config.resolveSkaFile,
+			config.resolveSkmFile,
+			config.runScript,
+			config.resolveMaterial
+		);
+	} else {
+		mAAS = std::make_unique<temple::AasAnimatedModelFactory>(config);
+	}
 
 }
 
@@ -464,8 +483,8 @@ void GameSystems::LoadModule(const std::string& moduleName) {
 void GameSystems::AddModulePaths(const std::string& moduleName) {
 
 	std::string moduleBase;
-	if (!Path::IsFileSystem(moduleName)) {
-		moduleBase = Path::Concat(".\\Modules\\", moduleName);
+	if (!VfsPath::IsFileSystem(moduleName)) {
+		moduleBase = VfsPath::Concat(".\\Modules\\", moduleName);
 	} else {
 		moduleBase = moduleName;
 	}

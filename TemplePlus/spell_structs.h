@@ -15,7 +15,8 @@ enum SpellStoreType : uint8_t{
 	spellStoreNone = 0,
 	spellStoreKnown = 1,
 	spellStoreMemorized = 2,
-	spellStoreCast = 3
+	spellStoreCast = 3,
+	spellStoreAtWill // New! Todo implementation
 };
 
 enum MetaMagicFlags : uint8_t
@@ -145,13 +146,14 @@ struct SpellStoreData
 	uint32_t pad3;
 	SpellStoreData():spellEnum(0), classCode(0), spellLevel(0), pad0(0), pad1(0),pad2(0),pad3(0){
 	};
-	SpellStoreData(int SpellEnum, int SpellLevel, int ClassCode, int mmData, int SpellStoreData):SpellStoreData(){
+	SpellStoreData(int SpellEnum, int SpellLevel, int ClassCode, int mmData, int SpellStoreData);/* :SpellStoreData() {
 		spellEnum = SpellEnum;
 		classCode = ClassCode;
 		spellLevel = SpellLevel;
 		metaMagicData = MetaMagicData(mmData);
 		spellStoreState = SpellStoreState(SpellStoreData);
-	}
+		padSpellStore = 0;
+	}*/
 
 	SpellStoreData(int SpellEnum, int SpellLevel, int ClassCode, MetaMagicData mmData, SpellStoreState SpellStoreData) :SpellStoreData() {
 		spellEnum = SpellEnum;
@@ -168,9 +170,11 @@ struct SpellStoreData
 		metaMagicData = mmData;
 		spellStoreState = SpellStoreState(0);
 	}
-
+	bool operator < (const SpellStoreData& b);
 	SpellComponentFlag GetSpellComponentFlags(); // regards metamagic data
 };
+
+bool operator < (const SpellStoreData& sp1, const SpellStoreData& sp2);
 const auto TestSizeOfSpellStoreData = sizeof(SpellStoreData);
 #pragma pack(pop)
 

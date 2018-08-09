@@ -9,6 +9,8 @@
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/objects/objsystem.h"
 
+using namespace DirectX;
+
 struct GrappleState {
 	uint16_t state;
 	float currentLength;

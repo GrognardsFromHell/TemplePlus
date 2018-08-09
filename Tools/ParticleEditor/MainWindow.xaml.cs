@@ -19,8 +19,36 @@ namespace ParticleEditor
 
         public MainWindow() {
             InitializeComponent();
-            PreviewControl.DataPath = Settings.Default.TemplePath;
-            if (PreviewControl.DataPath.Length == 0)
+#if _DEBUG
+            var shit = 1;
+#endif
+            //PreviewControl.DataPath = Settings.Default.TemplePath;
+            PreviewControl.DataPath = "";
+            var isValidPath = false;
+            if (PreviewControl.DataPath.Length > 0)
+            {
+                
+                try
+                {
+                    var templeDll = Path.Combine(PreviewControl.DataPath, "temple.dll");
+                    if (!File.Exists(templeDll))
+                    {
+                        MessageBox.Show("The chosen ToEE installation directory does not seem to be valid.\n"
+                                        + "Couldn't find temple.dll.",
+                            "Invalid ToEE Directory");
+                        
+                    }else
+                    {
+                        isValidPath = true;
+                    }
+
+                } catch (Exception e)
+                {
+                    isValidPath = false;
+                }
+            }
+            
+            if (PreviewControl.DataPath.Length == 0 || !isValidPath)
             {
                 ChooseDataPath();
             }
@@ -32,6 +60,18 @@ namespace ParticleEditor
         {
             get { return (EditorViewModel) GetValue(ModelProperty); }
             set { SetValue(ModelProperty, value); }
+        }
+
+        private void NewSystem_OnClick(object sender, RoutedEventArgs e)
+        {
+            
+            var NewSystem = new PartSysSpec();
+            var shit = Microsoft.VisualBasic.Interaction.InputBox("Enter system name", "System Name", "");
+            NewSystem.Name = shit;
+
+            Model.Systems.Add(NewSystem);
+            Model.SelectedSystem = NewSystem;
+
         }
 
         private void SaveVideo_OnClick(object sender, RoutedEventArgs e)
@@ -136,8 +176,11 @@ namespace ParticleEditor
                 var partsysName = Model.SelectedEmitter.ToSpec(Model.SelectedSystem.Name);
                 Model.SelectedSystem.Emitters.Add(EmitterSpec.Parse(partsysName));
 
+            }  else
+            {
+                var NewEmitter = new EmitterSpec();
+                Model.SelectedSystem.Emitters.Add(NewEmitter);
             }
-                
         }
 
         private void RenameEmitter_Click(object sender, RoutedEventArgs e){
@@ -147,5 +190,6 @@ namespace ParticleEditor
                 Model.SelectedEmitter.Name = shit;
             }
         }
+        
     }
 }

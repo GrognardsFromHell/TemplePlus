@@ -23,7 +23,7 @@
 #include "ai.h"
 #include "ui/ui_intgame_turnbased.h"
 #include "d20_obj_registry.h"
-#include "anim.h"
+#include "animgoals/anim.h"
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/objects/objsystem.h"
 #include "python/python_integration_d20_action.h"
@@ -85,6 +85,14 @@ static struct ActnSeqAddresses : temple::AddressTable {
 	
 }addresses;
 
+
+enum HourglassState : int
+{
+	HOURGLASS_EMPTY = 0, 
+	HOURGLASS_MOVE = 1, // move action
+	HOURGLASS_STD = 2, // standard action
+	HOURGLASS_FULL = 4, // full round action
+};
 
 static class ActnSeqReplacements : public TempleFix
 {
@@ -203,7 +211,7 @@ ActionSequenceSystem::ActionSequenceSystem()
 	rebase(_actionPerformProjectile, 0x1008AC70);
 	rebase(_actSeqSpellHarmful, 0x1008AD10);
 	rebase(_sub_1008BB40, 0x1008BB40);
-	rebase(getRemainingMaxMoveLength, 0x1008B8A0);
+	//rebase(GetRemainingMaxMoveLength, 0x1008B8A0);
 	//rebase(TrimPathToRemainingMoveLength, 0x1008B9A0);
 
 	rebase(_CrossBowSthgReload_1008E8A0, 0x1008E8A0);
@@ -238,6 +246,43 @@ ActionSequenceSystem::ActionSequenceSystem()
 		5, 2, 2, -1, 0,
 		6, 5, 2, -1, 3 };
 	memcpy(turnBasedStatusTransitionMatrix, _transMatrix, sizeof(turnBasedStatusTransitionMatrix));
+}
+
+uint32_t ActionSequenceSystem::GetRemainingMaxMoveLength(D20Actn* d20a, TurnBasedStatus* tbStat, float* moveLen){
+	auto surplusMoves = tbStat->surplusMoveDistance;
+	auto moveSpeed = dispatch.Dispatch29hGetMoveSpeed(d20a->d20APerformer);
+	if (d20a->d20ActType == D20A_UNSPECIFIED_MOVE){
+		if (tbStat->hourglassState >= HOURGLASS_FULL){
+			*moveLen = 2 * moveSpeed + surplusMoves;
+			return TRUE;
+		}
+		if (tbStat->hourglassState >= HOURGLASS_MOVE) {
+			*moveLen = moveSpeed + surplusMoves;
+			return TRUE;
+		}
+		*moveLen = surplusMoves;
+		return TRUE;
+	}
+
+	if (d20a->d20ActType == D20A_5FOOTSTEP && !(tbStat->tbsFlags & (TBSF_Movement | TBSF_Movement2))){
+		if (surplusMoves <= 0.001){
+			*moveLen = 5.0f;
+			return TRUE;
+		}
+		*moveLen = surplusMoves;
+		return TRUE;
+	}
+	
+	if (d20a->d20ActType == D20A_MOVE){
+		*moveLen = moveSpeed + surplusMoves;
+		return TRUE;
+	}
+	if (d20a->d20ActType == D20A_DOUBLE_MOVE) {
+		*moveLen = 2*moveSpeed + surplusMoves;
+		return TRUE;
+	}
+
+	return FALSE;
 }
 
 
@@ -388,16 +433,21 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 
 	if (tgtClassif == D20TC_CastSpell){
 
-		unsigned int spellEnum, spellClass, spellLevel, metaMagicData;
-		D20SpellDataExtractInfo(&d20Sys.globD20Action->d20SpellData,
-			&spellEnum, nullptr, &spellClass, &spellLevel,nullptr,&metaMagicData);
+		unsigned int spellEnum, spellClass, spellLevel, metamagicValue;
 
+		D20SpellDataExtractInfo(&d20Sys.globD20Action->d20SpellData,
+			&spellEnum, nullptr, &spellClass, &spellLevel,nullptr,&metamagicValue);
+
+		MetaMagicData metaMagicData = metamagicValue;
+
+		//Modify metamagic data for enlarge and widen 
+		dispatch.DispatchMetaMagicModify(d20Sys.globD20Action->d20APerformer, metaMagicData);
 
 		auto curSeq = *actSeqSys.actSeqCur;
-		curSeq->spellPktBody.spellRange *= ((MetaMagicData)metaMagicData).metaMagicEnlargeSpellCount + 1;
+		curSeq->spellPktBody.spellRange *= metaMagicData.metaMagicEnlargeSpellCount + 1;
 		SpellEntry spellEntry;
 		if (spellSys.spellRegistryCopy(spellEnum, &spellEntry)){
-			spellEntry.radiusTarget *= ((MetaMagicData)metaMagicData).metaMagicWidenSpellCount + 1;
+			spellEntry.radiusTarget *= metaMagicData.metaMagicWidenSpellCount + 1;
 		}
 		PickerArgs pickArgs;
 		spellSys.pickerArgsFromSpellEntry(&spellEntry, &pickArgs, curSeq->spellPktBody.caster, curSeq->spellPktBody.casterLevel);
@@ -655,7 +705,7 @@ void ActionSequenceSystem::TurnStart(objHndl obj)
 				auto d20SpellData = &d20a->d20SpellData;
 				if (d20Sys.d20QueryWithData(actSeq->performer, DK_QUE_SpellInterrupted, d20SpellData, 0)) {
 					d20a->d20Caf &= ~D20CAF_NEED_ANIM_COMPLETED;
-					animationGoals.Interrupt(actSeq->performer, AnimGoalPriority::AGP_5, 0);
+					gameSystems->GetAnim().Interrupt(actSeq->performer, AnimGoalPriority::AGP_5, 0);
 				}
 			}
 		}
@@ -946,7 +996,7 @@ void ActionSequenceSystem::ProcessPathForAoOs(objHndl obj, PathQueryResult* pqr,
 		// it means you incur an AOO
 
 		// loop over enemies to catch interceptions
-		for (int enemyIdx = 0; enemyIdx < enemies.size(); enemyIdx++)
+		for (auto enemyIdx = 0u; enemyIdx < enemies.size(); enemyIdx++)
 		{
 			auto enemy = enemies[enemyIdx];
 			auto interrupterIdx = 0u;
@@ -1042,8 +1092,8 @@ uint32_t ActionSequenceSystem::MoveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 		
 		if (reach < 0.1){ reach = 3.0; }
 		actSeq->targetObj = d20a->d20ATarget;
-		pathQ.distanceToTargetMin = distToTgtMin * 12.0;
-		pathQ.tolRadius = reach * 12.0 - fourPointSevenPlusEight;
+		pathQ.distanceToTargetMin = distToTgtMin * 12.0f;
+		pathQ.tolRadius = reach * 12.0f - fourPointSevenPlusEight;
 	} else
 	{
 		pathQ.to = d20aIn->destLoc;
@@ -1117,7 +1167,7 @@ uint32_t ActionSequenceSystem::MoveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 	if (!combat->isCombatActive()){	d20aCopy.distTraversed = 0;		pathLength = 0.0;	}
 
 	float remainingMaxMoveLength = 0;
-	if (getRemainingMaxMoveLength(d20a, &tbStatCopy, &remainingMaxMoveLength)) // deducting moves that have already been spent, but also a raw calculation (not taking 5' step and such into account)
+	if (GetRemainingMaxMoveLength(d20a, &tbStatCopy, &remainingMaxMoveLength)) // deducting moves that have already been spent, but also a raw calculation (not taking 5' step and such into account)
 	{
 		if (remainingMaxMoveLength < 0.1)	{releasePath(d20aCopy.path);	return AEC_TARGET_TOO_FAR;	}
 		if (static_cast<long double>(remainingMaxMoveLength) < pathLength)
@@ -1125,6 +1175,7 @@ uint32_t ActionSequenceSystem::MoveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 			auto temp = 1;;
 			if (TrimPathToRemainingMoveLength(&d20aCopy, remainingMaxMoveLength, &pathQ)){ releasePath(d20aCopy.path); return temp; }
 			pqResult = d20aCopy.path;
+			pathLength = pathfinding->GetPathLength(pqResult);
 			pathLength = remainingMaxMoveLength;
 		}
 	}
@@ -1993,7 +2044,7 @@ int32_t ActionSequenceSystem::DoAoosByAdjcentEnemies(objHndl obj)
 
 	auto enemies = combatSys.GetEnemiesCanMelee(obj);
 
-	for (int i = 0; i < enemies.size(); i++)
+	for (auto i = 0u; i < enemies.size(); i++)
 	{
 		auto enemy = enemies[i];
 		bool okToAoo = true;
@@ -2084,8 +2135,12 @@ int32_t ActionSequenceSystem::InterruptNonCounterspell(D20Actn* d20a)
 	while (1){
 		
 		if (readiedAction->readyType != RV_Counterspell) {
-
-			if (d20a->d20ActType == D20A_CAST_SPELL){
+			auto isInterruptibleAction = d20a->d20ActType == D20A_CAST_SPELL;
+			// added interruption to use of scrolls and such
+			if (d20a->d20ActType == D20A_USE_ITEM && d20a->d20SpellData.spellEnumOrg != 0){
+				isInterruptibleAction = true;
+			}
+			if (isInterruptibleAction){
 				if (d20a->d20APerformer && readiedAction->interrupter){
 					auto isFriendly = critterSys.IsFriendly(readiedAction->interrupter, d20a->d20APerformer);
 					auto sharedAlleg = critterSys.NpcAllegianceShared(readiedAction->interrupter, d20a->d20APerformer);
@@ -2930,7 +2985,7 @@ uint32_t ActionSequenceSystem::ShouldTriggerCombat(ActnSeq* actSeq)
 	auto &spPkt = actSeq->spellPktBody;
 	if (!spPkt.spellEnum)
 		return FALSE;
-	for (auto i=0; i<spPkt.targetCount; i++){
+	for (auto i=0u; i<spPkt.targetCount; i++){
 		auto spTgt = spPkt.targetListHandles[i];
 		if (!spTgt)
 			continue;

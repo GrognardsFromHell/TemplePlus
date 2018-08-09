@@ -1,5 +1,5 @@
 name: Vexing Flanker
 flags: 4194320
-prereqs: 1013 1
+prereqs: 1580 1
 description: When you take this feat your flanking bonus becomes +4.
 prereq descr: Combat Reflexes

@@ -2,7 +2,7 @@
 
 #include <particles/parser.h>
 #include <particles/parser_params.h>
-#include <infrastructure/format.h>
+#include <fmt/format.h>
 
 using namespace particles;
 

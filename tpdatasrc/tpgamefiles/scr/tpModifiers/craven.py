@@ -14,8 +14,8 @@ def CADamage(attachee, args, evt_obj):
 	return 0
 
 def Fearful(attachee, args, evt_obj):
-	if evt_obj.flags & 21: # D20STD_F_SPELL_DESCRIPTOR_FEAR
-		evt_obj.bonus_list.add(-2, 0, "Craven You are easily frightened")
+	if evt_obj.flags & (1<<(D20STD_F_SPELL_DESCRIPTOR_FEAR-1)): # D20STD_F_SPELL_DESCRIPTOR_FEAR
+		evt_obj.bonus_list.add(-2, 0, "Craven: You are easily frightened")
 	
 	return 0
 	

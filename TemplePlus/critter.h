@@ -77,10 +77,10 @@ struct HairStyle {
 
 	uint32_t Pack() const {
 		return ((int)race & 7)
-			| ((int)gender) & 1 << 3
-			| ((int)size) & 3 << 10
-			| style & 7 << 4
-			| color & 7 << 7;
+			| (((int)gender) & 1) << 3
+			| (((int)size) & 3) << 10
+			| (style & 7) << 4
+			| (color & 7) << 7;
 	}
 };
 
@@ -240,11 +240,12 @@ struct LegacyCritterSystem : temple::AddressTable
 	*/
 	bool CanSense(objHndl critter, objHndl tgt); 
 
+	int GetEffectiveLevel(objHndl& objHnd); // Get Effective Character Level (used for determining XP gain / requirements)
 	int GetLevel(objHndl critter);
 
 	int SkillLevel(objHndl critter, SkillEnum skill);
 
-	Race GetRace(objHndl critter);
+	Race GetRace(objHndl critter, bool getBaseRace = true);
 
 	Gender GetGender(objHndl critter);
 
@@ -322,7 +323,7 @@ struct LegacyCritterSystem : temple::AddressTable
 	static int GetCritterNumNaturalAttacks(objHndl obj);
 	int GetCritterAttackType(objHndl obj, int attackIdx);
 	int GetBaseAttackBonus(const objHndl& handle, Stat classBeingLeveld = Stat::stat_strength);
-	int GetArmorClass(objHndl obj, DispIoAttackBonus *dispIo);
+	int GetArmorClass(objHndl obj, DispIoAttackBonus *dispIo = nullptr);
 #pragma endregion
 
 #pragma region Spellcasting
@@ -352,9 +353,9 @@ struct LegacyCritterSystem : temple::AddressTable
 
 
 private:
-	int GetModelRaceOffset(objHndl obj);
+	int GetModelRaceOffset(objHndl obj, bool useBaseRace = true);
 	void UpdateAddMeshes(objHndl obj);
-	void ApplyReplacementMaterial(gfx::AnimatedModelPtr model, int mesId);
+	void ApplyReplacementMaterial(gfx::AnimatedModelPtr model, int mesId, int fallbackMesId = -1);
 
 	std::string GetHairStyleFile(HairStyle style, const char *extension);
 

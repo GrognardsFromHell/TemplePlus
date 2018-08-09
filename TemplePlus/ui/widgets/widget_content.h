@@ -8,6 +8,9 @@
 #include <graphics/textengine.h>
 #include "ui/ui_assets.h"
 
+enum class PredefinedFont;
+struct TigTextStyle;
+
 class WidgetContent {
 public:
 	WidgetContent();
@@ -91,12 +94,19 @@ public:
 	void SetStyle(const gfx::TextStyle &style);
 	const gfx::TextStyle &GetStyle() const;
 
+	void SetCenterVertically(bool isCentered);
+
 	void Render() override;
 
 private:
 	gfx::FormattedText mText;
 	std::string mStyleId;
 	bool mWordWrap = false;
+	bool mCenterVertically = false;
 
 	void UpdateBounds();
+
+	void RenderWithPredefinedFont(PredefinedFont font, TigTextStyle textStyle);
+	void UpdateBoundsWithPredefinedFont(PredefinedFont font, TigTextStyle textStyle);
+
 };

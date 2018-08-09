@@ -1,0 +1,5 @@
+name: Pain Touch
+flags: 12582912
+prereqs: 266 2
+description: Victims of a successful stunning attack are subject to such debilitating pain that they are nauseated for 1 round following the round they are stunned. Creatures that are immune to stunning attacks are also immune to the effect of this feat, as are any creatures that are more than one size category larger than the feat user.
+prereq descr: Stunning Fist, Wis 15, Base Attack Bonus +2

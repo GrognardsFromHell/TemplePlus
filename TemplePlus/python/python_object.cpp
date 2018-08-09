@@ -7,7 +7,7 @@
 #include "../gamesystems/gamesystems.h"
 #include "../reputations.h"
 #include "../critter.h"
-#include "../anim.h"
+#include "../animgoals/anim.h"
 #include "../ai.h"
 #include "../combat.h"
 #include "../dispatcher.h"
@@ -39,6 +39,7 @@
 #include <gamesystems/objects/objevent.h>
 #include "ui/ui_systems.h"
 #include "ui/ui_legacysystems.h"
+#include "ui/ui_char_editor.h"
 #include "pathfinding.h"
 
 #include <pybind11/embed.h>
@@ -47,7 +48,6 @@
 #include "python_spell.h"
 
 namespace py = pybind11;
-
 
 struct PyObjHandle {
 	PyObject_HEAD;
@@ -273,7 +273,7 @@ static PyObject * PyObjHandle_FallDown(PyObject* obj, PyObject* args)
 		return 0;
 	}
 	if (fallDownArg > 75 || fallDownArg < 73) fallDownArg = 73;
-	animationGoals.PushFallDown(self->handle, fallDownArg);
+	gameSystems->GetAnim().PushFallDown(self->handle, fallDownArg);
 	Py_RETURN_NONE;
 }
 	
@@ -595,13 +595,13 @@ static PyObject* PyObjHandle_CanFindPathToObj(PyObject* obj, PyObject* args) {
 	auto reach = critterSys.GetReach(self->handle, D20A_UNSPECIFIED_MOVE);
 	if (reach < 0.1) { reach = 3.0; }
 	pathQ.distanceToTargetMin = 0.0;
-	pathQ.tolRadius = reach * 12.0 - fourPointSevenPlusEight;
+	pathQ.tolRadius = reach * 12.0f - fourPointSevenPlusEight;
 
 	auto nodeCount = pathfindingSys.FindPath(&pathQ, &pqr);
 	
 	auto pathLen = pathfindingSys.GetPathLength(&pqr);
 
-	return PyInt_FromLong(pathLen);
+	return PyInt_FromLong(static_cast<long>(pathLen));
 }
 
 
@@ -641,9 +641,9 @@ static PyObject* PyObjHandle_SkillRanksGet(PyObject* obj, PyObject* args) {
 		return 0;
 	}
 	
-	auto skillLevel = critterSys.SkillBaseGet(self->handle, skillId);
+	auto skillRanks = critterSys.SkillBaseGet(self->handle, skillId);
 
-	return PyInt_FromLong(skillLevel);
+	return PyInt_FromLong(skillRanks);
 }
 
 static PyObject* PyObjHandle_SkillRoll(PyObject* obj, PyObject* args) {
@@ -711,13 +711,16 @@ static PyObject* PyObjHandle_GroupList(PyObject* obj, PyObject* args) {
 	return result;
 }
 
+// turns out you could already get this via .stat_base_get(stat_attack_bonus). Leaving it for backward compatibility...
 static PyObject* PyObjHandle_GetBaseAttackBonus(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
 		return PyInt_FromLong(0);
 	}
 
-	return PyInt_FromLong(critterSys.GetBaseAttackBonus(self->handle) );
+	auto bab = critterSys.GetBaseAttackBonus(self->handle);
+
+	return PyInt_FromLong(bab);
 }
 
 static PyObject* PyObjHandle_StatLevelGet(PyObject* obj, PyObject* args) {
@@ -734,7 +737,9 @@ static PyObject* PyObjHandle_StatLevelGet(PyObject* obj, PyObject* args) {
 	if (PyTuple_Size(args) >=2)
 		return PyInt_FromLong(objects.StatLevelGet(self->handle, stat, statArg)); // WIP currently just handles stat_caster_level expansion
 
-	return PyInt_FromLong(objects.StatLevelGet(self->handle, stat));
+	auto statLevel = objects.StatLevelGet(self->handle, stat);
+
+	return PyInt_FromLong(statLevel);
 }
 
 static PyObject* PyObjHandle_StatLevelGetBase(PyObject* obj, PyObject* args) {
@@ -1071,7 +1076,7 @@ static PyObject* PyObjHandle_TurnTowards(PyObject* obj, PyObject* args) {
 		objects.SetRotation(self->handle, relativeAngle);
 		Py_RETURN_NONE;
 	}
-	animationGoals.PushRotate(self->handle, relativeAngle);
+	gameSystems->GetAnim().PushRotate(self->handle, relativeAngle);
 	Py_RETURN_NONE;
 }
 
@@ -1280,7 +1285,7 @@ static PyObject* PyObjHandle_StealFrom(PyObject* obj, PyObject* args) {
 		return 0;
 	}
 
-	animationGoals.PushUseSkillOn(self->handle, target, skill_pick_pocket);
+	gameSystems->GetAnim().PushUseSkillOn(self->handle, target, skill_pick_pocket);
 	Py_RETURN_NONE;
 }
 
@@ -1378,6 +1383,136 @@ static PyObject* PyObjHandle_ConditionAddWithArgs(PyObject* obj, PyObject* args)
 	return PyInt_FromLong(result);
 }
 
+static PyObject* PyObjHandle_FavoredEnemy(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle)
+		return PyInt_FromLong(0);
+
+	objHndl critter;
+	if (!PyArg_ParseTuple(args, "O&:objhndl.is_favored_enemy", &ConvertObjHndl, &critter)) {
+		return 0;
+	}
+
+	if (!critter)
+		return PyInt_FromLong(0);
+
+	auto category = critterSys.GetCategory(critter);
+	int result = 0;
+
+	switch (category) {
+		case mc_type_aberration:
+			result = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_ABERRATION);
+			break;
+		case mc_type_animal:
+			result = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_ANIMAL);
+			break;
+		case mc_type_beast:
+			result = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_BEAST);
+			break;
+		case mc_type_construct:
+			result = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_CONSTRUCT);
+			break;
+		case mc_type_elemental:
+			result = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_ELEMENTAL);
+			break;
+		case mc_type_giant:
+			result = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_GIANT);
+			break;
+		case mc_type_humanoid:
+			{
+				//Check the subtype (be careful since it could fall into more than one category, if so return the highest feat count)
+				int flags = critterSys.GetSubcategoryFlags(critter);
+				if (flags & mc_subtype_goblinoid) {
+					int count = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_HUMANOID_GOBLINOID);
+					if (count > result) result = count;
+				}
+				if (flags & mc_subtype_reptilian) {
+					int count = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_HUMANOID_REPTILIAN);
+					if (count > result) result = count;
+				}
+				if (flags & mc_subtype_dwarf) {
+					int count = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_HUMANOID_DWARF);
+					if (count > result) result = count;
+				}
+				if (flags & mc_subtype_elf) {
+					int count = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_HUMANOID_ELF);
+					if (count > result) result = count;
+				}
+				if (flags & mc_subtype_gnoll) {
+					int count = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_HUMANOID_GNOLL);
+					if (count > result) result = count;
+				}
+				if (flags & mc_subtype_gnome) {
+					int count = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_HUMANOID_GNOME);
+					if (count > result) result = count;
+				}
+				if (flags & mc_subtype_halfling) {
+					int count = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_HUMANOID_HALFLING);
+					if (count > result) result = count;
+				}
+				if (flags & mc_subtype_orc) {
+					int count = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_HUMANOID_ORC);
+					if (count > result) result = count;
+				}
+				if (flags & mc_subtype_human) {
+					int count = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_HUMANOID_HUMAN);
+					if (count > result) result = count;
+				}
+			}
+			break;
+		case mc_type_ooze:
+			result = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_OOZE);
+			break;
+		case mc_type_plant:
+			result = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_PLANT);
+			break;
+		case mc_type_shapechanger:
+			result = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_SHAPECHANGER);
+			break;
+		case mc_type_vermin:
+			result = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_VERMIN);
+			break;
+		case mc_type_dragon:
+			result = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_DRAGON);
+			break;
+		case mc_type_magical_beast:
+			result = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_BEAST);
+			break;
+		case mc_type_monstrous_humanoid:
+			result = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_MONSTROUS_HUMANOID);
+			break;
+		case mc_type_outsider:
+			{
+				//Check the subtype (since it could fall into more than one category be careful to return the highest count)
+				int flags = critterSys.GetSubcategoryFlags(critter);
+				if (flags & mc_subtype_evil) {
+					int count = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_OUTSIDER_EVIL);
+					if (count > result) result = count;
+				}
+				if (flags & mc_subtype_good) {
+					int count = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_OUTSIDER_GOOD);
+					if (count > result) result = count;
+				}
+				if (flags & mc_subtype_lawful) {
+					int count = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_OUTSIDER_LAWFUL);
+					if (count > result) result = count;
+				}
+				if (flags & mc_subtype_chaotic) {
+					int count = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_OUTSIDER_CHAOTIC);
+					if (count > result) result = count;
+				}
+			}
+			break;
+		case mc_type_fey:
+			result = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_FEY);
+			break;
+		case mc_type_undead:
+			result = feats.HasFeatCountByClass(self->handle, FEAT_FAVORED_ENEMY_UNDEAD);
+			break;
+	}
+	
+	return PyInt_FromLong(result);
+}
 
 static PyObject* PyObjHandle_IsFlankedBy(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
@@ -1887,6 +2022,24 @@ static PyObject* PyObjHandle_D20QueryWithData(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(result);
 }
 
+
+static PyObject* PyObjHandle_D20QueryWithObject(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		Py_RETURN_NONE;
+	}
+
+	int queryKey;
+	objHndl queryObject;
+	if (!PyArg_ParseTuple(args, "iO&:objhndl.d20_query_with_object", &queryKey, &ConvertObjHndl, &queryObject)) {
+		return 0;
+	}
+	auto dispatcherKey = (D20DispatcherKey)(DK_QUE_Helpless + queryKey);
+	auto result = d20Sys.d20QueryWithData(self->handle, dispatcherKey, queryObject);
+	return PyInt_FromLong(result);
+}
+
+
 static PyObject* PyObjHandle_D20QueryTestData(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -1951,9 +2104,9 @@ static PyObject* PyObjHandle_DistanceTo(PyObject* obj, PyObject* args) {
 			PyObject* offxArg = PyTuple_GET_ITEM(args, 1);
 			PyObject* offyArg = PyTuple_GET_ITEM(args, 2);
 			if (PyFloat_Check(offxArg))
-				off_x = PyFloat_AsDouble(offxArg);
+				off_x = static_cast<float>(PyFloat_AsDouble(offxArg));
 			if (PyFloat_Check(offyArg))
-				off_y = PyFloat_AsDouble(offyArg);
+				off_y = static_cast<float>(PyFloat_AsDouble(offyArg));
 		}
 		targetLoc.off_x = off_x;
 		targetLoc.off_y = off_y;
@@ -2023,7 +2176,7 @@ static PyObject* PyObjHandle_AnimGoalInterrupt(PyObject* obj, PyObject* args) {
 	if (!self->handle) {
 		return PyInt_FromLong(0);
 	}
-	animationGoals.Interrupt(self->handle, AGP_HIGHEST, false);
+	gameSystems->GetAnim().Interrupt(self->handle, AGP_HIGHEST, false);
 	Py_RETURN_NONE;
 }
 
@@ -2038,7 +2191,7 @@ static PyObject* PyObjHandle_AnimGoalPushAttack(PyObject* obj, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "O&|iii:objhndl.anim_goal_push_attack", &ConvertObjHndl, &tgt, &animIdx, &isCrit, &isSecondary)) {
 		return 0;
 	}
-	return PyInt_FromLong(animationGoals.PushAttackAnim(self->handle, tgt, -1, animIdx, isCrit, isSecondary));
+	return PyInt_FromLong(gameSystems->GetAnim().PushAttackAnim(self->handle, tgt, -1, animIdx, isCrit, isSecondary));
 }
 
 static PyObject* PyObjHandle_AnimGoalGetNewId(PyObject* obj, PyObject* args) {
@@ -2046,7 +2199,7 @@ static PyObject* PyObjHandle_AnimGoalGetNewId(PyObject* obj, PyObject* args) {
 	if (!self->handle) {
 		return PyInt_FromLong(0);
 	}
-	return PyInt_FromLong(animationGoals.GetActionAnimId(self->handle));
+	return PyInt_FromLong(gameSystems->GetAnim().GetActionAnimId(self->handle));
 }
 
 
@@ -2135,7 +2288,7 @@ static PyObject* PyObjHandle_RunOff(PyObject* obj, PyObject* args) {
 	objects.SetFlag(self->handle, OF_CLICK_THROUGH);
 	aiSys.SetAiFlag(self->handle, AiFlag::RunningOff);
 	objects.FadeTo(self->handle, 0, 25, 5, 2);
-	animationGoals.PushRunNearTile(self->handle, loc, 5);
+	gameSystems->GetAnim().PushRunNearTile(self->handle, loc, 5);
 	Py_RETURN_NONE;
 }
 
@@ -2150,7 +2303,7 @@ static PyObject* PyObjHandle_RunTo(PyObject* obj, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "L|ff:objhndl.runoff", &loc.location, &loc.off_x, &loc.off_y)) {
 		return 0;
 	}
-	animationGoals.PushRunNearTile(self->handle, loc, 5);
+	gameSystems->GetAnim().PushRunNearTile(self->handle, loc, 5);
 	Py_RETURN_NONE;
 }
 
@@ -2388,6 +2541,7 @@ static PyObject* PyObjHandle_GetInt(PyObject* obj, PyObject* args) {
 	if (objectFields.GetType(field) == ObjectFieldType::Int32)
 	{
 		value = objects.getInt32(self->handle, field);
+
 	} else if (objectFields.GetType(field) == ObjectFieldType::Float32)
 	{
 		value = (int) objSystem->GetObject(self->handle)->GetFloat(field);
@@ -2477,7 +2631,13 @@ static PyObject* PyObjHandle_HasFeat(PyObject* obj, PyObject* args) {
 		return 0;
 	}
 
-	auto result = _HasFeatCountByClass(self->handle, feat, (Stat) 0, 0);
+	Stat levelRaised = (Stat)0;
+	uint32_t domain1 = 0;
+	uint32_t domain2 = 0;
+	uint32_t alignmentChoice = 0;
+
+	auto result = feats.HasFeatCountByClass(self->handle, feat, levelRaised, 0, domain1, domain2, alignmentChoice);
+
 	return PyInt_FromLong(result);
 }
 
@@ -2488,7 +2648,7 @@ static PyObject * PyObjHandle_FeatAdd(PyObject* obj, PyObject * args){
 	}
 
 	if (PyTuple_GET_SIZE(args) < 1) {
-		PyErr_SetString(PyExc_RuntimeError, "has_feat called with no arguments!");
+		PyErr_SetString(PyExc_RuntimeError, "feat_add called with no arguments!");
 		return PyInt_FromLong(0);
 	}
 
@@ -2528,7 +2688,7 @@ static PyObject* PyObjHandle_SpellKnownAdd(PyObject* obj, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "iii:objhndl.spell_known_add", &spellIdx, &spellClassCode, &slotLevel)) {
 		return 0;
 	}
-	spellSys.SpellKnownAdd(self->handle, spellIdx, spellClassCode & 0x7F | 0x80, slotLevel, 1, 0);
+	spellSys.SpellKnownAdd(self->handle, spellIdx, (spellClassCode & 0x7F) | 0x80, slotLevel, 1, 0);
 	Py_RETURN_NONE;
 }
 
@@ -2543,7 +2703,7 @@ static PyObject* PyObjHandle_SpellMemorizedAdd(PyObject* obj, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "iii:objhndl.spell_memorized_add", &spellIdx, &spellClassCode, &slotLevel)) {
 		return 0;
 	}
-	spellSys.SpellKnownAdd(self->handle, spellIdx, spellClassCode & 0x7F | 0x80, slotLevel, 2, 0);
+	spellSys.SpellMemorizedAdd(self->handle, spellIdx, (spellClassCode & 0x7F) | 0x80, slotLevel, 2, 0);
 	Py_RETURN_NONE;
 }
 
@@ -2641,6 +2801,18 @@ static PyObject* PyObjHandle_GetDeity(PyObject* obj, PyObject* args) {
 		return PyInt_FromLong(0);
 	}
 	return PyInt_FromLong(objects.GetDeity(self->handle));
+}
+
+
+static PyObject* PyObjHandle_GetWeaponType(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	auto result = objects.GetWeaponType(self->handle);
+
+	return PyInt_FromLong(result);
 }
 
 static PyObject* PyObjHandle_GetWieldType(PyObject* obj, PyObject* args) {
@@ -2888,7 +3060,7 @@ static PyObject* PyObjHandle_Unconceal(PyObject* obj, PyObject* args) {
 	if (!self->handle) {
 		return PyInt_FromLong(0);
 	}
-	auto result = animationGoals.PushUnconceal(self->handle);
+	auto result = gameSystems->GetAnim().PushUnconceal(self->handle);
 	return PyInt_FromLong(result);
 }
 
@@ -2903,7 +3075,7 @@ static PyObject* PyObjHandle_PendingToMemorized(PyObject* obj, PyObject* args) {
 	}
 
 	if (classEnum == (Stat)-1)
-		spellSys.spellsPendingToMemorized(self->handle);
+		spellSys.SpellsPendingToMemorized(self->handle);
 	else
 		spellSys.SpellsPendingToMemorizedByClass(self->handle, classEnum);
 	
@@ -2969,6 +3141,17 @@ static PyObject* PyObjHandle_IsUnconscious(PyObject* obj, PyObject* args) {
 	auto result = critterSys.IsDeadOrUnconscious(self->handle);
 	return PyInt_FromLong(result);
 }
+
+
+static PyObject* PyObjHandle_IsBuckler(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(1);
+	}
+	auto result = inventory.IsBuckler(self->handle);
+	return PyInt_FromLong(result);
+}
+
 
 static PyObject * PyObjHandle_MakeWizard(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
@@ -3067,6 +3250,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "d20_query", PyObjHandle_D20Query, METH_VARARGS, NULL },
 	{ "d20_query_has_spell_condition", PyObjHandle_D20QueryHasSpellCond, METH_VARARGS, NULL },
 	{ "d20_query_with_data", PyObjHandle_D20QueryWithData, METH_VARARGS, NULL },
+    { "d20_query_with_object", PyObjHandle_D20QueryWithObject, METH_VARARGS, NULL },
 	{ "d20_query_test_data", PyObjHandle_D20QueryTestData, METH_VARARGS, NULL },
 	{ "d20_query_get_data", PyObjHandle_D20QueryGetData, METH_VARARGS, NULL },
 	{ "d20_send_signal", PyObjHandle_D20SendSignal, METH_VARARGS, NULL },
@@ -3097,6 +3281,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "get_category_type", PyObjHandle_GetCategoryType, METH_VARARGS, NULL },
 	{ "get_initiative", PyObjHandle_GetInitiative, METH_VARARGS, NULL },
 	{ "get_deity", PyObjHandle_GetDeity, METH_VARARGS, NULL },
+	{ "get_weapon_type", PyObjHandle_GetWeaponType, METH_VARARGS, NULL },
 	{ "get_wield_type", PyObjHandle_GetWieldType, METH_VARARGS, NULL },
 	{ "get_weapon_projectile_proto", PyObjHandle_GetWeaponProjectileProto, METH_VARARGS, NULL },
 	{ "group_list", PyObjHandle_GroupList, METH_VARARGS, NULL },
@@ -3119,9 +3304,11 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "is_active_combatant", PyObjHandle_IsActiveCombatant, METH_VARARGS, NULL },
 	{ "is_category_type", PyObjHandle_IsCategoryType, METH_VARARGS, NULL },
 	{ "is_category_subtype", PyObjHandle_IsCategorySubtype, METH_VARARGS, NULL },
+	{ "is_favored_enemy", PyObjHandle_FavoredEnemy, METH_VARARGS, NULL },
 	{ "is_flanked_by", PyObjHandle_IsFlankedBy, METH_VARARGS, NULL },
 	{ "is_friendly", PyObjHandle_IsFriendly, METH_VARARGS, NULL },
 	{ "is_unconscious", PyObjHandle_IsUnconscious, METH_VARARGS, NULL },
+	{ "is_buckler", PyObjHandle_IsBuckler, METH_VARARGS, NULL },
 	{ "item_condition_add_with_args", PyObjHandle_ItemConditionAdd, METH_VARARGS, NULL },
 	{ "item_find", PyObjHandle_ItemFind, METH_VARARGS, NULL },
 	{ "item_get", PyObjHandle_ItemGet, METH_VARARGS, NULL },
@@ -3264,6 +3451,17 @@ static PyObject* PyObjHandle_GetLocation(PyObject* obj, void*) {
 		return PyLong_FromLongLong(0);
 	}
 	return PyLong_FromLongLong(objects.GetLocation(self->handle));
+}
+static PyObject* PyObjHandle_GetLocationFull(PyObject* obj, void*) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		logger->warn("obj.location called with null handle!");
+		return PyLong_FromLongLong(0);
+	}
+	auto locFull = objects.GetLocationFull(self->handle);
+	py::object pyLoc = py::cast(locFull);
+	pyLoc.inc_ref();
+	return pyLoc.ptr();
 }
 
 static PyObject* PyObjHandle_GetType(PyObject* obj, void*) {
@@ -3506,6 +3704,49 @@ static PyObject* PyObjHandle_GetHighestDivineClass(PyObject* obj, void*) {
 }
 
 
+//Gets the highest divine caster level
+static PyObject* PyObjHandle_GetHighestDivineCasterLevel(PyObject* obj, void*) {
+	auto self = GetSelf(obj);
+	objHndl objHnd = self->handle;
+	if (!objHnd) {
+		return PyInt_FromLong(0);
+	}
+
+	int highestCasterLvl = 0;
+
+	for (auto it : d20ClassSys.classEnumsWithSpellLists) {
+		auto classEnum = (Stat)it;
+		if (d20ClassSys.IsDivineCastingClass(classEnum)) {
+			auto currentCasterLevel = objects.StatLevelGet(objHnd, stat_caster_level, classEnum);
+			highestCasterLvl = std::max(highestCasterLvl, currentCasterLevel);
+		}
+	}
+
+	return PyInt_FromLong(highestCasterLvl);
+}
+
+
+//Gets the highest arcane caster level
+static PyObject* PyObjHandle_GetHighestArcaneCasterLevel(PyObject* obj, void*) {
+	auto self = GetSelf(obj);
+	objHndl objHnd = self->handle;
+	if (!objHnd) {
+		return PyInt_FromLong(0);
+	}
+
+	int highestCasterLvl = 0;
+
+	for (auto it : d20ClassSys.classEnumsWithSpellLists) {
+		auto classEnum = (Stat)it;
+		if (d20ClassSys.IsArcaneCastingClass(classEnum)) {
+			auto currentCasterLevel = objects.StatLevelGet(objHnd, stat_caster_level, classEnum);
+			highestCasterLvl = std::max(highestCasterLvl, currentCasterLevel);
+		}
+	}
+
+	return PyInt_FromLong(highestCasterLvl);
+}
+
 
 static PyObject* PyObjHandle_GetSpellsKnown(PyObject* obj, void*) {
 	auto self = GetSelf(obj);
@@ -3562,9 +3803,12 @@ PyGetSetDef PyObjHandleGetSets[] = {
 	{"char_classes", PyObjHandle_GetCharacterClasses, NULL, "a tuple containing the character classes array", NULL },
 	{ "highest_arcane_class", PyObjHandle_GetHighestArcaneClass, NULL, "Highest Arcane spell casting class", NULL },
 	{ "highest_divine_class", PyObjHandle_GetHighestDivineClass, NULL, "Highest Divine spell casting class", NULL },
+    { "highest_arcane_caster_level", PyObjHandle_GetHighestArcaneCasterLevel, NULL, "Highest Arcane caster level", NULL },
+    { "highest_divine_caster_level", PyObjHandle_GetHighestDivineCasterLevel, NULL, "Highest Divine caster level", NULL },
 	{"description", PyObjHandle_GetDescription, NULL, NULL },
 	{"name", PyObjHandle_GetNameId, NULL, NULL},
 	{"location", PyObjHandle_GetLocation, NULL, NULL},
+	{ "location_full", PyObjHandle_GetLocationFull, NULL, NULL },
 	{"type", PyObjHandle_GetType, NULL, NULL},
 	{"radius", PyObjHandle_GetRadius, PyObjHandle_SetRadius, NULL},
 	{"height", PyObjHandle_GetRenderHeight, PyObjHandle_SetRenderHeight, NULL},

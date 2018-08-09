@@ -12,11 +12,16 @@
 #include "gamesystems/d20/d20stats.h"
 #include "mod_support.h"
 #include "party.h"
+#include "ui_systems.h"
+#include "d20_race.h"
+#include "ui_render.h"
+#include "gamesystems/objects/objsystem.h"
 
 int PcCreationFeatUiPrereqCheckUsercallWrapper();
 int HookedUsercallFeatMultiselectSub_101822A0();
 int(__cdecl * OrgFeatMultiselectSub_101822A0)();
 int HookedFeatMultiselectSub_101822A0(feat_enums feat);
+
 
 class PcCreationHooks : TempleFix
 {
@@ -44,8 +49,86 @@ public:
 			return TRUE;
 		});
 
+		
+		// Update title
+		replaceFunction<void(__cdecl)()>(0x1011C470, []() { ChargenSystem::UpdateDescriptionBox(); });
+
+		replaceFunction<void(__cdecl)(int widgetId)>(0x1011ED80, [](int id){
+			uiPcCreation.MainWndRender(id);
+		});
+
+		// Chargen Race System
+		replaceFunction<void(__cdecl)()>(0x1018A7D0, [](){	uiSystems->GetPcCreation().GetRace().Show();	});
+		replaceFunction<void(__cdecl)()>(0x1018A7B0, []() {	uiSystems->GetPcCreation().GetRace().Hide();	});
+		replaceFunction<void(__cdecl)(CharEditorSelectionPacket&)>(0x1018A590, [](CharEditorSelectionPacket& pkt) {	uiSystems->GetPcCreation().GetRace().Reset(pkt);	});
+		replaceFunction<void(__cdecl)()>(0x1018A5A0, []() {	uiSystems->GetPcCreation().GetRace().CheckComplete();	});
+		replaceFunction<void(__cdecl)()>(0x1018A7F0, []() { RaceChargen::UpdateScrollbox(); });
+
+		// Gender
+		replaceFunction<void(__cdecl)(CharEditorSelectionPacket&, objHndl&)>(0x10189CD0, [](CharEditorSelectionPacket&selPkt, objHndl&handle) {uiPcCreation.GenderFinalize(selPkt, handle); });
+
+		// Height
+		replaceFunction<void(__cdecl)()>(0x10189530, [](){
+			auto &selPkt = uiPcCreation.GetCharEditorSelPacket();
+			auto &uiPcCreationHeightSliderValue = temple::GetRef<int>(0x10C42E28);
+			auto &dword_102FE17C = temple::GetRef<int>(0x102FE17C);
+			auto &dword_102FE178 = temple::GetRef<int>(0x102FE178);
+			
+			
+			auto &maxHeightInches = temple::GetRef<int>(0x10C4315C);
+			auto &minHeightInches = temple::GetRef<int>(0x10C42E1C);
+			
+			auto &maxWeight = temple::GetRef<int>(0x10C42E08);
+			auto &minWeight = temple::GetRef<int>(0x10C42E24);
+			
+
+
+			dword_102FE17C = 205 - uiPcCreationHeightSliderValue;
+			dword_102FE178 = 204;
+			auto heightDeltaInch = uiPcCreationHeightSliderValue * (maxHeightInches - minHeightInches) / 164;
+			selPkt.height = heightDeltaInch + minHeightInches;
+			selPkt.modelScale = selPkt.height * d20RaceSys.GetModelScale(selPkt.raceId, selPkt.genderId) / maxHeightInches;
+
+			
+
+			auto &textBuffer = temple::GetRef<char[16]>(0x10C42EB0);
+			_snprintf(textBuffer, sizeof textBuffer, "%d'%d\"", (selPkt.height) / 12, (selPkt.height) % 12);
+
+			UiRenderer::PushFont(PredefinedFont::ARIAL_BOLD_24);
+			auto metrics = UiRenderer::MeasureTextSize(textBuffer, uiPcCreation.whiteTextGenericStyle);
+			UiRenderer::PopFont();
+			temple::GetRef<TigRect>(0x10C42E0C) = { dword_102FE178 +44, dword_102FE17C -metrics.height / 2 + 5,
+													metrics.width, metrics.height};
+			
+
+			auto &wnd = temple::GetRef<LgcyWindow>(0x10C42EC8);
+			dword_102FE178 += wnd.x;
+			dword_102FE17C += wnd.y;
+
+			selPkt.weight = minWeight + uiPcCreationHeightSliderValue * (maxWeight - minWeight) / 164;
+
+			auto editedChar = uiPcCreation.GetEditedChar();
+			if (editedChar)
+				objSystem->GetObject(editedChar)->SetInt32(obj_f_model_scale, (int)(selPkt.modelScale * 100.0));
+
+		});
+		replaceFunction<void(__cdecl)()>(0x10189700, []() {uiPcCreation.HeightShow(); });
+
+		// Hair
+		// Update Hair
+		replaceFunction<void(__cdecl)()>(0x10188B70, []() {uiPcCreation.HairUpdate(); });
+		replaceFunction<void(__cdecl)()>(0x10188BD0, []() {uiPcCreation.HairUpdateStyleBtnTextures(); });
+
+		replaceFunction<int(Race, int, int, int, int)>(0x100E17B0, [](Race race, int gender, int hairType, int hairColor, int helmMod) {
+			return ((int)d20RaceSys.GetHairStyle(race) & 7)
+				| ((gender & 1) << 3)
+				| ((hairType & 7) << 4)
+				| ((hairColor & 7) << 7)
+				| ((helmMod & 3) << 10);
+		});
+
 		// Chargen Class system
-		replaceFunction<void(__cdecl)(GameSystemConf&)>(0x10188910, [](GameSystemConf& conf) {uiPcCreation.ClassSystemInit(conf); });
+		replaceFunction<void(__cdecl)(UiSystemConf&)>(0x10188910, [](UiSystemConf& conf) {uiPcCreation.ClassSystemInit(conf); });
 		replaceFunction<void(__cdecl)()>(0x101885E0, []() {uiPcCreation.ClassWidgetsFree(); });
 		replaceFunction<void(__cdecl)()>(0x101885D0, []() {uiPcCreation.ClassActivate(); });
 		replaceFunction<void(__cdecl)(UiResizeArgs&)>(0x101889F0, [](UiResizeArgs& args) {uiPcCreation.ClassWidgetsResize(args); });
@@ -79,7 +162,7 @@ public:
 		});
 
 		// Feats
-		replaceFunction<void(__cdecl)(GameSystemConf&)>(0x101847F0, [](GameSystemConf& conf) {uiPcCreation.FeatsSystemInit(conf); });
+		replaceFunction<void(__cdecl)(UiSystemConf&)>(0x101847F0, [](UiSystemConf& conf) {uiPcCreation.FeatsSystemInit(conf); });
 		replaceFunction<void(__cdecl)()>(0x10182D30, []() {uiPcCreation.FeatsFree(); });
 		replaceFunction<void(__cdecl)()>(0x10182A30, []() {uiPcCreation.FeatsActivate(); });
 		replaceFunction<void(__cdecl)(CharEditorSelectionPacket&)>(0x10181F40, [](CharEditorSelectionPacket& selPkt) {uiPcCreation.FeatsReset(selPkt); });
@@ -90,7 +173,7 @@ public:
 		replaceFunction<BOOL(__cdecl)()>(0x10181FA0, []() {return uiPcCreation.FeatsCheckComplete(); });
 
 		// Spell system
-		replaceFunction<void(__cdecl)(GameSystemConf&)>(0x101800E0, [](GameSystemConf& conf) {uiPcCreation.SpellsSystemInit(conf); });
+		replaceFunction<void(__cdecl)(UiSystemConf&)>(0x101800E0, [](UiSystemConf& conf) {uiPcCreation.SpellsSystemInit(conf); });
 		replaceFunction<void(__cdecl)()>(0x1017F090, []() {uiPcCreation.SpellsFree(); });
 		replaceFunction<void(__cdecl)()>(0x101804A0, []() {uiPcCreation.SpellsActivate(); });
 		replaceFunction<void(__cdecl)()>(0x1017EAE0, []() {uiPcCreation.SpellsReset(); });

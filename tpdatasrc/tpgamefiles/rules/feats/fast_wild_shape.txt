@@ -1,0 +1,5 @@
+name: Fast Wild Shape
+flags: 12582912
+prereqs: 
+description: You gain the ability to use wild shape as a move equivalent action.
+prereq descr: Dex 13, ability to use wild shape

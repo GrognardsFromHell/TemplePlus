@@ -137,110 +137,7 @@ private:
 	LgcyWidgetId& mWindowId = temple::GetRef<LgcyWidgetId>(0x10BEA2E4);
 };
 
-class UiPcCreation : public UiSystem {
-public:
-    static constexpr auto Name = "pc_creation";
-    UiPcCreation(const UiSystemConf &config);
-    ~UiPcCreation();
-    void ResizeViewport(const UiResizeArgs &resizeArgs) override;
-    const std::string &GetName() const override;
 
-	/**
-	 * Will immediately start a new game if the default party was set.
-	 */
-	void Start();
-};
-
-/**
- * For which purpose has the inventory screen been opened?
- */
-enum class UiCharDisplayType : uint32_t {
-	Hidden = 0,
-	Looting = 1,
-	Bartering = 2,
-	LevelUp = 3,
-	UsingMagicOnItem = 4,
-	PartyPool = 5,
-	Unk6 = 6
-};
-
-class UiChar : public UiSystem {
-public:
-    static constexpr auto Name = "Char-UI";
-    UiChar(const UiSystemConf &config);
-    ~UiChar();
-    void Reset() override;
-    void ResizeViewport(const UiResizeArgs &resizeArgs) override;
-    const std::string &GetName() const override;
-
-	// Was @ 101F97D0 (GetInventoryObjState)
-	bool GetInventoryObjectState() const {
-		return mInventoryObjState != 0;
-	}
-
-	// Was @ 101F97E0 (UiCharInventoryObjSetState)
-	void SetInventoryObjectState(bool state) {
-		mInventoryObjState = state ? 1 : 0;
-	}
-
-	// Was @ 10155160 (GetCharInventoryObj)
-	objHndl GetInventoryObject() const {
-		return mInventoryObj;
-	}
-
-	// Was @ 10155170 (UiCharInventoryObjSet)
-	void SetInventoryObject(objHndl handle) {
-		mInventoryObj = handle;
-		SetInventoryObjectState(!!handle);
-	}
-
-	objHndl GetTooltipItem() const	{
-		return mTooltipItem;
-	}
-
-	// Was @ 10144030 (ui_char_has_current_critter)
-	bool IsVisible() const {
-		return !!mCurrentCritter;
-	}
-
-	UiCharDisplayType GetDisplayType() const {
-		return mDisplayType;
-	}
-
-	bool IsLevelingUp() const {
-		return GetDisplayType() == UiCharDisplayType::LevelUp;
-	}
-
-	bool IsBartering() const {
-		return GetDisplayType() == UiCharDisplayType::Bartering;
-	}
-
-	bool IsLootingActive() const {
-		return mLooting != FALSE;
-	}
-
-	/*
-		This is actually used to *hide* the char ui if param is 0.
-		Other meanings of param are currently unknown.
-		1 means opening for looting; enables the Take All button
-		2 means opening for bartering
-		3 ??
-		4 means opening for spells targeting inventory items
-	*/
-	void Show(UiCharDisplayType type);
-
-	void Hide() {
-		Show(UiCharDisplayType::Hidden);
-	}
-	
-private:
-	objHndl &mInventoryObj = temple::GetRef<objHndl>(0x10BEECC0);
-	BOOL &mInventoryObjState = temple::GetRef<BOOL>(0x10EF97C4);
-	objHndl &mCurrentCritter = temple::GetRef<objHndl>(0x10BE9940);
-	UiCharDisplayType &mDisplayType = temple::GetRef<UiCharDisplayType>(0x10BE994C);
-	BOOL &mLooting = temple::GetRef<BOOL>(0x10BE6EE8);
-	objHndl &mTooltipItem = temple::GetRef<objHndl>(0x10BF07B8);
-};
 
 class UiToolTip : public UiSystem {
 public:
@@ -278,25 +175,6 @@ public:
     const std::string &GetName() const override;
 };
 
-class UiTownmap : public UiSystem, public SaveGameAwareUiSystem {
-public:
-    static constexpr auto Name = "Townmap-UI";
-    UiTownmap(const UiSystemConf &config);
-    ~UiTownmap();
-    void Reset() override;
-    bool SaveGame(TioFile *file) override;
-    bool LoadGame(const UiSaveFile &saveGame) override;
-    void ResizeViewport(const UiResizeArgs &resizeArgs) override;
-    const std::string &GetName() const override;
-
-	// Was @ 10128B60 (ui_townmap_is_visible)
-	bool IsVisible() const {
-		return mVisible != 0;
-	}
-
-private:
-	BOOL &mVisible = temple::GetRef<BOOL>(0x10BE1F28);
-};
 
 class UiPopup : public UiSystem {
 public:
@@ -329,6 +207,8 @@ public:
     ~UiRandomEncounter();
     void ResizeViewport(const UiResizeArgs &resizeArgs) override;
     const std::string &GetName() const override;
+	bool HasPermissionToExit();
+	void ShowExitWnd();
 };
 
 class UiHelp : public UiSystem {
@@ -637,9 +517,11 @@ public:
 	}
 
 	bool HandleKeyEvent(const InGameKeyEvent &msg);
+	bool CharacterSelect(const InGameKeyEvent &msg, int modifier, int keyEvt);
 
 private:
 	uint32_t &mState = temple::GetRef<uint32_t>(0x10BE8CF4);
+	uint32_t &mDoYouWantToQuitActive = temple::GetRef<uint32_t>(0x10BE8CF0);
 };
 
 class UiHelpManager : public UiSystem, public SaveGameAwareUiSystem {

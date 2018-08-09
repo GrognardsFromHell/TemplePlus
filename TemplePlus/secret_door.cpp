@@ -1,5 +1,6 @@
 
 #include "stdafx.h"
+#include <infrastructure/meshes.h>
 #include "secret_door.h"
 #include "obj.h"
 #include "util/fixes.h"
@@ -52,17 +53,16 @@ public:
 				}
 			}
 			
-			auto aasHndl = objects.GetAasHandle(sd);
-			if (!aasHndl){
-				logger->error("Secret door: cannot start particle efgect, noanimhandlefor {}", sd);
+			auto aasHndl = objects.GetAnimHandle(sd);
+			if (!aasHndl) {
+				logger->error("Secret door: cannot start particle effect, noanimhandlefor {}", sd);
 				return FALSE;
 			}
 
 			for (auto i=0; i<29;i++)
 			{
 				auto boneName = fmt::format("effect-secretdoor-{:02d}", i);
-				auto hasBone = temple::GetRef<BOOL(__cdecl)(int, const char*)>(0x10263A10);
-				if (hasBone(aasHndl, boneName.c_str() )){
+				if (aasHndl->HasBone(boneName)) {
 					gameSystems->GetParticleSys().CreateAtObj(boneName, sd);
 				}
 			}

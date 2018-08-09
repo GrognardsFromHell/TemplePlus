@@ -11,6 +11,7 @@
 #include <tig/tig_tokenizer.h>
 #include "weapon.h"
 #include "dungeon_master.h"
+#include "d20_race.h"
 
 class ProtosHooks : public TempleFix{
 public: 
@@ -19,7 +20,8 @@ public:
 	static int ParseCondition(int colIdx, objHndl handle, char* content, int condIdx, int stage, int unused, int unused2);
 	static int ParseMonsterSubcategory(int colIdx, objHndl handle, char* content, obj_f field, int arrayLen, char** strings);
 	static int ParseType(int colIdx, objHndl handle, char* content, obj_f field, int arrayLen, char** strings);
-
+	static int ParseRace(int colIdx, objHndl handle, char* content, obj_f field, int arrayLen, char** strings);
+	static int ParseSpell(int colIdx, objHndl handle, char* content, obj_f field);
 	void apply() override 
 	{
 
@@ -57,7 +59,9 @@ public:
 		// Hook the generic ParseType function
 		replaceFunction<int(__cdecl)(int, objHndl, char*, obj_f, int, char**)>(0x10039680, ParseType);
 
-		
+		replaceFunction<int(__cdecl)(int, objHndl, char*, obj_f, int, char**)>(0x10039B40, ParseRace);
+
+		replaceFunction<int(__cdecl)(int, objHndl, char*, obj_f)>(0x1003A8C0, ParseSpell);
 	}
 } protosHooks;
 
@@ -370,4 +374,60 @@ int ProtosHooks::ParseType(int colIdx, objHndl handle, char * content, obj_f fie
 
 	
 	return foundType ? TRUE : FALSE;
+}
+
+int ProtosHooks::ParseRace(int colIdx, objHndl handle, char * content, obj_f field, int arrayLen, char ** strings)
+{
+	if (content && *content){
+		auto race = d20RaceSys.GetRaceEnum(content);
+		objSystem->GetObject(handle)->SetInt32(field, race);
+	}
+	return 1;
+}
+
+int ProtosHooks::ParseSpell(int colIdx, objHndl handle, char* content, obj_f field){
+	if (!content || !*content)
+		return 1;
+	StringTokenizer tok(content);
+	if (!tok.next())
+		return 1;
+
+	if (tok.token().type != StringTokenType::QuotedString)
+		return 1;
+	
+	
+	auto spEnum = spellSys.GetSpellEnum(tok.token().text);
+	if (!spEnum){
+		logger->error("ParseSpell: attempting to add a non-existant spell {}", content);
+	}
+	if (!tok.next() || tok.token().type != StringTokenType::Identifier)
+		return 1;
+
+	auto spClass = spellSys.GetSpellClass(tok.token().text);
+	if (!tok.next() || tok.token().type != StringTokenType::Number)
+		return 1;
+	auto spLvl = tok.token().numberInt;
+
+	auto obj = objSystem->GetObject(handle);
+	if (!obj->IsCritter() || (!spellSys.isDomainSpell(spClass) && spClass != Domain::Domain_Special )){
+
+		
+		auto shouldAddKnown = true;
+		std::vector<int> spellClasses, spellLevels;
+		if (obj->IsCritter() && spellSys.SpellKnownQueryGetData(handle, spEnum, spellClasses, spellLevels)){
+			for (auto i=0; i < spellClasses.size(); i++){
+				if (spellClasses[i] == spClass && spellLevels[i] == spLvl){
+					shouldAddKnown = false;
+					break;
+				}
+			}
+		}
+		if (shouldAddKnown)
+			spellSys.SpellKnownAdd(handle, spEnum, spClass, spLvl, SpellStoreType::spellStoreKnown, 0);
+		if (!obj->IsCritter())
+			return 1;
+	}
+	spellSys.SpellMemorizedAdd(handle, spEnum, spClass, spLvl, SpellStoreType::spellStoreMemorized, 0);
+
+	return 1;
 }

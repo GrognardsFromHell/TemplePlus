@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "obj.h"
+#include "ai.h"
 #include <temple/dll.h>
 #include <temple/meshes.h>
 #include "d20.h"
@@ -12,7 +13,12 @@
 #include "pathfinding.h"
 #include "float_line.h"
 #include "gamesystems/gamesystems.h"
+#include "gamesystems/mapsystem.h"
 #include "gamesystems/objects/objsystem.h"
+#include "gamesystems/legacymapsystems.h"
+#include "animgoals/anim.h"
+
+#include <infrastructure/vfs.h>
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -33,12 +39,10 @@ static_assert(temple::validate_size<CondNode, 52>::value, "Condition node struct
 struct ObjectSystemAddresses : temple::AddressTable
 {
 
-	int8_t(*SectorGetElevation)(LocAndOffsets forLocation);
 	int(*GetAasHandle)(objHndl obj);
 	
 	ObjectSystemAddresses()
 	{
-		rebase(SectorGetElevation, 0x100A8CB0);
 		rebase(GetAasHandle, 0x10021A40);
 	}
 } addresses;
@@ -163,9 +167,9 @@ gfx::AnimatedModelParams Objects::GetAnimParams(objHndl handle)
 					result.offsetX = parentLoc.off_x;
 					result.offsetY = parentLoc.off_y;
 
-					auto elevation = addresses.SectorGetElevation(parentLoc);
+					auto depth = gameSystems->GetHeight().GetDepth(parentLoc);
 					auto offsetZ = objects.GetOffsetZ(parent);
-					result.offsetZ = offsetZ - elevation;
+					result.offsetZ = offsetZ - depth;
 
 					result.rotation = objects.GetRotation(parent);
 					result.rotationPitch = objects.GetRotationPitch(parent);
@@ -188,16 +192,26 @@ gfx::AnimatedModelParams Objects::GetAnimParams(objHndl handle)
 	result.offsetY = loc.off_y;
 	
 	auto flags = objects.GetFlags(handle);
-	int8_t elevation = 0; // TODO: This may be "depth" instead of elevation.
+	int8_t depth = 0;
 	if (!(flags & OF_NOHEIGHT)) {
-		elevation = addresses.SectorGetElevation(loc);
-}
-	result.offsetZ = objects.GetOffsetZ(handle) - elevation;
+		depth = gameSystems->GetHeight().GetDepth(loc);
+	}
+	result.offsetZ = objects.GetOffsetZ(handle) - depth;
 	result.rotation = objects.GetRotation(handle);
 	result.rotationPitch = objects.GetRotationPitch(handle);
 
 	return result;
 	}
+
+void Objects::ClearAnim(objHndl handle)
+{
+	auto obj = gameSystems->GetObj().GetObject(handle);
+	auto animHandle = obj->GetInt32(obj_f_animation_handle);
+	if (animHandle) {
+		gameSystems->GetAAS().FreeHandle(animHandle);
+		obj->SetInt32(obj_f_animation_handle, 0);
+	}
+}
 
 void Objects::SetAnimId(objHndl obj, gfx::EncodedAnimId animId) {
 
@@ -212,9 +226,9 @@ void Objects::SetAnimId(objHndl obj, gfx::EncodedAnimId animId) {
 		// Apparently certain anim IDs cause weapons to disappear, 
 		// possibly skill use/casting?
 		int opacity = 0;
-		if (animId & 0xC0000000) {
+		if (animId.IsSpecialAnim()) {
 			opacity = 255;
-	}
+		}
 
 		if (mainHand) {
 			FadeTo(mainHand, opacity, 10, 16, 0);
@@ -229,6 +243,12 @@ void Objects::SetAnimId(objHndl obj, gfx::EncodedAnimId animId) {
 	auto model = GetAnimHandle(obj);
 	model->SetAnimId(animId);
 
+}
+
+bool Objects::HasAnimId(objHndl obj, gfx::EncodedAnimId animId)
+{
+	auto model = GetAnimHandle(obj);
+	return model->HasAnim(animId);
 }
 
 gfx::EncodedAnimId Objects::GetIdleAnim(objHndl obj)
@@ -557,7 +577,7 @@ float Objects::GetRotationTowards(objHndl from, objHndl to) {
 	auto rot = 5*M_PI/4 - AngleBetweenPoints(locFrom, locTo);
 	if (rot < 0)
 		rot = rot + 2 * M_PI;
-	return  rot;
+	return (float) rot;
 }
 
 void Objects::FadeTo(objHndl handle, int targetOpacity, int tickTimeMs, int tickOpacityQuantum, int callbackMode) const
@@ -626,10 +646,10 @@ void Objects::Destroy(objHndl ObjHnd) {
 
 	auto moveContentToLoc = temple::GetPointer<void(objHndl, BOOL)>(0x1006DB80);
 
-	auto type = _GetInternalFieldInt32(ObjHnd, obj_f_type);
-	if (type != obj_t_pc && type != obj_t_npc)
+	auto type = GetType(ObjHnd);
+	if (!IsCritterType(type))
 	{
-		if (type >= obj_t_weapon && type <= obj_t_generic || type == obj_t_bag)
+		if (IsEquipmentType(type))
 		{
 			auto parentObj = inventory.GetParent(ObjHnd);
 			if (parentObj)
@@ -641,10 +661,10 @@ void Objects::Destroy(objHndl ObjHnd) {
 			}
 		}
 		if (type == obj_t_container)
-{
+		{
 			moveContentToLoc(ObjHnd, 1);
 		}
-}
+	}
 	else
 	{
 		auto removeFromGroups = temple::GetPointer<int(objHndl)>(0x10080DA0);
@@ -665,8 +685,7 @@ void Objects::Destroy(objHndl ObjHnd) {
 		moveContentToLoc(ObjHnd, 1);
 }
 
-	auto cancelAnims = temple::GetPointer<void(objHndl)>(0x1000C760);
-	cancelAnims(ObjHnd);
+	gameSystems->GetAnim().ClearForObject(ObjHnd);
 	
 	if (combatSys.isCombatActive())
 {
@@ -776,14 +795,29 @@ bool Objects::IsStatic(objHndl handle) {
 	auto type = GetType(handle);
 	if (type == obj_t_projectile 
 		|| type == obj_t_container 
-		|| type == obj_t_pc 
-		|| type == obj_t_npc 
-		|| type >= obj_t_weapon && type <= obj_t_generic 
-		|| type == obj_t_bag)
+		|| IsCritterType(type)
+		|| IsEquipmentType(type))
 		return false;
 	
 	return (GetFlags(handle) & OF_DYNAMIC) == 0;
 
+}
+
+bool Objects::IsUntargetable(objHndl handle)
+{
+	if (GetFlags(handle) & (OF_OFF | OF_CLICK_THROUGH | OF_DONTDRAW)) {
+		return true;
+	}
+
+	if (IsUndetectedSecretDoor(handle)) {
+		return true;
+	}
+
+	if (aiSys.IsRunningOff(handle)) {
+		return true;
+	}
+
+	return false;
 }
 
 int Objects::StatLevelGet(objHndl obj, Stat stat)
@@ -818,6 +852,38 @@ int Objects::StatLevelGetBaseWithModifiers(objHndl handle, Stat stat, DispIoBonu
 int Objects::StatLevelSetBase(objHndl obj, Stat stat, int value)
 {
 	return _StatLevelSetBase(obj, stat, value);
+}
+
+int32_t Objects::GetMoneyAmount(objHndl handle){
+
+	if (!handle)
+		return 0;
+
+	auto obj = objSystem->GetObject(handle);
+
+	
+	switch(obj->type){
+	case obj_t_money:
+		return obj->GetInt32(obj_f_money_quantity) * inventory.GetCoinWorth( obj->GetInt32(obj_f_money_type));
+	case obj_t_pc:
+		return party.GetMoney();	
+	}
+
+	if (obj->IsNPC())
+		return critterSys.MoneyAmount(handle);
+
+	if (obj->IsContainer()){
+		auto items = inventory.GetInventory(handle);
+		auto totalWorth = 0;
+		for (auto item: items){
+			auto itemObj = objSystem->GetObject(item);
+			if (itemObj->type == obj_t_money)
+				totalWorth += GetMoneyAmount(item);
+		}
+		return totalWorth;
+	}
+
+	return 0;
 }
 
 
@@ -929,11 +995,30 @@ public:
 			}
 		});
 
+		// ObjIsUntargetable
+		replaceFunction<BOOL(objHndl)>(0x1001fcb0, [](objHndl obj) {
+			return objects.IsUntargetable(obj) ? TRUE : FALSE;
+		});
+
+		// anim_obj_set_aas_anim_id
+		replaceFunction<int(objHndl, gfx::EncodedAnimId)>(0x10021d50, [](objHndl objId, gfx::EncodedAnimId animId) {
+			objects.SetAnimId(objId, animId);
+			return 0;
+		});
+
+		// obj_has_anim
+		replaceFunction<int(objHndl, gfx::EncodedAnimId)>(0x10021d20, [](objHndl handle, gfx::EncodedAnimId animId) {
+			return objects.HasAnimId(handle, animId) ? 1 : 0;
+		});
+
 		replaceFunction(0x1004E7F0, _abilityScoreLevelGet);
 		replaceFunction(0x100257A0, _destroy);
 		//orgMove = replaceFunction(0x10025950, Move);
 		//orgMoveUpdateLoc = replaceFunction(0x100C1990, MoveUpdateLoc);
 
+		// obj_get_closest_distance_from_mesh
+		// The respective goal function that called this function was replaced and now calls AAS directly
+		breakRegion(0x10022a30, 0x10022BB6);
 
 		writeCall(0x10022AEF, HookedGetModelScale); 
 		writeCall(0x100228A5, HookedGetModelScale); // RayCast

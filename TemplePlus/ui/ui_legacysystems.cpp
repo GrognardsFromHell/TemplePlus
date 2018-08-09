@@ -19,6 +19,8 @@
 #include "gamesystems/objects/objsystem.h"
 #include "damage.h"
 #include "critter.h"
+#include "combat.h"
+#include "ui_char.h"
 
 //*****************************************************************************
 //* MainMenu-UI
@@ -330,67 +332,7 @@ bool UiDlg::IsActive() const
 	return !(mFlags & 1) || !uiManager->IsHidden(mWindowId);
 }
 
-//*****************************************************************************
-//* pc_creation
-//*****************************************************************************
 
-UiPcCreation::UiPcCreation(const UiSystemConf &config) {
-    auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x10120420);
-    if (!startup(&config)) {
-        throw TempleException("Unable to initialize game system pc_creation");
-    }
-}
-UiPcCreation::~UiPcCreation() {
-    auto shutdown = temple::GetPointer<void()>(0x1011ebc0);
-    shutdown();
-}
-void UiPcCreation::ResizeViewport(const UiResizeArgs& resizeArg) {
-    auto resize = temple::GetPointer<void(const UiResizeArgs*)>(0x10120b30);
-    resize(&resizeArg);
-}
-const std::string &UiPcCreation::GetName() const {
-    static std::string name("pc_creation");
-    return name;
-}
-
-void UiPcCreation::Start()
-{
-	static auto ui_pc_creation_start = temple::GetPointer<int()>(0x1011fdc0);
-	ui_pc_creation_start();
-}
-
-//*****************************************************************************
-//* Char-UI
-//*****************************************************************************
-
-UiChar::UiChar(const UiSystemConf &config) {
-    auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x1014b900);
-    if (!startup(&config)) {
-        throw TempleException("Unable to initialize game system Char-UI");
-    }
-}
-UiChar::~UiChar() {
-    auto shutdown = temple::GetPointer<void()>(0x10149820);
-    shutdown();
-}
-void UiChar::ResizeViewport(const UiResizeArgs& resizeArg) {
-    auto resize = temple::GetPointer<void(const UiResizeArgs*)>(0x1014ba20);
-    resize(&resizeArg);
-}
-void UiChar::Reset() {
-    auto reset = temple::GetPointer<void()>(0x10143f80);
-    reset();
-}
-const std::string &UiChar::GetName() const {
-    static std::string name("Char-UI");
-    return name;
-}
-
-void UiChar::Show(UiCharDisplayType type)
-{
-	static auto ui_show_charui = temple::GetPointer<void(UiCharDisplayType)>(0x10148e20);
-	ui_show_charui(type);
-}
 
 //*****************************************************************************
 //* ToolTip-UI
@@ -465,40 +407,6 @@ const std::string &UiScrollpane::GetName() const {
     return name;
 }
 
-//*****************************************************************************
-//* Townmap-UI
-//*****************************************************************************
-
-UiTownmap::UiTownmap(const UiSystemConf &config) {
-    auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x1012e1c0);
-    if (!startup(&config)) {
-        throw TempleException("Unable to initialize game system Townmap-UI");
-    }
-}
-UiTownmap::~UiTownmap() {
-    auto shutdown = temple::GetPointer<void()>(0x1012bbe0);
-    shutdown();
-}
-void UiTownmap::ResizeViewport(const UiResizeArgs& resizeArg) {
-    auto resize = temple::GetPointer<void(const UiResizeArgs*)>(0x10128450);
-    resize(&resizeArg);
-}
-void UiTownmap::Reset() {
-    auto reset = temple::GetPointer<void()>(0x1012bb40);
-    reset();
-}
-bool UiTownmap::SaveGame(TioFile *file) {
-        auto save = temple::GetPointer<int(TioFile*)>(0x10128650);
-        return save(file) == 1;
-}
-bool UiTownmap::LoadGame(const UiSaveFile &save) {
-        auto load = temple::GetPointer<int(const UiSaveFile*)>(0x101288f0);
-        return load(&save) == 1;
-}
-const std::string &UiTownmap::GetName() const {
-    static std::string name("Townmap-UI");
-    return name;
-}
 
 //*****************************************************************************
 //* Popup-UI
@@ -578,6 +486,27 @@ void UiRandomEncounter::ResizeViewport(const UiResizeArgs& resizeArg) {
 const std::string &UiRandomEncounter::GetName() const {
     static std::string name("RandomEncounter-UI");
     return name;
+}
+
+bool UiRandomEncounter::HasPermissionToExit(){
+	static auto hasPermissionToExit = temple::GetRef<BOOL(__cdecl)()>(0x1016CEB0);
+	return (hasPermissionToExit() != FALSE) ? true : false;
+}
+
+void UiRandomEncounter::ShowExitWnd(){
+	struct UiRndEncExitWidgets
+	{
+		LgcyWindow *wnd;
+		LgcyButton *okBtn;
+		LgcyButton *cancelBtn;
+		LgcyButton *cancelBtn2;
+	};
+	auto exitWidgets = temple::GetRef<UiRndEncExitWidgets*>(0x10BF3550);
+	auto wnd = exitWidgets->wnd;
+	if (wnd){
+		uiManager->SetHidden(wnd->widgetId, false);
+	}
+	temple::GetRef<int>(0x10BF3788) = 1;
 }
 
 //*****************************************************************************
@@ -1153,7 +1082,7 @@ BOOL UiCamping::Camp(int hoursToRest){
 				restPeriods *= 2;
 			}
 
-			for (auto partyIdx = 0; partyIdx < party.GroupListGetLen(); partyIdx++){
+			for (auto partyIdx = 0u; partyIdx < party.GroupListGetLen(); partyIdx++){
 				auto partyMember = party.GroupListGetMemberN(partyIdx);
 				
 				auto healAmt = GetHealingAmount(partyMember, restPeriods);
@@ -1164,7 +1093,7 @@ BOOL UiCamping::Camp(int hoursToRest){
 				// heal damage
 				if (canHeal){
 					spellSys.SanitizeSpellSlots(partyMember);
-					spellSys.spellsPendingToMemorized(partyMember);
+					spellSys.SpellsPendingToMemorized(partyMember);
 					objSystem->GetObject(partyMember)->ClearArray(obj_f_critter_spells_cast_idx);
 					damage.Heal(partyMember, partyMember, Dice(0, 0, healAmt), D20A_NONE);
 				}
@@ -1225,7 +1154,7 @@ void UiCamping::SetTimeUntilHealed(){
 
 
 	auto healMod = GetHealingAmountMod();
-	for (auto partyIdx =0; partyIdx < party.GroupListGetLen(); partyIdx++)
+	for (auto partyIdx =0u; partyIdx < party.GroupListGetLen(); partyIdx++)
 	{
 		auto handle = party.GroupListGetMemberN(partyIdx);
 		if (!handle) continue;
@@ -1271,7 +1200,7 @@ int UiCamping::GetHealingAmountMod(){
 	if (GetSleepStatus()<= 1) { // safe resting place or camping in wilderness
 
 							// find someone who can cast heal spells
-		for (auto partyIdx = 0; partyIdx < party.GroupListGetLen(); partyIdx++) {
+		for (auto partyIdx = 0u; partyIdx < party.GroupListGetLen(); partyIdx++) {
 			auto partyMember = party.GroupListGetMemberN(partyIdx);
 
 			auto maxClrSpellLvl = spellSys.GetMaxSpellLevel(partyMember, stat_level_cleric);
@@ -1471,6 +1400,39 @@ bool UiKeyManager::HandleKeyEvent(const InGameKeyEvent & msg)
 {
 	static auto UiManagerKeyEventHandler = temple::GetPointer<BOOL(const InGameKeyEvent &kbMsg)>(0x10143d60);
 	return UiManagerKeyEventHandler(msg) != 0;
+}
+
+bool UiKeyManager::CharacterSelect(const InGameKeyEvent& msg, int modifier, int keyEvt){
+
+	if (mDoYouWantToQuitActive)
+		return true;
+
+	auto charNumber = (uint32_t)(keyEvt - 29);
+	if (charNumber >= party.GroupListGetLen() 
+		|| combatSys.isCombatActive())
+		return true;
+
+	auto isDlgActive = temple::GetRef<int(__cdecl)()>(0x1014BAC0);
+	if (isDlgActive())
+		return true;
+
+	auto dude = party.GroupListGetMemberN( charNumber);
+	if (party.ObjIsAIFollower(dude))
+		return true;
+
+	auto uiCharState = uiSystems->GetChar().GetDisplayType();
+	if (uiCharState == UiCharDisplayType::LevelUp)
+		return true;
+
+
+	if (uiSystems->GetChar().IsVisible()){
+		uiSystems->GetChar().ShowForCritter(uiCharState, dude);
+		return true;
+	}
+
+	party.CurrentlySelectedClear();
+	party.AddToCurrentlySelected(dude);
+	return true;
 }
 
 //*****************************************************************************

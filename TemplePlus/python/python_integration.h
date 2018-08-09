@@ -34,6 +34,8 @@ public:
 	int RunScriptDefault0(ScriptId scriptId, EventId eventId, PyObject *args);
 	std::string RunScriptStringResult(ScriptId scriptId, EventId eventId, PyObject *args);
 	std::map<int, std::vector<int>> RunScriptMapResult(ScriptId scriptId, EventId eventId, PyObject* args);
+	std::vector<int> RunScriptVectorResult(ScriptId scriptId, EventId eventId, PyObject* args);
+	
 	/*
 		Gets a loaded instance of a script module or null if loading failed.
 		Returns a borrowed ref
@@ -51,4 +53,5 @@ private:
 	string mSearchPattern;
 	string mFilenameRegexp;
 };
+
 

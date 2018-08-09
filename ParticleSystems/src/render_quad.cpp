@@ -8,6 +8,8 @@
 #include "particles/render_point.h"
 #include "particles/instances.h"
 
+using namespace DirectX;
+
 namespace particles {
 
 	using namespace gfx;

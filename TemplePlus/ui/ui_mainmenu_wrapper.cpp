@@ -8,7 +8,7 @@ static class UiMainMenuWrapper : public TempleFix {
 public:
 
 	void apply() override {
-		return; 
+		//return; 
 
 		// ui_mm_is_visible
 		replaceFunction<BOOL()>(0x101157f0, []() {
@@ -20,10 +20,10 @@ public:
 			uiSystems->GetMM().Hide();
 		});
 
-		// ui_mm_render_logo
-		replaceFunction<void()>(0x10115820, []() {
-			// TODO: This is stupid, this just renders the game logo as if the main menu was open
-		});
+		//// ui_mm_render_logo
+		//replaceFunction<void()>(0x10115820, []() {
+		//	// TODO: This is stupid, this just renders the game logo as if the main menu was open
+		//});
 
 		// ui_mm_show_page
 		replaceFunction<void(int)>(0x10116500, [](int page) {

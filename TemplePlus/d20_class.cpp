@@ -392,6 +392,14 @@ int D20ClassSystem::GetClassHitDice(Stat classEnum){
 	return classSpec->second.hitDice;
 }
 
+int D20ClassSystem::GetClassEnum(const std::string& s){
+	for (auto &classSpec:classSpecs){
+		if (!_strcmpi(tolower(classSpec.second.conditionName).c_str(), tolower(s).c_str()))
+			return classSpec.first;
+	}
+	return 0;
+}
+
 const char* D20ClassSystem::GetClassShortHelp(Stat classCode){
 	return d20Stats.GetClassShortDesc(classCode);
 }

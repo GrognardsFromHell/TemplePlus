@@ -1,0 +1,5 @@
+name: Deadly Defense
+flags: 4194320
+prereqs: 
+description: When fighting defensively, you deal an extra 1d6 points of damage with any light weapon or with any weapon to which the Weapon Finesse feat applies (such as a rapier, spiked chain, or whip). This feat's benefit applies only when you are unarmored or wearing light armor and not using a shield.  If you have the Combat Expertise feat, you also gain the benefit of Deadly Defense when taking a penalty of at least -2 on your attack roll from that feat.
+prereq descr: 

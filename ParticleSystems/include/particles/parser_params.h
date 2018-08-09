@@ -1,6 +1,6 @@
 #pragma once
 
-#include <gsl/string_span.h>
+#include <gsl/string_span>
 #include <string>
 
 #include "params.h"

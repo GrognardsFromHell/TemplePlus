@@ -43,12 +43,13 @@ enum class MainMenuPage {
 	InGameNormal,
 	InGameIronman,
 	Options,
-	SetPieces
 };
 
 class ViewCinematicsDialog;
-
+class SetPiecesDialog;
+// mainmenu
 class UiMM : public UiSystem {
+	friend class UiMainMenuWrapper;
 public:
 	static constexpr auto Name = "MM-UI";
 	UiMM(const UiSystemConf &config);
@@ -62,11 +63,13 @@ public:
 	void Hide();
 
 private:
+	const bool USE_NEW_WIDGETS = true; // override vanilla ToEE MM widgets
 	// MainMenuPages &mPages = temple::GetRef<MainMenuPages>(0x10BD4F40);
 
 	MainMenuPage mCurrentPage = MainMenuPage::MainMenu;
 
 	std::unique_ptr<ViewCinematicsDialog> mViewCinematicsDialog;
+	std::unique_ptr<SetPiecesDialog> mSetPiecesDialog;
 
 	std::unique_ptr<WidgetContainer> mMainWidget;
 	std::map<MainMenuPage, WidgetContainer*> mPageWidgets;

@@ -38,6 +38,7 @@
 #include "ui_systems.h"
 #include <infrastructure/tabparser.h>
 #include "ui_assets.h"
+#include "d20_race.h"
 
 #define NUM_ITEM_ENHANCEMENT_SPECS 41
 #define NUM_APPLIED_BONUSES_MAX 9 // number of bonuses that can be applied on item creation
@@ -1386,7 +1387,7 @@ void UiItemCreation::LoadMaaSpecs()
 				auto& tok = spellReqTok.token();
 				if (tok.type != StringTokenType::QuotedString)
 					continue;
-				auto spellEnum = spellSys.getSpellEnum(tok.text);
+				auto spellEnum = spellSys.GetSpellEnum(tok.text);
 				if (spellEnum){
 					itEnh.reqs.spells[0].push_back(spellEnum);
 				}
@@ -1753,7 +1754,7 @@ int UiItemCreation::GetItemCreationType(){
 }
 
 int UiItemCreation::GetSurplusXp(objHndl crafter){
-	auto level = objects.StatLevelGet(crafter, stat_level);
+	auto level = critterSys.GetEffectiveLevel(crafter);
 	auto xpReq = d20LevelSys.GetXpRequireForLevel(level);
 	return gameSystems->GetObj().GetObject(crafter)->GetInt32(obj_f_critter_experience) - xpReq;
 }
@@ -1848,7 +1849,7 @@ bool UiItemCreation::ItemCreationRulesParseReqText(objHndl crafter, const char *
 
 	// Race
 	if (firstChar == 'R'){
-		auto raceEnum = temple::GetRef<Race(__cdecl)(const char*)>(0x10073B70)(reqTxt + 1);
+		auto raceEnum = d20RaceSys.GetRaceEnum(reqTxt + 1);
 		return objects.StatLevelGet(crafter, stat_race) == raceEnum;
 	}
 
@@ -1858,7 +1859,7 @@ bool UiItemCreation::ItemCreationRulesParseReqText(objHndl crafter, const char *
 			if (GetItemCreationType() == ItemCreationType::CraftWondrous)
 				return true;
 		}
-		auto spEnum = spellSys.getSpellEnum(reqTxt + 1);
+		auto spEnum = spellSys.GetSpellEnum(reqTxt + 1);
 		if (!spEnum)
 			spEnum = atol(reqTxt + 1);
 		return spellSys.IsSpellKnown(crafter, spEnum);

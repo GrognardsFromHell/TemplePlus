@@ -16,6 +16,7 @@
 #include "ui/ui.h"
 #include <infrastructure/elfhash.h>
 #include "python/python_integration_feat.h"
+#include "d20_race.h"
 
 TabFileStatus featPropertiesTabFile;
 uint32_t featPropertiesTable[NUM_FEATS + 1000];
@@ -140,7 +141,7 @@ LegacyFeatSystem::LegacyFeatSystem()
 	rebase(ToEE_WeaponFeatCheck, 0x1007C4F0);
 	rebase(FeatAdd, 0x1007CF30);
 
-	int _racialFeatsTable[NUM_RACES * 10] = { -1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	int _racialFeatsTable[VANILLA_NUM_RACES * 10] = { -1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		FEAT_SIMPLE_WEAPON_PROFICIENCY_ELF, -1, 0, 0, 0, 0, 0, 0, 0, 0,
 		-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -159,6 +160,17 @@ LegacyFeatSystem::LegacyFeatSystem()
 	featPreReqTable[FEAT_GREATER_TWO_WEAPON_FIGHTING].featPrereqs[2].featPrereqCodeArg = 11;
 
 	memset(emptyString, 0, 1);
+
+	//Add standard metamagic feats to the list
+	metamagicFeats.insert(FEAT_EMPOWER_SPELL);
+	metamagicFeats.insert(FEAT_ENLARGE_SPELL);
+	metamagicFeats.insert(FEAT_EXTEND_SPELL);
+	metamagicFeats.insert(FEAT_HEIGHTEN_SPELL);
+	metamagicFeats.insert(FEAT_WIDEN_SPELL);
+	metamagicFeats.insert(FEAT_MAXIMIZE_SPELL);
+	metamagicFeats.insert(FEAT_QUICKEN_SPELL);
+	metamagicFeats.insert(FEAT_STILL_SPELL);
+	metamagicFeats.insert(FEAT_SILENT_SPELL);
 
 }
 BOOL LegacyFeatSystem::FeatSystemInit()
@@ -260,13 +272,13 @@ void LegacyFeatSystem::_GetNewFeatsFromFile()
 					
 					if (prereqArgCount < prereqCount)
 					{
-						if (featSpec.prereqs.size() <= prereqArgCount)
+						if (featSpec.prereqs.size() <= static_cast<size_t>(prereqArgCount))
 							featSpec.prereqs.resize(featSpec.prereqs.size() + 1);
 						featSpec.prereqs[prereqArgCount++].featPrereqCodeArg = atol(ch);
 					}
 					else
 					{
-						if (featSpec.prereqs.size() <= prereqCount)
+						if (featSpec.prereqs.size() <= static_cast<size_t>(prereqCount))
 							featSpec.prereqs.resize(featSpec.prereqs.size() + 1);
 						featSpec.prereqs[prereqCount++].featPrereqCode = atol(ch);
 					}
@@ -361,21 +373,17 @@ uint32_t LegacyFeatSystem::HasFeatCount(objHndl objHnd, feat_enums featEnum)
 }
 
 
-uint32_t LegacyFeatSystem::HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLevelBeingRaised, uint32_t rangerSpecializationFeat)
+uint32_t LegacyFeatSystem::HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLevelBeingRaised, uint32_t rangerSpecializationFeat, uint32_t newDomain1, 
+	uint32_t newDomain2, uint32_t alignmentChoiceNew)
 {
 	if (!feats.IsFeatEnabled(featEnum))
 		return FALSE;
 
 
 	// Race feats
-	uint32_t objRace = objects.StatLevelGet(objHnd, stat_race);
-	uint32_t * racialFeat = &(feats.racialFeats[objRace * 10]);
-	while (*racialFeat != -1)
-	{
-		if (*racialFeat == featEnum) {
-			return 1;
-		}
-		racialFeat++;
+	auto objRace = critterSys.GetRace(objHnd, false);
+	if (d20RaceSys.HasFeat(objRace, featEnum)){
+		return TRUE;
 	}
 
 	// Class automatic feats
@@ -421,17 +429,31 @@ uint32_t LegacyFeatSystem::HasFeatCountByClass(objHndl objHnd, feat_enums featEn
 
 	}
 
+	auto nBarbarianLevel = objects.StatLevelGet(objHnd, stat_level_barbarian);
+	auto nRogueLevel = objects.StatLevelGet(objHnd, stat_level_rogue);
+
+	if (classLevelBeingRaised == stat_level_barbarian) {
+		nBarbarianLevel++;
+	}
+
+	if (classLevelBeingRaised == stat_level_rogue) {
+		nRogueLevel++;
+	}
+
 	// special casing for uncanny dodge for Brb 2 / Rog 4 combo
 	if (featEnum == FEAT_IMPROVED_UNCANNY_DODGE) {
-		if (objects.StatLevelGet(objHnd, stat_level_barbarian) >= 2
-			&& objects.StatLevelGet(objHnd, stat_level_rogue) >= 4)
+		if (nBarbarianLevel >= 2 && nRogueLevel >= 4)
 		{
 			return 1;
 		}
 	}
-
+	
 	// ranger styles
 	auto rangerLvl = objects.StatLevelGet(objHnd, stat_level_ranger);
+	if (classLevelBeingRaised == stat_level_ranger) {
+		rangerLvl++;
+	}
+
 	if (rangerSpecializationFeat) { rangerLvl++; }
 	if (rangerLvl >= 2)
 	{
@@ -456,9 +478,15 @@ uint32_t LegacyFeatSystem::HasFeatCountByClass(objHndl objHnd, feat_enums featEn
 	}
 
 	// war domain
-	uint32_t objDeity = objects.getInt32(objHnd, obj_f_critter_deity);
-	uint32_t domain_1 = objects.getInt32(objHnd, obj_f_critter_domain_1);
-	uint32_t domain_2 = objects.getInt32(objHnd, obj_f_critter_domain_2);
+	auto objDeity = objects.getInt32(objHnd, obj_f_critter_deity);
+	auto domain_1 = objects.getInt32(objHnd, obj_f_critter_domain_1);
+	auto domain_2 = objects.getInt32(objHnd, obj_f_critter_domain_2);
+	if (domain_1 == 0) {
+		domain_1 = newDomain1;
+	}
+	if (domain_2 == 0) {
+		domain_2 = newDomain2;
+	}
 	if (domain_1 == Domain_War || domain_2 == Domain_War){
 		switch (objDeity){
 		case DEITY_CORELLON_LARETHIAN:
@@ -476,6 +504,20 @@ uint32_t LegacyFeatSystem::HasFeatCountByClass(objHndl objHnd, feat_enums featEn
 		case DEITY_HEXTOR:
 			if (featEnum == FEAT_MARTIAL_WEAPON_PROFICIENCY_HEAVY_FLAIL || featEnum == FEAT_WEAPON_FOCUS_HEAVY_FLAIL) { return 1; }
 		}
+	}
+
+	auto currentAlignmentChoice = objects.getInt32(objHnd, obj_f_critter_alignment_choice);
+	if (currentAlignmentChoice == 0) {
+		currentAlignmentChoice = alignmentChoiceNew;
+	}
+
+	auto nPaladinLevel = objects.StatLevelGet(objHnd, stat_level_paladin);
+	auto nClericLevel = objects.StatLevelGet(objHnd, stat_level_cleric);
+	if (classLevelBeingRaised == stat_level_paladin) {
+		nPaladinLevel++;
+	}
+	else if (classLevelBeingRaised == stat_level_cleric) {
+		nClericLevel++;
 	}
 
 	// simple weapon prof
@@ -498,28 +540,32 @@ uint32_t LegacyFeatSystem::HasFeatCountByClass(objHndl objHnd, feat_enums featEn
 			return 1;
 		}
 	}
-	else if (featEnum == FEAT_TURN_UNDEAD
-		&& (objects.StatLevelGet(objHnd, stat_level_cleric) >= 1
-			|| objects.StatLevelGet(objHnd, stat_level_paladin) >= 4)
-		&& objects.getInt32(objHnd, obj_f_critter_alignment_choice) == 1)
+	else if (featEnum == FEAT_TURN_UNDEAD && (nClericLevel >= 1 || nPaladinLevel >= 4) && currentAlignmentChoice == 1)
 	{
 		return 1;
 	}
-	else if (featEnum == FEAT_REBUKE_UNDEAD
-		&& objects.StatLevelGet(objHnd, stat_level_cleric) >= 1
-		&& objects.getInt32(objHnd, obj_f_critter_alignment_choice) == 2)
+	else if (featEnum == FEAT_REBUKE_UNDEAD && nClericLevel >= 1 && currentAlignmentChoice == 2)
 	{
 		return 1;
 	}
 
+
+	auto clrLvl = objects.StatLevelGet(objHnd, stat_level_cleric);
+	auto palLvl = objects.StatLevelGet(objHnd, stat_level_paladin);
+	auto align = objects.getInt32(objHnd, obj_f_critter_alignment_choice);
 
 	return _HasFeatCount(objHnd, featEnum);
 
 }
 
+uint32_t LegacyFeatSystem::HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classLevelBeingRaised, uint32_t rangerSpecializationFeat)
+{
+	return HasFeatCountByClass(objHnd, featEnum, classLevelBeingRaised, rangerSpecializationFeat, 0, 0, 0);
+}
+
 uint32_t LegacyFeatSystem::HasFeatCountByClass(objHndl objHnd, feat_enums featEnum)
 {
-	return _HasFeatCountByClass(objHnd, featEnum, (Stat)0, 0);
+	return HasFeatCountByClass(objHnd, featEnum, (Stat)0, 0,0,0,0);
 };
 
 uint32_t LegacyFeatSystem::FeatListGet(objHndl objHnd, feat_enums* listOut, Stat classBeingLevelled, feat_enums rangerSpecFeat)
@@ -900,7 +946,7 @@ uint32_t LegacyFeatSystem::FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, 
 		// Class Level
 		else if (featReqCode >= stat_level_barbarian && featReqCode <= stat_level_shadow_sun_ninja)	{
 			if (classCodeBeingLevelledUp == featReqCode) { featReqCodeArg--; }
-			if ((int)objects.StatLevelGet(objHnd, (Stat)featReqCode) < featReqCodeArg) { return 0; }
+			if (objects.StatLevelGet(objHnd, (Stat)featReqCode) < featReqCodeArg) { return 0; }
 		}
 		// BAB
 		else if (featReqCode == stat_attack_bonus){
@@ -1072,6 +1118,18 @@ int LegacyFeatSystem::IsMagicFeat(feat_enums feat)
 		return (featFind->second.flags & FPF_WIZARD_BONUS) != 0;
 	}
 	return (m_featPropertiesTable[feat] & FPF_WIZARD_BONUS) != 0;
+}
+
+void LegacyFeatSystem::AddMetamagicFeat(feat_enums feat)
+{
+	//Add Metamagic feat to the list
+	metamagicFeats.insert(feat);
+}
+
+bool LegacyFeatSystem::IsMetamagicFeat(feat_enums feat)
+{
+	//Search for the feat in the matamgic list
+	return metamagicFeats.find(feat) != metamagicFeats.end();
 }
 
 int LegacyFeatSystem::IsFeatPartOfMultiselect(feat_enums feat)

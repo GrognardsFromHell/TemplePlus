@@ -10,5 +10,6 @@
 * Open TemplePlus.sln in Visual Studio
 * Press F5 :)
 
-Special thanks to Deleaker for providing a free copy and supporting open source :)  
+Special thanks to Deleaker and PyVmMonitor for supporting open source :)  
 www.deleaker.com
+http://pyvmmonitor.com

@@ -6,7 +6,7 @@
 #include <direct.h>
 
 #include "infrastructure/exception.h"
-#include "infrastructure/format.h"
+#include <fmt/format.h>
 
 std::unique_ptr<Vfs> vfs;
 
@@ -18,8 +18,8 @@ public:
 protected:
 	
 	// Inherited via Vfs
-	virtual FileHandle Open(const char* name, const char* mode) override {
-		return (FileHandle)fopen(name, mode);
+	virtual FileHandle Open(std::string_view name, std::string_view mode) override {
+		return (FileHandle)fopen(name.data(), mode.data());
 	}
 
 	virtual size_t Length(FileHandle handle) override {
@@ -41,35 +41,52 @@ protected:
 		fclose((FILE*)handle);
 	}
 
+	virtual void Seek(FileHandle handle, int position, SeekDir dir) override {
+		int origin;
+		switch (dir) {
+		default:
+		case SeekDir::Start:
+			origin = SEEK_SET;
+			break;
+		case SeekDir::Current:
+			origin = SEEK_CUR;
+			break;
+		case SeekDir::End:
+			origin = SEEK_END;
+			break;
+		}
 
-public:
-	bool MkDir(const std::string& path) override {
-		return _mkdir(path.c_str()) == 0;
+		fseek((FILE*)handle, position, origin);
 	}
 
-	virtual bool FileExists(const std::string& path) override {
+public:
+	bool MkDir(std::string_view path) override {
+		return _mkdir(path.data()) == 0;
+	}
+
+	virtual bool FileExists(std::string_view path) override {
 		struct stat buffer;
-		if (stat(path.c_str(), &buffer) != 0) {
+		if (stat(path.data(), &buffer) != 0) {
 			return false;
 		}
 		return (buffer.st_mode & _S_IFREG) != 0;
 	}
 	
-	virtual bool DirExists(const std::string& path) override {
+	virtual bool DirExists(std::string_view path) override {
 		struct stat buffer;
-		if (stat(path.c_str(), &buffer) != 0) {
+		if (stat(path.data(), &buffer) != 0) {
 			return false;
 		}
 		return (buffer.st_mode & _S_IFDIR) != 0;
 	}
 
-	std::vector<VfsSearchResult> Search(const std::string& globPattern) override {
+	std::vector<VfsSearchResult> Search(std::string_view globPattern) override {
 		throw TempleException("Unsupported Operation");
 	}
-	bool RemoveDir(const std::string& path) override {
+	bool RemoveDir(std::string_view path) override {
 		throw TempleException("Unsupported Operation");
 	}
-	bool RemoveFile(const std::string& path) override {
+	bool RemoveFile(std::string_view path) override {
 		throw TempleException("Unsupported Operation");
 	}
 	size_t Tell(FileHandle handle) override {
@@ -81,8 +98,8 @@ Vfs* Vfs::CreateStdIoVfs() {
 	return new StdIoVfs;
 }
 
-std::string Vfs::ReadAsString(const std::string& filename) {
-	auto fh = Open(filename.c_str(), "rt");
+std::string Vfs::ReadAsString(std::string_view filename) {
+	auto fh = Open(filename, "rt");
 	if (!fh) {
 		throw TempleException("Unable to find file {}", filename);
 	}
@@ -100,8 +117,8 @@ std::string Vfs::ReadAsString(const std::string& filename) {
 	return result;
 }
 
-std::vector<uint8_t> Vfs::ReadAsBinary(const std::string& filename) {
-	auto fh = Open(filename.c_str(), "rb");
+std::vector<uint8_t> Vfs::ReadAsBinary(std::string_view filename) {
+	auto fh = Open(filename, "rb");
 	if (!fh) {
 		throw TempleException("Unable to find file {}", filename);
 	}
@@ -115,36 +132,36 @@ std::vector<uint8_t> Vfs::ReadAsBinary(const std::string& filename) {
 	return result;
 }
 
-bool Vfs::IsDirEmpty(const std::string& path) {
+bool Vfs::IsDirEmpty(std::string_view path) {
 	if (!DirExists(path)) {
 		return false;
 	}
 
-	auto globPattern(Path::Concat(path, "*.*"));
+	auto globPattern(VfsPath::Concat(path, "*.*"));
 	return Search(globPattern).empty();
 }
 
-void Vfs::WriteBinaryFile(const std::string &path, gsl::span<uint8_t> data) {
+void Vfs::WriteBinaryFile(std::string_view path, gsl::span<uint8_t> data) {
 	
-	auto fh(Open(path.c_str(), "wb"));
+	auto fh(Open(path, "wb"));
 	if (Write(&data[0], data.size(), fh) != data.size()) {
 		Close(fh);
-		RemoveFile(path.c_str());
+		RemoveFile(path);
 		throw TempleException("Unable to write file {}", path);
 	}
 	Close(fh);
 
 }
 
-bool Vfs::CleanDir(const std::string& path) {
+bool Vfs::CleanDir(std::string_view path) {
 	if (!DirExists(path)) {
 		return false;
 	}
 
 	auto result = true;
 
-	for (const auto &entry : Search(Path::Concat(path, "*.*"))) {
-		auto fullPath(Path::Concat(path, entry.filename));
+	for (const auto &entry : Search(VfsPath::Concat(path, "*.*"))) {
+		auto fullPath(VfsPath::Concat(path, entry.filename));
 
 		if (!entry.dir) {
 			result &= RemoveFile(fullPath);
@@ -158,7 +175,7 @@ bool Vfs::CleanDir(const std::string& path) {
 	return result;
 }
 
-bool Path::IsFileSystem(const std::string& path) {
+bool VfsPath::IsFileSystem(std::string_view path) {
 
 	if (path.empty()) {
 		return false;
@@ -176,7 +193,7 @@ bool Path::IsFileSystem(const std::string& path) {
 
 }
 
-std::string Path::Concat(const std::string& a, const std::string& b) {
+std::string VfsPath::Concat(std::string_view a, std::string_view b) {
 
 	std::string result;
 	result.reserve(a.length() + b.length() + 1);
@@ -191,4 +208,3 @@ std::string Path::Concat(const std::string& a, const std::string& b) {
 	return result;
 
 }
-

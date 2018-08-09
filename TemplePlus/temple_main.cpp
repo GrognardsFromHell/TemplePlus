@@ -163,6 +163,8 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 	// Notify the UI system that the module has been loaded
 	UiModuleLoader uiModuleLoader(uiSystems);
 	
+	//temple::GetRef<BOOL(__cdecl)()>(0x10036720)(); // check dialog
+
 	if (!config.skipIntro) {
 		movieFuncs.PlayMovie("movies\\introcinematic.bik", 0, 0, 0);
 	}

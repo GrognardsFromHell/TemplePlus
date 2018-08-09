@@ -5,10 +5,9 @@
 #include <infrastructure/json11.hpp>
 #include <infrastructure/vfs.h>
 
-namespace std {
-	ostream &operator <<(ostream &out, const eastl::string &text) {
-		out << text.c_str();
-		return out;
+namespace eastl {
+	void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const string &text) {
+		f.writer().write("{}", text.c_str());
 	}
 }
 
@@ -304,6 +303,10 @@ void WidgetButtonStyles::LoadStyles(const json11::Json & jsonStyleArray)
 		buttonStyle.normalImagePath = style["normalImage"].string_value();
 		buttonStyle.hoverImagePath = style["hoverImage"].string_value();
 		buttonStyle.pressedImagePath = style["pressedImage"].string_value();
+		buttonStyle.frameImagePath = style["frameImage"].string_value();
+		buttonStyle.activatedImagePath = style["activatedImage"].string_value();
+		
+
 		if (style["soundEnter"].is_number()) {
 			buttonStyle.soundEnter = (int) style["soundEnter"].number_value();
 		}

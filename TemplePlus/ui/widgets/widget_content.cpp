@@ -17,6 +17,8 @@
 
 // Render this font using the old engine
 static eastl::string sScurlockFont = "Scurlock";
+static eastl::string sPriory12 = "Priory-12";
+static eastl::string sArialBold10 = "Arial-Bold-ToEE";
 
 static TigTextStyle GetScurlockStyle(const gfx::Brush &brush) {
 	static ColorRect sColorRect;
@@ -36,6 +38,56 @@ static TigTextStyle GetScurlockStyle(const gfx::Brush &brush) {
 	textStyle.leading = 1;
 	textStyle.kerning = 0;
 	textStyle.tracking = 10;
+	textStyle.flags = TTSF_DROP_SHADOW;
+	textStyle.shadowColor = &sShadowColor;
+
+	return textStyle;
+}
+
+static TigTextStyle GetPrioryStyle(const gfx::Brush &brush) {
+	static ColorRect sColorRect;
+	sColorRect.topLeft = brush.primaryColor;
+	sColorRect.topRight = brush.primaryColor;
+	if (brush.gradient) {
+		sColorRect.bottomLeft = brush.secondaryColor;
+		sColorRect.bottomRight = brush.secondaryColor;
+	}
+	else {
+		sColorRect.bottomLeft = brush.primaryColor;
+		sColorRect.bottomRight = brush.primaryColor;
+	}
+
+	static ColorRect sShadowColor(XMCOLOR{ 0, 0, 0, 0.5 });
+
+	TigTextStyle textStyle(&sColorRect);
+	textStyle.leading = 0;
+	textStyle.kerning = 1;
+	textStyle.tracking = 3;
+	textStyle.flags = TTSF_DROP_SHADOW;
+	textStyle.shadowColor = &sShadowColor;
+
+	return textStyle;
+}
+
+static TigTextStyle GetArialBoldStyle(const gfx::Brush &brush) {
+	static ColorRect sColorRect;
+	sColorRect.topLeft = brush.primaryColor;
+	sColorRect.topRight = brush.primaryColor;
+	if (brush.gradient) {
+		sColorRect.bottomLeft = brush.secondaryColor;
+		sColorRect.bottomRight = brush.secondaryColor;
+	}
+	else {
+		sColorRect.bottomLeft = brush.primaryColor;
+		sColorRect.bottomRight = brush.primaryColor;
+	}
+
+	static ColorRect sShadowColor(XMCOLOR{ 0, 0, 0, 0.5 });
+
+	TigTextStyle textStyle(&sColorRect);
+	textStyle.leading = 0;
+	textStyle.kerning = 1;
+	textStyle.tracking = 3;
 	textStyle.flags = TTSF_DROP_SHADOW;
 	textStyle.shadowColor = &sShadowColor;
 
@@ -115,51 +167,102 @@ const gfx::TextStyle & WidgetText::GetStyle() const
 	return mText.defaultStyle;
 }
 
+void WidgetText::SetCenterVertically(bool isCentered) {
+	mCenterVertically = isCentered;
+}
+
 void WidgetText::Render()
 {
 	if (mText.defaultStyle.fontFace == sScurlockFont) {
-		auto textStyle = GetScurlockStyle(mText.defaultStyle.foreground);
-		
-		auto area = mContentArea; // Will be modified below
-		if (mText.defaultStyle.align == gfx::TextAlign::Center) {
-			textStyle.flags |= TTSF_CENTER;
-		}
 
-		UiRenderer::PushFont(PredefinedFont::SCURLOCK_48);
+		RenderWithPredefinedFont(PredefinedFont::SCURLOCK_48, GetScurlockStyle(mText.defaultStyle.foreground));
 
-		auto text = ucs2_to_local(mText.text);
-		auto &textLayouter = tig->GetTextLayouter();
-		tigFont.Draw(text.c_str(), area, textStyle);
+	} else if (mText.defaultStyle.fontFace == sPriory12) {
 
-		UiRenderer::PopFont();
+		RenderWithPredefinedFont(PredefinedFont::PRIORY_12, GetPrioryStyle(mText.defaultStyle.foreground));
+
+	} else if (mText.defaultStyle.fontFace == sArialBold10) {
+
+		RenderWithPredefinedFont(PredefinedFont::ARIAL_BOLD_10, GetArialBoldStyle(mText.defaultStyle.foreground));
+
 	} else {
-		tig->GetRenderingDevice().GetTextEngine().RenderText(mContentArea, mText);
+
+		auto area = mContentArea; // Will be modified below
+
+		if (mCenterVertically) {
+			gfx::TextMetrics metrics;
+			tig->GetRenderingDevice().GetTextEngine().MeasureText(mText, metrics);
+			area = TigRect(area.x,
+				area.y + (area.height - metrics.height) / 2,
+				area.width, metrics.height);
+		}
+		
+		tig->GetRenderingDevice().GetTextEngine().RenderText(area, mText);
+
 	}
 }
 
 void WidgetText::UpdateBounds()
 {
-
 	if (mText.defaultStyle.fontFace == sScurlockFont) {
-		auto textStyle = GetScurlockStyle(mText.defaultStyle.foreground);
-		if (mText.defaultStyle.align == gfx::TextAlign::Center) {
-			textStyle.flags |= TTSF_CENTER;
-		}
-		UiRenderer::PushFont(PredefinedFont::SCURLOCK_48);
-		auto rect = UiRenderer::MeasureTextSize(ucs2_to_local(mText.text), textStyle, 0, 0);
-		UiRenderer::PopFont();		
-		if (mText.defaultStyle.align == gfx::TextAlign::Center) {
-			// Return 0 here to be in sync with the new renderer
-			mPreferredSize.width = 0;
-		} else {
-			mPreferredSize.width = rect.width;
-		}
-		mPreferredSize.height = rect.height;
+
+		UpdateBoundsWithPredefinedFont(PredefinedFont::SCURLOCK_48, GetScurlockStyle(mText.defaultStyle.foreground));
+
+	} else if (mText.defaultStyle.fontFace == sPriory12) {
+
+		UpdateBoundsWithPredefinedFont(PredefinedFont::PRIORY_12, GetPrioryStyle(mText.defaultStyle.foreground));
+
+	} else if (mText.defaultStyle.fontFace == sArialBold10) {
+
+		UpdateBoundsWithPredefinedFont(PredefinedFont::ARIAL_BOLD_10, GetArialBoldStyle(mText.defaultStyle.foreground));
+
 	} else {
 		gfx::TextMetrics textMetrics;
 		tig->GetRenderingDevice().GetTextEngine().MeasureText(mText, textMetrics);
 		mPreferredSize.width = textMetrics.width;
 		mPreferredSize.height = textMetrics.height;
 	}
+
+}
+
+void WidgetText::RenderWithPredefinedFont(PredefinedFont font, TigTextStyle textStyle)
+{
+	auto area = mContentArea; // Will be modified below
+
+	UiRenderer::PushFont(font);
+
+	auto text = ucs2_to_local(mText.text);
+
+	if (mText.defaultStyle.align == gfx::TextAlign::Center) {
+		textStyle.flags |= TTSF_CENTER;
+		if (mCenterVertically) {
+			auto textMeas = UiRenderer::MeasureTextSize(text, textStyle);
+			area = TigRect(area.x + (area.width - textMeas.width) / 2,
+				area.y + (area.height - textMeas.height) / 2,
+				textMeas.width, textMeas.height);
+		}
+	}
+	tigFont.Draw(text.c_str(), area, textStyle);
+
+	UiRenderer::PopFont();
+}
+
+void WidgetText::UpdateBoundsWithPredefinedFont(PredefinedFont font, TigTextStyle textStyle)
+{
+
+	if (mText.defaultStyle.align == gfx::TextAlign::Center) {
+		textStyle.flags |= TTSF_CENTER;
+	}
+	UiRenderer::PushFont(font);
+	auto rect = UiRenderer::MeasureTextSize(ucs2_to_local(mText.text), textStyle, 0, 0);
+	UiRenderer::PopFont();
+	if (mText.defaultStyle.align == gfx::TextAlign::Center) {
+		// Return 0 here to be in sync with the new renderer
+		mPreferredSize.width = 0;
+	}
+	else {
+		mPreferredSize.width = rect.width;
+	}
+	mPreferredSize.height = rect.height;
 
 }

@@ -1,6 +1,8 @@
 #pragma once
 
-#include "gsl/string_span.h"
+#include <gsl/string_span>
+
+#include <fmt/format.h>
 
 #include <string>
 #include <algorithm>
@@ -19,13 +21,13 @@ std::wstring utf8_to_ucs2(const std::string &);
 
 // trim from start
 inline std::string &ltrim(std::string &s) {
-	s.erase(s.begin(), find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(isspace))));
+	s.erase(s.begin(), find_if(s.begin(), s.end(), [](auto c) { return !std::isspace(c); }));
 	return s;
 }
 
 // trim from end
 inline std::string &rtrim(std::string &s) {
-	s.erase(find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(isspace))).base(), s.end());
+	s.erase(find_if(s.rbegin(), s.rend(), [](auto c) { return !std::isspace(c); }).base(), s.end());
 	return s;
 }
 
@@ -126,21 +128,54 @@ inline std::string tolower(const std::string &s) {
 	}
 }
 
-// Nice to have operator for serializing vectors in the logger
-template<typename T>
-std::ostream &operator <<(std::ostream &os, const std::vector<T> &v) {
-	using namespace std;
-
-	os << "[";
-	for (size_t i = 0; i < v.size(); ++i) {
-		os << v[i];
-		if (i != v.size() - 1) {
-			os << ", ";
-		}
+inline std::string tounderscore(const std::string &s) {
+	auto needsConversion = std::any_of(s.begin(), s.end(), [](char a) {
+		return a == ' ';
+	});
+	if (needsConversion) {
+		std::string result = s;
+		std::transform(result.begin(), result.end(), result.begin(), [](char ch){
+			if (ch == ' '){
+				return '_';
+			}
+			return ch;
+		});
+		return result;
 	}
-	os << "]";
+	else {
+		return s;
+	}
+}
 
-	return os;
+inline std::string toupper(const std::string &s) {
+	auto needsConversion = std::any_of(s.begin(), s.end(), [](char a) {
+		return std::toupper(a) != a;
+	});
+	if (needsConversion) {
+		std::string result = s;
+		std::transform(result.begin(), result.end(), result.begin(), [](char ch) { return std::toupper((int)ch); });
+		return result;
+	}
+	else {
+		return s;
+	}
+}
+
+// Nice to have operator for serializing vectors in the logger
+namespace std {
+	template<typename T>
+	void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const std::vector<T> &v) {
+		using namespace std;
+
+		f.writer().write("[");
+		for (size_t i = 0; i < v.size(); ++i) {
+			f.writer().write("{}", v[i]);
+			if (i != v.size() - 1) {
+				f.writer().write(", ");
+			}
+		}
+		f.writer().write("]");
+	}
 }
 
 inline bool endsWith(const std::string &str, const std::string &suffix) {

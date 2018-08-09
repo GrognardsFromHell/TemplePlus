@@ -97,6 +97,7 @@ public:
 			spellSys.SpellBeginRound(handle);
 		});
 
+		// SpellEntriesInit
 		replaceFunction<BOOL(__cdecl)(const char*)>(0x1007B5B0, [](const char* spellRulesFolder)->BOOL
 		{
 			return spellSys.SpellEntriesInit(spellRulesFolder);
@@ -137,6 +138,9 @@ public:
 		// GetSpellMesline
 		replaceFunction<const char*(__cdecl)(uint32_t)>(0x1007AD80, [](uint32_t spellEnum) {
 			return spellSys.GetSpellMesline(spellEnum);
+		});
+		replaceFunction<void(__cdecl)(objHndl, uint32_t, FloatLineColor, const char*, const char*)>(0x10076820, [](objHndl handle, uint32_t lineId, FloatLineColor color, const char* prefix, const char* suffix){
+			floatSys.FloatSpellLine(handle, lineId, color, prefix, suffix);
 		});
 		// GetSpellDescription	
 		replaceFunction<const char*(__cdecl)(uint32_t)>(0x10077910, [](uint32_t spellEnum) {
@@ -323,6 +327,10 @@ bool SpellPacketBody::SavingThrow(objHndl target, D20SavingThrowFlag flags) {
 	return damage.SavingThrowSpell(target, caster, dc, (SavingThrowType)spEntry.savingThrowType, flags, spellId );
 }
 
+bool SpellPacketBody::CheckSpellResistance(objHndl tgt){
+	return spellSys.CheckSpellResistance(this, tgt) != FALSE;
+}
+
 const char* SpellPacketBody::GetName(){
 	return spellSys.GetSpellName(spellEnum);
 }
@@ -463,7 +471,7 @@ void SpellPacketBody::Reset(){
 
 uint32_t SpellPacketBody::GetPartsysForObj(const objHndl& objHnd){
 
-	for (auto i=0; i < this->targetCount; i++){
+	for (auto i=0u; i < this->targetCount; i++){
 		if (this->targetListHandles[i] == objHnd){
 			return this->targetListPartsysIds[i];
 		}
@@ -693,7 +701,7 @@ bool LegacySpellSystem::CheckAbilityScoreReqForSpell(objHndl handle, uint32_t sp
 	if (!spEntry.spellEnum)
 		return false;
 
-	auto statLvl = 0;
+	auto statLvl = 0u;
 	auto spellStat = stat_wisdom;
 	for (auto i = 0u; i<spEntry.spellLvlsNum; i++) {
 		auto &lvlSpec = spEntry.spellLvls[i];
@@ -766,6 +774,37 @@ int LegacySpellSystem::GetSpellClass(int classEnum, bool isDomain){
 	}
 
 	return 0x80 | classEnum;
+}
+
+int LegacySpellSystem::GetSpellClass(const std::string& s){
+	for (auto i=0; i < VANILLA_NUM_CLASSES; i++){
+		MesLine line(10000 + i);
+		mesFuncs.GetLine_Safe(*spellSys.spellEnumMesHandle, &line);
+		if (!_stricmp(s.c_str(), line.value))
+			return spellSys.GetSpellClass(stat_level_barbarian + i);
+	}
+
+	for (auto i=0; i <= Domain::Domain_Special; i++){
+		MesLine line(10500 + i);
+		mesFuncs.GetLine_Safe(*spellSys.spellEnumMesHandle, &line);
+		if (!_stricmp(s.c_str(), line.value))
+			return spellSys.GetSpellClass(i, true);
+	}
+
+	// not found in vanilla stuff, try the new classes
+	// get class enum from string
+	auto className = s;
+	// convert underscores to spaces
+	std::transform(className.begin(), className.end(), className.begin(), [](char a)->char{
+		if (a == '_') return ' ';
+		return a;
+	});
+
+	auto classEnum = d20ClassSys.GetClassEnum(className);
+	if (!classEnum)
+		return 0;
+
+	return spellSys.GetSpellClass(classEnum);
 }
 
 const char* LegacySpellSystem::GetSpellEnumTAG(uint32_t spellEnum){
@@ -1012,13 +1051,12 @@ void LegacySpellSystem::SpellPacketSetCasterLevel(SpellPacketBody* spellPkt) con
 	auto spellEnum = spellPkt->spellEnum;
 	auto spellName = spellSys.GetSpellName(spellEnum);
 	auto casterName = description.getDisplayName(caster);
-	auto casterClass = spellSys.GetCastingClass(spellClassCode);
-
+	
 	auto casterObj = gameSystems->GetObj().GetObject(caster);
 
 	// normal spells
 	if (!spellSys.isDomainSpell(spellClassCode)){
-
+		auto casterClass = spellSys.GetCastingClass(spellClassCode);
 		// casting class
 		if (casterClass){
 			auto casterLvl = critterSys.GetCasterLevelForClass(caster, casterClass);
@@ -1047,25 +1085,26 @@ void LegacySpellSystem::SpellPacketSetCasterLevel(SpellPacketBody* spellPkt) con
 			spellPkt->casterLevel = 0;
 		}
 	} 
-	
-	// domain spell
-	else if ( objects.StatLevelGet(caster, stat_level_cleric) > 0){
-		spellPkt->casterLevel = critterSys.GetCasterLevelForClass(caster, stat_level_cleric);
-		logger->info("Critter {} is casting Domain spell {} at base caster_level {}.", casterName, spellName, spellPkt->casterLevel);
-	
-	// domain special (usually used for monsters)
-	} else if (spellPkt->spellClass == Domain_Special)
-	{
-		if (spellPkt->invIdx != 255 && (spellPkt->spellEnum < NORMAL_SPELL_RANGE || spellPkt->spellEnum > SPELL_LIKE_ABILITY_RANGE)) {
-			spellPkt->casterLevel = 0;
-			logger->info("Critter {} is casting item spell {} at base caster_level {}.", casterName, spellName, 0);
-		} 
-		
-		else {
-			spellPkt->casterLevel = objects.GetHitDiceNum(caster);
-			logger->info("Monster {} is casting spell {} at base caster_level {}.", casterName, spellName, spellPkt->casterLevel);
+	else{ // domain spell
+		if (spellPkt->spellClass == Domain_Special){ // domain special (usually used for monsters)
+			if (spellPkt->invIdx != 255 && (spellPkt->spellEnum < NORMAL_SPELL_RANGE || spellPkt->spellEnum > SPELL_LIKE_ABILITY_RANGE)) {
+				spellPkt->casterLevel = 0;
+				logger->info("Critter {} is casting item spell {} at base caster_level {}.", casterName, spellName, 0);
+			}
+
+			else {
+				spellPkt->casterLevel = objects.GetHitDiceNum(caster);
+				logger->info("Monster {} is casting spell {} at base caster_level {}.", casterName, spellName, spellPkt->casterLevel);
+			}
 		}
+		else if (objects.StatLevelGet(caster, stat_level_cleric) > 0) {
+			spellPkt->casterLevel = critterSys.GetCasterLevelForClass(caster, stat_level_cleric);
+			logger->info("Critter {} is casting Domain spell {} at base caster_level {}.", casterName, spellName, spellPkt->casterLevel);
+		}
+		
 	}
+	
+	
 
 	auto orgCasterLvl = spellPkt->casterLevel;
 	spellPkt->casterLevel = dispatch.Dispatch35CasterLevelModify(caster, spellPkt);
@@ -1451,7 +1490,8 @@ bool LegacySpellSystem::GetSpellPacketFromTransferInfo(unsigned& spellId, SpellP
 		if (!mtInfo.spellObjs[i].IsNull()) {
 			auto spellObjHandle = objSystem->GetHandleById(mtInfo.spellObjs[i]);
 			spellPkt.spellPktBody.spellObjs[i].obj = spellObjHandle;
-
+			if (!spellObjHandle)
+				continue;
 			if (!mtInfo.spellObjPartsys[i].empty()) {
 				auto partSysHandle = gameSystems->GetParticleSys().CreateAtObj(mtInfo.spellObjPartsys[i], spellObjHandle);
 				spellPkt.spellPktBody.spellObjs[i].partySysId = partSysHandle;
@@ -1663,6 +1703,19 @@ CondStruct* LegacySpellSystem::GetCondFromSpellIdx(int id) {
 	return nullptr;
 }
 
+uint32_t LegacySpellSystem::SpellsPendingToMemorized(objHndl handle){
+	auto obj = gameSystems->GetObj().GetObject(handle);
+	auto spellsMemo = obj->GetSpellArray(obj_f_critter_spells_memorized_idx);
+	for (auto i = 0u; i < spellsMemo.GetSize(); i++) {
+		auto spData = spellsMemo[i];
+		if (spData.spellStoreState.usedUp & 1){
+			spData.spellStoreState.usedUp &= 0xFE;
+			obj->SetSpell(obj_f_critter_spells_memorized_idx, i, spData);
+		}
+	}
+	return TRUE;
+}
+
 void LegacySpellSystem::SpellsPendingToMemorizedByClass(objHndl handle, Stat classEnum){
 	auto obj = gameSystems->GetObj().GetObject(handle);
 	auto spellsMemo = obj->GetSpellArray(obj_f_critter_spells_memorized_idx);
@@ -1703,6 +1756,22 @@ void LegacySpellSystem::SpellsCastReset(objHndl handle, Stat classEnum){
 			obj->RemoveSpell(obj_f_critter_spells_cast_idx, i);
 		}
 	}
+}
+
+void LegacySpellSystem::SpellMemorizedAdd(objHndl handle, int spellEnum, int spellClass, int spellLvl,
+	int spellStoreData, int metaMagicData){
+	if (!handle) return;
+	auto obj = objSystem->GetObject(handle);
+	
+	SpellStoreData spData(spellEnum, spellLvl, spellClass, metaMagicData, spellStoreData);
+	*(int*)&spData.spellStoreState = spellStoreData;
+	*(int*)&spData.metaMagicData = metaMagicData;
+	// Ensure it is flagged as SpellStoreMemorized if not specified
+	if (spData.spellStoreState.spellStoreType == SpellStoreType::spellStoreNone)
+		spData.spellStoreState.spellStoreType = (SpellStoreType)(spData.spellStoreState.spellStoreType | SpellStoreType::spellStoreMemorized);
+
+	auto size = obj->GetSpellArray(obj_f_critter_spells_memorized_idx).GetSize();
+	obj->SetSpell(obj_f_critter_spells_memorized_idx, size, spData);
 }
 
 void LegacySpellSystem::ForgetMemorized(objHndl handle) {
@@ -1966,7 +2035,7 @@ void LegacySpellSystem::GetSpellEntryExtFromClassSpec(std::map<int, int>& mappin
 	}
 }
 
-uint32_t LegacySpellSystem::getSpellEnum(const char* spellName)
+uint32_t LegacySpellSystem::GetSpellEnum(const char* spellName)
 {
 	MesLine mesLine;
 	for (auto i = 0; i < SPELL_ENUM_MAX_EXPANDED; i++)
@@ -2155,7 +2224,7 @@ uint32_t LegacySpellSystem::spellMemorizedQueryGetData(objHndl objHnd, uint32_t 
 	auto numSpellsMemod = obj->GetSpellArray(obj_f_critter_spells_memorized_idx).GetSize();
 	for (size_t i = 0; i < numSpellsMemod; i++) {
 		auto spellData = obj->GetSpell(obj_f_critter_spells_memorized_idx, i);
-		if (spellData.spellEnum == spellEnum && !spellData.spellStoreState.usedUp)
+		if (spellData.spellEnum == spellEnum && !(spellData.spellStoreState.usedUp&1))
 		{
 			if (classCodesOut) classCodesOut[*n] = spellData.classCode;
 			if (slotLevelsOut) slotLevelsOut[*n] = spellData.spellLevel;
@@ -2558,55 +2627,58 @@ int LegacySpellSystem::CheckSpellResistance(SpellPacketBody* spellPkt, objHndl h
 	}
 	
 	// obtain bonuses
-	DispIOBonusListAndSpellEntry dispIoBon;
-	BonusList bonlist;
 
-	auto casterLvlMod = dispatch.Dispatch35CasterLevelModify(handle, spellPkt);
+	// Defender bonus
+	DispIOBonusListAndSpellEntry dispIoBon;
+	dispIoBon.spellEntry = &dispIo.spellEntry;
+	int srMod = dispatch.Dispatch45SpellResistanceMod(handle, &dispIoBon);
+	if (srMod <= 0){
+		return 0;
+	}
+
+	BonusList bonlist;
+	auto caster = spellPkt->caster;
+
+	auto casterLvlMod = dispatch.Dispatch35CasterLevelModify(caster, spellPkt);
 	bonlist.AddBonus(casterLvlMod, 0, 203);
 
-
-	if (feats.HasFeatCountByClass(handle, FEAT_SPELL_PENETRATION)){
+	if (feats.HasFeatCountByClass(caster, FEAT_SPELL_PENETRATION)){
 		auto featName=  feats.GetFeatName(FEAT_SPELL_PENETRATION);
 		bonlist.AddBonusWithDesc(2,0,114, featName);
 	}
-	if (feats.HasFeatCountByClass(handle, FEAT_GREATER_SPELL_PENETRATION)){
+	if (feats.HasFeatCountByClass(caster, FEAT_GREATER_SPELL_PENETRATION)){
 		auto featName = feats.GetFeatName(FEAT_GREATER_SPELL_PENETRATION);
 		bonlist.AddBonusWithDesc(2, 0, 114, featName);
 	}
-	dispIoBon.spellEntry = &dispIo.spellEntry;
-
-	int srMod = dispatch.Dispatch45SpellResistanceMod(handle, &dispIoBon);
+	
 
 	// do the roll and log the result to the D20 window
-	int rollResult = 0;
+	int dispelSpellResistanceResult = 0;
 	if (srMod > 0){
 		auto Spell_Resistance = combatSys.GetCombatMesLine(5048);
 		int rollHistId;
-		rollResult = spellSys.DispelRoll(spellPkt->caster, &bonlist, 0, srMod, Spell_Resistance, &rollHistId);
-		char * outcomeText1, outcomeText2;
-		if (rollResult <=0)	{
+		dispelSpellResistanceResult = spellSys.DispelRoll(spellPkt->caster, &bonlist, 0, srMod, Spell_Resistance, &rollHistId);
+		char *outcomeText1, *outcomeText2;
+		if (dispelSpellResistanceResult <=0)	{
 			auto spellName = GetSpellName(spellPkt->spellEnum);
 			logger->info("CheckSpellResistance: Spell {} cast by {} resisted by target {}.", spellName, description.getDisplayName(spellPkt->caster), description.getDisplayName(handle));
 			floatSys.FloatSpellLine(handle, 30008, FloatLineColor::White);
 			PlayFizzle(handle);
 			outcomeText1 = combatSys.GetCombatMesLine(119); // Spell ~fails~[ROLL_
-			outcomeText1 = combatSys.GetCombatMesLine(120); // ] to overcome Spell Resistance
+			outcomeText2 = combatSys.GetCombatMesLine(120); // ] to overcome Spell Resistance
 
 		} else
 		{
 			floatSys.FloatSpellLine(handle, 30009, FloatLineColor::Red);
 			outcomeText1 = combatSys.GetCombatMesLine(121); // Spell ~overcomes~[ROLL_
-			outcomeText1 = combatSys.GetCombatMesLine(122); // ] Spell Resistance
+			outcomeText2 = combatSys.GetCombatMesLine(122); // ] Spell Resistance
 		}
 
 		auto histText = std::string(fmt::format("{}{}{}\n\n", outcomeText1, rollHistId, outcomeText2));
 		histSys.CreateFromFreeText(histText.c_str());
 	}
 
-	
-
-
-	return rollResult;
+	return dispelSpellResistanceResult <= 0 ? TRUE: FALSE;
 
 }
 
@@ -2738,7 +2810,7 @@ uint32_t __cdecl _getWizSchool(objHndl objHnd)
 
 uint32_t __cdecl _getSpellEnum(const char* spellName)
 {
-	return spellSys.getSpellEnum(spellName);
+	return spellSys.GetSpellEnum(spellName);
 }
 
 uint32_t _spellKnownQueryGetData(objHndl objHnd, uint32_t spellEnum, uint32_t* classCodesOut, uint32_t* slotLevelsOut, uint32_t* count)

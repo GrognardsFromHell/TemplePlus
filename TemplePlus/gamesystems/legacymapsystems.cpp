@@ -585,6 +585,12 @@ void HeightSystem::Clear()
 	clear();
 }
 
+int8_t HeightSystem::GetDepth(LocAndOffsets location)
+{
+	static auto get_depth = temple::GetPointer<int8_t(LocAndOffsets)>(0x100a8cb0);
+	return get_depth(location);
+}
+
 //*****************************************************************************
 //* PathNode
 //*****************************************************************************

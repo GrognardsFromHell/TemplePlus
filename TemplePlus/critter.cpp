@@ -31,6 +31,7 @@
 #include "ui/ui_legacysystems.h"
 #include "rng.h"
 #include "weapon.h"
+#include "d20_race.h"
 
 static struct CritterAddresses : temple::AddressTable {
 
@@ -112,6 +113,11 @@ class CritterReplacements : public TempleFix
 		// CritterGenerateHp
 		replaceFunction<void(objHndl)>(0x1007F720, [](objHndl handle){
 			critterSys.GenerateHp(handle);
+		});
+
+		// CritterGetWeaponAnimId
+		replaceFunction<int(objHndl, gfx::WeaponAnim)>(0x10020c60, [](objHndl handle, gfx::WeaponAnim animId) {
+			return (int) critterSys.GetAnimId(handle, animId);
 		});
 
 		// something used in the anim goals
@@ -592,7 +598,7 @@ void LegacyCritterSystem::GenerateHp(objHndl handle){
 	}
 
 	auto numLvls = obj->GetInt32Array(obj_f_critter_level_idx).GetSize();
-	for (auto i=0; i < numLvls; i++)
+	for (auto i=0u; i < numLvls; i++)
 	{
 		auto classType = (Stat)obj->GetInt32(obj_f_critter_level_idx, i);
 		auto classHd = d20ClassSys.GetClassHitDice(classType);
@@ -617,8 +623,10 @@ void LegacyCritterSystem::GenerateHp(objHndl handle){
 		}
 	}
 
-	if (obj->IsNPC()){
+	Dice racialHd = d20RaceSys.GetHitDice(critterSys.GetRace(handle, false));
+	hpPts += racialHd.Roll();
 
+	if (obj->IsNPC()){
 		auto numDice = obj->GetInt32(obj_f_npc_hitdice_idx, 0);
 		auto npcHd = Dice(numDice, obj->GetInt32(obj_f_npc_hitdice_idx, 1),obj->GetInt32(obj_f_npc_hitdice_idx, 2));
 		auto npcHdVal = npcHd.Roll();
@@ -756,8 +764,12 @@ int LegacyCritterSystem::SkillLevel(objHndl critter, SkillEnum skill){
 	return dispatch.dispatch1ESkillLevel(critter, skill, nullptr, critter, 1);
 }
 
-Race LegacyCritterSystem::GetRace(objHndl critter) {
-	return (Race)objects.StatLevelGet(critter, stat_race);
+Race LegacyCritterSystem::GetRace(objHndl critter, bool getBaseRace) {
+	auto race = objects.StatLevelGet(critter, stat_race);
+	if (!getBaseRace){
+		race += objects.StatLevelGet(critter, stat_subrace) << 5;
+	}
+	return (Race)race;
 }
 
 Gender LegacyCritterSystem::GetGender(objHndl critter) {
@@ -786,7 +798,7 @@ gfx::EncodedAnimId LegacyCritterSystem::GetAnimId(objHndl critter, gfx::WeaponAn
 	return gfx::EncodedAnimId(rawAnimId);
 }
 
-int LegacyCritterSystem::GetModelRaceOffset(objHndl obj)
+int LegacyCritterSystem::GetModelRaceOffset(objHndl obj, bool useBaseRace)
 {
 	// Meshes above 1000 are monsters, they dont get a creature type
 	auto meshId = objects.getInt32(obj, obj_f_base_mesh);
@@ -794,43 +806,16 @@ int LegacyCritterSystem::GetModelRaceOffset(objHndl obj)
 		return -1;
 	}
 
-	auto race = GetRace(obj);
+	auto race = GetRace(obj, useBaseRace);
 	auto gender = GetGender(obj);
 	bool isMale = (gender == Gender::Male);
 
 	/*
-		The following table comes from materials.mes, where
+		The following table comes from materials.mes (or materials_ext.mes), where
 		the offsets into the materials and addmesh table are listed.
 	*/
-	int result;
-	switch (race)
-	{
-	case race_human:
-		result = (isMale ? 0 : 1);
-		break;
-	case race_elf:
-		result = (isMale ? 2 : 3);
-		break;
-	case race_halforc:
-		result = (isMale ? 4 : 5);
-		break;
-	case race_dwarf:
-		result = (isMale ? 6 : 7);
-		break;
-	case race_gnome:
-		result = (isMale ? 8 : 9);
-		break;
-	case race_halfelf:
-		result = (isMale ? 10 : 11);
-		break;
-	case race_halfling:
-		result = (isMale ? 12 : 13);
-		break;
-	default:
-		result = 0;
-		break;
-	}
-
+	int result = d20RaceSys.GetRaceMaterialOffset(race) + (isMale? 0:1);
+	
 	return result;
 }
 
@@ -946,9 +931,9 @@ const std::vector<std::string>& LegacyCritterSystem::GetAddMeshes(int matIdx, in
 	return sEmptyAddMeshes;
 }
 
-void LegacyCritterSystem::ApplyReplacementMaterial(gfx::AnimatedModelPtr model, int mesId)
+void LegacyCritterSystem::ApplyReplacementMaterial(gfx::AnimatedModelPtr model, int mesId, int fallbackMesId)
 {
-	auto& replacementSet = tig->GetMdfFactory().GetReplacementSet(mesId);
+	auto& replacementSet = tig->GetMdfFactory().GetReplacementSet(mesId, fallbackMesId);
 	for (auto& entry : replacementSet) {
 		model->AddReplacementMaterial(entry.first, entry.second);
 	}
@@ -1088,11 +1073,12 @@ std::string LegacyCritterSystem::GetHairStyleFile(HairStyle style, const char * 
 	return std::string();
 }
 
+// Originally @ 1007E9D0
 void LegacyCritterSystem::UpdateModelEquipment(objHndl obj)
 {
 
 	UpdateAddMeshes(obj);
-	auto raceOffset = GetModelRaceOffset(obj);
+	auto raceOffset = GetModelRaceOffset(obj, false);
 	if (raceOffset == -1) {
 		return;
 	}
@@ -1105,7 +1091,7 @@ void LegacyCritterSystem::UpdateModelEquipment(objHndl obj)
 	// This is a bit shit but since AAS will just splice the
 	// add meshes into the list of model parts, 
 	// we have to reset the render buffers
-	gameSystems->GetAAS().InvalidateBuffers(model->GetHandle());
+	model->SetRenderState(nullptr);
 
 	// Apply the naked replacement materials for
 	// equipment slots that support them
@@ -1114,15 +1100,16 @@ void LegacyCritterSystem::UpdateModelEquipment(objHndl obj)
 	ApplyReplacementMaterial(model, 200 + raceOffset); // Gloves
 	ApplyReplacementMaterial(model, 500 + raceOffset); // Armor
 	ApplyReplacementMaterial(model, 800 + raceOffset); // Boots
-	
+
 	// Now apply it for the actual equipment
+	auto baseRaceOffset = GetModelRaceOffset(obj, true); // use base race for equipment because holy crap ToEE has an entry for each race!!!
 	for (uint32_t slotId = 0; slotId < (uint32_t)EquipSlot::Count; ++slotId) {
 		auto slot = (EquipSlot) slotId;
 		auto item = GetWornItem(obj, slot);
 		if (item) {
 			auto materialSlot = objects.getInt32(item, obj_f_item_material_slot);
 			if (materialSlot != -1) {
-				ApplyReplacementMaterial(model, materialSlot + raceOffset);
+				ApplyReplacementMaterial(model, materialSlot + raceOffset, materialSlot + baseRaceOffset);
 			}
 		}
 	}
@@ -1198,14 +1185,17 @@ bool LegacyCritterSystem::IsLootableCorpse(objHndl critter)
 	for (size_t i = 0; i < invenCount; ++i) {
 		auto item = objects.getArrayFieldObj(critter, obj_f_critter_inventory_list_idx, i);
 		auto invLocation = objects.GetItemInventoryLocation(item);
-		if (inventory.IsInvIdxWorn(invLocation) ) {
-			continue; // Currently equipped on the corpse
-		}
 
 		auto itemFlags = objects.GetItemFlags(item);
 		if (itemFlags & OIF_NO_LOOT) {
 			continue; // Flagged as unlootable
 		}
+
+		//if (inventory.IsInvIdxWorn(invLocation) ) {
+		//	continue; // Currently equipped on the corpse
+		//} // removing this condition - why should worn items be excluded??
+
+		
 
 		return true; // Found an item that is lootable
 	}
@@ -1401,6 +1391,23 @@ int LegacyCritterSystem::GetHpPercent(const objHndl& handle)
 	if (maxHp <= 0)
 		return 0;
 	return (curHp - subdualDam) / maxHp;
+}
+
+int LegacyCritterSystem::GetEffectiveLevel(objHndl & objHnd)
+{
+	if (!objHnd) return 1;
+	auto lvl = objects.StatLevelGet(objHnd, stat_level);
+	auto lvlAdj = d20RaceSys.GetLevelAdjustment(objHnd);
+	auto racialHdCount = 0;
+	if (objSystem->GetObject(objHnd)->IsPC()) {
+		Dice racialHd = d20RaceSys.GetHitDice(critterSys.GetRace(objHnd, false));
+		racialHdCount = racialHd.GetCount();
+	}
+	else { // NPC
+		auto numDice = objSystem->GetObject(objHnd)->GetInt32(obj_f_npc_hitdice_idx, 0);
+	}
+	lvl += lvlAdj + racialHdCount;
+	return lvl;
 }
 
 int LegacyCritterSystem::GetCritterAttackType(objHndl obj, int attackIdx)

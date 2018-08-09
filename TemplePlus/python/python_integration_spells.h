@@ -5,7 +5,7 @@
 
 enum class SpellEvent : uint32_t {
 	SpellEffect = 0,
-	BeginSpellCast,
+	BeginSpellCast, // activated inside animation callback 10017DD0
 	EndSpellCast,
 	BeginRound,
 	EndRound,

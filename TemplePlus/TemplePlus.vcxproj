@@ -17,9 +17,16 @@
   <ItemGroup>
     <ClCompile Include="ability_fixes.cpp" />
     <ClCompile Include="action_sequence.cpp" />
+    <ClCompile Include="animgoals\animgoal.cpp" />
+    <ClCompile Include="animgoals\animgoals.cpp" />
+    <ClCompile Include="animgoals\animgoals_callbacks.cpp" />
+    <ClCompile Include="animgoals\animgoals_debugrenderer.cpp" />
+    <ClCompile Include="animgoals\animgoals_hooks.cpp" />
+    <ClCompile Include="animgoals\animgoals_stackentry.cpp" />
     <ClCompile Include="common.cpp" />
     <ClCompile Include="config\config_hooks.cpp" />
     <ClCompile Include="d20_defs.cpp" />
+    <ClCompile Include="d20_race.cpp" />
     <ClCompile Include="diag\proto_cols.cpp" />
     <ClCompile Include="dungeon_master.cpp" />
     <ClCompile Include="fixes\pointbuyconfig.cpp" />
@@ -45,6 +52,9 @@
     <ClCompile Include="fonts\fonts_layout.cpp" />
     <ClCompile Include="fonts\fonts_mapping.cpp" />
     <ClCompile Include="fonts\fonts_render.cpp" />
+    <ClCompile Include="frozen_obj_ref.cpp" />
+    <ClCompile Include="frozen_obj_ref_hooks.cpp" />
+    <ClCompile Include="gamesystems\aas_hooks.cpp" />
     <ClCompile Include="gamesystems\clipping\clippingmesh.cpp" />
     <ClCompile Include="gamesystems\clipping\clipping_hooks.cpp" />
     <ClCompile Include="gamesystems\clipping\clipping.cpp" />
@@ -93,7 +103,6 @@
     <ClCompile Include="general_condition_fixes.cpp" />
     <ClCompile Include="InfinityEngine.cpp" />
     <ClCompile Include="legacyscriptsystem.cpp" />
-    <ClCompile Include="graphics\aas_hooks.cpp" />
     <ClCompile Include="graphics\imgfile.cpp" />
     <ClCompile Include="graphics\loadingscreen.cpp" />
     <ClCompile Include="graphics\mapterrain.cpp" />
@@ -125,6 +134,7 @@
     <ClCompile Include="python\python_dispatcher.cpp" />
     <ClCompile Include="python\python_integration_d20_action.cpp" />
     <ClCompile Include="python\python_integration_feat.cpp" />
+    <ClCompile Include="python\python_integration_race.cpp" />
     <ClCompile Include="raycast.cpp" />
     <ClCompile Include="obj_hooks.cpp" />
     <ClCompile Include="particles.cpp" />
@@ -154,6 +164,7 @@
     <ClCompile Include="quest.cpp" />
     <ClCompile Include="objlist.cpp" />
     <ClCompile Include="radialmenu.cpp" />
+    <ClCompile Include="raycast_hooks.cpp" />
     <ClCompile Include="reputations.cpp" />
     <ClCompile Include="rng.cpp" />
     <ClCompile Include="secret_door.cpp" />
@@ -174,6 +185,8 @@
     <ClCompile Include="python\python_importer.cpp" />
     <ClCompile Include="traps.cpp" />
     <ClCompile Include="tutorial.cpp" />
+    <ClCompile Include="ui\ui_charegen.cpp" />
+    <ClCompile Include="ui\ui_chargen.cpp" />
     <ClCompile Include="ui\ui_debug.cpp" />
     <ClCompile Include="ui\ui_dm.cpp" />
     <ClCompile Include="ui\ui_mainmenu_wrapper.cpp" />
@@ -208,7 +221,7 @@
     <ClCompile Include="ui\ui_char_editor_feats.cpp" />
     <ClCompile Include="ui\ui_intgame_turnbased.cpp" />
     <ClCompile Include="ui\ui_pc_creation.cpp" />
-    <ClCompile Include="anim.cpp" />
+    <ClCompile Include="animgoals\anim.cpp" />
     <ClCompile Include="animalcompanion.cpp" />
     <ClCompile Include="attackrollcpp.cpp" />
     <ClCompile Include="bonusspells.cpp" />
@@ -288,12 +301,19 @@
   <ItemGroup>
     <ClInclude Include="action_sequence.h" />
     <ClInclude Include="ai.h" />
+    <ClInclude Include="animgoals\animgoal.h" />
+    <ClInclude Include="animgoals\animgoals.h" />
+    <ClInclude Include="animgoals\animgoals_callbacks.h" />
+    <ClInclude Include="animgoals\animgoals_debugrenderer.h" />
+    <ClInclude Include="animgoals\animgoals_stackentry.h" />
+    <ClInclude Include="animgoals\anim_slot.h" />
     <ClInclude Include="bonus.h" />
     <ClInclude Include="d20_class.h" />
     <ClInclude Include="critter.h" />
     <ClInclude Include="d20_level.h" />
     <ClInclude Include="d20_levelup.h" />
     <ClInclude Include="d20_obj_registry.h" />
+    <ClInclude Include="d20_race.h" />
     <ClInclude Include="d20_status.h" />
     <ClInclude Include="damage.h" />
     <ClInclude Include="diag\diag.h" />
@@ -304,6 +324,8 @@
     <ClInclude Include="float_line.h" />
     <ClInclude Include="fonts\fonts.h" />
     <ClInclude Include="fonts\fonts_mapping.h" />
+    <ClInclude Include="frozen_obj_ref.h" />
+    <ClInclude Include="gamesystems\aas_hooks.h" />
     <ClInclude Include="gamesystems\clipping\clippingmesh.h" />
     <ClInclude Include="gamesystems\clipping\clipping.h" />
     <ClInclude Include="gamesystems\d20\d20stats.h" />
@@ -343,13 +365,17 @@
     <ClInclude Include="python\python_integration_class_spec.h" />
     <ClInclude Include="python\python_integration_d20_action.h" />
     <ClInclude Include="python\python_integration_feat.h" />
+    <ClInclude Include="python\python_integration_race.h" />
     <ClInclude Include="rng.h" />
     <ClInclude Include="tig\tig_console.h" />
     <ClInclude Include="tig\tig_keyboard.h" />
     <ClInclude Include="tutorial.h" />
+    <ClInclude Include="ui\ui_char.h" />
+    <ClInclude Include="ui\ui_chargen.h" />
     <ClInclude Include="ui\ui_debug.h" />
     <ClInclude Include="ui\ui_dm.h" />
     <ClInclude Include="ui\ui_pc_creation.h" />
+    <ClInclude Include="ui\ui_townmap.h" />
     <ClInclude Include="ui\ui_worldmap.h" />
     <ClInclude Include="ui\widgets\widgets.h" />
     <ClInclude Include="ui\widgets\widget_content.h" />
@@ -442,7 +468,7 @@
     <ClInclude Include="ui\ui_picker.h" />
     <ClInclude Include="ui\ui_char_editor.h" />
     <ClInclude Include="ui\ui_intgame_turnbased.h" />
-    <ClInclude Include="anim.h" />
+    <ClInclude Include="animgoals\anim.h" />
     <ClInclude Include="combat.h" />
     <ClInclude Include="common.h" />
     <ClInclude Include="condition.h" />
@@ -587,6 +613,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <MinimalRebuild>false</MinimalRebuild>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -616,6 +643,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -649,6 +677,7 @@
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

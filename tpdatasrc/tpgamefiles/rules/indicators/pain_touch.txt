@@ -1,0 +1,5 @@
+ID_string: PAIN_TOUCH
+effect_type: 0
+texture_file: art\interface\Player_Conditions\Ailments\Spell Stinking Cloud.tga
+help_topic: TAG_ROOT
+tooltip_base_text: Nauseated

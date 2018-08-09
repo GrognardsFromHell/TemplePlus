@@ -42,6 +42,9 @@ struct LegacyCombatSystem : temple::AddressTable {
 	std::vector<objHndl> GetHostileCombatantList(objHndl handle); // gets a list from the combat initiative
 	void GetEnemyListInRange(objHndl obj, float rangeFeet, std::vector<objHndl> & enemies);
 	bool HasLineOfAttack(objHndl obj, objHndl target); // can shoot or attack target (i.e. target isn't behind a wall or sthg)
+	// can shoot or attack target (i.e. target isn't behind a wall or sthg)
+	bool HasLineOfAttackFromPosition(LocAndOffsets fromPosition, objHndl target);
+	
 
 
 	void AddToInitiativeWithinRect(objHndl objHndl) const; // adds critters to combat initiative around obj
@@ -54,6 +57,7 @@ struct LegacyCombatSystem : temple::AddressTable {
 	void CombatAdvanceTurn(objHndl obj);
 	BOOL IsBrawlInProgress();
 	void CritterExitCombatMode(objHndl handle);
+	bool CombatEnd(); // ends combat mode
 	
 
 	uint32_t* combatModeActive;

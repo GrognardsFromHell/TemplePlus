@@ -16,6 +16,8 @@
 #include "rng.h"
 #include "tutorial.h"
 #include "legacyscriptsystem.h"
+#include "python/python_integration_obj.h"
+#include "gamesystems/timeevents.h"
 
 class TurnBasedReplacements : public TempleFix
 {
@@ -254,6 +256,28 @@ void TurnBasedSys::CreateInitiativeListWithParty(){
 	auto newTBActor = combatSys.GetInitiativeListMember(0);
 	turnBasedSetCurrentActor(newTBActor);
 	temple::GetRef<int>(0x10BCAD80) = objSystem->GetObject(newTBActor)->GetInt32(obj_f_initiative);
+}
+
+void TurnBasedSys::ExecuteExitCombatScriptForInitiativeList(){
+	auto N = GetInitiativeListLength();
+	for (auto i = 0; i < N; i++){
+		auto combatant = groupInitiativeList->GroupMembers[i];
+		pythonObjIntegration.ExecuteObjectScript(combatant, combatant, ObjScriptEvent::ExitCombat);
+	}
+}
+
+void TurnBasedSys::TbCombatEnd(){
+	groupInitiativeList->Reset();
+	auto gameTime = gameSystems->GetTimeEvent().GetTime();
+	auto &combatAbsoluteEndTimeInSeconds = temple::GetRef<int>(0x11E61538);
+	combatAbsoluteEndTimeInSeconds = temple::GetRef<int(__cdecl)(GameTime&)>(0x1005FD50)(gameTime);
+	if (tutorial.IsTutorialActive()){
+		if (scriptSys.GetGlobalFlag(4)){
+			scriptSys.SetGlobalFlag(4, 0);
+			scriptSys.SetGlobalFlag(2, 1);
+			tutorial.ShowTopic(18);
+		}
+	}
 }
 
 void _turnBasedSetCurrentActor(objHndl objHnd)

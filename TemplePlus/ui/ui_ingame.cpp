@@ -19,6 +19,9 @@
 #include "dungeon_master.h"
 #include "tig/tig_loadingscreen.h"
 #include "tig/tig_console.h"
+#include "ui_char.h"
+#include "ui_townmap.h"
+#include "raycast.h"
 
 UiInGame::UiInGame(const UiSystemConf &config) {
 	auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x10112e70);
@@ -140,11 +143,11 @@ void UiInGame::ProcessMessage(const TigMsg & msg) {
 			mouseFuncs.SetDraggedIcon(0, 0, 0);
 		}
 
-		static int* objRecovery_10BD3AFC = temple::GetPointer<int>(0x10BD3AFC);
-		static uint32_t &idx_10BD3B44 = temple::GetRef<uint32_t>(0x10BD3B44);
+		static int* viewportIds = temple::GetPointer<int>(0x10BD3AF8);
+		static uint32_t &viewportIdx = temple::GetRef<uint32_t>(0x10BD3B44);
 
 		
-		if (!objRecovery_10BD3AFC[idx_10BD3B44])
+		if (!viewportIds[viewportIdx+1])
 		{
 			static bool combatModeMsg = false;
 			if (combatSys.isCombatActive())
@@ -192,8 +195,7 @@ void UiInGame::HandleCombatMessage(const TigMsg & msg)
 
 void UiInGame::HandleNonCombatMessage(const TigMsg & msg)
 {
-	auto checkCritterWithInventoryOpen = temple::GetRef<BOOL(__cdecl)()>(0x10144030);
-	if (checkCritterWithInventoryOpen() && msg.type == TigMsgType::MOUSE)
+	if (uiSystems->GetChar().IsVisible() && msg.type == TigMsgType::MOUSE)
 		return;
 
 	if (msg.type == TigMsgType::KEYSTATECHANGE) {
@@ -202,12 +204,23 @@ void UiInGame::HandleNonCombatMessage(const TigMsg & msg)
 
 	if (msg.type == TigMsgType::MOUSE) {
 
-
-
+		auto tigMsgMouse = (TigMsgMouse&)msg;
+		auto mouseFlags = tigMsgMouse.buttonStateFlags;
+		if (mouseFlags & MSF_LMB_RELEASED){
+			return temple::GetRef<void(__cdecl)(const TigMsg&)>(0x10114AF0)(msg); // normal LMB released handler
+		}
+		else if (mouseFlags & MSF_LMB_CLICK || mouseFlags & (MSF_POS_CHANGE | MSF_LMB_DOWN)){
+			return temple::GetRef<void(__cdecl)(const TigMsg&)>(0x101148B0)(msg); // LMB drag handler
+		}
+		else if (mouseFlags & MSF_RMB_CLICK){
+			return temple::GetRef<void(__cdecl)(const TigMsg&)>(0x10114D90)(msg); // RMB handler
+		}
+		else if (mouseFlags & (MSF_POS_CHANGE) || mouseFlags & (MSF_POS_CHANGE_SLOW)){
+			static auto NormalMsgHandler = temple::GetPointer<void(const TigMsg &msg)>(0x10114e30);
+			NormalMsgHandler(msg);
+		}
 	}
 
-	static auto NormalMsgHandler = temple::GetPointer<void(const TigMsg &msg)>(0x10114e30);
-	NormalMsgHandler(msg);
 }
 
 void UiInGame::HandleCombatKeyStateChange(const TigMsg & msg)
@@ -273,12 +286,12 @@ void UiInGame::HandleCombatMouseEvent(const TigMsg & msg)
 objHndl UiInGame::GetMouseTarget(int x, int y)
 {
 	// Pick the object using the screen coordinates first
-	auto mousedOver = PickObject(x, y, 6);
+	auto mousedOver = PickObject(x, y);
 	if (!mousedOver) {		
 		return objHndl::null;
 	}
 
-	if (IsUntargetable(mousedOver)) {
+	if (objects.IsUntargetable(mousedOver)) {
 		return objHndl::null;
 	}
 
@@ -309,33 +322,14 @@ void UiInGame::DoKeyboardScrolling(){
 
 }
 
-objHndl UiInGame::PickObject(int x, int y, uint32_t flags)
+objHndl UiInGame::PickObject(int x, int y, GameRaycastFlags flags)
 {
 	objHndl result = objHndl::null;
-	static auto game_raycast = temple::GetPointer<BOOL(int x, int y, objHndl *pObjHndlOut, uint32_t flags)>(0x10022360);
-	if (game_raycast(x, y, &result, flags) == 0) {
+	if (PickObjectOnScreen(x, y, &result, flags) == 0) {
 		return objHndl::null;
 	} else {
 		return result;
 	}
-}
-
-bool UiInGame::IsUntargetable(objHndl obj)
-{
-	if (objects.GetFlags(obj) & (OF_OFF|OF_CLICK_THROUGH|OF_DONTDRAW)) {
-		return true;
-	}
-
-	if (objects.IsUndetectedSecretDoor(obj)) {
-		return true;
-	}
-
-	if (aiSys.IsRunningOff(obj)) {
-		return true;
-	}
-
-	return false;
-	
 }
 
 void UiInGame::ResetInput()

@@ -4,7 +4,9 @@
 #include "ui_debug.h"
 #include "ui/widgets/widgets.h"
 #include "tig/tig_startup.h"
+#include "config/config.h"
 #include <graphics/shaperenderer2d.h>
+#include "animgoals/animgoals_debugrenderer.h"
 
 #include <debugui.h>
 
@@ -68,6 +70,8 @@ static void DrawLegacyWidgetTreeNode(LgcyWidget *widget) {
 	}
 
 	ImGui::BulletText(" X:%d Y:%d W:%d H:%d", widget->x, widget->y, widget->width, widget->height);
+	ImGui::BulletText(" Renderer: %x", widget->render);
+	ImGui::BulletText(" Msg Handler: %x", widget->handleMessage);
 
 	if (widget->IsWindow()) {
 		auto window = (LgcyWindow*)widget;
@@ -151,7 +155,7 @@ void UIRenderDebug()
 	if (!debugUiVisible) {
 		return;
 	}
-	ImGui::Begin("UI System", &debugUiVisible);
+	ImGui::Begin("Debug Info", &debugUiVisible);
 
 	if (ImGui::CollapsingHeader("Top Level Windows (Bottom to Top)")) {
 
@@ -159,6 +163,20 @@ void UIRenderDebug()
 			DrawWidgetTreeNode(widgetId);
 		}
 
+	}
+
+	if (ImGui::CollapsingHeader("Anim Goals Debugging")) {
+		static bool showGoalsChecked;
+		ImGui::Checkbox("Render Current Goals", &showGoalsChecked);
+		AnimGoalsDebugRenderer::Enable(showGoalsChecked);
+
+		static bool showNamesChecked;
+		ImGui::Checkbox("Render Object Names", &showNamesChecked);
+		AnimGoalsDebugRenderer::EnableObjectNames(showNamesChecked);
+	}
+
+	if (ImGui::CollapsingHeader("Rendering Debugging")) {
+		ImGui::Checkbox("Draw Cylinder Hitboxes", &config.drawObjCylinders);
 	}
 
 	ImGui::End();

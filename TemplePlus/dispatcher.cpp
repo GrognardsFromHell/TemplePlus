@@ -18,6 +18,8 @@
 class DispatcherReplacements : public TempleFix {
 public:
 
+	static int Dispatch54AoE(objHndl, DispIO *, D20DispatcherKey);
+
 	void apply() override {
 		logger->info("Replacing basic Dispatcher functions");
 		
@@ -56,9 +58,19 @@ public:
 			return dispatch.DispatchD20ActionCheck(d20a, tbStat, dispType);
 		});
 		
- 
+		replaceFunction(0x1004D360, Dispatch54AoE);
 	}
 } dispatcherReplacements;
+
+int DispatcherReplacements::Dispatch54AoE(objHndl handle, DispIO* evtObj, D20DispatcherKey dispKey){
+	if (!handle) return 0;
+	auto obj = objSystem->GetObject(handle);
+	auto dispatcher = obj->GetDispatcher();
+	if (!dispatcher->IsValid())
+		return 0;
+	dispatcher->Process(dispTypeObjectEvent, dispKey, evtObj);
+	return 0;
+}
 
 struct DispatcherSystemAddresses : temple::AddressTable
 {
@@ -139,7 +151,7 @@ int32_t DispatcherSystem::dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, 
 	if (!dispatcherValid(dispatcher)) return 0;
 
 	dispIO.dispIOType = dispIoTypeObjBonus;
-	dispIO.returnVal = flag;
+	dispIO.flags = flag;
 	dispIO.bonOut = bonOut;
 	dispIO.obj = objHnd2;
 	if (!bonOut)
@@ -181,24 +193,6 @@ float DispatcherSystem::Dispatch29hGetMoveSpeed(objHndl objHnd, DispIoMoveSpeed 
 
 	result = moveTot * dispIo.factor;
 
-
-	/*uint32_t objHndLo = (uint32_t)(objHnd & 0xffffFFFF);
-	uint32_t objHndHi = (uint32_t)((objHnd >>32) & 0xffffFFFF);
-	macAsmProl;
-	__asm{
-		mov ecx, this;
-		mov esi, [ecx]._Dispatch29hMovementSthg;
-		mov eax, iO;
-		push eax;
-		mov eax, objHndHi;
-		push eax;
-		mov eax, objHndLo;
-		push eax;
-		call esi;
-		add esp, 12;
-		fstp result;
-	}
-	macAsmEpil*/
 	return result;
 }
 
@@ -576,6 +570,26 @@ void DispatcherSystem::DispatchConditionRemove(Dispatcher* dispatcher, CondNode*
 		}
 	}
 	cond->flags |= 1;
+}
+
+void DispatcherSystem::DispatchMetaMagicModify(objHndl obj, MetaMagicData& mmData)
+{
+	auto _dispatcher = objects.GetDispatcher(obj);
+	if (!dispatch.dispatcherValid(_dispatcher)) return;
+	EvtObjMetaMagic dispIo;
+	dispIo.mmData = mmData;
+	DispatcherProcessor(_dispatcher, dispTypeMetaMagicMod, 0, &dispIo);
+	mmData = dispIo.mmData;
+}
+
+void DispatcherSystem::DispatchSpecialAttack(objHndl obj, int attack, objHndl target)
+{
+	auto _dispatcher = objects.GetDispatcher(obj);
+	if (!dispatch.dispatcherValid(_dispatcher)) return;
+	EvtObjSpecialAttack dispIo;
+	dispIo.target = target;
+	dispIo.attack = static_cast<EvtObjSpecialAttack::AttackType>(attack);
+	DispatcherProcessor(_dispatcher, dispTypeSpecialAttack, 0, &dispIo);
 }
 
 unsigned DispatcherSystem::Dispatch35CasterLevelModify(objHndl obj, SpellPacketBody* spellPkt)
@@ -1208,13 +1222,20 @@ void DispatcherCallbackArgs::SetCondArg(uint32_t argIdx, int value)
 	conds.CondNodeSetArg(subDispNode->condNode, argIdx, value);
 }
 
+void DispatcherCallbackArgs::SetCondArgObjHndl(uint32_t argIdx, const objHndl& handle){
+	if (argIdx +1 < this->subDispNode->condNode->condStruct->numArgs){
+		SetCondArg(argIdx, handle.GetHandleUpper());
+		SetCondArg(argIdx + 1, handle.GetHandleLower());
+	}
+}
+
 void DispatcherCallbackArgs::RemoveCondition(){
 	conds.ConditionRemove(this->objHndCaller, this->subDispNode->condNode);
 }
 
-void DispatcherCallbackArgs::RemoveSpellMod(){
-	auto removeSpellMod = temple::GetRef<void(__cdecl)(DispatcherCallbackArgs)>(0x100CBAB0);
-	removeSpellMod(*this);
+void DispatcherCallbackArgs::RemoveSpell(){
+	auto removeSpell = temple::GetRef<void(__cdecl)(DispatcherCallbackArgs)>(0x100D7620);
+	removeSpell(*this);
 }
 
 DispIoAttackBonus::DispIoAttackBonus(){
@@ -1239,7 +1260,7 @@ DispIoObjBonus::DispIoObjBonus()
 	dispIOType = dispIoTypeObjBonus;
 	obj = 0i64;
 	pad = 0;
-	returnVal = 0;
+	flags = 0;
 	bonOut = &bonlist;
 }
 

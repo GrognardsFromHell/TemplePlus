@@ -40,5 +40,56 @@
 	{
 		"id": "scrollbar-track",
 		"normalImage": "art/scrollbar/empty.tga"
-	}
+	},
+	{
+      "id": "action-pointer-next",
+	    "inherit": "default-sounds",
+      "normalImage": "art/interface/char_ui/char_looting_ui/ActionPointer.tga",
+	  "hoverImage": "art/interface/char_ui/char_looting_ui/ActionPointerHovered.tga",
+	  "pressedImage": "art/interface/char_ui/char_looting_ui/ActionPointerClicked.tga",
+	  "disabledImage": "art/interface/char_ui/char_looting_ui/ActionPointerDisabled.tga"
+    },
+	{
+      "id": "chargen-button",
+	    "inherit": "default-sounds",
+      "textStyle": "chargen-button-text",
+      "normalImage": "art/interface/pc_creation/button_active_normal.tga",
+      "hoverImage": "art/interface/pc_creation/button_active_hover.tga",
+      "pressedImage": "art/interface/pc_creation/button_active_click.tga",
+      "disabledImage": "art/interface/pc_creation/button_active_disabled.tga",
+	  "frameImage": "art/interface/pc_creation/buttonbox.tga"
+    },
+	{
+      "id": "chargen-disabled-button",
+	    "inherit": "default-sounds",
+      "textStyle": "chargen-button-text",
+      "normalImage": "art/interface/pc_creation/button_disabled_normal.tga",
+	  "activatedImage": "art/interface/pc_creation/button_disabled_activated.tga",
+      "hoverImage": "art/interface/pc_creation/button_disabled_hover.tga",
+      "pressedImage": "art/interface/pc_creation/button_disabled_click.tga",
+      "disabledImage": "art/interface/pc_creation/button_disabled.tga",
+	  "frameImage": "art/interface/pc_creation/buttonbox.tga"
+    },
+	{
+      "id": "chargen-active-button",
+	    "inherit": "default-sounds",
+      "textStyle": "chargen-button-text",
+      "normalImage": "art/interface/pc_creation/button_active_normal.tga",
+	  "activatedImage": "art/interface/pc_creation/button_active_activated.tga",
+      "hoverImage": "art/interface/pc_creation/button_active_activated.tga",
+      "pressedImage": "art/interface/pc_creation/button_active_click.tga",
+      "disabledImage": "art/interface/pc_creation/button_active_disabled.tga",
+	  "frameImage": "art/interface/pc_creation/buttonbox.tga"
+    },
+		{
+      "id": "chargen-done-button",
+	    "inherit": "default-sounds",
+      "textStyle": "chargen-button-text",
+      "normalImage": "art/interface/pc_creation/button_done_normal.tga",
+	  "activatedImage": "art/interface/pc_creation/button_done_activated.tga",
+      "hoverImage": "art/interface/pc_creation/button_done_hover.tga",
+      "pressedImage": "art/interface/pc_creation/button_done_click.tga",
+      "disabledImage": "art/interface/pc_creation/button_done_disabled.tga",
+	  "frameImage": "art/interface/pc_creation/buttonbox.tga"
+    }
 ]

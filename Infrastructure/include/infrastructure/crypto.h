@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include <gsl/span.h>
+#include <gsl/span>
 
 namespace crypto {
 

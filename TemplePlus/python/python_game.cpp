@@ -24,6 +24,7 @@
 #include "movies.h"
 #include "textbubbles.h"
 #include "party.h"
+#include "raycast.h"
 #include "sound.h"
 #include "ui/ui.h"
 #include "ui/ui_dialog.h"
@@ -45,6 +46,7 @@
 #include "ui/ui_systems.h"
 #include "ui/ui_legacysystems.h"
 #include "ui/ui_worldmap.h"
+#include "ui/ui_char.h"
 
 #include <pybind11/embed.h>
 namespace py = pybind11;
@@ -79,12 +81,6 @@ static struct PyGameAddresses : temple::AddressTable {
 	// Returns the first conscious party member (which is then the leader) or 0
 	objHndl (__cdecl *PartyGetLeader)();
 
-	// Casts a ray into the game world at the given x,y screen coordinates and returns the object it found
-	// what objects are collided with is controlled by the flags value
-	// Returns true if an object is found
-	// Flags is mostly 6 but for spells with different target types it differs
-	bool (__cdecl *GameRaycast)(int screenX, int screenY, objHndl* pObjHndlOut, int flags);
-
 	// Shakes the screen
 	void(__cdecl *ShakeScreen)(float amount, float duration);
 
@@ -103,8 +99,6 @@ static struct PyGameAddresses : temple::AddressTable {
 
 		rebase(PartyGetCount, 0x1002B2B0);
 		rebase(PartyGetLeader, 0x1002BE60);
-
-		rebase(GameRaycast, 0x10022360);
 
 		rebase(ShakeScreen, 0x10005840);
 	}
@@ -152,7 +146,7 @@ static PyObject* PyGame_GetHovered(PyObject*, void*) {
 	auto pos = mouseFuncs.GetPos();
 	objHndl handle;
 
-	if (pyGameAddresses.GameRaycast(pos.x, pos.y, &handle, 6)) {
+	if (PickObjectOnScreen(pos.x, pos.y, &handle, GRF_HITTEST_3D)) {
 		return PyObjHndl_Create(handle);
 	} else {
 		return PyObjHndl_CreateNull();
@@ -1197,7 +1191,16 @@ PyObject* PyGame_CreateHistoryFromId(PyObject*, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+PyObject* PyGame_CreateHistoryFromPattern(PyObject*, PyObject* args) {
 
+	int patternId;
+	objHndl handle, handle2;
+	if (!PyArg_ParseTuple(args, "iO&O&:game.create_history_from_pattern", &patternId, &ConvertObjHndl, &handle, &ConvertObjHndl, &handle2)) {
+		Py_RETURN_NONE;
+	}
+	histSys.CreateRollHistoryLineFromMesfile(patternId, handle, handle2);
+	Py_RETURN_NONE;
+}
 
 
 PyObject* PyGame_WrittenUiShow(PyObject*, PyObject* args) {
@@ -1226,6 +1229,7 @@ static PyMethodDef PyGameMethods[]{
 	{ "get_wall_endpt", PySpell_SpellGetPickerEndPoint, METH_VARARGS, NULL },
 	{ "create_history_freeform", PyGame_CreateHistoryFreeform, METH_VARARGS, NULL },
 	{ "create_history_from_id", PyGame_CreateHistoryFromId, METH_VARARGS, NULL },
+	{ "create_history_from_pattern", PyGame_CreateHistoryFromPattern, METH_VARARGS, NULL },
 	{"fade_and_teleport", PyGame_FadeAndTeleport, METH_VARARGS, NULL},
 	{"fade", PyGame_Fade, METH_VARARGS, NULL},
 	{ "fnn", PyGame_FindNpcNear, METH_VARARGS, NULL },

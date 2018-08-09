@@ -33,11 +33,10 @@ struct Updater::Impl {
 	std::string status;
 
 	// Safely update the status string for the end user
-	template<typename... TArgs>
-	void UpdateStatus(const char *fmt, const TArgs&... args) {		
+	void UpdateStatus(const std::string &new_status) {
 		std::lock_guard<std::mutex> guard(mutex);
-		status = fmt::format(fmt, args...);
-		logger->info("New updater status: {}", status);
+		status = new_status;
+		logger->info("New updater status: {}", new_status);
 	}
 
 private:
@@ -122,14 +121,14 @@ void Updater::Impl::RunUpdate() {
 		return;
 	}
 
-	UpdateStatus("Installing update to {}", futureVersion);
+	UpdateStatus(fmt::format("Installing update to {}", futureVersion));
 	logger->info("Update available: {} -> {}", currentVersion, futureVersion);
 	
 	std::wstring updateArg = fmt::format(L"--update={}", feedUrl);
 	auto updateResult = RunUpdater({ updateArg });
 	logger->info("Result from update: {}", updateResult);
 
-	UpdateStatus("Restart your game to update to {}", futureVersion);
+	UpdateStatus(fmt::format("Restart your game to update to {}", futureVersion));
 
 }
 

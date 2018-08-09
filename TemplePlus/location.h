@@ -14,7 +14,7 @@ struct LocationSys : temple::AddressTable
 	void RegularizeLoc(LocAndOffsets* toLocTweaked); //  alters the location and offsets so that the offsets are within the tile
 	void GetOverallOffset(LocAndOffsets loc, float* absX, float* absY);
 	BOOL ShiftLocationByOneSubtile(LocAndOffsets* loc, ScreenDirections direction, LocAndOffsets* locOut);
-	
+
 	void (__cdecl*PointNodeInit)(LocAndOffsets* loc, PointNode* pntNode);
 	int GetLocFromScreenLocPrecise(int x, int y, LocAndOffsets&);
 	
@@ -31,7 +31,7 @@ struct LocationSys : temple::AddressTable
 	void GetScrollTranslation(int &xOut, int &yOut);
 
 	// Distance between two objects in feet
-	float (__cdecl *DistanceToObj)(objHndl from, objHndl to);
+	float DistanceToObj(objHndl from, objHndl to);
 
 	// Distance between from and loc in inches (without the obj radius)
 	float DistanceToLoc(objHndl from, LocAndOffsets loc);

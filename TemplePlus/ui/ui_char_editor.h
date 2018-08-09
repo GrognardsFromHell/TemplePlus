@@ -4,47 +4,10 @@
 #include <EASTL/fixed_string.h>
 #include <EASTL/hash_map.h>
 #include "EASTL/vector.h"
+#include "ui_chargen.h"
 
 struct UiResizeArgs;
 struct GameSystemConf;
-
-struct CharEditorSelectionPacket{
-	int abilityStats[6];
-	int numRerolls; // number of rerolls
-	int isPointbuy;
-	char rerollString[128];
-	Stat statBeingRaised;
-	int raceId; // 7 is considered invalid
-	int genderId; // 2 is considered invalid
-	int height0;
-	int height1;
-	int modelScale;
-	int hair0;
-	int hair1;
-	Stat classCode;
-	int deityId;
-	int domain1;
-	int domain2;
-	Alignment alignment; 
-	int alignmentChoice; // 1 is for Positive Energy, 2 is for Negative Energy
-	feat_enums feat0;
-	feat_enums feat1;
-	feat_enums feat2;
-	int skillPointsAdded[42]; // idx corresponds to skill enum
-	int skillPointsSpent;
-	int availableSkillPoints;
-	int spellEnums[SPELL_ENUM_MAX_VANILLA];
-	int spellEnumsAddedCount;
-	int spellEnumToRemove; // for sorcerers who swap out spells
-	int wizSchool;
-	int forbiddenSchool1;
-	int forbiddenSchool2;
-	feat_enums feat3;
-	feat_enums feat4;
-	int portraitId;
-	char voiceFile[256];
-	int voiceId; // -1 is considered invalid
-};
 
 struct KnownSpellInfo {
 	int spEnum = 0;
@@ -60,32 +23,21 @@ struct KnownSpellInfo {
 
 enum FeatInfoFlag
 {
-	None = 0, 
+	NoFeatInfoFlag = 0, 
 	DisregardPrereqs = 4 
 };
-struct FeatInfo {
-	int featEnum;
-	int flag = 0;
-	int minLevel = 1;
-	FeatInfo(int FeatEnum) : featEnum(FeatEnum) {};
-	FeatInfo(std::string &featName);
+
+
+
+enum CharEditorStages : int {
+	CE_Stage_Class = 0,
+	CE_Stage_Stats,
+	CE_Stage_Features,
+	CE_Stage_Skills,
+	CE_Stage_Feats,
+	CE_Stage_Spells,
+	CE_STAGE_COUNT
 };
-
-
-struct LegacyCharEditorSystem{
-	const char* name;
-	BOOL(__cdecl *systemInit)(GameSystemConf *);
-	BOOL(__cdecl *systemResize)(void *);
-	int systemReset; // unused
-	void(__cdecl *free)();
-	void(__cdecl *hide)();
-	void(__cdecl *show)();
-	BOOL(__cdecl *checkComplete)(); // checks if the char editing stage is complete (thus allowing you to move on to the next stage). This is checked at every render call.
-	void(__cdecl *finalize)(CharEditorSelectionPacket &selPkt, objHndl &handle); //applies the configuration when clicking the "finish" button
-	void(__cdecl *reset)(CharEditorSelectionPacket & editSpec);
-	BOOL(__cdecl *activate)(); // inits values and sets appropriate states for buttons based on gameplay logic (e.g. stuff exclusive to certain classes etc.)
-};
-
 
 class CharEditorSystem {
 public:
@@ -128,6 +80,8 @@ public:
 	int GetRolledStatIdx(int x, int y, int *xyOut = nullptr); // gets the index of the Rolled Stats button according to the mouse position. Returns -1 if none.
 
 	void SetIsNewChar(bool state);
+	bool IsNewChar(void);
+	bool IsSelectingFeats();
 
 	bool SpellsNeedReset();
 	void SpellsNeedResetSet(bool value);

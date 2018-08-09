@@ -11,7 +11,7 @@
 #include <graphics/shaperenderer3d.h>
 #include <infrastructure/meshes.h>
 #include <temple/meshes.h>
-#include <temple/aasrenderer.h>
+#include <aas/aas_renderer.h>
 #include <particles/render.h>
 
 struct TempleDll;
@@ -34,7 +34,7 @@ struct TempleDll {
 	gfx::ShapeRenderer2d shapeRenderer2d;
 	gfx::ShapeRenderer3d shapeRenderer3d;
 	temple::AasAnimatedModelFactory aasFactory;
-	temple::AasRenderer aasRenderer;
+	aas::Renderer aasRenderer;
 	particles::ParticleRendererManager renderManager;
 	std::unique_ptr<particles::PartSys> partSys;
 	gfx::AnimatedModelPtr currentModel;

@@ -28,6 +28,7 @@
 #include "legacymapsystems.h"
 #include "infrastructure/meshes.h"
 #include "turn_based.h"
+#include "d20_race.h"
 
 
 //*****************************************************************************
@@ -194,6 +195,13 @@ void TeleportSystem::AdvanceTime(uint32_t time) {
 const std::string &TeleportSystem::GetName() const {
 	static std::string name("Teleport");
 	return name;
+}
+
+// Originally @ 0x10084af0
+bool TeleportSystem::IsObjectTeleporting(objHndl handle) const
+{
+	static auto orgMethod = temple::GetPointer<BOOL(objHndl)>(0x10084af0);
+	return orgMethod(handle) == 1;
 }
 
 //*****************************************************************************
@@ -822,7 +830,9 @@ D20System::D20System(const GameSystemConf &config) {
 	if (!startup(&config)) {
 		throw TempleException("Unable to initialize game system D20");
 	}
-	conds.RegisterNewConditions();
+	d20RaceSys.GetRaceSpecsFromPython();
+	conds.RegisterNewConditions(); // also initializes tpdp and race_defs modules
+	
 	d20ClassSys.GetClassSpecs();
 	d20LevelSys.GenerateSpellsPerLevelTables();
 	damage.Init();
@@ -916,6 +926,12 @@ int LightSchemeSystem::GetHourOfDay()
 {
 	static auto lightscheme_get_hour = temple::GetPointer<int()>(0x1006f0b0);
 	return lightscheme_get_hour();
+}
+
+bool LightSchemeSystem::IsUpdating() const
+{
+	static auto lightscheme_is_updating = temple::GetPointer<int()>(0x1006f0c0);
+	return lightscheme_is_updating() == 1;
 }
 
 //*****************************************************************************
@@ -1937,6 +1953,12 @@ void MapFoggingSystem::PerformCheckForCritter(objHndl handle, int idx){
 
 	sectorSys.SectorListReturnToPool(sectorList);
 
+}
+
+int MapFoggingSystem::IsPosExplored(LocAndOffsets location)
+{
+	static auto is_pos_explored = temple::GetPointer<int(LocAndOffsets)>(0x1002ecb0);
+	return is_pos_explored(location);
 }
 
 void MapFoggingSystem::InitScreenBuffers() {

@@ -4,7 +4,7 @@
 #include <particles/parser.h>
 #include <infrastructure/vfs.h>
 #include <infrastructure/stringutil.h>
-#include <infrastructure/format.h>
+#include <fmt/format.h>
 
 using namespace particles;
 

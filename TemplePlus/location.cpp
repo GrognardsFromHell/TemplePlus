@@ -2,6 +2,7 @@
 #include "location.h"
 #include "obj.h"
 #include "util/fixes.h"
+#include "gamesystems/objects/objsystem.h"
 
 const LocAndOffsets LocAndOffsets::null{ locXY::fromField(0), 0,0 };
 
@@ -184,6 +185,31 @@ void LocationSys::GetScrollTranslation(int& xOut, int& yOut) {
 	yOut = (int) *translationY;
 }
 
+float LocationSys::DistanceToObj(objHndl from, objHndl to){
+	if (!from || !to)
+		return 0.0f;
+	auto fromObj = objSystem->GetObject(from);
+	auto toObj = objSystem->GetObject(to);
+
+	if (fromObj->IsItem()) {
+		auto parent = inventory.GetParent(from);
+		if (parent == to)
+			return 0.0f;
+	}
+	if (toObj->IsItem()){
+		auto parent = inventory.GetParent(to);
+		if (parent == from)
+			return 0.0f;
+	}
+
+	auto fromLoc = fromObj->GetLocationFull();
+	auto toLoc = toObj->GetLocationFull();
+	auto fromRadius = objects.GetRadius(from);
+	auto toRadius = objects.GetRadius(to);
+	auto result = (Distance3d(fromLoc, toLoc) - (fromRadius + toRadius)) / INCH_PER_FEET;
+	return result;
+}
+
 float LocationSys::DistanceToLoc(objHndl from, LocAndOffsets loc) {
 	auto objLoc = objects.GetLocationFull(from);
 	auto distance = Distance3d(objLoc, loc);
@@ -262,7 +288,7 @@ LocationSys::LocationSys()
 	rebase(subtileFromLoc,0x10040750); 
 	rebase(PointNodeInit, 0x100408A0);
 
-	rebase(DistanceToObj, 0x100236E0);
+	//rebase(DistanceToObj, 0x100236E0);
 	
 	rebase(ShiftSubtileOnceByDirection, 0x10029DC0);
 	rebase(Distance3d, 0x1002A0A0);

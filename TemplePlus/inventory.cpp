@@ -9,8 +9,9 @@
 #include "condition.h"
 #include <python/python_integration_obj.h>
 #include "float_line.h"
+#include "party.h"
+#include "rng.h"
 
-#define INVENTORY_IDX_UNDEFINED -1
 
 InventorySystem inventory;
 
@@ -101,6 +102,13 @@ public:
 		// FindMatchingStackableItem
 		replaceFunction<objHndl(objHndl, objHndl)>(0x10067DF0, [](objHndl receiver, objHndl item) {
 			return inventory.FindMatchingStackableItem(receiver, item);
+		});
+
+		// DoNpcLooting
+		replaceFunction<int(__cdecl)(objHndl, objHndl)>(0x1006C170, [](objHndl opener, objHndl container){
+
+			return inventory.DoNpcLooting(opener, container)?TRUE:FALSE;
+			
 		});
 	};
 
@@ -795,6 +803,16 @@ void InventorySystem::MoneyToCoins(int money, int* plat, int* gold, int* silver,
 	}
 }
 
+int32_t InventorySystem::GetCoinWorth(int32_t coinType){
+
+	static int32_t coinWorths[] = { 1,10,100,1000 };
+	if (coinType >= 0 && coinType <= 3){
+		return coinWorths[coinType];
+	}
+	
+	return 0u;
+}
+
 int InventorySystem::GetWieldType(objHndl wielder, objHndl item, bool regardEnlargement) const
 {
 	if (!regardEnlargement)
@@ -945,6 +963,10 @@ void InventorySystem::QuantitySet(const objHndl& item, int qtyNew){
 	if (GetQuantityField(item, &qtyField)){
 		gameSystems->GetObj().GetObject(item)->SetInt32(qtyField, qtyNew);
 	}
+}
+
+objHndl InventorySystem::SplitObjFromStack(objHndl item, locXY & loc){
+	return temple::GetRef<objHndl(__cdecl)(objHndl, locXY&)>(0x10066B00)(item, loc);
 }
 
 int InventorySystem::ItemWeight(objHndl item){
@@ -1111,6 +1133,250 @@ bool InventorySystem::ItemCanBePickpocketed(objHndl item){
 		return false;
 
 	return true;
+}
+
+bool InventorySystem::NpcCanLoot(objHndl handle){
+	return (!critterSys.IsDeadNullDestroyed(handle)
+		&& !critterSys.IsDeadOrUnconscious(handle)
+		&& !((objects.getInt32(handle, obj_f_npc_pad_i_3) & 0xF) == NLT_Nothing)
+		&& !d20Sys.d20QueryWithData(handle, DK_QUE_Critter_Has_Condition, conds.GetByName("Animal Companion Animal"), 0)
+		&& !critterSys.IsUndead(handle)
+		&& !d20Sys.d20QueryWithData(handle, DK_QUE_Critter_Has_Condition, conds.GetByName("sp-Summoned"), 0)
+		);
+}
+
+bool InventorySystem::NpcWillLoot(objHndl item, NpcLootingType lootType){
+
+	if (lootType == NLT_Nothing)
+		return false;
+
+	auto itemObj = objSystem->GetObject(item);
+	if (itemObj->GetItemFlags() & (OIF_NO_LOOT | OIF_NO_NPC_PICKUP | OIF_NO_DISPLAY))
+		return false;
+	if (itemObj->type == obj_t_key)
+		return false;
+	if (itemObj->type == obj_t_money)
+		return lootType != NLT_ArcaneScrollsOnly;
+	// not money or keys
+	if (lootType == NLT_HalfShareMoneyOnly)
+		return false;
+	if (lootType == NLT_ArcaneScrollsOnly){
+		if (itemObj->type != obj_t_scroll)
+			return false;
+		auto spInfo = itemObj->GetSpell(obj_f_item_spell_idx, 0);
+		return spellSys.IsArcaneSpellClass(spInfo.classCode);
+	}
+
+	return true;
+}
+
+bool InventorySystem::ItemTransferTo(objHndl item, objHndl receiver, int invIdx){
+	auto transferTo = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl, int)>(0x1006A3A0);
+	return transferTo(item, receiver, invIdx) != FALSE;
+}
+
+bool InventorySystem::DoNpcLooting(objHndl opener, objHndl container){
+
+	auto partySize = party.GroupNPCFollowersLen() + party.GroupPCsLen(); // in vanilla this was GroupListLen, which is wrong because it includes AI followers such as animal companions
+	auto npcSize = party.GroupNPCFollowersLen();
+
+	// if no NPCs, return
+	if (!npcSize)
+		return false;
+
+	struct LooterInfo {
+		objHndl handle;
+		int lootingType; // raw data
+		NpcLootingType shareType;
+		/*
+		determined by shareType and party size;
+		0 if no shares
+		*/
+		int shareDivider;
+		int itemWorthTotal; // in cp
+		int lastItemWorth;
+		int moneyGiven[4] = {0,}; // cp, sp, gp, pp
+		LooterInfo(objHndl npc) :handle(npc) {
+			lootingType = objects.getInt32(npc, obj_f_npc_pad_i_3);
+			shareType = (NpcLootingType)(lootingType & 0xF);
+			itemWorthTotal
+ = 100 * ((lootingType >> 8) & 0xFFFF00);
+			lastItemWorth
+ = 1600 * (lootingType & 0xFFF0);
+			auto partySize = party.GroupNPCFollowersLen() + party.GroupPCsLen(); // in vanilla this was GroupListLen, which is wrong because it includes AI followers such as animal companions
+			switch (shareType) {
+			case NpcLootingType::NLT_Normal:
+				shareDivider = partySize;
+				break;
+			case NpcLootingType::NLT_HalfShareMoneyOnly:
+				shareDivider = 2 * partySize;
+				break;
+			case NLT_ArcaneScrollsOnly:
+			case NLT_Nothing:
+				shareDivider = 0;
+				break;
+			case NLT_ThirdOfAll:
+				shareDivider = (partySize <= 3) ? partySize : 3;
+				break;
+			case NLT_FifthOfAll:
+				shareDivider = (partySize <= 5) ? partySize : 5;
+				break;
+			default:
+				break;
+			}
+		};
+	};
+
+	std::vector<LooterInfo> looterInfo;
+
+	// fill a list of NPCs that can loot
+	for (auto i = 0; i < npcSize; i++) {
+		auto npc = party.GroupNPCFollowersGetMemberN(i);
+		auto npcCanLoot = inventory.NpcCanLoot(npc);
+		if (!npcCanLoot)
+			continue;
+		looterInfo.push_back(LooterInfo(npc));
+	}
+
+	// if none can loot, return
+	if (!looterInfo.size())
+		return false;
+
+	// get the container's inventory
+	auto items = inventory.GetInventory(container);
+	if (!items.size())
+		return false;
+
+	// count coin totals first
+	int moneyArray[4] = { 0, }; // cp, sp, gp, pp
+	for (auto item : items){
+		if (objects.GetType(item) != obj_t_money)
+			continue;
+		auto moneyType = objects.getInt32(item, obj_f_money_type);
+		if (moneyType >= 4 || moneyType < 0)
+			continue;
+		moneyArray[moneyType] = objects.getInt32(item, obj_f_money_quantity);
+	}
+
+	// calcualte each NPC's share of coins
+	for (auto i=0; i < 4; i++){
+		for (auto &li:looterInfo){
+			if (li.shareDivider){
+				li.moneyGiven[i] = moneyArray[i] / li.shareDivider;
+			}
+		}
+	}
+
+	// randomize the item order
+	for (auto i=0; i < items.size(); i++){
+		auto randIdx = rngSys.GetInt(0, items.size()-1);
+		auto randItem = items[randIdx];
+		auto orgItem = items[i];
+		items[i] = randItem;
+		items[randIdx] = orgItem;
+	}
+
+	auto result = false; // has any item been looted?
+
+
+	for (auto item: items){
+		auto itemIsTaken = false;
+		auto itemObj = objSystem->GetObject(item);
+		auto itemWorth = itemObj->GetInt32(obj_f_item_worth);
+		if (!itemWorth) // don't let NPCs take worthless items
+			continue;
+
+		if (itemObj->type == obj_t_money)
+			itemWorth = objects.GetMoneyAmount(item);
+		
+		for (auto &li: looterInfo){
+			li.itemWorthTotal += itemWorth;
+		}
+
+		for (auto &li: looterInfo){
+
+			if (itemIsTaken || !inventory.NpcWillLoot(item, li.shareType))
+				continue;
+
+			if (itemObj->type ==obj_t_money){
+				auto moneyType = itemObj->GetInt32(obj_f_money_type);
+				auto moneyQty = itemObj->GetInt32(obj_f_money_quantity);
+				auto moneyGiven = moneyQty;
+				if (li.moneyGiven[moneyType] <= moneyGiven)
+					moneyGiven = li.moneyGiven[moneyType];
+				li.moneyGiven[moneyType] -= moneyGiven;
+				if (moneyGiven > 0){
+					auto transferMoney = temple::GetRef<void(__cdecl)(int, objHndl, objHndl, int, objHndl)>(0x1006B970);
+					transferMoney(moneyType, container, li.handle, moneyGiven, item);
+					auto itemDescr = description.getDisplayName(item, opener);
+					floatSys.floatMesLine(li.handle, 1, FloatLineColor::LightBlue, itemDescr);
+					logger->info("{} looted {}", description.getDisplayName(li.handle, opener), itemDescr);
+					if (moneyGiven == moneyQty){
+						itemIsTaken = true;
+					}
+					result = true;
+				}
+			}
+			else{
+				auto loc = objSystem->GetObject(container)->GetLocation();
+				auto splitItem = inventory.SplitObjFromStack(item, loc);
+				auto itemWasSplit = splitItem != item; // checks if the item was actually split
+
+				auto itemTransferSuccess = false;
+				if (inventory.ItemTransferTo(splitItem, li.handle )){
+					// guard against encumbering NPC as a result of the item transfer
+					if (!d20Sys.d20Query(li.handle, DK_QUE_Critter_Is_Encumbered_Heavy)
+						&& !d20Sys.d20Query(li.handle, DK_QUE_Critter_Is_Encumbered_Overburdened)){
+
+						if (objects.GetFlags(splitItem) & OF_DESTROYED){ // I think this happens after the ItemTransferTo?
+							splitItem = inventory.FindMatchingStackableItem(li.handle, splitItem);
+						}
+
+						auto itemDescr = description.getDisplayName(splitItem, opener);
+						floatSys.floatMesLine(li.handle, 1, FloatLineColor::LightBlue, itemDescr);
+						logger->info("{} looted {}", description.getDisplayName(li.handle, opener), itemDescr);
+						itemIsTaken = true;
+						result = true;
+						li.lastItemWorth = itemWorth;
+						itemTransferSuccess = true;
+					}
+					else{ // try to restore the item I think?
+						if (objects.GetFlags(splitItem) & OF_DESTROYED) {
+
+							splitItem = inventory.FindMatchingStackableItem(li.handle, splitItem);
+							splitItem = inventory.SplitObjFromStack(splitItem, loc);
+							if (!itemWasSplit)
+								item = splitItem;
+						}
+					}
+				}
+
+				if (!itemTransferSuccess){
+					inventory.ItemTransferTo(splitItem, container);
+				}
+
+			}
+
+			if (li.itemWorthTotal >= li.lastItemWorth * li.shareDivider){
+				li.lastItemWorth = 0;
+				li.itemWorthTotal = 0;
+			}
+		}
+
+	}
+
+
+	// update the looting status field
+	for (auto &it : looterInfo){
+
+		auto lastItemWorth = it.lastItemWorth / 100 >> 8;
+		auto totalItemWorth = it.itemWorthTotal / 100 >> 8;
+
+		int newVal = 0x10 * ( (totalItemWorth)<<12 | lastItemWorth & 0xFFF ) | it.shareType;
+		objects.setInt32(it.handle, obj_f_npc_pad_i_3, newVal);
+	}
+
+	return result;
 }
 
 const std::string & InventorySystem::GetAttachBone(objHndl handle)

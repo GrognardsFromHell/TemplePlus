@@ -7,22 +7,34 @@
   "__styles": [
     {
       "id": "mm-dialog-title",
-      "fontFamily": "Arial",
+      "fontFamily": "Priory-12",
       "pointSize": 12,
       "foreground": "#ffffff",
       "align": "center"
     },
     {
       "id": "mm-cinematics-list-button",
-      "fontFamily": "Arial",
+      "fontFamily": "Priory-12",
       "pointSize": 12,
-      "foreground": "#ffffff"
+      "foreground": "#ffffff",
+	  "align": "center"
+    },
+    {
+      "id": "mm-cinematics-list-button-selected",
+      "fontFamily": "Priory-12",
+      "pointSize": 12,
+      "foreground": "#3a58ff",
+	  "align": "center"
     }
   ],
   "__buttonStyles": [
     {
       "id": "mm-cinematics-list-button",
       "textStyle": "mm-cinematics-list-button"
+    },
+	{
+      "id": "mm-cinematics-list-button-selected",
+      "textStyle": "mm-cinematics-list-button-selected"
     }
   ],
   "content": [
