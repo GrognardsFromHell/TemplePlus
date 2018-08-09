@@ -1590,36 +1590,39 @@ BOOL AiSystem::ImprovePosition(AiTactic* aiTac){
 		if (curNum > 0) {
 
 			auto path = curSeq->d20ActArray[curSeq->d20ActArrayNum - 1].path;
+			if (path) {
 
-			auto lowerBound = 0.0f;
-			auto upperBound = path->GetPathResultLength();
+				auto lowerBound = 0.0f;
+				auto upperBound = path->GetPathResultLength();
 
-			auto truncationDistance = upperBound;
-			auto newDest = path->to;
-			hasLineOfAttack = combatSys.HasLineOfAttackFromPosition(newDest, tgt);
+				auto truncationDistance = upperBound;
+				auto newDest = path->to;
+				hasLineOfAttack = combatSys.HasLineOfAttackFromPosition(newDest, tgt);
 
-			if (hasLineOfAttack) {
-				while (upperBound > lowerBound + 2.0f) {
-					truncationDistance = (upperBound + lowerBound) / 2;
-					pathfindingSys.TruncatePathToDistance(path, &newDest, truncationDistance);
-					hasLineOfAttack = combatSys.HasLineOfAttackFromPosition(newDest, tgt);
-					if (hasLineOfAttack) {
-						upperBound = truncationDistance;
+				if (hasLineOfAttack) {
+					while (upperBound > lowerBound + 2.0f) {
+						truncationDistance = (upperBound + lowerBound) / 2;
+						pathfindingSys.TruncatePathToDistance(path, &newDest, truncationDistance);
+						hasLineOfAttack = combatSys.HasLineOfAttackFromPosition(newDest, tgt);
+						if (hasLineOfAttack) {
+							upperBound = truncationDistance;
+						}
+						else {
+							lowerBound = truncationDistance;
+						}
+					}
+
+					auto truncPath = pathfindingSys.FetchAvailablePQRCacheSlot();
+					if (pathfindingSys.GetPartialPath(path, truncPath, 0, upperBound)) {
+						logger->info("ImprovePosition: truncated path to length {} ft", upperBound);
+						path->occupiedFlag &= ~1;
+						curSeq->d20ActArray[curSeq->d20ActArrayNum - 1].path = truncPath;
+						curSeq->d20ActArray[curSeq->d20ActArrayNum - 1].destLoc = truncPath->to;
 					}
 					else {
-						lowerBound = truncationDistance;
+						truncPath->occupiedFlag &= ~1;
 					}
-				}
 
-				auto truncPath = pathfindingSys.FetchAvailablePQRCacheSlot();
-				if (pathfindingSys.GetPartialPath(path, truncPath, 0, upperBound)) {
-					logger->info("ImprovePosition: truncated path to length {} ft", upperBound);
-					path->occupiedFlag &= ~1;
-					curSeq->d20ActArray[curSeq->d20ActArrayNum - 1].path = truncPath;
-					curSeq->d20ActArray[curSeq->d20ActArrayNum - 1].destLoc = truncPath->to;
-				}
-				else {
-					truncPath->occupiedFlag &= ~1;
 				}
 
 			}
