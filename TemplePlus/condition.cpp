@@ -5268,8 +5268,10 @@ int ClassAbilityCallbacks::BardicMusicBeginRound(DispatcherCallbackArgs args){
 		switch (bmType)
 		{
 		case BM_INSPIRE_GREATNESS:
-			if (tgt)
-				conds.AddTo(tgt, "Greatness", {0,0,0,0});
+			if (tgt) {
+				int bonusRounds = d20Sys.D20QueryPython(args.objHndCaller, "Bardic Ability Duration Bonus");
+				conds.AddTo(tgt, "Greatness", { bonusRounds + 5,0,0,0 });
+			}
 			return 0;
 		case BM_INSPIRE_COURAGE: 
 			party.ApplyConditionAround(args.objHndCaller, 30, "Inspired_Courage", objHndl::null);
@@ -5290,8 +5292,10 @@ int ClassAbilityCallbacks::BardicMusicBeginRound(DispatcherCallbackArgs args){
 			return 0;
 		case BM_SONG_OF_FREEDOM: break; // TODO
 		case BM_INSPIRE_HEROICS: 
-			if (tgt)
-				conds.AddTo(tgt, "Inspired Heroics", {0,0,0,0});
+			if (tgt) {
+				int bonusRounds = d20Sys.D20QueryPython(args.objHndCaller, "Bardic Ability Duration Bonus");
+				conds.AddTo(tgt, "Inspired Heroics", { bonusRounds + 5,0,0,0 });
+			}
 		default: break;
 		}
 
@@ -5522,7 +5526,7 @@ int ClassAbilityCallbacks::BardMusicActionFrame(DispatcherCallbackArgs args){
 int ClassAbilityCallbacks::BardicMusicInspireRefresh(DispatcherCallbackArgs args){
 	GET_DISPIO(dispIoTypeCondStruct, DispIoCondStruct);
 	if (dispIo->condStruct == (CondStruct*)args.GetData1()){
-		args.SetCondArg(0, 5); // set duration to 5
+		args.SetCondArg(0, dispIo->arg1); // set duration to the old condition value
 		args.SetCondArg(1, 1);
 		dispIo->outputFlag = 0; // prevent adding a duplicate entry
 	}
@@ -5543,7 +5547,6 @@ int ClassAbilityCallbacks::BardicMusicInspireBeginRound(DispatcherCallbackArgs a
 
 int ClassAbilityCallbacks::BardicMusicInspireOnAdd(DispatcherCallbackArgs args)
 {
-	args.SetCondArg(0, 5); // set duration to 5 rounds
 	if (args.GetData2() == BM_INSPIRE_HEROICS)
 		args.SetCondArg(1, 0); // enabler flag; gets set to 1 on the Bard's turn (since it requires hearing the bard for a full round)
 	else

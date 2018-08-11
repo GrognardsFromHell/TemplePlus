@@ -48,7 +48,8 @@ def OnBeginRound( spell ):
 		#print "Removing target " + str(obj)
 		remove_list.append(obj)
 	else:
-		obj.condition_add("Greatness")
+		bonusRounds = spell.caster.d20_query("Bardic Ability Duration Bonus")
+		obj.condition_add("Greatness", bonusRounds+5, 0, 0, 0)
 
 	spell.target_list.remove_list(remove_list)
 	if spell.num_of_targets == 0:
