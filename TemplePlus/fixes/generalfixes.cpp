@@ -577,6 +577,8 @@ int BardicInspireCourageFix::BardicInspiredCourageToHit(DispatcherCallbackArgs a
 			bonVal = 2;
 		else if (brdLvl < 20) 
 			bonVal = 3;
+		else
+			bonVal = 4;
 	}
 	dispIo->bonlist.AddBonus(bonVal, 13, 191);
 	return 0;
@@ -606,6 +608,8 @@ int BardicInspireCourageFix::BardicInspiredCourageDamBon(DispatcherCallbackArgs 
 			bonVal = 2;
 		else if (brdLvl < 20)
 			bonVal = 3;
+		else
+			bonVal = 4;
 	}
 	dispIo->damage.AddDamageBonus(bonVal, 13, 191);
 	return 0;
