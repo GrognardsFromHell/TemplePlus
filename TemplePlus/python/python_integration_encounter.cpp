@@ -222,7 +222,7 @@ static BOOL __cdecl RandomEncounterExists(const RandomEncounterSetup* setup, Ran
 	PyTuple_SET_ITEM(args, 1, (PyObject*)encounter);
 	Py_INCREF(encounter);
 
-	auto result = pythonObjIntegration.ExecuteScript("random_encounter", "encounter_exists", args);
+	auto result = pythonObjIntegration.ExecuteScript("expand_encounters", "encounter_coordinator", args);
 	Py_DECREF(args);
 
 	if (!result) {
