@@ -2,7 +2,7 @@ from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
 
-#Lingering Song, Song and Silence: p. 40
+#Lingering Song, Complete Adventurer: p. 111
 
 print "Registering Lingering Song"
 	
