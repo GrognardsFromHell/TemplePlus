@@ -1,5 +1,5 @@
 name: Lingering Song
 flags: 12582912
 prereqs: 
-description: If you use bardic music to inspire competence, inspire courage, or inspire greatness, the effects last twice as long as they otherwise would.
+description: If you use bardic music to inspire courage, inspire greatness, or inspire heroics, the effect lasts for 1 minute after an inspired ally stops hearing you play.
 prereq descr: Bardic Music Ability
