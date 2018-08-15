@@ -77,6 +77,8 @@ class D20ClassHooks : public TempleFix
 			if (raceEnum == race_human) // todo: generalize with a dispatch
 				result++;
 			result += d20ClassSys.GetSkillPts(classEnum);
+			if (result < 1)
+				result = 1;
 			return result;
 		});
 
