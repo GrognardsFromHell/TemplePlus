@@ -20,7 +20,6 @@
     <ClCompile Include="bonusspells.cpp">
       <Filter>Mods and Fixes</Filter>
     </ClCompile>
-    <ClCompile Include="anim.cpp" />
     <ClCompile Include="pathfinding.cpp" />
     <ClCompile Include="mainloop.cpp" />
     <ClCompile Include="feat.cpp">
@@ -276,7 +275,6 @@
     <ClCompile Include="ui\ui_char_editor_feats.cpp">
       <Filter>ui</Filter>
     </ClCompile>
-    <ClCompile Include="graphics\aas_hooks.cpp" />
     <ClCompile Include="gamesystems\objects\objevent.cpp" />
     <ClCompile Include="ui\ui_party.cpp">
       <Filter>ui</Filter>
@@ -521,6 +519,17 @@
     <ClCompile Include="tig\tig_sound.cpp">
       <Filter>tig</Filter>
     </ClCompile>
+    <ClCompile Include="gamesystems\aas_hooks.cpp" />
+    <ClCompile Include="raycast_hooks.cpp" />
+    <ClCompile Include="animgoals\animgoals.cpp" />
+    <ClCompile Include="animgoals\anim.cpp" />
+    <ClCompile Include="animgoals\animgoals_hooks.cpp" />
+    <ClCompile Include="frozen_obj_ref.cpp" />
+    <ClCompile Include="frozen_obj_ref_hooks.cpp" />
+    <ClCompile Include="animgoals\animgoals_stackentry.cpp" />
+    <ClCompile Include="animgoals\animgoal.cpp" />
+    <ClCompile Include="animgoals\animgoals_debugrenderer.cpp" />
+    <ClCompile Include="animgoals\animgoals_callbacks.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -531,7 +540,6 @@
     <ClInclude Include="xp.h">
       <Filter>Mods and Fixes</Filter>
     </ClInclude>
-    <ClInclude Include="anim.h" />
     <ClInclude Include="pathfinding.h" />
     <ClInclude Include="mainloop.h" />
     <ClInclude Include="feat.h">
@@ -988,6 +996,15 @@
     <ClInclude Include="ui\ui_townmap.h">
       <Filter>ui</Filter>
     </ClInclude>
+    <ClInclude Include="gamesystems\aas_hooks.h" />
+    <ClInclude Include="animgoals\animgoal.h" />
+    <ClInclude Include="animgoals\anim.h" />
+    <ClInclude Include="frozen_obj_ref.h" />
+    <ClInclude Include="animgoals\animgoals_stackentry.h" />
+    <ClInclude Include="animgoals\animgoals.h" />
+    <ClInclude Include="animgoals\animgoals_debugrenderer.h" />
+    <ClInclude Include="animgoals\anim_slot.h" />
+    <ClInclude Include="animgoals\animgoals_callbacks.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

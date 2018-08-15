@@ -5,9 +5,9 @@
 #include <unordered_map>
 
 #include <DirectXMath.h>
-#include <gsl/span.h>
+#include <gsl/span>
 
-enum AasEventFlag;
+struct Ray3d;
 
 namespace gfx {
 
@@ -264,7 +264,7 @@ namespace gfx {
 	private:
 		// Indicates that an animation id uses the encoded format
 		static constexpr int sWeaponAnimFlag = 1 << 30;
-		static constexpr int sBardInstrumentAnimFlag = 2 << 30;
+		static constexpr int sBardInstrumentAnimFlag = 1 << 31;
 
 		int mId;
 	};
@@ -304,6 +304,11 @@ namespace gfx {
 		virtual gsl::span<DirectX::XMFLOAT4> GetNormals() = 0;
 		virtual gsl::span<DirectX::XMFLOAT2> GetUV() = 0;
 		virtual gsl::span<uint16_t> GetIndices() = 0;
+	};
+
+	class IRenderState {
+	public:
+		virtual ~IRenderState() = default;
 	};
 
 	class AnimatedModel {
@@ -354,7 +359,7 @@ namespace gfx {
 		virtual void AddReplacementMaterial(gfx::MaterialPlaceholderSlot slot,
 			const gfx::MdfRenderMaterialPtr &material) = 0;
 
-		virtual void SetAnimId(int animId) = 0;
+		virtual void SetAnimId(EncodedAnimId animId) = 0;
 
 		// This seems to reset cloth simulation state
 		virtual void SetClothFlag() = 0;
@@ -364,6 +369,13 @@ namespace gfx {
 		virtual std::unique_ptr<Submesh> GetSubmesh(const AnimatedModelParams& params, int submeshIdx) = 0;
 
 		virtual std::unique_ptr<Submesh> GetSubmeshForParticles(const AnimatedModelParams& params, int submeshIdx) = 0;
+
+		bool HitTestRay(const AnimatedModelParams& params, const Ray3d &ray, float &hitDistance);
+
+		/**
+		 * Find the closest distance that the given point is away from the surface of this mesh.
+		 */
+		float GetDistanceToMesh(const AnimatedModelParams &params, DirectX::XMFLOAT3 pos);
 
 		/**
 			This calculates the effective height in world coordinate units of the model in its current
@@ -378,6 +390,27 @@ namespace gfx {
 			Scale is model scale in percent.
 		*/
 		virtual float GetRadius(int scale = 100) = 0;
+
+		/**
+		 * Sets a custom render state pointer that will be freed when this model is freed.
+		 */
+		virtual void SetRenderState(std::unique_ptr<IRenderState> renderState) = 0;
+
+		/**
+		 * Returns the currently assigned render state or null.
+		 */
+		virtual IRenderState *GetRenderState() const = 0;
+
+		template<typename T>
+		T &GetOrCreateRenderState() {
+			auto current = GetRenderState();
+			if (!current) {
+				auto newState = std::make_unique<T>();
+				current = newState.get();
+				SetRenderState(std::move(newState));
+			}
+			return (T&) *current;
+		}
 
 	};
 
@@ -394,6 +427,7 @@ namespace gfx {
 		float rotationYaw = 0;
 		AnimatedModelPtr parentAnim;
 		std::string attachedBoneName;
+		bool rotation3d = false; // Enables use of rotationRoll/rotationPitch/rotationYaw
 	};
 
 	class AnimatedModelFactory {
@@ -413,6 +447,13 @@ namespace gfx {
 			const std::string& skeletonFilename,
 			EncodedAnimId idleAnimId,
 			const AnimatedModelParams& params) = 0;
+
+		virtual std::unique_ptr<gfx::AnimatedModel> BorrowByHandle(uint32_t handle) = 0;
+
+		virtual void FreeHandle(uint32_t handle) = 0;
+
+		virtual void FreeAll() = 0;
+
 
 	};
 

@@ -37,8 +37,8 @@ private:
 
 class TigInitializer;
 
-namespace temple {
-	class AasAnimatedModelFactory;
+namespace gfx {
+	class AnimatedModelFactory;
 }
 
 class VagrantSystem;
@@ -452,7 +452,7 @@ public:
 		return mMapCloseAwareSystems;
 	}
 
-	temple::AasAnimatedModelFactory& GetAAS() const {
+	gfx::AnimatedModelFactory& GetAAS() const {
 		Expects(!!mAAS);
 		return *mAAS;
 	}
@@ -524,7 +524,7 @@ private:
 	GameSystemConf mConfig;
 	TigBufferstuffInitializer mTigBuffer;
 
-	std::unique_ptr<temple::AasAnimatedModelFactory> mAAS;
+	std::unique_ptr<gfx::AnimatedModelFactory> mAAS;
 	std::map<int, std::string> mMeshesById;
 
 	bool mResetting = false;

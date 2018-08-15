@@ -12,7 +12,7 @@
 #include <combat.h>
 #include <ui/ui.h>
 #include <condition.h>
-#include <anim.h>
+#include "animgoals/anim.h"
 #include <gamesystems/gamesystems.h>
 #include <gamesystems/objects/objsystem.h>
 #include <ui/ui_picker.h>
@@ -335,7 +335,7 @@ static PyObject *PySpell_SummonMonsters(PyObject *obj, PyObject *args) {
 
 	}
 
-	animationGoals.Interrupt(newHandle, AGP_HIGHEST);	
+	gameSystems->GetAnim().Interrupt(newHandle, AGP_HIGHEST);	
 	
 	PySpell_UpdatePacket((PyObject*) self);
 	return PyInt_FromLong(1);

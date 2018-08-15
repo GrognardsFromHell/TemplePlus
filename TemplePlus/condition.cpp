@@ -2,6 +2,7 @@
 #include "stdafx.h"
 
 #include <graphics/math.h>
+#include <infrastructure/meshes.h>
 
 #include "common.h"
 #include "dispatcher.h"
@@ -26,7 +27,7 @@
 #include <infrastructure/elfhash.h>
 #include "particles.h"
 #include "gamesystems/particlesystems.h"
-#include "anim.h"
+#include "animgoals/anim.h"
 #include "python/python_integration_spells.h"
 #include "history.h"
 #include "gamesystems/objects/objevent.h"
@@ -290,6 +291,14 @@ public:
 	static int RemoveDiseasePerform(DispatcherCallbackArgs arg); // also used in WholenessOfBodyPerform
 	void HookSpellCallbacks();
 	static int TurnUndeadHook(objHndl, Stat shouldBeClassCleric, DispIoD20ActionTurnBased* evtObj);
+	static int TurnUndeadCheck(DispatcherCallbackArgs args);
+	static int TurnUndeadPerform(DispatcherCallbackArgs args);
+
+	static bool StunningFistHook(objHndl objHnd, objHndl caster, int DC, int saveType, int flags);
+	
+	//Old version of the function to be used within the replacement
+	int (*oldTurnUndeadPerform)(DispatcherCallbackArgs) = nullptr;
+	
 	void apply() override {
 		logger->info("Replacing Condition-related Functions");
 
@@ -426,15 +435,22 @@ public:
 
 		// Turn Undead extension
 		redirectCall(0x1004AF5F, TurnUndeadHook);
+		oldTurnUndeadPerform = replaceFunction(0x1004AEB0, TurnUndeadPerform);
+
+		replaceFunction<int(DispatcherCallbackArgs)>(0x1004ADE0, TurnUndeadCheck);
+
+
 
 
 		// racial callbacks
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FDC70, raceCallbacks.HalflingThrownWeaponAndSlingBonus);
 
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100CBAB0, spCallbacks.SpellRemoveMod);
+
+		// Stunning Fist extension
+		redirectCall(0x100E84B0, StunningFistHook);
 	}
 } condFuncReplacement;
-
 
 
 CondNode::CondNode(CondStruct *cond) {
@@ -1208,7 +1224,7 @@ int GenericCallbacks::GlobalHpChanged(DispatcherCallbackArgs args){
 		d20Sys.D20SignalPython(handle, "Knocked Unconscious");
 		if (!isUncon){
 			auto animId = Dice::Roll(1, 3, 72); // roll number between 73-75
-			animationGoals.PushFallDown(handle, animId);
+			gameSystems->GetAnim().PushFallDown(handle, animId);
 		}
 		if (isDying){
 			conds.AddTo(handle, "Dying", {});
@@ -1944,6 +1960,7 @@ void _FeatConditionsRegister()
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionAnimalCompanionAnimal);
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionAutoendTurn);
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionTurnUndead);
+	conds.hashmethods.CondStructAddToHashtable(conds.ConditionGreaterTurning);
 	
 	// Add the destruction domain to the condition table so it can be accessed in python
 	CondStruct * pDestructionDomain = *(conds.ConditionArrayDomains + 3 * Domain_Destruction);
@@ -2283,9 +2300,6 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 1, dispTypeConditionAdd, 0, CondNodeSetArg0FromSubDispDef, 1, 0);
 	DispatcherHookInit(cond, 2, dispTypeRadialMenuEntry, 0, DivineMightRadial, 0, 0);
 
-	DispatcherHookInit((CondStructNew*)ConditionTurnUndead, 6, dispTypeD20ActionPerform, DK_D20A_DIVINE_MIGHT, CondArgDecrement, 1, 0); // decrement the number of turn charges remaining; 
-	DispatcherHookInit((CondStructNew*)ConditionGreaterTurning, 6, dispTypeD20ActionPerform, DK_D20A_DIVINE_MIGHT, CondArgDecrement, 1, 0); // decrement the number of turn charges remaining
-					
 	// Divine Might Bonus (gets activated when you choose the action from the Radial Menu)
 	mCondDivineMightBonus = &condDivineMightBonus;
 	cond = mCondDivineMightBonus; 	condName = mCondDivineMightBonusName;
@@ -3204,16 +3218,16 @@ int ConditionFunctionReplacement::LayOnHandsPerform(DispatcherCallbackArgs args)
 		if (d20a->d20Caf & D20CAF_RANGED)
 			return 0;
 		d20Sys.ToHitProc(d20a);
-		animResult = animationGoals.PushAttemptAttack(d20a->d20APerformer, d20a->d20ATarget) != 0;
+		animResult = gameSystems->GetAnim().PushAttemptAttack(d20a->d20APerformer, d20a->d20ATarget) != 0;
 	} else	{
-		animResult = animationGoals.PushAnimate(d20a->d20APerformer, 86) != 0;
+		animResult = gameSystems->GetAnim().PushAnimate(d20a->d20APerformer, 86) != 0;
 	}
 
 	
 	if (animResult)
 	{
 		// fixes lack of animation ID
-		d20a->animID = animationGoals.GetActionAnimId(d20a->d20APerformer);
+		d20a->animID = gameSystems->GetAnim().GetActionAnimId(d20a->d20APerformer);
 		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
 	}
 		
@@ -3225,11 +3239,11 @@ int ConditionFunctionReplacement::RemoveDiseasePerform(DispatcherCallbackArgs ar
 {
 	auto dispIo = dispatch.DispIoCheckIoType12(args.dispIO);
 	auto d20a = dispIo->d20a;
-	auto animResult = animationGoals.PushAnimate(d20a->d20APerformer, 86);
+	auto animResult = gameSystems->GetAnim().PushAnimate(d20a->d20APerformer, 86);
 	
 	if (animResult){
 		// fixes lack of animation ID
-		d20a->animID = animationGoals.GetActionAnimId(d20a->d20APerformer);
+		d20a->animID = gameSystems->GetAnim().GetActionAnimId(d20a->d20APerformer);
 		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
 	}
 	return 0;
@@ -3311,6 +3325,22 @@ void ConditionFunctionReplacement::HookSpellCallbacks()
 	
 }
 
+
+bool ConditionFunctionReplacement::StunningFistHook(objHndl objHnd, objHndl caster, int DC, int saveType, int flags)
+{
+
+	//Preform the saving throw and return the result
+	bool result = damage.SavingThrow(objHnd, caster, DC, static_cast<SavingThrowType>(saveType), flags);
+
+	if (!result) {
+		//On a failed saving throw send the signal that a stunning fist effect was applied
+		dispatch.DispatchSpecialAttack(caster, static_cast<int>(EvtObjSpecialAttack::STUNNING_FIST), objHnd);
+	}
+
+	return result;
+}
+
+
 int ConditionFunctionReplacement::TurnUndeadHook(objHndl handle, Stat shouldBeClassCleric, DispIoD20ActionTurnBased * evtObj){
 
 	auto turnType = evtObj->d20a->data1;
@@ -3319,6 +3349,51 @@ int ConditionFunctionReplacement::TurnUndeadHook(objHndl handle, Stat shouldBeCl
 	result += d20Sys.D20QueryPython(handle, "Turn Undead Level", turnType);
 
 	return result;
+}
+
+int ConditionFunctionReplacement::TurnUndeadPerform(DispatcherCallbackArgs args)
+{
+	auto dispIo = static_cast<DispIoD20ActionTurnBased*>(args.dispIO);
+	dispIo->AssertType(dispIOTypeD20ActionTurnBased);
+
+	auto turnType = args.GetCondArg(0);
+
+	auto result = condFuncReplacement.oldTurnUndeadPerform(args);  //Just call the old version now
+
+	// Send the signal if this was the turn type used
+	if (dispIo->d20a->data1 == turnType) {
+		d20Sys.D20SignalPython(args.objHndCaller, "Turn Undead Perform", turnType);
+	}
+
+	return result;
+}
+
+int ConditionFunctionReplacement::TurnUndeadCheck(DispatcherCallbackArgs args)
+{
+	auto dispIo = static_cast<DispIoD20ActionTurnBased*>(args.dispIO);
+	dispIo->AssertType(dispIOTypeD20ActionTurnBased);
+
+	auto d20a = dispIo->d20a;
+	auto turnType = args.GetCondArg(0);
+
+	if (turnType == d20a->data1) {
+		auto charges = args.GetCondArg(1);
+
+		// Check if the turn undead ability has been disabled in python
+		auto result = d20Sys.D20QueryPython(args.objHndCaller, "Turn Undead Disabled");
+		if (result > 0) {
+			dispIo->returnVal = dispIo->returnVal = AEC_INVALID_ACTION;
+		} else {
+			if (charges > 0) {
+				dispIo->returnVal = 0;
+			}
+			else {
+				dispIo->returnVal = dispIo->returnVal = AEC_OUT_OF_CHARGES;
+			}
+		}
+	}
+
+	return 0;
 }
 
 #pragma region Spell Callbacks
@@ -4965,18 +5040,16 @@ int ClassAbilityCallbacks::DruidWildShapeReset(DispatcherCallbackArgs args){
 			numTimes += (1 << 8);
 	}
 
-	
+	//See if any bonus uses should be added
+	auto extraWildShape = d20Sys.D20QueryPython(args.objHndCaller, "Extra Wildshape Uses");
+	auto extraElementalWildShape = d20Sys.D20QueryPython(args.objHndCaller, "Extra Wildshape Elemental Uses");
+	numTimes += extraWildShape;
+	numTimes += (1 << 8) * extraElementalWildShape;
 	
 	args.SetCondArg(0, numTimes);
 	if (args.GetCondArg(2)) {
 		args.SetCondArg(2, 0);
-		auto obj = gameSystems->GetObj().GetObject(args.objHndCaller);
-		auto animHandle = obj->GetInt32(obj_f_animation_handle);
-		if (animHandle) {
-			auto freeAasModel = temple::GetPointer<void(int)>(0x10264510);
-			freeAasModel(animHandle);
-			obj->SetInt32(obj_f_animation_handle, 0);
-		}
+		objects.ClearAnim(args.objHndCaller);
 
 		gameSystems->GetParticleSys().CreateAtObj("sp-animal shape", args.objHndCaller);
 		d20StatusSys.initItemConditions(args.objHndCaller);
@@ -5114,13 +5187,7 @@ int ClassAbilityCallbacks::DruidWildShapePerform(DispatcherCallbackArgs args){
 
 
 	auto initObj = [args](int protoId) {
-		auto obj = gameSystems->GetObj().GetObject(args.objHndCaller);
-		auto animHandle = obj->GetInt32(obj_f_animation_handle);
-		if (animHandle) {
-			auto freeAasModel = temple::GetPointer<void(int)>(0x10264510);
-			freeAasModel(animHandle);
-			obj->SetInt32(obj_f_animation_handle, 0);
-		}
+		objects.ClearAnim(args.objHndCaller);
 		if (protoId) {
 			auto lvl = objects.StatLevelGet(args.objHndCaller, stat_level);
 			damage.Heal(args.objHndCaller, args.objHndCaller, Dice(0, 0, lvl), D20A_CLASS_ABILITY_SA);

@@ -280,6 +280,46 @@ private:
 } uiCharEditor;
 
 
+// Helper function for the python character editor
+int hasFeat(int feat) {
+	auto handle = chargen.GetEditedChar();
+	auto &charPkt = chargen.GetCharEditorSelPacket();
+
+	auto levelRaised = charPkt.classCode;
+	if (chargen.IsNewChar())
+		levelRaised = (Stat)0;
+
+	uint32_t domain1 = Domain_None;
+	uint32_t domain2 = Domain_None;
+	uint32_t alignmentChoice = 0;
+
+	if (!chargen.IsNewChar()) {
+		if (levelRaised == stat_level_cleric) {
+			domain1 = charPkt.domain1;
+			domain2 = charPkt.domain2;
+			alignmentChoice = charPkt.alignmentChoice;
+		}
+	}
+
+	auto result = feats.HasFeatCountByClass(handle, static_cast<feat_enums>(feat), levelRaised, 0, domain1, domain2, alignmentChoice);
+
+	if (feat == charPkt.feat0) {
+		result++;
+	}
+	if (feat == charPkt.feat1) {
+		result++;
+	}
+	if (feat == charPkt.feat2) {
+		result++;
+	}
+	if (feat == charPkt.feat3) {
+		result++;
+	}
+
+	return result;
+}
+
+
 template <> class py::detail::type_caster<objHndl> {
 public:
 	bool load(handle src, bool) {
@@ -451,45 +491,46 @@ PYBIND11_EMBEDDED_MODULE(char_editor, mm) {
 		}
 		return skillRanks;
 	})
+	.def("has_feat", [](std::string featString)->int {
+		auto feat = ElfHash::Hash(featString);
+		return hasFeat(feat);
+	})
 	.def("has_feat", [](int featEnum)->int{
 		auto feat = (feat_enums)featEnum;
+		return hasFeat(feat);
+	})
+
+	.def("has_metamagic_feat", []()->int {
+		int featCount = 0;
 		auto handle = chargen.GetEditedChar();
 		auto &charPkt = chargen.GetCharEditorSelPacket();
 
-		auto levelRaised = charPkt.classCode;
-		if (chargen.IsNewChar())
-			levelRaised = (Stat)0;
+		auto featList = feats.GetFeats(handle);
 
-		uint32_t domain1 = Domain_None;
-		uint32_t domain2 = Domain_None;
-		uint32_t alignmentChoice = 0;
-		
-		if (!chargen.IsNewChar()){
-			if (levelRaised == stat_level_cleric) {
-				domain1 = charPkt.domain1;
-				domain2 = charPkt.domain2;
-				alignmentChoice = charPkt.alignmentChoice;
+		bool hasMMFeat = false;
+		for (auto feat : featList) {
+			if (feats.IsMetamagicFeat(feat)) {
+				featCount++;
 			}
 		}
-		
-		
-		auto result = feats.HasFeatCountByClass(handle, feat, levelRaised, 0, domain1, domain2, alignmentChoice);
 
-		if (feat == charPkt.feat0) {
-			result++;
-		}
-		if (feat == charPkt.feat1) {
-			result++;
-		}
-		if (feat == charPkt.feat2) {
-			result++;
-		}
-		if (feat == charPkt.feat3) {
-			result++;
+		if (feats.IsMetamagicFeat(charPkt.feat0)) {
+			featCount++;
 		}
 
-		return result;
+		if (feats.IsMetamagicFeat(charPkt.feat1)) {
+			featCount++;
+		}
 
+		if (feats.IsMetamagicFeat(charPkt.feat2)) {
+			featCount++;
+		}
+
+		if (feats.IsMetamagicFeat(charPkt.feat3)) {
+			featCount++;
+		}
+
+		return featCount;
 	})
 	
 	.def("set_bonus_feats", [](std::vector<FeatInfo> & fti){

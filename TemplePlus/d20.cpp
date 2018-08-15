@@ -15,7 +15,7 @@
 #include "location.h"
 #include "action_sequence.h"
 #include "critter.h"
-#include "anim.h"
+#include "animgoals/anim.h"
 #include "tab_file.h"
 #include "combat.h"
 #include "float_line.h"
@@ -28,7 +28,6 @@
 #include "gamesystems/objects/objsystem.h"
 #include "damage.h"
 #include "history.h"
-#include "anim.h"
 #include "python/python_spell.h"
 #include "python/python_integration_spells.h"
 #include "gamesystems/particlesystems.h"
@@ -893,7 +892,7 @@ void LegacyD20System::d20aTriggerCombatCheck(ActnSeq* actSeq, int32_t idx)
 
 		auto caster = spellPkt.caster;
 		auto tgtCount = spellPkt.targetCount;
-		for (auto i=0; i<tgtCount; i++){
+		for (uint32_t i=0; i<tgtCount; i++){
 			auto spTgt = spellPkt.targetListHandles[i];
 			if (!spTgt)
 				break;
@@ -1137,9 +1136,9 @@ ActionErrorCode D20ActionCallbacks::PerformStandardAttack(D20Actn* d20a)
 		playCritFlag = 1;
 	}
 	
-	if (animationGoals.PushAttackAnim(d20a->d20APerformer, d20a->d20ATarget, 0xFFFFFFFF, hitAnimIdx, playCritFlag, useSecondaryAnim))
+	if (gameSystems->GetAnim().PushAttackAnim(d20a->d20APerformer, d20a->d20ATarget, 0xFFFFFFFF, hitAnimIdx, playCritFlag, useSecondaryAnim))
 	{
-		d20a->animID = animationGoals.GetActionAnimId(d20a->d20APerformer);
+		d20a->animID = gameSystems->GetAnim().GetActionAnimId(d20a->d20APerformer);
 		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
 	}
 	return AEC_OK;
@@ -1163,8 +1162,8 @@ ActionErrorCode D20ActionCallbacks::PerformTripAttack(D20Actn* d20a)
 	d20a->d20Caf |= D20CAF_TOUCH_ATTACK;
 	combatSys.ToHitProcessing(*d20a);
 	//d20Sys.ToHitProc(d20a);
-	if (animationGoals.PushAttemptAttack(d20a->d20APerformer, d20a->d20ATarget)){
-		d20a->animID = animationGoals.GetActionAnimId(d20a->d20APerformer);
+	if (gameSystems->GetAnim().PushAttemptAttack(d20a->d20APerformer, d20a->d20ATarget)){
+		d20a->animID = gameSystems->GetAnim().GetActionAnimId(d20a->d20APerformer);
 		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
 	}
 	return AEC_OK;
@@ -1640,14 +1639,11 @@ ActionErrorCode D20ActionCallbacks::PerformDivineMight(D20Actn* d20a)
 	dispIo.returnVal = 0;
 	dispIo.d20a = d20a;
 	dispIo.tbStatus = nullptr;
-	auto dispatcher = objects.GetDispatcher(d20a->d20APerformer);
-	if (dispatch.dispatcherValid(dispatcher))
-	{
-		dispatch.DispatcherProcessor(dispatcher, dispTypeD20ActionPerform, DK_D20A_DIVINE_MIGHT, &dispIo); // reduces the turn undead charge by 1
-	}
+	d20Sys.D20SignalPython(d20a->d20APerformer, "Deduct Turn Undead Charge");  //Deduct a turn undead charge for divine might
 
 	auto chaScore = objects.StatLevelGet(d20a->d20APerformer, stat_charisma);
 	auto chaMod = objects.GetModFromStatLevel(chaScore);
+	
 	conds.AddTo(d20a->d20APerformer, "Divine Might Bonus", { chaMod, 0 });
 	
 	return static_cast<ActionErrorCode>(dispIo.returnVal);
@@ -1737,8 +1733,8 @@ ActionErrorCode D20ActionCallbacks::PerformQuiveringPalm(D20Actn* d20a){
 	auto attackAnimSubid = rngSys.GetInt(0, 2);
 	
 	
-	if (animationGoals.PushAttackAnim(d20a->d20APerformer, d20a->d20ATarget, 0xFFFFFFFF, attackAnimSubid, playCritFlag, 0))	{
-		d20a->animID = animationGoals.GetActionAnimId(d20a->d20APerformer);
+	if (gameSystems->GetAnim().PushAttackAnim(d20a->d20APerformer, d20a->d20ATarget, 0xFFFFFFFF, attackAnimSubid, playCritFlag, 0))	{
+		d20a->animID = gameSystems->GetAnim().GetActionAnimId(d20a->d20APerformer);
 		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
 	}
 
@@ -1750,7 +1746,7 @@ ActionErrorCode D20ActionCallbacks::PerformSneak(D20Actn* d20a){
 	auto performer = d20a->d20APerformer;
 	
 	auto newSneakState = 1 - critterSys.IsMovingSilently(performer);
-	animationGoals.Interrupt(performer, AnimGoalPriority::AGP_5);
+	gameSystems->GetAnim().Interrupt(performer, AnimGoalPriority::AGP_5);
 
 	if (newSneakState && combatSys.isCombatActive()){ // entering sneak while in combat
 
@@ -2080,9 +2076,9 @@ ActionErrorCode D20ActionCallbacks::PerformCopyScroll(D20Actn * d20a){
 
 ActionErrorCode D20ActionCallbacks::PerformDisarm(D20Actn* d20a){
 
-	if (animationGoals.PushAttemptAttack(d20a->d20APerformer, d20a->d20ATarget))
+	if (gameSystems->GetAnim().PushAttemptAttack(d20a->d20APerformer, d20a->d20ATarget))
 	{
-		d20a->animID = animationGoals.GetActionAnimId(d20a->d20APerformer);
+		d20a->animID = gameSystems->GetAnim().GetActionAnimId(d20a->d20APerformer);
 		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
 	}
 	return AEC_OK;
@@ -2151,8 +2147,8 @@ BOOL D20ActionCallbacks::ActionFrameDisarm(D20Actn* d20a){
 		d20aCopy.d20ATarget = d20a->d20APerformer;
 		if (!d20Sys.d20Defs[D20A_DISARM].actionCheckFunc(&d20aCopy, nullptr))
 		{
-			if( animationGoals.PushAttemptAttack(d20aCopy.d20APerformer, d20aCopy.d20ATarget))
-				d20aCopy.animID = animationGoals.GetActionAnimId(d20aCopy.d20APerformer);
+			if( gameSystems->GetAnim().PushAttemptAttack(d20aCopy.d20APerformer, d20aCopy.d20ATarget))
+				d20aCopy.animID = gameSystems->GetAnim().GetActionAnimId(d20aCopy.d20APerformer);
 			if (combatSys.DisarmCheck(d20a->d20ATarget, d20a->d20APerformer, d20a))
 			{
 
@@ -2329,6 +2325,9 @@ ActionErrorCode D20ActionCallbacks::ActionCostCastSpell(D20Actn * d20a, TurnBase
 	MetaMagicData mmData;
 	d20a->d20SpellData.Extract(&spEnum, nullptr, &spellClass, &spLvl, &invIdx, &mmData);
 
+	//Modify metamagic information for quicken if necessary
+	dispatch.DispatchMetaMagicModify(d20Sys.globD20Action->d20APerformer, mmData);
+
 	SpellEntry spEntry(spEnum);
 
 	// Metamagicked spontaneous casters always cost full round to cast
@@ -2457,7 +2456,7 @@ BOOL D20ActionCallbacks::ActionFrameTripAttack(D20Actn* d20a){
 	// auto tripCheck = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x100B6230);
 	if (combatSys.TripCheck(d20a->d20APerformer, tgt))	{
 		conds.AddTo(d20a->d20ATarget, "Prone", {});
-		animationGoals.PushAnimate(tgt, 64);
+		gameSystems->GetAnim().PushAnimate(tgt, 64);
 		histSys.CreateRollHistoryLineFromMesfile(44, performer, tgt);
 		combatSys.FloatCombatLine(tgt, 104);
 
@@ -2477,7 +2476,7 @@ BOOL D20ActionCallbacks::ActionFrameTripAttack(D20Actn* d20a){
 		if (combatSys.TripCheck(tgt, performer))
 		{
 			conds.AddTo(performer, "Prone", {});
-			animationGoals.PushAnimate(performer, 64);
+			gameSystems->GetAnim().PushAnimate(performer, 64);
 			combatSys.FloatCombatLine(performer, 104);
 			histSys.CreateRollHistoryLineFromMesfile(44, tgt, performer);
 			return FALSE;
@@ -2541,10 +2540,10 @@ BOOL D20ActionCallbacks::ProjectileHitPython(D20Actn * d20a, objHndl projectile,
 
 ActionErrorCode D20ActionCallbacks::PerformAidAnotherWakeUp(D20Actn* d20a){
 
-	if (animationGoals.PushAttemptAttack(d20a->d20APerformer, d20a->d20ATarget))
+	if (gameSystems->GetAnim().PushAttemptAttack(d20a->d20APerformer, d20a->d20ATarget))
 	{
-		animationGoals.PushUseSkillOn(d20a->d20APerformer, d20a->d20ATarget, SkillEnum::skill_heal);
-		d20a->animID = animationGoals.GetActionAnimId(d20a->d20APerformer);
+		gameSystems->GetAnim().PushUseSkillOn(d20a->d20APerformer, d20a->d20ATarget, SkillEnum::skill_heal);
+		d20a->animID = gameSystems->GetAnim().GetActionAnimId(d20a->d20APerformer);
 		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
 
 		//if (!party.IsInParty(d20a->d20APerformer) )
@@ -2695,14 +2694,23 @@ ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
 	
 	int spellEnum = 0, spellClass, spellLvl, invIdx;
 	MetaMagicData mmData;
+
+	auto &curSeq = *actSeqSys.actSeqCur;
+	auto &spellPkt = curSeq->spellPktBody;
+
+	//Get the metamagic data
+	dispatch.DispatchMetaMagicModify(d20Sys.globD20Action->d20APerformer, d20a->d20SpellData.metaMagicData);
+	
+	// Make sure the spell packet has the correct meta magic data (it will not if metamagic data has been modified)
+	spellPkt.metaMagicData = d20a->d20SpellData.metaMagicData;
+
+	// Now the deduct charge signal should be sent since the spell can no longer be aborted (but it can fail)
+	d20Sys.D20SignalPython(d20a->d20APerformer, "Sudden Metamagic Deduct Charge");
+
 	d20a->d20SpellData.Extract(&spellEnum, nullptr, &spellClass, &spellLvl, &invIdx, &mmData);
 	SpellStoreData spellData(spellEnum, spellLvl, spellClass, mmData );
 
 	objHndl item = objHndl::null;
-	
-
-	auto &curSeq = *actSeqSys.actSeqCur;
-	auto &spellPkt = curSeq->spellPktBody;
 
 	// if it's an item spell
 	if (invIdx != INV_IDX_INVALID){
@@ -2720,7 +2728,7 @@ ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
 		if (invIdx != INV_IDX_INVALID){
 			item = inventory.GetItemAtInvIdx(caster, invIdx);
 		}
-		return animationGoals.PushSpellInterrupt(caster, item, ag_attempt_spell_w_cast_anim, spellSchool);
+		return gameSystems->GetAnim().PushSpellInterrupt(caster, item, ag_attempt_spell_w_cast_anim, spellSchool);
 	};
 
 	if (d20Sys.SpellIsInterruptedCheck(d20a, invIdx, &spellData)){
@@ -2773,7 +2781,7 @@ ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
 			if (!party.IsInParty(curSeq->spellPktBody.caster)) {
 				auto leader = party.GetConsciousPartyLeader();
 				auto targetRot = objects.GetRotationTowards(curSeq->spellPktBody.caster, leader);
-				animationGoals.PushRotate(curSeq->spellPktBody.caster, targetRot);
+				gameSystems->GetAnim().PushRotate(curSeq->spellPktBody.caster, targetRot);
 			}
 			if (curSeq) {
 				curSeq->spellPktBody.Reset();
@@ -2785,10 +2793,10 @@ ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
 	auto spellId = spellSys.GetNewSpellId();
 	spellSys.RegisterSpell(spellPkt, spellId);
 
-	if (animationGoals.PushSpellCast(spellPkt, item)){
+	if (gameSystems->GetAnim().PushSpellCast(spellPkt, item)){
 		spellPkt.Debit();
 		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
-		d20a->animID = animationGoals.GetActionAnimId(d20a->d20APerformer);
+		d20a->animID = gameSystems->GetAnim().GetActionAnimId(d20a->d20APerformer);
 	}
 
 	// provoke hostility
@@ -3082,7 +3090,7 @@ ActionErrorCode D20ActionCallbacks::AddToSeqWhirlwindAttack(D20Actn* d20a, ActnS
 	auto perfSizeFeet = objects.GetRadius(performer)/INCH_PER_FEET;
 
 	std::vector<objHndl> enemies;
-	combatSys.GetEnemyListInRange(performer, 1.0 + perfSizeFeet + reach, enemies);
+	combatSys.GetEnemyListInRange(performer, 1.0f + perfSizeFeet + reach, enemies);
 	
 	for (auto i=0u; i<enemies.size(); i++){
 		if (locSys.DistanceToObj(performer, enemies[i]) <= reach) {
@@ -3281,9 +3289,9 @@ ActionErrorCode D20ActionCallbacks::ActionCostWhirlwindAttack(D20Actn* d20a, Tur
 		auto perfSizeFeet = objects.GetRadius(performer) / INCH_PER_FEET;
 
 		std::vector<objHndl> enemies;
-		combatSys.GetEnemyListInRange(performer, 1.0 + perfSizeFeet + reach, enemies);
+		combatSys.GetEnemyListInRange(performer, 1.0f + perfSizeFeet + reach, enemies);
 		auto numEnemies = 0;
-		for (auto i=0; i<enemies.size(); i++){
+		for (size_t i=0; i<enemies.size(); i++){
 			if (locSys.DistanceToObj(performer, enemies[i] ) < reach)
 				numEnemies++;
 		}

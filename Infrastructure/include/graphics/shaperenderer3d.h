@@ -41,6 +41,10 @@ public:
 		const XMFLOAT3 &to,
 		XMCOLOR color);
 
+	void DrawLineWithoutDepth(const XMFLOAT3 &from,
+		const XMFLOAT3 &to,
+		XMCOLOR color);
+
 	void DrawCylinder(const XMFLOAT3 &pos, float radius, float height);
 
 	/*

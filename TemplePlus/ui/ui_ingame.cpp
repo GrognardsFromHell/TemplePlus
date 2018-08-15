@@ -21,6 +21,7 @@
 #include "tig/tig_console.h"
 #include "ui_char.h"
 #include "ui_townmap.h"
+#include "raycast.h"
 
 UiInGame::UiInGame(const UiSystemConf &config) {
 	auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x10112e70);
@@ -285,12 +286,12 @@ void UiInGame::HandleCombatMouseEvent(const TigMsg & msg)
 objHndl UiInGame::GetMouseTarget(int x, int y)
 {
 	// Pick the object using the screen coordinates first
-	auto mousedOver = PickObject(x, y, 6);
+	auto mousedOver = PickObject(x, y);
 	if (!mousedOver) {		
 		return objHndl::null;
 	}
 
-	if (IsUntargetable(mousedOver)) {
+	if (objects.IsUntargetable(mousedOver)) {
 		return objHndl::null;
 	}
 
@@ -321,33 +322,14 @@ void UiInGame::DoKeyboardScrolling(){
 
 }
 
-objHndl UiInGame::PickObject(int x, int y, uint32_t flags)
+objHndl UiInGame::PickObject(int x, int y, GameRaycastFlags flags)
 {
 	objHndl result = objHndl::null;
-	static auto game_raycast = temple::GetPointer<BOOL(int x, int y, objHndl *pObjHndlOut, uint32_t flags)>(0x10022360);
-	if (game_raycast(x, y, &result, flags) == 0) {
+	if (PickObjectOnScreen(x, y, &result, flags) == 0) {
 		return objHndl::null;
 	} else {
 		return result;
 	}
-}
-
-bool UiInGame::IsUntargetable(objHndl obj)
-{
-	if (objects.GetFlags(obj) & (OF_OFF|OF_CLICK_THROUGH|OF_DONTDRAW)) {
-		return true;
-	}
-
-	if (objects.IsUndetectedSecretDoor(obj)) {
-		return true;
-	}
-
-	if (aiSys.IsRunningOff(obj)) {
-		return true;
-	}
-
-	return false;
-	
 }
 
 void UiInGame::ResetInput()

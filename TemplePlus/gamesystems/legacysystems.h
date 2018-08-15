@@ -56,6 +56,8 @@ public:
 	void Reset() override;
 	void AdvanceTime(uint32_t time) override;
 	const std::string &GetName() const override;
+
+	bool IsObjectTeleporting(objHndl handle) const;
 };
 
 class SectorSystem : public GameSystem, public SaveGameAwareGameSystem, public ResetAwareGameSystem {
@@ -222,6 +224,8 @@ public:
 	void SetLightSchemeId(int schemeId);
 	void SetLightScheme(int schemeId, int hour);
 	int GetHourOfDay();
+
+	bool IsUpdating() const;
 
 
 };
@@ -561,6 +565,8 @@ public:
 	
 	void SaveEsd();
 	void PerformCheckForCritter(objHndl handle, int idx);
+
+	int IsPosExplored(LocAndOffsets location);
 
 private:
 

@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "../gsl/gsl.h"
+#include <gsl/gsl>
 
 #include <memory>
 #include <list>
@@ -320,7 +320,7 @@ namespace gfx {
 		template<typename TElement>
 		MappedVertexBuffer<TElement> Map(VertexBuffer &buffer, gfx::MapMode mode = gfx::MapMode::Discard) {
 			auto data = MapVertexBufferRaw(buffer, mode);
-			auto castData = gsl::as_span<TElement>((TElement*)data.data(), data.size() / sizeof(TElement));
+			auto castData = gsl::span<TElement>((TElement*)data.data(), data.size() / sizeof(TElement));
 			return MappedVertexBuffer<TElement>(buffer, *this, castData, 0);
 		}
 		void Unmap(VertexBuffer &buffer);
@@ -460,7 +460,7 @@ namespace gfx {
 	
 	template <typename T>
 	VertexBufferPtr RenderingDevice::CreateVertexBuffer(gsl::span<T> data, bool immutable) {
-		return CreateVertexBufferRaw(gsl::as_span(reinterpret_cast<const uint8_t*>(&data[0]), data.size_bytes()), immutable);
+		return CreateVertexBufferRaw(gsl::span(reinterpret_cast<const uint8_t*>(&data[0]), data.size_bytes()), immutable);
 	}
 
 	extern RenderingDevice *renderingDevice;

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 #include <temple/dll.h>
 #include "temple_functions.h"
 
@@ -124,6 +126,13 @@ struct Path {
 	int field_1a14;
 
 	float GetPathResultLength();
+
+	bool IsComplete() const {
+		return (flags & PF_COMPLETE) == PF_COMPLETE;
+	}
+
+	// Returns the next node along this path, or empty in case the path is not completely built
+	std::optional<LocAndOffsets> GetNextNode() const;
 };
 
 struct PathQueryResult : Path {

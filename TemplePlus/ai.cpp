@@ -12,6 +12,7 @@
 #include "pathfinding.h"
 #include "objlist.h"
 #include "gamesystems/objects/objsystem.h"
+#include "gamesystems/gamesystems.h"
 
 #pragma region AI System Implementation
 #include "location.h"
@@ -29,7 +30,7 @@
 #include "rng.h"
 #include "turn_based.h"
 #include "gamesystems/mapsystem.h"
-#include "anim.h"
+#include "animgoals/anim.h"
 #include "gamesystems/legacysystems.h"
 #include "ui/ui_systems.h"
 #include "ui/ui_legacysystems.h"
@@ -779,7 +780,7 @@ objHndl AiSystem::FindSuitableTarget(objHndl handle){
 	if (!kosCandidate){
 		if (objToTurnTowards){
 			auto rotationTo = objects.GetRotationTowards(handle, objToTurnTowards);
-			animationGoals.PushRotate(handle, rotationTo);
+			gameSystems->GetAnim().PushRotate(handle, rotationTo);
 		}
 	}
 
@@ -3453,8 +3454,7 @@ BOOL AiPacket::WieldBestItem(){
 	if (getDlgTarget(obj))
 		return FALSE;
 
-	auto getAnimPriority = temple::GetRef<int(__cdecl)(objHndl)>(0x1000C500);
-	auto animPriority = getAnimPriority(obj);
+	auto animPriority = gameSystems->GetAnim().GetCurrentPriority(obj);
 	if (animPriority != 7 && animPriority > 2)
 		return FALSE;
 
@@ -3779,7 +3779,7 @@ void AiPacket::ProcessCombat(){
 				UseItem();
 				break;
 			case 3:
-				animationGoals.PushUseSkillOn(obj, target, this->skillEnum, this->scratchObj, 0);
+				gameSystems->GetAnim().PushUseSkillOn(obj, target, this->skillEnum, this->scratchObj, 0);
 				break;
 			case 4:
 				MoveToScoutPoint();
@@ -3944,14 +3944,14 @@ void AiPacket::DoWaypoints(){
 		if (npcFlags& ONF_USE_ALERTPOINTS){
 			
 			if (!!temple::GetRef<BOOL(__cdecl)(objHndl, int)>(0x1005BC00)(obj, 0)){
-				animationGoals.PushFidget(obj);
+				gameSystems->GetAnim().PushFidget(obj);
 				temple::GetRef<void(__cdecl)(objHndl)>(0x10015FD0)(obj);
 			}
 		}
 		else if (!temple::GetRef<BOOL(__cdecl)(objHndl, int)>(0x1005B950)(obj, 0) // waypoint sthg
 			&& !temple::GetRef<BOOL(__cdecl)(objHndl, int)>(0x1005BC00)(obj, 0)) // npc wander sthg
 		{
-			animationGoals.PushFidget(obj);
+			gameSystems->GetAnim().PushFidget(obj);
 			temple::GetRef<void(__cdecl)(objHndl)>(0x10015FD0)(obj);
 		}
 		return;
@@ -3960,7 +3960,7 @@ void AiPacket::DoWaypoints(){
 	if (npcFlags && ONF_AI_WAIT_HERE)
 		return;
 
-	if (gameSystems->GetAnim().GetRunSlotId(obj, nullptr))
+	if (gameSystems->GetAnim().GetFirstRunSlotId(obj))
 		return;
 
 	if (aiSys.RefuseFollowCheck(this->obj, this->leader) && critterSys.RemoveFollower(obj, 0)){

@@ -12,7 +12,7 @@
 #include "ui_systems.h"
 #include "ui_worldmap.h"
 #include "ui_legacysystems.h"
-#include "anim.h"
+#include "animgoals/anim.h"
 #include "gamesystems/timeevents.h"
 #include "location.h"
 #include "gameview.h"

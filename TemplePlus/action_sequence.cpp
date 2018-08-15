@@ -23,7 +23,7 @@
 #include "ai.h"
 #include "ui/ui_intgame_turnbased.h"
 #include "d20_obj_registry.h"
-#include "anim.h"
+#include "animgoals/anim.h"
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/objects/objsystem.h"
 #include "python/python_integration_d20_action.h"
@@ -433,16 +433,21 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 
 	if (tgtClassif == D20TC_CastSpell){
 
-		unsigned int spellEnum, spellClass, spellLevel, metaMagicData;
-		D20SpellDataExtractInfo(&d20Sys.globD20Action->d20SpellData,
-			&spellEnum, nullptr, &spellClass, &spellLevel,nullptr,&metaMagicData);
+		unsigned int spellEnum, spellClass, spellLevel, metamagicValue;
 
+		D20SpellDataExtractInfo(&d20Sys.globD20Action->d20SpellData,
+			&spellEnum, nullptr, &spellClass, &spellLevel,nullptr,&metamagicValue);
+
+		MetaMagicData metaMagicData = metamagicValue;
+
+		//Modify metamagic data for enlarge and widen 
+		dispatch.DispatchMetaMagicModify(d20Sys.globD20Action->d20APerformer, metaMagicData);
 
 		auto curSeq = *actSeqSys.actSeqCur;
-		curSeq->spellPktBody.spellRange *= ((MetaMagicData)metaMagicData).metaMagicEnlargeSpellCount + 1;
+		curSeq->spellPktBody.spellRange *= metaMagicData.metaMagicEnlargeSpellCount + 1;
 		SpellEntry spellEntry;
 		if (spellSys.spellRegistryCopy(spellEnum, &spellEntry)){
-			spellEntry.radiusTarget *= ((MetaMagicData)metaMagicData).metaMagicWidenSpellCount + 1;
+			spellEntry.radiusTarget *= metaMagicData.metaMagicWidenSpellCount + 1;
 		}
 		PickerArgs pickArgs;
 		spellSys.pickerArgsFromSpellEntry(&spellEntry, &pickArgs, curSeq->spellPktBody.caster, curSeq->spellPktBody.casterLevel);
@@ -700,7 +705,7 @@ void ActionSequenceSystem::TurnStart(objHndl obj)
 				auto d20SpellData = &d20a->d20SpellData;
 				if (d20Sys.d20QueryWithData(actSeq->performer, DK_QUE_SpellInterrupted, d20SpellData, 0)) {
 					d20a->d20Caf &= ~D20CAF_NEED_ANIM_COMPLETED;
-					animationGoals.Interrupt(actSeq->performer, AnimGoalPriority::AGP_5, 0);
+					gameSystems->GetAnim().Interrupt(actSeq->performer, AnimGoalPriority::AGP_5, 0);
 				}
 			}
 		}

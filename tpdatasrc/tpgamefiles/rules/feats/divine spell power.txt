@@ -1,0 +1,5 @@
+name: Divine Spell Power
+flags: 12582912
+prereqs: 
+description: You can spend a turn or rebuke attempt as a free action and roll a turning check (with a special +3 bonus, plus any other modifiers you'd normally apply to your turning check). Treat the result of the turning check as a modifier to your caster level on the next divine spell you cast in that round.  If you don't cast a divine spell before your next turn, you lose the effect of the check result. This feat has no effect on your arcane spellcasting ability.
+prereq descr: Ability to turn or rebuke undead, able to cast 1st-level divine spells

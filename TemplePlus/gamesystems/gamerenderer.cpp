@@ -5,13 +5,14 @@
 #include <graphics/mdfmaterials.h>
 #include <graphics/shaperenderer2d.h>
 #include <fonts/fonts.h>
-#include <temple/aasrenderer.h>
+#include <aas/aas_renderer.h>
 #include <temple/dll.h>
 #include <particles/render.h>
 #include <particles/instances.h>
 #include "ui/ui_render.h"
 #include "tig/tig_font.h"
 #include "particlesystems.h"
+#include "animgoals/animgoals_debugrenderer.h"
 
 #include "tig/tig_startup.h"
 #include "temple_functions.h"
@@ -136,7 +137,7 @@ GameRenderer::GameRenderer(TigInitializer &tig,
 
 	Expects(!gameRenderer);
 
-	mAasRenderer = std::make_unique<temple::AasRenderer>(
+	mAasRenderer = std::make_unique<aas::Renderer>(
 		gameSystems.GetAAS(), 
 		tig.GetRenderingDevice(),
 		tig.GetShapeRenderer2d(),
@@ -279,6 +280,9 @@ void GameRenderer::RenderWorld(RenderWorldInfo *info) {
     renderFuncs.RenderUiRelated(info);
     renderFuncs.RenderTextBubbles(info);
     renderFuncs.RenderTextFloaters(info);
+
+	AnimGoalsDebugRenderer::RenderAllAnimGoals((int)info->tiles->x1, (int)info->tiles->x2, (int)info->tiles->y1,
+		(int)info->tiles->y2);
 
     mRenderingDevice.Present();
   }

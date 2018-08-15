@@ -6,12 +6,12 @@
 #include <set>
 #include <map>
 
-#include <gsl/gsl.h>
+#include <gsl/gsl>
 
 #include <gamesystems/map/sector.h>
 
 #include "streams.h"
-#include "anim.h"
+#include "animgoals/anim.h"
 
 struct QuestSave {
 	GameTime acceptedTime;

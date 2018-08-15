@@ -33,7 +33,7 @@
 #include <ui\ui_systems.h>
 #include <ui\ui_legacysystems.h>
 
-#include "anim.h"
+#include "animgoals/anim.h"
 #include "critter.h"
 #include "party.h"
 #include "fade.h"
@@ -261,7 +261,7 @@ bool DungeonMaster::HandleMsg(const TigMsg & msg){
 
 		// acquire target from cursor
 		if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_POS_CHANGE){
-			mTgtObj = uiSystems->GetInGame().PickObject(mouseMsg.x,mouseMsg.y,GameRaycastFlags::GRF_4 | GameRaycastFlags::GRF_2);
+			mTgtObj = uiSystems->GetInGame().PickObject(mouseMsg.x, mouseMsg.y);
 		}
 
 		
@@ -1270,8 +1270,8 @@ void DungeonMaster::RenderVsParty(){
 			}
 
 			// Load Mobiles from save
-			std::string filename = fmt::format("{}", saveFnameMatch[1]);
-			if (ImGui::Button(fmt::format("Go {} {}", saveFnameMatch[1], saveFnameMatch[2]).c_str())) {
+			std::string filename = fmt::format("{}", saveFnameMatch[1].str());
+			if (ImGui::Button(fmt::format("Go {} {}", saveFnameMatch[1].str(), saveFnameMatch[2].str()).c_str())) {
 				PseudoLoad(filename);
 			}
 		}

@@ -2,7 +2,7 @@
 #include "infrastructure/meshes.h"
 
 // True if the weapon has to fallback on both hands
-static bool IsWeapon2hFallbacak(gfx::WeaponAnimType weaponType) {
+static bool IsWeapon2hFallback(gfx::WeaponAnimType weaponType) {
 	switch (weaponType) {
 	case gfx::WeaponAnimType::Greatsword:
 	case gfx::WeaponAnimType::Greataxe:
@@ -351,7 +351,7 @@ static bool GetFallbackAnim(gfx::EncodedAnimId& animId) {
 		auto rightHand = animId.GetWeaponRightHand();
 
 		// Possibly the weapons in either hand need to fallback together
-		if (IsWeapon2hFallbacak(leftHand) || IsWeapon2hFallbacak(rightHand)) {
+		if (IsWeapon2hFallback(leftHand) || IsWeapon2hFallback(rightHand)) {
 			auto leftHandFallback = GetWeaponFallback(leftHand);
 			auto rightHandFallback = GetWeaponFallback(rightHand);
 

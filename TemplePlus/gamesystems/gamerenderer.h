@@ -5,10 +5,8 @@ class TigInitializer;
 namespace gfx {
 	class RenderingDevice;
 }
-namespace temple {
-	struct AasConfig;
-	class AasAnimatedModelFactory;
-	class AasRenderer;
+namespace aas {
+	class Renderer;
 }
 namespace particles {
 	class ParticleRendererManager;
@@ -47,7 +45,7 @@ private:
 	gfx::RenderingDevice& mRenderingDevice;
 	GameSystems &mGameSystems;
 
-	std::unique_ptr<class temple::AasRenderer> mAasRenderer;
+	std::unique_ptr<aas::Renderer> mAasRenderer;
 	std::unique_ptr<MapObjectRenderer> mMapObjectRenderer;
 	std::unique_ptr<ParticleSystemsRenderer> mParticleSysRenderer;
 	std::unique_ptr<GMeshRenderer> mGmeshRenderer;

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <gsl/gsl.h>
-#include <iosfwd>
+#include <gsl/gsl>
+#include <fmt/format.h>
 
 #include "temple_enums.h"
 
@@ -55,7 +55,8 @@ inline bool operator <(const objHndl &a, const objHndl &b) {
 inline bool operator >(const objHndl &a, const objHndl &b) {
 	return a.handle > b.handle;
 }
-std::ostream &operator <<(std::ostream &out, const objHndl &handle);
+
+void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const objHndl &s);
 
 namespace std {
 	template <> struct hash<objHndl> {

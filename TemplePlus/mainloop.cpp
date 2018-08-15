@@ -28,7 +28,7 @@
 #include "tig/tig_keyboard.h"
 #include "party.h"
 #include "critter.h"
-#include "anim.h"
+#include "animgoals/anim.h"
 #include "gamesystems/objects/objsystem.h"
 #include "combat.h"
 #include "turn_based.h"
@@ -649,7 +649,7 @@ void MainLoopHooks::NormalLmbHandleTarget(objHndl * tgt)
 			return;
 
 		chosenOne = selectedClosest;
-		animationGoals.PushForMouseTarget(chosenOne, goalType, tgtHndl, tgtLoc, objHndl::null, someFlag);
+		gameSystems->GetAnim().PushForMouseTarget(chosenOne, goalType, tgtHndl, tgtLoc, objHndl::null, someFlag);
 
 
 	}

@@ -6,7 +6,7 @@
 #include <graphics/mdfmaterials.h>
 #include <infrastructure/meshes.h>
 #include <infrastructure/exception.h>
-#include <infrastructure/format.h>
+#include <fmt/format.h>
 
 #include "params.h"
 

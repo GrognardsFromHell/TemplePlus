@@ -1904,6 +1904,8 @@ enum enum_disp_type : uint32_t {
 
 	dispTypeDealingDamageWeaponlikeSpell,
 	dispTypeActionCostMod,
+	dispTypeMetaMagicMod,
+	dispTypeSpecialAttack,
 	dispTypeCount // used just for size definition purposes
 
 

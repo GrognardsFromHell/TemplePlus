@@ -22,6 +22,7 @@ namespace gfx {
 	class EncodedAnimId;
 	}
 
+
 struct Objects : temple::AddressTable {
 	friend struct LegacyCritterSystem;
 
@@ -42,7 +43,10 @@ struct Objects : temple::AddressTable {
 	int GetAasHandle(objHndl handle);
 	gfx::AnimatedModelPtr GetAnimHandle(objHndl obj);
 	gfx::AnimatedModelParams GetAnimParams(objHndl obj);
+
+	void ClearAnim(objHndl handle);
 	void SetAnimId(objHndl obj, gfx::EncodedAnimId id);
+	bool HasAnimId(objHndl obj, gfx::EncodedAnimId id);
 	gfx::EncodedAnimId GetIdleAnim(objHndl obj);
 	bool IsDoorOpen(objHndl obj);
 	PortalFlag GetPortalFlags(objHndl obj) {
@@ -231,6 +235,7 @@ struct Objects : temple::AddressTable {
 
 	void Destroy(objHndl obj);
 
+
 #pragma region Common
 	ObjectId GetId(objHndl handle);
 	ObjectType GetType(objHndl obj);
@@ -254,12 +259,21 @@ struct Objects : temple::AddressTable {
 	bool IsEquipmentType(ObjectType type) const {
 		return type >= obj_t_weapon && type <= obj_t_generic || type == obj_t_bag;
 	}
+	bool IsStaticType(ObjectType type) const {
+		return type != obj_t_projectile && type != obj_t_container && !IsCritterType(type) && !IsEquipmentType(type);
+	}
 	bool IsNPC(objHndl obj) {
 		return GetType(obj) == obj_t_npc;
 	}
 	bool IsPlayerControlled(objHndl obj);
 	std::string GetDisplayName(objHndl obj, objHndl observer);
 	bool IsStatic(objHndl handle);
+
+	/**
+	 * Is the object not targetable by mouse?
+	 * Was @ 1001FCB0
+	 */
+	bool IsUntargetable(objHndl handle);
 
 	int StatLevelGet(objHndl obj, Stat stat);
 	int StatLevelGet(objHndl obj, Stat stat, int statArg);  // WIP currently just handles stat_caster_level expansion

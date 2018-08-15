@@ -69,6 +69,7 @@ int DispatcherReplacements::Dispatch54AoE(objHndl handle, DispIO* evtObj, D20Dis
 	if (!dispatcher->IsValid())
 		return 0;
 	dispatcher->Process(dispTypeObjectEvent, dispKey, evtObj);
+	return 0;
 }
 
 struct DispatcherSystemAddresses : temple::AddressTable
@@ -569,6 +570,26 @@ void DispatcherSystem::DispatchConditionRemove(Dispatcher* dispatcher, CondNode*
 		}
 	}
 	cond->flags |= 1;
+}
+
+void DispatcherSystem::DispatchMetaMagicModify(objHndl obj, MetaMagicData& mmData)
+{
+	auto _dispatcher = objects.GetDispatcher(obj);
+	if (!dispatch.dispatcherValid(_dispatcher)) return;
+	EvtObjMetaMagic dispIo;
+	dispIo.mmData = mmData;
+	DispatcherProcessor(_dispatcher, dispTypeMetaMagicMod, 0, &dispIo);
+	mmData = dispIo.mmData;
+}
+
+void DispatcherSystem::DispatchSpecialAttack(objHndl obj, int attack, objHndl target)
+{
+	auto _dispatcher = objects.GetDispatcher(obj);
+	if (!dispatch.dispatcherValid(_dispatcher)) return;
+	EvtObjSpecialAttack dispIo;
+	dispIo.target = target;
+	dispIo.attack = static_cast<EvtObjSpecialAttack::AttackType>(attack);
+	DispatcherProcessor(_dispatcher, dispTypeSpecialAttack, 0, &dispIo);
 }
 
 unsigned DispatcherSystem::Dispatch35CasterLevelModify(objHndl obj, SpellPacketBody* spellPkt)

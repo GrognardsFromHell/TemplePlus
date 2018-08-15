@@ -3,7 +3,8 @@
 
 #include <memory>
 
-#include "gsl/span.h"
+#include <gsl/span>
+
 #include "graphics/math.h"
 #include "infrastructure/macros.h"
 

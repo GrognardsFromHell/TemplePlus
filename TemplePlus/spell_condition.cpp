@@ -16,7 +16,7 @@
 #include "gamesystems/objects/objevent.h"
 #include "gamesystems/particlesystems.h"
 #include "damage.h"
-#include "anim.h"
+#include "animgoals/anim.h"
 #include "float_line.h"
 #include "action_sequence.h"
 #include "ai.h"
@@ -715,7 +715,7 @@ int SpellConditionFixes::GreaseSlippage(DispatcherCallbackArgs args){
 		histSys.CreateRollHistoryLineFromMesfile(48, args.objHndCaller, objHndl::null);
 		combatSys.FloatCombatLine(args.objHndCaller, 104);
 		conds.AddTo(args.objHndCaller, "Prone", {});
-		animationGoals.PushAnimate(args.objHndCaller, 64);
+		gameSystems->GetAnim().PushAnimate(args.objHndCaller, 64);
 	}
 
 	return 0;
@@ -730,7 +730,7 @@ int SpellConditionFixes::ColorSprayUnconsciousOnAdd(DispatcherCallbackArgs args)
 	auto dur = dice.Roll();
 	args.SetCondArg(1, dur);
 	conds.AddTo(args.objHndCaller, "Prone", {});
-	animationGoals.PushAnimate(args.objHndCaller, 64);
+	gameSystems->GetAnim().PushAnimate(args.objHndCaller, 64);
 
 	return 0;
 }

@@ -8,7 +8,7 @@
 const char *buildVersion = TOSTRING(_TP_VERSION);
 const char *buildCommitId = TOSTRING(_TP_COMMIT);
 #else
-#include "infrastructure/format.h"
+#include <fmt/format.h>
 const char *buildVersion = "UNKNOWN";
 const char *buildCommitId = "UNKNOWN";
 #endif
