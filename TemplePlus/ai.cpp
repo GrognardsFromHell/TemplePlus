@@ -1214,6 +1214,28 @@ BOOL AiSystem::TargetDamaged(AiTactic * aiTac){
 	return FALSE;
 }
 
+BOOL AiSystem::TargetFriendHurt(AiTactic * aiTac)
+{
+	auto performer = aiTac->performer;
+	auto lowest = 0.7;
+	auto N = combatSys.GetInitiativeListLength();
+	for (auto i = 0; i < N; i++) {
+		auto combatant = combatSys.GetInitiativeListMember(i);
+		if (!combatant || !critterSys.IsFriendly(performer, combatant))
+			continue;
+		
+		auto hpPct = critterSys.GetHpPercent(combatant); 
+		
+		if (hpPct < lowest) {
+			lowest = hpPct;
+			aiTac->target = combatant;
+		}
+
+	}
+
+	return FALSE;
+}
+
 int AiSystem::TargetThreatened(AiTactic* aiTac)
 {
 	objHndl performer = aiTac->performer;
@@ -1589,7 +1611,17 @@ BOOL AiSystem::ImprovePosition(AiTactic* aiTac){
 		// in addition, truncate the path to the least amount necessary to achieve LOS
 		if (curNum > 0) {
 
+
+			if (curSeq->d20ActArrayNum != curNum){
+				
+			}
 			auto path = curSeq->d20ActArray[curSeq->d20ActArrayNum - 1].path;
+
+			if (!path){
+				logger->info("ImprovePosition: Unspecified Move failed. ");
+				actSeqSys.ActionSequenceRevertPath(initialActNum);
+				return FALSE;
+			}
 
 			auto lowerBound = 0.0f;
 			auto upperBound = path->GetPathResultLength();
@@ -3161,6 +3193,9 @@ public:
 		replaceFunction(0x100E46D0, AiTargetThreatened);
 		replaceFunction<BOOL(__cdecl)(AiTactic*)>(0x100E37D0, [](AiTactic*aiTac)->BOOL {
 			return aiSys.TargetDamaged(aiTac);
+		});
+		replaceFunction<BOOL(__cdecl)(AiTactic*)>(0x100E4070, [](AiTactic*aiTac)->BOOL {
+			return aiSys.TargetFriendHurt(aiTac);
 		});
 		replaceFunction(0x100E4680, AiAttackThreatened);
 		replaceFunction(0x100E48D0, _AiApproach);

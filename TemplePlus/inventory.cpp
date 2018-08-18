@@ -186,6 +186,12 @@ objHndl InventorySystem::FindMatchingStackableItem(objHndl receiver, objHndl ite
 }
 
 void InventorySystem::WieldBest(objHndl handle, int invSlot, objHndl target){
+
+	if (invSlot == INVENTORY_WORN_IDX_START + EquipSlot::WeaponSecondary){
+		return;
+	}
+	auto existingItem = GetItemAtInvIdx(handle, invSlot);
+
 	temple::GetRef<void(__cdecl)(objHndl, int, objHndl)>(0x1006CCC0)(handle, invSlot, target);
 }
 
@@ -909,6 +915,13 @@ obj_f InventorySystem::GetInventoryNumField(objHndl objHnd)
 	if (objects.IsContainer(objHnd))
 		return obj_f_container_inventory_num;
 	return obj_f_critter_inventory_num;
+}
+
+void InventorySystem::WieldBestAll(objHndl critter, objHndl tgt){
+	
+	for (auto invIdx = INVENTORY_WORN_IDX_START; invIdx <  INVENTORY_WORN_IDX_END; invIdx++){
+		WieldBest(critter, invIdx, tgt);
+	}
 }
 
 void InventorySystem::ForceRemove(objHndl item, objHndl parent)

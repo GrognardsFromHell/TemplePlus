@@ -224,6 +224,7 @@ struct AiSystem : temple::AddressTable
 	BOOL ImprovePosition(AiTactic *aiTac);
 	int TargetClosest(AiTactic * aiTac);
 	BOOL TargetDamaged(AiTactic *aiTac);
+	BOOL TargetFriendHurt(AiTactic* aiTac);
 	int TargetThreatened(AiTactic * aiTac);
 	BOOL UsePotion(AiTactic *aiTac);
 
@@ -244,7 +245,6 @@ struct AiSystem : temple::AddressTable
 	int GetStrategyIdx(const char* stratName) const; // get the strategy.tab index for given strategy name
 	void AiListRemove(const objHndl& handle, const objHndl& tgt, int aiType);
 	
-
 
 	static int GetAiSpells(AiSpellList* aiSpell, objHndl obj, AiSpellType aiSpellType);
 	static int ChooseRandomSpell(AiPacket* aiPkt);

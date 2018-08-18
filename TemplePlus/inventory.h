@@ -180,7 +180,7 @@ struct InventorySystem : temple::AddressTable
 	/*
 		Tries to wield the best items, unclear what the optional item argument does.
 	*/
-	void (__cdecl *WieldBestAll)(objHndl critter, objHndl tgt);
+	void WieldBestAll(objHndl critter, objHndl tgt);
 
 	/*
 		Clears the inventory of the given object. Keeps items that have the PERSISTENT flag set if
@@ -219,7 +219,7 @@ struct InventorySystem : temple::AddressTable
 		rebase(_SetItemParent, 0x1006B6C0);
 
 		rebase(IdentifyAll, 0x10064C70);
-		rebase(WieldBestAll, 0x1006D100);
+		//rebase(WieldBestAll, 0x1006D100);
 		
 		rebase(_ForceRemove, 0x10069AE0);
 		rebase(Clear,		 0x10069E00);
