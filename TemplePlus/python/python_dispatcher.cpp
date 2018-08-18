@@ -586,7 +586,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		py::class_<SpellPacketBody>(m, "SpellPacket")
 			.def(py::init<uint32_t>(), py::arg("spell_id"))
 			.def_readwrite("spell_enum", &SpellPacketBody::spellEnum)
-			.def_readwrite("spell_know_slot_level", &SpellPacketBody::spellKnownSlotLevel)
+			.def_readwrite("spell_known_slot_level", &SpellPacketBody::spellKnownSlotLevel)
 			.def_readwrite("inventory_idx", &SpellPacketBody::invIdx)
 			.def_readwrite("picker_result", &SpellPacketBody::pickerResult)
 			.def_readwrite("spell_class", &SpellPacketBody::spellClass)

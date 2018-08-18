@@ -18,7 +18,7 @@ def QueryHealingBonus(attachee, args, evt_obj):
 	#Is it a conjuration(healing) spell
 	if spEntry.spell_school_enum == Conjuration and spEntry.spell_subschool_enum == Healing:
 		#Bonus is twice the spell level
-		healingBonus = 2 * spPacket.spell_know_slot_level
+		healingBonus = 2 * spPacket.spell_known_slot_level
 
 	#Return the bonus 
 	evt_obj.return_val += healingBonus
