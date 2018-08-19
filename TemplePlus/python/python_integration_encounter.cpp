@@ -195,7 +195,8 @@ static void __cdecl RandomEncounterCreate(RandomEncounter* encounter) {
 		addresses.MapChange(); // No idea what this does
 	}
 
-	auto result = pythonObjIntegration.ExecuteScript("random_encounter", "encounter_create", args);
+	auto result = pythonObjIntegration.ExecuteScript("random_encounter", "encounter_exists", args);
+	pythonObjIntegration.ExecuteScript("expand_encounters", "encounter_coordinator", args);
 	Py_DECREF(args);
 
 	if (!result) {
