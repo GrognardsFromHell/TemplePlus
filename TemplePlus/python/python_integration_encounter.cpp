@@ -196,6 +196,7 @@ static void __cdecl RandomEncounterCreate(RandomEncounter* encounter) {
 	}
 
 	auto result = pythonObjIntegration.ExecuteScript("random_encounter", "encounter_exists", args);
+	if(result && PyObject_IsTrue(result))
 	pythonObjIntegration.ExecuteScript("expand_encounters", "encounter_coordinator", args);
 	Py_DECREF(args);
 
