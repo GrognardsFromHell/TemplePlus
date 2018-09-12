@@ -1,0 +1,5 @@
+name: Wolverine's Rage
+flags: 4194304
+prereqs: 1595
+description: If you have taken damage during the last round, you may spend a wild shape as a free action on your turn to enter a rage. While in this rage, you gain a +2 bonus to Strength, a +2 bonus to Constitution, and take a -2 penalty to AC. This rage lasts for 5 rounds and cannot be ended voluntarily.
+prereq descr: Ability to use wild shape

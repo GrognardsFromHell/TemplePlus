@@ -4983,14 +4983,12 @@ int ClassAbilityCallbacks::DruidWildShapeInit(DispatcherCallbackArgs args){
 
 	args.SetCondArg(0, numTimes);
 
-	if (conds.AddTo(args.objHndCaller, conds.GetByName("Wild Shaped"), { numTimes, 0,0 }))
-	{
-		int dummy = 1;
-	} else
-	{
-		int dummy = 1;
+	// Add if the condition has not already been added.  The extender messes up things up if a query is not used and
+	// the condition can get added many times.
+	auto res = d20Sys.D20QueryPython(args.objHndCaller, "Wild Shaped Condition Added");
+	if (!res) {
+		conds.AddTo(args.objHndCaller, conds.GetByName("Wild Shaped"), { numTimes, 0,0 });
 	}
-
 
 	return 0;
 }
@@ -5162,12 +5160,12 @@ int ClassAbilityCallbacks::DruidWildShapeCheck(DispatcherCallbackArgs args){
 		if (spec.monCat == mc_type_elemental) {
 			numTimes = numTimes >> 8;
 			if (numTimes <= 0)
-				dispIo->returnVal = AEC_INVALID_ACTION;
+				dispIo->returnVal = AEC_OUT_OF_CHARGES;
 		}
 		else { // normal animal (or plant)
 			numTimes = numTimes & 0xFF;
 			if (numTimes <= 0)
-				dispIo->returnVal = AEC_INVALID_ACTION;
+				dispIo->returnVal = AEC_OUT_OF_CHARGES;
 		}
 	}
 
