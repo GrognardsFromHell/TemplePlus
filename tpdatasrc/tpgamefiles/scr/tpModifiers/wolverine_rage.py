@@ -87,7 +87,7 @@ def WolverineRageEffectTooltip(attachee, args, evt_obj):
 
 	return 0
 
-def WolverineRageEffectTooltip(attachee, args, evt_obj):
+def WolverineRageEffectTooltipEffect(attachee, args, evt_obj):
 	# not active, do nothing
 	if not args.get_arg(2):
 		return 0
@@ -132,7 +132,7 @@ WolverineRageEffect.AddHook(ET_OnBeginRound, EK_NONE, WolverineRageEffectBeginRo
 WolverineRageEffect.AddHook(ET_OnD20PythonActionCheck, WolverineRageEnum, OnWolverineRageEffectCheck, ())
 WolverineRageEffect.AddHook(ET_OnD20PythonActionPerform, WolverineRageEnum, OnWolverineRageEffectPerform, ())
 WolverineRageEffect.AddHook(ET_OnGetTooltip, EK_NONE, WolverineRageEffectTooltip, ())
-WolverineRageEffect.AddHook(ET_OnGetEffectTooltip, EK_NONE, WolverineRageEffectTooltip, ())
+WolverineRageEffect.AddHook(ET_OnGetEffectTooltip, EK_NONE, WolverineRageEffectTooltipEffect, ())
 WolverineRageEffect.AddHook(ET_OnAbilityScoreLevel, EK_STAT_CONSTITUTION, WolverineRageEffectConMod, ())
 WolverineRageEffect.AddHook(ET_OnAbilityScoreLevel, EK_STAT_STRENGTH, WolverineRageEffectStrMod, ())
 WolverineRageEffect.AddHook(ET_OnGetAC, EK_NONE, WolverineRageEffectACPenalty, ())
