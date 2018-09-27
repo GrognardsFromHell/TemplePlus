@@ -1745,7 +1745,14 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 		else
 		{
 			int monkLvl = objects.StatLevelGet(args.objHndCaller, stat_level_monk);
-			attackDamageType = DamageType::Bludgeoning;
+			
+			attackDamageType = DamageType::Subdual;
+			if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_IMPROVED_UNARMED_STRIKE) > 0) {
+				//Note:  Bludgeoning is zero so this will be default if nothing answers the query
+				int nDamageType = d20Sys.D20QueryPython(args.objHndCaller, "Unarmed Damage Type");
+				attackDamageType = static_cast<DamageType>(nDamageType);
+			}
+			
 			damageMesLine = 113; // Unarmed
 
 			auto beltItem = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Lockpicks);
@@ -1764,7 +1771,6 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 				if (monkLvl <= 0)
 				{
 					attackDiceType = 2;
-					attackDamageType = DamageType::Subdual;
 				} else if (monkLvl < 4)
 				{
 					attackDiceType = 4;
@@ -1796,7 +1802,6 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 				if (monkLvl <= 0)
 				{
 					attackDiceType = 4;
-					attackDamageType = DamageType::Subdual;
 				}
 				else if (monkLvl < 4)
 				{
@@ -1833,7 +1838,6 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 				if (monkLvl <= 0)
 				{
 					attackDiceType = 3;
-					attackDamageType = DamageType::Subdual;
 				} else if (monkLvl < 4)
 				{
 					attackDiceType = 6;
