@@ -73,7 +73,7 @@ TEST_F(PartSysParserTest, TestKeyFrameParsing) {
 		float lifespan = (paramIdx >= part_accel_X) ? emitter->GetParticleLifespan() : emitter->GetLifespan();
 		auto msg = fmt::format(L"Sys: {} Emitter: {} Param: {} (Lifespan: {})", partSysName, emitter->GetName(), paramIdx, lifespan);
 
-		ASSERT_NE(nullptr, param) << msg;
+		ASSERT_NE(static_cast<void*>(nullptr), param) << msg;
 		ASSERT_EQ((int) PSPT_KEYFRAMES, (int) param->GetType()) << msg;
 		auto frameParam = (const PartSysParamKeyframes*)param;
 
