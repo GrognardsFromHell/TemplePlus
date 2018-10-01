@@ -69,7 +69,8 @@ CondStructNew ConditionSystem::mCondCaptivated;
 CondStructNew ConditionSystem::mCondHezrouStench;
 CondStructNew ConditionSystem::mCondHezrouStenchHit;
 
-
+int ConditionPreventWithArg(DispatcherCallbackArgs args);
+int ConditionOverrideBy(DispatcherCallbackArgs args);
 
 
 struct ConditionSystemAddresses : temple::AddressTable
@@ -338,6 +339,9 @@ public:
 		replaceFunction(0x100EAC10, BarbarianRageACPenalty);
 		
 		replaceFunction(0x100ECF30, ConditionPrevent);
+		replaceFunction(0x100ECF60, ConditionPreventWithArg);
+		replaceFunction(0x100ECFA0, ConditionOverrideBy);
+
 		replaceFunction(0x100EE050, GlobalGetArmorClass);
 		replaceFunction(0x100EE280, GlobalToHitBonus);
 		replaceFunction(0x100EE760, GlobalOnDamage);
@@ -663,17 +667,66 @@ int ConditionPrevent(DispatcherCallbackArgs args)
 	if (dispIO->condStruct == (CondStruct *)args.subDispNode->subDispDef->data1)
 	{
 		dispIO->outputFlag = 0;
+		return 0;
 	}
+
+	// Adding the following to accomodate CondStruct replacements (see extend_existing in python_dispatcher.cpp)
+	// Explanation:
+	// ToEE stores the actual CondStruct memory address instead of cond ID inside data1
+	// So we retrieve the name from the condstruct address
+	// and then fetch the up-to-date condition
+	auto refCond = (CondStruct *)args.subDispNode->subDispDef->data1;
+	if (!refCond)
+		return 0;
+	refCond = conds.GetByName(refCond->condName); // re-retrieve it via the NAME
+	if (refCond && dispIO->condStruct == refCond){
+		dispIO->outputFlag = 0;
+		return 0;
+	}
+
 	return 0;
 };
 
 int ConditionPreventWithArg(DispatcherCallbackArgs args)
 {
-	int arg1 = arg1 = conds.CondNodeGetArg(args.subDispNode->condNode, 0);
-	DispIoCondStruct *dispIo = dispatch.DispIoCheckIoType1((DispIoCondStruct *)args.dispIO);;
+	int arg1 = conds.CondNodeGetArg(args.subDispNode->condNode, 0);
+	DispIoCondStruct *dispIo = dispatch.DispIoCheckIoType1((DispIoCondStruct *)args.dispIO);
 	
-	if (dispIo->condStruct == (CondStruct *)args.subDispNode->subDispDef->data1 && dispIo->arg1 == arg1)
+	auto refCond = (CondStruct *)args.subDispNode->subDispDef->data1;
+	if (dispIo->condStruct == refCond && dispIo->arg1 == arg1){
 		dispIo->outputFlag = 0;
+		return 0;
+	}
+	
+	if (!refCond)
+		return 0;
+	refCond = conds.GetByName(refCond->condName); // re-retrieve it via the NAME
+	
+	if (dispIo->condStruct == refCond && dispIo->arg1 == arg1)
+		dispIo->outputFlag = 0;
+
+	return 0;
+}
+
+int ConditionOverrideBy(DispatcherCallbackArgs args){
+	DispIoCondStruct *dispIo = dispatch.DispIoCheckIoType1((DispIoCondStruct *)args.dispIO);
+	if (!dispIo)
+		return 0;
+	
+	auto refCond = (CondStruct *)args.subDispNode->subDispDef->data1;
+	if (dispIo->condStruct == refCond ) {
+		args.RemoveCondition();
+		return 0;
+	}
+
+	if (!refCond)
+		return 0;
+	refCond = conds.GetByName(refCond->condName); // re-retrieve it via the NAME
+	if (dispIo->condStruct == refCond) {
+		args.RemoveCondition();
+		return 0;
+	}
+
 	return 0;
 }
 
