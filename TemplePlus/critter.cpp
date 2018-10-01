@@ -1404,7 +1404,7 @@ int LegacyCritterSystem::GetEffectiveLevel(objHndl & objHnd)
 		racialHdCount = racialHd.GetCount();
 	}
 	else { // NPC
-		auto numDice = objSystem->GetObject(objHnd)->GetInt32(obj_f_npc_hitdice_idx, 0);
+		racialHdCount = objSystem->GetObject(objHnd)->GetInt32(obj_f_npc_hitdice_idx, 0);
 	}
 	lvl += lvlAdj + racialHdCount;
 	return lvl;
