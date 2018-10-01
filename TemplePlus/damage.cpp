@@ -166,7 +166,7 @@ void DamagePacket::CalcFinalDamage(){ // todo hook this
 
 			if (this->flags & 2) //empowered
 			{
-				dice.rolledDamage *= 1.5;
+				dice.rolledDamage = static_cast<int>(dice.rolledDamage * 1.5);
 			}
 		}
 	}
@@ -211,7 +211,7 @@ int DamagePacket::GetOverallDamageByType(DamageType damType)
 	if (damTot < 0.0)
 		damTot = 0.0;
 
-	return damTot;
+	return static_cast<int>(damTot);
 }
 
 int DamagePacket::AddModFactor(float factor, DamageType damType, int damageMesLine){
@@ -523,11 +523,15 @@ void Damage::DamageCritter(objHndl attacker, objHndl tgt, DispIoDamage & evtObjD
 }
 
 void Damage::Heal(objHndl target, objHndl healer, const Dice& dice, D20ActionType actionType) {
-	addresses.Heal(target, healer, dice.ToPacked(), actionType);
+	int healingBonus = d20Sys.D20QueryPython(healer, "Healing Bonus", 0);  //0 spell id for non-spell healing
+	Dice diceNew(dice.GetCount(), dice.GetSides(), dice.GetModifier() + healingBonus);
+	addresses.Heal(target, healer, diceNew.ToPacked(), actionType);
 }
 
 void Damage::HealSpell(objHndl target, objHndl healer, const Dice& dice, D20ActionType actionType, int spellId) {
-	addresses.HealSpell(target, healer, dice.ToPacked(), actionType, spellId);
+	int healingBonus = d20Sys.D20QueryPython(healer, "Healing Bonus", spellId);
+	Dice diceNew(dice.GetCount(), dice.GetSides(), dice.GetModifier() + healingBonus);
+	addresses.HealSpell(target, healer, diceNew.ToPacked(), actionType, spellId);
 }
 
 void Damage::HealSubdual(objHndl target, int amount) {

@@ -1,0 +1,5 @@
+ID_string: WOLVERINE_RAGE
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Barbarian Rage.tga
+help_topic: TAG_ROOT
+tooltip_base_text:Wolverine's Rage

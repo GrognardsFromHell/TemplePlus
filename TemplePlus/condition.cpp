@@ -1798,7 +1798,14 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 		else
 		{
 			int monkLvl = objects.StatLevelGet(args.objHndCaller, stat_level_monk);
-			attackDamageType = DamageType::Bludgeoning;
+			
+			attackDamageType = DamageType::Subdual;
+			if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_IMPROVED_UNARMED_STRIKE) > 0) {
+				//Note:  Bludgeoning is zero so this will be default if nothing answers the query
+				int nDamageType = d20Sys.D20QueryPython(args.objHndCaller, "Unarmed Damage Type");
+				attackDamageType = static_cast<DamageType>(nDamageType);
+			}
+			
 			damageMesLine = 113; // Unarmed
 
 			auto beltItem = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Lockpicks);
@@ -1817,7 +1824,6 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 				if (monkLvl <= 0)
 				{
 					attackDiceType = 2;
-					attackDamageType = DamageType::Subdual;
 				} else if (monkLvl < 4)
 				{
 					attackDiceType = 4;
@@ -1849,7 +1855,6 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 				if (monkLvl <= 0)
 				{
 					attackDiceType = 4;
-					attackDamageType = DamageType::Subdual;
 				}
 				else if (monkLvl < 4)
 				{
@@ -1886,7 +1891,6 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 				if (monkLvl <= 0)
 				{
 					attackDiceType = 3;
-					attackDamageType = DamageType::Subdual;
 				} else if (monkLvl < 4)
 				{
 					attackDiceType = 6;
@@ -5036,14 +5040,12 @@ int ClassAbilityCallbacks::DruidWildShapeInit(DispatcherCallbackArgs args){
 
 	args.SetCondArg(0, numTimes);
 
-	if (conds.AddTo(args.objHndCaller, conds.GetByName("Wild Shaped"), { numTimes, 0,0 }))
-	{
-		int dummy = 1;
-	} else
-	{
-		int dummy = 1;
+	// Add if the condition has not already been added.  The extender messes up things up if a query is not used and
+	// the condition can get added many times.
+	auto res = d20Sys.D20QueryPython(args.objHndCaller, "Wild Shaped Condition Added");
+	if (!res) {
+		conds.AddTo(args.objHndCaller, conds.GetByName("Wild Shaped"), { numTimes, 0,0 });
 	}
-
 
 	return 0;
 }
@@ -5215,12 +5217,12 @@ int ClassAbilityCallbacks::DruidWildShapeCheck(DispatcherCallbackArgs args){
 		if (spec.monCat == mc_type_elemental) {
 			numTimes = numTimes >> 8;
 			if (numTimes <= 0)
-				dispIo->returnVal = AEC_INVALID_ACTION;
+				dispIo->returnVal = AEC_OUT_OF_CHARGES;
 		}
 		else { // normal animal (or plant)
 			numTimes = numTimes & 0xFF;
 			if (numTimes <= 0)
-				dispIo->returnVal = AEC_INVALID_ACTION;
+				dispIo->returnVal = AEC_OUT_OF_CHARGES;
 		}
 	}
 
@@ -5321,8 +5323,10 @@ int ClassAbilityCallbacks::BardicMusicBeginRound(DispatcherCallbackArgs args){
 		switch (bmType)
 		{
 		case BM_INSPIRE_GREATNESS:
-			if (tgt)
-				conds.AddTo(tgt, "Greatness", {0,0,0,0});
+			if (tgt) {
+				int bonusRounds = d20Sys.D20QueryPython(args.objHndCaller, "Bardic Ability Duration Bonus");
+				conds.AddTo(tgt, "Greatness", { bonusRounds + 5,0,0,0 });
+			}
 			return 0;
 		case BM_INSPIRE_COURAGE: 
 			party.ApplyConditionAround(args.objHndCaller, 30, "Inspired_Courage", objHndl::null);
@@ -5343,8 +5347,10 @@ int ClassAbilityCallbacks::BardicMusicBeginRound(DispatcherCallbackArgs args){
 			return 0;
 		case BM_SONG_OF_FREEDOM: break; // TODO
 		case BM_INSPIRE_HEROICS: 
-			if (tgt)
-				conds.AddTo(tgt, "Inspired Heroics", {0,0,0,0});
+			if (tgt) {
+				int bonusRounds = d20Sys.D20QueryPython(args.objHndCaller, "Bardic Ability Duration Bonus");
+				conds.AddTo(tgt, "Inspired Heroics", { bonusRounds + 5,0,0,0 });
+			}
 		default: break;
 		}
 
@@ -5575,7 +5581,7 @@ int ClassAbilityCallbacks::BardMusicActionFrame(DispatcherCallbackArgs args){
 int ClassAbilityCallbacks::BardicMusicInspireRefresh(DispatcherCallbackArgs args){
 	GET_DISPIO(dispIoTypeCondStruct, DispIoCondStruct);
 	if (dispIo->condStruct == (CondStruct*)args.GetData1()){
-		args.SetCondArg(0, 5); // set duration to 5
+		args.SetCondArg(0, dispIo->arg1); // set duration to the old condition value
 		args.SetCondArg(1, 1);
 		dispIo->outputFlag = 0; // prevent adding a duplicate entry
 	}
@@ -5596,7 +5602,6 @@ int ClassAbilityCallbacks::BardicMusicInspireBeginRound(DispatcherCallbackArgs a
 
 int ClassAbilityCallbacks::BardicMusicInspireOnAdd(DispatcherCallbackArgs args)
 {
-	args.SetCondArg(0, 5); // set duration to 5 rounds
 	if (args.GetData2() == BM_INSPIRE_HEROICS)
 		args.SetCondArg(1, 0); // enabler flag; gets set to 1 on the Bard's turn (since it requires hearing the bard for a full round)
 	else

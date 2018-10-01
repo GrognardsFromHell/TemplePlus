@@ -254,9 +254,38 @@ uint32_t GetCourageBonus(objHndl objHnd)
 	return 4;
 };
 
+int BardicInspiredCourageInitGetBonusRounds()
+// Helper Function that finds the number of extra rounds to allow inspire courage to last after the bard stops singing
+{
+	int bonusRounds = 0;
+
+	// Find the highest level bard
+	auto brdLvl = 0;
+	objHndl highBardDude;
+	for (unsigned int i = 0; i<party.GroupListGetLen(); i++) {
+		auto dude = party.GroupListGetMemberN(i);
+		if (!dude)
+			continue;
+		auto dudeBrdLvl = objects.StatLevelGet(dude, stat_level_bard);
+		if (dudeBrdLvl > brdLvl) {
+			brdLvl = dudeBrdLvl;
+			highBardDude = dude;
+		}
+	}
+
+	// Query the highest level bard for the number of bonus rounds
+	if (brdLvl > 0) {
+		bonusRounds = d20Sys.D20QueryPython(highBardDude, "Bardic Ability Duration Bonus");
+	}
+
+	return bonusRounds;
+}
+
 uint32_t __cdecl BardicInspiredCourageInitArgs(DispatcherCallbackArgs args)
 {
-	conds.CondNodeSetArg(args.subDispNode->condNode, 0, 5);
+	auto bonusRounds = BardicInspiredCourageInitGetBonusRounds();
+	
+	conds.CondNodeSetArg(args.subDispNode->condNode, 0, 5 + bonusRounds);
 	conds.CondNodeSetArg(args.subDispNode->condNode, 1, 0);
 	auto courageBonus = 1;
 	if ( objects.IsCritter(args.objHndCaller) )
@@ -276,15 +305,17 @@ uint32_t __cdecl BardicInspiredCourageInitArgs(DispatcherCallbackArgs args)
 	return 0;
 };
 
+
 // Bardic Inspire Courage Function Replacements
 class BardicInspireCourageFix : public TempleFix
 {
 public:
-
+	static int BardicInspiredCourageRefresh(DispatcherCallbackArgs args);
 	static int BardicInspiredCourageToHit(DispatcherCallbackArgs args);
 	static int BardicInspiredCourageDamBon(DispatcherCallbackArgs args);
 	void apply() override
 	{
+		replaceFunction(0x100EA510, BardicInspiredCourageRefresh);
 		replaceFunction(0x100EA5C0, BardicInspiredCourageInitArgs);
 		replaceFunction(0x100EA5F0, BardicInspiredCourageToHit);
 		replaceFunction(0x100EA630, BardicInspiredCourageDamBon);
@@ -324,7 +355,7 @@ public:
 
 		isWalkOverride = true;
 		auto N = party.CurrentlySelectedNum();
-		for (auto i = 0; i < N; i++) {
+		for (int i = 0; i < static_cast<int>(N); i++) {
 			auto dude = party.GetCurrentlySelected(i);
 			if (!dude)
 				continue;
@@ -546,6 +577,8 @@ int BardicInspireCourageFix::BardicInspiredCourageToHit(DispatcherCallbackArgs a
 			bonVal = 2;
 		else if (brdLvl < 20) 
 			bonVal = 3;
+		else
+			bonVal = 4;
 	}
 	dispIo->bonlist.AddBonus(bonVal, 13, 191);
 	return 0;
@@ -575,8 +608,23 @@ int BardicInspireCourageFix::BardicInspiredCourageDamBon(DispatcherCallbackArgs 
 			bonVal = 2;
 		else if (brdLvl < 20)
 			bonVal = 3;
+		else
+			bonVal = 4;
 	}
 	dispIo->damage.AddDamageBonus(bonVal, 13, 191);
+	return 0;
+}
+
+int BardicInspireCourageFix::BardicInspiredCourageRefresh(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIoTypeCondStruct, DispIoCondStruct);
+	if (dispIo->condStruct == (CondStruct*)args.GetData1()) {
+		auto bonusRounds = BardicInspiredCourageInitGetBonusRounds();
+
+		args.SetCondArg(0, 5+ bonusRounds); // set duration to the old condition value
+		args.SetCondArg(1, 1);
+		dispIo->outputFlag = 0; // prevent adding a duplicate entry
+	}
 	return 0;
 }
 
