@@ -2923,7 +2923,9 @@ void UiPcCreation::RenderCharDimensions(int widId){
 void UiPcCreation::RenderCharExpLvl(int widId) {
 	auto &selPkt = GetCharEditorSelPacket();
 
-	if (GetEditedChar() && GetStatesComplete() >= ChargenStages::CG_Stage_Class && selPkt.classCode){
+	auto editedChar = GetEditedChar();
+
+	if (editedChar && GetStatesComplete() >= ChargenStages::CG_Stage_Class && selPkt.classCode){
 		if (!modSupport.IsCo8()){ // Co8 replaced the text with the background image
 			DrawTextInWidgetCentered(widId,
 				d20Stats.GetStatShortName(Stat::stat_experience),
@@ -2935,8 +2937,9 @@ void UiPcCreation::RenderCharExpLvl(int widId) {
 		DrawTextInWidgetCentered(widId,
 			d20Stats.GetStatShortName(Stat::stat_level),
 			TigRect(134, 268, 37, 14), blackTextGenericStyle);
+		auto lvl = critterSys.GetEffectiveLevel(editedChar);
 		DrawTextInWidgetCentered(widId,
-			"1", TigRect(177, 269, 24, 12), whiteTextGenericStyle);
+			fmt::format("{}", lvl), TigRect(177, 269, 24, 12), whiteTextGenericStyle);
 	}
 	else {
 		UiRenderer::DrawTextureInWidget(widId, temple::GetRef<int>(0x10BDD41C),

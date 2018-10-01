@@ -97,6 +97,10 @@ public:
 	static void AlignGenderRaceBtnRender(int widId);
 	#pragma endregion 
 
+#pragma region Stats Wnd
+	static int StatsLvlBtnRenderHook(objHndl handle);
+#pragma endregion
+
 	#pragma region Spellbook functions
 	static BOOL MemorizeSpellMsg(int widId, TigMsg* tigMsg);
 	static BOOL (*orgMemorizeSpellMsg)(int widId, TigMsg* tigMsg);
@@ -312,6 +316,10 @@ void CharUiSystem::AlignGenderRaceBtnRender(int widId){
 	TigRect rect(x, btn->y, textMeas.width, textMeas.height);
 	UiRenderer::RenderText(text, rect, style);
 	UiRenderer::PopFont();
+}
+
+int CharUiSystem::StatsLvlBtnRenderHook(objHndl handle){
+	return critterSys.GetEffectiveLevel(handle);
 }
 
 BOOL CharUiSystem::MemorizeSpellMsg(int widId, TigMsg* tigMsg){
@@ -1276,7 +1284,7 @@ void CharUiSystem::apply(){
 
 	}
 
-
+	writeCall(0x101C1F98, StatsLvlBtnRenderHook);
 
 	int charSheetAttackCodeForAttackBonusDisplay = 1 + ATTACK_CODE_OFFHAND;
 	write(0x101C45F3 + 7, &charSheetAttackCodeForAttackBonusDisplay, sizeof(int));
