@@ -498,7 +498,7 @@ public:
 
 void MainLoopHooks::NormalLmbHandleTarget(objHndl * tgt)
 {
-	locXY tgtLoc;
+	locXY tgtLoc = LocAndOffsets::null.location;
 
 	auto leader = party.GetConsciousPartyLeader();
 	auto chosenOne = leader;

@@ -49,6 +49,10 @@ public:
 			return inventory.ItemInsertGetLocation(item, receiver, itemInsertLoc, bag, flags);
 		});
 
+		replaceFunction<objHndl(__cdecl)(objHndl, uint32_t)>(0x100651B0, [](objHndl handle, uint32_t idx){
+			return inventory.GetItemAtInvIdx(handle, idx);
+		});
+
 		// PoopItems
 		replaceFunction<void (objHndl, int)>(0x1006DA00, [](objHndl obj, int unflagNoTransfer)	{
 			auto objType = objects.GetType(obj);
@@ -119,6 +123,37 @@ int(__cdecl*InventoryHooks::orgItemInsertGetLocation)(objHndl, objHndl, int*, ob
 
 bool InventorySystem::IsInvIdxWorn(int invIdx){
 	return invIdx >= INVENTORY_WORN_IDX_START && invIdx <= INVENTORY_WORN_IDX_END;
+}
+
+objHndl InventorySystem::GetItemAtInvIdx(objHndl handle, uint32_t nIdx){
+	auto invenField = obj_f_begin;  
+	auto invenNumField = obj_f_begin;  inventory.GetInventoryNumField(handle);
+	if (objects.IsCritter(handle)){
+		if (d20Sys.d20Query(handle, DK_QUE_Polymorphed))
+			return objHndl::null;
+		invenField = inventory.GetInventoryListField(handle);
+		invenNumField = inventory.GetInventoryNumField(handle);
+	}
+	else{
+		invenField = inventory.GetInventoryListField(handle);
+		invenNumField = inventory.GetInventoryNumField(handle);
+	}
+	auto obj = objSystem->GetObject(handle);
+	auto numItems = obj->GetInt32(invenNumField);
+			
+	for (auto i=0; i < numItems; i++){
+		auto item = obj->GetObjHndl(invenField, i);
+		if (!item) {
+			logger->debug("obj {} name {} contains null object", handle, obj->GetInt32(obj_f_name));
+		}
+		else if (!objects.IsEquipment(item)){
+			auto itemName = objects.getInt32(item, obj_f_name);
+			logger->debug("obj {} name {} contains object {} name {}", handle, obj->GetInt32(obj_f_name), item, itemName);
+		}
+		if (inventory.GetInventoryLocation(item) == nIdx)
+			return item;
+	}
+	return objHndl::null;
 }
 
 objHndl InventorySystem::FindMatchingStackableItem(objHndl receiver, objHndl item){
@@ -505,17 +540,16 @@ std::vector<objHndl> InventorySystem::GetInventory(objHndl handle){
 	return result;
 }
 
-int InventorySystem::GetInventoryLocation(objHndl item)
+int InventorySystem::GetInventoryLocation(objHndl item){
+	if (!item){
+		logger->error("GetInventoryLocation: called on null item!");
+		return 0;
+	}
 
-{
-	if(item && objects.IsEquipment(item))
-		return objects.getInt32(item, obj_f_item_inv_location);
-	
-	logger->error("Item: item_parent: ERROR: Called on non-item!\n");
-	if (item)
-		return objects.getInt32(item, obj_f_item_inv_location);
-	return 0;
-	
+	if(!objects.IsEquipment(item)){
+		logger->error("Item: item_parent: ERROR: Called on non-item!\n");
+	}	
+	return objects.getInt32(item, obj_f_item_inv_location);
 }
 
 ItemFlag InventorySystem::GetItemFlags(objHndl item)

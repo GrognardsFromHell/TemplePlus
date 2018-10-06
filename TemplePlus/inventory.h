@@ -66,7 +66,7 @@ struct InventorySystem : temple::AddressTable
 	static bool IsInvIdxWorn(int invIdx); // does the inventory index refer to a designated "worn item" slot?
 
 	objHndl(__cdecl *GetSubstituteInventory)  (objHndl);
-	objHndl(__cdecl *GetItemAtInvIdx)(objHndl, uint32_t nIdx); // returns the item at obj_f_critter_inventory subIdx nIdx  (or obj_f_container_inventory for containers); Note the difference to ItemWornAt! (this is a more low level function)
+	objHndl GetItemAtInvIdx(objHndl, uint32_t nIdx); // returns the item at obj_f_critter_inventory subIdx nIdx  (or obj_f_container_inventory for containers); Note the difference to ItemWornAt! (this is a more low level function)
 	objHndl FindMatchingStackableItem(objHndl objHndReceiver, objHndl objHndItem);
 	void WieldBest(objHndl handle, int invSlot, objHndl target);
 	
@@ -206,7 +206,7 @@ struct InventorySystem : temple::AddressTable
 	InventorySystem()
 	{
 		rebase(GetSubstituteInventory, 0x1007F5B0);
-		rebase(GetItemAtInvIdx, 0x100651B0);
+		//rebase(GetItemAtInvIdx, 0x100651B0);
 		rebase(_ItemWornAt,      0x10065010);
 		rebase(_GetWieldType,    0x10066580);
 		//rebase(FindMatchingStackableItem, 0x10067DF0);
