@@ -1,0 +1,5 @@
+name: Greater Powerful charge
+flags: 12582928
+prereqs: 266 4
+description: As Powerful Charge, but treat yourself as one size category larger than you are. For Colossal creatures, the extra 6d6 points of damage bonus becomes 8d6.
+prereq descr: Powerful Charge Feat, Base Attack Bonus +4 and medium or larger

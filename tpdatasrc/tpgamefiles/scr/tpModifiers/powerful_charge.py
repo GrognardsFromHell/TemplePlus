@@ -1,10 +1,10 @@
-#Powerful Charge:  Miniatures Handbook, p. 27
+#Powerful Charge and Greater Powerful Charge:  Miniatures Handbook, p. 27
 
 from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
 
-print "Registering Powerful Charge"
+print "Registering Powerful Charge and Greater Powerful Charge"
 
 def PowerfulChargeBeginRound(attachee, args, evt_obj):
 	# Reset the already used this round flag
@@ -12,16 +12,12 @@ def PowerfulChargeBeginRound(attachee, args, evt_obj):
 	return 0
 
 def PowerfulChargeDamageBonus(attachee, args, evt_obj):
-
-	print "Powerful Charge Damage Bonus"
-
 	# already used this round, do nothing
 	if args.get_arg(0):
 		return 0
 
 	#Must be charging 
 	charging = attachee.d20_query("Charging")
-	
 	if charging == 0:
 		return 0
 	
@@ -30,6 +26,10 @@ def PowerfulChargeDamageBonus(attachee, args, evt_obj):
 	#Size must be medium or larger
 	if (size > STAT_SIZE_COLOSSAL) or (size < STAT_SIZE_MEDIUM):
 		return 0
+	
+	#One extra size category for greater powerful charge
+	if attachee.has_feat("Greater Powerful Charge"):
+		size = size + 1
 		
 	#Damage Dice determined based on size
 	if size == STAT_SIZE_MEDIUM:
@@ -47,9 +47,12 @@ def PowerfulChargeDamageBonus(attachee, args, evt_obj):
 	elif size == STAT_SIZE_GARGANTUAN:
 		diceString = '1d6'
 		numDice = 5
-	else:  #STAT_SIZE_COLOSSAL
+	elif size == STAT_SIZE_COLOSSAL:
 		diceString = '1d6'
 		numDice = 6
+	else:  #Colossal with powerful charge
+		diceString = '1d6'
+		numDice = 8
 		
 	damage_dice = dice_new(diceString)
 	damage_dice.number = numDice
