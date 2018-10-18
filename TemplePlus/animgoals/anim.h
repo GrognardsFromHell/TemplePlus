@@ -229,7 +229,7 @@ private:
 	// Fixed size array of 512 slots
 	AnimSlotArray& mSlots = temple::GetRef<AnimSlotArray>(0x118CE520);
 
-	AnimSlotId* &animIdGlobal = temple::GetRef<AnimSlotId*>(0x102AC880);
+	AnimSlotId &animIdGlobal = temple::GetRef<AnimSlotId>(0x102AC880);
 
 	int &animSysIsLoading = temple::GetRef<int>(0x10AA4BB8);
 
