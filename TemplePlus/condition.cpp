@@ -364,6 +364,12 @@ public:
 		replaceFunction(0x100F8940, TwoWeaponFightingBonusRanger);
 		replaceFunction(0x100FEBA0, BarbarianDamageResistance);
 
+		//Subdual and lethal damage checkboxes
+		replaceFunction(0x100F8DA0, NonlethalDamageRadial);
+		replaceFunction(0x100F8ED0, NonlethalDamageSetSubdual);
+		replaceFunction(0x100F8F70, DealNormalDamageCallback);
+		
+
 		
 		replaceFunction(0x10101150, ItemSkillBonusCallback);
 
@@ -3052,6 +3058,48 @@ int BarbarianRageSaveBonus(DispatcherCallbackArgs args)
 		if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_INDOMITABLE_WILL, (Stat)0, 0))
 			bonusSys.bonusAddToBonusList(&dispIo->bonlist, 4, 0, 344); // Indomitable Will
 	}
+	return 0;
+}
+
+int NonlethalDamageRadial(DispatcherCallbackArgs args)
+{
+	// Check for a weapon or the improved unarmed strike feat
+	if ( _GetAttackWeapon(args.objHndCaller, 1, D20CAF_NONE) || feats.HasFeatCountByClass(args.objHndCaller, FEAT_IMPROVED_UNARMED_STRIKE)) {
+		RadialMenuEntryToggle radEntry(5014, args.GetCondArgPtr(0), "TAG_RADIAL_MENU_NONLETHAL_DAMAGE");
+		radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Options);
+	}
+
+    return 0;
+}
+
+int NonlethalDamageSetSubdual(DispatcherCallbackArgs args)
+{
+	//First check if subdual damage is turned on
+	if (args.GetCondArg(0)) {
+
+		auto dispIo = dispatch.DispIoCheckIoType4(args.dispIO);
+
+		//If a weapon is used or the attacker has the improved unarmed strike feat and not a ranged attack then change to subdual
+		if ((dispIo->attackPacket.GetWeaponUsed() || feats.HasFeatCountByClass(args.objHndCaller, FEAT_IMPROVED_UNARMED_STRIKE)) && 
+			!(dispIo->attackPacket.flags & D20CAF_RANGED)) {
+			for (int i = 0; i < dispIo->damage.diceCount; i++) {
+				dispIo->damage.dice[i].type = DamageType::Subdual;
+			}
+		}
+	}
+
+	return 0;
+}
+
+int DealNormalDamageCallback(DispatcherCallbackArgs args)
+{
+	// No weapon and doesn't have the improved unarmed strike feat
+	if (!_GetAttackWeapon(args.objHndCaller, 1, D20CAF_NONE) && !feats.HasFeatCountByClass(args.objHndCaller, FEAT_IMPROVED_UNARMED_STRIKE)) {
+
+		RadialMenuEntryToggle radEntry(5015, args.GetCondArgPtr(0), "TAG_RADIAL_MENU_NONLETHAL_DAMAGE");
+		radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Options);
+	}
+
 	return 0;
 }
 
