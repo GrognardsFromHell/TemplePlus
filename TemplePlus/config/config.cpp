@@ -180,7 +180,8 @@ static ConfigSetting configSettings[] = {
 	CONF_BOOL(fastSneakAnim),
 	CONF_BOOL(alertAiThroughDoors),
 	CONF_INT(walkDistanceFt),
-	CONF_BOOL(newAnimSystem)
+	CONF_BOOL(newAnimSystem),
+	CONF_BOOL(upscaleLinearFiltering)
 };
 
 void TemplePlusConfig::Load() {
