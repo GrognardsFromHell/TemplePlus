@@ -3082,8 +3082,20 @@ int NonlethalDamageSetSubdual(DispatcherCallbackArgs args)
 		//If a weapon is used or the attacker has the improved unarmed strike feat and not a ranged attack then change to subdual
 		if ((dispIo->attackPacket.GetWeaponUsed() || feats.HasFeatCountByClass(args.objHndCaller, FEAT_IMPROVED_UNARMED_STRIKE)) && 
 			!(dispIo->attackPacket.flags & D20CAF_RANGED)) {
-			for (int i = 0; i < dispIo->damage.diceCount; i++) {
-				dispIo->damage.dice[i].type = DamageType::Subdual;
+			
+			// Convert all physical damage to subudal.  Fire and other special damage types are excluded.  
+			// The game originally converted only the first dice for all damage types.  This will work 
+			// more correctly for feats that add bonus damage dice.
+			for (unsigned int i = 0; i < dispIo->damage.diceCount; i++) {
+				if ((dispIo->damage.dice[i].type == DamageType::Bludgeoning) || 
+					(dispIo->damage.dice[i].type == DamageType::Piercing) ||
+					(dispIo->damage.dice[i].type == DamageType::Slashing) || 
+					(dispIo->damage.dice[i].type == DamageType::BludgeoningAndPiercing) ||
+					(dispIo->damage.dice[i].type == DamageType::PiercingAndSlashing) ||
+					(dispIo->damage.dice[i].type == DamageType::SlashingAndBludgeoning) ||
+					(dispIo->damage.dice[i].type == DamageType::SlashingAndBludgeoningAndPiercing)) {
+					dispIo->damage.dice[i].type = DamageType::Subdual;
+				}
 			}
 		}
 	}
@@ -3095,7 +3107,6 @@ int DealNormalDamageCallback(DispatcherCallbackArgs args)
 {
 	// No weapon and doesn't have the improved unarmed strike feat
 	if (!_GetAttackWeapon(args.objHndCaller, 1, D20CAF_NONE) && !feats.HasFeatCountByClass(args.objHndCaller, FEAT_IMPROVED_UNARMED_STRIKE)) {
-
 		RadialMenuEntryToggle radEntry(5015, args.GetCondArgPtr(0), "TAG_RADIAL_MENU_NONLETHAL_DAMAGE");
 		radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Options);
 	}
