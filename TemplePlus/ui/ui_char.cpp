@@ -567,12 +567,20 @@ void CharUiSystem::SpellsShow(objHndl obj)
 		} 
 		else if(clericLvl > 0) // domain spell
 		{
+			auto &domainSpellPacket = navClassPackets[i];
 			auto maxClericSpellLvl = d20ClassSys.ClericMaxSpellLvl(clericLvl);
 			if (maxClericSpellLvl >= 1)	{
 				for (int j = 1; j <= maxClericSpellLvl; j++) {
-					navClassPackets[i].numSpellsForLvl[j] = 1;
+					domainSpellPacket.numSpellsForLvl[j] = 1;
 				}
-			}	
+			}
+			auto race = critterSys.GetRace(dude, false);
+			auto racialSpells = d20RaceSys.GetSpellLikeAbilities(race);
+			for (auto it:racialSpells){
+				auto &spell = it.first;
+				auto specifiedCount = it.second;
+				domainSpellPacket.numSpellsForLvl[spell.spellLevel] += specifiedCount;				
+			}
 		}
 
 
