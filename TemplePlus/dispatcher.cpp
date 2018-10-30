@@ -411,6 +411,15 @@ bool DispatcherSystem::Dispatch64ImmunityCheck(objHndl handle, DispIoImmunity* d
 	return 0;
 }
 
+void DispatcherSystem::Dispatch68ItemRemove(objHndl handle){
+	if (!handle)
+		return;
+	auto dispatcher = objSystem->GetObject(handle)->GetDispatcher();
+	if (dispatcher->IsValid()){
+		DispatcherProcessor(dispatcher, dispTypeItemForceRemove, 0, nullptr);
+	}
+}
+
 DispIoObjEvent* DispatcherSystem::DispIoCheckIoType17(DispIO* dispIo)
 {
 	if (dispIo->dispIOType != dispIoTypeObjEvent)
