@@ -47,7 +47,7 @@ def HasLightArmorNoShield(obj):
 
 def DeadlyDefenseDamageBonus(attachee, args, evt_obj):
 
-	#Really checking for total defnese or fighting defensively but it should not cause an issue
+	#Check for fighting defensively
 	IsFightingDefensively = attachee.d20_query(Q_FightingDefensively)
 	
 	#Combat Expertise Penalty >= 2 will also trigger the bonus
