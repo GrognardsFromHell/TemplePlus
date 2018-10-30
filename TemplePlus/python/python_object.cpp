@@ -942,7 +942,7 @@ static PyObject * PyObjHandle_InventoryItem(PyObject* obj, PyObject* args) {
 	int invFieldType = inventory.GetInventoryListField(self->handle);
 	int n = 0;
 	if (PyArg_ParseTuple(args, "i", &n)){
-		int nMax = CRITTER_MAX_ITEMS + 100; // PLACEHOLDER!
+		int nMax = 199; // PLACEHOLDER!
 		if (invFieldType == obj_f_container_inventory_list_idx){
 			nMax = CONTAINER_MAX_ITEMS;
 		}
