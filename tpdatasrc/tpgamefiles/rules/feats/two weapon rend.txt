@@ -1,0 +1,5 @@
+name: Two-Weapon Rend
+flags: 12582928
+prereqs: 266 11 
+description: If you successfully hit an opponent with both of the weapons you wield, you deal extra damage equal to 1d6 + 1-1/2 times your Strength bonus. This extra damage is treated as the same type that your off-hand weapon deals normally for the purpose of overcoming damage reduction and other effects related to damage type. You can gain this extra damage once per round against a given opponent.
+prereq descr: Two-Weapon Fighting, Dex 15, base attack bonus +11
