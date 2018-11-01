@@ -46,9 +46,8 @@ def HasLightArmorNoShield(obj):
 	return 1
 
 def DeadlyDefenseDamageBonus(attachee, args, evt_obj):
-
-	#Check for fighting defensively
-	IsFightingDefensively = attachee.d20_query(Q_FightingDefensively)
+	#Test the check box for fighting defensively only (the ability won't be active yet on the first attack)
+	IsFightingDefensively = attachee.d20_query("Fighting Defensively Checked")
 	
 	#Combat Expertise Penalty >= 2 will also trigger the bonus
 	CombatExpertiseValue = attachee.d20_query("Combat Expertise Value")

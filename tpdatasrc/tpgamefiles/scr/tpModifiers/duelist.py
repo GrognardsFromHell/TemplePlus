@@ -158,8 +158,8 @@ def ElaborateParry(attachee, args, evt_obj):
 	duelistLvl = attachee.stat_level_get(classEnum)
 	if duelistLvl < 7:
 		return 0
-		
-	if not attachee.d20_query(Q_FightingDefensively) and not attachee.d20_query("Total Defense"): # this also covers Total Defense
+	
+	if not attachee.d20_query(Q_FightingDefensively): # this also covers Total Defense
 		return 0
 	
 	evt_obj.bonus_list.add(duelistLvl , 8, 137) # Dodge bonus,  ~Class~[TAG_LEVEL_BONUSES]
