@@ -203,12 +203,14 @@ esd_load_result MapSystemHooks::fog_esd_load(uint64_t sectorLoc, explored_sector
 		buffer->allExplored = 1;
 		return esd_load_result::FULLY_EXPLORED;
 	case SectorExplorationState::PartiallyExplored:
+		buffer->allExplored = 0;
 		for (size_t i = 0; i < sizeof(buffer->exploredBitmap); ++i) {
 			buffer->exploredBitmap[i] = data.explorationBitmap[i];
 		}
 		return esd_load_result::PARTIALLY_EXPLORED;
 	default:
 	case SectorExplorationState::Unexplored:
+		buffer->allExplored = 0;
 		return esd_load_result::FULLY_UNEXPLORED;
 	}
 }
