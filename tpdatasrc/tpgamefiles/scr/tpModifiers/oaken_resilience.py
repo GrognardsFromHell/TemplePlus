@@ -118,6 +118,17 @@ def OakenResilienceAddPre(attachee, args, evt_obj):
 		
 	return 0
 
+	
+def OakenResilienceTripDefenseBonus(attachee, args, evt_obj):
+	# not active, do nothing
+	if not args.get_arg(0):
+		return 0
+	
+	#Check that this is a trip before applying the bonus
+	if (evt_obj.flags & 1 and evt_obj.flags & 2):
+		evt_obj.bonus_list.add(8, 0, "Oaken Resilience") # untyped
+	
+	return 0
 
 #Setup the feat
 OakenResilienceFeat = PythonModifier("Oaken Resilience Feat", 2) # spare, spare
@@ -134,5 +145,6 @@ OakenResilienceEffect.AddHook(ET_OnGetEffectTooltip, EK_NONE, OakenResilienceEff
 OakenResilienceEffect.AddHook(ET_OnD20Query, EK_Q_Critter_Is_Immune_Critical_Hits, OakenResilienceCriticalImmunity, ())
 OakenResilienceEffect.AddHook(ET_OnD20Query, EK_Q_Critter_Is_Immune_Poison, OakenResiliencePoisonImmunity, ())
 OakenResilienceEffect.AddHook(ET_OnConditionAddPre, EK_NONE, OakenResilienceAddPre, ())
-
+OakenResilienceEffect.AddHook(ET_OnGetAbilityCheckModifier, EK_STAT_DEXTERITY, OakenResilienceTripDefenseBonus, ())
+OakenResilienceEffect.AddHook(ET_OnGetAbilityCheckModifier, EK_STAT_STRENGTH, OakenResilienceTripDefenseBonus, ())
 
