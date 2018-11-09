@@ -1274,7 +1274,7 @@ void AnimSystem::SaveToMap(std::string_view mapName)
     if (vfs->Write(&slotCount, sizeof(int), fh) != sizeof(int)) {
         throw TempleException("Failed writing out the number of slots");
     }
-
+	vfs->Close(fh);
 }
 
 // Originally @ 0x1000c760
