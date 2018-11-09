@@ -87,7 +87,7 @@ bool AnimSystem::PushFidgetInternal(objHndl handle) {
 		AnimSlotGoalStackEntry goalData;
 		if (!goalData.InitWithInterrupt(handle, ag_anim_fidget))
 			return false;
-		return goalData.Push(animIdGlobal);
+		return goalData.Push(&animIdGlobal);
 	}
 
 	return false;
@@ -380,11 +380,11 @@ bool AnimSystem::PushMoveToTile(objHndl handle, LocAndOffsets loc){
         return PushRunToTile(handle, loc);
     }
 	    
-    if (!gameSystems->GetAnim().DoesObjHaveGoal(handle, ag_move_to_tile, animIdGlobal)) {
+    if (!gameSystems->GetAnim().DoesObjHaveGoal(handle, ag_move_to_tile, &animIdGlobal)) {
         AnimSlotGoalStackEntry goalData(handle, ag_move_to_tile);
         goalData.targetTile.location = loc;
         if (Interrupt(handle, AnimGoalPriority::AGP_3, false))
-            if (goalData.Push(animIdGlobal)) {
+            if (goalData.Push(&animIdGlobal)) {
                 return true;
             }
         return false;
@@ -394,7 +394,7 @@ bool AnimSystem::PushMoveToTile(objHndl handle, LocAndOffsets loc){
     goalData.targetTile.location = loc;
     if (!Interrupt(handle, AnimGoalPriority::AGP_3, false))
         return true;
-    goalData.Push(animIdGlobal);
+    goalData.Push(&animIdGlobal);
     return true;
 }
 
