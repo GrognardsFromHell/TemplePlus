@@ -252,7 +252,7 @@ def DefStanceEffectTooltip(attachee, args, evt_obj):
 	if IsWinded(args):
 		evt_obj.append(154, -2, "Winded (" + str(args.get_arg(2)) + " rounds)")
 		return 0
-	evt_obj.append(53, -2, "Defensive Stance (" + str(args.get_arg(2)) + " rounds)")
+	evt_obj.append(tpdp.hash("DWARVEN_DEFENDER_STANCE"), -2, " (" + str(args.get_arg(2)) + " rounds)")
 	return 0
 
 defStance = PythonModifier("Defensive Stance", 4) # arg0 - is active ; arg1 - number of times used this day ; arg2 - rounds remaining ; arg3 - is in winded state

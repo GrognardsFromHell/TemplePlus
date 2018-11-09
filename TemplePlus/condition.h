@@ -338,6 +338,10 @@ int BarbarianRageSaveBonus(DispatcherCallbackArgs args);
 int BarbarianRageACPenalty(DispatcherCallbackArgs args);
 int BarbarianDamageResistance(DispatcherCallbackArgs args);
 
+int NonlethalDamageRadial(DispatcherCallbackArgs args);
+int DealNormalDamageCallback(DispatcherCallbackArgs args);
+int NonlethalDamageSetSubdual(DispatcherCallbackArgs args);
+
 int DisarmedOnAdd(DispatcherCallbackArgs args);
 int DisarmedRetrieveQuery(DispatcherCallbackArgs args);
 int DisarmRadialMenu(DispatcherCallbackArgs args);
