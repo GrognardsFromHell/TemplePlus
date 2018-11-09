@@ -192,6 +192,21 @@ uint32_t LegacyCritterSystem::AddFollower(objHndl npc, objHndl pc, int unkFlag, 
 	return addresses.AddFollower(npc, pc, unkFlag, asAiFollower);
 }
 
+bool LegacyCritterSystem::FollowerAtMax(){
+	auto followers = party.GroupNPCFollowersLen();
+	auto pcs = party.GroupPCsLen();
+	auto res = false;
+	if (config.maxPCsFlexible)
+	{
+		res = (followers + pcs >= PARTY_SIZE_MAX) || followers >= PARTY_NPC_SIZE_MAX;
+	}
+	else {
+
+		res = (followers >= PARTY_SIZE_MAX - (uint32_t)config.maxPCs) || followers >= PARTY_NPC_SIZE_MAX;
+	}
+	return res;
+}
+
 uint32_t LegacyCritterSystem::RemoveFollower(objHndl npc, int forceFollower) {
 	return addresses.RemoveFollower(npc, forceFollower);
 }

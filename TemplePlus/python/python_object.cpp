@@ -776,6 +776,11 @@ static PyObject* PyObjHandle_FollowerAdd(PyObject* obj, PyObject* args) {
 	if (!self->handle) {
 		return PyInt_FromLong(0);
 	}
+	
+	if (critterSys.FollowerAtMax()) {
+		return PyInt_FromLong(false);
+	}
+
 	objHndl follower;
 	if (!PyArg_ParseTuple(args, "O&:objhndl.follower_add", &ConvertObjHndl, &follower)) {
 		return 0;
@@ -799,13 +804,8 @@ static PyObject* PyObjHandle_FollowerRemove(PyObject* obj, PyObject* args) {
 
 
 static PyObject* PyObjHandle_FollowerAtMax(PyObject* obj, PyObject* args) {
-	auto followers = party.GroupNPCFollowersLen();
-	auto pcs = party.GroupPCsLen();
-	if (config.maxPCsFlexible)
-	{
-		return PyInt_FromLong( (followers + pcs >= PARTY_SIZE_MAX) || followers >= 5 );
-	}
-	return PyInt_FromLong((followers >= PARTY_SIZE_MAX - (uint32_t) config.maxPCs) || followers >= 5);
+	auto res = critterSys.FollowerAtMax();
+	return PyInt_FromLong(res);
 }
  
 static PyObject* PyObjHandle_AiFollowerAdd(PyObject* obj, PyObject* args) {

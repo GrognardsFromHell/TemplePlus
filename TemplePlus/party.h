@@ -5,6 +5,7 @@
 #include "skill.h"
 
 #define PARTY_SIZE_MAX 8 // PCs and NPCs
+#define PARTY_NPC_SIZE_MAX 5 // max number of controllable NPCs. Above this causes crash in the logbook system IIRC
 
 struct LegacyPartySystem : temple::AddressTable
 {

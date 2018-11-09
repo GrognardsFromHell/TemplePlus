@@ -100,6 +100,7 @@ struct LegacyCritterSystem : temple::AddressTable
 		Unk Flag could mean -> Add their NPC followers to the group as well
 	*/
 	uint32_t AddFollower(objHndl npc, objHndl pc, int unkFlag, bool asAiFollower);
+	bool FollowerAtMax(); // is at max number of controllable followers
 
 	/*
 		Unk Flag could mean -> Remove their NPC followers to the group as well
