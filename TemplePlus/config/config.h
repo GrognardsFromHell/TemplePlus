@@ -45,6 +45,7 @@ struct TemplePlusConfig
 	int windowHeight = 768;
 	int renderWidth = 800; // will set to window size on first run
 	int renderHeight = 600;
+	bool upscaleLinearFiltering = true;
 	std::wstring toeeDir;
 	int sectorCacheSize = 128; // Default is now 128 (ToEE was 16)
 	int screenshotQuality = 80; // 1-100, Default is 80
