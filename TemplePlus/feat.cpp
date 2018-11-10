@@ -1023,7 +1023,8 @@ char* LegacyFeatSystem::GetFeatDescription(feat_enums feat)
 	if (feat >= FEAT_NONE
 		|| feat == FEAT_IMPROVED_DISARM
 		|| feat ==  FEAT_GREATER_WEAPON_SPECIALIZATION
-		|| feat == FEAT_IMPROVED_SUNDER)
+		|| feat == FEAT_IMPROVED_SUNDER
+		|| feat == FEAT_GREATER_TWO_WEAPON_FIGHTING)
 		getLineResult = mesFuncs.GetLine(feats.featMesNew, &mesLine) == 0;
 	else
 		getLineResult = mesFuncs.GetLine(*feats.featMes, &mesLine) == 0;
@@ -1046,7 +1047,8 @@ char* LegacyFeatSystem::GetFeatPrereqDescription(feat_enums feat)
 		|| feat == FEAT_IMPROVED_DISARM
 		|| feat == FEAT_GREATER_WEAPON_SPECIALIZATION
 		|| feat == FEAT_IMPROVED_SUNDER
-		|| feat == FEAT_STUNNING_FIST)
+		|| feat == FEAT_STUNNING_FIST
+		|| feat == FEAT_GREATER_TWO_WEAPON_FIGHTING)
 		mesHnd = &feats.featMesNew;
 
 	

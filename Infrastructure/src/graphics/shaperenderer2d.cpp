@@ -31,6 +31,7 @@ struct ShapeRenderer2d::Impl {
 	Material texturedWithoutBlendingMaterial;
 	Material texturedWithMaskMaterial;
 	SamplerStatePtr samplerWrapState;
+	SamplerStatePtr samplerClampPointState;
 	SamplerStatePtr samplerClampState;
 	DepthStencilStatePtr noDepthState;
 
@@ -64,6 +65,14 @@ ShapeRenderer2d::Impl::Impl(RenderingDevice &device)
 	samplerWrapSpec.magFilter = TextureFilterType::Linear;
 	samplerWrapSpec.mipFilter = TextureFilterType::Linear;
 	samplerWrapState = device.CreateSamplerState(samplerWrapSpec);
+
+	SamplerSpec samplerClampPointSpec;
+	samplerClampPointSpec.addressU = TextureAddress::Clamp;
+	samplerClampPointSpec.addressV = TextureAddress::Clamp;
+	samplerClampPointSpec.minFilter = TextureFilterType::NearestNeighbor;
+	samplerClampPointSpec.magFilter = TextureFilterType::NearestNeighbor;
+	samplerClampPointSpec.mipFilter = TextureFilterType::NearestNeighbor;
+	samplerClampPointState = device.CreateSamplerState(samplerClampPointSpec);
 
 	SamplerSpec samplerClampSpec;
 	samplerClampSpec.addressU = TextureAddress::Clamp;
@@ -157,7 +166,7 @@ ShapeRenderer2d::ShapeRenderer2d(RenderingDevice& device) : mImpl(std::make_uniq
 ShapeRenderer2d::~ShapeRenderer2d() {
 }
 
-void ShapeRenderer2d::DrawRectangle(float x, float y, float width, float height, gfx::Texture* texture, uint32_t color) {
+void ShapeRenderer2d::DrawRectangle(float x, float y, float width, float height, gfx::Texture* texture, uint32_t color, SamplerType2d samplerType) {
 
 	if (texture) {
 		mImpl->device.SetMaterial(mImpl->texturedMaterial);
@@ -188,17 +197,17 @@ void ShapeRenderer2d::DrawRectangle(float x, float y, float width, float height,
 	vertices[3].uv = XMFLOAT2(0, 1);
 	vertices[3].diffuse = color;
 
-	DrawRectangle(vertices, texture);
+	DrawRectangle(vertices, texture, nullptr, samplerType);
 
 }
 
 void ShapeRenderer2d::DrawRectangle(gsl::span<Vertex2d, 4> corners,
 	gfx::Texture* texture,
 	gfx::Texture* mask,
-	bool wrap,
+	SamplerType2d samplerType,
 	bool blending) {
 
-	auto& samplerState = *(wrap ? mImpl->samplerWrapState : mImpl->samplerClampState);
+	auto& samplerState = getSamplerState(samplerType);
 
 	if (texture && mask) {
 		Expects(blending);
@@ -229,6 +238,18 @@ void ShapeRenderer2d::DrawRectangle(gsl::span<Vertex2d, 4> corners,
 	}
 
 }
+
+	SamplerState &ShapeRenderer2d::getSamplerState(SamplerType2d type) const {
+		switch (type) {
+		default:
+		case SamplerType2d::CLAMP:
+			return *mImpl->samplerClampState;
+		case SamplerType2d::POINT:
+			return *mImpl->samplerClampPointState;
+		case SamplerType2d::WRAP:
+			return *mImpl->samplerWrapState;
+		}
+	}
 
 	void ShapeRenderer2d::DrawRectangle(gsl::span<Vertex2d, 4> corners,
 		const gfx::MdfRenderMaterialPtr& material) {

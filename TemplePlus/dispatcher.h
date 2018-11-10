@@ -113,7 +113,7 @@ struct DispatcherSystem : temple::AddressTable
 	int Dispatch45SpellResistanceMod(objHndl handle, DispIOBonusListAndSpellEntry* dispIo);
 	void Dispatch48BeginRound(objHndl obj, int numRounds) const;
 	bool Dispatch64ImmunityCheck(objHndl handle, DispIoImmunity* dispIo);
-	
+	void Dispatch68ItemRemove(objHndl handle);
 #pragma endregion
 
 	void DispIoDamageInit(DispIoDamage *dispIoDamage);

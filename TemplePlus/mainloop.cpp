@@ -269,12 +269,19 @@ void GameLoop::RenderFrame() {
 	TigRect srcRect{0, 0, config.renderWidth, config.renderHeight};
 	srcRect.FitInto(destRect);
 
+	gfx::SamplerType2d samplerType = gfx::SamplerType2d::CLAMP;
+	if (!config.upscaleLinearFiltering) {
+		samplerType = gfx::SamplerType2d::POINT;
+	}
+
 	tig->GetShapeRenderer2d().DrawRectangle(
 		(float) srcRect.x, 
 		(float)srcRect.y, 
 		(float)srcRect.width, 
 		(float)srcRect.height, 
-		*mSceneColor
+		*mSceneColor,
+		0xFFFFFFFF,
+		samplerType
 	);
 
 	tig->GetConsole().Render();
@@ -498,7 +505,7 @@ public:
 
 void MainLoopHooks::NormalLmbHandleTarget(objHndl * tgt)
 {
-	locXY tgtLoc;
+	locXY tgtLoc = LocAndOffsets::null.location;
 
 	auto leader = party.GetConsciousPartyLeader();
 	auto chosenOne = leader;

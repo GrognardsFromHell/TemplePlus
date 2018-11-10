@@ -1,0 +1,5 @@
+name: Powerful Charge
+flags: 12582928
+prereqs: 266 1
+description: When you charge, if your melee attack hits, it deals an extra 1d8 points of damage (if you're Medium). For Large creatures, the extra damage is 2d6; for Huge, 3d6; for Gargantuan, 4d6; and for Colossal, 6d6. This feat works only when you make a charge. It does not work when you're mounted. If you have the ability to make multiple attacks on a charge, you may apply this extra damage to only one of those attacks in a round.
+prereq descr: Base Attack Bonus +1 and medium or larger

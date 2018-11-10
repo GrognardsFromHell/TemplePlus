@@ -220,7 +220,7 @@ objHndl LegacyPartySystem::GetLeader()
 objHndl LegacyPartySystem::GetConsciousPartyLeader(){
 
 	auto selectedCount = CurrentlySelectedNum();
-	for (auto i=0; i <selectedCount; i++){
+	for (auto i=0u; i < selectedCount; i++){
 		auto dude = GetCurrentlySelected(i);
 		if (!dude) continue;
 		if (!critterSys.IsDeadOrUnconscious(dude))
@@ -235,7 +235,7 @@ objHndl LegacyPartySystem::GetConsciousPartyLeader(){
 	}
 
 	auto partySize = GroupListGetLen();
-	for (auto i=0; i <partySize; i++){
+	for (auto i=0u; i < partySize; i++){
 		auto dude = GroupListGetMemberN(i);
 		if (!dude)continue;
 		if (!critterSys.IsDeadOrUnconscious(dude))
