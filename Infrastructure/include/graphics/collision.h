@@ -26,9 +26,17 @@ inline bool Cylinder3d::HitTest(const Ray3d & ray, float &distance) const
 
 	auto sa = XMLoadFloat3(&ray.origin);
 	auto sb = sa + XMLoadFloat3(&ray.direction);
+	auto rayLength = XMVectorGetX(XMVector3Length(XMLoadFloat3(&ray.direction)));
 
 	auto p = XMLoadFloat3(&baseCenter);
-	auto q = p + XMVectorSet(0, height, 0, 1);
+	
+	// Fix issues with degenerated cylinders (height=0)
+	auto effectiveHeight = 1.0f;
+	if (height > effectiveHeight)
+	{
+		effectiveHeight = height;
+	}
+	auto q = p + XMVectorSet(0, effectiveHeight, 0, 1);
 
 	auto d = q - p;
 	auto m = sa - p;
@@ -51,6 +59,7 @@ inline bool Cylinder3d::HitTest(const Ray3d & ray, float &distance) const
 		if (md < 0.0f) t = -mn / nn; // Intersect segment against ’p’ endcap
 		else if (md > dd) t = (nd - mn) / nn; // Intersect segment against ’q’ endcap
 		else t = 0.0f; // ’a’ lies inside cylinder
+		distance = t * rayLength;
 		return 1;
 	}
 	float b = dd * mn - nd * md;
@@ -62,6 +71,7 @@ inline bool Cylinder3d::HitTest(const Ray3d & ray, float &distance) const
 		// Intersection outside cylinder on ’p’ side
 		if (nd <= 0.0f) return 0; // Segment pointing away from endcap
 		t = -md / nd;
+		distance = t * rayLength;
 		// Keep intersection if Dot(S(t) - p, S(t) - p) <= r ? 2
 		return k + 2 * t * (mn + t * nn) <= 0.0f;
 	}
@@ -69,9 +79,11 @@ inline bool Cylinder3d::HitTest(const Ray3d & ray, float &distance) const
 		// Intersection outside cylinder on ’q’ side
 		if (nd >= 0.0f) return 0; // Segment pointing away from endcap
 		t = (dd - md) / nd;
+		distance = t * rayLength;
 		// Keep intersection if Dot(S(t) - q, S(t) - q) <= r ? 2
 		return k + dd - 2 * md + t * (2 * (mn - nd) + t * nn) <= 0.0f;
 	}
+	distance = t * rayLength;
 	// Segment intersects cylinder between the endcaps; t is correct
 	return true;
 }
