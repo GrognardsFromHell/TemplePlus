@@ -26,6 +26,6 @@ def QueryHealingBonus(attachee, args, evt_obj):
 	evt_obj.return_val += healingBonus
 	return 0
 
-LingeringSong = PythonModifier("Augment Healing", 2) #Extra, Extra
-LingeringSong.MapToFeat("Augment Healing")
-LingeringSong.AddHook(ET_OnD20PythonQuery, "Healing Bonus", QueryHealingBonus, ())
+AugmentHealing = PythonModifier("Augment Healing", 2) #Extra, Extra
+AugmentHealing.MapToFeat("Augment Healing")
+AugmentHealing.AddHook(ET_OnD20PythonQuery, "Healing Bonus", QueryHealingBonus, ())
