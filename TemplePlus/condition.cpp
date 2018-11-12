@@ -465,6 +465,7 @@ public:
 		// Animal Companion Bonus Levels Extension
 		redirectCall(0x100FC18C, AnimalCompanionLevelHook);
 		redirectCall(0x100FC2D6, AnimalCompanionLevelHook);
+		redirectCall(0x100FC6D4, AnimalCompanionLevelHook);
 	}
 } condFuncReplacement;
 
