@@ -296,6 +296,8 @@ public:
 	static int TurnUndeadPerform(DispatcherCallbackArgs args);
 
 	static bool StunningFistHook(objHndl objHnd, objHndl caster, int DC, int saveType, int flags);
+
+	static int AnimalCompanionLevelHook(objHndl, Stat shouldBeClassDruid);
 	
 	//Old version of the function to be used within the replacement
 	int (*oldTurnUndeadPerform)(DispatcherCallbackArgs) = nullptr;
@@ -459,6 +461,10 @@ public:
 
 		// Stunning Fist extension
 		redirectCall(0x100E84B0, StunningFistHook);
+
+		// Animal Companion Bonus Levels Extension
+		redirectCall(0x100FC18C, AnimalCompanionLevelHook);
+		redirectCall(0x100FC2D6, AnimalCompanionLevelHook);
 	}
 } condFuncReplacement;
 
@@ -3439,6 +3445,17 @@ void ConditionFunctionReplacement::HookSpellCallbacks()
 
 	
 	
+}
+
+
+int ConditionFunctionReplacement::AnimalCompanionLevelHook(objHndl objHnd, Stat shouldBeClassDruid)
+/// Replaces the druid level for animal compation level calculation
+{
+	auto result = objects.StatLevelGet(objHnd, stat_level_druid); // the vanilla code we're replacing did this
+
+	result += d20Sys.D20QueryPython(objHnd, "Animal Companion Level Bonus");
+
+	return result;
 }
 
 

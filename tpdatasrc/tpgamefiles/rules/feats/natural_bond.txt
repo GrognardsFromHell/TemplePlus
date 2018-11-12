@@ -1,0 +1,5 @@
+name: Natural Bond
+flags: 12582912
+prereqs: 
+description: Add three to your effective druid level for the purpose of determining the bonus Hit Dice, extra tricks, special abilities, and other bonuses that your animal companion receives (see page 36 of the Player's Handbook). This bonus can never make your effective druid level exceed your character level. 
+prereq descr: Animal Companion
