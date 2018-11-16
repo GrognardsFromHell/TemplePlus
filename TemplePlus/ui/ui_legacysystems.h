@@ -516,8 +516,12 @@ public:
 		mState = state;
 	}
 
+	int GetKeyEventModifier();
+	bool DontHandle(int evt);
+	
 	bool HandleKeyEvent(const InGameKeyEvent &msg);
 	bool CharacterSelect(const InGameKeyEvent &msg, int modifier, int keyEvt);
+	bool CombatToggle();
 
 private:
 	uint32_t &mState = temple::GetRef<uint32_t>(0x10BE8CF4);

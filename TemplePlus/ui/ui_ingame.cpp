@@ -22,6 +22,11 @@
 #include "ui_char.h"
 #include "ui_townmap.h"
 #include "raycast.h"
+#include "hotkeys.h"
+#include "infrastructure/keyboard.h"
+#include "location.h"
+#include "action_sequence.h"
+#include "graphics/device.h"
 
 UiInGame::UiInGame(const UiSystemConf &config) {
 	auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x10112e70);
@@ -199,7 +204,7 @@ void UiInGame::HandleNonCombatMessage(const TigMsg & msg)
 		return;
 
 	if (msg.type == TigMsgType::KEYSTATECHANGE) {
-		return temple::GetRef<void(__cdecl)(const TigMsg&)>(0x101130B0)(msg); // normal keystate change handler
+		return HandleNonCombatKeyStateChange(msg);
 	}
 
 	if (msg.type == TigMsgType::MOUSE) {
@@ -221,6 +226,61 @@ void UiInGame::HandleNonCombatMessage(const TigMsg & msg)
 		}
 	}
 
+}
+
+void UiInGame::HandleNonCombatKeyStateChange(const TigMsg& msg){
+	//return temple::GetRef<void(__cdecl)(const TigMsg&)>(0x101130B0)(msg); // normal keystate change handler
+	InGameKeyEvent kmsg(msg);
+	auto msga = reinterpret_cast<const TigKeyStateChangeMsg&>(msg);
+	if (msga.down){
+		return;
+	}
+
+	auto leader = party.GetConsciousPartyLeader();
+	if (leader){
+		if (hotkeys.IsReservedHotkey(msga.key)){
+			if (hotkeys.IsKeyPressed(VK_LCONTROL) || hotkeys.IsKeyPressed(VK_RCONTROL)){ // trying to assign hotkey to reserved hotkey
+				hotkeys.HotkeyReservedPopup(msga.key);
+				return;
+			}
+		}
+		else if (hotkeys.IsNormalNonreservedHotkey(msga.key)){
+			if (hotkeys.IsKeyPressed(VK_LCONTROL) || hotkeys.IsKeyPressed(VK_RCONTROL)) { // assign hotkey
+				auto leaderLoc = objects.GetLocationFull(leader);
+				auto screenPos = tig->GetRenderingDevice().GetCamera().WorldToScreenUi(leaderLoc.ToInches3D());
+
+				radialMenus.SpawnMenu(int(screenPos.x), int(screenPos.y));
+				radialMenus.MsgHandler(&msg);
+				return;
+			}
+			
+			actSeqSys.TurnBasedStatusInit(leader);
+			leader = party.GetConsciousPartyLeader();// in case the leader changes somehow...
+			logger->info("Intgame: Resetting sequence.");
+			actSeqSys.curSeqReset(leader);
+			
+			d20Sys.GlobD20ActnInit();
+			auto radmenuHotkeySthg = temple::GetRef<RadialMenu*(__cdecl)(objHndl, int)>(0x100F3D60);
+			if (radmenuHotkeySthg(party.GetConsciousPartyLeader(), msga.key))
+			{
+				actSeqSys.ActionAddToSeq();
+				actSeqSys.sequencePerform();
+				auto fellowPc = party.GetFellowPc(leader);
+
+				char voicelineText[1000];
+				voicelineText[0] = 0;
+				int soundId = 0;
+				critterSys.GetOkayVoiceLine(leader, fellowPc, voicelineText, &soundId);
+				critterSys.PlayCritterVoiceLine(leader, fellowPc, voicelineText, soundId);
+				radialMenus.ClearActiveRadialMenu();
+				return;
+			}
+			
+		}
+	}
+
+	uiSystems->GetManager().SetState(0);
+	uiSystems->GetManager().HandleKeyEvent(kmsg);
 }
 
 void UiInGame::HandleCombatKeyStateChange(const TigMsg & msg)
