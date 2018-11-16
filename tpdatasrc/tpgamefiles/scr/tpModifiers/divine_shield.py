@@ -76,20 +76,16 @@ def DivineShieldAcBonus(attachee, args, evt_obj):
 		if bucklerDisabled == 1:
 			return 0
 	
-	#Find the shield bonus
-	bonusValue = attachee.d20_query_with_object(Q_Armor_Get_AC_Bonus, item)
-	
 	#Add the charisma modifier to the shield's bonus
-	charismaBonus = attachee.stat_level_get(stat_cha_mod)
+	charisma = attachee.stat_level_get(stat_charisma)
 	
-	if charismaBonus < 0:
-		charismaBonus = 0
+	charismaBonus = (charisma - 10) / 2
 	
-	bonusValue = bonusValue + charismaBonus
-	
-	#Add the new bonus as a shield bonus.  Since shield bonuses don't stack this new bonus will
-	#take the place of the bonus for the shield currently used
-	evt_obj.bonus_list.add(bonusValue, 29, "Divine Shield Feat")
+	# This doesn't work exactly like the feat.  Instead of adding the bonus to the shield's AC bonus,
+	# the bonus is added seperately as a bonus that always stacks.  This should work out the same in almost
+	# all cases.
+	if charismaBonus > 0:
+		evt_obj.bonus_list.add(charismaBonus, 0, "Divine Shield Feat")
 
 	return 0
 	
