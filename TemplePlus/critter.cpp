@@ -1695,6 +1695,22 @@ int LegacyCritterSystem::GetNumFollowers(objHndl obj, int excludeForcedFollowers
 	}
 	return followersNum;
 }
+void LegacyCritterSystem::BuildRadialMenu(objHndl handle){
+	if (!handle){
+		return;
+	}
+
+	auto obj = objSystem->GetObject(handle);
+	Dispatcher * dispatcher = obj->GetDispatcher();
+
+	if (dispatch.dispatcherValid(dispatcher)) {
+		if (objects.IsPlayerControlled(handle)) {
+			objects.dispatch.DispatcherProcessor(dispatcher, dispTypeRadialMenuEntry, 0, nullptr);
+			auto setActiveRadial = temple::GetRef<void(__cdecl)(objHndl)>(0x100F0A70);
+			setActiveRadial(handle);
+		}
+	}
+}
 #pragma region Critter Hooks
 uint32_t _isCritterCombatModeActive(objHndl objHnd)
 {

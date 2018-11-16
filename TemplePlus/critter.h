@@ -352,6 +352,7 @@ struct LegacyCritterSystem : temple::AddressTable
 	static int SkillBaseGet(objHndl handle, SkillEnum skill);
 	static int GetNumFollowers(objHndl obj, int excludeForcedFollowers);
 
+	void BuildRadialMenu(objHndl handle);
 
 private:
 	int GetModelRaceOffset(objHndl obj, bool useBaseRace = true);
