@@ -18,6 +18,9 @@ public:
 	BOOL IsReservedHotkey(uint32_t dinputKey);
 	int HotkeyReservedPopup(uint32_t dinputKey);
 	BOOL IsNormalNonreservedHotkey(uint32_t dinputKey);
+	
+	
+	bool IsKeyPressed(int virtualKey); // input is VK_*
 };
 
 

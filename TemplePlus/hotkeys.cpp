@@ -10,6 +10,7 @@
 #include "action_sequence.h"
 #include "ui/ui_systems.h"
 #include "ui/ui_legacysystems.h"
+#include "infrastructure/keyboard.h"
 
 HotkeySystem hotkeys;
 
@@ -285,6 +286,11 @@ BOOL HotkeySystem::IsNormalNonreservedHotkey(uint32_t dinputKey)
 {
 	auto isNormalNonreservedHotkey = temple::GetRef<BOOL(__cdecl)(uint32_t)>(0x100F3D20);
 	return isNormalNonreservedHotkey(dinputKey);
+}
+
+bool HotkeySystem::IsKeyPressed(int virtualKey)
+{
+	return infrastructure::gKeyboard.IsKeyPressed(virtualKey);
 }
 
 void __cdecl HotkeyInit()
