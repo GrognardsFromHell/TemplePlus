@@ -295,6 +295,9 @@ public:
 	~ItemSystem();
 	void ResetBuffers(const RebuildBufferInfo& rebuildInfo) override;
 	const std::string &GetName() const override;
+
+	BOOL &editorMode = temple::GetRef<BOOL>(0x10AA8490);
+	BOOL &junkpileActive = temple::GetRef<BOOL>(0x10AA847C);
 };
 
 class CombatSystem : public GameSystem, public SaveGameAwareGameSystem, public ResetAwareGameSystem, public TimeAwareGameSystem {
@@ -584,7 +587,7 @@ private:
 	BOOL& mFoggingEnabled = temple::GetRef<BOOL>(0x108254A0);
 	uint8_t*& mFogCheckData = temple::GetRef<uint8_t*>(0x108A5498);
 	void** mFogBuffers = temple::GetPointer<void*>(0x10824470); // 8 entries, one for each controllable party member
-	
+	uint8_t* mFogUnexploredData = temple::GetPointer<uint8_t>(0x11E61560);
 
 	SectorLoc* mEsdSectorLocs = temple::GetPointer<SectorLoc>(0x108EC598); // 32 entries
 	uint32_t& mEsdLoaded = temple::GetRef<uint32_t>(0x108EC6B0);

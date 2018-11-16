@@ -208,6 +208,8 @@ public:
 		return lastSlotPushedTo_;
 	}
 
+	void NotifySpeedRecalc(objHndl parent); // sets ASF_SPEED_RECALC
+
 private:
 	friend class AnimGoalsHooks;
 	std::unique_ptr<AnimationGoals> animationGoals_;

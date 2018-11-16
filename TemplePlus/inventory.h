@@ -13,6 +13,8 @@ enum EquipSlot : uint32_t;
 #define INVENTORY_BAG_IDX_START 217
 #define INVENTORY_BAG_IDX_END 221
 #define INVENTORY_IDX_UNDEFINED -1
+#define INVENTORY_IDX_HOTBAR_START 2000 // seems to be Arcanum leftover (appears in some IF conditions but associated callbacks are stubs)
+#define INVENTORY_IDX_HOTBAR_END 2009 // last index for hotbar items
 
 enum ItemErrorCode: uint32_t
 {

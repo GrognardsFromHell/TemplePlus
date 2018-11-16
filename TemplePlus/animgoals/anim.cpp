@@ -597,6 +597,10 @@ bool AnimSystem::InterruptAllForTbCombat(){
     return interruptAllForTbCombat();
 }
 
+void AnimSystem::NotifySpeedRecalc(objHndl handle){
+	temple::GetRef<void(__cdecl)(objHndl)>(0x1001AAA0)(handle);
+}
+
 std::optional<AnimSlotId> AnimSystem::AllocSlot()
 {
 	// Find a free slot
