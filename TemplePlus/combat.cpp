@@ -1650,8 +1650,15 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 		auto critThreatRange = 21 - dispIoAtkBon.Dispatch(performer, objHndl::null, dispTypeGetCriticalHitRange, DK_NONE);
 		if (!d20Sys.d20Query(tgt, DK_QUE_Critter_Is_Immune_Critical_Hits)){
 			if (toHitRoll >= critThreatRange || critAlwaysCheat) {
-				critHitRoll = Dice::Roll(1, 20);
+
+				// Add bonuses that only apply to the attack bonus for the confirmation roll (unfortunately, only this 
+				// bonus list will be used by the log)
+				auto dispatcher = gameSystems->GetObj().GetObject(performer)->GetDispatcher();
+				dispatcher->Process(dispConfirmCriticalBonus, DK_NONE, &dispIoToHitBon);
+				toHitBonFinal = dispIoToHitBon.bonlist.GetEffectiveBonusSum();
 				
+				critHitRoll = Dice::Roll(1, 20);
+
 				// RerollCritical handling (e.g. from Luck domain)
 				if (isMiss(critHitRoll, toHitBonFinal, tgtAcFinal) && d20Sys.d20Query(performer, DK_QUE_RerollCritical)){
 					histSys.RollHistoryType0Add(toHitRoll, critHitRoll, performer, tgt, &dispIoToHitBon.bonlist, &dispIoTgtAc.bonlist, dispIoToHitBon.attackPacket.flags);

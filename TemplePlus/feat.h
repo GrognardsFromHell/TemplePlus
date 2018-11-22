@@ -179,7 +179,9 @@ struct LegacyFeatSystem : temple::AddressTable
 protected:
 	std::map<feat_enums, NewFeatSpec> mNewFeats;
 	void _GetNewFeatsFromFile();
+	void _GenerateFeats();
 	void _CompileParents();
+	void _AddFeat(const NewFeatSpec &featSpec);
 };
 
 extern LegacyFeatSystem feats;

@@ -212,6 +212,11 @@ BOOL LegacyFeatSystem::FeatSystemInit()
 
 		// New file-based Feats
 		_GetNewFeatsFromFile();
+
+		// Power Critical feats
+		_GenerateFeats();
+
+		_CompileParents();
 		return 1;
 	}
 
@@ -219,6 +224,57 @@ BOOL LegacyFeatSystem::FeatSystemInit()
 	return 0;
 
 }
+
+void LegacyFeatSystem::_GenerateFeats()
+{
+	//Generate Power Critical Feats
+	std::string parentFeatName = "Power Critical";
+	NewFeatSpec featSpec;
+	featSpec.name = parentFeatName;
+	*(reinterpret_cast<int *>(&featSpec.flags)) = 4718608;  //Master, fighter bonus, new content
+	featSpec.description = "When using the weapon you selected, you gain a +4 bonus on the roll to confirm a threat.";
+	featSpec.description += "  Note:  Log displays as if the bonus effected the attack and confirm roll when a conformation roll is made.";
+	featSpec.description += "  However, only the conformation roll is affected in game.";
+	featSpec.prereqDescr = "BAB 4, Weapon Focus with weapon";
+	
+	FeatPrereq featPreReq;
+	featPreReq.featPrereqCode = 266;
+	featPreReq.featPrereqCodeArg = 4;  //BAB + 4
+	featSpec.prereqs.push_back(featPreReq);
+
+	_AddFeat(featSpec);  //Add the parent feat
+
+	//Change common members for the child feat as appropriate
+	*(reinterpret_cast<int *>(&featSpec.flags)) &= ~(FPF_MULTI_MASTER);  //Remove master flag
+	featSpec.parentId = static_cast<feat_enums>(ElfHash::Hash(parentFeatName));
+	featSpec.prereqs.emplace_back();
+	featSpec.prereqs[1].featPrereqCodeArg = 1;
+	
+	//Generate the child feats
+	for (int type = static_cast<int>(wt_gauntlet); type <= static_cast<int>(wt_ray); type++) {
+		if ((type != wt_grapple) && (type != wt_net)) {
+			featSpec.weapType = static_cast<WeaponTypes>(type);
+			featSpec.name = parentFeatName;
+			featSpec.name += " - ";
+			featSpec.name += weapons.GetName(featSpec.weapType);
+			// Weapon focus in the same weapon is the other prereq
+			featSpec.prereqs[1].featPrereqCode = type + static_cast<int>(FEAT_WEAPON_FOCUS_GAUNTLET) + 1000;
+			_AddFeat(featSpec);  //Add the child feat
+		}
+	}
+
+}
+
+void LegacyFeatSystem::_AddFeat(const NewFeatSpec &featSpec)
+{
+	if (featSpec.name.size()) {
+		auto featId = static_cast<feat_enums>(ElfHash::Hash(featSpec.name));
+		Expects(static_cast<uint32_t>(featId) > NUM_FEATS && static_cast<uint32_t>(featId) > 1000); // ensure no collision with the normal ToEE feats, and also > 1000 so that it meshes with the feat prerequisites check
+		mNewFeats[featId] = featSpec;
+		newFeats.push_back(featId);
+	}
+}
+
 void LegacyFeatSystem::_GetNewFeatsFromFile()
 {
 	TioFileList flist;
@@ -325,20 +381,13 @@ void LegacyFeatSystem::_GetNewFeatsFromFile()
 			}
 		}
 
-		if (featSpec.name.size()){
-			auto featId = (feat_enums)ElfHash::Hash(featSpec.name);
-			Expects((uint32_t)featId > NUM_FEATS && (uint32_t)featId > 1000); // ensure no collision with the normal ToEE feats, and also > 1000 so that it meshes with the feat prerequisites check
-			mNewFeats[featId] = featSpec;
-			newFeats.push_back(featId);
-		}
+		_AddFeat(featSpec);
 
 		tio_fclose(featFile);
 
 	}
 
 	tio_filelist_destroy(&flist);
-
-	_CompileParents();
 }
 
 void LegacyFeatSystem::_CompileParents(){

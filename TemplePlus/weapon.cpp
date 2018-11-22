@@ -5,6 +5,17 @@
 
 WeaponSystem weapons;
 
+std::string WeaponSystem::GetName(WeaponTypes wpnType)
+{
+	//Use the weapon focus feat to the the name of the feat
+	auto weaponFocusFeat = static_cast<feat_enums>(static_cast<int>(FEAT_WEAPON_FOCUS_GAUNTLET) + wpnType);
+	std::string weaponFocusFeatName = feats.GetFeatName(weaponFocusFeat);
+	int nIdx1 = weaponFocusFeatName.find("(");
+	int nIdx2 = weaponFocusFeatName.find(")");
+	std::string strWeaponName = weaponFocusFeatName.substr(nIdx1 + 1, nIdx2 - nIdx1 - 1);
+	return strWeaponName;
+}
+
 uint32_t WeaponSystem::IsSimple(WeaponTypes wpnType)
 {
 	if (wpnType == wt_longspear || (wpnType <= wt_javelin && wpnType >= wt_gauntlet))

@@ -2358,6 +2358,8 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 2, dispTypeGetNumAttacksBase, 0, GreaterTWFRanger, 0, 0); // same callback as Improved TWF (it just adds an extra attack... logic is inside the action sequence / d20 / GlobalToHit functions
 	DispatcherHookInit(cond, 3, dispType0, 0, nullptr, 0, 0);
 
+	char * desc = feats.GetFeatName(FEAT_DIVINE_MIGHT);
+
 	// Divine Might Ability
 	mCondDivineMight = &condDivineMight;
 	cond = mCondDivineMight; 	condName = mCondDivineMightName;
