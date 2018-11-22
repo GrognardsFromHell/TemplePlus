@@ -21,6 +21,10 @@
 #include "critter.h"
 #include "combat.h"
 #include "ui_char.h"
+#include "hotkeys.h"
+#include "tig/tig_loadingscreen.h"
+#include "tig/tig_console.h"
+#include "gamesystems/d20/d20_help.h"
 
 //*****************************************************************************
 //* MainMenu-UI
@@ -1396,10 +1400,147 @@ const std::string &UiKeyManager::GetName() const {
     return name;
 }
 
+int UiKeyManager::GetKeyEventModifier()
+{
+	if (hotkeys.IsKeyPressed(VK_LCONTROL) || hotkeys.IsKeyPressed(VK_RCONTROL)){
+		return 29;
+	}
+	if (hotkeys.IsKeyPressed(VK_LSHIFT) || hotkeys.IsKeyPressed(VK_RSHIFT)) {
+		return 42;
+	}
+	if (hotkeys.IsKeyPressed(VK_LMENU) || hotkeys.IsKeyPressed(VK_RMENU)) {
+		return 56;
+	}
+
+	return 0;
+}
+struct KeyConfEvent
+{
+	int field0;
+	int field4;
+	int modifier;
+	int eventName;
+	int field10;
+	int handlerId;
+	int primary;
+	int secondaryId;
+	int aecondary;
+};
+bool UiKeyManager::DontHandle(int evtName){
+	if (evtName <= 50){
+		return mState == 1;
+	}
+	if (evtName == 56)
+		return false;
+	if (evtName == 55){
+		return (mState == 1 || mState == 2);
+	}
+	if (evtName <= 60){
+		return mState == 1;
+	}
+	return false;
+}
+
 bool UiKeyManager::HandleKeyEvent(const InGameKeyEvent & msg)
 {
 	static auto UiManagerKeyEventHandler = temple::GetPointer<BOOL(const InGameKeyEvent &kbMsg)>(0x10143d60);
-	return UiManagerKeyEventHandler(msg) != 0;
+	static auto &keycfgEvents = temple::GetRef<KeyConfEvent[61]>(0x10BE7020);
+
+	auto res = true;
+	int modifier = GetKeyEventModifier();
+	auto evt = temple::GetRef<int(__cdecl)(const InGameKeyEvent &, int)>(0x101431F0)(msg, modifier);
+	auto evtName = keycfgEvents[evt].eventName;
+
+	if (DontHandle(evtName)){
+		return false;
+	}
+	if (msg.msg.arg1 == 0x54){ // stupid hack for Sitra's remote control keyboard
+		evtName = 27;
+	}
+	switch (evtName){
+	case 2:
+	case 3:
+	case 4:
+	case 5:
+	case 6:
+	case 7:
+	case 8:
+	case 9:
+		return temple::GetRef<int(__cdecl)(const InGameKeyEvent &, int, int)>(0x10143310)(msg, modifier, evtName) != FALSE;
+	case 10:
+	case 11:
+	case 12:
+	case 13:
+	case 14:
+	case 15:
+	case 16:
+	case 17:
+		return temple::GetRef<int(__cdecl)(const InGameKeyEvent &, int, int)>(0x10143380)(msg, modifier, evtName) != FALSE;
+	case 18:
+	case 19:
+	case 20:
+	case 21:
+	case 22:
+	case 23:
+	case 24:
+	case 25:
+		return temple::GetRef<int(__cdecl)(const InGameKeyEvent &, int, int)>(0x101433B0)(msg, modifier, evtName) != FALSE;
+	case 26:
+		return temple::GetRef<int(__cdecl)()>(0x101433E0)() != FALSE; // select all
+	case 27:
+		tig->GetConsole().Toggle();
+		return true;
+	case 28: // center screen
+		return temple::GetRef<int(__cdecl)()>(0x10143430)() != FALSE;
+	case 29:
+	case 30:
+	case 31:
+	case 32:
+	case 33:
+	case 34:
+	case 35:
+	case 36:
+		return CharacterSelect(msg, modifier, evtName);
+	case 37:
+		return temple::GetRef<int(__cdecl)()>(0x101434E0)() != FALSE; // MainMenu toggle
+	case 38:
+		return temple::GetRef<int(__cdecl)()>(0x10143530)() != FALSE; // Quickload
+	case 39:
+		return temple::GetRef<int(__cdecl)()>(0x10143560)() != FALSE; // Quickload
+	case 40:
+		return temple::GetRef<int(__cdecl)()>(0x10143580)() != FALSE; // Screenshot
+	case 51:
+		return temple::GetRef<int(__cdecl)()>(0x10143820)() != FALSE; // Inventory
+	case 52:
+		return temple::GetRef<int(__cdecl)()>(0x101438C0)() != FALSE; // Logbook
+	case 53:
+		return temple::GetRef<int(__cdecl)()>(0x10143940)() != FALSE; // Map
+	case 54:
+		return temple::GetRef<int(__cdecl)()>(0x10143A40)() != FALSE; // Formation
+	case 55:
+		return temple::GetRef<int(__cdecl)()>(0x10143AC0)() != FALSE; // Rest
+	case 56:
+		if (!mDoYouWantToQuitActive)
+			helpSys.ClickForHelpToggle();
+		return true;
+	case 0:
+	case 1:
+	case 41:
+	case 50:
+		return true;
+	case 57:
+		return temple::GetRef<int(__cdecl)()>(0x10143B40)() != FALSE; // Options
+	case 58:
+		return CombatToggle();
+	default:
+		return false;
+	case 59:
+	case 60:
+		return true;
+		
+	}
+	
+	// return UiManagerKeyEventHandler(msg) != 0;
 }
 
 bool UiKeyManager::CharacterSelect(const InGameKeyEvent& msg, int modifier, int keyEvt){
@@ -1433,6 +1574,25 @@ bool UiKeyManager::CharacterSelect(const InGameKeyEvent& msg, int modifier, int 
 	party.CurrentlySelectedClear();
 	party.AddToCurrentlySelected(dude);
 	return true;
+}
+
+bool UiKeyManager::CombatToggle()
+{
+	if (mDoYouWantToQuitActive){
+		return true;
+	}
+	if (!combatSys.isCombatActive()){
+		auto leader = party.GetConsciousPartyLeader();
+		combatSys.enterCombat(leader);
+		combatSys.StartCombat(party.GetConsciousPartyLeader(), 1);
+		return true;
+	}
+
+	if (combatSys.AllCombatantsFarFromParty()){
+		combatSys.CritterExitCombatMode(party.GetConsciousPartyLeader());
+		return true;
+	}
+	return false;
 }
 
 //*****************************************************************************

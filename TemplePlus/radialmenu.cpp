@@ -121,16 +121,7 @@ class RadialMenuReplacements : public TempleFix
 
 		// RadialMenuUpdate
 		replaceFunction<void(__cdecl)(objHndl)>(0x1004D1F0, [](objHndl objHnd){
-			auto obj = gameSystems->GetObj().GetObject(objHnd);
-			Dispatcher * dispatcher = obj->GetDispatcher();
-			
-			if (dispatch.dispatcherValid(dispatcher)){
-				if (objects.IsPlayerControlled(objHnd))	{
-					objects.dispatch.DispatcherProcessor(dispatcher, dispTypeRadialMenuEntry, 0, nullptr);
-					auto setActiveRadial = temple::GetRef<void(__cdecl)(objHndl)>(0x100F0A70);
-					setActiveRadial(objHnd);
-				}
-			}
+			critterSys.BuildRadialMenu(objHnd);
 		});
 
 		// RadialMenuMsg
@@ -816,9 +807,9 @@ BOOL RadialMenus::ActiveRadialMenuHasActiveNode()
 	return GetActiveRadialMenuNode() != -1;
 }
 
-int RadialMenus::MsgHandler(TigMsg* msg)
+int RadialMenus::MsgHandler(const TigMsg* msg)
 {
-	static auto msgHandler = temple::GetRef<int(__cdecl)(TigMsg*)>(0x1013DC90);
+	static auto msgHandler = temple::GetRef<int(__cdecl)(const TigMsg*)>(0x1013DC90);
 	return msgHandler(msg);
 }
 

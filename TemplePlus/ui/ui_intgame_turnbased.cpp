@@ -29,6 +29,7 @@
 #include <dungeon_master.h>
 #include "gamesystems/objects/objsystem.h"
 #include "raycast.h"
+#include "hotkeys.h"
 
 UiIntgameTurnbased uiIntgameTb;
 
@@ -686,10 +687,8 @@ int UiIntegameTurnbasedRepl::UiIntgameMsgHandler(int widId, TigMsg* msg) {
 						
 
 					// bind hotkey
-					auto IsNormalNonreservedHotkey = temple::GetRef<bool(__cdecl)(int)>(0x100F3D20);
-					if (IsNormalNonreservedHotkey(msg->arg1)
-						&& (infrastructure::gKeyboard.IsKeyPressed(VK_LCONTROL) || infrastructure::gKeyboard.IsKeyPressed(VK_RCONTROL)))
-					{
+					if (hotkeys.IsNormalNonreservedHotkey(msg->arg1)
+						&& (hotkeys.IsKeyPressed(VK_LCONTROL) || infrastructure::gKeyboard.IsKeyPressed(VK_RCONTROL)))					{
 						auto leaderLoc = objects.GetLocationFull(leader);
 						
 						PointNode pnt;

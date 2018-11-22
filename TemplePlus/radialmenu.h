@@ -205,7 +205,7 @@ public:
 
 	int GetActiveRadialMenuNode();
 	BOOL ActiveRadialMenuHasActiveNode();
-	int MsgHandler(TigMsg* msg);
+	int MsgHandler(const TigMsg* msg);
 	int SpawnMenu(int x, int y);
 
 	void ClearActiveRadialMenu();

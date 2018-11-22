@@ -1601,7 +1601,7 @@ BOOL AiSystem::ImprovePosition(AiTactic* aiTac){
 		// Check if AoO's were added - if so cut the movement before reaching those
 		for (auto i = initialActNum; i < curNum; i++) {
 			auto &d20a = curSeq->d20ActArray[i];
-			if (d20a.d20ActType == D20A_AOO_MOVEMENT) {
+			if (d20a.d20ActType == D20A_AOO_MOVEMENT || d20a.d20ActType == D20A_READIED_INTERRUPT) {
 				curNum = i;
 				actSeqSys.ActionSequenceRevertPath(i);
 				break;

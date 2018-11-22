@@ -47,6 +47,7 @@ private:
 
 	void HandleCombatMessage(const TigMsg &msg);
 	void HandleNonCombatMessage(const TigMsg &msg);
+	void HandleNonCombatKeyStateChange(const TigMsg& msg);
 	void HandleCombatKeyStateChange(const TigMsg &msg);
 	void HandleCombatMouseEvent(const TigMsg &msg);
 	

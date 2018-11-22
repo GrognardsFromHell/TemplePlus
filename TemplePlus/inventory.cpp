@@ -11,6 +11,9 @@
 #include "float_line.h"
 #include "party.h"
 #include "rng.h"
+#include "gamesystems/legacysystems.h"
+#include "ai.h"
+#include "animgoals/anim.h"
 
 
 InventorySystem inventory;
@@ -41,6 +44,14 @@ public:
 
 	void apply() override 	{
 
+		static void(__cdecl*orgItemForceRemove)(objHndl, objHndl)= replaceFunction<void(__cdecl)(objHndl, objHndl)>(0x10069AE0, [](objHndl item, objHndl parent) {
+			auto parent_ = inventory.GetParent(item);
+			if (!parent_ || !parent){
+				logger->warn("item_force_remove called on item that doesn't think it has a parent.");
+			}
+			orgItemForceRemove(item, parent);
+		});
+
 		replaceFunction<int(__cdecl)(objHndl, objHndl, int)>(0x1006B6C0, [](objHndl item, objHndl receiver, int flags){
 			return inventory.SetItemParent(item, receiver, flags);
 		});
@@ -51,6 +62,40 @@ public:
 
 		replaceFunction<objHndl(__cdecl)(objHndl, uint32_t)>(0x100651B0, [](objHndl handle, uint32_t idx){
 			return inventory.GetItemAtInvIdx(handle, idx);
+		});
+
+		// ClearInventory
+		replaceFunction<void(__cdecl)(objHndl, BOOL)>(0x10069E00, [](objHndl handle, BOOL preservePersistentItems){
+			if (!handle)
+				return;
+			auto obj = objSystem->GetObject(handle);
+			auto invenNumFld = inventory.GetInventoryNumField(handle);
+			auto invenField = inventory.GetInventoryListField(handle);
+			
+			auto N = obj->GetInt32(invenNumFld);
+			auto persistentN = 0;
+			auto invenNumActualSize = obj->GetObjectIdArray(invenField).GetSize();
+			if (N != invenNumActualSize) {
+				logger->debug("Inventory array size for {} does not equal associated num field on ClearInventory. Arraysize: {}, numfield: {}", handle, invenNumActualSize, N);
+			}
+			auto loc = obj->GetLocation();
+
+			while ( obj->GetInt32(invenNumFld) > persistentN){
+				auto item = obj->GetObjHndl(invenField, persistentN);
+				if (preservePersistentItems && (objects.GetItemFlags(item) & OIF_PERSISTENT) ){
+					persistentN++;
+					continue;
+				}
+				inventory.ForceRemove(item, handle);
+				auto moveObj = temple::GetPointer<void(objHndl, locXY)>(0x100252D0);
+				moveObj(item, loc);
+				objects.Destroy(item);
+			}
+
+			if (obj->IsCritter()){
+				auto setMoneyZero = temple::GetRef<void(__cdecl)(objHndl)>(0x1007FCC0); 
+				setMoneyZero(handle);
+			}
 		});
 
 		// PoopItems
@@ -454,13 +499,17 @@ int InventorySystem::SetItemParent(objHndl item, objHndl receiver, ItemInsertFla
 	
 }
 
-objHndl InventorySystem::GetParent(objHndl item)
-{
+objHndl InventorySystem::GetParent(objHndl item) {
 	objHndl parent = objHndl::null;
-	if (!addresses.GetParent(item, &parent)) {
-		return objHndl::null;
+	if (!item || !objects.IsEquipment(item)){
+		logger->debug("GetParent: Called on non-Item!");
+		return parent;
 	}
-	return parent;
+	auto obj = objSystem->GetObject(item);
+	auto flags = obj->GetFlags();
+	if (!(flags & OF_INVENTORY))
+		return parent;
+	return obj->GetObjHndl(obj_f_item_parent);
 }
 
 bool InventorySystem::IsRangedWeapon(objHndl weapon){
@@ -958,9 +1007,100 @@ void InventorySystem::WieldBestAll(objHndl critter, objHndl tgt){
 	}
 }
 
-void InventorySystem::ForceRemove(objHndl item, objHndl parent)
-{
-	_ForceRemove(item, parent);
+void InventorySystem::ForceRemove(objHndl item, objHndl parent){
+	if (!parent) {
+		logger->warn("ForceRemove called on null parent!");
+		return;
+	}
+
+	auto _parent = GetParent(item);
+	auto isparty = false;
+	if (!_parent){
+		logger->warn("ForceRemove called on item that doesn't think it has a parent.");
+		// return;
+	}
+	else{
+		if (parent != _parent){
+			logger->warn("ForceRemove called on item with different parent");
+		}
+		isparty = party.IsInParty(parent);
+	}
+
+	auto parentObj = objSystem->GetObject(parent);
+	auto invenField = obj_f_container_inventory_list_idx;
+	auto invenNumField = obj_f_container_inventory_num;
+	if (!parentObj->IsContainer()){
+		invenField = obj_f_critter_inventory_list_idx;
+		invenNumField = obj_f_critter_inventory_num;
+	}
+	auto N = parentObj->GetInt32(invenNumField);
+
+	auto idx = -1;
+	for (auto i=0; i < N; i++){
+		if (item == parentObj->GetObjHndl(invenField, i)){
+			idx = i;
+			break;
+		}
+	}
+	if (idx < 0){
+		logger->error("ForceRemove: Couldn't match object in parent!");
+		return;
+	}
+	
+	if (parentObj->IsCritter() && !(parentObj->GetFlags() & OF_DESTROYED)){
+		dispatch.Dispatch68ItemRemove(parent);
+	}
+
+	// Delete item from inventory list
+	auto itemObj = objSystem->GetObject(item);
+	auto invIdxOrg = itemObj->GetInt32(obj_f_item_inv_location);
+	
+	while (idx < N-1){
+		auto tmp = parentObj->GetObjHndl(invenField, idx + 1);
+		parentObj->SetObjHndl(invenField, idx, tmp);
+		idx++;
+	}
+	parentObj->RemoveObjectId(invenField, N-1);
+	parentObj->SetInt32(invenNumField, N - 1);
+	itemObj->SetInt32(obj_f_item_inv_location, -1);
+	
+	if (inventory.IsInvIdxWorn(invIdxOrg)){
+		if (inventory.IsNormalCrossbow(item)) { // unset OWF_WEAPON_LOADED
+			itemObj->SetInt32(obj_f_weapon_flags, itemObj->GetInt32(obj_f_weapon_flags) & ~OWF_WEAPON_LOADED);
+		}
+		static auto inheritLightFlags = temple::GetRef<void(__cdecl)(objHndl, objHndl)>(0x10066260);
+		inheritLightFlags(item, parent);
+		pythonObjIntegration.ExecuteObjectScript(parent, item, ObjScriptEvent::WieldOff);
+		critterSys.UpdateModelEquipment(parent);
+	}
+	else{
+		if (invIdxOrg >= INVENTORY_IDX_HOTBAR_START && invIdxOrg <= INVENTORY_IDX_HOTBAR_END){
+			static auto hotbarRelatedArcanumLeftover = temple::GetRef<void(__cdecl)()>(0x1009A500);
+			hotbarRelatedArcanumLeftover();
+		}
+	}
+
+	if (parentObj->IsContainer()){
+		if (!gameSystems->GetItem().editorMode && gameSystems->GetItem().junkpileActive){
+			static auto junkpileOnRemoveItem = temple::GetRef<void(__cdecl)(objHndl)>(0x10069A20);
+			junkpileOnRemoveItem(parent);
+		}
+	}
+	else if (parentObj->IsNPC()){
+		auto aiFlags = (AiFlag) (parentObj->GetInt64(obj_f_npc_ai_flags64) | AiFlag::CheckWield);
+		parentObj->SetInt64(obj_f_npc_ai_flags64, aiFlags);
+	}
+	if (parent){
+		gameSystems->GetAnim().NotifySpeedRecalc(parent);
+		// nullsub_1009A3D0 - removed
+	}
+	pythonObjIntegration.ExecuteObjectScript(parent, item, ObjScriptEvent::RemoveItem);
+	if (parentObj->IsCritter() && ! (parentObj->GetFlags() & OF_DESTROYED) ){
+		d20StatusSys.initItemConditions(parent);
+		critterSys.BuildRadialMenu(parent);
+	}
+
+	//_ForceRemove(item, parent);
 }
 
 bool InventorySystem::IsProficientWithArmor(objHndl obj, objHndl armor) const
