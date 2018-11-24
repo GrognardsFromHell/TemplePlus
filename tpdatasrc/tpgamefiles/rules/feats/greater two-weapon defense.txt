@@ -1,0 +1,5 @@
+name: Greater Two-Weapon Defense
+flags: 12582928
+prereqs: 266 11 1 19
+description: When wielding two weapons (not including natural weapons or unarmed strikes), you gain a +3 shield bonus to your AC. When you are fighting defensively or using the total defense action, this shield bonus increases to +6.
+prereq descr: Two- Weapon Defense, Improved Two-Weapon Defense, Two-Weapon Fighting, DEX 19, base attack bonus +11
