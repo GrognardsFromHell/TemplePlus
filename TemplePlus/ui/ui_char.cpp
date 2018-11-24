@@ -948,7 +948,7 @@ int CharUiSystem::InventorySlotMsg(int widId, TigMsg* msg)
 						appraisedWorth *= qty;
 						inventory.MoneyToCoins(appraisedWorth, &plat, &gold, &silver, &copper);
 					}
-					
+					// IIF_Allow_Swap | IIF_Use_Wield_Slots | IIF_4 | IIF_Use_Max_Idx_200 | IIF_10 
 					ItemErrorCode itemTransferError = inventory.TransferWithFlags(item, critterLooted, -1, 1+2+4+8+16, objHndl::null);
 					if (itemTransferError == IEC_OK && uiSystems->GetChar().IsBartering()) {
 						objSystem->GetObject(item)->SetItemFlag(OIF_IDENTIFIED, 1);

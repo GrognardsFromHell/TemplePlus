@@ -657,7 +657,7 @@ void Objects::Destroy(objHndl ObjHnd) {
 				auto loc = GetLocation(parentObj);
 				inventory.ItemRemove(ObjHnd);
 				auto moveObj = temple::GetPointer<void(objHndl, locXY)>(0x100252D0);
-				moveObj(ObjHnd, loc);
+				inventory.MoveItem(ObjHnd, loc);
 			}
 		}
 		if (type == obj_t_container)

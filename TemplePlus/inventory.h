@@ -44,7 +44,7 @@ enum ItemInsertFlags : uint8_t {
 	IIF_None = 0,
 	IIF_Allow_Swap = 0x1,
 	IIF_Use_Wield_Slots = 0x2, // will let the item transfer try to insert in the wielded item slots (note: will not replace if there is already an item equipped!)
-	IIF_4 = 0x4,
+	IIF_4 = 0x4, // I think this allows to fall back to unspecified slots
 	IIF_Use_Max_Idx_200 = 0x8, // will use up to inventory index 200 (invisible slots)
 	IIF_10 = 0x10,
 	IIF_Use_Bags = 0x20, // use inventory indices of bags (not really supported in ToEE)
@@ -65,6 +65,8 @@ enum NpcLootingType : uint32_t
 struct InventorySystem : temple::AddressTable
 {
 	
+	void MoveItem(const objHndl& item, const locXY& loc);
+
 	static bool IsInvIdxWorn(int invIdx); // does the inventory index refer to a designated "worn item" slot?
 
 	objHndl(__cdecl *GetSubstituteInventory)  (objHndl);
@@ -132,8 +134,19 @@ struct InventorySystem : temple::AddressTable
 	objHndl GetParent(objHndl item);
 	int SetItemParent(objHndl item, objHndl parent, int flags);
 	int SetItemParent(objHndl item, objHndl receiver, ItemInsertFlags flags);
-	ItemErrorCode TransferWithFlags(objHndl item, objHndl receiver, int invenInt, char flags, objHndl bag); // see ItemInsertFlags
-	bool ItemTransferTo(objHndl item, objHndl receiver, int invIdx = INVENTORY_IDX_UNDEFINED); // this is a more low level function relative to ItemTransferWithFlags
+
+	
+	ItemErrorCode TransferWithFlags(objHndl item, objHndl receiver, int invenInt, int flags, objHndl bag); // see ItemInsertFlags
+	
+		void TransferPcInvLocation(objHndl item, int itemInvLocation); // weaponsets related I think
+		void PcInvLocationSet(objHndl parent, int itemInvLocation, int itemInvLocationNew);
+		ItemErrorCode CheckSlotAndWieldFlags(objHndl item, objHndl receiver, int invIdx); // checks if item can be inserted into inventory location in principle (with regard to item type and ItemWearFlags and such)
+		ItemErrorCode TransferToEquippedSlot(objHndl parent, objHndl receiver, objHndl item, int* unk, int invIdx, int itemInsertLocation, int flags);
+		bool ItemTransferTo(objHndl item, objHndl receiver, int invIdx = INVENTORY_IDX_UNDEFINED); // this is a more low level function relative to ItemTransferWithFlags
+		ItemErrorCode CheckTransferToWieldSlot(objHndl item, int invSlot, objHndl receiver);
+		
+		ItemErrorCode ItemTransferFromTo(objHndl owner, objHndl receiver, objHndl item, int* a4, int invSlot, int flags);
+		ItemErrorCode ItemTransferSwap(objHndl owner, objHndl receiver, objHndl item, objHndl itemPrevious, int* a4, int equippedItemSlot, int destItemSlotMaybe, int flags);
 	void ItemPlaceInIdx(objHndl item, int idx);
 	int ItemInsertGetLocation(objHndl item, objHndl receiver, int* itemInsertLocation, objHndl bag, char flags);
 	void InsertAtLocation(objHndl item, objHndl receiver, int itemInsertLocation);
