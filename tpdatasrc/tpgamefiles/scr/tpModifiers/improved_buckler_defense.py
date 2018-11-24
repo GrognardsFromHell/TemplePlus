@@ -4,7 +4,7 @@ from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
 
-print "Improved Buckler Defense"
+print "Registering Improved Buckler Defense"
 
 #Signal disables the Buckler penalty on the C++ side if two weapon fighting
 def DisableBucklerPenalty(attachee, args, evt_obj):
