@@ -23,6 +23,8 @@ struct LegacyPartySystemAddresses : temple::AddressTable
 	void(__cdecl * AddToCurrentlySelected)(objHndl objHnd);
 	void(*ArraySort)(void* arr, size_t arrSize, size_t elementSize, int(*sortFunc)(void*, void*));
 
+	int * partyMoney; // size 4 array containing: CP, SP, GP, PP
+
 	LegacyPartySystemAddresses()
 	{
 		rebase(AddToCurrentlySelected, 0x1002B560);
@@ -32,6 +34,7 @@ struct LegacyPartySystemAddresses : temple::AddressTable
 		rebase(groupAiFollowers, 0x11E71E20);
 		rebase(groupPcs , 0x11E71F40);
 		rebase(groupList, 0x11E721E0);
+		rebase(partyMoney, 0x1080AB60);
 	}
 	
 	
@@ -95,6 +98,18 @@ int LegacyPartySystem::GetPartyAlignment()
 int LegacyPartySystem::GetMoney() const
 {
 	return temple::GetRef<int(__cdecl)()>(0x1002B750)();
+}
+
+void LegacyPartySystem::GiveMoneyFromItem(const objHndl& item){
+	auto itemObj = objSystem->GetObject(item);
+	if (!itemObj){
+		return;
+	}
+	auto moneyAmt = itemObj->GetInt32(obj_f_money_quantity);
+	auto moneyType = itemObj->GetInt32(obj_f_money_type);
+	if (moneyType < 4 && moneyType >= 0){
+		addresses.partyMoney[moneyType] += moneyAmt;
+	}
 }
 
 void LegacyPartySystem::ApplyConditionAround(const objHndl& obj, double range, const char* condName, const objHndl& obj2){

@@ -646,7 +646,7 @@ void LegacyCritterSystem::GenerateHp(objHndl handle){
 		auto npcHd = Dice(numDice, obj->GetInt32(obj_f_npc_hitdice_idx, 1),obj->GetInt32(obj_f_npc_hitdice_idx, 2));
 		auto npcHdVal = npcHd.Roll();
 		if (config.maxHpForNpcHitdice){
-			npcHdVal = numDice * (npcHd.GetSides() + npcHd.GetModifier());
+			npcHdVal = numDice * npcHd.GetSides() + npcHd.GetModifier();
 		}
 		if (npcHdVal + conMod*numDice < 1)
 			npcHdVal = numDice*(1 - conMod);

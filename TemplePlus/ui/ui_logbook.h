@@ -1,5 +1,6 @@
 #pragma once
 #include "common.h"
+#include "gametime.h"
 
 #define LOGBOOK_MAX_PARTY_MEMBER_COUNT 5
 
@@ -22,6 +23,7 @@ class UiLogbook
 {
 public:
 	void IncreaseCritHits(objHndl handle);
+	void MarkKey(int keyId, const GameTime& gameTime);
 
 protected:
 	void IncreaseAmount(PartyLogbookPacket & pkt, objHndl handle, int amount);
