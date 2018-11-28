@@ -213,9 +213,6 @@ BOOL LegacyFeatSystem::FeatSystemInit()
 		// New file-based Feats
 		_GetNewFeatsFromFile();
 
-		// Power Critical feats
-		_GenerateFeats();
-
 		_CompileParents();
 		return 1;
 	}
@@ -225,44 +222,31 @@ BOOL LegacyFeatSystem::FeatSystemInit()
 
 }
 
-void LegacyFeatSystem::_GenerateFeats()
+void LegacyFeatSystem::_GeneratePowerCriticalChildFeats(const NewFeatSpec &feat)
 {
-	//Generate Power Critical Feats
-	std::string parentFeatName = "Power Critical";
-	NewFeatSpec featSpec;
-	featSpec.name = parentFeatName;
-	*(reinterpret_cast<int *>(&featSpec.flags)) = 4718608;  //Master, fighter bonus, new content
-	featSpec.description = "When using the weapon you selected, you gain a +4 bonus on the roll to confirm a threat.";
-	featSpec.description += "  Note:  Log displays as if the bonus effected the attack and confirm roll when a conformation roll is made.";
-	featSpec.description += "  However, only the conformation roll is affected in game.";
-	featSpec.prereqDescr = "BAB 4, Weapon Focus with weapon";
+	NewFeatSpec childFeat(feat);
+	std::string parentFeatName = childFeat.name;
 	
-	FeatPrereq featPreReq;
-	featPreReq.featPrereqCode = 266;
-	featPreReq.featPrereqCodeArg = 4;  //BAB + 4
-	featSpec.prereqs.push_back(featPreReq);
-
-	_AddFeat(featSpec);  //Add the parent feat
-
 	//Change common members for the child feat as appropriate
-	*(reinterpret_cast<int *>(&featSpec.flags)) &= ~(FPF_MULTI_MASTER);  //Remove master flag
-	featSpec.parentId = static_cast<feat_enums>(ElfHash::Hash(parentFeatName));
-	featSpec.prereqs.emplace_back();
-	featSpec.prereqs[1].featPrereqCodeArg = 1;
-	
-	//Generate the child feats
+	*(reinterpret_cast<int *>(&childFeat.flags)) &= ~(FPF_MULTI_MASTER);  //Remove master flag
+	childFeat.parentId = static_cast<feat_enums>(ElfHash::Hash(parentFeatName));
+	childFeat.prereqs.emplace_back();  //Already have the BAB req from copying the parent feat
+	childFeat.prereqs[1].featPrereqCodeArg = 1;
+
+	//Generate each child feat
 	for (int type = static_cast<int>(wt_gauntlet); type <= static_cast<int>(wt_ray); type++) {
+
+		//No crits for grapple or net
 		if ((type != wt_grapple) && (type != wt_net)) {
-			featSpec.weapType = static_cast<WeaponTypes>(type);
-			featSpec.name = parentFeatName;
-			featSpec.name += " - ";
-			featSpec.name += weapons.GetName(featSpec.weapType);
+			childFeat.weapType = static_cast<WeaponTypes>(type);
+			childFeat.name = parentFeatName;
+			childFeat.name += " - ";
+			childFeat.name += weapons.GetName(childFeat.weapType);
 			// Weapon focus in the same weapon is the other prereq
-			featSpec.prereqs[1].featPrereqCode = type + static_cast<int>(FEAT_WEAPON_FOCUS_GAUNTLET) + 1000;
-			_AddFeat(featSpec);  //Add the child feat
+			childFeat.prereqs[1].featPrereqCode = type + static_cast<int>(FEAT_WEAPON_FOCUS_GAUNTLET) + 1000;
+			_AddFeat(childFeat);  //Add the child feat
 		}
 	}
-
 }
 
 void LegacyFeatSystem::_AddFeat(const NewFeatSpec &featSpec)
@@ -382,6 +366,11 @@ void LegacyFeatSystem::_GetNewFeatsFromFile()
 		}
 
 		_AddFeat(featSpec);
+
+		//Add the power critical child feats based on the flag
+		if (featSpec.flags & FPF_POWER_CRIT_ITEM) {
+		    _GeneratePowerCriticalChildFeats(featSpec);
+		}
 
 		tio_fclose(featFile);
 
