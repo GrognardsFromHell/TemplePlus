@@ -180,7 +180,7 @@ struct LegacyFeatSystem : temple::AddressTable
 protected:
 	std::map<feat_enums, NewFeatSpec> mNewFeats;
 	void _GetNewFeatsFromFile();
-	void _GeneratePowerCriticalChildFeats(const NewFeatSpec &feat);
+	void _GeneratePowerCriticalChildFeats(const NewFeatSpec &parentFeat);
 	void _CompileParents();
 	void _AddFeat(const NewFeatSpec &featSpec);
 };

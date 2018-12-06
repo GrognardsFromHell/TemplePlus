@@ -222,14 +222,13 @@ BOOL LegacyFeatSystem::FeatSystemInit()
 
 }
 
-void LegacyFeatSystem::_GeneratePowerCriticalChildFeats(const NewFeatSpec &feat)
+void LegacyFeatSystem::_GeneratePowerCriticalChildFeats(const NewFeatSpec &parentFeat)
 {
-	NewFeatSpec childFeat(feat);
-	std::string parentFeatName = childFeat.name;
+	NewFeatSpec childFeat(parentFeat);
 	
 	//Change common members for the child feat as appropriate
-	*(reinterpret_cast<int *>(&childFeat.flags)) &= ~(FPF_MULTI_MASTER);  //Remove master flag
-	childFeat.parentId = static_cast<feat_enums>(ElfHash::Hash(parentFeatName));
+	childFeat.flags = static_cast<FeatPropertyFlag>(FPF_POWER_CRIT_ITEM | FPF_MULTI_SELECT_ITEM | FPF_NON_CORE);
+	childFeat.parentId = static_cast<feat_enums>(ElfHash::Hash(parentFeat.name));
 	childFeat.prereqs.emplace_back();  //Already have the BAB req from copying the parent feat
 	childFeat.prereqs[1].featPrereqCodeArg = 1;
 
@@ -239,7 +238,7 @@ void LegacyFeatSystem::_GeneratePowerCriticalChildFeats(const NewFeatSpec &feat)
 		//No crits for grapple or net
 		if ((type != wt_grapple) && (type != wt_net)) {
 			childFeat.weapType = static_cast<WeaponTypes>(type);
-			childFeat.name = parentFeatName;
+			childFeat.name = parentFeat.name;
 			childFeat.name += " - ";
 			childFeat.name += weapons.GetName(childFeat.weapType);
 			// Weapon focus in the same weapon is the other prereq
