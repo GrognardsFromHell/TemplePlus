@@ -23,8 +23,8 @@ namespace aas {
 		char field_D;
 		char field_E;
 		char field_F;
-		float elapsedTimeRelated; // Maybe: Elapsed "fade-in" time in seconds
-		float maybeSpeedFactor; // Maybe: 1 / fade-in time in seconds
+		float weight; // 1.0 = Fully weighted, otherwise weighted with primary anims
+		float fadingSpeed; // Velocity with which weight is being changed
 		int eventHandlingDepth;
 		AnimPlayer * nextRunningAnim;
 		AnimPlayer * prevRunningAnim;

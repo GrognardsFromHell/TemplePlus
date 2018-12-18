@@ -27,8 +27,9 @@ namespace aas {
 		prevRunningAnim = 0;
 		maybeEnded = 1;
 		field_D = 0;
-		elapsedTimeRelated = 0;
-		maybeSpeedFactor = 2.0f;
+		// Default is fading in over .5 seconds
+		weight = 0;
+		fadingSpeed = 2.0f;
 		eventHandlingDepth = 0;
 		streamCount = 0;
 		currentTime = 0;
@@ -54,14 +55,14 @@ namespace aas {
 
 	void AnimPlayer::GetDistPerSec(float *distPerSec)
 	{
-		if (animation->driveType == SkelAnimDriver::Distance && maybeSpeedFactor > 0.0) {
+		if (animation->driveType == SkelAnimDriver::Distance && fadingSpeed > 0.0) {
 			*distPerSec = ownerAnim->scale * distancePerSecond;
 		}
 	}
 
 	void AnimPlayer::GetRotationPerSec(float * rotationPerSec)
 	{
-		if (animation->driveType == SkelAnimDriver::Rotation && maybeSpeedFactor > 0.0) {
+		if (animation->driveType == SkelAnimDriver::Rotation && fadingSpeed > 0.0) {
 			*rotationPerSec = distancePerSecond;
 		}
 	}
@@ -143,13 +144,14 @@ namespace aas {
 
 	void AnimPlayer::AddTime(float timeChanged, float distanceChanged, float rotationChanged)
 	{
-		elapsedTimeRelated += timeChanged * maybeSpeedFactor;
+		// Modify weight according to fadein/fadeout speed
+		weight += timeChanged * fadingSpeed;
 
-		// Clamp to [0,1]
-		if (elapsedTimeRelated <= 0.0f) {
-			elapsedTimeRelated = 0.0f;
-		} else if (elapsedTimeRelated > 1.0) {
-			elapsedTimeRelated = 1.0f;
+		// Clamp weight to [0,1]
+		if (weight <= 0.0f) {
+			weight = 0.0f;
+		} else if (weight > 1.0) {
+			weight = 1.0f;
 		}
 	}
 
@@ -206,7 +208,7 @@ namespace aas {
 
 		}
 
-		if (streamCount != 1 || ownerAnim->variationCount != 1 || elapsedTimeRelated != 1.0f) {
+		if (streamCount != 1 || ownerAnim->variationCount != 1 || weight != 1.0f) {
 
 			// Get the bone data for each stream
 			SkelBoneState boneData[4 * 1024];			 // 4 streams with at most 1024 bones each
@@ -219,7 +221,7 @@ namespace aas {
 
 			SkelBoneState boneDataTemp[1024];
 			gsl::span<SkelBoneState> boneDataBuf = boneDataTemp;
-			if (elapsedTimeRelated == 1.0f) {
+			if (weight == 1.0f) {
 				boneDataBuf = boneStateOut;
 			}
 
@@ -234,7 +236,7 @@ namespace aas {
 				}
 			}
 
-			SkelBoneState::Lerp(boneStateOut, boneStateOut, boneDataBuf, boneCount, elapsedTimeRelated);
+			SkelBoneState::Lerp(boneStateOut, boneStateOut, boneDataBuf, boneCount, weight);
 		} else {
 			streams[0]->GetBoneState(boneStateOut);
 		}
@@ -380,21 +382,20 @@ namespace aas {
 
 	}
 
-	void AnimPlayer::Setup2(float a)
+	void AnimPlayer::Setup2(float fadeInTimeSecs)
 	{
-		// Always 0.5
-		if (a <= 0.0f) {
-			maybeSpeedFactor = 1.0f;
-			elapsedTimeRelated = 1.0f;
-		}
-		else {
-			auto a_inv = 1.0f / a;
-			if (a_inv <= maybeSpeedFactor) {
-				this->elapsedTimeRelated = 0.0001f;
+		// Always 0.5s
+		if (fadeInTimeSecs <= 0.0f) {
+			fadingSpeed = 1.0f;
+			weight = 1.0f;
+		} else {
+			auto fadeInSpeed = 1.0f / fadeInTimeSecs;
+			if (fadeInSpeed <= fadingSpeed) {
+				weight = 0.0001f;
 			}
 			else {
-				maybeSpeedFactor = a_inv;
-				elapsedTimeRelated = 0.0001f;
+				fadingSpeed = fadeInSpeed;
+				weight = 0.0001f;
 			}
 		}
 	}

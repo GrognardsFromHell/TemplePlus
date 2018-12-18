@@ -883,7 +883,7 @@ namespace aas {
 			{
 				if (newestRunningAnim->maybeEnded)
 				{
-					if (newestRunningAnim->elapsedTimeRelated <= 0.0 && newestRunningAnim->maybeSpeedFactor < 0.0)
+					if (newestRunningAnim->weight <= 0.0 && newestRunningAnim->fadingSpeed < 0.0)
 					{
 						delete newestRunningAnim;
 						newestRunningAnim = nullptr;
@@ -891,7 +891,7 @@ namespace aas {
 				}
 			}
 
-			if (newestRunningAnim->elapsedTimeRelated == 1.0f && newestRunningAnim->maybeSpeedFactor >= 0.0)
+			if (newestRunningAnim->weight == 1.0f && newestRunningAnim->fadingSpeed >= 0.0)
 			{
 				auto curAnim = newestRunningAnim->prevRunningAnim;
 				if (curAnim)
@@ -930,7 +930,7 @@ namespace aas {
 		auto bones = skeleton->GetBones();
 
 		auto running_anim = runningAnimsHead;
-		if (!running_anim || running_anim->elapsedTimeRelated != 1.0f || running_anim->maybeSpeedFactor < 0.0) {
+		if (!running_anim || running_anim->weight != 1.0f || running_anim->fadingSpeed < 0.0) {
 			for (int i = 0; i < bones.size(); i++) {
 				boneState[i] = bones[i].initialState;
 			}
@@ -942,14 +942,17 @@ namespace aas {
 			running_anim->method6(boneState, drivenTime, drivenDistance, drivenRotation);
 
 			if (!running_anim->GetEventHandlingDepth()) {
+				// Delete animations that have completed their fading out time
 				if (running_anim->maybeEnded) {
-					if (running_anim->elapsedTimeRelated <= 0.0 && running_anim->maybeSpeedFactor < 0.0) {
+					if (running_anim->weight <= 0.0 && running_anim->fadingSpeed < 0.0) {
 						delete running_anim;
 					}
 				}
 			}
 
-			if (running_anim->elapsedTimeRelated == 1.0f && running_anim->maybeSpeedFactor >= 0.0) {
+			// When an animation has faded in completely, 
+			// delete any previous animation that may have ended
+			if (running_anim->weight == 1.0f && running_anim->fadingSpeed >= 0.0) {
 				auto prev_anim = running_anim->prevRunningAnim;
 				while (prev_anim) {
 					auto next_prev = prev_anim->prevRunningAnim;
@@ -1005,10 +1008,10 @@ namespace aas {
 		auto player = runningAnimsHead;
 		while (player) {
 			auto next = player->nextRunningAnim;
-			player->elapsedTimeRelated = 0;
+			player->weight = 0;
 
 			if (!next) {
-				player->elapsedTimeRelated = 1.0f;
+				player->weight = 1.0f;
 				player->SetTime(time);
 				// epsilon
 				Advance(
