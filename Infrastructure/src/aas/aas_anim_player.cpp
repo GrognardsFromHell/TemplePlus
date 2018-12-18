@@ -25,7 +25,6 @@ namespace aas {
 		ownerAnim = 0;
 		nextRunningAnim = 0;
 		prevRunningAnim = 0;
-		maybeEnded = 1;
 		field_D = 0;
 		// Default is fading in over .5 seconds
 		weight = 0;
@@ -142,7 +141,7 @@ namespace aas {
 
 	}
 
-	void AnimPlayer::AddTime(float timeChanged, float distanceChanged, float rotationChanged)
+	void AnimPlayer::FadeInOrOut(float timeChanged)
 	{
 		// Modify weight according to fadein/fadeout speed
 		weight += timeChanged * fadingSpeed;

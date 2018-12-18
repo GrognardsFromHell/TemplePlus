@@ -857,6 +857,36 @@ namespace aas {
 		player->Setup2(0.5f);
 	}
 
+	void AnimatedModel::CleanupAnimations(AnimPlayer *player)
+	{
+		// Delete any animation that has ended once it has faded out
+		if (!player->GetEventHandlingDepth())
+		{
+			if (player->weight <= 0.0 && player->fadingSpeed < 0.0)
+			{
+				delete player;
+				return;
+			}
+		}
+
+		// When any animation that is not currently fading out reaches weight 1,
+		// delete any animation that may have ended regardless of whether it has
+		// finished fading out
+		if (player->weight >= 1.0f && player->fadingSpeed >= 0.0)
+		{
+			auto curAnim = player->prevRunningAnim;
+			while (curAnim)
+			{
+				auto prev = curAnim->prevRunningAnim;
+				if (!curAnim->GetEventHandlingDepth())
+				{
+					delete curAnim;
+				}
+				curAnim = prev;
+			}
+		}
+	}
+
 	void AnimatedModel::Advance(const Matrix3x4 & world_matrix, float delta_time, float delta_distance, float delta_rotation)
 	{
 		this->drivenTime += delta_time;
@@ -867,8 +897,8 @@ namespace aas {
 
 		auto anim_player = runningAnimsHead;
 		while (anim_player) {
-			auto next = anim_player->nextRunningAnim; // addtime MIGHT cancel the current anim and break this field
-			anim_player->AddTime(delta_time, delta_distance, delta_rotation);
+			auto next = anim_player->nextRunningAnim;
+			anim_player->FadeInOrOut(delta_time);
 			anim_player = next;
 		}
 
@@ -879,36 +909,7 @@ namespace aas {
 			v8->AdvanceEvents(delta_time, delta_distance, delta_rotation);
 			v8->LeaveEventHandling();
 
-			if (!newestRunningAnim->GetEventHandlingDepth())
-			{
-				if (newestRunningAnim->maybeEnded)
-				{
-					if (newestRunningAnim->weight <= 0.0 && newestRunningAnim->fadingSpeed < 0.0)
-					{
-						delete newestRunningAnim;
-						newestRunningAnim = nullptr;
-					}
-				}
-			}
-
-			if (newestRunningAnim->weight == 1.0f && newestRunningAnim->fadingSpeed >= 0.0)
-			{
-				auto curAnim = newestRunningAnim->prevRunningAnim;
-				if (curAnim)
-				{
-					AnimPlayer *prev = nullptr;
-					do
-					{
-						prev = curAnim->prevRunningAnim;
-						if (!curAnim->GetEventHandlingDepth())
-						{
-							if (curAnim->maybeEnded)
-								delete curAnim;
-						}
-						curAnim = prev;
-					} while (prev);
-				}
-			}
+			CleanupAnimations(v8);
 		}
 	}
 
@@ -941,29 +942,7 @@ namespace aas {
 
 			running_anim->method6(boneState, drivenTime, drivenDistance, drivenRotation);
 
-			if (!running_anim->GetEventHandlingDepth()) {
-				// Delete animations that have completed their fading out time
-				if (running_anim->maybeEnded) {
-					if (running_anim->weight <= 0.0 && running_anim->fadingSpeed < 0.0) {
-						delete running_anim;
-					}
-				}
-			}
-
-			// When an animation has faded in completely, 
-			// delete any previous animation that may have ended
-			if (running_anim->weight == 1.0f && running_anim->fadingSpeed >= 0.0) {
-				auto prev_anim = running_anim->prevRunningAnim;
-				while (prev_anim) {
-					auto next_prev = prev_anim->prevRunningAnim;
-					if (!prev_anim->GetEventHandlingDepth()) {
-						if (prev_anim->maybeEnded) {
-							delete prev_anim;
-						}
-					}
-					prev_anim = next_prev;
-				}
-			}
+			CleanupAnimations(running_anim);
 
 			running_anim = next_running_anim;
 		}

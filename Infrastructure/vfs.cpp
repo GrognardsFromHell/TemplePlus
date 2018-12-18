@@ -144,6 +144,9 @@ bool Vfs::IsDirEmpty(std::string_view path) {
 void Vfs::WriteBinaryFile(std::string_view path, gsl::span<uint8_t> data) {
 	
 	auto fh(Open(path, "wb"));
+	if (!fh) {
+		throw TempleException("Unable to open file {} for writing", path);
+	}
 	if (Write(&data[0], data.size(), fh) != data.size()) {
 		Close(fh);
 		RemoveFile(path);

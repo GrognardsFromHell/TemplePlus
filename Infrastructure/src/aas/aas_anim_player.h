@@ -19,7 +19,6 @@ namespace aas {
 	class AnimPlayer {
 	public:
 		AnimatedModel * ownerAnim;
-		char maybeEnded;
 		char field_D;
 		char field_E;
 		char field_F;
@@ -50,7 +49,7 @@ namespace aas {
 		void GetDistPerSec(float* distPerSec);
 		void GetRotationPerSec(float* rotationPerSec);
 		void AdvanceEvents(float timeChanged, float distanceChanged, float rotationChanged);
-		void AddTime(float timeChanged, float distanceChanged, float rotationChanged);
+		void FadeInOrOut(float timeChanged);
 		void method6(gsl::span<SkelBoneState> boneStateOut, float timeChanged, float distanceChanged, float rotationChanged);
 		void SetTime(float time);
 		float GetCurrentFrame();

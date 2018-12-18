@@ -108,6 +108,8 @@ namespace aas {
 		AasSubmeshWithMaterial * GetOrAddSubmesh(AasMaterial material, IMaterialResolver *materialResolver);
 
 		std::unique_ptr<gfx::IRenderState> renderState_;
+
+		void CleanupAnimations(AnimPlayer *player);
 	};
 
 }
