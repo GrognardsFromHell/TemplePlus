@@ -212,6 +212,8 @@ BOOL LegacyFeatSystem::FeatSystemInit()
 
 		// New file-based Feats
 		_GetNewFeatsFromFile();
+
+		_CompileParents();
 		return 1;
 	}
 
@@ -219,6 +221,43 @@ BOOL LegacyFeatSystem::FeatSystemInit()
 	return 0;
 
 }
+
+void LegacyFeatSystem::_GeneratePowerCriticalChildFeats(const NewFeatSpec &parentFeat)
+{
+	NewFeatSpec childFeat(parentFeat);
+	
+	//Change common members for the child feat as appropriate
+	childFeat.flags = static_cast<FeatPropertyFlag>(FPF_POWER_CRIT_ITEM | FPF_MULTI_SELECT_ITEM | FPF_NON_CORE);
+	childFeat.parentId = static_cast<feat_enums>(ElfHash::Hash(parentFeat.name));
+	childFeat.prereqs.emplace_back();  //Already have the BAB req from copying the parent feat
+	childFeat.prereqs[1].featPrereqCodeArg = 1;
+
+	//Generate each child feat
+	for (int type = static_cast<int>(wt_gauntlet); type <= static_cast<int>(wt_ray); type++) {
+
+		//No crits for grapple or net
+		if ((type != wt_grapple) && (type != wt_net)) {
+			childFeat.weapType = static_cast<WeaponTypes>(type);
+			childFeat.name = parentFeat.name;
+			childFeat.name += " - ";
+			childFeat.name += weapons.GetName(childFeat.weapType);
+			// Weapon focus in the same weapon is the other prereq
+			childFeat.prereqs[1].featPrereqCode = type + static_cast<int>(FEAT_WEAPON_FOCUS_GAUNTLET) + 1000;
+			_AddFeat(childFeat);  //Add the child feat
+		}
+	}
+}
+
+void LegacyFeatSystem::_AddFeat(const NewFeatSpec &featSpec)
+{
+	if (featSpec.name.size()) {
+		auto featId = static_cast<feat_enums>(ElfHash::Hash(featSpec.name));
+		Expects(static_cast<uint32_t>(featId) > NUM_FEATS && static_cast<uint32_t>(featId) > 1000); // ensure no collision with the normal ToEE feats, and also > 1000 so that it meshes with the feat prerequisites check
+		mNewFeats[featId] = featSpec;
+		newFeats.push_back(featId);
+	}
+}
+
 void LegacyFeatSystem::_GetNewFeatsFromFile()
 {
 	TioFileList flist;
@@ -325,11 +364,11 @@ void LegacyFeatSystem::_GetNewFeatsFromFile()
 			}
 		}
 
-		if (featSpec.name.size()){
-			auto featId = (feat_enums)ElfHash::Hash(featSpec.name);
-			Expects((uint32_t)featId > NUM_FEATS && (uint32_t)featId > 1000); // ensure no collision with the normal ToEE feats, and also > 1000 so that it meshes with the feat prerequisites check
-			mNewFeats[featId] = featSpec;
-			newFeats.push_back(featId);
+		_AddFeat(featSpec);
+
+		//Add the power critical child feats based on the flag
+		if (featSpec.flags & FPF_POWER_CRIT_ITEM) {
+		    _GeneratePowerCriticalChildFeats(featSpec);
 		}
 
 		tio_fclose(featFile);
@@ -337,8 +376,6 @@ void LegacyFeatSystem::_GetNewFeatsFromFile()
 	}
 
 	tio_filelist_destroy(&flist);
-
-	_CompileParents();
 }
 
 void LegacyFeatSystem::_CompileParents(){

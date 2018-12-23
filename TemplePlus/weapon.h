@@ -12,6 +12,8 @@ struct WeaponTypeProperties
 
 struct WeaponSystem : temple::AddressTable
 {
+	std::string GetName(WeaponTypes wpnType);
+
 	uint32_t IsSimple(WeaponTypes wpnType);
 	uint32_t IsMartial(WeaponTypes wpnType);
 	uint32_t IsExotic(WeaponTypes wpnType);

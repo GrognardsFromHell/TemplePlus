@@ -47,6 +47,7 @@
 #include "ui/ui_legacysystems.h"
 #include "ui/ui_worldmap.h"
 #include "ui/ui_char.h"
+#include "infrastructure/elfhash.h"
 
 #include <pybind11/embed.h>
 namespace py = pybind11;
@@ -499,11 +500,33 @@ PyObject* PyGame_GetWpnTypeForFeat(PyObject*, PyObject* args) {
 	return PyInt_FromLong(feats.GetWeaponType(featCode));
 }
 
+PyObject* PyGame_GetFeatName(PyObject*, PyObject* args) {
+	feat_enums featCode;
+	if (!PyArg_ParseTuple(args, "i:game.get_feat_name", &featCode)) {
+		return nullptr;
+	}
+
+	return PyString_FromString(feats.GetFeatName(featCode));
+}
+
 PyObject* PyGame_GetFeatForWpnType(PyObject*, PyObject* args) {
 	WeaponTypes wt;
 	feat_enums baseFeat = FEAT_NONE;
-	if (!PyArg_ParseTuple(args, "i|i:game.get_feat_for_weapon_type", &wt, &baseFeat)) {
+
+	if (PyTuple_GET_SIZE(args) < 2) {
 		return nullptr;
+	}
+
+	PyObject* arg1 = PyTuple_GET_ITEM(args, 0);
+	wt = static_cast<WeaponTypes>(PyLong_AsLong(arg1));
+
+	PyObject* arg2 = PyTuple_GET_ITEM(args, 1);
+	if (PyString_Check(arg2)) {
+		auto argString = fmt::format("{}", PyString_AsString(arg2));
+		baseFeat = static_cast<feat_enums>(ElfHash::Hash(argString));
+	}
+	else {
+		baseFeat = static_cast<feat_enums>(PyLong_AsLong(arg2));
 	}
 
 	return PyInt_FromLong(feats.GetFeatForWeaponType(wt, baseFeat));
@@ -1294,6 +1317,7 @@ static PyMethodDef PyGameMethods[]{
 	{ "get_weapon_damage_type", PyGame_GetWpnDamType,METH_VARARGS, NULL },
 	{"is_save_favored_for_class", PyGame_IsSaveFavoerdForClass,METH_VARARGS, NULL },
 	{ "is_lax_rules", PyGame_IsLaxRules,METH_VARARGS, NULL },
+	{"get_feat_name", PyGame_GetFeatName,METH_VARARGS, NULL},
 	// This is some unfinished UI for which the graphics are missing
 	// {"charmap", PyGame_Charmap, METH_VARARGS, NULL},
 	{NULL, NULL, NULL, NULL}

@@ -32,7 +32,8 @@ enum FeatPropertyFlag : uint32_t {
 	FPF_GREAT_WEAP_SPEC_ITEM = 0x100100, // NEW	
 	FPF_PSIONIC = 0x200000,
 	FPF_NON_CORE =0x400000,
-	FPF_CUSTOM_REQ = 0x800000 // signifies that requirements should be checked via script
+	FPF_CUSTOM_REQ = 0x800000, // signifies that requirements should be checked via script
+	FPF_POWER_CRIT_ITEM = 0x1000000
 };
 
 
@@ -179,7 +180,9 @@ struct LegacyFeatSystem : temple::AddressTable
 protected:
 	std::map<feat_enums, NewFeatSpec> mNewFeats;
 	void _GetNewFeatsFromFile();
+	void _GeneratePowerCriticalChildFeats(const NewFeatSpec &parentFeat);
 	void _CompileParents();
+	void _AddFeat(const NewFeatSpec &featSpec);
 };
 
 extern LegacyFeatSystem feats;
