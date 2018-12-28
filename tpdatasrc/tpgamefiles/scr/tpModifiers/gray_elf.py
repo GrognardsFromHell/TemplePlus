@@ -16,7 +16,7 @@ raceSpecModule = __import__('race098_gray_elf')
 
 def ElvenSaveBonusEnchantment(attachee, args, evt_obj):
 	flags = evt_obj.flags
-	if (flags & (2 << (D20STD_F_SPELL_SCHOOL_ENCHANTMENT-1))): 
+	if (flags & (1 << (D20STD_F_SPELL_SCHOOL_ENCHANTMENT-1))): 
 		evt_obj.bonus_list.add(2, 31, 139) # Racial Bonus
 	return 0
 
