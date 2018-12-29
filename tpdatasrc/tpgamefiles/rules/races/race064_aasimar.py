@@ -18,7 +18,7 @@ raceSpec.weight_female   = [89, 165]
 raceSpec.stat_modifiers  = [0, 0, 0, 0, 2, 2]   # str, dex, con, int, wis, cha
 raceSpec.proto_id        = 13022
 raceSpec.material_offset = 0         # offset into rules/material_ext.mes file
-raceSpec.feats           = [feat_exotic_weapon_proficiency_hand_crossbow, feat_martial_weapon_proficiency_rapier, feat_martial_weapon_proficiency_short_sword]
+raceSpec.feats           = [feat_simple_weapon_proficiency, feat_martial_weapon_proficiency_all]
 
 ###################################################
 def RegisterRace():
