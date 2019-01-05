@@ -2306,8 +2306,8 @@ enum Subrace : uint32_t
 	subrace_none = 0, // default
 
 	//Human subraces
-	subrace_aasumar = 1,
-	subrace_tiefling = 2,
+	subrace_aasumar = 2,
+	subrace_tiefling = 3,
 
 	// Dwarf subraces
 	subrace_deep_dwarf = 1,
