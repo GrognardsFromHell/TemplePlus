@@ -63,7 +63,12 @@ public:
 
 	static int DivinePowerToHitAsFighter(DispatcherCallbackArgs args);
 
+	static int MagicCirclePreventDamage(DispatcherCallbackArgs args);
+
 	void apply() override {
+
+		// Magic Circle Taking Damage - didn't check that attacker is not null
+		replaceFunction(0x100C8D60, MagicCirclePreventDamage);
 
 		// Divine Power To Hit as fighter
 		replaceFunction(0x100C7390, DivinePowerToHitAsFighter);
@@ -1031,5 +1036,67 @@ int SpellConditionFixes::DivinePowerToHitAsFighter(DispatcherCallbackArgs args)
 		return 0; // fixed vanilla bug that would cause it to virtually stack with the pre-existing bonus
 	dispIo->bonlist.AddBonus(fighterBab, 40, args.GetData2()); // Divine Power BAB bouns type change from 12 to 40 so it stacks with Weapon Enh Bonus but doesn't stack with itself
 		
+	return 0;
+}
+
+int SpellConditionFixes::MagicCirclePreventDamage(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIOTypeDamage, DispIoDamage);
+	// fix - sometimes there was no attacker...
+	auto attacker = dispIo->attackPacket.attacker;
+	if (!attacker) {
+		return 0;
+	}
+	
+	// Check if using natural attack
+	// Another fix - vanilla toee was checking the target rather than the attacker...
+	auto weaponMain = inventory.ItemWornAt(attacker, EquipSlot::WeaponPrimary);
+	auto weaponSec  = inventory.ItemWornAt(attacker, EquipSlot::WeaponSecondary);
+	if (weaponMain || weaponSec){
+		return 0;
+	}
+
+	auto spellId = args.GetCondArg(0);
+	SpellPacketBody spellPkt(spellId);
+	if (!spellPkt.spellEnum){
+		logger->error("MagicCirclePreventDamage: unable to retrieve spell packet!");
+		return 0;
+	}
+	
+	auto attackerObj = objSystem->GetObject(attacker);
+	// check if attacker is summoned creature
+	if (!d20Sys.d20QueryWithData(attacker, DK_QUE_Critter_Has_Condition, conds.GetByName("sp-Summoned"),0)){
+		return 0;
+	}
+	auto alignment = attackerObj->GetInt32(obj_f_critter_alignment);
+	switch(spellPkt.spellEnum){
+	case 368:
+		if (!(alignment & ALIGNMENT_LAWFUL)){
+			return 0;
+		}
+		break;
+	case 370:
+		if (!(alignment & ALIGNMENT_GOOD)) {
+			return 0;
+		}
+		break;
+	case 371:
+		if (!(alignment & ALIGNMENT_EVIL)) {
+			return 0;
+		}
+		break;
+	case 372:
+		if (!(alignment & ALIGNMENT_CHAOTIC)) {
+			return 0;
+		}
+		break;
+	default:
+		logger->error("MagicCirclePreventDamage: invalid spell = {}", spellSys.GetSpellMesline(spellPkt.spellEnum));
+		return 0;
+	}
+	if (spellPkt.CheckSpellResistance(args.objHndCaller)){
+		return 0;
+	}
+	dispIo->damage.AddModFactor(0.0, DamageType::Unspecified, 104);
 	return 0;
 }
