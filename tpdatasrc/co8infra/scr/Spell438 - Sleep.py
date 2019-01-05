@@ -80,7 +80,7 @@ def OnSpellEffect( spell ):
 			remove_list.append( target_item.obj )
 
 	spell.target_list.remove_list( remove_list )
-	spell.spell_end( spell.id , 1) # changed to force spell_end since there are no lingering particles and no per round effects
+	spell.spell_end( spell.id) # changed back force_spell_end to 0 despite there being no per-round effects. it caused problems - sp-Sleep would get pruned when saving...
 
 def OnBeginRound( spell ):
 	print "Sleep OnBeginRound"
