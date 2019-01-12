@@ -495,6 +495,38 @@ PYBIND11_EMBEDDED_MODULE(char_editor, mm) {
 		auto feat = ElfHash::Hash(featString);
 		return hasFeat(feat);
 	})
+	.def("get_feats", []()->std::vector<int> {
+		std::vector<int> returnValues;
+		auto handle = chargen.GetEditedChar();
+		auto feats = objects.feats.GetFeats(handle);
+		auto &charPkt = chargen.GetCharEditorSelPacket();
+
+		if ((charPkt.feat0 != FEAT_INVALID) && (charPkt.feat0 != FEAT_NONE)) {
+			feats.push_back(charPkt.feat0);
+		}
+
+		if ((charPkt.feat1 != FEAT_INVALID) && (charPkt.feat1 != FEAT_NONE)) {
+			feats.push_back(charPkt.feat1);
+		}
+
+		if((charPkt.feat2 != FEAT_INVALID) && (charPkt.feat2 != FEAT_NONE)) {
+			feats.push_back(charPkt.feat2);
+		}
+
+		if ((charPkt.feat3 != FEAT_INVALID) && (charPkt.feat3 != FEAT_NONE)) {
+			feats.push_back(charPkt.feat3);
+		}
+
+		if ((charPkt.feat4 != FEAT_INVALID) && (charPkt.feat4 != FEAT_NONE)) {
+			feats.push_back(charPkt.feat4);
+		}
+
+		for (auto &&feat : feats) {
+			returnValues.push_back(static_cast<int>(feat));
+		}
+		
+		return returnValues;
+	})
 	.def("has_feat", [](int featEnum)->int{
 		auto feat = (feat_enums)featEnum;
 		return hasFeat(feat);

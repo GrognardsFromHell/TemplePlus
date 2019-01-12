@@ -1678,6 +1678,7 @@ int __cdecl GlobalToHitBonus(DispatcherCallbackArgs args)
 			if (weapon)
 			{
 				long double weaponRange = (long double)objects.getInt32(weapon, obj_f_weapon_range);
+				weaponRange += dispatch.DispatchRangeBonus(args.objHndCaller, weapon);
 				int rangePenaltyFacotr = (int)(dist / weaponRange);
 				if ((int)rangePenaltyFacotr > 0)
 					bonusSys.bonusAddToBonusList(&dispIo->bonlist, -2 * rangePenaltyFacotr, 0, 303);

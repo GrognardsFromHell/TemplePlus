@@ -1,0 +1,6 @@
+name: Ranged Weapon Mastery - Piercing
+flags: 12583168
+prereqs: 266 8
+description: When using any ranged weapon that has the damage type you selected, you gain a +2 bonus on attack rolls and a +2 bonus on damage rolls.  In addition, you increase its range increment by 20 feet.
+prereq descr: BAB 8, Weapon Focus and Weapon Specialization with a ranged weapon that deals this type of damage.
+parent: Ranged Weapon Mastery
