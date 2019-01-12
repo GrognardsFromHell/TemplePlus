@@ -589,7 +589,8 @@ void AnimSystem::GoalDestinationAdd(objHndl handle, LocAndOffsets loc){
 }
 
 void AnimSystem::SetRuninfoDeallocCallback(void(* cb)()){
-    temple::GetRef<void(__cdecl*)()>(0x10AA4BB4) = cb;
+	SetAllGoalsClearedCallback(cb);
+    //temple::GetRef<void(__cdecl*)()>(0x10AA4BB4) = cb;
 }
 
 bool AnimSystem::InterruptAllForTbCombat(){

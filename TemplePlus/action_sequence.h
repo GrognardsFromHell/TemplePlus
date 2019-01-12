@@ -106,6 +106,7 @@ struct ActionSequenceSystem : temple::AddressTable
 	int turnBasedStatusTransitionMatrix[7][5]; // describes the new hourglass state when current state is i after doing an action that costs j
 
 	void curSeqReset(objHndl objHnd);
+	void ResetAll(objHndl handle);
 	void ActSeqSpellReset() const;
 	
 	// Pickers
@@ -185,6 +186,7 @@ struct ActionSequenceSystem : temple::AddressTable
 	int32_t InterruptCounterspell(D20Actn *d20a);
 	int32_t GetCurSeqD20ActionCount();
 	objHndl getNextSimulsPerformer(); // returns next simultaneous action performer
+	
 
 	static int ReadyVsApproachOrWithdrawalCount();
 	static void ReadyVsRemoveForObj(objHndl obj);
