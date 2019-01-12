@@ -812,7 +812,8 @@ void LegacyCombatSystem::EndTurn()
 		auto combatantObj = gameSystems->GetObj().GetObject(combatant);
 		
 		auto shouldRemove = critterSys.IsDeadNullDestroyed(combatant) || (combatantObj->GetFlags() & OF_OFF);
-		if (!shouldRemove && combatantObj->IsNPC() && !party.IsInParty(combatant)){
+		// Added in Temple+ : Remove AIs that aren't in combat mode
+		if (!shouldRemove && combatantObj->IsNPC() && !party.IsInParty(combatant) && !combatSys.IsBrawlInProgress()){
 			auto aifs = AIFS_NONE;
 			aiSys.GetAiFightStatus(combatant, &aifs, nullptr);
 			if (aifs == AIFS_NONE){
@@ -996,14 +997,14 @@ void LegacyCombatSystem::TurnStart2(int prevInitiativeIdx)
 	int curActorInitIdx = tbSys.GetInitiativeListIdx();
 	if (prevInitiativeIdx > curActorInitIdx)
 	{
-		logger->debug("TurnStart2: \t End Subturn. Cur Actor: {} ({}), Initiative Idx: {}; Prev Initiative Idx: {} ", description.getDisplayName(actor), actor, curActorInitIdx, prevInitiativeIdx);
+		logger->debug("TurnStart2: \t End Subturn. Cur Actor: {}, Initiative Idx: {}; Prev Initiative Idx: {} ", actor, curActorInitIdx, prevInitiativeIdx);
 		CombatSubturnEnd();
 	}
 
 	// start new turn for current actor
 	actor = tbSys.turnBasedGetCurrentActor();
 	curActorInitIdx = tbSys.GetInitiativeListIdx();
-	logger->debug("TurnStart2: \t Starting new turn for {} ({}). InitiativeIdx: {}", description.getDisplayName(actor), actor, curActorInitIdx);
+	logger->debug("TurnStart2: \t Starting new turn for {}. InitiativeIdx: {}", actor, curActorInitIdx);
 	Subturn();
 
 	// set action bar values
@@ -1017,7 +1018,7 @@ void LegacyCombatSystem::TurnStart2(int prevInitiativeIdx)
 	if (actSeqSys.SimulsAdvance())
 	{
 		actor = tbSys.turnBasedGetCurrentActor();
-		logger->debug("TurnStart2: \t Actor {} ({}) starting turn...(simul)", description.getDisplayName(actor), actor);
+		logger->debug("TurnStart2: \t Actor {} starting turn...(simul)", actor);
 		CombatAdvanceTurn(actor);
 	}
 }
@@ -1042,7 +1043,7 @@ void LegacyCombatSystem::CombatAdvanceTurn(objHndl obj)
 	static int combatInitiative = 0;
 	combatInitiative++;
 	auto curSeq = *actSeqSys.actSeqCur;
-	logger->debug("Combat Advance Turn: Actor {} ({}) ending his turn. CurSeq: {}", description.getDisplayName(obj), obj, (void*)curSeq);
+	logger->debug("Combat Advance Turn: Actor {} ending his turn. CurSeq: {}",obj, (void*)curSeq);
 	if (combatInitiative <= GetInitiativeListLength())
 	{
 		int initListIdx = tbSys.GetInitiativeListIdx();
