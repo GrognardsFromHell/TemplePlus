@@ -73,7 +73,7 @@ struct CombatSystemAddresses : temple::AddressTable
 	void (*Subturn)();
 	void (*EndTurn)();
 	void (*CombatPerformFleeCombat)(objHndl obj);
-} addresses;
+} combatAddresses;
 
 class CombatSystemReplacements : public TempleFix
 {
@@ -669,7 +669,7 @@ void LegacyCombatSystem::AddToInitiativeWithinRect(objHndl handle) const
 
 void LegacyCombatSystem::TurnProcessAi(objHndl obj)
 {
-	//return addresses.TurnProcessing_100635E0(obj);
+	//return combatAddresses.TurnProcessing_100635E0(obj);
 	auto actor = tbSys.turnBasedGetCurrentActor();
 	if (obj != actor && obj != actSeqSys.getNextSimulsPerformer())
 	{
@@ -730,14 +730,61 @@ void LegacyCombatSystem::TurnProcessAi(objHndl obj)
 
 BOOL LegacyCombatSystem::StartCombat(objHndl combatInitiator, int setToFirstInitiativeFlag){
 
-	if (!*combatModeActive){
-
-		if (AllPcsUnconscious())
-			return FALSE;
-
-		return temple::GetRef<BOOL(__cdecl)(objHndl, int)>(0x100639A0)(combatInitiator, setToFirstInitiativeFlag);
+	if (*combatModeActive){
+		return TRUE;
 	}
+
+	if (AllPcsUnconscious())
+		return FALSE;
+
+	*combatAddresses.combatRoundCount = 0;
+	if (!gameSystems->GetAnim().InterruptAllForTbCombat()){
+		logger->debug("Combat: TB_Start: Anim-Goal-Interrupt FAILED!");
+	}
+	gameSystems->GetAnim().SetAllGoalsClearedCallback(temple::GetRef<void(__cdecl)()>(0x100628F0));
+	tbSys.CreateInitiativeListWithParty();
+	*combatModeActive = TRUE;
+
+	// Add within rect party to initiative 
+	for (auto i=0u; i < party.GroupListGetLen(); i++){
+		auto partyMember = party.GroupListGetMemberN(i);
+		AddToInitiativeWithinRect(partyMember);
+	}
+
+	AddToInitiative(combatInitiator);
+
+	if (setToFirstInitiativeFlag){
+		actSeqSys.ResetAll(combatInitiator);
+	}
+	else{
+		actSeqSys.ResetAll(objHndl::null);
+	}
+	temple::GetRef<int(__cdecl)()>(0x1009A950)(); // some logbook related crap, sets 0x10D249F8 = 1
+
+	actSeqSys.TurnStart(tbSys.turnBasedGetCurrentActor());
+
+	if (party.GetConsciousPartyLeader()){
+		++ (*combatAddresses.combatRoundCount);
+		*combatAddresses.combatActor = objHndl::null;
+		*combatAddresses.combatTimeEventSthg = 0;
+		*combatAddresses.combatTimeEventIndicator = 0;
+	}
+
+	if (actSeqSys.SimulsAdvance()){
+		logger->info("Combat for {} ending turn (simul)...", combatInitiator);
+		CombatAdvanceTurn(combatInitiator);
+	}
+
+	TurnStart2(0);
+
+	auto uiCallback = temple::GetRef<void(__cdecl*)()>(0x10AA83F4); // something to do with refreshing the initiative list portraits
+	uiCallback();
+
+	temple::GetRef<void(__cdecl)(objHndl)>(0x1003C770)(combatInitiator); // turn combat music on
+	
 	return TRUE;
+
+	//	return temple::GetRef<BOOL(__cdecl)(objHndl, int)>(0x100639A0)(combatInitiator, setToFirstInitiativeFlag);
 }
 
 void LegacyCombatSystem::EndTurn()
@@ -756,7 +803,6 @@ void LegacyCombatSystem::EndTurn()
 	tbSys.InitiativeListNextActor();
 
 	if (party.IsInParty(actor) && !actSeqSys.isPerforming(actor)){
-		//static auto addToInitiativeWithinRect = temple::GetRef<void(__cdecl)(objHndl)>(0x10062AC0);
 		AddToInitiativeWithinRect(actor);
 	}
 
@@ -794,7 +840,7 @@ void LegacyCombatSystem::EndTurn()
 		auto leader = party.GetConsciousPartyLeader();
 		combatSys.CritterExitCombatMode(leader);
 	}
-	//addresses.EndTurn();
+	//combatAddresses.EndTurn();
 }
 
 void LegacyCombatSystem::CombatSubturnEnd()
@@ -803,10 +849,10 @@ void LegacyCombatSystem::CombatSubturnEnd()
 	gameTimeSys.GameTimeAdd(&timeDelta);
 	if (party.GetConsciousPartyLeader())
 	{
-		++(*addresses.combatRoundCount);
-		*addresses.combatActor = 0i64;
-		*addresses.combatTimeEventSthg = 0;
-		*addresses.combatTimeEventIndicator = 0;
+		++(*combatAddresses.combatRoundCount);
+		*combatAddresses.combatActor = 0i64;
+		*combatAddresses.combatTimeEventSthg = 0;
+		*combatAddresses.combatTimeEventIndicator = 0;
 	}
 }
 
@@ -941,7 +987,7 @@ void LegacyCombatSystem::Subturn()
 	logger->info("Calling AI Process for {}", actor);
 	combatSys.TurnProcessAi(actor);
 
-	// addresses.Subturn();
+	// combatAddresses.Subturn();
 }
 
 void LegacyCombatSystem::TurnStart2(int prevInitiativeIdx)
@@ -961,10 +1007,10 @@ void LegacyCombatSystem::TurnStart2(int prevInitiativeIdx)
 	Subturn();
 
 	// set action bar values
-	uiCombat.ActionBarUnsetFlag1(*addresses.barPkt);
+	uiCombat.ActionBarUnsetFlag1(*combatAddresses.barPkt);
 	if (!objects.IsPlayerControlled(actor))
 	{
-		uiCombat.ActionBarSetMovementValues(*addresses.barPkt, 0.0, 20.0, 1.0);
+		uiCombat.ActionBarSetMovementValues(*combatAddresses.barPkt, 0.0, 20.0, 1.0);
 	}
 	
 	// handle simuls
@@ -978,9 +1024,9 @@ void LegacyCombatSystem::TurnStart2(int prevInitiativeIdx)
 
 void LegacyCombatSystem::CombatAdvanceTurn(objHndl obj)
 {
-	if (addresses.CheckFleeCombatMap() && addresses.GetFleeStatus())
+	if (combatAddresses.CheckFleeCombatMap() && combatAddresses.GetFleeStatus())
 	{
-		addresses.CombatPerformFleeCombat(obj);
+		combatAddresses.CombatPerformFleeCombat(obj);
 	}
 	if (!isCombatActive())
 		return;
@@ -1006,7 +1052,7 @@ void LegacyCombatSystem::CombatAdvanceTurn(objHndl obj)
 	}
 	combatInitiative--;
 
-	// return addresses.CombatTurnAdvance(obj);
+	// return combatAddresses.CombatTurnAdvance(obj);
 }
 
 BOOL LegacyCombatSystem::IsBrawlInProgress()
@@ -1070,7 +1116,7 @@ bool LegacyCombatSystem::CombatEnd(){
 
 	d20ObjRegistrySys.D20ObjRegistrySendSignalAll(DK_SIG_Combat_End, 0, 0);
 	*combatSys.combatModeActive = 0;
-	gameSystems->GetAnim().SetRuninfoDeallocCallback(nullptr);
+	gameSystems->GetAnim().SetAllGoalsClearedCallback(nullptr);
 	if (!gameSystems->GetAnim().InterruptAllForTbCombat()){
 		logger->debug("CombatEnd: Anim goal interrupt FAILED!");
 	}
@@ -1168,7 +1214,7 @@ uint32_t LegacyCombatSystem::IsCloseToParty(objHndl objHnd)
 
 int LegacyCombatSystem::GetEnemiesCanMelee(objHndl obj, objHndl* canMeleeList)
 {
-	return addresses.GetEnemiesCanMelee(obj, canMeleeList);
+	return combatAddresses.GetEnemiesCanMelee(obj, canMeleeList);
 }
 
 std::vector<objHndl> LegacyCombatSystem::GetEnemiesCanMelee(objHndl handle){
@@ -1406,10 +1452,38 @@ int LegacyCombatSystem::GetClosestEnemy(AiTactic* aiTac, int selectionType)
 	return 0;
 }
 
-void LegacyCombatSystem::Brawl(objHndl a, objHndl b){
+void LegacyCombatSystem::Brawl(objHndl player, objHndl brawlAi){
 
 	temple::GetRef<int>(0x102E7F38) = -1; // reset brawl state (fixes weird issues... also allows brawling to be reused)
-	_Brawl(a, b);
+
+	auto &brawlInProgress = temple::GetRef<BOOL>(0x10BD01C0);
+	if (brawlInProgress){
+		return;
+	}
+
+	auto &brawlPlayer = temple::GetRef<objHndl>(0x10BD01C8);
+	auto &brawlOpponent = temple::GetRef<objHndl>(0x10BD01D0);
+	brawlPlayer = player;
+	brawlOpponent = brawlAi;
+
+	for (auto i = 0u; i < party.GroupListGetLen(); i++) {
+		auto partyMember = party.GroupListGetMemberN(i);
+		if (partyMember == player){
+			conds.AddTo(player, "Brawl Player",{});
+		}
+		else{
+			conds.AddTo(partyMember, "Brawl Spectator", {});
+		}
+	}
+	conds.AddTo(brawlAi, "Brawl Opponent", {});
+	d20Sys.d20SendSignal(player, DK_SIG_DealNormalDamage, 0, 0);
+	inventory.ItemUnwieldByIdx(player, INVENTORY_WORN_IDX_START + EquipSlot::WeaponPrimary);
+	inventory.ItemUnwieldByIdx(player, INVENTORY_WORN_IDX_START + EquipSlot::WeaponSecondary);
+	combatSys.enterCombat(brawlAi);
+	combatSys.StartCombat(player, TRUE);
+	brawlInProgress = 1;
+
+	//_Brawl(player, brawlAi);
 }
 
 void LegacyCombatSystem::enterCombat(objHndl objHnd){
