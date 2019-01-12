@@ -36,6 +36,7 @@
 #include "d20_class.h"
 #include "gamesystems/d20/d20stats.h"
 #include "d20_race.h"
+#include "ai.h"
 
 #define CB int(__cdecl)(DispatcherCallbackArgs)
 using DispCB = int(__cdecl )(DispatcherCallbackArgs);
@@ -124,6 +125,8 @@ public:
 	static int __cdecl SpellDismissSignalHandler(DispatcherCallbackArgs args); // fixes issue with dismissing multiple spells
 	static int __cdecl DismissSignalHandler(DispatcherCallbackArgs args); // fixes issue with lingering Dismiss Spell holdouts
 
+	
+	static int __cdecl SpellModCountdownRemove(DispatcherCallbackArgs args);
 	static int __cdecl SpellRemoveMod(DispatcherCallbackArgs args); // fixes issue with dismissing multiple spells
 	static int __cdecl AoeSpellRemove(DispatcherCallbackArgs args);
 
@@ -174,6 +177,8 @@ public:
 	static int __cdecl CastDefensivelySpellInterrupted(DispatcherCallbackArgs args);
 	
 	static int __cdecl D20ModCountdownHandler(DispatcherCallbackArgs args);
+	static int __cdecl D20ModCountdownEndHandler(DispatcherCallbackArgs args);
+
 
 	static int __cdecl MonsterRegenerationOnDamage(DispatcherCallbackArgs args);
 
@@ -442,7 +447,10 @@ public:
 
 		// D20Mods countdown handler
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100EC9B0, genericCallbacks.D20ModCountdownHandler);
-
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100E98B0, genericCallbacks.D20ModCountdownEndHandler);
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100CBAB0, spCallbacks.SpellRemoveMod);
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100DC100, spCallbacks.SpellModCountdownRemove);
+		
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100F72E0, genericCallbacks.MonsterRegenerationOnDamage);
 
 		// Turn Undead extension
@@ -457,7 +465,6 @@ public:
 		// racial callbacks
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FDC70, raceCallbacks.HalflingThrownWeaponAndSlingBonus);
 
-		replaceFunction<int(DispatcherCallbackArgs)>(0x100CBAB0, spCallbacks.SpellRemoveMod);
 
 		// Stunning Fist extension
 		redirectCall(0x100E84B0, StunningFistHook);
@@ -1407,7 +1414,7 @@ int GenericCallbacks::D20ModCountdownHandler(DispatcherCallbackArgs args){
 		args.SetCondArg(durArgIdx, durNew);
 		return 0;
 	}
-
+	
 	auto d20modCountdownEndHandler = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100E98B0);
 	if (args.dispType == dispTypeBeginRound){
 		
@@ -1431,6 +1438,61 @@ int GenericCallbacks::D20ModCountdownHandler(DispatcherCallbackArgs args){
 	{
 		d20modCountdownEndHandler(args);
 	}
+	return 0;
+}
+
+int GenericCallbacks::D20ModCountdownEndHandler(DispatcherCallbackArgs args){
+	//original seems a bit messed up...
+	int data1 = args.GetData1();
+	
+	if (args.dispIO && args.dispIO->dispIOType == dispIoTypeSendSignal){
+		GET_DISPIO(dispIoTypeSendSignal, DispIoD20Signal);
+		if (dispIo){
+			if (args.dispType != dispTypeBeginRound && dispIo->data1 != args.GetCondArg(0)){
+				return 0;
+			}
+			
+			if (data1 <= -1 || data1 >= 29){
+				return 0;
+			}
+		}
+	}
+	auto evtObj = static_cast<DispIoD20Signal*>(args.dispIO);
+	switch (data1){
+	case 5: // Held
+	case 7: // Sleeping
+	case 12: // Temp HP
+	case 13: // Cursed
+	case 14: // Fear
+	case 15: // Disease
+	case 16: // Poison
+	case 25: // Charmed
+		if (!args.dispIO || args.dispIO->dispIOType != dispIoTypeSendSignal || args.GetCondArg(0) == evtObj->data1){
+			logger->info("Forcibly removing {}", args.subDispNode->condNode->condStruct->condName);
+		}
+		break;
+	case 6: // Invisible
+		if (!args.dispIO || args.dispIO->dispIOType != dispIoTypeSendSignal || args.GetCondArg(0) == evtObj->data1) {
+			logger->info("Forcibly removing {}", args.subDispNode->condNode->condStruct->condName);
+		}
+		if (d20Sys.d20Query(args.objHndCaller, DK_QUE_Critter_Is_Invisible)){
+			objects.FadeTo(args.objHndCaller, 255, 0, 5);
+		}
+		break;
+	case 20: // Timed Disappear
+		if (args.dispType == dispTypeBeginRound || !evtObj || (evtObj->dispIOType == dispIoTypeSendSignal && evtObj->data1 == args.GetCondArg(0))){
+			logger->info("Forcibly removing {}", args.subDispNode->condNode->condStruct->condName);
+			gameSystems->GetParticleSys().CreateAtObj("Fizzle", args.objHndCaller);
+			auto aiFlags = objects.getInt64(args.objHndCaller, obj_f_npc_ai_flags64) | AiFlag::RunningOff;
+			objSystem->GetObject(args.objHndCaller)->SetInt64(obj_f_npc_ai_flags64, aiFlags);
+			objects.FadeTo(args.objHndCaller, 0, 2, 5, 1);
+		}
+		break;
+	default:
+		break;
+	}
+
+	args.RemoveCondition();
 	return 0;
 }
 
@@ -4223,6 +4285,96 @@ int SpellCallbacks::DismissSignalHandler(DispatcherCallbackArgs args){
 
 void DispatcherCallbackArgs::RemoveSpellMod() {
 	spCallbacks.SpellRemoveMod(*this);
+}
+
+int __cdecl SpellCallbacks::SpellModCountdownRemove(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIoTypeSendSignal, DispIoD20Signal);
+	auto spellId = args.GetCondArg(0);
+	auto dur = args.GetCondArg(1);
+	int durNew = dur - (int)dispIo->data1;
+	SpellPacketBody spellPkt(spellId);
+	if (!spellPkt.spellEnum){
+		logger->debug("SpellModCountdownRemove: err.... why are we counting a spell that no longer exists? spell removed without removing the appropriate conditions? -Troika");
+		DispatcherCallbackArgs dca2 = args;
+		dca2.dispIO = nullptr;
+		dca2.RemoveSpellMod();
+		return 0;
+	}
+
+	auto spellIdentifier = args.GetData1();
+	if (durNew < 0){
+		if (spellIdentifier == 208){
+			args.RemoveSpellMod();
+			return 0;
+		}
+		if (spellIdentifier == 221){
+			spellPkt.EndPartsysForTgtObj(args.objHndCaller);
+			if (!spellPkt.RemoveObjFromTargetList(args.objHndCaller)){
+				logger->debug("SpellModCountdownRemove: Cannot remove target");
+				return 0;
+			}
+			d20Sys.d20SendSignal(args.objHndCaller, DK_SIG_Spell_End, spellPkt.spellId, 0);
+			args.RemoveSpellMod();
+			return 0;
+		}
+		if (spellIdentifier == 239 && d20Sys.d20Query(args.objHndCaller, DK_QUE_Unconscious)){
+			if (!conds.AddTo(spellPkt.targetListHandles[0], "sp-Frog Tongue Swallowed", {spellId, 1,0})){
+				logger->info("SpellModCountdownRemove: unable to add condition");
+			}
+			if (!conds.AddTo(args.objHndCaller, "sp-Frog Tongue Swallowing", { spellId, 1,0 })) {
+				logger->info("SpellModCountdownRemove: unable to add condition");
+			}
+			objects.setInt32(args.objHndCaller, obj_f_grapple_state, (objects.getInt32(args.objHndCaller, obj_f_grapple_state) & ~0xFFF8) | 7);
+			args.RemoveSpellMod();
+			return 0;
+		}
+
+		floatSys.FloatSpellLine(args.objHndCaller, 20000, FloatLineColor::White); // Spell expired
+		auto args2 = args;
+		args2.dispIO = nullptr;
+		args2.RemoveSpell();
+		args2.RemoveSpellMod();
+		return 0;
+	}
+
+	if (spellIdentifier == 221){
+		if (!args.GetCondArg(3)){
+			return 0;
+		}
+	}
+	else if (spellIdentifier == 225){
+		if (!args.GetCondArg(2)) {
+			return 0;
+		}
+	}
+
+	args.SetCondArg(1, durNew);
+	spellPkt.durationRemaining = durNew;
+	spellPkt.UpdateSpellsCastRegistry();
+	spellPkt.UpdatePySpell();
+	switch (spellIdentifier){
+	case 48: // Dazed
+		floatSys.FloatSpellLine(args.objHndCaller, 20012, FloatLineColor::Red);
+		return 0;
+	case 156: // Acid
+		temple::GetRef<void(__cdecl)(DispatcherCallbackArgs)>(0x100CE940)(args);
+		return 0;
+	case 203:
+		floatSys.FloatCombatLine(args.objHndCaller, 47); // Sleeping
+		return 0;
+	case 240:
+		if (d20Sys.d20Query(args.objHndCaller, DK_QUE_Unconscious))
+			return 0;
+		floatSys.FloatSpellLine(args.objHndCaller, 21005, FloatLineColor::White); // Grappling
+		objects.setInt32(args.objHndCaller, obj_f_grapple_state, (objects.getInt32(args.objHndCaller, obj_f_grapple_state) & ~0xFFFA) | 5);
+		return 0;
+	case 244: // Stunned
+		histSys.CreateRollHistoryLineFromMesfile(33, args.objHndCaller, objHndl::null);
+		floatSys.FloatCombatLine(args.objHndCaller, 89); // Stunned
+		return 0;
+	}
+	return 0;
 }
 
 int SpellCallbacks::SpellRemoveMod(DispatcherCallbackArgs args){

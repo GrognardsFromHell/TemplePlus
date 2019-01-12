@@ -43,7 +43,6 @@ static struct ActnSeqAddresses : temple::AddressTable {
 	ReadiedActionPacket * readiedActionCache;
 	ActnSeq** actSeqInterrupt;
 	int* seqSthg_10B3D59C;
-	int* seqSthg_10B3D5C4;
 	int * cursorState;
 	int *aooShaderId;
 	int * aooShaderLocationsNum;
@@ -67,7 +66,6 @@ static struct ActnSeqAddresses : temple::AddressTable {
 		rebase(aooShaderLocationsNum, 0x10B3D598);
 		rebase(seqSthg_10B3D59C, 0x10B3D59C);
 		rebase(cursorState, 0x10B3D5AC);
-		rebase(seqSthg_10B3D5C4, 0x10B3D5C4);
 
 		rebase(readiedActionCache, 0x1186A900);
 		rebase(actSeqPickerAction, 0x118CD400);
@@ -318,6 +316,17 @@ void ActionSequenceSystem::curSeqReset(objHndl obj)
 	location->getLocAndOff(obj, &curSeq->performerLoc);
 	curSeq->ignoreLos = 0;
 	*performingDefaultAction = 0;
+}
+
+void ActionSequenceSystem::ResetAll(objHndl handle){
+	// resets the readied action cache
+	// Clear TBUiIntgameFocus
+	// Set handle to initiative list first entry
+	// Free all act seq array occupancies
+	// Set Turn Based Actor to Initiative List first entry, and use their initiative
+	// Clear the picker targeting type, action type and data
+	// Clear pathfinding cache occupancies
+	temple::GetRef<void(__cdecl)(objHndl)>(0x10092DA0)(handle);
 }
 
 void ActionSequenceSystem::ActSeqSpellReset() const
@@ -667,7 +676,7 @@ void ActionSequenceSystem::ActionTypeAutomatedSelection(objHndl handle)
 
 void ActionSequenceSystem::TurnStart(objHndl obj)
 {
-	logger->debug("*** NEXT TURN *** starting for {} ({}). CurSeq: {}", description.getDisplayName(obj), obj, (void*)(*actSeqSys.actSeqCur));
+	logger->debug("*** NEXT TURN *** starting for {}. CurSeq: {}", obj, (void*)(*actSeqSys.actSeqCur));
 	auto objBody = gameSystems->GetObj().GetObject(obj);
 	//orgTurnStart(obj);
 
@@ -675,8 +684,7 @@ void ActionSequenceSystem::TurnStart(objHndl obj)
 	dword_1189FB60 = 0;
 	auto& seqSthg_10B3D59C = temple::GetRef<int>(0x10B3D59C);
 	seqSthg_10B3D59C = 0;
-	auto& seqSthg_10B3D5C4 = temple::GetRef<int>(0x10B3D5C4);
-	seqSthg_10B3D5C4 = 0;
+	*performedDefaultAction = 0;
 
 	if (d20Sys.globD20Action->d20APerformer && d20Sys.globD20Action->d20APerformer != obj) {
 		d20Sys.d20SendSignal(d20Sys.globD20Action->d20APerformer, DK_SIG_EndTurn, 0, 0);

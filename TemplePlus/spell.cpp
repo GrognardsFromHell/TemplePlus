@@ -543,6 +543,7 @@ int LegacySpellSystem::GetNewSpellId(){
 		spellIdSerial = 1;
 		return spellIdSerial;
 	}
+	logger->info("New spellid assigned: {}", spellIdSerial);
 	return spellIdSerial++;
 }
 
@@ -602,7 +603,7 @@ BOOL LegacySpellSystem::RegisterSpell(SpellPacketBody & spellPkt, int spellId)
 	newPkt.spellPktBody.animFlags |= SpellAnimationFlag::SAF_UNK8;
 	
 	spellsCastRegistry.put(spellId, newPkt);
-
+	logger->info("New spell registered: id {}, spell enum {}", spellId, spEnum);
 	return TRUE;
 }
 
