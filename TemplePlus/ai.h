@@ -169,7 +169,8 @@ struct AiSystem : temple::AddressTable
 	objHndl GetCombatFocus(objHndl npc);
 	objHndl GetWhoHitMeLast(objHndl npc);
 	BOOL ConsiderTarget(objHndl obj, objHndl tgt); // checks if it's a good target
-	objHndl FindSuitableTarget(objHndl handle);
+	objHndl GetFriendsCombatFocus(objHndl handle, objHndl friendHandle, objHndl leader);
+	objHndl FindSuitableTarget(objHndl handle); // was 0x1005CED0;
 	int CannotHate(objHndl aiHandle, objHndl triggerer, objHndl aiLeader);
 	int WillKos(objHndl aiHandle, objHndl triggerer); // does the triggerer provoke KOS hostility
 	/*

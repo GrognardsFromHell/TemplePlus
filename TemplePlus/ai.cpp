@@ -627,8 +627,13 @@ BOOL AiSystem::ConsiderTarget(objHndl obj, objHndl tgt)
 		if (critterSys.IsDeadOrUnconscious(tgt)){
 			if (objBody->GetInt32(obj_f_critter_flags) & OCF_NON_LETHAL_COMBAT)
 				return 0;
-			auto aiFindSuitableCritter = temple::GetRef<objHndl(__cdecl)(objHndl)>(0x1005CED0);
-			auto suitableCrit = aiFindSuitableCritter(obj);
+			//// Make AI party members ignore unconscious critters if nothing else is left...
+			//if (party.IsInParty(obj)){
+			//	if (combatSys.AllCombatantsFarFromParty()){
+			//		return 0;
+			//	}
+			//}
+			auto suitableCrit = aiSys.FindSuitableTarget(obj);
 			if (suitableCrit && suitableCrit != tgt)
 				return 0;
 		}
@@ -657,6 +662,58 @@ BOOL AiSystem::ConsiderTarget(objHndl obj, objHndl tgt)
 			return 0;
 	}
 	return 1;
+}
+
+objHndl AiSystem::GetFriendsCombatFocus(objHndl handle, objHndl friendHandle, objHndl leader){
+	auto tgtObj = objSystem->GetObject(friendHandle);
+	if (tgtObj->IsNPC()) {
+		AiFightStatus aifs;
+		objHndl targetsFocus = objHndl::null;
+		aiSys.GetAiFightStatus(friendHandle, &aifs, &targetsFocus);
+
+		//// Make AI ignore friend's target if it's unconscious (otherwise putting foes to sleep caused "enter combat" loops when more than 1 AI follower was in party)
+		//if (targetsFocus && critterSys.IsDeadOrUnconscious(targetsFocus)){
+		//	return objHndl::null;
+		//}
+
+		if (aiSys.ConsiderTarget(handle, targetsFocus) && (aifs == AIFS_FIGHTING || aifs == AIFS_FLEEING || aifs == AIFS_SURRENDERED)) {
+
+			auto allegianceStr = aiSys.GetAllegianceStrength(handle, friendHandle);
+
+			if (allegianceStr && !aiSys.CannotHate(handle, targetsFocus, leader)) {
+				auto isUnconcealed = !critterSys.IsMovingSilently(targetsFocus)	&& !critterSys.IsConcealed(targetsFocus);
+
+				// check simple LOS/hearing
+				if (!aiSys.CannotHear(handle, targetsFocus, isUnconcealed)	|| !critterSys.HasLineOfSight(handle, targetsFocus)) {
+					return targetsFocus;
+				}
+				else {
+					// new in Temple+ : check pathfinding short distances (to simulate sensing nearby critters)
+					auto pathFlags = PathQueryFlags::PQF_HAS_CRITTER | PQF_IGNORE_CRITTERS
+						| PathQueryFlags::PQF_800 | PathQueryFlags::PQF_TARGET_OBJ
+						| PathQueryFlags::PQF_ADJUST_RADIUS | PathQueryFlags::PQF_ADJ_RADIUS_REQUIRE_LOS
+						| PathQueryFlags::PQF_DONT_USE_PATHNODES | PathQueryFlags::PQF_A_STAR_TIME_CAPPED;
+
+					if (!config.alertAiThroughDoors) {
+						pathFlags |= PathQueryFlags::PQF_DOORS_ARE_BLOCKING;
+					}
+
+					if (pathfindingSys.CanPathTo(handle, targetsFocus, (PathQueryFlags)pathFlags, 40)) {
+						return targetsFocus;
+					}
+					else if (!party.IsInParty(handle)) {
+						auto partyTgt = pathfindingSys.CanPathToParty(handle);
+						if (partyTgt) {
+							return partyTgt;
+						}
+					}
+				}
+			}
+
+		}
+	}
+
+	return objHndl::null;
 }
 
 objHndl AiSystem::FindSuitableTarget(objHndl handle){
@@ -706,6 +763,11 @@ objHndl AiSystem::FindSuitableTarget(objHndl handle){
 	auto kosCandidate = objHndl::null;
 	for (auto i =0; i < numCritters; i++){
 		auto target = critterList[i];
+		
+		// Added 2019-01 because it was silly
+		if (target == handle)
+			continue;
+
 		int isUnconcealed = !critterSys.IsMovingSilently(target) 
 			&& !critterSys.IsConcealed(target);
 
@@ -721,46 +783,10 @@ objHndl AiSystem::FindSuitableTarget(objHndl handle){
 				break;
 			}
 
-			if (tgtObj->IsNPC()) {
-				AiFightStatus aifs;
-				objHndl targetsFocus = objHndl::null;
-				aiSys.GetAiFightStatus(target, &aifs, &targetsFocus);
-				if (aiSys.ConsiderTarget(handle, targetsFocus)
-					&& (aifs == AIFS_FIGHTING || aifs == AIFS_FLEEING || aifs == AIFS_SURRENDERED)){
-					auto allegianceStr = aiSys.GetAllegianceStrength(handle, target);
-
-					if (allegianceStr && !aiSys.CannotHate(handle, targetsFocus, leader)){
-						isUnconcealed =  !critterSys.IsMovingSilently(targetsFocus)
-							&& !critterSys.IsConcealed(targetsFocus);
-						if (!aiSys.CannotHear(handle, targetsFocus, isUnconcealed)
-							|| !critterSys.HasLineOfSight(handle, targetsFocus)) {
-							kosCandidate = targetsFocus;
-							break;
-						} else{
-							// check pathfinding short distances
-							auto pathFlags = PathQueryFlags::PQF_HAS_CRITTER | PQF_IGNORE_CRITTERS
-								| PathQueryFlags::PQF_800 | PathQueryFlags::PQF_TARGET_OBJ
-								| PathQueryFlags::PQF_ADJUST_RADIUS | PathQueryFlags::PQF_ADJ_RADIUS_REQUIRE_LOS
-								| PathQueryFlags::PQF_DONT_USE_PATHNODES | PathQueryFlags::PQF_A_STAR_TIME_CAPPED;
-
-							if (!config.alertAiThroughDoors) {
-								pathFlags |= PathQueryFlags::PQF_DOORS_ARE_BLOCKING;
-							}
-
-							if (pathfindingSys.CanPathTo(handle, targetsFocus, (PathQueryFlags)pathFlags, 40)) {
-								kosCandidate = targetsFocus;
-								break;
-							} else if (!party.IsInParty(handle)){
-								auto partyTgt = pathfindingSys.CanPathToParty(handle);
-								if (partyTgt){
-									kosCandidate = partyTgt;
-									break;
-								}
-							}
-						}
-					}
-			
-				}
+			auto friendsCombatFocus = aiSys.GetFriendsCombatFocus(handle, target, leader);
+			if (friendsCombatFocus){
+				kosCandidate = friendsCombatFocus;
+				break;
 			}
 		}
 
@@ -831,8 +857,9 @@ int AiSystem::WillKos(objHndl aiHandle, objHndl triggerer){
 
 	if (aiFightStatus == AIFS_SURRENDERED && curTgt == triggerer)
 		return FALSE;
-
-	if (!leader && !party.IsInParty(aiHandle)){
+	
+	auto isInParty = party.IsInParty(aiHandle);
+	if (!leader && !isInParty){
 		auto npcFlags = objSystem->GetObject(aiHandle)->GetNPCFlags();
 		if (npcFlags & NpcFlag::ONF_KOS && !(npcFlags & NpcFlag::ONF_KOS_OVERRIDE)) {
 
@@ -870,6 +897,11 @@ int AiSystem::WillKos(objHndl aiHandle, objHndl triggerer){
 	GetAiFightStatus(triggerer, &aiFightStatus, &curTgt);
 	if (aiFightStatus != AIFS_FIGHTING || !curTgt)
 		return FALSE;
+	/*if (isInParty && critterSys.IsDeadOrUnconscious(triggerer)){
+		if (combatSys.AllCombatantsFarFromParty()){
+			return FALSE;
+		}
+	}*/
 	if (GetAllegianceStrength(aiHandle, curTgt) == 0) {
 		return FALSE; // there's a stub for more extensive logic here...
 	}
@@ -3232,8 +3264,91 @@ public:
 
 		static int (*orgAiTimeEventExpires)(TimeEvent*) = replaceFunction<int(__cdecl)(TimeEvent*)>(0x1005F090, [](TimeEvent*evt)
 		{
-			auto result =  orgAiTimeEventExpires(evt);
-			return result;
+			auto handle = evt->params[0].handle;
+			if (!handle){
+				return TRUE;
+			}
+
+			auto obj = objSystem->GetObject(handle);
+			if (!obj){
+				return TRUE;
+			}
+
+			static auto scheduleNormalAiEvent = temple::GetRef<void(__cdecl)(objHndl, GameTime&)>(0x1005BE00);
+			auto canDoHeartbeat = true;
+			auto isReschedule = true;
+			auto isFirstHeartbeat = evt->params[1].int32;
+
+			if (!critterSys.IsDeadNullDestroyed(handle) && isFirstHeartbeat){
+				auto aiFlags = obj->GetInt64(obj_f_npc_ai_flags64);
+				obj->SetInt64(obj_f_npc_ai_flags64, aiFlags | AiFlag::CheckWield);
+				
+				// NPC Wander off
+				if (!party.IsInParty(handle) 
+					&& !critterSys.isCritterCombatModeActive(handle)
+					&& !temple::GetRef<BOOL(__cdecl)(objHndl, int)>(0x1005B950)(handle, 1) /* waypoint related */) {
+					temple::GetRef<void(__cdecl)(objHndl, int) >(0x1005BC00)(handle, 1); // NPC Wander
+				}
+
+				if (pythonObjIntegration.ExecuteObjectScript(handle, handle, ObjScriptEvent::FirstHeartbeat) != TRUE){
+					canDoHeartbeat = false;
+				}
+			}
+
+			if (canDoHeartbeat){
+				canDoHeartbeat = temple::GetRef<bool(__cdecl)(objHndl)>(0x10058730)(handle);
+			}
+			
+			if (canDoHeartbeat){
+				if (pythonObjIntegration.ExecuteObjectScript(handle, handle, ObjScriptEvent::Heartbeat) == TRUE){
+					if (! (obj->GetInt32(obj_f_npc_flags) & NpcFlag::ONF_GENERATOR) ){
+						aiSys.AiProcess(handle);
+					}
+					else{
+						static auto generatorGetNextEvent = temple::GetRef<int(__cdecl)(objHndl, GameTime&)>(0x10050740);
+						GameTime time;
+						if (generatorGetNextEvent(handle, time)){
+							scheduleNormalAiEvent(handle, time);
+							return TRUE;
+						}
+						else{
+							isReschedule = false;
+						}
+					}
+				}
+			}
+			else{
+				if (!combatSys.isCombatActive() && !critterSys.IsDeadNullDestroyed(handle)){
+					gameSystems->GetAnim().Interrupt(handle, AGP_4, false);
+				}
+				SectorLoc secLoc(obj->GetLocation());
+				auto sectorLoaded = gameSystems->GetMapSector().IsSectorLoaded(secLoc);
+				if (!temple::GetRef<BOOL(__cdecl)(objHndl)>(0x10058780)(handle) && !sectorLoaded){
+					isReschedule = false;
+				}
+			}
+
+			
+			if (!isReschedule){
+				if (!combatSys.isCombatActive()){
+					if (obj->GetInt32(obj_f_critter_flags) & OCF_ENCOUNTER){
+						objects.Destroy(handle);
+					}
+				}
+				return TRUE;
+			}
+			
+			// Reschedule AI event with fixed delay based on distance from party + optional random delay
+			auto aiEvtDelay = temple::GetRef<int(__cdecl)(objHndl)>(0x10058850)(handle); // Minimum 250ms
+			if (isFirstHeartbeat) {
+				aiEvtDelay += rngSys.GetInt(0, 5000);
+			}
+			GameTime time(0, aiEvtDelay);
+			scheduleNormalAiEvent(handle, time);
+			return TRUE;
+			
+			/*auto result =  orgAiTimeEventExpires(evt);
+			return result;*/
 		});
 
 		// AiTimeEventGenerate_MapSectorLoad
