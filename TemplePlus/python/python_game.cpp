@@ -1345,7 +1345,7 @@ static PyMethodDef PyGameMethods[]{
 	{ "is_lax_rules", PyGame_IsLaxRules,METH_VARARGS, NULL },
 	{"get_feat_name", PyGame_GetFeatName,METH_VARARGS, NULL},
 	{"is_ranged_weapon", PyGame_IsRangedWeapon,METH_VARARGS, NULL},
-	{"is_melee_weapon", PyGame_IsRangedWeapon,METH_VARARGS, NULL},
+	{"is_melee_weapon", PyGame_IsMeleeWeapon,METH_VARARGS, NULL},
 	// This is some unfinished UI for which the graphics are missing
 	// {"charmap", PyGame_Charmap, METH_VARARGS, NULL},
 	{NULL, NULL, NULL, NULL}
