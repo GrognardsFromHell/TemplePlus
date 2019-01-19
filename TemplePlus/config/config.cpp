@@ -167,6 +167,7 @@ static ConfigSetting configSettings[] = {
 	CONF_BOOL(newClasses),
 	CONF_BOOL(newRaces),
 	CONF_BOOL(monstrousRaces),
+	CONF_BOOL(forgottenRealmsRaces),
 	CONF_BOOL(laxRules),
 	CONF_BOOL(disableAlignmentRestrictions),
 	CONF_BOOL(disableCraftingSpellReqs),
