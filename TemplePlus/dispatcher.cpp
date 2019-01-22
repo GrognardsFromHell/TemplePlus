@@ -591,6 +591,16 @@ void DispatcherSystem::DispatchMetaMagicModify(objHndl obj, MetaMagicData& mmDat
 	mmData = dispIo.mmData;
 }
 
+double DispatcherSystem::DispatchRangeBonus(objHndl obj, objHndl weaponUsed)
+{
+	auto _dispatcher = objects.GetDispatcher(obj);
+	if (!dispatch.dispatcherValid(_dispatcher)) return 0;
+	EvtObjRangeIncrementBonus dispIo;
+	dispIo.weaponUsed = weaponUsed;
+	DispatcherProcessor(_dispatcher, dispRangeIncrementBonus, 0, &dispIo);
+	return dispIo.rangeBonus;
+}
+
 void DispatcherSystem::DispatchSpecialAttack(objHndl obj, int attack, objHndl target)
 {
 	auto _dispatcher = objects.GetDispatcher(obj);

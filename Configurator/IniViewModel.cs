@@ -88,7 +88,8 @@ namespace TemplePlusConfig
           "NewRaces", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
         public static readonly DependencyProperty MonstrousRacesProperty = DependencyProperty.Register(
           "MonstrousRaces", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
-
+        public static readonly DependencyProperty ForgottenRealmsRacesProperty = DependencyProperty.Register(
+          "ForgottenRealmsRacesRaces", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
 
         public static readonly DependencyProperty LaxRulesProperty = DependencyProperty.Register(
           "LaxRules", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
@@ -283,6 +284,11 @@ namespace TemplePlusConfig
             get { return (bool)GetValue(MonstrousRacesProperty); }
             set { SetValue(MonstrousRacesProperty, value); }
         }
+        public bool ForgottenRealmsRaces
+        {
+            get { return (bool)GetValue(ForgottenRealmsRacesProperty); }
+            set { SetValue(ForgottenRealmsRacesProperty, value); }
+        }
 
         public bool LaxRules
         {
@@ -468,6 +474,11 @@ namespace TemplePlusConfig
             {
                 MonstrousRaces = monstrousRaces;
             }
+            bool forgottenRealmsRaces;
+            if (bool.TryParse(tpData["forgottenRealmsRaces"], out forgottenRealmsRaces))
+            {
+                ForgottenRealmsRaces = forgottenRealmsRaces;
+            }
 
             // Lax Rules
             bool laxRules;
@@ -558,6 +569,7 @@ namespace TemplePlusConfig
             tpData["newClasses"] = NewClasses? "true" : "false";
             tpData["newRaces"] = NewRaces? "true" : "false";
             tpData["monstrousRaces"] = MonstrousRaces? "true" : "false";
+            tpData["forgottenRealmsRaces"] = ForgottenRealmsRaces ? "true" : "false";
             tpData["nonCoreMaterials"] = NonCore ? "true" : "false";
             tpData["tolerantNpcs"] = TolerantTownsfolk? "true" : "false";
             tpData["showExactHPforNPCs"] = TransparentNpcStats? "true" : "false";
