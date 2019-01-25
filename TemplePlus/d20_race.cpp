@@ -37,6 +37,7 @@ public:
 	// Main Race
 	RaceBase baseRace = race_base_human;
 	bool isBaseRace = true;
+	bool bonusFirstLevelFeat = false;
 	std::vector<Race> subraces;
 
 	// Subrace
@@ -138,6 +139,7 @@ PYBIND11_EMBEDDED_MODULE(race_defs, m) {
 		.def_readwrite("height_male", &RaceSpec::heightMale)
 		.def_readwrite("height_female", &RaceSpec::heightFemale)
 		.def_readwrite("weight_male", &RaceSpec::weightMale)
+		.def_readwrite("bonus_first_level_feat", &RaceSpec::bonusFirstLevelFeat)
 		.def_readwrite("weight_female", &RaceSpec::weightFemale)
 		.def_readwrite("stat_modifiers", &RaceSpec::statModifiers)
 		.def_readwrite("natural_armor", &RaceSpec::naturalArmor)
@@ -304,6 +306,16 @@ int D20RaceSys::GetMaxHeight(Race race, Gender genderId)
 		return raceSpecs.heightMale[1];
 	else
 		return raceSpecs.heightFemale[1];
+}
+
+bool D20RaceSys::BonusFirstLevelFeat(Race race)
+{
+	if (race <= VANILLA_NUM_RACES) 
+	{
+		return race == race_human;
+	}
+	auto &raceSpecs = GetRaceSpec(race);
+	return raceSpecs.bonusFirstLevelFeat;
 }
 
 int D20RaceSys::GetMinWeight(Race race, Gender genderId)
