@@ -357,8 +357,8 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 		}
 		addresses.actSeqPicker->flagsTarget = UiPickerFlagsTarget::None;
 		addresses.actSeqPicker->modeTarget = UiPickerType::Single;
-		addresses.actSeqPicker->incFlags = UiPickerIncFlags::NonCritter;
-		addresses.actSeqPicker->excFlags = UiPickerIncFlags::None;
+		addresses.actSeqPicker->incFlags = UiPickerIncFlags::UIPI_NonCritter;
+		addresses.actSeqPicker->excFlags = UiPickerIncFlags::UIPI_None;
 		addresses.actSeqPicker->callback = reinterpret_cast<PickerCallback>(0x10096570);//(int)ChooseTargetCallback;
 		addresses.actSeqPicker->spellEnum = 0;
 		addresses.actSeqPicker->caster = d20Sys.globD20Action->d20APerformer;
@@ -379,8 +379,11 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 		}
 		addresses.actSeqPicker->flagsTarget = UiPickerFlagsTarget::None;
 		addresses.actSeqPicker->modeTarget = UiPickerType::Single;
-		addresses.actSeqPicker->incFlags = static_cast<UiPickerIncFlags>((uint64_t)UiPickerIncFlags::Self | (uint64_t)UiPickerIncFlags::Other | (uint64_t)UiPickerIncFlags::Dead);
-		addresses.actSeqPicker->excFlags = UiPickerIncFlags::NonCritter;
+		addresses.actSeqPicker->incFlags = static_cast<UiPickerIncFlags>(
+			(uint64_t)UiPickerIncFlags::UIPI_Self
+			| (uint64_t)UiPickerIncFlags::UIPI_Other 
+			| (uint64_t)UiPickerIncFlags::UIPI_Dead);
+		addresses.actSeqPicker->excFlags = UiPickerIncFlags::UIPI_NonCritter;
 		addresses.actSeqPicker->callback = reinterpret_cast<PickerCallback>(0x10096570);//(int)ChooseTargetCallback;
 		addresses.actSeqPicker->spellEnum = 0;
 		addresses.actSeqPicker->caster = d20Sys.globD20Action->d20APerformer;
@@ -402,8 +405,11 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 		}
 		addresses.actSeqPicker->flagsTarget = UiPickerFlagsTarget::None;
 		addresses.actSeqPicker->modeTarget = UiPickerType::Single;
-		addresses.actSeqPicker->incFlags = static_cast<UiPickerIncFlags>((uint64_t)UiPickerIncFlags::Other | (uint64_t)UiPickerIncFlags::Dead);
-		addresses.actSeqPicker->excFlags = static_cast<UiPickerIncFlags>((uint64_t)UiPickerIncFlags::Self | (uint64_t)UiPickerIncFlags::NonCritter);
+		addresses.actSeqPicker->incFlags = static_cast<UiPickerIncFlags>(
+			(uint64_t)UiPickerIncFlags::UIPI_Other | (uint64_t)UiPickerIncFlags::UIPI_Dead);
+		addresses.actSeqPicker->excFlags = static_cast<UiPickerIncFlags>(
+			(uint64_t)UiPickerIncFlags::UIPI_Self 
+			| (uint64_t)UiPickerIncFlags::UIPI_NonCritter);
 		addresses.actSeqPicker->callback = reinterpret_cast<PickerCallback>(0x10096570);//(int)ChooseTargetCallback;
 		addresses.actSeqPicker->spellEnum = 0;
 		addresses.actSeqPicker->caster = d20Sys.globD20Action->d20APerformer;
@@ -429,8 +435,12 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 		}
 		addresses.actSeqPicker->flagsTarget = UiPickerFlagsTarget::Range;
 		addresses.actSeqPicker->modeTarget = UiPickerType::Area;
-		addresses.actSeqPicker->incFlags = static_cast<UiPickerIncFlags>((uint64_t)UiPickerIncFlags::Self | (uint64_t)UiPickerIncFlags::Other );
-		addresses.actSeqPicker->excFlags = static_cast<UiPickerIncFlags>( (uint64_t)UiPickerIncFlags::Dead | (uint64_t)UiPickerIncFlags::NonCritter);
+		addresses.actSeqPicker->incFlags = static_cast<UiPickerIncFlags>(
+			(uint64_t)UiPickerIncFlags::UIPI_Self
+			| (uint64_t)UiPickerIncFlags::UIPI_Other );
+		addresses.actSeqPicker->excFlags = static_cast<UiPickerIncFlags>( 
+			(uint64_t)UiPickerIncFlags::UIPI_Dead 
+			| (uint64_t)UiPickerIncFlags::UIPI_NonCritter);
 		addresses.actSeqPicker->callback = reinterpret_cast<PickerCallback>(0x10096570);//(int)ChooseTargetCallback;
 		addresses.actSeqPicker->spellEnum = 0;
 		addresses.actSeqPicker->caster = d20Sys.globD20Action->d20APerformer;

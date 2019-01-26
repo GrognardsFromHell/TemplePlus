@@ -15,6 +15,10 @@
 #include <tig/tig_mouse.h>
 #include <config/config.h>
 #include "raycast.h"
+#include "gamesystems/gamesystems.h"
+#include "gamesystems/map/sector.h"
+#include "gamesystems/legacysystems.h"
+#include "hotkeys.h"
 
 
 const PickerSpec PickerSpec::null;
@@ -57,6 +61,10 @@ class UiPickerHooks : TempleFix
 
 		// Picker Multi Keystate change - support pressing Enter key
 		replaceFunction(0x10137DA0, PickerMultiKeystateChange);
+
+		replaceFunction<BOOL(__cdecl)(TigMsg*)>(0x10138170, [](TigMsg*msg){
+			return uiPicker.MultiPosChange(msg);
+		});
 
 		// Config Spell Targeting - added fix to allow AI to cast multiple projectiles with Magic Missile and the like on the selected target
 		static BOOL(__cdecl *orgConfigSpellTargeting)(PickerArgs&, SpellPacketBody&) = replaceFunction<BOOL(__cdecl)(PickerArgs &, SpellPacketBody &)>(0x100B9690, [](PickerArgs &args, SpellPacketBody &spPkt)	{
@@ -833,6 +841,79 @@ void UiPicker::WallCursorText(int x, int y){
 	}
 }
 
+BOOL UiPicker::MultiPosChange(TigMsg * msg)
+{
+	auto activePickerIdx = GetActivePickerIdx();
+	if (activePickerIdx < 0 || activePickerIdx >= MAX_PICKER_COUNT)
+		return FALSE;
+
+	auto msgMouse = (TigMsgMouse*)msg;
+
+	auto &pick = GetActivePicker();
+	auto &pickStatus = GetPickerStatusFlags();
+
+	LocAndOffsets mouseLoc;
+	if (locSys.GetLocFromScreenLocPrecise(msgMouse->x, msgMouse->y, mouseLoc)){
+		auto fogFlags = temple::GetRef<uint8_t(__cdecl)(LocAndOffsets)>(0x1002ECB0)(mouseLoc);
+		if (! (fogFlags & 4)){
+			if (pick.args.result.flags & PickerResultFlags::PRF_HAS_MULTI_OBJ){
+				pick.args.result.FreeObjlist();
+				pick.tgtIdx = 0; // fix: added this - otherwise there was a visual issue where the count wouldn't get reset, even though the actual list did
+			}
+			pick.args.result.flags = 0;
+			(int&)pickStatus |= PickerStatusFlags::PSF_Invalid;
+			return FALSE;
+		}
+	}
+
+	auto flgs = pick.GetFlagsFromExclusions();
+	objHndl pickedHndl = objHndl::null;
+	if (!PickObjectOnScreen(msgMouse->x, msgMouse->y, &pickedHndl, flgs)){
+		pick.tgt = objHndl::null;
+		(int&)pickStatus &= ~(PickerStatusFlags::PSF_Invalid| PSF_OutOfRange);
+		return TRUE;
+	}
+	pick.tgt = pickedHndl;
+
+	if ( (pick.args.flagsTarget & UiPickerFlagsTarget::Exclude1st )  ){
+		if (!pick.args.TargetValid(pickedHndl)){
+			(int&)pickStatus |= PickerStatusFlags::PSF_Invalid;
+		}
+	}
+	else if (!pick.args.CheckTargetVsIncFlags(pick.tgt)){
+		(int&)pickStatus |= PickerStatusFlags::PSF_Invalid;
+	}
+	else {
+		if (pick.args.TargetValid(pickedHndl)) {
+			(int&)pickStatus &= ~PickerStatusFlags::PSF_Invalid;
+		}
+		else {
+			(int&)pickStatus |= PickerStatusFlags::PSF_Invalid;
+		}
+	}
+
+	if ( !(pick.args.flagsTarget & UiPickerFlagsTarget::LosNotRequired) ){
+		if (pick.args.LosBlocked(pickedHndl)){
+			(int&)pickStatus |= PickerStatusFlags::PSF_Invalid;
+		}
+	}
+
+	if (pick.args.flagsTarget & UiPickerFlagsTarget::Range){
+		auto casterObj = objSystem->GetObject(pick.args.caster);
+		if (!casterObj)
+			return FALSE;
+		auto casterLoc = casterObj->GetLocation();
+		auto pickedObj = objSystem->GetObject(pickedHndl);
+		if (!pickedObj) return FALSE;
+		auto pickedObjLoc = pickedObj->GetLocation();
+		if (locSys.GetTileDeltaMaxBtwnLocs(casterLoc, pickedObjLoc) > pick.args.range){
+			(int&)pickStatus |= PickerStatusFlags::PSF_OutOfRange;
+		}
+	}
+
+	return TRUE;
+}
+
 void UiPicker::DrawConeAoE(LocAndOffsets originLoc, LocAndOffsets tgtLoc, float angularWidthDegrees, int spellEnum){
 	temple::GetRef<void(__cdecl)(LocAndOffsets, LocAndOffsets, float, int)>(0x10107920)(originLoc, tgtLoc, angularWidthDegrees, spellEnum);
 }
@@ -987,6 +1068,100 @@ void PickerArgs::DoExclusions(){
 	}
 }
 
+bool PickerArgs::CheckTargetVsIncFlags(objHndl tgt)
+{
+	auto tgtObj = objSystem->GetObject(tgt);
+	if (!tgtObj)
+		return false;
+
+	auto incFlags = this->incFlags;
+	if ( (incFlags & UiPickerIncFlags::UIPI_Self) && (tgt == this->caster))
+		return true;
+	if ((incFlags & UiPickerIncFlags::UIPI_Other) && (tgt != this->caster))
+		return true;
+	auto isCritter = tgtObj->IsCritter();
+	if ((incFlags & UiPickerIncFlags::UIPI_NonCritter) && !isCritter)
+		return true;
+	if (isCritter){
+		if ((incFlags & UiPickerIncFlags::UIPI_Dead) && critterSys.IsDeadNullDestroyed(tgt))
+			return true;
+		if ((incFlags & UiPickerIncFlags::UIPI_Undead) && critterSys.IsUndead(tgt))
+			return true;
+		if ((incFlags & UiPickerIncFlags::UIPI_Unconscious) 
+			&& critterSys.IsDeadOrUnconscious(tgt))
+			return true;
+		if ((incFlags & UiPickerIncFlags::UIPI_Hostile) && !critterSys.IsFriendly(caster,tgt))
+			return true;
+		if ((incFlags & UiPickerIncFlags::UIPI_Friendly) && critterSys.IsFriendly(caster, tgt))
+			return true;
+	}
+	else if ((incFlags & UiPickerIncFlags::UIPI_Potion) 
+		&& tgtObj->type == obj_t_food && inventory.IsMagicItem(tgt))
+		return true;
+	else if ((incFlags & UiPickerIncFlags::UIPI_Scroll) && tgtObj->type == obj_t_scroll )
+		return true;
+
+	return false;
+}
+
+bool PickerArgs::TargetValid(objHndl tgt)
+{
+	auto tgtObj = objSystem->GetObject(tgt);
+	if (!tgtObj)
+		return false;
+
+	if (objects.IsUntargetable(tgt))
+		return false;
+
+	if ( (excFlags & UIPI_Self) && tgt == caster){
+		return false;
+	}
+	if ((excFlags & UIPI_Other) && tgt != caster)
+		return false;
+
+	auto isCritter = tgtObj->IsCritter();
+
+	if ( (excFlags & UIPI_NonCritter) && !isCritter){
+		return false;
+	}
+
+	if (isCritter){
+		if ((excFlags & UIPI_Dead) && critterSys.IsDeadNullDestroyed(tgt))
+			return false;
+		if ((excFlags & UIPI_Undead) && critterSys.IsUndead(tgt))
+			return false;
+		if ((excFlags & UIPI_Unconscious) && critterSys.IsDeadOrUnconscious(tgt))
+			return false;
+		if ((excFlags & UiPickerIncFlags::UIPI_Hostile) && !critterSys.IsFriendly(caster, tgt))
+			return false;
+		if ((excFlags & UiPickerIncFlags::UIPI_Friendly) && critterSys.IsFriendly(caster, tgt))
+			return false;
+	}
+	else if ((excFlags & UiPickerIncFlags::UIPI_Potion)
+		&& tgtObj->type == obj_t_food && inventory.IsMagicItem(tgt))
+		return false;
+	else if ((excFlags & UiPickerIncFlags::UIPI_Scroll) && tgtObj->type == obj_t_scroll)
+		return false;
+
+	if ( (flagsTarget & UiPickerFlagsTarget::Range) && IsBaseModeTarget(UiPickerType::Single)){
+		auto casterObj = objSystem->GetObject(caster);
+		if (!casterObj) return false;
+		auto casterLoc = casterObj->GetLocationFull();
+		auto tgtLoc = tgtObj->GetLocationFull();
+		if (INCH_PER_FEET * this->range + objects.GetRadius(tgt) + objects.GetRadius(caster)
+			< locSys.Distance3d(casterLoc, tgtLoc))
+			return false;
+	}
+	
+	return true;
+}
+
+bool PickerArgs::LosBlocked(objHndl handle)
+{
+	static auto losBlocked = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x101370E0);
+	return losBlocked(caster, handle);
+}
+
 void PickerArgs::ExcludeTargets(){
 	temple::GetRef<void(__cdecl)(PickerArgs*)>(0x100BA3C0)(this);
 }
@@ -1019,4 +1194,23 @@ BOOL PickerCacheEntry::Finalize(){
 	{
 		return TRUE;
 	}
+}
+
+GameRaycastFlags PickerCacheEntry::GetFlagsFromExclusions()
+{
+	GameRaycastFlags result = GameRaycastFlags::GRF_HITTEST_3D;
+	if (hotkeys.IsKeyPressed(VK_LMENU) || hotkeys.IsKeyPressed(VK_RMENU)){
+		result = GRF_HITTEST_SEL_CIRCLE;
+	}
+
+	if (args.excFlags & UiPickerIncFlags::UIPI_NonCritter){
+		(int&)result |= (GRF_ExcludeContainers | GRF_ExcludePortals | GRF_ExcludeScenery);
+	}
+	if (args.excFlags & UiPickerIncFlags::UIPI_Dead) {
+		(int&)result |= (GRF_ExcludeDead );
+	}
+	if (args.excFlags & UiPickerIncFlags::UIPI_Unconscious) {
+		(int&)result |= (GRF_ExcludeUnconscious);
+	}
+	return result;
 }
