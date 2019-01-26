@@ -288,14 +288,14 @@ static void Barycentric(XMVECTOR p, XMVECTOR a, XMVECTOR b, XMVECTOR c, float &u
 {
 	using namespace DirectX;
 	auto v0 = b - a, v1 = c - a, v2 = p - a;
-	auto d00 = v0 * v0;
-	auto d01 = v0 * v1;
-	auto d11 = v1 * v1;
-	auto d20 = v2 * v0;
-	auto d21 = v2 * v1;
-	auto denom = d00 * d11 - d01 * d01;
-	v = XMVectorGetX((d11 * d20 - d01 * d21) / denom);
-	w = XMVectorGetX((d00 * d21 - d01 * d20) / denom);
+	auto d00 = XMVector3Dot(v0, v0);
+	auto d01 = XMVector3Dot(v0, v1);
+	auto d11 = XMVector3Dot(v1, v1);
+	auto d20 = XMVector3Dot(v2, v0);
+	auto d21 = XMVector3Dot(v2, v1);
+	auto denom = XMVector3Dot(d00, d11) - XMVector3Dot(d01, d01);
+	v = XMVectorGetX((XMVector3Dot(d11, d20) - XMVector3Dot(d01, d21)) / denom);
+	w = XMVectorGetX((XMVector3Dot(d00, d21) - XMVector3Dot(d01, d20)) / denom);
 	u = 1.0f - v - w;
 }
 
@@ -313,7 +313,7 @@ static float DistanceFromLine(XMVECTOR p1, XMVECTOR p2, XMVECTOR p) {
 	auto edge1 = p2 - p1;
 	auto edge1LenVec = XMVector3Length(edge1);
 	auto edge1Norm = edge1 / edge1LenVec;
-	auto projFactor = XMVectorGetX((p - p1) * edge1Norm);
+	auto projFactor = XMVectorGetX(XMVector3Dot(p - p1, edge1Norm));
 	if (projFactor >= 0 && projFactor < XMVectorGetX(edge1LenVec)) {
 		// If projFactor < 0 or > the length of V0V1, it's outside the line
 		auto pp = p1 + projFactor * edge1Norm;
@@ -356,7 +356,7 @@ float gfx::AnimatedModel::GetDistanceToMesh(const AnimatedModelParams & params, 
 			auto n = XMVector3Normalize(XMVector3Cross(v1 - v0, v2 - v0));
 
 			// Project the point into the plane of the triangle
-			auto distFromPlaneVec = ((p - v0) * n);
+			auto distFromPlaneVec = XMVector3Dot(p - v0, n);
 			auto distFromPlane = XMVectorGetX(distFromPlaneVec);
 			auto projectedPos = p - distFromPlane * n;
 
