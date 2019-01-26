@@ -846,17 +846,14 @@ public:
 		//	// return orgAdvanceTime(timeMsec);
 		//});
 
-		static int (*orgTimeEventSchedule)(TimeEvent*, GameTime*, GameTime*, GameTime*) = replaceFunction<int(__cdecl)(TimeEvent*, GameTime*, GameTime*, GameTime*)>(0x10060720, [](TimeEvent* evt, GameTime* timeDelta, GameTime* timeAbsolute, GameTime* timeResultOut)
+		/*static int (*orgTimeEventSchedule)(TimeEvent*, GameTime*, GameTime*, GameTime*) = replaceFunction<int(__cdecl)(TimeEvent*, GameTime*, GameTime*, GameTime*)>(0x10060720, [](TimeEvent* evt, GameTime* timeDelta, GameTime* timeAbsolute, GameTime* timeResultOut)
 		{
-			/*if (evt->system == TimeEventType::ObjFade)
+			if (evt->system == TimeEventType::Search)
 			{
-				if (config.newFeatureTestMode)
-				{
-					logger->debug("TimeEventSchedule: ObjFade evt id {} for obj {}", evt->params[0].int32, description.getDisplayName(evt->params[1].handle));
-				}
-			}*/
+				auto asdf = 1;
+			}
 			return orgTimeEventSchedule(evt, timeDelta, timeAbsolute, timeResultOut);
-		});
+		});*/
 
 		
 
