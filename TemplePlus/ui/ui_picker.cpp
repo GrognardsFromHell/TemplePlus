@@ -856,12 +856,16 @@ BOOL UiPicker::MultiPosChange(TigMsg * msg)
 	if (locSys.GetLocFromScreenLocPrecise(msgMouse->x, msgMouse->y, mouseLoc)){
 		auto fogFlags = temple::GetRef<uint8_t(__cdecl)(LocAndOffsets)>(0x1002ECB0)(mouseLoc);
 		if (! (fogFlags & 4)){
+
+			(int&)pickStatus |= PickerStatusFlags::PSF_Invalid;
+			return FALSE; // change from vanilla - decided not to reset the selection list. atari bug #536
+
 			if (pick.args.result.flags & PickerResultFlags::PRF_HAS_MULTI_OBJ){
 				pick.args.result.FreeObjlist();
 				pick.tgtIdx = 0; // fix: added this - otherwise there was a visual issue where the count wouldn't get reset, even though the actual list did
 			}
 			pick.args.result.flags = 0;
-			(int&)pickStatus |= PickerStatusFlags::PSF_Invalid;
+			//(int&)pickStatus |= PickerStatusFlags::PSF_Invalid; // change from vanilla
 			return FALSE;
 		}
 	}
