@@ -35,9 +35,11 @@ bool MapMobilePreprocessor::IsValidCacheFile(const std::string& path) const {
 	}
 
 	if (vfs->Read(&fileGuid, sizeof(GUID), fh) != sizeof(GUID)) {
+		vfs->Close(fh);
 		return false;
 	}
 
+	vfs->Close(fh);
 	return fileGuid == mModuleGuid;
 }
 
