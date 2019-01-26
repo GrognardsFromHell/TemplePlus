@@ -423,10 +423,15 @@ def GetCritterHandle( spell, critter_name ):
 	return OBJ_HANDLE_NULL
 
 def End_Spell(spell):
-	spell.summon_monsters( 1, 14456 )
-	critter = GetCritterHandle( spell, 14456)
-	spell.caster.follower_remove(critter)
-	critter.destroy()
+	# This is used to forcibly end Co8-made spells that are supposed to be of instantaneous duration
+	# Previous version used Cerulean the Blue's workaround method (commented out below)
+	## spell.summon_monsters( 1, 14456 )
+	## critter = GetCritterHandle( spell, 14456)
+	## spell.caster.follower_remove(critter)
+	## critter.destroy()
+	
+	# proper method:
+	spell.spell_end( spell.id,1 ) # this forces the spell_end to work even with a non-empty target list
 	return 
 
 def Timed_Destroy(obj, time):
