@@ -34,7 +34,8 @@ struct WeaponSystem : temple::AddressTable
 	int GetBaseHardness(WeaponTypes weapon);
 	bool AmmoMatchesWeapon(objHndl weapon, objHndl ammoItem);
 	bool IsReachWeaponType(WeaponTypes weap_type);
-
+	bool IsRangedWeapon(WeaponTypes wpnType);
+	bool IsMeleeWeapon(WeaponTypes wpnType);
 
 	std::map<WeaponTypes, WeaponTypeProperties> wpnProps;
 	WeaponSystem();

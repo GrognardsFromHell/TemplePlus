@@ -104,6 +104,7 @@ struct DispatcherSystem : temple::AddressTable
 	unsigned int Dispatch35CasterLevelModify(objHndl obj, SpellPacketBody* spellPkt);
 	void DispatchMetaMagicModify(objHndl obj, MetaMagicData& mmData);
 	void DispatchSpecialAttack(objHndl obj, int attack, objHndl target);
+	double DispatchRangeBonus(objHndl obj, objHndl weaponUsed);
 	int DispatchSpellListLevelExtension(objHndl obj, Stat casterClass);
 	int DispatchGetBaseCasterLevel(objHndl obj, Stat casterClass);
 
@@ -539,6 +540,12 @@ struct EvtObjSpecialAttack : DispIO // type 36 (NEW!)
 
 	int attack;  //Uses the attack enum but unfortunately the enum can't be passed through to python
 	objHndl target;
+};
+
+struct EvtObjRangeIncrementBonus : DispIO // type 37 (NEW!)
+{
+	objHndl weaponUsed = objHndl::null;
+	double rangeBonus = 0.0;
 };
 
 struct EvtObjActionCost: DispIO

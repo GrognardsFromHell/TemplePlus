@@ -830,6 +830,13 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("target", &EvtObjSpecialAttack::target)
 		;
 
+	py::class_<EvtObjRangeIncrementBonus, DispIO>(m, "EvtObjRangeIncrementBonus", "Add a bonus to the range increment.")
+		.def_readwrite("weapon_used", &EvtObjRangeIncrementBonus::weaponUsed, "Weapon Being Used")
+		.def_readwrite("range_bonus", &EvtObjRangeIncrementBonus::rangeBonus, "The Bonus to add to the weapon's range increment")
+		;
+
+	
+
 }
 
 
@@ -1074,8 +1081,9 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 		pbEvtObj = py::cast(static_cast<EvtObjSpecialAttack*>(args.dispIO));
 		break;
 
-
-
+	case dispRangeIncrementBonus:
+		pbEvtObj = py::cast(static_cast<EvtObjRangeIncrementBonus*>(args.dispIO));
+		break;
 
 	case dispTypeConditionAdd: // these are actually null
 	case dispTypeConditionRemove:

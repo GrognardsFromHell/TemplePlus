@@ -355,6 +355,62 @@ bool WeaponSystem::IsReachWeaponType(WeaponTypes weapType){
 	}
 }
 
+bool WeaponSystem::IsMeleeWeapon(WeaponTypes wpnType)
+{
+	switch (wpnType) {
+	case wt_light_crossbow:
+	case wt_dart:
+	case wt_sling:
+	case wt_heavy_crossbow:
+	case wt_javelin:
+	case wt_shortbow:
+	case wt_composite_shortbow:
+	case wt_longbow:
+	case wt_composite_longbow:
+	case wt_hand_crossbow:
+	case wt_shuriken:
+	case wt_repeating_crossbow:
+	case wt_net:
+	case wt_ray:
+	case wt_grenade:
+		return false;
+
+	default:
+		return true;
+	}
+}
+
+bool WeaponSystem::IsRangedWeapon(WeaponTypes wpnType)
+{
+	switch (wpnType) {
+		case wt_dagger:
+		case wt_shortspear:
+		case wt_spear:
+		case wt_light_crossbow:
+		case wt_dart:
+		case wt_sling:
+		case wt_heavy_crossbow:
+		case wt_javelin:
+		case wt_throwing_axe:
+		case wt_light_hammer:
+		case wt_trident:
+		case wt_shortbow:
+		case wt_composite_shortbow:
+		case wt_longbow:
+		case wt_composite_longbow:
+		case wt_hand_crossbow:
+		case wt_shuriken:
+		case wt_repeating_crossbow:
+		case wt_net:
+		case wt_ray:
+		case wt_grenade:
+			return true;
+
+		default:
+			return false;
+	}
+}
+
 WeaponSystem::WeaponSystem(){
 	wpnProps[wt_javelin].damType = DamageType::Piercing;
 	wpnProps[wt_dagger].damType = DamageType::PiercingAndSlashing;

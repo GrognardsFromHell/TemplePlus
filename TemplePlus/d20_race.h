@@ -16,6 +16,7 @@ public:
 	{
 		RDF_Vanilla = 1,
 		RDF_Monstrous = 2,
+		RDF_ForgottenRealms = 4
 	};
 
 	int vanillaRaceEnums[VANILLA_NUM_RACES];

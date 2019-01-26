@@ -159,6 +159,7 @@
 {2129}{Mountain Dwarf}
 {2130}{Wild Elf}
 {2162}{Wood Elf}
+{2161}{Gold Dwarf}
 
 // Race Abbreviations Go Between 3000-3999
 
@@ -176,6 +177,7 @@
 {12098} Gray Elf {Gray elves are taller and grander in physical appearance than others of their race, gray elves have a reputation for being aloof and arrogant (even by elven standards).  Gray elves have all the standard elven racial traits except as follows:  +2 Intelligence, -2 Strength.  Their favored class is wizard.}
 {12130} Wild Elf {Wild elves were always close to nature, even more so than other elves, but they have forgotten many of the high arts and lore of their people, choosing stealth and survival over building and book learning. Wild elves are stocky and strongly built for elves.  Wild elves have all the standard elven racial traits except as follows:  +2 Dexterity, -2 Intelligence.  Their favored class is Sorcerer.}
 {12162} Wood Elf {Wood elves are uncommonly strong for elves, but also smaller and less intuitive than most elves.  Wood elves have all the standard elven racial traits except as follows:  +2 Strength, +2 Dexterity, -2 Constitution, -2 Intelligence, -2 Charisma.  Their favored class is ranger.}
+{12161} Gold Dwarf {Gold dwarves are a forgotten realms race.  They are stocky and muscular, Averaging 4 feet tall and weighing as much as an adult human.  They have the standard dwarven traits except as follows:  -2 Dexterity, +2 Constitution.  +1 racial bonus on attack rolls against aberrations: Gold dwarves are trained in special combat techniques against the many bizarre creatures that live in the Underdark.  (This replaces the attack bonus against ores and goblinoids.)  Their favored class is fighter. }
 
 // Class Short Help Goes Between 13000-13099
 {13011}Arcane Archer{The arcane archer is an Elven warrior skilled in using magic to supplement their combat prowess.

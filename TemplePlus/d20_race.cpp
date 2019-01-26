@@ -192,7 +192,10 @@ void D20RaceSys::GetRaceSpecsFromPython(){
 	for (auto it : mRaceSpecs){
 		auto &entry = it.second;
 		if (entry.isBaseRace) continue;
-
+		
+		if ((entry.flags & RDF_ForgottenRealms) && !config.forgottenRealmsRaces) {
+			continue;
+		}
 		mRaceSpecs[(Race)entry.baseRace].subraces.push_back(it.first);
 	}
 
@@ -486,6 +489,8 @@ bool RaceSpec::IsEnabled()
 	if (flags && D20RaceSys::RaceDefinitionFlags::RDF_Vanilla)
 		return true;
 	if (flags && D20RaceSys::RaceDefinitionFlags::RDF_Monstrous && !config.monstrousRaces)
+		return false;
+	if (flags && D20RaceSys::RaceDefinitionFlags::RDF_ForgottenRealms && !config.forgottenRealmsRaces)
 		return false;
 	return config.newRaces;
 }
