@@ -4304,11 +4304,11 @@ int __cdecl SpellCallbacks::SpellModCountdownRemove(DispatcherCallbackArgs args)
 
 	auto spellIdentifier = args.GetData1();
 	if (durNew < 0){
-		if (spellIdentifier == 208){
+		if (spellIdentifier == 209){
 			args.RemoveSpellMod();
 			return 0;
 		}
-		if (spellIdentifier == 221){
+		if (spellIdentifier == 222){
 			spellPkt.EndPartsysForTgtObj(args.objHndCaller);
 			if (!spellPkt.RemoveObjFromTargetList(args.objHndCaller)){
 				logger->debug("SpellModCountdownRemove: Cannot remove target");
@@ -4318,7 +4318,7 @@ int __cdecl SpellCallbacks::SpellModCountdownRemove(DispatcherCallbackArgs args)
 			args.RemoveSpellMod();
 			return 0;
 		}
-		if (spellIdentifier == 239 && d20Sys.d20Query(args.objHndCaller, DK_QUE_Unconscious)){
+		if (spellIdentifier == 240 && !d20Sys.d20Query(args.objHndCaller, DK_QUE_Unconscious)){
 			if (!conds.AddTo(spellPkt.targetListHandles[0], "sp-Frog Tongue Swallowed", {spellId, 1,0})){
 				logger->info("SpellModCountdownRemove: unable to add condition");
 			}
@@ -4329,7 +4329,7 @@ int __cdecl SpellCallbacks::SpellModCountdownRemove(DispatcherCallbackArgs args)
 			args.RemoveSpellMod();
 			return 0;
 		}
-
+		// else
 		floatSys.FloatSpellLine(args.objHndCaller, 20000, FloatLineColor::White); // Spell expired
 		auto args2 = args;
 		args2.dispIO = nullptr;
@@ -4338,12 +4338,12 @@ int __cdecl SpellCallbacks::SpellModCountdownRemove(DispatcherCallbackArgs args)
 		return 0;
 	}
 
-	if (spellIdentifier == 221){
+	if (spellIdentifier == 222){
 		if (!args.GetCondArg(3)){
 			return 0;
 		}
 	}
-	else if (spellIdentifier == 225){
+	else if (spellIdentifier == 226){
 		if (!args.GetCondArg(2)) {
 			return 0;
 		}

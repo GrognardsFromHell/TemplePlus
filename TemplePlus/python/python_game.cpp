@@ -1116,8 +1116,8 @@ PyObject* PyGame_Picker(PyObject*, PyObject* args) {
 	PickerArgs picker;
 	picker.flagsTarget = LosNotRequired;
 	picker.modeTarget = UiPickerType::Single;
-	picker.incFlags = UiPickerIncFlags::Other;
-	picker.excFlags = UiPickerIncFlags::None;
+	picker.incFlags = UiPickerIncFlags::UIPI_Other;
+	picker.excFlags = UiPickerIncFlags::UIPI_None;
 	picker.spellEnum = spellId;
 	picker.callback = PyGame_PickerCallback;
 	picker.caster = caster;

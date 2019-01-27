@@ -299,6 +299,8 @@ PyObject* PyTempleImporter::ReadData(const string& path) {
 		return nullptr;
 	}
 
+	tio_fclose(fh);
+
 	buf[len] = '\0';
 
 	return rawData;
