@@ -2982,9 +2982,15 @@ int AiSystem::ChooseRandomSpellFromList(AiPacket* aiPkt, AiSpellList* aiSpells){
 			spellRange = spellEntry.radiusTarget;
 		}
 		auto tgt = aiPkt->target;
-		if (objects.IsCritter(tgt)
-			&& d20Sys.d20Query(tgt, DK_QUE_Critter_Is_Grappling) == 1
-			|| d20Sys.d20Query(tgt, DK_QUE_Critter_Is_Charmed))	{
+		if (spellEntry.IsBaseModeTarget(UiPickerType::Personal)){
+			tgt = aiPkt->obj;
+		}
+
+		if (tgt != aiPkt->obj
+			&& objects.IsCritter(tgt)
+			&& (d20Sys.d20Query(tgt, DK_QUE_Critter_Is_Grappling) == 1
+			    || d20Sys.d20Query(tgt, DK_QUE_Critter_Is_Charmed)
+			)){
 			continue;
 		}
 
@@ -2992,9 +2998,13 @@ int AiSystem::ChooseRandomSpellFromList(AiPacket* aiPkt, AiSpellList* aiSpells){
 		
 			if (!spellSys.GetSpellTargets(aiPkt->obj,tgt, &aiPkt->spellPktBod, spellEnum))
 				continue;
-			if (locSys.DistanceToObj(aiPkt->obj, tgt)>spellRange
-				&& spellSys.SpellHasAiType(spellEnum, ai_action_offensive)
-				|| spellSys.SpellHasAiType(spellEnum, ai_action_defensive)){
+			if (aiPkt->spellPktBod.targetListHandles[0]){
+				tgt = aiPkt->spellPktBod.targetListHandles[0];
+			}
+			if (locSys.DistanceToObj(aiPkt->obj, tgt)>spellRange && 
+				( spellSys.SpellHasAiType(spellEnum, ai_action_offensive)
+				  || spellSys.SpellHasAiType(spellEnum, ai_action_defensive) )
+				){
 				continue;
 			}
 
