@@ -2977,8 +2977,8 @@ int AiSystem::ChooseRandomSpellFromList(AiPacket* aiPkt, AiSpellList* aiSpells){
 		spellSys.spellRegistryCopy(spellEnum, &spellEntry);
 		auto spellRange = spellSys.GetSpellRange(&spellEntry, aiPkt->spellPktBod.casterLevel, aiPkt->spellPktBod.caster);
 		aiPkt->spellPktBod.spellRange = spellRange;
-		if ( static_cast<UiPickerType>(spellEntry.modeTargetSemiBitmask & 0xFF) == UiPickerType::Area
-			&& spellEntry.spellRangeType == SpellRangeType::SRT_Personal)	{
+		if (spellEntry.IsBaseModeTarget(UiPickerType::Area) && spellEntry.spellRangeType == SpellRangeType::SRT_Personal
+			|| spellEntry.IsBaseModeTarget(UiPickerType::Personal) && (spellEntry.flagsTargetBitmask & UiPickerFlagsTarget::Radius) ){
 			spellRange = spellEntry.radiusTarget;
 		}
 		auto tgt = aiPkt->target;

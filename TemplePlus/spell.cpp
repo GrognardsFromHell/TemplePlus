@@ -2436,12 +2436,13 @@ uint32_t LegacySpellSystem::pickerArgsFromSpellEntry(SpellEntry* spEntry, Picker
 	args->maxTargets = spEntry->maxTarget;
 	args->radiusTarget = spEntry->radiusTarget;
 	args->degreesTarget = spEntry->degreesTarget;
-	if (spEntry->spellRangeType){
+	if (spEntry->spellRangeType != SRT_Specified){
 		args->range = spellSys.GetSpellRangeExact(spEntry->spellRangeType, casterLvl, caster);
 	} 
 	else{
 		args->range = spEntry->spellRange;
 	}
+
 	args->callback = nullptr;
 	args->caster = caster;
 
@@ -2470,6 +2471,12 @@ uint32_t LegacySpellSystem::pickerArgsFromSpellEntry(SpellEntry* spEntry, Picker
 	if (spEntry->spellRangeType == SRT_Personal
 		&& spEntry->IsBaseModeTarget(UiPickerType::Area))
 	{
+		/*if (spEntry->spellRangeType == SRT_Specified){
+			args->range = spEntry->spellRange;
+		}
+		else{
+			args->range = spellSys.GetSpellRangeExact(spEntry->spellRangeType, casterLvl, caster);
+		}*/
 		// seems to do the spell range thing as above, so skipping this
 	}
 
@@ -2565,7 +2572,13 @@ bool LegacySpellSystem::GetSpellTargets(objHndl obj, objHndl tgt, SpellPacketBod
 		pickArgs.SetSingleTgt(tgt);
 		break;
 	case UiPickerType::Personal:
-		pickArgs.SetSingleTgt(obj);
+		if (spEntry.flagsTargetBitmask & UiPickerFlagsTarget::Range){
+			loc = objSystem->GetObject(obj)->GetLocationFull();
+			uiPicker.GetListRange(&loc, &pickArgs);
+		}
+		else{
+			pickArgs.SetSingleTgt(obj);
+		}
 		break;
 	case UiPickerType::Cone:
 		loc = objSystem->GetObject(tgt)->GetLocationFull();
