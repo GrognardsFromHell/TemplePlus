@@ -23,6 +23,16 @@ def DwarfSaveBonus(attachee, args, evt_obj):
 	elif (flags & (1 << (D20STD_F_POISON-1))): 
 		evt_obj.bonus_list.add(2, 31, BONUS_MES_RACIAL_BONUS) # Racial Bonus
 	return 0
+	
+def OnGetAppraiseSkill(attachee, args, evt_obj):
+	# adds appraise bonus to metal or rock items
+	item = evt_obj.obj
+	if item == OBJ_HANDLE_NULL:
+		return 0
+	item_material = item.obj_get_int(obj_f_material)
+	if (item_material == mat_stone or item_material == mat_metal):
+		evt_obj.bonus_list.add(2, 0, BONUS_MES_RACIAL_BONUS)
+	return 0
 
 def OnGetFavoredClass(attachee, args, evt_obj):
 	if evt_obj.data1 == stat_level_fighter:
@@ -75,5 +85,6 @@ raceSpecObj.AddHook(ET_OnGetMoveSpeed,    EK_NONE,           OnGetMoveSpeedSetLo
 raceSpecObj.AddHook(ET_OnToHitBonus2,     EK_NONE,           OnGetToHitBonusVsAberration, ())
 raceSpecObj.AddHook(ET_OnGetAC,           EK_NONE,           OnGetArmorClassBonusVsGiants, ())
 raceSpecObj.AddHook(ET_OnGetAbilityCheckModifier, EK_NONE,   OnAbilityModCheckStabilityBonus, ())
+raceSpecObj.AddHook(ET_OnGetSkillLevel,   EK_SKILL_APPRAISE, OnGetAppraiseSkill, ())
 raceSpecObj.AddHook(ET_OnSaveThrowLevel, EK_NONE,   DwarfSaveBonus, ())
 

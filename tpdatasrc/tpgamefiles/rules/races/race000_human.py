@@ -18,6 +18,7 @@ raceSpec.weight_female   = [89, 165]
 raceSpec.stat_modifiers  = [0, 0, 0, 0, 0, 0]   # str, dex, con, int, wis, cha
 raceSpec.proto_id        = 13000
 raceSpec.material_offset = 0         # offset into rules/material_ext.mes file
+raceSpec.bonus_first_level_feat = 1
 
 ###################################################
 def RegisterRace():

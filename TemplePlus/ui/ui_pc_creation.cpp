@@ -1777,7 +1777,7 @@ bool UiPcCreation::IsSelectingNormalFeat() {
 bool UiPcCreation::IsSelectingSecondFeat()
 {
 	auto &selPkt = GetCharEditorSelPacket();
-	return selPkt.raceId == race_human;
+	return d20RaceSys.BonusFirstLevelFeat(selPkt.raceId);
 }
 
 bool UiPcCreation::IsSelectingBonusFeat()
