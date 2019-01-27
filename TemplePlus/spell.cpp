@@ -635,9 +635,73 @@ int LegacySpellSystem::CopyLearnableSpells(objHndl& handle, int spellClass, std:
 	return entries.size();
 }
 
-uint32_t LegacySpellSystem::ConfigSpellTargetting(PickerArgs* pickerArgs, SpellPacketBody* spellPktBody)
+uint32_t LegacySpellSystem::ConfigSpellTargetting(PickerArgs* args, SpellPacketBody* spPkt)
 {
-	return addresses.ConfigSpellTargetting(pickerArgs, spellPktBody);
+	auto flags = (PickerResultFlags)args->result.flags;
+
+	if (flags & PRF_HAS_SINGLE_OBJ) {
+		spPkt->targetCount = 1;
+		spPkt->orgTargetCount = 1;
+		spPkt->targetListHandles[0] = args->result.handle;
+
+		// add for the benefit of AI casters
+		if (args->IsBaseModeTarget(UiPickerType::Multi) && args->result.handle) {
+			auto N = 1;
+			if (!args->IsModeTargetFlagSet(UiPickerType::OnceMulti)) {
+				N = MAX_SPELL_TARGETS;
+			}
+			for (; spPkt->targetCount < args->maxTargets && spPkt->targetCount < N; spPkt->targetCount++) {
+				spPkt->targetListHandles[spPkt->targetCount] = args->result.handle;
+			}
+		}
+	}
+	else {
+		spPkt->targetCount = 0;
+		spPkt->orgTargetCount = 0;
+	}
+
+	if (flags & PRF_HAS_MULTI_OBJ) {
+
+		auto objNode = args->result.objList.objects;
+
+		for (spPkt->targetCount = 0; objNode; ++spPkt->targetCount) {
+			if (spPkt->targetCount >= 32)
+				break;
+
+			spPkt->targetListHandles[spPkt->targetCount] = objNode->handle;
+
+			if (objNode->next)
+				objNode = objNode->next;
+			// else apply the rest of the targeting to the last object
+			else if (!args->IsModeTargetFlagSet(UiPickerType::OnceMulti)) {
+				while (spPkt->targetCount < args->maxTargets) {
+					spPkt->targetListHandles[spPkt->targetCount++] = objNode->handle;
+				}
+				objNode = nullptr;
+				break;
+			}
+		}
+	}
+
+	if (flags & PRF_HAS_LOCATION) {
+		spPkt->aoeCenter.location = args->result.location;
+		spPkt->aoeCenter.off_z = args->result.offsetz;
+	}
+	else
+	{
+		spPkt->aoeCenter.location.location.locx = 0;
+		spPkt->aoeCenter.location.location.locy = 0;
+		spPkt->aoeCenter.location.off_x = 0;
+		spPkt->aoeCenter.location.off_y = 0;
+		spPkt->aoeCenter.off_z = 0;
+	}
+
+	if (flags & PRF_UNK8) {
+		logger->debug("ui_picker: not implemented - BECAME_TOUCH_ATTACK");
+	}
+
+	return TRUE;
+	//return addresses.ConfigSpellTargetting(pickerArgs, spellPktBody);
 }
 
 int LegacySpellSystem::GetMaxSpellLevel(objHndl objHnd, Stat classCode, int characterLvl)
@@ -2482,8 +2546,49 @@ const char* LegacySpellSystem::GetSpellEnumNameFromEnum(int spellEnum)
 bool LegacySpellSystem::GetSpellTargets(objHndl obj, objHndl tgt, SpellPacketBody* spellPkt, unsigned spellEnum)
 {
 	// returns targets using the picker function
-	auto getTgts = temple::GetRef<bool(__cdecl)(objHndl , objHndl , SpellPacketBody* , unsigned )>(0x10079030);
-	return getTgts(obj, tgt, spellPkt, spellEnum);
+		
+	SpellEntry spEntry(spellEnum);
+	if (!spEntry.spellEnum)
+		return false;
+	
+	PickerArgs pickArgs;
+	if (!spellSys.pickerArgsFromSpellEntry(&spEntry, &pickArgs, obj, spellPkt->casterLevel))
+		return false;
+
+	memset(&pickArgs.result, 0, sizeof(pickArgs.result));
+
+	auto modeTgt = pickArgs.GetBaseModeTarget();
+	LocAndOffsets loc = LocAndOffsets::null;
+	switch (modeTgt){
+	case UiPickerType::Single:
+	case UiPickerType::Multi:
+		pickArgs.SetSingleTgt(tgt);
+		break;
+	case UiPickerType::Personal:
+		pickArgs.SetSingleTgt(obj);
+		break;
+	case UiPickerType::Cone:
+		loc = objSystem->GetObject(tgt)->GetLocationFull();
+		uiPicker.SetConeTargets(&loc, &pickArgs);
+		break;
+	case UiPickerType::Area:
+		if (spEntry.spellRangeType == SRT_Personal){
+			loc=objSystem->GetObject(obj)->GetLocationFull();
+		}else{
+			loc = objSystem->GetObject(tgt)->GetLocationFull();
+		}
+		uiPicker.GetListRange(&loc, &pickArgs);
+		break;
+	default:
+		break;
+	} 
+		
+	spellSys.ConfigSpellTargetting(&pickArgs, spellPkt);
+	pickArgs.FreeObjlist();
+	return spellPkt->targetCount > 0;
+
+	//auto getTgts = temple::GetRef<bool(__cdecl)(objHndl, objHndl, SpellPacketBody*, unsigned)>(0x10079030);
+	//return getTgts(obj, tgt, spellPkt, spellEnum);
 }
 
 BOOL LegacySpellSystem::SpellHasAiType(unsigned spellEnum, AiSpellType aiSpellType)

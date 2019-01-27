@@ -101,6 +101,8 @@ struct PickerArgs {
 	bool CheckTargetVsIncFlags(objHndl tgt);
 	bool TargetValid( objHndl objHndl); // check exclusions from flags, and range
 	bool LosBlocked(objHndl objHndl);
+	bool SetSingleTgt( objHndl tgt);
+	void FreeObjlist();
 
 protected:
 	void ExcludeTargets();

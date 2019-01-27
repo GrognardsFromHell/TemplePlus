@@ -1166,8 +1166,70 @@ bool PickerArgs::LosBlocked(objHndl handle)
 	return losBlocked(caster, handle);
 }
 
+bool PickerArgs::SetSingleTgt(objHndl tgt)
+{
+	auto tgtObj = objSystem->GetObject(tgt);
+	if (!tgtObj) {
+		return false;
+	}
+	if (result.flags& PickerResultFlags::PRF_HAS_MULTI_OBJ){
+		result.FreeObjlist();
+	}
+	result.flags = PRF_HAS_LOCATION | PRF_HAS_SINGLE_OBJ;
+	result.handle = tgt;
+	result.location = tgtObj->GetLocationFull();
+	result.offsetz = tgtObj->GetFloat(obj_f_offset_z);
+	
+	DoExclusions();
+	
+	return true;
+}
+
+void PickerArgs::FreeObjlist()
+{
+	if (this->result.flags & PRF_HAS_MULTI_OBJ){
+		result.FreeObjlist();
+	}
+	result.flags = 0;
+}
+
 void PickerArgs::ExcludeTargets(){
-	temple::GetRef<void(__cdecl)(PickerArgs*)>(0x100BA3C0)(this);
+	//temple::GetRef<void(__cdecl)(PickerArgs*)>(0x100BA3C0)(this);
+
+	if (result.flags & PRF_HAS_SINGLE_OBJ){
+		if (!TargetValid(result.handle)){
+			result.handle = objHndl::null;
+			result.flags &= ~PRF_HAS_SINGLE_OBJ;
+		}
+	}
+	if (result.flags & PRF_HAS_MULTI_OBJ) {
+		
+		// remove until valid found (if any)
+		while (result.objList.objects){
+			if (TargetValid(result.objList.objects->handle))
+				break;
+			auto objNode = result.objList.objects;
+			result.objList.objects = result.objList.objects->next;
+			objNode->ReturnToPool();
+		}
+
+		// here, the first one (if any exists) should be valid
+		auto objNode = result.objList.objects;
+		while (objNode){
+			auto next = objNode->next;
+			if (!next)
+				break;
+
+			if (!TargetValid(next->handle)){ // remove the "next" node
+				auto removeNode = objNode->next;
+				objNode->next = objNode->next->next;
+				removeNode->ReturnToPool();
+				continue;
+			}
+			
+			objNode = objNode->next;
+		}
+	}
 }
 
 void PickerArgs::FilterResults(){
