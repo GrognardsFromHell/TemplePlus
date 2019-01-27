@@ -48,11 +48,11 @@ def OnIllusionDCBonus(attachee, args, evt_obj):
 		evt_obj.bonus_list.add(1, 31, 139) # Racial Bonus
 	return 0
 	
-
+#Note:  Adding the size +4 bonus to hide as a racial bonus since setting size to small does not grant the bonus
 raceSpecObj = PythonModifier(GetConditionName(), 0)
 race_utils.AddAbilityModifierHooks(raceSpecObj, raceSpecModule)
 race_utils.AddSaveThrowBonusHook(raceSpecObj, D20_Save_Will, 2)
-race_utils.AddSkillBonuses(raceSpecObj, {skill_hide: 2, skill_listen: 2})
+race_utils.AddSkillBonuses(raceSpecObj, {skill_hide: 6, skill_listen: 2})
 race_utils.AddBaseMoveSpeed(raceSpecObj, 20)
 
 raceSpecObj.AddHook(ET_OnGetSpellResistanceMod, EK_NONE, OnGetSpellResistance, ())

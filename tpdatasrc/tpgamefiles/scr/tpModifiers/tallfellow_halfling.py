@@ -46,9 +46,10 @@ def OnGetToHitBonusSlingsThrownWeapons(attachee, args, evt_obj):
 		
 	return 0
 
+#Note:  Adding the size +4 bonus to hide as a racial bonus since setting size to small does not grant the bonus
 raceSpecObj = PythonModifier(GetConditionName(), 0)
 race_utils.AddAbilityModifierHooks(raceSpecObj, raceSpecModule)
-race_utils.AddSkillBonuses(raceSpecObj, {skill_spot: 2, skill_search: 2, skill_listen:2})
+race_utils.AddSkillBonuses(raceSpecObj, {skill_spot: 2, skill_search: 2, skill_listen:2, skill_hide:4})
 race_utils.AddBaseMoveSpeed(raceSpecObj, 20)
 
 raceSpecObj.AddHook(ET_OnD20Query, EK_Q_FavoredClass, OnGetFavoredClass, ())
