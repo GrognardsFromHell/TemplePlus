@@ -474,7 +474,7 @@ void UiPicker::RenderPickers(){
 	}
 
 	else if (pick.args.IsBaseModeTarget(UiPickerType::Personal)){
-		if (tgt && (pick.args.flagsTarget &UiPickerFlagsTarget::Radius) && tgt != originator){
+		if (tgt && (pick.args.flagsTarget &UiPickerFlagsTarget::Radius) && tgt == originator){
 
 			DrawCircleAoE(originLoc, 1.0, INCH_PER_FEET * pick.args.radiusTarget, pick.args.spellEnum);
 
