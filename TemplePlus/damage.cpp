@@ -581,7 +581,7 @@ bool Damage::SavingThrowSpell(objHndl obj, objHndl attacker, int dc, SavingThrow
 	}
 
 	for (auto i=0; i < 21; i++){ // i=0 -> 1 -> acid;  1<<13 -> 0x2000  (D20STF_SPELL_DESCRIPTOR_ACID)
-		if (spEntry.spellDescriptorBitmask & (1<<i) == (1<<i)){
+		if ((spEntry.spellDescriptorBitmask & (1<<i)) == (1<<i)){
 			flagsModified |= 1 << (i + 13);
 		}
 	}

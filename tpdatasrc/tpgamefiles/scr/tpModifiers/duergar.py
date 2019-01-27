@@ -16,14 +16,6 @@ raceSpecModule = __import__('race097_duergar')
 BONUS_MES_RACIAL_BONUS = 139
 BONUS_MES_STABILITY    = 317
 
-
-def ElvenSaveBonusEnchantment(attachee, args, evt_obj):
-	flags = evt_obj.flags
-	if (flags & (2 << (D20STD_F_SPELL_SCHOOL_ENCHANTMENT-1))): 
-		evt_obj.bonus_list.add(2, 31, BONUS_MES_RACIAL_BONUS) # Racial Bonus
-	return 0
-
-
 def OnGetFavoredClass(attachee, args, evt_obj):
 	if evt_obj.data1 == stat_level_fighter:
 		evt_obj.return_val = 1
@@ -93,7 +85,6 @@ def CasterLevelRacialSpell(attachee, args, evt_obj):
 
 raceSpecObj = PythonModifier(GetConditionName(), 0)
 race_utils.AddAbilityModifierHooks(raceSpecObj, raceSpecModule)
-race_utils.AddSaveThrowBonusHook(raceSpecObj, D20_Save_Will, 2)
 race_utils.AddSaveBonusVsEffectType(raceSpecObj, D20STD_F_SPELL_LIKE_EFFECT, 2)
 race_utils.AddSkillBonuses(raceSpecObj, {skill_listen: 1, skill_spot: 1, skill_move_silently: 4})
 race_utils.AddBaseMoveSpeed(raceSpecObj, 20) # note: dwarven move speed with heavy armor or when medium/heavy encumbered is already handled in Encumbered Medium, Encumbered Heavy condition callbacks
@@ -102,7 +93,6 @@ race_utils.AddFavoredClassHook(raceSpecObj, stat_level_fighter)
 
 raceSpecObj.AddHook(ET_OnGetSkillLevel,   EK_SKILL_APPRAISE, OnGetAppraiseSkill, ())
 raceSpecObj.AddHook(ET_OnGetMoveSpeed,    EK_NONE,           OnGetMoveSpeedSetLowerLimit, ())
-raceSpecObj.AddHook(ET_OnSaveThrowLevel,  EK_NONE,           ElvenSaveBonusEnchantment, ())
 raceSpecObj.AddHook(ET_OnConditionAddPre, EK_NONE,           ConditionImmunityOnPreAdd, ()) # paralysis immunity
 raceSpecObj.AddHook(ET_OnToHitBonus2,     EK_NONE,           OnGetToHitBonusVsOrcsAndGoblins, ())
 raceSpecObj.AddHook(ET_OnGetAC,           EK_NONE,           OnGetArmorClassBonusVsGiants, ())

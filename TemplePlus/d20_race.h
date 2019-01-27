@@ -38,6 +38,7 @@ public:
 	int GetProtoId(Race race);
 	std::string& GetHelpTopic(Race race);
 	Race GetRaceEnum(const std::string& raceName);
+	bool BonusFirstLevelFeat(Race race);
 	int GetMinHeight(Race race, Gender genderId);
 	int GetMaxHeight(Race race, Gender genderId);
 	int GetMinWeight(Race race, Gender genderId);
