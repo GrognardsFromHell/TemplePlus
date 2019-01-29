@@ -1288,7 +1288,8 @@ void DungeonMaster::RenderFudgeRolls(){
 	ImGui::RadioButton("Normal", &mForceRollType, 0); ImGui::SameLine();
 	ImGui::RadioButton("Min", &mForceRollType, 1); ImGui::SameLine();
 	ImGui::RadioButton("Avg", &mForceRollType, 2); ImGui::SameLine();
-	ImGui::RadioButton("Max", &mForceRollType, 3);
+	ImGui::RadioButton("Avg+2", &mForceRollType, 3); ImGui::SameLine();
+	ImGui::RadioButton("Max", &mForceRollType, 4);
 
 
 }

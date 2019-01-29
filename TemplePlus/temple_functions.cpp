@@ -42,6 +42,12 @@ int32_t TempleFuncs::diceRoll(uint32_t dieNum, uint32_t dieType, int32_t dieBonu
 		result +=  (int)ceil( ( (1.0 + dieType) * dieNum) / 2); // average, rounded up for even dice
 		return result;
 	case 3:
+		result += (int)ceil(((1.0 + dieType) * dieNum) / 2); // average, rounded up for even dice
+		if (dieType >=2){
+			result += 2 * dieNum;
+		}
+		return result;
+	case 4:
 		result += dieNum * dieType;
 		return result;
 	default: 
