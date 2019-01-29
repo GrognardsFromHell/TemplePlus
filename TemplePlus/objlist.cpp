@@ -13,6 +13,7 @@ static struct ObjListAddresses : temple::AddressTable {
 	void(__cdecl *ObjListRadius)(LocAndOffsets loc, float radius, float angleMin, float angleMax, int flags, ObjListResult &result);
 	void(__cdecl *ObjListFollowers)(objHndl critter, ObjListResult &result);
 	int(__cdecl *ObjListFree)(ObjListResult &result);
+	void(__cdecl *ReturnToPool)(ObjListResultItem* objListResultItem);
 	ObjListResultItem *(__cdecl*ObjlistPop)();
 	
 	ObjListAddresses() {
@@ -23,6 +24,7 @@ static struct ObjListAddresses : temple::AddressTable {
 		rebase(ObjListFollowers, 0x1001F450);
 		rebase(ObjListFree, 0x1001F2C0);
 		rebase(ObjlistPop, 0x100C0CA0);
+		rebase(ReturnToPool, 0x100C0C20);
 	}
 
 	
@@ -44,6 +46,11 @@ void ObjListResult::PrependHandle(objHndl handle){
 	objNodeNew->next = this->objects;
 	this->objects = objNodeNew;
 }
+
+void ObjListResultItem::ReturnToPool() {
+	addresses.ReturnToPool(this);
+}
+
 
 void ObjListResult::IncreaseObjListCount(){
 	temple::GetRef<int>(0x10808CF8)++;

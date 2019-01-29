@@ -266,7 +266,8 @@ struct ObjListResultItem {
 			next->FreeRecursive();
 		free(this);
 	}
-	
+
+	void ReturnToPool();
 };
 
 struct ObjListResult

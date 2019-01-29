@@ -1405,7 +1405,7 @@ int LegacyCritterSystem::GetHpPercent(const objHndl& handle)
 	auto subdualDam = objects.StatLevelGet(handle, Stat::stat_subdual_damage);
 	if (maxHp <= 0)
 		return 0;
-	return (curHp - subdualDam) / maxHp;
+	return 100 * (curHp - subdualDam) / maxHp;
 }
 
 int LegacyCritterSystem::GetEffectiveLevel(objHndl & objHnd)
