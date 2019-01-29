@@ -242,12 +242,17 @@ objHndl LegacyPartySystem::GetConsciousPartyLeader(){
 			return dude;
 	}
 	
-	// added fix in case the leader is not currently selected and is in combat
+
+	/* added fix in case the leader is not currently selected and is in combat 
+		This fixes issue with Fear'ed characters fucking up things in TB combat, because while running away they weren't selected. 
+		Symptoms included causing an incorrect radial menu to appear for the fear'd character.
+	*/
 	if (combatSys.isCombatActive()){
 		auto curActor = tbSys.turnBasedGetCurrentActor();
-		if (IsInParty(curActor))
+		if (IsInParty(curActor) && !critterSys.IsDeadOrUnconscious(curActor))
 			return curActor;
 	}
+
 
 	auto partySize = GroupListGetLen();
 	for (auto i=0u; i < partySize; i++){

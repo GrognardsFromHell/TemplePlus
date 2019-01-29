@@ -136,6 +136,9 @@ public:
 		replaceFunction<BOOL(__cdecl)()>(0x10062A30, [](){ // Combat End
 			return combatSys.CombatEnd()?TRUE:FALSE;
 		});
+		replaceFunction<void(__cdecl)(objHndl)>(0x100630F0, [](objHndl handle) { // Critter Exit Combat Mode
+			return combatSys.CritterExitCombatMode(handle);
+		});
 
 		orgCheckRangedWeaponAmmo = replaceFunction(0x100654E0, CheckRangedWeaponAmmo);
 		
