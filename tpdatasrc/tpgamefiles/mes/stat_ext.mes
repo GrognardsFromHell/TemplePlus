@@ -161,6 +161,7 @@
 {2162}{Wood Elf}
 {2161}{Gold Dwarf}
 {2102}{Strongheart}
+{2134}{Ghostwise}
 
 // Race Abbreviations Go Between 3000-3999
 
@@ -181,6 +182,7 @@
 {12161} Gold Dwarf {Gold dwarves are a forgotten realms race.  They are stocky and muscular, Averaging 4 feet tall and weighing as much as an adult human.  They have the standard dwarven traits except as follows:  -2 Dexterity, +2 Constitution.  +1 racial bonus on attack rolls against aberrations: Gold dwarves are trained in special combat techniques against the many bizarre creatures that live in the Underdark.  (This replaces the attack bonus against ores and goblinoids.)  Their favored class is fighter. }
 {12102} Strongheart {Strongheart Halflings are a forgotten realms race.  While the lightfoot halflings value the experience of travel and the sight of new lands and peoples, the stronghearts are a more organized, oderly, and industrious race. They build to last, and fiercely defend their homelands against threats that their lightfoot kin would simply flee.  They have the standard halfling traits except as follows:  Strongheart halflings gain one extra feat at 1st level.  Srongheart halflings do not receinve the halfling racial +1 bonus on all saving throws.}
 {12038} Tallfellow {Tallfellow halflings are somewhat rare among halfling folk. Tallfellows are 4 feet tall or more and weigh between 30 and 35 pounds.  They have the standard halfling traits except as follows:  +2 racial bonus on Search, Spot, and Listen checks. Like an elf, a tallfellow who merely passes within 5 feet of a secret or concealed door is entitled to a Search check as though actively looking for it. This trait replaces the lightfoot's +2 bonus on Listen checks.  Tallfellows are less athletic than lightfoot halflings and do not have a racial bonus on Climb, Jump, and Move Silently checks.}
+{12134} Ghostwise {Ghostwise Halflings are a forgotten realms race.  These wild, nearly feral halflings rarely leave their confines of the deep forests.  They have the standard halfling traits except as follows:  Ghostwise halflings do not receinve the halfling racial +1 bonus on all saving throws.  Their favored class is barbarian.}
 // Class Short Help Goes Between 13000-13099
 {13011}Arcane Archer{The arcane archer is an Elven warrior skilled in using magic to supplement their combat prowess.
 
