@@ -17,7 +17,7 @@ raceSpec.height_female   = [38, 46]
 raceSpec.weight_male     = [33, 35]
 raceSpec.weight_female   = [28, 30]
 raceSpec.stat_modifiers  = [-2, 2, 0, 0, 0, 0]   # str, dex, con, int, wis, cha
-raceSpec.proto_id        = 13040
+raceSpec.proto_id        = 13039
 raceSpec.material_offset = 12         # offset into rules/material_ext.mes file
 
 ###################################################
