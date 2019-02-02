@@ -20,6 +20,7 @@ raceSpec.stat_modifiers  = [-2, 2, 0, 0, 0, 0]   # str, dex, con, int, wis, cha
 raceSpec.proto_id        = 13037
 raceSpec.material_offset = 12         # offset into rules/material_ext.mes file
 raceSpec.bonus_first_level_feat = 1
+raceSpec.use_base_race_for_deity = 1
 
 ###################################################
 def RegisterRace():
