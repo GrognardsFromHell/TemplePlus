@@ -35,6 +35,7 @@ public:
 	HairStyleRace GetHairStyle(Race race); // get racial hair style from among those available in ToEE
 	RaceBase GetBaseRace(Race race); // Gets base race enum from compound race ID
 	Subrace GetSubrace(Race race); // Gets subrace enum from compound race ID
+	bool UseBaseRaceForDeity(Race race);  //Flag to treat diety selections the same as the base rase for the subrace
 	int GetProtoId(Race race);
 	std::string& GetHelpTopic(Race race);
 	Race GetRaceEnum(const std::string& raceName);

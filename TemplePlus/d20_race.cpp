@@ -34,10 +34,13 @@ public:
 	std::vector<int> heightMale = { 70,80 };
 	std::vector<int> heightFemale = { 70,80 };
 
+	bool bonusFirstLevelFeat = false;  //Grants an extra feat at first level if true
+	bool useBaseRaceForDeity = false;  //Treats the subrace as the main race for deity selection if true
+
 	// Main Race
 	RaceBase baseRace = race_base_human;
 	bool isBaseRace = true;
-	bool bonusFirstLevelFeat = false;
+	
 	std::vector<Race> subraces;
 
 	// Subrace
@@ -140,6 +143,7 @@ PYBIND11_EMBEDDED_MODULE(race_defs, m) {
 		.def_readwrite("height_female", &RaceSpec::heightFemale)
 		.def_readwrite("weight_male", &RaceSpec::weightMale)
 		.def_readwrite("bonus_first_level_feat", &RaceSpec::bonusFirstLevelFeat)
+		.def_readwrite("use_base_race_for_deity", &RaceSpec::useBaseRaceForDeity)
 		.def_readwrite("weight_female", &RaceSpec::weightFemale)
 		.def_readwrite("stat_modifiers", &RaceSpec::statModifiers)
 		.def_readwrite("natural_armor", &RaceSpec::naturalArmor)
@@ -316,6 +320,17 @@ bool D20RaceSys::BonusFirstLevelFeat(Race race)
 	}
 	auto &raceSpecs = GetRaceSpec(race);
 	return raceSpecs.bonusFirstLevelFeat;
+}
+
+bool D20RaceSys::UseBaseRaceForDeity(Race race) 
+{
+	if (race <= VANILLA_NUM_RACES)
+	{
+		return false;
+	}
+
+	auto &raceSpec = GetRaceSpec(race);
+	return raceSpec.useBaseRaceForDeity;
 }
 
 int D20RaceSys::GetMinWeight(Race race, Gender genderId)
