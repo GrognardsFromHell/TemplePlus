@@ -203,7 +203,7 @@ int DamagePacket::GetOverallDamageByType(DamageType damType)
 	}
 
 	for (auto i = 0; i < this->damModCount; i++) {
-		if (damage.DamageTypeMatch(damType, this->damageResistances[i].type)){
+		if (damage.DamageTypeMatch(damType, this->damageFactorModifiers[i].type)){
 			damTot += this->damageFactorModifiers[i].damageReduced;
 		}
 	}
