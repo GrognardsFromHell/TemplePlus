@@ -18,6 +18,7 @@ raceSpec.weight_female   = [104, 134]
 raceSpec.stat_modifiers  = [0, -2, 2, 0, 0, 0]   # str, dex, con, int, wis, cha
 raceSpec.proto_id        = 13035
 raceSpec.material_offset = 6         # offset into rules/material_ext.mes file
+raceSpec.use_base_race_for_deity = 1
 
 ###################################################
 def RegisterRace():

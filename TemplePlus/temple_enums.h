@@ -2315,6 +2315,7 @@ enum Subrace : uint32_t
 	subrace_derro = 2,
 	subrace_duergar = 3,
 	subrace_mountain_dwarf = 4,
+	subrace_gold_dwarf = 4,
 
 	// Elf
 	subrace_aquatic_elf = 1,
@@ -2330,6 +2331,8 @@ enum Subrace : uint32_t
 	// Halflings
 	subrace_tallfellow = 1,
 	subrace_deep_halfling = 2,
+	subrace_strongheart_halfling = 3,
+	subrace_ghostwise_halfling = 4,
 };
 
 enum NpcFlag : uint32_t

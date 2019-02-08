@@ -5,6 +5,7 @@
 #include <gamesystems/objects/objsystem.h>
 #include <critter.h>
 #include <gamesystems/d20/d20stats.h>
+#include "d20_race.h"
 
 LegacyDeitySystem deitySys;
 
@@ -30,6 +31,10 @@ bool LegacyDeitySystem::CanPickDeity(objHndl handle, int deityId){
 
 	auto obj = objSystem->GetObject(handle);
 	auto race = (Race)obj->GetInt32(obj_f_critter_race);
+	if (d20RaceSys.UseBaseRaceForDeity(race)) {
+		race = static_cast<Race>(d20RaceSys.GetBaseRace(race));
+	}
+
 	auto alignment = (Alignment) obj->GetInt32(obj_f_critter_alignment);
 	auto classEnum = (Stat)obj->GetInt32(obj_f_critter_level_idx, 0);
 	auto deityClass = d20ClassSys.GetDeityClass(classEnum);
