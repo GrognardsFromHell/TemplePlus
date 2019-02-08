@@ -412,6 +412,7 @@ void SpellPacketBody::Debit(){
 				&& spellMem.metaMagicData == metaMagicData)	{
 				spellMem.spellStoreState.usedUp = 1;
 				casterObj->SetSpell(obj_f_critter_spells_memorized_idx, i, spellMem);
+				spellFound = true;
 				break;
 			}
 		}
