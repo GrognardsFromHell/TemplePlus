@@ -1102,7 +1102,7 @@ void LegacyCombatSystem::CritterExitCombatMode(objHndl handle) {
 	combatMusicEnd(handle);
 
 	auto N = party.GroupListGetLen();
-	for (auto i=0; i < N; i++){
+	for (auto i=0u; i < N; i++){
 		auto partyMem = party.GroupListGetMemberN(i);
 		auto critterFlags = critterSys.GetCritterFlags(partyMem);
 		if (critterFlags & OCF_COMBAT_MODE_ACTIVE){
@@ -1132,7 +1132,7 @@ bool LegacyCombatSystem::CombatEnd(){
 	tbSys.TbCombatEnd();
 	if (!mResettingCombatSystem){
 		auto N = party.GroupListGetLen();
-		for (auto i=0; i < N; i++){
+		for (auto i=0u; i < N; i++){
 			auto partyMember = party.GroupListGetMemberN(i);
 			temple::GetRef<void(__cdecl)(objHndl)>(0x100B70A0)(partyMember);
 		}
@@ -1174,7 +1174,7 @@ bool LegacyCombatSystem::AllCombatantsFarFromParty()
 		}
 
 		auto Nparty = party.GroupListGetLen();
-		for (auto j=0; j < Nparty; j++){
+		for (auto j=0u; j < Nparty; j++){
 			auto partyMem = party.GroupListGetMemberN(j);
 			if (locSys.DistanceToObj(combatant, partyMem) < PEACEOUT_DISTANCE){
 				return false;
@@ -1193,7 +1193,7 @@ bool LegacyCombatSystem::AllCombatantsFarFromParty()
 bool LegacyCombatSystem::AllPcsUnconscious(){
 
 	auto N = party.GroupPCsLen();
-	for (auto i=0; i < N; i++){
+	for (auto i=0u; i < N; i++){
 		auto pc = party.GroupPCsGetMemberN(i);
 		if (!pc)
 			continue;
@@ -1502,7 +1502,7 @@ void LegacyCombatSystem::enterCombat(objHndl objHnd){
 	if (objects.IsPlayerControlled(objHnd)){
 		
 		auto partyCount = party.GroupListGetLen();
-		for (auto i=0; i < partyCount; i++){
+		for (auto i=0u; i < partyCount; i++){
 			auto partyMember = party.GroupListGetMemberN(i);
 			if (!critterSys.IsCombatModeActive(partyMember)){
 				temple::GetRef<void(__cdecl)(objHndl)>(0x10062740)(partyMember); // set combat mode active and force spreadout
