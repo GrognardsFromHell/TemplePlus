@@ -34,6 +34,9 @@
 #include "gamesystems/legacysystems.h"
 #include "ui/ui_systems.h"
 #include "ui/ui_legacysystems.h"
+#include "infrastructure/vfs.h"
+#include "util/streams.h"
+#include "infrastructure/elfhash.h"
 
 
 struct AiSystem aiSys;
@@ -41,7 +44,7 @@ AiParamPacket * AiSystem::aiParams;
 
 const auto TestSizeOfAiTactic = sizeof(AiTactic); // should be 2832 (0xB10 )
 const auto TestSizeOfAiStrategy = sizeof(AiStrategy); // should be 808 (0x324)
-
+constexpr int AI_PREFAB_STRAT_MAX = 10000;
 struct AiSystemAddresses : temple::AddressTable
 {
 	int (__cdecl*UpdateAiFlags)(objHndl obj, int aiFightStatus, objHndl target, int * soundMap);
@@ -75,6 +78,27 @@ AiSystem::AiSystem()
 	RegisterNewAiTactics();
 }
 
+AiStrategy* AiSystem::GetAiStrategy(uint32_t stratId){
+	// Check if "normal" strategy ID
+	if (stratId < AI_PREFAB_STRAT_MAX ){
+
+		if (stratId >= aiStrategies.size()){
+			logger->warn("Strategy ID {} not found!", stratId);
+			return &aiStrategies[0];
+		}
+		
+		return &aiStrategies[stratId];
+	}
+	
+	// otherwise - fetch custom strategy
+	auto customStrat = aiCustomStrats->get(stratId);
+	if (customStrat == nullptr){
+		logger->warn("Custom strat ID {} not found!", stratId);
+		return &aiStrategies[0];
+	}
+	return customStrat;
+}
+
 void AiSystem::aiTacticGetConfig(int tacIdx, AiTactic* aiTacOut, AiStrategy* aiStrat)
 {
 	SpellPacketBody * spellPktBody = &aiTacOut->spellPktBody;
@@ -100,9 +124,10 @@ uint32_t AiSystem::StrategyParse(objHndl objHnd, objHndl target)
 	#pragma region preamble
 	AiTactic aiTac;
 	combat->enterCombat(objHnd);
-	auto stratIdx = objects.getInt32(objHnd, obj_f_critter_strategy);
-	Expects(stratIdx >= 0);
-	AiStrategy* aiStrat = &aiStrategies[stratIdx];
+	
+	auto critterStratIdx = (uint32_t)objects.getInt32(objHnd, obj_f_critter_strategy);
+	AiStrategy * aiStrat = GetAiStrategy(critterStratIdx);
+	
 	if (!actSeq->TurnBasedStatusInit(objHnd)) return 0;
 
 	actSeq->curSeqReset(objHnd);
@@ -209,9 +234,10 @@ uint32_t AiSystem::AiStrategDefaultCast(objHndl objHnd, objHndl target, D20Spell
 {
 	AiTactic aiTac;
 	combat->enterCombat(objHnd);
-	auto stratIdx = objects.getInt32(objHnd, obj_f_critter_strategy);
-	Expects(stratIdx >= 0 && stratIdx < aiStrategies.size());
-	AiStrategy* aiStrat = &aiStrategies[stratIdx];
+	
+	auto critterStratIdx = (uint32_t)objects.getInt32(objHnd, obj_f_critter_strategy);
+	AiStrategy * aiStrat = GetAiStrategy(critterStratIdx);
+
 	if (!actSeq->TurnBasedStatusInit(objHnd)) return 0;
 
 	actSeq->curSeqReset(objHnd);
@@ -1895,74 +1921,85 @@ int AiSystem::UpdateAiFlags(objHndl handle, AiFightStatus aiFightStatus, objHndl
 	return aiFightStatus;
 }
 
-void AiSystem::StrategyTabLineParseTactic(AiStrategy* aiStrat, char* tacName, char* middleString, char* spellString)
+void AiSystem::StrategyTabLineParseTactic(AiStrategy* aiStrat, const char* tacName, const char* middleString, const char* spellString)
 { // this functions matches the tactic strings (3 strings) to a tactic def
-	int tacIdx = 0;
-	if (*tacName)
-	{
-		// first check the vanilla tactic defs (44 types)
-		for (int i = 0; i < 44 && _stricmp(tacName, aiTacticDefs[i].name); i++){
-			++tacIdx;
-		}
-		if (tacIdx < 44)
-		{
-			aiStrat->aiTacDefs[aiStrat->numTactics] = &aiTacticDefs[tacIdx];
-			aiStrat->field54[aiStrat->numTactics] = 0;
-			aiStrat->spellsKnown[aiStrat->numTactics].spellEnum = -1;
-			if (*spellString)
-				spell->ParseSpellSpecString(&aiStrat->spellsKnown[aiStrat->numTactics], (char *)spellString);
-			++aiStrat->numTactics;
-			return;
-		}
-
-		// if none matched, try the new Temple+ tactics
-		tacIdx = 0;
-		for (int i = 0; i < 100 && aiTacticDefsNew[i].name && _stricmp(tacName, aiTacticDefsNew[i].name); i++)
-		{
-			tacIdx++;
-		}
-		if (aiTacticDefsNew[tacIdx].name && tacIdx < 100){
-			aiStrat->aiTacDefs[aiStrat->numTactics] = &aiTacticDefsNew[tacIdx];
-			aiStrat->field54[aiStrat->numTactics] = 0;
-			aiStrat->spellsKnown[aiStrat->numTactics].spellEnum = -1;
-			if (*spellString)
-				spell->ParseSpellSpecString(&aiStrat->spellsKnown[aiStrat->numTactics], (char *)spellString);
-			++aiStrat->numTactics;
-			return;
-		}
-		logger->warn("Error: No Such Tactic {} for Strategy {}", tacName, aiStrat->name);
+	if (!*tacName){
 		return;
-		
-		
 	}
+
+	int tacIdx = 0;
+
+	// first check the vanilla tactic defs (44 types)
+	constexpr int VANILLA_NUM_TACTICS = 44;
+	for (int i = 0; i < VANILLA_NUM_TACTICS && _stricmp(tacName, aiTacticDefs[i].name); i++){
+		++tacIdx;
+	}
+
+	if (tacIdx < VANILLA_NUM_TACTICS) {
+		aiStrat->aiTacDefs[aiStrat->numTactics] = &aiTacticDefs[tacIdx];
+		aiStrat->field54[aiStrat->numTactics] = 0;
+		aiStrat->spellsKnown[aiStrat->numTactics].spellEnum = -1;
+		if (*spellString)
+			spell->ParseSpellSpecString(&aiStrat->spellsKnown[aiStrat->numTactics], (char *)spellString);
+		++aiStrat->numTactics;
+		return;
+	}
+
+	// if none matched, try the new Temple+ tactics
+	tacIdx = 0;
+	for (int i = 0; i < 100 && aiTacticDefsNew[i].name && _stricmp(tacName, aiTacticDefsNew[i].name); i++)
+	{
+		tacIdx++;
+	}
+	if (aiTacticDefsNew[tacIdx].name && tacIdx < 100){
+		aiStrat->aiTacDefs[aiStrat->numTactics] = &aiTacticDefsNew[tacIdx];
+		aiStrat->field54[aiStrat->numTactics] = 0;
+		aiStrat->spellsKnown[aiStrat->numTactics].spellEnum = -1;
+		if (*spellString)
+			spell->ParseSpellSpecString(&aiStrat->spellsKnown[aiStrat->numTactics], (char *)spellString);
+		++aiStrat->numTactics;
+		return;
+	}
+	logger->warn("Error: No Such Tactic {} for Strategy {}", tacName, aiStrat->name);
+	
 	return;
+}
+
+void AiSystem::ParseStrategyLine(AiStrategy & newStrategy, const std::vector< string>& strings)
+{
+	newStrategy.numTactics = 0;
+	if (!strings.size())
+		return;
+	if (strings[0].size()){
+		newStrategy.name = fmt::format("{}", strings[0]);
+	}
+	
+	for (auto i=1u; i+2 < strings.size(); i+=3)
+	{
+		StrategyTabLineParseTactic(&newStrategy, strings[i].c_str(), strings[i+1].c_str(), strings[i+2].c_str());
+	} 
 }
 
 int AiSystem::StrategyTabLineParser(const TigTabParser* tabFile, int n, char** strings)
 {
-	const char *snameEndPos; 
-	char v6; 
 	int numCols; 
-	char **v9; 
+	char **str; 
 	
 	AiStrategy newStrategy;
-
-	snameEndPos = *strings;
-	auto i = 0;
-	do
-		v6 = *snameEndPos++;
-	while (v6);
+	
 	newStrategy.name = fmt::format("{}", *strings);
 	newStrategy.numTactics = 0;
 	numCols = 3;
-	v9 = strings + 2;
+	str = strings + 1;
+	auto i = 0;
 	do
 	{
 		if (numCols > tabFile->maxColumns )
 			break;
-		StrategyTabLineParseTactic(&newStrategy, *(v9 - 1), *v9, v9[1]);
+
+		StrategyTabLineParseTactic(&newStrategy, str[0], str[1], str[2]);
 		numCols += 3;
-		v9 += 3;
+		str += 3;
 		++i;
 	} while (i < 20);
 	aiStrategies.push_back(newStrategy);
@@ -1988,6 +2025,73 @@ void AiSystem::InitCustomStrategies(){
 		StrategyTabLineParseTactic(&pcFighter, "target closest", "", "");
 		aiStrategies.push_back(pcFighter);
 	}
+
+	{
+		aiCustomStrats = new IdxTableWrapper<AiStrategy>(&mAiStrategiesCustom);
+		aiCustomStrats->newTable(sizeof AiStrategy, __FILE__, __LINE__);
+	}
+}
+
+void AiSystem::SetCustomStrategy(objHndl handle, const std::vector<std::string>& stringVector)
+{
+	AiStrategy aiStrat;
+	ParseStrategyLine(aiStrat, stringVector);
+	auto id = ElfHash::Hash(aiStrat.name);
+	if (id >= 0 && id < AI_PREFAB_STRAT_MAX){
+		logger->error("bad strategy id!"); 
+		return;
+	}
+
+	aiCustomStrats->put(id, aiStrat);
+	mAiStrategiesCustomSrc.push_back(stringVector);
+	objSystem->GetObject(handle)->SetInt32(obj_f_critter_strategy,id);
+}
+
+bool AiSystem::CustomStrategiesSave()
+{
+	VfsOutputStream tios("Save\\Current\\custom_strats.bin");
+	
+	for (auto &strat : mAiStrategiesCustomSrc) {
+		
+		for (auto it: strat){
+			tios.WriteStringPrefixed(it);
+		}
+		tios.WriteStringPrefixed("\n");
+	}
+
+	return true;
+}
+
+bool AiSystem::CustomStrategiesLoad()
+{
+	std::string stratPath = { "Save\\Current\\custom_strats.bin" };
+	if (!vfs->FileExists(stratPath)) // support old saves without custom strats
+		return true;
+
+	auto data = vfs->ReadAsBinary(stratPath);
+	MemoryInputStream tios2(data);
+
+	auto pos = 0u;
+	while (pos < data.size()){
+		std::vector<std::string> stringVector;
+		
+		
+		while (true){
+			std::string s = tios2.ReadStringPrefixed();
+			if (s.size() && !strcmp(s.c_str(), "\n")){
+				break;
+			}
+			stringVector.push_back(s);
+		}
+		
+		AiStrategy aiStrat;
+		ParseStrategyLine(aiStrat, stringVector);
+		auto id = ElfHash::Hash(aiStrat.name);
+		aiCustomStrats->put(id, aiStrat);
+		mAiStrategiesCustomSrc.push_back(stringVector);
+		pos = tios2.GetPos();
+	}
+	return true;
 }
 
 int AiSystem::AiOnInitiativeAdd(objHndl obj)
@@ -1996,10 +2100,9 @@ int AiSystem::AiOnInitiativeAdd(objHndl obj)
 		return 0;
 	}
 
-	int critterStratIdx = objects.getInt32(obj, obj_f_critter_strategy);
-	
-	assert(critterStratIdx >= 0 && (uint32_t) critterStratIdx < aiStrategies.size());
-	AiStrategy * aiStrat = &aiStrategies[critterStratIdx];
+	auto critterStratIdx = (uint32_t)objects.getInt32(obj, obj_f_critter_strategy);
+	AiStrategy * aiStrat = GetAiStrategy(critterStratIdx);  
+
 	AiTactic aiTac;
 	aiTac.performer = obj;
 
@@ -3959,8 +4062,10 @@ void AiPacket::ProcessBackingOff(){
 	if (!(npcFlags & ONF_BACKING_OFF))
 		return;
 	auto minDistFeet = 12.0f;
-	if (aiParams.combatMinDistanceFeet > 1)
-		minDistFeet = aiParams.combatMinDistanceFeet;
+	if (aiParams.combatMinDistanceFeet > 1){
+		minDistFeet = (float)aiParams.combatMinDistanceFeet;
+	}
+		
 
 	if (locSys.DistanceToObj(obj, target) >= minDistFeet){
 		objBody->SetInt32(obj_f_npc_flags, npcFlags & ~(ONF_BACKING_OFF));

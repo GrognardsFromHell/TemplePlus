@@ -134,8 +134,11 @@ struct AiSystem : temple::AddressTable
 {
 	//AiStrategy ** aiStrategies;
 	std::vector<AiStrategy> aiStrategies;
+	IdxTableWrapper<AiStrategy> * aiCustomStrats;
+
 	AiTacticDef * aiTacticDefs;
 	AiTacticDef aiTacticDefsNew[AI_TACTICS_NEW_SIZE];
+	
 	static AiParamPacket * aiParams;
 	uint32_t * aiStrategiesNum;
 	LegacyCombatSystem * combat;
@@ -145,6 +148,8 @@ struct AiSystem : temple::AddressTable
 	Pathfinding * pathfinding;
 	
 	AiSystem();
+
+	AiStrategy* GetAiStrategy(uint32_t stratId);
 
 	void aiTacticGetConfig(int i, AiTactic* aiTac, AiStrategy* aiStrat);
 	uint32_t StrategyParse(objHndl objHnd, objHndl target);
@@ -234,9 +239,15 @@ struct AiSystem : temple::AddressTable
 
 
 	// Init
-	void StrategyTabLineParseTactic(AiStrategy*, char * tacName, char * middleString, char* spellString);
+	void StrategyTabLineParseTactic(AiStrategy*, const char * tacName, const char * middleString, const char* spellString);
+	void ParseStrategyLine(AiStrategy& stratOut, const std::vector<string>& strings);
 	int StrategyTabLineParser(const TigTabParser* tabFile, int n, char ** strings);
 	void InitCustomStrategies();
+	void SetCustomStrategy(objHndl handle, const std::vector<std::string>& stringVector);
+	
+	// Custom strats save/load
+	bool CustomStrategiesSave();
+	bool CustomStrategiesLoad();
 
 	int AiOnInitiativeAdd(objHndl obj);
 	AiCombatRole GetRole(objHndl obj);
@@ -265,7 +276,8 @@ private:
 	void (__cdecl *_FleeAdd)(objHndl npc, objHndl target);
 	void (__cdecl *_StopAttacking)(objHndl npc);
 	bool Is5FootStepWorth(AiTactic * aiTac);
-	
+	IdxTable< AiStrategy> mAiStrategiesCustom;
+	std::vector<std::vector<std::string>> mAiStrategiesCustomSrc;
 };
 
 extern AiSystem aiSys;

@@ -1216,17 +1216,15 @@ void DungeonMaster::RenderEditedObj() {
 	if (obj->IsNPC() || !objects.IsPlayerControlled(mEditedObj)){
 		auto curAiStartegyIdx = obj->GetInt32(obj_f_critter_strategy);
 		auto aiStratGetter = [](void*data, int idx, const char** outTxt)->bool{
-			if (idx >= (int)aiSys.aiStrategies.size())
+			AiStrategy * aiStrat = aiSys.GetAiStrategy( (uint32_t)idx);
+			if (!aiStrat)
 				return false;
-
-			*outTxt = aiSys.aiStrategies[idx].name.c_str();
+			*outTxt = aiStrat->name.c_str();
 			return true;
 		};
 
 		if (ImGui::Combo("AI Type", &curAiStartegyIdx, aiStratGetter, nullptr, aiSys.aiStrategies.size(), 8)){
-			if (curAiStartegyIdx >=0 && curAiStartegyIdx < (int)aiSys.aiStrategies.size()){
-				obj->SetInt32(obj_f_critter_strategy, curAiStartegyIdx);
-			}
+			obj->SetInt32(obj_f_critter_strategy, curAiStartegyIdx);
 		}
 	}
 

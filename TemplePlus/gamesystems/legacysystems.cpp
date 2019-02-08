@@ -29,6 +29,7 @@
 #include "infrastructure/meshes.h"
 #include "turn_based.h"
 #include "d20_race.h"
+#include "ai.h"
 
 
 //*****************************************************************************
@@ -1625,11 +1626,23 @@ void PartySystem::ForEachInParty(std::function<void(objHndl)> callback) {
 
 bool D20LoadSaveSystem::SaveGame(TioFile *file) {
 	auto save = temple::GetPointer<int(TioFile*)>(0x1004fb70);
-	return save(file) == 1;
+	auto result = save(file) == 1;
+	if (!result)
+		return false;
+
+	aiSys.CustomStrategiesSave();
+
+	return result;
 }
 bool D20LoadSaveSystem::LoadGame(GameSystemSaveFile* saveFile) {
 	auto load = temple::GetPointer<int(GameSystemSaveFile*)>(0x1004fbd0);
-	return load(saveFile) == 1;
+	auto result = load(saveFile) == 1;
+	if (!result)
+		return false;
+
+	aiSys.CustomStrategiesLoad();
+
+	return result;
 }
 const std::string &D20LoadSaveSystem::GetName() const {
 	static std::string name("D20LoadSave");

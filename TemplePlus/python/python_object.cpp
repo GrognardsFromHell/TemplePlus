@@ -2780,6 +2780,37 @@ static PyObject* PyObjHandle_AiStopAttacking(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+static PyObject* PyObjHandle_AiStrategySetCustom(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		Py_RETURN_NONE;
+	}
+
+	auto strings = PyTuple_GetItem(args, 0);
+	if (!PyList_Check(strings)){
+		logger->error("ai_strategy_set_custom: expected list of strings as input");
+		Py_RETURN_NONE;
+	}
+
+	auto count = PyList_Size(strings);
+	if ( (count % 3) != 1){
+		logger->error("ai_strategy_set_custom: expected list of string triplets as input");
+		Py_RETURN_NONE;
+	}
+
+	std::vector<string> stringVector;
+	for (auto i=0; i < count; i++){
+		const char* s = PyString_AsString( PyList_GET_ITEM(strings, i));
+		stringVector.push_back(s);
+	}
+
+	
+	aiSys.SetCustomStrategy( self->handle, stringVector);
+	
+	Py_RETURN_NONE;
+}
+
+
 static PyObject* PyObjHandle_AllegianceShared(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -3211,6 +3242,9 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "ai_shitlist_add", PyObjHandle_AiShitlistAdd, METH_VARARGS, NULL },
 	{ "ai_shitlist_remove", PyObjHandle_AiShitlistRemove, METH_VARARGS, NULL },
 	{ "ai_stop_attacking", PyObjHandle_AiStopAttacking, METH_VARARGS, NULL },
+
+	{ "ai_strategy_set_custom", PyObjHandle_AiStrategySetCustom, METH_VARARGS, NULL },
+
 	{ "allegiance_shared", PyObjHandle_AllegianceShared, METH_VARARGS, NULL },
 	{ "anim_callback", PyObjHandle_AnimCallback, METH_VARARGS, NULL },
 	{ "anim_goal_interrupt", PyObjHandle_AnimGoalInterrupt, METH_VARARGS, NULL },
