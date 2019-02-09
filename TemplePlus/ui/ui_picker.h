@@ -88,7 +88,7 @@ struct PickerArgs {
 	float trimmedRangeInches; // after processing for collision with walls
 	int field10c;
 
-
+	PickerArgs() { memset(this, 0, sizeof(PickerArgs)); };
 	bool IsBaseModeTarget(UiPickerType type);
 	bool IsModeTargetFlagSet(UiPickerType type);
 	void SetModeTargetFlag(UiPickerType type);

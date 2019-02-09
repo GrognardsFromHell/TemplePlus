@@ -1453,17 +1453,19 @@ int AiSystem::Approach(AiTactic* aiTac)
 int AiSystem::CastParty(AiTactic* aiTac)
 {
 	auto initialActNum = (*actSeqSys.actSeqCur)->d20ActArrayNum;
-	if (!aiTac->target)
-		return 0;
-	objHndl enemiesCanMelee[40];
+	if (!aiTac->target){
+		return FALSE;
+	}
+	
 	int castDefensively = 0;
-	if (combatSys.GetEnemiesCanMelee(aiTac->performer, enemiesCanMelee) > 0)
+	auto enemiesCanMelee = combatSys.GetEnemiesCanMelee(aiTac->performer);
+	if (enemiesCanMelee.size() > 0)
 		castDefensively = 1;
 	d20Sys.d20SendSignal(aiTac->performer, DK_SIG_SetCastDefensively, castDefensively, 0);
 	LocAndOffsets targetLoc =	objects.GetLocationFull(aiTac->target);
+	
 	auto partyLen = party.GroupListGetLen();
-	for (auto i = 0u; i < partyLen; i++)
-	{
+	for (auto i = 0u; i < partyLen; i++){
 		aiTac->spellPktBody.targetListHandles[i] = party.GroupListGetMemberN(i);
 	}
 	aiTac->spellPktBody.targetCount = partyLen;
@@ -1477,9 +1479,9 @@ int AiSystem::CastParty(AiTactic* aiTac)
 	if (actSeqSys.ActionSequenceChecksWithPerformerLocation() != AEC_OK)
 	{
 		actSeqSys.ActionSequenceRevertPath(initialActNum);
-		return 0;
+		return FALSE;
 	}
-	return 1;
+	return TRUE;
 }
 
 int AiSystem::PickUpWeapon(AiTactic* aiTac)
@@ -3297,6 +3299,9 @@ public:
 	static int AiCastParty(AiTactic* aiTac);
 	static int AiFlank(AiTactic* aiTac);
 	static int AiRage(AiTactic* aiTac);
+	static int CastArea(AiTactic* aiTac);
+	static int CastSingle(AiTactic* aiTac);
+	
 
 	static int ChooseRandomSpellUsercallWrapper();
 	static void SetCritterStrategy(objHndl obj, const char *stratName);
@@ -3333,7 +3338,9 @@ public:
 		});
 		replaceFunction(0x100E3A00, _AiTargetClosest);
 		replaceFunction(0x100E3B60, AiRage);
+		replaceFunction(0x100E41E0, CastSingle);
 		replaceFunction(0x100E43F0, AiCastParty);
+		replaceFunction(0x100E4510, CastArea);
 		replaceFunction(0x100E46C0, AiAttack);
 		replaceFunction(0x100E46D0, AiTargetThreatened);
 		replaceFunction<BOOL(__cdecl)(AiTactic*)>(0x100E37D0, [](AiTactic*aiTac)->BOOL {
@@ -3583,6 +3590,87 @@ int AiReplacements::AiRage(AiTactic* aiTac)
 		}
 	}
 	return 1;
+}
+
+int AiReplacements::CastArea(AiTactic* aiTac){
+	auto actNumOrg = actSeqSys.GetCurSeqD20ActionCount();
+	if (!aiTac->target)
+		return FALSE;
+	if (d20Sys.d20QueryWithData(aiTac->target, DK_QUE_Critter_Has_Spell_Active, aiTac->spellPktBody.spellEnum, 0)) {
+		return FALSE;
+	}
+	auto performer = aiTac->performer;
+	auto enemies = combatSys.GetEnemiesCanMelee(performer);
+	auto castDefensively = 0;
+	if (enemies.size() > 0) {
+		castDefensively = 1;
+	}
+
+	d20Sys.d20SendSignal(performer, DK_SIG_SetCastDefensively, castDefensively, 0);
+
+	SpellEntry spEntry(aiTac->d20SpellData.spellEnumOrg);
+	if (!spEntry.spellEnum) {
+		return FALSE;
+	}
+	
+	PickerArgs pickArgs;
+	auto locAndOff = objSystem->GetObject(aiTac->target)->GetLocationFull();
+	//uiPicker.PickerArgsInit(&pickArgs);
+	if (!spellSys.pickerArgsFromSpellEntry(&spEntry, &pickArgs, performer, aiTac->spellPktBody.casterLevel)){
+		return FALSE;
+	}
+	uiPicker.GetListRange(&locAndOff, &pickArgs);
+	spellSys.ConfigSpellTargetting(&pickArgs, &aiTac->spellPktBody);
+	pickArgs.FreeObjlist();
+	
+	spellSys.GetSpellTargets(performer, aiTac->target, &aiTac->spellPktBody, aiTac->spellPktBody.spellEnum);
+	d20Sys.GlobD20ActnInit();
+	d20Sys.GlobD20ActnSetTypeAndData1(D20A_CAST_SPELL, 0);
+	actSeqSys.ActSeqCurSetSpellPacket(&aiTac->spellPktBody, 0);
+	d20Sys.GlobD20ActnSetSpellData(&aiTac->d20SpellData);
+	
+	d20Sys.GlobD20ActnSetTarget(objHndl::null, &locAndOff);
+	actSeqSys.ActionAddToSeq();
+	if (actSeqSys.ActionSequenceChecksWithPerformerLocation())
+	{
+		actSeqSys.ActionSequenceRevertPath(actNumOrg);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+int AiReplacements::CastSingle(AiTactic* aiTac){
+	auto actNumOrg = actSeqSys.GetCurSeqD20ActionCount();
+	if (!aiTac->target)
+		return FALSE;
+	if (d20Sys.d20QueryWithData(aiTac->target,	DK_QUE_Critter_Has_Spell_Active, aiTac->spellPktBody.spellEnum, 0)){
+		return FALSE;
+	}
+	auto performer = aiTac->performer;
+	auto enemies = combatSys.GetEnemiesCanMelee(performer);
+	auto castDefensively = 0;
+	if (enemies.size() > 0){
+		castDefensively = 1;
+	}
+
+	d20Sys.d20SendSignal(performer, DK_SIG_SetCastDefensively, castDefensively, 0);
+
+	spellSys.GetSpellTargets(performer, aiTac->target, &aiTac->spellPktBody, aiTac->spellPktBody.spellEnum);
+	d20Sys.GlobD20ActnInit();
+	d20Sys.GlobD20ActnSetTypeAndData1(D20A_CAST_SPELL, 0);
+	actSeqSys.ActSeqCurSetSpellPacket(&aiTac->spellPktBody, 0);
+	d20Sys.GlobD20ActnSetSpellData(&aiTac->d20SpellData);
+	if (aiTac->target){
+		auto locAndOff = objSystem->GetObject(aiTac->target)->GetLocationFull();
+		d20Sys.GlobD20ActnSetTarget(aiTac->target, &locAndOff);
+	}
+	actSeqSys.ActionAddToSeq();
+	if (actSeqSys.ActionSequenceChecksWithPerformerLocation())
+	{
+		actSeqSys.ActionSequenceRevertPath(actNumOrg);
+		return FALSE;
+	}
+	return TRUE;
 }
 
 static int _ChooseRandomSpellUsercallWrapper(AiPacket* aiPkt)

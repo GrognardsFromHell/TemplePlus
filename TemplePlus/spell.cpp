@@ -665,23 +665,28 @@ uint32_t LegacySpellSystem::ConfigSpellTargetting(PickerArgs* args, SpellPacketB
 
 		auto objNode = args->result.objList.objects;
 
-		for (spPkt->targetCount = 0; objNode; ++spPkt->targetCount) {
+		for (spPkt->targetCount = 0; objNode; ) {
 			if (spPkt->targetCount >= 32)
 				break;
 
-			spPkt->targetListHandles[spPkt->targetCount] = objNode->handle;
+			spPkt->targetListHandles[spPkt->targetCount++] = objNode->handle;
 
-			if (objNode->next)
+			if (objNode->next) {
 				objNode = objNode->next;
+			}
 			// else apply the rest of the targeting to the last object
-			else if (!args->IsModeTargetFlagSet(UiPickerType::OnceMulti)) {
+			else if (args->IsBaseModeTarget(UiPickerType::Multi) && !args->IsModeTargetFlagSet(UiPickerType::OnceMulti)) {
 				while (spPkt->targetCount < args->maxTargets) {
 					spPkt->targetListHandles[spPkt->targetCount++] = objNode->handle;
 				}
 				objNode = nullptr;
 				break;
 			}
+			else{
+				break;
+			}
 		}
+		spPkt->orgTargetCount = spPkt->targetCount;
 	}
 
 	if (flags & PRF_HAS_LOCATION) {
