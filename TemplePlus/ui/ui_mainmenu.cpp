@@ -138,10 +138,10 @@ UiMM::UiMM(const UiSystemConf &config) {
 		Hide();
 		uiSystems->GetLoadGame().Show(true);
 	});
-	widgetDoc.GetButton("set-pieces")->SetClickHandler([this]() {
+	/*widgetDoc.GetButton("set-pieces")->SetClickHandler([this]() {
 		Hide();
 		mSetPiecesDialog->Show();
-	});
+	});*/
 	widgetDoc.GetButton("tutorial")->SetClickHandler([this]() {
 		LaunchTutorial();
 	});
