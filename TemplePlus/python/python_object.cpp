@@ -646,6 +646,21 @@ static PyObject* PyObjHandle_SkillRanksGet(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(skillRanks);
 }
 
+static PyObject* PyObjHandle_SkillRanksSet(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+
+	if (!self->handle)
+		return 0;
+	int skillRanks;
+	SkillEnum skillId;
+
+	if (!PyArg_ParseTuple(args, "ii:objhndl.skill_ranks_set", &skillId, &skillRanks)) {
+		return 0;
+	}
+	gameSystems->GetObj().GetObject(self->handle)->SetInt32(obj_f_critter_skill_idx, skillId, skillRanks*2);
+	Py_RETURN_NONE;
+}
+
 static PyObject* PyObjHandle_SkillRoll(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 
@@ -3418,6 +3433,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "set_initiative", PyObjHandle_SetInitiative, METH_VARARGS, NULL },
 	{ "skill_level_get", PyObjHandle_SkillLevelGet, METH_VARARGS, NULL},
 	{ "skill_ranks_get", PyObjHandle_SkillRanksGet, METH_VARARGS, NULL },
+	{ "skill_ranks_set", PyObjHandle_SkillRanksSet, METH_VARARGS, NULL },
 	{ "skill_roll", PyObjHandle_SkillRoll, METH_VARARGS, NULL },
 	{ "soundmap_critter", PyObjHandle_SoundmapCritter, METH_VARARGS, NULL },
 	{ "spell_known_add", PyObjHandle_SpellKnownAdd, METH_VARARGS, NULL },
