@@ -539,21 +539,25 @@ PyObject* PyGame_GetFeatForWpnType(PyObject*, PyObject* args) {
 	WeaponTypes wt;
 	feat_enums baseFeat = FEAT_NONE;
 
-	if (PyTuple_GET_SIZE(args) < 2) {
+	auto numArgs = PyTuple_GET_SIZE(args);
+	if (numArgs < 1u) {
 		return nullptr;
 	}
 
 	PyObject* arg1 = PyTuple_GET_ITEM(args, 0);
 	wt = static_cast<WeaponTypes>(PyLong_AsLong(arg1));
 
-	PyObject* arg2 = PyTuple_GET_ITEM(args, 1);
-	if (PyString_Check(arg2)) {
-		auto argString = fmt::format("{}", PyString_AsString(arg2));
-		baseFeat = static_cast<feat_enums>(ElfHash::Hash(argString));
+	if (numArgs >= 2u){
+		PyObject* arg2 = PyTuple_GET_ITEM(args, 1);
+		if (PyString_Check(arg2)) {
+			auto argString = fmt::format("{}", PyString_AsString(arg2));
+			baseFeat = static_cast<feat_enums>(ElfHash::Hash(argString));
+		}
+		else {
+			baseFeat = static_cast<feat_enums>(PyLong_AsLong(arg2));
+		}
 	}
-	else {
-		baseFeat = static_cast<feat_enums>(PyLong_AsLong(arg2));
-	}
+	
 
 	return PyInt_FromLong(feats.GetFeatForWeaponType(wt, baseFeat));
 }
