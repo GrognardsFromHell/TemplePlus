@@ -523,13 +523,19 @@ void Damage::DamageCritter(objHndl attacker, objHndl tgt, DispIoDamage & evtObjD
 }
 
 void Damage::Heal(objHndl target, objHndl healer, const Dice& dice, D20ActionType actionType) {
-	int healingBonus = d20Sys.D20QueryPython(healer, "Healing Bonus", 0);  //0 spell id for non-spell healing
+	int healingBonus = 0;
+	if (healer){
+		healingBonus = d20Sys.D20QueryPython(healer, "Healing Bonus", 0);  //0 spell id for non-spell healing
+	}
 	Dice diceNew(dice.GetCount(), dice.GetSides(), dice.GetModifier() + healingBonus);
 	addresses.Heal(target, healer, diceNew.ToPacked(), actionType);
 }
 
 void Damage::HealSpell(objHndl target, objHndl healer, const Dice& dice, D20ActionType actionType, int spellId) {
-	int healingBonus = d20Sys.D20QueryPython(healer, "Healing Bonus", spellId);
+	int healingBonus = 0;
+	if (healer) {
+		healingBonus = d20Sys.D20QueryPython(healer, "Healing Bonus", 0);  //0 spell id for non-spell healing
+	}
 	Dice diceNew(dice.GetCount(), dice.GetSides(), dice.GetModifier() + healingBonus);
 	addresses.HealSpell(target, healer, diceNew.ToPacked(), actionType, spellId);
 }
