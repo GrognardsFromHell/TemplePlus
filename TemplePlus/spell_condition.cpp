@@ -65,6 +65,9 @@ public:
 
 	static int MagicCirclePreventDamage(DispatcherCallbackArgs args);
 
+	static int SpikeStonesHitTrigger(DispatcherCallbackArgs args);
+	static int SpikeGrowthHitTrigger(DispatcherCallbackArgs args);
+
 	void apply() override {
 
 		// Magic Circle Taking Damage - didn't check that attacker is not null
@@ -337,6 +340,9 @@ public:
 
 		redirectCall(0x100D56A3, MindFogSaveThrowHook);
 
+		replaceFunction(0x100D6660, SpikeStonesHitTrigger);
+
+		replaceFunction(0x100D62E0, SpikeGrowthHitTrigger);
 	}
 } spellConditionFixes;
 
@@ -891,7 +897,7 @@ bool SpellConditionFixes::ShouldRemoveInvisibility(objHndl handle, DispIoD20Sign
 				logger->warn("RemoveInvisibility: Error, unable to retrieve spell.");
 				return false;
 			}
-			for (auto j = 0; j < spellPkt.targetCount; j++){
+			for (auto j = 0u; j < spellPkt.targetCount; j++){
 				if (spellSys.IsSpellHarmful(spellPkt.spellEnum, spellPkt.caster, spellPkt.targetListHandles[j])){
 					d20Sys.d20SendSignal(handle, DK_SIG_Spell_End, spellId, 0);
 					return true;
@@ -1098,5 +1104,123 @@ int SpellConditionFixes::MagicCirclePreventDamage(DispatcherCallbackArgs args)
 		return 0;
 	}
 	dispIo->damage.AddModFactor(0.0, DamageType::Unspecified, 104);
+	return 0;
+}
+
+int SpellConditionFixes::SpikeStonesHitTrigger(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIoTypeObjEvent, DispIoObjEvent);
+	auto evtId = args.GetCondArg(2);
+	if (dispIo->evtId =! evtId){
+		return 0;
+	}
+
+	auto spellId = args.GetCondArg(0);
+	SpellPacketBody spPkt(spellId);
+	if (!spPkt.spellEnum){
+		logger->error("SpikeStonesHitTrigger: Could not retrieve spell for spellID {}", spellId);
+		return 0;
+	}
+
+	auto tgt = dispIo->tgt;
+
+	spPkt.TriggerAoeHitScript();
+	if (spPkt.CheckSpellResistance(tgt)){
+		return 0;
+	}
+	
+	if (args.dispKey == DK_OnEnterAoE){
+		auto particleId = gameSystems->GetParticleSys().CreateAtObj("sp-Spike Stones-HIT", tgt);
+		spPkt.AddTarget(tgt, particleId, 1);
+		conds.AddTo(tgt, "sp-Spike Stones Hit", {spellId, spPkt.durationRemaining, evtId});
+	}
+	else if (args.dispKey == DK_OnLeaveAoE){
+		ActnSeq * actSeq = nullptr;
+		/*
+		 * crash fix: 
+		 * isPerforming() is now retrieving the target's actual action sequence, 
+		 * rather than "current sequence" (which may be different than the target's 
+		 * action sequence due to simultaneous actions for several actors)
+		 */
+		if (actSeqSys.isPerforming(tgt, &actSeq)){ // 
+				auto distTraversed = actSeq->d20ActArray[actSeq->d20aCurIdx].distTraversed;
+				d20Sys.d20SendSignal(tgt, DK_SIG_Combat_Critter_Moved, static_cast<int>(distTraversed), 0 );
+		}
+		
+		auto particleId = spPkt.GetPartsysForObj(args.objHndCaller);
+		gameSystems->GetParticleSys().End(particleId);
+		if (!spPkt.RemoveObjFromTargetList(args.objHndCaller)){
+			logger->error("SpikeStonesHitTrigger: Cannot remove target {}", tgt);
+			return 0;
+		}
+
+		args.RemoveSpellMod();
+	}
+
+
+	if (!spPkt.UpdateSpellsCastRegistry()){
+		logger->error("SpikeStonesHitTrigger: Unable to save spell packet");
+		return 0;
+	}
+	spPkt.UpdatePySpell();
+	return 0;
+}
+
+int SpellConditionFixes::SpikeGrowthHitTrigger(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIoTypeObjEvent, DispIoObjEvent);
+	auto evtId = args.GetCondArg(2);
+	if (dispIo->evtId = !evtId) {
+		return 0;
+	}
+
+	auto spellId = args.GetCondArg(0);
+	SpellPacketBody spPkt(spellId);
+	if (!spPkt.spellEnum) {
+		logger->error("SpikeGrowthHitTrigger: Could not retrieve spell for spellID {}", spellId);
+		return 0;
+	}
+
+	auto tgt = dispIo->tgt;
+
+	spPkt.TriggerAoeHitScript();
+	if (spPkt.CheckSpellResistance(tgt)) {
+		return 0;
+	}
+
+	if (args.dispKey == DK_OnEnterAoE) {
+		auto particleId = gameSystems->GetParticleSys().CreateAtObj("sp-Spike Growth-HIT", tgt);
+		spPkt.AddTarget(tgt, particleId, 1);
+		conds.AddTo(tgt, "sp-Spike Growth Hit", { spellId, spPkt.durationRemaining, evtId });
+	}
+	else if (args.dispKey == DK_OnLeaveAoE) {
+		ActnSeq * actSeq = nullptr;
+		/*
+		 * crash fix:
+		 * isPerforming() is now retrieving the target's actual action sequence,
+		 * rather than "current sequence" (which may be different than the target's
+		 * action sequence due to simultaneous actions for several actors)
+		 */
+		if (actSeqSys.isPerforming(tgt, &actSeq)) { // 
+			auto distTraversed = actSeq->d20ActArray[actSeq->d20aCurIdx].distTraversed;
+			d20Sys.d20SendSignal(tgt, DK_SIG_Combat_Critter_Moved, static_cast<int>(distTraversed), 0);
+		}
+
+		auto particleId = spPkt.GetPartsysForObj(args.objHndCaller);
+		gameSystems->GetParticleSys().End(particleId);
+		if (!spPkt.RemoveObjFromTargetList(args.objHndCaller)) {
+			logger->error("SpikeGrowthHitTrigger: Cannot remove target {}", tgt);
+			return 0;
+		}
+
+		args.RemoveSpellMod();
+	}
+
+
+	if (!spPkt.UpdateSpellsCastRegistry()) {
+		logger->error("SpikeGrowthHitTrigger: Unable to save spell packet");
+		return 0;
+	}
+	spPkt.UpdatePySpell();
 	return 0;
 }

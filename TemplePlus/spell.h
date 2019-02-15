@@ -141,7 +141,7 @@ struct SpellPacketBody{
 	void DoForTargetList(std::function<void(const objHndl& tgtHndl)> cb);
 	bool RemoveObjFromTargetList(const objHndl& objHnd);
 	bool EndPartsysForTgtObj(const objHndl& handle);
-	
+	void TriggerAoeHitScript();
 };
 
 const uint32_t TestSizeOfSpellPacketBody = sizeof(SpellPacketBody); // should be 0xAE8  (2792)

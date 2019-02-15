@@ -129,7 +129,7 @@ struct ActionSequenceSystem : temple::AddressTable
 			void AttackAppend(ActnSeq * actSeq, D20Actn * d20a, TurnBasedStatus* tbStat, int attackCode);
 
 	int StdAttackTurnBasedStatusCheck(D20Actn *d20a, TurnBasedStatus *tbStat);
-	uint32_t isPerforming(objHndl objHnd);
+	uint32_t isPerforming(objHndl objHnd, ActnSeq** = nullptr);
 	uint32_t MoveSequenceParse(D20Actn * d20aIn, ActnSeq* actSeq, TurnBasedStatus* tbStat, float distToTgtMin, float reach, int nonspecificMoveType);
 		void releasePath(PathQueryResult*);
 		void addReadiedInterrupts(ActnSeq* actSeq, CmbtIntrpts * intrpts);

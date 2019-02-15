@@ -2928,6 +2928,11 @@ bool SpellPacketBody::EndPartsysForTgtObj(const objHndl& handle){
 	return true;
 }
 
+void SpellPacketBody::TriggerAoeHitScript(){
+	pySpellIntegration.SpellSoundPlay(this, SpellEvent::SpellStruck);
+	pySpellIntegration.SpellTrigger(this->spellId, SpellEvent::AreaOfEffectHit);
+}
+
 uint32_t __cdecl _getWizSchool(objHndl objHnd)
 {
 	return spellSys.getWizSchool(objHnd);

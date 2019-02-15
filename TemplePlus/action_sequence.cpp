@@ -885,12 +885,14 @@ uint32_t ActionSequenceSystem::addD20AToSeq(D20Actn* d20a, ActnSeq* actSeq)
 	return *actnProcState;
 }
 
-uint32_t ActionSequenceSystem::isPerforming(objHndl obj)
+uint32_t ActionSequenceSystem::isPerforming(objHndl obj, ActnSeq** actSeqOut)
 {
 	for (auto i = 0; i < ACT_SEQ_ARRAY_SIZE; i++)
 	{
-		if (actSeqArray[i].performer == obj && (actSeqArray[i].seqOccupied & SEQF_PERFORMING))
-		{
+		if (actSeqArray[i].performer == obj && (actSeqArray[i].seqOccupied & SEQF_PERFORMING)){
+			if (actSeqOut != nullptr){
+				*actSeqOut = &actSeqArray[i];
+			}
 			return 1;
 		}
 	}
