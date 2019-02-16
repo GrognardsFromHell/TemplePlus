@@ -39,6 +39,7 @@
 #include <infrastructure/tabparser.h>
 #include "ui_assets.h"
 #include "d20_race.h"
+#include "gamesystems/d20/d20stats.h"
 
 #define NUM_ITEM_ENHANCEMENT_SPECS 41
 #define NUM_APPLIED_BONUSES_MAX 9 // number of bonuses that can be applied on item creation
@@ -130,10 +131,14 @@ public:
 
 	static BOOL HookedIsSpellKnown(objHndl handle, int spellEnum); // for Lax Rules overriding of spell requirements in crafting Wondrous Item
 
+	static char* GetCraftingPrereqString(objHndl crafter, objHndl item);
+
 	void apply() override {
 		// auto system = UiSystem::getUiSystem("ItemCreation-UI");		
 		// system->init = systemInit;
 		
+		replaceFunction<char*(__cdecl)(objHndl, objHndl)>(0x10152410, GetCraftingPrereqString);
+
 		// UiItemCreationIsActive
 		replaceFunction<BOOL(__cdecl)()>(0x1014F180, [](){
 			return itemCreation().IsActive();
@@ -1884,6 +1889,68 @@ bool UiItemCreation::ItemCreationRulesParseReqText(objHndl crafter, const char *
 	
 
 	return false;
+}
+
+std::string UiItemCreation::PrintPrereqToken(const char * reqTxt)
+{
+	std::string result = fmt::format("");
+
+	auto firstChar = toupper(*reqTxt);
+	MesLine mesLine;
+	switch (firstChar){
+	case 'A':
+		if (!_stricmp(reqTxt + 1, "good")) {
+			mesLine.key = 20100;
+		}
+		else if (!_stricmp(reqTxt + 1, "lawful")) {
+			mesLine.key = 20101;
+		}
+		if (!_stricmp(reqTxt + 1, "evil")) {
+			mesLine.key = 20102;
+		}
+		else  { // should be chaotic...
+			mesLine.key = 20103;
+		}
+		mesFuncs.GetLine_Safe(mItemCreationMes, &mesLine);
+		result = fmt::format("{}", mesLine.value);
+		break;
+	case 'C': // level
+		mesLine.key = 20000 + min(20l, atol(reqTxt+1) );
+		mesFuncs.GetLine_Safe(mItemCreationMes, &mesLine);
+		result = fmt::format("{}", mesLine.value);
+		break;
+	case 'F':
+		result = fmt::format("{}", feats.GetFeatName(temple::GetRef<feat_enums(__cdecl)(const char*)>(0x1007BB50)(reqTxt + 1)));
+		break;
+	case 'R':
+		result = fmt::format("{}", d20Stats.GetRaceName(d20RaceSys.GetRaceEnum(reqTxt + 1)) );
+		break;
+	case 'S':
+		result = fmt::format("{}", spellSys.GetSpellName(spellSys.GetSpellEnum(reqTxt + 1)));
+		break;
+	case 'O':
+		{
+			StringTokenizer tok(reqTxt + 1);
+			auto isFirst = true;
+			while (tok.next()) {
+				if (!isFirst){
+					result.append(", ");
+				}
+				if (tok.token().type != StringTokenType::Identifier
+					&& tok.token().type != StringTokenType::QuotedString)
+					continue;
+
+				auto tmp = PrintPrereqToken(tok.token().text);
+				result.append(tmp);
+				isFirst = false;
+			}
+		}
+		break;
+	default:
+		result = fmt::format("null");
+		break;
+	}
+	return result;
 }
 
 
@@ -3968,6 +4035,47 @@ BOOL ItemCreationHooks::HookedIsSpellKnown(objHndl handle, int spellEnum){
 	}
 
 	return temple::GetRef<BOOL(__cdecl)(objHndl, int)>(0x10075B50)(handle, spellEnum);
+}
+
+char* ItemCreationHooks::GetCraftingPrereqString(objHndl crafter, objHndl item){
+	auto prereqBuffer = temple::GetRef<char[2000]>(0x10BECEF0);
+	prereqBuffer[0] = 0;
+
+	auto itemGuid = objSystem->GetPersistableId(item);
+	auto protoId = itemGuid.GetPrototypeId();
+	auto prereqStrRaw = itemCreation().GetItemCreationRulesMesLine(protoId);
+	if (!prereqStrRaw){
+		return prereqBuffer;
+	}
+
+	std::string tmp;
+	StringTokenizer tok(prereqStrRaw);
+	while (tok.next()){
+		if (tok.token().type != StringTokenType::QuotedString && tok.token().type != StringTokenType::Identifier){
+			continue;
+		}
+
+		auto prereqStr = itemCreation().PrintPrereqToken(tok.token().text);
+		static auto prereqFieldLabel = temple::GetRef<char*>(0x10BED98C);
+		if (*itemCreationAddresses.craftInsufficientXP 
+			|| *itemCreationAddresses.craftInsufficientFunds
+			|| *itemCreationAddresses.craftSkillReqNotMet
+			|| *itemCreationAddresses.insuffPrereqs){
+			auto prereqMet = itemCreation().ItemCreationRulesParseReqText(crafter, tok.token().text);
+			//_snprintf(tmp, 2000, "@0%s @%d%s", prereqFieldLabel, prereqMet ? 1 : 2, prereqStr);
+			tmp.append( fmt::format("@0{} @{:d}{}\n", prereqFieldLabel, prereqMet ? 1 : 2, prereqStr) );
+		}
+		else{
+			//_snprintf(tmp, 2000, "@0%s @3%s", prereqFieldLabel, prereqStr);
+			tmp.append( fmt::format("@0{} @3{}\n", prereqFieldLabel, prereqStr) );
+		}
+
+	}
+	if (tmp.size()){
+		_snprintf(prereqBuffer, 2000, "%s", tmp.c_str());
+	}
+		
+	return prereqBuffer;
 }
 
 int UiItemCreation::MaaCpCost(int effIdx){

@@ -74,6 +74,7 @@ struct TigMsg;
 
 class UiItemCreation : public UiSystem {
 	friend class D20System;
+	friend class ItemCreationHooks;
 public:
 	static constexpr auto Name = "ItemCreation-UI";
 	UiItemCreation(const UiSystemConf &config);
@@ -183,7 +184,7 @@ public:
 	UiItemCreation();
 
 	int GetItemCreationType();
-
+	
 protected:
 
 	void ButtonStateInit(int wndId);
@@ -198,6 +199,7 @@ protected:
 	bool ItemCreationParseMesfileEntry(objHndl crafter, objHndl item);
 	const char* GetItemCreationRulesMesLine(int key);
 	bool ItemCreationRulesParseReqText(objHndl crafter, const char* reqTxt);
+	std::string PrintPrereqToken(const char* str);
 
 	int mItemCreationType = 9;
 	objHndl mItemCreationCrafter;
