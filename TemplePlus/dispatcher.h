@@ -51,12 +51,15 @@ struct DispatcherSystem : temple::AddressTable
 	Dispatcher* DispatcherInit(objHndl objHnd);
 	bool dispatcherValid(Dispatcher * dispatcher);
 	void DispatcherProcessor(Dispatcher * dispatcher, enum_disp_type dispType, uint32_t dispKey, DispIO * dispIO);
+	void DispatcherProcessorForItems(CondStruct* cond, int condArgs[64], enum_disp_type dispType, D20DispatcherKey key, DispIO* dispIo);
+
 	void  DispatcherClearField(Dispatcher * dispatcher, CondNode ** dispCondList);
 	void  DispatcherClearPermanentMods(Dispatcher * dispatcher);
 	void  DispatcherClearItemConds(Dispatcher * dispatcher);
 	void  DispatcherClearConds(Dispatcher *dispatcher);
 	
 	int DispatchForCritter(objHndl handle, DispIoBonusList*, enum_disp_type dispType, D20DispatcherKey dispKey);
+	void DispatchForItem(objHndl item, enum_disp_type dispType, D20DispatcherKey key, DispIO* dispIo);
 	int Dispatch10AbilityScoreLevelGet(objHndl handle, Stat stat, DispIoBonusList * dispIo);
 	int32_t dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, BonusList * bonOut, objHndl objHnd2, int32_t flag);
 	float Dispatch29hGetMoveSpeed(objHndl objHnd, DispIoMoveSpeed * dispIo = nullptr);
@@ -123,6 +126,9 @@ struct DispatcherSystem : temple::AddressTable
 	int Dispatch60GetAttackDice(objHndl obj, DispIoAttackDice * dispIo);
 
 	int DispatchGetBonus(objHndl critter, DispIoBonusList* bonusListOut, enum_disp_type dispType, D20DispatcherKey key);
+
+	
+	int DispatchItemQuery(objHndl item, D20DispatcherKey d20DispatcherKey);
 
 	DispatcherSystem()
 	{
@@ -307,7 +313,7 @@ struct DispIoD20Signal : DispIO // DispIoType 6
 
 struct DispIoD20Query : DispIO // DispIoType 7
 {
-	uint32_t return_val;
+	int return_val; // changed to int type to avoid python casting madness
 	uint32_t data1;
 	uint32_t data2;
 

@@ -62,7 +62,8 @@ const std::unordered_map<std::string, uint32_t> ItemEnhSpecFlagDict = {
 	{"iesf_thrown",IESF_THROWN },
 	{"iesf_unk100",IESF_UNK100 },
 	{"iesf_plus_bonus",IESF_ENH_BONUS },
-	{"iesf_incremental", IESF_INCREMENTAL }
+	{"iesf_incremental", IESF_INCREMENTAL },
+	{"iesf_noncore", IESF_NONCORE },
 };
 
 int WandCraftCostCp=0;
@@ -641,7 +642,7 @@ bool UiItemCreation::IsOutmoded(int effIdx){
 bool UiItemCreation::MaaEffectIsApplicable(int effIdx){
 
 	auto& itEnh = itemEnhSpecs[effIdx];
-	if (!(itEnh.flags & IESF_ENABLED))
+	if (!(itEnh.flags & IESF_ENABLED) || ( (itEnh.flags & IESF_NONCORE) && !config.nonCoreMaterials))
 		return false;
 
 	if (itEnh.flags & IESF_INCREMENTAL){

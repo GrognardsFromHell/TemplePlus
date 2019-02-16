@@ -34,7 +34,8 @@ enum ItemEnhancementSpecFlags{
 	IESF_THROWN = 0x40, // applies to thrown weapons only
 	IESF_UNK100 = 0x100, // only used in Keen
 	IESF_ENH_BONUS = 0x200, // special casing for the enhancement bonus (the +X for weapons/armors)
-	IESF_INCREMENTAL = 0x400 // indicates that there are multiple progressive versions of this that supercede each other
+	IESF_INCREMENTAL = 0x400, // indicates that there are multiple progressive versions of this that supercede each other
+	IESF_NONCORE = 0x800 // enhancement based on non-core rules material (e.g. splatbook/fanmade), enabled only when non-core materials config is set 
 };
 
 struct ItemEnhancementSpec {

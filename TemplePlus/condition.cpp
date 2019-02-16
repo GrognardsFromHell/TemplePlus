@@ -3623,7 +3623,7 @@ int SpellCallbacks::ArmorSpellFailure(DispatcherCallbackArgs args){
 	auto classCode = spellSys.GetCastingClass(spellClass);
 	auto failChance = 0;
 	for (auto i = (int)EquipSlot::Helmet; i < EquipSlot::Count; i++){
-		auto itemFailChance = d20Sys.d20QueryWithData(args.objHndCaller, DK_QUE_Get_Arcane_Spell_Failure, classCode, i);
+		int itemFailChance = (int)d20Sys.d20QueryWithData(args.objHndCaller, DK_QUE_Get_Arcane_Spell_Failure, classCode, i);
 		if (itemFailChance > 0)
 			failChance += itemFailChance;
 	}

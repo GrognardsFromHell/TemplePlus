@@ -1361,16 +1361,46 @@ void CharUiSystem::apply(){
 	orgInventorySlotMsg = replaceFunction<int(__cdecl)(int, TigMsg*) >(0x10157DC0, InventorySlotMsg);
 
 	// Addendums to the item description box
-	static char* (*orgGetItemDescr)(objHndl, objHndl) = replaceFunction<char*(__cdecl)(objHndl, objHndl)>(0x10122DD0, [](objHndl obj, objHndl item) {
+	static char* (*orgGetItemDescr)(objHndl, objHndl) = replaceFunction<char*(__cdecl)(objHndl, objHndl)>(0x10122DD0, [](objHndl observer, objHndl item) {
 		// need to put this here
 		temple::GetRef<objHndl>(0x10BF07B8) = item;
+		auto itemObj = objSystem->GetObject(item);
+		auto descBuffer = temple::GetRef<char[]>(0x10BDDEC8);
 
-		auto result = orgGetItemDescr(obj, item);
+		if (itemObj->type == obj_t_armor){
+			
+			auto desc = fmt::format("{}\n\n{}: {}", objects.GetDisplayName(item, observer),
+				uiAssets->GetTooltipString(100) /* Weight*/, itemObj->GetInt32(obj_f_item_weight));
+
+			auto acBonus  = dispatch.DispatchItemQuery(item, DK_QUE_Armor_Get_AC_Bonus);
+			auto dexBonus = dispatch.DispatchItemQuery(item, DK_QUE_Armor_Get_Max_DEX_Bonus);
+			auto maxSpeed = dispatch.DispatchItemQuery(item, DK_QUE_Armor_Get_Max_Speed);
+			auto dexBonusString = dexBonus == 100 ? fmt::format(" - ") : fmt::format("{:+d}", dexBonus);
+			auto maxSpeedString = maxSpeed == 100 ? fmt::format(" - ") : fmt::format("{}", maxSpeed);
+			auto armorCheckPenalty = temple::GetRef<int(__cdecl)(objHndl)>(0x1004F0D0)(item);
+			auto spellFailureChance = itemObj->GetInt32(obj_f_armor_arcane_spell_failure);
+			spellFailureChance += dispatch.DispatchItemQuery(item, DK_QUE_Get_Arcane_Spell_Failure);
+			if (spellFailureChance < 0) spellFailureChance = 0;
+			sprintf(descBuffer, "%s\n%s: %+d\n%s: %s   %s: %s\n%s: %d   %s: %d%%",
+				desc.c_str(), 
+				uiAssets->GetTooltipString(101) /* AC */, acBonus,
+				uiAssets->GetTooltipString(120) /* Max DEX Bonus */, dexBonusString.c_str(),
+				uiAssets->GetTooltipString(122) /* Max Speed */, maxSpeedString.c_str(),
+				uiAssets->GetTooltipString(121) /* Armor Check Penalty */, armorCheckPenalty,
+				uiAssets->GetTooltipString(102) /* Spell Failure */, spellFailureChance
+			);
+		}
+		else{
+			descBuffer = orgGetItemDescr(observer, item);
+		}
+		
+
+		
 		std::string addonStr;
-		ItemGetDescrAddon(obj, item, addonStr);
-		sprintf(result, "%s\n%s", result, addonStr.c_str());
+		ItemGetDescrAddon(observer, item, addonStr);
+		sprintf(descBuffer, "%s\n%s", descBuffer, addonStr.c_str());
 
-		return result;
+		return descBuffer;
 	});
 
 	replaceFunction(0x10155D20, TotalWeightOutputBtnTooltip);

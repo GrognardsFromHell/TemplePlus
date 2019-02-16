@@ -91,7 +91,7 @@ def BardSpellFailure(attachee, args, evt_obj):
 	if item == OBJ_HANDLE_NULL:
 		return 0
 
-	if equip_slot == 5: # armor - bards can cast in light armor with no spell failure
+	if equip_slot == item_wear_armor: # bards can cast in light armor with no spell failure
 		armor_flags = item.obj_get_int(obj_f_armor_flags)
 		if (armor_flags & ARMOR_TYPE_NONE) or (armor_flags == ARMOR_TYPE_LIGHT):
 			return 0

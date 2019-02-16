@@ -89,6 +89,33 @@ void DispatcherSystem::DispatcherProcessor(Dispatcher* dispatcher, enum_disp_typ
 	_DispatcherProcessor(dispatcher, dispType, dispKey, dispIO);
 }
 
+void DispatcherSystem::DispatcherProcessorForItems(CondStruct* condStruct, int condArgs[64], enum_disp_type dispType,
+	D20DispatcherKey key, DispIO* dispIo){
+	
+	auto sdd = condStruct->subDispDefs;
+	auto numArgs = condStruct->numArgs;
+	CondNode condNode(condStruct);
+	if (numArgs > 0){
+		memcpy(&condNode.args, condArgs, sizeof(int) * numArgs); // was qmemcpy originally
+	}
+	
+	while (sdd->dispType != enum_disp_type::dispType0){
+		if (sdd->dispType != dispType){
+			sdd++;
+			continue;
+		}
+		if (sdd->dispKey == key || dispType == dispType0 /* shouldn't happen...*/ 
+			|| sdd->dispKey == DK_NONE){
+			SubDispNode sdn;
+			sdn.subDispDef = sdd;
+			sdn.condNode = &condNode;
+			sdd->dispCallback(&sdn, objHndl::null, dispType, key, dispIo);
+		}
+		sdd++;
+	}
+
+}
+
 Dispatcher * DispatcherSystem::DispatcherInit(objHndl objHnd)
 {
 	return _DispatcherInit(objHnd);
@@ -138,6 +165,32 @@ int DispatcherSystem::DispatchForCritter(objHndl handle, DispIoBonusList * event
 	
 	DispatcherProcessor(dispatcher, dispType, dispKey, eventObjUsed);
 	return eventObjUsed->bonlist.GetEffectiveBonusSum();
+}
+
+void DispatcherSystem::DispatchForItem(objHndl item, enum_disp_type dispType, D20DispatcherKey key, DispIO * dispIo){
+	auto argarrayCount = 0;
+	auto itemObj = objSystem->GetObject(item);
+	if (!itemObj){
+		return;
+	}
+	auto condArray = itemObj->GetInt32Array(obj_f_item_pad_wielder_condition_array);
+	auto argArray = itemObj->GetInt32Array(obj_f_item_pad_wielder_argument_array);
+	auto condCount = condArray.GetSize();
+	
+	for (auto i = 0u; i < condCount; i++){
+		auto condId = condArray[i];
+		auto cond = conds.GetById(condId);
+		if (!cond){
+			continue;
+		}
+
+		int condArgs[64] = {0,};
+		for (auto j=0u; j < cond->numArgs; j++){
+			condArgs[j] = argArray[argarrayCount++];
+		}
+		condArgs[2] = -1;
+		DispatcherProcessorForItems(cond, condArgs, dispType, key, dispIo);
+	}
 }
 
 int DispatcherSystem::Dispatch10AbilityScoreLevelGet(objHndl handle, Stat stat, DispIoBonusList * dispIo){
@@ -793,6 +846,14 @@ int DispatcherSystem::DispatchGetBonus(objHndl critter, DispIoBonusList* eventOb
 
 	return eventObj->bonlist.GetEffectiveBonusSum();
 
+}
+
+int DispatcherSystem::DispatchItemQuery(objHndl item, D20DispatcherKey key)
+{
+	DispIoD20Query evtObj;
+	*(objHndl*)(&evtObj.data1) = item;
+	DispatchForItem(item, dispTypeD20Query, key, &evtObj);
+	return evtObj.return_val;
 }
 
 void DispIO::AssertType(enum_dispIO_type eventObjType) const
