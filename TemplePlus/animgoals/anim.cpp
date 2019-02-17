@@ -671,6 +671,8 @@ AnimSystem::AnimSystem(const GameSystemConf &config) {
   if (!startup(&config)) {
     throw TempleException("Unable to initialize game system Anim");
   }
+
+  animSysIsLoading = 0;
 }
 AnimSystem::~AnimSystem() {
   auto shutdown = temple::GetPointer<void()>(0x1000c110);
@@ -679,6 +681,7 @@ AnimSystem::~AnimSystem() {
 void AnimSystem::Reset() {
   auto reset = temple::GetPointer<void()>(0x1000c120);
   reset();
+  animSysIsLoading = 0;
 }
 bool AnimSystem::SaveGame(TioFile *file) {
   auto save = temple::GetPointer<int(TioFile *)>(0x1001cab0);
