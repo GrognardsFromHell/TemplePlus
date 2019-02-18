@@ -594,8 +594,23 @@ void AnimSystem::SetRuninfoDeallocCallback(void(* cb)()){
 }
 
 bool AnimSystem::InterruptAllForTbCombat(){
-    static auto interruptAllForTbCombat = temple::GetRef<BOOL(__cdecl)()>(0x1000C950);
-    return interruptAllForTbCombat();
+    //static auto interruptAllForTbCombat = temple::GetRef<BOOL(__cdecl)()>(0x1000C950);
+	//return interruptAllForTbCombat();
+
+	for (auto i = 0u; i < ANIM_RUN_SLOT_CAP; i++){
+		auto &slot = mSlots[i];
+		if (!slot.IsActive() || objects.GetType(slot.animObj) == obj_t_portal){
+			continue;
+		}
+		if (gameSystems->GetAnim().CurrentGoalHasField10_1(slot)){
+			continue;
+		}
+		if (!gameSystems->GetAnim().InterruptGoals(slot, AnimGoalPriority::AGP_3) ){
+			logger->error("AnimSystem::InterruptAllForTbCombat: Failed to interrupt slot {}", i);
+		};
+	}
+	return true;
+    
 }
 
 void AnimSystem::NotifySpeedRecalc(objHndl handle){
@@ -1163,7 +1178,7 @@ bool AnimSystem::CurrentGoalHasField10_1(const AnimSlot &slot) const
 
 	auto &goal = animationGoals_->GetByType(slot.pCurrentGoal->goalType);
     
-    return (goal.field_10 & 1 || (slot.pCurrentGoal->flagsData.number & 0x80));
+	return (goal.field_10 & 1 || (slot.pCurrentGoal->scratchVal1.number & 0x80));
 }
 
 // Originally @ 0x10054f30
