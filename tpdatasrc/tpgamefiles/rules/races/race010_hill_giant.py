@@ -20,6 +20,7 @@ raceSpec.height_male     = [120, 140]
 raceSpec.height_female   = [110, 130]
 raceSpec.weight_male     = [1700, 2210]
 raceSpec.weight_female   = [1600, 2200]
+raceSpec.feats           = [feat_simple_weapon_proficiency, feat_martial_weapon_proficiency_all, feat_armor_proficiency_light, feat_armor_proficiency_medium, feat_shield_proficiency]
 raceSpec.material_offset = 0                        # offset into rules/material_ext.mes file
 
 ###################################################
