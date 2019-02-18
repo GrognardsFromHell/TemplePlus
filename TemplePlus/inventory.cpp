@@ -178,6 +178,10 @@ public:
 			return inventory.DoNpcLooting(opener, container)?TRUE:FALSE;
 			
 		});
+
+		replaceFunction<int(__cdecl)(objHndl, objHndl)>(0x10066730, [](objHndl item, objHndl wielder){
+			return inventory.GetWeaponAnimId(item, wielder);
+		});
 	};
 
 	
@@ -1347,6 +1351,17 @@ int InventorySystem::GetWieldType(objHndl wielder, objHndl item, bool regardEnla
 	return 2 * (wielderSize <= 5) + 1;	
 }
 
+int InventorySystem::GetWeaponAnimId(objHndl item, objHndl wielder){
+	auto wieldType = GetWieldType(wielder, item, false); // TODO overhaul this...
+	if (wieldType == 2){
+		return temple::GetRef<int[74]>(0x102BE668)[objects.getInt32(item, obj_f_weapon_type)]; // two handed anims
+	}
+	if (wieldType != 1 && wieldType != 0){
+		return 0;
+	}
+	return temple::GetRef<int[74]>(0x102BE540)[objects.getInt32(item, obj_f_weapon_type)]; // single handed anims
+}
+
 obj_f InventorySystem::GetInventoryListField(objHndl objHnd)
 {
 	if (objects.IsContainer(objHnd)) return obj_f_container_inventory_list_idx;
@@ -1826,7 +1841,7 @@ bool InventorySystem::DoNpcLooting(objHndl opener, objHndl container){
 	std::vector<LooterInfo> looterInfo;
 
 	// fill a list of NPCs that can loot
-	for (auto i = 0; i < npcSize; i++) {
+	for (auto i = 0u; i < npcSize; i++) {
 		auto npc = party.GroupNPCFollowersGetMemberN(i);
 		auto npcCanLoot = inventory.NpcCanLoot(npc);
 		if (!npcCanLoot)
