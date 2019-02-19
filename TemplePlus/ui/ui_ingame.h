@@ -49,7 +49,7 @@ private:
 	void HandleNonCombatMessage(const TigMsg &msg);
 	void HandleNonCombatKeyStateChange(const TigMsg& msg);
 	void HandleCombatKeyStateChange(const TigMsg &msg);
-	void HandleCombatMouseEvent(const TigMsg &msg);
+	void HandleMouseMoveEvent(const TigMsg &msg);
 	
 	objHndl GetMouseTarget(int x, int y);
 	

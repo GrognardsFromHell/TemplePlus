@@ -193,7 +193,7 @@ void UiInGame::HandleCombatMessage(const TigMsg & msg)
 	else if (msg.type == TigMsgType::MOUSE)
 	{
 		if (msg.arg4 & MSF_POS_CHANGE || msg.arg4 & MSF_POS_CHANGE_SLOW) {
-			HandleCombatMouseEvent(msg);
+			HandleMouseMoveEvent(msg);
 		}
 	}
 }
@@ -214,15 +214,16 @@ void UiInGame::HandleNonCombatMessage(const TigMsg & msg)
 		if (mouseFlags & MSF_LMB_RELEASED){
 			return temple::GetRef<void(__cdecl)(const TigMsg&)>(0x10114AF0)(msg); // normal LMB released handler
 		}
-		else if (mouseFlags & MSF_LMB_CLICK || mouseFlags & (MSF_POS_CHANGE | MSF_LMB_DOWN)){
+		else if ( (mouseFlags & MSF_LMB_CLICK) || ( (mouseFlags & (MSF_POS_CHANGE | MSF_LMB_DOWN)) == (MSF_POS_CHANGE | MSF_LMB_DOWN))){
 			return temple::GetRef<void(__cdecl)(const TigMsg&)>(0x101148B0)(msg); // LMB drag handler
 		}
 		else if (mouseFlags & MSF_RMB_CLICK){
 			return temple::GetRef<void(__cdecl)(const TigMsg&)>(0x10114D90)(msg); // RMB handler
 		}
-		else if (mouseFlags & (MSF_POS_CHANGE) || mouseFlags & (MSF_POS_CHANGE_SLOW)){
-			static auto NormalMsgHandler = temple::GetPointer<void(const TigMsg &msg)>(0x10114e30);
-			NormalMsgHandler(msg);
+		else if ( (mouseFlags & (MSF_POS_CHANGE)) || (mouseFlags & (MSF_POS_CHANGE_SLOW) ) ){
+			//static auto NormalMsgHandler = temple::GetPointer<void(const TigMsg &msg)>(0x10114e30);
+			//NormalMsgHandler(msg);
+			return HandleMouseMoveEvent(msg);
 		}
 	}
 
@@ -289,7 +290,8 @@ void UiInGame::HandleCombatKeyStateChange(const TigMsg & msg)
 	CombatKeystateHandler(msg);
 }
 
-void UiInGame::HandleCombatMouseEvent(const TigMsg & msg)
+// was 0x10114690
+void UiInGame::HandleMouseMoveEvent(const TigMsg & msg)
 {
 	uiSystems->GetParty().SetHoveredObj(objHndl::null);
 	uiSystems->GetParty().SetPressedObj(objHndl::null);
@@ -317,17 +319,20 @@ void UiInGame::HandleCombatMouseEvent(const TigMsg & msg)
 		return;
 	}
 
-	auto msg_10BD3B5C = temple::GetRef<BOOL>(0x10BD3B5C);	
-	if (msg_10BD3B5C == 1)
+	auto normalLmbClicked = temple::GetRef<BOOL>(0x10BD3B5C);	
+	if (normalLmbClicked == 1)
 	{
-		auto dword_10BD3AC8 = temple::GetRef<int>(0x10BD3AC8);
-		auto stru_10BD3AD8 = temple::GetRef<objHndl>(0x10BD3AD8);
-		if (!dword_10BD3AC8 && mouseTarget == stru_10BD3AD8)
+		auto dragViewport = temple::GetRef<int>(0x10BD3AC8);
+		auto mouseDragTarget = temple::GetRef<objHndl>(0x10BD3AD8);
+		if (!dragViewport && mouseTarget == mouseDragTarget)
 		{
 			uiSystems->GetInGame().AddToGroupArray(mouseTarget);
 			uiSystems->GetParty().SetPressedObj(mouseTarget);
 		}		
-	} else if (objects.IsEquipment(mouseTarget) || objSystem->GetProtoId(mouseTarget) == 2064) {
+	} else if (objects.IsEquipment(mouseTarget) 
+		|| objects.IsContainer(mouseTarget)
+		|| objSystem->GetProtoId(mouseTarget) == 2064
+		) {
 		// 2064 is the guestbook
 		uiSystems->GetInGame().SetFocusObject(mouseTarget);
 	} else if (objects.IsCritter(mouseTarget)) {
