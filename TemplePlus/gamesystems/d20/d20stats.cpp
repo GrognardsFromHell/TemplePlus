@@ -473,6 +473,7 @@ StatType D20StatsSystem::GetType(Stat stat) {
 	case stat_level_frost_mage:
 	case stat_level_artificer:
 	case stat_level_abjurant_champion:
+	case stat_level_scout:
 
 	case stat_level_psion:
 	case stat_level_psychic_warrior:

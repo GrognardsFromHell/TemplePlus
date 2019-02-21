@@ -1,0 +1,5 @@
+name: Hide in Plain Sight Scout
+flags: 8
+prereqs:
+description:  Beginning at 14th level, a scout can use the Hide skill in natural terrain even while being observed.  A scout loses this benefit when wearing medium or heavy armor or when carrying a medium or heavy load.
+prereq descr: Scout level 14.

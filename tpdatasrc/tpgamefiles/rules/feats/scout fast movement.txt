@@ -1,0 +1,5 @@
+name: Fast Movement Scout
+flags: 8
+prereqs:
+description:  Starting at 3rd level, a scout's gains a +10 foot enhancement bonus to her base land speed. At 11th level, this bonus increases to +20 feet.
+prereq descr: Scout Level 3.

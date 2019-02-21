@@ -30,6 +30,7 @@
 {43}{Frost Mage}
 {44}{Artificer}
 {45}{Abjurant Champion}
+{46}{Scout}
 
 // Psionic Classes
 {58}{Psion}
@@ -92,7 +93,7 @@
 {1043}{}
 {1044}{}
 {1045}{}
-{1046}{}
+{1046}{Sct}
 {1047}{}
 {1048}{}
 {1049}{}
@@ -287,6 +288,7 @@ Feats: Spell Focus (conjuration).
 Spells: Able to cast lesser planar ally.}
 
 {13027}Favored Soul{Favored souls cast divine spells by means of an innate connection rather than through laborious training and prayer, so their divine connection is natural rather than learned.}
+{13039}Scout{A scout has some training in weapons and a unique combat style that favors fast movement and devastating attacks.}
 
 // Cannot Pick Class Short Help Goes in the range of 20007+
 {20007} Arcane Archer{Arcane Archer requirements:
