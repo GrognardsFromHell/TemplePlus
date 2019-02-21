@@ -1,0 +1,5 @@
+name: Battle Fortitude
+flags: 8
+prereqs:
+description:  At 2nd level, a scout gains a +1 competence bonus on Fortitude saves and initiative checks. This bonus increases to +2 at 11th level and +3 at 20th level. A scout loses this bonus when wearing medium or heavy armor or when carrying a medium or heavy load.
+prereq descr: Scout Level 2.
