@@ -38,9 +38,8 @@ public:
 		replaceFunction(0x100F7E70, CombatExpertiseAcBonus);
 
 		replaceFunction(0x100CB890, GrappledMoveSpeed); // fixed Grappled when the frog is dead
-		{
+		{ // Remove the Grappled condition when the frog (caster) is dead on the following queries
 			SubDispDefNew sdd;
-			sdd.dispKey = DK_QUE_Critter_Is_Grappling;
 			sdd.dispType = dispTypeD20Query;
 			sdd.dispCallback = [](DispatcherCallbackArgs args){
 				auto spellId = args.GetCondArg(0);
@@ -55,10 +54,13 @@ public:
 				dispIo->return_val = 1;
 				return 0;
 			};
-
+			sdd.dispKey = DK_QUE_SneakAttack;
 			write(0x102E6158, &sdd, sizeof(sdd));
+			sdd.dispKey = DK_QUE_Helpless;
 			write(0x102E616C, &sdd, sizeof(sdd));
+			sdd.dispKey = DK_QUE_CannotCast;
 			write(0x102E6180, &sdd, sizeof(sdd));
+			sdd.dispKey = DK_QUE_Critter_Is_Grappling;
 			write(0x102E61A8, &sdd, sizeof(sdd));
 			write(0x102E15C0 + offsetof(CondStruct, subDispDefs) + (1) * sizeof(SubDispDefNew), &sdd, sizeof(sdd));
 
