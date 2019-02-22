@@ -1234,6 +1234,10 @@ CondStructNew::CondStructNew(std::string Name, int NumArgs, bool preventDuplicat
 	
 }
 
+CondStructNew::CondStructNew(CondStruct& existingCondStruct){
+	ExtendExisting(existingCondStruct.condName);
+}
+
 void CondStructNew::AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(* callback)(DispatcherCallbackArgs)){
 	Expects(numHooks < 99);
 	subDispDefs[numHooks++] = { dispType, dispKey, callback, static_cast<uint32_t>(0), static_cast<uint32_t>(0) };
@@ -1266,6 +1270,22 @@ void CondStructNew::AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, i
 
 void CondStructNew::Register(){
 	conds.hashmethods.CondStructAddToHashtable(reinterpret_cast<CondStruct*>(this), true);
+}
+
+void CondStructNew::ExtendExisting(const std::string & condName)
+{
+	auto cond = (CondStructNew*)conds.GetByName(condName);
+	if (cond) {
+		for (auto i = 0; i < 100 && cond->subDispDefs[i].dispType != 0; i++) {
+			this->subDispDefs[this->numHooks++] = cond->subDispDefs[i];
+		}
+		this->numArgs = cond->numArgs;
+		this->condName = cond->condName;
+		this->Register();
+	}
+	else {
+		logger->info("Extend Existing Error: Condition {} does not exist!", condName);
+	}
 }
 
 void CondStructNew::AddToFeatDictionary(feat_enums feat, feat_enums featEnumMax, uint32_t condArg2Offset){

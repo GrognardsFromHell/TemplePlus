@@ -219,6 +219,7 @@ struct CondStructNew{
 
 	CondStructNew();
 	CondStructNew(std::string Name, int NumArgs, bool preventDuplicate = true); // use preventDuplicate = true for "unique" conditions or conditions that should never stack / apply twice
+	CondStructNew(CondStruct & existingCondStruct); // Extends existing cond struct
 	void AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(*callback)(DispatcherCallbackArgs) );
 	void AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(*callback)(DispatcherCallbackArgs), uint32_t data1, uint32_t data2);
 	void AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(*callback)(DispatcherCallbackArgs), CondStructNew* data1, uint32_t data2);
@@ -226,10 +227,12 @@ struct CondStructNew{
 	//void AddPyHook(enum_disp_type dispType, D20DispatcherKey dispKey, PyObject* pycallback, PyObject* pydataTuple);
 	//void AddPyHook(enum_disp_type dispType, D20DispatcherKey dispKey, pybind11::function pycallback, pybind11::tuple pydataTuple);
 	void Register();
+	void ExtendExisting(const std::string &condName);
 	void AddToFeatDictionary(feat_enums feat, feat_enums featEnumMax = FEAT_INVALID, uint32_t condArg2Offset = 0);
 
 	// standard callbacks
 	void AddAoESpellRemover();
+	
 };
 
 struct DispatcherCallbackArgs {
@@ -520,6 +523,7 @@ struct DispIoEffectTooltip: DispIO // type 24
 
 	/*
 	 spellEnum = -1 for no spell
+	see uiParty.IndicatorTextGet
 	*/
 	void Append(int effectTypeId, int spellEnum, const char* text) const;
 };

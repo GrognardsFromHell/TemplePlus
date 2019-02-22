@@ -35,7 +35,7 @@ void D20StatusSystem::initRace(objHndl objHnd)
 		auto count = 0;
 		auto specifiedCount = it.second;
 
-		for (auto i = 0; i < spellsMemorized.GetSize(); i++) {
+		for (auto i = 0u; i < spellsMemorized.GetSize(); i++) {
 			auto &memSpell = spellsMemorized[i];
 			if (memSpell.classCode == spell.classCode && memSpell.spellLevel == spell.spellLevel && memSpell.spellEnum == spell.spellEnum && memSpell.padSpellStore == race){
 				count++;
