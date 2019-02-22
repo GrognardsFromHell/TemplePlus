@@ -1,0 +1,5 @@
+name: Skirmish
+flags: 8
+prereqs:
+description: A scout deals an extra 1d6 points of damage on all attacks he makes during any round in which he moves at least 10 feet away from where he was at the start of his turn and then attacks.  The extra damage applies only to attacks taken during the scout's turn. This extra damage increases by 1d6 for every four levels gained above 1st.  Creatures immune to extra damage from critical hits are not vulnerable to this additional damage. The scout must be able to see the target well enough to pick out a vital spot and must be able to reach such a spot. Scouts can apply this extra damage to ranged attacks if the target is within 30 feet. At 3rd level, a scout gains a +1 competence bonus to Armor Class during any round in which he moves at least 10 feet. This bonus improves by 1 for every four levels gained above 3rd. A scout loses this ability when wearing medium or heavy armor or when carrying a medium or heavy load.
+prereq descr: Scout Level 1.

@@ -1,0 +1,5 @@
+ID_string: SCOUT_SKIRMISH
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Spell Magic Fang.tga
+help_topic: TAG_ROOT
+tooltip_base_text:Skirmish

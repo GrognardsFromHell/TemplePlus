@@ -1,0 +1,5 @@
+name: Free Movement
+flags: 8
+prereqs:
+description:  At 18th level and higher, a scout can slip out of bonds, grapples, and even the effects of confining spells easily. This ability duplicates the effect of a freedom of movement spell, except that it is always active. A scout loses this benefit when wearing medium or heavy armor or when carrying a medium or heavy load.
+prereq descr: Scout Level 18.
