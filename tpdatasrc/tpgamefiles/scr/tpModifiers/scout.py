@@ -184,6 +184,10 @@ def SkirmishDamageBonus(attachee, args, evt_obj):
 	
 	target = evt_obj.attack_packet.target
 	
+	#Disable if too far away
+	if attachee.distance_to(target) > 30:
+		skirmishEnabled = 0
+	
 	#Disable skirmish if the target can't be seen
 	if not attachee.can_sense(target):
 		skirmishEnabled = 0
