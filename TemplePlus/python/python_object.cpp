@@ -405,6 +405,23 @@ static PyObject* PyObjHandle_MoneyAdj(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+static PyObject* PyObjHandle_CanSense(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	objHndl targetObj;
+	if (!PyArg_ParseTuple(args, "O&:objhndl.can_sense", &ConvertObjHndl, &targetObj)) {
+		return 0;
+	}
+	if (!targetObj)
+		return PyInt_FromLong(0);
+
+	return PyInt_FromLong(critterSys.CanSense(self->handle, targetObj));
+}
+
+
 static PyObject* PyObjHandle_CanSneakAttack(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle){
@@ -424,9 +441,13 @@ static PyObject* PyObjHandle_CanSneakAttack(PyObject* obj, PyObject* args) {
 		return PyInt_FromLong(0);
 	if (d20Sys.d20Query(targetObj, DK_QUE_Critter_Is_Immune_Critical_Hits))
 		return PyInt_FromLong(0);
+
+	// Can't sneak attack if the target has concealment
+	if (!critterSys.CanSense(self->handle, targetObj)) {
+		return PyInt_FromLong(0);
+	}
 	
 	auto isFlanked = combatSys.IsFlankedBy(targetObj, self->handle);
-	
 
 	auto result = (isFlanked 
 		|| d20Sys.d20Query(targetObj, DK_QUE_SneakAttack)
@@ -3281,6 +3302,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"can_cast_spell", PyObjHandle_CanCastSpell, METH_VARARGS, NULL },
 	{"can_find_path_to_obj", PyObjHandle_CanFindPathToObj, METH_VARARGS, NULL },
 	{"can_see", PyObjHandle_HasLos, METH_VARARGS, NULL },
+	{"can_sense", PyObjHandle_CanSense, METH_VARARGS, NULL },
 	{ "can_sneak_attack", PyObjHandle_CanSneakAttack, METH_VARARGS, NULL },
 	{ "concealed_set", PyObjHandle_ConcealedSet, METH_VARARGS, NULL },
 	{ "condition_add_with_args", PyObjHandle_ConditionAddWithArgs, METH_VARARGS, NULL },

@@ -5982,11 +5982,17 @@ int ClassAbilityCallbacks::SneakAttackDamage(DispatcherCallbackArgs args) {
 		}
 	}
 
-	if (atkPkt.flags & D20CAF_FLANKED
+	bool sneakAttackCondition = atkPkt.flags & D20CAF_FLANKED
 		|| d20Sys.d20Query(tgt, DK_QUE_SneakAttack)
 		|| d20Sys.d20QueryWithData(atkPkt.attacker, DK_QUE_OpponentSneakAttack, (uint32_t)dispIo, 0)
-		|| !critterSys.CanSense(tgt, atkPkt.attacker)
-		|| sneakAttackFromCrit)
+		|| !critterSys.CanSense(tgt, atkPkt.attacker);
+
+	// From the SRD:  The rogue must be able to see the target well enough to pick out a vital 
+	// spot and must be able to reach such a spot. A rogue cannot sneak attack while striking a 
+	// creature with concealment or striking the limbs of a creature whose vitals are beyond reach. 
+	bool canSenseTarget = critterSys.CanSense(args.objHndCaller, tgt);
+
+	if ((sneakAttackCondition && canSenseTarget) || sneakAttackFromCrit)
 	{
 		// get sneak attack dice (NEW! now via query, for prestige class modularity)
 		auto sneakAttackDice = d20Sys.D20QueryPython(args.objHndCaller, fmt::format("Sneak Attack Dice"));

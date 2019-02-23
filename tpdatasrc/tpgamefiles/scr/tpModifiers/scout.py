@@ -182,6 +182,12 @@ def SkirmishDamageBonus(attachee, args, evt_obj):
 	if SkirmishEnabled(args.get_arg(0)):
 		skirmishEnabled = 1
 	
+	target = evt_obj.attack_packet.target
+	
+	#Disable skirmish if the target can't be seen
+	if not attachee.can_sense(target):
+		skirmishEnabled = 0
+	
 	#Check if sneak attack is turned on for criticals and it was a critical hit (this counts for skrimish too)
 	sneakAttackOnCritical = attachee.d20_send_signal("Sneak Attack Critical")
 	if sneakAttackOnCritical:
@@ -192,7 +198,6 @@ def SkirmishDamageBonus(attachee, args, evt_obj):
 		return 0
 		
 	#Check for immunity to skirmish (same as immunity to sneak attack)
-	target = evt_obj.attack_packet.target
 	NoSneakAttack = target.d20_query(Q_Critter_Is_Immune_Critical_Hits)
 	
 	if NoSneakAttack:
