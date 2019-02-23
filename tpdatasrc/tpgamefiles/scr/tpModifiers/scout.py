@@ -189,7 +189,8 @@ def SkirmishDamageBonus(attachee, args, evt_obj):
 		skirmishEnabled = 0
 	
 	#Check if sneak attack is turned on for criticals and it was a critical hit (this counts for skrimish too)
-	sneakAttackOnCritical = attachee.d20_send_signal("Sneak Attack Critical")
+	sneakAttackOnCritical = attachee.d20_query("Sneak Attack Critical")
+	
 	if sneakAttackOnCritical:
 		if attackFlags & D20CAF_CRITICAL:
 			skirmishEnabled = 1
