@@ -17,7 +17,7 @@ def GetClassDefinitionFlags():
 
 #Located in tpdata\tpmes\help_extensions.tab
 def GetClassHelpTopic():
-	return "TAG_SCOUT"
+	return "TAG_SCOUTS"
 
 classEnum = stat_level_scout
 
