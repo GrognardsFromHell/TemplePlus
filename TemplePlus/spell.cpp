@@ -26,6 +26,7 @@
 #include "damage.h"
 #include <tig\tig_tokenizer.h>
 #include "ai.h"
+#include "condition.h"
 
 static_assert(sizeof(SpellStoreData) == (32U), "SpellStoreData structure has the wrong size!");
 
@@ -1767,9 +1768,22 @@ bool LegacySpellSystem::IsSpellActive(int spellid) {
 	return false;
 }
 
-CondStruct* LegacySpellSystem::GetCondFromSpellIdx(int id) {
+CondStruct* LegacySpellSystem::GetCondFromSpellCondId(int id) {
 	if (id >= 3 && id < 254) {
 		return addresses.spellConds[id - 1].condition;
+	}
+	return nullptr;
+}
+
+CondStruct * LegacySpellSystem::GetCondFromSpellEnum(int spellEnum)
+{
+	for (auto i = 0; i < 261; i++){
+		if (addresses.spellConds[i].unknown == spellEnum){
+			auto spellCond = addresses.spellConds[i].condition;
+			if (!spellCond)
+				return nullptr;
+			return conds.GetByName(spellCond->condName); // re-reference because Temple+ might replace it
+		}
 	}
 	return nullptr;
 }

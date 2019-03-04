@@ -22,17 +22,15 @@ def	OnSpellEffect ( spell ):
 			return
 
 
-	spell.duration = 1
-
+	spell.duration = 600 * spell.caster_level
 	target = spell.target_list[0]
 
 	if target.obj.is_friendly( spell.caster ):
 
 		# Neutralise any Hezrou Stench effects.
 		neutraliseStench(target.obj, 600 * spell.caster_level)
-
 		#target.partsys_id = game.particles( 'sp-Neutralize Poison', target.obj )
-		game.particles( 'sp-Neutralize Poison', target.obj ) # the particles get ended when condition_add_with_args is applied so we separate them from the target.partsys_id
+		game.particles( 'sp-Neutralize Poison', target.obj ) # not a persistent particle effect anyway
 		target.obj.condition_add_with_args( 'sp-Neutralize Poison', spell.id, spell.duration, 0 )
 		
 
@@ -45,9 +43,8 @@ def	OnSpellEffect ( spell ):
 		neutraliseStench(target.obj, )
 
 		#target.partsys_id = game.particles( 'sp-Neutralize Poison', target.obj )
-		game.particles( 'sp-Neutralize Poison', target.obj )
+		game.particles( 'sp-Neutralize Poison', target.obj ) # not a persistent particle effect anyway
 		target.obj.condition_add_with_args( 'sp-Neutralize Poison', spell.id, spell.duration, 0 )
-		
 
 	else:
 		print "Saving throw successful: " + str(target)

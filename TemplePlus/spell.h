@@ -302,7 +302,8 @@ struct LegacySpellSystem : temple::AddressTable
 	static void SpellsCastRegistryPut(int spellId, SpellPacket&);
 	bool IsSpellActive(int spellid);
 
-	CondStruct *GetCondFromSpellIdx(int id);
+	CondStruct *GetCondFromSpellCondId(int id);
+	CondStruct* GetCondFromSpellEnum(int spellEnum);
 	uint32_t(__cdecl * spellRemoveFromStorage)(objHndl objHnd, obj_f fieldIdx, SpellStoreData * spellData, int unknown);
 	uint32_t SpellsPendingToMemorized(objHndl objHnd);
 	void SpellsPendingToMemorizedByClass(objHndl handle, Stat classEnum);

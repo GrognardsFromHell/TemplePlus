@@ -1992,7 +1992,7 @@ static PyObject* PyObjHandle_D20QueryHasSpellCond(PyObject* obj, PyObject* args)
 	}
 
 	// Get the condition struct from the spell id
-	auto cond = spellSys.GetCondFromSpellIdx(spellId);
+	auto cond = spellSys.GetCondFromSpellCondId(spellId);
 	if (!cond) {
 		return PyInt_FromLong(0);
 	}
