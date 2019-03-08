@@ -391,19 +391,25 @@ uint32_t LegacyCritterSystem::IsFriendly(objHndl critter1, objHndl critter2) {
 	//	}
 	//}
 
+	// Here, they are not both party members (up to "charm person" situations)
+
 	auto obj1 = objSystem->GetObject(critter1);
 	auto obj2 = objSystem->GetObject(critter2);
 	
 	// if both are NPCs:
 	if (obj1->IsNPC() && obj2->IsNPC()) {
 
-		if (!d20Sys.d20Query(critter1, DK_QUE_Critter_Is_Charmed)) {
-			if (critter1_leader == critter2) {
-				return TRUE;
-			}
-			if (critter2_leader == critter1 
-				|| critterSys.NpcAllegianceShared(critter1, critter2)
-				|| critterSys.HasNoFaction(critter1) && critterSys.HasNoFaction(critter2)  ) {
+		if (d20Sys.d20Query(critter1, DK_QUE_Critter_Is_Charmed)){
+			return FALSE;
+		}
+
+		if (critter1_leader == critter2 || critter2_leader == critter1 || critterSys.NpcAllegianceShared(critter1, critter2)) {
+			return TRUE;
+		}
+
+		// Faction 0 critters
+		if (critterSys.HasNoFaction(critter1) && critterSys.HasNoFaction(critter2)) {
+			if (!critter1_in_party && !critter2_in_party){ // added so your animal companions attack faction 0 critters...
 				return TRUE;
 			}
 		}
