@@ -103,7 +103,7 @@ void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const loc
 }
 
 void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const LocAndOffsets &loc) {
-	f.writer().write("{},{},{}", loc.location, loc.off_x, loc.off_y);
+	f.writer().write("{},{},{},{}", loc.location.locx, loc.location.locy, loc.off_x, loc.off_y);
 }
 
 void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const LocFull &loc) {

@@ -599,9 +599,19 @@ bool AnimSystem::InterruptAllForTbCombat(){
 
 	for (auto i = 0u; i < ANIM_RUN_SLOT_CAP; i++){
 		auto &slot = mSlots[i];
-		if (!slot.IsActive() || objects.GetType(slot.animObj) == obj_t_portal){
+		if (!slot.IsActive()){
 			continue;
 		}
+
+		if (!slot.animObj){
+			logger->info("Active Animation Slot with Null handle detected!");
+			continue;
+		}
+
+		if (objects.GetType(slot.animObj) == obj_t_portal){
+			continue;
+		}
+
 		if (gameSystems->GetAnim().CurrentGoalHasField10_1(slot)){
 			continue;
 		}
