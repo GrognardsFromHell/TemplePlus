@@ -684,8 +684,11 @@ BOOL AiSystem::ConsiderTarget(objHndl obj, objHndl tgt)
 		return 0;
 	if (leader){
 		int64_t tileDelta = locSys.GetTileDeltaMax(leader, tgt);
-		if (tileDelta > 20)
-			return 0;
+		if (tileDelta > 20){ 
+			// added so your summons work at range...
+			if (locSys.DistanceToObj(obj, tgt) > 15.0f )
+				return 0;
+		}
 	}
 	return 1;
 }

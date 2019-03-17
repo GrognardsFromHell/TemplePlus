@@ -1253,6 +1253,12 @@ void CondStructNew::AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, i
 	subDispDefs[numHooks++] = { dispType, dispKey, callback, data1, data2 };
 }
 
+void CondStructNew::AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(*callback)(DispatcherCallbackArgs), CondStruct * data1, uint32_t data2)
+{
+	Expects(numHooks < 99);
+	subDispDefs[numHooks++] = { dispType, dispKey, callback, (CondStructNew*)data1, data2 };
+}
+
 //void CondStructNew::AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(* callback)(DispatcherCallbackArgs), uint32_t data1, const char* data2) 
 //{
 //	Expects(numHooks < 99);

@@ -95,6 +95,7 @@ class SpellCallbacks {
 public:
 
 	static int __cdecl ArmorSpellFailure(DispatcherCallbackArgs args);
+	static int __cdecl SpellEffectTooltipDuration(DispatcherCallbackArgs args); // data1 - indicator ID; arg0 - spellId, arg1 - duration
 
 	static int __cdecl SkillBonus(DispatcherCallbackArgs args);
 	static int __cdecl BeginHezrouStench(DispatcherCallbackArgs args);
@@ -119,6 +120,7 @@ public:
 	static int __cdecl HezrouStenchCureNausea(DispatcherCallbackArgs args);
 	static int __cdecl RemoveSpell(DispatcherCallbackArgs args);
 	static int __cdecl HasCondition(DispatcherCallbackArgs args);
+	static int __cdecl HasSpellEffectActive(DispatcherCallbackArgs args);
 
 	static int __cdecl SpellDismissRadialSub(DispatcherCallbackArgs args); // allows dismissal of specific spells
 	static int __cdecl SpellAddDismissCondition(DispatcherCallbackArgs args); // prevents dups
@@ -1318,7 +1320,21 @@ int GenericCallbacks::GlobalHpChanged(DispatcherCallbackArgs args){
 int GenericCallbacks::HasCondition(DispatcherCallbackArgs args){
 	args.dispIO->AssertType(dispIOTypeQuery);
 	auto dispIo = static_cast<DispIoD20Query*>(args.dispIO);
-	if (dispIo->data1 == args.GetData1() && !dispIo->data2){
+	
+	auto myCond = (CondStruct*)args.GetData1();
+	auto queriedCond = (CondStruct*)dispIo->data1;
+	
+	if (myCond == queriedCond && !dispIo->data2){
+		dispIo->return_val = 1;
+		dispIo->data1 = args.GetCondArg(0);
+		dispIo->data2 = 0;
+	}
+
+	if (!queriedCond || !myCond) {
+		return 0;
+	}
+	// if not, re-reference the cond struct since it may have been extended
+	if (!dispIo->data2 && conds.GetByName(myCond->condName) == conds.GetByName(queriedCond->condName)){
 		dispIo->return_val = 1;
 		dispIo->data1 = args.GetCondArg(0);
 		dispIo->data2 = 0;
@@ -2609,7 +2625,8 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 11, dispTypeEffectTooltip, 0, spCallbacks.HezrouStenchEffectTooltip, 141, 0);
 	DispatcherHookInit(cond, 12, dispTypeD20Signal, DK_SIG_Combat_End, spCallbacks.HezrouStenchCureNausea,0,0 );
 	DispatcherHookInit(cond, 13, dispTypeD20Query, DK_QUE_Critter_Has_Condition, spCallbacks.HasCondition, (uint32_t)cond, 0);
-
+	DispatcherHookInit(cond, 14, dispTypeConditionAddPre, DK_NONE, ConditionOverrideBy, (uint32_t)conds.GetByName("sp-Neutralize Poison"), 0); // make neutralie poison remove existing stench effect
+	
 	// Necklace of Adaptation
 
 	auto itemForceRemoveCallback = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x10104410);
@@ -3647,6 +3664,19 @@ int SpellCallbacks::ArmorSpellFailure(DispatcherCallbackArgs args){
 	return 0;
 }
 
+int __cdecl SpellCallbacks::SpellEffectTooltipDuration(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType24(args.dispIO);
+	auto numRounds = args.GetCondArg(1);
+	auto spellId = args.GetCondArg(0);
+	SpellPacketBody spellPkt(spellId);
+	if (spellPkt.spellEnum){
+		dispIo->Append(args.GetData1(), spellPkt.spellEnum, fmt::format("\n{}: {}", combatSys.GetCombatMesLine(175), numRounds).c_str());
+	}
+	
+	return 0;
+}
+
 int SpellCallbacks::SkillBonus(DispatcherCallbackArgs args){
 
 	SkillEnum skillEnum = (SkillEnum)args.GetData1();
@@ -4167,6 +4197,31 @@ int SpellCallbacks::HasCondition(DispatcherCallbackArgs args)
 	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
 	if (dispIo->data1 == args.GetData1())
 		dispIo->return_val = 1;
+	return 0;
+}
+
+int SpellCallbacks::HasSpellEffectActive(DispatcherCallbackArgs args){
+	GET_DISPIO(dispIOTypeQuery, DispIoD20Query);
+
+	if (dispIo->return_val == 1){
+		return 0;
+	}
+
+	auto spellEnum = dispIo->data1;
+	int v2 = dispIo->data2;
+
+	if (v2 >= 0 
+		&& ( v2 > 0 || spellEnum >= 282) 
+		&& ( (v2 <= 0 && spellEnum <= 285) ) ){ // Magic Circle Against Alignment
+		return 0;
+	}
+
+	auto spellCond = spellSys.GetCondFromSpellEnum(spellEnum);
+	
+	if (d20Sys.d20QueryWithData(args.objHndCaller, DK_QUE_Critter_Has_Condition, spellCond, 0)){
+		dispIo->return_val = 1;
+	}
+
 	return 0;
 }
 
@@ -6209,6 +6264,32 @@ void Conditions::AddConditionsToTable(){
 	bardInspireHeroics.AddHook(dispTypeConditionAddFromD20StatusInit, DK_NONE, genericCallbacks.PlayParticlesSavePartsysId, 2, (uint32_t)"Bardic-Inspire Courage-hit"); // todo make new pfx
 	bardInspireHeroics.AddHook(dispTypeConditionAdd, DK_NONE, genericCallbacks.PlayParticlesSavePartsysId, 2, (uint32_t)"Bardic-Inspire Courage-hit");
 
+	{
+		auto removeFearCond = conds.GetByName("sp-Remove Fear");
+		if (removeFearCond){
+			static CondStructNew removeFearExtend(*removeFearCond);
+			removeFearExtend.AddHook(dispTypeD20Query, DK_QUE_Critter_Has_Condition, genericCallbacks.HasCondition, &removeFearExtend, 0);
+			removeFearExtend.subDispDefs[3].dispCallback = [](DispatcherCallbackArgs){ // cancel the RemoveSpellOnAdd callback
+				return 0;
+			};
+			
+			removeFearExtend.AddHook(dispTypeEffectTooltip, DK_NONE, spCallbacks.SpellEffectTooltipDuration, 1, 0); // Courage indicator icon
+		}
+	}
+
+	{
+		auto neutPoisonCond = conds.GetByName("sp-Neutralize Poison");
+		if (neutPoisonCond) {
+			static CondStructNew neutPoisonCondExtend(*neutPoisonCond);
+			neutPoisonCondExtend.AddHook(dispTypeD20Query, DK_QUE_Critter_Has_Condition, genericCallbacks.HasCondition, &neutPoisonCondExtend, 0);
+			neutPoisonCondExtend.subDispDefs[2].dispCallback = [](DispatcherCallbackArgs) { // cancel the RemoveSpellOnAdd callback so it doesn't end the spell immediately
+				return 0;
+			};
+			neutPoisonCondExtend.AddHook(dispTypeConditionAddPre, DK_NONE, ConditionPrevent, conds.GetByName("Poisoned"), 0); // Prevent "Poisoned" condition from being applied
+			neutPoisonCondExtend.AddHook(dispTypeEffectTooltip, DK_NONE, spCallbacks.SpellEffectTooltipDuration, 19, 0); // Delay Poison indicator icon
+			neutPoisonCondExtend.AddHook(dispTypeD20Query, DK_QUE_Critter_Is_Immune_Poison, genericCallbacks.QuerySetReturnVal1);
+		}
+	}
 
 	// New Conditions!
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mConditionDisableAoO);

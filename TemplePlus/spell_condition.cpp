@@ -68,6 +68,8 @@ public:
 	static int SpikeStonesHitTrigger(DispatcherCallbackArgs args);
 	static int SpikeGrowthHitTrigger(DispatcherCallbackArgs args);
 
+	static int IsCritterAfraidQuery(DispatcherCallbackArgs args);
+
 	void apply() override {
 
 		// Magic Circle Taking Damage - didn't check that attacker is not null
@@ -337,6 +339,8 @@ public:
 			}, 52, 0);
 			write(0x102D2318, &sdd, sizeof(SubDispDefNew));
 		}
+
+		replaceFunction(0x100C5CD0, IsCritterAfraidQuery);
 
 		redirectCall(0x100D56A3, MindFogSaveThrowHook);
 
@@ -1222,5 +1226,31 @@ int SpellConditionFixes::SpikeGrowthHitTrigger(DispatcherCallbackArgs args)
 		return 0;
 	}
 	spPkt.UpdatePySpell();
+	return 0;
+}
+
+int SpellConditionFixes::IsCritterAfraidQuery(DispatcherCallbackArgs args){
+	auto isShaken = args.GetCondArg(2);
+	if (isShaken){
+		return 0;
+	}
+	auto spellId = args.GetCondArg(0);
+	SpellPacketBody spPkt(spellId);
+	if (!spPkt.spellEnum){
+		logger->warn("IsCritterAfraidQuery: Unable to get spell packet. Id {}", spellId);
+		return 0;
+	}
+
+	auto calmEmotionsCond = conds.GetByName("sp-Calm Emotions");
+	auto removeFearCond   = conds.GetByName("sp-Remove Fear");
+	if (d20Sys.d20QueryWithData(args.objHndCaller, DK_QUE_Critter_Has_Condition, calmEmotionsCond, 0)){
+		return 0;
+	}
+	if (d20Sys.d20QueryWithData(args.objHndCaller, DK_QUE_Critter_Has_Condition, removeFearCond, 0)) { // added in Temple+
+		return 0;
+	}
+	GET_DISPIO(dispIOTypeQuery, DispIoD20Query);
+	dispIo->return_val = 1;
+	*(objHndl*)&(dispIo->data1) = spPkt.caster;
 	return 0;
 }
