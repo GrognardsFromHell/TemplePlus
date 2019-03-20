@@ -325,3 +325,15 @@ def FreeMovementScout(attachee, args, evt_obj):
 scoutFreeMovement = PythonModifier("Free Movement", 2) #Spare, Spare
 scoutFreeMovement.MapToFeat("Free Movement")
 scoutFreeMovement.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Freedom_of_Movement, FreeMovementScout, ())
+
+#Blindsight
+
+#Returns the range of the blindsight ability.  It is queried by the engine.
+def ScoutBlindsightRange(attachee, args, evt_obj):
+	evt_obj.return_val = 30
+	return 0
+
+scoutBlindsight = PythonModifier("Blindsight", 2) #Spare, Spare
+scoutBlindsight.MapToFeat("Blindsight")
+scoutBlindsight.AddHook(ET_OnD20PythonQuery, "Blindsight Range", ScoutBlindsightRange, ())
+

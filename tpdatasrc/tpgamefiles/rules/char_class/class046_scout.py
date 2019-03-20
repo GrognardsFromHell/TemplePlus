@@ -30,6 +30,7 @@ class_feats = {
 5: (feat_evasion,),
 14: ("Hide in Plain Sight Scout",),
 18: ("Free Movement",),
+20: ("Blindsight",),
 }
 
 bonus_feats = [feat_acrobatic, feat_agile, feat_alertness, feat_athletic, feat_blind_fight, feat_combat_expertise, feat_dodge, feat_far_shot, feat_great_fortitude,

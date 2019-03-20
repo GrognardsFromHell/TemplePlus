@@ -32,6 +32,8 @@
 #include "rng.h"
 #include "weapon.h"
 #include "d20_race.h"
+#include "location.h"
+
 
 static struct CritterAddresses : temple::AddressTable {
 
@@ -100,6 +102,11 @@ static struct CritterAddresses : temple::AddressTable {
 
 class CritterReplacements : public TempleFix
 {
+public:
+	bool CanSense(objHndl critter, objHndl tgt);
+	int InvisibleAttackBonus(DispatcherCallbackArgs args);
+
+private:
 	void ShowExactHpForNPCs();
 
 	void apply() override 
@@ -108,6 +115,16 @@ class CritterReplacements : public TempleFix
 		replaceFunction(0x10062720, _isCritterCombatModeActive); 
 		replaceFunction<float(objHndl, D20ActionType)>(0x100B52D0, [](objHndl handle, D20ActionType d20aType){
 			return critterSys.GetReach(handle, d20aType);
+		});
+
+		// Invisibility Attack bonus
+		oldInvisibleAttackBonus = replaceFunction<int(DispatcherCallbackArgs)>(0x100E88D0, [](DispatcherCallbackArgs args) {
+			return critterReplacements.InvisibleAttackBonus(args);
+		});
+
+		// CanSense
+		oldCanSense = replaceFunction<bool(objHndl, objHndl)>(0x1007FFF0, [](objHndl critter, objHndl tgt) {
+			return critterReplacements.CanSense(critter, tgt);
 		});
 
 		// CritterGenerateHp
@@ -145,6 +162,11 @@ class CritterReplacements : public TempleFix
 		});
 		ShowExactHpForNPCs();
 	}
+
+private:
+	int(*oldInvisibleAttackBonus)(DispatcherCallbackArgs args);
+	bool(*oldCanSense)(objHndl, objHndl);
+
 } critterReplacements;
 
 void CritterReplacements::ShowExactHpForNPCs()
@@ -155,6 +177,27 @@ void CritterReplacements::ShowExactHpForNPCs()
 		char * displayExactHpForNPCsBuffer = &displayExactHpForNPCsChar;
 		write(0x1012441B + 2, displayExactHpForNPCsBuffer, 1);
 	}
+}
+
+int CritterReplacements::InvisibleAttackBonus(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType5((DispIoAttackBonus*)args.dispIO);
+
+	// If the attacker can be seen with blindsight, don't add the bonus
+	if (critterSys.CanSeeWithBlindsight(dispIo->attackPacket.victim, args.objHndCaller)) {
+		return 0;
+	}
+
+	return oldInvisibleAttackBonus(args);
+}
+
+bool CritterReplacements::CanSense(objHndl critter, objHndl tgt)
+{
+	//First check if the critter can see the target with blindsense
+	if (critterSys.CanSeeWithBlindsight(critter, tgt)) return true;
+
+	// Default to let TOEE handle it
+	return oldCanSense(critter, tgt);
 }
 
 #pragma region Critter System Implementation
@@ -226,6 +269,23 @@ objHndl LegacyCritterSystem::GetLeaderForNpc(objHndl critter){
 		leader = GetLeader(leader);
 	}
 	return leader;
+}
+
+bool LegacyCritterSystem::CanSeeWithBlindsight(objHndl critter, objHndl target) {
+	auto blindsightDistance = d20Sys.D20QueryPython(critter, "Blindsight Range");
+
+	if (blindsightDistance > 0) {
+		auto distance = locSys.DistanceToObj(critter, target);
+
+		if (distance < blindsightDistance) {
+			bool bEthereal = d20Sys.d20Query(target, DK_QUE_Is_Ethereal);
+
+			// Rules are not 100% clear but I dont think blindsense should work on ethereal creatures
+			return !bEthereal;
+		}
+	}
+
+	return false;
 }
 
 int LegacyCritterSystem::HasLineOfSight(objHndl critter, objHndl target) {
@@ -773,8 +833,9 @@ int LegacyCritterSystem::GetPortraitId(objHndl leader) {
 	return objects.getInt32(leader, obj_f_critter_portrait);
 }
 
-bool LegacyCritterSystem::CanSense(objHndl critter, objHndl tgt){
-	return temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x1007FFF0)(critter, tgt) != FALSE;
+bool LegacyCritterSystem::CanSense(objHndl critter, objHndl tgt)
+{
+	return critterReplacements.CanSense(critter, tgt);
 }
 
 int LegacyCritterSystem::GetLevel(objHndl critter) {
