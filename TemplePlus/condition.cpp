@@ -6025,8 +6025,7 @@ int ClassAbilityCallbacks::SneakAttackDamage(DispatcherCallbackArgs args) {
 		return 0;
 
 	// limit to 30'
-	if (locSys.DistanceToObj(args.objHndCaller, tgt) > 30)
-		return 0;
+	bool within30Feet = (locSys.DistanceToObj(args.objHndCaller, tgt) < 30.0);
 
 	// See if it is a critical and if criticals cause sneak attacks
 	bool sneakAttackFromCrit = false;
@@ -6047,7 +6046,7 @@ int ClassAbilityCallbacks::SneakAttackDamage(DispatcherCallbackArgs args) {
 	// creature with concealment or striking the limbs of a creature whose vitals are beyond reach. 
 	bool canSenseTarget = critterSys.CanSense(args.objHndCaller, tgt);
 
-	if ((sneakAttackCondition && canSenseTarget) || sneakAttackFromCrit)
+	if ((sneakAttackCondition && canSenseTarget && within30Feet) || sneakAttackFromCrit)
 	{
 		// get sneak attack dice (NEW! now via query, for prestige class modularity)
 		auto sneakAttackDice = d20Sys.D20QueryPython(args.objHndCaller, fmt::format("Sneak Attack Dice"));
