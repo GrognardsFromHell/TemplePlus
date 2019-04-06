@@ -123,6 +123,11 @@ struct LegacyCritterSystem : temple::AddressTable
 	int HasLineOfSight(objHndl critter, objHndl target);
 
 	/*
+		Returns true if the critter can see the targe with blindsight.
+	*/
+	bool CanSeeWithBlindsight(objHndl critter, objHndl target);
+
+	/*
 		Gets an item worn at the given equipment slot.
 	*/
 	objHndl GetWornItem(objHndl handle, EquipSlot slot);

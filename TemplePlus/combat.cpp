@@ -1580,6 +1580,8 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 		cond = conds.GetByName("Weapon Seeking");
 		if (d20Sys.d20QueryWithData(attacker, DK_QUE_Critter_Has_Condition, cond, 0))
 			return 0;
+		if (critterSys.CanSeeWithBlindsight(attacker, victim))
+			return 0;
 
 		DispIoAttackBonus dispIo;
 		dispIo.attackPacket.flags = (D20CAF)d20a.d20Caf;
