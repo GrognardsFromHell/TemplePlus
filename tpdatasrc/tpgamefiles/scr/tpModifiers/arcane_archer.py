@@ -140,6 +140,8 @@ def ImbueArrowPerform(attachee, args, evt_obj):
 	tgtLoc = cur_seq.spell_packet.loc.loc_and_offsets
 	arrowTgt = evt_obj.d20a.target
 	min_dist = 10000
+	if arrowTgt == attachee: # e.g. when player brings up radial menu by right clicking the character
+		arrowTgt = OBJ_HANDLE_NULL
 	if arrowTgt == OBJ_HANDLE_NULL:
 		for p in range(0,32):
 			tgt = cur_seq.spell_packet.get_target(p)
