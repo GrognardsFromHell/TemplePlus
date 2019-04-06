@@ -94,6 +94,18 @@ static struct DamageAddresses : temple::AddressTable {
 
 Damage damage;
 
+class DamageHooks: TempleFix
+{
+	void apply () override{
+		replaceFunction<int(__cdecl)(objHndl , objHndl , const Dice &, DamageType , 
+			int , int , int , D20ActionType , int , int )>(0x100B7F80, [](objHndl victim, objHndl attacker, const Dice &dice, DamageType damType, 
+			int attackPower, int reduction, int damageDescId, D20ActionType actionType, int spellId, int flags){
+			damage.DealSpellDamage(victim, attacker, dice, damType, attackPower, reduction, damageDescId, actionType, spellId, flags);
+			return -1;
+		});
+	}
+} damageHooks;
+
 int DamagePacket::AddEtherealImmunity(){
 	if (damModCount >= 5)
 		return 0;
@@ -293,7 +305,7 @@ void Damage::DealSpellDamage(objHndl tgt, objHndl attacker, const Dice& dice, Da
 		evtObjDam.damage.flags |= 2; // empowered
 	if (mmData.metaMagicFlags & 1)
 		evtObjDam.damage.flags |= 1; // maximized
-	temple::GetRef<int>(0x10BCA8AC) = 0; // is weapon damage
+	temple::GetRef<int>(0x10BCA8AC) = 0; // is weapon damage (used in logbook for record holding)
 
 	DamageCritter(attacker, tgt, evtObjDam);
 
