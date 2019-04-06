@@ -182,8 +182,19 @@ def SkirmishDamageBonus(attachee, args, evt_obj):
 	if SkirmishEnabled(args.get_arg(0)):
 		skirmishEnabled = 1
 	
+	target = evt_obj.attack_packet.target
+	
+	#Disable if too far away
+	if attachee.distance_to(target) > 30:
+		skirmishEnabled = 0
+	
+	#Disable skirmish if the target can't be seen
+	if not attachee.can_sense(target):
+		skirmishEnabled = 0
+	
 	#Check if sneak attack is turned on for criticals and it was a critical hit (this counts for skrimish too)
-	sneakAttackOnCritical = attachee.d20_send_signal("Sneak Attack Critical")
+	sneakAttackOnCritical = attachee.d20_query("Sneak Attack Critical")
+	
 	if sneakAttackOnCritical:
 		if attackFlags & D20CAF_CRITICAL:
 			skirmishEnabled = 1
@@ -192,7 +203,6 @@ def SkirmishDamageBonus(attachee, args, evt_obj):
 		return 0
 		
 	#Check for immunity to skirmish (same as immunity to sneak attack)
-	target = evt_obj.attack_packet.target
 	NoSneakAttack = target.d20_query(Q_Critter_Is_Immune_Critical_Hits)
 	
 	if NoSneakAttack:
@@ -315,3 +325,15 @@ def FreeMovementScout(attachee, args, evt_obj):
 scoutFreeMovement = PythonModifier("Free Movement", 2) #Spare, Spare
 scoutFreeMovement.MapToFeat("Free Movement")
 scoutFreeMovement.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Freedom_of_Movement, FreeMovementScout, ())
+
+#Blindsight
+
+#Returns the range of the blindsight ability.  It is queried by the engine.
+def ScoutBlindsightRange(attachee, args, evt_obj):
+	evt_obj.return_val = 30
+	return 0
+
+scoutBlindsight = PythonModifier("Blindsight", 2) #Spare, Spare
+scoutBlindsight.MapToFeat("Blindsight")
+scoutBlindsight.AddHook(ET_OnD20PythonQuery, "Blindsight Range", ScoutBlindsightRange, ())
+

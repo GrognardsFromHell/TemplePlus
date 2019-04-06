@@ -1,0 +1,5 @@
+name: Blindsight
+flags: 8
+prereqs:
+description:  At 20th level, a scout gains the blindsense ability out to 30 feet.  His senses become so acute that she can maneuver and fight flawlessly even in total darkness. Invisibility, darkness, and most kinds of concealment are irrelevant.
+prereq descr: Scout level 20.
