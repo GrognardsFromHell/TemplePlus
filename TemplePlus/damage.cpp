@@ -97,9 +97,12 @@ Damage damage;
 class DamageHooks: TempleFix
 {
 	void apply () override{
-		replaceFunction<int(__cdecl)(objHndl , objHndl , const Dice &, DamageType , 
-			int , int , int , D20ActionType , int , int )>(0x100B7F80, [](objHndl victim, objHndl attacker, const Dice &dice, DamageType damType, 
+		replaceFunction<int(__cdecl)(objHndl , objHndl , unsigned int, DamageType , 
+			int , int , int , D20ActionType , int , int )>(0x100B7F80, [](objHndl victim, objHndl attacker, unsigned int nPackedDice, DamageType damType, 
 			int attackPower, int reduction, int damageDescId, D20ActionType actionType, int spellId, int flags){
+
+			Dice dice = Dice::FromPacked(nPackedDice);
+			
 			damage.DealSpellDamage(victim, attacker, dice, damType, attackPower, reduction, damageDescId, actionType, spellId, flags);
 			return -1;
 		});
