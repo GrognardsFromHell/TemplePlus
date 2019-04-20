@@ -1908,6 +1908,7 @@ enum enum_disp_type : uint32_t {
 	dispTypeSpecialAttack,
     dispConfirmCriticalBonus,
 	dispRangeIncrementBonus,
+    dispTypeDealingDamageSpell,
 	dispTypeCount // used just for size definition purposes
 
 
@@ -1996,6 +1997,7 @@ enum Stat : uint32_t {
 	stat_level_artificer = 44,
 	stat_level_abjurant_champion = 45,
 	stat_level_scout = 46,
+	stat_level_warmage = 47,
 
 	stat_level_psion = 58,
 	stat_level_psychic_warrior = 59,

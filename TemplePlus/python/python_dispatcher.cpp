@@ -109,6 +109,15 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		feats.AddMetamagicFeat(static_cast<feat_enums>(feat));
 	});
 
+	m.def("get_metamagic_feats", []() {
+		std::vector<int> result;
+		auto mmFeats = feats.GetMetamagicFeats();
+		for (auto &&feat : mmFeats) {
+			result.push_back(static_cast<int>(feat));
+		}
+		return result;
+	});
+
 	m.def("GetModifierFileList", [](){
 		auto result = std::vector<std::string>();
 		TioFileList flist;
@@ -555,7 +564,9 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("min_target", &SpellEntry::minTarget)
 		.def_readwrite("max_target", &SpellEntry::maxTarget)
 		.def_readwrite("mode_target", &SpellEntry::modeTargetSemiBitmask)
-		.def("is_base_mode_target", &SpellEntry::IsBaseModeTarget)
+		.def("is_base_mode_target", [](SpellEntry &spEntry, int type)->bool {
+		    return spEntry.IsBaseModeTarget(static_cast<UiPickerType>(type));
+		})
 		.def("get_level_specs", [](SpellEntry &spEntry)->std::vector<SpellEntryLevelSpec> {
 			auto result = std::vector<SpellEntryLevelSpec>();
 			if (!spEntry.spellEnum)
@@ -584,6 +595,9 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			.def_readwrite("caster_level", &SpellPacketBody::casterLevel)
 			.def_readwrite("loc", &SpellPacketBody::aoeCenter)
 			.def_readwrite("caster", &SpellPacketBody::caster)
+			.def("get_spell_casting_class", [](SpellPacketBody&pkt) {
+				return static_cast<int>(spellSys.GetCastingClass(pkt.spellClass));
+				})
 			.def("get_metamagic_data", [](SpellPacketBody&pkt) {
 				return pkt.metaMagicData;
 			})
@@ -825,7 +839,11 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("range_bonus", &EvtObjRangeIncrementBonus::rangeBonus, "The Bonus to add to the weapon's range increment")
 		;
 
-	
+	py::class_<EvtObjDealingSpellDamage, DispIO>(m, "EvtObjDealingSpellDamage", "Dealing damage from a spell.")
+		.def_readwrite("damage_packet", &EvtObjDealingSpellDamage::damage, "Damage Packet.")
+		.def_readwrite("target", &EvtObjDealingSpellDamage::target, "The target of the spell.")
+		.def_readwrite("spell_packet", &EvtObjDealingSpellDamage::spellPkt, "Spell packet.")
+		;
 
 }
 
@@ -936,7 +954,7 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 		pbEvtObj = py::cast(static_cast<DispIoSavingThrow*>(args.dispIO));
 		break;
 
-
+	case dispTypeDealingDamageWeaponlikeSpell:
 	case dispTypeDealingDamage:
 	case dispTypeTakingDamage:
 	case dispTypeDealingDamage2:
@@ -1073,6 +1091,10 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 
 	case dispRangeIncrementBonus:
 		pbEvtObj = py::cast(static_cast<EvtObjRangeIncrementBonus*>(args.dispIO));
+		break;
+
+	case dispTypeDealingDamageSpell:
+		pbEvtObj = py::cast(static_cast<EvtObjDealingSpellDamage*>(args.dispIO));
 		break;
 
 	case dispTypeConditionAdd: // these are actually null

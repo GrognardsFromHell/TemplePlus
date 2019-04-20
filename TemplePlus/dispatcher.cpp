@@ -756,6 +756,17 @@ void DispatcherSystem::DispIoDamageInit(DispIoDamage* dispIoDamage)
 
 }
 
+void DispatcherSystem::DispatchSpellDamage(objHndl obj, DamagePacket* damage, objHndl target, SpellPacketBody *spellPkt)
+{
+	auto _dispatcher = objects.GetDispatcher(obj);
+	if (!dispatch.dispatcherValid(_dispatcher)) return;
+	EvtObjDealingSpellDamage dispIo;
+	dispIo.damage = damage;
+	dispIo.spellPkt = spellPkt;
+	dispIo.target = target;
+	DispatcherProcessor(_dispatcher, dispTypeDealingDamageSpell, 0, &dispIo);
+}
+
 int32_t DispatcherSystem::DispatchDamage(objHndl objHnd, DispIoDamage* dispIoDamage, enum_disp_type dispType, D20DispatcherKey key)
 {
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
