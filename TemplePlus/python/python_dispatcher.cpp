@@ -1097,6 +1097,10 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 		pbEvtObj = py::cast(static_cast<EvtObjDealingSpellDamage*>(args.dispIO));
 		break;
 
+	case dispTypeMetaMagicMod:
+		pbEvtObj = py::cast(static_cast<EvtObjMetaMagic*>(args.dispIO));
+		break;
+
 	case dispTypeConditionAdd: // these are actually null
 	case dispTypeConditionRemove:
 	case dispTypeConditionRemove2:
