@@ -1261,6 +1261,10 @@ void UiChar::ShowForCritter(UiCharDisplayType type, objHndl handle) {
 	SetCritter(handle);
 }
 
+objHndl UiChar::GetCritter(){ // originally 0x10144050
+	return mCurrentCritter;
+}
+
 void UiChar::SetCritter(objHndl handle) {
 	static auto ui_show_charui = temple::GetPointer<void(objHndl)>(0x101499E0);
 	ui_show_charui(handle);
@@ -1312,6 +1316,24 @@ void CharUiSystem::apply(){
 	orgMemorizeSpellMsg = replaceFunction(0x101B9360, MemorizeSpellMsg);
 	replaceFunction(0x101B2EE0, IsSpecializationSchoolSlot);
 	orgSpellsShow = replaceFunction(0x101B5D80, SpellsShow);
+
+	static BOOL(__cdecl* orgMetamagicBtnMsg)(int, TigMsg&) = replaceFunction<BOOL(__cdecl)(int, TigMsg&)>(0x101BA580, [](int widId, TigMsg& msg) {
+		auto msgType = msg.type;
+		if (msgType != TigMsgType::WIDGET){
+			return TRUE;
+		}
+		auto &msgWidget = (TigMsgWidget&)msg;
+		if (msgWidget.widgetEventType != TigMsgWidgetEvent::MouseReleased ){
+			return TRUE;
+		}
+		auto handle = uiSystems->GetChar().GetCritter();
+		if (!feats.HasMetamagicFeat(handle)){
+			return TRUE;
+		}
+
+		return orgMetamagicBtnMsg(widId, msg);
+
+	});
 
 	// UiCharSpellGetScrollbarY  has bug when called from Spellbook, it receives the first tab's scrollbar always
 	writeCall(0x101BA5D9, HookedCharSpellGetSpellbookScrollbarY);

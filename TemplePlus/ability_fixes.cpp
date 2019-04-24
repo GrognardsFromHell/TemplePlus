@@ -31,8 +31,11 @@ public:
 	static int CombatExpertiseAcBonus(DispatcherCallbackArgs args);
 	static int TacticalAbusePrevention(DispatcherCallbackArgs args); // Combat Expertise / Fight Defensively
 	
+	static int SpellFocusDcMod(DispatcherCallbackArgs args);
 
 	void apply() override {
+
+		//replaceFunction(0x100FC050, SpellFocusDcMod);
 
 		replaceFunction(0x100F7ED0, TacticalAbusePrevention);
 		replaceFunction(0x100F7E70, CombatExpertiseAcBonus);
@@ -369,5 +372,16 @@ int AbilityConditionFixes::TacticalAbusePrevention(DispatcherCallbackArgs args)
 		return 0;
 	}
 	args.SetCondArg(1, 1);
+	return 0;
+}
+
+int AbilityConditionFixes::SpellFocusDcMod(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIoTypeBonusListAndSpellEntry, DispIOBonusListAndSpellEntry);
+	auto feat = (feat_enums)args.GetCondArg(0);
+	auto spellSchool = dispIo->spellEntry->spellSchoolEnum - 1;
+	if ( feat - FEAT_SPELL_FOCUS_ABJURATION == spellSchool || feat - FEAT_GREATER_SPELL_FOCUS_ABJURATION == spellSchool){
+		dispIo->bonList->AddBonusFromFeat(1, 0, 114, feat);
+	}
 	return 0;
 }

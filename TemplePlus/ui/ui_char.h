@@ -96,6 +96,7 @@ public:
 	void ShowLooting();
 
 	void ShowForCritter(UiCharDisplayType type, objHndl handle);
+	objHndl GetCritter();
 	void SetCritter(objHndl handle);
 
 	void Hide() {
