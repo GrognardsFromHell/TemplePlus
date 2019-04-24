@@ -603,7 +603,19 @@ uint32_t LegacyFeatSystem::HasFeatCountByClass(objHndl objHnd, feat_enums featEn
 uint32_t LegacyFeatSystem::HasFeatCountByClass(objHndl objHnd, feat_enums featEnum)
 {
 	return HasFeatCountByClass(objHnd, featEnum, (Stat)0, 0,0,0,0);
-};
+}
+bool LegacyFeatSystem::HasMetamagicFeat(objHndl handle)
+{
+	auto mmFeatList = temple::GetRef<feat_enums[9]>(0x102BFC30);
+	for (auto i=0; i< 9; i++){
+		if (HasFeatCountByClass(handle, mmFeatList[i])){
+			return true;
+		}
+			
+	}
+	return false;
+}
+;
 
 uint32_t LegacyFeatSystem::FeatListGet(objHndl objHnd, feat_enums* listOut, Stat classBeingLevelled, feat_enums rangerSpecFeat)
 {

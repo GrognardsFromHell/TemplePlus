@@ -133,6 +133,8 @@ struct LegacyFeatSystem : temple::AddressTable
 	uint32_t HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classEnum, uint32_t rangerSpecializationFeat, uint32_t newDomain1, uint32_t newDomain2, uint32_t alignmentChoiceNew);
 	uint32_t HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classEnum, uint32_t rangerSpecializationFeat);
 	uint32_t HasFeatCountByClass(objHndl objHnd, feat_enums featEnum);
+	bool HasMetamagicFeat(objHndl handle);
+
 	uint32_t FeatListElective(objHndl objHnd, feat_enums * listOut);
 	uint32_t FeatListGet(objHndl objHnd, feat_enums * listOut, Stat classBeingLevelled, feat_enums rangerSpecFeat);
 	uint32_t FeatExistsInArray(feat_enums featCode, feat_enums * featArray, uint32_t featArrayLen);
@@ -168,6 +170,7 @@ struct LegacyFeatSystem : temple::AddressTable
 
 	bool IsNonCore(feat_enums feat);
 	void DoForAllFeats(void (__cdecl*cb)(int featEnum));
+	
 	uint32_t rangerArcheryFeats[4 * 2 + 100];
 	uint32_t rangerTwoWeaponFeats[4 * 2 + 100];
 
