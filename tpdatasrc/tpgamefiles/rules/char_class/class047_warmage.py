@@ -17,7 +17,7 @@ def GetClassDefinitionFlags():
 	return CDF_BaseClass
 
 def GetClassHelpTopic():
-	return "TAG_WARMAGE"
+	return "TAG_WARMAGES"
 	
 classEnum = stat_level_warmage
 

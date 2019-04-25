@@ -64,18 +64,13 @@ classSpecObj.AddHook(ET_OnLevelupSystemEvent, EK_LVL_Spells_Finalize, OnLevelupS
 
 # Warmage Edge
 # Here is how this complicated ability is implimented.  First it is increated by a critical but not empower
-# Second multi target spells will only get the benefit once.  This will effect the first one to do damage.
+# Second multi target spells will only get the benefit once.  This will effect the first target that takes damage.
 # Third area area effect spells get the benefit against each object in their area of effect one time (ice
 # storm for example only gets the bonus on the bludgeoning damage).  Fourth multi round spells can get the 
 # benefit each round.
 
-# List of who has been effected by the the last spell that caused damage.  Not a prefect solution but this should
-# work fairly well.
-effectedList = list()
-
 def WarmageBeginRound(attachee, args, evt_obj):
 	args.set_arg(0, 0)
-	effectedList[:] = []
 	return 0
 
 def WarmageEdgeOnSpellDamage(attachee, args, evt_obj):
@@ -85,24 +80,19 @@ def WarmageEdgeOnSpellDamage(attachee, args, evt_obj):
 	if spellCastingClass != stat_level_warmage:
 		return 0
 	
-	#Clear the effected list if this is a new spell
 	prevSpellID = args.get_arg(0)
 	spellID = evt_obj.spell_packet.spell_id
 	
-	if prevSpellID != spellID:
-		effectedList[:] = []
-	
 	spEntry = tpdp.SpellEntry(evt_obj.spell_packet.spell_enum)
-	multiTarget = spEntry.is_base_mode_target(MODE_TARGET_MULTI)  	
+	multiTarget = spEntry.is_base_mode_target(MODE_TARGET_MULTI)
 	target = evt_obj.target
 	
 	if multiTarget:
-		#No bonus if the list is non empty
-		if effectedList:
+		#If the same multi target is doing damage again, no bonus
+		if prevSpellID == spellID:
 			return 0
-	else:
-		#Check if this opponent has been effected by this casting
-		if target in effectedList:
+	elif evt_obj.spell_packet.spell_enum != spell_melfs_acid_arrow: #Always give the bonus to acid arrow
+		if target.d20_query_with_data("Warmage Edge Damage Taken", spellID):
 			return 0
 	
 	int = attachee.stat_level_get(stat_intelligence)
@@ -116,15 +106,32 @@ def WarmageEdgeOnSpellDamage(attachee, args, evt_obj):
 		evt_obj.damage_packet.bonus_list.add_from_feat(intMod, 0, 137, "Warmage Edge")
 		
 	args.set_arg(0, spellID)
-	effectedList.append(target)
-		
-	#Add the target to the list of targets effected this round
+	target.condition_add_with_args("Warmage Edge Damage", spellID)
+	
 	return 0
 		
 warmageEdge = PythonModifier("Warmage Edge", 2) #Previous Spell ID, Spare
 warmageEdge.MapToFeat("Warmage Edge")
 warmageEdge.AddHook(ET_OnDispatchSpellDamage, EK_NONE, WarmageEdgeOnSpellDamage, ())
 warmageEdge.AddHook(ET_OnBeginRound, EK_NONE, WarmageBeginRound, ())
+
+#Warmage edge damage effect
+
+def WarmageDamageBeginRound(attachee, args, evt_obj):
+	spellID = args.get_arg(0)
+	args.condition_remove() #Always disapears at the begining of the round
+	return 0
+	
+def TakenWarmageEdgeDamageFromSpellQuery(attachee, args, evt_obj):
+	spellID = args.get_arg(0)
+	querySpellID = evt_obj.data1
+	if spellID == querySpellID:
+		evt_obj.return_val = 1
+	return 0
+
+warmageEdgeDamage = PythonModifier("Warmage Edge Damage", 2, False) #Previous Spell ID, Spare
+warmageEdgeDamage.AddHook(ET_OnBeginRound, EK_NONE, WarmageDamageBeginRound, ())
+warmageEdgeDamage.AddHook(ET_OnD20PythonQuery, "Warmage Edge Damage Taken", TakenWarmageEdgeDamageFromSpellQuery, ())
 
 #Armored Mage
 
