@@ -1,0 +1,5 @@
+name: Warmage Edge
+flags: 8
+prereqs:
+description: Whenever a warmage casts a spell that deals hit point damage, he adds his Intelligence bonus (if any) to the amount of damage dealt.  The bonus from the warmage edge special ability applies only to spells that he casts as a warmage.  A single spell can never gain this extra damage more than once per casting.  If a spell deals damage for more than 1 round, it deals this extra damage in each round.
+prereq descr: Warmage level 1

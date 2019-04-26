@@ -2986,6 +2986,7 @@ spell_rope_trick = 405
 spell_rusting_grasp = 406
 spell_sanctuary = 407
 spell_scare = 408
+spell_scorching_ray = 733
 spell_screen = 409
 spell_scrying = 410
 spell_sculpt_sound = 411
@@ -3234,6 +3235,7 @@ stat_level_frost_mage = 43
 stat_level_artificer = 44
 stat_level_abjurant_champion = 45
 stat_level_scout = 46
+stat_level_warmage = 47
 
 stat_level_psion = 58
 stat_level_psychic_warrior = 59
@@ -3475,6 +3477,7 @@ ET_OnMetaMagicMod = 93
 ET_OnSpecialAttack = 94
 ET_OnConfirmCriticalBonus = 95
 ET_OnRangeIncrementBonus = 96
+ET_OnDispatchSpellDamage = 97
 
 # Event Keys
 

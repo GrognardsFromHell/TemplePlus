@@ -1183,6 +1183,11 @@ bool LegacyFeatSystem::IsMetamagicFeat(feat_enums feat)
 	return metamagicFeats.find(feat) != metamagicFeats.end();
 }
 
+std::vector<feat_enums> LegacyFeatSystem::GetMetamagicFeats()
+{
+	return std::vector(metamagicFeats.begin(), metamagicFeats.end());
+}
+
 int LegacyFeatSystem::IsFeatPartOfMultiselect(feat_enums feat)
 {
 	if (feat > NUM_FEATS){

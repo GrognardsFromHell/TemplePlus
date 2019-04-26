@@ -308,6 +308,9 @@ void Damage::DealSpellDamage(objHndl tgt, objHndl attacker, const Dice& dice, Da
 		evtObjDam.damage.flags |= 2; // empowered
 	if (mmData.metaMagicFlags & 1)
 		evtObjDam.damage.flags |= 1; // maximized
+
+	dispatch.DispatchSpellDamage(attacker, &evtObjDam.damage, tgt, &spPkt);
+
 	temple::GetRef<int>(0x10BCA8AC) = 0; // is weapon damage (used in logbook for record holding)
 
 	DamageCritter(attacker, tgt, evtObjDam);
@@ -521,13 +524,9 @@ int Damage::DealWeaponlikeSpellDamage(objHndl tgt, objHndl attacker, const Dice 
 		uiLogbook.IncreaseCritHits(attacker);
 	}
 
-
-
 	dispatch.DispatchDamage(attacker, &evtObjDam, dispTypeDealingDamageWeaponlikeSpell, DK_NONE);
-
+	dispatch.DispatchSpellDamage(attacker, &evtObjDam.damage, tgt, &spPkt);
 	
-
-
 	DamageCritter(attacker, tgt, evtObjDam);
 
 	return -1;

@@ -151,6 +151,7 @@ struct LegacyFeatSystem : temple::AddressTable
 	//Metamgic feats (subset of magic feats)
 	void AddMetamagicFeat(feat_enums feat);
 	bool IsMetamagicFeat(feat_enums feat);
+	std::vector<feat_enums> GetMetamagicFeats();
 
 	int IsFeatRacialOrClassAutomatic(feat_enums feat);  // feats automatically granted (cannot be manually selected at levelup)
 	int IsClassFeat(feat_enums feat);
