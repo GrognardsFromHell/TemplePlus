@@ -31,7 +31,7 @@ struct DispIoEffectTooltip; // 24
 struct EvtObjSpellCaster; // 34;
 struct EvtObjActionCost; // 35
 struct D20Actn;
-
+struct DamagePacket;
 
 struct SpellEntry;
 
@@ -122,6 +122,7 @@ struct DispatcherSystem : temple::AddressTable
 
 	void DispIoDamageInit(DispIoDamage *dispIoDamage);
 	int32_t DispatchDamage(objHndl objHnd, DispIoDamage* dispIoDamage, enum_disp_type enumDispType, D20DispatcherKey d20DispatcherKey);
+	void DispatchSpellDamage(objHndl obj, DamagePacket* damage, objHndl target, SpellPacketBody *spellPkt);
 	int DispatchD20ActionCheck(D20Actn* d20Actn, TurnBasedStatus* turnBasedStatus, enum_disp_type dispType);
 	int Dispatch60GetAttackDice(objHndl obj, DispIoAttackDice * dispIo);
 
@@ -557,6 +558,14 @@ struct EvtObjRangeIncrementBonus : DispIO // type 37 (NEW!)
 {
 	objHndl weaponUsed = objHndl::null;
 	double rangeBonus = 0.0;
+};
+
+struct EvtObjDealingSpellDamage : DispIO // type 38 (NEW!)
+{
+	//BonusList* bonusList = nullptr;
+	DamagePacket* damage = nullptr;
+	SpellPacketBody* spellPkt = nullptr;
+	objHndl target = objHndl::null;
 };
 
 struct EvtObjActionCost: DispIO
