@@ -164,6 +164,9 @@ public:
 	uint32_t ItemWorthAdjustedForCasterLevel(objHndl objHndItem, uint32_t casterLevelNew);
 	uint32_t CraftedWandWorth(objHndl item, int casterLevelNew);
 	bool ScribedScrollSpellGet(objHndl item, SpellStoreData& spellData, int * spellLevelBase = nullptr);
+	int ScribedScrollSpellLevel(objHndl item);
+	int ScribedScrollCasterLevel(objHndl item);
+	uint32_t ScribedScrollWorth(objHndl item, int casterLevelNew);
 	int GetMaxSpellLevelFromCasterLevel(int cl);
 
 	bool IsWeaponBonus(int effIdx);

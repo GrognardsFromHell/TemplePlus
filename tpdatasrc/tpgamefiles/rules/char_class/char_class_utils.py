@@ -31,7 +31,16 @@ def GetHighestArcaneClass( attachee ):
 
 def GetHighestDivineClass( attachee ):
 	return attachee.highest_divine_class
-		
+
+def GetBaseCasterLevel(caster_levels, class_level):
+	if classLvl >= len(caster_levels):
+		base_cl = caster_levels[-1]
+	elif classLvl < 1:
+		base_cl = caster_levels[0]
+	else:
+		base_cl = caster_levels[classLvl]
+	return base_cl
+	
 def GetSpellsKnownAddedCount( spells_known, spellListLvl, spellLvl):
 	highestEntry = -1
 	newNumKnown = -999

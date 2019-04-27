@@ -56,7 +56,7 @@ std::map<int, std::vector<int>> PythonClassSpecIntegration::GetSpellsPerDay(int 
 {
 	auto classSpecEntry = mScripts.find(classEnum);
 	if (classSpecEntry == mScripts.end())
-		return std::map<int, std::vector<int>>();;
+		return std::map<int, std::vector<int>>();
 
 	auto result = RunScriptMapResult(classSpecEntry->second.id, (EventId)ClassSpecFunc::GetSpellsPerDay, nullptr);
 
@@ -87,6 +87,17 @@ Stat PythonClassSpecIntegration::GetSpellDcStat(int classEnum)
 	if (classSpecEntry == mScripts.end())
 		return stat_wisdom;
 	return  (Stat)RunScriptDefault0(classSpecEntry->second.id, (EventId)ClassSpecFunc::GetSpellDcStat, nullptr);
+}
+
+std::vector<int> PythonClassSpecIntegration::GetCasterLevels(int classEnum)
+{
+	auto classSpecEntry = mScripts.find(classEnum);
+	if (classSpecEntry == mScripts.end())
+		return std::vector<int>();
+
+	auto result = RunScriptVectorResult(classSpecEntry->second.id, (EventId)ClassSpecFunc::GetCasterLevels, nullptr);
+
+	return result;
 }
 
 ClassDefinitionFlag PythonClassSpecIntegration::GetClassDefinitionFlags(int classEnum){
@@ -348,6 +359,7 @@ static std::map<ClassSpecFunc, std::string> classSpecFunctions = {
 	{ ClassSpecFunc::GetSpellSourceType,"GetSpellSourceType" },
 	{ ClassSpecFunc::GetSpellList,"GetSpellList" },
 	{ ClassSpecFunc::GetSpellsPerDay,"GetSpellsPerDay" },
+	{ ClassSpecFunc::GetCasterLevels,"GetCasterLevels" },
 	{ ClassSpecFunc::GetSpellConditionName,"GetSpellCasterConditionName" },
 	{ ClassSpecFunc::GetSpellDeterminingStat,"GetSpellDeterminingStat" },
 	{ ClassSpecFunc::GetSpellDcStat,"GetSpellDcStat" },

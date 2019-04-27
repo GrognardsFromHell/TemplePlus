@@ -90,6 +90,11 @@ def GetSpellReadyingType():
 def GetSpellsPerDay():
 	return spells_per_day
 
+caster_levels = [ int(x / 2) if x >= 4 else 0 for x in range(1, 21) ]
+def GetCasterLevels(classLvl):
+	return caster_levels
+
+
 def GetSpellDeterminingStat():
 	return stat_wisdom
 

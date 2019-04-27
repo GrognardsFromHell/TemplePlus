@@ -313,6 +313,50 @@ int D20ClassSystem::GetMaxSpellLevel(Stat classEnum, int characterLvl)
 	return spellsVector.size() - 1; // first slot corresponds to level 0 spells
 }
 
+int D20ClassSystem::GetCasterLevel(Stat classEnum, int classLvl){
+	auto classSpec = classSpecs.find(classEnum);
+	if (classSpec == classSpecs.end())
+		return -1;
+
+	std::vector<int> &casterLvl = classSpec->second.casterLvl;
+
+	if (casterLvl.size() <= 0){
+		return -1;
+	}
+	if (classLvl >= casterLvl.size()){
+		return casterLvl[casterLvl.size() - 1];
+	}
+	if (classLvl < 1) {
+		return -1;
+	}
+	return casterLvl[classLvl-1];
+}
+
+int D20ClassSystem::GetMinCasterLevelForSpellLevel(Stat classEnum, int spellLevel){
+	auto result = -1;
+
+	auto classSpec = classSpecs.find(classEnum);
+	if (classSpec == classSpecs.end())
+		return -1;
+
+	auto &spellsPerDay = classSpec->second.spellsPerDay;
+
+	auto minClassLvl = 999;
+	for (auto it : spellsPerDay) {
+		auto cl = it.first;
+		if (cl > minClassLvl)
+			continue;
+		auto &spellsVector = it.second;
+		int maxSpellLvl = (int)spellsVector.size() - 1;
+		if (maxSpellLvl >= spellLevel && spellsVector[maxSpellLvl] >= 0){
+			minClassLvl = it.first;
+		}
+	}
+	if (minClassLvl == 999)
+		return -1;
+	return GetCasterLevel(classEnum, minClassLvl);
+}
+
 std::string D20ClassSystem::GetSpellCastingCondition(Stat classEnum){
 	auto result = std::string();
 
@@ -470,6 +514,7 @@ void D20ClassSystem::GetClassSpecs(){
 			if (classSpec.spellsPerDay.size()){
 				classSpec.spellStat = pythonClassIntegration.GetSpellDeterminingStat(it);
 				classSpec.spellDcStat = pythonClassIntegration.GetSpellDcStat(it);
+				classSpec.casterLvl = pythonClassIntegration.GetCasterLevels(it);
 			}
 
 			static std::map<SpellListType, Stat> spellListMaps = {

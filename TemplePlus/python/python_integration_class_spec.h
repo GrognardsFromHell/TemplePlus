@@ -22,6 +22,7 @@ enum class ClassSpecFunc : int {
 	GetSpellSourceType,
 	GetSpellList,
 	GetSpellsPerDay,
+	GetCasterLevels,
 	GetSpellConditionName,
 	GetSpellDeterminingStat,
 	GetSpellDcStat,
@@ -73,6 +74,7 @@ public:
 	std::string GetSpellCastingConditionName(int classEnum);
 	Stat GetSpellDeterminingStat(int classEnum);
 	Stat GetSpellDcStat(int classEnum);
+	std::vector<int> GetCasterLevels(int classEnum);
 
 	bool IsEnabled(int classEnum);
 	bool IsClassSkill(int classCode, int skillEnum);
@@ -91,6 +93,7 @@ public:
 	void LevelupInitSpellSelection(objHndl handle, Stat classEnum, int classLvlNew = -1, int classLvlIncrease = 1);
 	bool LevelupSpellsCheckComplete(objHndl handle, Stat classEnum);
 	void LevelupSpellsFinalize(objHndl handle, Stat classEnum, int classLvlNew = -1);
+	
 
 protected:
 	const char* GetFunctionName(EventId evt) override;

@@ -2127,7 +2127,11 @@ void _FeatConditionsRegister()
 
 	// Scribe Scroll
 	static CondStructNew scribeScroll("Scribe Scroll", 0);
-	scribeScroll.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatScribeScrollRadialMenu);
+	//scribeScroll.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatScribeScrollRadialMenu);
+	scribeScroll.AddHook(dispTypeRadialMenuEntry, DK_NONE, [](DispatcherCallbackArgs args){
+		conds.AddTo(args.objHndCaller, "Scribe Scroll Level Set", { 1, 0 });
+		return 0;
+	});
 	scribeScroll.AddToFeatDictionary(FEAT_SCRIBE_SCROLL);
 	
 	// Forge Ring
@@ -2646,10 +2650,17 @@ void ConditionSystem::RegisterNewConditions()
 	preferOneHanded.AddHook(dispTypeD20Query, DK_QUE_Is_Preferring_One_Handed_Wield, genericCallbacks.PreferOneHandedWieldQuery);
 	preferOneHanded.AddHook(dispTypeRadialMenuEntry, DK_NONE, genericCallbacks.PreferOneHandedWieldRadialMenu);
 
-	//mCondCraftWandLevelSet = 
-	static CondStructNew craftWandSetLev("Craft Wand Level Set", 2);
-	craftWandSetLev.AddHook(dispTypeD20Query, DK_QUE_Craft_Wand_Spell_Level, QueryRetrun1GetArgs, &craftWandSetLev, 0);
-	craftWandSetLev.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatCraftWandRadial);
+	{
+		//mCondCraftWandLevelSet = 
+		static CondStructNew craftWandSetLev("Craft Wand Level Set", 2);
+		craftWandSetLev.AddHook(dispTypeD20Query, DK_QUE_Craft_Wand_Spell_Level, QueryRetrun1GetArgs, &craftWandSetLev, 0);
+		craftWandSetLev.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatCraftWandRadial);
+	}
+	{
+		static CondStructNew scribeScrollSetLev("Scribe Scroll Level Set", 2);
+		scribeScrollSetLev.AddHook(dispTypeD20Query, DK_QUE_Scribe_Scroll_Spell_Level, QueryRetrun1GetArgs, &scribeScrollSetLev, 0);
+		scribeScrollSetLev.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatScribeScrollRadialMenu);
+	}
 
 	// Aid Another
 	mCondAidAnother = new CondStructNew();
@@ -5230,7 +5241,28 @@ int ClassAbilityCallbacks::FeatBrewPotionRadialMenu(DispatcherCallbackArgs args)
 
 int ClassAbilityCallbacks::FeatScribeScrollRadialMenu(DispatcherCallbackArgs args)
 {
-	return ItemCreationBuildRadialMenuEntry(args, ScribeScroll, "TAG_SCRIBE_SCROLL", 5067);
+	// return ItemCreationBuildRadialMenuEntry(args, ScribeScroll, "TAG_SCRIBE_SCROLL", 5067);
+	if (combatSys.isCombatActive()) { return 0; }
+	MesLine mesLine;
+	RadialMenuEntry radMenuScribeScroll;
+	mesLine.key = 5067;
+	mesFuncs.GetLine_Safe(*combatSys.combatMesfileIdx, &mesLine);
+	radMenuScribeScroll.text = (char*)mesLine.value;
+	radMenuScribeScroll.d20ActionType = D20A_ITEM_CREATION;
+	radMenuScribeScroll.d20ActionData1 = ScribeScroll;
+	radMenuScribeScroll.helpId = ElfHash::Hash("TAG_SCRIBE_SCROLL");
+
+	int newParent = radialMenus.AddParentChildNode(args.objHndCaller, &radMenuScribeScroll, radialMenus.GetStandardNode(RadialMenuStandardNode::Feats));
+
+
+	auto setWandLevelMaxArg = min(20, critterSys.GetCasterLevel(args.objHndCaller));
+	RadialMenuEntrySlider setScrollLevel(6017, 1, setWandLevelMaxArg, args.GetCondArgPtr(0), 6019, ElfHash::Hash("TAG_SCRIBE_SCROLL"));
+	radialMenus.AddChildNode(args.objHndCaller, &setScrollLevel, newParent);
+
+	RadialMenuEntryAction useCraftWand(5067, D20A_ITEM_CREATION, ItemCreationType::ScribeScroll, "TAG_SCRIBE_SCROLL");
+	radialMenus.AddChildNode(args.objHndCaller, &useCraftWand, newParent);
+
+	return 0;
 };
 
 int ClassAbilityCallbacks::FeatCraftWandRadial(DispatcherCallbackArgs args){

@@ -116,6 +116,10 @@ def GetSpellReadyingType():
 def GetSpellsPerDay():
 	return spells_per_day
 
+caster_levels = range(1, 21)
+def GetCasterLevels(classLvl):
+	return caster_levels
+
 def GetSpellDeterminingStat():
 	return stat_charisma
 

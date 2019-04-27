@@ -379,70 +379,6 @@ int UiItemCreation::CraftedWandSpellLevel(objHndl objHndItem)
 	if (!CraftedWandSpellGet(objHndItem, wandSpell))
 		wandSpell.spellLevel = -1;
 	return wandSpell.spellLevel;
-
-	//auto spellData = objSystem->GetObject(objHndItem)->GetSpell(obj_f_item_spell_idx, 0);
-	//uint32_t spellLevelBasic = spellData.spellLevel;
-	//uint32_t spellLevelFinal = spellData.spellLevel;
-
-
-	//int casterLevelSet = (int) d20Sys.d20QueryReturnData(itemCreationCrafter, DK_QUE_Craft_Wand_Spell_Level);
-	//casterLevelSet = 2 * ((casterLevelSet + 1) / 2) - 1;
-	//if (casterLevelSet < 1)
-	//	casterLevelSet = 1;
-
-	//auto slotLevelSet = 1 + (casterLevelSet - 1)/ 2;
-	//if (spellLevelBasic == 0 && casterLevelSet <= 1)
-	//	slotLevelSet = 0;
-	//	
-	//
-
-	//// get data from caster - make this optional!
-
-	//uint32_t spellClassCodes[SPELL_ENUM_MAX_VANILLA] = { 0, };
-	//uint32_t spellLevels[SPELL_ENUM_MAX_VANILLA] = { 0, };
-	//uint32_t spellFoundNum = 0;
-	//int casterKnowsSpell = spellSys.spellKnownQueryGetData(itemCreationCrafter, spellData.spellEnum, spellClassCodes, spellLevels, &spellFoundNum);
-	//if (casterKnowsSpell){
-	//	uint32_t spellClassFinal = spellClassCodes[0];
-	//	spellLevelBasic = spellLevels[0];
-	//	spellLevelFinal = 0;
-	//	auto isClassSpell = !spellSys.isDomainSpell(spellClassCodes[0]);
-	//	
-	//	if (isClassSpell){
-	//		
-	//		spellLevelFinal = spellSys.GetMaxSpellSlotLevel(itemCreationCrafter, spellSys.GetCastingClass(spellClassCodes[0]), 0);
-	//	};
-
-	//	if (spellFoundNum > 1){
-	//		for (uint32_t i = 1; i < spellFoundNum; i++){
-	//			if (spellLevels[i] > spellLevelFinal){
-	//				spellData.classCode = spellClassCodes[i];
-	//				spellLevelFinal = spellLevels[i];
-	//			}
-	//			if (spellLevels[i] < spellLevelBasic){
-	//				spellLevelBasic = spellLevels[i];
-	//			}
-	//		}
-	//		spellData.spellLevel = spellLevelFinal;
-
-	//	}
-
-	//	spellData.spellLevel = spellLevelFinal; // that's the max possible at this point
-	//	if (slotLevelSet && slotLevelSet <= spellLevelFinal && slotLevelSet >= spellLevelBasic)
-	//		spellData.spellLevel = slotLevelSet;
-	//	else if (slotLevelSet  > spellLevelFinal)
-	//		spellData.spellLevel = spellLevelFinal;
-	//	else if (slotLevelSet < spellLevelBasic)
-	//		spellData.spellLevel = spellLevelBasic;
-	//	else if (spellLevelBasic == 0)
-	//	{
-	//		spellData.spellLevel = spellLevelBasic;
-	//	} 
-
-	//	spellLevelFinal = spellData.spellLevel;
-
-	//}
-	//return spellLevelFinal;
 }
 
 int UiItemCreation::CraftedWandCasterLevel(objHndl item)
@@ -476,7 +412,8 @@ bool UiItemCreation::CreateItemResourceCheck(objHndl crafter, objHndl objHndItem
 
 	// Scrolls
 	if (itemCreationType == ItemCreationType::ScribeScroll){
-		craftingCostCP = itemWorth / 2; // todo enhance with applied level etc.
+		itemWorth = ScribedScrollWorth(objHndItem, ScribedScrollCasterLevel(objHndItem));
+		craftingCostCP = itemWorth / 2;
 	}
 	// MAA
 	else if (itemCreationType == ItemCreationType::CraftMagicArmsAndArmor){
@@ -925,6 +862,14 @@ void UiItemCreation::CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, o
 
 	}
 	if (itemCreationType == ScribeScroll){
+		auto scrollSpell = obj->GetSpell(obj_f_item_spell_idx, 0);
+
+		obj->SetSpell(obj_f_item_spell_idx, 0, scrollSpell);
+		/*int casterLevelFinal = scrollSpell.spellLevel * 2 - 1;
+		if (casterLevelFinal < 1)
+			casterLevelFinal = 1;*/
+
+		return;
 		// do scroll specific stuff
 		// templeFuncs.Obj_Set_Field_32bit(objHndItem, obj_f_description, templeFuncs.CustomNameNew("Scroll of LOL"));
 	};
@@ -1455,133 +1400,46 @@ uint32_t UiItemCreation::ItemWorthAdjustedForCasterLevel(objHndl objHndItem, uin
 }
 
 uint32_t UiItemCreation::CraftedWandWorth(objHndl item, int casterLevelNew){
+
+	auto baseWorth = 750;
 	auto obj = objSystem->GetObject(item);
 
 	// which spell?
 	auto spellData = obj->GetSpell(obj_f_item_spell_idx, 0);
-	int spellLevelBase = (int)spellData.spellLevel;
+	// Calculate cost
+	int spellLevelSpec = spellData.spellLevel;
+	int casterLevelSpec = max(1, spellLevelSpec * 2 - 1);
+	int calcWorthSpecGp = (spellLevelSpec == 0) ? ((baseWorth/2) * casterLevelSpec) : (baseWorth * spellLevelSpec * casterLevelSpec);
+	int actualWorthSpec = obj->GetInt32(obj_f_item_worth);
+	int actualWorthSpecGp = actualWorthSpec / 100;
+	int materialCostCalc = max(0, actualWorthSpecGp - calcWorthSpecGp); // the protos.tab specs are calculated including material costs, and minimal caster level
+
+
+
 	// retrieve Spell Known data
+	int spellLevelBase;
 	CraftedWandSpellGet(item, spellData, &spellLevelBase);
+	auto casterLevelBase = max(1, spellLevelBase * 2 - 1);
+	auto casterClass = (Stat)spellSys.GetCastingClass(spellData.classCode);
+	auto minCasterLevel = (int)d20ClassSys.GetMinCasterLevelForSpellLevel(casterClass, spellLevelBase);
+	if (minCasterLevel >= 1) {
+		casterLevelBase = minCasterLevel;
+	}
 
 	// get base worth by class (default to protos.tab spec)
-	auto itemWorthBase = obj->GetInt32(obj_f_item_worth);
-
-	auto itemWorthBaseGp = itemWorthBase / 100;
-
-	switch (spellLevelBase){ // cost at minimum required caster level
-	case 0:
-		itemWorthBaseGp = 375; break;
-	case 1:
-		itemWorthBaseGp = 750; break;
-	case 2:
-		itemWorthBaseGp = 4500; break;
-	case 3:
-		itemWorthBaseGp = 11250; break;
-	case 4:
-	default:
-		itemWorthBaseGp = 21000; break;
-	}
-	itemWorthBase = itemWorthBaseGp * 100;
-	auto casterClass = (Stat)spellSys.GetCastingClass(spellData.classCode);
-	//auto minCasterLevel = (int)d20ClassSys.GetMinCasterLevelForSpellLevel(casterClass, spellLevelBase);
-	
-	
-	switch (casterClass){
-	case stat_level_cleric:
-	case stat_level_wizard:
-	case stat_level_druid:
-		switch (spellLevelBase){
-			case 0:
-				itemWorthBaseGp = 375; break;
-			case 1:
-				itemWorthBaseGp = 750; break;
-			case 2:
-				itemWorthBaseGp = 4500; break;
-			case 3:
-				itemWorthBaseGp = 11250; break;
-			case 4:
-			default:
-				itemWorthBaseGp = 21000; break;
-		}
-		break;
-	case stat_level_sorcerer:
-		switch (spellLevelBase) {
-		case 0:
-			itemWorthBaseGp = 375; break;
-		case 1:
-			itemWorthBaseGp = 750; break;
-		case 2:
-			itemWorthBaseGp = 6000; break;
-		case 3:
-			itemWorthBaseGp = 13500; break;
-		case 4:
-		default:
-			itemWorthBaseGp = 24000; break;
-		}
-		break;
-	case stat_level_bard:
-		switch (spellLevelBase) {
-		case 0:
-			itemWorthBaseGp = 375; break;
-		case 1:
-			itemWorthBaseGp = 1500; break;
-		case 2:
-			itemWorthBaseGp = 6000; break;
-		case 3:
-			itemWorthBaseGp = 15750; break;
-		case 4:
-		default:
-			itemWorthBaseGp = 30000; break;
-		}
-		break;
-	case stat_level_paladin:
-	case stat_level_ranger:
-		switch (spellLevelBase) {
-		case 0:
-			itemWorthBaseGp = 375; break;
-		case 1:
-			itemWorthBaseGp = 1500; break;
-		case 2:
-			itemWorthBaseGp = 6000; break;
-		case 3:
-			itemWorthBaseGp = 11250; break;
-		case 4:
-		default:
-			itemWorthBaseGp = 21000; break;
-		}
-		break;
-	default: // use Wizard-like
-		switch (spellLevelBase) {
-		case 0:
-			itemWorthBaseGp = 375; break;
-		case 1:
-			itemWorthBaseGp = 750; break;
-		case 2:
-			itemWorthBaseGp = 4500; break;
-		case 3:
-			itemWorthBaseGp = 11250; break;
-		case 4:
-		default:
-			itemWorthBaseGp = 21000; break;
-		}
-		break;
-	}
+	auto itemWorthBaseGp = (spellLevelBase == 0) ? ((baseWorth/2) * casterLevelBase) : (baseWorth  * casterLevelBase * spellLevelBase);
+	auto itemWorthBase = itemWorthBaseGp * 100 + materialCostCalc;
 
 
 	if (casterLevelNew == -1) {
 		return itemWorthBase;
 	}
 
-
-	auto casterLevelOld = spellLevelBase * 2 - 1;
-	if (casterLevelOld < 1)
-		casterLevelOld = 1;
-
-	if (spellLevelBase == 0 && casterLevelNew > casterLevelOld) {
+	if (spellLevelBase == 0 && casterLevelNew > casterLevelBase) {
 		return itemWorthBase * casterLevelNew;
 	}
-	if (casterLevelNew > casterLevelOld){
-		return (uint32_t)( (double)itemWorthBase * (double)casterLevelNew / casterLevelOld );
+	if (casterLevelNew > casterLevelBase) {
+		return (uint32_t)((double)itemWorthBase * (double)casterLevelNew / casterLevelBase);
 	}
 	return itemWorthBase;
 
@@ -1634,15 +1492,13 @@ bool UiItemCreation::ScribedScrollSpellGet(objHndl item, SpellStoreData & spellD
 			spellLevelBasic = spellLevelMinTemp;
 	}
 
-	auto characterLvl = objects.StatLevelGet(itemCreationCrafter, stat_level);
-
 	spellData.classCode = spellClassFinal;
 	spellData.spellLevel = spellLevelMax; // that's the max possible at this point
 
 
 										  // get Craft Wand Caster Level setting
-	int wandSpellLevetSet = (int)d20Sys.d20QueryReturnData(itemCreationCrafter, DK_QUE_Craft_Wand_Spell_Level);
-	int casterLevelSet = 2 * ((wandSpellLevetSet + 1) / 2) - 1; // {0,1,2} ? 1;  {3,4} ? 3 etc 
+	int scribeScrollLevelSet = (int)d20Sys.d20QueryReturnData(itemCreationCrafter, DK_QUE_Scribe_Scroll_Spell_Level);
+	int casterLevelSet = 2 * ((scribeScrollLevelSet + 1) / 2) - 1; // {0,1,2} ? 1;  {3,4} ? 3 etc 
 	if (casterLevelSet < 1)
 		casterLevelSet = 1;
 
@@ -1666,6 +1522,66 @@ bool UiItemCreation::ScribedScrollSpellGet(objHndl item, SpellStoreData & spellD
 	if (spellLevelBaseOut)
 		*spellLevelBaseOut = spellLevelBasic;
 	return true;
+}
+
+int UiItemCreation::ScribedScrollSpellLevel(objHndl item)
+{
+	SpellStoreData scrollSpell;
+	if (!ScribedScrollSpellGet(item, scrollSpell))
+		scrollSpell.spellLevel = -1;
+	return scrollSpell.spellLevel;
+}
+
+int UiItemCreation::ScribedScrollCasterLevel(objHndl item)
+{
+	int result = ScribedScrollSpellLevel(item);
+	if (result <= 1)
+		return 1;
+	return (result * 2) - 1;
+}
+
+uint32_t UiItemCreation::ScribedScrollWorth(objHndl item, int casterLevelNew)
+{
+	auto baseWorth = 25;
+	auto obj = objSystem->GetObject(item);
+
+	// which spell?
+	auto spellData = obj->GetSpell(obj_f_item_spell_idx, 0);
+	// Calculate cost
+	int spellLevelSpec    = spellData.spellLevel;
+	int casterLevelSpec   = max(1, spellLevelSpec * 2 - 1);
+	int calcWorthSpecGp   = (spellLevelSpec == 0) ? ((baseWorth / 2) * casterLevelSpec) : (baseWorth * spellLevelSpec * casterLevelSpec);
+	int actualWorthSpec   = obj->GetInt32(obj_f_item_worth);
+	int actualWorthSpecGp = actualWorthSpec / 100;
+	int materialCostCalc  = max(0, actualWorthSpecGp - calcWorthSpecGp); // the protos.tab specs are calculated including material costs, and minimal caster level
+
+	// retrieve Spell Known data (e.g. for Bards) and caster level (as modified by user selection)
+	int spellLevelBase;
+	ScribedScrollSpellGet(item, spellData, &spellLevelBase);
+	auto casterLevelBase = max(1,spellLevelBase * 2 - 1);
+	auto casterClass = (Stat)spellSys.GetCastingClass(spellData.classCode);
+	auto minCasterLevel = (int)d20ClassSys.GetMinCasterLevelForSpellLevel(casterClass, spellLevelBase);
+	if (minCasterLevel >= 1) {
+		casterLevelBase = minCasterLevel;
+	}
+
+	// get base worth by class (default to protos.tab spec)
+	auto itemWorthBaseGp = (spellLevelBase == 0) ? ((baseWorth / 2) * casterLevelBase) : (baseWorth  * casterLevelBase * spellLevelBase);
+	auto itemWorthBase = itemWorthBaseGp * 100 + materialCostCalc;
+	
+
+
+	if (casterLevelNew == -1) {
+		return itemWorthBase;
+	}
+
+	if (spellLevelBase == 0 && casterLevelNew > casterLevelBase) {
+		return itemWorthBase * casterLevelNew;
+	}
+	if (casterLevelNew > casterLevelBase) {
+		return (uint32_t)((double)itemWorthBase * (double)casterLevelNew / casterLevelBase);
+	}
+	return itemWorthBase;
 }
 
 static vector<objHndl> craftingProtoHandles[8];

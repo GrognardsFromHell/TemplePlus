@@ -77,6 +77,7 @@ struct D20ClassSpec {
 	SpellReadyingType spellMemorizationType;
 	SpellSourceType spellSourceType;
 	std::map<int, std::vector<int>> spellsPerDay; // index is class level, vector enumerates spells per day for each spell level
+	std::vector<int> casterLvl; // index is class level, value is basic caster level
 	Stat spellStat; // stat that determines maximum spell level
 	Stat spellDcStat = Stat::stat_strength; // stat that determines spell DC level
 };
@@ -108,6 +109,8 @@ public:
 	Stat GetSpellDcStat(Stat classEnum); // default - same as GetSpellStat
 	Stat GetDeityClass(Stat classEnum); // get effective class for deity selection
 	int GetMaxSpellLevel(Stat classEnum, int characterLvl);
+	int GetCasterLevel(Stat classEnum, int classLvl);
+	int GetMinCasterLevelForSpellLevel(Stat classEnum, int spellLevel);
 	std::string GetSpellCastingCondition(Stat classEnum);
 
 	void ClassPacketAlloc(ClassPacket *classPkt); // allocates the three IdxTables within ClassPacket
