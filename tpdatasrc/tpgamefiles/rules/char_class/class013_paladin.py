@@ -91,7 +91,7 @@ def GetSpellsPerDay():
 	return spells_per_day
 
 caster_levels = [ int(x / 2) if x >= 4 else 0 for x in range(1, 21) ]
-def GetCasterLevels(classLvl):
+def GetCasterLevels():
 	return caster_levels
 
 

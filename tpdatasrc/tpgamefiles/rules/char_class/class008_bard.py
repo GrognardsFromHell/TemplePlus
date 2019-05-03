@@ -117,7 +117,7 @@ def GetSpellsPerDay():
 	return spells_per_day
 
 caster_levels = range(1, 21)
-def GetCasterLevels(classLvl):
+def GetCasterLevels():
 	return caster_levels
 
 def GetSpellDeterminingStat():

@@ -383,10 +383,22 @@ int UiItemCreation::CraftedWandSpellLevel(objHndl objHndItem)
 
 int UiItemCreation::CraftedWandCasterLevel(objHndl item)
 {
-	int result = CraftedWandSpellLevel(item);
-	if (result <= 1)
+	// int spellLvl = CraftedWandSpellLevel(item);
+	SpellStoreData wandSpell;
+	if (!CraftedWandSpellGet(item, wandSpell))
+		wandSpell.spellLevel = -1;
+	if (wandSpell.spellLevel <= 1)
 		return 1;
-	return (result * 2) - 1;
+
+	auto spellLvl = wandSpell.spellLevel;
+	auto castingClass = spellSys.GetCastingClass(wandSpell.classCode);
+	auto minCasterLvl = (int)d20ClassSys.GetMinCasterLevelForSpellLevel(castingClass, spellLvl);
+	auto casterLvl = (spellLvl * 2) - 1; // TODO get this right for rangers/paladins... bleh
+
+	if (minCasterLvl >= 1 && casterLvl < minCasterLvl ){
+		return minCasterLvl;
+	}
+	return casterLvl;
 }
 
 bool UiItemCreation::CreateItemResourceCheck(objHndl crafter, objHndl objHndItem){
@@ -420,16 +432,14 @@ bool UiItemCreation::CreateItemResourceCheck(objHndl crafter, objHndl objHndItem
 		craftingCostCP = MaaCpCost( CRAFT_EFFECT_INVALID );
 	}
 	// Wands & Potions
+	else if (itemCreationType == ItemCreationType::CraftWand){
+		itemWorth = CraftedWandWorth(objHndItem, CraftedWandCasterLevel(objHndItem)); //ItemWorthAdjustedForCasterLevel(objHndItem, CraftedWandCasterLevel(objHndItem));
+		craftingCostCP = itemWorth / 2;
+	}
+	// Potions
 	else {
 		// current method for crafting stuff:
-		craftingCostCP =  itemWorth / 2;
-
-		if (itemCreationType == ItemCreationType::CraftWand){
-
-			itemWorth = CraftedWandWorth(objHndItem, CraftedWandCasterLevel(objHndItem)); //ItemWorthAdjustedForCasterLevel(objHndItem, CraftedWandCasterLevel(objHndItem));
-			craftingCostCP = itemWorth / 2;
-		}
-			
+		craftingCostCP =  itemWorth / 2;	
 	};
 
 	if ( ( (uint32_t)partyMoney ) < craftingCostCP){
@@ -935,7 +945,10 @@ void UiItemCreation::CreateItemDebitXPGP(objHndl crafter, objHndl objHndItem){
 	{
 		int itemWorth;
 		if (itemCreationType == ItemCreationType::CraftWand)
-			itemWorth = CraftedWandWorth(objHndItem, CraftedWandCasterLevel(objHndItem)); //ItemWorthAdjustedForCasterLevel(objHndItem, CraftedWandCasterLevel(objHndItem));
+			itemWorth = CraftedWandWorth(objHndItem, CraftedWandCasterLevel(objHndItem));
+		else if (itemCreationType == ItemCreationType::ScribeScroll){
+			itemWorth = ScribedScrollWorth(objHndItem, ScribedScrollCasterLevel(objHndItem));
+		}
 		else
 			itemWorth = objects.getInt32(objHndItem, obj_f_item_worth);
 		craftingCostCP = itemWorth / 2;
@@ -1045,6 +1058,10 @@ void UiItemCreation::ItemCreationCraftingCostTexts(int widgetId, objHndl objHndI
 	if (itemCreationType == CraftWand){
 		casterLevelNew = CraftedWandCasterLevel(objHndItem);
 		itemWorth = CraftedWandWorth(objHndItem, casterLevelNew);
+	}
+	else if (itemCreationType == ScribeScroll){
+		casterLevelNew = ScribedScrollCasterLevel(objHndItem);
+		itemWorth = ScribedScrollWorth(objHndItem, casterLevelNew);
 	}
 	
 
@@ -1406,18 +1423,13 @@ uint32_t UiItemCreation::CraftedWandWorth(objHndl item, int casterLevelNew){
 
 	// which spell?
 	auto spellData = obj->GetSpell(obj_f_item_spell_idx, 0);
-	// Calculate cost
-	int spellLevelSpec = spellData.spellLevel;
-	int casterLevelSpec = max(1, spellLevelSpec * 2 - 1);
-	int calcWorthSpecGp = (spellLevelSpec == 0) ? ((baseWorth/2) * casterLevelSpec) : (baseWorth * spellLevelSpec * casterLevelSpec);
-	int actualWorthSpec = obj->GetInt32(obj_f_item_worth);
-	int actualWorthSpecGp = actualWorthSpec / 100;
-	int materialCostCalc = max(0, actualWorthSpecGp - calcWorthSpecGp); // the protos.tab specs are calculated including material costs, and minimal caster level
 
+	SpellEntry spEntry(spellData.spellEnum);
+	int materialCost = spEntry.costGp * 50;
 
 
 	// retrieve Spell Known data
-	int spellLevelBase;
+	int spellLevelBase = spellData.spellLevel; // default value
 	CraftedWandSpellGet(item, spellData, &spellLevelBase);
 	auto casterLevelBase = max(1, spellLevelBase * 2 - 1);
 	auto casterClass = (Stat)spellSys.GetCastingClass(spellData.classCode);
@@ -1427,21 +1439,22 @@ uint32_t UiItemCreation::CraftedWandWorth(objHndl item, int casterLevelNew){
 	}
 
 	// get base worth by class (default to protos.tab spec)
-	auto itemWorthBaseGp = (spellLevelBase == 0) ? ((baseWorth/2) * casterLevelBase) : (baseWorth  * casterLevelBase * spellLevelBase);
-	auto itemWorthBase = itemWorthBaseGp * 100 + materialCostCalc;
+	auto itemWorthBaseGp = (spellLevelBase == 0) ? ((baseWorth / 2) * casterLevelBase) : (baseWorth  * casterLevelBase * spellLevelBase);
+	auto itemWorthBase = itemWorthBaseGp * 100; // +materialCost * 100;
+
 
 
 	if (casterLevelNew == -1) {
-		return itemWorthBase;
+		return itemWorthBase + materialCost * 100;
 	}
 
 	if (spellLevelBase == 0 && casterLevelNew > casterLevelBase) {
-		return itemWorthBase * casterLevelNew;
+		return itemWorthBase * casterLevelNew + materialCost * 100;
 	}
 	if (casterLevelNew > casterLevelBase) {
-		return (uint32_t)((double)itemWorthBase * (double)casterLevelNew / casterLevelBase);
+		return (uint32_t)((double)itemWorthBase * (double)casterLevelNew / casterLevelBase) + materialCost * 100;
 	}
-	return itemWorthBase;
+	return itemWorthBase + materialCost * 100;
 
 }
 
@@ -1534,10 +1547,27 @@ int UiItemCreation::ScribedScrollSpellLevel(objHndl item)
 
 int UiItemCreation::ScribedScrollCasterLevel(objHndl item)
 {
-	int result = ScribedScrollSpellLevel(item);
-	if (result <= 1)
+	// int result = ScribedScrollSpellLevel(item);
+	/*if (result <= 1)
 		return 1;
 	return (result * 2) - 1;
+	*/
+
+	SpellStoreData scrollSpell;
+	if (!ScribedScrollSpellGet(item, scrollSpell))
+		scrollSpell.spellLevel = -1;
+	if (scrollSpell.spellLevel <= 1)
+		return 1;
+
+	auto spellLvl = scrollSpell.spellLevel;
+	auto castingClass = spellSys.GetCastingClass(scrollSpell.classCode);
+	auto minCasterLvl = (int)d20ClassSys.GetMinCasterLevelForSpellLevel(castingClass, spellLvl);
+	auto casterLvl = (spellLvl * 2) - 1; // TODO get this right for rangers/paladins... bleh
+
+	if (minCasterLvl >= 1 && casterLvl < minCasterLvl) {
+		return minCasterLvl;
+	}
+	return casterLvl;
 }
 
 uint32_t UiItemCreation::ScribedScrollWorth(objHndl item, int casterLevelNew)
@@ -1548,15 +1578,12 @@ uint32_t UiItemCreation::ScribedScrollWorth(objHndl item, int casterLevelNew)
 	// which spell?
 	auto spellData = obj->GetSpell(obj_f_item_spell_idx, 0);
 	// Calculate cost
-	int spellLevelSpec    = spellData.spellLevel;
-	int casterLevelSpec   = max(1, spellLevelSpec * 2 - 1);
-	int calcWorthSpecGp   = (spellLevelSpec == 0) ? ((baseWorth / 2) * casterLevelSpec) : (baseWorth * spellLevelSpec * casterLevelSpec);
-	int actualWorthSpec   = obj->GetInt32(obj_f_item_worth);
-	int actualWorthSpecGp = actualWorthSpec / 100;
-	int materialCostCalc  = max(0, actualWorthSpecGp - calcWorthSpecGp); // the protos.tab specs are calculated including material costs, and minimal caster level
+	
+	SpellEntry spEntry(spellData.spellEnum);
+	int materialCost = spEntry.costGp;
 
 	// retrieve Spell Known data (e.g. for Bards) and caster level (as modified by user selection)
-	int spellLevelBase;
+	int spellLevelBase = spellData.spellLevel; // default value
 	ScribedScrollSpellGet(item, spellData, &spellLevelBase);
 	auto casterLevelBase = max(1,spellLevelBase * 2 - 1);
 	auto casterClass = (Stat)spellSys.GetCastingClass(spellData.classCode);
@@ -1567,21 +1594,21 @@ uint32_t UiItemCreation::ScribedScrollWorth(objHndl item, int casterLevelNew)
 
 	// get base worth by class (default to protos.tab spec)
 	auto itemWorthBaseGp = (spellLevelBase == 0) ? ((baseWorth / 2) * casterLevelBase) : (baseWorth  * casterLevelBase * spellLevelBase);
-	auto itemWorthBase = itemWorthBaseGp * 100 + materialCostCalc;
+	auto itemWorthBase = itemWorthBaseGp * 100; // +materialCost * 100;
 	
 
 
 	if (casterLevelNew == -1) {
-		return itemWorthBase;
+		return itemWorthBase + materialCost * 100;
 	}
 
 	if (spellLevelBase == 0 && casterLevelNew > casterLevelBase) {
-		return itemWorthBase * casterLevelNew;
+		return itemWorthBase * casterLevelNew + materialCost * 100;
 	}
 	if (casterLevelNew > casterLevelBase) {
-		return (uint32_t)((double)itemWorthBase * (double)casterLevelNew / casterLevelBase);
+		return (uint32_t)((double)itemWorthBase * (double)casterLevelNew / casterLevelBase) + materialCost * 100;
 	}
-	return itemWorthBase;
+	return itemWorthBase + materialCost * 100;
 }
 
 static vector<objHndl> craftingProtoHandles[8];
