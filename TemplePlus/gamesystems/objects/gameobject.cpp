@@ -46,7 +46,7 @@ bool GameObjectBody::IsStackable() const{
 			flags = GetItemFlags();
 			if ( (flags & OIF_IS_MAGICAL) && (flags & OIF_EXPIRES_AFTER_USE) )
 				return true;
-			break;
+			return false;
 		case obj_t_generic:
 			return GetInt32(obj_f_category) == 5; // jewelry / gems
 		case obj_t_armor:
