@@ -159,7 +159,7 @@ void TurnBasedSys::ArbitrateInitiativeConflicts()  {
 	if (N <= 1)
 		return;
 
-	for (auto i=0; i < N; i++){
+	for (auto i=0u; i < N; i++){
 		auto combatant    = combatSys.GetInitiativeListMember(i);
 		if (!combatant){
 			continue;
@@ -246,7 +246,7 @@ void TurnBasedSys::CreateInitiativeListWithParty(){
 	}
 
 	auto N = party.GroupListGetLen();
-	for (auto i=0; i < N; i++){
+	for (auto i=0u; i < N; i++){
 		auto partyMember = party.GroupListGetMemberN(i);
 		if (d20Sys.d20Query(partyMember, DK_QUE_EnterCombat)){
 			AddToInitiative(partyMember);
@@ -260,13 +260,40 @@ void TurnBasedSys::CreateInitiativeListWithParty(){
 
 void TurnBasedSys::ExecuteExitCombatScriptForInitiativeList(){
 	auto N = GetInitiativeListLength();
-	for (auto i = 0; i < N; i++){
+	for (auto i = 0u; i < N; i++){
 		auto combatant = groupInitiativeList->GroupMembers[i];
 		pythonObjIntegration.ExecuteObjectScript(combatant, combatant, ObjScriptEvent::ExitCombat);
 	}
 }
 
 void TurnBasedSys::TbCombatEnd(){
+
+	// Added in Temple+
+	// Enforcing exiting combat mode for critters
+	// Otherwise, there could be an infinite enter/exit combat loop for concealed enemy combatants:
+	// 1. AI would enter combat
+	// 2. AI could not approach party
+	// 3. AI was concealed
+	// 4. Combat ended (all unconcealed enemies far from party) - see LegacyCombatSys::AllCombatantsFarFromParty()
+	// 5. AI still in combat mode, would restart combat immediately
+	// 6. repeat
+	for (auto i = 0u; i < groupInitiativeList->GroupSize; i++) {
+		auto combatant = groupInitiativeList->GroupMembers[i];
+		if (!combatant) continue;
+		auto combatantObj = objSystem->GetObject(combatant);
+		auto critterFlags = critterSys.GetCritterFlags(combatant);
+		if (critterFlags & OCF_COMBAT_MODE_ACTIVE) {
+			combatantObj->SetInt32(obj_f_critter_flags, critterFlags & ~OCF_COMBAT_MODE_ACTIVE);
+		}
+		if (combatantObj->IsNPC()){
+			auto aiFlags = static_cast<AiFlag>(combatantObj->GetInt64(obj_f_npc_ai_flags64));
+			if (aiFlags & AiFlag::Fighting) {
+				combatantObj->SetInt64(obj_f_npc_ai_flags64, aiFlags & ~AiFlag::Fighting);
+			}
+		}
+		
+	}
+
 	groupInitiativeList->Reset();
 	auto gameTime = gameSystems->GetTimeEvent().GetTime();
 	auto &combatAbsoluteEndTimeInSeconds = temple::GetRef<int>(0x11E61538);
