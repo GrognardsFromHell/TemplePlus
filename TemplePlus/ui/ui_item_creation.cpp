@@ -390,9 +390,12 @@ int UiItemCreation::CraftedWandCasterLevel(objHndl item)
 	if (wandSpell.spellLevel <= 1)
 		return 1;
 
-	auto spellLvl = wandSpell.spellLevel;
+	auto spellLvl = (int)wandSpell.spellLevel;
 	auto castingClass = spellSys.GetCastingClass(wandSpell.classCode);
 	auto minCasterLvl = (int)d20ClassSys.GetMinCasterLevelForSpellLevel(castingClass, spellLvl);
+	if ((minCasterLvl % 2) == 0) {
+		minCasterLvl--; // because toee encodes spell level rather than caster level...
+	}
 	auto casterLvl = (spellLvl * 2) - 1; // TODO get this right for rangers/paladins... bleh
 
 	if (minCasterLvl >= 1 && casterLvl < minCasterLvl ){
@@ -873,15 +876,14 @@ void UiItemCreation::CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, o
 	}
 	if (itemCreationType == ScribeScroll){
 		auto scrollSpell = obj->GetSpell(obj_f_item_spell_idx, 0);
-
+		ScribedScrollSpellGet(objHndItem, scrollSpell);
 		obj->SetSpell(obj_f_item_spell_idx, 0, scrollSpell);
+
 		/*int casterLevelFinal = scrollSpell.spellLevel * 2 - 1;
 		if (casterLevelFinal < 1)
 			casterLevelFinal = 1;*/
 
 		return;
-		// do scroll specific stuff
-		// templeFuncs.Obj_Set_Field_32bit(objHndItem, obj_f_description, templeFuncs.CustomNameNew("Scroll of LOL"));
 	};
 
 	if (itemCreationType == BrewPotion){
@@ -1129,7 +1131,8 @@ void UiItemCreation::ItemCreationCraftingCostTexts(int widgetId, objHndl objHndI
 		UiRenderer::DrawTextInWidget(widgetId, prereqString, rect, *itemCreationAddresses.itemCreationTextStyle);
 	}
 	
-	if (itemCreationType == ItemCreationType::CraftWand)
+	if (!*insuffPrereq &&
+		(itemCreationType == ItemCreationType::CraftWand || itemCreationType == ItemCreationType::ScribeScroll))
 	{
 		rect.x = 210 + 108 * mUseCo8Ui;
 		rect.y = 250;
@@ -1438,6 +1441,12 @@ uint32_t UiItemCreation::CraftedWandWorth(objHndl item, int casterLevelNew){
 		casterLevelBase = minCasterLevel;
 	}
 
+	// ToEE only encodes spell level in items - Caster Level is implicitly taken as Spell Level * 2 - 1
+	// So in case caster level was selected as even valued, reduce it by 1 so as to not overcharge the crafter...
+	if ((casterLevelBase % 2) == 0) {
+		casterLevelBase--;
+	}
+
 	// get base worth by class (default to protos.tab spec)
 	auto itemWorthBaseGp = (spellLevelBase == 0) ? ((baseWorth / 2) * casterLevelBase) : (baseWorth  * casterLevelBase * spellLevelBase);
 	auto itemWorthBase = itemWorthBaseGp * 100; // +materialCost * 100;
@@ -1559,9 +1568,12 @@ int UiItemCreation::ScribedScrollCasterLevel(objHndl item)
 	if (scrollSpell.spellLevel <= 1)
 		return 1;
 
-	auto spellLvl = scrollSpell.spellLevel;
+	auto spellLvl = (int)scrollSpell.spellLevel;
 	auto castingClass = spellSys.GetCastingClass(scrollSpell.classCode);
 	auto minCasterLvl = (int)d20ClassSys.GetMinCasterLevelForSpellLevel(castingClass, spellLvl);
+	if ( (minCasterLvl % 2 )==0){
+		minCasterLvl--; // because toee encodes spell level rather than caster level...
+	}
 	auto casterLvl = (spellLvl * 2) - 1; // TODO get this right for rangers/paladins... bleh
 
 	if (minCasterLvl >= 1 && casterLvl < minCasterLvl) {
@@ -1590,6 +1602,12 @@ uint32_t UiItemCreation::ScribedScrollWorth(objHndl item, int casterLevelNew)
 	auto minCasterLevel = (int)d20ClassSys.GetMinCasterLevelForSpellLevel(casterClass, spellLevelBase);
 	if (minCasterLevel >= 1) {
 		casterLevelBase = minCasterLevel;
+	}
+
+	// ToEE only encodes spell level in items - Caster Level is implicitly taken as Spell Level * 2 - 1
+	// So in case caster level was selected as even valued, reduce it by 1 so as to not overcharge the crafter...
+	if ((casterLevelBase % 2 ) == 0){
+		casterLevelBase--;
 	}
 
 	// get base worth by class (default to protos.tab spec)
