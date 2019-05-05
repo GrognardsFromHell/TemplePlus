@@ -272,6 +272,9 @@ objHndl LegacyCritterSystem::GetLeaderForNpc(objHndl critter){
 }
 
 bool LegacyCritterSystem::CanSeeWithBlindsight(objHndl critter, objHndl target) {
+	if (!critter || !target){
+		return false;
+	}
 	auto blindsightDistance = d20Sys.D20QueryPython(critter, "Blindsight Range");
 
 	if (blindsightDistance > 0) {
