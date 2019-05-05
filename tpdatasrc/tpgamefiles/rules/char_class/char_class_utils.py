@@ -32,7 +32,7 @@ def GetHighestArcaneClass( attachee ):
 def GetHighestDivineClass( attachee ):
 	return attachee.highest_divine_class
 
-def GetBaseCasterLevel(caster_levels, class_level):
+def GetBaseCasterLevel(caster_levels, classLvl):
 	if classLvl >= len(caster_levels):
 		base_cl = caster_levels[-1]
 	elif classLvl < 1:
