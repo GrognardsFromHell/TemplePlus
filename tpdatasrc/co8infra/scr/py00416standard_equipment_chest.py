@@ -53,7 +53,7 @@ def give_default_starting_equipment(x = 0):
 					create_item_in_inventory( aaa, pc )	
 			elif pc.stat_level_get(stat_level_rogue) > 0:
 				for aaa in [6042 ,6045 ,6046 ,4049 ,4060 ,6233 ,8014 ,4096 ,5005 ,5005 ,8014 ,12012]:
-					create_item_in_inventory( aaa, pc )					
+					create_item_in_inventory( aaa, pc )
 			elif pc.stat_level_get(stat_level_sorcerer) > 0:
 				if pc.stat_level_get(stat_race) in [race_gnome, race_halfling]:
 					for aaa in [6211 ,6045 ,6046 ,6124 ,4060 ,4115 ,5007 ,5007 ,8014]: # dagger (4060) instead of spear
@@ -68,6 +68,9 @@ def give_default_starting_equipment(x = 0):
 				else:
 					for aaa in [4110 ,4096 ,5005 ,5005 ,6081 ,6143 ,6038 ,6011 ,8014]:
 						create_item_in_inventory( aaa, pc )
+			else: # default to rogue outfit
+				for aaa in [6042 ,6045 ,6046 ,4049 ,4060 ,6233 ,8014 ,4096 ,5005 ,5005 ,8014 ,12012]:
+					create_item_in_inventory( aaa, pc )
 	return
 	
 def defalt_equipment_autoequip():	

@@ -54,7 +54,7 @@ def OnGetBaseCasterLevel(attachee, args, evt_obj):
 		return 0
 	classLvl = attachee.stat_level_get(classEnum)
 	caster_levels = classSpecModule.GetCasterLevels()
-	base_cl = char_class_utils.GetCasterLevel(caster_levels, classLvl)
+	base_cl = char_class_utils.GetBaseCasterLevel(caster_levels, classLvl)
 	if base_cl <= 0:
 		return 0
 	evt_obj.bonus_list.add(base_cl, 0, 137)

@@ -680,8 +680,10 @@ BOOL AiSystem::ConsiderTarget(objHndl obj, objHndl tgt)
 			return 0;
 	}
 
-	if (locSys.DistanceToObj(obj, tgt) > 125.0)
+	if (locSys.DistanceToObj(obj, tgt) > 125.0){
 		return 0;
+	}
+		
 	if (leader){
 		int64_t tileDelta = locSys.GetTileDeltaMax(leader, tgt);
 		if (tileDelta > 20){ 
