@@ -1,5 +1,5 @@
 name: Extra Music
 flags: 12582913
 prereqs: 
-description: When you take this feat, you gain four extra bardic music uses per day.
+description: When you take this feat, you gain four extra bardic music uses per day.  You can take this feat multiple times, Its effects stack.
 prereq descr: Bardic Music
