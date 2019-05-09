@@ -1,5 +1,5 @@
 name: Extra Rage
 flags: 12582913
 prereqs: 
-description: You rage two more times per day than you otherwise could.
+description: You rage two more times per day than you otherwise could.  You can take this feat multiple times, Its effects stack.
 prereq descr: Barbarian rage ability.

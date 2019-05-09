@@ -2,4 +2,4 @@ name: Warmage Armored Mage
 flags: 8
 prereqs:
 description: A warmage's limited focus and specialized training, however, allows him to avoid arcane spell failure as long as he sticks to light armor and light shields.  At 8th level, a warmage learns to use medium armor with no chance of arcane spell failure.
-prereq descr: War Mage Level 1.
+prereq descr: Warmage Level 1.
