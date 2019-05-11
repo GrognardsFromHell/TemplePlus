@@ -68,7 +68,8 @@ static struct SpellAddresses : temple::AddressTable {
 IdxTableWrapper<SpellEntry> spellEntryRegistry(0x10AAF428);
 IdxTableWrapper<SpellPacket> spellsCastRegistry(0x10AAF218);
 
-// Expand the range of usable spellEnums. Currently walled off at 802.
+BOOL _CheckSpellResistanceUsercallWrapper(objHndl objHnd);
+
 class SpellFuncReplacements : public TempleFix {
 public:
 	static void hookedPrint(const char * fmt, const char* spellName)
@@ -78,6 +79,8 @@ public:
 
 	void apply() override {
 
+		replaceFunction<BOOL(__cdecl)(objHndl)>(0x100C3810, _CheckSpellResistanceUsercallWrapper);
+		
 		replaceFunction<int(__cdecl(int, int))>(0x10076550, [](int spellEnum, int spellClass){
 			return spellSys.GetSpellLevelBySpellClass(spellEnum, spellClass);
 		});
@@ -2885,6 +2888,36 @@ int LegacySpellSystem::SpellEnd(int spellId, int endDespiteTargetList) const
 
 
 #pragma region Hooks
+
+BOOL CheckSpellResistanceCdeclWrapper(SpellPacketBody*pkt, objHndl handle){
+	if (!pkt) {
+		return FALSE;
+	}
+
+	return pkt->CheckSpellResistance(handle);
+}
+
+BOOL __declspec(naked) _CheckSpellResistanceUsercallWrapper(objHndl objHnd) {
+	// esi is SpellPacketBody * pkt
+	__asm { 
+		push ebp;
+		mov ebp, esp; // ebp+4 = &retaddr, ebp+8 = &arg1
+
+		mov eax, [ebp + 12];
+		push eax;
+		mov eax, [ebp + 8];
+		push eax;
+		push esi;
+		mov eax, CheckSpellResistanceCdeclWrapper;
+		call eax;
+		add esp, 8;
+
+		pop esi;
+		mov esp, ebp;
+		pop ebp;
+		retn;
+	}
+}
 
 void SpellPacketBody::DoForTargetList(std::function<void(const objHndl& )> cb){
 	auto orgTgtCount = this->targetCount;
