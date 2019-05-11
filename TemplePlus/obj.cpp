@@ -887,14 +887,20 @@ int32_t Objects::GetMoneyAmount(objHndl handle){
 }
 
 
-Dispatcher * Objects::GetDispatcher(objHndl obj)
+Dispatcher * Objects::GetDispatcher(objHndl handle)
 {
-	return objSystem->GetObject(obj)->GetDispatcher();
+	auto obj = objSystem->GetObject(handle);
+	if (!obj)
+		return nullptr;
+	return obj->GetDispatcher();
 }
 
-void Objects::SetDispatcher(objHndl obj, uint32_t data32)
+void Objects::SetDispatcher(objHndl handle, uint32_t data32)
 {
-	objSystem->GetObject(obj)->SetDispatcher(reinterpret_cast<Dispatcher*>(data32));
+	auto obj = objSystem->GetObject(handle);
+	if (!obj)
+		return;
+	obj->SetDispatcher(reinterpret_cast<Dispatcher*>(data32));
 }
 
 int Objects::GetModFromStatLevel(int statLevel)
