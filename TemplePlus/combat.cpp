@@ -1129,7 +1129,7 @@ bool LegacyCombatSystem::CombatEnd(){
 	auto &mResettingCombatSystem = temple::GetRef<BOOL>(0x10AA8448);
 	if (!mResettingCombatSystem)
 		tbSys.ExecuteExitCombatScriptForInitiativeList();
-	tbSys.TbCombatEnd();
+	tbSys.TbCombatEnd(mResettingCombatSystem);
 	if (!mResettingCombatSystem){
 		auto N = party.GroupListGetLen();
 		for (auto i=0u; i < N; i++){

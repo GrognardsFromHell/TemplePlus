@@ -28,7 +28,7 @@ struct TurnBasedSys : temple::AddressTable
 
 	void CreateInitiativeListWithParty(); // resets initiative list and fills it with the party.
 	void ExecuteExitCombatScriptForInitiativeList();
-	void TbCombatEnd();
+	void TbCombatEnd(bool isResetting);
 };
 
 extern TurnBasedSys tbSys;

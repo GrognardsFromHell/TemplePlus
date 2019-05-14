@@ -266,7 +266,7 @@ void TurnBasedSys::ExecuteExitCombatScriptForInitiativeList(){
 	}
 }
 
-void TurnBasedSys::TbCombatEnd(){
+void TurnBasedSys::TbCombatEnd(bool isResetting){
 
 	// Added in Temple+
 	// Enforcing exiting combat mode for critters
@@ -277,22 +277,25 @@ void TurnBasedSys::TbCombatEnd(){
 	// 4. Combat ended (all unconcealed enemies far from party) - see LegacyCombatSys::AllCombatantsFarFromParty()
 	// 5. AI still in combat mode, would restart combat immediately
 	// 6. repeat
-	for (auto i = 0u; i < groupInitiativeList->GroupSize; i++) {
-		auto combatant = groupInitiativeList->GroupMembers[i];
-		if (!combatant) continue;
-		auto combatantObj = objSystem->GetObject(combatant);
-		auto critterFlags = critterSys.GetCritterFlags(combatant);
-		if (critterFlags & OCF_COMBAT_MODE_ACTIVE) {
-			combatantObj->SetInt32(obj_f_critter_flags, critterFlags & ~OCF_COMBAT_MODE_ACTIVE);
-		}
-		if (combatantObj->IsNPC()){
-			auto aiFlags = static_cast<AiFlag>(combatantObj->GetInt64(obj_f_npc_ai_flags64));
-			if (aiFlags & AiFlag::Fighting) {
-				combatantObj->SetInt64(obj_f_npc_ai_flags64, aiFlags & ~AiFlag::Fighting);
+	if (!isResetting){
+		for (auto i = 0u; i < groupInitiativeList->GroupSize; i++) {
+			auto combatant = groupInitiativeList->GroupMembers[i];
+			if (!combatant) continue;
+			auto combatantObj = objSystem->GetObject(combatant);
+			auto critterFlags = critterSys.GetCritterFlags(combatant);
+			if (critterFlags & OCF_COMBAT_MODE_ACTIVE) {
+				combatantObj->SetInt32(obj_f_critter_flags, critterFlags & ~OCF_COMBAT_MODE_ACTIVE);
 			}
+			if (combatantObj->IsNPC()) {
+				auto aiFlags = static_cast<AiFlag>(combatantObj->GetInt64(obj_f_npc_ai_flags64));
+				if (aiFlags & AiFlag::Fighting) {
+					combatantObj->SetInt64(obj_f_npc_ai_flags64, aiFlags & ~AiFlag::Fighting);
+				}
+			}
+
 		}
-		
 	}
+	
 
 	groupInitiativeList->Reset();
 	auto gameTime = gameSystems->GetTimeEvent().GetTime();
