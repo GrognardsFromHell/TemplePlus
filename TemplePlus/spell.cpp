@@ -2801,7 +2801,7 @@ int LegacySpellSystem::CheckSpellResistance(SpellPacketBody* spellPkt, objHndl h
 		int rollHistId;
 		dispelSpellResistanceResult = spellSys.DispelRoll(spellPkt->caster, &bonlist, 0, srMod, Spell_Resistance, &rollHistId);
 		char *outcomeText1, *outcomeText2;
-		if (dispelSpellResistanceResult <=0)	{
+		if (dispelSpellResistanceResult < 0)	{ // fixed bug - was <= instead of <
 			auto spellName = GetSpellName(spellPkt->spellEnum);
 			logger->info("CheckSpellResistance: Spell {} cast by {} resisted by target {}.", spellName, description.getDisplayName(spellPkt->caster), description.getDisplayName(handle));
 			floatSys.FloatSpellLine(handle, 30008, FloatLineColor::White);
