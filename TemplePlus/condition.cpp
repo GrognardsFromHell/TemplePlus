@@ -1334,6 +1334,11 @@ int GenericCallbacks::HasCondition(DispatcherCallbackArgs args){
 	if (!queriedCond || !myCond) {
 		return 0;
 	}
+
+	if (dispIo->return_val != 0){ // means we have probably already changed dispIo->data1 from queriedCond to condArg(0), so it's no longer a valid pointer!
+		return 0;
+	}
+
 	// if not, re-reference the cond struct since it may have been extended
 	if (!dispIo->data2 && conds.GetByName(myCond->condName) == conds.GetByName(queriedCond->condName)){
 		dispIo->return_val = 1;
