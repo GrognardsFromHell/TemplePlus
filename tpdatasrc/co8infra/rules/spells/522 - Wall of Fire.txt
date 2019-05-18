@@ -1,9 +1,9 @@
 School: Evocation
 Descriptor: Fire
-#Level: Drd 5
-#Level: Wiz 4
-#Level: Sor 4
-#Level: Fire 5
+Level: Drd 5
+Level: Wiz 4
+Level: Sor 4
+Level: Fire 5
 Component: V
 Component: S
 Casting Time: 1 action
