@@ -1328,6 +1328,7 @@ int GenericCallbacks::HasCondition(DispatcherCallbackArgs args){
 		dispIo->return_val = 1;
 		dispIo->data1 = args.GetCondArg(0);
 		dispIo->data2 = 0;
+		return 0;
 	}
 
 	if (!queriedCond || !myCond) {
