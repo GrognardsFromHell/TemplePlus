@@ -174,7 +174,9 @@ def LevelupGetBonusFeats( obj ):
 	
 	#The only option will be the normal feat if the chracter does not have it
 	if not char_editor.has_feat(feat):
-		bonFeatInfo.append(char_editor.FeatInfo(feat))
+		featInfo = char_editor.FeatInfo(feat)
+		featInfo.feat_status_flags |= 4 # always pickable
+		bonFeatInfo.append(featInfo)
 	else:
 		#Any metamagic feat can be selected if the character does not have the normal feat
 		bonus_feats = tpdp.get_metamagic_feats()
