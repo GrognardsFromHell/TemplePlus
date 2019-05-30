@@ -30,8 +30,12 @@ class DescriptionHooks : public TempleFix{
 
 const char* LegacyDescriptionSystem::getDisplayName(objHndl obj)
 {
-	if (obj)
-		return _getDisplayName(obj, obj);
+	if (obj){
+		auto result = _getDisplayName(obj, obj);
+		if (!result)
+			return "OBJ_HANDLE_NULL";
+		return result;
+	}
 	else
 		return "OBJ_HANDLE_NULL";
 }
