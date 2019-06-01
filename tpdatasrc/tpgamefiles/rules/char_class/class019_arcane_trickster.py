@@ -27,7 +27,7 @@ class_feats = {
 	2: (feat_sneak_attack,)
 }
 
-class_skills = (skill_appraise, skill_balance, skill_bluff, skill_climb, skill_concentration, skill_craft, skill_decipher_script, skill_diplomacy, skill_disable_device, skill_disguise, skill_escape_artist, skill_gather_information, skill_hide, skill_jump, skill_knowledge_all, skill_listen, skill_move_silently, skill_open_lock, skill_profession, skill_search, skill_sense_motive, skill_pick_pocket, skill_spellcraft, skill_spot, skill_swim, skill_tumble, skill_use_rope)
+class_skills = (skill_alchemy, skill_appraise, skill_balance, skill_bluff, skill_climb, skill_concentration, skill_craft, skill_decipher_script, skill_diplomacy, skill_disable_device, skill_disguise, skill_escape_artist, skill_gather_information, skill_hide, skill_jump, skill_knowledge_all, skill_listen, skill_move_silently, skill_open_lock, skill_profession, skill_search, skill_sense_motive, skill_pick_pocket, skill_spellcraft, skill_spot, skill_swim, skill_tumble, skill_use_rope)
 
 
 def IsEnabled():
