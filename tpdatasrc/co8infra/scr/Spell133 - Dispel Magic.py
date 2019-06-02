@@ -8,13 +8,6 @@ def OnBeginSpellCast( spell ):
 	game.particles( "sp-abjuration-conjure", spell.caster )
 
 def OnSpellEffect ( spell ):
-
-#	Dar's level check no longer needed thanks to Spellslinger's dll fix
-#	if spell.caster_class == 13: #added to check for proper paladin slot level (darmagon)
-#		if spell.spell_level < 3:
-#			spell.caster.float_mesfile_line('mes\\spell.mes', 16008)
-#			spell.spell_end(spell.id)
-#			return
 		
 	# Lareth Special scripting in the Moathouse
 	if spell.caster.name == 8002 and spell.caster.map == 5005: 
@@ -43,9 +36,9 @@ def OnSpellEffect ( spell ):
 		for target in game.obj_list_vicinity(locc_, OLC_GENERIC ):
 			if target.distance_to(dispel_obj) <= 20:
 				partsys_id = game.particles( 'sp-Dispel Magic - Targeted', target )
-				aaa1 = game.party[0].damage( OBJ_HANDLE_NULL, 0, dice_new("1d3"))
+				#aaa1 = game.party[0].damage( OBJ_HANDLE_NULL, 0, dice_new("1d3"))
 				target.condition_add_with_args( 'sp-Dispel Magic', spell.id, 0, 1 )
-				game.party[0].damage( OBJ_HANDLE_NULL, 0, dice_new("1d4"))
+				#game.party[0].damage( OBJ_HANDLE_NULL, 0, dice_new("1d4"))
 				
 		for target in game.obj_list_vicinity(locc_, OLC_NPC + OLC_PC):
 			if target.distance_to(dispel_obj) <= 18:
