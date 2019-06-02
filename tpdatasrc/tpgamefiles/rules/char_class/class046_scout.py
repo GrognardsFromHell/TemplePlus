@@ -46,7 +46,7 @@ feat_skill_focus_scry, feat_skill_focus_search, feat_skill_focus_sense_motive, f
 feat_skill_focus_swim, feat_skill_focus_tumble, feat_skill_focus_use_magic_device, feat_skill_focus_use_rope, feat_skill_focus_survival
 ]
 
-class_skills = (skill_balance, skill_climb, skill_craft, skill_disable_device, skill_escape_artist, skill_hide, skill_jump, skill_knowledge_nature, skill_listen, skill_move_silently, skill_ride, skill_search, skill_sense_motive, skill_spot, skill_wilderness_lore, skill_swim, skill_tumble, skill_use_rope)
+class_skills = (skill_alchemy, skill_balance, skill_climb, skill_craft, skill_disable_device, skill_escape_artist, skill_hide, skill_jump, skill_knowledge_nature, skill_listen, skill_move_silently, skill_ride, skill_search, skill_sense_motive, skill_spot, skill_wilderness_lore, skill_swim, skill_tumble, skill_use_rope)
 
 def IsEnabled():
 	return 1

@@ -25,7 +25,7 @@ classEnum = stat_level_mystic_theurge
 class_feats = {
 }
 
-class_skills = (skill_concentration, skill_craft, skill_decipher_script, skill_knowledge_arcana, skill_knowledge_religion, skill_profession, skill_sense_motive, skill_spellcraft)
+class_skills = (skill_alchemy, skill_concentration, skill_craft, skill_decipher_script, skill_knowledge_arcana, skill_knowledge_religion, skill_profession, skill_sense_motive, skill_spellcraft)
 
 
 
