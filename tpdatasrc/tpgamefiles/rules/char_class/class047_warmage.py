@@ -29,7 +29,7 @@ class_feats = {
 8: (feat_armor_proficiency_medium,),
 }
 
-class_skills = (skill_concentration, skill_intimidate, skill_spellcraft)
+class_skills = (skill_alchemy, skill_concentration, skill_intimidate, skill_spellcraft)
 
 spells_per_day = {
 1:  (5, 3),
