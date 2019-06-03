@@ -26,7 +26,7 @@ classEnum = stat_level_dragon_disciple
 class_feats = {
 }
 
-class_skills = (skill_concentration, skill_craft, skill_diplomacy, skill_escape_artist, skill_gather_information, skill_knowledge_all, skill_listen, skill_profession, skill_search, skill_spellcraft, skill_spot)
+class_skills = (skill_alchemy, skill_concentration, skill_craft, skill_diplomacy, skill_escape_artist, skill_gather_information, skill_knowledge_all, skill_listen, skill_profession, skill_search, skill_spellcraft, skill_spot)
 
 def IsEnabled():
 	return 0

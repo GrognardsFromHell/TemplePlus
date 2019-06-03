@@ -41,7 +41,7 @@ feat_mounted_combat, feat_mounted_archery, feat_far_shot, feat_improved_bull_rus
 feat_weapon_focus_head, feat_weapon_specialization_head, feat_greater_weapon_focus_head, feat_greater_weapon_specialization, feat_blind_fight, feat_combat_expertise]
 
 
-class_skills = (skill_concentration, skill_craft, skill_decipher_script, skill_jump, skill_knowledge_arcana, skill_ride, skill_sense_motive, skill_spellcraft, skill_swim)
+class_skills = (skill_alchemy, skill_concentration, skill_craft, skill_decipher_script, skill_jump, skill_knowledge_arcana, skill_ride, skill_sense_motive, skill_spellcraft, skill_swim)
 
 
 def IsEnabled():

@@ -29,7 +29,7 @@ class_feats = {
 
 bonus_feats = [feat_defensive_roll, feat_improved_evasion, feat_crippling_strike, feat_opportunist, feat_skill_mastery, feat_slippery_mind]
 
-class_skills = (skill_appraise, skill_balance, skill_bluff, skill_climb, skill_craft, skill_decipher_script, skill_diplomacy, skill_disable_device, skill_disguise, skill_escape_artist, skill_forgery, skill_gather_information, skill_hide, skill_intimidate, skill_jump, skill_listen, skill_move_silently, skill_open_lock, skill_perform, skill_profession, skill_search, skill_sense_motive, skill_pick_pocket, skill_spot, skill_swim, skill_tumble, skill_use_magic_device, skill_use_rope)
+class_skills = (skill_alchemy, skill_appraise, skill_balance, skill_bluff, skill_climb, skill_craft, skill_decipher_script, skill_diplomacy, skill_disable_device, skill_disguise, skill_escape_artist, skill_forgery, skill_gather_information, skill_hide, skill_intimidate, skill_jump, skill_listen, skill_move_silently, skill_open_lock, skill_perform, skill_profession, skill_search, skill_sense_motive, skill_pick_pocket, skill_spot, skill_swim, skill_tumble, skill_use_magic_device, skill_use_rope)
 
 
 def GetHitDieType():

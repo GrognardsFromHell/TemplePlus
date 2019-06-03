@@ -26,7 +26,7 @@ classEnum = stat_level_hierophant
 class_feats = {
 }
 
-class_skills = (skill_concentration, skill_craft, skill_diplomacy, skill_heal, skill_knowledge_arcana, skill_knowledge_religion, skill_profession, skill_spellcraft)
+class_skills = (skill_alchemy, skill_concentration, skill_craft, skill_diplomacy, skill_heal, skill_knowledge_arcana, skill_knowledge_religion, skill_profession, skill_spellcraft)
 
 
 def IsEnabled():

@@ -34,7 +34,7 @@ class_feats = {
 20: (feat_mighty_rage,)
 }
 
-class_skills = (skill_climb, skill_craft, skill_handle_animal, skill_intimidate, skill_jump, skill_listen, skill_ride, skill_wilderness_lore, skill_swim)
+class_skills = (skill_alchemy, skill_climb, skill_craft, skill_handle_animal, skill_intimidate, skill_jump, skill_listen, skill_ride, skill_wilderness_lore, skill_swim)
 
 def GetHitDieType():
 	return 12

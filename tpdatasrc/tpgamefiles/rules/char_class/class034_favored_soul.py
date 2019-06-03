@@ -31,7 +31,7 @@ class_feats = {
 20: ('Damage Reduction (Favored Soul)',)
 }
 
-class_skills = (skill_concentration, skill_craft, skill_diplomacy, skill_heal, skill_knowledge_arcana, skill_profession, skill_sense_motive, skill_spellcraft)
+class_skills = (skill_alchemy, skill_concentration, skill_craft, skill_diplomacy, skill_heal, skill_knowledge_arcana, skill_profession, skill_sense_motive, skill_spellcraft)
 
 # not including domain spells
 spells_per_day = {

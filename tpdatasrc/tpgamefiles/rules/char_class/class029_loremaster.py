@@ -26,7 +26,7 @@ classEnum = stat_level_loremaster
 class_feats = {
 }
 
-class_skills = (skill_appraise, skill_concentration, skill_alchemy, skill_decipher_script, skill_gather_information, skill_handle_animal, skill_heal, skill_knowledge_all, skill_perform, skill_profession, skill_spellcraft, skill_use_magic_device)
+class_skills = (skill_alchemy, skill_appraise, skill_concentration, skill_alchemy, skill_decipher_script, skill_gather_information, skill_handle_animal, skill_heal, skill_knowledge_all, skill_perform, skill_profession, skill_spellcraft, skill_use_magic_device)
 
 def IsEnabled():
 	return 0

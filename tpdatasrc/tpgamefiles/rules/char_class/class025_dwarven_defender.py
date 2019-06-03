@@ -27,7 +27,7 @@ class_feats = {
 6: (feat_improved_uncanny_dodge,)
 }
 
-class_skills = (skill_craft, skill_listen, skill_sense_motive, skill_spot)
+class_skills = (skill_alchemy, skill_craft, skill_listen, skill_sense_motive, skill_spot)
 
 def IsEnabled():
 	return 1

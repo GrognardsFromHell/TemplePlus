@@ -27,7 +27,7 @@ class_feats = {
 1: (feat_armor_proficiency_light, feat_armor_proficiency_medium, feat_armor_proficiency_heavy, feat_shield_proficiency, feat_simple_weapon_proficiency, feat_domain_power)
 }
 
-class_skills = (skill_concentration, skill_craft, skill_diplomacy, skill_heal, skill_knowledge_arcana, skill_knowledge_religion, skill_profession, skill_spellcraft)
+class_skills = (skill_alchemy, skill_concentration, skill_craft, skill_diplomacy, skill_heal, skill_knowledge_arcana, skill_knowledge_religion, skill_profession, skill_spellcraft)
 
 # not including domain spells
 spells_per_day = {

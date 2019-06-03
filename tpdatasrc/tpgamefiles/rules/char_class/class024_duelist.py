@@ -24,7 +24,7 @@ class_feats = {
 1: ( feat_simple_weapon_proficiency, feat_martial_weapon_proficiency_all)
 }
 
-class_skills = (skill_balance, skill_bluff, skill_escape_artist, skill_jump, skill_listen, skill_perform, skill_sense_motive, skill_spot, skill_tumble)
+class_skills = (skill_alchemy, skill_balance, skill_bluff, skill_escape_artist, skill_jump, skill_listen, skill_perform, skill_sense_motive, skill_spot, skill_tumble)
 
 def IsEnabled():
 	return 1
