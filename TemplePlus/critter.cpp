@@ -1003,6 +1003,20 @@ const std::vector<std::string>& LegacyCritterSystem::GetAddMeshes(int matIdx, in
 	// Lazily load the addmesh rules
 	if (mAddMeshes.empty()) {
 		auto mapping(MesFile::ParseFile("rules\\addmesh.mes"));
+
+		// Extender files for rules/addmesh.mes
+		{
+			TioFileList addmeshFlist;
+			tio_filelist_create(&addmeshFlist, "rules\\addmeshes\\*.mes");
+
+			for (auto i = 0; i < addmeshFlist.count; i++) {
+
+				std::string combinedFname(fmt::format("rules\\addmeshes\\{}", addmeshFlist.files[i].name));
+				auto addmeshesMappingExt = MesFile::ParseFile(combinedFname);
+				mapping.insert(addmeshesMappingExt.begin(), addmeshesMappingExt.end());
+			}
+		}
+
 		for (auto &entry : mapping) {
 			mAddMeshes[entry.first] = split(entry.second, ';', true);
 		}

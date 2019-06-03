@@ -10,6 +10,7 @@
 #include "temple/dll.h"
 #include "temple/meshes.h"
 #include <gsl/gsl>
+#include "../../TemplePlus/tio/tio.h"
 
 namespace temple {
 
@@ -657,10 +658,27 @@ namespace temple {
 
 		MH_EnableHook(nullptr);
 
-		auto meshesMapping = MesFile::ParseFile("art/meshes/meshes.mes");
-		mMapping.insert(meshesMapping.begin(), meshesMapping.end());
-		logger->debug("Loaded mapping for {} meshes from art/meshes/meshes.mes",
-			meshesMapping.size());
+
+		{
+			auto meshesMapping = MesFile::ParseFile("art/meshes/meshes.mes");
+			mMapping.insert(meshesMapping.begin(), meshesMapping.end());
+			logger->debug("Loaded mapping for {} meshes from art/meshes/meshes.mes",
+				meshesMapping.size());
+		}
+		
+		// Extender files for art/meshes/meshes.mes
+		{
+			TioFileList meshesFlist;
+			tio_filelist_create(&meshesFlist, "art\\meshes\\ext\\*.mes");
+
+			for (auto i = 0; i < meshesFlist.count; i++) {
+
+				std::string combinedFname(fmt::format("art\\meshes\\ext\\{}", meshesFlist.files[i].name));
+				auto meshesMappingExt = MesFile::ParseFile(combinedFname);
+				mMapping.insert(meshesMappingExt.begin(), meshesMappingExt.end());
+			}
+		}
+		
 
 	}
 
