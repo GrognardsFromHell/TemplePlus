@@ -37,7 +37,7 @@ class_feats = {
 20: (feat_perfect_self,)
 }
 
-class_skills = (skill_balance, skill_climb, skill_concentration, skill_craft, skill_diplomacy, skill_escape_artist, skill_hide, skill_jump, skill_knowledge_arcana, skill_knowledge_religion, skill_listen, skill_move_silently, skill_perform, skill_profession, skill_sense_motive, skill_spot, skill_swim, skill_tumble)
+class_skills = (skill_alchemy, skill_balance, skill_climb, skill_concentration, skill_craft, skill_diplomacy, skill_escape_artist, skill_hide, skill_jump, skill_knowledge_arcana, skill_knowledge_religion, skill_listen, skill_move_silently, skill_perform, skill_profession, skill_sense_motive, skill_spot, skill_swim, skill_tumble)
 
 def GetHitDieType():
 	return 8

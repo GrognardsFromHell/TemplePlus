@@ -34,7 +34,7 @@ class_feats = {
 
 
 
-class_skills = (skill_concentration, skill_craft, skill_diplomacy, skill_handle_animal, skill_heal, skill_hide, skill_intimidate, skill_knowledge_religion, skill_profession, skill_ride)
+class_skills = (skill_alchemy, skill_concentration, skill_craft, skill_diplomacy, skill_handle_animal, skill_heal, skill_hide, skill_intimidate, skill_knowledge_religion, skill_profession, skill_ride)
 
 
 spell_list = {

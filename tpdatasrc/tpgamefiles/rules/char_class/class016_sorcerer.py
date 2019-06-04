@@ -27,7 +27,7 @@ class_feats = {
 1: (feat_simple_weapon_proficiency, feat_call_familiar)
 }
 
-class_skills = (skill_bluff, skill_concentration, skill_craft, skill_knowledge_arcana, skill_profession, skill_spellcraft)
+class_skills = (skill_alchemy, skill_bluff, skill_concentration, skill_craft, skill_knowledge_arcana, skill_profession, skill_spellcraft)
 
 spells_per_day = {
 1:  (5, 3),

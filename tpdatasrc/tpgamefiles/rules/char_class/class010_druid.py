@@ -34,7 +34,7 @@ class_feats = {
 
 }
 
-class_skills = (skill_concentration, skill_craft, skill_diplomacy, skill_handle_animal, skill_heal, skill_knowledge_nature, skill_listen, skill_profession, skill_ride, skill_spellcraft, skill_spot, skill_wilderness_lore, skill_swim)
+class_skills = (skill_alchemy, skill_concentration, skill_craft, skill_diplomacy, skill_handle_animal, skill_heal, skill_knowledge_nature, skill_listen, skill_profession, skill_ride, skill_spellcraft, skill_spot, skill_wilderness_lore, skill_swim)
 
 spells_per_day = {
 1:  (3, 1),

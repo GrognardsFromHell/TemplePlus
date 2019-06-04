@@ -33,7 +33,7 @@ class_feats = {
 6: (feat_remove_disease,)
 }
 
-class_skills = (skill_concentration, skill_craft, skill_diplomacy, skill_handle_animal, skill_heal, skill_knowledge_religion, skill_profession, skill_ride, skill_sense_motive)
+class_skills = (skill_alchemy, skill_concentration, skill_craft, skill_diplomacy, skill_handle_animal, skill_heal, skill_knowledge_religion, skill_profession, skill_ride, skill_sense_motive)
 
 spells_per_day = {
 1:  (-1,),

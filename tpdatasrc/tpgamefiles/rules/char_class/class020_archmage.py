@@ -26,7 +26,7 @@ classEnum = stat_level_archmage
 class_feats = {
 }
 
-class_skills = (skill_concentration, skill_craft, skill_knowledge_all, skill_profession, skill_search, skill_spellcraft)
+class_skills = (skill_alchemy, skill_concentration, skill_craft, skill_knowledge_all, skill_profession, skill_search, skill_spellcraft)
 
 def IsEnabled():
 	return 1

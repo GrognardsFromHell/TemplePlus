@@ -34,7 +34,7 @@ class_feats = {
 }
 
 
-class_skills = (skill_appraise, skill_balance, skill_bluff, skill_climb, skill_concentration, skill_craft, skill_decipher_script, skill_diplomacy, skill_decipher_script, skill_diplomacy, skill_disguise, skill_escape_artist, skill_gather_information, skill_hide, skill_jump, skill_knowledge_all, skill_listen, skill_move_silently, skill_perform, skill_profession, skill_sense_motive, skill_pick_pocket, skill_spellcraft, skill_swim, skill_tumble, skill_use_magic_device)
+class_skills = (skill_alchemy, skill_appraise, skill_balance, skill_bluff, skill_climb, skill_concentration, skill_craft, skill_decipher_script, skill_diplomacy, skill_decipher_script, skill_diplomacy, skill_disguise, skill_escape_artist, skill_gather_information, skill_hide, skill_jump, skill_knowledge_all, skill_listen, skill_move_silently, skill_perform, skill_profession, skill_sense_motive, skill_pick_pocket, skill_spellcraft, skill_swim, skill_tumble, skill_use_magic_device)
 
 
 spells_per_day = {

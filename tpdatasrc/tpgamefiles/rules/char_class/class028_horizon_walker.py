@@ -25,7 +25,7 @@ class_feats = {
 
 
 
-class_skills = (skill_balance, skill_climb, skill_diplomacy, skill_handle_animal, skill_hide, skill_knowledge_nature, skill_listen, skill_move_silently, skill_profession, skill_ride, skill_spot, skill_wilderness_lore)
+class_skills = (skill_alchemy, skill_balance, skill_climb, skill_diplomacy, skill_handle_animal, skill_hide, skill_knowledge_nature, skill_listen, skill_move_silently, skill_profession, skill_ride, skill_spot, skill_wilderness_lore)
 
 def IsEnabled():
 	return 0

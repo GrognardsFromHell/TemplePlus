@@ -24,7 +24,7 @@ class_feats = {
 1: (feat_armor_proficiency_light, feat_martial_weapon_proficiency_shortbow, feat_martial_weapon_proficiency_composite_shortbow, feat_martial_weapon_proficiency_rapier, feat_martial_weapon_proficiency_short_sword)
 }
 
-class_skills = (skill_balance, skill_bluff, skill_decipher_script, skill_diplomacy, skill_disguise, skill_escape_artist, skill_hide, skill_jump, skill_listen, skill_move_silently, skill_perform, skill_profession, skill_search, skill_pick_pocket, skill_spot, skill_tumble, skill_use_rope)
+class_skills = (skill_alchemy, skill_balance, skill_bluff, skill_decipher_script, skill_diplomacy, skill_disguise, skill_escape_artist, skill_hide, skill_jump, skill_listen, skill_move_silently, skill_perform, skill_profession, skill_search, skill_pick_pocket, skill_spot, skill_tumble, skill_use_rope)
 
 def IsEnabled():
 	return 0

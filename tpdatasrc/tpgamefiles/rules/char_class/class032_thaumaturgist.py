@@ -25,7 +25,7 @@ classEnum = stat_level_thaumaturgist
 class_feats = {
 }
 
-class_skills = (skill_concentration, skill_craft, skill_diplomacy, skill_knowledge_religion, skill_profession, skill_sense_motive, skill_spellcraft)
+class_skills = (skill_alchemy, skill_concentration, skill_craft, skill_diplomacy, skill_knowledge_religion, skill_profession, skill_sense_motive, skill_spellcraft)
 
 def IsEnabled():
 	return 0

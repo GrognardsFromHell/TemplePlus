@@ -34,7 +34,7 @@ class_feats = {
 }
 
 
-class_skills = (skill_craft, skill_hide, skill_listen, skill_move_silently, skill_ride, skill_spot, skill_wilderness_lore, skill_use_rope)
+class_skills = (skill_alchemy, skill_craft, skill_hide, skill_listen, skill_move_silently, skill_ride, skill_spot, skill_wilderness_lore, skill_use_rope)
 
 def IsEnabled():
 	return 1

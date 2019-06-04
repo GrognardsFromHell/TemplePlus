@@ -31,7 +31,7 @@ class_feats = {
 9: (feat_evasion,)
 }
 
-class_skills = (skill_climb, skill_concentration, skill_craft, skill_handle_animal, skill_heal, skill_hide, skill_jump, skill_knowledge_nature, skill_listen, skill_move_silently, skill_profession, skill_ride, skill_search, skill_spot, skill_wilderness_lore, skill_swim, skill_use_rope)
+class_skills = (skill_alchemy, skill_climb, skill_concentration, skill_craft, skill_handle_animal, skill_heal, skill_hide, skill_jump, skill_knowledge_nature, skill_listen, skill_move_silently, skill_profession, skill_ride, skill_search, skill_spot, skill_wilderness_lore, skill_swim, skill_use_rope)
 
 spells_per_day = {
 1:  (-1,),

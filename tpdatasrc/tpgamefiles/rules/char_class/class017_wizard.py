@@ -33,7 +33,7 @@ feat_empower_spell, feat_enlarge_spell, feat_extend_spell, feat_forge_ring, feat
 feat_scribe_scroll, feat_silent_spell, feat_still_spell, feat_widen_spell
 ]
 
-class_skills = (skill_concentration, skill_craft, skill_decipher_script, skill_knowledge_all, skill_profession, skill_spellcraft)
+class_skills = (skill_alchemy, skill_concentration, skill_craft, skill_decipher_script, skill_knowledge_all, skill_profession, skill_spellcraft)
 
 spells_per_day = {
 1:  (3, 1),
