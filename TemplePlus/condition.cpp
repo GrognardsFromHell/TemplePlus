@@ -452,7 +452,8 @@ public:
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100E98B0, genericCallbacks.D20ModCountdownEndHandler);
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100CBAB0, spCallbacks.SpellRemoveMod);
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100DC100, spCallbacks.SpellModCountdownRemove);
-		
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100D3430, spCallbacks.AoeSpellRemove);
+
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100F72E0, genericCallbacks.MonsterRegenerationOnDamage);
 
 		// Turn Undead extension
@@ -2605,7 +2606,7 @@ void ConditionSystem::RegisterNewConditions()
 	cond->condName = "Hezrou Stench";
 	cond->numArgs = 4; // 0 - spellId; 1 - duration; 2 - eventId; 3 - partsysId;
 
-	auto aoeSpellRemover = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100D3430);
+	auto aoeSpellRemover = spCallbacks.AoeSpellRemove; //temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100D3430);
 
 	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)cond, 0);
 	DispatcherHookInit(cond, 1, dispTypeConditionAdd, 0, spCallbacks.BeginHezrouStench, 0, 0);
@@ -4523,11 +4524,21 @@ int SpellCallbacks::SpellRemoveMod(DispatcherCallbackArgs args){
 	return 0;
 }
 
+// Originally 0x100D3430
 int SpellCallbacks::AoeSpellRemove(DispatcherCallbackArgs args){
 	auto spellId = args.GetCondArg(0);
 	SpellPacketBody pkt(spellId);
 	if (!pkt.spellEnum)
 		return 0;
+
+	// Added in Temple+: fixes bug where failed Dispel Magic still causes AoE spells to stop (but without removing their effects! Which caused effect permanency. E.g. Lareth fight in Co8)
+	if (args.dispKey == DK_SIG_Spell_End && args.dispIO && args.dispIO->dispIOType == dispIoTypeSendSignal){
+		GET_DISPIO(dispIoTypeSendSignal, DispIoD20Signal);
+		auto spellIdFromSignal = dispIo->data1;
+		if (spellIdFromSignal != 0 && spellIdFromSignal != spellId){
+			return 0;
+		}
+	}
 
 	auto partsysIdToPlay = -1;
 	switch (args.GetData1()){

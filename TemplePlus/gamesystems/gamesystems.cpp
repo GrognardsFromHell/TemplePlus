@@ -374,6 +374,20 @@ void GameSystems::InitAnimationSystem() {
 	
 	mMeshesById = MesFile::ParseFile("art\\meshes\\meshes.mes");
 
+	// Extender files for art/meshes/meshes.mes
+	{
+		TioFileList meshesFlist;
+		tio_filelist_create(&meshesFlist, "art\\meshes\\ext\\*.mes");
+
+		for (auto i = 0; i < meshesFlist.count; i++) {
+
+			std::string combinedFname(fmt::format("art\\meshes\\ext\\{}", meshesFlist.files[i].name));
+			auto meshesMappingExt = MesFile::ParseFile(combinedFname);
+			mMeshesById.insert(meshesMappingExt.begin(), meshesMappingExt.end());
+		}
+	}
+
+
 	temple::AasConfig config;
 	config.runScript = [] (const std::string &command) {
 		pythonObjIntegration.RunAnimFrameScript(command);
