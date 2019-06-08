@@ -3236,6 +3236,7 @@ stat_level_artificer = 44
 stat_level_abjurant_champion = 45
 stat_level_scout = 46
 stat_level_warmage = 47
+stat_level_beguiler = 48
 
 stat_level_psion = 58
 stat_level_psychic_warrior = 59
@@ -3478,6 +3479,8 @@ ET_OnSpecialAttack = 94
 ET_OnConfirmCriticalBonus = 95
 ET_OnRangeIncrementBonus = 96
 ET_OnDispatchSpellDamage = 97
+ET_OnSpellResistanceCheckBonus = 98
+ET_OnTargetSpellDCBonus = 99 #DC bonus based on the target of a spell
 
 # Event Keys
 

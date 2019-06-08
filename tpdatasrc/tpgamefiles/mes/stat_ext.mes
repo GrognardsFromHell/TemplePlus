@@ -32,6 +32,7 @@
 {45}{Abjurant Champion}
 {46}{Scout}
 {47}{Warmage}
+{48}{Beguiler}
 
 // Psionic Classes
 {58}{Psion}
@@ -96,7 +97,7 @@
 {1045}{}
 {1046}{Sct}
 {1047}{Wrmg}
-{1048}{}
+{1048}{Bglr}
 {1049}{}
 {1050}{}
 {1051}{}
@@ -291,6 +292,7 @@ Spells: Able to cast lesser planar ally.}
 {13027}Favored Soul{Favored souls cast divine spells by means of an innate connection rather than through laborious training and prayer, so their divine connection is natural rather than learned.}
 {13039}Scout{A scout has some training in weapons and a unique combat style that favors fast movement and devastating attacks.}
 {13040}Warmage{A warmage is a militant spellcaster whose training focuses on battlefield magic.}
+{13041}Beguiler{A beguiler is a sellcaster who delights in manipulating others, either to their disadvantage or for their own good.}
 
 // Cannot Pick Class Short Help Goes in the range of 20007+
 {20007} Arcane Archer{Arcane Archer requirements:
