@@ -1,0 +1,5 @@
+name: Beguiler Armored Mage
+flags: 8
+prereqs:
+description: A beguiler's limited focus and specialized training, allow you to avoid any chance of arcane spell failure as long as you restrict yourself to light armor. This training does not extend to any other form of armor, nor does this ability apply to spells gained from other spellcasting classes.
+prereq descr: Beguiler Level 1.

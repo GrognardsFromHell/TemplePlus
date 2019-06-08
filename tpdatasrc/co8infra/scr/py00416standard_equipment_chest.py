@@ -68,6 +68,9 @@ def give_default_starting_equipment(x = 0):
 				else:
 					for aaa in [6013 ,6045 ,6046 ,6059, 4117 , 4115 ,5007 ,5007, 8014]:
 						create_item_in_inventory( aaa, pc )
+			elif pc.stat_level_get(stat_level_beguiler) > 0:
+				for aaa in [6042 ,6045 ,6046 ,4049 ,4060 ,6233 ,8014 ,4096 ,5005 ,5005 ,8014 ,12012]:
+					create_item_in_inventory( aaa, pc )
 			elif pc.stat_level_get(stat_level_wizard) > 0 or pc.arcane_spell_level_can_cast() > 0:
 				if pc.stat_level_get(stat_race) in [race_gnome, race_halfling]:
 					for aaa in [4060 ,4096 ,5005 ,5005 ,6081 ,6143 ,6038 ,6011 ,8014]:

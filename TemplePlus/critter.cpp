@@ -1711,6 +1711,21 @@ bool LegacyCritterSystem::HashMatchingClassForSpell(objHndl handle, uint32_t spe
 		}
 	}
 
+	// Check for an Advanced Learning Class (character will know the spell but it will not be on their list standard)
+	bool bHasAdvancedLearning = false;
+	auto advancedLearningClasses = spellSys.GetClassesWithAdvancedLearning();
+	for (auto classEnum : advancedLearningClasses) {
+		if (objects.StatLevelGet(handle, classEnum) > 0) {
+			bHasAdvancedLearning = true;
+		}
+	}
+
+	if (bHasAdvancedLearning) {
+		if (spellSys.IsSpellKnown(handle, spellEnum)) {
+			return true;
+		}
+	}
+
 	return false;
 }
 

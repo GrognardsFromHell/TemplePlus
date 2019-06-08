@@ -1,0 +1,5 @@
+name: Surprise Casting
+flags: 8
+prereqs:
+description: At 2nd level, when you successfully use the Bluff skill to feint in combat, your target is denied its Dexterity bonus to AC for the next melee attack you make against it or the next spell you cast.  At 6th level, you gain the ability to feint in combat as a move action instead of a standard action. If you have the Improved Feint feat, it becomes a swift action.
+prereq descr: Beguiler level 2

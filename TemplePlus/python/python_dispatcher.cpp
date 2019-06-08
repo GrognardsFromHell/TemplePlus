@@ -459,6 +459,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.value("CastSpell", D20ActionType::D20A_CAST_SPELL)
 		.value("UseItem", D20ActionType::D20A_USE_ITEM)
 		.value("UsePotion", D20ActionType::D20A_USE_POTION)
+		.value("Feint", D20ActionType::D20A_FEINT)
 		.export_values()
 		;
 
@@ -845,6 +846,13 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("spell_packet", &EvtObjDealingSpellDamage::spellPkt, "Spell packet.")
 		;
 
+	py::class_<EvtObjSpellTargetBonus, DispIO>(m, "EvtObjSpellPacketTargetBonusList", "Spell Packet, Target and Bonus List.")
+		.def_readwrite("bonus_list", &EvtObjSpellTargetBonus::bonusList, "Bonus list.")
+		.def_readwrite("target", &EvtObjSpellTargetBonus::target, "The target of the spell.")
+		.def_readwrite("spell_packet", &EvtObjSpellTargetBonus::spellPkt, "Spell packet.")
+		;
+	
+
 }
 
 
@@ -1099,6 +1107,11 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 
 	case dispTypeMetaMagicMod:
 		pbEvtObj = py::cast(static_cast<EvtObjMetaMagic*>(args.dispIO));
+		break;
+
+	case dispTypeSpellResistanceCasterLevelCheck:
+	case dispTypeTargetSpellDCBonus:
+		pbEvtObj = py::cast(static_cast<EvtObjSpellTargetBonus*>(args.dispIO));
 		break;
 
 	case dispTypeConditionAdd: // these are actually null

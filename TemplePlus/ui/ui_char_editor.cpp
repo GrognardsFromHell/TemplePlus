@@ -192,6 +192,7 @@ public:
 	std::string featsAvailTitleString, featsExistingTitleString;
 	std::string featsTitleString;
 	std::string featsClassBonusTitleString;
+	bool selectingSpells = true;
 
 
 	int spellsWndId = 0;
@@ -361,8 +362,29 @@ PYBIND11_EMBEDDED_MODULE(char_editor, mm) {
 			auto firstIsNewSlot = spellSys.IsNewSlotDesignator(first);
 			auto secondIsNewSlot = spellSys.IsNewSlotDesignator(second);
 
-			auto firstSpellLvl = spellSys.GetSpellLevelBySpellClass(first, spellSys.GetSpellClass(self.spellClass) );
+			auto firstSpellLvl = spellSys.GetSpellLevelBySpellClass(first, spellSys.GetSpellClass(self.spellClass));
 			auto secondSpellLvl = spellSys.GetSpellLevelBySpellClass(second, spellSys.GetSpellClass(other.spellClass));
+
+			// Check for Advanced Learning Extended List Spells
+			if (firstSpellLvl == -1) {
+				auto castingClass = spellSys.GetCastingClass(self.spellClass);
+				if (pythonClassIntegration.HasAdvancedLearning(castingClass)) {
+					int nAdvancedLearningStat = pythonClassIntegration.GetAdvancedLearningClass(castingClass);
+					if (nAdvancedLearningStat != self.spellClass) {
+						firstSpellLvl = spellSys.GetSpellLevelBySpellClass(first, spellSys.GetSpellClass(nAdvancedLearningStat));
+					}
+				}
+			}
+
+			if (secondSpellLvl == -1) {
+				auto castingClass = spellSys.GetCastingClass(other.spellClass);
+				if (pythonClassIntegration.HasAdvancedLearning(castingClass)) {
+					int nAdvancedLearningStat = pythonClassIntegration.GetAdvancedLearningClass(castingClass);
+					if (nAdvancedLearningStat != other.spellClass) {
+						secondSpellLvl = spellSys.GetSpellLevelBySpellClass(second, spellSys.GetSpellClass(nAdvancedLearningStat));
+					}
+				}
+			}
 
 			auto firstClass = self.spellClass;
 			auto secondClass = other.spellClass;
@@ -408,7 +430,7 @@ PYBIND11_EMBEDDED_MODULE(char_editor, mm) {
 			return spellSys.GetCastingClass(ksi.spellClass);
 		})
 		.def("set_casting_class", [](KnownSpellInfo& ksi, int classEnum) {
-			ksi.spellClass = spellSys.GetCastingClass(classEnum);
+			ksi.spellClass = spellSys.GetSpellClass(classEnum, false);
 		}, py::arg("class_enum"))
 		;
 
@@ -661,8 +683,18 @@ PYBIND11_EMBEDDED_MODULE(char_editor, mm) {
 				continue;
 
 			SpellStoreData spData(spEnum, it.spellLevel, it.spellClass, 0, SpellStoreType::spellStoreKnown );
-			if (spData.spellLevel == -1)
+			if (spData.spellLevel == -1) {
 				spData.spellLevel = spellSys.GetSpellLevelBySpellClass(spEnum, spData.classCode);
+				if (spData.spellLevel == -1) {
+					int castingClass = spellSys.GetCastingClass(it.spellClass);
+					if (pythonClassIntegration.HasAdvancedLearning(castingClass)) {
+						int nAdvancedLearningStat = pythonClassIntegration.GetAdvancedLearningClass(castingClass);
+						if (nAdvancedLearningStat != castingClass) {
+							spData.spellLevel = spellSys.GetSpellLevelBySpellClass(spEnum, spellSys.GetSpellClass(nAdvancedLearningStat));
+						}
+					}
+				}
+			}
 			
 			if (spellSys.IsSpellKnown(handle,spEnum, spData.classCode))
 				continue;
@@ -750,7 +782,7 @@ void UiCharEditor::BtnStatesUpdate(int systemId){
 	}
 	
 	// Spells
-	if (d20ClassSys.IsSelectingSpellsOnLevelup(handle, classCode)){
+	if (selectingSpells){
 		uiManager->SetButtonState(stateBtnIds[5], LgcyButtonState::Normal);
 	} 
 	else
@@ -854,6 +886,12 @@ BOOL UiCharEditor::ClassShow(){
 }
 
 BOOL UiCharEditor::ClassHide(){
+	auto handle = GetEditedChar();
+	auto classCode = GetCharEditorSelPacket().classCode;
+
+	//Call IsSelectingSpellsOnLevelup now and keep the value so it does not need to be called continually
+	selectingSpells = d20ClassSys.IsSelectingSpellsOnLevelup(handle, classCode);
+	
 	uiManager->SetHidden(classWndId, true);
 	return 0;
 }
@@ -1535,8 +1573,10 @@ void UiCharEditor::SpellsActivate() {
 BOOL UiCharEditor::SpellsCheckComplete(){
 	auto selPkt = GetCharEditorSelPacket();
 	auto handle = GetEditedChar();
-	if (!d20ClassSys.IsSelectingSpellsOnLevelup(handle, selPkt.classCode))
+
+	if (!selectingSpells) {
 		return true;
+	}
 
 	auto &needPopulateEntries = temple::GetRef<int>(0x10C4D4C4);
 
