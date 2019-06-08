@@ -2,6 +2,7 @@ from toee import *
 import char_class_utils
 import char_editor
 import tpdp
+import functools
 
 # Warmage:  Complete Arcane, p. 10
 
@@ -145,14 +146,18 @@ def ObjMeetsPrereqs( obj ):
 def GetDeityClass():
 	return stat_level_sorcerer
 	
-def IsAdvancedLearningSpell(spell):
+def IsAdvancedLearningSpell(obj, spell):
 	spEntry = tpdp.SpellEntry(spell.spell_enum)
+	
+	#Don't add spells that are already known to the list
+	if obj.is_spell_known(spell.spell_enum):
+		return False
 	
 	#First get rid of everything in the beguiler spell list
 	for level, spell_list_level in spell_list.items():
 		if spell.spell_enum in spell_list_level:
 			return False
-	
+		
 	#Next, get rid of everything that is not evocation
 	if spEntry.spell_school_enum == Evocation:
 		return True
@@ -163,7 +168,7 @@ def GetAdvancedLearningList(obj, maxSpellLevel):
 	#Add wizard spells and remove all that are not evocation
 	
 	spAdvancedLearningList = char_editor.get_learnable_spells(obj, stat_level_wizard, maxSpellLevel)
-	spAdvancedLearningList = filter(IsAdvancedLearningSpell, spAdvancedLearningList)
+	spAdvancedLearningList = filter(functools.partial(IsAdvancedLearningSpell, obj), spAdvancedLearningList)
 		
 	for idx in range(0, len(spAdvancedLearningList)):
 		spAdvancedLearningList[idx].set_casting_class(classEnum)

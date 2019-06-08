@@ -2,6 +2,7 @@ from toee import *
 import char_class_utils
 import char_editor
 import tpdp
+import functools
 
 # Beguiler:  Player's Handbook 2, p. 6
 
@@ -142,9 +143,13 @@ def ObjMeetsPrereqs(obj):
 def GetDeityClass():
 	return stat_level_rogue
 
-def IsAdvancedLearningSpell(spell):
+def IsAdvancedLearningSpell(obj, spell):
 	spEntry = tpdp.SpellEntry(spell.spell_enum)
-	
+
+	#Don't add spells that are already known to the list
+	if obj.is_spell_known(spell.spell_enum):
+		return False
+
 	#First get rid of everything in the beguiler spell list
 	for level, spell_list_level in spell_list.items():
 		if spell.spell_enum in spell_list_level:
@@ -157,10 +162,10 @@ def IsAdvancedLearningSpell(spell):
 	return False
 
 def GetAdvancedLearningList(obj, maxSpellLevel):
-	#Add wizard spells and remove all that are not evocation
+	#Add wizard spells and remove all that are not enchantment or illusion
 	
 	spAdvancedLearningList = char_editor.get_learnable_spells(obj, stat_level_wizard, maxSpellLevel)
-	spAdvancedLearningList = filter(IsAdvancedLearningSpell, spAdvancedLearningList)
+	spAdvancedLearningList = filter(functools.partial(IsAdvancedLearningSpell, obj), spAdvancedLearningList)
 		
 	for idx in range(0, len(spAdvancedLearningList)):
 		spAdvancedLearningList[idx].set_casting_class(classEnum)

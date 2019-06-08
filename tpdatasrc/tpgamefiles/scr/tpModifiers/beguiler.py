@@ -109,9 +109,10 @@ def QuickenFeintCostMod(attachee, args, evt_obj):
 	if evt_obj.d20a.action_type != tpdp.D20ActionType.Feint:
 		return 0
 		
+	#Change to a swift or move equivalent action as appropriate
 	if attachee.has_feat(feat_improved_feint):
 		if not (evt_obj.turnbased_status.flags & TBSF_FreeActionSpellPerformed):
-			evt_obj.turnbased_status.flags |= TBSF_FreeActionSpellPerformed
+			evt_obj.turnbased_status.flags |= TBSF_FreeActionSpellPerformed #Swift action uses the quickened spell action
 			evt_obj.cost_new.action_cost = D20ACT_NULL
 	else:
 		evt_obj.cost_new.action_cost = D20ACT_Move_Action
