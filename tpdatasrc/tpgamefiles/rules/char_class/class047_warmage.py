@@ -56,14 +56,13 @@ spells_per_day = {
 }
 
 # There are non core spells that are not listed since they are not in constants.py.  If they are added to the game they should be added here.
-# Warmages are granted all the spells on their list as soon as they get atleast one spell per day of that level.
-# Advanced learning offers warmages additional evocation spells on the sorcerer/wizard list.  Currently this just adds wind wall for a third level 
-# spell.  If more spells are added, this may need to be reworked.
+# Warmages are granted all the spells on their list as soon as they get atleast one spell per day of that level.  Additional spells are added
+# to this list with advanced learning.
 spell_list = {
 	0: (spell_acid_splash, spell_disrupt_undead, spell_light, spell_ray_of_frost),
 	1: (spell_burning_hands, spell_chill_touch, spell_magic_missile, spell_shocking_grasp, spell_true_strike),
 	2: (spell_continual_flame, spell_fire_trap, spell_flaming_sphere, spell_melfs_acid_arrow, spell_pyrotechnics, spell_shatter, spell_scorching_ray),
-	3: (spell_fire_shield, spell_fireball, spell_flame_arrow, spell_gust_of_wind, spell_ice_storm, spell_lightning_bolt, spell_poison, spell_sleet_storm, spell_stinking_cloud, spell_wind_wall),
+	3: (spell_fire_shield, spell_fireball, spell_flame_arrow, spell_gust_of_wind, spell_ice_storm, spell_lightning_bolt, spell_poison, spell_sleet_storm, spell_stinking_cloud),
 	4: (spell_contagion, spell_evards_black_tentacles, spell_phantasmal_killer, spell_shout, spell_wall_of_fire),
 	5: (spell_cloudkill, spell_cone_of_cold, spell_flame_strike),
 	6: (spell_blade_barrier, spell_chain_lightning, spell_circle_of_death, spell_disintegrate, spell_fire_seeds, spell_otilukes_freezing_sphere, spell_tensers_transformation),
@@ -103,6 +102,12 @@ def GetSpellSourceType():
 def GetSpellReadyingType():
 	return spell_readying_innate
 	
+def HasAdvancedLearning():
+	return 1
+	
+def GetAdvancedLearningClass():
+	return stat_level_wizard
+	
 def GetSpellList():
 	return spell_list
 
@@ -140,14 +145,84 @@ def ObjMeetsPrereqs( obj ):
 def GetDeityClass():
 	return stat_level_sorcerer
 	
+def IsAdvancedLearningSpell(spell):
+	spEntry = tpdp.SpellEntry(spell.spell_enum)
+	
+	#First get rid of everything in the beguiler spell list
+	for level, spell_list_level in spell_list.items():
+		if spell.spell_enum in spell_list_level:
+			return False
+	
+	#Next, get rid of everything that is not evocation
+	if spEntry.spell_school_enum == Evocation:
+		return True
+	
+	return False
+
+def GetAdvancedLearningList(obj, maxSpellLevel):
+	#Add wizard spells and remove all that are not evocation
+	
+	spAdvancedLearningList = char_editor.get_learnable_spells(obj, stat_level_wizard, maxSpellLevel)
+	spAdvancedLearningList = filter(IsAdvancedLearningSpell, spAdvancedLearningList)
+		
+	for idx in range(0, len(spAdvancedLearningList)):
+		spAdvancedLearningList[idx].set_casting_class(classEnum)
+	
+	return spAdvancedLearningList
+	
+def IsSelectingSpellsOnLevelup(obj):
+	classLvl = obj.stat_level_get(classEnum)
+	classLvlNew = classLvl + 1
+	
+	#levels 3, 6, 11, and 16 get advanced learning otherwise there is nothing to select
+	if classLvlNew in [3, 6, 11, 16]:
+		maxSpellLvl = char_editor.get_max_spell_level( obj, classEnum, classLvlNew )
+		AdvancedLearningList = GetAdvancedLearningList(obj, maxSpellLvl)
+		if AdvancedLearningList:
+			return 1
+	return 0
+	
+def InitSpellSelection(obj, classLvlNew = -1, classLvlIncrement = 1):
+	classLvl = obj.stat_level_get(classEnum)
+	if classLvlNew <= 0:
+		classLvlNew = classLvl + 1
+	maxSpellLvl = char_editor.get_max_spell_level( obj, classEnum, classLvlNew )
+	
+	spAvail = GetAdvancedLearningList(obj, maxSpellLvl)
+	
+	# Add the spell level labels
+	for p in range(1,maxSpellLvl+1):
+		spAvail.append(char_editor.KnownSpellInfo(spell_label_level_0 + p, 0, classEnum))
+	spAvail.sort()
+
+	char_editor.append_available_spells(spAvail)
+	
+	# Add a single spell slot
+	vacant_slot = char_editor.KnownSpellInfo(spell_vacant, 3, classEnum)
+	spEnums = [vacant_slot]
+	char_editor.append_spell_enums(spEnums)
+	return 0
+	
+def LevelupCheckSpells(obj):
+	spell_enums = char_editor.get_spell_enums()
+	for spInfo in spell_enums:
+		if spInfo.spell_enum == spell_vacant:
+			return 0
+	return 1
+	
 def LevelupSpellsFinalize( obj, classLvlNew = -1 ):
+	#Add the normal spells
 	classLvl = obj.stat_level_get(classEnum)
 	if classLvlNew <= 0:
 		classLvlNew = classLvl + 1
 
 	maxSpellLvl = char_editor.get_max_spell_level( obj, classEnum, classLvlNew )
 	class_spells = char_editor.get_learnable_spells(obj, classEnum, maxSpellLvl)
-	char_editor.spell_known_add(class_spells)
+	char_editor.spell_known_add(class_spells) # internally takes care of duplicates and the labels/vacant slots	
+	
+	#Add Anything from advanced learning
+	spEnums = char_editor.get_spell_enums()
+	char_editor.spell_known_add(spEnums) # internally takes care of duplicates and the labels/vacant slots	
 	return 0
 	
 def IsSelectingFeatsOnLevelup( obj ):
