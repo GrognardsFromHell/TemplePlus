@@ -292,7 +292,7 @@ Spells: Able to cast lesser planar ally.}
 {13027}Favored Soul{Favored souls cast divine spells by means of an innate connection rather than through laborious training and prayer, so their divine connection is natural rather than learned.}
 {13039}Scout{A scout has some training in weapons and a unique combat style that favors fast movement and devastating attacks.}
 {13040}Warmage{A warmage is a militant spellcaster whose training focuses on battlefield magic.}
-{13041}Beguiler{A beguiler is a sellcaster who delights in manipulating others, either to their disadvantage or for their own good.}
+{13041}Beguiler{A beguiler is a spellcaster who delights in manipulating others, either to their disadvantage or for their own good.}
 
 // Cannot Pick Class Short Help Goes in the range of 20007+
 {20007} Arcane Archer{Arcane Archer requirements:
