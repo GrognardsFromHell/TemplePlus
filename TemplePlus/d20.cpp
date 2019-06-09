@@ -265,8 +265,16 @@ bool LegacyD20System::SpellIsInterruptedCheck(D20Actn* d20a, int invIdx, SpellSt
 		if (!item)
 			return false;
 		auto itemObj = gameSystems->GetObj().GetObject(item);
-		if (itemObj->type != obj_t_scroll)
-			return false;
+		if (itemObj->type != obj_t_scroll){
+			if (itemObj->type == obj_t_generic) {
+				auto itemFlags = itemObj->GetItemFlags();
+				if (!(itemFlags & OIF_NEEDS_SPELL) ){
+					return false;
+				}
+			}
+			else
+				return false;
+		}
 	}
 
 	if (d20a->d20Caf & D20CAF_COUNTERSPELLED)
