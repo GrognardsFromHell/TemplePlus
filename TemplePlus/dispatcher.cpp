@@ -664,6 +664,28 @@ void DispatcherSystem::DispatchSpecialAttack(objHndl obj, int attack, objHndl ta
 	DispatcherProcessor(_dispatcher, dispTypeSpecialAttack, 0, &dispIo);
 }
 
+void DispatcherSystem::DispatchSpellResistanceCasterLevelCheck(objHndl caster, objHndl target, BonusList *bonusList, SpellPacketBody *spellPkt)
+{
+	auto _dispatcher = objects.GetDispatcher(caster);
+	if (!dispatch.dispatcherValid(_dispatcher)) return;
+	EvtObjSpellTargetBonus dispIo;
+	dispIo.spellPkt = spellPkt;
+	dispIo.target = target;
+	dispIo.bonusList = bonusList;
+	DispatcherProcessor(_dispatcher, dispTypeSpellResistanceCasterLevelCheck, 0, &dispIo);
+}
+
+void DispatcherSystem::DispatchTargetSpellDCBonus(objHndl caster, objHndl target, BonusList *bonusList, SpellPacketBody*spellPkt)
+{
+	auto _dispatcher = objects.GetDispatcher(caster);
+	if (!dispatch.dispatcherValid(_dispatcher)) return;
+	EvtObjSpellTargetBonus dispIo;
+	dispIo.spellPkt = spellPkt;
+	dispIo.target = target;
+	dispIo.bonusList = bonusList;
+	DispatcherProcessor(_dispatcher, dispTypeTargetSpellDCBonus, 0, &dispIo);
+}
+
 unsigned DispatcherSystem::Dispatch35CasterLevelModify(objHndl obj, SpellPacketBody* spellPkt)
 {
 	auto _dispatcher = objects.GetDispatcher(obj);

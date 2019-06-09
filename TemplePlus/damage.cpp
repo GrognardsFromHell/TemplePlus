@@ -610,7 +610,15 @@ bool Damage::SavingThrowSpell(objHndl obj, objHndl attacker, int dc, SavingThrow
 	if (type == (SavingThrowType)3){
 		type = SavingThrowType::Fortitude;
 	}
-	result = damage.SavingThrow(obj, attacker, dc, type, flagsModified);
+
+	BonusList bonlist;
+
+	// Gets a DC bonus based on the target of the spell
+	dispatch.DispatchTargetSpellDCBonus(attacker, obj, &bonlist, &spPkt);
+
+	int nDCBonus = bonlist.GetEffectiveBonusSum();
+
+	result = damage.SavingThrow(obj, attacker, dc+ nDCBonus, type, flagsModified);
 	spPkt.savingThrowResult = result;
 	if (!spPkt.UpdateSpellsCastRegistry()){
 		logger->debug("SavingThrowSpell: Unable to save spell pkt");
@@ -622,6 +630,14 @@ bool Damage::SavingThrowSpell(objHndl obj, objHndl attacker, int dc, SavingThrow
 }
 
 bool Damage::ReflexSaveAndDamage(objHndl obj, objHndl attacker, int dc, int reduction, int flags, const Dice& dice, DamageType damageType, int attackPower, D20ActionType actionType, int spellId) {
+	SpellPacketBody spPkt(spellId);
+	BonusList bonlist;
+
+	// Gets a DC bonus based on the target of the spell
+	dispatch.DispatchTargetSpellDCBonus(attacker, obj, &bonlist, &spPkt);
+
+	int nDCBonus = bonlist.GetEffectiveBonusSum();
+
 	return addresses.ReflexSaveAndDamage(obj, attacker, dc, reduction, flags, dice.ToPacked(), damageType, attackPower, actionType, spellId);
 }
 

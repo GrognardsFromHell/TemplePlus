@@ -162,6 +162,16 @@ SpellSourceType PythonClassSpecIntegration::GetSpellSourceType(int classEnum)
 	return static_cast<SpellSourceType>(GetInt(classEnum, ClassSpecFunc::GetSpellSourceType, (int)SpellSourceType::Ability));
 }
 
+int PythonClassSpecIntegration::GetAdvancedLearningClass(int classEnum)
+{
+	return static_cast<enum Stat>(GetInt(classEnum, ClassSpecFunc::GetAdvancedLearningClass, classEnum));
+}
+
+bool PythonClassSpecIntegration::HasAdvancedLearning(int classEnum)
+{
+	return (GetInt(classEnum, ClassSpecFunc::GetAdvancedLearningClass, 0) != 0);
+}
+
 std::map<int, int> PythonClassSpecIntegration::GetSpellList(int classEnum)
 {
 	auto result = std::map<int, int>();
@@ -356,6 +366,8 @@ static std::map<ClassSpecFunc, std::string> classSpecFunctions = {
 
 	{ ClassSpecFunc::GetSpellListType,"GetSpellListType" },
 	{ ClassSpecFunc::GetSpellReadyingType,"GetSpellReadyingType" },
+	{ ClassSpecFunc::GetAdvancedLearningClass,"GetAdvancedLearningClass" },
+	{ ClassSpecFunc::HasAdvancedLearning,"HasAdvancedLearning" },
 	{ ClassSpecFunc::GetSpellSourceType,"GetSpellSourceType" },
 	{ ClassSpecFunc::GetSpellList,"GetSpellList" },
 	{ ClassSpecFunc::GetSpellsPerDay,"GetSpellsPerDay" },

@@ -4,33 +4,34 @@ import char_editor
 import tpdp
 import functools
 
-# Warmage:  Complete Arcane, p. 10
+# Beguiler:  Player's Handbook 2, p. 6
 
 ###################################################
 
 def GetConditionName(): # used by API
-	return "Warmage"
+	return "Beguiler"
 
 def GetCategory():
-	return "Complete Arcane"
+	return "Player's Handbook 2"
 
 def GetClassDefinitionFlags():
 	return CDF_BaseClass
 
 def GetClassHelpTopic():
-	return "TAG_WARMAGES"
+	return "TAG_BEGUILER"
 	
-classEnum = stat_level_warmage
+classEnum = stat_level_beguiler
 
 ###################################################
 
-#Note:  The shield proficency feat is used here but warmages should not get proficency with heavy shields (only light).  This may be worth updating at some point. 
 class_feats = {
-1: (feat_armor_proficiency_light, feat_simple_weapon_proficiency, feat_shield_proficiency, "Warmage Armored Mage", "Warmage Edge"),
-8: (feat_armor_proficiency_medium,),
+1: (feat_armor_proficiency_light, feat_simple_weapon_proficiency, feat_martial_weapon_proficiency_shortbow, feat_exotic_weapon_proficiency_hand_crossbow, feat_martial_weapon_proficiency_short_sword, feat_martial_weapon_proficiency_rapier, feat_traps, "Beguiler Armored Mage"),
+2: ("Cloaked Casting", "Surprise Casting"),
+5: (feat_silent_spell,),
+10: (feat_still_spell,),
 }
 
-class_skills = (skill_alchemy, skill_concentration, skill_intimidate, skill_spellcraft)
+class_skills = (skill_alchemy, skill_appraise, skill_balance, skill_bluff, skill_climb, skill_concentration, skill_decipher_script, skill_diplomacy, skill_disable_device, skill_disguise, skill_escape_artist, skill_forgery, skill_gather_information, skill_hide, skill_jump, skill_listen, skill_move_silently, skill_open_lock, skill_search, skill_sense_motive, skill_pick_pocket, skill_spellcraft, skill_spot, skill_swim, skill_tumble, skill_use_magic_device, skill_use_rope)
 
 spells_per_day = {
 1:  (5, 3),
@@ -57,19 +58,19 @@ spells_per_day = {
 }
 
 # There are non core spells that are not listed since they are not in constants.py.  If they are added to the game they should be added here.
-# Warmages are granted all the spells on their list as soon as they get atleast one spell per day of that level.  Additional spells are added
+# Beguilers are granted all the spells on their list as soon as they get atleast one spell per day of that level.  Additional spells are added
 # to this list with advanced learning.
 spell_list = {
-	0: (spell_acid_splash, spell_disrupt_undead, spell_light, spell_ray_of_frost),
-	1: (spell_burning_hands, spell_chill_touch, spell_magic_missile, spell_shocking_grasp, spell_true_strike),
-	2: (spell_continual_flame, spell_fire_trap, spell_flaming_sphere, spell_melfs_acid_arrow, spell_pyrotechnics, spell_shatter, spell_scorching_ray),
-	3: (spell_fire_shield, spell_fireball, spell_flame_arrow, spell_gust_of_wind, spell_ice_storm, spell_lightning_bolt, spell_poison, spell_sleet_storm, spell_stinking_cloud),
-	4: (spell_contagion, spell_evards_black_tentacles, spell_phantasmal_killer, spell_shout, spell_wall_of_fire),
-	5: (spell_cloudkill, spell_cone_of_cold, spell_flame_strike),
-	6: (spell_blade_barrier, spell_chain_lightning, spell_circle_of_death, spell_disintegrate, spell_fire_seeds, spell_otilukes_freezing_sphere, spell_tensers_transformation),
-	7: (spell_delayed_blast_fireball, spell_earthquake, spell_finger_of_death, spell_fire_storm, spell_mordenkainens_sword, spell_prismatic_spray, spell_sunbeam, ),
-	8: (spell_horrid_wilting, spell_incendiary_cloud, spell_polar_ray, spell_prismatic_wall, spell_sunburst),
-	9: (spell_elemental_swarm, spell_implosion, spell_meteor_swarm, spell_prismatic_sphere, spell_wail_of_the_banshee, spell_weird)
+	0: (spell_dancing_lights, spell_daze, spell_detect_magic, spell_ghost_sound, spell_message, spell_open_close, spell_read_magic),
+	1: (spell_charm_person, spell_color_spray, spell_comprehend_languages, spell_detect_secret_doors, spell_disguise_self, spell_expeditious_retreat, spell_hypnotism, spell_mage_armor, spell_obscuring_mist, spell_silent_image, spell_sleep, spell_undetectable_alignment),
+	2: (spell_blur, spell_daze_monster, spell_detect_thoughts, spell_fog_cloud, spell_glitterdust, spell_hypnotic_pattern, spell_invisibility, spell_knock, spell_minor_image, spell_mirror_image, spell_misdirection, spell_see_invisibility, spell_silence, spell_spider_climb),
+	3: (spell_clairaudience_clairvoyance, spell_deep_slumber, spell_dispel_magic, spell_displacement, spell_glibness, spell_haste, spell_hold_person, spell_invisibility_sphere, spell_major_image, spell_nondetection, spell_slow, spell_suggestion),
+	4: (spell_charm_monster, spell_confusion, spell_crushing_despair, spell_freedom_of_movement, spell_improved_invisibility, spell_locate_creature, spell_rainbow_pattern, spell_solid_fog),
+	5: (spell_break_enchantment, spell_dominate_person, spell_feeblemind, spell_hold_monster, spell_mind_fog, spell_rarys_telepathic_bond, spell_seeming, spell_sending),
+	6: (spell_greater_dispelling, spell_mislead, spell_repulsion, spell_shadow_walk, spell_true_seeing, spell_veil),
+	7: (spell_ethereal_jaunt, spell_mass_hold_person, spell_mass_invisibility, spell_phase_door, spell_power_word_blind, spell_project_image, spell_spell_turning),
+	8: (spell_demand, spell_discern_location, spell_mind_blank, spell_power_word_stun, spell_screen),
+	9: (spell_dominate_monster, spell_etherealness, spell_foresight, spell_hold_monster, spell_power_word_kill, spell_time_stop)
 }
 
 def IsEnabled():
@@ -79,7 +80,7 @@ def GetHitDieType():
 	return 6
 	
 def GetSkillPtsPerLevel():
-	return 2
+	return 6
 	
 def GetBabProgression():
 	return base_attack_bonus_type_non_martial
@@ -102,7 +103,7 @@ def GetSpellSourceType():
 
 def GetSpellReadyingType():
 	return spell_readying_innate
-	
+
 def HasAdvancedLearning():
 	return 1
 	
@@ -115,15 +116,11 @@ def GetSpellList():
 def GetSpellsPerDay():
 	return spells_per_day
 
-caster_levels = range(1, 21)
-def GetCasterLevels():
-	return caster_levels
-
 def GetSpellDeterminingStat():
-	return stat_charisma
+	return stat_intelligence
 
 def GetSpellDcStat():
-	return stat_charisma
+	return stat_intelligence
 
 def IsClassSkill(skillEnum):
 	return char_class_utils.IsClassSkill(class_skills, skillEnum)
@@ -134,38 +131,38 @@ def IsClassFeat(featEnum):
 def GetClassFeats():
 	return class_feats
 
-def IsAlignmentCompatible( alignment):
+def IsAlignmentCompatible(alignment):
 	return 1
 
-def ObjMeetsPrereqs( obj ):
-	abScore = obj.stat_base_get(stat_charisma)
+def ObjMeetsPrereqs(obj):
+	abScore = obj.stat_base_get(stat_intelligence)
 	if abScore > 10:
 		return 1
 	return 0
 
 def GetDeityClass():
-	return stat_level_sorcerer
-	
+	return stat_level_rogue
+
 def IsAdvancedLearningSpell(obj, spell):
 	spEntry = tpdp.SpellEntry(spell.spell_enum)
-	
+
 	#Don't add spells that are already known to the list
 	if obj.is_spell_known(spell.spell_enum):
 		return False
-	
+
 	#First get rid of everything in the beguiler spell list
 	for level, spell_list_level in spell_list.items():
 		if spell.spell_enum in spell_list_level:
 			return False
-		
-	#Next, get rid of everything that is not evocation
-	if spEntry.spell_school_enum == Evocation:
+	
+	#Next, get rid of everything that is not enchantment or illustion
+	if spEntry.spell_school_enum == Enchantment or spEntry.spell_school_enum == Illusion:
 		return True
 	
 	return False
 
 def GetAdvancedLearningList(obj, maxSpellLevel):
-	#Add wizard spells and remove all that are not evocation
+	#Add wizard spells and remove all that are not enchantment or illusion
 	
 	spAdvancedLearningList = char_editor.get_learnable_spells(obj, stat_level_wizard, maxSpellLevel)
 	spAdvancedLearningList = filter(functools.partial(IsAdvancedLearningSpell, obj), spAdvancedLearningList)
@@ -174,13 +171,13 @@ def GetAdvancedLearningList(obj, maxSpellLevel):
 		spAdvancedLearningList[idx].set_casting_class(classEnum)
 	
 	return spAdvancedLearningList
-	
+
 def IsSelectingSpellsOnLevelup(obj):
 	classLvl = obj.stat_level_get(classEnum)
 	classLvlNew = classLvl + 1
 	
-	#levels 3, 6, 11, and 16 get advanced learning otherwise there is nothing to select
-	if classLvlNew in [3, 6, 11, 16]:
+	#levels 3, 7, 11, 15 and 19 get advanced learning otherwise there is nothing to select
+	if classLvlNew in [3, 7, 11, 15, 19]:
 		maxSpellLvl = char_editor.get_max_spell_level( obj, classEnum, classLvlNew )
 		AdvancedLearningList = GetAdvancedLearningList(obj, maxSpellLvl)
 		if AdvancedLearningList:
@@ -214,8 +211,8 @@ def LevelupCheckSpells(obj):
 		if spInfo.spell_enum == spell_vacant:
 			return 0
 	return 1
-	
-def LevelupSpellsFinalize( obj, classLvlNew = -1 ):
+
+def LevelupSpellsFinalize(obj, classLvlNew = -1):
 	#Add the normal spells
 	classLvl = obj.stat_level_get(classEnum)
 	if classLvlNew <= 0:
@@ -228,43 +225,5 @@ def LevelupSpellsFinalize( obj, classLvlNew = -1 ):
 	#Add Anything from advanced learning
 	spEnums = char_editor.get_spell_enums()
 	char_editor.spell_known_add(spEnums) # internally takes care of duplicates and the labels/vacant slots	
+	
 	return 0
-	
-def IsSelectingFeatsOnLevelup( obj ):
-	newLvl = obj.stat_level_get( classEnum ) + 1
-	if (newLvl == 7) or (newLvl == 10) or (newLvl == 15) or (newLvl == 20):
-		return 1
-	return 0
-	
-def LevelupGetBonusFeats( obj ):
-	bonFeatInfo = []
-	feat = ""
-	newLvl = obj.stat_level_get( classEnum ) + 1
-	#Find the normal feat for each level
-	if newLvl == 7:
-		feat = "Sudden Empower"
-	elif newLvl == 10:
-		feat = "Sudden Enlarge"
-	elif newLvl == 15:
-		feat = "Sudden Widen"
-	elif newLvl == 20:
-		feat = "Sudden Maximize"
-	else:
-		return #No bonus feat this level
-	
-	#The only option will be the normal feat if the chracter does not have it
-	if not char_editor.has_feat(feat):
-		featInfo = char_editor.FeatInfo(feat)
-		featInfo.feat_status_flags |= 4 # always pickable
-		bonFeatInfo.append(featInfo)
-	else:
-		#Any metamagic feat can be selected if the character does not have the normal feat
-		bonus_feats = tpdp.get_metamagic_feats()
-		
-		#If the character already has the feat, he can select any metamagic feat
-		for feat in bonus_feats:
-			bonFeatInfo.append(char_editor.FeatInfo(feat))
-	
-	char_editor.set_bonus_feats(bonFeatInfo)
-	return
-

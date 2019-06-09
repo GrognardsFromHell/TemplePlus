@@ -182,6 +182,7 @@ struct LegacySpellSystem : temple::AddressTable
 
 	IdxTable<SpellPacket> * spellCastIdxTable;
 	std::map<int, SpellEntryExt> mSpellEntryExt;
+	std::vector<Stat> advancedLearningClasses;
 	
 	MesHandle *spellEnumMesHandle;
 	MesHandle spellEnumsExt;
@@ -196,6 +197,9 @@ struct LegacySpellSystem : temple::AddressTable
 
 	int GetNewSpellId();
 	BOOL RegisterSpell(SpellPacketBody& spellPkt, int spellId);
+
+	void RegisterAdvancedLearningClass(Stat classEnum);
+	const std::vector<Stat> &GetClassesWithAdvancedLearning();
 
 	uint32_t spellRegistryCopy(uint32_t spellEnum, SpellEntry* spellEntry);
 
