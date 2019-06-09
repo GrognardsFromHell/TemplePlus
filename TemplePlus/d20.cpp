@@ -322,6 +322,10 @@ int LegacyD20System::CastSpellProcessTargets(D20Actn* d20a, SpellPacketBody& spe
 		if (feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_GREATER_SPELL_PENETRATION)) {
 			casterLvlBonlist.AddBonusFromFeat(2, 0, 114, FEAT_GREATER_SPELL_PENETRATION);
 		}
+
+		// New Spell resistance mod
+		dispatch.DispatchSpellResistanceCasterLevelCheck(spellPkt.caster, tgt, &casterLvlBonlist, &spellPkt);
+
 		dispIoSr.spellEntry = &spEntry;
 		auto dispelDc = dispatch.Dispatch45SpellResistanceMod(tgt, &dispIoSr);
 		if (dispelDc <=0){

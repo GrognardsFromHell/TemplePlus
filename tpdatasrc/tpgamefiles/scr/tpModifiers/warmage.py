@@ -58,9 +58,24 @@ def OnLevelupSpellsFinalize(attachee, args, evt_obj):
 		return 0
 	classSpecModule.LevelupSpellsFinalize(attachee)
 	return 0
+	
+def OnInitLevelupSpellSelection(attachee, args, evt_obj):
+	if evt_obj.arg0 != classEnum:
+		return 0
+	classSpecModule.InitSpellSelection(attachee)
+	return 0
+	
+def OnLevelupSpellsCheckComplete(attachee, args, evt_obj):
+	if evt_obj.arg0 != classEnum:
+		return 0
+	if not classSpecModule.LevelupCheckSpells(attachee):
+		evt_obj.bonus_list.add(-1, 0, 137) # denotes incomplete spell selection
+	return 1	
 
 classSpecObj.AddHook(ET_OnGetBaseCasterLevel, EK_NONE, OnGetBaseCasterLevel, ())
 classSpecObj.AddHook(ET_OnLevelupSystemEvent, EK_LVL_Spells_Finalize, OnLevelupSpellsFinalize, ())
+classSpecObj.AddHook(ET_OnLevelupSystemEvent, EK_LVL_Spells_Activate, OnInitLevelupSpellSelection, ())
+classSpecObj.AddHook(ET_OnLevelupSystemEvent, EK_LVL_Spells_Check_Complete, OnLevelupSpellsCheckComplete, ())
 
 # Warmage Edge
 # Here is how this complicated ability is implimented.  First it is increated by a critical but not empower

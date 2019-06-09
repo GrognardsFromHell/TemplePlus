@@ -505,6 +505,9 @@ void D20ClassSystem::GetClassSpecs(){
 			// Spell Source Type (Arcane/Divine/other...)
 			classSpec.spellSourceType = pythonClassIntegration.GetSpellSourceType(it);
 
+			if (pythonClassIntegration.HasAdvancedLearning(it)) {
+				spellSys.RegisterAdvancedLearningClass(static_cast<Stat>(it));
+			}
 
 			// Spellcasting Condition
 			classSpec.spellCastingConditionName = fmt::format("{}", pythonClassIntegration.GetSpellCastingConditionName(it));

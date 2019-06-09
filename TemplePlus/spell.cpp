@@ -552,6 +552,16 @@ int LegacySpellSystem::GetNewSpellId(){
 	return spellIdSerial++;
 }
 
+void LegacySpellSystem::RegisterAdvancedLearningClass(Stat classEnum)
+{
+	advancedLearningClasses.push_back(classEnum);
+}
+
+const vector<Stat> &LegacySpellSystem::GetClassesWithAdvancedLearning()
+{
+	return advancedLearningClasses;
+}
+
 BOOL LegacySpellSystem::RegisterSpell(SpellPacketBody & spellPkt, int spellId)
 {
 	if (!spellId){
@@ -2793,6 +2803,8 @@ int LegacySpellSystem::CheckSpellResistance(SpellPacketBody* spellPkt, objHndl h
 		bonlist.AddBonusWithDesc(2, 0, 114, featName);
 	}
 	
+	// New Spell resistance mod
+	dispatch.DispatchSpellResistanceCasterLevelCheck(caster, handle, &bonlist, spellPkt);
 
 	// do the roll and log the result to the D20 window
 	int dispelSpellResistanceResult = 0;
