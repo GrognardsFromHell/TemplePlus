@@ -738,6 +738,13 @@ void UiPartyPool::Refresh()
 	ui_party_refresh();
 }
 
+static class UiPartyPoolFix : public TempleFix {
+public:
+	void apply() override {
+		
+	}
+} uiPartyPoolFix;
+
 //*****************************************************************************
 //* pcc_portrait
 //*****************************************************************************
@@ -745,6 +752,20 @@ void UiPartyPool::Refresh()
 static class UiPccPortraitFix : public TempleFix {
 public:
 	void apply() override {
+
+		// UiPcCreationRemovePc
+		replaceFunction<void()>(0x10163150, []() {
+			auto N = party.GroupPCsLen();
+			auto &pccIdx = *uiSystems->GetPccPortrait().pcCreationIdx;
+			if (pccIdx >= 0 && pccIdx < N){
+				auto pc = party.GroupPCsGetMemberN(pccIdx);
+				party.ObjRemoveFromAllGroupArrays(pc);
+				// set button state...
+				uiManager->SetButtonState(uiSystems->GetPccPortrait().pcPortraitWidgIds[N - 1], LgcyButtonState::Disabled);
+				objects.Destroy(pc);
+			}
+			pccIdx = -1;
+		});
 
 		// ui_msg_pc_creation_portraits
 		static LgcyWidgetHandleMsgFn orgPcPortraitsMsgFunc;
