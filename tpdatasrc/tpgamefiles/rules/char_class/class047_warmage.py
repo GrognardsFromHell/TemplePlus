@@ -26,7 +26,7 @@ classEnum = stat_level_warmage
 
 #Note:  The shield proficency feat is used here but warmages should not get proficency with heavy shields (only light).  This may be worth updating at some point. 
 class_feats = {
-1: (feat_armor_proficiency_light, feat_simple_weapon_proficiency, feat_shield_proficiency, "Warmage Armored Mage", "Warmage Edge"),
+1: (feat_armor_proficiency_light, feat_simple_weapon_proficiency, "Light Shield Proficiency", "Warmage Armored Mage", "Warmage Edge"),
 8: (feat_armor_proficiency_medium,),
 }
 

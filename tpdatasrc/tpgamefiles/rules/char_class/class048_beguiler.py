@@ -18,7 +18,7 @@ def GetClassDefinitionFlags():
 	return CDF_BaseClass
 
 def GetClassHelpTopic():
-	return "TAG_BEGUILER"
+	return "TAG_BEGUILERS"
 	
 classEnum = stat_level_beguiler
 
