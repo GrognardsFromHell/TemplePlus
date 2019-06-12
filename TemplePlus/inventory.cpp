@@ -43,12 +43,17 @@ static class InventoryHooks : public TempleFix {
 public: 
 
 	static int (__cdecl*orgItemInsertGetLocation)(objHndl, objHndl, int*, objHndl, int);
+	static int(__cdecl*orgIsProficientWithArmor)(objHndl, objHndl);
 
 	void apply() override 	{
 
 		// ItemRemove
 		replaceFunction<void(__cdecl)(objHndl)>(0x10069F60, [](objHndl item) {
 			inventory.ItemRemove(item);
+		});
+
+		orgIsProficientWithArmor = replaceFunction<int(__cdecl)(objHndl, objHndl)>(0x1007C410, [](objHndl obj, objHndl armor) {
+			return inventory.IsProficientWithArmor(obj, armor) ? 1 : 0;
 		});
 
 		// ItemForceRemove
@@ -187,6 +192,7 @@ public:
 	
 } hooks;
 int(__cdecl*InventoryHooks::orgItemInsertGetLocation)(objHndl, objHndl, int*, objHndl, int);
+int(__cdecl*InventoryHooks::orgIsProficientWithArmor)(objHndl, objHndl);
 
 
 void InventorySystem::MoveItem(const objHndl& item, const locXY& loc){
@@ -1484,8 +1490,26 @@ void InventorySystem::ForceRemove(objHndl item, objHndl parent){
 
 bool InventorySystem::IsProficientWithArmor(objHndl obj, objHndl armor) const
 {
-	auto isProfWithArmor = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x1007C410);
-	return isProfWithArmor(obj, armor) != 0;
+
+	if (obj) {
+		int res = d20Sys.D20QueryPython(obj, "Has Light Shield Proficency");
+		if (res != 0) {
+			auto itemObj = gameSystems->GetObj().GetObject(armor);
+			auto itemType = itemObj->type;
+
+			if (itemType == obj_t_armor) {
+				auto armorFlags = itemObj->GetInt32(obj_f_armor_flags);
+				auto armorType = inventory.GetArmorType(armorFlags);
+				if (armorType == ArmorType::ARMOR_TYPE_SHIELD) {
+					auto spellFailure = itemObj->GetInt32(obj_f_armor_arcane_spell_failure);
+					if (spellFailure <= 5) {  //Only a light shield or buckler will have a spell failure this low
+						return 1;
+					}
+				}
+			}
+		}
+	}
+	return InventoryHooks::orgIsProficientWithArmor(obj, armor) != 0;
 }
 
 void InventorySystem::GetItemMesLine(MesLine* line)
@@ -1879,7 +1903,7 @@ bool InventorySystem::DoNpcLooting(objHndl opener, objHndl container){
 	}
 
 	// randomize the item order
-	for (auto i=0; i < items.size(); i++){
+	for (size_t i=0; i < items.size(); i++){
 		auto randIdx = rngSys.GetInt(0, items.size()-1);
 		auto randItem = items[randIdx];
 		auto orgItem = items[i];

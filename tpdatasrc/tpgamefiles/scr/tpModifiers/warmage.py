@@ -77,6 +77,16 @@ classSpecObj.AddHook(ET_OnLevelupSystemEvent, EK_LVL_Spells_Finalize, OnLevelupS
 classSpecObj.AddHook(ET_OnLevelupSystemEvent, EK_LVL_Spells_Activate, OnInitLevelupSpellSelection, ())
 classSpecObj.AddHook(ET_OnLevelupSystemEvent, EK_LVL_Spells_Check_Complete, OnLevelupSpellsCheckComplete, ())
 
+#Light Shield Proficiency
+
+def HasLightShieldProficency(attachee, args, evt_obj):
+	evt_obj.return_val = 1
+	return 0
+	
+lightShieldProficiency = PythonModifier("Light Shield Proficiency", 2) #Spare, Spare
+lightShieldProficiency.MapToFeat("Light Shield Proficiency")
+lightShieldProficiency.AddHook(ET_OnD20PythonQuery, "Has Light Shield Proficency", HasLightShieldProficency, ())
+
 # Warmage Edge
 # Here is how this complicated ability is implimented.  First it is increated by a critical but not empower
 # Second multi target spells will only get the benefit once.  This will effect the first target that takes damage.
