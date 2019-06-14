@@ -183,6 +183,9 @@ public:
 		replaceFunction<void(__cdecl)()>(0x10097060, [](){
 			uiIntgameTb.CursorRenderUpdate();
 		});
+		replaceFunction<BOOL(__cdecl)(objHndl)>(0x10173B30, [](objHndl handle){
+			return uiIntgameTb.AooPossible(handle) ? TRUE : FALSE;
+		});
 	}
 } uiIntgameTurnbasedReplacements;
 
@@ -913,6 +916,37 @@ void UiIntgameTurnbased::RenderPositioningBlueCircle(LocAndOffsets loc, objHndl 
 
 void UiIntgameTurnbased::AooInterceptArrowDraw(LocAndOffsets* perfLoc, LocAndOffsets* targetLoc) {
 	intgameAddresses.AooInterceptArrowDraw(perfLoc, targetLoc);
+}
+
+bool UiIntgameTurnbased::AooPossible(objHndl handle)
+{
+	if (!handle) return false;
+	auto obj = objSystem->GetObject(handle);
+	if (!obj) return false;
+
+	auto isFocus = handle == *intgameAddresses.intgameFocusObj;
+
+	if (isFocus){
+		auto loc = obj->GetLocationFull();
+		if (!d20Sys.d20QueryWithData(handle, DK_QUE_AOOPossible, handle)){
+			return false;
+		}
+		return combatSys.CanMeleeTargetAtLoc(handle, handle, &loc);
+	}
+
+	if (objects.IsPlayerControlled(handle)) {
+		return false;
+	}
+
+	auto showPreview = hotkeys.IsKeyPressed(VK_LMENU) || hotkeys.IsKeyPressed(VK_RMENU) || (*intgameAddresses.uiIntgameWaypointMode);
+	if (!showPreview && (! *intgameAddresses.uiIntgameAcquireByRaycastOn || ! *intgameAddresses.uiIntgameSelectionConfirmed) ){
+		return false;
+	}
+	auto loc = obj->GetLocationFull();
+	if (critterSys.IsConcealed(handle) || !d20Sys.d20QueryWithData(handle, DK_QUE_AOOPossible, handle)){
+		return false;
+	}
+	return combatSys.CanMeleeTargetAtLoc(handle, handle, &loc);
 }
 
 void UiIntgameTurnbased::CursorRenderUpdate(){

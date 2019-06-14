@@ -293,8 +293,24 @@ BOOL LegacyCombatSystem::CanMeleeTargetAtLoc(objHndl obj, objHndl target, LocAnd
 		objHndl secondaryWeapon = critterSys.GetWornItem(obj, EquipSlot::WeaponSecondary);
 		if (!combatSys.CanMeleeTargetAtLocRegardItem(obj, secondaryWeapon, target, loc))
 		{
-			if (!objects.getArrayFieldInt32(obj, obj_f_critter_attacks_idx, 0))
-				return 0;
+			if (!objects.getArrayFieldInt32(obj, obj_f_critter_attacks_idx, 0)){
+				// check polymorphed
+				auto protoId = d20Sys.d20Query(obj, DK_QUE_Polymorphed);
+				if (!protoId){
+					return FALSE;
+				}
+				else
+				{
+					auto protoHandle = objSystem->GetProtoHandle(protoId);
+					if (protoHandle) {
+						auto protoObj = objSystem->GetObject(protoHandle);
+						if (protoObj && !protoObj->GetInt32(obj_f_critter_attacks_idx, 0) )
+							return FALSE;
+					}
+				}
+				
+			}
+				
 			float objReach = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK);
 			float tgtRadius = objects.GetRadius(target) / 12.0f;
 			auto distToLoc = locSys.DistanceToLocFeet(obj, loc);
