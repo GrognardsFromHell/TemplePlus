@@ -170,6 +170,7 @@ public:
 	BOOL PickerActiveCheck(); // is there an active picker?
 	
 	int ShowPicker(const PickerArgs &args, void *callbackArgs);
+	void CancelPicker();
 	BOOL FreeCurrentPicker();
 	PickerCacheEntry &GetPicker(int pickerIdx);
 	PickerCacheEntry &GetActivePicker();
@@ -185,7 +186,8 @@ public:
 	uint32_t GetListRange(LocAndOffsets* locAndOffsets, PickerArgs* pickerArgs);
 
 	// Wall mode
-	void WallStateReset() { mWallState = WallPicker_StartPoint; };
+	void WallStateReset() { mWallState = WallPicker_StartPoint; }
+	
 	WallPickerState GetWallState() { return  mWallState ; };
 	LocAndOffsets GetWallEndPoint();
 

@@ -169,7 +169,7 @@ class UiPickerHooks : TempleFix
 
 BOOL UiPicker::PickerActiveCheck()
 {
-	return (*addresses.activePickerIdx) >= 0;
+	return (*addresses.activePickerIdx) >= 0 && (*addresses.activePickerIdx) < MAX_PICKER_COUNT;
 }
 
 int UiPicker::ShowPicker(const PickerArgs& args, void* callbackArgs) {
@@ -215,6 +215,21 @@ int UiPicker::ShowPicker(const PickerArgs& args, void* callbackArgs) {
 
 	return TRUE;
 	// return addresses.ShowPicker(args, callbackArgs);
+}
+
+void UiPicker::CancelPicker(){
+	if (!PickerActiveCheck())
+		return;
+	auto &picker = GetActivePicker();
+	picker.args.result.flags = PickerResultFlags::PRF_CANCELLED;
+	if (picker.args.callback){
+		picker.args.callback(picker.args.result, picker.callbackArgs);
+	}
+
+	// Set Char Portrait callbacks to null
+	temple::GetRef<void(__cdecl)(void*, void*, void*)>(0x10131950)(nullptr, nullptr, nullptr);
+
+	picker.args.result.FreeObjlist();
 }
 
 uint32_t UiPicker::ObjectNodesFromPickerResult(objHndl objHnd, PickerArgs* pickerArgs)
