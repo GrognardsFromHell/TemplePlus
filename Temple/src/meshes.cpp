@@ -11,6 +11,7 @@
 #include "temple/meshes.h"
 #include <gsl/gsl>
 #include "../../TemplePlus/tio/tio.h"
+#include "infrastructure/vfs.h"
 
 namespace temple {
 
@@ -668,15 +669,20 @@ namespace temple {
 		
 		// Extender files for art/meshes/meshes.mes
 		{
-			TioFileList meshesFlist;
-			tio_filelist_create(&meshesFlist, "art\\meshes\\ext\\*.mes");
-
-			for (auto i = 0; i < meshesFlist.count; i++) {
-
-				std::string combinedFname(fmt::format("art\\meshes\\ext\\{}", meshesFlist.files[i].name));
+			
+			// tio_filelist_create(&meshesFlist, "art\\meshes\\ext\\*.mes");
+			for (auto it : vfs->Search("art\\meshes\\ext\\*.mes")){
+				std::string combinedFname(fmt::format("art\\meshes\\ext\\{}",it.filename));
 				auto meshesMappingExt = MesFile::ParseFile(combinedFname);
 				mMapping.insert(meshesMappingExt.begin(), meshesMappingExt.end());
 			}
+			/*
+			 TioFileList meshesFlist;
+			 for (auto i = 0; i < meshesFlist.count; i++) {
+				std::string combinedFname(fmt::format("art\\meshes\\ext\\{}", meshesFlist.files[i].name));
+				auto meshesMappingExt = MesFile::ParseFile(combinedFname);
+				mMapping.insert(meshesMappingExt.begin(), meshesMappingExt.end());
+			}*/
 		}
 		
 
