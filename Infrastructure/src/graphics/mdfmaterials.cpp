@@ -326,7 +326,7 @@ namespace gfx {
 
 			return result;
 		} catch (std::exception& e) {
-			logger->error("Unable to load MDF file '{}': {}", name, e.what());
+			// logger->error("Unable to load MDF file '{}': {}", name, e.what()); // produces massive logspam when casting spells
 			return nullptr;
 		}
 
