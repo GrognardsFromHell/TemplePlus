@@ -63,8 +63,15 @@ def AddSaveBonusVsEffectType(raceSpecObj, saveThrowDescriptor, value):
 def OnQueryReturnTrue(attachee, args, evt_obj):
 	evt_obj.return_val = 1
 	return 0
+def ConditionImmunityOnPreAdd(attachee, args, evt_obj):
+	val = evt_obj.is_modifier("Poisoned")
+	if val:
+		evt_obj.return_val = 0
+		attachee.float_text_line( "Poison Immunity", tf_red )
+	return 0
 def AddPoisonImmunity(raceSpecObj):
-	raceSpecObj.AddHook(ET_OnD20Query, EK_Q_Critter_Is_Immune_Poison, OnQueryReturnTrue, ())
+	raceSpecObj.AddHook(ET_OnD20Query       , EK_Q_Critter_Is_Immune_Poison, OnQueryReturnTrue, ())
+	raceSpecObj.AddHook(ET_OnConditionAddPre, EK_NONE                      , ConditionImmunityOnPreAdd, ())
 	return
 
 def OnGetDamageResistance(attachee, args, evt_obj):
