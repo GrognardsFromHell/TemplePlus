@@ -738,10 +738,24 @@ void UiPartyPool::Refresh()
 	ui_party_refresh();
 }
 
+void UiPartyPool::SetAddRemoveBtnState(LgcyButtonState state)
+{
+	uiManager->SetButtonState(addRemoveBtnState, state);
+}
+
 static class UiPartyPoolFix : public TempleFix {
 public:
 	void apply() override {
-		
+		static LgcyWidgetHandleMsgFn orgSelectPoolCharMsg;
+		orgSelectPoolCharMsg = replaceFunction<BOOL(LgcyWidgetId, TigMsg*)>(0x10165620, [](LgcyWidgetId widId, TigMsg* msg){
+			auto result = orgSelectPoolCharMsg(widId, msg);
+			if (result){
+				if (party.GroupPCsLen() >= uiSystems->GetPccPortrait().pcPortraitSlotCount){
+					uiSystems->GetPartyPool().SetAddRemoveBtnState(LgcyButtonState::Disabled);
+				}
+			}
+			return result;
+		});
 	}
 } uiPartyPoolFix;
 
@@ -806,13 +820,13 @@ public:
 		write(0x1016312F + 3, &writeVal, 4);
 
 		// ui_msg_pc_creation_portraits
-		writeVal = system.MAX_PC_CREATION_PORTRAITS;
+		writeVal = system.pcPortraitSlotCount;
 		write(0x101633B5 + 1, &writeVal, 1);
 		writeVal = (int)&system.pcPortraitWidgIds;
 		write(0x101633B7 + 1, &writeVal, 4);
 
 		// ui_render_pc_creation_portraits
-		writeVal = system.MAX_PC_CREATION_PORTRAITS;
+		writeVal = system.pcPortraitSlotCount;
 		write(0x10163279 + 1, &writeVal, 1);
 		writeVal = (int)&system.pcPortraitWidgIds;
 		write(0x1016327B + 1, &writeVal, 4);
@@ -827,7 +841,7 @@ public:
 	}
 } uiPccPortraitFix;
 
-UiPccPortrait::UiPccPortrait(const UiSystemConf &config) {
+UiPccPortrait::UiPccPortrait(const UiSystemConf &conf) {
 
 	if (textureFuncs.RegisterTexture("art\\interface\\pc_creation\\portrait.tga", uiPccPortraitTexture)
 		|| textureFuncs.RegisterTexture("art\\interface\\pc_creation\\portrait_click.tga", uiPccPortraitClickTexture)
@@ -837,21 +851,24 @@ UiPccPortrait::UiPccPortrait(const UiSystemConf &config) {
 	{
 		throw TempleException("Unable to open PCCPortrait textures");
 	}
-		
-	InitWidgets(config.height);
+	pcPortraitSlotCount = MAX_PC_CREATION_PORTRAITS;
+	if (!config.maxPCsFlexible && config.maxPCs <= MAX_PC_CREATION_PORTRAITS && config.maxPCs > 0){
+		pcPortraitSlotCount = config.maxPCs;
+	}
+	InitWidgets(conf.height);
 
 	uiPccPortraitFix.WriteMaxPCPortraitValues(*this);
 
 }
 UiPccPortrait::~UiPccPortrait() {
-	for (int i = 0; i < MAX_PC_CREATION_PORTRAITS; i++)
+	for (int i = 0; i < pcPortraitSlotCount; i++)
 	{
 		uiManager->RemoveChildWidget(pcPortraitWidgIds[i]);
 	}
 	uiManager->RemoveWidget(pcPortraitsMainId);
 }
 void UiPccPortrait::ResizeViewport(const UiResizeArgs& resizeArg) {
-	for (int i = 0; i < MAX_PC_CREATION_PORTRAITS; i++)
+	for (int i = 0; i < pcPortraitSlotCount; i++)
 	{
 		uiManager->RemoveChildWidget(pcPortraitWidgIds[i]);
 	}
@@ -870,13 +887,13 @@ void UiPccPortrait::Hide()
 
 void UiPccPortrait::ButtonActivateNext()
 {
-	for (int i = 0; i < MAX_PC_CREATION_PORTRAITS; i++)
+	for (int i = 0; i < pcPortraitSlotCount; i++)
 	{
 		auto state = uiManager->GetButtonState(pcPortraitWidgIds[i]);
 		if (state == LgcyButtonState::Disabled)
 		{
 			uiManager->SetButtonState(pcPortraitWidgIds[i], LgcyButtonState::Normal);
-			if (i == MAX_PC_CREATION_PORTRAITS - 1)
+			if (i == pcPortraitSlotCount - 1)
 				*uiPcPortraitsFullMaybe = 1;
 			return;
 		}
@@ -888,7 +905,7 @@ void UiPccPortrait::Refresh()
 {
 	uiManager->SetHidden(pcPortraitsMainId, false);
 	uiManager->BringToFront(pcPortraitsMainId);
-	for (int i = 0; i < MAX_PC_CREATION_PORTRAITS; i++)
+	for (int i = 0; i < pcPortraitSlotCount; i++)
 	{
 		uiManager->SetButtonState(pcPortraitWidgIds[i], LgcyButtonState::Disabled);
 	}
@@ -896,7 +913,7 @@ void UiPccPortrait::Refresh()
 
 	if (party.GroupPCsLen())
 	{
-		for (int i = 0; i < MAX_PC_CREATION_PORTRAITS; i++)
+		for (int i = 0; i < pcPortraitSlotCount; i++)
 		{
 			uiManager->SetButtonState(pcPortraitWidgIds[i], LgcyButtonState::Normal);
 		}
@@ -906,7 +923,7 @@ void UiPccPortrait::Refresh()
 
 void UiPccPortrait::Disable()
 {
-	for (int i = 0; i < MAX_PC_CREATION_PORTRAITS; i++)
+	for (int i = 0; i < pcPortraitSlotCount; i++)
 	{
 		uiManager->SetButtonState(pcPortraitWidgIds[i], LgcyButtonState::Disabled);
 	}
@@ -918,7 +935,7 @@ bool UiPccPortrait::HandleMessage(LgcyWidgetId widgetId, TigMsg * tigMsg)
 
 	if (tigMsg->type != TigMsgType::WIDGET
 		|| tigMsg->arg2 != 1
-		|| (WidgetIdIndexOf(widgetId, pcPortraitWidgIds, MAX_PC_CREATION_PORTRAITS) == -1))
+		|| (WidgetIdIndexOf(widgetId, pcPortraitWidgIds, pcPortraitSlotCount) == -1))
 		return true;
 	return false;
 
@@ -936,7 +953,7 @@ void UiPccPortrait::InitWidgets(int height)
 	static auto ui_render_pc_creation_portraits = temple::GetPointer<void(LgcyWidgetId widgetId)>(0x10163270);
 	static auto ui_msg_pc_creation_portraits = temple::GetPointer<BOOL(LgcyWidgetId widgetId, TigMsg *msg)>(0x101633a0);
 
-	for (int i = 0; i < MAX_PC_CREATION_PORTRAITS; i++)
+	for (int i = 0; i < pcPortraitSlotCount; i++)
 	{
 		LgcyButton button;
 		uiManager->ButtonInit(&button, 0, pcPortraitsMainId, pcPortraitsMain.x + 81 * i, pcPortraitsMain.y, 76, 63);

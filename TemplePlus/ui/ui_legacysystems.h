@@ -292,6 +292,10 @@ public:
 	void Show(bool ingame);
 
 	void Refresh();
+	void SetAddRemoveBtnState(LgcyButtonState state);
+
+private:
+	LgcyButtonState & addRemoveBtnState = temple::GetRef<LgcyButtonState>(0x10BF2408);
 };
 
 class UiPccPortrait : public UiSystem {
@@ -308,9 +312,10 @@ public:
 	void Refresh();
 	void Disable();
 	
+	int pcPortraitSlotCount; // number of actual portrait slots (up to MAX_PC_CREATION_PORTRAITS)
 private:
 	static constexpr int MAX_PC_CREATION_PORTRAITS = 8;
-
+	
 	bool HandleMessage(LgcyWidgetId widgetId, TigMsg* tigMsg);
 
 	int* pcCreationIdx = temple::GetPointer<int>(0x10BF0BC8);
