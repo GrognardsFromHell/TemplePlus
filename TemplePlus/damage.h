@@ -54,8 +54,10 @@ struct DamagePacket {
 	void AddAttackPower(int attackPower);
 	void CalcFinalDamage(); // calcualtes the finalDamage field
 	int GetOverallDamageByType(DamageType damType);
+	int GetOverallDamage();
 	int AddModFactor(float factor, DamageType damType, int damageMesLine);
 	DamagePacket();
+	
 };
 
 #pragma pack(push, 1)

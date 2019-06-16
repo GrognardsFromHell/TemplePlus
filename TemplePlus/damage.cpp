@@ -106,6 +106,14 @@ class DamageHooks: TempleFix
 			damage.DealSpellDamage(victim, attacker, dice, damType, attackPower, reduction, damageDescId, actionType, spellId, flags);
 			return -1;
 		});
+
+		replaceFunction<int(__cdecl)(DamagePacket*, DamageType)>(0x100E1210, [](DamagePacket* pkt, DamageType damType){
+			return pkt->GetOverallDamageByType(damType);
+		});
+		replaceFunction<int(__cdecl)(DamagePacket*)>(0x100E1360, [](DamagePacket* pkt) {
+			return pkt->GetOverallDamage();
+		});
+
 	}
 } damageHooks;
 
@@ -219,6 +227,51 @@ int DamagePacket::GetOverallDamageByType(DamageType damType)
 
 	for (auto i = 0; i < this->damModCount; i++) {
 		if (damage.DamageTypeMatch(damType, this->damageFactorModifiers[i].type)){
+			damTot += this->damageFactorModifiers[i].damageReduced;
+		}
+	}
+
+	if (damTot < 0.0)
+		damTot = 0.0;
+
+	return static_cast<int>(damTot);
+}
+
+int DamagePacket::GetOverallDamage()
+{
+	auto damTot = (double)0.0;
+
+	for (auto i = 0u; i < this->diceCount; i++) {
+		auto &dice = this->dice[i];
+		if (dice.type != DamageType::Subdual) {
+			damTot += dice.rolledDamage;
+			if (i == 0) {
+				damTot += this->bonuses.GetEffectiveBonusSum();
+			}
+		}
+
+	}
+
+	for (auto i = 0; i < this->damResCount; i++) {
+		addresses.CalcDamageModFromDR(this, &this->damageResistances[i], DamageType::Unspecified, DamageType::Unspecified);
+	}
+
+	for (auto i = 0; i < this->damModCount; i++) {
+		addresses.CalcDamageModFromFactor(this, &this->damageFactorModifiers[i], DamageType::Unspecified, DamageType::Unspecified);
+	}
+
+	
+
+	for (auto i = 0; i < this->damResCount; i++) {
+		auto &res = this->damageResistances[i];
+		if (res.type != DamageType::Subdual){
+			damTot += this->damageResistances[i].damageReduced;
+		}
+	}
+
+	for (auto i = 0; i < this->damModCount; i++) {
+		auto &damMod = this->damageFactorModifiers[i];
+		if (damMod.type != DamageType::Subdual){
 			damTot += this->damageFactorModifiers[i].damageReduced;
 		}
 	}

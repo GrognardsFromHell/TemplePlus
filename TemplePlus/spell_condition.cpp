@@ -452,7 +452,7 @@ int SpellConditionFixes::ImmunityCheckHandler(DispatcherCallbackArgs args)
 	}
 
 
-	if (immType != 10)
+	if (immType != DK_IMMUNITY_SPELL)
 		return 0;
 
 	// get the spellpacket of the protective spell (i.e. the one this hook belongs to)
