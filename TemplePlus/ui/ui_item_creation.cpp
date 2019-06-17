@@ -3179,7 +3179,8 @@ int UiItemCreation::MaaEffectTooltip(int x, int y, int * widId){
 
 
 	auto& itEnh = itemEnhSpecs[effIdx];
-	std::string text(fmt::format("{}", tooltips.GetTooltipString(6049))); // Requirements:
+	//std::string text(fmt::format("{}", tooltips.GetTooltipString(6049))); // Requirements:
+	std::string text(fmt::format("Requirements:")); // Requirements:
 	
 	if (itEnh.reqs.minLevel) {
 		text.append(fmt::format("\n{} {}", uiAssets->GetStatMesLine(273), itEnh.reqs.minLevel )); // Caster Level
