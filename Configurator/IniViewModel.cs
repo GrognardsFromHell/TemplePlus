@@ -54,6 +54,9 @@ namespace TemplePlusConfig
         public static readonly DependencyProperty MaxLevelProperty = DependencyProperty.Register(
             "MaxLevel", typeof(int), typeof(IniViewModel), new PropertyMetadata(default(int)));
 
+        public static readonly DependencyProperty NumberOfPcsProperty = DependencyProperty.Register(
+            "NumberOfPcs", typeof(NumberOfPcsType), typeof(IniViewModel), new PropertyMetadata(default(NumberOfPcsType)));
+
         public static readonly DependencyProperty AllowXpOverflowProperty = DependencyProperty.Register(
            "AllowXpOverflow", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
 
@@ -107,6 +110,8 @@ namespace TemplePlusConfig
             .Cast<HpOnLevelUpType>();
         public IEnumerable<FogOfWarType> FogOfWarTypes => Enum.GetValues(typeof(FogOfWarType))
            .Cast<FogOfWarType>();
+        public IEnumerable<NumberOfPcsType> NumberOfPcsTypes => Enum.GetValues(typeof(NumberOfPcsType))
+           .Cast<NumberOfPcsType>();
 
         public IniViewModel()
         {
@@ -118,6 +123,8 @@ namespace TemplePlusConfig
             WalkDistanceFt = 0;
             SlowerLevelling = false;
             AllowXpOverflow = false;
+            NumberOfPcs = NumberOfPcsType.PCs_5_NPCs_3;
+            NeedsCo8Defaults = false;
         }
 
         public string InstallationPath
@@ -210,6 +217,12 @@ namespace TemplePlusConfig
             get { return (int)GetValue(MaxLevelProperty); }
             set { SetValue(MaxLevelProperty, value); }
         }
+
+        public NumberOfPcsType NumberOfPcs
+        {
+            get { return (NumberOfPcsType)GetValue(NumberOfPcsProperty); }
+            set { SetValue(NumberOfPcsProperty, value); }
+        } 
 
         public bool AllowXpOverflow
         {
@@ -316,6 +329,8 @@ namespace TemplePlusConfig
             set { SetValue(ShowTargetingCirclesInFogOfWarProperty, value); }
         }
 
+        public bool NeedsCo8Defaults { get; internal set; }
+
         /// <summary>
         /// Tries to find an installation directory based on common locations and the Windows registry.
         /// </summary>
@@ -402,6 +417,49 @@ namespace TemplePlusConfig
             {
                 MaxLevel = maxLevel;
             }
+
+            bool maxPCsFlexible = false;
+            
+            bool.TryParse(tpData["maxPCsFlexible"], out maxPCsFlexible);
+            if (tpData["maxPCsFlexible"] == null)
+            {
+                NeedsCo8Defaults = true;
+            }
+            if (maxPCsFlexible)
+            {
+                NumberOfPcs = NumberOfPcsType.Flexible;
+            }
+            else
+            {
+                int maxPCs;
+                if (int.TryParse(tpData["maxPCs"], out maxPCs)){
+                    switch (maxPCs)
+                    {
+                        case 3:
+                            NumberOfPcs = NumberOfPcsType.PCs_3_NPCs_5;
+                            break;
+                        case 4:
+                            NumberOfPcs = NumberOfPcsType.PCs_4_NPCs_4;
+                            break;
+                        case 5:
+                            NumberOfPcs = NumberOfPcsType.PCs_5_NPCs_3;
+                            break;
+                        case 6:
+                            NumberOfPcs = NumberOfPcsType.PCs_6_NPCs_2;
+                            break;
+                        case 7:
+                            NumberOfPcs = NumberOfPcsType.PCs_7_NPCs_1;
+                            break;
+                        case 8:
+                            NumberOfPcs = NumberOfPcsType.PCs_8_NPCs_0;
+                            break;
+                        default:
+                            NumberOfPcs = NumberOfPcsType.PCs_5_NPCs_3;
+                            break;
+                    }
+                }
+            }
+                
 
             bool allowXpOverflow;
             if (bool.TryParse(tpData["allowXpOverflow"], out allowXpOverflow))
@@ -564,6 +622,34 @@ namespace TemplePlusConfig
             tpData["windowedLockCursor"] = WindowedLockCursor ? "true" : "false";
             tpData["dungeonMaster"] = DungeonMaster ? "true" : "false";
             tpData["maxLevel"] = MaxLevel.ToString();
+            tpData["maxPCsFlexible"] = "false";
+            switch (NumberOfPcs)
+            {
+                case NumberOfPcsType.Flexible:
+                    tpData["maxPCsFlexible"] = "true";
+                    break;
+                case NumberOfPcsType.PCs_3_NPCs_5:
+                    tpData["maxPCs"] = 3.ToString();
+                    break;
+                case NumberOfPcsType.PCs_4_NPCs_4:
+                    tpData["maxPCs"] = 4.ToString();
+                    break;
+                case NumberOfPcsType.PCs_5_NPCs_3:
+                    tpData["maxPCs"] = 5.ToString();
+                    break;
+                case NumberOfPcsType.PCs_6_NPCs_2:
+                    tpData["maxPCs"] = 6.ToString();
+                    break;
+                case NumberOfPcsType.PCs_7_NPCs_1:
+                    tpData["maxPCs"] = 7.ToString();
+                    break;
+                case NumberOfPcsType.PCs_8_NPCs_0:
+                    tpData["maxPCs"] = 8.ToString();
+                    break;
+                default:
+                    tpData["maxPCs"] = 5.ToString();
+                    break;
+            }
             tpData["allowXpOverflow"] = AllowXpOverflow ? "true" : "false";
             tpData["slowerLevelling"] = SlowerLevelling ? "true" : "false";
             tpData["newClasses"] = NewClasses? "true" : "false";
@@ -581,6 +667,24 @@ namespace TemplePlusConfig
             tpData["alertAiThroughDoors"] = AlertAiThroughDoors ? "true" : "false";
             
         }
+    }
+
+    public enum NumberOfPcsType
+    {
+        [System.ComponentModel.Description("3 PCs")]
+        PCs_3_NPCs_5,
+        [System.ComponentModel.Description("4 PCs")]
+        PCs_4_NPCs_4,
+        [System.ComponentModel.Description("5 PCs")]
+        PCs_5_NPCs_3,
+        [System.ComponentModel.Description("6 PCs")]
+        PCs_6_NPCs_2,
+        [System.ComponentModel.Description("7 PCs")]
+        PCs_7_NPCs_1,
+        [System.ComponentModel.Description("8 PCs")]
+        PCs_8_NPCs_0,
+        [System.ComponentModel.Description("Flexible")]
+        Flexible // allows UPTO 8 PCs
     }
 
     public enum HpOnLevelUpType

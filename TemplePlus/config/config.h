@@ -76,7 +76,7 @@ struct TemplePlusConfig
 	bool showExactHPforNPCs = false; // draw exact HP for NPCs
 	int pointBuyPoints = 25; // number of Point Buy points at chargen
 	uint32_t maxPCs = 5; // max number of PCs in the party
-	bool maxPCsFlexible = true; // makes the party PC/NPC composition fluid
+	bool maxPCsFlexible = false; // makes the party PC/NPC composition fluid
 	uint32_t maxLevel = 10; // maximum character level
 	std::string hpOnLevelup = "Normal" ;
 	bool maxHpForNpcHitdice = false;
