@@ -806,6 +806,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 	py::class_<DispIoImmunity, DispIO>(m, "EventObjImmunityQuery", "Used for performing the immunity handling")
 		.def_readwrite("spell_entry", &DispIoImmunity::spellEntry)
 		.def_readwrite("spell_packet", &DispIoImmunity::spellPkt)
+		.def_readwrite("return_val", &DispIoImmunity::returnVal)
 		;
 
 	py::class_<DispIoEffectTooltip, DispIO>(m, "EventObjEffectTooltip", "Used for tooltips when hovering over the status effect indicators in the party portrait row")

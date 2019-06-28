@@ -1046,12 +1046,7 @@ void _DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint3
 		return;
 	}
 	dispCounter++;
-	/*
-	if (dispKey == DK_D20A_TOUCH_ATTACK || dispKey == DK_SIG_TouchAttack)
-	{
-		int asd = 1;
-	}
-	*/
+	
 	SubDispNode* subDispNode = dispatcher->subDispNodes[dispType];
 
 	while (subDispNode != nullptr) {
@@ -1062,8 +1057,9 @@ void _DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint3
 			DispIOType21Init((DispIoTypeImmunityTrigger*)&dispIoImmunity);
 			dispIoImmunity.condNode = (CondNode *)subDispNode->condNode;
 
+			// prevent recursion
 			if (dispKey != DK_IMMUNITY_SPELL || dispType != dispTypeImmunityTrigger) {
-				_Dispatch62(dispatcher->objHnd, (DispIO*)&dispIoImmunity, 10);
+				_Dispatch62(dispatcher->objHnd, (DispIO*)&dispIoImmunity, DK_IMMUNITY_SPELL);
 			}
 			
 			if (dispIoImmunity.interrupt == 1 && dispType != dispType63) { // dispType63 is essentially <-> Minor globe of invulnerability
@@ -1078,21 +1074,14 @@ void _DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint3
 				subDispNode->subDispDef->dispCallback(subDispNode, dispatcher->objHnd, dispType, dispKey, (DispIO*)dispIO);
 			}
 
-
 		}
 
 		subDispNode = subDispNode->next;
 	}
 
 	dispCounter--;
-	/*
-	if (dispCounter == 0)
-	{
-		int breakpointDummy = 1;
-	}
-	*/
+	
 	return;
-
 }
 
 int32_t _DispatchDamage(objHndl objHnd, DispIoDamage* dispIo, enum_disp_type dispType, D20DispatcherKey key)
