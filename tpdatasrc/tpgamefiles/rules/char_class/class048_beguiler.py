@@ -70,7 +70,7 @@ spell_list = {
 	6: (spell_greater_dispelling, spell_mislead, spell_repulsion, spell_shadow_walk, spell_true_seeing, spell_veil),
 	7: (spell_ethereal_jaunt, spell_mass_hold_person, spell_mass_invisibility, spell_phase_door, spell_power_word_blind, spell_project_image, spell_spell_turning),
 	8: (spell_demand, spell_discern_location, spell_mind_blank, spell_power_word_stun, spell_screen),
-	9: (spell_dominate_monster, spell_etherealness, spell_foresight, spell_hold_monster, spell_power_word_kill, spell_time_stop)
+	9: (spell_dominate_monster, spell_etherealness, spell_foresight, spell_mass_hold_monster, spell_power_word_kill, spell_time_stop)
 }
 
 def IsEnabled():
