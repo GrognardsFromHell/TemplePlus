@@ -530,6 +530,7 @@
     <ClCompile Include="animgoals\animgoal.cpp" />
     <ClCompile Include="animgoals\animgoals_debugrenderer.cpp" />
     <ClCompile Include="animgoals\animgoals_callbacks.cpp" />
+    <ClCompile Include="poison.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
