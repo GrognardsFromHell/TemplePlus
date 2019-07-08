@@ -24,6 +24,25 @@ struct PoisonSpec {
 };
 //const int testSizeOfPoisonSpec = sizeof PoisonSpec; // should be 32 (0x20)
 
+enum class PoisonEffect : int {
+	None = -10,
+	Unconsciousness = -9,
+	Paralyze = -8,
+	HPDamage = -7,
+	StrPermanent = -6,
+	DexPermanent = -5,
+	ConPermanent = -4,
+	IntPermanent = -3,
+	WisPermanent = -2,
+	ChaPermanent = -1,
+	StrTemporary = 0,
+	DexTemporary = 1,
+	ConTemporary = 2,
+	IntTemporary = 3,
+	WisTemporary = 4,
+	ChaTemporary = 5
+};
+
 namespace json11 {
 	class Json;
 }
@@ -32,11 +51,10 @@ class PoisonSystem {
 public:
 	static constexpr auto Name = "Poison";
 	PoisonSystem();
-	~PoisonSystem();
-
 	const std::string &GetName() const;//override;
 
 	void LoadSpecsFile(const std::string &path);
+	void SaveSpecsFile(const std::string & path);
 	void AssignVanillaSpecs();
 	void LoadSpecs(const json11::Json &jsonStyleArray);
 	void AddSpec(int id, const PoisonSpec &spec);

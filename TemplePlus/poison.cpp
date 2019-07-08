@@ -12,8 +12,9 @@
 #include <infrastructure/vfs.h>
 #include "gamesystems/gamesystems.h"
 #include "animgoals/anim.h"
-
-PoisonSystem* poisonSystem = nullptr;
+#include <fstream>
+#include <gamesystems\gamesystems.h>
+#include <combat.h>
 
 static class PoisonFixes : public TempleFix
 {
@@ -58,7 +59,7 @@ int PoisonFixes::PoisonedOnBeginRound(DispatcherCallbackArgs args) {
 	if (dc < 0 || dc > 100) // failsafe
 		dc = 15;
 
-	if (pspec->delayedEffect == -10) {
+	if (pspec->delayedEffect == (int)PoisonEffect::None) {
 		conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
 		return 0;
 	}
@@ -78,14 +79,14 @@ int PoisonFixes::PoisonedOnBeginRound(DispatcherCallbackArgs args) {
 		return 0;
 	}
 
-	if (pspec->delayedEffect == -8) // paralyze
+	if (pspec->delayedEffect == (int)PoisonEffect::Paralyze) // paralyze
 	{
 		auto rollResParalyzedRounds = Dice(2, 6, 0).Roll() * 10; // x10 due to minutes, not rounds
 		conds.AddTo(args.objHndCaller, "Paralyzed", { rollResParalyzedRounds, 0, 0 });
 		conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
 		return 0;
 	}
-	if (pspec->delayedEffect == -7) // HP damage
+	if (pspec->delayedEffect == (int)PoisonEffect::HPDamage) // HP damage
 	{
 		auto dice = Dice(pspec->delayedDice.count, pspec->delayedDice.sides, pspec->delayedDice.bonus);
 		damage.DealDamage(args.objHndCaller, objHndl::null, dice, DamageType::Poison, 1, 100, 0, D20ActionType::D20A_NONE);
@@ -93,7 +94,7 @@ int PoisonFixes::PoisonedOnBeginRound(DispatcherCallbackArgs args) {
 		return 0;
 	}
 
-	if (pspec->delayedEffect == -9)
+	if (pspec->delayedEffect == (int)PoisonEffect::Unconsciousness)
 	{
 		conds.AddTo(args.objHndCaller, "Unconscious", { });
 		gameSystems->GetAnim().PushAnimate(args.objHndCaller, 64);
@@ -111,7 +112,7 @@ int PoisonFixes::PoisonedOnBeginRound(DispatcherCallbackArgs args) {
 	auto rollRes = Dice(pspec->delayedDice.count, pspec->delayedDice.sides, pspec->delayedDice.bonus).Roll();
 	conds.AddTo(args.objHndCaller, "Temp_Ability_Loss", { pspec->delayedEffect + (pspec->delayedEffect < 0 ? 6 : 0), rollRes });
 
-	if (pspec->delayedSecondEffect != -10) {
+	if (pspec->delayedSecondEffect != (int)PoisonEffect::None) {
 		rollRes = Dice(pspec->delayedSecDice.count, pspec->delayedSecDice.sides, pspec->delayedSecDice.bonus).Roll();
 		conds.AddTo(args.objHndCaller, "Temp_Ability_Loss", { pspec->delayedSecondEffect + (pspec->delayedSecondEffect < 0 ? 6 : 0), rollRes });
 
@@ -133,7 +134,7 @@ int PoisonFixes::PoisonedOnAdd(DispatcherCallbackArgs args) {
 	args.SetCondArg(1, 10); // set initial 10 rounds countdown for secondary damage
 	int immEffect = pspec->immediateEffect;
 
-	if (immEffect == -10)
+	if (immEffect == (int)PoisonEffect::None)
 	{
 		return 0; // do nothing
 	}
@@ -155,20 +156,20 @@ int PoisonFixes::PoisonedOnAdd(DispatcherCallbackArgs args) {
 		return 0;
 	}
 
-	if (immEffect == -8) // paralyze
+	if (immEffect == (int)PoisonEffect::Paralyze) // paralyze
 	{
 		auto rollResParalyzedRounds = Dice(2, 6, 0).Roll() * 10; // x10 due to minutes, not rounds
 		conds.AddTo(args.objHndCaller, "Paralyzed", { rollResParalyzedRounds, 0, 0 });
 		return 0;
 	}
-	if (immEffect == -7) // HP damage
+	if (immEffect == (int)PoisonEffect::HPDamage) // HP damage
 	{
 		auto dice = Dice(pspec->immNumDie, pspec->immDieType, pspec->immDieBonus);
 		damage.DealDamage(args.objHndCaller, objHndl::null, dice, DamageType::Poison, 1, 100, 0, D20ActionType::D20A_NONE);
 		return 0;
 	}
 
-	if (immEffect == -9)
+	if (immEffect == (int)PoisonEffect::Unconsciousness)
 	{
 		conds.AddTo(args.objHndCaller, "Unconscious", { });
 		gameSystems->GetAnim().PushAnimate(args.objHndCaller, 64);
@@ -180,7 +181,7 @@ int PoisonFixes::PoisonedOnAdd(DispatcherCallbackArgs args) {
 	auto rollRes = Dice(pspec->immNumDie, pspec->immDieType, pspec->immDieBonus).Roll();
 	conds.AddTo(args.objHndCaller, "Temp_Ability_Loss", { pspec->immediateEffect + (pspec->immediateEffect < 0 ? 6 : 0), rollRes });
 
-	if (pspec->immediateSecondEffect != -10) {
+	if (pspec->immediateSecondEffect != (int)PoisonEffect::None) {
 		rollRes = Dice(pspec->immSecDice.count, pspec->immSecDice.sides, pspec->immSecDice.bonus).Roll();
 		conds.AddTo(args.objHndCaller, "Temp_Ability_Loss", { pspec->immediateSecondEffect + (pspec->immediateSecondEffect < 0 ? 6 : 0), rollRes });
 
@@ -191,33 +192,14 @@ int PoisonFixes::PoisonedOnAdd(DispatcherCallbackArgs args) {
 
 const PoisonSpec * PoisonFixes::GetPoisonSpec(int poisonId)
 {
-	if (!poisonSystem) {
-		if ((poisonId >= 0) && (poisonId < 36))
-		{
-			auto &poisonSpecs = temple::GetRef<PoisonSpec[36]>(0x1028C080);
-			return &poisonSpecs[poisonId];
-		}
-		return nullptr;
-	}
-	return poisonSystem->GetSpec(poisonId);
+	return gameSystems->GetPoison().GetSpec(poisonId);
 }
-
 
 PoisonSystem::PoisonSystem()
 {
-	Expects(!poisonSystem);
-	poisonSystem = this;
-
 	AssignVanillaSpecs();
+	//SaveSpecsFile("d:\\temp\\vpoisons.json");
 	LoadSpecsFile("data/mes/poisons.json");
-}
-
-PoisonSystem::~PoisonSystem()
-{
-	if (poisonSystem == this)
-	{
-		poisonSystem = nullptr;
-	}
 }
 
 const std::string & PoisonSystem::GetName() const
@@ -233,14 +215,86 @@ void PoisonSystem::LoadSpecsFile(const std::string & path)
 	json11::Json json = json.parse(vfs->ReadAsString(path), error);
 
 	if (json.is_null()) {
-		throw TempleException("Unable to parse text styles from {}: {}", path, error);
+		throw TempleException("Unable to parse poison.json from {}: {}", path, error);
 	}
 
 	if (!json.is_array()) {
-		throw TempleException("Text style files must start with an array at the root");
+		throw TempleException("poison.json must start with an array at the root");
 	}
 
 	LoadSpecs(json);
+}
+
+void PoisonSystem::SaveSpecsFile(const std::string & path)
+{
+	std::ofstream dump(path, std::fstream::trunc);
+	if (!dump.is_open()) return;
+	std::vector<json11::Json> items;
+	size_t len = mPoisonSpecs.size();
+	for (size_t i = 0; i < len; i++) {
+		auto& item = mPoisonSpecs[i];
+		json11::Json::object o = { 
+			{"id", (INT32)i},
+			{"dc", (INT32)item.dc},
+			{"immediateEffect", item.immediateEffect},
+			{"comment", _GetCombatMesLine(i + 300)}
+		};
+		if (item.immNumDie != 0)
+			o.emplace("immNumDie", (INT32)item.immNumDie);
+		if (item.immDieType != 0)
+			o.emplace("immDieType", (INT32)item.immDieType);
+		if (item.immDieBonus != 0)
+			o.emplace("immDieBonus", (INT32)item.immDieBonus);
+
+		if (item.immediateSecondEffect != -10)
+		{
+			o.emplace("immediateSecondEffect", item.immediateSecondEffect);
+			if ((item.immSecDice.bonus != 0) || (item.immSecDice.sides != 0) || (item.immSecDice.count != 0)){
+				json11::Json::object so = {};
+				if (item.immSecDice.bonus != 0)
+					so.emplace("bonus", (INT32)item.immSecDice.bonus);
+				if (item.immSecDice.count != 0)
+					so.emplace("count", (INT32)item.immSecDice.count);
+				if (item.immSecDice.sides != 0)
+					so.emplace("sides", (INT32)item.immSecDice.sides);
+				o.emplace("immSecDice", so);
+			}
+		}
+
+		if (item.delayedEffect != -10)
+		{
+			o.emplace("delayedEffect", item.delayedEffect);
+			if ((item.delayedDice.bonus != 0) || (item.delayedDice.sides != 0) || (item.delayedDice.count != 0)) {
+				json11::Json::object so = {};
+				if (item.delayedDice.bonus != 0)
+					so.emplace("bonus", (INT32)item.delayedDice.bonus);
+				if (item.delayedDice.count != 0)
+					so.emplace("count", (INT32)item.delayedDice.count);
+				if (item.delayedDice.sides != 0)
+					so.emplace("sides", (INT32)item.delayedDice.sides);
+				o.emplace("delayedDice", so);
+			}
+		}
+
+		if (item.delayedSecondEffect != -10)
+		{
+			o.emplace("delayedSecondEffect", item.delayedSecondEffect);
+			if ((item.delayedSecDice.bonus != 0) || (item.delayedSecDice.sides != 0) || (item.delayedSecDice.count != 0)) {
+				json11::Json::object so = {};
+				if (item.delayedSecDice.bonus != 0)
+					so.emplace("bonus", (INT32)item.delayedSecDice.bonus);
+				if (item.delayedSecDice.count != 0)
+					so.emplace("count", (INT32)item.delayedSecDice.count);
+				if (item.delayedSecDice.sides != 0)
+					so.emplace("sides", (INT32)item.delayedSecDice.sides);
+				o.emplace("delayedSecDice", so);
+			}
+		}
+
+		items.push_back(o);
+	}
+	dump << json11::Json(items).dump();
+	dump.close();
 }
 
 void PoisonSystem::AssignVanillaSpecs()
@@ -257,18 +311,22 @@ void PoisonSystem::LoadSpecs(const json11::Json & jsonStyleArray)
 {
 	for (auto &item : jsonStyleArray.array_items()) {
 		if (!item.is_object()) {
-			logger->warn("Skipping text style that is not an object.");
+			logger->warn("Skipping poison that is not an object.");
 			continue;
 		}
 
 		auto idNode = item["id"];
 		if (!idNode.is_number()) {
-			logger->warn("Skipping text style that is missing 'id' attribute.");
+			logger->warn("Skipping poison that is missing 'id' attribute.");
 			continue;
 		}
 		int id = (uint8_t)item["id"].int_value();
 
 		PoisonSpec spec = {};
+		spec.immediateEffect = -10;
+		spec.immediateSecondEffect = -10;
+		spec.delayedEffect = -10;
+		spec.delayedSecondEffect = -10;
 
 		if (item["dc"].is_number()) {
 			spec.dc = (uint8_t)item["dc"].int_value();
@@ -287,7 +345,7 @@ void PoisonSystem::LoadSpecs(const json11::Json & jsonStyleArray)
 			}
 
 			if (item["immDieBonus"].is_number()) {
-				spec.immDieBonus = (uint8_t)item["immDieBonus"].int_value();
+				spec.immDieBonus = (int8_t)item["immDieBonus"].int_value();
 			}
 		}
 
@@ -300,7 +358,7 @@ void PoisonSystem::LoadSpecs(const json11::Json & jsonStyleArray)
 				auto &subitem = item.object_items().at("immSecDice");
 
 				if (subitem["bonus"].is_number()) {
-					spec.immSecDice.bonus = (uint8_t)subitem["bonus"].int_value();
+					spec.immSecDice.bonus = (int8_t)subitem["bonus"].int_value();
 				}
 
 				if (subitem["count"].is_number()) {
@@ -322,7 +380,7 @@ void PoisonSystem::LoadSpecs(const json11::Json & jsonStyleArray)
 				auto &subitem = item.object_items().at("delayedDice");
 
 				if (subitem["bonus"].is_number()) {
-					spec.delayedDice.bonus = (uint8_t)subitem["bonus"].int_value();
+					spec.delayedDice.bonus = (int8_t)subitem["bonus"].int_value();
 				}
 
 				if (subitem["count"].is_number()) {
@@ -344,7 +402,7 @@ void PoisonSystem::LoadSpecs(const json11::Json & jsonStyleArray)
 				auto &subitem = item.object_items().at("delayedSecDice");
 
 				if (subitem["bonus"].is_number()) {
-					spec.delayedSecDice.bonus = (uint8_t)subitem["bonus"].int_value();
+					spec.delayedSecDice.bonus = (int8_t)subitem["bonus"].int_value();
 				}
 
 				if (subitem["count"].is_number()) {
