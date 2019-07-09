@@ -905,7 +905,7 @@ void Objects::SetDispatcher(objHndl handle, uint32_t data32)
 
 int Objects::GetModFromStatLevel(int statLevel)
 {
-	return (statLevel - 10) / 2;
+	return (statLevel - 10) >> 1;
 }
 
 bool Objects::IsPortalOpen(objHndl obj) {
