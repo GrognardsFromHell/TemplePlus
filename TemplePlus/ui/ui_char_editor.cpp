@@ -603,6 +603,24 @@ PYBIND11_EMBEDDED_MODULE(char_editor, mm) {
 			spInfo.push_back(ksi[i]);
 		}
 	})
+	.def("has_armored_arcane_caster_feature", []()->bool
+	{
+		auto handle = chargen.GetEditedChar();
+		auto &charPkt = chargen.GetCharEditorSelPacket();
+		
+		auto classes = d20ClassSys.GetArmoredArcaneCasterFeatureClasses();
+
+		for (auto c : classes) {
+			if (charPkt.classCode == c) {
+				return true;
+			}
+			if (objects.StatLevelGet(handle, c)) {
+				return true;
+			}
+		}
+
+		return false;
+	})
 	.def("get_class_code", []()->int
 	{
 		auto &selPkt = temple::GetRef<CharEditorSelectionPacket>(0x11E72F00);

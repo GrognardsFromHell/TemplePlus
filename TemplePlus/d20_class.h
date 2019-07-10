@@ -80,6 +80,7 @@ struct D20ClassSpec {
 	std::vector<int> casterLvl; // index is class level, value is basic caster level
 	Stat spellStat; // stat that determines maximum spell level
 	Stat spellDcStat = Stat::stat_strength; // stat that determines spell DC level
+	bool hasArmoredArcaneCasterFeature;
 };
 
 class D20ClassSystem : temple::AddressTable
@@ -120,6 +121,8 @@ public:
 	bool IsSaveFavoredForClass(Stat classCode, int saveType);
 	int GetSkillPts(Stat classEnum);
 	int GetClassHitDice(Stat classEnum);
+	bool HasArmoredArcaneCasterFeature(Stat classCode);
+	std::vector<Stat> GetArmoredArcaneCasterFeatureClasses();
 	
 	int GetClassEnum(const std::string &s); // gets class enum from string (based on Class Condition). Case insensitive.
 

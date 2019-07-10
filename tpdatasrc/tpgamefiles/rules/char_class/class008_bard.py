@@ -104,6 +104,9 @@ def IsWillSaveFavored():
 	return 1
 
 # Spell casting
+def HasArmoredArcaneCasterFeature():
+	return 1
+
 def GetSpellListType():
 	return spell_list_type_bardic
 
