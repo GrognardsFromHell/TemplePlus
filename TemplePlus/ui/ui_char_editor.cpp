@@ -608,7 +608,7 @@ PYBIND11_EMBEDDED_MODULE(char_editor, mm) {
 		auto handle = chargen.GetEditedChar();
 		auto &charPkt = chargen.GetCharEditorSelPacket();
 		
-		auto classes = d20ClassSys.GetArmoredArcaneCasterFeatureClasses();
+		auto &classes = d20ClassSys.GetArmoredArcaneCasterFeatureClasses();
 
 		for (auto c : classes) {
 			if (charPkt.classCode == c) {

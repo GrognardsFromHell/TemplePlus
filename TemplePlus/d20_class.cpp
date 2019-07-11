@@ -403,23 +403,13 @@ int D20ClassSystem::GetBaseAttackBonus(Stat classCode, uint32_t classLvl){
 	return 0;
 }
 
-std::vector<Stat> D20ClassSystem::GetArmoredArcaneCasterFeatureClasses() {
-	std::vector<Stat> classEnums;
-	for (auto &cSpec : classSpecs) {
-		if (cSpec.second.hasArmoredArcaneCasterFeature) {
-			classEnums.push_back(static_cast<Stat>(cSpec.first));
-		}
-	}
-
-	return classEnums;
+const std::vector<Stat>& D20ClassSystem::GetArmoredArcaneCasterFeatureClasses() {
+	return armoredArcaneCasterFeatureClasses;
 }
 
 bool  D20ClassSystem::HasArmoredArcaneCasterFeature(Stat classCode){
-	auto classSpec = classSpecs.find(classCode);
-	if (classSpec == classSpecs.end())
-		return 0;
-
-	return classSpec->second.hasArmoredArcaneCasterFeature;
+	auto codeFound = std::find(armoredArcaneCasterFeatureClasses.begin(), armoredArcaneCasterFeatureClasses.end(), classCode);
+	return codeFound != armoredArcaneCasterFeatureClasses.end();
 }
 
 bool D20ClassSystem::IsSaveFavoredForClass(Stat classCode, int saveType){
@@ -518,6 +508,11 @@ void D20ClassSystem::GetClassSpecs(){
 		// spell casting
 		classSpec.spellListType = pythonClassIntegration.GetSpellListType(it);
 		classSpec.hasArmoredArcaneCasterFeature = pythonClassIntegration.HasArmoredArcaneCasterFeature(it);
+
+		if (classSpec.hasArmoredArcaneCasterFeature) {
+			armoredArcaneCasterFeatureClasses.push_back(static_cast<Stat>(it));
+		}
+
 		if (classSpec.spellListType != SpellListType::None){
 			// Spell Readying Type
 			classSpec.spellMemorizationType = pythonClassIntegration.GetSpellReadyingType(it);
@@ -572,7 +567,7 @@ void D20ClassSystem::GetClassSpecs(){
 				classEnumsWithSpellLists.push_back((Stat)it);
 			}
 		}
-		
+
 		// skills
 		for (auto skillEnum = static_cast<int>(skill_appraise); skillEnum < skill_count; skillEnum++) {
 			classSpec.classSkills[(SkillEnum)skillEnum] = pythonClassIntegration.IsClassSkill(it, (SkillEnum)skillEnum);

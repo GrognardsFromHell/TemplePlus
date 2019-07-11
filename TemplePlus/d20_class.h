@@ -122,7 +122,7 @@ public:
 	int GetSkillPts(Stat classEnum);
 	int GetClassHitDice(Stat classEnum);
 	bool HasArmoredArcaneCasterFeature(Stat classCode);
-	std::vector<Stat> GetArmoredArcaneCasterFeatureClasses();
+	const std::vector<Stat> &GetArmoredArcaneCasterFeatureClasses();
 	
 	int GetClassEnum(const std::string &s); // gets class enum from string (based on Class Condition). Case insensitive.
 
@@ -187,6 +187,7 @@ public:
 	
 protected:
 	std::map<int, D20ClassSpec> classSpecs;
+	std::vector<Stat> armoredArcaneCasterFeatureClasses;
 };
 
 extern D20ClassSystem d20ClassSys;
