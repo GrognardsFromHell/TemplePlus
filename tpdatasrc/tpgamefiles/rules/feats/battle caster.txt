@@ -1,0 +1,5 @@
+name: Battle Caster
+flags: 12582912
+prereqs: 
+description: You are able to wear armor one category heavier than you can normally wear while still avoiding the chance of arcane spell failure.  It does not apply to spells gained from spell casting classes other than the class that provides the ability to cast arcane spells while in armor.
+prereq descr: Ability to ignore arcane spell failure chance from armor.

@@ -108,6 +108,15 @@ ClassDefinitionFlag PythonClassSpecIntegration::GetClassDefinitionFlags(int clas
 	return (ClassDefinitionFlag)RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::GetClassDefFlags, nullptr);
 }
 
+bool PythonClassSpecIntegration::HasArmoredArcaneCasterFeature(int classEnum) {
+	auto classSpecEntry = mScripts.find(classEnum);
+	if (classSpecEntry == mScripts.end())
+		return false; // default to false
+
+	int res = GetInt(classSpecEntry->second.id, ClassSpecFunc::HasArmoredArcaneCasterFeature, 0);
+	return res ? true : false;
+}
+
 int PythonClassSpecIntegration::GetBabProgression(int classEnum){
 	auto classSpecEntry = mScripts.find(classEnum);
 	if (classSpecEntry == mScripts.end())
@@ -368,6 +377,7 @@ static std::map<ClassSpecFunc, std::string> classSpecFunctions = {
 	{ ClassSpecFunc::GetSpellReadyingType,"GetSpellReadyingType" },
 	{ ClassSpecFunc::GetAdvancedLearningClass,"GetAdvancedLearningClass" },
 	{ ClassSpecFunc::HasAdvancedLearning,"HasAdvancedLearning" },
+	{ ClassSpecFunc::HasArmoredArcaneCasterFeature, "HasArmoredArcaneCasterFeature" },
 	{ ClassSpecFunc::GetSpellSourceType,"GetSpellSourceType" },
 	{ ClassSpecFunc::GetSpellList,"GetSpellList" },
 	{ ClassSpecFunc::GetSpellsPerDay,"GetSpellsPerDay" },

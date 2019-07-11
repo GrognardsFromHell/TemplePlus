@@ -174,8 +174,12 @@ def WarmageSpellFailure(attachee, args, evt_obj):
 	if equip_slot == item_wear_armor: # warmage can cast in light armor (and medium armor at level 8 or greater) with no spell failure
 		warmageLevel = attachee.stat_level_get(stat_level_warmage)
 		armor_flags = item.obj_get_int(obj_f_armor_flags)
-		if (armor_flags & ARMOR_TYPE_NONE) or (armor_flags == ARMOR_TYPE_LIGHT) or ((armor_flags == ARMOR_TYPE_MEDIUM) and (warmageLevel > 7)):
-			return 0
+		if attachee.d20_query("Improved Armored Casting"):
+			if (armor_flags & ARMOR_TYPE_NONE) or (armor_flags == ARMOR_TYPE_LIGHT) or (armor_flags == ARMOR_TYPE_MEDIUM) or (warmageLevel > 7):
+				return 0
+		else:
+			if (armor_flags & ARMOR_TYPE_NONE) or (armor_flags == ARMOR_TYPE_LIGHT) or ((armor_flags == ARMOR_TYPE_MEDIUM) and (warmageLevel > 7)):
+				return 0
 	
 	if equip_slot == item_wear_shield:  # warmage can cast with a light shield (or buclker) with no spell failure
 		shieldFailure = item.obj_get_int(obj_f_armor_arcane_spell_failure)
