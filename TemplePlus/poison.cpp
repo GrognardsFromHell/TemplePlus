@@ -199,7 +199,7 @@ PoisonSystem::PoisonSystem()
 {
 	AssignVanillaSpecs();
 	//SaveSpecsFile("d:\\temp\\vpoisons.json");
-	LoadSpecsFile("data/mes/poisons.json");
+	LoadSpecsFile("data/rules/poisons.json");
 }
 
 const std::string & PoisonSystem::GetName() const
