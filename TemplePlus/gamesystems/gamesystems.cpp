@@ -40,6 +40,7 @@
 #include "graphics/mapterrain.h"
 #include "ui/ui_systems.h"
 #include <aas/aas_model_factory.h>
+#include <poison.h>
 
 using namespace gfx;
 
@@ -789,7 +790,7 @@ void GameSystems::InitializeSystems(LoadingScreen& loadingScreen) {
 	mItemHighlight = InitializeSystem<ItemHighlightSystem>(loadingScreen, mConfig);
 	loadingScreen.SetProgress(79 / 79.0f);
 	mPathX = InitializeSystem<PathXSystem>(loadingScreen, mConfig);
-
+	mPoison = InitializeSystem<PoisonSystem>(loadingScreen);
 }
 
 void GameSystems::EndGame() {

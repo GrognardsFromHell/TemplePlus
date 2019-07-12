@@ -18,7 +18,6 @@ class AbilityConditionFixes : public TempleFix {
 public:
 #define ABFIX(fname) static int fname ## (DispatcherCallbackArgs args);
 #define HOOK_ORG(fname) static int (__cdecl* org ##fname)(DispatcherCallbackArgs) = replaceFunction<int(__cdecl)(DispatcherCallbackArgs)>
-	static int PoisonedOnBeginRound(DispatcherCallbackArgs args);;
 	static int MonsterSplittingHpChange(DispatcherCallbackArgs args);
 	static int MonsterOozeSplittingOnDamage(DispatcherCallbackArgs args);
 	static int MonsterSubtypeFire(DispatcherCallbackArgs args);
@@ -73,8 +72,6 @@ public:
 		replaceFunction(0x101020A0, BootsOfSpeedBeginRound); // fixes the bug that fucked things up
 
 		replaceFunction(0x100FDE00, MonsterSubtypeFire); // fixes 2x damage factor for vulnerability to cold (should be 1.5)
-
-		replaceFunction(0x100EA040, PoisonedOnBeginRound);
 
 		replaceFunction(0x100F7550, MonsterSplittingHpChange);
 		replaceFunction(0x100F7490, MonsterOozeSplittingOnDamage);
@@ -156,65 +153,6 @@ public:
 	}
 } abilityConditionFixes;
 
-int AbilityConditionFixes::PoisonedOnBeginRound(DispatcherCallbackArgs args){
-	GET_DISPIO(dispIoTypeSendSignal, DispIoD20Signal);
-
-	// decrement duration
-	auto dur = args.GetCondArg(1);
-	auto durRem = dur - (int)dispIo->data1;
-	if (durRem >= 0){
-		args.SetCondArg(1, durRem);
-		return 0;
-	}
-
-	auto poisonId = args.GetCondArg(0);
-	auto &poisonSpecs = temple::GetRef<PoisonSpec[36]>(0x1028C080);
-	auto pspec = poisonSpecs[poisonId];
-
-	// make saving throw
-	auto dc = pspec.dc;
-	if (dc <= 0){
-		dc = args.GetCondArg(2);
-	}
-	if (dc < 0 || dc > 100) // failsafe
-		dc = 15;
-
-	if (pspec.delayedEffect == -10 || pspec.delayedEffect == -9) {
-		conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
-		return 0;
-	}
-
-	// success - remove condition
-	if (damage.SavingThrow(args.objHndCaller, objHndl::null, dc, SavingThrowType::Fortitude, D20STF_POISON)){
-		conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
-		return 0;
-	}
-
-	// failure
-
-	// check delay poison
-	if (d20Sys.d20QueryWithData(args.objHndCaller, DK_QUE_Critter_Has_Condition, conds.GetByName("sp-Delay Poison"), 0)){
-		floatSys.FloatSpellLine(args.objHndCaller, 20033, FloatLineColor::White);
-		conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
-		return 0;
-	}
-		
-	floatSys.FloatCombatLine(args.objHndCaller, 56);
-	histSys.CreateRollHistoryLineFromMesfile(21, args.objHndCaller, objHndl::null); // "X takes poison damage!"
-	floatSys.FloatCombatLine(args.objHndCaller, 96);
-
-	auto rollRes = Dice(pspec.delayedDice.count, pspec.delayedDice.sides, pspec.delayedDice.sides).Roll();
-	conds.AddTo(args.objHndCaller, "Temp_Ability_Loss", {pspec.delayedEffect + (pspec.delayedEffect < 0 ? 6:0), rollRes});
-
-	if (pspec.delayedSecondEffect != -10){
-		rollRes = Dice(pspec.delayedSecDice.count, pspec.delayedSecDice.sides, pspec.delayedSecDice.sides).Roll();
-		conds.AddTo(args.objHndCaller, "Temp_Ability_Loss", { pspec.delayedSecondEffect + (pspec.delayedSecondEffect < 0 ? 6 : 0), rollRes });
-
-	}
-
-	conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
-	return 0;
-}
 
 int AbilityConditionFixes::MonsterSplittingHpChange(DispatcherCallbackArgs args){
 	auto protoId = objSystem->GetProtoId(args.objHndCaller);
