@@ -3780,6 +3780,8 @@ EK_Q_Quivering_Palm_Can_Perform = 0x147
 EK_Q_Trip_AOO = 0x148
 EK_Q_Get_Arcane_Spell_Failure = 0x149 # gets arcane spell failure for (class_enum, equip_slot) combo
 EK_Q_Is_Preferring_One_Handed_Wield = 0x14A # gets arcane spell failure for (class_enum, equip_slot) combo
+EK_Q_Scribe_Scroll_Spell_Level = 0x14B
+EK_Q_Critter_Is_Immune_Paralysis = 0x14C
 
 EK_LVL_Stats_Activate = 100
 EK_LVL_Stats_Check_Complete = 101

@@ -687,7 +687,7 @@ bool Damage::SavingThrow(objHndl handle, objHndl attacker, int dc, SavingThrowTy
 	}
 	return finalSaveThrowMod + diceResult >= dc;
 
-	// return addresses.SavingThrow(handle, attacker, dc, type, flags);
+	// return addresses.SavingThrow(handle, attacker, dc, saveType, flags);
 }
 
 bool Damage::SavingThrowSpell(objHndl obj, objHndl attacker, int dc, SavingThrowType type, int flags, int spellId) {

@@ -60,6 +60,7 @@ public:
 	static int AidOnAddTempHp(DispatcherCallbackArgs args);
 
 	static int GhoulTouchAttackHandler(DispatcherCallbackArgs args);
+	static int HoldXOnAdd(DispatcherCallbackArgs args); // used in the various paralyzing spells to add the "Held" effect
 
 	static int DivinePowerToHitAsFighter(DispatcherCallbackArgs args);
 
@@ -1025,6 +1026,30 @@ int SpellConditionFixes::GhoulTouchAttackHandler(DispatcherCallbackArgs args){
 	if (!spellPkt.RemoveObjFromTargetList(args.objHndCaller)){
 		logger->debug("GhoulTouchAttackHandler: Cannot remove target");
 		return 0;
+	}
+	return 0;
+}
+
+int SpellConditionFixes::HoldXOnAdd(DispatcherCallbackArgs args){
+	// Added in Temple+
+	if (d20Sys.d20Query(args.objHndCaller, DK_QUE_Critter_Is_Immune_Paralysis )){
+		args.RemoveSpell();
+		args.RemoveSpellMod();
+		return 0;
+	}
+
+	floatSys.FloatSpellLine(args.objHndCaller, 20001u, FloatLineColor::Red);
+	if (!conds.AddTo(args.objHndCaller, "Held", { args.GetCondArg(0), args.GetCondArg(1) , args.GetCondArg(2) })){
+		logger->error("Unable to add condition Held");
+	};
+	auto spellId = args.GetCondArg(0);
+	SpellPacketBody spPkt(spellId);
+	if (!spPkt.spellEnum)
+		return 0;
+	if (args.objHndCaller == spPkt.caster){
+		auto tbStat = actSeqSys.curSeqGetTurnBasedStatus();
+		if (tbStat)
+			tbStat->hourglassState = 0;
 	}
 	return 0;
 }
