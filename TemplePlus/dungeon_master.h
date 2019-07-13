@@ -21,12 +21,14 @@ public:
 	void Hide();
 	void Toggle();
 
+	bool IsUnavailable();
 	bool IsActionActive();
 	bool IsEditorActive();
 	objHndl GetHoveredCritter();
 	bool IsHandlingMsg();
 	void SetIsHandlingMsg(bool b);;
 
+	
 	int GetDiceRollForcing();
 
 	void Render();

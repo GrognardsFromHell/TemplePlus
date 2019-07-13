@@ -49,6 +49,7 @@
 #include "ui/ui_mainmenu.h"
 #include "config/config.h"
 #include "ui/ui_dm.h"
+#include "ui/ui_pc_creation.h"
 
 DungeonMaster dmSys;
 
@@ -77,7 +78,7 @@ void DungeonMaster::Render() {
 
 	isMoused = false;
 
-	if (!gameView || !config.dungeonMaster || !party.GetConsciousPartyLeader() || !uiSystems->GetUtilityBar().IsVisible())
+	if (IsUnavailable())
 		return;
 	
 	RenderDmButton();
@@ -1384,6 +1385,11 @@ bool DungeonMaster::IsMinimized() {
 	return isMinimized;
 }
 
+bool DungeonMaster::IsUnavailable()
+{
+	return !gameView || !config.dungeonMaster || !party.GetConsciousPartyLeader() || !uiSystems->GetUtilityBar().IsVisible();
+}
+
 bool DungeonMaster::IsActionActive() {
 	return isActionActive;
 }
@@ -1405,6 +1411,8 @@ void DungeonMaster::SetIsHandlingMsg(bool b){
 }
 
 int DungeonMaster::GetDiceRollForcing(){
+	if (IsUnavailable()) // so it doesn't affect PC creation stat rolls
+		return 0;
 	return mForceRollType;
 }
 
