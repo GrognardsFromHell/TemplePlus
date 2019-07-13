@@ -99,6 +99,9 @@ def GetSpellSourceType():
 
 def GetSpellReadyingType():
 	return spell_readying_innate
+	
+def HasArmoredArcaneCasterFeature():
+	return 1
 
 def GetSpellList():
 	return spell_list

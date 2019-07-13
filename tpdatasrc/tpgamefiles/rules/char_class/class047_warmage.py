@@ -103,6 +103,9 @@ def GetSpellSourceType():
 def GetSpellReadyingType():
 	return spell_readying_innate
 	
+def HasArmoredArcaneCasterFeature():
+	return 1
+	
 def HasAdvancedLearning():
 	return 1
 	
@@ -176,6 +179,9 @@ def GetAdvancedLearningList(obj, maxSpellLevel):
 	return spAdvancedLearningList
 	
 def IsSelectingSpellsOnLevelup(obj):
+	if char_editor.get_class_code() !=  classEnum: # This is strictly a warmage benefit (in case it's being accessed externally from sthg like Mystic Theurge / Archmage)
+		return 0
+	
 	classLvl = obj.stat_level_get(classEnum)
 	classLvlNew = classLvl + 1
 	

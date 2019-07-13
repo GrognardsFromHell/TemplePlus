@@ -49,6 +49,7 @@ enum class ClassSpecFunc : int {
 	LevelupSpellsFinalize,
 	GetAdvancedLearningClass,
 	HasAdvancedLearning,
+	HasArmoredArcaneCasterFeature,
 };
 
 
@@ -63,6 +64,7 @@ public:
 	std::map<feat_enums, int> GetFeats(int classEnum);
 	
 	ClassDefinitionFlag GetClassDefinitionFlags(int classEnum);
+	bool HasArmoredArcaneCasterFeature(int classEnum);
 	int GetBabProgression(int classEnum);
 	int GetHitDieType(int classEnum);
 	int GetInt(int classEnum, ClassSpecFunc specType, int defaultVal = 0);

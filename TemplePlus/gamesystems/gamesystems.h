@@ -121,6 +121,7 @@ class HeightSystem;
 class GMeshSystem;
 class PathNodeSystem;
 class GameSystemLoadingScreen;
+class PoisonSystem;
 
 class GameSystems {
 public:
@@ -446,7 +447,11 @@ public:
 		Expects(!!mPathX);
 		return *mPathX;
 	}
-	
+	PoisonSystem& GetPoison() const {
+		Expects(!!mPoison);
+		return *mPoison;
+	}
+
 	// All systems that want to listen to map events
 	const std::vector<MapCloseAwareGameSystem*> &GetMapCloseAwareSystems() const {
 		return mMapCloseAwareSystems;
@@ -617,6 +622,7 @@ private:
 	std::unique_ptr<FormationSystem> mFormation;
 	std::unique_ptr<ItemHighlightSystem> mItemHighlight;
 	std::unique_ptr<PathXSystem> mPathX;
+	std::unique_ptr<PoisonSystem> mPoison;
 
 	std::unique_ptr<class LegacyGameSystemResources> mLegacyResources;
 

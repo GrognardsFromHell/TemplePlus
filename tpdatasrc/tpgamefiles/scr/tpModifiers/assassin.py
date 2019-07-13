@@ -113,6 +113,9 @@ def AssassinSpellFailure(attachee, args, evt_obj):
 		armor_flags = item.obj_get_int(obj_f_armor_flags)
 		if (armor_flags & ARMOR_TYPE_NONE) or (armor_flags == ARMOR_TYPE_LIGHT):
 			return 0
+			
+		if attachee.d20_query("Improved Armored Casting") and (armor_flags == ARMOR_TYPE_MEDIUM):
+			return 0
 
 	evt_obj.return_val += item.obj_get_int(obj_f_armor_arcane_spell_failure)
 	return 0
