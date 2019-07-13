@@ -233,6 +233,31 @@ void Console::RenderCheatsMenu()
 				}
 			}
 
+			if (ImGui::MenuItem("Rest party")){
+				for (auto i = 0u; i < party.GroupListGetLen(); i++) {
+					auto handle = party.GroupListGetMemberN(i);
+					if (critterSys.IsDeadNullDestroyed(handle)){
+						continue;
+					}
+
+					auto obj = objSystem->GetObject(handle);
+					if (!obj) continue;
+					// Refresh spells
+					spellSys.SpellsPendingToMemorized(handle);
+					spellSys.SpellsCastReset(handle);
+
+					auto dispatcher = obj->GetDispatcher();
+					if (dispatcher->IsValid()) {
+						dispatcher->Process(enum_disp_type::dispTypeNewDay, DK_NEWDAY_REST, nullptr);
+					}
+
+					// Heal
+					obj->SetInt32(obj_f_hp_damage, 0);
+					obj->SetInt32(obj_f_critter_subdual_damage, 0);
+					
+				}
+			}
+
 			if (combatSys.isCombatActive()){
 				ImGui::PushItemWidth(100);
 				if (ImGui::MenuItem("Refresh Turn")) {
