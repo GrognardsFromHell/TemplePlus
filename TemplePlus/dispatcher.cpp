@@ -304,6 +304,40 @@ void DispatcherSystem::dispatchTurnBasedStatusInit(objHndl objHnd, DispIOTurnBas
 	}
 }
 
+int DispatcherSystem::DispatchSavingThrow(objHndl handle, DispIoSavingThrow * evtObj, enum_disp_type dispType, D20DispatcherKey d20DispatcherKey)
+{
+	auto obj = objSystem->GetObject(handle);
+	if (!obj || !obj->IsCritter())
+		return 0;
+	
+	auto dispatcher = obj->GetDispatcher();
+	if (!dispatcherValid(dispatcher))
+		return 0;
+
+	if (!evtObj){
+		DispIoSavingThrow evtObjLocal;
+		dispatcher->Process(dispType, d20DispatcherKey, &evtObjLocal);
+		return evtObjLocal.bonlist.GetEffectiveBonusSum();
+	}
+
+	dispatcher->Process(dispType, d20DispatcherKey, evtObj);
+	return evtObj->bonlist.GetEffectiveBonusSum();
+}
+
+int DispatcherSystem::Dispatch13SavingThrow(objHndl handle, SavingThrowType saveType, DispIoSavingThrow * evtObj)
+{
+	return DispatchSavingThrow(handle, evtObj, dispTypeSaveThrowLevel, (D20DispatcherKey)((int)saveType + D20DispatcherKey::DK_SAVE_FORTITUDE) );
+}
+
+int DispatcherSystem::Dispatch14SavingThrowMod(objHndl handle, SavingThrowType saveType, DispIoSavingThrow * evtObj)
+{
+	return DispatchSavingThrow(handle, evtObj, dispTypeSaveThrowSpellResistanceBonus, (D20DispatcherKey)((int)saveType + D20DispatcherKey::DK_SAVE_FORTITUDE));
+}
+
+int DispatcherSystem::Dispatch44FinalSaveThrow(objHndl handle, SavingThrowType saveType, DispIoSavingThrow* evtObj){
+	return DispatchSavingThrow(handle, evtObj, dispTypeCountersongSaveThrow, (D20DispatcherKey)((int)saveType + D20DispatcherKey::DK_SAVE_FORTITUDE));
+}
+
 
 DispIoCondStruct* DispatcherSystem::DispIoCheckIoType1(DispIoCondStruct* dispIo)
 {
@@ -1364,6 +1398,13 @@ void DispatcherCallbackArgs::RemoveCondition(){
 void DispatcherCallbackArgs::RemoveSpell(){
 	auto removeSpell = temple::GetRef<void(__cdecl)(DispatcherCallbackArgs)>(0x100D7620);
 	removeSpell(*this);
+}
+
+DispIoSavingThrow::DispIoSavingThrow(){
+	this->dispIOType = dispIOTypeSavingThrow;
+	this->obj = objHndl::null;
+	this->flags = 0;
+	this->rollResult = 0;
 }
 
 DispIoAttackBonus::DispIoAttackBonus(){

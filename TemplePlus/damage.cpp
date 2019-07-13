@@ -611,8 +611,83 @@ void Damage::HealSubdual(objHndl target, int amount) {
 	addresses.HealSubdual(target, amount);
 }
 
-bool Damage::SavingThrow(objHndl obj, objHndl attacker, int dc, SavingThrowType type, int flags) {
-	return addresses.SavingThrow(obj, attacker, dc, type, flags);
+bool Damage::SavingThrow(objHndl handle, objHndl attacker, int dc, SavingThrowType saveType, int flags) {
+	auto obj = objSystem->GetObject(handle);
+	if (!obj) {
+		return false;
+	}
+
+	auto saveThrowMod = 0;
+
+	DispIoSavingThrow evtObj;
+	evtObj.obj = attacker;
+	evtObj.flags = (int64_t)flags; // TODO: vanilla bug! flags input should be 64 bit (since some of the descriptor enums go beyond 32). Looks like they fixed it in the dispatcher but not this function.
+
+	// NPC special bonus from protos
+	if (obj->IsNPC()){
+		auto npcSaveBonus = 0;
+		auto validType = false;
+		switch(saveType){
+		case SavingThrowType::Fortitude:
+			npcSaveBonus = obj->GetInt32(obj_f_npc_save_fortitude_bonus);
+			validType = true;
+			break;
+		case SavingThrowType::Reflex:
+			npcSaveBonus = obj->GetInt32(obj_f_npc_save_reflexes_bonus);
+			validType = true;
+			break;
+		case SavingThrowType::Will:
+			npcSaveBonus = obj->GetInt32(obj_f_npc_save_willpower_bonus);
+			validType = true;
+			break;
+		default:
+			break;
+		}
+		if (validType){
+			evtObj.bonlist.AddBonus(npcSaveBonus, 0, 139);
+		}
+		else{
+			logger->error("SavingThrow(): Bad save type parameter");
+		}
+	}
+
+	dispatch.Dispatch13SavingThrow(handle, saveType, &evtObj);
+	evtObj.obj = handle;
+	if (attacker && !(evtObj.flags & 2)){
+		saveThrowMod = dispatch.Dispatch14SavingThrowMod(attacker, saveType, &evtObj);
+	}
+	Dice dice(1, 20, 0);
+	auto diceResult = dice.Roll();
+	auto & savingThrowAlwaysRoll1 = temple::GetRef<int>(0x10BCA8B8);
+	auto & savingThrowAlwaysRoll20 = temple::GetRef<int>(0x10BCA8B4);
+	if (savingThrowAlwaysRoll1)
+		diceResult = 1;
+	else if (savingThrowAlwaysRoll20)
+		diceResult = 20;
+	evtObj.rollResult = diceResult;
+	if (diceResult + saveThrowMod < dc || diceResult == 1){
+		if (d20Sys.d20Query(handle, DK_QUE_RerollSavingThrow)){
+			histSys.RollHistoryType3Add(handle, dc, saveType, flags, dice.ToPacked(), diceResult, &evtObj.bonlist);
+			diceResult = dice.Roll();
+			flags |= 1;
+		}
+	}
+
+	auto finalSaveThrowMod = dispatch.Dispatch44FinalSaveThrow(handle, saveType, &evtObj);
+	auto histId = histSys.RollHistoryType3Add(handle, dc, saveType, flags, dice.ToPacked(), diceResult, &evtObj.bonlist);
+	histSys.CreateRollHistoryString(histId);
+
+	if (diceResult == 1){
+		// if (finalSaveThrowMod + 1 >= dc)
+			return false; // natural 1 - always fails
+	}
+	else if (diceResult == 20){
+		// if (finalSaveThrowMod + 20 < dc)
+			return true; // natural 20 - always succeeds
+	}
+	return finalSaveThrowMod + diceResult >= dc;
+
+	// return addresses.SavingThrow(handle, attacker, dc, type, flags);
 }
 
 bool Damage::SavingThrowSpell(objHndl obj, objHndl attacker, int dc, SavingThrowType type, int flags, int spellId) {

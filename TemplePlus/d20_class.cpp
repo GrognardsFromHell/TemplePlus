@@ -314,21 +314,22 @@ int D20ClassSystem::GetMaxSpellLevel(Stat classEnum, int characterLvl)
 }
 
 int D20ClassSystem::GetCasterLevel(Stat classEnum, int classLvl){
+	if (classLvl < 1)
+		return -1;
+
 	auto classSpec = classSpecs.find(classEnum);
 	if (classSpec == classSpecs.end())
 		return -1;
-
+	
 	std::vector<int> &casterLvl = classSpec->second.casterLvl;
 
 	if (casterLvl.size() <= 0){
 		return -1;
 	}
-	if (classLvl >= casterLvl.size()){
+	if ((unsigned int)classLvl >= casterLvl.size()){
 		return casterLvl[casterLvl.size() - 1];
 	}
-	if (classLvl < 1) {
-		return -1;
-	}
+	
 	return casterLvl[classLvl-1];
 }
 

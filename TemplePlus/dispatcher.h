@@ -67,6 +67,12 @@ struct DispatcherSystem : temple::AddressTable
 	void dispIOTurnBasedStatusInit(DispIOTurnBasedStatus* dispIOtbStat);
 	void dispatchTurnBasedStatusInit(objHndl objHnd, DispIOTurnBasedStatus* dispIOtB);
 
+	int DispatchSavingThrow(objHndl handle, DispIoSavingThrow* evtObj, enum_disp_type enumDisp, D20DispatcherKey d20DispatcherKey);
+	int Dispatch13SavingThrow(objHndl handle, SavingThrowType saveType, DispIoSavingThrow* evtObj);
+	int Dispatch14SavingThrowMod(objHndl handle, SavingThrowType saveType, DispIoSavingThrow* evtObj);
+	int Dispatch44FinalSaveThrow(objHndl handle, SavingThrowType saveType, DispIoSavingThrow* evtObj);
+	
+
 #pragma region event object checkers
 
 	DispIoCondStruct* DispIoCheckIoType1(DispIoCondStruct* dispIo); // used for ConditionAdd (3); 1,2 and 4 dispatch will null eventObjs
@@ -288,10 +294,11 @@ struct DispIoBonusList : DispIO { // DispIoType = 2  used for fetching ability s
 struct DispIoSavingThrow : DispIO { // DispIoType = 3
 	uint32_t returVal;
 	objHndl obj;
-	uint32_t flags; // see D20SavingThrowFlag looks like: 2 - trap, 0x10 - Spell, 0x20 thru 0x1000 - spell schools (abjuration thru transmutation, e.g. 0x100 - enchantment), 0x100000 - fear/morale effect?
-	int field_14;
+	uint64_t flags; // see D20SavingThrowFlag looks like: 2 - trap, 0x10 - Spell, 0x20 thru 0x1000 - spell schools (abjuration thru transmutation, e.g. 0x100 - enchantment), 0x100000 - fear/morale effect?
 	BonusList bonlist;
 	int rollResult;
+
+	DispIoSavingThrow();
 };
 
 struct DispIoAttackBonus : DispIO { // DispIoType 5
