@@ -358,6 +358,7 @@ struct LegacyCritterSystem : temple::AddressTable
 	static int GetNumFollowers(objHndl obj, int excludeForcedFollowers);
 
 	void BuildRadialMenu(objHndl handle);
+	int SetCritterAttacks(objHndl handle);
 
 private:
 	int GetModelRaceOffset(objHndl obj, bool useBaseRace = true);

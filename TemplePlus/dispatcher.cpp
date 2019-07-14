@@ -19,6 +19,8 @@ class DispatcherReplacements : public TempleFix {
 public:
 
 	static int Dispatch54AoE(objHndl, DispIO *, D20DispatcherKey);
+	static int GetNumNaturalAttacks_(objHndl handle);
+	static int GetDamageIdx(objHndl handle, int idx);
 
 	void apply() override {
 		logger->info("Replacing basic Dispatcher functions");
@@ -59,6 +61,9 @@ public:
 		});
 		
 		replaceFunction(0x1004D360, Dispatch54AoE);
+
+		replaceFunction(0x100800C0, GetNumNaturalAttacks_);
+		replaceFunction(0x10080100, GetDamageIdx);
 	}
 } dispatcherReplacements;
 
@@ -71,6 +76,40 @@ int DispatcherReplacements::Dispatch54AoE(objHndl handle, DispIO* evtObj, D20Dis
 	dispatcher->Process(dispTypeObjectEvent, dispKey, evtObj);
 	return 0;
 }
+
+int DispatcherReplacements::GetNumNaturalAttacks_(objHndl handle) {
+	if (!handle) return 0;
+	auto obj = objSystem->GetObject(handle);
+	int result = 0;
+	int idx = 0;
+	int attacksCount;
+	do
+	{
+		attacksCount = obj->GetInt32(obj_f_critter_attacks_idx, idx);
+		if (attacksCount > 0)
+			result += attacksCount;
+		idx++;
+	} while (idx < 4);
+	return result;
+}
+
+int DispatcherReplacements::GetDamageIdx(objHndl handle, int idx)
+{
+	if (!handle) return 0;
+	auto obj = objSystem->GetObject(handle);
+	int v2 = 0;
+	int result = 0;
+	while (1)
+	{
+		v2 += obj->GetInt32(obj_f_critter_attacks_idx, result);
+		if (idx < v2)
+			break;
+		if (++result > 4)
+			return 0;
+	}
+	return result;
+}
+
 
 struct DispatcherSystemAddresses : temple::AddressTable
 {
