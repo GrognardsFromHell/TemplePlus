@@ -2787,7 +2787,7 @@ ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
 		if (!filterResult
 			&& !spellEntry.IsBaseModeTarget(UiPickerType::Area)
 			&& !spellEntry.IsBaseModeTarget(UiPickerType::Cone)
-			&& spellEntry.IsBaseModeTarget(UiPickerType::Location)) {
+			&& !spellEntry.IsBaseModeTarget(UiPickerType::Location)) {
 			spellPkt.Debit();
 			spellInterruptApply(spellEntry.spellSchoolEnum, spellPkt.caster, invIdx); // note: perhaps the current sequence changes due to the applied interrupt
 			if (!party.IsInParty(curSeq->spellPktBody.caster)) {
