@@ -22,6 +22,7 @@ public:
 	static int ParseType(int colIdx, objHndl handle, char* content, obj_f field, int arrayLen, char** strings);
 	static int ParseRace(int colIdx, objHndl handle, char* content, obj_f field, int arrayLen, char** strings);
 	static int ParseSpell(int colIdx, objHndl handle, char* content, obj_f field);
+	static int SetCritterAttacks(objHndl handle);
 	void apply() override 
 	{
 
@@ -62,6 +63,9 @@ public:
 		replaceFunction<int(__cdecl)(int, objHndl, char*, obj_f, int, char**)>(0x10039B40, ParseRace);
 
 		replaceFunction<int(__cdecl)(int, objHndl, char*, obj_f)>(0x1003A8C0, ParseSpell);
+
+		//SetCritterAttacks
+		replaceFunction<int(__cdecl)(objHndl)>(0x1003AAC0, SetCritterAttacks);
 	}
 } protosHooks;
 
@@ -430,4 +434,55 @@ int ProtosHooks::ParseSpell(int colIdx, objHndl handle, char* content, obj_f fie
 	spellSys.SpellMemorizedAdd(handle, spEnum, spClass, spLvl, SpellStoreType::spellStoreMemorized, 0);
 
 	return 1;
+}
+
+int ProtosHooks::SetCritterAttacks(objHndl handle)
+{
+	auto obj = objSystem->GetObject(handle);
+	int32_t objType = obj->GetInt32(obj_f_type);
+	int result = 0;
+	if (objType == 13 || (result = objType, result == 14))
+	{
+		int32_t strAbility = obj->GetInt32(obj_f_critter_abilities_idx, 0); //v2 = getArrayFieldInt32(obj, obj_f_critter_abilities_idx, 0);
+		int strMod = objects.GetModFromStatLevel(strAbility);
+		int32_t sizeCategory = obj->GetInt32(obj_f_size);
+		int sizeMod = critterSys.GetBonusFromSizeCategory(sizeCategory);
+		int attackIndex = 0;
+		do
+		{
+			if (obj->GetInt32(obj_f_critter_attacks_idx, attackIndex) > 0)
+			{
+				int32_t attackBonusOld = obj->GetInt32(obj_f_attack_bonus_idx, attackIndex);
+				int32_t v6 = obj->GetInt32(obj_f_critter_damage_idx, attackIndex);
+				auto dice = Dice::FromPacked(v6);
+				auto diceCount = dice.GetCount(); //v15 = GetPackedDiceNumDice(v6);
+				auto diceSides = dice.GetSides(); //v14 = GetPackedDiceType(v6);
+				auto diceMod = dice.GetModifier(); //v7 = GetPackedDiceBonus(v6);
+				auto attackBonusNew = attackBonusOld - (strMod + sizeMod);
+				Dice dice2;
+				if (attackIndex <= 0 || strMod <= 0)
+					dice2 = Dice(diceCount, diceSides, diceMod - strMod); //v8 = encodeTriplet(v15, v14, v7 - v17);
+				else
+					dice2 = Dice(diceCount, diceSides, diceMod - strMod / 2); //v8 = encodeTriplet(v15, v14, v7 - v17 / 2);
+				auto dicePacked = dice2.ToPacked();
+				obj->SetInt32(obj_f_attack_bonus_idx, attackIndex, attackBonusNew);
+				obj->SetInt32(obj_f_critter_damage_idx, attackIndex, dicePacked);
+			}
+			++attackIndex;
+		} while (attackIndex < 3);
+
+		auto dexAbility = obj->GetInt32(obj_f_critter_abilities_idx, 1);
+		result = objects.GetModFromStatLevel(dexAbility);
+		for (int i = result; attackIndex < 4; ++attackIndex)
+		{
+			result = obj->GetInt32(obj_f_critter_attacks_idx, attackIndex);
+			if (result > 0)
+			{
+				auto attackBonusOld = obj->GetInt32(obj_f_attack_bonus_idx, attackIndex);
+				// added sizeMod for better usage
+				obj->SetInt32(obj_f_attack_bonus_idx, attackIndex, attackBonusOld - i - sizeMod); //result = setArrayFieldByValue(obj, obj_f_attack_bonus_idx, attackIndex, v12 - i);
+			}
+		}
+	}
+	return result;
 }

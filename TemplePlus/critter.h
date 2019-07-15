@@ -321,6 +321,7 @@ struct LegacyCritterSystem : temple::AddressTable
 	float GetReach(objHndl objHndl, D20ActionType actType); // reach in feet
 	int GetBonusFromSizeCategory(int sizeCategory);
 	int GetDamageIdx(objHndl obj, int attackIdx);
+	int GetNumNaturalAttacks(objHndl handle);
 	// bonus to hit from size
 	int GetCritterDamageDice(objHndl obj, int attackIdx);
 	DamageType GetCritterAttackDamageType(objHndl obj, int attackIdx);
@@ -358,8 +359,6 @@ struct LegacyCritterSystem : temple::AddressTable
 	static int GetNumFollowers(objHndl obj, int excludeForcedFollowers);
 
 	void BuildRadialMenu(objHndl handle);
-	int SetCritterAttacks(objHndl handle);
-
 private:
 	int GetModelRaceOffset(objHndl obj, bool useBaseRace = true);
 	void UpdateAddMeshes(objHndl obj);

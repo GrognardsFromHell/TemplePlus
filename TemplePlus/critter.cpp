@@ -162,10 +162,11 @@ private:
 		});
 		ShowExactHpForNPCs();
 
-		//SetCritterAttacks
-		replaceFunction<int(__cdecl)(objHndl)>(0x1003AAC0, [](objHndl handle) {
-			return (int)critterSys.SetCritterAttacks(handle);
+		//GetNumNaturalAttacks
+		replaceFunction<int(__cdecl)(objHndl)>(0x100800C0, [](objHndl handle) {
+			return (int)critterSys.GetNumNaturalAttacks(handle);
 		});
+
 	}
 
 private:
@@ -1453,6 +1454,22 @@ int LegacyCritterSystem::GetDamageIdx(objHndl obj, int attackIdx)
 	return 0;
 }
 
+int LegacyCritterSystem::GetNumNaturalAttacks(objHndl handle) {
+	if (!objSystem->IsValidHandle(handle)) {
+		return 0;
+	}
+	auto obj = objSystem->GetObject(handle);
+	int result = 0;
+	int attacksCount;
+	for (int i = 0; i < 4; i++)
+	{
+		attacksCount = obj->GetInt32(obj_f_critter_attacks_idx, i);
+		if (attacksCount > 0)
+			result += attacksCount;
+	}
+	return result;
+}
+
 int LegacyCritterSystem::GetCritterDamageDice(objHndl obj, int attackIdx)
 {
 	int damageIdx = GetDamageIdx(obj, attackIdx);
@@ -1815,56 +1832,7 @@ void LegacyCritterSystem::BuildRadialMenu(objHndl handle){
 		}
 	}
 }
-int LegacyCritterSystem::SetCritterAttacks(objHndl handle)
-{
-	auto obj = objSystem->GetObject(handle);
-	int32_t objType = obj->GetInt32(obj_f_type);
-	int result = 0;
-	if (objType == 13 || (result = objType, result == 14))
-	{
-		int32_t strAbility = obj->GetInt32(obj_f_critter_abilities_idx, 0); //v2 = getArrayFieldInt32(obj, obj_f_critter_abilities_idx, 0);
-		int strMod = objects.GetModFromStatLevel(strAbility);
-		int32_t sizeCategory = obj->GetInt32(obj_f_size);
-		int sizeMod = critterSys.GetBonusFromSizeCategory(sizeCategory);
-		int attackIndex = 0;
-		do
-		{
-			if (obj->GetInt32(obj_f_critter_attacks_idx, attackIndex) > 0)
-			{
-				int32_t attackBonusOld = obj->GetInt32(obj_f_attack_bonus_idx, attackIndex);
-				int32_t v6 = obj->GetInt32(obj_f_critter_damage_idx, attackIndex);
-				auto dice = Dice::FromPacked(v6);
-				auto diceCount = dice.GetCount(); //v15 = GetPackedDiceNumDice(v6);
-				auto diceSides = dice.GetSides(); //v14 = GetPackedDiceType(v6);
-				auto diceMod = dice.GetModifier(); //v7 = GetPackedDiceBonus(v6);
-				auto attackBonusNew = attackBonusOld - (strMod + sizeMod);
-				Dice dice2;
-				if (attackIndex <= 0 || strMod <= 0)
-					dice2 = Dice(diceCount, diceSides, diceMod - strMod); //v8 = encodeTriplet(v15, v14, v7 - v17);
-				else
-					dice2 = Dice(diceCount, diceSides, diceMod - strMod / 2); //v8 = encodeTriplet(v15, v14, v7 - v17 / 2);
-				auto dicePacked = dice2.ToPacked();
-				obj->SetInt32(obj_f_attack_bonus_idx, attackIndex, attackBonusNew);
-				obj->SetInt32(obj_f_critter_damage_idx, attackIndex, dicePacked);
-			}
-			++attackIndex;
-		} while (attackIndex < 3);
 
-		auto dexAbility = obj->GetInt32(obj_f_critter_abilities_idx, 1);
-		result = objects.GetModFromStatLevel(dexAbility);
-		for (int i = result; attackIndex < 4; ++attackIndex)
-		{
-			result = obj->GetInt32(obj_f_critter_attacks_idx, attackIndex);
-			if (result > 0)
-			{
-				auto attackBonusOld = obj->GetInt32(obj_f_attack_bonus_idx, attackIndex);
-				// added sizeMod for better usage
-				obj->SetInt32(obj_f_attack_bonus_idx, attackIndex, attackBonusOld - i - sizeMod); //result = setArrayFieldByValue(obj, obj_f_attack_bonus_idx, attackIndex, v12 - i);
-			}
-		}
-	}
-	return result;
-}
 #pragma region Critter Hooks
 uint32_t _isCritterCombatModeActive(objHndl objHnd)
 {

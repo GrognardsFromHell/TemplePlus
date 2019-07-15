@@ -150,6 +150,25 @@ public:
 		
 			return 0;
 		});
+
+
+		// fix for negative str mod still accounting in the bon list
+		static int(*orgWeaponFinesseToHitBonus)(DispatcherCallbackArgs) =
+			replaceFunction<int(__cdecl)(DispatcherCallbackArgs)>(0x100F80C0, [](DispatcherCallbackArgs args)->int
+		{
+			auto dispIo = static_cast<DispIoAttackBonus*>(args.dispIO);
+			int bonCount = dispIo->bonlist.bonCount;
+			int result = orgWeaponFinesseToHitBonus(args);
+			if (bonCount != dispIo->bonlist.bonCount) // dex bonus added
+			{
+				int strMod = objects.GetModFromStatLevel(objects.abilityScoreLevelGet(args.objHndCaller, stat_strength, 0));
+				if (strMod < 0) {
+					dispIo->bonlist.ModifyBonus(-strMod, 2, 103);
+				}
+			}
+			return result;
+		});
+
 	}
 } abilityConditionFixes;
 
