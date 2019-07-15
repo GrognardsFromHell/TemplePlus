@@ -1387,7 +1387,7 @@ bool DungeonMaster::IsMinimized() {
 
 bool DungeonMaster::IsUnavailable()
 {
-	return !gameView || !config.dungeonMaster || !party.GetConsciousPartyLeader() || !uiSystems->GetUtilityBar().IsVisible();
+	return !gameView || !config.dungeonMaster || !uiSystems->GetUtilityBar().IsVisible() || !party.GetConsciousPartyLeader();
 }
 
 bool DungeonMaster::IsActionActive() {
