@@ -193,7 +193,7 @@ BOOL LegacyDescriptionSystem::Init(const GameSystemConf& conf){
 	else {
 		MesLine line;
 		mesFuncs.ReadLineDirect(descriptionMes, numLines - 1, &line);
-		if (line.key > *descrIdxMax)
+		if ( static_cast<int>(line.key) > *descrIdxMax)
 			*descrIdxMax = line.key;
 	}
 

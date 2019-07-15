@@ -1008,7 +1008,7 @@ void DungeonMaster::RenderEditedObj() {
 					subFeat = FEAT_NONE;
 					childFeats.clear();
 					feats.MultiselectGetChildren(featEnum, childFeats);
-					if (subFeatCur < childFeats.size())
+					if ( static_cast<size_t>(subFeatCur) < childFeats.size())
 						subFeat = childFeats[subFeatCur];
 				}
 			}
