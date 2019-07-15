@@ -45,6 +45,24 @@ def PhantasmImmunity(attachee, args, evt_obj):
 	
 	return 0
 	
+def PhantasmImmunitySaveBonus(attachee, args, evt_obj):
+	flags = evt_obj.flags
+	if not (flags & (1<< (D20STD_F_SPELL_LIKE_EFFECT-1) ) ): # 0x10
+		return 0
+	
+	sp_pkt = evt_obj.spell_packet
+	# Check if phantasm subschool
+	spell_enum = sp_pkt.spell_enum
+	if (spell_enum == 0):
+		return 0
+	spell_entry = tpdp.SpellEntry(spell_enum)
+	if (spell_entry.spell_school_enum != Illusion or spell_entry.spell_subschool_enum != Phantasm):
+		return 0
+	
+	evt_obj.return_val = 1
+	
+	return 0
+	
 def OnGetMoveSpeedSetLowerLimit(attachee, args, evt_obj):
 	# this sets the lower limit for dwarf move speed at 20, unless someone has already set it (e.g. by web/entangle)
 	if evt_obj.bonus_list.flags & 2:
@@ -112,6 +130,7 @@ raceSpecObj.AddHook(ET_OnGetMoveSpeed,    EK_NONE,           OnGetMoveSpeedSetLo
 raceSpecObj.AddHook(ET_OnConditionAddPre, EK_NONE,           ConditionImmunityOnPreAdd, ()) # paralysis immunity (affects normal Paralysis condition)
 raceSpecObj.AddHook(ET_OnD20Query,        EK_Q_Critter_Is_Immune_Paralysis, OnQueryReturnTrue, ()) # paralysis immunity query - used in spell paralysis effects such as Hold Person/Monster
 raceSpecObj.AddHook(ET_OnSpellImmunityCheck,      EK_NONE,   PhantasmImmunity, ()) # phantasm immunity
+raceSpecObj.AddHook(ET_OnSaveThrowLevel    ,      EK_NONE,   PhantasmImmunitySaveBonus, ()) # phantasm immunity via save throw - incomplete approach since you can fail on a natural 1
 raceSpecObj.AddHook(ET_OnToHitBonus2,     EK_NONE,           OnGetToHitBonusVsOrcsAndGoblins, ())
 raceSpecObj.AddHook(ET_OnGetAC,           EK_NONE,           OnGetArmorClassBonusVsGiants, ())
 raceSpecObj.AddHook(ET_OnGetAbilityCheckModifier, EK_NONE,   OnAbilityModCheckStabilityBonus, ())
