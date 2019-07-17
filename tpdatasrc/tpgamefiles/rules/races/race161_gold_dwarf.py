@@ -16,7 +16,7 @@ raceSpec.height_female   = [43, 51]
 raceSpec.weight_male     = [148, 178]
 raceSpec.weight_female   = [104, 134]
 raceSpec.stat_modifiers  = [0, -2, 2, 0, 0, 0]   # str, dex, con, int, wis, cha
-raceSpec.proto_id        = 13035
+raceSpec.proto_id        = 13036
 raceSpec.material_offset = 6         # offset into rules/material_ext.mes file
 raceSpec.use_base_race_for_deity = 1
 
