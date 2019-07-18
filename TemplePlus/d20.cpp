@@ -1224,7 +1224,7 @@ D20TargetClassification LegacyD20System::TargetClassification(D20Actn* d20a)
 		return D20TargetClassification::D20TC_CallLightning;
 	if (d20DefFlags & D20ADF_TargetContainer)
 		return D20TargetClassification::D20TC_ItemInteraction;
-	if (d20DefFlags * D20ADF_TargetingBasedOnD20Data)
+	if (d20DefFlags & D20ADF_TargetingBasedOnD20Data)
 	{
 		switch (d20a->data1){
 		case BM_FASCINATE:
