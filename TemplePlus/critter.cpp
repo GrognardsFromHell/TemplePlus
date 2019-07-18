@@ -48,6 +48,7 @@ static struct CritterAddresses : temple::AddressTable {
 	int (__cdecl *SoundmapCritter)(objHndl critter, int id);
 	void (__cdecl *KillByEffect)(objHndl critter, objHndl killer);
 	void (__cdecl *Kill)(objHndl critter, objHndl killer);
+	void(__cdecl *CritterHpChanged)(objHndl obj, objHndl assailant, int damAmt);
 
 	void (__cdecl *GetStandpoint)(objHndl, StandPointType, StandPoint *);
 	void (__cdecl *SetStandpoint)(objHndl, StandPointType, const StandPoint *);
@@ -95,6 +96,7 @@ static struct CritterAddresses : temple::AddressTable {
 		rebase(GiveMoney, 0x1007F960);
 		rebase(TakeMoney, 0x1007FA40);
 		rebase(GetWeaponAnim, 0x10020B60);
+		rebase(CritterHpChanged, 0x100B8AA0);
 	}
 
 	
@@ -658,6 +660,11 @@ void LegacyCritterSystem::Kill(objHndl critter, objHndl killer) {
 
 void LegacyCritterSystem::KillByEffect(objHndl critter, objHndl killer) {
 	return addresses.KillByEffect(critter, killer);
+}
+
+void LegacyCritterSystem::CritterHpChanged(objHndl obj, objHndl assailant, int damAmt)
+{
+	addresses.CritterHpChanged(obj, assailant, damAmt);
 }
 
 static_assert(temple::validate_size<StandPoint, 0x20>::value, "Invalid size");

@@ -177,6 +177,8 @@ struct LegacyCritterSystem : temple::AddressTable
 		Same as Kill, but applies condition "Killed By Death Effect" before killing.
 	*/
 	void KillByEffect(objHndl critter, objHndl killer = objHndl::null);
+
+	void CritterHpChanged(objHndl obj, objHndl assailant, int damAmt);
 		
 	/*
 		Changes one of the standpoints for a critter.
