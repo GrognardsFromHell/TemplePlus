@@ -439,50 +439,37 @@ int ProtosHooks::ParseSpell(int colIdx, objHndl handle, char* content, obj_f fie
 int ProtosHooks::SetCritterAttacks(objHndl handle)
 {
 	auto obj = objSystem->GetObject(handle);
-	int32_t objType = obj->GetInt32(obj_f_type);
-	int result = 0;
-	if (objType == 13 || (result = objType, result == 14))
+	if (obj->IsCritter())
 	{
-		int32_t strAbility = obj->GetInt32(obj_f_critter_abilities_idx, 0); //v2 = getArrayFieldInt32(obj, obj_f_critter_abilities_idx, 0);
-		int strMod = objects.GetModFromStatLevel(strAbility);
-		int32_t sizeCategory = obj->GetInt32(obj_f_size);
-		int sizeMod = critterSys.GetBonusFromSizeCategory(sizeCategory);
-		int attackIndex = 0;
-		do
+		int strMod = objects.GetModFromStatLevel(obj->GetInt32(obj_f_critter_abilities_idx, 0));
+		int sizeMod = critterSys.GetBonusFromSizeCategory(obj->GetInt32(obj_f_size));
+		for(int attackIndex = 0; attackIndex < 3; attackIndex++)
 		{
 			if (obj->GetInt32(obj_f_critter_attacks_idx, attackIndex) > 0)
 			{
 				int32_t attackBonusOld = obj->GetInt32(obj_f_attack_bonus_idx, attackIndex);
-				int32_t v6 = obj->GetInt32(obj_f_critter_damage_idx, attackIndex);
-				auto dice = Dice::FromPacked(v6);
-				auto diceCount = dice.GetCount(); //v15 = GetPackedDiceNumDice(v6);
-				auto diceSides = dice.GetSides(); //v14 = GetPackedDiceType(v6);
-				auto diceMod = dice.GetModifier(); //v7 = GetPackedDiceBonus(v6);
 				auto attackBonusNew = attackBonusOld - (strMod + sizeMod);
-				Dice dice2;
-				if (attackIndex <= 0 || strMod <= 0)
-					dice2 = Dice(diceCount, diceSides, diceMod - strMod); //v8 = encodeTriplet(v15, v14, v7 - v17);
-				else
-					dice2 = Dice(diceCount, diceSides, diceMod - strMod / 2); //v8 = encodeTriplet(v15, v14, v7 - v17 / 2);
-				auto dicePacked = dice2.ToPacked();
 				obj->SetInt32(obj_f_attack_bonus_idx, attackIndex, attackBonusNew);
-				obj->SetInt32(obj_f_critter_damage_idx, attackIndex, dicePacked);
-			}
-			++attackIndex;
-		} while (attackIndex < 3);
 
-		auto dexAbility = obj->GetInt32(obj_f_critter_abilities_idx, 1);
-		result = objects.GetModFromStatLevel(dexAbility);
-		for (int i = result; attackIndex < 4; ++attackIndex)
-		{
-			result = obj->GetInt32(obj_f_critter_attacks_idx, attackIndex);
-			if (result > 0)
-			{
-				auto attackBonusOld = obj->GetInt32(obj_f_attack_bonus_idx, attackIndex);
-				// added sizeMod for better usage
-				obj->SetInt32(obj_f_attack_bonus_idx, attackIndex, attackBonusOld - i - sizeMod); //result = setArrayFieldByValue(obj, obj_f_attack_bonus_idx, attackIndex, v12 - i);
+				// Decrement dice damage modifier to remove STR bonus, as it will be added later on
+				Dice diceDamage = Dice::FromPacked(obj->GetInt32(obj_f_critter_damage_idx, attackIndex));
+				int newDiceMod = diceDamage.GetModifier() - strMod / 2;
+				if (attackIndex <= 0 || strMod <= 0)
+					newDiceMod = diceDamage.GetModifier() - strMod;
+				
+				Dice diceDamageNew = Dice(diceDamage.GetCount(), diceDamage.GetSides(), newDiceMod);
+				obj->SetInt32(obj_f_critter_damage_idx, attackIndex, diceDamageNew.ToPacked());
 			}
 		}
+
+		// Last Natural Attack (3) is dex based, therefore dex and size is removed from attack bonus
+		if (obj->GetInt32(obj_f_critter_attacks_idx, 3) > 0)
+		{
+			auto dexMod = objects.GetModFromStatLevel(obj->GetInt32(obj_f_critter_abilities_idx, 1));
+			auto attackBonusOld = obj->GetInt32(obj_f_attack_bonus_idx, 3);
+			
+			obj->SetInt32(obj_f_attack_bonus_idx, 3, attackBonusOld - dexMod - sizeMod); 
+		}
 	}
-	return result;
+	return 0;
 }
