@@ -191,6 +191,16 @@ def InitSpellSelection(obj, classLvlNew = -1, classLvlIncrement = 1):
 		spEnums.append(char_editor.KnownSpellInfo(spell_label_level_0 + spellLvl, 0, classEnum))  # add label
 		# add spells
 		newSpellsKnownCount = char_class_utils.GetSpellsKnownAddedCount(spells_known, spellListLvl, spellLvl)
+		
+		#Do not add more spells than can be selected (otherwise lockup happens)
+		spellList = char_editor.get_learnable_spells(obj, classEnum, maxSpellLvl)
+		spellAvailableCount = 0
+		for spell in spellList:
+			if spellLvl == spell.spell_level:
+				if not obj.is_spell_known(spell.spell_enum):
+					spellAvailableCount = spellAvailableCount + 1
+		newSpellsKnownCount = min(newSpellsKnownCount, spellAvailableCount)
+		
 		print str(newSpellsKnownCount)
 		for q in range(0, newSpellsKnownCount):
 			spEnums.append(char_editor.KnownSpellInfo(spell_new_slot_lvl_0 + spellLvl, 3, classEnum))
