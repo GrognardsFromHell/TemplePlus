@@ -456,7 +456,6 @@ bool UiItemCreation::CreateItemResourceCheck(objHndl crafter, objHndl objHndItem
 	// Scrolls, Wands and Potions:
 	if ( itemCreationType != CraftMagicArmsAndArmor){
 		// check requirements from rules\\item_creation.mes
-		//if ( temple::GetRef<int(__cdecl)(objHndl, objHndl)>(0x10152280)(crafter, objHndItem) == 0){ 
 		if (!ItemCreationParseMesfileEntry(crafter, objHndItem)){
 			*insuffPrereqs = 1;
 			canCraft = 0;
@@ -1737,6 +1736,7 @@ bool UiItemCreation::ItemWielderCondsHasAntecedent(int effIdx, objHndl item){
 	return false;
 }
 
+// Originally 0x10152280
 bool UiItemCreation::ItemCreationParseMesfileEntry(objHndl crafter, objHndl item){
 	
 	auto itemObj = objSystem->GetObject(item);
@@ -1772,6 +1772,7 @@ const char * UiItemCreation::GetItemCreationRulesMesLine(int key){
 	return line.value;
 }
 
+// Originally 0x101505B0
 bool UiItemCreation::ItemCreationRulesParseReqText(objHndl crafter, const char * reqTxt){
 
 	if (!reqTxt)

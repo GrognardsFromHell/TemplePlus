@@ -6,7 +6,7 @@ def OnBeginSpellCast( spell ):
 	print "spell.caster=", spell.caster, " caster.level= ", spell.caster_level
 	game.particles( "sp-conjuration-conjure", spell.caster )
 
-def	OnSpellEffect( spell ):
+def OnSpellEffect( spell ):
 	print "Cure Light Wounds OnSpellEffect"
 
 	npc = spell.caster			##  added so NPC's can use potion
@@ -80,11 +80,3 @@ def OnBeginRound( spell ):
 
 def OnEndSpellCast( spell ):
 	print "Cure Light Wounds OnEndSpellCast"
-
-def spell_id_what_is_it():
-	f=open("roullete.txt","w")
-	game.particles( "sp-summon monster I", game.party[0] )
-	f.write("Spell.id is "+str(spell.id))
-	game.particles( "sp-summon monster I", game.party[1] )
-	f.close()
-	game.particles( "sp-summon monster I", game.party[2] )

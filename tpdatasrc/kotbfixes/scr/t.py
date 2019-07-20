@@ -118,7 +118,12 @@ def list_quests():
 def restup():
 	for pc in game.party[0].group_list():
 		pc.spells_pending_to_memorized() # Memorizes Spells
-		pc.obj_set_int( 29, 0) # Removes all damage (doesn't work for companions?)
+		pc.obj_set_int( obj_f_hp_damage, 0) # Removes all damage (doesn't work for companions?)
+		if pc.stat_level_get(stat_level_bard) >= 1:
+			pc.spells_cast_reset(stat_level_bard)
+		if pc.stat_level_get(stat_level_sorcerer) >= 1:
+			pc.spells_cast_reset(stat_level_sorcerer)
+
 
 def cnk(proto_id, do_not_destroy = 0, how_many = 1, timer = 0):
 	# Create n' Kill
@@ -818,7 +823,7 @@ def portraits_verify():
 	previous_portrait = -1
 	found_error_flag = 0
 	ff = open('modules\\ToEE\\portrait_checking_result.txt','w')
-	i_file = open('modles\\ToEE\\portraits.mes','r')
+	i_file = open('modules\\ToEE\\portraits.mes','r')
 	
 	while s !='':
 		s = i_file.readline()

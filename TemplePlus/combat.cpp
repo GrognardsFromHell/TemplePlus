@@ -517,7 +517,7 @@ void LegacyCombatSystem::GetEnemyListInRange(objHndl performer, float rangeFeet,
 	auto perfLoc = objSystem->GetObject(performer)->GetLocationFull();
 
 	ObjList enemies;
-	enemies.ListRadius(perfLoc, rangeFeet* INCH_PER_TILE, OLC_CRITTERS);
+	enemies.ListRadius(perfLoc, rangeFeet* INCH_PER_FEET, OLC_CRITTERS);
 	for (int i = 0; i < enemies.size(); i++) {
 		auto resHandle = enemies[i];
 		if (!resHandle)

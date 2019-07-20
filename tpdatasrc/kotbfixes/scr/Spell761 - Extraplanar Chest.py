@@ -120,8 +120,7 @@ def	OnSpellEffect ( spell ):
 	
 
 	End_Spell(spell)
-		
-	spell.spell_end(spell.id)
+	spell.spell_end(spell.id, 1)  # fix - adding the endDespiteTargetList flag to force the spell_end and prevent the spell trigger from going on indefinitely
 
 
 def OnBeginRound( spell ):

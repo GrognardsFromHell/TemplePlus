@@ -2,6 +2,24 @@ from toee import *
 from utilities import *
 from Co8 import *
 
+## How this works:
+##
+## A variable is set in moduels\ToEE\delayed_blast_fireball.txt, that determines how many rounds the fireball is delayed.
+## If it's 0, the spell works just like ordinary Fireball, except the damage is limited to 20d6 rather than 10d6.
+## If it's greater than 0:
+##	The spell's duration is set to the delay.
+##	A "spell object" is created. (proto 6400; actually an armor object)
+##	This spell object is assigned a randomized ID, and borks the dc ???????
+##	When the number of rounds equal to the delay passes, the spell "ends".
+##	This triggers the OnEndSpellCast() script.
+##	The script looks for the spell object in the spell caster's vicinity.
+##		NB: This means that changing maps or walking far away will bork the spell.	
+##	If the spell object is found:
+##		Target everything in its vicinity using a 360 degree targeting cone, with a reach of 20.
+##		Asplode!
+##	Possibly enlarge spell, maximize spell etc won't work?
+##	Now given the Water Temple pool treatment
+
 def OnBeginSpellCast( spell ):
 	print "Delayed Blast Fireball OnBeginSpellCast"
 	print "spell.target_list=", spell.target_list
@@ -45,7 +63,7 @@ def OnSpellEffect( spell ):
 		spell.num_of_targets = 1
 		spell.target_list[0].obj = spell.caster			
 		spell.target_list[0].obj.condition_add_with_args('sp-Mage Armor', spell.id, spell.duration, 0)
-		spell.dc = game.random_range(0, 2147483647)
+		# spell.dc = game.random_range(0, 2147483647)
 		spell.target_loc = game.random_range(0,2147483647)
 		set_spell_flag(spell_obj, spell.dc ^ spell.target_loc)
 		
