@@ -10,10 +10,7 @@ def	OnSpellEffect( spell ):
 	print "Stinking Cloud OnSpellEffect"
 
 	
-	if game.global_vars[451] & 2**8 != 0:
-		spell.duration = game.random_range(1,3) + 1 # optional SC duration nerf: made 1d3 + 1
-	else:
-		spell.duration = 1 * spell.caster_level
+	spell.duration = 1 * spell.caster_level
 	
 	npc = spell.caster		
 

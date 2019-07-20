@@ -22,13 +22,9 @@ def	OnSpellEffect( spell ):
 
 		if not target_item.obj.is_category_type( mc_type_animal ) and (target_item.obj.get_size < STAT_SIZE_LARGE or target_item.obj.is_category_type(mc_type_humanoid) ) and critter_is_unconscious(target_item.obj) != 1 and not target_item.obj.d20_query(Q_Prone):
 			npc = spell.caster
-
 		else:
-			#ffws += 'Target NOT Okayed!\n'
-
 			game.global_flags[811] = 0	
 			for obj in game.party[0].group_list():
-
 				if obj.distance_to(npc) <= 5 and critter_is_unconscious(obj) != 1 and not obj.is_category_type( mc_type_animal ) and obj.get_size < STAT_SIZE_LARGE and game.global_flags[811] == 0 and not obj.d20_query(Q_Prone):
 					target_item.obj = obj
 					game.global_flags[811] = 1
