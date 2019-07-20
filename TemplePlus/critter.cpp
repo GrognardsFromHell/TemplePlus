@@ -48,6 +48,7 @@ static struct CritterAddresses : temple::AddressTable {
 	int (__cdecl *SoundmapCritter)(objHndl critter, int id);
 	void (__cdecl *KillByEffect)(objHndl critter, objHndl killer);
 	void (__cdecl *Kill)(objHndl critter, objHndl killer);
+	void(__cdecl *CritterHpChanged)(objHndl obj, objHndl assailant, int damAmt);
 
 	void (__cdecl *GetStandpoint)(objHndl, StandPointType, StandPoint *);
 	void (__cdecl *SetStandpoint)(objHndl, StandPointType, const StandPoint *);
@@ -95,6 +96,7 @@ static struct CritterAddresses : temple::AddressTable {
 		rebase(GiveMoney, 0x1007F960);
 		rebase(TakeMoney, 0x1007FA40);
 		rebase(GetWeaponAnim, 0x10020B60);
+		rebase(CritterHpChanged, 0x100B8AA0);
 	}
 
 	
@@ -161,6 +163,12 @@ private:
 			return itemObj->GetInt32(obj_f_weapon_range) + (int) critterSys.GetReach(parent, D20A_NONE);
 		});
 		ShowExactHpForNPCs();
+
+		//GetNumNaturalAttacks
+		replaceFunction<int(__cdecl)(objHndl)>(0x100800C0, [](objHndl handle) {
+			return (int)critterSys.GetNumNaturalAttacks(handle);
+		});
+
 	}
 
 private:
@@ -652,6 +660,11 @@ void LegacyCritterSystem::Kill(objHndl critter, objHndl killer) {
 
 void LegacyCritterSystem::KillByEffect(objHndl critter, objHndl killer) {
 	return addresses.KillByEffect(critter, killer);
+}
+
+void LegacyCritterSystem::CritterHpChanged(objHndl obj, objHndl assailant, int damAmt)
+{
+	addresses.CritterHpChanged(obj, assailant, damAmt);
 }
 
 static_assert(temple::validate_size<StandPoint, 0x20>::value, "Invalid size");
@@ -1448,6 +1461,22 @@ int LegacyCritterSystem::GetDamageIdx(objHndl obj, int attackIdx)
 	return 0;
 }
 
+int LegacyCritterSystem::GetNumNaturalAttacks(objHndl handle) {
+	if (!objSystem->IsValidHandle(handle)) {
+		return 0;
+	}
+	auto obj = objSystem->GetObject(handle);
+	int result = 0;
+	int attacksCount;
+	for (int i = 0; i < 4; i++)
+	{
+		attacksCount = obj->GetInt32(obj_f_critter_attacks_idx, i);
+		if (attacksCount > 0)
+			result += attacksCount;
+	}
+	return result;
+}
+
 int LegacyCritterSystem::GetCritterDamageDice(objHndl obj, int attackIdx)
 {
 	int damageIdx = GetDamageIdx(obj, attackIdx);
@@ -1810,6 +1839,7 @@ void LegacyCritterSystem::BuildRadialMenu(objHndl handle){
 		}
 	}
 }
+
 #pragma region Critter Hooks
 uint32_t _isCritterCombatModeActive(objHndl objHnd)
 {

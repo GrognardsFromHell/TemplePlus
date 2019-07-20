@@ -312,6 +312,54 @@ public:
 	void apply() override {
 		logger->info("Replacing Condition-related Functions");
 
+		//dispTypeConditionAddPre
+		static int(__cdecl* orgTempAbilityLoss)(DispatcherCallbackArgs) = replaceFunction<int(__cdecl)(DispatcherCallbackArgs)>(0x100EA1F0, [](DispatcherCallbackArgs args) {
+			Stat statDamaged = (Stat)args.GetCondArg(0);
+			int amountDamaged = args.GetCondArg(1);
+			DispIoCondStruct *dispIo = dispatch.DispIoCheckIoType1((DispIoCondStruct *)args.dispIO);
+			if ((int32_t)dispIo->condStruct == args.subDispNode->subDispDef->data1 && dispIo->arg1 == statDamaged){
+				int amountDamagedByNew = dispIo->arg2;
+				int scoreLevel = objects.StatLevelGet(args.objHndCaller, statDamaged);
+				if (scoreLevel - amountDamagedByNew < 0){
+					amountDamagedByNew = scoreLevel;
+					if (amountDamagedByNew <= 0)
+					{
+						dispIo->outputFlag = 0;
+						return 0;
+					}
+				} 
+				amountDamaged = amountDamaged + amountDamagedByNew;
+				args.SetCondArg(1, amountDamaged);
+				dispIo->outputFlag = 0;
+				critterSys.CritterHpChanged(args.objHndCaller, objHndl::null, 0);
+			}
+
+			return 0;
+		});
+
+		//dispTypeConditionAdd
+		static int(__cdecl* orgTempAbilityLoss2)(DispatcherCallbackArgs) = replaceFunction<int(__cdecl)(DispatcherCallbackArgs)>(0x100EA3B0, [](DispatcherCallbackArgs args) 
+		{
+			Stat statDamaged = (Stat)args.GetCondArg(0);
+			if ((statDamaged >= stat_strength) && (statDamaged <= stat_charisma)) {
+				int scoreLevel = objects.StatLevelGet(args.objHndCaller, statDamaged);
+				if (scoreLevel < 0){
+					int amountDamaged = args.GetCondArg(1);
+					// dont let stat go below zero
+					amountDamaged = amountDamaged + scoreLevel;
+					if (amountDamaged <= 0)
+					{
+						// remove condition, as it should have no effect
+						conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
+					} else {
+						args.SetCondArg(1, amountDamaged);
+					}
+				}
+			}
+			
+			critterSys.CritterHpChanged(args.objHndCaller, objHndl::null, 0);
+			return 0;
+		});
 		//conds.RegisterNewConditions();
 
 
@@ -6428,3 +6476,4 @@ int RaceAbilityCallbacks::HalflingThrownWeaponAndSlingBonus(DispatcherCallbackAr
 void CondStructNew::AddAoESpellRemover() {
 	AddHook(dispTypeD20Signal, DK_SIG_Spell_End, spCallbacks.AoeSpellRemove);
 }
+
