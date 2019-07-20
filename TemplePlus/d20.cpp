@@ -1224,7 +1224,7 @@ D20TargetClassification LegacyD20System::TargetClassification(D20Actn* d20a)
 		return D20TargetClassification::D20TC_CallLightning;
 	if (d20DefFlags & D20ADF_TargetContainer)
 		return D20TargetClassification::D20TC_ItemInteraction;
-	if (d20DefFlags * D20ADF_TargetingBasedOnD20Data)
+	if (d20DefFlags & D20ADF_TargetingBasedOnD20Data)
 	{
 		switch (d20a->data1){
 		case BM_FASCINATE:
@@ -2787,7 +2787,8 @@ ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
 		if (!filterResult
 			&& !spellEntry.IsBaseModeTarget(UiPickerType::Area)
 			&& !spellEntry.IsBaseModeTarget(UiPickerType::Cone)
-			&& spellEntry.IsBaseModeTarget(UiPickerType::Location)) {
+			&& !spellEntry.IsBaseModeTarget(UiPickerType::Location)) {
+			floatSys.FloatSpellLine(spellPkt.caster, 30000, FloatLineColor::Red); // Spell has fizzled
 			spellPkt.Debit();
 			spellInterruptApply(spellEntry.spellSchoolEnum, spellPkt.caster, invIdx); // note: perhaps the current sequence changes due to the applied interrupt
 			if (!party.IsInParty(curSeq->spellPktBody.caster)) {

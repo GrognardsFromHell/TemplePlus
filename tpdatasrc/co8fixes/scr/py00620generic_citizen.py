@@ -11,7 +11,13 @@ def san_dialog( attachee, triggerer ):
 
 def san_enter_combat( attachee, triggerer ):
 	ProtectTheInnocent(attachee, triggerer)
-	if (attachee.name != 14012 and attachee.name != 14023 and attachee.name != 14044 and attachee.name != 20001):
+	name_exceptions = [14012, # Renton (militia captain)
+		14023, # Percy
+		14044, # Woodcutter
+		20001, # Jaroo
+		14321 # CE vignette peasant
+		]
+	if not (attachee.name in name_exceptions):
 		for pc in game.party:
 			attachee.ai_shitlist_remove( pc )
 			attachee.reaction_set( pc, 50 )

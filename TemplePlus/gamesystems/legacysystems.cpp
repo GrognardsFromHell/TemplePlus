@@ -557,7 +557,7 @@ std::string PortraitSystem::GetPortraitFileFromId(int id, int subId){
 }
 
 bool PortraitSystem::IsModularId(int id){
-	return ((unsigned int)id) >= PORTRAIT_MAX_ID;
+	return ((unsigned int)id) >= (unsigned int)PORTRAIT_MAX_ID;
 }
 
 bool PortraitSystem::IsPortraitFilenameValid(objHndl handle, const char* filename) {
@@ -1941,7 +1941,7 @@ void MapFoggingSystem::PerformCheckForCritter(objHndl handle, int idx){
 			auto model     = objects.GetAnimHandle(objNodeItem);
 			auto submeshes = model->GetSubmeshes();
 			
-			for (auto i_submesh=0; i_submesh<submeshes.size(); i_submesh++){
+			for (auto i_submesh=0u; i_submesh<submeshes.size(); i_submesh++){
 				auto doorSubmesh = model->GetSubmesh(aasParams, submeshes[i_submesh]);
 				auto vertPos   = doorSubmesh->GetPositions();
 				auto indices   = doorSubmesh->GetIndices();
