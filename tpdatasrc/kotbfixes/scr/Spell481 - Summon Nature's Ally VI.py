@@ -1,6 +1,6 @@
 from toee import *
 from utilities import *
-
+from SummonMonsterTools import *
 
 def OnBeginSpellCast( spell ):
 	print "Summon Nature's VI OnBeginSpellCast"
@@ -23,7 +23,11 @@ def	OnSpellEffect ( spell ):
 
 	# create monster, monster should be added to target_list
 	spell.summon_monsters( 1, spell_arg)
+	target_item = spell.target_list[0]
+	game.particles('sp-Summon Natures Ally V', target_item.obj)
 
+	SummonMonster_Rectify_Initiative(spell, spell_arg) # Added by S.A. - sets iniative to caster's initiative -1, so that it gets to act in the same round
+	
 	spell.spell_end(spell.id)
 
 def OnBeginRound( spell ):

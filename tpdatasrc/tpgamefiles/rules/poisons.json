@@ -589,5 +589,199 @@
 		"count": 0,
 		"sides": 0
 	}
+},
+{
+	"comment": "MONSTROUS Scorpion Tiny, MM288",
+	"id": 44,
+	"dc": 12,
+	"immediateEffect": 2,
+	"immDieBonus": 1,
+
+	"delayedEffect": 2,
+	"delayedDice": {
+		"bonus": 1
+	}
+},
+{
+	"comment": "MONSTROUS Scorpion Small, MM288",
+	"id": 45,
+	"dc": 12,
+	"immediateEffect": 2,
+	"immDieType": 2,
+	"immNumDie": 1,
+
+	"delayedEffect": 2,
+	"delayedDice": {
+		"count": 1,
+		"sides": 2
+	}
+},
+{
+	"comment": "MONSTROUS Scorpion Medium, MM288",
+	"id": 46,
+	"dc": 13,
+	"immediateEffect": 2,
+	"immDieType": 3,
+	"immNumDie": 1,
+
+	"delayedEffect": 2,
+	"delayedDice": {
+		"count": 1,
+		"sides": 3
+	}
+},
+{
+	"comment": "MONSTROUS Scorpion Large, MM288",
+	"id": 47,
+	"dc": 14,
+	"immediateEffect": 2,
+	"immDieType": 4,
+	"immNumDie": 1,
+
+	"delayedEffect": 2,
+	"delayedDice": {
+		"count": 1,
+		"sides": 4
+	}
+},
+{
+	"comment": "MONSTROUS Scorpion Huge, MM288",
+	"id": 48,
+	"dc": 18,
+	"immediateEffect": 2,
+	"immDieType": 6,
+	"immNumDie": 1,
+
+	"delayedEffect": 2,
+	"delayedDice": {
+		"count": 1,
+		"sides": 6
+	}
+},
+{
+	"comment": "MONSTROUS Scorpion Gargantuan, MM288",
+	"id": 49,
+	"dc": 23,
+	"immediateEffect": 2,
+	"immDieType": 8,
+	"immNumDie": 1,
+
+	"delayedEffect": 2,
+	"delayedDice": {
+		"count": 1,
+		"sides": 8
+	}
+},
+{
+	"comment": "MONSTROUS Scorpion Colossal, MM288",
+	"id": 49,
+	"dc": 33,
+	"immediateEffect": 2,
+	"immDieType": 10,
+	"immNumDie": 1,
+
+	"delayedEffect": 2,
+	"delayedDice": {
+		"count": 1,
+		"sides": 10
+	}
+},
+{
+	"comment": "MONSTROUS Spider Tiny, MM288",
+	"id": 50,
+	"dc": 10,
+	"immediateEffect": 0,
+	"immDieType": 2,
+	"immNumDie": 1,
+
+	"delayedEffect": 0,
+	"delayedDice": {
+		"count": 1,
+		"sides": 2
+	}
+},
+{
+	"comment": "MONSTROUS Spider Small, MM288",
+	"id": 51,
+	"dc": 10,
+	"immediateEffect": 0,
+	"immDieType": 3,
+	"immNumDie": 1,
+
+	"delayedEffect": 0,
+	"delayedDice": {
+		"count": 1,
+		"sides": 3
+	}
+},
+{
+	"comment": "MONSTROUS Spider Medium, MM288",
+	"id": 52,
+	"dc": 12,
+	"immediateEffect": 0,
+	"immDieType": 4,
+	"immNumDie": 1,
+
+	"delayedEffect": 0,
+	"delayedDice": {
+		"count": 1,
+		"sides": 4
+	}
+},
+{
+	"comment": "MONSTROUS Spider Large, MM288",
+	"id": 53,
+	"dc": 13,
+	"immediateEffect": 0,
+	"immDieType": 6,
+	"immNumDie": 1,
+
+	"delayedEffect": 0,
+	"delayedDice": {
+		"count": 1,
+		"sides": 6
+	}
+},
+{
+	"comment": "MONSTROUS Spider Huge, MM288",
+	"id": 54,
+	"dc": 16,
+	"immediateEffect": 0,
+	"immDieType": 8,
+	"immNumDie": 1,
+
+	"delayedEffect": 0,
+	"delayedDice": {
+		"count": 1,
+		"sides": 8
+	}
+},
+{
+	"comment": "MONSTROUS Spider Gargantuan, MM288",
+	"id": 55,
+	"dc": 20,
+	"immediateEffect": 0,
+	"immDieType": 6,
+	"immNumDie": 2,
+
+	"delayedEffect": 0,
+	"delayedDice": {
+		"count": 2,
+		"sides": 6
+	}
+},
+{
+	"comment": "MONSTROUS Spider Colossal, MM288",
+	"id": 56,
+	"dc": 28,
+	"immediateEffect": 0,
+	"immDieType": 8,
+	"immNumDie": 2,
+
+	"delayedEffect": 0,
+	"delayedDice": {
+		"count": 2,
+		"sides": 8
+	}
 }
 ]

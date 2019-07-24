@@ -19,16 +19,22 @@
 {16}{Sorcerer}
 {17}{Wizard}
 
-{18}{stat_level_prestige_}
-{19}{stat_level_prestige_}
-{20}{stat_level_prestige_}
-{21}{stat_level_prestige_}
-{22}{stat_level_prestige_}
-{23}{stat_level_prestige_}
-{24}{stat_level_prestige_}
-{25}{stat_level_prestige_}
-{26}{stat_level_prestige_}
-{27}{stat_level_prestige_}
+//core 3.5 Prestige classes
+{18}{Arcane Archer}
+{19}{Arcane Trickster}
+{20}{Archmage}
+{21}{Assassin}
+{22}{Blackguard}
+{23}{Dragon Disciple}
+{24}{Duelist}
+{25}{Dwarven Defender}
+{26}{Eldritch Knight}
+{27}{Hierophant}
+{28}{Horizon Walker}
+{29}{Loremaster}
+{30}{Mystic Theurge}
+{31}{Shadowdancer}
+{32}{Thaumaturgist}
 
 {228}{HP}
 {229}{HP}
@@ -146,7 +152,7 @@
 {1234}{}
 {1235}{}
 {1236}{SIZE}
-{1237}{}
+{1237}{EXP}
 
 {1238}{ALN}
 {1239}{DTY}

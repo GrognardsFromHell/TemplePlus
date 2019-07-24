@@ -177,6 +177,8 @@ struct LegacyCritterSystem : temple::AddressTable
 		Same as Kill, but applies condition "Killed By Death Effect" before killing.
 	*/
 	void KillByEffect(objHndl critter, objHndl killer = objHndl::null);
+
+	void CritterHpChanged(objHndl obj, objHndl assailant, int damAmt);
 		
 	/*
 		Changes one of the standpoints for a critter.
@@ -321,6 +323,7 @@ struct LegacyCritterSystem : temple::AddressTable
 	float GetReach(objHndl objHndl, D20ActionType actType); // reach in feet
 	int GetBonusFromSizeCategory(int sizeCategory);
 	int GetDamageIdx(objHndl obj, int attackIdx);
+	int GetNumNaturalAttacks(objHndl handle);
 	// bonus to hit from size
 	int GetCritterDamageDice(objHndl obj, int attackIdx);
 	DamageType GetCritterAttackDamageType(objHndl obj, int attackIdx);
@@ -358,7 +361,6 @@ struct LegacyCritterSystem : temple::AddressTable
 	static int GetNumFollowers(objHndl obj, int excludeForcedFollowers);
 
 	void BuildRadialMenu(objHndl handle);
-
 private:
 	int GetModelRaceOffset(objHndl obj, bool useBaseRace = true);
 	void UpdateAddMeshes(objHndl obj);

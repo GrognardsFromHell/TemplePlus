@@ -10,9 +10,9 @@ ENLARGE_KEY = "Sp152_Enlarge_Activelist"
 
 def OnBeginSpellCast( spell ):
 	print "Enlarge OnBeginSpellCast\n"
-	print "\nspell.target_list=" , str(spell.target_list) , "\n"
-	print "\nspell.caster=" + str( spell.caster) + " caster.level= ", spell.caster_level , "\n"
-	print "\nspell.id=", spell.id , "\n"
+	#print "\nspell.target_list=" , str(spell.target_list) , "\n"
+	#print "\nspell.caster=" + str( spell.caster) + " caster.level= ", spell.caster_level , "\n"
+	#print "\nspell.id=", spell.id , "\n"
 	game.particles( "sp-transmutation-conjure", spell.caster )
 
 

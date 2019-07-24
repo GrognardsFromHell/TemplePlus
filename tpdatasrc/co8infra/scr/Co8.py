@@ -437,6 +437,25 @@ def End_Spell(spell):
 def Timed_Destroy(obj, time):
 	game.timevent_add( destroy, ( obj ), time) # 1000 = 1 second
 	return
+	
+def Timed_Runoff(obj, runoff_time = 1000, runoff_location = -1):
+	if runoff_location == -1:
+		obj.runoff(obj.location-3)
+	elif type(runoff_location) == type( obj.location ):
+		obj.runoff(runoff_location)
+	elif type(runoff_location) == type( [ 1 , 2 ] ):
+		obj.runoff(     location_from_axis(runoff_location[0], runoff_location[1])        )
+	else:
+		obj.runoff(obj.location-3)
+	
+	game.timevent_add( Timed_Runoff_Set_OF_OFF, ( obj ), runoff_time) # 1000 = 1 second, default
+	
+	return
+
+def Timed_Runoff_Set_OF_OFF( obj ):
+	obj.object_flag_set(OF_OFF)
+	return
+
 
 def destroy(obj): # Destroys object.  Neccessary for time event destruction to work.
 	obj.destroy()

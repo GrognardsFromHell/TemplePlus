@@ -22,6 +22,7 @@ public:
 	static int ParseType(int colIdx, objHndl handle, char* content, obj_f field, int arrayLen, char** strings);
 	static int ParseRace(int colIdx, objHndl handle, char* content, obj_f field, int arrayLen, char** strings);
 	static int ParseSpell(int colIdx, objHndl handle, char* content, obj_f field);
+	static int SetCritterAttacks(objHndl handle);
 	void apply() override 
 	{
 
@@ -62,6 +63,9 @@ public:
 		replaceFunction<int(__cdecl)(int, objHndl, char*, obj_f, int, char**)>(0x10039B40, ParseRace);
 
 		replaceFunction<int(__cdecl)(int, objHndl, char*, obj_f)>(0x1003A8C0, ParseSpell);
+
+		//SetCritterAttacks
+		replaceFunction<int(__cdecl)(objHndl)>(0x1003AAC0, SetCritterAttacks);
 	}
 } protosHooks;
 
@@ -430,4 +434,42 @@ int ProtosHooks::ParseSpell(int colIdx, objHndl handle, char* content, obj_f fie
 	spellSys.SpellMemorizedAdd(handle, spEnum, spClass, spLvl, SpellStoreType::spellStoreMemorized, 0);
 
 	return 1;
+}
+
+int ProtosHooks::SetCritterAttacks(objHndl handle)
+{
+	auto obj = objSystem->GetObject(handle);
+	if (obj->IsCritter())
+	{
+		int strMod = objects.GetModFromStatLevel(obj->GetInt32(obj_f_critter_abilities_idx, 0));
+		int sizeMod = critterSys.GetBonusFromSizeCategory(obj->GetInt32(obj_f_size));
+		for(int attackIndex = 0; attackIndex < 3; attackIndex++)
+		{
+			if (obj->GetInt32(obj_f_critter_attacks_idx, attackIndex) > 0)
+			{
+				int32_t attackBonusOld = obj->GetInt32(obj_f_attack_bonus_idx, attackIndex);
+				auto attackBonusNew = attackBonusOld - (strMod + sizeMod);
+				obj->SetInt32(obj_f_attack_bonus_idx, attackIndex, attackBonusNew);
+
+				// Decrement dice damage modifier to remove STR bonus, as it will be added later on
+				Dice diceDamage = Dice::FromPacked(obj->GetInt32(obj_f_critter_damage_idx, attackIndex));
+				int newDiceMod = diceDamage.GetModifier() - strMod / 2;
+				if (attackIndex <= 0 || strMod <= 0)
+					newDiceMod = diceDamage.GetModifier() - strMod;
+				
+				Dice diceDamageNew = Dice(diceDamage.GetCount(), diceDamage.GetSides(), newDiceMod);
+				obj->SetInt32(obj_f_critter_damage_idx, attackIndex, diceDamageNew.ToPacked());
+			}
+		}
+
+		// Last Natural Attack (3) is dex based, therefore dex and size is removed from attack bonus
+		if (obj->GetInt32(obj_f_critter_attacks_idx, 3) > 0)
+		{
+			auto dexMod = objects.GetModFromStatLevel(obj->GetInt32(obj_f_critter_abilities_idx, 1));
+			auto attackBonusOld = obj->GetInt32(obj_f_attack_bonus_idx, 3);
+			
+			obj->SetInt32(obj_f_attack_bonus_idx, 3, attackBonusOld - dexMod - sizeMod); 
+		}
+	}
+	return 0;
 }
