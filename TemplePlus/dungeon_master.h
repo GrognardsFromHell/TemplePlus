@@ -78,7 +78,7 @@ public:
 		std::vector<SpellStoreData> spellsKnown;
 		std::vector<SpellStoreData> spellsMemorized;
 		std::vector<feat_enums> feats;
-		
+		std::vector<int> scripts;
 	};
 
 	enum DungeonMasterAction : int {

@@ -50,6 +50,8 @@
 #include "config/config.h"
 #include "ui/ui_dm.h"
 #include "ui/ui_pc_creation.h"
+#include "python/python_integration_obj.h"
+#include "python/python_header.h"
 
 DungeonMaster dmSys;
 
@@ -892,7 +894,7 @@ void DungeonMaster::RenderEditedObj() {
 	if (!obj)
 		return;
 
-	ImGui::Text(fmt::format("Name: {}", critEditor.name).c_str());
+	ImGui::Text(fmt::format("Name: {} , Proto: {}",critEditor.name, objSystem->GetProtoId(mEditedObj) ).c_str());
 	
 	ImGui::SameLine();
 	if (ImGui::Button("Clone"))
@@ -1214,6 +1216,27 @@ void DungeonMaster::RenderEditedObj() {
 		ImGui::TreePop();
 	}
 
+	if (ImGui::TreeNodeEx("Scripts", ImGuiTreeNodeFlags_CollapsingHeader)){
+		static auto scriptNameGetter = [](void*data, int idx, const char** outTxt)->bool
+		{
+			if (idx > SAN::san_unlock_attempt)
+				return false;
+			*outTxt = pythonObjIntegration.GetEventName((ObjScriptEvent)idx).c_str();
+			return true;
+		};
+		std::vector<int> scriptsChang;
+		ImGui::PushItemWidth(145);
+		for (auto idx = 0; idx <= SAN::san_unlock_attempt; idx++){
+			scriptsChang.push_back(critEditor.scripts[idx]);
+			if (ImGui::InputInt(pythonObjIntegration.GetEventName((ObjScriptEvent)idx).c_str(), &scriptsChang[idx])) {
+				critEditor.scripts[idx] = scriptsChang[idx];
+			}
+		}
+		ImGui::PopItemWidth();
+		ImGui::TreePop();
+	}
+
+	// AI
 	if (obj->IsNPC() || !objects.IsPlayerControlled(mEditedObj)){
 		auto curAiStartegyIdx = obj->GetInt32(obj_f_critter_strategy);
 		auto aiStratGetter = [](void*data, int idx, const char** outTxt)->bool{
@@ -1319,8 +1342,14 @@ void DungeonMaster::SetObjEditor(objHndl handle){
 	for (auto i = 0u; i < statScores.GetSize(); i++)
 		critEditor.stats.push_back(statScores[i]);
 
+	auto scriptsArray = obj->GetScriptArray(obj_f_scripts_idx);
+	for (auto i=0; i <= SAN::san_unlock_attempt; i++){
+		auto &script = scriptsArray[i];
+		critEditor.scripts.push_back(script.scriptId);
+	}
+
 	// Feats
-	static objHndl thisHandle  ;
+	static objHndl thisHandle;
 	thisHandle = handle;
 	feats.DoForAllFeats([](int featEnum){
 		if (feats.HasFeatCount(thisHandle, (feat_enums)featEnum)){
@@ -1356,6 +1385,14 @@ void DungeonMaster::ApplyObjEdit(objHndl handle){
 	auto statIdx = 0;
 	for (auto it : critEditor.stats) {
 		obj->SetInt32(obj_f_critter_abilities_idx, statIdx++, it);
+	}
+
+	// Scripts
+	auto scriptIdx = 0u;
+	for ( auto it : critEditor.scripts){
+		ObjectScript script = obj->GetScript(obj_f_scripts_idx, scriptIdx);
+		script.scriptId = it;
+		obj->SetScript(obj_f_scripts_idx, scriptIdx++, script);
 	}
 
 	// Class Levels
