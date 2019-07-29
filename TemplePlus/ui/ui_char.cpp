@@ -103,7 +103,10 @@ public:
 
 	#pragma region Spellbook functions
 	static BOOL MemorizeSpellMsg(int widId, TigMsg* tigMsg);
-	static BOOL (*orgMemorizeSpellMsg)(int widId, TigMsg* tigMsg);
+	static BOOL(*orgMemorizeSpellMsg)(int widId, TigMsg* tigMsg);
+
+	static bool CharSpellsNavClassTabMsg(int widId, TigMsg* tigMsg);
+	static bool(*orgCharSpellsNavClassTabMsg)(int widId, TigMsg* tigMsg);
 
 	static BOOL SpellbookSpellsMsg(int widId, TigMsg* tigMsg){
 		return orgSpellbookSpellsMsg(widId, tigMsg);
@@ -138,7 +141,7 @@ public:
 #pragma endregion 
 protected:
 	void apply() override;
-	
+
 } charUiSys;
 
 void CharUiSystem::ClassLevelBtnRender(int widId){
@@ -359,6 +362,34 @@ BOOL CharUiSystem::MemorizeSpellMsg(int widId, TigMsg* tigMsg){
 	}
 
 	return orgMemorizeSpellMsg(widId, tigMsg);
+}
+
+bool CharUiSystem::CharSpellsNavClassTabMsg(int widId, TigMsg* tigMsg)
+{
+	auto uiCharSpellsNavClassTabIdxBefore = temple::GetRef<int>(0x10D18F68);
+
+	auto ret = orgCharSpellsNavClassTabMsg(widId, tigMsg);
+
+	auto uiCharSpellsNavClassTabIdxAfter = temple::GetRef<int>(0x10D18F68);
+
+	//For a change of tab, hide memorized spells for all new natural casting classes
+	if (uiCharSpellsNavClassTabIdxBefore != uiCharSpellsNavClassTabIdxAfter) {
+
+		auto navClassPackets = addresses.uiCharSpellsNavPackets;
+		auto spellClassCode = navClassPackets[uiCharSpellsNavClassTabIdxAfter].spellClassCode;
+		auto classCode = spellSys.GetCastingClass(spellClassCode);
+		auto& curCharSpellPkt = addresses.uiCharSpellPackets[uiCharSpellsNavClassTabIdxAfter];
+
+		if (d20ClassSys.IsNaturalCastingClass(classCode) && !spellSys.isDomainSpell(spellClassCode) 
+			&& (classCode != stat_level_sorcerer) && (classCode != stat_level_bard)) {
+			for (auto i = 0u; i < NUM_SPELLBOOK_SLOTS; i++) {
+		        uiManager->SetHidden(curCharSpellPkt.memorizeSpellWnds[i]->widgetId, true);
+			}
+		}
+
+	}
+
+	return ret;
 }
 
 void CharUiSystem::SpellsShow(objHndl obj)
@@ -858,7 +889,7 @@ void UiChar::LootingWidgetsInit(){
 	mNextBtn->SetClickHandler([&](){
 		auto &lootedCritter = uiSystems->GetChar().GetLootedObject();
 		mCrittersLootedIdx++;
-		if (mCrittersLootedIdx >= mCrittersLootedList.size())
+		if (mCrittersLootedIdx >= static_cast<int>(mCrittersLootedList.size()))
 			mCrittersLootedIdx = 0;
 		auto nextCritter = mCrittersLootedList[mCrittersLootedIdx];
 		uiSystems->GetChar().SetLootedObject(nextCritter);
@@ -1314,6 +1345,7 @@ void CharUiSystem::apply(){
 
 	//orgSpellbookSpellsMsg = replaceFunction(0x101B8F10, SpellbookSpellsMsg);
 	orgMemorizeSpellMsg = replaceFunction(0x101B9360, MemorizeSpellMsg);
+	orgCharSpellsNavClassTabMsg = replaceFunction(0x101B8B60, CharSpellsNavClassTabMsg);
 	replaceFunction(0x101B2EE0, IsSpecializationSchoolSlot);
 	orgSpellsShow = replaceFunction(0x101B5D80, SpellsShow);
 
@@ -1431,6 +1463,7 @@ void CharUiSystem::apply(){
 
 BOOL(*CharUiSystem::orgSpellbookSpellsMsg)(int widId, TigMsg* tigMsg);
 BOOL(*CharUiSystem::orgMemorizeSpellMsg)(int widId, TigMsg* tigMsg);
+bool(*CharUiSystem::orgCharSpellsNavClassTabMsg)(int widId, TigMsg* tigMsg);
 void(*CharUiSystem::orgSpellsShow)(objHndl obj);
 BOOL(*CharUiSystem::orgInventorySlotMsg)(int widId, TigMsg* msg);
 int CharUiSystem::specSlotIndices[10];
