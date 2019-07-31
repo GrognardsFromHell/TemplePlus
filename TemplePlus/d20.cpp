@@ -2710,6 +2710,8 @@ ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
 	auto &curSeq = *actSeqSys.actSeqCur;
 	auto &spellPkt = curSeq->spellPktBody;
 
+	auto spellPktOld = spellPkt;  //For Debiting spells (has the original meta magic data)
+
 	//Get the metamagic data
 	dispatch.DispatchMetaMagicModify(d20Sys.globD20Action->d20APerformer, d20a->d20SpellData.metaMagicData);
 	
@@ -2745,8 +2747,7 @@ ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
 
 	if (d20Sys.SpellIsInterruptedCheck(d20a, invIdx, &spellData)){
 		if (invIdx == INV_IDX_INVALID){
-			//spellPkt.MemorizedUseUp(spellData);
-			spellPkt.Debit();
+			spellPktOld.Debit();  //Use the old packet
 		}
 		spellInterruptApply(spellEntry.spellSchoolEnum, spellPkt.caster, invIdx);
 		if (curSeq)
@@ -2789,7 +2790,8 @@ ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
 			&& !spellEntry.IsBaseModeTarget(UiPickerType::Cone)
 			&& !spellEntry.IsBaseModeTarget(UiPickerType::Location)) {
 			floatSys.FloatSpellLine(spellPkt.caster, 30000, FloatLineColor::Red); // Spell has fizzled
-			spellPkt.Debit();
+			spellPktOld.Debit();  //Use the old packet
+
 			spellInterruptApply(spellEntry.spellSchoolEnum, spellPkt.caster, invIdx); // note: perhaps the current sequence changes due to the applied interrupt
 			if (!party.IsInParty(curSeq->spellPktBody.caster)) {
 				auto leader = party.GetConsciousPartyLeader();
@@ -2807,7 +2809,8 @@ ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
 	spellSys.RegisterSpell(spellPkt, spellId);
 
 	if (gameSystems->GetAnim().PushSpellCast(spellPkt, item)){
-		spellPkt.Debit();
+		// Use the old mmdata when debiting the spell so the correct spell can be found
+		spellPktOld.Debit();  //Use the old packet
 		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
 		d20a->animID = gameSystems->GetAnim().GetActionAnimId(d20a->d20APerformer);
 	}
