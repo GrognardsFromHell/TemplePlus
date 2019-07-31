@@ -344,7 +344,7 @@ void AiSystem::ShitlistRemove(objHndl npc, objHndl target) {
 		SetWhoHitMeLast(npc, objHndl::null);
 	}
 
-	aiSys.UpdateAiFlags(npc, AIFS_NONE, objHndl::null, nullptr);
+	aiSys.UpdateAiFlags(npc, AIFS_NONE, objHndl::null, nullptr); // note: this also unsets OCF_COMBAT_MODE within AiPacket::ProcessCombat (if AIFS_NONE, it does DoWaypoints(), which exits combat mode)
 }
 
 BOOL AiSystem::AiListFind(objHndl aiHandle, objHndl tgt, int typeToFind){
