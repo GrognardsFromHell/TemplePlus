@@ -52,6 +52,11 @@ def SuddenWidenDeductCharge(attachee, args, evt_obj):
 		
 	#Decriment the charges
 	charges = charges - 1
+	
+	#Prevent the issue where the charges start with a large value
+	if charges > 1000:
+		charges = 0
+	
 	args.set_arg(0, charges)
 
 	return 0
