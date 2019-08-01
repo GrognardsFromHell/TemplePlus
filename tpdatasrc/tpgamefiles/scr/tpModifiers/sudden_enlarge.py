@@ -51,11 +51,6 @@ def SuddenEnlargeDeductCharge(attachee, args, evt_obj):
 		
 	#Decriment the charges
 	charges = charges - 1
-	
-	#Prevent the issue where the charges start with a large value
-	if charges > 1000:
-		charges = 0
-	
 	args.set_arg(0, charges)
 
 	return 0
@@ -65,6 +60,7 @@ tpdp.register_metamagic_feat("Sudden Enlarge")
 suddenEnlargeFeat = PythonModifier("Sudden Enlarge Feat", 4) #Charges, Toggeled On, Spare, Spare
 suddenEnlargeFeat.MapToFeat("Sudden Enlarge")
 suddenEnlargeFeat.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, SuddenEnlargeRadial, ())
+suddenEnlargeFeat.AddHook(ET_OnConditionAdd, EK_NONE, SuddenEnlargeNewDay, ())
 suddenEnlargeFeat.AddHook(ET_OnNewDay, EK_NEWDAY_REST, SuddenEnlargeNewDay, ())
 suddenEnlargeFeat.AddHook(ET_OnMetaMagicMod, EK_NONE, SuddenEnlargeMetamagicUpdate, ())
 suddenEnlargeFeat.AddHook(ET_OnD20PythonSignal, "Sudden Metamagic Deduct Charge", SuddenEnlargeDeductCharge, ())

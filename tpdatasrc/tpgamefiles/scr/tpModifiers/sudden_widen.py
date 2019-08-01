@@ -52,11 +52,6 @@ def SuddenWidenDeductCharge(attachee, args, evt_obj):
 		
 	#Decriment the charges
 	charges = charges - 1
-	
-	#Prevent the issue where the charges start with a large value
-	if charges > 1000:
-		charges = 0
-	
 	args.set_arg(0, charges)
 
 	return 0
@@ -66,6 +61,7 @@ tpdp.register_metamagic_feat("Sudden Widen")
 suddenWidenFeat = PythonModifier("Sudden Widen Feat", 4) #Charges, Toggeled On, Spare, Spare
 suddenWidenFeat.MapToFeat("Sudden Widen")
 suddenWidenFeat.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, SuddenWidenRadial, ())
+suddenWidenFeat.AddHook(ET_OnConditionAdd, EK_NONE, SuddenWidenNewDay, ())
 suddenWidenFeat.AddHook(ET_OnNewDay, EK_NEWDAY_REST, SuddenWidenNewDay, ())
 suddenWidenFeat.AddHook(ET_OnMetaMagicMod, EK_NONE, SuddenWidenMetamagicUpdate, ())
 suddenWidenFeat.AddHook(ET_OnD20PythonSignal, "Sudden Metamagic Deduct Charge", SuddenWidenDeductCharge, ())
