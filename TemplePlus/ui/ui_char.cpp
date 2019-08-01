@@ -139,6 +139,9 @@ public:
 #pragma region Feats
 	static void FeatsShow();
 #pragma endregion 
+
+	static const char *TabNameReplacement(int stat);
+
 protected:
 	void apply() override;
 
@@ -364,6 +367,21 @@ BOOL CharUiSystem::MemorizeSpellMsg(int widId, TigMsg* tigMsg){
 	return orgMemorizeSpellMsg(widId, tigMsg);
 }
 
+const char *CharUiSystem::TabNameReplacement(int stat)
+// Replace the tab text (in method UiCharSpellsNavClassTabRender) with long or short text for the names as appropriate
+{
+	auto uiCharSpellTabsCount = temple::GetRef<int>(0x10D18F6C);
+	const char *res = nullptr;
+
+	if (uiCharSpellTabsCount <= 3) {
+		res = d20Stats.GetStatName(static_cast<Stat>(stat));
+	} else {
+		res = d20Stats.GetStatShortName(static_cast<Stat>(stat));
+	}
+
+	return res;
+}
+
 bool CharUiSystem::CharSpellsNavClassTabMsg(int widId, TigMsg* tigMsg)
 {
 	auto uiCharSpellsNavClassTabIdxBefore = temple::GetRef<int>(0x10D18F68);
@@ -462,28 +480,50 @@ void CharUiSystem::SpellsShow(objHndl obj)
 
 	auto uiCharSpellTabPadding = temple::GetRef<int>(0x10C81B40);
 
-	// find which caster class tabs should appear
-	for (auto it: d20ClassSys.classEnums){
+	// Find the tab count before making the tabs to determine if long or short names should be used
+	std::vector<Stat> tabClasses;
+	for (auto it : d20ClassSys.classEnums) {
 		auto classCode = (Stat)it;
 		auto spellClassCode = spellSys.GetSpellClass(classCode);
 
 		if (!d20ClassSys.HasSpellList(classCode))
 			continue;
 
-		auto classLvl = objects.StatLevelGet(dude, classCode) ;
+		auto classLvl = objects.StatLevelGet(dude, classCode);
 		if (classLvl <= 0)
 			continue;
 
-		line = d20Stats.GetStatName(classCode);
+		uiCharSpellTabsCount++;
+		tabClasses.push_back(classCode);
+	}
+	
+	//One more tab for clerics
+	auto clericLvl = critterSys.GetCasterLevelForClass(dude, stat_level_cleric);
+	if (clericLvl > 0) {
+		uiCharSpellTabsCount++;
+	}
+
+	// find which caster class tabs should appear
+	int nTabIdx = 0;  //Current Tab index
+	for (auto classCode : tabClasses) {
+		auto spellClassCode = spellSys.GetSpellClass(classCode);
+
+		// Shorten the names of tabs if there are more than 3 so they fit reasonably
+		if (uiCharSpellTabsCount <= 3) {
+			line = d20Stats.GetStatName(classCode);
+		}
+		else {
+			line = d20Stats.GetStatShortName(classCode);
+		}
 		auto textSize = UiRenderer::MeasureTextSize(line, style);
 
-		auto navTabBtn = navClassPackets[uiCharSpellTabsCount].button;
+		auto navTabBtn = navClassPackets[nTabIdx].button;
 		navTabBtn->width = textSize.width + 2 * uiCharSpellTabPadding;
 		navTabBtn->x += navTabX;
 		navTabX += navTabBtn->width ;
 		uiManager->SetHidden(navTabBtn->widgetId, false);
 		
-		navClassPackets[uiCharSpellTabsCount].spellClassCode = spellClassCode;
+		navClassPackets[nTabIdx].spellClassCode = spellClassCode;
 		
 		int n1 = 0;
 		for (int spellLvl = 0; spellLvl < 10; spellLvl++){
@@ -497,27 +537,25 @@ void CharUiSystem::SpellsShow(objHndl obj)
 
 		int nKnown = max(0, critterSys.SpellNumByFieldAndClass(dude, obj_f_critter_spells_known_idx, spellClassCode)-2);
 		
-		uiManager->ScrollbarSetYmax(charSpellPackets[uiCharSpellTabsCount].spellbookScrollbar->widgetId, nKnown);
-		uiManager->ScrollbarSetYmax(charSpellPackets[uiCharSpellTabsCount].memorizeScrollbar->widgetId, nMemo-2 <=0 ? 0 : nMemo-2);
+		uiManager->ScrollbarSetYmax(charSpellPackets[nTabIdx].spellbookScrollbar->widgetId, nKnown);
+		uiManager->ScrollbarSetYmax(charSpellPackets[nTabIdx].memorizeScrollbar->widgetId, nMemo-2 <=0 ? 0 : nMemo-2);
 
-		uiCharSpellTabsCount++;
-
+		nTabIdx++;
 	}
 
 	// domain
-	auto clericLvl = critterSys.GetCasterLevelForClass(dude, stat_level_cleric);
 	if ( clericLvl > 0) {
 		mesline.key = 2;
 		mesFuncs.GetLine_Safe(spellsUiText, &mesline);
 		line = mesline.value;
 		auto textSize = UiRenderer::MeasureTextSize(line, style);
 
-		auto domainTabBtn = navClassPackets[uiCharSpellTabsCount].button;
+		auto domainTabBtn = navClassPackets[nTabIdx].button;
 		domainTabBtn->width = textSize.width + 2 * uiCharSpellTabPadding;
 		domainTabBtn->x += navTabX;
 		navTabX += textSize.width;
 		uiManager->SetHidden(domainTabBtn->widgetId, false);
-		navClassPackets[uiCharSpellTabsCount].spellClassCode = Domain_Count;
+		navClassPackets[nTabIdx].spellClassCode = Domain_Count;
 
 
 		int n1 = d20ClassSys.NumDomainSpellsKnownFromClass(dude, stat_level_cleric);
@@ -528,10 +566,8 @@ void CharUiSystem::SpellsShow(objHndl obj)
 		int nKnown = max(0, critterSys.DomainSpellNumByField(dude, obj_f_critter_spells_known_idx) - 2);
 
 
-		uiManager->ScrollbarSetYmax(charSpellPackets[uiCharSpellTabsCount].spellbookScrollbar->widgetId, nKnown);
-		uiManager->ScrollbarSetYmax(charSpellPackets[uiCharSpellTabsCount].memorizeScrollbar->widgetId, nMemo - 2 <= 0 ? 0 : nMemo - 2);
-
-		uiCharSpellTabsCount++;
+		uiManager->ScrollbarSetYmax(charSpellPackets[nTabIdx].spellbookScrollbar->widgetId, nKnown);
+		uiManager->ScrollbarSetYmax(charSpellPackets[nTabIdx].memorizeScrollbar->widgetId, nMemo - 2 <= 0 ? 0 : nMemo - 2);
 	}
 
 	// show the first class's spellbook / spells memorized
@@ -1346,6 +1382,7 @@ void CharUiSystem::apply(){
 	//orgSpellbookSpellsMsg = replaceFunction(0x101B8F10, SpellbookSpellsMsg);
 	orgMemorizeSpellMsg = replaceFunction(0x101B9360, MemorizeSpellMsg);
 	orgCharSpellsNavClassTabMsg = replaceFunction(0x101B8B60, CharSpellsNavClassTabMsg);
+	redirectCall(0x101B6ED8, TabNameReplacement);
 	replaceFunction(0x101B2EE0, IsSpecializationSchoolSlot);
 	orgSpellsShow = replaceFunction(0x101B5D80, SpellsShow);
 

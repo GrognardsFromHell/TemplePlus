@@ -60,6 +60,7 @@ tpdp.register_metamagic_feat("Sudden Still")
 suddenStillFeat = PythonModifier("Sudden Still Feat", 4) #Charges, Toggeled On, Spare, Spare
 suddenStillFeat.MapToFeat("Sudden Still")
 suddenStillFeat.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, SuddenStillRadial, ())
+suddenStillFeat.AddHook(ET_OnConditionAdd, EK_NONE, SuddenStillNewDay, ())
 suddenStillFeat.AddHook(ET_OnNewDay, EK_NEWDAY_REST, SuddenStillNewDay, ())
 suddenStillFeat.AddHook(ET_OnMetaMagicMod, EK_NONE, SuddenStillMetamagicUpdate, ())
 suddenStillFeat.AddHook(ET_OnD20PythonSignal, "Sudden Metamagic Deduct Charge", SuddenStillDeductCharge, ())

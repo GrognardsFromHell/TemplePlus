@@ -60,6 +60,7 @@ tpdp.register_metamagic_feat("Sudden Extend")
 suddenExtendFeat = PythonModifier("Sudden Extend Feat", 4) #Charges, Toggeled On, Spare, Spare
 suddenExtendFeat.MapToFeat("Sudden Extend")
 suddenExtendFeat.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, SuddenExtendRadial, ())
+suddenExtendFeat.AddHook(ET_OnConditionAdd, EK_NONE, SuddenExtendNewDay, ())
 suddenExtendFeat.AddHook(ET_OnNewDay, EK_NEWDAY_REST, SuddenExtendNewDay, ())
 suddenExtendFeat.AddHook(ET_OnMetaMagicMod, EK_NONE, SuddenExtendMetamagicUpdate, ())
 suddenExtendFeat.AddHook(ET_OnD20PythonSignal, "Sudden Metamagic Deduct Charge", SuddenExtendDeductCharge, ())

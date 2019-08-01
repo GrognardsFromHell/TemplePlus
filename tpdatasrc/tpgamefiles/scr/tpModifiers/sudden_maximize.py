@@ -60,6 +60,7 @@ tpdp.register_metamagic_feat("Sudden Maximize")
 suddenMaximizeFeat = PythonModifier("Sudden Maximize Feat", 4) #Charges, Toggeled On, Spare, Spare
 suddenMaximizeFeat.MapToFeat("Sudden Maximize")
 suddenMaximizeFeat.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, SuddenMaximizeRadial, ())
+suddenMaximizeFeat.AddHook(ET_OnConditionAdd, EK_NONE, SuddenMaximizeNewDay, ())
 suddenMaximizeFeat.AddHook(ET_OnNewDay, EK_NEWDAY_REST, SuddenMaximizeNewDay, ())
 suddenMaximizeFeat.AddHook(ET_OnMetaMagicMod, EK_NONE, SuddenMaximizeMetamagicUpdate, ())
 suddenMaximizeFeat.AddHook(ET_OnD20PythonSignal, "Sudden Metamagic Deduct Charge", SuddenMaximizeDeductCharge, ())

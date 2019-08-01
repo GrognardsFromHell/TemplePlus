@@ -60,6 +60,7 @@ tpdp.register_metamagic_feat("Sudden Silent")
 suddenSilentFeat = PythonModifier("Sudden Silent Feat", 4) #Charges, Toggeled On, Spare, Spare
 suddenSilentFeat.MapToFeat("Sudden Silent")
 suddenSilentFeat.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, SuddenSilentRadial, ())
+suddenSilentFeat.AddHook(ET_OnConditionAdd, EK_NONE, SuddenSilentNewDay, ())
 suddenSilentFeat.AddHook(ET_OnNewDay, EK_NEWDAY_REST, SuddenSilentNewDay, ())
 suddenSilentFeat.AddHook(ET_OnMetaMagicMod, EK_NONE, SuddenSilentMetamagicUpdate, ())
 suddenSilentFeat.AddHook(ET_OnD20PythonSignal, "Sudden Metamagic Deduct Charge", SuddenSlientDeductCharge, ())

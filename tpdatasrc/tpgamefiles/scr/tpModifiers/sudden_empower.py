@@ -60,6 +60,7 @@ tpdp.register_metamagic_feat("Sudden Empower")
 suddenEmpowerFeat = PythonModifier("Sudden Empower Feat", 4) #Charges, Toggeled On, Spare, Spare
 suddenEmpowerFeat.MapToFeat("Sudden Empower")
 suddenEmpowerFeat.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, SuddenEmpowerRadial, ())
+suddenEmpowerFeat.AddHook(ET_OnConditionAdd, EK_NONE, SuddenEmpowerNewDay, ())
 suddenEmpowerFeat.AddHook(ET_OnNewDay, EK_NEWDAY_REST, SuddenEmpowerNewDay, ())
 suddenEmpowerFeat.AddHook(ET_OnMetaMagicMod, EK_NONE, SuddenEmpowerMetamagicUpdate, ())
 suddenEmpowerFeat.AddHook(ET_OnD20PythonSignal, "Sudden Metamagic Deduct Charge", SuddenEmpowerDeductCharge, ())
