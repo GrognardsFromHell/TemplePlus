@@ -4266,7 +4266,7 @@ void AiPacket::DoWaypoints(){
 	if (!this->leader){
 		if (npcFlags& ONF_USE_ALERTPOINTS){
 			
-			if (!!temple::GetRef<BOOL(__cdecl)(objHndl, int)>(0x1005BC00)(obj, 0)){
+			if (!temple::GetRef<BOOL(__cdecl)(objHndl, int)>(0x1005BC00)(obj, 0)){
 				gameSystems->GetAnim().PushFidget(obj);
 				temple::GetRef<void(__cdecl)(objHndl)>(0x10015FD0)(obj);
 			}
