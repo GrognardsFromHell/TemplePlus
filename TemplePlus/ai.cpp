@@ -1280,7 +1280,7 @@ BOOL AiSystem::TargetDamaged(AiTactic * aiTac){
 BOOL AiSystem::TargetFriendHurt(AiTactic * aiTac)
 {
 	auto performer = aiTac->performer;
-	auto lowest = 0.7;
+	auto lowest = 70;
 	auto N = combatSys.GetInitiativeListLength();
 	for (auto i = 0; i < N; i++) {
 		auto combatant = combatSys.GetInitiativeListMember(i);
