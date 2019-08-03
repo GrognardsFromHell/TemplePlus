@@ -296,46 +296,6 @@ const std::string &UiSlide::GetName() const {
     return name;
 }
 
-//*****************************************************************************
-//* Dlg-UI
-//*****************************************************************************
-
-UiDlg::UiDlg(const UiSystemConf &config) {
-    auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x1014dd40);
-    if (!startup(&config)) {
-        throw TempleException("Unable to initialize game system Dlg-UI");
-    }
-}
-UiDlg::~UiDlg() {
-    auto shutdown = temple::GetPointer<void()>(0x1014ccc0);
-    shutdown();
-}
-void UiDlg::ResizeViewport(const UiResizeArgs& resizeArg) {
-    auto resize = temple::GetPointer<void(const UiResizeArgs*)>(0x1014de30);
-    resize(&resizeArg);
-}
-void UiDlg::Reset() {
-    auto reset = temple::GetPointer<void()>(0x1014ccf0);
-    reset();
-}
-bool UiDlg::SaveGame(TioFile *file) {
-        auto save = temple::GetPointer<int(TioFile*)>(0x1014c830);
-        return save(file) == 1;
-}
-bool UiDlg::LoadGame(const UiSaveFile &save) {
-        auto load = temple::GetPointer<int(const UiSaveFile*)>(0x1014cd50);
-        return load(&save) == 1;
-}
-const std::string &UiDlg::GetName() const {
-    static std::string name("Dlg-UI");
-    return name;
-}
-
-bool UiDlg::IsActive() const
-{
-	return !(mFlags & 1) || !uiManager->IsHidden(mWindowId);
-}
-
 
 
 //*****************************************************************************

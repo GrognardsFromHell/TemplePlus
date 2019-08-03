@@ -1104,7 +1104,7 @@ PyObject* PyGame_Picker(PyObject*, PyObject* args) {
 	}
 
 	// This picker can only be used while in dialog
-	if (!uiDialog.IsActive()) {
+	if (!uiDialog->IsActive()) {
 		logger->debug("Can only use game.picker from dialog");
 		Py_RETURN_NONE;
 	}
@@ -1126,7 +1126,7 @@ PyObject* PyGame_Picker(PyObject*, PyObject* args) {
 	picker.callback = PyGame_PickerCallback;
 	picker.caster = caster;
 	
-	uiDialog.Hide();
+	uiDialog->Hide();
 	uiPicker.ShowPicker(picker, &dialogPickerArgs);
 
 	Py_RETURN_NONE;
@@ -1135,14 +1135,14 @@ PyObject* PyGame_Picker(PyObject*, PyObject* args) {
 // This is called for various tasks by the picker we create above
 static void __cdecl PyGame_PickerCallback(const PickerResult &result, void*) {
 
-	auto currentDlg = uiDialog.GetCurrentDialog();
+	auto currentDlg = uiDialog->GetCurrentDialog();
 
 	// Reset picker obj
 	pythonObjIntegration.SetPickerObj(nullptr);
 		
 	if (result.flags & PRF_CANCELLED) {
 		// The player cancelled the picker
-		uiDialog.ReShowDialog(currentDlg, dialogPickerArgs.cancelledLine);
+		uiDialog->ReShowDialog(currentDlg, dialogPickerArgs.cancelledLine);
 	} else {
 		// Something has been picked. Is it a valid target?
 		auto targetObj = PyObjHndl_Create(result.handle);
@@ -1156,9 +1156,9 @@ static void __cdecl PyGame_PickerCallback(const PickerResult &result, void*) {
 			// Target is valid
 			if (PyObject_IsTrue(isValidObj)) {
 				pythonObjIntegration.SetPickerObj(targetObj);
-				uiDialog.ReShowDialog(currentDlg, dialogPickerArgs.validTargetLine);
+				uiDialog->ReShowDialog(currentDlg, dialogPickerArgs.validTargetLine);
 			} else {
-				uiDialog.ReShowDialog(currentDlg, dialogPickerArgs.invalidTargetLine);
+				uiDialog->ReShowDialog(currentDlg, dialogPickerArgs.invalidTargetLine);
 			}
 			Py_DECREF(isValidObj);
 		}
@@ -1172,7 +1172,7 @@ static void __cdecl PyGame_PickerCallback(const PickerResult &result, void*) {
 	
 	// The picker would still be going if we didnt cancel it
 	uiPicker.FreeCurrentPicker();
-	uiDialog.Unk(); // Not clear what this does. Plays some speech samples? 
+	uiDialog->Unk(); // Not clear what this does. Plays some speech samples? 
 	
 }
 

@@ -246,7 +246,7 @@ void LegacyCombatSystem::FloatCombatLine(objHndl obj, int line, FloatLineColor f
 void LegacyCombatSystem::FloatTextBubble(objHndl handle, int combatMesLine)
 {
 	auto combatLineText = GetCombatMesLine(combatMesLine);
-	uiDialog.ShowTextBubble(handle, handle, combatLineText);
+	uiDialog->ShowTextBubble(handle, handle, combatLineText);
 }
 
 int LegacyCombatSystem::IsWithinReach(objHndl attacker, objHndl target)

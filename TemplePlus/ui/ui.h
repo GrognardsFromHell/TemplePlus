@@ -120,6 +120,10 @@ struct LgcyWindow : public LgcyWidget {
 
 	LgcyWindow();
 	LgcyWindow(int x, int y, int w, int h);
+	int AddChildButton(const std::string &btnName, int xRelative, int yRelative, int w, int h
+		, LgcyWidgetRenderFn renderHandler
+		, LgcyWidgetHandleMsgFn msgHandler
+		, LgcyWidgetRenderTooltipFn tooltipHandler = nullptr); // returns ID of new button
 };
 
 /*
@@ -154,8 +158,8 @@ struct LgcyButton : public LgcyWidget {
 	int sndHoverOn = -1;
 	int sndHoverOff = -1;
 	LgcyButton();
-	LgcyButton(char* ButtonName, int ParentId, int X, int Y, int Width, int Height);
-	LgcyButton(char* ButtonName, int ParentId, TigRect& rect);
+	LgcyButton(const char* ButtonName, int ParentId, int X, int Y, int Width, int Height);
+	LgcyButton(const char* ButtonName, int ParentId, TigRect& rect);
 
 	void SetDefaultSounds();
 };

@@ -3362,7 +3362,7 @@ int DisarmedReminder(DispatcherCallbackArgs args)
 	{
 		char blargh[1000];
 		memcpy(blargh, "I was disarmed.", sizeof("I was disarmed."));
-		uiDialog.ShowTextBubble(args.objHndCaller, args.objHndCaller, { blargh }, -1);
+		uiDialog->ShowTextBubble(args.objHndCaller, args.objHndCaller, { blargh }, -1);
 		args.subDispNode->condNode->args[7]++;
 	}
 	return 0;

@@ -1174,7 +1174,7 @@ static PyObject* PyObjHandle_FloatLine(PyObject* obj, PyObject* args) {
 	dlgState.npc = self->handle;
 	dialogScripts.LoadNpcLine(dlgState, true);
 
-	uiDialog.ShowTextBubble(dlgState.npc, dlgState.pc, dlgState.npcLineText, dlgState.speechId);
+	uiDialog->ShowTextBubble(dlgState.npc, dlgState.pc, dlgState.npcLineText, dlgState.speechId);
 
 	dialogScripts.Free(dlgState.dialogHandle);
 

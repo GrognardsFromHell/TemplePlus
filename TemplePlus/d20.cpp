@@ -2562,7 +2562,7 @@ ActionErrorCode D20ActionCallbacks::PerformAidAnotherWakeUp(D20Actn* d20a){
 		{
 			char blargh[1000];
 			memcpy(blargh, "Wake up!", sizeof("Wake up!"));
-			uiDialog.ShowTextBubble(d20a->d20APerformer, d20a->d20APerformer, { blargh }, -1);
+			uiDialog->ShowTextBubble(d20a->d20APerformer, d20a->d20APerformer, { blargh }, -1);
 			
 		}
 	}
