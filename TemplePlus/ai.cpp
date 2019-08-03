@@ -4280,7 +4280,7 @@ void AiPacket::DoWaypoints(){
 		return;
 	}
 
-	if (npcFlags && ONF_AI_WAIT_HERE)
+	if (npcFlags & ONF_AI_WAIT_HERE)
 		return;
 
 	if (gameSystems->GetAnim().GetFirstRunSlotId(obj))
