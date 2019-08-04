@@ -1,17 +1,13 @@
 #include "stdafx.h"
 #include "messagequeue.h"
+#include "ui/ui.h"
 
 static struct MessageQueueFuncs : temple::AddressTable {
 	
 	BOOL *tigProcessEvents;
 
-	BOOL (*WftHandleMouseEvent)(const void* args);
-	BOOL (*WftHandleOtherEvent)(const TigMsg* args);
-
 	MessageQueueFuncs() {
-		rebase(tigProcessEvents, 0x103012C4);
-		rebase(WftHandleOtherEvent, 0x101F8A80);
-		rebase(WftHandleMouseEvent, 0x101F9970);		
+		rebase(tigProcessEvents, 0x103012C4);		
 	}
 } functions;
 
@@ -27,22 +23,20 @@ MessageQueue::~MessageQueue() {
 	}
 }
 
-void MessageQueue::Enqueue(const Message& msg) {
-	mQueue.push_back(msg);
+void MessageQueue::Enqueue(const TigMsgBase& msg) {
+	mQueue.push_back((TigMsg&)msg);
 }
 
 bool MessageQueue::Process(Message &unhandledMsgOut) {
 
 	while (!mQueue.empty()) {
-		const auto& msg = mQueue.front();
+		auto msg = mQueue.front();
+		mQueue.pop_front();
 
 		if (!HandleMessage(msg)) {
 			unhandledMsgOut = msg;
-			mQueue.pop_front();
 			return true;
 		}
-		
-		mQueue.pop_front();
 	}
 
 	return false;
@@ -50,10 +44,10 @@ bool MessageQueue::Process(Message &unhandledMsgOut) {
 }
 
 bool MessageQueue::HandleMessage(const Message& msg) {
-
 	// TODO: Just dequeue directly in the movie player instead of having the dependency this way
-/*	if (is_movie_playing_true())
-		return;*/
+/*	if (is_movie_playing_true()) {
+		return false;
+	}*/
 
 	auto tigProcessEvents = (*functions.tigProcessEvents == TRUE);
 	
@@ -61,11 +55,11 @@ bool MessageQueue::HandleMessage(const Message& msg) {
 		return false;
 	}
 	
-	if (msg.type == TigMsgType::MOUSE && functions.WftHandleMouseEvent(&msg.arg1)) {
+	if (msg.type == TigMsgType::MOUSE && uiManager->TranslateMouseMessage((TigMouseMsg&)msg.arg1)) {
 		return true;
 	}
 
-	if (functions.WftHandleOtherEvent(&msg)) {
+	if (uiManager->ProcessMessage(const_cast<TigMsg&>(msg))) {
 		if (msg.type == TigMsgType::TMT_UNK7) {
 			return false;
 		}
@@ -75,6 +69,29 @@ bool MessageQueue::HandleMessage(const Message& msg) {
 	
 	return false;
 
+}
+
+void MessageQueue::ProcessMessages()
+{
+	TigMsg msg;
+	while (!mQueue.empty() && !Process(msg))
+		;
+}
+
+void MessageQueue::PollExternalEvents()
+{
+	// TODO: Move these dependencies out and make it a parameterizable "external event producer"
+	static uint32_t& timePolled = temple::GetRef<uint32_t>(0x11E74578);
+	timePolled = timeGetTime();
+
+	// Previously DirectInput was polled here for events, but this all happens in the 
+	// Windows message loop now
+	
+	static auto process_window_messages = temple::GetPointer<int()>(0x101de880);
+	process_window_messages();
+
+	static auto sound_process_loop = temple::GetPointer<void()>(0x101e4360);
+	sound_process_loop();
 }
 
 MessageQueue* messageQueue = nullptr;

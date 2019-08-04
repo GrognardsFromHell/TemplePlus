@@ -97,6 +97,12 @@ void MouseFuncs::DrawItemUnderCursor() const {
 
 }
 
+bool MouseFuncs::SetDraggedIcon(uint32_t textureId, int centerX, int centerY)
+{
+	static auto tig_mouse_set_dragged_icon = temple::GetPointer<signed int(int textureId, int draggedCenterX, int draggedCenterY)>(0x101dd500);
+	return tig_mouse_set_dragged_icon(textureId, centerX, centerY) == 0;
+}
+
 void MouseFuncs::SetCursorDrawCallback(CursorDrawCallback callback, uint32_t id)
 {
 	mCursorDrawCallback = callback;
@@ -120,6 +126,38 @@ int MouseFuncs::SetCursor(int shaderId) {
 
 	stashedCursorShaderIds.push_back(shaderId);
 	return 0;
+}
+
+int(MouseFuncs::SetCursorFromMaterial)(std::string matName){
+	auto material = tig->GetMdfFactory().GetByName(matName);
+
+	if (!material) {
+		logger->error("Unable to get or load cursor material {}", matName);
+		return false;
+	}
+
+	auto primaryTexture = material->GetPrimaryTexture();
+
+	if (!primaryTexture) {
+		logger->error("Material {} has no texture and cannot be used as a cursor", material->GetName());
+		return false;
+	}
+
+	int hotspotX = 0;
+	int hotspotY = 0;
+
+	// Special handling for cursors that don't have their hotspot on 0,0
+	if (strstr(primaryTexture->GetName().c_str(), "Map_GrabHand_Closed.tga")
+		|| strstr(primaryTexture->GetName().c_str(), "Map_GrabHand_Open.tga")
+		|| strstr(primaryTexture->GetName().c_str(), "SlidePortraits.tga")) {
+		hotspotX = primaryTexture->GetContentRect().width / 2;
+		hotspotY = primaryTexture->GetContentRect().height / 2;
+	}
+
+	tig->GetRenderingDevice().SetCursor(hotspotX, hotspotY, primaryTexture);
+	auto shaderId = material->GetId();
+	stashedCursorShaderIds.push_back(shaderId);
+	return true;
 }
 
 void MouseFuncs::ResetCursor() {

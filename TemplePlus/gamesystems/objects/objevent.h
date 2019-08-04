@@ -2,6 +2,11 @@
 #include <idxtables.h>
 #include <obj.h>
 #include <objlist.h>
+
+
+#define OBJ_EVENT_WALL_ENTERED_HANDLER_ID 50
+#define OBJ_EVENT_WALL_EXITED_HANDLER_ID 51
+
 struct GameSystemSaveFile;
 struct ObjEventListItem;
 struct ObjEventAoE
@@ -17,6 +22,10 @@ struct ObjEventAoE
 	ObjListResultItem* objNodesPrev;
 	int field2C;
 	ObjListResult objListResult; // result for the current time tick; is copied to objNodesPrev at the end of the tick
+
+	bool IsWall();
+	LocAndOffsets GetWallEndpoint();
+	void UpdateObjectNodes(); // copies current objlist results to objNodesPrev and clears
 };
 struct LocAndOffsets;
 
@@ -33,8 +42,7 @@ class ObjEventSystem
 public:
 	IdxTableWrapper<ObjEventAoE> * objEvtTable;
 	
-	BOOL FreeObjectNodes(ObjEventAoE* aoeEvt, int id) const;
-		void FreeObjectNodesRecursive(ObjListResultItem* item) const;
+
 	ObjEventSystem();
 
 	int ListRangeUpdate(ObjEventAoE &data, int id, ObjEventListItem* listItem) const;
@@ -45,7 +53,7 @@ public:
 
 #pragma region ObjEventList functions
 
-	int EventAppend(objHndl aoeObj, int onEnterFuncIdx, int onLeaveFuncIdx, ObjectListFilter olcFilter, float radiusInch, float angleBase, float angleSize) const;
+	int EventAppend(objHndl aoeObj, int onEnterFuncIdx, int onLeaveFuncIdx, ObjectListFilter olcFilter, float radiusInch, float angleBase, float angleSize) const; // registers an object event
 	void PrependEvtListNode(ObjEventListItem& evtListNode);
 	void ListItemNew(objHndl obj, LocAndOffsets loc, LocAndOffsets aoeObjLoc);
 	bool ListHasItems() const;
@@ -57,6 +65,12 @@ private:
 	bool mLockEvtList = false; // so that the EvtList isn't altered when processing it; can happen on damage events and subsequently cause crashes
 #pragma endregion
 	bool ObjEventLocIsInAoE(ObjEventAoE* const aoeEvt, LocAndOffsets aoeObjLoc, float objRadius) const;
+
+
+
+protected:
+	BOOL FreeObjectNodes(ObjEventAoE* aoeEvt, int id) const;
+	void FreeObjectNodesRecursive(ObjListResultItem* item) const;
 } ;
 
 extern ObjEventSystem objEvents;

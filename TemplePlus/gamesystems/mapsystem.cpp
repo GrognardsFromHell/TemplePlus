@@ -15,7 +15,7 @@
 
 #include <tio/tio.h>
 
-#include "anim.h"
+#include "animgoals/anim.h"
 #include "map/sector.h"
 #include "obj.h"
 #include "gamesystems/legacysystems.h"
@@ -38,6 +38,7 @@ struct MapListEntry {
 	int id;
 	int flags = 0;
 	std::string name;
+	std::string description;
 	int worldmap = 0;
 	int area = 0;
 	int movie = 0;
@@ -93,6 +94,7 @@ MapSystem::~MapSystem() {
 
 void MapSystem::LoadModule() {
 	auto mapList = MesFile::ParseFile("Rules\\MapList.mes");
+	auto mapNames = MesFile::ParseFile("mes\\map_names.mes");
 
 	std::vector<gsl::cstring_span<>> parts;
 
@@ -159,6 +161,18 @@ void MapSystem::LoadModule() {
 			
 		}
 		mMaps[line.first] = entry;
+	}
+
+	for (auto &line : mapNames) {
+		mMaps[line.first].description.assign( line.second  );
+	}
+
+	// get info from hardcoded map areas table (bleh)
+	for (auto &entry: mMaps) {
+		if (!entry.second.area) {
+			auto mapArea = temple::GetRef<int(__cdecl)(int)>(0x1006EC30)(entry.second.id);
+			entry.second.area = mapArea;
+		}
 	}
 
 }
@@ -336,7 +350,8 @@ bool MapSystem::SaveGame(TioFile *file) {
 }
 
 bool MapSystem::LoadGame(GameSystemSaveFile* saveFile) {
-	
+	// originally 10072C40
+
 	char filename[260];
 	if (!tio_fgets(filename, 260, saveFile->file)) {
 		logger->error("Unable to load current map data directory");
@@ -409,6 +424,166 @@ bool MapSystem::LoadGame(GameSystemSaveFile* saveFile) {
 const std::string &MapSystem::GetName() const {
 	static std::string name("Map");
 	return name;
+}
+
+bool MapSystem::PseudoLoad(GameSystemSaveFile * saveFile, std::string saveFolder, std::vector<objHndl> & dynHandles)
+{
+	char filename[260];
+	if (!tio_fgets(filename, 260, saveFile->file)) {
+		logger->error("Unable to load current map data directory");
+		return false;
+	}
+	auto len = strnlen(filename, 259);
+	if (len > 0 && filename[len - 1] == '\n') {
+		filename[len - 1] = '\0';
+	}
+	else {
+		logger->error("Map data directory not correctly terminated.");
+		return false;
+	}
+
+	// Find the map entry corresponding to the map directory
+	auto lastBackslash = strrchr(filename, '\\');
+	const char* mapName;
+	if (lastBackslash)
+		mapName = lastBackslash + 1;
+	else
+		mapName = filename;
+
+	MapListEntry *mapEntry = nullptr;
+	for (auto& entry : mMaps) {
+		if (!_stricmp(entry.second.name.c_str(), mapName)) {
+			mapEntry = &entry.second;
+			break;
+		}
+	}
+	if (!mapEntry) {
+		logger->error("No map was found that matches {}", filename);
+		return false;
+	}
+
+	logger->info("Loading map id {}, name {}", mapEntry->id, mapEntry->name);
+
+	if (!tio_fgets(filename, 260, saveFile->file)) {
+		logger->error("Unable to load current map data directory");
+		return false;
+	}
+	len = strnlen(filename, 259);
+	if (len > 0 && filename[len - 1] == '\n') {
+		filename[len - 1] = '\0';
+	}
+	else {
+		logger->error("Map save directory not correctly terminated.");
+		return false;
+	}
+
+	// NOTE: save dir is ignored
+
+	auto visitedMaps = LoadIdxTable<int32_t>(saveFile->file);
+	if (saveFolder.size() < 2)
+		return false;
+
+	if (saveFolder[saveFolder.size() - 1] != '\\') {
+		saveFolder.resize(saveFolder.size() + 1);
+		saveFolder[saveFolder.size() - 1] = '\\';
+	}
+	std::string mapfleeFile = fmt::format("{}map_mapflee.bin", saveFolder);
+	if (vfs->FileExists(mapfleeFile.c_str()) ) {
+		auto mapFleeFh = vfs->Open(mapfleeFile.c_str(), "rb");
+		MapFleeSaveData fleeData;
+		vfs->Read(&fleeData, sizeof(fleeData), mapFleeFh);
+		vfs->Close(mapFleeFh);
+	}
+
+	
+	// Pseudo Open Map
+
+	auto dataDir = fmt::format("maps\\{}", mapEntry->name);
+	auto saveDir = fmt::format("{}maps\\{}", saveFolder, mapEntry->name);
+
+	logger->info("Loading Map: {}", dataDir);
+
+	if (!vfs->DirExists(dataDir)) {
+		logger->error("Cannot open map '{}' because it doesn't exist.", dataDir);
+		return false;
+	}
+
+	vfs->MkDir(saveDir);
+
+
+	auto mdyFilename = fmt::format("{}\\mobile.mdy", saveDir);
+
+	if (!vfs->FileExists(mdyFilename)) {
+		logger->info("Skipping dynamic mobiles because {} doesn't exist.", mdyFilename);
+		return false;
+	}
+
+	logger->info("Loading dynamic mobiles from {}", mdyFilename);
+
+	auto mdyfh = tio_fopen(mdyFilename.c_str(), "rb");
+	if (!mdyfh) {
+		throw TempleException("Unable to open dynamic mobile file for reading: {}", mdyFilename);
+	}
+
+	dynHandles.clear();
+	while (true) {
+		try {
+			auto handle = objSystem->LoadFromFile(mdyfh);
+			auto d = description.getDisplayName(handle);
+			std::string handleDesc;
+			if (d)
+				handleDesc = fmt::format("{}", d);
+			else
+				handleDesc = fmt::format("Unnamed");
+			logger->debug("PseudoLoad: dynamic object {} ({})", handleDesc,	objSystem->GetObject(handle)->id.ToString());
+			dynHandles.push_back(handle);
+		}
+		catch (TempleException &e) {
+			logger->error("Unable to load object: {}", e.what());
+			break;
+		}
+		
+	}
+
+	if (!tio_feof(mdyfh)) {
+		tio_fclose(mdyfh);
+		throw TempleException("Error while reading dynamic mobile file {}", mdyFilename);
+	}
+
+	tio_fclose(mdyfh);
+
+	logger->info("Done reading dynamic mobiles.");
+
+	// Post Process
+
+	objSystem->ForEachObj([&](objHndl handle, GameObjectBody& obj) {
+		if (!obj.IsStatic()) {
+			obj.UnfreezeIds();
+		}
+
+		/*if (obj.HasFlag(OF_TELEPORTED)) {
+			TimeEvent e;
+			e.system = TimeEventType::Teleported;
+			e.params[0].handle = handle;
+			gameSystems->GetTimeEvent().ScheduleNow(e);
+			obj.SetFlag(OF_TELEPORTED, false);
+			return;
+		}*/
+
+		//// Initialize everything's D20 state
+		//if (gameSystems->GetParty().IsInParty(handle)) {
+		//	return; // The party is initialized elsewhere (in the Party system)
+		//}
+
+		// This logic is a bit odd really. Apparently obj_f_dispatcher will not be -1 for non-critters anyway?
+		if (obj.IsNPC() || obj.GetInt32(obj_f_dispatcher) == -1) {
+			d20Sys.d20Status->D20StatusInit(handle);
+		}
+
+	});
+
+	
+	return true;
 }
 
 void MapSystem::ResetFleeTo()
@@ -515,6 +690,9 @@ int MapSystem::GetMapIdByType(MapType type)
 		if (entry.second.type == type) {
 			return entry.first;
 		}
+	}
+	if (type == MapType::ArenaMap){
+		return 5119;
 	}
 	return 0;
 }
@@ -687,6 +865,26 @@ const std::string & MapSystem::GetMapName(int mapId)
 
 	static std::string sEmptyName;
 	return sEmptyName;
+}
+
+const std::string & MapSystem::GetMapDescription(int mapId)
+{
+	auto it = mMaps.find(mapId);
+	if (it != mMaps.end()) {
+		return it->second.description;
+	}
+
+	static std::string sEmptyName;
+	return sEmptyName;
+}
+
+bool MapSystem::IsMapOutdoors(int mapId)
+{
+	auto it = mMaps.find(mapId);
+	if (it != mMaps.end()) {
+		return it->second.IsOutdoors();
+	}
+	return false;
 }
 
 int MapSystem::GetEnterMovie(int mapId, bool ignoreVisited)
@@ -1191,7 +1389,7 @@ void MapSystem::MapLoadPostprocess()
 
 		// Initialize everything's D20 state
 		if (gameSystems->GetParty().IsInParty(handle)) {
-			return; // The party is initialized elsewhere apparently
+			return; // The party is initialized elsewhere (in the Party system)
 		}
 
 		// This logic is a bit odd really. Apparently obj_f_dispatcher will not be -1 for non-critters anyway?

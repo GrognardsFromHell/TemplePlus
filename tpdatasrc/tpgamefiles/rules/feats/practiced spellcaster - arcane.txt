@@ -1,0 +1,6 @@
+name: Practiced Spellcaster - Arcane
+flags: 12582912
+prereqs: 
+description: Your caster level increases by +4 for Arcane spells, limited by your total HD.
+prereq descr: Spellcraft 4 ranks.
+parent: Practiced Spellcaster

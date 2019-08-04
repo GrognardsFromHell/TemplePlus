@@ -48,7 +48,7 @@ struct ClearanceProfile
 
 };
 
-struct ClearanceIndex
+struct ClearanceIndex // Holds the mapping from sector (Y,X) into SectorClearanceData[] array index; -1 if none exists
 {
 	unsigned char numSectors;
 	uint16_t clrAddr[16][16]; // sectorY, sectorX
@@ -59,7 +59,7 @@ struct ClearanceIndex
 	void Reset()
 	{
 		numSectors = 0;
-		for (int i = 0; i < 16 * 16; i++)
+		for (int i = 0; i < 16; i++)
 		{
 			for (int j = 0; j < 16; j++)
 			{
@@ -70,8 +70,8 @@ struct ClearanceIndex
 };
 
 struct SectorClearanceData
-{
-	float val[64 * 3][64 * 3]; // in feet (matched to the Distance3d function return value)
+{ 
+	float val[64 * 3][64 * 3]; // clearance distance, for each subtile, in feet (matched to the Distance3d function return value)
 };
 
 struct MapClearanceData

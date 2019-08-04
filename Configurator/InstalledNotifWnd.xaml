@@ -10,7 +10,7 @@
     <Grid Margin="22,0" HorizontalAlignment="Center" VerticalAlignment="Top" Height="162">
 
         <Label x:Name="label" Content="Temple+ has been installed!" HorizontalAlignment="Left" Margin="0,18,-1,0" VerticalAlignment="Top" Width="329" Height="29" FontSize="15" HorizontalContentAlignment="Center" FontWeight="Bold"/>
-        <Label x:Name="label_Copy" Content="Shortcuts have been added to the start menu." HorizontalAlignment="Left" Margin="0,56,-1,0" VerticalAlignment="Top" Width="329" Height="29" FontSize="14" HorizontalContentAlignment="Center"/>
+        <Label x:Name="label_Copy" Content="Shortcuts have been added to the start menu &#xA;under the &quot;Temple+&quot; folder." HorizontalAlignment="Center" Margin="0,56,-1,0" VerticalAlignment="Top" Width="329" Height="47" FontSize="14" HorizontalContentAlignment="Center"/>
         <Button x:Name="button" Content="Next" HorizontalAlignment="Center" Margin="0,130,0,0" VerticalAlignment="Top" Width="64" Click="button_Click"/>
 
     </Grid>

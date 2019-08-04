@@ -2,7 +2,26 @@
 
 #include "common.h"
 
-enum RaycastFlags : uint32_t
+// these flags are generated based on picker specs and used inside the raycast function in 10022360
+enum GameRaycastFlags : uint32_t {
+	GRF_HITTEST_SEL_CIRCLE = 1,
+	GRF_HITTEST_CYLINDER = 2, // this is set as a default
+	GRF_HITTEST_MESH = 4, // this is set as a default - looks like "Get radius from Aas"
+	GRF_HITTEST_3D = 6,
+	GRF_ExcludeScenery = 8,
+	GRF_ExcludeItems = 16,
+	GRF_ExcludePortals = 32,
+	GRF_ExcludeContainers = 64,
+	GRF_ExcludeCritters = 0x80,
+	GRF_ExcludeDead = 0x100,
+	GRF_ExcludeUnconscious = 0x200	
+};
+
+inline GameRaycastFlags operator|(GameRaycastFlags lhs, GameRaycastFlags rhs) {
+	return static_cast<GameRaycastFlags>(static_cast<uint32_t>(lhs) | static_cast<uint32_t>(rhs));
+}
+
+enum RaycastFlags : uint32_t // used in the ObjIterator
 {
 	HasToBeCleared = 1,
 	HasRadius = 2,
@@ -80,9 +99,12 @@ struct RaycastPointSearchPacket
 	float targetAbsY;
 	float ux; //normalized direction x component
 	float uy;
-	float range;
+	float rangeInch;
 	float absOdotU; // dot product of the origin point and the direction vector, normalized by the direction vector norm
 	float radius;
+
+	RaycastPointSearchPacket(const XMFLOAT2 &origin, const XMFLOAT2 &endPt);
+	bool IsPointInterceptedBySegment(const XMFLOAT2 &v, float objRadius);
 };
 
 struct PointAlongSegment
@@ -91,3 +113,5 @@ struct PointAlongSegment
 	float absY;
 	float distFromOrigin;
 };
+
+bool PickObjectOnScreen(int x, int y, objHndl *pickedHandle, GameRaycastFlags flags);

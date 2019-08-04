@@ -1,0 +1,5 @@
+name: Hide in Plain Sight
+flags: 8
+prereqs:
+description: You can use the hide skill even while being observed. Hiding during combat is a move action and takes a -20 penalty.
+prereq descr: Assassin level 8.

@@ -8,6 +8,7 @@
 #include <util/fixes.h>
 
 #include <ui/ui.h>
+#include <ui/ui_assets.h>
 #include "tig/tig_startup.h"
 #include "tig/tig_texture.h"
 
@@ -415,8 +416,12 @@ int RenderHooks::TextureRender2d(const Render2dArgs* args) {
 	// rendering an icon
 	auto blending = ((args->flags & Render2dArgs::FLAG_DISABLEBLENDING) == 0);
 
-	auto wrap = ((args->flags & Render2dArgs::FLAG_WRAP) != 0);
-	shapeRenderer.DrawRectangle(vertices, deviceTexture, maskTexture, wrap, blending);
+	gfx::SamplerType2d samplerType = gfx::SamplerType2d::CLAMP;
+	if ((args->flags & Render2dArgs::FLAG_WRAP) != 0) {
+		samplerType = gfx::SamplerType2d::WRAP;
+	}
+
+	shapeRenderer.DrawRectangle(vertices, deviceTexture, maskTexture, samplerType, blending);
 	
 	return 0;
 }

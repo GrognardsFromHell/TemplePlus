@@ -1,0 +1,5 @@
+name: Extra Smiting
+flags: 12582913
+prereqs: 266 4
+description: You smite two more times per day than you otherwise could.  You can take this feat multiple times, Its effects stack.
+prereq descr: Paladin Smite Evil, Destruction Domain Smite or Black Guard Smite Good and Base Attack Bonus +4.

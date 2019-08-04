@@ -2,6 +2,7 @@
 #include "location.h"
 #include "obj.h"
 #include "util/fixes.h"
+#include "gamesystems/objects/objsystem.h"
 
 const LocAndOffsets LocAndOffsets::null{ locXY::fromField(0), 0,0 };
 
@@ -184,6 +185,31 @@ void LocationSys::GetScrollTranslation(int& xOut, int& yOut) {
 	yOut = (int) *translationY;
 }
 
+float LocationSys::DistanceToObj(objHndl from, objHndl to){
+	if (!from || !to)
+		return 0.0f;
+	auto fromObj = objSystem->GetObject(from);
+	auto toObj = objSystem->GetObject(to);
+
+	if (fromObj->IsItem()) {
+		auto parent = inventory.GetParent(from);
+		if (parent == to)
+			return 0.0f;
+	}
+	if (toObj->IsItem()){
+		auto parent = inventory.GetParent(to);
+		if (parent == from)
+			return 0.0f;
+	}
+
+	auto fromLoc = fromObj->GetLocationFull();
+	auto toLoc = toObj->GetLocationFull();
+	auto fromRadius = objects.GetRadius(from);
+	auto toRadius = objects.GetRadius(to);
+	auto result = (Distance3d(fromLoc, toLoc) - (fromRadius + toRadius)) / INCH_PER_FEET;
+	return result;
+}
+
 float LocationSys::DistanceToLoc(objHndl from, LocAndOffsets loc) {
 	auto objLoc = objects.GetLocationFull(from);
 	auto distance = Distance3d(objLoc, loc);
@@ -199,6 +225,10 @@ float LocationSys::DistanceToLocFeet(objHndl obj, LocAndOffsets* loc)
 	return InchesToFeet(distance - radius);
 }
 
+
+int64_t LocationSys::GetTileDeltaMaxBtwnLocs(locXY loc1, locXY loc2){
+	return temple::GetRef<int64_t(__cdecl)(locXY, locXY)>(0x1002A030)(loc1, loc2);
+}
 
 float LocationSys::InchesToFeet(float inches) {
 	return inches / 12.0f;
@@ -218,7 +248,7 @@ LocAndOffsets LocationSys::TrimToLength(LocAndOffsets srcLoc, LocAndOffsets tgtL
 float LocationSys::AngleBetweenPoints(LocAndOffsets &fromPoint, LocAndOffsets &toPoint)
 {
 	auto fromCoord = fromPoint.ToInches2D();
-	auto toCoord = fromPoint.ToInches2D();
+	auto toCoord = toPoint.ToInches2D();
 
 	// Create the vector from->to
 	auto dir = XMFLOAT2(
@@ -227,7 +257,28 @@ float LocationSys::AngleBetweenPoints(LocAndOffsets &fromPoint, LocAndOffsets &t
 	);
 
 	auto angle = atan2(dir.y, dir.x);
-	return angle + 2.3561945f; // + 135 degrees
+	return angle; //+ 2.3561945f; // + 135 degrees
+}
+
+XMFLOAT2 LocationSys::GetDirectionVector(LocAndOffsets & fromPoint, LocAndOffsets & toPoint)
+{
+	auto fromCoord = fromPoint.ToInches2D();
+	auto toCoord = toPoint.ToInches2D();
+
+	// Create the vector from->to
+	auto dir = XMFLOAT2(
+		toCoord.x - fromCoord.x,
+		toCoord.y - fromCoord.y
+	);
+
+	auto normalizer = sqrt(dir.x * dir.x + dir.y * dir.y);
+	if (normalizer > 0){
+		dir.x = dir.x / normalizer;
+		dir.y = dir.y / normalizer;
+	}
+		
+
+	return dir;
 }
 
 LocationSys::LocationSys()
@@ -237,7 +288,7 @@ LocationSys::LocationSys()
 	rebase(subtileFromLoc,0x10040750); 
 	rebase(PointNodeInit, 0x100408A0);
 
-	rebase(DistanceToObj, 0x100236E0);
+	//rebase(DistanceToObj, 0x100236E0);
 	
 	rebase(ShiftSubtileOnceByDirection, 0x10029DC0);
 	rebase(Distance3d, 0x1002A0A0);
@@ -251,7 +302,7 @@ LocationSys::LocationSys()
 float AngleBetweenPoints(LocAndOffsets fromPoint, LocAndOffsets toPoint) {
 
 	auto fromCoord = fromPoint.ToInches2D();
-	auto toCoord = fromPoint.ToInches2D();
+	auto toCoord = toPoint.ToInches2D();
 	
 	// Create the vector from->to
 	auto dir = XMFLOAT2(
@@ -260,7 +311,7 @@ float AngleBetweenPoints(LocAndOffsets fromPoint, LocAndOffsets toPoint) {
 	);
 
 	auto angle = atan2(dir.y, dir.x);
-	return angle + 2.3561945f; // + 135 degrees
+	return angle; //+ 2.3561945f; // + 135 degrees
 }
 
 bool operator!=(const LocAndOffsets& to, const LocAndOffsets& rhs)

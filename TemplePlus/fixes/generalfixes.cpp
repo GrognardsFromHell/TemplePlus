@@ -14,6 +14,12 @@
 #include <tig/tig_font.h>
 #include <party.h>
 #include <damage.h>
+#include "ui/ui_systems.h"
+#include "ui/ui_legacysystems.h"
+#include "animgoals/anim.h"
+#include <gamesystems\objects\objsystem.h>
+#include <location.h>
+#include "gamesystems/gamesystems.h"
 
 struct TigTextStyle;
 
@@ -37,7 +43,7 @@ public:
 
 
 objHndl __cdecl ItemWornAtModifiedForTumlbeCheck(objHndl objHnd, uint32_t itemWornSlot)
-{
+{ // hook inside 0x1008AA90 ; will also affect dwarf subraces
 	if (critterSys.GetRace(objHnd) == race_dwarf)
 	{
 		return objHndl::null;
@@ -117,7 +123,7 @@ class SpellSlingerGeneralFixes : public TempleFix
 public:
 
 	
-
+	static int EncumbranceNextWeight(int strScore, int encumLevel);
 	void apply() override{
 		// breakfree_on_entanglement_fix.txt
 		writeHex(0x100D4259, "90 90 90 90  90 90");
@@ -174,6 +180,10 @@ public:
 			return orgEncumbranceQuery(args);
 		});
 
+
+		// fixes hangup when equipping item with really high STR
+		replaceFunction(0x100EBB20, EncumbranceNextWeight);
+
 	}
 } spellSlingerGeneralFixes;
 
@@ -193,6 +203,7 @@ uint32_t __cdecl HookedFragarachAnswering(DispatcherCallbackArgs args) {
 	{
 		logger->info("Prevented Scather AoO bug! TB Actor is {}, Attachee is {},  target is {}", 
 			description.getDisplayName(curActor), description.getDisplayName(attachee), description.getDisplayName(tgtObj) );
+		// got a crash report once from the getDisplayName here when triggered by a trap apparently, so disabling it
 		return 0;
 	}
 
@@ -243,9 +254,38 @@ uint32_t GetCourageBonus(objHndl objHnd)
 	return 4;
 };
 
+int BardicInspiredCourageInitGetBonusRounds()
+// Helper Function that finds the number of extra rounds to allow inspire courage to last after the bard stops singing
+{
+	int bonusRounds = 0;
+
+	// Find the highest level bard
+	auto brdLvl = 0;
+	objHndl highBardDude;
+	for (unsigned int i = 0; i<party.GroupListGetLen(); i++) {
+		auto dude = party.GroupListGetMemberN(i);
+		if (!dude)
+			continue;
+		auto dudeBrdLvl = objects.StatLevelGet(dude, stat_level_bard);
+		if (dudeBrdLvl > brdLvl) {
+			brdLvl = dudeBrdLvl;
+			highBardDude = dude;
+		}
+	}
+
+	// Query the highest level bard for the number of bonus rounds
+	if (brdLvl > 0) {
+		bonusRounds = d20Sys.D20QueryPython(highBardDude, "Bardic Ability Duration Bonus");
+	}
+
+	return bonusRounds;
+}
+
 uint32_t __cdecl BardicInspiredCourageInitArgs(DispatcherCallbackArgs args)
 {
-	conds.CondNodeSetArg(args.subDispNode->condNode, 0, 5);
+	auto bonusRounds = BardicInspiredCourageInitGetBonusRounds();
+	
+	conds.CondNodeSetArg(args.subDispNode->condNode, 0, 5 + bonusRounds);
 	conds.CondNodeSetArg(args.subDispNode->condNode, 1, 0);
 	auto courageBonus = 1;
 	if ( objects.IsCritter(args.objHndCaller) )
@@ -265,15 +305,17 @@ uint32_t __cdecl BardicInspiredCourageInitArgs(DispatcherCallbackArgs args)
 	return 0;
 };
 
+
 // Bardic Inspire Courage Function Replacements
 class BardicInspireCourageFix : public TempleFix
 {
 public:
-
+	static int BardicInspiredCourageRefresh(DispatcherCallbackArgs args);
 	static int BardicInspiredCourageToHit(DispatcherCallbackArgs args);
 	static int BardicInspiredCourageDamBon(DispatcherCallbackArgs args);
 	void apply() override
 	{
+		replaceFunction(0x100EA510, BardicInspiredCourageRefresh);
 		replaceFunction(0x100EA5C0, BardicInspiredCourageInitArgs);
 		replaceFunction(0x100EA5F0, BardicInspiredCourageToHit);
 		replaceFunction(0x100EA630, BardicInspiredCourageDamBon);
@@ -307,39 +349,47 @@ class WalkOnShortDistanceMod : public TempleFix
 {
 public: 
 
-	static int(__cdecl*orgSub_100437F0)(LocAndOffsets loc, int runFlag);
-	static int(__cdecl *orgShouldRun)(objHndl obj);
-	static int(__cdecl*orgAnimPushRunToTileWithPath)(objHndl obj, LocAndOffsets loc, Path* path);
-	static int ShouldRun(objHndl obj)
-	{
-		return 0;
-	};
-	static int Sub_100437F0(LocAndOffsets loc, int runFlag)
-	{
-		return orgSub_100437F0(loc, runFlag);
+	static int PartySelectedStandUpAndMoveToPosition(LocAndOffsets loc, int walkFlag);
+	static int(__cdecl*orgPartySelectedFormationMoveToPosition)(LocAndOffsets loc, int walkFlag);
+	static int PartySelectedFormationMoveToPosition(LocAndOffsets loc, int isNotAlwaysRun){
+
+		isWalkOverride = true;
+		auto N = party.CurrentlySelectedNum();
+		for (int i = 0; i < static_cast<int>(N); i++) {
+			auto dude = party.GetCurrentlySelected(i);
+			if (!dude)
+				continue;
+			if (locSys.DistanceToLoc(dude, loc) > INCH_PER_FEET * config.walkDistanceFt) {
+				isWalkOverride = false;
+			}
+		}
+
+		return orgPartySelectedFormationMoveToPosition(loc, isWalkOverride);
 	};
 
-	static int AnimPushRunToTileWithPath(objHndl obj, LocAndOffsets loc, Path* path)
-{
-		return orgAnimPushRunToTileWithPath(obj, loc, path);
-};
+	static bool isWalkOverride;
 
 		void apply() override
 		{
-		//	replaceFunction(0x100FD1C0, sub_100FD1C0);
-		//orgSub_100437F0 = replaceFunction(0x100437F0, Sub_100437F0);
-		//orgShouldRun = replaceFunction(0x10014750, ShouldRun);
+			isWalkOverride = false;
+
+			redirectToLambda<BOOL(__cdecl)(objHndl, LocAndOffsets)>(0x10044995, [](objHndl handle, LocAndOffsets loc) {
+				if (isWalkOverride)
+					return gameSystems->GetAnim().PushWalkToTile(handle, loc) ? TRUE : FALSE; 
+				else
+					return gameSystems->GetAnim().PushRunToTile(handle, loc) ? TRUE : FALSE;
+			});
+			
+		replaceFunction(0x10113010, PartySelectedStandUpAndMoveToPosition);
+		orgPartySelectedFormationMoveToPosition = replaceFunction(0x100437F0, PartySelectedFormationMoveToPosition);
 		//writeHex(0x1001A922, "90 90 90 90");
 		//writeHex(0x1001A98F, "90 90 90 90");
 		//writeHex(0x1001A338 + 1, "05");
 		//writeHex(0x1001A346 + 1, "03");
-		//orgAnimPushRunToTileWithPath = replaceFunction(0x1001A2E0, AnimPushRunToTileWithPath);
 		}
 } walkOnShortDistMod;
-
-int(__cdecl*WalkOnShortDistanceMod::orgSub_100437F0)(LocAndOffsets loc, int runFlag);
-int(__cdecl*WalkOnShortDistanceMod::orgShouldRun)(objHndl obj);
-int(__cdecl*WalkOnShortDistanceMod::orgAnimPushRunToTileWithPath)(objHndl obj, LocAndOffsets loc, Path* path);
+bool WalkOnShortDistanceMod::isWalkOverride = false;
+int(__cdecl*WalkOnShortDistanceMod::orgPartySelectedFormationMoveToPosition)(LocAndOffsets loc, int walkFlag);
 
 // PartyPool UI Fix
 static class PartyPoolUiLagFix : public TempleFix {
@@ -416,7 +466,7 @@ int RemoveSuggestionSpellFix::RemoveSpellSuggestion(DispIO* dispIo, enum_disp_ty
 			auto spellId = _CondNodeGetArg(sdn->condNode, 0);
 			d20Sys.d20SendSignal(obj, DK_SIG_Spell_End, spellId, 0);
 			critterSys.RemoveFollower(obj, 1);
-			ui.UpdatePartyUi();
+			uiSystems->GetParty().Update();
 			return 1;
 		}
 		return 0;
@@ -432,7 +482,7 @@ int RemoveSuggestionSpellFix::RemoveSpellSuggestion(DispIO* dispIo, enum_disp_ty
 	if (dispKey == DK_SIG_Killed ||dispKey == DK_SIG_Critter_Killed){
 		d20Sys.d20SendSignal(obj, DK_SIG_Spell_End, spellId, 0);
 		critterSys.RemoveFollower(obj, 1);
-		ui.UpdatePartyUi();
+		uiSystems->GetParty().Update();
 		return 1;
 	}
 
@@ -441,7 +491,7 @@ int RemoveSuggestionSpellFix::RemoveSpellSuggestion(DispIO* dispIo, enum_disp_ty
 		if (dispIo->dispIOType == dispIOTypeDispelCheck || dispIo->dispIOType == dispIOTypeTurnBasedStatus)	{
 			d20Sys.d20SendSignal(obj, DK_SIG_Spell_End, 0, 0);
 			critterSys.RemoveFollower(obj, 1);
-			ui.UpdatePartyUi();
+			uiSystems->GetParty().Update();
 		}
 		return 0;
 	}
@@ -456,7 +506,7 @@ int RemoveSuggestionSpellFix::RemoveSpellSuggestion(DispIO* dispIo, enum_disp_ty
 		if (d20Sys.d20QueryWithData(obj, DK_QUE_Critter_Has_Condition, condSuggestion, 0) == 1 && d20a->spellId != spellId)	{
 			d20Sys.d20SendSignal(obj, DK_SIG_Spell_End, spellPkt.spellId, 0);
 			critterSys.RemoveFollower(obj, 1);
-			ui.UpdatePartyUi();
+			uiSystems->GetParty().Update();
 			return 1;
 		}	
 	} else if (d20Sys.IsActionOffensive(d20a->d20ActType, d20a->d20ATarget))	{
@@ -464,7 +514,7 @@ int RemoveSuggestionSpellFix::RemoveSpellSuggestion(DispIO* dispIo, enum_disp_ty
 			if (d20Sys.d20QueryWithData(obj, DK_QUE_Critter_Has_Condition, condSuggestion, 0))	{
 				d20Sys.d20SendSignal(obj, DK_SIG_Spell_End, objHndl::null);
 				critterSys.RemoveFollower(obj, 1);
-				ui.UpdatePartyUi();
+				uiSystems->GetParty().Update();
 				return 1;
 			}
 		}
@@ -527,6 +577,8 @@ int BardicInspireCourageFix::BardicInspiredCourageToHit(DispatcherCallbackArgs a
 			bonVal = 2;
 		else if (brdLvl < 20) 
 			bonVal = 3;
+		else
+			bonVal = 4;
 	}
 	dispIo->bonlist.AddBonus(bonVal, 13, 191);
 	return 0;
@@ -556,7 +608,74 @@ int BardicInspireCourageFix::BardicInspiredCourageDamBon(DispatcherCallbackArgs 
 			bonVal = 2;
 		else if (brdLvl < 20)
 			bonVal = 3;
+		else
+			bonVal = 4;
 	}
 	dispIo->damage.AddDamageBonus(bonVal, 13, 191);
 	return 0;
+}
+
+int BardicInspireCourageFix::BardicInspiredCourageRefresh(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIoTypeCondStruct, DispIoCondStruct);
+	if (dispIo->condStruct == (CondStruct*)args.GetData1()) {
+		auto bonusRounds = BardicInspiredCourageInitGetBonusRounds();
+
+		args.SetCondArg(0, 5+ bonusRounds); // set duration to the old condition value
+		args.SetCondArg(1, 1);
+		dispIo->outputFlag = 0; // prevent adding a duplicate entry
+	}
+	return 0;
+}
+
+int WalkOnShortDistanceMod::PartySelectedStandUpAndMoveToPosition(LocAndOffsets loc, int walkFlag){
+	// make Prone party members do a Stand Up action first if they're prone
+	auto N = party.GroupListGetLen();
+	for (auto i=0u; i < N; i++){
+		auto partyMember = party.GroupListGetMemberN(i);
+		if (!d20Sys.d20Query(partyMember, DK_QUE_Prone))
+			continue;
+		actSeqSys.TurnBasedStatusInit(partyMember);
+		actSeqSys.curSeqReset(partyMember);
+		d20Sys.GlobD20ActnInit();
+		d20Sys.GlobD20ActnSetTypeAndData1(D20A_STAND_UP, 0);
+		actSeqSys.ActionAddToSeq();
+		actSeqSys.sequencePerform();
+	}
+	return PartySelectedFormationMoveToPosition(loc, walkFlag);
+}
+
+int SpellSlingerGeneralFixes::EncumbranceNextWeight(int strScore, int encumLevel)
+{
+	auto result = 0;
+	if (strScore <=0){
+		if (encumLevel == 1)
+			return 0;
+		if (encumLevel == 2)
+			return 1;
+		if (encumLevel == 3)
+			return 2;
+	}
+	if (strScore >= 29)
+	{
+		if (strScore >= 80) // fixed so it doesn't exponentially explode... (for cheat characters)
+			return 1000 * 1000;
+		result = 4 * EncumbranceNextWeight(strScore - 10, encumLevel);
+	}
+	else
+	{
+		switch (encumLevel)
+		{
+		case 1:
+			result = temple::GetRef<int[]>(0x102E4904)[strScore];
+			break;
+		case 2:
+			result = temple::GetRef<int[]>(0x102E497C)[strScore];
+			break;
+		case 3:
+			result = temple::GetRef<int[]>(0x102E49F4)[strScore];
+			break;
+		}
+	}
+	return result;
 }

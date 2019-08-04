@@ -3,7 +3,12 @@
 
 #include "ui_systems.h"
 #include "ui_legacysystems.h"
-
+#include "ui_turn_based.h"
+#include "ui_mainmenu.h"
+#include "ui_worldmap.h"
+#include "ui_pc_creation.h"
+#include "ui_char.h"
+#include "ui_townmap.h"
 UiSystems* uiSystems = nullptr;
 
 UiSystems::UiSystems(int width, int height)
@@ -19,14 +24,14 @@ UiSystems::UiSystems(int width, int height)
 	mInGame = InitializeSystem<UiInGame>(config);
 	mInGameSelect = InitializeSystem<UiInGameSelect>(config);
 	mRadialMenu = InitializeSystem<UiRadialMenu>(config);
-	mTurnBased = InitializeSystem<UiTurnBased>(config);
+	mTurnBased = InitializeSystem<UiTurnBased>(config.width, config.height);
 	mAnim = InitializeSystem<UiAnim>(config);
 	mTB = InitializeSystem<UiTB>(config);
 	mWMapRnd = InitializeSystem<UiWMapRnd>();
 	mCombat = InitializeSystem<UiCombat>(config);
 	mSlide = InitializeSystem<UiSlide>();
 	mDlg = InitializeSystem<UiDlg>(config);
-	mPcCreation = InitializeSystem<UiPcCreation>(config);
+	mPcCreation = InitializeSystem<UiPcCreationSys>(config);
 	mChar = InitializeSystem<UiChar>(config);
 	mToolTip = InitializeSystem<UiToolTip>(config);
 	mLogbook = InitializeSystem<UiLogbook>(config);
@@ -35,12 +40,13 @@ UiSystems::UiSystems(int width, int height)
 	mPopup = InitializeSystem<UiPopup>(config);
 	mTextDialog = InitializeSystem<UiTextDialog>(config);
 	mFocusManager = InitializeSystem<UiFocusManager>(config);
-	mWorldmap = InitializeSystem<UiWorldmap>(config);
+	mWorldmap = InitializeSystem<UiWorldmap>(config.width, config.height);
 	mRandomEncounter = InitializeSystem<UiRandomEncounter>(config);
 	mHelp = InitializeSystem<UiHelp>(config);
 	mItemCreation = InitializeSystem<UiItemCreation>(config);
 	mSkillMastery = InitializeSystem<UiSkillMastery>(config);
 	mUtilityBar = InitializeSystem<UiUtilityBar>(config);
+	mDungeonMaster = InitializeSystem<UiDM>(config);
 	mTrack = InitializeSystem<UiTrack>(config);
 	mPartyPool = InitializeSystem<UiPartyPool>(config);
 	mPccPortrait = InitializeSystem<UiPccPortrait>(config);
@@ -50,7 +56,7 @@ UiSystems::UiSystems(int width, int height)
 	mHelpInventory = InitializeSystem<UiHelpInventory>(config);
 	mPartyQuickview = InitializeSystem<UiPartyQuickview>();
 	mOptions = InitializeSystem<UiOptions>(config);
-	mManager = InitializeSystem<UiManager>(config);
+	mManager = InitializeSystem<UiKeyManager>(config);
 	mHelpManager = InitializeSystem<UiHelpManager>(config);
 	mSlider = InitializeSystem<UiSlider>(config);
 	mWritten = InitializeSystem<UiWritten>(config);

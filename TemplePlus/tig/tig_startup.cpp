@@ -5,6 +5,8 @@
 #include <graphics/shaperenderer3d.h>
 #include <graphics/mdfmaterials.h>
 
+#include <debugui.h>
+
 #include <temple/dll.h>
 #include <temple/vfs.h>
 #include <temple/soundsystem.h>
@@ -19,10 +21,12 @@
 
 #include "tig_startup.h"
 #include "../tio/tio.h"
+#include "tig_console.h"
 
 #include "../config/config.h"
 #include <fstream>
 #include <mod_support.h>
+#include <winsock.h>
 
 TigInitializer* tig = nullptr;
 
@@ -101,8 +105,16 @@ TigInitializer::TigInitializer(HINSTANCE hInstance)
 	mRenderingDevice->SetAntiAliasing(config.antialiasing,
 		config.msaaSamples,
 		config.msaaQuality);
+
+	mDebugUI = std::make_unique<DebugUI>(*mRenderingDevice);
+	// Install a message filter for the debug UI
+	mMainWindow->SetWindowMsgFilter([&](UINT msg, WPARAM wParam, LPARAM lParam) {
+		return mDebugUI->HandleMessage(msg, wParam, lParam);
+	});
+
 	mMdfFactory = std::make_unique<gfx::MdfMaterialFactory>(*mRenderingDevice);
 	mMdfFactory->LoadReplacementSets("rules\\materials.mes");
+	mMdfFactory->LoadReplacementSets("rules\\materials_ext.mes"); // material extension file
 	mShapeRenderer2d = std::make_unique<gfx::ShapeRenderer2d>(*mRenderingDevice);
 	mShapeRenderer3d = std::make_unique<gfx::ShapeRenderer3d>(*mRenderingDevice);
 	mTextLayouter = std::make_unique<TextLayouter>(*mRenderingDevice, *mShapeRenderer2d);
@@ -124,7 +136,7 @@ TigInitializer::TigInitializer(HINSTANCE hInstance)
 	// mStartedSystems.emplace_back(StartSystem("texture.c", 0x101EDF60, 0x101EE0A0));
 	mStartedSystems.emplace_back(StartSystem("mouse.c", 0x101DDF50, 0x101DDE30));
 	mStartedSystems.emplace_back(StartSystem("message.c", 0x101DE460, 0x101DE4E0));
-	// mMessageQueue = std::make_unique<MessageQueue>();
+	mMessageQueue = std::make_unique<MessageQueue>();
 	// startedSystems.emplace_back(StartSystem("gfx.c", TigStartupNoop, TigShutdownNoop));
 	mStartedSystems.emplace_back(StartSystem("strparse.c", 0x101EBF00, TigShutdownNoop));
 	mStartedSystems.emplace_back(StartSystem("filecache.c", TigStartupNoop, TigShutdownNoop));
@@ -136,7 +148,8 @@ TigInitializer::TigInitializer(HINSTANCE hInstance)
 	// mStartedSystems.emplace_back(StartSystem("movie.c", 0x101F1090, TigShutdownNoop));
 	mStartedSystems.emplace_back(StartSystem("wft.c", 0x101F98A0, 0x101F9770));
 	mStartedSystems.emplace_back(StartSystem("font.c", 0x101EAEC0, 0x101EA140));
-	mStartedSystems.emplace_back(StartSystem("console.c", 0x101E0290, 0x101DFBC0));
+	mConsole = std::make_unique<Console>();
+	// mStartedSystems.emplace_back(StartSystem("console.c", 0x101E0290, 0x101DFBC0));
 	mStartedSystems.emplace_back(StartSystem("loadscreen.c", 0x101E8260, TigShutdownNoop));
 
 	*tigInternal.consoleDisabled = false; // tig init disables console by default
@@ -191,7 +204,7 @@ void TigInitializer::LoadDataFiles() {
 		logger->info("Registering archive {}", file.name);
 		int result = tio_path_add(file.name);
 		if (result != 0) {
-			logger->trace("Unable to add archive {}: {}", file.name, result);
+			logger->error("Unable to add archive {}: {}", file.name, result);
 		}
 	}
 
@@ -204,7 +217,8 @@ void TigInitializer::LoadDataFiles() {
 
 	logger->info("Registering tpdata\\tpgamefiles.dat");
 	if (tio_path_add(fmt::format("{}\\tpgamefiles.dat", tpDataPath).c_str())) {
-		logger->trace("Unable to add archive tpdata\\tpgamefiles.dat");
+		logger->error("Unable to add archive tpdata\\tpgamefiles.dat");
+		throw TempleException("Could not load tpgamefiles.dat!");
 	}
 
 	if (tio_path_add(tpDataPath.c_str())) {
@@ -226,7 +240,7 @@ void TigInitializer::LoadDataFiles() {
 	logger->info("Registering new pathfinding data tpdata\\clearances.dat");
 	auto result=  tio_path_add(fmt::format("{}\\clearances.dat", tpDataPath).c_str());
 	if (result != 0) {
-		logger->trace("Unable to add archive tpdata\\clearances.dat");
+		logger->error("Unable to add archive tpdata\\clearances.dat");
 	}
 
 	if (temple::Dll::GetInstance().HasCo8Hooks()){
@@ -236,24 +250,32 @@ void TigInitializer::LoadDataFiles() {
 			logger->info("KotB module detected; registering  kotbfixes.dat.");
 			result = tio_path_add(fmt::format("{}\\kotbfixes.dat", tpDataPath).c_str());
 			if (result != 0) {
-				logger->trace("Unable to add archive tpdata\\kotbfixes.dat");
+				logger->error("Unable to add archive tpdata\\kotbfixes.dat");
 			}
 		}
-		else if (modSupport.IsIWD()){
-			// placeholder
-			logger->info("Icewind Dale module detected.");
-		}
-		else{
-			logger->info("Registering Co8 file fixes tpdata\\co8fixes.dat");
-			result = tio_path_add(fmt::format("{}\\co8fixes.dat", tpDataPath).c_str());
+		else {
+			logger->info("Registering Co8 infrastructure fixes tpdata\\co8infra.dat");
+			result = tio_path_add(fmt::format("{}\\co8infra.dat", tpDataPath).c_str());
 			if (result != 0) {
-				logger->trace("Unable to add archive tpdata\\co8fixes.dat");
+				logger->error("Unable to add archive tpdata\\co8fixes.dat");
+			}
+
+			if (modSupport.IsIWD()) {
+				// placeholder
+				logger->info("Icewind Dale module detected.");
+			}
+			else {
+				logger->info("Registering Co8 file fixes tpdata\\co8fixes.dat");
+				result = tio_path_add(fmt::format("{}\\co8fixes.dat", tpDataPath).c_str());
+				if (result != 0) {
+					logger->error("Unable to add archive tpdata\\co8fixes.dat");
+				}
 			}
 		}
 		
 	}
 
-	// overrides for testing (mainly for co8fixes so there's no need to repack the archive)
+	// overrides for testing (mainly for co8fixes so there's no need to repack the archive). Also for user mods.
 	tio_mkdir(fmt::format("overrides").c_str());
 	tio_path_add(fmt::format("overrides").c_str());
 

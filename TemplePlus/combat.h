@@ -5,7 +5,7 @@
 
 
 /*
-	Maximum distance for NPCs to execute the "EnterCombat" function
+	Maximum distance for NPCs to execute the "EnterCombat" function (18 tiles)
 	Unfortunately increasing this only makes you bump into the pathfinding
 	limitation
 */
@@ -39,8 +39,12 @@ struct LegacyCombatSystem : temple::AddressTable {
 	objHndl CheckRangedWeaponAmmo(objHndl obj); // checks if the ammo slot item matches a wielded weapon (primary or secondary), and if so, returns it
 	bool AmmoMatchesItemAtSlot(objHndl obj, EquipSlot equipSlot);
 	objHndl * GetHostileCombatantList(objHndl obj, int* count); // gets a list from the combat initiative
+	std::vector<objHndl> GetHostileCombatantList(objHndl handle); // gets a list from the combat initiative
 	void GetEnemyListInRange(objHndl obj, float rangeFeet, std::vector<objHndl> & enemies);
 	bool HasLineOfAttack(objHndl obj, objHndl target); // can shoot or attack target (i.e. target isn't behind a wall or sthg)
+	// can shoot or attack target (i.e. target isn't behind a wall or sthg)
+	bool HasLineOfAttackFromPosition(LocAndOffsets fromPosition, objHndl target);
+	
 
 
 	void AddToInitiativeWithinRect(objHndl objHndl) const; // adds critters to combat initiative around obj
@@ -48,12 +52,19 @@ struct LegacyCombatSystem : temple::AddressTable {
 	void CombatSubturnEnd();
 	void Subturn();
 	void TurnProcessAi(objHndl obj);
+	BOOL StartCombat(objHndl combatInitiator, int setToFirstInitiativeFlag); // setToFirstInitiativeFlag - will set combatInitiator to start of initiative list if true
 	void TurnStart2( int initiativeIdx);
 	void CombatAdvanceTurn(objHndl obj);
 	BOOL IsBrawlInProgress();
+	void CritterExitCombatMode(objHndl handle);
+	bool CombatEnd(); // ends combat mode
 	
+
 	uint32_t* combatModeActive;
 	bool isCombatActive();
+	bool IsAutoAttack();
+	bool AllCombatantsFarFromParty();
+	bool AllPcsUnconscious(); // true if all party PCs are unconscious
 	uint32_t IsCloseToParty(objHndl objHnd);
 	/*
 	// in vanilla, checks if obj are both in the party or both NOT in the party; kinda used like IsFriendly in the code, so be careful!
@@ -61,9 +72,11 @@ struct LegacyCombatSystem : temple::AddressTable {
 	*/
 	BOOL AffiliationSame(objHndl obj, objHndl obj2); 
 	/*
-		retrieves a list of enemies that the obj can melee with; return val is that number of such enemies
+		retrieves a list of enemies that can melee attack obj; return val is that number of such enemies
 	*/
 	int GetEnemiesCanMelee(objHndl obj, objHndl* canMeleeList);
+	std::vector<objHndl> GetEnemiesCanMelee(objHndl handle);
+
 	objHndl GetWeapon(AttackPacket* attackPacket);
 	static bool IsUnarmed(objHndl handle);
 	bool DisarmCheck(objHndl attacker, objHndl defender, D20Actn* d20a);
@@ -76,10 +89,10 @@ struct LegacyCombatSystem : temple::AddressTable {
 	/*
 		Use for the non-lethal brawl.
 	*/
-	void (__cdecl *Brawl)(objHndl a, objHndl b);
+	void Brawl(objHndl a, objHndl b);
+	void (__cdecl *_Brawl)(objHndl a, objHndl b);
 	void enterCombat(objHndl objHnd);
-
-	void (__cdecl *AddToInitiative)(objHndl critter);
+	void AddToInitiative(objHndl critter);
 	void (__cdecl *RemoveFromInitiative)(objHndl critter);
 
 	int (__cdecl *GetInitiative)(objHndl critter);
@@ -103,12 +116,12 @@ struct LegacyCombatSystem : temple::AddressTable {
 		rebase(IsFlankedBy, 0x100B9200);
 		rebase(_GetInitiativeListLength, 0x100DEDA0);
 		rebase(_GetInitiativeListMember, 0x100DEDF0);
-		rebase(AddToInitiative, 0x100DF1E0);
+		
 		rebase(RemoveFromInitiative, 0x100DF530);
 		rebase(GetInitiative, 0x100DEDB0);
 		rebase(SetInitiative, 0x100DF2E0);
 		rebase(_GetClosestEnemy, 0x100E2B80);
-		rebase(Brawl, 0x100EBD40);
+		rebase(_Brawl, 0x100EBD40);
 	}
 
 private:

@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <EASTL/hash_map.h>
+#include <EASTL/vector.h>
 #include <temple/dll.h>
 #include "tig/tig.h"
 #include <obj.h>
@@ -20,13 +22,43 @@ struct UiResizeArgs {
 	TigRect rect2;
 };
 
-struct Widget {
-	uint32_t type; // 1 - window 2 - button 3 - scrollbar
+struct TooltipStyle {
+	const char* styleName;
+	const char* fontName;
+	int fontSize;
+	int fontColorAlpha;
+	int fontColorRed;
+	int fontColorGreen;
+	int fontColorBlue;
+};
+
+enum class LgcyWidgetType : uint32_t {
+	Window = 1,
+	Button = 2,
+	Scrollbar = 3
+};
+
+typedef int LgcyWidgetId;
+
+struct TigMsg;
+struct TigRect;
+struct TigMouseMsg;
+
+/*
+The base structure of all legacy widgets
+*/
+using LgcyWidgetRenderFn = void(*)(LgcyWidgetId widgetId);
+using LgcyWidgetRenderTooltipFn = void(*)(int x, int y, LgcyWidgetId *id);
+using LgcyWidgetHandleMsgFn = BOOL(*)(LgcyWidgetId id, TigMsg *msg);
+
+#pragma pack(push, 1)
+struct LgcyWidget {
+	LgcyWidgetType type;
 	uint32_t size;
-	int parentId;
-	int widgetId;
+	LgcyWidgetId parentId;
+	LgcyWidgetId widgetId;
 	char name[64];
-	uint32_t widgetFlags; // 1 - hidden?
+	uint32_t flags;
 	int x;
 	int y;
 	int xrelated;
@@ -34,12 +66,42 @@ struct Widget {
 	uint32_t width;
 	uint32_t height;
 	uint32_t field_6c;
-	int(__cdecl*renderTooltip)(int x, int y, int* widId) ;
-	void(__cdecl*render)(int widId); // Function pointer
-	BOOL(__cdecl*handleMessage)(int widId, TigMsg* msg); // Function pointer
+	LgcyWidgetRenderTooltipFn renderTooltip = nullptr;
+	LgcyWidgetRenderFn render = nullptr;
+	LgcyWidgetHandleMsgFn handleMessage = nullptr;
+
+	bool IsWindow() const {
+		return type == LgcyWidgetType::Window;
+	}
+
+	bool IsButton() const {
+		return type == LgcyWidgetType::Button;
+	}
+
+	bool IsScrollBar() const {
+		return type == LgcyWidgetType::Scrollbar;
+	}
+
+	bool IsHidden() const {
+		return (flags & 1) != 0;
+	}
+	
+	bool CanHandleMessage() const {
+		if (widgetId == -1){
+			auto dummy = 1;
+			return false;
+		}
+		return !!handleMessage;
+	}
+
+	bool HandleMessage(const TigMsg &msg) {
+		return handleMessage(widgetId, const_cast<TigMsg*>(&msg)) != 0;
+	}
+
+	size_t GetSize() const;
 };
 
-enum class WindowMouseState : uint32_t {
+enum class LgcyWindowMouseState : uint32_t {
 	Outside = 0,
 	Hovered = 6,
 	// I have not actually found any place where this is ever set
@@ -47,111 +109,58 @@ enum class WindowMouseState : uint32_t {
 	PressedOutside = 8
 };
 
-/*
-	Type: 1
-	Size: 660
-	Examples: mm_ui->c:1057
-*/
-struct WidgetType1 : public Widget {
+struct LgcyWindow : public LgcyWidget {
 	int children[128];
 	uint32_t field_27c;
 	uint32_t childrenCount;
-	int windowId;
-	WindowMouseState mouseState;
+	int zIndex;
+	LgcyWindowMouseState mouseState;
 	uint32_t field_28c;
 	uint32_t field_290;
 
-
-	WidgetType1()
-	{
-		widgetId = -1;
-		parentId = -1;
-		type = 1;
-		x = 0;
-		y = 0;
-		xrelated = 0;
-		yrelated = 0;
-		height = 0;
-		width = 0;
-		render = 0;
-		handleMessage = 0;
-		renderTooltip = 0;
-		childrenCount = 0;
-		mouseState = WindowMouseState::Outside;
-		field_28c = 0;
-		windowId = 0;
-		widgetFlags = 0;
-	}
-	WidgetType1(int xin, int yin, int widthin, int heightin){
-		WidgetType1Init(xin, yin, widthin, heightin);
-	}
-
-	void WidgetType1Init(int xin, int yin, int widthin, int heightin)
-	{
-		widgetId = -1;
-		parentId = -1;
-		type = 1;
-		x = xin;
-		y = yin;
-		xrelated = xin;
-		yrelated = yin;
-		height = heightin;
-		width = widthin;
-		render = 0;
-		handleMessage = 0;
-		renderTooltip = 0;
-		childrenCount = 0;
-		mouseState = WindowMouseState::Outside;
-		field_28c = 0;
-		windowId = 0;
-		widgetFlags = 0;
-	}
-	bool Add(int * widIdOut);
+	LgcyWindow();
+	LgcyWindow(int x, int y, int w, int h);
 };
 
 /*
-	Type: 2
-	Size: 188
-	Examples: charmap_ui->c:203, options_ui->c:1342
+Type: 2
+Size: 188
+Examples: charmap_ui->c:203, options_ui->c:1342
 */
-enum UiButtonState : uint32_t
+enum LgcyButtonState : uint32_t
 {
-	UBS_NORMAL = 0,
-	UBS_HOVERED,
-	UBS_DOWN,
-	UBS_RELEASED,
-	UBS_DISABLED
+	Normal = 0,
+	Hovered,
+	Down,
+	Released,
+	Disabled
 };
 
-struct WidgetType2 : public Widget {
-	int field7c;
-	int field80;
-	int field84;
-	int field88;
-	int field8C;
-	int field90;
-	int buttonState; // 1 - hovered 2 - down  3 - released 4 - disabled
+struct LgcyButton : public LgcyWidget {
+	int field7c = -1;
+	int field80 = -1;
+	int field84 = -1;
+	int field88 = -1;
+	int field8C = -1;
+	int field90 = -1;
+	LgcyButtonState buttonState = LgcyButtonState::Normal; // 1 - hovered 2 - down  3 - released 4 - disabled
 	int field98;
 	int field9C;
 	int fieldA0;
 	int fieldA4;
 	int fieldA8;
-	int sndDown;
-	int sndClick;
-	int hoverOn;
-	int hoverOff;
-	WidgetType2();
-	WidgetType2(char* ButtonName, int ParentId, int X, int Y, int Width, int Height);
-	WidgetType2(char* ButtonName, int ParentId, TigRect& rect);
-	bool Add(int* widIdOut);
+	int sndDown = -1;
+	int sndClick = -1;
+	int sndHoverOn = -1;
+	int sndHoverOff = -1;
+	LgcyButton();
+	LgcyButton(char* ButtonName, int ParentId, int X, int Y, int Width, int Height);
+	LgcyButton(char* ButtonName, int ParentId, TigRect& rect);
+
+	void SetDefaultSounds();
 };
 
-/*
-	Type: 3
-	Size: 176
-	Only Example: wft\wft_scrollbar.c:138
-*/
-struct WidgetType3 : public Widget {
+struct LgcyScrollBar : public LgcyWidget {
 	int yMin;
 	int yMax;
 	int scrollbarY;
@@ -168,171 +177,170 @@ struct WidgetType3 : public Widget {
 	int GetY();
 	bool Init(int x, int y, int height);
 	bool Init(int x, int y, int height, int parentId);
-	bool Add(int * widIdOut);
 };
 
-struct ActiveWidgetListEntry {
-	Widget *widget;
-	const char *sourceFilename;
+#pragma pack(pop)
+
+struct LgcyWidgetDeleter
+{
+	void operator()(LgcyWidget *p);
+};
+
+class WidgetBase;
+
+class ActiveLegacyWidget {
+public:
+	ActiveLegacyWidget() = default;
+	EA_NON_COPYABLE(ActiveLegacyWidget)
+
+	const char *sourceFile;
 	uint32_t sourceLine;
-	ActiveWidgetListEntry *next;
+	unique_ptr<LgcyWidget, LgcyWidgetDeleter> widget;
+	WidgetBase *advancedWidget = nullptr;
 };
 
-
-
-
-struct ImgFile {
-	int tilesX;
-	int tilesY;
-	int width;
-	int height;
-	int textureIds[16];
-	int field_50;
-};
-
-enum class UiAssetType : uint32_t {
-	Portraits = 0,
-	Inventory,
-	Generic, // Textures
-	GenericLarge // IMG files
-};
-
-enum class UiGenericAsset : uint32_t {
-	AcceptHover = 0,
-	AcceptNormal,
-	AcceptPressed,
-	DeclineHover,
-	DeclineNormal,
-	DeclinePressed,
-	DisabledNormal,
-	GenericDialogueCheck
-};
-
-typedef int(*UiMsgFunc)(int, TigMsg*);
-
-
-struct TooltipStyle{
-	const char* styleName;
-	const char* fontName;
-	int fontSize;
-	int fontColorAlpha;
-	int fontColorRed;
-	int fontColorGreen;
-	int fontColorBlue;
-};
 #pragma endregion
 
-/*
-Tracks all active widgets with information about where they come frome.
-*/
-extern temple::GlobalPrimitive<ActiveWidgetListEntry*, 0x10EF68DC> activeWidgetAllocList;
+inline int WidgetIdIndexOf(LgcyWidgetId widgetId, LgcyWidgetId* widgetlist, int size)
+{
+	for (int i = 0; i < size; i++) {
+		if (widgetlist[i] == widgetId)
+			return i;
+	}
 
+	return -1;
+}
+inline int WidgetIdIndexOf(LgcyWidgetId widgetId, LgcyWindow** widgetlist, int size)
+{
+	for (int i = 0; i < size; i++) {
+		if (widgetlist[i]->widgetId == widgetId)
+			return i;
+	}
 
-extern temple::GlobalPrimitive<int, 0x10EF68D8> activeWidgetCount;
+	return -1;
+}
 
-
-class Ui : public TempleFix {
+class UiManager {
 public:
-	bool GetAsset(UiAssetType assetType, UiGenericAsset assetIndex, int &textureIdOut);
 
-	/*
-		Loads a .img file.
-	*/
-	ImgFile* LoadImg(const char *filename);
-	
-	/*
-	
-	*/
-	void UpdateCombatUi();
+	UiManager();
+	~UiManager();
+		
+	void SetAdvancedWidget(LgcyWidgetId id, WidgetBase *widget);
+	WidgetBase *GetAdvancedWidget(LgcyWidgetId id) const;
 
-	/*
-	
-	*/
-	void UpdatePartyUi();
+	LgcyWidgetId AddWindow(LgcyWindow& widget);
+	BOOL ButtonInit(LgcyButton * widg, char* buttonName, LgcyWidgetId parentId, int x, int y, int width, int height);
+	LgcyWidgetId AddButton(LgcyButton& button);
+	LgcyWidgetId AddButton(LgcyButton& button, LgcyWidgetId parentId);
+	LgcyWidgetId AddScrollBar(LgcyScrollBar& scrollBar);
+	LgcyWidgetId AddScrollBar(LgcyScrollBar& scrollBar, LgcyWidgetId parentId);
 
-	/*
-	
-	*/
-	void ShowWorldMap(int unk);
-
-	void WorldMapTravelByDialog(int destination);
-
-	/*
-		Shows the party pool UI. Flag indicates whether the pool
-		is being shown ingame (tavern) or from outside the game.
-	*/
-	void ShowPartyPool(bool ingame);
-
-	/*
-		This is actually used to *hide* the char ui if param is 0.
-		Other meanings of param are currently unknown.
-		1 means opening for looting; enables the Take All button
-		2 means opening for bartering
-		3 ??
-		4 means opening for spells targeting inventory items
-	*/
-	void ShowCharUi(int page);
-
-	/*
-		Not quite clear what this is.
-	*/
-	bool ShowWrittenUi(objHndl handle);
-
-
-
-	bool CharEditorIsActive();
-	bool CharLootingIsActive();
-
-	bool IsWidgetHidden(int widId);
-	BOOL AddWindow(Widget* widget, unsigned size, int* widgetId, const char * codeFileName, int lineNumber);
-	BOOL ButtonInit(WidgetType2 * widg, char* buttonName, int parentId, int x, int y, int width, int height);
-	BOOL AddButton(WidgetType2* button, unsigned size, int* widgId, const char * codeFileName, int lineNumber);
 	/*
 		sets the button's parent, and also does a bunch of mouse handling (haven't delved too deep there yet)
 	*/
-	BOOL BindToParent(int parentId, int buttonId);
-	BOOL SetDefaultSounds(int widId);
-	BOOL ButtonSetButtonState(int widgetId, int newState);
-	BOOL WidgetRemoveRegardParent(int widIdx);
-	BOOL WidgetAndWindowRemove(int widId);
-	BOOL WidgetRemove(int widId);
-	BOOL WidgetSetHidden(int widId, int hiddenState);
-	BOOL WidgetCopy(int widId, Widget* widgetOut);
-	int WidgetSet(int widId, const Widget* widg);
+	void SetButtonState(LgcyWidgetId widgetId, LgcyButtonState newState);
+	LgcyButtonState GetButtonState(LgcyWidgetId widId);
 
-	Widget* WidgetGet(int widId);
-	WidgetType1* WidgetGetType1(int widId);
-	WidgetType2* GetButton(int widId);
-	WidgetType3* ScrollbarGet(int widId);
+	bool ScrollbarGetY(LgcyWidgetId widId, int * y);
+	void ScrollbarSetYmax(LgcyWidgetId widId, int yMax);
+	void ScrollbarSetY(LgcyWidgetId widId, int value); // I think? sets field84
 
-	int GetWindowContainingPoint(int x, int y);
-	BOOL GetButtonState(int widId, int* state);
-	bool GetButtonState(int widId, UiButtonState& state);
-	void WidgetBringToFront(int widId);
-	int WidgetlistIndexof(int widgetId, int * widgetlist, int size);
-	BOOL WidgetContainsPoint(int widgetId, int x, int y);
-	
+	/**
+		Adds a widget to the list of created widgets and returns the assigned widget id.
+	*/
+	LgcyWidgetId AddWidget(const LgcyWidget *widget, const char *sourceFile, uint32_t sourceLine);
+
 	/*
-			gets widget at x,y including children
-			*/
-	int GetAtInclChildren(int x, int y);
+	Add something to the list of active windows on top of all existing windows.
+	*/
+	void AddWindow(LgcyWidgetId id);
+	void RemoveWindow(LgcyWidgetId id);
 
-	int UiWidgetHandleMouseMsg(TigMouseMsg* mouseMsg);
-
-	bool ScrollbarGetY(int widId, int * y);
-	void ScrollbarSetYmax(int widId, int yMax);
-	BOOL ScrollbarSetY(int widId, int value); // I think? sets field84
-	const char* GetTooltipString(int line) const;
-	const char* GetStatShortName(Stat stat) const;
-	const char* GetStatMesLine(int line) const;
 	/*
-			The list of all active widgets
-			*/
-	static Widget** activeWidgets;
-	// = 
-	void  apply  () override
-	{
-		activeWidgets = temple::GetPointer<Widget*>(0x10EF68E0); // [3000]
+	Gets a pointer to the widget with the given widget ID, null if it doesn't exist.
+	*/
+	LgcyWidget* GetWidget(LgcyWidgetId id) const;
+	LgcyWindow* GetWindow(LgcyWidgetId widId) const;
+	LgcyButton* GetButton(LgcyWidgetId widId) const;
+	LgcyScrollBar* GetScrollBar(LgcyWidgetId widId) const;
+
+	void BringToFront(LgcyWidgetId id);
+	void SendToBack(LgcyWidgetId id);
+	void SetHidden(LgcyWidgetId id, bool hidden);
+	bool IsHidden(int widId) const {
+		auto widget = GetWidget(widId);
+		return !widget || widget->IsHidden();
 	}
+
+	void RemoveWidget(LgcyWidgetId id);
+	bool AddChild(LgcyWidgetId parentId, LgcyWidgetId childId);
+	void RemoveChildWidget(LgcyWidgetId id);
+
+	void Render();
+
+	LgcyWindow* GetWindowAt(int x, int y);
+
+	LgcyWidgetId GetWidgetAt(int x, int y);
+	bool DoesWidgetContain(LgcyWidgetId id, int x, int y);
+
+	using IdVector = std::vector<LgcyWidgetId>;
+	using WidgetMap = eastl::hash_map<LgcyWidgetId, ActiveLegacyWidget>;
+
+	const IdVector& GetActiveWindows() const {
+		return mActiveWindows;
+	}
+
+	/**
+	* Uses the current mouse position to refresh which widget is being moused over.
+	* Useful if a widget is hidden, shown or added to update the mouse-over state
+	* without actually moving the mouse.
+	*/
+	void RefreshMouseOverState();
+
+	/**
+	* Handles a mouse message and produces higher level mouse messages based on it.
+	*/
+	bool TranslateMouseMessage(const TigMouseMsg &mouseMsg);
+	bool ProcessMessage(TigMsg& mouseMsg);
+
+	LgcyWidgetId GetMouseCaptureWidgetId() const {
+		return mMouseCaptureWidgetId;
+	}
+
+	void SetMouseCaptureWidgetId(LgcyWidgetId widgetId) {
+		mMouseCaptureWidgetId = widgetId;
+	}
+	void UnsetMouseCaptureWidgetId(LgcyWidgetId widgetId) {
+		if (mMouseCaptureWidgetId == widgetId) {
+			mMouseCaptureWidgetId = -1;
+		}
+	}
+
+private:
+	UiManager(UiManager&) = delete;
+	UiManager& operator=(UiManager&) = delete;
+	UiManager(UiManager&&) = delete;
+	UiManager& operator=(UiManager&&) = delete;
+
+	LgcyWidgetId mNextWidgetId = 0;
+	WidgetMap mActiveWidgets;
+	IdVector mActiveWindows;
+	int maxZIndex = 0;
+
+	/*
+	This will sort the windows using their z-order in the order in which
+	they should be rendered.
+	*/
+	void SortWindows();
+
+	LgcyWidgetId& mMouseCaptureWidgetId = temple::GetRef<LgcyWidgetId>(0x11E74384);
+	int& mWidgetMouseHandlerWidgetId = temple::GetRef<int>(0x10301324);
+	int& mMouseButtonId = temple::GetRef<int>(0x10301328);
+	void(*mMouseMsgHandlerRenderTooltipCallback)(int x, int y, void* data) = temple::GetPointer<void(int x, int y, void* data)>(0x101F9870);
+
+	bool ProcessWidgetMessage(TigMsg &msg);
+	bool ProcessMouseMessage(TigMsg &msg);
 };
-extern Ui ui;
+
+extern UiManager *uiManager;

@@ -148,6 +148,11 @@ static class MapSystemHooks : public TempleFix {
 		// replaceFunction(0x10072370, _map_open);
 		replaceFunction(0x10072a90, map_open_in_game);
 
+		static void (__cdecl*orgCheckFogForCritter)(objHndl , int) = replaceFunction<void(__cdecl)(objHndl, int)>(0x100327A0, [](objHndl handle, int idx){
+
+			orgCheckFogForCritter(handle, idx);
+		});
+
 	}
 	
 } hooks;
@@ -195,14 +200,17 @@ esd_load_result MapSystemHooks::fog_esd_load(uint64_t sectorLoc, explored_sector
 	auto state = gameSystems->GetMap().GetExplorationData({ sectorLoc }, &data);
 	switch (state) {
 	case SectorExplorationState::AllExplored:
+		buffer->allExplored = 1;
 		return esd_load_result::FULLY_EXPLORED;
 	case SectorExplorationState::PartiallyExplored:
+		buffer->allExplored = 0;
 		for (size_t i = 0; i < sizeof(buffer->exploredBitmap); ++i) {
 			buffer->exploredBitmap[i] = data.explorationBitmap[i];
 		}
 		return esd_load_result::PARTIALLY_EXPLORED;
 	default:
 	case SectorExplorationState::Unexplored:
+		buffer->allExplored = 0;
 		return esd_load_result::FULLY_UNEXPLORED;
 	}
 }
@@ -211,9 +219,18 @@ BOOL MapSystemHooks::fog_esd_save(uint64_t sectorLoc, explored_sector_data * fog
 {
 	SectorLoc loc{ sectorLoc };
 	SectorExplorationData data;
-	for (size_t i = 0; i < sizeof(fogSec->exploredBitmap); ++i) {
-		data.explorationBitmap[i] = fogSec->exploredBitmap[i];
+
+	if (fogSec->allExplored){
+		for (size_t i = 0; i < sizeof(fogSec->exploredBitmap); ++i) {
+			data.explorationBitmap[i] = 0xff;
+		}
 	}
+	else{
+		for (size_t i = 0; i < sizeof(fogSec->exploredBitmap); ++i) {
+			data.explorationBitmap[i] = fogSec->exploredBitmap[i];
+		}
+	}
+
 	gameSystems->GetMap().SetExplorationData(loc, data);
 	return TRUE;
 }

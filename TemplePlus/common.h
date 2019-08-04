@@ -76,6 +76,9 @@ struct GroupArray {
 	objHndl GroupMembers[32];
 	uint32_t GroupSize;
 	int (__cdecl*sortFunc)(void*, void*); // used for comparing two items (e.g. alphabetic sorting)
+
+	void Clear(); // clears members
+	void Reset(); // clears members and sorter func
 };
 
 struct JumpPointPacket {
@@ -104,7 +107,7 @@ struct BonusCap
 	int capValue;
 	int bonType;
 	char *bonCapperString;
-	char * bonCapDescr;
+	const char * bonCapDescr;
 };
 
 struct BonusList
@@ -157,6 +160,7 @@ struct BonusList
 
 	int AddCap(int capType, int capValue, uint32_t bonMesLineNum);
 	int AddCapWithDescr(int capType, int capValue, uint32_t bonMesLineNum, char* capDescr);
+	int AddCapWithCustomDescr(int capType, int capValue, uint32_t bonMesLineNum, std::string &textArg);
 
 	BOOL SetOverallCap(int BonFlags, int newCap, int newCapType, int newCapMesLineNum, char *capDescr = nullptr);
 	static const char* GetBonusMesLine(int lineNum);
@@ -249,12 +253,21 @@ enum class UiPickerType : uint64_t {
 	Any30Feet = 0x800,
 	Primary30Feet = 0x1000,
 	EndEarlyMulti = 0x2000,
-	LocIsClear = 0x4000
+	LocIsClear = 0x4000,
+	PickOrigin = 0x8000 // New! denotes that the spell's point of origin can be freely chosen
 };
 
 struct ObjListResultItem {
 	objHndl handle;
 	ObjListResultItem *next;
+
+	void FreeRecursive(){
+		if (next)
+			next->FreeRecursive();
+		free(this);
+	}
+
+	void ReturnToPool();
 };
 
 struct ObjListResult
@@ -303,6 +316,8 @@ struct ObjListResult
 	void PrependHandle(objHndl handle);
 	void IncreaseObjListCount();
 	int CountResults();
+	void ListRadius(LocAndOffsets origin, float rangeInches, float angleMin, float angleMax, int filter);
+	void ListRaycast(LocAndOffsets &origin, LocAndOffsets &endPt, float rangeInches, float radiusInches);
 
 };
 
@@ -340,4 +355,14 @@ enum EquipSlot : uint32_t {
 	Count = 16,
 	Invalid = 17
 };
+
+//struct ActionCostPacket
+//{
+//	int hourglassCost;
+//	int chargeAfterPicker; // flag I think; is only set at stuff that requires using the picker it seems
+//	float moveDistCost;
+//
+//	ActionCostPacket() { hourglassCost = 0; chargeAfterPicker = 0; moveDistCost = 0.0f; }
+//};
+////const auto TestSizeOfActionCostPacket = sizeof(ActionCostPacket); // should be 12 (0xC)
 #pragma endregion

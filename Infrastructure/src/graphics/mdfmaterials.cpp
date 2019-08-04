@@ -288,6 +288,17 @@ namespace gfx {
 		return nullptr;
 	}
 
+	MdfRenderMaterialPtr MdfMaterialFactory::GetByName(const std::string &name){
+		auto nameLower = tolower(name);
+		auto it = mNameRegistry.find(nameLower);
+		if (it != mNameRegistry.end()) {
+			return it->second;
+		}
+		return nullptr;
+	}
+
+	
+
 	MdfRenderMaterialPtr MdfMaterialFactory::LoadMaterial(const std::string& name) {
 
 		auto nameLower = tolower(name);
@@ -315,7 +326,7 @@ namespace gfx {
 
 			return result;
 		} catch (std::exception& e) {
-			logger->error("Unable to load MDF file '{}': {}", name, e.what());
+			// logger->error("Unable to load MDF file '{}': {}", name, e.what()); // produces massive logspam when casting spells
 			return nullptr;
 		}
 
@@ -385,7 +396,7 @@ namespace gfx {
 
 	}
 
-	const MdfMaterialFactory::ReplacementSet &MdfMaterialFactory::GetReplacementSet(uint32_t id)
+	const MdfMaterialFactory::ReplacementSet &MdfMaterialFactory::GetReplacementSet(uint32_t id, int fallbackId)
 	{
 		static const ReplacementSet sEmptyResult;
 
@@ -393,6 +404,13 @@ namespace gfx {
 
 		if (it != mReplacementSets.end()) {
 			return it->second;
+		}
+
+		if (fallbackId != -1){
+			it = mReplacementSets.find((uint32_t) fallbackId);
+			if (it != mReplacementSets.end()) {
+				return it->second;
+			}
 		}
 
 		return sEmptyResult;

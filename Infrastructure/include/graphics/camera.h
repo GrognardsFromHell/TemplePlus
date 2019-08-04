@@ -1,10 +1,9 @@
 
 #pragma once
 
-#include <DirectXMath.h>
-using namespace DirectX;
-
 #include "../infrastructure/location.h"
+#include "collision.h"
+#include "math.h"
 
 namespace gfx {
 
@@ -93,9 +92,16 @@ namespace gfx {
 		 */
 		XMFLOAT3 ScreenToWorld(float x, float y);
 
+		/**
+		 * Returns a ray that pierces through the screen starting at the mouse position
+		 * and goes to zFar, effectively.
+		 */
+		Ray3d GetPickRay(float x, float y);
+
 		XMFLOAT2 ScreenToTileLegacy(int x, int y);
 
 		LocAndOffsets ScreenToTile(int screenX, int screenY);
+		XMFLOAT3 TileToWorld(locXY tilePos);
 
 		void CenterOn(float x, float y, float z);
 

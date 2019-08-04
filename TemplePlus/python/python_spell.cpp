@@ -12,10 +12,15 @@
 #include <combat.h>
 #include <ui/ui.h>
 #include <condition.h>
-#include <anim.h>
+#include "animgoals/anim.h"
 #include <gamesystems/gamesystems.h>
 #include <gamesystems/objects/objsystem.h>
 #include <ui/ui_picker.h>
+#include "ui/ui_systems.h"
+#include "ui/ui_legacysystems.h"
+
+#include <pybind11/embed.h>
+namespace py = pybind11;
 
 struct PySpell;
 static PyObject *PySpellTargets_Create(PySpell *spell);
@@ -53,12 +58,22 @@ struct PySpell {
 	MetaMagicData metaMagic;
 };
 
+struct PySpellStore {
+	PyObject_HEAD;
+	SpellStoreData spellData;
+};
+
 
 const int testSizeofPyspell = sizeof PySpell; // should be 680 (due to HEAD_EXTRA is +8 relative to toee)
 
 // Contains all active spells
 typedef unordered_map<int, PySpell*> ActiveSpellMap;
 static ActiveSpellMap activeSpells;
+
+/******************************************************************************
+* PySpell
+******************************************************************************/
+#pragma region PySpell
 
 static PyObject* PySpell_Repr(PyObject* obj) {
 	auto self = (PySpell*)obj;
@@ -226,6 +241,18 @@ static PyObject *PySpell_SpellGetMenuArg(PyObject*, PyObject *args) {
 
 	return PyInt_FromLong(result);
 }
+
+
+static PyObject *PySpell_SpellGetPickerEndPoint(PyObject*, PyObject *args) {
+	
+	auto wallEndPt = uiPicker.GetWallEndPoint();
+	py::object pyLoc = py::cast(wallEndPt);
+	pyLoc.inc_ref();
+	return pyLoc.ptr();
+}
+
+
+
 static PyObject *PySpell_IsObjectSelected(PyObject *obj, PyObject *) {
 	auto self = (PySpell*)obj;
 	SpellPacketBody body;
@@ -270,8 +297,8 @@ static PyObject *PySpell_SummonMonsters(PyObject *obj, PyObject *args) {
 	auto casterIni = combatSys.GetInitiative(self->caster);
 	combatSys.SetInitiative(newHandle, casterIni);
 
-	ui.UpdateCombatUi();
-	ui.UpdatePartyUi();
+	uiSystems->GetCombat().Update();
+	uiSystems->GetParty().Update();
 
 	conds.AddTo(newHandle, "sp-Summoned", { (int)self->spellId, (int) self->duration, 0 });
 	conds.AddTo(newHandle, "Timed-Disappear", { (int) self->spellId, (int)self->duration, 0 });
@@ -308,7 +335,7 @@ static PyObject *PySpell_SummonMonsters(PyObject *obj, PyObject *args) {
 
 	}
 
-	animationGoals.Interrupt(newHandle, AGP_HIGHEST);	
+	gameSystems->GetAnim().Interrupt(newHandle, AGP_HIGHEST);	
 	
 	PySpell_UpdatePacket((PyObject*) self);
 	return PyInt_FromLong(1);
@@ -319,6 +346,7 @@ static PyMethodDef PySpellMethods[] = {
 	{ "spell_remove", PySpell_SpellRemove, METH_VARARGS, NULL },
 	{ "spell_target_list_sort", PySpell_SpellTargetListSort, METH_VARARGS, NULL },
 	{ "spell_get_menu_arg", PySpell_SpellGetMenuArg, METH_VARARGS, NULL },
+	{ "spell_get_picker_end_point", PySpell_SpellGetPickerEndPoint, METH_VARARGS, NULL },
 	{ "is_object_selected", PySpell_IsObjectSelected, METH_VARARGS, NULL },
 	{ "summon_monsters", PySpell_SummonMonsters, METH_VARARGS, NULL },
 	{NULL, NULL, NULL, NULL}
@@ -404,6 +432,16 @@ static PyObject* PySpell_GetTargetLocOffZ(PyObject* obj, void*) {
 	auto self = (PySpell*)obj;
 	return PyFloat_FromDouble(self->targetLocation.off_z);
 }
+
+static PyObject* PySpell_GetTargetLocFull(PyObject* obj, void*) {
+	auto self = (PySpell*)obj;
+
+	py::object blyat = py::cast(self->targetLocation.location);
+	blyat.inc_ref();
+	return blyat.ptr();
+}
+
+
 
 static PyObject* PySpell_GetCasterLevel(PyObject* obj, void*) {
 	auto self = (PySpell*)obj;
@@ -541,6 +579,7 @@ static PyGetSetDef PySpellGetSet[] = {
 	{"target_loc_off_x", PySpell_GetTargetLocOffX, NULL, NULL},
 	{"target_loc_off_y", PySpell_GetTargetLocOffY, NULL, NULL},
 	{"target_loc_off_z", PySpell_GetTargetLocOffZ, NULL, NULL},
+	{"target_loc_full", PySpell_GetTargetLocFull, NULL, NULL },
 	{"caster_level", PySpell_GetCasterLevel, PySpell_SetCasterLevel, NULL},
 	{"dc", PySpell_GetDC, PySpell_SetDC, NULL},
 	{"id", PySpell_GetId, NULL, NULL},
@@ -710,8 +749,7 @@ void PySpell_UpdatePacket(PyObject* pySpell) {
 		spell.targetListHandles[i] = self->targets[i].obj;
 		spell.targetListPartsysIds[i] = self->targets[i].partSysId;
 	}
-
-	spellSys.UpdateSpellPacket(spell);
+	spell.UpdateSpellsCastRegistry();
 }
 
 objHndl PySpell_GetTargetHandle(PyObject* spell, int targetIdx) {
@@ -719,9 +757,13 @@ objHndl PySpell_GetTargetHandle(PyObject* spell, int targetIdx) {
 	return self->targets[targetIdx].obj;
 }
 
+#pragma endregion
+
 /******************************************************************************
 * Spell Target
 ******************************************************************************/
+
+#pragma region Spell Target
 
 static PyObject* PySpellTargets_Repr(PyObject* obj);
 
@@ -837,10 +879,12 @@ static PyObject *PySpellTargetsEntry_Create(PySpell *spell, int targetIdx) {
 	return (PyObject*) result;
 }
 
+#pragma endregion
+
 /******************************************************************************
  * Spell Target Array
  ******************************************************************************/
-
+#pragma region Spell Target Array
 struct PySpellTargets {
 	PyObject_HEAD;
 	PySpell *spell;
@@ -949,7 +993,7 @@ static PyObject *PySpellTargets_GetItem(PyObject *obj, Py_ssize_t index) {
 }
 
 static PySequenceMethods PySpellTargetsSequence = {
-	0,
+	PySpellTargets_Len,
 	0,
 	0,
 	PySpellTargets_GetItem,
@@ -1016,3 +1060,234 @@ BOOL ConvertTargetArray(PyObject* obj, PySpell** pySpellOut) {
 	*pySpellOut = ((PySpellTargets*)obj)->spell;
 	return TRUE;
 }
+#pragma endregion
+
+
+/******************************************************************************
+* Spell Store
+******************************************************************************/
+
+#pragma region Spell Store
+BOOL ConvertSpellStore(PyObject * obj, SpellStoreData * pSpellStoreOut)
+{
+	if (obj == Py_None) {
+		pSpellStoreOut->spellEnum = 0;
+		pSpellStoreOut->spellLevel = 0;
+		pSpellStoreOut->classCode = 0;
+		return TRUE;
+	}
+
+	if (obj->ob_type != &PySpellStoreType) {
+		PyErr_SetString(PyExc_TypeError, "Expected PySpellStore.");
+		return FALSE;
+	}
+
+	*pSpellStoreOut = ((PySpellStore*)obj)->spellData;
+	return TRUE;
+}
+
+
+static int PySpellStore_Init(PyObject* obj, PyObject* args, PyObject* kwargs) {
+	auto self = (PySpellStore*)obj;
+
+	if (!PyArg_ParseTuple(args, "|iii:PySpellStore", &self->spellData.spellEnum, &self->spellData.classCode, &self->spellData.spellLevel)) {
+		return -1;
+	}
+
+	return 0;
+}
+
+static PyObject* PySpellStore_New(PyTypeObject*, PyObject*, PyObject*) {
+	auto self = PyObject_New(PySpellStore, &PySpellStoreType);
+	self->spellData = SpellStoreData();
+	return (PyObject*)self;
+}
+
+PyObject* PySpellStore_Create(const SpellStoreData& spellData){
+	if (PyType_Ready(&PySpellStoreType)) {
+		return 0;
+	}
+
+	auto self = PyObject_NEW(PySpellStore, &PySpellStoreType);
+	self->spellData = spellData;
+
+	return (PyObject*)self;
+}
+
+SpellStoreData PySpellStore_AsSpellStore(PyObject * obj){
+	auto self = (PySpellStore*)obj;
+	return self->spellData;
+}
+
+static void PySpellStore_Del(PyObject *obj) {
+	PyObject_Del(obj);
+}
+
+static PyObject* PySpellStore_Repr(PyObject* obj) {
+	auto self = (PySpellStore*)obj;
+	return PyString_FromFormat("PySpellStore %s (enum=%d, class=%d, level=%d)", spellSys.GetSpellName(self->spellData.spellEnum), self->spellData.spellEnum, self->spellData.classCode, self->spellData.spellLevel);
+}
+
+
+static PyObject* PySpellStore_IsNaturallyCast(PyObject* obj, PyObject* args) {
+	auto self = (PySpellStore*)obj;
+	if (!self->spellData.spellEnum)
+		return PyInt_FromLong(0);
+
+	if (spellSys.isDomainSpell(self->spellData.classCode))
+		return PyInt_FromLong(0);
+
+	return PyInt_FromLong(d20ClassSys.IsNaturalCastingClass(spellSys.GetCastingClass(self->spellData.classCode)));
+
+}
+
+static PyObject* PySpellStore_IsAreaSpell(PyObject* obj, PyObject* args) {
+	auto self = (PySpellStore*)obj;
+	if (!self->spellData.spellEnum)
+		return PyInt_FromLong(0);
+
+	SpellEntry spEntry(self->spellData.spellEnum);
+	if (!spEntry.spellEnum){
+		return PyInt_FromLong(0);
+	}
+
+	return PyInt_FromLong(spEntry.IsBaseModeTarget(UiPickerType::Area));
+}
+
+static PyObject* PySpellStore_IsModeTarget(PyObject* obj, PyObject* args) {
+	auto self = (PySpellStore*)obj;
+	if (!self->spellData.spellEnum)
+		return PyInt_FromLong(0);
+
+	SpellEntry spEntry(self->spellData.spellEnum);
+	if (!spEntry.spellEnum) {
+		return PyInt_FromLong(0);
+	}
+
+	int modeTarget;
+	if (!PyArg_ParseTuple(args, "i:PySpellStore.is_mode_target", &modeTarget)) {
+		return PyInt_FromLong(0);
+	}
+
+	return PyInt_FromLong(spEntry.IsBaseModeTarget((UiPickerType)modeTarget));
+}
+
+static PyObject* PySpellStore_IsUsedUp(PyObject* obj, PyObject* args) {
+	auto self = (PySpellStore*)obj;
+	if (!self->spellData.spellEnum)
+		return PyInt_FromLong(0);
+
+	return PyInt_FromLong(self->spellData.spellStoreState.usedUp & 1);
+}
+
+static PyMethodDef PySpellStoreMethods[] = {
+	{"is_area_spell", PySpellStore_IsAreaSpell, METH_VARARGS, NULL },
+	{"is_mode_target", PySpellStore_IsModeTarget, METH_VARARGS, NULL },
+	{"is_naturally_cast", PySpellStore_IsNaturallyCast, METH_VARARGS, NULL },
+	{"is_used_up", PySpellStore_IsUsedUp, METH_VARARGS, NULL },
+	{ NULL, NULL, NULL, NULL }
+};
+
+
+
+static PyObject* PySpellStore_GetEnum(PyObject* obj, void*) {
+	auto self = (PySpellStore*)obj;
+	return PyInt_FromLong(self->spellData.spellEnum);
+}
+
+static int PySpellStore_SetEnum(PyObject *obj, PyObject *value, void*) {
+	auto self = (PySpellStore*)obj;
+	if (!PyInt_Check(value)) {
+		PyErr_SetString(PyExc_TypeError, "spell_enum can only be an integer");
+		return -1;
+	}
+	self->spellData.spellEnum = PyInt_AsLong(value);
+	return 0;
+}
+
+static PyObject* PySpellStore_GetLevel(PyObject* obj, void*) {
+	auto self = (PySpellStore*)obj;
+	return PyInt_FromLong(self->spellData.spellLevel);
+}
+
+static int PySpellStore_SetLevel(PyObject *obj, PyObject *value, void*) {
+	auto self = (PySpellStore*)obj;
+	if (!PyInt_Check(value)) {
+		PyErr_SetString(PyExc_TypeError, "spell_level can only be an integer");
+		return -1;
+	}
+	self->spellData.spellLevel = PyInt_AsLong(value);
+	return 0;
+}
+
+static PyObject* PySpellStore_GetClass(PyObject* obj, void*) {
+	auto self = (PySpellStore*)obj;
+	return PyInt_FromLong(self->spellData.classCode);
+}
+
+static int PySpellStore_SetClass(PyObject *obj, PyObject *value, void*) {
+	auto self = (PySpellStore*)obj;
+	if (!PyInt_Check(value)) {
+		PyErr_SetString(PyExc_TypeError, "spell_class can only be an integer");
+		return -1;
+	}
+	self->spellData.classCode = PyInt_AsLong(value);
+	return 0;
+}
+
+
+static PyObject* PySpellStore_GetName(PyObject* obj, void*) {
+	auto self = (PySpellStore*)obj;
+	return PyString_FromString(spellSys.GetSpellName(self->spellData.spellEnum));
+}
+static PyGetSetDef PySpellStoreGetSet[] = {
+	{ "spell_enum", PySpellStore_GetEnum, PySpellStore_SetEnum, NULL },
+	{ "spell_level", PySpellStore_GetLevel, PySpellStore_SetLevel, NULL },
+	{ "spell_class", PySpellStore_GetClass, PySpellStore_SetClass, NULL },
+	{ "spell_name", PySpellStore_GetName, NULL, NULL },
+	{ NULL, NULL, NULL, NULL }
+};
+
+PyTypeObject PySpellStoreType = {
+	PyObject_HEAD_INIT(NULL)
+	0, /*ob_size*/
+	"toee.PySpellStore", /*tp_name*/
+	sizeof(PySpellStore), /*tp_basicsize*/
+	0, /*tp_itemsize*/
+	PySpellStore_Del, /*tp_dealloc*/
+	0, /*tp_print*/
+	0, /*tp_getattr*/
+	0, /*tp_setattr*/
+	0, /*tp_compare*/
+	PySpellStore_Repr, /*tp_repr*/
+	0, /*tp_as_number*/
+	0, /*tp_as_sequence*/
+	0, /*tp_as_mapping*/
+	0, /*tp_hash */
+	0, /*tp_call*/
+	0, /*tp_str*/
+	PyObject_GenericGetAttr, /*tp_getattro*/
+	PyObject_GenericSetAttr, /*tp_setattro*/
+	0, /*tp_as_buffer*/
+	Py_TPFLAGS_DEFAULT, /*tp_flags*/
+	0, /* tp_doc */
+	0, /* tp_traverse */
+	0, /* tp_clear */
+	0, /* tp_richcompare */
+	0, /* tp_weaklistoffset */
+	0, /* tp_iter */
+	0, /* tp_iternext */
+	PySpellStoreMethods, /* tp_methods */
+	0, /* tp_members */
+	PySpellStoreGetSet, /* tp_getset */
+	0, /* tp_base */
+	0, /* tp_dict */
+	0, /* tp_descr_get */
+	0, /* tp_descr_set */
+	0, /* tp_dictoffset */
+	PySpellStore_Init, /* tp_init */
+	0, /* tp_alloc */
+	PySpellStore_New, /* tp_new */
+};
+
+#pragma endregion

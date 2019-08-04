@@ -28,7 +28,8 @@ enum class MapType : uint32_t {
 	None,
 	StartMap,
 	ShoppingMap,
-	TutorialMap
+	TutorialMap,
+	ArenaMap // new in Temple+
 };
 
 struct SectorExplorationData {
@@ -55,6 +56,8 @@ public:
 	bool SaveGame(TioFile *file) override;
 	bool LoadGame(GameSystemSaveFile* saveFile) override;
 	const std::string &GetName() const override;
+
+	bool PseudoLoad(GameSystemSaveFile* saveFile, std::string saveFolder, std::vector<objHndl> & dynHandles);
 
 	void ResetFleeTo();
 	const MapFleeInfo &GetFleeInfo() const {
@@ -120,6 +123,8 @@ public:
 	locXY GetStartPos(int mapId) const;
 
 	const std::string& GetMapName(int mapId);
+	const std::string& GetMapDescription(int mapId);
+	bool IsMapOutdoors(int mapId);
 
 	int GetEnterMovie(int mapId, bool ignoreVisited);
 

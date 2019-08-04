@@ -54,6 +54,7 @@ trickery = 20
 war = 21
 water = 22
 special = 23
+domain_special = 23
 
 # Genders
 gender_female = 0
@@ -2246,9 +2247,11 @@ race_elf = 2
 race_gnome = 3
 race_mountain_dwarf = 3
 race_halfelf = 4
+race_half_elf = 4
 race_aquatic_elf = 4
 race_halforc = 5
-race_drow = 5
+race_half_orc = 5
+race_drow = 66
 race_halfling = 6
 race_gray_elf = 6
 race_wild_elf = 7
@@ -2257,6 +2260,8 @@ race_svirfneblin = 9
 race_forest_gnome = 10
 race_tallfellow = 11
 race_deep_halfling = 12
+race_hill_giant = 10
+race_troll = 11
 
 san_dialog = 9
 san_first_heartbeat = 10
@@ -2981,6 +2986,7 @@ spell_rope_trick = 405
 spell_rusting_grasp = 406
 spell_sanctuary = 407
 spell_scare = 408
+spell_scorching_ray = 733
 spell_screen = 409
 spell_scrying = 410
 spell_sculpt_sound = 411
@@ -3228,6 +3234,9 @@ stat_level_cryokineticist = 42
 stat_level_frost_mage = 43
 stat_level_artificer = 44
 stat_level_abjurant_champion = 45
+stat_level_scout = 46
+stat_level_warmage = 47
+stat_level_beguiler = 48
 
 stat_level_psion = 58
 stat_level_psychic_warrior = 59
@@ -3324,6 +3333,11 @@ stat_spell_list_level = 288 # new - used for getting the effective level for tak
 stat_psi_points_max = 300 # new!
 stat_psi_points_cur = 301 # new!
 
+# Race Definition Flags
+RDF_None = 0
+RDF_Vanilla = 1   # Vanilla ToEE race
+RDF_Monstrous = 2 # Monster races e.g. Trolls
+
 CDF_None = 0
 CDF_BaseClass = 1 # denotes class is base class (can be taken at level 1, and factors into multiclass calculations; unlike Prestige Classes for instance)
 CDF_CoreClass = 2 # class is drawn from Core 3.5 rules. Those that aren't will not be selectable unless "Non-Core Materials" is enabled.
@@ -3343,7 +3357,7 @@ spell_list_type_paladin = 7
 spell_list_type_psionic = 8
 spell_list_type_ranger = 9
 spell_list_type_special = 10
-spell_list_type_theurge = 11
+spell_list_type_extender = 11
 
 spell_source_type_ability = 0
 spell_source_type_arcane = 1
@@ -3458,6 +3472,16 @@ ET_OnPythonReserved9 = 87
 ET_OnSpellListExtensionGet = 88
 ET_OnGetBaseCasterLevel = 89
 ET_OnLevelupSystemEvent = 90
+ET_OnDealingDamageWeaponlikeSpell = 91
+ET_OnActionCostMod = 92
+ET_OnMetaMagicMod = 93
+ET_OnSpecialAttack = 94
+ET_OnConfirmCriticalBonus = 95
+ET_OnRangeIncrementBonus = 96
+ET_OnDispatchSpellDamage = 97
+ET_OnSpellResistanceCheckBonus = 98
+ET_OnTargetSpellDCBonus = 99 #DC bonus based on the target of a spell
+
 # Event Keys
 
 EK_NONE = 0x0
@@ -3755,6 +3779,9 @@ EK_Q_Empty_Body_Num_Rounds = 0x146  # returns number of rounds set for Monk's Em
 EK_Q_Quivering_Palm_Can_Perform = 0x147
 EK_Q_Trip_AOO = 0x148
 EK_Q_Get_Arcane_Spell_Failure = 0x149 # gets arcane spell failure for (class_enum, equip_slot) combo
+EK_Q_Is_Preferring_One_Handed_Wield = 0x14A # gets arcane spell failure for (class_enum, equip_slot) combo
+EK_Q_Scribe_Scroll_Spell_Level = 0x14B
+EK_Q_Critter_Is_Immune_Paralysis = 0x14C
 
 EK_LVL_Stats_Activate = 100
 EK_LVL_Stats_Check_Complete = 101
@@ -3834,6 +3861,7 @@ AEC_OUT_OF_AMMO = 11
 AEC_NEED_MELEE_WEAPON = 12
 AEC_CANT_WHILE_PRONE = 13
 AEC_INVALID_ACTION = 14
+AEC_ACTION_INVALID = 14
 AEC_CANNOT_CAST_SPELLS = 15
 AEC_OUT_OF_CHARGES = 16
 AEC_WRONG_WEAPON_TYPE = 17
@@ -3856,3 +3884,37 @@ BM_SUGGESTION = 5
 BM_INSPIRE_GREATNESS = 6
 BM_SONG_OF_FREEDOM = 7
 BM_INSPIRE_HEROICS = 8
+
+PQF_TO_EXACT = 1
+PQF_HAS_CRITTER = 2
+PQF_MAX_PF_LENGTH_STHG = 4
+PQF_STRAIGHT_LINE = 8
+PQF_10 = 0x10
+PQF_IGNORE_CRITTERS = 0x80 # path (i.e. pass) through critters (flag is set when pathing out of combat)
+PQF_STRAIGHT_LINE_ONLY_FOR_SANS_NODE = 0x200
+PQF_DOORS_ARE_BLOCKING = 0x400
+
+PQF_TARGET_OBJ = 0x1000 # Indicates that the query is to move to a target object
+PQF_ADJUST_RADIUS = 0x2000 # Indicates that the destination should be adjusted for the critter and target radius.
+PQF_DONT_USE_PATHNODES = 0x4000
+PQF_DONT_USE_STRAIGHT_LINE = 0x8000
+PQF_FORCED_STRAIGHT_LINE = 0x10000
+PQF_ADJ_RADIUS_REQUIRE_LOS = 0x20000
+PQF_ALLOW_ALTERNATIVE_TARGET_TILE = 0x40000
+PQF_A_STAR_TIME_CAPPED = 0x80000
+PQF_IGNORE_CRITTERS_ON_DESTINATION = 0x800000
+PQF_AVOID_AOOS = 0x1000000 # NEW! Make the PF attempt avoid Aoos (using the ShouldIgnore function in combat.py to ignore insiginificant threats)
+
+
+TBSF_FreeActionSpellPerformed = 512
+
+MODE_TARGET_NONE = 0
+MODE_TARGET_SINGLE = 1
+MODE_TARGET_MULTI = 2
+MODE_TARGET_CONE = 3
+MODE_TARGET_AREA = 4
+MODE_TARGET_LOCATION = 5
+MODE_TARGET_PERSONAL = 6
+MODE_TARGET_INVENTORY_ITEM = 7
+MODE_TARGET_RAY = 8
+MODE_TARGET_WALL = 9

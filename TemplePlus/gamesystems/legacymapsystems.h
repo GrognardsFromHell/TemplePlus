@@ -2,6 +2,7 @@
 #pragma once
 
 #include "gamesystem.h"
+#include "map/sector.h"
 struct GameSystemConf;
 
 #pragma once
@@ -134,6 +135,8 @@ public:
 	const std::string &GetName() const override;
 
 	void SetDirectories(const std::string &dataDir, const std::string &saveDir);
+
+	SectorVB * GetSvb(SectorLoc secLoc);
 };
 
 class TextBubbleSystem : public GameSystem, public BufferResettingGameSystem, public ResetAwareGameSystem, public TimeAwareGameSystem, public MapCloseAwareGameSystem {
@@ -178,6 +181,8 @@ public:
 	void SetDataDirs(const std::string &dataDir, const std::string &saveDir);
 
 	void Clear();
+
+	int8_t GetDepth(LocAndOffsets location);
 };
 
 class PathNodeSystem : public GameSystem, public ResetAwareGameSystem {

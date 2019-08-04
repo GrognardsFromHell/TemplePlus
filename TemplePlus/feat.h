@@ -5,6 +5,7 @@
 #define NUM_FEATS 750 // vanilla was 649 (and Moebius hack increased this to 664 I think)
 #include "tig/tig_mes.h"
 #include <map>
+#include <unordered_set>
 
 enum FeatPropertyFlag : uint32_t {
 	FPF_CAN_GAIN_MULTIPLE_TIMES = 0x1,
@@ -30,7 +31,9 @@ enum FeatPropertyFlag : uint32_t {
 	FPF_MULTI_MASTER = 0x80000, // head of multiselect class of feats (NEW)
 	FPF_GREAT_WEAP_SPEC_ITEM = 0x100100, // NEW	
 	FPF_PSIONIC = 0x200000,
-	FPF_NON_CORE =0x400000
+	FPF_NON_CORE =0x400000,
+	FPF_CUSTOM_REQ = 0x800000, // signifies that requirements should be checked via script
+	FPF_POWER_CRIT_ITEM = 0x1000000
 };
 
 
@@ -52,7 +55,7 @@ struct ClassFeatTable
 
 struct FeatPrereq
 {
-	int featPrereqCode;
+	int featPrereqCode; // see feat_requirement_codes
 	int featPrereqCodeArg;
 };
 
@@ -67,6 +70,9 @@ struct NewFeatSpec {
 	std::string description;
 	std::string prereqDescr;
 	std::vector<FeatPrereq> prereqs;
+	feat_enums parentId = (feat_enums)0;              // for multiselect feats such as Weapon Focus
+	std::vector<feat_enums> children; // for multiselect feats such as Weapon Focus
+	WeaponTypes weapType = wt_none;      // for weapon feats which are weapon specific (such as Weapon Focus - Shortsword)
 	NewFeatSpec() { flags = (FeatPropertyFlag)0; };
 };
 
@@ -77,7 +83,7 @@ extern uint32_t  featPropertiesTable[];
 extern FeatPrereqRow featPreReqTable[];
 extern MesHandle * featMes;
 extern MesHandle * featEnumsMes;
-extern char ** featNames;
+// extern char ** featNames;
 
 
 
@@ -120,16 +126,18 @@ struct LegacyFeatSystem : temple::AddressTable
 	Stat * charEditorClassCode;
 	char emptyString[1000] ;
 	char featPrereqDescrBuffer[5000];
+	std::unordered_set<feat_enums> metamagicFeats;
 
-	uint32_t racialFeats[ 10 * NUM_RACES ];
+	uint32_t racialFeats[ 10 * VANILLA_NUM_RACES ];
 	uint32_t HasFeatCount(objHndl objHnd, feat_enums featEnum);
+	uint32_t HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classEnum, uint32_t rangerSpecializationFeat, uint32_t newDomain1, uint32_t newDomain2, uint32_t alignmentChoiceNew);
 	uint32_t HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classEnum, uint32_t rangerSpecializationFeat);
 	uint32_t HasFeatCountByClass(objHndl objHnd, feat_enums featEnum);
+	bool HasMetamagicFeat(objHndl handle);
+
 	uint32_t FeatListElective(objHndl objHnd, feat_enums * listOut);
 	uint32_t FeatListGet(objHndl objHnd, feat_enums * listOut, Stat classBeingLevelled, feat_enums rangerSpecFeat);
 	uint32_t FeatExistsInArray(feat_enums featCode, feat_enums * featArray, uint32_t featArrayLen);
-	uint32_t WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat classBeingLeveled, WeaponTypes wpnType);
-	feat_enums GetFeatForWeaponType(WeaponTypes wt, feat_enums baseFeat); // for stuff like Weapon Specialization/Focus etc.
 	uint32_t FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, feat_enums * featArray, uint32_t featArrayLen, Stat classCodeBeingLevelledUp, Stat abilityScoreBeingIncreased);
 
 	std::vector<feat_enums> GetFeats(objHndl handle); // This is what objHndl.feats in python returns ??
@@ -139,13 +147,30 @@ struct LegacyFeatSystem : temple::AddressTable
 	const char* GetFeatHelpTopic(feat_enums feat);
 	int IsFeatEnabled(feat_enums feat);
 	int IsMagicFeat(feat_enums feat); // crafting / metamagic feats (that Wiz/Sorcs can pick as bonus feats)
-	int IsFeatPartOfMultiselect(feat_enums feat); // hidden feats that are only selectable in a submenu
+	
+	//Metamgic feats (subset of magic feats)
+	void AddMetamagicFeat(feat_enums feat);
+	bool IsMetamagicFeat(feat_enums feat);
+	std::vector<feat_enums> GetMetamagicFeats();
+
 	int IsFeatRacialOrClassAutomatic(feat_enums feat);  // feats automatically granted (cannot be manually selected at levelup)
 	int IsClassFeat(feat_enums feat);
 	int IsFighterFeat(feat_enums feat); // feats that fighters can select as bonus feats
 	int IsFeatPropertySet(feat_enums feat, int featProp); // checks bitfield if the entire featProp is set (i.e. partial matches return 0)
+
+	// weapon feats handling
+	WeaponTypes GetWeaponType(feat_enums feat); // gets the associated weapon type
+	uint32_t WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat classBeingLeveled, WeaponTypes wpnType);
+	feat_enums GetFeatForWeaponType(WeaponTypes wt, feat_enums baseFeat = FEAT_NONE); // for stuff like Weapon Specialization/Focus etc.
+
+	int IsFeatPartOfMultiselect(feat_enums feat); // hidden feats that are only selectable in a submenu
 	bool IsFeatMultiSelectMaster(feat_enums feat);
+	feat_enums MultiselectGetFirst(feat_enums feat);
+	void MultiselectGetChildren(feat_enums feat, std::vector<feat_enums>& out);
+
 	bool IsNonCore(feat_enums feat);
+	void DoForAllFeats(void (__cdecl*cb)(int featEnum));
+	
 	uint32_t rangerArcheryFeats[4 * 2 + 100];
 	uint32_t rangerTwoWeaponFeats[4 * 2 + 100];
 
@@ -159,6 +184,9 @@ struct LegacyFeatSystem : temple::AddressTable
 protected:
 	std::map<feat_enums, NewFeatSpec> mNewFeats;
 	void _GetNewFeatsFromFile();
+	void _GeneratePowerCriticalChildFeats(const NewFeatSpec &parentFeat);
+	void _CompileParents();
+	void _AddFeat(const NewFeatSpec &featSpec);
 };
 
 extern LegacyFeatSystem feats;

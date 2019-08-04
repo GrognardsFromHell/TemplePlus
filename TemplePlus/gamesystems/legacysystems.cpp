@@ -19,6 +19,17 @@
 #include <ui/ui_item_creation.h>
 #include "d20/d20stats.h"
 #include "deity/legacydeitysystem.h"
+#include "ui/ui_systems.h"
+#include "fade.h"
+#include "objects/objsystem.h"
+#include "infrastructure/vfs.h"
+#include "infrastructure/elfhash.h"
+#include "infrastructure/mesparser.h"
+#include "legacymapsystems.h"
+#include "infrastructure/meshes.h"
+#include "turn_based.h"
+#include "d20_race.h"
+#include "ai.h"
 
 
 //*****************************************************************************
@@ -88,6 +99,27 @@ const std::string &DescriptionSystem::GetName() const {
 	return name;
 }
 
+bool DescriptionSystem::ReadCustomNames(GameSystemSaveFile * file, std::vector<std::string>& customNamesOut){
+	auto count = 0;
+	if (!tio_fread(&count, sizeof(int), 1, file->file))
+		return false;
+
+	if (count <= 0)
+		return true;
+
+	for (auto i=0; i < count; i++){
+		auto nameLen = 0;
+		tio_fread(&nameLen, sizeof(int), 1, file->file);
+		std::string tmpStr;
+		tmpStr.resize(nameLen + 1);
+		tio_fread(&tmpStr[0], sizeof(char), nameLen, file->file);
+		tmpStr[nameLen] = 0;
+		customNamesOut.push_back(tmpStr);
+	}
+	return true;
+
+}
+
 //*****************************************************************************
 //* ItemEffect
 //*****************************************************************************
@@ -136,12 +168,41 @@ void TeleportSystem::Reset() {
 	reset();
 }
 void TeleportSystem::AdvanceTime(uint32_t time) {
-	auto advanceTime = temple::GetPointer<void(uint32_t)>(0x10086480);
-	advanceTime(time);
+	auto &fadeAndTeleportActive = temple::GetRef<BOOL>(0x10AB74C0);
+	if (!fadeAndTeleportActive)
+		return;
+
+	auto &teleportProcessActive = temple::GetRef<BOOL>(0x10AB74B8);
+	teleportProcessActive = 1;
+
+	tbSys.groupInitiativeList->Clear(); // fix for common crash - sometimes initiative list isn't cleared and then some other processes get invalid crap
+
+	auto teleportProcess = temple::GetRef<void(__cdecl)(FadeAndTeleportArgs&)>(0x10085AA0);
+	auto &teleportPacket = temple::GetRef<FadeAndTeleportArgs>(0x10AB74C8);
+	teleportProcess(teleportPacket);
+
+	teleportProcessActive = 0;
+	fadeAndTeleportActive = 0;
+	
+	if (teleportPacket.flags & FadeAndTeleportFlags::ftf_unk80000000){
+		if (teleportPacket.flags & FadeAndTeleportFlags::ftf_unk20){
+			temple::GetRef<void(__cdecl)()>(0x100027E0)(); // GameEnableDrawing
+		}
+	}
+
+	/*auto advanceTime = temple::GetPointer<void(uint32_t)>(0x10086480);
+	advanceTime(time);*/
 }
 const std::string &TeleportSystem::GetName() const {
 	static std::string name("Teleport");
 	return name;
+}
+
+// Originally @ 0x10084af0
+bool TeleportSystem::IsObjectTeleporting(objHndl handle) const
+{
+	static auto orgMethod = temple::GetPointer<BOOL(objHndl)>(0x10084af0);
+	return orgMethod(handle) == 1;
 }
 
 //*****************************************************************************
@@ -179,6 +240,21 @@ void SectorSystem::SetLimits(uint64_t limitX, uint64_t limitY)
 {
 	static auto set_sector_limit = temple::GetPointer<BOOL(uint64_t, uint64_t)>(0x10081940);
 	set_sector_limit(limitX, limitY);
+}
+
+bool SectorSystem::ReadSectorTimes(GameSystemSaveFile * saveFile, std::vector<SectorTime>& sectorTimes){
+	auto count = 0;
+	if (!tio_fread(&count, sizeof(int), 1, saveFile->file))
+		return false;
+	if (count > 2 * config.sectorCacheSize)
+		return false;
+	sectorTimes.resize(count);
+	if (!count)
+		return true;
+
+	if (tio_fread(&sectorTimes[0], sizeof(SectorTime), count, saveFile->file) != count)
+		return false;
+	return true;
 }
 
 //*****************************************************************************
@@ -255,18 +331,242 @@ const std::string &ScriptNameSystem::GetName() const {
 //*****************************************************************************
 
 PortraitSystem::PortraitSystem(const GameSystemConf &config) {
-	auto startup = temple::GetPointer<int(const GameSystemConf*)>(0x1007de10);
-	if (!startup(&config)) {
+	//auto startup = temple::GetPointer<int(const GameSystemConf*)>(0x1007de10);
+	if (!mesFuncs.Open("art\\interface\\portraits\\portraits.mes", &mPortraitsMes)){
 		throw TempleException("Unable to initialize game system Portrait");
 	}
+
+	TioFileList flist;
+	tio_filelist_create(&flist, "art\\interface\\portraits\\*");
+
+	for (auto i=0; i < flist.count; i++){
+		auto &fentry = flist.files[i];
+		if (!(fentry.attribs & TioFileAttribs::TFA_SUBDIR))
+			continue;
+		if (!_strcmpi(fentry.name, ".") || !_strcmpi(fentry.name, ".."))
+			continue;
+
+		PortraitPack porPackNew;
+		porPackNew.path = fmt::format("art\\interface\\portraits\\{}", fentry.name);
+		porPackNew.key = ElfHash::Hash(fentry.name);
+		if (porPackNew.key > 0 && porPackNew.key <= PORTRAIT_MAX_ID){
+			porPackNew.key = ElfHash::Hash(fmt::format("{}a{}b{}c{}",fentry.name, fentry.name, fentry.name, fentry.name));
+		}
+
+
+		auto portFname = fmt::format("{}\\portraits.mes", porPackNew.path);
+		if (!tio_fileexists(portFname.c_str()))
+			continue;
+
+		auto mesContent = MesFile::ParseFile(portFname);
+
+		TioFileList portraitTgaFiles;
+		tio_filelist_create(&portraitTgaFiles, fmt::format("{}\\*.tga", porPackNew.path).c_str());
+		auto lastIdx = 0;
+		for (auto it: mesContent){
+			auto portraitFname = fmt::format("{}\\{}",porPackNew.path, it.second);
+			//if (!tio_fileexists(portraitFname.c_str())) // so it doesn't list non-existant entries (i.e. stuff that's not in the extension folder)
+			//	continue;
+			auto foundFile = false;
+			for (auto j= 0 ; j < portraitTgaFiles.count; j++){
+				if (!_strcmpi(portraitTgaFiles.files[ (j + lastIdx) % portraitTgaFiles.count].name, it.second.c_str())){
+					foundFile = true;
+					lastIdx = j + lastIdx + 1;
+					break;
+				}
+			}
+			if (!foundFile)
+				continue;
+
+			porPackNew.packContents[it.first] = it.second;
+		}
+
+		tio_filelist_destroy(&portraitTgaFiles);
+		mPortraitPacks.push_back(porPackNew);
+	}
+
+	tio_filelist_destroy(&flist);
 }
+
 PortraitSystem::~PortraitSystem() {
-	auto shutdown = temple::GetPointer<void()>(0x1007de30);
-	shutdown();
+	/*auto shutdown = temple::GetPointer<void()>(0x1007de30);
+	shutdown();*/
+	mesFuncs.Close(mPortraitsMes);
 }
 const std::string &PortraitSystem::GetName() const {
 	static std::string name("Portrait");
 	return name;
+}
+
+bool PortraitSystem::GetFirstId(objHndl handle, int* idxOut) const {
+	*idxOut = 0;
+
+	MesLine line;
+	if (!mesFuncs.GetFirstLine(mPortraitsMes, &line))
+		return false;
+	
+	auto mesFindLine = temple::GetRef<BOOL(__cdecl)(MesHandle, MesLine*)>(0x101E6650);
+
+	while (line.key % 10 || !IsPortraitFilenameValid(handle, line.value)){
+		if (!mesFindLine(mPortraitsMes, &line))
+			return false;
+	}
+
+	*idxOut = line.key;
+	return true;
+}
+
+bool PortraitSystem::GetNextId(objHndl handle, int* idxOut) const {
+	MesLine line(*idxOut);
+
+	auto findNextLine = temple::GetRef<BOOL(__cdecl)(MesHandle, MesLine*)>(0x101E6650);
+
+	MesHandle mh = mPortraitsMes;
+	auto packKey = GetKeyFromId(line.key);
+
+	auto moveToFirstPortraitPack = [&](){ // moves to first portrait pack (if any is found) after exhausting the "normal" portraits
+		if (!mPortraitPacks.size())
+			return false;
+		if (!mPortraitPacks[0].packContents.size())
+			return false;
+		
+		packKey = mPortraitPacks[0].key;
+		*idxOut = mPortraitPacks[0].packContents.begin()->first ^ packKey;
+		return true;
+	};
+
+	// normal portraits retrieval
+	if (packKey == 0){
+		if (!findNextLine(mh, &line)){
+			return moveToFirstPortraitPack();
+		}
+			
+		while (line.key % 10 || !IsPortraitFilenameValid(handle, line.value)) {
+			if (!findNextLine(mh, &line)){
+				return moveToFirstPortraitPack();
+			}			
+		}
+
+		*idxOut = (line.key ^ packKey);
+		return true;
+	}
+
+
+	auto moveToNextPortraitPack=  [&](){
+		auto isNextOne = false;
+		for (auto it : mPortraitPacks){
+			if (isNextOne) {
+				if (!it.packContents.size())
+					continue;
+
+				/// todo verify is multiple of 10
+				*idxOut = it.packContents.begin()->first ^ it.key;
+				return true;
+			}
+
+			if (it.key == packKey){
+				isNextOne = true;
+				continue;
+			}
+			
+		}
+		return false;
+	};
+
+	if (packKey != 0){
+		for (auto it: mPortraitPacks){
+			if (it.key != packKey)
+				continue;
+			// found the portrait pack from the id
+			
+			auto foundPortrait = false;
+
+			auto dekey = *idxOut ^ packKey;
+
+			auto nextId = it.packContents.find(dekey);
+			do	{
+				std::advance(nextId, 1);
+			} while (nextId != it.packContents.end() && (nextId->first % 10) );
+				
+
+			if (nextId == it.packContents.end()){
+				return moveToNextPortraitPack();
+			}
+				
+
+			auto result = nextId->first;
+
+			*idxOut = result ^ packKey;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+int PortraitSystem::GetKeyFromId(int id) const{
+	if (id < PORTRAIT_MAX_ID)
+		return 0;
+
+	for (auto it : mPortraitPacks){
+		auto dekey = (int)(id ^ it.key);
+		if (dekey > 0 && dekey < PORTRAIT_MAX_ID)
+			return it.key;
+	}
+	return 0;
+}
+
+std::string PortraitSystem::GetPortraitFileFromId(int id, int subId){
+	auto packKey = GetKeyFromId(id);
+	auto result = fmt::format("art\\interface\\portraits\\");
+
+	MesLine line(id + subId);
+	if(!packKey){ // normal portraits.mes
+		
+		if (!mesFuncs.GetLine(mPortraitsMes, &line)) { // If not found, use TempMan
+			line.key = 0 + subId; 
+			mesFuncs.GetLine(mPortraitsMes, &line);
+		}
+		result.append(line.value);
+		return result;
+	}
+
+	// get from new portrait pack
+	for (auto it: mPortraitPacks){
+		if (it.key != packKey)
+			continue;
+		auto dekey = id ^ packKey;
+		auto portFind = it.packContents.find(dekey + subId);
+
+		if (portFind == it.packContents.end()){ // not found, return TempMan
+			line.key = 0 + subId;
+			mesFuncs.GetLine(mPortraitsMes, &line);
+			result.append(line.value);
+			return result;
+		}
+
+		result = fmt::format("{}\\{}", it.path, portFind->second);
+		return result;
+	}
+
+	// failsafe
+	line.key = 0 + subId;
+	mesFuncs.GetLine(mPortraitsMes, &line);
+	result.append(line.value);
+	return result;
+}
+
+bool PortraitSystem::IsModularId(int id){
+	return ((unsigned int)id) >= (unsigned int)PORTRAIT_MAX_ID;
+}
+
+bool PortraitSystem::IsPortraitFilenameValid(objHndl handle, const char* filename) {
+	if (!filename || !*filename || !_strnicmp("TMP", filename, 3))
+		return false;
+	if (!_strnicmp("NPC", filename, 3) || !_strnicmp("MOO", filename, 3)) {
+		return objSystem->GetObject(handle)->IsNPC();
+	}
+	return true;
 }
 
 //*****************************************************************************
@@ -294,6 +594,10 @@ bool SkillSystem::LoadGame(GameSystemSaveFile* saveFile) {
 const std::string &SkillSystem::GetName() const {
 	static std::string name("Skill");
 	return name;
+}
+
+bool SkillSystem::ReadUnknown(GameSystemSaveFile * saveFile, int & unk){
+	return tio_fread(&unk, sizeof(int), 1, saveFile->file) == 1;
 }
 
 //*****************************************************************************
@@ -474,6 +778,31 @@ const std::string &ScriptSystem::GetName() const {
 	return name;
 }
 
+bool ScriptSystem::ReadGlobalVars(GameSystemSaveFile * saveFile, std::vector<int>& globalVars, std::vector<int>& globalFlagsData, int & storyState){
+	globalVars.resize(2000);
+	globalFlagsData.resize(100);
+	if (!tio_fread(&globalVars[0], sizeof(int) * 2000, 1, saveFile->file)
+		|| !tio_fread(&globalFlagsData[0], sizeof(int) * 100, 1, saveFile->file)
+		|| !tio_fread(&storyState, sizeof(int), 1, saveFile->file)
+		)
+		return false;
+
+	return true;
+}
+
+bool ScriptSystem::ReadEncounterQueue(GameSystemSaveFile * saveFile, std::vector<int>& encounterQueue){
+	int count = 0;
+	if (!tio_fread(&count, sizeof(int), 1, saveFile->file))
+		return false;
+	encounterQueue.resize(count);
+	if (!count)
+		return true;
+
+	if (tio_fread(&encounterQueue[0], sizeof(int), count, saveFile->file) != count)
+		return false;
+	return true;
+}
+
 //*****************************************************************************
 //* Level
 //*****************************************************************************
@@ -502,11 +831,12 @@ D20System::D20System(const GameSystemConf &config) {
 	if (!startup(&config)) {
 		throw TempleException("Unable to initialize game system D20");
 	}
-	conds.RegisterNewConditions();
+	d20RaceSys.GetRaceSpecsFromPython();
+	conds.RegisterNewConditions(); // also initializes tpdp and race_defs modules
+	
 	d20ClassSys.GetClassSpecs();
 	d20LevelSys.GenerateSpellsPerLevelTables();
 	damage.Init();
-	itemCreation.GetMaaSpecs();
 	d20Sys.GetPythonActionSpecs();
 }
 D20System::~D20System() {
@@ -597,6 +927,12 @@ int LightSchemeSystem::GetHourOfDay()
 {
 	static auto lightscheme_get_hour = temple::GetPointer<int()>(0x1006f0b0);
 	return lightscheme_get_hour();
+}
+
+bool LightSchemeSystem::IsUpdating() const
+{
+	static auto lightscheme_is_updating = temple::GetPointer<int()>(0x1006f0c0);
+	return lightscheme_is_updating() == 1;
 }
 
 //*****************************************************************************
@@ -756,6 +1092,12 @@ void SoundGameSystem::SetSoundSchemeIds(int scheme1, int scheme2)
 {
 	static auto soundscheme_set = temple::GetPointer<void(int, int)>(0x1003c4d0);
 	soundscheme_set(scheme1, scheme2);
+}
+
+void SoundGameSystem::StopAll(bool flag)
+{
+	static auto soundgame_stop_all = temple::GetPointer<void(int a1)>(0x1003c5b0);
+	soundgame_stop_all(flag ? TRUE : FALSE);
 }
 
 //*****************************************************************************
@@ -1284,11 +1626,23 @@ void PartySystem::ForEachInParty(std::function<void(objHndl)> callback) {
 
 bool D20LoadSaveSystem::SaveGame(TioFile *file) {
 	auto save = temple::GetPointer<int(TioFile*)>(0x1004fb70);
-	return save(file) == 1;
+	auto result = save(file) == 1;
+	if (!result)
+		return false;
+
+	aiSys.CustomStrategiesSave();
+
+	return result;
 }
 bool D20LoadSaveSystem::LoadGame(GameSystemSaveFile* saveFile) {
 	auto load = temple::GetPointer<int(GameSystemSaveFile*)>(0x1004fbd0);
-	return load(saveFile) == 1;
+	auto result = load(saveFile) == 1;
+	if (!result)
+		return false;
+
+	aiSys.CustomStrategiesLoad();
+
+	return result;
 }
 const std::string &D20LoadSaveSystem::GetName() const {
 	static std::string name("D20LoadSave");
@@ -1328,36 +1682,7 @@ const std::string &GameInitSystem::GetName() const {
 	return name;
 }
 
-//*****************************************************************************
-//* ObjFade
-//*****************************************************************************
 
-ObjFadeSystem::ObjFadeSystem(const GameSystemConf &config) {
-	auto startup = temple::GetPointer<int(const GameSystemConf*)>(0x1004c130);
-	if (!startup(&config)) {
-		throw TempleException("Unable to initialize game system ObjFade");
-	}
-}
-ObjFadeSystem::~ObjFadeSystem() {
-	auto shutdown = temple::GetPointer<void()>(0x1004c170);
-	shutdown();
-}
-void ObjFadeSystem::Reset() {
-	auto reset = temple::GetPointer<void()>(0x1004c190);
-	reset();
-}
-bool ObjFadeSystem::SaveGame(TioFile *file) {
-	auto save = temple::GetPointer<int(TioFile*)>(0x1004c1c0);
-	return save(file) == 1;
-}
-bool ObjFadeSystem::LoadGame(GameSystemSaveFile* saveFile) {
-	auto load = temple::GetPointer<int(GameSystemSaveFile*)>(0x1004c220);
-	return load(saveFile) == 1;
-}
-const std::string &ObjFadeSystem::GetName() const {
-	static std::string name("ObjFade");
-	return name;
-}
 
 //*****************************************************************************
 //* Deity
@@ -1550,6 +1875,103 @@ void MapFoggingSystem::SaveExploredTileData(int mapId) {
 void MapFoggingSystem::SaveEsd() {
 	static auto map_flush_esd = temple::GetPointer<void()>(0x10030f40);
 	map_flush_esd();
+}
+
+void MapFoggingSystem::PerformCheckForCritter(objHndl handle, int idx){
+	memset(&mFogBuffers[idx], 0, 4 * sFogBufferDim* sFogBufferDim);
+	auto obj = objSystem->GetObject(handle);
+	auto objLoc = obj->GetLocation();
+
+	auto fogBufferDim_div3 = sFogBufferDim / 3;
+	int64_t (& objsRelX)[] = temple::GetRef<int64_t[]>(0x1080FB88);
+	int64_t (& objsRelY)[] = temple::GetRef<int64_t[]>(0x108EC550);
+
+	objsRelX[idx] = objLoc.locx - fogBufferDim_div3;
+	objsRelY[idx] = objLoc.locy - fogBufferDim_div3;
+
+	TileRect tiles;
+	tiles.x1 = objLoc.locx - fogBufferDim_div3;
+	tiles.x2 = objLoc.locx + fogBufferDim_div3;
+	tiles.y1 = objLoc.locy - fogBufferDim_div3;
+	tiles.y2 = objLoc.locy + fogBufferDim_div3;
+
+	auto sectorList = sectorSys.BuildSectorList(&tiles);
+	if (!sectorList)
+		return;
+
+	auto listNode = sectorList;
+
+	while (listNode){
+
+		Sector *sect;
+		if (!sectorSys.SectorLock(listNode->sector, &sect)){
+			listNode = listNode->next;
+			continue;
+		}
+		auto secLoc = listNode->sector;
+		auto baseTile=secLoc.GetBaseTile();
+
+		auto svb = gameSystems->GetSectorVB().GetSvb(secLoc);
+		auto relX = objsRelX[idx];
+		auto relY = objsRelY[idx];
+
+		auto cornerX = listNode->cornerTile.locx;
+		auto cornerY = listNode->cornerTile.locy;
+
+		auto deltaX = cornerX - baseTile.locx;
+		auto deltaY = cornerY - baseTile.locy;
+		
+
+		auto &objNodes = sect->objects;
+		auto objNode = objNodes.tiles[deltaX + (deltaY << 6)];
+
+		for (; objNode != nullptr; objNode = objNode->next) {
+
+			auto objNodeItem = objNode->handle;
+			if (!objNodeItem){
+				continue;
+			}
+
+			auto objNodeObj = objSystem->GetObject(objNodeItem);
+
+			if (objNodeObj->type != obj_t_portal)
+				continue;
+
+			auto aasParams = objects.GetAnimParams(objNodeItem);
+			auto model     = objects.GetAnimHandle(objNodeItem);
+			auto submeshes = model->GetSubmeshes();
+			
+			for (auto i_submesh=0u; i_submesh<submeshes.size(); i_submesh++){
+				auto doorSubmesh = model->GetSubmesh(aasParams, submeshes[i_submesh]);
+				auto vertPos   = doorSubmesh->GetPositions();
+				auto indices   = doorSubmesh->GetIndices();
+				auto primCount = doorSubmesh->GetPrimitiveCount();
+
+				for (auto i_prim = 0; i_prim < primCount; i_prim++){
+					// todo: fill triangle with value 8 
+				}
+
+			}
+			
+
+		}
+
+
+
+		// unlock sector TODO svb
+		sectorSys.SectorUnlock(listNode->sector);
+
+		listNode = listNode->next;
+	}
+
+	sectorSys.SectorListReturnToPool(sectorList);
+
+}
+
+int MapFoggingSystem::IsPosExplored(LocAndOffsets location)
+{
+	static auto is_pos_explored = temple::GetPointer<int(LocAndOffsets)>(0x1002ecb0);
+	return is_pos_explored(location);
 }
 
 void MapFoggingSystem::InitScreenBuffers() {

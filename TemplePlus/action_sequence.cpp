@@ -23,11 +23,13 @@
 #include "ai.h"
 #include "ui/ui_intgame_turnbased.h"
 #include "d20_obj_registry.h"
-#include "anim.h"
+#include "animgoals/anim.h"
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/objects/objsystem.h"
 #include "python/python_integration_d20_action.h"
-
+#include "ui/ui_systems.h"
+#include "ui/ui_legacysystems.h"
+#include "radialmenu.h"
 
 static struct ActnSeqAddresses : temple::AddressTable {
 
@@ -41,7 +43,6 @@ static struct ActnSeqAddresses : temple::AddressTable {
 	ReadiedActionPacket * readiedActionCache;
 	ActnSeq** actSeqInterrupt;
 	int* seqSthg_10B3D59C;
-	int* seqSthg_10B3D5C4;
 	int * cursorState;
 	int *aooShaderId;
 	int * aooShaderLocationsNum;
@@ -65,7 +66,6 @@ static struct ActnSeqAddresses : temple::AddressTable {
 		rebase(aooShaderLocationsNum, 0x10B3D598);
 		rebase(seqSthg_10B3D59C, 0x10B3D59C);
 		rebase(cursorState, 0x10B3D5AC);
-		rebase(seqSthg_10B3D5C4, 0x10B3D5C4);
 
 		rebase(readiedActionCache, 0x1186A900);
 		rebase(actSeqPickerAction, 0x118CD400);
@@ -83,6 +83,14 @@ static struct ActnSeqAddresses : temple::AddressTable {
 	
 }addresses;
 
+
+enum HourglassState : int
+{
+	HOURGLASS_EMPTY = 0, 
+	HOURGLASS_MOVE = 1, // move action
+	HOURGLASS_STD = 2, // standard action
+	HOURGLASS_FULL = 4, // full round action
+};
 
 static class ActnSeqReplacements : public TempleFix
 {
@@ -145,34 +153,6 @@ public:
 		replaceFunction(0x100999E0, GreybarReset);
 		replaceFunction(0x10099CF0, PerformOnAnimComplete);
 
-		// AddToSeqSpellCast
-		replaceFunction<ActionErrorCode(D20Actn*, ActnSeq*, TurnBasedStatus*)>(0x100958A0,[](D20Actn* d20a, ActnSeq* seq, TurnBasedStatus* tbStat)->ActionErrorCode
-		{
-			if (d20Sys.d20Query(d20a->d20APerformer, DK_QUE_Prone))
-			{
-				D20Actn d20aGetup = *d20a;
-				d20aGetup.d20ActType = D20A_STAND_UP;
-				seq->d20ActArray[ seq->d20ActArrayNum++] = d20aGetup;
-			}
-
-			uint32_t spellEnum;
-			d20Sys.ExtractSpellInfo(&d20a->d20SpellData, &spellEnum, nullptr, nullptr, nullptr, nullptr ,nullptr);
-			SpellEntry spellEntry;
-			auto srcResult = spellSys.spellRegistryCopy(spellEnum, &spellEntry);
-			if (srcResult
-				&& spellEntry.spellRangeType == SpellRangeType::SRT_Touch
-				&& static_cast<UiPickerType>(spellEntry.modeTargetSemiBitmask) == UiPickerType::Single
-				&& !(seq->ignoreLos & 1)
-			)
-			{
-				int dummy = 1;
-				return (ActionErrorCode)actSeqSys.AddToSeqWithTarget(d20a, seq, tbStat);
-			}
-			seq->d20ActArray[seq->d20ActArrayNum++] = *d20a;
-			return ActionErrorCode::AEC_OK;
-			
-		});
-		
 		replaceFunction<void(__cdecl)(objHndl)>(0x100934E0, [](objHndl handle)
 		{
 			actSeqSys.ActionTypeAutomatedSelection(handle);
@@ -229,7 +209,7 @@ ActionSequenceSystem::ActionSequenceSystem()
 	rebase(_actionPerformProjectile, 0x1008AC70);
 	rebase(_actSeqSpellHarmful, 0x1008AD10);
 	rebase(_sub_1008BB40, 0x1008BB40);
-	rebase(getRemainingMaxMoveLength, 0x1008B8A0);
+	//rebase(GetRemainingMaxMoveLength, 0x1008B8A0);
 	//rebase(TrimPathToRemainingMoveLength, 0x1008B9A0);
 
 	rebase(_CrossBowSthgReload_1008E8A0, 0x1008E8A0);
@@ -264,6 +244,43 @@ ActionSequenceSystem::ActionSequenceSystem()
 		5, 2, 2, -1, 0,
 		6, 5, 2, -1, 3 };
 	memcpy(turnBasedStatusTransitionMatrix, _transMatrix, sizeof(turnBasedStatusTransitionMatrix));
+}
+
+uint32_t ActionSequenceSystem::GetRemainingMaxMoveLength(D20Actn* d20a, TurnBasedStatus* tbStat, float* moveLen){
+	auto surplusMoves = tbStat->surplusMoveDistance;
+	auto moveSpeed = dispatch.Dispatch29hGetMoveSpeed(d20a->d20APerformer);
+	if (d20a->d20ActType == D20A_UNSPECIFIED_MOVE){
+		if (tbStat->hourglassState >= HOURGLASS_FULL){
+			*moveLen = 2 * moveSpeed + surplusMoves;
+			return TRUE;
+		}
+		if (tbStat->hourglassState >= HOURGLASS_MOVE) {
+			*moveLen = moveSpeed + surplusMoves;
+			return TRUE;
+		}
+		*moveLen = surplusMoves;
+		return TRUE;
+	}
+
+	if (d20a->d20ActType == D20A_5FOOTSTEP && !(tbStat->tbsFlags & (TBSF_Movement | TBSF_Movement2))){
+		if (surplusMoves <= 0.001){
+			*moveLen = 5.0f;
+			return TRUE;
+		}
+		*moveLen = surplusMoves;
+		return TRUE;
+	}
+	
+	if (d20a->d20ActType == D20A_MOVE){
+		*moveLen = moveSpeed + surplusMoves;
+		return TRUE;
+	}
+	if (d20a->d20ActType == D20A_DOUBLE_MOVE) {
+		*moveLen = 2*moveSpeed + surplusMoves;
+		return TRUE;
+	}
+
+	return FALSE;
 }
 
 
@@ -301,6 +318,17 @@ void ActionSequenceSystem::curSeqReset(objHndl obj)
 	*performingDefaultAction = 0;
 }
 
+void ActionSequenceSystem::ResetAll(objHndl handle){
+	// resets the readied action cache
+	// Clear TBUiIntgameFocus
+	// Set handle to initiative list first entry
+	// Free all act seq array occupancies
+	// Set Turn Based Actor to Initiative List first entry, and use their initiative
+	// Clear the picker targeting type, action type and data
+	// Clear pathfinding cache occupancies
+	temple::GetRef<void(__cdecl)(objHndl)>(0x10092DA0)(handle);
+}
+
 void ActionSequenceSystem::ActSeqSpellReset() const
 {
 	auto actSeqSpellReset = temple::GetRef<void(__cdecl)()>(0x100930A0);
@@ -329,13 +357,13 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 		}
 		addresses.actSeqPicker->flagsTarget = UiPickerFlagsTarget::None;
 		addresses.actSeqPicker->modeTarget = UiPickerType::Single;
-		addresses.actSeqPicker->incFlags = UiPickerIncFlags::NonCritter;
-		addresses.actSeqPicker->excFlags = UiPickerIncFlags::None;
+		addresses.actSeqPicker->incFlags = UiPickerIncFlags::UIPI_NonCritter;
+		addresses.actSeqPicker->excFlags = UiPickerIncFlags::UIPI_None;
 		addresses.actSeqPicker->callback = reinterpret_cast<PickerCallback>(0x10096570);//(int)ChooseTargetCallback;
 		addresses.actSeqPicker->spellEnum = 0;
 		addresses.actSeqPicker->caster = d20Sys.globD20Action->d20APerformer;
 		*actSeqPickerActive = 1;
-		uiTurnBased.ShowPicker(addresses.actSeqPicker,nullptr);
+		uiPicker.ShowPicker(*addresses.actSeqPicker,nullptr);
 		*addresses.actSeqPickerAction = *d20Sys.globD20Action;
 		return;
 	}
@@ -351,14 +379,17 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 		}
 		addresses.actSeqPicker->flagsTarget = UiPickerFlagsTarget::None;
 		addresses.actSeqPicker->modeTarget = UiPickerType::Single;
-		addresses.actSeqPicker->incFlags = static_cast<UiPickerIncFlags>((uint64_t)UiPickerIncFlags::Self | (uint64_t)UiPickerIncFlags::Other | (uint64_t)UiPickerIncFlags::Dead);
-		addresses.actSeqPicker->excFlags = UiPickerIncFlags::NonCritter;
+		addresses.actSeqPicker->incFlags = static_cast<UiPickerIncFlags>(
+			(uint64_t)UiPickerIncFlags::UIPI_Self
+			| (uint64_t)UiPickerIncFlags::UIPI_Other 
+			| (uint64_t)UiPickerIncFlags::UIPI_Dead);
+		addresses.actSeqPicker->excFlags = UiPickerIncFlags::UIPI_NonCritter;
 		addresses.actSeqPicker->callback = reinterpret_cast<PickerCallback>(0x10096570);//(int)ChooseTargetCallback;
 		addresses.actSeqPicker->spellEnum = 0;
 		addresses.actSeqPicker->caster = d20Sys.globD20Action->d20APerformer;
 
 		*actSeqPickerActive = 1;
-		uiTurnBased.ShowPicker(addresses.actSeqPicker, nullptr);
+		uiPicker.ShowPicker(*addresses.actSeqPicker, nullptr);
 		*addresses.actSeqPickerAction = *d20Sys.globD20Action;
 		return;
 	}
@@ -374,13 +405,16 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 		}
 		addresses.actSeqPicker->flagsTarget = UiPickerFlagsTarget::None;
 		addresses.actSeqPicker->modeTarget = UiPickerType::Single;
-		addresses.actSeqPicker->incFlags = static_cast<UiPickerIncFlags>((uint64_t)UiPickerIncFlags::Other | (uint64_t)UiPickerIncFlags::Dead);
-		addresses.actSeqPicker->excFlags = static_cast<UiPickerIncFlags>((uint64_t)UiPickerIncFlags::Self | (uint64_t)UiPickerIncFlags::NonCritter);
+		addresses.actSeqPicker->incFlags = static_cast<UiPickerIncFlags>(
+			(uint64_t)UiPickerIncFlags::UIPI_Other | (uint64_t)UiPickerIncFlags::UIPI_Dead);
+		addresses.actSeqPicker->excFlags = static_cast<UiPickerIncFlags>(
+			(uint64_t)UiPickerIncFlags::UIPI_Self 
+			| (uint64_t)UiPickerIncFlags::UIPI_NonCritter);
 		addresses.actSeqPicker->callback = reinterpret_cast<PickerCallback>(0x10096570);//(int)ChooseTargetCallback;
 		addresses.actSeqPicker->spellEnum = 0;
 		addresses.actSeqPicker->caster = d20Sys.globD20Action->d20APerformer;
 		*actSeqPickerActive = 1;
-		uiTurnBased.ShowPicker(addresses.actSeqPicker, nullptr);
+		uiPicker.ShowPicker(*addresses.actSeqPicker, nullptr);
 		*addresses.actSeqPickerAction = *d20Sys.globD20Action;
 		return;
 	}
@@ -401,35 +435,47 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 		}
 		addresses.actSeqPicker->flagsTarget = UiPickerFlagsTarget::Range;
 		addresses.actSeqPicker->modeTarget = UiPickerType::Area;
-		addresses.actSeqPicker->incFlags = static_cast<UiPickerIncFlags>((uint64_t)UiPickerIncFlags::Self | (uint64_t)UiPickerIncFlags::Other );
-		addresses.actSeqPicker->excFlags = static_cast<UiPickerIncFlags>( (uint64_t)UiPickerIncFlags::Dead | (uint64_t)UiPickerIncFlags::NonCritter);
+		addresses.actSeqPicker->incFlags = static_cast<UiPickerIncFlags>(
+			(uint64_t)UiPickerIncFlags::UIPI_Self
+			| (uint64_t)UiPickerIncFlags::UIPI_Other );
+		addresses.actSeqPicker->excFlags = static_cast<UiPickerIncFlags>( 
+			(uint64_t)UiPickerIncFlags::UIPI_Dead 
+			| (uint64_t)UiPickerIncFlags::UIPI_NonCritter);
 		addresses.actSeqPicker->callback = reinterpret_cast<PickerCallback>(0x10096570);//(int)ChooseTargetCallback;
 		addresses.actSeqPicker->spellEnum = 0;
 		addresses.actSeqPicker->caster = d20Sys.globD20Action->d20APerformer;
 		*actSeqPickerActive = 1;
-		uiTurnBased.ShowPicker(addresses.actSeqPicker, nullptr);
+		uiPicker.ShowPicker(*addresses.actSeqPicker, nullptr);
 		*addresses.actSeqPickerAction = *d20Sys.globD20Action;
 		return;
 	}
 
 	if (tgtClassif == D20TC_CastSpell){
 
-		unsigned int spellEnum, spellClass, spellLevel, metaMagicData;
-		D20SpellDataExtractInfo(&d20Sys.globD20Action->d20SpellData,
-			&spellEnum, nullptr, &spellClass, &spellLevel,nullptr,&metaMagicData);
+		unsigned int spellEnum, spellClass, spellLevel, metamagicValue;
 
+		D20SpellDataExtractInfo(&d20Sys.globD20Action->d20SpellData,
+			&spellEnum, nullptr, &spellClass, &spellLevel,nullptr,&metamagicValue);
+
+		MetaMagicData metaMagicData = metamagicValue;
+
+		//Modify metamagic data for enlarge and widen 
+		dispatch.DispatchMetaMagicModify(d20Sys.globD20Action->d20APerformer, metaMagicData);
 
 		auto curSeq = *actSeqSys.actSeqCur;
-		curSeq->spellPktBody.spellRange *= ((MetaMagicData)metaMagicData).metaMagicEnlargeSpellCount + 1;
+		curSeq->spellPktBody.spellRange *= metaMagicData.metaMagicEnlargeSpellCount + 1;
 		SpellEntry spellEntry;
-		if (spellSys.spellRegistryCopy(spellEnum, &spellEntry))
-		{
-			spellEntry.radiusTarget *= ((MetaMagicData)metaMagicData).metaMagicWidenSpellCount + 1;
+		if (spellSys.spellRegistryCopy(spellEnum, &spellEntry)){
+			spellEntry.radiusTarget *= metaMagicData.metaMagicWidenSpellCount + 1;
 		}
 		PickerArgs pickArgs;
 		spellSys.pickerArgsFromSpellEntry(&spellEntry, &pickArgs, curSeq->spellPktBody.caster, curSeq->spellPktBody.casterLevel);
 		pickArgs.spellEnum = spellEnum;
 		pickArgs.callback = [](const PickerResult & result, void* cbArgs) { actSeqSys.SpellPickerCallback(result, (SpellPacketBody*)cbArgs); };
+		// Modify the PickerArgs
+		if (d20Sys.globD20Action->d20ActType == D20A_PYTHON_ACTION)
+			pythonD20ActionIntegration.ModifyPicker(d20Sys.globD20Action->data1, &pickArgs);
+
 		*actSeqPickerActive = 1;
 		uiPicker.ShowPicker(pickArgs, &curSeq->spellPktBody);
 		*addresses.actSeqPickerAction = *d20Sys.globD20Action;
@@ -562,6 +608,7 @@ void ActionSequenceSystem::ActionTypeAutomatedSelection(objHndl handle)
 		case obj_t_pc:
 		case obj_t_npc:
 			targetingType = D20TC_SingleExcSelf;
+			break;
 		default:
 			targetingType = D20TC_Movement;
 			break;
@@ -617,12 +664,16 @@ void ActionSequenceSystem::ActionTypeAutomatedSelection(objHndl handle)
 
 	auto d20a = d20Sys.globD20Action;
 	auto performer = d20a->d20APerformer;
-	if (critterSys.IsFriendly(handle,performer) || critterSys.AllegianceShared(handle, performer))
-	{
-		if (!d20Sys.d20Query(performer, DK_QUE_HoldingCharge)) {
-			setGlobD20Action(D20A_UNSPECIFIED_MOVE, 0);
-			return;
+	if (critterSys.IsFriendly(handle,performer)){ // || critterSys.NpcAllegianceShared(handle, performer)){ // NpcAllegianceShared check is currently not a good idea since ToEE has poor Friend or Foe tracking when it comes to faction mates...
+		
+		auto performerLeader = critterSys.GetLeader(performer);
+		if (!performerLeader || critterSys.IsFriendly(handle, performerLeader)){
+			if (!d20Sys.d20Query(performer, DK_QUE_HoldingCharge)) {
+				setGlobD20Action(D20A_UNSPECIFIED_MOVE, 0);
+				return;
+			}
 		}
+		
 	} else if (critterSys.IsDeadNullDestroyed(handle) && temple::GetRef<BOOL(__cdecl)(objHndl)>(0x101391C0)(handle))
 	{
 		setGlobD20Action(D20A_OPEN_CONTAINER, 0);
@@ -635,7 +686,7 @@ void ActionSequenceSystem::ActionTypeAutomatedSelection(objHndl handle)
 
 void ActionSequenceSystem::TurnStart(objHndl obj)
 {
-	logger->debug("*** NEXT TURN *** starting for {} ({}). CurSeq: {}", description.getDisplayName(obj), obj, (void*)(*actSeqSys.actSeqCur));
+	logger->debug("*** NEXT TURN *** starting for {}. CurSeq: {}", obj, (void*)(*actSeqSys.actSeqCur));
 	auto objBody = gameSystems->GetObj().GetObject(obj);
 	//orgTurnStart(obj);
 
@@ -643,8 +694,7 @@ void ActionSequenceSystem::TurnStart(objHndl obj)
 	dword_1189FB60 = 0;
 	auto& seqSthg_10B3D59C = temple::GetRef<int>(0x10B3D59C);
 	seqSthg_10B3D59C = 0;
-	auto& seqSthg_10B3D5C4 = temple::GetRef<int>(0x10B3D5C4);
-	seqSthg_10B3D5C4 = 0;
+	*performedDefaultAction = 0;
 
 	if (d20Sys.globD20Action->d20APerformer && d20Sys.globD20Action->d20APerformer != obj) {
 		d20Sys.d20SendSignal(d20Sys.globD20Action->d20APerformer, DK_SIG_EndTurn, 0, 0);
@@ -673,7 +723,7 @@ void ActionSequenceSystem::TurnStart(objHndl obj)
 				auto d20SpellData = &d20a->d20SpellData;
 				if (d20Sys.d20QueryWithData(actSeq->performer, DK_QUE_SpellInterrupted, d20SpellData, 0)) {
 					d20a->d20Caf &= ~D20CAF_NEED_ANIM_COMPLETED;
-					animationGoals.Interrupt(actSeq->performer, AnimGoalPriority::AGP_5, 0);
+					gameSystems->GetAnim().Interrupt(actSeq->performer, AnimGoalPriority::AGP_5, 0);
 				}
 			}
 		}
@@ -757,7 +807,7 @@ int ActionSequenceSystem::ActionAddToSeq()
 {
 	auto curSeq = *actSeqCur;
 	auto d20ActnType = d20Sys.globD20Action->d20ActType;
-	int actnCheckResult = 0;
+	int actnCheckResult = AEC_OK;
 	TurnBasedStatus tbStatus = curSeq->tbStatus;
 
 
@@ -777,6 +827,9 @@ int ActionSequenceSystem::ActionAddToSeq()
 	{
 		curSeq->tbStatus.tbsFlags |= TBSF_CritterSpell; // perhaps bug that it's not affecting the local copy?? TODO
 		curSeq->spellPktBody.spellEnumOriginal = curSeq->spellPktBody.spellEnum;
+	}
+	if (d20ActnType == D20A_PYTHON_ACTION){
+		d20Sys.globD20ActionKey = (D20DispatcherKey) d20Sys.globD20Action->data1;
 	}
 	auto actnCheckFunc = d20Sys.d20Defs[d20ActnType].actionCheckFunc;
 	if (actnCheckFunc)
@@ -801,8 +854,10 @@ int ActionSequenceSystem::ActionAddToSeq()
 			actSeqSys.ActSeqGetPicker();
 			return AEC_TARGET_INVALID;
 		}
-	} else
-	{
+	} 
+	else{
+		if (actnCheckResult == AEC_OUT_OF_CHARGES)
+			return actnCheckResult;
 		d20Sys.TargetCheck(d20Sys.globD20Action);
 	}
 	auto result =  actSeqSys.addD20AToSeq(d20Sys.globD20Action, curSeq);
@@ -830,12 +885,14 @@ uint32_t ActionSequenceSystem::addD20AToSeq(D20Actn* d20a, ActnSeq* actSeq)
 	return *actnProcState;
 }
 
-uint32_t ActionSequenceSystem::isPerforming(objHndl obj)
+uint32_t ActionSequenceSystem::isPerforming(objHndl obj, ActnSeq** actSeqOut)
 {
 	for (auto i = 0; i < ACT_SEQ_ARRAY_SIZE; i++)
 	{
-		if (actSeqArray[i].performer == obj && (actSeqArray[i].seqOccupied & SEQF_PERFORMING))
-		{
+		if (actSeqArray[i].performer == obj && (actSeqArray[i].seqOccupied & SEQF_PERFORMING)){
+			if (actSeqOut != nullptr){
+				*actSeqOut = &actSeqArray[i];
+			}
 			return 1;
 		}
 	}
@@ -943,24 +1000,23 @@ void ActionSequenceSystem::ProcessPathForAoOs(objHndl obj, PathQueryResult* pqr,
 	aooPacket->obj = obj;
 	aooPacket->path = pqr;
 	aooPacket->numAoOs = 0;
-	auto pathLength = pathfindingSys.pathLength(pqr);
+	auto pathLength = pathfindingSys.GetPathLength(pqr);
 	if (aooFreeDistFeet > pathLength)
 		return;
 	//truncateLengthFeet = pathLength;
 	LocAndOffsets truncatedLoc;
 	pathfindingSys.TruncatePathToDistance(aooPacket->path, &truncatedLoc, truncateLengthFeet); // this is the first possible distance where an Aoo might occur
-	int enemyCount = 0;
-	objHndl* enemies = combatSys.GetHostileCombatantList(obj, &enemyCount );
 
-	while (truncateLengthFeet <  pathLength - 2.0)
-	{
+	auto enemies = combatSys.GetHostileCombatantList(obj);
+	
+	while (truncateLengthFeet <  pathLength - 2.0){
 
 		// obj is moving away from truncatedLoc
 		// if an enemy can hit you from when you're in the current truncatedLoc
 		// it means you incur an AOO
 
 		// loop over enemies to catch interceptions
-		for (int enemyIdx = 0; enemyIdx < enemyCount; enemyIdx++)
+		for (auto enemyIdx = 0u; enemyIdx < enemies.size(); enemyIdx++)
 		{
 			auto enemy = enemies[enemyIdx];
 			auto interrupterIdx = 0u;
@@ -1007,7 +1063,6 @@ void ActionSequenceSystem::ProcessPathForAoOs(objHndl obj, PathQueryResult* pqr,
 		
 			
 	}
-	delete [] enemies;
 	
 	return;
 }
@@ -1050,7 +1105,6 @@ uint32_t ActionSequenceSystem::MoveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 		if (pathQ.critter == pathQ.targetObj)
 			return ActionErrorCode::AEC_TARGET_INVALID;
 
-		const float twelve = 12.0;
 		const float fourPointSevenPlusEight = 4.714045f + 8.0f;
 		pathQ.flags = static_cast<PathQueryFlags>(PathQueryFlags::PQF_TO_EXACT | PathQueryFlags::PQF_HAS_CRITTER | PathQueryFlags::PQF_800
 			| PathQueryFlags::PQF_TARGET_OBJ | PathQueryFlags::PQF_ADJUST_RADIUS | PathQueryFlags::PQF_ADJ_RADIUS_REQUIRE_LOS);
@@ -1058,8 +1112,8 @@ uint32_t ActionSequenceSystem::MoveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 		
 		if (reach < 0.1){ reach = 3.0; }
 		actSeq->targetObj = d20a->d20ATarget;
-		pathQ.distanceToTargetMin = distToTgtMin * twelve;
-		pathQ.tolRadius = reach * twelve - fourPointSevenPlusEight;
+		pathQ.distanceToTargetMin = distToTgtMin * 12.0f;
+		pathQ.tolRadius = reach * 12.0f - fourPointSevenPlusEight;
 	} else
 	{
 		pathQ.to = d20aIn->destLoc;
@@ -1067,8 +1121,7 @@ uint32_t ActionSequenceSystem::MoveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 			 | PathQueryFlags::PQF_ALLOW_ALTERNATIVE_TARGET_TILE);
 	}
 
-	if (d20a->d20Caf & D20CAF_UNNECESSARY)
-	{
+	if (d20a->d20Caf & D20CAF_UNNECESSARY){
 		*reinterpret_cast<int*>(&pathQ.flags) |= PQF_A_STAR_TIME_CAPPED;
 	} 
 
@@ -1121,7 +1174,7 @@ uint32_t ActionSequenceSystem::MoveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 		}
 	}
 
-	auto pathLength = pathfinding->pathLength(pqResult);
+	auto pathLength = pathfinding->GetPathLength(pqResult);
 	d20aCopy.destLoc = pqResult->to;
 	d20aCopy.distTraversed = pathLength;
 
@@ -1134,7 +1187,7 @@ uint32_t ActionSequenceSystem::MoveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 	if (!combat->isCombatActive()){	d20aCopy.distTraversed = 0;		pathLength = 0.0;	}
 
 	float remainingMaxMoveLength = 0;
-	if (getRemainingMaxMoveLength(d20a, &tbStatCopy, &remainingMaxMoveLength)) // deducting moves that have already been spent, but also a raw calculation (not taking 5' step and such into account)
+	if (GetRemainingMaxMoveLength(d20a, &tbStatCopy, &remainingMaxMoveLength)) // deducting moves that have already been spent, but also a raw calculation (not taking 5' step and such into account)
 	{
 		if (remainingMaxMoveLength < 0.1)	{releasePath(d20aCopy.path);	return AEC_TARGET_TOO_FAR;	}
 		if (static_cast<long double>(remainingMaxMoveLength) < pathLength)
@@ -1142,6 +1195,7 @@ uint32_t ActionSequenceSystem::MoveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 			auto temp = 1;;
 			if (TrimPathToRemainingMoveLength(&d20aCopy, remainingMaxMoveLength, &pathQ)){ releasePath(d20aCopy.path); return temp; }
 			pqResult = d20aCopy.path;
+			pathLength = pathfinding->GetPathLength(pqResult);
 			pathLength = remainingMaxMoveLength;
 		}
 	}
@@ -1150,39 +1204,58 @@ uint32_t ActionSequenceSystem::MoveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 	/*
 	this is 0 for specific move action types like 5' step, Move, Run, Withdraw; 
 	*/
-	if (nonspecificMoveType) 
-	{
+	if (nonspecificMoveType){
+		auto chosenActionType = D20A_MOVE;
+		
 		float baseMoveDist = dispatch.Dispatch29hGetMoveSpeed(d20aCopy.d20APerformer, nullptr);
-		if (!(d20aCopy.d20Caf & D20CAF_CHARGE))
-		{
-			if (pathLength > (long double)tbStatCopy.surplusMoveDistance)
-			{
-				if ( 2*baseMoveDist + tbStatCopy.surplusMoveDistance < (long double)pathLength){ releasePath(pqResult); return 8; }
-				if (tbStatCopy.surplusMoveDistance + baseMoveDist < (long double)pathLength){ d20aCopy.d20ActType = D20A_DOUBLE_MOVE; goto LABEL_53; }
-				else if (pathLength <= 5.0)
-				{
+		if (!(d20aCopy.d20Caf & D20CAF_CHARGE))	{
+			if (pathLength > (long double)tbStatCopy.surplusMoveDistance){
+
+				// distance greater than twice base distance -> cannot do
+				if ( 2*baseMoveDist + tbStatCopy.surplusMoveDistance < (long double)pathLength){
+					releasePath(pqResult); 
+					return AEC_TARGET_TOO_FAR;
+				}
+				// distance greater than base move distance -> do double move
+				if (tbStatCopy.surplusMoveDistance + baseMoveDist < (long double)pathLength){
+					chosenActionType = D20A_DOUBLE_MOVE;
+				}
+
+				// check if under 5'
+				else if (pathLength <= 5.0)	{
+
 					if (d20a->d20ActType != D20A_UNSPECIFIED_MOVE)
 					{
 						d20->d20Defs[d20a->d20ActType].actionCost(d20a, &tbStatCopy, &actCost);
-						if (actCost.hourglassCost == 4 || !tbStatCopy.hourglassState) 
-						{
-							d20aCopy.d20ActType = D20A_5FOOTSTEP; goto LABEL_53;
+						
+						if (actCost.hourglassCost == 4 || !tbStatCopy.hourglassState) {
+							chosenActionType = D20A_5FOOTSTEP;
 						}
-					} else if (!tbStatCopy.hourglassState)
-					{
-						d20aCopy.d20ActType = D20A_5FOOTSTEP;
-						if (!(tbStatCopy.tbsFlags & (TBSF_Movement | TBSF_Movement2))){	goto LABEL_53; }
+					} 
+					else {
+						if (!tbStatCopy.hourglassState || 	tbStatCopy.hourglassState == 4 && !objects.IsPlayerControlled(d20a->d20APerformer)) { // added for AI to take 5' steps when it still has full round action to exploit
+							chosenActionType = D20A_5FOOTSTEP;
+							if ( (tbStatCopy.tbsFlags & (TBSF_Movement | TBSF_Movement2)) != 0) {
+								chosenActionType = D20A_MOVE;
+							}
+						}
 					}
 				}
 
 			}
-			d20aCopy.d20ActType = D20A_MOVE;
+
+			d20aCopy.d20ActType = chosenActionType;
 		} 
-		else if ( 2* baseMoveDist >= (long double)pathLength) d20aCopy.d20ActType = D20A_RUN;	
-		else	{	releasePath(pqResult); return AEC_TARGET_TOO_FAR;	}
+		else if ( 2* baseMoveDist >= (long double)pathLength) 
+			chosenActionType = D20A_RUN;
+		else{
+			releasePath(pqResult);
+			return AEC_TARGET_TOO_FAR;
+		}
+
+		d20aCopy.d20ActType = chosenActionType;
 	}
 
-LABEL_53:
 	if (config.pathfindingDebugMode)
 	{
 		if (!critterSys.IsPC(d20a->d20APerformer))
@@ -1240,7 +1313,7 @@ void ActionSequenceSystem::updateDistTraversed(ActnSeq* actSeq)
 	for (int i = 0; i < numd20s; i++)
 	{
 		path = actSeq->d20ActArray[i].path;
-		if (path){	actSeq->d20ActArray[i].distTraversed = pathfinding->pathLength(path);	}
+		if (path){	actSeq->d20ActArray[i].distTraversed = pathfinding->GetPathLength(path);	}
 	}
 }
 
@@ -1309,10 +1382,10 @@ uint32_t ActionSequenceSystem::AssignSeq(objHndl objHnd)
 		{
 			if (prevSeq != nullptr)
 			{
-				logger->debug("Pushing sequence from {} ({}) to {} ({})", object->description.getDisplayName(prevSeq->performer), prevSeq->performer, object->description._getDisplayName(objHnd, objHnd), objHnd);
+				logger->debug("Pushing sequence from {} to {}", prevSeq->performer, objHnd);
 			} else
 			{
-				logger->debug("Allocated sequence for {} ({}) ", object->description.getDisplayName(objHnd), objHnd, objHnd);
+				logger->debug("Allocated sequence for {}", objHnd);
 			}
 		}
 		(*actSeqCur)->prevSeq = prevSeq;
@@ -1382,6 +1455,12 @@ int ActionSequenceSystem::GetNewHourglassState(objHndl performer, D20ActionType 
 	d20a.distTraversed = 0;
 	d20a.spellId = 0;
 	d20a.path = nullptr;
+
+	auto activeMenu = radialMenus.GetActiveRadialMenu();
+	if (d20ActionType == D20A_PYTHON_ACTION && radialMenus.lastPythonActionNode > 0 ){
+		d20a.data1= (D20DispatcherKey)activeMenu->nodes[radialMenus.lastPythonActionNode].entry.dispKey;
+	}
+
 	if (d20SpellData)
 	{
 		d20a.d20SpellData = *d20SpellData;
@@ -1425,7 +1504,7 @@ BOOL ActionSequenceSystem::SequenceSwitch(objHndl obj)
 
 	if (seqIdx >= 0)
 	{
-		logger->debug("SequenceSwitch: \t doing for {} ({}). Previous Current Seq: {}", description.getDisplayName(obj), obj, (void*)(*actSeqCur));
+		logger->debug("SequenceSwitch: \t doing for {}. Previous Current Seq: {}", obj, (void*)(*actSeqCur));
 		*actSeqCur = &actSeqArray[seqIdx];
 		logger->debug("SequenceSwitch: \t new Current Seq: {}", (void*)(*actSeqCur));
 		return 1;
@@ -1440,7 +1519,7 @@ void ActionSequenceSystem::GreybarReset()
 	auto actor = tbSys.turnBasedGetCurrentActor();
 	if ( !isPerforming(actor) && IsSimulsCompleted() && !IsLastSimultPopped(actor))
 	{
-		logger->debug("GREYBAR DEHANGER for {} ({}) ending turn...", description.getDisplayName(actor), actor);
+		logger->debug("GREYBAR DEHANGER for {} ending turn...", actor);
 		combatSys.CombatAdvanceTurn(actor);
 		return;
 	}
@@ -1639,7 +1718,7 @@ void ActionSequenceSystem::ProcessSequenceForAoOs(ActnSeq* actSeq, D20Actn* d20a
 	D20Actn d20aAoOMovement(D20A_AOO_MOVEMENT);
 	LocAndOffsets truncLoc;
 	pathfindingSys.TruncatePathToDistance(pqr, &truncLoc, 0.0);
-	float startDistFeet = 0.0, endDistFeet = pathfindingSys.pathLength(d20a->path), aooDistFeet;
+	float startDistFeet = 0.0, endDistFeet = pathfindingSys.GetPathLength(d20a->path), aooDistFeet;
 	PathQueryResult * pqrTrunc;
 	for (auto i = 0u; i < aooPacket.numAoOs;i++)
 	{
@@ -1659,7 +1738,7 @@ void ActionSequenceSystem::ProcessSequenceForAoOs(ActnSeq* actSeq, D20Actn* d20a
 			}
 			startDistFeet = aooPacket.aooDistFeet[i];
 			d20aAoOMovement.destLoc = aooPacket.aooLocs[i];
-			d20aAoOMovement.distTraversed = pathfindingSys.pathLength(pqrTrunc);
+			d20aAoOMovement.distTraversed = pathfindingSys.GetPathLength(pqrTrunc);
 			actSeq->d20ActArray[actSeq->d20ActArrayNum] = d20aAoOMovement;
 			if (!addingAoOStatus)
 				actSeq->d20ActArray[actSeq->d20ActArrayNum].d20ActType = d20ActionTypePostAoO;
@@ -1700,7 +1779,7 @@ void ActionSequenceSystem::ProcessSequenceForAoOs(ActnSeq* actSeq, D20Actn* d20a
 		return;
 	}
 	d20aAoOMovement.destLoc = d20a->destLoc;
-	d20aAoOMovement.distTraversed = pathfindingSys.pathLength(pqrLastStretch);
+	d20aAoOMovement.distTraversed = pathfindingSys.GetPathLength(pqrLastStretch);
 	if (!addingAoOStatus)
 		d20aAoOMovement.d20ActType = d20ActionTypePostAoO;
 	actSeq->d20ActArray[actSeq->d20ActArrayNum++] = d20aAoOMovement;
@@ -1747,9 +1826,8 @@ uint32_t ActionSequenceSystem::TurnBasedStatusUpdate(D20Actn* d20a, TurnBasedSta
 	TurnBasedStatus tbStatCopy = *tbStatus;
 	
 
-	int actProcResult = ActionCostProcess(&tbStatCopy, d20a);
-	if (!actProcResult)
-	{
+	auto actProcResult = (ActionErrorCode)ActionCostProcess(&tbStatCopy, d20a);
+	if (actProcResult == AEC_OK){
 		memcpy(tbStatus, &tbStatCopy, sizeof(TurnBasedStatus));
 		return 0;
 	}
@@ -1761,11 +1839,10 @@ uint32_t ActionSequenceSystem::TurnBasedStatusUpdate(D20Actn* d20a, TurnBasedSta
 		{
 			return actProcResult;
 		}
-		actProcResult = ActionCostProcess(&tbStatCopy, d20a);
+		actProcResult = (ActionErrorCode)ActionCostProcess(&tbStatCopy, d20a);
 	}
 
-	if (!actProcResult)
-	{
+	if (actProcResult == AEC_OK){
 		memcpy(tbStatus, &tbStatCopy, sizeof(TurnBasedStatus));
 		return 0;
 	}
@@ -1985,11 +2062,9 @@ int32_t ActionSequenceSystem::DoAoosByAdjcentEnemies(objHndl obj)
 {
 	int status = 0;
 
-	objHndl enemies[40];
+	auto enemies = combatSys.GetEnemiesCanMelee(obj);
 
-	int numEnemies = combatSys.GetEnemiesCanMelee(obj, enemies);
-
-	for (int i = 0; i < numEnemies; i++)
+	for (auto i = 0u; i < enemies.size(); i++)
 	{
 		auto enemy = enemies[i];
 		bool okToAoo = true;
@@ -2043,7 +2118,10 @@ bool ActionSequenceSystem::SpellTargetsFilterInvalid(D20Actn& d20a){
 
 		// Check if Critter
 		if (tgtObj->IsCritter()){
-			d20a.d20ATarget = tgt;
+			if (!d20a.d20ATarget){
+				d20a.d20ATarget = tgt;
+			}
+				
 			// Check Q_CanBeAffected_PerformAction
 			auto canBeAffected = d20Sys.D20QueryWithDataDefaultTrue(tgt, DK_QUE_CanBeAffected_PerformAction, &d20a, 0);
 			if (!canBeAffected) {
@@ -2077,11 +2155,15 @@ int32_t ActionSequenceSystem::InterruptNonCounterspell(D20Actn* d20a)
 	while (1){
 		
 		if (readiedAction->readyType != RV_Counterspell) {
-
-			if (d20a->d20ActType == D20A_CAST_SPELL){
+			auto isInterruptibleAction = d20a->d20ActType == D20A_CAST_SPELL;
+			// added interruption to use of scrolls and such
+			if (d20a->d20ActType == D20A_USE_ITEM && d20a->d20SpellData.spellEnumOrg != 0){
+				isInterruptibleAction = true;
+			}
+			if (isInterruptibleAction){
 				if (d20a->d20APerformer && readiedAction->interrupter){
 					auto isFriendly = critterSys.IsFriendly(readiedAction->interrupter, d20a->d20APerformer);
-					auto sharedAlleg = critterSys.AllegianceShared(readiedAction->interrupter, d20a->d20APerformer);
+					auto sharedAlleg = critterSys.NpcAllegianceShared(readiedAction->interrupter, d20a->d20APerformer);
 					if (!sharedAlleg && !isFriendly)
 						break;
 				}	
@@ -2090,7 +2172,7 @@ int32_t ActionSequenceSystem::InterruptNonCounterspell(D20Actn* d20a)
 			if (d20a->d20ActType == D20A_READIED_INTERRUPT ) {
 				if (d20a->d20ATarget && readiedAction->interrupter) {
 					auto isFriendly = critterSys.IsFriendly(readiedAction->interrupter, d20a->d20ATarget);
-					auto sharedAlleg = critterSys.AllegianceShared(readiedAction->interrupter, d20a->d20ATarget);
+					auto sharedAlleg = critterSys.NpcAllegianceShared(readiedAction->interrupter, d20a->d20ATarget);
 					if (!sharedAlleg && !isFriendly)
 						break;
 				}
@@ -2137,6 +2219,18 @@ int32_t ActionSequenceSystem::InterruptCounterspell(D20Actn* d20a)
 	}
 	return result;
 
+}
+
+int32_t ActionSequenceSystem::GetCurSeqD20ActionCount(){
+	if (!(*actSeqCur))
+		return 0;
+
+	return (*actSeqCur)->d20ActArrayNum;
+}
+
+objHndl ActionSequenceSystem::getNextSimulsPerformer(){
+	auto getNextSimulsActor = temple::GetRef<objHndl(__cdecl)()>(0x100920E0);
+	return getNextSimulsActor();
 }
 
 int ActionSequenceSystem::ReadyVsApproachOrWithdrawalCount()
@@ -2261,24 +2355,43 @@ void ActionSequenceSystem::InterruptSwitchActionSequence(ReadiedActionPacket* re
 			sequencePerform();
 		}
 	}
-	ui.UpdateCombatUi();
+	uiSystems->GetCombat().Update();
 
 }
 
 uint32_t ActionSequenceSystem::combatTriggerSthg(ActnSeq* actSeq)
 {
-	uint32_t result;
-	macAsmProl;
-	__asm{
-		mov ecx, this;
-		mov esi, [ecx]._combatTriggerSthg;
-		mov ebx, actSeq;
-		call esi;
-		mov result, eax;
+	auto performer = actSeq->performer;
+	ActnSeq seqCopy = *actSeq;
+
+
+	combatSys.enterCombat(performer);
+	for (auto i=0; i < actSeq->d20ActArrayNum; i++){
+		d20Sys.d20aTriggerCombatCheck(actSeq, i);
 	}
-	macAsmEpil;
-	
-	return result;
+
+	combatSys.StartCombat(performer, 1);
+
+	if (objects.IsPlayerControlled(performer)){
+		*actSeq = seqCopy;
+		return FALSE;
+	}
+	return TRUE;
+
+
+
+	//uint32_t result;
+	//macAsmProl;
+	//__asm{
+	//	mov ecx, this;
+	//	mov esi, [ecx]._combatTriggerSthg;
+	//	mov ebx, actSeq;
+	//	call esi;
+	//	mov result, eax;
+	//}
+	//macAsmEpil;
+	//
+	//return result;
 }
 
 ActionErrorCode ActionSequenceSystem::seqCheckAction(D20Actn* d20a, TurnBasedStatus* tbStat)
@@ -2304,43 +2417,31 @@ uint32_t ActionSequenceSystem::curSeqNext()
 	objHndl performer = curSeq->performer;
 	SpellPacketBody spellPktBody;
 	curSeq->seqOccupied &= 0xffffFFFE; //unset "occupied" flag
-	logger->debug("CurSeqNext: \t Sequence Completed for {} ({}) (sequence {})",
-		description._getDisplayName(curSeq->performer, curSeq->performer),
-		curSeq->performer, (void*)curSeq);
+	logger->debug("CurSeqNext: \t Sequence Completed for {} (sequence {})", curSeq->performer, (void*)curSeq);
 
 	int d20ActArrayNum = curSeq->d20ActArrayNum;
-	if (d20ActArrayNum > 0)
-	{
+	if (d20ActArrayNum > 0){
 		d20Sys.d20SendSignal(
-			(*actSeqCur)->d20ActArray[d20ActArrayNum - 1].d20APerformer,
-			DK_SIG_Sequence,
-			(int)*actSeqCur, 0);
+			(*actSeqCur)->d20ActArray[d20ActArrayNum - 1].d20APerformer,	DK_SIG_Sequence,	(int)*actSeqCur, 0);
 	}
 		
 
 	// do d20SendSignal for DK_SIG_Action_Recipient
-	for (int d20aIdx = 0; d20aIdx < (*actSeqCur)->d20ActArrayNum; d20aIdx++)
-	{
+	for (int d20aIdx = 0; d20aIdx < (*actSeqCur)->d20ActArrayNum; d20aIdx++){
 		D20Actn* d20a = &(*actSeqCur)->d20ActArray[d20aIdx];
 		auto d20aType = d20a->d20ActType;
-		if (d20aType == D20A_CAST_SPELL)
-		{
+		if (d20aType == D20A_CAST_SPELL){
 			auto spellId = d20a->spellId;
-			if (spellId)
-			{
-				if (spellSys.GetSpellPacketBody(spellId, &spellPktBody ))
-				{
-					for (auto i = 0u; i < spellPktBody.orgTargetCount; i++)
-					{
-						if (spellPktBody.targetListHandles[i])
-						{
-							d20Sys.d20SendSignal(spellPktBody.targetListHandles[i],
-								DK_SIG_Action_Recipient,
+			if (spellId){
+				if (spellSys.GetSpellPacketBody(spellId, &spellPktBody )){
+					for (auto i = 0u; i < spellPktBody.orgTargetCount; i++){
+						if (spellPktBody.targetListHandles[i]){
+							d20Sys.d20SendSignal(spellPktBody.targetListHandles[i],	DK_SIG_Action_Recipient,
 								(int)d20a,0);
 						}
 					}
-				} else
-				{
+				}
+				else{
 					logger->warn("CurSeqNext(): \t  unable to retrieve spell packet!");
 				}
 			}
@@ -2348,23 +2449,20 @@ uint32_t ActionSequenceSystem::curSeqNext()
 		else
 		{
 			auto d20aTarget = d20a->d20ATarget;
-			bool triggersCombat = (d20Sys.d20Defs[d20aType].flags & D20ADF_TriggersCombat) != 0;
+			auto actionFlag = d20a->GetActionDefinitionFlags();
+			bool triggersCombat = (actionFlag & D20ADF_TriggersCombat) != 0;
 			if (triggersCombat || (d20aType == D20A_LAY_ON_HANDS_USE && critterSys.IsUndead(d20aTarget)) )
 			{
-				if (d20aTarget)
-				{
-					d20Sys.d20SendSignal(d20aTarget,
-						DK_SIG_Action_Recipient,
-						(int)d20a, 0);
+				if (d20aTarget){
+					d20Sys.d20SendSignal(d20aTarget, DK_SIG_Action_Recipient,(int)d20a, 0);
 				}
 				if (critterSys.IsMovingSilently(performer)){
 					critterSys.SetMovingSilently(performer, FALSE);
 				}
 
-			} else
-			{
-				d20Sys.d20SendSignal((*actSeqCur)->performer, DK_SIG_Action_Recipient,
-					(int)d20a, 0);
+			} 
+			else{
+				d20Sys.d20SendSignal((*actSeqCur)->performer, DK_SIG_Action_Recipient,	(int)d20a, 0);
 			}
 		}
 
@@ -2553,7 +2651,7 @@ void ActionSequenceSystem::ActionPerform()
 		if (critterSys.IsDeadOrUnconscious(performer)){
 
 			curSeq->d20ActArrayNum = curSeq->d20aCurIdx;
-			logger->debug("ActionPerform: \t Unconscious actor {} - cutting sequence", objects.description._getDisplayName(performer, performer));
+			logger->debug("ActionPerform: \t Unconscious actor {} - cutting sequence", performer);
 		}
 
 		// if have finished up the actions - do CurSeqNext
@@ -2577,7 +2675,23 @@ void ActionSequenceSystem::ActionPerform()
 			break;
 		}
 
+
+		//if (*performingDefaultAction &&
+	
+		//}
+
+
 		if (*performingDefaultAction){
+
+			if (d20a->d20ActType == D20A_STANDARD_ATTACK || d20a->d20ActType == D20A_STANDARD_RANGED_ATTACK) {
+				if (d20a->d20ATarget && critterSys.IsDeadOrUnconscious(d20a->d20ATarget)) {
+					*performedDefaultAction = 0;
+					curSeq->d20ActArrayNum = curSeq->d20aCurIdx;
+					//curSeq->tbStatus.tbsFlags |= TBSF_FullAttack;
+					break;
+				}
+			}
+
 			*performedDefaultAction = 1;
 		}
 
@@ -2597,7 +2711,7 @@ void ActionSequenceSystem::ActionPerform()
 		else{
 
 			if ( d20->D20ActionTriggersAoO(d20a, &tbStatus) && DoAoosByAdjcentEnemies(d20a->d20APerformer))	{
-				logger->debug("ActionPerform: \t Sequence Preempted {} ({})", description._getDisplayName(d20a->d20APerformer, d20a->d20APerformer), d20a->d20APerformer);
+				logger->debug("ActionPerform: \t Sequence Preempted {}", d20a->d20APerformer);
 				--*(curIdx);
 				sequencePerform();
 			} 
@@ -2605,11 +2719,7 @@ void ActionSequenceSystem::ActionPerform()
 				curSeq->tbStatus = tbStatus;
 				*(uint32_t*)(&curSeq->tbStatus.tbsFlags) |= TBSF_HasActedThisRound;
 				InterruptCounterspell(d20a);
-				logger->debug("ActionPerform: \t Performing action for {} ({}): {}",
-					description.getDisplayName(d20a->d20APerformer), 
-					d20a->d20APerformer,
-					(int)d20a->d20ActType);
-
+				logger->debug("ActionPerform: \t Performing action for {}: {}",	d20a->d20APerformer,d20a->d20ActType);
 
 				/*if (config.newFeatureTestMode && d20a->path != nullptr)
 				{
@@ -2624,20 +2734,6 @@ void ActionSequenceSystem::ActionPerform()
 						logger->debug("Move Action: {} going from {} to {}, nodes used: {}", description.getDisplayName(d20a->path->mover), d20a->path->from, d20a->path->to, directionsDebug);
 				}*/
 
-
-				if (*performingDefaultAction &&
-					(d20a->d20ActType == D20A_STANDARD_ATTACK || d20a->d20ActType == D20A_STANDARD_RANGED_ATTACK)){
-					if (d20a->d20ATarget && critterSys.IsDeadOrUnconscious(d20a->d20ATarget)){
-						*performedDefaultAction = 0;
-						curSeq->d20ActArrayNum = curSeq->d20aCurIdx;
-						//curSeq->tbStatus.tbsFlags |= TBSF_FullAttack;
-						if (curSeq->tbStatus.attackModeCode > 0) // not the case for bonus attacks
-							curSeq->tbStatus.attackModeCode--;
-						else
-							curSeq->tbStatus.numBonusAttacks++;
-						break;
-					}
-				}
 
 				ActionErrorCode performResult = static_cast<ActionErrorCode>(d20->d20Defs[d20a->d20ActType].performFunc(d20a));
 				InterruptNonCounterspell(d20a);
@@ -2666,7 +2762,7 @@ void ActionSequenceSystem::sequencePerform()
 	// check if OK to perform
 	if (*actSeqPickerActive){
 		ActnSeq * curSeq = *actSeqCur;
-		if (!curSeq || party.IsInParty(curSeq->performer)) // should solve the issue when casting a spell in the presence of prebuffing NPCs (i.e NPCs can still cast spells while the picker is active)
+		if (!curSeq || party.IsInParty(curSeq->performer)) // should solve the issue when casting a spell in the presence of prebuffing NPCs (i.e non-party members can now cast spells while the player's picker is active, so there shouldn't be a lingering spell cast sequence fucking your shit up)
 			return;
 	}
 
@@ -2689,7 +2785,7 @@ void ActionSequenceSystem::sequencePerform()
 
 	// try to perform the sequence and its actions
 	ActnSeq * curSeq = *actSeqCur;
-	if (combat->isCombatActive() || !actSeqSpellHarmful(curSeq) || !combatTriggerSthg(curSeq) ) // POSSIBLE BUG: I think this can cause spells to be overridden (e.g. when the temple priests prebuff simulataneously with you, and you get the spell effect instead) TODO
+	if (combat->isCombatActive() || !ShouldTriggerCombat(curSeq) || !combatTriggerSthg(curSeq) )
 	{
 		if (curSeq != *actSeqCur)
 		{
@@ -2890,19 +2986,39 @@ bool ActionSequenceSystem::projectileCheckBeforeNextAction()
 	return 1;
 }
 
-uint32_t ActionSequenceSystem::actSeqSpellHarmful(ActnSeq* actSeq)
+uint32_t ActionSequenceSystem::ShouldTriggerCombat(ActnSeq* actSeq)
 {
-	uint32_t result;
-	macAsmProl;
-	__asm{
-		mov ecx, this;
-		mov esi, [ecx]._actSeqSpellHarmful;
-		mov ebx, actSeq;
-		call esi;
-		mov result, eax;
+
+	// check if any of the actions triggers combat
+	for (auto i=0; i< actSeq->d20ActArrayNum; i++){
+		auto &d20a = actSeq->d20ActArray[i];
+		auto flags = d20a.GetActionDefinitionFlags();
+		if (flags & D20ADF_TriggersCombat){
+			if (party.IsInParty(actSeq->performer))
+				return TRUE;
+			if (actSeq->targetObj && party.IsInParty(actSeq->targetObj))
+				return TRUE;
+		}
 	}
-	macAsmEpil;
-	return result;
+
+	// check spell targets
+	auto &spPkt = actSeq->spellPktBody;
+	if (!spPkt.spellEnum)
+		return FALSE;
+	for (auto i=0u; i<spPkt.targetCount; i++){
+		auto spTgt = spPkt.targetListHandles[i];
+		if (!spTgt)
+			continue;
+		if (!objSystem->GetObject(spTgt)->IsCritter())
+			continue;
+		if (spellSys.IsSpellHarmful(spPkt.spellEnum, spPkt.caster, spTgt)){
+			if (party.IsInParty(spTgt) || party.IsInParty(actSeq->performer))
+				return TRUE;
+		}
+	}
+
+	return FALSE;
+	
 }
 
 uint32_t ActionSequenceSystem::isSimultPerformer(objHndl objHnd)
@@ -2924,11 +3040,10 @@ uint32_t ActionSequenceSystem::simulsOk(ActnSeq* actSeq)
 	if (numd20as <= 0){ return 1; }
 	auto d20a = &actSeq->d20ActArray[0];
 	auto numStdAttkActns = 0;
-	while (d20Sys.d20Defs[d20a->d20ActType].flags & D20ADF_SimulsCompatible)
-	{
+	while (d20a->GetActionDefinitionFlags() & D20ADF_SimulsCompatible){
 		++d20a;
 		++numStdAttkActns;
-		if (numStdAttkActns >= numd20as) return 1;
+		if (numStdAttkActns >= numd20as) return TRUE;
 	}
 	if (isSomeoneAlreadyActingSimult(actSeq->performer))
 	{
@@ -2965,7 +3080,7 @@ uint32_t ActionSequenceSystem::simulsAbort(objHndl objHnd)
 			else{
 				*numSimultPerformers = *simulsIdx;
 				memcpy(tbStatus118CD3C0, &(*actSeqCur)->tbStatus, sizeof(TurnBasedStatus));
-				logger->debug("Simul aborted {} ({})", description._getDisplayName(objHnd, objHnd), *simulsIdx);
+				logger->debug("Simul aborted {} ({})", objHnd, *simulsIdx);
 				return 1;
 			}
 		}
@@ -3106,8 +3221,12 @@ int ActionSequenceSystem::ActionCostProcess(TurnBasedStatus* tbStat, D20Actn* d2
 	int result = d20Sys.d20Defs[d20a->d20ActType].actionCost(d20a, tbStat, &actCost);
 	if (result)
 		return result;
-
 	
+	// Adding action cost modification facility
+	EvtObjActionCost evtObjActionCost(actCost, tbStat, d20a);
+	evtObjActionCost.DispatchCost();
+	actCost.hourglassCost = evtObjActionCost.acpCur.hourglassCost;
+
 	hourglassCost = actCost.hourglassCost;
 	if (tbStat->hourglassState == -1)
 		tbStat->hourglassState = -1;
@@ -3285,7 +3404,7 @@ int ActionSequenceSystem::UnspecifiedAttackAddToSeq(D20Actn* d20a, ActnSeq* actS
 		}
 		d20aCopy = *d20a;
 		d20aCopy.d20ActType = inventory.IsThrowingWeapon(weapon) != 0 ? D20A_THROW : D20A_STANDARD_RANGED_ATTACK;
-		int result = TurnBasedStatusUpdate(&tbStatCopy, &d20aCopy);
+		int result = TurnBasedStatusUpdate(&d20aCopy, &tbStatCopy);
 		if (!result)
 		{
 			int attackCode = tbStatCopy.attackModeCode;
@@ -3370,9 +3489,14 @@ int ActionSequenceSystem::StdAttackTurnBasedStatusCheck(D20Actn* d20a, TurnBased
 	int hgState = tbStat->hourglassState;
 
 	if (tbStat->attackModeCode < tbStat->baseAttackNumCode || hgState < 2)
-		return 1; // Not enough time error
-
+		return AEC_NOT_ENOUGH_TIME1; // Not enough time error
 	
+	auto tgt = d20a->d20ATarget;
+	if (*actSeqSys.performingDefaultAction && tgt && critterSys.IsDeadOrUnconscious(tgt)
+	&& (d20a->d20ActType == D20A_STANDARD_ATTACK || d20a->d20ActType == D20A_STANDARD_RANGED_ATTACK)) {
+	return AEC_TARGET_INVALID;
+	}
+
 	if (hgState != -1)
 		hgState = turnBasedStatusTransitionMatrix[hgState][2];
 	tbStat->hourglassState = hgState;
@@ -3384,7 +3508,7 @@ int ActionSequenceSystem::StdAttackTurnBasedStatusCheck(D20Actn* d20a, TurnBased
 	tbStat->baseAttackNumCode = tbStat->attackModeCode + 1;
 	tbStat->numBonusAttacks = 0;
 	tbStat->numAttacks = 0;
-	return 0;
+	return AEC_OK;
 }
 #pragma endregion
 
@@ -3712,7 +3836,7 @@ void ActnSeqReplacements::NaturalAttackOverwrites()
 	writeVal = (int)&d20Sys.d20Defs[0].flags;
 	write(0x1008ACCA + 2, &writeVal, sizeof(int));
 
-	// actSeqSpellHarmful
+	// ShouldTriggerCombat
 	//  flags
 	writeVal = (int)&d20Sys.d20Defs[0].flags;
 	write(0x1008AD59 + 2, &writeVal, sizeof(int));
@@ -3844,4 +3968,47 @@ void ActnSeqReplacements::NaturalAttackOverwrites()
 	// 10099C2E projectilePerformFunc
 	writeVal = (int)&d20Sys.d20Defs[0].projectileHitFunc;
 	write(0x10099C2E + 2, &writeVal, sizeof(int));
+}
+
+
+const char*actionErrorCodeStrings[] =
+{
+	"AEC_OK", //0
+	"AEC_NOT_ENOUGH_TIME1",
+	"AEC_NOT_ENOUGH_TIME2",
+	"AEC_NOT_ENOUGH_TIME3",
+	"AEC_ALREADY_MOVED",
+	"AEC_TARGET_OUT_OF_RANGE",
+	"AEC_TARGET_TOO_CLOSE",
+	"AEC_TARGET_BLOCKED",
+	"AEC_TARGET_TOO_FAR",
+	"AEC_TARGET_INVALID",
+	"AEC_NO_LOS",
+	"AEC_OUT_OF_AMMO",
+	"AEC_NEED_MELEE_WEAPON",
+	"AEC_CANT_WHILE_PRONE",
+	"AEC_INVALID_ACTION",
+	"AEC_CANNOT_CAST_SPELLS",
+	"AEC_OUT_OF_CHARGES",
+	"AEC_WRONG_WEAPON_TYPE",
+	"AEC_CANNOT_CAST_OUT_OF_AVAILABLE_SPELLS",
+	"AEC_CANNOT_CAST_NOT_ENOUGH_XP",
+	"AEC_CANNOT_CAST_NOT_ENOUGH_GP",
+	"AEC_OUT_OF_COMBAT_ONLY",
+	"AEC_CANNOT_USE_MUST_USE_BEFORE_ATTACKING",
+	"AEC_NEED_A_STRAIGHT_LINE",
+	"AEC_NO_ACTIONS",
+	"AEC_NOT_IN_COMBAT",
+	"AEC_AREA_NOT_SAFE"
+};
+ostream & operator<<(ostream & str, ActionErrorCode aec)
+{
+	size_t i = (size_t)aec;
+	if (i <= AEC_AREA_NOT_SAFE) {
+		str << actionErrorCodeStrings[i];
+	}
+	else {
+		str << fmt::format("Unknown Action Error Code [{}]", i);
+	}
+	return str;
 }

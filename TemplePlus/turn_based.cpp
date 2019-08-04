@@ -13,6 +13,11 @@
 #include "gamesystems/objects/objsystem.h"
 #include "ai.h"
 #include "condition.h"
+#include "rng.h"
+#include "tutorial.h"
+#include "legacyscriptsystem.h"
+#include "python/python_integration_obj.h"
+#include "gamesystems/timeevents.h"
 
 class TurnBasedReplacements : public TempleFix
 {
@@ -36,6 +41,9 @@ public:
 		orgPortraitDragChangeInitiative = replaceFunction(0x100DF5A0, PortraitDragChangeInitiative);
 		replaceFunction<void(__cdecl)(objHndl)>(0x100DF1E0, [](objHndl handle){
 			tbSys.AddToInitiative(handle);
+		});
+		replaceFunction<void(__cdecl)()>(0x100DF450, [](){
+			tbSys.CreateInitiativeListWithParty();
 		});
 	}
 } tbReplacements;
@@ -145,13 +153,44 @@ void TurnBasedSys::AddToInitiativeGroup(objHndl handle) const
 	party.ObjAddToGroupArray(groupInitiativeList, handle);
 }
 
-void TurnBasedSys::ArbitrateInitiativeConflicts() const
-{
-	auto arbConf = temple::GetRef<void(__cdecl)()>(0x100DEFA0);
-	arbConf();
+void TurnBasedSys::ArbitrateInitiativeConflicts()  {
+
+	auto N = GetInitiativeListLength();
+	if (N <= 1)
+		return;
+
+	for (auto i=0u; i < N; i++){
+		auto combatant    = combatSys.GetInitiativeListMember(i);
+		if (!combatant){
+			continue;
+		}
+		auto combatantObj = objSystem->GetObject(combatant);
+		auto initiative = combatantObj->GetInt32(obj_f_initiative);
+		auto subinitiative = combatantObj->GetInt32(obj_f_subinitiative);
+
+		for (auto j= i + 1; j < N; j++){
+			auto combatant2 = combatSys.GetInitiativeListMember(j);
+			if (!combatant2){
+				continue;
+			}
+				
+			auto combatantObj2 = objSystem->GetObject(combatant2);
+			auto initiative2 = combatantObj2->GetInt32(obj_f_initiative);
+			if (initiative != initiative2)
+				break;
+
+			auto subinitiative2 = combatantObj2->GetInt32(obj_f_subinitiative);
+			if (subinitiative != subinitiative2)
+				break;
+			combatantObj2->SetInt32(obj_f_subinitiative, subinitiative2 - 1);
+		}
+	}
+
+	/*auto arbConf = temple::GetRef<void(__cdecl)()>(0x100DEFA0);
+	arbConf();*/
 }
 
-void TurnBasedSys::AddToInitiative(objHndl handle) const
+void TurnBasedSys::AddToInitiative(objHndl handle) 
 {
 	if (IsInInitiativeList(handle))
 		return;
@@ -168,7 +207,7 @@ void TurnBasedSys::AddToInitiative(objHndl handle) const
 
 	aiSys.AiOnInitiativeAdd(handle);
 
-	auto initiativeRoll = templeFuncs.RNG(1, 20);
+	auto initiativeRoll = rngSys.GetInt(1, 20);
 	int initiativeMod = 0;
 	auto dispatcher = obj->GetDispatcher();
 	if (dispatcher->IsValid()){
@@ -196,6 +235,79 @@ void TurnBasedSys::AddToInitiative(objHndl handle) const
 bool TurnBasedSys::IsInInitiativeList(objHndl handle) const   // 0x100DEDD0
 {
 	return party.ObjIsInGroupArray(groupInitiativeList, handle) != 0;
+}
+
+void TurnBasedSys::CreateInitiativeListWithParty(){
+	groupInitiativeList->Reset();
+	groupInitiativeList->sortFunc = temple::GetRef<int(__cdecl)(void*, void*)>(0x100DEF20);
+
+	if (tutorial.IsTutorialActive() && scriptSys.GetGlobalFlag(4)){
+		tutorial.ShowTopic(11);
+	}
+
+	auto N = party.GroupListGetLen();
+	for (auto i=0u; i < N; i++){
+		auto partyMember = party.GroupListGetMemberN(i);
+		if (d20Sys.d20Query(partyMember, DK_QUE_EnterCombat)){
+			AddToInitiative(partyMember);
+		}
+	}
+
+	auto newTBActor = combatSys.GetInitiativeListMember(0);
+	turnBasedSetCurrentActor(newTBActor);
+	temple::GetRef<int>(0x10BCAD80) = objSystem->GetObject(newTBActor)->GetInt32(obj_f_initiative);
+}
+
+void TurnBasedSys::ExecuteExitCombatScriptForInitiativeList(){
+	auto N = GetInitiativeListLength();
+	for (auto i = 0u; i < N; i++){
+		auto combatant = groupInitiativeList->GroupMembers[i];
+		pythonObjIntegration.ExecuteObjectScript(combatant, combatant, ObjScriptEvent::ExitCombat);
+	}
+}
+
+void TurnBasedSys::TbCombatEnd(bool isResetting){
+
+	// Added in Temple+
+	// Enforcing exiting combat mode for critters
+	// Otherwise, there could be an infinite enter/exit combat loop for concealed enemy combatants:
+	// 1. AI would enter combat
+	// 2. AI could not approach party
+	// 3. AI was concealed
+	// 4. Combat ended (all unconcealed enemies far from party) - see LegacyCombatSys::AllCombatantsFarFromParty()
+	// 5. AI still in combat mode, would restart combat immediately
+	// 6. repeat
+	if (!isResetting){
+		for (auto i = 0u; i < groupInitiativeList->GroupSize; i++) {
+			auto combatant = groupInitiativeList->GroupMembers[i];
+			if (!combatant) continue;
+			auto combatantObj = objSystem->GetObject(combatant);
+			auto critterFlags = critterSys.GetCritterFlags(combatant);
+			if (critterFlags & OCF_COMBAT_MODE_ACTIVE) {
+				combatantObj->SetInt32(obj_f_critter_flags, critterFlags & ~OCF_COMBAT_MODE_ACTIVE);
+			}
+			if (combatantObj->IsNPC()) {
+				auto aiFlags = static_cast<AiFlag>(combatantObj->GetInt64(obj_f_npc_ai_flags64));
+				if (aiFlags & AiFlag::Fighting) {
+					combatantObj->SetInt64(obj_f_npc_ai_flags64, aiFlags & ~AiFlag::Fighting);
+				}
+			}
+
+		}
+	}
+	
+
+	groupInitiativeList->Reset();
+	auto gameTime = gameSystems->GetTimeEvent().GetTime();
+	auto &combatAbsoluteEndTimeInSeconds = temple::GetRef<int>(0x11E61538);
+	combatAbsoluteEndTimeInSeconds = temple::GetRef<int(__cdecl)(GameTime&)>(0x1005FD50)(gameTime);
+	if (tutorial.IsTutorialActive()){
+		if (scriptSys.GetGlobalFlag(4)){
+			scriptSys.SetGlobalFlag(4, 0);
+			scriptSys.SetGlobalFlag(2, 1);
+			tutorial.ShowTopic(18);
+		}
+	}
 }
 
 void _turnBasedSetCurrentActor(objHndl objHnd)

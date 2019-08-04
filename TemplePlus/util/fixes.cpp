@@ -4,8 +4,8 @@
 #include <temple/dll.h>
 
 #include "util/fixes.h"
-#include "../src/trampoline.h"
-#include "../src/HDE/hde32.h"
+#include "trampoline.h"
+#include "hde/hde32.h"
 
 vector<TempleFix*> &TempleFixes::fixes() {
 	static vector<TempleFix*> activeFixes;
@@ -143,6 +143,21 @@ void TempleFix::writeNoops(uint32_t offset) {
 	Expects(oldInstruction.len <= sizeof(noopBytes));
 	memset(noopBytes, 0x90, oldInstruction.len);
 	write(offset, &noopBytes[0], oldInstruction.len);
+
+}
+
+void TempleFix::breakRegion(uint32_t from, uint32_t to)
+{
+	size_t size = to - from;
+
+	Expects(to > from);
+
+	// Unprotect the entire area
+	MemoryUnprotector unprotector(from, size);
+
+	// Fill with INT 3 instructions (which trigger breakpoints)
+	auto realFrom = reinterpret_cast<char*>(temple::Dll::GetInstance().GetAddress(from));
+	memset(realFrom, 0xCC, size);
 
 }
 

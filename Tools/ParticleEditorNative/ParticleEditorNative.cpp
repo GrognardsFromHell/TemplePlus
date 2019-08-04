@@ -3,7 +3,7 @@
 #include <particles/render.h>
 #include <graphics/mdfmaterials.h>
 #include <graphics/textures.h>
-#include <temple/aasrenderer.h>
+#include <aas/aas_renderer.h>
 #include <temple/meshes.h>
 #include <temple/vfs.h>
 #include <fstream>

@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "obj.h"
+#include "ai.h"
 #include <temple/dll.h>
 #include <temple/meshes.h>
 #include "d20.h"
@@ -12,7 +13,12 @@
 #include "pathfinding.h"
 #include "float_line.h"
 #include "gamesystems/gamesystems.h"
+#include "gamesystems/mapsystem.h"
 #include "gamesystems/objects/objsystem.h"
+#include "gamesystems/legacymapsystems.h"
+#include "animgoals/anim.h"
+
+#include <infrastructure/vfs.h>
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -20,6 +26,11 @@
 #include <gamesystems/d20/d20stats.h>
 #include "python/python_integration_obj.h"
 #include <set>
+#include <config/config.h>
+#include "gamesystems/timeevents.h"
+#include "gamesystems/legacysystems.h"
+#include "gamesystems/objfade.h"
+#include "party.h"
 
 Objects objects;
 
@@ -28,12 +39,10 @@ static_assert(temple::validate_size<CondNode, 52>::value, "Condition node struct
 struct ObjectSystemAddresses : temple::AddressTable
 {
 
-	int8_t(*SectorGetElevation)(LocAndOffsets forLocation);
 	int(*GetAasHandle)(objHndl obj);
 	
 	ObjectSystemAddresses()
 	{
-		rebase(SectorGetElevation, 0x100A8CB0);
 		rebase(GetAasHandle, 0x10021A40);
 	}
 } addresses;
@@ -68,6 +77,14 @@ int32_t Objects::getArrayFieldInt32(objHndl obj, obj_f field, uint32_t index) {
 
 objHndl Objects::getArrayFieldObj(objHndl obj, obj_f field, uint32_t index) {
 	return objSystem->GetObject(obj)->GetObjHndl(field, index);
+}
+
+int Objects::GetAasHandle(objHndl handle){
+	auto model(GetAnimHandle(handle));
+	if (model) {
+		return model->GetHandle();
+	}
+	return 0;
 }
 
 gfx::AnimatedModelPtr Objects::GetAnimHandle(objHndl obj)
@@ -150,9 +167,9 @@ gfx::AnimatedModelParams Objects::GetAnimParams(objHndl handle)
 					result.offsetX = parentLoc.off_x;
 					result.offsetY = parentLoc.off_y;
 
-					auto elevation = addresses.SectorGetElevation(parentLoc);
+					auto depth = gameSystems->GetHeight().GetDepth(parentLoc);
 					auto offsetZ = objects.GetOffsetZ(parent);
-					result.offsetZ = offsetZ - elevation;
+					result.offsetZ = offsetZ - depth;
 
 					result.rotation = objects.GetRotation(parent);
 					result.rotationPitch = objects.GetRotationPitch(parent);
@@ -175,16 +192,26 @@ gfx::AnimatedModelParams Objects::GetAnimParams(objHndl handle)
 	result.offsetY = loc.off_y;
 	
 	auto flags = objects.GetFlags(handle);
-	int8_t elevation = 0; // TODO: This may be "depth" instead of elevation.
+	int8_t depth = 0;
 	if (!(flags & OF_NOHEIGHT)) {
-		elevation = addresses.SectorGetElevation(loc);
-}
-	result.offsetZ = objects.GetOffsetZ(handle) - elevation;
+		depth = gameSystems->GetHeight().GetDepth(loc);
+	}
+	result.offsetZ = objects.GetOffsetZ(handle) - depth;
 	result.rotation = objects.GetRotation(handle);
 	result.rotationPitch = objects.GetRotationPitch(handle);
 
 	return result;
 	}
+
+void Objects::ClearAnim(objHndl handle)
+{
+	auto obj = gameSystems->GetObj().GetObject(handle);
+	auto animHandle = obj->GetInt32(obj_f_animation_handle);
+	if (animHandle) {
+		gameSystems->GetAAS().FreeHandle(animHandle);
+		obj->SetInt32(obj_f_animation_handle, 0);
+	}
+}
 
 void Objects::SetAnimId(objHndl obj, gfx::EncodedAnimId animId) {
 
@@ -199,9 +226,9 @@ void Objects::SetAnimId(objHndl obj, gfx::EncodedAnimId animId) {
 		// Apparently certain anim IDs cause weapons to disappear, 
 		// possibly skill use/casting?
 		int opacity = 0;
-		if (animId & 0xC0000000) {
+		if (animId.IsSpecialAnim()) {
 			opacity = 255;
-	}
+		}
 
 		if (mainHand) {
 			FadeTo(mainHand, opacity, 10, 16, 0);
@@ -216,6 +243,12 @@ void Objects::SetAnimId(objHndl obj, gfx::EncodedAnimId animId) {
 	auto model = GetAnimHandle(obj);
 	model->SetAnimId(animId);
 
+}
+
+bool Objects::HasAnimId(objHndl obj, gfx::EncodedAnimId animId)
+{
+	auto model = GetAnimHandle(obj);
+	return model->HasAnim(animId);
 }
 
 gfx::EncodedAnimId Objects::GetIdleAnim(objHndl obj)
@@ -541,12 +574,44 @@ float Objects::GetRotationTowards(objHndl from, objHndl to) {
 	auto locFrom = GetLocationFull(from);
 	auto locTo = GetLocationFull(to);
 
-	return AngleBetweenPoints(locFrom, locTo);
+	auto rot = 5*M_PI/4 - AngleBetweenPoints(locFrom, locTo);
+	if (rot < 0)
+		rot = rot + 2 * M_PI;
+	return (float) rot;
 }
 
-void Objects::FadeTo(objHndl obj, int targetOpacity, int tickTimeMs, int tickOpacityQuantum, int callbackMode) const
+void Objects::FadeTo(objHndl handle, int targetOpacity, int tickTimeMs, int tickOpacityQuantum, int callbackMode) const
 {
-	_FadeTo(obj, targetOpacity, tickTimeMs, tickOpacityQuantum, callbackMode);
+	auto obj = objSystem->GetObject(handle);
+	auto cur = obj->GetInt32(obj_f_transparency);
+	if (cur != targetOpacity){
+
+		gameSystems->GetObjFade().SetValidationObj(handle);
+
+		gameSystems->GetTimeEvent().Remove(TimeEventType::ObjFade, [](const TimeEvent & evt){
+			if (evt.params[1].handle != gameSystems->GetObjFade().GetValidationObj())
+				return false;
+			gameSystems->GetObjFade().RemoveFromTable(evt.params[0].int32);
+			return true;
+		});
+
+		auto newId = gameSystems->GetObjFade().AppendToTable(tickOpacityQuantum, cur, targetOpacity, tickTimeMs, callbackMode);
+		GameTime evtTime(0, tickTimeMs);
+		TimeEvent evt;
+		evt.system = TimeEventType::ObjFade;
+		evt.params[0].int32 = newId;
+		evt.params[1].handle = handle;
+		gameSystems->GetTimeEvent().Schedule(evt, tickTimeMs);
+	}
+	if (callbackMode == 3){
+		temple::GetRef<int(__cdecl)(objHndl, int)>(0x1006D890)(handle, 1);
+	}
+	return; // TRUE
+}
+
+void Objects::SetTransparency(objHndl handle, int amt)
+{
+	temple::GetRef<void(__cdecl)(objHndl, int)>(0x10020060)(handle, amt);
 }
 
 void Objects::Move(objHndl handle, LocAndOffsets toLocation) {
@@ -581,10 +646,10 @@ void Objects::Destroy(objHndl ObjHnd) {
 
 	auto moveContentToLoc = temple::GetPointer<void(objHndl, BOOL)>(0x1006DB80);
 
-	auto type = _GetInternalFieldInt32(ObjHnd, obj_f_type);
-	if (type != obj_t_pc && type != obj_t_npc)
+	auto type = GetType(ObjHnd);
+	if (!IsCritterType(type))
 	{
-		if (type >= obj_t_weapon && type <= obj_t_generic || type == obj_t_bag)
+		if (IsEquipmentType(type))
 		{
 			auto parentObj = inventory.GetParent(ObjHnd);
 			if (parentObj)
@@ -592,14 +657,14 @@ void Objects::Destroy(objHndl ObjHnd) {
 				auto loc = GetLocation(parentObj);
 				inventory.ItemRemove(ObjHnd);
 				auto moveObj = temple::GetPointer<void(objHndl, locXY)>(0x100252D0);
-				moveObj(ObjHnd, loc);
+				inventory.MoveItem(ObjHnd, loc);
 			}
 		}
 		if (type == obj_t_container)
-{
+		{
 			moveContentToLoc(ObjHnd, 1);
 		}
-}
+	}
 	else
 	{
 		auto removeFromGroups = temple::GetPointer<int(objHndl)>(0x10080DA0);
@@ -620,8 +685,7 @@ void Objects::Destroy(objHndl ObjHnd) {
 		moveContentToLoc(ObjHnd, 1);
 }
 
-	auto cancelAnims = temple::GetPointer<void(objHndl)>(0x1000C760);
-	cancelAnims(ObjHnd);
+	gameSystems->GetAnim().ClearForObject(ObjHnd);
 	
 	if (combatSys.isCombatActive())
 {
@@ -668,9 +732,56 @@ int32_t Objects::GetHPCur(objHndl obj)
 	return _StatLevelGet(obj, stat_hp_current);
 }
 
-bool Objects::IsPlayerControlled(objHndl obj)
-{
-	return _IsPlayerControlled(obj);
+bool Objects::IsPlayerControlled(objHndl handle){
+
+	if (!handle)
+		return false;
+
+	if (!party.IsInParty(handle)) {
+		return false;
+	}
+
+	auto obj = objSystem->GetObject(handle);
+
+	auto partyCount = party.GetLivingPartyMemberCount();
+
+	if (obj->IsPC()){
+		if (partyCount <= 1){ 		// ha! vanilla only checked this
+			if (party.IsInParty(handle)) // vanilla didn't check this
+				return true;
+		}
+	}
+
+	if (party.ObjIsAIFollower(handle))
+		return false;
+
+	// check if charmed by someone
+	auto leader = objHndl::null;
+	if (d20Sys.d20Query(handle, DK_QUE_Critter_Is_Charmed)){
+		leader = d20Sys.d20QueryReturnData(handle, DK_QUE_Critter_Is_Charmed);
+		if (leader && !party.IsInParty(leader))
+			return false;
+	}
+
+	// checked if afraid of someone & can see them
+	if (d20Sys.d20Query(handle, DK_QUE_Critter_Is_Afraid)){
+		objHndl fearer;
+		fearer = d20Sys.d20QueryReturnData(handle, DK_QUE_Critter_Is_Afraid);
+		if (fearer && locSys.DistanceToObj(handle, fearer) < 40.0 
+			&& combatSys.HasLineOfAttack(fearer, handle)){
+			return false;
+		}
+	}
+
+	if (d20Sys.d20Query(handle, DK_QUE_Critter_Is_AIControlled)
+		|| d20Sys.d20Query(handle, DK_QUE_Critter_Is_Confused)){
+		return false;
+	}
+
+	
+
+	return true;
+	//return _IsPlayerControlled(handle);
 }
 
 string Objects::GetDisplayName(objHndl obj, objHndl observer) {
@@ -684,14 +795,29 @@ bool Objects::IsStatic(objHndl handle) {
 	auto type = GetType(handle);
 	if (type == obj_t_projectile 
 		|| type == obj_t_container 
-		|| type == obj_t_pc 
-		|| type == obj_t_npc 
-		|| type >= obj_t_weapon && type <= obj_t_generic 
-		|| type == obj_t_bag)
+		|| IsCritterType(type)
+		|| IsEquipmentType(type))
 		return false;
 	
 	return (GetFlags(handle) & OF_DYNAMIC) == 0;
 
+}
+
+bool Objects::IsUntargetable(objHndl handle)
+{
+	if (GetFlags(handle) & (OF_OFF | OF_CLICK_THROUGH | OF_DONTDRAW)) {
+		return true;
+	}
+
+	if (IsUndetectedSecretDoor(handle)) {
+		return true;
+	}
+
+	if (aiSys.IsRunningOff(handle)) {
+		return true;
+	}
+
+	return false;
 }
 
 int Objects::StatLevelGet(objHndl obj, Stat stat)
@@ -709,25 +835,77 @@ int Objects::StatLevelGetBase(objHndl obj, Stat stat)
 	return _StatLevelGetBase(obj, stat);
 }
 
+int Objects::StatLevelGetBaseWithModifiers(objHndl handle, Stat stat, DispIoBonusList*evtObj){
+
+	auto objBody = objSystem->GetObject(handle);
+	auto dispatcher = objBody->GetDispatcher();
+	if (dispatcher->IsValid()){
+		return dispatch.DispatchForCritter(handle, evtObj, dispTypeStatBaseGet, (D20DispatcherKey)(stat + 1));
+	}
+	else{
+		return objects.StatLevelGetBase(handle, stat);
+	}
+
+	return 0;
+}
+
 int Objects::StatLevelSetBase(objHndl obj, Stat stat, int value)
 {
 	return _StatLevelSetBase(obj, stat, value);
 }
 
+int32_t Objects::GetMoneyAmount(objHndl handle){
 
-Dispatcher * Objects::GetDispatcher(objHndl obj)
-{
-	return objSystem->GetObject(obj)->GetDispatcher();
+	if (!handle)
+		return 0;
+
+	auto obj = objSystem->GetObject(handle);
+
+	
+	switch(obj->type){
+	case obj_t_money:
+		return obj->GetInt32(obj_f_money_quantity) * inventory.GetCoinWorth( obj->GetInt32(obj_f_money_type));
+	case obj_t_pc:
+		return party.GetMoney();	
+	}
+
+	if (obj->IsNPC())
+		return critterSys.MoneyAmount(handle);
+
+	if (obj->IsContainer()){
+		auto items = inventory.GetInventory(handle);
+		auto totalWorth = 0;
+		for (auto item: items){
+			auto itemObj = objSystem->GetObject(item);
+			if (itemObj->type == obj_t_money)
+				totalWorth += GetMoneyAmount(item);
+		}
+		return totalWorth;
+	}
+
+	return 0;
 }
 
-void Objects::SetDispatcher(objHndl obj, uint32_t data32)
+
+Dispatcher * Objects::GetDispatcher(objHndl handle)
 {
-	objSystem->GetObject(obj)->SetDispatcher(reinterpret_cast<Dispatcher*>(data32));
+	auto obj = objSystem->GetObject(handle);
+	if (!obj)
+		return nullptr;
+	return obj->GetDispatcher();
+}
+
+void Objects::SetDispatcher(objHndl handle, uint32_t data32)
+{
+	auto obj = objSystem->GetObject(handle);
+	if (!obj)
+		return;
+	obj->SetDispatcher(reinterpret_cast<Dispatcher*>(data32));
 }
 
 int Objects::GetModFromStatLevel(int statLevel)
 {
-	return (statLevel - 10) / 2;
+	return (statLevel - 10) >> 1;
 }
 
 bool Objects::IsPortalOpen(objHndl obj) {
@@ -743,6 +921,10 @@ int Objects::GetTempId(objHndl handle) {
 
 int Objects::GetAlpha(objHndl handle) {
 	return _GetInternalFieldInt32(handle, obj_f_transparency);
+}
+
+BOOL Objects::IsPortalLocked(const objHndl& handle){
+	return temple::GetRef<BOOL(__cdecl)(objHndl)>(0x1001FD70)(handle);
 }
 
 int Objects::IsCritterProne(objHndl handle){
@@ -819,18 +1001,70 @@ public:
 			}
 		});
 
+		// ObjIsUntargetable
+		replaceFunction<BOOL(objHndl)>(0x1001fcb0, [](objHndl obj) {
+			return objects.IsUntargetable(obj) ? TRUE : FALSE;
+		});
+
+		// anim_obj_set_aas_anim_id
+		replaceFunction<int(objHndl, gfx::EncodedAnimId)>(0x10021d50, [](objHndl objId, gfx::EncodedAnimId animId) {
+			objects.SetAnimId(objId, animId);
+			return 0;
+		});
+
+		// obj_has_anim
+		replaceFunction<int(objHndl, gfx::EncodedAnimId)>(0x10021d20, [](objHndl handle, gfx::EncodedAnimId animId) {
+			return objects.HasAnimId(handle, animId) ? 1 : 0;
+		});
+
 		replaceFunction(0x1004E7F0, _abilityScoreLevelGet);
 		replaceFunction(0x100257A0, _destroy);
 		//orgMove = replaceFunction(0x10025950, Move);
 		//orgMoveUpdateLoc = replaceFunction(0x100C1990, MoveUpdateLoc);
 
+		// obj_get_closest_distance_from_mesh
+		// The respective goal function that called this function was replaced and now calls AAS directly
+		breakRegion(0x10022a30, 0x10022BB6);
 
 		writeCall(0x10022AEF, HookedGetModelScale); 
 		writeCall(0x100228A5, HookedGetModelScale); // RayCast
 		writeCall(0x10023F1F, HookedGetModelScale); // Render related
 		writeCall(0x10021E9F, HookedGetModelScale);
 		
+		// RelockPortalSchedule
+		static BOOL(__cdecl*orgRelockPortalSchedule)(objHndl, int) = replaceFunction<BOOL(__cdecl)(objHndl, int)>(0x1001FE40, [](objHndl handle, int isTimeEvent)->BOOL {
+			if (!handle)
+				return FALSE;
+
+			auto obj = objSystem->GetObject(handle);
+			auto protoId = objSystem->GetProtoId(handle);
+			if (protoId == 1000  // generic door
+				|| (obj->type != obj_t_container && obj->type != obj_t_portal)){ 
+				return FALSE;
+			}
+
+			auto flagsField = obj_f_portal_flags;
+			if (obj->type == obj_t_container)
+				flagsField = obj_f_container_flags;
+
+			auto flags = obj->GetInt32(flagsField);
+			if (!config.disableDoorRelocking 
+				&&	flags & PortalFlag::OPF_LOCKED){ // this is the same enum value for container
+				TimeEvent evt;
+				evt.system = TimeEventType::Lock;
+				evt.params[0].handle = handle;
+				gameSystems->GetTimeEvent().Schedule(evt, 3600000);
+			}
+
+			flags &= ~OPF_LOCKED;
+			if (isTimeEvent && !config.disableDoorRelocking){
+				flags |= OPF_LOCKED;
+			}
+			obj->SetInt32(flagsField, flags);
 			
+			return objects.IsPortalLocked(handle);
+		});
+
 }
 } objReplacements;
 

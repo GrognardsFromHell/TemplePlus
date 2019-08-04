@@ -18,7 +18,7 @@ GameView::GameView(MainWindow &mainWindow, gfx::RenderingDevice &device, int wid
 		auto pos = MapToScene(x, y);
 		x = pos.x;
 		y = pos.y;
-
+		
 		// Account for a resized screen
 		if (x < 0 || y < 0 || x >= mWidth || y >= mHeight)
 		{
@@ -43,6 +43,11 @@ GameView::GameView(MainWindow &mainWindow, gfx::RenderingDevice &device, int wid
 					mouseFuncs.MouseOutsideWndSet(true);
 				}
 			}
+			else
+			{
+				logger->info("Mouse outside resized window: x: {}, y: {}, wheel: {}", x, y, wheelDelta);
+			}
+
 			return;
 		}
 		mouseFuncs.MouseOutsideWndSet(false);
@@ -73,6 +78,18 @@ XMINT2 GameView::MapToScene(int x, int y) const
 	localY = floor(localY / mSceneScale);
 
 	return{ (int) localX, (int) localY };
+}
+
+XMINT2 GameView::MapFromScene(int x, int y) const{
+
+	auto localX = x * mSceneScale;
+	auto localY = y * mSceneScale;
+	
+	// move it into the scene rectangle coordinate space
+	localX += mSceneRect.x+1;
+	localY += mSceneRect.y+1;
+
+	return{ (int)localX, (int)localY };
 }
 
 void GameView::Resize(int width, int height)

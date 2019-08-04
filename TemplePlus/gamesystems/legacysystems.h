@@ -34,6 +34,8 @@ public:
 	bool SaveGame(TioFile *file) override;
 	bool LoadGame(GameSystemSaveFile* saveFile) override;
 	const std::string &GetName() const override;
+
+	bool ReadCustomNames(GameSystemSaveFile* file, std::vector<std::string> &customNamesOut); // deserializes custom names from save game file
 };
 
 class ItemEffectSystem : public GameSystem, public ModuleAwareGameSystem {
@@ -54,6 +56,8 @@ public:
 	void Reset() override;
 	void AdvanceTime(uint32_t time) override;
 	const std::string &GetName() const override;
+
+	bool IsObjectTeleporting(objHndl handle) const;
 };
 
 class SectorSystem : public GameSystem, public SaveGameAwareGameSystem, public ResetAwareGameSystem {
@@ -67,6 +71,7 @@ public:
 	const std::string &GetName() const override;
 
 	void SetLimits(uint64_t limitX, uint64_t limitY);
+	bool ReadSectorTimes(GameSystemSaveFile *saveFile, std::vector<SectorTime> & sectorTimes);
 };
 
 class RandomSystem : public GameSystem {
@@ -105,6 +110,25 @@ public:
 	PortraitSystem(const GameSystemConf &config);
 	~PortraitSystem();
 	const std::string &GetName() const override;
+
+	bool GetFirstId(objHndl handle, int* idxOut) const; // gets first valid portrait from portraits.mes
+	bool GetNextId(objHndl handle, int* idxOut) const;
+	int GetKeyFromId(int id) const;
+	std::string GetPortraitFileFromId(int id, int subId = 0);
+	bool IsModularId(int id);
+
+	static bool IsPortraitFilenameValid(objHndl handle, const char* filename);
+private:
+
+	const int PORTRAIT_MAX_ID = 65536;
+	
+	struct PortraitPack{
+		int key = 0;
+		std::string path;
+		std::map<int, std::string> packContents;
+	};
+	std::vector<PortraitPack> mPortraitPacks;
+	MesHandle & mPortraitsMes = temple::GetRef<MesHandle>(0x10AB7368);
 };
 
 class SkillSystem : public GameSystem, public SaveGameAwareGameSystem {
@@ -115,6 +139,8 @@ public:
 	bool SaveGame(TioFile *file) override;
 	bool LoadGame(GameSystemSaveFile* saveFile) override;
 	const std::string &GetName() const override;
+
+	bool ReadUnknown(GameSystemSaveFile *saveFile, int& unk); // not sure what it reads, appears unused
 };
 
 class FeatSystem : public GameSystem {
@@ -156,6 +182,9 @@ public:
 	bool SaveGame(TioFile *file) override;
 	bool LoadGame(GameSystemSaveFile* saveFile) override;
 	const std::string &GetName() const override;
+
+	bool ReadGlobalVars(GameSystemSaveFile *saveFile, std::vector<int> & globalVars, std::vector<int> & globalFlagsData, int& storyState);
+	bool ReadEncounterQueue(GameSystemSaveFile *saveFile, std::vector<int> & encounterQueue);
 };
 
 class LevelSystem : public GameSystem {
@@ -195,6 +224,8 @@ public:
 	void SetLightSchemeId(int schemeId);
 	void SetLightScheme(int schemeId, int hour);
 	int GetHourOfDay();
+
+	bool IsUpdating() const;
 
 
 };
@@ -251,6 +282,10 @@ public:
 	const std::string &GetName() const override;
 
 	void SetSoundSchemeIds(int scheme1, int scheme2);
+
+	// Used when starting the game
+	void StopAll(bool flag);
+
 };
 
 class ItemSystem : public GameSystem, public BufferResettingGameSystem {
@@ -260,6 +295,9 @@ public:
 	~ItemSystem();
 	void ResetBuffers(const RebuildBufferInfo& rebuildInfo) override;
 	const std::string &GetName() const override;
+
+	BOOL &editorMode = temple::GetRef<BOOL>(0x10AA8490);
+	BOOL &junkpileActive = temple::GetRef<BOOL>(0x10AA847C);
 };
 
 class CombatSystem : public GameSystem, public SaveGameAwareGameSystem, public ResetAwareGameSystem, public TimeAwareGameSystem {
@@ -465,16 +503,6 @@ public:
 	const std::string &GetName() const override;
 };
 
-class ObjFadeSystem : public GameSystem, public SaveGameAwareGameSystem, public ResetAwareGameSystem {
-public:
-	static constexpr auto Name = "ObjFade";
-	ObjFadeSystem(const GameSystemConf &config);
-	~ObjFadeSystem();
-	void Reset() override;
-	bool SaveGame(TioFile *file) override;
-	bool LoadGame(GameSystemSaveFile* saveFile) override;
-	const std::string &GetName() const override;
-};
 
 class DeitySystem : public GameSystem {
 public:
@@ -539,6 +567,9 @@ public:
 	void SaveExploredTileData(int mapId);
 	
 	void SaveEsd();
+	void PerformCheckForCritter(objHndl handle, int idx);
+
+	int IsPosExplored(LocAndOffsets location);
 
 private:
 
@@ -555,7 +586,8 @@ private:
 
 	BOOL& mFoggingEnabled = temple::GetRef<BOOL>(0x108254A0);
 	uint8_t*& mFogCheckData = temple::GetRef<uint8_t*>(0x108A5498);
-	void** mFogBuffers = temple::GetPointer<void*>(0x10824470); // 8 entries
+	void** mFogBuffers = temple::GetPointer<void*>(0x10824470); // 8 entries, one for each controllable party member
+	uint8_t* mFogUnexploredData = temple::GetPointer<uint8_t>(0x11E61560);
 
 	SectorLoc* mEsdSectorLocs = temple::GetPointer<SectorLoc>(0x108EC598); // 32 entries
 	uint32_t& mEsdLoaded = temple::GetRef<uint32_t>(0x108EC6B0);

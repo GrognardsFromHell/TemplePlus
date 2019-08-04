@@ -1,0 +1,5 @@
+name: Death Attack
+flags: 8
+prereqs:
+description: You can make a deadly attack after studying a target for 3 rounds. When hit by a melee sneak attack, the target makes a Fort Save (DC 10 + Assn lvl + Int mod). If the roll fails, it dies or becomes paralyzed for 1d6 rounds + 1/Assn level (your choice).
+prereq descr: Assassin level 1.

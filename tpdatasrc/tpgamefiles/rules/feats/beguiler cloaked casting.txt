@@ -1,0 +1,5 @@
+name: Cloaked Casting
+flags: 8
+prereqs:
+description: At 2nd level you gain a +1 bonus to the spell's save DC when you cast a spell that targets any foe who would be denied a Dexterity bonus to AC.  At 8th level, you gain a +2 bonus on rolls made to overcome the spell resistance of any affected target.  At 14th level, the bonus to your spell's save DC increases to +2.  At 20th level, you become able to automatically overcome the spell resistance of any affected target.
+prereq descr: Beguiler level 2

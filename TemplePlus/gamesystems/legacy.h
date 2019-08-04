@@ -101,10 +101,6 @@ struct GameSystemInitTable : temple::AddressTable {
 	// Handle to the id->filename table for meshes
 	MesHandle *meshesMes;
 
-	// State relating to the ironman mode
-	bool *ironmanFlag;
-	char **ironmanSaveGame;
-
 	// The exact purpose of the scratchbuffer is unknown at this point
 	TigBuffer **scratchBuffer;
 
@@ -139,8 +135,6 @@ struct GameSystemInitTable : temple::AddressTable {
 		rebase(fontIsEnglish, 0x10EF2E5C);
 		rebase(gameSystemConf, 0x103072A0);
 		rebase(meshesMes, 0x10307168);
-		rebase(ironmanFlag, 0x103072B8);
-		rebase(ironmanSaveGame, 0x103072C0);
 		rebase(scratchBuffer, 0x103072DC);
 		rebase(scratchBufferRect, 0x1030727C);
 		rebase(scratchBufferRectExtended, 0x10307290);

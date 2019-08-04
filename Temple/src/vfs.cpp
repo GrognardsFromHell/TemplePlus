@@ -117,6 +117,8 @@ namespace temple {
 		// Returns current pos of file handle
 		int(*Tell)(TioFile *file);
 
+		int(*Seek)(TioFile*file, int offset, int origin);
+
 		TioVfsImpl() {
 			Resolve("tio_path_add", AddPath);
 			Resolve("tio_path_remove", RemovePath);
@@ -135,6 +137,7 @@ namespace temple {
 			// Resolve("tio_pack_funcs", TioPackFuncs);
 			// Resolve("tio_pack", TioPack);
 			Resolve("tio_ftell", Tell);
+			Resolve("tio_fseek", Seek);
 		}
 
 		/*
@@ -212,38 +215,38 @@ namespace temple {
 	TioVfs::~TioVfs() {
 	}
 
-	bool TioVfs::AddPath(const std::string& path) {
-		return mImpl->AddPath(path.c_str()) == 0;
+	bool TioVfs::AddPath(std::string_view  path) {
+		return mImpl->AddPath(path.data()) == 0;
 	}
 
-	bool TioVfs::RemovePath(const std::string& path) {
-		return mImpl->RemovePath(path.c_str()) == 0;
+	bool TioVfs::RemovePath(std::string_view  path) {
+		return mImpl->RemovePath(path.data()) == 0;
 	}
 
-	bool TioVfs::GetArchiveGUID(const std::string& path, GUID& guidOut) {
-		return mImpl->PathGuid(path.c_str(), &guidOut) == 0;
+	bool TioVfs::GetArchiveGUID(std::string_view  path, GUID& guidOut) {
+		return mImpl->PathGuid(path.data(), &guidOut) == 0;
 	}
 
-	bool TioVfs::FileExists(const std::string& path) {
+	bool TioVfs::FileExists(std::string_view  path) {
 		TioFileListFile info;
-		return mImpl->FileExists(path.c_str(), &info) != 0
+		return mImpl->FileExists(path.data(), &info) != 0
 			&& info.IsFile();
 	}
 
-	bool TioVfs::DirExists(const std::string& path) {
+	bool TioVfs::DirExists(std::string_view  path) {
 		TioFileListFile info;
-		return mImpl->FileExists(path.c_str(), &info) != 0
+		return mImpl->FileExists(path.data(), &info) != 0
 			&& info.IsDir();
 	}
 
-	bool TioVfs::MkDir(const std::string& path) {
-		return mImpl->MkDir(path.c_str()) == 0;
+	bool TioVfs::MkDir(std::string_view  path) {
+		return mImpl->MkDir(path.data()) == 0;
 	}
 
-	std::vector<VfsSearchResult> TioVfs::Search(const std::string& globPattern) {
+	std::vector<VfsSearchResult> TioVfs::Search(std::string_view  globPattern) {
 
 		TioFileList list;
-		mImpl->filelist_create(&list, globPattern.c_str());
+		mImpl->filelist_create(&list, globPattern.data());
 
 		VfsSearchResult result;
 		std::vector<VfsSearchResult> results;
@@ -266,12 +269,12 @@ namespace temple {
 
 	}
 
-	bool TioVfs::RemoveDir(const std::string& path) {
-		return (mImpl->RemoveDir(path.c_str()) == 0);
+	bool TioVfs::RemoveDir(std::string_view  path) {
+		return (mImpl->RemoveDir(path.data()) == 0);
 	}
 
-	bool TioVfs::RemoveFile(const std::string& path) {
-		return (mImpl->RemoveFile(path.c_str()) == 0);
+	bool TioVfs::RemoveFile(std::string_view  path) {
+		return (mImpl->RemoveFile(path.data()) == 0);
 	}
 
 	/*void TioVfs::Pack(const std::vector<std::string>& args)
@@ -284,8 +287,8 @@ namespace temple {
 		mImpl->TioPack(args.size(), argsC);
 	}*/
 
-	Vfs::FileHandle TioVfs::Open(const char* name, const char* mode) {
-		return mImpl->OpenFile(name, mode);
+	Vfs::FileHandle TioVfs::Open(std::string_view name, std::string_view mode) {
+		return mImpl->OpenFile(name.data(), mode.data());
 	}
 
 	size_t TioVfs::Read(void* buffer, size_t size, FileHandle handle) {
@@ -311,5 +314,10 @@ namespace temple {
 	size_t TioVfs::Tell(FileHandle handle) {
 		auto tioFile = static_cast<TioFile*>(handle);
 		return mImpl->Tell(tioFile);
+	}
+
+	void TioVfs::Seek(FileHandle handle, int offset, SeekDir dir) {
+		auto tioFile = static_cast<TioFile*>(handle);
+		mImpl->Seek(tioFile, offset, (int) dir);
 	}
 }

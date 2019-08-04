@@ -15,6 +15,10 @@
 #include <tig/tig_mouse.h>
 #include <config/config.h>
 #include "raycast.h"
+#include "gamesystems/gamesystems.h"
+#include "gamesystems/map/sector.h"
+#include "gamesystems/legacysystems.h"
+#include "hotkeys.h"
 
 
 const PickerSpec PickerSpec::null;
@@ -57,6 +61,10 @@ class UiPickerHooks : TempleFix
 
 		// Picker Multi Keystate change - support pressing Enter key
 		replaceFunction(0x10137DA0, PickerMultiKeystateChange);
+
+		replaceFunction<BOOL(__cdecl)(TigMsg*)>(0x10138170, [](TigMsg*msg){
+			return uiPicker.MultiPosChange(msg);
+		});
 
 		// Config Spell Targeting - added fix to allow AI to cast multiple projectiles with Magic Missile and the like on the selected target
 		static BOOL(__cdecl *orgConfigSpellTargeting)(PickerArgs&, SpellPacketBody&) = replaceFunction<BOOL(__cdecl)(PickerArgs &, SpellPacketBody &)>(0x100B9690, [](PickerArgs &args, SpellPacketBody &spPkt)	{
@@ -148,6 +156,12 @@ class UiPickerHooks : TempleFix
 			return uiPicker.FreeCurrentPicker();
 		});
 
+		// SetConeTargets
+		replaceFunction<BOOL(__cdecl)(LocAndOffsets *, PickerArgs*)>(0x100BA6A0, [](LocAndOffsets * mouseLoc, PickerArgs* args){
+			uiPicker.SetConeTargets(mouseLoc, args);
+			return 1;
+		});
+
 	}
 } uiPickerHooks;
 
@@ -155,7 +169,7 @@ class UiPickerHooks : TempleFix
 
 BOOL UiPicker::PickerActiveCheck()
 {
-	return (*addresses.activePickerIdx) >= 0;
+	return (*addresses.activePickerIdx) >= 0 && (*addresses.activePickerIdx) < MAX_PICKER_COUNT;
 }
 
 int UiPicker::ShowPicker(const PickerArgs& args, void* callbackArgs) {
@@ -168,7 +182,7 @@ int UiPicker::ShowPicker(const PickerArgs& args, void* callbackArgs) {
 		return FALSE;
 
 	
-	ui.WidgetSetHidden(uiIntgameSelect.GetId(), 0);
+	uiManager->SetHidden(uiIntgameSelect.GetId(), false);
 	pickerIdx++;
 
 	if (pickerIdx >= MAX_PICKER_COUNT || pickerIdx < 0)
@@ -203,6 +217,21 @@ int UiPicker::ShowPicker(const PickerArgs& args, void* callbackArgs) {
 	// return addresses.ShowPicker(args, callbackArgs);
 }
 
+void UiPicker::CancelPicker(){
+	if (!PickerActiveCheck())
+		return;
+	auto &picker = GetActivePicker();
+	picker.args.result.flags = PickerResultFlags::PRF_CANCELLED;
+	if (picker.args.callback){
+		picker.args.callback(picker.args.result, picker.callbackArgs);
+	}
+
+	// Set Char Portrait callbacks to null
+	temple::GetRef<void(__cdecl)(void*, void*, void*)>(0x10131950)(nullptr, nullptr, nullptr);
+
+	picker.args.result.FreeObjlist();
+}
+
 uint32_t UiPicker::ObjectNodesFromPickerResult(objHndl objHnd, PickerArgs* pickerArgs)
 {
 	return addresses.sub_100BA030(objHnd, pickerArgs);
@@ -217,7 +246,8 @@ BOOL UiPicker::FreeCurrentPicker() {
 
 	auto &picker = GetActivePicker();
 	picker.args.result.FreeObjlist();
-	ui.WidgetSetHidden(uiIntgameSelect.GetId(), 1);
+	uiManager->SetHidden(uiIntgameSelect.GetId(), true);
+	uiManager->SetHidden(uiIntgameSelect.GetCastNowWndId(), true);
 
 	if (picker.cursorStackCount_Maybe){
 		mouseFuncs.ResetCursor();
@@ -251,14 +281,63 @@ uint32_t UiPicker::SetSingleTarget(objHndl objHnd, PickerArgs* pickerArgs)
 	return addresses.sub_100BA480(objHnd, pickerArgs);
 }
 
-void UiPicker::SetConeTargets(LocAndOffsets* locAndOffsets, PickerArgs* pickerArgs)
+void UiPicker::SetConeTargets(LocAndOffsets* mouseLoc, PickerArgs* pickerArgs)
 {
-	addresses.sub_100BA6A0(locAndOffsets, pickerArgs);
+	auto &pickRes = pickerArgs->result;
+	if (pickerArgs){
+		pickRes.FreeObjlist();
+	}
+
+	pickRes.flags |= (PickerResultFlags::PRF_HAS_LOCATION | PickerResultFlags::PRF_HAS_MULTI_OBJ);
+
+	auto originator = pickerArgs->caster;
+	LocAndOffsets originLoc;
+	locSys.getLocAndOff(originator, &originLoc);
+
+	auto dir = locSys.GetDirectionVector(originLoc, *mouseLoc);
+
+	auto coneTgtLoc = *mouseLoc;
+
+	auto coneOrigin = originLoc;
+	auto angleSize = pickerArgs->degreesTarget * M_PI / 180.0;
+	auto angleStart = -atan2(dir.y, dir.x) - angleSize*0.5 + M_PI * 5 / 4;
+	auto rangeInches = pickerArgs->radiusTarget * INCH_PER_FEET;
+
+	if (pickerArgs->IsModeTargetFlagSet(UiPickerType::PickOrigin)){
+		// mouseLoc becomes the coneOrigin
+		auto newTgtLoc = *mouseLoc;
+		newTgtLoc.off_x += rangeInches * dir.x;
+		newTgtLoc.off_y += rangeInches * dir.y;
+		newTgtLoc.Regularize();
+		coneOrigin = *mouseLoc;
+		coneTgtLoc = newTgtLoc;
+	}
+
+	
+	if (!(pickerArgs->flagsTarget & UiPickerFlagsTarget::FixedRadius)){
+		rangeInches = locSys.Distance3d(coneTgtLoc, coneOrigin);
+	}
+	pickRes.objList.ListRadius(coneOrigin, rangeInches, angleStart, angleSize, OLC_ALL);
+
+	if (! (pickerArgs->flagsTarget & UiPickerFlagsTarget::Unknown80h)){
+		temple::GetRef<void(__cdecl)(LocAndOffsets &, PickerArgs*)>(0x100B9F60)(coneOrigin, pickerArgs); // raycasting etc.
+	}
+
+	
+	pickerArgs->DoExclusions();
+	
+
+
+//	addresses.sub_100BA6A0(locAndOffsets, pickerArgs);
 }
 
 uint32_t UiPicker::GetListRange(LocAndOffsets* locAndOffsets, PickerArgs* pickerArgs)
 {
 	return addresses.sub_100BA540(locAndOffsets, pickerArgs);
+}
+
+LocAndOffsets UiPicker::GetWallEndPoint(){
+	return mWallEndPt;
 }
 
 UiPicker::UiPicker(){
@@ -278,6 +357,7 @@ void UiPicker::InitWallSpec(){
 	mWallSpec.idx = (int)UiPickerType::Wall;
 	mWallSpec.cursorTextDraw = [](int x, int y, void*) { uiPicker.WallCursorText(x, y); };
 	mWallMsgHandlers.posChange = [](TigMsg*msg) {return uiPicker.WallPosChange(msg); };
+	mWallMsgHandlers.lmbClick = [](TigMsg*msg) {return TRUE; }; // just so it eats the message; otherwise the game things you're doing drag select
 	mWallMsgHandlers.lmbReleased = [](TigMsg*msg) {return uiPicker.WallLmbReleased(msg); };
 	mWallMsgHandlers.rmbReleased = [](TigMsg*msg) {return uiPicker.WallRmbReleased(msg); };
 
@@ -340,7 +420,7 @@ void UiPicker::RenderPickers(){
 			auto handleObj = objSystem->GetObject(handle);
 			auto fogFlags = temple::GetRef<uint8_t(__cdecl)(LocAndOffsets)>(0x1002ECB0)(handleObj->GetLocationFull()) ;
 
-			if (config.laxRules || !critterSys.IsConcealed(handle) && (fogFlags & 1) ){ // fixed rendering for hidden critters
+			if ( (config.laxRules && config.showTargetingCirclesInFogOfWar) || !critterSys.IsConcealed(handle) && (fogFlags & 1) ){ // fixed rendering for hidden critters
 				DrawCircleValidTarget(handle, originator, pick.args.spellEnum);
 				temple::GetRef<void(objHndl, int)>(0x10108ED0)(handle, ++tgtCount); // text append	
 			}
@@ -367,7 +447,7 @@ void UiPicker::RenderPickers(){
 	}
 
 	auto origObj = objSystem->GetObject(originator);
-	auto originiLoc = origObj->GetLocationFull();
+	auto originLoc = origObj->GetLocationFull();
 	auto originRadius = objects.GetRadius(originator);
 
 	tgt = pick.tgt; //just in case it got updated
@@ -384,7 +464,7 @@ void UiPicker::RenderPickers(){
 		}
 
 		float orgAbsX, orgAbsY, tgtAbsX, tgtAbsY;
-		locSys.GetOverallOffset(originiLoc, &orgAbsX, &orgAbsY);
+		locSys.GetOverallOffset(originLoc, &orgAbsX, &orgAbsY);
 		locSys.GetOverallOffset(tgtLoc, &tgtAbsX, &tgtAbsY);
 
 		auto areaRadiusInch = INCH_PER_FEET * pick.args.radiusTarget;
@@ -403,39 +483,52 @@ void UiPicker::RenderPickers(){
 			spellEffectPointerSize = 135.744f;
 		}
 
-		if (originRadius * 1.5f + areaRadiusInch  + spellEffectPointerSize < locSys.distBtwnLocAndOffs(tgtLoc, originiLoc)){
-			DrawSpellEffectPointer(tgtLoc, originiLoc, areaRadiusInch);
+		if (originRadius * 1.5f + areaRadiusInch  + spellEffectPointerSize < locSys.distBtwnLocAndOffs(tgtLoc, originLoc)){
+			DrawSpellEffectPointer(tgtLoc, originLoc, areaRadiusInch);
 		}	
 	}
 
 	else if (pick.args.IsBaseModeTarget(UiPickerType::Personal)){
-		if (tgt && (pick.args.flagsTarget &UiPickerFlagsTarget::Radius) && tgt != originator){
+		if (tgt && (pick.args.flagsTarget &UiPickerFlagsTarget::Radius) && tgt == originator){
 
-			DrawCircleAoE(originiLoc, 1.0, INCH_PER_FEET * pick.args.radiusTarget, pick.args.spellEnum);
+			DrawCircleAoE(originLoc, 1.0, INCH_PER_FEET * pick.args.radiusTarget, pick.args.spellEnum);
 
 		}
 	}
 
 	else if (pick.args.IsBaseModeTarget(UiPickerType::Cone)) {
 		LocAndOffsets tgtLoc;
-		if (tgt) {
-			tgtLoc = tgtObj->GetLocationFull();
-		}
-		else {
-			locSys.GetLocFromScreenLocPrecise(pick.x, pick.y, tgtLoc);
-		}
-
-		if (pick.args.flagsTarget & UiPickerFlagsTarget::FixedRadius){
-			tgtLoc = locSys.TrimToLength(originiLoc, tgtLoc, pick.args.radiusTarget * INCH_PER_FEET);
-			
-		}
-
 		auto degreesTarget = pick.args.degreesTarget;
-		if (!(pick.args.flagsTarget & UiPickerFlagsTarget::Degrees)){
+		if (!(pick.args.flagsTarget & UiPickerFlagsTarget::Degrees)) {
 			degreesTarget = 60.0f;
 		}
 
-		DrawConeAoE(originiLoc, tgtLoc, degreesTarget, pick.args.spellEnum);
+
+		auto coneOrigin = originLoc;
+		if (pick.args.IsModeTargetFlagSet(UiPickerType::PickOrigin)){
+			locSys.GetLocFromScreenLocPrecise(pick.x, pick.y, coneOrigin);
+			auto dir = locSys.GetDirectionVector(originLoc, coneOrigin);
+
+			LocAndOffsets newTgtLoc = coneOrigin;
+			newTgtLoc.off_x += dir.x * 4000; newTgtLoc.off_y += dir.y * 4000;
+			newTgtLoc.Regularize();
+			tgtLoc = newTgtLoc;
+
+		}
+		else{ // normal cone emanating from caster
+			if (tgt) {
+				tgtLoc = tgtObj->GetLocationFull();
+			}
+			else {
+				locSys.GetLocFromScreenLocPrecise(pick.x, pick.y, tgtLoc);
+			}
+		}
+
+		if (pick.args.flagsTarget & UiPickerFlagsTarget::FixedRadius) {
+			tgtLoc = locSys.TrimToLength(coneOrigin, tgtLoc, pick.args.radiusTarget * INCH_PER_FEET);
+		}
+
+		DrawConeAoE(coneOrigin, tgtLoc, degreesTarget, pick.args.spellEnum);
 	}
 
 	else if (pick.args.IsBaseModeTarget(UiPickerType::Ray)){
@@ -446,7 +539,7 @@ void UiPicker::RenderPickers(){
 			auto rayWidth = pick.args.radiusTarget * INCH_PER_FEET / 2.0f;
 			auto rayLength = originRadius + pick.args.trimmedRangeInches;
 
-			DrawRectangleAoE(originiLoc, tgtLoc, rayWidth, rayLength, rayLength, pick.args.spellEnum);
+			DrawRectangleAoE(originLoc, tgtLoc, rayWidth, rayLength, rayLength, pick.args.spellEnum);
 		}
 	}
 
@@ -558,7 +651,7 @@ BOOL UiPicker::PickerMsgMouse(TigMsg * msg){
 			result = TRUE;
 	}
 
-	if (msgMouse->buttonStateFlags & MSF_POS_CHANGE2) {
+	if (msgMouse->buttonStateFlags & MSF_POS_CHANGE_SLOW) {
 		auto handler = pickerSpec.msg->posChange2;
 		if (handler && handler(msg))
 			result = TRUE;
@@ -648,8 +741,8 @@ BOOL UiPicker::WallPosChange(TigMsg * msg){
 
 		// get radius and range up to mouse (trimmed by walls and such)
 		auto radiusInch = pick.args.radiusTarget * INCH_PER_FEET / 2.0f;	
-		pick.args.GetTrimmedRange(pick.args.result.location, mouseLoc, radiusInch, maxRange);
-		pick.args.degreesTarget = locSys.AngleBetweenPoints(pick.args.result.location, mouseLoc);
+		pick.args.GetTrimmedRange(pick.args.result.location, mouseLoc, radiusInch, maxRange, INCH_PER_FEET * 5.0);
+		pick.args.degreesTarget = 2.3561945f - locSys.AngleBetweenPoints(pick.args.result.location, mouseLoc); // putting this in radians, unlike the usual usage
 
 		pick.args.GetTargetsInPath(pick.args.result.location, mouseLoc, radiusInch);
 
@@ -683,6 +776,12 @@ BOOL UiPicker::WallLmbReleased(TigMsg * msg)
 	}
 
 	else if (wallState == WallPicker_EndPoint){
+		auto msgMouse = (TigMsgMouse*)msg;
+		LocAndOffsets mouseLoc;
+		locSys.GetLocFromScreenLocPrecise(msgMouse->x, msgMouse->y, mouseLoc);
+		auto mouseLocTrim = locSys.TrimToLength(pick.args.result.location, mouseLoc, pick.args.trimmedRangeInches);
+		mWallEndPt = mouseLocTrim;
+		
 		return pick.Finalize();
 	}
 
@@ -757,6 +856,83 @@ void UiPicker::WallCursorText(int x, int y){
 	}
 }
 
+BOOL UiPicker::MultiPosChange(TigMsg * msg)
+{
+	auto activePickerIdx = GetActivePickerIdx();
+	if (activePickerIdx < 0 || activePickerIdx >= MAX_PICKER_COUNT)
+		return FALSE;
+
+	auto msgMouse = (TigMsgMouse*)msg;
+
+	auto &pick = GetActivePicker();
+	auto &pickStatus = GetPickerStatusFlags();
+
+	LocAndOffsets mouseLoc;
+	if (locSys.GetLocFromScreenLocPrecise(msgMouse->x, msgMouse->y, mouseLoc)){
+		auto fogFlags = temple::GetRef<uint8_t(__cdecl)(LocAndOffsets)>(0x1002ECB0)(mouseLoc);
+		if (! (fogFlags & 4)){
+
+			(int&)pickStatus |= PickerStatusFlags::PSF_Invalid;
+			return FALSE; // change from vanilla - decided not to reset the selection list. atari bug #536
+
+			if (pick.args.result.flags & PickerResultFlags::PRF_HAS_MULTI_OBJ){
+				pick.args.result.FreeObjlist();
+				pick.tgtIdx = 0; // fix: added this - otherwise there was a visual issue where the count wouldn't get reset, even though the actual list did
+			}
+			pick.args.result.flags = 0;
+			//(int&)pickStatus |= PickerStatusFlags::PSF_Invalid; // change from vanilla
+			return FALSE;
+		}
+	}
+
+	auto flgs = pick.GetFlagsFromExclusions();
+	objHndl pickedHndl = objHndl::null;
+	if (!PickObjectOnScreen(msgMouse->x, msgMouse->y, &pickedHndl, flgs)){
+		pick.tgt = objHndl::null;
+		(int&)pickStatus &= ~(PickerStatusFlags::PSF_Invalid| PSF_OutOfRange);
+		return TRUE;
+	}
+	pick.tgt = pickedHndl;
+
+	if ( (pick.args.flagsTarget & UiPickerFlagsTarget::Exclude1st )  ){
+		if (!pick.args.TargetValid(pickedHndl)){
+			(int&)pickStatus |= PickerStatusFlags::PSF_Invalid;
+		}
+	}
+	else if (!pick.args.CheckTargetVsIncFlags(pick.tgt)){
+		(int&)pickStatus |= PickerStatusFlags::PSF_Invalid;
+	}
+	else {
+		if (pick.args.TargetValid(pickedHndl)) {
+			(int&)pickStatus &= ~PickerStatusFlags::PSF_Invalid;
+		}
+		else {
+			(int&)pickStatus |= PickerStatusFlags::PSF_Invalid;
+		}
+	}
+
+	if ( !(pick.args.flagsTarget & UiPickerFlagsTarget::LosNotRequired) ){
+		if (pick.args.LosBlocked(pickedHndl)){
+			(int&)pickStatus |= PickerStatusFlags::PSF_Invalid;
+		}
+	}
+
+	if (pick.args.flagsTarget & UiPickerFlagsTarget::Range){
+		auto casterObj = objSystem->GetObject(pick.args.caster);
+		if (!casterObj)
+			return FALSE;
+		auto casterLoc = casterObj->GetLocation();
+		auto pickedObj = objSystem->GetObject(pickedHndl);
+		if (!pickedObj) return FALSE;
+		auto pickedObjLoc = pickedObj->GetLocation();
+		if (locSys.GetTileDeltaMaxBtwnLocs(casterLoc, pickedObjLoc) > pick.args.range){
+			(int&)pickStatus |= PickerStatusFlags::PSF_OutOfRange;
+		}
+	}
+
+	return TRUE;
+}
+
 void UiPicker::DrawConeAoE(LocAndOffsets originLoc, LocAndOffsets tgtLoc, float angularWidthDegrees, int spellEnum){
 	temple::GetRef<void(__cdecl)(LocAndOffsets, LocAndOffsets, float, int)>(0x10107920)(originLoc, tgtLoc, angularWidthDegrees, spellEnum);
 }
@@ -795,18 +971,22 @@ bool PickerArgs::IsModeTargetFlagSet(UiPickerType type)
 	return (((uint64_t)modeTarget) & ((uint64_t)type)) == (uint64_t)type;
 }
 
+void PickerArgs::SetModeTargetFlag(UiPickerType type){
+	*(uint64_t*)(&(this->modeTarget)) |= (uint64_t)type;
+}
+
 UiPickerType PickerArgs::GetBaseModeTarget()
 {
 	return (UiPickerType) (((uint64_t)this->modeTarget) & 0xFF);
 }
 
-void PickerArgs::GetTrimmedRange(LocAndOffsets &originLoc, LocAndOffsets &tgtLoc, float radiusInch, float maxRange){
-	this->trimmedRangeInches = maxRange;
+void PickerArgs::GetTrimmedRange(LocAndOffsets &originLoc, LocAndOffsets &tgtLoc, float radiusInch, float maxRangeInch, float incrementInches){
+	this->trimmedRangeInches = maxRangeInch;
 
 	RaycastPacket rayPkt;
 	rayPkt.sourceObj = objHndl::null;
 	rayPkt.origin = originLoc;
-	rayPkt.rayRangeInches = maxRange;
+	rayPkt.rayRangeInches = maxRangeInch;
 	rayPkt.targetLoc = tgtLoc;
 	rayPkt.radius = radiusInch;
 	rayPkt.flags = (RaycastFlags)(RaycastFlags::ExcludeItemObjects | RaycastFlags::HasRadius | RaycastFlags::HasRangeLimit);
@@ -819,6 +999,10 @@ void PickerArgs::GetTrimmedRange(LocAndOffsets &originLoc, LocAndOffsets &tgtLoc
 			if (dist < this->trimmedRangeInches)
 				this->trimmedRangeInches = dist;
 		}
+	}
+
+	if (incrementInches > 0){
+		this->trimmedRangeInches = ceil(this->trimmedRangeInches / incrementInches) * incrementInches;
 	}
 }
 
@@ -903,8 +1087,164 @@ void PickerArgs::DoExclusions(){
 	}
 }
 
+bool PickerArgs::CheckTargetVsIncFlags(objHndl tgt)
+{
+	auto tgtObj = objSystem->GetObject(tgt);
+	if (!tgtObj)
+		return false;
+
+	auto incFlags = this->incFlags;
+	if ( (incFlags & UiPickerIncFlags::UIPI_Self) && (tgt == this->caster))
+		return true;
+	if ((incFlags & UiPickerIncFlags::UIPI_Other) && (tgt != this->caster))
+		return true;
+	auto isCritter = tgtObj->IsCritter();
+	if ((incFlags & UiPickerIncFlags::UIPI_NonCritter) && !isCritter)
+		return true;
+	if (isCritter){
+		if ((incFlags & UiPickerIncFlags::UIPI_Dead) && critterSys.IsDeadNullDestroyed(tgt))
+			return true;
+		if ((incFlags & UiPickerIncFlags::UIPI_Undead) && critterSys.IsUndead(tgt))
+			return true;
+		if ((incFlags & UiPickerIncFlags::UIPI_Unconscious) 
+			&& critterSys.IsDeadOrUnconscious(tgt))
+			return true;
+		if ((incFlags & UiPickerIncFlags::UIPI_Hostile) && !critterSys.IsFriendly(caster,tgt))
+			return true;
+		if ((incFlags & UiPickerIncFlags::UIPI_Friendly) && critterSys.IsFriendly(caster, tgt))
+			return true;
+	}
+	else if ((incFlags & UiPickerIncFlags::UIPI_Potion) 
+		&& tgtObj->type == obj_t_food && inventory.IsMagicItem(tgt))
+		return true;
+	else if ((incFlags & UiPickerIncFlags::UIPI_Scroll) && tgtObj->type == obj_t_scroll )
+		return true;
+
+	return false;
+}
+
+bool PickerArgs::TargetValid(objHndl tgt)
+{
+	auto tgtObj = objSystem->GetObject(tgt);
+	if (!tgtObj)
+		return false;
+
+	if (objects.IsUntargetable(tgt))
+		return false;
+
+	if ( (excFlags & UIPI_Self) && tgt == caster){
+		return false;
+	}
+	if ((excFlags & UIPI_Other) && tgt != caster)
+		return false;
+
+	auto isCritter = tgtObj->IsCritter();
+
+	if ( (excFlags & UIPI_NonCritter) && !isCritter){
+		return false;
+	}
+
+	if (isCritter){
+		if ((excFlags & UIPI_Dead) && critterSys.IsDeadNullDestroyed(tgt))
+			return false;
+		if ((excFlags & UIPI_Undead) && critterSys.IsUndead(tgt))
+			return false;
+		if ((excFlags & UIPI_Unconscious) && critterSys.IsDeadOrUnconscious(tgt))
+			return false;
+		if ((excFlags & UiPickerIncFlags::UIPI_Hostile) && !critterSys.IsFriendly(caster, tgt))
+			return false;
+		if ((excFlags & UiPickerIncFlags::UIPI_Friendly) && critterSys.IsFriendly(caster, tgt))
+			return false;
+	}
+	else if ((excFlags & UiPickerIncFlags::UIPI_Potion)
+		&& tgtObj->type == obj_t_food && inventory.IsMagicItem(tgt))
+		return false;
+	else if ((excFlags & UiPickerIncFlags::UIPI_Scroll) && tgtObj->type == obj_t_scroll)
+		return false;
+
+	if ( (flagsTarget & UiPickerFlagsTarget::Range) && IsBaseModeTarget(UiPickerType::Single)){
+		auto casterObj = objSystem->GetObject(caster);
+		if (!casterObj) return false;
+		auto casterLoc = casterObj->GetLocationFull();
+		auto tgtLoc = tgtObj->GetLocationFull();
+		if (INCH_PER_FEET * this->range + objects.GetRadius(tgt) + objects.GetRadius(caster)
+			< locSys.Distance3d(casterLoc, tgtLoc))
+			return false;
+	}
+	
+	return true;
+}
+
+bool PickerArgs::LosBlocked(objHndl handle)
+{
+	static auto losBlocked = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x101370E0);
+	return losBlocked(caster, handle);
+}
+
+bool PickerArgs::SetSingleTgt(objHndl tgt)
+{
+	auto tgtObj = objSystem->GetObject(tgt);
+	if (!tgtObj) {
+		return false;
+	}
+	if (result.flags& PickerResultFlags::PRF_HAS_MULTI_OBJ){
+		result.FreeObjlist();
+	}
+	result.flags = PRF_HAS_LOCATION | PRF_HAS_SINGLE_OBJ;
+	result.handle = tgt;
+	result.location = tgtObj->GetLocationFull();
+	result.offsetz = tgtObj->GetFloat(obj_f_offset_z);
+	
+	DoExclusions();
+	
+	return true;
+}
+
+void PickerArgs::FreeObjlist()
+{
+	if (this->result.flags & PRF_HAS_MULTI_OBJ){
+		result.FreeObjlist();
+	}
+	result.flags = 0;
+}
+
 void PickerArgs::ExcludeTargets(){
-	temple::GetRef<void(__cdecl)(PickerArgs*)>(0x100BA3C0)(this);
+	//temple::GetRef<void(__cdecl)(PickerArgs*)>(0x100BA3C0)(this);
+
+	if (result.flags & PRF_HAS_SINGLE_OBJ){
+		if (!TargetValid(result.handle)){
+			result.handle = objHndl::null;
+			result.flags &= ~PRF_HAS_SINGLE_OBJ;
+		}
+	}
+	if (result.flags & PRF_HAS_MULTI_OBJ) {
+		
+		// remove until valid found (if any)
+		while (result.objList.objects){
+			if (TargetValid(result.objList.objects->handle))
+				break;
+			auto objNode = result.objList.objects;
+			result.objList.objects = result.objList.objects->next;
+			objNode->ReturnToPool();
+		}
+
+		// here, the first one (if any exists) should be valid
+		auto objNode = result.objList.objects;
+		while (objNode){
+			auto next = objNode->next;
+			if (!next)
+				break;
+
+			if (!TargetValid(next->handle)){ // remove the "next" node
+				auto removeNode = objNode->next;
+				objNode->next = objNode->next->next;
+				removeNode->ReturnToPool();
+				continue;
+			}
+			
+			objNode = objNode->next;
+		}
+	}
 }
 
 void PickerArgs::FilterResults(){
@@ -925,8 +1265,9 @@ BOOL PickerCacheEntry::Finalize(){
 		&& (!(flags & PRF_HAS_SINGLE_OBJ) || args.result.handle))	
 	{
 		SpellPacketBody *pkt = (SpellPacketBody*)callbackArgs;
+
 		if (args.callback)
-			args.callback(args.result, pkt);
+			args.callback(args.result, pkt); // ActionSequenceSystem::SpellPickerCallback
 		args.result.FreeObjlist();
 		return flags != 0;
 	}
@@ -934,4 +1275,23 @@ BOOL PickerCacheEntry::Finalize(){
 	{
 		return TRUE;
 	}
+}
+
+GameRaycastFlags PickerCacheEntry::GetFlagsFromExclusions()
+{
+	GameRaycastFlags result = GameRaycastFlags::GRF_HITTEST_3D;
+	if (hotkeys.IsKeyPressed(VK_LMENU) || hotkeys.IsKeyPressed(VK_RMENU)){
+		result = GRF_HITTEST_SEL_CIRCLE;
+	}
+
+	if (args.excFlags & UiPickerIncFlags::UIPI_NonCritter){
+		(int&)result |= (GRF_ExcludeContainers | GRF_ExcludePortals | GRF_ExcludeScenery);
+	}
+	if (args.excFlags & UiPickerIncFlags::UIPI_Dead) {
+		(int&)result |= (GRF_ExcludeDead );
+	}
+	if (args.excFlags & UiPickerIncFlags::UIPI_Unconscious) {
+		(int&)result |= (GRF_ExcludeUnconscious);
+	}
+	return result;
 }

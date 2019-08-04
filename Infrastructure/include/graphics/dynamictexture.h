@@ -1,8 +1,9 @@
 
 #pragma once
 
+#include <gsl/gsl>
+
 #include <memory>
-#include "gsl/span.h"
 #include <atlcomcli.h>
 
 #include "textures.h"
@@ -56,7 +57,7 @@ namespace gfx {
 		template<typename T>
 		void Update(gsl::span<T> data) {
 			UpdateRaw(
-				gsl::as_span(reinterpret_cast<uint8_t*>(&data[0]), data.size_bytes()), 
+				gsl::span(reinterpret_cast<uint8_t*>(&data[0]), data.size_bytes()), 
 				mSize.width * sizeof(T)
 			);
 		}

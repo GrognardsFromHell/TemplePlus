@@ -1738,7 +1738,9 @@ enum D20DispatcherKey : uint32_t {
 	DK_QUE_Quivering_Palm_Can_Perform = 0x147,
 	DK_QUE_Trip_AOO = 0x148,
 	DK_QUE_Get_Arcane_Spell_Failure = 0x149, // returns additive spell failure chance
-
+	DK_QUE_Is_Preferring_One_Handed_Wield = 0x14A, // e.g. a character with a Buckler can opt to wield a sword one handed so as to not take the -1 to hit penalty
+	DK_QUE_Scribe_Scroll_Spell_Level = 0x14B,
+	DK_QUE_Critter_Is_Immune_Paralysis = 0x14C,
 
 	DK_LVL_Stats_Activate = 100,
 	DK_LVL_Stats_Check_Complete = 101,
@@ -1798,7 +1800,8 @@ enum enum_dispIO_type : uint32_t {
 	dispIOType31,
 	dispIOType32,
 	dispIOType33,
-	evtObjTypeSpellCaster // new! used for querying spell caster specs (caster level, learnable spells, etc.)
+	evtObjTypeSpellCaster, // new! used for querying spell caster specs (caster level, learnable spells, etc.)
+	evtObjTypeActionCost // new! used for modifying action cost
 
 };
 
@@ -1901,6 +1904,14 @@ enum enum_disp_type : uint32_t {
 
 
 	dispTypeDealingDamageWeaponlikeSpell,
+	dispTypeActionCostMod,
+	dispTypeMetaMagicMod,
+	dispTypeSpecialAttack,
+    dispConfirmCriticalBonus,
+	dispRangeIncrementBonus,
+    dispTypeDealingDamageSpell,
+    dispTypeSpellResistanceCasterLevelCheck,
+	dispTypeTargetSpellDCBonus,
 	dispTypeCount // used just for size definition purposes
 
 
@@ -1988,6 +1999,9 @@ enum Stat : uint32_t {
 	stat_level_frost_mage = 43,
 	stat_level_artificer = 44,
 	stat_level_abjurant_champion = 45,
+	stat_level_scout = 46,
+	stat_level_warmage = 47,
+	stat_level_beguilers = 48,
 
 	stat_level_psion = 58,
 	stat_level_psychic_warrior = 59,
@@ -2235,17 +2249,32 @@ enum Alignment : uint32_t {
 	ALIGNMENT_CHAOTIC_EVIL = 10,
 };
 
+enum RaceBase
+{
+	race_base_human = 0,
+	race_base_dwarf = 1,
+	race_base_elf = 2,
+	race_base_gnome = 3,
+	race_base_halfelf = 4,
+	race_base_half_elf = 4,
+	race_base_halforc = 5,
+	race_base_half_orc = 5,
+	race_base_halfling = 6,
+
+	race_base_goblin = 7,
+	race_base_bugbear = 8,
+	race_base_gnoll = 9,
+	race_base_hill_giant = 10,
+	race_base_troll = 11,
+	race_base_hobgoblin = 12,
+	race_base_lizardman = 13,
+};
+
 enum Race : uint32_t
 {
 	race_human = 0,
-	race_deep_dwarf = 0,
-	race_derro = 1,
 	race_dwarf = 1,
-	race_duergar = 1,
-	race_mountain_dwarf = 1,
 	race_elf = 2,
-	race_aquatic_elf = 2,
-	race_drow = 2,
 	race_gnome = 3,
 	race_halfelf = 4,
 	race_half_elf = 4,
@@ -2253,15 +2282,65 @@ enum Race : uint32_t
 	race_half_orc = 5,
 	race_halfling = 6,
 
-	race_gray_elf = 6,
-	race_wild_elf = 7,
-	race_wood_elf = 8,
-	race_svirfneblin = 9,
-	race_forest_gnome = 10,
-	race_tallfellow = 11,
-	race_deep_halfling = 12,
+	race_goblin = 7,
+	race_bugbear = 8,
+	race_gnoll = 9,
+	race_hill_giant = 10,
+	race_troll = 11,
+	race_hobgoblin = 12,
+	race_lizardman = 13,
+
+	// Dwarf subraces
+	race_deep_dwarf = 1,
+	race_derro = 1,
+	race_duergar = 1,
+	race_mountain_dwarf = 1,
+	// Elf subraces
+	race_aquatic_elf = 2,
+	race_drow = 2,
+	race_gray_elf = 2,
+	race_wild_elf = 2,
+	race_wood_elf = 2,
+	// Gnome subraces
+	race_svirfneblin = 3,
+	race_forest_gnome = 3,
+	// Halfling subraces
+	race_tallfellow = 6,
+	race_deep_halfling = 6,
 };
 
+enum Subrace : uint32_t
+{
+	subrace_none = 0, // default
+
+	//Human subraces
+	subrace_aasumar = 2,
+	subrace_tiefling = 3,
+
+	// Dwarf subraces
+	subrace_deep_dwarf = 1,
+	subrace_derro = 2,
+	subrace_duergar = 3,
+	subrace_mountain_dwarf = 4,
+	subrace_gold_dwarf = 4,
+
+	// Elf
+	subrace_aquatic_elf = 1,
+	subrace_drow = 2,
+	subrace_gray_elf = 3,
+	subrace_wild_elf = 4,
+	subrace_wood_elf = 5,
+	
+	// Gnomes
+	subrace_svirfneblin = 1,
+	subrace_forest_gnome = 2,
+
+	// Halflings
+	subrace_tallfellow = 1,
+	subrace_deep_halfling = 2,
+	subrace_strongheart_halfling = 3,
+	subrace_ghostwise_halfling = 4,
+};
 
 enum NpcFlag : uint32_t
 {
@@ -2521,7 +2600,10 @@ enum WeaponTypes : uint32_t
 	wt_net,
 	wt_grapple,
 	wt_ray,
-	wt_grenade   // 72
+	wt_grenade,   // 72
+	wt_mindblade,
+
+	wt_none = 0xFFFFffff
 };
 
 

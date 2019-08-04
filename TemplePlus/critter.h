@@ -77,10 +77,10 @@ struct HairStyle {
 
 	uint32_t Pack() const {
 		return ((int)race & 7)
-			| ((int)gender) & 1 << 3
-			| ((int)size) & 3 << 10
-			| style & 7 << 4
-			| color & 7 << 7;
+			| (((int)gender) & 1) << 3
+			| (((int)size) & 3) << 10
+			| (style & 7) << 4
+			| (color & 7) << 7;
 	}
 };
 
@@ -100,6 +100,7 @@ struct LegacyCritterSystem : temple::AddressTable
 		Unk Flag could mean -> Add their NPC followers to the group as well
 	*/
 	uint32_t AddFollower(objHndl npc, objHndl pc, int unkFlag, bool asAiFollower);
+	bool FollowerAtMax(); // is at max number of controllable followers
 
 	/*
 		Unk Flag could mean -> Remove their NPC followers to the group as well
@@ -113,7 +114,7 @@ struct LegacyCritterSystem : temple::AddressTable
 	/*
 	Gets the current leader of the given critter (recursive in case it's an NPC charmed by an NPC). Might be 0.
 	*/
-	objHndl GetLeaderRecursive(objHndl critter);
+	objHndl GetLeaderForNpc(objHndl critter);
 
 	/*
 		Checks for line of sight betwen a critter and a target obj.
@@ -122,13 +123,18 @@ struct LegacyCritterSystem : temple::AddressTable
 	int HasLineOfSight(objHndl critter, objHndl target);
 
 	/*
+		Returns true if the critter can see the targe with blindsight.
+	*/
+	bool CanSeeWithBlindsight(objHndl critter, objHndl target);
+
+	/*
 		Gets an item worn at the given equipment slot.
 	*/
 	objHndl GetWornItem(objHndl handle, EquipSlot slot);
 
 
 
-	void Attack(objHndl target, objHndl attacker, int n1, int n2);
+	void Attack(objHndl provoked, objHndl attacker, int rangeType, int flags);
 
 	/*
 		does the gameplay logic for pickpocketing (this gets called at the end of the pickpocket animation)
@@ -151,7 +157,10 @@ struct LegacyCritterSystem : temple::AddressTable
 		 - one is the other's leader
 		 - both share a faction (including factions from reputations for PCs)
 	*/
-	BOOL AllegianceShared(objHndl obj, objHndl obj2);
+	BOOL NpcAllegianceShared(objHndl obj, objHndl obj2);
+	bool HasNoFaction(objHndl handle); // returns true for all PCs; returns false for NPCs in party
+	int GetReaction(objHndl of, objHndl towards); // gets npc reaction towards
+
 
 	/*
 		For id = 7, this returns footstep sound ids for the critter
@@ -168,6 +177,8 @@ struct LegacyCritterSystem : temple::AddressTable
 		Same as Kill, but applies condition "Killed By Death Effect" before killing.
 	*/
 	void KillByEffect(objHndl critter, objHndl killer = objHndl::null);
+
+	void CritterHpChanged(objHndl obj, objHndl assailant, int damAmt);
 		
 	/*
 		Changes one of the standpoints for a critter.
@@ -237,11 +248,12 @@ struct LegacyCritterSystem : temple::AddressTable
 	*/
 	bool CanSense(objHndl critter, objHndl tgt); 
 
+	int GetEffectiveLevel(objHndl& objHnd); // Get Effective Character Level (used for determining XP gain / requirements)
 	int GetLevel(objHndl critter);
 
 	int SkillLevel(objHndl critter, SkillEnum skill);
 
-	Race GetRace(objHndl critter);
+	Race GetRace(objHndl critter, bool getBaseRace = true);
 
 	Gender GetGender(objHndl critter);
 
@@ -299,6 +311,7 @@ struct LegacyCritterSystem : temple::AddressTable
 
 #pragma region Category
 	MonsterCategory GetCategory(objHndl objHnd);
+	MonsterSubcategoryFlag GetSubcategoryFlags(objHndl handle);
 	uint32_t IsCategoryType(objHndl objHnd, MonsterCategory categoryType);
 	uint32_t IsCategorySubtype(objHndl objHnd, MonsterSubcategoryFlag categoryType);
 	uint32_t IsUndead(objHndl objHnd);
@@ -310,13 +323,16 @@ struct LegacyCritterSystem : temple::AddressTable
 	float GetReach(objHndl objHndl, D20ActionType actType); // reach in feet
 	int GetBonusFromSizeCategory(int sizeCategory);
 	int GetDamageIdx(objHndl obj, int attackIdx);
+	int GetNumNaturalAttacks(objHndl handle);
 	// bonus to hit from size
 	int GetCritterDamageDice(objHndl obj, int attackIdx);
 	DamageType GetCritterAttackDamageType(objHndl obj, int attackIdx);
+	bool IsSleeping(objHndl hndl);
+	int GetHpPercent(const objHndl& handle);
 	static int GetCritterNumNaturalAttacks(objHndl obj);
 	int GetCritterAttackType(objHndl obj, int attackIdx);
 	int GetBaseAttackBonus(const objHndl& handle, Stat classBeingLeveld = Stat::stat_strength);
-	int GetArmorClass(objHndl obj, DispIoAttackBonus *dispIo);
+	int GetArmorClass(objHndl obj, DispIoAttackBonus *dispIo = nullptr);
 #pragma endregion
 
 #pragma region Spellcasting
@@ -344,11 +360,11 @@ struct LegacyCritterSystem : temple::AddressTable
 	static int SkillBaseGet(objHndl handle, SkillEnum skill);
 	static int GetNumFollowers(objHndl obj, int excludeForcedFollowers);
 
-
+	void BuildRadialMenu(objHndl handle);
 private:
-	int GetModelRaceOffset(objHndl obj);
+	int GetModelRaceOffset(objHndl obj, bool useBaseRace = true);
 	void UpdateAddMeshes(objHndl obj);
-	void ApplyReplacementMaterial(gfx::AnimatedModelPtr model, int mesId);
+	void ApplyReplacementMaterial(gfx::AnimatedModelPtr model, int mesId, int fallbackMesId = -1);
 
 	std::string GetHairStyleFile(HairStyle style, const char *extension);
 

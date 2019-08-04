@@ -181,6 +181,9 @@ public:
 	*/
 	CondStruct *GetByName(const string &name);
 	CondStruct* GetById(const int condId);
+
+	void DoForAllCondStruct( void(__cdecl*cb)(CondStruct & condStruct));
+
 	/*
 		Adds a condition to an item's obj_f_item_pad_wielder_condition_array and 
 		obj_f_item_pad_wielder_argument_array.
@@ -291,13 +294,13 @@ void _CondNodeSetArg(CondNode* condNode, uint32_t argIdx, uint32_t argVal);
 uint32_t _ConditionAddDispatch(Dispatcher* dispatcher, CondNode** ppCondNode, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4);
 uint32_t _ConditionAddDispatchArgs(Dispatcher* dispatcher, CondNode** ppCondNode, CondStruct* condStruct, const vector<int> &args);
 void _CondNodeAddToSubDispNodeArray(Dispatcher* dispatcher, CondNode* condNode);
-uint32_t _ConditionAddToAttribs_NumArgs0(Dispatcher* dispatcher, CondStruct* condStruct);
-uint32_t _ConditionAddToAttribs_NumArgs2(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2);
-uint32_t _ConditionAdd_NumArgs0(Dispatcher* dispatcher, CondStruct* condStruct);
-uint32_t _ConditionAdd_NumArgs1(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1);
-uint32_t _ConditionAdd_NumArgs2(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2);
-uint32_t _ConditionAdd_NumArgs3(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3);
-uint32_t _ConditionAdd_NumArgs4(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4);
+uint32_t _ConditionAddToAttribs_NumArgs0(Dispatcher* dispatcher, CondStruct* condStruct, bool isInternalUse = true);
+uint32_t _ConditionAddToAttribs_NumArgs2(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, bool isInternalUse = true);
+uint32_t _ConditionAdd_NumArgs0(Dispatcher* dispatcher, CondStruct* condStruct, bool isInternalUse = true);
+uint32_t _ConditionAdd_NumArgs1(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, bool isInternalUse = true);
+uint32_t _ConditionAdd_NumArgs2(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, bool isInternalUse = true);
+uint32_t _ConditionAdd_NumArgs3(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, bool isInternalUse = true);
+uint32_t _ConditionAdd_NumArgs4(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4, bool isInternalUse = true);
 void InitCondFromCondStructAndArgs(Dispatcher *dispatcher, CondStruct *condStruct, int *condargs);
 
 
@@ -329,9 +332,15 @@ int TacticalOptionAbusePrevention(DispatcherCallbackArgs args);
 int CombatExpertiseRadialMenu(DispatcherCallbackArgs args);
 int CombatExpertiseSet(DispatcherCallbackArgs args);
 
+
 int BarbarianRageStatBonus(DispatcherCallbackArgs args);
 int BarbarianRageSaveBonus(DispatcherCallbackArgs args);
+int BarbarianRageACPenalty(DispatcherCallbackArgs args);
 int BarbarianDamageResistance(DispatcherCallbackArgs args);
+
+int NonlethalDamageRadial(DispatcherCallbackArgs args);
+int DealNormalDamageCallback(DispatcherCallbackArgs args);
+int NonlethalDamageSetSubdual(DispatcherCallbackArgs args);
 
 int DisarmedOnAdd(DispatcherCallbackArgs args);
 int DisarmedRetrieveQuery(DispatcherCallbackArgs args);

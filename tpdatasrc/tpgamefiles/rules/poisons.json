@@ -1,0 +1,787 @@
+[
+{
+"comment": "Small Centipede",
+"dc": 11,
+"delayedDice": {
+"count": 1,
+"sides": 2
+},
+"delayedEffect": 1,
+"id": 0,
+"immDieType": 2,
+"immNumDie": 1,
+"immediateEffect": 1
+},
+{
+"comment": "Greenblood Oil",
+"dc": 13,
+"delayedDice": {
+"count": 1,
+"sides": 2
+},
+"delayedEffect": 2,
+"id": 1,
+"immDieBonus": 1,
+"immediateEffect": 2
+},
+{
+"comment": "Spider Venom",
+"dc": 14,
+"delayedDice": {
+"count": 1,
+"sides": 6
+},
+"delayedEffect": 0,
+"id": 2,
+"immDieType": 4,
+"immNumDie": 1,
+"immediateEffect": 0
+},
+{
+"comment": "Blood Root",
+"dc": 12,
+"delayedDice": {
+"count": 1,
+"sides": 4
+},
+"delayedEffect": 2,
+"delayedSecDice": {
+"count": 1,
+"sides": 3
+},
+"delayedSecondEffect": 4,
+"id": 3,
+"immediateEffect": -10
+},
+{
+"comment": "Purple Worm",
+"dc": 24,
+"delayedDice": {
+"count": 1,
+"sides": 6
+},
+"delayedEffect": 0,
+"id": 4,
+"immDieType": 6,
+"immNumDie": 1,
+"immediateEffect": 0
+},
+{
+"comment": "Large Scorpion",
+"dc": 18,
+"delayedDice": {
+"count": 1,
+"sides": 6
+},
+"delayedEffect": 0,
+"id": 5,
+"immDieType": 6,
+"immNumDie": 1,
+"immediateEffect": 0
+},
+{
+"comment": "Wyvern",
+"dc": 17,
+"delayedDice": {
+"count": 2,
+"sides": 6
+},
+"delayedEffect": 2,
+"id": 6,
+"immDieType": 6,
+"immNumDie": 2,
+"immediateEffect": 2
+},
+{
+"comment": "Giant Wasp",
+"dc": 18,
+"delayedDice": {
+"count": 1,
+"sides": 6
+},
+"delayedEffect": 1,
+"id": 7,
+"immDieType": 6,
+"immNumDie": 1,
+"immediateEffect": 1
+},
+{
+"comment": "Black Adder",
+"dc": 12,
+"delayedDice": {
+"count": 1,
+"sides": 6
+},
+"delayedEffect": 0,
+"id": 8,
+"immediateEffect": -10
+},
+{
+"comment": "Malyss Root Paste",
+"dc": 16,
+"delayedDice": {
+"count": 2,
+"sides": 4
+},
+"delayedEffect": 1,
+"id": 9,
+"immDieBonus": 1,
+"immediateEffect": 1
+},
+{
+"comment": "Dragon Bile",
+"dc": 26,
+"id": 10,
+"immDieType": 6,
+"immNumDie": 3,
+"immediateEffect": 0
+},
+{
+"comment": "Sassone Leaf Residue",
+"dc": 16,
+"delayedDice": {
+"count": 1,
+"sides": 6
+},
+"delayedEffect": 2,
+"id": 11,
+"immDieType": 12,
+"immNumDie": 2,
+"immediateEffect": -7
+},
+{
+"comment": "Terinav Root",
+"dc": 16,
+"delayedDice": {
+"count": 2,
+"sides": 6
+},
+"delayedEffect": 1,
+"id": 12,
+"immDieType": 6,
+"immNumDie": 1,
+"immediateEffect": 1
+},
+{
+"comment": "Carrion Crawler Brain Juice",
+"dc": 13,
+"id": 13,
+"immediateEffect": -8
+},
+{
+"comment": "Black Lotus Extract",
+"dc": 20,
+"delayedDice": {
+"count": 3,
+"sides": 6
+},
+"delayedEffect": 2,
+"id": 14,
+"immDieType": 6,
+"immNumDie": 3,
+"immediateEffect": 2
+},
+{
+"comment": "Id Moss",
+"dc": 14,
+"delayedDice": {
+"count": 2,
+"sides": 6
+},
+"delayedEffect": 3,
+"id": 15,
+"immDieType": 4,
+"immNumDie": 1,
+"immediateEffect": 3
+},
+{
+"comment": "Striped Toadstool",
+"dc": 11,
+"delayedDice": {
+"count": 2,
+"sides": 6
+},
+"delayedEffect": 4,
+"delayedSecDice": {
+"count": 1,
+"sides": 4
+},
+"delayedSecondEffect": 3,
+"id": 16,
+"immDieBonus": 1,
+"immediateEffect": 4
+},
+{
+"comment": "Lich Dust",
+"dc": 17,
+"delayedDice": {
+"count": 1,
+"sides": 6
+},
+"delayedEffect": 0,
+"id": 17,
+"immDieType": 6,
+"immNumDie": 2,
+"immediateEffect": 0
+},
+{
+"comment": "Dark Reaver Powder",
+"dc": 18,
+"delayedDice": {
+"count": 1,
+"sides": 6
+},
+"delayedEffect": 2,
+"delayedSecDice": {
+"count": 1,
+"sides": 6
+},
+"delayedSecondEffect": 0,
+"id": 18,
+"immDieType": 6,
+"immNumDie": 2,
+"immediateEffect": 2
+},
+{
+"comment": "Burnt Othur Fumes",
+"dc": 18,
+"delayedDice": {
+"count": 3,
+"sides": 6
+},
+"delayedEffect": 2,
+"id": 19,
+"immDieBonus": 1,
+"immediateEffect": 2
+},
+{
+"comment": "Quasit",
+"dc": 13,
+"delayedDice": {
+"count": 2,
+"sides": 4
+},
+"delayedEffect": 1,
+"id": 20,
+"immDieType": 4,
+"immNumDie": 1,
+"immediateEffect": 1
+},
+{
+"comment": "Violet Fungi",
+"dc": 14,
+"delayedDice": {
+"count": 1,
+"sides": 4
+},
+"delayedEffect": 0,
+"delayedSecDice": {
+"count": 1,
+"sides": 4
+},
+"delayedSecondEffect": 2,
+"id": 21,
+"immDieType": 4,
+"immNumDie": 1,
+"immSecDice": {
+"count": 1,
+"sides": 4
+},
+"immediateEffect": 0,
+"immediateSecondEffect": 2
+},
+{
+"comment": "Yellow Mold",
+"dc": 15,
+"delayedDice": {
+"count": 2,
+"sides": 6
+},
+"delayedEffect": 2,
+"id": 22,
+"immDieType": 6,
+"immNumDie": 1,
+"immediateEffect": 2
+},
+{
+"comment": "Mystical",
+"dc": 0,
+"delayedDice": {
+"count": 1,
+"sides": 10
+},
+"delayedEffect": 2,
+"id": 23,
+"immDieType": 10,
+"immNumDie": 1,
+"immediateEffect": 2
+},
+{
+"comment": "Other",
+"dc": 0,
+"id": 24,
+"immediateEffect": -10
+},
+{
+"comment": "Blue Whinnis",
+"dc": 14,
+"delayedEffect": -9,
+"id": 25,
+"immDieBonus": 1,
+"immediateEffect": 2
+},
+{
+"comment": "Shadow Essence",
+"dc": 17,
+"delayedDice": {
+"count": 2,
+"sides": 6
+},
+"delayedEffect": 0,
+"id": 26,
+"immDieBonus": 1,
+"immediateEffect": -6
+},
+{
+"comment": "Deathblade",
+"dc": 20,
+"delayedDice": {
+"count": 2,
+"sides": 6
+},
+"delayedEffect": 2,
+"id": 27,
+"immDieType": 6,
+"immNumDie": 1,
+"immediateEffect": 2
+},
+{
+"comment": "Nitharit",
+"dc": 13,
+"delayedDice": {
+"count": 3,
+"sides": 6
+},
+"delayedEffect": 2,
+"id": 28,
+"immediateEffect": -10
+},
+{
+"comment": "Oil of Taggit",
+"dc": 15,
+"delayedEffect": -9,
+"id": 29,
+"immediateEffect": -10
+},
+{
+"comment": "Arsenic",
+"dc": 13,
+"delayedDice": {
+"count": 1,
+"sides": 8
+},
+"delayedEffect": 2,
+"id": 30,
+"immDieBonus": 1,
+"immediateEffect": 2
+},
+{
+"comment": "Ungol Dust",
+"dc": 15,
+"delayedDice": {
+"count": 1,
+"sides": 6
+},
+"delayedEffect": 5,
+"delayedSecDice": { "bonus": 1 },
+"delayedSecondEffect": -1,
+"id": 31,
+"immDieBonus": 1,
+"immediateEffect": 5
+},
+{
+"comment": "Insanity Mist",
+"dc": 15,
+"delayedDice": {
+"count": 2,
+"sides": 6
+},
+"delayedEffect": 4,
+"id": 32,
+"immDieType": 4,
+"immNumDie": 1,
+"immediateEffect": 4
+},
+{
+"comment": "Error! Missing line 333 in tpmes//combat.mes",
+"dc": 0,
+"id": 33,
+"immediateEffect": -10
+},
+{
+"comment": "Error! Missing line 334 in tpmes//combat.mes",
+"dc": 10,
+"delayedDice": { "count": 1 },
+"delayedEffect": 2,
+"delayedSecDice": { "count": 2 },
+"delayedSecondEffect": 1,
+"id": 34,
+"immSecDice": { "count": 4 },
+"immediateEffect": -4,
+"immediateSecondEffect": 1
+},
+{
+"comment": "Error! Missing line 335 in tpmes//combat.mes",
+"dc": 4,
+"delayedDice": {
+"bonus": -1,
+"count": 126,
+"sides": 127
+},
+"delayedEffect": -2,
+"delayedSecDice": { "count": 2 },
+"delayedSecondEffect": 2,
+"id": 35,
+"immSecDice": { "count": 2 },
+"immediateEffect": 4,
+"immediateSecondEffect": -2
+},
+{
+	"comment": "MONSTROUS CENTIPEDE Tiny, MM287",
+	"id": 36,
+	"dc": 10,
+	"immediateEffect": 1,
+	"immNumDie": 0,
+	"immDieType": 0,
+	"immDieBonus": 1,
+
+	"immediateSecondEffect": -10,
+	"immSecDice": {
+		"bonus": 0,
+		"count": 0,
+		"sides": 0
+	},
+
+	"delayedEffect": 1,
+	"delayedDice": {
+		"bonus": 1,
+		"count": 0,
+		"sides": 0
+	},
+
+	"delayedSecondEffect": -10,
+	"delayedSecDice": {
+		"bonus": 0,
+		"count": 0,
+		"sides": 0
+	}
+},
+{
+	"comment": "MONSTROUS CENTIPEDE Small, MM287",
+	"id": 37,
+	"dc": 10,
+	"immediateEffect": 1,
+	"immNumDie": 1,
+	"immDieType": 2,
+
+	"delayedEffect": 1,
+	"delayedDice": {
+		"count": 1,
+		"sides": 2
+	}
+},
+{
+	"comment": "MONSTROUS CENTIPEDE Medium, MM287",
+	"id": 38,
+	"dc": 10,
+	"immediateEffect": 1,
+	"immNumDie": 1,
+	"immDieType": 3,
+
+	"delayedEffect": 1,
+	"delayedDice": {
+		"count": 1,
+		"sides": 3
+	}
+},
+{
+	"comment": "MONSTROUS CENTIPEDE Large, MM287",
+	"id": 39,
+	"dc": 11,
+	"immediateEffect": 1,
+	"immNumDie": 1,
+	"immDieType": 4,
+
+	"delayedEffect": 1,
+	"delayedDice": {
+		"count": 1,
+		"sides": 4
+	}
+},
+{
+	"comment": "MONSTROUS CENTIPEDE Huge, MM287",
+	"id": 40,
+	"dc": 14,
+	"immediateEffect": 1,
+	"immNumDie": 1,
+	"immDieType": 6,
+
+	"delayedEffect": 1,
+	"delayedDice": {
+		"count": 1,
+		"sides": 6
+	}
+},
+{
+	"comment": "MONSTROUS CENTIPEDE Gargantuan, MM287",
+	"id": 41,
+	"dc": 17,
+	"immediateEffect": 1,
+	"immNumDie": 1,
+	"immDieType": 8,
+
+	"delayedEffect": 1,
+	"delayedDice": {
+		"count": 1,
+		"sides": 8
+	}
+},
+{
+	"comment": "MONSTROUS CENTIPEDE Colossal, MM287",
+	"id": 42,
+	"dc": 23,
+	"immediateEffect": 1,
+	"immNumDie": 2,
+	"immDieType": 6,
+
+	"delayedEffect": 1,
+	"delayedDice": {
+		"count": 2,
+		"sides": 6
+	}
+},
+{
+	"comment": "Drow poison, MM103",
+	"id": 43,
+	"dc": 13,
+	"immediateEffect": -9,
+	"immNumDie": 0,
+	"immDieType": 0,
+	"immDieBonus": 0,
+
+	"immediateSecondEffect": -10,
+	"immSecDice": {
+		"bonus": 0,
+		"count": 0,
+		"sides": 0
+	},
+
+	"delayedEffect": -9,
+	"delayedDice": {
+		"bonus": 0,
+		"count": 0,
+		"sides": 0
+	},
+
+	"delayedSecondEffect": -10,
+	"delayedSecDice": {
+		"bonus": 0,
+		"count": 0,
+		"sides": 0
+	}
+},
+{
+	"comment": "MONSTROUS Scorpion Tiny, MM288",
+	"id": 44,
+	"dc": 12,
+	"immediateEffect": 2,
+	"immDieBonus": 1,
+
+	"delayedEffect": 2,
+	"delayedDice": {
+		"bonus": 1
+	}
+},
+{
+	"comment": "MONSTROUS Scorpion Small, MM288",
+	"id": 45,
+	"dc": 12,
+	"immediateEffect": 2,
+	"immDieType": 2,
+	"immNumDie": 1,
+
+	"delayedEffect": 2,
+	"delayedDice": {
+		"count": 1,
+		"sides": 2
+	}
+},
+{
+	"comment": "MONSTROUS Scorpion Medium, MM288",
+	"id": 46,
+	"dc": 13,
+	"immediateEffect": 2,
+	"immDieType": 3,
+	"immNumDie": 1,
+
+	"delayedEffect": 2,
+	"delayedDice": {
+		"count": 1,
+		"sides": 3
+	}
+},
+{
+	"comment": "MONSTROUS Scorpion Large, MM288",
+	"id": 47,
+	"dc": 14,
+	"immediateEffect": 2,
+	"immDieType": 4,
+	"immNumDie": 1,
+
+	"delayedEffect": 2,
+	"delayedDice": {
+		"count": 1,
+		"sides": 4
+	}
+},
+{
+	"comment": "MONSTROUS Scorpion Huge, MM288",
+	"id": 48,
+	"dc": 18,
+	"immediateEffect": 2,
+	"immDieType": 6,
+	"immNumDie": 1,
+
+	"delayedEffect": 2,
+	"delayedDice": {
+		"count": 1,
+		"sides": 6
+	}
+},
+{
+	"comment": "MONSTROUS Scorpion Gargantuan, MM288",
+	"id": 49,
+	"dc": 23,
+	"immediateEffect": 2,
+	"immDieType": 8,
+	"immNumDie": 1,
+
+	"delayedEffect": 2,
+	"delayedDice": {
+		"count": 1,
+		"sides": 8
+	}
+},
+{
+	"comment": "MONSTROUS Scorpion Colossal, MM288",
+	"id": 49,
+	"dc": 33,
+	"immediateEffect": 2,
+	"immDieType": 10,
+	"immNumDie": 1,
+
+	"delayedEffect": 2,
+	"delayedDice": {
+		"count": 1,
+		"sides": 10
+	}
+},
+{
+	"comment": "MONSTROUS Spider Tiny, MM288",
+	"id": 50,
+	"dc": 10,
+	"immediateEffect": 0,
+	"immDieType": 2,
+	"immNumDie": 1,
+
+	"delayedEffect": 0,
+	"delayedDice": {
+		"count": 1,
+		"sides": 2
+	}
+},
+{
+	"comment": "MONSTROUS Spider Small, MM288",
+	"id": 51,
+	"dc": 10,
+	"immediateEffect": 0,
+	"immDieType": 3,
+	"immNumDie": 1,
+
+	"delayedEffect": 0,
+	"delayedDice": {
+		"count": 1,
+		"sides": 3
+	}
+},
+{
+	"comment": "MONSTROUS Spider Medium, MM288",
+	"id": 52,
+	"dc": 12,
+	"immediateEffect": 0,
+	"immDieType": 4,
+	"immNumDie": 1,
+
+	"delayedEffect": 0,
+	"delayedDice": {
+		"count": 1,
+		"sides": 4
+	}
+},
+{
+	"comment": "MONSTROUS Spider Large, MM288",
+	"id": 53,
+	"dc": 13,
+	"immediateEffect": 0,
+	"immDieType": 6,
+	"immNumDie": 1,
+
+	"delayedEffect": 0,
+	"delayedDice": {
+		"count": 1,
+		"sides": 6
+	}
+},
+{
+	"comment": "MONSTROUS Spider Huge, MM288",
+	"id": 54,
+	"dc": 16,
+	"immediateEffect": 0,
+	"immDieType": 8,
+	"immNumDie": 1,
+
+	"delayedEffect": 0,
+	"delayedDice": {
+		"count": 1,
+		"sides": 8
+	}
+},
+{
+	"comment": "MONSTROUS Spider Gargantuan, MM288",
+	"id": 55,
+	"dc": 20,
+	"immediateEffect": 0,
+	"immDieType": 6,
+	"immNumDie": 2,
+
+	"delayedEffect": 0,
+	"delayedDice": {
+		"count": 2,
+		"sides": 6
+	}
+},
+{
+	"comment": "MONSTROUS Spider Colossal, MM288",
+	"id": 56,
+	"dc": 28,
+	"immediateEffect": 0,
+	"immDieType": 8,
+	"immNumDie": 2,
+
+	"delayedEffect": 0,
+	"delayedDice": {
+		"count": 2,
+		"sides": 8
+	}
+}
+]

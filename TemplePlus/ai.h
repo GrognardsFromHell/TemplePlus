@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "tig\tig_mes.h"
+#include "tig\tig_tabparser.h"
 #include "d20.h"
 
 
@@ -32,12 +33,40 @@ struct AiPacket
 	SkillEnum skillEnum;
 	objHndl scratchObj;
 	objHndl leader;
-	int field30;
+	int soundMap;
 	D20SpellData spellData;
 	int field3C;
 	SpellPacketBody spellPktBod;
 
 	AiPacket(objHndl objIn);
+
+	BOOL PacketCreate();
+	BOOL WieldBestItem();
+	BOOL SelectHealSpell();
+	bool ShouldUseHealSpellOn(objHndl handle, BOOL healSpellRecommended);
+	BOOL LookForEquipment();
+
+
+	
+	void FightStatusUpdate();
+		bool HasScoutStandpoint();
+		bool ScoutPointSetState();
+		void ChooseRandomSpell_RegardInvulnerableStatus();
+		objHndl PickRandomFromAiList();
+		objHndl ConsiderCombatFocus();
+
+
+	
+	void ProcessCombat();
+		void ProcessBackingOff();
+		void ThrowSpell();
+		void UseItem();
+		void MoveToScoutPoint();
+		void ScoutPointAttack();
+
+		void DoWaypoints();
+		void ProcessFighting();
+		void FleeingStatusRefresh();
 };
 struct AiParamPacket
 { // most of this stuff is arcanum leftovers
@@ -55,9 +84,11 @@ struct AiParamPacket
 	int unused12;
 	int offensiveSpellChance;
 	int defensiveSpellChance;
-	int healSpellChange;
+	int healSpellChance;
 	int combatMinDistanceFeet;
 	int canOpenPortals;
+
+	void GetForCritter(objHndl handle);
 };
 
 enum AiFlag : uint64_t {
@@ -78,14 +109,14 @@ enum AiFlag : uint64_t {
 enum AiCombatRole: int32_t
 {
 	general = 0,
-	fighter = 1,
-	defender = 2,
-	caster = 3,
-	healer = 4,
-	flanker = 5,
-	sniper = 6,
-	magekiller = 7,
-	berzerker = 8,
+	fighter ,
+	defender ,
+	caster ,
+	healer ,
+	flanker ,
+	sniper ,
+	magekiller ,
+	berzerker ,
 	tripper,
 	special
 };
@@ -101,9 +132,13 @@ enum AiFightStatus : uint32_t {
 
 struct AiSystem : temple::AddressTable
 {
-	AiStrategy ** aiStrategies;
+	//AiStrategy ** aiStrategies;
+	std::vector<AiStrategy> aiStrategies;
+	IdxTableWrapper<AiStrategy> * aiCustomStrats;
+
 	AiTacticDef * aiTacticDefs;
 	AiTacticDef aiTacticDefsNew[AI_TACTICS_NEW_SIZE];
+	
 	static AiParamPacket * aiParams;
 	uint32_t * aiStrategiesNum;
 	LegacyCombatSystem * combat;
@@ -114,29 +149,51 @@ struct AiSystem : temple::AddressTable
 	
 	AiSystem();
 
+	AiStrategy* GetAiStrategy(uint32_t stratId);
+
 	void aiTacticGetConfig(int i, AiTactic* aiTac, AiStrategy* aiStrat);
-	uint32_t AiStrategyParse(objHndl objHnd, objHndl target);
+	uint32_t StrategyParse(objHndl objHnd, objHndl target);
 	uint32_t AiStrategDefaultCast(objHndl objHnd, objHndl target, D20SpellData* spellData, SpellPacketBody* spellPkt);
 	
-	bool HasAiFlag(objHndl npc, AiFlag flag);
+	bool IsRunningOff(objHndl handle) const;
+	bool HasAiFlag(objHndl npc, AiFlag flag) const;
 	void SetAiFlag(objHndl npc, AiFlag flag);
 	void ClearAiFlag(objHndl npc, AiFlag flag);
 	AiParamPacket GetAiParams(objHndl obj);
 
 	void ShitlistAdd(objHndl npc, objHndl target);
 	void ShitlistRemove(objHndl npc, objHndl target);
+	BOOL AiListFind(objHndl aiHandle, objHndl tgt, int typeToFind); // search for tgt in ai list field. 0 is for enemies, 1 is for allies
 	void FleeAdd(objHndl npc, objHndl target);
 	void StopAttacking(objHndl npc);
 	void ProvokeHostility(objHndl agitator, objHndl provokedNpc, int rangeType, int flags); // rangeType - 0 is for 5 tiles, 1 is for 10 tiles, 2 is for 20 tiles, and 3 is unlimited
-	
+	void TryLockOnTarget(objHndl handle, objHndl leader, objHndl target, int isAlways1, int isFlags1Set, int skipAiStatusUpdate);
+	void TargetLockUnset(objHndl handle);
+	BOOL RefuseFollowCheck(objHndl handle, objHndl leader);
 
 	objHndl GetCombatFocus(objHndl npc);
 	objHndl GetWhoHitMeLast(objHndl npc);
 	BOOL ConsiderTarget(objHndl obj, objHndl tgt); // checks if it's a good target
+	objHndl GetFriendsCombatFocus(objHndl handle, objHndl friendHandle, objHndl leader);
+	objHndl FindSuitableTarget(objHndl handle); // was 0x1005CED0;
+	int CannotHate(objHndl aiHandle, objHndl triggerer, objHndl aiLeader);
+	int WillKos(objHndl aiHandle, objHndl triggerer); // does the triggerer provoke KOS hostility
+	/*
+	// returns 4 if aiHandle == tgt
+	// returns 3 if  tgt == leader   or   tgt in party and (leader or aiHandle in party)
+	// otherwise:
+	// returns 0 if aiHandle is charmed
+	// otherwise:
+	// returns 1 if allegiance shared
+	*/
+	int GetAllegianceStrength(objHndl aiHandle, objHndl tgt);
 	BOOL CannotHear(objHndl handle, objHndl tgt, int tileRangeIdx); // checks if a critter (handle) can observe tgt up to a specified range; regards magic effects such as Invisibility to Undead / Animals, and also makes a hidden listen check
 	void SetCombatFocus(objHndl npc, objHndl target);
 	void SetWhoHitMeLast(objHndl npc, objHndl target);
 	void GetAiFightStatus(objHndl obj, AiFightStatus* status, objHndl * target);
+	
+	void AlertAllies(objHndl handle, objHndl alertFrom, int rangeIdx);
+		void AlertAlly(objHndl handle, objHndl alertFrom, objHndl alertDispatcher, int rangeIdx);
 	/*
 	 updates AI flags based on a "Should flee" check
 	 originally 10057A70
@@ -153,6 +210,7 @@ struct AiSystem : temple::AddressTable
 			Plays the "Fleeing" voice line, and sequences a move action away from the fleeingFrom object
 		*/
 		void FleeProcess(objHndl obj, objHndl fleeingFrom);
+	
 		int UpdateAiFlags(objHndl ObjHnd, AiFightStatus aiFightStatus, objHndl target, int *soundMap);
 
 	// AI Tactic functions
@@ -164,40 +222,62 @@ struct AiSystem : temple::AddressTable
 	int CoupDeGrace(AiTactic * aiTac);
 	int ChargeAttack(AiTactic * aiTac);
 	int Default(AiTactic* aiTac);
+	BOOL DefaultCast(AiTactic *aiTac);
 	int Flank(AiTactic * aiTac);
 	int GoMelee(AiTactic* aiTac);
 	int PickUpWeapon(AiTactic* aiTac);	
 	int Sniper(AiTactic *aiTac);
+	BOOL ImprovePosition(AiTactic *aiTac);
 	int TargetClosest(AiTactic * aiTac);
+	BOOL TargetDamaged(AiTactic *aiTac);
+	BOOL TargetFriendHurt(AiTactic* aiTac);
 	int TargetThreatened(AiTactic * aiTac);
+	BOOL UsePotion(AiTactic *aiTac);
 
 	unsigned int Asplode(AiTactic * aiTactic);
 	unsigned int WakeFriend(AiTactic* aiTac);
 
 
-	void StrategyTabLineParseTactic(AiStrategy*, char * tacName, char * middleString, char* spellString);
-	int StrategyTabLineParser(TabFileStatus* tabFile, int n, char ** strings);
+	// Init
+	void StrategyTabLineParseTactic(AiStrategy*, const char * tacName, const char * middleString, const char* spellString);
+	void ParseStrategyLine(AiStrategy& stratOut, const std::vector<string>& strings);
+	int StrategyTabLineParser(const TigTabParser* tabFile, int n, char ** strings);
+	void InitCustomStrategies();
+	void SetCustomStrategy(objHndl handle, const std::vector<std::string>& stringVector);
+	
+	// Custom strats save/load
+	bool CustomStrategiesSave();
+	bool CustomStrategiesLoad();
+
 	int AiOnInitiativeAdd(objHndl obj);
 	AiCombatRole GetRole(objHndl obj);
 	BOOL AiFiveFootStepAttempt(AiTactic * aiTac);
 
 	void RegisterNewAiTactics();
 	int GetStrategyIdx(const char* stratName) const; // get the strategy.tab index for given strategy name
+	void AiListRemove(const objHndl& handle, const objHndl& tgt, int aiType);
+	
+
 	static int GetAiSpells(AiSpellList* aiSpell, objHndl obj, AiSpellType aiSpellType);
 	static int ChooseRandomSpell(AiPacket* aiPkt);
 	static int ChooseRandomSpellFromList(AiPacket* aiPkt, AiSpellList *);
-	
+	static int ChooseRandomSpellFromList(AiTactic * aiTac, AiSpellList * aiSpellList);
+
+	BOOL IsPcUnderAiControl(objHndl handle);
 	void AiProcess(objHndl obj);
+	bool AiProcessHandleConfusion(objHndl handle, int confusionState);
+	bool AiProcessPc(objHndl handle);
 
 	int AiTimeEventExpires(TimeEvent* evt);
-
+	
 private:
 	void (__cdecl *_ShitlistAdd)(objHndl npc, objHndl target);
 	void (__cdecl *_AiRemoveFromList)(objHndl npc, objHndl target, int listType);	
 	void (__cdecl *_FleeAdd)(objHndl npc, objHndl target);
-	void (__cdecl *_AiSetCombatStatus)(objHndl npc, int status, objHndl target, int unk);
 	void (__cdecl *_StopAttacking)(objHndl npc);
-	
+	bool Is5FootStepWorth(AiTactic * aiTac);
+	IdxTable< AiStrategy> mAiStrategiesCustom;
+	std::vector<std::vector<std::string>> mAiStrategiesCustomSrc;
 };
 
 extern AiSystem aiSys;

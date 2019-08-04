@@ -3,7 +3,8 @@
 
 #include <memory>
 
-#include "gsl/span.h"
+#include <gsl/span>
+
 #include "graphics/math.h"
 #include "infrastructure/macros.h"
 
@@ -34,6 +35,14 @@ namespace gfx {
 	};
 #pragma pack(pop)
 	
+	enum class SamplerType2d {
+		CLAMP,
+		WRAP,
+		POINT
+	};
+
+	class SamplerState;
+
 	/*
 		Renders shapes in 2d screen space.
 	*/
@@ -42,8 +51,8 @@ namespace gfx {
 		explicit ShapeRenderer2d(RenderingDevice& g);
 		~ShapeRenderer2d();
 
-		void DrawRectangle(float x, float y, float width, float height, gfx::Texture& texture, uint32_t color = 0xFFFFFFFF) {
-			DrawRectangle(x, y, width, height, &texture, color);
+		void DrawRectangle(float x, float y, float width, float height, gfx::Texture& texture, uint32_t color = 0xFFFFFFFF, SamplerType2d samplerType = SamplerType2d::CLAMP) {
+			DrawRectangle(x, y, width, height, &texture, color, samplerType);
 		}
 		
 		void DrawRectangle(float x, float y, float width, float height, uint32_t color) {
@@ -53,7 +62,7 @@ namespace gfx {
 		void DrawRectangle(gsl::span<Vertex2d, 4> corners,
 			gfx::Texture* texture,
 			gfx::Texture* mask = nullptr,
-			bool wrap = false,
+			SamplerType2d samplerType = SamplerType2d::CLAMP,
 			bool blending = true);
 
 		void DrawRectangle(gsl::span<Vertex2d, 4> corners,
@@ -84,8 +93,11 @@ namespace gfx {
 		void DrawRectangle(
 			float x, float y, float width, float height,
 			gfx::Texture* texture,
-			uint32_t color = 0xFFFFFFFF
+			uint32_t color = 0xFFFFFFFF, 
+			SamplerType2d samplerType = SamplerType2d::CLAMP
 		);
+
+		SamplerState &getSamplerState(SamplerType2d type) const;
 
 		struct Impl;
 		std::unique_ptr<Impl> mImpl;

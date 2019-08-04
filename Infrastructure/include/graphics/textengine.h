@@ -18,6 +18,12 @@ namespace gfx {
 		Justified
 	};
 
+	enum class ParagraphAlign: uint8_t {
+		Near,
+		Far,
+		Center
+	};
+
 	struct Brush {
 		bool gradient = false;
 		XMCOLOR primaryColor = { 1,1,1,1 };
@@ -30,10 +36,11 @@ namespace gfx {
 		bool bold = false;
 		bool italic = false;
 		TextAlign align = TextAlign::Left;
+		ParagraphAlign paragraphAlign = ParagraphAlign::Near;
 		Brush foreground;
 		bool uniformLineHeight = false;
-		float lineHeight;
-		float baseLine;
+		float lineHeight = 0;
+		float baseLine = 0;
 		bool dropShadow = false;
 		Brush dropShadowBrush;
 		bool trim = false;
@@ -89,6 +96,15 @@ namespace gfx {
 		void SetRenderTarget(ID3D11Texture2D *renderTarget);
 
 		void AddFont(const std::string &filename);
+
+		/**
+		 * Checks if this text engine can provide the given font family. If false, it means it would
+		 * use a fallback font.
+		 */
+		bool HasFontFamily(const std::string &name);
+
+		void SetScissorRect(const TigRect &rect);
+		void ResetScissorRect();
 
 	private:
 		struct Impl;

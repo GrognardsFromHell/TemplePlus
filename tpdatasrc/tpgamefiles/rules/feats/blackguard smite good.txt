@@ -1,0 +1,5 @@
+name: Smite Good
+flags: 8
+prereqs:
+description: You may attempt to smite good with a normal melee attack.  A Smite attack adds your CHA modifier to the attack roll and deal 1 extra damage per Blackguard level.
+prereq descr: Blackguard level 2.

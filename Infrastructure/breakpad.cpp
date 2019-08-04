@@ -1,42 +1,27 @@
 
+#include "crash_reporting.h"
+
 #include "infrastructure/breakpad.h"
-#include "breakpad\exception_handler.h"
-#include "infrastructure/format.h"
-
-// Delegate back to breakpad
-static bool HandleCrashCallbackDelegate(const wchar_t* dump_path,
-	const wchar_t* minidump_id,
-	void* context,
-	EXCEPTION_POINTERS* exinfo,
-	MDRawAssertionInfo* assertion,
-	bool succeeded) {
-	auto breakpad = (Breakpad*)context;
-	
-	auto msg = fmt::format(L"Sorry! TemplePlus seems to have crashed. A crash report was written to {}\\{}.dmp.\n\n"
-		L"If you want to report this issue, please make sure to attach this file.",
-		dump_path,
-		minidump_id);
-	
-	// Now starts the tedious work of reporting on this crash, heh.
-	MessageBox(NULL, msg.c_str(), L"TemplePlus Crashed - Oops!", MB_OK);
-
-	return false;
-}
+#include <fmt/format.h>
+#include "platform/windows.h"
 
 Breakpad::Breakpad(const std::wstring &crashDumpFolder)
 {
-	using google_breakpad::ExceptionHandler;
 
-	CreateDirectory(crashDumpFolder.c_str(), nullptr);
+	mHandler = std::make_unique<InProcessCrashReporting>(crashDumpFolder, [this](const std::wstring &minidump_path) {
 
-	mHandler.reset(new ExceptionHandler(
-		crashDumpFolder.c_str(),
-		nullptr,
-		HandleCrashCallbackDelegate,
-		this,
-		ExceptionHandler::HANDLER_ALL
-	));
+		auto msg = fmt::format(L"Sorry! TemplePlus seems to have crashed. A crash report was written to {}.\n\n"
+			L"If you want to report this issue, please contact us on our forums at RPGCodex or send an email to templeplushelp@gmail.com.",
+			minidump_path);
+		if (!extraMessage().empty()) {
+			msg.append(extraMessage());
+		}
 
+		// Now starts the tedious work of reporting on this crash, heh.
+		MessageBox(NULL, msg.c_str(), L"TemplePlus Crashed - Oops!", MB_OK);
+
+	});
+	
 }
 
 Breakpad::~Breakpad()

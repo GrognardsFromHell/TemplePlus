@@ -5,6 +5,7 @@
 #include "skill.h"
 
 #define PARTY_SIZE_MAX 8 // PCs and NPCs
+#define PARTY_NPC_SIZE_MAX 5 // max number of controllable NPCs. Above this causes crash in the logbook system IIRC
 
 struct LegacyPartySystem : temple::AddressTable
 {
@@ -12,7 +13,10 @@ struct LegacyPartySystem : temple::AddressTable
 	void GroupArraySort(GroupArray* groupArray);
 	int GetPartyAlignment();
 	int GetMoney() const; // returns party money in CP
+	void GiveMoneyFromItem(const objHndl& item); // increases party money from money item (gold, copper etc)
+
 	void ApplyConditionAround(const objHndl& obj, double range, const char* condName, const objHndl& obj2);
+	
 	objHndl (__cdecl*GetFellowPc)(objHndl obj); // fetches a PC who is not identical to the object. For NPCs this will try to fetch their leader.
 	objHndl(__cdecl *GroupArrayMemberN)(GroupArray *, uint32_t nIdx);
 	objHndl(__cdecl *GroupNPCFollowersGetMemberN)(uint32_t nIdx);
@@ -21,9 +25,10 @@ struct LegacyPartySystem : temple::AddressTable
 	uint32_t(__cdecl *GroupPCsLen)();
 	objHndl(__cdecl *GroupListGetMemberN)(uint32_t nIdx);
 	uint32_t(__cdecl *GroupListGetLen)();
+	uint32_t GetLivingPartyMemberCount();
 	uint32_t(__cdecl *ObjIsInGroupArray)(GroupArray *, objHndl);
 	uint32_t(__cdecl *ObjIsAIFollower)(objHndl);
-	bool (__cdecl *IsInParty)(objHndl critter);
+	bool IsInParty(objHndl critter);
 	uint32_t(__cdecl * ObjFindInGroupArray)(GroupArray *, objHndl); // returns index
 	uint32_t(__cdecl * ObjRemoveFromAllGroupArrays)(objHndl);
 	uint32_t(__cdecl *ObjAddToGroupArray)(GroupArray *, objHndl);
@@ -46,7 +51,8 @@ struct LegacyPartySystem : temple::AddressTable
 	void (__cdecl *SetStoryState)(int newState);
 
 	objHndl GetLeader();
-	objHndl(__cdecl*GetConsciousPartyLeader)();
+	objHndl GetConsciousPartyLeader();
+	objHndl(__cdecl*_GetConsciousPartyLeader)();
 	objHndl PartyMemberWithHighestSkill(SkillEnum skillEnum);
 	int MoneyAdj(int plat, int gold, int silver, int copper); // this is a direct manipulator which doesn't convert currencies
 	void DebitMoney(int plat, int gold, int silver, int copper);
@@ -61,14 +67,14 @@ struct LegacyPartySystem : temple::AddressTable
 		rebase(GroupPCsLen, 0x1002B370);
 		rebase(GroupListGetMemberN, 0x1002B150);
 		rebase(GroupListGetLen, 0x1002B2B0);
-		rebase(GetConsciousPartyLeader, 0x1002BE60);
+		rebase(_GetConsciousPartyLeader, 0x1002BE60);
 		rebase(ObjFindInGroupArray, 0x100DF780);
 		rebase(ObjIsInGroupArray, 0x100DF960);
 		rebase(ObjIsAIFollower, 0x1002B220);
 		rebase(ObjRemoveFromAllGroupArrays, 0x1002BD00);
 		rebase(ObjAddToGroupArray, 0x100DF990);
 		//rebase(AddToPCGroup, 0x1002BBE0);
-		rebase(IsInParty, 0x1002B1B0);
+		//rebase(IsInParty, 0x1002B1B0);
 		rebase(RumorLogAdd, 0x1005FC20);
 		rebase(GetStoryState, 0x10006A20);
 		rebase(SetStoryState, 0x10006A30);

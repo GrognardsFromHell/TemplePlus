@@ -96,12 +96,13 @@ namespace gfx {
 		~MdfMaterialFactory();
 
 		MdfRenderMaterialPtr GetById(int id);
+		MdfRenderMaterialPtr GetByName(const std::string &name);
 
 		MdfRenderMaterialPtr LoadMaterial(const std::string& name);
 
 		// Retrieves a material replacement set from rules/materials.mes
 		using ReplacementSet = std::map<MaterialPlaceholderSlot, MdfRenderMaterialPtr>;
-		const ReplacementSet& GetReplacementSet(uint32_t id);
+		const ReplacementSet& GetReplacementSet(uint32_t id, int fallbackId = -1);
 		void LoadReplacementSets(const std::string &filename);
 
 	private:

@@ -1,0 +1,75 @@
+// This file defines starting equipment for each class. Each line is a list 
+// of items specified by their prototype number 
+
+// Medium size races 
+
+// barbarian 
+{0}{6142} 
+
+// bard 
+{1}{6142} 
+
+// cleric 
+{2}{6142} 
+
+// druid 
+{3}{6142}
+
+// fighter 
+{4}{6142} 
+
+// monk 
+{5}{6142} 
+
+// paladin 
+{6}{6142} 
+
+// ranger 
+{7}{6142} 
+
+// rogue 
+{8}{6142} 
+
+// sorceror 
+{9}{6142} 
+
+// wizard 
+{10}{6142} 
+
+// tutorial 
+{11}{6047 6032 6011 6012}
+
+// Small size races (halflings and gnomes) 
+
+// barbarian 
+{100}{6142} 
+
+// bard 
+{101}{6142} 
+
+// cleric 
+{102}{6142} 
+
+// druid 
+{103}{6142}
+
+// fighter 
+{104}{6142} 
+
+// monk 
+{105}{6142} 
+
+// paladin 
+{106}{6142} 
+
+// ranger 
+{107}{6142} 
+
+// rogue 
+{108}{6142} 
+
+// sorceror 
+{109}{6142} 
+
+// wizard 
+{110}{6142} 

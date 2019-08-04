@@ -2,6 +2,7 @@
 #pragma once
 
 #include <DirectXMath.h>
+using DirectX::XMINT2;
 using DirectX::XMFLOAT2;
 using DirectX::XMFLOAT3;
 using DirectX::XMFLOAT4;
@@ -15,6 +16,8 @@ using DirectX::XM_1DIVPI;
 using DirectX::XM_1DIV2PI;
 using DirectX::XM_PIDIV2;
 using DirectX::XM_PIDIV4;
+using DirectX::XMConvertToDegrees;
+using DirectX::XMConvertToRadians;
 
 #include <DirectXPackedVector.h>
 using DirectX::PackedVector::XMCOLOR;
@@ -63,4 +66,12 @@ struct TigRect {
 	bool Intersects(const TigRect &other);
 	bool Intersects(const TigRect &other, TigRect &intersection);
 	bool ContainsPoint(int px, int py);
+
+	bool operator==(const TigRect &other) const {
+		return x == other.x && y == other.y && width == other.width && height == other.height;
+	}
+
+	bool operator!=(const TigRect &other) const {
+		return !(*this == other);
+	}
 };

@@ -1,0 +1,5 @@
+name: Aura of Despair
+flags: 8
+prereqs:
+description: Radiates a malign aura that causes enemies within 10 feet to take a -2 penalty on all saving throws.
+prereq descr: Blackguard level 3.

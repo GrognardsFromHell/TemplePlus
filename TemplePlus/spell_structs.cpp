@@ -42,6 +42,30 @@ void D20SpellData::Extract(int* SpellEnum, int *SpellEnumOrg, int* SpellClass, i
 	}
 }
 
+SpellStoreData::SpellStoreData(int SpellEnum, int SpellLevel, int ClassCode, int mmData, int SpellStoreData):SpellStoreData() {
+	spellEnum = SpellEnum;
+	classCode = ClassCode;
+	spellLevel = SpellLevel;
+	metaMagicData = MetaMagicData(mmData);
+	spellStoreState = SpellStoreState(SpellStoreData);
+	padSpellStore = 0;	
+}
+
+bool SpellStoreData::operator<(const SpellStoreData& sp2){
+	auto &sp1 = *this;
+	int levelDelta = sp1.spellLevel - sp2.spellLevel;
+	if (levelDelta < 0)
+		return true;
+	else if (levelDelta > 0)
+		return false;
+
+	// if levels are equal
+	auto name1 = spellSys.GetSpellName(sp1.spellEnum);
+	auto name2 = spellSys.GetSpellName(sp2.spellEnum);
+	auto nameCmp = _strcmpi(name1, name2);
+	return nameCmp < 0;
+}
+
 SpellComponentFlag SpellStoreData::GetSpellComponentFlags(){
 
 	SpellEntry spEntry(this->spellEnum);
@@ -60,4 +84,18 @@ SpellComponentFlag SpellStoreData::GetSpellComponentFlags(){
 	}
 
 	return (SpellComponentFlag)result;
+}
+
+bool operator<(const SpellStoreData & sp1, const SpellStoreData & sp2){
+	int levelDelta = sp1.spellLevel - sp2.spellLevel;
+	if (levelDelta < 0)
+		return true;
+	else if (levelDelta > 0)
+		return false;
+
+	// if levels are equal
+	auto name1 = spellSys.GetSpellName(sp1.spellEnum);
+	auto name2 = spellSys.GetSpellName(sp2.spellEnum);
+	auto nameCmp = _strcmpi(name1, name2);
+	return nameCmp < 0;
 }

@@ -1,0 +1,5 @@
+name: Practiced Spellcaster
+flags: 13107200
+prereqs: 
+description: Your caster level increases by +4, limited by your total HD. You must choose either Arcane or Divine spells.
+prereq descr: Spellcraft 4 ranks.

@@ -9,6 +9,9 @@
 #include <gamesystems/objects/objsystem.h>
 #include <condition.h>
 #include <tig/tig_tokenizer.h>
+#include "weapon.h"
+#include "dungeon_master.h"
+#include "d20_race.h"
 
 class ProtosHooks : public TempleFix{
 public: 
@@ -17,9 +20,37 @@ public:
 	static int ParseCondition(int colIdx, objHndl handle, char* content, int condIdx, int stage, int unused, int unused2);
 	static int ParseMonsterSubcategory(int colIdx, objHndl handle, char* content, obj_f field, int arrayLen, char** strings);
 	static int ParseType(int colIdx, objHndl handle, char* content, obj_f field, int arrayLen, char** strings);
-
+	static int ParseRace(int colIdx, objHndl handle, char* content, obj_f field, int arrayLen, char** strings);
+	static int ParseSpell(int colIdx, objHndl handle, char* content, obj_f field);
+	static int SetCritterAttacks(objHndl handle);
 	void apply() override 
 	{
+
+		// protos.tab line parser; replaced for supporting extensions
+		static int(*orgProtoParser)(TigTabParser*, int, const char**) =
+			replaceFunction<int(__cdecl)(TigTabParser*, int, const char**)>(0x1003B640, [](TigTabParser* parser, int lineIdx, const char** cols)->int {
+
+			static std::vector<int> parsedProtoIds;
+
+			auto & parsedIds = parsedProtoIds;
+			auto protoNum = atol(cols[0]);
+			auto foundProto = std::find(parsedIds.begin(), parsedIds.end(), protoNum);
+			if (foundProto == parsedIds.end()) {
+				parsedIds.push_back(protoNum);
+				auto result = orgProtoParser(parser, lineIdx, cols);
+				dmSys.InitEntry(protoNum);
+				return result;
+			}
+			else
+			{
+				logger->info("Skipping duplicate proto {}", protoNum);
+			}
+
+			return 0;
+
+		});
+
+
 		// Fix for protos condition parser
 		replaceFunction<int(__cdecl)(int, objHndl, char*, int, int, int, int)>(0x10039E80, ParseCondition);
 
@@ -29,26 +60,12 @@ public:
 		// Hook the generic ParseType function
 		replaceFunction<int(__cdecl)(int, objHndl, char*, obj_f, int, char**)>(0x10039680, ParseType);
 
-		// replaces the proto parser for supporting extensions
-		static int (*orgProtoParser)(TigTabParser*, int, const char**) = 
-			replaceFunction<int(__cdecl)(TigTabParser*, int, const char**)>(0x1003B640, [](TigTabParser* parser, int lineIdx, const char** cols)->int{
+		replaceFunction<int(__cdecl)(int, objHndl, char*, obj_f, int, char**)>(0x10039B40, ParseRace);
 
-			static std::vector<int> parsedProtoIds;
+		replaceFunction<int(__cdecl)(int, objHndl, char*, obj_f)>(0x1003A8C0, ParseSpell);
 
-			auto & parsedIds = parsedProtoIds;
-			auto protoNum = atol(cols[0]);
-			auto foundProto = std::find(parsedIds.begin(), parsedIds.end(), protoNum);
-			if (foundProto == parsedIds.end()){
-				parsedIds.push_back(protoNum);
-				return orgProtoParser(parser, lineIdx, cols);
-			} else
-			{
-				logger->info("Skipping duplicate proto {}", protoNum);
-			}
-
-			return 0;
-			
-		});
+		//SetCritterAttacks
+		replaceFunction<int(__cdecl)(objHndl)>(0x1003AAC0, SetCritterAttacks);
 	}
 } protosHooks;
 
@@ -320,20 +337,138 @@ int ProtosHooks::ParseMonsterSubcategory(int colIdx, objHndl handle, char * cont
 
 int ProtosHooks::ParseType(int colIdx, objHndl handle, char * content, obj_f field, int arrayLen, char ** strings){
 
+	auto foundType = false;
+	auto val = 0;
+
 	if (content && *content){
 		if (arrayLen <= 0)
 			return 0;
 
 		for (auto i=0; i< arrayLen; i++){
-			if ( strings[i] && !_strcmpi(content, strings[i]))
-			{
-				objSystem->GetObject(handle)->SetInt32(field, i);
-				return 1;
+			if ( strings[i] && !_strcmpi(content, strings[i])){
+				
+				val = i;
+				objSystem->GetObject(handle)->SetInt32(field, val);
+				foundType = true; 
+				break;
 			}
 		}
 
 		if (field == obj_f_weapon_type){
-			auto asdf = 1;
+			if (!foundType && !_strcmpi(content, "wt_mindblade")){
+				val = wt_mindblade;
+				foundType = true;
+				objSystem->GetObject(handle)->SetInt32(field, val);
+				
+			}
+
+			auto weapType = (WeaponTypes)val;
+			auto damType = weapons.wpnProps[weapType].damType;
+			
+			if (damType == DamageType::Unspecified){
+				weapons.wpnProps[weapType].damType = (DamageType)objSystem->GetObject(handle)->GetInt32(obj_f_weapon_attacktype);
+			} 
+			//else if (damType != (DamageType)objSystem->GetObject(handle)->GetInt32(obj_f_weapon_attacktype)){ // for debug
+			//	auto d = description.getDisplayName(handle);
+			//	auto strangeWeaponDamType = (DamageType)objSystem->GetObject(handle)->GetInt32(obj_f_weapon_attacktype);
+			//	auto dummy = 1;
+			//}
+		}
+	}
+
+	
+	return foundType ? TRUE : FALSE;
+}
+
+int ProtosHooks::ParseRace(int colIdx, objHndl handle, char * content, obj_f field, int arrayLen, char ** strings)
+{
+	if (content && *content){
+		auto race = d20RaceSys.GetRaceEnum(content);
+		objSystem->GetObject(handle)->SetInt32(field, race);
+	}
+	return 1;
+}
+
+int ProtosHooks::ParseSpell(int colIdx, objHndl handle, char* content, obj_f field){
+	if (!content || !*content)
+		return 1;
+	StringTokenizer tok(content);
+	if (!tok.next())
+		return 1;
+
+	if (tok.token().type != StringTokenType::QuotedString)
+		return 1;
+	
+	
+	auto spEnum = spellSys.GetSpellEnum(tok.token().text);
+	if (!spEnum){
+		logger->error("ParseSpell: attempting to add a non-existant spell {}", content);
+	}
+	if (!tok.next() || tok.token().type != StringTokenType::Identifier)
+		return 1;
+
+	auto spClass = spellSys.GetSpellClass(tok.token().text);
+	if (!tok.next() || tok.token().type != StringTokenType::Number)
+		return 1;
+	auto spLvl = tok.token().numberInt;
+
+	auto obj = objSystem->GetObject(handle);
+	if (!obj->IsCritter() || (!spellSys.isDomainSpell(spClass) && spClass != Domain::Domain_Special )){
+
+		
+		auto shouldAddKnown = true;
+		std::vector<int> spellClasses, spellLevels;
+		if (obj->IsCritter() && spellSys.SpellKnownQueryGetData(handle, spEnum, spellClasses, spellLevels)){
+			for (auto i=0; i < spellClasses.size(); i++){
+				if (spellClasses[i] == spClass && spellLevels[i] == spLvl){
+					shouldAddKnown = false;
+					break;
+				}
+			}
+		}
+		if (shouldAddKnown)
+			spellSys.SpellKnownAdd(handle, spEnum, spClass, spLvl, SpellStoreType::spellStoreKnown, 0);
+		if (!obj->IsCritter())
+			return 1;
+	}
+	spellSys.SpellMemorizedAdd(handle, spEnum, spClass, spLvl, SpellStoreType::spellStoreMemorized, 0);
+
+	return 1;
+}
+
+int ProtosHooks::SetCritterAttacks(objHndl handle)
+{
+	auto obj = objSystem->GetObject(handle);
+	if (obj->IsCritter())
+	{
+		int strMod = objects.GetModFromStatLevel(obj->GetInt32(obj_f_critter_abilities_idx, 0));
+		int sizeMod = critterSys.GetBonusFromSizeCategory(obj->GetInt32(obj_f_size));
+		for(int attackIndex = 0; attackIndex < 3; attackIndex++)
+		{
+			if (obj->GetInt32(obj_f_critter_attacks_idx, attackIndex) > 0)
+			{
+				int32_t attackBonusOld = obj->GetInt32(obj_f_attack_bonus_idx, attackIndex);
+				auto attackBonusNew = attackBonusOld - (strMod + sizeMod);
+				obj->SetInt32(obj_f_attack_bonus_idx, attackIndex, attackBonusNew);
+
+				// Decrement dice damage modifier to remove STR bonus, as it will be added later on
+				Dice diceDamage = Dice::FromPacked(obj->GetInt32(obj_f_critter_damage_idx, attackIndex));
+				int newDiceMod = diceDamage.GetModifier() - strMod / 2;
+				if (attackIndex <= 0 || strMod <= 0)
+					newDiceMod = diceDamage.GetModifier() - strMod;
+				
+				Dice diceDamageNew = Dice(diceDamage.GetCount(), diceDamage.GetSides(), newDiceMod);
+				obj->SetInt32(obj_f_critter_damage_idx, attackIndex, diceDamageNew.ToPacked());
+			}
+		}
+
+		// Last Natural Attack (3) is dex based, therefore dex and size is removed from attack bonus
+		if (obj->GetInt32(obj_f_critter_attacks_idx, 3) > 0)
+		{
+			auto dexMod = objects.GetModFromStatLevel(obj->GetInt32(obj_f_critter_abilities_idx, 1));
+			auto attackBonusOld = obj->GetInt32(obj_f_attack_bonus_idx, 3);
+			
+			obj->SetInt32(obj_f_attack_bonus_idx, 3, attackBonusOld - dexMod - sizeMod); 
 		}
 	}
 	return 0;

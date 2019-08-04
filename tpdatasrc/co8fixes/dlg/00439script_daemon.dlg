@@ -1,0 +1,24 @@
+{1}{Do not put an NPC in the left-most position at the portrait row along the bottom of the screen.}{Do not put an NPC in the left-most position at the portrait row along the bottom of the screen.}{}{}{}{}
+{2}{This can cause a variety of problems, such as quests not updating properly or even appearing in your logbook at all.}{This can cause a variety of problems, such as quests not updating properly or even appearing in your logbook at all.}{}{}{}{}
+
+
+{101}{Something has gone awry!}{Something has gone awry!}{}{}{}{}
+
+
+{150}{Yes?}{Yes?}{}{}{}{}
+{151}{Stay here for a while.}{}{1}{}{0}{npc.obj_remove_from_all_groups(npc)}
+{152}{E:}{}{1}{}{0}{}
+
+
+{200}{G:}{G:}{}{}{}{}
+{201}{Would you care to join us?}{}{1}{}{220}{npc.pc_add(npc)}
+{202}{How goes it?}{}{1}{}{210}{}
+{203}{E:}{}{1}{}{0}{}
+
+{210}{Me? I'm fine. Watch out for those bugbears!}{Me? I'm fine. Watch out for those bugbears!}{}{}{}{}
+{211}{Would you care to join us?}{}{1}{}{0}{npc.pc_add(npc)}
+{212}{You too, my friend.}{}{1}{}{0}{}
+{213}{E:}{}{1}{}{0}{}
+
+{220}{Once more into the breach!}{Once more into the breach!}{}{}{}{}
+{221}{Let's go.}{}{1}{}{0}{npc.scripts[9] = 0}

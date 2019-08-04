@@ -6,6 +6,7 @@ class UiIntgameSelect
 
 public:
 	int GetId();
+	int GetCastNowWndId();
 
 private:
 	int mId;

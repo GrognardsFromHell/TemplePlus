@@ -1,0 +1,276 @@
+{1}{G:}{G:}{}{}{}{}
+{2}{Hello, I am @pcname@.}{}{8}{not npc.has_met(pc)}{10}{}
+{3}{Me @pcname@.}{}{-7}{not npc.has_met(pc)}{10}{}
+{4}{Remember that Furnok guy you wanted me to catch cheating?}{}{8}{game.quests[18].state == qs_accepted}{120}{}
+{5}{Remember that cheatin' guy?}{}{-7}{game.quests[18].state == qs_accepted}{120}{}
+{6}{I defeated the Hextorites!}{}{1}{game.quests[97].state == qs_completed}{90}{}
+{7}{K:}{}{1}{npc.has_met(pc)}{100}{}
+{8}{E:}{}{1}{npc.has_met(pc)}{0}{}
+
+
+{10}{Be you seeking a room now?}{Be you seeking a room now, lass?}{}{10}{}{}
+{11}{Yes, I'd like to stay here. How much are the rooms?}{}{8}{game.global_flags[694] == 0}{20}{}
+{12}{Yes, I'd like to stay here. How much are the rooms?}{}{8}{game.global_flags[694] == 1}{800}{}
+{13}{Yeah, me want room. How much?}{}{-7}{game.global_flags[694] == 0}{20}{}
+{14}{Yeah, me want room. How much?}{}{-7}{game.global_flags[694] == 1}{800}{}
+{15}{I'd like to arrange for long-term lodging.}{}{8}{}{30}{}
+{16}{Me wanna stay here long time.}{}{-7}{}{30}{}
+{17}{Why, does my presence here in the common room make you uncomfortable, Ostler?}{}{8}{(pc.item_find(6318) != OBJ_HANDLE_NULL and pc.stat_level_get( stat_gender ) == gender_female) or (pc.item_find(6320) != OBJ_HANDLE_NULL and pc.stat_level_get( stat_gender ) == gender_female)}{330}{}
+{18}{Not right now, Ostler.}{}{8}{}{80}{}
+{19}{Nope, not now.}{}{-7}{}{80}{}
+
+
+{20}{I've got space aplenty. Two gold will get you any room upstairs for a night.}{I've got space aplenty. Two gold will get you any room upstairs for a night.}{}{}{}{}
+{21}{Okay. Here's the two gold.}{}{8}{pc.money_get() >= 200}{115}{pc.money_adj(-200)}
+{22}{Okay. Here's two gold.}{}{-7}{pc.money_get() >= 200}{115}{pc.money_adj(-200)}
+{23}{I'm a little short}{}{8}{pc.money_get() <= 200}{80}{}
+{24}{Me wish I had two gold.}{}{-7}{pc.money_get() <= 200}{80}{}
+{25}{E:}{}{1}{}{0}{}
+
+
+{30}{I see. Well now, I have a little problem that needs taking care of, and I need someone new in town to do it. Are you interested in getting the room for free?}{I see. Well now, I have a little problem that needs taking care of, and I need someone new in town to do it. Are you interested in getting the room for free?}{}{30}{}{}
+{31}{What's the problem?}{}{8}{}{40}{}
+{32}{What you need?}{}{-7}{}{40}{}
+
+
+{40}{I suspect that a certain gentleman named Furnok is cheating at games of chance here in the inn.}{I suspect that a certain gentleman named Furnok is cheating at games of chance here in the inn.}{}{40}{}{game.quests[18].state = qs_mentioned}
+{41}{You haven't been able to catch him?}{}{8}{}{50}{}
+{42}{Why you no catch?}{}{-7}{}{50}{}
+
+
+{50}{He doesn't cheat anyone here in town. He only seems to win big when playing with our guests who are passing through.}{He doesn't cheat anyone here in town. He only seems to win big when playing with our guests who are passing through.}{}{50}{}{}
+{51}{Why do you want me to get involved?}{}{8}{}{60}{}
+{52}{Why you want me?}{}{-7}{}{60}{}
+
+
+{60}{I need someone new, someone that he will think is an easy mark. Then you can catch him in the act. Come back and let me know, and you can have a free room here.}{I need someone new, someone that he will think is an easy mark. Then you can catch him in the act. Come back and let me know, and you can have a free room here.}{}{60}{}{}
+{61}{OK, I'll do it.}{}{8}{}{70}{}
+{62}{I don't know about this. I'll let you know.}{}{8}{}{80}{}
+{63}{Okay, me catch bad guy for Gundipoop!}{}{-7}{}{70}{}
+{64}{Me not sure. Me think about it.}{}{-7}{}{80}{}
+{65}{Look, I don't want to get involved. Can I just get a room?}{}{8}{game.global_flags[694] == 0}{20}{}
+{66}{Look, I don't want to get involved. Can I just get a room?}{}{8}{game.global_flags[694] == 1}{800}{}
+{67}{Me not want to do that. Me just want room.}{}{-7}{game.global_flags[694] == 0}{20}{}
+{68}{Me not want to do that. Me just want room.}{}{-7}{game.global_flags[694] == 1}{800}{}
+
+{70}{Thank you. Let me know when you catch him.}{Thank you. Let me know when you catch him.}{}{70}{}{game.quests[18].state = qs_accepted}
+{71}{E:}{}{1}{}{0}{}
+
+
+{80}{Too bad, too bad, maybe some other time. Is there anything else I can do for you?}{Too bad, too bad, maybe some other time. Is there anything else I can do for you?}{}{80}{}{}
+{81}{K:}{}{1}{}{100}{}
+{82}{E:}{}{1}{}{0}{}
+
+
+{90}{That's wonderful! Thank you.}{That's wonderful! Thank you.}{}{90}{}{}
+{91}{E:}{}{1}{}{0}{}
+
+
+{100}{What can I do for you?}{What can I do for you, lass?}{}{100}{}{}
+{101}{I am interested in getting a room.}{}{8}{game.quests[18].state != qs_completed and game.global_flags[694] == 0}{20}{}
+{102}{I am interested in getting a room.}{}{8}{game.quests[18].state != qs_completed and game.global_flags[694] == 1}{800}{}
+{103}{Me want room.}{}{-7}{game.quests[18].state != qs_completed and game.global_flags[694] == 0}{20}{}
+{104}{Me want room.}{}{-7}{game.quests[18].state != qs_completed and game.global_flags[694] == 1}{800}{}
+{105}{I would like to try to catch Furnok cheating.}{}{8}{game.quests[18].state == qs_mentioned and game.global_flags[58] == 0}{70}{}
+{106}{Me try to catch cheatin' guy for you!}{}{-7}{game.quests[18].state == qs_mentioned and game.global_flags[58] == 0}{70}{}
+{107}{Remember when I said Furnok was dead?}{}{8}{game.quests[18].state == qs_botched and game.global_flags[58] == 0}{180}{}
+{108}{Remember dead cheatin' guy?}{}{-7}{game.quests[18].state == qs_botched and game.global_flags[58] == 0}{180}{}
+{109}{I'd like to arrange for long-term lodging.}{}{8}{game.quests[18].state == qs_unknown}{30}{}
+{110}{Me wanna stay here long time.}{}{-7}{game.quests[18].state == qs_unknown}{30}{}
+{111}{I'd like to temporarily leave one of my fellows here.}{}{8}{game.quests[18].state == qs_completed}{400}{}
+{112}{Me wanna a fren to stay like good puppy here.}{}{-7}{game.quests[18].state == qs_completed}{400}{}
+{113}{F:}{}{1}{}{0}{}
+
+
+{115}{Yes sir. You are free to sleep in any room upstairs for the next 24 hours.}{Yes ma'am. You are free to sleep in any room upstairs for the next 24 hours.}{}{115}{}{set_room_flag(npc,pc)}
+{116}{A:}{}{1}{}{0}{}
+{117}{E:}{}{1}{}{0}{}
+
+
+{120}{Yes? What about Furnok?}{Yes? What about Furnok?}{}{120}{}{}
+{121}{I'm still trying to catch him. If he's cheating, he's good.}{}{8}{game.global_flags[51] == 0 and game.global_flags[58] == 0}{130}{}
+{122}{I caught him cheating.}{}{8}{game.global_flags[51] == 1}{140}{}
+{123}{He's dead.}{}{8}{game.global_flags[51] == 0 and game.global_flags[58] == 1}{160}{}
+{124}{Me still try to catch him. He good!}{}{-7}{game.global_flags[51] == 0 and game.global_flags[58] == 0}{130}{}
+{125}{Me catch him!}{}{-7}{game.global_flags[51] == 1}{140}{}
+{126}{He dead now!}{}{-7}{game.global_flags[51] == 0 and game.global_flags[58] == 1}{160}{}
+{127}{F:}{}{1}{}{0}{}
+
+
+{130}{Well, please keep trying. I don't want to lose customers to him!}{Well, please keep trying. I don't want to lose customers to him!}{}{130}{}{}
+{131}{K:}{}{1}{}{100}{}
+{132}{E:}{}{1}{}{0}{}
+
+
+{140}{That's wonderful, thank you! I will make sure he doesn't gamble with anyone here again!}{That's wonderful, thank you! I will make sure he doesn't gamble with anyone here again!}{}{140}{}{game.quests[18].state = qs_completed; npc.reaction_adj( pc,+20)}
+{141}{I get a free room now, right?}{}{8}{game.global_flags[56] == 0}{320}{}
+{142}{Me get room free?}{}{-7}{game.global_flags[56] == 0}{320}{}
+{143}{What about the free room you promised?}{}{8}{game.global_flags[56] == 1}{150}{}
+{144}{Hey! You said me get free room!}{}{-7}{game.global_flags[56] == 1}{150}{}
+
+
+{150}{You are free to use any room upstairs at any time. And since you already paid me for tonight, I will gladly reimburse you the two gold.}{You are free to use any room upstairs at any time. And since you already paid me for tonight, I will gladly reimburse you the two gold.}{}{150}{}{pc.money_adj(200)}
+{151}{A:}{}{1}{}{0}{}
+{152}{E:}{}{1}{}{0}{}
+
+
+{160}{Oh Great Mother! I never meant for that to happen. I suppose it doesn't matter now if he was cheating.}{Oh Great Mother! I never meant for that to happen. I suppose it doesn't matter now if he was cheating.}{}{160}{}{game.quests[18].state = qs_botched}
+{161}{So no free room for me, huh?}{}{8}{}{170}{}
+{162}{No free room?}{}{-7}{}{170}{}
+{163}{K:}{}{1}{}{100}{}
+{164}{E:}{}{1}{}{0}{}
+
+
+{170}{I'm sorry, but I said only if you caught him cheating.}{I'm sorry, but I said only if you caught him cheating.}{}{170}{}{}
+{171}{K:}{}{1}{}{100}{}
+{172}{E:}{}{1}{}{0}{}
+
+
+{180}{Yes. You told me Furnok was dead.}{Yes. You told me Furnok was dead.}{}{180}{}{game.quests[18].unbotch()}
+{181}{Well, he got better. He's back among the living, and I plan to still catch him cheating.}{}{8}{}{190}{}
+{182}{He better now! Me check him for cheating!}{}{-7}{}{190}{}
+
+
+{190}{I see. Good luck, @pcname@.}{I see. Good luck, @pcname@.}{}{190}{}{}
+{191}{E:}{}{1}{}{0}{}
+
+
+{200}{[The innkeeper glares at Furnok] What are you doing here with him?}{[The innkeeper glares at Furnok] What are you doing here with him?}{}{200}{}{}
+{201}{What? What's the problem.}{}{8}{game.quests[18].state == qs_unknown}{210}{}
+{202}{Yeah, I have decided to try to catch him cheating.}{}{8}{game.quests[18].state == qs_mentioned}{70}{}
+{203}{I am keeping him close, where I can watch him.}{}{8}{game.quests[18].state == qs_accepted}{220}{}
+{204}{Huh?}{}{-7}{game.quests[18].state == qs_unknown}{210}{}
+{205}{Me think I gonna catch him cheating!}{}{-7}{game.quests[18].state == qs_mentioned}{70}{}
+{206}{Me go around with him, so me can watch him!}{}{-7}{game.quests[18].state == qs_accepted}{220}{}
+{207}{Don't worry about him. Can I ask you something?}{}{8}{}{100}{}
+{208}{Don't worry. Me have question for you.}{}{-7}{}{100}{}
+
+
+{210}{[He lowers his voice] I suspect that man of cheating at cards and dice here in my inn!}{[He lowers his voice] I suspect that man of cheating at cards and dice here in my inn!}{}{210}{}{game.quests[18].state = qs_mentioned}
+{211}{I see. Want me to catch him red-handed?}{}{8}{}{70}{}
+{212}{Ah! Want me to catch him?}{}{-7}{}{70}{}
+{213}{K:}{}{1}{}{100}{}
+
+
+{220}{Oh, that's smart. Let me know what you find out.}{Oh, that's smart. Let me know what you find out.}{}{220}{}{}
+{221}{K:}{}{1}{}{100}{}
+{222}{E:}{}{1}{}{0}{}
+
+
+{230}{What is it, Tuperello? Oh, you want to have a drinking contest with @pcname@. Who else wants in? Speak up now!}{What is it, Tuperello? Oh, you want to have a drinking contest with @pcname@. Who else wants in? Speak up now!}{}{230}{}{game.quests[19].unbotch(); game.quests[19].state = qs_accepted}
+{231}{[You look to see who else is joining]}{}{1}{}{240}{contest_who(npc)}
+
+
+{240}{[Ostler gives everyone a fresh pint of ale] Okay, everyone ready?}{[Ostler gives everyone a fresh pint of ale] Okay, everyone ready?}{}{240}{}{}
+{241}{Ready!}{}{1}{}{260}{}
+{242}{No, I want to quit the contest.}{}{8}{}{250}{}
+{243}{No, me quit.}{}{-7}{}{250}{}
+
+
+{250}{[Ostler eyes you condescendingly and everyone else groans in disappointment] You heard the man. He's out of the running.}{[Ostler eyes you condescendingly and everyone else groans in disappointment] You heard the lass. She's out of the running.}{}{250}{}{game.quests[19].state = qs_botched}
+{251}{[You turn away as they finish the contest without you].}{}{1}{}{0}{}
+
+
+{260}{Drink!}{Drink!}{}{260}{}{}
+{261}{[You and everyone else drink your ales.]}{}{1}{}{0}{contest_drink(npc,pc)}
+
+
+{270}{[The whole bar yells and screams] There you go, man!}{[The whole bar yells and screams] There you go, lass!}{}{270}{}{}
+{271}{[You drink all of your ale and remain standing].}{}{1}{}{240}{}
+
+
+{280}{You are out of the game! [The game continues without you].}{You are out of the game! [The game continues without you].}{}{280}{}{}
+
+
+{290}{[There is a huge round of applause in your direction] You win! You are the winner!}{[There is a huge round of applause in your direction] You win, lass! You are the winner!}{}{290}{}{pc.reputation_add( 66 )}
+{291}{[You wave blearily to the crowd]}{}{1}{}{0}{game.quests[19].state = qs_completed}
+
+
+{300}{[There is a huge round of applause] We have a winner! And someone drag him out here!}{[There is a huge round of applause] We have a winner! And someone drag her out here!}{}{300}{}{}
+
+
+{310}{[Everyone in the inn is laughing] We seem to have no winner, folks. The contest is a draw.}{[Everyone in the inn is laughing] We seem to have no winner, folks. The contest is a draw.}{}{310}{}{}
+
+
+{320}{Yes, you are free to use any room upstairs at any time.}{Yes, you are free to use any room upstairs at any time.}{}{320}{}{game.sleep_status_update()}
+{321}{A:}{}{1}{}{0}{}
+{322}{E:}{}{1}{}{0}{}
+
+
+{330}{Madam...I expect my patrons to be fully clothed.}{Madam...I expect my patrons to be fully clothed.}{}{}{}{}
+{331}{Oh my, I'm so sorry. But do you like what you see, Ostler?}{}{1}{}{340}{}
+
+
+{340}{Yes, ma'am. Well...I've got space aplenty, and you can have a free room here.}{Yes, ma'am. Well...I've got space aplenty, and you can have a free room here.}{}{}{}{}
+{341}{Why thank you Ostler. And thank you for the compliment.}{}{1}{}{115}{}
+{342}{E:}{}{1}{}{0}{}
+
+
+{350}{Oh Great Mother!}{Oh Great Mother!}{}{350}{}{}
+{351}{I need a healing potion.}{}{1}{game.global_vars[525] <= 7}{360}{game.global_vars[525] = game.global_vars[525] + 1}
+{352}{I need a healing potion.}{}{1}{game.global_vars[525] >= 8}{370}{}
+{353}{F:}{}{1}{}{0}{}
+
+
+{360}{Yes sir.}{Yes ma'am.}{}{360}{}{create_item_in_inventory(8006,pc)}
+{361}{I'd like another.}{}{1}{game.global_vars[525] <= 7}{360}{game.global_vars[525] = game.global_vars[525] + 1}
+{362}{I'd like another.}{}{1}{game.global_vars[525] >= 8}{370}{}
+{363}{A:}{}{1}{}{0}{}
+
+
+{370}{I'm sorry. I'm all out of them.}{I'm sorry. I'm all out of them.}{}{370}{}{}
+{371}{E:}{}{1}{}{0}{}
+
+
+{400}{Sir, who would like to stay?}{Ma'am, who would like to stay?}{}{400}{}{}
+{401}{I choose...}{}{1}{}{430}{}
+{402}{Actually, never mind.}{}{1}{}{0}{}
+
+{430}{Sir, who would like to stay?}{Ma'am, who would like to stay?}{}{400}{}{game.picker( npc, spell_remove_disease, can_stay_behind, [ 440, 420, 450 ] )}
+{431}{}{}{}{}{}{}
+
+{440}{Your tag-along followers can take care of themselves, sir. Anything else?}{Your tag-along followers can take care of themselves, ma'am. Anything else?}{}{440}{}{}
+{441}{Yes, someone else wants to stay...}{}{1}{}{430}{}
+{442}{Actually, never mind.}{}{1}{}{0}{}
+
+{450}{Very well! Just go upstairs and your friend will stay behind. Does anyone else also wish to stay as well?}{Very well! Just go upstairs and your friend will stay behind. Does anyone else wish to stay as well?}{}{450}{}{}
+{451}{Yes...}{}{1}{}{460}{mark_pc_dropoff(picker_obj)}
+{452}{No, that's it.}{}{1}{}{0}{mark_pc_dropoff(picker_obj)}
+
+
+{460}{Sir, who else would like to stay?}{Ma'am, who else would like to stay?}{}{400}{}{game.picker( npc, spell_remove_disease, can_stay_behind, [ 440, 420, 450 ] )}
+{461}{}{}{}{}{}{}
+
+{600}{[the man is too agitated to talk to you right now]}{[the man is too agitated to talk to you right now]}{}{}{}{}
+
+
+{800}{Two and two gold will get you a small room upstairs for a night.}{Two and two gold will get you a small room upstairs for a night.}{}{}{}{}
+{801}{Four gold!}{}{1}{}{820}{}
+{802}{Okay. Here's the four gold.}{}{1}{pc.money_get() >= 400}{115}{pc.money_adj(-400)}
+{804}{I'm a little short}{}{1}{pc.money_get() <= 400}{80}{}
+{805}{K:}{}{1}{}{100}{}
+{806}{E:}{}{1}{}{0}{}
+
+
+{820}{I haven't time for chit-chat. I'm very busy, sir.}{I haven't time for chit-chat. I'm very busy, madam.}{}{}{}{}
+{821}{Okay. Here's the four gold.}{}{1}{pc.money_get() >= 400}{115}{pc.money_adj(-400)}
+{822}{I'm a little short}{}{1}{pc.money_get() <= 400}{80}{}
+{823}{K:}{}{1}{}{100}{}
+{824}{E:}{}{1}{}{0}{}
+
+
+{10008}{Welcome to the Inn of the Welcome Wench, sir. I am Ostler Gundigoot, sole proprietor, at your service.}{Welcome to the Inn of the Welcome Wench, madam. I am Ostler Gundigoot, sole proprietor, at your service.}{}{}{}{}
+{10009}{Welcome to the Inn of the Welcome Wench, sir. I am Ostler Gundigoot. How may I help you?}{Welcome to the Inn of the Welcome Wench, madam. I am Ostler Gundigoot. How may I help you?}{}{}{}{}
+{10011}{Welcome back, @pcname@. It is wonderful to see you again.}{Welcome back, @pcname@. It is wonderful to see you again.}{}{}{}{}
+{10012}{Hello, @pcname@. Do you need anything?}{Hello, @pcname@. Do you need anything?}{}{}{}{}
+{10014}{I'm done.}{I'm done.}{}{}{}{}
+{10015}{Sir, I expect my patrons to be fully clothed!}{Madam, I expect my patrons to be fully clothed!}{}{}{}{}
+{10016}{More barbarians? What is the world coming to?}{More barbarians? What is the world coming to?}{}{}{}{}
+{10017}{[The innkeeper glances at your followers] Sir, we do not serve that kind at my inn.}{[The innkeeper glances at your followers] Madam, we do not serve that kind at my inn.}{}{}{}{}
+{10019}{Damn, where is that stable boy?! Boy! Boy, get in here! There's animals underfoot!}{Damn, where is that stable boy?! Boy! Boy, get in here! There's animals underfoot!}{}{}{}{}
+{10020}{Will all of you be checking into a single room?}{Will all of you be checking into a single room?}{}{}{}{}
+{10021}{What? Who said that?}{What? Who said that?}{}{}{}{}
+{11001}{[The innkeeper looks you up and down, slowly] The name's Ostler Gundigoot. What do you want at my inn?}{[The innkeeper looks you up and down, slowly] The name's Ostler Gundigoot. What do you want at my inn?}{}{}{}{}
+{11002}{[The innkeeper looks at you with obvious disgust] My name is Ostler Gundigoot. The inn is nearly full, I should warn you.}{[The innkeeper looks at you with obvious disgust] My name is Ostler Gundigoot. The inn is nearly full, I should warn you.}{}{}{}{}
+{11003}{Yes? What is it now?}{Yes? What is it now?}{}{}{}{}
+{11004}{I haven't time for chit chat. I'm very busy, sir!}{I haven't time for chit chat. I'm very busy, madam!}{}{}{}{}

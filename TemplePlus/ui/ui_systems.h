@@ -20,7 +20,7 @@ class UiWMapRnd;
 class UiCombat;
 class UiSlide;
 class UiDlg;
-class UiPcCreation;
+class UiPcCreationSys;
 class UiChar;
 class UiToolTip;
 class UiLogbook;
@@ -35,6 +35,7 @@ class UiHelp;
 class UiItemCreation;
 class UiSkillMastery;
 class UiUtilityBar;
+class UiDM;
 class UiTrack;
 class UiPartyPool;
 class UiPccPortrait;
@@ -44,7 +45,7 @@ class UiCamping;
 class UiHelpInventory;
 class UiPartyQuickview;
 class UiOptions;
-class UiManager;
+class UiKeyManager;
 class UiHelpManager;
 class UiSlider;
 class UiWritten;
@@ -111,7 +112,7 @@ public:
 		Expects(!!mDlg);
 		return *mDlg;
 	}
-	UiPcCreation& GetPcCreation() const {
+	UiPcCreationSys& GetPcCreation() const {
 		Expects(!!mPcCreation);
 		return *mPcCreation;
 	}
@@ -171,6 +172,10 @@ public:
 		Expects(!!mUtilityBar);
 		return *mUtilityBar;
 	}
+	UiDM & GetDM() const {
+		Expects(!!mDungeonMaster);
+		return *mDungeonMaster;
+	}
 	UiTrack& GetTrack() const {
 		Expects(!!mTrack);
 		return *mTrack;
@@ -207,7 +212,7 @@ public:
 		Expects(!!mOptions);
 		return *mOptions;
 	}
-	UiManager& GetManager() const {
+	UiKeyManager& GetManager() const {
 		Expects(!!mManager);
 		return *mManager;
 	}
@@ -259,7 +264,7 @@ private:
 	std::unique_ptr<UiCombat> mCombat;
 	std::unique_ptr<UiSlide> mSlide;
 	std::unique_ptr<UiDlg> mDlg;
-	std::unique_ptr<UiPcCreation> mPcCreation;
+	std::unique_ptr<UiPcCreationSys> mPcCreation;
 	std::unique_ptr<UiChar> mChar;
 	std::unique_ptr<UiToolTip> mToolTip;
 	std::unique_ptr<UiLogbook> mLogbook;
@@ -274,6 +279,7 @@ private:
 	std::unique_ptr<UiItemCreation> mItemCreation;
 	std::unique_ptr<UiSkillMastery> mSkillMastery;
 	std::unique_ptr<UiUtilityBar> mUtilityBar;
+	std::unique_ptr<UiDM> mDungeonMaster;
 	std::unique_ptr<UiTrack> mTrack;
 	std::unique_ptr<UiPartyPool> mPartyPool;
 	std::unique_ptr<UiPccPortrait> mPccPortrait;
@@ -283,7 +289,7 @@ private:
 	std::unique_ptr<UiHelpInventory> mHelpInventory;
 	std::unique_ptr<UiPartyQuickview> mPartyQuickview;
 	std::unique_ptr<UiOptions> mOptions;
-	std::unique_ptr<UiManager> mManager;
+	std::unique_ptr<UiKeyManager> mManager;
 	std::unique_ptr<UiHelpManager> mHelpManager;
 	std::unique_ptr<UiSlider> mSlider;
 	std::unique_ptr<UiWritten> mWritten;

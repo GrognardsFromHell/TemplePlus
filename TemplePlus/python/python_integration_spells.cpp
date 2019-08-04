@@ -271,6 +271,7 @@ uint32_t PythonSpellIntegration::SpellSoundPlay(SpellPacketBody* spellPkt, Spell
 				}
 			}
 			break;
+		case UiPickerType::Wall:
 		case UiPickerType::Location:
 			sound.PlaySoundAtLoc(spellSoundId, spellPkt->aoeCenter.location.location);
 			return 1;
@@ -279,7 +280,6 @@ uint32_t PythonSpellIntegration::SpellSoundPlay(SpellPacketBody* spellPkt, Spell
 		case UiPickerType::Ray:
 			sound.PlaySoundAtObj(spellSoundId, spellPkt->caster);
 			return 1;
-
 
 		default:
 			break;

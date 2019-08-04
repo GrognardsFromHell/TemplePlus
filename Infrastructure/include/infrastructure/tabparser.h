@@ -5,7 +5,7 @@
 #include <vector>
 #include <map>
 
-#include <gsl/string_span.h>
+#include <gsl/string_span>
 
 class TabFileColumn {
 	friend class TabFileRecord;

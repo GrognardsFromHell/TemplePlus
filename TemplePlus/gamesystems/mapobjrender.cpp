@@ -12,7 +12,7 @@
 #include <infrastructure/images.h>
 #include <graphics/shaperenderer3d.h>
 #include <graphics/shaperenderer2d.h>
-#include <temple/aasrenderer.h>
+#include <aas/aas_renderer.h>
 #include "../critter.h"
 #include <graphics/dynamictexture.h>
 
@@ -22,6 +22,7 @@
 
 using namespace gfx;
 using namespace temple;
+using namespace DirectX;
 
 static struct MapRenderAddresses : temple::AddressTable {
 	uint8_t (*GetFogStatus)(locXY loc, float offsetX, float offsetY);
@@ -49,7 +50,7 @@ static struct MapRenderAddresses : temple::AddressTable {
 MapObjectRenderer::MapObjectRenderer(GameSystems& gameSystems, 
 	gfx::RenderingDevice& device, 
 	gfx::MdfMaterialFactory &mdfFactory,
-	temple::AasRenderer &aasRenderer)
+	aas::Renderer &aasRenderer)
 	: mGameSystems(gameSystems),
 	  mDevice(device),
 	  mAasRenderer(aasRenderer) {
@@ -980,8 +981,8 @@ void MapObjectRenderer::RenderShadowMapShadow(objHndl obj,
 	}
 
 	mAasRenderer.RenderShadowMapShadow(
-		gsl::as_span(&models[0], modelCount),
-		gsl::as_span(&params[0], modelCount),
+		gsl::span(&models[0], modelCount),
+		gsl::span(&params[0], modelCount),
 		worldPos,
 		radius,
 		height,

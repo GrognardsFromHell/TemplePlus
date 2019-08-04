@@ -8,9 +8,10 @@
 #include "python_embed.h"
 #include <infrastructure/elfhash.h>
 
-PythonIntegration::PythonIntegration(const string& searchPattern, const string& filenameRegexp) {
+PythonIntegration::PythonIntegration(const string& searchPattern, const string& filenameRegexp, bool isHashId) {
 	mSearchPattern = searchPattern;
 	mFilenameRegexp = filenameRegexp;
+	mIsHashId = isHashId;
 }
 
 PythonIntegration::~PythonIntegration() {
@@ -40,7 +41,10 @@ void PythonIntegration::LoadScripts() {
 		ScriptRecord record;
 		record.filename = scriptName;
 		record.moduleName = scriptMatch[1];
-		record.id = stoi(scriptMatch[2]);
+		if (mIsHashId)
+			record.id = ElfHash::Hash(scriptMatch[2]);
+		else
+			record.id = stoi(scriptMatch[2]);
 
 		if (mScripts.find(record.id) != mScripts.end()) {
 			if (record.id == 522){ // ugly hack for glibness spell - damn you troika!
@@ -234,6 +238,53 @@ std::map<int, std::vector<int>> PythonIntegration::RunScriptMapResult(ScriptId s
 			}
 		}
 		
+	}
+
+	Py_DECREF(resultObj);
+	return result;
+}
+
+std::vector<int> PythonIntegration::RunScriptVectorResult(ScriptId scriptId, EventId evt, PyObject * args)
+{
+	auto result = std::vector<int>();
+	ScriptRecord script;
+	if (!LoadScript(scriptId, script)) {
+		return result;
+	}
+
+	auto dict = PyModule_GetDict(script.module);
+	auto eventName = GetFunctionName(evt);
+	auto callback = PyDict_GetItemString(dict, eventName);
+
+	if (!callback || !PyCallable_Check(callback)) {
+		logger->error("Script {} attached as {} is missing the corresponding function.",
+			script.filename, eventName);
+		return result;
+	}
+
+	auto resultObj = PyObject_CallObject(callback, args);
+
+	if (!resultObj) {
+		logger->error("An error occurred while calling event {} for script {}.", eventName, script.filename);
+		PyErr_Print();
+		return result;
+	}
+
+	if (!PyList_Check(resultObj)){
+		return result;
+	}
+
+	PyObject *pyvalue;
+	Py_ssize_t pos = 0;
+
+	auto listSize = PyList_Size(resultObj);
+	for (auto i=0; i < listSize; i++){
+		pyvalue = PyList_GetItem(resultObj, i);
+		if (!PyInt_Check(pyvalue)){
+			logger->warn("RunScriptVectorResult: Invalid python value");
+			continue;
+		}
+		result.push_back(PyInt_AsLong(pyvalue));
 	}
 
 	Py_DECREF(resultObj);

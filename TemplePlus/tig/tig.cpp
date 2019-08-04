@@ -1,4 +1,3 @@
-#include "..\..\Infrastructure\include\graphics\math.h"
 #include "stdafx.h"
 #include "tig.h"
 #include "tig_tabparser.h"
@@ -25,8 +24,7 @@ BOOL TigTabParser::Open(const char* filenameIn)
 		free(filename);
 	if (fileContent)
 		free(fileContent);
-	filename = new char[strlen(filenameIn) + 1];
-	strcpy(filename, filenameIn);
+	filename = _strdup(filenameIn);
 	auto file = tio_fopen(filenameIn, "rb");
 	if (!file)
 		return 17;
@@ -35,6 +33,7 @@ BOOL TigTabParser::Open(const char* filenameIn)
 	auto fileLen = tio_filelength(file);
 	fileContent = new char[fileLen + 1];
 	fileContentEndPos = &fileContent[tio_fread(fileContent, 1, fileLen, file)];
+	fileContent[fileLen] = '\0'; // Ensure nul-termination of file
 	tio_fclose(file);
 
 
@@ -128,6 +127,9 @@ void TigTabParser::Process()
 				{
 					break;
 				}
+				if (curPos >= endPos) {
+					break;
+				}
 			}
 			if (*curPos == '\x15')
 			{
@@ -184,23 +186,6 @@ TigTabParserFuncs::TigTabParserFuncs() {
 	rebase(Close, 0x101F2C30);
 }
 
-class TigTabReplacements: TempleFix{
-public:
-	static void FormatRawString(TigTabParser* tab);
-
-	static void(__cdecl*orgFormatRawString)(TigTabParser* tab);
-	void apply() override {
-		orgFormatRawString = replaceFunction(0x101F2DC0, FormatRawString);
-	}
-} tigTabReplacements;
-
-void TigTabReplacements::FormatRawString(TigTabParser* tab)
-{
-	orgFormatRawString(tab);
-	int dummy = 1;
-}
-
-void(__cdecl*TigTabReplacements::orgFormatRawString)(TigTabParser* tab);
 
 
 void TigRect::FitInto(const TigRect& boundingRect) {

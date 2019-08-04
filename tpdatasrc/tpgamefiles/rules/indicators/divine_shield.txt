@@ -1,0 +1,5 @@
+ID_string: DIVINE_SHIELD
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Spell Heroism.tga
+help_topic: TAG_ROOT
+tooltip_base_text:Divine Shield

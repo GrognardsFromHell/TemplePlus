@@ -10,7 +10,7 @@
 #include <infrastructure/logging.h>
 #include <infrastructure/stringutil.h>
 
-#include "../src/hde/hde32.h"
+#include "hde/hde32.h"
 
 #include "temple/dll.h"
 
@@ -243,6 +243,17 @@ namespace temple {
 		                            MEM_RESERVE,
 		                            PAGE_NOACCESS);
 
+	}
+
+	void Dll::SetReservedMemory(void *reservedMem)
+	{
+		if (mReservedMem) {
+			throw TempleException("Memory has already been reserved.");
+		}
+		if (mImpl) {
+			throw TempleException("DLL has already been loaded.");
+		}
+		mReservedMem = reservedMem;
 	}
 
 	bool Dll::IsVanillaDll() const {

@@ -61,7 +61,7 @@ struct SectorLoc
 		raw = (sectorX & 0x3ffFFFF) | (sectorY << 26);
 	}
 
-	locXY GetBaseTile()
+	locXY GetBaseTile() // get the corner tile (lowest x,y in the sector)
 	{
 		locXY loc;
 		loc.locx = (int)x() * SECTOR_SIDE_SIZE;
@@ -73,6 +73,15 @@ struct SectorLoc
 		return raw == secLoc.raw;
 	}
 
+};
+
+struct SectorList {
+	SectorLoc sector;
+	locXY cornerTile;  // tile coords
+	locXY extent;      // relative to the above tile
+	SectorList *next;
+	// There is 4 bytes padding here but we dont rely on the size here
+	int pad;
 };
 
 #define TILES_PER_SECTOR SECTOR_SIDE_SIZE*SECTOR_SIDE_SIZE
@@ -232,9 +241,18 @@ struct SectorTilePacket{
 };
 
 struct SectorObjects {
-	SectorObjectsNode* tiles[SECTOR_SIDE_SIZE][SECTOR_SIDE_SIZE];
+	SectorObjectsNode* tiles[SECTOR_SIDE_SIZE * SECTOR_SIDE_SIZE];
 	BOOL staticObjsDirty;
 	int objectsRead;
+};
+const int testSizeofSectorObjects = sizeof SectorObjects; // should be 16392 (0x4008)
+struct SectorVB{
+	SectorLoc secLoc;
+	int flags;
+	int8_t data[18432];
+	int refCnt;
+	int sysTime;
+	int field4814;
 };
 
 struct Sector
@@ -348,6 +366,9 @@ public:
 	builds a list of TileListEntry's for every sector contained in the  TileRect (including partially contained sectors)
 	*/
 	static BOOL BuildTileListFromRect(TileRect* tileRect, TileListEntry* tle);
+	SectorList * BuildSectorList(TileRect *tileRect); // don't forget to free this list!
+	void SectorListReturnToPool(SectorList *secList); // returns secList to the pool (by prepending it)
+
 
 	static uint64_t GetSectorLimitX();
 	static uint64_t GetSectorLimitY();
@@ -361,6 +382,7 @@ public:
 	NOTE: will return TRUE for non-existant file! (it just won't load any actual data)
 	*/
 	static BOOL SectorLoad(SectorLoc secLoc, Sector* sect);
+	static BOOL SectorLoadObjects(SectorObjects* secObjs,TioFile* file, SectorLoc secLoc );
 	static bool SectorFileExists(SectorLoc secLoc);
 
 	static void SectorCacheEntryFree(Sector* sect);

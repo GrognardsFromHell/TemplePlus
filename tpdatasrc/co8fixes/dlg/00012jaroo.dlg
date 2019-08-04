@@ -1,0 +1,656 @@
+{1}{G:}{G:}{}{}{}{game.global_flags[1] = 1}
+{2}{Hello, I'm @pcname@.}{}{8}{not npc.has_met(pc)}{20}{}
+{3}{Hi, me @pcname@.}{}{-7}{not npc.has_met(pc)}{20}{}
+{4}{I have some questions about the Old Faith.}{}{8}{npc.has_met(pc)}{200}{}
+{5}{Me learn about Old Faith.}{}{-7}{npc.has_met(pc)}{200}{}
+{6}{Why haven't you sent in your monthly report to Hrudek in the Gnarley Forest?}{}{8}{npc.has_met(pc) and game.party_alignment == TRUE_NEUTRAL and game.global_flags[18] == 0}{318}{game.global_flags[18] = 1; game.global_flags[67] = 1}
+{7}{Hrudey wants report.}{}{-7}{npc.has_met(pc) and game.party_alignment == TRUE_NEUTRAL and game.global_flags[18] == 0}{318}{game.global_flags[18] = 1; game.global_flags[67] = 1}
+{8}{I've cleared the Moathouse now, Jaroo. You can send that report. Everything's safe around here now.}{}{8}{game.story_state >= 2 and game.party_alignment == TRUE_NEUTRAL and game.global_flags[19] == 0 and game.global_vars[562] == 4}{346}{game.global_flags[19] = 1}
+{9}{Me clear out Moathouse. You report to Hurdey bandits gone.}{}{-7}{game.story_state >= 2 and game.party_alignment == TRUE_NEUTRAL and game.global_flags[19] == 0 and game.global_vars[562] == 4}{346}{game.global_flags[19] = 1}
+{10}{I've finally done it, Jaroo. I've got Terjon to agree to convert Marek, the carpenter's brother, to the Old Faith!}{}{8}{game.global_flags[17] == 1 and game.quests[5].state != qs_completed}{336}{}
+{11}{Terjon say it okay for carpet man brother to join you.}{}{-7}{game.global_flags[17] == 1 and game.quests[5].state != qs_completed}{336}{}
+{12}{Where is Amii?}{}{8}{game.quests[99].state == qs_botched}{900}{}
+{13}{Where Aimy?}{}{-7}{game.quests[99].state == qs_botched}{900}{}
+{14}{Can we talk about Amii?}{}{8}{pc.item_find( 12900 ) == OBJ_HANDLE_NULL and npc.has_met(pc) and game.quests[99].state == qs_accepted}{600}{}
+{15}{Talks of Aimy?}{}{-7}{pc.item_find( 12900 ) == OBJ_HANDLE_NULL and npc.has_met(pc) and game.quests[99].state == qs_accepted}{600}{}
+{16}{Jaroo! I have found the Swamp Lotus you were looking for! [give flower to Jaroo]}{}{8}{pc.item_find( 12900 ) != OBJ_HANDLE_NULL and npc.has_met(pc) and game.quests[99].state == qs_accepted}{800}{party_transfer_to( npc, 12900 )}
+{17}{Me finds da swampy flower! [give flower to Jaroo]}{}{-7}{pc.item_find( 12900 ) != OBJ_HANDLE_NULL and npc.has_met(pc) and game.quests[99].state == qs_accepted}{800}{party_transfer_to( npc, 12900 )}
+{18}{K:}{}{1}{npc.has_met(pc)}{80}{}
+{19}{E:}{}{1}{npc.has_met(pc)}{0}{}
+
+
+{20}{I am Jaroo Ashstaff. I am a druid of the Old Faith, and one of the spiritual leaders of this community.}{I am Jaroo Ashstaff. I am a druid of the Old Faith, and one of the spiritual leaders of this community.}{}{20}{}{}
+{21}{One of the spiritual leaders? Who else is here?}{}{8}{}{30}{}
+{22}{May I make an offering?}{}{8}{}{40}{}
+{23}{May I come here for healing?}{}{8}{}{370}{}
+{24}{Any clerks near here? I get lots of ouchies.}{}{-7}{}{370}{}
+{25}{You want a doh...doh...um, me give you stuff?}{}{-7}{}{40}{}
+{26}{There be other spear-leaders here?}{}{-7}{}{30}{}
+{27}{Jaroo?! I've been looking for you. Hrudek in the Gnarley Forest has been worried about you. You haven't sent him your report for months.}{}{8}{game.party_alignment == TRUE_NEUTRAL and game.global_flags[18] == 0}{318}{game.global_flags[18] = 1}
+{28}{You Jawoo that Hrudey fellow talk about. He say you late.}{}{-7}{game.party_alignment == TRUE_NEUTRAL and game.global_flags[18] == 0}{318}{game.global_flags[18] = 1}
+
+
+{30}{A temple dedicated to St. Cuthbert has been built north of here. The Canon Terjon presides there, serving his own flock.}{A temple dedicated to St. Cuthbert has been built north of here. The Canon Terjon presides there, serving his own flock.}{}{30}{}{}
+{31}{Is that a problem?}{}{8}{}{50}{}
+{32}{You like them stuffy heads?}{}{-7}{}{50}{}
+{33}{So do you like Terjon?}{}{8}{}{120}{}
+{34}{Terjon is a cannon?}{}{-7}{}{120}{}
+
+
+{40}{Donations are accepted, of course.}{Donations are accepted, of course.}{}{40}{}{}
+{41}{Here is 100 gold.}{}{1}{pc.money_get() >= 10000}{60}{game.global_vars[2] = game.global_vars[2] + 100;  pc.money_adj(-10000)}
+{42}{Here is 20 gold.}{}{1}{pc.money_get() >= 2000}{60}{game.global_vars[2] = game.global_vars[2] + 20; pc.money_adj(-2000)}
+{43}{Here is 5 gold.}{}{1}{pc.money_get() >= 500}{60}{game.global_vars[2] = game.global_vars[2] + 5; pc.money_adj(-500)}
+{44}{Here is 1 gold.}{}{1}{pc.money_get() >= 100}{60}{game.global_vars[2] = game.global_vars[2] + 1; pc.money_adj(-100)}
+{45}{I have no gold to spare.}{}{8}{}{70}{}
+{46}{Me got no gold.}{}{-7}{}{70}{}
+
+
+{50}{Those of the Old Faith seek a balance in all things. We tolerate all other religions and do not oppose their presence here.}{Those of the Old Faith seek a balance in all things. We tolerate all other religions and do not oppose their presence here.}{}{50}{}{}
+{51}{I have some questions about the Old Faith.}{}{8}{}{200}{}
+{52}{Me learn about Old Faith.}{}{-7}{}{200}{}
+{53}{K:}{}{1}{}{80}{}
+{54}{E:}{}{1}{}{0}{}
+
+
+{60}{Thank you, my son.}{Thank you, my daughter.}{}{60}{}{}
+{61}{I have some questions about the Old Faith.}{}{8}{}{200}{}
+{62}{Me learn about Old Faith.}{}{-7}{}{200}{}
+{63}{K:}{}{1}{}{80}{}
+{64}{E:}{}{1}{}{0}{}
+
+
+{70}{Perhaps in time your fortunes will change.}{Perhaps in time your fortunes will change.}{}{70}{}{}
+{71}{I have some questions about the Old Faith.}{}{8}{}{200}{}
+{72}{Me learn about Old Faith.}{}{-7}{}{200}{}
+{73}{K:}{}{1}{}{80}{}
+{74}{E:}{}{1}{}{0}{}
+
+
+{80}{How can I help you, my son?}{How can I help you, my daughter?}{}{80}{}{}
+{81}{Can you look at something I found?}{}{8}{pc.item_find( 3000 ) != OBJ_HANDLE_NULL or pc.item_find(5800) != OBJ_HANDLE_NULL}{160}{}
+{82}{Me find stuff. You look at it?}{}{-7}{pc.item_find( 3000 ) != OBJ_HANDLE_NULL or pc.item_find(5800) != OBJ_HANDLE_NULL}{160}{}
+{83}{I am in need of healing.}{}{8}{}{370}{}
+{84}{Me have ouchies.}{}{-7}{}{370}{}
+{85}{I would like to donate some gold.}{}{8}{}{40}{}
+{86}{Me want to give gold.}{}{-7}{}{40}{}
+{87}{I am trying to help Mytch the Miller.}{}{8}{game.global_flags[12] == 1 and game.quests[8].state == qs_accepted and game.global_flags[13] == 0}{240}{}
+{88}{Me helping miller!}{}{-7}{game.global_flags[12] == 1 and game.quests[8].state == qs_accepted and game.global_flags[13] == 0}{240}{}
+{89}{I've finally done it, Jaroo. I've got Terjon to agree to convert Marek, the carpenter's brother, to the Old Faith!}{}{8}{game.global_flags[17] == 1 and game.quests[5].state != qs_completed}{336}{}
+{90}{Terjon say it OK for carpet man brother to join you.}{}{-7}{game.global_flags[17] == 1 and game.quests[5].state != qs_completed}{336}{}
+{91}{I have some questions about the Old Faith.}{}{8}{}{200}{}
+{92}{Me learn about Old Faith.}{}{-7}{}{200}{}
+{93}{Why haven't you sent in your monthly report to Hrudek in the Gnarley Forest?}{}{8}{game.party_alignment == TRUE_NEUTRAL and game.global_flags[18] == 0}{318}{game.global_flags[18] = 1; game.global_flags[67] = 1}
+{94}{Hrudey wants report.}{}{-7}{game.party_alignment == TRUE_NEUTRAL and game.global_flags[18] == 0}{318}{game.global_flags[18] = 1; game.global_flags[67] = 1}
+{95}{Why don't you help Tarim with the Deklo Spiders?}{}{8}{game.quests[2].state == qs_mentioned}{920}{}
+{96}{Jaroo, do you mind if we kill the spiders that have infested the Deklo Grove?}{}{8}{game.quests[2].state == qs_accepted}{920}{}
+{97}{Jawoo care about Decklow spiders?}{}{-7}{game.quests[2].state == qs_mentioned or game.quests[2].state == qs_accepted}{920}{}
+{98}{E:}{}{1}{}{0}{}
+
+
+{100}{[Jaroo peers at the ring] Oh my, I believe that belongs to Jay, one of the local shepherds. Or more specifically, to his wife. But she died years ago. Wherever did you find it?}{[Jaroo peers at the ring] Oh my, I believe that belongs to Jay, one of the local shepherds. Or more specifically, to his wife. But she died years ago. Wherever did you find it?}{}{100}{}{game.quests[4].state = qs_mentioned}
+{101}{I found it at Emridy Meadows.}{}{8}{game.party_alignment & ALIGNMENT_EVIL != 0}{110}{}
+{102}{I found it in the Deklo grove.}{}{8}{game.party_alignment & ALIGNMENT_GOOD != 0}{110}{}
+{103}{I found it at the Moathouse.}{}{8}{game.party_alignment == LAWFUL_NEUTRAL or game.party_alignment == CHAOTIC_NEUTRAL or game.party_alignment == TRUE_NEUTRAL}{110}{}
+{104}{Does that really matter? I just wanted to know who owned it.}{}{8}{}{110}{}
+{105}{Me forget. Is that impotent?}{}{-7}{}{110}{}
+
+
+{110}{I am sure that Jay would reward you for its return. He lives to the northwest, across from the temple of St. Cuthbert.}{I am sure that Jay would reward you for its return. He lives to the northwest, across from the temple of St. Cuthbert.}{}{110}{}{}
+{111}{A:}{}{1}{}{80}{}
+{112}{E:}{}{1}{}{0}{}
+
+
+{120}{[Jaroo rocks back on his heels, laughing] Oh my! Terjon can be a very rigid thinker, but we get along in our own way. I miss the Canoness, however.}{[Jaroo rocks back on his heels, laughing] Oh my! Terjon can be a very rigid thinker, but we get along in our own way. I miss the Canoness, however.}{}{120}{}{}
+{121}{There was someone else in charge of the temple?}{}{8}{}{130}{}
+{122}{Cannon S? Huh?}{}{-7}{}{130}{}
+
+
+{130}{The Canoness Y'Dey left some time ago. I know not where she went, but she was a good deal more amenable than Terjon.}{The Canoness Y'Dey left some time ago. I know not where she went, but she was a good deal more amenable than Terjon.}{}{130}{}{}
+{131}{K:}{}{1}{}{80}{}
+{132}{E:}{}{1}{}{0}{}
+
+
+{140}{Yes, I could perform such a conversion.  But only with the consent of Terjon from the Church of St. Cuthbert.  There must remain a balance after all.}{Yes, I could perform such a conversion.  But only with the consent of Terjon from the Church of St. Cuthbert.  There must remain a balance after all.}{}{140}{}{game.global_flags[23] = 1}
+{141}{I have some more questions about the Old Faith.}{}{8}{}{200}{}
+{142}{Me want know more about Old Fate.}{}{-7}{}{200}{}
+{143}{K:}{}{1}{}{80}{}
+{144}{E:}{}{1}{}{0}{}
+
+
+{150}{If you are meaning to ask if I can perform a conversion on Marek, the carpenter's brother, I'm sure that can be arranged.  Since he currently worships St. Cuthbert, though, I would require the consent of Terjon at the Church of St. Cuthbert.}{If you are meaning to ask if I can perform a conversion on Marek, the carpenter's brother, I'm sure that can be arranged.  Since he currently worships St. Cuthbert, though, I would require the consent of Terjon at the Church of St. Cuthbert.}{}{150}{}{game.global_flags[23] = 1}
+{151}{I have some more questions about the Old Faith.}{}{8}{}{200}{}
+{152}{Me want know more about Old Fate.}{}{-7}{}{200}{}
+{153}{K:}{}{1}{}{80}{}
+{154}{E:}{}{1}{}{0}{}
+
+
+{160}{I will certainly try to help you, son. Please let me see the item in question.}{I will certainly try to help you, daughter. Please let me see the item in question.}{}{160}{}{}
+{161}{[You show him the gold ring] Do you know who owns this ring?}{}{8}{pc.item_find( 3000 ) != OBJ_HANDLE_NULL}{100}{}
+{162}{[You show him the gold ring] Me find this purdy ring!}{}{-7}{pc.item_find( 3000 ) != OBJ_HANDLE_NULL}{100}{}
+{163}{[You show him the plant from Black Jay's property] What kind of plant is this?}{}{8}{pc.item_find(5800) != OBJ_HANDLE_NULL and game.global_flags[3] == 0}{170}{}
+{164}{[You show him the plant from Black Jay's property] What be this? A shrubbery?}{}{-7}{pc.item_find(5800) != OBJ_HANDLE_NULL and game.global_flags[3] == 0}{170}{}
+{165}{F:}{}{1}{}{80}{}
+
+
+{170}{Great mother! This is hemlock! It is very poisonous. You will need to be careful with it.}{Great mother! This is hemlock! It is very poisonous. You will need to be careful with it.}{}{170}{}{game.global_flags[3] = 1}
+{171}{I found this on Black Jay's fields.}{}{8}{}{180}{}
+{172}{OK, thanks. That's what I needed to know.}{}{8}{}{80}{}
+{173}{Me find near Black Jay's house.}{}{-7}{}{180}{}
+{174}{A:}{}{-7}{}{80}{}
+
+
+{180}{Impossible! I check the local fields regularly for such infestation.}{Impossible! I check the local fields regularly for such infestation.}{}{180}{}{}
+{181}{Oh, it wasn't growing there. It was uprooted elsewhere and left there.}{}{8}{}{190}{}
+{182}{It not planted. It just lying there.}{}{-7}{}{190}{}
+
+
+{190}{That is most disturbing. Why would someone do such a thing?}{That is most disturbing. Why would someone do such a thing?}{}{190}{}{}
+{191}{I don't know, but I aim to find out. Black Jay's sheep are being slaughtered.}{}{8}{game.quests[3].state == qs_accepted}{60}{}
+{192}{I don't know. I will talk to Black Jay.}{}{8}{game.quests[3].state <= qs_mentioned}{60}{}
+{193}{Me checking for Black Jay. His sheep die from this.}{}{-7}{game.quests[3].state == qs_accepted}{60}{}
+{194}{Me no know. Me ask Black Jay.}{}{-7}{game.quests[3].state <= qs_mentioned}{60}{}
+
+
+{200}{Yes, my son. What is it you would know?}{Yes, daughter. What is it you would know?}{}{200}{}{}
+{201}{What is the Old Faith?}{}{8}{}{210}{}
+{202}{Which god do you worship?}{}{8}{}{220}{}
+{203}{What Old Fate?}{}{-7}{}{210}{}
+{204}{Within the Old Faith, would one full year be enough to properly mourn a lost spouse?}{}{8}{( game.quests[6].state == qs_mentioned or game.quests[6].state == qs_accepted ) and game.global_flags[10] == 1}{230}{}
+{205}{One year crying time enough for dead wife?}{}{-7}{( game.quests[6].state == qs_mentioned or game.quests[6].state == qs_accepted ) and game.global_flags[10] == 1}{230}{}
+{206}{Can you perform a conversion to the Old Faith from St. Cuthbert?}{}{8}{game.quests[5].state == qs_accepted}{140}{}
+{207}{Carpenter brother join you?}{}{-7}{game.quests[5].state == qs_accepted}{150}{}
+{208}{K:}{}{1}{}{80}{}
+
+
+{210}{Oerth's natural fertility has inspired our devotion. Our druidical order was derived from the ancients and has evolved into a natural state of unity promoting the prosperity of the entire world.}{Oerth's natural fertility has inspired our devotion. Our druidical order was derived from the ancients and has evolved into a natural state of unity promoting the prosperity of the entire world.}{}{210}{}{}
+{211}{I have some more questions about the Old Faith.}{}{8}{}{200}{}
+{212}{Me want know more about Old Fate.}{}{-7}{}{200}{}
+{213}{K:}{}{1}{}{80}{}
+{214}{E:}{}{1}{}{0}{}
+
+
+{220}{We worship Beory, mother goddess of Oerth and manifestation of the will of Oerth itself.}{We worship Beory, mother goddess of Oerth and manifestation of the will of Oerth itself.}{}{220}{}{}
+{221}{I have some more questions about the Old Faith.}{}{8}{}{200}{}
+{222}{Me want know more about Old Fate.}{}{-7}{}{200}{}
+{223}{K:}{}{1}{}{80}{}
+{224}{E:}{}{1}{}{0}{}
+
+
+{230}{Yes. The Old Faith requires one year of mourning for a lost spouse, but after that time it is permissible, if not encouraged, to court again.}{Yes. The Old Faith requires one year of mourning for a lost spouse, but after that time it is permissible, if not encouraged, to court again.}{}{230}{}{game.global_flags[8] = 1}
+{231}{I have some more questions about the Old Faith.}{}{8}{}{200}{}
+{232}{Me want know more about Old Fate.}{}{-7}{}{200}{}
+{233}{K:}{}{1}{}{80}{}
+{234}{E:}{}{1}{}{0}{}
+
+
+{240}{How kind of you, my son. What is the miller's problem?}{How kind of you, my daughter. What is the miller's problem?}{}{240}{}{}
+{241}{He would like to donate flour to the church of St. Cuthbert.}{}{8}{}{250}{}
+{242}{He wanna give flowers to the church!}{}{-7}{}{290}{}
+
+
+{250}{I see. And does he lack the grain?}{I see. And does he lack the grain?}{}{250}{}{}
+{251}{No, he is worried what you would think, him being Old Faith and all.}{}{8}{}{260}{}
+
+
+{260}{I see. That is quite the dilemma. He has plenty of grain, you say?}{I see. That is quite the dilemma. He has plenty of grain, you say?}{}{260}{}{}
+{261}{Yes. He could give some to you, too!}{}{8}{pc.skill_level_get(npc,skill_diplomacy) >= 6}{270}{}
+{262}{He sure does.}{}{8}{}{280}{}
+
+
+{270}{What a marvellous idea, my son! Please tell the miller he may donate to both parties, with my blessing.}{What a marvellous idea, my daughter! Please tell the miller he may donate to both parties, with my blessing.}{}{270}{}{game.global_flags[13] = 1}
+{271}{Thanks, Jaroo. Good bye.}{}{8}{}{0}{}
+
+
+{280}{Tell Mytch that I am sorry, but I do not see a solution to his predicament at this time.}{Tell Mytch that I am sorry, but I do not see a solution to his predicament at this time.}{}{280}{}{}
+{281}{I have some more questions about the Old Faith.}{}{8}{}{200}{}
+{282}{Me want know more about Old Fate.}{}{-7}{}{200}{}
+{283}{K:}{}{1}{}{80}{}
+{284}{E:}{}{1}{}{0}{}
+
+
+{290}{Flowers? I don't understand, my son.}{Flowers? I don't understand, my daughter.}{}{290}{}{}
+{291}{Flowers! You know, he makes that! And Calmert needs it!}{}{-7}{}{300}{}
+
+
+{300}{Oh, you mean flour! He wants to donate some to the church? And he doesn't have enough?}{Oh, you mean flour! He wants to donate some to the church? And he doesn't have enough?}{}{300}{}{}
+{301}{No, he gots lots. But he worried about you.}{}{-7}{}{310}{}
+
+
+{310}{Oh, my son, the miller should not worry. Just tell him to give some flour to the church and to me, and balance will be maintained.}{Oh, my daughter, the miller should not worry. Just tell him to give some flour to the church and to me, and balance will be maintained.}{}{310}{}{game.global_flags[13] = 1}
+{311}{Yay! Flowers for everyone! Me go tell him!}{}{-7}{}{0}{}
+
+
+{318}{Ah yes. There has been a recent increase in bandit activity in the area. I was hoping to research this further before sending in my report.}{Ah yes. There has been a recent increase in bandit activity in the area. I was hoping to research this further before sending in my report.}{}{318}{}{}
+{319}{He seemed pretty worried. I think you should send it along soon.}{}{8}{}{323}{}
+{320}{You send Hrudey report.}{}{-7}{}{323}{}
+
+
+{323}{Perhaps you can help me then. Nearby here is an old Moathouse. It has been the source of bandit activity in the past and it may be so again now. Please investigate the Moathouse for me, and report back what you find.}{Perhaps you can help me then. Nearby here is an old Moathouse. It has been the source of bandit activity in the past and it may be so again now. Please investigate the Moathouse for me, and report back what you find.}{}{323}{}{game.areas[2] = 1; game.story_state = 1; game.quests[72].state = qs_mentioned}
+{324}{Yes Jaroo. I shall find the source of this imbalance. [travel immediately to moathouse]}{}{8}{}{0}{game.quests[72].state = qs_accepted; game.global_vars[562] = 4; game.worldmap_travel_by_dialog(2)}
+{325}{Me go check it out. [travel immediately to moathouse]}{}{-7}{}{0}{game.quests[72].state = qs_accepted; game.global_vars[562] = 4; game.worldmap_travel_by_dialog(2)}
+{326}{Okay, but I have some more questions for you first.}{}{8}{}{80}{game.quests[72].state = qs_accepted; game.global_vars[562] = 4}
+{327}{Me ask something else first.}{}{-7}{}{80}{game.quests[72].state = qs_accepted; game.global_vars[562] = 4}
+{328}{N:}{}{1}{}{0}{}
+
+
+{336}{Then perhaps he has seen the wisdom in balance. I shall make the arrangements with Marek as soon as possible. Thank you, @pcname@.}{Then perhaps he has seen the wisdom in balance. I shall make the arrangements with Marek as soon as possible. Thank you, @pcname@.}{}{336}{}{game.quests[5].state = qs_completed}
+{337}{K:}{}{1}{}{80}{}
+{338}{E:}{}{1}{}{0}{}
+
+
+{346}{That is good, my son. I shall send a report to Hrudek tomorrow. But I fear there may yet be more disturbance in the area. When the Temple of Elemental Evil was destroyed ten years ago, I'm afraid some of it remained intact.}{That is good, my daughter. I shall send a report to Hrudek tomorrow. But I fear there may yet be more disturbance in the area. When the Temple of Elemental Evil was destroyed ten years ago, I'm afraid some of it remained intact.}{}{346}{}{game.quests[26].state = qs_completed; game.quests[72].state = qs_completed; game.global_vars[562] = 6}
+{347}{Yes, go on.}{}{8}{}{349}{}
+{348}{Go on.}{}{-7}{}{349}{}
+
+
+{349}{At the time, I urged the invaders to seal off the lower levels and let it be, that enough had been done to the balance, and that it was over. They took my advice, but perhaps I was hasty in my evaluation.}{At the time, I urged the invaders to seal off the lower levels and let it be, that enough had been done to the balance, and that it was over. They took my advice, but perhaps I was hasty in my evaluation.}{}{349}{}{}
+{350}{Hasty?}{}{8}{}{352}{}
+{351}{Tasty? Yes, me getting hungry!}{}{-7}{}{352}{}
+
+
+{352}{I think there is something down there. Something terrifying. Something that seeks to unbalance the world. I fear the day is near at hand, when it will come forth once again. And that Nulb will once again thrive.}{I think there is something down there. Something terrifying. Something that seeks to unbalance the world. I fear the day is near at hand, when it will come forth once again. And that Nulb will once again thrive.}{}{352}{}{}
+{353}{Ah yes. I know where Nulb is. I think I shall have to investigate it further. Thanks, Jaroo.}{}{8}{game.areas[3] == 1}{0}{}
+{354}{Me go check out Nulb-place.}{}{-7}{game.areas[3] == 1}{0}{}
+{355}{Nulb? Where is that?}{}{8}{game.areas[3] == 0}{358}{}
+{356}{Me not hear of Bulb.}{}{-7}{game.areas[3] == 0}{358}{}
+
+
+{358}{Nulb was a once-thriving town of evil. With the destruction of the Temple of Elemental Evil ten years ago, it is falling to ruin. If your path lies to the Temple, then you must go through Nulb. I shall mark it on your map here.}{Nulb was a once-thriving town of evil. With the destruction of the Temple of Elemental Evil ten years ago, it is falling to ruin. If your path lies to the Temple, then you must go through Nulb. I shall mark it on your map here.}{}{358}{}{game.areas[3] = 1; game.story_state = 3}
+{359}{I will travel there at once. [travel immediately to Nulb]}{}{8}{}{0}{game.worldmap_travel_by_dialog(3)}
+{360}{Me go to Bulb now. [travel immediately to Nulb]}{}{-7}{}{0}{game.worldmap_travel_by_dialog(3)}
+{361}{Thanks, Jaroo. Good bye.}{}{8}{}{0}{}
+{362}{Bye bye.}{}{-7}{}{0}{}
+
+
+{370}{What are your healing needs, my son?}{What are your healing needs, my daughter?}{}{370}{}{}
+{371}{I need to raise a companion from the dead.}{}{8}{}{550}{}
+{372}{I need to Remove Disease.}{}{8}{game.global_vars[2] >= 100}{390}{}
+{373}{I need to Neutralize Poison.}{}{8}{game.global_vars[2] >= 100}{410}{}
+{374}{I need to cure some wounds.}{}{8}{game.global_vars[2] >= 100}{430}{}
+{375}{Bring back dead guy?}{}{-7}{}{550}{}
+{376}{Get rid of disease.}{}{-7}{game.global_vars[2] >= 100}{390}{}
+{377}{No more poison.}{}{-7}{game.global_vars[2] >= 100}{410}{}
+{378}{Fix ouchie.}{}{-7}{game.global_vars[2] >= 100}{430}{}
+{379}{I need to Remove Disease.}{}{8}{game.global_vars[2] <= 99}{470}{}
+{380}{I need to Neutralize Poison.}{}{8}{game.global_vars[2] <= 99}{490}{}
+{381}{I need to cure some wounds.}{}{8}{game.global_vars[2] <= 99}{510}{}
+{382}{Get rid of disease.}{}{-7}{game.global_vars[2] <= 99}{470}{}
+{383}{No more poison.}{}{-7}{game.global_vars[2] <= 99}{490}{}
+{384}{Fix ouchie.}{}{-7}{game.global_vars[2] <= 99}{510}{}
+{385}{I have contracted a strange affliction while adventuring.}{}{8}{game.story_state >= 1}{950}{}
+{386}{Problems.}{}{-7}{game.story_state >= 1}{950}{}
+{387}{E:}{}{1}{}{0}{}
+
+
+{390}{Who will be in need of the Remove Disease?}{Who will be in need of the Remove Disease?}{}{390}{}{game.picker( npc, spell_remove_disease, should_heal_disease_on, [ 450, 370, 400 ] )}
+{391}{}{}{}{}{}{}
+
+
+{400}{The cost to Remove Disease will be 210 gold pieces.}{The cost to Remove Disease will be 210 gold pieces.}{}{400}{}{}
+{401}{OK. Here it is.}{}{8}{pc.money_get() >= 21000}{405}{pc.money_adj(-21000); npc.cast_spell( spell_remove_disease, picker_obj )}
+{402}{I will have to come back later.}{}{8}{}{0}{}
+{403}{Me pay now.}{}{-7}{pc.money_get() >= 21000}{405}{pc.money_adj(-21000); npc.cast_spell( spell_remove_disease, picker_obj )}
+{404}{Not have money. Me go.}{}{-7}{}{0}{}
+
+
+{405}{It is done.}{It is done.}{}{405}{}{npc.spells_pending_to_memorized()}
+{406}{I am in need of more healing.}{}{8}{}{370}{}
+{407}{Need more.}{}{-7}{}{370}{}
+{408}{Thanks, Jaroo. Good bye.}{}{8}{}{0}{}
+{409}{Bye.}{}{-7}{}{0}{}
+
+
+{410}{Who will be in need of the Neutralize Poison?}{Who will be in need of the Neutralize Poison?}{}{410}{}{game.picker( npc, spell_neutralize_poison, should_heal_poison_on, [ 450, 370, 420 ] )}
+{411}{}{}{}{}{}{}
+
+
+{420}{The cost to Neutralize Poison will be 210 gold pieces.}{The cost to Neutralize Poison will be 210 gold pieces.}{}{}{}{}
+{421}{OK. Here it is.}{}{8}{pc.money_get() >= 21000}{405}{pc.money_adj(-21000); npc.cast_spell( spell_neutralize_poison, picker_obj )}
+{422}{I will have to come back later.}{}{8}{}{0}{}
+{423}{Me pay now.}{}{-7}{pc.money_get() >= 21000}{405}{pc.money_adj(-21000); npc.cast_spell( spell_neutralize_poison, picker_obj )}
+{424}{Not have money. Me go.}{}{-7}{}{0}{}
+
+
+{430}{Are your wounds serious or light?}{Are your wounds serious or light?}{}{430}{}{}
+{431}{Light.}{}{1}{}{434}{}
+{432}{Serious.}{}{1}{}{460}{}
+
+
+{434}{Who will be in need of the Cure Light Wounds?}{Who will be in need of the Cure Light Wounds?}{}{434}{}{game.picker( npc, spell_cure_light_wounds, should_heal_hp_on, [ 450, 370, 436 ] )}
+{435}{}{}{}{}{}{}
+
+
+{436}{The cost to Cure Light Wounds will be 70 gold pieces.}{The cost to Cure Light Wounds will be 70 gold pieces.}{}{436}{}{}
+{437}{OK. Here it is.}{}{8}{pc.money_get() >= 7000}{405}{pc.money_adj(-7000); npc.cast_spell( spell_cure_light_wounds, picker_obj )}
+{438}{I will have to come back later.}{}{8}{}{0}{}
+{439}{Me pay now.}{}{-7}{pc.money_get() >= 7000}{405}{pc.money_adj(-7000); npc.cast_spell( spell_cure_light_wounds, picker_obj )}
+{440}{Not have money. Me go.}{}{-7}{}{0}{}
+
+
+{450}{That person does not require this healing at this time.}{That person does not require this healing at this time.}{}{450}{}{}
+{451}{I am in need of more healing.}{}{8}{}{370}{}
+{452}{Need more.}{}{-7}{}{370}{}
+{453}{Thanks, Jaroo. Good bye.}{}{8}{}{0}{}
+{454}{Bye.}{}{-7}{}{0}{}
+
+
+{460}{Who will be in need of the Cure Serious Wounds?}{Who will be in need of the Cure Serious Wounds?}{}{460}{}{game.picker( npc, spell_cure_serious_wounds, should_heal_hp_on, [ 450, 370, 462 ] )}
+{461}{}{}{}{}{}{}
+
+
+{462}{The cost to Cure Serious Wounds will be 300 gold pieces.}{The cost to Cure Serious Wounds will be 300 gold pieces.}{}{462}{}{}
+{463}{OK. Here it is.}{}{8}{pc.money_get() >= 30000}{405}{pc.money_adj(-30000); npc.cast_spell( spell_cure_serious_wounds, picker_obj )}
+{464}{I will have to come back later.}{}{8}{}{0}{}
+{465}{Me pay now.}{}{-7}{pc.money_get() >= 30000}{405}{pc.money_adj(-30000); npc.cast_spell( spell_cure_serious_wounds, picker_obj )}
+{466}{Not have money. Me go.}{}{-7}{}{0}{}
+
+
+{470}{Who will be in need of the Remove Disease?}{Who will be in need of the Remove Disease?}{}{470}{}{game.picker( npc, spell_remove_disease, should_heal_disease_on, [ 450, 370, 480 ] )}
+{471}{}{}{}{}{}{}
+
+
+{480}{The cost to Remove Disease will be 250 gold pieces.}{The cost to Remove Disease will be 250 gold pieces.}{}{480}{}{}
+{481}{OK. Here it is.}{}{8}{pc.money_get() >= 25000}{485}{pc.money_adj(-25000); npc.cast_spell( spell_remove_disease, picker_obj )}
+{482}{I will have to come back later.}{}{8}{}{0}{}
+{483}{Me pay now.}{}{-7}{pc.money_get() >= 25000}{485}{pc.money_adj(-25000); npc.cast_spell( spell_remove_disease, picker_obj )}
+{484}{Not have money. Me go.}{}{-7}{}{0}{}
+
+
+{485}{It is done.}{It is done.}{}{485}{}{npc.spells_pending_to_memorized()}
+{486}{I am in need of more healing.}{}{8}{}{370}{}
+{487}{Need more.}{}{-7}{}{370}{}
+{488}{Thanks, Jaroo. Good bye.}{}{8}{}{0}{}
+{489}{Bye.}{}{-7}{}{0}{}
+
+
+{490}{Who will be in need of the Neutralize Poison?}{Who will be in need of the Neutralize Poison?}{}{490}{}{game.picker( npc, spell_neutralize_poison, should_heal_poison_on, [ 450, 370, 500 ] )}
+{491}{}{}{}{}{}{}
+
+
+{500}{The cost to Neutralize Poison will be 250 gold pieces.}{The cost to Neutralize Poison will be 250 gold pieces.}{}{500}{}{}
+{501}{OK. Here it is.}{}{8}{pc.money_get() >= 25000}{485}{pc.money_adj(-25000); npc.cast_spell( spell_neutralize_poison, picker_obj )}
+{502}{I will have to come back later.}{}{8}{}{0}{}
+{503}{Me pay now.}{}{-7}{pc.money_get() >= 25000}{485}{pc.money_adj(-25000); npc.cast_spell( spell_neutralize_poison, picker_obj )}
+{504}{Not have money. Me go.}{}{-7}{}{0}{}
+
+
+{510}{Are your wounds serious or light?}{Are your wounds serious or light?}{}{510}{}{}
+{511}{Light.}{}{1}{}{514}{}
+{512}{Serious.}{}{1}{}{540}{}
+
+
+{514}{Who will be in need of the Cure Light Wounds?}{Who will be in need of the Cure Light Wounds?}{}{514}{}{game.picker( npc, spell_cure_light_wounds, should_heal_hp_on, [ 450, 370, 516 ] )}
+{515}{}{}{}{}{}{}
+
+
+{516}{The cost to Cure Light Wounds will be 100 gold pieces.}{The cost to Cure Light Wounds will be 100 gold pieces.}{}{516}{}{}
+{517}{OK. Here it is.}{}{8}{pc.money_get() >= 10000}{485}{pc.money_adj(-10000); npc.cast_spell( spell_cure_light_wounds, picker_obj )}
+{518}{I will have to come back later.}{}{8}{}{0}{}
+{519}{Me pay now.}{}{-7}{pc.money_get() >= 10000}{485}{pc.money_adj(-10000); npc.cast_spell( spell_cure_light_wounds, picker_obj )}
+{520}{Not have money. Me go.}{}{-7}{}{0}{}
+
+
+{530}{That person does not require this healing at this time.}{That person does not require this healing at this time.}{}{530}{}{}
+{531}{I am in need of more healing.}{}{8}{}{450}{}
+{532}{Need more.}{}{-7}{}{450}{}
+{533}{Thanks, Jaroo. Good bye.}{}{8}{}{0}{}
+{534}{Bye.}{}{-7}{}{0}{}
+
+
+{540}{Who will be in need of the Cure Serious Wounds?}{Who will be in need of the Cure Serious Wounds?}{}{540}{}{game.picker( npc, spell_cure_serious_wounds, should_heal_hp_on, [ 450, 370, 542 ] )}
+{541}{}{}{}{}{}{}
+
+
+{542}{The cost to Cure Serious Wounds will be 350 gold pieces.}{The cost to Cure Serious Wounds will be 350 gold pieces.}{}{542}{}{}
+{543}{OK. Here it is.}{}{8}{pc.money_get() >= 35000}{485}{pc.money_adj(-35000); npc.cast_spell( spell_cure_serious_wounds, picker_obj )}
+{544}{I will have to come back later.}{}{8}{}{0}{}
+{545}{Me pay now.}{}{-7}{pc.money_get() >= 35000}{485}{pc.money_adj(-35000); npc.cast_spell( spell_cure_serious_wounds, picker_obj )}
+{546}{Not have money. Me go.}{}{-7}{}{0}{}
+
+
+{550}{I am able to Reincarnate for a price, however, I cannot guarantee the person will return as the same race. Would you like to continue?}{I am able to Reincarnate for a price, however, I cannot guarantee the person will return as the same race. Would you like to continue?}{}{550}{}{}
+{551}{Yes, I would like a Reincarnation, please.}{}{8}{game.global_vars[2] >= 100}{560}{}
+{552}{Me bring back friend from dead.}{}{-7}{game.global_vars[2] >= 100}{560}{}
+{553}{Yes, I would like a Reincarnation, please.}{}{8}{game.global_vars[2] <= 99}{570}{}
+{554}{Me bring back friend from dead.}{}{-7}{game.global_vars[2] <= 99}{570}{}
+{555}{N:}{}{1}{}{80}{}
+
+
+{560}{Who will be in need of the Reincarnation?}{Who will be in need of the Reincarnation?}{}{560}{}{game.picker( npc, spell_reincarnation, should_resurrect_on, [ 450, 370, 562 ] )}
+{561}{}{}{}{}{}{}
+
+
+{562}{The cost for a Reincarnation is 225 gold pieces.}{The cost for a Reincarnation is 225 gold pieces.}{}{562}{}{}
+{563}{OK. Here it is.}{}{8}{pc.money_get() >= 22500}{485}{pc.money_adj(-22500); npc.cast_spell( spell_reincarnation, picker_obj )}
+{564}{I will have to come back later.}{}{8}{}{0}{}
+{565}{Me pay now.}{}{-7}{pc.money_get() >= 22500}{485}{pc.money_adj(-22500); npc.cast_spell( spell_reincarnation, picker_obj )}
+{566}{Not have money. Me go.}{}{-7}{}{0}{}
+
+
+{570}{Who will be in need of the Reincarnation?}{Who will be in need of the Reincarnation?}{}{570}{}{game.picker( npc, spell_reincarnation, should_resurrect_on, [ 450, 370, 562 ] )}
+{571}{}{}{}{}{}{}
+
+
+{572}{The cost for a Reincarnation is 275 gold pieces.}{The cost for a Reincarnation is 275 gold pieces.}{}{572}{}{}
+{573}{OK. Here it is.}{}{8}{pc.money_get() >= 27500}{485}{pc.money_adj(-27500); npc.cast_spell( spell_reincarnation, picker_obj )}
+{574}{I will have to come back later.}{}{8}{}{0}{}
+{575}{Me pay now.}{}{-7}{pc.money_get() >= 27500}{485}{pc.money_adj(-27500); npc.cast_spell( spell_reincarnation, picker_obj )}
+{576}{Not have money. Me go.}{}{-7}{}{0}{}
+
+
+{580}{G:}{G:}{}{}{}{game.global_flags[1] = 1}
+{581}{What's being done to prepare for the Hextor invasion?}{}{1}{game.global_vars[501] == 2}{590}{}
+
+
+{590}{Everyone is welcome here in the Grove. Those with nowhere else to go may seek shelter here. We cannot fortify this building very well against prolonged attack, but we will trust in Beory to protect us. Will you lend your assistance, my son?}{Everyone is welcome here in the Grove. Those with nowhere else to go may seek shelter here. We cannot fortify this building very well against prolonged attack, but we will trust in Beory to protect us. Will you lend your assistance, my daughter?}{}{590}{}{}
+{591}{Yes, I'll be defending the town itself on the outside.}{}{1}{game.quests[97].state == qs_accepted}{610}{}
+{592}{No, I won't be involved.}{}{1}{game.quests[97].state != qs_accepted}{620}{}
+
+
+{600}{Yes, my son. What is it you would know?}{Yes, daughter. What is it you would know?}{}{}{}{}
+{601}{Tarim mentioned a Full Heal to cure her.}{}{8}{game.global_flags[855] == 0}{650}{}
+{602}{Fuel Heel make ouchi go bye-bye?}{}{-7}{game.global_flags[855] == 0}{650}{}
+{603}{Tarim mentioned a Full Heal to cure her.}{}{8}{game.global_flags[855] == 1}{670}{}
+{604}{Fuel Heel make ouchi go bye-bye?}{}{-7}{game.global_flags[855] == 1}{670}{}
+{605}{Why is Amii here?}{}{8}{}{700}{}
+{606}{Why she here?}{}{-7}{}{700}{}
+{607}{K:}{}{1}{}{80}{}
+{608}{E:}{}{1}{}{0}{}
+
+
+{610}{How kind of you, my son. Thank you.}{How kind of you, my daughter. Thank you.}{}{610}{}{}
+{611}{K:}{}{1}{}{80}{}
+{612}{E:}{}{1}{}{0}{}
+
+
+{620}{I see. That is quite the dilemma.}{I see. That is quite the dilemma.}{}{620}{}{}
+{621}{E:}{}{1}{}{0}{}
+
+
+{630}{Great mother!}{Great mother!}{}{630}{}{}
+{631}{I need healing.}{}{1}{}{640}{}
+{632}{E:}{}{1}{}{0}{}
+
+
+{640}{What are your healing needs, my son?}{What are your healing needs, my daughter?}{}{640}{}{}
+{641}{I need to raise someone from the dead.}{}{1}{game.global_vars[523] <= 1}{660}{}
+{642}{I need to raise someone from the dead.}{}{1}{game.global_vars[523] >= 2}{750}{}
+{643}{I need to cure some wounds.}{}{1}{game.global_vars[524] <= 3}{730}{}
+{644}{I need to cure some wounds.}{}{1}{game.global_vars[524] >= 4}{750}{}
+{645}{F:}{}{1}{}{0}{}
+
+
+{650}{I wish it were so. If a mere Healing spell would have cured her ailment then I would have healed her long ago. Believe me, I have tried everything within my power. Still, I have one path yet untried. Perhaps you could aid me in this endeavour?}{I wish it were so. If a mere Healing spell would have cured her ailment then I would have healed her long ago. Believe me, I have tried everything within my power. Still, I have one path yet untried. Perhaps you could aid me in this endeavour?}{}{}{}{}
+{651}{What can I do to help?}{}{8}{}{680}{game.global_flags[855] = 1}
+{652}{Me helps?}{}{-7}{}{680}{game.global_flags[855] = 1}
+{653}{K:}{}{1}{}{80}{}
+{654}{E:}{}{1}{}{0}{}
+
+
+{660}{Who will be in need of the Reincarnation?}{Who will be in need of the Reincarnation?}{}{660}{}{game.picker( npc, spell_reincarnation, should_resurrect_on, [ 690, 640, 710 ] )}
+{661}{}{}{}{}{}{}
+
+
+{670}{As I told you, if a mere Healing spell would have cured her ailment then I would have healed her long ago. The only thing left to try is the Swamp Lotus powder. For Amii's sake please seek out this flower!}{As I told you, if a mere Healing spell would have cured her ailment then I would have healed her long ago. The only thing left to try is the Swamp Lotus powder. For Amii's sake please seek out this flower!}{}{}{}{}
+{671}{K:}{}{1}{}{80}{}
+{672}{E:}{}{1}{}{0}{}
+
+
+{680}{I once read about a healing powder that can be made from Swamp Lotus. I believe that this powder will heal her. The problem of course is that I have not seen a Swamp Lotus in many, many moons. They have become quite rare. I fear too rare. If you manage to find one of these flowers then please bring it to me immediately!}{I once read about a healing powder that can be made from Swamp Lotus. I believe that this powder will heal her. The problem of course is that I have not seen a Swamp Lotus in many, many moons. They have become quite rare. I fear too rare. If you manage to find one of these flowers then please bring it to me immediately!}{}{}{}{}
+{681}{Okay, Jaroo, I will keep an eye out for this flower.}{}{8}{}{0}{}
+{682}{Me finds da flour!}{}{-7}{}{0}{}
+{683}{No thanks. The brat can die for all I care.}{}{8}{}{0}{amii_dies_due_to_dont_give_a_damn_dialog(npc,pc)}
+{684}{No. Me no cares.}{}{-7}{}{0}{amii_dies_due_to_dont_give_a_damn_dialog(npc,pc)}
+{685}{K:}{}{1}{}{80}{}
+{686}{E:}{}{1}{}{0}{}
+
+
+{690}{That person does not require this healing at this time.}{That person does not require this healing at this time.}{}{690}{}{}
+{691}{I need other healing.}{}{1}{}{640}{}
+{692}{F:}{}{1}{}{0}{}
+
+
+{700}{Tarim and Ganna have asked me to find a cure for Amii. She has been staying with me while I research her problem. Do not worry, @pcname@, her parents are often here visiting. Amii is loved by many. She is one of Beory's flock, as are we all.}{Tarim and Ganna have asked me to find a cure for Amii. She has been staying with me while I research her problem. Do not worry, @pcname@, her parents are often here visiting. Amii is loved by many. She is one of Beory's flock, as are we all.}{}{}{}{}
+{701}{Tarim mentioned a Full Heal to cure her.}{}{8}{game.global_flags[855] == 0}{650}{}
+{702}{Fuel Heel make ouchi go bye-bye?}{}{-7}{game.global_flags[855] == 0}{650}{}
+{703}{Tarim mentioned a Full Heal to cure her.}{}{8}{game.global_flags[855] == 1}{670}{}
+{704}{Fuel Heel make ouchi go bye-bye?}{}{-7}{game.global_flags[855] == 1}{670}{}
+{705}{K:}{}{1}{}{80}{}
+{706}{E:}{}{1}{}{0}{}
+
+
+{710}{Yes, my son.}{Yes, daughter.}{}{710}{}{game.global_vars[523] = game.global_vars[523] + 1}
+{711}{Let me have it.}{}{1}{}{720}{npc.cast_spell( spell_reincarnation, picker_obj )}
+
+
+{720}{It is done.}{It is done.}{}{720}{}{npc.spells_pending_to_memorized()}
+{721}{I need more healing.}{}{1}{}{640}{}
+{722}{A:}{}{1}{}{0}{}
+
+
+{730}{Who will be in need of the Cure Serious Wounds?}{Who will be in need of the Cure Serious Wounds?}{}{730}{}{game.picker( npc, spell_cure_serious_wounds, should_heal_hp_on, [ 690, 640, 740 ] )}
+{731}{}{}{}{}{}{}
+
+
+{740}{Yes, my son.}{Yes, daughter.}{}{740}{}{game.global_vars[524] = game.global_vars[524] + 1}
+{741}{Let me have it.}{}{1}{}{720}{npc.cast_spell( spell_cure_serious_wounds, picker_obj )}
+
+
+{750}{I'm sorry. I am unable to cast that spell again.}{I'm sorry. I am unable to cast that spell again.}{}{750}{}{}
+{751}{I need more healing.}{}{1}{}{640}{}
+{752}{A:}{}{1}{}{0}{}
+
+
+{800}{[studying the delicate flower] Praises to Beory! The Great Mother has once again chosen to share her bounty!}{[studying the delicate flower] Praises to Beory! The Great Mother has once again chosen to share her bounty!}{}{}{}{}
+{801}{Can you cure Amii now?}{}{8}{}{810}{}
+{802}{Ouchi go bye-bye now?}{}{-7}{}{810}{}
+{803}{How will you make the healing powder?}{}{8}{}{810}{}
+{804}{Will you need more? Is one flower enough?}{}{8}{}{810}{}
+{805}{Jawoo needs more flowers?}{}{-7}{}{810}{}
+
+
+{810}{No time for questions... I must work quickly. [Jaroo uses a stone pestle and mortar to grind the flower into a fine dust]}{No time for questions... I must work quickly. [Jaroo uses a stone pestle and mortar to grind the flower into a fine dust]}{}{}{}{}
+{811}{[wait]}{}{1}{}{820}{}
+
+
+{820}{Now to brew this dust into a tea... [Jaroo begins to brew tea in a jade tea pot that has been carved into the shape of an owlbear]}{Now to brew this dust into a tea... [Jaroo begins to brew tea in a jade tea pot that has been carved into the shape of an owlbear]}{}{}{}{}
+{821}{That tea pot is quite interesting looking.}{}{8}{}{830}{}
+{822}{Animal pot?}{}{-7}{}{830}{}
+{823}{[wait]}{}{1}{}{850}{}
+
+
+{830}{Ah, yes, this was a gift from a friend, my mentor actually. I am quite fond of it. Too often we forget that all creatures share Oerth's gift... even the heinous owlbear. It is important that we do not lose sight of the balance. It is so easy to view the world in black and white... good and evil... life is after all the greatest gift. All creatures have that in common.}{Ah, yes, this was a gift from a friend, my mentor actually. I am quite fond of it. Too often we forget that all creatures share Oerth's gift... even the heinous owlbear. It is important that we do not lose sight of the balance. It is so easy to view the world in black and white... good and evil... life is after all the greatest gift. All creatures have that in common.}{}{}{}{}
+{831}{I disagree. Evil should be destroyed at any cost! No mercy for the wicked!}{}{8}{}{850}{}
+{832}{Me like owebear meat. [licking lips]}{}{-7}{}{850}{}
+{833}{Life is cheap, Jaroo. The strong survive and the weak die.}{}{8}{}{850}{}
+{834}{What dat meen?}{}{-7}{}{850}{}
+{835}{Your mentor was a wise man, Jaroo.}{}{8}{}{850}{}
+{836}{Me can talk wit da animals. Dey me friends!}{}{-7}{}{850}{}
+{837}{[wait]}{}{1}{}{850}{}
+
+
+{850}{It is ready! Here Amii, drink this... [Amii trembles as she takes the steaming tea from Jaroo]}{It is ready! Here Amii, drink this... [Amii trembles as she takes the steaming tea from Jaroo]}{}{}{}{}
+{851}{[wait]}{}{1}{}{860}{}
+
+
+{860}{It is done. There is nothing more we can do... wait... Yes! I can sense a change. Amii, your life energy seems much stronger. It appears to be working! Run home girl! Your parents will be overjoyed to see you again! Rejoice in the gift of life!!}{It is done. There is nothing more we can do... wait... Yes! I can sense a change. Amii, your life energy seems much stronger. It appears to be working! Run home girl! Your parents will be overjoyed to see you again! Rejoice in the gift of life!!}{}{}{}{}
+{861}{[more]}{}{1}{}{870}{run_off(npc,pc)}
+
+
+{870}{Thank you @pcname@! You have done a great service today. May Beory watch over you as you have watched over Amii.}{Thank you @pcname@! You have done a great service today. May Beory watch over you as you have watched over Amii.}{}{}{}{}
+{871}{K:}{}{1}{}{80}{}
+{872}{E:}{}{1}{}{0}{}
+
+
+{900}{Sadly, she died. What else can be said? I was unable to find a cure for her... perhaps if you would have found the Swamp Lotus... she has rejoined the circle of life. Death waits for all of us sooner or later.}{Sadly, she died. What else can be said? I was unable to find a cure for her... perhaps if you would have found the Swamp Lotus... she has rejoined the circle of life. Death waits for all of us sooner or later.}{}{}{}{}
+{901}{K:}{}{1}{}{80}{}
+{902}{E:}{}{1}{}{0}{}
+
+
+{920}{Ah, yes, those spiders... I've been meaning to talk to Tarim about the situation. Normally they don't threaten the local hunters and woodsmen too much, but there has been an overpopulation this season. Too many spiders and not enough for them to eat.}{Ah, yes, those spiders... I've been meaning to talk to Tarim about the situation. Normally they don't threaten the local hunters and woodsmen too much, but there has been an overpopulation this season. Too many spiders and not enough for them to eat.}{}{}{}{}
+{921}{[more]}{}{1}{}{922}{}
+{922}{Balance needs to be restored. Could you help with this? Perhaps you could hunt down a few spiders? Everyone will be better off once the spider population is reduced to a normal level.}{Balance needs to be restored. Could you help with this? Perhaps you could hunt down a few spiders? Everyone will be better off once the spider population is reduced to a normal level.}{}{}{}{}
+{923}{Certainly, I'll get right on that.}{}{8}{}{0}{}
+{924}{Me hunts da spiders now.}{}{-7}{}{0}{}
+{925}{K:}{}{1}{}{80}{}
+{926}{E:}{}{1}{}{0}{}
+
+
+{950}{What is it?}{What is it?}{}{}{}{}
+{951}{A spell's aura remains long after it has ended.}{}{8}{}{1000}{}
+{952}{Secret passageways elude me, as though warded by an enchantment of antipathy.}{}{8}{}{970}{}
+{953}{Da spell is permanent.}{}{-7}{}{1000}{}
+{954}{Secret doors no show.}{}{-7}{}{970}{}
+
+
+{970}{Terrible. I can offer you relief, if you are sure about it. All secret doors shall be revealed to you.}{Terrible. I can offer you relief, if you are sure about it. All secret doors shall be revealed to you.}{}{}{}{}
+{971}{Y:}{}{8}{}{980}{game.global_vars[455] |= 2**7}
+{972}{F:}{}{8}{}{0}{}
+
+
+{980}{Very well. It is done.}{Very well. It is done.}{}{}{}{game.global_vars[455] |= 2**7}
+{981}{E:}{}{1}{}{0}{game.global_vars[455] |= 2**7}
+
+
+{1000}{Great Mother! That is most disturbing. I will certainly try to help you, son. Who will be in need?}{Great Mother! That is most disturbing. I will certainly try to help you, daughter. Who will be in need?}{}{}{}{game.picker( npc, spell_reincarnation, should_clear_spell_on, [ 1045, 370, 1562 ] )}
+{1001}{}{}{}{}{}{}
+
+
+{1045}{That person is already dead. You will need to pay for reincarnation.}{That person is already dead. You will need to pay for reincarnation.}{}{}{}{}
+{1046}{I am in need of more healing.}{}{8}{}{370}{}
+{1047}{Need more.}{}{-7}{}{370}{}
+{1048}{Thanks, Jaroo. Good bye.}{}{8}{}{0}{}
+{1049}{Bye.}{}{-7}{}{0}{}
+
+
+{1562}{I will do this free of cost.}{I will do this free of cost.}{}{}{}{ game.global_vars[753] = picker_obj.stat_level_get(stat_experience); kill_picked(picker_obj, npc) }
+{1563}{Okay, great.}{}{8}{}{1575}{}
+{1564}{Dat gud.}{}{-7}{}{1575}{}
+
+
+{1575}{It is done.}{It is done.}{}{}{}{ picker_obj.stat_base_set(stat_experience, game.global_vars[753]); npc.spells_pending_to_memorized() }
+{1576}{I am in need of more healing.}{}{8}{}{370}{}
+{1577}{Need more.}{}{-7}{}{370}{}
+{1578}{Thanks, Jaroo. Good bye.}{}{8}{}{0}{}
+{1579}{Bye.}{}{-7}{}{0}{}
+
+
+{4000}{This is not the time, friend.}{This is not the time, friend.}{}{}{}{}
+
+
+{10008}{Welcome, my son.}{Welcome, my daughter.}{}{}{}{}
+{10009}{Greetings, friend.}{Greetings, friend.}{}{}{}{}
+{10011}{Welcome back to the Grove.}{Welcome back to the Grove.}{}{}{}{}
+{10012}{Hello again.}{Hello again.}{}{}{}{}
+{10014}{It has been finished.}{It has been finished.}{}{}{}{}
+{10015}{Perhaps you should clothe yourself before entering this sacred place.}{Perhaps you should clothe yourself before entering this sacred place.}{}{}{}{}
+{10016}{Everyone is welcome here in the Grove.}{Everyone is welcome here in the Grove.}{}{}{}{}
+{10017}{Please make sure your friends do not get out of control here.}{Please make sure your friends do not get out of control here.}{}{}{}{}
+{10019}{Welcome, animal friend.}{Welcome, animal friend.}{}{}{}{}
+{10020}{You are all welcome here in the Grove.}{You are all welcome here in the Grove.}{}{}{}{}
+{10021}{Alas, I cannot find you. You have camouflaged yourself quite well.}{Alas, I cannot find you. You have camouflaged yourself quite well.}{}{}{}{}
+{11001}{Your reputation precedes you.}{Your reputation precedes you.}{}{}{}{}
+{11002}{The Grove provides sanctuary even to one of your sort.}{The Grove provides sanctuary even to one of your sort.}{}{}{}{}
+{11003}{Your welcome here in the Grove is wearing thin.}{Your welcome here in the Grove is wearing thin.}{}{}{}{}
+{11004}{You shall no longer find sanctuary here in the Grove.}{You shall no longer find sanctuary here in the Grove.}{}{}{}{}

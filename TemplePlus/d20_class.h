@@ -6,8 +6,6 @@
 #include "skill.h"
 #include "obj.h"
 
-//#include <EASTL/hash_map.h>
-
 
 enum BardicMusicSongType : int {
 	BM_INSPIRE_COURAGE = 1,
@@ -79,8 +77,10 @@ struct D20ClassSpec {
 	SpellReadyingType spellMemorizationType;
 	SpellSourceType spellSourceType;
 	std::map<int, std::vector<int>> spellsPerDay; // index is class level, vector enumerates spells per day for each spell level
+	std::vector<int> casterLvl; // index is class level, value is basic caster level
 	Stat spellStat; // stat that determines maximum spell level
 	Stat spellDcStat = Stat::stat_strength; // stat that determines spell DC level
+	bool hasArmoredArcaneCasterFeature;
 };
 
 class D20ClassSystem : temple::AddressTable
@@ -100,7 +100,7 @@ public:
 	bool IsNaturalCastingClass(Stat classEnum, objHndl handle = objHndl::null);
 	bool IsNaturalCastingClass(uint32_t classEnum);
 	bool IsVancianCastingClass(Stat classEnum, objHndl handle = objHndl::null);
-	bool IsCastingClass(Stat classEnum);
+	bool IsCastingClass(Stat classEnum, bool includeExtenders = false);
 	bool HasSpellList(Stat classEnum); // does this class have its own spell list? (as opposed to extending another's like Mystic Theurge does), e.g. Blackguard, Assassin
 	bool IsLateCastingClass(Stat classEnum); // for classes like Ranger / Paladin that start casting on level 4
 	bool IsArcaneCastingClass(Stat stat, objHndl handle = objHndl::null); // classes who list SpellSourceType as Arcane; this is mostly used to retrieve spell properties, so Mystic Theurges need not apply since they don't have an independent spell list
@@ -110,6 +110,8 @@ public:
 	Stat GetSpellDcStat(Stat classEnum); // default - same as GetSpellStat
 	Stat GetDeityClass(Stat classEnum); // get effective class for deity selection
 	int GetMaxSpellLevel(Stat classEnum, int characterLvl);
+	int GetCasterLevel(Stat classEnum, int classLvl);
+	int GetMinCasterLevelForSpellLevel(Stat classEnum, int spellLevel);
 	std::string GetSpellCastingCondition(Stat classEnum);
 
 	void ClassPacketAlloc(ClassPacket *classPkt); // allocates the three IdxTables within ClassPacket
@@ -119,7 +121,10 @@ public:
 	bool IsSaveFavoredForClass(Stat classCode, int saveType);
 	int GetSkillPts(Stat classEnum);
 	int GetClassHitDice(Stat classEnum);
+	bool HasArmoredArcaneCasterFeature(Stat classCode);
+	const std::vector<Stat> &GetArmoredArcaneCasterFeatureClasses();
 	
+	int GetClassEnum(const std::string &s); // gets class enum from string (based on Class Condition). Case insensitive.
 
 	const char* GetClassShortHelp(Stat classCode);
 	std::string &GetClassHelpTopic(Stat classEnum); // the TAG_XXX help ID
@@ -178,10 +183,11 @@ public:
 	bool IsSelectingSpellsOnLevelup(objHndl handle, Stat classEnum);
 	void LevelupInitSpellSelection(objHndl handle, Stat classEnum, int classLvlNew = -1, int classLvlIncrease = 1);
 	bool LevelupSpellsCheckComplete(objHndl handle, Stat classEnum);
-	void LevelupSpellsFinalize(objHndl handle, Stat classEnum, int classLvlNew = -1);
+	void LevelupSpellsFinalize(objHndl handle, Stat classEnum, int classLvlNew = -1); // called with default arg (-1) for when the class isn't new. So the PRCs with args denoting chosen base classes won't get a classLvlNew arg (e.g. see Mystic Theurge which expects different args)
 	
 protected:
 	std::map<int, D20ClassSpec> classSpecs;
+	std::vector<Stat> armoredArcaneCasterFeatureClasses;
 };
 
 extern D20ClassSystem d20ClassSys;

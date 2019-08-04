@@ -26,7 +26,7 @@ static int PyGlobalVars_SetItem(PyObject *, Py_ssize_t index, PyObject *item) {
 		PyErr_Format(PyExc_IndexError, "Global variable index %d is out of range.", index);
 		return -1;
 	}
-	if (!PyInt_Check(item)) {
+	if (! (PyInt_Check(item) || PyLong_Check(item)) ){
 		PyErr_SetString(PyExc_ValueError, "Can only set integer values as global variable.");
 		return -1;
 	}

@@ -40,16 +40,19 @@ struct TemplePlusConfig
 	bool windowed = false;
 	bool d3dDebug = false; // Enables D3D11 debugging
 	bool lockCursor = true; // When in fullscreen, lock cursor
+	bool windowedLockCursor = false; // lock cursor anyway
 	int windowWidth = 1024;
 	int windowHeight = 768;
 	int renderWidth = 800; // will set to window size on first run
 	int renderHeight = 600;
+	bool upscaleLinearFiltering = true;
 	std::wstring toeeDir;
 	int sectorCacheSize = 128; // Default is now 128 (ToEE was 16)
 	int screenshotQuality = 80; // 1-100, Default is 80
 	bool debugPartSys = false;
 	bool debugClipping = true;
 	bool drawObjCylinders = false;
+	bool newAnimSystem = false;
 
 	bool autoUpdate = true;
 	std::string autoUpdateFeed = "https://templeplus.org/update-feeds/stable/";
@@ -64,25 +67,40 @@ struct TemplePlusConfig
 	bool featPrereqWarnings = false;
 	bool spellAlreadyKnownWarnings = false;
 
-	// gameplay
+	// gameplay 
 	// double randomEncounterExperienceFactor = 0.7; // an additional factor; e.g. if the normal Experience Multiplier is 0.7 and this is 0.7, overall is 0.49 NOT YET IMPLEMENTED
+	bool dungeonMaster = false;
 	bool newFeatureTestMode = true;
 	bool NPCsLevelLikePCs = true;
 	bool showNpcStats = false;
 	bool showExactHPforNPCs = false; // draw exact HP for NPCs
 	int pointBuyPoints = 25; // number of Point Buy points at chargen
 	uint32_t maxPCs = 5; // max number of PCs in the party
-	bool maxPCsFlexible = true; // makes the party PC/NPC composition fluid
+	bool maxPCsFlexible = false; // makes the party PC/NPC composition fluid
 	uint32_t maxLevel = 10; // maximum character level
 	std::string hpOnLevelup = "Normal" ;
+	bool maxHpForNpcHitdice = false;
 	bool allowXpOverflow = false;
 	bool slowerLevelling = false;
-	bool laxRules = false; // Relaxed restrictions for various things
+	bool laxRules = false; // Relaxed restrictions for various things; this also acts as a master switch
+	bool disableMulticlassXpPenalty = false;
+	bool disableCraftingSpellReqs = false;
+	bool showTargetingCirclesInFogOfWar = false;
+	bool disableAlignmentRestrictions = false;
+	bool disableDoorRelocking = false;
 	bool newClasses = false; // Prestige classes and such
+	bool newRaces = false; // Drow etc.
+	bool monstrousRaces = false; // monstrous races. unbalanced as hell ><
+	bool forgottenRealmsRaces = false;  //Races from the forgotten realms campaign setting (Gold Dwarf, Genasi, ...)
 	bool nonCoreMaterials = false; // splatbooks, fan suggestions etc
 	bool tolerantNpcs = false; // NPCs tolerate monster party members
 	std::string fogOfWar = "Normal";
 	bool disableFogOfWar = false; // Previously: -nofog
+	double speedupFactor = 1.0;
+	bool equalizeMoveSpeed = true;
+	bool fastSneakAnim = false;
+	bool alertAiThroughDoors = false;
+	int walkDistanceFt = 0;
 
 	std::unordered_map<std::string, VanillaSetting> vanillaSettings;
 	void AddVanillaSetting(const std::string &name, 

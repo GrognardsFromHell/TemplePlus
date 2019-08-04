@@ -2,7 +2,7 @@
 
 #include "tig/tig_msg.h"
 
-#include <deque>
+#include <EASTL/deque.h>
 
 using Message = TigMsg;
 
@@ -11,13 +11,17 @@ public:
 	MessageQueue();
 	~MessageQueue();
 
-	void Enqueue(const Message &msg);
+	void Enqueue(const TigMsgBase &msg);
 	bool Process(Message &unhandledMsgOut);
 	
 	bool HandleMessage(const Message &msg);
 
+	void ProcessMessages();
+
+	void PollExternalEvents();
+
 private:
-	std::deque<Message> mQueue;
+	eastl::deque<Message> mQueue;
 };
 
 extern MessageQueue *messageQueue;

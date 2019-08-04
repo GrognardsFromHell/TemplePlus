@@ -1,0 +1,859 @@
+// 4000 - 4999: Weapons
+
+
+{4111}{Rod of the Python}
+{4124}{Mace of Smiting}
+{4125}{Staff of Striking}
+{4137}{Staff of Fire}
+{4138}{Staff of Life}
+{4139}{Rod of the Viper}
+{4227}{White Rod, Minor}
+{4228}{White Rod}
+{4229}{Grey Rod, Minor}
+{4230}{Grey Rod}
+{4231}{Black Rod, Minor}
+{4232}{Black Rod}
+{4233}{Staff of Defense}
+{4234}{Staff of the Transmuter}
+{4309}{Staff of Size Alteration}
+{4310}{Staff of Charming}
+{4311}{Staff of Frost}
+{4312}{Staff of the Woodlands}
+{4313}{Staff of Healing}
+{4314}{Rod of Alertness}
+{4315}{Rod of Negation}
+{4316}{Rod of Thunder and Lightning}
+{4317}{Staff Elemental Control, Air}
+{4318}{Staff Elemental Control, Earth}
+{4319}{Staff Elemental Control, Fire}
+{4320}{Staff Elemental Control, Water}
+
+
+// 6000 - :Armor
+
+
+{6057}{Boots of Elvenkind}
+{6058}{Cloak of Elvenkind}
+{6082}{Ring Protection +1}
+{6083}{Ring Protection +2}
+{6084}{Ring Protection +3}
+{6085}{Cloak of Resist +1, Light Blue}
+{6086}{Cloak of Resist +2, Light Blue}
+{6087}{Cloak of Resist +3, Light Blue}
+{6088}{Ring Invisibility}
+{6089}{Ring Mammal Control}
+{6090}{Scarab of Proof against Poison}
+{6101}{Ring Fire Resistance, Minor}
+{6105}{Ring Freedom of Movement}
+{6107}{Necklace of Adaptation}
+{6115}{Bracers of Armor +5}
+{6119}{Bracers of Armor +3}
+{6137}{Boots of Speed}
+{6198}{Ring Animal Summoning, Dog}
+{6199}{Gloves of Dexterity +2}
+{6200}{Gloves of Dexterity +4}
+{6201}{Gloves of Dexterity +6}
+{6240}{Amulet of Health +2}
+{6241}{Amulet of Health +4}
+{6242}{Amulet of Health +6}
+{6243}{Belt of Giant Strength +4}
+{6244}{Belt of Giant Strength +6}
+{6245}{Gauntlets of Ogre Power}
+{6246}{Headband of Intellect +2}
+{6247}{Headband of Intellect +4}
+{6248}{Headband of Intellect +6}
+{6249}{Amulet of Wisdom +2}
+{6250}{Amulet of Wisdom +4}
+{6251}{Amulet of Wisdom +6}
+{6252}{Cloak of Charisma +2, Red}
+{6253}{Cloak of Charisma +4, Red}
+{6254}{Cloak of Charisma +6, Red}
+{6255}{Circlet of Persuasion}
+{6256}{Necklace of Detection}
+{6257}{Amulet of Mighty Fists +1}
+{6258}{Amulet of Mighty Fists +2}
+{6259}{Amulet of Mighty Fists +3}
+{6260}{Amulet of Mighty Fists +4}
+{6261}{Amulet of Mighty Fists +5}
+{6262}{Amulet of Natural Armor +1}
+{6263}{Amulet of Natural Armor +2}
+{6264}{Amulet of Natural Armor +3}
+{6265}{Amulet of Natural Armor +4}
+{6266}{Amulet of Natural Armor +5}
+{6267}{Bracers of Archery, Greater}
+{6268}{Bracers of Archery, Lesser}
+{6271}{Circlet of Blasting, Minor}
+{6272}{Bracers of Armor +1}
+{6273}{Bracers of Armor +2}
+{6274}{Bracers of Armor +4}
+{6275}{Cloak of Arachnida}
+{6276}{Hands of Fire}
+{6277}{Hands of Ice}
+{6278}{Hands of Electricity}
+{6279}{Hands of Life}
+{6280}{Hands of Death}
+{6284}{Helm of Teleportation}
+{6285}{Vest of Escape}
+{6286}{Mantle of Spell Resistance}
+{6287}{Goggles of Minute Seeing}
+{6288}{Helm of Telepathy}
+{6289}{Boots of the Winterlands}
+{6290}{Bracers of Dawn}
+{6291}{Dwarven Forge Gauntlets}
+{6292}{Eyes of Charming}
+{6293}{Eyes of the Eagle}
+{6294}{Helm of Reading Magic}
+{6295}{Periapt of Wound Closure}
+{6401}{Robe of the Archmagi, White}
+{6402}{Robe of the Archmagi, Grey}
+{6403}{Robe of the Archmagi, Black}
+{6404}{Cape of the Mountebank}
+{6405}{Druid's Vestments}
+{6406}{Cloak of Resist +4, Light Blue}
+{6407}{Cloak of Resist +5, Light Blue}
+{6408}{Cloak of Displacement, Minor}
+{6409}{Cloak of Displacement, Major}
+{6410}{Robe of Eyes}
+{6411}{Robe of Blending}
+{6412}{Helm of Brilliance}
+{6656}{Cloak of Resist +1, Black}
+{6657}{Cloak of Resist +2, Black}
+{6658}{Cloak of Resist +3, Black}
+{6659}{Cloak of Resist +4, Black}
+{6660}{Cloak of Resist +5, Black}
+{6661}{Cloak of Resist +1, Green}
+{6662}{Cloak of Resist +2, Green}
+{6663}{Cloak of Resist +3, Green}
+{6664}{Cloak of Resist +4, Green}
+{6665}{Cloak of Resist +5, Green}
+{6666}{Cloak of Resist +1, Red}
+{6667}{Cloak of Resist +2, Red}
+{6668}{Cloak of Resist +3, Red}
+{6669}{Cloak of Resist +4, Red}
+{6670}{Cloak of Resist +5, Red}
+{6671}{Cloak of Resist +1, White}
+{6672}{Cloak of Resist +2, White}
+{6673}{Cloak of Resist +3, White}
+{6674}{Cloak of Resist +4, White}
+{6675}{Cloak of Resist +5, White}
+{6676}{Cloak of Resist +1, Blue}
+{6677}{Cloak of Resist +2, Blue}
+{6678}{Cloak of Resist +3, Blue}
+{6679}{Cloak of Resist +4, Blue}
+{6680}{Cloak of Resist +5, Blue}
+{6681}{Cloak of Resist +1, Fur}
+{6682}{Cloak of Resist +2, Fur}
+{6683}{Cloak of Resist +3, Fur}
+{6684}{Cloak of Resist +4, Fur}
+{6685}{Cloak of Resist +5, Fur}
+{6686}{Cloak of Resist +1, Violet}
+{6687}{Cloak of Resist +2, Violet}
+{6688}{Cloak of Resist +3, Violet}
+{6689}{Cloak of Resist +4, Violet}
+{6690}{Cloak of Resist +5, Violet}
+{6691}{Cloak of Resist +1, Orange}
+{6692}{Cloak of Resist +2, Orange}
+{6693}{Cloak of Resist +3, Orange}
+{6694}{Cloak of Resist +4, Orange}
+{6695}{Cloak of Resist +5, Orange}
+{6696}{Cloak of Arachnida, Black}
+{6697}{Cloak of Arachnida, Red}
+{6698}{Cloak of Arachnida, Spiral}
+{6699}{Cloak of Charisma +2, White}
+{6700}{Cloak of Charisma +4, White}
+{6701}{Cloak of Charisma +6, White}
+{6702}{Cloak of Charisma +2, Black}
+{6703}{Cloak of Charisma +4, Black}
+{6704}{Cloak of Charisma +6, Black}
+{6705}{Cloak of Charisma +2, Stars}
+{6706}{Cloak of Charisma +4, Stars}
+{6707}{Cloak of Charisma +6, Stars}
+{6708}{Cloak of Charisma +2, Blue}
+{6709}{Cloak of Charisma +4, Blue}
+{6710}{Cloak of Charisma +6, Blue}
+{6711}{Cloak of Elvenkind, Green}
+{6712}{Cloak of Elvenkind, Fur}
+{6713}{Cloak of Elvenkind, Black}
+{6714}{Mantle of Spell Resist, Black}
+{6715}{Mantle of Spell Resist, Stars}
+{6716}{Mantle of Spell Resist, Blue}
+{6717}{Mantle of Spell Resist, Violet}
+{6718}{Cape of Mountebank, Black}
+{6719}{Cape of Mountebank, Blue}
+{6720}{Cape of Mountebank, Green}
+{6721}{Cloak of Resist +1, Invisible}
+{6722}{Cloak of Resist +2, Invisible}
+{6723}{Cloak of Resist +3, Invisible}
+{6724}{Cloak of Resist +4, Invisible}
+{6725}{Cloak of Resist +5, Invisible}
+
+{6791}{Boots of Striding & Springing, Buccaneer}
+{6792}{Boots of Striding & Springing, Fine Leather}
+{6793}{Boots of Striding & Springing, Green Leather}
+{6794}{Boots of Striding & Springing, Combat Boots}
+{6795}{Boots of Striding & Springing, White Leather}
+{6796}{Boots of Striding & Springing, Red Padded}
+{6797}{Boots of Striding & Springing, Monk}
+{6798}{Boots of Striding & Springing, Chainmail}
+{6799}{Boots of Striding & Springing, Gilded Plate}
+{6800}{Boots of Striding & Springing, Black Leather}
+{6801}{Boots of Striding & Springing, Brown Leather}
+
+{6809}{Gloves of Masterful Thievery}
+{6810}{Gloves of Masterful Thievery +2 Dex}
+{6811}{Gloves of Masterful Thievery +4 Dex}
+{6812}{Gloves of Masterful Thievery +6 Dex}
+
+// 8000 - 8999: Food/Poison/Potions
+
+{8006}{Cure Moderate Wounds}
+{8007}{Cure Serious Wounds}
+{8008}{Haste}
+{8009}{Enlarge Person}
+{8010}{Invisibility}
+{8012}{Aid}
+{8013}{Bull's Strength}
+{8014}{Cure Light Wounds}
+{8015}{Heroism}
+{8017}{Neutralize Poison}
+{8020}{Protection From Fire (CL 5)}
+{8022}{Eagle's Splendor}
+{8023}{Glibness}
+{8025}{Reduce Person}
+{8032}{Protection From Acid (CL 5)}
+{8033}{Protection From Electricity (CL 5)}
+{8038}{Protection From Cold (CL 5)}
+{8039}{Protection From Sonic (CL 5)}
+{8034}{Elixir of Hiding}
+{8035}{Elixir of Sneaking}
+{8036}{Elixir of Vision}
+{8041}{Protection From Fire (CL 9)}
+{8042}{Protection From Acid (CL 9)}
+{8043}{Protection From Electricity (CL 9)}
+{8044}{Protection From Cold (CL 9)}
+{8045}{Protection From Sonic (CL 9)}
+{8046}{Resist Fire (CL 3)}
+{8047}{Resist Acid (CL 3)}
+{8048}{Resist Electricity (CL 3)}
+{8049}{Resist Cold (CL 3)}
+{8050}{Resist Sonic (CL 3)}
+{8051}{Resist Fire (CL 7)}
+{8052}{Resist Acid (CL 7)}
+{8053}{Resist Electricity (CL 7)}
+{8054}{Resist Cold (CL 7)}
+{8055}{Resist Sonic (CL 7)}
+{8056}{Resist Fire (CL 11)}
+{8057}{Resist Acid (CL 11)}
+{8058}{Resist Electricity (CL 11)}
+{8059}{Resist Cold (CL 11)}
+{8060}{Resist Sonic (CL 11)}
+{8061}{Lesser Restoration}
+{8062}{Gaseous Form}
+{8063}{Fox's Cunning}
+{8064}{Bear's Endurance}
+{8065}{Shield of Faith}
+{8066}{Protection from Evil}
+{8067}{Protection from Chaos}
+{8068}{Protection from Good}
+{8069}{Protection from Law}
+{8070}{Sanctuary}
+{8071}{Magic Fang}
+{8072}{Negative Energy Protection}
+{8108}{Remove Curse}
+{8110}{Protection From Arrows}
+{8111}{Barkskin}
+{8112}{Blur}
+{8113}{Cat's Grace}
+{8114}{Owl's Wisdom}
+{8115}{Delay Poison}
+{8116}{Remove Disease}
+{8117}{Greater Magic Fang}
+{8118}{Rage}
+{8119}{Displacement}
+
+// 9000 - 9999: Scrolls
+
+
+{9002}{Aid}
+{9006}{Animal Friendship}
+{9008}{Animal Growth}
+{9010}{Animal Trance}
+{9011}{Animate Dead}
+{9025}{Bane}
+{9027}{Barkskin}
+{9028}{Bestow Curse}
+{9037}{Bless}
+{9038}{Bless Water}
+{9040}{Blindness/Deafness}
+{9041}{Blink}
+{9042}{Blur}
+{9043}{Break Enchantment}
+{9044}{Bull's Strength}
+{9045}{Burning Hands}
+{9046}{Call Lightening}
+{9047}{Calm Animals}
+{9048}{Calm Emotions}
+{9049}{Cat's Grace}
+{9050}{Cause Fear}
+{9051}{Chain Lightning}
+{9054}{Chaos Hammer}
+{9055}{Charm Monster}
+{9056}{Charm Person}
+{9057}{Charm Animal}
+{9058}{Chill Metal}
+{9059}{Chill Touch}
+{9060}{Inflict Moderate Wounds, Mass}
+{9061}{Inflict Light Wounds, Mass}
+{9062}{Clairaudience/Clairvoyance}
+{9063}{Inflict Serious Wounds, Mass}
+{9064}{Inflict Critical Wounds, Mass}
+{9065}{Cloudkill}
+{9066}{Color Spray}
+{9067}{Command}
+{9072}{Cone of Cold}
+{9073}{Confusion}
+{9074}{Consecrate}
+{9076}{Contagion}
+{9079}{Control Plants}
+{9089}{Cure Critical Wounds}
+{9090}{Cure Light Wounds}
+{9091}{Cure Minor Wounds}
+{9092}{Cure Moderate Wounds}
+{9093}{Cure Serious Wounds}
+{9094}{Curse Water}
+{9097}{Darkvision}
+{9099}{Daze}
+{9100}{Death Knell}
+{9101}{Death Ward}
+{9104}{Delay Poison}
+{9107}{Desecrate}
+{9110}{Detect Chaos}
+{9111}{Detect Evil}
+{9112}{Detect Good}
+{9113}{Detect Law}
+{9114}{Detect Magic}
+{9117}{Detect Secret Doors}
+{9120}{Detect Undead}
+{9122}{Dimensional Anchor}
+{9123}{Dimension Door}
+{9125}{Discern Lies}
+{9128}{Dismissal}
+{9129}{Dispel Chaos}
+{9130}{Dispel Evil}
+{9131}{Dispel Good}
+{9132}{Dispel Law}
+{9133}{Dispel Magic}
+{9134}{Displacement}
+{9135}{Disrupt Undead}
+{9137}{Divine Favor}
+{9138}{Divine Power}
+{9139}{Dominate Animal}
+{9141}{Dominate Person}
+{9142}{Doom}
+{9147}{Emotion}
+{9148}{Bear's Endurance}
+{9149}{Endure Elements}
+{9152}{Enlarge Person}
+{9153}{Entangle}
+{9155}{Entropic Shield}
+{9159}{Expeditious Retreat}
+{9163}{Faerie Fire}
+{9165}{Fear}
+{9167}{Feeblemind}
+{9169}{Find Traps}
+{9171}{Fireball}
+{9173}{Fire Shield}
+{9178}{Flame Strike}
+{9180}{Flare}
+{9183}{Fog Cloud}
+{9188}{Freedom of Movement}
+{9189}{Gaseous Form}
+{9192}{Gentle Repose}
+{9194}{Ghoul Touch}
+{9195}{Giant Vermin}
+{9196}{Glitterdust}
+{9199}{Goodberry}
+{9201}{Command, Greater}
+{9204}{Magic Fang, Greater}
+{9205}{Magic Weapon, Greater}
+{9213}{Guidance}
+{9214}{Gust of Wind}
+{9217}{Halt Undead}
+{9219}{Haste}
+{9221}{Cure Light Wounds, Mass}
+{9223}{Heat Metal}
+{9226}{Hold Animal}
+{9227}{Hold Monster}
+{9228}{Hold Person}
+{9229}{Grease}
+{9231}{Holy Smite}
+{9237}{Ice Storm}
+{9238}{Identify}
+{9244}{Invisibility, Greater}
+{9246}{Inflict Critical Wounds}
+{9247}{Inflict Light Wounds}
+{9248}{Inflict Minor Wounds}
+{9249}{Inflict Moderate Wounds}
+{9250}{Inflict Serious Wounds}
+{9253}{Invisibility}
+{9254}{Invisibility Purge}
+{9255}{Invisibility Sphere}
+{9256}{Hide from Animals}
+{9257}{Hide from Undead}
+{9261}{Keen Edge}
+{9262}{Knock}
+{9265}{Extraplanar Chest}
+{9272}{Restoration, Lesser}
+{9275}{Lightning Bolt}
+{9280}{Mage Armor}
+{9282}{Magic Circle Against Chaos}
+{9283}{Magic Circle Against Evil}
+{9284}{Magic Circle Against Good}
+{9285}{Magic Circle Against Law}
+{9286}{Magic Fang}
+{9288}{Magic Missile}
+{9290}{Magic Stone}
+{9291}{Magic Vestment}
+{9292}{Magic Weapon}
+{9303}{Meld Into Stone}
+{9304}{Melf's Acid Arrow}
+{9309}{Mind Fog}
+{9311}{Globe Invulnerability, Lesser}
+{9315}{Mirror Image}
+{9320}{Mordenkainen's Faithful Hound}
+{9327}{Neutralize Poison}
+{9333}{Obscuring Mist}
+{9334}{Open/Close}
+{9335}{Order's Wrath}
+{9337}{Otiluke's Resilient Sphere}
+{9345}{Phantasmal Killer}
+{9352}{Poison}
+{9359}{Prayer}
+{9364}{Produce Flame}
+{9367}{Protection From Arrows}
+{9368}{Protection From Chaos}
+{9369}{Protection From Energy}
+{9370}{Protection From Evil}
+{9371}{Protection From Good}
+{9372}{Protection From Law}
+{9373}{Negative Energy Protection}
+{9379}{Raise Dead}
+{9380}{Reincarnate}
+{9383}{Ray of Enfeeblement}
+{9384}{Ray of Frost}
+{9385}{Read Magic}
+{9386}{Reduce Person}
+{9389}{Ray of Clumsiness}
+{9390}{Remove Blindness/Deafness}
+{9391}{Remove Curse}
+{9392}{Remove Disease}
+{9393}{Remove Fear}
+{9394}{Remove Paralysis}
+{9396}{Repel Vermin}
+{9399}{Resistance}
+{9400}{Resist Energy}
+{9401}{Restoration}
+{9404}{Righteous Might}
+{9407}{Sanctuary}
+{9408}{Scare}
+{9412}{Searing Light}
+{9414}{See Invisibility}
+{9425}{Shatter}
+{9426}{Shield}
+{9427}{Shield of Faith}
+{9430}{Shillelagh}
+{9431}{Shocking Grasp}
+{9432}{Shout}
+{9434}{Silence}
+{9437}{Slay Living}
+{9438}{Sleep}
+{9439}{Sleet Storm}
+{9440}{Slow}
+{9442}{Soften Earth and Stone}
+{9443}{Solid Fog}
+{9445}{Sound Burst}
+{9451}{Spell Resistance}
+{9455}{Spike Growth}
+{9456}{Spike Stones}
+{9457}{Spiritual Weapon}
+{9460}{Stinking Cloud}
+{9462}{Stoneskin}
+{9466}{Dominate Monster}
+{9467}{Summon Monster I}
+{9468}{Summon Monster II}
+{9469}{Summon Monster III}
+{9470}{Summon Monster IV}
+{9471}{Summon Monster V}
+{9472}{Summon Monster VI}
+{9473}{Summon Monster VII}
+{9474}{Summon Monster VIII}
+{9475}{Summon Monster IX}
+{9476}{Summon Nature's Ally I}
+{9477}{Summon Nature's Ally II}
+{9478}{Summon Nature's Ally III}
+{9479}{Summon Nature's Ally IV}
+{9480}{Summon Nature's Ally V}
+{9481}{Summon Nature's Ally VI}
+{9482}{Summon Nature's Ally VII}
+{9483}{Summon Nature's Ally VIII}
+{9484}{Summon Nature's Ally IX}
+{9485}{Summon Swarm}
+{9490}{Tasha's Hideous Laughter}
+{9492}{Teleport}
+{9505}{Tree Shape}
+{9508}{True Seeing}
+{9509}{True Strike}
+{9513}{Unholy Blight}
+{9515}{Vampiric Touch}
+{9519}{Virtue}
+{9531}{Web}
+{9536}{Wind Wall}
+{9542}{Blight}
+{9543}{Dispel Air}
+{9544}{Dispel Earth}
+{9545}{Dispel Fire}
+{9546}{Dispel Water}
+{9547}{Rage}
+{9548}{Heal}
+{9549}{Acid Splash}
+{9550}{Call Lightning Storm}
+{9551}{Crushing Despair}
+{9552}{Daze Monster}
+{9553}{Deep Slumber}
+{9554}{Eagle's Splendor}
+{9555}{False Life}
+{9556}{Fox's Cunning}
+{9557}{Glibness}
+{9558}{Good Hope}
+{9559}{Heroism}
+{9653}{Circle of Death}
+{9654}{Dispel Magic, Greater}
+{9655}{Eyebite}
+{9656}{Undeath to Death}
+{9657}{Hold Person, Mass}
+{9658}{Insanity}
+{9659}{Power Word Blind}
+{9660}{Confusion, Lesser}
+{9661}{Longstrider}
+{9662}{Owl's Wisdom}
+{9663}{Quench}
+{9664}{Reduce Animal}
+{9665}{Heroism, Greater}
+{9666}{Harm}
+{9667}{Scorching Ray}
+{9668}{Disintegrate}
+{9669}{Analyze Dweomer}
+{9670}{Delayed Blast Fireball}
+{9671}{Finger of Death}
+{9672}{Flaming Sphere}
+{9673}{Holy Sword}
+{9674}{Heal, Mass}
+{9675}{Mordenkainen's Sword}
+{9676}{Prismatic Spray}
+{9677}{Tenser's Transformation}
+{9678}{Weird}
+{9679}{Bear's Endurance, Mass}
+{9680}{Bull's Strength, Mass}
+{9681}{Cat's Grace, Mass}
+{9682}{Eagle's Splendor, Mass}
+{9683}{Fox's Cunning, Mass}
+{9684}{Owl's Wisdom, Mass}
+{9685}{Cure Moderate Wounds, Mass}
+{9686}{Cure Serious Wounds, Mass}
+{9687}{Cure Critical Wounds, Mass}
+{9688}{Charm Monster, Mass}
+{9689}{Horrid Wilting}
+{9690}{Polar Ray}
+{9691}{Power Word Stun}
+{9692}{Hold Monster, Mass}
+{9693}{Power Word Kill}
+{9694}{Heroes' Feast}
+{9695}{Blasphemy}
+{9696}{Holy Word}
+{9697}{Miracle}
+{9698}{Warp Wood}
+{9699}{Snowball Swarm}
+{9700}{Scintillating Sphere}
+{9701}{Great Shout}
+{9998}{Itz}
+
+// 12000 - 12999: Generic
+
+
+{12002}{Wand of Fear}
+{12006}{Wand of Fireball}
+{12007}{Wand of Magic Missiles (5 Missiles)}
+{12008}{Chime of Opening}
+{12009}{Dust of Disappearance}
+{12016}{Rope of Entanglement}
+{12055}{Wand of Charm Monster}
+{12056}{Wand of Charm Person}
+{12057}{Wand of Charm Animal}
+{12058}{Wand of Chill Metal}
+{12059}{Wand of Chill Touch}
+{12062}{Wand of Clairaudience/voyance}
+{12064}{Wand of Ray of Clumsiness}
+{12066}{Wand of Color Spray}
+{12073}{Wand of Confusion}
+{12074}{Wand of Consecrate}
+{12076}{Wand of Contagion}
+{12079}{Wand of Control Plants}
+{12089}{Wand of Cure Critical Wounds}
+{12090}{Wand of Cure Light Wounds}
+{12091}{Wand of Cure Minor Wounds}
+{12092}{Wand of Cure Moderate Wounds}
+{12093}{Wand of Cure Serious Wounds}
+{12094}{Wand of Curse Water}
+{12099}{Wand of Daze}
+{12100}{Wand of Death Knell}
+{12101}{Wand of Death Ward}
+{12104}{Wand of Delay Poison}
+{12107}{Wand of Desecrate}
+{12110}{Wand of Detect Chaos}
+{12111}{Wand of Detect Evil}
+{12112}{Wand of Detect Good}
+{12113}{Wand of Detect Law}
+{12114}{Wand of Detect Magic}
+{12117}{Wand of Detect Secret Doors}
+{12120}{Wand of Detect Undead}
+{12122}{Wand of Dimensional Anchor}
+{12123}{Wand of Dimension Door}
+{12125}{Wand of Discern Lies}
+{12128}{Wand of Dismissal}
+{12133}{Wand of Dispel Magic}
+{12134}{Wand of Displacement}
+{12135}{Wand of Disrupt Undead}
+{12137}{Wand of Divine Favor}
+{12138}{Wand of Divine Power}
+{12139}{Wand of Dominate Animal}
+{12142}{Wand of Doom}
+{12147}{Wand of Emotion}
+{12148}{Wand of Bear's Endurance}
+{12149}{Wand of Endure Elements}
+{12152}{Wand of Enlarge Person}
+{12153}{Wand of Entangle}
+{12155}{Wand of Entropic Shield}
+{12159}{Wand of Expeditious Retreat}
+{12163}{Wand of Faerie Fire}
+{12169}{Wand of Find Traps}
+{12173}{Wand of Fire Shield}
+{12178}{Wand of Flame Strike}
+{12180}{Wand of Flare}
+{12183}{Wand of Fog Cloud}
+{12188}{Wand of Freedom of Movement}
+{12189}{Wand of Gaseous Form}
+{12194}{Wand of Ghoul Touch}
+{12195}{Wand of Giant Vermin}
+{12196}{Wand of Glitterdust}
+{12199}{Wand of Goodberry}
+{12200}{Wand of Grease}
+{12204}{Wand of Magic Fang, Greater}
+{12205}{Wand of Magic Weapon, Greater}
+{12213}{Wand of Guidance}
+{12214}{Wand of Gust of Wind}
+{12217}{Wand of Halt Undead}
+{12219}{Wand of Haste}
+{12223}{Wand of Heat Metal}
+{12226}{Wand of Hold Animal}
+{12228}{Wand of Hold Person}
+{12231}{Wand of Holy Smite}
+{12237}{Wand of Ice Storm}
+{12238}{Wand of Identify}
+{12244}{Wand of Invisibility, Greater}
+{12246}{Wand of Inflict Critical Wounds}
+{12247}{Wand of Inflict Light Wounds}
+{12248}{Wand of Inflict Minor Wounds}
+{12249}{Wand of Inflict Moderate Wounds}
+{12250}{Wand of Inflict Serious Wounds}
+{12253}{Wand of Invisibility}
+{12254}{Wand of Invisibility Purge}
+{12255}{Wand of Invisibility Sphere}
+{12256}{Wand of Hide From Animals}
+{12257}{Wand of Hide From Undead}
+{12261}{Wand of Keen Edge}
+{12262}{Wand of Knock}
+{12272}{Wand of Restoration, Lesser}
+{12275}{Wand of Lightning Bolt}
+{12280}{Wand of Mage Armor}
+{12282}{Wand of Magic Circle vs. Chaos}
+{12283}{Wand of Magic Circle vs. Evil}
+{12284}{Wand of Magic Circle vs. Good}
+{12285}{Wand of Magic Circle vs. Law}
+{12286}{Wand of Magic Fang}
+{12290}{Wand of Magic Stone}
+{12291}{Wand of Magic Vestment}
+{12292}{Wand of Magic Weapon}
+{12303}{Wand of Meld Into Stone}
+{12304}{Wand of Melf's Acid Arrow}
+{12311}{Wand of Globe of Invulnerability, Lesser}
+{12315}{Wand of Mirror Image}
+{12327}{Wand of Neutralize Poison}
+{12333}{Wand of Obscuring Mist}
+{12334}{Wand of Open/Close}
+{12335}{Wand of Order's Wrath}
+{12337}{Wand of Otiluke's Resilient Sphere}
+{12345}{Wand of Phantasmal Killer}
+{12352}{Wand of Poison}
+{12359}{Wand of Prayer}
+{12364}{Wand of Produce Flame}
+{12367}{Wand of Protection From Arrows}
+{12368}{Wand of Protection From Chaos}
+{12369}{Wand of Protection From Energy}
+{12370}{Wand of Protection From Evil}
+{12371}{Wand of Protection From Good}
+{12372}{Wand of Protection From Law}
+{12383}{Wand of Ray of Enfeeblement}
+{12384}{Wand of Ray of Frost}
+{12385}{Wand of Read Magic}
+{12386}{Wand of Reduce Person}
+{12390}{Wand of Remove Blind/Deaf}
+{12391}{Wand of Remove Curse}
+{12392}{Wand of Remove Disease}
+{12393}{Wand of Remove Fear}
+{12394}{Wand of Remove Paralysis}
+{12396}{Wand of Repel Vermin}
+{12399}{Wand of Resistance}
+{12400}{Wand of Resist Energy}
+{12401}{Wand of Restoration}
+{12407}{Wand of Sanctuary}
+{12408}{Wand of Scare}
+{12412}{Wand of Searing Light}
+{12414}{Wand of See Invisibility}
+{12420}{Monk's Belt}
+{12425}{Wand of Shatter}
+{12426}{Wand of Shield}
+{12427}{Wand of Shield of Faith}
+{12430}{Wand of Shillelagh}
+{12431}{Wand of Shocking Grasp}
+{12432}{Wand of Shout}
+{12434}{Wand of Silence}
+{12438}{Wand of Sleep}
+{12439}{Wand of Sleet Storm}
+{12440}{Wand of Slow}
+{12442}{Wand of Soften Earth and Stone}
+{12443}{Wand of Solid Fog}
+{12445}{Wand of Sound Burst}
+{12455}{Wand of Spike Growth}
+{12456}{Wand of Spike Stones}
+{12457}{Wand of Spiritual Weapon}
+{12460}{Wand of Stinking Cloud}
+{12462}{Wand of Stoneskin}
+{12466}{Wand of Dominate Monster}
+{12467}{Wand of Summon Monster I}
+{12468}{Wand of Summon Monster II}
+{12469}{Wand of Summon Monster III}
+{12470}{Wand of Summon Monster IV}
+{12476}{Wand of Summon Nature's Ally I}
+{12477}{Wand of Summon Nature's Ally II}
+{12478}{Wand of Summon Nature's Ally III}
+{12479}{Wand of Summon Nature's Ally IV}
+{12485}{Wand of Summon Swarm}
+{12490}{Wand of Tasha's Hideous Laughter}
+{12505}{Wand of Tree Shape}
+{12509}{Wand of True Strike}
+{12513}{Wand of Unholy Blight}
+{12515}{Wand of Vampiric Touch}
+{12519}{Wand of Virtue}
+{12531}{Wand of Web}
+{12532}{Wand of Acid Splash}
+{12533}{Wand of Aid}
+{12535}{Wand of Animal Trance}
+{12536}{Wand of Bane}
+{12537}{Wand of Barkskin}
+{12538}{Wand of Bestow Curse}
+{12539}{Wand of Bless}
+{12540}{Wand of Bless Water}
+{12541}{Wand of Blindness/Deafness}
+{12542}{Wand of Blink}
+{12543}{Wand of Blur}
+{12544}{Wand of Break Enchantment}
+{12545}{Wand of Bull's Strength}
+{12546}{Wand of Burning Hands}
+{12547}{Wand of Call Lightning}
+{12548}{Wand of Calm Animals}
+{12549}{Wand of Calm Emotions}
+{12550}{Wand of Cat's Grace}
+{12551}{Wand of Cause Fear}
+{12552}{Wand of Chaos Hammer}
+{12553}{Wand of Wind Wall}
+{12554}{Wand of Blight}
+{12559}{Wand of Rage}
+{12560}{Wand of Chain Lightning}
+{12566}{Wand of Fox's Cunning}
+{12567}{Wand of Glibness}
+{12569}{Wand of Heroism}
+{12570}{Wand of Confusion, Lesser}
+{12571}{Wand of Longstrider}
+{12572}{Wand of Owl's Wisdom}
+{12573}{Wand of Quench}
+{12574}{Wand of Reduce Animal}
+{12575}{Wand of Call Lightning Storm}
+{12576}{Wand of Crushing Despair}
+{12577}{Wand of Daze Monster}
+{12578}{Wand of Deep Slumber}
+{12579}{Wand of Eagle's Splendor}
+{12580}{Wand of False Life}
+{12581}{Wand of Fireball}
+{12588}{Horn of Blasting}
+{12589}{Horn of Fog}
+{12590}{Drums of Panic}
+{12591}{Wand of Magic Missiles (2 Missiles)}
+{12592}{Wand of Magic Missiles (3 Missiles)}
+{12594}{Ioun Stone, Dusty Rose}
+{12595}{Ioun Stone, Pale Blue}
+{12596}{Ioun Stone, Scarlet and Red}
+{12597}{Ioun Stone, Incandescent Blue}
+{12598}{Ioun Stone, Deep Red}
+{12599}{Ioun Stone, Pink}
+{12600}{Ioun Stone, Pink and Green}
+{12601}{Bag of Tricks, Tan}
+{12604}{Horn of Goodness}
+{12605}{Horn of Evil}
+{12606}{Wand of Magic Missiles}
+{12607}{Wand of Magic Missiles (4 Missiles)}
+{12608}{Wand of Scorching Ray}
+{12609}{Wand of Scorching Ray (2 Rays)}
+{12610}{Wand of Scorching Ray (3 Rays)}
+{12611}{Wand of Reincarnation}
+{12613}{Wand of Animate Dead}
+{12615}{Wand of Good Hope}
+{12617}{Wand of Negative Energy Protection}
+{12618}{Wand of Fireball (7d6)}
+{12619}{Wand of Fireball (9d6)}
+{12620}{Wand of Fireball (10d6)}
+{12621}{Wand of Lightning Bolt (7d6)}
+{12622}{Wand of Lightning Bolt (9d6)}
+{12623}{Wand of Lightning Bolt (10d6)}
+{12624}{Ring Protection +4}
+{12625}{Ring Protection +5}
+{12626}{Ring Chameleon Power}
+{12627}{Ring Electric Resist, Minor}
+{12628}{Ring Sonic Resist, Minor}
+{12629}{Ring Cold Resist, Minor}
+{12630}{Ring Acid Resist, Minor}
+{12631}{Ring Fire Resist, Major}
+{12632}{Ring Electric Resist, Major}
+{12633}{Ring Sonic Resist, Major}
+{12634}{Ring Cold Resist, Major}
+{12635}{Ring Acid Resist, Major}
+{12636}{Ring Warmth}
+{12637}{Ring Blinking}
+{12652}{Brooch of Shielding}
+{12654}{Chime of Interruption}
+{12655}{Circlet of Blasting, Major}
+{12659}{Dust of Appearance}
+{12660}{Eyes of Doom}
+{12663}{Prayer Beads of Blessing}
+{12665}{Prayer Beads of Healing}
+{12666}{Pipe of Pain}
+{12667}{Pipe of Haunting}
+{12669}{Scarab of Protection}
+{12673}{Mandolin of Charming}
+
+
+// 16000 - 16999: Bags
+{16000}{Backpack}
+{16001}{Pouch}
+{16002}{Bag of holding, 1000 lb}
+{16003}{Bag of holding, 500 lb}
+{16004}{Wonnilon's backpack}

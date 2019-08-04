@@ -54,8 +54,10 @@ struct DamagePacket {
 	void AddAttackPower(int attackPower);
 	void CalcFinalDamage(); // calcualtes the finalDamage field
 	int GetOverallDamageByType(DamageType damType);
+	int GetOverallDamage();
 	int AddModFactor(float factor, DamageType damType, int damageMesLine);
 	DamagePacket();
+	
 };
 
 #pragma pack(push, 1)
@@ -73,6 +75,7 @@ struct DispIoDamage : DispIO { // Io type 4
 
 class Damage {
 	friend class D20System;
+	friend struct DamagePacket;
 public:
 	
 	MesHandle damageMes;

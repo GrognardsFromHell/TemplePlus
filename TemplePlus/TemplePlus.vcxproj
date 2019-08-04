@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -17,9 +17,18 @@
   <ItemGroup>
     <ClCompile Include="ability_fixes.cpp" />
     <ClCompile Include="action_sequence.cpp" />
+    <ClCompile Include="animgoals\animgoal.cpp" />
+    <ClCompile Include="animgoals\animgoals.cpp" />
+    <ClCompile Include="animgoals\animgoals_callbacks.cpp" />
+    <ClCompile Include="animgoals\animgoals_debugrenderer.cpp" />
+    <ClCompile Include="animgoals\animgoals_hooks.cpp" />
+    <ClCompile Include="animgoals\animgoals_stackentry.cpp" />
     <ClCompile Include="common.cpp" />
     <ClCompile Include="config\config_hooks.cpp" />
+    <ClCompile Include="d20_defs.cpp" />
+    <ClCompile Include="d20_race.cpp" />
     <ClCompile Include="diag\proto_cols.cpp" />
+    <ClCompile Include="dungeon_master.cpp" />
     <ClCompile Include="fixes\pointbuyconfig.cpp" />
     <ClCompile Include="d20_levelup.cpp" />
     <ClCompile Include="d20_obj_registry.cpp" />
@@ -43,6 +52,9 @@
     <ClCompile Include="fonts\fonts_layout.cpp" />
     <ClCompile Include="fonts\fonts_mapping.cpp" />
     <ClCompile Include="fonts\fonts_render.cpp" />
+    <ClCompile Include="frozen_obj_ref.cpp" />
+    <ClCompile Include="frozen_obj_ref_hooks.cpp" />
+    <ClCompile Include="gamesystems\aas_hooks.cpp" />
     <ClCompile Include="gamesystems\clipping\clippingmesh.cpp" />
     <ClCompile Include="gamesystems\clipping\clipping_hooks.cpp" />
     <ClCompile Include="gamesystems\clipping\clipping.cpp" />
@@ -82,13 +94,15 @@
     </ClCompile>
     <ClCompile Include="gamesystems\objects\objsystem.cpp" />
     <ClCompile Include="gamesystems\objects\objsystem_hooks.cpp" />
+    <ClCompile Include="gamesystems\objfade.cpp" />
     <ClCompile Include="gamesystems\particlesystems.cpp" />
     <ClCompile Include="gamesystems\partsystemsrenderer.cpp" />
     <ClCompile Include="gamesystems\staticmeshes.cpp" />
     <ClCompile Include="gamesystems\ui_intgame_renderer.cpp" />
     <ClCompile Include="gameview.cpp" />
+    <ClCompile Include="general_condition_fixes.cpp" />
+    <ClCompile Include="InfinityEngine.cpp" />
     <ClCompile Include="legacyscriptsystem.cpp" />
-    <ClCompile Include="graphics\aas_hooks.cpp" />
     <ClCompile Include="graphics\imgfile.cpp" />
     <ClCompile Include="graphics\loadingscreen.cpp" />
     <ClCompile Include="graphics\mapterrain.cpp" />
@@ -98,7 +112,6 @@
     <ClCompile Include="graphics\renderstates_hooks.cpp" />
     <ClCompile Include="graphics\render_hooks.cpp" />
     <ClCompile Include="gamesystems\map\sector.cpp" />
-    <ClCompile Include="gamesystems\map\tig_console.cpp" />
     <ClCompile Include="gametime.cpp" />
     <ClCompile Include="graphics\textures_hooks.cpp" />
     <ClCompile Include="graphics\video_hooks.cpp">
@@ -113,13 +126,16 @@
     <ClCompile Include="messages\messagequeue.cpp" />
     <ClCompile Include="mod_support.cpp" />
     <ClCompile Include="obj_structs.cpp" />
+    <ClCompile Include="poison.cpp" />
+    <ClCompile Include="portrait.cpp" />
     <ClCompile Include="protos.cpp" />
     <ClCompile Include="python\python_bonus.cpp" />
     <ClCompile Include="python\python_integration_class_spec.cpp" />
     <ClCompile Include="python\python_damage.cpp" />
     <ClCompile Include="python\python_dispatcher.cpp" />
     <ClCompile Include="python\python_integration_d20_action.cpp" />
-    <ClCompile Include="python\python_ui.cpp" />
+    <ClCompile Include="python\python_integration_feat.cpp" />
+    <ClCompile Include="python\python_integration_race.cpp" />
     <ClCompile Include="raycast.cpp" />
     <ClCompile Include="obj_hooks.cpp" />
     <ClCompile Include="particles.cpp" />
@@ -149,7 +165,9 @@
     <ClCompile Include="quest.cpp" />
     <ClCompile Include="objlist.cpp" />
     <ClCompile Include="radialmenu.cpp" />
+    <ClCompile Include="raycast_hooks.cpp" />
     <ClCompile Include="reputations.cpp" />
+    <ClCompile Include="rng.cpp" />
     <ClCompile Include="secret_door.cpp" />
     <ClCompile Include="skill.cpp" />
     <ClCompile Include="spell_structs.cpp" />
@@ -158,6 +176,8 @@
     <ClCompile Include="temple_enums.cpp" />
     <ClCompile Include="textbubbles.cpp" />
     <ClCompile Include="tig\tig.cpp" />
+    <ClCompile Include="tig\tig_console.cpp" />
+    <ClCompile Include="tig\tig_console_wrapper.cpp" />
     <ClCompile Include="tig\tig_sound.cpp" />
     <ClCompile Include="tio\tio_utils.cpp" />
     <ClCompile Include="python\python_consoleout.cpp" />
@@ -166,14 +186,27 @@
     <ClCompile Include="python\python_importer.cpp" />
     <ClCompile Include="traps.cpp" />
     <ClCompile Include="tutorial.cpp" />
+    <ClCompile Include="ui\ui_charegen.cpp" />
+    <ClCompile Include="ui\ui_chargen.cpp" />
+    <ClCompile Include="ui\ui_debug.cpp" />
+    <ClCompile Include="ui\ui_dm.cpp" />
+    <ClCompile Include="ui\ui_mainmenu_wrapper.cpp" />
+    <ClCompile Include="ui\ui_pc_creation_hooks.cpp" />
+    <ClCompile Include="ui\ui_utility_bar.cpp" />
+    <ClCompile Include="ui\widgets\widgets.cpp" />
+    <ClCompile Include="ui\widgets\widget_content.cpp" />
     <ClCompile Include="ui\ui_alert.cpp" />
+    <ClCompile Include="ui\ui_assets.cpp" />
     <ClCompile Include="ui\ui_char.cpp" />
     <ClCompile Include="ui\ui_char_editor.cpp" />
     <ClCompile Include="ui\ui_combat.cpp" />
     <ClCompile Include="ui\ui_dialog.cpp" />
+    <ClCompile Include="ui\ui_ingame.cpp" />
+    <ClCompile Include="ui\ui_ingame_wrapper.cpp" />
     <ClCompile Include="ui\ui_intgame_select.cpp" />
     <ClCompile Include="ui\ui_legacysystems.cpp" />
     <ClCompile Include="ui\ui_logbook.cpp" />
+    <ClCompile Include="ui\ui_wrapper.cpp" />
     <ClCompile Include="ui\ui_party.cpp" />
     <ClCompile Include="ui\ui_popup.cpp" />
     <ClCompile Include="ui\ui_slider.cpp" />
@@ -189,7 +222,7 @@
     <ClCompile Include="ui\ui_char_editor_feats.cpp" />
     <ClCompile Include="ui\ui_intgame_turnbased.cpp" />
     <ClCompile Include="ui\ui_pc_creation.cpp" />
-    <ClCompile Include="anim.cpp" />
+    <ClCompile Include="animgoals\anim.cpp" />
     <ClCompile Include="animalcompanion.cpp" />
     <ClCompile Include="attackrollcpp.cpp" />
     <ClCompile Include="bonusspells.cpp" />
@@ -202,6 +235,8 @@
     <ClCompile Include="faction.cpp" />
     <ClCompile Include="feat.cpp" />
     <ClCompile Include="ui\ui_worldmap.cpp" />
+    <ClCompile Include="ui\widgets\widget_doc.cpp" />
+    <ClCompile Include="ui\widgets\widget_styles.cpp" />
     <ClCompile Include="updater\updater.cpp" />
     <ClCompile Include="util\datadump.cpp" />
     <ClCompile Include="util\fixes.cpp" />
@@ -237,7 +272,6 @@
     <ClCompile Include="util\streams.cpp" />
     <ClCompile Include="weapon.cpp" />
     <ClCompile Include="ui\ui_render.cpp" />
-    <ClCompile Include="worldmap.cpp" />
     <ClCompile Include="xp.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -258,7 +292,6 @@
     </ClCompile>
     <ClCompile Include="tig\tig_mes.cpp" />
     <ClCompile Include="tig\tig_mouse.cpp" />
-    <ClCompile Include="tig\tig_msg.cpp" />
     <ClCompile Include="tig\tig_shader.cpp" />
     <ClCompile Include="tig\tig_texture.cpp" />
     <ClCompile Include="mainwindow.cpp" />
@@ -269,21 +302,31 @@
   <ItemGroup>
     <ClInclude Include="action_sequence.h" />
     <ClInclude Include="ai.h" />
+    <ClInclude Include="animgoals\animgoal.h" />
+    <ClInclude Include="animgoals\animgoals.h" />
+    <ClInclude Include="animgoals\animgoals_callbacks.h" />
+    <ClInclude Include="animgoals\animgoals_debugrenderer.h" />
+    <ClInclude Include="animgoals\animgoals_stackentry.h" />
+    <ClInclude Include="animgoals\anim_slot.h" />
     <ClInclude Include="bonus.h" />
     <ClInclude Include="d20_class.h" />
     <ClInclude Include="critter.h" />
     <ClInclude Include="d20_level.h" />
     <ClInclude Include="d20_levelup.h" />
     <ClInclude Include="d20_obj_registry.h" />
+    <ClInclude Include="d20_race.h" />
     <ClInclude Include="d20_status.h" />
     <ClInclude Include="damage.h" />
     <ClInclude Include="diag\diag.h" />
     <ClInclude Include="dialog.h" />
     <ClInclude Include="dice.h" />
+    <ClInclude Include="dungeon_master.h" />
     <ClInclude Include="fade.h" />
     <ClInclude Include="float_line.h" />
     <ClInclude Include="fonts\fonts.h" />
     <ClInclude Include="fonts\fonts_mapping.h" />
+    <ClInclude Include="frozen_obj_ref.h" />
+    <ClInclude Include="gamesystems\aas_hooks.h" />
     <ClInclude Include="gamesystems\clipping\clippingmesh.h" />
     <ClInclude Include="gamesystems\clipping\clipping.h" />
     <ClInclude Include="gamesystems\d20\d20stats.h" />
@@ -301,7 +344,6 @@
     <ClInclude Include="gamesystems\mapsystem.h" />
     <ClInclude Include="gamesystems\map\gmesh.h" />
     <ClInclude Include="gamesystems\map\sector.h" />
-    <ClInclude Include="gamesystems\map\tig_console.h" />
     <ClInclude Include="gamesystems\objects\arrayidxbitmaps.h" />
     <ClInclude Include="gamesystems\objects\gameobject.h" />
     <ClInclude Include="gamesystems\objects\objarrays.h" />
@@ -310,6 +352,8 @@
     <ClInclude Include="gamesystems\objects\objfind.h" />
     <ClInclude Include="gamesystems\objects\objregistry.h" />
     <ClInclude Include="gamesystems\objects\objsystem.h" />
+    <ClInclude Include="gamesystems\objfade.h" />
+    <ClInclude Include="gamesystems\random_encounter.h" />
     <ClInclude Include="gamesystems\ui_intgame_renderer.h" />
     <ClInclude Include="gameview.h" />
     <ClInclude Include="InfinityEngine.h" />
@@ -321,9 +365,25 @@
     <ClInclude Include="python\python_dispatcher.h" />
     <ClInclude Include="python\python_integration_class_spec.h" />
     <ClInclude Include="python\python_integration_d20_action.h" />
+    <ClInclude Include="python\python_integration_feat.h" />
+    <ClInclude Include="python\python_integration_race.h" />
+    <ClInclude Include="rng.h" />
+    <ClInclude Include="tig\tig_console.h" />
     <ClInclude Include="tig\tig_keyboard.h" />
     <ClInclude Include="tutorial.h" />
+    <ClInclude Include="ui\ui_char.h" />
+    <ClInclude Include="ui\ui_chargen.h" />
+    <ClInclude Include="ui\ui_debug.h" />
+    <ClInclude Include="ui\ui_dm.h" />
+    <ClInclude Include="ui\ui_pc_creation.h" />
+    <ClInclude Include="ui\ui_townmap.h" />
+    <ClInclude Include="ui\ui_worldmap.h" />
+    <ClInclude Include="ui\widgets\widgets.h" />
+    <ClInclude Include="ui\widgets\widget_content.h" />
     <ClInclude Include="ui\ui_alert.h" />
+    <ClInclude Include="ui\ui_assets.h" />
+    <ClInclude Include="ui\ui_ingame.h" />
+    <ClInclude Include="ui\ui_intgame_wrapper.h" />
     <ClInclude Include="ui\ui_legacysystems.h" />
     <ClInclude Include="ui\ui_logbook.h" />
     <ClInclude Include="ui\ui_popup.h" />
@@ -332,6 +392,8 @@
     <ClInclude Include="ui\ui_system.h" />
     <ClInclude Include="ui\ui_systems.h" />
     <ClInclude Include="ui\ui_tooltip.h" />
+    <ClInclude Include="ui\widgets\widget_doc.h" />
+    <ClInclude Include="ui\widgets\widget_styles.h" />
     <ClInclude Include="updater\updater.h" />
     <ClInclude Include="ui\ui_party.h" />
     <ClInclude Include="util\datadump.h" />
@@ -407,7 +469,7 @@
     <ClInclude Include="ui\ui_picker.h" />
     <ClInclude Include="ui\ui_char_editor.h" />
     <ClInclude Include="ui\ui_intgame_turnbased.h" />
-    <ClInclude Include="anim.h" />
+    <ClInclude Include="animgoals\anim.h" />
     <ClInclude Include="combat.h" />
     <ClInclude Include="common.h" />
     <ClInclude Include="condition.h" />
@@ -472,9 +534,6 @@
     <ProjectReference Include="..\Infrastructure\Infrastructure.vcxproj">
       <Project>{006f5b8a-f75f-413c-ad3a-e004ca8ddf26}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\MinHook\MinHook.vcxproj">
-      <Project>{23ad6e36-fa90-4a0d-a1f4-6bfcdbcbdc7c}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\ParticleSystems\ParticleSystems.vcxproj">
       <Project>{a806cafa-9ff2-42dc-a02f-7e57ef2ab867}</Project>
     </ProjectReference>
@@ -490,25 +549,25 @@
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>TemplePlus</RootNamespace>
     <ProjectName>TemplePlus</ProjectName>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -555,11 +614,12 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <MinimalRebuild>false</MinimalRebuild>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>d2d1.lib;dwrite.lib;dxguid.lib;d3d11.lib;dxgi.lib;d3dcompiler.lib;EASTL.lib;psapi.lib;turbojpeg-static_d.lib;particlesystems.lib;temple.lib;tio\tio.lib;MinHook.lib;Infrastructure.lib;winmm.lib;d3d9.lib;ws2_32.lib;Crypt32.lib;ssleay32.lib;libeay32.lib;python27_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
+      <AdditionalDependencies>d2d1.lib;dwrite.lib;dxguid.lib;d3d11.lib;dxgi.lib;d3dcompiler.lib;EASTL.lib;psapi.lib;turbojpeg-static_d.lib;particlesystems.lib;temple.lib;tio\tio.lib;Infrastructure.lib;winmm.lib;d3d9.lib;ws2_32.lib;Crypt32.lib;ssleay32.lib;libeay32.lib;python27_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
       <AdditionalLibraryDirectories>$(SolutionDir)dependencies\lib;$(TargetDir)</AdditionalLibraryDirectories>
@@ -570,6 +630,9 @@
       <EnableDpiAwareness>false</EnableDpiAwareness>
       <AdditionalManifestFiles>manifest.xml</AdditionalManifestFiles>
     </Manifest>
+    <PostBuildEvent>
+      <Command>"$(ProjectDir)\..\tpdatasrc\PackFiles.bat"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='TestWithIda|Win32'">
     <ClCompile>
@@ -581,6 +644,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -595,6 +659,9 @@
       <EnableDpiAwareness>false</EnableDpiAwareness>
       <AdditionalManifestFiles>manifest.xml</AdditionalManifestFiles>
     </Manifest>
+    <PostBuildEvent>
+      <Command>"$(ProjectDir)\..\tpdatasrc\PackFiles.bat"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -604,20 +671,21 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_SCL_SECURE_NO_WARNINGS;WIN32;NDEBUG;_WINDOWS;$(MSBuildDefines);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.;$(SolutionDir)dependencies\include;$(SolutionDir)MinHook\include;$(SolutionDir)Infrastructure\include;$(SolutionDir)D3D8Adapter\include</AdditionalIncludeDirectories>
-      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>d2d1.lib;dwrite.lib;dxguid.lib;d3d11.lib;dxgi.lib;d3dcompiler.lib;EASTL.lib;psapi.lib;turbojpeg-static.lib;particlesystems.lib;temple.lib;tio\tio.lib;MinHook.lib;Infrastructure.lib;winmm.lib;ws2_32.lib;Crypt32.lib;ssleay32.lib;libeay32.lib;python27.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d2d1.lib;dwrite.lib;dxguid.lib;d3d11.lib;dxgi.lib;d3dcompiler.lib;EASTL.lib;psapi.lib;turbojpeg-static.lib;particlesystems.lib;temple.lib;tio\tio.lib;Infrastructure.lib;winmm.lib;ws2_32.lib;Crypt32.lib;ssleay32.lib;libeay32.lib;python27.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
@@ -629,6 +697,9 @@
       <EnableDpiAwareness>false</EnableDpiAwareness>
       <AdditionalManifestFiles>manifest.xml</AdditionalManifestFiles>
     </Manifest>
+    <PostBuildEvent>
+      <Command>"$(ProjectDir)\..\tpdatasrc\PackFiles.bat"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

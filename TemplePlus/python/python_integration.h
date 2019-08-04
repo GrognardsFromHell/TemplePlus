@@ -22,7 +22,7 @@ public:
 	typedef int ScriptId;
 	typedef int EventId;
 
-	PythonIntegration(const string &searchPattern, const string &filenameRegexp);
+	PythonIntegration(const string &searchPattern, const string &filenameRegexp, bool hashId = false);
 	virtual ~PythonIntegration();
 
 	void LoadScripts();
@@ -34,6 +34,8 @@ public:
 	int RunScriptDefault0(ScriptId scriptId, EventId eventId, PyObject *args);
 	std::string RunScriptStringResult(ScriptId scriptId, EventId eventId, PyObject *args);
 	std::map<int, std::vector<int>> RunScriptMapResult(ScriptId scriptId, EventId eventId, PyObject* args);
+	std::vector<int> RunScriptVectorResult(ScriptId scriptId, EventId eventId, PyObject* args);
+	
 	/*
 		Gets a loaded instance of a script module or null if loading failed.
 		Returns a borrowed ref
@@ -47,8 +49,9 @@ protected:
 	ScriptCache mScripts;
 private:
 	
-	
+	bool mIsHashId;
 	string mSearchPattern;
 	string mFilenameRegexp;
 };
+
 

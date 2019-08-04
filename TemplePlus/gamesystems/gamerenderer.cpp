@@ -5,13 +5,14 @@
 #include <graphics/mdfmaterials.h>
 #include <graphics/shaperenderer2d.h>
 #include <fonts/fonts.h>
-#include <temple/aasrenderer.h>
+#include <aas/aas_renderer.h>
 #include <temple/dll.h>
 #include <particles/render.h>
 #include <particles/instances.h>
 #include "ui/ui_render.h"
 #include "tig/tig_font.h"
 #include "particlesystems.h"
+#include "animgoals/animgoals_debugrenderer.h"
 
 #include "tig/tig_startup.h"
 #include "temple_functions.h"
@@ -26,6 +27,7 @@
 #include "lightningrenderer.h"
 #include "ui_intgame_renderer.h"
 #include "fogrenderer.h"
+#include "map/sector.h"
 
 using namespace gfx;
 using namespace temple;
@@ -34,13 +36,7 @@ using namespace particles;
 GameRenderer *gameRenderer = nullptr;
 
 #pragma pack(push, 1)
-struct SectorList {
-  locationSec sector;
-  locXY someTile;      // tile coords
-  locXY someTileInSec; // coords in sector
-  SectorList *next;
-  // There is 4 bytes padding here but we dont rely on the size here
-};
+
 
 struct RenderUnknown {
   int v[114];
@@ -141,7 +137,7 @@ GameRenderer::GameRenderer(TigInitializer &tig,
 
 	Expects(!gameRenderer);
 
-	mAasRenderer = std::make_unique<temple::AasRenderer>(
+	mAasRenderer = std::make_unique<aas::Renderer>(
 		gameSystems.GetAAS(), 
 		tig.GetRenderingDevice(),
 		tig.GetShapeRenderer2d(),
@@ -224,7 +220,7 @@ void GameRenderer::Render() {
 
     PreciseSectorRows *list = reinterpret_cast<PreciseSectorRows *>(&unk);
 
-    auto sectorList = renderFuncs.SectorListBuild(tiles);
+	auto sectorList = sectorSys.BuildSectorList(&tiles);
 
     RenderWorldInfo renderInfo;
     renderInfo.sectors = sectorList;
@@ -242,7 +238,7 @@ void GameRenderer::Render() {
 
     RenderWorld(&renderInfo);
 
-    renderFuncs.SectorListFree(sectorList);
+	sectorSys.SectorListReturnToPool(sectorList);
   }
 }
 
@@ -284,6 +280,9 @@ void GameRenderer::RenderWorld(RenderWorldInfo *info) {
     renderFuncs.RenderUiRelated(info);
     renderFuncs.RenderTextBubbles(info);
     renderFuncs.RenderTextFloaters(info);
+
+	AnimGoalsDebugRenderer::RenderAllAnimGoals((int)info->tiles->x1, (int)info->tiles->x2, (int)info->tiles->y1,
+		(int)info->tiles->y2);
 
     mRenderingDevice.Present();
   }

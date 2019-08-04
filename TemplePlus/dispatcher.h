@@ -5,8 +5,6 @@
 
 #define DISPATCHER_MAX  250 // max num of simultaneous Dispatches going on (static int counter inside _DispatcherProcessor)
 #include "spell.h"
-//#include <pybind11/pybind11.h>
-//using namespace pybind11;
 
 struct CondStructNew;
 struct BuffDebuffPacket;
@@ -31,8 +29,9 @@ struct DispIoAttackDice; // 20
 struct DispIoImmunity; //23
 struct DispIoEffectTooltip; // 24
 struct EvtObjSpellCaster; // 34;
+struct EvtObjActionCost; // 35
 struct D20Actn;
-
+struct DamagePacket;
 
 struct SpellEntry;
 
@@ -47,25 +46,32 @@ struct DispatcherCallbackArgs;
 struct Dispatcher;
 
 
-
-
 struct DispatcherSystem : temple::AddressTable
 {
 	Dispatcher* DispatcherInit(objHndl objHnd);
 	bool dispatcherValid(Dispatcher * dispatcher);
 	void DispatcherProcessor(Dispatcher * dispatcher, enum_disp_type dispType, uint32_t dispKey, DispIO * dispIO);
+	void DispatcherProcessorForItems(CondStruct* cond, int condArgs[64], enum_disp_type dispType, D20DispatcherKey key, DispIO* dispIo);
+
 	void  DispatcherClearField(Dispatcher * dispatcher, CondNode ** dispCondList);
 	void  DispatcherClearPermanentMods(Dispatcher * dispatcher);
 	void  DispatcherClearItemConds(Dispatcher * dispatcher);
 	void  DispatcherClearConds(Dispatcher *dispatcher);
 	
 	int DispatchForCritter(objHndl handle, DispIoBonusList*, enum_disp_type dispType, D20DispatcherKey dispKey);
+	void DispatchForItem(objHndl item, enum_disp_type dispType, D20DispatcherKey key, DispIO* dispIo);
 	int Dispatch10AbilityScoreLevelGet(objHndl handle, Stat stat, DispIoBonusList * dispIo);
 	int32_t dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, BonusList * bonOut, objHndl objHnd2, int32_t flag);
 	float Dispatch29hGetMoveSpeed(objHndl objHnd, DispIoMoveSpeed * dispIo = nullptr);
 	float Dispatch40GetBaseMoveSpeed(objHndl objHnd, DispIoMoveSpeed * dispIo = nullptr);
 	void dispIOTurnBasedStatusInit(DispIOTurnBasedStatus* dispIOtbStat);
 	void dispatchTurnBasedStatusInit(objHndl objHnd, DispIOTurnBasedStatus* dispIOtB);
+
+	int DispatchSavingThrow(objHndl handle, DispIoSavingThrow* evtObj, enum_disp_type enumDisp, D20DispatcherKey d20DispatcherKey);
+	int Dispatch13SavingThrow(objHndl handle, SavingThrowType saveType, DispIoSavingThrow* evtObj);
+	int Dispatch14SavingThrowMod(objHndl handle, SavingThrowType saveType, DispIoSavingThrow* evtObj);
+	int Dispatch44FinalSaveThrow(objHndl handle, SavingThrowType saveType, DispIoSavingThrow* evtObj);
+	
 
 #pragma region event object checkers
 
@@ -105,6 +111,11 @@ struct DispatcherSystem : temple::AddressTable
 	int DispatchGetSizeCategory(objHndl objHndCaller);
 	void DispatchConditionRemove(Dispatcher* dispatcher, CondNode* cond);
 	unsigned int Dispatch35CasterLevelModify(objHndl obj, SpellPacketBody* spellPkt);
+	void DispatchSpellResistanceCasterLevelCheck(objHndl caster, objHndl target, BonusList *bonlist, SpellPacketBody*spellPkt);
+	void DispatchTargetSpellDCBonus(objHndl caster, objHndl target, BonusList *bonlist, SpellPacketBody*spellPkt);
+	void DispatchMetaMagicModify(objHndl obj, MetaMagicData& mmData);
+	void DispatchSpecialAttack(objHndl obj, int attack, objHndl target);
+	double DispatchRangeBonus(objHndl obj, objHndl weaponUsed);
 	int DispatchSpellListLevelExtension(objHndl obj, Stat casterClass);
 	int DispatchGetBaseCasterLevel(objHndl obj, Stat casterClass);
 
@@ -114,15 +125,19 @@ struct DispatcherSystem : temple::AddressTable
 	int Dispatch45SpellResistanceMod(objHndl handle, DispIOBonusListAndSpellEntry* dispIo);
 	void Dispatch48BeginRound(objHndl obj, int numRounds) const;
 	bool Dispatch64ImmunityCheck(objHndl handle, DispIoImmunity* dispIo);
-	
+	void Dispatch68ItemRemove(objHndl handle);
 #pragma endregion
 
 	void DispIoDamageInit(DispIoDamage *dispIoDamage);
 	int32_t DispatchDamage(objHndl objHnd, DispIoDamage* dispIoDamage, enum_disp_type enumDispType, D20DispatcherKey d20DispatcherKey);
+	void DispatchSpellDamage(objHndl obj, DamagePacket* damage, objHndl target, SpellPacketBody *spellPkt);
 	int DispatchD20ActionCheck(D20Actn* d20Actn, TurnBasedStatus* turnBasedStatus, enum_disp_type dispType);
 	int Dispatch60GetAttackDice(objHndl obj, DispIoAttackDice * dispIo);
 
 	int DispatchGetBonus(objHndl critter, DispIoBonusList* bonusListOut, enum_disp_type dispType, D20DispatcherKey key);
+
+	
+	int DispatchItemQuery(objHndl item, D20DispatcherKey d20DispatcherKey);
 
 	DispatcherSystem()
 	{
@@ -155,6 +170,7 @@ struct CondNode : temple::TempleAlloc {
 	uint32_t args[10];
 
 	explicit CondNode(CondStruct *cond);
+	bool IsExpired() { return (flags & 1) != 0; };
 };
 
 struct SubDispNode : temple::TempleAlloc {
@@ -212,14 +228,21 @@ struct CondStructNew{
 
 	CondStructNew();
 	CondStructNew(std::string Name, int NumArgs, bool preventDuplicate = true); // use preventDuplicate = true for "unique" conditions or conditions that should never stack / apply twice
+	CondStructNew(CondStruct & existingCondStruct); // Extends existing cond struct
 	void AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(*callback)(DispatcherCallbackArgs) );
 	void AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(*callback)(DispatcherCallbackArgs), uint32_t data1, uint32_t data2);
 	void AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(*callback)(DispatcherCallbackArgs), CondStructNew* data1, uint32_t data2);
+	void AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(*callback)(DispatcherCallbackArgs), CondStruct* data1, uint32_t data2);
 	// void AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(*callback)(DispatcherCallbackArgs), uint32_t data1, const char *data2); // this fucks things up :(
 	//void AddPyHook(enum_disp_type dispType, D20DispatcherKey dispKey, PyObject* pycallback, PyObject* pydataTuple);
 	//void AddPyHook(enum_disp_type dispType, D20DispatcherKey dispKey, pybind11::function pycallback, pybind11::tuple pydataTuple);
 	void Register();
+	void ExtendExisting(const std::string &condName);
 	void AddToFeatDictionary(feat_enums feat, feat_enums featEnumMax = FEAT_INVALID, uint32_t condArg2Offset = 0);
+
+	// standard callbacks
+	void AddAoESpellRemover();
+	
 };
 
 struct DispatcherCallbackArgs {
@@ -234,6 +257,10 @@ struct DispatcherCallbackArgs {
 	int GetData1() const; // gets the data1 value from the subDispDef
 	int GetData2() const;
 	void SetCondArg(uint32_t argIdx, int value);
+	void SetCondArgObjHndl(uint32_t argIdx, const objHndl& handle);
+	void RemoveCondition(); // note: this is the low level function
+	void RemoveSpellMod();
+	void RemoveSpell(); // general spell remover
 	
 };
 
@@ -267,10 +294,11 @@ struct DispIoBonusList : DispIO { // DispIoType = 2  used for fetching ability s
 struct DispIoSavingThrow : DispIO { // DispIoType = 3
 	uint32_t returVal;
 	objHndl obj;
-	uint32_t flags; // see D20SavingThrowFlag looks like: 2 - trap, 0x10 - Spell, 0x20 thru 0x1000 - spell schools (abjuration thru transmutation, e.g. 0x100 - enchantment), 0x100000 - fear/morale effect?
-	int field_14;
+	uint64_t flags; // see D20SavingThrowFlag looks like: 2 - trap, 0x10 - Spell, 0x20 thru 0x1000 - spell schools (abjuration thru transmutation, e.g. 0x100 - enchantment), 0x100000 - fear/morale effect?
 	BonusList bonlist;
 	int rollResult;
+
+	DispIoSavingThrow();
 };
 
 struct DispIoAttackBonus : DispIO { // DispIoType 5
@@ -299,7 +327,7 @@ struct DispIoD20Signal : DispIO // DispIoType 6
 
 struct DispIoD20Query : DispIO // DispIoType 7
 {
-	uint32_t return_val;
+	int return_val; // changed to int type to avoid python casting madness
 	uint32_t data1;
 	uint32_t data2;
 
@@ -332,7 +360,7 @@ const auto TestSizeOfDispIoTooltip = sizeof(DispIoTooltip); // should be 2568  (
 
 struct DispIoObjBonus : DispIO // type 10
 {
-	uint32_t returnVal;
+	uint32_t flags;
 	BonusList * bonOut;
 	uint32_t pad;
 	objHndl obj; //optional
@@ -506,6 +534,7 @@ struct DispIoEffectTooltip: DispIO // type 24
 
 	/*
 	 spellEnum = -1 for no spell
+	see uiParty.IndicatorTextGet
 	*/
 	void Append(int effectTypeId, int spellEnum, const char* text) const;
 };
@@ -519,6 +548,60 @@ struct EvtObjSpellCaster: DispIO // type 34 (NEW!)
 	int arg1;
 	SpellPacketBody* spellPkt;
 	EvtObjSpellCaster() { dispIOType = evtObjTypeSpellCaster; handle = objHndl::null; arg0 = 0; arg1 = 0; spellPkt = nullptr; };
+};
+
+struct EvtObjMetaMagic : DispIO // type 35 (NEW!)
+{
+	MetaMagicData mmData;
+};
+
+struct EvtObjSpecialAttack : DispIO // type 36 (NEW!)
+{
+	enum AttackType {STUNNING_FIST=1, NUM_EFFECTS};
+
+	int attack;  //Uses the attack enum but unfortunately the enum can't be passed through to python
+	objHndl target;
+};
+
+struct EvtObjRangeIncrementBonus : DispIO // type 37 (NEW!)
+{
+	objHndl weaponUsed = objHndl::null;
+	double rangeBonus = 0.0;
+};
+
+struct EvtObjDealingSpellDamage : DispIO // type 38 (NEW!)
+{
+	DamagePacket* damage = nullptr;
+	SpellPacketBody* spellPkt = nullptr;
+	objHndl target = objHndl::null;
+};
+
+struct EvtObjSpellTargetBonus : DispIO // type 38 (NEW!)
+{
+	BonusList* bonusList = nullptr;
+	SpellPacketBody* spellPkt = nullptr;
+	objHndl target = objHndl::null;
+};
+
+struct EvtObjActionCost: DispIO
+{
+	ActionCostPacket acpOrig; // original
+	ActionCostPacket acpCur; // current
+	D20Actn *d20a;
+	TurnBasedStatus *tbStat;
+
+	EvtObjActionCost()
+	{
+		dispIOType = evtObjTypeActionCost;
+	};
+
+	EvtObjActionCost(ActionCostPacket acp, TurnBasedStatus *tbStatIn, D20Actn* d20aIn) : EvtObjActionCost(){
+		this->acpOrig = acp;
+		this->acpCur = acp;
+		this->d20a = d20aIn;
+		this->tbStat = tbStatIn;
+	}
+	void DispatchCost(D20DispatcherKey key = DK_NONE);
 };
 
 

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -22,32 +22,32 @@
     <ProjectGuid>{006F5B8A-F75F-413C-AD3A-E004CA8DDF26}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>Infrastructure</RootNamespace>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -87,14 +87,14 @@
       <AdditionalIncludeDirectories>include</AdditionalIncludeDirectories>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalDependencies>
-      </AdditionalDependencies>
+      <AdditionalDependencies>crash_reporting_d.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -121,6 +121,7 @@
       <AdditionalIncludeDirectories>include</AdditionalIncludeDirectories>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -129,8 +130,7 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <Lib>
-      <AdditionalDependencies>
-      </AdditionalDependencies>
+      <AdditionalDependencies>crash_reporting.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -162,9 +162,28 @@
     <ClInclude Include="breakpad\minidump_format.h" />
     <ClInclude Include="breakpad\scoped_ptr.h" />
     <ClInclude Include="breakpad\string_utils-inl.h" />
+    <ClInclude Include="include\aas\aas.h" />
+    <ClInclude Include="include\aas\aas_model_factory.h" />
+    <ClInclude Include="include\aas\aas_renderer.h" />
+    <ClInclude Include="include\graphics\collision.h" />
+    <ClInclude Include="src\aas\aas_anim_events.h" />
+    <ClInclude Include="src\aas\aas_anim_player.h" />
+    <ClInclude Include="src\aas\aas_anim_player_stream.h" />
+    <ClInclude Include="src\aas\aas_cloth_collision.h" />
+    <ClInclude Include="src\aas\aas_cloth_sim.h" />
+    <ClInclude Include="src\aas\aas_cloth_sim_mesh.h" />
+    <ClInclude Include="include\aas\aas_math.h" />
+    <ClInclude Include="include\fmt\container.h" />
+    <ClInclude Include="include\fmt\format.h" />
+    <ClInclude Include="include\fmt\ostream.h" />
+    <ClInclude Include="include\fmt\posix.h" />
+    <ClInclude Include="include\fmt\printf.h" />
+    <ClInclude Include="include\fmt\string.h" />
+    <ClInclude Include="include\fmt\time.h" />
     <ClInclude Include="include\graphics\bufferbinding.h" />
     <ClInclude Include="include\graphics\buffers.h" />
     <ClInclude Include="include\graphics\camera.h" />
+    <ClInclude Include="include\debugui.h" />
     <ClInclude Include="include\graphics\device.h" />
     <ClInclude Include="include\graphics\dynamictexture.h" />
     <ClInclude Include="include\graphics\materials.h" />
@@ -179,6 +198,8 @@
     <ClInclude Include="include\gsl\gsl_util.h" />
     <ClInclude Include="include\gsl\span.h" />
     <ClInclude Include="include\gsl\string_span.h" />
+    <ClInclude Include="include\imconfig.h" />
+    <ClInclude Include="include\imgui.h" />
     <ClInclude Include="include\infrastructure\binaryreader.h" />
     <ClInclude Include="include\infrastructure\breakpad.h" />
     <ClInclude Include="include\infrastructure\crypto.h" />
@@ -186,7 +207,6 @@
     <ClInclude Include="include\infrastructure\macros.h" />
     <ClInclude Include="include\infrastructure\elfhash.h" />
     <ClInclude Include="include\infrastructure\exception.h" />
-    <ClInclude Include="include\infrastructure\format.h" />
     <ClInclude Include="include\infrastructure\infrastructure.h" />
     <ClInclude Include="include\infrastructure\INI.h" />
     <ClInclude Include="include\infrastructure\images.h" />
@@ -209,21 +229,30 @@
     <ClInclude Include="include\spdlog\details\line_logger.h" />
     <ClInclude Include="include\spdlog\details\logger_impl.h" />
     <ClInclude Include="include\spdlog\details\log_msg.h" />
+    <ClInclude Include="include\spdlog\details\mpmc_blocking_q.h" />
     <ClInclude Include="include\spdlog\details\mpmc_bounded_q.h" />
     <ClInclude Include="include\spdlog\details\null_mutex.h" />
     <ClInclude Include="include\spdlog\details\os.h" />
     <ClInclude Include="include\spdlog\details\pattern_formatter_impl.h" />
     <ClInclude Include="include\spdlog\details\registry.h" />
     <ClInclude Include="include\spdlog\details\spdlog_impl.h" />
+    <ClInclude Include="include\spdlog\fmt\fmt.h" />
+    <ClInclude Include="include\spdlog\fmt\ostr.h" />
     <ClInclude Include="include\spdlog\formatter.h" />
     <ClInclude Include="include\spdlog\logger.h" />
+    <ClInclude Include="include\spdlog\sinks\android_sink.h" />
+    <ClInclude Include="include\spdlog\sinks\ansicolor_sink.h" />
     <ClInclude Include="include\spdlog\sinks\base_sink.h" />
+    <ClInclude Include="include\spdlog\sinks\dist_sink.h" />
     <ClInclude Include="include\spdlog\sinks\file_sinks.h" />
+    <ClInclude Include="include\spdlog\sinks\msvc_sink.h" />
     <ClInclude Include="include\spdlog\sinks\null_sink.h" />
     <ClInclude Include="include\spdlog\sinks\ostream_sink.h" />
     <ClInclude Include="include\spdlog\sinks\sink.h" />
     <ClInclude Include="include\spdlog\sinks\stdout_sinks.h" />
     <ClInclude Include="include\spdlog\sinks\syslog_sink.h" />
+    <ClInclude Include="include\spdlog\sinks\wincolor_sink.h" />
+    <ClInclude Include="include\spdlog\sinks\windebug_sink.h" />
     <ClInclude Include="include\spdlog\spdlog.h" />
     <ClInclude Include="include\infrastructure\stopwatch.h" />
     <ClInclude Include="include\infrastructure\stringutil.h" />
@@ -231,19 +260,35 @@
     <ClInclude Include="include\infrastructure\version.h" />
     <ClInclude Include="include\infrastructure\vfs.h" />
     <ClInclude Include="include\graphics\textures.h" />
+    <ClInclude Include="include\spdlog\tweakme.h" />
+    <ClInclude Include="src\aas\aas_animated_model.h" />
+    <ClInclude Include="src\aas\aas_mesh.h" />
+    <ClInclude Include="src\aas\aas_skeleton.h" />
+    <ClInclude Include="src\debugui\imgui\imgui_impl_dx11.h" />
     <ClInclude Include="src\graphics\shaders_compiler.h" />
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="include\graphics\materials.cpp" />
+    <ClCompile Include="include\fmt\format.cc" />
+    <ClCompile Include="include\fmt\ostream.cc" />
+    <ClCompile Include="include\fmt\posix.cc" />
+    <ClCompile Include="include\fmt\printf.cc" />
+    <ClCompile Include="src\aas\aas.cpp" />
+    <ClCompile Include="src\aas\aas_math.cpp" />
+    <ClCompile Include="src\aas\aas_renderer.cpp" />
+    <ClCompile Include="src\aas\aas_animated_model.cpp" />
+    <ClCompile Include="src\aas\aas_anim_player.cpp" />
+    <ClCompile Include="src\aas\aas_anim_player_stream.cpp" />
+    <ClCompile Include="src\aas\aas_cloth_collision.cpp" />
+    <ClCompile Include="src\aas\aas_cloth_sim.cpp" />
+    <ClCompile Include="src\aas\aas_cloth_sim_mesh.cpp" />
+    <ClCompile Include="src\aas\aas_mesh.cpp" />
+    <ClCompile Include="src\aas\aas_model_factory.cpp" />
+    <ClCompile Include="src\aas\aas_skeleton.cpp" />
     <ClCompile Include="src\allocator.cpp" />
     <ClCompile Include="breakpad.cpp" />
-    <ClCompile Include="breakpad\crash_generation_client.cc" />
-    <ClCompile Include="breakpad\exception_handler.cc" />
-    <ClCompile Include="breakpad\guid_string.cc" />
     <ClCompile Include="crypto.cpp" />
     <ClCompile Include="d3d.cpp" />
-    <ClCompile Include="format.cc" />
     <ClCompile Include="elfhash.cpp" />
     <ClCompile Include="images.cpp" />
     <ClCompile Include="images_tga.cpp" />
@@ -251,7 +296,11 @@
     <ClCompile Include="images_jpeg.cpp" />
     <ClCompile Include="mdfparser.cpp" />
     <ClCompile Include="meshes_animfallbacks.cpp" />
-    <ClCompile Include="meshes_rewrite.cpp" />
+    <ClCompile Include="src\debugui\debugui.cpp" />
+    <ClCompile Include="src\debugui\imgui\imgui.cpp" />
+    <ClCompile Include="src\debugui\imgui\imgui_demo.cpp" />
+    <ClCompile Include="src\debugui\imgui\imgui_draw.cpp" />
+    <ClCompile Include="src\debugui\imgui\imgui_impl_dx11.cpp" />
     <ClCompile Include="src\graphics\dynamictexture.cpp" />
     <ClCompile Include="src\graphics\shaders_compiler.cpp" />
     <ClCompile Include="src\graphics\bufferbinding.cpp" />

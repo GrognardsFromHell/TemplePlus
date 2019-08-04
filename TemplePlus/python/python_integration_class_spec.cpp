@@ -56,7 +56,7 @@ std::map<int, std::vector<int>> PythonClassSpecIntegration::GetSpellsPerDay(int 
 {
 	auto classSpecEntry = mScripts.find(classEnum);
 	if (classSpecEntry == mScripts.end())
-		return std::map<int, std::vector<int>>();;
+		return std::map<int, std::vector<int>>();
 
 	auto result = RunScriptMapResult(classSpecEntry->second.id, (EventId)ClassSpecFunc::GetSpellsPerDay, nullptr);
 
@@ -89,12 +89,32 @@ Stat PythonClassSpecIntegration::GetSpellDcStat(int classEnum)
 	return  (Stat)RunScriptDefault0(classSpecEntry->second.id, (EventId)ClassSpecFunc::GetSpellDcStat, nullptr);
 }
 
+std::vector<int> PythonClassSpecIntegration::GetCasterLevels(int classEnum)
+{
+	auto classSpecEntry = mScripts.find(classEnum);
+	if (classSpecEntry == mScripts.end())
+		return std::vector<int>();
+
+	auto result = RunScriptVectorResult(classSpecEntry->second.id, (EventId)ClassSpecFunc::GetCasterLevels, nullptr);
+
+	return result;
+}
+
 ClassDefinitionFlag PythonClassSpecIntegration::GetClassDefinitionFlags(int classEnum){
 	auto classSpecEntry = mScripts.find(classEnum);
 	if (classSpecEntry == mScripts.end())
 		return ClassDefinitionFlag::CDF_BaseClass;
 
 	return (ClassDefinitionFlag)RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::GetClassDefFlags, nullptr);
+}
+
+bool PythonClassSpecIntegration::HasArmoredArcaneCasterFeature(int classEnum) {
+	auto classSpecEntry = mScripts.find(classEnum);
+	if (classSpecEntry == mScripts.end())
+		return false; // default to false
+
+	int res = GetInt(classSpecEntry->second.id, ClassSpecFunc::HasArmoredArcaneCasterFeature, 0);
+	return res ? true : false;
 }
 
 int PythonClassSpecIntegration::GetBabProgression(int classEnum){
@@ -151,6 +171,16 @@ SpellSourceType PythonClassSpecIntegration::GetSpellSourceType(int classEnum)
 	return static_cast<SpellSourceType>(GetInt(classEnum, ClassSpecFunc::GetSpellSourceType, (int)SpellSourceType::Ability));
 }
 
+int PythonClassSpecIntegration::GetAdvancedLearningClass(int classEnum)
+{
+	return static_cast<enum Stat>(GetInt(classEnum, ClassSpecFunc::GetAdvancedLearningClass, classEnum));
+}
+
+bool PythonClassSpecIntegration::HasAdvancedLearning(int classEnum)
+{
+	return (GetInt(classEnum, ClassSpecFunc::GetAdvancedLearningClass, 0) != 0);
+}
+
 std::map<int, int> PythonClassSpecIntegration::GetSpellList(int classEnum)
 {
 	auto result = std::map<int, int>();
@@ -197,27 +227,42 @@ int PythonClassSpecIntegration::IsClassFeat(int classCode, int featEnum)
 	return result;
 }
 
+bool PythonClassSpecIntegration::IsAlignmentCompatible(const objHndl & handle, int classEnum)
+{
+	auto classSpecEntry = mScripts.find(classEnum);
+	if (classSpecEntry == mScripts.end())
+		return false;
+
+	if (config.laxRules && config.disableAlignmentRestrictions)
+		return true;
+
+	auto obj = gameSystems->GetObj().GetObject(handle);
+
+	
+	auto objAlignment = obj->GetInt32(obj_f_critter_alignment);
+	auto args = Py_BuildValue("(i)", objAlignment);
+	auto result = RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::IsAlignmentCompatible, args) != 0;
+	Py_DECREF(args);
+	
+	return result;
+
+}
+
 bool PythonClassSpecIntegration::ReqsMet(const objHndl & handle, int classEnum){
 	auto classSpecEntry = mScripts.find(classEnum);
 	if (classSpecEntry == mScripts.end())
 		return false;
 	
-	// check alignment
 	auto obj = gameSystems->GetObj().GetObject(handle);
-	auto objAlignment = obj->GetInt32(obj_f_critter_alignment);
-	auto args = Py_BuildValue("(i)", objAlignment);
-	auto result = RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::IsAlignmentCompatible, args) != 0;
-	Py_DECREF(args);
-	if (!result && !config.laxRules)
-		return false;
-
+	
+	
 	auto attachee = PyObjHndl_Create(handle);
-	args = Py_BuildValue("(O)", attachee);
+	auto args = Py_BuildValue("(O)", attachee);
 	Py_DECREF(attachee);
-	result = RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::ObjMeetsPrereqs, args) != 0;
+	auto result = RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::ObjMeetsPrereqs, args) != 0;
 	Py_DECREF(args);
 	return result;
-
+	
 }
 
 Stat PythonClassSpecIntegration::GetDeityClass(int classEnum){
@@ -330,9 +375,13 @@ static std::map<ClassSpecFunc, std::string> classSpecFunctions = {
 
 	{ ClassSpecFunc::GetSpellListType,"GetSpellListType" },
 	{ ClassSpecFunc::GetSpellReadyingType,"GetSpellReadyingType" },
+	{ ClassSpecFunc::GetAdvancedLearningClass,"GetAdvancedLearningClass" },
+	{ ClassSpecFunc::HasAdvancedLearning,"HasAdvancedLearning" },
+	{ ClassSpecFunc::HasArmoredArcaneCasterFeature, "HasArmoredArcaneCasterFeature" },
 	{ ClassSpecFunc::GetSpellSourceType,"GetSpellSourceType" },
 	{ ClassSpecFunc::GetSpellList,"GetSpellList" },
 	{ ClassSpecFunc::GetSpellsPerDay,"GetSpellsPerDay" },
+	{ ClassSpecFunc::GetCasterLevels,"GetCasterLevels" },
 	{ ClassSpecFunc::GetSpellConditionName,"GetSpellCasterConditionName" },
 	{ ClassSpecFunc::GetSpellDeterminingStat,"GetSpellDeterminingStat" },
 	{ ClassSpecFunc::GetSpellDcStat,"GetSpellDcStat" },

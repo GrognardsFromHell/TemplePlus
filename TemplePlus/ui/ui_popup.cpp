@@ -25,7 +25,7 @@ class UiPopupReplacement : public TempleFix
 
 BOOL UiPopup::UiPopupMsg(int widId, TigMsg * msg){
 
-	ui.GetButton(widId);
+	uiManager->GetButton(widId);
 
 	if (msg->type == TigMsgType::MOUSE)
 		return TRUE;
@@ -70,6 +70,11 @@ BOOL UiPopup::UiPopupWndMsg(int widId, TigMsg * msg)
 	return FALSE;
 }
 
+UiPromptListEntry& UiPopup::GetPopupByType(int popupType){
+	Expects(popupType < 5 && popupType >= 0);
+	return temple::GetRef<UiPromptListEntry[]>(0x10C03BD8)[popupType];
+}
+
 int UiPopup::VanillaPopupShow(const char * bodyText, const char * title, int buttonTextType, int(*callback)(int), int(*callback2)(int)){
 	return temple::GetRef<int(__cdecl)(const char * , const char * , int(*)(int), int(*)(int))>(0x1017CF20)(bodyText, title, callback, callback2);
 }
@@ -77,19 +82,42 @@ int UiPopup::VanillaPopupShow(const char * bodyText, const char * title, int but
 int UiPopup::FindPopupBtnIdx(int widId){
 
 	auto result = 0;
-
-	auto btn = &( GetCurPopup().btn1);
-	
-	for ( ; result < 3; result++){
-		if ((*btn)->widgetId == widId)
-			return result;
-		btn++;
+	auto &popup = GetCurPopup();
+	for (auto i = 0; i < 3; i++){
+		if (popup.btns[i]->widgetId == widId){
+			return i;
+		}
 	}
-	return result;
+
+	return 3;
 }
 
 void UiPopup::ExecuteCallback(int popupIdx, int btnIdx){
-	temple::GetRef<void(__cdecl)(int, int)>(0x101719D0)(popupIdx, btnIdx);
+	// temple::GetRef<void(__cdecl)(int, int)>(0x101719D0)(popupIdx, btnIdx);
+
+	auto &popup = GetPopupByType(popupIdx);
+	if (!(popup.flags & 1)){
+		if (popup.prompt.callback){
+			popup.prompt.callback(btnIdx);
+		}
+	}
+
+	auto wnd = popup.wnd;
+	popup.isActive = 0;
+	SetCurrentPopupIdx(-1);
+	uiManager->SetHidden(wnd->widgetId, true);
+	if (popup.prompt.renderFuncMaybe){
+		popup.prompt.renderFuncMaybe();
+	}
+
+	popup.ResetWnd();
+	popup.prompt.Reset();
+
+	if ((popup.flags & 1)) {
+		if (popup.prompt.callback) {
+			popup.prompt.callback(btnIdx);
+		}
+	}
 }
 
 UiPromptListEntry & UiPopup::GetCurPopup(){
@@ -98,4 +126,33 @@ UiPromptListEntry & UiPopup::GetCurPopup(){
 
 int UiPopup::GetCurrentPopupIdx(){
 	return temple::GetRef<int>(0x102FC218);
+}
+
+void UiPopup::SetCurrentPopupIdx(int popupIdx){
+	temple::GetRef<int>(0x102FC218) = popupIdx;
+}
+
+void UiPromptPacket::Reset(){
+	memset(this, 0, sizeof(UiPromptPacket));
+	this->idx = -1;
+}
+
+void UiPromptListEntry::ResetWnd(){
+	this->flags = 0;
+	this->isActive = 0;
+	this->wnd->x = 0;
+	this->wnd->y = 0;
+	this->wnd->xrelated = 0;
+	this->wnd->yrelated = 0;
+	this->wnd->width = 0;
+	this->wnd->height = 0;
+
+	for (auto i  = 0; i < 3; i++ ){
+		auto btn = this->btns[i];
+		btn->x = btn->y = btn->xrelated = btn->yrelated = 0;
+		btn->width = btn->height = 0;
+	}
+	this->prompt.texture0 = 0;
+	this->prompt.texture1 = 0;
+	this->prompt.texture2 = 0;
 }

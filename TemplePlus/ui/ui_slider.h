@@ -3,8 +3,8 @@
 #include <tig/tig_msg.h>
 
 
-struct WidgetType1;
-struct WidgetType2;
+struct LgcyWindow;
+struct LgcyButton;
 
 class UiSlider
 {

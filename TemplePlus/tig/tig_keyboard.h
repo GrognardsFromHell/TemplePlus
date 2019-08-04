@@ -106,6 +106,9 @@
 #define DIK_UNLABELED 0x97    /*                        (J3100) */
 #define DIK_NUMPADENTER 0x9C  /* Enter on numeric keypad */
 #define DIK_RCONTROL 0x9D
+#define DIK_MUTE 0xA0
+#define DIK_VOLUMEDOWN 0xAE
+#define DIK_VOLUMEUP 0xB0
 #define DIK_NUMPADCOMMA 0xB3 /* , on numeric keypad (NEC PC98) */
 #define DIK_DIVIDE 0xB5      /* / on numeric keypad */
 #define DIK_SYSRQ 0xB7

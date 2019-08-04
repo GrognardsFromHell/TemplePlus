@@ -299,6 +299,8 @@ PyObject* PyTempleImporter::ReadData(const string& path) {
 		return nullptr;
 	}
 
+	tio_fclose(fh);
+
 	buf[len] = '\0';
 
 	return rawData;
@@ -310,8 +312,11 @@ void PyTempleImporter_Install() {
 	PyTempleImporter::instance->mSearchPath.push_back("python-lib/");
 	PyTempleImporter::instance->mSearchPath.push_back("templeplus/lib/");
 	PyTempleImporter::instance->mSearchPath.push_back("scr/");
+	PyTempleImporter::instance->mSearchPath.push_back("rules/races/");
+	PyTempleImporter::instance->mSearchPath.push_back("rules/");
 	PyTempleImporter::instance->mSearchPath.push_back("rules/char_class/");
 	PyTempleImporter::instance->mSearchPath.push_back("rules/d20_actions/");
+	PyTempleImporter::instance->mSearchPath.push_back("scr/feats/");
 }
 
 void PyTempleImporter_Uninstall() {

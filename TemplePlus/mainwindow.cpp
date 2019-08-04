@@ -5,11 +5,12 @@
 #include <windowsx.h>
 
 #include "movies.h"
-#include "tig/tig_msg.h"
 #include "tig/tig_mouse.h"
 #include "config/config.h"
 #include "mainwindow.h"
 #include "tig/tig_startup.h"
+#include "messages/messagequeue.h"
+#include "tig/tig_keyboard.h"
 
 struct WindowFuncs : temple::AddressTable {
 	void (*TigSoundSetActive)(BOOL active);
@@ -49,8 +50,25 @@ void MainWindow::LockCursor(int x, int y, int w, int h) const {
 	auto &device(tig->GetRenderingDevice());
 
 	RECT rect{ x, y, x + w, y + h };
+
+	static bool unsetClip = false;
+
 	if (isForeground) {
 		ClipCursor(&rect);
+		unsetClip = false;
+	}
+	else // Unset the CursorClip  (was supposed to happen naturally when alt-tabbing, but sometimes it requires hitting a keystroke before it takes effect so adding it here too)
+	{
+		// Check if already unset the CursorClip so it doesn't cause interference in case some other app is trying to clip the cursor...
+		if (unsetClip) 
+			return;
+		unsetClip = true;
+
+		auto screenWidth = GetSystemMetrics(SM_CXSCREEN);
+		auto screenHeight = GetSystemMetrics(SM_CYSCREEN);
+		RECT unClip{0 ,0 , screenWidth, screenHeight};
+		ClipCursor(&unClip);
+		
 	}
 }
 
@@ -179,6 +197,10 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 		return DefWindowProcA(hWnd, msg, wparam, lparam);
 	}
 
+	if (mWindowMsgFilter && mWindowMsgFilter(msg, wparam, lparam)) {
+		return DefWindowProcA(hWnd, msg, wparam, lparam);
+	}
+
 	static int mousePosX = 0; // Replaces memory @ 10D25CEC
 	static int mousePosY = 0; // Replaces memory @ 10D25CF0
 	RECT rect;
@@ -224,7 +246,7 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 			tigMsg.createdMs = timeGetTime();
 			tigMsg.type = TigMsgType::KEYDOWN;
 			tigMsg.arg1 = wparam;
-			msgFuncs.Enqueue(&tigMsg);
+			messageQueue->Enqueue(tigMsg);
 		}
 
 		tigMsg.createdMs = timeGetTime();
@@ -232,7 +254,7 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 		tigMsg.arg1 = ToDirectInputKey(wparam);
 		tigMsg.arg2 = 1; // Means it has changed to pressed
 		if (tigMsg.arg1 != 0) {
-			msgFuncs.Enqueue(&tigMsg);
+			messageQueue->Enqueue(tigMsg);
 		}
 		break;
 	case WM_SYSKEYDOWN:
@@ -241,7 +263,7 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 		tigMsg.arg1 = ToDirectInputKey(wparam);
 		tigMsg.arg2 = 1; // Means it has changed to pressed
 		if (tigMsg.arg1 != 0) {
-			msgFuncs.Enqueue(&tigMsg);
+			messageQueue->Enqueue(tigMsg);
 		}
 		break;
 	case WM_KEYUP:
@@ -251,14 +273,14 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 		tigMsg.arg1 = ToDirectInputKey(wparam);
 		tigMsg.arg2 = 0; // Means it has changed to unpressed
 		if (tigMsg.arg1 != 0) {
-			msgFuncs.Enqueue(&tigMsg);
+			messageQueue->Enqueue(tigMsg);
 		}
 		break;
 	case WM_CHAR:
 		tigMsg.createdMs = timeGetTime();
 		tigMsg.type = TigMsgType::CHAR;
 		tigMsg.arg1 = wparam;
-		msgFuncs.Enqueue(&tigMsg);
+		messageQueue->Enqueue(tigMsg);
 		break;
 	case WM_SYSCOMMAND:
 		if (wparam == SC_KEYMENU || wparam == SC_SCREENSAVE || wparam == SC_MONITORPOWER) {
@@ -272,7 +294,7 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 		tigMsg.createdMs = timeGetTime();
 		tigMsg.type = TigMsgType::EXIT;
 		tigMsg.arg1 = 1;
-		msgFuncs.Enqueue(&tigMsg);
+		messageQueue->Enqueue(tigMsg);
 		return 0;
 	case WM_ERASEBKGND:
 		return 0;
@@ -317,6 +339,26 @@ void MainWindow::UpdateMousePos(int xAbs, int yAbs, int wheelDelta) {
 }
 
 int MainWindow::ToDirectInputKey(int vk) {
+
+	// Special case for keys that can be on the numpad
+	switch (vk) {
+	case VK_HOME:
+		return 0xC7; // DIK_HOME/* Home on arrow keypad */
+	case VK_END:
+		return 0xCF; // DIK_END/* End on arrow keypad */
+	case VK_PRIOR:
+		return 0xC9; // DIK_PRIOR/* PgUp on arrow keypad */
+	case VK_NEXT:
+		return 0xD1; // DIK_NEXT/* PgDn on arrow keypad */
+	case VK_VOLUME_DOWN:
+		return DIK_VOLUMEDOWN;
+	case VK_VOLUME_UP:
+		return DIK_VOLUMEUP;
+	case VK_VOLUME_MUTE:
+		return DIK_MUTE;
+	default:
+		break;
+	}
 
 	// This seems to map using scan codes, which
 	// actually look like original US keyboard ones

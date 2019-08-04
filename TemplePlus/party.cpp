@@ -9,6 +9,8 @@
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/objects/objsystem.h"
 #include "condition.h"
+#include "combat.h"
+#include "turn_based.h"
 
 struct LegacyPartySystemAddresses : temple::AddressTable
 {
@@ -21,6 +23,8 @@ struct LegacyPartySystemAddresses : temple::AddressTable
 	void(__cdecl * AddToCurrentlySelected)(objHndl objHnd);
 	void(*ArraySort)(void* arr, size_t arrSize, size_t elementSize, int(*sortFunc)(void*, void*));
 
+	int * partyMoney; // size 4 array containing: CP, SP, GP, PP
+
 	LegacyPartySystemAddresses()
 	{
 		rebase(AddToCurrentlySelected, 0x1002B560);
@@ -30,6 +34,7 @@ struct LegacyPartySystemAddresses : temple::AddressTable
 		rebase(groupAiFollowers, 0x11E71E20);
 		rebase(groupPcs , 0x11E71F40);
 		rebase(groupList, 0x11E721E0);
+		rebase(partyMoney, 0x1080AB60);
 	}
 	
 	
@@ -53,6 +58,10 @@ public:
 			if (config.tolerantNpcs)
 				return FALSE;
 			return orgFearfulResponse(handle);
+		});
+
+		replaceFunction<objHndl()>(0x1002BE60, [](){
+			return party.GetConsciousPartyLeader();
 		});
 	}
 } partyHacks;
@@ -91,6 +100,18 @@ int LegacyPartySystem::GetMoney() const
 	return temple::GetRef<int(__cdecl)()>(0x1002B750)();
 }
 
+void LegacyPartySystem::GiveMoneyFromItem(const objHndl& item){
+	auto itemObj = objSystem->GetObject(item);
+	if (!itemObj){
+		return;
+	}
+	auto moneyAmt = itemObj->GetInt32(obj_f_money_quantity);
+	auto moneyType = itemObj->GetInt32(obj_f_money_type);
+	if (moneyType < 4 && moneyType >= 0){
+		addresses.partyMoney[moneyType] += moneyAmt;
+	}
+}
+
 void LegacyPartySystem::ApplyConditionAround(const objHndl& obj, double range, const char* condName, const objHndl& obj2){
 	auto groupLen = GroupListGetLen();
 	for (auto i = 0u; i < groupLen; i++){
@@ -105,6 +126,24 @@ void LegacyPartySystem::ApplyConditionAround(const objHndl& obj, double range, c
 			args.push_back(0);
 		conds.AddTo(partyMem, condName, args);	
 	}
+}
+
+uint32_t LegacyPartySystem::GetLivingPartyMemberCount()
+{
+	auto N = GroupListGetLen();
+	auto result = 0u;
+	for (auto i=0; i < N; i++){
+		auto partyMem = GroupListGetMemberN(i);
+		if (!critterSys.IsDeadNullDestroyed(partyMem))
+			result++;
+	}
+	return result;
+}
+
+bool LegacyPartySystem::IsInParty(objHndl critter){
+	if (!critter)
+		return false;
+	return party.ObjIsInGroupArray(addresses.groupList, critter);
 }
 
 uint32_t LegacyPartySystem::AddToPCGroup(objHndl objHnd)
@@ -191,6 +230,43 @@ objHndl LegacyPartySystem::GetLeader()
 		leader = GetConsciousPartyLeader();
 	}
 	return leader;
+}
+
+objHndl LegacyPartySystem::GetConsciousPartyLeader(){
+
+	auto selectedCount = CurrentlySelectedNum();
+	for (auto i=0u; i < selectedCount; i++){
+		auto dude = GetCurrentlySelected(i);
+		if (!dude) continue;
+		if (!critterSys.IsDeadOrUnconscious(dude))
+			return dude;
+	}
+	
+
+	/* added fix in case the leader is not currently selected and is in combat 
+		This fixes issue with Fear'ed characters fucking up things in TB combat, because while running away they weren't selected. 
+		Symptoms included causing an incorrect radial menu to appear for the fear'd character.
+	*/
+	if (combatSys.isCombatActive()){
+		auto curActor = tbSys.turnBasedGetCurrentActor();
+		if (IsInParty(curActor) && !critterSys.IsDeadOrUnconscious(curActor))
+			return curActor;
+	}
+
+
+	auto partySize = GroupListGetLen();
+	for (auto i=0u; i < partySize; i++){
+		auto dude = GroupListGetMemberN(i);
+		if (!dude)continue;
+		if (!critterSys.IsDeadOrUnconscious(dude))
+			return dude;
+	}
+
+	// still none found:
+	if (partySize)
+		return GroupListGetMemberN(0);
+
+	return objHndl::null;
 }
 
 objHndl LegacyPartySystem::PartyMemberWithHighestSkill(SkillEnum skillEnum)

@@ -1,0 +1,108 @@
+{0}{Unspecified Move}
+{1}{Unspecified Attack}
+{2}{Standard Attack}
+{3}{Full Attack}
+{4}{Standard Ranged Attack}
+{5}{Reload}
+{6}{5 Foot Step}
+{7}{Move}
+{8}{Double Move}
+{9}{Run}
+{10}{Cast Spell}
+{11}{Heal}
+{12}{Cleave}
+{13}{Attack Of Opportunity}
+{14}{Whirlwind Attack}
+{15}{Touch Attack}
+{16}{Total Defense}
+{17}{Charge Attack}
+{18}{Fall To Prone}
+{19}{Stand Up}
+{20}{Turn Undead}
+{21}{Death Touch}
+{22}{Protective Ward}
+{23}{Feat of Strength}
+{24}{Bardic Music}
+{25}{Pickup Object}
+{26}{Coup De Gras}
+{27}{Use Item}
+{28}{Barbarian Rage}
+{29}{Stunning Fist}
+{30}{Smite Evil}
+{31}{Lay on Hands Set}
+{32}{Detect Evil}
+{33}{Stop Concentration}
+{34}{Break Free}
+{35}{Trip Attack}
+{36}{Remove Disease}
+{37}{Create Item}
+{38}{Wholeness of Body}
+{39}{Decipher Written Spell}
+{40}{Track}
+{41}{Activate Magic Device}
+{42}{Call Lightning}
+{43}{AoO Movement}
+{44}{Class Ability}
+{45}{Activate Magic Device} // free
+{46}{Open Inventory}
+{47}{Activate Magic Device} // spell
+{48}{Disable Device}
+{49}{Search}
+{50}{Sneak}
+{51}{Talk}
+{52}{Open Lock}
+{53}{Sleight of Hand}
+{54}{Open Container}
+{55}{Throw}
+{56}{Throw Grenade}
+{57}{Feint}
+{58}{Ready Spell}
+{59}{Ready for Counterspell}
+{60}{Ready vs. Approach}
+{61}{Ready vs. Withdrawal}
+{62}{Copy Scroll}
+{63}{Activate Readied Action}
+{64}{Lay on Hands} //use
+{65}{Wholeness of Body}
+{66}{Dismiss Spell}
+{67}{Flee Combat}
+{68}{Use Potion}
+{69}{Divine Might}
+
+{1000}{OK}
+{1001}{Not enough time}
+{1002}{Not enough time}
+{1003}{Not enough time}
+{1004}{Already Moved}
+{1005}{Target Out Of Range}
+{1006}{Target Too Close}
+{1007}{Target Blocked}
+{1008}{Target Too Far}
+{1009}{Target Invalid}
+{1010}{No Line Of Sight}
+{1011}{Out Of Ammo}
+{1012}{Need Melee Weapon}
+{1013}{Can't While Prone}
+{1014}{Invalid Action}
+{1015}{Cannot Cast Spells}
+{1016}{Out of Charges}
+{1017}{Wrong Weapon Type}
+{1018}{Cannot Cast (Out of Available Spells)}
+{1019}{Cannot Cast (Not enough XP)}
+{1020}{Cannot Cast (Not enough GP)}
+{1021}{Out of Combat only!}
+{1022}{Cannot Use (Must use before attacking in a round)}
+{1023}{Need a Straight Line}
+{1024}{No Actions}
+{1025}{Not in Combat}		// HTN - 7/27/03, after text-lock!!!
+{1026}{This area is not safe!} // after text-lock - 
+
+{2000}{Not Enough Time}
+{2001}{No Actions}
+{2002}{Move Action}
+{2003}{Standard Action}
+{2004}{Standard Action}
+{2005}{Full Action}
+{2006}{Full Action+}
+{2007}{Full Action+}
+

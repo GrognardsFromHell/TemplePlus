@@ -1,0 +1,209 @@
+// 0_char_ui.mes
+// format is: (x), (y), (width), (height)
+// default path is: "art\\interface\\char_ui\\"
+
+--- char_ui_main_window ---
+{000} {68}       ; x
+{001} {73}       ; y
+{002} {658}      ; width
+{003} {447}      ; height
+
+{010} {144}      ; red - border (outside) color/alpha
+{011} {144}      ; green
+{012} {144}      ; blue
+{013} {255}      ; alpha
+
+{014} {200}      ; red - border (inside) color/alpha
+{015} {200}      ; green
+{016} {200}      ; blue
+{017} {255}      ; alpha
+
+{018} {priory-12}  ; font name
+{019} {12}       ; font size
+
+{020} {priory-12}  ; font small name
+{021} {12}        ; font small size
+
+{022} {82}       ; x - (top-left corner) location of name/classes/level
+{023} {66}       ; y
+
+{024} {329}      ; x - (top-left corner) location of alignment/gender/race/worship
+{025} {66}       ; y
+
+{026} {priory-12}  ; font big name
+{027} {12}        ; font big size
+
+--- char_ui_main_exit_button ---
+{030} {675}
+{031} {475}
+{032} {53}
+{033} {50}
+
+--- char_ui_main_text_field ---
+{040} {274}
+{041} {386}
+{042} {456}
+{043} {117}
+
+--- char_ui_select_inventory_0_button ---
+{060} {288}
+{061} {182}
+{062} {25}
+{063} {28}
+
+--- char_ui_select_inventory_1_button ---
+{080} {288}
+{081} {198}
+{082} {25}
+{083} {28}
+
+--- char_ui_select_inventory_2_button ---
+{100} {288}
+{101} {239}
+{102} {25}
+{103} {28}
+
+--- char_ui_select_inventory_3_button ---
+{120} {288}
+{121} {280}
+{122} {25}
+{123} {28}
+
+--- char_ui_select_inventory_4_button ---
+{140} {288}
+{141} {321}
+{142} {25}
+{143} {28}
+
+--- char_ui_select_skills_button ---
+{160} {363}
+{161} {119}
+{162} {69}
+{163} {19}
+
+--- char_ui_select_feats_button ---
+{180} {444}
+{181} {119}
+{182} {69}
+{183} {19}
+
+--- char_ui_select_spells_button ---
+{200} {525}
+{201} {119}
+{202} {69}
+{203} {19}
+
+--- char_ui_select_abilities_button ---
+{210} {606}
+{211} {94}
+{212} {69}
+{213} {19}
+
+--- char_ui_main_editor_class_button ---
+{220} {669}
+{221} {59}
+{222} {112}
+{223} {27}
+
+--- char_ui_main_editor_stats_button ---
+{224} {669}
+{225} {87}
+{226} {112}
+{227} {27}
+
+--- char_ui_main_editor_feats_button ---
+{228} {669}
+{229} {115}
+{230} {112}
+{231} {27}
+
+--- char_ui_main_editor_skills_button ---
+{232} {669}
+{233} {143}
+{234} {112}
+{235} {27}
+
+--- char_ui_main_editor_spells_button ---
+{236} {669}
+{237} {171}
+{238} {112}
+{239} {27}
+
+--- char_ui_main_editor_finish_button ---
+{240} {669}
+{241} {199}
+{242} {112}
+{243} {27}
+
+--- font normal color ---
+{260} {255}     ; red
+{261} {255}     ; green
+{262} {255}     ; blue
+{263} {255}     ; alpha
+
+--- font dark color ---
+{280} {144}
+{281} {144}
+{282} {144}
+{283} {255}
+
+--- font highlight color ---
+{300} {96}
+{301} {96}
+{302} {96}
+{303} {255}
+
+--- tab_left ---
+{320} {8}   ; width
+{321} {20}  ; height
+
+--- tab_fill ---
+{340} {1}
+{341} {20}
+
+--- inner_window_border ---
+{360} {322}
+{361} {122}
+{362} {402}
+{363} {270}
+
+--- char_ui_mode x-coordinates ---
+{380} {72}      ; normal
+{381} {140}     ; looting
+{382} {10}      ; level-up
+
+--- char_ui_main_nav_editor_window ---
+{400} {669}      ; x
+{401} {59}       ; y
+{402} {112}      ; width
+{403} {180}      ; height
+
+--- char_ui_main_nav_font_offset_x ---
+{420} {5}        ; font_offset_x
+
+--- char_ui_main_name_button ---
+{500} {89}		; x
+{501} {82}		; y
+{502} {184}		; width
+{503} {16}		; height
+
+--- char_ui_main_class_level_button ---
+{520} {255}		; x
+{521} {82}		; y
+{522} {431}		; width
+{523} {16}		; height
+
+--- char_ui_main_alignment_gender_race_button ---
+{540} {230}		; x
+{541} {101}		; y
+{542} {231}		; width
+{543} {16}		; height
+
+--- char_ui_main_worship_button ---
+{560} {481}		; x
+{561} {101}		; y
+{562} {190}		; width
+{563} {16}		; height
+
+--- tooltip_ui_style ---
+{2000} {0}

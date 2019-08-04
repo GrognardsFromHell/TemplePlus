@@ -24,13 +24,16 @@
 #include <graphics/shaperenderer2d.h>
 #include "ui_tooltip.h"
 #include "ui_render.h"
-#include <anim.h>
+#include "animgoals/anim.h"
 #include <tig\tig_mouse.h>
+#include <dungeon_master.h>
+#include "gamesystems/objects/objsystem.h"
+#include "raycast.h"
+#include "hotkeys.h"
 
 UiIntgameTurnbased uiIntgameTb;
 
 struct UiIntgameTurnbasedAddresses : temple::AddressTable {
-	BOOL (__cdecl*GameRayCast)(int x, int y, objHndl* obj, int flags);
 	void (__cdecl *CursorRenderUpdate)();
 	int (__cdecl *AooIndicatorDraw)(LocAndOffsets*, int shaderId);
 	int (__cdecl *GetHourglassDepletionState)();
@@ -60,7 +63,7 @@ struct UiIntgameTurnbasedAddresses : temple::AddressTable {
 	int* uiIntgameSelectionConfirmed;
 	int* uiIntgameWidgetEnteredForRender;
 	int* uiIntgameWidgetEnteredForGameplay;
-	WidgetType1** uiIntgameMainWnd;
+	LgcyWindow** uiIntgameMainWnd;
 	int* uiIntgameWaypointMode;
 	objHndl* intgameActor;
 	objHndl* intgameFocusObj; // hovered char, more or less
@@ -69,14 +72,12 @@ struct UiIntgameTurnbasedAddresses : temple::AddressTable {
 	objHndl* uiIntgameObjFromRaycast;
 	int* activePickerIdx;
 	ActnSeq* uiIntgameCurSeqBackup;
+	ActnSeq* uiIntgameCurSeqBackup_GenerateSequence;
 	LocAndOffsets* uiIntgameWaypointLoc; // the last fixed waypoint in waypoint mode
 	int64_t* screenXfromMouseEvent;
 	int64_t* screenYfromMouseEvent;
 
 	UiIntgameTurnbasedAddresses() {
-		rebase(GameRayCast, 0x10022360);
-
-
 		rebase(CursorRenderUpdate, 0x10097060);
 
 
@@ -130,6 +131,7 @@ struct UiIntgameTurnbasedAddresses : temple::AddressTable {
 		rebase(uiIntgameActionErrorCode, 0x11869298);
 		rebase(movementFeet, 0x11869240);
 		rebase(uiIntgameCurSeqBackup, 0x118692A0);
+		rebase(uiIntgameCurSeqBackup_GenerateSequence, 0x10B3BF50);
 	}
 
 
@@ -149,19 +151,21 @@ public:
 	*/
 	static int UiIntgamePathSequenceHandler(TigMsgMouse* msg);
 	static int (__cdecl* orgUiIntgamePathSequenceHandler)(TigMsgMouse* msg);
+		
 
 	static void UiIntgameGenerateSequence(int isUnnecessary);
 	static void (__cdecl*orgUiIntgameGenerateSequence)(int isUnnecessary);
-
-
-	static void RestoreSeqBackup();
+		static void CurSeqBackup(); // backs up current sequence for UiIntgameGenerateSequence
+		static void RestoreSeqBackup();
+		static bool ShouldRollbackSequence();
+		static BOOL UiIntgameLocIsFarFromDesignatedLoc(LocAndOffsets loc);
 	
 	static int UiIntgameMsgHandler(int widId, TigMsg* msg);
 		static bool ToggleAcquisition(TigMsg* msg);
 		static bool ResetViaRmb(TigMsg* msg);
 	static int (__cdecl*orgUiIntgameMsgHandler)(int widId, TigMsg* msg);
 
-	static BOOL UiIntgameRaycast(objHndl* obj, int x, int y, int flags);
+	static BOOL UiIntgameRaycast(objHndl* obj, int x, int y, GameRaycastFlags flags);
 	static int IntgameValidateMouseSelection(TigMsgMouse* msg);
 
 	static void RenderAooIndicator(const LocAndOffsets& location, int materialId);
@@ -178,6 +182,9 @@ public:
 
 		replaceFunction<void(__cdecl)()>(0x10097060, [](){
 			uiIntgameTb.CursorRenderUpdate();
+		});
+		replaceFunction<BOOL(__cdecl)(objHndl)>(0x10173B30, [](objHndl handle){
+			return uiIntgameTb.AooPossible(handle) ? TRUE : FALSE;
 		});
 	}
 } uiIntgameTurnbasedReplacements;
@@ -297,20 +304,33 @@ int UiIntegameTurnbasedRepl::UiIntgamePathSequenceHandler(TigMsgMouse* msg) {
 
 	bool performSeq = true;
 	objHndl actor = tbSys.turnBasedGetCurrentActor();
-	if (*intgameAddresses.uiIntgameAcquireByRaycastOn) {
+
+
+	auto &isWaypointMode = *intgameAddresses.uiIntgameWaypointMode;
+
+	auto &tgtFromPortraits   = *intgameAddresses.uiIntgameTargetObjFromPortraits;
+	auto &objFromRaycast     = *intgameAddresses.uiIntgameObjFromRaycast;
+	auto &acquireByRaycastOn = *intgameAddresses.uiIntgameAcquireByRaycastOn;
+
+	auto &waypointLoc        = *intgameAddresses.uiIntgameWaypointLoc;
+	auto &locFromScreenLoc   = *intgameAddresses.locFromScreenLoc;
+
+	if (acquireByRaycastOn) {
 
 		if (*intgameAddresses.uiIntgameSelectionConfirmed && !actSeqSys.isPerforming(actor)) {
-			if ((infrastructure::gKeyboard.IsKeyPressed(VK_LMENU) || infrastructure::gKeyboard.IsKeyPressed(VK_RMENU) || *intgameAddresses.uiIntgameWaypointMode)
-				&& !*intgameAddresses.uiIntgameObjFromRaycast) {
+
+			auto altIsPressed = infrastructure::gKeyboard.IsKeyPressed(VK_LMENU) || infrastructure::gKeyboard.IsKeyPressed(VK_RMENU);
+
+			if ( (altIsPressed || isWaypointMode) && !objFromRaycast) {
 				LocAndOffsets curd20aTgtLoc;
 				actSeqSys.GetPathTargetLocFromCurD20Action(&curd20aTgtLoc);
-				if (locSys.Distance3d(curd20aTgtLoc, *intgameAddresses.locFromScreenLoc) >= 24.0) {
+				if (locSys.Distance3d(curd20aTgtLoc, locFromScreenLoc) >= 24.0) {
 					performSeq = false;
-				} else if (*intgameAddresses.uiIntgameWaypointMode == 0
-					|| intgameAddresses.locFromScreenLoc->location != intgameAddresses.uiIntgameWaypointLoc->location) {
+				} else if (isWaypointMode == 0
+					|| locFromScreenLoc.location != waypointLoc.location) {
 					// this initiates waypoint mode
-					*intgameAddresses.uiIntgameWaypointMode = 1;
-					*intgameAddresses.uiIntgameWaypointLoc = *intgameAddresses.locFromScreenLoc;
+					isWaypointMode = 1;
+					waypointLoc = locFromScreenLoc;
 					UiIntgameBackupCurSeq();
 					performSeq = false;
 				}
@@ -324,8 +344,8 @@ int UiIntegameTurnbasedRepl::UiIntgamePathSequenceHandler(TigMsgMouse* msg) {
 		intgameAddresses.UiActionBarGetValuesFromMovement();
 		logger->info("UiIntgame: \t Issuing Sequence for current actor {} ({}), cur seq: {}", description.getDisplayName(actor), actor, (void*)(*actSeqSys.actSeqCur));
 		actSeqSys.sequencePerform();
-		*intgameAddresses.uiIntgameTargetObjFromPortraits = 0i64;
-		*intgameAddresses.uiIntgameWaypointMode = 0;
+		tgtFromPortraits = 0i64;
+		isWaypointMode = 0;
 		SeqPickerTargetingTypeReset();
 		auto comrade = party.GetFellowPc(actor);
 		char text[1000];
@@ -333,8 +353,8 @@ int UiIntegameTurnbasedRepl::UiIntgamePathSequenceHandler(TigMsgMouse* msg) {
 		critterSys.GetOkayVoiceLine(actor, comrade, text, &soundId);
 		critterSys.PlayCritterVoiceLine(actor, comrade, text, soundId);
 	}
-	*intgameAddresses.uiIntgameAcquireByRaycastOn = 0;
-	*intgameAddresses.uiIntgameObjFromRaycast = 0i64;
+	acquireByRaycastOn = 0;
+	objFromRaycast = 0i64;
 	IntgameValidateMouseSelection(msg);
 	return 1;
 	// return orgUiIntgamePathPreviewHandler(msg);
@@ -343,11 +363,205 @@ int UiIntegameTurnbasedRepl::UiIntgamePathSequenceHandler(TigMsgMouse* msg) {
 void UiIntegameTurnbasedRepl::UiIntgameGenerateSequence(int isUnnecessary) {
 	auto curSeq = *actSeqSys.actSeqCur;
 	// replacing this just for debug purposes really
-	orgUiIntgameGenerateSequence(isUnnecessary);
+
+	auto actor = tbSys.turnBasedGetCurrentActor();
+
+	if (actSeqSys.isPerforming(actor)){
+		return;
+	}
+
+	CurSeqBackup();
+
+	auto altIsPressed = infrastructure::gKeyboard.IsKeyPressed(VK_LMENU) || infrastructure::gKeyboard.IsKeyPressed(VK_RMENU);
+	
+	auto &isWaypointMode = *intgameAddresses.uiIntgameWaypointMode;
+
+	auto &tgtFromPortraits = *intgameAddresses.uiIntgameTargetObjFromPortraits;
+	auto &objFromRaycast = *intgameAddresses.uiIntgameObjFromRaycast;
+
+	auto &x = *intgameAddresses.screenXfromMouseEvent;
+	auto &y = *intgameAddresses.screenYfromMouseEvent;
+
+	auto &locFromScreenLoc = *intgameAddresses.locFromScreenLoc;
+
+	auto actionLoc = locFromScreenLoc; // 
+
+	if (isWaypointMode || altIsPressed){
+
+		if (tgtFromPortraits){
+			objFromRaycast = tgtFromPortraits;
+		}
+		else {
+			auto raycastFlags = GameRaycastFlags::GRF_ExcludeUnconscious | GameRaycastFlags::GRF_ExcludePortals |
+				GameRaycastFlags::GRF_ExcludeItems | GameRaycastFlags::GRF_HITTEST_SEL_CIRCLE;
+
+			if (!PickObjectOnScreen(x, y, &objFromRaycast, raycastFlags)){
+				objFromRaycast = objHndl::null;
+				locSys.GetLocFromScreenLocPrecise(x, y, locFromScreenLoc);
+				actionLoc = locFromScreenLoc;
+
+				if (UiIntgameLocIsFarFromDesignatedLoc(locFromScreenLoc)){
+					RestoreSeqBackup();
+					locFromScreenLoc = *intgameAddresses.uiIntgameWaypointLoc;
+					return;
+				}
+			}
+		}
+	}
+
+	else if (tgtFromPortraits){
+		objFromRaycast = tgtFromPortraits;
+	}
+
+	else{
+		auto raycastFlags = GameRaycastFlags::GRF_HITTEST_3D | GameRaycastFlags::GRF_ExcludePortals;
+
+		if (!PickObjectOnScreen(x, y, &objFromRaycast, raycastFlags)) {
+			objFromRaycast = objHndl::null;
+			locSys.GetLocFromScreenLocPrecise(x, y, locFromScreenLoc);
+			actionLoc = *intgameAddresses.locFromScreenLoc;
+		}
+	}
+	
+
+	auto mouseLoc = LocAndOffsets::null;
+	locSys.GetLocFromScreenLocPrecise(x, y, mouseLoc);
+	auto subTile = locSys.subtileFromLoc(&mouseLoc);
+
+	auto canGenerate = objFromRaycast != objHndl::null;
+	if (!canGenerate){
+		auto sub_100AC5C0 = temple::GetRef<BOOL(__cdecl)(int64_t, int)>(0x100AC5C0);
+		if (!sub_100AC5C0(subTile, 1)){
+			auto fogFlags = temple::GetRef<uint8_t(__cdecl)(LocAndOffsets)>(0x1002ECB0)(mouseLoc);
+			if (fogFlags & 4) // explored
+				canGenerate = true;
+		}
+	}
+
+	if (!canGenerate){
+		actor = tbSys.turnBasedGetCurrentActor();
+		if (objects.IsPlayerControlled(actor)){
+			if (isWaypointMode) {
+				RestoreSeqBackup();
+			}
+			else{
+				actSeqSys.curSeqReset(actor);
+			}
+				
+			actSeqSys.TurnBasedStatusInit(actor);
+			d20Sys.GlobD20ActnInit();
+			objFromRaycast = objHndl::null;
+		}
+		return;
+	}
+
+
+	if (!actSeqSys.isPerforming(actor)){
+		if (objFromRaycast) {
+			if (!critterSys.IsCombatModeActive(actor)) {
+				combatSys.enterCombat(actor);
+			}
+
+
+			switch (objSystem->GetObject(objFromRaycast)->type) {
+			case obj_t_container:
+				if (isWaypointMode)
+					RestoreSeqBackup();
+				else
+					actSeqSys.curSeqReset(actor);
+				if (isUnnecessary)
+					d20Sys.GlobD20ActnSetD20CAF(D20CAF_UNNECESSARY);
+				actSeqSys.TurnBasedStatusInit(actor);
+				d20Sys.GlobD20ActnInit();
+				actSeqSys.ActionTypeAutomatedSelection(objFromRaycast);
+				if (!d20Sys.GlobD20ActnSetTarget(objFromRaycast, nullptr)) {
+					actSeqSys.ActionAddToSeq();
+				}
+				break;
+			case obj_t_weapon:
+			case obj_t_ammo:
+			case obj_t_armor:
+			case obj_t_money:
+			case obj_t_food:
+			case obj_t_scroll:
+			case obj_t_key:
+			case obj_t_written:
+			case obj_t_generic:
+				if (actSeqSys.SeqPickerHasTargetingType())
+					return;
+				if (isWaypointMode) {
+					RestoreSeqBackup();
+				}
+				else {
+					logger->debug("Generate Sequence: Reseting sequence");
+					actSeqSys.curSeqReset(actor);
+				}
+				if (isUnnecessary)
+					d20Sys.GlobD20ActnSetD20CAF(D20CAF_UNNECESSARY);
+				actSeqSys.TurnBasedStatusInit(actor);
+				d20Sys.GlobD20ActnInit();
+				actSeqSys.ActionTypeAutomatedSelection(objFromRaycast);
+				if (!d20Sys.GlobD20ActnSetTarget(objFromRaycast, nullptr)) {
+					actSeqSys.ActionAddToSeq();
+				}
+				break;
+			case obj_t_pc:
+			case obj_t_npc:
+				if (isWaypointMode) {
+					RestoreSeqBackup();
+				}
+				else {
+					actSeqSys.curSeqReset(actor);
+				}
+				if (isUnnecessary)
+					d20Sys.GlobD20ActnSetD20CAF(D20CAF_UNNECESSARY);
+				actSeqSys.TurnBasedStatusInit(actor);
+				d20Sys.GlobD20ActnInit();
+				actSeqSys.ActionTypeAutomatedSelection(objFromRaycast);
+				if (!d20Sys.GlobD20ActnSetTarget(objFromRaycast, nullptr)) {
+					actSeqSys.ActionAddToSeq();
+				}
+				break;
+			default:
+				break;
+			}
+		}
+		else if (!critterSys.IsDeadOrUnconscious(actor)){
+			if (isWaypointMode) {
+				RestoreSeqBackup();
+			}
+			else {
+				actSeqSys.curSeqReset(actor);
+			}
+			actSeqSys.TurnBasedStatusInit(actor);
+			d20Sys.GlobD20ActnInit();
+			if (isUnnecessary)
+				d20Sys.GlobD20ActnSetD20CAF(D20CAF_UNNECESSARY);
+			
+			actSeqSys.ActionTypeAutomatedSelection(objHndl::null);
+			if (!d20Sys.GlobD20ActnSetTarget(objHndl::null, &actionLoc)) {
+				actSeqSys.ActionAddToSeq();
+			}
+		}
+	}
+
+	if (ShouldRollbackSequence()){
+		if (*actSeqSys.actSeqCur){
+			**actSeqSys.actSeqCur = *intgameAddresses.uiIntgameCurSeqBackup_GenerateSequence;
+		}
+	}
+
+	// orgUiIntgameGenerateSequence(isUnnecessary);
 	if (*actSeqSys.actSeqCur != curSeq) {
 		logger->info("Sequence switch from Generate Sequence to {}", (void*)*actSeqSys.actSeqCur);
 		int dummy = 1;
 	};
+}
+
+void UiIntegameTurnbasedRepl::CurSeqBackup(){
+	if (*actSeqSys.actSeqCur){
+		*intgameAddresses.uiIntgameCurSeqBackup_GenerateSequence = **actSeqSys.actSeqCur;
+	}
 }
 
 void UiIntegameTurnbasedRepl::RestoreSeqBackup()
@@ -356,8 +570,47 @@ void UiIntegameTurnbasedRepl::RestoreSeqBackup()
 	restoreSeqBackup();
 }
 
+bool UiIntegameTurnbasedRepl::ShouldRollbackSequence(){
+	return (*pathfindingSys.rollbackSequenceFlag) != 0;
+}
+
+BOOL UiIntegameTurnbasedRepl::UiIntgameLocIsFarFromDesignatedLoc(LocAndOffsets loc)
+{
+	// returns actorR^2 >= dx^2 + dy^2 for waypoint mode
+	return temple::GetRef<BOOL(__cdecl)(LocAndOffsets)>(0x10173CF0)(loc);
+	return 0;
+}
+
 int UiIntegameTurnbasedRepl::UiIntgameMsgHandler(int widId, TigMsg* msg) {
+
+	if (dmSys.IsActive() && !dmSys.IsMinimized()){
+		if (msg->type == TigMsgType::MOUSE)
+			
+			if (dmSys.IsMoused()){
+				return FALSE;
+			}
+			
+			auto mouseMsg =*(TigMsgMouse*)msg;
+			if ((mouseMsg.buttonStateFlags & MouseStateFlags::MSF_RMB_CLICK)
+				|| (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_RMB_RELEASED)){
+
+				if (dmSys.IsEditorActive())
+					return FALSE;
+				if (dmSys.GetHoveredCritter())
+					return FALSE;
+				
+		}
+
+		if (dmSys.IsActionActive())
+			return FALSE;
+
+		if (dmSys.IsHandlingMsg()){
+			return FALSE;
+		}
+			
+	}
 	
+
 	auto initialSeq = *actSeqSys.actSeqCur;
 	int result = 0;
 
@@ -389,7 +642,8 @@ int UiIntegameTurnbasedRepl::UiIntgameMsgHandler(int widId, TigMsg* msg) {
 		if (objects.IsPlayerControlled(intgameActor)){
 			auto tigMsgType = msg->type;
 			if (tigMsgType == TigMsgType::MOUSE){
-				if (msg->arg4 & MSF_LMB_CLICK){
+
+				if (msg->arg4 & MSF_LMB_CLICK) {
 					if (ToggleAcquisition(msg))
 						result = 1;
 				}
@@ -402,7 +656,7 @@ int UiIntegameTurnbasedRepl::UiIntgameMsgHandler(int widId, TigMsg* msg) {
 					if (intgameRMB(msg))
 						result = 1;
 				}
-				if (msg->arg4 & MSF_RMB_RELEASED){
+				if (msg->arg4 & MSF_RMB_RELEASED) {
 					if (ResetViaRmb(msg))
 						result = 1;
 				}
@@ -410,6 +664,7 @@ int UiIntegameTurnbasedRepl::UiIntgameMsgHandler(int widId, TigMsg* msg) {
 					if (IntgameValidateMouseSelection(reinterpret_cast<TigMsgMouse*>(msg)))
 						result = 1;
 				}
+				
 			} 
 			else { // widget or keyboard msg
 				if (tigMsgType == TigMsgType::KEYSTATECHANGE && (msg->arg2 & 0xFF)== 0)	{
@@ -422,8 +677,8 @@ int UiIntegameTurnbasedRepl::UiIntgameMsgHandler(int widId, TigMsg* msg) {
 							panic.push_back(1);
 						if (panic.size() >= 4)
 						{
-							animationGoals.Interrupt(leader, AnimGoalPriority::AGP_HIGHEST, true);
-							animationGoals.Interrupt(leader, AnimGoalPriority::AGP_1, true);
+							gameSystems->GetAnim().Interrupt(leader, AnimGoalPriority::AGP_HIGHEST, true);
+							gameSystems->GetAnim().Interrupt(leader, AnimGoalPriority::AGP_1, true);
 							(*actSeqSys.actSeqCur)->seqOccupied = 0;
 						}
 						return 1;
@@ -435,10 +690,8 @@ int UiIntegameTurnbasedRepl::UiIntgameMsgHandler(int widId, TigMsg* msg) {
 						
 
 					// bind hotkey
-					auto IsNormalNonreservedHotkey = temple::GetRef<bool(__cdecl)(int)>(0x100F3D20);
-					if (IsNormalNonreservedHotkey(msg->arg1)
-						&& (infrastructure::gKeyboard.IsKeyPressed(VK_LCONTROL) || infrastructure::gKeyboard.IsKeyPressed(VK_RCONTROL)))
-					{
+					if (hotkeys.IsNormalNonreservedHotkey(msg->arg1)
+						&& (hotkeys.IsKeyPressed(VK_LCONTROL) || infrastructure::gKeyboard.IsKeyPressed(VK_RCONTROL)))					{
 						auto leaderLoc = objects.GetLocationFull(leader);
 						
 						PointNode pnt;
@@ -551,12 +804,12 @@ bool UiIntegameTurnbasedRepl::ResetViaRmb(TigMsg* msg)
 
 }
 
-BOOL UiIntegameTurnbasedRepl::UiIntgameRaycast(objHndl* obj, int x, int y, int flags) {
+BOOL UiIntegameTurnbasedRepl::UiIntgameRaycast(objHndl* obj, int x, int y, GameRaycastFlags flags) {
 	if (*intgameAddresses.uiIntgameTargetObjFromPortraits) {
 		*obj = *intgameAddresses.uiIntgameTargetObjFromPortraits;
 		return 1;
 	} else {
-		return intgameAddresses.GameRayCast(x, y, obj, flags);
+		return PickObjectOnScreen(x, y, obj, flags);
 	}
 }
 
@@ -578,7 +831,7 @@ int UiIntegameTurnbasedRepl::IntgameValidateMouseSelection(TigMsgMouse* msg) {
 	LocAndOffsets locFromScreen;
 	PointNode prevPntNode, pntNode;
 	float distSqr;
-	if (UiIntgameRaycast(&obj, msg->x, msg->y, 6)) {
+	if (UiIntgameRaycast(&obj, msg->x, msg->y, GRF_HITTEST_3D)) {
 		objFromRaycast = obj;
 	} else {
 		locSys.GetLocFromScreenLocPrecise(msg->x, msg->y, locFromScreen);
@@ -663,6 +916,37 @@ void UiIntgameTurnbased::RenderPositioningBlueCircle(LocAndOffsets loc, objHndl 
 
 void UiIntgameTurnbased::AooInterceptArrowDraw(LocAndOffsets* perfLoc, LocAndOffsets* targetLoc) {
 	intgameAddresses.AooInterceptArrowDraw(perfLoc, targetLoc);
+}
+
+bool UiIntgameTurnbased::AooPossible(objHndl handle)
+{
+	if (!handle) return false;
+	auto obj = objSystem->GetObject(handle);
+	if (!obj) return false;
+
+	auto isFocus = handle == *intgameAddresses.intgameFocusObj;
+
+	if (isFocus){
+		auto loc = obj->GetLocationFull();
+		if (!d20Sys.d20QueryWithData(handle, DK_QUE_AOOPossible, handle)){
+			return false;
+		}
+		return combatSys.CanMeleeTargetAtLoc(handle, handle, &loc);
+	}
+
+	if (objects.IsPlayerControlled(handle)) {
+		return false;
+	}
+
+	auto showPreview = hotkeys.IsKeyPressed(VK_LMENU) || hotkeys.IsKeyPressed(VK_RMENU) || (*intgameAddresses.uiIntgameWaypointMode);
+	if (!showPreview && (! *intgameAddresses.uiIntgameAcquireByRaycastOn || ! *intgameAddresses.uiIntgameSelectionConfirmed) ){
+		return false;
+	}
+	auto loc = obj->GetLocationFull();
+	if (critterSys.IsConcealed(handle) || !d20Sys.d20QueryWithData(handle, DK_QUE_AOOPossible, handle)){
+		return false;
+	}
+	return combatSys.CanMeleeTargetAtLoc(handle, handle, &loc);
 }
 
 void UiIntgameTurnbased::CursorRenderUpdate(){
@@ -750,6 +1034,7 @@ void UiIntgameTurnbased::CursorRenderUpdate(){
 	} 
 	else if ( (*actSeqSys.seqPickerD20ActnType == D20A_UNSPECIFIED_ATTACK) 
 		&& intgameTarget && cursorState
+		&& curSeq 
 		&& (curSeq->tbStatus.attackModeCode < curSeq->tbStatus.baseAttackNumCode + curSeq->tbStatus.numBonusAttacks))
 	{
 		mouseFuncs.SetCursorDrawCallback([](int x, int y) {temple::GetRef<void(__cdecl)(int, int, void*)>(0x1008A240)(x, y, nullptr); }, 0x1008A240);
@@ -769,7 +1054,7 @@ void UiIntegameTurnbasedRepl::HourglassUpdate(int intgameAcquireOn, int intgameS
 	TurnBasedStatus tbStat1;
 
 
-	if (d20aType != D20A_NONE && d20aType >= D20A_UNSPECIFIED_MOVE && d20Sys.d20Defs[d20aType].flags & D20ADF::D20ADF_DrawPathByDefault) {
+	if (d20aType != D20A_NONE && d20aType >= D20A_UNSPECIFIED_MOVE && d20Sys.globD20Action->GetActionDefinitionFlags() & D20ADF::D20ADF_DrawPathByDefault) {
 		_showPathPreview = 1;
 		intgameAcquireOn = 1;
 		intgameSelectionConfirmed = 1;
@@ -854,7 +1139,7 @@ void UiIntegameTurnbasedRepl::HourglassUpdate(int intgameAcquireOn, int intgameS
 		}
 
 		d20aType = d20Sys.globD20Action->d20ActType;
-		if (d20aType != D20A_NONE && d20aType >= D20A_UNSPECIFIED_MOVE && d20Sys.d20Defs[d20aType].flags & D20ADF::D20ADF_DrawPathByDefault) {
+		if (d20aType != D20A_NONE && d20aType >= D20A_UNSPECIFIED_MOVE && d20Sys.globD20Action->GetActionDefinitionFlags() & D20ADF::D20ADF_DrawPathByDefault) {
 			tbStat1.tbsFlags = tbStat->tbsFlags;
 			tbStat1.surplusMoveDistance = tbStat->surplusMoveDistance;
 			if (d20aType != D20A_NONE && d20aType >= D20A_UNSPECIFIED_MOVE && d20Sys.d20Defs[d20aType].turnBasedStatusCheck) {

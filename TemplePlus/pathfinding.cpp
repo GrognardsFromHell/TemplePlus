@@ -218,7 +218,7 @@ public:
 	}
 } pathFindingReplacements;
 
-float Pathfinding::pathLength(Path* path)
+float Pathfinding::GetPathLength(Path* path)
 {
 	float distTot;
 	if (path->flags & PF_STRAIGHT_LINE_SUCCEEDED)	return loc->distBtwnLocAndOffs(path->to, path->from) / 12.0f;
@@ -1622,31 +1622,52 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 
 }
 
-objHndl Pathfinding::CanPathToParty(objHndl obj)
+bool Pathfinding::CanPathTo(objHndl obj, objHndl target, PathQueryFlags flags, float maxDistanceFeet){
+	auto from = objects.GetLocationFull(obj);
+	
+	auto partyMember = target;
+	PathQueryResult path;
+	memset(&path, 0, sizeof(PathQueryResult));
+	PathQuery pathQ;
+	pathQ.from = from;
+	pathQ.flags = flags;
+	auto reach = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK);
+	pathQ.tolRadius = reach * 12.0f - 8.0f;
+	pathQ.targetObj = target;
+	if (config.pathfindingDebugMode)
+		logger->info("PF attempt to party member: {}", target);
+	pathQ.critter = obj;
+	pathQ.distanceToTargetMin = reach;
+	
+
+	if (!FindPath(&pathQ, &path)){
+		return false;
+	}
+	
+	if (maxDistanceFeet > 0){
+		auto pathDist = path.GetPathResultLength();
+		if (pathDist > maxDistanceFeet)
+			return false;
+
+	}
+
+	return true;
+}
+
+objHndl Pathfinding::CanPathToParty(objHndl obj, bool excludeUnconscious)
 {
 	if (party.IsInParty(obj))
 		return objHndl::null;
 	auto from = objects.GetLocationFull(obj);
 	int partySize = party.GroupListGetLen();
-	for (int i = 0; i < partySize; i++)
-	{
+	for (int i = 0; i < partySize; i++){
+
 		auto partyMember = party.GroupListGetMemberN(i);
-		PathQueryResult path;
-		memset(&path, 0, sizeof(PathQueryResult));
-		PathQuery pathQ;
-		pathQ.from = from;
-		pathQ.flags = static_cast<PathQueryFlags>(PQF_HAS_CRITTER | PQF_TO_EXACT | PQF_800 | PQF_ADJ_RADIUS_REQUIRE_LOS | PQF_ADJUST_RADIUS | PQF_TARGET_OBJ);
-		auto reach = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK);
-		pathQ.tolRadius = reach * 12.0f - 8.0f;
-		pathQ.targetObj = partyMember;
-		if (config.pathfindingDebugMode)
-			logger->info("PF attempt to party member: {}", description.getDisplayName(partyMember));
-		pathQ.critter = obj;
-		pathQ.distanceToTargetMin = 0;
-		if (FindPath(&pathQ, &path))
-{
+		if (excludeUnconscious && critterSys.IsDeadOrUnconscious(partyMember))
+			continue;
+		if (CanPathTo(obj, partyMember)){
 			return partyMember;
-		}
+		}		
 	}
 	return objHndl::null;
 	//return addresses.canPathToParty(objHnd);
@@ -1684,7 +1705,7 @@ BOOL Pathfinding::PathStraightLineIsClear(Path* pqr, PathQuery* pq, LocAndOffset
 			if (! (objFlags & OF_NO_BLOCK))
 			{
 				auto pathFlags = pq->flags;
-				if ( (pathFlags & PQF_DOORS_ARE_BLOCKING) || objType)
+				if ( (pathFlags & PQF_DOORS_ARE_BLOCKING) || objType != obj_t_portal)
 				{
 					if (objType != obj_t_pc && objType != obj_t_npc)
 						break;
@@ -2402,3 +2423,24 @@ void _aStarSettingChanged()
 	pathfindingSys.AStarSettingChanged();
 }
 
+float Path::GetPathResultLength(){
+	return pathfindingSys.GetPathLength(this);
+}
+
+// Originally @ 0x1003ff30
+std::optional<LocAndOffsets> Path::GetNextNode() const
+{
+	if (!IsComplete()) {
+		return {};
+	}
+	
+	if (flags & PF_STRAIGHT_LINE_SUCCEEDED) {
+		return to;
+	} else {
+		if (currentNode + 1 < nodeCount) {
+			return nodes[currentNode];
+		}
+
+		return to;
+	}
+}

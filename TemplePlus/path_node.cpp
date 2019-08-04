@@ -97,7 +97,7 @@ void PathNodeSys::RecipDebug()
 			pathQ.flags2 = 0;
 			if (pathfindingSys.FindPath(&pathQ, &path) > 0)
 			{
-				auto pathLen = pathfindingSys.pathLength(&path);
+				auto pathLen = pathfindingSys.GetPathLength(&path);
 				auto fromToDist = locSys.distBtwnLocAndOffs(pathQ.from, pathQ.to) / 12.0;
 				oneSided[i].distances[j] = pathLen;
 			} else
@@ -113,7 +113,7 @@ void PathNodeSys::RecipDebug()
 			pathQ.flags2 = 0;
 			if (pathfindingSys.FindPath(&pathQ, &path) > 0)
 			{
-				auto pathLen2 = pathfindingSys.pathLength(&path);
+				auto pathLen2 = pathfindingSys.GetPathLength(&path);
 				auto fromToDist = locSys.distBtwnLocAndOffs(pathQ.from, pathQ.to) / 12.0;
 				oneSided[i].distances2[j] = pathLen2;
 			}
@@ -126,7 +126,7 @@ void PathNodeSys::RecipDebug()
 				pathQ.flags2 = 0;
 				if (pathfindingSys.FindPath(&pathQ, &path) > 0)
 				{
-					auto pathLen2 = pathfindingSys.pathLength(&path);
+					auto pathLen2 = pathfindingSys.GetPathLength(&path);
 					oneSided[i].distances2[j] = pathLen2;
 				} 
 				else
@@ -411,7 +411,7 @@ void PathNodeSys::RecalculateNeighbours(MapPathNodeList* node)
 		pathQ.flags2 = 0;
 		if (pathfindingSys.FindPath(&pathQ, &path ) > 0)
 		{
-			auto pathLen = pathfindingSys.pathLength(&path);
+			auto pathLen = pathfindingSys.GetPathLength(&path);
 			auto fromToDist = locSys.distBtwnLocAndOffs(pathQ.from, pathQ.to) / 12.0;
 
 			if ( pathLen < 6 * fromToDist && node->node.neighboursCount < MAX_NEIGHBOURS) // prevent extremely roundabout links

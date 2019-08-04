@@ -1,5 +1,7 @@
 #include "infrastructure/exception.h"
 #include "infrastructure/images.h"
+#include "infrastructure/binaryreader.h"
+#include "infrastructure/vfs.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_ONLY_TGA
@@ -102,6 +104,60 @@ namespace gfx {
 			*dest++ = 0xFF;
 			*dest++ = 0xFF;
 			*dest++ = alpha;
+		}
+
+		return result;
+
+	}
+
+	static std::string BuildTgaFilenamePattern(const std::string &imgFilename) {
+		// Build a pattern for the actual tga filenames
+		std::string filenamePattern(imgFilename);
+		auto dotPos = filenamePattern.rfind('.');
+		if (dotPos != std::string::npos) {
+			filenamePattern.erase(dotPos);
+		}
+		filenamePattern.append("_{}_{}.tga");
+		return filenamePattern;
+	}
+
+	DecodedImage DecodeCombinedImage(const std::string &filename, const span<uint8_t> imgData) {
+
+		BinaryReader reader(imgData);
+
+		DecodedImage result;
+		result.info.format = ImageFileFormat::IMG;
+		result.info.hasAlpha = true; // Depends on the TGAs, actually
+		result.info.width = reader.Read<uint16_t>();
+		result.info.height = reader.Read<uint16_t>();
+
+		auto filenamePattern = BuildTgaFilenamePattern(filename);
+
+		result.data = std::make_unique<uint8_t[]>(result.info.width * result.info.height * 4);
+		auto stride = result.info.width * 4;
+
+		int yTile = 0;
+		for (int yCur = 0; yCur < result.info.height; yCur += 256, yTile++) {
+			int xTile = 0;
+			for (int xCur = 0; xCur < result.info.width; xCur += 256, xTile++) {
+
+				auto filename = fmt::format(filenamePattern, xTile, yTile);
+				auto tileData(DecodeImage(vfs->ReadAsBinary(filename)));
+				
+				// Must fit into remaining image
+				Expects(tileData.info.width <= result.info.width - xCur);
+				Expects(tileData.info.height <= result.info.height - yCur);
+
+				// Have to copy row by row
+				auto srcStride = tileData.info.width * 4;
+				for (auto row = 0; row < tileData.info.height; row++) {
+					// Convert from Y-up to Y-down axis
+					auto targetRow = result.info.height - yCur - tileData.info.height + row;
+					auto dest = &result.data[targetRow * stride + xCur * 4];
+					auto src = &tileData.data[row * srcStride];
+					memcpy(dest, src, srcStride);
+				}
+			}
 		}
 
 		return result;

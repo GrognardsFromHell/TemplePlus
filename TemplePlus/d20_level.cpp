@@ -5,6 +5,8 @@
 #include "util/fixes.h"
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/objects/objsystem.h"
+#include "gamesystems/deity/legacydeitysystem.h"
+#include "d20_race.h"
 
 
 D20LevelSystem d20LevelSys;
@@ -40,8 +42,8 @@ public:
 		write(0x100F4E4C + 3, &writeVal, sizeof(int));
 
 		// AddSkillPoints
-		replaceFunction<int(objHndl, int, int)>(0x1007DAA0, [](objHndl obj, int skillEnum, int numAdd)->int{
-			return d20LevelSys.AddSkillPoints(obj, skillEnum, numAdd);
+		replaceFunction<void(objHndl, int, int)>(0x1007DAA0, [](objHndl obj, int skillEnum, int numAdd){
+			d20LevelSys.AddSkillPoints(obj, skillEnum, numAdd);
 		});
 	}
 } d20LevelHooks;
@@ -63,44 +65,42 @@ uint32_t D20LevelSystem::GetLevelPacket(Stat classEnum, objHndl objHnd, uint32_t
 
 bool D20LevelSystem::CanLevelup(objHndl objHnd)
 {
-	auto lvl = objects.StatLevelGet(objHnd, stat_level);
-	if (d20Sys.d20Query(objHnd, DK_QUE_ExperienceExempt) || lvl >= (int)config.maxLevel)
-	{
+	auto ecl = critterSys.GetEffectiveLevel(objHnd);
+	
+	if (d20Sys.d20Query(objHnd, DK_QUE_ExperienceExempt) || ecl >= (int)config.maxLevel){
 		return 0;
 	}
-	return objects.getInt32(objHnd, obj_f_critter_experience) >= xpReqTable[lvl + 1];
+	return objects.getInt32(objHnd, obj_f_critter_experience) >= xpReqTable[ecl + 1];
 		//addresses.xpReqTable[lvl + 1];
 
 }
 
-int D20LevelSystem::AddSkillPoints(objHndl handle, int skillEnum, int numAdd){
+void D20LevelSystem::AddSkillPoints(objHndl handle, int skillEnum, int numAdded){
 
-	auto obj = gameSystems->GetObj().GetObject(handle);
-	auto crLvls = obj->GetInt32Array(obj_f_critter_level_idx);
 	
-	if (!crLvls.GetSize() ){ // by default use fighter specs
-		if (d20ClassSys.IsClassSkill((SkillEnum)skillEnum, stat_level_fighter))
-			numAdd *= 2;
-	}
-	else{
-		auto lastClass = (Stat)crLvls[crLvls.GetSize() - 1];
-		if (lastClass == stat_level_cleric && temple::GetRef<BOOL(__cdecl)(objHndl, int)>(0x1004C0D0)(handle, skillEnum)
-			|| d20ClassSys.IsClassSkill((SkillEnum)skillEnum, lastClass)){
-			numAdd *= 2;
-		} 
+	auto levClass = stat_level_fighter; // default
+	auto obj = objSystem->GetObject(handle);
+	auto numClasses = obj->GetInt32Array(obj_f_critter_level_idx).GetSize();
+
+	if (numClasses) {
+		levClass = (Stat)obj->GetInt32(obj_f_critter_level_idx, numClasses - 1);
 	}
 
-	auto result = numAdd + obj->GetInt32(obj_f_critter_skill_idx, skillEnum);
-	if (obj->IsPC()){
-		auto expectedSkillpts = 2 * objects.StatLevelGet(handle, stat_level) + 6;
-		if (result > expectedSkillpts)
-		{
-			logger->debug("Warning: the PC {} has more skill points ({}) than they should ({})", handle, result, expectedSkillpts);
-		}	
-	}
-	obj->SetInt32(obj_f_critter_skill_idx, skillEnum, result);
+	auto skill = (SkillEnum)skillEnum;
 
-	return result;
+	if (d20ClassSys.IsClassSkill(skill, levClass) ||
+		(levClass == stat_level_cleric && deitySys.IsDomainSkill(handle, skill))
+		|| d20Sys.D20QueryPython(handle, "Is Class Skill", skill)) {
+		numAdded *= 2;
+	}
+
+	auto skillPtNew = numAdded + obj->GetInt32(obj_f_critter_skill_idx, skill);
+	if (obj->IsPC()) {
+		auto expectedMax = 2 * objects.StatLevelGet(handle, stat_level) + 6;
+		if (skillPtNew > expectedMax)
+			logger->warn("PC {} has more skill points than they should (has: {} , expected: {}", handle, skillPtNew, expectedMax);
+	}
+	obj->SetInt32(obj_f_critter_skill_idx, skill, skillPtNew);
 }
 
 uint32_t D20LevelSystem::GetXpRequireForLevel(uint32_t level)
@@ -112,7 +112,11 @@ uint32_t D20LevelSystem::GetXpRequireForLevel(uint32_t level)
 }
 
 int D20LevelSystem::GetSurplusXp(objHndl handle){
-	int xpReq = (int)GetXpRequireForLevel(objects.StatLevelGet(handle, stat_level));
+	auto lvl = objects.StatLevelGet(handle, stat_level);
+	if (lvl > 1){
+		lvl = critterSys.GetEffectiveLevel(handle);
+	}
+	int xpReq = (int)GetXpRequireForLevel(lvl);
 	return gameSystems->GetObj().GetObject(handle)->GetInt32(obj_f_critter_experience) - xpReq;
 }
 

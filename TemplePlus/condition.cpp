@@ -2,6 +2,7 @@
 #include "stdafx.h"
 
 #include <graphics/math.h>
+#include <infrastructure/meshes.h>
 
 #include "common.h"
 #include "dispatcher.h"
@@ -26,7 +27,7 @@
 #include <infrastructure/elfhash.h>
 #include "particles.h"
 #include "gamesystems/particlesystems.h"
-#include "anim.h"
+#include "animgoals/anim.h"
 #include "python/python_integration_spells.h"
 #include "history.h"
 #include "gamesystems/objects/objevent.h"
@@ -34,6 +35,8 @@
 #include "sound.h"
 #include "d20_class.h"
 #include "gamesystems/d20/d20stats.h"
+#include "d20_race.h"
+#include "ai.h"
 
 #define CB int(__cdecl)(DispatcherCallbackArgs)
 using DispCB = int(__cdecl )(DispatcherCallbackArgs);
@@ -67,12 +70,13 @@ CondStructNew ConditionSystem::mCondCaptivated;
 CondStructNew ConditionSystem::mCondHezrouStench;
 CondStructNew ConditionSystem::mCondHezrouStenchHit;
 
-
+int ConditionPreventWithArg(DispatcherCallbackArgs args);
+int ConditionOverrideBy(DispatcherCallbackArgs args);
 
 
 struct ConditionSystemAddresses : temple::AddressTable
 {
-	void(__cdecl* SetPermanentModArgsFromDataFields)(Dispatcher* dispatcher, CondStruct* condStruct, int* condArgs);
+	void(__cdecl*SetPermanentModArgsFromDataFields)(Dispatcher* dispatcher, CondStruct* condStruct, int* condArgs);
 	int(__cdecl*RemoveSpellCondition)(DispatcherCallbackArgs args); 
 	int(__cdecl*RemoveSpellMod)(DispatcherCallbackArgs args);
 	ConditionSystemAddresses()
@@ -91,9 +95,14 @@ class SpellCallbacks {
 public:
 
 	static int __cdecl ArmorSpellFailure(DispatcherCallbackArgs args);
+	static int __cdecl SpellEffectTooltipDuration(DispatcherCallbackArgs args); // data1 - indicator ID; arg0 - spellId, arg1 - duration
 
 	static int __cdecl SkillBonus(DispatcherCallbackArgs args);
 	static int __cdecl BeginHezrouStench(DispatcherCallbackArgs args);
+
+	static int __cdecl ConcentratingActionSequenceHandler(DispatcherCallbackArgs args); // handles "Stop Concentration" due to action taken
+	static int __cdecl ConcentratingActionRecipientHandler(DispatcherCallbackArgs args); // handles "Stop Concentration" due to action received
+
 
 	static int __cdecl EnlargePersonWeaponDice(DispatcherCallbackArgs args);
 
@@ -111,14 +120,19 @@ public:
 	static int __cdecl HezrouStenchCureNausea(DispatcherCallbackArgs args);
 	static int __cdecl RemoveSpell(DispatcherCallbackArgs args);
 	static int __cdecl HasCondition(DispatcherCallbackArgs args);
+	static int __cdecl HasSpellEffectActive(DispatcherCallbackArgs args);
 
 	static int __cdecl SpellDismissRadialSub(DispatcherCallbackArgs args); // allows dismissal of specific spells
 	static int __cdecl SpellAddDismissCondition(DispatcherCallbackArgs args); // prevents dups
 	static int __cdecl SpellDismissSignalHandler(DispatcherCallbackArgs args); // fixes issue with dismissing multiple spells
+	static int __cdecl DismissSignalHandler(DispatcherCallbackArgs args); // fixes issue with lingering Dismiss Spell holdouts
 
+	
+	static int __cdecl SpellModCountdownRemove(DispatcherCallbackArgs args);
 	static int __cdecl SpellRemoveMod(DispatcherCallbackArgs args); // fixes issue with dismissing multiple spells
+	static int __cdecl AoeSpellRemove(DispatcherCallbackArgs args);
 
-
+	
 } spCallbacks;
 
 
@@ -153,6 +167,7 @@ public:
 	static int __cdecl ImprovedTripBonus(DispatcherCallbackArgs args);
 
 	static int __cdecl PowerAttackDamageBonus(DispatcherCallbackArgs args);
+	static int __cdecl PowerAttackToHitPenalty(DispatcherCallbackArgs args);
 	static int __cdecl GlobalWieldedTwoHandedQuery(DispatcherCallbackArgs args);
 
 	static int __cdecl GlobalHpChanged(DispatcherCallbackArgs args);
@@ -164,10 +179,13 @@ public:
 	static int __cdecl CastDefensivelySpellInterrupted(DispatcherCallbackArgs args);
 	
 	static int __cdecl D20ModCountdownHandler(DispatcherCallbackArgs args);
+	static int __cdecl D20ModCountdownEndHandler(DispatcherCallbackArgs args);
+
 
 	static int __cdecl MonsterRegenerationOnDamage(DispatcherCallbackArgs args);
 
-
+	static int __cdecl PreferOneHandedWieldRadialMenu(DispatcherCallbackArgs args);
+	static int __cdecl PreferOneHandedWieldQuery(DispatcherCallbackArgs args);
 
 } genericCallbacks;
 
@@ -181,6 +199,7 @@ public:
 	static int __cdecl UseableItemActionCheck(DispatcherCallbackArgs args);
 
 	static int __cdecl BucklerToHitPenalty(DispatcherCallbackArgs args);
+	static int __cdecl BucklerAcPenalty(DispatcherCallbackArgs args);
 	static int __cdecl WeaponMerciful(DispatcherCallbackArgs);
 	static int __cdecl WeaponSeekingAttackerConcealmentMissChance(DispatcherCallbackArgs args);
 	static int __cdecl WeaponSpeed(DispatcherCallbackArgs args);
@@ -280,11 +299,69 @@ public:
 	static int RemoveDiseasePerform(DispatcherCallbackArgs arg); // also used in WholenessOfBodyPerform
 	void HookSpellCallbacks();
 	static int TurnUndeadHook(objHndl, Stat shouldBeClassCleric, DispIoD20ActionTurnBased* evtObj);
+	static int TurnUndeadCheck(DispatcherCallbackArgs args);
+	static int TurnUndeadPerform(DispatcherCallbackArgs args);
+
+	static bool StunningFistHook(objHndl objHnd, objHndl caster, int DC, int saveType, int flags);
+
+	static int AnimalCompanionLevelHook(objHndl, Stat shouldBeClassDruid);
+	
+	//Old version of the function to be used within the replacement
+	int (*oldTurnUndeadPerform)(DispatcherCallbackArgs) = nullptr;
+	
 	void apply() override {
 		logger->info("Replacing Condition-related Functions");
-		
+
+		//dispTypeConditionAddPre
+		static int(__cdecl* orgTempAbilityLoss)(DispatcherCallbackArgs) = replaceFunction<int(__cdecl)(DispatcherCallbackArgs)>(0x100EA1F0, [](DispatcherCallbackArgs args) {
+			Stat statDamaged = (Stat)args.GetCondArg(0);
+			int amountDamaged = args.GetCondArg(1);
+			DispIoCondStruct *dispIo = dispatch.DispIoCheckIoType1((DispIoCondStruct *)args.dispIO);
+			if ((int32_t)dispIo->condStruct == args.subDispNode->subDispDef->data1 && dispIo->arg1 == statDamaged){
+				int amountDamagedByNew = dispIo->arg2;
+				int scoreLevel = objects.StatLevelGet(args.objHndCaller, statDamaged);
+				if (scoreLevel - amountDamagedByNew < 0){
+					amountDamagedByNew = scoreLevel;
+					if (amountDamagedByNew <= 0)
+					{
+						dispIo->outputFlag = 0;
+						return 0;
+					}
+				} 
+				amountDamaged = amountDamaged + amountDamagedByNew;
+				args.SetCondArg(1, amountDamaged);
+				dispIo->outputFlag = 0;
+				critterSys.CritterHpChanged(args.objHndCaller, objHndl::null, 0);
+			}
+
+			return 0;
+		});
+
+		//dispTypeConditionAdd
+		static int(__cdecl* orgTempAbilityLoss2)(DispatcherCallbackArgs) = replaceFunction<int(__cdecl)(DispatcherCallbackArgs)>(0x100EA3B0, [](DispatcherCallbackArgs args) 
+		{
+			Stat statDamaged = (Stat)args.GetCondArg(0);
+			if ((statDamaged >= stat_strength) && (statDamaged <= stat_charisma)) {
+				int scoreLevel = objects.StatLevelGet(args.objHndCaller, statDamaged);
+				if (scoreLevel < 0){
+					int amountDamaged = args.GetCondArg(1);
+					// dont let stat go below zero
+					amountDamaged = amountDamaged + scoreLevel;
+					if (amountDamaged <= 0)
+					{
+						// remove condition, as it should have no effect
+						conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
+					} else {
+						args.SetCondArg(1, amountDamaged);
+					}
+				}
+			}
+			
+			critterSys.CritterHpChanged(args.objHndCaller, objHndl::null, 0);
+			return 0;
+		});
 		//conds.RegisterNewConditions();
-		
+
 
 		replaceFunction(0x100E19C0, _CondStructAddToHashtable);
 		replaceFunction(0x100E1A80, _GetCondStructFromHashcode);
@@ -293,18 +370,35 @@ public:
 		replaceFunction(0x100E1DD0, _CondNodeAddToSubDispNodeArray);
 
 		replaceFunction(0x100E22D0, _ConditionAddDispatch);
-		replaceFunction(0x100E24C0, _ConditionAddToAttribs_NumArgs0);
-		replaceFunction(0x100E2500, _ConditionAddToAttribs_NumArgs2);
-		replaceFunction(0x100E24E0, _ConditionAdd_NumArgs0);
-		replaceFunction(0x100E2530, _ConditionAdd_NumArgs2);
-		replaceFunction(0x100E2560, _ConditionAdd_NumArgs3);
-		replaceFunction(0x100E2590, _ConditionAdd_NumArgs4);
+		replaceFunction<uint32_t(__cdecl)(Dispatcher*, CondStruct*)>(0x100E24C0, [](Dispatcher* dis, CondStruct* cond) {
+			return _ConditionAddToAttribs_NumArgs0(dis, cond, false);
+		});
+		replaceFunction<uint32_t(__cdecl)(Dispatcher*, CondStruct*, int, int)>(0x100E2500, [](Dispatcher* dis, CondStruct* cond, int arg1, int arg2) {
+			return _ConditionAddToAttribs_NumArgs2(dis, cond, arg1, arg2, false);
+		});
+		replaceFunction<uint32_t(__cdecl)(Dispatcher*, CondStruct*)>(0x100E24E0, [](Dispatcher* dis, CondStruct* cond) {
+			return _ConditionAdd_NumArgs0(dis, cond, false);
+		});
+		replaceFunction<uint32_t(__cdecl)(Dispatcher*, CondStruct*, int, int)>(0x100E2530, [](Dispatcher* dis, CondStruct* cond, int arg1, int arg2) {
+			return _ConditionAdd_NumArgs2(dis, cond, arg1, arg2, false);
+		});
+		replaceFunction<uint32_t(__cdecl)(Dispatcher*, CondStruct*, int, int, int)>(0x100E2560, [](Dispatcher* dis, CondStruct* cond, int arg1, int arg2, int arg3)	{
+			return 	_ConditionAdd_NumArgs3(dis, cond, arg1, arg2, arg3, false);
+		});
+		replaceFunction<uint32_t(__cdecl)(Dispatcher*, CondStruct*, int, int, int, int)>(0x100E2590, [](Dispatcher* dis, CondStruct* cond, int arg1, int arg2, int arg3, int arg4){
+			return _ConditionAdd_NumArgs4(dis, cond, arg1, arg2, arg3, arg4, false);
+		});
 		replaceFunction(0x100E25C0, InitCondFromCondStructAndArgs);
+		replaceFunction(0x100ED030, ConditionRemoveCallback);
 		
 		replaceFunction(0x100EABB0, BarbarianRageStatBonus);
 		replaceFunction(0x100EABE0, BarbarianRageSaveBonus);
+		replaceFunction(0x100EAC10, BarbarianRageACPenalty);
 		
 		replaceFunction(0x100ECF30, ConditionPrevent);
+		replaceFunction(0x100ECF60, ConditionPreventWithArg);
+		replaceFunction(0x100ECFA0, ConditionOverrideBy);
+
 		replaceFunction(0x100EE050, GlobalGetArmorClass);
 		replaceFunction(0x100EE280, GlobalToHitBonus);
 		replaceFunction(0x100EE760, GlobalOnDamage);
@@ -327,6 +421,12 @@ public:
 		replaceFunction(0x100F8940, TwoWeaponFightingBonusRanger);
 		replaceFunction(0x100FEBA0, BarbarianDamageResistance);
 
+		//Subdual and lethal damage checkboxes
+		replaceFunction(0x100F8DA0, NonlethalDamageRadial);
+		replaceFunction(0x100F8ED0, NonlethalDamageSetSubdual);
+		replaceFunction(0x100F8F70, DealNormalDamageCallback);
+		
+
 		
 		replaceFunction(0x10101150, ItemSkillBonusCallback);
 
@@ -346,8 +446,9 @@ public:
 		// Enlarge Person weapon damage dice modification
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100CA2B0, spCallbacks.EnlargePersonWeaponDice);
 
-		// power attack damage bonus
+		// power attack damage bonus and To Hit penalty
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100F8540, genericCallbacks.PowerAttackDamageBonus);
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100F84C0, genericCallbacks.PowerAttackToHitPenalty);
 
 		// Use Item ActionCheck & Radial
 		replaceFunction<int(DispatcherCallbackArgs)>(0x10100B60, itemCallbacks.UseableItemActionCheck);
@@ -361,6 +462,9 @@ public:
 
 		// buckler to-hit penalty
 		replaceFunction<int(DispatcherCallbackArgs)>(0x10104DA0, itemCallbacks.BucklerToHitPenalty);
+
+		// buckler AC penalty
+		replaceFunction<int(DispatcherCallbackArgs)>(0x10104E40, itemCallbacks.BucklerAcPenalty);
 
 
 
@@ -393,20 +497,35 @@ public:
 
 		// D20Mods countdown handler
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100EC9B0, genericCallbacks.D20ModCountdownHandler);
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100E98B0, genericCallbacks.D20ModCountdownEndHandler);
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100CBAB0, spCallbacks.SpellRemoveMod);
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100DC100, spCallbacks.SpellModCountdownRemove);
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100D3430, spCallbacks.AoeSpellRemove);
 
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100F72E0, genericCallbacks.MonsterRegenerationOnDamage);
 
 		// Turn Undead extension
 		redirectCall(0x1004AF5F, TurnUndeadHook);
+		oldTurnUndeadPerform = replaceFunction(0x1004AEB0, TurnUndeadPerform);
+
+		replaceFunction<int(DispatcherCallbackArgs)>(0x1004ADE0, TurnUndeadCheck);
+
+
 
 
 		// racial callbacks
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FDC70, raceCallbacks.HalflingThrownWeaponAndSlingBonus);
 
-		replaceFunction<int(DispatcherCallbackArgs)>(0x100CBAB0, spCallbacks.SpellRemoveMod);
+
+		// Stunning Fist extension
+		redirectCall(0x100E84B0, StunningFistHook);
+
+		// Animal Companion Bonus Levels Extension
+		redirectCall(0x100FC18C, AnimalCompanionLevelHook);
+		redirectCall(0x100FC2D6, AnimalCompanionLevelHook);
+		redirectCall(0x100FC6D4, AnimalCompanionLevelHook);
 	}
 } condFuncReplacement;
-
 
 
 CondNode::CondNode(CondStruct *cond) {
@@ -552,31 +671,52 @@ void _CondNodeAddToSubDispNodeArray(Dispatcher* dispatcher, CondNode* condNode) 
 };
 
 
-uint32_t _ConditionAddToAttribs_NumArgs0(Dispatcher* dispatcher, CondStruct* condStruct) {
+CondStruct* _getCondStruct_RegardVanillaHook(CondStruct* condStruct, bool isInternalUse){
+	if (!isInternalUse) {
+		// this section is meant for vanilla conditions that may be added by their direct address.
+		// The hooked function will go here, whereas internal Temple+ usage won't.
+		auto condStructNew = conds.GetByName(condStruct->condName);
+		if (condStructNew != condStruct) {
+			return condStructNew;
+		}
+	}
+	return condStruct;
+}
+
+uint32_t _ConditionAddToAttribs_NumArgs0(Dispatcher* dispatcher, CondStruct* condStruct, bool isInternalUse) {
+
+	condStruct = _getCondStruct_RegardVanillaHook(condStruct, isInternalUse);
 	return _ConditionAddDispatch(dispatcher, &dispatcher->permanentMods, condStruct, 0, 0, 0, 0);
 };
 
-uint32_t _ConditionAddToAttribs_NumArgs2(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2) {
+uint32_t _ConditionAddToAttribs_NumArgs2(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, bool isInternalUse) {
+
+	condStruct = _getCondStruct_RegardVanillaHook(condStruct, isInternalUse);
 	return _ConditionAddDispatch(dispatcher, &dispatcher->permanentMods, condStruct, arg1, arg2, 0, 0);
 };
 
-uint32_t _ConditionAdd_NumArgs0(Dispatcher* dispatcher, CondStruct* condStruct) {
+uint32_t _ConditionAdd_NumArgs0(Dispatcher* dispatcher, CondStruct* condStruct, bool isInternalUse) {
+	condStruct = _getCondStruct_RegardVanillaHook(condStruct, isInternalUse);
 	return _ConditionAddDispatch(dispatcher, &dispatcher->conditions, condStruct, 0, 0, 0, 0);
 };
 
-uint32_t _ConditionAdd_NumArgs1(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1) {
+uint32_t _ConditionAdd_NumArgs1(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, bool isInternalUse) {
+	condStruct = _getCondStruct_RegardVanillaHook(condStruct, isInternalUse);
 	return _ConditionAddDispatch(dispatcher, &dispatcher->conditions, condStruct, arg1, 0, 0, 0);
 };
 
-uint32_t _ConditionAdd_NumArgs2(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2) {
+uint32_t _ConditionAdd_NumArgs2(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, bool isInternalUse) {
+	condStruct = _getCondStruct_RegardVanillaHook(condStruct, isInternalUse);
 	return _ConditionAddDispatch(dispatcher, &dispatcher->conditions, condStruct, arg1, arg2, 0, 0);
 };
 
-uint32_t _ConditionAdd_NumArgs3(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3) {
+uint32_t _ConditionAdd_NumArgs3(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, bool isInternalUse) {
+	condStruct = _getCondStruct_RegardVanillaHook(condStruct, isInternalUse);
 	return _ConditionAddDispatch(dispatcher, &dispatcher->conditions, condStruct, arg1, arg2, arg3, 0);
 };
 
-uint32_t _ConditionAdd_NumArgs4(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4) {
+uint32_t _ConditionAdd_NumArgs4(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4, bool isInternalUse) {
+	condStruct = _getCondStruct_RegardVanillaHook(condStruct, isInternalUse);
 	return _ConditionAddDispatch(dispatcher, &dispatcher->conditions, condStruct, arg1, arg2, arg3, arg4);
 }
 
@@ -598,17 +738,66 @@ int ConditionPrevent(DispatcherCallbackArgs args)
 	if (dispIO->condStruct == (CondStruct *)args.subDispNode->subDispDef->data1)
 	{
 		dispIO->outputFlag = 0;
+		return 0;
 	}
+
+	// Adding the following to accomodate CondStruct replacements (see extend_existing in python_dispatcher.cpp)
+	// Explanation:
+	// ToEE stores the actual CondStruct memory address instead of cond ID inside data1
+	// So we retrieve the name from the condstruct address
+	// and then fetch the up-to-date condition
+	auto refCond = (CondStruct *)args.subDispNode->subDispDef->data1;
+	if (!refCond)
+		return 0;
+	refCond = conds.GetByName(refCond->condName); // re-retrieve it via the NAME
+	if (refCond && dispIO->condStruct == refCond){
+		dispIO->outputFlag = 0;
+		return 0;
+	}
+
 	return 0;
 };
 
 int ConditionPreventWithArg(DispatcherCallbackArgs args)
 {
-	int arg1 = arg1 = conds.CondNodeGetArg(args.subDispNode->condNode, 0);
-	DispIoCondStruct *dispIo = dispatch.DispIoCheckIoType1((DispIoCondStruct *)args.dispIO);;
+	int arg1 = conds.CondNodeGetArg(args.subDispNode->condNode, 0);
+	DispIoCondStruct *dispIo = dispatch.DispIoCheckIoType1((DispIoCondStruct *)args.dispIO);
 	
-	if (dispIo->condStruct == (CondStruct *)args.subDispNode->subDispDef->data1 && dispIo->arg1 == arg1)
+	auto refCond = (CondStruct *)args.subDispNode->subDispDef->data1;
+	if (dispIo->condStruct == refCond && dispIo->arg1 == arg1){
 		dispIo->outputFlag = 0;
+		return 0;
+	}
+	
+	if (!refCond)
+		return 0;
+	refCond = conds.GetByName(refCond->condName); // re-retrieve it via the NAME
+	
+	if (dispIo->condStruct == refCond && dispIo->arg1 == arg1)
+		dispIo->outputFlag = 0;
+
+	return 0;
+}
+
+int ConditionOverrideBy(DispatcherCallbackArgs args){
+	DispIoCondStruct *dispIo = dispatch.DispIoCheckIoType1((DispIoCondStruct *)args.dispIO);
+	if (!dispIo)
+		return 0;
+	
+	auto refCond = (CondStruct *)args.subDispNode->subDispDef->data1;
+	if (dispIo->condStruct == refCond ) {
+		args.RemoveCondition();
+		return 0;
+	}
+
+	if (!refCond)
+		return 0;
+	refCond = conds.GetByName(refCond->condName); // re-retrieve it via the NAME
+	if (dispIo->condStruct == refCond) {
+		args.RemoveCondition();
+		return 0;
+	}
+
 	return 0;
 }
 
@@ -646,8 +835,8 @@ int RemoveSpellConditionAndMod(DispatcherCallbackArgs args)
 {
 	auto argsCopy = args;
 	argsCopy.dispKey = DK_SIG_Action_Recipient;
-	addresses.RemoveSpellCondition(argsCopy);
-	addresses.RemoveSpellMod(argsCopy);
+	argsCopy.RemoveSpell();
+	argsCopy.RemoveSpellMod();
 	return 0;
 };
 
@@ -843,7 +1032,7 @@ int GenericCallbacks::TripAooQuery(DispatcherCallbackArgs args)
 int GenericCallbacks::ImprovedTripBonus(DispatcherCallbackArgs args)
 {
 	auto dispIo = dispatch.DispIoCheckIoType10(args.dispIO);
-	if (dispIo->returnVal & 1){
+	if (dispIo->flags & 1){
 		dispIo->bonOut->AddBonusWithDesc(4, 0, 114, feats.GetFeatName(FEAT_IMPROVED_TRIP));
 	}
 	return 0;
@@ -873,7 +1062,7 @@ int GenericCallbacks::PowerAttackDamageBonus(DispatcherCallbackArgs args)
 	// check offhand
 	auto offhandWeapon = inventory.ItemWornAt(args.objHndCaller, EquipSlot::WeaponSecondary);
 	auto shield = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Shield);
-	auto regardOffhand = (offhandWeapon || shield && !inventory.IsBuckler(shield)) ?true:false;
+	auto regardOffhand = (offhandWeapon || shield && !inventory.IsBuckler(shield)) ?true:false; // is there an offhand item (weapon/non-buckler shield)
 
 	// case 1
 	switch (wieldType)
@@ -979,6 +1168,58 @@ int GenericCallbacks::PowerAttackDamageBonus(DispatcherCallbackArgs args)
 	//return 0;
 }
 
+int GenericCallbacks::PowerAttackToHitPenalty(DispatcherCallbackArgs args)
+{
+	auto powerAttackAmt = args.GetCondArg(0);
+
+	if (!powerAttackAmt)
+		return 0;
+
+	GET_DISPIO(dispIOTypeAttackBonus, DispIoAttackBonus);
+	
+	// ignore ranged weapons
+	if (dispIo->attackPacket.flags & D20CAF_RANGED)
+		return 0;
+
+	// get wield type
+	auto weaponUsed = dispIo->attackPacket.GetWeaponUsed();
+	auto wieldType = inventory.GetWieldType(args.objHndCaller, weaponUsed, true);
+	auto wieldTypeWeaponModified = inventory.GetWieldType(args.objHndCaller, weaponUsed, false); // the wield type if the weapon is not enlarged along with the critter
+	auto modifiedByEnlarge = wieldType != wieldTypeWeaponModified;
+
+	
+
+	dispIo->bonlist.AddBonusFromFeat(-powerAttackAmt, 0, 114, FEAT_POWER_ATTACK); // todo convenience disabling of to hit penalty when not dual wielding
+	return 0;
+
+	//switch (wieldType)
+	//{
+	//case 0: // light weapon
+	//	switch (wieldTypeWeaponModified)
+	//	{
+	//	case 0:
+	//		// is light weapon either way, so no malus (and no damage bonus) applied
+	//		return 0;
+	//	case 1: // benefitting from enlargement of weapon - so apply to hit malus
+	//	case 2:
+	//	default:
+	//		// add penalty
+	//		dispIo->bonlist.AddBonusFromFeat(-powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
+	//		return 0;
+	//	}
+	//case 1: // single handed wield if weapon is unaffected; 
+	//case 2: // two handed wield if weapon is unaffected
+	//case 3:
+	//case 4:
+	//default:
+	//	// add penalty
+	//	dispIo->bonlist.AddBonusFromFeat(-powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
+	//	return 0;
+	//}
+
+	return 0;
+}
+
 int GenericCallbacks::GlobalWieldedTwoHandedQuery(DispatcherCallbackArgs args)
 {
 	auto dispIo = static_cast<DispIoD20Query*>(args.dispIO);
@@ -1002,13 +1243,19 @@ int GenericCallbacks::GlobalWieldedTwoHandedQuery(DispatcherCallbackArgs args)
 
 	auto offhandWeapon = inventory.ItemWornAt(args.objHndCaller, EquipSlot::WeaponSecondary);
 	auto shield = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Shield);
-	auto regardOffhand = (offhandWeapon || shield && !inventory.IsBuckler(shield)) ? true : false;
+	auto isShieldAlloingTwoHandedWield = (shield != objHndl::null) && inventory.IsBuckler(shield); // are you holding the weapon with your buckler hand?
+	if (isShieldAlloingTwoHandedWield){
+		if (d20Sys.d20Query(args.objHndCaller, DK_QUE_Is_Preferring_One_Handed_Wield))
+			isShieldAlloingTwoHandedWield = false;
+	}
+	auto hasInterferingOffhand = (offhandWeapon != objHndl::null 
+								  || (shield != objHndl::null && !isShieldAlloingTwoHandedWield)) ? true : false;
 
 	auto wieldType = inventory.GetWieldType(args.objHndCaller, weaponUsed, true);
 	auto wieldTypeWeaponModified = inventory.GetWieldType(args.objHndCaller, weaponUsed, false); // the wield type if the weapon is not enlarged along with the critter
+	
 
-
-	bool isTwohandedWieldable = !regardOffhand ;
+	bool isTwohandedWieldable = !hasInterferingOffhand;
 
 	switch (wieldType)
 	{
@@ -1039,7 +1286,7 @@ int GenericCallbacks::GlobalWieldedTwoHandedQuery(DispatcherCallbackArgs args)
 		case 1: // only in reduce person
 			break;
 		case 2:
-			if (regardOffhand) // shouldn't really be possible... maybe if player is cheating
+			if (hasInterferingOffhand) // shouldn't really be possible to hold two Two Handed Weapons... maybe if player is cheating
 			{
 				logger->warn("Illegally wielding weapon along withoffhand!");
 			}
@@ -1101,7 +1348,7 @@ int GenericCallbacks::GlobalHpChanged(DispatcherCallbackArgs args){
 		d20Sys.D20SignalPython(handle, "Knocked Unconscious");
 		if (!isUncon){
 			auto animId = Dice::Roll(1, 3, 72); // roll number between 73-75
-			animationGoals.PushFallDown(handle, animId);
+			gameSystems->GetAnim().PushFallDown(handle, animId);
 		}
 		if (isDying){
 			conds.AddTo(handle, "Dying", {});
@@ -1122,7 +1369,27 @@ int GenericCallbacks::GlobalHpChanged(DispatcherCallbackArgs args){
 int GenericCallbacks::HasCondition(DispatcherCallbackArgs args){
 	args.dispIO->AssertType(dispIOTypeQuery);
 	auto dispIo = static_cast<DispIoD20Query*>(args.dispIO);
-	if (dispIo->data1 == args.GetData1() && !dispIo->data2){
+	
+	auto myCond = (CondStruct*)args.GetData1();
+	auto queriedCond = (CondStruct*)dispIo->data1;
+	
+	if (myCond == queriedCond && !dispIo->data2){
+		dispIo->return_val = 1;
+		dispIo->data1 = args.GetCondArg(0);
+		dispIo->data2 = 0;
+		return 0;
+	}
+
+	if (!queriedCond || !myCond) {
+		return 0;
+	}
+
+	if (dispIo->return_val != 0){ // means we have probably already changed dispIo->data1 from queriedCond to condArg(0), so it's no longer a valid pointer!
+		return 0;
+	}
+
+	// if not, re-reference the cond struct since it may have been extended
+	if (!dispIo->data2 && conds.GetByName(myCond->condName) == conds.GetByName(queriedCond->condName)){
 		dispIo->return_val = 1;
 		dispIo->data1 = args.GetCondArg(0);
 		dispIo->data2 = 0;
@@ -1186,6 +1453,11 @@ int GenericCallbacks::CastDefensivelySpellInterrupted(DispatcherCallbackArgs arg
 	if (!combatSys.isCombatActive())
 		return 0; // forego this outside of combat
 
+	// check if no threatening melee enemies - if so, disregard casting defensively (since it's just annoying micromanagement!!!)
+	auto enemiesCanMelee = combatSys.GetEnemiesCanMelee(args.objHndCaller);
+	if (!enemiesCanMelee.size())
+		return FALSE;
+
 	auto spellData = (D20SpellData*)(dispIo->data1);
 	if (!spellData)
 		return 0;
@@ -1213,7 +1485,7 @@ int GenericCallbacks::D20ModCountdownHandler(DispatcherCallbackArgs args){
 		args.SetCondArg(durArgIdx, durNew);
 		return 0;
 	}
-
+	
 	auto d20modCountdownEndHandler = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100E98B0);
 	if (args.dispType == dispTypeBeginRound){
 		
@@ -1237,6 +1509,61 @@ int GenericCallbacks::D20ModCountdownHandler(DispatcherCallbackArgs args){
 	{
 		d20modCountdownEndHandler(args);
 	}
+	return 0;
+}
+
+int GenericCallbacks::D20ModCountdownEndHandler(DispatcherCallbackArgs args){
+	//original seems a bit messed up...
+	int data1 = args.GetData1();
+	
+	if (args.dispIO && args.dispIO->dispIOType == dispIoTypeSendSignal){
+		GET_DISPIO(dispIoTypeSendSignal, DispIoD20Signal);
+		if (dispIo){
+			if (args.dispType != dispTypeBeginRound && dispIo->data1 != args.GetCondArg(0)){
+				return 0;
+			}
+			
+			if (data1 <= -1 || data1 >= 29){
+				return 0;
+			}
+		}
+	}
+	auto evtObj = static_cast<DispIoD20Signal*>(args.dispIO);
+	switch (data1){
+	case 5: // Held
+	case 7: // Sleeping
+	case 12: // Temp HP
+	case 13: // Cursed
+	case 14: // Fear
+	case 15: // Disease
+	case 16: // Poison
+	case 25: // Charmed
+		if (!args.dispIO || args.dispIO->dispIOType != dispIoTypeSendSignal || args.GetCondArg(0) == evtObj->data1){
+			logger->info("Forcibly removing {}", args.subDispNode->condNode->condStruct->condName);
+		}
+		break;
+	case 6: // Invisible
+		if (!args.dispIO || args.dispIO->dispIOType != dispIoTypeSendSignal || args.GetCondArg(0) == evtObj->data1) {
+			logger->info("Forcibly removing {}", args.subDispNode->condNode->condStruct->condName);
+		}
+		if (d20Sys.d20Query(args.objHndCaller, DK_QUE_Critter_Is_Invisible)){
+			objects.FadeTo(args.objHndCaller, 255, 0, 5);
+		}
+		break;
+	case 20: // Timed Disappear
+		if (args.dispType == dispTypeBeginRound || !evtObj || (evtObj->dispIOType == dispIoTypeSendSignal && evtObj->data1 == args.GetCondArg(0))){
+			logger->info("Forcibly removing {}", args.subDispNode->condNode->condStruct->condName);
+			gameSystems->GetParticleSys().CreateAtObj("Fizzle", args.objHndCaller);
+			auto aiFlags = objects.getInt64(args.objHndCaller, obj_f_npc_ai_flags64) | AiFlag::RunningOff;
+			objSystem->GetObject(args.objHndCaller)->SetInt64(obj_f_npc_ai_flags64, aiFlags);
+			objects.FadeTo(args.objHndCaller, 0, 2, 5, 1);
+		}
+		break;
+	default:
+		break;
+	}
+
+	args.RemoveCondition();
 	return 0;
 }
 
@@ -1271,6 +1598,26 @@ int GenericCallbacks::MonsterRegenerationOnDamage(DispatcherCallbackArgs args){
 	}
 	if (replacedDice)
 		dispIo->damage.bonuses.ZeroBonusSetMeslineNum(322);
+	return 0;
+}
+
+int GenericCallbacks::PreferOneHandedWieldRadialMenu(DispatcherCallbackArgs args)
+{
+	auto shield = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Shield);
+	if (!inventory.IsBuckler(shield))
+		return 0;
+
+	RadialMenuEntryToggle radEntry(5124, args.GetCondArgPtr(0), "TAG_RADIAL_MENU_PREFER_ONE_HANDED_WIELD");
+	radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Options);
+	return 0;
+}
+
+int GenericCallbacks::PreferOneHandedWieldQuery(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIOTypeQuery, DispIoD20Query);
+	auto isCurrentlyOn = args.GetCondArg(0);
+
+	dispIo->return_val = isCurrentlyOn;
 	return 0;
 }
 
@@ -1464,6 +1811,7 @@ int __cdecl GlobalToHitBonus(DispatcherCallbackArgs args)
 			if (weapon)
 			{
 				long double weaponRange = (long double)objects.getInt32(weapon, obj_f_weapon_range);
+				weaponRange += dispatch.DispatchRangeBonus(args.objHndCaller, weapon);
 				int rangePenaltyFacotr = (int)(dist / weaponRange);
 				if ((int)rangePenaltyFacotr > 0)
 					bonusSys.bonusAddToBonusList(&dispIo->bonlist, -2 * rangePenaltyFacotr, 0, 303);
@@ -1492,6 +1840,10 @@ int GlobalGetArmorClass(DispatcherCallbackArgs args) // the basic AC value (init
 		if (objects.GetType(args.objHndCaller) == obj_t_npc || polymorphedTo)
 		{
 			bonusSys.bonusAddToBonusList(bonlist, objects.getInt32(defender, obj_f_npc_ac_bonus), 9, 123);
+		} else{
+			auto race = critterSys.GetRace(defender, false);
+			auto racialAcBonus = d20RaceSys.GetNaturalArmor(race);
+			bonlist->AddBonus(racialAcBonus, 9, 123);
 		}
 	}
 
@@ -1593,7 +1945,14 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 		else
 		{
 			int monkLvl = objects.StatLevelGet(args.objHndCaller, stat_level_monk);
-			attackDamageType = DamageType::Bludgeoning;
+			
+			attackDamageType = DamageType::Subdual;
+			if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_IMPROVED_UNARMED_STRIKE) > 0) {
+				//Note:  Bludgeoning is zero so this will be default if nothing answers the query
+				int nDamageType = d20Sys.D20QueryPython(args.objHndCaller, "Unarmed Damage Type");
+				attackDamageType = static_cast<DamageType>(nDamageType);
+			}
+			
 			damageMesLine = 113; // Unarmed
 
 			auto beltItem = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Lockpicks);
@@ -1612,7 +1971,6 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 				if (monkLvl <= 0)
 				{
 					attackDiceType = 2;
-					attackDamageType = DamageType::Subdual;
 				} else if (monkLvl < 4)
 				{
 					attackDiceType = 4;
@@ -1644,7 +2002,6 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 				if (monkLvl <= 0)
 				{
 					attackDiceType = 4;
-					attackDamageType = DamageType::Subdual;
 				}
 				else if (monkLvl < 4)
 				{
@@ -1681,7 +2038,6 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 				if (monkLvl <= 0)
 				{
 					attackDiceType = 3;
-					attackDamageType = DamageType::Subdual;
 				} else if (monkLvl < 4)
 				{
 					attackDiceType = 6;
@@ -1807,7 +2163,12 @@ void _FeatConditionsRegister()
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionFightDefensively);
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionAnimalCompanionAnimal);
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionAutoendTurn);
-
+	conds.hashmethods.CondStructAddToHashtable(conds.ConditionTurnUndead);
+	conds.hashmethods.CondStructAddToHashtable(conds.ConditionGreaterTurning);
+	
+	// Add the destruction domain to the condition table so it can be accessed in python
+	CondStruct * pDestructionDomain = *(conds.ConditionArrayDomains + 3 * Domain_Destruction);
+	conds.hashmethods.CondStructAddToHashtable(pDestructionDomain);
 
 	// Craft Wand
 	static CondStructNew craftWand("Craft Wand", 0);
@@ -1821,7 +2182,11 @@ void _FeatConditionsRegister()
 
 	// Scribe Scroll
 	static CondStructNew scribeScroll("Scribe Scroll", 0);
-	scribeScroll.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatScribeScrollRadialMenu);
+	//scribeScroll.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatScribeScrollRadialMenu);
+	scribeScroll.AddHook(dispTypeRadialMenuEntry, DK_NONE, [](DispatcherCallbackArgs args){
+		conds.AddTo(args.objHndCaller, "Scribe Scroll Level Set", { 1, 0 });
+		return 0;
+	});
 	scribeScroll.AddToFeatDictionary(FEAT_SCRIBE_SCROLL);
 	
 	// Forge Ring
@@ -1940,6 +2305,19 @@ CondStruct* ConditionSystem::GetByName(const string& name) {
 CondStruct* ConditionSystem::GetById(const int condId)
 {
 	return hashmethods.GetCondStruct(condId);
+}
+
+void ConditionSystem::DoForAllCondStruct(void(*cb)(CondStruct &condStruct)){
+	uint32_t bitmask = (mCondStructHashtable->powerOfTwo - 1);
+
+	for (auto i = 0u; i < mCondStructHashtable->numItems; i++) {
+		auto idx = mCondStructHashtable->idxArray[i];
+		auto dataEntry = &mCondStructHashtable->dataArray[idx];
+		if (*dataEntry) {
+			cb(**dataEntry);
+		}
+	}
+	
 }
 
 void ConditionSystem::AddToItem(objHndl item, const CondStruct* cond, const vector<int>& args) {
@@ -2118,6 +2496,8 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 2, dispTypeGetNumAttacksBase, 0, GreaterTWFRanger, 0, 0); // same callback as Improved TWF (it just adds an extra attack... logic is inside the action sequence / d20 / GlobalToHit functions
 	DispatcherHookInit(cond, 3, dispType0, 0, nullptr, 0, 0);
 
+	char * desc = feats.GetFeatName(FEAT_DIVINE_MIGHT);
+
 	// Divine Might Ability
 	mCondDivineMight = &condDivineMight;
 	cond = mCondDivineMight; 	condName = mCondDivineMightName;
@@ -2130,9 +2510,6 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 1, dispTypeConditionAdd, 0, CondNodeSetArg0FromSubDispDef, 1, 0);
 	DispatcherHookInit(cond, 2, dispTypeRadialMenuEntry, 0, DivineMightRadial, 0, 0);
 
-	DispatcherHookInit((CondStructNew*)ConditionTurnUndead, 6, dispTypeD20ActionPerform, DK_D20A_DIVINE_MIGHT, CondArgDecrement, 1, 0); // decrement the number of turn charges remaining; 
-	DispatcherHookInit((CondStructNew*)ConditionGreaterTurning, 6, dispTypeD20ActionPerform, DK_D20A_DIVINE_MIGHT, CondArgDecrement, 1, 0); // decrement the number of turn charges remaining
-	
 	// Divine Might Bonus (gets activated when you choose the action from the Radial Menu)
 	mCondDivineMightBonus = &condDivineMightBonus;
 	cond = mCondDivineMightBonus; 	condName = mCondDivineMightBonusName;
@@ -2277,7 +2654,7 @@ void ConditionSystem::RegisterNewConditions()
 	cond->condName = "Hezrou Stench";
 	cond->numArgs = 4; // 0 - spellId; 1 - duration; 2 - eventId; 3 - partsysId;
 
-	auto aoeSpellRemover = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100D3430);
+	auto aoeSpellRemover = spCallbacks.AoeSpellRemove; //temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100D3430);
 
 	DispatcherHookInit(cond, 0, dispTypeConditionAddPre, 0, ConditionPrevent, (uint32_t)cond, 0);
 	DispatcherHookInit(cond, 1, dispTypeConditionAdd, 0, spCallbacks.BeginHezrouStench, 0, 0);
@@ -2307,7 +2684,8 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 11, dispTypeEffectTooltip, 0, spCallbacks.HezrouStenchEffectTooltip, 141, 0);
 	DispatcherHookInit(cond, 12, dispTypeD20Signal, DK_SIG_Combat_End, spCallbacks.HezrouStenchCureNausea,0,0 );
 	DispatcherHookInit(cond, 13, dispTypeD20Query, DK_QUE_Critter_Has_Condition, spCallbacks.HasCondition, (uint32_t)cond, 0);
-
+	DispatcherHookInit(cond, 14, dispTypeConditionAddPre, DK_NONE, ConditionOverrideBy, (uint32_t)conds.GetByName("sp-Neutralize Poison"), 0); // make neutralie poison remove existing stench effect
+	
 	// Necklace of Adaptation
 
 	auto itemForceRemoveCallback = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x10104410);
@@ -2323,11 +2701,21 @@ void ConditionSystem::RegisterNewConditions()
 
 #pragma endregion
 
+	static CondStructNew preferOneHanded("Prefer One Handed Wield", 1);
+	preferOneHanded.AddHook(dispTypeD20Query, DK_QUE_Is_Preferring_One_Handed_Wield, genericCallbacks.PreferOneHandedWieldQuery);
+	preferOneHanded.AddHook(dispTypeRadialMenuEntry, DK_NONE, genericCallbacks.PreferOneHandedWieldRadialMenu);
 
-	//mCondCraftWandLevelSet = 
-	static CondStructNew craftWandSetLev("Craft Wand Level Set", 2);
-	craftWandSetLev.AddHook(dispTypeD20Query, DK_QUE_Craft_Wand_Spell_Level, QueryRetrun1GetArgs, &craftWandSetLev, 0);
-	craftWandSetLev.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatCraftWandRadial);
+	{
+		//mCondCraftWandLevelSet = 
+		static CondStructNew craftWandSetLev("Craft Wand Level Set", 2);
+		craftWandSetLev.AddHook(dispTypeD20Query, DK_QUE_Craft_Wand_Spell_Level, QueryRetrun1GetArgs, &craftWandSetLev, 0);
+		craftWandSetLev.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatCraftWandRadial);
+	}
+	{
+		static CondStructNew scribeScrollSetLev("Scribe Scroll Level Set", 2);
+		scribeScrollSetLev.AddHook(dispTypeD20Query, DK_QUE_Scribe_Scroll_Spell_Level, QueryRetrun1GetArgs, &scribeScrollSetLev, 0);
+		scribeScrollSetLev.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatScribeScrollRadialMenu);
+	}
 
 	// Aid Another
 	mCondAidAnother = new CondStructNew();
@@ -2532,7 +2920,6 @@ int* ConditionSystem::CondNodeGetArgPtr(CondNode* condNode, uint32_t argIdx)
 }
 
 #pragma region NewConditionCallbacks
-
  int __cdecl AoODisableRadialMenuInit(DispatcherCallbackArgs args)
 {
 	RadialMenuEntry radEntry;
@@ -2780,12 +3167,34 @@ int CombatExpertiseSet(DispatcherCallbackArgs args)
 int BarbarianRageStatBonus(DispatcherCallbackArgs args)
 {
 	DispIoBonusList * dispIo = dispatch.DispIoCheckIoType2(args.dispIO);
-	if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_MIGHTY_RAGE, (Stat)0, 0))
-		bonusSys.bonusAddToBonusList(&dispIo->bonlist, 8, 0, 339); // Greater Rage
-	else if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_GREATER_RAGE, (Stat)0, 0))
-		bonusSys.bonusAddToBonusList(&dispIo->bonlist, 6, 0, 338); // Greater Rage
-	else
-		bonusSys.bonusAddToBonusList(&dispIo->bonlist, 4, 0, 195); // normal rage
+	if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_MIGHTY_RAGE, (Stat)0, 0)) {
+		int nBonus = 8;
+		nBonus += d20Sys.D20QueryPython(args.objHndCaller, "Additional Rage Stat Bonus");
+		bonusSys.bonusAddToBonusList(&dispIo->bonlist, nBonus, 0, 339); // Greater Rage
+	}
+	else if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_GREATER_RAGE, (Stat)0, 0)) {
+		int nBonus = 6;
+		nBonus += d20Sys.D20QueryPython(args.objHndCaller, "Additional Rage Stat Bonus");
+		bonusSys.bonusAddToBonusList(&dispIo->bonlist, nBonus, 0, 338); // Greater Rage
+	}
+	else {
+		int nBonus = 4;
+		nBonus += d20Sys.D20QueryPython(args.objHndCaller, "Additional Rage Stat Bonus");
+		bonusSys.bonusAddToBonusList(&dispIo->bonlist, nBonus, 0, 195); // normal rage
+	}
+	return 0;
+}
+
+int BarbarianRageACPenalty(DispatcherCallbackArgs args)
+{
+	DispIoAttackBonus * dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
+
+	int nPenalty = -2;
+
+	//Value needs to be negated (it is a penalty) since qureies can't return negative values
+	nPenalty += -1 * d20Sys.D20QueryPython(args.objHndCaller, "Additional Rage AC Penalty");
+
+	bonusSys.bonusAddToBonusList(&dispIo->bonlist, nPenalty, 0, 195);  //rage ac penalty
 	return 0;
 }
 
@@ -2804,6 +3213,59 @@ int BarbarianRageSaveBonus(DispatcherCallbackArgs args)
 		if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_INDOMITABLE_WILL, (Stat)0, 0))
 			bonusSys.bonusAddToBonusList(&dispIo->bonlist, 4, 0, 344); // Indomitable Will
 	}
+	return 0;
+}
+
+int NonlethalDamageRadial(DispatcherCallbackArgs args)
+{
+	// Check for a weapon or the improved unarmed strike feat
+	if ( _GetAttackWeapon(args.objHndCaller, 1, D20CAF_NONE) || feats.HasFeatCountByClass(args.objHndCaller, FEAT_IMPROVED_UNARMED_STRIKE)) {
+		RadialMenuEntryToggle radEntry(5014, args.GetCondArgPtr(0), "TAG_RADIAL_MENU_NONLETHAL_DAMAGE");
+		radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Options);
+	}
+
+    return 0;
+}
+
+int NonlethalDamageSetSubdual(DispatcherCallbackArgs args)
+{
+	//First check if subdual damage is turned on
+	if (args.GetCondArg(0)) {
+
+		auto dispIo = dispatch.DispIoCheckIoType4(args.dispIO);
+
+		//If a weapon is used or the attacker has the improved unarmed strike feat and not a ranged attack then change to subdual
+		if ((dispIo->attackPacket.GetWeaponUsed() || feats.HasFeatCountByClass(args.objHndCaller, FEAT_IMPROVED_UNARMED_STRIKE)) && 
+			!(dispIo->attackPacket.flags & D20CAF_RANGED)) {
+			
+			// Convert all physical damage to subudal.  Fire and other special damage types are excluded.  
+			// The game originally converted only the first dice for all damage types.  This will work 
+			// more correctly for feats that add bonus damage dice.
+			for (unsigned int i = 0; i < dispIo->damage.diceCount; i++) {
+				if ((dispIo->damage.dice[i].type == DamageType::Bludgeoning) || 
+					(dispIo->damage.dice[i].type == DamageType::Piercing) ||
+					(dispIo->damage.dice[i].type == DamageType::Slashing) || 
+					(dispIo->damage.dice[i].type == DamageType::BludgeoningAndPiercing) ||
+					(dispIo->damage.dice[i].type == DamageType::PiercingAndSlashing) ||
+					(dispIo->damage.dice[i].type == DamageType::SlashingAndBludgeoning) ||
+					(dispIo->damage.dice[i].type == DamageType::SlashingAndBludgeoningAndPiercing)) {
+					dispIo->damage.dice[i].type = DamageType::Subdual;
+				}
+			}
+		}
+	}
+
+	return 0;
+}
+
+int DealNormalDamageCallback(DispatcherCallbackArgs args)
+{
+	// No weapon and doesn't have the improved unarmed strike feat
+	if (!_GetAttackWeapon(args.objHndCaller, 1, D20CAF_NONE) && !feats.HasFeatCountByClass(args.objHndCaller, FEAT_IMPROVED_UNARMED_STRIKE)) {
+		RadialMenuEntryToggle radEntry(5015, args.GetCondArgPtr(0), "TAG_RADIAL_MENU_NONLETHAL_DAMAGE");
+		radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Options);
+	}
+
 	return 0;
 }
 
@@ -2979,7 +3441,10 @@ int RendOnDamage(DispatcherCallbackArgs args)
 
 	DamagePacket * dmgPacket = &dispIo->damage;
 	auto attackDescr = dmgPacket->dice[0].typeDescription; // e.g. Claw etc.
-	if (conds.CondNodeGetArg(args.subDispNode->condNode, 0) && attackDescr == (char*)conds.CondNodeGetArg(args.subDispNode->condNode, 1))
+	auto hasDeliveredDamage = args.GetCondArg(0);
+	auto previousAttackDescr = (char*)args.GetCondArg(1);
+	auto previousTarget = args.GetCondArgObjHndl(2);
+	if (hasDeliveredDamage && attackDescr == previousAttackDescr && previousTarget == dispIo->attackPacket.victim)
 	{
 		Dice dice(2, 6, 9);
 		dispIo->damage.AddDamageDice(dice.ToPacked(), DamageType::PiercingAndSlashing, 133);
@@ -2989,8 +3454,9 @@ int RendOnDamage(DispatcherCallbackArgs args)
 	}
 	else
 	{
-		conds.CondNodeSetArg(args.subDispNode->condNode, 0, 1);
-		conds.CondNodeSetArg(args.subDispNode->condNode, 1, (int)attackDescr);
+		args.SetCondArg(0, 1);
+		args.SetCondArg(1, (int)attackDescr);
+		args.SetCondArgObjHndl(2, dispIo->attackPacket.victim);
 	}
 		
 	return 0;
@@ -3023,16 +3489,16 @@ int ConditionFunctionReplacement::LayOnHandsPerform(DispatcherCallbackArgs args)
 		if (d20a->d20Caf & D20CAF_RANGED)
 			return 0;
 		d20Sys.ToHitProc(d20a);
-		animResult = animationGoals.PushAttemptAttack(d20a->d20APerformer, d20a->d20ATarget) != 0;
+		animResult = gameSystems->GetAnim().PushAttemptAttack(d20a->d20APerformer, d20a->d20ATarget) != 0;
 	} else	{
-		animResult = animationGoals.PushAnimate(d20a->d20APerformer, 86) != 0;
+		animResult = gameSystems->GetAnim().PushAnimate(d20a->d20APerformer, 86) != 0;
 	}
 
 	
 	if (animResult)
 	{
 		// fixes lack of animation ID
-		d20a->animID = animationGoals.GetActionAnimId(d20a->d20APerformer);
+		d20a->animID = gameSystems->GetAnim().GetActionAnimId(d20a->d20APerformer);
 		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
 	}
 		
@@ -3044,11 +3510,11 @@ int ConditionFunctionReplacement::RemoveDiseasePerform(DispatcherCallbackArgs ar
 {
 	auto dispIo = dispatch.DispIoCheckIoType12(args.dispIO);
 	auto d20a = dispIo->d20a;
-	auto animResult = animationGoals.PushAnimate(d20a->d20APerformer, 86);
+	auto animResult = gameSystems->GetAnim().PushAnimate(d20a->d20APerformer, 86);
 	
 	if (animResult){
 		// fixes lack of animation ID
-		d20a->animID = animationGoals.GetActionAnimId(d20a->d20APerformer);
+		d20a->animID = gameSystems->GetAnim().GetActionAnimId(d20a->d20APerformer);
 		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
 	}
 	return 0;
@@ -3056,6 +3522,10 @@ int ConditionFunctionReplacement::RemoveDiseasePerform(DispatcherCallbackArgs ar
 
 void ConditionFunctionReplacement::HookSpellCallbacks()
 {
+
+	replaceFunction(0x100D3100, SpellCallbacks::ConcentratingActionSequenceHandler);
+	replaceFunction(0x100D32B0, SpellCallbacks::ConcentratingActionRecipientHandler);
+
 	// QueryCritterHasCondition for sp-Spiritual Weapon
 	int writeVal = dispTypeD20Query;
 	SubDispDefNew sdd;
@@ -3119,11 +3589,39 @@ void ConditionFunctionReplacement::HookSpellCallbacks()
 
 		// signal handler
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100DE3F0, spCallbacks.SpellDismissSignalHandler);
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100E95C0, SpellCallbacks::DismissSignalHandler);
 	}
 
 	
 	
 }
+
+
+int ConditionFunctionReplacement::AnimalCompanionLevelHook(objHndl objHnd, Stat shouldBeClassDruid)
+/// Replaces the druid level for animal compation level calculation
+{
+	auto result = objects.StatLevelGet(objHnd, stat_level_druid); // the vanilla code we're replacing did this
+
+	result += d20Sys.D20QueryPython(objHnd, "Animal Companion Level Bonus");
+
+	return result;
+}
+
+
+bool ConditionFunctionReplacement::StunningFistHook(objHndl objHnd, objHndl caster, int DC, int saveType, int flags)
+{
+
+	//Preform the saving throw and return the result
+	bool result = damage.SavingThrow(objHnd, caster, DC, static_cast<SavingThrowType>(saveType), flags);
+
+	if (!result) {
+		//On a failed saving throw send the signal that a stunning fist effect was applied
+		dispatch.DispatchSpecialAttack(caster, static_cast<int>(EvtObjSpecialAttack::STUNNING_FIST), objHnd);
+	}
+
+	return result;
+}
+
 
 int ConditionFunctionReplacement::TurnUndeadHook(objHndl handle, Stat shouldBeClassCleric, DispIoD20ActionTurnBased * evtObj){
 
@@ -3133,6 +3631,51 @@ int ConditionFunctionReplacement::TurnUndeadHook(objHndl handle, Stat shouldBeCl
 	result += d20Sys.D20QueryPython(handle, "Turn Undead Level", turnType);
 
 	return result;
+}
+
+int ConditionFunctionReplacement::TurnUndeadPerform(DispatcherCallbackArgs args)
+{
+	auto dispIo = static_cast<DispIoD20ActionTurnBased*>(args.dispIO);
+	dispIo->AssertType(dispIOTypeD20ActionTurnBased);
+
+	auto turnType = args.GetCondArg(0);
+
+	auto result = condFuncReplacement.oldTurnUndeadPerform(args);  //Just call the old version now
+
+	// Send the signal if this was the turn type used
+	if (dispIo->d20a->data1 == turnType) {
+		d20Sys.D20SignalPython(args.objHndCaller, "Turn Undead Perform", turnType);
+	}
+
+	return result;
+}
+
+int ConditionFunctionReplacement::TurnUndeadCheck(DispatcherCallbackArgs args)
+{
+	auto dispIo = static_cast<DispIoD20ActionTurnBased*>(args.dispIO);
+	dispIo->AssertType(dispIOTypeD20ActionTurnBased);
+
+	auto d20a = dispIo->d20a;
+	auto turnType = args.GetCondArg(0);
+
+	if (turnType == d20a->data1) {
+		auto charges = args.GetCondArg(1);
+
+		// Check if the turn undead ability has been disabled in python
+		auto result = d20Sys.D20QueryPython(args.objHndCaller, "Turn Undead Disabled");
+		if (result > 0) {
+			dispIo->returnVal = dispIo->returnVal = AEC_INVALID_ACTION;
+		} else {
+			if (charges > 0) {
+				dispIo->returnVal = 0;
+			}
+			else {
+				dispIo->returnVal = dispIo->returnVal = AEC_OUT_OF_CHARGES;
+			}
+		}
+	}
+
+	return 0;
 }
 
 #pragma region Spell Callbacks
@@ -3163,7 +3706,7 @@ int SpellCallbacks::ArmorSpellFailure(DispatcherCallbackArgs args){
 	auto classCode = spellSys.GetCastingClass(spellClass);
 	auto failChance = 0;
 	for (auto i = (int)EquipSlot::Helmet; i < EquipSlot::Count; i++){
-		auto itemFailChance = d20Sys.d20QueryWithData(args.objHndCaller, DK_QUE_Get_Arcane_Spell_Failure, classCode, i);
+		int itemFailChance = (int)d20Sys.d20QueryWithData(args.objHndCaller, DK_QUE_Get_Arcane_Spell_Failure, classCode, i);
 		if (itemFailChance > 0)
 			failChance += itemFailChance;
 	}
@@ -3184,6 +3727,19 @@ int SpellCallbacks::ArmorSpellFailure(DispatcherCallbackArgs args){
 	auto histId = histSys.RollHistoryType5Add(args.objHndCaller, objHndl::null, failChance, 59, rollRes, 62, 192); // Arcane Spell Failure due to Armor
 	histSys.CreateRollHistoryString(histId);
 
+	return 0;
+}
+
+int __cdecl SpellCallbacks::SpellEffectTooltipDuration(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType24(args.dispIO);
+	auto numRounds = args.GetCondArg(1);
+	auto spellId = args.GetCondArg(0);
+	SpellPacketBody spellPkt(spellId);
+	if (spellPkt.spellEnum){
+		dispIo->Append(args.GetData1(), spellPkt.spellEnum, fmt::format("\n{}: {}", combatSys.GetCombatMesLine(175), numRounds).c_str());
+	}
+	
 	return 0;
 }
 
@@ -3226,6 +3782,101 @@ int SpellCallbacks::BeginHezrouStench(DispatcherCallbackArgs args){
 	spellPkt.spellObjs[0].partySysId = args.GetCondArg(3);
 	spellPkt.UpdateSpellsCastRegistry();
 	pySpellIntegration.UpdateSpell(spellPkt.spellId);
+
+
+	return 0;
+}
+
+int SpellCallbacks::ConcentratingActionSequenceHandler(DispatcherCallbackArgs args){
+	GET_DISPIO(dispIoTypeSendSignal, DispIoD20Signal);
+	auto actSeq = (ActnSeq*)dispIo->data1;
+	if (!actSeq)
+		return 1;
+	auto spellId = args.GetCondArg(0);
+	SpellPacketBody spellPkt(spellId);
+	if (!spellPkt.spellEnum){
+		logger->debug("Cannot fetch spell packet");
+		return 0;
+	}
+
+	if (spellPkt.spellEnum == 303){ // Meld Into Stone hardcoding...
+		return 0;
+	}
+
+	for (auto i=0; i < actSeq->d20ActArrayNum; i++){
+		auto &d20a = actSeq->d20ActArray[i];
+		auto actionFlags = d20Sys.GetActionFlags(d20a.d20ActType);
+		if (!(actionFlags & D20ADF::D20ADF_Breaks_Concentration))
+			continue;
+		if (d20a.d20ActType == D20A_CAST_SPELL && d20a.spellId == spellId)
+			break;
+		if (d20a.d20Caf & D20CAF_FREE_ACTION) // added in Temple+ - free actions won't take up your standard action
+			continue;
+		DispatcherCallbackArgs dca;
+		dca.dispIO = nullptr;
+		dca.dispType = dispTypeD20Signal;
+		dca.dispKey = DK_SIG_Remove_Concentration;
+		dca.subDispNode = args.subDispNode;
+		dca.objHndCaller = args.objHndCaller;
+		SpellRemoveMod(dca);
+	}
+	return 0;
+}
+
+int SpellCallbacks::ConcentratingActionRecipientHandler(DispatcherCallbackArgs args)
+{
+	if (!args.dispIO){
+		return args.dispType == dispTypeBeginRound;
+	}
+
+	if (args.dispKey == DK_SIG_Killed){
+		return 1;
+	}
+		
+	if (args.dispIO->dispIOType != enum_dispIO_type::dispIoTypeSendSignal)
+		return 0;
+
+	GET_DISPIO(dispIoTypeSendSignal, DispIoD20Signal);
+	auto d20a = (D20Actn*)dispIo->data1;
+	auto spellId = args.GetCondArg(0);
+	if (!d20a)
+		return 1;
+
+	if (d20a->d20ActType != D20A_CAST_SPELL)
+		return 0;
+
+	auto d20aSpellId = d20a->spellId;
+	if (spellId == d20aSpellId)
+		return 0;
+
+	SpellPacketBody spellPkt(d20aSpellId);
+	if (!spellPkt.spellEnum){
+		logger->debug("ConcentratingActionRecipientHandler: error, unable to retrieve spell packet");
+		return 0;
+	}
+
+	SpellPacketBody conceSpellPkt(spellId);
+	if (!conceSpellPkt.spellEnum) {
+		logger->debug("ConcentratingActionRecipientHandler: error, unable to retrieve spell packet of concentrated spell");
+		return 0;
+	}
+
+	if (conceSpellPkt.spellEnum == 303) //meld into stone hack
+	{
+		return 0;
+	}
+
+	if (skillSys.SkillRoll(args.objHndCaller, SkillEnum::skill_concentration, spellPkt.dc,nullptr, 1)){
+		return 0;
+	}
+
+	histSys.CreateRollHistoryLineFromMesfile(32, args.objHndCaller, objHndl::null);
+	combatSys.FloatCombatLine(args.objHndCaller, 54);
+	auto args2 = args;
+	args2.dispKey = DK_SIG_Remove_Concentration;
+	args2.dispIO = nullptr;
+	args2.dispType = enum_disp_type::dispTypeD20Signal;
+	args2.RemoveSpellMod();
 
 
 	return 0;
@@ -3615,12 +4266,43 @@ int SpellCallbacks::HasCondition(DispatcherCallbackArgs args)
 	return 0;
 }
 
+int SpellCallbacks::HasSpellEffectActive(DispatcherCallbackArgs args){
+	GET_DISPIO(dispIOTypeQuery, DispIoD20Query);
+
+	if (dispIo->return_val == 1){
+		return 0;
+	}
+
+	auto spellEnum = dispIo->data1;
+	int v2 = dispIo->data2;
+
+	if (v2 >= 0 
+		&& ( v2 > 0 || spellEnum >= 282) 
+		&& ( (v2 <= 0 && spellEnum <= 285) ) ){ // Magic Circle Against Alignment
+		return 0;
+	}
+
+	auto spellCond = spellSys.GetCondFromSpellEnum(spellEnum);
+	
+	if (d20Sys.d20QueryWithData(args.objHndCaller, DK_QUE_Critter_Has_Condition, spellCond, 0)){
+		dispIo->return_val = 1;
+	}
+
+	return 0;
+}
+
 int SpellCallbacks::SpellDismissRadialSub(DispatcherCallbackArgs args)
 {
 	auto spellId = args.GetCondArg(0);
 	SpellPacketBody spPkt(spellId);
 	static auto helpId = ElfHash::Hash("TAG_DISMISS_SPELL");
 	RadialMenuEntryAction radEntry(-1, D20A_DISMISS_SPELLS, spellId, helpId);
+	if (!spPkt.spellEnum){
+		logger->warn("SpellDismissRadialSub: Caught ended spell, terminating.");
+		conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
+		return 0;
+	}
+
 	radEntry.text = (char*)spellSys.GetSpellMesline(spPkt.spellEnum);
 	if (spPkt.targetCount == 1 && spPkt.targetListHandles[0] != spPkt.caster && spPkt.targetListHandles[0] && objects.IsCritter(spPkt.targetListHandles[0])){
 		auto text = fmt::format("{} ({})", radEntry.text, description.getDisplayName(spPkt.targetListHandles[0]));
@@ -3660,15 +4342,159 @@ int SpellCallbacks::SpellDismissSignalHandler(DispatcherCallbackArgs args) {
 	if (dispIo->data1 != spellId)
 		return 0;
 
-	auto spellRemove = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100D7620);
-	auto spellModRemove = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100CBAB0);
-	
 	if (spPkt.spellEnum == 315 || args.GetData1() == 1 || spPkt.targetCount > 0){
 		floatSys.FloatSpellLine(args.objHndCaller, 20000, FloatLineColor::White); // a spell has expired
-		spellRemove(args);
-		spellModRemove(args);
+		args.RemoveSpell();
+		args.RemoveSpellMod();
 	}
 
+	return 0;
+}
+
+int SpellCallbacks::DismissSignalHandler(DispatcherCallbackArgs args){
+	GET_DISPIO(dispIoTypeSendSignal, DispIoD20Signal);
+	auto spellId = args.GetCondArg(0);
+	if (dispIo->data2 == 0 && spellId == dispIo->data1){ // used to check dispIo->data1 == 0 too; doesn't seem to make sense, why would spellId be 0?
+	
+		SpellPacketBody spPkt(spellId);
+		if (!spPkt.spellEnum){
+			conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
+			return 0;
+		}
+		if (spPkt.aoeObj && spPkt.aoeObj != args.objHndCaller){
+			d20Sys.d20SendSignal(spPkt.aoeObj, DK_SIG_Dismiss_Spells, spPkt.spellId, 0);
+		}
+		// Spell objects. Added in Temple+ for Wall spells
+		for (auto i = 0u; i < static_cast<unsigned int>(spPkt.numSpellObjs) && i < 128; i++) {
+			auto spellObj = spPkt.spellObjs[i].obj;
+			if (!spellObj || spellObj == args.objHndCaller) continue;
+			d20Sys.d20SendSignal(spellObj, DK_SIG_Dismiss_Spells, spPkt.spellId, 0);
+		}
+
+		for (auto i=0u; i < spPkt.targetCount; i++){
+			auto tgt = spPkt.targetListHandles[i];
+			if (!tgt || tgt == args.objHndCaller)
+				continue;
+			d20Sys.d20SendSignal(spPkt.targetListHandles[i], DK_SIG_Dismiss_Spells, spPkt.spellId, 0);
+		}
+
+		// in case the dismiss didn't take care of that (e.g. grease)
+		if (spPkt.aoeObj) {
+			d20Sys.d20SendSignal(spPkt.aoeObj, DK_SIG_Spell_End, spPkt.spellId, 0);
+		}
+
+		// Spell objects. Added in Temple+ for Wall spells
+		for (auto i = 0u; i < static_cast<unsigned int>(spPkt.numSpellObjs) && i < 128; i++) {
+			auto spellObj = spPkt.spellObjs[i].obj;
+			if (!spellObj) continue;
+			d20Sys.d20SendSignal(spellObj, DK_SIG_Spell_End, spPkt.spellId, 0);
+		}
+
+		
+		// adding this speciically for grease because I want to be careful
+		auto SP_GREASE_ENUM = 200;
+		if (spPkt.spellEnum == SP_GREASE_ENUM){
+			conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
+		}
+		
+		// By now all effects should have been removed. Cross your fingers!
+		d20Sys.d20SendSignal(args.objHndCaller, DK_SIG_Spell_End, spPkt.spellId, 0);
+
+	}
+	return 0;
+}
+
+void DispatcherCallbackArgs::RemoveSpellMod() {
+	spCallbacks.SpellRemoveMod(*this);
+}
+
+int __cdecl SpellCallbacks::SpellModCountdownRemove(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIoTypeSendSignal, DispIoD20Signal);
+	auto spellId = args.GetCondArg(0);
+	auto dur = args.GetCondArg(1);
+	int durNew = dur - (int)dispIo->data1;
+	SpellPacketBody spellPkt(spellId);
+	if (!spellPkt.spellEnum){
+		logger->debug("SpellModCountdownRemove: err.... why are we counting a spell that no longer exists? spell removed without removing the appropriate conditions? -Troika");
+		DispatcherCallbackArgs dca2 = args;
+		dca2.dispIO = nullptr;
+		dca2.RemoveSpellMod();
+		return 0;
+	}
+
+	auto spellIdentifier = args.GetData1();
+	if (durNew < 0){
+		if (spellIdentifier == 209){
+			args.RemoveSpellMod();
+			return 0;
+		}
+		if (spellIdentifier == 222){
+			spellPkt.EndPartsysForTgtObj(args.objHndCaller);
+			if (!spellPkt.RemoveObjFromTargetList(args.objHndCaller)){
+				logger->debug("SpellModCountdownRemove: Cannot remove target");
+				return 0;
+			}
+			d20Sys.d20SendSignal(args.objHndCaller, DK_SIG_Spell_End, spellPkt.spellId, 0);
+			args.RemoveSpellMod();
+			return 0;
+		}
+		if (spellIdentifier == 240 && !d20Sys.d20Query(args.objHndCaller, DK_QUE_Unconscious)){
+			if (!conds.AddTo(spellPkt.targetListHandles[0], "sp-Frog Tongue Swallowed", {spellId, 1,0})){
+				logger->info("SpellModCountdownRemove: unable to add condition");
+			}
+			if (!conds.AddTo(args.objHndCaller, "sp-Frog Tongue Swallowing", { spellId, 1,0 })) {
+				logger->info("SpellModCountdownRemove: unable to add condition");
+			}
+			objects.setInt32(args.objHndCaller, obj_f_grapple_state, (objects.getInt32(args.objHndCaller, obj_f_grapple_state) & ~0xFFF8) | 7);
+			args.RemoveSpellMod();
+			return 0;
+		}
+		// else
+		floatSys.FloatSpellLine(args.objHndCaller, 20000, FloatLineColor::White); // Spell expired
+		auto args2 = args;
+		args2.dispIO = nullptr;
+		args2.RemoveSpell();
+		args2.RemoveSpellMod();
+		return 0;
+	}
+
+	if (spellIdentifier == 222){
+		if (!args.GetCondArg(3)){
+			return 0;
+		}
+	}
+	else if (spellIdentifier == 226){
+		if (!args.GetCondArg(2)) {
+			return 0;
+		}
+	}
+
+	args.SetCondArg(1, durNew);
+	spellPkt.durationRemaining = durNew;
+	spellPkt.UpdateSpellsCastRegistry();
+	spellPkt.UpdatePySpell();
+	switch (spellIdentifier){
+	case 48: // Dazed
+		floatSys.FloatSpellLine(args.objHndCaller, 20012, FloatLineColor::Red);
+		return 0;
+	case 156: // Acid
+		temple::GetRef<void(__cdecl)(DispatcherCallbackArgs)>(0x100CE940)(args);
+		return 0;
+	case 203:
+		floatSys.FloatCombatLine(args.objHndCaller, 47); // Sleeping
+		return 0;
+	case 240:
+		if (d20Sys.d20Query(args.objHndCaller, DK_QUE_Unconscious))
+			return 0;
+		floatSys.FloatSpellLine(args.objHndCaller, 21005, FloatLineColor::White); // Grappling
+		objects.setInt32(args.objHndCaller, obj_f_grapple_state, (objects.getInt32(args.objHndCaller, obj_f_grapple_state) & ~0xFFFA) | 5);
+		return 0;
+	case 244: // Stunned
+		histSys.CreateRollHistoryLineFromMesfile(33, args.objHndCaller, objHndl::null);
+		floatSys.FloatCombatLine(args.objHndCaller, 89); // Stunned
+		return 0;
+	}
 	return 0;
 }
 
@@ -3693,6 +4519,7 @@ int SpellCallbacks::SpellRemoveMod(DispatcherCallbackArgs args){
 	case DK_SIG_TouchAttackAdded:
 	case DK_SIG_Teleport_Prepare:
 	case DK_SIG_Teleport_Reconnect:
+	case DK_SIG_Combat_End:
 		break;
 	default:
 		if (evtObj && evtObj->data1 != args.GetCondArg(0))
@@ -3706,11 +4533,22 @@ int SpellCallbacks::SpellRemoveMod(DispatcherCallbackArgs args){
 	case 2:
 		if (args.dispKey == DK_SIG_Remove_Concentration){
 			if (spPkt.spellEnum != 0){
-				floatSys.FloatCombatLine(args.objHndCaller, 5060);
+				floatSys.FloatCombatLine(args.objHndCaller, 5060); // Stop Concentration
 				d20Sys.d20SendSignal(args.objHndCaller, DK_SIG_Concentration_Broken, spellId, 0);
+
+				if (spPkt.caster && spPkt.caster != args.objHndCaller){
+					d20Sys.d20SendSignal(spPkt.caster, DK_SIG_Concentration_Broken, spellId, 0);
+				}
+
 				for (auto i=0u; i < spPkt.targetCount; i++){
 					if (args.objHndCaller != spPkt.targetListHandles[i])
 						d20Sys.d20SendSignal(spPkt.targetListHandles[i], DK_SIG_Concentration_Broken, spellId, 0);
+				}
+				// added in Temple+: Concentration_Broken on the spell objects
+				for (auto i=0; i < spPkt.numSpellObjs && i < 128; i++){
+					auto spObj = spPkt.spellObjs[i].obj;
+					if (!spObj || spObj == args.objHndCaller) continue;
+						d20Sys.d20SendSignal(spObj, DK_SIG_Concentration_Broken, spellId, 0);
 				}
 			}
 		}
@@ -3731,6 +4569,63 @@ int SpellCallbacks::SpellRemoveMod(DispatcherCallbackArgs args){
 
 	conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
 	
+	return 0;
+}
+
+// Originally 0x100D3430
+int SpellCallbacks::AoeSpellRemove(DispatcherCallbackArgs args){
+	auto spellId = args.GetCondArg(0);
+	SpellPacketBody pkt(spellId);
+	if (!pkt.spellEnum)
+		return 0;
+
+	// Added in Temple+: fixes bug where failed Dispel Magic still causes AoE spells to stop (but without removing their effects! Which caused effect permanency. E.g. Lareth fight in Co8)
+	if (args.dispKey == DK_SIG_Spell_End && args.dispIO && args.dispIO->dispIOType == dispIoTypeSendSignal){
+		GET_DISPIO(dispIoTypeSendSignal, DispIoD20Signal);
+		auto spellIdFromSignal = dispIo->data1;
+		if (spellIdFromSignal != 0 && spellIdFromSignal != spellId){
+			return 0;
+		}
+	}
+
+	auto partsysIdToPlay = -1;
+	switch (args.GetData1()){
+	case 0x26:
+		gameSystems->GetParticleSys().CreateAtObj("sp-consecrate-END", args.objHndCaller);
+		break;
+	case 0x35:
+		gameSystems->GetParticleSys().CreateAtObj("sp-Desecrate-END", args.objHndCaller);
+		break;
+	case 0x66:
+		gameSystems->GetParticleSys().CreateAtObj("sp-Fog Cloud-END", args.objHndCaller);
+		break;
+	case 0x8B:
+		gameSystems->GetParticleSys().CreateAtObj("sp-Invisibility Sphere-END", args.objHndCaller);
+		break;
+	case 0x9D:
+		gameSystems->GetParticleSys().CreateAtObj("sp-Minor Globe of Invulnerability-END", args.objHndCaller);
+		break;
+	case 0x9F:
+		gameSystems->GetParticleSys().CreateAtObj("sp-Mind Fog-END", args.objHndCaller);
+		break;
+	case 0xD2:
+		gameSystems->GetParticleSys().CreateAtObj("sp-Solid Fog-END", args.objHndCaller);
+		break;
+	case 0xED:
+		gameSystems->GetParticleSys().CreateAtObj("sp-Wind Wall-END", args.objHndCaller);
+		break;
+	default:
+		break;
+	}
+
+	gameSystems->GetParticleSys().End(pkt.spellObjs[0].partySysId);
+	for (auto i = 1; i < pkt.numSpellObjs; i++){
+		gameSystems->GetParticleSys().End(pkt.spellObjs[i].partySysId);
+	}
+
+	auto evtId = args.GetCondArg(2);
+	objEvents.objEvtTable->remove(evtId);
+	args.RemoveSpellMod();
 	return 0;
 }
 
@@ -4019,6 +4914,42 @@ int ItemCallbacks::BucklerToHitPenalty(DispatcherCallbackArgs args)
 
 	return 0;
 }
+
+
+int __cdecl ItemCallbacks::BucklerAcPenalty(DispatcherCallbackArgs args)
+{
+	//Check if the penalty is turned off through python
+	if (d20Sys.D20QueryPython(args.objHndCaller, "Disable Buckler Penalty") == 0) {
+
+		auto dispIo = static_cast<DispIoAttackBonus*>(args.dispIO);
+		dispIo->AssertType(dispIOTypeAttackBonus);
+
+		auto weaponUsed = dispIo->attackPacket.GetWeaponUsed();
+
+		if ((dispIo->attackPacket.flags & D20CAF_RANGED))
+			return 0;
+
+		if (!weaponUsed)
+			return 0;
+
+		auto offhandObject = inventory.ItemWornAt(args.objHndCaller, EquipSlot::WeaponSecondary);
+
+		if (offhandObject) {
+			auto objectFlag = objects.getInt32(offhandObject, obj_f_type);
+			if (objectFlag == obj_t_weapon) {
+				args.SetCondArg(1, 1);  //Two Weapon Fighting, remove buckler bonus
+			}
+		} else {
+			auto twoHanded = d20Sys.d20QueryWithData(args.objHndCaller, DK_QUE_WieldedTwoHanded, reinterpret_cast<uint32_t>(dispIo), 0);
+			if (twoHanded) {
+				args.SetCondArg(1, 1);  //Using a two handed weapon or using a one handed weapon in two hands, remove buckler bonus
+			}
+		}
+	}
+
+	return 0;
+}
+
 
 int ItemCallbacks::WeaponMerciful(DispatcherCallbackArgs args){
 	GET_DISPIO(dispIOTypeDamage, DispIoDamage);
@@ -4375,7 +5306,28 @@ int ClassAbilityCallbacks::FeatBrewPotionRadialMenu(DispatcherCallbackArgs args)
 
 int ClassAbilityCallbacks::FeatScribeScrollRadialMenu(DispatcherCallbackArgs args)
 {
-	return ItemCreationBuildRadialMenuEntry(args, ScribeScroll, "TAG_SCRIBE_SCROLL", 5067);
+	// return ItemCreationBuildRadialMenuEntry(args, ScribeScroll, "TAG_SCRIBE_SCROLL", 5067);
+	if (combatSys.isCombatActive()) { return 0; }
+	MesLine mesLine;
+	RadialMenuEntry radMenuScribeScroll;
+	mesLine.key = 5067;
+	mesFuncs.GetLine_Safe(*combatSys.combatMesfileIdx, &mesLine);
+	radMenuScribeScroll.text = (char*)mesLine.value;
+	radMenuScribeScroll.d20ActionType = D20A_ITEM_CREATION;
+	radMenuScribeScroll.d20ActionData1 = ScribeScroll;
+	radMenuScribeScroll.helpId = ElfHash::Hash("TAG_SCRIBE_SCROLL");
+
+	int newParent = radialMenus.AddParentChildNode(args.objHndCaller, &radMenuScribeScroll, radialMenus.GetStandardNode(RadialMenuStandardNode::Feats));
+
+
+	auto setWandLevelMaxArg = min(20, critterSys.GetCasterLevel(args.objHndCaller));
+	RadialMenuEntrySlider setScrollLevel(6017, 1, setWandLevelMaxArg, args.GetCondArgPtr(0), 6019, ElfHash::Hash("TAG_SCRIBE_SCROLL"));
+	radialMenus.AddChildNode(args.objHndCaller, &setScrollLevel, newParent);
+
+	RadialMenuEntryAction useCraftWand(5067, D20A_ITEM_CREATION, ItemCreationType::ScribeScroll, "TAG_SCRIBE_SCROLL");
+	radialMenus.AddChildNode(args.objHndCaller, &useCraftWand, newParent);
+
+	return 0;
 };
 
 int ClassAbilityCallbacks::FeatCraftWandRadial(DispatcherCallbackArgs args){
@@ -4472,14 +5424,12 @@ int ClassAbilityCallbacks::DruidWildShapeInit(DispatcherCallbackArgs args){
 
 	args.SetCondArg(0, numTimes);
 
-	if (conds.AddTo(args.objHndCaller, conds.GetByName("Wild Shaped"), { numTimes, 0,0 }))
-	{
-		int dummy = 1;
-	} else
-	{
-		int dummy = 1;
+	// Add if the condition has not already been added.  The extender messes up things up if a query is not used and
+	// the condition can get added many times.
+	auto res = d20Sys.D20QueryPython(args.objHndCaller, "Wild Shaped Condition Added");
+	if (!res) {
+		conds.AddTo(args.objHndCaller, conds.GetByName("Wild Shaped"), { numTimes, 0,0 });
 	}
-
 
 	return 0;
 }
@@ -4529,18 +5479,16 @@ int ClassAbilityCallbacks::DruidWildShapeReset(DispatcherCallbackArgs args){
 			numTimes += (1 << 8);
 	}
 
-	
+	//See if any bonus uses should be added
+	auto extraWildShape = d20Sys.D20QueryPython(args.objHndCaller, "Extra Wildshape Uses");
+	auto extraElementalWildShape = d20Sys.D20QueryPython(args.objHndCaller, "Extra Wildshape Elemental Uses");
+	numTimes += extraWildShape;
+	numTimes += (1 << 8) * extraElementalWildShape;
 	
 	args.SetCondArg(0, numTimes);
 	if (args.GetCondArg(2)) {
 		args.SetCondArg(2, 0);
-		auto obj = gameSystems->GetObj().GetObject(args.objHndCaller);
-		auto animHandle = obj->GetInt32(obj_f_animation_handle);
-		if (animHandle) {
-			auto freeAasModel = temple::GetPointer<void(int)>(0x10264510);
-			freeAasModel(animHandle);
-			obj->SetInt32(obj_f_animation_handle, 0);
-		}
+		objects.ClearAnim(args.objHndCaller);
 
 		gameSystems->GetParticleSys().CreateAtObj("sp-animal shape", args.objHndCaller);
 		d20StatusSys.initItemConditions(args.objHndCaller);
@@ -4653,12 +5601,12 @@ int ClassAbilityCallbacks::DruidWildShapeCheck(DispatcherCallbackArgs args){
 		if (spec.monCat == mc_type_elemental) {
 			numTimes = numTimes >> 8;
 			if (numTimes <= 0)
-				dispIo->returnVal = AEC_INVALID_ACTION;
+				dispIo->returnVal = AEC_OUT_OF_CHARGES;
 		}
 		else { // normal animal (or plant)
 			numTimes = numTimes & 0xFF;
 			if (numTimes <= 0)
-				dispIo->returnVal = AEC_INVALID_ACTION;
+				dispIo->returnVal = AEC_OUT_OF_CHARGES;
 		}
 	}
 
@@ -4678,13 +5626,7 @@ int ClassAbilityCallbacks::DruidWildShapePerform(DispatcherCallbackArgs args){
 
 
 	auto initObj = [args](int protoId) {
-		auto obj = gameSystems->GetObj().GetObject(args.objHndCaller);
-		auto animHandle = obj->GetInt32(obj_f_animation_handle);
-		if (animHandle) {
-			auto freeAasModel = temple::GetPointer<void(int)>(0x10264510);
-			freeAasModel(animHandle);
-			obj->SetInt32(obj_f_animation_handle, 0);
-		}
+		objects.ClearAnim(args.objHndCaller);
 		if (protoId) {
 			auto lvl = objects.StatLevelGet(args.objHndCaller, stat_level);
 			damage.Heal(args.objHndCaller, args.objHndCaller, Dice(0, 0, lvl), D20A_CLASS_ABILITY_SA);
@@ -4765,8 +5707,10 @@ int ClassAbilityCallbacks::BardicMusicBeginRound(DispatcherCallbackArgs args){
 		switch (bmType)
 		{
 		case BM_INSPIRE_GREATNESS:
-			if (tgt)
-				conds.AddTo(tgt, "Greatness", {0,0,0,0});
+			if (tgt) {
+				int bonusRounds = d20Sys.D20QueryPython(args.objHndCaller, "Bardic Ability Duration Bonus");
+				conds.AddTo(tgt, "Greatness", { bonusRounds + 5,0,0,0 });
+			}
 			return 0;
 		case BM_INSPIRE_COURAGE: 
 			party.ApplyConditionAround(args.objHndCaller, 30, "Inspired_Courage", objHndl::null);
@@ -4787,8 +5731,10 @@ int ClassAbilityCallbacks::BardicMusicBeginRound(DispatcherCallbackArgs args){
 			return 0;
 		case BM_SONG_OF_FREEDOM: break; // TODO
 		case BM_INSPIRE_HEROICS: 
-			if (tgt)
-				conds.AddTo(tgt, "Inspired Heroics", {0,0,0,0});
+			if (tgt) {
+				int bonusRounds = d20Sys.D20QueryPython(args.objHndCaller, "Bardic Ability Duration Bonus");
+				conds.AddTo(tgt, "Inspired Heroics", { bonusRounds + 5,0,0,0 });
+			}
 		default: break;
 		}
 
@@ -4814,10 +5760,13 @@ int ClassAbilityCallbacks::BardMusicRadial(DispatcherCallbackArgs args){
 	if (!bardLvl || perfSkill < 3)
 		return 0;
 
+	//Ask python for the maximum number of uses of bardic music
+	int nMaxBardicMusic = d20Sys.D20QueryPython(args.objHndCaller, "Max Bardic Music");
+
 	RadialMenuEntryParent bmusic(5039);
 	bmusic.flags |= 0x6;
 	bmusic.minArg = args.GetCondArg(0);
-	bmusic.maxArg = bardLvl;
+	bmusic.maxArg = nMaxBardicMusic;
 	auto bmusicId = bmusic.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Class);
 
 	RadialMenuEntryAction insCourage(5040, D20A_BARDIC_MUSIC, BM_INSPIRE_COURAGE, "TAG_CLASS_FEATURES_BARD_INSPIRE_COURAGE");
@@ -4940,7 +5889,7 @@ int ClassAbilityCallbacks::BardMusicActionFrame(DispatcherCallbackArgs args){
 		auto partsysId = args.GetCondArg(5);
 		gameSystems->GetParticleSys().End(partsysId);
 		auto objHnd = args.GetCondArgObjHndl(3);
-		if (gameSystems->GetObj().IsValidHandle(objHnd)){
+		if (gameSystems->GetObj().IsValidHandle(objHnd) && bmType != BM_SUGGESTION){ // make an exception for Suggestion since it shouldn't abort the Fascinate song
 			d20Sys.d20SendSignal(objHnd, DK_SIG_Bardic_Music_Completed, 0,0);
 		}
 	}
@@ -5016,7 +5965,7 @@ int ClassAbilityCallbacks::BardMusicActionFrame(DispatcherCallbackArgs args){
 int ClassAbilityCallbacks::BardicMusicInspireRefresh(DispatcherCallbackArgs args){
 	GET_DISPIO(dispIoTypeCondStruct, DispIoCondStruct);
 	if (dispIo->condStruct == (CondStruct*)args.GetData1()){
-		args.SetCondArg(0, 5); // set duration to 5
+		args.SetCondArg(0, dispIo->arg1); // set duration to the old condition value
 		args.SetCondArg(1, 1);
 		dispIo->outputFlag = 0; // prevent adding a duplicate entry
 	}
@@ -5037,7 +5986,6 @@ int ClassAbilityCallbacks::BardicMusicInspireBeginRound(DispatcherCallbackArgs a
 
 int ClassAbilityCallbacks::BardicMusicInspireOnAdd(DispatcherCallbackArgs args)
 {
-	args.SetCondArg(0, 5); // set duration to 5 rounds
 	if (args.GetData2() == BM_INSPIRE_HEROICS)
 		args.SetCondArg(1, 0); // enabler flag; gets set to 1 on the Bard's turn (since it requires hearing the bard for a full round)
 	else
@@ -5174,16 +6122,33 @@ int ClassAbilityCallbacks::SneakAttackDamage(DispatcherCallbackArgs args) {
 		return 0;
 
 	// limit to 30'
-	if (locSys.DistanceToObj(args.objHndCaller, tgt) > 30)
-		return 0;
+	bool within30Feet = (locSys.DistanceToObj(args.objHndCaller, tgt) < 30.0);
 
-	if (atkPkt.flags & D20CAF_FLANKED
+	// See if it is a critical and if criticals cause sneak attacks
+	bool sneakAttackFromCrit = false;
+	if (atkPkt.flags & D20CAF_CRITICAL) {
+		auto result = d20Sys.D20QueryPython(args.objHndCaller, "Sneak Attack Critical");
+		if (result > 0) {
+			sneakAttackFromCrit = true;
+		}
+	}
+
+	bool sneakAttackCondition = atkPkt.flags & D20CAF_FLANKED
 		|| d20Sys.d20Query(tgt, DK_QUE_SneakAttack)
 		|| d20Sys.d20QueryWithData(atkPkt.attacker, DK_QUE_OpponentSneakAttack, (uint32_t)dispIo, 0)
-		|| !critterSys.CanSense(tgt, atkPkt.attacker))
+		|| !critterSys.CanSense(tgt, atkPkt.attacker);
+
+	// From the SRD:  The rogue must be able to see the target well enough to pick out a vital 
+	// spot and must be able to reach such a spot. A rogue cannot sneak attack while striking a 
+	// creature with concealment or striking the limbs of a creature whose vitals are beyond reach. 
+	bool canSenseTarget = critterSys.CanSense(args.objHndCaller, tgt);
+
+	if ((sneakAttackCondition && canSenseTarget && within30Feet) || sneakAttackFromCrit)
 	{
 		// get sneak attack dice (NEW! now via query, for prestige class modularity)
 		auto sneakAttackDice = d20Sys.D20QueryPython(args.objHndCaller, fmt::format("Sneak Attack Dice"));
+		auto sneakAttackDmgBonus = d20Sys.D20QueryPython(args.objHndCaller, fmt::format("Sneak Attack Bonus"));
+
 		if (sneakAttackDice <= 0)
 			return 0;
 
@@ -5193,9 +6158,9 @@ int ClassAbilityCallbacks::SneakAttackDamage(DispatcherCallbackArgs args) {
 		}
 
 		
-		auto sneakDmgDice = Dice(sneakAttackDice, 6, 0);
+		auto sneakDmgDice = Dice(sneakAttackDice, 6, sneakAttackDmgBonus);
 		if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_DEADLY_PRECISION)) {
-			sneakDmgDice = Dice(sneakAttackDice, 5, 1*sneakAttackDice);
+			sneakDmgDice = Dice(sneakAttackDice, 5, 1*sneakAttackDice + sneakAttackDmgBonus);
 		}
 		dispIo->damage.AddDamageDice(sneakDmgDice.ToPacked(), DamageType::Unspecified, 106);
 		floatSys.FloatCombatLine(args.objHndCaller, 90); // Sneak Attack!
@@ -5395,6 +6360,32 @@ void Conditions::AddConditionsToTable(){
 	bardInspireHeroics.AddHook(dispTypeConditionAddFromD20StatusInit, DK_NONE, genericCallbacks.PlayParticlesSavePartsysId, 2, (uint32_t)"Bardic-Inspire Courage-hit"); // todo make new pfx
 	bardInspireHeroics.AddHook(dispTypeConditionAdd, DK_NONE, genericCallbacks.PlayParticlesSavePartsysId, 2, (uint32_t)"Bardic-Inspire Courage-hit");
 
+	{
+		auto removeFearCond = conds.GetByName("sp-Remove Fear");
+		if (removeFearCond){
+			static CondStructNew removeFearExtend(*removeFearCond);
+			removeFearExtend.AddHook(dispTypeD20Query, DK_QUE_Critter_Has_Condition, genericCallbacks.HasCondition, &removeFearExtend, 0);
+			removeFearExtend.subDispDefs[3].dispCallback = [](DispatcherCallbackArgs){ // cancel the RemoveSpellOnAdd callback
+				return 0;
+			};
+			
+			removeFearExtend.AddHook(dispTypeEffectTooltip, DK_NONE, spCallbacks.SpellEffectTooltipDuration, 1, 0); // Courage indicator icon
+		}
+	}
+
+	{
+		auto neutPoisonCond = conds.GetByName("sp-Neutralize Poison");
+		if (neutPoisonCond) {
+			static CondStructNew neutPoisonCondExtend(*neutPoisonCond);
+			neutPoisonCondExtend.AddHook(dispTypeD20Query, DK_QUE_Critter_Has_Condition, genericCallbacks.HasCondition, &neutPoisonCondExtend, 0);
+			neutPoisonCondExtend.subDispDefs[2].dispCallback = [](DispatcherCallbackArgs) { // cancel the RemoveSpellOnAdd callback so it doesn't end the spell immediately
+				return 0;
+			};
+			neutPoisonCondExtend.AddHook(dispTypeConditionAddPre, DK_NONE, ConditionPrevent, conds.GetByName("Poisoned"), 0); // Prevent "Poisoned" condition from being applied
+			neutPoisonCondExtend.AddHook(dispTypeEffectTooltip, DK_NONE, spCallbacks.SpellEffectTooltipDuration, 19, 0); // Delay Poison indicator icon
+			neutPoisonCondExtend.AddHook(dispTypeD20Query, DK_QUE_Critter_Is_Immune_Poison, genericCallbacks.QuerySetReturnVal1);
+		}
+	}
 
 	// New Conditions!
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mConditionDisableAoO);
@@ -5481,3 +6472,8 @@ int RaceAbilityCallbacks::HalflingThrownWeaponAndSlingBonus(DispatcherCallbackAr
 
 	return 0;
 }
+
+void CondStructNew::AddAoESpellRemover() {
+	AddHook(dispTypeD20Signal, DK_SIG_Spell_End, spCallbacks.AoeSpellRemove);
+}
+

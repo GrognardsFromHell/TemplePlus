@@ -7,37 +7,61 @@
 #include "d20_obj_registry.h"
 #include "gamesystems/objects/objsystem.h"
 #include <gamesystems/gamesystems.h>
-
+#include "d20_race.h"
 
 
 D20StatusSystem d20StatusSys;
 
 void D20StatusSystem::initRace(objHndl objHnd)
 {
-	if (objects.IsCritter(objHnd))
-	{
-		Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
-		if (critterSys.IsUndead(objHnd))
-		{
-			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionMonsterUndead);
+	if (!objects.IsCritter(objHnd))
+		return;
+
+	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
+	if (critterSys.IsUndead(objHnd)){
+
+		_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionMonsterUndead);
+	}
+
+	auto race = critterSys.GetRace(objHnd, false);
+	auto raceCond = d20RaceSys.GetRaceCondition(race);
+	_ConditionAddToAttribs_NumArgs0(dispatcher, conds.GetByName(raceCond));
+
+		
+	auto racialSpells = d20RaceSys.GetSpellLikeAbilities(race);
+	auto spellsMemorized = objSystem->GetObject(objHnd)->GetSpellArray(obj_f_critter_spells_memorized_idx);
+	for (auto it: racialSpells){
+		auto &spell = it.first;
+		auto count = 0;
+		auto specifiedCount = it.second;
+
+		for (auto i = 0u; i < spellsMemorized.GetSize(); i++) {
+			auto &memSpell = spellsMemorized[i];
+			if (memSpell.classCode == spell.classCode && memSpell.spellLevel == spell.spellLevel && memSpell.spellEnum == spell.spellEnum && memSpell.padSpellStore == race){
+				count++;
+				if (count >= specifiedCount){
+					break;
+				}
+			}
 		}
-
-		static std::vector<std::string> raceCondNames = {"Human", "Dwarf", "Elf", "Gnome", "Halfelf", "Halforc", "Halfling"};
-
-		uint32_t objRace = critterSys.GetRace(objHnd);
-		CondStruct ** condStructRace = conds.ConditionArrayRace + objRace;
-		_ConditionAddToAttribs_NumArgs0(dispatcher, conds.GetByName(raceCondNames[objRace]));
-
-		if (critterSys.IsSubtypeFire(objHnd))
-		{
-			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionSubtypeFire);
-		}
-
-		if (critterSys.IsOoze(objHnd))
-		{
-			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionMonsterOoze);
+		auto spData = spell;
+		spData.padSpellStore = race;
+		auto spellStoreData = *(int*)(&spData.spellStoreState);
+		for (auto i = 0 ; i < specifiedCount - count; i++){
+			spellSys.SpellMemorizedAdd(objHnd, spell.spellEnum, spell.classCode, spell.spellLevel, spellStoreData, 0);
 		}
 	}
+
+	if (critterSys.IsSubtypeFire(objHnd))
+	{
+		_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionSubtypeFire);
+	}
+
+	if (critterSys.IsOoze(objHnd))
+	{
+		_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionMonsterOoze);
+	}
+	
 }
 
 void D20StatusSystem::initClass(objHndl objHnd){
@@ -45,20 +69,6 @@ void D20StatusSystem::initClass(objHndl objHnd){
 	{
 		Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
 
-		CondStruct ** condStructClass = conds.ConditionArrayClasses;
-
-		/*uint32_t stat = stat_level_barbarian;
-		for (uint32_t i = 0; i < VANILLA_NUM_CLASSES; i++)
-		{
-			if (objects.StatLevelGet(objHnd, (Stat)stat) > 0
-				&& *condStructClass != nullptr)
-			{
-				_ConditionAddToAttribs_NumArgs0(dispatcher, *condStructClass);
-			};
-
-			condStructClass += 1;
-			stat += 1;
-		}*/
 		for (auto classCode: d20ClassSys.classEnums){
 			if (objects.StatLevelGet(objHnd, (Stat)classCode) <= 0)
 				continue;
@@ -68,20 +78,15 @@ void D20StatusSystem::initClass(objHndl objHnd){
 			_ConditionAddToAttribs_NumArgs0(dispatcher, condStructClass);
 		}
 		
-			
-		
 
 		if (objects.StatLevelGet(objHnd, stat_level_cleric) >= 1){
 			_D20StatusInitDomains(objHnd);
 		}
 
-		if (feats.HasFeatCountByClass(objHnd, FEAT_REBUKE_UNDEAD)){
+		if (feats.HasFeatCountByClass(objHnd, FEAT_REBUKE_UNDEAD)) {
 			_ConditionAddToAttribs_NumArgs2(dispatcher, conds.GetByName("Turn Undead"), 1, 0);
-		}
-
-		if (objects.StatLevelGet(objHnd, stat_level_paladin) >= 3)
-		{
-			_ConditionAddToAttribs_NumArgs0(dispatcher, conds.GetByName("Turn Undead"));
+		} else if (feats.HasFeatCountByClass(objHnd, FEAT_TURN_UNDEAD)) {
+			_ConditionAddToAttribs_NumArgs2(dispatcher, conds.GetByName("Turn Undead"), 0, 0);
 		}
 
 		if (objects.StatLevelGet(objHnd, stat_level_bard) >= 1){
@@ -109,9 +114,7 @@ void D20StatusSystem::D20StatusInit(objHndl objHnd)
 
 	objects.dispatch.DispatcherClearPermanentMods(dispatcher);
 
-	if (objects.IsCritter(objHnd))
-	{
-	//	hooked_print_debug_message("D20Status Init for %s", description.getDisplayName(objHnd));
+	if (objects.IsCritter(objHnd)){
 
 		auto psiptsCondStruct = conds.GetByName("Psi Points");
 		if (psiptsCondStruct){
@@ -204,36 +207,26 @@ void D20StatusSystem::initDomains(objHndl objHnd)
 	uint32_t domain_1 = objects.getInt32(objHnd, obj_f_critter_domain_1);
 	uint32_t domain_2 = objects.getInt32(objHnd, obj_f_critter_domain_2);
 
-	if (domain_1)
-	{
-		CondStruct * condStructDomain1 = *(conds.ConditionArrayDomains + 3 * domain_1);
-		uint32_t arg1 = *(conds.ConditionArrayDomainsArg1 + 3 * domain_1);
-		uint32_t arg2 = *(conds.ConditionArrayDomainsArg2 + 3 * domain_1);
-		if (condStructDomain1 != nullptr)
-		{
-			_ConditionAddToAttribs_NumArgs2(dispatcher, condStructDomain1, arg1, arg2);
-		}
-	}
+	initDomain(dispatcher, domain_1);
+	initDomain(dispatcher, domain_2);
+}
 
-	if (domain_2)
-	{
-		CondStruct * condStructDomain2 = *(conds.ConditionArrayDomains + 3 * domain_2);
-		uint32_t arg1 = *(conds.ConditionArrayDomainsArg1 + 3 * domain_2);
-		uint32_t arg2 = *(conds.ConditionArrayDomainsArg2 + 3 * domain_2);
-		if (condStructDomain2 != nullptr)
+void D20StatusSystem::initDomain(Dispatcher * dispatcher, uint32_t domain)
+{
+	if (domain) {
+		CondStruct * condStructDomain = *(conds.ConditionArrayDomains + 3 * domain);
+		uint32_t arg1 = *(conds.ConditionArrayDomainsArg1 + 3 * domain);
+		uint32_t arg2 = *(conds.ConditionArrayDomainsArg2 + 3 * domain);
+		if (condStructDomain != nullptr)
 		{
-			_ConditionAddToAttribs_NumArgs2(dispatcher, condStructDomain2, arg1, arg2);
+			//Check if the domain should be retrieved from the condition system 
+			if (domain != Domain_Destruction && domain != Domain_Sun) {
+				_ConditionAddToAttribs_NumArgs2(dispatcher, condStructDomain, arg1, arg2);
+			}
+			else {
+				_ConditionAddToAttribs_NumArgs2(dispatcher, conds.GetByName(condStructDomain->condName), arg1, arg2);
+			}
 		}
-	}
-
-	auto alignmentchoice = objects.getInt32(objHnd, obj_f_critter_alignment_choice);
-	if (alignmentchoice == 2)
-	{
-		_ConditionAddToAttribs_NumArgs2(dispatcher, conds.ConditionTurnUndead, 1, 0);
-	}
-	else
-	{
-		_ConditionAddToAttribs_NumArgs2(dispatcher, conds.ConditionTurnUndead, 0, 0);
 	}
 }
 
@@ -269,6 +262,7 @@ void D20StatusSystem::initFeats(objHndl objHnd)
 	_ConditionAddToAttribs_NumArgs0(dispatcher, (CondStruct*)conds.mConditionDisableAoO);
 	_ConditionAddToAttribs_NumArgs0(dispatcher, (CondStruct*)&conds.mCondDisarm);
 	_ConditionAddToAttribs_NumArgs0(dispatcher, (CondStruct*)conds.mCondAidAnother);
+	_ConditionAddToAttribs_NumArgs0(dispatcher, conds.GetByName("Prefer One Handed Wield"));
 	//addToDispatcher("Trip Attack Of Opportunity"); // decided to incorporate this in Improved Trip to prevent AoOs on AoOs
 }
 

@@ -5,7 +5,7 @@
 
 void MapMobilePreprocessor::Preprocess(const std::string& mapName) const {
 
-	auto cachePath = Path::Concat("maps\\", EncodeMapCacheFilename(mapName));
+	auto cachePath = VfsPath::Concat("maps\\", EncodeMapCacheFilename(mapName));
 
 	if (IsValidCacheFile(cachePath)) {
 		return;
@@ -35,9 +35,11 @@ bool MapMobilePreprocessor::IsValidCacheFile(const std::string& path) const {
 	}
 
 	if (vfs->Read(&fileGuid, sizeof(GUID), fh) != sizeof(GUID)) {
+		vfs->Close(fh);
 		return false;
 	}
 
+	vfs->Close(fh);
 	return fileGuid == mModuleGuid;
 }
 

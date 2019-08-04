@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 #include <temple/dll.h>
 #include "temple_functions.h"
 
@@ -41,13 +43,7 @@ enum PathQueryFlags : uint32_t {
 	PQF_STRAIGHT_LINE_ONLY_FOR_SANS_NODE = 0x200,
 	PQF_DOORS_ARE_BLOCKING = 0x400, // if set, it will consider doors to block the path
 	PQF_800 = 0x800,
-
-
-	/*
-	Indicates that the query is to move to a target object.
-	WAS ERRONEOUSLY LISTED AS 0x10  (look out for those BYTE1() operators DS!)
-	*/
-	PQF_TARGET_OBJ = 0x1000,
+	PQF_TARGET_OBJ = 0x1000, // Indicates that the query is to move to a target object.
 
 	/*
 	Indicates that the destination should be adjusted for the critter and target
@@ -68,7 +64,7 @@ enum PathQueryFlags : uint32_t {
 	PQF_ALLOW_ALTERNATIVE_TARGET_TILE = 0x40000,
 
 	// Appears to mean that pathfinding should obey the time limit
-	PQF_A_STAR_TIME_CAPPED = 0x80000, // it is set when the D20 action has the flag D20CAF_TRUNCATED
+	PQF_A_STAR_TIME_CAPPED = 0x80000, // it is set when the D20 action has the flag D20CAF_UNNECESSARY
 
 	PQF_IGNORE_CRITTERS_ON_DESTINATION = 0x800000, // NEW! makes it ignored critters on the PathDestIsClear function
 	PQF_AVOID_AOOS = 0x1000000 // NEW! Make the PF attempt avoid Aoos (using the ShouldIgnore function in combat.py to ignore insiginificant threats)
@@ -128,6 +124,15 @@ struct Path {
 	int currentNode;
 	int field_1a10;
 	int field_1a14;
+
+	float GetPathResultLength();
+
+	bool IsComplete() const {
+		return (flags & PF_COMPLETE) == PF_COMPLETE;
+	}
+
+	// Returns the next node along this path, or empty in case the path is not completely built
+	std::optional<LocAndOffsets> GetNextNode() const;
 };
 
 struct PathQueryResult : Path {
@@ -178,7 +183,7 @@ struct Pathfinding : temple::AddressTable {
 	PathQueryResult* FetchAvailablePQRCacheSlot();
 	uint32_t * rollbackSequenceFlag;
 
-	float pathLength(Path *path); // path length in feet; note: unlike the ToEE function, returns a float (and NOT to the FPU!)
+	float GetPathLength(Path *path); // path length in feet; note: unlike the ToEE function, returns a float (and NOT to the FPU!)
 
 
 	Pathfinding();
@@ -209,9 +214,10 @@ struct Pathfinding : temple::AddressTable {
 	bool TargetSurrounded(Path* pqr, PathQuery* pq);
 
 	int FindPath(PathQuery* pq, PathQueryResult* result);
-	void (__cdecl *ToEEpathDistBtwnToAndFrom)(Path *path); // outputs to FPU (st0);  apparently distance in feet (since it divides by 12)
+	
 
-	objHndl CanPathToParty(objHndl objHnd);
+	bool CanPathTo(objHndl handle, objHndl target, PathQueryFlags flags = static_cast<PathQueryFlags>(PQF_HAS_CRITTER | PQF_TO_EXACT | PQF_800 | PQF_ADJ_RADIUS_REQUIRE_LOS | PQF_ADJUST_RADIUS | PQF_TARGET_OBJ), float maxDistance = -1);
+	objHndl CanPathToParty(objHndl objHnd, bool excludeUnconscious = true);
 	BOOL PathStraightLineIsClear(Path* pqr, PathQuery* pq, LocAndOffsets subPathFrom, LocAndOffsets subPathTo); // including static obstacles it seems
 	BOOL PathAdjRadiusLosClear(Path* pqr, PathQuery* pq, LocAndOffsets subPathFrom, LocAndOffsets subPathTo);
 	ScreenDirections GetDirection(int a1, int a2, int a3);
@@ -241,6 +247,8 @@ protected:
 	int FindPathShortDistanceAdjRadius(PathQuery* pq, Path* pqr);
 	int FindPathForcecdStraightLine(Path* pqr, PathQuery* pq);
 	int FindPathSansNodes(PathQuery* pq, Path* pqr);
+
+	void(__cdecl *ToEEpathDistBtwnToAndFrom)(Path *path); // outputs to FPU (st0);  apparently distance in feet (since it divides by 12)
 } ;
 
 extern Pathfinding pathfindingSys;

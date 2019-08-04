@@ -37,8 +37,8 @@ struct SpellEntry{
 	uint32_t spellSubSchoolEnum;
 	uint32_t spellDescriptorBitmask;
 	uint32_t spellComponentBitmask;
-	uint32_t costXP;
-	uint32_t costGP;
+	uint32_t costGp;
+	uint32_t costXp;
 	uint32_t castingTimeType;
 	SpellRangeType spellRangeType;
 	uint32_t spellRange;
@@ -55,7 +55,7 @@ struct SpellEntry{
 	uint32_t maxTarget;
 	int radiusTarget; //note:	if it's negative, then its absolute value is used as SpellRangeType for mode_target personal; if it's positive, it's a specified number(in feet ? )
 	int degreesTarget;
-	uint32_t aiTypeBitmask;
+	uint32_t aiTypeBitmask; // see AiSpellType in spell_structs.h
 	uint32_t pad;
 
 	//UiPickerType GetModeTarget() const;
@@ -71,6 +71,14 @@ struct SpellEntryExt {
 
 const uint32_t TestSizeOfSpellEntry = sizeof(SpellEntry); // should be 0xC0  ( 192 )
 
+
+struct SpellObj
+{
+	objHndl obj;
+	int partySysId;
+	int field_C;
+};
+
 struct SpellPacketBody{
 	uint32_t spellEnum;
 	uint32_t spellEnumOriginal; // used for spontaneous casting in order to debit the "original" spell
@@ -84,12 +92,7 @@ struct SpellPacketBody{
 	uint32_t dc;
 	int numSpellObjs;
 	objHndl aoeObj;
-	struct SpellObj
-	{
-		objHndl obj;
-		int partySysId;
-		int field_C;
-	}	spellObjs[128];
+	SpellObj spellObjs[128];
 	uint32_t orgTargetCount;
 	uint32_t targetCount;
 	objHndl targetListHandles[32];
@@ -114,12 +117,15 @@ struct SpellPacketBody{
 	// updates the spell in the SpellsCast registry *if it is still active*
 	*/
 	bool UpdateSpellsCastRegistry() const;
+	void UpdatePySpell();
+
 	bool FindObj(objHndl obj, int* idx) const;
 	bool InsertToPartsysList(uint32_t idx, int partsysId);
 	bool InsertToTargetList(uint32_t idx, objHndl tgt);
 	// fetches from the SpellsCastRegistry. If it fails, the spellId will be 0 (as in the Reset function)
 	bool AddTarget(objHndl tgt, int partsysId, int replaceExisting); // will add target (or replace its partsys if it already exists)
 	bool SavingThrow(objHndl target, D20SavingThrowFlag flags);
+	bool CheckSpellResistance(objHndl tgt);
 	const char* GetName(); // get the spell name
 
 	bool IsVancian();
@@ -131,6 +137,11 @@ struct SpellPacketBody{
 	void Debit(); // debit from the caster's memorized / daily casted spells
 	void MemorizedUseUp(SpellStoreData &spellData); // mark memorized spell as used up
 	void Reset();
+	uint32_t GetPartsysForObj(const objHndl& objHnd);
+	void DoForTargetList(std::function<void(const objHndl& tgtHndl)> cb);
+	bool RemoveObjFromTargetList(const objHndl& objHnd);
+	bool EndPartsysForTgtObj(const objHndl& handle);
+	void TriggerAoeHitScript();
 };
 
 const uint32_t TestSizeOfSpellPacketBody = sizeof(SpellPacketBody); // should be 0xAE8  (2792)
@@ -171,6 +182,7 @@ struct LegacySpellSystem : temple::AddressTable
 
 	IdxTable<SpellPacket> * spellCastIdxTable;
 	std::map<int, SpellEntryExt> mSpellEntryExt;
+	std::vector<Stat> advancedLearningClasses;
 	
 	MesHandle *spellEnumMesHandle;
 	MesHandle spellEnumsExt;
@@ -186,8 +198,12 @@ struct LegacySpellSystem : temple::AddressTable
 	int GetNewSpellId();
 	BOOL RegisterSpell(SpellPacketBody& spellPkt, int spellId);
 
+	void RegisterAdvancedLearningClass(Stat classEnum);
+	const std::vector<Stat> &GetClassesWithAdvancedLearning();
+
 	uint32_t spellRegistryCopy(uint32_t spellEnum, SpellEntry* spellEntry);
 
+	void DoForSpellEntries( void(__cdecl*cb)(SpellEntry & spellEntry));
 
 	int CopyLearnableSpells(objHndl & handle, int spellClass, std::vector<SpellEntry> & entries);
 	uint32_t ConfigSpellTargetting(PickerArgs* pickerArgs, SpellPacketBody* spellPacketBody);
@@ -198,7 +214,7 @@ struct LegacySpellSystem : temple::AddressTable
 	const char* GetSpellMesline(uint32_t line) const;
 	const char* GetSpellDescription(uint32_t spellEnum) const;
 	bool CheckAbilityScoreReqForSpell(objHndl handle, uint32_t spellEnum, int statBeingRaised) const;
-	int GetSpellClass(int classEnum, bool isDomain = false);
+	bool IsNaturalSpellsPerDayDepleted(const objHndl& handle, uint32_t spell_level, uint32_t spellClass);
 	static const char* GetSpellEnumTAG(uint32_t spellEnum);
 	const char* GetSpellName(uint32_t spellEnum) const;
 	
@@ -209,15 +225,16 @@ struct LegacySpellSystem : temple::AddressTable
 	uint32_t getWizSchool(objHndl objHnd);
 	bool IsForbiddenSchool(objHndl handle, int spSchool);
 	uint32_t getStatModBonusSpellCount(objHndl objHnd, uint32_t classCode, uint32_t slotLvl);
+	void SanitizeSpellSlots(objHndl handle);
 	void spellPacketBodyReset(SpellPacketBody * spellPktBody);
 	void SpellPacketSetCasterLevel(SpellPacketBody * spellPktBody) const;
-	uint32_t getSpellEnum(const char* spellName); // retrieve spell enum from string. Used for parsing protos.tab and item creation strings
+	uint32_t GetSpellEnum(const char* spellName); // retrieve spell enum from string. Used for parsing protos.tab and item creation strings
 	uint32_t GetSpellEnumFromSpellId(uint32_t spellId);
 	uint32_t GetSpellPacketBody(uint32_t spellId, SpellPacketBody* spellPktBodyOut);
 	void UpdateSpellPacket(const SpellPacketBody &spellPktBody);
 	uint32_t spellKnownQueryGetData(objHndl objHnd, uint32_t spellEnum, uint32_t* classCodesOut, uint32_t* slotLevelsOut, uint32_t* count);
 	bool SpellKnownQueryGetData(objHndl objHnd, uint32_t spellEnum, std::vector<int> & classCodesOut, std::vector<int> & spellLevels); // returns the information of spell known by the caster; retruns false if unknown
-	bool IsSpellKnown(objHndl handle, int spEnum, int spClass);
+	bool IsSpellKnown(objHndl handle, int spEnum, int spClass = -1);
 	uint32_t spellCanCast(objHndl objHnd, uint32_t spellEnum, uint32_t spellClassCode, uint32_t spellLevel);
 	int NumSpellsInLevel(objHndl handle, obj_f spellField, int spellClass, int spellLvl);
 	uint32_t spellMemorizedQueryGetData(objHndl objHnd, uint32_t spellEnum, uint32_t* classCodesOut, uint32_t* slotLevelsOut, uint32_t* count);
@@ -227,6 +244,8 @@ struct LegacySpellSystem : temple::AddressTable
 	// SpellClass 
 	bool isDomainSpell(uint32_t spellClassCode);
 	Stat GetCastingClass(uint32_t spellClassCode);
+	int GetSpellClass(int classEnum, bool isDomain = false); // get spell class from casting class
+	int GetSpellClass(const std::string &s); // get spell class from string specification e.g. class_wizard (used in protos.tab parsing)
 	bool IsArcaneSpellClass(uint32_t spellClass);
 	int GetSpellSchool(int spellEnum);
 
@@ -287,13 +306,14 @@ struct LegacySpellSystem : temple::AddressTable
 	static void SpellsCastRegistryPut(int spellId, SpellPacket&);
 	bool IsSpellActive(int spellid);
 
-	CondStruct *GetCondFromSpellIdx(int id);
+	CondStruct *GetCondFromSpellCondId(int id);
+	CondStruct* GetCondFromSpellEnum(int spellEnum);
 	uint32_t(__cdecl * spellRemoveFromStorage)(objHndl objHnd, obj_f fieldIdx, SpellStoreData * spellData, int unknown);
-	uint32_t (__cdecl * spellsPendingToMemorized)(objHndl objHnd);
+	uint32_t SpellsPendingToMemorized(objHndl objHnd);
 	void SpellsPendingToMemorizedByClass(objHndl handle, Stat classEnum);
 	void SpellsCastReset(objHndl handle, Stat classEnum = (Stat)-1);
 	int (__cdecl *SpellKnownAdd)(objHndl ObjHnd, int nSpellIdx, int nSpellClassCode, int nSpellCasterLevel, int nSpellStoreData, int nMetamagicData);
-	int (__cdecl *SpellMemorizedAdd)(objHndl ObjHnd, int nSpellIdx, int nSpellClassCode, int nSpellCasterLevel, int nSpellStoreData, int nMetamagicData);
+	void SpellMemorizedAdd(objHndl ObjHnd, int spellEnum, int spellClass, int spellLvl, int nSpellStoreData, int nMetamagicData);
 	void ForgetMemorized(objHndl handle);
 	LegacySpellSystem()
 	{
@@ -307,11 +327,11 @@ struct LegacySpellSystem : temple::AddressTable
 		rebase(_getSpellCountByClassLvl, 0x100F4D10);
 		rebase(_getStatModBonusSpellCount, 0x100F4C30);
 		rebase(spellRemoveFromStorage, 0x100758A0);
-		rebase(spellsPendingToMemorized, 0x100757D0);
+		//rebase(spellsPendingToMemorized, 0x100757D0);
 		rebase(_spellPacketBodyReset,0x1008A350); 
 		rebase(_spellPacketSetCasterLevel,0x10079B70); 
 		rebase(SpellKnownAdd, 0x10079EE0);
-		rebase(SpellMemorizedAdd, 0x10075A10);
+		//rebase(SpellMemorizedAdd, 0x10075A10);
 		rebase(_pickerArgsFromSpellEntry,0x100772A0); 
 		//rebase(spellMTI, 0x10AB59E8);
 	}

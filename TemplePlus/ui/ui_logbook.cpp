@@ -30,6 +30,10 @@ void UiLogbook::IncreaseCritHits(objHndl handle){
 	}
 }
 
+void UiLogbook::MarkKey(int keyId, const GameTime& gameTime){
+	temple::GetRef<void(__cdecl)(int, GameTime)>(0x1009A7B0)(keyId, gameTime);
+}
+
 BOOL PartyLogbookPacket::HasObj(objHndl handle){
 	for (auto i=0; i < LOGBOOK_MAX_PARTY_MEMBER_COUNT; i++){
 		ObjectId id = this->sub[i].id;

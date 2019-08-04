@@ -56,10 +56,12 @@ struct HistoryEntryType3 : HistoryEntry
 	uint32_t dicePacked;
 	int32_t rollResult;
 	uint32_t dc;
-	uint32_t saveType;
+	SavingThrowType saveType;
 	uint32_t saveFlags;
 	BonusList bonlist;
 	uint32_t pad[99];
+
+	HistoryEntryType3(objHndl obj, uint32_t dicePacked, int rollResult, int dc, SavingThrowType saveType, int flags, BonusList* Bonlist);
 };
 
 struct HistoryEntryType4 : HistoryEntry {
@@ -191,7 +193,7 @@ public:
 			rh->Clear();
 			/*
 			auto observer = party.GetConsciousPartyLeader();
-			auto descr = description._getDisplayName(hist->obj, observer);
+			auto descr = description.getDisplayName(hist->obj, observer);
 			histSys.GetRollUiString();
 			if (hist3->rollResult == 1) {
 				
@@ -214,8 +216,8 @@ public:
 				return 	 orgPrintHistoryEntryToD20Console(histId, textOut);
 
 			auto observer = party.GetConsciousPartyLeader();
-			auto descr = description._getDisplayName(hist->obj, observer);
-			auto saveTypeString = combatSys.GetCombatMesLine(hist3->saveType + 500);
+			auto descr = description.getDisplayName(hist->obj, observer);
+			auto saveTypeString = combatSys.GetCombatMesLine( (int)(hist3->saveType) + 500);
 			auto text = fmt::format("{} {} {} {} - {}", descr, histSys.GetRollUiString(26), saveTypeString, histSys.GetRollUiString(18), histSys.GetRollUiString(20 + (hist3->rollResult != 20) ));
 			if (hist3->rollResult == 20){
 				text.append(fmt::format(" (natural 20)\n\n"));
@@ -253,6 +255,14 @@ HistorySystem::HistorySystem()
 int HistorySystem::CreateRollHistoryLineFromMesfile(int historyMesLine, objHndl obj, objHndl obj2)
 {
 	return addresses.CreateRollHistoryLineFromMesfile(historyMesLine, obj, obj2);
+}
+
+int HistorySystem::RollHistoryType3Add(objHndl handle, int dc, SavingThrowType saveType, int flags, uint32_t dicePacked, int d20RollRes, BonusList * bonlist)
+{
+	HistoryEntryType3 hist(handle, dicePacked, d20RollRes, dc, saveType, flags,bonlist);
+	auto id = RollHistoryAdd(&hist);
+	AppendHistoryId(id);
+	return id;
 }
 
 int HistorySystem::RollHistoryType4Add(objHndl obj, int dc, const char* text, uint32_t dicePacked, int d20RollRes, BonusList* bonlist){
@@ -390,3 +400,16 @@ const auto TestSizeOfHistoryEntryType3 = sizeof(HistoryEntryType3); // should be
 const auto TestSizeOfHistoryEntryType4 = sizeof(HistoryEntryType4); // should be 5384 (0x1508)
 const auto TestSizeOfHistoryEntryType5 = sizeof(HistoryEntryType5); // should be 5384 (0x1508)
 const auto TestSizeOfHistoryArrayEntry = sizeof(HistoryArrayEntry); // should be 5392 (0x1510)
+
+HistoryEntryType3::HistoryEntryType3(objHndl handle, uint32_t dicePacked, int rollResult, int dc, SavingThrowType saveType, int flags, BonusList * bonlistIn)
+{
+	this->histType = 3;
+	this->obj = handle;
+	this->obj2 = objHndl::null;
+	this->dc = dc;
+	this->saveType = saveType;
+	this->saveFlags = flags;
+	this->dicePacked = dicePacked;
+	this->rollResult = rollResult;
+	this->bonlist = *bonlistIn;
+}

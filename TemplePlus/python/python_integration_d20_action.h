@@ -8,13 +8,16 @@ enum class D20ActionSpecFunc : int {
 	GetActionName,
 	GetTargetingClassification,
 	GetActionCostType,
-	AddToSequence
+	AddToSequence,
+	ModifyPicker,
+	ProjectileHit
 };
 
 
 struct D20Actn;
 struct ActnSeq;
 struct TurnBasedStatus;
+struct PickerArgs;
 enum ActionErrorCode : uint32_t;
 
 class PythonD20ActionIntegration : public PythonIntegration {
@@ -28,10 +31,12 @@ public:
 
 	int GetActionDefinitionFlags(int actionEnum);
 	int GetTargetingClassification(int actionEnum);
+	void ModifyPicker(int actionEnum, PickerArgs * pickArgs);
 	ActionCostType GetActionCostType(int actionEnum);
 
 
 	ActionErrorCode PyAddToSeq(int actionEnum, D20Actn *d20a, ActnSeq *actSeq, TurnBasedStatus *tbStat);
+	BOOL PyProjectileHit(int actionEnum, D20Actn *d20a, objHndl projectile, objHndl obj2 );
 	
 protected:
 	const char* GetFunctionName(EventId evt) override;

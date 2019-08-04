@@ -1,26 +1,7 @@
-/*************************************************************************/
-/* spdlog - an extremely fast and easy to use c++11 logging library.     */
-/* Copyright (c) 2014 Gabi Melman.                                       */
-/*                                                                       */
-/* Permission is hereby granted, free of charge, to any person obtaining */
-/* a copy of this software and associated documentation files (the       */
-/* "Software"), to deal in the Software without restriction, including   */
-/* without limitation the rights to use, copy, modify, merge, publish,   */
-/* distribute, sublicense, and/or sell copies of the Software, and to    */
-/* permit persons to whom the Software is furnished to do so, subject to */
-/* the following conditions:                                             */
-/*                                                                       */
-/* The above copyright notice and this permission notice shall be        */
-/* included in all copies or substantial portions of the Software.       */
-/*                                                                       */
-/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
-/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
-/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
-/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
-/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
-/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
-/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
-/*************************************************************************/
+//
+// Copyright(c) 2015 Gabi Melman.
+// Distributed under the MIT License (http://opensource.org/licenses/MIT)
+//
 
 // async log helper :
 // Process logs asynchronously using a back thread.
@@ -28,111 +9,133 @@
 // If the internal queue of log messages reaches its max size,
 // then the client call will block until there is more room.
 //
-// If the back thread throws during logging, a spdlog::spdlog_ex exception
-// will be thrown in client's thread when tries to log the next message
 
 #pragma once
 
-#include <chrono>
-#include <thread>
-#include <atomic>
-#include <functional>
-
 #include "../common.h"
+#include "../details/log_msg.h"
+#include "../details/mpmc_blocking_q.h"
+#include "../details/os.h"
+#include "../formatter.h"
 #include "../sinks/sink.h"
-#include "./mpmc_bounded_q.h"
-#include "./log_msg.h"
 
+#include <chrono>
+#include <condition_variable>
+#include <exception>
+#include <functional>
+#include <iostream>
+#include <memory>
+#include <string>
+#include <thread>
+#include <utility>
+#include <vector>
 
-namespace spdlog
-{
-namespace details
-{
+namespace spdlog {
+namespace details {
 
 class async_log_helper
 {
     // Async msg to move to/from the queue
     // Movable only. should never be copied
-    struct async_msg
+    enum class async_msg_type
     {
-        std::string logger_name;
+        log,
+        flush,
+        terminate
+    };
+
+    struct async_msg
+    {        
         level::level_enum level;
         log_clock::time_point time;
+        size_t thread_id;
         std::string txt;
+        async_msg_type msg_type;
+        size_t msg_id;
 
         async_msg() = default;
         ~async_msg() = default;
 
-async_msg(async_msg&& other) SPDLOG_NOEXCEPT:
-        logger_name(std::move(other.logger_name)),
-                    level(std::move(other.level)),
-                    time(std::move(other.time)),
-                    txt(std::move(other.txt))
-        {}
-
-        async_msg& operator=(async_msg&& other) SPDLOG_NOEXCEPT
+        explicit async_msg(async_msg_type m_type)
+            : level(level::info)
+            , thread_id(0)
+            , msg_type(m_type)
+            , msg_id(0)
         {
-            logger_name = std::move(other.logger_name);
-            level = other.level;
-            time = std::move(other.time);
-            txt = std::move(other.txt);
-            return *this;
         }
+
+        async_msg(async_msg &&other) = default;
+        async_msg &operator=(async_msg &&other) = default;
+
         // never copy or assign. should only be moved..
-        async_msg(const async_msg&) = delete;
-        async_msg& operator=(async_msg& other) = delete;
+        async_msg(const async_msg &) = delete;
+        async_msg &operator=(const async_msg &other) = delete;
 
         // construct from log_msg
-        async_msg(const details::log_msg& m) :
-            logger_name(m.logger_name),
-            level(m.level),
-            time(m.time),
-            txt(m.raw.data(), m.raw.size())
-        {}
-
+        explicit async_msg(const details::log_msg &m)
+            : level(m.level)
+            , time(m.time)
+            , thread_id(m.thread_id)
+            , txt(m.raw.data(), m.raw.size())
+            , msg_type(async_msg_type::log)
+            , msg_id(m.msg_id)
+        {
+        }
 
         // copy into log_msg
-        void fill_log_msg(log_msg &msg)
+        void fill_log_msg(log_msg &msg, std::string* logger_name)
         {
-            msg.clear();
             msg.logger_name = logger_name;
             msg.level = level;
             msg.time = time;
+            msg.thread_id = thread_id;
+            msg.raw.clear();
             msg.raw << txt;
+            msg.msg_id = msg_id;
         }
     };
 
 public:
-
     using item_type = async_msg;
     using q_type = details::mpmc_bounded_queue<item_type>;
 
     using clock = std::chrono::steady_clock;
 
-
-    async_log_helper(formatter_ptr formatter,
-                     const std::vector<sink_ptr>& sinks,
+    async_log_helper(std::string logger_name,
+                     formatter_ptr formatter,
+                     std::vector<sink_ptr> sinks,
                      size_t queue_size,
+                     const log_err_handler err_handler,
                      const async_overflow_policy overflow_policy = async_overflow_policy::block_retry,
-                     const std::function<void()>& worker_warmup_cb = nullptr);
+                     std::function<void()> worker_warmup_cb = nullptr,
+                     const std::chrono::milliseconds &flush_interval_ms = std::chrono::milliseconds::zero(),
+                     std::function<void()> worker_teardown_cb = nullptr);
 
-    void log(const details::log_msg& msg);
+    void log(const details::log_msg &msg);
 
     // stop logging and join the back thread
     ~async_log_helper();
 
-    void set_formatter(formatter_ptr);
+    async_log_helper(const async_log_helper &) = delete;
+    async_log_helper &operator=(const async_log_helper &) = delete;
 
+    void set_formatter(formatter_ptr msg_formatter);
+
+    void flush();
+
+    void set_error_handler(spdlog::log_err_handler err_handler);
 
 private:
+	std::string _logger_name;
     formatter_ptr _formatter;
     std::vector<std::shared_ptr<sinks::sink>> _sinks;
 
     // queue of messages to log
     q_type _q;
 
-    // last exception thrown from the worker thread
-    std::shared_ptr<spdlog_ex> _last_workerthread_ex;
+    log_err_handler _err_handler;
+
+    std::chrono::time_point<log_clock> _last_flush;
 
     // overflow policy
     const async_overflow_policy _overflow_policy;
@@ -140,158 +143,200 @@ private:
     // worker thread warmup callback - one can set thread priority, affinity, etc
     const std::function<void()> _worker_warmup_cb;
 
+    // auto periodic sink flush parameter
+    const std::chrono::milliseconds _flush_interval_ms;
+
+    // worker thread teardown callback
+    const std::function<void()> _worker_teardown_cb;
+
+    std::mutex null_mutex_;
+    // null_mutex null_mutex_;
+    std::condition_variable_any not_empty_cv_;
+    std::condition_variable_any not_full_cv_;
+
     // worker thread
     std::thread _worker_thread;
 
-    // throw last worker thread exception or if worker thread is not active
-    void throw_if_bad_worker();
+    void enqueue_msg(async_msg &&new_msg, async_overflow_policy policy);
 
     // worker thread main loop
     void worker_loop();
 
-    // pop next message from the queue and process it
-    // return true if a message was available (queue was not empty), will set the last_pop to the pop time
-    bool process_next_msg(clock::time_point& last_pop);
+    // dequeue next message from the queue and process it.
+    // return false if termination of the queue is required
+    bool process_next_msg();
 
-    // sleep,yield or return immediatly using the time passed since last message as a hint
-    static void sleep_or_yield(const clock::time_point& last_op_time);
+    void handle_flush_interval();
 
+    void flush_sinks();
 };
-}
-}
+} // namespace details
+} // namespace spdlog
 
 ///////////////////////////////////////////////////////////////////////////////
 // async_sink class implementation
 ///////////////////////////////////////////////////////////////////////////////
-inline spdlog::details::async_log_helper::async_log_helper(formatter_ptr formatter, const std::vector<sink_ptr>& sinks, size_t queue_size, const async_overflow_policy overflow_policy, const std::function<void()>& worker_warmup_cb):
-    _formatter(formatter),
-    _sinks(sinks),
-    _q(queue_size),
-    _overflow_policy(overflow_policy),
-    _worker_warmup_cb(worker_warmup_cb),
-    _worker_thread(&async_log_helper::worker_loop, this)
-{}
-
-// Send to the worker thread termination message(level=off)
-// and wait for it to finish gracefully
-inline spdlog::details::async_log_helper::~async_log_helper()
+inline spdlog::details::async_log_helper::async_log_helper(std::string logger_name, 
+                                                           formatter_ptr formatter, 
+                                                           std::vector<sink_ptr> sinks,
+                                                           size_t queue_size,
+                                                           log_err_handler err_handler, 
+                                                           const async_overflow_policy overflow_policy,
+                                                           std::function<void()> worker_warmup_cb,
+                                                           const std::chrono::milliseconds &flush_interval_ms,
+                                                           std::function<void()> worker_teardown_cb)
+    : _logger_name(std::move(logger_name)) 
+	, _formatter(std::move(formatter))
+    , _sinks(std::move(sinks))
+    , _q(queue_size)
+    , _err_handler(std::move(err_handler))
+    , _last_flush(os::now())
+    , _overflow_policy(overflow_policy)
+    , _worker_warmup_cb(std::move(worker_warmup_cb))
+    , _flush_interval_ms(flush_interval_ms)
+    , _worker_teardown_cb(std::move(worker_teardown_cb))
 {
-
-    try
-    {
-        log(log_msg(level::off));
-        _worker_thread.join();
-    }
-    catch (...) //Dont crash if thread not joinable
-    {}
+    _worker_thread = std::thread(&async_log_helper::worker_loop, this);
 }
 
-
-//Try to push and block until succeeded
-inline void spdlog::details::async_log_helper::log(const details::log_msg& msg)
+// send to the worker thread terminate message, and join it.
+inline spdlog::details::async_log_helper::~async_log_helper()
 {
-    throw_if_bad_worker();
-    async_msg new_msg(msg);
-    if (!_q.enqueue(std::move(new_msg)) && _overflow_policy != async_overflow_policy::discard_log_msg)
+    try
     {
-        auto last_op_time = clock::now();
-        do
-        {
-            sleep_or_yield(last_op_time);
-        }
-        while (!_q.enqueue(std::move(new_msg)));
+        enqueue_msg(async_msg(async_msg_type::terminate), async_overflow_policy::block_retry);
+        _worker_thread.join();
     }
+    catch (...) // don't crash in destructor
+    {
+    }
+}
 
+// try to push and block until succeeded (if the policy is not to discard when the queue is full)
+inline void spdlog::details::async_log_helper::log(const details::log_msg &msg)
+{
+    enqueue_msg(async_msg(msg), _overflow_policy);
+}
+
+inline void spdlog::details::async_log_helper::enqueue_msg(details::async_log_helper::async_msg &&new_msg, async_overflow_policy policy)
+{
+
+    // block until succeeded pushing to the queue
+    if (policy == async_overflow_policy::block_retry)
+    {
+        _q.enqueue(std::move(new_msg));
+    }
+    else
+    {
+        _q.enqueue_nowait(std::move(new_msg));
+    }
+}
+
+// optionally wait for the queue be empty and request flush from the sinks
+inline void spdlog::details::async_log_helper::flush()
+{
+    enqueue_msg(async_msg(async_msg_type::flush), _overflow_policy);
 }
 
 inline void spdlog::details::async_log_helper::worker_loop()
 {
-    try
+    if (_worker_warmup_cb)
     {
-        if (_worker_warmup_cb) _worker_warmup_cb();
-        clock::time_point last_pop = clock::now();
-        while(process_next_msg(last_pop));
+        _worker_warmup_cb();
     }
-    catch (const std::exception& ex)
+    auto active = true;
+    while (active)
     {
-        _last_workerthread_ex = std::make_shared<spdlog_ex>(std::string("async_logger worker thread exception: ") + ex.what());
+        try
+        {
+            active = process_next_msg();
+        }
+        catch (const std::exception &ex)
+        {
+            _err_handler(ex.what());
+        }
+        catch (...)
+        {
+            _err_handler("Unknown exeption in async logger worker loop.");
+        }
     }
-    catch (...)
+    if (_worker_teardown_cb)
     {
-        _last_workerthread_ex = std::make_shared<spdlog_ex>("async_logger worker thread exception");
+        _worker_teardown_cb();
     }
 }
 
 // process next message in the queue
-// return true if this thread should still be active (no msg with level::off was received)
-inline bool spdlog::details::async_log_helper::process_next_msg(clock::time_point& last_pop)
+// return true if this thread should still be active (while no terminate msg was received)
+inline bool spdlog::details::async_log_helper::process_next_msg()
 {
-
     async_msg incoming_async_msg;
-    log_msg incoming_log_msg;
-
-    if (_q.dequeue(incoming_async_msg))
+    bool dequeued = _q.dequeue_for(incoming_async_msg, std::chrono::seconds(2));
+    if (!dequeued)
     {
-        last_pop = clock::now();
+        handle_flush_interval();
+        return true;
+    }
 
-        if(incoming_async_msg.level == level::off)
-            return false;
+    switch (incoming_async_msg.msg_type)
+    {
+    case async_msg_type::flush:
+        flush_sinks();
+        return true;
 
-        incoming_async_msg.fill_log_msg(incoming_log_msg);
+    case async_msg_type::terminate:
+        flush_sinks();
+        return false;
+
+    default:
+        log_msg incoming_log_msg;
+        incoming_async_msg.fill_log_msg(incoming_log_msg, &_logger_name);
         _formatter->format(incoming_log_msg);
         for (auto &s : _sinks)
-            s->log(incoming_log_msg);
+        {
+            if (s->should_log(incoming_log_msg.level))
+            {
+                s->log(incoming_log_msg);
+            }
+        }
+        handle_flush_interval();
+        return true;
     }
-    else //empty queue
-    {
-        sleep_or_yield(last_pop);
-    }
-    return true;
+    assert(false);
+    return true; // should not be reached
 }
 
 inline void spdlog::details::async_log_helper::set_formatter(formatter_ptr msg_formatter)
 {
-    _formatter = msg_formatter;
+    _formatter = std::move(msg_formatter);
 }
 
-
-// sleep,yield or return immediatly using the time passed since last message as a hint
-inline void spdlog::details::async_log_helper::sleep_or_yield(const clock::time_point& last_op_time)
+inline void spdlog::details::async_log_helper::set_error_handler(spdlog::log_err_handler err_handler)
 {
-    using std::chrono::milliseconds;
-    using namespace std::this_thread;
-
-    auto time_since_op = clock::now() - last_op_time;
-
-    // spin upto 1 ms
-    if (time_since_op <= milliseconds(1))
-        return;
-
-    // yield upto 10ms
-    if (time_since_op <= milliseconds(10))
-        return yield();
-
-
-    // sleep for half of duration since last op
-    if (time_since_op <= milliseconds(100))
-        return sleep_for(time_since_op / 2);
-
-    return sleep_for(milliseconds(100));
+    _err_handler = std::move(err_handler);
 }
 
-// throw if the worker thread threw an exception or not active
-inline void spdlog::details::async_log_helper::throw_if_bad_worker()
+// flush all sinks if _flush_interval_ms has expired.
+inline void spdlog::details::async_log_helper::handle_flush_interval()
 {
-    if (_last_workerthread_ex)
+    if (_flush_interval_ms == std::chrono::milliseconds::zero())
     {
-        auto ex = std::move(_last_workerthread_ex);
-        throw *ex;
+        return;
+    }
+    auto delta = details::os::now() - _last_flush;
+    ;
+    if (delta >= _flush_interval_ms)
+    {
+        flush_sinks();
     }
 }
 
-
-
-
-
-
-
+// flush all sinks if _flush_interval_ms has expired. only called if queue is empty
+inline void spdlog::details::async_log_helper::flush_sinks()
+{
+    for (auto &s : _sinks)
+    {
+        s->flush();
+    }
+    _last_flush = os::now();
+}

@@ -2,6 +2,7 @@
 #include "common.h"
 #include "critter.h"
 #include "obj.h"
+#include <objlist.h>
 #include "inventory.h"
 #include "float_line.h"
 #include "condition.h"
@@ -26,6 +27,13 @@
 #include "temple_functions.h"
 #include "combat.h"
 #include "history.h"
+#include "ui/ui_systems.h"
+#include "ui/ui_legacysystems.h"
+#include "rng.h"
+#include "weapon.h"
+#include "d20_race.h"
+#include "location.h"
+
 
 static struct CritterAddresses : temple::AddressTable {
 
@@ -40,6 +48,7 @@ static struct CritterAddresses : temple::AddressTable {
 	int (__cdecl *SoundmapCritter)(objHndl critter, int id);
 	void (__cdecl *KillByEffect)(objHndl critter, objHndl killer);
 	void (__cdecl *Kill)(objHndl critter, objHndl killer);
+	void(__cdecl *CritterHpChanged)(objHndl obj, objHndl assailant, int damAmt);
 
 	void (__cdecl *GetStandpoint)(objHndl, StandPointType, StandPoint *);
 	void (__cdecl *SetStandpoint)(objHndl, StandPointType, const StandPoint *);
@@ -87,6 +96,7 @@ static struct CritterAddresses : temple::AddressTable {
 		rebase(GiveMoney, 0x1007F960);
 		rebase(TakeMoney, 0x1007FA40);
 		rebase(GetWeaponAnim, 0x10020B60);
+		rebase(CritterHpChanged, 0x100B8AA0);
 	}
 
 	
@@ -94,6 +104,11 @@ static struct CritterAddresses : temple::AddressTable {
 
 class CritterReplacements : public TempleFix
 {
+public:
+	bool CanSense(objHndl critter, objHndl tgt);
+	int InvisibleAttackBonus(DispatcherCallbackArgs args);
+
+private:
 	void ShowExactHpForNPCs();
 
 	void apply() override 
@@ -102,6 +117,26 @@ class CritterReplacements : public TempleFix
 		replaceFunction(0x10062720, _isCritterCombatModeActive); 
 		replaceFunction<float(objHndl, D20ActionType)>(0x100B52D0, [](objHndl handle, D20ActionType d20aType){
 			return critterSys.GetReach(handle, d20aType);
+		});
+
+		// Invisibility Attack bonus
+		oldInvisibleAttackBonus = replaceFunction<int(DispatcherCallbackArgs)>(0x100E88D0, [](DispatcherCallbackArgs args) {
+			return critterReplacements.InvisibleAttackBonus(args);
+		});
+
+		// CanSense
+		oldCanSense = replaceFunction<bool(objHndl, objHndl)>(0x1007FFF0, [](objHndl critter, objHndl tgt) {
+			return critterReplacements.CanSense(critter, tgt);
+		});
+
+		// CritterGenerateHp
+		replaceFunction<void(objHndl)>(0x1007F720, [](objHndl handle){
+			critterSys.GenerateHp(handle);
+		});
+
+		// CritterGetWeaponAnimId
+		replaceFunction<int(objHndl, gfx::WeaponAnim)>(0x10020c60, [](objHndl handle, gfx::WeaponAnim animId) {
+			return (int) critterSys.GetAnimId(handle, animId);
 		});
 
 		// something used in the anim goals
@@ -128,7 +163,18 @@ class CritterReplacements : public TempleFix
 			return itemObj->GetInt32(obj_f_weapon_range) + (int) critterSys.GetReach(parent, D20A_NONE);
 		});
 		ShowExactHpForNPCs();
+
+		//GetNumNaturalAttacks
+		replaceFunction<int(__cdecl)(objHndl)>(0x100800C0, [](objHndl handle) {
+			return (int)critterSys.GetNumNaturalAttacks(handle);
+		});
+
 	}
+
+private:
+	int(*oldInvisibleAttackBonus)(DispatcherCallbackArgs args);
+	bool(*oldCanSense)(objHndl, objHndl);
+
 } critterReplacements;
 
 void CritterReplacements::ShowExactHpForNPCs()
@@ -139,6 +185,27 @@ void CritterReplacements::ShowExactHpForNPCs()
 		char * displayExactHpForNPCsBuffer = &displayExactHpForNPCsChar;
 		write(0x1012441B + 2, displayExactHpForNPCsBuffer, 1);
 	}
+}
+
+int CritterReplacements::InvisibleAttackBonus(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType5((DispIoAttackBonus*)args.dispIO);
+
+	// If the attacker can be seen with blindsight, don't add the bonus
+	if (critterSys.CanSeeWithBlindsight(dispIo->attackPacket.victim, args.objHndCaller)) {
+		return 0;
+	}
+
+	return oldInvisibleAttackBonus(args);
+}
+
+bool CritterReplacements::CanSense(objHndl critter, objHndl tgt)
+{
+	//First check if the critter can see the target with blindsense
+	if (critterSys.CanSeeWithBlindsight(critter, tgt)) return true;
+
+	// Default to let TOEE handle it
+	return oldCanSense(critter, tgt);
 }
 
 #pragma region Critter System Implementation
@@ -176,6 +243,21 @@ uint32_t LegacyCritterSystem::AddFollower(objHndl npc, objHndl pc, int unkFlag, 
 	return addresses.AddFollower(npc, pc, unkFlag, asAiFollower);
 }
 
+bool LegacyCritterSystem::FollowerAtMax(){
+	auto followers = party.GroupNPCFollowersLen();
+	auto pcs = party.GroupPCsLen();
+	auto res = false;
+	if (config.maxPCsFlexible)
+	{
+		res = (followers + pcs >= PARTY_SIZE_MAX) || followers >= PARTY_NPC_SIZE_MAX;
+	}
+	else {
+
+		res = (followers >= PARTY_SIZE_MAX - (uint32_t)config.maxPCs) || followers >= PARTY_NPC_SIZE_MAX;
+	}
+	return res;
+}
+
 uint32_t LegacyCritterSystem::RemoveFollower(objHndl npc, int forceFollower) {
 	return addresses.RemoveFollower(npc, forceFollower);
 }
@@ -184,9 +266,37 @@ objHndl LegacyCritterSystem::GetLeader(objHndl critter) {
 	return addresses.GetLeader(critter);
 }
 
-objHndl LegacyCritterSystem::GetLeaderRecursive(objHndl critter)
-{
-	return addresses.GetLeaderRecursive(critter);
+objHndl LegacyCritterSystem::GetLeaderForNpc(objHndl critter){
+
+	auto obj = objSystem->GetObject(critter);
+	if (!obj->IsNPC())
+		return objHndl::null;
+
+	auto leader = critter;
+	while (leader && !objSystem->GetObject(leader)->IsPC()){
+		leader = GetLeader(leader);
+	}
+	return leader;
+}
+
+bool LegacyCritterSystem::CanSeeWithBlindsight(objHndl critter, objHndl target) {
+	if (!critter || !target){
+		return false;
+	}
+	auto blindsightDistance = d20Sys.D20QueryPython(critter, "Blindsight Range");
+
+	if (blindsightDistance > 0) {
+		auto distance = locSys.DistanceToObj(critter, target);
+
+		if (distance < blindsightDistance) {
+			bool bEthereal = d20Sys.d20Query(target, DK_QUE_Is_Ethereal);
+
+			// Rules are not 100% clear but I dont think blindsense should work on ethereal creatures
+			return !bEthereal;
+		}
+	}
+
+	return false;
 }
 
 int LegacyCritterSystem::HasLineOfSight(objHndl critter, objHndl target) {
@@ -197,158 +307,12 @@ objHndl LegacyCritterSystem::GetWornItem(objHndl handle, EquipSlot slot) {
 	return inventory.ItemWornAt(handle, (uint32_t) slot);
 }
 
-void LegacyCritterSystem::Attack(objHndl target, objHndl attacker, int n1, int flags) {
+void LegacyCritterSystem::Attack(objHndl provoked, objHndl agitator, int rangeType, int flags) {
 	// flags:
 	// 0x1 - if 1, will adjust reaction by -10 regardless of the hostility threshold
 	// 0x2 - 
 	// 0x4
-
-	if (!target || !attacker)
-		return;
-	if (attacker == target)
-		return;
-	auto attackerObj = gameSystems->GetObj().GetObject(attacker);
-	auto tgtObj = gameSystems->GetObj().GetObject(target);
-	if (objects.IsCritter(attacker))
-	{
-		auto critFlags = attackerObj->GetInt32(obj_f_critter_flags2);
-		if (critFlags & OCF2_NIGH_INVULNERABLE)
-			return;
-		if (critterSys.IsDeadNullDestroyed(attacker)) return;
-
-	}
-	auto objFlags = attackerObj->GetFlags();
-	if (objFlags& (OF_OFF | OF_DONTDRAW | OF_INVULNERABLE))
-		return;
-	auto attackerName = attackerObj->GetInt32(obj_f_name);
-
-	if (attackerName == 6719) { // who is this hardcoded mofo???
-		return;
-	}
-
-	if (combatSys.IsBrawlInProgress())
-	{
-			return;
-	}
-		
-
-	if (attackerObj->IsPC() && tgtObj->IsPC())
-		return;
-
-
-	if (tgtObj->IsPC() && attackerObj->IsNPC() || tgtObj->IsNPC()){
-		if (flags & 4)	{
-			auto tgtLeader = critterSys.GetLeader(target);
-			if (tgtLeader)	{
-				auto ai_1005E2B0 = temple::GetRef<void(__cdecl)(objHndl, objHndl, objHndl, int, int, int)>(0x1005E2B0);
-				ai_1005E2B0(target, tgtLeader, attacker, 1, 0, 1);
-			}
-		} 
-		else
-		{
-			auto flag2 = flags & 2;
-			if (!flag2)	{
-				// do ai_1005E2B0 for the critter followers
-				auto ai_1005E830 = temple::GetRef<void(__cdecl)(objHndl, objHndl, int, int)>(0x1005E830);
-				ai_1005E830(target, attacker, 1, flags &1);
-			}
-			if (attackerObj->IsCritter()){
-
-				// UnConceal
-				auto attackerLeader = critterSys.GetLeaderRecursive(attacker);
-				auto toUnconceal = attackerLeader;
-				if (!attackerLeader){
-					toUnconceal = attacker;
-					attackerLeader = attacker;
-				}
-				if (critterSys.IsConcealed(attackerLeader))	{
-					critterSys.SetConcealedWithFollowers(toUnconceal, 0);
-				}
-
-				// unset ONF_KOS_OVERRIDE
-				if (attackerObj->IsNPC()){
-					auto npcFlags = attackerObj->GetNPCFlags();
-					npcFlags &= ~(ONF_KOS_OVERRIDE);
-					attackerObj->SetNPCFlags(npcFlags);
-				}
-
-				// Unknown
-				if (!flag2)	{
-					if (attackerObj->IsPC())	{
-						auto sub_10057790 = temple::GetRef<void(__cdecl)(objHndl, objHndl)>(0x10057790);
-						sub_10057790(attacker, target);
-					}
-					if (!(flags&1))	{
-						auto sub_1005D890 = temple::GetRef<void(__cdecl)(objHndl, objHndl, int)>(0x1005D890);
-						sub_1005D890(attacker, target, n1);
-					}
-				}
-
-				if (attackerObj->IsNPC()){
-
-					auto leader = critterSys.GetLeader(attacker);
-
-					// set "who hit me last"
-					if ( !(flags&1) && target != leader){
-						attackerObj->SetObjHndl(obj_f_npc_who_hit_me_last, target);
-					}
-
-					auto aiShitlistAddWithFollowers = temple::GetRef<void(__cdecl)(objHndl, objHndl)>(0x1005CCA0);
-					aiShitlistAddWithFollowers(attacker, target);
-					if (tgtObj->IsNPC()) {
-						aiShitlistAddWithFollowers(target, attacker);
-					}
-					else if (tgtObj->IsPC()){
-					
-						auto aiPar = aiSys.GetAiParams(attacker);
-						
-						if (leader == target)	{
-							auto npcRefuseFollowingCheck = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x10058A30);
-							if (npcRefuseFollowingCheck(attacker, target) && critterSys.RemoveFollower(attacker, 0))
-							{
-								ui.UpdatePartyUi();
-								auto npcFlags = attackerObj->GetInt32(obj_f_npc_flags);
-								attackerObj->SetNPCFlags(npcFlags | ONF_JILTED);
-							}
-							else if (templeFuncs.RNG(1,3) == 1 && !critterSys.IsDeadOrUnconscious(attacker))
-							{
-								auto uiDlgSoundPlayer = temple::GetRef<void(__cdecl*)(objHndl, objHndl, char*, int)>(0x10AA73B0);
-								if (uiDlgSoundPlayer)
-								{
-									char ffText[1000]; int soundId;
-									auto getFriendlyFireVoiceLine = temple::GetRef<void(__cdecl)(objHndl, objHndl, char*, int*)>(0x10037450);
-									getFriendlyFireVoiceLine(attacker, target, ffText, &soundId);
-									uiDlgSoundPlayer(attacker, target, ffText, soundId);
-								}
-							}
-						} 
-						else if (flags &1 )
-						{
-							objects.AdjustReaction(attacker, target, -10);
-						} else
-						{
-							auto curReaction = objects.GetReaction(attacker, target);
-							if (curReaction > aiPar.hostilityThreshold)
-								objects.AdjustReaction(attacker, target, aiPar.hostilityThreshold - curReaction);
-						}
-					}
-
-					if ( !(flags&1) || !critterSys.AllegianceShared(target, attacker) && target != leader)
-					{
-						aiSys.FightStatusProcess(attacker, target);
-					}
-				}
-			}
-		}
-		return;
-	}
-
-	if (attackerObj->IsNPC()){
-		aiSys.UpdateAiFlags(attacker, AIFS_FIGHTING, target, nullptr);
-		return;
-	}
-
-	//addresses.Attack(target, attacker, n1, flags);
+	aiSys.ProvokeHostility(provoked, agitator, rangeType, flags);
 }
 
 void LegacyCritterSystem::Pickpocket(objHndl handle, objHndl tgt, int & gotCaught){
@@ -448,14 +412,242 @@ int LegacyCritterSystem::MoneyAmount(objHndl handle){
 	return temple::GetRef<int(__cdecl)(objHndl)>(0x1007F880)(handle);
 }
 
-uint32_t LegacyCritterSystem::IsFriendly(objHndl pc, objHndl npc) {
-	return addresses.IsFriendly(pc, npc);
+uint32_t LegacyCritterSystem::IsFriendly(objHndl critter1, objHndl critter2) {
+
+	if (!critter1 || !critter2)
+		return FALSE;
+
+	if (critter1 == critter2)
+		return TRUE;
+
+	// added to account for both being AI controlled (assumed friendly - TODO overhaul in the future!)
+	if (d20Sys.d20Query(critter1, DK_QUE_Critter_Is_AIControlled) && d20Sys.d20Query(critter2, DK_QUE_Critter_Is_AIControlled))
+		return TRUE;
+
+	static auto checkNotCharmedPartyMember = [](objHndl handle) { // returns false if is in party, is charmed, and charmed is out of party
+		auto isInParty = party.IsInParty(handle);
+		if (!isInParty)
+			return true;
+		if (!d20Sys.d20Query(handle, DK_QUE_Critter_Is_Charmed))
+			return true;
+
+		objHndl charmer;
+		charmer.handle = d20Sys.d20QueryReturnData(handle, DK_QUE_Critter_Is_Charmed);
+		if (!charmer)
+			return true;
+		if (party.IsInParty(charmer))
+			return true;
+
+		return false;
+	};
+
+	auto critter1_in_party = party.IsInParty(critter1);
+	auto critter2_in_party = party.IsInParty(critter2);
+	auto critter1_leader = critterSys.GetLeader(critter1);
+	auto critter2_leader = critterSys.GetLeader(critter2);
+
+	// if both are in party, or critter2's leader is in party
+	if ((critter1_in_party && critter2_in_party)
+		|| (party.IsInParty(critter2_leader) && critter1_in_party)
+		|| (party.IsInParty(critter1_leader) && critter2_in_party)) { // added the flip condition too () - was missing in vanilla, looked like a bug
+
+		if (checkNotCharmedPartyMember(critter2) && checkNotCharmedPartyMember(critter1))
+			return TRUE;
+	}
+	//else{
+	//	// bug? was in vanilla code...
+	//	if (critter1_in_party && party.IsInParty(critter2_leader)){
+	//		if (checkNotCharmedPartyMember(critter2) && checkNotCharmedPartyMember(critter1))
+	//			return TRUE;
+	//	}
+	//}
+
+	// Here, they are not both party members (up to "charm person" situations)
+
+	auto obj1 = objSystem->GetObject(critter1);
+	auto obj2 = objSystem->GetObject(critter2);
+	
+	// if both are NPCs:
+	if (obj1->IsNPC() && obj2->IsNPC()) {
+
+		if (d20Sys.d20Query(critter1, DK_QUE_Critter_Is_Charmed)){
+			return FALSE;
+		}
+
+		if (critter1_leader == critter2 || critter2_leader == critter1 || critterSys.NpcAllegianceShared(critter1, critter2)) {
+			return TRUE;
+		}
+
+		// Faction 0 critters
+		if (critterSys.HasNoFaction(critter1) && critterSys.HasNoFaction(critter2)) {
+			if (!critter1_in_party && !critter2_in_party){ // added so your animal companions attack faction 0 critters...
+				return TRUE;
+			}
+		}
+
+		return FALSE;
+	}
+
+
+	// in this section, at least one of the critters is a PC
+	auto pc = critter1;
+	auto npc = critter2;
+
+	if (!objSystem->GetObject(pc)->IsPC()){
+		pc = critter2;
+		npc = critter1;
+		// they can't be both NPCs at this point - if they were, it'd have returned in the previous section.
+	}
+
+	if (!objSystem->GetObject(pc)->IsPC()) {
+		return FALSE; // just in case something that's not even a critter somehow got here
+	}
+	
+	if (!d20Sys.d20Query(pc, DK_QUE_Critter_Is_Charmed))
+		return FALSE;
+	objHndl charmer;
+	charmer.handle = d20Sys.d20QueryReturnData(pc, DK_QUE_Critter_Is_Charmed);
+	if (charmer != npc)
+		return FALSE;
+	return TRUE;
+
+
+
+	//// check if the other one is a PC
+	//if (!objSystem->GetObject(npc)->IsPC()) {
+	//	return FALSE;
+	//}
+
+	//if (!objSystem->GetObject(critter1)->IsNPC()){
+
+	//	if (objSystem->GetObject(critter1)->IsPC()){
+	//		if (!d20Sys.d20Query(critter1, DK_QUE_Critter_Is_Charmed))
+	//			return FALSE;
+	//		objHndl charmer;
+	//		charmer.handle = d20Sys.d20QueryReturnData(critter1, DK_QUE_Critter_Is_Charmed);
+	//		if (charmer != critter2)
+	//			return FALSE;
+	//		return TRUE;
+
+	//	}
+
+	//	if (!objSystem->GetObject(critter2)->IsPC()) {
+	//		return FALSE;
+	//	}
+
+	//	if (!d20Sys.d20Query(critter2, DK_QUE_Critter_Is_Charmed))
+	//		return FALSE;
+	//	objHndl charmer;
+	//	charmer.handle = d20Sys.d20QueryReturnData(critter2, DK_QUE_Critter_Is_Charmed);
+	//	if (charmer != critter1)
+	//		return FALSE;
+	//	return TRUE;
+	//}
+
+	//if (objSystem->GetObject(critter2)->IsNPC()) {
+	//	
+	//	if (!d20Sys.d20Query(critter1, DK_QUE_Critter_Is_Charmed)){
+	//		auto critter1_leader = critterSys.GetLeader(critter1);
+	//		if (critter1_leader == critter2_leader)
+	//			return TRUE;
+	//		if (critter2_leader == critter1
+	//			|| critterSys.NpcAllegianceShared(critter1, critter2)
+	//			|| critterSys.HasNoFaction(critter1) && critterSys.HasNoFaction(critter2) ){
+	//			return TRUE;
+	//		}
+	//			
+	//	}
+	//	return FALSE;
+	//}
+	//
+
+	//return addresses.IsFriendly(critter1, critter2);
 }
 
-BOOL LegacyCritterSystem::AllegianceShared(objHndl obj, objHndl obj2)
-{
-	auto allegShared = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x10080A70);
-	return allegShared(obj, obj2);
+BOOL LegacyCritterSystem::NpcAllegianceShared(objHndl handle, objHndl handle2){
+
+	const int FACTION_ARRAY_MAX = 50;
+
+	auto obj = objSystem->GetObject(handle);
+	auto obj2 = objSystem->GetObject(handle2);
+	auto npc = handle;
+	auto pc = handle2;
+	
+
+	if (obj->IsPC()) {
+		if ( obj2->IsPC() )
+			return FALSE;
+		pc = handle;
+		npc = handle2;
+	}
+	// handle1 is NPC
+	else if (obj2->IsNPC()){  // handle2 is also NPC
+
+		auto objLeader = critterSys.GetLeaderForNpc(handle);
+		auto obj2Leader = critterSys.GetLeaderForNpc(handle2);
+
+		// check leaders:
+		// if one is the leader of the other, or their leaders are identical (and not null) - TRUE
+		if ( (objLeader && objLeader == obj2Leader)
+			|| objLeader == handle2 
+			|| obj2Leader == handle){
+			return TRUE;
+		}
+
+		// check joint factions
+		for (auto factionIdx = 0; factionIdx < FACTION_ARRAY_MAX; factionIdx++){
+			auto objFaction = obj->GetInt32(obj_f_npc_faction, factionIdx);
+			if (!objFaction)
+				return FALSE;
+			if (factions.FactionHas(handle2, objFaction))
+				return TRUE;
+		}
+
+		// If no joint factions - return FALSE
+		return FALSE;
+	}
+	else{ // handle2 is PC
+		pc = handle2;
+		npc = handle;
+	}
+
+	auto leader = critterSys.GetLeaderForNpc(npc);
+	if (pc == leader)
+		return TRUE;
+
+	auto npcObj = objSystem->GetObject(npc);
+	for (auto factionIdx = 0; factionIdx < FACTION_ARRAY_MAX; factionIdx++) {
+		auto objFaction = npcObj->GetInt32(obj_f_npc_faction, factionIdx);
+		if (!objFaction)
+			return FALSE;
+		if (factions.PCHasFactionFromReputation(pc, objFaction))
+			return TRUE;
+	}
+	return FALSE;
+
+	//auto allegShared = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x10080A70);
+	//return allegShared(handle, handle2);
+}
+
+bool LegacyCritterSystem::HasNoFaction(objHndl handle){
+	if (!handle)
+		return true;
+
+	auto obj = objSystem->GetObject(handle);
+	
+	if (obj->IsPC())
+		return true;
+	
+	if (party.IsInParty(handle))
+		return false;
+
+	auto result = obj->GetInt32(obj_f_npc_faction, 0) == 0;
+
+	return result;
+}
+
+int LegacyCritterSystem::GetReaction(objHndl of, objHndl towards){
+	return temple::GetRef<int(objHndl, objHndl)>(0x10054180)(of, towards);
 }
 
 int LegacyCritterSystem::SoundmapCritter(objHndl critter, int id) {
@@ -470,6 +662,11 @@ void LegacyCritterSystem::KillByEffect(objHndl critter, objHndl killer) {
 	return addresses.KillByEffect(critter, killer);
 }
 
+void LegacyCritterSystem::CritterHpChanged(objHndl obj, objHndl assailant, int damAmt)
+{
+	addresses.CritterHpChanged(obj, assailant, damAmt);
+}
+
 static_assert(temple::validate_size<StandPoint, 0x20>::value, "Invalid size");
 
 void LegacyCritterSystem::SetStandPoint(objHndl critter, StandPointType type, const StandPoint& standpoint) {
@@ -482,8 +679,67 @@ StandPoint LegacyCritterSystem::GetStandPoint(objHndl critter, StandPointType ty
 	return result;
 }
 
-void LegacyCritterSystem::GenerateHp(objHndl critter){
-	temple::GetRef<void(__cdecl)(objHndl)>(0x1007F720)(critter);
+void LegacyCritterSystem::GenerateHp(objHndl handle){
+	if (!handle){
+		return;
+	}
+
+	auto hpPts = 0;
+	auto critterLvlIdx = 0;
+	auto obj = objSystem->GetObject(handle);
+
+	auto conMod = 0;
+	if (!d20Sys.d20Query(handle, DK_QUE_Critter_Has_No_Con_Score)){
+		auto conScore = objects.StatLevelGetBaseWithModifiers(handle, stat_constitution);
+		conMod = objects.GetModFromStatLevel(conScore);
+	}
+
+	auto numLvls = obj->GetInt32Array(obj_f_critter_level_idx).GetSize();
+	for (auto i=0u; i < numLvls; i++)
+	{
+		auto classType = (Stat)obj->GetInt32(obj_f_critter_level_idx, i);
+		auto classHd = d20ClassSys.GetClassHitDice(classType);
+		if (i == 0){
+			hpPts = classHd; // first class level gets full HP
+		}
+		else
+		{
+			auto hdRoll = Dice::Roll(1, classHd, 0);
+			auto cfgLower(tolower(config.hpOnLevelup));
+			if (!_stricmp(cfgLower.c_str(), "max")) {
+				hdRoll = classHd;
+			}
+			else if (!_stricmp(cfgLower.c_str(), "average")) {
+				hdRoll = classHd/ 2 + rngSys.GetInt(0, 1); // hit die are always even numbered so randomize the roundoff
+			}
+			
+
+			if (hdRoll + conMod < 1)
+				hdRoll = 1 - conMod; // note: the con mod is applied separately! This just makes sure it doesn't dip to negatives
+			hpPts += hdRoll;
+		}
+	}
+
+	Dice racialHd = d20RaceSys.GetHitDice(critterSys.GetRace(handle, false));
+	hpPts += racialHd.Roll();
+
+	if (obj->IsNPC()){
+		auto numDice = obj->GetInt32(obj_f_npc_hitdice_idx, 0);
+		auto npcHd = Dice(numDice, obj->GetInt32(obj_f_npc_hitdice_idx, 1),obj->GetInt32(obj_f_npc_hitdice_idx, 2));
+		auto npcHdVal = npcHd.Roll();
+		if (config.maxHpForNpcHitdice){
+			npcHdVal = numDice * npcHd.GetSides() + npcHd.GetModifier();
+		}
+		if (npcHdVal + conMod*numDice < 1)
+			npcHdVal = numDice*(1 - conMod);
+		hpPts += npcHdVal;
+	}
+
+	if (hpPts < 1)
+		hpPts = 1;
+	obj->SetInt32(obj_f_hp_pts, hpPts);
+
+	//temple::GetRef<void(__cdecl)(objHndl)>(0x1007F720)(handle);
 }
 
 void LegacyCritterSystem::SetSubdualDamage(objHndl critter, int damage) {
@@ -505,10 +761,16 @@ void LegacyCritterSystem::SetConcealed(objHndl critter, int concealed) {
 	addresses.SetConcealed(critter, concealed);
 }
 
-void LegacyCritterSystem::SetConcealedWithFollowers(objHndl obj, int newState)
-{
-	auto setConcWithFollowers = temple::GetRef<void(__cdecl)(objHndl, int)>(0x10080670);
-	setConcWithFollowers(obj, newState);
+void LegacyCritterSystem::SetConcealedWithFollowers(objHndl obj, int newState){
+	SetConcealed(obj, newState);
+	ObjList objList;
+	objList.ListFollowers(obj);
+	for (auto i=0; i<objList.size(); i++){
+		auto follower = objList[i];
+		if (!follower)
+			continue;
+		SetConcealed(follower, newState);
+	}
 }
 
 uint32_t LegacyCritterSystem::Resurrect(objHndl critter, ResurrectType type, int unk) {
@@ -587,8 +849,9 @@ int LegacyCritterSystem::GetPortraitId(objHndl leader) {
 	return objects.getInt32(leader, obj_f_critter_portrait);
 }
 
-bool LegacyCritterSystem::CanSense(objHndl critter, objHndl tgt){
-	return temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x1007FFF0)(critter, tgt) != FALSE;
+bool LegacyCritterSystem::CanSense(objHndl critter, objHndl tgt)
+{
+	return critterReplacements.CanSense(critter, tgt);
 }
 
 int LegacyCritterSystem::GetLevel(objHndl critter) {
@@ -599,8 +862,12 @@ int LegacyCritterSystem::SkillLevel(objHndl critter, SkillEnum skill){
 	return dispatch.dispatch1ESkillLevel(critter, skill, nullptr, critter, 1);
 }
 
-Race LegacyCritterSystem::GetRace(objHndl critter) {
-	return (Race)objects.StatLevelGet(critter, stat_race);
+Race LegacyCritterSystem::GetRace(objHndl critter, bool getBaseRace) {
+	auto race = objects.StatLevelGet(critter, stat_race);
+	if (!getBaseRace){
+		race += objects.StatLevelGet(critter, stat_subrace) << 5;
+	}
+	return (Race)race;
 }
 
 Gender LegacyCritterSystem::GetGender(objHndl critter) {
@@ -629,7 +896,7 @@ gfx::EncodedAnimId LegacyCritterSystem::GetAnimId(objHndl critter, gfx::WeaponAn
 	return gfx::EncodedAnimId(rawAnimId);
 }
 
-int LegacyCritterSystem::GetModelRaceOffset(objHndl obj)
+int LegacyCritterSystem::GetModelRaceOffset(objHndl obj, bool useBaseRace)
 {
 	// Meshes above 1000 are monsters, they dont get a creature type
 	auto meshId = objects.getInt32(obj, obj_f_base_mesh);
@@ -637,43 +904,16 @@ int LegacyCritterSystem::GetModelRaceOffset(objHndl obj)
 		return -1;
 	}
 
-	auto race = GetRace(obj);
+	auto race = GetRace(obj, useBaseRace);
 	auto gender = GetGender(obj);
 	bool isMale = (gender == Gender::Male);
 
 	/*
-		The following table comes from materials.mes, where
+		The following table comes from materials.mes (or materials_ext.mes), where
 		the offsets into the materials and addmesh table are listed.
 	*/
-	int result;
-	switch (race)
-	{
-	case race_human:
-		result = (isMale ? 0 : 1);
-		break;
-	case race_elf:
-		result = (isMale ? 2 : 3);
-		break;
-	case race_halforc:
-		result = (isMale ? 4 : 5);
-		break;
-	case race_dwarf:
-		result = (isMale ? 6 : 7);
-		break;
-	case race_gnome:
-		result = (isMale ? 8 : 9);
-		break;
-	case race_halfelf:
-		result = (isMale ? 10 : 11);
-		break;
-	case race_halfling:
-		result = (isMale ? 12 : 13);
-		break;
-	default:
-		result = 0;
-		break;
-	}
-
+	int result = d20RaceSys.GetRaceMaterialOffset(race) + (isMale? 0:1);
+	
 	return result;
 }
 
@@ -776,6 +1016,20 @@ const std::vector<std::string>& LegacyCritterSystem::GetAddMeshes(int matIdx, in
 	// Lazily load the addmesh rules
 	if (mAddMeshes.empty()) {
 		auto mapping(MesFile::ParseFile("rules\\addmesh.mes"));
+
+		// Extender files for rules/addmesh.mes
+		{
+			TioFileList addmeshFlist;
+			tio_filelist_create(&addmeshFlist, "rules\\addmeshes\\*.mes");
+
+			for (auto i = 0; i < addmeshFlist.count; i++) {
+
+				std::string combinedFname(fmt::format("rules\\addmeshes\\{}", addmeshFlist.files[i].name));
+				auto addmeshesMappingExt = MesFile::ParseFile(combinedFname);
+				mapping.insert(addmeshesMappingExt.begin(), addmeshesMappingExt.end());
+			}
+		}
+
 		for (auto &entry : mapping) {
 			mAddMeshes[entry.first] = split(entry.second, ';', true);
 		}
@@ -789,9 +1043,9 @@ const std::vector<std::string>& LegacyCritterSystem::GetAddMeshes(int matIdx, in
 	return sEmptyAddMeshes;
 }
 
-void LegacyCritterSystem::ApplyReplacementMaterial(gfx::AnimatedModelPtr model, int mesId)
+void LegacyCritterSystem::ApplyReplacementMaterial(gfx::AnimatedModelPtr model, int mesId, int fallbackMesId)
 {
-	auto& replacementSet = tig->GetMdfFactory().GetReplacementSet(mesId);
+	auto& replacementSet = tig->GetMdfFactory().GetReplacementSet(mesId, fallbackMesId);
 	for (auto& entry : replacementSet) {
 		model->AddReplacementMaterial(entry.first, entry.second);
 	}
@@ -931,11 +1185,12 @@ std::string LegacyCritterSystem::GetHairStyleFile(HairStyle style, const char * 
 	return std::string();
 }
 
+// Originally @ 1007E9D0
 void LegacyCritterSystem::UpdateModelEquipment(objHndl obj)
 {
 
 	UpdateAddMeshes(obj);
-	auto raceOffset = GetModelRaceOffset(obj);
+	auto raceOffset = GetModelRaceOffset(obj, false);
 	if (raceOffset == -1) {
 		return;
 	}
@@ -948,7 +1203,7 @@ void LegacyCritterSystem::UpdateModelEquipment(objHndl obj)
 	// This is a bit shit but since AAS will just splice the
 	// add meshes into the list of model parts, 
 	// we have to reset the render buffers
-	gameSystems->GetAAS().InvalidateBuffers(model->GetHandle());
+	model->SetRenderState(nullptr);
 
 	// Apply the naked replacement materials for
 	// equipment slots that support them
@@ -957,15 +1212,16 @@ void LegacyCritterSystem::UpdateModelEquipment(objHndl obj)
 	ApplyReplacementMaterial(model, 200 + raceOffset); // Gloves
 	ApplyReplacementMaterial(model, 500 + raceOffset); // Armor
 	ApplyReplacementMaterial(model, 800 + raceOffset); // Boots
-	
+
 	// Now apply it for the actual equipment
+	auto baseRaceOffset = GetModelRaceOffset(obj, true); // use base race for equipment because holy crap ToEE has an entry for each race!!!
 	for (uint32_t slotId = 0; slotId < (uint32_t)EquipSlot::Count; ++slotId) {
 		auto slot = (EquipSlot) slotId;
 		auto item = GetWornItem(obj, slot);
 		if (item) {
 			auto materialSlot = objects.getInt32(item, obj_f_item_material_slot);
 			if (materialSlot != -1) {
-				ApplyReplacementMaterial(model, materialSlot + raceOffset);
+				ApplyReplacementMaterial(model, materialSlot + raceOffset, materialSlot + baseRaceOffset);
 			}
 		}
 	}
@@ -1041,14 +1297,17 @@ bool LegacyCritterSystem::IsLootableCorpse(objHndl critter)
 	for (size_t i = 0; i < invenCount; ++i) {
 		auto item = objects.getArrayFieldObj(critter, obj_f_critter_inventory_list_idx, i);
 		auto invLocation = objects.GetItemInventoryLocation(item);
-		if (invLocation >= 200 && invLocation <= 216) {
-			continue; // Currently equipped on the corpse
-		}
 
 		auto itemFlags = objects.GetItemFlags(item);
 		if (itemFlags & OIF_NO_LOOT) {
 			continue; // Flagged as unlootable
 		}
+
+		//if (inventory.IsInvIdxWorn(invLocation) ) {
+		//	continue; // Currently equipped on the corpse
+		//} // removing this condition - why should worn items be excluded??
+
+		
 
 		return true; // Found an item that is lootable
 	}
@@ -1077,6 +1336,16 @@ MonsterCategory LegacyCritterSystem::GetCategory(objHndl objHnd)
 		return (MonsterCategory)(monCat & 0xFFFFFFFF);
 	}
 	return mc_type_monstrous_humanoid; // default - so they have at least a weapons proficiency
+}
+
+MonsterSubcategoryFlag LegacyCritterSystem::GetSubcategoryFlags(objHndl objHnd){
+	if (objHnd && objects.IsCritter(objHnd)) {
+		auto monCat = objects.getInt64(objHnd, obj_f_critter_monster_category);
+		auto moncatSubtype = static_cast<MonsterSubcategoryFlag>(monCat >> 32);
+
+		return moncatSubtype;
+	}
+	return (MonsterSubcategoryFlag)0;
 }
 
 uint32_t LegacyCritterSystem::IsCategoryType(objHndl objHnd, MonsterCategory categoryType){
@@ -1128,21 +1397,14 @@ float LegacyCritterSystem::GetReach(objHndl obj, D20ActionType actType) {
 	if (actType != D20A_TOUCH_ATTACK)
 	{
 		objHndl weapon = inventory.GetItemAtInvIdx(obj, 203);
-		if (weapon)
-		{
+		// todo: handle cases where enlarged creatures dual wield polearms ><
+		if (weapon){
 			auto weapType = objects.GetWeaponType(weapon);
-			switch (weapType)
-			{
-			case wt_glaive:
-			case wt_guisarme:
-			case wt_longspear:
-			case wt_ranseur:
-			case wt_spike_chain:
+			if (weapons.IsReachWeaponType(weapType)){
 				return naturalReach + 3.0f; // +5.0 - 2.0
-			default:
-				return naturalReach - 2.0f;
 			}
-				
+			
+			return naturalReach - 2.0f;
 		}
 	}
 	return naturalReach - 2.0f;
@@ -1199,6 +1461,22 @@ int LegacyCritterSystem::GetDamageIdx(objHndl obj, int attackIdx)
 	return 0;
 }
 
+int LegacyCritterSystem::GetNumNaturalAttacks(objHndl handle) {
+	if (!objSystem->IsValidHandle(handle)) {
+		return 0;
+	}
+	auto obj = objSystem->GetObject(handle);
+	int result = 0;
+	int attacksCount;
+	for (int i = 0; i < 4; i++)
+	{
+		attacksCount = obj->GetInt32(obj_f_critter_attacks_idx, i);
+		if (attacksCount > 0)
+			result += attacksCount;
+	}
+	return result;
+}
+
 int LegacyCritterSystem::GetCritterDamageDice(objHndl obj, int attackIdx)
 {
 	int damageIdx = GetDamageIdx(obj, attackIdx);
@@ -1221,6 +1499,43 @@ DamageType LegacyCritterSystem::GetCritterAttackDamageType(objHndl obj, int atta
 	if (x > 6 || x < 0)
 		return DamageType::Bludgeoning;
 	return damType[x];
+}
+
+bool LegacyCritterSystem::IsSleeping(objHndl hndl)
+{
+	if (!hndl)
+		return false;
+	auto obj = objSystem->GetObject(hndl);
+	if (!obj->IsCritter())
+		return false;
+	return ( obj->GetInt32(obj_f_critter_flags) & CritterFlag::OCF_SLEEPING) != 0;
+	}
+
+int LegacyCritterSystem::GetHpPercent(const objHndl& handle)
+{
+	auto maxHp = objects.StatLevelGet(handle, Stat::stat_hp_max);
+	auto curHp = objects.GetHPCur(handle);
+	auto subdualDam = objects.StatLevelGet(handle, Stat::stat_subdual_damage);
+	if (maxHp <= 0)
+		return 0;
+	return 100 * (curHp - subdualDam) / maxHp;
+}
+
+int LegacyCritterSystem::GetEffectiveLevel(objHndl & objHnd)
+{
+	if (!objHnd) return 1;
+	auto lvl = objects.StatLevelGet(objHnd, stat_level);
+	auto lvlAdj = d20RaceSys.GetLevelAdjustment(objHnd);
+	auto racialHdCount = 0;
+	if (objSystem->GetObject(objHnd)->IsPC()) {
+		Dice racialHd = d20RaceSys.GetHitDice(critterSys.GetRace(objHnd, false));
+		racialHdCount = racialHd.GetCount();
+	}
+	else { // NPC
+		racialHdCount = objSystem->GetObject(objHnd)->GetInt32(obj_f_npc_hitdice_idx, 0);
+	}
+	lvl += lvlAdj + racialHdCount;
+	return lvl;
 }
 
 int LegacyCritterSystem::GetCritterAttackType(objHndl obj, int attackIdx)
@@ -1425,6 +1740,21 @@ bool LegacyCritterSystem::HashMatchingClassForSpell(objHndl handle, uint32_t spe
 		}
 	}
 
+	// Check for an Advanced Learning Class (character will know the spell but it will not be on their list standard)
+	bool bHasAdvancedLearning = false;
+	auto advancedLearningClasses = spellSys.GetClassesWithAdvancedLearning();
+	for (auto classEnum : advancedLearningClasses) {
+		if (objects.StatLevelGet(handle, classEnum) > 0) {
+			bHasAdvancedLearning = true;
+		}
+	}
+
+	if (bHasAdvancedLearning) {
+		if (spellSys.IsSpellKnown(handle, spellEnum)) {
+			return true;
+		}
+	}
+
 	return false;
 }
 
@@ -1493,6 +1823,23 @@ int LegacyCritterSystem::GetNumFollowers(objHndl obj, int excludeForcedFollowers
 	}
 	return followersNum;
 }
+void LegacyCritterSystem::BuildRadialMenu(objHndl handle){
+	if (!handle){
+		return;
+	}
+
+	auto obj = objSystem->GetObject(handle);
+	Dispatcher * dispatcher = obj->GetDispatcher();
+
+	if (dispatch.dispatcherValid(dispatcher)) {
+		if (objects.IsPlayerControlled(handle)) {
+			objects.dispatch.DispatcherProcessor(dispatcher, dispTypeRadialMenuEntry, 0, nullptr);
+			auto setActiveRadial = temple::GetRef<void(__cdecl)(objHndl)>(0x100F0A70);
+			setActiveRadial(handle);
+		}
+	}
+}
+
 #pragma region Critter Hooks
 uint32_t _isCritterCombatModeActive(objHndl objHnd)
 {

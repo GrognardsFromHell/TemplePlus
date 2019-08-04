@@ -1,10 +1,13 @@
 #pragma once
 
 class CombinedImgFile;
-struct WidgetType1;
-struct WidgetType3;
+struct LgcyWindow;
+struct LgcyScrollBar;
 struct TigTextStyle;
 struct UiResizeArgs;
+struct UiSystemConf;
+
+#include "ui_system.h"
 
 #define CRAFT_EFFECT_INVALID -1
 
@@ -31,7 +34,8 @@ enum ItemEnhancementSpecFlags{
 	IESF_THROWN = 0x40, // applies to thrown weapons only
 	IESF_UNK100 = 0x100, // only used in Keen
 	IESF_ENH_BONUS = 0x200, // special casing for the enhancement bonus (the +X for weapons/armors)
-	IESF_INCREMENTAL = 0x400 // indicates that there are multiple progressive versions of this that supercede each other
+	IESF_INCREMENTAL = 0x400, // indicates that there are multiple progressive versions of this that supercede each other
+	IESF_NONCORE = 0x800 // enhancement based on non-core rules material (e.g. splatbook/fanmade), enabled only when non-core materials config is set 
 };
 
 struct ItemEnhancementSpec {
@@ -63,15 +67,21 @@ struct ItemEnhancementSpec {
 		condId = 0;
 		downgradesTo = upgradesTo = CRAFT_EFFECT_INVALID;
 	}
-	ItemEnhancementSpec(const char* CondName, uint32_t Flags, int EffcBonus, int enhBonus = 0);
+	ItemEnhancementSpec(const std::string &condName, uint32_t Flags, int EffcBonus, int enhBonus = 0);
 };
 
 struct TigMsg;
 
-class ItemCreation {
+class UiItemCreation : public UiSystem {
 	friend class D20System;
+	friend class ItemCreationHooks;
 public:
-
+	static constexpr auto Name = "ItemCreation-UI";
+	UiItemCreation(const UiSystemConf &config);
+	~UiItemCreation();
+	void Reset() override;
+	void ResizeViewport(const UiResizeArgs &resizeArgs) override;
+	const std::string &GetName() const override;
 
 	BOOL IsActive();
 	BOOL ItemCreationShow(objHndl crafter, ItemCreationType icType); // shows the item creation UI for the chosen IC type
@@ -130,8 +140,8 @@ public:
 
 
 	
-	bool UiItemCreationWidgetsInit(int width, int height);
-	bool MaaWidgetsInit(int width, int height);
+	void UiItemCreationWidgetsInit(int width, int height); // Item creation (scribe scroll etc.) widgets
+	void MaaWidgetsInit(int width, int height);
 	void MaaWidgetsExit(int widId);
 	void ItemCreationWidgetsExit(int widId);
 	void UiItemCreationResize(UiResizeArgs& resizeArgs);
@@ -154,6 +164,9 @@ public:
 	uint32_t ItemWorthAdjustedForCasterLevel(objHndl objHndItem, uint32_t casterLevelNew);
 	uint32_t CraftedWandWorth(objHndl item, int casterLevelNew);
 	bool ScribedScrollSpellGet(objHndl item, SpellStoreData& spellData, int * spellLevelBase = nullptr);
+	int ScribedScrollSpellLevel(objHndl item);
+	int ScribedScrollCasterLevel(objHndl item);
+	uint32_t ScribedScrollWorth(objHndl item, int casterLevelNew);
 	int GetMaxSpellLevelFromCasterLevel(int cl);
 
 	bool IsWeaponBonus(int effIdx);
@@ -171,8 +184,10 @@ public:
 	
 	void CraftScrollWandPotionSetItemSpellData(objHndl item, objHndl crafter);
 
-	ItemCreation();
+	UiItemCreation();
 
+	int GetItemCreationType();
+	
 protected:
 
 	void ButtonStateInit(int wndId);
@@ -180,9 +195,14 @@ protected:
 	void MaaInitCrafter(objHndl crafter);
 	void MaaInitWnd(int wndId);
 
-	void GetMaaSpecs() const;
+	void LoadMaaSpecs();
 	static int GetSurplusXp(objHndl crafter);
 	bool ItemWielderCondsHasAntecedent(int effIdx, objHndl item);
+
+	bool ItemCreationParseMesfileEntry(objHndl crafter, objHndl item);
+	const char* GetItemCreationRulesMesLine(int key);
+	bool ItemCreationRulesParseReqText(objHndl crafter, const char* reqTxt);
+	std::string PrintPrereqToken(const char* str);
 
 	int mItemCreationType = 9;
 	objHndl mItemCreationCrafter;
@@ -192,11 +212,11 @@ protected:
 	int craftingWidgetId; // denotes which item creation widget is currently active
 	bool mUseCo8Ui = false;
 
-	WidgetType1* mItemCreationWnd = nullptr;
+	LgcyWindow* mItemCreationWnd = nullptr;
 		
 		int mItemCreationWndId;
 		int mItemCreationScrollbarId;
-		WidgetType3* mItemCreationScrollbar;
+		LgcyScrollBar* mItemCreationScrollbar;
 		int mMaaItemsScrollbarY = 0;
 		CombinedImgFile* bkgImage;
 		int mItemCreationEntryBtnIds[21];
@@ -209,7 +229,7 @@ protected:
 		int mItemCreationWidenedTexture01;
 		int mItemCreationWidenedTexture11;
 
-	WidgetType1* mMaaWnd = nullptr;
+		LgcyWindow* mMaaWnd = nullptr;
 		int mMaaWndId;
 		int mMaaItemsScrollbarId;
 		int mMaaApplicableEffectsScrollbarId;
@@ -279,10 +299,6 @@ int ItemCreation::craftingWidgetId;
 	*/
 };
 
-extern ItemCreation itemCreation;
-
-
-
 //uint32_t ItemWorthAdjustedForCasterLevel(objHndl objHndItem, uint32_t slotLevelNew);
 void UiItemCreationCraftingCostTexts(objHndl objHndItem);
 /*
@@ -293,15 +309,15 @@ struct ButtonStateTextures {
 	ButtonStateTextures() : normal(-1), hover(-1), pressed(-1) {}
 
 	void loadAccept() {
-		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptNormal, normal);
-		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptHover, hover);
-		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptPressed, pressed);
+		uiManager->GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptNormal, normal);
+		uiManager->GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptHover, hover);
+		uiManager->GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptPressed, pressed);
 	}
 
 	void loadDecline() {
-		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclineNormal, normal);
-		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclineHover, hover);
-		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclinePressed, pressed);
+		uiManager->GetAsset(UiAssetType::Generic, UiGenericAsset::DeclineNormal, normal);
+		uiManager->GetAsset(UiAssetType::Generic, UiGenericAsset::DeclineHover, hover);
+		uiManager->GetAsset(UiAssetType::Generic, UiGenericAsset::DeclinePressed, pressed);
 	}
 };
 */

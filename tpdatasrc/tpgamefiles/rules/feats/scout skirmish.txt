@@ -1,0 +1,5 @@
+name: Skirmish
+flags: 8
+prereqs:
+description: A scout deals an extra 1d6 points of damage (+1d6/4 levels) on all attacks he makes during any round in which he moves at least 10 feet away from where he was at the start of his turn and then attacks.  Creatures immune critical hits are immune.  At 3rd level, a scout gains a +1 competence bonus to AC also (+1/4 levels).
+prereq descr: Scout Level 1.

@@ -8,6 +8,7 @@
 #include "gamesystems/d20/d20stats.h"
 #include "gamesystems/legacysystems.h"
 #include "gamesystems/deity/legacydeitysystem.h"
+#include "ui/ui_char_editor.h"
 
 D20ClassSystem d20ClassSys;
 
@@ -27,6 +28,8 @@ struct D20ClassSystemAddresses : temple::AddressTable
 
 class D20ClassHooks : public TempleFix
 {
+
+	static int HookedLvl1SkillPts(int intMod);
 	void apply() override {
 
 		// GetClassHD
@@ -74,8 +77,14 @@ class D20ClassHooks : public TempleFix
 			if (raceEnum == race_human) // todo: generalize with a dispatch
 				result++;
 			result += d20ClassSys.GetSkillPts(classEnum);
+			if (result < 1)
+				result = 1;
 			return result;
 		});
+
+		writeNoops(0x10181441);
+		writeNoops(0x1018144E);
+		writeCall(0x10181436, HookedLvl1SkillPts);
 
 		// GetNumSpellsPerDayFromClass
 		replaceFunction<int(objHndl, Stat, int , int )>(0x100F5660, [](objHndl handle, Stat classCode, int spellLvl, int classLvl)
@@ -113,7 +122,7 @@ bool D20ClassSystem::ReqsMet(const objHndl& handle, const Stat classCode){
 
 bool D20ClassSystem::IsCompatibleWithAlignment(Stat classEnum, Alignment al){
 
-	if (config.laxRules)
+	if (config.laxRules && config.disableAlignmentRestrictions)
 		return true;
 
 	return temple::GetRef<BOOL(__cdecl)(Stat, Alignment)>(0x10188170)(classEnum, al);
@@ -140,12 +149,15 @@ bool D20ClassSystem::IsVancianCastingClass(Stat classEnum, objHndl handle )
 	return classSpec->second.spellMemorizationType == SpellReadyingType::Vancian;
 }
 
-bool D20ClassSystem::IsCastingClass(Stat classEnum){
+bool D20ClassSystem::IsCastingClass(Stat classEnum, bool includeExtenders){
 	auto classSpec = classSpecs.find(classEnum);
 	if (classSpec == classSpecs.end())
 		return false;
 
-	if (classSpec->second.spellListType == SpellListType::None){
+	if (includeExtenders && classSpec->second.spellListType == SpellListType::Extender)
+		return true;
+
+	else if (classSpec->second.spellListType == SpellListType::None){
 		return false;
 	}
 
@@ -301,6 +313,51 @@ int D20ClassSystem::GetMaxSpellLevel(Stat classEnum, int characterLvl)
 	return spellsVector.size() - 1; // first slot corresponds to level 0 spells
 }
 
+int D20ClassSystem::GetCasterLevel(Stat classEnum, int classLvl){
+	if (classLvl < 1)
+		return -1;
+
+	auto classSpec = classSpecs.find(classEnum);
+	if (classSpec == classSpecs.end())
+		return -1;
+	
+	std::vector<int> &casterLvl = classSpec->second.casterLvl;
+
+	if (casterLvl.size() <= 0){
+		return -1;
+	}
+	if (classLvl >= static_cast<int>(casterLvl.size())){
+		return casterLvl[casterLvl.size() - 1];
+	}
+	
+	return casterLvl[classLvl-1];
+}
+
+int D20ClassSystem::GetMinCasterLevelForSpellLevel(Stat classEnum, int spellLevel){
+	auto result = -1;
+
+	auto classSpec = classSpecs.find(classEnum);
+	if (classSpec == classSpecs.end())
+		return -1;
+
+	auto &spellsPerDay = classSpec->second.spellsPerDay;
+
+	auto minClassLvl = 999;
+	for (auto it : spellsPerDay) {
+		auto cl = it.first;
+		if (cl > minClassLvl)
+			continue;
+		auto &spellsVector = it.second;
+		int maxSpellLvl = (int)spellsVector.size() - 1;
+		if (maxSpellLvl >= spellLevel && spellsVector[maxSpellLvl] >= 0){
+			minClassLvl = it.first;
+		}
+	}
+	if (minClassLvl == 999)
+		return -1;
+	return GetCasterLevel(classEnum, minClassLvl);
+}
+
 std::string D20ClassSystem::GetSpellCastingCondition(Stat classEnum){
 	auto result = std::string();
 
@@ -347,6 +404,15 @@ int D20ClassSystem::GetBaseAttackBonus(Stat classCode, uint32_t classLvl){
 	return 0;
 }
 
+const std::vector<Stat>& D20ClassSystem::GetArmoredArcaneCasterFeatureClasses() {
+	return armoredArcaneCasterFeatureClasses;
+}
+
+bool  D20ClassSystem::HasArmoredArcaneCasterFeature(Stat classCode){
+	auto codeFound = std::find(armoredArcaneCasterFeatureClasses.begin(), armoredArcaneCasterFeatureClasses.end(), classCode);
+	return codeFound != armoredArcaneCasterFeatureClasses.end();
+}
+
 bool D20ClassSystem::IsSaveFavoredForClass(Stat classCode, int saveType){
 	auto classSpec = classSpecs.find(classCode);
 	if (classSpec == classSpecs.end())
@@ -380,6 +446,14 @@ int D20ClassSystem::GetClassHitDice(Stat classEnum){
 		return 6;
 
 	return classSpec->second.hitDice;
+}
+
+int D20ClassSystem::GetClassEnum(const std::string& s){
+	for (auto &classSpec:classSpecs){
+		if (!_strcmpi(tolower(classSpec.second.conditionName).c_str(), tolower(s).c_str()))
+			return classSpec.first;
+	}
+	return 0;
 }
 
 const char* D20ClassSystem::GetClassShortHelp(Stat classCode){
@@ -434,6 +508,12 @@ void D20ClassSystem::GetClassSpecs(){
 
 		// spell casting
 		classSpec.spellListType = pythonClassIntegration.GetSpellListType(it);
+		classSpec.hasArmoredArcaneCasterFeature = pythonClassIntegration.HasArmoredArcaneCasterFeature(it);
+
+		if (classSpec.hasArmoredArcaneCasterFeature) {
+			armoredArcaneCasterFeatureClasses.push_back(static_cast<Stat>(it));
+		}
+
 		if (classSpec.spellListType != SpellListType::None){
 			// Spell Readying Type
 			classSpec.spellMemorizationType = pythonClassIntegration.GetSpellReadyingType(it);
@@ -441,6 +521,9 @@ void D20ClassSystem::GetClassSpecs(){
 			// Spell Source Type (Arcane/Divine/other...)
 			classSpec.spellSourceType = pythonClassIntegration.GetSpellSourceType(it);
 
+			if (pythonClassIntegration.HasAdvancedLearning(it)) {
+				spellSys.RegisterAdvancedLearningClass(static_cast<Stat>(it));
+			}
 
 			// Spellcasting Condition
 			classSpec.spellCastingConditionName = fmt::format("{}", pythonClassIntegration.GetSpellCastingConditionName(it));
@@ -450,6 +533,7 @@ void D20ClassSystem::GetClassSpecs(){
 			if (classSpec.spellsPerDay.size()){
 				classSpec.spellStat = pythonClassIntegration.GetSpellDeterminingStat(it);
 				classSpec.spellDcStat = pythonClassIntegration.GetSpellDcStat(it);
+				classSpec.casterLvl = pythonClassIntegration.GetCasterLevels(it);
 			}
 
 			static std::map<SpellListType, Stat> spellListMaps = {
@@ -484,7 +568,7 @@ void D20ClassSystem::GetClassSpecs(){
 				classEnumsWithSpellLists.push_back((Stat)it);
 			}
 		}
-		
+
 		// skills
 		for (auto skillEnum = static_cast<int>(skill_appraise); skillEnum < skill_count; skillEnum++) {
 			classSpec.classSkills[(SkillEnum)skillEnum] = pythonClassIntegration.IsClassSkill(it, (SkillEnum)skillEnum);
@@ -623,8 +707,21 @@ bool D20ClassSystem::IsSelectingSpellsOnLevelup(objHndl handle, Stat classEnum){
 }
 
 void D20ClassSystem::LevelupInitSpellSelection(objHndl handle, Stat classEnum, int classLvlNew, int classLvlIncrease){
-	if (objects.StatLevelGet(handle, classEnum) && classLvlNew == -1)
-		dispatch.DispatchLevelupSystemEvent(handle, classEnum, DK_LVL_Spells_Activate);
-	else
+	// default is -1 (is so when called from the UiCharEditor SpellsActivate)
+	auto existingClassLvl = objects.StatLevelGet(handle, classEnum);
+	if (classLvlNew == -1 && existingClassLvl )
+		dispatch.DispatchLevelupSystemEvent(handle, classEnum, DK_LVL_Spells_Activate); // when advancing the spell level
+	else {
 		pythonClassIntegration.LevelupInitSpellSelection(handle, classEnum, classLvlNew);
+	}
+		
+}
+
+int D20ClassHooks::HookedLvl1SkillPts(int intStatLvl){
+
+	auto result = (intStatLvl - 10) / 2;
+	auto &selPkt = chargen.GetCharEditorSelPacket();
+	auto classLevelled = selPkt.classCode;
+	result += d20ClassSys.GetSkillPts(classLevelled);
+	return result;
 }

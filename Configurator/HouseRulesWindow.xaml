@@ -5,11 +5,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TemplePlusConfig"
         mc:Ignorable="d"
-        Title="HouseRulesWindow" Height="336.86" Width="503.027"
+        Title="HouseRulesWindow" Height="410.153" Width="670.745"
         WindowStartupLocation="CenterScreen"
         d:DataContext="{d:DesignInstance local:IniViewModel}">
-    <Grid Margin="0,0,2,0">
-        <StackPanel HorizontalAlignment="Left" Height="119" VerticalAlignment="Top" Width="206" Margin="10,10,0,0">
+    <Grid Margin="0,0,2,-10">
+        <StackPanel HorizontalAlignment="Left" Height="174" VerticalAlignment="Top" Width="206" Margin="10,10,0,0">
             <Label VerticalAlignment="Center" Content="General" Margin="0,0,10,0" />
             <StackPanel Orientation="Horizontal">
                 <Label VerticalAlignment="Center" Content="Fog of War" />
@@ -17,19 +17,26 @@
             </StackPanel>
             <CheckBox VerticalAlignment="Center" Content="Tolerant Townsfolk" IsChecked="{Binding TolerantTownsfolk}" Margin="0,5,0,5" ToolTip="Townsfolk will be tolerant of monstrous party members and NPCs."/>
             <CheckBox VerticalAlignment="Center" Content="Transparent NPC Stats" IsChecked="{Binding TransparentNpcStats}" Margin="0,5,0,5" ToolTip="The game will show exact HPs for critters and your NPCs' stats."/>
+            <CheckBox VerticalAlignment="Center" Content="Fast Sneak Animation" IsChecked="{Binding FastSneaking}" Margin="0,5,0,5" ToolTip="Makes sneak animations as fast as your normal movement."/>
+            <CheckBox VerticalAlignment="Center" Content="Disable Door Re-Locking" IsChecked="{Binding DisableDoorRelocking}" Margin="0,5,0,5" ToolTip="Doors that were unlocked via the Open Lock skill will no longer become re-locked when you come back again."/>
+            <CheckBox VerticalAlignment="Center" Content="Alert AI across rooms" IsChecked="{Binding AlertAiThroughDoors}" Margin="0,5,0,5" ToolTip="AIs will alert each other even through closed doors. It's more realistic, but be aware that it may cause some fights to involve a larger number of combatants than before! Range is up to 40ft (of travel distance)."/>
         </StackPanel>
-        <Button x:Name="button" Content="Ok" HorizontalAlignment="Left" Margin="10,0,0,10" VerticalAlignment="Bottom" Width="75" Click="button_Click"/>
-        <StackPanel HorizontalAlignment="Left" Height="107" VerticalAlignment="Top" Width="225" Margin="0,164,0,0">
-            <Label VerticalAlignment="Center" Content="Extra Content" Margin="0,0,10,0" />
+        <Button x:Name="button" Content="Ok" HorizontalAlignment="Left" Margin="10,0,0,15" VerticalAlignment="Bottom" Width="75" Click="button_Click"/>
+        <StackPanel HorizontalAlignment="Left" Height="157" VerticalAlignment="Top" Width="215" Margin="10,189,0,0">
+            <Label VerticalAlignment="Center" Content="Extra Content" Margin="0,0,10,0" Height="24" />
             <CheckBox VerticalAlignment="Center" Content="Non-Core Materials" IsChecked="{Binding NonCore}" Margin="0,5,0,5" ToolTip="Enables content from outside the core DnD rules, such as from splatbooks and fan suggestions."/>
             <CheckBox VerticalAlignment="Center" Content="Prestige Classes" IsChecked="{Binding NewClasses}" Margin="0,5,0,5" ToolTip="Enables Prestige Classes."/>
+            <CheckBox VerticalAlignment="Center" Content="Extra Races" IsChecked="{Binding NewRaces}" Margin="0,5,0,5" ToolTip="Enables new PC Races."/>
+            <CheckBox VerticalAlignment="Center" Content="Monstrous PC Races" IsChecked="{Binding MonstrousRaces}" Margin="0,5,0,5" ToolTip="Enables Monstrous PC Races."/>
+            <CheckBox VerticalAlignment="Center" Content="Forgotten Realms PC Races" IsChecked="{Binding ForgottenRealmsRaces}" Margin="0,5,0,5" ToolTip="Enables Forgotten Realms PC Races."/>
         </StackPanel>
-        <GridSplitter x:Name="gridSplitter" HorizontalAlignment="Left" Height="286" Margin="230,10,0,0" VerticalAlignment="Top" Width="3"/>
-        <StackPanel HorizontalAlignment="Left" Height="106" VerticalAlignment="Top" Width="245" Margin="238,164,0,0">
+        <GridSplitter x:Name="gridSplitter" HorizontalAlignment="Left" Height="326" Margin="230,10,0,0" VerticalAlignment="Top" Width="3"/>
+        <StackPanel HorizontalAlignment="Left" Height="106" VerticalAlignment="Top" Width="180" Margin="238,189,0,0">
             <Label VerticalAlignment="Center" Content="Difficulty" Margin="0,0,10,0" />
             <CheckBox VerticalAlignment="Center" Content="Slower levelling" IsChecked="{Binding SlowerLevelling}" Margin="0,5,35,5" ToolTip="Adjuts the experience point curve such that you rapidly get to level 3, but level more slowly afterwards. You will be about 1-2 levels behind a normal game."/>
+            <CheckBox VerticalAlignment="Center" Content="Max HP for NPC HD" IsChecked="{Binding MaxHpForNpcHitdice}" Margin="0,5,35,5" ToolTip="NPCs with NPC Hit Dice will max them out."/>
         </StackPanel>
-        <StackPanel HorizontalAlignment="Left" Height="137" VerticalAlignment="Top" Width="245" Margin="238,10,0,0">
+        <StackPanel HorizontalAlignment="Left" Height="137" VerticalAlignment="Top" Width="188" Margin="238,10,0,0">
             <Label VerticalAlignment="Center" Content="Ruleset" Margin="0,0,10,0" />
             <StackPanel Orientation="Horizontal">
                 <Label VerticalAlignment="Center" Content="HP on Level Up" Height="27" />
@@ -41,7 +48,15 @@
                 <TextBox Width="50" VerticalAlignment="Center" Text="{Binding PointBuyPoints}" />
             </StackPanel>
             <CheckBox VerticalAlignment="Center" Content="Allow XP overflow" IsChecked="{Binding AllowXpOverflow}" Margin="0,5,35,5" ToolTip="Allows experience points to accumulate beyond the limit of the next level."/>
-            <CheckBox VerticalAlignment="Center" Content="Lax Rules" IsChecked="{Binding LaxRules}" Margin="0,5,35,5" ToolTip="Relax some restrictions such as craft MAA spell requirements, alignment restrictions for Prestige Classes."/>
+            <CheckBox VerticalAlignment="Center" Content="Lax Rules" IsChecked="{Binding LaxRules}" Margin="0,5,35,5" ToolTip="Relax some restrictions such as craft MAA spell requirements, alignment restrictions for Prestige Classes." Initialized="CheckBox_Initialized" Unchecked="CheckBox_Unchecked" Checked="CheckBox_Checked"/>
+        </StackPanel>
+        <GridSplitter x:Name="gridSplitter_Copy" HorizontalAlignment="Left" Height="326" Margin="431,10,0,0" VerticalAlignment="Top" Width="3"/>
+        <StackPanel HorizontalAlignment="Left" Height="137" VerticalAlignment="Top" Width="206" Margin="450,10,0,0">
+            <Label VerticalAlignment="Center" Content="Lax Rules Options" Margin="0,0,10,0" />
+            <CheckBox VerticalAlignment="Center" Content="Disable Alignment Restrictions" IsChecked="{Binding DisableAlignmentRestrictions}" Margin="0,5,10,5" ToolTip="Alignment restrictions will not apply when choosing a class with respect to the critter's alignment, nor to the party alignment."/>
+            <CheckBox VerticalAlignment="Center" Content="Disable Crafting Spell Reqs." IsChecked="{Binding DisableCraftingSpellReqs}" Margin="0,5,10,5" ToolTip="Crafting Magic Arms and Armor or Wondrous Items will ignore spell requirements. Scrolls/Wands still apply obviously."/>
+            <CheckBox VerticalAlignment="Center" Content="Disable Multiclass XP Penalty" IsChecked="{Binding DisableMulticlassXpPenalty}" Margin="0,5,10,5" ToolTip="Does away with Experience Point penalties for multiclassed characters."/>
+            <CheckBox VerticalAlignment="Center" Content="Show Hidden Creature Targets" IsChecked="{Binding ShowTargetingCirclesInFogOfWar}" Margin="0,5,10,5" ToolTip="Displays the targeting circles on hidden targets when casting spells, such as those still in the fog of war, or ones that are in hiding."/>
         </StackPanel>
     </Grid>
 </Window>

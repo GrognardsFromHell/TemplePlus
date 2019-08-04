@@ -1,0 +1,78 @@
+{
+  "type": "container",
+  "centerHorizontally": true,
+  "centerVertically": true,
+  "width": 291,
+  "height": 357,
+  "__styles": [
+    {
+      "id": "mm-setpieces-dialog-title",
+      "fontFamily": "Priory-12",
+      "pointSize": 12,
+      "foreground": "#ffffff",
+      "align": "center"
+    },
+    {
+      "id": "mm-setpieces-list-button",
+      "fontFamily": "Priory-12",
+      "pointSize": 12,
+      "foreground": "#ffffff",
+	  "align": "center"
+    },
+    {
+      "id": "mm-setpieces-list-button-selected",
+      "fontFamily": "Priory-12",
+      "pointSize": 12,
+      "foreground": "#0000ff",
+	  "align": "center"
+    }
+  ],
+  "__buttonStyles": [
+    {
+      "id": "mm-setpieces-list-button",
+      "textStyle": "mm-setpieces-list-button"
+    },
+	{
+      "id": "mm-setpieces-list-button-selected",
+      "textStyle": "mm-setpieces-list-button-selected"
+    }
+  ],
+  "content": [
+    {
+      "type": "image",
+      "path": "art/interface/pc_creation/meta_backdrop.img"
+    },
+    {
+      "type": "text",
+      "text": "Coming soon",
+      "style": "mm-setpieces-dialog-title",
+      "y": 20
+    }
+  ],
+  "children": [
+    {
+      "id": "go",
+      "type": "button",
+      "text": "Accept",
+      "x": 28,
+      "y": 306,
+      "style": "accept-button"
+    },
+    {
+      "id": "cancel",
+      "type": "button",
+      "text": "#{main_menu:1002}",
+      "x": 152,
+      "y": 306,
+      "style": "cancel-button"
+    },
+    {
+      "id":  "scenariosList",
+      "type": "scrollView",
+      "x": 22,
+      "y": 71,
+      "width": 246,
+      "height": 218
+    }
+  ]
+}

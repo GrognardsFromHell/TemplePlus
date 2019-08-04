@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "../gsl/gsl.h"
+#include <gsl/gsl>
 
 #include <memory>
 #include <list>
@@ -193,6 +193,7 @@ namespace gfx {
 	friend class Shader;
 	friend class BufferBinding;
 	friend class TextureLoader;
+	friend class DebugUI;
 	public:
 		RenderingDevice(HWND mWindowHandle, uint32_t adapterIdx = 0, bool debugDevice = false);
 		~RenderingDevice();
@@ -236,7 +237,13 @@ namespace gfx {
 		BlendStatePtr CreateBlendState(const BlendSpec &spec);
 		DepthStencilStatePtr CreateDepthStencilState(const DepthStencilSpec &spec);
 		RasterizerStatePtr CreateRasterizerState(const RasterizerSpec &spec);
-		SamplerStatePtr createSamplerState(const SamplerSpec &spec);
+		SamplerStatePtr CreateSamplerState(const SamplerSpec &spec);
+
+		// Changes the current scissor rect to the given rectangle
+		void SetScissorRect(int x, int y, int width, int height);
+
+		// Resets the scissor rect to the current render target's size
+		void ResetScissorRect();
 				
 		std::shared_ptr<class IndexBuffer> CreateEmptyIndexBuffer(size_t count);
 		std::shared_ptr<class VertexBuffer> CreateEmptyVertexBuffer(size_t count, bool forPoints = false);
@@ -313,7 +320,7 @@ namespace gfx {
 		template<typename TElement>
 		MappedVertexBuffer<TElement> Map(VertexBuffer &buffer, gfx::MapMode mode = gfx::MapMode::Discard) {
 			auto data = MapVertexBufferRaw(buffer, mode);
-			auto castData = gsl::as_span<TElement>((TElement*)data.data(), data.size() / sizeof(TElement));
+			auto castData = gsl::span<TElement>((TElement*)data.data(), data.size() / sizeof(TElement));
 			return MappedVertexBuffer<TElement>(buffer, *this, castData, 0);
 		}
 		void Unmap(VertexBuffer &buffer);
@@ -453,7 +460,7 @@ namespace gfx {
 	
 	template <typename T>
 	VertexBufferPtr RenderingDevice::CreateVertexBuffer(gsl::span<T> data, bool immutable) {
-		return CreateVertexBufferRaw(gsl::as_span(reinterpret_cast<const uint8_t*>(&data[0]), data.size_bytes()), immutable);
+		return CreateVertexBufferRaw(gsl::span(reinterpret_cast<const uint8_t*>(&data[0]), data.size_bytes()), immutable);
 	}
 
 	extern RenderingDevice *renderingDevice;

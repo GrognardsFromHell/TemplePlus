@@ -1,0 +1,5 @@
+name: Craven
+flags: 12582912
+prereqs: 
+description: 1 extra damage per character level for sneak attacks, -2 to saving throws against fear.
+prereq descr: Sneak Attack, Can't be immune to fear

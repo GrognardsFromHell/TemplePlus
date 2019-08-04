@@ -6,10 +6,12 @@
 #include <graphics/dynamictexture.h>
 #include <graphics/shaperenderer2d.h>
 
+#include <debugui.h>
+
 #include "mainloop.h"
 #include <temple/dll.h>
 #include "mainwindow.h"
-#include "tig/tig_msg.h"
+#include "tig/tig_console.h"
 #include "tig/tig_mouse.h"
 #include "tig/tig_startup.h"
 #include "gameview.h"
@@ -26,13 +28,18 @@
 #include "tig/tig_keyboard.h"
 #include "party.h"
 #include "critter.h"
-#include "anim.h"
+#include "animgoals/anim.h"
 #include "gamesystems/objects/objsystem.h"
 #include "combat.h"
 #include "turn_based.h"
 #include "action_sequence.h"
 #include "maps.h"
 #include <infrastructure/keyboard.h>
+#include "messages/messagequeue.h"
+#include "ui/ui_systems.h"
+#include "ui/ui_legacysystems.h"
+#include "ui/ui_mainmenu.h"
+#include "ui/ui_debug.h"
 
 static GameLoop *gameLoop = nullptr;
 
@@ -49,8 +56,6 @@ static struct MainLoop : temple::AddressTable {
 	// Not sure what these do
 	int (__cdecl *sub_10113CD0)();
 	bool (__cdecl *sub_10113D40)(int arg);
-
-	bool (__cdecl *IsMainMenuVisible)();
 
 	objHndl (__cdecl *GetPCGroupMemberN)(int nIdx);
 
@@ -78,7 +83,6 @@ static struct MainLoop : temple::AddressTable {
 		rebase(sub_10113D40, 0x10113D40);
 
 		rebase(GetPCGroupMemberN, 0x1002B170);
-		rebase(IsMainMenuVisible, 0x101157F0);
 
 		rebase(DoMouseScrolling, 0x10001010);
 		rebase(SetScrollDirection, 0x10006480);
@@ -136,16 +140,34 @@ void GameLoop::Run() {
 	auto quit = false;
 	while (!quit) {
 
-		Stopwatch sw1;
+		tig->GetDebugUI().NewFrame();
 
 		// Read user input and external system events (such as time)
-		msgFuncs.ProcessSystemEvents();
-
+		messageQueue->PollExternalEvents();			
+		
 		mGameSystems.AdvanceTime();
 
 		// This locks the cursor to our window if we are in the foreground and it's enabled
-		if (!config.windowed && config.lockCursor) {
+		if (!config.windowed && config.lockCursor){
 			auto sceneRect = gameView.GetSceneRect();
+
+			// Take care of roundoff issues
+			// Otherwise the cursor can be 1 pixel beyond the border
+			// TODO should this be generalizedinto GetSceneRect?
+			// test Upper Left corner mapping for roundoff errors
+			auto ul = gameView.MapToScene(sceneRect.x, sceneRect.y);
+			if (ul.x < 0)
+				sceneRect.x = ceil(sceneRect.x);
+			if (ul.y < 0)
+				sceneRect.y = ceil(sceneRect.y);
+
+			// test Bottom Right corner mapping for roundoff errors
+			auto br = gameView.MapToScene(sceneRect.x + sceneRect.z, sceneRect.y + sceneRect.w);
+			if (br.x >= config.renderWidth)
+				sceneRect.z = floor(sceneRect.z);
+			if (br.y >= config.renderHeight)
+				sceneRect.w = floor(sceneRect.w);
+
 			tig->GetMainWindow().LockCursor(
 				(int) sceneRect.x,
 				(int) sceneRect.y,
@@ -153,12 +175,21 @@ void GameLoop::Run() {
 				(int) sceneRect.w
 			);
 		}
-		Stopwatch sw2;
+		else if (config.windowed && config.windowedLockCursor) {
+			RECT winrect;
+			GetWindowRect(tig->GetMainWindow().GetHwnd(), &winrect);
+			tig->GetMainWindow().LockCursor(
+				(int)winrect.left+8,
+				(int)winrect.top+5,
+				(int)(winrect.right - winrect.left - 18),
+				(int)(winrect.bottom - winrect.top - 13)
+			);
+		}
 
 		RenderFrame();
 
 		// Why does it process msgs AFTER rendering???		
-		while (!msgFuncs.Process(&msg)) {
+		while (messageQueue->Process(msg)) {
 			if (msg.type == TigMsgType::EXIT) {
 				quit = true;
 				break;
@@ -169,20 +200,21 @@ void GameLoop::Run() {
 				&& msg.arg1 == 0x44
 				&& msg.arg2 == 1) {
 				mDiagScreen->Toggle();
+				UIShowDebug();
 			}
 
 			// I have not found any place where message type 7 is queued,
 			// so i removed the out of place re-rendering of the game frame
 
-			if (!mainLoop.IsMainMenuVisible()) {
-					mainLoop.InGameHandleMessage(msg);
+			if (!uiSystems->GetMM().IsVisible()) {
+				mainLoop.InGameHandleMessage(msg);
 			}
 
 			auto unk = mainLoop.sub_10113CD0();
 			if (mainLoop.sub_10113D40(unk)) {
 				DoMouseScrolling();
 			}
-	}
+		}
 
 		
 }
@@ -217,7 +249,7 @@ void GameLoop::RenderFrame() {
 	mDiagScreen->Render();
 
 	// Draw Version Number while in Main Menu
-	if (mainLoop.IsMainMenuVisible()) {
+	if (uiSystems->GetMM().IsVisible()) {
 		RenderVersion();
 	}
 
@@ -237,13 +269,25 @@ void GameLoop::RenderFrame() {
 	TigRect srcRect{0, 0, config.renderWidth, config.renderHeight};
 	srcRect.FitInto(destRect);
 
+	gfx::SamplerType2d samplerType = gfx::SamplerType2d::CLAMP;
+	if (!config.upscaleLinearFiltering) {
+		samplerType = gfx::SamplerType2d::POINT;
+	}
+
 	tig->GetShapeRenderer2d().DrawRectangle(
 		(float) srcRect.x, 
 		(float)srcRect.y, 
 		(float)srcRect.width, 
 		(float)srcRect.height, 
-		*mSceneColor
+		*mSceneColor,
+		0xFFFFFFFF,
+		samplerType
 	);
+
+	tig->GetConsole().Render();
+
+	// Render the Debug UI
+	tig->GetDebugUI().Render();
 
 	// Render "GFade" overlay
 	static auto& gfadeEnabled = temple::GetRef<BOOL>(0x10D25118);
@@ -254,6 +298,8 @@ void GameLoop::RenderFrame() {
 		tig->GetShapeRenderer2d().DrawRectangle(0, 0, w, h, gfadeColor);
 	}
 	
+	// ImGui::ShowTestWindow();
+
 	device.Present();
 
 	device.EndPerfGroup();
@@ -263,6 +309,16 @@ void GameLoop::DoMouseScrolling() {
 
 	if (config.windowed && mouseFuncs.MouseOutsideWndGet())
 		return;
+
+	static auto sysRefTime = 0;
+	auto now = timeGetTime();
+	if (sysRefTime && (now  < sysRefTime + 16) ){
+		auto scrollButter = temple::GetRef<int>(0x102AC238);
+		if (!scrollButter)
+			return;
+	}
+	
+	sysRefTime = now;
 
 	POINT mousePt = mouseFuncs.GetPos();
 	POINT mmbRef = mouseFuncs.GetMmbReference();
@@ -422,45 +478,34 @@ public:
 			if (!gameLoop) {
 				return 0;
 			}
-
+			
 			gameLoop->RenderFrame();
+			
+			// We have to manually trigger a new frame for the debug UI here since 
+			// this can be called from virtually anywhere
+			ImGui::NewFrame();
+
 			return 0;
 		});
-		/*
-			The normal (non-combat) LMB handler function
-		*/
-		static void(__cdecl*orgNormalLmbHandler)(TigMsg*) = replaceFunction<void(TigMsg*)>(0x10114AF0, [](TigMsg* msg)
-		{
-			//logger->debug("NormalLmbHandler: LMB released; args:  {} , {} , {} , {}", msg->arg1, msg->arg2, msg->arg3, msg->arg4);
-			orgNormalLmbHandler(msg);
-			//logger->debug("NormalLmbHandler: success.");
-		});
 
-		static void(__cdecl*orgIngameMsgHandler)(TigMsg*) = replaceFunction<void(TigMsg*)>(0x10114EF0, [](TigMsg* msg)
-		{
-			if (msg->type == TigMsgType::KEYSTATECHANGE || msg->type == TigMsgType::CHAR || msg->type == TigMsgType::KEYDOWN) {
-				int dummy = 1;
-				if (msg->arg1 == DIK_HOME) {
-					int asd = 1;
-					VK_HOME;
-				}
-			}
-			//logger->debug("NormalLmbHandler: LMB released; args:  {} , {} , {} , {}", msg->arg1, msg->arg2, msg->arg3, msg->arg4);
-			orgIngameMsgHandler(msg);
-			//logger->debug("NormalLmbHandler: success.");
-		});
-
-		static void(__cdecl*orgNormalLmbHandleTarget)(objHndl*) = replaceFunction<void(objHndl*)>(0x101140F0, [](objHndl* tgt){
-			
+		replaceFunction<void(objHndl*)>(0x101140F0, [](objHndl* tgt) {
 			NormalLmbHandleTarget(tgt);
-			//orgNormalLmbHandleTarget(tgt);
 		});
+
+
+		static void(__cdecl*orgScrollToPartyLeader)() = replaceFunction<void(__cdecl)()>(0x10113CE0, []() {
+			auto dummy = -1;
+			party.GetConsciousPartyLeader();
+			orgScrollToPartyLeader();
+
+		});
+
 	}
 } hooks;
 
 void MainLoopHooks::NormalLmbHandleTarget(objHndl * tgt)
 {
-	locXY tgtLoc;
+	locXY tgtLoc = LocAndOffsets::null.location;
 
 	auto leader = party.GetConsciousPartyLeader();
 	auto chosenOne = leader;
@@ -611,7 +656,7 @@ void MainLoopHooks::NormalLmbHandleTarget(objHndl * tgt)
 			return;
 
 		chosenOne = selectedClosest;
-		animationGoals.PushForMouseTarget(chosenOne, goalType, tgtHndl, tgtLoc, objHndl::null, someFlag);
+		gameSystems->GetAnim().PushForMouseTarget(chosenOne, goalType, tgtHndl, tgtLoc, objHndl::null, someFlag);
 
 
 	}

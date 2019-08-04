@@ -1,0 +1,388 @@
+{1}{Welcome, friend, to the Hommlet Trading Post. I am Rannos Davl. How may I help you?}{Welcome, friend, to the Hommlet Trading Post. I am Rannos Davl. How may I help you?}{}{1}{}{game.global_flags[197] = 1}
+{2}{May we barter?}{}{1}{}{450}{}
+{3}{I could use some extra help. Are you hiring anyone out?}{}{8}{game.global_flags[39] == 0}{140}{}
+{4}{You have man-at-arms to sell me?}{}{-7}{game.global_flags[39] == 0}{140}{}
+{5}{Rannos Davl? I've been looking for you. I saw the remnants of your handiwork out at a peasant camp. Very nice work.}{}{8}{game.party_alignment == CHAOTIC_EVIL and game.global_flags[67] == 0}{320}{}
+{6}{Me looking for you. Me want to join up.}{}{-7}{game.party_alignment == CHAOTIC_EVIL and game.global_flags[67] == 0}{320}{}
+{7}{Why does the teamster think you are strange?}{}{8}{game.global_flags[40] == 1}{110}{}
+{8}{Teamster next door think you funny fellows.}{}{-7}{game.global_flags[40] == 1}{110}{}
+{9}{So how's business, Rannos? Your prices seem a little high for the market.}{}{1}{game.global_flags[41] == 0 and game.quests[17].state == qs_completed}{440}{}
+{10}{Were you responsible for that assassin that came after me?}{}{1}{game.global_flags[277] == 1 and game.global_flags[428] == 0 and game.quests[64].state != qs_completed and game.quests[64].state != qs_botched}{390}{}
+{11}{E:}{}{1}{}{0}{}
+
+
+{20}{It is interesting that you return here after double crossing ME! [angry] You are no longer welcome here. Begone! [calmer now] And I suggest you watch your back.}{It is interesting that you return here after double crossing ME! [angry] You are no longer welcome here. Begone! [calmer now] And I suggest you watch your back.}{}{20}{}{}
+{21}{You were responsible for that assassin that came after me, weren't you?}{}{1}{game.global_flags[277] == 1 and game.global_flags[428] == 0 and game.quests[64].state != qs_completed and game.quests[64].state != qs_botched}{390}{}
+{22}{You and your partner are up to no good here, Rannos. Your threats do not scare me. Farewell.}{}{8}{}{0}{}
+{23}{You and Green Egg are bad guys. You not scare me.}{}{-7}{}{0}{}
+{24}{I do as I please, Rannos, and you no longer matter to me. I just wanted to come by and tell you that in person.}{}{8}{}{0}{}
+
+
+{30}{What can I do for you, friend? May I offer you the services of my man-at arms?}{What can I do for you, friend? May I offer you the services of my man-at arms?}{}{30}{}{game.global_flags[197] = 1}
+{31}{May we barter?}{}{1}{}{450}{}
+{32}{I think I might take you up on that offer, Rannos. How much for your man-at-arms?}{}{8}{game.global_flags[39] == 0}{140}{}
+{33}{Me want helper.}{}{-7}{game.global_flags[39] == 0}{140}{}
+{34}{I've already hired out your man-at-arms, Rannos. And he seems a bit suspicious.}{}{8}{game.global_flags[39] == 1}{310}{}
+{35}{Me already have helper. Me not like him.}{}{-7}{game.global_flags[39] == 1}{310}{}
+{36}{I have left mayhem and destruction in my wake at the moathouse. You may verify it for yourself. Now where do I sign up?}{}{8}{game.party_alignment == CHAOTIC_EVIL and game.story_state >= 2 and game.areas[3] == 0 and anyone( pc.group_list(), "has_follower", 8002 ) == 0}{350}{}
+{37}{Me clean up in moathouse.}{}{-7}{game.party_alignment == CHAOTIC_EVIL and game.story_state >= 2 and game.areas[3] == 0 and anyone( pc.group_list(), "has_follower", 8002 ) == 0}{350}{}
+{38}{I have been looking for you. I saw the remnants of your handiwork out at a peasant camp. Very nice work.}{}{8}{game.party_alignment == CHAOTIC_EVIL and game.global_flags[67] == 0}{320}{}
+{39}{Me looking for you. Me want to join up.}{}{-7}{game.party_alignment == CHAOTIC_EVIL and game.global_flags[67] == 0}{320}{}
+{40}{So how's business, Rannos? Your prices seem a little high for the market.}{}{1}{game.global_flags[41] == 0 and game.quests[17].state == qs_completed}{440}{}
+{41}{Were you responsible for that assassin that came after me?}{}{1}{game.global_flags[277] == 1 and game.global_flags[428] == 0 and game.quests[64].state != qs_completed and game.quests[64].state != qs_botched}{390}{}
+{42}{E:}{}{1}{}{0}{}
+
+
+{50}{Welcome, friend, to my Trading Post. What can I offer you?}{Welcome, friend, to my Trading Post. What can I offer you?}{}{50}{}{game.quests[16].state = qs_mentioned}
+{51}{May we barter?}{}{1}{}{450}{}
+{52}{I'm looking for some extra help. You hiring out?}{}{8}{game.global_flags[39] == 0}{140}{}
+{53}{Me want helper.}{}{-7}{game.global_flags[39] == 0}{140}{}
+{54}{I found your spy in the peasant laborer camp. I think Burne and Rufus might be interested in that, don't you?}{}{8}{game.quests[16].state != qs_completed and game.quests[15].state == qs_completed}{240}{game.quests[16].state = qs_accepted}
+{55}{Me find spy in camp.}{}{-7}{game.quests[16].state != qs_completed}{240}{game.quests[16].state = qs_accepted}
+{56}{I have left mayhem and destruction in my wake at the moathouse. You may verify it for yourself. Now where do I sign up?}{}{8}{game.party_alignment == CHAOTIC_EVIL and game.story_state >= 2 and game.areas[3] == 0 and anyone( pc.group_list(), "has_follower", 8002 ) == 0}{350}{}
+{57}{Me clean up in moathouse.}{}{-7}{game.party_alignment == CHAOTIC_EVIL and game.story_state >= 2 and game.areas[3] == 0 and anyone( pc.group_list(), "has_follower", 8002 ) == 0}{350}{}
+{58}{I have been looking for you. I saw the remnants of your handiwork out at a peasant camp. Very nice work.}{}{8}{game.party_alignment == CHAOTIC_EVIL and game.global_flags[67] == 0}{320}{}
+{59}{Me looking for you. Me want to join up.}{}{-7}{game.party_alignment == CHAOTIC_EVIL and game.global_flags[67] == 0}{320}{}
+{60}{So how's business, Rannos? Your prices seem a little high for the market.}{}{1}{game.global_flags[41] == 0 and game.quests[17].state == qs_completed}{440}{}
+{61}{Were you responsible for that assassin that came after me?}{}{1}{game.global_flags[277] == 1 and game.global_flags[428] == 0 and game.quests[64].state != qs_completed and game.quests[64].state != qs_botched}{390}{}
+{62}{E:}{}{1}{}{0}{}
+
+
+{70}{Welcome back, friend. What do you have to offer for trade today?}{Welcome back, friend. What do you have to offer for trade today?}{}{70}{}{}
+{71}{May we barter?}{}{1}{}{450}{}
+{72}{I could use some extra help. Are you hiring anyone out?}{}{8}{game.global_flags[39] == 0}{140}{}
+{73}{You have man-at-arms to sell me?}{}{-7}{game.global_flags[39] == 0}{140}{}
+{74}{Why does the teamster think you are strange?}{}{8}{game.global_flags[40] == 1}{110}{}
+{75}{Teamster next door think you funny fellows.}{}{-7}{game.global_flags[40] == 1}{110}{}
+{76}{I have left mayhem and destruction in my wake at the moathouse. You may verify it for yourself. Now where do I sign up?}{}{8}{game.party_alignment == CHAOTIC_EVIL and game.story_state >= 2 and game.areas[3] == 0 and anyone( pc.group_list(), "has_follower", 8002 ) == 0}{350}{}
+{77}{Me clean up in moathouse.}{}{-7}{game.party_alignment == CHAOTIC_EVIL and game.story_state >= 2 and game.areas[3] == 0 and anyone( pc.group_list(), "has_follower", 8002 ) == 0}{350}{}
+{78}{I have been looking for you. I saw the remnants of your handiwork out at a peasant camp. Very nice work.}{}{8}{game.party_alignment == CHAOTIC_EVIL and game.global_flags[67] == 0}{320}{}
+{79}{Me looking for you. Me want to join up.}{}{-7}{game.party_alignment == CHAOTIC_EVIL and game.global_flags[67] == 0}{320}{}
+{80}{So how's business, Rannos? Your prices seem a little high for the market.}{}{1}{game.global_flags[41] == 0 and game.quests[17].state == qs_completed}{440}{}
+{81}{Were you responsible for that assassin that came after me?}{}{1}{game.global_flags[277] == 1 and game.global_flags[428] == 0 and game.quests[64].state != qs_completed and game.quests[64].state != qs_botched}{390}{}
+{82}{E:}{}{1}{}{0}{}
+
+
+{90}{[sarcastic] Let me know if you find anything that tickles your fancy.}{[sarcastic] Let me know if you find anything that tickles your fancy.}{}{90}{}{}
+{91}{This doesn't tickle my fancy at all, Rannos. [show him the letter]}{}{1}{anyone( pc.group_list(), "has_item", 11002 ) and game.quests[64].state != qs_completed}{430}{}
+{92}{I'll do that.}{}{1}{game.quests[64].state == qs_completed}{0}{}
+
+
+{100}{You are welcome to your opinion, friend. But an opinion is all it is. [anger building] Now get out!}{You are welcome to your opinion, friend. But an opinion is all it is. [anger building] Now get out!}{}{100}{}{}
+{101}{Very well. But you'd better know that I'll be keeping a very close eye on you from now on.}{}{1}{}{0}{game.quests[64].state = qs_completed}
+{102}{You have deceived me for the last time, Rannos. Prepare to die! [attack]}{}{1}{game.party_alignment == NEUTRAL_GOOD or game.party_alignment == TRUE_NEUTRAL or game.party_alignment == CHAOTIC_GOOD}{0}{npc.attack(pc)}
+{103}{You have lied to me once too often, you fat pig. Prepare to die! [attack]}{}{1}{game.party_alignment == NEUTRAL_EVIL or game.party_alignment == CHAOTIC_NEUTRAL or game.party_alignment == CHAOTIC_EVIL}{0}{npc.attack(pc)}
+{104}{Your deceit is at and end, Rannos. Prepare to face the consequences! [attack]}{}{1}{game.party_alignment == LAWFUL_GOOD or game.party_alignment == LAWFUL_NEUTRAL or game.party_alignment == LAWFUL_EVIL}{0}{npc.attack(pc)}
+
+
+{110}{Those [spits] St. Cuthbert folk are a mighty suspicious lot, now, aren't they? I have no idea why our friend Sef would want to stir up trouble with us, but I can assure you we have the best interests of the people of Hommlet at heart.}{Those [spits] St. Cuthbert folk are a mighty suspicious lot, now, aren't they? I have no idea why our friend Sef would want to stir up trouble with us, but I can assure you we have the best interests of the people of Hommlet at heart.}{}{110}{}{}
+{111}{Hey! I worship St. Cuthbert, too. And I think you're up to no good here, Rannos. I just can't quite figure it out yet. But I will.}{}{8}{pc.skill_level_get(npc,skill_bluff) >= 4 and pc.stat_level_get( stat_deity ) == 16}{130}{}
+{112}{Me worship Sand Cubber and me think you and Green Egg funny fellows, too.}{}{-7}{pc.skill_level_get(npc,skill_bluff) >= 4 and pc.stat_level_get( stat_deity ) == 16}{130}{}
+{113}{What of this strange man that shows up here occasionally?}{}{8}{}{120}{}
+{114}{Sef say you and Green Egg have hangman out front.}{}{-7}{}{125}{}
+{115}{E:}{}{1}{}{0}{}
+
+
+{120}{Ah, not to worry, my friends. He is a supplier, who takes our orders to restock our shop. I admit, not a friendly looking fellow, but quite harmless, I assure you.}{Ah, not to worry, my friends. He is a supplier, who takes our orders to restock our shop. I admit, not a friendly looking fellow, but quite harmless, I assure you.}{}{120}{}{}
+{121}{Then why does he come around so frequently? I think I'll have to check with him myself.}{}{8}{pc.skill_level_get(npc,skill_sense_motive) >= 10}{0}{}
+{122}{Me go talk with him myself.}{}{-7}{pc.skill_level_get(npc,skill_sense_motive) >= 10}{0}{}
+{123}{Thanks for the information, Rannos. I think everyone's just a little tense around here. Farewell for now.}{}{8}{}{0}{}
+{124}{Tanks. Me come back later.}{}{-7}{}{0}{}
+{125}{[brief moment of surprise] Hangman? Uh, no. We haven't had a reason for a hanging in a long time around here.}{[brief moment of surprise] Hangman? Uh, no. We haven't had a reason for a hanging in a long time around here.}{}{}{}{}
+{126}{Okay. Me thought someone got hung. Bye.}{}{1}{}{0}{}
+
+
+{130}{[spits again] You St. Cuthbert fold are all the same. I will tell you this then, friend. This town isn't big enough for St. Cuthbert. He is already tearing it apart. Now the best thing for you would be to get out of town before things get ugly.}{[spits again] You St. Cuthbert fold are all the same. I will tell you this then, friend. This town isn't big enough for St. Cuthbert. He is already tearing it apart. Now the best thing for you would be to get out of town before things get ugly.}{}{130}{}{}
+{131}{Ugly? Pray St. Cuthbert doesn't have to come down here. Or you will see ugly. 'Friend.'}{}{8}{}{0}{}
+{132}{Sand Cubber not afraid of non-Cubbers. Me not go no place else.}{}{-7}{}{0}{}
+
+
+{140}{My man-at-arms here, Raimol, is for hire. I could let you have him for 20 gold. With an additional 160 gold for a suit of chainmail for him.}{My man-at-arms here, Raimol, is for hire. I could let you have him for 20 gold. With an additional 160 gold for a suit of chainmail for him.}{}{140}{}{}
+{141}{All right, Rannos. I will hire your man.}{}{8}{pc.money_get() >= 18000}{150}{game.global_flags[39] = 1; pc.money_adj(-18000)}
+{142}{Me hire man-at-arms.}{}{-7}{pc.money_get() >= 18000}{150}{game.global_flags[39] = 1; pc.money_adj(-18000)}
+{143}{180 gold pieces total for the hire! I'll have to think about that.}{}{8}{}{0}{}
+{144}{Me think about it. Come back later.}{}{-7}{}{0}{}
+{145}{That is a lot of money, friend. Certainly, we can come to some kind of agreement here.}{}{8}{pc.skill_level_get(npc,skill_diplomacy) >= 5}{160}{}
+{146}{Me think you should make me a deal.}{}{-7}{pc.skill_level_get(npc,skill_diplomacy) >= 5}{160}{}
+
+
+{150}{Excellent news, friend. Go introduce yourself to him and he will join you. I will supply him with his chainmail.}{Excellent news, friend. Go introduce yourself to him and he will join you. I will supply him with his chainmail.}{}{150}{}{}
+{151}{E:}{}{1}{}{0}{}
+
+
+{160}{I could go as low as 150 gold pieces. For a friend, of course. Do we have a deal?}{I could go as low as 150 gold pieces. For a friend, of course. Do we have a deal?}{}{160}{}{}
+{161}{Now that is more reasonable. I will hire him.}{}{8}{pc.money_get() >= 15000}{150}{game.global_flags[39] = 1; pc.money_adj(-15000)}
+{162}{Me hire him.}{}{-7}{pc.money_get() >= 15000}{150}{game.global_flags[39] = 1; pc.money_adj(-15000)}
+{163}{That is still a little too high, Rannos. I'll have to think about it and get back to you.}{}{8}{}{0}{}
+{164}{Me think about it. Come back later.}{}{-7}{}{0}{}
+
+
+{170}{This messenger of yours is [teeth gritted] lying! I cannot say what little games you or he are playing, but he is simply an agent for our supplier.}{This messenger of yours is [teeth gritted] lying! I cannot say what little games you or he are playing, but he is simply an agent for our supplier.}{}{170}{}{}
+{171}{I'm sorry, Rannos. You are the one who is lying. He told me everything. Now what do you plan to do about it?}{}{8}{pc.skill_level_get(npc,skill_sense_motive) >= 5}{180}{}
+{172}{You the one who lies!}{}{-7}{pc.skill_level_get(npc,skill_sense_motive) >= 5}{180}{}
+{173}{Yet he told me your entire operation. I could even point out where you keep your log books from the Temple.}{}{8}{pc.skill_level_get(npc,skill_bluff) >= 7}{180}{}
+{174}{Me know everything about Rannos. He tell me where secret stuff hidden.}{}{-7}{pc.skill_level_get(npc,skill_bluff) >= 7}{180}{}
+{175}{Just admit it Rannos. We've found you out. I knew there was something suspicious about you and Gremag.}{}{8}{pc.skill_level_get(npc,skill_diplomacy) >= 14}{180}{}
+{176}{Well one of you is lying, that much is certain. I just cannot decide which one. I will give you the benefit of the doubt. . .for now, Rannos.}{}{8}{}{0}{}
+{177}{Me not tell liar from not liar. Me confused. Me go.}{}{-7}{}{0}{}
+
+
+{180}{So perhaps a friendly gift might buy your silence on this rather sensitive issue. No cause alarming the good folk around here. This is not about them.}{So perhaps a friendly gift might buy your silence on this rather sensitive issue. No cause alarming the good folk around here. This is not about them.}{}{180}{}{}
+{181}{Perhaps a little cash would do the trick.}{}{8}{}{190}{}
+{182}{I could use a good magic item.}{}{8}{}{200}{}
+{183}{If you work for the Temple, give me directions. I need to check that place out.}{}{8}{}{210}{}
+{184}{Me want money.}{}{-7}{}{190}{}
+{185}{You give me magic item.}{}{-7}{}{200}{}
+{186}{Me want to know where the bad Temple is!}{}{-7}{}{210}{}
+{187}{No thanks, Rannos. I'm not in the mood for gift-giving.}{}{8}{}{0}{}
+{188}{No presents today.}{}{-7}{}{0}{}
+{189}{F:}{}{1}{}{0}{}
+
+
+{190}{Then please accept my gift of 20 gold pieces. For one friend to another. [serious now] For the gift of your silence.}{Then please accept my gift of 20 gold pieces. For one friend to another. [serious now] For the gift of your silence.}{}{190}{}{}
+{191}{A measly 20 in gold? 'Tis not so easy to hold my tongue. But between friends, I might remain silent for about, say, 200 gold.}{}{8}{pc.skill_level_get(npc,skill_diplomacy) >= 7}{235}{pc.money_adj(+20000); pc.condition_add_with_args("Fallen_Paladin",0,0)}
+{192}{Sounds fair, Rannos. I'll take the 20 gold.}{}{8}{}{220}{pc.money_adj(+2000); pc.condition_add_with_args("Fallen_Paladin",0,0)}
+{193}{Not close Rannos! It worth more. Me want 200 gold!}{}{-7}{pc.skill_level_get(npc,skill_diplomacy) >= 7}{235}{pc.money_adj(+20000); pc.condition_add_with_args("Fallen_Paladin",0,0)}
+{194}{Me think 20 gold is fair.}{}{-7}{}{220}{pc.money_adj(+2000); pc.condition_add_with_args("Fallen_Paladin",0,0)}
+
+
+{200}{[reaches under the counter] This enchanted shortsword will come in quite handy I am sure. And it is my best offer. [looks at it] I think it buys silence quite nicely.}{[reaches under the counter] This enchanted shortsword will come in quite handy I am sure. And it is my best offer. [looks at it] I think it buys silence quite nicely.}{}{200}{}{}
+{201}{I will take the shortsword, Rannos.}{}{8}{}{230}{npc.item_transfer_to_by_proto(pc,4107)}
+{202}{Me want shortsword.}{}{-7}{}{230}{npc.item_transfer_to_by_proto(pc,4107)}
+{203}{On second thought, I think I would prefer some cash, Rannos.}{}{8}{}{190}{}
+{204}{No. Me just want money instead, I think.}{}{-7}{}{190}{}
+
+
+{210}{[laughs] We don't go near the Temple, friend. Oh we may have dealings with them, but we don't go there ourselves. I cannot assist you with that, I am afraid.}{[laughs] We don't go near the Temple, friend. Oh we may have dealings with them, but we don't go there ourselves. I cannot assist you with that, I am afraid.}{}{210}{}{}
+{211}{Then tell me, friend, who CAN tell me?}{}{1}{game.areas[2] == 0 and game.global_flags[37] == 0}{215}{}
+{212}{Fine. Just give me some money, then.}{}{1}{}{190}{}
+{213}{Then you'll just have to wonder what I'm going to do with my newfound knowledge, wont you? Have a nice day.}{}{1}{}{0}{}
+{214}{E:}{}{1}{}{0}{}
+
+
+{215}{The Master at the Moathouse can help you. He is a pleasant man. I'm sure he will help you, friend. Here, I will mark the Moathouse on your map for you. You will find the Master there.}{The Master at the Moathouse can help you. He is a pleasant man. I'm sure he will help you, friend. Here, I will mark the Moathouse on your map for you. You will find the Master there.}{}{215}{}{game.areas[2] = 1; game.story_state = 1}
+{216}{Thanks Rannos. I'll go find this "master" of yours. [travel immediately to moathouse]}{}{8}{}{0}{game.worldmap_travel_by_dialog(2)}
+{217}{Me go find Master. [travel immediately to moathouse]}{}{-7}{}{0}{game.worldmap_travel_by_dialog(2)}
+{218}{E:}{}{1}{}{0}{}
+
+
+{220}{Take your money then, friend, and remember what it buys.}{Take your money then, friend, and remember what it buys.}{}{220}{}{}
+{221}{E:}{}{1}{}{0}{}
+
+
+{230}{Take your sword then, friend, and remember what I have purchased from you with it.}{Take your sword then, friend, and remember what I have purchased from you with it.}{}{230}{}{}
+{231}{E:}{}{1}{}{0}{}
+
+
+{235}{I will buy your silence with this gold then. But I wonder now which of us is truly the thief. Now get out of here.}{I will buy your silence with this gold then. But I wonder now which of us is truly the thief. Now get out of here.}{}{235}{}{}
+{236}{E:}{}{1}{}{0}{}
+
+
+{240}{Another of Gremag's mistakes. [stares over at Gremag] I grow weary of this. All right, how much to keep silent about this little mess. Surely, you see the sensitivity of this issue to me.}{Another of Gremag's mistakes. [stares over at Gremag] I grow weary of this. All right, how much to keep silent about this little mess. Surely, you see the sensitivity of this issue to me.}{}{240}{}{game.quests[16].state = qs_completed}
+{241}{How about 50 gold pieces?}{}{8}{}{220}{pc.money_adj(+5000); pc.condition_add_with_args("Fallen_Paladin",0,0)}
+{242}{I see the sensitivity, Rannos. And for that you're going to pay a little extra. My price is 100 gold pieces.}{}{8}{pc.skill_level_get(npc,skill_diplomacy) >= 5}{220}{pc.money_adj(+10000); pc.condition_add_with_args("Fallen_Paladin",0,0)}
+{243}{Your mistake or Gremag's does not matter to me. I will not cover for your spies.}{}{8}{}{260}{}
+{244}{Enough of this talk. I don't care whose mistake it is. Tell me NOW who's behind this!}{}{8}{pc.skill_level_get(npc,skill_intimidate) >= 4 and game.areas[2] == 0}{270}{}
+{245}{Me want 50 gold.}{}{-7}{}{220}{pc.money_adj(+5000); pc.condition_add_with_args("Fallen_Paladin",0,0)}
+{246}{Me think you in bad way. Me need 100 gold to forget Rannos' mess.}{}{-7}{pc.skill_level_get(npc,skill_diplomacy) >= 5}{220}{pc.money_adj(+10000); pc.condition_add_with_args("Fallen_Paladin",0,0)}
+{247}{Me not keep silent for anything. You bad man.}{}{-7}{}{260}{}
+{248}{You tell me NOW who you work for!}{}{-7}{pc.skill_level_get(npc,skill_intimidate) >= 4 and game.areas[2] == 0}{270}{}
+{249}{Too late, friend. I've already told Burne and Rufus. I'm sure they'll be down any time to have a chat with you.}{}{8}{game.quests[15].state == qs_completed}{280}{}
+{250}{Me already tell Bunny and Woofus.}{}{-7}{game.quests[15].state == qs_completed}{280}{}
+{251}{Give me everything in your store for free. Now! Or I'll start talking!}{}{8}{}{300}{}
+{252}{Me want everything here!}{}{-7}{}{300}{}
+
+
+{260}{Then I suggest, friend, that you leave here and keep quiet. You wouldn't want your little visit here to be 'unpleasant' would you?}{Then I suggest, friend, that you leave here and keep quiet. You wouldn't want your little visit here to be "unpleasant" would you?}{}{260}{}{}
+{261}{Actually, I suggest you and your strange little friend here pack up and get out of town yourselves...or things might get 'unpleasant' for you.}{}{8}{}{0}{}
+{262}{Me not the one going to get unpleasant, me think.}{}{-7}{}{0}{}
+{263}{E:}{}{1}{}{0}{}
+
+
+{270}{Of course, friend. You would like to meet the Master. He is at the Moathouse, here, on your maps. I'm sure he will welcome you.}{Of course, friend. You would like to meet the Master. He is at the Moathouse, here, on your maps. I'm sure he will welcome you.}{}{270}{}{game.areas[2] = 1; game.story_state = 1}
+{271}{Thanks Rannos. I'll go find this "master" of yours. [travel immediately to moathouse]}{}{8}{}{0}{game.worldmap_travel_by_dialog(2)}
+{272}{Me go find Master. [travel immediately to moathouse]}{}{-7}{}{0}{game.worldmap_travel_by_dialog(2)}
+{273}{E:}{}{1}{}{0}{}
+
+
+{280}{[calm] Then I can see that our friendship is at an end. And to think I had such high hopes for you. Now by the unholy bonds of Tharizdun get out of my shop!}{[calm] Then I can see that our friendship is at an end. And to think I had such high hopes for you. Now by the unholy bonds of Tharizdun get out of my shop!}{}{280}{}{}
+{281}{You dare to mention the Dark God by name. You are more foolish than I thought, Rannos Davl. Now farewell.}{}{8}{}{0}{}
+{282}{Me go now before Dark God come here.}{}{-7}{}{0}{}
+
+
+{290}{[less confident] So you return. What do you want?}{[less confident] So you return. What do you want?}{}{290}{}{}
+{291}{May we barter?}{}{1}{}{450}{}
+{292}{Nothing this time, Rannos. Just making sure you're not getting into any more trouble.}{}{8}{}{0}{}
+{293}{Me check on bad Rannos. That is all.}{}{-7}{}{0}{}
+{294}{I have left mayhem and destruction in my wake at the Moathouse. You may verify it for yourself. Now where do I sign up?}{}{8}{game.party_alignment == CHAOTIC_EVIL and game.story_state >= 2 and game.areas[3] == 0 and anyone( pc.group_list(), "has_follower", 8002 ) == 0}{350}{}
+{295}{Me clean up in Moathouse.}{}{-7}{game.party_alignment == CHAOTIC_EVIL and game.story_state >= 2 and game.areas[3] == 0 and anyone( pc.group_list(), "has_follower", 8002 ) == 0}{350}{}
+{296}{So how's business, Rannos? Your prices seem a little high for the market.}{}{1}{game.global_flags[41] == 0 and game.quests[17].state == qs_completed}{440}{}
+{297}{Were you responsible for that assassin that came after me?}{}{1}{game.global_flags[277] == 1 and game.global_flags[428] == 0 and game.quests[64].state != qs_completed and game.quests[64].state != qs_botched}{390}{}
+
+
+{300}{I am afraid that is not a reasonable request. And I thought we were friends. Alas, I will have to suffer whatever consequences I may have from your foolishness.}{I am afraid that is not a reasonable request. And I thought we were friends. Alas, I will have to suffer whatever consequences I may have from your foolishness.}{}{300}{}{}
+{301}{E:}{}{1}{}{0}{}
+
+
+{310}{Ah, so you have. I get so busy around here. How then may I help you, friend?}{Ah, so you have. I get so busy around here. So how may I help you, friend?}{}{310}{}{}
+{311}{I got your courier to talk, Rannos. I know you and Gremag work for the Temple.}{}{8}{}{170}{}
+{312}{You and Green Egg work for Temple! Me hear it from message boy.}{}{-7}{}{170}{}
+{313}{May we barter?}{}{1}{}{450}{}
+{314}{E:}{}{1}{}{0}{}
+
+
+{320}{You look like you might be worthy to join our cause. What kind of business are you looking for?}{You look like you might be worthy to join our cause. What kind of business are you looking for?}{}{320}{}{game.global_flags[67] = 1}
+{321}{I am a new recruit. Sign me up!}{}{8}{pc.skill_level_get(npc,skill_bluff) >= 4 and game.areas[2] == 0}{330}{}
+{322}{I would like to join forces with your bandits and help destroy this little fairy tale hamlet.}{}{8}{game.areas[2] == 0}{330}{}
+{323}{Me a new recruit. Me join!}{}{-7}{pc.skill_level_get(npc,skill_bluff) >= 4 and game.areas[2] == 0}{330}{}
+{324}{Me want to join with bandits. Me want to burn stuff.}{}{-7}{game.areas[2] == 0}{330}{}
+{325}{Something to shake things up around here. This place is boring.}{}{8}{game.areas[2] == 1}{340}{}
+{326}{Me looking for something with a little excitement to it.}{}{-7}{game.areas[2] == 1}{340}{}
+
+
+{330}{Hmm. You will have to prove yourself worthy first, friend. There is a moathouse nearby that I have marked on your map. It is filled with all sorts of creatures to kill. Prove your might by clearing it out. Really impress me.}{Hmm. You will have to prove yourself worthy first, friend. There is a moathouse nearby that I have marked on your map. It is filled with all sorts of creatures to kill. Prove your might by clearing it out. Really impress me.}{}{330}{}{game.areas[2] = 1; game.story_state = 1; game.quests[30].state = qs_completed}
+{331}{And what is this moathouse where I am to go?}{}{8}{}{410}{}
+{332}{What be dis moathouse place?}{}{-7}{}{410}{}
+
+
+{340}{Let me think, friend. I have something that might appeal to you. You are aware of the Moathouse, yes? It is filled with all kinds of creatures to kill. Prove your might by clearing it out. It may be worth your while in more ways than one.}{I'll tell you what. You go down to that Moathouse and prove yourself there. If you can do that for me, then I might be able to take you on in as a recruit.}{}{340}{}{game.quests[30].state = qs_completed}
+{341}{How so, Rannos?}{}{1}{}{410}{}
+
+
+{350}{So you say. Let me check with Gremag, here. Please excuse me for a short moment. [turns to speak with Gremag.]}{So you say. Let me check with Gremag, here. Please excuse me for a short moment. [turns to speak with Gremag.]}{}{350}{}{}
+{351}{Hurry up, Rannos. We had a deal. Now let me in with the recruits.}{}{8}{game.global_flags[37] == 0}{360}{}
+{352}{What you say? Me join recruits of Temple?}{}{-7}{game.global_flags[37] == 0}{360}{}
+{353}{Hurry up, Rannos. We had a deal. Now let me in with the recruits.}{}{8}{game.global_flags[37] == 1}{370}{}
+{354}{What you say? Me join recruits of Temple?}{}{-7}{game.global_flags[37] == 1}{370}{}
+
+
+{360}{I'm afraid there's been a little problem with our recruiter. Please excuse this little mix-up. We'll try to straighten it out as soon as we can get back to you.}{I'm afraid there's been a little problem with our recruiter. Please excuse this little mix-up. We'll try to straighten it out as soon as we can get back to you.}{}{360}{}{}
+{361}{All right then, Rannos. I hope to hear from you soon.}{}{8}{}{0}{}
+{362}{Me wait to hear from Rannos soon.}{}{-7}{}{0}{}
+
+
+{370}{Your way is clear, friend. Seek out our agents in the little town of Nulb. I have marked it on your map for you.}{Your way is clear, friend. Seek out our agents in the little town of Nulb. I have marked it on your map for you.}{}{370}{}{game.areas[3] = 1; game.story_state = 3}
+{371}{Perhaps our paths will cross again, Rannos. I will look for your agents in Nulb. Farewell. [travel immediately to Nulb]}{}{8}{}{0}{game.worldmap_travel_by_dialog(3)}
+{372}{Me go to Bulb now. [travel immediately to Nulb]}{}{-7}{}{0}{game.worldmap_travel_by_dialog(3)}
+{373}{E:}{}{1}{}{0}{}
+
+
+{380}{Raimol! Get over here and help me out at once!}{Raimol! Get over here and help me out at once!}{}{380}{}{}
+
+
+{390}{Why, whatever could you be talking about, friend?}{Why, whatever could you be talking about, friend?}{}{390}{}{game.global_flags[428] = 1}
+{391}{An assassin tried to kill me out in the wild. He was sent to kill me because I sold some of Lareth's items to you.}{}{8}{}{400}{}
+{392}{Bad guy killer say he kill me because me sell pretty boy stuff to you!}{}{-7}{}{400}{}
+
+
+{400}{I am afraid anyone in town could have heard about what happened with Lareth. To assume the news came from me is folly.}{I am afraid anyone in town could have heard about what happened with Lareth. To assume the news came from me is folly.}{}{400}{}{}
+{401}{Okay. Thanks for straightening that out, Rannos. I didn't think you'd really be involved.}{}{1}{}{0}{game.quests[64].state = qs_botched}
+{402}{That sounds suspicious, Rannos. I guess I can't prove anything, but rest assured that I'll be watching you. Very closely.}{}{1}{pc.skill_level_get(npc,skill_sense_motive) >= 6 and pc.skill_level_get(npc,skill_sense_motive) <= 9}{90}{game.quests[64].state = qs_completed}
+{403}{You're lying, Rannos.}{}{1}{pc.skill_level_get(npc,skill_sense_motive) >= 10}{100}{}
+{404}{I have some physical evidence here that shows you were complicit in the plot. [reach into your pack for the assassin's letter]}{}{1}{anyone( pc.group_list(), "has_item", 11002 )}{90}{}
+
+
+{410}{The moathouse was a former outpost of the Temple of Elemental evil. It was destroyed and has fallen into decay and ruin. But I am certain many unfound treasures remain for those who seek them out.}{The moathouse was a former outpost of the Temple of Elemental evil. It was destroyed and has fallen into decay and ruin. But I am certain many unfound treasures remain for those who seek them out.}{}{410}{}{}
+{411}{And if I clear out this moathouse, I will become a recruit?}{}{8}{}{420}{}
+{412}{Me become recruit if moathouse clear?}{}{-7}{}{420}{}
+
+
+{420}{Yes, friend. You will be notified of your next destination should you prove your worth at the moathouse.}{Yes, friend. You will be notified of your next destination should you prove your worth at the moathouse.}{}{420}{}{}
+{421}{I'll show you what I can do at this moathouse of yours. I'll see you soon. [travel immediately to moathouse]}{}{8}{}{0}{game.worldmap_travel_by_dialog(2)}
+{422}{Me go prove self at moathouse. [travel immediately to moathouse]}{}{-7}{}{0}{game.worldmap_travel_by_dialog(2)}
+{423}{E:}{}{1}{}{0}{}
+
+
+{430}{[Rannos ignores the note and gazes back at you pointedly.]}{[Rannos ignores the note and gazes back at you pointedly.]}{}{430}{}{}
+{431}{[continue]}{}{1}{}{100}{}
+
+
+{440}{Our prices are quite fair. Still, we might be able to make a deal. Between friends.}{Our prices are quite fair. Still, we might be able to make a deal. Between friends.}{}{440}{}{}
+{441}{I got your courier to talk, Rannos. I know you and Gremag work for the Temple.}{}{8}{game.global_flags[41] == 0}{170}{game.global_flags[41] = 1}
+{442}{You and Green Egg work for Temple! Me hear it from message boy.}{}{-7}{game.global_flags[41] == 0}{170}{game.global_flags[41] = 1}
+
+
+{450}{Surely.}{Surely.}{}{}{}{}
+{451}{Very well.}{}{1}{}{460}{}
+
+
+{460}{}{}{}{}{}{}
+{461}{B:[Barter]}{}{1}{}{0}{pc.barter(npc)}
+
+
+{1000}{No! Death is not part of my plan! Gremag, let us begone from this wretched place!}{No! Death is not part of my plan! Gremag, let us begone from this wretched place!}{}{1000}{}{game.gloabl_vars[750] = 1; game.global_vars[751] = 1}
+{1001}{[continue]}{}{1}{}{0}{switch_to_gremag(npc,pc)}
+
+
+{1010}{Yes, Gremag, you are indeed correct. Time for us to disappear.}{Yes, Gremag, you are indeed correct. Time for us to disappear.}{}{1010}{}{game.global_vars[750] = 1; game.global_vars[751] = 1}
+{1011}{[continue]}{}{1}{}{1012}{}
+{1012}{As for you, @pcname@, we will meet again, and next time the vultures will feast upon your remains!}{As for you, @pcname@, we will meet again, and next time the vultures will feast upon your remains!}{}{}{}{game.global_vars[750] = 1; game.global_vars[751] = 1; npc.attack( pc )}
+{1013}{[continue]}{}{1}{}{0}{game.global_vars[750] = 1; game.global_vars[751] = 1; npc.attack( pc )}
+
+
+{1100}{Gremag was my friend. I will avenge his death, but not today.  Mark my words, @pcname@, the next time we meet you shall die.}{Gremag was my friend. I will avenge his death, but not today.  Mark my words, @pcname@, the next time we meet you shall die.}{}{1100}{}{game.global_vars[750] = 1; game.global_vars[751] = 1; npc.attack( pc )}
+{1101}{[continue]}{}{1}{}{0}{game.global_vars[750] = 1; game.global_vars[751] = 1; npc.attack( pc )}
+
+
+{2000}{[shouting] Surprise!! Welcome home friends! We've been waiting for you...}{[shouting] Surprise!! Welcome home friends! We've been waiting for you...}{}{2000}{}{game.party[0].reputation_remove(23)}
+{2001}{[continue]}{}{1}{}{2012}{}
+
+
+{2012}{You should have killed us when you had the chance, @pcname@.}{You should have killed us when you had the chance, @pcname@.}{}{2012}{}{game.global_flags[883] = 1}
+{2013}{[continue]}{}{1}{}{2024}{}
+
+
+{2024}{Clearly, last time we met you had us at a disadvantage... in fact it was quite unfair!}{Clearly, last time we met you had us at a disadvantage... in fact it was quite unfair!}{}{2024}{}{buff_npc(npc,pc)}
+{2025}{[continue]}{}{1}{}{2036}{}
+
+
+{2036}{But this time the advantage is ours!}{But this time the advantage is ours!}{}{2036}{}{buff_npc_three(npc,pc)}
+{2037}{[continue]}{}{1}{}{2048}{}
+
+
+{2048}{My name Is Rannos Davl. You would do good to remember that as I pluck the life from your dying corpse.}{My name Is Rannos Davl. You would do good to remember that as I pluck the life from your dying corpse.}{}{2048}{}{buff_npc_two(npc,pc)}
+{2049}{[continue]}{}{1}{}{0}{npc.attack( pc )}
+
+
+{2100}{[shouting] Surprise!! Welcome home friends! We've been waiting for you...}{[shouting] Surprise!! Welcome home friends! We've been waiting for you...}{}{2100}{}{game.party[0].reputation_remove(23)}
+{2101}{[continue]}{}{1}{}{2112}{}
+
+
+{2112}{You should have killed me when you had the chance, @pcname@.}{You should have killed me when you had the chance, @pcname@.}{}{2112}{}{game.global_flags[883] = 1}
+{2113}{[continue]}{}{1}{}{2124}{}
+
+
+{2124}{Clearly, last time we met you had me at a disadvantage... in fact it was quite unfair!}{Clearly, last time we met you had me at a disadvantage... in fact it was quite unfair!}{}{2124}{}{buff_npc(npc,pc)}
+{2125}{[continue]}{}{1}{}{2136}{}
+
+
+{2136}{But this time the advantage is ours!}{But this time the advantage is ours!}{}{2136}{}{buff_npc_four(npc,pc)}
+{2137}{[continue]}{}{1}{}{2148}{}
+
+
+{2148}{Gremag was my friend. Killing him was a grave mistake. A mistake that will now cost you your life.}{Gremag was my friend. Killing him was a grave mistake. A mistake that will now cost you your life.}{}{2148}{}{buff_npc_two(npc,pc)}
+{2149}{[continue]}{}{1}{}{0}{npc.attack( pc )}
+
+
+{2500}{Yes? What would you like?}{Yes? What would you like?}{}{2500}{}{}
+{2501}{I'm looking for the Master... Lareth. Tell me where he is you worthless grub!}{}{8}{pc.skill_level_get(npc,skill_intimidate) >= 7}{3000}{}
+{2502}{Me need Layrest, you tell me where he is, NOW!}{}{-7}{pc.skill_level_get(npc,skill_intimidate) >= 7}{3000}{}
+{2503}{I'm looking for the Master... Lareth. Have you seen him or heard from him?}{}{8}{}{3100}{}
+{2504}{Me need Layrest.}{}{-7}{}{3100}{}
+{2505}{Were you responsible for that assassin that came after me?}{}{1}{game.global_flags[277] == 1 and game.global_flags[428] == 0 and game.quests[64].state != qs_completed and game.quests[64].state != qs_botched}{390}{}
+
+
+{3000}{Who? I've never heard of her. [whispers] The walls have ears. Keep your voice down. Burne's Badgers be damned. They're watching us, so I haven't gathered much information. I suggest that you snoop around.}{Who? I've never heard of her. [whispers] The walls have ears. Keep your voice down. Burne's Badgers be damned. They're watching us, so I haven't gathered much information. I suggest that you snoop around.}{}{3000}{}{game.global_flags[843] = 1}
+{3001}{E:}{}{1}{}{0}{}
+
+
+{3100}{[nervously] Who? I've never heard of her. Leave me alone. Go bother someone else.}{[nervously] Who? I've never heard of her. Leave me alone. Go bother someone else.}{}{3100}{}{game.global_flags[843] = 1}
+{3101}{E:}{}{1}{}{0}{}
+
+
+{10001}{I am afraid you lack the proper funds to pay for that, friend.}{I am afraid you lack the proper funds to pay for that, friend.}{}{10001}{}{}
+{12007}{I would be willing to sell that to you, friend}{I would be willing to sell that to you, friend}{}{12007}{}{}
+{12008}{I am sorry, but I cannot sell that to you.}{I am sorry, but I cannot sell that to you.}{}{12008}{}{}
+{12010}{I would be willing to buy that from you, friend.}{I would be willing to buy that from you, friend.}{}{12010}{}{}
+{12011}{I am sorry, but I cannot buy that from you.}{I am sorry, but I cannot buy that from you.}{}{12011}{}{}
+{12012}{One moment, friend. I am attending another at this moment. [He turns away for a moment and then looks back at you.] Now how may I help you, friend?}{One moment, friend. I am attending another at this moment. [He turns away for a moment and then looks back at you.] Now how may I help you, friend?}{}{12012}{}{}

@@ -1,0 +1,5 @@
+name: Extra Wild Shape
+flags: 12582913
+prereqs: 
+description: You may use your wild shape ability two more times per day than you otherwise could. If you are able to use wild shape to become an elemental, you also gain one additional use per day of your elemental wild shape.  You can take this feat multiple times, Its effects stack.
+prereq descr: Ability to use wild shape.

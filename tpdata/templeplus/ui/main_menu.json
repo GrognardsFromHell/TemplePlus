@@ -1,0 +1,230 @@
+{
+  "type": "container",
+  "sizeToParent":  true,
+  "__styles": [
+    {
+      "id": "mm-button-text",
+      "fontFamily": "Scurlock",
+      "pointSize": 48,
+      "foreground": [ "#0064a4", "#01415d" ],
+      "dropShadow": true,
+      "dropShadowBrush": "#000000",
+      "align": "center"
+    },
+    {
+      "id": "mm-button-hover-text",
+      "inherit": "mm-button-text",
+      "foreground": [ "#01ffff", "#01d0ff" ]
+    },
+    {
+      "id": "mm-button-pressed-text",
+      "inherit": "mm-button-text",
+      "foreground": [ "#eb1510", "#da5b61" ]
+    }
+  ],
+  "__buttonStyles": [
+    {
+      "id": "mm-button",
+      "inherit": "default-sounds",
+      "textStyle": "mm-button-text",
+      "hoverTextStyle": "mm-button-hover-text",
+      "pressedTextStyle": "mm-button-pressed-text"
+    }
+  ],
+  "children": [
+    {
+      "type": "container",
+      "y": 30,
+      "centerHorizontally":  true,
+      "content": [
+        {
+          "type": "image",
+          "path": "art/interface/mainmenu_ui/MainMenu_Title.img"
+        }
+      ]
+    },
+    {
+      "id":  "pages",
+      "type": "container",
+      "width": 400,
+      "height": 270,
+      "centerHorizontally":  true,
+      "children": [
+        {
+          "id": "page-main-menu",
+          "type": "container",
+          "sizeToParent": true,
+          "children": [
+            {
+              "id": "new-game",
+              "type": "button",
+              "text": "#{main_menu:0}",
+              "style": "mm-button",
+              "width": 400
+            },
+            {
+              "id": "load-game",
+              "type": "button",
+              "text": "#{main_menu:1}",
+              "style": "mm-button",
+              "y": 40,
+              "width": 400
+            },
+            {
+              "id": "tutorial",
+              "type": "button",
+              "text": "#{main_menu:2}",
+              "style": "mm-button",
+              "y": 80,
+              "width": 400
+            },
+            {
+              "id": "options",
+              "type": "button",
+              "text": "#{main_menu:3}",
+              "style": "mm-button",
+              "y": 120,
+              "width": 400
+            },
+            {
+              "id": "quit-game",
+              "type": "button",
+              "text": "#{main_menu:4}",
+              "style": "mm-button",
+              "y": 160,
+              "width": 400
+            }
+          ]
+        },
+        {
+          "id": "page-difficulty",
+          "type": "container",
+          "sizeToParent": true,
+          "children": [
+            {
+              "id": "difficulty-normal",
+              "type": "button",
+              "text": "#{main_menu:10}",
+              "style": "mm-button",
+              "width": 400
+            },
+            {
+              "id": "difficulty-ironman",
+              "type": "button",
+              "text": "#{main_menu:11}",
+              "style": "mm-button",
+              "y": 40,
+              "width": 400
+            },
+            {
+              "id": "difficulty-exit",
+              "type": "button",
+              "text": "#{main_menu:12}",
+              "style": "mm-button",
+              "y": 80,
+              "width": 400
+            }
+          ]
+        },
+        {
+          "id": "page-ingame-normal",
+          "type": "container",
+          "sizeToParent": true,
+          "children": [
+            {
+              "id": "ingame-normal-load",
+              "type": "button",
+              "text": "#{main_menu:20}",
+              "style": "mm-button",
+              "width": 400
+            },
+            {
+              "id": "ingame-normal-save",
+              "type": "button",
+              "text": "#{main_menu:21}",
+              "style": "mm-button",
+              "y": 40,
+              "width": 400
+            },
+            {
+              "id": "ingame-normal-close",
+              "type": "button",
+              "text": "#{main_menu:22}",
+              "style": "mm-button",
+              "y": 80,
+              "width": 400
+            },
+            {
+              "id": "ingame-normal-quit",
+              "type": "button",
+              "text": "#{main_menu:23}",
+              "style": "mm-button",
+              "y": 120,
+              "width": 400
+            }
+          ]
+        },
+        {
+          "id": "page-ingame-ironman",
+          "type": "container",
+          "sizeToParent": true,
+          "children": [
+            {
+              "id": "ingame-ironman-close",
+              "type": "button",
+              "text": "#{main_menu:30}",
+              "style": "mm-button",
+              "width": 400
+            },
+            {
+              "id": "ingame-ironman-save-quit",
+              "type": "button",
+              "text": "#{main_menu:31}",
+              "style": "mm-button",
+              "y": 40,
+              "width": 400
+            }
+          ]
+        },
+        {
+          "id": "page-options",
+          "type": "container",
+          "sizeToParent": true,
+          "children": [
+            {
+              "id": "options-show",
+              "type": "button",
+              "text": "#{main_menu:40}",
+              "style": "mm-button",
+              "width": 400
+            },
+            {
+              "id": "options-view-cinematics",
+              "type": "button",
+              "text": "#{main_menu:41}",
+              "style": "mm-button",
+              "y": 40,
+              "width": 400
+            },
+            {
+              "id": "options-credits",
+              "type": "button",
+              "text": "#{main_menu:42}",
+              "style": "mm-button",
+              "y": 80,
+              "width": 400
+            },
+            {
+              "id": "options-back",
+              "type": "button",
+              "text": "#{main_menu:43}",
+              "style": "mm-button",
+              "y": 120,
+              "width": 400
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

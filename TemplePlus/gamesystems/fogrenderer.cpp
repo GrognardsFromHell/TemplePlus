@@ -78,7 +78,7 @@ void FogOfWarRenderer::Render() {
 	gfx::PerfGroup perfGroup(mDevice, "Fog Of War");
 
 	// Reset the blurred buffer
-	std::fill(mBlurredFog.begin(), mBlurredFog.end(), 0);
+	eastl::fill(mBlurredFog.begin(), mBlurredFog.end(), 0);
 
 	static auto sOpaquePattern = FogBlurKernel::Create(0xFF);
 	static auto sHalfTransparentPattern = FogBlurKernel::Create(0xA0);
@@ -127,7 +127,7 @@ void FogOfWarRenderer::Render() {
 	auto mFogOriginX = (uint32_t) fogMinX;
 	auto mFogOriginY = (uint32_t) fogMinY;
 
-	mBlurredFogTexture->Update<uint8_t>(gsl::as_span(&mBlurredFog[0], mBlurredFog.size()));
+	mBlurredFogTexture->Update<uint8_t>(gsl::span(&mBlurredFog[0], mBlurredFog.size()));
 
 	// Use only the relevant subportion of the texture
 	auto umin = 2.5f / (float)mBlurredFogWidth;

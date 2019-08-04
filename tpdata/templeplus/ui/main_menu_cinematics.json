@@ -1,0 +1,78 @@
+{
+  "type": "container",
+  "centerHorizontally": true,
+  "centerVertically": true,
+  "width": 291,
+  "height": 357,
+  "__styles": [
+    {
+      "id": "mm-dialog-title",
+      "fontFamily": "Priory-12",
+      "pointSize": 12,
+      "foreground": "#ffffff",
+      "align": "center"
+    },
+    {
+      "id": "mm-cinematics-list-button",
+      "fontFamily": "Priory-12",
+      "pointSize": 12,
+      "foreground": "#ffffff",
+	  "align": "center"
+    },
+    {
+      "id": "mm-cinematics-list-button-selected",
+      "fontFamily": "Priory-12",
+      "pointSize": 12,
+      "foreground": "#3a58ff",
+	  "align": "center"
+    }
+  ],
+  "__buttonStyles": [
+    {
+      "id": "mm-cinematics-list-button",
+      "textStyle": "mm-cinematics-list-button"
+    },
+	{
+      "id": "mm-cinematics-list-button-selected",
+      "textStyle": "mm-cinematics-list-button-selected"
+    }
+  ],
+  "content": [
+    {
+      "type": "image",
+      "path": "art/interface/pc_creation/meta_backdrop.img"
+    },
+    {
+      "type": "text",
+      "text": "#{main_menu:1000}",
+      "style": "mm-dialog-title",
+      "y": 20
+    }
+  ],
+  "children": [
+    {
+      "id": "view",
+      "type": "button",
+      "text": "#{main_menu:1001}",
+      "x": 28,
+      "y": 306,
+      "style": "accept-button"
+    },
+    {
+      "id": "cancel",
+      "type": "button",
+      "text": "#{main_menu:1002}",
+      "x": 152,
+      "y": 306,
+      "style": "cancel-button"
+    },
+    {
+      "id":  "cinematicsList",
+      "type": "scrollView",
+      "x": 22,
+      "y": 71,
+      "width": 246,
+      "height": 218
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+name: Seeker Arrow
+flags: 8
+prereqs:
+description: Once per day you may launch a seeking arrow to a target. The arrow can navigate around any unavoidable obstacle so long as the target is within range.
+prereq descr: Arcane Archer level 4.

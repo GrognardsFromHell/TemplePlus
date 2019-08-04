@@ -22,18 +22,11 @@ struct locationSec {
 struct TempleFuncs : temple::AddressTable {
 	TempleFuncs();
 
-
-	void(*ProcessSystemEvents)();
 	uint32_t(__cdecl *StringHash)(const char * pString);
 
 
 	int32_t diceRoll(uint32_t dieNum, uint32_t dieType, int32_t dieBonus);
-	int32_t (__cdecl*RNG)(uint32_t num, uint32_t range);
 
-
-	void(__cdecl *UpdatePartyUI)();
-
-	
 	int32_t(__cdecl *ObjStatBaseDispatch)(objHndl, uint32_t obj_stat, void *); // Dispatcher Type 0x42; defaults to ObjStatBaseGet if no Dispatcher found
 
 	

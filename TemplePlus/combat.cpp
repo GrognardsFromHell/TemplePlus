@@ -28,10 +28,15 @@
 #include "ui/ui_dialog.h"
 #include "condition.h"
 #include "legacyscriptsystem.h"
+#include "config/config.h"
+#include "d20_obj_registry.h"
+#include "animgoals/anim.h"
 
 
 struct CombatSystemAddresses : temple::AddressTable
 {
+	void(__cdecl *AddToInitiative)(objHndl critter);
+
 	int(__cdecl* GetEnemiesCanMelee)(objHndl obj, objHndl* canMeleeList);
 	void(__cdecl*CombatTurnProcessAi)(objHndl obj);
 	void(__cdecl*CombatTurnAdvance)(objHndl obj);
@@ -61,12 +66,14 @@ struct CombatSystemAddresses : temple::AddressTable
 		rebase(combatActor, 0x10AA8438);
 		rebase(combatTimeEventSthg, 0x10AA8440);
 		rebase(combatTimeEventIndicator, 0x10AA8444);
+
+		rebase(AddToInitiative, 0x100DF1E0);
 	}
 
 	void (*Subturn)();
 	void (*EndTurn)();
 	void (*CombatPerformFleeCombat)(objHndl obj);
-} addresses;
+} combatAddresses;
 
 class CombatSystemReplacements : public TempleFix
 {
@@ -126,6 +133,12 @@ public:
 		orgActionBarResetCallback = replaceFunction(0x10062E60, ActionBarResetCallback);
 		orgTurnStart2 = replaceFunction(0x100638F0, TurnStart2);
 		orgCombatTurnAdvance = replaceFunction(0x100634E0, CombatTurnAdvance);
+		replaceFunction<BOOL(__cdecl)()>(0x10062A30, [](){ // Combat End
+			return combatSys.CombatEnd()?TRUE:FALSE;
+		});
+		replaceFunction<void(__cdecl)(objHndl)>(0x100630F0, [](objHndl handle) { // Critter Exit Combat Mode
+			return combatSys.CritterExitCombatMode(handle);
+		});
 
 		orgCheckRangedWeaponAmmo = replaceFunction(0x100654E0, CheckRangedWeaponAmmo);
 		
@@ -210,7 +223,7 @@ void LegacyCombatSystem::FloatCombatLine(objHndl obj, int line)
 	FloatLineColor floatColor = FloatLineColor::White;
 	if (objType == obj_t_npc )
 	{
-		auto npcLeader = critterSys.GetLeaderRecursive(obj);
+		auto npcLeader = critterSys.GetLeaderForNpc(obj);
 		if (!party.IsInParty(npcLeader))
 			floatColor = FloatLineColor::Red;
 		else
@@ -246,6 +259,9 @@ int LegacyCombatSystem::IsWithinReach(objHndl attacker, objHndl target)
 
 BOOL LegacyCombatSystem::CanMeleeTargetAtLocRegardItem(objHndl obj, objHndl weapon, objHndl target, LocAndOffsets* loc)
 {
+	if (!obj || critterSys.IsDeadOrUnconscious(obj))
+		return FALSE;
+
 	if (weapon)
 	{
 		if (objects.GetType(weapon) != obj_t_weapon)
@@ -263,24 +279,48 @@ BOOL LegacyCombatSystem::CanMeleeTargetAtLocRegardItem(objHndl obj, objHndl weap
 	auto distToLoc = max((float)0.0,locSys.DistanceToLocFeet(obj, loc));
 	if (tgtRadius + objReach < distToLoc)
 		return 0;
-	return 1;
+	return TRUE;
 }
 
-BOOL LegacyCombatSystem::CanMeleeTargetAtLoc(objHndl obj, objHndl target, LocAndOffsets* loc)
-{
+BOOL LegacyCombatSystem::CanMeleeTargetAtLoc(objHndl obj, objHndl target, LocAndOffsets* loc){
+
+	if (!obj || critterSys.IsDeadOrUnconscious(obj))
+		return FALSE;
+
 	objHndl weapon = critterSys.GetWornItem(obj, EquipSlot::WeaponPrimary);
 	if (!combatSys.CanMeleeTargetAtLocRegardItem(obj, weapon, target, loc))
 	{
 		objHndl secondaryWeapon = critterSys.GetWornItem(obj, EquipSlot::WeaponSecondary);
 		if (!combatSys.CanMeleeTargetAtLocRegardItem(obj, secondaryWeapon, target, loc))
 		{
-			if (!objects.getArrayFieldInt32(obj, obj_f_critter_attacks_idx, 0))
-				return 0;
+			if (!objects.getArrayFieldInt32(obj, obj_f_critter_attacks_idx, 0)){
+				// check polymorphed
+				auto protoId = d20Sys.d20Query(obj, DK_QUE_Polymorphed);
+				if (!protoId){
+					return FALSE;
+				}
+				else
+				{
+					auto protoHandle = objSystem->GetProtoHandle(protoId);
+					if (protoHandle) {
+						auto protoObj = objSystem->GetObject(protoHandle);
+						if (protoObj && !protoObj->GetInt32(obj_f_critter_attacks_idx, 0) )
+							return FALSE;
+					}
+				}
+				
+			}
+				
 			float objReach = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK);
 			float tgtRadius = objects.GetRadius(target) / 12.0f;
-			if (max<float>(0.0f,
-				locSys.DistanceToLocFeet(obj, loc)) - tgtRadius > objReach)
+			auto distToLoc = locSys.DistanceToLocFeet(obj, loc);
+			if (distToLoc < 0)
+				distToLoc = 0;
+
+			if (distToLoc - tgtRadius > objReach){
 				return 0;
+			}
+			
 		}
 	}
 	return 1;
@@ -331,6 +371,8 @@ bool LegacyCombatSystem::CanMeleeTargetFromLocRegardItem(objHndl obj, objHndl we
 }
 
 BOOL LegacyCombatSystem::CanMeleeTarget(objHndl obj, objHndl target){
+	if (!target)
+		return 0;
 	if (objects.GetFlags(obj) & (OF_OFF | OF_DESTROYED))
 		return 0;
 	auto targetObjFlags = objects.GetFlags(target);
@@ -448,8 +490,7 @@ objHndl * LegacyCombatSystem::GetHostileCombatantList(objHndl obj, int * count)
 	for (int i = 0; i < initListLen; i++)
 	{
 		auto combatant = GetInitiativeListMember(i);
-		if (obj != combatant && !critterSys.IsFriendly(obj,combatant))
-		{
+		if (combatant && obj != combatant && !critterSys.IsFriendly(obj,combatant)){
 			hostileTempList[hostileCount++] = combatant;
 		}
 	}
@@ -459,12 +500,24 @@ objHndl * LegacyCombatSystem::GetHostileCombatantList(objHndl obj, int * count)
 	return result;
 }
 
+std::vector<objHndl> LegacyCombatSystem::GetHostileCombatantList(objHndl handle){
+	int initListLen = GetInitiativeListLength();
+	std::vector<objHndl> result;
+	for (int i = 0; i < initListLen; i++){
+		auto combatant = GetInitiativeListMember(i);
+		if (combatant && handle != combatant && !critterSys.IsFriendly(handle, combatant)) {
+			result.push_back(combatant);
+		}
+	}
+	return result;
+}
+
 void LegacyCombatSystem::GetEnemyListInRange(objHndl performer, float rangeFeet, std::vector<objHndl>& enemiesOut){
 
 	auto perfLoc = objSystem->GetObject(performer)->GetLocationFull();
 
 	ObjList enemies;
-	enemies.ListRadius(perfLoc, rangeFeet* INCH_PER_TILE, OLC_CRITTERS);
+	enemies.ListRadius(perfLoc, rangeFeet* INCH_PER_FEET, OLC_CRITTERS);
 	for (int i = 0; i < enemies.size(); i++) {
 		auto resHandle = enemies[i];
 		if (!resHandle)
@@ -473,7 +526,7 @@ void LegacyCombatSystem::GetEnemyListInRange(objHndl performer, float rangeFeet,
 		if (critterSys.IsDeadNullDestroyed(resHandle))
 			continue;
 
-		if (resHandle != performer && !critterSys.AllegianceShared(resHandle, performer) && !critterSys.IsFriendly(performer, resHandle)) {
+		if (resHandle != performer && !critterSys.NpcAllegianceShared(resHandle, performer) && !critterSys.IsFriendly(performer, resHandle)) {
 			enemiesOut.push_back(resHandle);
 		}
 	}
@@ -534,6 +587,58 @@ bool LegacyCombatSystem::HasLineOfAttack(objHndl obj, objHndl target)
 	return 0;
 }
 
+bool LegacyCombatSystem::HasLineOfAttackFromPosition(LocAndOffsets fromPosition, objHndl target){
+	RaycastPacket objIt;
+	objIt.origin = fromPosition;
+	LocAndOffsets tgtLoc = objects.GetLocationFull(target);
+	objIt.targetLoc = tgtLoc;
+	objIt.flags = static_cast<RaycastFlags>(RaycastFlags::StopAfterFirstBlockerFound | RaycastFlags::ExcludeItemObjects | RaycastFlags::HasTargetObj | RaycastFlags::HasSourceObj | RaycastFlags::HasRadius);
+	objIt.radius = static_cast<float>(0.1);
+	bool blockerFound = false;
+	if (objIt.Raycast())
+	{
+		auto results = objIt.results;
+		for (auto i = 0; i < objIt.resultCount; i++)
+		{
+			objHndl resultObj = results[i].obj;
+			if (!resultObj)
+			{
+				if (results[i].flags & RaycastResultFlags::BlockerSubtile)
+				{
+					blockerFound = true;
+				}
+				continue;
+			}
+
+			auto objType = objects.GetType(resultObj);
+			if (objType == obj_t_portal)
+			{
+				if (!objects.IsPortalOpen(resultObj))
+				{
+					blockerFound = 1;
+				}
+				continue;
+			}
+			if (objType == obj_t_pc || objType == obj_t_npc)
+			{
+				if (critterSys.IsDeadOrUnconscious(resultObj)
+					|| d20Sys.d20Query(resultObj, DK_QUE_Prone))
+				{
+					continue;
+				}
+				// TODO: flag for Cover 
+			}
+		}
+	}
+	objIt.RaycastPacketFree();
+	if (!blockerFound)
+	{
+		return true;
+	}
+
+	return false;
+}
+
 void LegacyCombatSystem::AddToInitiativeWithinRect(objHndl handle) const
 {
 
@@ -561,8 +666,7 @@ void LegacyCombatSystem::AddToInitiativeWithinRect(objHndl handle) const
 		if (resObj->GetFlags() & ( OF_OFF | OF_DESTROYED | OF_DONTDRAW ))
 			continue;
 
-		if (critterSys.IsDeadOrUnconscious(resHandle))
-		{
+		if (critterSys.IsDeadOrUnconscious(resHandle)){
 			continue;
 		}
 			
@@ -584,10 +688,9 @@ void LegacyCombatSystem::AddToInitiativeWithinRect(objHndl handle) const
 
 void LegacyCombatSystem::TurnProcessAi(objHndl obj)
 {
-	//return addresses.TurnProcessing_100635E0(obj);
+	//return combatAddresses.TurnProcessing_100635E0(obj);
 	auto actor = tbSys.turnBasedGetCurrentActor();
-	static auto getNextSimulsActor = temple::GetRef<objHndl(__cdecl)()>(0x100920E0);
-	if (obj != actor && obj != getNextSimulsActor())
+	if (obj != actor && obj != actSeqSys.getNextSimulsPerformer())
 	{
 		logger->warn("Not AI processing {} (wrong turn...)", description.getDisplayName(obj));
 		return;
@@ -644,6 +747,65 @@ void LegacyCombatSystem::TurnProcessAi(objHndl obj)
 
 }
 
+BOOL LegacyCombatSystem::StartCombat(objHndl combatInitiator, int setToFirstInitiativeFlag){
+
+	if (*combatModeActive){
+		return TRUE;
+	}
+
+	if (AllPcsUnconscious())
+		return FALSE;
+
+	*combatAddresses.combatRoundCount = 0;
+	if (!gameSystems->GetAnim().InterruptAllForTbCombat()){
+		logger->debug("Combat: TB_Start: Anim-Goal-Interrupt FAILED!");
+	}
+	gameSystems->GetAnim().SetAllGoalsClearedCallback(temple::GetRef<void(__cdecl)()>(0x100628F0));
+	tbSys.CreateInitiativeListWithParty();
+	*combatModeActive = TRUE;
+
+	// Add within rect party to initiative 
+	for (auto i=0u; i < party.GroupListGetLen(); i++){
+		auto partyMember = party.GroupListGetMemberN(i);
+		AddToInitiativeWithinRect(partyMember);
+	}
+
+	AddToInitiative(combatInitiator);
+
+	if (setToFirstInitiativeFlag){
+		actSeqSys.ResetAll(combatInitiator);
+	}
+	else{
+		actSeqSys.ResetAll(objHndl::null);
+	}
+	temple::GetRef<int(__cdecl)()>(0x1009A950)(); // some logbook related crap, sets 0x10D249F8 = 1
+
+	actSeqSys.TurnStart(tbSys.turnBasedGetCurrentActor());
+
+	if (party.GetConsciousPartyLeader()){
+		++ (*combatAddresses.combatRoundCount);
+		*combatAddresses.combatActor = objHndl::null;
+		*combatAddresses.combatTimeEventSthg = 0;
+		*combatAddresses.combatTimeEventIndicator = 0;
+	}
+
+	if (actSeqSys.SimulsAdvance()){
+		logger->info("Combat for {} ending turn (simul)...", combatInitiator);
+		CombatAdvanceTurn(combatInitiator);
+	}
+
+	TurnStart2(0);
+
+	auto uiCallback = temple::GetRef<void(__cdecl*)()>(0x10AA83F4); // something to do with refreshing the initiative list portraits
+	uiCallback();
+
+	temple::GetRef<void(__cdecl)(objHndl)>(0x1003C770)(combatInitiator); // turn combat music on
+	
+	return TRUE;
+
+	//	return temple::GetRef<BOOL(__cdecl)(objHndl, int)>(0x100639A0)(combatInitiator, setToFirstInitiativeFlag);
+}
+
 void LegacyCombatSystem::EndTurn()
 {
 	auto actor = tbSys.turnBasedGetCurrentActor();
@@ -660,7 +822,6 @@ void LegacyCombatSystem::EndTurn()
 	tbSys.InitiativeListNextActor();
 
 	if (party.IsInParty(actor) && !actSeqSys.isPerforming(actor)){
-		//static auto addToInitiativeWithinRect = temple::GetRef<void(__cdecl)(objHndl)>(0x10062AC0);
 		AddToInitiativeWithinRect(actor);
 	}
 
@@ -669,8 +830,21 @@ void LegacyCombatSystem::EndTurn()
 		auto combatant = tbSys.groupInitiativeList->GroupMembers[i];
 		auto combatantObj = gameSystems->GetObj().GetObject(combatant);
 		
-		if (critterSys.IsDeadNullDestroyed(combatant) 
-			|| (combatantObj->GetFlags() & OF_OFF)) {
+		auto shouldRemove = critterSys.IsDeadNullDestroyed(combatant) || (combatantObj->GetFlags() & OF_OFF);
+		// Added in Temple+ : Remove AIs that aren't in combat mode
+		if (!shouldRemove && combatantObj->IsNPC() && !party.IsInParty(combatant) && !combatSys.IsBrawlInProgress()){
+			/*auto aifs = AIFS_NONE;
+			aiSys.GetAiFightStatus(combatant, &aifs, nullptr);
+			if (aifs == AIFS_NONE){
+				shouldRemove = true;
+			}*/
+			// Changing this to accomodate the Ghost from Fear of Ghosts quest... hope I don't regret it xD
+			auto critterFlags = critterSys.GetCritterFlags(combatant);
+			if (!(critterFlags & OCF_COMBAT_MODE_ACTIVE)) {
+				shouldRemove = true;
+			}
+		}
+		if (shouldRemove) {
 			static auto removeFromInitiative = temple::GetRef<int(__cdecl)(objHndl)>(0x100DF530);
 			removeFromInitiative(combatant);
 		}
@@ -682,20 +856,16 @@ void LegacyCombatSystem::EndTurn()
 		actSeqSys.TurnStart(tbSys.turnBasedGetCurrentActor());
 	}
 
-	static auto combatantsFarFromParty = temple::GetRef<int(__cdecl)()>(0x10062CB0);
-	static auto combatEnd = temple::GetRef<int(__cdecl)(objHndl)>(0x100630F0);
-	static auto allPcsUnconscious = temple::GetRef<int(__cdecl)()>(0x10062D60);
-	
-	if (combatantsFarFromParty()){
+	if (AllCombatantsFarFromParty()){
 		logger->info("Ending combat (enemies far from party)");
 		auto leader = party.GetConsciousPartyLeader();
-		combatEnd(leader);
-	} else if (allPcsUnconscious())
+		combatSys.CritterExitCombatMode(leader);
+	} else if (AllPcsUnconscious())
 	{
 		auto leader = party.GetConsciousPartyLeader();
-		combatEnd(leader);
+		combatSys.CritterExitCombatMode(leader);
 	}
-	//addresses.EndTurn();
+	//combatAddresses.EndTurn();
 }
 
 void LegacyCombatSystem::CombatSubturnEnd()
@@ -704,71 +874,184 @@ void LegacyCombatSystem::CombatSubturnEnd()
 	gameTimeSys.GameTimeAdd(&timeDelta);
 	if (party.GetConsciousPartyLeader())
 	{
-		++(*addresses.combatRoundCount);
-		*addresses.combatActor = 0i64;
-		*addresses.combatTimeEventSthg = 0;
-		*addresses.combatTimeEventIndicator = 0;
+		++(*combatAddresses.combatRoundCount);
+		*combatAddresses.combatActor = 0i64;
+		*combatAddresses.combatTimeEventSthg = 0;
+		*combatAddresses.combatTimeEventIndicator = 0;
 	}
 }
 
 void LegacyCombatSystem::Subturn()
 {
-	addresses.Subturn();
+	
+	auto actor = tbSys.turnBasedGetCurrentActor();
+	auto partyLeader = party.GetConsciousPartyLeader();
 
-	//auto actor = tbSys.turnBasedGetCurrentActor();
+	if (!actSeqSys.isPerforming(actor) ){
+		if (party.IsInParty(actor))
+			combatSys.AddToInitiativeWithinRect(actor);
+		else if (!critterSys.IsFriendly(actor, partyLeader)){
+	
+			ObjList objList;
+			objList.ListRangeTiles(actor, 24, OLC_CRITTERS);
+			for (auto i=0; i< objList.size(); i++){
+				auto resHandle = objList[i];
+				if (!resHandle)
+					break;
+				if (resHandle == actor)
+					continue;
+
+				
+				auto resObj = gameSystems->GetObj().GetObject(resHandle);
+				if (resObj->GetFlags() & (OF_OFF | OF_DESTROYED | OF_DONTDRAW))
+					continue;
+				if (critterSys.IsDeadOrUnconscious(resHandle)) {
+					continue;
+				}
+
+				if (party.IsInParty(resHandle))
+					continue;
+
+				if (tbSys.IsInInitiativeList(resHandle) || critterSys.IsCombatModeActive(resHandle))
+					continue;
+
+				auto objDesc = description.getDisplayName(resHandle);
+
+				if (!combatSys.HasLineOfAttack(resHandle, actor)){
 
 
-	//if (party.IsInParty(actor) && !actSeqSys.isPerforming(actor)) {
-	//	static auto addToInitiativeWithinRect = temple::GetRef<void(__cdecl)(objHndl)>(0x10062AC0);
-	//	addToInitiativeWithinRect(actor);
-	//}
+					if (locSys.DistanceToObj(actor, resHandle) > 40){
+						continue;
+					}
+					// check pathfinding short distances
+					auto pathFlags = PathQueryFlags::PQF_HAS_CRITTER | PQF_IGNORE_CRITTERS 
+						|PathQueryFlags::PQF_800 | PathQueryFlags::PQF_TARGET_OBJ
+						 | PathQueryFlags::PQF_ADJUST_RADIUS | PathQueryFlags::PQF_ADJ_RADIUS_REQUIRE_LOS
+						| PathQueryFlags::PQF_DONT_USE_PATHNODES | PathQueryFlags::PQF_A_STAR_TIME_CAPPED;
 
-	//if (!actor){
-	//	logger->error("Combat Subturn: Coudn't start TB combat Turn due to no Active Critters!");
-	//	static auto combatEnd = temple::GetRef<int(__cdecl)()>(0x10062A30);
-	//	combatEnd();
-	//}
+					if (!config.alertAiThroughDoors){
+						pathFlags |= PathQueryFlags::PQF_DOORS_ARE_BLOCKING;
+					}
 
-	//auto 
+					if (!pathfindingSys.CanPathTo(actor, resHandle, (PathQueryFlags)pathFlags, 40)){
+						//logger->debug("Failed to alert {} because of PF distance", resHandle);
+						continue;
+					}	
+				}
+				
+				if (aiSys.GetAllegianceStrength(resHandle, actor)){ // check that they have a faction in common
+					aiSys.ProvokeHostility(partyLeader, resHandle, 3, 0);
+					continue;
+				}
+
+				if (factions.HasNullFaction(resHandle) && factions.HasNullFaction(actor)){
+					if (aiSys.WillKos(resHandle, partyLeader)) {
+						aiSys.ProvokeHostility(partyLeader, resHandle, 3, 0);
+					}
+				}
+
+			}
+			 
+		}
+	}
+
+	if (!actor){
+		logger->error("Combat Subturn: Coudn't start TB combat Turn due to no Active Critters!");
+		CombatEnd();
+		return;
+	}
+
+	auto & combatSubturnTimeEvent = temple::GetRef<int>(0x10AA8420);
+	combatSubturnTimeEvent = 10;
+	static auto uiCombatInitiativePortraitsReset = temple::GetRef<int(__cdecl*)(int)>(0x10AA83FC);
+	party.CurrentlySelectedClear();
+
+	if (objects.IsPlayerControlled(actor)){
+		
+		uiCombatInitiativePortraitsReset(combatSubturnTimeEvent);
+
+		party.AddToCurrentlySelected(actor);
+		temple::GetRef<objHndl>(0x10AA8430) = actor; // looks like a write-only debug thing?
+
+		// there was a call to some nullsub here
+
+		auto combatSubturnCallback = temple::GetRef<void(__cdecl*)(objHndl)>(0x10AA8400);
+		if (combatSubturnCallback){
+			combatSubturnCallback(actor);
+		}
+
+		if (maps.GetCurrentMapId() == 5118 && scriptSys.GetGlobalFlag(7)
+			&& objSystem->GetObject(actor)->IsPC()) {
+			if (!tutorial.IsTutorialActive()) {
+				tutorial.Toggle();
+			}
+			tutorial.ShowTopic(31);
+			scriptSys.SetGlobalFlag(7, 0);
+		}
+		return;
+	}
+
+	// non-player controlled
+
+	uiCombatInitiativePortraitsReset(0);
+	temple::GetRef<objHndl>(0x10AA8430) = actor; // looks like a write-only debug thing?
+	auto combatSubturnCallback = temple::GetRef<void(__cdecl*)(objHndl)>(0x10AA8400);
+	if (combatSubturnCallback) {
+		combatSubturnCallback(actor);
+	}
+
+	if (actSeqSys.isPerforming(actor))
+		return;
+
+	if (!pythonObjIntegration.ExecuteObjectScript(actor, actor, ObjScriptEvent::StartCombat)){
+		logger->info("Skipping AI Process for {} (script)", actor);
+		combatSys.CombatAdvanceTurn(actor);
+		return;
+	}
+	
+	logger->info("Calling AI Process for {}", actor);
+	combatSys.TurnProcessAi(actor);
+
+	// combatAddresses.Subturn();
 }
 
-void LegacyCombatSystem::TurnStart2(int initiativeIdx)
+void LegacyCombatSystem::TurnStart2(int prevInitiativeIdx)
 {
 	auto actor = tbSys.turnBasedGetCurrentActor();
 	int curActorInitIdx = tbSys.GetInitiativeListIdx();
-	if (initiativeIdx > curActorInitIdx)
+	if (prevInitiativeIdx > curActorInitIdx)
 	{
-		logger->debug("TurnStart2: \t End Subturn. Cur Actor: {} ({}), Initiative Idx: {}; New Initiative Idx: {} ", description.getDisplayName(actor), actor, curActorInitIdx, initiativeIdx);
+		logger->debug("TurnStart2: \t End Subturn. Cur Actor: {}, Initiative Idx: {}; Prev Initiative Idx: {} ", actor, curActorInitIdx, prevInitiativeIdx);
 		CombatSubturnEnd();
 	}
 
 	// start new turn for current actor
 	actor = tbSys.turnBasedGetCurrentActor();
 	curActorInitIdx = tbSys.GetInitiativeListIdx();
-	logger->debug("TurnStart2: \t Starting new turn for {} ({}). InitiativeIdx: {}", description.getDisplayName(actor), actor, curActorInitIdx);
+	logger->debug("TurnStart2: \t Starting new turn for {}. InitiativeIdx: {}", actor, curActorInitIdx);
 	Subturn();
 
 	// set action bar values
-	uiCombat.ActionBarUnsetFlag1(*addresses.barPkt);
+	uiCombat.ActionBarUnsetFlag1(*combatAddresses.barPkt);
 	if (!objects.IsPlayerControlled(actor))
 	{
-		uiCombat.ActionBarSetMovementValues(*addresses.barPkt, 0.0, 20.0, 1.0);
+		uiCombat.ActionBarSetMovementValues(*combatAddresses.barPkt, 0.0, 20.0, 1.0);
 	}
 	
 	// handle simuls
 	if (actSeqSys.SimulsAdvance())
 	{
 		actor = tbSys.turnBasedGetCurrentActor();
-		logger->debug("TurnStart2: \t Actor {} ({}) starting turn...(simul)", description.getDisplayName(actor), actor);
+		logger->debug("TurnStart2: \t Actor {} starting turn...(simul)", actor);
 		CombatAdvanceTurn(actor);
 	}
 }
 
 void LegacyCombatSystem::CombatAdvanceTurn(objHndl obj)
 {
-	if (addresses.CheckFleeCombatMap() && addresses.GetFleeStatus())
+	if (combatAddresses.CheckFleeCombatMap() && combatAddresses.GetFleeStatus())
 	{
-		addresses.CombatPerformFleeCombat(obj);
+		combatAddresses.CombatPerformFleeCombat(obj);
 	}
 	if (!isCombatActive())
 		return;
@@ -784,7 +1067,7 @@ void LegacyCombatSystem::CombatAdvanceTurn(objHndl obj)
 	static int combatInitiative = 0;
 	combatInitiative++;
 	auto curSeq = *actSeqSys.actSeqCur;
-	logger->debug("Combat Advance Turn: Actor {} ({}) ending his turn. CurSeq: {}", description.getDisplayName(obj), obj, (void*)curSeq);
+	logger->debug("Combat Advance Turn: Actor {} ending his turn. CurSeq: {}",obj, (void*)curSeq);
 	if (combatInitiative <= GetInitiativeListLength())
 	{
 		int initListIdx = tbSys.GetInitiativeListIdx();
@@ -794,7 +1077,7 @@ void LegacyCombatSystem::CombatAdvanceTurn(objHndl obj)
 	}
 	combatInitiative--;
 
-	// return addresses.CombatTurnAdvance(obj);
+	// return combatAddresses.CombatTurnAdvance(obj);
 }
 
 BOOL LegacyCombatSystem::IsBrawlInProgress()
@@ -808,9 +1091,138 @@ BOOL LegacyCombatSystem::IsBrawlInProgress()
 	return false;
 }
 
+void LegacyCombatSystem::CritterExitCombatMode(objHndl handle) {
+
+	if (!objects.IsPlayerControlled(handle)) {
+		auto critterFlags = critterSys.GetCritterFlags(handle);
+		if (critterFlags & OCF_COMBAT_MODE_ACTIVE) {
+			objSystem->GetObject(handle)->SetInt32(obj_f_critter_flags, critterFlags & ~OCF_COMBAT_MODE_ACTIVE);
+		}
+		return;
+	}
+
+	if (!isCombatActive())
+		return;
+
+	if (party.GetConsciousPartyLeader() != handle){
+		return;
+	}
+
+	if (critterSys.IsDeadNullDestroyed(handle)){
+		if (party.GetLivingPartyMemberCount() >= 1)
+			return;
+	}
+
+	if (!CombatEnd())
+		return;
+
+	static auto uiCombatResetCallback = temple::GetRef<int(__cdecl*)()>(0x10AA83F8);
+	uiCombatResetCallback();
+
+	static auto combatMusicEnd = temple::GetRef<void(__cdecl)(objHndl)>(0x1003C8B0);
+	combatMusicEnd(handle);
+
+	auto N = party.GroupListGetLen();
+	for (auto i=0u; i < N; i++){
+		auto partyMem = party.GroupListGetMemberN(i);
+		auto critterFlags = critterSys.GetCritterFlags(partyMem);
+		if (critterFlags & OCF_COMBAT_MODE_ACTIVE){
+			objSystem->GetObject(partyMem)->SetInt32(obj_f_critter_flags, critterFlags & ~OCF_COMBAT_MODE_ACTIVE);
+		}
+	}
+
+	// temple::GetRef<void(__cdecl)(objHndl)>(0x100630F0)(handle);
+}
+
+bool LegacyCombatSystem::CombatEnd(){
+	//static auto combatEnd = temple::GetRef<int(__cdecl)()>(0x10062A30);
+	if (!isCombatActive() )
+		return true;
+
+	d20ObjRegistrySys.D20ObjRegistrySendSignalAll(DK_SIG_Combat_End, 0, 0);
+	*combatSys.combatModeActive = 0;
+	gameSystems->GetAnim().SetAllGoalsClearedCallback(nullptr);
+	if (!gameSystems->GetAnim().InterruptAllForTbCombat()){
+		logger->debug("CombatEnd: Anim goal interrupt FAILED!");
+	}
+	static auto actSeqResetOnCombatEnd = temple::GetRef<void(__cdecl)()>(0x10097BE0);
+	actSeqResetOnCombatEnd();
+	auto &mResettingCombatSystem = temple::GetRef<BOOL>(0x10AA8448);
+	if (!mResettingCombatSystem)
+		tbSys.ExecuteExitCombatScriptForInitiativeList();
+	tbSys.TbCombatEnd(mResettingCombatSystem);
+	if (!mResettingCombatSystem){
+		auto N = party.GroupListGetLen();
+		for (auto i=0u; i < N; i++){
+			auto partyMember = party.GroupListGetMemberN(i);
+			temple::GetRef<void(__cdecl)(objHndl)>(0x100B70A0)(partyMember);
+		}
+		auto combatGiveXp = temple::GetRef<void(__cdecl)()>(0x100B88C0);
+		combatGiveXp();
+	}
+	return true;
+}
+
 bool LegacyCombatSystem::isCombatActive()
 {
-	return *combatSys.combatModeActive != 0;
+	auto isActive = *combatSys.combatModeActive;
+	return isActive != 0;
+}
+
+bool LegacyCombatSystem::IsAutoAttack(){
+	if (isCombatActive())
+		return false;
+	return config.GetVanillaInt("auto attack") != 0;
+}
+
+bool LegacyCombatSystem::AllCombatantsFarFromParty()
+{
+	const double PEACEOUT_DISTANCE = 125.0;
+
+	if (!isCombatActive())
+		return true;
+
+	auto N = GetInitiativeListLength();
+
+	for (auto i=0; i < N; i++){
+		auto combatant = GetInitiativeListMember(i);
+		if (party.IsInParty(combatant))
+			continue;
+		if (critterSys.IsDeadOrUnconscious(combatant))
+			continue;
+		if (critterSys.IsConcealed(combatant)){
+			continue; // TODO maybe revamp this condition?
+		}
+
+		auto Nparty = party.GroupListGetLen();
+		for (auto j=0u; j < Nparty; j++){
+			auto partyMem = party.GroupListGetMemberN(j);
+			if (locSys.DistanceToObj(combatant, partyMem) < PEACEOUT_DISTANCE){
+				return false;
+			}
+				
+		}
+	}
+
+	return true;
+
+//	static auto combatantsFarFromParty = temple::GetRef<int(__cdecl)()>(0x10062CB0);
+	//return combatantsFarFromParty();
+
+}
+
+bool LegacyCombatSystem::AllPcsUnconscious(){
+
+	auto N = party.GroupPCsLen();
+	for (auto i=0u; i < N; i++){
+		auto pc = party.GroupPCsGetMemberN(i);
+		if (!pc)
+			continue;
+		if (!critterSys.IsDeadOrUnconscious(pc))
+			return false;
+	}
+
+	return true;
 }
 
 uint32_t LegacyCombatSystem::IsCloseToParty(objHndl objHnd)
@@ -827,7 +1239,23 @@ uint32_t LegacyCombatSystem::IsCloseToParty(objHndl objHnd)
 
 int LegacyCombatSystem::GetEnemiesCanMelee(objHndl obj, objHndl* canMeleeList)
 {
-	return addresses.GetEnemiesCanMelee(obj, canMeleeList);
+	return combatAddresses.GetEnemiesCanMelee(obj, canMeleeList);
+}
+
+std::vector<objHndl> LegacyCombatSystem::GetEnemiesCanMelee(objHndl handle){
+	std::vector<objHndl> result;
+
+	auto N = combatSys.GetInitiativeListLength();
+	for (auto i = 0; i < N; i++) {
+		auto combatant = combatSys.GetInitiativeListMember(i);
+		if (!combatant || combatant == handle || critterSys.IsFriendly(handle, combatant))
+			continue;
+		if (!combatSys.CanMeleeTarget(combatant, handle))
+			continue;
+		result.push_back(combatant);
+	}
+
+	return result;
 }
 
 objHndl LegacyCombatSystem::GetWeapon(AttackPacket* attackPacket)
@@ -1049,9 +1477,72 @@ int LegacyCombatSystem::GetClosestEnemy(AiTactic* aiTac, int selectionType)
 	return 0;
 }
 
-void LegacyCombatSystem::enterCombat(objHndl objHnd)
-{
-	_enterCombat(objHnd);
+void LegacyCombatSystem::Brawl(objHndl player, objHndl brawlAi){
+
+	temple::GetRef<int>(0x102E7F38) = -1; // reset brawl state (fixes weird issues... also allows brawling to be reused)
+
+	auto &brawlInProgress = temple::GetRef<BOOL>(0x10BD01C0);
+	if (brawlInProgress){
+		return;
+	}
+
+	auto &brawlPlayer = temple::GetRef<objHndl>(0x10BD01C8);
+	auto &brawlOpponent = temple::GetRef<objHndl>(0x10BD01D0);
+	brawlPlayer = player;
+	brawlOpponent = brawlAi;
+
+	for (auto i = 0u; i < party.GroupListGetLen(); i++) {
+		auto partyMember = party.GroupListGetMemberN(i);
+		if (partyMember == player){
+			conds.AddTo(player, "Brawl Player",{});
+		}
+		else{
+			conds.AddTo(partyMember, "Brawl Spectator", {});
+		}
+	}
+	conds.AddTo(brawlAi, "Brawl Opponent", {});
+	d20Sys.d20SendSignal(player, DK_SIG_DealNormalDamage, 0, 0);
+	inventory.ItemUnwieldByIdx(player, INVENTORY_WORN_IDX_START + EquipSlot::WeaponPrimary);
+	inventory.ItemUnwieldByIdx(player, INVENTORY_WORN_IDX_START + EquipSlot::WeaponSecondary);
+	combatSys.enterCombat(brawlAi);
+	combatSys.StartCombat(player, TRUE);
+	brawlInProgress = 1;
+
+	//_Brawl(player, brawlAi);
+}
+
+void LegacyCombatSystem::enterCombat(objHndl objHnd){
+
+	if (!d20Sys.d20Query(objHnd, DK_QUE_EnterCombat))
+		return;
+
+	if (!combatSys.IsCloseToParty(objHnd))
+		return;
+
+
+	if (objects.IsPlayerControlled(objHnd)){
+		
+		auto partyCount = party.GroupListGetLen();
+		for (auto i=0u; i < partyCount; i++){
+			auto partyMember = party.GroupListGetMemberN(i);
+			if (!critterSys.IsCombatModeActive(partyMember)){
+				temple::GetRef<void(__cdecl)(objHndl)>(0x10062740)(partyMember); // set combat mode active and force spreadout
+			}
+		}
+
+	}
+	else if (!critterSys.IsCombatModeActive(objHnd)){
+		auto partyMember0 = party.GroupListGetMemberN(0);
+		inventory.WieldBestAll(objHnd, partyMember0);
+		temple::GetRef<void(__cdecl)(objHndl)>(0x10062740)(objHnd); // set combat mode active and force spreadout
+		temple::GetRef<void(__cdecl)(objHndl)>(0x1003C770)(objHnd); // turn combat music on
+	}
+
+	//_enterCombat(objHnd);
+}
+
+void LegacyCombatSystem::AddToInitiative(objHndl critter){
+	tbSys.AddToInitiative(critter);
 }
 
 int LegacyCombatSystem::DispelRoll(objHndl obj, BonusList* bonlist, int modifier, int dc, const char* text, int *rollHistId){
@@ -1070,6 +1561,8 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 	auto d20Data = d20a.data1;
 	auto caflags = d20a.d20Caf;
 	auto tgt = d20a.d20ATarget;
+	if (!tgt)
+		return;
 
 	// mirror image processing
 	auto mirrorImageCond = conds.GetByName("sp-Mirror Image");
@@ -1107,6 +1600,8 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 			return 0;
 		cond = conds.GetByName("Weapon Seeking");
 		if (d20Sys.d20QueryWithData(attacker, DK_QUE_Critter_Has_Condition, cond, 0))
+			return 0;
+		if (critterSys.CanSeeWithBlindsight(attacker, victim))
 			return 0;
 
 		DispIoAttackBonus dispIo;
@@ -1256,8 +1751,15 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 		auto critThreatRange = 21 - dispIoAtkBon.Dispatch(performer, objHndl::null, dispTypeGetCriticalHitRange, DK_NONE);
 		if (!d20Sys.d20Query(tgt, DK_QUE_Critter_Is_Immune_Critical_Hits)){
 			if (toHitRoll >= critThreatRange || critAlwaysCheat) {
-				critHitRoll = Dice::Roll(1, 20);
+
+				// Add bonuses that only apply to the attack bonus for the confirmation roll (unfortunately, only this 
+				// bonus list will be used by the log)
+				auto dispatcher = gameSystems->GetObj().GetObject(performer)->GetDispatcher();
+				dispatcher->Process(dispConfirmCriticalBonus, DK_NONE, &dispIoToHitBon);
+				toHitBonFinal = dispIoToHitBon.bonlist.GetEffectiveBonusSum();
 				
+				critHitRoll = Dice::Roll(1, 20);
+
 				// RerollCritical handling (e.g. from Luck domain)
 				if (isMiss(critHitRoll, toHitBonFinal, tgtAcFinal) && d20Sys.d20Query(performer, DK_QUE_RerollCritical)){
 					histSys.RollHistoryType0Add(toHitRoll, critHitRoll, performer, tgt, &dispIoToHitBon.bonlist, &dispIoTgtAc.bonlist, dispIoToHitBon.attackPacket.flags);
@@ -1308,7 +1810,7 @@ bool LegacyCombatSystem::TripCheck(objHndl handle, objHndl target){
 		if (!dispatcher->IsValid())
 			return 0;
 		dispIo.bonOut = bonlist;
-		dispIo.returnVal = flags;
+		dispIo.flags = flags;
 		dispIo.obj = opponent;
 		dispatch.DispatcherProcessor(dispatcher, dispTypeAbilityCheckModifier, DK_STAT_STRENGTH + statUsed, &dispIo);
 		return dispIo.bonOut->GetEffectiveBonusSum();

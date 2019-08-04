@@ -75,7 +75,7 @@ void UiRenderer::DrawTexture(int texId, const TigRect& destRect, const TigRect& 
 }
 
 void UiRenderer::DrawTextureInWidget(int widId, int texId, const TigRect & destRect, const TigRect & srcRect, int flags){
-	auto wid = ui.WidgetGet(widId);
+	auto wid = uiManager->GetWidget(widId);
 	if (!wid)
 		return;
 	
@@ -126,7 +126,7 @@ void UiRenderer::PopFont() {
 }
 
 bool UiRenderer::DrawTextInWidget(int widgetId, const string &text, const TigRect &rect, const TigTextStyle &style) {
-	auto wid = ui.WidgetGet(widgetId);
+	auto wid = uiManager->GetWidget(widgetId);
 	if (!wid)
 		return 1;
 	if (text.empty())
@@ -137,6 +137,15 @@ bool UiRenderer::DrawTextInWidget(int widgetId, const string &text, const TigRec
 	return tigFont.Draw(text.c_str(), extents, style) == TRUE;
 
 	// return uiRenderFuncs.DrawTextInWidget(widgetId, text.c_str(), rect, style);
+}
+
+bool UiRenderer::DrawTextInWidgetCentered(int widgetId, const string & text, const TigRect & rect, const TigTextStyle & style)
+{
+	auto meas = MeasureTextSize(text, style);
+	TigRect rect2( (rect.width - meas.width)/2 + rect.x, 
+				   (rect.height - meas.height) / 2 + rect.y,
+					meas.width, meas.height);
+	return DrawTextInWidget(widgetId, text, rect2, style);
 }
 
 bool UiRenderer::RenderText(const string &text, TigRect &rect, const TigTextStyle &style) {

@@ -1,0 +1,5 @@
+name: Augment Healing
+flags: 12582912
+prereqs: 
+description: Add +2 points per spell level to the amount of damage healed by any Conjuration [Healing] spell that you cast.
+prereq descr: Heal 4 ranks

@@ -28,7 +28,7 @@ copy Release\DeltaCompressionDotNet*.dll dist
 copy Release\TemplePlus.exe dist
 copy -Recurse tpdata dist\tpdata
 copy -Recurse dependencies\python-lib dist\tpdata\python-lib
-copy dependencies\bin\d3dcompiler_47.dll dist
+copy "C:\Program Files (x86)\Windows Kits\10\Redist\D3D\x86\d3dcompiler_47.dll" dist
 
 if (Test-Path env:\APPVEYOR_BUILD_VERSION) {
     $distZipFile = "TemplePlus-$($env:APPVEYOR_BUILD_VERSION).zip"
@@ -47,9 +47,9 @@ $srcDir = Join-Path (pwd) "dist"
 
 # Create the nuget package (with the right version number)
 if (Test-Path env:\APPVEYOR_BUILD_VERSION) {
-    .\.nuget\nuget.exe pack -Version $env:APPVEYOR_BUILD_VERSION TemplePlus.nuspec
+    nuget.exe pack -Version $env:APPVEYOR_BUILD_VERSION TemplePlus.nuspec
 } else {
-    .\.nuget\nuget.exe pack TemplePlus.nuspec
+    nuget.exe pack TemplePlus.nuspec
 }
 
 "Finished packing the release."

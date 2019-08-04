@@ -2,6 +2,7 @@
 
 #include "gametime.h"
 #include "gamesystem.h"
+#include "frozen_obj_ref.h"
 
 struct GameSystemConf;
 
@@ -24,7 +25,9 @@ enum class GameClockType : uint32_t {
 		Advances as long as the dialog UI is not visible, but not while the
 		game is otherwise paused.
 	*/
-	GameTimeAnims
+	GameTimeAnims,
+
+	ClockTypeCount // number of clock types
 };
 
 /*
@@ -68,7 +71,8 @@ enum class TimeEventType : uint32_t {
 	IntgameTurnbased = 34,
 	PythonDialog = 35,
 	EncumberedComplain = 36,
-	PythonRealtime = 37
+	PythonRealtime = 37,
+	TimeEventSystemCount
 };
 
 enum class TimeEventArgType {
@@ -114,16 +118,6 @@ union TimeEventArg {
 	LocAndOffsets location;
 };
 
-#pragma pack(push, 1)
-struct TimeEventObjInfo {
-	ObjectId guid;
-	locXY location;
-	int mapNumber;
-	int padding;
-};
-#pragma pack(pop)
-const int shit5 = offsetof(TimeEventObjInfo, location);
-
 struct TimeEvent {
 	GameTime time;
 	TimeEventType system;
@@ -134,14 +128,18 @@ struct TimeEvent {
 struct TimeEventListEntry {
 	TimeEvent evt;
 	// Keeps track of objs referenced in the time event
-	TimeEventObjInfo objects[4];
+	FrozenObjRef objects[4];
 	// Linked list ptr to next entry
 	TimeEventListEntry* nextEvent;
+
+	bool ObjHandlesValid();
+	bool IsValid(int isLoadingMap); // can do object handle recovery
 };
 
 #pragma pack(pop)
 
 class TimeEventSystem : public GameSystem, public SaveGameAwareGameSystem, public ResetAwareGameSystem, public TimeAwareGameSystem {
+friend class TimeEventHooks;
 public:
 	static constexpr auto Name = "TimeEvent";
 	TimeEventSystem(const GameSystemConf &config);
@@ -168,10 +166,10 @@ public:
 
 	bool IsDaytime();
 
-	void AdvanceTime(const GameTime &advanceBy);
+	void GameTimeAdd(const GameTime &advanceBy);
 
-	// This odd, at a glance it seems to do the same as the previous, but if more than a day is passed
-	// additional dispatcher functions are called for the party...???
+	// It does the same as the previous, but if more than a day is passed
+	// additional dispatcher functions are called for the party (DK_NEWDAY_CALENDARICAL)
 	void AddTime(int timeInMs);
 
 	string FormatTime(const GameTime &time);
@@ -180,6 +178,7 @@ public:
 	 * Removes all time events of the given system type without calling their expiry function.
 	 */
 	void RemoveAll(TimeEventType type);
+	void PushDisableAdvance(); // increases the lock count on time advance
 
 	/**
 	 * Removes all time events to which the given predicate applies.
@@ -197,4 +196,14 @@ private:
 	- sourceFile and sourceLine are not used.
 	*/
 	bool Schedule(TimeEvent *evt, const GameTime *delay, const GameTime *baseTime, GameTime *triggerTimeOut, const char *sourceFile, int sourceLine);
+	bool ScheduleInternal(GameTime * time, TimeEvent *evt, GameTime *triggerTimeOut);
+
+	BOOL TimeEventReadFromFile(TioFile * file, TimeEvent * evtOut);
+
+	BOOL TimeEventListEntryAdd(TimeEventListEntry * evt);
+	
+	BOOL TimeEventParamSerializer(TioFile *file, const TimeEventTypeSpec &sysSpec, TimeEventListEntry *listNode);
+	
+	bool IsInAdvanceTime();
+
 };

@@ -50,4 +50,6 @@ struct MovieFuncs : temple::AddressTable {
 
 extern MovieFuncs movieFuncs;
 
+int HookedPlayMovieBink(const char * filename, const SubtitleLine * subtitles, int flags, uint32_t soundtrackId);
+
 void hook_movies();

@@ -21,12 +21,10 @@
 #include "graphics/render_hooks.h"
 #include <python/python_integration_class_spec.h>
 
-#undef HAVE_ROUND
-#define PYBIND11_EXPORT
-#include <pybind11/pybind11.h>
-#include <pybind11/common.h>
+#include <pybind11/embed.h>
 #include <pybind11/cast.h>
 #include <pybind11/stl.h>
+
 #include <python/python_object.h>
 #include <radialmenu.h>
 #include <action_sequence.h>
@@ -35,20 +33,20 @@
 #include <infrastructure/elfhash.h>
 #include <tig/tig_mouse.h>
 #include <combat.h>
+#include "ui_assets.h"
+#include <infrastructure/keyboard.h>
+#include "gamesystems/deity/legacydeitysystem.h"
 
 namespace py = pybind11;
-using namespace pybind11;
-using namespace pybind11::detail;
 
 Chargen chargen;
-
+temple::GlobalStruct<LegacyCharEditorSystem, 0x102FA6C8> lgcySystems;
 class UiCharEditor {
 	friend class UiCharEditorHooks;
 public:
 
 	objHndl GetEditedChar();
 	CharEditorSelectionPacket & GetCharEditorSelPacket();
-
 
 	void PrepareNextStages();
 	void BtnStatesUpdate(int systemId);
@@ -70,6 +68,7 @@ public:
 	void FeatsFree();
 	void FeatWidgetsFree();
 	BOOL FeatsWidgetsResize(UiResizeArgs &args);
+	bool IsSelectingFeats();
 	BOOL FeatsShow();
 	BOOL FeatsHide();
 	void FeatsActivate();
@@ -95,6 +94,9 @@ public:
 
 #pragma region Widget callbacks
 	void StateTitleRender(int widId);
+	void MainWndRender(int widId);
+
+
 	void ClassBtnRender(int widId);
 	BOOL ClassBtnMsg(int widId, TigMsg* msg);
 	BOOL ClassNextBtnMsg(int widId, TigMsg* msg);
@@ -136,10 +138,11 @@ public:
 	eastl::vector<int> classBtnMapping; // used as an index of choosable character classes
 	int GetClassWndPage();
 	Stat GetClassCodeFromWidgetAndPage(int idx, int page);
-	int GetStatesComplete();
+	int &GetStatesComplete();
 
 	// logic
 	void ClassSetPermissibles();
+	bool ClassSanitize(); // re-check class requirements. Returns true if re-evaluation is required.
 	bool IsSelectingNormalFeat(); // the normal feat you get every 3rd level in 3.5ed
 	bool IsSelectingBonusFeat(); // selecting a class bonus feat
 
@@ -153,9 +156,7 @@ public:
 	bool FeatCanPick(feat_enums feat);
 	bool IsSelectingRangerSpec();
 	bool IsClassBonusFeat(feat_enums feat);
-	bool IsBonusFeatDisregardingPrereqs(feat_enums feat);
 
-	void SetBonusFeats(std::vector<FeatInfo> & fti);
 	void FeatsSanitize();
 	void FeatsMultiSelectActivate(feat_enums feat);
 	feat_enums FeatsMultiGetFirst(feat_enums feat); // first alphabetical
@@ -178,8 +179,8 @@ public:
 	int featsMainWndId = 0, featsMultiSelectWndId =0;
 	int featsScrollbarId =0, featsExistingScrollbarId =0, featsMultiSelectScrollbarId =0;
 	int featsScrollbarY =0, featsExistingScrollbarY =0, featsMultiSelectScrollbarY =0;
-	WidgetType1 featsMainWnd, featsMultiSelectWnd;
-	WidgetType3 featsScrollbar, featsExistingScrollbar, featsMultiSelectScrollbar;
+	LgcyWindow featsMainWnd, featsMultiSelectWnd;
+	LgcyScrollBar featsScrollbar, featsExistingScrollbar, featsMultiSelectScrollbar;
 	eastl::vector<int> featsAvailBtnIds, featsExistingBtnIds, featsMultiSelectBtnIds;
 	int featsMultiOkBtnId = 0, featsMultiCancelBtnId = 0;
 	const int FEATS_AVAIL_BTN_COUNT = 17; // vanilla 18
@@ -191,12 +192,13 @@ public:
 	std::string featsAvailTitleString, featsExistingTitleString;
 	std::string featsTitleString;
 	std::string featsClassBonusTitleString;
+	bool selectingSpells = true;
 
 
 	int spellsWndId = 0;
-	WidgetType1 spellsWnd;
-	WidgetType3 spellsScrollbar, spellsScrollbar2;
+	LgcyWindow spellsWnd;
 	int spellsScrollbarId = 0, spellsScrollbar2Id = 0;
+	LgcyScrollBar spellsScrollbar, spellsScrollbar2;
 	int spellsScrollbarY = 0, spellsScrollbar2Y = 0;
 	eastl::vector<int> spellsAvailBtnIds, spellsChosenBtnIds;
 	const int SPELLS_BTN_COUNT = 17; // vanilla had 20, decreasing this to increase the font
@@ -270,7 +272,7 @@ private:
 	feat_enums featsMultiSelected = FEAT_NONE, mFeatsMultiMasterFeat = FEAT_NONE;
 
 	std::unique_ptr<CharEditorClassSystem> mClass;
-	std::vector<FeatInfo> mExistingFeats, mSelectableFeats, mMultiSelectFeats, mMultiSelectMasterFeats, mBonusFeats;
+	std::vector<FeatInfo> mExistingFeats, mSelectableFeats, mMultiSelectFeats, mMultiSelectMasterFeats; 
 	//std::unique_ptr<CharEditorStatsSystem> mStats;
 	//std::unique_ptr<CharEditorFeaturesSystem> mFeatures;
 	//std::unique_ptr<CharEditorSkillsSystem> mSkills;
@@ -279,7 +281,47 @@ private:
 } uiCharEditor;
 
 
-template <> class type_caster<objHndl> {
+// Helper function for the python character editor
+int hasFeat(int feat) {
+	auto handle = chargen.GetEditedChar();
+	auto &charPkt = chargen.GetCharEditorSelPacket();
+
+	auto levelRaised = charPkt.classCode;
+	if (chargen.IsNewChar())
+		levelRaised = (Stat)0;
+
+	uint32_t domain1 = Domain_None;
+	uint32_t domain2 = Domain_None;
+	uint32_t alignmentChoice = 0;
+
+	if (!chargen.IsNewChar()) {
+		if (levelRaised == stat_level_cleric) {
+			domain1 = charPkt.domain1;
+			domain2 = charPkt.domain2;
+			alignmentChoice = charPkt.alignmentChoice;
+		}
+	}
+
+	auto result = feats.HasFeatCountByClass(handle, static_cast<feat_enums>(feat), levelRaised, 0, domain1, domain2, alignmentChoice);
+
+	if (feat == charPkt.feat0) {
+		result++;
+	}
+	if (feat == charPkt.feat1) {
+		result++;
+	}
+	if (feat == charPkt.feat2) {
+		result++;
+	}
+	if (feat == charPkt.feat3) {
+		result++;
+	}
+
+	return result;
+}
+
+
+template <> class py::detail::type_caster<objHndl> {
 public:
 	bool load(handle src, bool) {
 		value = PyObjHndl_AsObjHndl(src.ptr());
@@ -298,10 +340,10 @@ protected:
 
 
 
-PYBIND11_PLUGIN(tp_char_editor){
-	py::module mm("char_editor", "Temple+ Char Editor, used for extending the ToEE character editor.");
-
-
+PYBIND11_EMBEDDED_MODULE(char_editor, mm) {
+	
+	mm.doc() = "Temple+ Char Editor, used for extending the ToEE character editor.";
+	
 	#pragma region KnownSpellInfo
 	py::class_<KnownSpellInfo>(mm, "KnownSpellInfo")
 		.def(py::init())
@@ -320,8 +362,29 @@ PYBIND11_PLUGIN(tp_char_editor){
 			auto firstIsNewSlot = spellSys.IsNewSlotDesignator(first);
 			auto secondIsNewSlot = spellSys.IsNewSlotDesignator(second);
 
-			auto firstSpellLvl = spellSys.GetSpellLevelBySpellClass(first, spellSys.GetSpellClass(self.spellClass) );
+			auto firstSpellLvl = spellSys.GetSpellLevelBySpellClass(first, spellSys.GetSpellClass(self.spellClass));
 			auto secondSpellLvl = spellSys.GetSpellLevelBySpellClass(second, spellSys.GetSpellClass(other.spellClass));
+
+			// Check for Advanced Learning Extended List Spells
+			if (firstSpellLvl == -1) {
+				auto castingClass = spellSys.GetCastingClass(self.spellClass);
+				if (pythonClassIntegration.HasAdvancedLearning(castingClass)) {
+					int nAdvancedLearningStat = pythonClassIntegration.GetAdvancedLearningClass(castingClass);
+					if (nAdvancedLearningStat != self.spellClass) {
+						firstSpellLvl = spellSys.GetSpellLevelBySpellClass(first, spellSys.GetSpellClass(nAdvancedLearningStat));
+					}
+				}
+			}
+
+			if (secondSpellLvl == -1) {
+				auto castingClass = spellSys.GetCastingClass(other.spellClass);
+				if (pythonClassIntegration.HasAdvancedLearning(castingClass)) {
+					int nAdvancedLearningStat = pythonClassIntegration.GetAdvancedLearningClass(castingClass);
+					if (nAdvancedLearningStat != other.spellClass) {
+						secondSpellLvl = spellSys.GetSpellLevelBySpellClass(second, spellSys.GetSpellClass(nAdvancedLearningStat));
+					}
+				}
+			}
 
 			auto firstClass = self.spellClass;
 			auto secondClass = other.spellClass;
@@ -367,7 +430,7 @@ PYBIND11_PLUGIN(tp_char_editor){
 			return spellSys.GetCastingClass(ksi.spellClass);
 		})
 		.def("set_casting_class", [](KnownSpellInfo& ksi, int classEnum) {
-			ksi.spellClass = spellSys.GetCastingClass(classEnum);
+			ksi.spellClass = spellSys.GetSpellClass(classEnum, false);
 		}, py::arg("class_enum"))
 		;
 
@@ -381,9 +444,151 @@ PYBIND11_PLUGIN(tp_char_editor){
 		.def_readwrite("feat_status_flags", &FeatInfo::flag, "0 - normal, 1 - automatic class feat, 2 - bonus selectable feat, 4 - selectable feat (disregard reqs)")
 		;
 		// methods
+#pragma region methods
 	mm
+	.def("stat_level_get", [](int statEnum, int statArg)->int{
+		auto stat = (Stat)statEnum;
+		auto handle = chargen.GetEditedChar();
+		auto &charPkt = chargen.GetCharEditorSelPacket();
+
+		auto statLvl = 0;
+		if (statArg != -1)
+			statLvl = objects.StatLevelGet(handle, stat, statArg);
+		else
+			statLvl = objects.StatLevelGet(handle, stat);
+
+		// Increase character level if appropriate
+		if (!chargen.IsNewChar()){
+			if (charPkt.classCode == stat) {
+				statLvl++;
+			}
+			// Report 1 higher if the stat is being raised
+			if (stat == charPkt.statBeingRaised) {
+				statLvl++;
+			}
+		}
+		
+		return statLvl;
+	}, py::arg("stat"), py::arg("stat_arg") = -1)
+	.def("skill_level_get", [](int skillEnum)->int {
+		auto skill = (SkillEnum)skillEnum;
+		auto handle = chargen.GetEditedChar();
+		auto &charPkt = chargen.GetCharEditorSelPacket();
+
+		auto skillLevel = critterSys.SkillLevel(handle, skill);
+		
+		// Add additional skill points from the character editor if necessary
+
+		if (!chargen.IsNewChar()) {
+			auto levelRaised = charPkt.classCode;
+			auto pointsSpent = 0;
+			if (skill >= 0 && skill < skill_count) {
+				pointsSpent += charPkt.skillPointsAdded[skill];
+			}
+			// Check if class skill - if not, halve their contribution (TODO sucks if skillLevel itself was rounded down :( )
+			auto numAdded = pointsSpent/2;
+			if (d20ClassSys.IsClassSkill(skill, levelRaised) ||
+				(levelRaised == stat_level_cleric && deitySys.IsDomainSkill(handle, skill))
+				|| d20Sys.D20QueryPython(handle, "Is Class Skill", skill)) {
+				numAdded = pointsSpent;
+			}
+
+			skillLevel += numAdded;
+			
+		}
+		return skillLevel;
+	})
+	.def("skill_ranks_get", [](int skillEnum)->int {
+		auto skill = (SkillEnum)skillEnum;
+		auto handle = chargen.GetEditedChar();
+		auto &charPkt = chargen.GetCharEditorSelPacket();
+
+		// Add additional skill points from the character editor if necessary
+		auto skillRanks = critterSys.SkillBaseGet(handle, skill);
+
+		if (!chargen.IsNewChar()){
+			if (skill < skill_count) {
+				skillRanks += charPkt.skillPointsAdded[skill];
+			}
+		}
+		return skillRanks;
+	})
+	.def("has_feat", [](std::string featString)->int {
+		auto feat = ElfHash::Hash(featString);
+		return hasFeat(feat);
+	})
+	.def("get_feats", []()->std::vector<int> {
+		std::vector<int> returnValues;
+		auto handle = chargen.GetEditedChar();
+		auto feats = objects.feats.GetFeats(handle);
+		auto &charPkt = chargen.GetCharEditorSelPacket();
+
+		if ((charPkt.feat0 != FEAT_INVALID) && (charPkt.feat0 != FEAT_NONE)) {
+			feats.push_back(charPkt.feat0);
+		}
+
+		if ((charPkt.feat1 != FEAT_INVALID) && (charPkt.feat1 != FEAT_NONE)) {
+			feats.push_back(charPkt.feat1);
+		}
+
+		if((charPkt.feat2 != FEAT_INVALID) && (charPkt.feat2 != FEAT_NONE)) {
+			feats.push_back(charPkt.feat2);
+		}
+
+		if ((charPkt.feat3 != FEAT_INVALID) && (charPkt.feat3 != FEAT_NONE)) {
+			feats.push_back(charPkt.feat3);
+		}
+
+		if ((charPkt.feat4 != FEAT_INVALID) && (charPkt.feat4 != FEAT_NONE)) {
+			feats.push_back(charPkt.feat4);
+		}
+
+		for (auto &&feat : feats) {
+			returnValues.push_back(static_cast<int>(feat));
+		}
+		
+		return returnValues;
+	})
+	.def("has_feat", [](int featEnum)->int{
+		auto feat = (feat_enums)featEnum;
+		return hasFeat(feat);
+	})
+
+	.def("has_metamagic_feat", []()->int {
+		int featCount = 0;
+		auto handle = chargen.GetEditedChar();
+		auto &charPkt = chargen.GetCharEditorSelPacket();
+
+		auto featList = feats.GetFeats(handle);
+
+		bool hasMMFeat = false;
+		for (auto feat : featList) {
+			if (feats.IsMetamagicFeat(feat)) {
+				featCount++;
+			}
+		}
+
+		if (feats.IsMetamagicFeat(charPkt.feat0)) {
+			featCount++;
+		}
+
+		if (feats.IsMetamagicFeat(charPkt.feat1)) {
+			featCount++;
+		}
+
+		if (feats.IsMetamagicFeat(charPkt.feat2)) {
+			featCount++;
+		}
+
+		if (feats.IsMetamagicFeat(charPkt.feat3)) {
+			featCount++;
+		}
+
+		return featCount;
+	})
+	
 	.def("set_bonus_feats", [](std::vector<FeatInfo> & fti){
-		uiCharEditor.SetBonusFeats(fti);
+		chargen.SetBonusFeats(fti);
 	})
 	.def("get_spell_enums", []()->std::vector<KnownSpellInfo>& {
 		return chargen.GetKnownSpellInfo();
@@ -397,6 +602,24 @@ PYBIND11_PLUGIN(tp_char_editor){
 		for (auto i = 0u; i < ksi.size(); i++){
 			spInfo.push_back(ksi[i]);
 		}
+	})
+	.def("has_armored_arcane_caster_feature", []()->bool
+	{
+		auto handle = chargen.GetEditedChar();
+		auto &charPkt = chargen.GetCharEditorSelPacket();
+		
+		auto &classes = d20ClassSys.GetArmoredArcaneCasterFeatureClasses();
+
+		for (auto c : classes) {
+			if (charPkt.classCode == c) {
+				return true;
+			}
+			if (objects.StatLevelGet(handle, c)) {
+				return true;
+			}
+		}
+
+		return false;
 	})
 	.def("get_class_code", []()->int
 	{
@@ -478,8 +701,18 @@ PYBIND11_PLUGIN(tp_char_editor){
 				continue;
 
 			SpellStoreData spData(spEnum, it.spellLevel, it.spellClass, 0, SpellStoreType::spellStoreKnown );
-			if (spData.spellLevel == -1)
+			if (spData.spellLevel == -1) {
 				spData.spellLevel = spellSys.GetSpellLevelBySpellClass(spEnum, spData.classCode);
+				if (spData.spellLevel == -1) {
+					int castingClass = spellSys.GetCastingClass(it.spellClass);
+					if (pythonClassIntegration.HasAdvancedLearning(castingClass)) {
+						int nAdvancedLearningStat = pythonClassIntegration.GetAdvancedLearningClass(castingClass);
+						if (nAdvancedLearningStat != castingClass) {
+							spData.spellLevel = spellSys.GetSpellLevelBySpellClass(spEnum, spellSys.GetSpellClass(nAdvancedLearningStat));
+						}
+					}
+				}
+			}
 			
 			if (spellSys.IsSpellKnown(handle,spEnum, spData.classCode))
 				continue;
@@ -488,7 +721,7 @@ PYBIND11_PLUGIN(tp_char_editor){
 		}
 	})
 	;
-
+#pragma endregion
 
 	py::class_<CharEditorSelectionPacket>(mm, "CharEdSpecs", "Holds the character editing specs.")
 		.def_readwrite("class_code", &CharEditorSelectionPacket::classCode, "Chosen class")
@@ -502,7 +735,7 @@ PYBIND11_PLUGIN(tp_char_editor){
 		//.def_readwrite("spells", (int CharEditorSelectionPacket::*) &CharEditorSelectionPacket::spellEnums, "Spell enums available for learning")
 		//.def_readwrite("spells_count", &CharEditorSelectionPacket::spellEnumsAddedCount, "Number of Spell enums available for learning")
 		;
-	return mm.ptr();
+
 }
 
 
@@ -526,18 +759,18 @@ void UiCharEditor::BtnStatesUpdate(int systemId){
 	auto lvlNew = objects.StatLevelGet(handle, stat_level) + 1;
 	auto &stateBtnIds = temple::GetRef<int[6]>(0x11E72E40);
 
-	ui.ButtonSetButtonState(stateBtnIds[2], UBS_DISABLED); // features
+	uiManager->SetButtonState(stateBtnIds[2], LgcyButtonState::Disabled); // features
 
 	// gain stat every 4 levels
 	if (lvlNew % 4)
-		ui.ButtonSetButtonState(stateBtnIds[1], UBS_DISABLED); // stats
+		uiManager->SetButtonState(stateBtnIds[1], LgcyButtonState::Disabled); // stats
 	else
-		ui.ButtonSetButtonState(stateBtnIds[1], UBS_NORMAL); 
+		uiManager->SetButtonState(stateBtnIds[1], LgcyButtonState::Normal); 
 
 	if (lvlNew % 3)
-		ui.ButtonSetButtonState(stateBtnIds[4], UBS_DISABLED); // feats
+		uiManager->SetButtonState(stateBtnIds[4], LgcyButtonState::Disabled); // feats
 	else
-		ui.ButtonSetButtonState(stateBtnIds[4], UBS_NORMAL);
+		uiManager->SetButtonState(stateBtnIds[4], LgcyButtonState::Normal);
 
 
 	mIsSelectingBonusFeat = false;
@@ -547,34 +780,34 @@ void UiCharEditor::BtnStatesUpdate(int systemId){
 		auto classLvlNew = GetNewLvl(classCode);
 
 		if (d20ClassSys.IsSelectingFeatsOnLevelup(handle, classCode) ) {
-			ui.ButtonSetButtonState(stateBtnIds[4], UBS_NORMAL); // feats
+			uiManager->SetButtonState(stateBtnIds[4], LgcyButtonState::Normal); // feats
 			mIsSelectingBonusFeat = true;
 		}
 
 		
 		if (classCode == stat_level_cleric) {
 			if (classLvlNew == 1)
-				ui.ButtonSetButtonState(stateBtnIds[2], UBS_NORMAL); // features
+				uiManager->SetButtonState(stateBtnIds[2], LgcyButtonState::Normal); // features
 		}
 		if (classCode == stat_level_ranger) {
 			if (classLvlNew == 1 || classLvlNew == 2 || !(classLvlNew % 5))
-				ui.ButtonSetButtonState(stateBtnIds[2], UBS_NORMAL); // features
+				uiManager->SetButtonState(stateBtnIds[2], LgcyButtonState::Normal); // features
 		}
 		if (classCode == stat_level_wizard) {
 			if (classLvlNew == 1)
-				ui.ButtonSetButtonState(stateBtnIds[2], UBS_NORMAL); // wizard special school
+				uiManager->SetButtonState(stateBtnIds[2], LgcyButtonState::Normal); // wizard special school
 		}
 	}
 	
 	// Spells
-	if (d20ClassSys.IsSelectingSpellsOnLevelup(handle, classCode)){
-		ui.ButtonSetButtonState(stateBtnIds[5], UBS_NORMAL);
+	if (selectingSpells){
+		uiManager->SetButtonState(stateBtnIds[5], LgcyButtonState::Normal);
 	} 
 	else
 	{
-		ui.ButtonSetButtonState(stateBtnIds[5], UBS_DISABLED);
+		uiManager->SetButtonState(stateBtnIds[5], LgcyButtonState::Disabled);
 	};
-	
+
 	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
 	auto &stateTitles = temple::GetRef<const char*[6]>(0x10BE8D1C);
 	auto text = stateTitles[systemId];
@@ -590,18 +823,16 @@ void UiCharEditor::BtnStatesUpdate(int systemId){
 }
 
 BOOL UiCharEditor::ClassWidgetsInit(){
-	static WidgetType1 classWnd(259,117, 405, 271);
-	classWnd.widgetFlags = 1;
+	static LgcyWindow classWnd(259,117, 405, 271);
+	classWnd.flags = 1;
 	classWnd.render = [](int widId) { uiCharEditor.StateTitleRender(widId); };
-	if (classWnd.Add(&classWndId))
-		return 0;
+	classWndId = uiManager->AddWindow(classWnd);
 
 	int coloff = 0, rowoff = 0;
 
 	for (auto it: d20ClassSys.vanillaClassEnums){
 		// class buttons
-		int newId = 0;
-		WidgetType2 classBtn("Class btn", classWndId, 71 + coloff, 47 + rowoff, 130, 20);
+		LgcyButton classBtn("Class btn", classWndId, 71 + coloff, 47 + rowoff, 130, 20);
 		coloff = 139 - coloff;
 		if (!coloff)
 			rowoff += 29;
@@ -612,10 +843,8 @@ BOOL UiCharEditor::ClassWidgetsInit(){
 		classBtn.x += classWnd.x; classBtn.y += classWnd.y;
 		classBtn.render = [](int id) {uiCharEditor.ClassBtnRender(id); };
 		classBtn.handleMessage = [](int id, TigMsg* msg) { return uiCharEditor.ClassBtnMsg(id, msg); };
-		classBtn.Add(&newId);
-		classBtnIds.push_back(newId);
-		ui.SetDefaultSounds(newId);
-		ui.BindToParent(classWndId, newId);
+		classBtn.SetDefaultSounds();
+		classBtnIds.push_back(uiManager->AddButton(classBtn, classWndId));
 
 		//rects
 		classBtnFrameRects.push_back(TigRect(classBtn.x-5, classBtn.y-5, classBtn.width+10, classBtn.height+10));
@@ -637,9 +866,7 @@ BOOL UiCharEditor::ClassWidgetsInit(){
 	classNextBtnTextRect.x -= classWnd.x; classNextBtnTextRect.y -= classWnd.y;
 	classPrevBtnTextRect.x -= classWnd.x; classPrevBtnTextRect.y -= classWnd.y;
 
-	WidgetType2 nextBtn("Class Next Button", classWndId, classWnd.x + 293, classWnd.y + 230, 55, 20),
-		prevBtn("Class Prev. Button", classWndId, classWnd.x + 58, classWnd.y + 230, 55, 20);
-
+	LgcyButton nextBtn("Class Next Button", classWndId, classWnd.x + 293, classWnd.y + 230, 55, 20);
 	nextBtn.handleMessage = [](int widId, TigMsg*msg)->BOOL {
 		if (uiCharEditor.classWndPage < uiCharEditor.mPageCount)
 			uiCharEditor.classWndPage++;
@@ -647,45 +874,54 @@ BOOL UiCharEditor::ClassWidgetsInit(){
 		return 1; };
 	nextBtn.render = [](int id) { uiCharEditor.ClassNextBtnRender(id); };
 	nextBtn.handleMessage = [](int widId, TigMsg*msg)->BOOL {	return uiCharEditor.ClassNextBtnMsg(widId, msg); };
+	nextBtn.SetDefaultSounds();
+	classNextBtn = uiManager->AddButton(nextBtn, classWndId);
+
+	LgcyButton prevBtn("Class Prev. Button", classWndId, classWnd.x + 58, classWnd.y + 230, 55, 20);
 	prevBtn.render = [](int id) { uiCharEditor.ClassPrevBtnRender(id); };
 	prevBtn.handleMessage = [](int widId, TigMsg*msg)->BOOL {	return uiCharEditor.ClassPrevBtnMsg(widId, msg); };
-	nextBtn.Add(&classNextBtn);	prevBtn.Add(&classPrevBtn);
+	prevBtn.SetDefaultSounds();
+	classPrevBtn = uiManager->AddButton(prevBtn, classWndId);
 	
-	ui.SetDefaultSounds(classNextBtn);	ui.BindToParent(classWndId, classNextBtn);
-	ui.SetDefaultSounds(classPrevBtn);	ui.BindToParent(classWndId, classPrevBtn);
-
 	return TRUE;
 }
 
 void UiCharEditor::ClassWidgetsFree(){
 	for (auto it: classBtnIds){
-		ui.WidgetRemoveRegardParent(it);
+		uiManager->RemoveChildWidget(it);
 	}
 	classBtnIds.clear();
-	ui.WidgetRemoveRegardParent(classNextBtn);
-	ui.WidgetRemoveRegardParent(classPrevBtn);
-	ui.WidgetRemove(classWndId);
+	uiManager->RemoveChildWidget(classNextBtn);
+	uiManager->RemoveChildWidget(classPrevBtn);
+	uiManager->RemoveWidget(classWndId);
 }
 
 BOOL UiCharEditor::ClassShow(){
-	ui.WidgetSetHidden(classWndId, 0);
-	ui.WidgetBringToFront(classWndId);
+	chargen.SetIsNewChar(false);
+	uiManager->SetHidden(classWndId, false);
+	uiManager->BringToFront(classWndId);
 	return 1;
 }
 
 BOOL UiCharEditor::ClassHide(){
-	ui.WidgetSetHidden(classWndId, 1);
+	auto handle = GetEditedChar();
+	auto classCode = GetCharEditorSelPacket().classCode;
+
+	//Call IsSelectingSpellsOnLevelup now and keep the value so it does not need to be called continually
+	selectingSpells = d20ClassSys.IsSelectingSpellsOnLevelup(handle, classCode);
+	
+	uiManager->SetHidden(classWndId, true);
 	return 0;
 }
 
 BOOL UiCharEditor::ClassWidgetsResize(UiResizeArgs & args){
 	for (auto it: classBtnIds){
-		ui.WidgetRemoveRegardParent(it);
+		uiManager->RemoveChildWidget(it);
 	}
 	classBtnIds.clear();
-	ui.WidgetRemoveRegardParent(classNextBtn);
-	ui.WidgetRemoveRegardParent(classPrevBtn);
-	ui.WidgetAndWindowRemove(classWndId);
+	uiManager->RemoveChildWidget(classNextBtn);
+	uiManager->RemoveChildWidget(classPrevBtn);
+	uiManager->RemoveWidget(classWndId);
 	classBtnFrameRects.clear();
 	classBtnRects.clear();
 	classTextRects.clear();
@@ -917,60 +1153,53 @@ void UiCharEditor::SpellsFree(){
 
 
 BOOL UiCharEditor::FeatsWidgetsInit(int w, int h) {
-	featsMainWnd = WidgetType1(259, 117, 405, 271);
-	featsMainWnd.widgetFlags = 1;
+	featsMainWnd = LgcyWindow(259, 117, 405, 271);
+	featsMainWnd.flags = 1;
 	featsMainWnd.render = [](int widId) {uiCharEditor.FeatsWndRender(widId); };
 	featsMainWnd.handleMessage = [](int widId, TigMsg*msg) { return uiCharEditor.FeatsWndMsg(widId, msg); };
-	featsMainWnd.Add(&featsMainWndId);
+	featsMainWndId = uiManager->AddWindow(featsMainWnd);
 
 	// multi select wnd
 	featsMultiCenterX = (w - 289) / 2;
 	featsMultiCenterY = (h - 355) / 2;
-	featsMultiSelectWnd = WidgetType1(0, 0, w, h);
+	featsMultiSelectWnd = LgcyWindow(0, 0, w, h);
 	auto featsMultiRefX = featsMultiCenterX + featsMultiSelectWnd.x;
 	auto featsMultiRefY = featsMultiCenterY + featsMultiSelectWnd.y;
-	featsMultiSelectWnd.widgetFlags = 1;
+	featsMultiSelectWnd.flags = 1;
 	featsMultiSelectWnd.render = [](int widId) {uiCharEditor.FeatsMultiSelectWndRender(widId); };
 	featsMultiSelectWnd.handleMessage = [](int widId, TigMsg*msg) { return uiCharEditor.FeatsMultiSelectWndMsg(widId, msg); };
-	featsMultiSelectWnd.Add(&featsMultiSelectWndId);
+	featsMultiSelectWndId = uiManager->AddWindow(featsMultiSelectWnd);
 	//scrollbar
 	featsMultiSelectScrollbar.Init(256, 71, 219);
 	featsMultiSelectScrollbar.parentId = featsMultiSelectWndId;
 	featsMultiSelectScrollbar.x += featsMultiRefX;
 	featsMultiSelectScrollbar.y += featsMultiRefY;
-	featsMultiSelectScrollbar.Add(&featsMultiSelectScrollbarId);
-	ui.BindToParent(featsMultiSelectWndId, featsMultiSelectScrollbarId);
+	featsMultiSelectScrollbarId = uiManager->AddScrollBar(featsMultiSelectScrollbar, featsMultiSelectWndId);
 	
 	//ok btn
 	{
-		int newId = 0;
-		WidgetType2 multiOkBtn("Feats Multiselect Ok Btn", featsMultiSelectWndId, 29, 307, 110, 22);
+		LgcyButton multiOkBtn("Feats Multiselect Ok Btn", featsMultiSelectWndId, 29, 307, 110, 22);
 		multiOkBtn.x += featsMultiRefX; multiOkBtn.y += featsMultiRefY;
 		featMultiOkRect = TigRect(multiOkBtn.x, multiOkBtn.y, multiOkBtn.width, multiOkBtn.height);
 		featMultiOkTextRect = TigRect(multiOkBtn.x, multiOkBtn.y + 4, multiOkBtn.width, multiOkBtn.height - 8);
 		multiOkBtn.render = [](int id) {uiCharEditor.FeatsMultiOkBtnRender(id); };
 		multiOkBtn.handleMessage = [](int id, TigMsg* msg) { return uiCharEditor.FeatsMultiOkBtnMsg(id, msg); };
 		multiOkBtn.renderTooltip = nullptr;
-		multiOkBtn.Add(&newId);
-		featsMultiOkBtnId = newId;
-		ui.SetDefaultSounds(newId);
-		ui.BindToParent(featsMultiSelectWndId, newId);
+		multiOkBtn.SetDefaultSounds();
+		featsMultiOkBtnId = uiManager->AddButton(multiOkBtn, featsMultiSelectWndId);
 	}
 
 	//cancel btn
 	{
-		int newId = 0;
-		WidgetType2 multiCancelBtn("Feats Multiselect Cancel Btn", featsMultiSelectWndId, 153, 307, 110, 22);
+		LgcyButton multiCancelBtn("Feats Multiselect Cancel Btn", featsMultiSelectWndId, 153, 307, 110, 22);
 		multiCancelBtn.x += featsMultiRefX; multiCancelBtn.y += featsMultiRefY;
 		featMultiCancelRect = TigRect(multiCancelBtn.x, multiCancelBtn.y, multiCancelBtn.width, multiCancelBtn.height);
 		featMultiCancelTextRect = TigRect(multiCancelBtn.x, multiCancelBtn.y + 4, multiCancelBtn.width, multiCancelBtn.height - 8);
 		multiCancelBtn.render = [](int id) {uiCharEditor.FeatsMultiCancelBtnRender(id); };
 		multiCancelBtn.handleMessage = [](int id, TigMsg* msg) { return uiCharEditor.FeatsMultiCancelBtnMsg(id, msg); };
 		multiCancelBtn.renderTooltip = nullptr;
-		multiCancelBtn.Add(&newId);
-		featsMultiCancelBtnId = newId;
-		ui.SetDefaultSounds(newId);
-		ui.BindToParent(featsMultiSelectWndId, newId);
+		multiCancelBtn.SetDefaultSounds();
+		featsMultiCancelBtnId = uiManager->AddButton(multiCancelBtn, featsMultiSelectWndId);
 	}
 	
 	featMultiTitleRect = TigRect(featsMultiCenterX, featsMultiCenterY + 20, 289, 12);
@@ -978,17 +1207,14 @@ BOOL UiCharEditor::FeatsWidgetsInit(int w, int h) {
 	featsMultiBtnRects.clear();
 	auto rowOff = 75;
 	for (auto i=0; i < FEATS_MULTI_BTN_COUNT; i++){
-		int newId = 0;
-		WidgetType2 featMultiBtn("Feats Multiselect btn", featsMultiSelectWndId, 23, 75 + i*(FEATS_MULTI_BTN_HEIGHT+2), 233, FEATS_MULTI_BTN_HEIGHT);
+		LgcyButton featMultiBtn("Feats Multiselect btn", featsMultiSelectWndId, 23, 75 + i*(FEATS_MULTI_BTN_HEIGHT+2), 233, FEATS_MULTI_BTN_HEIGHT);
 
 		featMultiBtn.x += featsMultiRefX; featMultiBtn.y += featsMultiRefY;
 		featMultiBtn.render = [](int id) {uiCharEditor.FeatsMultiBtnRender(id); };
 		featMultiBtn.handleMessage = [](int id, TigMsg* msg) { return uiCharEditor.FeatsMultiBtnMsg(id, msg); };
 		featMultiBtn.renderTooltip = nullptr;
-		featMultiBtn.Add(&newId);
-		featsMultiSelectBtnIds.push_back(newId);
-		ui.SetDefaultSounds(newId);
-		ui.BindToParent(featsMultiSelectWndId, newId);
+		featMultiBtn.SetDefaultSounds();
+		featsMultiSelectBtnIds.push_back(uiManager->AddButton(featMultiBtn, featsMultiSelectWndId));
 		featsMultiBtnRects.push_back(TigRect(featMultiBtn.x, featMultiBtn.y, featMultiBtn.width, featMultiBtn.height));
 	}
 
@@ -1001,17 +1227,14 @@ BOOL UiCharEditor::FeatsWidgetsInit(int w, int h) {
 	featsAvailBtnIds.clear();
 	featsBtnRects.clear();
 	for (auto i = 0; i < FEATS_AVAIL_BTN_COUNT; i++) {
-		int newId = 0;
-		WidgetType2 featsAvailBtn("Feats Available btn", featsMainWndId, 7, 38 + i*(FEATS_AVAIL_BTN_HEIGHT + 1), 169, FEATS_AVAIL_BTN_HEIGHT);
+		LgcyButton featsAvailBtn("Feats Available btn", featsMainWndId, 7, 38 + i*(FEATS_AVAIL_BTN_HEIGHT + 1), 169, FEATS_AVAIL_BTN_HEIGHT);
 
 		featsAvailBtn.x += featsMainWnd.x; featsAvailBtn.y += featsMainWnd.y;
 		featsAvailBtn.render = [](int id) {uiCharEditor.FeatsEntryBtnRender(id); };
 		featsAvailBtn.handleMessage = [](int id, TigMsg* msg) { return uiCharEditor.FeatsEntryBtnMsg(id, msg); };
 		featsAvailBtn.renderTooltip = nullptr;
-		featsAvailBtn.Add(&newId);
-		featsAvailBtnIds.push_back(newId);
-		ui.SetDefaultSounds(newId);
-		ui.BindToParent(featsMainWndId, newId);
+		featsAvailBtn.SetDefaultSounds();
+		featsAvailBtnIds.push_back(uiManager->AddButton(featsAvailBtn, featsMainWndId));
 		featsBtnRects.push_back(TigRect(featsAvailBtn.x - featsMainWnd.x, featsAvailBtn.y - featsMainWnd.y, featsAvailBtn.width, featsAvailBtn.height));
 	}
 	//scrollbar
@@ -1019,25 +1242,21 @@ BOOL UiCharEditor::FeatsWidgetsInit(int w, int h) {
 	featsScrollbar.parentId = featsMainWndId;
 	featsScrollbar.x += featsMainWnd.x;
 	featsScrollbar.y += featsMainWnd.y;
-	featsScrollbar.Add(&featsScrollbarId);
-	ui.BindToParent(featsMainWndId, featsScrollbarId);
+	featsScrollbarId = uiManager->AddScrollBar(featsScrollbar, featsMainWndId);
 
 
 	// Existing feats
 	featsExistingBtnIds.clear();
 	featsExistingBtnRects.clear();
 	for (auto i = 0; i < FEATS_EXISTING_BTN_COUNT; i++) {
-		int newId = 0;
-		WidgetType2 featsExistingBtn("Feats Existing btn", featsMainWndId, 212, 121 + i*(FEATS_EXISTING_BTN_HEIGHT + 1), 175, FEATS_EXISTING_BTN_HEIGHT);
+		LgcyButton featsExistingBtn("Feats Existing btn", featsMainWndId, 212, 121 + i*(FEATS_EXISTING_BTN_HEIGHT + 1), 175, FEATS_EXISTING_BTN_HEIGHT);
 
 		featsExistingBtn.x += featsMainWnd.x; featsExistingBtn.y += featsMainWnd.y;
 		featsExistingBtn.render = [](int id) {uiCharEditor.FeatsExistingBtnRender(id); };
 		featsExistingBtn.handleMessage = [](int id, TigMsg* msg) { return uiCharEditor.FeatsExistingBtnMsg(id, msg); };
 		featsExistingBtn.renderTooltip = nullptr;
-		featsExistingBtn.Add(&newId);
-		featsExistingBtnIds.push_back(newId);
-		ui.SetDefaultSounds(newId);
-		ui.BindToParent(featsMainWndId, newId);
+		featsExistingBtn.SetDefaultSounds();
+		featsExistingBtnIds.push_back(uiManager->AddButton(featsExistingBtn, featsMainWndId));
 		featsExistingBtnRects.push_back(TigRect(featsExistingBtn.x - featsMainWnd.x, featsExistingBtn.y - featsMainWnd.y, featsExistingBtn.width, featsExistingBtn.height));
 	}
 	//scrollbar
@@ -1045,8 +1264,7 @@ BOOL UiCharEditor::FeatsWidgetsInit(int w, int h) {
 	featsExistingScrollbar.parentId = featsMainWndId;
 	featsExistingScrollbar.x += featsMainWnd.x;
 	featsExistingScrollbar.y += featsMainWnd.y;
-	featsExistingScrollbar.Add(&featsExistingScrollbarId);
-	ui.BindToParent(featsMainWndId, featsExistingScrollbarId);
+	featsExistingScrollbarId = uiManager->AddScrollBar(featsExistingScrollbar, featsMainWndId);
 
 	featsSelectedBorderRect = TigRect(featsMainWnd.x + 207, featsMainWnd.y + 42, 185, 19 );
 	featsClassBonusBorderRect = TigRect(featsMainWnd.x + 207, featsMainWnd.y + 81, 185, 19);
@@ -1063,31 +1281,31 @@ void UiCharEditor::FeatsFree(){
 
 void UiCharEditor::FeatWidgetsFree(){
 	for (auto i = 0; i < FEATS_MULTI_BTN_COUNT; i++) {
-		ui.WidgetRemoveRegardParent(featsMultiSelectBtnIds[i]);
+		uiManager->RemoveChildWidget(featsMultiSelectBtnIds[i]);
 	}
 	featsMultiSelectBtnIds.clear();
 
 	for (auto i = 0; i < FEATS_AVAIL_BTN_COUNT; i++) {
-		ui.WidgetRemoveRegardParent(featsAvailBtnIds[i]);
+		uiManager->RemoveChildWidget(featsAvailBtnIds[i]);
 	}
 	featsAvailBtnIds.clear();
 
 	for (auto i = 0; i < FEATS_EXISTING_BTN_COUNT; i++) {
-		ui.WidgetRemoveRegardParent(featsExistingBtnIds[i]);
+		uiManager->RemoveChildWidget(featsExistingBtnIds[i]);
 	}
 	featsExistingBtnIds.clear();
 
-	ui.WidgetRemoveRegardParent(featsMultiOkBtnId);
-	ui.WidgetRemoveRegardParent(featsMultiCancelBtnId);
-	ui.WidgetRemoveRegardParent(featsMultiSelectScrollbarId);
-	ui.WidgetRemoveRegardParent(featsScrollbarId);
-	ui.WidgetRemoveRegardParent(featsExistingScrollbarId);
+	uiManager->RemoveChildWidget(featsMultiOkBtnId);
+	uiManager->RemoveChildWidget(featsMultiCancelBtnId);
+	uiManager->RemoveChildWidget(featsMultiSelectScrollbarId);
+	uiManager->RemoveChildWidget(featsScrollbarId);
+	uiManager->RemoveChildWidget(featsExistingScrollbarId);
 
-	auto wid = ui.WidgetGetType1(featsMultiSelectWndId);
-	auto wid2 = ui.WidgetGetType1(featsMainWndId);
+	auto wid = uiManager->GetWindow(featsMultiSelectWndId);
+	auto wid2 = uiManager->GetWindow(featsMainWndId);
 
-	ui.WidgetRemove(featsMultiSelectWndId);
-	ui.WidgetRemove(featsMainWndId);
+	uiManager->RemoveWidget(featsMultiSelectWndId);
+	uiManager->RemoveWidget(featsMainWndId);
 	
 	
 }
@@ -1097,16 +1315,27 @@ BOOL UiCharEditor::FeatsWidgetsResize(UiResizeArgs & args){
 	return FeatsWidgetsInit(args.rect1.width, args.rect1.height);
 }
 
+bool UiCharEditor::IsSelectingFeats()
+{
+	auto result = false;
+
+	if (uiManager) {
+		result = !uiManager->IsHidden(featsMainWndId);
+	}
+
+	return result;
+}
+
 BOOL UiCharEditor::FeatsShow(){
 	featsMultiSelected = FEAT_NONE;
-	ui.WidgetSetHidden(featsMainWndId, 0);
-	ui.WidgetBringToFront(featsMainWndId);
+	uiManager->SetHidden(featsMainWndId, false);
+	uiManager->BringToFront(featsMainWndId);
 	return 1;
 }
 
 BOOL UiCharEditor::FeatsHide()
 {
-	ui.WidgetSetHidden(featsMainWndId, 1);
+	uiManager->SetHidden(featsMainWndId, true);
 	return 0;
 }
 
@@ -1117,7 +1346,7 @@ void UiCharEditor::FeatsActivate(){
 	auto &selPkt = GetCharEditorSelPacket();
 
 	mIsSelectingBonusFeat = d20ClassSys.IsSelectingFeatsOnLevelup(handle, selPkt.classCode);
-	mBonusFeats.clear();
+	chargen.BonusFeatsClear();
 	if (mIsSelectingBonusFeat)
 		d20ClassSys.LevelupGetBonusFeats(handle, selPkt.classCode); // can call set_bonus_feats
 
@@ -1144,11 +1373,11 @@ void UiCharEditor::FeatsActivate(){
 
 	std::sort(mExistingFeats.begin(), mExistingFeats.end(), featSorter);
 
-	ui.WidgetCopy(featsExistingScrollbarId, &featsExistingScrollbar);
+	featsExistingScrollbar = *uiManager->GetScrollBar(featsExistingScrollbarId);
 	featsExistingScrollbar.scrollbarY = 0;
 	featsExistingScrollbarY = 0;
 	featsExistingScrollbar.yMax = max((int)mExistingFeats.size() - FEATS_EXISTING_BTN_COUNT, 0);
-	ui.WidgetSet(featsExistingScrollbarId, &featsExistingScrollbar);
+	*uiManager->GetScrollBar(featsExistingScrollbarId) = featsExistingScrollbar;
 
 	// Available feats
 	mSelectableFeats.clear();
@@ -1184,63 +1413,56 @@ void UiCharEditor::FeatsActivate(){
 	}
 	std::sort(mSelectableFeats.begin(), mSelectableFeats.end(), featSorter);
 
-	ui.WidgetCopy(featsScrollbarId, &featsScrollbar);
+	featsScrollbar = *uiManager->GetScrollBar(featsScrollbarId);
 	featsScrollbar.scrollbarY = 0;
 	featsScrollbarY= 0;
 	featsScrollbar.yMax = max((int)mSelectableFeats.size() - FEATS_AVAIL_BTN_COUNT, 0);
-	ui.WidgetSet(featsScrollbarId, &featsScrollbar);
+	*uiManager->GetScrollBar(featsScrollbarId) = featsScrollbar ;
 }
 
 BOOL UiCharEditor::SpellsWidgetsInit(){
 
 	const int spellsWndX = 259, spellsWndY = 117, spellsWndW = 405, spellsWndH = 271;
-	spellsWnd = WidgetType1(spellsWndX, spellsWndY, spellsWndW, spellsWndH);
-	spellsWnd.widgetFlags = 1;
+	spellsWnd = LgcyWindow(spellsWndX, spellsWndY, spellsWndW, spellsWndH);
+	spellsWnd.flags = 1;
 	spellsWnd.render = [](int widId) {uiCharEditor.SpellsWndRender(widId); };
 	spellsWnd.handleMessage = [](int widId, TigMsg*msg) { return uiCharEditor.SpellsWndMsg(widId, msg); };
-	spellsWnd.Add(&spellsWndId);
+	spellsWndId = uiManager->AddWindow(spellsWnd);
 
 	// Available Spells Scrollbar
 	spellsScrollbar.Init(183, 37, 230);
 	spellsScrollbar.parentId = spellsWndId;
 	spellsScrollbar.x += spellsWnd.x;
 	spellsScrollbar.y += spellsWnd.y;
-	spellsScrollbar.Add(&spellsScrollbarId);
-	ui.BindToParent(spellsWndId, spellsScrollbarId);
+	spellsScrollbarId = uiManager->AddScrollBar(spellsScrollbar, spellsWndId);
 
 	// Spell selection scrollbar
 	spellsScrollbar2.Init(385, 37, 230);
 	spellsScrollbar2.parentId = spellsWndId;
 	spellsScrollbar2.x += spellsWnd.x;
 	spellsScrollbar2.y += spellsWnd.y;
-	spellsScrollbar2.Add(&spellsScrollbar2Id);
-	ui.BindToParent(spellsWndId, spellsScrollbar2Id);
+	spellsScrollbar2Id = uiManager->AddScrollBar(spellsScrollbar2, spellsWndId);
 
 	int rowOff = 39;
 	for (auto i = 0; i < SPELLS_BTN_COUNT; i++, rowOff += SPELLS_BTN_HEIGHT){
 		
-		int newId = 0;
-		WidgetType2 spellAvailBtn("Spell Available btn", spellsWndId, 4, rowOff, 180, SPELLS_BTN_HEIGHT);
+		LgcyButton spellAvailBtn("Spell Available btn", spellsWndId, 4, rowOff, 180, SPELLS_BTN_HEIGHT);
 
 		spellAvailBtn.x += spellsWnd.x; spellAvailBtn.y += spellsWnd.y;
 		spellAvailBtn.render = [](int id) {uiCharEditor.SpellsAvailableEntryBtnRender(id); };
 		spellAvailBtn.handleMessage = [](int id, TigMsg* msg) { return uiCharEditor.SpellsAvailableEntryBtnMsg(id, msg); };
 		spellAvailBtn.renderTooltip = nullptr;
-		spellAvailBtn.Add(&newId);
-		spellsAvailBtnIds.push_back(newId);
-		ui.SetDefaultSounds(newId);
-		ui.BindToParent(spellsWndId, newId);
+		spellAvailBtn.SetDefaultSounds();
+		spellsAvailBtnIds.push_back(uiManager->AddButton(spellAvailBtn, spellsWndId));
 
-		WidgetType2 spellChosenBtn("Spell Chosen btn", spellsWndId, 206, rowOff, 170, SPELLS_BTN_HEIGHT);
+		LgcyButton spellChosenBtn("Spell Chosen btn", spellsWndId, 206, rowOff, 170, SPELLS_BTN_HEIGHT);
 
 		spellChosenBtn.x += spellsWnd.x; spellChosenBtn.y += spellsWnd.y;
 		spellChosenBtn.render = [](int id) {uiCharEditor.SpellsEntryBtnRender(id); };
 		spellChosenBtn.handleMessage = [](int id, TigMsg* msg) { return uiCharEditor.SpellsEntryBtnMsg(id, msg); };
 		spellChosenBtn.renderTooltip = nullptr;
-		spellChosenBtn.Add(&newId);
-		spellsChosenBtnIds.push_back(newId);
-		ui.SetDefaultSounds(newId);
-		ui.BindToParent(spellsWndId, newId);
+		spellChosenBtn.SetDefaultSounds();
+		spellsChosenBtnIds.push_back(uiManager->AddButton(spellChosenBtn, spellsWndId));
 
 	}
 
@@ -1272,22 +1494,22 @@ BOOL UiCharEditor::SpellsWidgetsInit(){
 
 void UiCharEditor::SpellsWidgetsFree(){
 	for (auto i = 0; i < SPELLS_BTN_COUNT; i++){
-		ui.WidgetRemoveRegardParent(spellsChosenBtnIds[i]);
-		ui.WidgetRemoveRegardParent(spellsAvailBtnIds[i]);
+		uiManager->RemoveChildWidget(spellsChosenBtnIds[i]);
+		uiManager->RemoveChildWidget(spellsAvailBtnIds[i]);
 	}
 	spellsChosenBtnIds.clear();
 	spellsAvailBtnIds.clear();
-	ui.WidgetRemove(spellsWndId);
+	uiManager->RemoveWidget(spellsWndId);
 }
 
 BOOL UiCharEditor::SpellsShow(){
-	ui.WidgetSetHidden(spellsWndId, 0);
-	ui.WidgetBringToFront(spellsWndId);
+	uiManager->SetHidden(spellsWndId, false);
+	uiManager->BringToFront(spellsWndId);
 	return 1;
 }
 
 BOOL UiCharEditor::SpellsHide(){
-	ui.WidgetSetHidden(spellsWndId, 1);
+	uiManager->SetHidden(spellsWndId, true);
 	return 0;
 }
 
@@ -1318,19 +1540,19 @@ void UiCharEditor::SpellsActivate() {
 
 	static auto setScrollbars = []() {
 		auto sbId = uiCharEditor.spellsScrollbarId;
-		ui.ScrollbarSetY(sbId, 0);
+		uiManager->ScrollbarSetY(sbId, 0);
 		int numEntries = (int)chargen.GetAvailableSpells().size();
-		ui.ScrollbarSetYmax(sbId, max(0, numEntries - uiCharEditor.SPELLS_BTN_COUNT));
-		ui.WidgetCopy(sbId, &uiCharEditor.spellsScrollbar);
+		uiManager->ScrollbarSetYmax(sbId, max(0, numEntries - uiCharEditor.SPELLS_BTN_COUNT));
+		uiCharEditor.spellsScrollbar = *uiManager->GetScrollBar(sbId);
 		uiCharEditor.spellsScrollbar.y = 0;
 		uiCharEditor.spellsScrollbarY = 0;
 
 		auto &charEdSelPkt = uiCharEditor.GetCharEditorSelPacket();
 		auto sbAddedId = uiCharEditor.spellsScrollbar2Id;
 		int numAdded = (int)chargen.GetKnownSpellInfo().size();
-		ui.ScrollbarSetY(sbAddedId, 0); 
-		ui.ScrollbarSetYmax(sbAddedId, max(0, numAdded - uiCharEditor.SPELLS_BTN_COUNT));
-		ui.WidgetCopy(sbAddedId, &uiCharEditor.spellsScrollbar2);
+		uiManager->ScrollbarSetY(sbAddedId, 0); 
+		uiManager->ScrollbarSetYmax(sbAddedId, max(0, numAdded - uiCharEditor.SPELLS_BTN_COUNT));
+		uiCharEditor.spellsScrollbar2 = *uiManager->GetScrollBar(sbAddedId);
 		uiCharEditor.spellsScrollbar2.y = 0;
 		uiCharEditor.spellsScrollbar2Y = 0;
 	};
@@ -1343,7 +1565,12 @@ void UiCharEditor::SpellsActivate() {
 
 	knSpInfo.clear();
 	avSpInfo.clear();
+	selPkt.spellEnumToRemove = 0;
 
+
+	/*auto newLvl = GetNewLvl(selPkt.classCode);
+	if (newLvl == 1)
+		newLvl = 0;*/
 	d20ClassSys.LevelupInitSpellSelection(handle, selPkt.classCode);
 
 	
@@ -1364,8 +1591,10 @@ void UiCharEditor::SpellsActivate() {
 BOOL UiCharEditor::SpellsCheckComplete(){
 	auto selPkt = GetCharEditorSelPacket();
 	auto handle = GetEditedChar();
-	if (!d20ClassSys.IsSelectingSpellsOnLevelup(handle, selPkt.classCode))
+
+	if (!selectingSpells) {
 		return true;
+	}
 
 	auto &needPopulateEntries = temple::GetRef<int>(0x10C4D4C4);
 
@@ -1403,8 +1632,50 @@ void UiCharEditor::StateTitleRender(int widId){
 	UiRenderer::PopFont();
 }
 
+void UiCharEditor::MainWndRender(int widId){
+	auto &dword_10BE9970 = temple::GetRef<int>(0x10BE9970);
+	if (!dword_10BE9970){
+		auto statesComplete = 0;
+
+		auto stage = 0;
+		auto &mStagesComplete = GetStatesComplete();
+		auto &selPkt = GetCharEditorSelPacket();
+		auto &mActiveStage = GetState();
+
+
+		for (stage = 0; stage < std::min(mStagesComplete + 1, (int)CharEditorStages::CE_STAGE_COUNT); stage++) {
+			auto &sys = lgcySystems[stage];
+			if (!sys.checkComplete)
+				break;
+			if (!sys.checkComplete())
+				break;
+		}
+
+		if (stage != mStagesComplete) {
+			mStagesComplete = stage;
+			if (mActiveStage > stage)
+				mActiveStage = stage;
+
+			// reset the next stages
+			for (auto nextStage = stage + 1; nextStage < CharEditorStages::CE_STAGE_COUNT; nextStage++) {
+				if (lgcySystems[nextStage].reset) {
+					lgcySystems[nextStage].reset(selPkt);
+				}
+			}
+		}
+	}
+
+	auto wnd = uiManager->GetWindow(widId);
+	RenderHooks::RenderImgFile(temple::GetRef<ImgFile*>(0x10BE9974), wnd->x, wnd->y);
+	
+	UiRenderer::DrawTextureInWidget( widId, temple::GetRef<int>(0x10BE993C),
+		{406, 15, 120, 227} , { 1,1,120,227 });
+	
+
+}
+
 void UiCharEditor::ClassBtnRender(int widId){
-	auto idx = ui.WidgetlistIndexof(widId, &classBtnIds[0], classBtnIds.size());
+	auto idx = WidgetIdIndexOf(widId, &classBtnIds[0], classBtnIds.size());
 	if (idx == -1)
 		return;
 
@@ -1416,15 +1687,14 @@ void UiCharEditor::ClassBtnRender(int widId){
 	static TigRect srcRect(1, 1, 120, 30);
 	UiRenderer::DrawTexture(buttonBox, classBtnFrameRects[idx], srcRect);
 
-	UiButtonState btnState; 
-	ui.GetButtonState(widId, btnState);
-	if (btnState != UiButtonState::UBS_DISABLED && btnState != UiButtonState::UBS_DOWN)
+	auto btnState = uiManager->GetButtonState(widId);
+	if (btnState != LgcyButtonState::Disabled && btnState != LgcyButtonState::Down)
 	{
 		auto &selPkt = GetCharEditorSelPacket();
 		if (selPkt.classCode == classCode)
-			btnState = UiButtonState::UBS_RELEASED;
-		else
-			btnState = btnState == UiButtonState::UBS_HOVERED ? UiButtonState::UBS_HOVERED : UiButtonState::UBS_NORMAL;
+			btnState = LgcyButtonState::Released;
+		else if (btnState != LgcyButtonState::Hovered)
+			btnState = LgcyButtonState::Normal;
 	}
 		
 	auto texId = temple::GetRef<int[15]>(0x11E74140)[(int)btnState];
@@ -1448,7 +1718,7 @@ BOOL UiCharEditor::ClassBtnMsg(int widId, TigMsg * msg){
 	if (msg->type != TigMsgType::WIDGET)
 		return 0;
 	
-	auto idx = ui.WidgetlistIndexof(widId, &classBtnIds[0], classBtnIds.size());
+	auto idx = WidgetIdIndexOf(widId, &classBtnIds[0], classBtnIds.size());
 	if (idx == -1)
 		return 0;
 	
@@ -1466,6 +1736,10 @@ BOOL UiCharEditor::ClassBtnMsg(int widId, TigMsg * msg){
 		GetCharEditorSelPacket().classCode = classCode;
 		PrepareNextStages();
 		temple::GetRef<void(__cdecl)(int)>(0x10143FF0)(0); // resets all the next systems in case of change
+		if (ClassSanitize()) { // resets the chosen class in case the user cheats (e.g. by selecting skills up ahead)
+			PrepareNextStages();
+			temple::GetRef<void(__cdecl)(int)>(0x10143FF0)(0); // resets all the next systems in case of change
+		}
 		return 1;
 	}
 
@@ -1554,12 +1828,15 @@ BOOL UiCharEditor::FinishBtnMsg(int widId, TigMsg * msg){
 	auto charEdited = GetEditedChar();
 
 	// add spell casting condition
-	if (d20ClassSys.IsCastingClass(selPkt.classCode)){
-		auto spellcastCond = (std::string)d20ClassSys.GetSpellCastingCondition(selPkt.classCode);
-		if ( spellcastCond.size() ){
-			conds.AddTo(charEdited, spellcastCond, {0,0,0,0, 0,0,0,0});
-		}
+	
+	auto spellcastCond = (std::string)d20ClassSys.GetSpellCastingCondition(selPkt.classCode);
+	if ( spellcastCond.size() ){
+		conds.AddTo(charEdited, spellcastCond, {0,0,0,0, 0,0,0,0});
 	}
+
+	// Final refresh once alignment_choice has been set
+	d20StatusSys.D20StatusRefresh(charEdited);
+
 	return 1;
 }
 
@@ -1571,10 +1848,9 @@ void UiCharEditor::ClassNextBtnRender(int widId){
 	static TigRect srcRect(1, 1, 120, 30);
 	UiRenderer::DrawTexture(buttonBox, classNextBtnFrameRect, srcRect);
 
-	UiButtonState btnState;
-	ui.GetButtonState(widId, btnState);
-	if (btnState != UiButtonState::UBS_DISABLED && btnState != UiButtonState::UBS_DOWN){
-		btnState = btnState == UiButtonState::UBS_HOVERED ? UiButtonState::UBS_HOVERED : UiButtonState::UBS_NORMAL;
+	auto btnState = uiManager->GetButtonState(widId);
+	if (btnState != LgcyButtonState::Disabled && btnState != LgcyButtonState::Down){
+		btnState = btnState == LgcyButtonState::Hovered ? LgcyButtonState::Hovered : LgcyButtonState::Normal;
 	}
 
 	auto texId = temple::GetRef<int[15]>(0x11E74140)[(int)btnState];
@@ -1599,10 +1875,9 @@ void UiCharEditor::ClassPrevBtnRender(int widId){
 	static TigRect srcRect(1, 1, 120, 30);
 	UiRenderer::DrawTexture(buttonBox, classPrevBtnFrameRect, srcRect);
 
-	UiButtonState btnState;
-	ui.GetButtonState(widId, btnState);
-	if (btnState != UiButtonState::UBS_DISABLED && btnState != UiButtonState::UBS_DOWN) {
-		btnState = btnState == UiButtonState::UBS_HOVERED ? UiButtonState::UBS_HOVERED : UiButtonState::UBS_NORMAL;
+	auto btnState = uiManager->GetButtonState(widId);
+	if (btnState != LgcyButtonState::Disabled && btnState != LgcyButtonState::Down) {
+		btnState = btnState == LgcyButtonState::Hovered ? LgcyButtonState::Hovered : LgcyButtonState::Normal;
 	}
 
 	auto texId = temple::GetRef<int[15]>(0x11E74140)[(int)btnState];
@@ -1666,8 +1941,8 @@ BOOL UiCharEditor::FeatsWndMsg(int widId, TigMsg * msg)
 	if (msg->type == TigMsgType::WIDGET) {
 		auto msgW = (TigMsgWidget*)msg;
 		if (msgW->widgetEventType == TigMsgWidgetEvent::Scrolled) {
-			ui.ScrollbarGetY(featsScrollbarId, &featsScrollbarY);
-			ui.ScrollbarGetY(featsExistingScrollbarId, &featsExistingScrollbarY);
+			uiManager->ScrollbarGetY(featsScrollbarId, &featsScrollbarY);
+			uiManager->ScrollbarGetY(featsExistingScrollbarId, &featsExistingScrollbarY);
 		}
 		return FALSE;
 	}
@@ -1679,7 +1954,7 @@ BOOL UiCharEditor::FeatsWndMsg(int widId, TigMsg * msg)
 	auto msgM = (TigMsgMouse*)msg;
 	auto &selPkt = GetCharEditorSelPacket();
 
-	if (msgM->buttonStateFlags & MouseStateFlags::MSF_RMB_RELEASED && ui.IsWidgetHidden(featsMultiSelectWndId)) {
+	if (msgM->buttonStateFlags & MouseStateFlags::MSF_RMB_RELEASED && uiManager->IsHidden(featsMultiSelectWndId)) {
 		
 		bool dumy = 1;
 		auto putFeat = false;
@@ -1739,14 +2014,14 @@ BOOL UiCharEditor::FeatsWndMsg(int widId, TigMsg * msg)
 
 	if ((int)msgM->x >= featsMainWnd.x + 3 && (int)msgM->x <= featsMainWnd.x + 188
 		&& (int)msgM->y >= featsMainWnd.y +36 && (int)msgM->y <= featsMainWnd.y + 263) {
-		ui.WidgetCopy(featsScrollbarId, &featsScrollbar);
+		featsScrollbar = *uiManager->GetScrollBar(featsScrollbarId);
 		if (featsScrollbar.handleMessage)
 			return featsScrollbar.handleMessage(featsScrollbarId, (TigMsg*)&msgCopy);
 	}
 
 	if ((int)msgM->x >= featsMainWnd.x + 207 && (int)msgM->x <= featsMainWnd.x + 392
 		&& (int)msgM->y >= featsMainWnd.y + 118 && (int)msgM->y <= featsMainWnd.y + 263) {
-		ui.WidgetCopy(featsExistingScrollbarId, &featsExistingScrollbar);
+		featsExistingScrollbar = *uiManager->GetScrollBar(featsExistingScrollbarId);
 		if (featsExistingScrollbar.handleMessage)
 			return featsExistingScrollbar.handleMessage(featsExistingScrollbarId, (TigMsg*)&msgCopy);
 	}
@@ -1760,7 +2035,7 @@ BOOL UiCharEditor::FeatsEntryBtnMsg(int widId, TigMsg * msg){
 		return 0;
 	auto msgW = (TigMsgWidget*)msg;
 
-	auto widIdx = ui.WidgetlistIndexof(widId, &featsAvailBtnIds[0], FEATS_AVAIL_BTN_COUNT);
+	auto widIdx = WidgetIdIndexOf(widId, &featsAvailBtnIds[0], FEATS_AVAIL_BTN_COUNT);
 	auto featIdx = widIdx + featsScrollbarY;
 	if (widIdx == -1 || featIdx >= (int)mSelectableFeats.size())
 		return FALSE;
@@ -1769,7 +2044,7 @@ BOOL UiCharEditor::FeatsEntryBtnMsg(int widId, TigMsg * msg){
 	auto feat = (feat_enums)featInfo.featEnum;
 
 	auto &selPkt = GetCharEditorSelPacket();
-	auto btn = ui.GetButton(widId);
+	auto btn = uiManager->GetButton(widId);
 
 	switch (msgW->widgetEventType){
 	case TigMsgWidgetEvent::Clicked:
@@ -1834,7 +2109,7 @@ BOOL UiCharEditor::FeatsEntryBtnMsg(int widId, TigMsg * msg){
 
 void UiCharEditor::FeatsEntryBtnRender(int widId){
 
-	auto widIdx = ui.WidgetlistIndexof(widId, &featsAvailBtnIds[0], FEATS_AVAIL_BTN_COUNT);
+	auto widIdx = WidgetIdIndexOf(widId, &featsAvailBtnIds[0], FEATS_AVAIL_BTN_COUNT);
 	auto featIdx = widIdx + featsScrollbarY;
 	if (widIdx == -1 || featIdx >= (int)mSelectableFeats.size())
 		return;
@@ -1855,7 +2130,7 @@ BOOL UiCharEditor::FeatsExistingBtnMsg(int widId, TigMsg* msg)
 		return 0;
 	auto msgW = (TigMsgWidget*)msg;
 
-	auto widIdx = ui.WidgetlistIndexof(widId, &featsExistingBtnIds[0], FEATS_EXISTING_BTN_COUNT);
+	auto widIdx = WidgetIdIndexOf(widId, &featsExistingBtnIds[0], FEATS_EXISTING_BTN_COUNT);
 	auto featIdx = widIdx + featsExistingScrollbarY;
 	if (widIdx == -1 || featIdx >= (int)mExistingFeats.size())
 		return FALSE;
@@ -1864,7 +2139,7 @@ BOOL UiCharEditor::FeatsExistingBtnMsg(int widId, TigMsg* msg)
 	auto feat = (feat_enums)featInfo.featEnum;
 
 	auto &selPkt = GetCharEditorSelPacket();
-	auto btn = ui.GetButton(widId);
+	auto btn = uiManager->GetButton(widId);
 
 	switch (msgW->widgetEventType) {
 	case TigMsgWidgetEvent::Entered:
@@ -1882,7 +2157,7 @@ BOOL UiCharEditor::FeatsExistingBtnMsg(int widId, TigMsg* msg)
 }
 
 void UiCharEditor::FeatsExistingBtnRender(int widId){
-	auto widIdx = ui.WidgetlistIndexof(widId, &featsExistingBtnIds[0], FEATS_EXISTING_BTN_COUNT);
+	auto widIdx = WidgetIdIndexOf(widId, &featsExistingBtnIds[0], FEATS_EXISTING_BTN_COUNT);
 	auto featIdx = widIdx + featsExistingScrollbarY;
 	if (widIdx == -1 || featIdx >= (int)mExistingFeats.size())
 		return;
@@ -1920,9 +2195,17 @@ void UiCharEditor::FeatsMultiSelectActivate(feat_enums feat) {
 	// populate list
 	mMultiSelectFeats.clear();
 
-	auto featIt = FEAT_ACROBATIC;
-	auto featProp = 0x100;
-	switch(feat){
+	if (feat >NUM_FEATS){
+		std::vector<feat_enums> tmp;
+		feats.MultiselectGetChildren(feat, tmp);
+		for (auto it: tmp){
+			mMultiSelectFeats.push_back(FeatInfo(it));
+		}
+	}
+	else{
+		auto featIt = FEAT_ACROBATIC;
+		auto featProp = 0x100;
+		switch (feat) {
 		case FEAT_EXOTIC_WEAPON_PROFICIENCY:
 			featProp = FPF_EXOTIC_WEAP_ITEM;
 			break;
@@ -1952,24 +2235,27 @@ void UiCharEditor::FeatsMultiSelectActivate(feat_enums feat) {
 			break;
 		default:
 			break;
-	}
+		}
 
-	for (auto ft = 0; ft < NUM_FEATS; ft++) {
-		featIt = (feat_enums)ft;
-		if (feats.IsFeatPropertySet(featIt, featProp) && feats.IsFeatEnabled(featIt)) {
-			mMultiSelectFeats.push_back(FeatInfo(ft));
+		for (auto ft = 0; ft < NUM_FEATS; ft++) {
+			featIt = (feat_enums)ft;
+			if (feats.IsFeatPropertySet(featIt, featProp) && feats.IsFeatEnabled(featIt)) {
+				mMultiSelectFeats.push_back(FeatInfo(ft));
+			}
 		}
 	}
 
-	ui.WidgetCopy(featsMultiSelectScrollbarId, &featsMultiSelectScrollbar);
+	
+
+	featsMultiSelectScrollbar = *uiManager->GetScrollBar(featsMultiSelectScrollbarId);
 	featsMultiSelectScrollbar.scrollbarY = 0;
 	featsMultiSelectScrollbarY = 0;
 	featsMultiSelectScrollbar.yMax = max(0, (int)mMultiSelectFeats.size() - FEATS_MULTI_BTN_COUNT);
-	ui.WidgetSet(featsMultiSelectScrollbarId, &featsMultiSelectScrollbar);
-	ui.ButtonSetButtonState(featsMultiOkBtnId, UBS_DISABLED);
+	featsMultiSelectScrollbar = *uiManager->GetScrollBar(featsMultiSelectScrollbarId);
+	uiManager->SetButtonState(featsMultiOkBtnId, LgcyButtonState::Disabled);
 
-	ui.WidgetSetHidden(featsMultiSelectWndId, 0);
-	ui.WidgetBringToFront(featsMultiSelectWndId);
+	uiManager->SetHidden(featsMultiSelectWndId, false);
+	uiManager->BringToFront(featsMultiSelectWndId);
 }
 
 void UiCharEditor::FeatsMultiSelectWndRender(int widId){
@@ -1989,29 +2275,27 @@ BOOL UiCharEditor::FeatsMultiSelectWndMsg(int widId, TigMsg * msg){
 	if (msg->type != TigMsgType::WIDGET && msg->type != TigMsgType::KEYSTATECHANGE)
 		return FALSE;
 	
-	ui.ScrollbarGetY(featsMultiSelectScrollbarId, &featsMultiSelectScrollbarY);
+	uiManager->ScrollbarGetY(featsMultiSelectScrollbarId, &featsMultiSelectScrollbarY);
 	
 	return TRUE;
 }
 
 void UiCharEditor::FeatsMultiOkBtnRender(int widId){
-	UiButtonState buttonState;
-	if (ui.GetButtonState(widId, buttonState))
-		return;
+	auto buttonState = uiManager->GetButtonState(widId);
 
 	int texId;
 	switch(buttonState){
-	case UBS_NORMAL:
-		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptNormal, texId);
+	case LgcyButtonState::Normal:
+		uiAssets->GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptNormal, texId);
 		break;
-	case UBS_HOVERED:
-		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptHover, texId);
+	case LgcyButtonState::Hovered:
+		uiAssets->GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptHover, texId);
 		break;
-	case UBS_DOWN:
-		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptPressed, texId);
+	case LgcyButtonState::Down:
+		uiAssets->GetAsset(UiAssetType::Generic, UiGenericAsset::AcceptPressed, texId);
 		break;
-	case UBS_DISABLED:
-		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DisabledNormal, texId);
+	case LgcyButtonState::Disabled:
+		uiAssets->GetAsset(UiAssetType::Generic, UiGenericAsset::DisabledNormal, texId);
 		break;
 	default:	
 		break;
@@ -2063,29 +2347,27 @@ BOOL UiCharEditor::FeatsMultiOkBtnMsg(int widId, TigMsg * msg){
 	
 	mFeatsMultiMasterFeat = FEAT_NONE;
 	featsMultiSelected = FEAT_NONE;
-	ui.WidgetSetHidden(featsMultiSelectWndId, 1);
+	uiManager->SetHidden(featsMultiSelectWndId, true);
 
 	return TRUE;
 }
 
 void UiCharEditor::FeatsMultiCancelBtnRender(int widId){
-	UiButtonState buttonState;
-	if (ui.GetButtonState(widId, buttonState))
-		return;
+	auto buttonState = uiManager->GetButtonState(widId);
 
 	int texId;
 	switch (buttonState) {
-	case UBS_NORMAL:
-		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclineNormal, texId);
+	case LgcyButtonState::Normal:
+		uiAssets->GetAsset(UiAssetType::Generic, UiGenericAsset::DeclineNormal, texId);
 		break;
-	case UBS_HOVERED:
-		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclineHover, texId);
+	case LgcyButtonState::Hovered:
+		uiAssets->GetAsset(UiAssetType::Generic, UiGenericAsset::DeclineHover, texId);
 		break;
-	case UBS_DOWN:
-		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DeclinePressed, texId);
+	case LgcyButtonState::Down:
+		uiAssets->GetAsset(UiAssetType::Generic, UiGenericAsset::DeclinePressed, texId);
 		break;
-	case UBS_DISABLED:
-		ui.GetAsset(UiAssetType::Generic, UiGenericAsset::DisabledNormal, texId);
+	case LgcyButtonState::Disabled:
+		uiAssets->GetAsset(UiAssetType::Generic, UiGenericAsset::DisabledNormal, texId);
 		break;
 	default:
 		break;
@@ -2121,13 +2403,13 @@ BOOL UiCharEditor::FeatsMultiCancelBtnMsg(int widId, TigMsg * msg){
 
 	mFeatsMultiMasterFeat = FEAT_NONE;
 	featsMultiSelected = FEAT_NONE;
-	ui.WidgetSetHidden(featsMultiSelectWndId, 1);
+	uiManager->SetHidden(featsMultiSelectWndId, true);
 
 	return TRUE;
 }
 
 void UiCharEditor::FeatsMultiBtnRender(int widId){
-	auto widIdx = ui.WidgetlistIndexof(widId, &featsMultiSelectBtnIds[0], FEATS_MULTI_BTN_COUNT);
+	auto widIdx = WidgetIdIndexOf(widId, &featsMultiSelectBtnIds[0], FEATS_MULTI_BTN_COUNT);
 	auto featIdx = widIdx + featsMultiSelectScrollbarY;
 	if (widIdx == -1 || featIdx >= (int)mMultiSelectFeats.size())
 		return;
@@ -2138,6 +2420,12 @@ void UiCharEditor::FeatsMultiBtnRender(int widId){
 
 
 	auto getFeatShortName = [](feat_enums ft){
+
+		if (ft > NUM_FEATS)
+		{
+			auto dummy = 1;
+		}
+
 		if (feats.IsFeatMultiSelectMaster(ft))
 			return uiCharEditor.GetFeatName(ft);
 		
@@ -2151,9 +2439,11 @@ void UiCharEditor::FeatsMultiBtnRender(int widId){
 		MesLine line(mesKey);
 		auto pcCreationMes = temple::GetRef<MesHandle>(0x11E72EF0);
 		auto text = mesFuncs.GetLineById(pcCreationMes,mesKey);
-		if (!text)
-			text = uiCharEditor.GetFeatName(ft).c_str();
-		return std::string(text);
+		if (text){
+			return std::string(text);
+		}
+		else
+			return uiCharEditor.GetFeatName(ft);	
 	};
 
 	auto ftName = getFeatShortName(feat);
@@ -2175,7 +2465,7 @@ BOOL UiCharEditor::FeatsMultiBtnMsg(int widId, TigMsg* msg){
 
 	auto msgW = (TigMsgWidget*)msg;
 
-	auto widIdx = ui.WidgetlistIndexof(widId, &featsMultiSelectBtnIds[0], FEATS_MULTI_BTN_COUNT);
+	auto widIdx = WidgetIdIndexOf(widId, &featsMultiSelectBtnIds[0], FEATS_MULTI_BTN_COUNT);
 	auto featIdx = widIdx + featsMultiSelectScrollbarY;
 	if (widIdx == -1 || featIdx >= (int)mMultiSelectFeats.size())
 		return FALSE;
@@ -2184,7 +2474,7 @@ BOOL UiCharEditor::FeatsMultiBtnMsg(int widId, TigMsg* msg){
 	auto feat = (feat_enums)featInfo.featEnum;
 
 	auto &selPkt = GetCharEditorSelPacket();
-	auto btn = ui.GetButton(widId);
+	auto btn = uiManager->GetButton(widId);
 
 	switch (msgW->widgetEventType) {
 	case TigMsgWidgetEvent::MouseReleased:
@@ -2192,13 +2482,13 @@ BOOL UiCharEditor::FeatsMultiBtnMsg(int widId, TigMsg* msg){
 			helpSys.PresentWikiHelp(109 + feat);
 			return TRUE;
 		}
-		if (FeatCanPick(feat)){
+		if (FeatCanPick(feat) && !FeatAlreadyPicked(feat)){
 			featsMultiSelected = feat;
-			ui.ButtonSetButtonState(featsMultiOkBtnId, UBS_NORMAL);
+			uiManager->SetButtonState(featsMultiOkBtnId, LgcyButtonState::Normal);
 		} else
 		{
 			featsMultiSelected = FEAT_NONE;
-			ui.ButtonSetButtonState(featsMultiOkBtnId, UBS_DISABLED);
+			uiManager->SetButtonState(featsMultiOkBtnId, LgcyButtonState::Disabled);
 		}
 		return TRUE;
 	default:
@@ -2295,7 +2585,7 @@ bool UiCharEditor::FeatCanPick(feat_enums feat) {
 	if (IsSelectingBonusFeat() && IsClassBonusFeat(feat)){
 		if ( feats.IsFeatPropertySet(feat, FPF_ROGUE_BONUS))
 			return true;
-		if (uiCharEditor.IsBonusFeatDisregardingPrereqs(feat))
+		if (chargen.IsBonusFeatDisregardingPrereqs(feat))
 			return true;
 	}
 
@@ -2401,7 +2691,11 @@ bool UiCharEditor::IsSelectingRangerSpec()
 	return isRangerSpecial;
 }
 
-bool UiCharEditor::IsClassBonusFeat(feat_enums feat) {
+bool UiCharEditor::IsClassBonusFeat(feat_enums feat){
+	return chargen.IsClassBonusFeat(feat);
+}
+
+bool Chargen::IsClassBonusFeat(feat_enums feat) {
 	// mBonusFeats is delivered via the python class API
 	for (auto it : mBonusFeats) {
 		if (it.featEnum == feat)
@@ -2435,22 +2729,6 @@ bool UiCharEditor::IsClassBonusFeat(feat_enums feat) {
 	}
 }
 
-bool UiCharEditor::IsBonusFeatDisregardingPrereqs(feat_enums feat){
-	
-	for (auto it : mBonusFeats) {
-		if (it.featEnum == feat)
-			return (it.flag & FeatInfoFlag::DisregardPrereqs) != 0;
-	}
-
-	return false;
-}
-
-void UiCharEditor::SetBonusFeats(std::vector<FeatInfo>& fti) {
-	mBonusFeats.clear();
-	for (auto it : fti) {
-		uiCharEditor.mBonusFeats.push_back(it);
-	}
-}
 
 void UiCharEditor::FeatsSanitize() {
 	auto &selPkt = GetCharEditorSelPacket();
@@ -2469,37 +2747,8 @@ void UiCharEditor::FeatsSanitize() {
 }
 
 feat_enums UiCharEditor::FeatsMultiGetFirst(feat_enums feat) {
-	switch (feat)
-	{
-	case FEAT_EXOTIC_WEAPON_PROFICIENCY:
-		return FEAT_EXOTIC_WEAPON_PROFICIENCY_BASTARD_SWORD;
 
-	case FEAT_IMPROVED_CRITICAL:
-		return FEAT_IMPROVED_CRITICAL_BASTARD_SWORD;
-
-	case FEAT_MARTIAL_WEAPON_PROFICIENCY:
-		return FEAT_MARTIAL_WEAPON_PROFICIENCY_BATTLEAXE;
-
-	case FEAT_SKILL_FOCUS:
-		return FEAT_SKILL_FOCUS_APPRAISE;
-
-	case FEAT_WEAPON_FINESSE:
-		return FEAT_WEAPON_FINESSE_BASTARD_SWORD;
-
-	case FEAT_WEAPON_FOCUS:
-		return FEAT_WEAPON_FOCUS_BASTARD_SWORD;
-
-	case FEAT_GREATER_WEAPON_FOCUS:
-		return FEAT_GREATER_WEAPON_FOCUS_BASTARD_SWORD;
-
-	case FEAT_WEAPON_SPECIALIZATION:
-		return FEAT_WEAPON_SPECIALIZATION_BASTARD_SWORD;
-
-	case FEAT_GREATER_WEAPON_SPECIALIZATION:
-		return FEAT_GREATER_WEAPON_SPECIALIZATION_BASTARD_SWORD;
-	default:
-		return feat;
-	}
+	return feats.MultiselectGetFirst(feat);
 }
 
 
@@ -2538,8 +2787,8 @@ BOOL UiCharEditor::SpellsWndMsg(int widId, TigMsg * msg){
 	if (msg->type == TigMsgType::WIDGET){
 		auto msgW = (TigMsgWidget*)msg;
 		if (msgW->widgetEventType == TigMsgWidgetEvent::Scrolled){
-			ui.ScrollbarGetY(spellsScrollbarId, &spellsScrollbarY);
-			ui.ScrollbarGetY(spellsScrollbar2Id, &spellsScrollbar2Y);
+			uiManager->ScrollbarGetY(spellsScrollbarId, &spellsScrollbarY);
+			uiManager->ScrollbarGetY(spellsScrollbar2Id, &spellsScrollbar2Y);
 			SpellsPerDayUpdate();
 			return 1;
 		}
@@ -2554,7 +2803,7 @@ BOOL UiCharEditor::SpellsWndMsg(int widId, TigMsg * msg){
 			auto &knSpInfo = chargen.GetKnownSpellInfo();
 			for (auto i = 0; i < SPELLS_BTN_COUNT; i++){
 				// check if mouse within button
-				if (!ui.WidgetContainsPoint(spellsChosenBtnIds[i], msgM->x, msgM->y))
+				if (!uiManager->DoesWidgetContain(spellsChosenBtnIds[i], msgM->x, msgM->y))
 					continue;
 				
 				auto spellIdx = i + spellsScrollbar2Y;
@@ -2578,7 +2827,7 @@ BOOL UiCharEditor::SpellsWndMsg(int widId, TigMsg * msg){
 
 			for (auto i = 0; i < SPELLS_BTN_COUNT; i++) {
 				// get spell btn
-				if (!ui.WidgetContainsPoint(spellsAvailBtnIds[i], msgM->x, msgM->y))
+				if (!uiManager->DoesWidgetContain(spellsAvailBtnIds[i], msgM->x, msgM->y))
 					continue;
 				auto spellAvailIdx = i + spellsScrollbarY;
 				if ((uint32_t)spellAvailIdx >= avSpInfo.size())
@@ -2628,14 +2877,14 @@ BOOL UiCharEditor::SpellsWndMsg(int widId, TigMsg * msg){
 
 		if ((int)msgM->x >= spellsWnd.x + 4 && (int)msgM->x <= spellsWnd.x + 184
 			&& (int)msgM->y >= spellsWnd.y && (int)msgM->y <= spellsWnd.y + 259){
-			ui.WidgetCopy(spellsScrollbarId, &spellsScrollbar);
+			spellsScrollbar = *uiManager->GetScrollBar(spellsScrollbarId);
 			if (spellsScrollbar.handleMessage)
 				return spellsScrollbar.handleMessage(spellsScrollbarId, (TigMsg*)&msgCopy);
 		}
 
 		if ((int)msgM->x >= spellsWnd.x +206 && (int)msgM->x <= spellsWnd.x + 376
 			&& (int)msgM->y >= spellsWnd.y && (int)msgM->y <= spellsWnd.y + 259) {
-			ui.WidgetCopy(spellsScrollbar2Id, &spellsScrollbar2);
+			spellsScrollbar2 = *uiManager->GetScrollBar(spellsScrollbar2Id);
 			if (spellsScrollbar2.handleMessage)
 				return spellsScrollbar2.handleMessage(spellsScrollbar2Id, (TigMsg*)&msgCopy);
 		}
@@ -2680,7 +2929,7 @@ BOOL UiCharEditor::SpellsEntryBtnMsg(int widId, TigMsg * msg)
 
 void UiCharEditor::SpellsEntryBtnRender(int widId)
 {
-	auto widIdx = ui.WidgetlistIndexof(widId, &spellsChosenBtnIds[0], SPELLS_BTN_COUNT);
+	auto widIdx = WidgetIdIndexOf(widId, &spellsChosenBtnIds[0], SPELLS_BTN_COUNT);
 	if (widIdx == -1)
 		return;
 
@@ -2695,7 +2944,7 @@ void UiCharEditor::SpellsEntryBtnRender(int widId)
 	auto spEnum = spInfo.spEnum;
 	auto spLvl = spInfo.spellLevel;
 
-	auto btn = ui.GetButton(widId);
+	auto btn = uiManager->GetButton(widId);
 	
 	auto &selPkt = GetCharEditorSelPacket();
 	if (spFlag && (!selPkt.spellEnumToRemove || spFlag != 1)){
@@ -2730,7 +2979,7 @@ BOOL UiCharEditor::SpellsAvailableEntryBtnMsg(int widId, TigMsg * msg)
 		return 0;
 	auto msgW = (TigMsgWidget*)msg;
 
-	auto widIdx = ui.WidgetlistIndexof(widId, &spellsAvailBtnIds[0], SPELLS_BTN_COUNT);
+	auto widIdx = WidgetIdIndexOf(widId, &spellsAvailBtnIds[0], SPELLS_BTN_COUNT);
 	if (widIdx == -1)
 		return 0;
 
@@ -2747,7 +2996,7 @@ BOOL UiCharEditor::SpellsAvailableEntryBtnMsg(int widId, TigMsg * msg)
 
 	if (!spellSys.IsLabel(spEnum)){
 		
-		auto btn = ui.GetButton(widId);
+		auto btn = uiManager->GetButton(widId);
 		auto curSpellLvl = -1;
 		auto &selPkt = GetCharEditorSelPacket();
 		auto &knSpInfo = chargen.GetKnownSpellInfo();
@@ -2799,7 +3048,7 @@ BOOL UiCharEditor::SpellsAvailableEntryBtnMsg(int widId, TigMsg * msg)
 						break;
 
 					auto chosenWidIdx = (int)i - spellsScrollbar2Y;
-					if (!ui.WidgetContainsPoint(spellsChosenBtnIds[chosenWidIdx], msgW->x, msgW->y))
+					if (!uiManager->DoesWidgetContain(spellsChosenBtnIds[chosenWidIdx], msgW->x, msgW->y))
 						continue;
 
 					if (rhsSpInfo.spellLevel == -1 // wildcard slot
@@ -2853,7 +3102,7 @@ BOOL UiCharEditor::SpellsAvailableEntryBtnMsg(int widId, TigMsg * msg)
 
 void UiCharEditor::SpellsAvailableEntryBtnRender(int widId){
 
-	auto widIdx = ui.WidgetlistIndexof(widId, &spellsAvailBtnIds[0], SPELLS_BTN_COUNT);
+	auto widIdx = WidgetIdIndexOf(widId, &spellsAvailBtnIds[0], SPELLS_BTN_COUNT);
 	if (widIdx == -1)
 		return;
 
@@ -2863,7 +3112,7 @@ void UiCharEditor::SpellsAvailableEntryBtnRender(int widId){
 	if (spellIdx >= (int)avSpInfo.size())
 		return;
 
-	auto btn = ui.GetButton(widId);
+	auto btn = uiManager->GetButton(widId);
 	auto spEnum = avSpInfo[spellIdx].spEnum;
 
 	std::string text;
@@ -2911,7 +3160,7 @@ Stat UiCharEditor::GetClassCodeFromWidgetAndPage(int idx, int page){
 	return (Stat)classBtnMapping[idx2];
 }
 
-int UiCharEditor::GetStatesComplete(){
+int& UiCharEditor::GetStatesComplete(){
 	return temple::GetRef<int>(0x10BE8D38);
 }
 
@@ -2922,31 +3171,43 @@ void UiCharEditor::ClassSetPermissibles(){
 	for (auto it:classBtnIds){
 		auto classCode = GetClassCodeFromWidgetAndPage(idx++, page);
 		if (classCode == (Stat)-1)
-			ui.ButtonSetButtonState(it, UBS_DISABLED);
-		else if (d20ClassSys.ReqsMet(handle, classCode)){
-			ui.ButtonSetButtonState(it, UBS_NORMAL);
+			uiManager->SetButtonState(it, LgcyButtonState::Disabled);
+		else if (d20ClassSys.ReqsMet(handle, classCode) && pythonClassIntegration.IsAlignmentCompatible(handle, classCode)){
+			uiManager->SetButtonState(it, LgcyButtonState::Normal);
 		}
 		else{
-			ui.ButtonSetButtonState(it, UBS_DISABLED);
+			uiManager->SetButtonState(it, LgcyButtonState::Disabled);
 		}
 		
 	}
 
 	if (mPageCount <= 1){
-		ui.ButtonSetButtonState(classNextBtn, UBS_DISABLED);
-		ui.ButtonSetButtonState(classPrevBtn, UBS_DISABLED);
+		uiManager->SetButtonState(classNextBtn, LgcyButtonState::Disabled);
+		uiManager->SetButtonState(classPrevBtn, LgcyButtonState::Disabled);
 		return;
 	}
 
 	if (page > 0)
-		ui.ButtonSetButtonState(classPrevBtn, UBS_NORMAL);
+		uiManager->SetButtonState(classPrevBtn, LgcyButtonState::Normal);
 	else 
-		ui.ButtonSetButtonState(classPrevBtn, UBS_DISABLED);
+		uiManager->SetButtonState(classPrevBtn, LgcyButtonState::Disabled);
 
 	if (page < mPageCount-1)
-		ui.ButtonSetButtonState(classNextBtn, UBS_NORMAL);
+		uiManager->SetButtonState(classNextBtn, LgcyButtonState::Normal);
 	else
-		ui.ButtonSetButtonState(classNextBtn, UBS_DISABLED);
+		uiManager->SetButtonState(classNextBtn, LgcyButtonState::Disabled);
+}
+
+bool UiCharEditor::ClassSanitize(){
+	auto handle = GetEditedChar();
+	auto &selPkt = GetCharEditorSelPacket();
+	auto classCode = selPkt.classCode;
+	if (!d20ClassSys.ReqsMet(handle, classCode) || !pythonClassIntegration.IsAlignmentCompatible(handle, classCode)){
+		selPkt.classCode = (Stat)0;
+		return true;
+	}
+
+	return false;
 }
 
 
@@ -2963,6 +3224,10 @@ class UiCharEditorHooks : public TempleFix {
 	void apply() override {
 
 		// general
+		replaceFunction<void(int)>(0x10148880, [](int widId){
+			uiCharEditor.MainWndRender(widId);
+		});
+
 		replaceFunction<void()>(0x101B0760, []() {
 			uiCharEditor.PrepareNextStages();
 		});
@@ -3006,7 +3271,32 @@ class UiCharEditorHooks : public TempleFix {
 			return uiCharEditor.ClassCheckComplete();
 		});
 		
-		// feats
+
+		// Skill
+
+		// Hook for SkillIncreaseBtnMsg to raise 4 times when ctrl/alt is pressed
+		static BOOL(__cdecl*orgSkillIncBtnMsg)(int, TigMsg*) = replaceFunction<BOOL(__cdecl)(int, TigMsg*)>(0x101ABFA0, [](int widId, TigMsg* msg) {
+			if (msg->type != TigMsgType::WIDGET)
+				return FALSE;
+			auto widMsg = (TigMsgWidget*)msg;
+			if (widMsg->widgetEventType != TigMsgWidgetEvent::MouseReleased)
+				return FALSE;
+
+			if (infrastructure::gKeyboard.IsKeyPressed(VK_CONTROL) || infrastructure::gKeyboard.IsKeyPressed(VK_LCONTROL)
+				|| infrastructure::gKeyboard.IsKeyPressed(VK_LMENU) || infrastructure::gKeyboard.IsKeyPressed(VK_RMENU)) {
+				orgSkillIncBtnMsg(widId, msg);
+				int safetyCounter = 3;
+				while (uiManager->GetButtonState(widId) != LgcyButtonState::Disabled && safetyCounter >= 0) {
+					orgSkillIncBtnMsg(widId, msg);
+					safetyCounter--;
+				}
+				return TRUE;
+			};
+			return orgSkillIncBtnMsg(widId, msg);
+		});
+
+
+		// Feats
 		replaceFunction<BOOL(GameSystemConf&)>(0x101AAB80, [](GameSystemConf &conf) {
 			return uiCharEditor.FeatsSystemInit(conf);
 		});
@@ -3141,6 +3431,21 @@ int Chargen::GetRolledStatIdx(int x, int y, int * xyOut)
 	return 0;
 }
 
+bool Chargen::IsSelectingFeats()
+{
+	return uiCharEditor.IsSelectingFeats();
+}
+
+void Chargen::SetIsNewChar(bool state)
+{
+	mIsNewChar = state;
+}
+
+bool Chargen::IsNewChar()
+{
+	return mIsNewChar;
+}
+
 bool Chargen::SpellsNeedReset()
 {
 	return mSpellsNeedReset;
@@ -3181,5 +3486,33 @@ bool Chargen::SpellIsForbidden(int spEnum){
 		return true;
 	if (spellSys.IsForbiddenSchool(handle, spSchool))
 		return true;
+	return false;
+}
+
+void Chargen::BonusFeatsClear()
+{
+	mBonusFeats.clear();
+}
+
+void Chargen::SetBonusFeats(std::vector<FeatInfo>& fti)
+{
+	mBonusFeats.clear();
+	for (auto it : fti) {
+		mBonusFeats.push_back(it);
+	}
+}
+
+int Chargen::GetNewLvl(Stat classEnum)
+{
+	auto handle = GetEditedChar();
+	return objects.StatLevelGet(handle, classEnum) + 1;
+}
+
+bool Chargen::IsBonusFeatDisregardingPrereqs(feat_enums feat){
+	for (auto it : mBonusFeats) {
+		if (it.featEnum == feat)
+			return (it.flag & FeatInfoFlag::DisregardPrereqs) != 0;
+	}
+
 	return false;
 }

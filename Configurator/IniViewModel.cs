@@ -30,10 +30,20 @@ namespace TemplePlusConfig
         public static readonly DependencyProperty SoftShadowsProperty = DependencyProperty.Register(
             "SoftShadows", typeof (bool), typeof (IniViewModel), new PropertyMetadata(default(bool)));
 
+        public static readonly DependencyProperty WindowedLockCursorProperty = DependencyProperty.Register(
+           "WindowedLockCursor", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+
+        public static readonly DependencyProperty DungeonMasterProperty = DependencyProperty.Register(
+           "DungeonMaster", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+        
         public static readonly DependencyProperty HpOnLevelUpProperty = DependencyProperty.Register(
             "HpOnLevelUp", typeof (HpOnLevelUpType), typeof (IniViewModel),
             new PropertyMetadata(default(HpOnLevelUpType)));
 
+        public static readonly DependencyProperty MaxHpForNpcHitdiceProperty = DependencyProperty.Register(
+            "MaxHpForNpcHitdice", typeof(bool), typeof(IniViewModel),
+            new PropertyMetadata(default(bool)));
+        
         public static readonly DependencyProperty FogOfWarProperty = DependencyProperty.Register(
             "FogOfWar", typeof(FogOfWarType), typeof(IniViewModel),
             new PropertyMetadata(default(FogOfWarType)));
@@ -43,6 +53,9 @@ namespace TemplePlusConfig
 
         public static readonly DependencyProperty MaxLevelProperty = DependencyProperty.Register(
             "MaxLevel", typeof(int), typeof(IniViewModel), new PropertyMetadata(default(int)));
+
+        public static readonly DependencyProperty NumberOfPcsProperty = DependencyProperty.Register(
+            "NumberOfPcs", typeof(NumberOfPcsType), typeof(IniViewModel), new PropertyMetadata(default(NumberOfPcsType)));
 
         public static readonly DependencyProperty AllowXpOverflowProperty = DependencyProperty.Register(
            "AllowXpOverflow", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
@@ -56,21 +69,49 @@ namespace TemplePlusConfig
         public static readonly DependencyProperty TransparentNpcStatsProperty = DependencyProperty.Register(
           "TransparentNpcStats", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
 
+        public static readonly DependencyProperty FastSneakingProperty = DependencyProperty.Register(
+          "FastSneaking", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+        public static readonly DependencyProperty WalkDistanceFtProperty = DependencyProperty.Register(
+            "WalkDistanceFt", typeof(int), typeof(IniViewModel), new PropertyMetadata(default(int)));
+
+        public static readonly DependencyProperty DisableDoorRelockingProperty = DependencyProperty.Register(
+          "DisableDoorRelocking", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+        public static readonly DependencyProperty AlertAiThroughDoorsProperty = DependencyProperty.Register(
+          "AlertAiThroughDoors", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+
         
+
 
         public static readonly DependencyProperty NewClassesProperty = DependencyProperty.Register(
           "NewClasses", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
 
         public static readonly DependencyProperty NonCoreProperty = DependencyProperty.Register(
           "NonCore", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+        public static readonly DependencyProperty NewRacesProperty = DependencyProperty.Register(
+          "NewRaces", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+        public static readonly DependencyProperty MonstrousRacesProperty = DependencyProperty.Register(
+          "MonstrousRaces", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+        public static readonly DependencyProperty ForgottenRealmsRacesProperty = DependencyProperty.Register(
+          "ForgottenRealmsRacesRaces", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
 
         public static readonly DependencyProperty LaxRulesProperty = DependencyProperty.Register(
           "LaxRules", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+        public static readonly DependencyProperty DisableAlignmentRestrictionsProperty = DependencyProperty.Register(
+          "DisableAlignmentRestrictions", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+        public static readonly DependencyProperty DisableCraftingSpellReqsProperty = DependencyProperty.Register(
+          "DisableCraftingSpellReqs", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+        public static readonly DependencyProperty DisableMulticlassXpPenaltyProperty = DependencyProperty.Register(
+          "DisableMulticlassXpPenalty", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+        public static readonly DependencyProperty ShowTargetingCirclesInFogOfWarProperty = DependencyProperty.Register(
+          "ShowTargetingCirclesInFogOfWar", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+        
 
         public IEnumerable<HpOnLevelUpType> HpOnLevelUpTypes => Enum.GetValues(typeof (HpOnLevelUpType))
             .Cast<HpOnLevelUpType>();
         public IEnumerable<FogOfWarType> FogOfWarTypes => Enum.GetValues(typeof(FogOfWarType))
            .Cast<FogOfWarType>();
+        public IEnumerable<NumberOfPcsType> NumberOfPcsTypes => Enum.GetValues(typeof(NumberOfPcsType))
+           .Cast<NumberOfPcsType>();
 
         public IniViewModel()
         {
@@ -79,8 +120,11 @@ namespace TemplePlusConfig
             RenderHeight = (int)screenSize.Height;
             PointBuyPoints = 25;
             MaxLevel = 10;
+            WalkDistanceFt = 0;
             SlowerLevelling = false;
             AllowXpOverflow = false;
+            NumberOfPcs = NumberOfPcsType.PCs_5_NPCs_3;
+            NeedsCo8Defaults = false;
         }
 
         public string InstallationPath
@@ -131,11 +175,30 @@ namespace TemplePlusConfig
             set { SetValue(SoftShadowsProperty, value); }
         }
 
+        public bool WindowedLockCursor
+        {
+            get { return (bool)GetValue(WindowedLockCursorProperty); }
+            set { SetValue(WindowedLockCursorProperty, value); }
+        }
+
+        public bool DungeonMaster
+        {
+            get { return (bool)GetValue(DungeonMasterProperty); }
+            set { SetValue(DungeonMasterProperty, value); }
+        }
+
         public HpOnLevelUpType HpOnLevelUp
         {
             get { return (HpOnLevelUpType) GetValue(HpOnLevelUpProperty); }
             set { SetValue(HpOnLevelUpProperty, value); }
         }
+
+        public bool MaxHpForNpcHitdice
+        {
+            get { return (bool)GetValue(MaxHpForNpcHitdiceProperty); }
+            set { SetValue(MaxHpForNpcHitdiceProperty, value); }
+        }
+        
 
         public FogOfWarType FogOfWar
         {
@@ -154,6 +217,12 @@ namespace TemplePlusConfig
             get { return (int)GetValue(MaxLevelProperty); }
             set { SetValue(MaxLevelProperty, value); }
         }
+
+        public NumberOfPcsType NumberOfPcs
+        {
+            get { return (NumberOfPcsType)GetValue(NumberOfPcsProperty); }
+            set { SetValue(NumberOfPcsProperty, value); }
+        } 
 
         public bool AllowXpOverflow
         {
@@ -179,6 +248,33 @@ namespace TemplePlusConfig
             set { SetValue(TransparentNpcStatsProperty, value); }
         }
 
+        public bool FastSneaking
+        {
+            get { return (bool)GetValue(FastSneakingProperty); }
+            set { SetValue(FastSneakingProperty, value); }
+        }
+
+        public int WalkDistanceFt
+        {
+            get { return (int)GetValue(WalkDistanceFtProperty); }
+            set { if (value < 0)
+                    SetValue(WalkDistanceFtProperty, 0);
+                else
+                    SetValue(WalkDistanceFtProperty, value ); }
+        }
+
+        public bool DisableDoorRelocking
+        {
+            get { return (bool)GetValue(DisableDoorRelockingProperty); }
+            set { SetValue(DisableDoorRelockingProperty, value); }
+        }
+        public bool AlertAiThroughDoors
+        {
+            get { return (bool)GetValue(AlertAiThroughDoorsProperty); }
+            set { SetValue(AlertAiThroughDoorsProperty, value); }
+        }
+        
+
         public bool NewClasses
         {
             get { return (bool)GetValue(NewClassesProperty); }
@@ -191,11 +287,49 @@ namespace TemplePlusConfig
             set { SetValue(NonCoreProperty, value); }
         }
 
+        public bool NewRaces
+        {
+            get { return (bool)GetValue(NewRacesProperty); }
+            set { SetValue(NewRacesProperty, value); }
+        }
+        public bool MonstrousRaces
+        {
+            get { return (bool)GetValue(MonstrousRacesProperty); }
+            set { SetValue(MonstrousRacesProperty, value); }
+        }
+        public bool ForgottenRealmsRaces
+        {
+            get { return (bool)GetValue(ForgottenRealmsRacesProperty); }
+            set { SetValue(ForgottenRealmsRacesProperty, value); }
+        }
+
         public bool LaxRules
         {
             get { return (bool)GetValue(LaxRulesProperty); }
             set { SetValue(LaxRulesProperty, value); }
         }
+        public bool DisableAlignmentRestrictions
+        {
+            get { return (bool)GetValue(DisableAlignmentRestrictionsProperty); }
+            set { SetValue(DisableAlignmentRestrictionsProperty, value); }
+        }
+        public bool DisableCraftingSpellReqs
+        {
+            get { return (bool)GetValue(DisableCraftingSpellReqsProperty); }
+            set { SetValue(DisableCraftingSpellReqsProperty, value); }
+        }
+        public bool DisableMulticlassXpPenalty
+        {
+            get { return (bool)GetValue(DisableMulticlassXpPenaltyProperty); }
+            set { SetValue(DisableMulticlassXpPenaltyProperty, value); }
+        }
+        public bool ShowTargetingCirclesInFogOfWar
+        {
+            get { return (bool)GetValue(ShowTargetingCirclesInFogOfWarProperty); }
+            set { SetValue(ShowTargetingCirclesInFogOfWarProperty, value); }
+        }
+
+        public bool NeedsCo8Defaults { get; internal set; }
 
         /// <summary>
         /// Tries to find an installation directory based on common locations and the Windows registry.
@@ -238,7 +372,7 @@ namespace TemplePlusConfig
                         break;
                 }
             }
-
+            MaxHpForNpcHitdice = tpData["maxHpForNpcHitdice"] == "true";
             if (tpData["fogOfWar"] != null)
             {
                 switch (tpData["fogOfWar"].ToLowerInvariant())
@@ -275,12 +409,57 @@ namespace TemplePlusConfig
             SoftShadows = tpData["softShadows"] == "true";
             AntiAliasing = tpData["antialiasing"] == "true";
             WindowedMode = tpData["windowed"] == "true";
+            WindowedLockCursor = tpData["windowedLockCursor"] == "true";
+            DungeonMaster = tpData["dungeonMaster"] == "true";
 
             int maxLevel;
             if (int.TryParse(tpData["maxLevel"], out maxLevel))
             {
                 MaxLevel = maxLevel;
             }
+
+            bool maxPCsFlexible = false;
+            
+            bool.TryParse(tpData["maxPCsFlexible"], out maxPCsFlexible);
+            if (tpData["maxPCsFlexible"] == null)
+            {
+                NeedsCo8Defaults = true;
+            }
+            if (maxPCsFlexible)
+            {
+                NumberOfPcs = NumberOfPcsType.Flexible;
+            }
+            else
+            {
+                int maxPCs;
+                if (int.TryParse(tpData["maxPCs"], out maxPCs)){
+                    switch (maxPCs)
+                    {
+                        case 3:
+                            NumberOfPcs = NumberOfPcsType.PCs_3_NPCs_5;
+                            break;
+                        case 4:
+                            NumberOfPcs = NumberOfPcsType.PCs_4_NPCs_4;
+                            break;
+                        case 5:
+                            NumberOfPcs = NumberOfPcsType.PCs_5_NPCs_3;
+                            break;
+                        case 6:
+                            NumberOfPcs = NumberOfPcsType.PCs_6_NPCs_2;
+                            break;
+                        case 7:
+                            NumberOfPcs = NumberOfPcsType.PCs_7_NPCs_1;
+                            break;
+                        case 8:
+                            NumberOfPcs = NumberOfPcsType.PCs_8_NPCs_0;
+                            break;
+                        default:
+                            NumberOfPcs = NumberOfPcsType.PCs_5_NPCs_3;
+                            break;
+                    }
+                }
+            }
+                
 
             bool allowXpOverflow;
             if (bool.TryParse(tpData["allowXpOverflow"], out allowXpOverflow))
@@ -307,7 +486,30 @@ namespace TemplePlusConfig
                 TransparentNpcStats = showNpcStats && showExactHPforNPCs;
             }
 
+            bool fastSneaking;
+            if (bool.TryParse(tpData["fastSneakAnim"], out fastSneaking)){
+                FastSneaking = fastSneaking;
+            }
+            int walkDistFt;
+            if (int.TryParse(tpData["walkDistanceFt"], out walkDistFt))
+            {
+                if (walkDistFt < 0)
+                    walkDistFt = 0;
+                WalkDistanceFt = walkDistFt;
+            }
 
+            bool disableDoorRelocking;
+            if (bool.TryParse(tpData["disableDoorRelocking"], out disableDoorRelocking))
+            {
+                DisableDoorRelocking = disableDoorRelocking;
+            }
+            bool alertAiThroughDoors;
+            if (bool.TryParse(tpData["alertAiThroughDoors"], out alertAiThroughDoors))
+            {
+                AlertAiThroughDoors = alertAiThroughDoors;
+            }
+
+            
 
             bool newClasses;
             if (bool.TryParse(tpData["newClasses"], out newClasses))
@@ -320,11 +522,47 @@ namespace TemplePlusConfig
             {
                 NonCore = nonCore;
             }
+            bool newRaces;
+            if (bool.TryParse(tpData["newRaces"], out newRaces))
+            {
+                NewRaces = newRaces;
+            }
+            bool monstrousRaces;
+            if (bool.TryParse(tpData["monstrousRaces"], out monstrousRaces))
+            {
+                MonstrousRaces = monstrousRaces;
+            }
+            bool forgottenRealmsRaces;
+            if (bool.TryParse(tpData["forgottenRealmsRaces"], out forgottenRealmsRaces))
+            {
+                ForgottenRealmsRaces = forgottenRealmsRaces;
+            }
 
+            // Lax Rules
             bool laxRules;
             if (bool.TryParse(tpData["laxRules"], out laxRules))
             {
                 LaxRules = laxRules;
+            }
+            bool disableAlignmentRestrictions;
+            if (bool.TryParse(tpData["disableAlignmentRestrictions"], out disableAlignmentRestrictions))
+            {
+                DisableAlignmentRestrictions = disableAlignmentRestrictions;
+            }
+            bool disableCraftingSpellReqs;
+            if (bool.TryParse(tpData["disableCraftingSpellReqs"], out disableCraftingSpellReqs))
+            {
+                DisableCraftingSpellReqs = disableCraftingSpellReqs;
+            }
+            bool disableMulticlassXpPenalty;
+            if (bool.TryParse(tpData["disableMulticlassXpPenalty"], out disableMulticlassXpPenalty))
+            {
+                DisableMulticlassXpPenalty = disableMulticlassXpPenalty;
+            }
+            bool showTargetingCirclesInFogOfWar;
+            if (bool.TryParse(tpData["showTargetingCirclesInFogOfWar"], out showTargetingCirclesInFogOfWar))
+            {
+                ShowTargetingCirclesInFogOfWar = showTargetingCirclesInFogOfWar;
             }
 
         }
@@ -352,6 +590,7 @@ namespace TemplePlusConfig
                     tpData["hpOnLevelup"] = "normal";
                     break;
             }
+            tpData["maxHpForNpcHitdice"] = MaxHpForNpcHitdice ? "true" : "false";
             switch (FogOfWar)
             {
                 case FogOfWarType.Unfogged:
@@ -365,6 +604,13 @@ namespace TemplePlusConfig
                     break;
             }
             tpData["laxRules"] = LaxRules ? "true" : "false";
+
+            tpData["disableAlignmentRestrictions"] = DisableAlignmentRestrictions ? "true" : "false";
+            tpData["disableCraftingSpellReqs"] = DisableCraftingSpellReqs ? "true" : "false";
+            tpData["disableMulticlassXpPenalty"] = DisableMulticlassXpPenalty ? "true" : "false";
+            tpData["showTargetingCirclesInFogOfWar"] = ShowTargetingCirclesInFogOfWar ? "true" : "false";
+
+
             tpData["pointBuyPoints"] = PointBuyPoints.ToString();
             tpData["renderWidth"] = RenderWidth.ToString();
             tpData["renderHeight"] = RenderHeight.ToString();
@@ -373,15 +619,72 @@ namespace TemplePlusConfig
             tpData["windowHeight"] = RenderHeight.ToString();
             tpData["antialiasing"] = AntiAliasing? "true" : "false";
             tpData["softShadows"] = SoftShadows ? "true" : "false";
+            tpData["windowedLockCursor"] = WindowedLockCursor ? "true" : "false";
+            tpData["dungeonMaster"] = DungeonMaster ? "true" : "false";
             tpData["maxLevel"] = MaxLevel.ToString();
+            tpData["maxPCsFlexible"] = "false";
+            switch (NumberOfPcs)
+            {
+                case NumberOfPcsType.Flexible:
+                    tpData["maxPCsFlexible"] = "true";
+                    break;
+                case NumberOfPcsType.PCs_3_NPCs_5:
+                    tpData["maxPCs"] = 3.ToString();
+                    break;
+                case NumberOfPcsType.PCs_4_NPCs_4:
+                    tpData["maxPCs"] = 4.ToString();
+                    break;
+                case NumberOfPcsType.PCs_5_NPCs_3:
+                    tpData["maxPCs"] = 5.ToString();
+                    break;
+                case NumberOfPcsType.PCs_6_NPCs_2:
+                    tpData["maxPCs"] = 6.ToString();
+                    break;
+                case NumberOfPcsType.PCs_7_NPCs_1:
+                    tpData["maxPCs"] = 7.ToString();
+                    break;
+                case NumberOfPcsType.PCs_8_NPCs_0:
+                    tpData["maxPCs"] = 8.ToString();
+                    break;
+                default:
+                    tpData["maxPCs"] = 5.ToString();
+                    break;
+            }
             tpData["allowXpOverflow"] = AllowXpOverflow ? "true" : "false";
             tpData["slowerLevelling"] = SlowerLevelling ? "true" : "false";
             tpData["newClasses"] = NewClasses? "true" : "false";
+            tpData["newRaces"] = NewRaces? "true" : "false";
+            tpData["monstrousRaces"] = MonstrousRaces? "true" : "false";
+            tpData["forgottenRealmsRaces"] = ForgottenRealmsRaces ? "true" : "false";
             tpData["nonCoreMaterials"] = NonCore ? "true" : "false";
             tpData["tolerantNpcs"] = TolerantTownsfolk? "true" : "false";
             tpData["showExactHPforNPCs"] = TransparentNpcStats? "true" : "false";
             tpData["showNpcStats"] = TransparentNpcStats ? "true" : "false";
+            tpData["fastSneakAnim"] = FastSneaking ? "true" : "false";
+            if (WalkDistanceFt < 0) WalkDistanceFt = 0;
+            tpData["walkDistanceFt"] =WalkDistanceFt.ToString();
+            tpData["disableDoorRelocking"] = DisableDoorRelocking? "true" : "false";
+            tpData["alertAiThroughDoors"] = AlertAiThroughDoors ? "true" : "false";
+            
         }
+    }
+
+    public enum NumberOfPcsType
+    {
+        [System.ComponentModel.Description("3 PCs")]
+        PCs_3_NPCs_5,
+        [System.ComponentModel.Description("4 PCs")]
+        PCs_4_NPCs_4,
+        [System.ComponentModel.Description("5 PCs")]
+        PCs_5_NPCs_3,
+        [System.ComponentModel.Description("6 PCs")]
+        PCs_6_NPCs_2,
+        [System.ComponentModel.Description("7 PCs")]
+        PCs_7_NPCs_1,
+        [System.ComponentModel.Description("8 PCs")]
+        PCs_8_NPCs_0,
+        [System.ComponentModel.Description("Flexible")]
+        Flexible // allows UPTO 8 PCs
     }
 
     public enum HpOnLevelUpType

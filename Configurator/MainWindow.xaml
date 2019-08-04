@@ -10,6 +10,7 @@
         d:DataContext="{d:DesignInstance local:IniViewModel}" ResizeMode="CanMinimize" WindowStartupLocation="CenterScreen"
         >
     <Window.Resources>
+        <fa:DescriptionConverter x:Key="DescriptionConverter"/>
         <ImageBrush x:Key="Shitbrush" ImageSource="Installing.gif" Stretch="Uniform" AlignmentX="Right" />
     </Window.Resources>
     <Canvas Height="451" VerticalAlignment="Top" Margin="0,0,0,0">
@@ -19,6 +20,7 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <Button x:Name="OkButton" Width="75" Height="23" Click="Button_Click" VerticalAlignment="Top" Content="Ok"/>
+                <Button x:Name="HouseRulesBtn" Content="House Rules" HorizontalAlignment="Right" Width="84" Margin="0,0,-94,0" Click="HousRulesBtnClick"/>
             </Grid>
             <StackPanel Margin="0,0,0,0" Width="694" >
                 <local:InstallationDir x:Name="InstallationDir" InstallationPath="{Binding InstallationPath, Mode=TwoWay}" UsingCo8="{Binding UsingCo8}" Margin="0,0,10,0" />
@@ -33,12 +35,21 @@
                 <CheckBox VerticalAlignment="Center" Content="Disable Automatic Updates" IsChecked="{Binding DisableAutomaticUpdates}" Margin="0,5,0,5" />
                 <CheckBox VerticalAlignment="Center" Content="Anti Aliasing" IsChecked="{Binding AntiAliasing}" Margin="0,5,0,5" ToolTip="You may have to disable this if you have an integrated GPU." />
                 <CheckBox VerticalAlignment="Center" Content="Enable Soft Shadows (GPU intensive)" IsChecked="{Binding SoftShadows}" Margin="0,5,0,5" />
+                <CheckBox VerticalAlignment="Center" Content="Lock Cursor to Window" IsChecked="{Binding WindowedLockCursor}" Margin="0,5,0,5" ToolTip="Locks the cursor to the window area when using windowed mode and the window is active."/>
+                <CheckBox VerticalAlignment="Center" Content="Dungeon Master" IsChecked="{Binding DungeonMaster}" Margin="0,5,0,5" ToolTip="Enables the Dungeon Master UI, which allows you to spawn creatures and edit existing ones."/>
 
                 <StackPanel Orientation="Horizontal"  Margin="0,5,0,5">
                     <Label VerticalAlignment="Center" Content="Max Level:"/>
                     <TextBox Width="50" VerticalAlignment="Center" Text="{Binding MaxLevel}" />
                 </StackPanel>
-                <Button x:Name="HouseRulesBtn" Content="House Rules" HorizontalAlignment="Left" Width="84" Margin="55,15,0,0" Click="HousRulesBtnClick" Height="27"/>
+                <StackPanel Orientation="Horizontal"  Margin="0,5,0,5">
+                    <Label VerticalAlignment="Center" Content="Number of PCs"/>
+                    <ComboBox VerticalAlignment="Center" SelectedValue="{Binding NumberOfPcs}" ItemsSource="{Binding NumberOfPcsTypes}"  ToolTip="How many Player Character slots your party has (out of 8). 'Flexible' allows you to have any possible combination of PCs and NPCs. Note: the maximum number of NPCs is 5 in any case."/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal"  Margin="0,5,0,5">
+                    <Label VerticalAlignment="Center" Content="Walk Distance (feet)" ToolTip="Your characters will walk instead of running up to this distance. You can also force run by holding the Control key."/>
+                    <TextBox Width="50" VerticalAlignment="Center" Text="{Binding WalkDistanceFt}" ToolTip="Your characters will walk instead of running up to this distance. You can also force run by holding the Control key."/>
+                </StackPanel>
             </StackPanel>
 
         </DockPanel>

@@ -15,6 +15,8 @@
 #include "float_line.h"
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/particlesystems.h"
+#include "ui/ui_systems.h"
+#include "ui/ui_legacysystems.h"
 
 temple::GlobalPrimitive<float, 0x102CF708> experienceMultiplier;
 temple::GlobalPrimitive<int, 0x10BCA850> numCrittersSlainByCR;
@@ -38,7 +40,7 @@ BOOL XPAward::XpGainProcess(objHndl handle, int xpGainRaw){
 	auto couldAlreadyLevelup = d20LevelSys.CanLevelup(handle);
 	
 	auto xpReduction = GetMulticlassXpReductionPercent(handle);
-	auto xpGain = (int)(1.0 - xpReduction / 100.0)*xpGainRaw;
+	auto xpGain = (int) ((1.0 - xpReduction / 100.0)*xpGainRaw);
 
 	std::string text(fmt::format("{} {} {} {}", description.getDisplayName(handle), combatSys.GetCombatMesLine(145), xpGain, combatSys.GetCombatMesLine(146) )); // [obj] gains [xpGain] experience points
 	if (xpReduction){
@@ -47,13 +49,13 @@ BOOL XPAward::XpGainProcess(objHndl handle, int xpGainRaw){
 	histSys.CreateFromFreeText( (text + "\n").c_str());
 
 	auto xpNew = obj->GetInt32(obj_f_critter_experience) + xpGain;
-	auto curLvl = objects.StatLevelGet(handle, stat_level);
+	auto curLvl = critterSys.GetEffectiveLevel(handle);
 	
 	auto xpCap = d20LevelSys.GetXpRequireForLevel(curLvl + 2) - 1;
-	if (curLvl >= config.maxLevel)
+	if (curLvl >= (int)config.maxLevel)
 		xpCap = d20LevelSys.GetXpRequireForLevel(config.maxLevel);
 
-	if (!config.allowXpOverflow && xpNew > xpCap)
+	if (!config.allowXpOverflow && xpNew > (int)xpCap)
 		xpNew = xpCap;
 
 	d20Sys.d20SendSignal(handle, DK_SIG_Experience_Awarded, xpNew, 0);
@@ -73,7 +75,7 @@ int XPAward::GetMulticlassXpReductionPercent(objHndl handle){
 	auto highestLvl = -1;
 	auto reductionPct = 0;
 
-	if (config.laxRules)
+	if (config.laxRules && config.disableMulticlassXpPenalty)
 		return reductionPct;
 
 	for (auto it: d20ClassSys.baseClassEnums){
@@ -220,7 +222,7 @@ void XPTableForHighLevels::GiveXPAwards(){
 		if (d20Sys.d20Query(objHnd, DK_QUE_ExperienceExempt)) { continue; };
 		if (party.ObjIsAIFollower(objHnd)) { continue; };
 
-		int level = objects.StatLevelGet(objHnd, stat_level);
+		int level = critterSys.GetEffectiveLevel(objHnd);
 		if (level <= 0) { continue; };
 
 		int xpGainRaw = 0; // raw means it's prior to applying multiclass penalties, which  is Someone Else's Problem :P
@@ -253,7 +255,7 @@ void XPTableForHighLevels::GiveXPAwards(){
 	*(xpPile.ptr()) = xpForxpPile;
 
 	if (bShouldUpdatePartyUI){
-		templeFuncs.UpdatePartyUI();
+		uiSystems->GetParty().Update();
 		sound.PlaySound(100001); // LEVEL_UP.WAV
 		sound.PlaySound(100001); // amp it up a bit
 	}

@@ -4,6 +4,7 @@
 #include "dice.h"
 #include "bonus.h"
 #include "ai.h"
+#include "gamesystems/gamesystems.h"
 #include "gamesystems/objects/objsystem.h"
 #include "critter.h"
 #include "weapon.h"
@@ -11,8 +12,9 @@
 #include "history.h"
 #include "float_line.h"
 #include "sound.h"
-#include "anim.h"
+#include "animgoals/anim.h"
 #include "ui/ui_logbook.h"
+#include "party.h"
 
 static_assert(temple::validate_size<DispIoDamage, 0x550>::value, "DispIoDamage");
 
@@ -92,6 +94,29 @@ static struct DamageAddresses : temple::AddressTable {
 
 Damage damage;
 
+class DamageHooks: TempleFix
+{
+	void apply () override{
+		replaceFunction<int(__cdecl)(objHndl , objHndl , unsigned int, DamageType , 
+			int , int , int , D20ActionType , int , int )>(0x100B7F80, [](objHndl victim, objHndl attacker, unsigned int nPackedDice, DamageType damType, 
+			int attackPower, int reduction, int damageDescId, D20ActionType actionType, int spellId, int flags){
+
+			Dice dice = Dice::FromPacked(nPackedDice);
+			
+			damage.DealSpellDamage(victim, attacker, dice, damType, attackPower, reduction, damageDescId, actionType, spellId, flags);
+			return -1;
+		});
+
+		replaceFunction<int(__cdecl)(DamagePacket*, DamageType)>(0x100E1210, [](DamagePacket* pkt, DamageType damType){
+			return pkt->GetOverallDamageByType(damType);
+		});
+		replaceFunction<int(__cdecl)(DamagePacket*)>(0x100E1360, [](DamagePacket* pkt) {
+			return pkt->GetOverallDamage();
+		});
+
+	}
+} damageHooks;
+
 int DamagePacket::AddEtherealImmunity(){
 	if (damModCount >= 5)
 		return 0;
@@ -130,17 +155,13 @@ int DamagePacket::AddPhysicalDR(int amount, int bypasserBitmask, int damageMesLi
 }
 
 int DamagePacket::AddDR(int amount, DamageType damType, int damageMesLine){
-	
-	MesLine mesLine;
 
 	if (this->damResCount < 5u){
-		mesLine.key = damageMesLine;
-		mesFuncs.GetLine_Safe(*addresses.damageMes, &mesLine);
 		this->damageResistances[this->damResCount].damageReductionAmount = amount;
 		this->damageResistances[this->damResCount].dmgFactor = 0.0f;
 		this->damageResistances[this->damResCount].type = damType;
 		this->damageResistances[this->damResCount].attackPowerType = D20AttackPower::D20DAP_NORMAL;
-		this->damageResistances[this->damResCount].typeDescription = mesLine.value;
+		this->damageResistances[this->damResCount].typeDescription = damage.GetMesline(damageMesLine);
 		this->damageResistances[this->damResCount++].causedBy = nullptr;
 		return TRUE;
 	}
@@ -168,7 +189,7 @@ void DamagePacket::CalcFinalDamage(){ // todo hook this
 
 			if (this->flags & 2) //empowered
 			{
-				dice.rolledDamage *= 1.5;
+				dice.rolledDamage = static_cast<int>(dice.rolledDamage * 1.5);
 			}
 		}
 	}
@@ -205,7 +226,7 @@ int DamagePacket::GetOverallDamageByType(DamageType damType)
 	}
 
 	for (auto i = 0; i < this->damModCount; i++) {
-		if (damage.DamageTypeMatch(damType, this->damageResistances[i].type)){
+		if (damage.DamageTypeMatch(damType, this->damageFactorModifiers[i].type)){
 			damTot += this->damageFactorModifiers[i].damageReduced;
 		}
 	}
@@ -213,11 +234,65 @@ int DamagePacket::GetOverallDamageByType(DamageType damType)
 	if (damTot < 0.0)
 		damTot = 0.0;
 
-	return damTot;
+	return static_cast<int>(damTot);
+}
+
+int DamagePacket::GetOverallDamage()
+{
+	auto damTot = (double)0.0;
+
+	for (auto i = 0u; i < this->diceCount; i++) {
+		auto &dice = this->dice[i];
+		if (dice.type != DamageType::Subdual) {
+			damTot += dice.rolledDamage;
+			if (i == 0) {
+				damTot += this->bonuses.GetEffectiveBonusSum();
+			}
+		}
+
+	}
+
+	for (auto i = 0; i < this->damResCount; i++) {
+		addresses.CalcDamageModFromDR(this, &this->damageResistances[i], DamageType::Unspecified, DamageType::Unspecified);
+	}
+
+	for (auto i = 0; i < this->damModCount; i++) {
+		addresses.CalcDamageModFromFactor(this, &this->damageFactorModifiers[i], DamageType::Unspecified, DamageType::Unspecified);
+	}
+
+	
+
+	for (auto i = 0; i < this->damResCount; i++) {
+		auto &res = this->damageResistances[i];
+		if (res.type != DamageType::Subdual){
+			damTot += this->damageResistances[i].damageReduced;
+		}
+	}
+
+	for (auto i = 0; i < this->damModCount; i++) {
+		auto &damMod = this->damageFactorModifiers[i];
+		if (damMod.type != DamageType::Subdual){
+			damTot += this->damageFactorModifiers[i].damageReduced;
+		}
+	}
+
+	if (damTot < 0.0)
+		damTot = 0.0;
+
+	return static_cast<int>(damTot);
 }
 
 int DamagePacket::AddModFactor(float factor, DamageType damType, int damageMesLine){
-	return addresses.AddDamageModFactor(this, factor, damType, damageMesLine);
+
+	if (this->damModCount < 5){
+		this->damageFactorModifiers[this->damModCount].dmgFactor = factor;
+		this->damageFactorModifiers[this->damModCount].type = damType;
+		this->damageFactorModifiers[this->damModCount].attackPowerType = D20AttackPower::D20DAP_NORMAL;
+		this->damageFactorModifiers[this->damModCount].typeDescription = damage.GetMesline(damageMesLine);
+		this->damageFactorModifiers[this->damModCount++].causedBy = nullptr;
+		return TRUE;
+	}
+	return FALSE;
 }
 
 DamagePacket::DamagePacket(){
@@ -244,7 +319,7 @@ void Damage::DealSpellDamage(objHndl tgt, objHndl attacker, const Dice& dice, Da
 	if (!tgt)
 		return;
 
-	if (attacker && attacker != tgt && critterSys.AllegianceShared(tgt, attacker))
+	if (attacker && attacker != tgt && critterSys.NpcAllegianceShared(tgt, attacker))
 		floatSys.FloatCombatLine(tgt, 107); // friendly fire
 
 	aiSys.ProvokeHostility(attacker, tgt, 1, 0);
@@ -286,7 +361,10 @@ void Damage::DealSpellDamage(objHndl tgt, objHndl attacker, const Dice& dice, Da
 		evtObjDam.damage.flags |= 2; // empowered
 	if (mmData.metaMagicFlags & 1)
 		evtObjDam.damage.flags |= 1; // maximized
-	temple::GetRef<int>(0x10BCA8AC) = 0; // is weapon damage
+
+	dispatch.DispatchSpellDamage(attacker, &evtObjDam.damage, tgt, &spPkt);
+
+	temple::GetRef<int>(0x10BCA8AC) = 0; // is weapon damage (used in logbook for record holding)
 
 	DamageCritter(attacker, tgt, evtObjDam);
 
@@ -345,12 +423,12 @@ int Damage::DealAttackDamage(objHndl attacker, objHndl tgt, int d20Data, D20CAF 
 
 		// dodge animation
 		if (!critterSys.IsDeadOrUnconscious(tgt) && !critterSys.IsProne(tgt)){
-			animationGoals.PushDodge(attacker, tgt);
+			gameSystems->GetAnim().PushDodge(attacker, tgt);
 		}
 		return -1;
 	}
 
-	if (tgt && attacker && critterSys.AllegianceShared(tgt, attacker)){ // TODO check that this solves the infamous "Friendly Fire" float for NPCs
+	if (tgt && attacker && critterSys.NpcAllegianceShared(tgt, attacker) && combatSys.AffiliationSame(tgt, attacker)){
 		floatSys.FloatCombatLine(tgt, 107); // Friendly Fire
 	}
 
@@ -401,6 +479,7 @@ int Damage::DealAttackDamage(objHndl attacker, objHndl tgt, int d20Data, D20CAF 
 		temple::GetRef<void(__cdecl)(objHndl, DamageType, int)>(0x10016A90)(tgt, evtObjDam.damage.dice[i].type, evtObjDam.damage.dice[i].rolledDamage);
 	}
 
+	d20Sys.d20SendSignal(attacker, DK_SIG_Attack_Made, (int)&evtObjDam, 0);
 
 	// signal events
 	if (!isUnconsciousAlready && critterSys.IsDeadOrUnconscious(tgt)){
@@ -417,7 +496,7 @@ int Damage::DealWeaponlikeSpellDamage(objHndl tgt, objHndl attacker, const Dice 
 	if (!tgt)
 		return -1;
 
-	if (attacker && attacker != tgt && critterSys.AllegianceShared(tgt, attacker))
+	if (attacker && attacker != tgt && critterSys.NpcAllegianceShared(tgt, attacker))
 		floatSys.FloatCombatLine(tgt, 107); // friendly fire
 
 	aiSys.ProvokeHostility(attacker, tgt, 1, 0);
@@ -468,7 +547,7 @@ int Damage::DealWeaponlikeSpellDamage(objHndl tgt, objHndl attacker, const Dice 
 
 		// dodge animation
 		if (!critterSys.IsDeadOrUnconscious(tgt) && !critterSys.IsProne(tgt)) {
-			animationGoals.PushDodge(attacker, tgt);
+			gameSystems->GetAnim().PushDodge(attacker, tgt);
 		}
 		return -1;
 	}
@@ -498,13 +577,9 @@ int Damage::DealWeaponlikeSpellDamage(objHndl tgt, objHndl attacker, const Dice 
 		uiLogbook.IncreaseCritHits(attacker);
 	}
 
-
-
 	dispatch.DispatchDamage(attacker, &evtObjDam, dispTypeDealingDamageWeaponlikeSpell, DK_NONE);
-
+	dispatch.DispatchSpellDamage(attacker, &evtObjDam.damage, tgt, &spPkt);
 	
-
-
 	DamageCritter(attacker, tgt, evtObjDam);
 
 	return -1;
@@ -515,26 +590,182 @@ void Damage::DamageCritter(objHndl attacker, objHndl tgt, DispIoDamage & evtObjD
 }
 
 void Damage::Heal(objHndl target, objHndl healer, const Dice& dice, D20ActionType actionType) {
-	addresses.Heal(target, healer, dice.ToPacked(), actionType);
+	int healingBonus = 0;
+	if (healer){
+		healingBonus = d20Sys.D20QueryPython(healer, "Healing Bonus", 0);  //0 spell id for non-spell healing
+	}
+	Dice diceNew(dice.GetCount(), dice.GetSides(), dice.GetModifier() + healingBonus);
+	addresses.Heal(target, healer, diceNew.ToPacked(), actionType);
 }
 
 void Damage::HealSpell(objHndl target, objHndl healer, const Dice& dice, D20ActionType actionType, int spellId) {
-	addresses.HealSpell(target, healer, dice.ToPacked(), actionType, spellId);
+	int healingBonus = 0;
+	if (healer) {
+		healingBonus = d20Sys.D20QueryPython(healer, "Healing Bonus", 0);  //0 spell id for non-spell healing
+	}
+	Dice diceNew(dice.GetCount(), dice.GetSides(), dice.GetModifier() + healingBonus);
+	addresses.HealSpell(target, healer, diceNew.ToPacked(), actionType, spellId);
 }
 
 void Damage::HealSubdual(objHndl target, int amount) {
 	addresses.HealSubdual(target, amount);
 }
 
-bool Damage::SavingThrow(objHndl obj, objHndl attacker, int dc, SavingThrowType type, int flags) {
-	return addresses.SavingThrow(obj, attacker, dc, type, flags);
+bool Damage::SavingThrow(objHndl handle, objHndl attacker, int dc, SavingThrowType saveType, int flags) {
+	auto obj = objSystem->GetObject(handle);
+	if (!obj) {
+		return false;
+	}
+
+	auto saveThrowMod = 0;
+
+	DispIoSavingThrow evtObj;
+	evtObj.obj = attacker;
+	evtObj.flags = (int64_t)flags; // TODO: vanilla bug! flags input should be 64 bit (since some of the descriptor enums go beyond 32). Looks like they fixed it in the dispatcher but not this function.
+
+	// NPC special bonus from protos
+	if (obj->IsNPC()){
+		auto npcSaveBonus = 0;
+		auto validType = false;
+		switch(saveType){
+		case SavingThrowType::Fortitude:
+			npcSaveBonus = obj->GetInt32(obj_f_npc_save_fortitude_bonus);
+			validType = true;
+			break;
+		case SavingThrowType::Reflex:
+			npcSaveBonus = obj->GetInt32(obj_f_npc_save_reflexes_bonus);
+			validType = true;
+			break;
+		case SavingThrowType::Will:
+			npcSaveBonus = obj->GetInt32(obj_f_npc_save_willpower_bonus);
+			validType = true;
+			break;
+		default:
+			break;
+		}
+		if (validType){
+			evtObj.bonlist.AddBonus(npcSaveBonus, 0, 139);
+		}
+		else{
+			logger->error("SavingThrow(): Bad save type parameter");
+		}
+	}
+
+	dispatch.Dispatch13SavingThrow(handle, saveType, &evtObj);
+	evtObj.obj = handle;
+	if (attacker && !(evtObj.flags & 2)){
+		saveThrowMod = dispatch.Dispatch14SavingThrowMod(attacker, saveType, &evtObj);
+	}
+	Dice dice(1, 20, 0);
+	auto diceResult = dice.Roll();
+	auto & savingThrowAlwaysRoll1 = temple::GetRef<int>(0x10BCA8B8);
+	auto & savingThrowAlwaysRoll20 = temple::GetRef<int>(0x10BCA8B4);
+	if (savingThrowAlwaysRoll1)
+		diceResult = 1;
+	else if (savingThrowAlwaysRoll20)
+		diceResult = 20;
+	evtObj.rollResult = diceResult;
+	if (diceResult + saveThrowMod < dc || diceResult == 1){
+		if (d20Sys.d20Query(handle, DK_QUE_RerollSavingThrow)){
+			histSys.RollHistoryType3Add(handle, dc, saveType, flags, dice.ToPacked(), diceResult, &evtObj.bonlist);
+			diceResult = dice.Roll();
+			flags |= 1;
+		}
+	}
+
+	auto finalSaveThrowMod = dispatch.Dispatch44FinalSaveThrow(handle, saveType, &evtObj);
+	auto histId = histSys.RollHistoryType3Add(handle, dc, saveType, flags, dice.ToPacked(), diceResult, &evtObj.bonlist);
+	histSys.CreateRollHistoryString(histId);
+
+	if (diceResult == 1){
+		// if (finalSaveThrowMod + 1 >= dc)
+			return false; // natural 1 - always fails
+	}
+	else if (diceResult == 20){
+		// if (finalSaveThrowMod + 20 < dc)
+			return true; // natural 20 - always succeeds
+	}
+	return finalSaveThrowMod + diceResult >= dc;
+
+	// return addresses.SavingThrow(handle, attacker, dc, saveType, flags);
 }
 
 bool Damage::SavingThrowSpell(objHndl obj, objHndl attacker, int dc, SavingThrowType type, int flags, int spellId) {
-	return addresses.SavingThrowSpell(obj, attacker, dc, type, flags, spellId);
+
+	auto result = false;
+	SpellPacketBody spPkt(spellId);
+	if (!spPkt.spellEnum)
+		return false;
+
+	SpellEntry spEntry(spPkt.spellEnum);
+	auto flagsModified = flags | D20STF_SPELL_LIKE_EFFECT;
+	switch (spEntry.spellSchoolEnum){
+	case SpellSchools::School_Abjuration:
+		flagsModified |= D20SavingThrowFlag::D20STF_SPELL_SCHOOL_ABJURATION;
+		break;
+	case SpellSchools::School_Conjuration:
+		flagsModified |= D20SavingThrowFlag::D20STF_SPELL_SCHOOL_CONJURATION;
+		break;
+	case SpellSchools::School_Divination:
+		flagsModified |= D20SavingThrowFlag::D20STF_SPELL_SCHOOL_DIVINATION;
+		break;
+	case SpellSchools::School_Enchantment:
+		flagsModified |= D20SavingThrowFlag::D20STF_SPELL_SCHOOL_ENCHANTMENT;
+		break;
+	case SpellSchools::School_Evocation:
+		flagsModified |= D20SavingThrowFlag::D20STF_SPELL_SCHOOL_EVOCATION;
+		break;
+	case SpellSchools::School_Illusion:
+		flagsModified |= D20SavingThrowFlag::D20STF_SPELL_SCHOOL_ILLUSION;
+		break;
+	case SpellSchools::School_Necromancy:
+		flagsModified |= D20SavingThrowFlag::D20STF_SPELL_SCHOOL_NECROMANCY;
+		break;
+	case SpellSchools::School_Transmutation:
+		flagsModified |= D20SavingThrowFlag::D20STF_SPELL_SCHOOL_TRANSMUTATION;
+		break;
+	default:
+		break;
+	}
+
+	for (auto i=0; i < 21; i++){ // i=0 -> 1 -> acid;  1<<13 -> 0x2000  (D20STF_SPELL_DESCRIPTOR_ACID)
+		if ((spEntry.spellDescriptorBitmask & (1<<i)) == (1<<i)){
+			flagsModified |= 1 << (i + 13);
+		}
+	}
+
+	// fix for spell descriptor parsing that mapped "fortitude" to value 3
+	if (type == (SavingThrowType)3){
+		type = SavingThrowType::Fortitude;
+	}
+
+	BonusList bonlist;
+
+	// Gets a DC bonus based on the target of the spell
+	dispatch.DispatchTargetSpellDCBonus(attacker, obj, &bonlist, &spPkt);
+
+	int nDCBonus = bonlist.GetEffectiveBonusSum();
+
+	result = damage.SavingThrow(obj, attacker, dc+ nDCBonus, type, flagsModified);
+	spPkt.savingThrowResult = result;
+	if (!spPkt.UpdateSpellsCastRegistry()){
+		logger->debug("SavingThrowSpell: Unable to save spell pkt");
+		return false;
+	}
+	spPkt.UpdatePySpell();
+	return result;
+	// return addresses.SavingThrowSpell(obj, attacker, dc, type, flags, spellId);
 }
 
 bool Damage::ReflexSaveAndDamage(objHndl obj, objHndl attacker, int dc, int reduction, int flags, const Dice& dice, DamageType damageType, int attackPower, D20ActionType actionType, int spellId) {
+	SpellPacketBody spPkt(spellId);
+	BonusList bonlist;
+
+	// Gets a DC bonus based on the target of the spell
+	dispatch.DispatchTargetSpellDCBonus(attacker, obj, &bonlist, &spPkt);
+
+	int nDCBonus = bonlist.GetEffectiveBonusSum();
+
 	return addresses.ReflexSaveAndDamage(obj, attacker, dc, reduction, flags, dice.ToPacked(), damageType, attackPower, actionType, spellId);
 }
 
@@ -560,28 +791,30 @@ int Damage::AddDamageBonusWithDescr(DamagePacket* damage, int damBonus, int bonT
 
 int Damage::AddPhysicalDR(DamagePacket* damPkt, int DRAmount, int bypasserBitmask, unsigned int damageMesLine)
 {
-	MesLine mesLine; 
-
 	if (damPkt->damResCount < 5u)
 	{
-		mesLine.key = damageMesLine;
-		mesFuncs.GetLine_Safe(*addresses.damageMes, &mesLine);
 		damPkt->damageResistances[damPkt->damResCount].damageReductionAmount = DRAmount;
 		damPkt->damageResistances[damPkt->damResCount].dmgFactor = 0;
 		damPkt->damageResistances[damPkt->damResCount].type = DamageType::SlashingAndBludgeoningAndPiercing;
 		damPkt->damageResistances[damPkt->damResCount].attackPowerType = bypasserBitmask;
-		damPkt->damageResistances[damPkt->damResCount].typeDescription = mesLine.value;
+		damPkt->damageResistances[damPkt->damResCount].typeDescription = damage.GetMesline(damageMesLine);
 		damPkt->damageResistances[damPkt->damResCount++].causedBy = 0;
-		return 1;
+		return TRUE;
 	}
-	return  0;
+	return  FALSE;
 	
 }
 
-const char* Damage::GetMesline(unsigned damageMesLine){
-	MesLine mesline(damageMesLine);
-	mesFuncs.GetLine_Safe(damageMes, &mesline);
-	return mesline.value;
+const char* Damage::GetMesline(unsigned lineId){
+
+	MesLine line(lineId);
+	auto res = mesFuncs.GetLine(*addresses.damageMes, &line);
+	if (!res){
+		mesFuncs.GetLine_Safe(damageMes, &line);
+	}
+		
+
+	return line.value;
 }
 
 int Damage::AddDamageDice(DamagePacket* dmgPkt, int dicePacked, DamageType damType, unsigned int damageMesLine){
@@ -665,3 +898,4 @@ void Damage::Exit() const
 {
 	mesFuncs.Close(damageMes);
 }
+

@@ -14,9 +14,8 @@ public:
 } fix;
 
 void MessageQueueFix::apply() {
-	// Disabled for now
-	// replaceFunction(0x101DE660, EnqueueMsg);
-	// replaceFunction(0x101DE750, ProcessMsg);
+	replaceFunction(0x101DE660, EnqueueMsg);
+	replaceFunction(0x101DE750, ProcessMsg);
 }
 
 void MessageQueueFix::EnqueueMsg(const TigMsg* msg) {

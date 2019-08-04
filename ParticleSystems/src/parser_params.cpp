@@ -1,6 +1,6 @@
 #include <regex>
 
-#include <gsl/string_span.h>
+#include <gsl/string_span>
 #include <infrastructure/logging.h>
 
 #include "particles/parser_keyframes.h"

@@ -39,7 +39,7 @@ protected:
 	int responseWndId;
 	int scrollbarId;
 
-	WidgetType3 scrollbar;
+	LgcyScrollBar scrollbar;
 
 };
 

@@ -14,6 +14,8 @@
 #include "config/config.h"
 #include "updater/updater.h"
 #include "ui/ui_systems.h"
+#include "ui/widgets/widgets.h"
+#include "ui/widgets/widget_styles.h"
 
 class TempleMutex {
 public:
@@ -94,24 +96,6 @@ struct ObjPropDef {
 	uint32_t FieldTypeCode;
 };
 #pragma pack(pop)
-const char *PropTypes[] = {
-	"None",
-	"BeginSection",
-	"EndSection",
-	"Int32",
-	"Int64",
-	"AbilityArray",
-	"UnkArray",
-	"Int32Array",
-	"Int64Array",
-	"ScriptArray",
-	"Unk2Array",
-	"String",
-	"Obj",
-	"ObjArray",
-	"SpellArray",
-	"Float32"
-};
 
 int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 
@@ -162,6 +146,12 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 		logger->error("Unable to set the default cursor");
 		return 1;
 	}
+
+	UiManager uiManager;
+	UiAssets uiAssets;
+
+	WidgetTextStyles widgetTextStyles;
+	WidgetButtonStyles widgetButtonStyles;
 		
 	UiSystems uiSystems(config.renderWidth, config.renderHeight);
 
@@ -173,6 +163,8 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 	// Notify the UI system that the module has been loaded
 	UiModuleLoader uiModuleLoader(uiSystems);
 	
+	//temple::GetRef<BOOL(__cdecl)()>(0x10036720)(); // check dialog
+
 	if (!config.skipIntro) {
 		movieFuncs.PlayMovie("movies\\introcinematic.bik", 0, 0, 0);
 	}
@@ -182,7 +174,7 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 	// Show the main menu
 	mouseFuncs.ShowCursor();
 	if (!config.editor) {
-		uiMainMenuFuncs.ShowPage(0);
+		uiSystems.GetMM().Show(MainMenuPage::MainMenu);
 	} else {
 		startupRelevantFuncs.MapOpenInGame(5001, 0, 1);
 	}

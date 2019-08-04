@@ -1,6 +1,6 @@
 #pragma once
 
-const uint32_t SPELL_ENUM_MAX = 802;
+const uint32_t SPELL_ENUM_MAX_VANILLA = 802;
 const uint32_t SPELL_ENUM_MAX_EXPANDED = 3999;
 
 #define NUM_SPELL_LEVELS 10 // spells are levels 0-9
@@ -15,7 +15,8 @@ enum SpellStoreType : uint8_t{
 	spellStoreNone = 0,
 	spellStoreKnown = 1,
 	spellStoreMemorized = 2,
-	spellStoreCast = 3
+	spellStoreCast = 3,
+	spellStoreAtWill // New! Todo implementation
 };
 
 enum MetaMagicFlags : uint8_t
@@ -127,46 +128,8 @@ enum class SpellListType : int {
 	Psionic, 
 	Ranger, // subset of divine
 	Special, // "independent" list
-	Theurge // adds to both divine and arcane classes!
+	Extender // extends an existing spell list
 };
-
-struct D20SpellData
-{
-	uint16_t spellEnumOrg;
-	MetaMagicData metaMagicData;
-	uint8_t spellClassCode;
-	uint8_t itemSpellData;
-	SpontCastType spontCastType : 4;
-	unsigned char spellSlotLevel : 4;
-	void Set(uint32_t spellEnum, uint32_t spellClassCode, uint32_t spellLevel, uint32_t invIdx, MetaMagicData metaMagicData);
-	void Extract(int* spellEnum, int *spellEnumOrg, int* spellClass, int* spellLevel, int* invIdx, MetaMagicData* mmData);
-	D20SpellData(){
-		spellEnumOrg = 0;
-		metaMagicData = 0;
-		spellClassCode = 0;
-		itemSpellData = INV_IDX_INVALID;
-		spontCastType = SpontCastType::spontCastNone;
-		spellSlotLevel = 0;
-	}
-	D20SpellData(int spellEnum) : D20SpellData()
-	{
-		spellEnumOrg = spellEnum;
-	}
-};
-
-inline void D20SpellData::Set(uint32_t spellEnum, uint32_t SpellClassCode, uint32_t SpellLevel, uint32_t invIdx, MetaMagicData mmData)
-{
-	spellEnumOrg = spellEnum;
-	metaMagicData = mmData;
-	spellClassCode = SpellClassCode;
-	itemSpellData = invIdx;
-	spellSlotLevel = SpellLevel;
-	spontCastType = SpontCastType::spontCastNone;
-}
-
-
-
-const uint32_t TestSizeOfD20SpellData = sizeof(D20SpellData);
 
 #pragma pack(push,4)
 struct SpellStoreData
@@ -183,13 +146,14 @@ struct SpellStoreData
 	uint32_t pad3;
 	SpellStoreData():spellEnum(0), classCode(0), spellLevel(0), pad0(0), pad1(0),pad2(0),pad3(0){
 	};
-	SpellStoreData(int SpellEnum, int SpellLevel, int ClassCode, int mmData, int SpellStoreData):SpellStoreData(){
+	SpellStoreData(int SpellEnum, int SpellLevel, int ClassCode, int mmData, int SpellStoreData);/* :SpellStoreData() {
 		spellEnum = SpellEnum;
 		classCode = ClassCode;
 		spellLevel = SpellLevel;
 		metaMagicData = MetaMagicData(mmData);
 		spellStoreState = SpellStoreState(SpellStoreData);
-	}
+		padSpellStore = 0;
+	}*/
 
 	SpellStoreData(int SpellEnum, int SpellLevel, int ClassCode, MetaMagicData mmData, SpellStoreState SpellStoreData) :SpellStoreData() {
 		spellEnum = SpellEnum;
@@ -206,12 +170,54 @@ struct SpellStoreData
 		metaMagicData = mmData;
 		spellStoreState = SpellStoreState(0);
 	}
-
+	bool operator < (const SpellStoreData& b);
 	SpellComponentFlag GetSpellComponentFlags(); // regards metamagic data
 };
+
+bool operator < (const SpellStoreData& sp1, const SpellStoreData& sp2);
 const auto TestSizeOfSpellStoreData = sizeof(SpellStoreData);
 #pragma pack(pop)
 
+struct D20SpellData
+{
+	uint16_t spellEnumOrg;
+	MetaMagicData metaMagicData;
+	uint8_t spellClassCode;
+	uint8_t itemSpellData;
+	SpontCastType spontCastType : 4;
+	unsigned char spellSlotLevel : 4;
+	void Set(uint32_t spellEnum, uint32_t spellClassCode, uint32_t spellLevel, uint32_t invIdx, MetaMagicData metaMagicData);
+	void Extract(int* spellEnum, int *spellEnumOrg, int* spellClass, int* spellLevel, int* invIdx, MetaMagicData* mmData); // regards alt-node (shift clicking spells)
+	D20SpellData() {
+		spellEnumOrg = 0;
+		metaMagicData = 0;
+		spellClassCode = 0;
+		itemSpellData = INV_IDX_INVALID;
+		spontCastType = SpontCastType::spontCastNone;
+		spellSlotLevel = 0;
+	}
+	D20SpellData(int spellEnum) : D20SpellData() {
+		spellEnumOrg = spellEnum;
+	}
+
+	SpellStoreData ToSpellStore() {
+		SpellStoreData spData;
+		this->Extract((int*)&spData.spellEnum, nullptr, (int*)&spData.classCode, (int*)&spData.spellLevel, nullptr, &spData.metaMagicData);
+		return spData;
+	};
+};
+
+inline void D20SpellData::Set(uint32_t spellEnum, uint32_t SpellClassCode, uint32_t SpellLevel, uint32_t invIdx, MetaMagicData mmData)
+{
+	spellEnumOrg = spellEnum;
+	metaMagicData = mmData;
+	spellClassCode = SpellClassCode;
+	itemSpellData = invIdx;
+	spellSlotLevel = SpellLevel;
+	spontCastType = SpontCastType::spontCastNone;
+}
+
+const uint32_t TestSizeOfD20SpellData = sizeof(D20SpellData);
 
 
 enum SpellSchools : uint32_t

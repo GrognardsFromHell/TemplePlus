@@ -11,6 +11,8 @@
 #include "util/savegame.h"
 #include <infrastructure/vfs.h>
 #include <mod_support.h>
+#include "ui/ui_systems.h"
+#include "ui/ui_legacysystems.h"
 
 static struct GameLibLoadAddresses : temple::AddressTable {
 	/*
@@ -19,12 +21,7 @@ static struct GameLibLoadAddresses : temple::AddressTable {
 		- AI combat related
 	*/
 	int* isInLoad;
-
-	// Enables ironman mode
-	int* isIronman;
-	int* ironmanSaveNumber;
-	char **ironmanSaveName;
-
+	
 	void (__cdecl *UiMmRelated)(int arg);
 	void (__cdecl *UiMmRelated2)(int arg);
 
@@ -37,9 +34,6 @@ static struct GameLibLoadAddresses : temple::AddressTable {
 		rebase(UiMmRelated, 0x10111A00);
 		rebase(UiMmRelated2, 0x10111A40);
 		rebase(UnpackArchive, 0x101E5A10);
-		rebase(isIronman, 0x103072B8);
-		rebase(ironmanSaveNumber, 0x10306F44);
-		rebase(ironmanSaveName, 0x103072C0);
 		rebase(UiLoadGame, 0x101154B0);
 	}
 } addresses;
@@ -106,15 +100,14 @@ bool GameSystems::LoadGame(const string& filename) {
 		return false;
 	}
 	
-	
-	if (tio_fread(addresses.isIronman, 4, 1, file) != 1) {
+	if (tio_fread(&mIronmanFlag, 4, 1, file) != 1) {
 		logger->error("Unable to read ironman flag");
 		tio_fclose(file);
 		return false;
 	}
 
-	if (*addresses.isIronman) {
-		if (tio_fread(addresses.ironmanSaveNumber, 4, 1, file) != 1) {
+	if (mIronmanFlag) {
+		if (tio_fread(&mIronmanSaveNumber, 4, 1, file) != 1) {
 			logger->error("Unable to read ironman save number.");
 			tio_fclose(file);
 			return false;
@@ -128,12 +121,12 @@ bool GameSystems::LoadGame(const string& filename) {
 		}
 
 		// Other parts of toee may free this pointer so we have to use their free/alloc
-		if (*addresses.ironmanSaveName) {
-			free(*addresses.ironmanSaveName);
+		if (mIronmanSaveName) {
+			free(mIronmanSaveName);
 		}
-		*addresses.ironmanSaveName = (char*) malloc(savenameSize);
+		mIronmanSaveName = (char*) malloc(savenameSize);
 		
-		if (tio_fread(*addresses.ironmanSaveName, 1, savenameSize, file) != savenameSize) {
+		if (tio_fread(mIronmanSaveName, 1, savenameSize, file) != savenameSize) {
 			logger->error("Unable to read ironman savegame name.");
 			tio_fclose(file);
 			return false;
@@ -197,7 +190,7 @@ bool GameSystems::LoadGame(const string& filename) {
 	
 	logger->info("Completed loading of save game");
 	
-	ui.UpdatePartyUi();
+	uiSystems->GetParty().Update();
 	
 	if (temple::Dll::GetInstance().HasCo8Hooks()){
 		// Co8 load hook

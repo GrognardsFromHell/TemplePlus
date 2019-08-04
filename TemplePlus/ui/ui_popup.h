@@ -3,8 +3,8 @@
 #include <tig/tig_msg.h>
 
 
-struct WidgetType1;
-struct WidgetType2;
+struct LgcyWindow;
+struct LgcyButton;
 struct UiPromptPacket {
 	int idx;
 	void * unk4;
@@ -36,6 +36,8 @@ struct UiPromptPacket {
 	int unkA8;
 	int unkAC;
 	int unkB0;
+
+	void Reset();
 };
 
 const int testSizeofPromptPacket = sizeof(UiPromptPacket); // hsould be 180 (0xB4)
@@ -43,11 +45,10 @@ const int testSizeofPromptPacket = sizeof(UiPromptPacket); // hsould be 180 (0xB
 struct UiPromptListEntry {
 	int flags; // 1 - execute callback after reseting the prompt (otherwise does so before)
 	int isActive;
-	WidgetType1 * wnd;
-	WidgetType2 * btn1;
-	WidgetType2 * btn2;
-	WidgetType2 * btn3;
+	LgcyWindow * wnd;
+	LgcyButton * btns[3];
 	UiPromptPacket prompt;
+	void ResetWnd();
 };
 
 
@@ -71,4 +72,6 @@ protected:
 	BOOL UiPopupMsg(int widId, TigMsg* msg);
 	BOOL UiPopupWndMsg(int widId, TigMsg* msg);
 	int GetCurrentPopupIdx();
+	void SetCurrentPopupIdx(int popupIdx);
+	UiPromptListEntry & GetPopupByType(int popupType);
 };

@@ -30,8 +30,12 @@ class DescriptionHooks : public TempleFix{
 
 const char* LegacyDescriptionSystem::getDisplayName(objHndl obj)
 {
-	if (obj)
-		return _getDisplayName(obj, obj);
+	if (obj){
+		auto result = _getDisplayName(obj, obj);
+		if (!result)
+			return "OBJ_HANDLE_NULL";
+		return result;
+	}
 	else
 		return "OBJ_HANDLE_NULL";
 }
@@ -189,7 +193,7 @@ BOOL LegacyDescriptionSystem::Init(const GameSystemConf& conf){
 	else {
 		MesLine line;
 		mesFuncs.ReadLineDirect(descriptionMes, numLines - 1, &line);
-		if (line.key > *descrIdxMax)
+		if ( static_cast<int>(line.key) > *descrIdxMax)
 			*descrIdxMax = line.key;
 	}
 

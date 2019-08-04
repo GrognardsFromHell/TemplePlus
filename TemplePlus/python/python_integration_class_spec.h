@@ -22,6 +22,7 @@ enum class ClassSpecFunc : int {
 	GetSpellSourceType,
 	GetSpellList,
 	GetSpellsPerDay,
+	GetCasterLevels,
 	GetSpellConditionName,
 	GetSpellDeterminingStat,
 	GetSpellDcStat,
@@ -46,6 +47,9 @@ enum class ClassSpecFunc : int {
 	IsSelectingSpellsOnLevelup,
 	LevelupInitSpellSelection,
 	LevelupSpellsFinalize,
+	GetAdvancedLearningClass,
+	HasAdvancedLearning,
+	HasArmoredArcaneCasterFeature,
 };
 
 
@@ -60,6 +64,7 @@ public:
 	std::map<feat_enums, int> GetFeats(int classEnum);
 	
 	ClassDefinitionFlag GetClassDefinitionFlags(int classEnum);
+	bool HasArmoredArcaneCasterFeature(int classEnum);
 	int GetBabProgression(int classEnum);
 	int GetHitDieType(int classEnum);
 	int GetInt(int classEnum, ClassSpecFunc specType, int defaultVal = 0);
@@ -68,16 +73,20 @@ public:
 	SpellListType GetSpellListType(int classEnum);
 	SpellReadyingType GetSpellReadyingType(int classEnum);
 	SpellSourceType GetSpellSourceType(int classEnum);
+	int GetAdvancedLearningClass(int classEnum);
+	bool HasAdvancedLearning(int classEnum);
 	std::map<int, int> GetSpellList(int classEnum); // returns a mapping of spellEnum -> spell level for this class, to be used by the spell system
 	std::map<int, std::vector<int>> GetSpellsPerDay(int classEnum);
 	std::string GetSpellCastingConditionName(int classEnum);
 	Stat GetSpellDeterminingStat(int classEnum);
 	Stat GetSpellDcStat(int classEnum);
+	std::vector<int> GetCasterLevels(int classEnum);
 
 	bool IsEnabled(int classEnum);
 	bool IsClassSkill(int classCode, int skillEnum);
 	int IsClassFeat(int classCode, int featEnum);
 
+	bool IsAlignmentCompatible(const objHndl &handle, int classEnum); // checks if class is compatible with critter's alignment. Not relevant for character creation, only levelup (since alignment is determined after class selection)
 	bool ReqsMet(const objHndl &handle, int classEnum);
 
 	Stat GetDeityClass(int classEnum);
@@ -90,6 +99,7 @@ public:
 	void LevelupInitSpellSelection(objHndl handle, Stat classEnum, int classLvlNew = -1, int classLvlIncrease = 1);
 	bool LevelupSpellsCheckComplete(objHndl handle, Stat classEnum);
 	void LevelupSpellsFinalize(objHndl handle, Stat classEnum, int classLvlNew = -1);
+	
 
 protected:
 	const char* GetFunctionName(EventId evt) override;

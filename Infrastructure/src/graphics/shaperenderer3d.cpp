@@ -5,6 +5,8 @@
 // When drawing circles, how many segments do we use?
 constexpr static int sCircleSegments = 74;
 
+using namespace DirectX;
+
 namespace gfx {	
 	
 	struct ShapeRenderer3d::Impl : ResourceListener {
@@ -309,6 +311,23 @@ namespace gfx {
 		mImpl->lineBinding.Bind();
 		mImpl->BindLineMaterial(color);
 		
+		mImpl->device.Draw(gfx::PrimitiveType::LineList, 2);
+
+	}
+
+	void ShapeRenderer3d::DrawLineWithoutDepth(const XMFLOAT3& from, const XMFLOAT3& to, XMCOLOR color) {
+
+		std::array<XMFLOAT3, 2> positions{
+			from,
+			to
+		};
+
+		mImpl->lineVertexBuffer->Update<XMFLOAT3>(positions);
+		mImpl->lineBinding.Bind();
+		mImpl->BindLineMaterial(color);
+		mImpl->device.Draw(gfx::PrimitiveType::LineList, 2);
+
+		mImpl->BindLineMaterial(color, true);
 		mImpl->device.Draw(gfx::PrimitiveType::LineList, 2);
 
 	}

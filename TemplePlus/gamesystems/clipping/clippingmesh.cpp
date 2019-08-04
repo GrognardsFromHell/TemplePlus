@@ -46,8 +46,8 @@ void ClippingMesh::CreateResources(RenderingDevice &device) {
 	}
 
 	auto vertexBufferSize = mVertexCount * sizeof(XMFLOAT3);
-	mVertexBuffer = device.CreateVertexBufferRaw(gsl::as_span(&data[vertexDataStart], vertexBufferSize));
-	mIndexBuffer = device.CreateIndexBuffer(gsl::as_span(indices, mTriCount * 3));
+	mVertexBuffer = device.CreateVertexBufferRaw(gsl::span(&data[vertexDataStart], vertexBufferSize));
+	mIndexBuffer = device.CreateIndexBuffer(gsl::span(indices, mTriCount * 3));
 }
 
 void ClippingMesh::FreeResources(RenderingDevice &device) {

@@ -4,14 +4,16 @@
 
 #include <temple/dll.h>
 #include "gamesystems/objects/objsystem.h"
+#include "raycast.h"
 
 static struct ObjListAddresses : temple::AddressTable {
 	void(__cdecl *ObjListTile)(locXY loc, int flags, ObjListResult &result);
 	void(__cdecl *ObjListRect)(TileRect &trect, ObjectListFilter olcCritters, ObjListResult& result);
 	void(__cdecl *ObjListVicinity)(locXY loc, int flags, ObjListResult &result);
-	void(__cdecl *ObjListRadius)(LocAndOffsets loc, float radius, float unk1, float unk2, int flags, ObjListResult &result);
+	void(__cdecl *ObjListRadius)(LocAndOffsets loc, float radius, float angleMin, float angleMax, int flags, ObjListResult &result);
 	void(__cdecl *ObjListFollowers)(objHndl critter, ObjListResult &result);
 	int(__cdecl *ObjListFree)(ObjListResult &result);
+	void(__cdecl *ReturnToPool)(ObjListResultItem* objListResultItem);
 	ObjListResultItem *(__cdecl*ObjlistPop)();
 	
 	ObjListAddresses() {
@@ -22,6 +24,7 @@ static struct ObjListAddresses : temple::AddressTable {
 		rebase(ObjListFollowers, 0x1001F450);
 		rebase(ObjListFree, 0x1001F2C0);
 		rebase(ObjlistPop, 0x100C0CA0);
+		rebase(ReturnToPool, 0x100C0C20);
 	}
 
 	
@@ -44,6 +47,11 @@ void ObjListResult::PrependHandle(objHndl handle){
 	this->objects = objNodeNew;
 }
 
+void ObjListResultItem::ReturnToPool() {
+	addresses.ReturnToPool(this);
+}
+
+
 void ObjListResult::IncreaseObjListCount(){
 	temple::GetRef<int>(0x10808CF8)++;
 }
@@ -55,6 +63,31 @@ int ObjListResult::CountResults(){
 		node = node->next;
 	}
 	return count;
+}
+
+void ObjListResult::ListRadius(LocAndOffsets origin, float rangeInches, float angleMin, float angleSize, int filter){
+	addresses.ObjListRadius(origin, rangeInches, angleMin, angleSize, filter, *this);
+}
+
+void ObjListResult::ListRaycast(LocAndOffsets & origin, LocAndOffsets & endPt, float rangeInches, float radiusInches){
+	RaycastPacket rayPkt;
+	rayPkt.sourceObj = objHndl::null;
+	rayPkt.origin = origin;
+	rayPkt.rayRangeInches = rangeInches;
+	rayPkt.targetLoc = endPt;
+	rayPkt.radius = radiusInches;
+	rayPkt.flags = (RaycastFlags)(RaycastFlags::ExcludeItemObjects | RaycastFlags::HasRadius | RaycastFlags::HasRangeLimit);
+	rayPkt.Raycast();
+	this->Init();
+
+	if (rayPkt.resultCount) {
+		for (auto i = 0; i < rayPkt.resultCount; i++) {
+			auto &rayRes = rayPkt.results[i];
+			if (rayRes.obj) {
+				this->PrependHandle(rayRes.obj);
+			}
+		}
+	}
 }
 
 ObjList::ObjList() {
@@ -88,9 +121,9 @@ void ObjList::ListVicinity(objHndl handle, int flags){
 	ListVicinity(objSystem->GetObject(handle)->GetLocation(), flags);
 }
 
-void ObjList::ListRadius(LocAndOffsets loc, float radius, int flags) {
+void ObjList::ListRadius(LocAndOffsets loc, float radiusInches, int flags) {
 	FreeResult();
-	addresses.ObjListRadius(loc, radius, 0.0f, (float)(M_PI * 2), flags, mResult);
+	addresses.ObjListRadius(loc, radiusInches, 0.0f, (float)(M_PI * 2), flags, mResult);
 	mHasToFree = true;
 }
 
@@ -99,6 +132,19 @@ void ObjList::ListRange(LocAndOffsets loc, float radius, float angleMin, float a
 	FreeResult();
 	addresses.ObjListRadius(loc, radius, angleMin, angleMax, flags, mResult);
 	mHasToFree = true;
+}
+
+void ObjList::ListRangeTiles(objHndl handle, int rangeTiles, ObjectListFilter filter){
+	if (!handle){
+		logger->error("Null handle given in ObjList::ListRangeTiles");
+		return;
+	}
+		
+	auto objBody = objSystem->GetObject(handle);
+	auto loc = objBody->GetLocationFull();
+	auto rangeInches = rangeTiles *INCH_PER_TILE; //28.284271; ;
+	ListRadius(loc, rangeInches, filter);
+
 }
 
 void ObjList::ListCone(LocAndOffsets loc, float radius, float coneStartAngleRad, float coneArcRad, int flags) {
@@ -120,6 +166,19 @@ int ObjList::size() {
 	mSize = CountObjects();
 	mSizeValid = true;
 	return mSize;
+}
+
+std::vector<objHndl> ObjList::GetListResult(){
+	std::vector<objHndl> result;
+	if (!mResult.objects) {
+		return result;
+	}
+	auto item = mResult.objects;
+	while (item) {
+		result.push_back(item->handle);
+		item = item->next;
+	}
+	return result;
 }
 
 int ObjList::CountObjects() const {

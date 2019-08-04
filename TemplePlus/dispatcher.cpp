@@ -18,6 +18,8 @@
 class DispatcherReplacements : public TempleFix {
 public:
 
+	static int Dispatch54AoE(objHndl, DispIO *, D20DispatcherKey);
+
 	void apply() override {
 		logger->info("Replacing basic Dispatcher functions");
 		
@@ -56,9 +58,19 @@ public:
 			return dispatch.DispatchD20ActionCheck(d20a, tbStat, dispType);
 		});
 		
- 
+		replaceFunction(0x1004D360, Dispatch54AoE);
 	}
 } dispatcherReplacements;
+
+int DispatcherReplacements::Dispatch54AoE(objHndl handle, DispIO* evtObj, D20DispatcherKey dispKey){
+	if (!handle) return 0;
+	auto obj = objSystem->GetObject(handle);
+	auto dispatcher = obj->GetDispatcher();
+	if (!dispatcher->IsValid())
+		return 0;
+	dispatcher->Process(dispTypeObjectEvent, dispKey, evtObj);
+	return 0;
+}
 
 struct DispatcherSystemAddresses : temple::AddressTable
 {
@@ -75,6 +87,33 @@ DispatcherSystem dispatch;
 void DispatcherSystem::DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint32_t dispKey, DispIO* dispIO)
 {
 	_DispatcherProcessor(dispatcher, dispType, dispKey, dispIO);
+}
+
+void DispatcherSystem::DispatcherProcessorForItems(CondStruct* condStruct, int condArgs[64], enum_disp_type dispType,
+	D20DispatcherKey key, DispIO* dispIo){
+	
+	auto sdd = condStruct->subDispDefs;
+	auto numArgs = condStruct->numArgs;
+	CondNode condNode(condStruct);
+	if (numArgs > 0){
+		memcpy(&condNode.args, condArgs, sizeof(int) * numArgs); // was qmemcpy originally
+	}
+	
+	while (sdd->dispType != enum_disp_type::dispType0){
+		if (sdd->dispType != dispType){
+			sdd++;
+			continue;
+		}
+		if (sdd->dispKey == key || dispType == dispType0 /* shouldn't happen...*/ 
+			|| sdd->dispKey == DK_NONE){
+			SubDispNode sdn;
+			sdn.subDispDef = sdd;
+			sdn.condNode = &condNode;
+			sdd->dispCallback(&sdn, objHndl::null, dispType, key, dispIo);
+		}
+		sdd++;
+	}
+
 }
 
 Dispatcher * DispatcherSystem::DispatcherInit(objHndl objHnd)
@@ -128,6 +167,32 @@ int DispatcherSystem::DispatchForCritter(objHndl handle, DispIoBonusList * event
 	return eventObjUsed->bonlist.GetEffectiveBonusSum();
 }
 
+void DispatcherSystem::DispatchForItem(objHndl item, enum_disp_type dispType, D20DispatcherKey key, DispIO * dispIo){
+	auto argarrayCount = 0;
+	auto itemObj = objSystem->GetObject(item);
+	if (!itemObj){
+		return;
+	}
+	auto condArray = itemObj->GetInt32Array(obj_f_item_pad_wielder_condition_array);
+	auto argArray = itemObj->GetInt32Array(obj_f_item_pad_wielder_argument_array);
+	auto condCount = condArray.GetSize();
+	
+	for (auto i = 0u; i < condCount; i++){
+		auto condId = condArray[i];
+		auto cond = conds.GetById(condId);
+		if (!cond){
+			continue;
+		}
+
+		int condArgs[64] = {0,};
+		for (auto j=0u; j < cond->numArgs; j++){
+			condArgs[j] = argArray[argarrayCount++];
+		}
+		condArgs[2] = -1;
+		DispatcherProcessorForItems(cond, condArgs, dispType, key, dispIo);
+	}
+}
+
 int DispatcherSystem::Dispatch10AbilityScoreLevelGet(objHndl handle, Stat stat, DispIoBonusList * dispIo){
 	return dispatch.DispatchForCritter(handle, dispIo, dispTypeAbilityScoreLevel, (D20DispatcherKey)(stat+1));
 }
@@ -139,7 +204,7 @@ int32_t DispatcherSystem::dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, 
 	if (!dispatcherValid(dispatcher)) return 0;
 
 	dispIO.dispIOType = dispIoTypeObjBonus;
-	dispIO.returnVal = flag;
+	dispIO.flags = flag;
 	dispIO.bonOut = bonOut;
 	dispIO.obj = objHnd2;
 	if (!bonOut)
@@ -181,24 +246,6 @@ float DispatcherSystem::Dispatch29hGetMoveSpeed(objHndl objHnd, DispIoMoveSpeed 
 
 	result = moveTot * dispIo.factor;
 
-
-	/*uint32_t objHndLo = (uint32_t)(objHnd & 0xffffFFFF);
-	uint32_t objHndHi = (uint32_t)((objHnd >>32) & 0xffffFFFF);
-	macAsmProl;
-	__asm{
-		mov ecx, this;
-		mov esi, [ecx]._Dispatch29hMovementSthg;
-		mov eax, iO;
-		push eax;
-		mov eax, objHndHi;
-		push eax;
-		mov eax, objHndLo;
-		push eax;
-		call esi;
-		add esp, 12;
-		fstp result;
-	}
-	macAsmEpil*/
 	return result;
 }
 
@@ -255,6 +302,40 @@ void DispatcherSystem::dispatchTurnBasedStatusInit(objHndl objHnd, DispIOTurnBas
 			}
 		}
 	}
+}
+
+int DispatcherSystem::DispatchSavingThrow(objHndl handle, DispIoSavingThrow * evtObj, enum_disp_type dispType, D20DispatcherKey d20DispatcherKey)
+{
+	auto obj = objSystem->GetObject(handle);
+	if (!obj || !obj->IsCritter())
+		return 0;
+	
+	auto dispatcher = obj->GetDispatcher();
+	if (!dispatcherValid(dispatcher))
+		return 0;
+
+	if (!evtObj){
+		DispIoSavingThrow evtObjLocal;
+		dispatcher->Process(dispType, d20DispatcherKey, &evtObjLocal);
+		return evtObjLocal.bonlist.GetEffectiveBonusSum();
+	}
+
+	dispatcher->Process(dispType, d20DispatcherKey, evtObj);
+	return evtObj->bonlist.GetEffectiveBonusSum();
+}
+
+int DispatcherSystem::Dispatch13SavingThrow(objHndl handle, SavingThrowType saveType, DispIoSavingThrow * evtObj)
+{
+	return DispatchSavingThrow(handle, evtObj, dispTypeSaveThrowLevel, (D20DispatcherKey)((int)saveType + D20DispatcherKey::DK_SAVE_FORTITUDE) );
+}
+
+int DispatcherSystem::Dispatch14SavingThrowMod(objHndl handle, SavingThrowType saveType, DispIoSavingThrow * evtObj)
+{
+	return DispatchSavingThrow(handle, evtObj, dispTypeSaveThrowSpellResistanceBonus, (D20DispatcherKey)((int)saveType + D20DispatcherKey::DK_SAVE_FORTITUDE));
+}
+
+int DispatcherSystem::Dispatch44FinalSaveThrow(objHndl handle, SavingThrowType saveType, DispIoSavingThrow* evtObj){
+	return DispatchSavingThrow(handle, evtObj, dispTypeCountersongSaveThrow, (D20DispatcherKey)((int)saveType + D20DispatcherKey::DK_SAVE_FORTITUDE));
 }
 
 
@@ -417,6 +498,15 @@ bool DispatcherSystem::Dispatch64ImmunityCheck(objHndl handle, DispIoImmunity* d
 	return 0;
 }
 
+void DispatcherSystem::Dispatch68ItemRemove(objHndl handle){
+	if (!handle)
+		return;
+	auto dispatcher = objSystem->GetObject(handle)->GetDispatcher();
+	if (dispatcher->IsValid()){
+		DispatcherProcessor(dispatcher, dispTypeItemForceRemove, 0, nullptr);
+	}
+}
+
 DispIoObjEvent* DispatcherSystem::DispIoCheckIoType17(DispIO* dispIo)
 {
 	if (dispIo->dispIOType != dispIoTypeObjEvent)
@@ -548,32 +638,86 @@ void DispatcherSystem::DispatchConditionRemove(Dispatcher* dispatcher, CondNode*
 {
 	for (auto subDispNode = dispatcher->subDispNodes[dispTypeConditionRemove]; subDispNode; subDispNode = subDispNode->next)
 	{
-		if (subDispNode->subDispDef->dispKey == 0)
-		{
-			DispatcherCallbackArgs dca;
-			dca.dispIO = nullptr;
-			dca.dispType = dispTypeConditionRemove;
-			dca.dispKey = 0;
-			dca.objHndCaller = dispatcher->objHnd;
-			dca.subDispNode = subDispNode;
-			subDispNode->subDispDef->dispCallback(dca.subDispNode, dca.objHndCaller, dca.dispType, dca.dispKey, dca.dispIO);
+		if (subDispNode->subDispDef->dispKey == 0){
+			if (!(subDispNode->condNode->flags & 1) && (subDispNode->condNode == cond)){
+				DispatcherCallbackArgs dca;
+				dca.dispIO = nullptr;
+				dca.dispType = dispTypeConditionRemove;
+				dca.dispKey = 0;
+				dca.objHndCaller = dispatcher->objHnd;
+				dca.subDispNode = subDispNode;
+				subDispNode->subDispDef->dispCallback(dca.subDispNode, dca.objHndCaller, dca.dispType, dca.dispKey, dca.dispIO);
+			}	
 		}
 	}
 
 	for (auto subDispNode = dispatcher->subDispNodes[dispTypeConditionRemove2]; subDispNode; subDispNode = subDispNode->next)
 	{
-		if (subDispNode->subDispDef->dispKey == 0)
-		{
-			DispatcherCallbackArgs dca;
-			dca.dispIO = nullptr;
-			dca.dispType = dispTypeConditionRemove2;
-			dca.dispKey = 0;
-			dca.objHndCaller = dispatcher->objHnd;
-			dca.subDispNode = subDispNode;
-			subDispNode->subDispDef->dispCallback(dca.subDispNode, dca.objHndCaller, dca.dispType, dca.dispKey, dca.dispIO);
+		if (subDispNode->subDispDef->dispKey == 0){
+			if (!(subDispNode->condNode->flags & 1) && (subDispNode->condNode == cond)) {
+				DispatcherCallbackArgs dca;
+				dca.dispIO = nullptr;
+				dca.dispType = dispTypeConditionRemove2;
+				dca.dispKey = 0;
+				dca.objHndCaller = dispatcher->objHnd;
+				dca.subDispNode = subDispNode;
+				subDispNode->subDispDef->dispCallback(dca.subDispNode, dca.objHndCaller, dca.dispType, dca.dispKey, dca.dispIO);
+			}
 		}
 	}
 	cond->flags |= 1;
+}
+
+void DispatcherSystem::DispatchMetaMagicModify(objHndl obj, MetaMagicData& mmData)
+{
+	auto _dispatcher = objects.GetDispatcher(obj);
+	if (!dispatch.dispatcherValid(_dispatcher)) return;
+	EvtObjMetaMagic dispIo;
+	dispIo.mmData = mmData;
+	DispatcherProcessor(_dispatcher, dispTypeMetaMagicMod, 0, &dispIo);
+	mmData = dispIo.mmData;
+}
+
+double DispatcherSystem::DispatchRangeBonus(objHndl obj, objHndl weaponUsed)
+{
+	auto _dispatcher = objects.GetDispatcher(obj);
+	if (!dispatch.dispatcherValid(_dispatcher)) return 0;
+	EvtObjRangeIncrementBonus dispIo;
+	dispIo.weaponUsed = weaponUsed;
+	DispatcherProcessor(_dispatcher, dispRangeIncrementBonus, 0, &dispIo);
+	return dispIo.rangeBonus;
+}
+
+void DispatcherSystem::DispatchSpecialAttack(objHndl obj, int attack, objHndl target)
+{
+	auto _dispatcher = objects.GetDispatcher(obj);
+	if (!dispatch.dispatcherValid(_dispatcher)) return;
+	EvtObjSpecialAttack dispIo;
+	dispIo.target = target;
+	dispIo.attack = static_cast<EvtObjSpecialAttack::AttackType>(attack);
+	DispatcherProcessor(_dispatcher, dispTypeSpecialAttack, 0, &dispIo);
+}
+
+void DispatcherSystem::DispatchSpellResistanceCasterLevelCheck(objHndl caster, objHndl target, BonusList *bonusList, SpellPacketBody *spellPkt)
+{
+	auto _dispatcher = objects.GetDispatcher(caster);
+	if (!dispatch.dispatcherValid(_dispatcher)) return;
+	EvtObjSpellTargetBonus dispIo;
+	dispIo.spellPkt = spellPkt;
+	dispIo.target = target;
+	dispIo.bonusList = bonusList;
+	DispatcherProcessor(_dispatcher, dispTypeSpellResistanceCasterLevelCheck, 0, &dispIo);
+}
+
+void DispatcherSystem::DispatchTargetSpellDCBonus(objHndl caster, objHndl target, BonusList *bonusList, SpellPacketBody*spellPkt)
+{
+	auto _dispatcher = objects.GetDispatcher(caster);
+	if (!dispatch.dispatcherValid(_dispatcher)) return;
+	EvtObjSpellTargetBonus dispIo;
+	dispIo.spellPkt = spellPkt;
+	dispIo.target = target;
+	dispIo.bonusList = bonusList;
+	DispatcherProcessor(_dispatcher, dispTypeTargetSpellDCBonus, 0, &dispIo);
 }
 
 unsigned DispatcherSystem::Dispatch35CasterLevelModify(objHndl obj, SpellPacketBody* spellPkt)
@@ -668,6 +812,17 @@ void DispatcherSystem::DispIoDamageInit(DispIoDamage* dispIoDamage)
 
 }
 
+void DispatcherSystem::DispatchSpellDamage(objHndl obj, DamagePacket* damage, objHndl target, SpellPacketBody *spellPkt)
+{
+	auto _dispatcher = objects.GetDispatcher(obj);
+	if (!dispatch.dispatcherValid(_dispatcher)) return;
+	EvtObjDealingSpellDamage dispIo;
+	dispIo.damage = damage;
+	dispIo.spellPkt = spellPkt;
+	dispIo.target = target;
+	DispatcherProcessor(_dispatcher, dispTypeDealingDamageSpell, 0, &dispIo);
+}
+
 int32_t DispatcherSystem::DispatchDamage(objHndl objHnd, DispIoDamage* dispIoDamage, enum_disp_type dispType, D20DispatcherKey key)
 {
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);
@@ -758,6 +913,14 @@ int DispatcherSystem::DispatchGetBonus(objHndl critter, DispIoBonusList* eventOb
 
 	return eventObj->bonlist.GetEffectiveBonusSum();
 
+}
+
+int DispatcherSystem::DispatchItemQuery(objHndl item, D20DispatcherKey key)
+{
+	DispIoD20Query evtObj;
+	*(objHndl*)(&evtObj.data1) = item;
+	DispatchForItem(item, dispTypeD20Query, key, &evtObj);
+	return evtObj.return_val;
 }
 
 void DispIO::AssertType(enum_dispIO_type eventObjType) const
@@ -917,12 +1080,7 @@ void _DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint3
 		return;
 	}
 	dispCounter++;
-	/*
-	if (dispKey == DK_D20A_TOUCH_ATTACK || dispKey == DK_SIG_TouchAttack)
-	{
-		int asd = 1;
-	}
-	*/
+	
 	SubDispNode* subDispNode = dispatcher->subDispNodes[dispType];
 
 	while (subDispNode != nullptr) {
@@ -933,11 +1091,12 @@ void _DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint3
 			DispIOType21Init((DispIoTypeImmunityTrigger*)&dispIoImmunity);
 			dispIoImmunity.condNode = (CondNode *)subDispNode->condNode;
 
+			// prevent recursion
 			if (dispKey != DK_IMMUNITY_SPELL || dispType != dispTypeImmunityTrigger) {
-				_Dispatch62(dispatcher->objHnd, (DispIO*)&dispIoImmunity, 10);
+				_Dispatch62(dispatcher->objHnd, (DispIO*)&dispIoImmunity, DK_IMMUNITY_SPELL);
 			}
 			
-			if (dispIoImmunity.interrupt == 1 && dispType != dispType63) {
+			if (dispIoImmunity.interrupt == 1 && dispType != dispType63) { // dispType63 is essentially <-> Minor globe of invulnerability
 				dispIoImmunity.interrupt = 0;
 				dispIoImmunity.val2 = 10;
 				_Dispatch63(dispatcher->objHnd, (DispIO*)&dispIoImmunity);
@@ -949,21 +1108,14 @@ void _DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint3
 				subDispNode->subDispDef->dispCallback(subDispNode, dispatcher->objHnd, dispType, dispKey, (DispIO*)dispIO);
 			}
 
-
 		}
 
 		subDispNode = subDispNode->next;
 	}
 
 	dispCounter--;
-	/*
-	if (dispCounter == 0)
-	{
-		int breakpointDummy = 1;
-	}
-	*/
+	
 	return;
-
 }
 
 int32_t _DispatchDamage(objHndl objHnd, DispIoDamage* dispIo, enum_disp_type dispType, D20DispatcherKey key)
@@ -1009,6 +1161,18 @@ void DispIoEffectTooltip::Append(int effectTypeId, int spellEnum, const char* te
 	} else
 	{
 		bdbSub->text = nullptr;
+	}
+}
+
+void EvtObjActionCost::DispatchCost(D20DispatcherKey key){
+	if (!d20a || !d20a->d20APerformer) {
+		return;
+	}
+
+	auto dispatcher = objects.GetDispatcher(d20a->d20APerformer);
+
+	if (dispatcher->IsValid()) {
+		dispatch.DispatcherProcessor(dispatcher, dispTypeActionCostMod, key, this);
 	}
 }
 
@@ -1126,6 +1290,10 @@ CondStructNew::CondStructNew(std::string Name, int NumArgs, bool preventDuplicat
 	
 }
 
+CondStructNew::CondStructNew(CondStruct& existingCondStruct){
+	ExtendExisting(existingCondStruct.condName);
+}
+
 void CondStructNew::AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(* callback)(DispatcherCallbackArgs)){
 	Expects(numHooks < 99);
 	subDispDefs[numHooks++] = { dispType, dispKey, callback, static_cast<uint32_t>(0), static_cast<uint32_t>(0) };
@@ -1139,6 +1307,12 @@ void CondStructNew::AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, i
 void CondStructNew::AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(* callback)(DispatcherCallbackArgs), CondStructNew* data1, uint32_t data2){
 	Expects(numHooks < 99);
 	subDispDefs[numHooks++] = { dispType, dispKey, callback, data1, data2 };
+}
+
+void CondStructNew::AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(*callback)(DispatcherCallbackArgs), CondStruct * data1, uint32_t data2)
+{
+	Expects(numHooks < 99);
+	subDispDefs[numHooks++] = { dispType, dispKey, callback, (CondStructNew*)data1, data2 };
 }
 
 //void CondStructNew::AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(* callback)(DispatcherCallbackArgs), uint32_t data1, const char* data2) 
@@ -1158,6 +1332,22 @@ void CondStructNew::AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, i
 
 void CondStructNew::Register(){
 	conds.hashmethods.CondStructAddToHashtable(reinterpret_cast<CondStruct*>(this), true);
+}
+
+void CondStructNew::ExtendExisting(const std::string & condName)
+{
+	auto cond = (CondStructNew*)conds.GetByName(condName);
+	if (cond) {
+		for (auto i = 0; i < 100 && cond->subDispDefs[i].dispType != 0; i++) {
+			this->subDispDefs[this->numHooks++] = cond->subDispDefs[i];
+		}
+		this->numArgs = cond->numArgs;
+		this->condName = cond->condName;
+		this->Register();
+	}
+	else {
+		logger->info("Extend Existing Error: Condition {} does not exist!", condName);
+	}
 }
 
 void CondStructNew::AddToFeatDictionary(feat_enums feat, feat_enums featEnumMax, uint32_t condArg2Offset){
@@ -1194,6 +1384,29 @@ void DispatcherCallbackArgs::SetCondArg(uint32_t argIdx, int value)
 	conds.CondNodeSetArg(subDispNode->condNode, argIdx, value);
 }
 
+void DispatcherCallbackArgs::SetCondArgObjHndl(uint32_t argIdx, const objHndl& handle){
+	if (argIdx +1 < this->subDispNode->condNode->condStruct->numArgs){
+		SetCondArg(argIdx, handle.GetHandleUpper());
+		SetCondArg(argIdx + 1, handle.GetHandleLower());
+	}
+}
+
+void DispatcherCallbackArgs::RemoveCondition(){
+	conds.ConditionRemove(this->objHndCaller, this->subDispNode->condNode);
+}
+
+void DispatcherCallbackArgs::RemoveSpell(){
+	auto removeSpell = temple::GetRef<void(__cdecl)(DispatcherCallbackArgs)>(0x100D7620);
+	removeSpell(*this);
+}
+
+DispIoSavingThrow::DispIoSavingThrow(){
+	this->dispIOType = dispIOTypeSavingThrow;
+	this->obj = objHndl::null;
+	this->flags = 0;
+	this->rollResult = 0;
+}
+
 DispIoAttackBonus::DispIoAttackBonus(){
 	dispIOType = dispIOTypeAttackBonus;
 	this->attackPacket.dispKey = 1;
@@ -1216,7 +1429,7 @@ DispIoObjBonus::DispIoObjBonus()
 	dispIOType = dispIoTypeObjBonus;
 	obj = 0i64;
 	pad = 0;
-	returnVal = 0;
+	flags = 0;
 	bonOut = &bonlist;
 }
 
@@ -1294,6 +1507,19 @@ void DispIoD20ActionTurnBased::DispatchPythonActionPerform(D20DispatcherKey key)
 
 	if (dispatcher->IsValid()) {
 		dispatch.DispatcherProcessor(dispatcher, dispTypePythonActionPerform, key, this);
+	}
+}
+
+void DispIoD20ActionTurnBased::DispatchPythonActionFrame(D20DispatcherKey key){
+	if (!d20a || !d20a->d20APerformer) {
+		this->returnVal = AEC_INVALID_ACTION;
+		return;
+	}
+
+	auto dispatcher = objects.GetDispatcher(d20a->d20APerformer);
+
+	if (dispatcher->IsValid()) {
+		dispatch.DispatcherProcessor(dispatcher, dispTypePythonActionFrame, key, this);
 	}
 }
 

@@ -4,7 +4,9 @@
 enum FadeAndTeleportFlags : uint32_t {
 	ftf_play_movie = 1,
 	ftf_advance_time = 8,
-	ftf_play_sound = 0x10
+	ftf_play_sound = 0x10,
+	ftf_unk20 = 0x20,
+	ftf_unk80000000 = 0x80000000
 };
 
 #pragma pack(push, 1)
@@ -40,13 +42,13 @@ struct FadeAndTeleportArgs {
 };
 
 struct FadeArgs {
-	int field0;
+	int flags;
 	XMCOLOR color;
-	int field8;
+	int countSthgUsually48;
 	float transitionTime;
 	int field10;
 	int field14;
-	int field18;
+	int hoursToPass;
 };
 #pragma pack(pop)
 

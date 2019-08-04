@@ -15,7 +15,7 @@
 #include <tig/tig_mouse.h>
 #include <tig/tig_loadingscreen.h>
 #include <tig/tig_font.h>
-#include <tig/tig_msg.h>
+#include "messages/messagequeue.h"
 #include <movies.h>
 #include <python/python_integration_obj.h>
 #include "legacysystems.h"
@@ -25,9 +25,10 @@
 #include "particlesystems.h"
 #include "clipping/clipping.h"
 #include "gamesystems/timeevents.h"
+#include "gamesystems/objfade.h"
 #include "gamesystems/objects/objsystem.h"
 #include "gamesystems/map/gmesh.h"
-#include "anim.h"
+#include "animgoals/anim.h"
 
 #include "mapsystem.h"
 #include <infrastructure/vfs.h>
@@ -38,6 +39,8 @@
 #include <graphics/device.h>
 #include "graphics/mapterrain.h"
 #include "ui/ui_systems.h"
+#include <aas/aas_model_factory.h>
+#include <poison.h>
 
 using namespace gfx;
 
@@ -185,8 +188,8 @@ GameSystems::GameSystems(TigInitializer& tig) : mTig(tig) {
 
 	gameSystemInitTable.InitPfxLightning();
 
-	*gameSystemInitTable.ironmanFlag = false;
-	*gameSystemInitTable.ironmanSaveGame = 0;
+	mIronmanFlag = FALSE;
+	mIronmanSaveName = nullptr;
 
 }
 
@@ -304,6 +307,12 @@ TigBufferstuffInitializer::~TigBufferstuffInitializer() {
 	gameSystemInitTable.TigWindowBufferstuffFree(mBufferIdx);
 }
 
+void GameSystems::TakeSaveScreenshots() {
+	auto& device = mTig.GetRenderingDevice();
+	device.TakeScaledScreenshot("save\\temps.jpg", 64, 48);
+	device.TakeScaledScreenshot("save\\templ.jpg", 256, 192);
+}
+
 /*
 Checks that the TemplePlus data file has been loaded in some way.
 */
@@ -360,9 +369,25 @@ void GameSystems::InitBufferStuff(const GameSystemConf& conf) {
 	*/
 }
 
+#include "gamesystems/aas_hooks.h"
+
 void GameSystems::InitAnimationSystem() {
 	
 	mMeshesById = MesFile::ParseFile("art\\meshes\\meshes.mes");
+
+	// Extender files for art/meshes/meshes.mes
+	{
+		TioFileList meshesFlist;
+		tio_filelist_create(&meshesFlist, "art\\meshes\\ext\\*.mes");
+
+		for (auto i = 0; i < meshesFlist.count; i++) {
+
+			std::string combinedFname(fmt::format("art\\meshes\\ext\\{}", meshesFlist.files[i].name));
+			auto meshesMappingExt = MesFile::ParseFile(combinedFname);
+			mMeshesById.insert(meshesMappingExt.begin(), meshesMappingExt.end());
+		}
+	}
+
 
 	temple::AasConfig config;
 	config.runScript = [] (const std::string &command) {
@@ -377,8 +402,24 @@ void GameSystems::InitAnimationSystem() {
 	config.resolveMaterial = [=](const std::string &material) {
 		return ResolveMaterial(material);
 	};
+	config.fastSneakAnim = ::config.fastSneakAnim;
+	config.equalizeMovementSpeed = ::config.equalizeMoveSpeed;
+	if (::config.newAnimSystem) {
+		logger->info("Enabling new animation system.");
+		// Additionally, redirect all the old functions
+		AasHooks hooks;
+		hooks.apply();
+		MH_EnableHook(nullptr);
 
-	mAAS = std::make_unique<temple::AasAnimatedModelFactory>(config);
+		mAAS = std::make_unique<aas::AnimatedModelFactory>(
+			config.resolveSkaFile,
+			config.resolveSkmFile,
+			config.runScript,
+			config.resolveMaterial
+		);
+	} else {
+		mAAS = std::make_unique<temple::AasAnimatedModelFactory>(config);
+	}
 
 }
 
@@ -457,8 +498,8 @@ void GameSystems::LoadModule(const std::string& moduleName) {
 void GameSystems::AddModulePaths(const std::string& moduleName) {
 
 	std::string moduleBase;
-	if (!Path::IsFileSystem(moduleName)) {
-		moduleBase = Path::Concat(".\\Modules\\", moduleName);
+	if (!VfsPath::IsFileSystem(moduleName)) {
+		moduleBase = VfsPath::Concat(".\\Modules\\", moduleName);
 	} else {
 		moduleBase = moduleName;
 	}
@@ -524,11 +565,11 @@ void GameSystems::ResetGame() {
 		system->Reset();
 	}
 
-	*gameSystemInitTable.ironmanFlag = false;
-	if (*gameSystemInitTable.ironmanSaveGame) {
-		free(*gameSystemInitTable.ironmanSaveGame);
+	mIronmanFlag = FALSE;
+	if (mIronmanSaveName) {
+		free(mIronmanSaveName);
 	}
-	*gameSystemInitTable.ironmanSaveGame = nullptr;
+	mIronmanSaveName = nullptr;
 
 	mResetting = false;
 
@@ -749,7 +790,7 @@ void GameSystems::InitializeSystems(LoadingScreen& loadingScreen) {
 	mItemHighlight = InitializeSystem<ItemHighlightSystem>(loadingScreen, mConfig);
 	loadingScreen.SetProgress(79 / 79.0f);
 	mPathX = InitializeSystem<PathXSystem>(loadingScreen, mConfig);
-
+	mPoison = InitializeSystem<PoisonSystem>(loadingScreen);
 }
 
 void GameSystems::EndGame() {
@@ -764,7 +805,7 @@ template <typename Type, typename... Args>
 std::unique_ptr<Type> GameSystems::InitializeSystem(LoadingScreen& loadingScreen,
                                                     Args&&... args) {
 	logger->info("Loading game system {}", Type::Name);
-	msgFuncs.ProcessSystemEvents();
+	messageQueue->PollExternalEvents();
 	loadingScreen.Render();
 
 	auto result(std::make_unique<Type>(std::forward<Args>(args)...));
@@ -804,16 +845,18 @@ public:
 	void apply() override {
 		replaceFunction(0x10001DB0, Reset);
 		replaceFunction(0x10002510, IsResetting);
+		replaceFunction(0x10002830, TakeSaveScreenshots);
 	}
 
-	static void Reset();
-	static BOOL IsResetting();
+	static void Reset() {
+		gameSystems->ResetGame();
+	}
+
+	static BOOL IsResetting() {
+		return gameSystems->IsResetting() ? TRUE : FALSE;
+	}
+
+	static void TakeSaveScreenshots() {
+		gameSystems->TakeSaveScreenshots();
+	}
 } hooks;
-
-void GameSystemsHooks::Reset() {
-	gameSystems->ResetGame();
-}
-
-BOOL GameSystemsHooks::IsResetting() {
-	return gameSystems->IsResetting() ? TRUE : FALSE;
-}

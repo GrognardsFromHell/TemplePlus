@@ -1,25 +1,28 @@
 #pragma once
 #include "../obj.h"
 #include "../objlist.h"
+#include "raycast.h"
 
 
 struct TigMsg;
 #define MAX_PICKER_COUNT 32
 
-enum class UiPickerIncFlags : uint64_t
+enum UiPickerIncFlags : uint64_t
 {
-	None = 0,
-	Self = 0x1,
-	Other = 0x2,
-	NonCritter = 0x4,
-	Dead = 0x8,
-	Undead = 0x10,
-	Unconscious = 0x20,
-	Hostile = 0x40,
-	Friendly = 0x80,
-	Potion = 0x100,
-	Scroll = 0x200
+	UIPI_None = 0,
+	UIPI_Self = 0x1,
+	UIPI_Other = 0x2,
+	UIPI_NonCritter = 0x4,
+	UIPI_Dead = 0x8,
+	UIPI_Undead = 0x10,
+	UIPI_Unconscious = 0x20,
+	UIPI_Hostile = 0x40,
+	UIPI_Friendly = 0x80,
+	UIPI_Potion = 0x100,
+	UIPI_Scroll = 0x200
+
 };
+
 
 enum UiPickerFlagsTarget : uint64_t
 {
@@ -85,14 +88,22 @@ struct PickerArgs {
 	float trimmedRangeInches; // after processing for collision with walls
 	int field10c;
 
-
+	PickerArgs() { memset(this, 0, sizeof(PickerArgs)); };
 	bool IsBaseModeTarget(UiPickerType type);
 	bool IsModeTargetFlagSet(UiPickerType type);
+	void SetModeTargetFlag(UiPickerType type);
 	UiPickerType GetBaseModeTarget();
-	void GetTrimmedRange(LocAndOffsets &originLoc, LocAndOffsets &tgtLoc, float radiusInch, float maxRange);
+
+	void GetTrimmedRange(LocAndOffsets &originLoc, LocAndOffsets &tgtLoc, float radiusInch, float maxRangeInch, float incrementInches = 0);
 	void GetTargetsInPath(LocAndOffsets &originLoc, LocAndOffsets &tgtLoc, float radiusInch); // must have valid trimmedRangeInches value; must also free preexisting ObjectList!
 
 	void DoExclusions();
+	bool CheckTargetVsIncFlags(objHndl tgt);
+	bool TargetValid( objHndl objHndl); // check exclusions from flags, and range
+	bool LosBlocked(objHndl objHndl);
+	bool SetSingleTgt( objHndl tgt);
+	void FreeObjlist();
+
 protected:
 	void ExcludeTargets();
 	void FilterResults();
@@ -115,6 +126,7 @@ public:
 	int field134;
 
 	BOOL Finalize();
+	GameRaycastFlags GetFlagsFromExclusions();
 };
 
 const auto TestSizeOfPickerCacheEntry = sizeof(PickerCacheEntry); // should be 312 (0x138)
@@ -158,6 +170,7 @@ public:
 	BOOL PickerActiveCheck(); // is there an active picker?
 	
 	int ShowPicker(const PickerArgs &args, void *callbackArgs);
+	void CancelPicker();
 	BOOL FreeCurrentPicker();
 	PickerCacheEntry &GetPicker(int pickerIdx);
 	PickerCacheEntry &GetActivePicker();
@@ -173,8 +186,10 @@ public:
 	uint32_t GetListRange(LocAndOffsets* locAndOffsets, PickerArgs* pickerArgs);
 
 	// Wall mode
-	void WallStateReset() { mWallState = WallPicker_StartPoint; };
+	void WallStateReset() { mWallState = WallPicker_StartPoint; }
+	
 	WallPickerState GetWallState() { return  mWallState ; };
+	LocAndOffsets GetWallEndPoint();
 
 	UiPicker();
 protected:
@@ -186,6 +201,8 @@ protected:
 	BOOL PickerMsgKeyboard(TigMsg *msg); // KB message handler
 	const PickerSpec &GetPickerSpec(UiPickerType modeTarget) ;
 
+	BOOL MultiPosChange(TigMsg*msg);
+
 	// Wall mode
 	// walls are defined by a start point and an end point
 	void InitWallSpec();
@@ -196,7 +213,9 @@ protected:
 	BOOL WallRmbReleased(TigMsg *msg);
 	void WallCursorText(int x, int y);
 	WallPickerState mWallState = WallPicker_StartPoint;
+	LocAndOffsets mWallEndPt = LocAndOffsets::null;
 
+	
 
 	/*
 		Draws the rotating spiked circle for a valid target

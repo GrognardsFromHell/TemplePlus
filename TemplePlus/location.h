@@ -14,7 +14,7 @@ struct LocationSys : temple::AddressTable
 	void RegularizeLoc(LocAndOffsets* toLocTweaked); //  alters the location and offsets so that the offsets are within the tile
 	void GetOverallOffset(LocAndOffsets loc, float* absX, float* absY);
 	BOOL ShiftLocationByOneSubtile(LocAndOffsets* loc, ScreenDirections direction, LocAndOffsets* locOut);
-	
+
 	void (__cdecl*PointNodeInit)(LocAndOffsets* loc, PointNode* pntNode);
 	int GetLocFromScreenLocPrecise(int x, int y, LocAndOffsets&);
 	
@@ -31,7 +31,7 @@ struct LocationSys : temple::AddressTable
 	void GetScrollTranslation(int &xOut, int &yOut);
 
 	// Distance between two objects in feet
-	float (__cdecl *DistanceToObj)(objHndl from, objHndl to);
+	float DistanceToObj(objHndl from, objHndl to);
 
 	// Distance between from and loc in inches (without the obj radius)
 	float DistanceToLoc(objHndl from, LocAndOffsets loc);
@@ -42,6 +42,7 @@ struct LocationSys : temple::AddressTable
 		e.g. if deltaX = 15 and deltaY = -17 it will return 17
 	*/
 	int64_t (__cdecl*GetTileDeltaMax)(objHndl obj, objHndl obj2);
+	int64_t GetTileDeltaMaxBtwnLocs(locXY loc1, locXY loc2);
 
 	float InchesToFeet(float inches);
 
@@ -52,10 +53,14 @@ struct LocationSys : temple::AddressTable
 
 	/*
 	Calculates the angle in radians between two points in the tile coordinate system.
-	The angle can be used to make an object that is at fromPoint face the location at toPoint,
-	given that rotation 0 means "look directly north".
+	The angle can be used to make an object that is at fromPoint face the location at toPoint.
+	To convert to screen space rotation, which is defined as 0 when facing to the top of the screen and increasing ** clockwise **, do:
+	rotation = -angle + 5*pi/4 
+	         = -angle - 2.3561945f
 	*/
 	float AngleBetweenPoints(LocAndOffsets &fromPoint, LocAndOffsets &toPoint);
+
+	XMFLOAT2 GetDirectionVector(LocAndOffsets &fromPoint, LocAndOffsets &toPoint); // returns a normalized vector in the direction from -> to
 
 	LocationSys();
 };

@@ -10,6 +10,7 @@
 #include <feat.h>
 #include <skill.h>
 #include <d20.h>
+#include "d20_race.h"
 
 struct HelpTabEntry
 {
@@ -309,7 +310,9 @@ void HelpSystem::PresentWikiHelp(int helpIdx, D20HelpType helpType){
 		helpId = ElfHash::Hash(feats.GetFeatHelpTopic((feat_enums)(helpIdx - HELP_IDX_FEATS)) );
 		break;
 	case D20HelpType::Races:
-		helpId = ElfHash::Hash(temple::GetRef<const char*[]>(0x102F84B8)[helpIdx - HELP_IDX_RACES]);
+		adjustedIdx = helpIdx - HELP_IDX_RACES + race_human;
+		helpId = ElfHash::Hash(d20RaceSys.GetHelpTopic((Race)adjustedIdx));
+		//helpId = ElfHash::Hash(temple::GetRef<const char*[]>(0x102F84B8)[helpIdx - HELP_IDX_RACES]);
 		break;
 	case D20HelpType::Skills:
 		helpId = ElfHash::Hash(skillSys.GetSkillHelpTopic((SkillEnum)(helpIdx - HELP_IDX_SKILLS)) );

@@ -47,6 +47,7 @@ namespace TemplePlusConfig
                                      + dllVersion.Description);
             }
 
+            
             // It's a Co8 DLL, check if the required script file exists
             if (dllVersion.Co8)
             {
@@ -54,6 +55,11 @@ namespace TemplePlusConfig
                 if (!File.Exists(co8Init))
                 {
                     return CreateInvalid("A Co8 temple.dll is being used without the required Co8 data files.");
+                }
+                if (App._iniViewModel.NeedsCo8Defaults)
+                {
+                    App._iniViewModel.NumberOfPcs = NumberOfPcsType.Flexible;
+                    App._iniViewModel.MaxLevel    = 30;
                 }
             }
 

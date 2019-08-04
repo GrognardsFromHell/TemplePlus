@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include <gsl/gsl.h>
+#include <gsl/gsl>
 #include <atlcomcli.h>
 
 using gsl::span;
@@ -17,6 +17,7 @@ namespace gfx {
 		JPEG,
 		TGA,
 		FNTART,
+		IMG,
 		Unknown
 	};
 
@@ -70,6 +71,8 @@ namespace gfx {
 	DecodedImage DecodeFontArt(const span<uint8_t> data);
 
 	DecodedImage DecodeImage(const span<uint8_t> data);
+
+	DecodedImage DecodeCombinedImage(const std::string &filename, span<uint8_t> data);
 
 	HCURSOR LoadImageToCursor(const span<uint8_t> data, uint32_t hotspotX, uint32_t hotspotY);
 

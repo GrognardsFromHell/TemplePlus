@@ -50,6 +50,10 @@ enum ActionErrorCode : uint32_t
 	AEC_NOT_IN_COMBAT,
 	AEC_AREA_NOT_SAFE
 };
+
+// Allows for direct use of ActionErrorCode in format() strings
+ostream &operator<<(ostream &str, ActionErrorCode id);
+
 enum TurnBasedStatusFlags : uint32_t
 {
 	TBSF_NONE = 0,
@@ -102,6 +106,7 @@ struct ActionSequenceSystem : temple::AddressTable
 	int turnBasedStatusTransitionMatrix[7][5]; // describes the new hourglass state when current state is i after doing an action that costs j
 
 	void curSeqReset(objHndl objHnd);
+	void ResetAll(objHndl handle);
 	void ActSeqSpellReset() const;
 	
 	// Pickers
@@ -112,7 +117,7 @@ struct ActionSequenceSystem : temple::AddressTable
 
 	void ActionTypeAutomatedSelection(objHndl handle);
 	void TurnStart(objHndl obj);
-	int ActionAddToSeq();
+	int ActionAddToSeq(); // ActionErrorCode
 	
 		uint32_t addD20AToSeq(D20Actn * d20a, ActnSeq * actSeq);
 		ActionErrorCode AddToSeqSimple(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
@@ -124,8 +129,8 @@ struct ActionSequenceSystem : temple::AddressTable
 			void AttackAppend(ActnSeq * actSeq, D20Actn * d20a, TurnBasedStatus* tbStat, int attackCode);
 
 	int StdAttackTurnBasedStatusCheck(D20Actn *d20a, TurnBasedStatus *tbStat);
-	uint32_t isPerforming(objHndl objHnd);
-	uint32_t MoveSequenceParse(D20Actn * d20aIn, ActnSeq* actSeq, TurnBasedStatus *actnSthg, float distSthg, float reach, int a5);
+	uint32_t isPerforming(objHndl objHnd, ActnSeq** = nullptr);
+	uint32_t MoveSequenceParse(D20Actn * d20aIn, ActnSeq* actSeq, TurnBasedStatus* tbStat, float distToTgtMin, float reach, int nonspecificMoveType);
 		void releasePath(PathQueryResult*);
 		void addReadiedInterrupts(ActnSeq* actSeq, CmbtIntrpts * intrpts);
 		void updateDistTraversed(ActnSeq* actSeq);
@@ -144,7 +149,7 @@ struct ActionSequenceSystem : temple::AddressTable
 	uint32_t AssignSeq(objHndl objHnd);
 	uint32_t TurnBasedStatusInit(objHndl objHnd);
 	void ActSeqCurSetSpellPacket(SpellPacketBody* spellPacketBody, int flag);
-	int GetNewHourglassState(objHndl performer, D20ActionType d20ActionType, int d20Data1, int radMenuActualArg, D20SpellData* d20SpellData);
+	int GetNewHourglassState(objHndl performer, D20ActionType d20ActionType, int d20Data1, int radMenuActualArg, D20SpellData* d20SpellData); // used in radial menu rendering
 	int GetHourglassTransition(int hourglassCurrent, int hourglassCost);
 
 	BOOL SequenceSwitch(objHndl obj);
@@ -179,7 +184,10 @@ struct ActionSequenceSystem : temple::AddressTable
 	bool SpellTargetsFilterInvalid(D20Actn &d20a);
 	int32_t InterruptNonCounterspell(D20Actn *d20a);
 	int32_t InterruptCounterspell(D20Actn *d20a);
+	int32_t GetCurSeqD20ActionCount();
+	objHndl getNextSimulsPerformer(); // returns next simultaneous action performer
 	
+
 	static int ReadyVsApproachOrWithdrawalCount();
 	static void ReadyVsRemoveForObj(objHndl obj);
 	static ReadiedActionPacket * ReadiedActionGetNext(ReadiedActionPacket * prevReadiedAction, D20Actn* d20a);
@@ -202,7 +210,7 @@ struct ActionSequenceSystem : temple::AddressTable
 
 
 	bool projectileCheckBeforeNextAction();
-	uint32_t actSeqSpellHarmful(ActnSeq* actSeq);
+	uint32_t ShouldTriggerCombat(ActnSeq* actSeq);
 	uint32_t isSimultPerformer(objHndl);
 	uint32_t simulsOk(ActnSeq* actSeq);
 	uint32_t simulsAbort(objHndl);
@@ -226,7 +234,7 @@ private:
 	bool (__cdecl *_actionPerformProjectile)();
 	void (__cdecl *_sub_1008BB40)(D20Actn * d20a); // ActnSeq*actSeq@<ebx>, 
 	int(__cdecl* _CrossBowSthgReload_1008E8A0)(D20Actn *d20a); //, ActnSeq *actSeq@<ebx>
-	uint32_t (__cdecl *getRemainingMaxMoveLength)(D20Actn *d20a, TurnBasedStatus *actnSthg, float *floatOut); // doesn't take things like having made 5 foot step into account, just a raw calculation
+	uint32_t GetRemainingMaxMoveLength(D20Actn *d20a, TurnBasedStatus *actnSthg, float *floatOut); // doesn't take things like having made 5 foot step into account, just a raw calculation
 	int(__cdecl*_TurnBasedStatusUpdate)(D20Actn* d20Actn, TurnBasedStatus* turnBasedStatus);
 	void (__cdecl *_ProcessPathForReadiedActions)(CmbtIntrpts* d20a); // D20Actn*@<eax>
 	uint32_t (__cdecl* _sub_10096450)(ActnSeq * actSeq, uint32_t); // void * iO @<ebx>

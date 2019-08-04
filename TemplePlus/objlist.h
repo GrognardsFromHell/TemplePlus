@@ -31,10 +31,13 @@ enum ObjectListFilter {
 	OLC_PATH_BLOCKER = 0x18006 // added for pathfinding purposes
 };
 
-#pragma pack(push, 1)
-
-
-#pragma pack(pop)
+inline ObjectListFilter operator &(ObjectListFilter l, int r) {
+	return (ObjectListFilter)(static_cast<uint32_t>(l) & static_cast<uint32_t>(r));
+}
+inline ObjectListFilter &operator &=(ObjectListFilter &l, int r) {
+	l = (l & r);
+	return l;
+}
 
 class ObjList {
 public:
@@ -63,13 +66,18 @@ public:
 		Lists objects in a radius. This seems to be the radius in the X,Y 3D coordinate
 		space.
 	*/
-	void ListRadius(LocAndOffsets loc, float radius, int flags);
+	void ListRadius(LocAndOffsets loc, float radiusInches, int flags);
 
 	/*
 	Lists objects in a radius + angles. This seems to be the radius in the X,Y 3D coordinate
-	space.
+	space. flags - ObjectListFilter
 	*/
 	void ListRange(LocAndOffsets loc, float radius, float angleMin, float angleMax, int flags);
+
+	/*
+	Lists objects in a tile radius.
+	*/
+	void ListRangeTiles(objHndl handle, int rangeTiles, ObjectListFilter filter);
 
 
 	/*
@@ -95,6 +103,40 @@ public:
 		return get(idx);
 	}
 
+	std::vector<objHndl> GetListResult();
+
+	class iterator {
+	public:
+		explicit iterator(const ObjListResultItem *item) : item_(item) {
+		}
+
+		objHndl operator *() const { 
+			Expects(item_);
+			return item_->handle;
+		}
+
+		const iterator &operator ++() {
+			item_ = item_->next;
+			return *this; 
+		}
+
+		bool operator ==(const iterator &other) const { 
+			return item_ == other.item_; 
+		}
+		bool operator !=(const iterator &other) const { 
+			return item_ != other.item_;
+		}
+	private:
+		const ObjListResultItem* item_;
+	};
+
+	iterator begin() const {
+		return iterator(mResult.objects);
+	}
+
+	iterator end() const {
+		return iterator(nullptr);
+	}
 
 private:
 	ObjListResult mResult;

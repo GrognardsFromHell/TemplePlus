@@ -1,0 +1,19 @@
+School: Necromancy
+Level: Sor 50
+Level: Wiz 50
+Descriptor: Death
+Component: V
+Casting Time: 1 action
+Range: Medium
+Saving Throw: None
+Spell Resistance: No
+Projectile: No
+flags_Target: Range
+flags_Target: Radius
+inc_flags_Target: Other
+exc_flags_Target: Self
+exc_flags_Target: Dead
+exc_flags_Target: Non-critter
+mode_Target: Personal
+radius_Target: 200
+ai_type: ai_action_offensive

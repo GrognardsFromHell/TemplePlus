@@ -30,11 +30,6 @@ static struct GameLibSaveAddresses : temple::AddressTable {
 
 	int* isInSave;
 
-	// Enables ironman mode
-	int* isIronman;
-	int* ironmanSaveNumber;
-	char **ironmanSaveName;
-
 	void(__cdecl *UiMmRelated)(int arg);
 	void(__cdecl *UiMmRelated2)(int arg);
 
@@ -47,9 +42,6 @@ static struct GameLibSaveAddresses : temple::AddressTable {
 		rebase(UiMmRelated, 0x10111A00);
 		rebase(UiMmRelated2, 0x10111A40);
 		rebase(PackArchive, 0x101E5F80);
-		rebase(isIronman, 0x103072B8);
-		rebase(ironmanSaveNumber, 0x10306F44);
-		rebase(ironmanSaveName, 0x103072C0);
 		rebase(UiSaveGame, 0x101152F0);
 	}
 } addresses;
@@ -157,22 +149,22 @@ bool GameSystems::SaveGame(const string& filename, const string& displayName) {
 		return false;
 	}
 
-	if (tio_fwrite(addresses.isIronman, 4, 1, file) != 1) {
+	if (tio_fwrite(&mIronmanFlag, 4, 1, file) != 1) {
 		logger->error("Failed to write ironman mode flag.");
 		tio_fclose(file);
 		tio_remove(fullPath);
 		return false;
 	}
 
-	if (*addresses.isIronman) {
-		if (tio_fwrite(addresses.ironmanSaveNumber, 4, 1, file) != 1) {
+	if (mIronmanFlag) {
+		if (tio_fwrite(&mIronmanSaveNumber, 4, 1, file) != 1) {
 			logger->error("Failed to write ironman save number");
 			tio_fclose(file);
 			tio_remove(fullPath);
 			return false;
 		}
 
-		auto savenameLen = strlen(*addresses.ironmanSaveName) + 1;
+		auto savenameLen = strlen(mIronmanSaveName) + 1;
 		if (tio_fwrite(&savenameLen, 4, 1, file) != 1) {
 			logger->error("Failed to write ironman save name length");
 			tio_fclose(file);
@@ -180,7 +172,7 @@ bool GameSystems::SaveGame(const string& filename, const string& displayName) {
 			return false;
 		}
 		
-		if (tio_fwrite(*addresses.ironmanSaveName, 1, savenameLen, file) != savenameLen) {
+		if (tio_fwrite(mIronmanSaveName, 1, savenameLen, file) != savenameLen) {
 			logger->error("Failed to write ironman save name");
 			tio_fclose(file);
 			tio_remove(fullPath);
@@ -269,13 +261,27 @@ bool GameSystems::SaveGame(const string& filename, const string& displayName) {
 	return true;
 }
 
+bool GameSystems::SaveGameIronman()
+{
+	if (mIronmanFlag && mIronmanSaveName) {
+		auto filename = fmt::format("iron{:04d}", mIronmanSaveNumber);
+		return SaveGame(filename, mIronmanSaveName);
+	}
+	return false;
+}
+
 static class GameLibSaveReplacement : TempleFix {
 public:
-	static bool SaveGame(const char *filename, const char *displayName) {
-		return gameSystems->SaveGame(filename, displayName);
+	static BOOL SaveGame(const char *filename, const char *displayName) {
+		return gameSystems->SaveGame(filename, displayName) ? TRUE : FALSE;
 	}
 
 	void apply() override {
 		replaceFunction(0x100042C0, SaveGame);
+
+		// gamelib_ironman_save
+		replaceFunction<int()>(0x10004870, []() {
+			return gameSystems->SaveGameIronman() ? TRUE : FALSE;
+		});
 	}
 } fix;

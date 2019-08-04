@@ -36,12 +36,41 @@ bool GameObjectBody::IsProto() const
 	return protoId.IsBlocked();
 }
 
+bool GameObjectBody::IsStackable() const{
+	auto flags = 0;
+	switch(type){
+	
+		case obj_t_weapon:
+			return GetInt32(obj_f_weapon_type) == wt_shuriken;
+		case obj_t_food:
+			flags = GetItemFlags();
+			if ( (flags & OIF_IS_MAGICAL) && (flags & OIF_EXPIRES_AFTER_USE) )
+				return true;
+			return false;
+		case obj_t_generic:
+			return GetInt32(obj_f_category) == 5; // jewelry / gems
+		case obj_t_armor:
+			return GetInt32(obj_f_category) == 17; // necklaces
+		case obj_t_ammo:
+		case obj_t_money:
+		case obj_t_scroll:
+			return true;
+		default:
+			return false;
+	}
+
+}
+
 int32_t GameObjectBody::GetInt32(obj_f field) const
 {
 	Expects(objectFields.GetType(field) == ObjectFieldType::Int32);
 
 	if (field == obj_f_type) {
 		return type;
+	}
+	if (field == obj_f_model_scale)
+	{
+		auto dummy = 1;
 	}
 
 	// For 32-bit integers, instead of a pointer to the value, 
@@ -58,6 +87,11 @@ int32_t GameObjectBody::GetInt32(obj_f field) const
 float GameObjectBody::GetFloat(obj_f field) const
 {
 	Expects(objectFields.GetType(field) == ObjectFieldType::Float32);
+
+	if (field == obj_f_speed_run)
+	{
+		auto dummy = 1;
+	}
 
 	// For 32-bit floats, instead of a pointer to the value, 
 	// the pointer itself is the 32-bit float
@@ -834,6 +868,8 @@ void GameObjectBody::SetLocation(locXY location)
 {
 	SetInt64(obj_f_location, location);
 }
+
+
 
 
 void GameObjectBody::ForEachChild(std::function<void(objHndl item)> callback) const

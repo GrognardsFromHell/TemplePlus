@@ -11,24 +11,37 @@
 #include "gamesystems/objects/objsystem.h"
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/particlesystems.h"
+#include "action_sequence.h"
 
 // Ability Condition Fixes (for buggy abilities, including monster abilities)
 class AbilityConditionFixes : public TempleFix {
 public:
 #define ABFIX(fname) static int fname ## (DispatcherCallbackArgs args);
 #define HOOK_ORG(fname) static int (__cdecl* org ##fname)(DispatcherCallbackArgs) = replaceFunction<int(__cdecl)(DispatcherCallbackArgs)>
-	static int PoisonedOnBeginRound(DispatcherCallbackArgs args);;
 	static int MonsterSplittingHpChange(DispatcherCallbackArgs args);
 	static int MonsterOozeSplittingOnDamage(DispatcherCallbackArgs args);
+	static int MonsterSubtypeFire(DispatcherCallbackArgs args);
 	static int GrappledMoveSpeed(DispatcherCallbackArgs args);
 	static int DiplomacySkillSynergy(DispatcherCallbackArgs args);
 
+	static int BootsOfSpeedNewday(DispatcherCallbackArgs args);
+	static int BootsOfSpeedBeginRound(DispatcherCallbackArgs args);
+
+	static int CombatExpertiseAcBonus(DispatcherCallbackArgs args);
+	static int TacticalAbusePrevention(DispatcherCallbackArgs args); // Combat Expertise / Fight Defensively
+	
+	static int SpellFocusDcMod(DispatcherCallbackArgs args);
+
 	void apply() override {
 
+		//replaceFunction(0x100FC050, SpellFocusDcMod);
+
+		replaceFunction(0x100F7ED0, TacticalAbusePrevention);
+		replaceFunction(0x100F7E70, CombatExpertiseAcBonus);
+
 		replaceFunction(0x100CB890, GrappledMoveSpeed); // fixed Grappled when the frog is dead
-		{
+		{ // Remove the Grappled condition when the frog (caster) is dead on the following queries
 			SubDispDefNew sdd;
-			sdd.dispKey = DK_QUE_Critter_Is_Grappling;
 			sdd.dispType = dispTypeD20Query;
 			sdd.dispCallback = [](DispatcherCallbackArgs args){
 				auto spellId = args.GetCondArg(0);
@@ -43,18 +56,22 @@ public:
 				dispIo->return_val = 1;
 				return 0;
 			};
-
+			sdd.dispKey = DK_QUE_SneakAttack;
 			write(0x102E6158, &sdd, sizeof(sdd));
+			sdd.dispKey = DK_QUE_Helpless;
 			write(0x102E616C, &sdd, sizeof(sdd));
+			sdd.dispKey = DK_QUE_CannotCast;
 			write(0x102E6180, &sdd, sizeof(sdd));
+			sdd.dispKey = DK_QUE_Critter_Is_Grappling;
 			write(0x102E61A8, &sdd, sizeof(sdd));
 			write(0x102E15C0 + offsetof(CondStruct, subDispDefs) + (1) * sizeof(SubDispDefNew), &sdd, sizeof(sdd));
 
 		}
 
+		replaceFunction(0x10101EB0, BootsOfSpeedNewday);
+		replaceFunction(0x101020A0, BootsOfSpeedBeginRound); // fixes the bug that fucked things up
 
-
-		replaceFunction(0x100EA040, PoisonedOnBeginRound);
+		replaceFunction(0x100FDE00, MonsterSubtypeFire); // fixes 2x damage factor for vulnerability to cold (should be 1.5)
 
 		replaceFunction(0x100F7550, MonsterSplittingHpChange);
 		replaceFunction(0x100F7490, MonsterOozeSplittingOnDamage);
@@ -68,19 +85,36 @@ public:
 		});
 
 		// fixes Opportunist getting an AOO for your own attack...
-		HOOK_ORG(OpportuninstBroadcast)(0x100FADF0, [](DispatcherCallbackArgs args)->int
-		{
+		replaceFunction<int(__cdecl)(DispatcherCallbackArgs)>(0x100FADF0, [](DispatcherCallbackArgs args){
 			auto numAvail = args.GetCondArg(0);
-			if (numAvail){
-				GET_DISPIO(dispIoTypeSendSignal, DispIoD20Signal);
-				auto d20a = (D20Actn*)dispIo->data1;
-				if (d20a->d20APerformer != args.objHndCaller)
-					return orgOpportuninstBroadcast(args);
-			}
+			if (!numAvail)
+				return 0;
+			
+			GET_DISPIO(dispIoTypeSendSignal, DispIoD20Signal);
+			auto d20a = (D20Actn*)dispIo->data1;
+			if (d20a->d20APerformer == args.objHndCaller) // fixes vanilla bug where you got an AOO for your making your own attack
+				return 0;
+			
+			auto tgt = d20a->d20ATarget;
+			if (!tgt) // fixed missing check on target (e.g. this would fire on move actions)
+				return 0;
+
+			if (!d20Sys.d20QueryWithData(args.objHndCaller, DK_QUE_AOOPossible, tgt))
+				return 0;
+			if (!d20Sys.d20QueryWithData(args.objHndCaller, DK_QUE_AOOWillTake, tgt))
+				return 0;
+			if (combatSys.AffiliationSame(args.objHndCaller, tgt))
+				return 0;
+			if (!combatSys.CanMeleeTarget(args.objHndCaller, tgt))
+				return 0;
+
+			if (!d20a->IsMeleeHit())
+				return 0;
+			args.SetCondArg(0, numAvail - 1);
+			actSeqSys.DoAoo(args.objHndCaller, tgt);
 			return 0;
 		});
-	
-
+		
 		// Banshee Charisma Drain (fixes uninitialized values used when saving throw is successful)
 		HOOK_ORG(BansheeCharismaDrain)(0x100F67D0, [](DispatcherCallbackArgs args)->int {
 			GET_DISPIO(dispIOTypeDamage, DispIoDamage);
@@ -116,68 +150,28 @@ public:
 		
 			return 0;
 		});
+
+
+		// fix for negative str mod still accounting in the bon list
+		static int(*orgWeaponFinesseToHitBonus)(DispatcherCallbackArgs) =
+			replaceFunction<int(__cdecl)(DispatcherCallbackArgs)>(0x100F80C0, [](DispatcherCallbackArgs args)->int
+		{
+			auto dispIo = static_cast<DispIoAttackBonus*>(args.dispIO);
+			int bonCount = dispIo->bonlist.bonCount;
+			int result = orgWeaponFinesseToHitBonus(args);
+			if (bonCount != dispIo->bonlist.bonCount) // dex bonus added
+			{
+				int strMod = objects.GetModFromStatLevel(objects.abilityScoreLevelGet(args.objHndCaller, stat_strength, 0));
+				if (strMod < 0) {
+					dispIo->bonlist.ModifyBonus(-strMod, 2, 103);
+				}
+			}
+			return result;
+		});
+
 	}
 } abilityConditionFixes;
 
-int AbilityConditionFixes::PoisonedOnBeginRound(DispatcherCallbackArgs args){
-	GET_DISPIO(dispIoTypeSendSignal, DispIoD20Signal);
-
-	// decrement duration
-	auto dur = args.GetCondArg(1);
-	auto durRem = dur - (int)dispIo->data1;
-	if (durRem >= 0){
-		args.SetCondArg(1, durRem);
-		return 0;
-	}
-
-	auto poisonId = args.GetCondArg(0);
-	auto &poisonSpecs = temple::GetRef<PoisonSpec[36]>(0x1028C080);
-	auto pspec = poisonSpecs[poisonId];
-
-	// make saving throw
-	auto dc = pspec.dc;
-	if (dc <= 0){
-		dc = args.GetCondArg(2);
-	}
-	if (dc < 0 || dc > 100) // failsafe
-		dc = 15;
-
-	if (pspec.delayedEffect == -10 || pspec.delayedEffect == -9) {
-		conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
-		return 0;
-	}
-
-	// success - remove condition
-	if (damage.SavingThrow(args.objHndCaller, objHndl::null, dc, SavingThrowType::Fortitude, D20STF_POISON)){
-		conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
-		return 0;
-	}
-
-	// failure
-
-	// check delay poison
-	if (d20Sys.d20QueryWithData(args.objHndCaller, DK_QUE_Critter_Has_Condition, conds.GetByName("sp-Delay Poison"), 0)){
-		floatSys.FloatSpellLine(args.objHndCaller, 20033, FloatLineColor::White);
-		conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
-		return 0;
-	}
-		
-	floatSys.FloatCombatLine(args.objHndCaller, 56);
-	histSys.CreateRollHistoryLineFromMesfile(21, args.objHndCaller, objHndl::null); // "X takes poison damage!"
-	floatSys.FloatCombatLine(args.objHndCaller, 96);
-
-	auto rollRes = Dice(pspec.delayedDice.count, pspec.delayedDice.sides, pspec.delayedDice.sides).Roll();
-	conds.AddTo(args.objHndCaller, "Temp_Ability_Loss", {pspec.delayedEffect + (pspec.delayedEffect < 0 ? 6:0), rollRes});
-
-	if (pspec.delayedSecondEffect != -10){
-		rollRes = Dice(pspec.delayedSecDice.count, pspec.delayedSecDice.sides, pspec.delayedSecDice.sides).Roll();
-		conds.AddTo(args.objHndCaller, "Temp_Ability_Loss", { pspec.delayedSecondEffect + (pspec.delayedSecondEffect < 0 ? 6 : 0), rollRes });
-
-	}
-
-	conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
-	return 0;
-}
 
 int AbilityConditionFixes::MonsterSplittingHpChange(DispatcherCallbackArgs args){
 	auto protoId = objSystem->GetProtoId(args.objHndCaller);
@@ -246,6 +240,18 @@ int AbilityConditionFixes::MonsterOozeSplittingOnDamage(DispatcherCallbackArgs a
 	return 0;
 }
 
+int AbilityConditionFixes::MonsterSubtypeFire(DispatcherCallbackArgs args){
+
+	GET_DISPIO(dispIOTypeDamage, DispIoDamage);
+	auto immuneDamType = (DamageType)args.GetData1();
+	auto vulnerDamType = (DamageType)args.GetData2();
+
+	if (!(dispIo->attackPacket.flags & D20CAF_SAVE_SUCCESSFUL))
+		dispIo->damage.AddModFactor(1.5, vulnerDamType, 136); // Vulnerable
+	dispIo->damage.AddModFactor(0.0, immuneDamType, 104); // Invulnerable
+	return 0;
+}
+
 int AbilityConditionFixes::GrappledMoveSpeed(DispatcherCallbackArgs args){
 	auto spellId = args.GetCondArg(0);
 	SpellPacketBody spPkt(spellId);
@@ -267,5 +273,72 @@ int AbilityConditionFixes::DiplomacySkillSynergy(DispatcherCallbackArgs args){
 		dispIo->bonOut->AddBonus(2, 0, 140);
 	if (critterSys.SkillBaseGet(args.objHndCaller, SkillEnum::skill_sense_motive) >= 5)
 		dispIo->bonOut->AddBonus(2, 0, 302);
+	return 0;
+}
+
+int AbilityConditionFixes::BootsOfSpeedNewday(DispatcherCallbackArgs args){
+	auto arg1 = args.GetCondArg(1);
+	args.SetCondArg(0, arg1);
+	return 0;
+}
+
+int AbilityConditionFixes::BootsOfSpeedBeginRound(DispatcherCallbackArgs args){
+
+	auto roundsRem = args.GetCondArg(0);
+	auto isOn = args.GetCondArg(3);
+	if (!isOn)
+		return 0;
+	GET_DISPIO(dispIoTypeSendSignal, DispIoD20Signal);
+	int roundsNew = roundsRem - (int)dispIo->data1;
+	if (roundsNew >= 0){
+		args.SetCondArg(0, roundsNew);
+		return 1;
+	}
+	// conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode); // this was a bug in vanilla! should just reset the isOn arg, as below
+	args.SetCondArg(0, 0);
+	args.SetCondArg(3, 0);
+	
+	auto partsysId = args.GetCondArg(4);
+	gameSystems->GetParticleSys().End(partsysId);
+	return 0;
+}
+
+int AbilityConditionFixes::CombatExpertiseAcBonus(DispatcherCallbackArgs args){
+
+	auto expertiseAmt = args.GetCondArg(0);
+	if (!expertiseAmt){
+		return 0;
+	}
+
+	auto attackMade = args.GetCondArg(1);
+	if (!attackMade){
+		return 0;
+	}
+
+	GET_DISPIO(dispIOTypeAttackBonus, DispIoAttackBonus);
+	dispIo->bonlist.AddBonusFromFeat(expertiseAmt, 8, 114, FEAT_COMBAT_EXPERTISE);
+
+	return 0;
+}
+
+int AbilityConditionFixes::TacticalAbusePrevention(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIoTypeSendSignal, DispIoD20Signal);
+	auto damPkt = (DispIoDamage*)dispIo->data1;
+	if (damPkt->attackPacket.flags & D20CAF_RANGED){
+		return 0;
+	}
+	args.SetCondArg(1, 1);
+	return 0;
+}
+
+int AbilityConditionFixes::SpellFocusDcMod(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIoTypeBonusListAndSpellEntry, DispIOBonusListAndSpellEntry);
+	auto feat = (feat_enums)args.GetCondArg(0);
+	auto spellSchool = dispIo->spellEntry->spellSchoolEnum - 1;
+	if ( feat - FEAT_SPELL_FOCUS_ABJURATION == spellSchool || feat - FEAT_GREATER_SPELL_FOCUS_ABJURATION == spellSchool){
+		dispIo->bonList->AddBonusFromFeat(1, 0, 114, feat);
+	}
 	return 0;
 }

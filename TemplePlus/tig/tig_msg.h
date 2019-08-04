@@ -35,7 +35,8 @@ enum MouseStateFlags : uint32_t
 	MSF_MMB_RELEASED = 0x400,
 	MSF_MMB_UNK = 0x800,
 	MSF_POS_CHANGE = 0x1000,
-	MSF_POS_CHANGE2 = 0x2000,
+	// Sent only 35ms after mouse position has stabilized
+	MSF_POS_CHANGE_SLOW = 0x2000,
 	MSF_SCROLLWHEEL_CHANGE = 0x4000
 };
 
@@ -71,6 +72,21 @@ struct TigMsgMouse : TigMsgBase // type 0
 	uint32_t buttonStateFlags; // button state flags for mouse events - see MouseStateFlags
 };
 
+struct TigKeyStateChangeMsg : TigMsgBase // type 5
+{
+	uint32_t key; // DINPUT KEY
+	BOOL down; // false = up, true = down
+	uint32_t _unused1;
+	uint32_t _unused2;
+};
+
+struct TigCharMsg : TigMsgBase // type 4
+{
+	uint32_t charCode; // VK_* constant
+	uint32_t _unused1;
+	uint32_t _unused2;
+	uint32_t _unused3;
+};
 
 enum class TigMsgWidgetEvent : uint32_t
 {
@@ -96,31 +112,9 @@ struct TigMsg : TigMsgBase {
 	uint32_t arg2; // y for mouse events
 	uint32_t arg3;
 	uint32_t arg4; // button state flags for mouse events - see MouseStateFlags
-	void Enqueue();
 };
 
 struct TigMsgGlobalKeyCallback {
 	uint32_t keycode; // DirectInput constants
 	void(__cdecl *callback)(uint32_t);
 };
-
-struct TigMsgFuncs : temple::AddressTable {
-	// Return code of 0 means a msg has been written to msgOut.
-	int(__cdecl *Process)(TigMsgBase *msgOut);
-	void(__cdecl *Enqueue)(TigMsgBase *msg);
-	void(__cdecl *ProcessSystemEvents)();
-
-	TigMsgFuncs() {
-		rebase(Process, 0x101DE750);
-		rebase(Enqueue, 0x101DE660);
-		rebase(ProcessSystemEvents, 0x101DF440);
-	}
-} ;
-
-extern TigMsgFuncs msgFuncs;
-
-inline void processTigMessages() {
-	TigMsg msg;
-	while (!msgFuncs.Process(&msg))
-		;
-}

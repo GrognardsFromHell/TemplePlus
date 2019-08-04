@@ -59,7 +59,13 @@ CComPtr<ID3D11ShaderResourceView> TextureLoader::Load(const std::string& filenam
 	auto textureData(vfs->ReadAsBinary(filename));
 
 	try {
-		auto image(gfx::DecodeImage(textureData));
+		gfx::DecodedImage image;
+		
+		if (endsWith(tolower(filename), ".img") && textureData.size() == 4) {
+			image = std::move(gfx::DecodeCombinedImage(filename, textureData));
+		} else {
+			image = std::move(gfx::DecodeImage(textureData));
+		}	
 
 		auto texWidth = image.info.width;
 		auto texHeight = image.info.height;
@@ -97,7 +103,6 @@ CComPtr<ID3D11ShaderResourceView> TextureLoader::Load(const std::string& filenam
 
 	} catch (std::exception& e) {
 		logger->error("Unable to load texture {}: {}", filename, e.what());
-	
 	}
 
 	return result;

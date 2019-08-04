@@ -80,13 +80,17 @@ objHndl ObjSystem::GetHandleById(ObjectId id)
 	locXY loc;
 	loc.locx = pos.x;
 	loc.locy = pos.y;
-	list.ListTile(loc, 0x2000A);
-
+	list.ListTile(loc, OLC_IMMOBILE);
+	
 	for (auto i = 0; i < list.size(); ++i) {
 		auto candidate = list.get(i);
 		auto tempId = objects.GetTempId(candidate);
 		if (tempId == pos.tempId) {
 			mObjRegistry->AddToIndex(candidate, id);
+			/*if (!mObjRegistry->GetHandleById(id)) {
+				logger->debug("WTF; cannot find just added handle");
+				return objHndl::null;
+			}*/
 			return candidate;
 		}
 	}
@@ -317,7 +321,7 @@ objHndl ObjSystem::LoadFromFile(TioFile* file) {
 	if (tio_fread(&objId, sizeof(objId), 1, file) != 1) {
 		throw TempleException("Couldn't read the object id.");
 	}
-
+	
 	// Null IDs are allowed for sector objects
 	if (!objId.IsPermanent() && !objId.IsNull()) {
 		throw TempleException("Expected an object id of type Permanent, but got type {} instead.", (int)objId.subtype);
@@ -327,6 +331,7 @@ objHndl ObjSystem::LoadFromFile(TioFile* file) {
 	if (tio_fread(&typeCode, sizeof(typeCode), 1, file) != 1) {
 		throw TempleException("Unable to read object type");
 	}
+
 
 	auto obj = std::make_unique<GameObjectBody>();
 	obj->protoId = protoId;
@@ -438,7 +443,6 @@ objHndl ObjSystem::LoadFromBuffer(void* bufferPtr) {
 	}
 
 	auto typeCode = buffer.Read<uint32_t>();
-
 	auto obj = std::make_unique<GameObjectBody>();
 	obj->protoId = protoId;
 	obj->id = objId;

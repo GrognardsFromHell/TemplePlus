@@ -1,0 +1,5 @@
+name: Oaken Resilience
+flags: 12582912
+prereqs: 
+description: You can spend a wild shape to gain immunity to critical hits, poison, sleep, paralysis, polymorph, and stunning. You also gain great stability, which gives you a +8 bonus on checks to avoid being bull rushed or tripped. The effect remains for 10 minutes.
+prereq descr: Ability to wild shape into a plant

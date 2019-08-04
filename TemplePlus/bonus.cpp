@@ -11,6 +11,8 @@ class BonusSysReplacements : public TempleFix
 {
 	public: 
 		
+		static void _GetLine_BonusMes_Hook(MesHandle bonusMesHandle, MesLine & line);
+
 	void apply() override 
 	{
 		OrgBonusInit = (int(__cdecl *)())replaceFunction(0x100E5EB0, BonusMesInit);
@@ -25,6 +27,8 @@ class BonusSysReplacements : public TempleFix
 		replaceFunction(0x100E63B0, _getNumBonuses); 
 		replaceFunction(0x100E6380, _zeroBonusSetMeslineNum); 
 		replaceFunction(0x100E61A0, _bonusSetOverallCap); 
+
+		redirectCall(0x100E6786, _GetLine_BonusMes_Hook); // replace call to GetLine_Safe inside bonusPrintString (0x100E6740). Fixes missing line errors for "zero bonus reason" lines.
 
 		}
 } bonusSystemReplacements;
@@ -258,3 +262,7 @@ uint32_t _bonusSetOverallCap(uint32_t bonFlags, BonusList* bonList, int32_t newC
 	return bonusSys.bonusSetOverallCap(bonFlags, bonList, newCap, a4, bonMesLineNum, capDescr);
 }
 #pragma endregion
+
+void BonusSysReplacements::_GetLine_BonusMes_Hook(MesHandle bonusMesHandle, MesLine & line){
+	bonusSys.GetBonusMesLine(line);
+}

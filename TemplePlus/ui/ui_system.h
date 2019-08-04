@@ -2,12 +2,7 @@
 #pragma once
 
 #include "tig/tig.h"
-
-struct UiResizeArgs {
-	int viewportId;
-	TigRect rect1;
-	TigRect rect2;
-};
+#include "ui.h"
 
 struct TioFile;
 

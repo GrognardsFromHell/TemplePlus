@@ -135,7 +135,7 @@ void UiParty::IndicatorRender(int widId){
 	if (!PortraitRenderEnabled())
 		return;
 
-	auto btn = ui.GetButton(widId);
+	auto btn = uiManager->GetButton(widId);
 	if (!btn)
 		return;
 

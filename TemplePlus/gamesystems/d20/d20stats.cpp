@@ -17,7 +17,7 @@ class D20StatsHooks : public TempleFix{
 	void apply() override {
 		
 		replaceFunction<BOOL(Alignment, Alignment)>(0x1004A8F0, [](Alignment a, Alignment b)->BOOL{
-			if (config.laxRules)
+			if (config.laxRules && config.disableAlignmentRestrictions)
 				return TRUE;
 
 			return (BOOL)d20Stats.AlignmentsUnopposed(a, b);
@@ -29,6 +29,12 @@ class D20StatsHooks : public TempleFix{
 		replaceFunction<const char*(Stat)>(0x10074950, [](Stat stat)->const char*{
 			return d20Stats.GetStatName(stat);
 		});
+		replaceFunction<const char*(Race)>(0x10073A50, [](Race race)->const char*{
+			return d20Stats.GetRaceName(race);
+		});
+		replaceFunction<const char*(Race)>(0x10073AB0, [](Race race)->const char* {
+			return d20Stats.GetRaceShortDesc(race);
+		});
 		replaceFunction<const char*(Stat)>(0x10073AE0, [](Stat stat)->const char* {
 			return d20Stats.GetClassShortDesc(stat);
 		});
@@ -38,6 +44,12 @@ class D20StatsHooks : public TempleFix{
 
 		replaceFunction<int(objHndl, Stat)>(0x10073E90, [](objHndl handle, Stat stat)->int	{
 			return d20Stats.GetLevelStat(handle, stat);
+		});
+
+		static int (__cdecl*orgStatBaseGetType3)(objHndl, Stat) = replaceFunction<int(objHndl, Stat)>(0x10074B30, [](objHndl handle, Stat stat){
+			if (!handle)
+				return 0;
+			return d20Stats.GetType3StatBase(handle, stat);
 		});
 
 		// StatLevelGetBase
@@ -52,6 +64,10 @@ class D20StatsHooks : public TempleFix{
 
 			if (statType == StatType::Feat)
 				return feats.HasFeatCountByClass(handle, (feat_enums)(stat - 1000));
+			
+			if (statType == StatType::Combat) {
+				return d20Stats.GetType3StatBase(handle, stat);
+			}
 
 			if (statType == StatType::Psi)
 				return d20Stats.GetPsiStatBase(handle, stat);
@@ -62,10 +78,13 @@ class D20StatsHooks : public TempleFix{
 		// StatLevelGet
 		static int(__cdecl*orgGetLevel)(objHndl, Stat)  = replaceFunction<int(objHndl, Stat)>(0x10074800, [](objHndl handle, Stat stat)->int {
 			auto statType = d20Stats.GetType(stat);
-			if (statType== StatType::Level )
+			if (statType == StatType::Level)
 				return d20Stats.GetValue(handle, stat);
 			if (statType == StatType::SpellCasting)
 				return d20Stats.GetValue(handle, stat);
+			if (statType == StatType::Combat && (stat == stat_race ||stat == stat_subrace)){
+				return d20Stats.GetType3StatBase(handle, stat);
+			}
 			if (statType == StatType::Psi)
 				return d20Stats.GetPsiStat(handle, stat);
 			
@@ -115,6 +134,50 @@ const char* D20StatsSystem::GetClassShortDesc(Stat stat) const{
 	else
 		mesFuncs.GetLine_Safe(statMesExt, &line);
 	return line.value;
+}
+
+const char * D20StatsSystem::GetAlignmentName(Alignment alignment) {
+	return temple::GetRef<const char*[]>(0x10AAE89C)[alignment];
+}
+
+const char * D20StatsSystem::GetRaceName(Race race) {
+
+	if (race < VANILLA_NUM_RACES){
+		MesLine line(2000 + race);
+		mesFuncs.GetLine_Safe(statMes, &line);
+		return line.value;
+	}
+	
+	MesLine line(2000 + race);
+	mesFuncs.GetLine_Safe(statMesExt, &line);
+	return line.value;
+
+}
+
+const char * D20StatsSystem::GetRaceShortDesc(Race race)
+{
+	MesLine line(12000 + race);
+	if (race <= VANILLA_NUM_RACES)
+		mesFuncs.GetLine_Safe(statMes, &line);
+	else
+		mesFuncs.GetLine_Safe(statMesExt, &line);
+	return line.value;
+}
+
+const char* D20StatsSystem::GetMonsterSubcategoryName(int monsterSubcat){
+	MesLine line(8000 + monsterSubcat);
+	mesFuncs.GetLine_Safe(statMes, &line);
+	return line.value;
+}
+
+const char* D20StatsSystem::GetMonsterCategoryName(int monsterCat){
+	MesLine line(7000 + monsterCat);
+	mesFuncs.GetLine_Safe(statMes, &line);
+	return line.value;
+}
+
+const char * D20StatsSystem::GetGenderName(int genderId) {
+	return temple::GetRef<const char*[]>(0x10AAE410)[genderId];
 }
 
 const char* D20StatsSystem::GetCannotPickClassHelp(Stat stat) const{
@@ -191,18 +254,19 @@ int D20StatsSystem::GetLevelStat(const objHndl &handle, Stat stat) const
 
 int D20StatsSystem::GetSpellCastingStat(const objHndl & handle, Stat stat, int statArg) const
 {
-	if (stat == stat_caster_level && statArg != -1){
-		return critterSys.GetCasterLevelForClass(handle, (Stat)statArg);
+	int ret = 0;
+
+	if (stat == stat_caster_level && statArg != -1) {
+		Stat statCheck = static_cast<Stat>(statArg);
+		ret = critterSys.GetCasterLevelForClass(handle, statCheck);
+	} else if (stat >= stat_caster_level_barbarian && stat <= stat_caster_level_wizard) {
+		// Convert stat from stat_caster_level_X to stat_level_X since the function  GetCasterLevelForClass talkes the later
+	    Stat statCheck = static_cast<Stat>(static_cast<int>(stat) - static_cast<int>(stat_caster_level_barbarian) + static_cast<int>(stat_level_barbarian));
+		ret = critterSys.GetCasterLevelForClass(handle, statCheck);
+	} else if (stat == stat_spell_list_level && statArg != -1){
+		ret = objects.StatLevelGet(handle, (Stat)statArg) + critterSys.GetSpellListLevelExtension(handle, (Stat)statArg);
 	}
-	else if (stat>= stat_caster_level_barbarian 
-		&& stat <= stat_caster_level_wizard)
-	{
-		return critterSys.GetCasterLevelForClass(handle, stat);
-	}
-	else if (stat == stat_spell_list_level && statArg != -1){
-		return objects.StatLevelGet(handle, (Stat)statArg) + critterSys.GetSpellListLevelExtension(handle, (Stat)statArg);
-	}
-	return 0;
+	return ret;
 }
 
 int D20StatsSystem::GetBaseAttackBonus(const objHndl & handle, Stat classLeveled) const
@@ -233,8 +297,43 @@ int D20StatsSystem::GetPsiStatBase(const objHndl & handle, Stat stat, int statAr
 	return 0;
 }
 
+int D20StatsSystem::GetType3StatBase(const objHndl & handle, Stat stat) const
+{
+	switch(stat){
+	case stat_weight:
+		return (int)(objects.getInt32(handle, obj_f_critter_weight));
+	case stat_height:
+		return (int)(objects.getInt32(handle, obj_f_critter_height));
+	case stat_deity:
+		return (int)(objects.getInt32(handle, obj_f_critter_deity));
+	case stat_race:
+		return (int)(objects.getInt32(handle, obj_f_critter_race) & 0x1F);
+	case stat_subrace:
+		return (int)(objects.getInt32(handle, obj_f_critter_race) >> 5); // vanilla didn't bitshift
+	case stat_gender:
+		return (int)(objects.getInt32(handle, obj_f_critter_gender));
+	case stat_size:
+		return dispatch.DispatchGetSizeCategory(handle);
+	case stat_alignment:
+		return (int)(objects.getInt32(handle, obj_f_critter_alignment));
+	case stat_experience:
+		return (int)(objects.getInt32(handle, obj_f_critter_experience));
+	case stat_attack_bonus:
+		return critterSys.GetBaseAttackBonus(handle);
+	case stat_melee_attack_bonus:
+		return critterSys.GetBaseAttackBonus(handle) + objects.GetModFromStatLevel( objects.StatLevelGet(handle, stat_strength) );
+	case stat_ranged_attack_bonus:
+		return critterSys.GetBaseAttackBonus(handle) + objects.GetModFromStatLevel( objects.StatLevelGet(handle, stat_dexterity));
+	default:
+		return 0;
+		break;
+	}
+	
+	return 0;
+}
+
 bool D20StatsSystem::AlignmentsUnopposed(Alignment a, Alignment b, bool strictCheck){
-	if (config.laxRules && !strictCheck)
+	if (config.laxRules && config.disableAlignmentRestrictions && !strictCheck)
 		return true;
 
 	switch (a^b)
@@ -374,6 +473,9 @@ StatType D20StatsSystem::GetType(Stat stat) {
 	case stat_level_frost_mage:
 	case stat_level_artificer:
 	case stat_level_abjurant_champion:
+	case stat_level_scout:
+	case stat_level_warmage:
+	case stat_level_beguilers:
 
 	case stat_level_psion:
 	case stat_level_psychic_warrior:

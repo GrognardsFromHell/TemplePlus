@@ -95,7 +95,7 @@ class RadialMenuReplacements : public TempleFix
 	static int RmbReleasedHandler(TigMsg* msg);
 	void ReplaceStandardRadialNodes();
 
-
+	static RadialMenuNode* HookedGetActiveMenuNode(int nodeId);
 	void apply() override {
 
 
@@ -121,16 +121,7 @@ class RadialMenuReplacements : public TempleFix
 
 		// RadialMenuUpdate
 		replaceFunction<void(__cdecl)(objHndl)>(0x1004D1F0, [](objHndl objHnd){
-			auto obj = gameSystems->GetObj().GetObject(objHnd);
-			Dispatcher * dispatcher = obj->GetDispatcher();
-			
-			if (dispatch.dispatcherValid(dispatcher)){
-				if (objects.IsPlayerControlled(objHnd))	{
-					objects.dispatch.DispatcherProcessor(dispatcher, dispTypeRadialMenuEntry, 0, nullptr);
-					auto setActiveRadial = temple::GetRef<void(__cdecl)(objHndl)>(0x100F0A70);
-					setActiveRadial(objHnd);
-				}
-			}
+			critterSys.BuildRadialMenu(objHnd);
 		});
 
 		// RadialMenuMsg
@@ -184,6 +175,15 @@ class RadialMenuReplacements : public TempleFix
 		{
 			return radialMenus.AddParentChildNode(handle, entry, parIdx);
 		});
+
+		// GetChild
+		replaceFunction<int(int,int)>(0x100F0890, [](int activeNodeIdx, int i)->int
+		{
+			return radialMenus.GetChild(activeNodeIdx,i);
+		});
+
+		//// GetActiveRadMenuNodeRegardMorph
+		redirectCall(0x1013C2ED, HookedGetActiveMenuNode);
 
 	}
 };
@@ -250,6 +250,10 @@ void RadialMenuReplacements::ReplaceStandardRadialNodes()
 
 	writeval = reinterpret_cast<int>(&RadialMenus::standardNodeIndices[10]) ;
 	write(0x100F2B71 + 2, &writeval, sizeof(int*));
+}
+
+RadialMenuNode * RadialMenuReplacements::HookedGetActiveMenuNode(int nodeId){
+	return radialMenus.GetActiveMenuNodeRegardMorph(nodeId);
 }
 
 RadialMenuReplacements radMenuReplace;
@@ -381,6 +385,11 @@ void RadialMenus::BuildStandardRadialMenu(objHndl handle){
 		RadialMenuEntryParent dism(5101);
 		SetStandardNode(handle, RadialMenuStandardNode::SpellsDismiss ,RadialMenuStandardNode::Spells);
 	}
+}
+
+bool RadialMenus::IsShiftPressed(){
+	auto shiftPressed = temple::GetRef<int>(0x10BD0234);
+	return shiftPressed != 0;
 }
 
 void RadialMenus::AssignMenu(objHndl handle)
@@ -613,6 +622,36 @@ int RadialMenus::GetSpellLevelNodeFromSpellClass(objHndl handle, int spellClass)
 	return RadialMenuStandardNode::SpellsDomain + 1;
 }
 
+RadialMenuNode * RadialMenus::GetActiveMenuNodeRegardMorph(int nodeId){
+	auto activeMenu = GetActiveRadialMenu();
+	if (IsShiftPressed() && activeMenu->nodes[nodeId].morphsTo != -1){
+		nodeId = activeMenu->nodes[nodeId].morphsTo;
+	}
+
+	if (activeMenu->nodes[nodeId].entry.d20ActionType == D20A_PYTHON_ACTION){
+		lastPythonActionNode = nodeId;
+	}
+		
+
+	return &activeMenu->nodes[nodeId];
+}
+
+int RadialMenus::GetChild(int nodeId, int i){
+	auto activeMenu = GetActiveRadialMenu();
+	auto altNode = activeMenu->nodes[nodeId].morphsTo;
+
+	if (IsShiftPressed() && altNode != -1){
+		nodeId = activeMenu->nodes[nodeId].morphsTo;
+	}
+
+	auto result = activeMenu->nodes[nodeId].children[i];
+	if (IsShiftPressed() && activeMenu->nodes[result].morphsTo != -1){
+		result = activeMenu->nodes[result].morphsTo;
+	}
+
+	return result;
+}
+
 const RadialMenu* RadialMenus::GetForObj(objHndl handle) {
 	return addresses.GetRadialMenu(handle);
 }
@@ -768,9 +807,9 @@ BOOL RadialMenus::ActiveRadialMenuHasActiveNode()
 	return GetActiveRadialMenuNode() != -1;
 }
 
-int RadialMenus::MsgHandler(TigMsg* msg)
+int RadialMenus::MsgHandler(const TigMsg* msg)
 {
-	static auto msgHandler = temple::GetRef<int(__cdecl)(TigMsg*)>(0x1013DC90);
+	static auto msgHandler = temple::GetRef<int(__cdecl)(const TigMsg*)>(0x1013DC90);
 	return msgHandler(msg);
 }
 
@@ -962,12 +1001,12 @@ RadialMenuEntryAction::RadialMenuEntryAction(int combatMesLine, D20ActionType d2
 	d20ActionData1 = data1;
 }
 
-RadialMenuEntryAction::RadialMenuEntryAction(int combatMesLine, D20ActionType d20aType, int data1, const char helpId[]): RadialMenuEntryAction(combatMesLine, d20aType, data1, ElfHash::Hash(helpId))
+RadialMenuEntryAction::RadialMenuEntryAction(int combatMesLine, D20ActionType d20aType, int data1, const char *helpId): RadialMenuEntryAction(combatMesLine, d20aType, data1, ElfHash::Hash(helpId))
 {
 
 }
 
-RadialMenuEntryAction::RadialMenuEntryAction(int combatMesLine, int d20aType, int data1, const char helpId[]):RadialMenuEntryAction(combatMesLine, static_cast<D20ActionType>(d20aType), data1, ElfHash::Hash(helpId))
+RadialMenuEntryAction::RadialMenuEntryAction(int combatMesLine, int d20aType, int data1, const char *helpId):RadialMenuEntryAction(combatMesLine, static_cast<D20ActionType>(d20aType), data1, ElfHash::Hash(helpId))
 {
 }
 
@@ -986,7 +1025,20 @@ RadialMenuEntryAction::RadialMenuEntryAction(std::string & textArg, int d20aType
 	d20ActionData1 = data1;
 }
 
-RadialMenuEntryToggle::RadialMenuEntryToggle(int combatMesLine, void* ActualArg, const char HelpId[]): RadialMenuEntry()
+RadialMenuEntryAction::RadialMenuEntryAction(SpellStoreData & spData){
+	type = RadialMenuEntryType::Action;
+	if (spData.spellEnum > 0)
+		this->text = (char*)spellSys.GetSpellName(spData.spellEnum);
+	else
+		text = "NULL SPELL";
+	this->d20ActionType = D20A_CAST_SPELL;
+	this->d20ActionData1 = 0;
+
+	this->helpId = ElfHash::Hash(spellSys.GetSpellEnumTAG(spData.spellEnum));
+	this->d20SpellData.Set(spData.spellEnum, spData.classCode, spData.spellLevel, -1, spData.metaMagicData);
+}
+
+RadialMenuEntryToggle::RadialMenuEntryToggle(int combatMesLine, void* ActualArg, const char *HelpId): RadialMenuEntry()
 {
 	type = RadialMenuEntryType::Toggle;
 	text = combatSys.GetCombatMesLine(combatMesLine);
@@ -996,7 +1048,7 @@ RadialMenuEntryToggle::RadialMenuEntryToggle(int combatMesLine, void* ActualArg,
 	maxArg = 1;
 	actualArg = reinterpret_cast<int>(ActualArg);
 }
-RadialMenuEntryToggle::RadialMenuEntryToggle(std::string & textArg, const char HelpId[]): RadialMenuEntry()
+RadialMenuEntryToggle::RadialMenuEntryToggle(std::string & textArg, const char *HelpId): RadialMenuEntry()
 {
 	type = RadialMenuEntryType::Toggle;
 	auto textId = ElfHash::Hash(textArg);
@@ -1045,7 +1097,7 @@ int RadialMenuEntryParent::AddAsChild(objHndl handle, int parentId) {
 	return radialMenus.AddParentChildNode(handle, this, parentId);
 }
 
-RadialMenuEntryPythonAction::RadialMenuEntryPythonAction(int combatMesLine, int d20aType, int d20aKey, int data1, const char helpId[]): RadialMenuEntryAction(1, d20aType, data1, helpId) {
+RadialMenuEntryPythonAction::RadialMenuEntryPythonAction(int combatMesLine, int d20aType, int d20aKey, int data1, const char *helpId): RadialMenuEntryAction(1, d20aType, data1, helpId) {
 	if (combatMesLine == -1){
 		this->text = (char*)(d20Sys.GetPythonActionName((D20DispatcherKey)d20aKey).c_str());
 	} else
@@ -1056,12 +1108,12 @@ RadialMenuEntryPythonAction::RadialMenuEntryPythonAction(int combatMesLine, int 
 	this->callback = [](objHndl handle, RadialMenuEntry* entry) { return radialMenus.PythonActionCallback(handle, entry); };
 }
 
-RadialMenuEntryPythonAction::RadialMenuEntryPythonAction(int combatMesLine, int d20aType, const char d20aKey[], int data1, const char helpId[]):RadialMenuEntryAction(combatMesLine, d20aType, data1, helpId) {
+RadialMenuEntryPythonAction::RadialMenuEntryPythonAction(int combatMesLine, int d20aType, const char *d20aKey, int data1, const char *helpId):RadialMenuEntryAction(combatMesLine, d20aType, data1, helpId) {
 	this->dispKey = ElfHash::Hash(d20aKey);
 	this->callback = [](objHndl handle, RadialMenuEntry* entry) { return radialMenus.PythonActionCallback(handle, entry); };
 }
 
-RadialMenuEntryPythonAction::RadialMenuEntryPythonAction(std::string & textArg, int d20aType, int d20aKey, int data1, const char helpId[]) : RadialMenuEntryAction(1, d20aType, data1, helpId)
+RadialMenuEntryPythonAction::RadialMenuEntryPythonAction(std::string & textArg, int d20aType, int d20aKey, int data1, const char *helpId) : RadialMenuEntryAction(1, d20aType, data1, helpId)
 {
 	auto textId = ElfHash::Hash(textArg);
 	auto textCache = radialMenus.radMenuStrings.find(textId);
@@ -1075,4 +1127,14 @@ RadialMenuEntryPythonAction::RadialMenuEntryPythonAction(std::string & textArg, 
 	d20ActionData1 = data1;
 	this->callback = [](objHndl handle, RadialMenuEntry* entry) { return radialMenus.PythonActionCallback(handle, entry); };
 	this->dispKey = d20aKey;
+}
+
+RadialMenuEntryPythonAction::RadialMenuEntryPythonAction(SpellStoreData & spData, int d20aType, int d20aKey, int data1, const char *helpId):RadialMenuEntryAction(spData){
+	this->d20ActionType = (D20ActionType)d20aType;
+	if (helpId && *helpId){
+		this->helpId = ElfHash::Hash(helpId);
+	}
+	this->d20ActionData1 = data1;
+	this->dispKey = d20aKey;
+	this->callback = [](objHndl handle, RadialMenuEntry* entry) { return radialMenus.PythonActionCallback(handle, entry); };
 }

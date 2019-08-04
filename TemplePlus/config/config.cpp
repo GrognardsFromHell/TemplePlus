@@ -138,6 +138,8 @@ static ConfigSetting configSettings[] = {
 	CONF_STRING(defaultModule),
 	CONF_INT(windowWidth),
 	CONF_INT(windowHeight),
+	CONF_BOOL(windowedLockCursor),
+	CONF_BOOL(dungeonMaster),
 	CONF_INT(renderWidth),
 	CONF_INT(renderHeight),
 	CONF_BOOL(debugMessageEnable),
@@ -153,6 +155,7 @@ static ConfigSetting configSettings[] = {
 	CONF_INT(screenshotQuality),
 	CONF_BOOL(debugPartSys),
 	CONF_STRING(hpOnLevelup),
+	CONF_BOOL(maxHpForNpcHitdice),
 	CONF_BOOL(autoUpdate),
 	CONF_BOOL(allowXpOverflow),
 	CONF_BOOL(slowerLevelling),
@@ -162,10 +165,24 @@ static ConfigSetting configSettings[] = {
 	CONF_INT(msaaQuality),
 	CONF_BOOL(showNpcStats),
 	CONF_BOOL(newClasses),
+	CONF_BOOL(newRaces),
+	CONF_BOOL(monstrousRaces),
+	CONF_BOOL(forgottenRealmsRaces),
 	CONF_BOOL(laxRules),
+	CONF_BOOL(disableAlignmentRestrictions),
+	CONF_BOOL(disableCraftingSpellReqs),
+	CONF_BOOL(disableMulticlassXpPenalty),
+	CONF_BOOL(disableDoorRelocking),
+	CONF_BOOL(showTargetingCirclesInFogOfWar),
 	CONF_BOOL(nonCoreMaterials),
 	CONF_BOOL(tolerantNpcs),
-	CONF_STRING(fogOfWar)
+	CONF_STRING(fogOfWar),
+	CONF_DOUBLE(speedupFactor),
+	CONF_BOOL(fastSneakAnim),
+	CONF_BOOL(alertAiThroughDoors),
+	CONF_INT(walkDistanceFt),
+	CONF_BOOL(newAnimSystem),
+	CONF_BOOL(upscaleLinearFiltering)
 };
 
 void TemplePlusConfig::Load() {

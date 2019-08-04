@@ -7,6 +7,143 @@
 #include <gamesystems/mapsystem.h>
 #include <graphics/dynamictexture.h>
 #include <graphics/device.h>
+#include "ui_townmap.h"
+#include "combat.h"
+#include "ui_systems.h"
+#include "ui_worldmap.h"
+#include "ui_legacysystems.h"
+#include "animgoals/anim.h"
+#include "gamesystems/timeevents.h"
+#include "location.h"
+#include "gameview.h"
+#include "tig/tig_loadingscreen.h"
+#include "maps.h"
+
+
+struct TownmapWidgets
+{
+	LgcyWindow* mainWnd;
+	LgcyButton *worldmapBtn;
+	LgcyButton *currentMapBtn;
+	LgcyButton *mapViewBtn;
+	LgcyButton *partyMembers[32];
+	LgcyButton *infoFlags[20];
+	LgcyButton *exitBtn;
+	LgcyWindow *selectionWnd;
+	LgcyButton **acquiredMapBtns;
+	LgcyButton *centerOnPartyBtn;
+	LgcyButton *placeInfoBtn;
+	LgcyButton *delInfoBtn;
+	LgcyButton *zoomToolBtn;
+};
+
+UiTownmap::UiTownmap(const UiSystemConf &config) {
+	auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x1012e1c0);
+	if (!startup(&config)) {
+		throw TempleException("Unable to initialize game system Townmap-UI");
+	}
+}
+UiTownmap::~UiTownmap() {
+	auto shutdown = temple::GetPointer<void()>(0x1012bbe0);
+	shutdown();
+}
+void UiTownmap::ResizeViewport(const UiResizeArgs& resizeArg) {
+	auto resize = temple::GetPointer<void(const UiResizeArgs*)>(0x10128450);
+	resize(&resizeArg);
+}
+void UiTownmap::Reset() {
+	auto reset = temple::GetPointer<void()>(0x1012bb40);
+	reset();
+}
+bool UiTownmap::SaveGame(TioFile *file) {
+	auto save = temple::GetPointer<int(TioFile*)>(0x10128650);
+	return save(file) == 1;
+}
+bool UiTownmap::LoadGame(const UiSaveFile &save) {
+	auto load = temple::GetPointer<int(const UiSaveFile*)>(0x101288f0);
+	return load(&save) == 1;
+}
+const std::string &UiTownmap::GetName() const {
+	static std::string name("Townmap-UI");
+	return name;
+}
+
+bool UiTownmap::IsAvailable(){
+	return mAvailable != FALSE;
+}
+
+void UiTownmap::Show(){
+	static auto uiHideVarious = temple::GetRef<void(__cdecl)(int)>(0x101156B0);
+	uiHideVarious(1);
+	if (combatSys.isCombatActive())
+		return;
+	if (!uiSystems->GetRandomEncounter().HasPermissionToExit() 
+		&&	uiSystems->GetWorldmap().NeedToClearEncounterMap()){
+		uiSystems->GetRandomEncounter().ShowExitWnd();
+		return;
+	}
+
+	if (!IsAvailable()){
+		return;
+	}
+		
+	if (!IsVisible()){
+		gameSystems->GetTimeEvent().PushDisableAdvance();
+	}
+
+	mVisible = 1;
+	auto lgcyWidgets = temple::GetRef<TownmapWidgets*>(0x10BE0D4C);
+	uiManager->SetHidden(lgcyWidgets->mainWnd->widgetId, false);
+	uiManager->BringToFront(lgcyWidgets->mainWnd->widgetId);
+
+	uiManager->SetHidden(lgcyWidgets->selectionWnd->widgetId, false);
+	uiManager->BringToFront(lgcyWidgets->selectionWnd->widgetId);
+
+	if (!mPositionsInited){
+		PositionsInit();
+		mPositionsInited = 1;
+	}
+
+	auto mapId = gameSystems->GetMap().GetCurrentMapId();
+	if (gameSystems->GetMap().IsRandomEncounterMap(mapId)){
+		Hide();
+		uiSystems->GetWorldmap().Show(3);
+		return;
+	}
+
+	if (mCurrentlyDisplayedMapIdx != mapId - 4999){
+		// todo
+		//SetCurrentlyDisplayedMap(mapId);
+		CenterOnParty();
+	}
+	memset(mMapsVisited, 0, sizeof mMapsVisited);
+	auto count = 0;
+	for (auto &mapId : gameSystems->GetMap().GetVisitedMaps()) {
+		if (count >= 200) {
+			break;
+		}
+		mMapsVisited[count++] = mapId;
+	}
+}
+
+void UiTownmap::Hide()
+{
+}
+
+void UiTownmap::PositionsInit(){
+	auto N_maps = gameSystems->GetMap().GetHighestMapId();
+	auto& device = tig->GetRenderingDevice();
+
+	for (auto i = 0; i < N_maps; i++){
+		auto &pos = mPositions[i];
+		auto startLoc = gameSystems->GetMap().GetStartPos(i + 5000);	
+		pos = device.GetCamera().TileToWorld( startLoc );
+	}
+}
+
+void UiTownmap::CenterOnParty(){
+
+}
 
 class TownmapRenderer {
 	friend class TownmapRenderHook;

@@ -9,6 +9,14 @@
 #include "condition.h"
 #include <python/python_integration_obj.h>
 #include "float_line.h"
+#include "party.h"
+#include "rng.h"
+#include "gamesystems/legacysystems.h"
+#include "ai.h"
+#include "animgoals/anim.h"
+#include "gamesystems/objects/objevent.h"
+#include "ui/ui_logbook.h"
+
 
 InventorySystem inventory;
 
@@ -18,7 +26,7 @@ struct InventorySystemAddresses : temple::AddressTable
 	int(__cdecl*GetParent)(objHndl, objHndl*);
 	int(__cdecl*ItemInsertGetLocation)(objHndl item, objHndl receiver, int* idxOut, objHndl bag, char flags);
 	void(__cdecl*InsertAtLocation)(objHndl item, objHndl receiver, int itemInsertLocation);
-	ItemErrorCode(__cdecl*TransferWithFlags)(objHndl item, objHndl receiver, int invenIdx, char flags, objHndl bag);
+	ItemErrorCode(__cdecl*TransferWithFlags)(objHndl item, objHndl receiver, int invenIdx, int flags, objHndl bag);
 	InventorySystemAddresses()
 	{
 		rebase(GetParent, 0x10063E80);
@@ -33,7 +41,89 @@ struct InventorySystemAddresses : temple::AddressTable
 
 static class InventoryHooks : public TempleFix {
 public: 
+
+	static int (__cdecl*orgItemInsertGetLocation)(objHndl, objHndl, int*, objHndl, int);
+	static int(__cdecl*orgIsProficientWithArmor)(objHndl, objHndl);
+
 	void apply() override 	{
+
+		// ItemRemove
+		replaceFunction<void(__cdecl)(objHndl)>(0x10069F60, [](objHndl item) {
+			inventory.ItemRemove(item);
+		});
+
+		orgIsProficientWithArmor = replaceFunction<int(__cdecl)(objHndl, objHndl)>(0x1007C410, [](objHndl obj, objHndl armor) {
+			return inventory.IsProficientWithArmor(obj, armor) ? 1 : 0;
+		});
+
+		// ItemForceRemove
+		static void(__cdecl*orgItemForceRemove)(objHndl, objHndl)= replaceFunction<void(__cdecl)(objHndl, objHndl)>(0x10069AE0, [](objHndl item, objHndl parent) {
+			/*auto parent_ = inventory.GetParent(item);
+			if (!parent_ || !parent){
+				logger->warn("item_force_remove called on item that doesn't think it has a parent.");
+			}
+			orgItemForceRemove(item, parent);*/
+			inventory.ForceRemove(item, parent);
+		});
+
+		// TransferWithFlags
+		replaceFunction<ItemErrorCode(__cdecl)(objHndl, objHndl, int, int, objHndl)>(0x1006B040, [](objHndl item, objHndl receiver, int invIdx, int flags, objHndl bag){
+			return inventory.TransferWithFlags(item, receiver, invIdx, flags, bag);
+		});
+
+		replaceFunction<ItemErrorCode(__cdecl)(objHndl, objHndl, objHndl, int*, int, int)>(0x1006A000, [](objHndl owner, objHndl receiver, objHndl item, int* a4, int invSlot, int flags) {
+			return inventory.ItemTransferFromTo(owner, receiver, item, a4, invSlot, flags);
+		});
+
+		replaceFunction<int(__cdecl)(objHndl, objHndl, int)>(0x1006B6C0, [](objHndl item, objHndl receiver, int flags){
+			return inventory.SetItemParent(item, receiver, flags);
+		});
+
+		orgItemInsertGetLocation = replaceFunction<int(__cdecl)(objHndl, objHndl, int*, objHndl, int)>(0x10069000, [](objHndl item, objHndl receiver, int* itemInsertLoc, objHndl bag, int flags){
+			return inventory.ItemInsertGetLocation(item, receiver, itemInsertLoc, bag, flags);
+		});
+
+		replaceFunction<void(__cdecl)(objHndl, objHndl, int)>(0x100694B0, [](objHndl item, objHndl receiver, int itemInsertLocation){
+			inventory.InsertAtLocation(item, receiver, itemInsertLocation);
+		});
+
+		replaceFunction<objHndl(__cdecl)(objHndl, uint32_t)>(0x100651B0, [](objHndl handle, uint32_t idx){
+			return inventory.GetItemAtInvIdx(handle, idx);
+		});
+
+		// ClearInventory
+		replaceFunction<void(__cdecl)(objHndl, BOOL)>(0x10069E00, [](objHndl handle, BOOL preservePersistentItems){
+			if (!handle)
+				return;
+			auto obj = objSystem->GetObject(handle);
+			auto invenNumFld = inventory.GetInventoryNumField(handle);
+			auto invenField = inventory.GetInventoryListField(handle);
+			
+			auto N = obj->GetInt32(invenNumFld);
+			auto persistentN = 0;
+			auto invenNumActualSize = obj->GetObjectIdArray(invenField).GetSize();
+			if (N != invenNumActualSize) {
+				logger->debug("Inventory array size for {} does not equal associated num field on ClearInventory. Arraysize: {}, numfield: {}", handle, invenNumActualSize, N);
+			}
+			auto loc = obj->GetLocation();
+
+			while ( obj->GetInt32(invenNumFld) > persistentN){
+				auto item = obj->GetObjHndl(invenField, persistentN);
+				if (preservePersistentItems && (objects.GetItemFlags(item) & OIF_PERSISTENT) ){
+					persistentN++;
+					continue;
+				}
+				inventory.ForceRemove(item, handle);
+				inventory.MoveItem(item, loc);
+				objects.Destroy(item);
+			}
+
+			if (obj->IsCritter()){
+				auto setMoneyZero = temple::GetRef<void(__cdecl)(objHndl)>(0x1007FCC0); 
+				setMoneyZero(handle);
+			}
+		});
+
 		// PoopItems
 		replaceFunction<void (objHndl, int)>(0x1006DA00, [](objHndl obj, int unflagNoTransfer)	{
 			auto objType = objects.GetType(obj);
@@ -60,7 +150,6 @@ public:
 			}
 
 			auto objLoc = objects.GetLocation(obj);
-			auto moveObj = temple::GetPointer<void(objHndl, locXY)>(0x100252D0);
 			for (int i = invenNumActualSize - 1; i >= 0 ;i-- ){
 				auto item = objects.getArrayFieldObj(obj, invenField, i);
 				if (!item)
@@ -69,16 +158,15 @@ public:
 				auto itemFlags = objects.getInt32(item, obj_f_item_flags);
 				inventory.ForceRemove(item, obj);
 				if ( (spFlags & SpellFlags::SF_4000) || itemFlags & (OIF_NO_DROP | OIF_NO_DISPLAY) || (itemFlags & OIF_NO_LOOT)){
-					
-					moveObj(item, objLoc);
+					inventory.MoveItem(item, objLoc);
 					objects.Destroy(item);
 				} else if ( unflagNoTransfer)
 				{
 					objects.setInt32(item, obj_f_item_flags, itemFlags & ~OIF_NO_TRANSFER);
-					moveObj(item, objLoc);
+					inventory.MoveItem(item, objLoc);
 				} else
 				{
-					moveObj(item, objLoc);
+					inventory.MoveItem(item, objLoc);
 				}
 			}
 		});
@@ -88,13 +176,91 @@ public:
 		replaceFunction<objHndl(objHndl, objHndl)>(0x10067DF0, [](objHndl receiver, objHndl item) {
 			return inventory.FindMatchingStackableItem(receiver, item);
 		});
+
+		// DoNpcLooting
+		replaceFunction<int(__cdecl)(objHndl, objHndl)>(0x1006C170, [](objHndl opener, objHndl container){
+
+			return inventory.DoNpcLooting(opener, container)?TRUE:FALSE;
+			
+		});
+
+		replaceFunction<int(__cdecl)(objHndl, objHndl)>(0x10066730, [](objHndl item, objHndl wielder){
+			return inventory.GetWeaponAnimId(item, wielder);
+		});
 	};
 
 	
 } hooks;
+int(__cdecl*InventoryHooks::orgItemInsertGetLocation)(objHndl, objHndl, int*, objHndl, int);
+int(__cdecl*InventoryHooks::orgIsProficientWithArmor)(objHndl, objHndl);
+
+
+void InventorySystem::MoveItem(const objHndl& item, const locXY& loc){
+	auto itemObj = objSystem->GetObject(item);
+	if (!itemObj){
+		logger->error("MoveItem called on invalid item handle!");
+		return;
+	}
+	auto flags = itemObj->GetFlags();
+	if (flags & OF_DESTROYED){
+		return;
+	}
+	itemObj->SetFlag(OF_INVENTORY, false);
+	itemObj->SetLocation(loc);
+	itemObj->SetFloat(obj_f_offset_x, 0.f);
+	itemObj->SetFloat(obj_f_offset_y, 0.f);
+
+	SectorLoc secLoc(loc);
+	auto &mapSectorSys = gameSystems->GetMapSector();
+	if (mapSectorSys.IsSectorLoaded(secLoc)){
+		LockedMapSector sector(secLoc);
+		sector.AddObject(item);
+	}
+
+	itemObj->SetInt32(obj_f_render_flags, 0);
+	mapSectorSys.RemoveSectorLight(item);
+
+	static auto sub_10025050 = temple::GetPointer<int(objHndl, int)>(0x10025050);
+	sub_10025050(item, 2);
+
+	objEvents.ListItemNew(item, LocAndOffsets::null, LocAndOffsets::create(loc,0.f,0.f));
+
+	//return temple::GetRef<void(__cdecl)(objHndl, locXY)>(0x100252D0)(item, loc);
+}
 
 bool InventorySystem::IsInvIdxWorn(int invIdx){
 	return invIdx >= INVENTORY_WORN_IDX_START && invIdx <= INVENTORY_WORN_IDX_END;
+}
+
+objHndl InventorySystem::GetItemAtInvIdx(objHndl handle, uint32_t nIdx){
+	auto invenField = obj_f_begin;  
+	auto invenNumField = obj_f_begin;  inventory.GetInventoryNumField(handle);
+	if (objects.IsCritter(handle)){
+		if (d20Sys.d20Query(handle, DK_QUE_Polymorphed))
+			return objHndl::null;
+		invenField = inventory.GetInventoryListField(handle);
+		invenNumField = inventory.GetInventoryNumField(handle);
+	}
+	else{
+		invenField = inventory.GetInventoryListField(handle);
+		invenNumField = inventory.GetInventoryNumField(handle);
+	}
+	auto obj = objSystem->GetObject(handle);
+	auto numItems = obj->GetInt32(invenNumField);
+			
+	for (auto i=0; i < numItems; i++){
+		auto item = obj->GetObjHndl(invenField, i);
+		if (!item) {
+			logger->debug("obj {} name {} contains null object", handle, obj->GetInt32(obj_f_name));
+		}
+		else if (!objects.IsEquipment(item)){
+			auto itemName = objects.getInt32(item, obj_f_name);
+			logger->debug("obj {} name {} contains object {} name {}", handle, obj->GetInt32(obj_f_name), item, itemName);
+		}
+		if (inventory.GetInventoryLocation(item) == nIdx)
+			return item;
+	}
+	return objHndl::null;
 }
 
 objHndl InventorySystem::FindMatchingStackableItem(objHndl receiver, objHndl item){
@@ -139,7 +305,7 @@ objHndl InventorySystem::FindMatchingStackableItem(objHndl receiver, objHndl ite
 
 		// if item worn - ensure is ammo
 		auto invenItemLoc = invenItemObj->GetInt32(obj_f_item_inv_location);
-		if (invenItemLoc >= 200 && invenItemLoc <= 216){
+		if (inventory.IsInvIdxWorn(invenItemLoc)){
 			if (invenItemObj->type != obj_t_ammo)
 				continue;
 		}
@@ -159,6 +325,16 @@ objHndl InventorySystem::FindMatchingStackableItem(objHndl receiver, objHndl ite
 	}
 	
 	return objHndl::null;
+}
+
+void InventorySystem::WieldBest(objHndl handle, int invSlot, objHndl target){
+
+	if (invSlot == INVENTORY_WORN_IDX_START + EquipSlot::WeaponSecondary){
+		return;
+	}
+	auto existingItem = GetItemAtInvIdx(handle, invSlot);
+
+	temple::GetRef<void(__cdecl)(objHndl, int, objHndl)>(0x1006CCC0)(handle, invSlot, target);
 }
 
 int InventorySystem::GetItemWieldCondArg(objHndl item, uint32_t condId, int argOffset)
@@ -378,20 +554,24 @@ int InventorySystem::SetItemParent(objHndl item, objHndl receiver, ItemInsertFla
 	}
 	
 	if ( gameSystems->GetObj().GetProtoId(item) == 6239){ // Darley's Neckalce special casing
-		return ItemGetAdvanced(item, receiver, 201, flags);
+		return ItemGetAdvanced(item, receiver, 201, flags); // EquipSlot::Necklace + 200
 	}
-
+	
 	return ItemGetAdvanced(item, receiver, -1, flags);
 	
 }
 
-objHndl InventorySystem::GetParent(objHndl item)
-{
+objHndl InventorySystem::GetParent(objHndl item) {
 	objHndl parent = objHndl::null;
-	if (!addresses.GetParent(item, &parent)) {
-		return objHndl::null;
+	if (!item || !objects.IsEquipment(item)){
+		logger->debug("GetParent: Called on non-Item!");
+		return parent;
 	}
-	return parent;
+	auto obj = objSystem->GetObject(item);
+	auto flags = obj->GetFlags();
+	if (!(flags & OF_INVENTORY))
+		return parent;
+	return obj->GetObjHndl(obj_f_item_parent);
 }
 
 bool InventorySystem::IsRangedWeapon(objHndl weapon){
@@ -447,17 +627,40 @@ int InventorySystem::GetInventory(objHndl objHandle, objHndl ** inventoryArray){
 	return numItems;
 }
 
-int InventorySystem::GetInventoryLocation(objHndl item)
+std::vector<objHndl> InventorySystem::GetInventory(objHndl handle){
+	
+	std::vector<objHndl> result;
 
-{
-	if(item && objects.IsEquipment(item))
-		return objects.getInt32(item, obj_f_item_inv_location);
-	
-	logger->error("Item: item_parent: ERROR: Called on non-item!\n");
-	if (item)
-		return objects.getInt32(item, obj_f_item_inv_location);
-	return 0;
-	
+	auto obj = objSystem->GetObject(handle);
+	auto invenNumField = obj_f_critter_inventory_num;
+	auto invenField = obj_f_critter_inventory_list_idx;
+
+	if (obj->type == obj_t_container)
+	{
+		invenNumField = obj_f_container_inventory_num;
+		invenField = obj_f_container_inventory_list_idx;
+	}
+	auto numItems = obj->GetInt32(invenNumField);
+	if (numItems <= 0) 
+		return result;
+
+	for (int i = 0; i < numItems; i++){
+		result.push_back(obj->GetObjHndl(invenField, i));
+	}
+
+	return result;
+}
+
+int InventorySystem::GetInventoryLocation(objHndl item){
+	if (!item){
+		logger->error("GetInventoryLocation: called on null item!");
+		return 0;
+	}
+
+	if(!objects.IsEquipment(item)){
+		logger->error("Item: item_parent: ERROR: Called on non-item!\n");
+	}	
+	return objects.getInt32(item, obj_f_item_inv_location);
 }
 
 ItemFlag InventorySystem::GetItemFlags(objHndl item)
@@ -484,20 +687,298 @@ int InventorySystem::IsItemNonTransferable(objHndl item, objHndl receiver)
 
 int InventorySystem::ItemInsertGetLocation(objHndl item, objHndl receiver, int* itemInsertLocation, objHndl bag, char flags){
 
+	auto hasLocationOutput = itemInsertLocation != nullptr;
 	auto parentObj = objSystem->GetObject(receiver);
-	auto invIdx = -1;
+	auto invIdx = INVENTORY_IDX_UNDEFINED;
 
 	if (d20Sys.d20Query(receiver, DK_QUE_Polymorphed))
 		return IEC_Cannot_Use_While_Polymorphed;
 
 
+	auto isUseWieldSlots = (flags & IIF_Use_Wield_Slots) != 0;
 
-	return addresses.ItemInsertGetLocation(item, receiver, itemInsertLocation, bag, flags);
+	auto itemSthg_10067F90 = temple::GetRef<ItemErrorCode(__cdecl)(objHndl, int, objHndl)>(0x10067F90);
+	auto itemCheckSlotAndWieldFlags = temple::GetRef<ItemErrorCode(__cdecl)(objHndl, objHndl, int)>(0x10067680);
+
+	if (parentObj->IsCritter() && hasLocationOutput){
+		
+		if (flags & IIF_Allow_Swap 	|| (!IsInvIdxWorn(*itemInsertLocation) && !isUseWieldSlots)	)
+		{
+			if (isUseWieldSlots){
+				for (auto equipSlot=0; equipSlot < INVENTORY_WORN_IDX_COUNT; equipSlot++){
+
+					auto itemWornAtSlot = ItemWornAt(receiver, equipSlot);
+					auto itemFlagCheck = itemCheckSlotAndWieldFlags(item, receiver, InvIdxForSlot(equipSlot)) == IEC_OK;
+					auto slotIsOccupied = 
+						*itemInsertLocation == INVENTORY_IDX_UNDEFINED 
+					    && isUseWieldSlots
+						&& itemWornAtSlot != objHndl::null
+						&& itemFlagCheck;
+
+					if (slotIsOccupied){
+						if (ItemWornAt(receiver, equipSlot) != item){
+							*itemInsertLocation = InvIdxForSlot(equipSlot);
+							return IEC_Wield_Slot_Occupied;
+						}
+					}
+					else if (itemWornAtSlot == objHndl::null
+						     && itemFlagCheck
+						     && itemWornAtSlot != item){
+						*itemInsertLocation = InvIdxForSlot(equipSlot);
+						return IEC_OK;
+					}
+				}
+			}
+		}
+		else{
+
+		//	auto res = InventoryHooks::orgItemInsertGetLocation(item, receiver, itemInsertLocation, bag, flags);//addresses.ItemInsertGetLocation(item, receiver, itemInsertLocation, bag, flags);
+		//	return res;
+
+			auto shouldTrySlots = true;
+			auto result = IEC_Wrong_Type_For_Slot;
+			if (*itemInsertLocation != INVENTORY_IDX_UNDEFINED) {
+				result = itemSthg_10067F90(item, *itemInsertLocation, receiver);
+				if (result == IEC_OK){
+					shouldTrySlots = false;
+					invIdx = *itemInsertLocation;
+				}
+				else{
+					if (result != IEC_Wrong_Type_For_Slot && result != IEC_Wield_Slot_Occupied)
+						return result;
+				}
+			}
+
+			if (shouldTrySlots){
+				auto found = false;
+				for (auto i = 0; i < INVENTORY_WORN_IDX_COUNT; i++){
+					auto equipSlot = (EquipSlot)i;
+					if (!ItemWornAt(receiver, equipSlot)){
+						result = itemSthg_10067F90(item, i + INVENTORY_WORN_IDX_START, receiver);
+						if (result == IEC_OK){
+							found = true;
+							invIdx = i + INVENTORY_WORN_IDX_START;
+							break;
+						}
+					}
+				}
+				if (!found)
+					return result;
+			}
+
+		} 
+		// TODO
+		//return addresses.ItemInsertGetLocation(item, receiver, itemInsertLocation, bag, flags);
+	}
+
+	auto itemObj = objSystem->GetObject(item);
+	
+
+	// handling for stackable items, and money for PCs
+	if (itemObj->IsStackable() && FindMatchingStackableItem(receiver, item) // this is vanilla; I suppose it doesn't matter, since it'll stack it anyway in the calling function (but I wonder if it isn't better to return the stackable item's index?)
+		|| itemObj->type == obj_t_money && parentObj->IsPC()){
+		if (hasLocationOutput)
+			*itemInsertLocation = 0; 
+		return IEC_OK;
+	}
+
+	// if already found it in the above section
+	if (invIdx != INVENTORY_IDX_UNDEFINED){
+		if (hasLocationOutput)
+			*itemInsertLocation = invIdx;
+		return IEC_OK;
+	}
+	
+
+	auto tmp = INVENTORY_IDX_UNDEFINED;
+	if (!hasLocationOutput) {
+		itemInsertLocation = &tmp;
+	}
+	auto maxSlot = 120;
+
+	// already provided with designated location
+	if (*itemInsertLocation != INVENTORY_IDX_UNDEFINED && IsInvIdxWorn(*itemInsertLocation)){
+		invIdx = *itemInsertLocation;
+	}
+	// Containers
+	else if (!parentObj->IsCritter()){
+		if (!parentObj->IsContainer())
+			return IEC_No_Room_For_Item;
+
+		if (*itemInsertLocation != INVENTORY_IDX_UNDEFINED && !GetItemAtInvIdx(receiver, *itemInsertLocation)){
+			invIdx = *itemInsertLocation;
+			if (hasLocationOutput)
+				*itemInsertLocation = invIdx;
+			return IEC_OK;
+		}
+		maxSlot = 120;
+		if (flags & IIF_Use_Max_Idx_200) // fix - vanilla lacked this line
+			maxSlot = INVENTORY_WORN_IDX_START;
+		invIdx = FindEmptyInvIdx(item, receiver, 0, maxSlot);
+	}
+	// Critters
+	else if (*itemInsertLocation != INVENTORY_IDX_UNDEFINED	&& !GetItemAtInvIdx(receiver, *itemInsertLocation)){
+		invIdx = *itemInsertLocation;
+	}
+	else {
+
+		if (flags & IIF_Use_Max_Idx_200){
+			maxSlot = INVENTORY_WORN_IDX_START;
+			invIdx = FindEmptyInvIdx(item, receiver, 0, maxSlot);
+		}
+		else if ( (flags & IIF_Use_Bags) && BagFindLast(receiver) != objHndl::null){
+			auto receiverBag = BagFindLast(receiver);
+			if (receiverBag){
+				auto bagMaxIdx = BagGetContentMaxIdx(receiver, receiverBag);
+				invIdx = FindEmptyInvIdx(item, receiver, 0, bagMaxIdx); // todo BUG!
+			}
+		}
+		else if(flags & IIF_Allow_Swap){// bug?
+			if (*itemInsertLocation != INVENTORY_IDX_UNDEFINED)
+				return IEC_Wield_Slot_Occupied;
+			return IEC_No_Room_For_Item;
+		}
+		else if (bag){
+			auto bagMaxIdx = BagGetContentMaxIdx(receiver, bag);
+			auto bagBaseIdx = BagGetContentStartIdx(receiver, bag);
+			invIdx = FindEmptyInvIdx(item, receiver, bagBaseIdx, bagMaxIdx);
+		}
+		else{
+			maxSlot = CRITTER_INVENTORY_SLOT_COUNT;
+			invIdx = FindEmptyInvIdx(item, receiver, 0, maxSlot);
+		}
+	}
+		
+	if (invIdx != INVENTORY_IDX_UNDEFINED) {
+		if (hasLocationOutput)
+			*itemInsertLocation = invIdx;
+		return IEC_OK;
+	}
+	return IEC_No_Room_For_Item;
+
+	//return addresses.ItemInsertGetLocation(item, receiver, itemInsertLocation, bag, flags);
 }
 
 void InventorySystem::InsertAtLocation(objHndl item, objHndl receiver, int itemInsertLocation)
 {
-	addresses.InsertAtLocation(item, receiver, itemInsertLocation);
+	if (itemInsertLocation == -1){
+		logger->error("InsertAtLocation: Attempt to insert an item at location -1!");
+	}
+
+	auto receiverObj = objSystem->GetObject(receiver);
+	if (!receiverObj){
+		logger->error("InsertAtLocation: Null handle receiver object! Returning.");
+		return;
+	}
+	auto itemObj = objSystem->GetObject(item);
+	if (!item){
+		logger->error("InsertAtLocation: Null handle item object! Returning.");
+		return;
+	}
+		
+
+	auto itemType = objects.GetType(item);
+	obj_f qtyField = obj_f_begin;
+	auto isQuantity = inventory.GetQuantityField(item, &qtyField);
+
+	auto receiverType = objects.GetType(receiver);
+	auto invenNumField = inventory.GetInventoryNumField(receiver);
+	auto invenField    = inventory.GetInventoryListField(receiver);
+	
+	auto mergeStackables = false;
+
+	if (itemType == obj_t_money){
+		
+		if (receiverObj->IsPC()){
+			party.GiveMoneyFromItem(item);
+			auto loc = receiverObj->GetLocation();
+			inventory.MoveItem(item, loc);
+			pythonObjIntegration.ExecuteObjectScript(receiver, item, ObjScriptEvent::InsertItem);
+			objects.Destroy(item);
+			return;
+		}
+		
+		if (receiverObj->IsNPC()){
+			auto stackable = FindMatchingStackableItem(receiver, item);
+			if (stackable){
+				auto itemQty = itemObj->GetInt32(qtyField);
+				auto stackQty = objects.getInt32(stackable, qtyField);
+				objects.setInt32(stackable, qtyField, itemQty + stackQty);
+				auto loc = receiverObj->GetLocation();
+				inventory.MoveItem(item, loc);
+				pythonObjIntegration.ExecuteObjectScript(receiver, item, ObjScriptEvent::InsertItem);
+				objects.Destroy(item);
+				return;
+			}
+		}
+		mergeStackables = false;
+	}
+	else if (itemType == obj_t_key){
+		if (receiverObj->IsPC()){
+			auto t = gameSystems->GetTimeEvent().GetTime();
+			auto keyId = itemObj->GetInt32(obj_f_key_key_id);
+			uiLogbook.MarkKey(keyId, t);
+			auto loc = receiverObj->GetLocation();
+			inventory.MoveItem(item, loc);
+			pythonObjIntegration.ExecuteObjectScript(receiver, item, ObjScriptEvent::InsertItem);
+			objects.Destroy(item);
+			return;
+		}
+	}
+	else if (itemType == obj_t_ammo){
+		mergeStackables = true;
+	}
+	else if (!IsInvIdxWorn(itemInsertLocation)){
+		mergeStackables = true;
+	}
+
+	if (mergeStackables && isQuantity){
+		auto stackable = FindMatchingStackableItem(receiver, item);
+		if (stackable) {
+			auto itemQty = itemObj->GetInt32(qtyField);
+			auto stackQty = objects.getInt32(stackable, qtyField);
+			objects.setInt32(stackable, qtyField, itemQty + stackQty);
+			auto loc = receiverObj->GetLocation();
+			inventory.MoveItem(item, loc);
+			gameSystems->GetAnim().NotifySpeedRecalc(receiver);
+			pythonObjIntegration.ExecuteObjectScript(receiver, item, ObjScriptEvent::InsertItem);
+			objects.Destroy(item);
+			return;
+		}
+	}
+
+	// Set internal fields
+	auto invenCount = receiverObj->GetInt32(invenNumField);
+	receiverObj->SetInt32(invenNumField, invenCount + 1);
+	receiverObj->SetObjHndl(invenField, invenCount, item);
+	itemObj->SetInt32(obj_f_item_inv_location, itemInsertLocation);
+	itemObj->SetObjHndl(obj_f_item_parent, receiver);
+
+	// Do updates and notifications
+	if (inventory.IsInvIdxWorn(itemInsertLocation)){
+		static auto inheritLightFlags = temple::GetRef<void(__cdecl)(objHndl, objHndl)>(0x10066260);
+		inheritLightFlags(item, receiver);
+		pythonObjIntegration.ExecuteObjectScript(receiver, item, ObjScriptEvent::WieldOn);
+		critterSys.UpdateModelEquipment(receiver);
+	}
+
+	if (receiverObj->IsNPC()){
+		receiverObj->SetInt64(obj_f_npc_ai_flags64, receiverObj->GetInt64(obj_f_npc_ai_flags64) | AiFlag::CheckWield);
+	}
+	if (party.IsInParty(receiver) && itemInsertLocation >= INVENTORY_IDX_HOTBAR_START && itemInsertLocation <= INVENTORY_IDX_HOTBAR_END){
+		temple::GetRef<void(__cdecl)(objHndl, int)>(0x1009A510)(item, itemInsertLocation); // arcanum leftover, does nothing in ToEE
+	}
+	if (receiverObj->IsCritter()){
+		d20StatusSys.initItemConditions(receiver);
+		d20Sys.d20SendSignal(receiver, DK_SIG_Inventory_Update, item);
+	}
+	if (receiver){
+		gameSystems->GetAnim().NotifySpeedRecalc(receiver);
+		// nullsub_1009A3D0
+	}
+	pythonObjIntegration.ExecuteObjectScript(receiver, item, ObjScriptEvent::InsertItem);
+
+	//addresses.InsertAtLocation(item, receiver, itemInsertLocation);
 }
 
 int InventorySystem::ItemUnwield(objHndl item)
@@ -549,9 +1030,204 @@ int InventorySystem::Wield(objHndl critter, objHndl item, EquipSlot slot){
 	return TRUE;
 }
 
-ItemErrorCode InventorySystem::TransferWithFlags(objHndl item, objHndl receiver, int invenIdx, char flags, objHndl bag)
+ItemErrorCode InventorySystem::TransferWithFlags(objHndl item, objHndl receiver, int invIdx, int flags, objHndl bag) // see ItemInsertFlags
 {
-	return addresses.TransferWithFlags(item, receiver, invenIdx, flags, bag);
+	auto flagsDebug = (ItemInsertFlags)flags;
+	auto parent = GetParent(item);
+	if (!parent){
+		return IEC_Cannot_Transfer;
+	}
+	auto receiverObj = objSystem->GetObject(receiver);
+	auto itemObj = objSystem->GetObject(item), parentObj = objSystem->GetObject(parent);
+	if (!receiverObj || !itemObj || !parentObj){
+		return IEC_Cannot_Transfer;
+	}
+
+	auto itemInvLocation = itemObj->GetInt32(obj_f_item_inv_location);
+	auto itemInsertLocation = INVENTORY_IDX_UNDEFINED;
+	if (invIdx != INVENTORY_IDX_UNDEFINED)
+		itemInsertLocation = invIdx;
+
+	if (!receiverObj->IsCritter() && invIdx != INVENTORY_IDX_UNDEFINED && IsInvIdxWorn(invIdx)){
+		return IEC_No_Room_For_Item;
+	}
+
+	auto isNonTransferable = IsItemNonTransferable(item, receiver);
+	if (isNonTransferable){
+		if (isNonTransferable > 0){
+			logger->warn("TransferWithFlags: item {} cannot be removed from {}'s inventory, reason = {}.", item, parent, isNonTransferable);
+		}
+		return (ItemErrorCode)isNonTransferable;
+	}
+
+	auto result = (ItemErrorCode)ItemInsertGetLocation(item, receiver, &itemInsertLocation, bag, flags);
+	int unk = 0;
+	if (result == IEC_Wrong_Type_For_Slot){
+		/* Handle Wrong Type For Slot error
+		 try to transfer to matching equip slot
+		*/
+
+		if (invIdx == INVENTORY_IDX_UNDEFINED || !(flags & IIF_Use_Wield_Slots)){
+			logger->warn("TransferWithFlags: item ( {} ) cannot be inserted into ( {} )'s inventory, reason = ( {} )", item, parent, GetItemErrorString(IEC_Wrong_Type_For_Slot));
+			return IEC_Wrong_Type_For_Slot;
+		}
+
+		result = TransferToEquippedSlot(parent, receiver, item, &unk, invIdx, itemInsertLocation, flags);
+		TransferPcInvLocation(item, itemInvLocation);
+		return result;
+		
+	}
+
+	if (result != IEC_OK){
+		/* Handle Wield Slot Occupied error
+		  try to swap with existing item.
+		 */
+		if (result != IEC_Wield_Slot_Occupied || !(flags & IIF_Allow_Swap)){
+			logger->warn("TransferWithFlags: item ( {} ) cannot be inserted into ( {} )'s inventory, reason = ( {} )", item, parent, GetItemErrorString(result));
+			return result;
+		}
+		// try to swap Secondary Weapon with Shield slot (this looks a bit weird but eh)
+		if (itemInsertLocation == INVENTORY_WORN_IDX_START + EquipSlot::WeaponSecondary && !d20Sys.d20Query(parent, DK_QUE_Polymorphed)
+			&& (parentObj->IsCritter() || parentObj->IsContainer() )){
+			auto invenField = GetInventoryListField(parent);
+			auto invenNumField = GetInventoryNumField(parent);
+			auto invenCount = parentObj->GetInt32(invenNumField);
+			for (auto i = 0; i < invenCount; i++){
+				auto itemShield = parentObj->GetObjHndl(invenField, i);
+				if (!itemShield) continue;
+				if (objects.GetItemInventoryLocation(itemShield) == INVENTORY_WORN_IDX_START + EquipSlot::Shield){
+					logger->warn("TransferWithFlags: item ( {} ) cannot be inserted into ( {} )'s inventory, reason = ( {} )", item, parent, GetItemErrorString(IEC_Wield_Slot_Occupied));
+					return IEC_Wield_Slot_Occupied;
+				}
+			}
+		}
+
+		auto existingItem = GetItemAtInvIdx(receiver, itemInsertLocation);
+		if (!existingItem){
+			logger->warn("TransferWithFlags: item ( {} ) cannot be inserted into ( {} )'s inventory, reason = ( {} )", item, parent, GetItemErrorString(IEC_Wield_Slot_Occupied));
+			return IEC_Wield_Slot_Occupied;
+		}
+		result = ItemTransferSwap(parent, receiver, item, existingItem, &unk, itemInsertLocation, itemInsertLocation, flags);
+		TransferPcInvLocation(item, itemInvLocation);
+		return result;
+	}
+
+
+	// IEC_OK
+	if (itemInsertLocation == invIdx || itemInsertLocation != INVENTORY_IDX_UNDEFINED){
+		if ( (flags & IIF_Allow_Swap) && GetItemAtInvIdx(parent, invIdx)){
+			itemInsertLocation = invIdx;
+		}
+		result = ItemTransferFromTo(parent, receiver, item, &unk, itemInsertLocation, flags);
+		TransferPcInvLocation(item, itemInvLocation);
+		return result;
+	}
+
+	// Unspecified Inventory Slot
+	if (invIdx == INVENTORY_IDX_UNDEFINED){
+		if (flags & IIF_Use_Wield_Slots){
+			result = TransferToEquippedSlot(parent, receiver, item, &unk, INVENTORY_IDX_UNDEFINED, INVENTORY_IDX_UNDEFINED, flags);
+			TransferPcInvLocation(item, itemInvLocation);
+			return result;
+		}
+		if ( !(flags & IIF_4)){
+			logger->warn("TransferWithFlags: item ( {} ) cannot be inserted into ( {} )'s inventory, reason = ( {} )", item, parent, GetItemErrorString(IEC_OK));
+			return IEC_Cannot_Transfer;
+		}
+		result = ItemTransferFromTo(parent, receiver, item, &unk, INVENTORY_IDX_UNDEFINED, flags);
+		TransferPcInvLocation(item, itemInvLocation);
+		return result;
+	} 
+	
+	// Specified Slot
+	// Check if slot is clear
+	auto existingItem = GetItemAtInvIdx(receiver, invIdx);
+	if (!existingItem){
+		result = ItemTransferFromTo(parent, receiver, item, &unk, invIdx, flags);
+		TransferPcInvLocation(item, itemInvLocation);
+		return result;
+	}
+	// If not, check swappage
+	if (flags & IIF_Allow_Swap){
+		result = ItemTransferSwap(parent, receiver, item, existingItem, &unk, invIdx, INVENTORY_IDX_UNDEFINED, flags);
+		TransferPcInvLocation(item, itemInvLocation);
+		return result;
+	}
+	// If not, try unspecified slot 
+	if (!(flags & IIF_Use_Wield_Slots)){
+		if (!(flags &IIF_4)){
+			return IEC_No_Room_For_Item;
+		}
+		result = ItemTransferFromTo(parent, receiver, item, &unk, INVENTORY_IDX_UNDEFINED, flags);
+		TransferPcInvLocation(item, itemInvLocation);
+		return result;
+	}
+
+	// Go over wield slots
+	for (auto equipSlot = 0; equipSlot < EquipSlot::Count; ++equipSlot){
+		if (ItemWornAt(receiver, equipSlot)) continue;
+			
+		if (IEC_OK == CheckTransferToWieldSlot(item, equipSlot + INVENTORY_WORN_IDX_START, receiver)){
+			result = ItemTransferFromTo(parent, receiver, item, &unk, equipSlot + INVENTORY_WORN_IDX_START, flags);
+			TransferPcInvLocation(item, itemInvLocation);
+			return result;
+		}
+	}
+	return IEC_Cannot_Transfer;
+	
+	// return addresses.TransferWithFlags(item, receiver, invIdx, flags, bag);
+}
+
+void InventorySystem::TransferPcInvLocation(objHndl item, int itemInvLocation){
+	auto parent = GetParent(item);
+	if (!parent){
+		return;
+	}
+	auto parentObj = objSystem->GetObject(parent);
+	if (!parentObj)
+		return;
+	if (parentObj->IsPC()){
+		auto oldInvLocation = parentObj->GetInt32(obj_f_item_inv_location);
+		PcInvLocationSet(parent, itemInvLocation, oldInvLocation);
+	}
+}
+
+void InventorySystem::PcInvLocationSet(objHndl parent, int itemInvLocation, int itemInvLocationNew){
+	auto parentObj = objSystem->GetObject(parent);
+	for (auto i = 1; i < 21; ++i){
+		if (parentObj->GetInt32(obj_f_pc_weaponslots_idx, i) == itemInvLocation){
+			parentObj->SetInt32(obj_f_pc_weaponslots_idx, i, itemInvLocationNew);
+		}
+	}
+}
+
+ItemErrorCode InventorySystem::CheckSlotAndWieldFlags(objHndl item, objHndl receiver, int invIdx){
+	return temple::GetRef<ItemErrorCode(__cdecl)(objHndl, objHndl, int)>(0x10067680)(item, receiver, invIdx);
+}
+
+ItemErrorCode InventorySystem::TransferToEquippedSlot(objHndl parent, objHndl receiver, objHndl item, int* unk,
+	int invIdx, int itemInsertLocation, int flags){
+	auto receiverObj = objSystem->GetObject(receiver);
+	if (!receiverObj || !receiverObj->IsCritter()){
+		return IEC_Cannot_Transfer;
+	}
+
+	for (auto equipSlot = 0; equipSlot <= EquipSlot::Count; equipSlot++){
+		if (CheckSlotAndWieldFlags(item, receiver, equipSlot + INVENTORY_WORN_IDX_START))
+			continue;
+		auto existingItem = ItemWornAt(receiver, equipSlot);
+		if (!existingItem){
+			auto result = ItemTransferFromTo(parent, receiver, item, unk, equipSlot + INVENTORY_WORN_IDX_START, flags);
+			return result;
+		}
+		auto invLocation = objSystem->GetObject(existingItem)->GetInt32(obj_f_item_inv_location);
+		if (flags & IIF_Allow_Swap){
+			auto result = ItemTransferSwap(parent, receiver, item, existingItem, unk, invLocation, itemInsertLocation, flags);
+			return result;
+		}
+	}
+
+	return IEC_Cannot_Transfer;
 }
 
 void InventorySystem::ItemPlaceInIdx(objHndl item, int idx)
@@ -588,6 +1264,16 @@ void InventorySystem::MoneyToCoins(int money, int* plat, int* gold, int* silver,
 	{
 		*copper = remMoney;
 	}
+}
+
+int32_t InventorySystem::GetCoinWorth(int32_t coinType){
+
+	static int32_t coinWorths[] = { 1,10,100,1000 };
+	if (coinType >= 0 && coinType <= 3){
+		return coinWorths[coinType];
+	}
+	
+	return 0u;
 }
 
 int InventorySystem::GetWieldType(objHndl wielder, objHndl item, bool regardEnlargement) const
@@ -671,6 +1357,17 @@ int InventorySystem::GetWieldType(objHndl wielder, objHndl item, bool regardEnla
 	return 2 * (wielderSize <= 5) + 1;	
 }
 
+int InventorySystem::GetWeaponAnimId(objHndl item, objHndl wielder){
+	auto wieldType = GetWieldType(wielder, item, false); // TODO overhaul this...
+	if (wieldType == 2){
+		return temple::GetRef<int[74]>(0x102BE668)[objects.getInt32(item, obj_f_weapon_type)]; // two handed anims
+	}
+	if (wieldType != 1 && wieldType != 0){
+		return 0;
+	}
+	return temple::GetRef<int[74]>(0x102BE540)[objects.getInt32(item, obj_f_weapon_type)]; // single handed anims
+}
+
 obj_f InventorySystem::GetInventoryListField(objHndl objHnd)
 {
 	if (objects.IsContainer(objHnd)) return obj_f_container_inventory_list_idx;
@@ -688,15 +1385,131 @@ obj_f InventorySystem::GetInventoryNumField(objHndl objHnd)
 	return obj_f_critter_inventory_num;
 }
 
-void InventorySystem::ForceRemove(objHndl item, objHndl parent)
-{
-	_ForceRemove(item, parent);
+void InventorySystem::WieldBestAll(objHndl critter, objHndl tgt){
+	
+	for (auto invIdx = INVENTORY_WORN_IDX_START; invIdx <  INVENTORY_WORN_IDX_END; invIdx++){
+		WieldBest(critter, invIdx, tgt);
+	}
+}
+
+void InventorySystem::ForceRemove(objHndl item, objHndl parent){
+	if (!parent) {
+		logger->warn("ForceRemove called on null parent!");
+		return;
+	}
+
+	auto _parent = GetParent(item);
+	auto isparty = false;
+	if (!_parent){
+		logger->warn("ForceRemove called on item that doesn't think it has a parent.");
+		// return;
+	}
+	else{
+		if (parent != _parent){
+			logger->warn("ForceRemove called on item with different parent");
+		}
+		isparty = party.IsInParty(parent);
+	}
+
+	auto parentObj = objSystem->GetObject(parent);
+	auto invenField = obj_f_container_inventory_list_idx;
+	auto invenNumField = obj_f_container_inventory_num;
+	if (!parentObj->IsContainer()){
+		invenField = obj_f_critter_inventory_list_idx;
+		invenNumField = obj_f_critter_inventory_num;
+	}
+	auto N = parentObj->GetInt32(invenNumField);
+
+	auto idx = -1;
+	for (auto i=0; i < N; i++){
+		if (item == parentObj->GetObjHndl(invenField, i)){
+			idx = i;
+			break;
+		}
+	}
+	if (idx < 0){
+		logger->error("ForceRemove: Couldn't match object in parent!");
+		return;
+	}
+	
+	if (parentObj->IsCritter() && !(parentObj->GetFlags() & OF_DESTROYED)){
+		dispatch.Dispatch68ItemRemove(parent);
+	}
+
+	// Delete item from inventory list
+	auto itemObj = objSystem->GetObject(item);
+	auto invIdxOrg = itemObj->GetInt32(obj_f_item_inv_location);
+	
+	while (idx < N-1){
+		auto tmp = parentObj->GetObjHndl(invenField, idx + 1);
+		parentObj->SetObjHndl(invenField, idx, tmp);
+		idx++;
+	}
+	parentObj->RemoveObjectId(invenField, N-1);
+	parentObj->SetInt32(invenNumField, N - 1);
+	itemObj->SetInt32(obj_f_item_inv_location, -1);
+	
+	if (inventory.IsInvIdxWorn(invIdxOrg)){
+		if (inventory.IsNormalCrossbow(item)) { // unset OWF_WEAPON_LOADED
+			itemObj->SetInt32(obj_f_weapon_flags, itemObj->GetInt32(obj_f_weapon_flags) & ~OWF_WEAPON_LOADED);
+		}
+		static auto inheritLightFlags = temple::GetRef<void(__cdecl)(objHndl, objHndl)>(0x10066260);
+		inheritLightFlags(item, parent);
+		pythonObjIntegration.ExecuteObjectScript(parent, item, ObjScriptEvent::WieldOff);
+		critterSys.UpdateModelEquipment(parent);
+	}
+	else{
+		if (invIdxOrg >= INVENTORY_IDX_HOTBAR_START && invIdxOrg <= INVENTORY_IDX_HOTBAR_END){
+			static auto hotbarRelatedArcanumLeftover = temple::GetRef<void(__cdecl)()>(0x1009A500);
+			hotbarRelatedArcanumLeftover();
+		}
+	}
+
+	if (parentObj->IsContainer()){
+		if (!gameSystems->GetItem().editorMode && gameSystems->GetItem().junkpileActive){
+			static auto junkpileOnRemoveItem = temple::GetRef<void(__cdecl)(objHndl)>(0x10069A20);
+			junkpileOnRemoveItem(parent);
+		}
+	}
+	else if (parentObj->IsNPC()){
+		auto aiFlags = (AiFlag) (parentObj->GetInt64(obj_f_npc_ai_flags64) | AiFlag::CheckWield);
+		parentObj->SetInt64(obj_f_npc_ai_flags64, aiFlags);
+	}
+	if (parent){
+		gameSystems->GetAnim().NotifySpeedRecalc(parent);
+		// nullsub_1009A3D0 - removed
+	}
+	pythonObjIntegration.ExecuteObjectScript(parent, item, ObjScriptEvent::RemoveItem);
+	if (parentObj->IsCritter() && ! (parentObj->GetFlags() & OF_DESTROYED) ){
+		d20StatusSys.initItemConditions(parent);
+		critterSys.BuildRadialMenu(parent);
+	}
+
+	//_ForceRemove(item, parent);
 }
 
 bool InventorySystem::IsProficientWithArmor(objHndl obj, objHndl armor) const
 {
-	auto isProfWithArmor = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x1007C410);
-	return isProfWithArmor(obj, armor) != 0;
+
+	if (obj) {
+		int res = d20Sys.D20QueryPython(obj, "Has Light Shield Proficency");
+		if (res != 0) {
+			auto itemObj = gameSystems->GetObj().GetObject(armor);
+			auto itemType = itemObj->type;
+
+			if (itemType == obj_t_armor) {
+				auto armorFlags = itemObj->GetInt32(obj_f_armor_flags);
+				auto armorType = inventory.GetArmorType(armorFlags);
+				if (armorType == ArmorType::ARMOR_TYPE_SHIELD) {
+					auto spellFailure = itemObj->GetInt32(obj_f_armor_arcane_spell_failure);
+					if (spellFailure <= 5) {  //Only a light shield or buckler will have a spell failure this low
+						return 1;
+					}
+				}
+			}
+		}
+	}
+	return InventoryHooks::orgIsProficientWithArmor(obj, armor) != 0;
 }
 
 void InventorySystem::GetItemMesLine(MesLine* line)
@@ -740,6 +1553,10 @@ void InventorySystem::QuantitySet(const objHndl& item, int qtyNew){
 	if (GetQuantityField(item, &qtyField)){
 		gameSystems->GetObj().GetObject(item)->SetInt32(qtyField, qtyNew);
 	}
+}
+
+objHndl InventorySystem::SplitObjFromStack(objHndl item, locXY & loc){
+	return temple::GetRef<objHndl(__cdecl)(objHndl, locXY&)>(0x10066B00)(item, loc);
 }
 
 int InventorySystem::ItemWeight(objHndl item){
@@ -899,13 +1716,302 @@ BOOL InventorySystem::ItemGetAdvanced(objHndl item, objHndl parent, int invIdx, 
 }
 
 bool InventorySystem::ItemCanBePickpocketed(objHndl item){
-	if (GetParent(item) && GetInventoryLocation(item) >= 200 || ItemWeight(item) > 1)
+	if (GetParent(item) && GetInventoryLocation(item) >= INVENTORY_WORN_IDX_START || ItemWeight(item) > 1)
 		return false;
 
 	if (objSystem->GetObject(item)->GetItemFlags() & OIF_NO_PICKPOCKET)
 		return false;
 
 	return true;
+}
+
+bool InventorySystem::NpcCanLoot(objHndl handle){
+	return (!critterSys.IsDeadNullDestroyed(handle)
+		&& !critterSys.IsDeadOrUnconscious(handle)
+		&& !((objects.getInt32(handle, obj_f_npc_pad_i_3) & 0xF) == NLT_Nothing)
+		&& !d20Sys.d20QueryWithData(handle, DK_QUE_Critter_Has_Condition, conds.GetByName("Animal Companion Animal"), 0)
+		&& !critterSys.IsUndead(handle)
+		&& !d20Sys.d20QueryWithData(handle, DK_QUE_Critter_Has_Condition, conds.GetByName("sp-Summoned"), 0)
+		);
+}
+
+bool InventorySystem::NpcWillLoot(objHndl item, NpcLootingType lootType){
+
+	if (lootType == NLT_Nothing)
+		return false;
+
+	auto itemObj = objSystem->GetObject(item);
+	if (itemObj->GetItemFlags() & (OIF_NO_LOOT | OIF_NO_NPC_PICKUP | OIF_NO_DISPLAY))
+		return false;
+	if (itemObj->type == obj_t_key)
+		return false;
+	if (itemObj->type == obj_t_money)
+		return lootType != NLT_ArcaneScrollsOnly;
+	// not money or keys
+	if (lootType == NLT_HalfShareMoneyOnly)
+		return false;
+	if (lootType == NLT_ArcaneScrollsOnly){
+		if (itemObj->type != obj_t_scroll)
+			return false;
+		auto spInfo = itemObj->GetSpell(obj_f_item_spell_idx, 0);
+		return spellSys.IsArcaneSpellClass(spInfo.classCode);
+	}
+
+	return true;
+}
+
+bool InventorySystem::ItemTransferTo(objHndl item, objHndl receiver, int invIdx){
+	auto transferTo = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl, int)>(0x1006A3A0);
+	return transferTo(item, receiver, invIdx) != FALSE;
+}
+
+ItemErrorCode InventorySystem::CheckTransferToWieldSlot(objHndl item, int invSlot, objHndl receiver){
+	return temple::GetRef<ItemErrorCode(__cdecl)(objHndl, int, objHndl)>(0x10067F90)(item, invSlot, receiver);
+}
+
+ItemErrorCode InventorySystem::ItemTransferFromTo(objHndl owner, objHndl receiver, objHndl item, int * a4, int invSlot, int flags)
+{
+	auto result = IEC_OK;
+	auto ownerObj = objSystem->GetObject(owner), receiverObj = objSystem->GetObject(receiver), itemObj = objSystem->GetObject(item);
+	if (!receiverObj || !itemObj){
+		return result;
+	}
+	if (ownerObj && ownerObj->IsCritter() && IsInvIdxWorn(invSlot)){
+		result = CheckTransferToWieldSlot(item, invSlot, receiver);
+		if (result != IEC_OK){
+			if (!(flags & IIF_Allow_Swap)){
+				return result;
+			}
+			auto existingItem = GetItemAtInvIdx(owner, invSlot);
+			if (!existingItem) {
+				return result;
+			}
+			result = ItemTransferSwap(owner, receiver, item, existingItem, a4, invSlot, invSlot, flags);
+			return result;
+		}
+	}
+
+	if (owner == receiver){
+		ItemRemove(item);
+		InsertAtLocation(item, receiver, invSlot);
+		return IEC_OK;
+	}
+	// owner != receiver
+	ItemRemove(item);
+	itemObj->SetItemFlag(OIF_NO_TRANSFER, false);
+	InsertAtLocation(item, receiver, invSlot);
+	return IEC_OK;
+}
+
+ItemErrorCode InventorySystem::ItemTransferSwap(objHndl owner, objHndl receiver, objHndl item, objHndl itemPrevious,
+	int* a4, int equippedItemSlot, int destItemSlotMaybe, int flags){
+	static auto itemTransferSwap = temple::GetRef<ItemErrorCode(__cdecl)(objHndl, objHndl, objHndl, objHndl, int*, int, int, int)>(0x1006AB50);
+	auto result = itemTransferSwap(owner, receiver, item, itemPrevious, a4, equippedItemSlot, destItemSlotMaybe, flags);
+	return result;
+}
+
+bool InventorySystem::DoNpcLooting(objHndl opener, objHndl container){
+
+	auto partySize = party.GroupNPCFollowersLen() + party.GroupPCsLen(); // in vanilla this was GroupListLen, which is wrong because it includes AI followers such as animal companions
+	auto npcSize = party.GroupNPCFollowersLen();
+
+	// if no NPCs, return
+	if (!npcSize)
+		return false;
+
+	struct LooterInfo {
+		objHndl handle;
+		int lootingType; // raw data
+		NpcLootingType shareType;
+		/*
+		determined by shareType and party size;
+		0 if no shares
+		*/
+		int shareDivider;
+		int itemWorthTotal; // in cp
+		int lastItemWorth;
+		int moneyGiven[4] = {0,}; // cp, sp, gp, pp
+		LooterInfo(objHndl npc) :handle(npc) {
+			lootingType = objects.getInt32(npc, obj_f_npc_pad_i_3);
+			shareType = (NpcLootingType)(lootingType & 0xF);
+			itemWorthTotal
+ = 100 * ((lootingType >> 8) & 0xFFFF00);
+			lastItemWorth
+ = 1600 * (lootingType & 0xFFF0);
+			auto partySize = party.GroupNPCFollowersLen() + party.GroupPCsLen(); // in vanilla this was GroupListLen, which is wrong because it includes AI followers such as animal companions
+			switch (shareType) {
+			case NpcLootingType::NLT_Normal:
+				shareDivider = partySize;
+				break;
+			case NpcLootingType::NLT_HalfShareMoneyOnly:
+				shareDivider = 2 * partySize;
+				break;
+			case NLT_ArcaneScrollsOnly:
+			case NLT_Nothing:
+				shareDivider = 0;
+				break;
+			case NLT_ThirdOfAll:
+				shareDivider = (partySize <= 3) ? partySize : 3;
+				break;
+			case NLT_FifthOfAll:
+				shareDivider = (partySize <= 5) ? partySize : 5;
+				break;
+			default:
+				break;
+			}
+		};
+	};
+
+	std::vector<LooterInfo> looterInfo;
+
+	// fill a list of NPCs that can loot
+	for (auto i = 0u; i < npcSize; i++) {
+		auto npc = party.GroupNPCFollowersGetMemberN(i);
+		auto npcCanLoot = inventory.NpcCanLoot(npc);
+		if (!npcCanLoot)
+			continue;
+		looterInfo.push_back(LooterInfo(npc));
+	}
+
+	// if none can loot, return
+	if (!looterInfo.size())
+		return false;
+
+	// get the container's inventory
+	auto items = inventory.GetInventory(container);
+	if (!items.size())
+		return false;
+
+	// count coin totals first
+	int moneyArray[4] = { 0, }; // cp, sp, gp, pp
+	for (auto item : items){
+		if (objects.GetType(item) != obj_t_money)
+			continue;
+		auto moneyType = objects.getInt32(item, obj_f_money_type);
+		if (moneyType >= 4 || moneyType < 0)
+			continue;
+		moneyArray[moneyType] = objects.getInt32(item, obj_f_money_quantity);
+	}
+
+	// calcualte each NPC's share of coins
+	for (auto i=0; i < 4; i++){
+		for (auto &li:looterInfo){
+			if (li.shareDivider){
+				li.moneyGiven[i] = moneyArray[i] / li.shareDivider;
+			}
+		}
+	}
+
+	// randomize the item order
+	for (size_t i=0; i < items.size(); i++){
+		auto randIdx = rngSys.GetInt(0, items.size()-1);
+		auto randItem = items[randIdx];
+		auto orgItem = items[i];
+		items[i] = randItem;
+		items[randIdx] = orgItem;
+	}
+
+	auto result = false; // has any item been looted?
+
+
+	for (auto item: items){
+		auto itemIsTaken = false;
+		auto itemObj = objSystem->GetObject(item);
+		auto itemWorth = itemObj->GetInt32(obj_f_item_worth);
+		if (!itemWorth) // don't let NPCs take worthless items
+			continue;
+
+		if (itemObj->type == obj_t_money)
+			itemWorth = objects.GetMoneyAmount(item);
+		
+		for (auto &li: looterInfo){
+			li.itemWorthTotal += itemWorth;
+		}
+
+		for (auto &li: looterInfo){
+
+			if (itemIsTaken || !inventory.NpcWillLoot(item, li.shareType))
+				continue;
+
+			if (itemObj->type ==obj_t_money){
+				auto moneyType = itemObj->GetInt32(obj_f_money_type);
+				auto moneyQty = itemObj->GetInt32(obj_f_money_quantity);
+				auto moneyGiven = moneyQty;
+				if (li.moneyGiven[moneyType] <= moneyGiven)
+					moneyGiven = li.moneyGiven[moneyType];
+				li.moneyGiven[moneyType] -= moneyGiven;
+				if (moneyGiven > 0){
+					auto transferMoney = temple::GetRef<void(__cdecl)(int, objHndl, objHndl, int, objHndl)>(0x1006B970);
+					transferMoney(moneyType, container, li.handle, moneyGiven, item);
+					auto itemDescr = description.getDisplayName(item, opener);
+					floatSys.floatMesLine(li.handle, 1, FloatLineColor::LightBlue, itemDescr);
+					logger->info("{} looted {}", description.getDisplayName(li.handle, opener), itemDescr);
+					if (moneyGiven == moneyQty){
+						itemIsTaken = true;
+					}
+					result = true;
+				}
+			}
+			else{
+				auto loc = objSystem->GetObject(container)->GetLocation();
+				auto splitItem = inventory.SplitObjFromStack(item, loc);
+				auto itemWasSplit = splitItem != item; // checks if the item was actually split
+
+				auto itemTransferSuccess = false;
+				if (inventory.ItemTransferTo(splitItem, li.handle )){
+					// guard against encumbering NPC as a result of the item transfer
+					if (!d20Sys.d20Query(li.handle, DK_QUE_Critter_Is_Encumbered_Heavy)
+						&& !d20Sys.d20Query(li.handle, DK_QUE_Critter_Is_Encumbered_Overburdened)){
+
+						if (objects.GetFlags(splitItem) & OF_DESTROYED){ // I think this happens after the ItemTransferTo?
+							splitItem = inventory.FindMatchingStackableItem(li.handle, splitItem);
+						}
+
+						auto itemDescr = description.getDisplayName(splitItem, opener);
+						floatSys.floatMesLine(li.handle, 1, FloatLineColor::LightBlue, itemDescr);
+						logger->info("{} looted {}", description.getDisplayName(li.handle, opener), itemDescr);
+						itemIsTaken = true;
+						result = true;
+						li.lastItemWorth = itemWorth;
+						itemTransferSuccess = true;
+					}
+					else{ // try to restore the item I think?
+						if (objects.GetFlags(splitItem) & OF_DESTROYED) {
+
+							splitItem = inventory.FindMatchingStackableItem(li.handle, splitItem);
+							splitItem = inventory.SplitObjFromStack(splitItem, loc);
+							if (!itemWasSplit)
+								item = splitItem;
+						}
+					}
+				}
+
+				if (!itemTransferSuccess){
+					inventory.ItemTransferTo(splitItem, container);
+				}
+
+			}
+
+			if (li.itemWorthTotal >= li.lastItemWorth * li.shareDivider){
+				li.lastItemWorth = 0;
+				li.itemWorthTotal = 0;
+			}
+		}
+
+	}
+
+
+	// update the looting status field
+	for (auto &it : looterInfo){
+
+		auto lastItemWorth = it.lastItemWorth / 100 >> 8;
+		auto totalItemWorth = it.itemWorthTotal / 100 >> 8;
+
+		int newVal = 0x10 * ( (totalItemWorth)<<12 | lastItemWorth & 0xFFF ) | it.shareType;
+		objects.setInt32(it.handle, obj_f_npc_pad_i_3, newVal);
+	}
+
+	return result;
 }
 
 const std::string & InventorySystem::GetAttachBone(objHndl handle)
@@ -932,7 +2038,7 @@ const std::string & InventorySystem::GetAttachBone(objHndl handle)
 		"" // misc (thieves' tools, belt etc)
 	};
 
-	if (slot < 200) {
+	if (slot < INVENTORY_WORN_IDX_START) {
 		return sNoBone; // Apparently not equipped
 	}
 
@@ -946,7 +2052,7 @@ const std::string & InventorySystem::GetAttachBone(objHndl handle)
 		return sBoneLeftForearm;
 	}
 
-	return sBoneNames[slot - 200];
+	return sBoneNames[slot - INVENTORY_WORN_IDX_START];
 }
 
 int InventorySystem::GetSoundIdForItemEvent(objHndl item, objHndl wielder, objHndl tgt, int eventType)
@@ -956,4 +2062,73 @@ int InventorySystem::GetSoundIdForItemEvent(objHndl item, objHndl wielder, objHn
 
 int InventorySystem::InvIdxForSlot(EquipSlot slot){
 	return slot + INVENTORY_WORN_IDX_START;
+}
+
+int InventorySystem::InvIdxForSlot(int slot){
+	return InvIdxForSlot(static_cast<EquipSlot>(slot));
+}
+
+int InventorySystem::FindEmptyInvIdx(objHndl item, objHndl parent, int idxMin, int idxMax){
+
+	for (auto i=idxMin; i < idxMax; i++){
+		if (GetItemAtInvIdx(parent, i) == objHndl::null)
+			return i;
+	}
+
+	return INVENTORY_IDX_UNDEFINED;
+}
+
+objHndl InventorySystem::BagFindLast(objHndl parent){
+
+	for (auto i = INVENTORY_BAG_IDX_END; i >= INVENTORY_BAG_IDX_START; i--){
+		auto res = GetItemAtInvIdx(parent, i);
+		if (res)
+			return res;
+	}
+
+	return objHndl::null;
+}
+
+int InventorySystem::BagFindInvenIdx(objHndl parent, objHndl receiverBag){
+	for (auto i=INVENTORY_BAG_IDX_START; i <= INVENTORY_BAG_IDX_END; i++){
+		if (GetItemAtInvIdx(parent, i) == receiverBag)
+			return i;
+	}
+	return INVENTORY_IDX_UNDEFINED;
+}
+
+int InventorySystem::BagGetContentStartIdx(objHndl parent, objHndl receiverBag){
+
+	auto bagIdx = BagFindInvenIdx(parent, receiverBag);
+	return 24 * (bagIdx - INVENTORY_BAG_IDX_START);
+}
+
+int InventorySystem::BagGetContentMaxIdx(objHndl parent, objHndl receiverBag){
+
+	auto bagContentStartIdx = BagGetContentStartIdx(parent, receiverBag);
+
+
+	auto bagSize = objSystem->GetObject(receiverBag)->GetInt32(obj_f_bag_size);
+
+	auto bagRows = 0;
+	switch (bagSize){
+	case 1:
+		bagRows = 4;
+		break;
+	case 2:
+		bagRows = 2;
+		break;
+	default:
+		bagRows = 0;
+		break;
+	}
+	
+	if (bagSize == 1){
+		return bagContentStartIdx + 6 * bagRows;
+	}
+	else if (bagSize == 2){
+		return bagContentStartIdx + 4 * bagRows;
+	}
+	
+	return bagContentStartIdx;
 }

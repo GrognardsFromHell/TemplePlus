@@ -1,0 +1,13 @@
+Casting Time: Free Action
+Range: Medium
+Saving Throw: None
+Spell Resistance: No
+Projectile: No
+flags_Target: Range
+exc_flags_Target: Self
+inc_flags_Target: Other
+exc_flags_Target: Dead
+exc_flags_Target: Undead
+exc_flags_Target: Non-critter
+mode_Target: Single
+radius_Target: 30

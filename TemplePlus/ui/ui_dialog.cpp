@@ -52,17 +52,15 @@ void UiDialog::ShowTextBubble(objHndl speaker, objHndl speakingTo, const string 
 
 BOOL UiDialog::WidgetsInit(int w, int h)
 {
-	static WidgetType1 dlgWnd(9, h - 374, 611, 292);
-	dlgWnd.widgetFlags = 1;
+	static LgcyWindow dlgWnd(9, h - 374, 611, 292);
+	dlgWnd.flags = 1;
 	dlgWnd.render = [](int widId) { uiDialog.WndRender(widId); };
 	dlgWnd.handleMessage = [](int widId, TigMsg* msg) { return uiDialog.WndMsg(widId, msg); };
-	if (dlgWnd.Add(&wndId))
-		return 0;
+	wndId = uiManager->AddWindow(dlgWnd);
 
 	// scrollbar
 	scrollbar.Init(592, 28, 126, wndId);
-	scrollbar.Add(&scrollbarId);
-	ui.BindToParent(wndId, scrollbarId);
+	scrollbarId = uiManager->AddScrollBar(scrollbar, wndId);
 
 
 	int coloff = 0, rowoff = 0;
@@ -70,7 +68,7 @@ BOOL UiDialog::WidgetsInit(int w, int h)
 	//for (auto it : d20ClassSys.vanillaClassEnums) {
 	//	// class buttons
 	//	int newId = 0;
-	//	WidgetType2 classBtn("Class btn", wndId, 71 + coloff, 47 + rowoff, 130, 20);
+	//	LgcyButton classBtn("Class btn", wndId, 71 + coloff, 47 + rowoff, 130, 20);
 	//	coloff = 139 - coloff;
 	//	if (!coloff)
 	//		rowoff += 29;
@@ -83,8 +81,8 @@ BOOL UiDialog::WidgetsInit(int w, int h)
 	//	classBtn.handleMessage = [](int id, TigMsg* msg) { return uiCharEditor.ClassBtnMsg(id, msg); };
 	//	classBtn.Add(&newId);
 	//	classBtnIds.push_back(newId);
-	//	ui.SetDefaultSounds(newId);
-	//	ui.BindToParent(wndId, newId);
+	//	uiManager->SetDefaultSounds(newId);
+	//	uiManager->BindToParent(wndId, newId);
 
 	//	//rects
 	//	classBtnFrameRects.push_back(TigRect(classBtn.x - 5, classBtn.y - 5, classBtn.width + 10, classBtn.height + 10));
@@ -106,7 +104,7 @@ BOOL UiDialog::WidgetsInit(int w, int h)
 	//classNextBtnTextRect.x -= dlgWnd.x; classNextBtnTextRect.y -= dlgWnd.y;
 	//classPrevBtnTextRect.x -= dlgWnd.x; classPrevBtnTextRect.y -= dlgWnd.y;
 
-	//WidgetType2 nextBtn("Class Next Button", wndId, dlgWnd.x + 293, dlgWnd.y + 230, 55, 20),
+	//LgcyButton nextBtn("Class Next Button", wndId, dlgWnd.x + 293, dlgWnd.y + 230, 55, 20),
 	//	prevBtn("Class Prev. Button", wndId, dlgWnd.x + 58, dlgWnd.y + 230, 55, 20);
 
 	//nextBtn.handleMessage = [](int widId, TigMsg*msg)->BOOL {
@@ -120,8 +118,8 @@ BOOL UiDialog::WidgetsInit(int w, int h)
 	//prevBtn.handleMessage = [](int widId, TigMsg*msg)->BOOL {	return uiCharEditor.ClassPrevBtnMsg(widId, msg); };
 	//nextBtn.Add(&classNextBtn);	prevBtn.Add(&classPrevBtn);
 
-	//ui.SetDefaultSounds(classNextBtn);	ui.BindToParent(wndId, classNextBtn);
-	//ui.SetDefaultSounds(classPrevBtn);	ui.BindToParent(wndId, classPrevBtn);
+	//uiManager->SetDefaultSounds(classNextBtn);	uiManager->BindToParent(wndId, classNextBtn);
+	//uiManager->SetDefaultSounds(classPrevBtn);	uiManager->BindToParent(wndId, classPrevBtn);
 
 	return TRUE;
 	return 0;

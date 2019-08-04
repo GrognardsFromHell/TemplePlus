@@ -24,6 +24,7 @@
 #include "movies.h"
 #include "textbubbles.h"
 #include "party.h"
+#include "raycast.h"
 #include "sound.h"
 #include "ui/ui.h"
 #include "ui/ui_dialog.h"
@@ -40,6 +41,17 @@
 #include <history.h>
 #include <config/config.h>
 #include <gamesystems/deity/legacydeitysystem.h>
+#include <damage.h>
+#include <weapon.h>
+#include "ui/ui_systems.h"
+#include "ui/ui_legacysystems.h"
+#include "ui/ui_worldmap.h"
+#include "ui/ui_char.h"
+#include "infrastructure/elfhash.h"
+
+#include <pybind11/embed.h>
+namespace py = pybind11;
+
 
 static PyObject *encounterQueue = nullptr;
 
@@ -70,12 +82,6 @@ static struct PyGameAddresses : temple::AddressTable {
 	// Returns the first conscious party member (which is then the leader) or 0
 	objHndl (__cdecl *PartyGetLeader)();
 
-	// Casts a ray into the game world at the given x,y screen coordinates and returns the object it found
-	// what objects are collided with is controlled by the flags value
-	// Returns true if an object is found
-	// Flags is mostly 6 but for spells with different target types it differs
-	bool (__cdecl *GameRaycast)(int screenX, int screenY, objHndl* pObjHndlOut, int flags);
-
 	// Shakes the screen
 	void(__cdecl *ShakeScreen)(float amount, float duration);
 
@@ -94,8 +100,6 @@ static struct PyGameAddresses : temple::AddressTable {
 
 		rebase(PartyGetCount, 0x1002B2B0);
 		rebase(PartyGetLeader, 0x1002BE60);
-
-		rebase(GameRaycast, 0x10022360);
 
 		rebase(ShakeScreen, 0x10005840);
 	}
@@ -143,7 +147,7 @@ static PyObject* PyGame_GetHovered(PyObject*, void*) {
 	auto pos = mouseFuncs.GetPos();
 	objHndl handle;
 
-	if (pyGameAddresses.GameRaycast(pos.x, pos.y, &handle, 6)) {
+	if (PickObjectOnScreen(pos.x, pos.y, &handle, GRF_HITTEST_3D)) {
 		return PyObjHndl_Create(handle);
 	} else {
 		return PyObjHndl_CreateNull();
@@ -306,18 +310,18 @@ PyObject* PyGame_Fade(PyObject*, PyObject* args) {
 
 	// Trigger the fade out immediately
 	FadeArgs fadeArgs;
-	fadeArgs.field0 = 0;
+	fadeArgs.flags = 0;
 	fadeArgs.field10 = 0;
 	fadeArgs.color = XMCOLOR(0, 0, 0, 1);
 	fadeArgs.transitionTime = 2.0f;
-	fadeArgs.field8 = 48;
+	fadeArgs.countSthgUsually48 = 48;
 	fade.PerformFade(fadeArgs);
 
 	textBubbles.HideAll();
 
 	if (timeToAdvance > 0) {
 		auto time = GameTime::FromSeconds(timeToAdvance);
-		gameSystems->GetTimeEvent().AdvanceTime(time);
+		gameSystems->GetTimeEvent().GameTimeAdd(time);
 	}
 
 	if (movieId) {
@@ -343,7 +347,7 @@ PyObject* PyGame_Fade(PyObject*, PyObject* args) {
 		evt.params[3].int32 = 48;
 		gameSystems->GetTimeEvent().Schedule(evt, fadeOutTime);
 	} else {
-		fadeArgs.field0 = 1;
+		fadeArgs.flags = 1;
 		fade.PerformFade(fadeArgs);
 	}
 
@@ -487,6 +491,97 @@ PyObject* PyGame_GetBabForClass(PyObject*, PyObject* args){
 	return PyInt_FromLong(d20ClassSys.GetBaseAttackBonus(classCode, classLvl));
 }
 
+PyObject* PyGame_GetWpnTypeForFeat(PyObject*, PyObject* args) {
+	feat_enums featCode;
+	if (!PyArg_ParseTuple(args, "i:game.get_weapon_type_for_feat", &featCode)) {
+		return nullptr;
+	}
+
+	return PyInt_FromLong(feats.GetWeaponType(featCode));
+}
+
+PyObject* PyGame_GetFeatName(PyObject*, PyObject* args) {
+	feat_enums featCode;
+	if (!PyArg_ParseTuple(args, "i:game.get_feat_name", &featCode)) {
+		return nullptr;
+	}
+
+	return PyString_FromString(feats.GetFeatName(featCode));
+}
+
+PyObject* PyGame_IsRangedWeapon(PyObject*, PyObject* args) {
+	WeaponTypes wt;
+
+	if (PyTuple_GET_SIZE(args) < 1) {
+		return nullptr;
+	}
+
+	PyObject* arg1 = PyTuple_GET_ITEM(args, 0);
+	wt = static_cast<WeaponTypes>(PyLong_AsLong(arg1));
+
+	return PyInt_FromLong(weapons.IsRangedWeapon(wt));
+}
+
+PyObject* PyGame_IsMeleeWeapon(PyObject*, PyObject* args) {
+	WeaponTypes wt;
+
+	if (PyTuple_GET_SIZE(args) < 1) {
+		return nullptr;
+	}
+
+	PyObject* arg1 = PyTuple_GET_ITEM(args, 0);
+	wt = static_cast<WeaponTypes>(PyLong_AsLong(arg1));
+
+	return PyInt_FromLong(weapons.IsMeleeWeapon(wt));
+}
+
+PyObject* PyGame_GetFeatForWpnType(PyObject*, PyObject* args) {
+	WeaponTypes wt;
+	feat_enums baseFeat = FEAT_NONE;
+
+	auto numArgs = PyTuple_GET_SIZE(args);
+	if (numArgs < 1u) {
+		return nullptr;
+	}
+
+	PyObject* arg1 = PyTuple_GET_ITEM(args, 0);
+	wt = static_cast<WeaponTypes>(PyLong_AsLong(arg1));
+
+	if (numArgs >= 2u){
+		PyObject* arg2 = PyTuple_GET_ITEM(args, 1);
+		if (PyString_Check(arg2)) {
+			auto argString = fmt::format("{}", PyString_AsString(arg2));
+			baseFeat = static_cast<feat_enums>(ElfHash::Hash(argString));
+		}
+		else {
+			baseFeat = static_cast<feat_enums>(PyLong_AsLong(arg2));
+		}
+	}
+	
+
+	return PyInt_FromLong(feats.GetFeatForWeaponType(wt, baseFeat));
+}
+
+
+
+PyObject* PyGame_DamageTypeMatch(PyObject*, PyObject* args) {
+	DamageType dt1, dt2;
+	if (!PyArg_ParseTuple(args, "ii:game.damage_type_match", &dt1, &dt2)) {
+		return nullptr;
+	}
+	return PyInt_FromLong(damage.DamageTypeMatch(dt1, dt2) + damage.DamageTypeMatch(dt2, dt1));
+}
+
+PyObject* PyGame_GetWpnDamType(PyObject*, PyObject* args) {
+	WeaponTypes wt;
+	if (!PyArg_ParseTuple(args, "i:game.get_weapon_damage_type", &wt)) {
+		return nullptr;
+	}
+	auto damType = weapons.wpnProps[wt].damType;
+	return PyInt_FromLong((int)damType);
+}
+
+
 
 PyObject* PyGame_IsSaveFavoerdForClass(PyObject*, PyObject* args) {
 	Stat classCode;
@@ -525,7 +620,7 @@ PyObject* PyGame_ObjListRange(PyObject*, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "Lii:game.obj_list_range", &loc.location, &radius, &flags)) {
 		return 0;
 	}
-
+	loc.off_x = 0; loc.off_y = 0;
 	float radiusArg = radius * 12.0f; // Apparently a shoddy conversion to coordinate space
 
 	ObjList objList;
@@ -798,12 +893,12 @@ PyObject* PyGame_LoadGame(PyObject*, PyObject* args) {
 }
 
 PyObject* PyGame_UpdateCombatUi(PyObject*, PyObject* args) {
-	ui.UpdateCombatUi();
+	uiSystems->GetCombat().Update();
 	Py_RETURN_NONE;
 }
 
 PyObject* PyGame_UpdatePartyUi(PyObject*, PyObject* args) {
-	ui.UpdatePartyUi();
+	uiSystems->GetParty().Update();
 	Py_RETURN_NONE;
 }
 
@@ -850,20 +945,20 @@ PyObject* PyGame_GetDeityFavoredWeapon(PyObject*, PyObject* args) {
 
 
 PyObject* PyGame_UiShowWorldmap(PyObject*, PyObject* args) {
-	int unk;
-	if (!PyArg_ParseTuple(args, "i:game.ui_show_worldmap", &unk)) {
+	int mode;
+	if (!PyArg_ParseTuple(args, "i:game.ui_show_worldmap", &mode)) {
 		return 0;
 	}
-	ui.ShowWorldMap(unk);
+	ui_worldmap().Show(mode);
 	Py_RETURN_NONE;
 }
 
 PyObject* PyGame_WorldmapTravelByDialog(PyObject*, PyObject* args) {
-	int destination;
-	if (!PyArg_ParseTuple(args, "i:game.ui_worldmap_travel_by_dialog", &destination)) {
+	int area;
+	if (!PyArg_ParseTuple(args, "i:game.ui_worldmap_travel_by_dialog(area)", &area)) {
 		return 0;
 	}
-	ui.WorldMapTravelByDialog(destination);
+	ui_worldmap().TravelToArea(area);
 	Py_RETURN_NONE;
 }
 
@@ -923,6 +1018,18 @@ PyObject* PyGame_GametimeAdd(PyObject*, PyObject* args) {
 
 PyObject* PyGame_IsOutdoor(PyObject*, PyObject* args) {
 	return PyInt_FromLong(maps.IsCurrentMapOutdoor());
+}
+
+
+PyObject* PyGame_IsSpellHarmful(PyObject*, PyObject* args) {
+
+	int spellEnum = 0;
+	objHndl caster, tgt;
+	if (!PyArg_ParseTuple(args, "iO&O&:game.is_spell_harmful", &spellEnum, &ConvertObjHndl, &caster, &ConvertObjHndl, &tgt)) {
+		return 0;
+	}
+	auto result = spellSys.IsSpellHarmful(spellEnum, caster, tgt);
+	return PyInt_FromLong(result);
 }
 
 PyObject* PyGame_Shake(PyObject*, PyObject* args) {
@@ -1013,8 +1120,8 @@ PyObject* PyGame_Picker(PyObject*, PyObject* args) {
 	PickerArgs picker;
 	picker.flagsTarget = LosNotRequired;
 	picker.modeTarget = UiPickerType::Single;
-	picker.incFlags = UiPickerIncFlags::Other;
-	picker.excFlags = UiPickerIncFlags::None;
+	picker.incFlags = UiPickerIncFlags::UIPI_Other;
+	picker.excFlags = UiPickerIncFlags::UIPI_None;
 	picker.spellEnum = spellId;
 	picker.callback = PyGame_PickerCallback;
 	picker.caster = caster;
@@ -1070,12 +1177,12 @@ static void __cdecl PyGame_PickerCallback(const PickerResult &result, void*) {
 }
 
 PyObject* PyGame_PartyPool(PyObject*, PyObject* args) {
-	ui.ShowPartyPool(true);
+	uiSystems->GetPartyPool().Show(true);
 	Py_RETURN_NONE;
 }
 
 PyObject* PyGame_CharUiHide(PyObject*, PyObject* args) {
-	ui.ShowCharUi(0);
+	uiSystems->GetChar().Hide();
 	Py_RETURN_NONE;
 }
 
@@ -1127,13 +1234,35 @@ PyObject* PyGame_CreateHistoryFreeform(PyObject*, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+PyObject* PyGame_CreateHistoryFromId(PyObject*, PyObject* args) {
+
+	int histId;
+	if (!PyArg_ParseTuple(args, "i:game.create_history_from_id", &histId)) {
+		Py_RETURN_NONE;
+	}
+	histSys.CreateRollHistoryString(histId);
+	Py_RETURN_NONE;
+}
+
+PyObject* PyGame_CreateHistoryFromPattern(PyObject*, PyObject* args) {
+
+	int patternId;
+	objHndl handle, handle2;
+	if (!PyArg_ParseTuple(args, "iO&O&:game.create_history_from_pattern", &patternId, &ConvertObjHndl, &handle, &ConvertObjHndl, &handle2)) {
+		Py_RETURN_NONE;
+	}
+	histSys.CreateRollHistoryLineFromMesfile(patternId, handle, handle2);
+	Py_RETURN_NONE;
+}
+
+
 PyObject* PyGame_WrittenUiShow(PyObject*, PyObject* args) {
 	objHndl handle;
 	if (!PyArg_ParseTuple(args, "O&:game.written_ui_show", &ConvertObjHndl, &handle)) {
 		return 0;
 	}
 
-	auto result = ui.ShowWrittenUi(handle);
+	auto result = uiSystems->GetWritten().Show(handle) ? 1 : 0;
 	return PyInt_FromLong(result);
 }
 
@@ -1141,8 +1270,19 @@ PyObject* PyGame_IsDaytime(PyObject*, PyObject* args) {
 	return PyInt_FromLong(gameSystems->GetTimeEvent().IsDaytime());
 }
 
+static PyObject *PySpell_SpellGetPickerEndPoint(PyObject*, PyObject *args) {
+
+	auto wallEndPt = uiPicker.GetWallEndPoint();
+	py::object blyat = py::cast(wallEndPt);
+	blyat.inc_ref();
+	return blyat.ptr();
+}
+
 static PyMethodDef PyGameMethods[]{
+	{ "get_wall_endpt", PySpell_SpellGetPickerEndPoint, METH_VARARGS, NULL },
 	{ "create_history_freeform", PyGame_CreateHistoryFreeform, METH_VARARGS, NULL },
+	{ "create_history_from_id", PyGame_CreateHistoryFromId, METH_VARARGS, NULL },
+	{ "create_history_from_pattern", PyGame_CreateHistoryFromPattern, METH_VARARGS, NULL },
 	{"fade_and_teleport", PyGame_FadeAndTeleport, METH_VARARGS, NULL},
 	{"fade", PyGame_Fade, METH_VARARGS, NULL},
 	{ "fnn", PyGame_FindNpcNear, METH_VARARGS, NULL },
@@ -1180,6 +1320,7 @@ static PyMethodDef PyGameMethods[]{
 	{"pfx_lightning_bolt", PyGame_PfxLightningBolt, METH_VARARGS, NULL},
 	{"gametime_add", PyGame_GametimeAdd, METH_VARARGS, NULL},
 	{"is_outdoor", PyGame_IsOutdoor, METH_VARARGS, NULL},
+	{"is_spell_harmful", PyGame_IsSpellHarmful, METH_VARARGS, NULL },
 	{ "scroll_to", PyGame_ScrollTo, METH_VARARGS, NULL },
 	{"shake", PyGame_Shake, METH_VARARGS, NULL},
 	{"moviequeue_add", PyGame_MoviequeueAdd, METH_VARARGS, NULL},
@@ -1196,11 +1337,19 @@ static PyMethodDef PyGameMethods[]{
 	{"combat_is_active", PyGame_CombatIsActive, METH_VARARGS, NULL},
 	{"written_ui_show", PyGame_WrittenUiShow, METH_VARARGS, NULL},
 	{"is_daytime", PyGame_IsDaytime, METH_VARARGS, NULL},
+
+	{"damage_type_match", PyGame_DamageTypeMatch, METH_VARARGS, NULL },
 	{"vlist", PyGame_Vlist, METH_VARARGS, NULL },
 	{"getproto", PyGame_GetProto, METH_VARARGS, NULL },
 	{"get_bab_for_class", PyGame_GetBabForClass,METH_VARARGS, NULL },
+	{ "get_weapon_type_for_feat", PyGame_GetWpnTypeForFeat,METH_VARARGS, NULL },
+	{ "get_feat_for_weapon_type", PyGame_GetFeatForWpnType,METH_VARARGS, NULL },
+	{ "get_weapon_damage_type", PyGame_GetWpnDamType,METH_VARARGS, NULL },
 	{"is_save_favored_for_class", PyGame_IsSaveFavoerdForClass,METH_VARARGS, NULL },
 	{ "is_lax_rules", PyGame_IsLaxRules,METH_VARARGS, NULL },
+	{"get_feat_name", PyGame_GetFeatName,METH_VARARGS, NULL},
+	{"is_ranged_weapon", PyGame_IsRangedWeapon,METH_VARARGS, NULL},
+	{"is_melee_weapon", PyGame_IsMeleeWeapon,METH_VARARGS, NULL},
 	// This is some unfinished UI for which the graphics are missing
 	// {"charmap", PyGame_Charmap, METH_VARARGS, NULL},
 	{NULL, NULL, NULL, NULL}

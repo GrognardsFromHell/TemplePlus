@@ -199,8 +199,7 @@ int BonusList::AddCap(int capType, int capValue, uint32_t bonMesLineNum){
 	
 	MesLine mesLine;
 	if (bonCapperCount >= 10) {
-		auto breakPointDummy = 1;
-		if (bonCapperCount >= BonusListMax) return 0;// bug? there's only 10 slots (this is the original code!)
+		if (bonCapperCount >= 10) return 0;
 	}
 
 	mesLine.key = bonMesLineNum;
@@ -224,6 +223,24 @@ int BonusList::AddCapWithDescr(int capType, int capValue, uint32_t bonMesLineNum
 	}
 	return 0;
 }
+
+int BonusList::AddCapWithCustomDescr(int capType, int capValue, uint32_t bonMesLineNum, std::string & textArg)
+{
+	auto textId = ElfHash::Hash(textArg);
+	auto textCache = bonusSys.customBonusStrings.find(textId);
+	if (textCache == bonusSys.customBonusStrings.end()) {
+		bonusSys.customBonusStrings[textId] = textArg;
+	}
+	if (AddCap(capType, capValue, bonMesLineNum) == 1) {
+		bonCaps[bonCapperCount - 1].bonCapDescr = bonusSys.customBonusStrings[textId].c_str();
+		return 1;
+	}
+	return 0;
+}
+
+
+
+
 
 BOOL BonusList::SetOverallCap(int newBonFlags, int newCap, int newCapType, int newCapMesLineNum, char *capDescr) {
 	if (!newBonFlags)
@@ -320,4 +337,14 @@ const char* BonusList::GetBonusMesLine(int lineNum) {
 		mesFuncs.GetLine_Safe(*bonusSys.bonusMesHandle, &mesLine);
 
 	return mesLine.value;
+}
+
+void GroupArray::Clear() {
+	this->GroupSize = 0;
+	memset(this->GroupMembers, 0, sizeof(this->GroupMembers));
+}
+
+void GroupArray::Reset(){
+	Clear();
+	this->sortFunc = nullptr;
 }

@@ -5,6 +5,17 @@
 
 WeaponSystem weapons;
 
+std::string WeaponSystem::GetName(WeaponTypes wpnType)
+{
+	//Use the weapon focus feat to the the name of the feat
+	auto weaponFocusFeat = static_cast<feat_enums>(static_cast<int>(FEAT_WEAPON_FOCUS_GAUNTLET) + wpnType);
+	std::string weaponFocusFeatName = feats.GetFeatName(weaponFocusFeat);
+	int nIdx1 = weaponFocusFeatName.find("(");
+	int nIdx2 = weaponFocusFeatName.find(")");
+	std::string strWeaponName = weaponFocusFeatName.substr(nIdx1 + 1, nIdx2 - nIdx1 - 1);
+	return strWeaponName;
+}
+
 uint32_t WeaponSystem::IsSimple(WeaponTypes wpnType)
 {
 	if (wpnType == wt_longspear || (wpnType <= wt_javelin && wpnType >= wt_gauntlet))
@@ -36,65 +47,42 @@ uint32_t WeaponSystem::IsExotic(WeaponTypes wpnType)
 
 uint32_t WeaponSystem::IsDruidWeapon(WeaponTypes wpnType)
 {
-	switch (wpnType)
-	{
-	case wt_dagger:
-		return 1;
-	case wt_sickle:
-		return 1;
-	case wt_club:
-		return 1;
-	case wt_shortspear:
-		return 1;
-	case wt_quarterstaff:
-		return 1;
-	case wt_spear:
-		return 1;
-	case wt_dart:
-		return 1;
-	case wt_sling:
-		return 1;
-	case wt_scimitar:
-		return 1;
-	case wt_longspear:
-		return 1;
-	default:
-		return 0;
+	switch (wpnType){
+		case wt_dagger:
+		case wt_sickle:
+		case wt_club:
+		case wt_shortspear:
+		case wt_quarterstaff:
+		case wt_spear:
+		case wt_dart:
+		case wt_sling:
+		case wt_scimitar:
+		case wt_longspear:
+			return 1;
+		default:
+			return 0;
 	}
 	return 0;
 }
 
 
-uint32_t WeaponSystem::IsMonkWeapon(WeaponTypes wpnType)
-{
-	switch (wpnType)
-	{
-	case wt_dagger:
-		return 1;
-	case wt_club:
-		return 1;
-	case wt_quarterstaff:
-		return 1;
-	case wt_light_crossbow:
-		return 1;
-	case wt_sling:
-		return 1;
-	case wt_heavy_crossbow:
-		return 1;
-	case wt_javelin:
-		return 1;
-	case wt_handaxe:
-		return 1;
-	case wt_kama:
-		return 1;
-	case wt_nunchaku:
-		return 1;
-	case wt_siangham:
-		return 1;
-	case wt_shuriken:
-		return 1;
-	default:
-		return 0;
+uint32_t WeaponSystem::IsMonkWeapon(WeaponTypes wpnType){
+	switch (wpnType){
+		case wt_dagger:
+		case wt_club:
+		case wt_quarterstaff:
+		case wt_light_crossbow:
+		case wt_sling:
+		case wt_heavy_crossbow:
+		case wt_javelin:
+		case wt_handaxe:
+		case wt_kama:
+		case wt_nunchaku:
+		case wt_siangham:
+		case wt_shuriken:
+			return 1;
+		default:
+			return 0;
 	}
 	return 0;
 }
@@ -104,18 +92,12 @@ uint32_t WeaponSystem::IsRogueWeapon(uint32_t wielderSize, WeaponTypes wpnType)
 {
 	// TODO: looks like Troika intended to differentiate by the Wielder's Size? Was not implemented
 	if (weapons.IsSimple(wpnType)){ return 1; }
-	switch (wpnType)
-	{
+	switch (wpnType){
 	case wt_hand_crossbow:
-		return 1;
 	case wt_rapier:
-		return 1;
 	case wt_short_sword:
-		return 1;
 	case wt_sap:
-		return 1;
 	case wt_shortbow:
-		return 1;
 	case wt_composite_shortbow:
 		return 1;
 	default:
@@ -127,20 +109,15 @@ uint32_t WeaponSystem::IsRogueWeapon(uint32_t wielderSize, WeaponTypes wpnType)
 
 uint32_t WeaponSystem::IsWizardWeapon(WeaponTypes wpnType)
 {
-	switch (wpnType)
-	{
-	case wt_dagger:
-		return 1;
-	case wt_club:
-		return 1;
-	case wt_quarterstaff:
-		return 1;
-	case wt_light_crossbow:
-		return 1;
-	case wt_heavy_crossbow:
-		return 1;
-	default:
-		return 0;
+	switch (wpnType){
+		case wt_dagger:
+		case wt_club:
+		case wt_quarterstaff:
+		case wt_light_crossbow:
+		case wt_heavy_crossbow:
+			return 1;
+		default:
+			return 0;
 	}
 	return 0;
 }
@@ -150,15 +127,10 @@ uint32_t WeaponSystem::IsElvenWeapon(WeaponTypes wpnType)
 	switch (wpnType)
 	{
 	case wt_longsword:
-		return 1;
 	case wt_rapier:
-		return 1;
 	case wt_shortbow:
-		return 1;
 	case wt_composite_shortbow:
-		return 1;
 	case wt_longbow:
-		return 1;
 	case wt_composite_longbow:
 		return 1;
 	default:
@@ -176,17 +148,11 @@ uint32_t WeaponSystem::IsBardWeapon(WeaponTypes wpnType)
 	switch (wpnType)
 	{
 	case wt_sap:
-		return 1;
 	case wt_short_sword:
-		return 1;
 	case wt_longsword:
-		return 1;
 	case wt_rapier:
-		return 1;
 	case wt_shortbow:
-		return 1;
 	case wt_composite_shortbow:
-		return 1;
 	case wt_whip:
 		return 1;
 	default:
@@ -195,10 +161,9 @@ uint32_t WeaponSystem::IsBardWeapon(WeaponTypes wpnType)
 	return 0;
 }
 
-bool WeaponSystem::IsSlashingOrBludgeoning(objHndl weapon)
-{
+bool WeaponSystem::IsSlashingOrBludgeoning(objHndl weapon){
 	if (!weapon)
-		return 0;
+		return false;
 	auto weaponType = objects.GetWeaponType(weapon);
 	return IsSlashingOrBludgeoning(weaponType);
 }
@@ -245,10 +210,43 @@ bool WeaponSystem::IsSlashingOrBludgeoning(WeaponTypes wpnType)
 	case wt_gnome_hooked_hammer:
 	case wt_two_bladed_sword:
 	case wt_dwarven_urgrosh:
-		return 1;
+		return true;
 	default:
-		return 0;
+		return false;
 	}
+	
+	/*if (IsSlashingWeapon(wpnType) || IsBludgeoningWeapon(wpnType))
+		return true;*/
+	return false;
+}
+
+bool WeaponSystem::IsSlashingWeapon(WeaponTypes wpnType){
+	auto p = wpnProps.find(wpnType);
+	if (p == wpnProps.end()) return false;
+	return p->second.damType == DamageType::Slashing
+		|| p->second.damType == DamageType::SlashingAndBludgeoning
+		|| p->second.damType == DamageType::PiercingAndSlashing
+		|| p->second.damType == DamageType::SlashingAndBludgeoningAndPiercing;
+}
+
+bool WeaponSystem::IsPiercingWeapon(WeaponTypes wpnType)
+{
+	auto p = wpnProps.find(wpnType);
+	if (p == wpnProps.end()) return false;
+	return p->second.damType == DamageType::Piercing
+		|| p->second.damType == DamageType::PiercingAndSlashing
+		|| p->second.damType == DamageType::BludgeoningAndPiercing
+		|| p->second.damType == DamageType::SlashingAndBludgeoningAndPiercing;
+}
+
+bool WeaponSystem::IsBludgeoningWeapon(WeaponTypes wpnType)
+{
+	auto p = wpnProps.find(wpnType);
+	if (p == wpnProps.end()) return false;
+	return p->second.damType == DamageType::Bludgeoning
+		|| p->second.damType == DamageType::SlashingAndBludgeoning
+		|| p->second.damType == DamageType::BludgeoningAndPiercing
+		|| p->second.damType == DamageType::SlashingAndBludgeoningAndPiercing;
 }
 
 int WeaponSystem::GetBaseHardness(objHndl item)
@@ -342,4 +340,87 @@ bool WeaponSystem::AmmoMatchesWeapon(objHndl weapon, objHndl ammoItem)
 	if (!ammoItem)
 		return 0;
 	return ammoType == objects.getInt32(ammoItem, obj_f_ammo_type);
+}
+
+bool WeaponSystem::IsReachWeaponType(WeaponTypes weapType){
+	switch (weapType){
+	case wt_glaive:
+	case wt_guisarme:
+	case wt_longspear:
+	case wt_ranseur:
+	case wt_spike_chain:
+		return true;
+	default:
+		return false;
+	}
+}
+
+bool WeaponSystem::IsMeleeWeapon(WeaponTypes wpnType)
+{
+	switch (wpnType) {
+	case wt_light_crossbow:
+	case wt_dart:
+	case wt_sling:
+	case wt_heavy_crossbow:
+	case wt_javelin:
+	case wt_shortbow:
+	case wt_composite_shortbow:
+	case wt_longbow:
+	case wt_composite_longbow:
+	case wt_hand_crossbow:
+	case wt_shuriken:
+	case wt_repeating_crossbow:
+	case wt_net:
+	case wt_ray:
+	case wt_grenade:
+		return false;
+
+	default:
+		return true;
+	}
+}
+
+bool WeaponSystem::IsRangedWeapon(WeaponTypes wpnType)
+{
+	switch (wpnType) {
+		case wt_dagger:
+		case wt_shortspear:
+		case wt_spear:
+		case wt_light_crossbow:
+		case wt_dart:
+		case wt_sling:
+		case wt_heavy_crossbow:
+		case wt_javelin:
+		case wt_throwing_axe:
+		case wt_light_hammer:
+		case wt_trident:
+		case wt_shortbow:
+		case wt_composite_shortbow:
+		case wt_longbow:
+		case wt_composite_longbow:
+		case wt_hand_crossbow:
+		case wt_shuriken:
+		case wt_repeating_crossbow:
+		case wt_net:
+		case wt_ray:
+		case wt_grenade:
+			return true;
+
+		default:
+			return false;
+	}
+}
+
+WeaponSystem::WeaponSystem(){
+	wpnProps[wt_javelin].damType = DamageType::Piercing;
+	wpnProps[wt_dagger].damType = DamageType::PiercingAndSlashing;
+	wpnProps[wt_short_sword].damType = DamageType::Piercing;
+	wpnProps[wt_longsword].damType = DamageType::Slashing;
+	wpnProps[wt_dart].damType = DamageType::Piercing;
+	wpnProps[wt_dwarven_waraxe].damType = DamageType::Slashing;
+	wpnProps[wt_quarterstaff].damType = DamageType::Bludgeoning;
+	wpnProps[wt_light_crossbow].damType = DamageType::Piercing;
+	wpnProps[wt_morningstar].damType = DamageType::BludgeoningAndPiercing;
+	wpnProps[wt_shuriken].damType = DamageType::Piercing;
+	// todo: wakizashi, cutlass, or just generalize the fucking thing
 }

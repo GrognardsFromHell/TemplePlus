@@ -3,6 +3,8 @@
 
 #include <map>
 
+#include <temple/dll.h>
+
 #include "gamesystem.h"
 
 #ifdef GetObject
@@ -35,8 +37,8 @@ private:
 
 class TigInitializer;
 
-namespace temple {
-	class AasAnimatedModelFactory;
+namespace gfx {
+	class AnimatedModelFactory;
 }
 
 class VagrantSystem;
@@ -119,6 +121,7 @@ class HeightSystem;
 class GMeshSystem;
 class PathNodeSystem;
 class GameSystemLoadingScreen;
+class PoisonSystem;
 
 class GameSystems {
 public:
@@ -444,19 +447,25 @@ public:
 		Expects(!!mPathX);
 		return *mPathX;
 	}
-	
+	PoisonSystem& GetPoison() const {
+		Expects(!!mPoison);
+		return *mPoison;
+	}
+
 	// All systems that want to listen to map events
 	const std::vector<MapCloseAwareGameSystem*> &GetMapCloseAwareSystems() const {
 		return mMapCloseAwareSystems;
 	}
 
-	temple::AasAnimatedModelFactory& GetAAS() const {
+	gfx::AnimatedModelFactory& GetAAS() const {
 		Expects(!!mAAS);
 		return *mAAS;
 	}
 
 	// Makes a savegame.
 	bool SaveGame(const std::string &filename, const std::string &displayName);
+
+	bool SaveGameIronman();
 	
 	// Loads a game.
 	bool LoadGame(const std::string &filename);
@@ -483,7 +492,23 @@ public:
 		return mResetting;
 	}
 
+	/**
+	 * Creates the screenshots that will be used in case the game is saved.
+	 */
+	void TakeSaveScreenshots();
+
+	bool IsIronman() const {
+		return mIronmanFlag != FALSE;
+	}
+	void SetIronman(bool enable) {
+		mIronmanFlag = enable ? TRUE : FALSE;
+	}
+
 private:
+	BOOL &mIronmanFlag = temple::GetRef<BOOL>(0x103072B8);
+	int& mIronmanSaveNumber = temple::GetRef<int>(0x10306F44);
+	char *&mIronmanSaveName = temple::GetRef<char*>(0x103072C0);
+
 	void VerifyTemplePlusData();
 	std::string GetLanguage();
 	void PlayLegalMovies();
@@ -504,7 +529,7 @@ private:
 	GameSystemConf mConfig;
 	TigBufferstuffInitializer mTigBuffer;
 
-	std::unique_ptr<temple::AasAnimatedModelFactory> mAAS;
+	std::unique_ptr<gfx::AnimatedModelFactory> mAAS;
 	std::map<int, std::string> mMeshesById;
 
 	bool mResetting = false;
@@ -597,6 +622,7 @@ private:
 	std::unique_ptr<FormationSystem> mFormation;
 	std::unique_ptr<ItemHighlightSystem> mItemHighlight;
 	std::unique_ptr<PathXSystem> mPathX;
+	std::unique_ptr<PoisonSystem> mPoison;
 
 	std::unique_ptr<class LegacyGameSystemResources> mLegacyResources;
 

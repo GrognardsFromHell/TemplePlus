@@ -11,6 +11,7 @@
 #include <location.h>
 #include <gamesystems/legacy.h>
 #include <maps.h>
+#include "raycast.h"
 
 
 struct ObjEventListItem
@@ -97,12 +98,22 @@ int ObjEventSystem::ListRangeUpdate(ObjEventAoE& evt, int id, ObjEventListItem* 
 	}
 	
 	auto obj = gameSystems->GetObj().GetObject(evt.aoeObj);
-	if (gameSystems->GetObj().IsValidHandle(evt.aoeObj))
-	{
+	if (gameSystems->GetObj().IsValidHandle(evt.aoeObj)){
+
 		LocAndOffsets locFull = obj->GetLocationFull();
-		auto listRange = temple::GetRef<void(__cdecl)(LocAndOffsets, float, float, float, ObjectListFilter, ObjListResult*)>(0x10022E50);
-		listRange(locFull, evt.radiusInch, evt.angleMin, evt.angleSize, evt.filter, &evt.objListResult);
-		objEvtTable->put(id, evt);
+
+		if (evt.IsWall()){
+			
+			auto startPt = objSystem->GetObject(evt.aoeObj)->GetLocationFull();
+			LocAndOffsets endPt = evt.GetWallEndpoint();
+			evt.objListResult.ListRaycast(startPt, endPt, evt.radiusInch, 5.0f * INCH_PER_FEET / 2.0f);
+
+		}
+		else{
+			evt.objListResult.ListRadius(locFull,evt.radiusInch, evt.angleMin, evt.angleSize, evt.filter);
+			objEvtTable->put(id, evt);
+		}
+
 	} else
 	{
 		int dummy = 1;
@@ -159,14 +170,12 @@ BOOL ObjEventSystem::ObjEventHandler(ObjEventAoE* const aoeEvt, int id,ObjEventL
 {
 
 	auto objEventHandlerFuncs = temple::GetPointer<void(__cdecl*)(objHndl, objHndl, int)>(0x102AFB40); // an array of 50 callbacks, though there are only 2 duplicated for them all
-	auto onLeaveHandler = objEventHandlerFuncs[aoeEvt->onLeaveFuncIdx];
-	auto onEnterHandler = objEventHandlerFuncs[aoeEvt->onEnterFuncIdx];
-
-	auto isWallAoE = false;
+	auto onLeaveHandler = objEventHandlerFuncs[1]; // does  a dispatch for DK_OnLeaveAoE
+	auto onEnterHandler = objEventHandlerFuncs[0]; // does  a dispatch for DK_OnEnterAoE
 
 	if (aoeEvt->aoeObj != evt.obj)
 	{
-		// find the event obj in the aoeEvt list of previously appearing objects
+		// find the event obj in the aoeEvt list of previously appearing objects, to determine leaving / entering status
 		bool foundInNodes = false;
 		auto objNode = aoeEvt->objNodesPrev;
 		
@@ -198,9 +207,8 @@ BOOL ObjEventSystem::ObjEventHandler(ObjEventAoE* const aoeEvt, int id,ObjEventL
 		return 1;
 	}
 
-	// obj is aoeObj - iterate over the aoeEvt's objlist
+	// obj is aoeObj - i.e. the object itself moved. iterate over the aoeEvt's objlist
 	for (auto it = aoeEvt->objListResult.objects; it; it=it->next){
-		
 		
 		bool foundInNodes = false;
 
@@ -276,7 +284,9 @@ void ObjEventSystem::AdvanceTime()
 	auto objEvtUpdater = temple::GetRef<int(__cdecl)(ObjEventAoE*, int id)>(0x100450B0);
 	for (auto it : *objEvents.objEvtTable){
 		ObjEventAoE* data = it.data;
-		objEvtUpdater(data, it.id );
+		//objEvtUpdater(data, it.id );
+		data->UpdateObjectNodes();
+		//objEvents.objEvtTable->put(it.id, *data);
 	}
 }
 
@@ -440,6 +450,17 @@ bool ObjEventSystem::ObjEventLocIsInAoE(ObjEventAoE* const aoeEvt, LocAndOffsets
 	locSys.GetOverallOffset(aoeObjLoc, &aoeAbsX, &aoeAbsY);
 	locSys.GetOverallOffset(loc, &absX, &absY);
 
+	if (aoeEvt->IsWall()){
+		auto wallEndpt = aoeEvt->GetWallEndpoint();
+		float wallEndX, wallEndY;
+		locSys.GetOverallOffset(wallEndpt, &wallEndX, &wallEndY);
+		RaycastPointSearchPacket srchPkt({ aoeAbsX , aoeAbsY }, { wallEndX , wallEndY});
+		srchPkt.radius = 5.0f * INCH_PER_FEET / 2.0f;
+		
+		auto result = srchPkt.IsPointInterceptedBySegment({ absX, absY }, objRadius);
+		return result;
+	}
+
 	auto radius = objRadius + aoeEvt->radiusInch;
 	auto deltaX = absX - aoeAbsX;
 	auto absDeltaX = abs(deltaX);
@@ -479,5 +500,47 @@ bool ObjEventSystem::ObjEventLocIsInAoE(ObjEventAoE* const aoeEvt, LocAndOffsets
 	auto shit2 = sin(angleMax);
 
 	return 0;
+
+}
+
+bool ObjEventAoE::IsWall(){
+	return this->onEnterFuncIdx == OBJ_EVENT_WALL_ENTERED_HANDLER_ID && this->onLeaveFuncIdx == OBJ_EVENT_WALL_EXITED_HANDLER_ID;
+}
+
+LocAndOffsets ObjEventAoE::GetWallEndpoint(){
+	auto aoeObjBody = gameSystems->GetObj().GetObject(this->aoeObj);
+	auto aoeObjLoc = aoeObjBody->GetLocationFull();
+
+	auto wallEndpt = aoeObjLoc;
+	// use startPt + angleMin to find endPt
+	auto vectorAngle = 5 * M_PI / 4 - angleMin;
+	XMFLOAT2 dir(cos(vectorAngle), sin(vectorAngle));
+	wallEndpt.off_x += dir.x * radiusInch;
+	wallEndpt.off_y += dir.y * radiusInch;
+	wallEndpt.Regularize();
+	return wallEndpt;
+}
+
+void ObjEventAoE::UpdateObjectNodes(){
+	// Free previous nodes
+	auto prevNode = this->objNodesPrev;
+	if (prevNode){
+		if (prevNode->next)
+			prevNode->next->FreeRecursive();
+		free(prevNode);
+	}
+	
+	// Copy objlist to objNodesPrev
+	auto objNode = objListResult.objects;
+	prevNode = nullptr;
+	while (objNode){
+		auto newNode = new ObjListResultItem();
+		newNode->next = prevNode;
+		newNode->handle = objNode->handle;
+		prevNode = newNode;
+		objNode = objNode->next;
+	}
+	this->objNodesPrev = prevNode;
+	this->objListResult.Free();
 
 }

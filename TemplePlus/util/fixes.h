@@ -38,9 +38,18 @@ protected:
 	void redirectCall(uint32_t offset, void* redirectTo);
 	void redirectJump(uint32_t offset, void* redirectTo);
 
+	template<typename T>
+	void redirectToLambda(uint32_t offset, T* redirectTo) {
+		redirectCall(offset, redirectTo);
+	};
+
 	// Intelligently replaces the instruction at the given offset with noops
 	void writeNoops(uint32_t offset);
-	
+
+    // Overwrites an entire area with INT3 instructions as a canary to detect
+    // usage of functions that should have been fully replaced
+    void breakRegion(uint32_t begin, uint32_t end);
+
 	template<typename T>
 	T* replaceFunction(uint32_t offset, T* replaceWith) {
 		return (T*)replaceFunctionInternal(offset, replaceWith);

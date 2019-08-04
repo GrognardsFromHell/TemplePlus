@@ -1,7 +1,7 @@
 #pragma once
 
 #define VANILLA_NUM_CLASSES  (stat_level_wizard - stat_level_barbarian + 1)
-#define NUM_RACES 7
+#define VANILLA_NUM_RACES 7
 
 
 
@@ -76,7 +76,7 @@ enum D20ActionType : int32_t
 	D20A_WHOLENESS_OF_BODY_USE,
 	D20A_DISMISS_SPELLS,
 	D20A_FLEE_COMBAT,
-	D20A_USE_POTION = 68,
+	D20A_USE_POTION = 68, // vanilla actions are up to here
 	D20A_DIVINE_MIGHT = 69,
 	D20A_DISARM = 70,
 	D20A_SUNDER,
@@ -95,6 +95,8 @@ enum D20ActionType : int32_t
 	D20A_UNASSIGNED = -2 // used for hotkey binds
 };
 
+std::ostream &operator <<(std::ostream &out, D20ActionType D20ActionType);
+
 enum class ActionCostType : int {
 	Null,
 	Move,
@@ -102,6 +104,16 @@ enum class ActionCostType : int {
 	PartialCharge,
 	FullRound
 };
+
+struct ActionCostPacket
+{
+	int hourglassCost;
+	int chargeAfterPicker; // flag I think; is only set at stuff that requires using the picker it seems
+	float moveDistCost;
+	
+	ActionCostPacket() { hourglassCost = 0; chargeAfterPicker = 0; moveDistCost = 0.0f; }
+};
+//const auto TestSizeOfActionCostPacket = sizeof(ActionCostPacket); // should be 12 (0xC)
 
 enum D20SavingThrow : uint32_t {
 	D20_Save_Fortitude = 0,
@@ -142,42 +154,7 @@ enum D20STD_F : uint32_t {
 	D20STD_F_CHARM = 2, // 0x2
 	D20STD_F_TRAP = 3,  // 0x4
 	D20STD_F_POISON = 4, // 0x8
-
-	/*
-	v7 = flags | 0x10; <-- marks it as a spell like effect i'd wager
-	switch ( v10.SpellSchoolIdx )
-	{
-	case 1:
-	v7 = flags | 0x30;
-	break;
-	case 2:
-	v7 = flags | 0x50;
-	break;
-	case 3:
-	v7 = flags | 0x90;
-	break;
-	case 4:
-	v7 = flags | 0x110;
-	break;
-	case 5:
-	v7 = flags | 0x210;
-	break;
-	case 6:
-	v7 = flags | 0x410;
-	break;
-	case 7:
-	v7 = flags | 0x810;
-	break;
-	case 8:
-	v7 = flags | 0x1010;
-	break;
-	default:
-	break;
-	}
-	v8 = 0;
-	*/
-
-	D20STD_F_SPELL_LIKE_EFFECT = 0x10,
+	D20STD_F_SPELL_LIKE_EFFECT = 5,
 	D20STD_F_SPELL_SCHOOL_ABJURATION = 6, // 0x20 for the flags
 	D20STD_F_SPELL_SCHOOL_CONJURATION = 7, // 0x40
 	D20STD_F_SPELL_SCHOOL_DIVINATION = 8, // 0x80
@@ -199,7 +176,7 @@ enum D20STD_F : uint32_t {
 											  }
 											  while ( v8 < 21 );
 											  */
-	D20STD_F_SPELL_DESCRIPTOR_ACID = 0x2000,
+	D20STD_F_SPELL_DESCRIPTOR_ACID = 14, // 0x2000
 	D20STD_F_SPELL_DESCRIPTOR_CHAOTIC = 15, // 0x4000
 	D20STD_F_SPELL_DESCRIPTOR_COLD = 16, // 0x8000
 	D20STD_F_SPELL_DESCRIPTOR_DARKNESS = 17, // 0x10000
@@ -295,8 +272,8 @@ enum D20CAF : uint32_t
 	D20CAF_COUNTERSPELLED =    0x8000000, //268435456,
 	D20CAF_THROWN_GRENADE =    0x10000000, //536870912,
 	D20CAF_FINAL_ATTACK_ROLL = 0x20000000, //1073741824,
-	D20CAF_TRUNCATED =         0x40000000, //0x80000000,  indicates that the path has been truncated (since the destination was too far away)
-	D20CAF_UNNECESSARY =       0x80000000
+	D20CAF_TRUNCATED =         0x40000000, //0x40000000,  indicates that the path has been truncated (since the destination was too far away)
+	D20CAF_UNNECESSARY =       0x80000000  // affects pathfinding time allotment
 };
 
 static const char *d20ActionNames[] = {
@@ -357,7 +334,7 @@ static const char *d20ActionNames[] = {
 	"D20A_OPEN_CONTAINER",
 	"D20A_THROW",
 	"D20A_THROW_GRENADE",
-	"D20A_FEINT,"
+	"D20A_FEINT",
 	"D20A_READY_SPELL",
 	"D20A_READY_COUNTERSPELL",
 	"D20A_READY_ENTER",
@@ -369,4 +346,18 @@ static const char *d20ActionNames[] = {
 	"D20A_DISMISS_SPELLS",
 	"D20A_FLEE_COMBAT",
 	"D20A_USE_POTION",
+	"D20A_DIVINE_MIGHT",
+	"D20A_DISARM",
+	"D20A_SUNDER",
+	"D20A_BULLRUSH",
+	"D20A_TRAMPLE",
+	"D20A_GRAPPLE",
+	"D20A_PIN",
+	"D20A_OVERRUN",
+	"D20A_SHIELD_BASH",
+	"D20A_DISARMED_WEAPON_RETRIEVE",
+	"D20A_AID_ANOTHER_WAKE_UP",
+	"D20A_EMPTY_BODY", // monk ability
+	"D20A_QUIVERING_PALM", // monk ability
+	"D20A_PYTHON_ACTION"
 };

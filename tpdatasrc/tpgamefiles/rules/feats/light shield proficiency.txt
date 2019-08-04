@@ -1,0 +1,5 @@
+name: Light Shield Proficiency
+flags: 8
+prereqs:
+description:  Grants proficiency with light shields but not heavy shields or tower shields.
+prereq descr: Warmage level 1

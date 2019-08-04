@@ -67,7 +67,8 @@ namespace gfx {
 				^ eastl::hash<bool>()(style.italic)
 				^ eastl::hash<float>()(style.pointSize)
 				^ eastl::hash<float>()(style.tabStopWidth)
-				^ eastl::hash<uint32_t>()((uint32_t) style.align)
+				^ eastl::hash<uint32_t>()((uint32_t)style.align)
+				^ eastl::hash<uint32_t>()((uint32_t)style.paragraphAlign)
 				^ eastl::hash<bool>()(style.uniformLineHeight);
 
 			if (style.uniformLineHeight) {
@@ -86,6 +87,7 @@ namespace gfx {
 				&& a.italic == b.italic
 				&& a.tabStopWidth == b.tabStopWidth
 				&& a.align == b.align
+				&& a.paragraphAlign == b.paragraphAlign
 				&& a.uniformLineHeight == b.uniformLineHeight)) {
 				return false;
 			}
@@ -166,6 +168,13 @@ namespace gfx {
 		// Formatted strings
 		CComPtr<IDWriteTextLayout> GetTextLayout(int width, int height, const TextStyle &style, const std::wstring &text);
 		CComPtr<IDWriteTextLayout> GetTextLayout(int width, int height, const FormattedText &formatted, bool skipDrawingEffects = false);
+
+		// Clipping
+		bool enableClipRect = false;
+		D2D1_RECT_F clipRect;
+
+		void BeginDraw();
+		void EndDraw();
 
 	};
 	
@@ -254,7 +263,7 @@ namespace gfx {
 	void TextEngine::RenderText(const TigRect &rect, const FormattedText &formattedStr)
 	{
 
-		mImpl->context->BeginDraw();
+		mImpl->BeginDraw();
 
 		float x = (float) rect.x;
 		float y = (float) rect.y;
@@ -299,8 +308,8 @@ namespace gfx {
 		(float)rect.y + metrics.top + metrics.height
 		};
 		mImpl->context->DrawRectangle(rectOutline, brush);*/
-
-		D3DVERIFY(mImpl->context->EndDraw());
+		
+		mImpl->EndDraw();
 	}
 
 	void TextEngine::RenderTextRotated(const TigRect &rect, 
@@ -321,7 +330,7 @@ namespace gfx {
 	void TextEngine::RenderText(const TigRect &rect, const TextStyle & style, const std::wstring & text)
 	{
 
-		mImpl->context->BeginDraw();
+		mImpl->BeginDraw();
 
 		// Draw the drop shadow first as a simple +1, +1 shift
 		if (style.dropShadow) {
@@ -365,7 +374,7 @@ namespace gfx {
 		};
 		mImpl->context->DrawRectangle(rectOutline, brush);*/
 
-		D3DVERIFY(mImpl->context->EndDraw());
+		mImpl->EndDraw();
 	}
 
 	void TextEngine::RenderText(const TigRect &rect, const TextStyle & style, const std::string & text)
@@ -454,6 +463,47 @@ namespace gfx {
 		mImpl->textFormats.clear();
 	}
 
+	bool TextEngine::HasFontFamily(const std::string & name)
+	{
+		if (!mImpl->fontCollection) {
+			mImpl->LoadFontCollection();
+		}
+
+		auto requested_font_family = utf8_to_ucs2(name);
+		UINT index;
+		BOOL exists;
+		auto result = mImpl->fontCollection->FindFamilyName(requested_font_family.c_str(), &index, &exists);
+		if (!SUCCEEDED(result)) {
+			logger->warn("Unable to query font collection for family '{}': {:x}", name, result);
+			return false;
+		}
+
+		return exists == TRUE;
+
+	}
+
+	void TextEngine::SetScissorRect(const TigRect & rect)
+	{
+		mImpl->enableClipRect = true;
+		mImpl->clipRect.left = (float) rect.x;
+		mImpl->clipRect.top = (float) rect.y;
+		mImpl->clipRect.right = (float) rect.x + rect.width;
+		mImpl->clipRect.bottom = (float) rect.y + rect.height;
+	}
+
+	void TextEngine::ResetScissorRect()
+	{
+		mImpl->enableClipRect = false;
+	}
+
+	static DWRITE_FONT_STYLE GetFontStyle(const TextStyle &textStyle) {
+		return textStyle.italic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL;
+	}
+
+	static DWRITE_FONT_WEIGHT GetFontWeight(const TextStyle &textStyle) {
+		return textStyle.bold ? DWRITE_FONT_WEIGHT_BOLD : DWRITE_FONT_WEIGHT_NORMAL;
+	}
+
 	IDWriteTextFormat* TextEngine::Impl::GetTextFormat(const TextStyle &textStyle)
 	{
 		auto it = textFormats.find(textStyle);
@@ -461,15 +511,8 @@ namespace gfx {
 			return it->second;
 		}
 		
-		auto fontWeight = DWRITE_FONT_WEIGHT_NORMAL;
-		auto fontStyle = DWRITE_FONT_STYLE_NORMAL;
-
-		if (textStyle.bold) {
-			fontWeight = DWRITE_FONT_WEIGHT_BOLD;
-		}
-		if (textStyle.italic) {
-			fontStyle = DWRITE_FONT_STYLE_ITALIC;
-		}
+		auto fontWeight = GetFontWeight(textStyle);
+		auto fontStyle = GetFontStyle(textStyle);
 
 		CComPtr<IDWriteTextFormat> textFormat;
 
@@ -510,6 +553,18 @@ namespace gfx {
 			break;
 		case TextAlign::Justified:
 			D3DVERIFY(textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_JUSTIFIED));
+			break;
+		}
+
+		switch (textStyle.paragraphAlign) {
+		case ParagraphAlign::Near:
+			D3DVERIFY(textFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR));
+			break;
+		case ParagraphAlign::Far:
+			D3DVERIFY(textFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR));
+			break;
+		case ParagraphAlign::Center:
+			D3DVERIFY(textFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER));
 			break;
 		}
 
@@ -658,11 +713,18 @@ namespace gfx {
 			trimming.delimiterCount = 0;
 			textLayout->SetTrimming(&trimming, trimmingSign);
 		}
-
+		
 		for (auto &range : formatted.formats) {
 			DWRITE_TEXT_RANGE textRange;
 			textRange.startPosition = range.startChar;
 			textRange.length = range.length;
+
+			if (range.style.bold != formatted.defaultStyle.bold) {
+				textLayout->SetFontWeight(GetFontWeight(range.style), textRange);
+			}
+			if (range.style.italic != formatted.defaultStyle.italic) {
+				textLayout->SetFontStyle(GetFontStyle(range.style), textRange);
+			}
 
 			// This will collide with drop shadow drawing for example
 			if (!skipDrawingEffects) {
@@ -673,6 +735,24 @@ namespace gfx {
 
 		return textLayout;
 
+	}
+
+	void TextEngine::Impl::BeginDraw()
+	{
+		context->BeginDraw();
+
+		if (enableClipRect) {
+			context->PushAxisAlignedClip(clipRect, D2D1_ANTIALIAS_MODE_ALIASED);
+		}		
+	}
+
+	void TextEngine::Impl::EndDraw()
+	{
+		if (enableClipRect) {
+			context->PopAxisAlignedClip();
+		}
+
+		D3DVERIFY(context->EndDraw());
 	}
 
 	FontLoader::FontLoader(TextEngine::Impl &impl) : mImpl(impl) {

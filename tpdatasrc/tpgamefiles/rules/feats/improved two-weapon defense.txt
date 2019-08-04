@@ -1,0 +1,5 @@
+name: Improved Two-Weapon Defense
+flags: 12582928
+prereqs: 266 6 1 17
+description: When wielding two weapons (not including natural weapons or unarmed strikes), you gain a +2 shield bonus to your Armor Class. When you are fighting defensively or using the total defense action, this shield bonus increases to +4.
+prereq descr: Two-Weapon Fighting, Two-Weapon Defense, DEX 17, base attack bonus +6

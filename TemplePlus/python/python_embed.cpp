@@ -12,40 +12,27 @@
 #include "python_integration_spells.h"
 #include "python_console.h"
 #include "tio/tio.h"
+#include "tig/tig_startup.h"
+#include "tig/tig_console.h"
 #include <set>
+#include <string>
+#include <functional>
 #include "python_module.h"
 #include "python_dispatcher.h"
 
 #include "../gamesystems/gamesystems.h"
 #include "python_integration_class_spec.h"
 #include "python_integration_d20_action.h"
+#include "python_integration_feat.h"
 
-extern "C" PyObject *inittp_dispatcher();
-extern "C" PyObject *inittp_char_editor();
-extern "C" PyObject *inittp_actions();
-static struct PythonInitInternal : temple::AddressTable {
+#include <pybind11/embed.h>
+#include "python_integration_race.h"
 
-	// Writes to the console window
-	size_t (__cdecl *PythonConsoleWrite)(const void* ptr, size_t size, size_t count, void* handle);
-
-	void(__cdecl *TigConsoleSetCommandInterpreter)(void(__cdecl*)(const char*));
-
-	PythonInitInternal() {
-		rebase(PythonConsoleWrite, 0x101DFE90);
-		rebase(TigConsoleSetCommandInterpreter, 0x101DF820);
-	}	
-} pythonInitInternal;
+namespace py = pybind11;
 
 static PyObject *MainModule;
 PyObject *MainModuleDict;
 static PyConsole *console;
-
-// Wrapper for PyConsole::Exec
-static void __cdecl PyConsole_Exec(const char *str) {
-	if (console) {
-		console->Exec(str);
-	}
-}
 
 void PythonPrepareGlobalNamespace() {
 	// Pre-Import anything from toee into globals
@@ -72,11 +59,16 @@ void PythonPrepareGlobalNamespace() {
 
 static bool __cdecl PythonInit(GameSystemConf *conf) {
 
+	static char* sArgv = "";
+
 	Py_OptimizeFlag++;
 	Py_VerboseFlag++;
 	Py_NoSiteFlag++;
 	Py_SetProgramName("TemplePlus.exe");
+
 	Py_Initialize();
+
+	PySys_SetArgv(0, &sArgv);
 	
 	PySys_SetObject("stderr", PyTempleConsoleOut_New());
 	PySys_SetObject("stdout", PyTempleConsoleOut_New());
@@ -99,17 +91,16 @@ static bool __cdecl PythonInit(GameSystemConf *conf) {
 	Py_XDECREF(m);
 
 	console = new PyConsole;
-	pythonInitInternal.TigConsoleSetCommandInterpreter(PyConsole_Exec);
+	tig->GetConsole().SetCommandInterpreter(std::bind(&PyConsole::Exec, console, std::placeholders::_1));
 
+	// don't forget PyTempleImporter_Install (when adding new python integrations, for example...)
 	pythonObjIntegration.LoadScripts();
 	pySpellIntegration.LoadScripts();
+	pythonRaceIntegration.LoadScripts();
 	pythonClassIntegration.LoadScripts();
-	pythonD20ActionIntegration.LoadScripts(); // don't forget PyTempleImporter_Install
-
-	inittp_dispatcher();
-	inittp_char_editor();
-	inittp_actions();
-
+	pythonD20ActionIntegration.LoadScripts(); 
+	pyFeatIntegration.LoadScripts();
+	
 	// tpModifiers is imported in conditions.cpp since it needs the condition hashtable
 
 	return true;
@@ -130,6 +121,7 @@ static void __cdecl PythonReset() {
 static void __cdecl PythonExit() {
 	pythonObjIntegration.UnloadScripts();
 	pySpellIntegration.UnloadScripts();
+	pythonRaceIntegration.UnloadScripts();
 	pythonClassIntegration.UnloadScripts();
 	pythonD20ActionIntegration.UnloadScripts();
 

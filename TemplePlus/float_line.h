@@ -21,9 +21,7 @@ struct FloatLineSystem : temple::AddressTable
 	/*
 		Float a text line from mes/spells.mes with an optional prefix and suffix text.
 	*/
-	void FloatSpellLine(objHndl target, int lineId, FloatLineColor color, const char *prefix = 0, const char *suffix = 0) {
-		_FloatSpellLine(target, lineId, color, prefix, suffix);
-	}
+	void FloatSpellLine(objHndl target, int lineId, FloatLineColor color, const char *prefix = 0, const char *suffix = 0);
 
 	FloatLineSystem();
 	

@@ -1,0 +1,302 @@
+{1}{[You see a young apprentice mage] Hello there. Did you need me?}{[You see a young apprentice mage] Hello there. Did you need me?}{}{}{}{game.global_vars[109] = 1}
+{2}{Hello. I am @pcname@.}{}{8}{not npc.has_met( pc )}{20}{}
+{3}{Hi! Me @pcname@.}{}{-7}{not npc.has_met( pc )}{20}{}
+{4}{Hello again! Nice to see you.}{}{8}{npc.has_met( pc )}{30}{}
+{5}{Me happy to see Pishella again!}{}{-7}{npc.has_met( pc )}{30}{}
+{6}{Nice to meet you. Burne says you can help me?}{}{8}{game.global_flags[358] == 1 and not npc.has_met( pc ) and game.global_flags[359] == 0}{40}{}
+{7}{Hi! Bunny say you can get rid of bad skull thing.}{}{-7}{game.global_flags[358] == 1 and not npc.has_met( pc ) and game.global_flags[359] == 0}{40}{}
+{8}{Hi Pishella. So Burne says you can help me?}{}{8}{game.global_flags[358] == 1 and npc.has_met( pc ) and game.global_flags[359] == 0}{50}{}
+{9}{Hi Pishella. Bunny say you help me get rid of bad skull thing.}{}{-7}{game.global_flags[358] == 1 and npc.has_met( pc ) and game.global_flags[359] == 0}{50}{}
+{10}{I am glad the orb has been destroyed.}{}{8}{game.global_flags[359] == 1}{130}{}
+{11}{Me happy orb went boom!}{}{-7}{game.global_flags[359] == 1}{130}{}
+{12}{I defeated the Hextorites!}{}{1}{game.quests[97].state == qs_completed}{370}{}
+{13}{E:}{}{1}{npc.has_met( pc )}{0}{}
+
+
+{20}{I am Pishella. Nice to meet you. I live here in Hommlet and am apprenticed to Burne, His Most Worshipful Mage of Hommlet.}{I am Pishella. Nice to meet you. I live here in Hommlet and am apprenticed to Burne, His Most Worshipful Mage of Hommlet.}{}{}{}{}
+{21}{That sounds interesting. Do you enjoy working for Burne?}{}{8}{}{60}{}
+{22}{That sound fun! Bunny nice?}{}{-7}{}{60}{}
+{23}{I need to be going. Nice to meet you again.}{}{8}{}{0}{}
+{24}{Me need go. Bye bye.}{}{-7}{}{0}{}
+
+
+{30}{Nice to see you again, too! I have so much to study and learn here. I used to think magic was just raw desire, but Burne has opened up a whole new world to me.}{Nice to see you again, too! I have so much to study and learn here. I used to think magic was just raw desire, but Burne has opened up a whole new world to me.}{}{}{}{}
+{31}{Well I will let you get back to your studies then. Good luck!}{}{8}{}{0}{}
+{32}{Me let you study den. Bye bye.}{}{-7}{}{0}{}
+{33}{Do you still remember how many people you greeted at the Greyhawk conclave last year?}{}{8}{game.quests[61].state == qs_accepted}{150}{}
+{34}{Your education must be limited, staying here in this tower all the time. Why don't you come adventuring with me? The most powerful wizards are adventurers, that's where Burne learnt his trade.}{}{8}{pc.reputation_has( 27 ) == 0 and game.global_vars[501] != 2}{200}{}
+{35}{You wanna come with me, learn new spells and zap things?}{}{-7}{pc.reputation_has( 27 ) == 0 and game.global_vars[501] != 2}{200}{}
+{36}{Your education must be limited, staying here in this tower all the time. Why don't you come adventuring with me? The most powerful wizards are adventurers, that's where Burne learnt his trade.}{}{8}{pc.reputation_has( 27 ) == 0 and game.global_vars[501] == 2}{200}{}
+{37}{You wanna come with me, learn new spells and zap things?}{}{-7}{pc.reputation_has( 27 ) == 0 and game.global_vars[501] == 2}{200}{}
+
+
+{40}{Name your task, I'll try to help.}{Name your task, I'll try to help.}{}{}{}{}
+{41}{I wish to destroy the Golden Skull. Can you help me?}{}{8}{}{70}{}
+{42}{Me want smash skull. What you need?}{}{-7}{}{70}{}
+{43}{Now I have met you, we can discuss the details later.}{}{8}{}{0}{}
+{44}{Me come back later.}{}{-7}{}{0}{}
+{45}{How do I know I can trust you.}{}{8}{}{80}{}
+{46}{Can me trust you?}{}{-7}{}{80}{}
+{47}{I have all the supplies with me here. Let us begin. [hand her all the necessary elements]}{}{8}{anyone( pc.group_list(), "has_item", 2208 ) and anyone( pc.group_list(), "has_item", 4003 ) and anyone( pc.group_list(), "has_item", 4004 ) and anyone( pc.group_list(), "has_item", 3603 ) and anyone( pc.group_list(), "has_item", 2203 )}{90}{party_transfer_to( npc, 2208 ); party_transfer_to( npc, 4003 ); party_transfer_to( npc, 4004 ); party_transfer_to( npc, 3603 ); party_transfer_to( npc, 2203 )}
+{48}{Me gots all we need. Here. [hand her all the necessary elements]}{}{-7}{anyone( pc.group_list(), "has_item", 2208 ) and anyone( pc.group_list(), "has_item", 4003 ) and anyone( pc.group_list(), "has_item", 4004 ) and anyone( pc.group_list(), "has_item", 3603 ) and anyone( pc.group_list(), "has_item", 2203 )}{90}{party_transfer_to( npc, 2208 ); party_transfer_to( npc, 4003 ); party_transfer_to( npc, 4004 ); party_transfer_to( npc, 3603 ); party_transfer_to( npc, 2203 )}
+
+
+{50}{Yes, he is letting me handle this very important task. It shows he's really starting to trust me! Now, if you just bring me all the proper elements, I can take care of the destruction.}{Yes, he is letting me handle this very important task. It shows he's really starting to trust me! Now, if you just bring me all the proper elements, I can take care of the destruction.}{}{}{}{}
+{51}{What do you need?}{}{8}{}{70}{}
+{52}{What you need?}{}{-7}{}{70}{}
+{53}{This is good to know. I will return later.}{}{8}{}{0}{}
+{54}{Me come back later.}{}{-7}{}{0}{}
+{55}{I have all the supplies with me here. Let us begin. [hand her all the necessary elements]}{}{8}{anyone( pc.group_list(), "has_item", 2208 ) and anyone( pc.group_list(), "has_item", 4003 ) and anyone( pc.group_list(), "has_item", 4004 ) and anyone( pc.group_list(), "has_item", 3603 ) and anyone( pc.group_list(), "has_item", 2203 )}{90}{party_transfer_to( npc, 2208 ); party_transfer_to( npc, 4003 ); party_transfer_to( npc, 4004 ); party_transfer_to( npc, 3603 ); party_transfer_to( npc, 2203 )}
+{56}{Me gots all we need. Here. [hand her all the necessary elements]}{}{-7}{anyone( pc.group_list(), "has_item", 2208 ) and anyone( pc.group_list(), "has_item", 4003 ) and anyone( pc.group_list(), "has_item", 4004 ) and anyone( pc.group_list(), "has_item", 3603 ) and anyone( pc.group_list(), "has_item", 2203 )}{90}{party_transfer_to( npc, 2208 ); party_transfer_to( npc, 4003 ); party_transfer_to( npc, 4004 ); party_transfer_to( npc, 3603 ); party_transfer_to( npc, 2203 )}
+{57}{I am not sure I should be trusting you, though.}{}{8}{}{80}{}
+{58}{How me sure me trust you?}{}{-7}{}{80}{}
+
+
+{60}{Yes, he is a good man. I trust him completely. And I have learned so much from him already.}{Yes, he is a good man. I trust him completely. And I have learned so much from him already.}{}{}{}{}
+{61}{That is good. Well, I will let you get back to your studies. Farewell.}{}{8}{}{0}{}
+{62}{Me happy for Pishella. Me let you get back to work. Bye bye.}{}{-7}{}{0}{}
+
+
+{70}{I can help, but I will need a scroll of gust of wind, a scroll of fireball, a masterwork maul, and finally, some holy water. Bring me these things and it can be destroyed.}{I can help, but I will need a scroll of gust of wind, a scroll of fireball, a masterwork maul, and finally, some holy water. Bring me these things and it can be destroyed.}{}{}{}{}
+{71}{I shall work on getting those things for you, Pishella.}{}{8}{}{0}{}
+{72}{Me go get all dat stuff.}{}{-7}{}{0}{}
+{73}{I have all the supplies with me here. Let us begin. [hand her all the necessary elements]}{}{8}{anyone( pc.group_list(), "has_item", 2208 ) and anyone( pc.group_list(), "has_item", 4003 ) and anyone( pc.group_list(), "has_item", 4004 ) and anyone( pc.group_list(), "has_item", 3603 ) and anyone( pc.group_list(), "has_item", 2203 )}{90}{party_transfer_to( npc, 2208 ); party_transfer_to( npc, 4003 ); party_transfer_to( npc, 4004 ); party_transfer_to( npc, 3603 ); party_transfer_to( npc, 2203 )}
+{74}{Me gots all we need. Here. [hand her all the necessary elements]}{}{-7}{anyone( pc.group_list(), "has_item", 2208 ) and anyone( pc.group_list(), "has_item", 4003 ) and anyone( pc.group_list(), "has_item", 4004 ) and anyone( pc.group_list(), "has_item", 3603 ) and anyone( pc.group_list(), "has_item", 2203 )}{90}{party_transfer_to( npc, 2208 ); party_transfer_to( npc, 4003 ); party_transfer_to( npc, 4004 ); party_transfer_to( npc, 3603 ); party_transfer_to( npc, 2203 )}
+
+
+{80}{You may detect evil on us if you have not already. We will not be touching that orb, believe me. It is evil to the core. It must be destroyed!}{You may detect evil on us if you have not already. We will not be touching that orb, believe me. It is evil to the core. It must be destroyed!}{}{}{}{}
+{81}{And what will destroying it do?}{}{8}{}{100}{}
+{82}{What happen when it gone?}{}{-7}{}{100}{}
+{83}{I am still not convinced I need to do this thing or that I should be trusting you to this task. Farewell.}{}{8}{}{0}{}
+{84}{Me not sure me believe you yet. Bye bye.}{}{-7}{}{0}{}
+{85}{Okay. I have the elements. Let's destroy it!}{}{8}{anyone( pc.group_list(), "has_item", 2208 ) and anyone( pc.group_list(), "has_item", 4003 ) and anyone( pc.group_list(), "has_item", 4004 ) and anyone( pc.group_list(), "has_item", 3603 ) and anyone( pc.group_list(), "has_item", 2203 )}{90}{party_transfer_to( npc, 2208 ); party_transfer_to( npc, 4003 ); party_transfer_to( npc, 4004 ); party_transfer_to( npc, 3603 ); party_transfer_to( npc, 2203 )}
+{86}{Me have all we need. Let's destroy it!}{}{-7}{anyone( pc.group_list(), "has_item", 2208 ) and anyone( pc.group_list(), "has_item", 4003 ) and anyone( pc.group_list(), "has_item", 4004 ) and anyone( pc.group_list(), "has_item", 3603 ) and anyone( pc.group_list(), "has_item", 2203 )}{90}{party_transfer_to( npc, 2208 ); party_transfer_to( npc, 4003 ); party_transfer_to( npc, 4004 ); party_transfer_to( npc, 3603 ); party_transfer_to( npc, 2203 )}
+
+
+{90}{[She gathers the elements and starts looking through the scrolls. Then she looks up at you.] Oh, you need not stay around. It shall be destroyed shortly. Thank you for all you have done.}{[She gathers the elements and starts looking through the scrolls. Then she looks up at you.] Oh, you need not stay around. It shall be destroyed shortly. Thank you for all you have done.}{}{}{}{destroy_orb( npc, pc ); game.global_flags[359] = 1}
+{91}{I will be going then. Farewell and good luck.}{}{8}{}{0}{}
+{92}{Me glad dat thing gone. Bye bye!}{}{-7}{}{0}{}
+{93}{Now what will be the result of destroying that thing?}{}{8}{}{110}{}
+{94}{What happen when dat thing gone?}{}{-7}{}{110}{}
+{95}{I would like to see that thing destroyed. I will wait.}{}{8}{}{120}{}
+{96}{Me want to see it go boom. Me wait.}{}{-7}{}{120}{}
+
+
+{100}{Zuggtmoy, the creator of the orb, will be severely weakened for four days. Iuz will even suffer for his assistance in its creation. After four days, Zuggtmoy will return to her Abyssal Plane and escape her imprisonment.}{Zuggtmoy, the creator of the orb, will be severely weakened for four days. Iuz will even suffer for his assistance in its creation. After four days, Zuggtmoy will return to her Abyssal Plane and escape her imprisonment.}{}{}{}{}
+{101}{So once it is destroyed, I have four days to track down this Zuggtmoy and destroy her?}{}{8}{}{140}{}
+{102}{Me need to kill her in four days when orb gets destroyed?}{}{-7}{}{140}{}
+{103}{Thanks. I will go look for these things.}{}{8}{}{0}{}
+{104}{Me go find things.}{}{-7}{}{0}{}
+{105}{Okay. I have the elements. Let's destroy it!}{}{8}{anyone( pc.group_list(), "has_item", 2208 ) and anyone( pc.group_list(), "has_item", 4003 ) and anyone( pc.group_list(), "has_item", 4004 ) and anyone( pc.group_list(), "has_item", 3603 ) and anyone( pc.group_list(), "has_item", 2203 )}{90}{party_transfer_to( npc, 2208 ); party_transfer_to( npc, 4003 ); party_transfer_to( npc, 4004 ); party_transfer_to( npc, 3603 ); party_transfer_to( npc, 2203 )}
+{106}{Me have all we need. Let's destroy it!}{}{-7}{anyone( pc.group_list(), "has_item", 2208 ) and anyone( pc.group_list(), "has_item", 4003 ) and anyone( pc.group_list(), "has_item", 4004 ) and anyone( pc.group_list(), "has_item", 3603 ) and anyone( pc.group_list(), "has_item", 2203 )}{90}{party_transfer_to( npc, 2208 ); party_transfer_to( npc, 4003 ); party_transfer_to( npc, 4004 ); party_transfer_to( npc, 3603 ); party_transfer_to( npc, 2203 )}
+
+
+{110}{Zuggtmoy, the creator of the orb, will be severely weakened for four days. Iuz will even suffer for his assistance in its creation. After four days, Zuggtmoy will be banished to her Abyssal Plane, but only for a short time. You have four days to kill her!}{Zuggtmoy, the creator of the orb, will be severely weakened for four days. Iuz will even suffer for his assistance in its creation. After four days, Zuggtmoy will be banished to her Abyssal Plane, but only for a short time. You have four days to kill her!}{}{}{}{}
+{111}{Do not fear. I will find Zuggtmoy and destroy her within four days.}{}{8}{}{0}{}
+{112}{Me go find Zuggles and kill her before four days go by.}{}{-7}{}{0}{}
+{113}{I shall do my best.}{}{8}{}{0}{}
+{114}{Me do best. Bye bye.}{}{-7}{}{0}{}
+{115}{I would like to see the orb destroyed.}{}{8}{}{120}{}
+{116}{Me want to see orb go boom.}{}{-7}{}{120}{}
+
+
+{120}{As you wish. It will take me but a short time longer.}{As you wish. It will take me but a short time longer.}{}{}{}{}
+{121}{[wait]}{}{1}{}{0}{play_effect( npc, pc )}
+
+
+{130}{Yes. It is good that thing has been removed from the world. Now remember, you have only four days to destroy Zuggtmoy. Go, with all haste.}{Yes. It is good that thing has been removed from the world. Now remember, you have only four days to destroy Zuggtmoy. Go, with all haste.}{}{}{}{}
+{131}{It shall be done. Farewell.}{}{8}{}{0}{}
+{132}{Me go do dat. Bye bye.}{}{-7}{}{0}{}
+
+
+{140}{Yes. You will have just four days to destroy her.}{Yes. You will have just four days to destroy her.}{}{}{}{}
+{141}{Then I will go look for the things I need to destroy it.}{}{8}{}{0}{}
+{142}{Me go get all dat stuff.}{}{-7}{}{0}{}
+
+
+{150}{That's an odd question. Ahh...Burne must have posed this question to you in the form of a puzzle. I don't think he would approve of it if I told you the answer. I believe he wants you to unravel the puzzle by logic.}{That's an odd question. Ahh...Burne must have posed this question to you in the form of a puzzle. I don't think he would approve of it if I told you the answer. I believe he wants you to unravel the puzzle by logic.}{}{150}{}{}
+{151}{Surely it would not hurt to help me win your master's favour. After all, I work in the service of Hommlet and I could also put in a good word for you when a suitable opportunity arises.}{}{8}{pc.skill_level_get(npc,skill_diplomacy) >= 12 and game.party[0].reputation_has( 15 )}{160}{}
+{152}{Can't the rules be bent a little?}{}{8}{}{170}{}
+
+
+{160}{I really don't know if I should. Oh, very well. I think I made 5 greetings, if I'm not mistaken. Just don't tell Burne that I said so.}{I really don't know if I should. Oh, very well. I think I made 5 greetings, if I'm not mistaken. Just don't tell Burne that I said so.}{}{150}{}{}
+{161}{Thank you and don't worry, my lips are sealed. I will take my leave now and leave you to your studies.}{}{8}{}{0}{} 
+
+
+{170}{I'm afraid not. Please let me go back to my duties.}{I'm afraid not. Please let me go back to my duties.}{}{170}{}{}
+{171}{E:}{}{1}{}{0}{}
+
+
+{180}{Whatever.}{Whatever.}{}{}{}{}
+{181}{E:}{}{1}{}{0}{}
+
+
+{190}{[she has a brief conversation with Burne, then returns]}{[she has a brief conversation with Burne, then returns]}{}{190}{}{}
+{191}{[continue]}{}{1}{}{210}{}
+
+
+{200}{Well, I have been feeling a bit stifled...okay, I will see if Burne will let me come along.}{Well, I have been feeling a bit stifled...okay, I will see if Burne will let me come along.}{}{}{}{}
+{201}{Great!}{}{1}{not pc.follower_atmax()}{190}{}
+{202}{Oops, my party is full. As soon as someone slips up though, I will come back for you: we always need cannon fod- I mean new recruits.}{}{8}{pc.follower_atmax()}{220}{}
+{203}{Oops party full. Me get you when someone take dirt nap.}{}{-7}{pc.follower_atmax()}{220}{}
+
+
+{210}{Okay, he has agreed, but it will cost you 50 gold pieces. You're getting off lightly, but I pointed out he would also be saving on my room and board while I'm gone, plus all the spell components I won't be using. [Whispers even lower] He really is cheap!}{Okay, he has agreed, but it will cost you 50 gold pieces. You're getting off lightly, but I pointed out he would also be saving on my room and board while I'm gone, plus all the spell components I won't be using. [Whispers even lower] He really is cheap!}{}{}{}{}
+{211}{I don't have that much, sorry.}{}{1}{pc.money_get() < 5000}{220}{}
+{212}{Okay, it's a deal!}{}{1}{pc.money_get() >= 5000}{230}{}
+{213}{Sorry, changed my mind.}{}{1}{}{220}{}
+
+
+{220}{[She rolls her eyes] Whatever.}{[She rolls her eyes] Whatever.}{}{}{}{}
+{221}{Yes, yes, whatever! That's the spirit!}{}{1}{}{0}{}
+{222}{E:}{}{1}{}{0}{}
+
+
+{230}{Great, let's go! I can't wait to use my magic in the field!}{Great, let's go! I can't wait to use my magic in the field!}{}{}{}{pc.follower_add(npc)}
+{231}{[exit]}{}{1}{game.global_vars[501] != 2}{0}{pc.money_adj(-5000)}
+{232}{[exit]}{}{1}{game.global_vars[501] == 2}{0}{}
+
+
+{240}{Whatever.}{Whatever.}{}{}{}{}
+{241}{[Continue.]}{}{1}{}{0}{switch_to_tarah( npc, pc, 280)}
+
+
+{250}{Something amiss?}{Something amiss?}{}{}{}{}
+{251}{I need you to leave.}{}{8}{npc.area != 1}{260}{}
+{252}{Me need Pishella out.}{}{-7}{npc.area != 1}{260}{}
+{253}{I need you to leave.}{}{8}{npc.area == 1}{270}{}
+{254}{Me need Pishella out.}{}{-7}{npc.area == 1}{270}{}
+{255}{I need to talk to you about your equipment.}{}{1}{}{290}{}
+{256}{Why is a sorceress training as a wizard anyway?}{}{1}{}{310}{}
+{257}{Burne says you can help me with the orb?}{}{8}{game.global_flags[358] == 1 and game.global_flags[359] == 0}{600}{}
+{258}{Bunny say you help me get rid of bad skull thing.}{}{-7}{game.global_flags[358] == 1 and game.global_flags[359] == 0}{600}{}
+{259}{Never mind.}{}{1}{}{0}{}
+
+
+{260}{You are making me mad on so many levels right now. Take me back to Burne's tower first, jerk, or at least to Hommlet.}{You are making me mad on so many levels right now. Take me back to Burne's tower first, jerk, or at least to Hommlet.}{}{}{}{}
+{261}{Oops, sorry, of course I will.}{}{1}{}{0}{}
+{262}{Watch your mouth - and your back.}{}{1}{}{0}{}
+
+
+{270}{Well okay, that was fun, but I would have liked to have kept more scrolls. And I really failed to see the educational benefits of some of the outfits you made me wear.}{Well okay, that was fun, but I would have liked to have kept more scrolls. And I really failed to see the educational benefits of some of the outfits you made me wear.}{}{}{}{}
+{271}{Trust me, they helped. They helped a lot.}{}{8}{}{280}{}
+{272}{Who said them for you?}{}{-7}{}{280}{}
+
+
+{280}{May the gods have mercy on you.}{May the gods have mercy on you.}{}{}{}{pc.follower_remove(npc)}
+{281}{Bye!}{}{1}{}{0}{}
+
+
+{290}{My equipment? What do you want me to wear now?}{My equipment? What do you want me to wear now?}{}{}{}{}
+{291}{Stop distracting me. I need you to hang on to the things I have given you, don't just sell them.}{}{8}{}{300}{pc.follower_remove( npc ); pc.follower_add( npc )}
+{292}{Me no want you sell the shiny things me give you - you hang on to them.}{}{-7}{}{300}{pc.follower_remove( npc ); pc.follower_add( npc )}
+{293}{Well, there is this corset I have in mind... we'll talk about it later.}{}{8}{}{0}{}
+{294}{Never mind.}{}{1}{}{0}{}
+
+
+{300}{Sure, I understand. Pretty soon I hope to be able to craft my own magical items, but I know you won't want me to sell these.}{Sure, I understand. Pretty soon I hope to be able to craft my own magical items, but I know you won't want me to sell these.}{}{}{}{}
+{301}{Thanks.}{}{1}{}{0}{}
+
+
+{310}{Well, I have always had magical powers, but Burne has taught me many new things. The way he explains it, anyone with the brains to grasp what is being done can cast spells, not just a few with innate ability.}{Well, I have always had magical powers, but Burne has taught me many new things. The way he explains it, anyone with the brains to grasp what is being done can cast spells, not just a few with innate ability.}{}{}{}{}
+{311}{That's what they say.}{}{1}{}{0}{}
+{312}{You need a far greater intellect than just 'anyone'.}{}{1}{pc.stat_level_get(stat_level_wizard) >= 1}{0}{}
+{313}{What a copout, I'll never do such a thing.}{}{1}{pc.stat_level_get(stat_level_sorcerer) >= 1}{0}{}
+
+
+{320}{You are making me mad on so many levels right now.}{You are making me mad on so many levels right now.}{}{}{}{}
+{321}{[Continue.]}{}{1}{}{0}{switch_to_tarah( npc, pc, 300)}
+
+
+{330}{They have the field this day!}{They have the field this day!}{}{}{}{}
+{331}{I need a healing potion.}{}{1}{game.global_vars[526] <= 7}{340}{game.global_vars[526] = game.global_vars[526] + 1}
+{332}{I need a healing potion.}{}{1}{game.global_vars[526] >= 8}{380}{}
+{333}{F:}{}{1}{}{0}{}
+
+
+{340}{As you wish.}{As you wish.}{}{}{}{create_item_in_inventory(8006,pc)}
+{341}{I'd like another.}{}{1}{game.global_vars[526] <= 7}{340}{game.global_vars[526] = game.global_vars[526] + 1}
+{342}{I'd like another.}{}{1}{game.global_vars[526] >= 8}{380}{}
+{343}{A:}{}{1}{}{0}{}
+
+
+{350}{Hello there.}{Hello there.}{}{}{}{}
+{351}{You want to rejoin, Pishella?}{}{1}{}{360}{}
+{352}{F:}{}{1}{}{0}{}
+
+
+{360}{I'm afraid not. I don't approve of your recreational animal-killing.}{I'm afraid not. I don't approve of your recreational animal-killing.}{}{360}{}{}
+{361}{Suit yourself.}{}{1}{}{0}{}
+{362}{E:}{}{1}{}{0}{}
+{363}{F:}{}{1}{}{0}{}
+
+
+{370}{Thank you for all you have done.}{Thank you for all you have done.}{}{}{}{}
+{371}{E:}{}{1}{}{0}{}
+
+
+{380}{I'm afraid not. I'm all out of them.}{I'm afraid not. I'm all out of them.}{}{}{}{}
+{381}{E:}{}{1}{}{0}{}
+
+
+{390}{Well, I have been feeling a bit stifled...okay, I will come along.}{Well, I have been feeling a bit stifled...okay, I will come along.}{}{}{}{}
+{391}{Great!}{}{1}{not pc.follower_atmax()}{230}{}
+{392}{Oops, my party is full. As soon as someone slips up though, I will come back for you: we always need cannon fod- I mean new recruits.}{}{8}{pc.follower_atmax()}{220}{}
+{393}{Oops party full. Me get you when someone take dirt nap.}{}{-7}{pc.follower_atmax()}{220}{}
+
+
+{400}{Please let me go back to my duties.}{Please let me go back to my duties.}{}{}{}{}
+{401}{E:}{}{1}{}{0}{}
+
+
+{500}{I shall light a candle for you.}{I shall light a candle for you.}{}{}{}{}
+
+
+{510}{If I write a story about our adventures, I'm leaving out this part.}{If I write a story about our adventures, I'm leaving out this part.}{}{}{}{}
+
+
+{600}{Yes, he is letting me handle this very important task. It shows he's really starting to trust me! Now, if you just bring me all the proper elements, I can take care of the destruction.}{Yes, he is letting me handle this very important task. It shows he's really starting to trust me! Now, if you just bring me all the proper elements, I can take care of the destruction.}{}{}{}{}
+{601}{What do you need?}{}{8}{}{70}{}
+{602}{What you need?}{}{-7}{}{70}{}
+{603}{This is good to know. I will do it later.}{}{8}{}{0}{}
+{604}{Me do later.}{}{-7}{}{0}{}
+{605}{I have all the supplies with me here. Let us begin. [hand her all the necessary elements]}{}{8}{anyone( pc.group_list(), "has_item", 2208 ) and anyone( pc.group_list(), "has_item", 4003 ) and anyone( pc.group_list(), "has_item", 4004 ) and anyone( pc.group_list(), "has_item", 3603 ) and anyone( pc.group_list(), "has_item", 2203 )}{640}{pishella_destroy_skull_while_party_npc(pc,npc)}
+{606}{Me gots all we need. Here. [hand her all the necessary elements]}{}{-7}{anyone( pc.group_list(), "has_item", 2208 ) and anyone( pc.group_list(), "has_item", 4003 ) and anyone( pc.group_list(), "has_item", 4004 ) and anyone( pc.group_list(), "has_item", 3603 ) and anyone( pc.group_list(), "has_item", 2203 )}{640}{pishella_destroy_skull_while_party_npc(pc,npc)}
+
+{620}{I can help, but I will need a scroll of gust of wind, a scroll of fireball, a masterwork maul, and finally, some holy water. Bring me these things and it can be destroyed.}{I can help, but I will need a scroll of gust of wind, a scroll of fireball, a masterwork maul, and finally, some holy water. Bring me these things and it can be destroyed.}{}{}{}{}
+{621}{I shall work on getting those things for you, Pishella.}{}{8}{}{0}{}
+{622}{Me go get all dat stuff.}{}{-7}{}{0}{}
+{623}{I have all the supplies with me here. Let us begin. [hand her all the necessary elements]}{}{8}{anyone( pc.group_list(), "has_item", 2208 ) and anyone( pc.group_list(), "has_item", 4003 ) and anyone( pc.group_list(), "has_item", 4004 ) and anyone( pc.group_list(), "has_item", 3603 ) and anyone( pc.group_list(), "has_item", 2203 )}{640}{pishella_destroy_skull_while_party_npc(pc,npc)}
+{624}{Me gots all we need. Here. [hand her all the necessary elements]}{}{-7}{anyone( pc.group_list(), "has_item", 2208 ) and anyone( pc.group_list(), "has_item", 4003 ) and anyone( pc.group_list(), "has_item", 4004 ) and anyone( pc.group_list(), "has_item", 3603 ) and anyone( pc.group_list(), "has_item", 2203 )}{640}{pishella_destroy_skull_while_party_npc(pc,npc)}
+
+{640}{[She gathers the elements and starts looking through the scrolls. Then she looks up at you.] It shall be destroyed shortly. Thank you for all you have done.}{[She gathers the elements and starts looking through the scrolls. Then she looks up at you.] It shall be destroyed shortly. Thank you for all you have done.}{}{}{}{destroy_orb( npc, pc ); game.global_flags[359] = 1}
+{641}{You're welcome. You may proceed.}{}{8}{}{0}{play_effect( npc, pc )}
+{642}{Bye skully!}{}{-7}{}{0}{play_effect( npc, pc )}
+{643}{Now what will be the result of destroying that thing?}{}{8}{}{660}{}
+{644}{What happen when dat thing gone?}{}{-7}{}{660}{}
+
+{660}{Zuggtmoy, the creator of the orb, will be severely weakened for four days. Iuz will even suffer for his assistance in its creation. After four days, Zuggtmoy will be banished to her Abyssal Plane, but only for a short time. We have four days to kill her!}{Zuggtmoy, the creator of the orb, will be severely weakened for four days. Iuz will even suffer for his assistance in its creation. After four days, Zuggtmoy will be banished to her Abyssal Plane, but only for a short time. We have four days to kill her!}{}{}{}{}
+{661}{Do not fear. Zuggtmoy will be destroyed within four days. You may destroy the skull now.}{}{8}{}{0}{play_effect( npc, pc )}
+{662}{Zuggles dead by four!}{}{-7}{}{0}{play_effect( npc, pc )}
+{663}{Then we shall do our best. But let's get that thing destroyed first.}{}{8}{}{0}{play_effect( npc, pc )}
+{664}{We try dat.}{}{-7}{}{0}{play_effect( npc, pc )}
+
+
+{12014}{Ugh...}{Ugh...}{}{}{}{}
+{12020}{I'll do my best.}{I'll do my best.}{}{}{}{}
+{12022}{Subtlety is a virtue.}{Subtlety is a virtue.}{}{}{}{}
+{12029}{They have the field this day!}{They have the field this day!}{}{}{}{}
+{12054}{I need healing!}{I need healing!}{}{}{}{}
+{12055}{If I have to take another step, my feet will fall off.}{If I have to take another step, my feet will fall off.}{}{}{}{}
+{12056}{May your final journey be a peaceful one.}{May your final journey be a peaceful one.}{}{}{}{}
+{12057}{Surrender!}{Surrender!}{}{}{}{}
+{12094}{I think I can feel mould growing on my feet.}{I think I can feel mould growing on my feet.}{}{}{}{}
+
+
+{20000}{STOP!}{STOP!}{}{}{}{}
+
+
+{21000}{What the hell...?}{What the hell...?}{}{}{}{}
+
+
+{22000}{I don't think I want to be around you anymore.}{I don't think I want to be around you anymore.}{}{}{}{game.global_vars[911] = 32}

@@ -22,6 +22,7 @@ namespace gfx {
 	class EncodedAnimId;
 	}
 
+
 struct Objects : temple::AddressTable {
 	friend struct LegacyCritterSystem;
 
@@ -39,9 +40,13 @@ struct Objects : temple::AddressTable {
 	void setInt32(objHndl obj, obj_f field, uint32_t dataIn);
 	int32_t getArrayFieldInt32(objHndl obj, obj_f field, uint32_t index);
 	objHndl getArrayFieldObj(objHndl obj, obj_f field, uint32_t index);
+	int GetAasHandle(objHndl handle);
 	gfx::AnimatedModelPtr GetAnimHandle(objHndl obj);
 	gfx::AnimatedModelParams GetAnimParams(objHndl obj);
+
+	void ClearAnim(objHndl handle);
 	void SetAnimId(objHndl obj, gfx::EncodedAnimId id);
+	bool HasAnimId(objHndl obj, gfx::EncodedAnimId id);
 	gfx::EncodedAnimId GetIdleAnim(objHndl obj);
 	bool IsDoorOpen(objHndl obj);
 	PortalFlag GetPortalFlags(objHndl obj) {
@@ -172,9 +177,11 @@ struct Objects : temple::AddressTable {
 
 	/*
 		Calculates the rotation for obj from when it is facing object "to" directly.
+		The angle is defined differently than the normal x,y polar coordinate - 
+	    it increases ** clock wise **, and 0 is when the facing is towards the top of the screen.
 	*/
 	float GetRotationTowards(objHndl from, objHndl to);
-
+	
 	/*
 		Fades an object to a certain opacity, in time step tickTimeMs and opacity quantum tickQuantum
 		callbackMode:
@@ -184,7 +191,7 @@ struct Objects : temple::AddressTable {
 		3 - (should be as 1, but isn't??), will also poop items
 	*/
 	void FadeTo(objHndl obj, int targetOpacity, int tickTimeMs, int tickQuantum, int callbackMode = 0) const;
-	
+	void SetTransparency(objHndl handle, int amt);
 	void SetFlag(objHndl obj, ObjectFlag flag) {
 		_SetFlag(obj, flag);
 	}
@@ -207,6 +214,11 @@ struct Objects : temple::AddressTable {
 		return _SecretdoorDetect(door, viewer);
 	}
 
+	bool IsUndetectedSecretDoor(objHndl handle) {
+		auto flags = GetSecretDoorFlags(handle);
+		return (flags & OSDF_SECRET_DOOR) && !(flags & OSDF_SECRET_DOOR_FOUND);
+	}
+
 	SecretDoorFlag GetSecretDoorFlags(objHndl handle);
 
 	bool HasSpellEffects(objHndl obj) {
@@ -222,6 +234,7 @@ struct Objects : temple::AddressTable {
 	}
 
 	void Destroy(objHndl obj);
+
 
 #pragma region Common
 	ObjectId GetId(objHndl handle);
@@ -246,6 +259,9 @@ struct Objects : temple::AddressTable {
 	bool IsEquipmentType(ObjectType type) const {
 		return type >= obj_t_weapon && type <= obj_t_generic || type == obj_t_bag;
 	}
+	bool IsStaticType(ObjectType type) const {
+		return type != obj_t_projectile && type != obj_t_container && !IsCritterType(type) && !IsEquipmentType(type);
+	}
 	bool IsNPC(objHndl obj) {
 		return GetType(obj) == obj_t_npc;
 	}
@@ -253,10 +269,18 @@ struct Objects : temple::AddressTable {
 	std::string GetDisplayName(objHndl obj, objHndl observer);
 	bool IsStatic(objHndl handle);
 
+	/**
+	 * Is the object not targetable by mouse?
+	 * Was @ 1001FCB0
+	 */
+	bool IsUntargetable(objHndl handle);
+
 	int StatLevelGet(objHndl obj, Stat stat);
 	int StatLevelGet(objHndl obj, Stat stat, int statArg);  // WIP currently just handles stat_caster_level expansion
 	int StatLevelGetBase(objHndl obj, Stat stat); // can return floating point numbers too (e.g. movement speed)
+	int StatLevelGetBaseWithModifiers(objHndl obj, Stat stat, DispIoBonusList*evtObj = nullptr); // this returns the base stat including racial modifiers and such
 	int StatLevelSetBase(objHndl obj, Stat stat, int value);
+	int32_t GetMoneyAmount(objHndl handle); // get total money amount, in Copper Pieces; for PCs, returns party money, for containers, gets total money inside, and for coins, gets the quantity and multiplies by worth
 #pragma endregion
 
 #pragma region Dispatcher Stuff
@@ -266,9 +290,12 @@ struct Objects : temple::AddressTable {
 
 	int GetModFromStatLevel(int statLevel); // returns modifier from stat level e.g. Dex 15 -> +2
 	bool IsPortalOpen(objHndl obj);
+	BOOL IsPortalLocked(const objHndl& handle);
 	
 	int GetTempId(objHndl handle);
 	int GetAlpha(objHndl handle);
+	
+
 	static int IsCritterProne(objHndl handle);
 #pragma endregion
 

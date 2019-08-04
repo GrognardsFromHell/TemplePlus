@@ -10,6 +10,27 @@ struct JumpPoint {
 	locXY location;
 };
 
+struct LgcyJumpPoint {
+	int id;
+	char* mapName;
+	int mapId;
+	uint32_t field_C;
+	locXY location;
+};
+
+struct DayNightXfer
+{
+	ObjectId objId;
+	int defaultMapMaybe; // possibly "initial map"
+	int dayMapId;
+	LocAndOffsets loc;
+	int nightMapId;
+	int field34;
+	LocAndOffsets nightLoc;
+	DayNightXfer* next;
+	int field4C;
+};
+
 class Maps {
 public:
 	vector<int> GetVisited();
