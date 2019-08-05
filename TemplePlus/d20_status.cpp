@@ -194,6 +194,10 @@ void D20StatusSystem::D20StatusRefresh(objHndl objHnd)
 	if (dispatch.dispatcherValid(dispatcher)){
 		dispatch.PackDispatcherIntoObjFields(objHnd, dispatcher);
 		dispatch.DispatcherClearPermanentMods(dispatcher);
+		auto psiptsCondStruct = conds.GetByName("Psi Points");
+		if (psiptsCondStruct) {
+			_ConditionAddToAttribs_NumArgs0(dispatcher, psiptsCondStruct); // args will be set from D20StatusInitFromInternalFields if this condition has already been previously applied
+		}
 		initClass(objHnd);
 		initRace(objHnd);
 		initFeats(objHnd);
