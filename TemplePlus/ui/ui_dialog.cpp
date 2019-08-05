@@ -73,13 +73,16 @@ protected:
 	uint32_t& mFlags = temple::GetRef<uint32_t>(0x10BEA5F4);
 	int &lineCount = temple::GetRef<int>(0x10BEC194);
 	DialogMini *& dlgLineList = temple::GetRef<DialogMini*>(0x10BEC1A4);
-	
+	char **mResponseTexts = temple::GetPointer<char*>(0x10BE9B38); // size 5 array
+	char ** mResponseNumbers = temple::GetPointer<char*>(0x10BEA5F8); // size 5 array
+	int *mSkillsUsedInReply = temple::GetPointer<int>(0x10BEC214); // size 5 array
 
 	LgcyWidgetId& mWndId = temple::GetRef<LgcyWidgetId>(0x10BEA2E4);
-	LgcyWidgetId &responseWndId = temple::GetRef< LgcyWidgetId>(0x10BEC204);
+	LgcyWidgetId &mResponseWndId = temple::GetRef< LgcyWidgetId>(0x10BEC204);
 	LgcyWidgetId &wnd2Id = temple::GetRef<LgcyWidgetId>(0x10BEC198);
 	LgcyWidgetId &mScrollbarId = temple::GetRef<LgcyWidgetId>(0x10BEC19C);
 	LgcyWidgetId &mHeadBtnId = temple::GetRef<LgcyWidgetId>(0x10BEC210);
+	LgcyWidgetId *mReplyBtnIds = temple::GetPointer<LgcyWidgetId>(0x10BEA8A8); // size 5 array
 
 	int & scrollbarYmax = temple::GetRef<int>(0x10BEC2D4);
 	int & scrollbarY = temple::GetRef<int>(0x10BEA5F0);
@@ -94,16 +97,26 @@ protected:
 	ImgFile *& backdropMini2 = temple::GetRef<ImgFile*>(0x10BEC208);
 	ImgFile *& backdropMini3 = temple::GetRef<ImgFile*>(0x10BEC2D0);
 	ImgFile *& backdropMini  = temple::GetRef<ImgFile*>(0x10BE9B4C); // chooses from one of the above 3
-	
-	TigTextStyle yellowStyle = TigTextStyle::standardWhite;
-	TigTextStyle darkGrayStyle = TigTextStyle::standardWhite;
+	ImgFile* &mResponseBarImg = temple::GetRef<ImgFile*>(0x10BEC200);
+	int mSkillTextures[5] = {0,}; //= temple::GetPointer<int>(0x10BEA5D4); //size 5 array;
+
+	TigTextStyle yellowStyle, darkGrayStyle 
+	, replyStyleNormal 
+	, replyStyleHovered 
+	, replyStylePressed 
+	, skilledReplyNormal 
+	, skilledReplyHovered 
+	, skilledReplyPressed ;
 
 	int & historyWndX = temple::GetRef<int>(0x10BEA2E0);
 	int & historyWndY = temple::GetRef<int>(0x10BE9FF0);
 	int & textMinY = temple::GetRef<int>(0x10BEC20C);
 
 	TigRect &mHeadBtnTgtRect = temple::GetRef<TigRect>(0x10BEC334);
-	
+	TigRect mResponseRects[5]; //= temple::GetPointer<TigRect>(0x10BE9A38); //size 5 array
+	TigRect mResponseNumberRects[5]; // = temple::GetPointer<TigRect>(0x10BEA8C0); //size 5 array;
+	TigRect mSkillIconRects[5]; //= temple::GetPointer<TigRect>(0x10BE9F50); //size 5 array;
+
 
 	// std::unique_ptr<WidgetContainer> mWnd;
 
@@ -172,8 +185,15 @@ class UiDialogStyles {
 	public:
 		static ColorRect pureYellow;
 		static ColorRect darkGray;
-		static TigTextStyle yellowStyle;
-		static TigTextStyle darkGrayStyle;
+
+		static ColorRect brightYellow;
+		static ColorRect brightYellow2;
+		static ColorRect brightYellow3;
+
+		static ColorRect pureGreen;
+		static ColorRect darkGreen;
+		static ColorRect pureWhite;
+
 		UiDialogStyles();
 };
 
@@ -210,10 +230,24 @@ void UiDlg::ShowTextBubble(objHndl speaker, objHndl speakingTo, const string &te
 
 UiDialogImpl::UiDialogImpl(const UiSystemConf & config)
 {
-	yellowStyle.colors2 = yellowStyle.colors4 = yellowStyle.textColor = yellowStyle.shadowColor = &UiDialogStyles::pureYellow;
-	darkGrayStyle.colors2 = darkGrayStyle.colors4 = darkGrayStyle.textColor = darkGrayStyle.shadowColor = &UiDialogStyles::darkGray;
-	yellowStyle.tracking = darkGrayStyle.tracking = 3;
-	yellowStyle.field2c = darkGrayStyle.field2c = -1;
+	TigTextStyle templateStyle = TigTextStyle::standardWhite;
+	templateStyle.tracking = 3;
+	templateStyle.field2c = -1;
+
+	yellowStyle = darkGrayStyle = replyStylePressed = replyStyleHovered = replyStyleNormal
+		= skilledReplyNormal = skilledReplyHovered = skilledReplyPressed = templateStyle;
+
+	yellowStyle.SetColors(&UiDialogStyles::pureYellow);
+	darkGrayStyle.SetColors(&UiDialogStyles::darkGray);
+
+	replyStyleNormal.SetColors(&UiDialogStyles::pureGreen);
+	replyStyleHovered.SetColors(&UiDialogStyles::darkGreen);
+	replyStylePressed.SetColors(&UiDialogStyles::pureWhite);
+
+	skilledReplyNormal.SetColors(&UiDialogStyles::brightYellow);
+	skilledReplyHovered.SetColors(&UiDialogStyles::brightYellow2);
+	skilledReplyPressed.SetColors(&UiDialogStyles::brightYellow3);
+	
 
 	WidgetsInit(config.width, config.height);
 }
@@ -251,7 +285,7 @@ BOOL UiDialogImpl::WidgetsInit(int w, int h)
 
 		auto flags = dlgImpl->mFlags;
 		auto wnd = uiManager->GetWindow(widId);
-		auto responseWnd = uiManager->GetWindow(dlgImpl->responseWndId);
+		auto responseWnd = uiManager->GetWindow(dlgImpl->mResponseWndId);
 		
 		// Render background image
 		auto x = wnd->x, y = wnd->y + 18;
@@ -376,7 +410,139 @@ BOOL UiDialogImpl::WidgetsInit(int w, int h)
 /* 0x1014D5D0 */
 BOOL UiDialogImpl::ResponseWidgetsInit(int w, int h)
 {
-	// TODO
+	
+	static LgcyWindow responseWnd(16, h - 221, 611, 139);
+	responseWnd.flags = 1;
+	responseWnd.render = [](int id){
+		auto flags = dlgImpl->mFlags;
+		if (flags & UiDialogFlags::DialogHistoryShow){
+			auto wnd = uiManager->GetWindow(id);
+			if (!wnd) return;
+			RenderHooks::RenderImgFile(dlgImpl->mResponseBarImg, wnd->x, wnd->y);
+		}
+	};
+	responseWnd.handleMessage = [](int id, TigMsg*msg) {
+		if (msg->type == TigMsgType::MOUSE || msg->type == TigMsgType::WIDGET)
+			return TRUE;
+		if (msg->type == TigMsgType::CHAR){
+			auto chr = msg->arg1 & 0xFF;
+			if (chr >= '1' && chr <= '5'){
+				int responseIdx = chr - '1';
+				if (responseIdx < dlgImpl->mSlot.state.pcLines){
+					//uiDialog->PcReplyLineExecute(dlgImpl->mSlot, idx);
+					auto result = temple::GetRef<BOOL(__cdecl)(LgcyWidgetId, TigMsg*)>(0x1014D510)(id, msg);
+					return result;
+				}
+				return TRUE;
+			}
+		}
+		return FALSE;
+	}; 
+	mResponseWndId = uiManager->AddWindow(responseWnd);
+	
+	const int REPLY_COUNT = 5;
+	const int REPLY_TEXT_W = 559;
+	const int REPLY_HEIGHT = 23;
+	for (auto i = 0; i < REPLY_COUNT; i++) {
+		auto y = 9 + 25 * i;
+		auto x = 1;
+		mSkillIconRects[i] = TigRect(x + responseWnd.x + 2, y + responseWnd.y + 1, 15, 15);
+		mResponseRects[i] = TigRect(x + 36, y, REPLY_TEXT_W, REPLY_HEIGHT);
+		mResponseNumberRects[i] = TigRect(x + 17, y, 18, REPLY_HEIGHT);
+		mSkillsUsedInReply[i] = 0;
+		mResponseTexts[i] = nullptr;
+		mReplyBtnIds[i] = responseWnd.AddChildButton("Dialog reply btn", 1, y, 594, REPLY_HEIGHT,
+			[](int id) {
+			auto idx = WidgetIdIndexOf(id, dlgImpl->mReplyBtnIds, 5);
+			if (idx <= -1 || idx >= /*REPLY_COUNT*/ 5) return;
+			if (!dlgImpl->mResponseTexts[idx]){
+				return;
+			}
+			UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+
+			auto state = uiManager->GetButtonState(id);
+			auto style = &dlgImpl->replyStyleNormal;
+			auto skillUsed = dlgImpl->mSkillsUsedInReply[idx];
+			if (skillUsed){
+				switch (state) {
+				case LgcyButtonState::Normal:
+				case LgcyButtonState::Disabled:
+				case LgcyButtonState::Released:
+					style = &dlgImpl->skilledReplyNormal;
+					break;
+				case LgcyButtonState::Hovered:
+					style = &dlgImpl->skilledReplyHovered;
+					break;
+				case LgcyButtonState::Down:
+					style = &dlgImpl->skilledReplyPressed;
+					break;
+				default:
+					style = &dlgImpl->skilledReplyNormal;
+					break;
+				}
+			}
+			else{
+				switch (state) {
+				case LgcyButtonState::Normal:
+				case LgcyButtonState::Disabled:
+				case LgcyButtonState::Released:
+					style = &dlgImpl->replyStyleNormal;
+					break;
+				case LgcyButtonState::Hovered:
+					style = &dlgImpl->replyStyleHovered;
+					break;
+				case LgcyButtonState::Down:
+					style = &dlgImpl->replyStylePressed;
+					break;
+				default:
+					style = &dlgImpl->replyStyleNormal;
+					break;
+				}
+			}
+
+			UiRenderer::DrawTextInWidget(dlgImpl->mResponseWndId, 
+				dlgImpl->mResponseTexts[idx],
+				dlgImpl->mResponseRects[idx], *style);
+			UiRenderer::DrawTextInWidget(dlgImpl->mResponseWndId,
+				dlgImpl->mResponseNumbers[idx],
+				dlgImpl->mResponseNumberRects[idx], *style);
+			UiRenderer::PopFont();
+
+			if (skillUsed){
+				auto texId = dlgImpl->mSkillTextures[skillUsed];
+				static TigRect srcRect(1, 1, 15, 15);
+				auto destRect = dlgImpl->mSkillIconRects[skillUsed];
+				UiRenderer::DrawTexture(texId, destRect, srcRect);
+			}
+
+		},
+			[](int id, TigMsg*msg) {
+			if (!msg->IsWidgetEvent(TigMsgWidgetEvent::MouseReleased)) {
+				return FALSE;
+			}
+			if (helpSys.PresentWikiHelpIfActive(19)) {
+				return TRUE;
+			}
+
+			auto idx = WidgetIdIndexOf(id, dlgImpl->mReplyBtnIds, /*REPLY_COUNT*/5);
+			if (idx <= -1 || idx >= 5 /*REPLY_COUNT*/ || idx >= dlgImpl->mSlot.state.pcLines)
+				return TRUE;
+
+			auto result = temple::GetRef<BOOL(__cdecl)(int, TigMsg*)>(0x1014D560)(id, msg);
+			//uiDialog->PcReplyLineExecute(dlgImpl->mSlot, idx);
+			return result;
+		});
+	}
+
+	mResponseBarImg = uiAssets->LoadImg("art\\interface\\dialog\\response_split_bar.img");
+	for (auto i=0; i<6; ++i){
+		const char ** iconFilename = temple::GetPointer<const char*>(0x102FA978);
+		if (iconFilename[i]){
+			textureFuncs.RegisterTexture(iconFilename[i], &mSkillTextures[i]);
+		}
+	}
+
+
 	return TRUE;
 }
 
@@ -384,4 +550,12 @@ BOOL UiDialogImpl::ResponseWidgetsInit(int w, int h)
 #pragma region UI Styles
 ColorRect UiDialogStyles::pureYellow = ColorRect(XMCOLOR(0xFFffFF00));
 ColorRect UiDialogStyles::darkGray = ColorRect(XMCOLOR(0xFF666666));
+
+ColorRect UiDialogStyles::pureGreen = ColorRect(XMCOLOR(0xFF00FF00));
+ColorRect UiDialogStyles::darkGreen = ColorRect(XMCOLOR(0xFF99FF99));
+ColorRect UiDialogStyles::pureWhite = ColorRect(XMCOLOR(0xFFffFFff));
+
+ColorRect UiDialogStyles::brightYellow  = ColorRect(XMCOLOR(0xFFE4CE3E));
+ColorRect UiDialogStyles::brightYellow2 = ColorRect(XMCOLOR(0xFFFEFE19));
+ColorRect UiDialogStyles::brightYellow3 = ColorRect(XMCOLOR(0xFFFEFF00));
 #pragma endregion styles
