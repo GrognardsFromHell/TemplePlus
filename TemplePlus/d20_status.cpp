@@ -120,7 +120,10 @@ void D20StatusSystem::D20StatusInit(objHndl objHnd)
 		if (psiptsCondStruct){
 			_ConditionAddToAttribs_NumArgs0(dispatcher, psiptsCondStruct); // args will be set from D20StatusInitFromInternalFields if this condition has already been previously applied
 		}
-		
+		auto psionicFocusCondStruct = conds.GetByName("Psionic Focus");
+		if (psionicFocusCondStruct) {
+			_ConditionAddToAttribs_NumArgs0(dispatcher, psionicFocusCondStruct); // args will be set from D20StatusInitFromInternalFields if this condition has already been previously applied
+		}
 
 		initClass(objHnd);
 
@@ -197,6 +200,10 @@ void D20StatusSystem::D20StatusRefresh(objHndl objHnd)
 		auto psiptsCondStruct = conds.GetByName("Psi Points");
 		if (psiptsCondStruct) {
 			_ConditionAddToAttribs_NumArgs0(dispatcher, psiptsCondStruct); // args will be set from D20StatusInitFromInternalFields if this condition has already been previously applied
+		}
+		auto psionicFocusCondStruct = conds.GetByName("Psionic Focus");
+		if (psionicFocusCondStruct) {
+			_ConditionAddToAttribs_NumArgs0(dispatcher, psionicFocusCondStruct); // args will be set from D20StatusInitFromInternalFields if this condition has already been previously applied
 		}
 		initClass(objHnd);
 		initRace(objHnd);
