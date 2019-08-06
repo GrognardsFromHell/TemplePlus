@@ -64,7 +64,8 @@ public:
 	void DialogScrollbarReset();
 protected:
 	BOOL WidgetsInit(int w, int h);
-	BOOL ResponseWidgetsInit(int w, int h); // todo
+	BOOL ResponseWidgetsInit(int w, int h);
+	BOOL DummyWndInit(int w, int h);
 
 
 	DialogSlot & mSlot = temple::GetRef<DialogSlot>(0x10BEA918);
@@ -79,7 +80,7 @@ protected:
 
 	LgcyWidgetId& mWndId = temple::GetRef<LgcyWidgetId>(0x10BEA2E4);
 	LgcyWidgetId &mResponseWndId = temple::GetRef< LgcyWidgetId>(0x10BEC204);
-	LgcyWidgetId &wnd2Id = temple::GetRef<LgcyWidgetId>(0x10BEC198);
+	LgcyWidgetId &mDummyWndId = temple::GetRef<LgcyWidgetId>(0x10BEC198);
 	LgcyWidgetId &mScrollbarId = temple::GetRef<LgcyWidgetId>(0x10BEC19C);
 	LgcyWidgetId &mHeadBtnId = temple::GetRef<LgcyWidgetId>(0x10BEC210);
 	LgcyWidgetId *mReplyBtnIds = temple::GetPointer<LgcyWidgetId>(0x10BEA8A8); // size 5 array
@@ -211,8 +212,8 @@ void UiDialogImpl::ShowDialogWidgets()
 {
 	uiSystems->GetInGame().ResetInput();
 	
-	uiManager->SetHidden(wnd2Id, false);
-	uiManager->BringToFront(wnd2Id);
+	uiManager->SetHidden(mDummyWndId, false);
+	uiManager->BringToFront(mDummyWndId);
 	// temple::GetRef<void(__cdecl)()>(0x1014C340)();
 }
 
@@ -250,6 +251,7 @@ UiDialogImpl::UiDialogImpl(const UiSystemConf & config)
 	
 
 	WidgetsInit(config.width, config.height);
+
 }
 
 /* 0x1014BDF0 */
@@ -544,6 +546,29 @@ BOOL UiDialogImpl::ResponseWidgetsInit(int w, int h)
 
 
 	return TRUE;
+}
+
+BOOL UiDialogImpl::DummyWndInit(int w, int h)
+{
+	// This is a dummy window. Its purpose is to catch mouse clicks :)
+
+	static LgcyWindow dummyWnd(0, 0, w, h);
+	dummyWnd.flags = 1;
+	dummyWnd.render = [](int widId){
+		// this is a dummy window
+	};
+	dummyWnd.handleMessage = [](int widId, TigMsg* msg) {
+
+		if (msg->type == TigMsgType::KEYSTATECHANGE) {
+			return msg->arg1 == 1? TRUE: FALSE;
+		}
+		if (msg->type == TigMsgType::CHAR) {
+			return FALSE;
+		}
+		return TRUE;
+	};
+	mDummyWndId = uiManager->AddWindow(dummyWnd);
+
 }
 
 
