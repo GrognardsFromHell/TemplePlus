@@ -465,6 +465,7 @@ void UiManager::AddWindow(LgcyWidgetId id)
 	BringToFront(id);
 }
 
+/* 0x101F8F60 */
 void UiManager::RemoveWindow(LgcyWidgetId id)
 {
 	for (auto it = mActiveWindows.begin(); it != mActiveWindows.end(); ) {
@@ -561,6 +562,7 @@ void UiManager::SetHidden(LgcyWidgetId id, bool hidden)
 
 }
 
+/* 0x101F9420 */
 void UiManager::RemoveWidget(LgcyWidgetId id)
 {
 	auto it = mActiveWidgets.find(id);

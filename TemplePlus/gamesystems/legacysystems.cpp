@@ -803,6 +803,27 @@ bool ScriptSystem::ReadEncounterQueue(GameSystemSaveFile * saveFile, std::vector
 	return true;
 }
 
+using DialogBubbleFcn = void (__cdecl)(objHndl, objHndl, char*, int);
+using DialogFcn = void(__cdecl)(objHndl, objHndl, int, int, int);
+void ScriptSystem::SetDialogFuncs(void(__cdecl* dialogCb)(objHndl, objHndl, int, int, int),
+	void(__cdecl* dialogBubbleCb)(objHndl, objHndl, char*, int)){
+	{
+		auto &mPythonDialogCallback = temple::GetRef<DialogFcn*>(0x103073AC);
+		mPythonDialogCallback = dialogCb;
+	}
+
+	{
+		auto &mScriptedDialogCb = temple::GetRef<DialogBubbleFcn*>(0x103073BC);
+		mScriptedDialogCb = dialogBubbleCb;
+	}
+
+	{
+		auto &mFloatLineCb = temple::GetRef<DialogBubbleFcn*>(0x10BCA768);
+		mFloatLineCb = dialogBubbleCb;
+	}
+
+}
+
 //*****************************************************************************
 //* Level
 //*****************************************************************************
@@ -1253,6 +1274,20 @@ void AISystem::AddAiTimer(objHndl handle)
 {
 	static auto ai_schedule_npc_timer = temple::GetPointer<void(objHndl)>(0x1005d5e0);
 	ai_schedule_npc_timer(handle);
+}
+
+void AISystem::SetDialogFuncs(void(__cdecl * endDialogCb)(objHndl, int), 
+	void(__cdecl * dialogBubbleCb)(objHndl, objHndl, char *, int))
+{
+	{
+		auto & mDialogEnder = temple::GetRef<void(__cdecl *)(objHndl, int)>(0x10AA4BC8);
+		mDialogEnder = endDialogCb;
+	}
+
+	{
+		auto & mDialogPlayer = temple::GetRef<void(__cdecl *)(objHndl, objHndl, char *, int)>(0x10AA73B0);
+		mDialogPlayer = dialogBubbleCb;
+	}
 }
 
 //*****************************************************************************

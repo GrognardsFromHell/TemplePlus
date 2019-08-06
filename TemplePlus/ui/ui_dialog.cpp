@@ -5,6 +5,7 @@
 #include "ui.h"
 #include "tig/tig_font.h"
 #include "tig/tig_msg.h"
+#include "gamesystems/gamesystems.h"
 #include "gamesystems/d20/d20_help.h"
 #include "widgets/widgets.h"
 #include "ui_systems.h"
@@ -14,6 +15,8 @@
 #include "tig/tig_texture.h"
 #include "ui_render.h"
 #include "graphics/render_hooks.h"
+#include <map>
+#include "gamesystems/legacysystems.h"
 
 UiDlg* uiDialog = nullptr;
 UiDialogImpl * dlgImpl = nullptr;
@@ -62,9 +65,14 @@ public:
 	UiDialogImpl(const UiSystemConf &config);
 
 	void DialogScrollbarReset();
+	
 protected:
 	BOOL WidgetsInit(int w, int h);
+	void WidgetsFree();
+
 	BOOL ResponseWidgetsInit(int w, int h);
+	void ResponseWidgetsFree();
+
 	BOOL DummyWndInit(int w, int h);
 
 
@@ -72,10 +80,11 @@ protected:
 
 	int & mIsActive = temple::GetRef<int>(0x10BEC348);
 	uint32_t& mFlags = temple::GetRef<uint32_t>(0x10BEA5F4);
-	int &lineCount = temple::GetRef<int>(0x10BEC194);
-	DialogMini *& dlgLineList = temple::GetRef<DialogMini*>(0x10BEC1A4);
+	int &mLineCount = temple::GetRef<int>(0x10BEC194);
+	DialogMini *& mDlgLineList = temple::GetRef<DialogMini*>(0x10BEC1A4);
+	DialogMini *& mDlgLineList2 = temple::GetRef<DialogMini*>(0x10BEC1A0);
 	char **mResponseTexts = temple::GetPointer<char*>(0x10BE9B38); // size 5 array
-	char ** mResponseNumbers = temple::GetPointer<char*>(0x10BEA5F8); // size 5 array
+	std::map<int, std::string> mResponseNumbers; // = temple::GetPointer<char*>(0x10BEA5F8); // size 5 array
 	int *mSkillsUsedInReply = temple::GetPointer<int>(0x10BEC214); // size 5 array
 
 	LgcyWidgetId& mWndId = temple::GetRef<LgcyWidgetId>(0x10BEA2E4);
@@ -117,6 +126,8 @@ protected:
 	TigRect mResponseRects[5]; //= temple::GetPointer<TigRect>(0x10BE9A38); //size 5 array
 	TigRect mResponseNumberRects[5]; // = temple::GetPointer<TigRect>(0x10BEA8C0); //size 5 array;
 	TigRect mSkillIconRects[5]; //= temple::GetPointer<TigRect>(0x10BE9F50); //size 5 array;
+	int &mMusicVolume = temple::GetRef<int>(0x10BEA8A4);
+	
 
 
 	// std::unique_ptr<WidgetContainer> mWnd;
@@ -132,26 +143,44 @@ protected:
 //* Dlg-UI
 //*****************************************************************************
 
+/* 0x1014dd40 */
 UiDlg::UiDlg(const UiSystemConf &config) {
-	auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x1014dd40);
-	if (!startup(&config)) {
-		throw TempleException("Unable to initialize game system Dlg-UI");
-	}
 	mImpl = std::make_unique<UiDialogImpl>(config);
 	Expects(!uiDialog);
 	uiDialog = this;
 	dlgImpl = mImpl.get();
 }
+
+/* 0x1014ccc0 */
 UiDlg::~UiDlg() {
-	auto shutdown = temple::GetPointer<void()>(0x1014ccc0);
-	shutdown();
+	
+	uiManager->RemoveWindow(mImpl->mDummyWndId);
+	uiManager->RemoveWidget(mImpl->mDummyWndId);
+	mImpl->WidgetsFree();
+
+	for (auto it= mImpl->mDlgLineList; it != nullptr; it = mImpl->mDlgLineList){
+		auto curLine = it;
+		mImpl->mDlgLineList = it->prev;
+		if (it->lineText){
+			free((char*)it->lineText);
+		}
+		free(curLine);
+	}
+
+	temple::GetRef<void(__cdecl)()>(0x10034AB0)(); // frees speech stream
+
 	uiDialog = nullptr;
 }
-void UiDlg::ResizeViewport(const UiResizeArgs& resizeArg) {
-	auto resize = temple::GetPointer<void(const UiResizeArgs*)>(0x1014de30);
-	resize(&resizeArg);
 
+/* 0x1014de30 */
+void UiDlg::ResizeViewport(const UiResizeArgs& resizeArg) {
+	
+	uiManager->RemoveWindow(mImpl->mDummyWndId);
+	uiManager->RemoveWidget(mImpl->mDummyWndId);
+
+	mImpl->WidgetsFree();
 	mImpl->WidgetsInit(resizeArg.rect1.width, resizeArg.rect1.height);
+	mImpl->DummyWndInit(resizeArg.rect1.width, resizeArg.rect1.height);
 }
 void UiDlg::Reset() {
 	auto reset = temple::GetPointer<void()>(0x1014ccf0);
@@ -250,15 +279,41 @@ UiDialogImpl::UiDialogImpl(const UiSystemConf & config)
 	skilledReplyPressed.SetColors(&UiDialogStyles::brightYellow3);
 	
 
-	WidgetsInit(config.width, config.height);
+	mMusicVolume = temple::GetRef<int(__cdecl)()>(0x1003C9F0)();
 
+	MesFile::Content dlgUiMes = MesFile::ParseFile("mes\\dlg_ui.mes");
+	for (auto i=0; i < 5; ++i){
+		if (dlgUiMes[i].find(i))
+			mResponseNumbers[i] = dlgUiMes[i].c_str();
+	}
+
+	mSlot.dialogEngaged = 0;
+	mSlot.unk_186C = 0;
+	auto scriptDialogCb = temple::GetRef<void(__cdecl)(objHndl, objHndl, int, int, int)>(0x1014CED0);
+	auto dialogBubbleCb = temple::GetRef<void(__cdecl)(objHndl, objHndl, char*, int)>(0x1014CDE0);
+	auto dialogEndCb = temple::GetRef<void(__cdecl)(objHndl, int)>(0x1014BA40);
+	gameSystems->GetScript().SetDialogFuncs(scriptDialogCb, dialogBubbleCb);
+	gameSystems->GetAI().SetDialogFuncs( dialogEndCb ,dialogBubbleCb);
+
+	mFlags = 1;
+	mLineCount = 0;
+
+	// Write-only values?
+	temple::GetRef<int>(0x10BEC34C) = 1;
+	temple::GetRef<int>(0x10BEC350) = 0;
+	mDlgLineList = nullptr;
+	mDlgLineList2 = nullptr;
+	
+
+	WidgetsInit(config.width, config.height);
+	DummyWndInit(config.width, config.height);
 }
 
 /* 0x1014BDF0 */
 void UiDialogImpl::DialogScrollbarReset()
 {
-	scrollbarYmax = lineCount - 1;
-	scrollbarY = lineCount - 1;
+	scrollbarYmax = mLineCount - 1;
+	scrollbarY = mLineCount - 1;
 	uiManager->ScrollbarSetYmax(mScrollbarId, scrollbarYmax);
 	uiManager->ScrollbarSetY(mScrollbarId, scrollbarY);
 }
@@ -279,7 +334,7 @@ BOOL UiDialogImpl::WidgetsInit(int w, int h)
 	auto wndY = h - 374 ;
 	mWnd->SetPos(wndX, wndY);*/
 
-	static LgcyWindow dlgWnd(9, h - 374, 611, 292);
+	LgcyWindow dlgWnd(9, h - 374, 611, 292);
 	dlgWnd.flags = 1;
 	dlgWnd.render = [](int widId){
 		UiRenderer::PushFont(PredefinedFont::PRIORY_12);
@@ -302,7 +357,7 @@ BOOL UiDialogImpl::WidgetsInit(int w, int h)
 			dlgImpl->mIsActive ? (wnd->height - 4 - responseWnd->height) : (wnd->height - 4), 
 			LINE_WIDTH, 0);
 		
-		auto responses = dlgImpl->dlgLineList;
+		auto responses = dlgImpl->mDlgLineList;
 		if (flags & UiDialogFlags::DialogHistoryShow){
 			auto ymax = dlgImpl->scrollbarYmax;
 			auto scrollbarY = dlgImpl->scrollbarY;
@@ -356,9 +411,10 @@ BOOL UiDialogImpl::WidgetsInit(int w, int h)
 		return FALSE;
 	};
 	mWndId = uiManager->AddWindow(dlgWnd);
-	
+	temple::GetRef<LgcyWindow>(0x10BEA2E8) = dlgWnd; // they take some coords from this place... bah. Todo: replace this shit
+
 	// scrollbar
-	static LgcyScrollBar scrollbar;
+	LgcyScrollBar scrollbar;
 	scrollbar.Init(592, 28, 126, mWndId);
 	mScrollbarId = uiManager->AddScrollBar(scrollbar, mWndId);
 	DialogScrollbarReset();
@@ -400,13 +456,25 @@ BOOL UiDialogImpl::WidgetsInit(int w, int h)
 		uiDialog->ShowHistory();
 		return TRUE;
 		});
-	
+	mHeadBtnTgtRect = TigRect(dlgWnd.x + 581, dlgWnd.y+1, 23, 18);
 	backdrop = uiAssets->LoadImg("art\\interface\\dialog\\dialog_backdrop.img");
 	backdropMini1 = uiAssets->LoadImg("art\\interface\\dialog\\dialog_backdrop_mini_1.img");
 	backdropMini2 = uiAssets->LoadImg("art\\interface\\dialog\\dialog_backdrop_mini_2.img");
 	backdropMini3 = uiAssets->LoadImg("art\\interface\\dialog\\dialog_backdrop_mini_3.img");
 
 	return ResponseWidgetsInit(w, h);
+}
+
+void UiDialogImpl::WidgetsFree(){
+	ResponseWidgetsFree();
+	uiManager->RemoveChildWidget(mHeadBtnId);
+	uiManager->RemoveWidget(mScrollbarId);
+	uiManager->RemoveWindow(mWndId);
+	uiManager->RemoveWidget(mWndId);
+	free(backdrop);
+	free(backdropMini1);
+	free(backdropMini2);
+	free(backdropMini3);
 }
 
 /* 0x1014D5D0 */
@@ -548,6 +616,15 @@ BOOL UiDialogImpl::ResponseWidgetsInit(int w, int h)
 	return TRUE;
 }
 
+void UiDialogImpl::ResponseWidgetsFree(){
+	for (auto i=0; i < 5; i++){
+		uiManager->RemoveChildWidget(mReplyBtnIds[i]);
+	}
+	uiManager->RemoveWindow(mResponseWndId);
+	uiManager->RemoveWidget(mResponseWndId);
+	free(mResponseBarImg);
+}
+
 BOOL UiDialogImpl::DummyWndInit(int w, int h)
 {
 	// This is a dummy window. Its purpose is to catch mouse clicks :)
@@ -569,6 +646,7 @@ BOOL UiDialogImpl::DummyWndInit(int w, int h)
 	};
 	mDummyWndId = uiManager->AddWindow(dummyWnd);
 
+	return TRUE;
 }
 
 
