@@ -138,6 +138,7 @@ static ConfigSetting configSettings[] = {
 	CONF_STRING(defaultModule),
 	CONF_INT(windowWidth),
 	CONF_INT(windowHeight),
+	CONF_BOOL(enlargeDialogFonts),
 	CONF_BOOL(windowedLockCursor),
 	CONF_BOOL(dungeonMaster),
 	CONF_INT(renderWidth),

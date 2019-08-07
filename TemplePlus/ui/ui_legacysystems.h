@@ -227,6 +227,8 @@ public:
 	void Show();
 	bool IsRollHistoryVisible(); // is the roll history console visible
 	bool IsVisible();
+	void DialogBtnHide(); // Hides the Dialog History button
+	void DialogHistoryBtnToggle(); // Toggles visibility between the Minimize and Maximize buttons
 };
 
 class UiDM : public UiSystem {

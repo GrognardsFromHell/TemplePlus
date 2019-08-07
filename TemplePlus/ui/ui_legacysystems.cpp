@@ -572,6 +572,17 @@ bool UiUtilityBar::IsVisible(){
 	return temple::GetRef<int>(0x10BD33F8) != 0;
 }
 
+/* 0x10121B20 */
+void UiUtilityBar::DialogBtnHide()
+{
+	temple::GetRef<void(__cdecl)()>(0x10121B20)();
+}
+
+void UiUtilityBar::DialogHistoryBtnToggle()
+{
+	temple::GetRef<void(__cdecl)()>(0x10121AC0)();
+}
+
 //*****************************************************************************
 //*DM-UI
 //*****************************************************************************

@@ -17,6 +17,7 @@
 #include "graphics/render_hooks.h"
 #include <map>
 #include "gamesystems/legacysystems.h"
+#include "mod_support.h"
 
 UiDlg* uiDialog = nullptr;
 UiDialogImpl * dlgImpl = nullptr;
@@ -61,6 +62,7 @@ static struct UiDialogAddresses : temple::AddressTable {
 
 class UiDialogImpl {
 	friend class UiDlg;
+	friend class UiDialogHooks;
 public:
 	UiDialogImpl(const UiSystemConf &config);
 
@@ -133,11 +135,23 @@ protected:
 	// std::unique_ptr<WidgetContainer> mWnd;
 
 	void ShowDialogWidgets();
+	void UpdateWidgets();
 
 
 
 };
 
+
+class UiDialogHooks : public TempleFix
+{
+	void apply() override{
+		replaceFunction<void(__cdecl)()>(0x1014C030, [](){
+			if (dlgImpl){
+				dlgImpl->UpdateWidgets();
+			}
+		});
+	}
+} uiDialogHooks;
 
 //*****************************************************************************
 //* Dlg-UI
@@ -246,6 +260,88 @@ void UiDialogImpl::ShowDialogWidgets()
 	// temple::GetRef<void(__cdecl)()>(0x1014C340)();
 }
 
+/* 0x1014C030 */
+void UiDialogImpl::UpdateWidgets(){
+
+	if (!mIsActive){
+		if (mFlags & UiDialogFlags::DialogHistoryShow) {
+			textMinY = 26;
+			auto scrollbar = uiManager->GetScrollBar(mScrollbarId);
+			scrollbar->height = 261;
+			uiManager->SetHidden(mScrollbarId, false);
+			uiManager->SetHidden(mResponseWndId, true);
+			
+			auto headBtn = uiManager->GetButton(mHeadBtnId);
+			auto wnd = uiManager->GetWindow(mWndId);
+			headBtn->y = wnd->y + 1;
+			mHeadBtnTgtRect.y = wnd->y + 1;
+
+			uiSystems->GetUtilityBar().DialogBtnHide();
+			return;
+		}
+		else {
+			uiSystems->GetUtilityBar().DialogHistoryBtnToggle();
+		}
+		return;
+	}
+
+	
+	auto headBtn = uiManager->GetButton(mHeadBtnId);
+	auto wnd = uiManager->GetWindow(mWndId);
+	if (mFlags & UiDialogFlags::DialogHistoryShow){
+		textMinY = 26;
+		auto scrollbar = uiManager->GetScrollBar(mScrollbarId);
+		scrollbar->height = 126;
+		uiManager->SetHidden(mScrollbarId, false);
+		uiManager->SetHidden(mResponseWndId, false);
+		uiManager->BringToFront(mResponseWndId);
+		uiSystems->GetUtilityBar().DialogBtnHide();
+
+		headBtn->y = wnd->y + 1;
+		mHeadBtnTgtRect.y = wnd->y + 1;
+		return;
+	}
+	
+	uiManager->SetHidden(mScrollbarId, true);
+	uiManager->SetHidden(mResponseWndId, false);
+	uiManager->BringToFront(mResponseWndId);
+	uiSystems->GetUtilityBar().DialogBtnHide();
+	if (!mDlgLineList){
+		textMinY = -90;
+		backdropMini = backdropMini1;
+		mHeadBtnTgtRect.y = headBtn->y = wnd->y + 109;
+		historyWndY = wnd->y + 126;
+	}
+	else{
+		if (config.enlargeDialogFonts)
+			UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+		else
+			UiRenderer::PushFont(PredefinedFont::ARIAL_10);
+		auto meas = UiRenderer::MeasureTextSize(mDlgLineList->lineText, yellowStyle, 550, 0);
+		UiRenderer::PopFont();
+		if (meas.height > 26){
+			textMinY = -58;
+			backdropMini = backdropMini3;
+			mHeadBtnTgtRect.y = headBtn->y = wnd->y + 77;
+			historyWndY = wnd->y + 94;
+		}
+		else if (meas.height > 13){
+			textMinY = -77;
+			backdropMini = backdropMini2;
+			mHeadBtnTgtRect.y = headBtn->y = wnd->y + 96;
+			historyWndY = wnd->y + 113;
+		}
+		else{
+			textMinY = -90;
+			backdropMini = backdropMini1;
+			mHeadBtnTgtRect.y = headBtn->y = wnd->y + 109;
+			historyWndY = wnd->y + 126;
+		}
+	}
+	historyWndX = wnd->x;
+	return;
+}
+
 void UiDlg::ReShowDialog(DialogState* info, int line) {
 	addresses.ReShowDialog(info, line);
 }
@@ -258,8 +354,12 @@ void UiDlg::ShowTextBubble(objHndl speaker, objHndl speakingTo, const string &te
 	addresses.ShowTextBubble(speaker, speakingTo, text.c_str(), speechId);
 }
 
-UiDialogImpl::UiDialogImpl(const UiSystemConf & config)
+UiDialogImpl::UiDialogImpl(const UiSystemConf & conf)
 {
+	if (modSupport.IsCo8()){
+		::config.enlargeDialogFonts = true;
+	}
+
 	TigTextStyle templateStyle = TigTextStyle::standardWhite;
 	templateStyle.tracking = 3;
 	templateStyle.field2c = -1;
@@ -305,8 +405,8 @@ UiDialogImpl::UiDialogImpl(const UiSystemConf & config)
 	mDlgLineList2 = nullptr;
 	
 
-	WidgetsInit(config.width, config.height);
-	DummyWndInit(config.width, config.height);
+	WidgetsInit(conf.width, conf.height);
+	DummyWndInit(conf.width, conf.height);
 }
 
 /* 0x1014BDF0 */
@@ -328,16 +428,13 @@ void UiDlg::ShowHistory()
 BOOL UiDialogImpl::WidgetsInit(int w, int h)
 {
 	
-	/*mWnd = make_unique<WidgetContainer>(611, 292);
-	mWnd->SetSize({ 611, 292 });
-	auto wndX = 9;
-	auto wndY = h - 374 ;
-	mWnd->SetPos(wndX, wndY);*/
-
 	LgcyWindow dlgWnd(9, h - 374, 611, 292);
 	dlgWnd.flags = 1;
 	dlgWnd.render = [](int widId){
-		UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+		if (config.enlargeDialogFonts)
+			UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+		else
+			UiRenderer::PushFont(PredefinedFont::ARIAL_10);
 		const int LINE_WIDTH = 550;
 
 		auto flags = dlgImpl->mFlags;
@@ -354,7 +451,7 @@ BOOL UiDialogImpl::WidgetsInit(int w, int h)
 		RenderHooks::RenderImgFile(wndBackdrop, x, y);
 
 		TigRect textRect(14, 
-			dlgImpl->mIsActive ? (wnd->height - 4 - responseWnd->height) : (wnd->height - 4), 
+			dlgImpl->mIsActive ? (wnd->height - 4 - responseWnd->height) : (wnd->height - 6), 
 			LINE_WIDTH, 0);
 		
 		auto responses = dlgImpl->mDlgLineList;
@@ -371,7 +468,7 @@ BOOL UiDialogImpl::WidgetsInit(int w, int h)
 			auto lineText = responses->lineText;
 			auto textSize = UiRenderer::MeasureTextSize(lineText, dlgImpl->yellowStyle, LINE_WIDTH, 0);
 			textRect.height = textSize.height;
-			textRect.y -= textSize.height;
+			textRect.y -= textSize.height + 1;
 			if (textRect.y < dlgImpl->textMinY)
 				break;
 			auto isPcLine = (responses->flags & 1) != 0;
@@ -381,6 +478,7 @@ BOOL UiDialogImpl::WidgetsInit(int w, int h)
 			if (! (flags & UiDialogFlags::DialogHistoryShow) ){
 				break;
 			}
+			textRect.y--; // create additional spacing between history lines..
 			responses = responses->prev;
 		}
 
@@ -528,7 +626,11 @@ BOOL UiDialogImpl::ResponseWidgetsInit(int w, int h)
 			if (!dlgImpl->mResponseTexts[idx]){
 				return;
 			}
-			UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+			if (config.enlargeDialogFonts)
+				UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+			else
+				UiRenderer::PushFont(PredefinedFont::ARIAL_10);
+			
 
 			auto state = uiManager->GetButtonState(id);
 			auto style = &dlgImpl->replyStyleNormal;
