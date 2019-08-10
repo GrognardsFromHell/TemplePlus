@@ -355,12 +355,12 @@ int ProtosHooks::ParseType(int colIdx, objHndl handle, char * content, obj_f fie
 		}
 
 		if (field == obj_f_weapon_type){
-			if (!foundType && !_strcmpi(content, "wt_mindblade")){
+			/*if (!foundType && !_strcmpi(content, "wt_mindblade")){
 				val = wt_mindblade;
 				foundType = true;
 				objSystem->GetObject(handle)->SetInt32(field, val);
 				
-			}
+			}*/
 
 			auto weapType = (WeaponTypes)val;
 			auto damType = weapons.wpnProps[weapType].damType;
