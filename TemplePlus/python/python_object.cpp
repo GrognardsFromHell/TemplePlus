@@ -1923,7 +1923,7 @@ static PyObject* PyObjHandle_PerformTouchAttack(PyObject* obj, PyObject* args) {
 		action.d20Caf = D20CAF_TOUCH_ATTACK ;
 	action.data1 = 1;
 
-	d20Sys.ToHitProc(&action);
+	combatSys.ToHitProcessing(action);
 	d20Sys.CreateRollHistory(action.rollHistId1);
 	d20Sys.CreateRollHistory(action.rollHistId2);
 	d20Sys.CreateRollHistory(action.rollHistId0);
