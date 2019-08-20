@@ -66,6 +66,8 @@ struct InventorySystem : temple::AddressTable
 {
 	
 	void MoveItem(const objHndl& item, const locXY& loc);
+	int PcWeaponComboGetValue( objHndl handle, int idx);
+	void PcWeaponComboSetValue(objHndl handle, int idx, int value);
 
 	static bool IsInvIdxWorn(int invIdx); // does the inventory index refer to a designated "worn item" slot?
 
