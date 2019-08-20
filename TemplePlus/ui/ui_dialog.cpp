@@ -319,7 +319,13 @@ void UiDialogImpl::UpdateWidgets(){
 			UiRenderer::PushFont(PredefinedFont::ARIAL_10);
 		auto meas = UiRenderer::MeasureTextSize(mDlgLineList->lineText, yellowStyle, 550, 0);
 		UiRenderer::PopFont();
-		if (meas.height > 26){
+		if (modSupport.IsCo8()){
+			textMinY = -90;
+			backdropMini = backdropMini1;
+			mHeadBtnTgtRect.y = headBtn->y = wnd->y + 59;
+			historyWndY = wnd->y + 77;
+		}
+		else if (meas.height > 26){
 			textMinY = -58;
 			backdropMini = backdropMini3;
 			mHeadBtnTgtRect.y = headBtn->y = wnd->y + 77;
