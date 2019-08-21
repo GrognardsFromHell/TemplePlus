@@ -1511,12 +1511,12 @@ void LegacyCombatSystem::Brawl(objHndl player, objHndl brawlAi){
 	//_Brawl(player, brawlAi);
 }
 
-void LegacyCombatSystem::enterCombat(objHndl objHnd){
+void LegacyCombatSystem::enterCombat(objHndl objHnd, bool regardDistance){
 
 	if (!d20Sys.d20Query(objHnd, DK_QUE_EnterCombat))
 		return;
 
-	if (!combatSys.IsCloseToParty(objHnd))
+	if (regardDistance && !combatSys.IsCloseToParty(objHnd))
 		return;
 
 

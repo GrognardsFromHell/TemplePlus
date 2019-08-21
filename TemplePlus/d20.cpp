@@ -881,6 +881,7 @@ void LegacyD20System::GlobD20ActnSetSpellData(D20SpellData* d20SpellData)
 }
 #pragma endregion
 
+/* 0x1008AE90 */
 void LegacyD20System::d20aTriggerCombatCheck(ActnSeq* actSeq, int32_t idx)
 {
 	auto performer = actSeq->performer;
@@ -890,7 +891,7 @@ void LegacyD20System::d20aTriggerCombatCheck(ActnSeq* actSeq, int32_t idx)
 	if (flags & D20ADF_TriggersCombat){
 		combatSys.enterCombat(actSeq->performer);
 		if (tgt){
-			combatSys.enterCombat(tgt);
+			combatSys.enterCombat(tgt, false); // added regardDistance switch = false so that attacking from afar does trigger combat mode
 			aiSys.ProvokeHostility(performer, tgt, 1, 0);
 		}
 	}
@@ -912,28 +913,12 @@ void LegacyD20System::d20aTriggerCombatCheck(ActnSeq* actSeq, int32_t idx)
 				continue;
 			if (spellSys.IsSpellHarmful(spEnum, caster, spTgt)){
 				combatSys.enterCombat(performer);
-				combatSys.enterCombat(spTgt);
+				combatSys.enterCombat(spTgt, false);  // added regardDistance switch = false so that attacking from afar does trigger combat mode
 			}
 		}
 		
 
 	}
-
-	/*__asm{
-		push esi;
-		push ecx;
-		mov ecx, this;
-		mov esi, idx;
-		push esi;
-		mov esi, [ecx]._d20aTriggerCombatCheck;
-		mov eax, actSeq;
-		call esi;
-		add esp, 4;
-
-		pop ecx;
-		pop esi;
-	}*/
-	//void d20aTriggerCombatCheck(ActnSeq* actSeq, int32_t idx);//1008AE90    ActnSeq * @<eax>
 }
 
 int32_t LegacyD20System::D20ActionTriggersAoO(D20Actn* d20a, TurnBasedStatus* tbStat)
