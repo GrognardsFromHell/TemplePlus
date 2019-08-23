@@ -110,7 +110,7 @@ protected:
 	ImgFile *& backdropMini3 = temple::GetRef<ImgFile*>(0x10BEC2D0);
 	ImgFile *& backdropMini  = temple::GetRef<ImgFile*>(0x10BE9B4C); // chooses from one of the above 3
 	ImgFile* &mResponseBarImg = temple::GetRef<ImgFile*>(0x10BEC200);
-	int mSkillTextures[5] = {0,}; //= temple::GetPointer<int>(0x10BEA5D4); //size 5 array;
+	int mSkillTextures[6] = {0,}; //= temple::GetPointer<int>(0x10BEA5D4); //size 6 array;
 
 	TigTextStyle yellowStyle, darkGrayStyle 
 	, replyStyleNormal 
@@ -689,7 +689,7 @@ BOOL UiDialogImpl::ResponseWidgetsInit(int w, int h)
 			if (skillUsed){
 				auto texId = dlgImpl->mSkillTextures[skillUsed];
 				static TigRect srcRect(1, 1, 15, 15);
-				auto destRect = dlgImpl->mSkillIconRects[skillUsed];
+				auto destRect = dlgImpl->mSkillIconRects[idx];
 				UiRenderer::DrawTexture(texId, destRect, srcRect);
 			}
 
