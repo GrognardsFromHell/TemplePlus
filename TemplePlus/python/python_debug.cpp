@@ -363,7 +363,10 @@ struct PyDebugFunction {
 };
 
 static bool sInitialized = false;
-static std::vector<std::unique_ptr<PyDebugFunction>> sDebugFunctions;
+static std::vector<std::unique_ptr<PyDebugFunction>>& GetDebugFunctions() {
+	static std::vector<std::unique_ptr<PyDebugFunction>> state;
+	return state;
+}
 static void RegisterDebugFunction(PyDebugFunction &debugFunc);
 
 void PyDebug_Init() {
@@ -371,7 +374,7 @@ void PyDebug_Init() {
 	sInitialized = true;
 
 	// Register all the debug functions that have been added before this module was initialized
-	for (auto& debugFunc : sDebugFunctions) {
+	for (auto& debugFunc : GetDebugFunctions()) {
 		RegisterDebugFunction(*debugFunc);
 	}
 }
@@ -382,7 +385,7 @@ static PyObject* PyDebug_CallDebugFunction(PyObject *self, PyObject *args) {
 		return nullptr;
 	}
 	
-	for (auto& debugFunc : sDebugFunctions) {
+	for (auto& debugFunc : GetDebugFunctions()) {
 		if (!strcmp(debugFunc->name.c_str(), name)) {
 			
 			if (debugFunc->withArgs) {
@@ -434,7 +437,7 @@ void RegisterDebugFunctionWithArgs(const char *name, std::function<void(const st
 	pyDebugFunc->debugFuncWithArgs = function;
 	RegisterDebugFunction(*pyDebugFunc);
 
-	sDebugFunctions.emplace_back(std::move(pyDebugFunc));
+	GetDebugFunctions().emplace_back(std::move(pyDebugFunc));
 
 }
 
@@ -446,5 +449,5 @@ void RegisterDebugFunction(const char *name, std::function<void()> function)
 	pyDebugFunc->debugFunc = function;
 	RegisterDebugFunction(*pyDebugFunc);
 
-	sDebugFunctions.emplace_back(std::move(pyDebugFunc));
+	GetDebugFunctions().emplace_back(std::move(pyDebugFunc));
 }
