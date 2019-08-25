@@ -30,6 +30,10 @@
 
 #define NUM_SPELLBOOK_SLOTS 18 // 18 in vanilla
 
+constexpr int WEAP_COMBO_MAIN = 1;
+constexpr int WEAP_COMBO_SECONDARY = 2;
+constexpr int WEAP_COMBO_AMMO = 3;
+constexpr int WEAP_COMBO_SHIELD = 4;
 
 struct TigTextStyle;
 
@@ -133,6 +137,9 @@ public:
 	void LongDescriptionPopupCreate(objHndl item);
 
 	static void TotalWeightOutputBtnTooltip(int x, int y, int *widId);
+
+	static objHndl GetBag();
+	static void WeaponComboActivate(objHndl handle, int weapomCombo);
 #pragma endregion 
 	
 
@@ -1249,6 +1256,61 @@ void CharUiSystem::TotalWeightOutputBtnTooltip(int x, int y, int* widId)
 	UiRenderer::PopFont();
 }
 
+/* 0x10144350 */
+objHndl CharUiSystem::GetBag(){
+	return objHndl::null;
+}
+
+/* 0x101A2FB0 */
+void CharUiSystem::WeaponComboActivate(objHndl handle, int weaponCombo)
+{
+	auto bag = GetBag();
+
+	{
+		int weaponInvLoc = inventory.PcWeaponComboGetValue(handle, 4 * weaponCombo + WEAP_COMBO_MAIN);
+		if (weaponInvLoc != INVENTORY_IDX_UNDEFINED) {
+			auto weapon = inventory.GetItemAtInvIdx(handle, weaponInvLoc);
+			if (weapon) {
+				inventory.TransferWithFlags(weapon, handle, INVENTORY_WORN_IDX_START + EquipSlot::WeaponPrimary, ItemInsertFlags::IIF_4, bag);
+				inventory.PcWeaponComboSetValue(handle, 4 * weaponCombo + WEAP_COMBO_MAIN, INVENTORY_WORN_IDX_START + EquipSlot::WeaponPrimary);
+			}
+		}
+	}
+	
+	{
+		int weaponInvLoc = inventory.PcWeaponComboGetValue(handle, 4 * weaponCombo + WEAP_COMBO_SECONDARY);
+		if (weaponInvLoc != INVENTORY_IDX_UNDEFINED) {
+			auto weapon = inventory.GetItemAtInvIdx(handle, weaponInvLoc);
+			if (weapon) {
+				inventory.TransferWithFlags(weapon, handle, INVENTORY_WORN_IDX_START + EquipSlot::WeaponSecondary, ItemInsertFlags::IIF_4, bag);
+				inventory.PcWeaponComboSetValue(handle, 4 * weaponCombo + WEAP_COMBO_SECONDARY, INVENTORY_WORN_IDX_START + EquipSlot::WeaponSecondary);
+			}
+		}
+	}
+	
+	{
+		int ammoInvLoc = inventory.PcWeaponComboGetValue(handle, 4 * weaponCombo + WEAP_COMBO_AMMO);
+		if (ammoInvLoc != INVENTORY_IDX_UNDEFINED) {
+			auto ammo = inventory.GetItemAtInvIdx(handle, ammoInvLoc);
+			if (ammo) {
+				inventory.TransferWithFlags(ammo, handle, INVENTORY_WORN_IDX_START + EquipSlot::Ammo, ItemInsertFlags::IIF_4, bag);
+				inventory.PcWeaponComboSetValue(handle, 4 * weaponCombo + WEAP_COMBO_AMMO, INVENTORY_WORN_IDX_START + EquipSlot::Ammo);
+			}
+		}
+	}
+
+	{
+		int ammoInvLoc = inventory.PcWeaponComboGetValue(handle, 4 * weaponCombo + WEAP_COMBO_SHIELD);
+		if (ammoInvLoc != INVENTORY_IDX_UNDEFINED) {
+			auto ammo = inventory.GetItemAtInvIdx(handle, ammoInvLoc);
+			if (ammo) {
+				inventory.TransferWithFlags(ammo, handle, INVENTORY_WORN_IDX_START + EquipSlot::Shield, ItemInsertFlags::IIF_4, bag);
+				inventory.PcWeaponComboSetValue(handle, 4 * weaponCombo + WEAP_COMBO_SHIELD, INVENTORY_WORN_IDX_START + EquipSlot::Shield);
+			}
+		}
+	}
+}
+
 void CharUiSystem::FeatsShow(){
 	auto dude = temple::GetRef<objHndl>(0x10BE9940); // critter with inventory open
 
@@ -1339,6 +1401,8 @@ void UiChar::SetCritter(objHndl handle) {
 
 void CharUiSystem::apply(){
 	
+	replaceFunction(0x101A2FB0, WeaponComboActivate);
+
 	replaceFunction(0x10144B40, ClassLevelBtnRender);
 	replaceFunction(0x10145020, AlignGenderRaceBtnRender);
 

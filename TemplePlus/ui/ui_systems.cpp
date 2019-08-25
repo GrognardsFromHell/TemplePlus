@@ -9,6 +9,8 @@
 #include "ui_pc_creation.h"
 #include "ui_char.h"
 #include "ui_townmap.h"
+#include "ui_dialog.h"
+
 UiSystems* uiSystems = nullptr;
 
 UiSystems::UiSystems(int width, int height)

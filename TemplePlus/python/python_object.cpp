@@ -1174,7 +1174,7 @@ static PyObject* PyObjHandle_FloatLine(PyObject* obj, PyObject* args) {
 	dlgState.npc = self->handle;
 	dialogScripts.LoadNpcLine(dlgState, true);
 
-	uiDialog.ShowTextBubble(dlgState.npc, dlgState.pc, dlgState.npcLineText, dlgState.speechId);
+	uiDialog->ShowTextBubble(dlgState.npc, dlgState.pc, dlgState.npcLineText, dlgState.speechId);
 
 	dialogScripts.Free(dlgState.dialogHandle);
 
@@ -1923,7 +1923,7 @@ static PyObject* PyObjHandle_PerformTouchAttack(PyObject* obj, PyObject* args) {
 		action.d20Caf = D20CAF_TOUCH_ATTACK ;
 	action.data1 = 1;
 
-	d20Sys.ToHitProc(&action);
+	combatSys.ToHitProcessing(action);
 	d20Sys.CreateRollHistory(action.rollHistId1);
 	d20Sys.CreateRollHistory(action.rollHistId2);
 	d20Sys.CreateRollHistory(action.rollHistId0);

@@ -8,6 +8,7 @@
 #include "ui_ingame.h"
 #include "ui_systems.h"
 #include "ui_legacysystems.h"
+#include "ui_dialog.h"
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/mapsystem.h"
 #include "gamesystems/mapobjrender.h"

@@ -185,6 +185,7 @@ public:
 
 	bool ReadGlobalVars(GameSystemSaveFile *saveFile, std::vector<int> & globalVars, std::vector<int> & globalFlagsData, int& storyState);
 	bool ReadEncounterQueue(GameSystemSaveFile *saveFile, std::vector<int> & encounterQueue);
+	void SetDialogFuncs(void(__cdecl *dialogCb)(objHndl, objHndl, int , int, int ), void(__cdecl *dialogBubbleCb)(objHndl, objHndl, char *, int));
 };
 
 class LevelSystem : public GameSystem {
@@ -343,6 +344,7 @@ public:
 	const std::string &GetName() const override;
 
 	void AddAiTimer(objHndl handle);
+	void SetDialogFuncs(void(__cdecl*endDialogCb)(objHndl, int), void(__cdecl* dialogBubbleCb)(objHndl, objHndl, char*, int));
 };
 
 class AnimPrivateSystem : public GameSystem, public ResetAwareGameSystem {

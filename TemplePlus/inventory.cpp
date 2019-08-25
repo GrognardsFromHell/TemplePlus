@@ -228,6 +228,22 @@ void InventorySystem::MoveItem(const objHndl& item, const locXY& loc){
 	//return temple::GetRef<void(__cdecl)(objHndl, locXY)>(0x100252D0)(item, loc);
 }
 
+int InventorySystem::PcWeaponComboGetValue(objHndl handle, int idx)
+{
+	auto obj = objSystem->GetObject(handle);
+	if (!obj)
+		return 0;
+	return obj->GetInt32(obj_f_pc_weaponslots_idx, idx);
+}
+
+void InventorySystem::PcWeaponComboSetValue(objHndl handle, int idx, int value)
+{
+	auto obj = objSystem->GetObject(handle);
+	if (!obj)
+		return;
+	return obj->SetInt32(obj_f_pc_weaponslots_idx, idx, value);
+}
+
 bool InventorySystem::IsInvIdxWorn(int invIdx){
 	return invIdx >= INVENTORY_WORN_IDX_START && invIdx <= INVENTORY_WORN_IDX_END;
 }
@@ -1187,7 +1203,7 @@ void InventorySystem::TransferPcInvLocation(objHndl item, int itemInvLocation){
 	if (!parentObj)
 		return;
 	if (parentObj->IsPC()){
-		auto oldInvLocation = parentObj->GetInt32(obj_f_item_inv_location);
+		auto oldInvLocation = objSystem->GetObject(item)->GetInt32(obj_f_item_inv_location);
 		PcInvLocationSet(parent, itemInvLocation, oldInvLocation);
 	}
 }

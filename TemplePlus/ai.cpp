@@ -2815,7 +2815,9 @@ void AiSystem::AiProcess(objHndl obj){
 		return;
 
 	if (critterSys.IsDeadOrUnconscious(obj)){
-		logger->info("AI for {} ending turn (unconscious)...", obj);
+		if (combatSys.isCombatActive()){ // added to reduce log spam for knocked out NPCs
+			logger->info("AI for {} ending turn (unconscious)...", obj);
+		}
 		combatSys.CombatAdvanceTurn(obj);
 		return;
 	}
