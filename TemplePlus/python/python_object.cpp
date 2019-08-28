@@ -3633,6 +3633,11 @@ static PyObject* PyObjHandle_GetSize(PyObject* obj, void*) {
 	return PyInt_FromLong(objects.GetSize(self->handle));
 }
 
+static PyObject* PyObjHandle_GetReach(PyObject* obj, void*) {
+	auto self = GetSelf(obj);
+	return PyFloat_FromDouble(critterSys.GetReach(self->handle, D20ActionType::D20A_UNSPECIFIED_ATTACK));
+}
+
 static PyObject* PyObjHandle_GetOffsetX(PyObject* obj, void*) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -3908,6 +3913,7 @@ PyGetSetDef PyObjHandleGetSets[] = {
 	{"hit_dice", PyObjHandle_GetHitDice, NULL, NULL},
 	{"hit_dice_num", PyObjHandle_GetHitDiceNum, NULL, NULL},
 	{"get_size", PyObjHandle_GetSize, NULL, NULL},
+	{"get_reach", PyObjHandle_GetReach, NULL, NULL},
 	{"off_x", PyObjHandle_GetOffsetX, NULL, NULL},
 	{"off_y", PyObjHandle_GetOffsetY, NULL, NULL},
 	{"scripts", PyObjHandle_GetScripts, NULL, NULL},
