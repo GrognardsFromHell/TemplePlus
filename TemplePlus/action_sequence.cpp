@@ -455,12 +455,16 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 		addresses.actSeqPicker->modeTarget = UiPickerType::None;
 		addresses.actSeqPicker->incFlags = UiPickerIncFlags::UIPI_None;
 		addresses.actSeqPicker->excFlags = UiPickerIncFlags::UIPI_None;
+		addresses.actSeqPicker->minTargets = 0;
+		addresses.actSeqPicker->maxTargets = 0;
+		addresses.actSeqPicker->radiusTarget = 0;
+		addresses.actSeqPicker->range = 0;
 		addresses.actSeqPicker->spellEnum = 0;
 		addresses.actSeqPicker->caster = d20Sys.globD20Action->d20APerformer;
 
 		auto curSeq = *actSeqSys.actSeqCur;
 		// Modify the PickerArgs for a custom spell-style picker without having to define a spell
-		pythonD20ActionIntegration.ModifyPicker(d20Sys.globD20Action->data1, addresses.actSeqPicker);
+		pythonD20ActionIntegration.ModifyPicker(d20Sys.globD20Action->data1, addresses.actSeqPicker, d20Sys.globD20Action);
 		addresses.actSeqPicker->callback = [](const PickerResult & result, void* cbArgs) { actSeqSys.CustomPickerCallback(result, (SpellPacketBody*)cbArgs); };
 
 		*actSeqPickerActive = 1;
@@ -493,7 +497,7 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 		pickArgs.callback = [](const PickerResult & result, void* cbArgs) { actSeqSys.SpellPickerCallback(result, (SpellPacketBody*)cbArgs); };
 		// Modify the PickerArgs
 		if (d20Sys.globD20Action->d20ActType == D20A_PYTHON_ACTION)
-			pythonD20ActionIntegration.ModifyPicker(d20Sys.globD20Action->data1, &pickArgs);
+			pythonD20ActionIntegration.ModifyPicker(d20Sys.globD20Action->data1, &pickArgs, d20Sys.globD20Action);
 
 		*actSeqPickerActive = 1;
 		uiPicker.ShowPicker(pickArgs, &curSeq->spellPktBody);

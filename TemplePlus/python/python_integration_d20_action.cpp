@@ -218,15 +218,19 @@ int PythonD20ActionIntegration::GetTargetingClassification(int actionEnum){
 	return GetInt(actionEnum, D20ActionSpecFunc::GetTargetingClassification);
 }
 
-void PythonD20ActionIntegration::ModifyPicker(int actionEnum, PickerArgs * pickArgs){
+void PythonD20ActionIntegration::ModifyPicker(int actionEnum, PickerArgs * pickArgs, D20Actn *d20a){
 	auto actionSpecEntry = mScripts.find(actionEnum);
 	if (actionSpecEntry == mScripts.end()) {
+		if (d20a->d20APerformer) {
+			floatSys.floatMesLine(d20a->d20APerformer, 1, FloatLineColor::Red, fmt::format("Could not find script file {}", actionEnum).c_str());
+		}
 		return;
 	}
 
 	py::object pbPicker = py::cast(pickArgs);
+	py::object pbD20A = py::cast(d20a);
 
-	auto dispPyArgs = Py_BuildValue("(O)", pbPicker.ptr());
+	auto dispPyArgs = Py_BuildValue("(OO)", pbPicker.ptr(), pbD20A.ptr());
 
 	auto result = (ActionErrorCode)RunScriptDefault0(actionSpecEntry->second.id, (EventId)D20ActionSpecFunc::ModifyPicker, dispPyArgs);
 

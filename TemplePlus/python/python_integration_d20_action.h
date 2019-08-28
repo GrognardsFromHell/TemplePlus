@@ -31,7 +31,7 @@ public:
 
 	int GetActionDefinitionFlags(int actionEnum);
 	int GetTargetingClassification(int actionEnum);
-	void ModifyPicker(int actionEnum, PickerArgs * pickArgs);
+	void ModifyPicker(int actionEnum, PickerArgs * pickArgs, D20Actn *d20a);
 	ActionCostType GetActionCostType(int actionEnum);
 
 
