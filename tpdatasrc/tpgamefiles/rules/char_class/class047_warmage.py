@@ -156,7 +156,7 @@ def IsAdvancedLearningSpell(obj, spell):
 	if obj.is_spell_known(spell.spell_enum):
 		return False
 	
-	#First get rid of everything in the beguiler spell list
+	#First get rid of everything in the warmage spell list
 	for level, spell_list_level in spell_list.items():
 		if spell.spell_enum in spell_list_level:
 			return False
@@ -179,7 +179,7 @@ def GetAdvancedLearningList(obj, maxSpellLevel):
 	return spAdvancedLearningList
 	
 def IsSelectingSpellsOnLevelup(obj):
-	if char_editor.get_class_code() !=  classEnum: # This is strictly a warmage benefit (in case it's being accessed externally from sthg like Mystic Theurge / Archmage)
+	if char_editor.get_class_code() !=  classEnum: # This is strictly a warmage benefit (in case it's being accessed externally from something like Mystic Theurge / Archmage)
 		return 0
 	
 	classLvl = obj.stat_level_get(classEnum)
@@ -194,6 +194,9 @@ def IsSelectingSpellsOnLevelup(obj):
 	return 0
 	
 def InitSpellSelection(obj, classLvlNew = -1, classLvlIncrement = 1):
+	if char_editor.get_class_code() !=  classEnum: # This is strictly a beguiler benefit (in case it's being accessed externally from something like Mystic Theurge / Archmage)
+		return 0
+
 	classLvl = obj.stat_level_get(classEnum)
 	if classLvlNew <= 0:
 		classLvlNew = classLvl + 1
