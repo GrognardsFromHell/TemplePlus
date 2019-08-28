@@ -1276,7 +1276,14 @@ int LegacyD20System::TargetCheck(D20Actn* d20a)
 			return 0;
 		case D20TC_CallLightning:
 			return (*addresses.actSeqTargetsIdx) >= 0;
-
+		case D20TC_CustomSelect:
+			// Perform target validation for custom selection, maybe check more values?
+			curSeq->d20Action = d20a;
+			if (curSeq->spellPktBody.caster)
+				return 1;
+			else
+				return 0;
+			break;
 		case D20TC_CastSpell:
 			curSeq->d20Action = d20a;
 			if (curSeq->spellPktBody.caster || curSeq->spellPktBody.spellEnum)

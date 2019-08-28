@@ -966,8 +966,7 @@ bool PickerArgs::IsBaseModeTarget(UiPickerType type){
 	return ( ((uint64_t)modeTarget) & 0xFF) == _type;
 }
 
-bool PickerArgs::IsModeTargetFlagSet(UiPickerType type)
-{
+bool PickerArgs::IsModeTargetFlagSet(UiPickerType type){
 	return (((uint64_t)modeTarget) & ((uint64_t)type)) == (uint64_t)type;
 }
 
@@ -978,6 +977,30 @@ void PickerArgs::SetModeTargetFlag(UiPickerType type){
 UiPickerType PickerArgs::GetBaseModeTarget()
 {
 	return (UiPickerType) (((uint64_t)this->modeTarget) & 0xFF);
+}
+
+void PickerArgs::SetFlagsTargetFlag(UiPickerFlagsTarget target){
+	*(uint64_t*)(&(this->flagsTarget)) |= (uint64_t)target;
+}
+
+bool PickerArgs::IsFlagsTargetFlagSet(UiPickerFlagsTarget target){
+	return (((uint64_t)flagsTarget) & ((uint64_t)target)) == (uint64_t)target;
+}
+
+void PickerArgs::SetIncludeFlag(UiPickerIncFlags incType) {
+	*(uint64_t*)(&(this->incFlags)) |= (uint64_t)incType;
+}
+
+bool PickerArgs::IsIncludeFlagSet(UiPickerIncFlags incType) {
+	return (((uint64_t)incFlags) & ((uint64_t)incType)) == (uint64_t)incType;
+}
+
+void PickerArgs::SetExcludeFlag(UiPickerIncFlags excType) {
+	*(uint64_t*)(&(this->excFlags)) |= (uint64_t)excType;
+}
+
+bool PickerArgs::IsExcludeFlagSet(UiPickerIncFlags excType) {
+	return (((uint64_t)excFlags) & ((uint64_t)excType)) == (uint64_t)excType;
 }
 
 void PickerArgs::GetTrimmedRange(LocAndOffsets &originLoc, LocAndOffsets &tgtLoc, float radiusInch, float maxRangeInch, float incrementInches){

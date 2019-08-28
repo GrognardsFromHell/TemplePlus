@@ -3862,6 +3862,7 @@ D20TC_CastSpell = 3
 D20TC_SingleIncSelf = 4
 D20TC_CallLightning = 5
 D20TC_ItemInteraction = 6 # includes: portals, container, dead critters
+D20TC_CustomSelect = 7 # New!
 D20TC_Invalid = -1
 
 # Action error codes

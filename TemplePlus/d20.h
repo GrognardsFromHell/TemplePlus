@@ -39,7 +39,7 @@ enum D20TargetClassification : int {
 	D20TC_SingleIncSelf,
 	D20TC_CallLightning,
 	D20TC_ItemInteraction, // includes: portals, container, dead critters
-
+	D20TC_CustomSelect, // New!
 	D20TC_Invalid = -1
 };
 

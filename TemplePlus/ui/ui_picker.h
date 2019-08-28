@@ -93,6 +93,12 @@ struct PickerArgs {
 	bool IsModeTargetFlagSet(UiPickerType type);
 	void SetModeTargetFlag(UiPickerType type);
 	UiPickerType GetBaseModeTarget();
+	void SetFlagsTargetFlag(UiPickerFlagsTarget target);
+	bool IsFlagsTargetFlagSet(UiPickerFlagsTarget target);
+	void SetIncludeFlag(UiPickerIncFlags incType);
+	bool IsIncludeFlagSet(UiPickerIncFlags incType);
+	void SetExcludeFlag(UiPickerIncFlags excType);
+	bool IsExcludeFlagSet(UiPickerIncFlags excType);
 
 	void GetTrimmedRange(LocAndOffsets &originLoc, LocAndOffsets &tgtLoc, float radiusInch, float maxRangeInch, float incrementInches = 0);
 	void GetTargetsInPath(LocAndOffsets &originLoc, LocAndOffsets &tgtLoc, float radiusInch); // must have valid trimmedRangeInches value; must also free preexisting ObjectList!

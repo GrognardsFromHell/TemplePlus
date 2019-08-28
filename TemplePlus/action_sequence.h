@@ -114,6 +114,7 @@ struct ActionSequenceSystem : temple::AddressTable
 	BOOL SeqPickerHasTargetingType();
 	void SeqPickerTargetingReset();
 	void SpellPickerCallback(const PickerResult &result, SpellPacketBody *pkt);
+	void CustomPickerCallback(const PickerResult &result, SpellPacketBody *pkt);
 
 	void ActionTypeAutomatedSelection(objHndl handle);
 	void TurnStart(objHndl obj);

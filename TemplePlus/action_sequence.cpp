@@ -450,6 +450,25 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 		return;
 	}
 
+	if (tgtClassif == D20TC_CustomSelect) {
+		addresses.actSeqPicker->flagsTarget = UiPickerFlagsTarget::None;
+		addresses.actSeqPicker->modeTarget = UiPickerType::None;
+		addresses.actSeqPicker->incFlags = UiPickerIncFlags::UIPI_None;
+		addresses.actSeqPicker->excFlags = UiPickerIncFlags::UIPI_None;
+		addresses.actSeqPicker->spellEnum = 0;
+		addresses.actSeqPicker->caster = d20Sys.globD20Action->d20APerformer;
+
+		auto curSeq = *actSeqSys.actSeqCur;
+		// Modify the PickerArgs for a custom spell-style picker without having to define a spell
+		pythonD20ActionIntegration.ModifyPicker(d20Sys.globD20Action->data1, addresses.actSeqPicker);
+		addresses.actSeqPicker->callback = [](const PickerResult & result, void* cbArgs) { actSeqSys.CustomPickerCallback(result, (SpellPacketBody*)cbArgs); };
+
+		*actSeqPickerActive = 1;
+		uiPicker.ShowPicker(*addresses.actSeqPicker, &curSeq->spellPktBody);
+		*addresses.actSeqPickerAction = *d20Sys.globD20Action;
+		return;
+	}
+
 	if (tgtClassif == D20TC_CastSpell){
 
 		unsigned int spellEnum, spellClass, spellLevel, metamagicValue;
@@ -492,6 +511,78 @@ void ActionSequenceSystem::SeqPickerTargetingReset(){
 	*seqPickerD20ActnData1 = 0;
 	*seqPickerD20ActnType = D20A_UNSPECIFIED_ATTACK;
 	*seqPickerTargetingType = D20TargetClassification::D20TC_Invalid;
+}
+
+void ActionSequenceSystem::CustomPickerCallback(const PickerResult &result, SpellPacketBody *pkt){
+	if (!result.flags) {
+		*actSeqPickerActive = 1;
+		return;
+	}
+
+	*actSeqPickerActive = 0;
+
+	if (result.flags & PRF_CANCELLED) {
+		uiPicker.FreeCurrentPicker();
+		if (*actSeqCur)
+			(*actSeqCur)->spellPktBody.Reset();
+		*addresses.actSeqTargetsIdx = -1;
+		for (auto i = 0; i < 32; i++)
+			addresses.actSeqTargets[i] = objHndl::null;
+		*addresses.actSeqSpellLoc = LocAndOffsets::null;
+		d20Sys.D20ActnInit(d20Sys.globD20Action->d20APerformer, d20Sys.globD20Action);
+		return;
+	}
+
+	logger->info("CustomPickerCallback(): Resetting sequence");
+	auto performer = addresses.actSeqPickerAction->d20APerformer;
+
+	if (!SequenceSwitch(performer) && ((*actSeqCur)->seqOccupied & SEQF_PERFORMING))
+		return;
+
+	actSeqSys.curSeqReset(performer);
+	*d20Sys.globD20Action = *addresses.actSeqPickerAction;
+
+	if (result.flags & PRF_HAS_SINGLE_OBJ) {
+		pkt->targetCount = 1;
+		pkt->orgTargetCount = 1;
+		pkt->targetListHandles[0] = result.handle;
+	}
+	else {
+		pkt->targetCount = 0;
+		pkt->orgTargetCount = 0;
+	}
+
+	if (result.flags & PRF_HAS_MULTI_OBJ) {
+		auto objNode = result.objList.objects;
+		for (pkt->targetCount = 0; objNode != nullptr && pkt->targetCount < MAX_SPELL_TARGETS; ++pkt->targetCount) {
+			pkt->targetListHandles[pkt->targetCount] = objNode->handle;
+			objNode = objNode->next;
+		}
+		pkt->orgTargetCount = pkt->targetCount;
+	}
+
+	if (result.flags & PRF_HAS_LOCATION) {
+		pkt->aoeCenter.location = result.location;
+		pkt->aoeCenter.off_z = result.offsetz;
+	}
+	else {
+		pkt->aoeCenter.location = LocAndOffsets::null;
+		pkt->aoeCenter.off_z = 0.0f;
+	}
+
+	if (result.flags & PRF_UNK8) {
+		logger->warn("SpellPickerCallback: not implemented - BECAME_TOUCH_ATTACK");
+	}
+
+	pkt->caster = performer;
+	pkt->pickerResult = result;
+	uiPicker.FreeCurrentPicker();
+	ActionAddToSeq();
+	sequencePerform();
+	*addresses.actSeqTargetsIdx = -1;
+	for (auto i = 0; i < 32; i++)
+		addresses.actSeqTargets[i] = objHndl::null;
+	*addresses.actSeqSpellLoc = LocAndOffsets::null;
 }
 
 void ActionSequenceSystem::SpellPickerCallback(const PickerResult & result, SpellPacketBody * pkt){
