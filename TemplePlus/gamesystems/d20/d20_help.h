@@ -83,7 +83,10 @@ public:
 	static int LinkParser(D20HelpLink* d20hl, char * topicTitle, char **pos1, char **pos2, int *offsetOut);
 	bool IsClickForHelpActive();
 	void PresentWikiHelp(int topicIdx, D20HelpType helpType = D20HelpType::Default); // topicIdx is not the hashcode of a TAG_XXX string - it's a hardcoded index that gets converted via a lookup table
+	bool PresentWikiHelpIfActive(int topicIdx, D20HelpType helpType = D20HelpType::Default); // combines the above two funcs
+
 	void PresentWikiHelpWindow(int topicId);
+	
 
 	static int (__cdecl*orgGenerateLinks)(D20HelpTopic * d20ht);
 	static int (__cdecl*orgLinkParser)(D20HelpLink* d20hl, char * topicTitle, char **pos1, char **pos2, int *offsetOut);

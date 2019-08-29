@@ -112,6 +112,13 @@ struct TigMsg : TigMsgBase {
 	uint32_t arg2; // y for mouse events
 	uint32_t arg3;
 	uint32_t arg4; // button state flags for mouse events - see MouseStateFlags
+
+	bool IsWidgetEvent(TigMsgWidgetEvent evtType){
+		if (this->type != TigMsgType::WIDGET)
+			return false;
+		auto widMsg = (TigMsgWidget*)(this);
+		return widMsg->widgetEventType == evtType;
+	};
 };
 
 struct TigMsgGlobalKeyCallback {

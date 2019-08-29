@@ -17,6 +17,7 @@
 #include "combat.h"
 #include "graphics/mapterrain.h"
 #include "objfade.h"
+#include "ui/ui_dialog.h"
 
 /*
 Internal system specification used by the time event system
@@ -1046,7 +1047,7 @@ void TimeEventSystem::AdvanceTime(uint32_t newTimeMs) {
 	// advanced time elapsed and anim time
 	auto &timeAdvanceBlockerCount = temple::GetRef<int>(0x10AA83D8); // count of windows that block fidget animations / time advance
 
-
+	
 	if (!timeAdvanceBlockerCount) {
 
 		if (!uiSystems->GetDlg().IsActive() && !combatSys.isCombatActive()) {

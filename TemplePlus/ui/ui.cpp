@@ -153,7 +153,7 @@ public:
 	}
 } uiReplacement;
 
-LgcyButton::LgcyButton(char* ButtonName, int ParentId, int X, int Y, int Width, int Height){
+LgcyButton::LgcyButton(const char* ButtonName, int ParentId, int X, int Y, int Width, int Height){
 	if (ButtonName){
 		auto pos = name;
 		while( *ButtonName && (pos - name < 63) ){
@@ -188,7 +188,7 @@ LgcyButton::LgcyButton(char* ButtonName, int ParentId, int X, int Y, int Width, 
 	sndHoverOff = -1;
 }
 
-LgcyButton::LgcyButton(char* ButtonName, int ParentId, TigRect& rect){
+LgcyButton::LgcyButton(const char* ButtonName, int ParentId, TigRect& rect){
 	if (ButtonName) {
 		auto pos = name;
 		while (*ButtonName && (pos - name < 63)) {
@@ -288,6 +288,7 @@ LgcyWidgetId UiManager::AddWindow(LgcyWindow& widget)
 
 	auto widgetId = AddWidget(&widget, __FILE__, __LINE__);
 	AddWindow(widgetId);
+	widget.widgetId = widgetId;
 	return widgetId;
 }
 
@@ -464,6 +465,7 @@ void UiManager::AddWindow(LgcyWidgetId id)
 	BringToFront(id);
 }
 
+/* 0x101F8F60 */
 void UiManager::RemoveWindow(LgcyWidgetId id)
 {
 	for (auto it = mActiveWindows.begin(); it != mActiveWindows.end(); ) {
@@ -560,6 +562,7 @@ void UiManager::SetHidden(LgcyWidgetId id, bool hidden)
 
 }
 
+/* 0x101F9420 */
 void UiManager::RemoveWidget(LgcyWidgetId id)
 {
 	auto it = mActiveWidgets.find(id);
@@ -1082,6 +1085,22 @@ LgcyWindow::LgcyWindow(int x, int y, int w, int h) : LgcyWindow()
 	this->yrelated = y;
 	this->width = w;
 	this->height = h;
+}
+
+int LgcyWindow::AddChildButton(const std::string & btnName, int xRelative, int yRelative, int w, int h, LgcyWidgetRenderFn renderHandler, LgcyWidgetHandleMsgFn msgHandler, LgcyWidgetRenderTooltipFn tooltipHandler)
+{
+	LgcyButton btn(btnName.c_str(), this->widgetId, xRelative, yRelative, w, h);
+	btn.x += this->x; btn.y += this->y;
+	btn.render = renderHandler;
+	btn.handleMessage = msgHandler;
+	
+	if (nullptr != tooltipHandler){
+		btn.renderTooltip = tooltipHandler;
+	}
+	btn.SetDefaultSounds();
+	int btnId = uiManager->AddButton(btn, this->widgetId);
+	
+	return btnId;
 }
 
 LgcyButton::LgcyButton() {

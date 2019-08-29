@@ -59,6 +59,7 @@ struct TigTextStyle
 	static const TigTextStyle standardWhite;
 	TigTextStyle(ColorRect * color);
 	TigTextStyle();
+	void SetColors(ColorRect * color);
 };
 #pragma pack(pop)
 

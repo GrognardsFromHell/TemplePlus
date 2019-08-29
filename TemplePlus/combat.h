@@ -91,7 +91,7 @@ struct LegacyCombatSystem : temple::AddressTable {
 	*/
 	void Brawl(objHndl a, objHndl b);
 	void (__cdecl *_Brawl)(objHndl a, objHndl b);
-	void enterCombat(objHndl objHnd);
+	void enterCombat(objHndl objHnd, bool regardDistance = true);
 	void AddToInitiative(objHndl critter);
 	void (__cdecl *RemoveFromInitiative)(objHndl critter);
 

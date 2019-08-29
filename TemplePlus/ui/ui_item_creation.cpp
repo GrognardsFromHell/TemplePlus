@@ -2727,7 +2727,7 @@ void UiItemCreation::CreateItemFinalize(objHndl crafter, objHndl item){
 
 	auto insertResult = inventory.SetItemParent(newItemHandle, crafter, IIF_None);
 	if (!insertResult){
-		uiDialog.ShowTextBubble(crafter, crafter, fmt::format("My inventory is full!\nI dropped the item on the ground.") , -1);
+		uiDialog->ShowTextBubble(crafter, crafter, fmt::format("My inventory is full!\nI dropped the item on the ground.") , -1);
 	}
 
 	if (itemCreationType != ItemCreationType::Inactive) {

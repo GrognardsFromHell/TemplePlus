@@ -334,6 +334,15 @@ void HelpSystem::PresentWikiHelp(int helpIdx, D20HelpType helpType){
 	// temple::GetRef<void(__cdecl)(int)>(0x10124A40)(helpIdx);
 }
 
+bool HelpSystem::PresentWikiHelpIfActive(int topicIdx, D20HelpType helpType)
+{
+	if (IsClickForHelpActive()){
+		PresentWikiHelp(topicIdx, helpType);
+		return true;
+	}
+	return false;
+}
+
 void HelpSystem::PresentWikiHelpWindow(int topicId)
 {
 	temple::GetRef<void(__cdecl)(int)>(0x100E6CF0)(topicId);

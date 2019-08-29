@@ -5,6 +5,14 @@
 
 struct DialogLineNew;
 
+struct DialogMini
+{
+	int flags; // 1 - is PC line
+	const char* lineText;
+	DialogMini *prev;
+	DialogMini *next;
+};
+
 struct DialogState {
 	int dialogHandle;
 	int unk;

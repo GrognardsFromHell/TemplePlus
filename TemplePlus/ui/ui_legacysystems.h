@@ -119,24 +119,6 @@ public:
     const std::string &GetName() const override;
 };
 
-class UiDlg : public UiSystem, public SaveGameAwareUiSystem {
-public:
-    static constexpr auto Name = "Dlg-UI";
-    UiDlg(const UiSystemConf &config);
-    ~UiDlg();
-    void Reset() override;
-    bool SaveGame(TioFile *file) override;
-    bool LoadGame(const UiSaveFile &saveGame) override;
-    void ResizeViewport(const UiResizeArgs &resizeArgs) override;
-    const std::string &GetName() const override;
-
-	bool IsActive() const;
-
-private:
-	uint32_t& mFlags = temple::GetRef<uint32_t>(0x10BEA5F4);
-	LgcyWidgetId& mWindowId = temple::GetRef<LgcyWidgetId>(0x10BEA2E4);
-};
-
 
 
 class UiToolTip : public UiSystem {
@@ -245,6 +227,8 @@ public:
 	void Show();
 	bool IsRollHistoryVisible(); // is the roll history console visible
 	bool IsVisible();
+	void DialogBtnHide(); // Hides the Dialog History button
+	void DialogHistoryBtnToggle(); // Toggles visibility between the Minimize and Maximize buttons
 };
 
 class UiDM : public UiSystem {

@@ -19,4 +19,9 @@ TigTextStyle::TigTextStyle(ColorRect * color){
 TigTextStyle::TigTextStyle(){
 }
 
+void TigTextStyle::SetColors(ColorRect * color)
+{
+	this->textColor = this->colors2 = this->colors4 = this->shadowColor = color;
+}
+
 
