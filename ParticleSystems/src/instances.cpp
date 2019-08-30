@@ -50,27 +50,32 @@ namespace particles {
 
 	}
 
-	bool PartSysEmitter::IsDead() const {
-
-		if (mSpec->IsPermanent()) {
+	bool PartSysEmitter::IsDead(float lifetimeInSecs) const {
+		
+		// Emitters with permanent particles will stop emitting at some point, but cannot be dead
+		// or otherwise the existing particles would be removed
+		if (mSpec->IsPermanentParticles()) {
+			if (mEnded && GetActiveCount() == 0) {
+				// If it won't emit again, and has no active particles, it is dead anyway
+				return true;
+			}
 			return false;
 		}
 
-		if (mEnded && GetActiveCount() == 0) {
-			return true;
+		// Permanent emitters don't end, unless explicitly ended prematurely using EndPrematurely
+		// This is used extensively if an effect is ended, but existing particles should run their course.
+		if (mSpec->IsPermanent() && !mEnded) {
+			return false;
 		}
 
-		auto result = false;
+		// The maximum time the emitter needs to be kept is the sum of how long
+		// it'll emit particles and the maximum lifetime of particles it emits.
+		float lifespanSum = mSpec->GetLifespan() + mSpec->GetParticleLifespan();
 
-		// TODO: Here's a check for that ominous "permanent particle" flag
-		// It only went into this, if it didn't have that flag, which is very odd
-		if (true) {
-			auto lifespanSum = mSpec->GetLifespan() + mSpec->GetParticleLifespan();
-			if (mAliveInSecs >= lifespanSum)
-				result = true;
-		}
-
-		return result;
+		// Otherwise, it'll end once the emitter's lifespan has elapsed along with the last particle's lifespan
+		// We're using the lifetime of the particle system here, because emitter lifetimes
+		// are only increased when they are being simulated (so not while being off-screen)
+		return lifetimeInSecs >= lifespanSum;
 
 	}
 
@@ -289,6 +294,10 @@ namespace particles {
 		// another particle
 		auto secsPerPart = 1.0f / partsPerSec;
 
+		// It is pointless to simulate more time than the lifetime of a single particle,
+		// because we'll spawn more than could actually be active at the same time
+		mOutstandingSimulation = std::min(mSpec->GetParticleLifespan(), mOutstandingSimulation);
+
 		while (mOutstandingSimulation >= secsPerPart) {
 			mOutstandingSimulation -= secsPerPart;
 
@@ -387,14 +396,7 @@ namespace particles {
 
 	bool PartSys::IsDead() const {
 		for (auto& emitter : mEmitters) {
-
-			if (emitter->GetSpec()->IsPermanent())
-				return false;
-
-			float lifespanSum = emitter->GetSpec()->GetLifespan() +
-				emitter->GetSpec()->GetParticleLifespan();
-
-			if (mAliveInSecs < lifespanSum) {
+			if (!emitter->IsDead(mAliveInSecs)) {
 				return false;
 			}
 		}
