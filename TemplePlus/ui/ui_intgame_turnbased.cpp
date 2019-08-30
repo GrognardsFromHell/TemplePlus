@@ -950,8 +950,7 @@ bool UiIntgameTurnbased::AooPossible(objHndl handle)
 }
 
 void UiIntgameTurnbased::CursorRenderUpdate(){
-	temple::GetRef<void(__cdecl)()>(0x100936D0)(); // CursorHandleIntgameFocusObj
-
+	
 	auto &cursorStateForIntgameFocus = temple::GetRef<int>(0x10B3D5B0);
 	auto &cursorState = *intgameAddresses.cursorState;
 	auto &cursorPrevState = temple::GetRef<int>(0x10B3D5A8);
@@ -959,6 +958,12 @@ void UiIntgameTurnbased::CursorRenderUpdate(){
 	auto &widgetEnteredRender = *intgameAddresses.uiIntgameWidgetEnteredForRender;
 	auto &intgameTarget = *intgameAddresses.uiIntgameObjFromRaycast;
 	auto &actionFailing = temple::GetRef<int>(0x10B3D5B4);
+
+	// Set special cursors for locked doors
+	temple::GetRef<void(__cdecl)()>(0x100936D0)(); // CursorHandleIntgameFocusObj
+	if (cursorStateForIntgameFocus){
+		cursorState = cursorStateForIntgameFocus;
+	}
 
 	auto &curSeq = *actSeqSys.actSeqCur;
 	if ( (widgetEnteredGameplay || widgetEnteredRender) 

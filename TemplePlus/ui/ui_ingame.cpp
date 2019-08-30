@@ -332,6 +332,7 @@ void UiInGame::HandleMouseMoveEvent(const TigMsg & msg)
 		}		
 	} else if (objects.IsEquipment(mouseTarget) 
 		|| objects.IsContainer(mouseTarget)
+		|| objects.IsPortal(mouseTarget)
 		|| objSystem->GetProtoId(mouseTarget) == 2064
 		) {
 		// 2064 is the guestbook

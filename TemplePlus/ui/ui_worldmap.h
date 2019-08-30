@@ -2,6 +2,7 @@
 #pragma once
 
 #include "ui_system.h"
+class UiWorldmapImpl;
 
 class UiWorldmap : public UiSystem, public SaveGameAwareUiSystem {
 public:
@@ -19,6 +20,8 @@ public:
 	// Called by the dialog scripts to travel to an area based on a dialog choice
 	void TravelToArea(int area);
 	bool NeedToClearEncounterMap();
+private:
+	std::unique_ptr<UiWorldmapImpl> mImpl;
 };
 
 UiWorldmap &ui_worldmap();

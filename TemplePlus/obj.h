@@ -240,6 +240,12 @@ struct Objects : temple::AddressTable {
 	ObjectId GetId(objHndl handle);
 	ObjectType GetType(objHndl obj);
 	int32_t GetHPCur(objHndl obj);
+	bool IsPortal(objHndl handle){
+		return IsPortalType(GetType(handle));
+	};
+	bool IsPortalType(ObjectType type) const{
+		return type == obj_t_portal;
+	}
 	bool IsCritter(objHndl obj) {
 		return IsCritterType(GetType(obj));
 	}
@@ -294,7 +300,7 @@ struct Objects : temple::AddressTable {
 	
 	int GetTempId(objHndl handle);
 	int GetAlpha(objHndl handle);
-	
+
 
 	static int IsCritterProne(objHndl handle);
 #pragma endregion
