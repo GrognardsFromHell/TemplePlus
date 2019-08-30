@@ -1905,6 +1905,15 @@ int AiSystem::UpdateAiFlags(objHndl handle, AiFightStatus aiFightStatus, objHndl
 		pythonObjIntegration.ExecuteObjectScript(target, handle, ObjScriptEvent::EnterCombat);
 		if (obj->GetFlags() & OF_OFF)
 			return AIFS_NONE;
+		
+		/* 
+		 * Adding because of changes to shouldRemove
+		 */
+		combatSys.enterCombat(handle, false);
+		/*
+		 *
+		 */
+
 		if (soundMap){
 			*soundMap = critterSys.SoundmapCritter(handle, 5);
 		}
