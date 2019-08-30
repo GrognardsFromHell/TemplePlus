@@ -117,8 +117,12 @@ int ParticleSysSystem::CreateAt(uint32_t nameHash, XMFLOAT3 pos) {
 		logger->warn("Unable to spawn unknown particle system: {}", nameHash);
 		return -1;
 	}
-
+	
 	auto& spec = it->second;
+	if (config.debugPartSys){
+		logger->debug("Creating Partsys {}", spec->GetName());
+	}
+	
 
 	auto sys(std::make_shared<PartSys>(spec));
 	sys->SetWorldPos(mExternal.get(), pos.x, pos.y, pos.z);
@@ -139,6 +143,10 @@ ParticleSysSystem::Handle ParticleSysSystem::CreateAtObj(const std::string &name
 	}
 
 	auto& spec = it->second;
+
+	if (config.debugPartSys) {
+		logger->debug("Creating Partsys {}", spec->GetName());
+	}
 
 	auto loc = objects.GetLocationFull(obj);
 	auto absLoc = loc.ToInches3D(objects.GetOffsetZ(obj));
@@ -164,6 +172,10 @@ ParticleSysSystem::Handle ParticleSysSystem::CreateAtObj(uint32_t nameHash, objH
 
 	auto& spec = it->second;
 
+	if (config.debugPartSys) {
+		logger->debug("Creating Partsys {}", spec->GetName());
+	}
+
 	auto loc = objects.GetLocationFull(obj);
 	auto absLoc = loc.ToInches3D(objects.GetOffsetZ(obj));
 
@@ -186,6 +198,9 @@ ParticleSysSystem::Handle ParticleSysSystem::CreateAtPos(const std::string &name
 	}
 
 	auto& spec = it->second;
+	if (config.debugPartSys) {
+		logger->debug("Creating Partsys {}", spec->GetName());
+	}
 
 	auto sys(std::make_shared<PartSys>(spec));
 	sys->SetWorldPos(mExternal.get(), pos.x, pos.y, pos.z);
