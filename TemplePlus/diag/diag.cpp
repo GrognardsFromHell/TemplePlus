@@ -99,6 +99,8 @@ void DiagScreen::Render() {
 	lines.push_back(fmt::format("uiIntgameWidgetEnteredForRender: {}", temple::GetRef<int>(0x102FC640)));
 	auto intgameActor = temple::GetRef<objHndl>(0x10C04118);
 	lines.push_back(fmt::format("intgameActor: {}", intgameActor));
+	auto intgameFocus = temple::GetRef<objHndl>(0x10BE60D8);
+	lines.push_back(fmt::format("intgameFocusObj: {}", intgameFocus));
 	auto intgameTarget = temple::GetRef<objHndl>(0x10C040E8);
 	lines.push_back(fmt::format("uiIntgameObjFromRaycast: {}", intgameTarget));
 	
