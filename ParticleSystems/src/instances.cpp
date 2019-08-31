@@ -75,6 +75,7 @@ namespace particles {
 		// Otherwise, it'll end once the emitter's lifespan has elapsed along with the last particle's lifespan
 		// We're using the lifetime of the particle system here, because emitter lifetimes
 		// are only increased when they are being simulated (so not while being off-screen)
+		// This fixes the infamous Elemental Node lag
 		return lifetimeInSecs >= lifespanSum;
 
 	}
