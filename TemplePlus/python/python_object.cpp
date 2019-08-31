@@ -3019,14 +3019,13 @@ static PyObject* PyObjHandle_D20SendSignal(PyObject* obj, PyObject* args) {
 	if (!self->handle) {
 		Py_RETURN_NONE;
 	}
-
 	
 	PyObject* signalId = 0; //int signalId;
 	PyObject* arg = 0;
-	if (!PyArg_ParseTuple(args, "O|O:objhndl.d20_send_signal", &signalId, &arg)) {
+	int arg2 = 0;
+	if (!PyArg_ParseTuple(args, "O|Oi:objhndl.d20_send_signal", &signalId, &arg, &arg2)) {
 		return 0;
 	}
-
 
 	bool isPythonSig = false;
 	D20DispatcherKey dispKey;
@@ -3050,7 +3049,7 @@ static PyObject* PyObjHandle_D20SendSignal(PyObject* obj, PyObject* args) {
 	else if (arg && PyLong_Check(arg)) {
 		auto val = PyLong_AsLong(arg);
 		if (isPythonSig)
-			d20Sys.D20SignalPython(self->handle, dispKey, val, 0);
+			d20Sys.D20SignalPython(self->handle, dispKey, val, arg2);
 		else
 			d20Sys.d20SendSignal(self->handle, dispKey, val, 0);
 	}
@@ -3059,7 +3058,7 @@ static PyObject* PyObjHandle_D20SendSignal(PyObject* obj, PyObject* args) {
 	{
 		auto val = PyInt_AsLong(arg);
 		if (isPythonSig)
-			d20Sys.D20SignalPython(self->handle, dispKey, val, 0);
+			d20Sys.D20SignalPython(self->handle, dispKey, val, arg2);
 		else
 			d20Sys.d20SendSignal(self->handle, dispKey, val, 0);
 	} 
