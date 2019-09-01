@@ -160,7 +160,7 @@ int DamagePacket::AddDR(int amount, DamageType damType, int damageMesLine){
 		this->damageResistances[this->damResCount].damageReductionAmount = amount;
 		this->damageResistances[this->damResCount].dmgFactor = 0.0f;
 		this->damageResistances[this->damResCount].type = damType;
-		this->damageResistances[this->damResCount].attackPowerType = D20AttackPower::D20DAP_NORMAL;
+		this->damageResistances[this->damResCount].attackPowerType = D20DAP_UNSPECIFIED;
 		this->damageResistances[this->damResCount].typeDescription = damage.GetMesline(damageMesLine);
 		this->damageResistances[this->damResCount++].causedBy = nullptr;
 		return TRUE;
@@ -287,7 +287,7 @@ int DamagePacket::AddModFactor(float factor, DamageType damType, int damageMesLi
 	if (this->damModCount < 5){
 		this->damageFactorModifiers[this->damModCount].dmgFactor = factor;
 		this->damageFactorModifiers[this->damModCount].type = damType;
-		this->damageFactorModifiers[this->damModCount].attackPowerType = D20AttackPower::D20DAP_NORMAL;
+		this->damageFactorModifiers[this->damModCount].attackPowerType = D20DAP_UNSPECIFIED;
 		this->damageFactorModifiers[this->damModCount].typeDescription = damage.GetMesline(damageMesLine);
 		this->damageFactorModifiers[this->damModCount++].causedBy = nullptr;
 		return TRUE;
