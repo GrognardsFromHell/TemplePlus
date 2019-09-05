@@ -124,6 +124,10 @@ void D20StatusSystem::D20StatusInit(objHndl objHnd)
 		if (psionicFocusCondStruct) {
 			_ConditionAddToAttribs_NumArgs0(dispatcher, psionicFocusCondStruct); // args will be set from D20StatusInitFromInternalFields if this condition has already been previously applied
 		}
+		auto autohypnosisCondStruct = conds.GetByName("Autohypnosis");
+		if (autohypnosisCondStruct) {
+			_ConditionAddToAttribs_NumArgs0(dispatcher, autohypnosisCondStruct); // args will be set from D20StatusInitFromInternalFields if this condition has already been previously applied
+		}
 
 		initClass(objHnd);
 
@@ -204,6 +208,10 @@ void D20StatusSystem::D20StatusRefresh(objHndl objHnd)
 		auto psionicFocusCondStruct = conds.GetByName("Psionic Focus");
 		if (psionicFocusCondStruct) {
 			_ConditionAddToAttribs_NumArgs0(dispatcher, psionicFocusCondStruct); // args will be set from D20StatusInitFromInternalFields if this condition has already been previously applied
+		}
+		auto autohypnosisCondStruct = conds.GetByName("Autohypnosis");
+		if (autohypnosisCondStruct) {
+			_ConditionAddToAttribs_NumArgs0(dispatcher, autohypnosisCondStruct); // args will be set from D20StatusInitFromInternalFields if this condition has already been previously applied
 		}
 		initClass(objHnd);
 		initRace(objHnd);
