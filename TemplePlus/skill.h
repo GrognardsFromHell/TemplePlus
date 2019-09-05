@@ -83,7 +83,7 @@ enum SkillEnum : uint32_t
 	skill_forgery = 28,
 	skill_handle_animal = 29,
 	skill_innuendo = 30,
-	skill_intuit_direction = 31,
+	skill_autohypnosis = 31,
 	skill_jump = 32,
 	skill_knowledge_arcana = 33,
 	skill_knowledge_religion = 34,

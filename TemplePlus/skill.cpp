@@ -5,6 +5,15 @@
 #include "util/fixes.h"
 #include "float_line.h"
 
+// enables autohypnosis skill slot
+class AutohypnosisFix : public TempleFix {
+public:
+
+	void apply() override {
+		writeHex(0x102CBBA7, "00");
+	}
+} autohypnosisFix;
+
 #pragma region SkillSystem Implementation
 LegacySkillSystem skillSys;
 
