@@ -693,6 +693,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 	py::class_<DispIoSavingThrow, DispIO>(m, "EventObjSavingThrow", "Used for fetching saving throw bonuses")
 		.def_readwrite("bonus_list", &DispIoSavingThrow::bonlist)
 		.def_readwrite("return_val", &DispIoSavingThrow::returVal)
+		.def_readwrite("dc", &DispIoSavingThrow::dc)
 		.def_readwrite("obj", &DispIoSavingThrow::obj)
 		.def_readwrite("flags", &DispIoSavingThrow::flags);
 
