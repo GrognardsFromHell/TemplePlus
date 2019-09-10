@@ -344,8 +344,6 @@ std::pair<int, int> TextLayouter::MeasureCharRun(cstring_span<> text,
 	auto wordWidth = 0;
 	auto wordCount = 0;
 
-	const auto tabWidth = style.field4c - extents.x;
-
 	// This seems to be special handling for the sequence "@t" and @0 - @9
 	auto it = text.begin();
 	for (; it != text.end(); ++it) {
@@ -359,14 +357,30 @@ std::pair<int, int> TextLayouter::MeasureCharRun(cstring_span<> text,
 		if (ch == '@' && isdigit(nextCh)) {
 			++it; // Skip the number
 		}
-		else if (ch == '@' && nextCh == 't') {
+		else if (ch == '@' && nextCh == 't' && style.field4c > 0) {
 			++it; // Skip the t
 
-			if (tabWidth == 0) {
+			// Treat tab stops as if they were whitespace, but instead of adding tracking,
+			// add the space needed to reach the tab stop position
+			if (lineWidth + wordWidth <= extentsWidth) {
+				wordCount++;
+				if (lineWidth + wordWidth <= extentsWidth + linePadding) {
+					wordCountWithPadding++;
+				}
+
+				lineWidth += wordWidth;
+				wordWidth = 0;
+
+				// Increase the line width such that it continues at the tab stop location,
+				// but do not move backwards (unsupported)
+				auto currentX = extents.x + lineWidth;
+				auto trackingNeeded = std::max<int>(0, style.field4c - currentX);
+				lineWidth += trackingNeeded;
+			}
+			else {
+				// Stop if we have run out of space on this line
 				break;
 			}
-
-			wordWidth += tabWidth;
 		}
 		else if (ch == '\n') {
 			if (lineWidth + wordWidth <= extentsWidth) {
@@ -448,11 +462,9 @@ bool TextLayouter::HasMoreText(cstring_span<> text, int tabWidth) {
 			continue;
 		}
 
-		if (curChar == '@' && nextChar == 't') {
+		if (curChar == '@' && nextChar == 't'  && tabWidth > 0) {
 			++it;
-			if (tabWidth > 0) {
-				continue;
-			}
+			continue;
 		}
 
 		if (curChar != '\n' && !isspace(curChar)) {
@@ -561,7 +573,13 @@ void TextLayouter::LayoutAndDrawVanilla(gsl::cstring_span<> text, const TigFont 
 			}
 
 			startOfWord = lastIdx;
-			if (startOfWord < textLength &&  text[startOfWord] >= 0 &&  isspace(text[startOfWord])) {
+			if (startOfWord + 1 < textLength && text[startOfWord] == '@' && text[startOfWord + 1] == 't') {
+				// Extend the word width by the whitespace needed to move to the tabstop position from where
+				// the current X position is (after the word we're currently rendering)
+				wordWidth += std::max<int>(0, style.field4c - extents.x - (currentX + wordWidth));
+				// Skip the "t" of "@t"
+				startOfWord++;
+			} else if (startOfWord < textLength &&  text[startOfWord] >= 0 &&  isspace(text[startOfWord])) {
 				wordWidth += style.tracking;
 			}
 
@@ -813,22 +831,9 @@ ScanWordResult TextLayouter::ScanWord(const char* text,
 			continue;
 		}
 
-		// @t will advance the width up to the next tabstop
+		// @t will advance the width up to the next tabstop, but only if a tabstop has been specified
 		if (curCh == '@' && nextCh == 't') {
-			i++; // Skip the t
-			if (tabWidth > 0) {
-				if (style.flags & TTSF_TRUNCATE) {
-					result.fullWidth += tabWidth;
-					if (result.fullWidth > remainingSpace) {
-						result.drawEllipsis = true;
-						continue;
-					}
-					// The idx right before the width - padding starts
-					result.idxBeforePadding = i;
-				}
-				result.width += tabWidth;
-			}
-			continue;
+			break; // Treat it as if it was whitespace
 		}
 
 		auto glyphIdx = GetGlyphIdx(curCh, &text[0]);
