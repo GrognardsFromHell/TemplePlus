@@ -14,7 +14,7 @@
 #include "python/python_integration_obj.h"
 #include "python/python_object.h"
 
-
+static constexpr int DontUseLength = std::numeric_limits<int>::min();
 #define PATH_CACHE_EXPIRATION_TIME 5000 // miliseconds
 
 Pathfinding pathfindingSys;
@@ -1200,7 +1200,7 @@ int Pathfinding::FindPathShortDistanceAdjRadius(PathQuery* pq, Path* pqr)
 			else
 			{	// node has exceeded max length, dump it
 				idxPrevChain = pathFindAstar[curIdx].idxPreviousChain;
-				pathFindAstar[curIdx].length = 0x80000000;
+				pathFindAstar[curIdx].length = DontUseLength;
 				if (idxPrevChain)
 					pathFindAstar[idxPrevChain - 1].idxNextChain = pathFindAstar[curIdx].idxNextChain;
 				else
@@ -1263,63 +1263,65 @@ int Pathfinding::FindPathShortDistanceAdjRadius(PathQuery* pq, Path* pqr)
 			else
 				continue;
 
-			if (pathFindAstar[newIdx].length == 0x80000000)
+			if (pathFindAstar[newIdx].length == DontUseLength)
 				continue;
 
 			locSys.SubtileToLocAndOff(_fromSubtile, &subPathFrom);
 			locSys.SubtileToLocAndOff(shiftedSubtile, &subPathTo);
-
-			if (PathNodeSys::hasClearanceData)
-			{
-				SectorLoc secLoc(subPathTo.location);
-				//secLoc.GetFromLoc(subPathTo.location);
-				int secX = (int) secLoc.x(), secY = (int) secLoc.y();
-				int secClrIdx = PathNodeSys::clearanceData.clrIdx.clrAddr[secLoc.y()][secLoc.x()];
-				auto secBaseTile = secLoc.GetBaseTile();
-				int ssty = shiftedSubtile.y % 192;
-				int sstx = shiftedSubtile.x % 192;
-				if (direction % 2) // 
-				{
-				if (PathNodeSys::clearanceData.secClr[secClrIdx].val[shiftedSubtile.y % 192][shiftedSubtile.x % 192] < requisiteClearance)
-					{
-						/*if (config.pathfindingDebugMode)
-						{
-							logger->info("Pathfinding clearance too small:  {},  clearance value {}", subPathTo, PathNodeSys::clearanceData.secClr[secClrIdx].val[shiftedSubtile.y % 192][shiftedSubtile.x % 192]);
-						}*/
-						continue;
-					}
-						
-				} else
-				{
-					if (PathNodeSys::clearanceData.secClr[secClrIdx].val[shiftedSubtile.y % 192][shiftedSubtile.x % 192] < diagonalClearance)
-					{
-						/*if (config.pathfindingDebugMode)
-						{
-							logger->info("Pathfinding clearance too small:  {},  clearance value {}", subPathTo, PathNodeSys::clearanceData.secClr[secClrIdx].val[shiftedSubtile.y % 192][shiftedSubtile.x % 192]);
-						}*/
-					continue;
-					}
-				}
-
-				bool foundBlockers = false;
-
-				if (proxList.FindNear(subPathTo, requisiteClearanceCritters))
-					foundBlockers = true;
-
-				if (foundBlockers)
-					continue;
-
-			}
-			else if (!PathStraightLineIsClear(pqr, pq, subPathFrom, subPathTo))
-			{
-				continue;
-			}
-
+			
 			int oldLength = pathFindAstar[newIdx].length;
 			int newLength = pathFindAstar[refererIdx].length + 14 - 4 * (direction % 2); // +14 for diagonal, +10 for straight
 
 			if (oldLength == 0 || abs(oldLength) > newLength)
 			{
+				// Check whether the shorter path would be valid
+				if (PathNodeSys::hasClearanceData)
+				{
+					SectorLoc secLoc(subPathTo.location);
+					//secLoc.GetFromLoc(subPathTo.location);
+					int secX = (int)secLoc.x(), secY = (int)secLoc.y();
+					int secClrIdx = PathNodeSys::clearanceData.clrIdx.clrAddr[secLoc.y()][secLoc.x()];
+					auto secBaseTile = secLoc.GetBaseTile();
+					int ssty = shiftedSubtile.y % 192;
+					int sstx = shiftedSubtile.x % 192;
+					if (direction % 2) // 
+					{
+						if (PathNodeSys::clearanceData.secClr[secClrIdx].val[shiftedSubtile.y % 192][shiftedSubtile.x % 192] < requisiteClearance)
+						{
+							/*if (config.pathfindingDebugMode)
+							{
+								logger->info("Pathfinding clearance too small:  {},  clearance value {}", subPathTo, PathNodeSys::clearanceData.secClr[secClrIdx].val[shiftedSubtile.y % 192][shiftedSubtile.x % 192]);
+							}*/
+							continue;
+						}
+
+					}
+					else
+					{
+						if (PathNodeSys::clearanceData.secClr[secClrIdx].val[shiftedSubtile.y % 192][shiftedSubtile.x % 192] < diagonalClearance)
+						{
+							/*if (config.pathfindingDebugMode)
+							{
+								logger->info("Pathfinding clearance too small:  {},  clearance value {}", subPathTo, PathNodeSys::clearanceData.secClr[secClrIdx].val[shiftedSubtile.y % 192][shiftedSubtile.x % 192]);
+							}*/
+							continue;
+						}
+					}
+
+					bool foundBlockers = false;
+
+					if (proxList.FindNear(subPathTo, requisiteClearanceCritters))
+						foundBlockers = true;
+
+					if (foundBlockers)
+						continue;
+
+				}
+				else if (!PathStraightLineIsClear(pqr, pq, subPathFrom, subPathTo))
+				{
+					continue;
+				}
+
 				pathFindAstar[newIdx].length = newLength;
 				pathFindAstar[newIdx].refererIdx = refererIdx;
 				if (!pathFindAstar[newIdx].idxPreviousChain && !pathFindAstar[newIdx].idxNextChain) //  if node is not part of chain
@@ -1904,7 +1906,7 @@ int Pathfinding::FindPathShortDistanceSansTargetLegacy(PathQuery* pq, Path* pqr)
 			} else
 			{
 				idxPrevChain = pathFindAstar[curIdx].idxPreviousChain;
-				pathFindAstar[curIdx].length = 0x80000000;
+				pathFindAstar[curIdx].length = DontUseLength;
 				if (idxPrevChain)
 					pathFindAstar[idxPrevChain - 1].idxNextChain = pathFindAstar[curIdx].idxNextChain;
 				else
@@ -1940,7 +1942,7 @@ int Pathfinding::FindPathShortDistanceSansTargetLegacy(PathQuery* pq, Path* pqr)
 			else
 				continue;
 
-			if (pathFindAstar[newIdx].length == 0x80000000)
+			if (pathFindAstar[newIdx].length == DontUseLength)
 				continue;
 			
 			LocAndOffsets subPathFrom;
@@ -2197,7 +2199,7 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 			else
 			{
 				idxPrevChain = pathFindAstar[curIdx].idxPreviousChain;
-				pathFindAstar[curIdx].length = 0x80000000;
+				pathFindAstar[curIdx].length = DontUseLength;
 				if (idxPrevChain)
 					pathFindAstar[idxPrevChain - 1].idxNextChain = pathFindAstar[curIdx].idxNextChain;
 				else
@@ -2244,7 +2246,7 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 			else
 				continue;
 
-			if (pathFindAstar[newIdx].length == 0x80000000)
+			if (pathFindAstar[newIdx].length == DontUseLength)
 				continue;
 
 			LocAndOffsets subPathFrom;
@@ -2252,58 +2254,60 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 			locSys.SubtileToLocAndOff(_fromSubtile, &subPathFrom);
 			locSys.SubtileToLocAndOff(shiftedSubtile, &subPathTo);
 			
-			if (PathNodeSys::hasClearanceData)
-			{
-				SectorLoc secLoc(subPathTo.location);
-				//secLoc.GetFromLoc(subPathTo.location);
-				int secX = (int) secLoc.x(), secY = (int) secLoc.y();
-				int secClrIdx = PathNodeSys::clearanceData.clrIdx.clrAddr[secLoc.y()][secLoc.x()];
-				auto secBaseTile = secLoc.GetBaseTile();
-				int ssty = shiftedSubtile.y % 192;
-				int sstx = shiftedSubtile.x % 192;
-				if (direction%2 ) // xy straight
-				{
-					if (PathNodeSys::clearanceData.secClr[secClrIdx].val[shiftedSubtile.y % 192][shiftedSubtile.x % 192] < requisiteClearance)
-					{
-						//if (config.pathfindingDebugMode)
-						//{
-						//	//logger->info("Pathfinding clearance too small:  {},  clearance value {}", subPathTo, PathNodeSys::clearanceData.secClr[secClrIdx].val[shiftedSubtile.y % 192][shiftedSubtile.x % 192]);
-						//}
-						continue;
-					}
-				} else // xy diagonal
-				{
-					if (PathNodeSys::clearanceData.secClr[secClrIdx].val[shiftedSubtile.y % 192][shiftedSubtile.x % 192] < diagonalClearance)
-					{
-						/*if (config.pathfindingDebugMode)
-						{
-							logger->info("Pathfinding clearance too small:  {},  clearance value {}", subPathTo, PathNodeSys::clearanceData.secClr[secClrIdx].val[shiftedSubtile.y % 192][shiftedSubtile.x % 192]);
-						}*/
-					continue;
-					}
-				}
-				
-					
-		
-				bool foundBlockers = false;
-
-				if (proxList.FindNear(subPathTo, requisiteClearanceCritters))
-					foundBlockers = true;
-
-				if (foundBlockers)
-					continue;
-				
-			} 
-			else if (!PathStraightLineIsClear(pqr, pq, subPathFrom, subPathTo))
-			{
-				continue;
-			}
-
 			int oldLength = pathFindAstar[newIdx].length;
 			int newLength = pathFindAstar[refererIdx].length + 14 - 4 * (direction % 2); // +14 for diagonal, +10 for straight
 
 			if (oldLength == 0 || abs(oldLength) > newLength)
 			{
+				// Check whether the shorter path would be valid.
+				if (PathNodeSys::hasClearanceData)
+				{
+					SectorLoc secLoc(subPathTo.location);
+					//secLoc.GetFromLoc(subPathTo.location);
+					int secX = (int)secLoc.x(), secY = (int)secLoc.y();
+					int secClrIdx = PathNodeSys::clearanceData.clrIdx.clrAddr[secLoc.y()][secLoc.x()];
+					auto secBaseTile = secLoc.GetBaseTile();
+					int ssty = shiftedSubtile.y % 192;
+					int sstx = shiftedSubtile.x % 192;
+					if (direction % 2) // xy straight
+					{
+						if (PathNodeSys::clearanceData.secClr[secClrIdx].val[shiftedSubtile.y % 192][shiftedSubtile.x % 192] < requisiteClearance)
+						{
+							//if (config.pathfindingDebugMode)
+							//{
+							//	//logger->info("Pathfinding clearance too small:  {},  clearance value {}", subPathTo, PathNodeSys::clearanceData.secClr[secClrIdx].val[shiftedSubtile.y % 192][shiftedSubtile.x % 192]);
+							//}
+							continue;
+						}
+					}
+					else // xy diagonal
+					{
+						if (PathNodeSys::clearanceData.secClr[secClrIdx].val[shiftedSubtile.y % 192][shiftedSubtile.x % 192] < diagonalClearance)
+						{
+							/*if (config.pathfindingDebugMode)
+							{
+								logger->info("Pathfinding clearance too small:  {},  clearance value {}", subPathTo, PathNodeSys::clearanceData.secClr[secClrIdx].val[shiftedSubtile.y % 192][shiftedSubtile.x % 192]);
+							}*/
+							continue;
+						}
+					}
+
+
+
+					bool foundBlockers = false;
+
+					if (proxList.FindNear(subPathTo, requisiteClearanceCritters))
+						foundBlockers = true;
+
+					if (foundBlockers)
+						continue;
+
+				}
+				else if (!PathStraightLineIsClear(pqr, pq, subPathFrom, subPathTo))
+				{
+					continue;
+				}
+
 				pathFindAstar[newIdx].length = newLength;
 				pathFindAstar[newIdx].refererIdx = refererIdx;
 				if (!pathFindAstar[newIdx].idxPreviousChain && !pathFindAstar[newIdx].idxNextChain) //  if node is not part of chain

@@ -176,6 +176,8 @@ void UIRenderDebug()
 	}
 
 	if (ImGui::CollapsingHeader("Rendering Debugging")) {
+		ImGui::Checkbox("Debug Clipping", &config.debugClipping);
+		ImGui::Checkbox("Debug Particle Systems", &config.debugPartSys);
 		ImGui::Checkbox("Draw Cylinder Hitboxes", &config.drawObjCylinders);
 	}
 

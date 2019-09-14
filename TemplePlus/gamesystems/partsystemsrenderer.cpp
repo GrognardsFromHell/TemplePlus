@@ -126,6 +126,10 @@ void ParticleSystemsRenderer::RenderDebugInfo(const particles::PartSys &sys)
 		} };
 	mShapeRenderer2d.DrawLines(lines);
 
+	if (left < 0 ){
+		return;
+	}
+
 	UiRenderer::PushFont(PredefinedFont::ARIAL_10);
 
 	ColorRect textColor(0xFFFFFFFF);

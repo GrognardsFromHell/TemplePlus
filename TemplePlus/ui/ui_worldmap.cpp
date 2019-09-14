@@ -12,6 +12,17 @@
 //* Worldmap-UI
 //*****************************************************************************
 
+class UiWorldmapImpl {
+	friend class UiWorldmap;
+	friend class WorldmapFix;
+public:
+	UiWorldmapImpl();
+
+	std::vector<int> areaToLocId;
+};
+
+UiWorldmapImpl *wmImpl = nullptr;
+
 UiWorldmap::UiWorldmap(int width, int height) {
 	struct LgcyConf {
 		int x;
@@ -26,6 +37,8 @@ UiWorldmap::UiWorldmap(int width, int height) {
 		throw TempleException("Unable to initialize game system Worldmap-UI");
 	}
 
+	mImpl = std::make_unique<UiWorldmapImpl>();
+	wmImpl = mImpl.get();
 }
 UiWorldmap::~UiWorldmap() {
 	auto shutdown = temple::GetPointer<void()>(0x1015e060);
@@ -100,9 +113,9 @@ public:
 	void apply() override {
 		replaceFunction<void(int)>(0x10160450, [](int destArea) {
 			auto &uiWorldmapDestLocId = temple::GetRef<int>(0x102FB3E8);
-			auto &uiWorldmapAreaToLocId_Table = temple::GetRef<int[]>(0x11EA3610);
-
-			uiWorldmapDestLocId = uiWorldmapAreaToLocId_Table[destArea];
+			//auto &uiWorldmapAreaToLocId_Table = temple::GetRef<int[]>(0x11EA3610); // this is the Co8 location
+			
+			uiWorldmapDestLocId = wmImpl->areaToLocId[destArea];
 
 			ui_worldmap().Show(2);
 		});
@@ -305,6 +318,34 @@ int WorldmapFix::CanAccessWorldmap()
 
 void UiWorldmapMakeTripCdecl(int fromId, int toId) {
 	auto asdf = 1;
+}
+
+UiWorldmapImpl::UiWorldmapImpl(){
+
+	// Todo read this from file to support new modules
+	areaToLocId.resize(64, 0);
+	int i = 0;
+	for (auto it : {
+	-1,
+	9,
+	1, // Area 2 - Moathouse
+	3,
+	6,
+	0,
+	4,
+	7,
+	2,
+	5,
+	8,
+	12,
+	13,
+	0,
+	14,
+	15,
+	16,
+		}){
+		areaToLocId[i++] = it;
+	}
 }
 
 void __declspec(naked) UiWorldmapMakeTripWrapper() {

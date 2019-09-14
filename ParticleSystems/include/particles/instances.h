@@ -125,7 +125,7 @@ public:
 
   const PartSysEmitterSpecPtr &GetSpec() const { return mSpec; }
 
-  bool IsDead() const;
+  bool IsDead(float lifetimeInSecs) const;
 
   int GetActiveCount() const {
     if (mNextFreeParticle < mFirstUsedParticle) {
@@ -233,8 +233,7 @@ private:
   float mOutstandingSimulation = 0;
   ObjHndl mAttachedTo = 0;
   Vec3 mWorldPos;
-  bool mEnded = false; // Indicates that emission has ended but particles may
-                       // still be around
+  bool mEnded = false; // Indicates that emission has been forced to end
 
   Vec3 mObjPos;               // Current known pos of mAttachedTo
   Vec3 mPrevObjPos;           // Prev. known pos of mAttachedTo

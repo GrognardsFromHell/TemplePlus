@@ -1280,7 +1280,7 @@ BOOL AiSystem::TargetDamaged(AiTactic * aiTac){
 BOOL AiSystem::TargetFriendHurt(AiTactic * aiTac)
 {
 	auto performer = aiTac->performer;
-	auto lowest = 0.7;
+	auto lowest = 70;
 	auto N = combatSys.GetInitiativeListLength();
 	for (auto i = 0; i < N; i++) {
 		auto combatant = combatSys.GetInitiativeListMember(i);
@@ -1905,6 +1905,15 @@ int AiSystem::UpdateAiFlags(objHndl handle, AiFightStatus aiFightStatus, objHndl
 		pythonObjIntegration.ExecuteObjectScript(target, handle, ObjScriptEvent::EnterCombat);
 		if (obj->GetFlags() & OF_OFF)
 			return AIFS_NONE;
+		
+		/* 
+		 * Adding because of changes to shouldRemove
+		 */
+		combatSys.enterCombat(handle, false);
+		/*
+		 *
+		 */
+
 		if (soundMap){
 			*soundMap = critterSys.SoundmapCritter(handle, 5);
 		}
@@ -4268,7 +4277,7 @@ void AiPacket::DoWaypoints(){
 	if (!this->leader){
 		if (npcFlags& ONF_USE_ALERTPOINTS){
 			
-			if (!!temple::GetRef<BOOL(__cdecl)(objHndl, int)>(0x1005BC00)(obj, 0)){
+			if (!temple::GetRef<BOOL(__cdecl)(objHndl, int)>(0x1005BC00)(obj, 0)){
 				gameSystems->GetAnim().PushFidget(obj);
 				temple::GetRef<void(__cdecl)(objHndl)>(0x10015FD0)(obj);
 			}
@@ -4282,7 +4291,7 @@ void AiPacket::DoWaypoints(){
 		return;
 	}
 
-	if (npcFlags && ONF_AI_WAIT_HERE)
+	if (npcFlags & ONF_AI_WAIT_HERE)
 		return;
 
 	if (gameSystems->GetAnim().GetFirstRunSlotId(obj))

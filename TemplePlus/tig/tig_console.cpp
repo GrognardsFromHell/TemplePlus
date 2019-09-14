@@ -399,7 +399,7 @@ void Console::RenderCheatsMenu()
 			ImGui::EndMenu();
 		}
 		if (ImGui::BeginMenu("Debug")) {
-			if (ImGui::MenuItem("UI System")) {
+			if (ImGui::MenuItem("Debug Console")) {
 				UIShowDebug();
 			}
 			
