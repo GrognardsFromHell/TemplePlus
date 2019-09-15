@@ -1404,8 +1404,8 @@ DispIoSavingThrow::DispIoSavingThrow(){
 	this->dispIOType = dispIOTypeSavingThrow;
 	this->obj = objHndl::null;
 	this->flags = 0;
-	this->dc = 0;
 	this->rollResult = 0;
+	this->dc = 0;
 }
 
 DispIoAttackBonus::DispIoAttackBonus(){
