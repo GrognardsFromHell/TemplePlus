@@ -164,18 +164,21 @@ void FontRenderer::RenderRun(cstring_span<> text,
 
 		auto glyph = font.glyphs[glyphIdx];
 
-		float u1 = (float) glyph.rect.x;
-		float v1 = (float) glyph.rect.y;
-		float u2 = (float) glyph.rect.x + glyph.rect.width;
-		float v2 = (float) glyph.rect.y + glyph.rect.height;
+		// For some mysterious reason ToEE actually uses one pixel more to the left of the
+		// Glyph than is specified in the font file. That area should be transparent, but
+		// it means all rendered text is shifted one pixel more to the right than it should be.
+		float u1 = (float) glyph.rect.x - 1;
+		float v1 = (float) glyph.rect.y - 1;
+		float u2 = (float) u1 + glyph.rect.width + 1;
+		float v2 = (float) v1 + glyph.rect.height + 1;
 
 		auto& state = mImpl->mFileState[glyph.fileIdx];
 
 		TigRect destRect;
 		destRect.x = x;
 		destRect.y = y + font.baseline - glyph.base_line_y_offset;
-		destRect.width = glyph.rect.width;
-		destRect.height = glyph.rect.height;
+		destRect.width = glyph.rect.width + 1;
+		destRect.height = glyph.rect.height + 1;
 
 		x += style.kerning + glyph.width_line;
 
