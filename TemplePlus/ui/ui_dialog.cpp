@@ -457,7 +457,7 @@ BOOL UiDialogImpl::WidgetsInit(int w, int h)
 		RenderHooks::RenderImgFile(wndBackdrop, x, y);
 
 		TigRect textRect(14, 
-			dlgImpl->mIsActive ? (wnd->height - 4 - responseWnd->height) : (wnd->height - 6), 
+			dlgImpl->mIsActive ? (wnd->height - 5 - responseWnd->height) : (wnd->height - 6), 
 			LINE_WIDTH, 0);
 		
 		auto responses = dlgImpl->mDlgLineList;
