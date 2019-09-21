@@ -7,10 +7,19 @@
 #include "ui_systems.h"
 
 #include <temple/dll.h>
+#include "tig/tig_msg.h"
+#include "fade.h"
+#include "party.h"
+#include "gamesystems/gamesystems.h"
+#include "gamesystems/mapsystem.h"
 
 //*****************************************************************************
 //* Worldmap-UI
 //*****************************************************************************
+
+constexpr int HOMMLET_MAIN = 5001;
+constexpr int HOMMLET_NORTH = 15001;
+constexpr int HOMMLET_CASTLE = 25001;
 
 class UiWorldmapImpl {
 	friend class UiWorldmap;
@@ -18,9 +27,39 @@ class UiWorldmapImpl {
 public:
 	UiWorldmapImpl();
 
+	bool OnDestinationReached();
+
 	std::vector<int> areaToLocId;
+
+	int &mNeedToClearEncounterMap = temple::GetRef<int>(0x10BEF800);
+	int &mTeleportMapId = temple::GetRef<int>(0x102FB3CC);
 };
 
+constexpr int ACQUIRED_LOCATIONS_CO8 = 21;
+struct WorldmapWidgetsCo8
+{
+	LgcyWindow * mainWnd;
+	LgcyButton * worldmapBtn;
+	LgcyButton * curMapBtn;
+	LgcyButton * locationBtns[14];
+	LgcyButton * locationRingBtns[14];
+	LgcyButton * scriptBtns[14];
+	LgcyButton * URHereBtn;
+	LgcyButton * trailDots[80];
+	LgcyButton * exitBtn;
+	LgcyWindow * selectionWnd;
+	LgcyButton * acquiredLocations[ACQUIRED_LOCATIONS_CO8];
+	LgcyButton * centerOnPartyBtn;
+};
+struct WorldmapPath
+{
+	int startX;
+	int startY;
+	int unk8;
+	int unkC;
+	int count;
+	char* directions;
+};
 UiWorldmapImpl *wmImpl = nullptr;
 
 UiWorldmap::UiWorldmap(int width, int height) {
@@ -71,6 +110,11 @@ void UiWorldmap::Show(int mode)
 	ui_show_worldmap(mode);
 }
 
+void UiWorldmap::Hide(){
+	static auto ui_hide_worldmap = temple::GetRef<void(__cdecl)()>(0x1015E210);
+	return ui_hide_worldmap();
+}
+
 void UiWorldmap::TravelToArea(int area)
 {
 	static auto ui_worldmap_travel_by_dialog = temple::GetPointer<void(int)>(0x10160450);
@@ -109,6 +153,7 @@ class WorldmapFix : TempleFix
 public:
 	static int GetAreaFromMap(int mapId);
 	static int CanAccessWorldmap();
+	static BOOL UiWorldmapMakeTripCdecl(int fromId, int toId);
 
 	void apply() override {
 		replaceFunction<void(int)>(0x10160450, [](int destArea) {
@@ -123,7 +168,58 @@ public:
 		// This fixes an out of bounds write caused by spell slinger hacks
 		writeNoops(0x10159ABC);
 
-		//replaceFunction<void()>(0x1015EA20, UiWorldmapMakeTripWrapper);
+		replaceFunction<void()>(0x1015EA20, UiWorldmapMakeTripWrapper);
+		
+		// UiWorldmapAcquiredLocationBtnMsg 
+		static BOOL(__cdecl*orgUiWorldmapAcquiredLocationBtnMsg)(LgcyWidgetId, TigMsg *) = replaceFunction<BOOL(__cdecl)(LgcyWidgetId, TigMsg *)>(0x1015F320, [](LgcyWidgetId widId, TigMsg *msg){
+			
+			if (msg->type == TigMsgType::MOUSE){
+				return TRUE;
+			}
+			if (!msg->IsWidgetEvent(TigMsgWidgetEvent::MouseReleased)){
+				return FALSE;
+			}
+
+			auto & mIsMakingTrip = temple::GetRef<int>(0x10BEF7FC);
+			auto & mWorldmapWidgets = temple::GetRef<WorldmapWidgetsCo8*>(0x10BEF2D0);
+			auto & mLocationsVisitedCount = temple::GetRef<int>(0x10BEF810);
+			auto & mLocationVisitedFlags = temple::GetRef<int[21]>(0x11EA4800);
+			if (mIsMakingTrip){
+				return FALSE;
+			}
+
+			
+			auto btn = uiManager->GetButton(widId);
+			auto locIdx = -1;
+			auto foundLocIdx = false;
+			for (auto i = 0; i < ACQUIRED_LOCATIONS_CO8; ++i){
+				if (btn == mWorldmapWidgets->acquiredLocations[i]){
+					locIdx = i; foundLocIdx = true;
+					break;
+				}
+			}
+			if (!foundLocIdx){
+				auto locationRingIdx = -1;
+				for (auto i = 0; i < ACQUIRED_LOCATIONS_CO8; ++i){
+					if (btn == mWorldmapWidgets->locationRingBtns[i]){
+						locationRingIdx = i;
+						break;
+					}
+				}
+				for (auto i =0; i < mLocationsVisitedCount; ++i){
+					if ( (mLocationVisitedFlags[i] >> 8) == locationRingIdx ){
+						locIdx = i;
+						break;
+					}
+				}
+			}
+			auto curLocId = temple::GetRef<int(__cdecl)()>(0x1015DF70)();
+
+			return orgUiWorldmapAcquiredLocationBtnMsg(widId, msg);
+
+			/*UiWorldmapMakeTripCdecl(curLocId, mLocationVisitedFlags[locIdx] >> 8);
+			return TRUE;*/
+		});
 	}
 
 } worldmapFix;
@@ -316,8 +412,316 @@ int WorldmapFix::CanAccessWorldmap()
 	return result;
 }
 
-void UiWorldmapMakeTripCdecl(int fromId, int toId) {
-	auto asdf = 1;
+BOOL WorldmapFix::UiWorldmapMakeTripCdecl(int fromId, int toId) {
+	auto &mTeleportMapId = temple::GetRef<int>(0x102FB3CC);
+	auto &mTeleportMapIdTable = temple::GetRef<int[ACQUIRED_LOCATIONS_CO8]>(0x11EA3710);
+	auto &mToId = temple::GetRef<int>(0x102FB3E0);
+	auto &mFromId = temple::GetRef<int>(0x102FB3E4);
+	auto & mIsMakingTrip = temple::GetRef<int>(0x10BEF7FC);
+	auto &mRandomEncounterStatus = temple::GetRef<int>(0x102FB3D0);
+	auto &mTrailDotInitialIdx = temple::GetRef<int>(0x102FB3DC);
+	auto &mTrailDotCount = temple::GetRef<int>(0x10BEF7F8);
+	auto &mXoffset = temple::GetRef<int>(0x102FB3EC);
+	auto &mYoffset = temple::GetRef<int>(0x102FB3F0);
+	auto &someX_10BEF7CC = temple::GetRef<int>(0x10BEF7CC);
+	auto &someY_10BEF7D0 = temple::GetRef<int>(0x10BEF7D0);
+	auto &mRandomEncounterX = temple::GetRef<int>(0x102FB3D4);
+	auto &mRandomEncounterY = temple::GetRef<int>(0x102FB3D8);
+	auto & mWorldmapWidgets = temple::GetRef<WorldmapWidgetsCo8*>(0x10BEF2D0);
+	auto &mWorldmapState = temple::GetRef<int>(0x10BEF808);
+	auto &mPaths = temple::GetRef<WorldmapPath[190]>(0x11EA2406);
+
+	constexpr int PATH_ID_TABLE_WIDTH = 20;
+	auto &mPathIdTable = temple::GetRef<int[PATH_ID_TABLE_WIDTH*PATH_ID_TABLE_WIDTH]>(0x11EA4100);
+
+	mTeleportMapId = mTeleportMapIdTable[toId];
+	auto toId_adj = toId;
+	if ( fromId == -1 ){
+		toId_adj = mToId;
+	}
+	else{
+		mFromId = fromId;
+		if (fromId == 10 || fromId == 11){
+			mFromId = 9;
+		}
+		else if (fromId == 12 || fromId == 13){
+			mFromId = 6;
+		}
+		toId_adj = toId;
+		mToId = toId;
+		if (toId == 10 || toId == 11 ){
+			mToId = toId_adj = 9;
+		}
+		else if (toId == 12 || toId == 13){
+			mToId = toId_adj = 6;
+		}
+	}
+	mIsMakingTrip = 1;
+	
+	if (fromId == 10 || fromId == 11){
+		fromId = 9;
+	}
+	else if (fromId == 12 || fromId == 13) {
+		fromId = 6;
+	}
+
+	if (toId == 10 || toId == 11){
+		toId = 9;
+	}
+	else if (toId == 12 || toId == 13) {
+		toId = 6;
+	}
+
+	auto toX = 0, toY = 0;
+	switch (toId){
+	case 0:
+		toX = temple::GetRef<int>(0x10BEF3B4);
+		toY = temple::GetRef<int>(0x10BEF3B8);
+		break;
+	case 1:
+		toX = temple::GetRef<int>(0x10BEF3E0);
+		toY = temple::GetRef<int>(0x10BEF3E4);
+		break;
+	case 2:
+		toX = temple::GetRef<int>(0x10BEF40C);
+		toY = temple::GetRef<int>(0x10BEF410);
+		break;
+	case 3:
+		toX = temple::GetRef<int>(0x10BEF438);
+		toY = temple::GetRef<int>(0x10BEF43C);
+		break;
+	case 4:
+		toX = temple::GetRef<int>(0x10BEF464);
+		toY = temple::GetRef<int>(0x10BEF468);
+		break;
+	case 5:
+		toX = temple::GetRef<int>(0x10BEF490);
+		toY = temple::GetRef<int>(0x10BEF494);
+		break;
+	case 6:
+		toX = temple::GetRef<int>(0x10BEF4BC);
+		toY = temple::GetRef<int>(0x10BEF4C0);
+		break;
+	case 7:
+		toX = temple::GetRef<int>(0x10BEF4E8);
+		toY = temple::GetRef<int>(0x10BEF4EC);
+		break;
+	case 8:
+		toX = temple::GetRef<int>(0x10BEF514);
+		toY = temple::GetRef<int>(0x10BEF518);
+		break;
+	case 9:
+		toX = temple::GetRef<int>(0x10BEF540);
+		toY = temple::GetRef<int>(0x10BEF544);
+		break;
+	case 10:
+		toX = temple::GetRef<int>(0x10BEF55C);
+		toY = temple::GetRef<int>(0x10BEF560);
+		break;
+	case 11:
+		toX = temple::GetRef<int>(0x10BEF578);
+		toY = temple::GetRef<int>(0x10BEF57C);
+		break;
+	default:
+		break;
+	}
+
+	// If exiting a random encounter
+	if (mRandomEncounterStatus == 2 && toId != toId_adj && toId != mFromId ){
+		auto fromX = mXoffset + someX_10BEF7CC + mRandomEncounterX + 10;
+		auto fromY = mYoffset + someY_10BEF7D0 + mRandomEncounterY + 10;
+		logger->info("Travelling on the map from {}, {} to {}, {}", fromX, fromY, toX, toY);
+
+
+		auto& mTrailDotTextureW = temple::GetRef<int>(0x10BEF5C8);
+		auto& mTrailDotTextureH = temple::GetRef<int>(0x10BEF5CC);
+
+		auto deltaX = fromX - toX;
+		auto deltaY = fromY - toY;
+		mTrailDotCount = sqrt(deltaY*deltaY + deltaX * deltaX) / 12 + 1;
+		auto sumX = 0, sumY = 0;
+		for (auto i = 0; i <= mTrailDotCount; ++i){
+			auto dotWidget = mWorldmapWidgets->trailDots[i];
+			dotWidget->x = mTrailDotTextureW / -2
+			- sumX / mTrailDotCount
+			+ fromX + 9;
+			dotWidget->y = mTrailDotTextureH / -2
+				- sumY / mTrailDotCount
+				+ fromY + 10;
+			uiManager->SetHidden(dotWidget->widgetId, false);
+			sumY += deltaY;
+			sumX += deltaX;
+
+		}
+		mRandomEncounterStatus = 0;
+		mFromId = -1;
+		mToId = -1;
+		mTrailDotInitialIdx = -1;
+		return FALSE;
+	}
+
+	auto v44 = false, v49 = false;
+	auto endTrip = true;
+	if (mWorldmapState != 1){
+		endTrip = false;
+		if (mWorldmapState == 2){
+			if (fromId >= 1 || fromId <= 10) // original code... bug??
+				endTrip = false;
+			else{
+				endTrip = true;
+			}
+		}
+		else if (mRandomEncounterStatus == 2){
+			if (toId == mFromId){
+				fromId = toId_adj;
+				v49 = true;
+			}
+			else if (toId == toId_adj){
+				fromId = mFromId;
+				v44 = true;
+			}
+		}
+	}
+
+	
+	if (!endTrip){
+		auto pathId_raw = mPathIdTable[toId + PATH_ID_TABLE_WIDTH * fromId];
+		logger->info("***************************from {} to {}", fromId, toId);
+		
+		if (!(pathId_raw > -191 && pathId_raw <= 191)){
+			endTrip = true;
+			logger->info("Bad pathId, setting to no path");
+		};
+		if (pathId_raw == 191){
+			endTrip = true;
+		}
+		else{
+			auto deltaX = 14;
+			auto deltaY = 10;
+			logger->info(" ************************ path id : {}", pathId_raw);
+			auto pathId = pathId_raw - 1;
+			
+			if (pathId_raw > 0) {
+				logger->info(" ************************ path id changed to: {}", pathId);
+				auto &wmPath = mPaths[pathId];
+				mTrailDotCount = wmPath.count / 12;
+
+				auto traildot = mWorldmapWidgets->trailDots[0];
+				traildot->x = wmPath.startX + deltaX;
+				traildot->y = wmPath.startY + deltaY;
+				auto dotIdx = 1;
+				for (auto i = 1; i < wmPath.count; ++i) {
+					traildot = mWorldmapWidgets->trailDots[dotIdx];
+					switch (wmPath.directions[i - 1]) {
+					case 5:
+						--deltaY; break;
+					case 7:
+						--deltaX; break;
+					case 8:
+						++deltaX; break;
+					case 9:
+						--deltaX; --deltaY; break;
+					case 10:
+						++deltaX; --deltaY; break;
+					case 11:
+						--deltaX; ++deltaY; break;
+					case 12:
+						++deltaX; ++deltaY; break;
+					case 6:
+						++deltaY; break;
+					default:
+						break;
+					}
+					if (!(i % 12)) {
+						traildot->x = deltaX + wmPath.startX;
+						traildot->y = deltaY + wmPath.startY;
+						dotIdx++;
+					}
+
+				}
+			}
+			else{
+				pathId = -1 - pathId_raw;
+				logger->info(" ************************ path id : {}", pathId);
+
+				if (pathId < 0) {
+					logger->info(" ************************ BAD PATH reseting to 0...path id : {}", pathId);
+					pathId = 0;
+				}
+
+				auto &wmPath = mPaths[pathId];
+				mTrailDotCount = wmPath.count / 12;
+
+				auto traildot = mWorldmapWidgets->trailDots[mTrailDotCount];
+				traildot->x = wmPath.startX + deltaX;
+				traildot->y = wmPath.startY + deltaY;
+				auto dotIdx = 1;
+				for (auto i = 1; i < wmPath.count; ++i) {
+					traildot = mWorldmapWidgets->trailDots[mTrailDotCount- dotIdx];
+					switch (wmPath.directions[i - 1]) {
+					case 5:
+						--deltaY; break;
+					case 7:
+						--deltaX; break;
+					case 8:
+						++deltaX; break;
+					case 9:
+						--deltaX; --deltaY; break;
+					case 10:
+						++deltaX; --deltaY; break;
+					case 11:
+						--deltaX; ++deltaY; break;
+					case 12:
+						++deltaX; ++deltaY; break;
+					case 6:
+						++deltaY; break;
+					default:
+						break;
+					}
+					if (!(i % 12)) {
+						traildot->x = deltaX + wmPath.startX;
+						traildot->y = deltaY + wmPath.startY;
+						++dotIdx;
+					}
+
+				}
+			}
+
+
+			
+
+			if (v44){
+				auto dotDelta = mTrailDotCount - mTrailDotInitialIdx;
+				mTrailDotCount = dotDelta;
+				auto dotCount = dotDelta + 1;
+				for (auto i =0; i < dotCount; ++i){
+					auto dotsDest = mWorldmapWidgets->trailDots[i];
+					auto dotsSrc = mWorldmapWidgets->trailDots[mTrailDotInitialIdx + i];
+					dotsDest->x = dotsSrc->x;
+					dotsDest->y = dotsSrc->y;
+				}
+			}
+			else if (v49){
+				auto dotDelta = mTrailDotCount - mTrailDotInitialIdx;
+				mTrailDotCount = mTrailDotInitialIdx;
+				auto dotCount = mTrailDotInitialIdx + 1;
+				for (auto i = 0; i < dotCount; ++i) {
+					auto dotsDest = mWorldmapWidgets->trailDots[i];
+					auto dotsSrc = mWorldmapWidgets->trailDots[mTrailDotInitialIdx + i];
+					dotsDest->x = dotsSrc->x;
+					dotsDest->y = dotsSrc->y;
+				}
+			}
+
+			return FALSE;
+		}
+	}
+
+	if (wmImpl->OnDestinationReached()){
+		return TRUE;
+	}
+	mIsMakingTrip = FALSE;
+	return FALSE;
 }
 
 UiWorldmapImpl::UiWorldmapImpl(){
@@ -348,12 +752,58 @@ UiWorldmapImpl::UiWorldmapImpl(){
 	}
 }
 
+// 0x1015E840
+bool UiWorldmapImpl::OnDestinationReached()
+{
+
+	//rndEncDetails = nullptr;
+	auto &mRndEncDetails = temple::GetRef<void*>(0x10BEF814);
+	mRndEncDetails = nullptr;
+
+	mNeedToClearEncounterMap = FALSE;
+	FadeAndTeleportArgs fadeArgs;
+	auto &mapSystem = gameSystems->GetMap();
+	// Todo: modularize
+	if (mTeleportMapId == HOMMLET_MAIN){
+		fadeArgs.destLoc = { 623, 421 };
+	}
+	else if (mTeleportMapId == HOMMLET_NORTH){
+		fadeArgs.destLoc = { 512, 221 };
+		mTeleportMapId = HOMMLET_MAIN;
+	}
+	else if (mTeleportMapId == HOMMLET_CASTLE){
+		fadeArgs.destLoc = { 433, 626 };
+		mTeleportMapId = HOMMLET_MAIN;
+	}
+	else{
+		fadeArgs.destLoc = mapSystem.GetStartPos(mTeleportMapId);
+	}
+
+	
+	fadeArgs.flags = FadeAndTeleportFlags::ftf_unk200;
+	fadeArgs.somehandle = party.GroupPCsGetMemberN(0);
+	
+	auto curMap = mapSystem.GetCurrentMapId();
+	fadeArgs.destMap = (mTeleportMapId == curMap) ? -1 : mTeleportMapId;
+	
+	fadeArgs.movieId = mapSystem.GetEnterMovie(fadeArgs.destMap, false);
+	if (fadeArgs.movieId){
+		fadeArgs.flags |= FadeAndTeleportFlags::ftf_play_movie;
+		fadeArgs.field20 = 0;
+	}
+
+	ui_worldmap().Hide();
+	fade.FadeAndTeleport(fadeArgs);
+	return FALSE;
+	//return temple::GetRef<BOOL(__cdecl)()>(0x1015E840)() != FALSE;
+}
+
 void __declspec(naked) UiWorldmapMakeTripWrapper() {
 	macAsmProl; // esp = esp0 - 16
 	__asm {
-		push eax; // esp = esp0 - 20
 		push ecx; // esp = esp0 - 24
-		mov esi, UiWorldmapMakeTripCdecl;
+		push eax; // esp = esp0 - 20
+		mov esi, WorldmapFix::UiWorldmapMakeTripCdecl;
 		call esi;
 		add esp, 8;
 	}
