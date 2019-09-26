@@ -266,6 +266,7 @@ public:
 	static int DruidWildShapeCheck(DispatcherCallbackArgs args);
 	static int DruidWildShapePerform(DispatcherCallbackArgs args);
 	static int DruidWildShapeScale(DispatcherCallbackArgs args);
+	static bool IsIncompatibleWithDruid(objHndl item, objHndl critter);
 
 
 	static int BardicMusicBeginRound(DispatcherCallbackArgs args);
@@ -308,6 +309,7 @@ public:
 	
 	//Old version of the function to be used within the replacement
 	int (*oldTurnUndeadPerform)(DispatcherCallbackArgs) = nullptr;
+	bool (*oldIsIncompatibleWithDruid)(objHndl item, objHndl critter) = nullptr;
 	
 	void apply() override {
 		logger->info("Replacing Condition-related Functions");
@@ -473,6 +475,10 @@ public:
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FBB20, classAbilityCallbacks.DruidWildShapeRadialMenu);
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FBC60, classAbilityCallbacks.DruidWildShapeCheck);
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FBCE0, classAbilityCallbacks.DruidWildShapePerform);
+
+
+		// Druid Armor Restriction
+		oldIsIncompatibleWithDruid = replaceFunction<bool(objHndl item, objHndl critter)>(0x10066430, classAbilityCallbacks.IsIncompatibleWithDruid);
 
 		// Fixes Weapon Damage Bonus for ammo items
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FFE90, itemCallbacks.WeaponDamageBonus);
@@ -5685,6 +5691,19 @@ int ClassAbilityCallbacks::DruidWildShapeScale(DispatcherCallbackArgs args){
 	return 0;
 }
 
+bool ClassAbilityCallbacks::IsIncompatibleWithDruid(objHndl item, objHndl critter)
+{
+	bool result = condFuncReplacement.oldIsIncompatibleWithDruid(item, critter);  //Just call the old version now
+	
+	if (result) {
+		auto res = dispatch.DispatchIgnoreDruidOathCheck(critter, item);
+		if (res) return false;
+	}
+
+	return result;
+}
+
+
 // ************************************
 // *         Bardic Music             *
 // ************************************
@@ -5757,6 +5776,9 @@ int ClassAbilityCallbacks::BardicMusicBeginRound(DispatcherCallbackArgs args){
 int ClassAbilityCallbacks::BardMusicRadial(DispatcherCallbackArgs args){
 	auto perfSkill = critterSys.SkillBaseGet(args.objHndCaller, SkillEnum::skill_perform);
 	auto bardLvl = objects.StatLevelGet(args.objHndCaller, stat_level_bard);
+	auto bardicMusicBonus = d20Sys.D20QueryPython(args.objHndCaller, "Bardic Music Bonus Levels");
+	bardLvl += bardicMusicBonus;
+
 	if (!bardLvl || perfSkill < 3)
 		return 0;
 

@@ -852,7 +852,11 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("target", &EvtObjSpellTargetBonus::target, "The target of the spell.")
 		.def_readwrite("spell_packet", &EvtObjSpellTargetBonus::spellPkt, "Spell packet.")
 		;
-	
+
+	py::class_<EvtIgnoreDruidOathCheck, DispIO>(m, "EvtIgnoreDruidOathCheck", "Check if the Druid oath chan be ignored.")
+		.def_readwrite("item", &EvtIgnoreDruidOathCheck::item, "The item being checked.")
+		.def_readwrite("ignore_druid_oath", &EvtIgnoreDruidOathCheck::ignoreDruidOath, "True if the druid oath should be ignored for this item, false otherwise.")
+		;
 
 }
 
@@ -1113,6 +1117,10 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 	case dispTypeSpellResistanceCasterLevelCheck:
 	case dispTypeTargetSpellDCBonus:
 		pbEvtObj = py::cast(static_cast<EvtObjSpellTargetBonus*>(args.dispIO));
+		break;
+
+	case dispTypeIgnoreDruidOathCheck:
+		pbEvtObj = py::cast(static_cast<EvtIgnoreDruidOathCheck*>(args.dispIO));
 		break;
 
 	case dispTypeConditionAdd: // these are actually null
