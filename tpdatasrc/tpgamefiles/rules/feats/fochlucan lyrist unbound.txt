@@ -1,0 +1,5 @@
+name: Unbound
+flags: 8
+prereqs:
+description:  A Fochlucan lyrist's druid oaths are relaxed, allowing them to wear light metal armor with no loss of ability. A lyrist also suffers no experience point penalty for multiclassing.
+prereq descr: Fochlucan Lyrist Level 1.
