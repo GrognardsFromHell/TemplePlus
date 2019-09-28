@@ -25,7 +25,7 @@ class_feats = {
 1: ("Unbound", "Lyrist Bardic Music"),
 }
 
-class_skills = (skill_appraise, skill_bluff, skill_concentration, skill_craft, skill_decipher_script, skill_diplomacy, skill_disguise, skill_handle_animal, skill_knowledge_nature, skill_knowledge_arcana, skill_knowledge_religion, skill_listen, skill_move_silently, skill_heal, skill_hide, skill_perform, skill_pick_pocket, skill_use_magic_device, skill_sense_motive, skill_spellcraft)
+class_skills = (skill_appraise, skill_bluff, skill_concentration, skill_craft, skill_decipher_script, skill_diplomacy, skill_disguise, skill_gather_information, skill_handle_animal, skill_knowledge_nature, skill_knowledge_arcana, skill_knowledge_religion, skill_listen, skill_move_silently, skill_heal, skill_hide, skill_perform, skill_pick_pocket, skill_use_magic_device, skill_sense_motive, skill_spellcraft)
 
 
 
