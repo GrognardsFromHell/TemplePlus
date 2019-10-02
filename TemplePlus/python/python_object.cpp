@@ -749,6 +749,17 @@ static PyObject* PyObjHandle_GroupList(PyObject* obj, PyObject* args) {
 	return result;
 }
 
+static PyObject*PyObjHandle_GetItemWearFlags(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	auto res = objects.GetItemWearFlags(self->handle);
+
+	return PyInt_FromLong(res);
+}
+
 // turns out you could already get this via .stat_base_get(stat_attack_bonus). Leaving it for backward compatibility...
 static PyObject* PyObjHandle_GetBaseAttackBonus(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
@@ -3369,11 +3380,13 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "get_base_attack_bonus", PyObjHandle_GetBaseAttackBonus, METH_VARARGS, NULL },
 	{ "get_category_type", PyObjHandle_GetCategoryType, METH_VARARGS, NULL },
 	{ "get_initiative", PyObjHandle_GetInitiative, METH_VARARGS, NULL },
-	{ "get_deity", PyObjHandle_GetDeity, METH_VARARGS, NULL },
+	{ "get_item_wear_flags", PyObjHandle_GetItemWearFlags, METH_VARARGS, NULL },
+    { "get_deity", PyObjHandle_GetDeity, METH_VARARGS, NULL },
 	{ "get_weapon_type", PyObjHandle_GetWeaponType, METH_VARARGS, NULL },
 	{ "get_wield_type", PyObjHandle_GetWieldType, METH_VARARGS, NULL },
 	{ "get_weapon_projectile_proto", PyObjHandle_GetWeaponProjectileProto, METH_VARARGS, NULL },
 	{ "group_list", PyObjHandle_GroupList, METH_VARARGS, NULL },
+	
 	
 	{ "has_atoned", PyObjHandle_HasAtoned, METH_VARARGS, NULL },
 	{ "has_feat", PyObjHandle_HasFeat, METH_VARARGS, NULL },

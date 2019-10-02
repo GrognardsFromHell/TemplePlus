@@ -3263,7 +3263,7 @@ stat_level_jade_phoenix_mage = 78
 stat_level_master_of_nine = 79
 stat_level_ruby_knight_vindicator = 80
 stat_level_shadow_sun_ninja = 81
-
+stat_level_fochlucan_lyrist = 82
 
 
 
@@ -3481,6 +3481,7 @@ ET_OnRangeIncrementBonus = 96
 ET_OnDispatchSpellDamage = 97
 ET_OnSpellResistanceCheckBonus = 98
 ET_OnTargetSpellDCBonus = 99 #DC bonus based on the target of a spell
+ET_OnIgnoreDruidOathCheck = 100 #Should a druid oath be ignored
 
 # Event Keys
 

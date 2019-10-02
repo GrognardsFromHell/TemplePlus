@@ -248,6 +248,8 @@ public:
 uint32_t GetCourageBonus(objHndl objHnd)
 {
 	auto bardLvl = (int32_t)objects.StatLevelGet(objHnd, stat_level_bard);
+	auto bardicMusicLevelBonus = d20Sys.D20QueryPython(objHnd, "Bardic Music Bonus Levels");
+	bardLvl += bardicMusicLevelBonus;
 	if (bardLvl < 8) return 1;
 	if (bardLvl < 14) return 2;
 	if (bardLvl < 20) return 3;
@@ -267,6 +269,8 @@ int BardicInspiredCourageInitGetBonusRounds()
 		if (!dude)
 			continue;
 		auto dudeBrdLvl = objects.StatLevelGet(dude, stat_level_bard);
+		auto bardicMusicLevelBonus = d20Sys.D20QueryPython(dude, "Bardic Music Bonus Levels");
+		dudeBrdLvl += bardicMusicLevelBonus;
 		if (dudeBrdLvl > brdLvl) {
 			brdLvl = dudeBrdLvl;
 			highBardDude = dude;
@@ -568,6 +572,8 @@ int BardicInspireCourageFix::BardicInspiredCourageToHit(DispatcherCallbackArgs a
 			if (!dude)
 				continue;
 			auto dudeBrdLvl = objects.StatLevelGet(dude, stat_level_bard);
+			auto bardicMusicLevelBonus = d20Sys.D20QueryPython(dude, "Bardic Music Bonus Levels");
+			dudeBrdLvl += bardicMusicLevelBonus;
 			if (dudeBrdLvl > brdLvl)
 				brdLvl = dudeBrdLvl;
 		}
@@ -599,6 +605,8 @@ int BardicInspireCourageFix::BardicInspiredCourageDamBon(DispatcherCallbackArgs 
 			if (!dude)
 				continue;
 			auto dudeBrdLvl = objects.StatLevelGet(dude, stat_level_bard);
+			auto bardicMusicLevelBonus = d20Sys.D20QueryPython(dude, "Bardic Music Bonus Levels");
+			dudeBrdLvl += bardicMusicLevelBonus;
 			if (dudeBrdLvl > brdLvl)
 				brdLvl = dudeBrdLvl;
 		}
