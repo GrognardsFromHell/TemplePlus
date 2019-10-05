@@ -268,7 +268,7 @@ public:
 	static int DruidWildShapeScale(DispatcherCallbackArgs args);
 	static bool IsIncompatibleWithDruid(objHndl item, objHndl critter);
 
-
+	static int BardicMusicPlaySound(int bardicSongIdx, objHndl performer, int evtType);
 	static int BardicMusicBeginRound(DispatcherCallbackArgs args);
 	static int BardMusicRadial(DispatcherCallbackArgs args);
 	static int BardMusicCheck(DispatcherCallbackArgs args);
@@ -493,6 +493,7 @@ public:
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FE570, classAbilityCallbacks.BardMusicActionFrame);
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FE820, classAbilityCallbacks.BardicMusicBeginRound);
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100EA960, classAbilityCallbacks.BardicMusicGreatnessTakingTempHpDamage);
+		replaceFunction<int(int, objHndl, int)>(0x100FE4F0, classAbilityCallbacks.BardicMusicPlaySound);
 				
 		writeHex(0x102E6608 + 3*sizeof(int), "03" ); // fixes the Competence effect tooltip (was pointing to Inspire Courage)
 
@@ -5972,9 +5973,7 @@ int ClassAbilityCallbacks::BardMusicActionFrame(DispatcherCallbackArgs args){
 		break;
 	}
 
-	static int bardicMusicSounds []= {0, 20040, 20000, 20020, 20060, 20080, 20060, 20060 , 20040 };
-	auto instrType = d20Sys.d20Query(performer, DK_QUE_BardicInstrument);
-	sound.PlaySoundAtObj(bardicMusicSounds[bmType] + instrType, performer);
+	BardicMusicPlaySound(bmType, performer, 0);
 	args.SetCondArg(1, bmType);
 	args.SetCondArg(2, 0);
 	args.SetCondArg(3, d20a->d20ATarget.GetHandleUpper());
@@ -6120,6 +6119,13 @@ int ClassAbilityCallbacks::BardicMusicSuggestionFearQuery(DispatcherCallbackArgs
 	*(objHndl*)&dispIo->data1 = caster;
 
 	return 0;
+}
+
+int ClassAbilityCallbacks::BardicMusicPlaySound(int bardicSongIdx, objHndl performer, int evtType)
+{
+	static int bardicMusicSounds[] = { 0, 20040, 20000, 20020, 20060, 20080, 20060, 20060 , 20040 };
+	auto instrType = d20Sys.d20Query(performer, DK_QUE_BardicInstrument);
+	return sound.PlaySoundAtObj(evtType + bardicMusicSounds[bardicSongIdx] + instrType * 2, performer);
 }
 
 #pragma endregion
