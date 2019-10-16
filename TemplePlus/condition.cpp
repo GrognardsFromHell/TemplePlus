@@ -6125,7 +6125,17 @@ int ClassAbilityCallbacks::BardicMusicPlaySound(int bardicSongIdx, objHndl perfo
 {
 	static int bardicMusicSounds[] = { 0, 20040, 20000, 20020, 20060, 20080, 20060, 20060 , 20040 };
 	auto instrType = d20Sys.d20Query(performer, DK_QUE_BardicInstrument);
-	return sound.PlaySoundAtObj(evtType + bardicMusicSounds[bardicSongIdx] + instrType * 2, performer);
+	auto soundID = evtType + bardicMusicSounds[bardicSongIdx] + instrType * 2;
+
+	//Instrument 0 is voice
+ 	if (instrType == 0) {
+		Gender gender = static_cast<Gender>(objects.StatLevelGet(performer, stat_gender));
+		if (gender == Gender::Female) {
+			soundID += 10;  //The female sound is 10 more than the male sound
+		}
+	}
+
+	return sound.PlaySoundAtObj(soundID, performer);
 }
 
 #pragma endregion
