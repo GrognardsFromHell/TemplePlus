@@ -1140,7 +1140,7 @@ int SpellConditionFixes::SpikeStonesHitTrigger(DispatcherCallbackArgs args)
 {
 	GET_DISPIO(dispIoTypeObjEvent, DispIoObjEvent);
 	auto evtId = args.GetCondArg(2);
-	if (dispIo->evtId =! evtId){
+	if (dispIo->evtId != evtId){
 		return 0;
 	}
 
