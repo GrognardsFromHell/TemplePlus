@@ -1,0 +1,5 @@
+name: Lyrist Bardic Music
+flags: 8
+prereqs:
+description:  A Fochlucan lyrist adds his lyrist level to his bard level to determine the number of times per day he can use his bardic music, the bardic music abilities he can employ, and the power of those abilities.
+prereq descr: Fochlucan Lyrist Level 1.

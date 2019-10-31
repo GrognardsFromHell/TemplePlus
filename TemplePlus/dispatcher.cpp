@@ -720,6 +720,16 @@ void DispatcherSystem::DispatchTargetSpellDCBonus(objHndl caster, objHndl target
 	DispatcherProcessor(_dispatcher, dispTypeTargetSpellDCBonus, 0, &dispIo);
 }
 
+bool DispatcherSystem::DispatchIgnoreDruidOathCheck(objHndl character, objHndl item)
+{
+	auto _dispatcher = objects.GetDispatcher(character);
+	if (!dispatch.dispatcherValid(_dispatcher)) return false;
+	EvtIgnoreDruidOathCheck dispIo;
+	dispIo.item = item;
+	DispatcherProcessor(_dispatcher, dispTypeIgnoreDruidOathCheck, 0, &dispIo);
+	return dispIo.ignoreDruidOath;
+}
+
 unsigned DispatcherSystem::Dispatch35CasterLevelModify(objHndl obj, SpellPacketBody* spellPkt)
 {
 	auto _dispatcher = objects.GetDispatcher(obj);

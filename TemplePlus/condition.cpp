@@ -266,8 +266,9 @@ public:
 	static int DruidWildShapeCheck(DispatcherCallbackArgs args);
 	static int DruidWildShapePerform(DispatcherCallbackArgs args);
 	static int DruidWildShapeScale(DispatcherCallbackArgs args);
+	static bool IsIncompatibleWithDruid(objHndl item, objHndl critter);
 
-
+	static int BardicMusicPlaySound(int bardicSongIdx, objHndl performer, int evtType);
 	static int BardicMusicBeginRound(DispatcherCallbackArgs args);
 	static int BardMusicRadial(DispatcherCallbackArgs args);
 	static int BardMusicCheck(DispatcherCallbackArgs args);
@@ -308,6 +309,7 @@ public:
 	
 	//Old version of the function to be used within the replacement
 	int (*oldTurnUndeadPerform)(DispatcherCallbackArgs) = nullptr;
+	bool (*oldIsIncompatibleWithDruid)(objHndl item, objHndl critter) = nullptr;
 	
 	void apply() override {
 		logger->info("Replacing Condition-related Functions");
@@ -474,6 +476,10 @@ public:
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FBC60, classAbilityCallbacks.DruidWildShapeCheck);
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FBCE0, classAbilityCallbacks.DruidWildShapePerform);
 
+
+		// Druid Armor Restriction
+		oldIsIncompatibleWithDruid = replaceFunction<bool(objHndl item, objHndl critter)>(0x10066430, classAbilityCallbacks.IsIncompatibleWithDruid);
+
 		// Fixes Weapon Damage Bonus for ammo items
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FFE90, itemCallbacks.WeaponDamageBonus);
 
@@ -487,6 +493,7 @@ public:
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FE570, classAbilityCallbacks.BardMusicActionFrame);
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FE820, classAbilityCallbacks.BardicMusicBeginRound);
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100EA960, classAbilityCallbacks.BardicMusicGreatnessTakingTempHpDamage);
+		replaceFunction<int(int, objHndl, int)>(0x100FE4F0, classAbilityCallbacks.BardicMusicPlaySound);
 				
 		writeHex(0x102E6608 + 3*sizeof(int), "03" ); // fixes the Competence effect tooltip (was pointing to Inspire Courage)
 
@@ -5685,6 +5692,19 @@ int ClassAbilityCallbacks::DruidWildShapeScale(DispatcherCallbackArgs args){
 	return 0;
 }
 
+bool ClassAbilityCallbacks::IsIncompatibleWithDruid(objHndl item, objHndl critter)
+{
+	bool result = condFuncReplacement.oldIsIncompatibleWithDruid(item, critter);  //Just call the old version now
+	
+	if (result) {
+		auto res = dispatch.DispatchIgnoreDruidOathCheck(critter, item);
+		if (res) return false;
+	}
+
+	return result;
+}
+
+
 // ************************************
 // *         Bardic Music             *
 // ************************************
@@ -5757,6 +5777,9 @@ int ClassAbilityCallbacks::BardicMusicBeginRound(DispatcherCallbackArgs args){
 int ClassAbilityCallbacks::BardMusicRadial(DispatcherCallbackArgs args){
 	auto perfSkill = critterSys.SkillBaseGet(args.objHndCaller, SkillEnum::skill_perform);
 	auto bardLvl = objects.StatLevelGet(args.objHndCaller, stat_level_bard);
+	auto bardicMusicBonus = d20Sys.D20QueryPython(args.objHndCaller, "Bardic Music Bonus Levels");
+	bardLvl += bardicMusicBonus;
+
 	if (!bardLvl || perfSkill < 3)
 		return 0;
 
@@ -5950,9 +5973,7 @@ int ClassAbilityCallbacks::BardMusicActionFrame(DispatcherCallbackArgs args){
 		break;
 	}
 
-	static int bardicMusicSounds []= {0, 20040, 20000, 20020, 20060, 20080, 20060, 20060 , 20040 };
-	auto instrType = d20Sys.d20Query(performer, DK_QUE_BardicInstrument);
-	sound.PlaySoundAtObj(bardicMusicSounds[bmType] + instrType, performer);
+	BardicMusicPlaySound(bmType, performer, 0);
 	args.SetCondArg(1, bmType);
 	args.SetCondArg(2, 0);
 	args.SetCondArg(3, d20a->d20ATarget.GetHandleUpper());
@@ -6098,6 +6119,23 @@ int ClassAbilityCallbacks::BardicMusicSuggestionFearQuery(DispatcherCallbackArgs
 	*(objHndl*)&dispIo->data1 = caster;
 
 	return 0;
+}
+
+int ClassAbilityCallbacks::BardicMusicPlaySound(int bardicSongIdx, objHndl performer, int evtType)
+{
+	static int bardicMusicSounds[] = { 0, 20040, 20000, 20020, 20060, 20080, 20060, 20060 , 20040 };
+	auto instrType = d20Sys.d20Query(performer, DK_QUE_BardicInstrument);
+	auto soundID = evtType + bardicMusicSounds[bardicSongIdx] + instrType * 2;
+
+	//Instrument 0 is voice
+ 	if (instrType == 0) {
+		Gender gender = static_cast<Gender>(objects.StatLevelGet(performer, stat_gender));
+		if (gender == Gender::Female) {
+			soundID += 10;  //The female sound is 10 more than the male sound
+		}
+	}
+
+	return sound.PlaySoundAtObj(soundID, performer);
 }
 
 #pragma endregion

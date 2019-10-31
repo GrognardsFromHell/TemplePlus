@@ -8,18 +8,22 @@ print "Registering Extra Music"
 
 def EMNewDay(attachee, args, evt_obj):
 
-	BardicMusicCount = attachee.has_feat("Extra Music")
+	ExtraMusicCount = attachee.has_feat("Extra Music")
 
 	#Extra Music grants 4 additional uses of Bardic Music each time the feat is taken
-	args.set_arg(0, args.get_arg(0) + BardicMusicCount * 4)
+	MusicCount = args.get_arg(0)
+	MusicCount += ExtraMusicCount * 4
+	MusicCount += attachee.d20_query("Bardic Music Bonus Levels")
+	args.set_arg(0, MusicCount)
 
 	return 0
 	
 def QueryMaxBardicMusic(attachee, args, evt_obj):
 
-    #Total uses = bard level + extra music count * 4
+    #Total uses = bard level + extra music count * 4 + Bard Bonus Levels
 	MaxMusicCount = attachee.has_feat("Extra Music") * 4
 	MaxMusicCount += attachee.stat_level_get(stat_level_bard)
+	MaxMusicCount += attachee.d20_query("Bardic Music Bonus Levels")
 	evt_obj.return_val = MaxMusicCount
 	return 0
 

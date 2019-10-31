@@ -113,6 +113,7 @@ struct DispatcherSystem : temple::AddressTable
 	unsigned int Dispatch35CasterLevelModify(objHndl obj, SpellPacketBody* spellPkt);
 	void DispatchSpellResistanceCasterLevelCheck(objHndl caster, objHndl target, BonusList *bonlist, SpellPacketBody*spellPkt);
 	void DispatchTargetSpellDCBonus(objHndl caster, objHndl target, BonusList *bonlist, SpellPacketBody*spellPkt);
+	bool DispatchIgnoreDruidOathCheck(objHndl character, objHndl item);
 	void DispatchMetaMagicModify(objHndl obj, MetaMagicData& mmData);
 	void DispatchSpecialAttack(objHndl obj, int attack, objHndl target);
 	double DispatchRangeBonus(objHndl obj, objHndl weaponUsed);
@@ -576,11 +577,17 @@ struct EvtObjDealingSpellDamage : DispIO // type 38 (NEW!)
 	objHndl target = objHndl::null;
 };
 
-struct EvtObjSpellTargetBonus : DispIO // type 38 (NEW!)
+struct EvtObjSpellTargetBonus : DispIO // type 39 (NEW!)
 {
 	BonusList* bonusList = nullptr;
 	SpellPacketBody* spellPkt = nullptr;
 	objHndl target = objHndl::null;
+};
+
+struct EvtIgnoreDruidOathCheck : DispIO // type 40 (NEW!)
+{
+	objHndl item = objHndl::null;
+	bool ignoreDruidOath = false;
 };
 
 struct EvtObjActionCost: DispIO
