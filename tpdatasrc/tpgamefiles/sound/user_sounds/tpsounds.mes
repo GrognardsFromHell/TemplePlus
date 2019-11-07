@@ -9,3 +9,14 @@
 {16446}{} // spell projectile in-flight
 {16447}{spells\sp_FireTrap_indication.WAV} // spell hit
 {16448}{} // spell struck
+
+// [308] *[Mind Blank]
+{12160}{} // spell begin
+{12161}{spells\sp_foxs_cunning_end.WAV} // spell end
+{12162}{spells\sp_foxs_cunning.WAV} // spell effect
+{12163}{} // spell new round
+{12164}{} // spell projectile begin
+{12165}{} // spell projectile end
+{12166}{} // spell projectile in-flight
+{12167}{} // spell hit
+{12168}{} // spell struck

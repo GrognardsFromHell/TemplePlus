@@ -1,0 +1,5 @@
+ID_string: MIND_BLANK
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Spell Mind Blank.tga
+help_topic: TAG_ROOT
+tooltip_base_text:Mind Blank
