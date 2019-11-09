@@ -1,0 +1,5 @@
+name: Oversized Two-Weapon Fighting
+flags: 12582928
+prereqs: 0 13
+description: When wielding a one-handed weapon in your off hand, you take penalties for fighting with two weapons as if you were wielding a light weapon in your off hand.
+prereq descr: Two-Weapon Fighting, STR 13
