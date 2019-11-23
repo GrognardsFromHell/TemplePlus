@@ -20,3 +20,14 @@
 {12166}{} // spell projectile in-flight
 {12167}{} // spell hit
 {12168}{} // spell struck
+
+// [186] *[Foresight]
+{9720}{} // spell begin
+{9721}{spells\so_owls_wisdom.WAV} // spell end
+{9722}{spells\so_owls_wisdom_end.WAV} // spell effect
+{9723}{} // spell new round
+{9724}{} // spell projectile begin
+{9725}{} // spell projectile end
+{9726}{} // spell projectile in-flight
+{9727}{} // spell hit
+{9728}{} // spell struck

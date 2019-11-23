@@ -28,7 +28,7 @@ def MindBlankEffectTooltip(attachee, args, evt_obj):
 	
 def MindBlankRemove(attachee, args, evt_obj):
 	# Show the remove spell effect
-	target.partsys_id = game.particles( 'sp-Mind Blank-END', attachee )
+	game.particles( 'sp-Mind Blank-END', attachee)
 	return 0
 
 mindBlank = PythonModifier("sp-Mind Blank", 4)
