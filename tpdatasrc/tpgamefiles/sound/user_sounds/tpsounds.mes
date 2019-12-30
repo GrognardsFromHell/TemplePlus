@@ -9,3 +9,25 @@
 {16446}{} // spell projectile in-flight
 {16447}{spells\sp_FireTrap_indication.WAV} // spell hit
 {16448}{} // spell struck
+
+// [308] *[Mind Blank]
+{12160}{} // spell begin
+{12161}{spells\sp_foxs_cunning_end.WAV} // spell end
+{12162}{spells\sp_foxs_cunning.WAV} // spell effect
+{12163}{} // spell new round
+{12164}{} // spell projectile begin
+{12165}{} // spell projectile end
+{12166}{} // spell projectile in-flight
+{12167}{} // spell hit
+{12168}{} // spell struck
+
+// [186] *[Foresight]
+{9720}{} // spell begin
+{9721}{spells\so_owls_wisdom.WAV} // spell end
+{9722}{spells\so_owls_wisdom_end.WAV} // spell effect
+{9723}{} // spell new round
+{9724}{} // spell projectile begin
+{9725}{} // spell projectile end
+{9726}{} // spell projectile in-flight
+{9727}{} // spell hit
+{9728}{} // spell struck
