@@ -1,0 +1,5 @@
+name: Swashbuckler Lucky
+flags: 8
+prereqs:
+description:  A swashbuckler gains a +1 competence bonus on Reflex saves at 2nd level. This bonus increases to +2 at 11th level and to +3 at 20th level. A swashbuckler loses this bonus when wearing medium or heavy armor or when carrying a medium or heavy load.
+prereq descr: Swashbucklers Level 11

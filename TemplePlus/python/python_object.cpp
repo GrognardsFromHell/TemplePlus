@@ -2365,6 +2365,22 @@ static PyObject* PyObjHandle_GetCategoryType(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(type);
 }
 
+static PyObject* PyObjHandle_GetHandleLower(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	return PyInt_FromLong(self->handle.GetHandleLower());
+}
+
+static PyObject* PyObjHandle_GetHandleUpper(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	return PyInt_FromLong(self->handle.GetHandleUpper());
+}
+
 static PyObject* PyObjHandle_IsActiveCombatant(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -3379,6 +3395,8 @@ static PyMethodDef PyObjHandleMethods[] = {
 
 	{ "get_base_attack_bonus", PyObjHandle_GetBaseAttackBonus, METH_VARARGS, NULL },
 	{ "get_category_type", PyObjHandle_GetCategoryType, METH_VARARGS, NULL },
+    { "get_handle_upper", PyObjHandle_GetHandleUpper, METH_VARARGS, NULL},
+	{ "get_handle_lower", PyObjHandle_GetHandleLower, METH_VARARGS, NULL},
 	{ "get_initiative", PyObjHandle_GetInitiative, METH_VARARGS, NULL },
 	{ "get_item_wear_flags", PyObjHandle_GetItemWearFlags, METH_VARARGS, NULL },
     { "get_deity", PyObjHandle_GetDeity, METH_VARARGS, NULL },

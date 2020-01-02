@@ -22,6 +22,7 @@ def san_start_combat( attachee, triggerer ):
 	
 	
 def give_default_starting_equipment(x = 0):
+	print "Giving starting stuff"
 	for pc in game.party:
 			if pc.stat_level_get(stat_level_barbarian) > 0:
 				for aaa in [4074, 6059, 6011, 6216, 8014]:
@@ -53,6 +54,9 @@ def give_default_starting_equipment(x = 0):
 					create_item_in_inventory( aaa, pc )	
 			elif pc.stat_level_get(stat_level_rogue) > 0:
 				for aaa in [6042 ,6045 ,6046 ,4049 ,4060 ,6233 ,8014 ,4096 ,5005 ,5005 ,8014 ,12012]:
+					create_item_in_inventory( aaa, pc )
+			elif pc.stat_level_get(stat_level_swashbuckler) > 0:
+				for aaa in [6013 ,6045 ,6046 ,4009 ,4060 ,6238 ,8014]:
 					create_item_in_inventory( aaa, pc )
 			elif pc.stat_level_get(stat_level_sorcerer) > 0:
 				if pc.stat_level_get(stat_race) in [race_gnome, race_halfling]:

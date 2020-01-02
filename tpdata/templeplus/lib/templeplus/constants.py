@@ -3237,6 +3237,7 @@ stat_level_abjurant_champion = 45
 stat_level_scout = 46
 stat_level_warmage = 47
 stat_level_beguiler = 48
+stat_level_swashbuckler = 49
 
 stat_level_psion = 58
 stat_level_psychic_warrior = 59

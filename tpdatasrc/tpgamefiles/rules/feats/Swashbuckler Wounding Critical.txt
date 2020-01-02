@@ -1,0 +1,5 @@
+name: Swashbuckler Wounding Critical
+flags: 8
+prereqs:
+description:  A swashbuckler of 19th level or higher who scores a critical hit against a creature also deals 2 points of Constitution damage to the creature. (This damage is in addition to the Strength damage dealt by the swashbuckler's weakening critical class feature.) Creatures immune to critical hits are immune to this effect.
+prereq descr: Swashbucklers Level 19
