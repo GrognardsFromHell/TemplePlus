@@ -2,7 +2,7 @@ from toee import *
 import char_class_utils
 import char_editor
 
-#Complete Warrior variant, p. 11
+#Complete Warrior, p. 11
 
 ###################################################
 
@@ -16,7 +16,7 @@ def GetClassDefinitionFlags():
 	return CDF_BaseClass | CDF_CoreClass
 
 def GetClassHelpTopic():
-	return "TAG_SWASHBUCKLER"
+	return "TAG_SWASHBUCKLERS"
 
 classEnum = stat_level_swashbuckler
 

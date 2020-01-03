@@ -44,7 +44,7 @@ classSpecObj.AddHook(ET_OnSaveThrowLevel, EK_SAVE_FORTITUDE, OnGetSaveThrowFort,
 classSpecObj.AddHook(ET_OnSaveThrowLevel, EK_SAVE_REFLEX, OnGetSaveThrowReflex, ())
 classSpecObj.AddHook(ET_OnSaveThrowLevel, EK_SAVE_WILL, OnGetSaveThrowWill, ())
 
-#Checks for a load greater than light or armor greater than light (to enable skrimish, battle fortitude and fast movement)
+#Checks for a load greater than light or armor greater than light (to enable various abilities)
 def SwashbucklerEncumberedCheck(obj):
 	#Light armor or no armor
 	armor = obj.item_worn_at(5)

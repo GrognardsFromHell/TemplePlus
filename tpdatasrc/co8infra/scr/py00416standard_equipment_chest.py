@@ -22,7 +22,6 @@ def san_start_combat( attachee, triggerer ):
 	
 	
 def give_default_starting_equipment(x = 0):
-	print "Giving starting stuff"
 	for pc in game.party:
 			if pc.stat_level_get(stat_level_barbarian) > 0:
 				for aaa in [4074, 6059, 6011, 6216, 8014]:
