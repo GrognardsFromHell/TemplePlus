@@ -65,7 +65,6 @@ def SwashbucklerEncumberedCheck(obj):
 	
 #Check if the weapons is usable with finesse 
 def IsFinesseWeapon(creature, weapon):
-
 	#Unarmed works
 	if (weapon == OBJ_HANDLE_NULL):
 		return 1
@@ -114,7 +113,6 @@ swashbucklerGrace.AddHook(ET_OnSaveThrowLevel , EK_SAVE_REFLEX , SwashbucklerGra
 # Swashbuckler Insightful Strike
 
 def SwashbucklerInsightfulStrikeDamageBonus(attachee, args, evt_obj):
-
 	#Must not be encumbered
 	if SwashbucklerEncumberedCheck(attachee):
 		return 0
@@ -141,38 +139,32 @@ swashbucklerInsightfulStrike.AddHook(ET_OnDealingDamage, EK_NONE, SwashbucklerIn
 # Swashbuckler Dodge
 
 def SwashbucklerDodgeACBonus(attachee, args, evt_obj):
-
 	#Must not be encumbered
 	if SwashbucklerEncumberedCheck(attachee):
 		return 0
 
 	attacker = evt_obj.attack_packet.attacker
-	if attacker == OBJ_HANDLE_NULL:
+	if attacker == OBJ_HANDLE_NULL or attacker == attachee:
 		return 0
 
-	attackUpper = attacker.get_handle_upper()
-	attackLower = attacker.get_handle_lower()
+	#Test if the ability is used
+
+	prevAttacker = args.get_obj_from_args(0)
 
 	#Works for each attack from the first attacker like dodge (SRD let you choose the opponent)
-	if not args.get_arg(0):
-		oldUpper = args.get_arg(1)
-		oldLower = args.get_arg(2)
-		
-		if oldUpper != attackUpper or oldLower != attackLower:
+	if prevAttacker != OBJ_HANDLE_NULL:
+		if attacker != prevAttacker:
 			return 0
-		
+	
 	classLvl = attachee.stat_level_get(classEnum)
 	bonval = classLvl / 5
 	evt_obj.bonus_list.add(bonval, 8, 137 ) #Dodge bonus
-	args.set_arg(0, 0) #Ability used
-	args.set_arg(1, attackUpper)
-	args.set_arg(2, attackLower)
+	args.set_args_from_obj(0, attacker)
 	return 0
 
 def SwashbucklerDodgeBeginRound(attachee, args, evt_obj):
-	#Reset so a new first attacker can be selected
-	args.set_arg(0, 1)
-
+	#Reset to a null attacker at the beginning of the round
+	args.set_args_from_obj(0, OBJ_HANDLE_NULL)
 	return 0
 
 swashbucklerDodge = PythonModifier("Swashbuckler Dodge", 4) #Used this round flag, Attacker Upper Handle,  Attacker Lower Handle, Spare
@@ -189,7 +181,6 @@ swashbucklerAcrobaticCharge.MapToFeat("Swashbuckler Acrobatic Charge")
 #Swashbuckler Improved Flanking
 
 def SwashbucklerImprovedFlankingAttack(attachee, args, evt_obj):
-
 	if evt_obj.attack_packet.get_flags() & D20CAF_FLANKED:
 		evt_obj.bonus_list.add(2, 0, "Swashbuckler Improved Flanking")
 	return 0

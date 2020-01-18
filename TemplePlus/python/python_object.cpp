@@ -3395,8 +3395,6 @@ static PyMethodDef PyObjHandleMethods[] = {
 
 	{ "get_base_attack_bonus", PyObjHandle_GetBaseAttackBonus, METH_VARARGS, NULL },
 	{ "get_category_type", PyObjHandle_GetCategoryType, METH_VARARGS, NULL },
-    { "get_handle_upper", PyObjHandle_GetHandleUpper, METH_VARARGS, NULL},
-	{ "get_handle_lower", PyObjHandle_GetHandleLower, METH_VARARGS, NULL},
 	{ "get_initiative", PyObjHandle_GetInitiative, METH_VARARGS, NULL },
 	{ "get_item_wear_flags", PyObjHandle_GetItemWearFlags, METH_VARARGS, NULL },
     { "get_deity", PyObjHandle_GetDeity, METH_VARARGS, NULL },
