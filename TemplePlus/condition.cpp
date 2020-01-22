@@ -302,6 +302,7 @@ public:
 	static int TurnUndeadHook(objHndl, Stat shouldBeClassCleric, DispIoD20ActionTurnBased* evtObj);
 	static int TurnUndeadCheck(DispatcherCallbackArgs args);
 	static int TurnUndeadPerform(DispatcherCallbackArgs args);
+	static int ManyShotAttack(DispatcherCallbackArgs args);
 
 	static bool StunningFistHook(objHndl objHnd, objHndl caster, int DC, int saveType, int flags);
 
@@ -510,6 +511,8 @@ public:
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100D3430, spCallbacks.AoeSpellRemove);
 
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100F72E0, genericCallbacks.MonsterRegenerationOnDamage);
+
+		replaceFunction(0x100FCF50, ManyShotAttack);
 
 		// Turn Undead extension
 		redirectCall(0x1004AF5F, TurnUndeadHook);
@@ -3638,6 +3641,36 @@ int ConditionFunctionReplacement::TurnUndeadHook(objHndl handle, Stat shouldBeCl
 	result += d20Sys.D20QueryPython(handle, "Turn Undead Level", turnType);
 
 	return result;
+}
+
+int ConditionFunctionReplacement::ManyShotAttack(DispatcherCallbackArgs args)
+{
+	//Only currently supporting 2 arrows.  Plan to update at some point to allow 3 or 4 arrows for higher BAB.
+	auto dispIo = static_cast<DispIoAttackBonus*>(args.dispIO);
+
+	if (args.GetCondArg(0) == 0) return 0;
+	if (!(dispIo->attackPacket.flags & D20CAF_RANGED)) return 0;
+	if (dispIo->attackPacket.ammoItem == objHndl::null) return 0;
+
+	const bool correctAmmoType = (objects.getInt32(dispIo->attackPacket.weaponUsed, obj_f_weapon_ammo_type) == 0);
+	const bool notFullAttack = !(dispIo->attackPacket.flags & D20CAF_FULL_ATTACK);
+	const bool standardRangedAttack = (dispIo->attackPacket.d20ActnType == D20A_STANDARD_RANGED_ATTACK);
+	
+	const int ammoCount = objects.getInt32(dispIo->attackPacket.ammoItem, obj_f_ammo_quantity);
+	const bool enoughAmmo = (ammoCount > 1);
+	
+	//Note:  Not checking attackPacket.dispKey == 1 like the original code.  Instead checking final attack roll flag.
+	const bool finalAttackRoll = (dispIo->attackPacket.flags & D20CAF_FINAL_ATTACK_ROLL);
+
+	const auto distance = locSys.DistanceToObj(dispIo->attackPacket.attacker, dispIo->attackPacket.victim);
+	const bool closeEnough = (distance < 30.0);
+
+	if (correctAmmoType && notFullAttack && standardRangedAttack && enoughAmmo && finalAttackRoll && closeEnough) {
+		dispIo->bonlist.AddBonus(-4, 0, 304);  //This was incorrecly -2 in the original code
+		dispIo->attackPacket.flags = static_cast<D20CAF>(dispIo->attackPacket.flags | D20CAF_MANYSHOT);
+	}
+
+	return 0;
 }
 
 int ConditionFunctionReplacement::TurnUndeadPerform(DispatcherCallbackArgs args)
