@@ -303,6 +303,8 @@ public:
 	static int TurnUndeadCheck(DispatcherCallbackArgs args);
 	static int TurnUndeadPerform(DispatcherCallbackArgs args);
 	static int ManyShotAttack(DispatcherCallbackArgs args);
+	static int ManyShotMenu(int a1, objHndl objHnd);
+	static int ManyShotDamage(DispatcherCallbackArgs args);
 
 	static bool StunningFistHook(objHndl objHnd, objHndl caster, int DC, int saveType, int flags);
 
@@ -513,6 +515,8 @@ public:
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100F72E0, genericCallbacks.MonsterRegenerationOnDamage);
 
 		replaceFunction(0x100FCF50, ManyShotAttack);
+		replaceFunction(0x100FCEB0, ManyShotMenu);
+		replaceFunction(0x100FD030, ManyShotDamage);
 
 		// Turn Undead extension
 		redirectCall(0x1004AF5F, TurnUndeadHook);
@@ -3643,12 +3647,35 @@ int ConditionFunctionReplacement::TurnUndeadHook(objHndl handle, Stat shouldBeCl
 	return result;
 }
 
+int ConditionFunctionReplacement::ManyShotMenu(int a1, objHndl objHnd)
+{
+	CondNode *node = *(CondNode **)(a1 + 4);
+	const int baseAttack = critterSys.GetBaseAttackBonus(objHnd);
+	int maxArrows = 0;  //The maximum number of extra arrows to fire with many shot on a standard attack
+	if (baseAttack >= 16) {
+		maxArrows = 3;
+	}
+	else if (baseAttack >= 11) {
+		maxArrows = 2;
+	}
+	else if (baseAttack >= 6) {
+		maxArrows = 1;
+	}
+
+	RadialMenuEntrySlider radEntry(5095, 0, maxArrows, &(node->args[0]), -1, ElfHash::Hash("TAG_MANYSHOT"));
+	int parentNode = radialMenus.GetStandardNode(RadialMenuStandardNode::Feats);
+	radialMenus.AddChildNode(objHnd, &radEntry, parentNode);
+
+	return 0;
+}
+
 int ConditionFunctionReplacement::ManyShotAttack(DispatcherCallbackArgs args)
 {
-	//Only currently supporting 2 arrows.  Plan to update at some point to allow 3 or 4 arrows for higher BAB.
 	auto dispIo = static_cast<DispIoAttackBonus*>(args.dispIO);
 
-	if (args.GetCondArg(0) == 0) return 0;
+	const int arrowsSelected = args.GetCondArg(0);
+
+	if (arrowsSelected == 0) return 0;
 	if (!(dispIo->attackPacket.flags & D20CAF_RANGED)) return 0;
 	if (dispIo->attackPacket.ammoItem == objHndl::null) return 0;
 
@@ -3666,8 +3693,49 @@ int ConditionFunctionReplacement::ManyShotAttack(DispatcherCallbackArgs args)
 	const bool closeEnough = (distance < 30.0);
 
 	if (correctAmmoType && notFullAttack && standardRangedAttack && enoughAmmo && finalAttackRoll && closeEnough) {
-		dispIo->bonlist.AddBonus(-4, 0, 304);  //This was incorrecly -2 in the original code
+		const int arrowsToFire = std::min(arrowsSelected, ammoCount-1);  //Penalty based on the number of arrows that can actually be fired
+		dispIo->bonlist.AddBonus(-2*(arrowsToFire +1), 0, 304);  //Was -2 in the original code, now correctly varies based on #arrows
 		dispIo->attackPacket.flags = static_cast<D20CAF>(dispIo->attackPacket.flags | D20CAF_MANYSHOT);
+	}
+
+	return 0;
+}
+
+int ConditionFunctionReplacement::ManyShotDamage(DispatcherCallbackArgs args)
+{
+	auto dispIo = static_cast<DispIoD20Signal*>(args.dispIO);
+	auto damagePacket = reinterpret_cast<DispIoDamage *>(dispIo->data1);
+
+	if (damagePacket->attackPacket.flags & D20CAF_MANYSHOT && damagePacket->attackPacket.flags & D20CAF_HIT) {
+		auto name = objects.description.getDisplayName(damagePacket->attackPacket.attacker);
+		auto manyShot= combatSys.GetCombatMesLine(162);
+
+		std::string message;
+		message += name;
+		message += " ";
+		message += manyShot;
+		message += "\n\n";
+
+		histSys.CreateFromFreeText(message.c_str());
+
+		D20CAF flags = static_cast<D20CAF>(damagePacket->attackPacket.flags 
+			& ~(D20CAF_MANYSHOT | D20CAF_CRITICAL) | D20CAF_NO_PRECISION_DAMAGE);
+
+		const int arrowsSelected = args.GetCondArg(0);
+		int ammoCount = objects.getInt32(damagePacket->attackPacket.ammoItem, obj_f_ammo_quantity);
+
+		//Only fire arrows up to the number available (ammo has not been decrimented yet)
+		const int arrowsToFire = std::min(arrowsSelected, ammoCount-1);  
+
+		//Do damage for each extra arrow
+		for (int i = 0; i < arrowsToFire; i++) {
+			damage.DealAttackDamage(damagePacket->attackPacket.attacker, damagePacket->attackPacket.victim,
+				damagePacket->attackPacket.dispKey, flags, damagePacket->attackPacket.d20ActnType);
+
+			//Decriment the ammo
+			ammoCount = objects.getInt32(damagePacket->attackPacket.ammoItem, obj_f_ammo_quantity);
+			objects.setInt32(damagePacket->attackPacket.ammoItem, obj_f_ammo_quantity, ammoCount - 1);
+		}
 	}
 
 	return 0;
