@@ -31,3 +31,14 @@
 {9726}{} // spell projectile in-flight
 {9727}{} // spell hit
 {9728}{} // spell struck
+
+// [1000] *[Moment of Prescience]
+{26000}{} // spell begin
+{26001}{spells\sp_guidance_end.wav} // spell end
+{26002}{spells\sp_guidance.wav} // spell effect
+{26003}{} // spell new round
+{26004}{} // spell projectile begin
+{26005}{} // spell projectile end
+{26006}{} // spell projectile in-flight
+{26007}{} // spell hit
+{26008}{} // spell struck

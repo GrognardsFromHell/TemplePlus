@@ -1,0 +1,5 @@
+name: Swashbuckler Dodge
+flags: 8
+prereqs:
+description:  A swashbuckler is trained at focusing his defenses on a single opponent in melee. He receives a +1 dodge bonus to Armor Class against melee attacks from the first oponent to attack. This bonus increases by +1 at every five levels after 5th.  A swashbuckler loses this bonus when wearing medium or heavy armor or when carrying a medium or heavy load.
+prereq descr: Swashbucklers Level 5

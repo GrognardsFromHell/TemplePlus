@@ -2365,6 +2365,22 @@ static PyObject* PyObjHandle_GetCategoryType(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(type);
 }
 
+static PyObject* PyObjHandle_GetHandleLower(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	return PyInt_FromLong(self->handle.GetHandleLower());
+}
+
+static PyObject* PyObjHandle_GetHandleUpper(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	return PyInt_FromLong(self->handle.GetHandleUpper());
+}
+
 static PyObject* PyObjHandle_IsActiveCombatant(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {

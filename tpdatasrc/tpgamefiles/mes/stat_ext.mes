@@ -33,6 +33,7 @@
 {46}{Scout}
 {47}{Warmage}
 {48}{Beguiler}
+{49}{Swashbuckler}
 
 // Psionic Classes
 {58}{Psion}
@@ -101,7 +102,7 @@
 {1046}{Sct}
 {1047}{Wrmg}
 {1048}{Bglr}
-{1049}{}
+{1049}{Swbk}
 {1050}{}
 {1051}{}
 {1052}{}
@@ -297,6 +298,7 @@ Spells: Able to cast lesser planar ally.}
 {13039}Scout{A scout has some training in weapons and a unique combat style that favors fast movement and devastating attacks.}
 {13040}Warmage{A warmage is a militant spellcaster whose training focuses on battlefield magic.}
 {13041}Beguiler{A beguiler is a spellcaster who delights in manipulating others, either to their disadvantage or for their own good.}
+{13042}Swashbuckler{The swashbuckler embodies the concepts of daring and panache.}
 {13075}Fochlucan Lyrist{The Fochlucan lyrist is a Warrior, thief, spy, poet and woodland champion.
 
 Requirements

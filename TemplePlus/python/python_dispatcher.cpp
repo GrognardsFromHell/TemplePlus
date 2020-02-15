@@ -197,6 +197,8 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		})
 		.def("get_arg", &DispatcherCallbackArgs::GetCondArg)
 		.def("set_arg", &DispatcherCallbackArgs::SetCondArg)
+		.def("get_obj_from_args", &DispatcherCallbackArgs::GetCondArgObjHndl)
+		.def("set_args_from_obj", &DispatcherCallbackArgs::SetCondArgObjHndl)
 		.def("get_param", [](DispatcherCallbackArgs &args, int paramIdx){
 			PyObject*tuplePtr = (PyObject*)args.GetData2();
 			

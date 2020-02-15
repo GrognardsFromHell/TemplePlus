@@ -27,3 +27,7 @@ sp-Foresight	flashes			perm	2		Object Pos				Disc				ring	60	Add	0				0	0	0	0	0	
 sp-Foresight-END	flashes			30	7		Object Pos				Disc				ring	30	Add	0				0	0	0	0	0	0	0	40	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	300,0	0	0	0?360	0	0	0,128	255	0	0						1
 sp-Foresight-END	New Emitter			15	30		Node Pos	bip01 head			Sprite				flare-1	30	Add	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	#radius	0	0	0?360	0	0	64,0	255	0	0						1
 sp-Foresight-END	sparklemotion			15	5		Node Pos	bip01 head			Sprite				flare-1	30	Add	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	#radius	0	0	0?360	0	0	64,0	255	0	0						1
+sp-Moment of Prescience	sparklemotion			perm	5		Node Pos	bip01 head			Sprite				flare-1	30	Add	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	#radius	0	0	0?360	0	0	64,0	255	255	64						1
+sp-Moment of Prescience	New Emitter			15	30		Node Pos	bip01 head			Sprite				flare-1	30	Add	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	#radius	0	0	0?360	0	0	64,0	255	255	255						1
+sp-Moment of Prescience-END	New Emitter			15	30		Node Pos	bip01 head			Sprite				flare-1	30	Add	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	#radius	0	0	0?360	0	0	64,0	255	255	255						1
+sp-Moment of Prescience-END	sparklemotion			15	5		Node Pos	bip01 head			Sprite				flare-1	30	Add	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	#radius	0	0	0?360	0	0	64,0	255	255	64						1

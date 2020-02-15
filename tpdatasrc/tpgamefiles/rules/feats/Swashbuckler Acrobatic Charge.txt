@@ -1,0 +1,5 @@
+name: Swashbuckler Acrobatic Charge
+flags: 8
+prereqs:
+description:  A swashbuckler of 7th level or higher can charge in situations where others cannot. He may charge over difficult terrain that normally slows movement or allies blocking her path.  No in game effect currently.
+prereq descr: Swashbucklers Level 7

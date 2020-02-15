@@ -35,10 +35,6 @@ def ConditionImmunityOnPreAdd(attachee, args, evt_obj):
 		evt_obj.return_val = 0
 	return 0
 	
-def NoFlatFootedFirstRoundQuery(attachee, args, evt_obj):
-	evt_obj.return_val = 1
-	return 0
-	
 def ForesightAcBonus(attachee, args, evt_obj):
 	evt_obj.bonus_list.add(2, 0, "Foresight")  #  Insight Bonus
 	return 0
@@ -59,5 +55,4 @@ foresight.AddHook(ET_OnConditionAddPre, EK_NONE, ConditionImmunityOnPreAdd, ())
 foresight.AddHook(ET_OnGetAC, EK_NONE, ForesightAcBonus, ())
 foresight.AddHook(ET_OnSaveThrowLevel , EK_SAVE_REFLEX , ForesightReflexSaveBonus, ())
 foresight.AddHook(ET_OnConditionRemove, EK_NONE, ForesightRemove, ())
-foresight.AddHook(ET_OnD20PythonQuery, "Disable Flatfoot First Round", NoFlatFootedFirstRoundQuery, () )
 foresight.AddSpellCountdownStandardHook()

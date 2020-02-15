@@ -1,0 +1,5 @@
+name: Swashbuckler Insightful Strike
+flags: 8
+prereqs:
+description:  A swashbuckler becomes able to place his finesse attacks where they deal greater damage. He applies his Intelligence bonus (if any) as a bonus on damage rolls with any light weapon, as well as any other weapon that can be used with Weapon Finesse.
+prereq descr: Swashbucklers Level 3
