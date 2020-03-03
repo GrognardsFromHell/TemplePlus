@@ -2365,6 +2365,40 @@ static PyObject* PyObjHandle_GetCategoryType(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(type);
 }
 
+template<typename Filter>
+static PyObject* GetCharacterClassesSet(Filter filter, PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyTuple_New(0);
+	}
+
+	std::vector<int> classes;
+	for (auto it : d20ClassSys.classEnums) {
+		auto classEnum = (Stat)it;
+		if (filter(classEnum)) {
+			auto classLvl = objects.StatLevelGet(self->handle, classEnum);
+			if (classLvl > 0) {
+				classes.push_back(it);
+			}
+		}
+	}
+
+	auto result = PyTuple_New(classes.size());
+	for (auto i = 0; i < classes.size(); i++) {
+		PyTuple_SET_ITEM(result, i, PyInt_FromLong(classes[i]));
+	}
+
+	return result;
+}
+
+static PyObject* PyObjHandle_GetCharacterAllClassesSet(PyObject* obj, PyObject* args) {
+	return GetCharacterClassesSet([](Stat) { return true; }, obj, args);
+}
+
+static PyObject* PyObjHandle_GetCharacterBaseClassesSet(PyObject* obj, PyObject* args) {
+	return GetCharacterClassesSet([](Stat classEnum) { return d20ClassSys.IsBaseClass(classEnum); }, obj, args);
+}
+
 static PyObject* PyObjHandle_GetHandleLower(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -3395,6 +3429,8 @@ static PyMethodDef PyObjHandleMethods[] = {
 
 	{ "get_base_attack_bonus", PyObjHandle_GetBaseAttackBonus, METH_VARARGS, NULL },
 	{ "get_category_type", PyObjHandle_GetCategoryType, METH_VARARGS, NULL },
+	{ "get_character_classes", PyObjHandle_GetCharacterAllClassesSet, METH_VARARGS, "Get tuple with classes enums" },
+	{ "get_character_base_classes", PyObjHandle_GetCharacterBaseClassesSet, METH_VARARGS, "Get tuple with base classes enums" },
 	{ "get_initiative", PyObjHandle_GetInitiative, METH_VARARGS, NULL },
 	{ "get_item_wear_flags", PyObjHandle_GetItemWearFlags, METH_VARARGS, NULL },
     { "get_deity", PyObjHandle_GetDeity, METH_VARARGS, NULL },
