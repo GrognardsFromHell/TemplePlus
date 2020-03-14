@@ -10,7 +10,7 @@ jobs:
     - uses: actions/checkout@v1
     - name: Build
       run: |
-        curl -L -O dependencies.7z https://github.com/GrognardsFromHell/Dependencies/releases/download/v1.6/dependencies.7z
+        curl -L -o dependencies.7z https://github.com/GrognardsFromHell/Dependencies/releases/download/v1.6/dependencies.7z
         7z x dependencies.7z
         nuget install Squirrel.Windows -OutputDirectory Squirrel -Verbosity Detailed
         nuget restore
