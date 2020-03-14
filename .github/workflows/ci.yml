@@ -1,0 +1,20 @@
+
+name: CI
+on: [push]
+
+jobs:
+  build:
+    name: Build Windows
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Build
+      run: |
+        curl https://github.com/GrognardsFromHell/Dependencies/releases/download/v1.6/dependencies.7z -O
+        7z x dependencies.7z
+        nuget install Squirrel.Windows -OutputDirectory Squirrel -Verbosity Detailed
+        nuget restore
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars32.bat"
+        ps: .\UpdateVersion.ps1
+        msbuild TemplePlus.sln /p:Configuration=Release /p:Platform=Win32 /p:MSBuildDefines="_TP_VERSION=%APPVEYOR_BUILD_VERSION%;_TP_COMMIT=%APPVEYOR_REPO_COMMIT%;TP_RELEASE_BUILD" /verbosity:minimal
+      shell: cmd
