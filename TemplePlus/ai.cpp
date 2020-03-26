@@ -1978,18 +1978,28 @@ void AiSystem::StrategyTabLineParseTactic(AiStrategy* aiStrat, const char* tacNa
 		if (*spellString)
 			spell->ParseSpellSpecString(&aiStrat->spellsKnown[aiStrat->numTactics], (char *)spellString);
 
-		if (*middleString){
-			aiStrat->spellsKnown[aiStrat->numTactics].pad2 = atoi(middleString);
-			auto secondStr = strchr(middleString, ' ');
-			if (secondStr){
-				aiStrat->spellsKnown[aiStrat->numTactics].pad3 = atoi(secondStr);
+		if (*middleString) {
+			uint64_t val = _atoi64(middleString);
+			if (val) {
+				aiStrat->spellsKnown[aiStrat->numTactics].pad2 = (uint32_t)val;
+				auto secondStr = strchr(middleString, ' ');
+				if (secondStr) {
+					aiStrat->spellsKnown[aiStrat->numTactics].pad3 = atoi(secondStr);
+				}
+				else {
+					aiStrat->spellsKnown[aiStrat->numTactics].pad3 = (uint32_t)(val >> 32);
+				}
 			}
 			else {
-				uint64_t val = _atoi64(middleString);
-				if (val)
-				{
-					aiStrat->spellsKnown[aiStrat->numTactics].pad2 = (uint32_t)val;
-					aiStrat->spellsKnown[aiStrat->numTactics].pad3 = (uint32_t)(val >> 32);
+				objHndl found = objHndl::null;
+				objSystem->ForEachObj([&](objHndl handle, GameObjectBody& obj) {
+					if (found) return;
+					if (_stricmp(obj.id.ToString().c_str(), middleString)) return;
+					found = handle;
+				});
+				if (found) {
+					aiStrat->spellsKnown[aiStrat->numTactics].pad2 = found.GetHandleLower();
+					aiStrat->spellsKnown[aiStrat->numTactics].pad3 = found.GetHandleUpper();
 				}
 			}
 		}

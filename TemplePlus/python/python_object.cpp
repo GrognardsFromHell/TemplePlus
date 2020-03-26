@@ -3429,8 +3429,6 @@ static PyMethodDef PyObjHandleMethods[] = {
 
 	{ "get_base_attack_bonus", PyObjHandle_GetBaseAttackBonus, METH_VARARGS, NULL },
 	{ "get_category_type", PyObjHandle_GetCategoryType, METH_VARARGS, NULL },
-	{ "get_handle_upper", PyObjHandle_GetHandleUpper, METH_VARARGS, NULL},
-	{ "get_handle_lower", PyObjHandle_GetHandleLower, METH_VARARGS, NULL},
 	{ "get_character_classes", PyObjHandle_GetCharacterAllClassesSet, METH_VARARGS, "Get tuple with classes enums" },
 	{ "get_character_base_classes", PyObjHandle_GetCharacterBaseClassesSet, METH_VARARGS, "Get tuple with base classes enums" },
 	{ "get_initiative", PyObjHandle_GetInitiative, METH_VARARGS, NULL },
@@ -3956,6 +3954,18 @@ static PyObject* PyObjHandle_SafeForUnpickling(PyObject*, void*) {
 	Py_RETURN_TRUE;
 }
 
+static PyObject* PyObjHandle_GetID(PyObject* obj, void*) {
+	auto self = (PyObjHandle*)obj;
+
+	if (!self->handle) {
+		return PyString_FromString("OBJ_HANDLE_NULL");
+	}
+	else {
+		auto name = self->id.ToString();
+		return PyString_FromString(name.c_str());
+	}
+}
+
 PyGetSetDef PyObjHandleGetSets[] = {
 	{ "area", PyObjHandle_GetArea, NULL, NULL, NULL },
 	{"char_classes", PyObjHandle_GetCharacterClasses, NULL, "a tuple containing the character classes array", NULL },
@@ -3987,6 +3997,7 @@ PyGetSetDef PyObjHandleGetSets[] = {
 	{"loots", PyObjHandle_GetLoots, PyObjHandle_SetLoots, NULL},
 	{"proto", PyObjHandle_GetProto, NULL, NULL },
 	{"__safe_for_unpickling__", PyObjHandle_SafeForUnpickling, NULL, NULL},
+	{"id", PyObjHandle_GetID, NULL, NULL },
 	{NULL, NULL, NULL, NULL}
 };
 
