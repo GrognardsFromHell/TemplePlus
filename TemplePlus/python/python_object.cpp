@@ -3429,6 +3429,8 @@ static PyMethodDef PyObjHandleMethods[] = {
 
 	{ "get_base_attack_bonus", PyObjHandle_GetBaseAttackBonus, METH_VARARGS, NULL },
 	{ "get_category_type", PyObjHandle_GetCategoryType, METH_VARARGS, NULL },
+	{ "get_handle_upper", PyObjHandle_GetHandleUpper, METH_VARARGS, NULL},
+	{ "get_handle_lower", PyObjHandle_GetHandleLower, METH_VARARGS, NULL},
 	{ "get_character_classes", PyObjHandle_GetCharacterAllClassesSet, METH_VARARGS, "Get tuple with classes enums" },
 	{ "get_character_base_classes", PyObjHandle_GetCharacterBaseClassesSet, METH_VARARGS, "Get tuple with base classes enums" },
 	{ "get_initiative", PyObjHandle_GetInitiative, METH_VARARGS, NULL },

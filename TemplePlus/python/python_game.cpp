@@ -509,6 +509,17 @@ PyObject* PyGame_GetFeatName(PyObject*, PyObject* args) {
 	return PyString_FromString(feats.GetFeatName(featCode));
 }
 
+PyObject* PyGame_MakeCustomName(PyObject*, PyObject* args) {
+	char *name;
+
+	if (!PyArg_ParseTuple(args, "s:game.make_custom_name", &name)) { 
+		return 0;
+	}
+
+	auto nameId = objects.description.CustomNameNew(name);
+	return PyInt_FromLong(nameId);
+}
+
 PyObject* PyGame_IsRangedWeapon(PyObject*, PyObject* args) {
 	WeaponTypes wt;
 
@@ -1350,6 +1361,7 @@ static PyMethodDef PyGameMethods[]{
 	{"get_feat_name", PyGame_GetFeatName,METH_VARARGS, NULL},
 	{"is_ranged_weapon", PyGame_IsRangedWeapon,METH_VARARGS, NULL},
 	{"is_melee_weapon", PyGame_IsMeleeWeapon,METH_VARARGS, NULL},
+	{"make_custom_name", PyGame_MakeCustomName,METH_VARARGS, NULL},
 	// This is some unfinished UI for which the graphics are missing
 	// {"charmap", PyGame_Charmap, METH_VARARGS, NULL},
 	{NULL, NULL, NULL, NULL}

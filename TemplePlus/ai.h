@@ -236,7 +236,10 @@ struct AiSystem : temple::AddressTable
 
 	unsigned int Asplode(AiTactic * aiTactic);
 	unsigned int WakeFriend(AiTactic* aiTac);
-
+	int AiGoto(AiTactic* aiTac);
+	int AiHalt(AiTactic* aiTac);
+	int AiStop(AiTactic* aiTac);
+	int AiTargetObj(AiTactic* aiTac);
 
 	// Init
 	void StrategyTabLineParseTactic(AiStrategy*, const char * tacName, const char * middleString, const char* spellString);
@@ -284,5 +287,7 @@ extern AiSystem aiSys;
 
 unsigned int _AiAsplode(AiTactic* aiTac);
 unsigned int _AiWakeFriend(AiTactic* aiTac);
-
-
+unsigned int _AiGoto(AiTactic* aiTac);
+unsigned int _AiHalt(AiTactic* aiTac);
+unsigned int _AiStop(AiTactic* aiTac);
+unsigned int _AiTargetObj(AiTactic* aiTac);
