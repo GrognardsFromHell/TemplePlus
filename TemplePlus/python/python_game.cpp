@@ -1289,6 +1289,21 @@ static PyObject *PySpell_SpellGetPickerEndPoint(PyObject*, PyObject *args) {
 	return blyat.ptr();
 }
 
+static PyObject* PyGame_GetObjById(PyObject*, PyObject* args) {
+	char* name;
+	if (!PyArg_ParseTuple(args, "s:game.get_obj_by_id", &name)) {
+		return 0;
+	}
+	if (!name) {
+		return 0;
+	}
+	auto handle = objSystem->FindObjectByIdStr(format("{}", name));
+	if (!handle) {
+		return 0;
+	}
+	return PyObjHndl_Create(handle);
+}
+
 static PyMethodDef PyGameMethods[]{
 	{ "get_wall_endpt", PySpell_SpellGetPickerEndPoint, METH_VARARGS, NULL },
 	{ "create_history_freeform", PyGame_CreateHistoryFreeform, METH_VARARGS, NULL },
@@ -1362,6 +1377,7 @@ static PyMethodDef PyGameMethods[]{
 	{"is_ranged_weapon", PyGame_IsRangedWeapon,METH_VARARGS, NULL},
 	{"is_melee_weapon", PyGame_IsMeleeWeapon,METH_VARARGS, NULL},
 	{"make_custom_name", PyGame_MakeCustomName,METH_VARARGS, NULL},
+	{"get_obj_by_id", PyGame_GetObjById, METH_VARARGS, NULL},
 	// This is some unfinished UI for which the graphics are missing
 	// {"charmap", PyGame_Charmap, METH_VARARGS, NULL},
 	{NULL, NULL, NULL, NULL}

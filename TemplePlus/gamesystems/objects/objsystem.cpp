@@ -497,6 +497,19 @@ void ObjSystem::ForEachObj(std::function<void(objHndl, GameObjectBody&)> callbac
 
 }
 
+objHndl ObjSystem::FindObjectByIdStr(string id_str)
+{
+	for (auto& entry : *mObjRegistry) {
+		if (entry.second->IsProto()) {
+			continue; // Only instances
+		}
+		if (entry.second->id.ToString()._Equal(id_str)) {
+			return entry.first;
+		}
+	}
+	return objHndl::null;
+}
+
 objHndl ObjSystem::CreateProto(ObjectType type) {
 
 	auto objPtr = std::make_unique<GameObjectBody>();

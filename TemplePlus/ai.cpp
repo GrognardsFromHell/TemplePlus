@@ -1977,8 +1977,23 @@ void AiSystem::StrategyTabLineParseTactic(AiStrategy* aiStrat, const char* tacNa
 		aiStrat->spellsKnown[aiStrat->numTactics].spellEnum = -1;
 		if (*spellString)
 			spell->ParseSpellSpecString(&aiStrat->spellsKnown[aiStrat->numTactics], (char *)spellString);
-
+		else
 		if (*middleString) {
+			/**
+				middleString can have next values:
+				- string, like "G_BAE066DE_A0A2_4078_8AF0_F0A26A5434FA", e.g. id.ToString(), which will look up for objHndl and save to arg0, arg1
+				- uint64, e.g. locXY
+				- uint32 uint32, e.g. locx locy
+
+				Parsing result will assign two uin32: SpellStoreData.pad2 and SpellStoreData.pad3 to be treated as arg0 and arg1.
+
+				SpellStoreData.pad2 will hold arg0, which will be copied to AiTactic.field4 and used in tactic func like AiTargetObj
+				SpellStoreData.pad3 will hold arg1, which will be copied to AiTactic.field24 and used in tactic func like AiTargetObj
+
+				usage of arg0, arg1:
+				- locXY (locx, locy)
+				- handle (lower, upper)
+			*/
 			uint64_t val = _atoi64(middleString);
 			if (val) {
 				aiStrat->spellsKnown[aiStrat->numTactics].pad2 = (uint32_t)val;
@@ -1991,12 +2006,7 @@ void AiSystem::StrategyTabLineParseTactic(AiStrategy* aiStrat, const char* tacNa
 				}
 			}
 			else {
-				objHndl found = objHndl::null;
-				objSystem->ForEachObj([&](objHndl handle, GameObjectBody& obj) {
-					if (found) return;
-					if (_stricmp(obj.id.ToString().c_str(), middleString)) return;
-					found = handle;
-				});
+				objHndl found = objSystem->FindObjectByIdStr(format("{}", middleString));
 				if (found) {
 					aiStrat->spellsKnown[aiStrat->numTactics].pad2 = found.GetHandleLower();
 					aiStrat->spellsKnown[aiStrat->numTactics].pad3 = found.GetHandleUpper();
