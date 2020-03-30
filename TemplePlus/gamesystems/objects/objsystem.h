@@ -98,6 +98,11 @@ public:
 	void ForEachObj(std::function<void(objHndl, GameObjectBody&)> callback) const;
 
 	/**
+	 * Finds object based on id.toString() == id_str.
+	 */
+	objHndl FindObjectByIdStr(string id_str);
+
+	/**
 	 * Create a new empty prototype object.
 	 */
 	objHndl CreateProto(ObjectType type);

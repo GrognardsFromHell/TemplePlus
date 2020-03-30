@@ -798,6 +798,11 @@ bool LegacyCritterSystem::IsDeadNullDestroyed(objHndl critter)
 		return true;
 	}
 
+	if (!objSystem->IsValidHandle(critter))
+	{
+		return true;
+	}
+
 	auto flags = objects.GetFlags(critter);
 	if (flags & OF_DESTROYED) {
 		return true;

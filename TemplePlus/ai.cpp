@@ -117,6 +117,10 @@ void AiSystem::aiTacticGetConfig(int tacIdx, AiTactic* aiTacOut, AiStrategy* aiS
 		spell->SpellPacketSetCasterLevel(spellPktBody);
 		d20->D20ActnSetSpellData(&aiTacOut->d20SpellData, spellEnum, spellPktBody->spellClass, spellPktBody->spellKnownSlotLevel, 0xFF, spellPktBody->metaMagicData);
 	}
+	else {
+		aiTacOut->field4 = aiStrat->spellsKnown[tacIdx].pad2;
+		aiTacOut->field24 = aiStrat->spellsKnown[tacIdx].pad3;
+	}
 }
 
 uint32_t AiSystem::StrategyParse(objHndl objHnd, objHndl target)
@@ -1973,6 +1977,42 @@ void AiSystem::StrategyTabLineParseTactic(AiStrategy* aiStrat, const char* tacNa
 		aiStrat->spellsKnown[aiStrat->numTactics].spellEnum = -1;
 		if (*spellString)
 			spell->ParseSpellSpecString(&aiStrat->spellsKnown[aiStrat->numTactics], (char *)spellString);
+		else
+		if (*middleString) {
+			/**
+				middleString can have next values:
+				- string, like "G_BAE066DE_A0A2_4078_8AF0_F0A26A5434FA", e.g. id.ToString(), which will look up for objHndl and save to arg0, arg1
+				- uint64, e.g. locXY
+				- uint32 uint32, e.g. locx locy
+
+				Parsing result will assign two uin32: SpellStoreData.pad2 and SpellStoreData.pad3 to be treated as arg0 and arg1.
+
+				SpellStoreData.pad2 will hold arg0, which will be copied to AiTactic.field4 and used in tactic func like AiTargetObj
+				SpellStoreData.pad3 will hold arg1, which will be copied to AiTactic.field24 and used in tactic func like AiTargetObj
+
+				usage of arg0, arg1:
+				- locXY (locx, locy)
+				- handle (lower, upper)
+			*/
+			uint64_t val = _atoi64(middleString);
+			if (val) {
+				aiStrat->spellsKnown[aiStrat->numTactics].pad2 = (uint32_t)val;
+				auto secondStr = strchr(middleString, ' ');
+				if (secondStr) {
+					aiStrat->spellsKnown[aiStrat->numTactics].pad3 = atoi(secondStr);
+				}
+				else {
+					aiStrat->spellsKnown[aiStrat->numTactics].pad3 = (uint32_t)(val >> 32);
+				}
+			}
+			else {
+				objHndl found = objSystem->FindObjectByIdStr(format("{}", middleString));
+				if (found) {
+					aiStrat->spellsKnown[aiStrat->numTactics].pad2 = found.GetHandleLower();
+					aiStrat->spellsKnown[aiStrat->numTactics].pad3 = found.GetHandleUpper();
+				}
+			}
+		}
 		++aiStrat->numTactics;
 		return;
 	}
@@ -2260,6 +2300,30 @@ void AiSystem::RegisterNewAiTactics()
 	aiTacticDefsNew[n].aiFunc = _AiAsplode;
 	memset(aiTacticDefsNew[n].name, 0, 100);
 	sprintf(aiTacticDefsNew[n].name, "cast best crowd control");
+
+	n++;
+	aiTacticDefsNew[n].name = new char[100];
+	aiTacticDefsNew[n].aiFunc = _AiGoto;
+	memset(aiTacticDefsNew[n].name, 0, 100);
+	sprintf(aiTacticDefsNew[n].name, "goto");
+
+	n++;
+	aiTacticDefsNew[n].name = new char[100];
+	aiTacticDefsNew[n].aiFunc = _AiHalt;
+	memset(aiTacticDefsNew[n].name, 0, 100);
+	sprintf(aiTacticDefsNew[n].name, "halt");
+
+	n++;
+	aiTacticDefsNew[n].name = new char[100];
+	aiTacticDefsNew[n].aiFunc = _AiStop;
+	memset(aiTacticDefsNew[n].name, 0, 100);
+	sprintf(aiTacticDefsNew[n].name, "stop");
+
+	n++;
+	aiTacticDefsNew[n].name = new char[100];
+	aiTacticDefsNew[n].aiFunc = _AiTargetObj;
+	memset(aiTacticDefsNew[n].name, 0, 100);
+	sprintf(aiTacticDefsNew[n].name, "target obj");
 }
 
 int AiSystem::GetStrategyIdx(const char* stratName) const
@@ -2532,6 +2596,55 @@ unsigned AiSystem::WakeFriend(AiTactic* aiTac)
 		aiTac->target = origTarget;
 		return 0;
 
+}
+
+int AiSystem::AiGoto(AiTactic* aiTac)
+{
+	locXY loc = { aiTac->field4, aiTac->field24 };
+	if (!loc.ToField()) return 0;
+
+	int initialActNum = (*actSeqSys.actSeqCur)->d20ActArrayNum;
+	LocAndOffsets locAndOffsets = { loc, 0, 0 };
+
+	actSeqSys.curSeqReset(aiTac->performer);
+	d20Sys.GlobD20ActnInit();
+	d20Sys.GlobD20ActnSetTypeAndData1(D20A_UNSPECIFIED_MOVE, 0);
+	d20Sys.GlobD20ActnSetTarget(objHndl::null, &locAndOffsets);
+	actSeqSys.ActionAddToSeq();
+	if (actSeqSys.ActionSequenceChecksWithPerformerLocation() != AEC_OK) {
+		actSeqSys.ActionSequenceRevertPath(initialActNum);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+int AiSystem::AiHalt(AiTactic* aiTac)
+{
+	if (actSeqSys.curSeqGetTurnBasedStatus()->hourglassState > 2) {
+		actSeqSys.curSeqGetTurnBasedStatus()->hourglassState = 2;
+	}
+	actSeqSys.curSeqGetTurnBasedStatus()->surplusMoveDistance = 0;
+	return FALSE;
+}
+
+int AiSystem::AiStop(AiTactic* aiTac)
+{
+	actSeqSys.curSeqGetTurnBasedStatus()->hourglassState = 0;
+	actSeqSys.curSeqGetTurnBasedStatus()->surplusMoveDistance = 0;
+	return TRUE;
+}
+
+int AiSystem::AiTargetObj(AiTactic* aiTac)
+{
+	if (!aiTac->field24 && !aiTac->field4) return FALSE;
+	objHndl handle;
+	uint64_t h1 = (uint64_t)aiTac->field24 << 32 | aiTac->field4;
+	handle = h1;
+	if (!handle || !objSystem->IsValidHandle(handle)) 
+		return FALSE;
+
+	aiTac->target = handle;
+	return FALSE;
 }
 
 int AiSystem::Default(AiTactic* aiTac)
@@ -3303,6 +3416,26 @@ unsigned int _AiWakeFriend(AiTactic * aiTac)
 	return aiSys.WakeFriend(aiTac);
 }
 
+unsigned int _AiGoto(AiTactic * aiTac)
+{
+	return aiSys.AiGoto(aiTac);
+}
+
+unsigned int _AiHalt(AiTactic * aiTac)
+{
+	return aiSys.AiHalt(aiTac);
+}
+
+unsigned int _AiStop(AiTactic * aiTac)
+{
+	return aiSys.AiStop(aiTac);
+}
+
+unsigned int _AiTargetObj(AiTactic * aiTac)
+{
+	return aiSys.AiTargetObj(aiTac);
+}
+
 class AiReplacements : public TempleFix
 {
 public: 
@@ -4031,6 +4164,10 @@ bool AiPacket::ScoutPointSetState(){
 }
 
 void AiPacket::ChooseRandomSpell_RegardInvulnerableStatus(){
+	if (config.disableChooseRandomSpell_RegardInvulnerableStatus) {
+		this->aiState2 = 0;
+		return;
+	}
 	auto objBody = objSystem->GetObject(obj);
 	if (objBody->GetFlags() & OF_INVULNERABLE){
 		this->aiState2 = 0;
