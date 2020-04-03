@@ -362,7 +362,7 @@ objHndl UiInGame::GetMouseTarget(int x, int y)
 		return objHndl::null;
 	}
 
-	if (critterSys.IsConcealed(mousedOver)) {
+	if (objects.IsCritter(mousedOver) && critterSys.IsConcealed(mousedOver)) {
 		return objHndl::null;
 	}
 

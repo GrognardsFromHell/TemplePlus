@@ -620,6 +620,7 @@ static PyObject* PyObjHandle_CanFindPathToObj(PyObject* obj, PyObject* args) {
 	pathQ.distanceToTargetMin = 0.0;
 	pathQ.tolRadius = reach * 12.0f - fourPointSevenPlusEight;
 
+	pqr.nodeCount = 0;
 	auto nodeCount = pathfindingSys.FindPath(&pathQ, &pqr);
 	
 	auto pathLen = pathfindingSys.GetPathLength(&pqr);
@@ -2035,6 +2036,25 @@ static PyObject* PyObjHandle_D20QueryHasSpellCond(PyObject* obj, PyObject* args)
 	return PyInt_FromLong(result);
 }
 
+static PyObject* PyObjHandle_D20QueryHasCond(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	char* name;
+	if (!PyArg_ParseTuple(args, "s:objhndl.d20_query_has_condition", &name)) {
+		return 0;
+	}
+
+	auto cond = conds.GetByName(format("{}", name));
+	if (!cond) {
+		return PyInt_FromLong(0);
+	}
+
+	auto result = d20Sys.d20QueryWithData(self->handle, DK_QUE_Critter_Has_Condition, (uint32_t)cond, 0);
+	return PyInt_FromLong(result);
+}
+
 static PyObject* PyObjHandle_D20QueryWithData(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -3399,6 +3419,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 
 	{ "d20_query", PyObjHandle_D20Query, METH_VARARGS, NULL },
 	{ "d20_query_has_spell_condition", PyObjHandle_D20QueryHasSpellCond, METH_VARARGS, NULL },
+	{ "d20_query_has_condition", PyObjHandle_D20QueryHasCond, METH_VARARGS, NULL },
 	{ "d20_query_with_data", PyObjHandle_D20QueryWithData, METH_VARARGS, NULL },
     { "d20_query_with_object", PyObjHandle_D20QueryWithObject, METH_VARARGS, NULL },
 	{ "d20_query_test_data", PyObjHandle_D20QueryTestData, METH_VARARGS, NULL },

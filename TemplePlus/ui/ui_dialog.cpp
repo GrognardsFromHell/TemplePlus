@@ -18,6 +18,7 @@
 #include <map>
 #include "gamesystems/legacysystems.h"
 #include "mod_support.h"
+#include "gamesystems\objects\objsystem.h"
 
 UiDlg* uiDialog = nullptr;
 UiDialogImpl * dlgImpl = nullptr;
@@ -149,6 +150,17 @@ class UiDialogHooks : public TempleFix
 			if (dlgImpl){
 				dlgImpl->UpdateWidgets();
 			}
+		});
+		static void(__cdecl * UiDialogBegin)() = replaceFunction<void(__cdecl)()>(0x1014C8F0, []() {
+			/* 
+				Global variable ObjHnd(0x10BEA958) is not re-validated after map change, or handle was actually destroyed.
+				Should be nulled if invalid. Otherwise crash.
+			*/
+			if (!objSystem->IsValidHandle(temple::GetRef<objHndl>(0x10BEA958)))
+			{
+				temple::GetRef<objHndl>(0x10BEA958) = objHndl::null;
+			}
+			UiDialogBegin();
 		});
 	}
 } uiDialogHooks;
