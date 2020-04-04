@@ -240,6 +240,8 @@ struct AiSystem : temple::AddressTable
 	int AiHalt(AiTactic* aiTac);
 	int AiStop(AiTactic* aiTac);
 	int AiTargetObj(AiTactic* aiTac);
+	int AiTotalDefence(AiTactic* aiTac);
+	int AiPythonAction(AiTactic* aiTac);
 
 	// Init
 	void StrategyTabLineParseTactic(AiStrategy*, const char * tacName, const char * middleString, const char* spellString);
@@ -291,3 +293,5 @@ unsigned int _AiGoto(AiTactic* aiTac);
 unsigned int _AiHalt(AiTactic* aiTac);
 unsigned int _AiStop(AiTactic* aiTac);
 unsigned int _AiTargetObj(AiTactic* aiTac);
+unsigned int _AiTotalDefence(AiTactic* aiTac);
+unsigned int _AiPythonAction(AiTactic* aiTac);
