@@ -2324,6 +2324,18 @@ void AiSystem::RegisterNewAiTactics()
 	aiTacticDefsNew[n].aiFunc = _AiTargetObj;
 	memset(aiTacticDefsNew[n].name, 0, 100);
 	sprintf(aiTacticDefsNew[n].name, "target obj");
+
+	n++;
+	aiTacticDefsNew[n].name = new char[100];
+	aiTacticDefsNew[n].aiFunc = _AiTotalDefence;
+	memset(aiTacticDefsNew[n].name, 0, 100);
+	sprintf(aiTacticDefsNew[n].name, "total defence");
+
+	n++;
+	aiTacticDefsNew[n].name = new char[100];
+	aiTacticDefsNew[n].aiFunc = _AiPythonAction;
+	memset(aiTacticDefsNew[n].name, 0, 100);
+	sprintf(aiTacticDefsNew[n].name, "python action");
 }
 
 int AiSystem::GetStrategyIdx(const char* stratName) const
@@ -2646,6 +2658,41 @@ int AiSystem::AiTargetObj(AiTactic* aiTac)
 	aiTac->target = handle;
 	return FALSE;
 }
+
+int AiSystem::AiTotalDefence(AiTactic* aiTac)
+{
+	int initialActNum = (*actSeqSys.actSeqCur)->d20ActArrayNum;
+	actSeqSys.curSeqReset(aiTac->performer);
+	d20Sys.GlobD20ActnInit();
+	d20Sys.GlobD20ActnSetTypeAndData1(D20A_TOTAL_DEFENSE, 0);
+	d20Sys.GlobD20ActnSetTarget(objHndl::null, 0);
+	actSeqSys.ActionAddToSeq();
+	if (actSeqSys.ActionSequenceChecksWithPerformerLocation() != AEC_OK) {
+		actSeqSys.ActionSequenceRevertPath(initialActNum);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+int AiSystem::AiPythonAction(AiTactic* aiTac)
+{
+	auto actEnum = aiTac->field4;
+	if (!actEnum) 
+		return FALSE;
+
+	int initialActNum = (*actSeqSys.actSeqCur)->d20ActArrayNum;
+	actSeqSys.curSeqReset(aiTac->performer);
+	d20Sys.GlobD20ActnInit();
+	d20Sys.GlobD20ActnSetTypeAndData1(D20A_PYTHON_ACTION, actEnum);
+	d20Sys.GlobD20ActnSetTarget(aiTac->target, 0);
+	actSeqSys.ActionAddToSeq();
+	if (actSeqSys.ActionSequenceChecksWithPerformerLocation() != AEC_OK) {
+		actSeqSys.ActionSequenceRevertPath(initialActNum);
+		return FALSE;
+	}
+	return TRUE;
+}
+
 
 int AiSystem::Default(AiTactic* aiTac)
 {
@@ -3434,6 +3481,16 @@ unsigned int _AiStop(AiTactic * aiTac)
 unsigned int _AiTargetObj(AiTactic * aiTac)
 {
 	return aiSys.AiTargetObj(aiTac);
+}
+
+unsigned int _AiTotalDefence(AiTactic* aiTac)
+{
+	return aiSys.AiTotalDefence(aiTac);
+}
+
+unsigned int _AiPythonAction(AiTactic* aiTac)
+{
+	return aiSys.AiPythonAction(aiTac);
 }
 
 class AiReplacements : public TempleFix
@@ -4301,6 +4358,8 @@ void AiPacket::ProcessBackingOff(){
 	auto objBody = objSystem->GetObject(obj);
 	auto npcFlags = objBody->GetNPCFlags();
 	if (!(npcFlags & ONF_BACKING_OFF))
+		return;
+	if (!target)
 		return;
 	auto minDistFeet = 12.0f;
 	if (aiParams.combatMinDistanceFeet > 1){
