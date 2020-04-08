@@ -620,7 +620,6 @@ static PyObject* PyObjHandle_CanFindPathToObj(PyObject* obj, PyObject* args) {
 	pathQ.distanceToTargetMin = 0.0;
 	pathQ.tolRadius = reach * 12.0f - fourPointSevenPlusEight;
 
-	pqr.nodeCount = 0;
 	auto nodeCount = pathfindingSys.FindPath(&pathQ, &pqr);
 	
 	auto pathLen = pathfindingSys.GetPathLength(&pqr);

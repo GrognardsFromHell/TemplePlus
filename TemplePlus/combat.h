@@ -106,6 +106,7 @@ struct LegacyCombatSystem : temple::AddressTable {
 	void ToHitProcessing(D20Actn &d20a);
 	bool TripCheck(objHndl handle, objHndl target);
 
+	int GetCombatRoundCount();
 	LegacyCombatSystem() {
 		rebase(combatModeActive, 0x10AA8418);
 		rebase(combatMesfileIdx, 0x10AA8408);
