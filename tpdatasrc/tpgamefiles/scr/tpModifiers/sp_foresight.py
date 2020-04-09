@@ -47,6 +47,15 @@ def ForesightRemove(attachee, args, evt_obj):
 	# Show the remove spell effect
 	game.particles( 'sp-Foresight-END', attachee)
 	return 0
+	
+def ForesightHasSpellActive(attachee, args, evt_obj):
+	evt_obj.return_val = 1
+	return 0
+	
+def ForesightKilled(attachee, args, evt_obj):
+	args.condition_remove()
+	args.remove_spell()
+	return 0
 
 foresight = PythonModifier("sp-Foresight", 4)
 foresight.AddHook(ET_OnGetTooltip, EK_NONE, ForesightTooltip, ())
@@ -55,4 +64,6 @@ foresight.AddHook(ET_OnConditionAddPre, EK_NONE, ConditionImmunityOnPreAdd, ())
 foresight.AddHook(ET_OnGetAC, EK_NONE, ForesightAcBonus, ())
 foresight.AddHook(ET_OnSaveThrowLevel , EK_SAVE_REFLEX , ForesightReflexSaveBonus, ())
 foresight.AddHook(ET_OnConditionRemove, EK_NONE, ForesightRemove, ())
+foresight.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, ForesightHasSpellActive, ())
+foresight.AddHook(ET_OnD20Signal, EK_S_Killed, ForesightKilled, ())
 foresight.AddSpellCountdownStandardHook()

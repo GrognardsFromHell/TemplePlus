@@ -30,10 +30,21 @@ def MindBlankRemove(attachee, args, evt_obj):
 	# Show the remove spell effect
 	game.particles( 'sp-Mind Blank-END', attachee)
 	return 0
+	
+def MindBlankHasSpellActive(attachee, args, evt_obj):
+	evt_obj.return_val = 1
+	return 0
+	
+def MindBlankPrescienceKilled(attachee, args, evt_obj):
+	args.condition_remove()
+	args.remove_spell()
+	return 0
 
 mindBlank = PythonModifier("sp-Mind Blank", 4)
 mindBlank.AddHook(ET_OnSpellImmunityCheck, EK_NONE, MindBlankImmunity, ()) # spell_id, duration, spare, spare
 mindBlank.AddHook(ET_OnGetTooltip, EK_NONE, MindBlankTooltip, ())
 mindBlank.AddHook(ET_OnGetEffectTooltip, EK_NONE, MindBlankEffectTooltip, ())
 mindBlank.AddHook(ET_OnConditionRemove, EK_NONE, MindBlankRemove, ())
+mindBlank.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, MindBlankHasSpellActive, ())
+mindBlank.AddHook(ET_OnD20Signal, EK_S_Killed, MindBlankPrescienceKilled, ())
 mindBlank.AddSpellCountdownStandardHook()

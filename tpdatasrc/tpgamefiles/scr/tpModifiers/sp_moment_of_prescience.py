@@ -110,6 +110,15 @@ def MomentOfPrescienceRemove(attachee, args, evt_obj):
 	game.particles( 'sp-Moment of Prescience-END', attachee)
 	return 0
 
+def MomentOfPrescienceHasSpellActive(attachee, args, evt_obj):
+	evt_obj.return_val = 1
+	return 0
+	
+def MomentOfPrescienceKilled(attachee, args, evt_obj):
+	args.condition_remove()
+	args.remove_spell()
+	return 0
+
 momentOfPrescience = PythonModifier("sp-Moment of Prescience", 6) #
 momentOfPrescience.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, MomentOfPrescienceRadial, ())
 momentOfPrescience.AddHook(ET_OnGetTooltip, EK_NONE, MomentOfPrescienceTooltip, ())
@@ -119,4 +128,6 @@ momentOfPrescience.AddHook(ET_OnSaveThrowLevel , EK_NONE , MomentOfPrescienceSav
 momentOfPrescience.AddHook(ET_OnToHitBonus2, EK_NONE, MomentOfPrescienceAttackBonus, ())
 #momentOfPrescience.AddHook(ET_OnGetSkillLevel, EK_NONE, MomentOfPrescienceSkillCheck, ())
 momentOfPrescience.AddHook(ET_OnConditionRemove, EK_NONE, MomentOfPrescienceRemove, ())
+momentOfPrescience.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, MomentOfPrescienceHasSpellActive, ())
+momentOfPrescience.AddHook(ET_OnD20Signal, EK_S_Killed, MomentOfPrescienceKilled, ())
 momentOfPrescience.AddSpellCountdownStandardHook()
