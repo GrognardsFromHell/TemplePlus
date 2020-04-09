@@ -238,6 +238,11 @@ static int PyGame_SetNewSid(PyObject *obj, PyObject *value, void*) {
 	return 0;
 }
 
+static PyObject* PyGame_GetCombatTurn(PyObject* obj, void*) {
+	auto result = combatSys.GetCombatRoundCount();
+	return PyInt_FromLong(result);
+}
+
 
 static PyGetSetDef PyGameGettersSetters[] = {
 	{"party_alignment", PyGame_GetPartyAlignment, NULL, NULL },
@@ -259,6 +264,7 @@ static PyGetSetDef PyGameGettersSetters[] = {
 	{"areas", PyGame_GetAreas, NULL, NULL},
 	{"counters", PyGame_GetCounters, NULL, NULL},
 	{"encounter_queue", PyGame_GetEncounterQueue, NULL, NULL},
+	{"combat_turn", PyGame_GetCombatTurn, NULL, NULL},
 	{NULL, NULL, NULL, NULL}
 };
 
