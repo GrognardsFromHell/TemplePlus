@@ -22,10 +22,10 @@ struct Trap {
 	ObjScriptEvent trigger; // Which script event triggers it?
 	int flags; // see TrapFlag
 	char *partSysName;
-	int unk1;
-	int unk2;
+	int searchDC;
+	int disableDC;
 	char *replaceWith; // If the obj is not a "real" trap, the trap script will be replaced by this trap after triggering (by name)
-	BOOL unkCol12; // second to last col
+	int CR; // second to last col
 	int damageCount;
 	TrapDamage damage[5];
 };
