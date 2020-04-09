@@ -3176,6 +3176,7 @@ spell_label_level_6 = 809
 spell_label_level_7 = 810
 spell_label_level_8 = 811
 spell_label_level_9 = 812
+spell_moment_of_prescience = 1000
 spell_new_slot_lvl_0 = 1605
 spell_new_slot_lvl_1 = 1606
 spell_new_slot_lvl_2 = 1607
