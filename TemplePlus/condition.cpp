@@ -399,6 +399,7 @@ public:
 		replaceFunction(0x100EABB0, BarbarianRageStatBonus);
 		replaceFunction(0x100EABE0, BarbarianRageSaveBonus);
 		replaceFunction(0x100EAC10, BarbarianRageACPenalty);
+		redirectCall(0x100EADBF, BarbarianAddFatigue);
 		
 		replaceFunction(0x100ECF30, ConditionPrevent);
 		replaceFunction(0x100ECF60, ConditionPreventWithArg);
@@ -3212,6 +3213,18 @@ int BarbarianRageACPenalty(DispatcherCallbackArgs args)
 	return 0;
 }
 
+uint32_t BarbarianAddFatigue(objHndl critter, CondStruct* cond)
+{
+	auto bbnLevel = objects.StatLevelGet(critter, stat_level_barbarian);
+	auto newCond = conds.GetByName("FatigueExhaust");
+	if (bbnLevel < 17) {  //Tireless Rage Support
+		auto duration = objects.StatLevelGet(critter, stat_level_barbarian) + 5;
+		auto result = conds.AddTo(critter, newCond, { duration, duration, 1, 0, 0, 0 }); //New cond
+	}
+
+	return 0;
+}
+
 int BarbarianRageSaveBonus(DispatcherCallbackArgs args)
 {
 	DispIoSavingThrow * dispIo = dispatch.DispIoCheckIoType3(args.dispIO);
@@ -3300,22 +3313,6 @@ int BarbarianDamageResistance(DispatcherCallbackArgs args)
 	return 0;
 }
 
-
-void __cdecl BarbarianTirelessRageCheck(objHndl obj)
-{
-	if (objects.StatLevelGet(obj, stat_level_barbarian) < 17)
-		conds.AddTo(obj, "Barbarian_Fatigued", {0,0});
-};
-
-// Barbarian Tireless Rage patch
-class BarbarianTirelessRagePatch : public TempleFix
-{
-public:
-	void apply() override {
-		redirectCall(0x100EADBF, BarbarianTirelessRageCheck);
-	}
-
-} barbarianTirelessRagePatch;
 
 #pragma endregion
 

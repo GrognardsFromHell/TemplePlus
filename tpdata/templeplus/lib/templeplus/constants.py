@@ -3177,6 +3177,8 @@ spell_label_level_7 = 810
 spell_label_level_8 = 811
 spell_label_level_9 = 812
 spell_moment_of_prescience = 1000
+spell_touch_of_fatigue = 1001
+spell_ray_of_exhaustion = 1002
 spell_new_slot_lvl_0 = 1605
 spell_new_slot_lvl_1 = 1606
 spell_new_slot_lvl_2 = 1607
@@ -3910,7 +3912,19 @@ PQF_IGNORE_CRITTERS_ON_DESTINATION = 0x800000
 PQF_AVOID_AOOS = 0x1000000 # NEW! Make the PF attempt avoid Aoos (using the ShouldIgnore function in combat.py to ignore insiginificant threats)
 
 
+TBSF_NONE = 0
+TBSF_1 = 1
+TBSF_Movement = 2
+TBSF_Movement2 = 4
+TBSF_TouchAttack = 8
+TBSF_CritterSpell = 0x10
+TBSF_HasActedThisRound = 0x20
+TBSF_FullAttack = 0x40
+TBSF_80 = 0x80
+TBSF_100 = 0x100
 TBSF_FreeActionSpellPerformed = 512
+TBSF_400 = 0x400
+TBSF_ChangedWornItem = 0x800
 
 MODE_TARGET_NONE = 0
 MODE_TARGET_SINGLE = 1

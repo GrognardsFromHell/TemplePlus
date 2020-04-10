@@ -1,4 +1,6 @@
 {1000}{Moment of Prescience}
+{1001}{Touch of Fatigue}
+{1002}{Ray of Exhaustion}
 {3000}{Bardic Suggestion}
 {3003}{Fascinate}
 {3006}{Mass Suggestion}
@@ -9,6 +11,8 @@
 {5186}{[Divination] This spell grants you a powerful sixth sense in relation to yourself or another.}
 {5308}{[Abjuration] The subject is protected from all devices and spells that detect, influence, or read emotions or thoughts.}
 {6000}{[Divination] This spell grants you an insight bonus equal to your caster level (maximum +25) on any single attack roll, opposed ability or skill check, saving throw or as an AC bonus against one attack.}
+{6001}{[Necromancy] You channel negative energy through your touch, fatiguing the target. You must succeed on a touch attack to strike a target.  The subject is immediately fatigued for the spell’s duration.  This spell has no effect on a creature that is already fatigued. Unlike with normal fatigue, the effect ends as soon as the spell’s duration expires.}
+{6002}{[Necromancy] A black ray projects from your pointing finger. You must succeed on a ranged touch attack with the ray to strike a target.  The subject is immediately exhausted for the spell’s duration.  A successful Fortitude save means the creature is only fatigued.  A character that is already fatigued instead becomes exhausted.  This spell has no effect on a creature that is already exhausted.  Unlike normal exhaustion or fatigue, the effect ends as soon as the spell’s duration expires.}
 {8000}Bardic Suggestion{Bardic Suggestion (INTERNAL)}
 
 {90000}{Captivated!}

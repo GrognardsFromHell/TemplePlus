@@ -42,3 +42,26 @@
 {26006}{} // spell projectile in-flight
 {26007}{} // spell hit
 {26008}{} // spell struck
+
+// [1001] *[Touch of Fatigue]
+{26020}{} // spell begin
+{26021}{} // spell end
+{26022}{spells\sp_Chill_Touch.wav} // spell effect
+{26023}{} // spell new round
+{26024}{} // spell projectile begin
+{26025}{} // spell projectile end
+{26026}{} // spell projectile in-flight
+{26027}{spells\sp_Chill_Touch.wav} // spell hit
+{26028}{} // spell struck
+
+// [1002] *[Ray of Exhaustion]
+{26040}{} // spell begin
+{26041}{spells\sp_ray_enfeeblement_end.wav} // spell end
+{26042}{spells\sp_ray_enfeeblement.wav} // spell effect
+{26043}{} // spell new round
+{26044}{} // spell projectile begin
+{26045}{} // spell projectile end
+{26046}{} // spell projectile in-flight
+{26047}{spells\sp_ray_enfeeblement_hit.wav} // spell hit
+{26048}{} // spell struck
+

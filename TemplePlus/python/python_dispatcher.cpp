@@ -118,6 +118,22 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		return result;
 	});
 
+	m.def("cur_seq_get_turn_based_status_flags", []() {
+		int res = 0;
+		auto tbStatus = actSeqSys.curSeqGetTurnBasedStatus();
+		if (tbStatus) {
+			res = tbStatus->tbsFlags;
+		}
+		return res;
+		});
+
+	m.def("cur_seq_set_turn_based_status_flags", [](int flags) {
+		auto tbStatus = actSeqSys.curSeqGetTurnBasedStatus();
+		if (tbStatus) {
+			tbStatus->tbsFlags = flags;
+		}
+		});
+
 	m.def("GetModifierFileList", [](){
 		auto result = std::vector<std::string>();
 		TioFileList flist;
@@ -180,6 +196,12 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		})
 		.def("add_spell_dismiss_hook", [](CondStructNew &condStr){
 			condStr.AddHook(dispTypeConditionAdd, DK_NONE, temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100CBD60));
+		})
+		.def("add_spell_dispell_check_hook", [](CondStructNew &condStr) {
+		    condStr.AddHook(dispTypeDispelCheck, DK_NONE, temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100DB690));
+		})
+		.def("add_spell_touch_attack_discharge_radial_menu_hook", [](CondStructNew &condStr) {
+			condStr.AddHook(dispTypeRadialMenuEntry, DK_NONE, temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100C3450));
 		})
 		;
 
@@ -715,6 +737,10 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("return_val", &DispIoD20Signal::return_val)
 		.def_readwrite("data1", &DispIoD20Signal::data1)
 		.def_readwrite("data2", &DispIoD20Signal::data2)
+		.def("get_d20_action", [](DispIoD20Signal& evtObj)->D20Actn& {
+			D20Actn* d20a = (D20Actn*)evtObj.data1;
+			return *d20a;
+			}, "Used for S_TouchAttack to get a D20Action from the data1 field")
 		;
 
 	py::class_<DispIoD20Query, DispIO>(m, "EventObjD20Query")
