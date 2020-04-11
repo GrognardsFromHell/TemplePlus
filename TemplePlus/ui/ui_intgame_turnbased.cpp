@@ -1008,7 +1008,7 @@ void UiIntgameTurnbased::CursorRenderUpdate(){
 		cursorState = specialCursor;
 
 	if (cursorState != cursorPrevState){
-		//logger->debug("Changing cursor from {} to {}", cursorState, cursorPrevState);
+		logger->debug("Changing cursor from {} to {}", cursorState, cursorPrevState);
 		if (cursorPrevState)
 			temple::GetRef<void(__cdecl)()>(0x101DD770)();
 
