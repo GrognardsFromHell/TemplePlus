@@ -790,6 +790,9 @@ bool UiManager::TranslateMouseMessage(const TigMouseMsg& mouseMsg)
 			bool enqueueExited = false;
 			auto globalWid = GetWidget(globalWidId);
 			// if window
+
+			if (globalWid == nullptr) return false;  //Happens sometimes on shutdown
+
 			if (globalWid->IsWindow())
 			{
 				auto prevHoveredWindow = (LgcyWindow*)globalWid;
