@@ -26,3 +26,7 @@ class PythonModifier(tpdp.ModifierSpec):
         self.add_aoe_spell_ender()
     def AddSpellDismissStandardHook(self):
         self.add_spell_dismiss_hook()
+    def AddSpellTeleportPrepareStandard(self):
+        self.add_spell_teleport_prepare_standard()
+    def AddSpellTeleportReconnectStandard(self):
+        self.add_spell_teleport_reconnect_standard()

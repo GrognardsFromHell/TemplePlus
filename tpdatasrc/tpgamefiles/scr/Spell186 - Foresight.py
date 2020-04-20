@@ -14,6 +14,8 @@ def	OnSpellEffect( spell ):
 
 	target_item.obj.condition_add_with_args( 'sp-Foresight', spell.id, spell.duration, 0 )
 	target_item.partsys_id = game.particles( 'sp-Foresight', target_item.obj )
+	
+	spell.spell_end( spell.id )
 
 def OnBeginRound( spell ):
 	print "Foresight OnBeginRound"
