@@ -572,6 +572,13 @@ void UiManager::RemoveWidget(LgcyWidgetId id)
 		}
 		mActiveWidgets.erase(it);
 	}
+	UnsetMouseCaptureWidgetId(id);
+	if (mMouseButtonId == id) {
+		mMouseButtonId = 0;
+	}
+	if (mWidgetMouseHandlerWidgetId == id) {
+		mWidgetMouseHandlerWidgetId = 0;
+	}
 }
 
 bool UiManager::AddChild(LgcyWidgetId parentId, LgcyWidgetId childId)
