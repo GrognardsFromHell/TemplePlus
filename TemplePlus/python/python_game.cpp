@@ -48,6 +48,7 @@
 #include "ui/ui_worldmap.h"
 #include "ui/ui_char.h"
 #include "infrastructure/elfhash.h"
+#include "ui/ui_alert.h"
 
 #include <pybind11/embed.h>
 namespace py = pybind11;
@@ -1310,6 +1311,18 @@ static PyObject* PyGame_GetObjById(PyObject*, PyObject* args) {
 	return PyObjHndl_Create(handle);
 }
 
+PyObject* PyGame_AlertShow(PyObject*, PyObject* args) {
+	char* text, *button_text;
+	if (!PyArg_ParseTuple(args, "ss:game.alert_show", &text, &button_text)) {
+		return 0;
+	}
+	if (!text || !button_text) {
+		return 0;
+	}
+	auto result = UiAlert::ShowEx(2, 0, 0, button_text, text);
+	return PyInt_FromLong(result);
+}
+
 static PyMethodDef PyGameMethods[]{
 	{ "get_wall_endpt", PySpell_SpellGetPickerEndPoint, METH_VARARGS, NULL },
 	{ "create_history_freeform", PyGame_CreateHistoryFreeform, METH_VARARGS, NULL },
@@ -1384,6 +1397,7 @@ static PyMethodDef PyGameMethods[]{
 	{"is_melee_weapon", PyGame_IsMeleeWeapon,METH_VARARGS, NULL},
 	{"make_custom_name", PyGame_MakeCustomName,METH_VARARGS, NULL},
 	{"get_obj_by_id", PyGame_GetObjById, METH_VARARGS, NULL},
+	{"alert_show", PyGame_AlertShow, METH_VARARGS, NULL},
 	// This is some unfinished UI for which the graphics are missing
 	// {"charmap", PyGame_Charmap, METH_VARARGS, NULL},
 	{NULL, NULL, NULL, NULL}

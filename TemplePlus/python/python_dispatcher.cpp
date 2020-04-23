@@ -30,6 +30,7 @@
 #include "temple_functions.h"
 #include "rng.h"
 #include "float_line.h"
+#include "history.h"
 
 namespace py = pybind11;
 
@@ -141,6 +142,19 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 
 		tio_filelist_destroy(&flist);
 		return result;
+	});
+
+	m.def("dispatch_skill", [](objHndl obj, uint32_t skill_enum, BonusList& bonList, objHndl obj2 = objHndl::null, uint32_t flag = 1)-> int {
+		auto skillLevel = dispatch.dispatch1ESkillLevel(obj, (SkillEnum)skill_enum, (BonusList*)&bonList, obj2, flag);
+		return skillLevel;
+	});
+
+	m.def("create_history_type6_opposed_check", [](objHndl performer, objHndl defender, int performerRoll, int defenderRoll
+		, BonusList& performerBonList, BonusList& defenderBonList, uint32_t combatMesLineTitle, uint32_t combatMesLineResult, uint32_t flag)-> int
+	{
+		auto rollHistId = histSys.RollHistoryAddType6OpposedCheck(performer, defender, performerRoll, defenderRoll
+			, (BonusList*)&performerBonList, (BonusList*)&defenderBonList, combatMesLineTitle, combatMesLineResult, flag);
+		return rollHistId;
 	});
 
 	#pragma region Basic Dispatcher stuff
@@ -715,6 +729,10 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("return_val", &DispIoD20Signal::return_val)
 		.def_readwrite("data1", &DispIoD20Signal::data1)
 		.def_readwrite("data2", &DispIoD20Signal::data2)
+		.def("get_d20_action", [](DispIoD20Signal& evtObj)->D20Actn& {
+			D20Actn* d20a = (D20Actn*)evtObj.data1;
+			return *d20a;
+		}, "Used to get a D20Action from the data1 field")
 		;
 
 	py::class_<DispIoD20Query, DispIO>(m, "EventObjD20Query")
