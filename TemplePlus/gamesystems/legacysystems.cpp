@@ -2064,6 +2064,27 @@ const std::string &RandomEncounterSystem::GetName() const {
 	return name;
 }
 
+int RandomEncounterSystem::GetTerrainType(int x, int y)
+{
+	auto result = 0;
+	auto bitmapW = temple::GetRef<int>(0x109DD338 + 0x50C);
+	auto bitmapH = temple::GetRef<int>(0x109DD338 + 0x510);
+	auto bitmapData = temple::GetRef<unsigned char*>(0x109DD338 + 0x508);
+	auto offset = x * bitmapW / 528
+		+ bitmapW * (y * bitmapH / 565);
+	if (offset < 0){
+		offset = 0;
+	}
+	else if (offset >= bitmapW * bitmapH){
+		offset = bitmapW * bitmapH - 1;
+	}
+	if (offset & 1)
+		result = bitmapData[offset >> 1] >> 4;
+	else
+		result = bitmapData[offset >> 1] & 0xF;
+	return result;
+}
+
 //*****************************************************************************
 //* ObjectEvent
 //*****************************************************************************

@@ -608,6 +608,7 @@ public:
 	bool SaveGame(TioFile *file) override;
 	bool LoadGame(GameSystemSaveFile* saveFile) override;
 	const std::string &GetName() const override;
+	int GetTerrainType(int x, int y);
 };
 
 class ObjectEventSystem : public GameSystem, public SaveGameAwareGameSystem, public ResetAwareGameSystem, public TimeAwareGameSystem {
