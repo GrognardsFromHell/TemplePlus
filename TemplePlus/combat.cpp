@@ -833,16 +833,20 @@ void LegacyCombatSystem::EndTurn()
 		auto shouldRemove = critterSys.IsDeadNullDestroyed(combatant) || (combatantObj->GetFlags() & OF_OFF);
 		// Added in Temple+ : Remove AIs that aren't in combat mode
 		if (!shouldRemove && combatantObj->IsNPC() && !party.IsInParty(combatant) && !combatSys.IsBrawlInProgress()){
-			/*auto aifs = AIFS_NONE;
+			auto aifs = AIFS_NONE;
 			aiSys.GetAiFightStatus(combatant, &aifs, nullptr);
 			if (aifs == AIFS_NONE){
 				shouldRemove = true;
-			}*/
+			}
+			
+			/* Undoing the fear of ghosts hack, instead I'm going to change the script to let you just talk to the ghosts... 
+			 * if there are other critters with OF_INVULNERABLE this may have to be revisited.
 			// Changing this to accomodate the Ghost from Fear of Ghosts quest... hope I don't regret it xD
 			auto critterFlags = critterSys.GetCritterFlags(combatant);
 			if (!(critterFlags & OCF_COMBAT_MODE_ACTIVE)) {
 				shouldRemove = true;
 			}
+			*/
 		}
 		if (shouldRemove) {
 			static auto removeFromInitiative = temple::GetRef<int(__cdecl)(objHndl)>(0x100DF530);
