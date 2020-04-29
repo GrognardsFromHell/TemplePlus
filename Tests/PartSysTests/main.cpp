@@ -2,8 +2,8 @@
 #include "stdafx.h"
 #include <windows.h>
 
-#include <experimental/filesystem>
-using namespace std::experimental::filesystem::v1;
+#include <filesystem>
+using namespace std::filesystem;
 
 static void ChangeToDataDirectory() {
 	path p = current_path();

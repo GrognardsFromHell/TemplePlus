@@ -84,7 +84,7 @@ int GoalIsProne(AnimSlot& slot)
 int GoalIsConcealed(AnimSlot& slot)
 {
 	//logger->debug("GoalState IsConcealed");
-	return (critterSys.IsConcealed(slot.param1.obj));
+	return (objects.IsCritter(slot.param1.obj) && critterSys.IsConcealed(slot.param1.obj));
 }
 
 // Originally @ 0x100125F0

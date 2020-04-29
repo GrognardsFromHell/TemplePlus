@@ -21,6 +21,8 @@ def	OnSpellEffect( spell ):
 			obj.float_text_line("Not Fascinated!", tf_red)
 			continue
 		bard_lvl = spell.caster.stat_level_get(stat_level_bard)
+		bard_level_bonus = spell.caster.d20_query("Bardic Music Bonus Levels")
+		bard_lvl += bard_level_bonus
 		bard_cha_mod = (spell.caster.stat_level_get(stat_charisma) - 10) /2
 		if obj == spell.caster or obj.saving_throw( 10 + bard_lvl/2 + bard_cha_mod, D20_Save_Will, D20STD_F_NONE, spell.caster, D20A_BARDIC_MUSIC ):
 			remove_list.append(obj)

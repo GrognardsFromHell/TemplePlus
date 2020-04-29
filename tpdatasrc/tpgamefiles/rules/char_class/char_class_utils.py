@@ -25,6 +25,18 @@ def SavingThrowLevel(classEnum, attachee, saveTypeEnum):
 		value = (classLvl ) / 3
 	return value
 
+def GetHighestBaseClass( attachee ):
+	classes = attachee.get_character_base_classes()
+	highest_class = stat_level_barbarian
+	highest_level = -1
+	
+	for classEnum in classes:
+		level = attachee.stat_level_get(classEnum)
+		if level > highest_level:
+			highest_level = level
+			highest_class = classEnum
+	
+	return highest_class
 
 def GetHighestArcaneClass( attachee ):
 	return attachee.highest_arcane_class

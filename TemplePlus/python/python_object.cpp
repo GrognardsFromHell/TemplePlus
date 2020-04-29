@@ -749,6 +749,17 @@ static PyObject* PyObjHandle_GroupList(PyObject* obj, PyObject* args) {
 	return result;
 }
 
+static PyObject*PyObjHandle_GetItemWearFlags(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	auto res = objects.GetItemWearFlags(self->handle);
+
+	return PyInt_FromLong(res);
+}
+
 // turns out you could already get this via .stat_base_get(stat_attack_bonus). Leaving it for backward compatibility...
 static PyObject* PyObjHandle_GetBaseAttackBonus(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
@@ -2024,6 +2035,25 @@ static PyObject* PyObjHandle_D20QueryHasSpellCond(PyObject* obj, PyObject* args)
 	return PyInt_FromLong(result);
 }
 
+static PyObject* PyObjHandle_D20QueryHasCond(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	char* name;
+	if (!PyArg_ParseTuple(args, "s:objhndl.d20_query_has_condition", &name)) {
+		return 0;
+	}
+
+	auto cond = conds.GetByName(format("{}", name));
+	if (!cond) {
+		return PyInt_FromLong(0);
+	}
+
+	auto result = d20Sys.d20QueryWithData(self->handle, DK_QUE_Critter_Has_Condition, (uint32_t)cond, 0);
+	return PyInt_FromLong(result);
+}
+
 static PyObject* PyObjHandle_D20QueryWithData(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -2352,6 +2382,56 @@ static PyObject* PyObjHandle_GetCategoryType(PyObject* obj, PyObject* args) {
 	}
 	auto type = critterSys.GetCategory(self->handle);
 	return PyInt_FromLong(type);
+}
+
+template<typename Filter>
+static PyObject* GetCharacterClassesSet(Filter filter, PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyTuple_New(0);
+	}
+
+	std::vector<int> classes;
+	for (auto it : d20ClassSys.classEnums) {
+		auto classEnum = (Stat)it;
+		if (filter(classEnum)) {
+			auto classLvl = objects.StatLevelGet(self->handle, classEnum);
+			if (classLvl > 0) {
+				classes.push_back(it);
+			}
+		}
+	}
+
+	auto result = PyTuple_New(classes.size());
+	for (auto i = 0; i < classes.size(); i++) {
+		PyTuple_SET_ITEM(result, i, PyInt_FromLong(classes[i]));
+	}
+
+	return result;
+}
+
+static PyObject* PyObjHandle_GetCharacterAllClassesSet(PyObject* obj, PyObject* args) {
+	return GetCharacterClassesSet([](Stat) { return true; }, obj, args);
+}
+
+static PyObject* PyObjHandle_GetCharacterBaseClassesSet(PyObject* obj, PyObject* args) {
+	return GetCharacterClassesSet([](Stat classEnum) { return d20ClassSys.IsBaseClass(classEnum); }, obj, args);
+}
+
+static PyObject* PyObjHandle_GetHandleLower(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	return PyInt_FromLong(self->handle.GetHandleLower());
+}
+
+static PyObject* PyObjHandle_GetHandleUpper(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	return PyInt_FromLong(self->handle.GetHandleUpper());
 }
 
 static PyObject* PyObjHandle_IsActiveCombatant(PyObject* obj, PyObject* args) {
@@ -3338,6 +3418,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 
 	{ "d20_query", PyObjHandle_D20Query, METH_VARARGS, NULL },
 	{ "d20_query_has_spell_condition", PyObjHandle_D20QueryHasSpellCond, METH_VARARGS, NULL },
+	{ "d20_query_has_condition", PyObjHandle_D20QueryHasCond, METH_VARARGS, NULL },
 	{ "d20_query_with_data", PyObjHandle_D20QueryWithData, METH_VARARGS, NULL },
     { "d20_query_with_object", PyObjHandle_D20QueryWithObject, METH_VARARGS, NULL },
 	{ "d20_query_test_data", PyObjHandle_D20QueryTestData, METH_VARARGS, NULL },
@@ -3368,12 +3449,16 @@ static PyMethodDef PyObjHandleMethods[] = {
 
 	{ "get_base_attack_bonus", PyObjHandle_GetBaseAttackBonus, METH_VARARGS, NULL },
 	{ "get_category_type", PyObjHandle_GetCategoryType, METH_VARARGS, NULL },
+	{ "get_character_classes", PyObjHandle_GetCharacterAllClassesSet, METH_VARARGS, "Get tuple with classes enums" },
+	{ "get_character_base_classes", PyObjHandle_GetCharacterBaseClassesSet, METH_VARARGS, "Get tuple with base classes enums" },
 	{ "get_initiative", PyObjHandle_GetInitiative, METH_VARARGS, NULL },
-	{ "get_deity", PyObjHandle_GetDeity, METH_VARARGS, NULL },
+	{ "get_item_wear_flags", PyObjHandle_GetItemWearFlags, METH_VARARGS, NULL },
+    { "get_deity", PyObjHandle_GetDeity, METH_VARARGS, NULL },
 	{ "get_weapon_type", PyObjHandle_GetWeaponType, METH_VARARGS, NULL },
 	{ "get_wield_type", PyObjHandle_GetWieldType, METH_VARARGS, NULL },
 	{ "get_weapon_projectile_proto", PyObjHandle_GetWeaponProjectileProto, METH_VARARGS, NULL },
 	{ "group_list", PyObjHandle_GroupList, METH_VARARGS, NULL },
+	
 	
 	{ "has_atoned", PyObjHandle_HasAtoned, METH_VARARGS, NULL },
 	{ "has_feat", PyObjHandle_HasFeat, METH_VARARGS, NULL },
@@ -3889,6 +3974,18 @@ static PyObject* PyObjHandle_SafeForUnpickling(PyObject*, void*) {
 	Py_RETURN_TRUE;
 }
 
+static PyObject* PyObjHandle_GetID(PyObject* obj, void*) {
+	auto self = (PyObjHandle*)obj;
+
+	if (!self->handle) {
+		return PyString_FromString("OBJ_HANDLE_NULL");
+	}
+	else {
+		auto name = self->id.ToString();
+		return PyString_FromString(name.c_str());
+	}
+}
+
 PyGetSetDef PyObjHandleGetSets[] = {
 	{ "area", PyObjHandle_GetArea, NULL, NULL, NULL },
 	{"char_classes", PyObjHandle_GetCharacterClasses, NULL, "a tuple containing the character classes array", NULL },
@@ -3920,6 +4017,7 @@ PyGetSetDef PyObjHandleGetSets[] = {
 	{"loots", PyObjHandle_GetLoots, PyObjHandle_SetLoots, NULL},
 	{"proto", PyObjHandle_GetProto, NULL, NULL },
 	{"__safe_for_unpickling__", PyObjHandle_SafeForUnpickling, NULL, NULL},
+	{"id", PyObjHandle_GetID, NULL, NULL },
 	{NULL, NULL, NULL, NULL}
 };
 

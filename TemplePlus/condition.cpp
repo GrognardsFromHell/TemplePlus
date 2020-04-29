@@ -266,8 +266,9 @@ public:
 	static int DruidWildShapeCheck(DispatcherCallbackArgs args);
 	static int DruidWildShapePerform(DispatcherCallbackArgs args);
 	static int DruidWildShapeScale(DispatcherCallbackArgs args);
+	static bool IsIncompatibleWithDruid(objHndl item, objHndl critter);
 
-
+	static int BardicMusicPlaySound(int bardicSongIdx, objHndl performer, int evtType);
 	static int BardicMusicBeginRound(DispatcherCallbackArgs args);
 	static int BardMusicRadial(DispatcherCallbackArgs args);
 	static int BardMusicCheck(DispatcherCallbackArgs args);
@@ -301,6 +302,9 @@ public:
 	static int TurnUndeadHook(objHndl, Stat shouldBeClassCleric, DispIoD20ActionTurnBased* evtObj);
 	static int TurnUndeadCheck(DispatcherCallbackArgs args);
 	static int TurnUndeadPerform(DispatcherCallbackArgs args);
+	static int ManyShotAttack(DispatcherCallbackArgs args);
+	static int ManyShotMenu(int a1, objHndl objHnd);
+	static int ManyShotDamage(DispatcherCallbackArgs args);
 
 	static bool StunningFistHook(objHndl objHnd, objHndl caster, int DC, int saveType, int flags);
 
@@ -308,6 +312,7 @@ public:
 	
 	//Old version of the function to be used within the replacement
 	int (*oldTurnUndeadPerform)(DispatcherCallbackArgs) = nullptr;
+	bool (*oldIsIncompatibleWithDruid)(objHndl item, objHndl critter) = nullptr;
 	
 	void apply() override {
 		logger->info("Replacing Condition-related Functions");
@@ -474,6 +479,10 @@ public:
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FBC60, classAbilityCallbacks.DruidWildShapeCheck);
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FBCE0, classAbilityCallbacks.DruidWildShapePerform);
 
+
+		// Druid Armor Restriction
+		oldIsIncompatibleWithDruid = replaceFunction<bool(objHndl item, objHndl critter)>(0x10066430, classAbilityCallbacks.IsIncompatibleWithDruid);
+
 		// Fixes Weapon Damage Bonus for ammo items
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FFE90, itemCallbacks.WeaponDamageBonus);
 
@@ -487,6 +496,7 @@ public:
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FE570, classAbilityCallbacks.BardMusicActionFrame);
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FE820, classAbilityCallbacks.BardicMusicBeginRound);
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100EA960, classAbilityCallbacks.BardicMusicGreatnessTakingTempHpDamage);
+		replaceFunction<int(int, objHndl, int)>(0x100FE4F0, classAbilityCallbacks.BardicMusicPlaySound);
 				
 		writeHex(0x102E6608 + 3*sizeof(int), "03" ); // fixes the Competence effect tooltip (was pointing to Inspire Courage)
 
@@ -503,6 +513,10 @@ public:
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100D3430, spCallbacks.AoeSpellRemove);
 
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100F72E0, genericCallbacks.MonsterRegenerationOnDamage);
+
+		replaceFunction(0x100FCF50, ManyShotAttack);
+		replaceFunction(0x100FCEB0, ManyShotMenu);
+		replaceFunction(0x100FD030, ManyShotDamage);
 
 		// Turn Undead extension
 		redirectCall(0x1004AF5F, TurnUndeadHook);
@@ -3633,6 +3647,100 @@ int ConditionFunctionReplacement::TurnUndeadHook(objHndl handle, Stat shouldBeCl
 	return result;
 }
 
+int ConditionFunctionReplacement::ManyShotMenu(int a1, objHndl objHnd)
+{
+	CondNode *node = *(CondNode **)(a1 + 4);
+	const int baseAttack = critterSys.GetBaseAttackBonus(objHnd);
+	int maxArrows = 0;  //The maximum number of extra arrows to fire with many shot on a standard attack
+	if (baseAttack >= 16) {
+		maxArrows = 3;
+	}
+	else if (baseAttack >= 11) {
+		maxArrows = 2;
+	}
+	else if (baseAttack >= 6) {
+		maxArrows = 1;
+	}
+
+	RadialMenuEntrySlider radEntry(5095, 0, maxArrows, &(node->args[0]), -1, ElfHash::Hash("TAG_MANYSHOT"));
+	int parentNode = radialMenus.GetStandardNode(RadialMenuStandardNode::Feats);
+	radialMenus.AddChildNode(objHnd, &radEntry, parentNode);
+
+	return 0;
+}
+
+int ConditionFunctionReplacement::ManyShotAttack(DispatcherCallbackArgs args)
+{
+	auto dispIo = static_cast<DispIoAttackBonus*>(args.dispIO);
+
+	const int arrowsSelected = args.GetCondArg(0);
+
+	if (arrowsSelected == 0) return 0;
+	if (!(dispIo->attackPacket.flags & D20CAF_RANGED)) return 0;
+	if (dispIo->attackPacket.ammoItem == objHndl::null) return 0;
+
+	const bool correctAmmoType = (objects.getInt32(dispIo->attackPacket.weaponUsed, obj_f_weapon_ammo_type) == 0);
+	const bool notFullAttack = !(dispIo->attackPacket.flags & D20CAF_FULL_ATTACK);
+	const bool standardRangedAttack = (dispIo->attackPacket.d20ActnType == D20A_STANDARD_RANGED_ATTACK);
+	
+	const int ammoCount = objects.getInt32(dispIo->attackPacket.ammoItem, obj_f_ammo_quantity);
+	const bool enoughAmmo = (ammoCount > 1);
+	
+	//Note:  Not checking attackPacket.dispKey == 1 like the original code.  Instead checking final attack roll flag.
+	const bool finalAttackRoll = (dispIo->attackPacket.flags & D20CAF_FINAL_ATTACK_ROLL);
+
+	const auto distance = locSys.DistanceToObj(dispIo->attackPacket.attacker, dispIo->attackPacket.victim);
+	const bool closeEnough = (distance < 30.0);
+
+	if (correctAmmoType && notFullAttack && standardRangedAttack && enoughAmmo && finalAttackRoll && closeEnough) {
+		const int arrowsToFire = std::min(arrowsSelected, ammoCount-1);  //Penalty based on the number of arrows that can actually be fired
+		dispIo->bonlist.AddBonus(-2*(arrowsToFire +1), 0, 304);  //Was -2 in the original code, now correctly varies based on #arrows
+		dispIo->attackPacket.flags = static_cast<D20CAF>(dispIo->attackPacket.flags | D20CAF_MANYSHOT);
+	}
+
+	return 0;
+}
+
+int ConditionFunctionReplacement::ManyShotDamage(DispatcherCallbackArgs args)
+{
+	auto dispIo = static_cast<DispIoD20Signal*>(args.dispIO);
+	auto damagePacket = reinterpret_cast<DispIoDamage *>(dispIo->data1);
+
+	if (damagePacket->attackPacket.flags & D20CAF_MANYSHOT && damagePacket->attackPacket.flags & D20CAF_HIT) {
+		auto name = objects.description.getDisplayName(damagePacket->attackPacket.attacker);
+		auto manyShot= combatSys.GetCombatMesLine(162);
+
+		std::string message;
+		message += name;
+		message += " ";
+		message += manyShot;
+		message += "\n\n";
+
+		histSys.CreateFromFreeText(message.c_str());
+
+		D20CAF flags = static_cast<D20CAF>(damagePacket->attackPacket.flags 
+			& ~(D20CAF_MANYSHOT | D20CAF_CRITICAL) | D20CAF_NO_PRECISION_DAMAGE);
+
+		const int arrowsSelected = args.GetCondArg(0);
+		int ammoCount = objects.getInt32(damagePacket->attackPacket.ammoItem, obj_f_ammo_quantity);
+
+		//Only fire arrows up to the number available (ammo has not been decrimented yet)
+		const int arrowsToFire = std::min(arrowsSelected, ammoCount-1);  
+
+		//Do damage for each extra arrow
+		for (int i = 0; i < arrowsToFire; i++) {
+			damage.DealAttackDamage(damagePacket->attackPacket.attacker, damagePacket->attackPacket.victim,
+				damagePacket->attackPacket.dispKey, flags, damagePacket->attackPacket.d20ActnType);
+
+			//Decriment the ammo
+			ammoCount = objects.getInt32(damagePacket->attackPacket.ammoItem, obj_f_ammo_quantity);
+			objects.setInt32(damagePacket->attackPacket.ammoItem, obj_f_ammo_quantity, ammoCount - 1);
+		}
+	}
+
+	return 0;
+}
+
 int ConditionFunctionReplacement::TurnUndeadPerform(DispatcherCallbackArgs args)
 {
 	auto dispIo = static_cast<DispIoD20ActionTurnBased*>(args.dispIO);
@@ -5685,6 +5793,19 @@ int ClassAbilityCallbacks::DruidWildShapeScale(DispatcherCallbackArgs args){
 	return 0;
 }
 
+bool ClassAbilityCallbacks::IsIncompatibleWithDruid(objHndl item, objHndl critter)
+{
+	bool result = condFuncReplacement.oldIsIncompatibleWithDruid(item, critter);  //Just call the old version now
+	
+	if (result) {
+		auto res = dispatch.DispatchIgnoreDruidOathCheck(critter, item);
+		if (res) return false;
+	}
+
+	return result;
+}
+
+
 // ************************************
 // *         Bardic Music             *
 // ************************************
@@ -5757,6 +5878,9 @@ int ClassAbilityCallbacks::BardicMusicBeginRound(DispatcherCallbackArgs args){
 int ClassAbilityCallbacks::BardMusicRadial(DispatcherCallbackArgs args){
 	auto perfSkill = critterSys.SkillBaseGet(args.objHndCaller, SkillEnum::skill_perform);
 	auto bardLvl = objects.StatLevelGet(args.objHndCaller, stat_level_bard);
+	auto bardicMusicBonus = d20Sys.D20QueryPython(args.objHndCaller, "Bardic Music Bonus Levels");
+	bardLvl += bardicMusicBonus;
+
 	if (!bardLvl || perfSkill < 3)
 		return 0;
 
@@ -5950,9 +6074,7 @@ int ClassAbilityCallbacks::BardMusicActionFrame(DispatcherCallbackArgs args){
 		break;
 	}
 
-	static int bardicMusicSounds []= {0, 20040, 20000, 20020, 20060, 20080, 20060, 20060 , 20040 };
-	auto instrType = d20Sys.d20Query(performer, DK_QUE_BardicInstrument);
-	sound.PlaySoundAtObj(bardicMusicSounds[bmType] + instrType, performer);
+	BardicMusicPlaySound(bmType, performer, 0);
 	args.SetCondArg(1, bmType);
 	args.SetCondArg(2, 0);
 	args.SetCondArg(3, d20a->d20ATarget.GetHandleUpper());
@@ -6098,6 +6220,23 @@ int ClassAbilityCallbacks::BardicMusicSuggestionFearQuery(DispatcherCallbackArgs
 	*(objHndl*)&dispIo->data1 = caster;
 
 	return 0;
+}
+
+int ClassAbilityCallbacks::BardicMusicPlaySound(int bardicSongIdx, objHndl performer, int evtType)
+{
+	static int bardicMusicSounds[] = { 0, 20040, 20000, 20020, 20060, 20080, 20060, 20060 , 20040 };
+	auto instrType = d20Sys.d20Query(performer, DK_QUE_BardicInstrument);
+	auto soundID = evtType + bardicMusicSounds[bardicSongIdx] + instrType * 2;
+
+	//Instrument 0 is voice
+ 	if (instrType == 0) {
+		Gender gender = static_cast<Gender>(objects.StatLevelGet(performer, stat_gender));
+		if (gender == Gender::Female) {
+			soundID += 10;  //The female sound is 10 more than the male sound
+		}
+	}
+
+	return sound.PlaySoundAtObj(soundID, performer);
 }
 
 #pragma endregion

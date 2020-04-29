@@ -1,9 +1,9 @@
 # version format
 version: 0.1.0-pre+{build}
-image: Visual Studio 2017
+image: Visual Studio 2019
 
 install:
-  - appveyor DownloadFile https://github.com/GrognardsFromHell/Dependencies/releases/download/v1.5/dependencies.7z
+  - appveyor DownloadFile https://github.com/GrognardsFromHell/Dependencies/releases/download/v1.6/dependencies.7z
   - 7z x dependencies.7z
   - nuget install Squirrel.Windows -OutputDirectory Squirrel -Verbosity Detailed
 
@@ -11,7 +11,7 @@ before_build:
   - nuget restore
 
 build_script:
-  - call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars32.bat"
+  - call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars32.bat"
   - ps: .\UpdateVersion.ps1
   - msbuild TemplePlus.sln /p:Configuration=Release /p:Platform=Win32 /p:MSBuildDefines="_TP_VERSION=%APPVEYOR_BUILD_VERSION%;_TP_COMMIT=%APPVEYOR_REPO_COMMIT%;TP_RELEASE_BUILD" /verbosity:minimal
 

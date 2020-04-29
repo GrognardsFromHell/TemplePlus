@@ -1,0 +1,5 @@
+name: Swashbuckler Acrobatic Skill Mastery
+flags: 8
+prereqs:
+description:  A swashbuckler becomes so certain in the use of his acrobatic skills that he can use them reliably even under adverse conditions. When making a Jump or Tumble check, a swashbuckler may take 10 even if stress and distractions would normally prevent him from doing so.  No in game effect currently.
+prereq descr: Swashbucklers Level 13

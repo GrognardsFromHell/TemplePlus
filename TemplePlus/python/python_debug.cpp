@@ -335,6 +335,13 @@ static void PyDebug_Crash() {
 	*(reinterpret_cast<int*>(0)) = 1;
 }
 
+PyObject *PyDebug_BreakP(PyObject*, PyObject* args)
+{
+	const char *s;
+	PyArg_ParseTuple(args, "s:info", &s);
+	return PyLong_FromLongLong(1);
+}
+
 static PyMethodDef PyDebug_Methods[] = {
 	{ "crash", (PyCFunction)PyDebug_Crash, METH_NOARGS, NULL },
 	{ "dump_conds", (PyCFunction) PyDebug_DumpConds, METH_NOARGS, NULL },
@@ -351,6 +358,7 @@ static PyMethodDef PyDebug_Methods[] = {
 	{ "genclr", (PyCFunction)PyDebug_GenerateClearanceFile, METH_VARARGS, NULL },
 	{ "getclr", (PyCFunction)PyDebug_GetLocClearance, METH_VARARGS, NULL },
 	{ "pathto", (PyCFunction)PyDebug_PathTo, METH_VARARGS, NULL },
+	{ "breakp", (PyCFunction)PyDebug_BreakP, METH_VARARGS, NULL },
 	{ NULL, }
 };
 

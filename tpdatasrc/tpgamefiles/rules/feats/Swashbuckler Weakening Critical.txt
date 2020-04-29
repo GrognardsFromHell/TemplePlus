@@ -1,0 +1,5 @@
+name: Swashbuckler Weakening Critical
+flags: 8
+prereqs:
+description:  A swashbuckler of 14th level or higher who scores a critical hit against a creature also deals 2 points of Strength damage to the creature. Creatures immune to critical hits are immune to this effect.
+prereq descr: Swashbucklers Level 14

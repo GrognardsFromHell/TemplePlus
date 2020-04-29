@@ -225,7 +225,12 @@ namespace aas {
 		}
 
 		float GetRadius(int scale) override {
-			model_.SetScale(scale / 100.0f);
+			gfx::AnimatedModelParams animParams;
+			animParams.scale = scale / 100.0f;
+			auto aasParams(Convert(animParams));
+			aasSystem_.UpdateWorldMatrix(handle_, aasParams);
+			model_.Method19();
+
 			return model_.GetRadius();
 		}
 

@@ -40,7 +40,13 @@ BOOL XPAward::XpGainProcess(objHndl handle, int xpGainRaw){
 	auto couldAlreadyLevelup = d20LevelSys.CanLevelup(handle);
 	
 	auto xpReduction = GetMulticlassXpReductionPercent(handle);
-	auto xpGain = (int) ((1.0 - xpReduction / 100.0)*xpGainRaw);
+
+	//Check if the multiclass xp penalty should be disabled for this character
+	auto res = d20Sys.D20QueryPython(handle, "No MultiClass XP Penalty");
+	if (res != 0) {
+		xpReduction = 0;
+	}
+	auto xpGain = (int)((1.0 - xpReduction / 100.0)*xpGainRaw);
 
 	std::string text(fmt::format("{} {} {} {}", description.getDisplayName(handle), combatSys.GetCombatMesLine(145), xpGain, combatSys.GetCombatMesLine(146) )); // [obj] gains [xpGain] experience points
 	if (xpReduction){

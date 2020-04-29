@@ -178,6 +178,12 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def("add_aoe_spell_ender", [](CondStructNew &condStr) {
 			condStr.AddAoESpellRemover();
 		})
+		.def("add_spell_teleport_prepare_standard", [](CondStructNew & condStr) {
+			condStr.AddHook(dispTypeD20Signal, DK_SIG_Teleport_Prepare, temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100dbec0));
+		})
+		.def("add_spell_teleport_reconnect_standard", [](CondStructNew& condStr) {
+			condStr.AddHook(dispTypeD20Signal, DK_SIG_Teleport_Reconnect, temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x10262530));
+		})
 		.def("add_spell_dismiss_hook", [](CondStructNew &condStr){
 			condStr.AddHook(dispTypeConditionAdd, DK_NONE, temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100CBD60));
 		})
@@ -197,6 +203,8 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		})
 		.def("get_arg", &DispatcherCallbackArgs::GetCondArg)
 		.def("set_arg", &DispatcherCallbackArgs::SetCondArg)
+		.def("get_obj_from_args", &DispatcherCallbackArgs::GetCondArgObjHndl)
+		.def("set_args_from_obj", &DispatcherCallbackArgs::SetCondArgObjHndl)
 		.def("get_param", [](DispatcherCallbackArgs &args, int paramIdx){
 			PyObject*tuplePtr = (PyObject*)args.GetData2();
 			
@@ -560,6 +568,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("spell_enum", &SpellEntry::spellEnum)
 		.def_readwrite("spell_school_enum", &SpellEntry::spellSchoolEnum)
 		.def_readwrite("spell_subschool_enum", &SpellEntry::spellSubSchoolEnum)
+		.def_readwrite("descriptor", &SpellEntry::spellDescriptorBitmask)
 		.def_readwrite("casting_time", &SpellEntry::castingTimeType)
 		.def_readwrite("saving_throw_type", &SpellEntry::savingThrowType)
 		.def_readwrite("min_target", &SpellEntry::minTarget)
@@ -852,7 +861,11 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("target", &EvtObjSpellTargetBonus::target, "The target of the spell.")
 		.def_readwrite("spell_packet", &EvtObjSpellTargetBonus::spellPkt, "Spell packet.")
 		;
-	
+
+	py::class_<EvtIgnoreDruidOathCheck, DispIO>(m, "EvtIgnoreDruidOathCheck", "Check if the Druid oath chan be ignored.")
+		.def_readwrite("item", &EvtIgnoreDruidOathCheck::item, "The item being checked.")
+		.def_readwrite("ignore_druid_oath", &EvtIgnoreDruidOathCheck::ignoreDruidOath, "True if the druid oath should be ignored for this item, false otherwise.")
+		;
 
 }
 
@@ -1113,6 +1126,10 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 	case dispTypeSpellResistanceCasterLevelCheck:
 	case dispTypeTargetSpellDCBonus:
 		pbEvtObj = py::cast(static_cast<EvtObjSpellTargetBonus*>(args.dispIO));
+		break;
+
+	case dispTypeIgnoreDruidOathCheck:
+		pbEvtObj = py::cast(static_cast<EvtIgnoreDruidOathCheck*>(args.dispIO));
 		break;
 
 	case dispTypeConditionAdd: // these are actually null

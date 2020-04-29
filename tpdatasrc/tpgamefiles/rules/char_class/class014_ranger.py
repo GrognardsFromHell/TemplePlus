@@ -70,7 +70,7 @@ def IsFortSaveFavored():
 	return 1
 	
 def IsRefSaveFavored():
-	return 0
+	return 1
 	
 def IsWillSaveFavored():
 	return 0

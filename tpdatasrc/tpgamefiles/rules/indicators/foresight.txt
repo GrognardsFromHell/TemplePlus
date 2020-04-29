@@ -1,0 +1,5 @@
+ID_string: FORESIGHT
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Spell Foresight.tga
+help_topic: TAG_ROOT
+tooltip_base_text:Foresight

@@ -276,15 +276,15 @@ D20CAF_FULL_ATTACK = 0x40000
 D20CAF_AOO_MOVEMENT = 0x80000
 D20CAF_BONUS_ATTACK = 0x100000
 D20CAF_THROWN = 0x200000
-D20CAF_SAVE_SUCCESSFUL = 0x800000
-D20CAF_SECONDARY_WEAPON = 0x1000000
-D20CAF_MANYSHOT = 0x2000000
-D20CAF_ALWAYS_HIT = 0x4000000
-D20CAF_COVER = 0x8000000
-D20CAF_COUNTERSPELLED = 0x10000000
-D20CAF_THROWN_GRENADE = 0x20000000
-D20CAF_FINAL_ATTACK_ROLL = 0x40000000
-D20CAF_TRUNCATED = 0x80000000
+D20CAF_SAVE_SUCCESSFUL = 0x400000
+D20CAF_SECONDARY_WEAPON = 0x800000
+D20CAF_MANYSHOT = 0x1000000
+D20CAF_ALWAYS_HIT = 0x2000000
+D20CAF_COVER = 0x4000000
+D20CAF_COUNTERSPELLED = 0x8000000
+D20CAF_THROWN_GRENADE = 0x10000000
+D20CAF_FINAL_ATTACK_ROLL = 0x20000000
+D20CAF_TRUNCATED = 0x40000000
 
 D20DAP_NORMAL = 0x1
 D20DAP_UNSPECIFIED = 0x2
@@ -359,6 +359,7 @@ D20STD_F_SPELL_DESCRIPTOR_AIR = 31
 D20STD_F_SPELL_DESCRIPTOR_EARTH = 32
 D20STD_F_SPELL_DESCRIPTOR_WATER = 33
 D20STD_F_DISABLE_SLIPPERY_MIND = 34
+D20STD_F_FINAL_ROLL = 35
 
 D20_MODS_SPELLS_F_PRAYER_NEGATIVE = -4
 D20_MODS_SPELLS_F_PRAYER_POSITIVE = -3
@@ -3175,6 +3176,7 @@ spell_label_level_6 = 809
 spell_label_level_7 = 810
 spell_label_level_8 = 811
 spell_label_level_9 = 812
+spell_moment_of_prescience = 1000
 spell_new_slot_lvl_0 = 1605
 spell_new_slot_lvl_1 = 1606
 spell_new_slot_lvl_2 = 1607
@@ -3237,6 +3239,7 @@ stat_level_abjurant_champion = 45
 stat_level_scout = 46
 stat_level_warmage = 47
 stat_level_beguiler = 48
+stat_level_swashbuckler = 49
 
 stat_level_psion = 58
 stat_level_psychic_warrior = 59
@@ -3263,7 +3266,7 @@ stat_level_jade_phoenix_mage = 78
 stat_level_master_of_nine = 79
 stat_level_ruby_knight_vindicator = 80
 stat_level_shadow_sun_ninja = 81
-
+stat_level_fochlucan_lyrist = 82
 
 
 
@@ -3481,6 +3484,7 @@ ET_OnRangeIncrementBonus = 96
 ET_OnDispatchSpellDamage = 97
 ET_OnSpellResistanceCheckBonus = 98
 ET_OnTargetSpellDCBonus = 99 #DC bonus based on the target of a spell
+ET_OnIgnoreDruidOathCheck = 100 #Should a druid oath be ignored
 
 # Event Keys
 

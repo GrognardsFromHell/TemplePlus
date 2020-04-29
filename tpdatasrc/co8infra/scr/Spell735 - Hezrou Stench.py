@@ -83,6 +83,5 @@ def OnBeginRound( spell ):
 
 def OnEndSpellCast( spell ):
 	print "Hezrou Stench OnEndSpellCast"
-	#endStench(spell.caster)
-	spell.spend_end(spell.id)
+	spell.spell_end(spell.id)
 
