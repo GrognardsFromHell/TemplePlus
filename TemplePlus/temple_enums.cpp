@@ -455,8 +455,13 @@ static const char *ObjTypeNames[] = {
 	"obj_t_bag" // 16
 };
 
+static const char* unknownObject = "obj_t_unknown";
+
 const char* GetObjectTypeName(ObjectType type) {
-	return ObjTypeNames[type];
+	if (type < std::size(ObjTypeNames)) {
+		return ObjTypeNames[type];
+	}
+	return unknownObject;
 }
 
 const char* GetObjectFieldName(obj_f field) {

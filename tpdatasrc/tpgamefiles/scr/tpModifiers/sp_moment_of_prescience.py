@@ -62,8 +62,8 @@ def MomentOfPrescienceAcBonus(attachee, args, evt_obj):
 		spell_packet = tpdp.SpellPacket(spell_id)
 		bonus = min(spell_packet.caster_level, 25)
 		evt_obj.bonus_list.add(bonus, 0, "Moment of Prescience")  #  Insight Bonus
-		args.condition_remove()
 		args.remove_spell()
+		args.remove_spell_mod()
 	return 0
 	
 def MomentOfPrescienceSaveBonus(attachee, args, evt_obj):
@@ -76,8 +76,8 @@ def MomentOfPrescienceSaveBonus(attachee, args, evt_obj):
 		spell_packet = tpdp.SpellPacket(spell_id)
 		bonus = min(spell_packet.caster_level, 25)
 		evt_obj.bonus_list.add(bonus, 0, "Moment of Prescience")  #  Insight Bonus
-		args.condition_remove()
 		args.remove_spell()
+		args.remove_spell_mod()
 	return 0
 	
 def MomentOfPrescienceAttackBonus(attachee, args, evt_obj):
@@ -91,8 +91,8 @@ def MomentOfPrescienceAttackBonus(attachee, args, evt_obj):
 		spell_packet = tpdp.SpellPacket(spell_id)
 		bonus = min(spell_packet.caster_level, 25)
 		evt_obj.bonus_list.add(bonus, 0, "Moment of Prescience")  #  Insight Bonus
-		args.condition_remove()
 		args.remove_spell()
+		args.remove_spell_mod()
 	return 0
 	
 #def MomentOfPrescienceSkillCheck(attachee, args, evt_obj):
@@ -104,10 +104,21 @@ def MomentOfPrescienceAttackBonus(attachee, args, evt_obj):
 #		evt_obj.bonus_list.add(bonus, 0, "Moment of Prescience")  #  Insight Bonus
 #		args.condition_remove()
 #	return 0
+
+def MomentOfPrescienceHasSpellActive(attachee, args, evt_obj):
+	evt_obj.return_val = 1
+	return 0
 	
-def MomentOfPrescienceRemove(attachee, args, evt_obj):
-	# Show the remove spell effect
-	game.particles( 'sp-Moment of Prescience-END', attachee)
+def MomentOfPrescienceKilled(attachee, args, evt_obj):
+	args.remove_spell()
+	args.remove_spell_mod()
+	return 0
+	
+def MomentOfPrescienceSpellEnd(attachee, args, evt_obj):
+	print "MomentOfPrescienceSpellEnd"
+	spell_id = args.get_arg(0)
+	if evt_obj.data1 == spell_id:
+		game.particles( 'sp-Moment of Prescience-END', attachee)
 	return 0
 
 momentOfPrescience = PythonModifier("sp-Moment of Prescience", 6) #
@@ -118,5 +129,9 @@ momentOfPrescience.AddHook(ET_OnGetAC, EK_NONE, MomentOfPrescienceAcBonus, ())
 momentOfPrescience.AddHook(ET_OnSaveThrowLevel , EK_NONE , MomentOfPrescienceSaveBonus, ())
 momentOfPrescience.AddHook(ET_OnToHitBonus2, EK_NONE, MomentOfPrescienceAttackBonus, ())
 #momentOfPrescience.AddHook(ET_OnGetSkillLevel, EK_NONE, MomentOfPrescienceSkillCheck, ())
-momentOfPrescience.AddHook(ET_OnConditionRemove, EK_NONE, MomentOfPrescienceRemove, ())
+momentOfPrescience.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, MomentOfPrescienceHasSpellActive, ())
+momentOfPrescience.AddHook(ET_OnD20Signal, EK_S_Killed, MomentOfPrescienceKilled, ())
+momentOfPrescience.AddHook(ET_OnD20Signal, EK_S_Spell_End, MomentOfPrescienceSpellEnd, ())
+momentOfPrescience.AddSpellTeleportPrepareStandard()
+momentOfPrescience.AddSpellTeleportReconnectStandard()
 momentOfPrescience.AddSpellCountdownStandardHook()

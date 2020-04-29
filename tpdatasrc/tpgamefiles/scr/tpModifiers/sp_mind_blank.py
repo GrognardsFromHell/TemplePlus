@@ -26,14 +26,29 @@ def MindBlankEffectTooltip(attachee, args, evt_obj):
 	evt_obj.append(tpdp.hash("MIND_BLANK"), -2, " (" + str(args.get_arg(1)) + " rounds)")
 	return 0
 	
-def MindBlankRemove(attachee, args, evt_obj):
-	# Show the remove spell effect
-	game.particles( 'sp-Mind Blank-END', attachee)
+def MindBlankHasSpellActive(attachee, args, evt_obj):
+	evt_obj.return_val = 1
+	return 0
+	
+def MindBlankKilled(attachee, args, evt_obj):
+	args.remove_spell()
+	args.remove_spell_mod()
+	return 0
+	
+def MindBlankSpellEnd(attachee, args, evt_obj):
+	print "MomentOfPrescienceSpellEnd"
+	spell_id = args.get_arg(0)
+	if evt_obj.data1 == spell_id:
+		game.particles( 'sp-Mind Blank-END', attachee)
 	return 0
 
 mindBlank = PythonModifier("sp-Mind Blank", 4)
 mindBlank.AddHook(ET_OnSpellImmunityCheck, EK_NONE, MindBlankImmunity, ()) # spell_id, duration, spare, spare
 mindBlank.AddHook(ET_OnGetTooltip, EK_NONE, MindBlankTooltip, ())
 mindBlank.AddHook(ET_OnGetEffectTooltip, EK_NONE, MindBlankEffectTooltip, ())
-mindBlank.AddHook(ET_OnConditionRemove, EK_NONE, MindBlankRemove, ())
+mindBlank.AddHook(ET_OnD20Signal, EK_S_Spell_End, MindBlankSpellEnd, ())
+mindBlank.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, MindBlankHasSpellActive, ())
+mindBlank.AddHook(ET_OnD20Signal, EK_S_Killed, MindBlankKilled, ())
+mindBlank.AddSpellTeleportPrepareStandard()
+mindBlank.AddSpellTeleportReconnectStandard()
 mindBlank.AddSpellCountdownStandardHook()

@@ -178,6 +178,12 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def("add_aoe_spell_ender", [](CondStructNew &condStr) {
 			condStr.AddAoESpellRemover();
 		})
+		.def("add_spell_teleport_prepare_standard", [](CondStructNew & condStr) {
+			condStr.AddHook(dispTypeD20Signal, DK_SIG_Teleport_Prepare, temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100dbec0));
+		})
+		.def("add_spell_teleport_reconnect_standard", [](CondStructNew& condStr) {
+			condStr.AddHook(dispTypeD20Signal, DK_SIG_Teleport_Reconnect, temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x10262530));
+		})
 		.def("add_spell_dismiss_hook", [](CondStructNew &condStr){
 			condStr.AddHook(dispTypeConditionAdd, DK_NONE, temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100CBD60));
 		})
