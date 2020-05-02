@@ -5,7 +5,7 @@ Level: Wiz 8
 Component: V
 Component: S
 Casting Time: 1 action
-Range: Touch
+Range: Close
 Saving Throw: Willpower
 Spell Resistance: Yes
 Projectile: No
