@@ -317,6 +317,9 @@ int GlobalToHitBonus(DispatcherCallbackArgs args);
 int GlobalGetArmorClass(DispatcherCallbackArgs args);
 int GlobalOnDamage(DispatcherCallbackArgs args);
 
+int DispelCheck(DispatcherCallbackArgs args);
+int DispelAlignmentTouchAttackSignalHandler(DispatcherCallbackArgs args);
+
 int GreaterTwoWeaponFighting(DispatcherCallbackArgs args);
 int GreaterTWFRanger(DispatcherCallbackArgs args);
 int TwoWeaponFightingBonus(DispatcherCallbackArgs args);
