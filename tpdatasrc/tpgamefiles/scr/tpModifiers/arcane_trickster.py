@@ -44,6 +44,8 @@ def OnGetSaveThrowWill(attachee, args, evt_obj):
 
 def ArcTrkSneakAttackDice(attachee, args, evt_obj):
 	arcTrkLvl = attachee.stat_level_get(classEnum)
+	if evt_obj.data1 == classEnum: #class leveling up
+		arcTrkLvl = arcTrkLvl + 1
 	if arcTrkLvl <= 0:
 		return 0
 	evt_obj.return_val += arcTrkLvl /2

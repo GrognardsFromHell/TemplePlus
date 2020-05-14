@@ -74,11 +74,15 @@ def ScoutEncumberedCheck(obj):
 #Calculate the skrimish bonus for the scout
 def GetSkirmishACBonus(obj):
 	scoutLevel = float(obj.stat_level_get(stat_level_scout))
+	scoutBonusLevels = obj.d20_query("Skrimish Level Bonus")
+	scoutLevel = scoutLevel + scoutBonusLevels
 	bonusValue = int((scoutLevel + 1.0) / 4.0)
 	return bonusValue
 	
 def GetSkirmishDamageDice(obj):
 	scoutLevel = float(obj.stat_level_get(stat_level_scout))
+	scoutBonusLevels = obj.d20_query("Skrimish Level Bonus")
+	scoutLevel = scoutLevel + scoutBonusLevels
 	bonusValue = int((scoutLevel - 1)/ 4.0 + 1)
 	bonusDice = str(bonusValue) + "d6"
 	return bonusDice

@@ -44,6 +44,9 @@ def OnGetSaveThrowWill(attachee, args, evt_obj):
 def BlackguardSneakAttackDice(attachee, args, evt_obj):
 	blg_lvl = attachee.stat_level_get(classEnum)
 	palLvl = attachee.stat_level_get(stat_level_paladin)
+	
+	if evt_obj.data1 == classEnum: #class leveling up
+		blg_lvl = blg_lvl + 1 
 
 	if blg_lvl < 4 and palLvl < 5:
 		return 0

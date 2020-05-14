@@ -41,6 +41,10 @@ def OnGetSaveThrowWill(attachee, args, evt_obj):
 
 def RogueSneakAttackDice(attachee, args, evt_obj):
 	rogLvl = attachee.stat_level_get(classEnum)
+	rogLvlBonus = attachee.d20_query("Rogue Sneak Attack Level Bonus")
+	rogLvl = rogLvl + rogLvlBonus
+	if evt_obj.data1 == classEnum: #class leveling up
+		rogLvl = rogLvl + 1 
 	if rogLvl <= 0:
 		return 0
 	evt_obj.return_val += 1+ (rogLvl - 1)/2
