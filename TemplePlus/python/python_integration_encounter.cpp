@@ -27,6 +27,11 @@ can rest in the current area.
 */
 void UpdateSleepStatus() {
 	auto result = pythonObjIntegration.ExecuteScript("random_encounter", "can_sleep");
+	if (!result) {
+		logger->error("Unable to check for a random encounter - can_sleep");
+		PyErr_Print();
+	}
+
 	if (result) {
 		*addresses.sleepStatus = PyInt_AsLong(result);
 		Py_DECREF(result);

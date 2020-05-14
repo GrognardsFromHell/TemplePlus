@@ -100,6 +100,13 @@ struct BonusEntry
 	int32_t bonType; // types 0, 8 and 21 can stack ( 100E6490 ); use negative number for modifier
 	const char * bonusMesString; // parsable string for the help system e.g. "~Item~[TAG_ITEM]"
 	char * bonusDescr; // e.g. "Magic Full Plate +1"
+
+	BonusEntry() {
+		this->bonValue = 0;
+		this->bonType = 0;
+		this->bonusMesString = nullptr;
+		this->bonusDescr = nullptr;
+	}
 };
 
 struct BonusCap
@@ -108,6 +115,13 @@ struct BonusCap
 	int bonType;
 	char *bonCapperString;
 	const char * bonCapDescr;
+
+	BonusCap() {
+		this->capValue = 0;
+		this->bonType = 0;
+		this->bonCapperString = nullptr;
+		this->bonCapDescr = nullptr;
+	}
 };
 
 struct BonusList
