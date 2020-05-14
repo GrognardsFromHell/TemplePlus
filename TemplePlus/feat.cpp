@@ -829,10 +829,10 @@ uint32_t LegacyFeatSystem::FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, 
 			auto clericLvl = objects.StatLevelGet(objHnd, stat_level_cleric);
 			auto clericTurnLvl = clericLvl + (classCodeBeingLevelledUp == stat_level_cleric) - 0;
 
-			auto otherTurnLvl = max(0, d20Sys.D20QueryPython(objHnd, "Turn Undead Level"));
+			auto otherTurnLvl = max(0, d20Sys.D20QueryPython(objHnd, "Turn Undead Level", 0, classCodeBeingLevelledUp));
+			otherTurnLvl += max(0, d20Sys.D20QueryPython(objHnd, "Turn Undead Level", 1, classCodeBeingLevelledUp));
 			
 			auto highestTurnLvl = clericTurnLvl + paladinTurnLvl + otherTurnLvl;
-			
 
 			if (featIdx == FEAT_TURN_UNDEAD){
 				if (!(critterAlignment & ALIGNMENT_EVIL || critterAlignment == (ALIGNMENT_CHAOTIC | ALIGNMENT_LAWFUL)))// TODO: is this a bug??? might be harmless mistake, might be deliberate
