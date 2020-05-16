@@ -44,6 +44,7 @@ public:
 
 	static int (__cdecl*orgItemInsertGetLocation)(objHndl, objHndl, int*, objHndl, int);
 	static int(__cdecl*orgIsProficientWithArmor)(objHndl, objHndl);
+	static bool(__cdecl*orgIsIncompatibleWithDruid)(objHndl, objHndl);
 
 	void apply() override 	{
 
@@ -89,6 +90,10 @@ public:
 
 		replaceFunction<objHndl(__cdecl)(objHndl, uint32_t)>(0x100651B0, [](objHndl handle, uint32_t idx){
 			return inventory.GetItemAtInvIdx(handle, idx);
+		});
+
+		orgIsIncompatibleWithDruid = replaceFunction<bool(objHndl item, objHndl critter)>(0x10066430, [](objHndl item, objHndl critter) {
+			return inventory.IsIncompatibleWithDruid(item, critter);
 		});
 
 		// ClearInventory
@@ -193,6 +198,8 @@ public:
 } hooks;
 int(__cdecl*InventoryHooks::orgItemInsertGetLocation)(objHndl, objHndl, int*, objHndl, int);
 int(__cdecl*InventoryHooks::orgIsProficientWithArmor)(objHndl, objHndl);
+bool(__cdecl* InventoryHooks::orgIsIncompatibleWithDruid)(objHndl, objHndl);
+
 
 
 void InventorySystem::MoveItem(const objHndl& item, const locXY& loc){
@@ -246,6 +253,18 @@ void InventorySystem::PcWeaponComboSetValue(objHndl handle, int idx, int value)
 
 bool InventorySystem::IsInvIdxWorn(int invIdx){
 	return invIdx >= INVENTORY_WORN_IDX_START && invIdx <= INVENTORY_WORN_IDX_END;
+}
+
+bool InventorySystem::IsIncompatibleWithDruid(objHndl item, objHndl critter)
+{
+	bool result = InventoryHooks::orgIsIncompatibleWithDruid(item, critter);  //Just call the old version now
+
+	if (result) {
+		auto res = dispatch.DispatchIgnoreDruidOathCheck(critter, item);
+		if (res) return false;
+	}
+
+	return result;
 }
 
 objHndl InventorySystem::GetItemAtInvIdx(objHndl handle, uint32_t nIdx){
@@ -1794,6 +1813,17 @@ ItemErrorCode InventorySystem::ItemTransferFromTo(objHndl owner, objHndl receive
 	}
 	if (ownerObj && ownerObj->IsCritter() && IsInvIdxWorn(invSlot)){
 		result = CheckTransferToWieldSlot(item, invSlot, receiver);
+
+		//Fix for Atari bug #90
+		if (invSlot == 211) {  //Shield slot
+			if (result == IEC_OK || flags & IIF_Allow_Swap) {
+				bool incompatible = IsIncompatibleWithDruid(item, receiver);
+				if (incompatible) {
+					return IEC_Incompatible_With_Druid;
+				}
+			}
+		}
+
 		if (result != IEC_OK){
 			if (!(flags & IIF_Allow_Swap)){
 				return result;

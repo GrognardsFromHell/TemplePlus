@@ -36,7 +36,8 @@ enum ItemErrorCode: uint32_t
 	IEC_Cannot_Wield_Magical =15,
 	IEC_Cannot_Wield_Techno =16,
 	IEC_Wield_Slot_Occupied =17,
-	IEC_Prohibited_Due_To_Class =18
+	IEC_Prohibited_Due_To_Class =18,
+	IEC_Incompatible_With_Druid = 40
 };
 
 
@@ -70,6 +71,8 @@ struct InventorySystem : temple::AddressTable
 	void PcWeaponComboSetValue(objHndl handle, int idx, int value);
 
 	static bool IsInvIdxWorn(int invIdx); // does the inventory index refer to a designated "worn item" slot?
+
+	bool InventorySystem::IsIncompatibleWithDruid(objHndl item, objHndl critter);
 
 	objHndl(__cdecl *GetSubstituteInventory)  (objHndl);
 	objHndl GetItemAtInvIdx(objHndl, uint32_t nIdx); // returns the item at obj_f_critter_inventory subIdx nIdx  (or obj_f_container_inventory for containers); Note the difference to ItemWornAt! (this is a more low level function)
