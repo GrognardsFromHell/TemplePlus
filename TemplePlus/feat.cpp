@@ -1665,6 +1665,9 @@ uint32_t _WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featA
 	{
 		return 1;
 	}
+	else if (d20Sys.D20QueryPython(objHnd, "Proficient with Weapon", static_cast<int>(wpnType))) {  //Python "extra proficiency" support
+		return 1;
+	}
 
 	return 0;
 }

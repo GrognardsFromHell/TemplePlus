@@ -1814,7 +1814,7 @@ ItemErrorCode InventorySystem::ItemTransferFromTo(objHndl owner, objHndl receive
 	if (ownerObj && ownerObj->IsCritter() && IsInvIdxWorn(invSlot)){
 		result = CheckTransferToWieldSlot(item, invSlot, receiver);
 
-		//Fix for Atari bug #90
+		//Fix for Atari bug #81
 		if (invSlot == 211) {  //Shield slot
 			if (result == IEC_OK || flags & IIF_Allow_Swap) {
 				bool incompatible = IsIncompatibleWithDruid(item, receiver);
