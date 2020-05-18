@@ -30,6 +30,7 @@
 #include "temple_functions.h"
 #include "rng.h"
 #include "float_line.h"
+#include "history.h"
 
 namespace py = pybind11;
 
@@ -143,6 +144,19 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		return result;
 	});
 
+	m.def("dispatch_skill", [](objHndl obj, uint32_t skill_enum, BonusList& bonList, objHndl obj2 = objHndl::null, uint32_t flag = 1)-> int {
+		auto skillLevel = dispatch.dispatch1ESkillLevel(obj, (SkillEnum)skill_enum, (BonusList*)&bonList, obj2, flag);
+		return skillLevel;
+	});
+
+	m.def("create_history_type6_opposed_check", [](objHndl performer, objHndl defender, int performerRoll, int defenderRoll
+		, BonusList& performerBonList, BonusList& defenderBonList, uint32_t combatMesLineTitle, uint32_t combatMesLineResult, uint32_t flag)-> int
+	{
+		auto rollHistId = histSys.RollHistoryAddType6OpposedCheck(performer, defender, performerRoll, defenderRoll
+			, (BonusList*)&performerBonList, (BonusList*)&defenderBonList, combatMesLineTitle, combatMesLineResult, flag);
+		return rollHistId;
+	});
+
 	#pragma region Basic Dispatcher stuff
 
 	py::class_<CondStructNew>(m, "ModifierSpec")
@@ -178,6 +192,12 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def("add_aoe_spell_ender", [](CondStructNew &condStr) {
 			condStr.AddAoESpellRemover();
 		})
+		.def("add_spell_teleport_prepare_standard", [](CondStructNew & condStr) {
+			condStr.AddHook(dispTypeD20Signal, DK_SIG_Teleport_Prepare, temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100dbec0));
+		})
+		.def("add_spell_teleport_reconnect_standard", [](CondStructNew& condStr) {
+			condStr.AddHook(dispTypeD20Signal, DK_SIG_Teleport_Reconnect, temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x10262530));
+		})
 		.def("add_spell_dismiss_hook", [](CondStructNew &condStr){
 			condStr.AddHook(dispTypeConditionAdd, DK_NONE, temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100CBD60));
 		})
@@ -197,6 +217,8 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		})
 		.def("get_arg", &DispatcherCallbackArgs::GetCondArg)
 		.def("set_arg", &DispatcherCallbackArgs::SetCondArg)
+		.def("get_obj_from_args", &DispatcherCallbackArgs::GetCondArgObjHndl)
+		.def("set_args_from_obj", &DispatcherCallbackArgs::SetCondArgObjHndl)
 		.def("get_param", [](DispatcherCallbackArgs &args, int paramIdx){
 			PyObject*tuplePtr = (PyObject*)args.GetData2();
 			
@@ -560,6 +582,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("spell_enum", &SpellEntry::spellEnum)
 		.def_readwrite("spell_school_enum", &SpellEntry::spellSchoolEnum)
 		.def_readwrite("spell_subschool_enum", &SpellEntry::spellSubSchoolEnum)
+		.def_readwrite("descriptor", &SpellEntry::spellDescriptorBitmask)
 		.def_readwrite("casting_time", &SpellEntry::castingTimeType)
 		.def_readwrite("saving_throw_type", &SpellEntry::savingThrowType)
 		.def_readwrite("min_target", &SpellEntry::minTarget)
@@ -712,6 +735,10 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("return_val", &DispIoD20Signal::return_val)
 		.def_readwrite("data1", &DispIoD20Signal::data1)
 		.def_readwrite("data2", &DispIoD20Signal::data2)
+		.def("get_d20_action", [](DispIoD20Signal& evtObj)->D20Actn& {
+			D20Actn* d20a = (D20Actn*)evtObj.data1;
+			return *d20a;
+		}, "Used to get a D20Action from the data1 field")
 		;
 
 	py::class_<DispIoD20Query, DispIO>(m, "EventObjD20Query")
@@ -852,7 +879,11 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("target", &EvtObjSpellTargetBonus::target, "The target of the spell.")
 		.def_readwrite("spell_packet", &EvtObjSpellTargetBonus::spellPkt, "Spell packet.")
 		;
-	
+
+	py::class_<EvtIgnoreDruidOathCheck, DispIO>(m, "EvtIgnoreDruidOathCheck", "Check if the Druid oath chan be ignored.")
+		.def_readwrite("item", &EvtIgnoreDruidOathCheck::item, "The item being checked.")
+		.def_readwrite("ignore_druid_oath", &EvtIgnoreDruidOathCheck::ignoreDruidOath, "True if the druid oath should be ignored for this item, false otherwise.")
+		;
 
 }
 
@@ -1113,6 +1144,10 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 	case dispTypeSpellResistanceCasterLevelCheck:
 	case dispTypeTargetSpellDCBonus:
 		pbEvtObj = py::cast(static_cast<EvtObjSpellTargetBonus*>(args.dispIO));
+		break;
+
+	case dispTypeIgnoreDruidOathCheck:
+		pbEvtObj = py::cast(static_cast<EvtIgnoreDruidOathCheck*>(args.dispIO));
 		break;
 
 	case dispTypeConditionAdd: // these are actually null

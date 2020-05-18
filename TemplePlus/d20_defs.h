@@ -196,7 +196,8 @@ enum D20STD_F : uint32_t {
 	D20STD_F_SPELL_DESCRIPTOR_AIR = 31, // 0x40000000
 	D20STD_F_SPELL_DESCRIPTOR_EARTH = 32, // 0x80000000
 	D20STD_F_SPELL_DESCRIPTOR_WATER = 33, // <- This one might not even work anymore...
-	D20STD_F_DISABLE_SLIPPERY_MIND = 34
+	D20STD_F_DISABLE_SLIPPERY_MIND = 34,
+	D20STD_F_FINAL_ROLL = 35  //New (This flag does currently get set)
 };
 
 enum D20SavingThrowFlag : uint32_t {

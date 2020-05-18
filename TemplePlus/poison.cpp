@@ -15,6 +15,7 @@
 #include <fstream>
 #include <gamesystems\gamesystems.h>
 #include <combat.h>
+#include <gamesystems\d20\d20stats.h>
 
 static class PoisonFixes : public TempleFix
 {
@@ -180,6 +181,11 @@ int PoisonFixes::PoisonedOnAdd(DispatcherCallbackArgs args) {
 
 	auto rollRes = Dice(pspec->immNumDie, pspec->immDieType, pspec->immDieBonus).Roll();
 	conds.AddTo(args.objHndCaller, "Temp_Ability_Loss", { pspec->immediateEffect + (pspec->immediateEffect < 0 ? 6 : 0), rollRes });
+	{
+		Stat stat = (Stat)abs(pspec->immediateEffect);
+		auto statName = d20Stats.GetStatShortName(stat);
+		histSys.CreateFromFreeText(fmt::format("{} takes {} {} damage from poison!\n", description.getDisplayName(args.objHndCaller), rollRes, statName).c_str());
+	}
 
 	if (pspec->immediateSecondEffect != (int)PoisonEffect::None) {
 		rollRes = Dice(pspec->immSecDice.count, pspec->immSecDice.sides, pspec->immSecDice.bonus).Roll();

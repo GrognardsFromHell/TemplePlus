@@ -1,0 +1,5 @@
+ID_string: MOMENT_OF_PRESCIENCE
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Moment of Prescience.tga
+help_topic: TAG_ROOT
+tooltip_base_text:Moment of Prescience

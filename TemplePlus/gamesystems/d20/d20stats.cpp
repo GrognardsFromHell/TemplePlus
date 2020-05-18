@@ -476,6 +476,7 @@ StatType D20StatsSystem::GetType(Stat stat) {
 	case stat_level_scout:
 	case stat_level_warmage:
 	case stat_level_beguilers:
+	case stat_level_swashbuckler:
 
 	case stat_level_psion:
 	case stat_level_psychic_warrior:
@@ -502,6 +503,7 @@ StatType D20StatsSystem::GetType(Stat stat) {
 	case stat_level_master_of_nine:
 	case stat_level_ruby_knight_vindicator:
 	case stat_level_shadow_sun_ninja:
+	case stat_level_fochlucan_lyrist:
 
 		return StatType::Level;
 

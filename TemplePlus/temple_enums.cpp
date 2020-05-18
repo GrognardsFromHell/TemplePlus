@@ -456,7 +456,7 @@ static const char *ObjTypeNames[] = {
 };
 
 const char* GetObjectTypeName(ObjectType type) {
-	return ObjTypeNames[type];
+    return ObjTypeNames[type];
 }
 
 const char* GetObjectFieldName(obj_f field) {

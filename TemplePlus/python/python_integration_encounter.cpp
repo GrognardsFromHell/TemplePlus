@@ -5,6 +5,8 @@
 #include <structmember.h>
 #include <party.h>
 #include <gamesystems/random_encounter.h>
+#include "gamesystems/gamesystems.h"
+#include "gamesystems/legacysystems.h"
 
 static struct PyRandomEncounterAddresses : temple::AddressTable {
 	int* sleepStatus;
@@ -25,6 +27,11 @@ can rest in the current area.
 */
 void UpdateSleepStatus() {
 	auto result = pythonObjIntegration.ExecuteScript("random_encounter", "can_sleep");
+	if (!result) {
+		logger->error("Unable to check for a random encounter - can_sleep");
+		PyErr_Print();
+	}
+
 	if (result) {
 		*addresses.sleepStatus = PyInt_AsLong(result);
 		Py_DECREF(result);
@@ -211,7 +218,8 @@ static void __cdecl RandomEncounterCreate(RandomEncounter* encounter) {
 */
 static BOOL __cdecl RandomEncounterExists(const RandomEncounterSetup* setup, RandomEncounter **pEncounterOut) {
 	auto args = PyTuple_New(2);
-	auto terrain = addresses.GetTerrainType(setup->location);
+	auto terrain = gameSystems->GetRandomEncounter().GetTerrainType((int)setup->location.locx, (int)setup->location.locy);
+	//auto terrain = addresses.GetTerrainType(setup->location);
 	PyTuple_SET_ITEM(args, 0, PyRandomEncounterSetup_Create(terrain, setup->flags));
 	auto encounter = PyRandomEncounter_Create();
 	// Flag 1 means "sleep encounter"

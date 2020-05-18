@@ -37,6 +37,7 @@ public:
 };
 
 constexpr int ACQUIRED_LOCATIONS_CO8 = 21;
+constexpr int TRAILDOT_MAX = 80;
 struct WorldmapWidgetsCo8
 {
 	LgcyWindow * mainWnd;
@@ -46,7 +47,7 @@ struct WorldmapWidgetsCo8
 	LgcyButton * locationRingBtns[14];
 	LgcyButton * scriptBtns[14];
 	LgcyButton * URHereBtn;
-	LgcyButton * trailDots[80];
+	LgcyButton * trailDots[TRAILDOT_MAX];
 	LgcyButton * exitBtn;
 	LgcyWindow * selectionWnd;
 	LgcyButton * acquiredLocations[ACQUIRED_LOCATIONS_CO8];
@@ -176,6 +177,7 @@ public:
 		
 		
 		// UiWorldmapAcquiredLocationBtnMsg 
+		if (false)
 		static BOOL(__cdecl*orgUiWorldmapAcquiredLocationBtnMsg)(LgcyWidgetId, TigMsg *) = replaceFunction<BOOL(__cdecl)(LgcyWidgetId, TigMsg *)>(0x1015F320, [](LgcyWidgetId widId, TigMsg *msg){
 			
 			if (msg->type == TigMsgType::MOUSE){
@@ -435,68 +437,15 @@ int WorldmapFix::CanAccessWorldmap()
 	return result;
 }
 
-BOOL WorldmapFix::UiWorldmapMakeTripCdecl(int fromId, int toId) {
-	auto &mTeleportMapId = temple::GetRef<int>(0x102FB3CC);
-	auto &mTeleportMapIdTable = temple::GetRef<int[ACQUIRED_LOCATIONS_CO8]>(0x11EA3710);
-	auto &mToId = temple::GetRef<int>(0x102FB3E0);
-	auto &mFromId = temple::GetRef<int>(0x102FB3E4);
-	auto & mIsMakingTrip = temple::GetRef<int>(0x10BEF7FC);
-	auto &mRandomEncounterStatus = temple::GetRef<int>(0x102FB3D0);
-	auto &mTrailDotInitialIdx = temple::GetRef<int>(0x102FB3DC);
-	auto &mTrailDotCount = temple::GetRef<int>(0x10BEF7F8);
-	auto &mXoffset = temple::GetRef<int>(0x102FB3EC);
-	auto &mYoffset = temple::GetRef<int>(0x102FB3F0);
-	auto &someX_10BEF7CC = temple::GetRef<int>(0x10BEF7CC);
-	auto &someY_10BEF7D0 = temple::GetRef<int>(0x10BEF7D0);
-	auto &mRandomEncounterX = temple::GetRef<int>(0x102FB3D4);
-	auto &mRandomEncounterY = temple::GetRef<int>(0x102FB3D8);
-	auto & mWorldmapWidgets = temple::GetRef<WorldmapWidgetsCo8*>(0x10BEF2D0);
-	auto &mWorldmapState = temple::GetRef<int>(0x10BEF808);
-	auto &mPaths = temple::GetRef<WorldmapPath[190]>(0x11EA2406);
-
-	constexpr int PATH_ID_TABLE_WIDTH = 20;
-	auto &mPathIdTable = temple::GetRef<int[PATH_ID_TABLE_WIDTH*PATH_ID_TABLE_WIDTH]>(0x11EA4100);
-
-	mTeleportMapId = mTeleportMapIdTable[toId];
-	auto toId_adj = toId;
-	if ( fromId == -1 ){
-		toId_adj = mToId;
-	}
-	else{
-		mFromId = fromId;
-		if (fromId == 10 || fromId == 11){
-			mFromId = 9;
-		}
-		else if (fromId == 12 || fromId == 13){
-			mFromId = 6;
-		}
-		toId_adj = toId;
-		mToId = toId;
-		if (toId == 10 || toId == 11 ){
-			mToId = toId_adj = 9;
-		}
-		else if (toId == 12 || toId == 13){
-			mToId = toId_adj = 6;
-		}
-	}
-	mIsMakingTrip = 1;
-	
-	if (fromId == 10 || fromId == 11){
-		fromId = 9;
-	}
-	else if (fromId == 12 || fromId == 13) {
-		fromId = 6;
-	}
-
-	if (toId == 10 || toId == 11){
-		toId = 9;
-	}
-	else if (toId == 12 || toId == 13) {
-		toId = 6;
-	}
-
-	auto toX = 0, toY = 0;
-	switch (toId){
+int convertSpecialId(int id) {
+	if (id == 10 || id == 11)
+		return 9;
+	if (id == 12 || id == 13)
+		return 6;
+	return id;
+};
+void GetWorldXyById(int id, int& toX, int&toY){
+	switch (id) {
 	case 0:
 		toX = temple::GetRef<int>(0x10BEF3B4);
 		toY = temple::GetRef<int>(0x10BEF3B8);
@@ -546,11 +495,55 @@ BOOL WorldmapFix::UiWorldmapMakeTripCdecl(int fromId, int toId) {
 		toY = temple::GetRef<int>(0x10BEF57C);
 		break;
 	default:
-		break;
+		toX = toY = 0;
 	}
+}
 
-	// If exiting a random encounter
-	if (mRandomEncounterStatus == 2 && toId != toId_adj && toId != mFromId ){
+BOOL WorldmapFix::UiWorldmapMakeTripCdecl(int fromId, int toId) {
+	auto &mTeleportMapId = temple::GetRef<int>(0x102FB3CC);
+	auto &mTeleportMapIdTable = temple::GetRef<int[ACQUIRED_LOCATIONS_CO8]>(0x11EA3710);
+	auto &mToId = temple::GetRef<int>(0x102FB3E0);
+	auto &mFromId = temple::GetRef<int>(0x102FB3E4);
+	auto & mIsMakingTrip = temple::GetRef<int>(0x10BEF7FC);
+	auto &mRandomEncounterStatus = temple::GetRef<int>(0x102FB3D0);
+	auto &mTrailDotInitialIdx = temple::GetRef<int>(0x102FB3DC);
+	auto &mTrailDotCount = temple::GetRef<int>(0x10BEF7F8);
+	auto &mXoffset = temple::GetRef<int>(0x102FB3EC);
+	auto &mYoffset = temple::GetRef<int>(0x102FB3F0);
+	auto &someX_10BEF7CC = temple::GetRef<int>(0x10BEF7CC);
+	auto &someY_10BEF7D0 = temple::GetRef<int>(0x10BEF7D0);
+	auto &mRandomEncounterX = temple::GetRef<int>(0x102FB3D4);
+	auto &mRandomEncounterY = temple::GetRef<int>(0x102FB3D8);
+	auto & mWorldmapWidgets = temple::GetRef<WorldmapWidgetsCo8*>(0x10BEF2D0);
+	auto &mWorldmapState = temple::GetRef<int>(0x10BEF808);
+	auto &mPaths = temple::GetRef<WorldmapPath[190]>(0x11EA2406);
+
+
+
+	constexpr int PATH_ID_TABLE_WIDTH = 20;
+	auto &mPathIdTable = temple::GetRef<int[PATH_ID_TABLE_WIDTH*PATH_ID_TABLE_WIDTH]>(0x11EA4100);
+
+	mTeleportMapId = mTeleportMapIdTable[toId];
+	auto toIdOrg = toId;
+	if ( fromId == -1 ){ // random encounter map
+		toIdOrg = mToId;
+	}
+	else{
+		mFromId = fromId = convertSpecialId(fromId);
+		mToId = toIdOrg = toId = convertSpecialId(toId);
+	}
+	mIsMakingTrip = 1;
+	
+	fromId = convertSpecialId(fromId);
+	toId = convertSpecialId(toId);
+	
+	auto toX = 0, toY = 0;
+	GetWorldXyById(toId, toX, toY);
+	
+
+	// If exiting a random encounter and going to a different location than origin/prev. destination
+	// Make a beeline path
+	if (mRandomEncounterStatus == 2 && toId != toIdOrg && toId != mFromId ){
 		auto fromX = mXoffset + someX_10BEF7CC + mRandomEncounterX + 10;
 		auto fromY = mYoffset + someY_10BEF7D0 + mRandomEncounterY + 10;
 		logger->info("Travelling on the map from {}, {} to {}, {}", fromX, fromY, toX, toY);
@@ -562,6 +555,9 @@ BOOL WorldmapFix::UiWorldmapMakeTripCdecl(int fromId, int toId) {
 		auto deltaX = fromX - toX;
 		auto deltaY = fromY - toY;
 		mTrailDotCount = sqrt(deltaY*deltaY + deltaX * deltaX) / 12 + 1;
+		if (mTrailDotCount >= TRAILDOT_MAX){ // fixes crash
+			mTrailDotCount = 80;
+		}
 		auto sumX = 0, sumY = 0;
 		for (auto i = 0; i <= mTrailDotCount; ++i){
 			auto dotWidget = mWorldmapWidgets->trailDots[i];
@@ -583,7 +579,7 @@ BOOL WorldmapFix::UiWorldmapMakeTripCdecl(int fromId, int toId) {
 		return FALSE;
 	}
 
-	auto v44 = false, v49 = false;
+	auto rePathForward = false, rePathBackward = false;
 	auto endTrip = true;
 	if (mWorldmapState != 1){
 		endTrip = false;
@@ -596,12 +592,12 @@ BOOL WorldmapFix::UiWorldmapMakeTripCdecl(int fromId, int toId) {
 		}
 		else if (mRandomEncounterStatus == 2){
 			if (toId == mFromId){
-				fromId = toId_adj;
-				v49 = true;
+				fromId = toIdOrg;
+				rePathBackward = true;
 			}
-			else if (toId == toId_adj){
+			else if (toId == toIdOrg){
 				fromId = mFromId;
-				v44 = true;
+				rePathForward = true;
 			}
 		}
 	}
@@ -633,7 +629,7 @@ BOOL WorldmapFix::UiWorldmapMakeTripCdecl(int fromId, int toId) {
 				traildot->x = wmPath.startX + deltaX;
 				traildot->y = wmPath.startY + deltaY;
 				auto dotIdx = 1;
-				for (auto i = 1; i < wmPath.count; ++i) {
+				for (auto i = 1; i <= wmPath.count; ++i) {
 					traildot = mWorldmapWidgets->trailDots[dotIdx];
 					switch (wmPath.directions[i - 1]) {
 					case 5:
@@ -660,7 +656,10 @@ BOOL WorldmapFix::UiWorldmapMakeTripCdecl(int fromId, int toId) {
 						traildot->y = deltaY + wmPath.startY;
 						dotIdx++;
 					}
-
+					if (dotIdx >= TRAILDOT_MAX){
+						break;
+					}
+						
 				}
 			}
 			else{
@@ -679,7 +678,7 @@ BOOL WorldmapFix::UiWorldmapMakeTripCdecl(int fromId, int toId) {
 				traildot->x = wmPath.startX + deltaX;
 				traildot->y = wmPath.startY + deltaY;
 				auto dotIdx = 1;
-				for (auto i = 1; i < wmPath.count; ++i) {
+				for (auto i = 1; i <= wmPath.count; ++i) {
 					traildot = mWorldmapWidgets->trailDots[mTrailDotCount- dotIdx];
 					switch (wmPath.directions[i - 1]) {
 					case 5:
@@ -706,14 +705,16 @@ BOOL WorldmapFix::UiWorldmapMakeTripCdecl(int fromId, int toId) {
 						traildot->y = deltaY + wmPath.startY;
 						++dotIdx;
 					}
-
+					if (dotIdx >= TRAILDOT_MAX) {
+						break;
+					}
 				}
 			}
 
 
 			
 
-			if (v44){
+			if (rePathForward){
 				auto dotDelta = mTrailDotCount - mTrailDotInitialIdx;
 				mTrailDotCount = dotDelta;
 				auto dotCount = dotDelta + 1;
@@ -724,7 +725,7 @@ BOOL WorldmapFix::UiWorldmapMakeTripCdecl(int fromId, int toId) {
 					dotsDest->y = dotsSrc->y;
 				}
 			}
-			else if (v49){
+			else if (rePathBackward){
 				auto dotDelta = mTrailDotCount - mTrailDotInitialIdx;
 				mTrailDotCount = mTrailDotInitialIdx;
 				auto dotCount = mTrailDotInitialIdx + 1;

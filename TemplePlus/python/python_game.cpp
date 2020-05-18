@@ -48,6 +48,7 @@
 #include "ui/ui_worldmap.h"
 #include "ui/ui_char.h"
 #include "infrastructure/elfhash.h"
+#include "ui/ui_alert.h"
 
 #include <pybind11/embed.h>
 namespace py = pybind11;
@@ -238,6 +239,11 @@ static int PyGame_SetNewSid(PyObject *obj, PyObject *value, void*) {
 	return 0;
 }
 
+static PyObject* PyGame_GetCombatTurn(PyObject* obj, void*) {
+	auto result = combatSys.GetCombatRoundCount();
+	return PyInt_FromLong(result);
+}
+
 
 static PyGetSetDef PyGameGettersSetters[] = {
 	{"party_alignment", PyGame_GetPartyAlignment, NULL, NULL },
@@ -259,6 +265,7 @@ static PyGetSetDef PyGameGettersSetters[] = {
 	{"areas", PyGame_GetAreas, NULL, NULL},
 	{"counters", PyGame_GetCounters, NULL, NULL},
 	{"encounter_queue", PyGame_GetEncounterQueue, NULL, NULL},
+	{"combat_turn", PyGame_GetCombatTurn, NULL, NULL},
 	{NULL, NULL, NULL, NULL}
 };
 
@@ -507,6 +514,17 @@ PyObject* PyGame_GetFeatName(PyObject*, PyObject* args) {
 	}
 
 	return PyString_FromString(feats.GetFeatName(featCode));
+}
+
+PyObject* PyGame_MakeCustomName(PyObject*, PyObject* args) {
+	char *name;
+
+	if (!PyArg_ParseTuple(args, "s:game.make_custom_name", &name)) { 
+		return 0;
+	}
+
+	auto nameId = objects.description.CustomNameNew(name);
+	return PyInt_FromLong(nameId);
 }
 
 PyObject* PyGame_IsRangedWeapon(PyObject*, PyObject* args) {
@@ -1278,6 +1296,33 @@ static PyObject *PySpell_SpellGetPickerEndPoint(PyObject*, PyObject *args) {
 	return blyat.ptr();
 }
 
+static PyObject* PyGame_GetObjById(PyObject*, PyObject* args) {
+	char* name;
+	if (!PyArg_ParseTuple(args, "s:game.get_obj_by_id", &name)) {
+		return 0;
+	}
+	if (!name) {
+		return 0;
+	}
+	auto handle = objSystem->FindObjectByIdStr(format("{}", name));
+	if (!handle) {
+		return 0;
+	}
+	return PyObjHndl_Create(handle);
+}
+
+PyObject* PyGame_AlertShow(PyObject*, PyObject* args) {
+	char* text, *button_text;
+	if (!PyArg_ParseTuple(args, "ss:game.alert_show", &text, &button_text)) {
+		return 0;
+	}
+	if (!text || !button_text) {
+		return 0;
+	}
+	auto result = UiAlert::ShowEx(2, 0, 0, button_text, text);
+	return PyInt_FromLong(result);
+}
+
 static PyMethodDef PyGameMethods[]{
 	{ "get_wall_endpt", PySpell_SpellGetPickerEndPoint, METH_VARARGS, NULL },
 	{ "create_history_freeform", PyGame_CreateHistoryFreeform, METH_VARARGS, NULL },
@@ -1350,6 +1395,9 @@ static PyMethodDef PyGameMethods[]{
 	{"get_feat_name", PyGame_GetFeatName,METH_VARARGS, NULL},
 	{"is_ranged_weapon", PyGame_IsRangedWeapon,METH_VARARGS, NULL},
 	{"is_melee_weapon", PyGame_IsMeleeWeapon,METH_VARARGS, NULL},
+	{"make_custom_name", PyGame_MakeCustomName,METH_VARARGS, NULL},
+	{"get_obj_by_id", PyGame_GetObjById, METH_VARARGS, NULL},
+	{"alert_show", PyGame_AlertShow, METH_VARARGS, NULL},
 	// This is some unfinished UI for which the graphics are missing
 	// {"charmap", PyGame_Charmap, METH_VARARGS, NULL},
 	{NULL, NULL, NULL, NULL}

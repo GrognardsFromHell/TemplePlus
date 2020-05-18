@@ -1,0 +1,5 @@
+name: Swashbuckler Improved Flanking
+flags: 8
+prereqs:
+description:  A swashbuckler of 8th level or higher who is flanking an opponent gains a +4 bonus on attacks instead of a +2 bonus on attacks.
+prereq descr: Swashbucklers Level 8

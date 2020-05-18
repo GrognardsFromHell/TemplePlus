@@ -33,6 +33,7 @@
 {46}{Scout}
 {47}{Warmage}
 {48}{Beguiler}
+{49}{Swashbuckler}
 
 // Psionic Classes
 {58}{Psion}
@@ -61,6 +62,9 @@
 {79}{Master of Nine}
 {80}{Ruby Knight Vindicator}
 {81}{Shadow Sun Ninja}
+
+//
+{82}{Fochlucan Lyrist}
 
 {300}{Psi Points} // max
 {301}{Psi Points} // cur
@@ -98,7 +102,7 @@
 {1046}{Sct}
 {1047}{Wrmg}
 {1048}{Bglr}
-{1049}{}
+{1049}{Swbk}
 {1050}{}
 {1051}{}
 {1052}{}
@@ -132,6 +136,7 @@
 {1079}{Mo9}
 {1080}{Rkvn}
 {1081}{Ssnj}
+{1082}{Foch}
 
 
 
@@ -181,7 +186,7 @@
 {12096} Tiefling {Tieflings are humans with some trace of infernal blood in their veins, and their favored class is Rogue.  Tieflings are sneaky, subtle, and generally conniving. They prefer to strike from ambush and usually avoid a fair fight if they can. Tieflings tend to have an unsettling air about them, and most people are uncomfortable around them, whether they are aware of the tiefling's unsavory ancestry or not. While some look like normal humans, most retain physical characteristics derived from their ancestor, with the most common such features being horns, non-prehensile tails, and pointed teeth.  They possess the following traits:  +2 Dexterity, +2 Intelligence and -2 Charisma, resistance to fire 5, cold 5, and electricity 5 and +2 racial bonus on bluff and hide checks.  Level adjustment:  +1.}
 {12098} Gray Elf {Gray elves are taller and grander in physical appearance than others of their race, gray elves have a reputation for being aloof and arrogant (even by elven standards).  Gray elves have all the standard elven racial traits except as follows:  +2 Intelligence, -2 Strength.  Their favored class is wizard.}
 {12130} Wild Elf {Wild elves were always close to nature, even more so than other elves, but they have forgotten many of the high arts and lore of their people, choosing stealth and survival over building and book learning. Wild elves are stocky and strongly built for elves.  Wild elves have all the standard elven racial traits except as follows:  +2 Dexterity, -2 Intelligence.  Their favored class is Sorcerer.}
-{12162} Wood Elf {Wood elves are uncommonly strong for elves, but also smaller and less intuitive than most elves.  Wood elves have all the standard elven racial traits except as follows:  +2 Strength, +2 Dexterity, -2 Constitution, -2 Intelligence, -2 Charisma.  Their favored class is ranger.}
+{12162} Wood Elf {Wood elves are uncommonly strong for elves, but also smaller and less intuitive than most elves.  Wood elves have all the standard elven racial traits except as follows:  +2 Strength, +2 Dexterity, -2 Constitution, -2 Intelligence.  Their favored class is ranger.}
 {12161} Gold Dwarf {Gold dwarves are a forgotten realms race.  They are stocky and muscular, Averaging 4 feet tall and weighing as much as an adult human.  They have the standard dwarven traits except as follows:  -2 Dexterity, +2 Constitution.  +1 racial bonus on attack rolls against aberrations: Gold dwarves are trained in special combat techniques against the many bizarre creatures that live in the Underdark.  (This replaces the attack bonus against ores and goblinoids.)  Their favored class is fighter. }
 {12102} Strongheart {Strongheart Halflings are a forgotten realms race.  While the lightfoot halflings value the experience of travel and the sight of new lands and peoples, the stronghearts are a more organized, oderly, and industrious race. They build to last, and fiercely defend their homelands against threats that their lightfoot kin would simply flee.  They have the standard halfling traits except as follows:  Strongheart halflings gain one extra feat at 1st level.  Srongheart halflings do not receinve the halfling racial +1 bonus on all saving throws.}
 {12038} Tallfellow {Tallfellow halflings are somewhat rare among halfling folk. Tallfellows are 4 feet tall or more and weigh between 30 and 35 pounds.  They have the standard halfling traits except as follows:  +2 racial bonus on Search, Spot, and Listen checks. Like an elf, a tallfellow who merely passes within 5 feet of a secret or concealed door is entitled to a Search check as though actively looking for it. This trait replaces the lightfoot's +2 bonus on Listen checks.  Tallfellows are less athletic than lightfoot halflings and do not have a racial bonus on Climb, Jump, and Move Silently checks.}
@@ -293,6 +298,15 @@ Spells: Able to cast lesser planar ally.}
 {13039}Scout{A scout has some training in weapons and a unique combat style that favors fast movement and devastating attacks.}
 {13040}Warmage{A warmage is a militant spellcaster whose training focuses on battlefield magic.}
 {13041}Beguiler{A beguiler is a spellcaster who delights in manipulating others, either to their disadvantage or for their own good.}
+{13042}Swashbuckler{The swashbuckler embodies the concepts of daring and panache.}
+{13075}Fochlucan Lyrist{The Fochlucan lyrist is a Warrior, thief, spy, poet and woodland champion.
+
+Requirements
+Skills: Decipher Script 7, Diplomacy 7, Gather Information 7, Perform 13, Sleight of Hand 7.
+Alignment: Neutral good, neutral, chaotic neutral, or neutral evil.
+Spells: Casts 1st-level arcane and divine spells.
+Special: Bardic knowledge, Speak Language (Druidic) and evasion abilities.
+}
 
 // Cannot Pick Class Short Help Goes in the range of 20007+
 {20007} Arcane Archer{Arcane Archer requirements:
@@ -303,3 +317,7 @@ Spells: Ability to cast 1st level arcane spells.}
 
 {20034} Favored Soul {Favored Soul requirements:
 Charisma: 11 or higher.}
+{20047} Warmage {Warmage requirements:
+Charisma: 11 or higher.}
+{20048} Beguiler {Beguiler requirements:
+Intelligence: 11 or higher.}

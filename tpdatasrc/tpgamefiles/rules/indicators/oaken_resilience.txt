@@ -1,5 +1,5 @@
 ID_string: OAKEN_RESILIENCE
 effect_type: 0
-texture_file: art\interface\player_conditions\buffs\Spell Mirror Image.tga
+texture_file: art\interface\player_conditions\buffs\Spell Oaken Resilience.tga
 help_topic: TAG_ROOT
 tooltip_base_text:Oaken Resilience

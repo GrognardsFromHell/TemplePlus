@@ -572,6 +572,13 @@ void UiManager::RemoveWidget(LgcyWidgetId id)
 		}
 		mActiveWidgets.erase(it);
 	}
+	UnsetMouseCaptureWidgetId(id);
+	if (mMouseButtonId == id) {
+		mMouseButtonId = 0;
+	}
+	if (mWidgetMouseHandlerWidgetId == id) {
+		mWidgetMouseHandlerWidgetId = 0;
+	}
 }
 
 bool UiManager::AddChild(LgcyWidgetId parentId, LgcyWidgetId childId)
@@ -790,6 +797,9 @@ bool UiManager::TranslateMouseMessage(const TigMouseMsg& mouseMsg)
 			bool enqueueExited = false;
 			auto globalWid = GetWidget(globalWidId);
 			// if window
+
+			if (globalWid == nullptr) return false;  //Happens sometimes on shutdown
+
 			if (globalWid->IsWindow())
 			{
 				auto prevHoveredWindow = (LgcyWindow*)globalWid;

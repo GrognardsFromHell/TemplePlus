@@ -65,6 +65,23 @@
 {3361}{} // equip force item
 {3362}{} // equip fire item
 {3363}{} // equip power item
+
+//Female Bard Song Sounds (male values + 10)
+
+{20010}{spells\Counter_song_female.WAV} 
+{20011}{spells\Counter_song_female_end.WAV}
+
+{20030}{spells\fascinate_female.WAV}
+{20031}{spells\fascinate_female_end.WAV}
+
+{20050}{spells\Courage_SingR1.WAV}
+{20051}{spells\Courage_SingR1_end.WAV}
+
+{20070}{spells\competence_female.WAV}
+{20071}{spells\competence_female_end.WAV}
+
+{20090}{spells\Suggestion_SingR1.wav} 
+{20091}{spells\Suggestion_SingR1_end.wav} 
  
 {100000}{thunderclap.mp3}
 {100001}{LEVEL_UP.WAV}

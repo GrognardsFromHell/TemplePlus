@@ -2677,10 +2677,8 @@ bool UiCharEditor::FeatCanPick(feat_enums feat) {
 		}
 
 	default:
-		return true;
+		return feats.FeatPrereqsCheck(handle, feat, featsPicked.size() > 0 ? &featsPicked[0] : nullptr, featsPicked.size(), selPkt.classCode, selPkt.statBeingRaised) != FALSE;
 	}
-
-
 }
 
 bool UiCharEditor::IsSelectingRangerSpec()

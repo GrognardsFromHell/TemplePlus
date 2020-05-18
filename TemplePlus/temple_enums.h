@@ -1912,6 +1912,7 @@ enum enum_disp_type : uint32_t {
     dispTypeDealingDamageSpell,
     dispTypeSpellResistanceCasterLevelCheck,
 	dispTypeTargetSpellDCBonus,
+	dispTypeIgnoreDruidOathCheck,
 	dispTypeCount // used just for size definition purposes
 
 
@@ -2002,6 +2003,7 @@ enum Stat : uint32_t {
 	stat_level_scout = 46,
 	stat_level_warmage = 47,
 	stat_level_beguilers = 48,
+	stat_level_swashbuckler = 49,
 
 	stat_level_psion = 58,
 	stat_level_psychic_warrior = 59,
@@ -2028,6 +2030,7 @@ enum Stat : uint32_t {
 	stat_level_master_of_nine = 79,
 	stat_level_ruby_knight_vindicator = 80,
 	stat_level_shadow_sun_ninja = 81,
+	stat_level_fochlucan_lyrist = 82,
 
 
 	stat_hp_max = 0xE4,

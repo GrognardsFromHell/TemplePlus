@@ -1,0 +1,28 @@
+
+name: CI
+on: [push]
+
+jobs:
+  build:
+    name: Build Windows
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: nuget/setup-nuget@v1
+    - name: Download and Extract Dependencies
+      run: |
+        curl -L -o dependencies.7z https://github.com/GrognardsFromHell/Dependencies/releases/download/v1.6/dependencies.7z
+        7z x dependencies.7z
+    - name: Install NuGet packages
+      run: |
+        nuget install Squirrel.Windows -OutputDirectory Squirrel -Verbosity Detailed
+        nuget restore
+    - name: Build
+      run: |
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars32.bat"
+        msbuild TemplePlus.sln /p:Configuration=Release /p:Platform=Win32 /p:MSBuildDefines="_TP_VERSION=%BUILD_NUMBER%;_TP_COMMIT=%COMMIT_ID%;TP_RELEASE_BUILD" /verbosity:minimal
+      # Need to use cmd because of the vcvars32 batch file
+      shell: cmd
+      env:
+        BUILD_NUMBER: ${GITHUB_RUN_NUMBER}
+        COMMIT_ID: ${GITHUB_SHA::8}
