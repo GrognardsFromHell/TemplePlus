@@ -9,6 +9,7 @@
 # Unknown: sys = <module 'sys' (built-in)>
 
 # These are spell descriptors from the D20 SRD:
+ACID = 1
 CHAOTIC = 2
 COLD = 3
 DARKNESS = 4
