@@ -1987,9 +1987,14 @@ int __cdecl DispelCheck(DispatcherCallbackArgs args)
 		packetResult = spellSys.GetSpellPacketBody(spellId, &spellToDispel);
 
 		if (packetResult > 0) {
-			const bool breakEnchantment = (dispIo->flags & DispIoDispelCheck::BreakEnchantment) && (dispIo->returnVal > 0);  //Wasn't checking return value previously
-			const bool dispelMagicArea = (dispIo->flags & DispIoDispelCheck::DispelMagic) && (dispIo->returnVal > 0);  //Previously && spellToDispel.spellKnownSlotLevel < 4
-			const bool dispelMagicSingle = (!(dispIo->flags & DispIoDispelCheck::DispelMagic) && (dispIo->flags & DispIoDispelCheck::DispelMagicSingle));  //Previously && spellToDispel.spellKnownSlotLevel < 4
+			const bool breakEnchantment = (dispIo->flags & DispIoDispelCheck::BreakEnchantment);
+
+			//Previously && spellToDispel.spellKnownSlotLevel < 4
+			const bool dispelMagicArea = (dispIo->flags & DispIoDispelCheck::DispelMagic) && (dispIo->returnVal > 0);
+
+			//Previously && spellToDispel.spellKnownSlotLevel < 4
+			const bool dispelMagicSingle = (!(dispIo->flags & DispIoDispelCheck::DispelMagic) && (dispIo->flags & DispIoDispelCheck::DispelMagicSingle));
+
 			const bool dispelAlignment = ((dispIo->flags & DispIoDispelCheck::DispelAlignment) && dispIo->returnVal > 0);
 			const bool dispelElement = ((dispIo->flags & DispIoDispelCheck::DispelElement) && dispIo->returnVal > 0);
 
@@ -2079,7 +2084,7 @@ int __cdecl DispelCheck(DispatcherCallbackArgs args)
 				}
 				if (removeEffect) {
 					
-					if (dispelMagicArea || dispelAlignment || dispelElement) {
+					if (dispelMagicArea) {
 						dispIo->returnVal--;  //Mark that an effect has been removed (previously not for dispel alignment)
 					}
 
