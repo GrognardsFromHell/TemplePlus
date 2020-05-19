@@ -12,6 +12,7 @@
 #include "party.h"
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/mapsystem.h"
+#include "mod_support.h"
 
 //*****************************************************************************
 //* Worldmap-UI
@@ -169,7 +170,11 @@ public:
 		// This fixes an out of bounds write caused by spell slinger hacks
 		writeNoops(0x10159ABC);
 
-		replaceFunction<void()>(0x1015EA20, UiWorldmapMakeTripWrapper);
+
+		if (modSupport.IsCo8()){
+			replaceFunction<void()>(0x1015EA20, UiWorldmapMakeTripWrapper);
+		}
+		
 		
 		// UiWorldmapAcquiredLocationBtnMsg 
 		if (false)
@@ -182,14 +187,20 @@ public:
 				return FALSE;
 			}
 
+			if (!modSupport.IsCo8()) {
+				return orgUiWorldmapAcquiredLocationBtnMsg(widId, msg);
+			}
+
 			auto & mIsMakingTrip = temple::GetRef<int>(0x10BEF7FC);
 			auto & mWorldmapWidgets = temple::GetRef<WorldmapWidgetsCo8*>(0x10BEF2D0);
 			auto & mLocationsVisitedCount = temple::GetRef<int>(0x10BEF810);
-			auto & mLocationVisitedFlags = temple::GetRef<int[21]>(0x11EA4800);
+			auto & mLocationVisitedFlags = temple::GetRef<int[ACQUIRED_LOCATIONS_CO8]>(0x11EA4800);
+			
 			if (mIsMakingTrip){
 				return FALSE;
 			}
 
+			
 			
 			auto btn = uiManager->GetButton(widId);
 			auto locIdx = -1;
@@ -209,10 +220,22 @@ public:
 					}
 				}
 				for (auto i =0; i < mLocationsVisitedCount; ++i){
-					if ( (mLocationVisitedFlags[i] >> 8) == locationRingIdx ){
-						locIdx = i;
-						break;
+					//if (modSupport.IsCo8())
+					{
+						// auto & mLocationVisitedFlags = temple::GetRef<int[ACQUIRED_LOCATIONS_CO8]>(0x11EA4800);
+						if ((mLocationVisitedFlags[i] >> 8) == locationRingIdx) {
+							locIdx = i;
+							break;
+						}
 					}
+					/*else{
+						auto & mLocationVisitedFlags = temple::GetRef<int[ACQUIRED_LOCATIONS_CO8]>(0x10BEF78C);
+						if ((mLocationVisitedFlags[i] >> 8) == locationRingIdx) {
+							locIdx = i;
+							break;
+						}
+					}*/
+					
 				}
 			}
 			auto curLocId = temple::GetRef<int(__cdecl)()>(0x1015DF70)();
