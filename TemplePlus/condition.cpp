@@ -1948,8 +1948,7 @@ int __cdecl DispelAlignmentTouchAttackSignalHandler(DispatcherCallbackArgs args)
 			dispatch.DispatchDispelCheck(d20a->d20ATarget, spellId, dispelFlags, 1);
 		}
 
-		// Smacked with the data hammer to make it work
-		// There is code in remove spell that keeps spells from being removed in most signal handlers
+		// There is code in remove spell that keeps spells from being removed in most signal handlers.
 		// This is to fool it into removing the spell
 		auto tempKey = args.dispKey;
 		args.dispKey = DK_SIG_Concentration_Broken;
@@ -1998,7 +1997,17 @@ int __cdecl DispelCheck(DispatcherCallbackArgs args)
 			const bool dispelAlignment = ((dispIo->flags & DispIoDispelCheck::DispelAlignment) && dispIo->returnVal > 0);
 			const bool dispelElement = ((dispIo->flags & DispIoDispelCheck::DispelElement) && dispIo->returnVal > 0);
 
-			if (dispelMagicArea || breakEnchantment || dispelMagicSingle || dispelAlignment || dispelElement) {
+			bool bValidSchool = true;
+
+			//Enforce correct spell schools for break enchantment (note:  curses are handled elsewhere)
+			if (breakEnchantment) {
+				SpellEntry dispelEntry(spellToDispel.spellEnum);
+				if (dispelEntry.spellSchoolEnum != School_Enchantment && dispelEntry.spellSchoolEnum != School_Transmutation) {
+					bValidSchool = false;
+				}
+			}
+
+			if (dispelMagicArea || (breakEnchantment && bValidSchool) || dispelMagicSingle || dispelAlignment || dispelElement) {
 				bool removeEffect = false;
 
 				// Handle dispel alignment (it should not have a caster check)
@@ -2067,9 +2076,11 @@ int __cdecl DispelCheck(DispatcherCallbackArgs args)
 					//Enforce max bonus (new)
 					if (breakEnchantment) {  // Break Enchantment (+15 limit)
 						casterLevel = std::min(casterLevel, 15);
-					} else if (dispellingSpell.spellEnum == 133) {  //Dispel Magic (+10 limit)
+					}
+					else if (dispellingSpell.spellEnum == 133) {  //Dispel Magic (+10 limit)
 						casterLevel = std::min(casterLevel, 10);
-					} else if (dispellingSpell.spellEnum == 202) {  //Greater Dispel Magic (+20 limit)
+					}
+					else if (dispellingSpell.spellEnum == 202) {  //Greater Dispel Magic (+20 limit)
 						casterLevel = std::min(casterLevel, 20);
 					}
 
@@ -2084,8 +2095,8 @@ int __cdecl DispelCheck(DispatcherCallbackArgs args)
 				}
 				if (removeEffect) {
 					
-					if (dispelMagicArea) {
-						dispIo->returnVal--;  //Mark that an effect has been removed (previously not for dispel alignment)
+					if (dispelMagicArea || dispelAlignment || dispelElement) {
+						dispIo->returnVal--;  //Mark one spell removed charge
 					}
 
 					std::string floatText = " [";
