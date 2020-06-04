@@ -125,14 +125,14 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			res = tbStatus->tbsFlags;
 		}
 		return res;
-		});
+	});
 
 	m.def("cur_seq_set_turn_based_status_flags", [](int flags) {
 		auto tbStatus = actSeqSys.curSeqGetTurnBasedStatus();
 		if (tbStatus) {
 			tbStatus->tbsFlags = flags;
 		}
-		});
+	});
 
 	m.def("GetModifierFileList", [](){
 		auto result = std::vector<std::string>();
@@ -239,7 +239,19 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
 		})
 		.def("remove_spell_mod", &DispatcherCallbackArgs::RemoveSpellMod)
-		.def("remove_spell", &DispatcherCallbackArgs::RemoveSpell)
+		.def("remove_spell", [](DispatcherCallbackArgs& args) {
+			const bool bRemoveTouchAttack = (args.dispKey == DK_SIG_TouchAttack) && (args.dispType == dispTypeD20Signal);
+
+			//Force spell removal from a python touch attach handler
+			if (bRemoveTouchAttack) {
+				auto newArgs = args;
+				newArgs.dispKey = DK_SIG_Concentration_Broken;
+				newArgs.RemoveSpell();
+			}
+			else {
+				args.RemoveSpell();
+			}
+		})
 		;
 
 	#pragma endregion 

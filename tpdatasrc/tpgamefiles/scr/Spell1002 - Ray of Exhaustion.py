@@ -43,33 +43,26 @@ def OnEndProjectile( spell, projectile, index_of_target ):
 	####################################################
 
 	if spell.caster.perform_touch_attack( target_item.obj ) & D20CAF_HIT:
-		hasExhaust = target_item.obj.d20_query("Exhausted")
-		hasFatigue = target_item.obj.d20_query("Fatigued")
-		#wrongType = target_item.obj.is_category_type(mc_type_undead) or target_item.obj.is_category_type(mc_type_construct) or target_item.obj.is_category_type(mc_type_ooze) or target_item.obj.is_category_type(mc_type_plant)
-		# if wrongType:
-			# target_item.obj.float_text_line("Fatigue Immunity")
-		# elif hasExhaust:
-			# target_item.obj.float_text_line("Already Exhausted")
-		# elif hasFatigue:
-			# print "Already fatigued, no save!"
-			# target_item.obj.float_text_line("Exhausted")
-			# target_item.obj.d20_send_signal("Add Fatigue", spell.duration) #Upgrage to exhaustion regardless of save
-		if hasExhaust:
-			target_item.obj.d20_send_signal("Add Exhaustion", spell.duration) #Upgrage to exhaustion regardless of save
-		if hasFatigue:
-			print "Already fatigued, no save!"
-			target_item.obj.d20_send_signal("Add Fatigue", spell.duration) #Upgrage to exhaustion regardless of save
-			# target_item.obj.float_text_line("Exhausted")
+		wrongType = target_item.obj.is_category_type(mc_type_undead) or target_item.obj.is_category_type(mc_type_construct) or target_item.obj.is_category_type(mc_type_ooze) or target_item.obj.is_category_type(mc_type_plant)
+		if wrongType:
+			target_item.obj.float_text_line("Fatigue Immunity")
 		else:
-			# hit
-			if target_item.obj.saving_throw_spell( spell.dc, D20_Save_Fortitude, D20STD_F_NONE, spell.caster, spell.id ):
-				# saving throw successful
-				target_item.obj.condition_add_with_args("FatigueExhaust", 0, spell.duration, 0, 1, 0, 0)
-				target_item.obj.float_text_line("Fatigued")
+			hasExhaust = target_item.obj.d20_query("Exhausted")
+			hasFatigue = target_item.obj.d20_query("Fatigued")
+			if hasExhaust:
+				target_item.obj.d20_send_signal("Add Exhaustion", spell.duration) #Upgrage to exhaustion regardless of save
+			if hasFatigue:
+				target_item.obj.d20_send_signal("Add Fatigue", spell.duration) #Upgrage to exhaustion regardless of save
 			else:
-				# saving throw unsuccessful
-				target_item.obj.condition_add_with_args("FatigueExhaust", 0, spell.duration, spell.duration, 1, 0, 0)
-				target_item.obj.float_text_line("Exhausted")
+				# hit
+				if target_item.obj.saving_throw_spell( spell.dc, D20_Save_Fortitude, D20STD_F_NONE, spell.caster, spell.id ):
+					# saving throw successful
+					target_item.obj.condition_add_with_args("FatigueExhaust", 0, spell.duration, 0, 1, 0, 0)
+					target_item.obj.float_text_line("Fatigued")
+				else:
+					# saving throw unsuccessful
+					target_item.obj.condition_add_with_args("FatigueExhaust", 0, spell.duration, spell.duration, 1, 0, 0)
+					target_item.obj.float_text_line("Exhausted")
 	else:
 		# missed
 		target_item.obj.float_mesfile_line( 'mes\\spell.mes', 30007 )

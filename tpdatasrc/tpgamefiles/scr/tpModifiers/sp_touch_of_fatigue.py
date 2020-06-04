@@ -30,13 +30,15 @@ def TouchOfFatigueHoldingCharge(attachee, args, evt_obj):
 	return 0
 	
 def TouchOfFatigueTouchAttackAdded(attachee, args, evt_obj):
-	args.condition_remove()
-	args.remove_spell()
+	if evt_obj.data1 != 1001:
+		args.condition_remove()
+		args.remove_spell()
 	return 0
 	
 def TouchOfFatigueTouchAttack(attachee, args, evt_obj):
 	addFatigue = 0
 	
+	#Touch of fatigue does not allow upgrading
 	action = evt_obj.get_d20_action()
 	target = action.target
 	wrongType = target.is_category_type(mc_type_undead) or target.is_category_type(mc_type_construct) or target.is_category_type(mc_type_ooze) or target.is_category_type(mc_type_plant)
@@ -65,7 +67,7 @@ def TouchOfFatigueConditionAdd(attachee, args, evt_obj):
 	tbFlags = tpdp.cur_seq_get_turn_based_status_flags()
 	tbFlags = tbFlags | TBSF_TouchAttack
 	tpdp.cur_seq_set_turn_based_status_flags(tbFlags)
-	attachee.d20_send_signal(S_TouchAttackAdded, 1001, 0)
+	attachee.d20_send_signal(S_TouchAttackAdded, 1001)
 	return 0
 
 TouchOfFatigue = PythonModifier("sp-Touch of Fatigue", 4)

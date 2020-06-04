@@ -65,3 +65,25 @@
 {26047}{spells\sp_ray_enfeeblement_hit.wav} // spell hit
 {26048}{} // spell struck
 
+// [1003] *[Waves of Fatigue]
+{26060}{} // spell begin
+{26061}{} // spell end
+{26062}{spells\sp_rebuke_undead_end.WAV} // spell effect
+{26063}{} // spell new round
+{26064}{} // spell projectile begin
+{26065}{} // spell projectile end
+{26066}{} // spell projectile in-flight
+{26067}{} // spell hit
+{26068}{} // spell struck
+
+// [1004] *[Waves of Exhaustion]
+{26080}{} // spell begin
+{26081}{} // spell end
+{26082}{spells\sp_rebuke_undead_end.WAV} // spell effect
+{26083}{} // spell new round
+{26084}{} // spell projectile begin
+{26085}{} // spell projectile end
+{26086}{} // spell projectile in-flight
+{26087}{} // spell hit
+{26088}{} // spell struck
+

@@ -3218,8 +3218,16 @@ uint32_t BarbarianAddFatigue(objHndl critter, CondStruct* cond)
 	auto bbnLevel = objects.StatLevelGet(critter, stat_level_barbarian);
 	auto newCond = conds.GetByName("FatigueExhaust");
 	if (bbnLevel < 17) {  //Tireless Rage Support
+		auto fatigued = d20Sys.D20QueryPython(critter, "Fatigued");
 		auto duration = objects.StatLevelGet(critter, stat_level_barbarian) + 5;
-		auto result = conds.AddTo(critter, newCond, { duration, duration, 1, 0, 0, 0 }); //New cond
+		if (!fatigued) {
+			//Use the new fatigue condition
+			auto result = conds.AddTo(critter, newCond, { duration, duration, 0, 1, 0, 0 }); 
+		}
+		else {
+			//Let the Existing fatigue know about adding barbarian fatigue
+			d20Sys.D20SignalPython(critter, "Add Barbarian Fatigue", duration);
+		}
 	}
 
 	return 0;

@@ -2403,7 +2403,7 @@ static PyObject* GetCharacterClassesSet(Filter filter, PyObject* obj, PyObject* 
 	}
 
 	auto result = PyTuple_New(classes.size());
-	for (auto i = 0; i < classes.size(); i++) {
+	for (size_t i = 0; i < classes.size(); i++) {
 		PyTuple_SET_ITEM(result, i, PyInt_FromLong(classes[i]));
 	}
 
@@ -3103,7 +3103,8 @@ static PyObject* PyObjHandle_D20SendSignal(PyObject* obj, PyObject* args) {
 	
 	PyObject* signalId = 0; //int signalId;
 	PyObject* arg = 0;
-	if (!PyArg_ParseTuple(args, "O|O:objhndl.d20_send_signal", &signalId, &arg)) {
+	PyObject* arg2 = 0;
+	if (!PyArg_ParseTuple(args, "O|OO:objhndl.d20_send_signal", &signalId, &arg, &arg2)) {
 		return 0;
 	}
 
@@ -3121,6 +3122,12 @@ static PyObject* PyObjHandle_D20SendSignal(PyObject* obj, PyObject* args) {
 
 	if (arg && PyObjHndl_Check(arg)) {
 		objHndl hndl = PyObjHndl_AsObjHndl(arg);
+
+		if (arg2) {
+			logger->error("Error signal with handle and second argument");
+			return 0;
+		}
+
 		if (isPythonSig)
 			logger->error("Unimplemented D20SignalPython with handle arg");
 		else
@@ -3128,20 +3135,32 @@ static PyObject* PyObjHandle_D20SendSignal(PyObject* obj, PyObject* args) {
 	}
 	
 	else if (arg && PyLong_Check(arg)) {
+		long val2 = 0;
 		auto val = PyLong_AsLong(arg);
+
+		if (arg2) {
+			val2 = PyLong_AsLong(arg2);
+		}
+
 		if (isPythonSig)
-			d20Sys.D20SignalPython(self->handle, dispKey, val, 0);
+			d20Sys.D20SignalPython(self->handle, dispKey, val, val2);
 		else
-			d20Sys.d20SendSignal(self->handle, dispKey, val, 0);
+			d20Sys.d20SendSignal(self->handle, dispKey, val, val2);
 	}
 	
 	else if (arg && PyInt_Check(arg))
 	{
+		int val2 = 0;
 		auto val = PyInt_AsLong(arg);
+
+		if (arg2) {
+			val2 = PyInt_AsLong(arg2);
+		}
+
 		if (isPythonSig)
-			d20Sys.D20SignalPython(self->handle, dispKey, val, 0);
+			d20Sys.D20SignalPython(self->handle, dispKey, val, val2);
 		else
-			d20Sys.d20SendSignal(self->handle, dispKey, val, 0);
+			d20Sys.d20SendSignal(self->handle, dispKey, val, val2);
 	} 
 	
 	else {
