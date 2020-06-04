@@ -44,6 +44,8 @@ def OnGetSaveThrowWill(attachee, args, evt_obj):
 
 def AssassinSneakAttackDice(attachee, args, evt_obj):
 	ass_lvl = attachee.stat_level_get(classEnum)
+	if evt_obj.data1 == classEnum: #class leveling up
+		ass_lvl = ass_lvl + 1 
 	evt_obj.return_val += 1+(ass_lvl-1) /2
 	return 0
 

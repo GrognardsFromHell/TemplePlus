@@ -1,0 +1,5 @@
+name: Daring Outlaw
+flags: 12582912
+prereqs:  
+description: Your rogue and swashbuckler levels stack for the purpose of determining your competence bonus on Reflex saves from the grace class feature and the swashbuckler's dodge bonus to AC.  Your rogue and swashbuckler levels also stack for the purpose of determining your sneak attack bonus damage.
+prereq descr: Sneak attack +2d6, Grace +1
