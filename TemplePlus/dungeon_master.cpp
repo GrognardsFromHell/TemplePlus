@@ -374,6 +374,9 @@ bool DungeonMaster::HandleCloning(const TigMsg & msg){
 }
 
 bool DungeonMaster::HandleEditing(const TigMsg & msg){
+	if (IsMinimized()) {
+		return false;
+	}
 
 	if (msg.type == TigMsgType::MOUSE) {
 		auto &mouseMsg = *(TigMsgMouse*)&msg;

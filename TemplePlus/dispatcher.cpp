@@ -585,6 +585,22 @@ void DispatcherSystem::PackDispatcherIntoObjFields(objHndl objHnd, Dispatcher* d
 	}
 }
 
+int DispatcherSystem::DispatchDispelCheck(objHndl handle, int spellId, int flags, int returnValue)
+{
+	DispIoDispelCheck dispelIOCheck;
+	dispelIOCheck.dispIOType = dispIOTypeDispelCheck;
+	dispelIOCheck.flags = flags;
+	dispelIOCheck.returnVal = returnValue;
+	dispelIOCheck.spellId = spellId;
+	auto dispatcher = objects.GetDispatcher(handle);
+	if (dispatch.dispatcherValid(dispatcher))
+	{
+		DispatcherProcessor(dispatcher, dispTypeDispelCheck, 0, &dispelIOCheck);
+	}
+
+	return 0;
+}
+
 int DispatcherSystem::DispatchAttackBonus(objHndl objHnd, objHndl victim, DispIoAttackBonus* dispIo, enum_disp_type dispType, int key)
 {
 	Dispatcher * dispatcher = objects.GetDispatcher(objHnd);

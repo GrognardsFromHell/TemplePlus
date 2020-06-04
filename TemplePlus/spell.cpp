@@ -975,6 +975,8 @@ void LegacySpellSystem::SetSpontaneousCastingAltNode(objHndl obj, int nodeIdx, S
 			/*mesLine.key = 
 			mesFuncs.GetLine_Safe(*description.descriptionMes, &mesLine);
 			*/
+			if (!protoHandle)
+				continue;
 			radEntry.SetDefaults();
 			radEntry.text = (char*)description.GetDescriptionString(objects.getInt32(protoHandle, obj_f_description));
 			radEntry.d20ActionType = D20A_CAST_SPELL;
