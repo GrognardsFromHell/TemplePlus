@@ -317,6 +317,9 @@ struct LegacyCritterSystem : temple::AddressTable
 	uint32_t IsUndead(objHndl objHnd);
 	uint32_t IsOoze(objHndl objHnd);
 	uint32_t IsSubtypeFire(objHndl objHnd);
+	uint32_t IsSubtypeEarth(objHndl objHnd);
+	uint32_t IsSubtypeAir(objHndl objHnd);
+	uint32_t IsSubtypeWater(objHndl objHnd);
 #pragma endregion
 
 #pragma region Combat

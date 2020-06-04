@@ -106,6 +106,7 @@ struct DispatcherSystem : temple::AddressTable
 	DispIoEffectTooltip* DispIoCheckIoType24(DispIO* dispIo);
 	DispIOBonusListAndSpellEntry* DispIOCheckIoType14(DispIOBonusListAndSpellEntry* dispIo);
 	void PackDispatcherIntoObjFields(objHndl objHnd, Dispatcher* dispatcher);
+	int DispatchDispelCheck(objHndl handle, int spellId, int flags, int returnValue);
 	int DispatchAttackBonus(objHndl objHnd, objHndl victim, DispIoAttackBonus* dispIo, enum_disp_type dispType, int key);
 	int DispatchToHitBonusBase(objHndl objHndCaller, DispIoAttackBonus* dispIo);
 	int DispatchGetSizeCategory(objHndl objHndCaller);
@@ -372,8 +373,26 @@ const int TestSizeOfDispIoObjBonus = sizeof(DispIoObjBonus); // should be 912 (0
 
 struct DispIoDispelCheck : DispIO // type 11
 {
+	// Associated with the flags variable
+	enum DispelSpellType {
+		DispelMagicSingle = 0x1,  //Dispel Magic (area or single)
+		DispelEvil = 0x2,
+		DispelChaos = 0x4,
+		DispelGood = 0x8,
+		DispelLaw = 0x10,
+		DispelAlignment = DispelEvil | DispelChaos | DispelGood | DispelLaw,
+		SliperyMind = 0x20,
+		BreakEnchantment = 0x40,
+		DispelMagic = 0x80,  //Area dispel magic
+		DispelAir = 0x100,
+		DispelEarth = 0x200,
+		DispelFire = 0x400,
+		DispelWater = 0x800,
+		DispelElement = DispelAir | DispelEarth | DispelFire | DispelWater,
+	};
+
 	uint32_t spellId; // of the Dispel Spell (Break Enchantment, Dispel Magic etc.)
-	uint32_t flags;  // 0x80 - Dispel Magic   0x40 - Break Enchantment  0x20 - slippery mind 0x10 - 0x2 DispelAlignment stuff
+	uint32_t flags;  // Dispel Type flag
 	uint32_t returnVal;
 };
 
