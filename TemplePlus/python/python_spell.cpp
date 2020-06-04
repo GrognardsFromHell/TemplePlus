@@ -334,7 +334,11 @@ static PyObject *PySpell_SummonMonsters(PyObject *obj, PyObject *args) {
 		}
 
 	}
-
+	/* If PC summon - strip all factions */
+	else if (party.IsInParty(self->caster)) {
+		auto summonedObj = objSystem->GetObject(newHandle);
+		summonedObj->ClearArray(obj_f_npc_faction);
+	}
 	gameSystems->GetAnim().Interrupt(newHandle, AGP_HIGHEST);	
 	
 	PySpell_UpdatePacket((PyObject*) self);

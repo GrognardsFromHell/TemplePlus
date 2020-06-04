@@ -30,6 +30,7 @@
 #include "temple_functions.h"
 #include "rng.h"
 #include "float_line.h"
+#include "history.h"
 
 namespace py = pybind11;
 
@@ -159,6 +160,19 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		return result;
 	});
 
+	m.def("dispatch_skill", [](objHndl obj, uint32_t skill_enum, BonusList& bonList, objHndl obj2 = objHndl::null, uint32_t flag = 1)-> int {
+		auto skillLevel = dispatch.dispatch1ESkillLevel(obj, (SkillEnum)skill_enum, (BonusList*)&bonList, obj2, flag);
+		return skillLevel;
+	});
+
+	m.def("create_history_type6_opposed_check", [](objHndl performer, objHndl defender, int performerRoll, int defenderRoll
+		, BonusList& performerBonList, BonusList& defenderBonList, uint32_t combatMesLineTitle, uint32_t combatMesLineResult, uint32_t flag)-> int
+	{
+		auto rollHistId = histSys.RollHistoryAddType6OpposedCheck(performer, defender, performerRoll, defenderRoll
+			, (BonusList*)&performerBonList, (BonusList*)&defenderBonList, combatMesLineTitle, combatMesLineResult, flag);
+		return rollHistId;
+	});
+
 	#pragma region Basic Dispatcher stuff
 
 	py::class_<CondStructNew>(m, "ModifierSpec")
@@ -193,6 +207,12 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		})
 		.def("add_aoe_spell_ender", [](CondStructNew &condStr) {
 			condStr.AddAoESpellRemover();
+		})
+		.def("add_spell_teleport_prepare_standard", [](CondStructNew & condStr) {
+			condStr.AddHook(dispTypeD20Signal, DK_SIG_Teleport_Prepare, temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100dbec0));
+		})
+		.def("add_spell_teleport_reconnect_standard", [](CondStructNew& condStr) {
+			condStr.AddHook(dispTypeD20Signal, DK_SIG_Teleport_Reconnect, temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x10262530));
 		})
 		.def("add_spell_dismiss_hook", [](CondStructNew &condStr){
 			condStr.AddHook(dispTypeConditionAdd, DK_NONE, temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100CBD60));

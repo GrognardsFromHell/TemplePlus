@@ -266,7 +266,6 @@ public:
 	static int DruidWildShapeCheck(DispatcherCallbackArgs args);
 	static int DruidWildShapePerform(DispatcherCallbackArgs args);
 	static int DruidWildShapeScale(DispatcherCallbackArgs args);
-	static bool IsIncompatibleWithDruid(objHndl item, objHndl critter);
 
 	static int BardicMusicPlaySound(int bardicSongIdx, objHndl performer, int evtType);
 	static int BardicMusicBeginRound(DispatcherCallbackArgs args);
@@ -312,7 +311,6 @@ public:
 	
 	//Old version of the function to be used within the replacement
 	int (*oldTurnUndeadPerform)(DispatcherCallbackArgs) = nullptr;
-	bool (*oldIsIncompatibleWithDruid)(objHndl item, objHndl critter) = nullptr;
 	
 	void apply() override {
 		logger->info("Replacing Condition-related Functions");
@@ -408,6 +406,9 @@ public:
 		replaceFunction(0x100EE050, GlobalGetArmorClass);
 		replaceFunction(0x100EE280, GlobalToHitBonus);
 		replaceFunction(0x100EE760, GlobalOnDamage);
+
+		replaceFunction(0x100DB690, DispelCheck);
+		replaceFunction(0x100DCF10, DispelAlignmentTouchAttackSignalHandler);
 		
 		// fixes for lack of uniqueAnimID registration
 		replaceFunction(0x100FA060, LayOnHandsPerform);
@@ -479,10 +480,6 @@ public:
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FBB20, classAbilityCallbacks.DruidWildShapeRadialMenu);
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FBC60, classAbilityCallbacks.DruidWildShapeCheck);
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FBCE0, classAbilityCallbacks.DruidWildShapePerform);
-
-
-		// Druid Armor Restriction
-		oldIsIncompatibleWithDruid = replaceFunction<bool(objHndl item, objHndl critter)>(0x10066430, classAbilityCallbacks.IsIncompatibleWithDruid);
 
 		// Fixes Weapon Damage Bonus for ammo items
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FFE90, itemCallbacks.WeaponDamageBonus);
@@ -1835,6 +1832,290 @@ int __cdecl GlobalToHitBonus(DispatcherCallbackArgs args)
 	}
 
 	return 0;
+}
+
+int __cdecl DispelAlignmentTouchAttackSignalHandler(DispatcherCallbackArgs args)
+{
+	int result = 1;
+
+	auto dispIo = dispatch.DispIoCheckIoType6(args.dispIO);
+	auto d20a = reinterpret_cast<D20Actn*>(dispIo->data1);
+
+	if (d20a->d20Caf & D20CAF_HIT)
+	{
+		SpellPacketBody spellPktBody;
+		auto spellId = args.GetCondArg(0);
+		auto resultValue = spellSys.GetSpellPacketBody(spellId, &spellPktBody);
+
+		if (resultValue == 0) {
+			logger->warn("Dispel Alignment Touch attack: error getting spell id packet for spell_packet {}.", spellId);
+			return 0;
+		}
+
+		pySpellIntegration.SpellTrigger(spellId, SpellEvent::AreaOfEffectHit);
+		floatSys.FloatCombatLine(args.objHndCaller, 68);
+
+		//Note:  Purposefully removing the IsPC check, spells on PCs can now be removed on a touch attack if desired
+ 		if (d20Sys.d20QueryWithData(d20a->d20ATarget, DK_QUE_Critter_Has_Condition, conds.GetByName("sp-Summoned"), 0) == 1)
+		{
+			if (spellSys.CheckSpellResistance(&spellPktBody, d20a->d20ATarget) != 1)
+			{
+				bool canDispel = false;
+				const auto spellTypeFlag = args.GetData1();  //Was checking data2, I believe this was what was keeping it from working before
+				const auto targetAlignment = static_cast<Alignment>(objects.StatLevelGet(d20a->d20ATarget, stat_alignment));
+				switch (spellTypeFlag) {
+					case 0x41u: //Air
+						canDispel = critterSys.IsSubtypeAir(d20a->d20ATarget);
+						break;
+					case 0x42u: //Earth
+						canDispel = critterSys.IsSubtypeEarth(d20a->d20ATarget);
+						break;
+					case 0x43u:  //Fire
+						canDispel = critterSys.IsSubtypeFire(d20a->d20ATarget);
+						break;
+					case 0x44:  //Water
+						canDispel = critterSys.IsSubtypeWater(d20a->d20ATarget);
+						break;
+					case 0x45u:  //Dispel Chaos
+						canDispel = ((targetAlignment == ALIGNMENT_CHAOTIC_GOOD) || (targetAlignment == ALIGNMENT_CHAOTIC_NEUTRAL) ||
+							(targetAlignment == ALIGNMENT_CHAOTIC_EVIL));
+						break;
+					case 0x46u:  //Dispel Evil
+						canDispel = ((targetAlignment == ALIGNMENT_NEUTRAL_EVIL) || (targetAlignment == ALIGNMENT_LAWFUL_EVIL) || 
+							(targetAlignment == ALIGNMENT_CHAOTIC_EVIL));
+						break;
+					case 0x47u:  //Dispel Good
+						canDispel = ((targetAlignment == ALIGNMENT_CHAOTIC_GOOD) || (targetAlignment == ALIGNMENT_NEUTRAL_GOOD) ||
+							(targetAlignment == ALIGNMENT_LAWFUL_GOOD));
+						break;
+					case 0x48u: //Dispel Law
+						canDispel = ((targetAlignment == ALIGNMENT_LAWFUL_GOOD) || (targetAlignment == ALIGNMENT_LAWFUL_NEUTRAL) ||
+							(targetAlignment == ALIGNMENT_LAWFUL_EVIL));
+						break;
+					default:
+						break;
+				}
+
+				if (canDispel) {
+					if (spellPktBody.SavingThrow(d20a->d20ATarget, D20STF_NONE)) {
+						floatSys.FloatSpellLine(d20a->d20ATarget, 0x7531u, FloatLineColor::White);
+					}
+					else {
+						floatSys.FloatSpellLine(d20a->d20ATarget, 0x7532u, FloatLineColor::White);
+						critterSys.Kill(d20a->d20ATarget, objHndl::null);
+					}
+				}
+			}
+		}
+		else {
+			int dispelFlags = 0;
+			const auto spellId = args.GetCondArg(0);
+			const auto spellTypeFlag = args.GetData1();  //Was checking data2, I believe this was what was keeping it from working before
+			switch (spellTypeFlag) {
+				case 0x41u: //Air
+					dispelFlags = DispIoDispelCheck::DispelAir;
+					break;
+				case 0x42u: //Earth
+					dispelFlags = DispIoDispelCheck::DispelEarth;
+					break;
+				case 0x43u:  //Fire
+					dispelFlags = DispIoDispelCheck::DispelFire;
+					break;
+				case 0x44:  //Water
+					dispelFlags = DispIoDispelCheck::DispelWater;
+					break;
+				case 0x45u:  //Dispel Chaos
+					dispelFlags = DispIoDispelCheck::DispelChaos;
+					break;
+				case 0x46u:  //Dispel Evil
+					dispelFlags = DispIoDispelCheck::DispelEvil;
+					break;
+				case 0x47u: //Dispel Good
+					dispelFlags = DispIoDispelCheck::DispelGood;
+					break;
+				case 0x48u: //Dispel Law
+					dispelFlags = DispIoDispelCheck::DispelLaw;
+					break;
+				default:
+					break;
+			}
+
+			dispatch.DispatchDispelCheck(d20a->d20ATarget, spellId, dispelFlags, 1);
+		}
+
+		// There is code in remove spell that keeps spells from being removed in most signal handlers.
+		// This is to fool it into removing the spell
+		auto tempKey = args.dispKey;
+		args.dispKey = DK_SIG_Concentration_Broken;
+		args.RemoveSpell();
+		args.dispKey = tempKey;
+		conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
+	}
+	else {
+		floatSys.FloatCombatLine(args.objHndCaller, 69);  //Missed
+		result = 0;
+	}
+
+	return result;
+}
+
+int __cdecl DispelCheck(DispatcherCallbackArgs args)
+{
+	int result = 1;  
+
+	auto dispIo = dispatch.DispIOCheckIoType11((DispIoDispelCheck*)args.dispIO);
+
+	// Slippery mind
+	if (dispIo->flags & DispIoDispelCheck::SliperyMind) {
+		floatSys.FloatSpellLine(args.objHndCaller, 20000, FloatLineColor::White); // a spell has expired
+		args.RemoveSpell();
+		args.RemoveSpellMod();
+		return result;
+	}
+
+	SpellPacketBody dispellingSpell;
+	auto packetResult = spellSys.GetSpellPacketBody(dispIo->spellId, &dispellingSpell);
+	if (packetResult > 0) {
+		SpellPacketBody spellToDispel;
+		auto spellId = args.GetCondArg(0);
+		packetResult = spellSys.GetSpellPacketBody(spellId, &spellToDispel);
+
+		if (packetResult > 0) {
+			const bool breakEnchantment = (dispIo->flags & DispIoDispelCheck::BreakEnchantment);
+
+			//Previously && spellToDispel.spellKnownSlotLevel < 4
+			const bool dispelMagicArea = (dispIo->flags & DispIoDispelCheck::DispelMagic) && (dispIo->returnVal > 0);
+
+			//Previously && spellToDispel.spellKnownSlotLevel < 4
+			const bool dispelMagicSingle = (!(dispIo->flags & DispIoDispelCheck::DispelMagic) && (dispIo->flags & DispIoDispelCheck::DispelMagicSingle));
+
+			const bool dispelAlignment = ((dispIo->flags & DispIoDispelCheck::DispelAlignment) && dispIo->returnVal > 0);
+			const bool dispelElement = ((dispIo->flags & DispIoDispelCheck::DispelElement) && dispIo->returnVal > 0);
+
+			bool bValidSchool = true;
+
+			//Enforce correct spell schools for break enchantment (note:  curses are handled elsewhere)
+			if (breakEnchantment) {
+				SpellEntry dispelEntry(spellToDispel.spellEnum);
+				if (dispelEntry.spellSchoolEnum != School_Enchantment && dispelEntry.spellSchoolEnum != School_Transmutation) {
+					bValidSchool = false;
+				}
+			}
+
+			if (dispelMagicArea || (breakEnchantment && bValidSchool) || dispelMagicSingle || dispelAlignment || dispelElement) {
+				bool removeEffect = false;
+
+				// Handle dispel alignment (it should not have a caster check)
+                // SRD:  Third, with a touch you can automatically dispel any one enchantment spell cast by an evil creature or any one evil spell.
+				if (dispelAlignment) {
+					const auto casterAlignment = static_cast<Alignment>(objects.StatLevelGet(spellToDispel.caster, stat_alignment));
+					SpellEntry dispelEntry(spellToDispel.spellEnum);
+					if (dispIo->flags & DispIoDispelCheck::DispelEvil) {  //Dispel Evil
+						removeEffect = dispelEntry.spellDescriptorBitmask & D20SPELL_DESCRIPTOR_EVIL;
+						if (!removeEffect && (dispelEntry.spellSchoolEnum == School_Enchantment)) {
+							removeEffect = ((casterAlignment == ALIGNMENT_NEUTRAL_EVIL) || (casterAlignment == ALIGNMENT_LAWFUL_EVIL) ||
+								(casterAlignment == ALIGNMENT_CHAOTIC_EVIL));
+						}
+					}
+					else if (dispIo->flags & DispIoDispelCheck::DispelChaos) {  //Dispel Chaos
+						removeEffect = dispelEntry.spellDescriptorBitmask & D20SPELL_DESCRIPTOR_CHAOTIC;
+						if (!removeEffect && (dispelEntry.spellSchoolEnum == School_Enchantment)) {
+							removeEffect = ((casterAlignment == ALIGNMENT_CHAOTIC_GOOD) || (casterAlignment == ALIGNMENT_CHAOTIC_NEUTRAL) ||
+								(casterAlignment == ALIGNMENT_CHAOTIC_EVIL));
+						}
+					}
+					else if (dispIo->flags & DispIoDispelCheck::DispelGood) {  //Dispel Good
+						removeEffect = dispelEntry.spellDescriptorBitmask & D20SPELL_DESCRIPTOR_GOOD;
+						if (!removeEffect && (dispelEntry.spellSchoolEnum == School_Enchantment)) {
+							removeEffect = ((casterAlignment == ALIGNMENT_CHAOTIC_GOOD) || (casterAlignment == ALIGNMENT_NEUTRAL_GOOD) ||
+								(casterAlignment == ALIGNMENT_LAWFUL_GOOD));
+						}
+					}
+					else if (dispIo->flags & DispIoDispelCheck::DispelLaw) {  //Dispel Law
+						removeEffect = dispelEntry.spellDescriptorBitmask & D20SPELL_DESCRIPTOR_LAWFUL;
+						if (!removeEffect && (dispelEntry.spellSchoolEnum == School_Enchantment)) {
+							removeEffect = ((casterAlignment == ALIGNMENT_LAWFUL_EVIL) || (casterAlignment == ALIGNMENT_LAWFUL_NEUTRAL) ||
+								(casterAlignment == ALIGNMENT_LAWFUL_GOOD));
+						}
+					}
+				}
+				else if (dispelElement) {
+					SpellEntry dispelEntry(spellToDispel.spellEnum);
+					if (dispIo->flags & DispIoDispelCheck::DispelAir) {  //Dispel Air
+						removeEffect = dispelEntry.spellDescriptorBitmask & D20SPELL_DESCRIPTOR_AIR;
+						if (!removeEffect && (dispelEntry.spellSchoolEnum == School_Enchantment)) {
+							removeEffect = critterSys.IsSubtypeAir(dispellingSpell.caster);
+						}
+					}
+					if (dispIo->flags & DispIoDispelCheck::DispelFire) {  //Dispel Fire
+						removeEffect = dispelEntry.spellDescriptorBitmask & D20SPELL_DESCRIPTOR_FIRE;
+						if (!removeEffect && (dispelEntry.spellSchoolEnum == School_Enchantment)) {
+							removeEffect = critterSys.IsSubtypeFire(dispellingSpell.caster);
+						}
+					}
+					if (dispIo->flags & DispIoDispelCheck::DispelWater) {  //Dispel Water
+						removeEffect = dispelEntry.spellDescriptorBitmask & D20SPELL_DESCRIPTOR_WATER;
+						if (!removeEffect && (dispelEntry.spellSchoolEnum == School_Enchantment)) {
+							removeEffect = critterSys.IsSubtypeWater(dispellingSpell.caster);
+						}
+					}
+					if (dispIo->flags & DispIoDispelCheck::DispelEarth) {  //Dispel Earth
+						removeEffect = dispelEntry.spellDescriptorBitmask & D20SPELL_DESCRIPTOR_EARTH;
+						if (!removeEffect && (dispelEntry.spellSchoolEnum == School_Enchantment)) {
+							removeEffect = critterSys.IsSubtypeEarth(dispellingSpell.caster);
+						}
+					}
+				} else {
+					int casterLevel = dispellingSpell.casterLevel;
+
+					//Enforce max bonus (new)
+					if (breakEnchantment) {  // Break Enchantment (+15 limit)
+						casterLevel = std::min(casterLevel, 15);
+					}
+					else if (dispellingSpell.spellEnum == 133) {  //Dispel Magic (+10 limit)
+						casterLevel = std::min(casterLevel, 10);
+					}
+					else if (dispellingSpell.spellEnum == 202) {  //Greater Dispel Magic (+20 limit)
+						casterLevel = std::min(casterLevel, 20);
+					}
+
+					BonusList casterLvlBonlist;
+					casterLvlBonlist.AddBonus(casterLevel, 0, 203);
+					
+					auto mesLine = spellSys.GetSpellMesline(dispellingSpell.spellEnum);
+					const bool dispellSuccess = (spellSys.DispelRoll(dispellingSpell.caster, &casterLvlBonlist, 0,
+						spellToDispel.casterLevel + 11, const_cast<char*>(mesLine), nullptr) >= 0);
+					const bool sameCaster = (args.objHndCaller == dispellingSpell.caster);
+					removeEffect = dispellSuccess || sameCaster;
+				}
+				if (removeEffect) {
+					
+					if (dispelMagicArea || dispelAlignment || dispelElement) {
+						dispIo->returnVal--;  //Mark one spell removed charge
+					}
+
+					std::string floatText = " [";
+					floatText += spellSys.GetSpellMesline(spellToDispel.spellEnum);
+					floatText += ']';
+					floatSys.FloatSpellLine(spellToDispel.caster, 20002, FloatLineColor::White, nullptr, floatText.c_str());
+					args.RemoveSpell();
+					args.RemoveSpellMod();
+				}
+				else {
+					floatSys.FloatSpellLine(spellToDispel.caster, 20003, FloatLineColor::White);
+					spellSys.PlayFizzle(args.objHndCaller);
+				}
+			}
+		}
+		else {
+			logger->warn("Dispel Check: error getting spell id packet for spell_packet {} for spell being dispelled.", spellId);
+		}
+	}
+	else {
+		logger->warn("Dispel Check: error getting spell id packet for spell_packet {} for dispelling spell .", dispIo->spellId);
+	}
+
+	return result;
 }
 
 int GlobalGetArmorClass(DispatcherCallbackArgs args) // the basic AC value (initial value and some misc. global modifiers)
@@ -5798,17 +6079,6 @@ int ClassAbilityCallbacks::DruidWildShapeScale(DispatcherCallbackArgs args){
 	return 0;
 }
 
-bool ClassAbilityCallbacks::IsIncompatibleWithDruid(objHndl item, objHndl critter)
-{
-	bool result = condFuncReplacement.oldIsIncompatibleWithDruid(item, critter);  //Just call the old version now
-	
-	if (result) {
-		auto res = dispatch.DispatchIgnoreDruidOathCheck(critter, item);
-		if (res) return false;
-	}
-
-	return result;
-}
 
 
 // ************************************

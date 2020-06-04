@@ -15,6 +15,8 @@ def	OnSpellEffect( spell ):
 
 	target_item.obj.condition_add_with_args( 'sp-Moment of Prescience', spell.id, spell.duration, 0 )
 	target_item.partsys_id = game.particles( 'sp-Moment of Prescience', target_item.obj )
+	
+	spell.spell_end( spell.id )
 
 def OnBeginRound( spell ):
 	print "Moment of Prescience OnBeginRound"

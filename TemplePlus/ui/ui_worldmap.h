@@ -16,10 +16,12 @@ public:
 	const std::string &GetName() const override;
 
 	void Show(int mode);
+	void Hide();
 
 	// Called by the dialog scripts to travel to an area based on a dialog choice
 	void TravelToArea(int area);
 	bool NeedToClearEncounterMap();
+	
 private:
 	std::unique_ptr<UiWorldmapImpl> mImpl;
 };

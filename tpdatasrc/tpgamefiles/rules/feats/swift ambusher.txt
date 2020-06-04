@@ -1,0 +1,5 @@
+name: Swift Ambusher
+flags: 12582912
+prereqs:  
+description:  Your rogue and scout levels stack for the purpose of determining the extra damage and bonus to Armor Class granted when skirmishing.
+prereq descr: Sneak attack +1d6, Skirmish +1d6

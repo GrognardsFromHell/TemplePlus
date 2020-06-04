@@ -32,4 +32,8 @@ class PythonModifier(tpdp.ModifierSpec):
 	def AddSpellTouchAttackDischargeRadialMenuHook(self):
 		#Adds the standard discharge radial menu
 		self.add_spell_touch_attack_discharge_radial_menu_hook()
-		
+	def AddSpellTeleportPrepareStandard(self):
+		self.add_spell_teleport_prepare_standard()
+	def AddSpellTeleportReconnectStandard(self):
+		self.add_spell_teleport_reconnect_standard()
+

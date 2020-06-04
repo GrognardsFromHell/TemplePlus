@@ -97,6 +97,8 @@ def SwashbucklerGraceReflexBonus(attachee, args, evt_obj):
 		return 0
 
 	classLvl = attachee.stat_level_get(classEnum)
+	classBonusLvls = attachee.d20_query("Swashbuckler Grace Level Bonus")
+	classLvl = classLvl + classBonusLvls
 	if classLvl < 11:
 		bonval = 1
 	elif classLvl < 20:
@@ -157,6 +159,8 @@ def SwashbucklerDodgeACBonus(attachee, args, evt_obj):
 			return 0
 	
 	classLvl = attachee.stat_level_get(classEnum)
+	classBonusLvls = attachee.d20_query("Swashbuckler Dodge Level Bonus")
+	classLvl = classLvl + classBonusLvls	
 	bonval = classLvl / 5
 	evt_obj.bonus_list.add(bonval, 8, 137 ) #Dodge bonus
 	args.set_args_from_obj(0, attacker)

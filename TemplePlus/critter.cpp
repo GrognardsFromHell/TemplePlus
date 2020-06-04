@@ -1384,6 +1384,21 @@ uint32_t LegacyCritterSystem::IsSubtypeFire(objHndl objHnd)
 	return IsCategorySubtype(objHnd, mc_subtype_fire);
 }
 
+uint32_t LegacyCritterSystem::IsSubtypeAir(objHndl objHnd)
+{
+	return IsCategorySubtype(objHnd, mc_subtype_air);
+}
+
+uint32_t LegacyCritterSystem::IsSubtypeEarth(objHndl objHnd)
+{
+	return IsCategorySubtype(objHnd, mc_subtype_earth);
+}
+
+uint32_t LegacyCritterSystem::IsSubtypeWater(objHndl objHnd)
+{
+	return IsCategorySubtype(objHnd, mc_subtype_water);
+}
+
 float LegacyCritterSystem::GetReach(objHndl obj, D20ActionType actType) {
 
 	float naturalReach = (float)objects.getInt32(obj, obj_f_critter_reach);

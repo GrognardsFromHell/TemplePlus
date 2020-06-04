@@ -34,8 +34,8 @@
 
 // [1000] *[Moment of Prescience]
 {26000}{} // spell begin
-{26001}{spells\sp_guidance_end.wav} // spell end
-{26002}{spells\sp_guidance.wav} // spell effect
+{26001}{spells\sp_arcane_eye.WAV} // spell end
+{26002}{spells\sp_arcane_eye_end.WAV} // spell effect
 {26003}{} // spell new round
 {26004}{} // spell projectile begin
 {26005}{} // spell projectile end

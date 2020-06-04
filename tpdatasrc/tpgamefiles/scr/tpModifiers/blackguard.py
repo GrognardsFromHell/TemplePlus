@@ -44,6 +44,9 @@ def OnGetSaveThrowWill(attachee, args, evt_obj):
 def BlackguardSneakAttackDice(attachee, args, evt_obj):
 	blg_lvl = attachee.stat_level_get(classEnum)
 	palLvl = attachee.stat_level_get(stat_level_paladin)
+	
+	if evt_obj.data1 == classEnum: #class leveling up
+		blg_lvl = blg_lvl + 1 
 
 	if blg_lvl < 4 and palLvl < 5:
 		return 0
@@ -53,9 +56,12 @@ def BlackguardSneakAttackDice(attachee, args, evt_obj):
 	return 0
 
 def BlackguardRebukeUndeadLevel(attachee, args, evt_obj):
+	level_up = 0
 	if evt_obj.data1 != 1: # rebuke undead
 		return 0
-	blg_lvl = attachee.stat_level_get(classEnum)
+	if evt_obj.data2 == classEnum: #class leveling up (0 if not called on level up)
+		level_up = 1
+	blg_lvl = attachee.stat_level_get(classEnum) + level_up
 	if blg_lvl < 3:
 		return 0
 	evt_obj.return_val += blg_lvl - 2
