@@ -1432,6 +1432,54 @@ static PyObject* PyObjHandle_ConditionAddWithArgs(PyObject* obj, PyObject* args)
 	return PyInt_FromLong(result);
 }
 
+static PyObject* PyObjHandle_ConditionsGet(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+
+	auto dispatcher = objects.GetDispatcher(self->handle);
+	if (!dispatcher)
+		Py_RETURN_NONE;
+
+	long kind = 0;
+	if (PyTuple_GET_SIZE(args) > 0) {
+		PyObject* arg = PyTuple_GET_ITEM(args, 0);
+		if (PyInt_Check(arg)) {
+			kind = PyInt_AsLong(arg);
+		}
+	}
+
+	CondNode* node = dispatcher->conditions;
+	if (kind == 1) {
+		node = dispatcher->permanentMods;
+	} else
+	if (kind == 2) {
+		node = dispatcher->itemConds;
+	}
+	if (!node)
+		Py_RETURN_NONE;
+
+	auto list = PyList_New(0);
+	while (node) {
+		auto cname = PyString_FromString(node->condStruct->condName);
+		auto tuple = PyTuple_New(2);
+		PyTuple_SET_ITEM(tuple, 0, cname);
+		if (node->condStruct->numArgs) {
+			auto tupleArgs = PyTuple_New(node->condStruct->numArgs);
+			for (auto i = 0; i < node->condStruct->numArgs; i++)
+			{
+				PyTuple_SET_ITEM(tupleArgs, i, PyInt_FromSize_t(node->args[i]));
+			}
+			PyTuple_SET_ITEM(tuple, 1, tupleArgs);
+		}
+		
+		PyList_Append(list, tuple);
+		Py_DecRef(tuple);
+		
+		node = node->nextCondNode;
+	}
+	return list;
+}
+
+
 static PyObject* PyObjHandle_FavoredEnemy(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle)
@@ -3405,6 +3453,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "concealed_set", PyObjHandle_ConcealedSet, METH_VARARGS, NULL },
 	{ "condition_add_with_args", PyObjHandle_ConditionAddWithArgs, METH_VARARGS, NULL },
 	{ "condition_add", PyObjHandle_ConditionAddWithArgs, METH_VARARGS, NULL },
+	{ "conditions_get", PyObjHandle_ConditionsGet, METH_VARARGS, NULL },
 	{ "container_flags_get", GetFlags<obj_f_container_flags>, METH_VARARGS, NULL },
 	{ "container_flag_set", SetFlag<obj_f_container_flags>, METH_VARARGS, NULL },
 	{ "container_flag_unset", ClearFlag<obj_f_container_flags>, METH_VARARGS, NULL },
