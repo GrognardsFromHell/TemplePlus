@@ -268,6 +268,7 @@ public:
 	static int DruidWildShapeScale(DispatcherCallbackArgs args);
 
 	static int BardicMusicPlaySound(int bardicSongIdx, objHndl performer, int evtType);
+	static int BardicMusicOnSequence(DispatcherCallbackArgs args);
 	static int BardicMusicBeginRound(DispatcherCallbackArgs args);
 	static int BardMusicRadial(DispatcherCallbackArgs args);
 	static int BardMusicCheck(DispatcherCallbackArgs args);
@@ -494,6 +495,8 @@ public:
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FE820, classAbilityCallbacks.BardicMusicBeginRound);
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100EA960, classAbilityCallbacks.BardicMusicGreatnessTakingTempHpDamage);
 		replaceFunction<int(int, objHndl, int)>(0x100FE4F0, classAbilityCallbacks.BardicMusicPlaySound);
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100FE9B0, classAbilityCallbacks.BardicMusicOnSequence);
+
 				
 		writeHex(0x102E6608 + 3*sizeof(int), "03" ); // fixes the Competence effect tooltip (was pointing to Inspire Courage)
 
@@ -6507,6 +6510,62 @@ int ClassAbilityCallbacks::BardicMusicPlaySound(int bardicSongIdx, objHndl perfo
 	}
 
 	return sound.PlaySoundAtObj(soundID, performer);
+}
+
+int ClassAbilityCallbacks::BardicMusicOnSequence(DispatcherCallbackArgs args)
+{
+ 	const auto bmType = static_cast<BardicMusicSongType>(args.GetCondArg(1));
+	if (bmType != 0)
+	{
+		//Signal:  DK_SIG_Sequence
+		GET_DISPIO(dispIoTypeSendSignal, DispIoD20Signal);
+		bool interruptMusic = false;
+
+		auto actSeq = reinterpret_cast<ActnSeq*>(dispIo->data1);
+
+		if (bmType == BM_FASCINATE) {
+			for (int i=0; i < actSeq->d20ActArrayNum; i++) {
+				switch (actSeq->d20ActArray[i].d20ActType) {
+					case D20A_UNSPECIFIED_MOVE:
+					case D20A_5FOOTSTEP:
+					case D20A_MOVE:
+					case D20A_DOUBLE_MOVE:
+					case D20A_RUN:
+					case D20A_ATTACK_OF_OPPORTUNITY:
+					case D20A_BARDIC_MUSIC:
+						break;
+
+					default:
+						interruptMusic = true;
+						break;
+				}
+			}
+		} else {
+			for (int i = 0; i < actSeq->d20ActArrayNum; i++) {
+				if (actSeq->d20ActArray[i].d20ActType == D20A_CAST_SPELL) {
+					const auto allowCastingDuringSong = d20Sys.D20QueryPython(args.objHndCaller, "Allow Casting During Song");
+					if (allowCastingDuringSong == 0) {
+						interruptMusic = true;
+					}
+				}
+			}
+		}
+
+		if (interruptMusic)
+		{
+			args.SetCondArg(1, 0);
+			const auto system = args.GetCondArg(5);
+			auto &particles = gameSystems->GetParticleSys();
+			particles.End(system);
+			auto target = args.GetCondArgObjHndl(3);
+			if (target) {
+				d20Sys.d20SendSignal(target, DK_SIG_Bardic_Music_Completed, 0, 0);
+			}
+			BardicMusicPlaySound(bmType, args.objHndCaller, 1);  //End sound
+		}
+	}
+
+	return 0;
 }
 
 #pragma endregion
