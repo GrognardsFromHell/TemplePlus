@@ -1464,7 +1464,7 @@ static PyObject* PyObjHandle_ConditionsGet(PyObject* obj, PyObject* args) {
 		PyTuple_SET_ITEM(tuple, 0, cname);
 		if (node->condStruct->numArgs) {
 			auto tupleArgs = PyTuple_New(node->condStruct->numArgs);
-			for (auto i = 0; i < node->condStruct->numArgs; i++)
+			for (unsigned int i = 0; i < node->condStruct->numArgs; i++)
 			{
 				PyTuple_SET_ITEM(tupleArgs, i, PyInt_FromSize_t(node->args[i]));
 			}
@@ -2451,7 +2451,7 @@ static PyObject* GetCharacterClassesSet(Filter filter, PyObject* obj, PyObject* 
 	}
 
 	auto result = PyTuple_New(classes.size());
-	for (auto i = 0; i < classes.size(); i++) {
+	for (size_t i = 0; i < classes.size(); i++) {
 		PyTuple_SET_ITEM(result, i, PyInt_FromLong(classes[i]));
 	}
 
