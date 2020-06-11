@@ -6541,10 +6541,10 @@ int ClassAbilityCallbacks::BardicMusicOnSequence(DispatcherCallbackArgs args)
 				}
 			}
 		} else {
-			for (int i = 0; i < actSeq->d20ActArrayNum; i++) {
-				if (actSeq->d20ActArray[i].d20ActType == D20A_CAST_SPELL) {
-					const auto allowCastingDuringSong = d20Sys.D20QueryPython(args.objHndCaller, "Allow Casting During Song");
-					if (allowCastingDuringSong == 0) {
+			const auto allowCastingDuringSong = d20Sys.D20QueryPython(args.objHndCaller, "Allow Casting During Song");
+			if (allowCastingDuringSong == 0) {
+				for (int i = 0; i < actSeq->d20ActArrayNum; i++) {
+					if (actSeq->d20ActArray[i].d20ActType == D20A_CAST_SPELL) {
 						interruptMusic = true;
 					}
 				}

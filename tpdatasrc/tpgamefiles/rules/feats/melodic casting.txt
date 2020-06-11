@@ -1,5 +1,5 @@
 name: Melodic Casting
 flags: 12582912
 prereqs: 
-description: Whenever a Concentration check would be required to cast a spell or use a spell-like ability (such as when you cast defensively or are distracted or injured while casting), you can make a Perform check instead. In addition, you can cast spells and activate magic items by command word or spell completion while using a bardic music ability. Bardic music abilities that require concentration still take a standard action to perform.
+description: Whenever a Concentration check would be required to cast a spell or use a spell-like ability, you can make a Perform check instead. In addition, you can cast spells and activate magic items by command word or spell completion while using a bardic music ability.
 prereq descr: Perform 4 Ranks, Spellcraft 4 Ranks, Bardic Music Class Feature
