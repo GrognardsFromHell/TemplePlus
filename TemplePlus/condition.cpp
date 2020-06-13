@@ -6524,7 +6524,7 @@ int ClassAbilityCallbacks::PaladinDivineGrace(DispatcherCallbackArgs args) {
 
 	if (!d20Sys.d20Query(args.objHndCaller, DK_QUE_IsFallenPaladin)) {
 		const auto chaScore = objects.StatLevelGet(args.objHndCaller, stat_charisma);
-		const auto chaBonus = max(0, (chaScore - 10) / 2);
+		const auto chaBonus = std::max(0, (chaScore - 10) / 2);  //A penalty was incorrectly allowed here before
 		dispIo->bonlist.AddBonus(chaBonus, 0, 197);
 	}
 
@@ -6535,7 +6535,7 @@ int ClassAbilityCallbacks::SmiteEvilToHitBonus(DispatcherCallbackArgs args) {
 	GET_DISPIO(dispIOTypeAttackBonus, DispIoAttackBonus);
 
 	const auto chaScore = objects.StatLevelGet(args.objHndCaller, stat_charisma);
-	const auto chaBonus = max(0, (chaScore - 10) / 2);
+	const auto chaBonus = std::max(0, (chaScore - 10) / 2);  //A penalty was incorrectly allowed here before
 	dispIo->bonlist.AddBonusWithDesc(chaBonus, 0, 114, feats.GetFeatName(FEAT_SMITE_EVIL));
 
 	return 0;
