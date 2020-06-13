@@ -284,6 +284,9 @@ public:
 	static int BardicMusicHeroicsAC(DispatcherCallbackArgs args);
 	static int BardicMusicSuggestionFearQuery(DispatcherCallbackArgs args);
 
+	static int PaladinDivineGrace(DispatcherCallbackArgs args);
+	static int SmiteEvilToHitBonus(DispatcherCallbackArgs args);
+
 	static int SneakAttackDamage(DispatcherCallbackArgs args);
 } classAbilityCallbacks;
 
@@ -494,6 +497,10 @@ public:
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FE820, classAbilityCallbacks.BardicMusicBeginRound);
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100EA960, classAbilityCallbacks.BardicMusicGreatnessTakingTempHpDamage);
 		replaceFunction<int(int, objHndl, int)>(0x100FE4F0, classAbilityCallbacks.BardicMusicPlaySound);
+		
+		// Paladin
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100F9BA0, classAbilityCallbacks.PaladinDivineGrace);
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100EAFD0, classAbilityCallbacks.SmiteEvilToHitBonus);
 				
 		writeHex(0x102E6608 + 3*sizeof(int), "03" ); // fixes the Competence effect tooltip (was pointing to Inspire Courage)
 
@@ -6511,6 +6518,28 @@ int ClassAbilityCallbacks::BardicMusicPlaySound(int bardicSongIdx, objHndl perfo
 
 #pragma endregion
 
+
+int ClassAbilityCallbacks::PaladinDivineGrace(DispatcherCallbackArgs args) {
+	GET_DISPIO(dispIOTypeSavingThrow, DispIoSavingThrow);
+
+	if (!d20Sys.d20Query(args.objHndCaller, DK_QUE_IsFallenPaladin)) {
+		const auto chaScore = objects.StatLevelGet(args.objHndCaller, stat_charisma);
+		const auto chaBonus = max(0, (chaScore - 10) / 2);
+		dispIo->bonlist.AddBonus(chaBonus, 0, 197);
+	}
+
+	return 0;
+}
+
+int ClassAbilityCallbacks::SmiteEvilToHitBonus(DispatcherCallbackArgs args) {
+	GET_DISPIO(dispIOTypeAttackBonus, DispIoAttackBonus);
+
+	const auto chaScore = objects.StatLevelGet(args.objHndCaller, stat_charisma);
+	const auto chaBonus = max(0, (chaScore - 10) / 2);
+	dispIo->bonlist.AddBonusWithDesc(chaBonus, 0, 114, feats.GetFeatName(FEAT_SMITE_EVIL));
+
+	return 0;
+}
 
 
 int ClassAbilityCallbacks::SneakAttackDamage(DispatcherCallbackArgs args) {
