@@ -2,6 +2,7 @@ from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
 import race_utils
+import char_class_utils
 
 ###################################################
 
