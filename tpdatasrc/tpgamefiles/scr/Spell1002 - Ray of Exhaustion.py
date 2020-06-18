@@ -58,11 +58,9 @@ def OnEndProjectile( spell, projectile, index_of_target ):
 				if target_item.obj.saving_throw_spell( spell.dc, D20_Save_Fortitude, D20STD_F_NONE, spell.caster, spell.id ):
 					# saving throw successful
 					target_item.obj.condition_add_with_args("FatigueExhaust", 0, spell.duration, 0, 1, 0, 0)
-					target_item.obj.float_text_line("Fatigued")
 				else:
 					# saving throw unsuccessful
 					target_item.obj.condition_add_with_args("FatigueExhaust", 0, spell.duration, spell.duration, 1, 0, 0)
-					target_item.obj.float_text_line("Exhausted")
 	else:
 		# missed
 		target_item.obj.float_mesfile_line( 'mes\\spell.mes', 30007 )
