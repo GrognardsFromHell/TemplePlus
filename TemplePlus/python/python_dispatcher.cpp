@@ -259,18 +259,14 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
 		})
 		.def("remove_spell_mod", &DispatcherCallbackArgs::RemoveSpellMod)
+		.def("remove_spell_with_key", [](DispatcherCallbackArgs& args, int dispKey) {
+			// Remove a spell using a different key to work around the mess that is removeSpell
+			auto newArgs = args;
+			newArgs.dispKey = dispKey;
+			newArgs.RemoveSpell();
+		})
 		.def("remove_spell", [](DispatcherCallbackArgs& args) {
-			const bool bRemoveTouchAttack = (args.dispKey == DK_SIG_TouchAttack) && (args.dispType == dispTypeD20Signal);
-
-			//Force spell removal from a python touch attach handler
-			if (bRemoveTouchAttack) {
-				auto newArgs = args;
-				newArgs.dispKey = DK_SIG_Concentration_Broken;
-				newArgs.RemoveSpell();
-			}
-			else {
-				args.RemoveSpell();
-			}
+		   args.RemoveSpell();
 		})
 		;
 

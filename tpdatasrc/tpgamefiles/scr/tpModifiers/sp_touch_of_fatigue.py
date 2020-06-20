@@ -55,7 +55,7 @@ def TouchOfFatigueTouchAttack(attachee, args, evt_obj):
 		target.condition_add_with_args("FatigueExhaust", 0, duration, 0, 1, 0, 0)
 	
 	args.condition_remove()
-	args.remove_spell()
+	args.remove_spell_with_key(EK_S_Concentration_Broken)
 	return 0
 	
 def TouchOfFatigueSpellCast(attachee, args, evt_obj):
