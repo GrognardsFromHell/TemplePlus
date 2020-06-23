@@ -340,6 +340,7 @@ int BarbarianRageStatBonus(DispatcherCallbackArgs args);
 int BarbarianRageSaveBonus(DispatcherCallbackArgs args);
 int BarbarianRageACPenalty(DispatcherCallbackArgs args);
 int BarbarianDamageResistance(DispatcherCallbackArgs args);
+uint32_t BarbarianAddFatigue(objHndl critter, CondStruct* cond);
 
 int NonlethalDamageRadial(DispatcherCallbackArgs args);
 int DealNormalDamageCallback(DispatcherCallbackArgs args);

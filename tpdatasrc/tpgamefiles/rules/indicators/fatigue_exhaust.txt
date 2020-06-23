@@ -1,0 +1,5 @@
+ID_string: FATIGUE_EXHAUST
+effect_type: 1
+texture_file: art\interface\Player_Conditions\Ailments\Barbarian Fatigue.tga
+help_topic: TAG_ROOT
+tooltip_base_text:

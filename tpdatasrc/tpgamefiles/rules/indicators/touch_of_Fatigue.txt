@@ -1,0 +1,5 @@
+ID_string: TOUCH_OF_FATIGUE
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Touch of Fatigue.tga
+help_topic: TAG_ROOT
+tooltip_base_text:Touch of Fatigue
