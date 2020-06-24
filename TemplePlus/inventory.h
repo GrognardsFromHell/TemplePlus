@@ -224,6 +224,8 @@ struct InventorySystem : temple::AddressTable
 
 	int GetSoundIdForItemEvent(objHndl item, objHndl wielder, objHndl tgt, int eventType);
 
+	void UiOpenContainer(objHndl triggerer, objHndl container);
+
 	InventorySystem()
 	{
 		rebase(GetSubstituteInventory, 0x1007F5B0);

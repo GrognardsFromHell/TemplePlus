@@ -1360,7 +1360,7 @@ int AiSystem::TargetThreatened(AiTactic* aiTac)
 				return FALSE;
 			}
 		}
-		aiTac->target = 0;
+		aiTac->target = 0; //should it override it?
 		//hooked_print_debug_message(" no target found. Attempting Target Closest instead.");
 		logger->info("no target found. ");
 		//TargetClosest(aiTac);
@@ -1373,14 +1373,14 @@ int AiSystem::TargetThreatened(AiTactic* aiTac)
 
 	return FALSE;
 }
-BOOL AiSystem::UsePotion(AiTactic * aiTac){
+BOOL AiSystem::UsePotion(AiTactic* aiTac) {
 
 	auto performer = aiTac->performer;
 	auto hpCur = objects.StatLevelGet(performer, stat_hp_current);
 	auto hpMax = objects.StatLevelGet(performer, stat_hp_max);
 	auto hpPct = hpCur * 1.0 / hpMax;
 
-	auto objInventory =	inventory.GetInventory(performer);
+	auto objInventory = inventory.GetInventory(performer);
 	if (!objInventory.size())
 		return FALSE;
 
@@ -1416,7 +1416,7 @@ BOOL AiSystem::UsePotion(AiTactic * aiTac){
 			if (spellSys.SpellHasAiType(spEnum, AiSpellType::ai_action_heal_light) && hpCur >= 25)
 				continue;
 		}
-		
+
 		auto doUseItemAction = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl, objHndl)>(0x10098C90);
 		if (doUseItemAction(performer, performer, itemHandle))
 			return TRUE;
@@ -1426,6 +1426,26 @@ BOOL AiSystem::UsePotion(AiTactic * aiTac){
 	return FALSE;
 }
 ;
+
+
+BOOL AiSystem::UseItem(AiTactic* aiTac) {
+
+	objHndl item = objHndl::null;
+	if (aiTac->field24 && aiTac->field4) {
+		uint64_t h1 = (uint64_t)aiTac->field24 << 32 | aiTac->field4;
+		item = h1;
+		if (!item || !objSystem->IsValidHandle(item))
+			item = objHndl::null;
+	}
+	if (!item) return TRUE;
+
+	auto doUseItemAction = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl, objHndl)>(0x10098C90);
+	if (doUseItemAction(aiTac->performer, aiTac->performer, item))
+		return TRUE;
+
+	return TRUE;
+}
+
 
 int AiSystem::Approach(AiTactic* aiTac)
 {
@@ -1733,7 +1753,7 @@ BOOL AiSystem::ImprovePosition(AiTactic* aiTac){
 
 	auto performError = actSeqSys.ActionSequenceChecksWithPerformerLocation();
 
-	if (addToSeqError != AEC_OK || performError != AEC_OK)
+	if (addToSeqError != AEC_OK || performError != AEC_OK )
 	{
 		logger->info("ImprovePosition: Unspecified Move failed. AddToSeqError: {}  Location Checks Error: {}", addToSeqError, performError);
 		actSeqSys.ActionSequenceRevertPath(initialActNum);
@@ -1976,49 +1996,55 @@ void AiSystem::StrategyTabLineParseTactic(AiStrategy* aiStrat, const char* tacNa
 		aiStrat->field54[aiStrat->numTactics] = 0;
 		aiStrat->spellsKnown[aiStrat->numTactics].spellEnum = -1;
 		if (*spellString)
-			spell->ParseSpellSpecString(&aiStrat->spellsKnown[aiStrat->numTactics], (char *)spellString);
+			spell->ParseSpellSpecString(&aiStrat->spellsKnown[aiStrat->numTactics], (char*)spellString);
 		else
-		if (*middleString) {
-			/**
-				middleString can have next values:
-				- string, like "G_BAE066DE_A0A2_4078_8AF0_F0A26A5434FA", e.g. id.ToString(), which will look up for objHndl and save to arg0, arg1
-				- uint64, e.g. locXY
-				- uint32 uint32, e.g. locx locy
-
-				Parsing result will assign two uin32: SpellStoreData.pad2 and SpellStoreData.pad3 to be treated as arg0 and arg1.
-
-				SpellStoreData.pad2 will hold arg0, which will be copied to AiTactic.field4 and used in tactic func like AiTargetObj
-				SpellStoreData.pad3 will hold arg1, which will be copied to AiTactic.field24 and used in tactic func like AiTargetObj
-
-				usage of arg0, arg1:
-				- locXY (locx, locy)
-				- handle (lower, upper)
-			*/
-			uint64_t val = _atoi64(middleString);
-			if (val) {
-				aiStrat->spellsKnown[aiStrat->numTactics].pad2 = (uint32_t)val;
-				auto secondStr = strchr(middleString, ' ');
-				if (secondStr) {
-					aiStrat->spellsKnown[aiStrat->numTactics].pad3 = atoi(secondStr);
-				}
-				else {
-					aiStrat->spellsKnown[aiStrat->numTactics].pad3 = (uint32_t)(val >> 32);
-				}
-			}
-			else {
-				objHndl found = objSystem->FindObjectByIdStr(format("{}", middleString));
-				if (found) {
-					aiStrat->spellsKnown[aiStrat->numTactics].pad2 = found.GetHandleLower();
-					aiStrat->spellsKnown[aiStrat->numTactics].pad3 = found.GetHandleUpper();
-				}
-			}
-		}
+			StrategyTabLineParseTacticMiddleString(aiStrat, aiStrat->numTactics, middleString);
 		++aiStrat->numTactics;
 		return;
 	}
 	logger->warn("Error: No Such Tactic {} for Strategy {}", tacName, aiStrat->name);
 	
 	return;
+}
+
+void AiSystem::StrategyTabLineParseTacticMiddleString(AiStrategy* aiStrat, int idx, const char* middleString)
+{
+	if (*middleString) {
+		/**
+			middleString can have next values:
+			- string, like "G_BAE066DE_A0A2_4078_8AF0_F0A26A5434FA", e.g. id.ToString(), which will look up for objHndl and save to arg0, arg1
+			- uint64, e.g. locXY
+			- uint32 uint32, e.g. locx locy
+
+			Parsing result will assign two uin32: SpellStoreData.pad2 and SpellStoreData.pad3 to be treated as arg0 and arg1.
+
+			SpellStoreData.pad2 will hold arg0, which will be copied to AiTactic.field4 and used in tactic func like AiTargetObj
+			SpellStoreData.pad3 will hold arg1, which will be copied to AiTactic.field24 and used in tactic func like AiTargetObj
+
+			usage of arg0, arg1:
+			- locXY (locx, locy)
+			- handle (lower, upper)
+		*/
+		uint64_t val = _atoi64(middleString);
+		if (val) {
+			aiStrat->spellsKnown[idx].pad2 = (uint32_t)val;
+			auto secondStr = strchr(middleString, ' ');
+			if (secondStr) {
+				aiStrat->spellsKnown[idx].pad3 = atoi(secondStr);
+			}
+			else {
+				aiStrat->spellsKnown[idx].pad3 = (uint32_t)(val >> 32);
+			}
+		}
+		else 
+		if (objSystem) {
+			objHndl found = objSystem->FindObjectByIdStr(format("{}", middleString));
+			if (found) {
+				aiStrat->spellsKnown[idx].pad2 = found.GetHandleLower();
+				aiStrat->spellsKnown[idx].pad3 = found.GetHandleUpper();
+			}
+		}
+	}
 }
 
 void AiSystem::ParseStrategyLine(AiStrategy & newStrategy, const std::vector< string>& strings)
@@ -2336,6 +2362,18 @@ void AiSystem::RegisterNewAiTactics()
 	aiTacticDefsNew[n].aiFunc = _AiPythonAction;
 	memset(aiTacticDefsNew[n].name, 0, 100);
 	sprintf(aiTacticDefsNew[n].name, "python action");
+
+	n++;
+	aiTacticDefsNew[n].name = new char[100];
+	aiTacticDefsNew[n].aiFunc = _AiD20Action;
+	memset(aiTacticDefsNew[n].name, 0, 100);
+	sprintf(aiTacticDefsNew[n].name, "d20 action");
+	
+	n++;
+	aiTacticDefsNew[n].name = new char[100];
+	aiTacticDefsNew[n].aiFunc = _AiUseItem;
+	memset(aiTacticDefsNew[n].name, 0, 100);
+	sprintf(aiTacticDefsNew[n].name, "use item");
 }
 
 int AiSystem::GetStrategyIdx(const char* stratName) const
@@ -2655,6 +2693,7 @@ int AiSystem::AiTargetObj(AiTactic* aiTac)
 	if (!handle || !objSystem->IsValidHandle(handle)) 
 		return FALSE;
 
+	logger->info("AiTargetObj: \t {} set target from {} to {}", description.getDisplayName(aiTac->performer), description.getDisplayName(aiTac->target), description.getDisplayName(handle));
 	aiTac->target = handle;
 	return FALSE;
 }
@@ -2667,7 +2706,9 @@ int AiSystem::AiTotalDefence(AiTactic* aiTac)
 	d20Sys.GlobD20ActnSetTypeAndData1(D20A_TOTAL_DEFENSE, 0);
 	d20Sys.GlobD20ActnSetTarget(objHndl::null, 0);
 	actSeqSys.ActionAddToSeq();
-	if (actSeqSys.ActionSequenceChecksWithPerformerLocation() != AEC_OK) {
+	auto result = actSeqSys.ActionSequenceChecksWithPerformerLocation();
+	logger->info("AiTotalDefence: \t {} attempting total defence => {}", description.getDisplayName(aiTac->performer), result);
+	if (result != AEC_OK) {
 		actSeqSys.ActionSequenceRevertPath(initialActNum);
 		return FALSE;
 	}
@@ -2693,6 +2734,27 @@ int AiSystem::AiPythonAction(AiTactic* aiTac)
 	return TRUE;
 }
 
+int AiSystem::AiD20Action(AiTactic* aiTac)
+{
+	auto d20type = (D20ActionType)aiTac->field4;
+	if (!d20type)
+		return FALSE;
+
+	auto data1 = aiTac->field24;
+	int initialActNum = (*actSeqSys.actSeqCur)->d20ActArrayNum;
+	actSeqSys.curSeqReset(aiTac->performer);
+	d20Sys.GlobD20ActnInit();
+	d20Sys.GlobD20ActnSetTypeAndData1(d20type, data1);
+	d20Sys.GlobD20ActnSetTarget(aiTac->target, 0);
+	actSeqSys.ActionAddToSeq();
+	auto result = actSeqSys.ActionSequenceChecksWithPerformerLocation();
+	logger->info("AiD20Action: \t {} attempting {} on {} => {}", description.getDisplayName(aiTac->performer), d20type, description.getDisplayName(aiTac->target), result);
+	if (result != AEC_OK) {
+		actSeqSys.ActionSequenceRevertPath(initialActNum);
+		return FALSE;
+	}
+	return TRUE;
+}
 
 int AiSystem::Default(AiTactic* aiTac)
 {
@@ -2751,7 +2813,6 @@ int AiSystem::Default(AiTactic* aiTac)
 		d20Sys.GlobD20ActnSetTarget(aiTac->target, 0);
 		addToSeqError = (ActionErrorCode)actSeqSys.ActionAddToSeq();
 		performError = actSeqSys.ActionSequenceChecksWithPerformerLocation();
-		
 		if (addToSeqError != AEC_OK || performError != AEC_OK )
 		{
 			logger->info("AI Default: Unspecified Move failed. AddToSeqError: {}  Location Checks Error: {}", addToSeqError, performError);
@@ -3491,6 +3552,16 @@ unsigned int _AiTotalDefence(AiTactic* aiTac)
 unsigned int _AiPythonAction(AiTactic* aiTac)
 {
 	return aiSys.AiPythonAction(aiTac);
+}
+
+unsigned int _AiD20Action(AiTactic* aiTac)
+{
+	return aiSys.AiD20Action(aiTac);
+}
+
+unsigned int _AiUseItem(AiTactic* aiTac)
+{
+	return aiSys.UseItem(aiTac);
 }
 
 class AiReplacements : public TempleFix

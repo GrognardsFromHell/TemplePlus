@@ -49,6 +49,8 @@ struct HistoryEntryType2 : HistoryEntry
 	uint32_t dc;
 	BonusList bonlist;
 	uint32_t pad[100];
+
+	HistoryEntryType2(objHndl obj, uint32_t dicePacked, int rollResult, int dc, int skillIdx, BonusList* Bonlist);
 };
 
 struct HistoryEntryType3 : HistoryEntry
@@ -257,6 +259,14 @@ int HistorySystem::CreateRollHistoryLineFromMesfile(int historyMesLine, objHndl 
 	return addresses.CreateRollHistoryLineFromMesfile(historyMesLine, obj, obj2);
 }
 
+int HistorySystem::RollHistoryType2Add(objHndl obj, uint32_t dicePacked, int rollResult, int dc, int skillIdx, BonusList* bonlist)
+{
+	HistoryEntryType2 hist(obj, dicePacked, rollResult, dc, skillIdx, bonlist);
+	auto id = RollHistoryAdd(&hist);
+	AppendHistoryId(id);
+	return id;
+}
+
 int HistorySystem::RollHistoryType3Add(objHndl handle, int dc, SavingThrowType saveType, int flags, uint32_t dicePacked, int d20RollRes, BonusList * bonlist)
 {
 	HistoryEntryType3 hist(handle, dicePacked, d20RollRes, dc, saveType, flags,bonlist);
@@ -412,4 +422,16 @@ HistoryEntryType3::HistoryEntryType3(objHndl handle, uint32_t dicePacked, int ro
 	this->dicePacked = dicePacked;
 	this->rollResult = rollResult;
 	this->bonlist = *bonlistIn;
+}
+
+HistoryEntryType2::HistoryEntryType2(objHndl obj, uint32_t dicePacked, int rollResult, int dc, int skillIdx, BonusList* Bonlist)
+{
+	this->histType = 2;
+	this->obj = obj;
+	this->obj2 = objHndl::null;
+	this->dc = dc;
+	this->skillIdx = skillIdx;
+	this->dicePacked = dicePacked;
+	this->rollResult = rollResult;
+	this->bonlist = *Bonlist;
 }

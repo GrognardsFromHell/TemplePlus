@@ -233,6 +233,7 @@ struct AiSystem : temple::AddressTable
 	BOOL TargetFriendHurt(AiTactic* aiTac);
 	int TargetThreatened(AiTactic * aiTac);
 	BOOL UsePotion(AiTactic *aiTac);
+	BOOL UseItem(AiTactic* aiTac);
 
 	unsigned int Asplode(AiTactic * aiTactic);
 	unsigned int WakeFriend(AiTactic* aiTac);
@@ -242,9 +243,11 @@ struct AiSystem : temple::AddressTable
 	int AiTargetObj(AiTactic* aiTac);
 	int AiTotalDefence(AiTactic* aiTac);
 	int AiPythonAction(AiTactic* aiTac);
+	int AiD20Action(AiTactic* aiTac);
 
 	// Init
 	void StrategyTabLineParseTactic(AiStrategy*, const char * tacName, const char * middleString, const char* spellString);
+	void StrategyTabLineParseTacticMiddleString(AiStrategy* aiStrat, int idx, const char* middleString);
 	void ParseStrategyLine(AiStrategy& stratOut, const std::vector<string>& strings);
 	int StrategyTabLineParser(const TigTabParser* tabFile, int n, char ** strings);
 	void InitCustomStrategies();
@@ -295,3 +298,5 @@ unsigned int _AiStop(AiTactic* aiTac);
 unsigned int _AiTargetObj(AiTactic* aiTac);
 unsigned int _AiTotalDefence(AiTactic* aiTac);
 unsigned int _AiPythonAction(AiTactic* aiTac);
+unsigned int _AiD20Action(AiTactic* aiTac);
+unsigned int _AiUseItem(AiTactic* aiTac);

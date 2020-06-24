@@ -244,6 +244,11 @@ static PyObject* PyGame_GetCombatTurn(PyObject* obj, void*) {
 	return PyInt_FromLong(result);
 }
 
+static PyObject* PyGame_CharUIDisplayType(PyObject* obj, void*) {
+	auto result = uiSystems->GetChar().GetDisplayType();
+	return PyInt_FromLong((uint32_t)result);
+}
+
 
 static PyGetSetDef PyGameGettersSetters[] = {
 	{"party_alignment", PyGame_GetPartyAlignment, NULL, NULL },
@@ -266,6 +271,7 @@ static PyGetSetDef PyGameGettersSetters[] = {
 	{"counters", PyGame_GetCounters, NULL, NULL},
 	{"encounter_queue", PyGame_GetEncounterQueue, NULL, NULL},
 	{"combat_turn", PyGame_GetCombatTurn, NULL, NULL},
+	{"char_ui_display_type", PyGame_CharUIDisplayType, NULL, NULL},
 	{NULL, NULL, NULL, NULL}
 };
 

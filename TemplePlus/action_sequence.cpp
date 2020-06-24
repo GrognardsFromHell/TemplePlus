@@ -3309,7 +3309,7 @@ int ActionSequenceSystem::UnspecifiedAttackAddToSeqRangedMulti(ActnSeq* actSeq, 
 	if (weapon)
 	{
 		WeaponAmmoType ammoType = (WeaponAmmoType)objects.getInt32(weapon, obj_f_weapon_ammo_type);
-		if (ammoType > wat_dagger && ammoType <= wat_bottle) // thrown weapons   TODO: should this include daggers??
+		if (ammoType >= wat_dagger && ammoType <= wat_bottle) // thrown weapons
 		{
 			d20a->d20Caf |= D20CAF_THROWN;
 			if (ammoType != wat_shuriken && !feats.HasFeatCount(d20a->d20APerformer, FEAT_QUICK_DRAW))
@@ -3404,6 +3404,10 @@ int ActionSequenceSystem::UnspecifiedAttackAddToSeq(D20Actn* d20a, ActnSeq* actS
 		}
 		d20aCopy = *d20a;
 		d20aCopy.d20ActType = inventory.IsThrowingWeapon(weapon) != 0 ? D20A_THROW : D20A_STANDARD_RANGED_ATTACK;
+		if (d20aCopy.d20ActType == D20A_THROW)
+		{
+			d20aCopy.d20Caf |= D20CAF_THROWN;
+		}
 		int result = TurnBasedStatusUpdate(&d20aCopy, &tbStatCopy);
 		if (!result)
 		{

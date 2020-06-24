@@ -6,6 +6,7 @@
 #include "mapsystem.h"
 #include "map/sector.h"
 #include <config/config.h>
+#include "gamesystems\objects\objsystem.h"
 
 enum esd_load_result : uint32_t {
 	PARTIALLY_EXPLORED = 0,
@@ -150,7 +151,11 @@ static class MapSystemHooks : public TempleFix {
 
 		static void (__cdecl*orgCheckFogForCritter)(objHndl , int) = replaceFunction<void(__cdecl)(objHndl, int)>(0x100327A0, [](objHndl handle, int idx){
 
-			orgCheckFogForCritter(handle, idx);
+			if (objSystem->IsValidHandle(handle))
+			{
+				orgCheckFogForCritter(handle, idx);
+			} else
+				logger->info("orgCheckFogForCritter encountered null handle!!");
 		});
 
 	}

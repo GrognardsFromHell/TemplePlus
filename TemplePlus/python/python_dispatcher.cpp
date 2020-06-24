@@ -810,6 +810,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 	py::class_<DispIoD20ActionTurnBased, DispIO>(m, "EventObjD20Action", "Used for D20 Action Checks/Performance events and obtaining number of attacks (base/bonus/natural)")
 		.def_readwrite("return_val", &DispIoD20ActionTurnBased::returnVal)
 		.def_readwrite("d20a", &DispIoD20ActionTurnBased::d20a)
+		.def_readwrite("bonus_list", &DispIoD20ActionTurnBased::bonlist)
 		.def_readwrite("turnbased_status", &DispIoD20ActionTurnBased::tbStatus);
 
 	py::class_<DispIoMoveSpeed, DispIO>(m, "EventObjMoveSpeed", "Used for getting move speed, and also for model size scaling with Temple+.")

@@ -2310,6 +2310,37 @@ static PyObject* PyObjHandle_AnimGoalPushAttack(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(gameSystems->GetAnim().PushAttackAnim(self->handle, tgt, -1, animIdx, isCrit, isSecondary));
 }
 
+static PyObject* PyObjHandle_AnimGoalPushUseObject(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	objHndl tgt = objHndl::null;
+	AnimGoalType goalType = ag_use_object;
+	locXY tgtLoc = LocAndOffsets::null.location;
+	int someFlag = 1;
+	if (!PyArg_ParseTuple(args, "O&|iLi:objhndl.anim_goal_use_object", &ConvertObjHndl, &tgt, &goalType, &tgtLoc, &someFlag)) {
+		return 0;
+	}
+	gameSystems->GetAnim().PushForMouseTarget(self->handle, ag_use_object, tgt, tgtLoc, objHndl::null, someFlag);
+	return PyInt_FromLong(1);
+}
+
+static PyObject* PyObjHandle_ContainerOpenUI(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	objHndl tgt = objHndl::null;
+	if (!PyArg_ParseTuple(args, "O&:objhndl.container_open_ui", &ConvertObjHndl, &tgt)) {
+		return 0;
+	}
+	inventory.UiOpenContainer(self->handle, tgt);
+	return PyInt_FromLong(1);
+}
+
 static PyObject* PyObjHandle_AnimGoalGetNewId(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -3280,6 +3311,77 @@ static PyObject* PyObjHandle_Unconceal(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(result);
 }
 
+static PyObject* PyObjHandle_UseItem(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	objHndl item = objHndl::null;
+	objHndl target = objHndl::null;
+	if (!PyArg_ParseTuple(args, "O&|O&:objhndl.use_item", &ConvertObjHndl, &item, &ConvertObjHndl, &target)) {
+		return 0;
+	}
+	if (!target) target = self->handle;
+	if (!item)
+	{
+		PyErr_SetString(PyExc_ValueError, "item cannot be null!");
+		return PyInt_FromLong(0);
+	}
+
+	auto itemObj = objSystem->GetObject(item);
+	if (!itemObj->GetSpellArray(obj_f_item_spell_idx).GetSize())
+	{
+		PyErr_SetString(PyExc_ValueError, "item has no spell data!");
+		return PyInt_FromLong(0);
+	}
+	auto spData = itemObj->GetSpell(obj_f_item_spell_idx, 0);
+
+	actSeqSys.TurnBasedStatusInit(self->handle);
+	int initialActNum = (*actSeqSys.actSeqCur)->d20ActArrayNum;
+	SpellPacketBody spellPktBody; 
+	LocAndOffsets loc;
+	{
+		spellSys.spellPacketBodyReset(&spellPktBody);
+		spellPktBody.spellEnum = spData.spellEnum;
+		spellPktBody.spellEnumOriginal = spData.spellEnum;
+		spellPktBody.caster = self->handle;
+		spellPktBody.casterLevel = spData.spellLevel;
+		spellSys.SpellPacketSetCasterLevel(&spellPktBody);
+
+		SpellEntry spellEntry;
+		spellSys.spellRegistryCopy(spData.spellEnum, &spellEntry);
+		PickerArgs pickArgs;
+		{
+			spellSys.pickerArgsFromSpellEntry(&spellEntry, &pickArgs, self->handle, spellPktBody.casterLevel);
+			pickArgs.result = { 0, };
+			pickArgs.flagsTarget = (UiPickerFlagsTarget)(
+				(uint64_t)pickArgs.flagsTarget | (uint64_t)pickArgs.flagsTarget & UiPickerFlagsTarget::LosNotRequired
+				- (uint64_t)pickArgs.flagsTarget & UiPickerFlagsTarget::Range
+				);
+			objects.loc->getLocAndOff(target, &loc);
+			pickArgs.SetSingleTgt(target);
+		}
+		spellSys.ConfigSpellTargetting(&pickArgs, &spellPktBody);
+	}
+	d20Sys.GlobD20ActnInit();
+	d20Sys.GlobD20ActnSetTypeAndData1(D20A_USE_POTION, 0);
+	actSeqSys.ActSeqCurSetSpellPacket(&spellPktBody, 1);
+	D20SpellData d20SpellData;
+	d20Sys.D20ActnSetSpellData(&d20SpellData, spellPktBody.spellEnum, spellPktBody.spellClass, spellPktBody.casterLevel, 0xFF, 0);
+	d20Sys.GlobD20ActnSetSpellData(&d20SpellData);
+	d20Sys.GlobD20ActnSetTarget(target, &loc);
+	ActionErrorCode result = (ActionErrorCode)actSeqSys.ActionAddToSeq();
+	while (!result) {
+		result = (ActionErrorCode)actSeqSys.ActionSequenceChecksWithPerformerLocation();
+		if (result != AEC_OK) break;
+		actSeqSys.sequencePerform();
+		return PyInt_FromLong(result);
+	}
+	actSeqSys.ActionSequenceRevertPath(initialActNum);
+	actSeqSys.ActSeqSpellReset();
+	return PyInt_FromLong(result);
+}
+
 static PyObject* PyObjHandle_PendingToMemorized(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -3450,6 +3552,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "anim_callback", PyObjHandle_AnimCallback, METH_VARARGS, NULL },
 	{ "anim_goal_interrupt", PyObjHandle_AnimGoalInterrupt, METH_VARARGS, NULL },
 	{ "anim_goal_push_attack", PyObjHandle_AnimGoalPushAttack, METH_VARARGS, NULL },
+	{ "anim_goal_use_object", PyObjHandle_AnimGoalPushUseObject, METH_VARARGS, NULL },
 	{ "anim_goal_get_new_id", PyObjHandle_AnimGoalGetNewId, METH_VARARGS, NULL },
 	{ "apply_projectile_particles", PyObjHandle_ApplyProjectileParticles, METH_VARARGS, NULL },
 	{ "apply_projectile_hit_particles", PyObjHandle_ApplyProjectileHitParticles, METH_VARARGS, NULL },
@@ -3477,6 +3580,8 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "container_flag_set", SetFlag<obj_f_container_flags>, METH_VARARGS, NULL },
 	{ "container_flag_unset", ClearFlag<obj_f_container_flags>, METH_VARARGS, NULL },
 	{ "container_toggle_open", PyObjHandle_ContainerToggleOpen, METH_VARARGS, NULL },
+	{ "container_open_ui", PyObjHandle_ContainerOpenUI, METH_VARARGS, NULL },
+	
 	{ "critter_flags_get", GetFlags<obj_f_critter_flags>, METH_VARARGS, NULL },
 	{ "critter_flag_set", SetFlag<obj_f_critter_flags>, METH_VARARGS, NULL },
 	{ "critter_flag_unset", ClearFlag<obj_f_critter_flags>, METH_VARARGS, NULL },
@@ -3650,6 +3755,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"trip_check", PyObjHandle_TripCheck, METH_VARARGS, NULL },
 
 	{ "unconceal", PyObjHandle_Unconceal, METH_VARARGS, NULL },
+	{ "use_item", PyObjHandle_UseItem, METH_VARARGS, NULL },
 
 	{NULL, NULL, NULL, NULL}
 };

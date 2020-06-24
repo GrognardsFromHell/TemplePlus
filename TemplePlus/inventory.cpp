@@ -26,6 +26,7 @@ struct InventorySystemAddresses : temple::AddressTable
 	int(__cdecl*GetParent)(objHndl, objHndl*);
 	int(__cdecl*ItemInsertGetLocation)(objHndl item, objHndl receiver, int* idxOut, objHndl bag, char flags);
 	void(__cdecl*InsertAtLocation)(objHndl item, objHndl receiver, int itemInsertLocation);
+	void(__cdecl* UiOpenContainer_0)(objHndl triggerer, objHndl container);
 	ItemErrorCode(__cdecl*TransferWithFlags)(objHndl item, objHndl receiver, int invenIdx, int flags, objHndl bag);
 	InventorySystemAddresses()
 	{
@@ -34,7 +35,7 @@ struct InventorySystemAddresses : temple::AddressTable
 		rebase(InsertAtLocation,		0x100694B0);
 		rebase(ItemGetAdvanced,			0x1006A810);
 		rebase(TransferWithFlags,0x1006B040);
-
+		rebase(UiOpenContainer_0, 0x1014DEB0);
 		
 	}
 } addresses;
@@ -495,6 +496,14 @@ int InventorySystem::IsThrowingWeapon(objHndl weapon)
 		if (ammoType > wat_dagger && ammoType <= wat_bottle) // thrown weapons   TODO: should this include daggers??
 		{
 			return 1;
+		}
+		if (ammoType == wat_dagger)
+		{
+			WeaponFlags weaponFlags = (WeaponFlags)objects.getInt32(weapon, obj_f_weapon_flags);
+			if (weaponFlags & OWF_DEFAULT_THROWS)
+			{
+				return 1;
+			}
 		}
 	}
 	return 0;
@@ -2104,6 +2113,11 @@ const std::string & InventorySystem::GetAttachBone(objHndl handle)
 int InventorySystem::GetSoundIdForItemEvent(objHndl item, objHndl wielder, objHndl tgt, int eventType)
 {
 	return temple::GetRef<int(__cdecl)(objHndl, objHndl, objHndl, int)>(0x1006E0B0)(item, wielder, tgt, eventType);
+}
+
+void InventorySystem::UiOpenContainer(objHndl triggerer, objHndl container)
+{
+	addresses.UiOpenContainer_0(triggerer, container);
 }
 
 int InventorySystem::InvIdxForSlot(EquipSlot slot){
