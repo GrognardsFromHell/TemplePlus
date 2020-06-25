@@ -35,12 +35,17 @@ def OnGetSaveThrowWill(attachee, args, evt_obj):
 	value = char_class_utils.SavingThrowLevel(classEnum, attachee, D20_Save_Will)
 	evt_obj.bonus_list.add(value, 0, 137)
 	return 0
+	
+def OnQueryFindTraps(attachee, args, evt_obj):
+	evt_obj.return_val = 1
+	return 0
 
 classSpecObj = PythonModifier(GetConditionName(), 0)
 classSpecObj.AddHook(ET_OnToHitBonusBase, EK_NONE, OnGetToHitBonusBase, ())
 classSpecObj.AddHook(ET_OnSaveThrowLevel, EK_SAVE_FORTITUDE, OnGetSaveThrowFort, ())
 classSpecObj.AddHook(ET_OnSaveThrowLevel, EK_SAVE_REFLEX, OnGetSaveThrowReflex, ())
 classSpecObj.AddHook(ET_OnSaveThrowLevel, EK_SAVE_WILL, OnGetSaveThrowWill, ())
+classSpecObj.AddHook(EK_Q_Critter_Can_Find_Traps, EK_NONE, OnQueryFindTraps, ())
 
 ## Scout Specific Feats
 
