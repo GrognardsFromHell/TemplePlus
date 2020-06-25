@@ -223,6 +223,9 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def("add_spell_touch_attack_discharge_radial_menu_hook", [](CondStructNew &condStr) {
 			condStr.AddHook(dispTypeRadialMenuEntry, DK_NONE, temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100C3450));
 		})
+		.def("add_spell_dispel_check_standard", [](CondStructNew& condStr) {
+			condStr.AddHook(dispTypeDispelCheck, DK_NONE, DispelCheck);
+		})
 		;
 
 	py::class_<DispIO>(m, "EventObj", "The base Event Object")

@@ -132,6 +132,7 @@ momentOfPrescience.AddHook(ET_OnToHitBonus2, EK_NONE, MomentOfPrescienceAttackBo
 momentOfPrescience.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, MomentOfPrescienceHasSpellActive, ())
 momentOfPrescience.AddHook(ET_OnD20Signal, EK_S_Killed, MomentOfPrescienceKilled, ())
 momentOfPrescience.AddHook(ET_OnD20Signal, EK_S_Spell_End, MomentOfPrescienceSpellEnd, ())
+momentOfPrescience.AddSpellDispelCheckStandard()
 momentOfPrescience.AddSpellTeleportPrepareStandard()
 momentOfPrescience.AddSpellTeleportReconnectStandard()
 momentOfPrescience.AddSpellCountdownStandardHook()
