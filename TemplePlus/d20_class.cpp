@@ -76,9 +76,12 @@ class D20ClassHooks : public TempleFix
 			auto result = objects.GetModFromStatLevel(intScore);
 			if (raceEnum == race_human) { // todo: generalize with a dispatch
 				auto critter = chargen.GetEditedChar();
-				auto subRace = objects.StatLevelGet(critter, stat_subrace);
-				if (subRace == 0) {
-					result++;
+				if (critter) {
+					//Allow the bonus only for humans without a subrace (keeps aasimar and other plane touched from getting the bonus)
+					auto subRace = objects.StatLevelGet(critter, stat_subrace);
+					if (subRace == 0) {
+						result++;
+					}
 				}
 			}
 			result += d20ClassSys.GetSkillPts(classEnum);
