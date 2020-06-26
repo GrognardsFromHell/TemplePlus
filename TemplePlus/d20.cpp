@@ -2594,10 +2594,11 @@ ActionErrorCode D20ActionCallbacks::PerformCastItemSpell(D20Actn* d20a){
 		return AEC_OK;
 
 	auto caster = d20a->d20APerformer;
+	auto casterObj = gameSystems->GetObj().GetObject(caster);
 
 	auto useMagicDeviceBase = critterSys.SkillBaseGet(d20a->d20APerformer, SkillEnum::skill_use_magic_device);
 	int resultDeltaFromDc;
-	if (!inventory.IsIdentified(item) && itemObj->type != obj_t_food){ // blind use of magic item
+	if (casterObj->type == obj_t_pc && !inventory.IsIdentified(item) && itemObj->type != obj_t_food){ // blind use of magic item
 		if (itemObj->type == obj_t_scroll || !useMagicDeviceBase)
 			return AEC_CANNOT_CAST_SPELLS;
 		auto umdRoll = skillSys.SkillRoll(d20a->d20APerformer, SkillEnum::skill_use_magic_device, 25, &resultDeltaFromDc, 1);
@@ -2610,7 +2611,6 @@ ActionErrorCode D20ActionCallbacks::PerformCastItemSpell(D20Actn* d20a){
 			}
 		}
 	}
-
 
 	// check if item requires knowing the spell
 	if  (itemObj->type == obj_t_scroll || (itemFlags & OIF_NEEDS_SPELL ) && (itemObj->type == obj_t_generic || itemObj->type == obj_t_weapon)){

@@ -300,3 +300,4 @@ unsigned int _AiTotalDefence(AiTactic* aiTac);
 unsigned int _AiPythonAction(AiTactic* aiTac);
 unsigned int _AiD20Action(AiTactic* aiTac);
 unsigned int _AiUseItem(AiTactic* aiTac);
+unsigned int _AiCastOrigin(AiTactic* aiTac);

@@ -2292,7 +2292,11 @@ static PyObject* PyObjHandle_AnimGoalInterrupt(PyObject* obj, PyObject* args) {
 	if (!self->handle) {
 		return PyInt_FromLong(0);
 	}
-	gameSystems->GetAnim().Interrupt(self->handle, AGP_HIGHEST, false);
+	AnimGoalPriority priority = AGP_HIGHEST;
+	if (!PyArg_ParseTuple(args, "|i:objhndl.anim_goal_interrupt", &priority)) {
+		return 0;
+	}
+	gameSystems->GetAnim().Interrupt(self->handle, priority, false);
 	Py_RETURN_NONE;
 }
 
@@ -3321,6 +3325,7 @@ static PyObject* PyObjHandle_UseItem(PyObject* obj, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "O&|O&:objhndl.use_item", &ConvertObjHndl, &item, &ConvertObjHndl, &target)) {
 		return 0;
 	}
+	logger->info("Use Item {} on {}...", description.getDisplayName(item), description.getDisplayName(target), description.getDisplayName(self->handle));
 	if (!target) target = self->handle;
 	if (!item)
 	{
@@ -3329,6 +3334,7 @@ static PyObject* PyObjHandle_UseItem(PyObject* obj, PyObject* args) {
 	}
 
 	auto itemObj = objSystem->GetObject(item);
+	auto itemIdx = itemObj->GetInt32(obj_f_item_inv_location);
 	if (!itemObj->GetSpellArray(obj_f_item_spell_idx).GetSize())
 	{
 		PyErr_SetString(PyExc_ValueError, "item has no spell data!");
@@ -3367,16 +3373,19 @@ static PyObject* PyObjHandle_UseItem(PyObject* obj, PyObject* args) {
 	d20Sys.GlobD20ActnSetTypeAndData1(D20A_USE_POTION, 0);
 	actSeqSys.ActSeqCurSetSpellPacket(&spellPktBody, 1);
 	D20SpellData d20SpellData;
-	d20Sys.D20ActnSetSpellData(&d20SpellData, spellPktBody.spellEnum, spellPktBody.spellClass, spellPktBody.casterLevel, 0xFF, 0);
+	d20Sys.D20ActnSetSpellData(&d20SpellData, spellPktBody.spellEnum, spellPktBody.spellClass, spellPktBody.casterLevel, itemIdx, 0);
 	d20Sys.GlobD20ActnSetSpellData(&d20SpellData);
 	d20Sys.GlobD20ActnSetTarget(target, &loc);
 	ActionErrorCode result = (ActionErrorCode)actSeqSys.ActionAddToSeq();
-	while (!result) {
+	if (result == AEC_OK)
+	{
 		result = (ActionErrorCode)actSeqSys.ActionSequenceChecksWithPerformerLocation();
-		if (result != AEC_OK) break;
-		actSeqSys.sequencePerform();
-		return PyInt_FromLong(result);
+		if (result == AEC_OK) {
+			actSeqSys.sequencePerform();
+			return PyInt_FromLong(result);
+		}
 	}
+	logger->info("Use Item FAILED (due to {}) {} on {}...", result, description.getDisplayName(item), description.getDisplayName(target), description.getDisplayName(self->handle));
 	actSeqSys.ActionSequenceRevertPath(initialActNum);
 	actSeqSys.ActSeqSpellReset();
 	return PyInt_FromLong(result);
