@@ -81,6 +81,7 @@ struct LegacyCombatSystem : temple::AddressTable {
 	static bool IsUnarmed(objHndl handle);
 	bool DisarmCheck(objHndl attacker, objHndl defender, D20Actn* d20a);
 	bool SunderCheck(objHndl attacker, objHndl defender, D20Actn* d20a);
+	uint32_t UseItem(objHndl performer, objHndl item, objHndl target);
 	int GetClosestEnemy(objHndl obj, LocAndOffsets* locOut, objHndl * objOut, float* distOut, int flags);
 	int GetInitiativeListLength();
 	objHndl GetInitiativeListMember(int n);
