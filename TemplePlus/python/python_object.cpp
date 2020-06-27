@@ -3325,69 +3325,8 @@ static PyObject* PyObjHandle_UseItem(PyObject* obj, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "O&|O&:objhndl.use_item", &ConvertObjHndl, &item, &ConvertObjHndl, &target)) {
 		return 0;
 	}
-	logger->info("Use Item {} on {}...", description.getDisplayName(item), description.getDisplayName(target), description.getDisplayName(self->handle));
 	if (!target) target = self->handle;
-	if (!item)
-	{
-		PyErr_SetString(PyExc_ValueError, "item cannot be null!");
-		return PyInt_FromLong(0);
-	}
-
-	auto itemObj = objSystem->GetObject(item);
-	auto itemIdx = itemObj->GetInt32(obj_f_item_inv_location);
-	if (!itemObj->GetSpellArray(obj_f_item_spell_idx).GetSize())
-	{
-		PyErr_SetString(PyExc_ValueError, "item has no spell data!");
-		return PyInt_FromLong(0);
-	}
-	auto spData = itemObj->GetSpell(obj_f_item_spell_idx, 0);
-
-	actSeqSys.TurnBasedStatusInit(self->handle);
-	int initialActNum = (*actSeqSys.actSeqCur)->d20ActArrayNum;
-	SpellPacketBody spellPktBody; 
-	LocAndOffsets loc;
-	{
-		spellSys.spellPacketBodyReset(&spellPktBody);
-		spellPktBody.spellEnum = spData.spellEnum;
-		spellPktBody.spellEnumOriginal = spData.spellEnum;
-		spellPktBody.caster = self->handle;
-		spellPktBody.casterLevel = spData.spellLevel;
-		spellSys.SpellPacketSetCasterLevel(&spellPktBody);
-
-		SpellEntry spellEntry;
-		spellSys.spellRegistryCopy(spData.spellEnum, &spellEntry);
-		PickerArgs pickArgs;
-		{
-			spellSys.pickerArgsFromSpellEntry(&spellEntry, &pickArgs, self->handle, spellPktBody.casterLevel);
-			pickArgs.result = { 0, };
-			pickArgs.flagsTarget = (UiPickerFlagsTarget)(
-				(uint64_t)pickArgs.flagsTarget | (uint64_t)pickArgs.flagsTarget & UiPickerFlagsTarget::LosNotRequired
-				- (uint64_t)pickArgs.flagsTarget & UiPickerFlagsTarget::Range
-				);
-			objects.loc->getLocAndOff(target, &loc);
-			pickArgs.SetSingleTgt(target);
-		}
-		spellSys.ConfigSpellTargetting(&pickArgs, &spellPktBody);
-	}
-	d20Sys.GlobD20ActnInit();
-	d20Sys.GlobD20ActnSetTypeAndData1(D20A_USE_POTION, 0);
-	actSeqSys.ActSeqCurSetSpellPacket(&spellPktBody, 1);
-	D20SpellData d20SpellData;
-	d20Sys.D20ActnSetSpellData(&d20SpellData, spellPktBody.spellEnum, spellPktBody.spellClass, spellPktBody.casterLevel, itemIdx, 0);
-	d20Sys.GlobD20ActnSetSpellData(&d20SpellData);
-	d20Sys.GlobD20ActnSetTarget(target, &loc);
-	ActionErrorCode result = (ActionErrorCode)actSeqSys.ActionAddToSeq();
-	if (result == AEC_OK)
-	{
-		result = (ActionErrorCode)actSeqSys.ActionSequenceChecksWithPerformerLocation();
-		if (result == AEC_OK) {
-			actSeqSys.sequencePerform();
-			return PyInt_FromLong(result);
-		}
-	}
-	logger->info("Use Item FAILED (due to {}) {} on {}...", result, description.getDisplayName(item), description.getDisplayName(target), description.getDisplayName(self->handle));
-	actSeqSys.ActionSequenceRevertPath(initialActNum);
-	actSeqSys.ActSeqSpellReset();
+	uint32_t result = combatSys.UseItem(self->handle, item, target);
 	return PyInt_FromLong(result);
 }
 

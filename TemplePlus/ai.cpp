@@ -1437,66 +1437,10 @@ BOOL AiSystem::UseItem(AiTactic* aiTac) {
 		if (!item || !objSystem->IsValidHandle(item))
 			item = objHndl::null;
 	}
-	logger->info("Use Item {} on {}...", description.getDisplayName(item), description.getDisplayName(aiTac->target), description.getDisplayName(aiTac->performer));
-	if (!item) return TRUE;
-	if (!aiTac->target) return TRUE;
-
-	auto itemObj = objSystem->GetObject(item);
-	if (!itemObj->GetSpellArray(obj_f_item_spell_idx).GetSize())
-	{
+	auto result = combatSys.UseItem(aiTac->performer, item, aiTac->target);
+	if (!result)
 		return TRUE;
-	}
-	auto spData = itemObj->GetSpell(obj_f_item_spell_idx, 0);
-	auto itemIdx = itemObj->GetInt32(obj_f_item_inv_location);
-
-	actSeqSys.TurnBasedStatusInit(aiTac->performer);
-	int initialActNum = (*actSeqSys.actSeqCur)->d20ActArrayNum;
-	SpellPacketBody spellPktBody;
-	LocAndOffsets loc;
-	{
-		spellSys.spellPacketBodyReset(&spellPktBody);
-		spellPktBody.spellEnum = spData.spellEnum;
-		spellPktBody.spellEnumOriginal = spData.spellEnum;
-		spellPktBody.caster = aiTac->performer;
-		spellPktBody.casterLevel = spData.spellLevel;
-		spellSys.SpellPacketSetCasterLevel(&spellPktBody);
-
-		SpellEntry spellEntry;
-		spellSys.spellRegistryCopy(spData.spellEnum, &spellEntry);
-		PickerArgs pickArgs;
-		{
-			spellSys.pickerArgsFromSpellEntry(&spellEntry, &pickArgs, aiTac->performer, spellPktBody.casterLevel);
-			pickArgs.result = { 0, };
-			pickArgs.flagsTarget = (UiPickerFlagsTarget)(
-				(uint64_t)pickArgs.flagsTarget | (uint64_t)pickArgs.flagsTarget & UiPickerFlagsTarget::LosNotRequired
-				- (uint64_t)pickArgs.flagsTarget & UiPickerFlagsTarget::Range
-				);
-			objects.loc->getLocAndOff(aiTac->target, &loc);
-			pickArgs.SetSingleTgt(aiTac->target);
-		}
-		spellSys.ConfigSpellTargetting(&pickArgs, &spellPktBody);
-	}
-	d20Sys.GlobD20ActnInit();
-	d20Sys.GlobD20ActnSetTypeAndData1(D20A_USE_POTION, 0); // D20A_USE_ITEM?
-	actSeqSys.ActSeqCurSetSpellPacket(&spellPktBody, 1);
-	D20SpellData d20SpellData;
-	d20Sys.D20ActnSetSpellData(&d20SpellData, spellPktBody.spellEnum, spellPktBody.spellClass, spellPktBody.casterLevel, itemIdx, 0);
-	d20Sys.GlobD20ActnSetSpellData(&d20SpellData);
-	d20Sys.GlobD20ActnSetTarget(aiTac->target, &loc);
-	ActionErrorCode result = (ActionErrorCode)actSeqSys.ActionAddToSeq();
-	if (result == AEC_OK)
-	{
-		result = (ActionErrorCode)actSeqSys.ActionSequenceChecksWithPerformerLocation();
-		if (result == AEC_OK) {
-			actSeqSys.sequencePerform();
-			return TRUE;
-		}
-	}
-	logger->info("Use Item REVERT (due to {}) {} on {}...", result, description.getDisplayName(item), description.getDisplayName(aiTac->target), description.getDisplayName(aiTac->performer));
-	actSeqSys.ActionSequenceRevertPath(initialActNum);
-	actSeqSys.ActSeqSpellReset();
-
-	return TRUE;
+	return FALSE;
 }
 
 int AiSystem::Approach(AiTactic* aiTac)
