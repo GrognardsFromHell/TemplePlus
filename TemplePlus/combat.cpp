@@ -1420,6 +1420,66 @@ bool LegacyCombatSystem::SunderCheck(objHndl attacker, objHndl defender, D20Actn
 	return attackerSucceeded;
 }
 
+uint32_t LegacyCombatSystem::UseItem(objHndl performer, objHndl item, objHndl target)
+{
+	logger->info("Use Item:: {} on {}...", description.getDisplayName(item), description.getDisplayName(target), description.getDisplayName(performer));
+	if (!item || !target) return AEC_INVALID_ACTION;
+
+	auto itemObj = objSystem->GetObject(item);
+	if (!itemObj->GetSpellArray(obj_f_item_spell_idx).GetSize())
+	{
+		logger->warn("Use Item:: no spells in {}!", description.getDisplayName(item));
+		return AEC_CANNOT_CAST_OUT_OF_AVAILABLE_SPELLS;
+	}
+	auto spData = itemObj->GetSpell(obj_f_item_spell_idx, 0);
+	auto itemIdx = itemObj->GetInt32(obj_f_item_inv_location);
+
+	actSeqSys.TurnBasedStatusInit(performer);
+	int initialActNum = (*actSeqSys.actSeqCur)->d20ActArrayNum;
+	SpellPacketBody spellPktBody;
+	{
+		spellSys.spellPacketBodyReset(&spellPktBody);
+		spellPktBody.spellEnum = spData.spellEnum;
+		spellPktBody.spellEnumOriginal = spData.spellEnum;
+		spellPktBody.caster = performer;
+		spellPktBody.invIdx = itemIdx;
+		spellPktBody.spellClass = spData.classCode;
+		// caster level should be already specified in the item
+		spellPktBody.casterLevel = spData.spellLevel;
+		//spellSys.SpellPacketSetCasterLevel(&spellPktBody);
+
+		spellSys.GetSpellTargets(performer, target, &spellPktBody, spData.spellEnum);
+	}
+	//DispatchD20ActionCheck todo
+	d20Sys.GlobD20ActnInit();
+	D20ActionType d20type = D20A_USE_ITEM;
+	if (itemObj->type == obj_t_generic)
+		d20type = D20A_USE_POTION;
+	d20Sys.GlobD20ActnSetTypeAndData1(d20type, 0);
+	actSeqSys.ActSeqCurSetSpellPacket(&spellPktBody, 1);
+	D20SpellData d20SpellData;
+	d20Sys.D20ActnSetSpellData(&d20SpellData, spellPktBody.spellEnum, spellPktBody.spellClass, spellPktBody.casterLevel, itemIdx, 0);
+	d20Sys.GlobD20ActnSetSpellData(&d20SpellData);
+	LocAndOffsets loc;
+	objects.loc->getLocAndOff(target, &loc);
+	d20Sys.GlobD20ActnSetTarget(target, &loc);
+	ActionErrorCode result = (ActionErrorCode)actSeqSys.ActionAddToSeq();
+	if (result == AEC_OK)
+	{
+		result = (ActionErrorCode)actSeqSys.ActionSequenceChecksWithPerformerLocation();
+		if (result == AEC_OK) {
+			actSeqSys.sequencePerform();
+			logger->info("Use Item:: success");
+			return result;
+		}
+	}
+	logger->info("Use Item:: REVERT (due to {}) {} on {}...", result, description.getDisplayName(item), description.getDisplayName(target), description.getDisplayName(performer));
+	actSeqSys.ActionSequenceRevertPath(initialActNum);
+	actSeqSys.ActSeqSpellReset();
+
+	return result;
+}
+
 int LegacyCombatSystem::GetClosestEnemy(objHndl obj, LocAndOffsets* locOut, objHndl* objOut, float* distOut, int flags)
 {
 	return _GetClosestEnemy(obj, locOut, objOut, distOut, flags);

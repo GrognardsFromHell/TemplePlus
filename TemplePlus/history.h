@@ -15,6 +15,7 @@ struct HistorySystem : temple::AddressTable
 	int CreateRollHistoryString(int histId);// 100DFFF0
 	HistorySystem();
 	int CreateRollHistoryLineFromMesfile(int historyMesLine, objHndl obj, objHndl obj2);
+	int RollHistoryType2Add(objHndl obj, uint32_t dicePacked, int rollResult, int dc, int skillIdx, BonusList* bonlist); // Skill Check
 	int RollHistoryType3Add(objHndl handle, int dc, SavingThrowType saveType, int flags, uint32_t dicePacked, int d20RollRes, BonusList* bonlist); // Saving Throw
 	int RollHistoryType4Add(objHndl obj, int dc, const char* text, uint32_t dicePacked, int d20RollRes, BonusList* bonlist); // MiscCheckRoll
 	int RollHistoryType7Add(objHndl obj, BonusList* bonlist, int line, int unk); // Misc Bonus
