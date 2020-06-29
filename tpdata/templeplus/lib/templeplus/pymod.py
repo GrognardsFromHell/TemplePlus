@@ -36,4 +36,6 @@ class PythonModifier(tpdp.ModifierSpec):
 		self.add_spell_teleport_prepare_standard()
 	def AddSpellTeleportReconnectStandard(self):
 		self.add_spell_teleport_reconnect_standard()
+	def AddSpellDispelCheckStandard(self):
+		self.add_spell_dispel_check_standard()
 

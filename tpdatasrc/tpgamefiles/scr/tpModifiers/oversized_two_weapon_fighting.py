@@ -11,6 +11,10 @@ def OversizedTwoWeaponFightingAttackBonus(attachee, args, evt_obj):
 	weaponPrimary = attachee.item_worn_at(item_wear_weapon_primary)
 	weaponSecondary = attachee.item_worn_at(item_wear_weapon_secondary)
 	
+	#Only apply for full attack
+	if (evt_obj.attack_packet.get_flags() & D20CAF_FULL_ATTACK) == 0:
+		return 0
+	
 	#Weapons must not be the same
 	if weaponPrimary == weaponSecondary:
 		return 0

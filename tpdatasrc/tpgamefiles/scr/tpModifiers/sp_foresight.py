@@ -67,6 +67,7 @@ foresight.AddHook(ET_OnSaveThrowLevel , EK_SAVE_REFLEX , ForesightReflexSaveBonu
 foresight.AddHook(ET_OnD20Signal, EK_S_Spell_End, ForesightSpellEnd, ())
 foresight.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, ForesightHasSpellActive, ())
 foresight.AddHook(ET_OnD20Signal, EK_S_Killed, ForesightKilled, ())
+foresight.AddSpellDispelCheckStandard()
 foresight.AddSpellTeleportPrepareStandard()
 foresight.AddSpellTeleportReconnectStandard()
 foresight.AddSpellCountdownStandardHook()

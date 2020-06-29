@@ -601,7 +601,7 @@ void Damage::Heal(objHndl target, objHndl healer, const Dice& dice, D20ActionTyp
 void Damage::HealSpell(objHndl target, objHndl healer, const Dice& dice, D20ActionType actionType, int spellId) {
 	int healingBonus = 0;
 	if (healer) {
-		healingBonus = d20Sys.D20QueryPython(healer, "Healing Bonus", 0);  //0 spell id for non-spell healing
+		healingBonus = d20Sys.D20QueryPython(healer, "Healing Bonus", spellId);  //Called with the id of the healing spell
 	}
 	Dice diceNew(dice.GetCount(), dice.GetSides(), dice.GetModifier() + healingBonus);
 	addresses.HealSpell(target, healer, diceNew.ToPacked(), actionType, spellId);

@@ -4,7 +4,7 @@
 
 ## Quickstart
 
-* Get [Microsoft Visual Studio 2017](https://www.visualstudio.com/) (The free Community Edition suffices)
+* Get [Microsoft Visual Studio 2019](https://www.visualstudio.com/) (The free Community Edition suffices)
 * Clone the repository (use the HTTPS URL instead of the SSH URL so you can use Visual Studio's Git integration).
 * Download the latest [dependency binaries](https://github.com/GrognardsFromHell/Dependencies/releases/) and unzip it into project folder (where TemplePlus.sln is).
 * Open TemplePlus.sln in Visual Studio
