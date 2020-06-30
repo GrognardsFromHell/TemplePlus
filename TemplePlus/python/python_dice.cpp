@@ -37,6 +37,32 @@ PyObject *PyDice_Roll(PyObject *obj, PyObject *args) {
 	return PyInt_FromLong(result);
 }
 
+static PyObject* PyDice_Dice_GetPacked(PyObject* obj, void*) {
+	auto self = (PyDice*)obj;
+	uint32_t result = (self->number & 0x7F) | ((self->size & 0x7F) << 7);
+	if (self->bonus < 0) {
+		result |= ((-self->bonus) & 0x7F) << 14;
+		result |= 0x80000000;
+	}
+	else {
+		result |= (self->bonus & 0x7F) << 14;
+	}
+	return PyInt_FromLong(result);
+}
+
+static int PyDice_Dice_SetPacked(PyObject* obj, PyObject* value, void*) {
+	auto self = (PyDice*)obj;
+	if (PyInt_Check(value)) {
+		int packed = PyInt_AsLong(value);
+		auto dice = Dice::FromPacked(packed);
+		self->size = dice.GetSides();
+		self->number = dice.GetCount();
+		self->bonus = dice.GetModifier();
+		return 0;
+	}
+	return -1;
+}
+
 int PyDice_Init(PyObject *obj, PyObject *args, PyObject *kwds) {
 	auto self = (PyDice*)obj;
 	if (PyTuple_Size(args) == 1) {
@@ -81,6 +107,11 @@ static PyMethodDef PyDice_Methods[] = {
 	{ NULL, NULL, NULL, NULL }
 };
 
+static PyGetSetDef PyDice_GetSets[] = {
+	{"packed", PyDice_Dice_GetPacked, PyDice_Dice_SetPacked, NULL},
+	{NULL, NULL, NULL, NULL}
+};
+
 PyTypeObject PyDiceType = {
 	PyObject_HEAD_INIT(NULL)
 	0,                         /*ob_size*/
@@ -112,7 +143,7 @@ PyTypeObject PyDiceType = {
 	0,						   /* tp_iternext */
 	PyDice_Methods,            /* tp_methods */
 	PyDice_Members,            /* tp_members */
-	0,                   	   /* tp_getset */
+	PyDice_GetSets,        	   /* tp_getset */
 	0,                         /* tp_base */
 	0,                         /* tp_dict */
 	0,                         /* tp_descr_get */
