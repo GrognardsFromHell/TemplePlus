@@ -985,6 +985,20 @@ public:
 
 	void apply() override {
 
+		static void(__cdecl * orgObjSpawnItemsFromInvensource)(objHndl) = replaceFunction<void(__cdecl)(objHndl)>(0x1006DCF0, [](objHndl handle){
+			if (!handle) return;
+
+			auto getObjectRect = temple::GetRef<void(__cdecl)(objHndl, int, TigRect&)>(0x10022BC0);
+			TigRect objRect;
+			getObjectRect(handle, 0, objRect);
+
+			return orgObjSpawnItemsFromInvensource(handle);
+		});
+
+		static void(__cdecl * orgNPCInventoryRespawnSchedule)(objHndl) = replaceFunction<void(__cdecl)(objHndl)>(0x10067080, [](objHndl handle) {
+			return orgNPCInventoryRespawnSchedule(handle);
+			});
+
 		// obj_update_render_height
 		replaceFunction<void(objHndl, temple::AasHandle)>(0x10021360, [](objHndl objId, temple::AasHandle animId) {
 			auto anim = gameSystems->GetAAS().BorrowByHandle(animId);
