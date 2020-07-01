@@ -212,29 +212,7 @@ enum ScreenDirections : char {
 };
 
 
-inline std::ostream& operator<<(std::ostream& os, const ScreenDirections & direc) {
-	switch(direc)
-	{
-	case ScreenDirections::Top:
-		return os << "U";
-	case ScreenDirections::TopRight:
-		return os << "UR";
-	case ScreenDirections::Right:
-		return os << "R";
-	case ScreenDirections::BottomRight:
-		return os << "DR";
-	case ScreenDirections::Bottom:
-		return os << "D";
-	case ScreenDirections::BottomLeft :
-		return os << "DL";
-	case ScreenDirections::Left:
-		return os << "L";
-	case ScreenDirections::TopLeft:
-		return os << "UL";
-	default:
-		return os << "NA";
-	}
-}
+inline std::ostream& operator<<(std::ostream& os, const ScreenDirections& direc);
 
 
 struct PointNode
