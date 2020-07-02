@@ -5,7 +5,6 @@
 #include "obj_structs.h"
 #include "d20_defs.h"
 #include "temple_enums.h"
-#include <ostream>
 
 #define macAsmProl {\
 	__asm push ecx\
