@@ -3,6 +3,7 @@
 #include "bonus.h"
 #include "tig/tig_mes.h"
 #include "util/fixes.h"
+#include <infrastructure/elfhash.h>
 
 int(__cdecl *OrgBonusInit)();
 
@@ -193,6 +194,16 @@ uint32_t BonusSystem::zeroBonusSetMeslineNum(BonusList* bonList, uint32_t zeroBo
 
 uint32_t BonusSystem::bonusSetOverallCap(uint32_t bonFlags, BonusList* bonList, int32_t newCap, int newCapType, uint32_t bonMesLineNum, char* capDescr){
 	return bonList->SetOverallCap(bonFlags, newCap, newCapType, bonMesLineNum, capDescr);
+}
+
+char* BonusSystem::CacheCustomText(std::string& text)
+{
+	auto textId = ElfHash::Hash(text);
+	auto textCache = customBonusStrings.find(textId);
+	if (textCache == customBonusStrings.end()) {
+		bonusSys.customBonusStrings[textId] = text;
+	}
+	return (char*)customBonusStrings[textId].c_str();
 }
 
 BonusSystem::BonusSystem()
