@@ -83,7 +83,8 @@ const char* LegacyDescriptionSystem::GetDescriptionString(int descrIdx) const
 	if (mesFuncs.GetLine(descrMesExt, &line))
 		return line.value;
 	if (!mesFuncs.GetLine(mesHandle, &line)) {
-		return nullptr;
+		return "Unknown";
+		//return nullptr;
 	}
 	return line.value;
 }

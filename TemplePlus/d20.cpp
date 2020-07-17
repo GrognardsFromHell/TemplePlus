@@ -126,6 +126,7 @@ public:
 	static ActionErrorCode PerformStopConcentration(D20Actn* d20a);
 	static ActionErrorCode PerformTripAttack(D20Actn* d20a);
 	static ActionErrorCode PerformUseItem(D20Actn* d20a);
+	static ActionErrorCode PerformBreakFree(D20Actn* d20a);
 
 	// Action Frame 
 	static BOOL ActionFrameAidAnotherWakeUp(D20Actn* d20a);
@@ -197,6 +198,12 @@ public:
 		replaceFunction(0x100FD790, _D20StatusInitRace);
 		replaceFunction(0x100FEE60, _D20StatusInitClass); 
 		
+		static int(__cdecl * orgActionFrameSpell)(D20Actn*) = replaceFunction<int(__cdecl)(D20Actn*)>(0x1008DEA0, [](D20Actn* d20a) 
+		{
+			int result = orgActionFrameSpell(d20a);
+			logger->info("orgActionFrameSpell: {}", result);
+			return result;
+		});
 	}
 } d20Replacements;
 
@@ -576,6 +583,8 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqWhirlwindAttack;
 	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostWhirlwindAttack;
 
+	d20Type = D20A_BREAK_FREE;
+	d20Defs[d20Type].performFunc = d20Callbacks.PerformBreakFree;
 
 	// *(int*)&d20Defs[D20A_USE_POTION].flags |= (int)D20ADF_SimulsCompatible;  // need to modify the SimulsEnqueue script because it also checks for san_start_combat being null
 	// *(int*)&d20Defs[D20A_TRIP].flags -= (int)D20ADF_Unk8000;
@@ -1171,6 +1180,31 @@ ActionErrorCode D20ActionCallbacks::PerformUseItem(D20Actn* d20a){
 	return PerformCastSpell(d20a);
 }
 
+ActionErrorCode D20ActionCallbacks::PerformBreakFree(D20Actn* d20a) {
+	d20Sys.d20SendSignal(d20a->d20APerformer, D20DispatcherKey::DK_SIG_BreakFree, d20a->data1, 0);
+	return ActionErrorCode::AEC_OK;
+}
+/*
+ActionErrorCode D20ActionCallbacks::PerformBreakFree(D20Actn* d20a) {
+	int32_t spellId = -1;
+	if (d20a->data1) {
+		SpellPacketBody spellPkt;
+		if (spellSys.GetSpellPacketBody(d20a->data1, &spellPkt) == 1)
+		{
+			spellId = spellPkt.spellId;
+		}
+	}
+	else {
+		spellId = 0;
+	}
+	if (spellId >= 0)
+	{
+		d20Sys.d20SendSignal(d20a->d20APerformer, D20DispatcherKey::DK_SIG_BreakFree, spellId, 0);
+		return ActionErrorCode::AEC_OK;
+	}
+	return ActionErrorCode::AEC_INVALID_ACTION;
+}
+*/
 int LegacyD20System::TargetWithinReachOfLoc(objHndl obj, objHndl target, LocAndOffsets* loc)
 {
 	return addresses.TargetWithinReachOfLoc(obj, target, loc);

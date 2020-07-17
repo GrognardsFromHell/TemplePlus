@@ -190,6 +190,14 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		return rollHistId;
 	});
 
+	m.def("get_condition_ref", [](std::string& text)-> int
+	{
+		auto cond = conds.GetByName(text);
+		if (!cond) {
+			return 0;
+		}
+		return (uint32_t)cond;
+	});
 #pragma region Basic Dispatcher stuff
 
 	py::class_<CondStructNew>(m, "ModifierSpec")
@@ -367,6 +375,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def("set_flags", [](AttackPacket& pkt, int flagsNew) {	pkt.flags = (D20CAF)flagsNew;	}, "sets attack packet D20CAF flags to value specified")
 		.def_readwrite("action_type", &AttackPacket::d20ActnType)
 		.def_readwrite("event_key", &AttackPacket::dispKey)
+		.def_readwrite("ammo_item", &AttackPacket::ammoItem)
 		;
 
 	py::class_<DamagePacket>(m, "DamagePacket")
