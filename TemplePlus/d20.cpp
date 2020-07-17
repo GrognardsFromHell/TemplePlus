@@ -197,13 +197,6 @@ public:
 		replaceFunction(0x100FD2D0, _D20StatusInitFeats);
 		replaceFunction(0x100FD790, _D20StatusInitRace);
 		replaceFunction(0x100FEE60, _D20StatusInitClass); 
-		
-		static int(__cdecl * orgActionFrameSpell)(D20Actn*) = replaceFunction<int(__cdecl)(D20Actn*)>(0x1008DEA0, [](D20Actn* d20a) 
-		{
-			int result = orgActionFrameSpell(d20a);
-			logger->info("orgActionFrameSpell: {}", result);
-			return result;
-		});
 	}
 } d20Replacements;
 
@@ -1184,27 +1177,7 @@ ActionErrorCode D20ActionCallbacks::PerformBreakFree(D20Actn* d20a) {
 	d20Sys.d20SendSignal(d20a->d20APerformer, D20DispatcherKey::DK_SIG_BreakFree, d20a->data1, 0);
 	return ActionErrorCode::AEC_OK;
 }
-/*
-ActionErrorCode D20ActionCallbacks::PerformBreakFree(D20Actn* d20a) {
-	int32_t spellId = -1;
-	if (d20a->data1) {
-		SpellPacketBody spellPkt;
-		if (spellSys.GetSpellPacketBody(d20a->data1, &spellPkt) == 1)
-		{
-			spellId = spellPkt.spellId;
-		}
-	}
-	else {
-		spellId = 0;
-	}
-	if (spellId >= 0)
-	{
-		d20Sys.d20SendSignal(d20a->d20APerformer, D20DispatcherKey::DK_SIG_BreakFree, spellId, 0);
-		return ActionErrorCode::AEC_OK;
-	}
-	return ActionErrorCode::AEC_INVALID_ACTION;
-}
-*/
+
 int LegacyD20System::TargetWithinReachOfLoc(objHndl obj, objHndl target, LocAndOffsets* loc)
 {
 	return addresses.TargetWithinReachOfLoc(obj, target, loc);

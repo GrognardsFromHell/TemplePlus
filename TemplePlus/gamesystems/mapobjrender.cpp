@@ -735,10 +735,8 @@ std::vector<Light3d> MapObjectRenderer::FindLights(LocAndOffsets atLocation, flo
 
 	while (sectorIterator.HasNext()) {
 		auto& sector = sectorIterator.Next();
-		if (!&sector) break;
 
 		auto lightIt = sector.GetLights();
-		if (!&lightIt) break;
 		while (lightIt.HasNext()) {
 			auto& light = lightIt.Next();
 

@@ -1147,23 +1147,6 @@ void CharUiSystem::ItemGetDescrAddon(objHndl obj, objHndl item, std::string& add
 			addStr = fmt::format("Remaining Charges: {}", remCharges);
 		}
 	}
-	{
-		objHndl vendor = GetVendor();
-		objHndl appraiser = party.PartyMemberWithHighestSkill(SkillEnum::skill_appraise);
-		int worth = gameSystems->GetObj().GetObject(item)->GetInt32(obj_f_item_worth);
-		int appraisedWorth = inventory.GetAppraisedWorth(item, obj, vendor, SkillEnum::skill_appraise);
-		int plat = 0, gold = 0, silver = 0, copper = 0;
-		inventory.MoneyToCoins(appraisedWorth, &plat, &gold, &silver, &copper);
-		gold += plat * 10;
-		plat = 0;
-		addStr = fmt::format((addStr.length() > 0) ? "{0}\nPrice: {1}" : "Price: {1}{2}{3}{4}"
-			, addStr
-			, (gold || (!silver && !copper)) ? fmt::format("{0} gp ", gold) : ""
-			, (silver) ? fmt::format("{0} sp ", silver) : ""
-			, (copper) ? fmt::format("{0} cp ", copper) : ""
-			, (worth != appraisedWorth) ? fmt::format("({0:g} gp) ", worth / 100.0) : ""
-		);
-	}
 }
 
 void CharUiSystem::LongDescriptionPopupCreate(objHndl item){
