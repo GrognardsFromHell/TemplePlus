@@ -33,6 +33,7 @@
 #include "history.h"
 #include "bonus.h"
 #include "config/config.h"
+
 namespace py = pybind11;
 
 template <> class py::detail::type_caster<objHndl> {

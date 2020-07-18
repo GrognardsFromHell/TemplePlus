@@ -15,6 +15,6 @@ mode_Target: Multi
 mode_Target: Once-Multi
 mode_Target: End Early Multi
 min_Target: 1
-max_Target: -011
+max_Target: 0
 radius_Target: 100
 ai_type: ai_action_offensive
