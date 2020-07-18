@@ -1388,6 +1388,8 @@ int32_t DispatcherCallbackArgs::GetCondArg(uint32_t argIdx)
 objHndl DispatcherCallbackArgs::GetCondArgObjHndl(uint32_t argIdx)
 {
 	objHndl handle { ((((uint64_t)GetCondArg(argIdx)) << 32) | GetCondArg(argIdx + 1)) };
+	if (!gameSystems->GetObj().IsValidHandle(handle))
+		handle = objHndl::null;
 	return handle;
 }
 

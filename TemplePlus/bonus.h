@@ -24,6 +24,8 @@ struct BonusSystem : temple::AddressTable
 	void (__cdecl *_bonusPrintString)(BonusList *bonlist, uint32_t bonIdx, int32_t *bonValueOut, char *strBonusOut, char *strCapOut);
 	int32_t(__cdecl * _getOverallBonus)(BonusList* bonList);
 
+	char* CacheCustomText(std::string& text);
+
 	MesHandle * bonusMesHandle; //102E45A8
 	MesHandle bonusMesNew;
 	BonusSystem();

@@ -31,8 +31,8 @@
 #include "rng.h"
 #include "float_line.h"
 #include "history.h"
+#include "bonus.h"
 #include "config/config.h"
-
 namespace py = pybind11;
 
 template <> class py::detail::type_caster<objHndl> {
@@ -197,6 +197,15 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		return skillLevel;
 	});
 
+	m.def("dispatch_stat", [](objHndl obj, uint32_t stat, BonusList& bonList)-> int {
+		DispIoBonusList evtObjAbScore;
+		evtObjAbScore.flags |= 1; // effect unknown??
+		evtObjAbScore.bonlist = bonList;
+		auto result = dispatch.Dispatch10AbilityScoreLevelGet(obj, (Stat)stat, &evtObjAbScore);
+		bonList = evtObjAbScore.bonlist;
+		return result;
+	});
+
 	m.def("create_history_type6_opposed_check", [](objHndl performer, objHndl defender, int performerRoll, int defenderRoll
 		, BonusList& performerBonList, BonusList& defenderBonList, uint32_t combatMesLineTitle, uint32_t combatMesLineResult, uint32_t flag)-> int
 	{
@@ -205,7 +214,14 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		return rollHistId;
 	});
 
-	#pragma region Basic Dispatcher stuff
+	m.def("create_history_dc_roll", [](objHndl performer, int dc, Dice& dice, int roll, std::string& text, BonusList& bonlist)-> int
+	{
+		auto ptext = bonusSys.CacheCustomText(text);
+		auto rollHistId = histSys.RollHistoryType4Add(performer, dc, ptext, dice.ToPacked(), roll, (BonusList*)&bonlist);
+		return rollHistId;
+	});
+
+#pragma region Basic Dispatcher stuff
 
 	py::class_<CondStructNew>(m, "ModifierSpec")
 		.def(py::init())
