@@ -727,9 +727,18 @@ void LegacyCritterSystem::GenerateHp(objHndl handle){
 		auto numDice = obj->GetInt32(obj_f_npc_hitdice_idx, 0);
 		auto npcHd = Dice(numDice, obj->GetInt32(obj_f_npc_hitdice_idx, 1),obj->GetInt32(obj_f_npc_hitdice_idx, 2));
 		auto npcHdVal = npcHd.Roll();
-		if (config.maxHpForNpcHitdice){
+
+		auto cfgLower(tolower(config.HpForNPCHd));
+		if ((!_stricmp(cfgLower.c_str(), "max")) || config.maxHpForNpcHitdice) {
 			npcHdVal = numDice * npcHd.GetSides() + npcHd.GetModifier();
+		} else if (!_stricmp(cfgLower.c_str(), "min")) {
+			npcHdVal = numDice + npcHd.GetModifier();
+		} else if (!_stricmp(cfgLower.c_str(), "average")) {
+			npcHdVal = (numDice * (npcHd.GetSides() + 2)) / 2 + npcHd.GetModifier(); //Round
+		} else if (!_stricmp(cfgLower.c_str(), "threefourth")) {
+			npcHdVal = static_cast<int>((static_cast<double>(numDice * (npcHd.GetSides())) * .75) + .5) + npcHd.GetModifier(); //Round
 		}
+
 		if (npcHdVal + conMod*numDice < 1)
 			npcHdVal = numDice*(1 - conMod);
 		hpPts += npcHdVal;

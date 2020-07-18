@@ -31,6 +31,7 @@
 #include "rng.h"
 #include "float_line.h"
 #include "history.h"
+#include "config/config.h"
 
 namespace py = pybind11;
 
@@ -117,6 +118,37 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			result.push_back(static_cast<int>(feat));
 		}
 		return result;
+	});
+
+	m.def("config_set_string", [](std::string& configItem, std::string& value) {
+		auto configItemLower(tolower(configItem));
+		if (configItemLower == "hpfornpchd") {
+			config.HpForNPCHd = value;
+			config.maxHpForNpcHitdice = false;  //Turn off if we are setting the enum flag
+		}
+		else if (configItemLower == "hponlevelup") {
+			config.hpOnLevelup = value;
+		}
+		else {
+			logger->warn("Can't set config item {}.", configItem);
+		}
+	});
+
+	m.def("config_get_string", [](std::string& configItem) {
+		auto configItemLower(tolower(configItem));
+		if (configItemLower == "hpfornpchd") {
+			return config.HpForNPCHd;
+		}
+		else if (configItemLower == "hponlevelup") {
+			//Check the old param
+			if (config.maxHpForNpcHitdice) {
+				return std::string("max");
+			}
+			return config.hpOnLevelup;
+		}
+
+		logger->warn("Can't get config item {}.", configItem);
+		return std::string("");
 	});
 
 	m.def("cur_seq_get_turn_based_status_flags", []() {

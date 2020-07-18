@@ -34,7 +34,10 @@
         <StackPanel HorizontalAlignment="Left" Height="106" VerticalAlignment="Top" Width="180" Margin="238,189,0,0">
             <Label VerticalAlignment="Center" Content="Difficulty" Margin="0,0,10,0" />
             <CheckBox VerticalAlignment="Center" Content="Slower levelling" IsChecked="{Binding SlowerLevelling}" Margin="0,5,35,5" ToolTip="Adjuts the experience point curve such that you rapidly get to level 3, but level more slowly afterwards. You will be about 1-2 levels behind a normal game."/>
-            <CheckBox VerticalAlignment="Center" Content="Max HP for NPC HD" IsChecked="{Binding MaxHpForNpcHitdice}" Margin="0,5,35,5" ToolTip="NPCs with NPC Hit Dice will max them out."/>
+            <StackPanel Orientation="Horizontal">
+                <Label VerticalAlignment="Center" Content="HP for NPC HD" Height="27" />
+                <ComboBox VerticalAlignment="Center" SelectedValue="{Binding HpForNPCHd}"  ItemsSource="{Binding HpForNPCHdTypes}"/>
+            </StackPanel>
         </StackPanel>
         <StackPanel HorizontalAlignment="Left" Height="137" VerticalAlignment="Top" Width="188" Margin="238,10,0,0">
             <Label VerticalAlignment="Center" Content="Ruleset" Margin="0,0,10,0" />

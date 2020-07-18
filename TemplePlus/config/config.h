@@ -79,7 +79,8 @@ struct TemplePlusConfig
 	uint32_t maxPCs = 5; // max number of PCs in the party
 	bool maxPCsFlexible = false; // makes the party PC/NPC composition fluid
 	uint32_t maxLevel = 10; // maximum character level
-	std::string hpOnLevelup = "Normal" ;
+	std::string hpOnLevelup = "Normal";
+	std::string HpForNPCHd = "Normal";
 	bool maxHpForNpcHitdice = false;
 	bool allowXpOverflow = false;
 	bool slowerLevelling = false;
