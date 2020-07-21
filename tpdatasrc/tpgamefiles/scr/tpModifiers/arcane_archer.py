@@ -82,6 +82,7 @@ def EnhanceArrowDamage(attachee, args, evt_obj):
 	weapon_used = evt_obj.attack_packet.get_weapon_used()
 	if is_ranged_weapon(weapon_used):
 		evt_obj.damage_packet.bonus_list.add_from_feat(bon_lvl, 12, 147, "Enhance Arrow")
+		evt_obj.damage_packet.attack_power |= D20DAP_MAGIC
 	return 0
 
 
