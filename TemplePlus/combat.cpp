@@ -1432,6 +1432,12 @@ uint32_t LegacyCombatSystem::UseItem(objHndl performer, objHndl item, objHndl ta
 		return AEC_CANNOT_CAST_OUT_OF_AVAILABLE_SPELLS;
 	}
 	auto spData = itemObj->GetSpell(obj_f_item_spell_idx, 0);
+	if (!spData.spellEnum)
+	{
+		logger->warn("Use Item:: incorrect spell in {}!", description.getDisplayName(item));
+		return AEC_CANNOT_CAST_OUT_OF_AVAILABLE_SPELLS;
+	}
+
 	auto itemIdx = itemObj->GetInt32(obj_f_item_inv_location);
 
 	actSeqSys.TurnBasedStatusInit(performer);

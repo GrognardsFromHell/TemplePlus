@@ -216,6 +216,7 @@ struct AiSystem : temple::AddressTable
 	// AI Tactic functions
 	// These generate action sequences for the AI and/or change the AI target
 	int Approach(AiTactic* aiTac);
+	int ApproachSingle(AiTactic* aiTac);
 	int AttackThreatened(AiTactic* aiTac);
 	int BreakFree(AiTactic* aiTac);
 	int CastParty(AiTactic * aiTac);
@@ -251,7 +252,7 @@ struct AiSystem : temple::AddressTable
 	void ParseStrategyLine(AiStrategy& stratOut, const std::vector<string>& strings);
 	int StrategyTabLineParser(const TigTabParser* tabFile, int n, char ** strings);
 	void InitCustomStrategies();
-	void SetCustomStrategy(objHndl handle, const std::vector<std::string>& stringVector);
+	void SetCustomStrategy(objHndl handle, const std::vector<std::string>& stringVector, int save);
 	
 	// Custom strats save/load
 	bool CustomStrategiesSave();
@@ -300,4 +301,4 @@ unsigned int _AiTotalDefence(AiTactic* aiTac);
 unsigned int _AiPythonAction(AiTactic* aiTac);
 unsigned int _AiD20Action(AiTactic* aiTac);
 unsigned int _AiUseItem(AiTactic* aiTac);
-unsigned int _AiCastOrigin(AiTactic* aiTac);
+unsigned int _AiApproachSingle(AiTactic* aiTac);
