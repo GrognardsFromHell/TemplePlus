@@ -190,6 +190,20 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		return rollHistId;
 	});
 
+	m.def("create_history_attack_roll", [](objHndl performer, objHndl target, int roll, BonusList& bonlistAttacker, BonusList& bonlistTarget, uint32_t flags)-> int
+	{
+		auto rollHistId = histSys.RollHistoryType0Add(roll, -1, performer, target, (BonusList*)&bonlistAttacker, (BonusList*)&bonlistTarget, (D20CAF)flags);
+		return rollHistId;
+	});
+
+	m.def("get_condition_ref", [](std::string& text)-> int
+	{
+		auto cond = conds.GetByName(text);
+		if (!cond) {
+			return 0;
+		}
+		return (uint32_t)cond;
+	});
 #pragma region Basic Dispatcher stuff
 
 	py::class_<CondStructNew>(m, "ModifierSpec")
@@ -367,6 +381,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def("set_flags", [](AttackPacket& pkt, int flagsNew) {	pkt.flags = (D20CAF)flagsNew;	}, "sets attack packet D20CAF flags to value specified")
 		.def_readwrite("action_type", &AttackPacket::d20ActnType)
 		.def_readwrite("event_key", &AttackPacket::dispKey)
+		.def_readwrite("ammo_item", &AttackPacket::ammoItem)
 		;
 
 	py::class_<DamagePacket>(m, "DamagePacket")
@@ -778,7 +793,12 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 	py::class_<DispIoAttackBonus, DispIO>(m, "EventObjAttack", "Used for fetching attack or AC bonuses")
 		.def(py::init())
 		.def_readwrite("bonus_list", &DispIoAttackBonus::bonlist)
-		.def_readwrite("attack_packet", &DispIoAttackBonus::attackPacket);
+		.def_readwrite("attack_packet", &DispIoAttackBonus::attackPacket)
+		.def("dispatch", [](DispIoAttackBonus& evtObj, objHndl handle, objHndl target, int disp_type, int disp_key)->int {
+			auto result = evtObj.Dispatch(handle, target, (enum_disp_type)disp_type, (D20DispatcherKey)disp_key);
+			return result;
+			}, "")
+		;
 
 	py::class_<DispIoD20Signal, DispIO>(m, "EventObjD20Signal")
 		.def(py::init())

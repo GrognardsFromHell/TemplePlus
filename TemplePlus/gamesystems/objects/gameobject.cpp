@@ -1094,7 +1094,12 @@ objHndl GameObjectBody::GetProtoHandle() const
 
 const GameObjectBody * GameObjectBody::GetProtoObj() const
 {
-	return objSystem->mObjRegistry->Get(GetProtoHandle());
+	auto protoHandle = GetProtoHandle();
+	if (!protoHandle) {
+		logger->error("Proto not found {}", protoId.body.protoId);
+		return nullptr;
+	}
+	return objSystem->mObjRegistry->Get(protoHandle);
 }
 
 void GameObjectBody::FreeStorage(ObjectFieldType type, void * storage)

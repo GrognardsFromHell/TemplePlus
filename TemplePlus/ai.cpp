@@ -1475,6 +1475,38 @@ int AiSystem::Approach(AiTactic* aiTac)
 	return TRUE;
 }
 
+int AiSystem::ApproachSingle(AiTactic* aiTac)
+{
+	int initialActNum = (*actSeqSys.actSeqCur)->d20ActArrayNum;
+	if (!aiTac->target)
+		return 0;
+	if (combatSys.IsWithinReach(aiTac->performer, aiTac->target))
+		return 0;
+
+	// check if 5' step is a good choice
+	auto isWorth = Is5FootStepWorth(aiTac);
+
+	if (isWorth) {
+		d20Sys.GlobD20ActnSetTypeAndData1(D20A_5FOOTSTEP, 0);
+		d20Sys.GlobD20ActnSetTarget(aiTac->target, nullptr);
+		if (actSeqSys.ActionAddToSeq() == AEC_OK
+			&& !actSeqSys.ActionSequenceChecksWithPerformerLocation())
+			return TRUE;
+		actSeqSys.ActionSequenceRevertPath(initialActNum);
+	}
+
+	actSeqSys.curSeqReset(aiTac->performer);
+	d20Sys.GlobD20ActnInit();
+	d20Sys.GlobD20ActnSetTypeAndData1(D20A_MOVE, 0);
+	d20Sys.GlobD20ActnSetTarget(aiTac->target, 0);
+	actSeqSys.ActionAddToSeq();
+	if (actSeqSys.ActionSequenceChecksWithPerformerLocation() != AEC_OK) {
+		actSeqSys.ActionSequenceRevertPath(initialActNum);
+		return FALSE;
+	}
+	return TRUE;
+}
+
 int AiSystem::CastParty(AiTactic* aiTac)
 {
 	auto initialActNum = (*actSeqSys.actSeqCur)->d20ActArrayNum;
@@ -2110,7 +2142,7 @@ void AiSystem::InitCustomStrategies(){
 	}
 }
 
-void AiSystem::SetCustomStrategy(objHndl handle, const std::vector<std::string>& stringVector)
+void AiSystem::SetCustomStrategy(objHndl handle, const std::vector<std::string>& stringVector, int save)
 {
 	AiStrategy aiStrat;
 	ParseStrategyLine(aiStrat, stringVector);
@@ -2121,7 +2153,8 @@ void AiSystem::SetCustomStrategy(objHndl handle, const std::vector<std::string>&
 	}
 
 	aiCustomStrats->put(id, aiStrat);
-	mAiStrategiesCustomSrc.push_back(stringVector);
+	if (save)
+		mAiStrategiesCustomSrc.push_back(stringVector);
 	objSystem->GetObject(handle)->SetInt32(obj_f_critter_strategy,id);
 }
 
@@ -2370,6 +2403,12 @@ void AiSystem::RegisterNewAiTactics()
 	aiTacticDefsNew[n].aiFunc = _AiUseItem;
 	memset(aiTacticDefsNew[n].name, 0, 100);
 	sprintf(aiTacticDefsNew[n].name, "use item");
+
+	n++;
+	aiTacticDefsNew[n].name = new char[100];
+	aiTacticDefsNew[n].aiFunc = _AiApproachSingle;
+	memset(aiTacticDefsNew[n].name, 0, 100);
+	sprintf(aiTacticDefsNew[n].name, "approach single");
 }
 
 int AiSystem::GetStrategyIdx(const char* stratName) const
@@ -3558,6 +3597,11 @@ unsigned int _AiD20Action(AiTactic* aiTac)
 unsigned int _AiUseItem(AiTactic* aiTac)
 {
 	return aiSys.UseItem(aiTac);
+}
+
+unsigned int _AiApproachSingle(AiTactic* aiTac)
+{
+	return aiSys.ApproachSingle(aiTac);
 }
 
 class AiReplacements : public TempleFix

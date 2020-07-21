@@ -2327,7 +2327,7 @@ static PyObject* PyObjHandle_AnimGoalPushUseObject(PyObject* obj, PyObject* args
 	if (!PyArg_ParseTuple(args, "O&|iLi:objhndl.anim_goal_use_object", &ConvertObjHndl, &tgt, &goalType, &tgtLoc, &someFlag)) {
 		return 0;
 	}
-	gameSystems->GetAnim().PushForMouseTarget(self->handle, ag_use_object, tgt, tgtLoc, objHndl::null, someFlag);
+	gameSystems->GetAnim().PushForMouseTarget(self->handle, goalType, tgt, tgtLoc, objHndl::null, someFlag);
 	return PyInt_FromLong(1);
 }
 
@@ -3005,9 +3005,13 @@ static PyObject* PyObjHandle_AiStrategySetCustom(PyObject* obj, PyObject* args) 
 		stringVector.push_back(s);
 	}
 
-	
-	aiSys.SetCustomStrategy( self->handle, stringVector);
-	
+	int save = 1;
+	auto psave = PyTuple_GetItem(args, 1);
+	if (PyLong_Check(psave)) {
+		save = PyLong_AsLong(psave);
+	}
+
+	aiSys.SetCustomStrategy( self->handle, stringVector, save);
 	Py_RETURN_NONE;
 }
 
