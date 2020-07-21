@@ -80,8 +80,8 @@ namespace TemplePlusConfig
         public static readonly DependencyProperty AlertAiThroughDoorsProperty = DependencyProperty.Register(
           "AlertAiThroughDoors", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
 
-        
-
+        public static readonly DependencyProperty PreferUse5FootStepProperty = DependencyProperty.Register(
+          "PreferUse5FootStep", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
 
         public static readonly DependencyProperty NewClassesProperty = DependencyProperty.Register(
           "NewClasses", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
@@ -278,7 +278,12 @@ namespace TemplePlusConfig
             get { return (bool)GetValue(AlertAiThroughDoorsProperty); }
             set { SetValue(AlertAiThroughDoorsProperty, value); }
         }
-        
+
+        public bool PreferUse5FootStep
+        {
+            get { return (bool)GetValue(PreferUse5FootStepProperty); }
+            set { SetValue(PreferUse5FootStepProperty, value); }
+        }
 
         public bool NewClasses
         {
@@ -543,7 +548,13 @@ namespace TemplePlusConfig
                 AlertAiThroughDoors = alertAiThroughDoors;
             }
 
-            
+            bool preferUse5FootStep;
+            if (bool.TryParse(tpData["preferUse5FootStep"], out preferUse5FootStep))
+            {
+                PreferUse5FootStep = preferUse5FootStep;
+            }
+
+
 
             bool newClasses;
             if (bool.TryParse(tpData["newClasses"], out newClasses))
@@ -720,7 +731,7 @@ namespace TemplePlusConfig
             tpData["walkDistanceFt"] =WalkDistanceFt.ToString();
             tpData["disableDoorRelocking"] = DisableDoorRelocking? "true" : "false";
             tpData["alertAiThroughDoors"] = AlertAiThroughDoors ? "true" : "false";
-            
+            tpData["preferUse5FootStep"] = PreferUse5FootStep ? "true" : "false";
         }
     }
 

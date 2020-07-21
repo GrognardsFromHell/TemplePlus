@@ -150,6 +150,26 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 
 		logger->warn("Can't get config item {}.", configItem);
 		return std::string("");
+		});
+
+	m.def("config_set_bool", [](std::string& configItem, bool value) {
+		auto configItemLower(tolower(configItem));
+		if (configItemLower == "preferuse5footstep") {
+		    config.preferUse5FootStep = value;
+		}
+		else {
+			logger->warn("Can't set config item {}.", configItem);
+		}
+	});
+
+	m.def("config_get_bool", [](std::string& configItem) {
+		auto configItemLower(tolower(configItem));
+		if (configItemLower == "preferuse5footstep") {
+			return config.preferUse5FootStep;
+		}
+
+		logger->warn("Can't get config item {}.", configItem);
+		return false;
 	});
 
 	m.def("cur_seq_get_turn_based_status_flags", []() {

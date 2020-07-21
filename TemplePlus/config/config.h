@@ -102,6 +102,7 @@ struct TemplePlusConfig
 	bool equalizeMoveSpeed = true;
 	bool fastSneakAnim = false;
 	bool alertAiThroughDoors = false;
+	bool preferUse5FootStep = false;
 	int walkDistanceFt = 0;
 	bool disableChooseRandomSpell_RegardInvulnerableStatus = false;
 
