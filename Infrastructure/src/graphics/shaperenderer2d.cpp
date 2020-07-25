@@ -328,16 +328,26 @@ void ShapeRenderer2d::DrawLines(gsl::span<Line2d> lines) {
 
 	void ShapeRenderer2d::DrawRectangleOutline(XMFLOAT2 topLeft, XMFLOAT2 bottomRight, XMCOLOR color) {
 		
-		XMFLOAT2 topRight(bottomRight.x, topLeft.y);
-		XMFLOAT2 bottomLeft(topLeft.x, bottomRight.y);
-		
-		XMFLOAT2 lastBottomRight(bottomRight.x, bottomRight.y + 1);
+		float left = topLeft.x;
+		float top = topLeft.y;
+		float right = bottomRight.x;
+		float bottom = bottomRight.y;
 
+		// See the rasterization rules on this page for details about the exact vertex positioning:
+		// https://docs.microsoft.com/en-us/windows/win32/direct3d11/d3d10-graphics-programming-guide-rasterizer-stage-rules
+		// The short story: The start and end of each line must be centered horizontally (in the line's direction),
+		// and must be at the close and far edge of the pixel that should be covered.
+		// Example: To draw a line that covers pixels 0,0 and 1,0, one would have to have
+		// a vertex at 0,0.5 and 2,0.5 to cover both pixels fully.
 		std::array<Line2d, 4> lines{
-			Line2d(topLeft, topRight, color),
-			Line2d(bottomLeft, bottomRight, color),
-			Line2d(topLeft, bottomLeft, color),			
-			Line2d(topRight, lastBottomRight, color)
+			// Top line
+			Line2d(XMFLOAT2(left, top + 0.5f), XMFLOAT2(right, top + 0.5f), color),
+			// Bottom line
+			Line2d(XMFLOAT2(left, bottom - 0.5f), XMFLOAT2(right, bottom - 0.5f), color),
+			// Left line
+			Line2d(XMFLOAT2(left + 0.5f, top + 1.0f), XMFLOAT2(left + 0.5f, bottom - 1), color),
+			// Right line
+			Line2d(XMFLOAT2(right - 0.5f, top + 1.0f), XMFLOAT2(right - 0.5f, bottom - 1), color),
 		};
 
 		DrawLines(lines);

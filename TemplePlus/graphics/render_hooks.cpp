@@ -531,7 +531,20 @@ void RenderHooks::RenderDisc3d(LocAndOffsets& loc, int shaderId, float rotation,
 int RenderHooks::RenderRectIndirect(XMFLOAT2* topLeft, XMFLOAT2* bottomRight, XMCOLOR color) {
 	auto &shapeRenderer = tig->GetShapeRenderer2d();
 
-	shapeRenderer.DrawRectangleOutline(*topLeft, *bottomRight, color);
+	// In Vanilla, pixel coverage for these lines was ~50% leading to a darker
+	// color being drawn. This was inconsistent across drivers/fullscreen/windowed,
+	// so this ends up being an approximation...
+	color.r /= 2;
+	color.g /= 2;
+	color.b /= 2;
+
+	// To compensate for Vanilla's misuse of D3D8 line rasterization, we have to expand
+	// the actual rectangle by 1 in both dimensions.
+	XMFLOAT2 extendedBottomRight = *bottomRight;
+	extendedBottomRight.x++;
+	extendedBottomRight.y++;
+
+	shapeRenderer.DrawRectangleOutline(*topLeft, extendedBottomRight, color);
 
 	return 0;
 }
