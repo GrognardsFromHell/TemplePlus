@@ -138,13 +138,13 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 	m.def("config_get_string", [](std::string& configItem) {
 		auto configItemLower(tolower(configItem));
 		if (configItemLower == "hpfornpchd") {
-			return config.HpForNPCHd;
-		}
-		else if (configItemLower == "hponlevelup") {
 			//Check the old param
 			if (config.maxHpForNpcHitdice) {
 				return std::string("max");
 			}
+			return config.HpForNPCHd;
+		}
+		else if (configItemLower == "hponlevelup") {
 			return config.hpOnLevelup;
 		}
 
@@ -157,8 +157,14 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		if (configItemLower == "preferuse5footstep") {
 		    config.preferUse5FootStep = value;
 		}
-		if (configItemLower == "slowerlevelling") {
+		else if (configItemLower == "slowerlevelling") {
 			config.slowerLevelling = value;
+		}
+		else if (configItemLower == "disabletargetsurrounded") {
+			config.disableTargetSurrounded = value;
+		}
+		else if ("disablechooserandomspell_regardinvulnerablestatus") {
+			config.disableChooseRandomSpell_RegardInvulnerableStatus = value;
 		}
 		else {
 			logger->warn("Can't set config item {}.", configItem);
@@ -170,11 +176,14 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		if (configItemLower == "preferuse5footstep") {
 			return config.preferUse5FootStep;
 		}
-		if (configItemLower == "slowerlevelling") {
+		else if (configItemLower == "slowerlevelling") {
 			return config.slowerLevelling;
 		}
-		if (configItemLower == "disabletargetsurrounded") {
+		else if (configItemLower == "disabletargetsurrounded") {
 			return config.disableTargetSurrounded;
+		}
+		else if (configItemLower == "disablechooserandomspell_regardinvulnerablestatus") {
+			return config.disableChooseRandomSpell_RegardInvulnerableStatus;
 		}
 		logger->warn("Can't get config item {}.", configItem);
 		return false;
