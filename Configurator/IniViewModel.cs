@@ -44,7 +44,6 @@ namespace TemplePlusConfig
             "HpForNPCHd", typeof(HpForNPCHdType), typeof(IniViewModel),
             new PropertyMetadata(default(HpForNPCHdType)));
 
-        
         public static readonly DependencyProperty FogOfWarProperty = DependencyProperty.Register(
             "FogOfWar", typeof(FogOfWarType), typeof(IniViewModel),
             new PropertyMetadata(default(FogOfWarType)));
@@ -82,6 +81,9 @@ namespace TemplePlusConfig
 
         public static readonly DependencyProperty PreferUse5FootStepProperty = DependencyProperty.Register(
           "PreferUse5FootStep", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+
+        public static readonly DependencyProperty ExtendedSpellDescriptionsProperty = DependencyProperty.Register(
+          "ExtendedSpellDescriptions", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
 
         public static readonly DependencyProperty NewClassesProperty = DependencyProperty.Register(
           "NewClasses", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
@@ -285,6 +287,12 @@ namespace TemplePlusConfig
             set { SetValue(PreferUse5FootStepProperty, value); }
         }
 
+        public bool ExtendedSpellDescriptions
+        {
+            get { return (bool)GetValue(ExtendedSpellDescriptionsProperty); }
+            set { SetValue(ExtendedSpellDescriptionsProperty, value); }
+        }
+        
         public bool NewClasses
         {
             get { return (bool)GetValue(NewClassesProperty); }
@@ -554,7 +562,11 @@ namespace TemplePlusConfig
                 PreferUse5FootStep = preferUse5FootStep;
             }
 
-
+            bool extendedSpellDescriptions;
+            if (bool.TryParse(tpData["extendedSpellDescriptions"], out extendedSpellDescriptions))
+            {
+                ExtendedSpellDescriptions = extendedSpellDescriptions;
+            }
 
             bool newClasses;
             if (bool.TryParse(tpData["newClasses"], out newClasses))
@@ -732,6 +744,7 @@ namespace TemplePlusConfig
             tpData["disableDoorRelocking"] = DisableDoorRelocking? "true" : "false";
             tpData["alertAiThroughDoors"] = AlertAiThroughDoors ? "true" : "false";
             tpData["preferUse5FootStep"] = PreferUse5FootStep ? "true" : "false";
+            tpData["extendedSpellDescriptions"] = ExtendedSpellDescriptions ? "true" : "false";
         }
     }
 

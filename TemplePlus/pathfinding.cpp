@@ -632,6 +632,8 @@ bool Pathfinding::GetAlternativeTargetLocation(Path* pqr, PathQuery* pq)
 
 bool Pathfinding::TargetSurrounded(Path* pqr, PathQuery* pq)
 {
+	if (config.disableTargetSurrounded) return false;
+
 	if (    (pq->flags & PQF_IGNORE_CRITTERS) 
 		|| !(pq->flags & PQF_TARGET_OBJ ) 
 		|| !(pq->flags & PQF_HAS_CRITTER)

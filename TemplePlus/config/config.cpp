@@ -183,6 +183,7 @@ static ConfigSetting configSettings[] = {
 	CONF_BOOL(fastSneakAnim),
 	CONF_BOOL(alertAiThroughDoors),
 	CONF_BOOL(preferUse5FootStep),
+	CONF_BOOL(extendedSpellDescriptions),
 	CONF_INT(walkDistanceFt),
 	CONF_BOOL(newAnimSystem),
 	CONF_BOOL(upscaleLinearFiltering),

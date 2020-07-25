@@ -188,6 +188,7 @@ struct LegacySpellSystem : temple::AddressTable
 	MesHandle spellEnumsExt;
 	MesHandle *spellMes;
 	MesHandle spellMesExt;
+	MesHandle spellMesLong;
 	static std::map<int, std::string> mUserSpellMesLines;
 	static std::map<int, std::string> mUserSpellEnumsMesLines;
 	MesHandle * spellsRadialMenuOptionsMes;

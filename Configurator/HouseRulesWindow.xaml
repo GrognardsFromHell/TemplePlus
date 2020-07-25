@@ -31,7 +31,7 @@
             <CheckBox VerticalAlignment="Center" Content="Monstrous PC Races" IsChecked="{Binding MonstrousRaces}" Margin="0,5,0,5" ToolTip="Enables Monstrous PC Races."/>
             <CheckBox VerticalAlignment="Center" Content="Forgotten Realms PC Races" IsChecked="{Binding ForgottenRealmsRaces}" Margin="0,5,0,5" ToolTip="Enables Forgotten Realms PC Races."/>
         </StackPanel>
-        <GridSplitter x:Name="gridSplitter" HorizontalAlignment="Left" Height="326" Margin="230,10,0,0" VerticalAlignment="Top" Width="3"/>
+        <GridSplitter x:Name="gridSplitter" HorizontalAlignment="Left" Height="360" Margin="230,10,0,0" VerticalAlignment="Top" Width="3"/>
         <StackPanel HorizontalAlignment="Left" Height="106" VerticalAlignment="Top" Width="180" Margin="238,189,0,0">
             <Label VerticalAlignment="Center" Content="Difficulty" Margin="0,0,10,0" />
             <CheckBox VerticalAlignment="Center" Content="Slower levelling" IsChecked="{Binding SlowerLevelling}" Margin="0,5,35,5" ToolTip="Adjuts the experience point curve such that you rapidly get to level 3, but level more slowly afterwards. You will be about 1-2 levels behind a normal game."/>
@@ -40,6 +40,12 @@
                 <ComboBox VerticalAlignment="Center" SelectedValue="{Binding HpForNPCHd}"  ItemsSource="{Binding HpForNPCHdTypes}"/>
             </StackPanel>
         </StackPanel>
+
+        <StackPanel HorizontalAlignment="Left" Height="106" VerticalAlignment="Top" Width="180" Margin="238,270,0,0">
+            <Label VerticalAlignment="Center" Content="Help" Margin="0,0,10,0" />
+            <CheckBox VerticalAlignment="Center" Content="Extended Spell Descriptions" IsChecked="{Binding ExtendedSpellDescriptions}" Margin="0,5,10,5" ToolTip="Longer spell descriptions with better formatting."/>
+        </StackPanel>
+        
         <StackPanel HorizontalAlignment="Left" Height="137" VerticalAlignment="Top" Width="188" Margin="238,10,0,0">
             <Label VerticalAlignment="Center" Content="Ruleset" Margin="0,0,10,0" />
             <StackPanel Orientation="Horizontal">
@@ -54,7 +60,7 @@
             <CheckBox VerticalAlignment="Center" Content="Allow XP overflow" IsChecked="{Binding AllowXpOverflow}" Margin="0,5,35,5" ToolTip="Allows experience points to accumulate beyond the limit of the next level."/>
             <CheckBox VerticalAlignment="Center" Content="Lax Rules" IsChecked="{Binding LaxRules}" Margin="0,5,35,5" ToolTip="Relax some restrictions such as craft MAA spell requirements, alignment restrictions for Prestige Classes." Initialized="CheckBox_Initialized" Unchecked="CheckBox_Unchecked" Checked="CheckBox_Checked"/>
         </StackPanel>
-        <GridSplitter x:Name="gridSplitter_Copy" HorizontalAlignment="Left" Height="326" Margin="431,10,0,0" VerticalAlignment="Top" Width="3"/>
+        <GridSplitter x:Name="gridSplitter_Copy" HorizontalAlignment="Left" Height="360" Margin="431,10,0,0" VerticalAlignment="Top" Width="3"/>
         <StackPanel HorizontalAlignment="Left" Height="137" VerticalAlignment="Top" Width="206" Margin="450,10,0,0">
             <Label VerticalAlignment="Center" Content="Lax Rules Options" Margin="0,0,10,0" />
             <CheckBox VerticalAlignment="Center" Content="Disable Alignment Restrictions" IsChecked="{Binding DisableAlignmentRestrictions}" Margin="0,5,10,5" ToolTip="Alignment restrictions will not apply when choosing a class with respect to the critter's alignment, nor to the party alignment."/>

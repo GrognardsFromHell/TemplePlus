@@ -81,6 +81,7 @@ struct TemplePlusConfig
 	uint32_t maxLevel = 10; // maximum character level
 	std::string hpOnLevelup = "Normal";
 	std::string HpForNPCHd = "Normal";
+	bool disableTargetSurrounded = false;
 	bool maxHpForNpcHitdice = false;
 	bool allowXpOverflow = false;
 	bool slowerLevelling = false;
@@ -103,6 +104,7 @@ struct TemplePlusConfig
 	bool fastSneakAnim = false;
 	bool alertAiThroughDoors = false;
 	bool preferUse5FootStep = false;
+	bool extendedSpellDescriptions = false;
 	int walkDistanceFt = 0;
 	bool disableChooseRandomSpell_RegardInvulnerableStatus = false;
 

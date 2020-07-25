@@ -157,6 +157,9 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		if (configItemLower == "preferuse5footstep") {
 		    config.preferUse5FootStep = value;
 		}
+		if (configItemLower == "slowerlevelling") {
+			config.slowerLevelling = value;
+		}
 		else {
 			logger->warn("Can't set config item {}.", configItem);
 		}
@@ -167,10 +170,35 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		if (configItemLower == "preferuse5footstep") {
 			return config.preferUse5FootStep;
 		}
-
+		if (configItemLower == "slowerlevelling") {
+			return config.slowerLevelling;
+		}
+		if (configItemLower == "disabletargetsurrounded") {
+			return config.disableTargetSurrounded;
+		}
 		logger->warn("Can't get config item {}.", configItem);
 		return false;
 	});
+
+	m.def("config_set_int", [](std::string& configItem, int value) {
+		auto configItemLower(tolower(configItem));
+		if (configItemLower == "pointbuypoints") {
+			config.pointBuyPoints = value;
+		}
+		else {
+			logger->warn("Can't set config item {}.", configItem);
+		}
+		});
+
+	m.def("config_get_int", [](std::string& configItem) {
+		auto configItemLower(tolower(configItem));
+		if (configItemLower == "pointbuypoints") {
+			return config.pointBuyPoints;
+		}
+
+		logger->warn("Can't get config item {}.", configItem);
+		return 0;
+		});
 
 	m.def("cur_seq_get_turn_based_status_flags", []() {
 		int res = 0;
