@@ -1679,7 +1679,19 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 		dispIo.attackPacket.victim = victim;
 		dispIo.attackPacket.attacker = attacker;
 		dispIo.attackPacket.dispKey = 0;
-		return dispIo.Dispatch(victim, attacker, dispTypeGetDefenderConcealmentMissChance, DK_NONE);
+		(void)dispIo.Dispatch(victim, attacker, dispTypeGetDefenderConcealmentMissChance, DK_NONE);
+
+		// As per SRD, concealment chances do not stack, best consensus found was to take only the highest one
+		int maxConcealment = 0;
+		for (auto index = 0; index < dispIo.bonlist.bonCount; ++index)
+		{
+			if (dispIo.bonlist.bonusEntries[index].bonValue > maxConcealment)
+			{
+				maxConcealment = dispIo.bonlist.bonusEntries[index].bonValue;
+			}
+		}
+
+		return maxConcealment;
 	};
 
 	static auto getAttackerConcealmentMissChance = [](objHndl attacker) {
