@@ -309,12 +309,17 @@ BOOL UiPcCreation::ClassSystemInit(UiSystemConf & conf){
 		return 0;
 
 	for (auto it : d20ClassSys.baseClassEnums) {
-		auto className = _strdup(d20Stats.GetStatName((Stat)it));
+		auto classEnum = (Stat)it;
+		auto className = _strdup(d20Stats.GetStatName(classEnum));
 		classNamesUppercase[it] = className;
 		for (auto &letter : classNamesUppercase[it]) {
 			letter = toupper(letter);
 		}
-		classBtnMapping.push_back(it);
+
+		if (config.nonCoreMaterials || d20ClassSys.IsCoreClass(classEnum)) {
+			if (config.newClasses || d20ClassSys.IsBaseClass(classEnum))
+				classBtnMapping.push_back(it);
+		}
 	}
 	mPageCount = classBtnMapping.size() / 11;
 	if (mPageCount * 11u < classBtnMapping.size())
@@ -559,64 +564,97 @@ BOOL UiPcCreation::ClassBtnMsg(int widId, TigMsg * msg) {
 	return 0;
 }
 
-BOOL UiPcCreation::ClassNextBtnMsg(int widId, TigMsg * msg) {
-
-	if (!config.nonCoreMaterials)
-		return FALSE;
-
+BOOL UiPcCreation::ClassNextBtnMsg(int widId, TigMsg* msg)
+{
 	if (msg->type != TigMsgType::WIDGET)
 		return FALSE;
 
 	auto _msg = (TigMsgWidget*)msg;
+	bool interactedWithButton = true;
 
-	if (_msg->widgetEventType == TigMsgWidgetEvent::Clicked) {
-		if (classWndPage < mPageCount - 1)
-			classWndPage++;
-		ClassSetPermissibles();
-		return TRUE;
+	switch (_msg->widgetEventType)
+	{
+		case TigMsgWidgetEvent::MouseReleased:
+		{
+			if (classWndPage < mPageCount - 1)
+				classWndPage++;
+			ClassSetPermissibles();
+		}
+		break;
+		case TigMsgWidgetEvent::Exited:
+		{
+			// TODO: This doesn't show the text over the default char creation text
+			//temple::GetRef<void(__cdecl)(const char*)>(0x10162C00)("");
+		}
+		break;
+		case TigMsgWidgetEvent::Entered:
+		{
+			// TODO: This doesn't show the text over the default char creation text
+			/*if (classWndPage < mPageCount - 1)
+			{
+				auto textboxText = fmt::format("View the next page of classes.");
+				if (textboxText.size() >= 1024)
+					textboxText[1023] = 0;
+				strcpy(temple::GetRef<char[1024]>(0x10C80CC0), &textboxText[0]);
+				temple::GetRef<void(__cdecl)(const char*)>(0x10162C00)(temple::GetRef<char[1024]>(0x10C80CC0));
+			}*/
+		}
+		break;
+		default:
+			interactedWithButton = false;
+			break;
 	}
 
-	/*if (_msg->widgetEventType == TigMsgWidgetEvent::Exited) {
-	temple::GetRef<void(__cdecl)(const char*)>(0x10162C00)("");
-	return 1;
-	}
-
-	if (_msg->widgetEventType == TigMsgWidgetEvent::Entered) {
-	auto textboxText = fmt::format("Prestige Classes");
-	if (textboxText.size() >= 1024)
-	textboxText[1023] = 0;
-	strcpy(temple::GetRef<char[1024]>(0x10C80CC0), &textboxText[0]);
-	temple::GetRef<void(__cdecl)(const char*)>(0x10162C00)(temple::GetRef<char[1024]>(0x10C80CC0));
-	return 1;
-	}*/
-
-	return FALSE;
+	return interactedWithButton;
 }
 
 BOOL UiPcCreation::ClassPrevBtnMsg(int widId, TigMsg * msg)
 {
-
-	if (!config.nonCoreMaterials)
-		return FALSE;
-
 	if (msg->type != TigMsgType::WIDGET)
 		return 0;
 
 	auto _msg = (TigMsgWidget*)msg;
+	bool interactedWithButton = true;
 
-	if (_msg->widgetEventType == TigMsgWidgetEvent::Clicked) {
-		if (classWndPage > 0)
-			classWndPage--;
-		ClassSetPermissibles();
-		return TRUE;
+	switch (_msg->widgetEventType)
+	{
+		case TigMsgWidgetEvent::MouseReleased:
+		{
+			if (classWndPage > 0)
+				classWndPage--;
+			ClassSetPermissibles(); 
+		}
+		break;
+		case TigMsgWidgetEvent::Exited:
+		{
+			// TODO: This doesn't show the text over the default char creation text
+			//temple::GetRef<void(__cdecl)(const char*)>(0x10162C00)("");
+		}
+		break;
+		case TigMsgWidgetEvent::Entered:
+		{
+			// TODO: This doesn't show the text over the default char creation text
+			/*if (classWndPage > 0)
+			{
+				auto textboxText = fmt::format("View the previous page of classes.");
+				if (textboxText.size() >= 1024)
+					textboxText[1023] = 0;
+				strcpy(temple::GetRef<char[1024]>(0x10C80CC0), &textboxText[0]);
+				temple::GetRef<void(__cdecl)(const char*)>(0x10162C00)(temple::GetRef<char[1024]>(0x10C80CC0));
+			}*/
+		}
+		break;
+		default:
+			interactedWithButton = false;
+			break;
 	}
 
-	return FALSE;
+	return interactedWithButton;
 }
 
-
-void UiPcCreation::ClassNextBtnRender(int widId) {
-	if (!config.nonCoreMaterials)
+void UiPcCreation::ClassNextBtnRender(int widId)
+{
+	if (classWndPage == mPageCount - 1)
 		return;
 
 	static TigRect srcRect(1, 1, 120, 30);
@@ -642,8 +680,9 @@ void UiPcCreation::ClassNextBtnRender(int widId) {
 
 }
 
-void UiPcCreation::ClassPrevBtnRender(int widId) {
-	if (!config.nonCoreMaterials)
+void UiPcCreation::ClassPrevBtnRender(int widId)
+{
+	if (classWndPage == 0)
 		return;
 
 	static TigRect srcRect(1, 1, 120, 30);
@@ -3120,7 +3159,7 @@ void UiPcCreation::ClassSetPermissibles(){
 
 	}
 
-	if (!config.newClasses) {
+	if (mPageCount <= 1) {
 		uiManager->SetButtonState(classNextBtn, LgcyButtonState::Disabled);
 		uiManager->SetButtonState(classPrevBtn, LgcyButtonState::Disabled);
 		return;

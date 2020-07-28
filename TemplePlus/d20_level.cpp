@@ -75,9 +75,8 @@ bool D20LevelSystem::CanLevelup(objHndl objHnd)
 
 }
 
-void D20LevelSystem::AddSkillPoints(objHndl handle, int skillEnum, int numAdded){
-
-	
+void D20LevelSystem::AddSkillPoints(objHndl handle, int skillEnum, int numAdded)
+{
 	auto levClass = stat_level_fighter; // default
 	auto obj = objSystem->GetObject(handle);
 	auto numClasses = obj->GetInt32Array(obj_f_critter_level_idx).GetSize();

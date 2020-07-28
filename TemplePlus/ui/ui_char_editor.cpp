@@ -1727,7 +1727,7 @@ BOOL UiCharEditor::ClassBtnMsg(int widId, TigMsg * msg){
 	if (classCode == (Stat)-1)
 		return 0;
 
-	if (_msg->widgetEventType == TigMsgWidgetEvent::Clicked){
+	if (_msg->widgetEventType == TigMsgWidgetEvent::MouseReleased){
 		if (helpSys.IsClickForHelpActive()){
 			helpSys.PresentWikiHelp(HELP_IDX_CLASSES + classCode - stat_level_barbarian, D20HelpType::Classes);
 			return TRUE;
@@ -1766,29 +1766,40 @@ BOOL UiCharEditor::ClassNextBtnMsg(int widId, TigMsg * msg){
 		return FALSE;
 
 	auto _msg = (TigMsgWidget*)msg;
+	bool interactedWithButton = true;
 
-	if (_msg->widgetEventType == TigMsgWidgetEvent::Clicked) {
-		if (classWndPage < mPageCount-1)
-			classWndPage++;
-		uiCharEditor.ClassSetPermissibles();
-		return TRUE;
+	switch (_msg->widgetEventType)
+	{
+		case TigMsgWidgetEvent::MouseReleased:
+		{
+			if (classWndPage < mPageCount - 1)
+				classWndPage++;
+			uiCharEditor.ClassSetPermissibles();
+		}
+		break;
+		case TigMsgWidgetEvent::Exited:
+		{
+			temple::GetRef<void(__cdecl)(const char*)>(0x10162C00)("");
+		}
+		break;
+		case TigMsgWidgetEvent::Entered:
+		{
+			if (classWndPage < mPageCount - 1)
+			{
+				auto textboxText = fmt::format("View the next page of classes.");
+				if (textboxText.size() >= 1024)
+					textboxText[1023] = 0;
+				strcpy(temple::GetRef<char[1024]>(0x10C80CC0), &textboxText[0]);
+				temple::GetRef<void(__cdecl)(const char*)>(0x10162C00)(temple::GetRef<char[1024]>(0x10C80CC0));
+			}
+		}
+		break;
+		default:
+			interactedWithButton = false;
+			break;
 	}
 
-	if (_msg->widgetEventType == TigMsgWidgetEvent::Exited) {
-		temple::GetRef<void(__cdecl)(const char*)>(0x10162C00)("");
-		return 1;
-	}
-
-	if (_msg->widgetEventType == TigMsgWidgetEvent::Entered) {
-		auto textboxText = fmt::format("Prestige Classes");
-		if (textboxText.size() >= 1024)
-			textboxText[1023] = 0;
-		strcpy(temple::GetRef<char[1024]>(0x10C80CC0), &textboxText[0]);
-		temple::GetRef<void(__cdecl)(const char*)>(0x10162C00)(temple::GetRef<char[1024]>(0x10C80CC0));
-		return 1;
-	}
-
-	return FALSE;
+	return interactedWithButton;
 }
 
 BOOL UiCharEditor::ClassPrevBtnMsg(int widId, TigMsg * msg){
@@ -1796,16 +1807,40 @@ BOOL UiCharEditor::ClassPrevBtnMsg(int widId, TigMsg * msg){
 		return 0;
 
 	auto _msg = (TigMsgWidget*)msg;
+	bool interactedWithButton = true;
 
-	if (_msg->widgetEventType == TigMsgWidgetEvent::Clicked) {
-		if (classWndPage > 0)
-			classWndPage--;
-		uiCharEditor.ClassSetPermissibles();
-		return TRUE;
+	switch (_msg->widgetEventType)
+	{
+		case TigMsgWidgetEvent::MouseReleased:
+		{
+			if (classWndPage > 0)
+				classWndPage--;
+			uiCharEditor.ClassSetPermissibles();
+		}
+		break;
+		case TigMsgWidgetEvent::Exited:
+		{
+			temple::GetRef<void(__cdecl)(const char*)>(0x10162C00)("");
+		}
+		break;
+		case TigMsgWidgetEvent::Entered:
+		{
+			if (classWndPage > 0)
+			{
+				auto textboxText = fmt::format("View the previous page of classes.");
+				if (textboxText.size() >= 1024)
+					textboxText[1023] = 0;
+				strcpy(temple::GetRef<char[1024]>(0x10C80CC0), &textboxText[0]);
+				temple::GetRef<void(__cdecl)(const char*)>(0x10162C00)(temple::GetRef<char[1024]>(0x10C80CC0));
+			}
+		}
+		break;
+		default:
+			interactedWithButton = false;
+			break;
 	}
 
-
-	return FALSE;
+	return interactedWithButton;
 }
 
 BOOL UiCharEditor::FinishBtnMsg(int widId, TigMsg * msg){
@@ -1842,7 +1877,7 @@ BOOL UiCharEditor::FinishBtnMsg(int widId, TigMsg * msg){
 
 void UiCharEditor::ClassNextBtnRender(int widId){
 
-	if (mPageCount <= 1)
+	if (classWndPage == mPageCount - 1)
 		return;
 
 	static TigRect srcRect(1, 1, 120, 30);
@@ -1869,7 +1904,7 @@ void UiCharEditor::ClassNextBtnRender(int widId){
 
 void UiCharEditor::ClassPrevBtnRender(int widId){
 
-	if (mPageCount <= 1)
+	if (classWndPage == 0)
 		return;
 
 	static TigRect srcRect(1, 1, 120, 30);
