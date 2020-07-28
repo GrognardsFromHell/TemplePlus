@@ -2569,8 +2569,52 @@ static PyObject* PyObjHandle_RumorLogAdd(PyObject* obj, PyObject* args) {
 	party.RumorLogAdd(self->handle, rumorId);
 	Py_RETURN_NONE;
 }
+static PyObject* PyObjHandle_GetNumBaseAttacks(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle)
+		Py_RETURN_NONE;
 
+	auto dispatcher = objects.GetDispatcher(self->handle);
+	if (!dispatch.dispatcherValid(dispatcher))
+		Py_RETURN_NONE;
 
+	DispIoD20ActionTurnBased dispIo;
+	int numAttacksBase = 0;
+	auto mainWeapon = inventory.ItemWornAt(self->handle, EquipSlot::WeaponPrimary);
+	auto offhand = inventory.ItemWornAt(self->handle, EquipSlot::WeaponSecondary);
+
+	// if unarmed check natural attacks (for monsters)
+	if (!mainWeapon && !offhand) {
+		dispatch.DispatcherProcessor(dispatcher, dispTypeGetCritterNaturalAttacksNum, DK_D20A_FULL_ATTACK, &dispIo);
+		numAttacksBase = dispIo.returnVal;
+	}
+	if (numAttacksBase <= 0) {
+		dispatch.DispatcherProcessor(dispatcher, dispTypeGetNumAttacksBase, DK_D20A_FULL_ATTACK, &dispIo);
+		numAttacksBase = dispIo.returnVal;
+	}
+
+	return PyInt_FromLong(numAttacksBase);
+}
+
+static PyObject* PyObjHandle_GetNumBonusAttacks(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle)
+		Py_RETURN_NONE;
+
+	auto dispatcher = objects.GetDispatcher(self->handle);
+	if (!dispatch.dispatcherValid(dispatcher))
+		Py_RETURN_NONE;
+
+	DispIoD20ActionTurnBased dispIo;
+	BonusList bonlist;
+	int numBonusAttacks = 0;
+	dispIo.bonlist = &bonlist;
+	dispatch.DispatcherProcessor(dispatcher, dispTypeGetBonusAttacks, DK_D20A_FULL_ATTACK, &dispIo);
+	auto bonval = bonlist.GetEffectiveBonusSum();
+	numBonusAttacks = bonval + dispIo.returnVal;
+
+	return PyInt_FromLong(numBonusAttacks);
+}
 
 static PyObject* PyObjHandle_ObjectEventAppend(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
@@ -3644,6 +3688,8 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "npc_flags_get", GetFlags<obj_f_npc_flags>, METH_VARARGS, NULL },
 	{ "npc_flag_set", SetFlag<obj_f_npc_flags>, METH_VARARGS, NULL },
 	{ "npc_flag_unset", ClearFlag<obj_f_npc_flags>, METH_VARARGS, NULL },
+	{ "num_base_attacks", PyObjHandle_GetNumBaseAttacks, METH_VARARGS, NULL },
+	{ "num_bonus_attacks", PyObjHandle_GetNumBonusAttacks, METH_VARARGS, NULL },
 	
 	{ "object_event_append", PyObjHandle_ObjectEventAppend, METH_VARARGS, NULL },
 	{ "object_event_append_wall", PyObjHandle_WallEventAppend, METH_VARARGS, NULL },
