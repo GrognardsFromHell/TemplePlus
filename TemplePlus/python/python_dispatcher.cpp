@@ -620,6 +620,14 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		})
 		;
 
+	py::class_<RadialMenuEntrySlider, RadialMenuEntry>(m, "RadialMenuEntrySlider")
+		.def(py::init<int, int, int, std::string&, const char*>(), py::arg("minValue"), py::arg("maxValue"), py::arg("selectedValue"), py::arg("radialText"), py::arg("helpTopic"))
+		.def("link_to_args", [](RadialMenuEntrySlider& entry, DispatcherCallbackArgs& args, int selectedArgIdx)
+			{
+				entry.actualArg = (int)args.GetCondArgPtr(selectedArgIdx);
+			})
+		;
+
 	py::class_<RadialMenuEntryParent>(m, "RadialMenuEntryParent")
 		.def(py::init<int>(), py::arg("combesMesLine"))
 		.def(py::init<std::string&>(), py::arg("radialText"))

@@ -990,6 +990,38 @@ RadialMenuEntrySlider::RadialMenuEntrySlider(int combatMesLine, int _minArg, int
 	callback = (BOOL(__cdecl*)(objHndl, RadialMenuEntry*))temple::GetPointer(0x100F0200);
 }
 
+RadialMenuEntrySlider::RadialMenuEntrySlider(int minVal, int maxVal, int selectedVal, std::string& nodeText, const char* helpIdName) : RadialMenuEntry()
+{
+	type = RadialMenuEntryType::Slider;
+	auto nodeTextId = ElfHash::Hash(nodeText);
+	auto textCache = radialMenus.radMenuStrings.find(nodeTextId);
+	if (textCache == radialMenus.radMenuStrings.end()) {
+		radialMenus.radMenuStrings[nodeTextId] = nodeText;
+	}
+	text = (char*)radialMenus.radMenuStrings[nodeTextId].c_str();
+
+	if (minVal > maxVal) {
+		minVal = 0;
+		maxVal = 0;
+	}
+	if (selectedVal < minVal) {
+		selectedVal = minVal;
+	}
+	else if (selectedVal > maxVal) {
+		selectedVal = maxVal;
+	}
+	else {
+		// Do nothing, selected value is in bounds
+	}
+	maxArg = maxVal;
+	minArg = minVal;
+	actualArg = selectedVal;
+
+	helpId = ElfHash::Hash(helpIdName);
+
+	callback = (BOOL(__cdecl*)(objHndl, RadialMenuEntry*))temple::GetPointer(0x100F0200);
+}
+
 RadialMenuEntryAction::RadialMenuEntryAction(int combatMesLine, D20ActionType d20aType, int data1, uint32_t HelpId) : RadialMenuEntry() {
 	type = RadialMenuEntryType::Action;
 	if (combatMesLine > 0)
