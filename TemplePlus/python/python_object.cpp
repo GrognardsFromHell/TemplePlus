@@ -3039,6 +3039,14 @@ static PyObject* PyObjHandle_GetDeity(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(objects.GetDeity(self->handle));
 }
 
+static PyObject* PyObjHandle_GetReach(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	return PyFloat_FromDouble(critterSys.GetReach(self->handle, D20ActionType::D20A_UNSPECIFIED_ATTACK));
+}
 
 static PyObject* PyObjHandle_GetWeaponType(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
@@ -3578,7 +3586,8 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "get_character_base_classes", PyObjHandle_GetCharacterBaseClassesSet, METH_VARARGS, "Get tuple with base classes enums" },
 	{ "get_initiative", PyObjHandle_GetInitiative, METH_VARARGS, NULL },
 	{ "get_item_wear_flags", PyObjHandle_GetItemWearFlags, METH_VARARGS, NULL },
-    { "get_deity", PyObjHandle_GetDeity, METH_VARARGS, NULL },
+	{ "get_deity", PyObjHandle_GetDeity, METH_VARARGS, NULL },
+	{ "get_reach", PyObjHandle_GetReach, NULL, NULL },
 	{ "get_weapon_type", PyObjHandle_GetWeaponType, METH_VARARGS, NULL },
 	{ "get_wield_type", PyObjHandle_GetWieldType, METH_VARARGS, NULL },
 	{ "get_weapon_projectile_proto", PyObjHandle_GetWeaponProjectileProto, METH_VARARGS, NULL },
@@ -4117,8 +4126,8 @@ PyGetSetDef PyObjHandleGetSets[] = {
 	{"char_classes", PyObjHandle_GetCharacterClasses, NULL, "a tuple containing the character classes array", NULL },
 	{ "highest_arcane_class", PyObjHandle_GetHighestArcaneClass, NULL, "Highest Arcane spell casting class", NULL },
 	{ "highest_divine_class", PyObjHandle_GetHighestDivineClass, NULL, "Highest Divine spell casting class", NULL },
-    { "highest_arcane_caster_level", PyObjHandle_GetHighestArcaneCasterLevel, NULL, "Highest Arcane caster level", NULL },
-    { "highest_divine_caster_level", PyObjHandle_GetHighestDivineCasterLevel, NULL, "Highest Divine caster level", NULL },
+	{ "highest_arcane_caster_level", PyObjHandle_GetHighestArcaneCasterLevel, NULL, "Highest Arcane caster level", NULL },
+	{ "highest_divine_caster_level", PyObjHandle_GetHighestDivineCasterLevel, NULL, "Highest Divine caster level", NULL },
 	{"description", PyObjHandle_GetDescription, NULL, NULL },
 	{"name", PyObjHandle_GetNameId, NULL, NULL},
 	{"location", PyObjHandle_GetLocation, NULL, NULL},
