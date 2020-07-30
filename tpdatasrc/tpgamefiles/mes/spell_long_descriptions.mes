@@ -671,7 +671,11 @@ Effect:              Fog spreads in 20-foot radius
 Duration:      10 min/level}
 {5184}{Forbiddance}
 {5185}{Forcecage}
-{5186}{[Divination] This spell grants you a powerful sixth sense in relation to yourself or another.}
+{5186} Foresight {This spell grants you a powerful sixth sense.  You are never surprised or flat-footed and you get a +2 insight bonus to AC and Reflex saves.
+Casting:         1  std action   [Divination, V,S,M/DF]
+Range:               Personal
+Target:            You
+Duration:      10 min/level}
 {5187}{Freedom}
 {5188} Freedom of Movement {Creature may move and attack normally,  even  if paralyzed or under Solid Fog,  Slow,  Web,  etc.
 
@@ -1084,7 +1088,11 @@ Casting:         1  std action   [Evocation, V,S]
 Range:               Long,  400  feet  + 40/level
 Area:                   Four  40-foot  radius spreads
 Duration:      Save: Reflex half (fire damage),    SR: Yes}
-{5308}{[Abjuration] The subject is protected from all devices and spells that detect, influence, or read emotions or thoughts.}
+{5308} Mind Blank {The subject is protected from all devices and spells that detect, influence, or read emotions or thoughts.
+Casting:         1  std action   [Abjuration, V,S]
+Range:               Close,  25 feet  +  5 ft./2 levels
+Target:            One creature
+Duration:      24 hours,    Save: Will negates,    SR: Y}
 {5309} Mind Fog {Creatures  in the fog take a minus  10 competence penalty on Wisdom checks and Will  saves.  Effect remains for  2d6  rounds after  leaving the fog.
 Casting:         1  std action   [Enchantment, V,S]
 Range:               Medium,  100 feet  + 10/level
@@ -1764,7 +1772,11 @@ Casting:         1  std action   [Necromancy, V]
 Range:               Close,  25  feet  + 5/2 levels
 Area:                   40-foot  radius spread
 Duration:      Inst.,    Save: Fort negates,    SR: Yes}
-{5522}{[Evocation] Creates a 10' wide curtain of fire that deals an initial 2d4 fire damage and 2d6 +1/lvl to creatures passing through it.}
+{5522}{Creates a 10' wide curtain of fire that deals an initial 2d4 fire damage and 2d6 +1/lvl to creatures passing through it.
+Casting:         1  std action   [Evocation, V,S,M/DF]
+Range:               Medium ,  100  feet  + 10 levels  
+Duration:       Concentration + 1 round/level
+Save:                    None,    SR: Yes}
 {5523}{Wall of Force}
 {5524}{Wall of Ice}
 {5525}{Wall of Iron}
@@ -1811,25 +1823,25 @@ Casting:         1  std action   [Necromancy, V,S,DF]
 Range:               Touch 
 Targets:         One plant or plant creature 
 Duration:      Inst.,    Save: Fort half,    SR: Yes}
-{5543} Dispel Air {You gain a +4 deflection bonus to AC against all  attacks.  No other aspects of this spell  work.
+{5543} Dispel Air {You gain a +4 deflection bonus to AC against all  attacks.  Melee touch attack dispels one summoned air creature,  which ends spell.
 
 Casting:         1  std action   [Abjuration, V,S]
 Range:               Personal 
 Target:            You
 Duration:      1  round/level}
-{5544} Dispel Earth {You gain a +4 deflection bonus to AC against all  attacks.  No other aspects of this spell  work.
+{5544} Dispel Earth {You gain a +4 deflection bonus to AC against all  attacks.  Melee touch attack dispels one summoned earth creature,  which ends spell.
 
 Casting:         1  std action   [Abjuration, V,S]
 Range:               Personal 
 Target:            You
 Duration:      1  round/level}
-{5545} Dispel Fire {You gain a +4 deflection bonus to AC against all  attacks.  No other aspects of this spell  work.
+{5545} Dispel Fire {You gain a +4 deflection bonus to AC against all  attacks.  Melee touch attack dispels one summoned fire creature,  which ends spell.
 
 Casting:         1  std action   [Abjuration, V,S]
 Range:               Personal 
 Target:            You
 Duration:      1  round/level}
-{5546} Dispel Water {You gain a +4 deflection bonus to AC against all  attacks.  No other aspects of this spell  work.
+{5546} Dispel Water {You gain a +4 deflection bonus to AC against all  attacks.  Melee touch attack dispels one summoned water creature,  which ends spell.
 
 Casting:         1  std action   [Abjuration, V,S]
 Range:               Personal 
@@ -2142,3 +2154,28 @@ Duration:      Inst.,    Save: None,    SR: Yes}
 
 Casting:     Out of combat   [Conjuration, 5050 gp]
 Range:           Personal}
+{6000} Moment of Prescience {Grants an insight bonus equal to your caster level (max +25) on a attack roll, opposed ability or skill check, saving throw or an AC bonus on one attack.
+Casting:         1  std action   [Divination, V,S]
+Range:               Personal
+Target:            You
+Duration:     1 hour/level or until discharged}
+{6001} Touch of Fatigue {If you succeed on a touch attack the subject is fatigued for the spell’s duration.  This spell has no effect on a creature that is already fatigued.
+Casting:    1  std action   [Necromancy, V,S,M]
+Range:          Touch
+Target:        Living creature touched
+Duration: 1 round/level,   Save: Fort negates,   SR: Yes}
+{6002} Ray of Exhaustion {[Necromancy] On a successful ranged touch attack, the subject is exhausted (or fatigued on a successful save) for the spell’s duration.
+Casting:       1  std action   [Necromancy, V,S,M]
+Range:             Close,  25  feet  + 5/2 levels
+Effect:            Ray,  ranged touch attack
+Duration:    1 round/level,    Save: Fort partial,    SR: Yes}
+{6003} Waves of Fatigue {[Necromancy] Waves of negative energy render all living creatures in the spell’s area fatigued. It has no effect on a fatigued creature.
+Casting:         1  std action   [Necromancy, V,S]
+Range:               30 ft.
+Effect:              Cone-shaped burst
+Duration:      Instantaneous,    Save: No,    SR: Yes}
+{6004} Waves of Exhaustion {[Necromancy] Waves of negative energy cause all living creatures in the spell’s area to become exhausted. It has no effect on a exhausted creature.
+Casting:         1  std action   [Necromancy, V,S]
+Range:               60 ft.
+Area:                   Cone-shaped burst
+Duration:      Instantaneous,    Save: No,    SR: Yes}
