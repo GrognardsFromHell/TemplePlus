@@ -1,0 +1,2181 @@
+{5000}{SPELL_NONE}
+{5001} Aid {Grants  a +1  morale bonus on attack rolls and fear saves,  and temporary  hit points of  1d8 +1  per caster  level,  max 10.
+Casting:         1  std action  [Enchantment,V,S,DF]
+Range:               Touch 
+Target:             Living creature touched
+Duration:      1  min/level}
+{5002}{Air Walk}
+{5003}{Alarm}
+{5004}{Alter Self}
+{5005} Analyze Dweomer {Identifies all  items  in  up to five  inventories,  and grants +20 to Spellcraft  for  1  minute/level.
+
+Casting:         1  std action   [Divination, V,S,F, 1500 gp]
+Range:               Personal 
+Targets:         Up to five inventories 
+Duration:      Instantaneous,  and 1  min/level}
+{5006}{Animal Friendship}
+{5007} Animal Growth  {Creatures double in size,  +8 Str,  +4 Con,  -2 Dex,  +2 AC,  DR 10/magic,  base damage and reach increase.
+
+Casting:         1  std action   [Transmutation, V,S]
+Range:               Medium,  100  feet  + 10/level 
+Targets:         1  animal / 2 lvls, no more than 30 ft apart 
+Duration:      1  min/level,    Save: Fort negates,    SR: Yes}
+{5008}{Animal Messenger}
+{5009}{Animal Shapes}
+{5010} Animal Trance {Fascinates 2d6 Hit Dice of animals.  A magical  beast or a dire animal  is allowed a Will  saving throw.
+
+Casting:         1  std action   [Enchantment, V,S]
+Range:               Close,  25  feet  + 5/2 levels 
+Targets:         Animals with Intelligence  1  or 2 
+Duration:      1  min/level,    Save: see text,    SR: Yes}
+{5011} Animate Dead {Creates a skeleton or zombie from a dead humanoid.  Material  cost  is 25 gp.
+
+Casting:         1  std action   [Necro., V,S,M, 25 gp]
+Range:               Touch 
+Targets:         One corpse touched 
+Duration:      Instantaneous}
+{5012}{Animate Objects}
+{5013}{Animate Rope}
+{5014}{Antilife Shell}
+{5015}{Antimagic Field}
+{5016}{Antipathy}
+{5017}{Antiplant Shell}
+{5018}{Arcane Eye}
+{5019}{Arcane Lock}
+{5020}{Arcane Mark}
+{5021}{Astral Projection}
+{5022} Atonement {Restores a Paladin's class features if they were lost by committing an evil  act.  Costs 500 xp.
+
+Casting:         1  round   [Abjuration, V,S,M,DF, 500 xp]
+Range:               Touch 
+Target:            Living creature touched 
+Duration:      Instantaneous}
+{5023}{Augury}
+{5024}{Awaken}
+{5025} Bane {Each enemy takes a  -1  penalty  on attack rolls and saving throws against  fear effects.
+
+Casting:         1  std action   [Enchantment, V,S,DF]
+Range:               50 feet
+Area:                   All  enemies within 50 feet
+Duration:      1  min/level,    Save: Will  negates,    SR: Yes}
+{5026} Banishment {Forces outsiders or summoned creatures to return to native plane.  As many as 2 Hit Dice of creatures per caster level can be banished.
+Casting:         1  std action   [Abjuration, V,S,F]
+Range:               Close,  25  feet  + 5/2 levels
+Target:            Outsiders, no more than 30' apart
+Duration:      Inst.,    Save: Will negates,    SR: Yes}
+{5027} Barkskin {Grants a  +2  enhancement  bonus to existing natural  armor bonus,  +3 at  6th level,  +4 at  9th,  +5 at  12th.
+
+Casting:         1  std action   [Transmutation, V,S,DF]
+Range:               Touch 
+Target:            Living creature touched
+Duration:      10 min/level}
+{5028} Bestow Curse {Curse creature with one effect:   1)  -6  to an ability score.   2)  -4  on attack rolls,  saves,  and checks.   3)  Each turn,  50% chance to take no action.
+Casting:         1  std action   [Necromancy, V,S]
+Range:               Touch 
+Target:            Creature touched
+Duration:      Permanent,    Save: Will negates,    SR:Yes}
+{5029}{Bigby's Clenched Fist}
+{5030}{Bigby's Crushing Hand}
+{5031}{Bigby's Forceful Hand}
+{5032}{Bigby's Grasping Hand}
+{5033}{Bigby's Interposing Hand}
+{5034}{Binding}
+{5035} Blade Barrier {[Evocation] Wall of blades deals 1d6/level damage.}
+{5036} Blasphemy {Kills, paralyzes, weakens, and/or dazes nonevil  creatures based on  their HD.  Banishes nonevil  extraplanar creatures.
+Casting:         1  std action   [Evocation, V]
+Range:               Personal
+Area:                   40-foot  radius burst
+Duration:      Inst.,   Save: No (Will  for banish),   SR:Yes}
+{5037} Bless {You and each ally gain a  +1  morale bonus on attack rolls and saving throws against  fear effects.
+
+Casting:         1  std action   [Enchantment ,V,S,DF]
+Range:               50 feet
+Area:                   50-foot  burst  centered on caster
+Duration:      1  min/level}
+{5038} Bless Water {Creates a  flask of Holy Water.  Costs 25 gp.
+
+
+Casting:         1  minute   [Transmutation, V,S,M, 25 gp]
+Range:               Touch
+Target:            Flask of water touched
+Duration:      Instantaneous}
+{5039}{Bless Weapon}
+{5040} Blindness/Deafness {Makes subject  blinded or deafened.
+
+
+Casting:         1  std action   [Necromancy, V]
+Range:               Medium,  100  feet  + 10/level 
+Target:            One living creature
+Duration:      1  day,    Save: Fort negates,    SR: No}
+{5041} Blink {Attacks against you miss 50% of the time,  and your attacks miss 20% of the time.
+
+Casting:         1  std action   [Transmutation, V,S]
+Range:               Personal
+Target:            You
+Duration:      1  round/level (D)}
+{5042} Blur {Attacks miss subject 20% of the time.
+
+
+Casting:         1  std action   [Illusion, V]
+Range:               Touch
+Target:            Creature touched
+Duration:      1  min/level}
+{5043} Break Enchantment  {Frees subjects from enchantments, alterations, curses, and petrification.
+
+Casting:         1  minute   [Abjuration, V,S]
+Range:               Close,  25  feet  + 5/2 levels  
+Target:             Up to one creature/level, all within 30' 
+Duration:      Instantaneous}
+{5044} Bull's Strength {Grants a +4 enhancement  bonus to Strength,  improving melee attack rolls and damage rolls.
+
+Casting:         1  std action   [Transmutation. V,S]
+Range:               Touch 
+Target:             Creature touched
+Duration:      1  min/level}
+{5045} Burning Hands {Deals 1d4 points of fire damage per caster level  to  each creature  in the cone,  max 5d4.
+
+Casting:         1  std action   [Evocation, V,S]
+Range:               15  feet
+Area:                   Cone-shaped burst
+Duration:      Inst.,    Save: Reflex half,    SR: Yes}
+{5046} Call Lightning {You may call  one vertical  lightning  bolt per turn that deals 3d6 electricity damage.  The total number you can call  is equal  to your caster level,  max 10.
+Casting:         1  std action   [Evocation, V,S]
+Range:               Medium,  100  feet  + 10/level
+Area:                   5-foot  radius burst 
+Duration:      1  min/level,    Save: Reflex half,    SR: Yes}
+{5047} Calm Animals {Calms animals with total  HD up to 2d4 + caster level.  A dire animal  or trained animal  gets a Will  save.
+
+Casting:         1  std action   [Enchantment. V,S]
+Range:               Close,  25  feet  + 5/2 levels 
+Targets:         Animals within 30 ft. of each other 
+Duration:      1  min/level,    Save: see text,    SR: Yes}
+{5048} Calm Emotions {Calms creatures.  Offensive actions against  unfriendly  creatures are prevented.
+
+Casting:         1  std action   [Enchantment, V,S,DF]
+Range:               Medium,  100  feet  + 10/level
+Area:                   Creatures in a 20-foot  radius spread
+Duration:      1  round/level,    Save: Will negates,    SR: Y}
+{5049} Cat's Grace {Grants a +4 enhancement bonus to Dexterity,  improving AC,  Reflex saves,  and Dex based skills.
+
+Casting:         1  std action   [Transmutation, V,S]
+Range:               Touch 
+Target:             Creature touched
+Duration:      1  min/level}
+{5050} Cause Fear {Creature becomes frightened for 1d4 rounds.  If a Will  save is made,  it  is shaken  for 1  round instead.
+
+Casting:         1  std action   [Necromancy, V,S]
+Range:               Close,  25  feet  + 5/2 levels
+Target:            One living creature with 5 HD or less
+Duration:      1d4  rounds,    Save: Will  partial,    SR: Yes}
+{5051} Chain Lightning {Deals 1d6 electricity damage per level  to primary target, max 20d6.  Deals half damage to a number of secondary  targets equal  to your level,  max 20.
+Casting:         1  std action   [Evocation, V,S,F]
+Range:               Long,  400  feet  + 40/level
+Targets:         One primary, plus one secondary/level 
+Duration:      Inst.,    Save: Reflex half,    SR: Yes}
+{5052}{Disguise Self}
+{5053}{Changestaff}
+{5054} Chaos Hammer {Deals 1d8/two levels to lawful  creatures,  1d6/level  to lawful  outsiders,  and slows for 1d6 rounds.  Non-lawful  and non-chaotic take half,  and no slow.
+Casting:         1  std action   [Evocation, V,S]
+Range:               Medium,  100  feet  + 10/level
+Area:                   20-foot  radius burst
+Duration:      Inst.,    Save: Will  half + no slow,    SR:Yes}
+{5055} Charm Monster {Makes one creature regard you as its trusted friend and ally.  Constructs, elementals, oozes, plants, undead are immune.  
+Casting:         1  std action   [Enchantment, V,S]
+Range:               Close,  25  feet  + 5/2 levels
+Target:            One living creature
+Duration:      1  day/level,    Save: Will negates,    SR: Yes}
+{5056} Charm Person {Makes one humanoid creature regard you as its trusted friend and ally.
+
+Casting:         1  std action   [Enchantment, V,S]
+Range:               Close,  25  feet  + 5/2 levels
+Target:            One humanoid creature
+Duration:      1  hour/level,    Save: Will negates,    SR: Yes}
+{5057} Charm Animal {Makes one animal  regard you as its trusted friend and ally.
+
+Casting:         1  std action   [Enchantment, V,S]
+Range:               Close (25  feet  + 5/2 levels
+Target:            One animal
+Duration:      1  hour/level,    Save: Will negates,    SR: Yes}
+{5058} Chill Metal {Chills metal  armor,  causing its wearer 8d4 cold damage over 7 rounds.
+
+Casting:         1  std action   [Transmutation,  V,S,DF]
+Range:               Close,  25  feet  + 5/2 levels
+Target:            Metal  equipment of 1  creature / 2 levels
+Duration:      7 rounds}
+{5059} Chill Touch {Melee touch attack deals 1d6 negative energy damage and 1  Strength damage to living,  Fortitude saves.  Undead flee instead,  Will  saves.
+Casting:         1  std action   [Necromancy, V,S]
+Range:               Touch
+Target:            Creature or creatures touched
+Duration:      Inst.,    Save: see text,    SR: Yes}
+{5060} Circle of Death {Kills 1d4 HD of living creatures per level, max 20d4.  Creatures with the  fewest  HD are affected first. No creature of 9 or more HD  is affected.  Costs 500 gp.
+Casting:         1  std action   [Necromancy, V,S,M]
+Range:               Medium,  100  feet  + 10/level  
+Effect:              40-foot  radius burst
+Duration:      Inst.,    Save: Fort negates,    SR: Yes}}
+{5061} Inflict Light, Mass {Deals negative  energy damage of 1d8 +1  per level,  max +25,  to one creature  per  level.  Cures undead.
+
+Casting:         1  std action   [Necromancy, V,S]
+Range:               Close,  25  feet  + 5/2 levels
+Target:            1  creature/level, no more than 30' apart
+Duration:      Inst.,    Save: Will  half,    SR: Yes}
+{5062} Clairaudience/Clairvoyance {Hear and see at  a distance.  It allows you to see beyond the fog of war on the game map. 
+
+Casting:         Out of combat   [Divination, V,S,F/DF]
+Range:               Long,  400  feet  + 40/level 
+Effect:              Magical sensor
+Duration:      1  min/level (D)}
+{5063}{Cloak of Chaos}
+{5064}{Clone}
+{5065} Cloudkill {Kills creatures 3 HD or less,  4-6 HD save or die,  6+ HD save each turn or take 1d4 Con  damage.
+
+Casting:         1  std action   [Conjuration, V,S]
+Range:               Medium,  100  feet  + 10/level  
+Effect:              Cloud spreads in 20-foot  radius
+Duration:      1  min/level,    Save: Fort partial,    SR: No}
+{5066} Color Spray {Creatures with sight are affected based on  their HD.  2 HD or less: unconscious, blind, and stunned.   3-4 HD: blind and stunned.   5 HD or more: stunned.
+Casting:         1  std action   [Illusion, V,S,M]
+Range:               15  feet
+Area:                   Cone-shaped burst
+Duration:      Varies,    Save: Will negates,    SR:Yes}
+{5067} Command {One subject  obeys selected command for one  round:  approach,  fall,  flee,  or halt. 
+
+Casting:         1  std action   [Enchantment, V]
+Range:               Close,  25  feet  + 5/2 levels
+Target:            One living creature
+Duration:      1  round,    Save: Will negates,    SR:Yes}
+{5068}{Command Plants}
+{5069}{Commune}
+{5070}{Commune with Nature}
+{5071}{Comprehend Languages}
+{5072} Cone of Cold {Deals 1d6 cold damage per caster level  to each creature  in  the  cone,  max 15d6.
+
+Casting:         1  std action   [Evocation, V,S,M/DF]
+Range:               60 feet
+Area:                   Cone-shaped burst
+Duration:      Inst.,    Save: Reflex half,    SR: Yes}
+{5073} Confusion {Subjects behave oddly for 1  round per level.  They may flee,  babble,  attack randomly,  etc.
+
+Casting:        1  std action   [Enchantment,  V,S,M/DF]
+Range:              Medium,  100  feet  + 10/level 
+Targets:        All  creatures in 15-foot  radius burst 
+Duration:      1  round/level,    Save: Will negates,    SR: Y}
+{5074} Consecrate {Fills area with positive energy,  making undead weaker.  Costs 25 gp.
+
+Casting:         1  std action   [Evocation, V,S,M, 25 gp]
+Range:               Close,  25  feet  + 5/2 levels
+Area:                   20-foot  radius emanation
+Duration:      2  hours/level}
+{5075}{Contact Other Plane}
+{5076} Contagion {Subject  contracts a disease of your choice,  which strikes immediately.
+
+Casting:         1  std action   [Necromancy, V,S]
+Range:               Touch 
+Target:            Living creature touched 
+Duration:      Inst.,    Save: Fort negates,    SR: Yes}
+{5077}{Contingency}
+{5078}{Continual Flame}
+{5079} Control Plants {Entangles enemy creatures with surrounding vegetation.
+
+Casting:         1  std action   [Enchantment, V,S,M]
+Range:               Close,  25  feet  +  5/2 levels
+Targets:         Up to 2 HD/level of plant creatures 
+Duration:      1  min/level,    Save: Will negates,    SR: No}
+{5080} Control Undead {Control  up to 2 HD  per  caster  level  of undead.
+
+
+Casting:         1  std action   [Necromancy, V,S,M]
+Range:               Close,  25  feet  + 5/2 levels 
+Targets:         Undead within 30 ft. of each other 
+Duration:      1  min/level,    Save: Will negates,    SR: Yes}
+{5081}{Control Water}
+{5082}{Control Weather}
+{5083}{Control Winds}
+{5084}{Create Food and Water}
+{5085}{Create Greater Undead}
+{5086}{Create Undead}
+{5087}{Create Water}
+{5088}{Creeping Doom}
+{5089} Cure Critical Wounds {Cures 4d8 damage +1  per caster  level,  max +20.  Deals damage to undead  instead of curing. 
+
+Casting:         1  std action   [Conjuration, V,S]
+Range:               Touch
+Target:            Creature touched
+Duration:      Inst.,    Save: Will  half  undead,    SR: Yes}
+{5090} Cure Light Wounds {Cures 1d8 damage +1  per caster  level,  max +5.  Deals damage to undead  instead of curing.
+
+Casting:         1  std action   [Conjuration, V,S]
+Range:               Touch
+Target:            Creature touched
+Duration:      Inst.,    Save: Will  half  undead,    SR: Yes}
+{5091} Cure Minor Wounds {Cures 1  point of damage.  Deals damage to undead instead of curing. 
+
+Casting:         1  std action   [Conjuration, V,S]
+Range:               Touch
+Target:            Creature touched
+Duration:      Inst.,    Save: Will  half  undead,    SR: Yes}
+{5092} Cure Moderate Wounds {Cures 2d8 damage +1  per caster  level,  max +10.  Deals damage to undead  instead of curing. 
+
+Casting:         1  std action   [Conjuration, V,S]
+Range:               Touch
+Target:            Creature touched
+Duration:      Inst.,    Save: Will  half  undead,    SR: Yes}
+{5093} Cure Serious Wounds {Cures 3d8 damage +1  per caster  level,  max +15.  Deals damage to undead  instead of curing. 
+
+Casting:         1  std action   [Conjuration, V,S]
+Range:               Touch
+Target:            Creature touched
+Duration:      Inst.,    Save: Will  half  undead,    SR: Yes}
+{5094} Curse Water {Creates a  flask of Unholy Water.  Costs 25 gp.
+
+
+Casting:         1  minute   [Necromancy, V,S,M, 25 gp]
+Range:               Touch
+Target:            Flask of water touched
+Duration:      Instantaneous}
+{5095}{Dancing Lights}
+{5096} Darkness {[Evocation] 20-ft. radius of supernatural shadow.}
+{5097}{Darkvision}
+{5098} Daylight {[Evocation] 60-ft. radius of bright light.}
+{5099} Daze {Humanoid creature with 4 or fewer Hit  Dice takes no actions for 1  round.
+
+Casting:         1  std action   [Enchantment, V,S,M]
+Range:               Close,  25  feet  + 5/2 levels
+Target:             Humanoid creature 4 HD or less 
+Duration:      1  round,    Save: Will negates,    SR: Yes}
+{5100} Death Knell {Kills living creature with less than 0 HPs,  you gain 1d8 temp HPs,  +2  Strength,  and  +1  caster level.  Lasts for 10 minutes per HD of subject.
+Casting:         1  std action   [Necromancy, V,S]
+Range:               Touch
+Target:            Living creature touched
+Duration:      Inst.,    Save: Will negates,    SR: Yes}
+{5101} Death Ward {Grants immunity to death spells and negative energy effects.
+
+Casting:         1  std action   [Necromancy, V,S]
+Range:               Touch
+Target:            Living creature touched
+Duration:      1  min/level }
+{5102}{Deathwatch}
+{5103}{Deeper Darkness}
+{5104} Delay Poison {Subject becomes temporarily immune to poison.  New and preexisting poisons will  still  affect the subject after the spell  expires.
+Casting:         1  std action   [Conjuration, V,S]
+Range:               Touch
+Target:            Creature touched
+Duration:      1  hour/level}
+{5105} Delayed Blast Fireball {Deals 1d6 fire damage per caster level  to each creature in the area.  May be delayed up to 5  rounds.
+
+Casting:         1  std action   [Evocation, V,S,M] 
+Range:               Long,  400  feet  +  40/level
+Area:                   20-foot  radius spread
+Duration:      Up to 5 rnds,    Save: Reflex half,    SR: Yes}
+{5106}{Demand}
+{5107} Desecrate {Fills area with negative energy,  making undead stronger.  Costs 25 gp.
+
+Casting:         1  std action   [Evocation, V,S,M, 25 gp]
+Range:               Close,  25  feet  + 5/2 levels
+Area:                   20-foot  radius emanation
+Duration:      2  hours/level,    Save: None,    SR: Yes}
+{5108} Destruction {Slays subject  and consumes remains.  If Fortitude save succeeds,  deals 10d6 damage instead.
+
+Casting:         1  std action   [Necromancy, V,S,F]
+Range:               Close,  25  feet  + 5/2 levels 
+Area:                   One Creature 
+Duration:      Inst.,    Save: Fort partial,    SR: Yes}
+{5109}{Detect Animals or Plants}
+{5110} Detect Chaos {Reveals creatures, spells, or objects of Chaos.
+
+
+Casting:         1  std action   [Divination, V,S,DF]
+Range:               60 feet
+Area:                   Cone-shaped emanation
+Duration:      Concentration,  up to 10  min/level}
+{5111} Detect Evil {Reveals creatures, spells, or objects of Evil.
+
+
+Casting:         1  std action   [Divination, V,S,DF]
+Range:               60 feet
+Area:                   Cone-shaped emanation
+Duration:      Concentration, up to 10  min/level}
+{5112} Detect Good {Reveals creatures, spells, or objects of Good.
+
+
+Casting:         1  std action   [Divination, V,S,DF]
+Range:               60 feet
+Area:                   Cone-shaped emanation
+Duration:      Concentration, up to 10  min/level}
+{5113} Detect Law {Reveals creatures, spells, or objects of Law.
+
+
+Casting:         1  std action   [Divination, V,S,DF]
+Range:               60 feet
+Area:                   Cone-shaped emanation
+Duration:      Concentration, up to 10  min/level}
+{5114} Detect Magic {Detects spells and magic items within a 60 foot cone.
+
+Casting:         1  std action   [Divination, V,S]
+Range:               60 feet
+Area:                   Cone-shaped emanation
+Duration:      Concentration,  up to 1  min/level}
+{5115}{Detect Poison}
+{5116}{Detect Scrying}
+{5117} Detect Secret Doors {Reveals hidden doors within 60 feet.
+
+
+Casting:         1  std action   [Divination, V,S]
+Range:               60 feet
+Area:                   Cone-shaped emanation
+Duration:      Concentration,  up to 1  min/level}
+{5118}{Detect Snares and Pits}
+{5119}{Detect Thoughts}
+{5120} Detect Undead {Reveals undead within 60  feet.
+
+
+Casting:         1  std action   [Divination, V,S,M/DF] 
+Range:               60 feet
+Area:                   Cone-shaped emanation
+Duration:      Concentration,  up to 1  min/level}
+{5121} Dictum {Kills, paralyzes, slows, and/or deafens nonlawful  creatures based on  their HD.  Banishes nonlawful  extraplanar creatures.
+Casting:         1  std action   [Evocation, V]
+Range:               Personal
+Area:                   40-foot  radius burst
+Duration:      Inst.,   Save: No (Will  for banish),   SR:Yes}
+{5122} Dimensional Anchor {Bars extradimensional  movement  such as Blink,  Teleport,  and Dimension Door.
+
+Casting:         1  std action   [Abjuration, V,S]
+Range:               Medium,  100  feet  + 10/level
+Effect:              Ray,  ranged touch attack
+Duration:      1  min/level}
+{5123} Dimension Door {You instantly transfer yourself from your current  location to any other spot within range.
+
+Casting:         1  std action   [Conjuration, V]
+Range:               Long,  400  feet  + 40/level
+Target:            You and your possessions
+Duration:      Instantaneous}
+{5124}{Diminish Plants}
+{5125} Discern Lies {Grants a +30 bonus to your Sense Motive skill.
+
+
+Casting:         1  std action   [Divination, V,S]
+Range:               Personal
+Target:            You
+Duration:      1  round/level (D)}
+{5126}{Discern Location}
+{5127} Disintegrate {Ranged touch attack deals 2d6 damage per level,  or 5d6 with a successful save.  A  creature reduced to 0 or  fewer  hit points is turned to dust.
+Casting:         1  std action   [Transmutation,  V,S,M/DF]
+Range:               Medium,  100  feet  +  10/level 
+Effect:              Ray,  ranged touch attack
+Duration:      Inst.,    Save: Fort 5d6,    SR: Yes}
+{5128} Dismissal {Forces an outsider or summoned creature to return to its native plane.
+
+Casting:         1  std action   [Abjuration, V,S]
+Range:               Close,  25  feet  + 5/2 levels 
+Target:            One outsider or summoned creature
+Duration:      Inst.,    Save: Will negates,    SR: Yes}
+{5129} Dispel Chaos {Grants a +4 deflection bonus to AC against  attacks by chaotic creatures.  Melee touch attack dispels one chaotic summoned creature,  which ends spell.
+Casting:         1  std action   [Abjuration, V,S,DF]
+Range:               Personal 
+Target:            You
+Duration:      1  round/level,    Save: Will negates,    SR: Y}
+{5130} Dispel Evil {Grants a +4 deflection bonus to AC against  attacks by evil  creatures.  Melee touch attack dispels one evil summoned creature,  which ends spell.
+Casting:         1  std action   [Abjuration, V,S,DF]
+Range:               Personal 
+Target:            You
+Duration:      1  round/level,    Save: Will negates,    SR: Y}
+{5131} Dispel Good {Grants a +4 deflection bonus to AC against  attacks by good creatures.  Melee touch attack dispels one good summoned creature,  which ends spell
+Casting:         1  std action   [Abjuration, V,S,DF]
+Range:               Personal 
+Target:            You
+Duration:      1  round/level,    Save: Will negates,    SR: Y}
+{5132} Dispel Law {Grants a +4 deflection bonus to AC against  attacks by lawful creatures.    Melee touch attack dispels one lawful summoned creature,  which ends spell
+Casting:         1  std action   [Abjuration, V,S,DF]
+Range:               Personal 
+Target:            You
+Duration:      1  round/level,    Save: Will negates,    SR: Y}
+{5133} Dispel Magic {Choose to dispel  all  ongoing spells for one creature,  or  one  ongoing spell  for each creature.  Maximum caster level  for the dispel  check is 10.
+Casting:         1  std action   [Abjuration, V,S]
+Range:               Medium,  100  feet  + 10/level
+Area:                   One creature,  or 20-foot  radius burst
+Duration:      Inst.,    Save: None,    SR: No}
+{5134} Displacement {Attacks miss subject 50% of the time as if it  had total  concealment.
+
+Casting:         1  std action   [Illusion, V,M] 
+Range:               Touch
+Target:            Creature touched
+Duration:      1  round/level (D)}
+{5135} Disrupt Undead {Ranged touch attack deals 1d6 points of positive energy damage to an undead creature.
+
+Casting:         1  std action   [Necromancy, V,S]
+Range:               Close,  25  feet  + 5/2 levels  
+Effect:              Ray,  ranged touch attack
+Duration:      Inst.,    Save: None,    SR: Yes}
+{5136}{Divination}
+{5137} Divine Favor {You gain a +1  luck bonus on attack and weapon damage rolls for every three caster levels you have.
+
+Casting:         1  std action   [Evocation, V,S,DF]
+Range:               Personal
+Target:            You
+Duration:      1  minute}
+{5138} Divine Power {Your base attack bonus becomes equal  to your character level,  you gain +6 enhancement bonus to Strength,  and 1  temporary HP  per caster level.
+Casting:         1  std action   [Evocation, V,S,DF]
+Range:               Personal
+Target:            You
+Duration:      1  round/level}
+{5139} Dominate Animal {You control  the actions of one animal.  The animal  is added as a controllable NPC.
+
+Casting:         1  round   [Enchantment, V,S]
+Range:               Close,  25  feet   + 5/2 levels
+Target:            One creature
+Duration:      1  round/level,    Save: Will negates,    SR: Y}
+{5140} Dominate Monster {You control  the actions of one creature.  The creature is added as a controllable NPC.
+
+Casting:         1  round   [Enchantment, V,S]
+Range:               Close,  25  feet  + 5/2 levels
+Target:            One creature
+Duration:      1  day/level,    Save: Will negates,    SR: Yes}
+{5141} Dominate Person {You control  the actions of one humanoid creature.  The creature is added as a controllable NPC.
+
+Casting:         1  round   [Enchantment, V,S]
+Range:               Close,  25  feet  + 5/2 levels
+Target:            One humanoid
+Duration:      1  day/level,    Save: Will negates,    SR: Yes}
+{5142} Doom {Subject  takes -2  on attack rolls,  damage rolls,  saves,  and checks.
+
+Casting:         1  std action   [Necromancy, V,S]
+Range:               Medium,  100  feet  + 10/level
+Target:            One living creature
+Duration:      1  min/level,    Save: Will negates,    SR: Yes}
+{5143}{Drawmij's Instant Summons}
+{5144}{Dream}
+{5145}{Earthquake}
+{5146}{Elemental Swarm}
+{5147}{Emotion}
+{5148} Bear's Endurance {Grants a +4 enhancement  bonus to Constitution,  improving hit points,  Fortitude saves,  and Con based skills.
+Casting:         1  std action   [Transmutation, V,S]
+Range:               Touch 
+Target:             Creature touched
+Duration:      1  min/level}
+{5149} Endure Elements {Subject  gains Energy Resistance 5  from  one energy  type:  acid,  cold,  electricity,  fire,  or sonic.
+
+Casting:         1  std action   [Abjuration, V,S]
+Range:               Touch
+Target:            Creature touched
+Duration:      24 hours}
+{5150}{Energy Drain}
+{5151}{Enervation}
+{5152} Enlarge Person {Humanoid grows by one size category,  +2  Str,  -2  Dex,  -1  attack and AC.  Reach increases.  Weapons enlarge,  dealing more damage.
+Casting:         1  round   [Transmutation, V,S,M]
+Range:               Close,  25  feet  + 5/2 levels
+Target:            One humanoid creature
+Duration:      1  min/level,   Save: Fort negates,    SR: Yes}
+{5153} Entangle {Entangles creatures outdoors.  Break free with Reflex save or later DC 15  strength check.  Once free,  move each turn with DC 15  strength check.
+Casting:         1  std action   [Transmutation, V,S,DF]
+Range:               Long,  400  feet  + 40/level  
+Effect:              Plants in a 40-foot  radius spread 
+Duration:      1  min/level,    Save: Reflex partial,    SR: Yes}
+{5154}{Enthrall}
+{5155} Entropic Shield {Ranged attacks against  you which require an attack roll  have a 20% miss chance,  including magic rays.
+
+Casting:         1  std action   [Abjuration, V,S]
+Range:               Personal
+Target:            You
+Duration:      1  min/level}
+{5156}{Ethereal Jaunt}
+{5157}{Etherealness}
+{5158}{Evard's Black Tentacles}
+{5159} Expeditious Retreat {Increases your base land speed by 30 feet.  The spell  does not  need to be used as part  of a retreat.
+
+Casting:         1  std action   [Transmutation, V,S]
+Range:               Personal 
+Target:            You
+Duration:      1  min/level}
+{5160}{Explosive Runes}
+{5161} Eyebite {Up to 4 HD: comatose.  Up to 9 HD: panicked.  All: sickened.  In TOEE, all  targets selected on  casting, caster loses move action  each turn  for each target. 
+Casting:         1  std action   [Necromancy, V,S]
+Range:               Close,  25  feet  + 5/2 levels 
+Target:            One living creature /  3 levels
+Duration:      10 min/level,   Save: Fort negates,   SR: Yes}
+{5162}{Fabricate}
+{5163} Faerie Fire {Outlines subjects with light,  cancelling the effects of  Blur,  Displacement,  Invisibility,  etc.
+
+Casting:         1  std action   [Evocation, V,S,DF] 
+Range:               Long,  400  feet  + 40/level
+Area:                   Creatures within a 5-foot  radius burst 
+Duration:      1  min/level (D),    Save: None,    SR: Yes}
+{5164}{False Vision}
+{5165} Fear {Subjects within cone flee for  1  round per level.  If save is successful,  shaken for 1  round instead.
+
+Casting:         1  std action   [Necromancy, V,S,M]
+Range:               30  feet
+Area:                   Cone-shaped burst
+Duration:      1  round/level,    Save: Will partial,    SR: Y}
+{5166}{Feather Fall}
+{5167} Feeblemind {Subject's Intelligence and Charisma  scores  each drop to 1.
+
+Casting:         1  round   [Enchantment, V,S,M]
+Range:               Medium,  100  feet  + 10/level
+Target:            One creature
+Duration:      Inst.,    Save: Will negates,    SR: Yes}
+{5168}{Find the Path}
+{5169} Find Traps {Detect  traps like a rogue.  This spell does  not work.
+
+
+Casting:         1  std action   [Divination, V,S]
+Range:               Personal
+Target:            You
+Duration:      1  min/level}
+{5170} Finger of Death {Slays one living creature.  If Fortitude save succeeds,  deals 3d6 +1  per level  damage instead.
+
+Casting:         1  std action   [Necromancy, V,S]
+Range:               Close,  25  feet  + 5/2 levels 
+Target:            One living creature
+Duration:      Inst.,    Save: Fort partial,    SR: Yes}
+{5171} Fireball {Deals 1d6 fire damage per caster level  to each creature in the area,  max 10d6.
+
+Casting:         1  std action   [Evocation, V,S,M] 
+Range:               Long,  400  feet  + 40/level
+Area:                   20-foot  radius spread
+Duration:      Inst.,    Save: Reflex half,    SR: Yes}
+{5172}{Fire Seeds}
+{5173} Fire Shield {Creatures striking you take your choice of fire or cold damage equal  to 1d6 +1  per level,  max +15.  You gain protection against the opposite type.
+Casting:         1  std action   [Evocation, V,S,M/DF]
+Range:               Personal
+Target:            You
+Duration:      1  round/level (D)}
+{5174} Fire Storm {Deals 1d6 fire damage per caster  level  to each creature  in the area,  max 20d6.
+
+Casting:         1  std action   [Evocation, V,S,M] 
+Range:               Medium,  100  feet  + 10/level
+Area:                   Two 10-ft. cubes per level
+Duration:      Inst.,    Save: Reflex half,    SR: Yes} 
+{5175}{Fire Trap}
+{5176}{Flame Arrow}
+{5177}{Flame Blade}
+{5178} Flame Strike {Deals 1d6 damage per level  to each creature in the area,  max 15d6.  Half is fire damage,  half divine.
+
+Casting:         1  std action   [Evocation, V,S,DF]
+Range:               Medium,  100  feet  + 10/level
+Area:                   Cylinder,  10-ft. radius,  40 ft. high
+Duration:      Inst.,    Save: Reflex half,    SR: Yes}
+{5179} Flaming Sphere {Flaming Sphere}
+{5180} Flare {Subject  is dazzled for 1  minute,  taking a  – 1  penalty on attack rolls,  Spot  checks,  and Search checks.
+
+Casting:         1  std action   [Evocation, V,S]
+Range:               Close,  25  feet  + 5/2 levels  
+Effect:              Burst  of light  
+Duration:      Inst.,    Save: Fort negates,    SR: Yes}
+{5181} Flesh to Stone {[Transmutation] Turns subject creature into statue.}
+{5182}{Fly}
+{5183} Fog Cloud {Obscures sight beyond 5 feet.  A  creature within 5  feet  has  20% miss chance on attacks,  farther  50%.
+
+Casting:         1  std action   [Conjuration, V,S]
+Range:               Medium,  100 feet  + 10/level
+Effect:              Fog spreads in 20-foot radius
+Duration:      10 min/level}
+{5184}{Forbiddance}
+{5185}{Forcecage}
+{5186} Foresight {This spell grants you a powerful sixth sense.  You are never surprised or flat-footed and you get a +2 insight bonus to AC and Reflex saves.
+Casting:         1  std action   [Divination, V,S,M/DF]
+Range:               Personal
+Target:            You
+Duration:      10 min/level}
+{5187}{Freedom}
+{5188} Freedom of Movement {Creature may move and attack normally,  even  if paralyzed or under Solid Fog,  Slow,  Web,  etc.
+
+Casting:         1  std action   [Abjuration, V,S,M]
+Range:               Personal  or touch
+Target:            You or creature touched
+Duration:      10 min/level}
+{5189} Gaseous Form {Subject gains DR 10/magic,  is immune to poison and critical  hits,  can’t attack or cast most spells,  and has movement  reduced to 10.
+Casting:         1  std action   [Transmutation, S,M/DF]
+Range:               Touch
+Target:            Willing corporeal creature touched
+Duration:      2  min/level (D)}
+{5190}{Gate}
+{5191}{Geas/Quest}
+{5192} Gentle Repose {You preserve the remains of a dead creature so that they  do not decay.  In TOEE, the spell must be cast while the creature  is still alive.
+Casting:         1  std action   [Necromancy, V,S,M]
+Range:               Touch
+Target:            Corpse touched
+Duration:      Permanent,    Save: None,    SR: Yes}
+{5193}{Ghost Sound}
+{5194} Ghoul Touch {Melee touch attack paralyzes one creature,  which exudes a stench that makes those nearby sickened.
+
+Casting:         1  std action   [Necromancy, V,S,M]
+Range:               Touch
+Target:            Living humanoid touched
+Duration:      1d6 +2  rounds,    Save: Fort,    SR: Yes}
+{5195} Giant Vermin {Summons a vermin  into the party.  Choose from Black Widow Spider,  Giant Tick,  or Large Spider.
+
+Casting:         1  std action   [Transmutation, V,S,DF]
+Range:               Close,  25  feet  + 5/2 levels
+Target:            One creature
+Duration:      1  min/level}
+{5196} Glitterdust {Creatures in the area become blinded,  and invisible creatures can be seen.
+
+Casting:         1  std action   [Conjuration,  V,S,M]
+Range:               Medium,  100  feet  +  10/level 
+Area:                   10-foot  radius spread 
+Duration:      1  round/level,    Save: Will negates,    SR: N}
+{5197} Globe of Invulnerability {[Abjuration]  NO  As lesser globe of invulnerability, plus 4th-level spell effects.}
+{5198}{Glyph of Warding}
+{5199} Goodberry {Creates 2d4 berries in your inventory that  each cure 1  hit  point  when  eaten.
+
+Casting:         1  std action   [Transmutation, V,S,DF]
+Range:               Personal
+Targets:         You
+Duration:      One day/level}
+{5200} Grease {Any creature in the area must make a Reflex save or fall.  This save is repeated each turn while in the area.
+
+Casting:         1  std action   [Conjuration, V,S,M]
+Range:               Close,  25  feet  + 5/2 levels 
+Area:                   10-foot  square 
+Duration:      1  round/level,    Save: Reflex,    SR: No}
+{5201} Greater Command {Subjects  obey selected command for one  round:  approach,  fall,  flee,  or halt. 
+
+Casting:         1  std action   [Enchantment, V]
+Range:               Close,  25  feet  + 5/2 levels
+Targets:         1  creature/level, no more than 30' part 
+Duration:      1  round/level,    Save: Will negates,    SR: Y}
+{5202} Greater Dispel Magic {Choose to dispel  all  ongoing spells for one creature,  or  one  ongoing spell  for each creature.  Maximum caster level  for the dispel  check is 20.
+Casting:         1  std action   [Abjuration, V,S]
+Range:               Medium,  100  feet  + 10/level
+Area:                   One creature,  or 20-foot  radius burst
+Duration:      Inst.,    Save: None,    SR: No}
+{5203}{Greater Glyph of Warding}
+{5204} Greater Magic Fang  {Gives one natural  weapon of the subject a +1  enhancement bonus per caster level,  max +5.
+
+Casting:         1  std action   [Transmutation, V,S,DF]
+Range:               Close,  25  feet  + 5/2 levels
+Target:            Living creature
+Duration:      1  min/level}
+{5205} Greater Magic Weapon  {Gives weapon  an  enhancement  bonus on attack and damage rolls of  +1  per four caster levels,  max +5.
+
+Casting:         1  std action   [Transmutation, V,S,M]
+Range:               Close,   25  feet  + 5/2 levels
+Target:            One weapon  or fifty  projectiles
+Duration:      1  hour/level}
+{5206} Greater Planar Ally {Calls up to 18 HD  of extraplanar creatures to your aid.  Costs 1700 gp, and 500 experience points.
+
+Casting:        Out of combat   [Conjuration]
+Range:               Close,  25  feet  + 5/2 levels
+Effect:              see text 
+Duration:      1  min/level.}
+{5207}{Greater Planar Binding}
+{5208}{Greater Restoration}
+{5209}{Greater Scrying}
+{5210}{Greater Shadow Conjuration}
+{5211}{Greater Shadow Evocation}
+{5212}{Guards and Wards}
+{5213} Guidance {Subject  gets a  +1  competence bonus on one attack roll,  saving throw,  or skill  check.
+
+Casting:         1  std action   [Divination, V,S]
+Range:               Touch
+Target:            Creature touched
+Duration:      1  minute or until  discharged}
+{5214} Gust of Wind {Tiny creatures take 1d4 damage per caster level,  small creatures are knocked prone,  medium creatures lose a turn,  large creatures unaffected.
+Casting:         1  std action   [Evocation, V,S]
+Range:               60 feet  
+Effect:              Line-shaped gust emanating from you 
+Duration:      1  round,    Save: Fort negates,    SR: Yes}
+{5215}{Hallow}
+{5216}{Hallucinatory Terrain}
+{5217} Halt Undead {Immobilizes undead similar to Hold Person.  Undead with intelligence  get  a saving throw.
+
+Casting:         1  std action   [Necromancy, V,S,M]
+Range:               Medium,  100  feet  + 10/level
+Targets:         Up to 3 undead,  no more than 30' apart 
+Duration:      1  round/level,    Save: Will negates,    SR: Y}
+{5218} Harm {THIS HARM IS UNUSED.  USE 5566}
+{5219} Haste {Movement  rate increases by 30,  gains +1  on attack rolls and AC,  and may make one extra attack.
+
+Casting:         1  std action   [Transmutation, V,S,M]
+Range:               Close,  25  feet  + 5/2 levels
+Target:            1  creature/level,  no more than 30' apart
+Duration:      1  round/level}
+{5220} Heal {THIS HEAL IS UNUSED.  USE 5565}
+{5221} Cure Light Wounds, Mass {Cures 1d8 damage +1  per caster  level,  max +25,  to one creature per  level.  Damages undead  instead.
+
+Casting:         1  std action   [Conjuration, V,S]
+Range:               Close,  25  feet  + 5/2 levels 
+Target:            1  creature/level, no more than 30' apart 
+Duration:      Inst.,    Save: Will  half  undead,    SR: Yes}
+{5222}{Heal Mount}
+{5223} Heat Metal {Heats metal  armor,  causing its wearer 8d4 fire damage over 7 rounds.
+
+Casting:         1  std action   [Transmutation,  V,S,DF]
+Range:               Close,  25  feet  + 5/2 levels
+Target:            Metal  equipment of 1  creature / 2 levels
+Duration:      7 rounds}
+{5224}{Helping Hand}
+{5225} Heroes' Feast {Cures all diseases, makes immune to poison, and grants temporary  hit  points  equal  to 1d8 +1  per caster level,  max +10.
+Casting:         10  minutes   [Conjuration, V,S,DF]
+Range:               Close,  25  feet  + 5/2 levels 
+Effect:              Feast  for  one  creature/level 
+Duration:      12  hours}
+{5226} Hold Animal {Paralyzes one animal.  Subject  gets a new saving throw each turn.
+
+Casting:         1  std action   [Enchantment, V,S]
+Range:               Medium,  100  feet  + 10/level 
+Target:            One living creature 
+Duration:      1  round/level,    Save: Will  negates,    SR: Y}
+{5227} Hold Monster {Paralyzes a creature.  Constructs, elementals, oozes, plants, and undead are immune.  Subject  gets a new saving throw each turn.
+Casting:         1  std action   [Enchantment, V,S,M/DF]
+Range:               Medium,  100  feet  + 10/level 
+Target:            One living creature 
+Duration:      1  round/level,    Save: Will  negates,    SR: Y}
+{5228} Hold Person {Paralyzes one humanoid creature.  Subject  gets a new saving throw each turn.
+
+Casting:         1  std action   [Enchantment, V,S,F/DF]
+Range:               Medium,  100  feet  + 10/level 
+Target:            One humanoid creature 
+Duration:      1  round/level,    Save: Will  negates,    SR: Y}
+{5229} Hold Portal {[Abjuration]  NO  Magically holds doors and gates shut.}
+{5230}{Holy Aura}
+{5231} Holy Smite {Deals 1d8/two levels to evil  creatures,  1d6/level  to evil  outsiders,  and blinds for 1  round.  Non-evil and non-good take half damage.  and no blind.
+Casting:         1  std action   [Evocation, V,S]
+Range:               Medium,  100  feet  + 10/level
+Area:                   20-foot  radius burst
+Duration:      Inst.,    Save: Will  half + no blind,    SR:Yes}
+{5232} Holy Sword  {Summons a +5  Holy  sword with spell  resistance  15.
+
+
+Casting:         1  std action   [Evocation, V,S]
+Range:               Personal
+Targets:         You
+Duration:      1  round/level}
+{5233} Holy Word {Kills, paralyzes, blinds, and/or deafens nongood creatures based on  their HD.  Banishes nongood  extraplanar creatures.
+Casting:         1  std action   [Evocation, V]
+Range:               Personal
+Area:                   40-foot  radius burst
+Duration:      Inst.,   Save: No (Will  for banish),   SR:Yes}
+
+{5234} Horrid Wilting {Deals 1d6 damage per level  to each creature in the area,  max 20d6.  Water elementals and plants take 1d8  damage per level  instead.
+Casting:         1  std action   [Necromancy, V,S,M/DF]
+Range:               Long,  400  feet  +  40/level
+Targets:         living creatures,  no more than 60' apart
+Duration:      Inst.,    Save: Fort half,    SR: Yes}
+{5235}{Hypnotic Pattern}
+{5236}{Hypnotism}
+{5237} Ice Storm {Deals 3d6 bludgeoning damage and 2d6 cold damage to each creature  in  the area.
+
+Casting:         1  std action   [Evocation, V,S,M/DF]
+Range:               Long,  400  feet  +  40/level
+Area:                   Cylinder,  20-ft. radius,  40 ft. high
+Duration:      1  full  round,    Save: None,    SR: Yes}
+{5238} Identify {Determines the properties of one  magic item in your inventory.  Costs 100 gp.
+
+Casting:         1  std action   [Divination, V,S,M, 100 gp]
+Range:               Touch
+Target:            One touched object
+Duration:      Instantaneous}
+{5239}{Illusory Script}
+{5240}{Illusory Wall}
+{5241}{Imbue with Spell Ability}
+{5242}{Implosion}
+{5243}{Imprisonment}
+{5244} Greater Invisibility {Subject  attacks at +2,  creatures have 50% miss chance attacking subject.  Hide skill  increases. Subject  can attack and stay invisible.
+Casting:         1  std action   [Illusion, V,S]
+Range:               Personal  or touch
+Target:            You or creature touched
+Duration:      1  round/level (D)}
+{5245}{Incendiary Cloud}
+{5246} Inflict Critical Wounds {Melee touch attack deals negative energy damage    of 4d8 +1  per caster level,  max +20.  Cures undead.
+
+Casting:         1  std action   [Necromancy, V,S]
+Range:               Touch
+Target:            Creature touched
+Duration:      Inst.,    Save: Will  half,    SR: Yes}
+{5247} Inflict Light Wounds {Melee touch attack deals negative energy damage    of 1d8 +1  per caster level,  max +5.  Cures undead.
+
+Casting:         1  std action   [Necromancy, V,S]
+Range:               Touch
+Target:            Creature touched
+Duration:      Inst.,    Save: Will  half,    SR: Yes}
+{5248} Inflict Minor Wounds {Melee touch attack deals 1  point of negative energy damage.  Cures undead rather than doing damage.
+
+Casting:         1  std action   [Necromancy, V,S]
+Range:               Touch
+Target:            Creature touched
+Duration:      Inst.,    Save: Will  half,    SR: Yes}
+{5249} Inflict Moderate Wounds {Melee touch attack deals negative energy damage    of 2d8 +1  per caster level,  max +10.  Cures undead.
+
+Casting:         1  std action   [Necromancy, V,S]
+Range:               Touch
+Target:            Creature touched
+Duration:      Inst.,    Save: Will  half,    SR: Yes}
+{5250} Inflict Serious Wounds {Melee touch attack deals negative energy damage    of 3d8 +1  per caster level,  max +15.  Cures undead.
+
+Casting:         1  std action   [Necromancy, V,S]
+Range:               Touch
+Target:            Creature touched
+Duration:      Inst.,    Save: Will  half,    SR: Yes}
+{5251} Insanity {Subject  suffers continuous confusion.  It may  flee,  babble,  attack randomly,  etc.
+
+Casting:        1  std action   [Enchantment,  V,S]
+Range:              Medium,  100  feet  + 10/level 
+Targets:        One living creature 
+Duration:      Inst.,    Save: Will  negates,    SR: Y}
+{5252}{Insect Plague}
+{5253} Invisibility {Subject  attacks at +2,  creatures have 50% miss chance attacking subject.  Hide skill  increases.  Spell ends  if subject  attacks any creature.
+Casting:         1  std action   [Illusion, V,S,M/DF]
+Range:               Personal  or touch
+Target:            You or a creature
+Duration:      1  min/level (D)}
+{5254} Invisibility Purge {Sphere with radius of 5  feet per caster level surrounds you and negates all  invisibility.
+
+Casting:         1  std action   [Evocation, V,S]
+Range:               Personal
+Target:            You
+Duration:      1  min/level (D)}
+{5255} Invisibility Sphere {Makes everyone within 10 feet of the area  invisible.  The sphere does not move.
+
+Casting:         1  std action   [Illusion, V,S,M]
+Range:               Personal  or touch
+Area:                   10-foot  radius emanation
+Duration:      1  min/level (D)} 
+{5256} Hide from Animals {Animals can't  perceive subjects.  If a animal  is touched or attacked,  the spell  ends for all.
+
+Casting:         1  std action   [Abjuration, S,DF]
+Range:               Touch
+Target:            One touched creature/level
+Duration:      10 min/level}
+{5257} Hide from Undead {Undead can't  perceive subjects.  Any attempt  to turn,  command,  touch,  or attack an  undead creature  ends the spell.
+Casting:         1  std action   [Abjuration, V,S,DF]
+Range:               Touch
+Target:            One touched creature/level
+Duration:      10 min/level}
+{5258}{Iron Body}
+{5259}{Ironwood}
+{5260}{Jump}
+{5261} Keen Edge {Doubles a weapon's threat  range value for critical hits.
+
+Casting:         1  std action   [Transmutation, V,S]
+Range:               Close,  25  feet  + 5/2 levels
+Target:            One weapon or fifty projectiles
+Duration:      10  min/level }
+{5262} Knock {Unlocks a locked door,  box,  or chest.
+
+
+Casting:         1  std action   [Transmutation, V]
+Range:               Medium,  100  feet  +  10/level
+Target:            One door,  box,  or chest
+Duration:      Inst.,    Save: None,    SR: No}
+{5263}{Know Direction}
+{5264}{Legend Lore}
+{5265} Leomund's Secret Chest {[Conjuration] Hides expensive chest on Ethereal Plane; you retrieve it at will.}
+{5266}{Leomund's Secure Shelter}
+{5267}{Leomund's Tiny Hut}
+{5268}{Leomund's Trap}
+{5269}{Lesser Geas}
+{5270} Lesser Planar Ally {Calls an  extraplanar creature to your aid.  Costs 500 gp, and 100 experience points.
+
+Casting:        Out of combat   [Conjuration]
+Range:               Close,  25  feet  + 5/2 levels
+Effect:              see text 
+Duration:      1  min/level.}
+{5271}{Lesser Planar Binding}
+{5272} Lesser Restoration {Cures 4 points of temporary ability damage to one of the subject’s ability scores.
+
+Casting:         3 rounds   [Conjuration,  V,S]
+Range:               Touch
+Target:            Creature touched
+Duration:      Instantaneous}
+{5273}{Levitate}
+{5274}{Light}
+{5275} Lightning Bolt {Deals 1d6 electricity damage per caster level  to each creature in the area,  max 10d6.
+
+Casting:         1  std action   [Evocation, V,S,M]
+Range:               120 feet
+Area:                   120-foot  line from your fingertips
+Duration:      Inst.,    Save: Reflex half,    SR: Yes}
+{5276}{Limited Wish}
+{5277}{Liveoak}
+{5278}{Locate Creature}
+{5279}{Locate Object}
+{5280} Mage Armor {Provides a  +4 armor bonus to AC,  with no armor check penalty,  spell  failure,  or speed reduction.
+
+Casting:         1  std action   [Conjuration, V,S,F]
+Range:               Touch
+Target:            Creature touched
+Duration:      1  hour/level (D)}
+{5281}{Mage Hand}
+{5282} Magic Circle against Chaos {Gives +2  deflection bonus to AC  against chaos creatures to the caster only.  No other aspects of this spell work.
+Casting:         1  std action   [Abjuration, V,S]
+Range:               Touch  
+Area:                   10-foot  radius from touched creature 
+Duration:      10 min/level}
+{5283} Magic Circle against Evil {Gives +2  deflection bonus to AC  against evil creatures to the caster only.  No other aspects of this spell work.
+Casting:         1  std action   [Abjuration, V,S]
+Range:               Touch  
+Area:                   10-foot  radius from touched creature 
+Duration:      10 min/level}
+{5284} Magic Circle against Good {Gives +2  deflection bonus to AC  against good creatures to the caster only.  No other aspects of this spell work.
+Casting:         1  std action   [Abjuration, V,S]
+Range:               Touch  
+Area:                   10-foot  radius from touched creature 
+Duration:      10 min/level}
+{5285} Magic Circle against Law {Gives +2  deflection bonus to AC  against lawful creatures to the caster only.  No other aspects of this spell work.
+Casting:         1  std action   [Abjuration, V,S]
+Range:               Touch  
+Area:                   10-foot  radius from touched creature 
+Duration:      10 min/level}
+{5286} Magic Fang {Gives one natural  weapon of the subject a +1  enhancement bonus on attack and damage rolls.
+
+Casting:         1  std action   [Transmutation, V,S,DF]
+Range:               Touch
+Target:            Living creature touched
+Duration:      1  min/level}
+{5287}{Magic Jar}
+{5288} Magic Missile {Deals 1d4+1  damage per missile,  with one extra missile per two levels above 1st,  max 5 missiles.
+
+Casting:         1  std action   [Evocation, V,S]
+Range:               Medium,  100  feet  + 10/level
+Targets:         Up to five,  no two more than 30' apart
+Duration:      Inst.,    Save: None,    SR: Yes}
+{5289}{Magic Mouth}
+{5290} Magic Stone {Ranged touch attack deals 1d6 +1 damage,  2d6 +2 against  undead.
+
+Casting:         1  std action   [Transmutation, V,S]
+Range:               Close,  25  feet  + 5/2 levels
+Target:            One creature
+Duration:      30 minutes or until discharged}
+{5291} Magic Vestment {Armor or shield gains +1  enhancement  bonus per four caster levels,  max +5.
+
+Casting:         1  std action   [Transmutation, V,S,DF]
+Range:               Touch
+Target:            Armor or shield touched
+Duration:      1  hour/level}
+{5292} Magic Weapon {Gives weapon a +1  enhancement bonus.  It  does not  stack with a masterwork weapon's bonus.
+
+Casting:         1  std action   [Transmutation, V,S,DF]
+Range:               Touch
+Target:            Weapon touched
+Duration:      1  min/level}
+{5293}{Major Creation}
+{5294}{Major Image}
+{5295}{Make Whole}
+{5296}{Mark of Justice}
+{5297} Charm Monster, Mass {Makes creatures, whose combined HD do not exceed twice your level, believe they are your ally.
+  
+Casting:         1  std action   [Enchantment, V]
+Range:               Close,  25  feet  + 5/2 levels
+Target:            creatures, no more than 30' apart
+Duration:      1  round/level,    Save: Will  negates,    SR: Y}
+{5298}{Mass Haste}
+
+{5299} Mass Heal {Cures 10 HP/level  to 1  creature/level.  Ends ability dam,  blind/deaf,  disease,  feeblemind,  insanity, nausea/sickness,  poison,  stun.  Damages undead.
+Casting:         1  std action   [Conjuration, V,S]
+Range:               Close,  25  feet  + 5/2 levels 
+Target:            1  creature/level, no more than 30' apart 
+Duration:      Inst.,    Save: Will  half  undead,    SR: Yes}
+{5300}{Mass Invisibility}
+{5301} Mass Suggestion {[Enchantment] Compels subject to follow course of action; subject is added as a controllable NPC, affects one subject/level.}
+{5302}{Maze}
+{5303} Meld into Stone {You and your gear merge into stone.  You cannot make any actions, nor do you take any damage.
+
+Casting:         1  std action   [Transmutation, V,S]
+Range:               Personal
+Target:            You
+Duration:      10 min/level}
+{5304} Melf's Acid Arrow {Ranged touch attack deals 2d4 acid damage for 1  round +1  round per three levels.
+
+Casting:         1  std action   [Conjuration, V,S,M,F]
+Range:               Long,  400  feet  + 40/level  
+Effect:              One arrow of acid 
+Duration:      see above,   Save: None,    SR: No}
+{5305}{Mending}
+{5306}{Message}
+{5307} Meteor Swarm {Ranged touch attack deals 2d6 damage to target.  Explosion deals 6d6 fire damage to each creature in area  around target.  Launch up to 4  projectiles.
+Casting:         1  std action   [Evocation, V,S] 
+Range:               Long,  400  feet  + 40/level
+Area:                   Four  40-foot  radius spreads
+Duration:      Save: Reflex half (fire damage),    SR: Yes}
+{5308} Mind Blank {The subject is protected from all devices and spells that detect, influence, or read emotions or thoughts.
+Casting:         1  std action   [Abjuration, V,S]
+Range:               Close,  25 feet  +  5 ft./2 levels
+Target:            One creature
+Duration:      24 hours,    Save: Will negates,    SR: Y}
+{5309} Mind Fog {Creatures  in the fog take a minus  10 competence penalty on Wisdom checks and Will  saves.  Effect remains for  2d6  rounds after  leaving the fog.
+Casting:         1  std action   [Enchantment, V,S]
+Range:               Medium,  100 feet  + 10/level
+Effect:              Fog spreads in 20-foot radius
+Duration:      30 mins,    Save: Will negates,    SR: Y}
+{5310}{Minor Creation}
+{5311} Lesser Globe of Invulnerability {Blocks effects from  first,  second,  and third level spells.  Spells already  in  effect  are not affected.
+
+Casting:         1  std action   [Abjuration, V,S,M]
+Range:               10 feet
+Area:                   10-foot radius, centered on you
+Duration:      1  round/level,    Save: None,    SR: No}
+{5312}{Minor Image}
+{5313} Miracle {A  number of friends equal  to your caster level  are raised from the dead,  or fully  healed if still  alive.
+
+Casting:         1  std action   [Evocation, V,S]
+Range:               Close,  25  feet  + 5/2 levels 
+Target:            1  creature/level, no more than 30' apart 
+Duration:      Inst.,    Save: None,    SR: No}
+{5314}{Mirage Arcana}
+{5315} Mirror Image {Creates decoy  duplicates of yourself numbering  1d4 +1  per three caster levels, max 8.
+
+Casting:         1  std action   [Illusion, V,S]
+Range:               Personal
+Target:            You
+Duration:      1  min/level (D)}
+{5316}{Misdirection}
+{5317} Mislead {Creates decoy  duplicates of yourself equal  to your  caster  lever,  and confers  Improved Invisibility.
+
+Casting:         1  std action   [Illusion, S]
+Range:               Personal
+Target:            You
+Duration:      1  round/level (D)}
+{5318} Modify Memory {Subject's reaction  improves by  +40,  and they  get a penalty  of  -8 to spot and  listen checks.  If save  is successful,  they  get +4 to spot and  listen checks.
+Casting:         Out of combat   [Enchantment, V,S]
+Range:               Close,  25  feet  + 5/2 levels
+Target:            One living creature
+Duration:      Permanent,    Save: Will negates,    SR: Y}
+{5319}{Mordenkainen's Disjunction}
+{5320} Mordenkainen's Faithful Hound {Summons  phantom dog that  can  guard and attack.  It  has a +10 attack bonus and does 2d6+3 damage.
+
+Casting:         1  std action   [Conjuration, V,S,M]
+Range:               Close,  25  feet  + 5/2 levels
+Effect:              One summoned creature
+Duration:      1  hour/level (D)}
+{5321}{Mordenkainen's Lucubration}
+{5322}{Mordenkainen's Magnificent Mansion}
+{5323} Mordenkainen's Sword {Force weapon  attacks at  caster level  +3  +ability modifier,  dealing 4d6+3  force damage.
+
+Casting:         1  std action   [Evocation, V,S,F]
+Range:               Close,  25  feet  + 5/2 levels 
+Effect:              One  sword
+Duration:      1  round/level,    Save: None,    SR: Yes}
+{5324}{Mount}
+{5325}{Move Earth}
+{5326} Negative Energy Protection {This spell does not work.
+
+
+Casting:         1  std action   [Conjuration, V,S]
+Range:               Touch
+Target:            Creature  touched
+Duration:      1  round/level}
+{5327} Neutralize Poison {Subject  is detoxified of all  poisons,  and is made immune  to poison  till  spell  expires.
+
+Casting:         1  std action   [Conjuration, V,S,M/DF]
+Range:               Touch
+Target:            Creature or object touched
+Duration:      10 min/level}
+{5328}{Nightmare}
+{5329}{Nondetection}
+{5330}{Nystul's Magic Aura}
+{5331}{Nystul's Undetectable Aura}
+{5332}{Obscure Object}
+{5333} Obscuring Mist {Obscures sight  around you.  A  creature within 5  feet  has  20% miss chance on attacks,  farther  50%.
+
+Casting:         1  std action   [Conjuration, V,S]
+Range:               20 feet
+Effect:              Cloud spreads 20-foot  radius from you
+Duration:      1  min/level}
+{5334} Open/Close {You can open or close a door or chest.  Locked doors and chests can not be opened.
+
+Casting:         1  std action   [Transmutation, V,S]
+Range:               Close,  25  feet  + 5/2 levels  
+Target:             Door or chest
+Duration:      Instantaneous}
+{5335} Order's Wrath {Deals 1d8/two levels to chaotic creatures,  1d6/level  to chaotic outsiders,  and dazes for 1  round.  Non-lawful and non-chaotic take half,  and no daze.
+Casting:         1  std action   [Evocation, V,S]
+Range:               Medium,  100  feet  + 10/level
+Area:                   30-foot  radius burst
+Duration:      Inst.,    Save: Will  half + no daze,    SR:Yes}
+{5336}{Otiluke's Freezing Sphere}
+{5337} Otiluke's Resilient Sphere {Indestructible globe  encloses creature.  Nothing can  pass  in  or out,  but creature breathes normally.
+
+Casting:         1  std action   [Evocation, V,S,M]
+Range:               Close,  25  feet  + 5/2 levels 
+Effect:               Sphere, centered around a creature
+Duration:      1  min/level,    Save: Reflex negates,    SR: Y}
+{5338}{Otiluke's Telekinetic Sphere}
+{5339}{Otto's Irresistible Dance}
+{5340}{Passwall}
+{5341}{Pass without Trace}
+{5342}{Permanency}
+{5343}{Permanent Image}
+{5344}{Persistent Image}
+{5345} Phantasmal Killer {Kills one  living creature.  Creature gets a Will  save to disbelieve.  If  that fails,  a  Fortitude save avoids death,  but creature still  takes 3d6 damage.	
+Casting:         1  std action   [Illusion, V,S]
+Range:               Medium,  100  feet  + 10/level  
+Target:             One living creature
+Duration:      Inst.,    Save: Will and Fort,    SR: Yes}
+{5346}{Phantom Steed}
+{5347}{Phase Door}
+{5348} Planar Ally {Calls up to 12 HD  of extraplanar creatures to your aid.  Costs 1000 gp, and 250 experience points.
+
+Casting:        Out of combat   [Conjuration]
+Range:               Close,  25  feet  + 5/2 levels
+Effect:              see text 
+Duration:      1  min/level.}
+{5349}{Planar Binding}
+{5350}{Plane Shift}
+{5351}{Plant Growth}
+{5352} Poison {Melee touch attack deals 1d10 Constitution damage,  and another 1d10 one minute later.
+
+Casting:         1  std action   [Necromancy, V,S]
+Range:               Touch
+Target:            Living creature touched
+Duration:      Inst.,    Save: Fort negates,    SR: Yes}
+{5353}{Polymorph Any Object}
+{5354}{Polymorph Other}
+{5355}{Polymorph Self}
+{5356} Power Word Blind  {Blinds creature.  50 HP or less is permanent,  51-100 HP for 1d4+1  mins,  101-200 HP for 1d4+1  rounds.
+
+Casting:         1  std action   [Enchantment, V]
+Range:               Close,  25  feet  + 5/2 levels 
+Target:            One  creature with 200 hp or less
+Duration:      see text,    Save: None,    SR: Yes}
+{5357} Power Word Kill {Kills one  creature  with 100  HP or less.
+
+
+Casting:         1  std action   [Enchantment, V]
+Range:               Close,  25  feet  + 5/2 levels 
+Target:            One  creature with 100 hp or less
+Duration:      inst.,    Save: None,    SR: Yes}}
+{5358} Power Word Stun {Stuns one  creature.  50 HP or less for 4d4 rounds,  51-100 HP for 2d4 rounds,  101-150 HP for 1d4 rnds.
+
+Casting:         1  std action   [Enchantment, V]
+Range:               Close,  25  feet  + 5/2 levels 
+Target:            One creature with 150 hp or less
+Duration:      see text,    Save: None,    SR: Yes}
+{5359} Prayer {You and allies gain +1  luck bonus on attack, damage,  saves,  and skill checks rolls.  Foes get  -1  to each.
+
+Casting:         1  std action   [Enchantment, V,S,DF]
+Range:               40 feet
+Area:                   40-foot radius burst centered on you 
+Duration:      1  round/level,    Save: None,    SR: Yes}
+{5360}{Prestidigitation}
+{5361}{Prismatic Sphere}
+{5362} Prismatic Spray {Beams of light  hit  subjects with variety of effects such as  Fire,  Acid,  Electricity,  Poison,  Turn to stone,  Insanity,  and/or  Banishment.
+Casting:         1  std action   [Evocation, V,S]
+Range:               60 feet
+Area:                   Cone-shaped burst
+Duration:      Inst.,    Save: Yes,    SR: Yes}
+{5363}{Prismatic Wall}
+{5364} Produce Flame {Ranged or melee touch attack deals fire  damage  equal  to 1d6 +1  point  per caster  level,  max +5.
+
+Casting:         1  std action   [Evocation, V,S]
+Range:               0 feet,  120 feet for ranged attack  
+Effect:              Flame in your palm
+Duration:      1  min/level (D),    Save: None,    SR: Yes}
+{5365}{Programmed Image}
+{5366}{Project Image}
+{5367} Protection from Arrows {Prevents the first 10 damage from each ranged attack.  Prevents a total  of 10 per level,  max 100.
+
+Casting:         1  std action   [Abjuration, V,S,F]
+Range:               Touch
+Target:            Creature touched
+Duration:      1  hour/level  or until  discharged}
+{5368} Protection from Chaos {Gives +2  deflection bonus to AC  and +2  resistance bonus to saves,  against  chaotic creatures only.  Counters mind control  of any alignment.  Prevents bodily contact  with any summoned creature.
+Casting:         1  std action   [Abjuration, V,S,M/DF]
+Target:            Creature touched
+Duration:      1  min/level}
+{5369} Protection from Energy {Subject  is immune to the energy type chosen:  acid,  cold,  electricity,  fire,  or sonic.  Spell  ends after absorbing a total  of  12  points per level,  max 120.
+Casting:         1  std action   [Abjuration, V,S,DF]
+Range:               Touch
+Target:            Creature touched
+Duration:      10 min/level,  or until discharged}
+{5370} Protection from Evil {Gives +2  deflection bonus to AC  and +2  resistance bonus to saves,  both against  evil creatures only.  Counters mind control  of any alignment.  Prevents bodily contact  with any summoned creature.
+Casting:         1  std action   [Abjuration, V,S,M/DF]
+Target:            Creature touched
+Duration:      1  min/level}
+{5371} Protection from Good {Gives +2  deflection bonus to AC  and +2  resistance bonus to saves,  both against  good creatures only.  Counters mind control  of any alignment.  Prevents bodily contact  with any summoned creature.
+Casting:         1  std action   [Abjuration, V,S,M/DF]
+Target:            Creature touched
+Duration:      1  min/level}
+{5372} Protection from Law {Gives +2  deflection bonus to AC  and +2  resistance bonus to saves,  both against  lawful creatures only.  Counters mind control  of any alignment.  Prevents bodily contact  with any summoned creature.
+Casting:         1  std action   [Abjuration, V,S,M/DF]
+Target:            Creature touched
+Duration:      1  min/level}
+{5373}Protection from Spells {[Abjuration] +8 to saves vs. spells for up to 4 creatures/caster level for 10 min./caster level}
+{5374}{Prying Eyes}
+{5375}{Purify Food and Drink}
+{5376}{Pyrotechnics}
+{5377}{Quench}
+{5378}{Rainbow Pattern}
+{5379} Raise Dead {Restores life to a deceased creature.  The creature loses one level.  Costs 5000 gp.
+
+Casting:         1  minute   [Conj., V,S,M, 5000 gp]
+Range:               Touch
+Target:            Dead creature touched
+Duration:      Instantaneous}
+{5380}{Random Action}
+{5381}{Rary's Mnemonic Enhancer}
+{5382}{Rary's Telepathic Bond}
+{5383} Ray of Enfeeblement {Ranged touch attack gives a Strength penalty of 1d6 +1  per two caster levels,  max 1d6 + 5.
+
+Casting:         1  std action   [Necromancy, V,S]
+Range:               Close,  25  feet  + 5/2 levels  
+Effect:              Ray,  ranged touch attack
+Duration:      1  min/level ,    Save: None,    SR: Yes}
+{5384} Ray of Frost {Ranged touch attack deals 1d3 points of cold damage.
+
+Casting:         1  std action   [Evocation, V,S]
+Range:               Close,  25  feet  + 5/2 levels  
+Effect:              Ray,  ranged touch attack
+Duration:      Inst.,    Save: None,    SR: Yes}
+{5385} Read Magic {Identifies a scroll  or potion  in your  inventory.  If cast  in a safe area,  identifies all  scrolls and potions.
+
+Casting:         1  std action   [Divination, V,S]
+Range:               Personal
+Target:            You
+Duration:      Instantaneous}
+{5386} Reduce Person {One humanoid is reduced by one size category,  +2  Dex,  -2  Str,  +1  attack and AC.  Weapons reduce in size,  dealing less  damage.
+Casting:         1  round   [Transmutation, V,S,M]
+Range:               Close,  25  feet  + 5/2 levels
+Target:            One humanoid creature
+Duration:      1  min/level,    Save: Fort negates,    SR: Yes}
+{5387}{Refuge}
+{5388}{Regenerate}
+{5389} Reincarnate {[Transmutation] Brings dead subject back in a random body.}
+{5390} Remove Blindness/Deafness  {Cures blindness or deafness in one creature.  The condition can be magical or normal.
+
+Casting:         1  std action   [Conjuration, V,S]
+Range:               Touch
+Target:            Creature touched
+Duration:      Instantaneous}
+{5391} Remove Curse  {Removes curses created by  the Bestow Curse spell.
+
+
+Casting:         1  std action   [Abjuration, V,S]
+Range:               Touch
+Target:            Creature touched
+Duration:      Instantaneous}
+{5392} Remove Disease  {Cures all  diseases inflicting the subject.  It does not prevent  reinfection after a new exposure.
+
+Casting:         1  std action   [Conjuration, V,S]
+Range:               Touch
+Target:            Creature touched
+Duration:      Instantaneous}
+{5393} Remove Fear {Suppresses fear effects.
+
+
+Casting:         1  std action   [Abjuration, V,S]
+Range:               Close,  25  feet  + 5/2 levels
+Target:            One creature + one per four levels
+Duration:      10  minutes}
+{5394} Remove Paralysis {Frees creatures from paralysis or effects from the spell Slow.
+
+Casting:         1  std action   [Conjuration, V,S]
+Range:               Close,  25  feet  + 5/2 levels 
+Targets:         Up to 4 creatures, no more than 30' apart
+Duration:      Instantaneous}
+{5395}{Repel Metal or Stone}
+{5396} Repel Vermin {This spell does not work.
+
+
+Casting:         1  std action   [Abjuration,V,S]
+Range:               10 ft.  
+Area:                   10-foot radius centered on you
+Duration:      10 min/level,    Save: see text ,    SR: Yes}
+{5397}{Repel Wood}
+{5398}{Repulsion}
+{5399} Resistance {Subject gains a  +1  resistance bonus on  all  saving throws.
+
+Casting:         1  std action   [Abjuration, V,S,M/DF]
+Range:               Touch
+Target:            Creature touched
+Duration:      1  minute}
+{5400} Resist Energy {Subject  gains Energy Resistance 10  from the energy type chosen:  acid,  cold,  electricity ,  fire,  or sonic.  Increases to  20 at 7th level,  30 at 11th level.
+Casting:         1  std action   [Abjuration, V,S]
+Range:               Touch
+Target:            Creature touched
+Duration:      10 min/level}
+{5401} Restoration {Cures all  temporary ability damage,  and restores all  points permanently drained from one ability.
+
+Casting:         3 rounds   [Conjuration, V,S,M, 100 gp]
+Range:               Touch
+Target:            Creature touched
+Duration:      Instantaneous}
+{5402}{Resurrection}
+{5403}{Reverse Gravity}
+{5404} Righteous Might {Your size increases and you gain +4 Str,  +2 Con,  +2 natural armor bonus to AC,  and damage reduction.
+
+Casting:         1  std action   [Transmutation, V,S,DF]
+Range:               Personal 
+Target:            You
+Duration:      1  round/level}
+{5405}{Rope Trick}
+{5406}{Rusting Grasp}
+{5407} Sanctuary {Any opponent  attempting to attack the subject  must  make a Will  save or lose that action.
+
+Casting:         1  std action   [Abjuration, V,S,DF]
+Range:               Touch
+Target:            Creature touched
+Duration:      1  round/level,    Save: Will negates,    SR: N}
+{5408} Scare {Creatures become frightened for 1d4 rounds.  If a Will  save  is made  it  is shaken  for  1  round instead.
+
+Casting:         1  std action   [Necromancy, V,S,M]
+Range:               Medium,  100  feet  +  10/level
+Targets:         One living crt./3 levels of 5 HD or less
+Duration:      see text,    Save: Will partial,    SR: Yes}
+{5409}{Screen}
+{5410}{Scrying}
+{5411}{Sculpt Sound}
+{5412} Searing Light {Ranged touch attack deals 1d8/two levels damage, max 5d8,  and 1d6/level  against  undead, max 10d6.
+
+Casting:         1  std action   [Evocation,  V,S]
+Range:               Medium,  100  feet  + 10/level 
+Effect:              Ray,  ranged touch attack
+Duration:      Inst.,    Save: None,    SR: Yes}
+{5413}{Secret Page}
+{5414} See Invisibility {You can see creatures that  are invisible within your range of vision as if they were normally visible.
+
+Casting:         1  std action   [Divination, V,S,M]
+Range:               Personal
+Target:            You
+Duration:      10 min/level (D)}
+{5415}{Seeming}
+{5416}{Sending}
+{5417}{Sepia Snake Sigil}
+{5418}{Sequester}
+{5419}{Shades}
+{5420}{Shadow Conjuration}
+{5421}{Shadow Evocation}
+{5422}{Shadow Walk}
+{5423}{Shambler}
+{5424}{Shapechange}
+{5425} Shatter {Deals 1d6 points of sonic damage per caster level  to a creature with the Earth Subtype,  max 10d6.
+
+Casting:         1  std action   [Evocation, V,S]
+Range:               Close,  25  feet  +  5/2 levels 
+Target:            One creature
+Duration:      Instantaneous}
+{5426} Shield {Provides a +4 shield bonus to AC,  and negates Magic Missile attacks directed at  you.
+
+Casting:         1  std action   [Abjuration, V,S]
+Range:               Personal
+Target:            You
+Duration:      1  min/level (D)}
+{5427} Shield of Faith {Grants a +2 deflection bonus to subject's AC,  with an additional +1  every six levels, max +5.
+
+Casting:         1  std action   [Abjuration, V,S]
+Range:               Touch
+Target:            Creature touched
+Duration:      1  min/level}
+{5428}{Shield of Law}
+{5429}{Shield Other}
+{5430} Shillelagh {Summons a +1  quarterstaff into your possession which deals 2d6 +1  damage.
+
+Casting:         1  std action   [Transmutation, V,S,DF]
+Range:               Personal
+Targets:         You
+Duration:      1  min/level}
+{5431} Shocking Grasp {Melee touch attack deals  1d6  electricity damage per caster  level,  max 5d6.
+
+Casting:         1  std action   [Evocation, V,S]
+Range:               Touch
+Target:            Creature or object  touched
+Duration:      Inst.,    Save: None,    SR: Yes}
+{5432} Shout {Any creature within the area takes 5d6 points of sonic damage,  and is deafened for 2d6 rounds.
+
+Casting:         1  std action   [Evocation, V]
+Range:               30 feet 
+Area:                   Cone-shaped burst
+Duration:      Inst.,    Save: Fort  half + no deaf,    SR: No}
+{5433}{Shrink Item}
+{5434} Silence {All  sound is stopped in the area,  and spells with verbal  components cannot  be cast.  If cast on a creature,  the effect moves with the creature.
+Casting:         1  std action   [Illusion, V,S]
+Range:               Long,  400  feet  + 40/level 
+Area:                   20-foot  radius  emanation
+Duration:      1  min/level,    Save: Will negates,    SR: Yes}
+{5435}{Silent Image}
+{5436}{Simulacrum}
+{5437} Slay Living {Touch attack kills subject.  If Fortitude save succeeds,  deals 3d6 +1  per level  damage instead.
+
+Casting:         1  std action   [Necromancy, V,S]
+Range:               Touch
+Target:            Living creature touched
+Duration:      Inst.,    Save: Fort partial,    SR: Yes}
+{5438} Sleep {Puts 4 Hit Dice of living creatures to sleep.  Creatures with the fewest  Hit Dice are affected first.
+
+Casting:         1  round   [Enchantment, V,S,M]
+Range:               Medium,  100  feet  + 10/level
+Area:                   10-foot  radius burst
+Duration:      1  min/level,    Save: Will negates,    SR: Yes}
+{5439} Sleet Storm {Deals 2d8 damage to creatures in metal  armor,  and any missing a Reflex save fall.
+
+Casting:         1  std action   [Conjuration, V,S,M/DF]
+Range:               Long,  400  feet  + 40/level
+Area:                   Cylinder,  40-ft. radius,  20 ft. high
+Duration:      Inst.,    Save: Reflex,    SR: No}
+{5440} Slow {Targets take only a move action or standard action each turn,  move at  half speed,  and take -1  on attack rolls,  AC,  and Reflex saves.
+Casting:         1  std action   [Transmutation, V,S,M]
+Range:               Close,  25  feet  + 5/2 levels
+Targets:         1  creature/level,  no more than 30' apart
+Duration:      1  round/level,    Save: Will negates,    SR: Y}
+{5441}{Snare}
+{5442} Soften Earth and Stone {Creatures must  make a Reflex save or be caught for 1d2 round,  unable to move, attack, or cast spells.
+
+Casting:         1  std action   [Transmutation, V,S]
+Range:               Close,  25  feet  + 5/2 levels 
+Area:                   10-foot square 
+Duration:      Inst.,    Save: None,    SR: No}
+{5443} Solid Fog {Creatures within 5  feet  have  20% miss chance on attacks,  farther  50%.  Speed reduced to 5  feet,  minus 2  on melee attack and damage rolls.
+Casting:         1  std action   [Conjuration, V,S,M]
+Range:               Medium,  100 feet  + 10/level
+Effect:              Fog spreads in 20-foot radius
+Duration:      1  min/level}
+{5444}{Soul Bind}
+{5445} Sound Burst {Deals 1d8 sonic damage to each creature,  who must  make a Fortitude save or be stunned for 1  round.
+
+Casting:         1  std action   [Evocation, V,S,F/DF]
+Range:               Close,  25  feet  + 5/2 levels 
+Area:                   10-foot  radius spread 
+Duration:      Inst.,    Save: see text,    SR: Yes}
+{5446}{Speak with Animals}
+{5447}{Speak with Dead}
+{5448}{Speak with Plants}
+{5449}{Spectral Hand}
+{5450}{Spell Immunity}
+{5451} Spell Resistance {Creature gains spell  resistance equal  to 12 + your caster level.
+
+Casting:         1  std action   [Abjuration, V,S,DF]
+Range:               Touch
+Target:            Creature touched
+Duration:      1  min/level}
+{5452}{Spellstaff}
+{5453}{Spell Turning}
+{5454}{Spider Climb}
+{5455} Spike Growth {Creatures in area take 1d4 piercing damage for each 5  feet  they move,  and are slowed on a failed save.
+
+Casting:         1  std action   [Transmutation,  V,S,DF] 
+Range:               Medium,  100  feet  + 10/level
+Area:                   One 20-foot  square/level
+Duration:      1  hour/level,    Save: Reflex,    SR: Yes}
+{5456} Spike Stones {Creatures in area take 1d8 piercing damage for each 5  feet  they move,  and are slowed on a failed save.
+
+Casting:         1  std action   [Transmutation,  V,S,DF] 
+Range:               Medium,  100  feet  + 10/level
+Area:                   One 20-foot  square/level
+Duration:      1  hour/level,    Save: Reflex,    SR: Yes}
+{5457} Spiritual Weapon {Force weapon attacks with your base attack bonus + Wisdom modifier,  dealing 1d8 damage +1  per 3 levels,  max +5.
+Casting:         1  std action   [Evocation, V,S,DF]
+Range:               Medium,  100  feet  + 10/level 
+Effect:              Magic weapon of force
+Duration:      1  round/level}
+{5458}{Statue}
+{5459}{Status}
+{5460} Stinking Cloud {Living creatures become nauseated while in the cloud,  and for 1d4 +1  rounds after leaving it.
+
+Casting:         1  std action   [Conjuration, V,S,M]
+Range:               Medium,  100  feet  + 10/level 
+Effect:              Cloud spreads in 20-foot radius
+Duration:      1  round/level    Save: Fort negates,  SR: N}
+{5461}{Stone Shape}
+{5462} Stoneskin {Prevents the first 10 damage from each attack.  Prevents a total  of 10 damage per level,  max 150.
+
+Casting:         1  std action   [Abjur., V,S,M, 250 gp]
+Range:               Touch
+Target:            Creature touched
+Duration:      10 min/level or until discharged}
+{5463}{Stone Tell}
+{5464} Stone to Flesh {[Transmutation] Restores petrified creature.}
+{5465}{Storm of Vengeance}
+{5466} Dominate Monster {[Enchantment] Controls any creature telepathically; subject is added as a controllable NPC.}
+{5467} Summon Monster I {Summons an extraplanar ally.  It  appears where you choose and acts  immediately,  on your turn.
+
+Casting:         1  round   [Conjuration, V,S,F/DF]
+Range:               Close,  25  feet  + 5/2 levels
+Effect:              One summoned creature
+Duration:      1  round/level (D)}
+{5468} Summon Monster II {Summons an extraplanar ally.  It  appears where you choose and acts  immediately,  on your turn.
+
+Casting:         1  round   [Conjuration, V,S,F/DF]
+Range:               Close,  25  feet  + 5/2 levels
+Effect:              One summoned creature
+Duration:      1  round/level (D)}
+{5469} Summon Monster III {Summons an extraplanar ally.  It  appears where you choose and acts  immediately,  on your turn.
+
+Casting:         1  round   [Conjuration, V,S,F/DF]
+Range:               Close,  25  feet  + 5/2 levels
+Effect:              One summoned creature
+Duration:      1  round/level (D)}
+{5470} Summon Monster IV {Summons an extraplanar ally.  It  appears where you choose and acts  immediately,  on your turn.
+
+Casting:         1  round   [Conjuration, V,S,F/DF]
+Range:               Close,  25  feet  + 5/2 levels
+Effect:              One summoned creature
+Duration:      1  round/level (D)}
+{5471} Summon Monster V {Summons an extraplanar ally.  It  appears where you choose and acts  immediately,  on your turn.
+
+Casting:         1  round   [Conjuration, V,S,F/DF]
+Range:               Close,  25  feet  + 5/2 levels
+Effect:              One summoned creature
+Duration:      1  round/level (D)}
+{5472} Summon Monster VI {Summons an extraplanar ally.  It  appears where you choose and acts  immediately,  on your turn.
+
+Casting:         1  round   [Conjuration, V,S,F/DF]
+Range:               Close,  25  feet  + 5/2 levels
+Effect:              One summoned creature
+Duration:      1  round/level (D)}
+{5473} Summon Monster VII {Summons an extraplanar ally.  It  appears where you choose and acts  immediately,  on your turn.
+
+Casting:         1  round   [Conjuration, V,S,F/DF]
+Range:               Close,  25  feet  + 5/2 levels
+Effect:              One summoned creature
+Duration:      1  round/level (D)}
+{5474} Summon Monster VIII {Summons an extraplanar ally.  It  appears where you choose and acts  immediately,  on your turn.
+
+Casting:         1  round   [Conjuration, V,S,F/DF]
+Range:               Close,  25  feet  + 5/2 levels
+Effect:              One summoned creature
+Duration:      1  round/level (D)}
+{5475} Summon Monster IX {Summons an extraplanar ally.  It  appears where you choose and acts  immediately,  on your turn.
+
+Casting:         1  round   [Conjuration, V,S,F/DF]
+Range:               Close,  25  feet  + 5/2 levels
+Effect:              One summoned creature
+Duration:      1  round/level (D)}
+{5476} Summon Nature's Ally I {Summons a natural  creature ally.  It  appears where you choose and acts  immediately,  on your turn.
+
+Casting:         1  round   [Conjuration, V,S,DF]
+Range:               Close,  25  feet  + 5/2 levels
+Effect:              One summoned creature
+Duration:      1  round/level (D)}
+{5477} Summon Nature's Ally II {Summons a natural  creature ally.  It  appears where you choose and acts  immediately,  on your turn.
+
+Casting:         1  round   [Conjuration, V,S,DF]
+Range:               Close,  25  feet  + 5/2 levels
+Effect:              One summoned creature
+Duration:      1  round/level (D)}
+{5478} Summon Nature's Ally III {Summons a natural  creature ally.  It  appears where you choose and acts  immediately,  on your turn.
+
+Casting:         1  round   [Conjuration, V,S,DF]
+Range:               Close,  25  feet  + 5/2 levels
+Effect:              One summoned creature
+Duration:      1  round/level (D)}
+{5479} Summon Nature's Ally IV  {Summons a natural  creature ally.  It  appears where you choose and acts  immediately,  on your turn.
+
+Casting:         1  round   [Conjuration, V,S,DF]
+Range:               Close,  25  feet  + 5/2 levels
+Effect:              One summoned creature
+Duration:      1  round/level (D)}
+{5480} Summon Nature's Ally V {Summons a natural  creature ally.  It  appears where you choose and acts  immediately,  on your turn.
+
+Casting:         1  round   [Conjuration, V,S,DF]
+Range:               Close,  25  feet  + 5/2 levels
+Effect:              One summoned creature
+Duration:      1  round/level (D)}
+{5481} Summon Nature's Ally VI {Summons a natural  creature ally.  It  appears where you choose and acts  immediately,  on your turn.
+
+Casting:         1  round   [Conjuration, V,S,DF]
+Range:               Close,  25  feet  + 5/2 levels
+Effect:              One summoned creature
+Duration:      1  round/level (D)}
+{5482} Summon Nature's Ally VII {Summons a natural  creature ally.  It  appears where you choose and acts  immediately,  on your turn.
+
+Casting:         1  round   [Conjuration, V,S,DF]
+Range:               Close,  25  feet  + 5/2 levels
+Effect:              One summoned creature
+Duration:      1  round/level (D)}
+{5483} Summon Nature's Ally VIII {Summons a natural  creature ally.  It  appears where you choose and acts  immediately,  on your turn.
+
+Casting:         1  round   [Conjuration, V,S,DF]
+Range:               Close,  25  feet  + 5/2 levels
+Effect:              One summoned creature
+Duration:      1  round/level (D)}
+{5484} Summon Nature's Ally IX {Summons a natural  creature ally.  It  appears where you choose and acts  immediately,  on your turn.
+
+Casting:         1  round   [Conjuration, V,S,DF]
+Range:               Close,  25  feet  + 5/2 levels
+Effect:              One summoned creature
+Duration:      1  round/level (D)}
+{5485} Summon Swarm {[Conjuration] You summon a swarm of animals, based on what you select from the radial menu within the game.}
+{5486}{Sunbeam}
+{5487} Sunburst {Deals 6d6 damage and blinds each creature in the area.  Deals 1d6/level  to undead and fungi.  Destroys creatures  harmed by  bright  light,  on  failed save.
+Casting:         1  std action   [Evocation, V,S,M/DF] 
+Range:               Long,  400  feet  +  40/level
+Area:                   80-foot  radius spread
+Duration:      Inst.,  Save: Reflex half + no blind,  SR: Y}
+{5488}{Symbol}
+{5489}{Sympathy}
+{5490} Tasha's Hideous Laughter {Subject  loses actions for 1  round per caster  level  while afflicted with uncontrollable laughter.
+
+Casting:         1  std action   [Enchantment, V,S,M]
+Range:               Close,  25  feet  + 5/2 levels
+Target:            One creature, Int 3 or higher
+Duration:      1  round/level,    Save: Will negates,    SR: Y}
+{5491}{Telekinesis}
+{5492} Teleport {Bring up the World Map in the game and teleport  the entire party to the selected location.
+
+Casting:         1  std action   [Conjuration, V]
+Range:               Personal and touch
+Target:            You and your entire party
+Duration:      Instantaneous}
+{5493}{Teleportation Circle}
+{5494}{Teleport without Error}
+{5495}{Temporal Stasis}
+{5496}{Tenser's Floating Disk}
+{5497} Tenser's Transformation {You gain a  +4  enhancement  bonus to Str, Dex, and Con,  a  +4  natural  armor bonus, a  +5  competence
+bonus on  Fort  saves,  proficiency  with all  simple and martial  weapons.  Base attack bonus equals character  level.  You  lose spellcasting ability.
+Casting:         1  std action   [Transmutation, V,S,M]
+Range:               Personal,              Duration:      1  round/level}
+{5498}{Time Stop}
+{5499}{Tongues}
+{5500}{Transmute Metal to Wood}
+{5501}{Transmute Mud to Rock}
+{5502}{Transmute Rock to Mud}
+{5503}{Transport via Plants}
+{5504}{Trap the Soul}
+{5505} Tree Shape  {You assume the form of a large living tree,  +10 natural  armor bonus,  Dexterity becomes 0.
+
+Casting:         1  std action   [Transmutation, V,S,DF]
+Range:               Personal
+Target:            You
+Duration:      1  hour/level (D)}
+{5506}{Tree Stride}
+{5507}{True Resurrection}
+{5508} True Seeing {Subject sees the true form of creatures under blur,  displacement,  invisibility,  or other similar effects.
+
+Casting:         1  std action   [Divination, V,S,M, 250 gp]
+Range:               Touch
+Target:            Creature touched
+Duration:      1  minute}
+{5509} True Strike {Your next  single attack roll  gains a  +20  insight  bonus if made before the end of the next  round.
+
+Casting:         1  std action   [Divination, V,F]
+Range:               Personal
+Target:            You
+Duration:      1  round}
+{5510}{Undetectable Alignment}
+{5511}{Unhallow}
+{5512}{Unholy Aura}
+{5513} Unholy Blight {Deals 1d8/two levels to good creatures,  1d6/level  to good outsiders,  and sickens for 1  round.  Non-good and non-evil take half,  and no sicken.
+Casting:         1  std action   [Evocation, V,S]
+Range:               Medium,  100  feet  + 10/level
+Area:                   20-foot  radius spread
+Duration:      Inst.,    Save: Will  half + no sick,    SR:Yes}
+{5514}{Unseen Servant}
+{5515} Vampiric Touch {Melee touch attack deals 1d6 damage per two caster levels.  You gain temporary  hit points equal to damage dealt,  for one hour.
+Casting:         1  std action   [Necromancy, V,S]
+Range:               Touch
+Target:            Living creature touched
+Duration:      Inst.,    Save: None,    SR: Yes}
+{5516}{Vanish}
+{5517}{Veil}
+{5518}{Ventriloquism}
+{5519} Virtue {Subject  gains 1  temporary  hit point.
+
+
+Casting:         1  std action   [Transmutation, V,S,DF]
+Range:               Touch
+Target:            Creature touched
+Duration:      1  minute}
+{5520}{Vision}
+{5521} Wail of the Banshee {Scream kills creatures that hear it,  but not  caster.  Creatures closest to caster are affected first.
+
+Casting:         1  std action   [Necromancy, V]
+Range:               Close,  25  feet  + 5/2 levels
+Area:                   40-foot  radius spread
+Duration:      Inst.,    Save: Fort negates,    SR: Yes}
+{5522}{Creates a 10' wide curtain of fire that deals an initial 2d4 fire damage and 2d6 +1/lvl to creatures passing through it.
+Casting:         1  std action   [Evocation, V,S,M/DF]
+Range:               Medium ,  100  feet  + 10 levels  
+Duration:       Concentration + 1 round/level
+Save:                    None,    SR: Yes}
+{5523}{Wall of Force}
+{5524}{Wall of Ice}
+{5525}{Wall of Iron}
+{5526}{Wall of Stone}
+{5527}{Wall of Thorns}
+{5528} Warp Wood {Wooden  ranged weapons  become  useless,  wooden melee  weapons  get  a  -4  penalty  on  attack rolls.  Forces  open  wooden  chests  and doors.
+Casting:         1  std action   [Conjuration, V,S]
+Range:               Close,  25  feet  + 5/2 levels  
+Target:            1  small  wooden  object/level
+Duration:      Inst.,   Save: Will negates,    SR: Yes}
+{5529}{Water Breathing}
+{5530}{Water Walk}
+{5531} Web {Entangles creatures.  Break free with initial  Reflex save or later DC 15  strength check.  Once free,  move each turn with DC 15  strength check.
+Casting:         1  std action   [Conjuration, V,S,M]
+Range:               Medium,  100  feet  + 10/level  
+Effect:              Webs in a 20-foot  radius spread 
+Duration:      10 min/level,    Save: Reflex partial,    SR: Y}
+{5532} Weird {Any number of living creatures each get a Will  save to disbelieve.  If that fails,  a  Fortitude save will  avoid death but creature still takes 3d6 damage.
+Casting:         1  std action   [Illusion, V,S]
+Range:               Medium,  100  feet  + 10/level  
+Targets:         living creatures,  no more than 30' apart
+Duration:      Inst.,    Save: Will and Fort,    SR: Yes}
+{5533}{Whirlwind}
+{5534}{Whispering Wind}
+{5535}{Wind Walk}
+{5536} Wind Wall {Ranged weapons passing through the wall  have a 30% miss chance.
+
+Casting:         1  std action   [Evocation, V,S,M/DF]
+Range:               Medium,  100  feet  + 10/level
+Effect:              Wall  10'/level  long,  5'/level  high
+Duration:      1  round/level,    Save: None,    SR: Yes}
+{5537}{Wish}
+{5538}{Wood Shape}
+{5539} Word of Chaos {Kills, confuses, stuns, and/or deafens nonchaotic creatures based on  their HD.  Banishes nonchaotic  extraplanar  creatures.
+Casting:         1  std action   [Evocation, V]
+Range:               Personal
+Area:                   40-foot  radius burst
+Duration:      Inst.,   Save: No (Will  for banish),   SR:Yes}}
+{5540}{Word of Recall}
+{5541}{Zone of Truth}
+{5542} Blight {One plant  creature takes 1d6 points of damage per caster level,  max 15d6.
+
+Casting:         1  std action   [Necromancy, V,S,DF]
+Range:               Touch 
+Targets:         One plant or plant creature 
+Duration:      Inst.,    Save: Fort half,    SR: Yes}
+{5543} Dispel Air {You gain a +4 deflection bonus to AC against all  attacks.  Melee touch attack dispels one summoned air creature,  which ends spell.
+
+Casting:         1  std action   [Abjuration, V,S]
+Range:               Personal 
+Target:            You
+Duration:      1  round/level}
+{5544} Dispel Earth {You gain a +4 deflection bonus to AC against all  attacks.  Melee touch attack dispels one summoned earth creature,  which ends spell.
+
+Casting:         1  std action   [Abjuration, V,S]
+Range:               Personal 
+Target:            You
+Duration:      1  round/level}
+{5545} Dispel Fire {You gain a +4 deflection bonus to AC against all  attacks.  Melee touch attack dispels one summoned fire creature,  which ends spell.
+
+Casting:         1  std action   [Abjuration, V,S]
+Range:               Personal 
+Target:            You
+Duration:      1  round/level}
+{5546} Dispel Water {You gain a +4 deflection bonus to AC against all  attacks.  Melee touch attack dispels one summoned water creature,  which ends spell.
+
+Casting:         1  std action   [Abjuration, V,S]
+Range:               Personal 
+Target:            You
+Duration:      1  round/level}
+{5547} Rage {Subject gains +2 morale bonus to Strength and Con,  +1  on Will saves,  -2 to AC.
+
+Casting:         1  std action   [Enchantment, V,S]
+Range:               Medium,  100  feet  + 10/level
+Target:            One willing living creature per 3 levels
+Duration:      Concentration + 1  round/level (D)}
+{5548} Eagle's Splendor {Grants a +4 enhancement bonus to Charisma,  improving Charisma based skills and the DC  for spells cast  by Bards and Sorcerers.
+Casting:         1  std action   [Transmutation, V,S]
+Range:               Touch 
+Target:             Creature touched
+Duration:      1  min/level}
+{5549} Fox's Cunning {Grants a +4 enhancement bonus to Intelligence,  improving Intelligence based skills and the DC  for spells cast  by Wizards.  Does not  grant  skill  points.
+Casting:         1  std action   [Transmutation, V,S]
+Range:               Touch 
+Target:             Creature touched
+Duration:      1  min/level}
+{5550} Owl's Wisdom {Grants a +4 enhancement bonus to Wisdom,  improving Will  saves,  Wisdom based skills,  and the DC  for spells cast  by Clerics and Druids.
+Casting:         1  std action   [Transmutation, V,S]
+Range:               Touch 
+Target:             Creature touched
+Duration:      1  min/level}
+{5551} Reduce Animal {Animal  reduces in size,  +2  Dex,  -2  Str,  +1  attack and AC.  Weapons reduce,  dealing less  damage.
+
+Casting:         1  std action   [Transmutation, V,S]
+Range:               Touch 
+Target:             One animal
+Duration:      1  hour/level (D)}
+{5552} Glibness {You gain a +30 bonus on Bluff checks and your lies can  escape magical  discernment.
+
+Casting:         1  std action   [Transmutation, S]
+Range:               Personal
+Target:            You
+Duration:      10 min/level (D)}
+{5553} False Life {You gain temporary hit  points equal  to 1d10 +1  per caster level,  max +10.
+
+Casting:         1  std action   [Necromancy, V,S,M]
+Range:               Personal
+Target:            You
+Duration:      1  hour/level or until discharged}
+{5554} Longstrider {Your base land speed increases by 10 feet.
+
+
+Casting:         1  std action   [Transmutation, V,S,M]
+Range:               Personal
+Target:            You
+Duration:      1  hour/level (D)}
+{5555} Acid Splash {Ranged touch attack deals 1d3 points of acid damage.
+
+Casting:         1  std action   [Conjuration, V,S]
+Range:               Close,  25  feet  + 5/2 levels  
+Effect:              One missile of acid
+Duration:      Inst.,   Save: None,    SR: No}
+{5556} Daze Monster {One living creature with 6 or fewer Hit  Dice takes no actions for 1  round.
+
+Casting:         1  std action   [Enchantment, V,S,M]
+Range:               Medium,  100  feet  + 10/level  
+Target:             One living creature of 6 HD or less 
+Duration:      1  round,    Save: Will negates,    SR: Yes}
+{5557} Heroism {Target  gains a +2  morale bonus on attack rolls,  saves,  and skill  checks.
+
+Casting:         1  std action   [Enchantment, V,S]
+Range:               Touch
+Target:            Creature touched
+Duration:      10 min/level}
+{5558} Greater Heroism {Subject  gains +4 morale bonus on attack rolls,  saves,  and skill  checks,  immunity  to fear,  and temporary  hit points equal  to caster level,  max 20.
+Casting:         1  std action   [Enchantment, V,S]
+Range:               Touch
+Target:            Creature touched
+Duration:      1  min/level}
+{5559} Quench {Deals 1d6 points of damage per caster level  to Fire Elementals,  max 15d6.  It does nothing else.
+
+Casting:         1  std action   [Transmutation, V,S,DF]
+Range:               Medium,  100  feet  +  10/level 
+Target:            One fire elemental
+Duration:      Instantaneous,    Save: None,    SR: No}
+{5560} Call Lightning Storm {You may call  one vertical  lightning  bolt per turn that deals 5d6 electricity damage.  The total number you can call  is equal  to your caster level,  max 15.
+Casting:         1  std action   [Evocation, V,S]
+Range:               Long,  400  feet  + 40/level
+Area:                   5-foot radius burst
+Duration:      1  min/level,    Save: Reflex half,    SR: Yes}
+{5561} Lesser Confusion {One creature is confused for 1  round.  It may flee,  babble,  attack randomly,  etc.
+
+Casting:         1  std action   [Enchantment, V,S,DF]
+Range:               Close,  25  feet  + 5/2 levels
+Target:            One living creature
+Duration:      1  round,    Save: Will negates,    SR: Yes} 
+{5562} Deep Slumber {Puts 10 Hit Dice of living creatures to sleep.  Creatures with the fewest  Hit Dice are affected first.
+
+Casting:         1  round   [Enchantment, V,S,M]
+Range:               Close,  25  feet  + 5/2 levels
+Area:                   10-foot  radius burst
+Duration:      1  min/level,    Save: Will negates,    SR: Yes}
+{5563} Crushing Despair {Each creature takes  -2  on attack rolls,  damage rolls,  saves,  and skill  checks.
+
+Casting:         1  std action   [Enchantment, V,S]
+Range:               30 feet 
+Area:                   Cone-shaped burst 
+Duration:      1  min/level,    Save: Will negates,    SR: Yes}
+{5564} Good Hope {Each creature gains a +2  morale bonus on attack rolls,  damage rolls,  saving throws,  and checks.
+
+Casting:         1  std action   [Enchantment, V,S]
+Range:               Medium,  100  feet  + 10/level
+Targets:         1  creature/level, no more than 30' apart
+Duration:      1  min/level}
+{5565} Heal {Cures 10 HP/level, max 150.  Ends these conditions:  ability damage,  blinded/deafened,  diseased,  feeblemind,  insanity,  nauseated/sickened,  poisoned,  stunned.  Damages undead.
+Casting:         1  std action   [Conjuration, V,S]
+Target:            Creature touched
+Duration:      Instantaneous}
+{5566} Harm {Melee touch attack deals 10 points of negative energy damage per level,  max 150.  Cures undead.
+
+Casting:         1  std action   [Necromancy, V,S]
+Range:               Touch
+Target:            Creature touched
+Duration:      Inst.,    Save: Will  half,    SR: Yes}
+{5567} Reincarnation {Brings back a dead creature in another body.  The creature loses one level.  Costs 1000 gp.
+
+Casting:         10 minutes   [Trans., V,S,M,DF, 1000 gp]
+Range:               Touch
+Target:            Dead creature touched
+Duration:      Instantaneous}
+{5568} Mordenkainen's Private Sanctum {[Abjuration] Allows safe resting in otherwise hostile environments.}
+{5569}{Cujos Magic Missile [Evocation] 10d6 +1 damage, +1 missile per two levels above 1st max +4(INTERNAL).}
+{5570}{AHOBM [Necromancy] All heads off but mine}
+{5571} Mass Bear's Endurance {Grants  one  creature  per  level  a +4 enhancement  bonus to Constitution.
+
+Casting:         1  std action   [Transmutation, V,S]
+Range:               Close,  25  feet  + 5/2 levels
+Target:            1  creature/level,  no more than 30' apart
+Duration:      1  min/level}
+{5572} Mass Bull's Strength {Grants  one creature  per  level  a +4 enhancement  bonus to Strength.
+
+Casting:         1  std action   [Transmutation, V,S]
+Range:               Close,  25  feet  + 5/2 levels
+Target:            1  creature/level,  no more than 30' apart
+Duration:      1  min/level}
+{5573} Mass Cat's Grace {Grants  one  creature  per  level  a +4 enhancement bonus to Dexterity.
+
+Casting:         1  std action   [Transmutation, V,S]
+Range:               Close,  25  feet  + 5/2 levels
+Target:            1  creature/level,  no more than 30' apart
+Duration:      1  min/level}
+{5574} Mass Eagle's Splendor {Grants  one  creature  per  level  a +4 enhancement bonus to Charisma.
+
+Casting:         1  std action   [Transmutation, V,S]
+Range:               Close,  25  feet  + 5/2 levels
+Target:            1  creature/level,  no more than 30' apart
+Duration:      1  min/level}
+{5575} Mass Fox's Cunning {Grants  one  creature  per  level  a +4 enhancement bonus to Intelligence.
+
+Casting:         1  std action   [Transmutation, V,S]
+Range:               Close,  25  feet  + 5/2 levels
+Target:            1  creature/level,  no more than 30' apart
+Duration:      1  min/level}
+{5576} Mass Owl's Wisdom {Grants  one  creature  per  level  a +4 enhancement bonus to Wisdom.
+
+Casting:         1  std action   [Transmutation, V,S]
+Range:               Close,  25  feet  + 5/2 levels
+Target:            1  creature/level,  no more than 30' apart
+Duration:      1  min/level}
+{5577} Cure Moderate Wounds, Mass {Cures 2d8 damage +1  per caster  level,  max +30,  to one creature per  level.  Damages undead  instead.
+
+Casting:         1  std action   [Conjuration, V,S]
+Range:               Close,  25  feet  + 5/2 levels 
+Target:            1  creature/level, no more than 30' apart 
+Duration:      Inst.,    Save: Will  half  undead,    SR: Yes}}
+{5578} Cure Serious Wounds, Mass {Cures 3d8 damage +1  per caster  level,  max +35,  to one creature per  level.  Damages undead  instead.
+
+Casting:         1  std action   [Conjuration, V,S]
+Range:               Close,  25  feet  + 5/2 levels 
+Target:            1  creature/level, no more than 30' apart 
+Duration:      Inst.,    Save: Will  half  undead,    SR: Yes}
+{5579} Cure Critical Wounds, Mass {Cures 4d8 damage +1  per caster  level,  max +40,  to one creature per  level.  Damages undead  instead.
+
+Casting:         1  std action   [Conjuration, V,S]
+Range:               Close,  25  feet  + 5/2 levels 
+Target:            1  creature/level, no more than 30' apart 
+Duration:      Inst.,    Save: Will  half  undead,    SR: Yes}
+{5580}{Potion of Protection From Cold (INTERNAL)}
+{5581} Inflict Moderate Wounds, Mass {Deals negative  energy damage of 2d8 +1  per  level,  max +30,  to one creature  per  level.  Cures undead.
+
+Casting:         1  std action   [Necromancy, V,S]
+Range:               Close,  25  feet  + 5/2 levels
+Target:            1  creature/level, no more than 30' apart
+Duration:      Inst.,    Save: Will  half,    SR: Yes}
+{5582} Inflict Serious Wounds, Mass {Deals negative  energy damage of 3d8 +1  per  level,  max +35,  to one creature  per  level.  Cures undead.
+
+Casting:         1  std action   [Necromancy, V,S]
+Range:               Close,  25  feet  + 5/2 levels
+Target:            1  creature/level, no more than 30' apart
+Duration:      Inst.,    Save: Will  half,    SR: Yes}
+{5583} Inflict Critical Wounds, Mass {Deals negative  energy damage of 4d8 +1  per  level,  max +40,  to one creature  per  level.  Cures undead.
+
+Casting:         1  std action   [Necromancy, V,S]
+Range:               Close,  25  feet  + 5/2 levels
+Target:            1  creature/level, no more than 30' apart
+Duration:      Inst.,    Save: Will  half,    SR: Yes}
+{5584}{}
+{5585} Hold Monster, Mass {Paralyzes a number of creatures.  Constructs, elementals, oozes, plants, and undead are immune.  Subject  gets a new saving throw each turn.
+Casting:         1  std action   [Enchantment, V,S,F/DF]
+Range:               Medium,  100  feet  + 10/level 
+Target:            creatures, no more than 30' apart
+Duration:      1  round/level,    Save: Will  negates,    SR: Y}
+{5586} Polar Ray {Ranged touch attack deals 1d6 cold damage per caster level, max 25d6.
+
+Casting:         1  std action   [Evocation, V,S,F]
+Range:               Close,  25  feet  + 5/2 levels  
+Effect:              Ray,  ranged touch attack
+Duration:      Inst.,    Save: None,    SR: Yes}
+{5587} Undeath to Death {Kills 1d4 HD of undead per level, max 20d4.  Undead with the  fewest  HD are affected first. No undead of 9 or more HD  is affected.  Costs 500 gp.
+Casting:         1  std action   [Necromancy, V,S,M]
+Range:               Medium,  100  feet  + 10/level  
+Effect:              40-foot  radius burst
+Duration:      Inst.,    Save: Will  negates,    SR: Yes}
+{5588} Hold Person, Mass {Paralyzes a number of humanoid creatures.  Each creature  gets a new saving throw each turn.
+
+Casting:         1  std action   [Enchantment, V,S,F/DF]
+Range:               Medium,  100  feet  + 10/level 
+Target:            creatures, no more than 30' apart
+Duration:      1  round/level,    Save: Will  negates,    SR: Y}
+{5589}{}
+{5590}{}
+{5591}{}
+{5592}{}
+{5593}{}
+{5594}{}
+{5595}{}
+{5596}{}
+{5597}{}
+{5598}{}
+{5599}{}
+{5600}{Frog Tongue (INTERNAL)}
+{5601}{Vrock Screech (INTERNAL)}
+{5602}{Vrock Spores (INTERNAL)}
+{5603}{Zuggtmoy Summon Fungi (INTERNAL)}
+{5604}{Glabrezu Summon Quasits (INTERNAL)}
+{5605}{senshock summon elemental (INTERNAL)}
+{5606}{summon fungi (INTERNAL)}
+{5607}{summon lamia (INTERNAL)}
+{5608}{Gate (INTERNAL)}
+{5609}{phycomid attack (INTERNAL)}
+{5699}{Summoned (INTERNAL)}
+{5700}{Ring of Freedom of Movement (INTERNAL)}
+{5701}{Potion of Enlarge Person (INTERNAL)}
+{5702}{Potion of Haste (INTERNAL)}
+{5703}{Boots of Speed (INTERNAL)}
+{5704}{Dust of Disappearance (INTERNAL)}
+{5705}{Potion of eagle's splendor}
+{5706}{Potion of glibness (INTERNAL)}
+{5707}{Potion of hiding (INTERNAL)}
+{5708}{Potion of sneaking (INTERNAL)}
+{5709}{Potion of heroism (INTERNAL)}
+{5710}{Potion of super-heroism (INTERNAL)}
+{5711}{Potion of protection from fire (INTERNAL)}
+{5712}{Javelin of lightning (INTERNAL)}
+{5713}{Flame tongue (INTERNAL)}
+{5714}{Potion of protection from outsiders (INTERNAL)}
+{5715}{Potion of protection from elementals (INTERNAL)}
+{5716}{Potion of protection from earth (INTERNAL)}
+{5717}{Potion of protection from magic (INTERNAL)}
+{5718}{Potion of protection from undead (INTERNAL)}
+{5719}{Ring of Animal Summoning (Dog) (INTERNAL)}
+{5720}{Potion of Protection from Acid (INTERNAL)}
+{5721}{Potion of Protection from Electricity (INTERNAL)}
+{5722}{Summon Air Elemental(INTERNAL)}
+{5723}{Summon Earth Elemental(INTERNAL)}
+{5724}{Summon Fire Elemental(INTERNAL)}
+{5725}{Summon Water Elemental(INTERNAL)}
+{5726}{Summon Balor(INTERNAL)}
+{5727}{Summon Glabrezu(INTERNAL)}
+{5728}{Summon Hezrou(INTERNAL)}
+{5729}{Summon Vrock(INTERNAL)}
+{5733} Scorching Ray {Ranged touch attack deals 4d6  fire  damage  per  ray,  with one extra  ray  per four  levels beyond 3rd,  max  3  rays.
+Casting:         1  std action   [Evocation, V,S]
+Range:               Close,  25  feet  + 5/2 levels
+Effect:              Rays,  ranged touch attack
+Duration:      Inst.,    Save: None,    SR: Yes}
+{5734}{}
+{5735} Hezrou Stench {yuck}
+{5736}{Petrifying Breath (INTERNAL)}
+{5737}{Death Gaze (INTERNAL)}
+{5738}{Petrifying Gaze (INTERNAL)}
+{5739}{Frozen Breath (INTERNAL)}
+{5740}Ray of Clumsiness {[Transmutation] as Ray of Enfeeblement but dexterity decreased}
+{5741}Ice Breath Weapon{}
+{5742}{Summon Giant Constrictor Snake}
+{5743}{Abundant Step}
+{5744}{}
+{5745}{}
+{5746}{}
+{5747}{}
+{5748}{}
+{5749}{}
+{5750}{}
+{5751}{}
+{5752}{}
+{5753}{Harpy Song (INTERNAL)}
+{5754}{Unholy Blight Quickened (INTERNAL)}
+{5755}{Fear Gaze (INTERNAL)}
+{5756}{Spore No More (INTERNAL)}
+{5757}{Ooze You Lose (INTERNAL)}
+{5758}{Infatuation}
+{5759}{Enslavement}
+{5760}{Summon Familiar}
+{5761}Extraplanar Chest{Creates a miniature chest and a  large chest. The miniature resides in your inventory, and can be used to send the large  chest to and from  another plane.  The first  casting of this spell costs 5050 gp.
+
+Casting:     Out of combat   [Conjuration, 5050 gp]
+Range:           Personal}
+{6000} Moment of Prescience {Grants an insight bonus equal to your caster level (max +25) on a attack roll, opposed ability or skill check, saving throw or an AC bonus on one attack.
+Casting:         1  std action   [Divination, V,S]
+Range:               Personal
+Target:            You
+Duration:     1 hour/level or until discharged}
+{6001} Touch of Fatigue {If you succeed on a touch attack the subject is fatigued for the spell’s duration.  This spell has no effect on a creature that is already fatigued.
+Casting:    1  std action   [Necromancy, V,S,M]
+Range:          Touch
+Target:        Living creature touched
+Duration: 1 round/level,   Save: Fort negates,   SR: Yes}
+{6002} Ray of Exhaustion {[Necromancy] On a successful ranged touch attack, the subject is exhausted (or fatigued on a successful save) for the spell’s duration.
+Casting:       1  std action   [Necromancy, V,S,M]
+Range:             Close,  25  feet  + 5/2 levels
+Effect:            Ray,  ranged touch attack
+Duration:    1 round/level,    Save: Fort partial,    SR: Yes}
+{6003} Waves of Fatigue {[Necromancy] Waves of negative energy render all living creatures in the spell’s area fatigued. It has no effect on a fatigued creature.
+Casting:         1  std action   [Necromancy, V,S]
+Range:               30 ft.
+Effect:              Cone-shaped burst
+Duration:      Instantaneous,    Save: No,    SR: Yes}
+{6004} Waves of Exhaustion {[Necromancy] Waves of negative energy cause all living creatures in the spell’s area to become exhausted. It has no effect on a exhausted creature.
+Casting:         1  std action   [Necromancy, V,S]
+Range:               60 ft.
+Area:                   Cone-shaped burst
+Duration:      Instantaneous,    Save: No,    SR: Yes}

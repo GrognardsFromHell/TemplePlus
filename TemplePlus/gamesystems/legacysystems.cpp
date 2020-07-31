@@ -634,6 +634,7 @@ SpellSystem::~SpellSystem() {
 	auto shutdown = temple::GetPointer<void()>(0x100791d0);
 	mesFuncs.Close(spellSys.spellEnumsExt);
 	mesFuncs.Close(spellSys.spellMesExt);
+	mesFuncs.Close(spellSys.spellMesLong);
 	shutdown();
 
 }

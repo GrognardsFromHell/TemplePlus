@@ -32,6 +32,7 @@
 #include "float_line.h"
 #include "history.h"
 #include "bonus.h"
+#include "config/config.h"
 
 namespace py = pybind11;
 
@@ -119,6 +120,94 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		}
 		return result;
 	});
+
+	m.def("config_set_string", [](std::string& configItem, std::string& value) {
+		auto configItemLower(tolower(configItem));
+		if (configItemLower == "hpfornpchd") {
+			config.HpForNPCHd = value;
+			config.maxHpForNpcHitdice = false;  //Turn off if we are setting the enum flag
+		}
+		else if (configItemLower == "hponlevelup") {
+			config.hpOnLevelup = value;
+		}
+		else {
+			logger->warn("Can't set config item {}.", configItem);
+		}
+	});
+
+	m.def("config_get_string", [](std::string& configItem) {
+		auto configItemLower(tolower(configItem));
+		if (configItemLower == "hpfornpchd") {
+			//Check the old param
+			if (config.maxHpForNpcHitdice) {
+				return std::string("max");
+			}
+			return config.HpForNPCHd;
+		}
+		else if (configItemLower == "hponlevelup") {
+			return config.hpOnLevelup;
+		}
+
+		logger->warn("Can't get config item {}.", configItem);
+		return std::string("");
+		});
+
+	m.def("config_set_bool", [](std::string& configItem, bool value) {
+		auto configItemLower(tolower(configItem));
+		if (configItemLower == "preferuse5footstep") {
+		    config.preferUse5FootStep = value;
+		}
+		else if (configItemLower == "slowerlevelling") {
+			config.slowerLevelling = value;
+		}
+		else if (configItemLower == "disabletargetsurrounded") {
+			config.disableTargetSurrounded = value;
+		}
+		else if ("disablechooserandomspell_regardinvulnerablestatus") {
+			config.disableChooseRandomSpell_RegardInvulnerableStatus = value;
+		}
+		else {
+			logger->warn("Can't set config item {}.", configItem);
+		}
+	});
+
+	m.def("config_get_bool", [](std::string& configItem) {
+		auto configItemLower(tolower(configItem));
+		if (configItemLower == "preferuse5footstep") {
+			return config.preferUse5FootStep;
+		}
+		else if (configItemLower == "slowerlevelling") {
+			return config.slowerLevelling;
+		}
+		else if (configItemLower == "disabletargetsurrounded") {
+			return config.disableTargetSurrounded;
+		}
+		else if (configItemLower == "disablechooserandomspell_regardinvulnerablestatus") {
+			return config.disableChooseRandomSpell_RegardInvulnerableStatus;
+		}
+		logger->warn("Can't get config item {}.", configItem);
+		return false;
+	});
+
+	m.def("config_set_int", [](std::string& configItem, int value) {
+		auto configItemLower(tolower(configItem));
+		if (configItemLower == "pointbuypoints") {
+			config.pointBuyPoints = value;
+		}
+		else {
+			logger->warn("Can't set config item {}.", configItem);
+		}
+		});
+
+	m.def("config_get_int", [](std::string& configItem) {
+		auto configItemLower(tolower(configItem));
+		if (configItemLower == "pointbuypoints") {
+			return config.pointBuyPoints;
+		}
+
+		logger->warn("Can't get config item {}.", configItem);
+		return 0;
+		});
 
 	m.def("cur_seq_get_turn_based_status_flags", []() {
 		int res = 0;

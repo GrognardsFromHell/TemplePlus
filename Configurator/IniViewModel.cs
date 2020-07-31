@@ -40,10 +40,10 @@ namespace TemplePlusConfig
             "HpOnLevelUp", typeof (HpOnLevelUpType), typeof (IniViewModel),
             new PropertyMetadata(default(HpOnLevelUpType)));
 
-        public static readonly DependencyProperty MaxHpForNpcHitdiceProperty = DependencyProperty.Register(
-            "MaxHpForNpcHitdice", typeof(bool), typeof(IniViewModel),
-            new PropertyMetadata(default(bool)));
-        
+        public static readonly DependencyProperty HpForNPCHdProperty = DependencyProperty.Register(
+            "HpForNPCHd", typeof(HpForNPCHdType), typeof(IniViewModel),
+            new PropertyMetadata(default(HpForNPCHdType)));
+
         public static readonly DependencyProperty FogOfWarProperty = DependencyProperty.Register(
             "FogOfWar", typeof(FogOfWarType), typeof(IniViewModel),
             new PropertyMetadata(default(FogOfWarType)));
@@ -79,8 +79,11 @@ namespace TemplePlusConfig
         public static readonly DependencyProperty AlertAiThroughDoorsProperty = DependencyProperty.Register(
           "AlertAiThroughDoors", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
 
-        
+        public static readonly DependencyProperty PreferUse5FootStepProperty = DependencyProperty.Register(
+          "PreferUse5FootStep", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
 
+        public static readonly DependencyProperty ExtendedSpellDescriptionsProperty = DependencyProperty.Register(
+          "ExtendedSpellDescriptions", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
 
         public static readonly DependencyProperty NewClassesProperty = DependencyProperty.Register(
           "NewClasses", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
@@ -108,6 +111,10 @@ namespace TemplePlusConfig
 
         public IEnumerable<HpOnLevelUpType> HpOnLevelUpTypes => Enum.GetValues(typeof (HpOnLevelUpType))
             .Cast<HpOnLevelUpType>();
+
+        public IEnumerable<HpForNPCHdType> HpForNPCHdTypes => Enum.GetValues(typeof(HpForNPCHdType))
+            .Cast<HpForNPCHdType>();
+
         public IEnumerable<FogOfWarType> FogOfWarTypes => Enum.GetValues(typeof(FogOfWarType))
            .Cast<FogOfWarType>();
         public IEnumerable<NumberOfPcsType> NumberOfPcsTypes => Enum.GetValues(typeof(NumberOfPcsType))
@@ -193,10 +200,10 @@ namespace TemplePlusConfig
             set { SetValue(HpOnLevelUpProperty, value); }
         }
 
-        public bool MaxHpForNpcHitdice
+        public HpForNPCHdType HpForNPCHd
         {
-            get { return (bool)GetValue(MaxHpForNpcHitdiceProperty); }
-            set { SetValue(MaxHpForNpcHitdiceProperty, value); }
+            get { return (HpForNPCHdType)GetValue(HpForNPCHdProperty); }
+            set { SetValue(HpForNPCHdProperty, value); }
         }
         
 
@@ -273,8 +280,19 @@ namespace TemplePlusConfig
             get { return (bool)GetValue(AlertAiThroughDoorsProperty); }
             set { SetValue(AlertAiThroughDoorsProperty, value); }
         }
-        
 
+        public bool PreferUse5FootStep
+        {
+            get { return (bool)GetValue(PreferUse5FootStepProperty); }
+            set { SetValue(PreferUse5FootStepProperty, value); }
+        }
+
+        public bool ExtendedSpellDescriptions
+        {
+            get { return (bool)GetValue(ExtendedSpellDescriptionsProperty); }
+            set { SetValue(ExtendedSpellDescriptionsProperty, value); }
+        }
+        
         public bool NewClasses
         {
             get { return (bool)GetValue(NewClassesProperty); }
@@ -372,7 +390,36 @@ namespace TemplePlusConfig
                         break;
                 }
             }
-            MaxHpForNpcHitdice = tpData["maxHpForNpcHitdice"] == "true";
+
+            if (tpData["HpForNPCHd"] != null)
+            {
+                switch (tpData["HpForNPCHd"].ToLowerInvariant())
+                {
+                    case "min":
+                        HpForNPCHd = HpForNPCHdType.Min;
+                        break;
+                    case "max":
+                        HpForNPCHd = HpForNPCHdType.Max;
+                        break;
+                    case "average":
+                        HpForNPCHd = HpForNPCHdType.Average;
+                        break;
+                    case "threefourth":
+                        HpForNPCHd = HpForNPCHdType.ThreeFourth;
+                        break;
+                    default:
+                        HpForNPCHd = HpForNPCHdType.Normal;
+                        break;
+                }
+            }
+
+            //Handle reading in old setting (won't be written later)
+            bool MaxHpForNpcHitdice = tpData["maxHpForNpcHitdice"] == "true";
+            if (MaxHpForNpcHitdice)
+            {
+                HpForNPCHd = HpForNPCHdType.Max;
+            }
+
             if (tpData["fogOfWar"] != null)
             {
                 switch (tpData["fogOfWar"].ToLowerInvariant())
@@ -509,7 +556,17 @@ namespace TemplePlusConfig
                 AlertAiThroughDoors = alertAiThroughDoors;
             }
 
-            
+            bool preferUse5FootStep;
+            if (bool.TryParse(tpData["preferUse5FootStep"], out preferUse5FootStep))
+            {
+                PreferUse5FootStep = preferUse5FootStep;
+            }
+
+            bool extendedSpellDescriptions;
+            if (bool.TryParse(tpData["extendedSpellDescriptions"], out extendedSpellDescriptions))
+            {
+                ExtendedSpellDescriptions = extendedSpellDescriptions;
+            }
 
             bool newClasses;
             if (bool.TryParse(tpData["newClasses"], out newClasses))
@@ -590,7 +647,28 @@ namespace TemplePlusConfig
                     tpData["hpOnLevelup"] = "normal";
                     break;
             }
-            tpData["maxHpForNpcHitdice"] = MaxHpForNpcHitdice ? "true" : "false";
+
+            switch (HpForNPCHd)
+            {
+                case HpForNPCHdType.Min:
+                    tpData["HpForNPCHd"] = "min";
+                    break;
+                case HpForNPCHdType.Max:
+                    tpData["HpForNPCHd"] = "max";
+                    break;
+                case HpForNPCHdType.Average:
+                    tpData["HpForNPCHd"] = "average";
+                    break;
+                case HpForNPCHdType.ThreeFourth:
+                    tpData["HpForNPCHd"] = "threefourth";
+                    break;
+                default:
+                    tpData["HpForNPCHd"] = "normal";
+                    break;
+            }
+
+            //Set the old setting to false
+            tpData["maxHpForNpcHitdice"] = "false";
             switch (FogOfWar)
             {
                 case FogOfWarType.Unfogged:
@@ -665,7 +743,8 @@ namespace TemplePlusConfig
             tpData["walkDistanceFt"] =WalkDistanceFt.ToString();
             tpData["disableDoorRelocking"] = DisableDoorRelocking? "true" : "false";
             tpData["alertAiThroughDoors"] = AlertAiThroughDoors ? "true" : "false";
-            
+            tpData["preferUse5FootStep"] = PreferUse5FootStep ? "true" : "false";
+            tpData["extendedSpellDescriptions"] = ExtendedSpellDescriptions ? "true" : "false";
         }
     }
 
@@ -692,6 +771,15 @@ namespace TemplePlusConfig
         Normal,
         Max,
         Average
+    }
+
+    public enum HpForNPCHdType
+    {
+        Normal,
+        Min,
+        Average,
+        ThreeFourth,
+		Max
     }
 
     public enum FogOfWarType

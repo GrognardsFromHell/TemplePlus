@@ -27,6 +27,7 @@
 #include <tig\tig_tokenizer.h>
 #include "ai.h"
 #include "condition.h"
+#include "config\config.h"
 
 static_assert(sizeof(SpellStoreData) == (32U), "SpellStoreData structure has the wrong size!");
 
@@ -514,6 +515,9 @@ void LegacySpellSystem::Init(const GameSystemConf& conf){
 	// this is run after the vanilla code
 	mesFuncs.Open("tprules\\spell_enums_ext.mes", &spellSys.spellEnumsExt);
 	mesFuncs.Open("mes\\spell_ext.mes", &spellMesExt);
+	if (config.extendedSpellDescriptions) {
+		mesFuncs.Open("mes\\spell_long_descriptions.mes", &spellMesLong);
+	}
 
 
 	
@@ -766,6 +770,8 @@ const char* LegacySpellSystem::GetSpellMesline(uint32_t lineNumber) const{
 	if (findInUserFiles != mUserSpellMesLines.end())
 		return findInUserFiles->second.c_str();
 
+	if (mesFuncs.GetLine(spellMesLong, &mesLine))
+		return mesLine.value;
 
 	if (mesFuncs.GetLine(spellMesExt, &mesLine))
 		return mesLine.value;
