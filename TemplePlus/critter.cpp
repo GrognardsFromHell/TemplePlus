@@ -734,7 +734,7 @@ void LegacyCritterSystem::GenerateHp(objHndl handle){
 		} else if (!_stricmp(cfgLower.c_str(), "min")) {
 			npcHdVal = numDice + npcHd.GetModifier();
 		} else if (!_stricmp(cfgLower.c_str(), "average")) {
-			npcHdVal = (numDice * (npcHd.GetSides() + 2)) / 2 + npcHd.GetModifier(); //Round
+			npcHdVal = (numDice * (npcHd.GetSides() + 1)) / 2 + npcHd.GetModifier(); //Round to match monster manual numbers
 		} else if (!_stricmp(cfgLower.c_str(), "threefourth")) {
 			npcHdVal = static_cast<int>((static_cast<double>(numDice * (npcHd.GetSides())) * .75) + .5) + npcHd.GetModifier(); //Round
 		}
