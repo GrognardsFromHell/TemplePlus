@@ -770,8 +770,10 @@ const char* LegacySpellSystem::GetSpellMesline(uint32_t lineNumber) const{
 	if (findInUserFiles != mUserSpellMesLines.end())
 		return findInUserFiles->second.c_str();
 
-	if (mesFuncs.GetLine(spellMesLong, &mesLine))
-		return mesLine.value;
+	if (config.extendedSpellDescriptions) {
+		if (mesFuncs.GetLine(spellMesLong, &mesLine))
+			return mesLine.value;
+	}
 
 	if (mesFuncs.GetLine(spellMesExt, &mesLine))
 		return mesLine.value;
