@@ -37,6 +37,53 @@ PySequenceMethods PyObjScriptsSequence = {
 	0
 };
 
+static PyObject* PyObjScripts_Counter_Get(PyObject* obj, PyObject* args) {
+	auto self = (PyObjScripts*)obj;
+	if (!self->handle) {
+		Py_RETURN_NONE;
+	}
+	int counter_index, evt;
+	if (!PyArg_ParseTuple(args, "ii:PyObjScripts.counter_get", &evt, &counter_index)) {
+		return 0;
+	}
+	auto attachment = objects.GetScriptAttachment(self->handle, evt);
+	int val;
+	if (attachment.scriptId) {
+		val = (attachment.counters >> (counter_index * 8)) & 0xFF;
+	}
+	else {
+		val = 0;
+	}
+	return PyInt_FromLong(val);
+}
+
+static PyObject* PyObjScripts_Counter_Set(PyObject* obj, PyObject* args) {
+	auto self = (PyObjScripts*)obj;
+	if (!self->handle) {
+		Py_RETURN_NONE;
+	}
+	int counter_index, evt, value;
+	if (!PyArg_ParseTuple(args, "iii:PyObjScripts.counter_set", &evt, &counter_index, &value)) {
+		return 0;
+	}
+	auto attachment = objects.GetScriptAttachment(self->handle, evt);
+	if (attachment.scriptId) {
+		// Clear the current value
+		int mask = 0xFF << (counter_index * 8);
+		attachment.counters &= ~mask;
+		attachment.counters |= (value & 0xFF) << (counter_index * 8);
+		objects.SetScriptAttachment(self->handle, evt, attachment);
+	}
+	Py_RETURN_NONE;
+}
+
+static PyMethodDef PyObjScriptsMethods[] = {
+	{ "counter_get", PyObjScripts_Counter_Get, METH_VARARGS, NULL },
+	{ "counter_set", PyObjScripts_Counter_Set, METH_VARARGS, NULL },
+	{ NULL, NULL, NULL, NULL }
+};
+
+
 PyTypeObject PyObjScriptsType = {
 	PyObject_HEAD_INIT(NULL)
 	0, /*ob_size*/
@@ -66,7 +113,7 @@ PyTypeObject PyObjScriptsType = {
 	0, /* tp_weaklistoffset */
 	0, /* tp_iter */
 	0, /* tp_iternext */
-	0, /* tp_methods */
+	PyObjScriptsMethods, /* tp_methods */
 	0, /* tp_members */
 	0, /* tp_getset */
 	0, /* tp_base */
