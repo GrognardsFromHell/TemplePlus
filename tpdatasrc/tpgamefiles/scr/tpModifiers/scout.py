@@ -82,6 +82,8 @@ def GetSkirmishACBonus(obj):
 	scoutBonusLevels = obj.d20_query("Skrimish Level Bonus")
 	scoutLevel = scoutLevel + scoutBonusLevels
 	bonusValue = int((scoutLevel + 1.0) / 4.0)
+	skirmishExtraAC = obj.d20_query("Skirmish Additional AC")
+	bonusValue += skirmishExtraAC
 	return bonusValue
 	
 def GetSkirmishDamageDice(obj):
@@ -89,6 +91,8 @@ def GetSkirmishDamageDice(obj):
 	scoutBonusLevels = obj.d20_query("Skrimish Level Bonus")
 	scoutLevel = scoutLevel + scoutBonusLevels
 	bonusValue = int((scoutLevel - 1)/ 4.0 + 1)
+	skirmishExtraDice = obj.d20_query("Skirmish Additional Dice")
+	bonusValue += skirmishExtraDice
 	bonusDice = str(bonusValue) + "d6"
 	return bonusDice
 

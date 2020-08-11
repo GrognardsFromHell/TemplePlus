@@ -1,0 +1,5 @@
+name: Improved Skirmish
+flags: 12582912
+prereqs:  
+description:  If you move at least 20 feet away from where you were at the start of your turn, your skirmish damage increases by 2d6 and your competence bonus to AC from skirmish improves by 2.  A scout can select Improved Skirmish as one of his scout bonus feats.
+prereq descr: Skirmish +2d6/+1 AC
