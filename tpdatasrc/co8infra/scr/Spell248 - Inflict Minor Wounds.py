@@ -34,7 +34,7 @@ def OnSpellEffect( spell ):
 				target.obj.spell_damage( spell.caster, D20DT_NEGATIVE_ENERGY, dice, D20DAP_UNSPECIFIED, D20A_CAST_SPELL, spell.id )
 
 	else:
-		attack_result = spell.caster.perform_touch_attack(target.obj)
+		attack_result = spell.caster.perform_touch_attack(target.obj, 1)
 		if attack_result & D20CAF_HIT:
 			# check if target is undead
 			if target.obj.is_category_type( mc_type_undead ):
