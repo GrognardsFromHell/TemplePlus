@@ -43,7 +43,7 @@ feat_skill_focus_handle_animal, feat_skill_focus_heal, feat_skill_focus_hide, fe
 feat_skill_focus_jump, feat_skill_focus_knowledge, feat_skill_focus_listen, feat_skill_focus_move_silently, feat_skill_focus_open_lock,
 feat_skill_focus_performance, feat_skill_focus_slight_of_hand, feat_skill_focus_profession, feat_skill_focus_read_lips, feat_skill_focus_ride,
 feat_skill_focus_scry, feat_skill_focus_search, feat_skill_focus_sense_motive, feat_skill_focus_speak_language, feat_skill_focus_spellcraft, feat_skill_focus_spot,
-feat_skill_focus_swim, feat_skill_focus_tumble, feat_skill_focus_use_magic_device, feat_skill_focus_use_rope, feat_skill_focus_survival, "Swift Ambusher"
+feat_skill_focus_swim, feat_skill_focus_tumble, feat_skill_focus_use_magic_device, feat_skill_focus_use_rope, feat_skill_focus_survival, "Swift Ambusher", "Improved Skirmish"
 ]
 
 class_skills = (skill_alchemy, skill_balance, skill_climb, skill_craft, skill_disable_device, skill_escape_artist, skill_hide, skill_jump, skill_knowledge_nature, skill_listen, skill_move_silently, skill_ride, skill_search, skill_sense_motive, skill_spot, skill_wilderness_lore, skill_swim, skill_tumble, skill_use_rope)
