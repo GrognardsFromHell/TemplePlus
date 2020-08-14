@@ -1174,8 +1174,21 @@ ActionErrorCode D20ActionCallbacks::PerformUseItem(D20Actn* d20a){
 }
 
 ActionErrorCode D20ActionCallbacks::PerformBreakFree(D20Actn* d20a) {
-	d20Sys.d20SendSignal(d20a->d20APerformer, D20DispatcherKey::DK_SIG_BreakFree, d20a->data1, 0);
-	return ActionErrorCode::AEC_OK;
+	int spellId = d20a->data1;
+	if (spellId) {
+		SpellPacketBody spellPkt(spellId);
+		if (!spellPkt.spellEnum)
+		{
+			spellId = -1;
+		}
+	}
+
+	if (spellId >= 0)
+	{
+		d20Sys.d20SendSignal(d20a->d20APerformer, D20DispatcherKey::DK_SIG_BreakFree, spellId, 0);
+		return ActionErrorCode::AEC_OK;
+	}
+	return ActionErrorCode::AEC_INVALID_ACTION;
 }
 
 int LegacyD20System::TargetWithinReachOfLoc(objHndl obj, objHndl target, LocAndOffsets* loc)
