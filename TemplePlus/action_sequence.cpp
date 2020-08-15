@@ -126,9 +126,15 @@ public:
 		return actSeqSys.PerformOnAnimComplete(obj, animId);
 	}
 
+	static unsigned int ChargeAttackAddToSeq(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat)
+	{
+		return actSeqSys.ChargeAttackAddToSeq(d20a, actSeq, tbStat);
+	}
+
 	static void TurnStart(objHndl obj);
 	
 	static void(__cdecl*orgTurnStart)(objHndl obj);
+
 
 
 	static ActionErrorCode AddToSeqSimple(D20Actn*, ActnSeq*, TurnBasedStatus*);
@@ -153,6 +159,8 @@ public:
 		replaceFunction(0x100999E0, GreybarReset);
 		replaceFunction(0x10099CF0, PerformOnAnimComplete);
 
+		replaceFunction(0x100959B0, ChargeAttackAddToSeq);
+
 		replaceFunction<void(__cdecl)(objHndl)>(0x100934E0, [](objHndl handle)
 		{
 			actSeqSys.ActionTypeAutomatedSelection(handle);
@@ -167,8 +175,6 @@ public:
 int(__cdecl* ActnSeqReplacements::orgChooseTargetCallback)(void * );
 int(__cdecl* ActnSeqReplacements::orgSeqRenderFuncMove) (D20Actn* d20a, UiIntgameTurnbasedFlags flags);
 void(__cdecl* ActnSeqReplacements::orgTurnStart)(objHndl obj);
-
-
 
 #pragma region Action Sequence System Implementation
 
@@ -2893,6 +2899,47 @@ int ActionSequenceSystem::ActionFrameProcess(objHndl obj)
 	
 	logger->debug("ActionFrameProcess: \t Calling action frame function");
 	return actFrameFunc(d20a);	
+}
+
+unsigned int ActionSequenceSystem::ChargeAttackAddToSeq(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat)
+{
+	if (!d20a->d20ATarget.handle) return AEC_TARGET_INVALID;
+
+	if (tbStat->tbsFlags & (TBSF_Movement | TBSF_1))
+	{
+		return AEC_ALREADY_MOVED;
+	}
+
+	auto mainWeapon = inventory.ItemWornAt(d20a->d20APerformer, EquipSlot::WeaponPrimary);
+	if (inventory.IsRangedWeapon(mainWeapon)) {
+		return AEC_NEED_MELEE_WEAPON;
+	}
+
+	const auto reach = critterSys.GetReach(d20a->d20APerformer, d20a->d20ActType);
+	const auto distance = locSys.DistanceToObj(d20a->d20APerformer, d20a->d20ATarget);
+	if (distance <= (reach + 5.0))  //The "+ 5.0" is new to requre 10 feet distance for a charge
+	{
+		return AEC_TARGET_TOO_CLOSE;
+	}
+
+	//New:  Can't charge if fatigued or exhaused
+	const auto fatigued = d20Sys.D20QueryPython(d20a->d20APerformer, "Fatigued");
+	const auto exhausted = d20Sys.D20QueryPython(d20a->d20APerformer, "Exhausted");
+	if (fatigued != 0 || exhausted != 0) {
+		return AEC_INVALID_ACTION;
+	}
+
+	D20Actn d20aNew(*d20a);
+	d20aNew.d20ActType = D20A_UNSPECIFIED_MOVE;
+	d20aNew.d20Caf |= D20CAF_CHARGE | D20CAF_FREE_ACTION;
+	d20aNew.destLoc = objects.GetLocationFull(d20a->d20ATarget);
+	const auto result = MoveSequenceParse(&d20aNew, actSeq, tbStat, 0.0, reach, 1);
+	
+	if (!result) {
+		memcpy(&actSeq->d20ActArray[actSeq->d20ActArrayNum++], &d20aNew, sizeof(D20Actn));
+	}
+
+	return result;
 }
 
 void ActionSequenceSystem::PerformOnAnimComplete(objHndl obj, int animId)
