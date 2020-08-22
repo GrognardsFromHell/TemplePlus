@@ -960,9 +960,9 @@ bool UiManager::ProcessMessage(TigMsg &msg)
 	case TigMsgType::WIDGET:
 		return ProcessWidgetMessage(msg);
 	default:
-		// In order from top to bottom (back is top)
-		for (auto it = mActiveWindows.rbegin(); it != mActiveWindows.rend(); it++) {
-			auto window = GetWidget(*it);
+		// In order from top to bottom (back is top) using a index instead of an iterator because the iterator may invalidate
+		for (size_t i = mActiveWindows.size(); i > 0; i--) {
+			auto window = GetWidget(mActiveWindows[i-1]);
 
 			if (!window->IsHidden() && window->CanHandleMessage()) {
 				if (window->HandleMessage(msg)) {
