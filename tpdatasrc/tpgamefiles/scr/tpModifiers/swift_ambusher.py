@@ -5,7 +5,7 @@ import math
 
 #Swift Ambusher:   Complete Scoundrel, p. 81
 
-print "Registering Complete Scoundrel"
+print "Registering Swift Ambusher"
 	
 def SkirmishBonusLevels(attachee, args, evt_obj):
 	rogueLevel = attachee.stat_level_get(stat_level_rogue)
