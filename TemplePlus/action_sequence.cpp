@@ -2936,7 +2936,7 @@ unsigned int ActionSequenceSystem::ChargeAttackAddToSeq(D20Actn* d20a, ActnSeq* 
 	const auto result = MoveSequenceParse(&d20aNew, actSeq, tbStat, 0.0, reach, 1);
 	
 	if (!result) {
-		memcpy(&actSeq->d20ActArray[actSeq->d20ActArrayNum++], &d20aNew, sizeof(D20Actn));
+		actSeq->d20ActArray[actSeq->d20ActArrayNum++] = *d20a;
 	}
 
 	return result;
