@@ -1859,9 +1859,19 @@ ItemErrorCode InventorySystem::ItemTransferFromTo(objHndl owner, objHndl receive
 }
 
 ItemErrorCode InventorySystem::ItemTransferSwap(objHndl owner, objHndl receiver, objHndl item, objHndl itemPrevious,
-	int* a4, int equippedItemSlot, int destItemSlotMaybe, int flags){
+	int* a4, int equippedItemSlot, int destItemSlotMaybe, int flags)
+{	
+	// Atari bug #90 fix
+	if (equippedItemSlot == InvIdxForSlot(EquipSlot::Shield)) {
+		const bool incompatible = IsIncompatibleWithDruid(item, receiver);
+		if (incompatible) {
+			return IEC_Incompatible_With_Druid;
+		}
+	}
+
 	static auto itemTransferSwap = temple::GetRef<ItemErrorCode(__cdecl)(objHndl, objHndl, objHndl, objHndl, int*, int, int, int)>(0x1006AB50);
-	auto result = itemTransferSwap(owner, receiver, item, itemPrevious, a4, equippedItemSlot, destItemSlotMaybe, flags);
+	const auto result = itemTransferSwap(owner, receiver, item, itemPrevious, a4, equippedItemSlot, destItemSlotMaybe, flags);
+
 	return result;
 }
 
