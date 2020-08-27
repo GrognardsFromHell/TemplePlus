@@ -1,4 +1,5 @@
 from toee import *
+import tpdp
 
 def OnBeginSpellCast( spell ):
 	print "Ray of Enfeeblement OnBeginSpellCast"
@@ -20,9 +21,33 @@ def OnBeginProjectile( spell, projectile, index_of_target ):
 def OnEndProjectile( spell, projectile, index_of_target ):
 	print "Ray of Enfeeblement OnEndProjectile"
 
+	spellPkt = tpdp.SpellPacket(spell.id)
+	mmData = tpdp.MetaMagicData(spellPkt.get_metamagic_data())
+
 	dice = dice_new( '1d6' )
-	dam_amount = dice.roll()
-	dam_amount += min( 5, spell.caster_level / 2 )
+	dam_bonus = min( 5, spell.caster_level / 2 )
+
+	if (mmData.get_maximize() and mmData.get_empower_count() > 0):
+		#SRD:  An empowered, maximized spell gains the separate benefits of each feat: the maximum result plus one-half the normally rolled result.
+		print "Maximized and Empower"
+		dam_amount = 6 + dam_bonus
+		dam_amount_emp = dice.roll()
+		dam_amount_emp += dam_bonus
+		dam_amount_emp /= 2
+		dam_amount += dam_amount_emp
+	elif (mmData.get_maximize()):
+		print "Maximized"
+		dam_amount = 6 + dam_bonus
+	elif (mmData.get_empower_count() > 0):
+		print "Empowered"
+		dam_amount = dice.roll()
+		dam_amount += dam_bonus
+		dam_amount_emp = dam_amount/2
+		dam_amount += dam_amount_emp
+	else:
+		dam_amount = dice.roll()
+		dam_amount += dam_bonus
+	
 	print "amount=", dam_amount
 
 	spell.duration = 10 * spell.caster_level
