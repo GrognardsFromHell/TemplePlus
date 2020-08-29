@@ -4,8 +4,7 @@ import tpdp
 from utilities import *
 print "Registering fatigue_exhaust"
 	
-# Note:  Not currently supporting no run or charge for fatigue as per SRD.  This is the same
-# as barbarian fatigue previously worked.
+# Note:  Not current disabling run when fatigued.  Charge will be correctly disabled.
 	
 def FatigueOnAdd(attachee, args, evt_obj):
 	partSys = game.particles("Barbarian Fatigue", attachee )
