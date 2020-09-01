@@ -1897,9 +1897,7 @@ ItemErrorCode InventorySystem::ItemTransferSwap(objHndl owner, objHndl receiver,
 			}
 		}
 	}
-	auto result = itemTransferSwap(owner, receiver, item, itemPrevious, a4, equippedItemSlot, destItemSlotMaybe, flags);
-
-
+	
 	static auto itemTransferSwap = temple::GetRef<ItemErrorCode(__cdecl)(objHndl, objHndl, objHndl, objHndl, int*, int, int, int)>(0x1006AB50);
 	auto result = itemTransferSwap(owner, receiver, item, itemPrevious, a4, equippedItemSlot, destItemSlotMaybe, flags);
 	return result;
