@@ -1308,12 +1308,9 @@ static PyObject* PyGame_GetObjById(PyObject*, PyObject* args) {
 		return 0;
 	}
 	if (!name) {
-		return 0;
+		return PyObjHndl_CreateNull();
 	}
 	auto handle = objSystem->FindObjectByIdStr(format("{}", name));
-	if (!handle) {
-		return 0;
-	}
 	return PyObjHndl_Create(handle);
 }
 
