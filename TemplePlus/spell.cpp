@@ -27,6 +27,7 @@
 #include <tig\tig_tokenizer.h>
 #include "ai.h"
 #include "condition.h"
+#include "dice.h"
 #include "config\config.h"
 
 static_assert(sizeof(SpellStoreData) == (32U), "SpellStoreData structure has the wrong size!");
@@ -2679,6 +2680,34 @@ int LegacySpellSystem::DispelRoll(objHndl obj, BonusList* bonlist, int rollMod, 
 {
 	auto dispelRoll = temple::GetRef<int(__cdecl)(objHndl, BonusList*, int, int, char*, int*)>(0x100B51E0);
 	return dispelRoll(obj, bonlist, rollMod, dispelDC, historyText, rollHistId);
+}
+
+int LegacySpellSystem::RollWithMetamagic(int spellID, int count, int sides, int modifier) const
+{
+	SpellPacketBody spPkt(spellID);
+	MetaMagicData metaMagicData(spPkt.metaMagicData);
+	const bool empowered = metaMagicData.metaMagicEmpowerSpellCount > 0;
+	const bool maximized = metaMagicData.metaMagicFlags & MetaMagicFlags::MetaMagic_Maximize;
+
+	int res = 0;
+	if (maximized && empowered) {
+		//SRD:  An empowered, maximized spell gains the separate benefits of each feat: the maximum result plus one-half the normally rolled result.
+		int empower = Dice::Roll(count, sides, modifier);
+		empower /= 2;
+		res = empower + count * sides + modifier;
+	}
+	else if (empowered) {
+		res = Dice::Roll(count, sides, modifier);
+		res = static_cast<int>(res * 1.5);
+	}
+	else if (maximized) {
+		res = count * sides + modifier;
+	}
+	else {
+		res = Dice::Roll(count, sides, modifier);
+	}
+
+	return res;
 }
 
 void LegacySpellSystem::IdentifySpellCast(int spellId){
