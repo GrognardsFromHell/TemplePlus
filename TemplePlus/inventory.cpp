@@ -1824,11 +1824,23 @@ ItemErrorCode InventorySystem::ItemTransferFromTo(objHndl owner, objHndl receive
 		result = CheckTransferToWieldSlot(item, invSlot, receiver);
 
 		//Fix for Atari bug #81
-		if (invSlot == 211) {  //Shield slot
+		if (invSlot == InvIdxForSlot(EquipSlot::Shield)) {  //Shield slot
 			if (result == IEC_OK || flags & IIF_Allow_Swap) {
 				bool incompatible = IsIncompatibleWithDruid(item, receiver);
 				if (incompatible) {
 					return IEC_Incompatible_With_Druid;
+				}
+			}
+		}
+
+		// Workaround for armor that causes crashes on dwarves
+		if (invSlot == InvIdxForSlot(EquipSlot::Armor)){
+			if (result == IEC_OK || flags & IIF_Allow_Swap) {
+				if (critterSys.GetRace(owner) == Race::race_dwarf) {
+					auto armorMeshId = itemObj->GetInt32(obj_f_base_mesh);
+					if (armorMeshId == 12172) {
+						return IEC_Has_No_Art;
+					}
 				}
 			}
 		}
@@ -1861,6 +1873,23 @@ ItemErrorCode InventorySystem::ItemTransferFromTo(objHndl owner, objHndl receive
 ItemErrorCode InventorySystem::ItemTransferSwap(objHndl owner, objHndl receiver, objHndl item, objHndl itemPrevious,
 	int* a4, int equippedItemSlot, int destItemSlotMaybe, int flags){
 	static auto itemTransferSwap = temple::GetRef<ItemErrorCode(__cdecl)(objHndl, objHndl, objHndl, objHndl, int*, int, int, int)>(0x1006AB50);
+	
+	auto itemObj = objSystem->GetObject(item);
+	auto receiverObj = objSystem->GetObject(receiver);
+	if (!itemObj || !receiverObj) {
+		return IEC_Cannot_Transfer;
+	}
+
+	// Workaround for specific armor model that causes crashes on dwarves
+	if (equippedItemSlot == InvIdxForSlot(EquipSlot::Armor) && receiverObj->IsCritter()) {
+		if (critterSys.GetRace(receiver) == Race::race_dwarf) {
+			
+			auto armorMeshId = itemObj->GetInt32(obj_f_base_mesh);
+			if (armorMeshId == 12172) {
+				return IEC_Has_No_Art;
+			}
+		}
+	}
 	auto result = itemTransferSwap(owner, receiver, item, itemPrevious, a4, equippedItemSlot, destItemSlotMaybe, flags);
 	return result;
 }
