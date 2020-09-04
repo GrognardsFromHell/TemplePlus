@@ -18,7 +18,8 @@
 #include "gameview.h"
 #include "tig/tig_loadingscreen.h"
 #include "maps.h"
-
+#include "tig/tig_msg.h"
+#include "tig/tig_keyboard.h"
 
 struct TownmapWidgets
 {
@@ -146,7 +147,7 @@ void UiTownmap::CenterOnParty(){
 }
 
 class TownmapRenderer {
-	friend class TownmapRenderHook;
+	friend class TownmapHooks;
 public:
 	TownmapRenderer();
 	~TownmapRenderer();
@@ -497,10 +498,28 @@ void TownmapRenderer::Render(TigRect srcRect, TigRect destRect) {
  * Hook for replacing the existing render function.
  */
 
-static class TownmapRenderHook : public TempleFix {
+static class TownmapHooks : public TempleFix {
 public:
 
 	void apply() override {
+
+		// UiTownmapMainWndMsg - irregular behavior on 'ESC' key handling (would cause crash)
+		replaceFunction<BOOL(int, TigMsg&)>(0x1012C2D0, [](int widId, TigMsg& msg)->BOOL {
+			if (msg.type == TigMsgType::KEYSTATECHANGE) {
+				auto &keystt = (TigKeyStateChangeMsg&)msg;
+				if (keystt.key == DIK_ESCAPE && keystt.down == 0) {
+					static auto hideUiTownmap = temple::GetRef<void()>(0x1012BCB0);
+					hideUiTownmap();
+					return TRUE; // fixes crash issue and brings in line with other UI message handlers
+				}	
+			}
+			if (msg.type == TigMsgType::CHAR || msg.type == TigMsgType::MOUSE || msg.type == TigMsgType::WIDGET) {
+				return TRUE;
+			}
+			return FALSE;
+			});
+		
+
 		// ui_render_townmap_ui_0
 		replaceFunction<void(TigRect*, TigRect*)>(0x1002c750, [](TigRect* srcRect, TigRect* dstRct) {
 			                                          static TownmapRenderer sRendererInst;
@@ -513,5 +532,5 @@ public:
 		                                          });
 	}
 
-} hook;
+} townmapHooks;
 
