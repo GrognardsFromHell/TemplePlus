@@ -243,6 +243,25 @@ static PyObject *PySpell_SpellGetMenuArg(PyObject*, PyObject *args) {
 }
 
 
+static PyObject* PySpell_RollDiceWithMetaMagic(PyObject* obj, PyObject* args) {
+	int numDice;
+	int numSides;
+	int modifier;
+
+	if (!PyArg_ParseTuple(args, "iii:pyspell.roll_dice_with_metamagic", &numDice, &numSides, &modifier)) {
+		return 0;
+	}
+
+	//Should move the actual work into py spell
+	auto self = (PySpell*)obj;
+
+	int result = spellSys.RollWithMetamagic(self->spellId, numDice, numSides, modifier);
+
+	return PyInt_FromLong(result);
+}
+
+
+
 static PyObject *PySpell_SpellGetPickerEndPoint(PyObject*, PyObject *args) {
 	
 	auto wallEndPt = uiPicker.GetWallEndPoint();
@@ -353,6 +372,7 @@ static PyMethodDef PySpellMethods[] = {
 	{ "spell_get_picker_end_point", PySpell_SpellGetPickerEndPoint, METH_VARARGS, NULL },
 	{ "is_object_selected", PySpell_IsObjectSelected, METH_VARARGS, NULL },
 	{ "summon_monsters", PySpell_SummonMonsters, METH_VARARGS, NULL },
+	{ "roll_dice_with_metamagic", PySpell_RollDiceWithMetaMagic, METH_VARARGS, NULL },
 	{NULL, NULL, NULL, NULL}
 };
 

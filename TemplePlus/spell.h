@@ -277,6 +277,12 @@ struct LegacySpellSystem : temple::AddressTable
 		does a d20 roll for dispelling, and logs to history (outputting a history ID)
 	*/
 	int DispelRoll(objHndl obj,	BonusList* bonlist, int rollMod, int dispelDC, char* historyText, int* rollHistId);
+
+	/*
+		Does dice roll with metamagic applied (empower & maximize)
+	*/
+	int RollWithMetamagic(int spellID, int count, int sides, int modifier) const;
+
 	/*
 		Does Spellcraft skill checks for the spell being cast and logs to history
 	*/

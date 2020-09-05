@@ -1871,9 +1871,16 @@ ItemErrorCode InventorySystem::ItemTransferFromTo(objHndl owner, objHndl receive
 }
 
 ItemErrorCode InventorySystem::ItemTransferSwap(objHndl owner, objHndl receiver, objHndl item, objHndl itemPrevious,
-	int* a4, int equippedItemSlot, int destItemSlotMaybe, int flags){
-	static auto itemTransferSwap = temple::GetRef<ItemErrorCode(__cdecl)(objHndl, objHndl, objHndl, objHndl, int*, int, int, int)>(0x1006AB50);
-	
+	int* a4, int equippedItemSlot, int destItemSlotMaybe, int flags)
+{	
+	// Atari bug #90 fix
+	if (equippedItemSlot == InvIdxForSlot(EquipSlot::Shield)) {
+		const bool incompatible = IsIncompatibleWithDruid(item, receiver);
+		if (incompatible) {
+			return IEC_Incompatible_With_Druid;
+		}
+	}
+
 	auto itemObj = objSystem->GetObject(item);
 	auto receiverObj = objSystem->GetObject(receiver);
 	if (!itemObj || !receiverObj) {
@@ -1883,13 +1890,15 @@ ItemErrorCode InventorySystem::ItemTransferSwap(objHndl owner, objHndl receiver,
 	// Workaround for specific armor model that causes crashes on dwarves
 	if (equippedItemSlot == InvIdxForSlot(EquipSlot::Armor) && receiverObj->IsCritter()) {
 		if (critterSys.GetRace(receiver) == Race::race_dwarf) {
-			
+
 			auto armorMeshId = itemObj->GetInt32(obj_f_base_mesh);
 			if (armorMeshId == 12172) {
 				return IEC_Has_No_Art;
 			}
 		}
 	}
+	
+	static auto itemTransferSwap = temple::GetRef<ItemErrorCode(__cdecl)(objHndl, objHndl, objHndl, objHndl, int*, int, int, int)>(0x1006AB50);
 	auto result = itemTransferSwap(owner, receiver, item, itemPrevious, a4, equippedItemSlot, destItemSlotMaybe, flags);
 	return result;
 }

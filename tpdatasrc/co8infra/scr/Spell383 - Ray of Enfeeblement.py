@@ -1,4 +1,5 @@
 from toee import *
+import tpdp
 
 def OnBeginSpellCast( spell ):
 	print "Ray of Enfeeblement OnBeginSpellCast"
@@ -19,10 +20,11 @@ def OnBeginProjectile( spell, projectile, index_of_target ):
 
 def OnEndProjectile( spell, projectile, index_of_target ):
 	print "Ray of Enfeeblement OnEndProjectile"
+	
+	dam_bonus = min( 5, spell.caster_level / 2 )
+	dam_amount = spell.roll_dice_with_metamagic(1, 6, dam_bonus)	
 
-	dice = dice_new( '1d6' )
-	dam_amount = dice.roll()
-	dam_amount += min( 5, spell.caster_level / 2 )
+	
 	print "amount=", dam_amount
 
 	spell.duration = 10 * spell.caster_level

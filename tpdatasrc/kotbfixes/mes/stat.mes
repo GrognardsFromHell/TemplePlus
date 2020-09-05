@@ -364,7 +364,7 @@
 
 // Cannot Pick Class Short Help Goes Between 13100-13199
 {13100} Barbarian {Barbarian cannot be selected if alignment is lawful.}
-{13101} Bard {Bard cannot be selected if alignment is lawful.}
+{13101} Bard {Bard cannot be selected if your character's charisma is less than 11 or if their alignment is lawful.}
 {13102} Cleric {Cleric cannot be selected if your character's Wisdom is less than 11.}
 {13103} Druid {Druid cannot be selected if your character's Wisdom is less than 11 or if their alignment is not Neutral.}
 {13104} Fighter {}

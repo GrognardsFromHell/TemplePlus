@@ -71,6 +71,8 @@ public:
 
 	static int IsCritterAfraidQuery(DispatcherCallbackArgs args);
 
+	static int Condition_sp_False_Life_Init(DispatcherCallbackArgs args);
+
 	void apply() override {
 
 		// Magic Circle Taking Damage - didn't check that attacker is not null
@@ -90,6 +92,9 @@ public:
 
 		// Good Hope / Crushing Despair fix for concentration check requirement
 		replaceFunction(0x100CD390, EmotionBeginSpell);
+
+		// False life fails to use maximize and empower
+		replaceFunction(0x100CD6D0, Condition_sp_False_Life_Init);
 
 		// Invisibility Sphere lacking a Dismiss handler
 		{
@@ -945,10 +950,8 @@ int SpellConditionFixes::AidOnAddTempHp(DispatcherCallbackArgs args){
 		return 0;
 	}
 
-	auto tempHpAmt = Dice::Roll(1, 8);
-	if ((int)spellPkt.casterLevel > 0){
-		tempHpAmt += min(10, (int)spellPkt.casterLevel);
-	}
+	const auto bonus = std::min(10, (int)spellPkt.casterLevel);
+	const auto tempHpAmt = spellSys.RollWithMetamagic(spellId, 1, 8, bonus);
 
 	floatSys.FloatSpellLine(args.objHndCaller, 20005, FloatLineColor::White, fmt::format("[{}]", tempHpAmt).c_str(), nullptr); // %d Temp HP Gained
 	logger->debug("_begin_aid(): gained {} temporary hit points", tempHpAmt);
@@ -1279,3 +1282,28 @@ int SpellConditionFixes::IsCritterAfraidQuery(DispatcherCallbackArgs args){
 	*(objHndl*)&(dispIo->data1) = spPkt.caster;
 	return 0;
 }
+
+int SpellConditionFixes::Condition_sp_False_Life_Init(DispatcherCallbackArgs args)
+{
+	const auto spellID = args.GetCondArg(0);
+	SpellPacketBody spPkt(spellID);
+
+	if (!spPkt.spellEnum) {
+		logger->error("Error getting spell packet ID {}", spellID);
+		return 0;
+	}
+
+	const auto bonus = std::min(static_cast<int>(spPkt.casterLevel), 10);
+	const auto rollResult = spellSys.RollWithMetamagic(spellID, 1, 10, bonus);
+	
+	floatSys.FloatSpellLine(args.objHndCaller, 20005, FloatLineColor::White, fmt::format("[{}]", rollResult).c_str(), nullptr);
+	logger->info("Condition_sp_False_Life_Init:  Gainted {} hit points.", rollResult);
+
+	const auto res = conds.AddTo(args.objHndCaller, "Temporary_Hit_Points", { args.GetCondArg(0),  args.GetCondArg(1), rollResult});
+	if (!res) {
+		logger->error("Condition_sp_False_Life_Init:  Unable to add Temporary_Hit_Points condition.", spellID);
+	}
+
+	return 0;
+}
+

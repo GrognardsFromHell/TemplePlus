@@ -1,4 +1,5 @@
 from toee import *
+import tpdp
 
 def OnBeginSpellCast( spell ):
 	print "Ray of Cluminess OnBeginSpellCast"
@@ -21,11 +22,10 @@ def OnEndProjectile( spell, projectile, index_of_target ):
 	print "Ray of Clumsiness OnEndProjectile"
 	target_item = spell.target_list[0]
 
-	dice = dice_new( '1d6' )
-	dam_amount = dice.roll()
-	dam_amount += min(5, spell.caster_level / 2)	
-	if dam_amount >= target_item.obj.stat_level_get(stat_dexterity):
-		dam_amount = target_item.obj.stat_level_get(stat_dexterity) -1 
+	dam_bonus = min( 5, spell.caster_level / 2 )
+	dam_amount = spell.roll_dice_with_metamagic(1, 6, dam_bonus)	
+
+		
 	dam_amount = -dam_amount 
 	print "amount=", dam_amount
 
