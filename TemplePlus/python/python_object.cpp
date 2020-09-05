@@ -1696,7 +1696,14 @@ static PyObject* PyObjHandle_FloatMesFileLine(PyObject* obj, PyObject* args) {
 		PyErr_Format(PyExc_IOError, "Could not find line %d in mes file %s.", mesLineKey, mesFilename);
 		return 0;
 	}
-
+	if (!self->handle) {
+		PyErr_Format(PyExc_IOError, "PyObjHandle_FloatMesFileLine: called with null handle.");
+		return 0;
+	}
+	if (!objSystem->GetObject(self->handle)) {
+		PyErr_Format(PyExc_IOError, "PyObjHandle_FloatMesFileLine: Called with invalid Object.");
+		return 0;
+	}
 	floatSys.floatMesLine(self->handle, 1, colorId, it->second.c_str());
 	Py_RETURN_NONE;
 }
@@ -1708,7 +1715,14 @@ static PyObject* PyObjHandle_FloatTextLine(PyObject* obj, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "O|i:objhndl.float_text_line", &line, &colorId)) {
 		return 0;
 	}
-
+	if (!self->handle) {
+		PyErr_Format(PyExc_IOError, "PyObjHandle_FloatMesFileLine: called with null handle.");
+		return 0;
+	}
+	if (!objSystem->GetObject(self->handle)) {
+		PyErr_Format(PyExc_IOError, "PyObjHandle_FloatMesFileLine: Called with invalid Object.");
+		return 0;
+	}
 	if (line && PyString_Check(line)) {
 		floatSys.floatMesLine(self->handle, 1, colorId, fmt::format("{}", PyString_AsString(line)).c_str());
 	}
