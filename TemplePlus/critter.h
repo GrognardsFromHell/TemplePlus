@@ -248,6 +248,9 @@ struct LegacyCritterSystem : temple::AddressTable
 	*/
 	bool CanSense(objHndl critter, objHndl tgt); 
 
+
+	int GetSize(objHndl handle);
+
 	int GetEffectiveLevel(objHndl& objHnd); // Get Effective Character Level (used for determining XP gain / requirements)
 	int GetLevel(objHndl critter);
 
@@ -256,6 +259,9 @@ struct LegacyCritterSystem : temple::AddressTable
 	Race GetRace(objHndl critter, bool getBaseRace = true);
 
 	Gender GetGender(objHndl critter);
+
+	// gets prototype handle for polymorph (null if not polymorphed)
+	objHndl GetPolymorphedHandle(objHndl handle); 
 
 	std::string GetHairStylePreviewTexture(HairStyle style);
 	std::string GetHairStyleModel(HairStyle style);

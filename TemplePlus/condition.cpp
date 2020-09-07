@@ -1807,7 +1807,7 @@ int __cdecl GlobalToHitBonus(DispatcherCallbackArgs args)
 	}
 
 	// size bonus / penalty
-	int sizeCategory = dispatch.DispatchGetSizeCategory(args.objHndCaller);
+	int sizeCategory = critterSys.GetSize(args.objHndCaller);
 	int sizeCatBonus = critterSys.GetBonusFromSizeCategory(sizeCategory);
 	bonusSys.bonusAddToBonusList(&dispIo->bonlist, sizeCatBonus, 0, 115);
 
@@ -2153,7 +2153,7 @@ int GlobalGetArmorClass(DispatcherCallbackArgs args) // the basic AC value (init
 	}
 
 	// add size bonus / penalty to AC
-	int sizeCat = dispatch.DispatchGetSizeCategory(args.objHndCaller);
+	int sizeCat = critterSys.GetSize(args.objHndCaller);
 	int sizeCatBonus = critterSys.GetBonusFromSizeCategory(sizeCat);
 	bonusSys.bonusAddToBonusList(bonlist, sizeCatBonus, 0, 115); 
 

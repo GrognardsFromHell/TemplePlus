@@ -1289,7 +1289,7 @@ bool LegacyCombatSystem::DisarmCheck(objHndl attacker, objHndl defender, D20Actn
 	if (!defenderWeapon)
 		defenderWeapon = inventory.ItemWornAt(defender, 4);
 	int attackerRoll = templeFuncs.diceRoll(1, 20, 0);
-	int attackerSize = dispatch.DispatchGetSizeCategory(attacker);
+	int attackerSize = critterSys.GetSize(attacker);
 	BonusList atkBonlist;
 	DispIoAttackBonus dispIoAtkBonus;
 	if (feats.HasFeatCountByClass(attacker, FEAT_IMPROVED_DISARM))
@@ -1325,7 +1325,7 @@ bool LegacyCombatSystem::DisarmCheck(objHndl attacker, objHndl defender, D20Actn
 	int attackerResult = attackerRoll + bonusSys.getOverallBonus(&dispIoAtkBonus.bonlist);
 
 	int defenderRoll = templeFuncs.diceRoll(1, 20, 0);
-	int defenderSize = dispatch.DispatchGetSizeCategory(defender);
+	int defenderSize = critterSys.GetSize(defender);
 	BonusList defBonlist;
 	DispIoAttackBonus dispIoDefBonus;
 	bonusSys.bonusAddToBonusList(&dispIoDefBonus.bonlist, (defenderSize - 5) * 4, 0, 316);
@@ -1363,7 +1363,7 @@ bool LegacyCombatSystem::SunderCheck(objHndl attacker, objHndl defender, D20Actn
 	if (!defenderWeapon)
 		defenderWeapon = inventory.ItemWornAt(defender, 4);
 	int attackerRoll = templeFuncs.diceRoll(1, 20, 0);
-	int attackerSize = dispatch.DispatchGetSizeCategory(attacker);
+	int attackerSize = critterSys.GetSize(attacker);
 	BonusList atkBonlist;
 	DispIoAttackBonus dispIoAtkBonus;
 	if (feats.HasFeatCountByClass(attacker, FEAT_IMPROVED_SUNDER))
@@ -1394,7 +1394,7 @@ bool LegacyCombatSystem::SunderCheck(objHndl attacker, objHndl defender, D20Actn
 	int attackerResult = attackerRoll + bonusSys.getOverallBonus(&dispIoAtkBonus.bonlist);
 
 	int defenderRoll = templeFuncs.diceRoll(1, 20, 0);
-	int defenderSize = dispatch.DispatchGetSizeCategory(defender);
+	int defenderSize = critterSys.GetSize(defender);
 	BonusList defBonlist;
 	DispIoAttackBonus dispIoDefBonus;
 	bonusSys.bonusAddToBonusList(&dispIoDefBonus.bonlist, (defenderSize - 5) * 4, 0, 316);
@@ -1893,7 +1893,7 @@ bool LegacyCombatSystem::TripCheck(objHndl handle, objHndl target){
 	auto attackerStrMod = objects.GetModFromStatLevel(attackerStr);
 	attackerBon.AddBonus(attackerStrMod, 0, 103);
 	abilityScoreCheckModDispatch(handle, target, stat_strength, &attackerBon, 1);
-	auto attackerSize = dispatch.DispatchGetSizeCategory(handle);
+	auto attackerSize = critterSys.GetSize(handle);
 	if (attackerSize != 5){
 		attackerBon.AddBonus(4 * (attackerSize - 5), 0, 316);
 	}
@@ -1915,7 +1915,7 @@ bool LegacyCombatSystem::TripCheck(objHndl handle, objHndl target){
 		defenderBon.AddBonus(defenderMod, 0, 103);
 	}
 	abilityScoreCheckModDispatch(target, handle, defenderStat, &defenderBon, 3);
-	auto defenderSize = dispatch.DispatchGetSizeCategory(target);
+	auto defenderSize = critterSys.GetSize(target);
 	if (defenderSize != 5) {
 		defenderBon.AddBonus(4 * (defenderSize - 5), 0, 316);
 	}

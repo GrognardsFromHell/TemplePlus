@@ -2,7 +2,7 @@
 #include "common.h"
 #include "dispatcher.h"
 #include <map>
-
+#include "tig/tig_mes.h"
 
 enum EquipSlot : uint32_t;
 

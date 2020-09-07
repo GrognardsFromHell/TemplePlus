@@ -534,8 +534,6 @@ int Objects::GetHitDiceNum(objHndl handle) {
 }
 
 int Objects::GetSize(objHndl handle) {
-	// This function uses the dispatcher internally and should probably be rewritten
-	//return _GetSize(handle);
 	return dispatch.DispatchGetSizeCategory(handle);
 }
 

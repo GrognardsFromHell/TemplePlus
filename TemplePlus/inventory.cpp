@@ -1339,7 +1339,7 @@ int InventorySystem::GetWieldType(objHndl wielder, objHndl item, bool regardEnla
 	}
 
 	
-	auto wielderSize = dispatch.DispatchGetSizeCategory(wielder);
+	auto wielderSize = critterSys.GetSize(wielder);
 	auto wielderSizeBase = regardEnlargement ? gameSystems->GetObj().GetObject(wielder)->GetInt32(obj_f_size) : wielderSize;
 	auto itemSize = itemObj->GetInt32(obj_f_size);
 

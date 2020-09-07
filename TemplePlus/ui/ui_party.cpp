@@ -10,7 +10,9 @@
 #include "ui_render.h"
 #include <tig/tig_msg.h>
 #include <gamesystems/d20/d20_help.h>
-UiParty uiParty;
+LegacyUiParty uiParty;
+
+// TODO: merge this with UiParty
 
 class UiPartyHooks : public TempleFix {
 public:
@@ -57,7 +59,7 @@ public:
 	}
 } uiPartyHooks;
 
-int UiParty::IndicatorGetHelpHash(BuffDebuffPacket & bdb, int effectType, int iconIdx){
+int LegacyUiParty::IndicatorGetHelpHash(BuffDebuffPacket & bdb, int effectType, int iconIdx){
 	auto effectId = -1, spellEnum = -1;
 	switch (effectType)
 	{
@@ -88,7 +90,7 @@ int UiParty::IndicatorGetHelpHash(BuffDebuffPacket & bdb, int effectType, int ic
 	return ElfHash::Hash(spellSys.GetSpellEnumTAG((uint32_t)spellEnum));
 }
 
-int UiParty::IndicatorGetTextureId(BuffDebuffPacket & bdb, int effectType, int iconIdx){
+int LegacyUiParty::IndicatorGetTextureId(BuffDebuffPacket & bdb, int effectType, int iconIdx){
 	auto effectId = -1;
 	switch (effectType)
 	{
@@ -112,7 +114,7 @@ int UiParty::IndicatorGetTextureId(BuffDebuffPacket & bdb, int effectType, int i
 	return findSpec->second.textureId;
 }
 
-int UiParty::IndicatorGetCount(BuffDebuffPacket & bdb, int effectType)
+int LegacyUiParty::IndicatorGetCount(BuffDebuffPacket & bdb, int effectType)
 {
 	switch (effectType){
 	case IT_BUFF:
@@ -126,11 +128,11 @@ int UiParty::IndicatorGetCount(BuffDebuffPacket & bdb, int effectType)
 	}
 }
 
-void UiParty::IndicatorFindWidId(int widId, PartyPortraitPacket **porPkt, int * effectType, int * iconIdx){
+void LegacyUiParty::IndicatorFindWidId(int widId, PartyPortraitPacket **porPkt, int * effectType, int * iconIdx){
 	temple::GetRef<void(__cdecl)(int, PartyPortraitPacket **, int*, int*)>(0x10131CD0)(widId, porPkt, effectType, iconIdx);
 }
 
-void UiParty::IndicatorRender(int widId){
+void LegacyUiParty::IndicatorRender(int widId){
 
 	if (!PortraitRenderEnabled())
 		return;
@@ -153,7 +155,7 @@ void UiParty::IndicatorRender(int widId){
 	}
 }
 
-BOOL UiParty::IndicatorMsg(int widId, TigMsg * msg){
+BOOL LegacyUiParty::IndicatorMsg(int widId, TigMsg * msg){
 
 	if (msg->type != TigMsgType::WIDGET)
 		return FALSE;
@@ -177,7 +179,7 @@ BOOL UiParty::IndicatorMsg(int widId, TigMsg * msg){
 	return TRUE;
 }
 
-void UiParty::IndicatorTextGet(BuffDebuffPacket & bdb, int effectType, int iconIdx, char * text){
+void LegacyUiParty::IndicatorTextGet(BuffDebuffPacket & bdb, int effectType, int iconIdx, char * text){
 	auto effectId = -1, spellEnum = -1;
 	const char *extraText = nullptr;
 	switch (effectType)
@@ -240,15 +242,15 @@ void UiParty::IndicatorTextGet(BuffDebuffPacket & bdb, int effectType, int iconI
 	sprintf(text, "%s %s", baseText.c_str(), extraText);
 }
 
-IndicatorSpec & UiParty::IndicatorSpecGet(int effectId){
+IndicatorSpec & LegacyUiParty::IndicatorSpecGet(int effectId){
 	return buffDebuffSpecs[effectId];
 }
 
-BOOL UiParty::PortraitRenderEnabled(){
+BOOL LegacyUiParty::PortraitRenderEnabled(){
 	return temple::GetRef<int>(0x10BE33E4) == 0;
 }
 
-void UiParty::InitIndicatorSpecs(){
+void LegacyUiParty::InitIndicatorSpecs(){
 
 	struct VanillaIndicatorDictEntry{
 		const char *filename;
@@ -299,7 +301,7 @@ void UiParty::InitIndicatorSpecs(){
 	mesFuncs.Open("mes\\indicator.mes", &temple::GetRef<MesHandle>(0x10BD24C8));
 }
 
-void UiParty::GetNewIndicatorSpecs()
+void LegacyUiParty::GetNewIndicatorSpecs()
 {
 	TioFileList flist;
 	tio_filelist_create(&flist, "rules\\indicators\\*.txt");

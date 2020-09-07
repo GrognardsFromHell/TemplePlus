@@ -4,7 +4,7 @@
 #include "skill.h"
 
 #define DISPATCHER_MAX  250 // max num of simultaneous Dispatches going on (static int counter inside _DispatcherProcessor)
-#include "spell.h"
+#include "spell_structs.h"
 
 struct CondStructNew;
 struct BuffDebuffPacket;
@@ -34,7 +34,7 @@ struct D20Actn;
 struct DamagePacket;
 
 struct SpellEntry;
-
+struct SpellPacketBody;
 
 struct TurnBasedStatus;
 struct BonusList;

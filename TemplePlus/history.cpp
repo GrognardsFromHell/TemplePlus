@@ -9,6 +9,7 @@
 #include "description.h"
 #include "combat.h"
 #include <string.h>
+#include "spell.h"
 
 #define HISTORY_ARRAY_SIZE 150
 
