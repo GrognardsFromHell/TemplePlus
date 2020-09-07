@@ -141,7 +141,7 @@ void D20StatusSystem::D20StatusInit(objHndl objHnd)
 
 	initItemConditions(objHnd);
 
-	d20StatusSys.D20StatusInitFromInternalFields(objHnd, dispatcher);
+	d20StatusSys.D20StatusInitFromInternalFields(objHnd, dispatcher); // triggers Dispatch for dispTypeConditionAddFromD20StatusInit
 
 	d20ObjRegistrySys.Append(objHnd);
 
@@ -277,7 +277,8 @@ void D20StatusSystem::initItemConditions(objHndl objHnd)
 
 	if (obj->IsCritter()) {
 		objects.dispatch.DispatcherClearItemConds(dispatcher);
-		if (!d20Sys.d20Query(objHnd, DK_QUE_Polymorphed))
+		auto polyProto = d20Sys.d20Query(objHnd, DK_QUE_Polymorphed);
+		if (!polyProto)
 		{
 			uint32_t invenCount = obj->GetInt32(obj_f_critter_inventory_num);
 			for (uint32_t i = 0; i < invenCount; i++)
@@ -289,6 +290,32 @@ void D20StatusSystem::initItemConditions(objHndl objHnd)
 					//inventory.sub_100FF500(dispatcher, objHndItem, itemInvLocation);
 					InitFromItemConditionFields(dispatcher, objHndItem, itemInvLocation); // sets args[2] equal to the itemInvLocation
 				}
+			}
+		}
+		else {
+			// New! Adds monster conditions (as parsed from protos.tab and stored in the protos objects) instead of item conditions
+			auto protoHandle = objects.GetProtoHandle(polyProto);
+			if (protoHandle) {
+				auto protoObj = objSystem->GetObject(protoHandle);
+				if (!protoObj) return;
+
+				
+				auto condArray = protoObj->GetInt32Array(obj_f_conditions);
+				auto condArgArray = protoObj->GetInt32Array(obj_f_condition_arg0);
+				auto argIdx = 0u;
+
+				for (auto i = 0u; i < condArray.GetSize(); ++i) {
+					int condArgs[64] = { 0, };
+					auto monsterCondId = condArray[i]; //conds.GetByName("Tripping Bite");
+					auto monsterCond = conds.GetById(monsterCondId); // this should be assured due to check in proto parser for valid conds (protos.cpp)
+					if (!monsterCond) continue;
+					for (auto j = 0; j < monsterCond->numArgs; ++j) {
+						condArgs[j] = condArgArray[argIdx++];
+					}
+
+					conds.InitItemCondFromCondStructAndArgs(dispatcher, monsterCond, condArgs);
+				}
+				
 			}
 		}
 
