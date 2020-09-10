@@ -1,0 +1,20 @@
+School: Conjuration
+Subschool: Creation
+Level: Brd 1
+Level: Sor 1
+Level: Wiz 1
+Component: V
+Component: S
+Casting Time: 1 action
+Range: Close
+Saving Throw: Reflex
+Spell Resistance: No
+Projectile: No
+flags_Target: Range
+inc_flags_Target: Self
+inc_flags_Target: Other
+exc_flags_Target: Dead
+exc_flags_Target: Non-critter
+mode_Target: Area
+radius_Target: 5
+ai_type: ai_action_offensive

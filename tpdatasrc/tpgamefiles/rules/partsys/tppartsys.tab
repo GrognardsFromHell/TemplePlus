@@ -39,3 +39,9 @@ sp-Waves of Fatigue	sparkleness			15	300		Object YPR				Sprite	Same as Emitter	P
 sp-Waves of Fatigue	New Emitter			15	100		Object YPR				Sprite	Same as Emitter	Polar		flare-2	20	Add	0				0	0	0	0	0	0	0	60	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	-30?30	0	0?360	10?30	0	0	0	0	0	128,255	64	0?128	255						30
 sp-Waves of Exhaustion	sparkleness			15	300		Object YPR				Sprite	Same as Emitter	Polar		flare-1	20	Add	0				0	0	0	0	0	0	0	60	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	-30?30	0	0?720	2?6	0	0	0	0	0	128,255	64	0?128	255						30
 sp-Waves of Exhaustion	New Emitter			15	100		Object YPR				Sprite	Same as Emitter	Polar		flare-2	20	Add	0				0	0	0	0	0	0	0	60	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	-30?30	0	0?720	10?30	0	0	0	0	0	128,255	64	0?128	255						30
+sp-Small-Grease	greaseness			perm	30						Disc		Polar		bigcircle	90	Blend	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360	0	20?60	0,10,0	0	0	0	0	0	255,0	32	0	0						10
+sp-Small-Grease	New Emitter			perm	30						Disc		Polar		bigcircle	90	Blend	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360	0	20?60	0,20	0	0	0	0	0	255,0	16	0	0						10
+sp-Small-Grease	strike			15	100						Disc		Polar		bigcircle	90	Blend	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360	0	20?60	0,40	0	0	0	0	0	255,0	0	0	0						10
+sp-Small-Grease	black everyonce			perm	10						Disc		Polar		bigcircle	90	Blend	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360	0	20?60	0,40	0	0	0	0	0	255,0	0	0	0						2
+sp-Small-Grease	round the way grease			perm	30						Disc		Polar		bigcircle	90	Blend	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360	0	60	0,10,0	0	0	0	0	0	255,0	32	0	0						10
+
