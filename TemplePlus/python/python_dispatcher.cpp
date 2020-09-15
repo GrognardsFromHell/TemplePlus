@@ -166,6 +166,9 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		else if ("disablechooserandomspell_regardinvulnerablestatus") {
 			config.disableChooseRandomSpell_RegardInvulnerableStatus = value;
 		}
+		else if ("stricterrulesenforcement") {
+			config.stricterRulesEnforcement = value;
+		}
 		else {
 			logger->warn("Can't set config item {}.", configItem);
 		}
@@ -184,6 +187,9 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		}
 		else if (configItemLower == "disablechooserandomspell_regardinvulnerablestatus") {
 			return config.disableChooseRandomSpell_RegardInvulnerableStatus;
+		}
+		else if (configItemLower == "stricterrulesenforcement") {
+			return config.stricterRulesEnforcement;
 		}
 		logger->warn("Can't get config item {}.", configItem);
 		return false;

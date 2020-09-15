@@ -1925,6 +1925,13 @@ BOOL LegacySpellSystem::SpellEntriesInit(const char * spellRulesFolder){
 
 		tio_fclose(spellFile);
 
+		//Apply a patch for the grease radius for strict rules
+		if (config.stricterRulesEnforcement) {
+			if (spEntry.spellEnum == 200) {
+				spEntry.radiusTarget = 5;
+			}
+		}
+
 		spellEntryRegistry.put(spEntry.spellEnum, spEntry);
 
 	}

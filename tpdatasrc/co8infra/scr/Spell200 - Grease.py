@@ -1,5 +1,6 @@
 from toee import *
 import _include
+import tpdp
 from co8Util import size
 from co8Util.PersistentData import *
 from co8Util.ObjHandling import *
@@ -27,7 +28,10 @@ def	OnSpellEffect( spell ):
 	spell_obj.set_initiative( caster_init_value )
 
 	# put sp-Grease condition on obj
-	spell_obj_partsys_id = game.particles( 'sp-Small-Grease', spell_obj )
+	if tpdp.config_get_bool("StricterRulesEnforcement"):
+		spell_obj_partsys_id = game.particles( 'sp-Small-Grease', spell_obj )
+	else:
+		spell_obj_partsys_id = game.particles( 'sp-Grease', spell_obj )
 	spell_obj.condition_add_with_args( 'sp-Grease', spell.id, spell.duration, 0, spell_obj_partsys_id )
 	#spell_obj.condition_add_arg_x( 3, spell_obj_partsys_id )
 	#objectevent_id = spell_obj.condition_get_arg_x( 2 )

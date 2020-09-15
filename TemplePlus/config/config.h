@@ -86,6 +86,7 @@ struct TemplePlusConfig
 	bool allowXpOverflow = false;
 	bool slowerLevelling = false;
 	bool laxRules = false; // Relaxed restrictions for various things; this also acts as a master switch
+	bool stricterRulesEnforcement = false; //Stricter rules enforcement for things such as the size of the grease spell
 	bool disableMulticlassXpPenalty = false;
 	bool disableCraftingSpellReqs = false;
 	bool showTargetingCirclesInFogOfWar = false;
