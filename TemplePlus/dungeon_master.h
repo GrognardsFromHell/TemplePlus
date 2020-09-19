@@ -14,6 +14,9 @@ class DungeonMaster
 
 
 public:
+
+	DungeonMaster();
+
 	bool IsActive();
 	bool IsMinimized();
 	bool IsMoused();
@@ -51,16 +54,24 @@ public:
 	void TransitionToMap(int mapId);
 	objHndl GetTgtObj() { return mTgtObj;  }
 	
-
-	struct Record{
+	
+	struct Record {
 		int protoId;
 		std::string name;
+		std::string lowerName; // lower case name
+	};
+
+	struct CritterRecord: Record {
 		Race race;
 		MonsterCategory monsterCat;
 		MonsterSubcategoryFlag monsterSubtypes;
 		std::vector<int> factions;
 		int hitDice;
 		std::map<Stat, int> classLevels;
+	};
+
+	struct ItemRecord : Record {
+		int itemType;
 	};
 
 
@@ -73,7 +84,7 @@ public:
 	};
 
 
-	struct ObjEditor : Record{
+	struct ObjEditor : CritterRecord{
 		std::vector<int> stats;
 		std::vector<SpellStoreData> spellsKnown;
 		std::vector<SpellStoreData> spellsMemorized;
@@ -95,17 +106,26 @@ protected:
 
 	int mForceRollType; // 0 - normal, 1 - rolls 1s, 2 - roll avg (e.g. 10s), 3 - avg+2, 4 - rolls 20s
 
-	void RenderMonster(Record& record);
+	void RenderMonster(CritterRecord& record);
 	void RenderMonsterFilter();
 	void RenderMonsterModify();
 	void ApplyMonsterModify(objHndl handle);
 
-	bool FilterResult(Record& record);
-	std::map<int, Record > humanoids;
+	bool FilterResult(CritterRecord& record);
+
+	void RenderItem(ItemRecord& record); // Give item menu
+	void RenderItemFilter();
+
+	bool FilterItemResult(ItemRecord& record);
+	std::array<char, 256> mItemNameFilterBuf;
+	std::string mItemNameFilter = "";
+
+	
+	std::map<int, CritterRecord > humanoids;
 	bool mIsInited = false;
 
-	std::map<int, Record > monsters;
-	std::map<int, Record > weapons;
+	std::map<int, CritterRecord > monsters;
+	std::map<int, ItemRecord > items;
 
 	// Import from save internals
 	bool PseudoLoad(std::string filename);
@@ -131,6 +151,9 @@ protected:
 	int mSubcategoryFilter = 0;
 	int mActionTimeStamp = 0;
 	int mFactionFilter = 0;
+
+	// Item Filter
+	int mItemProtoFilter = 0;
 
 	objHndl mTgtObj = objHndl::null; // object under cursor
 	objHndl mEditedObj = objHndl::null; // object being edited
