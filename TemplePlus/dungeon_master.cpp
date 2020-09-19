@@ -1190,6 +1190,8 @@ void DungeonMaster::RenderEditedObj() {
 			auto condTmp = dispatcher->conditions;
 			if (fieldType == obj_f_permanent_mods)
 				condTmp = dispatcher->permanentMods;
+			else if (fieldType == obj_f_item_pad_wielder_condition_array)
+				condTmp = dispatcher->itemConds;
 
 			for (; condTmp; condTmp = condTmp->nextCondNode) {
 				if (condTmp->IsExpired())
@@ -1215,6 +1217,7 @@ void DungeonMaster::RenderEditedObj() {
 		auto dispatcher = obj->GetDispatcher();
 		displayCondUi(mEditedObj, dispatcher, obj_f_conditions);
 		displayCondUi(mEditedObj, dispatcher, obj_f_permanent_mods);
+		displayCondUi(mEditedObj, dispatcher, obj_f_item_pad_wielder_condition_array);
 		
 		ImGui::TreePop();
 	}
