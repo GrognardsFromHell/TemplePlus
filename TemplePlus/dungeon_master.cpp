@@ -75,7 +75,7 @@ static std::vector<CondStruct*> condStructs;
 static int mMonModFactionNew;
 static bool mMonModFactionIsOverride = false;
 
-const char* itemTypes[] = { "All", "Weapon" , "Ammo", "Armor & Wear", "Potion", "Scroll", "Wand", "Magical Item", "Other" };
+const char* itemTypes[] = { "All", "Weapon" , "Ammo", "Armor & Wearables", "Potion", "Scroll", "Wand", "Magical Item", "Other" };
 enum class DmItemType: int {
 Weapon= 0,
 Ammo,
@@ -761,9 +761,7 @@ void DungeonMaster::RenderItem(ItemRecord& record)
 
 	if (ImGui::TreeNode(fmt::format("{} | {}", record.protoId, record.name.c_str()).c_str())) {
 		auto protHndl = objSystem->GetProtoHandle(record.protoId);
-		if (ImGui::Button("Spawn")) {
-			ActivateSpawn(record.protoId);
-		}
+		
 		if (ImGui::Button("Give")) {
 			auto leader = party.GetConsciousPartyLeader();
 			auto loc = objects.GetLocation(leader);
@@ -778,6 +776,11 @@ void DungeonMaster::RenderItem(ItemRecord& record)
 					obj->SetItemFlag(OIF_IDENTIFIED, 1);
 				}
 			}
+		}
+		
+		ImGui::SameLine();
+		if (ImGui::Button("Spawn")) {
+			ActivateSpawn(record.protoId);
 		}
 
 		// auto obj = objSystem->GetObject(protHndl);

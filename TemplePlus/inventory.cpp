@@ -288,7 +288,7 @@ bool InventorySystem::ItemAccessibleDuringPolymorph(objHndl item)
 			if (armorType != ARMOR_TYPE_SHIELD)
 				return false;
 		}
-		if ( (wearFlags & (OIF_WEAR_NECKLACE | OIF_WEAR_RING | OIF_WEAR_CLOAK | OIF_WEAR_BRACERS) ) ) {
+		if ( (wearFlags & (OIF_WEAR_NECKLACE | OIF_WEAR_RING | OIF_WEAR_CLOAK | OIF_WEAR_HELMET | OIF_WEAR_BRACERS) ) ) {
 			return true;
 		}
 	}
