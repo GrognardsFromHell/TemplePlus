@@ -63,7 +63,12 @@ namespace TemplePlusConfig
         public string ModuleName
         {
             get { return (string)GetValue(ModuleNameProperty); }
-            set { SetValue(ModuleNameProperty, value); }
+            set { 
+                if (value != null && value.Length > 0)
+                    SetValue(ModuleNameProperty, value); 
+                else
+                    SetValue(ModuleNameProperty, "ToEE");
+            }
         }
 
         public List<string> ModuleNames {
@@ -76,16 +81,19 @@ namespace TemplePlusConfig
         {
             InstallationPathStatus = InstallationDirValidator.Validate(InstallationPath);
             ModuleSelectComboBox.ItemsSource = InstallationPathStatus.ModuleNames;
-            ModuleSelectComboBox.SelectedIndex = 0;
+            
             if (InstallationPathStatus.ModuleNames != null && InstallationPathStatus.ModuleNames.Count > 1)
             {
                 ModuleNameLabel.Visibility = Visibility.Visible;
                 ModuleSelectComboBox.Visibility = Visibility.Visible;
+                if (ModuleSelectComboBox.SelectedIndex < 0)
+                    ModuleSelectComboBox.SelectedIndex = 0;
             }
             else
             {
                 ModuleNameLabel.Visibility = Visibility.Collapsed;
                 ModuleSelectComboBox.Visibility = Visibility.Collapsed;
+                ModuleName = "ToEE";
             }
 
             if (InstallationPathStatus.Valid)

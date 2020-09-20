@@ -32,7 +32,7 @@
             <Label x:Name="InstallationDirStatus" Margin="5,0,0,0" Width="250" HorizontalAlignment="Left"
                    Content="{Binding InstallationPathStatus.Status, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:InstallationDir}}}" />
             <Label HorizontalAlignment="Left" Margin="5,0,0,0" Visibility="Collapsed" Name="ModuleNameLabel">Module:</Label>
-            <ComboBox VerticalAlignment="Center" SelectedItem="{Binding ModuleName}" ItemsSource="{Binding InstallationPathStatus.ModuleNames}"  
+            <ComboBox VerticalAlignment="Center" SelectedValue="{Binding ModuleName}" ItemsSource="{Binding InstallationPathStatus.ModuleNames}"  
                       Name="ModuleSelectComboBox"
                       ToolTip="Select Module"/>
         </DockPanel>
