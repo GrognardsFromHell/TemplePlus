@@ -60,6 +60,16 @@ public:
 		});
 		
 		replaceFunction(0x1004D360, Dispatch54AoE);
+
+		replaceFunction<BOOL(__cdecl)(objHndl,enum_disp_type, D20DispatcherKey, DispIO*)>(0x1004CDB0, [](objHndl item, enum_disp_type dispType, D20DispatcherKey dispKey, DispIO* evtObj) {
+			dispatch.DispatchForItem(item, dispType, dispKey, evtObj);
+			return 0;
+		});
+		
+		replaceFunction<BOOL(__cdecl)(objHndl, D20DispatcherKey)>(0x1004CEB0, [](objHndl item, D20DispatcherKey dispKey) {
+			return dispatch.DispatchItemQuery(item, dispKey);
+		});
+			
 	}
 } dispatcherReplacements;
 
@@ -941,6 +951,7 @@ int DispatcherSystem::DispatchGetBonus(objHndl critter, DispIoBonusList* eventOb
 
 }
 
+/*  0x1004CEB0 */
 int DispatcherSystem::DispatchItemQuery(objHndl item, D20DispatcherKey key)
 {
 	DispIoD20Query evtObj;

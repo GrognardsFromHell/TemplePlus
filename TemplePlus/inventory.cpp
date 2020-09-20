@@ -16,6 +16,7 @@
 #include "animgoals/anim.h"
 #include "gamesystems/objects/objevent.h"
 #include "ui/ui_logbook.h"
+#include <config\config.h>
 
 
 InventorySystem inventory;
@@ -268,12 +269,53 @@ bool InventorySystem::IsIncompatibleWithDruid(objHndl item, objHndl critter)
 	return result;
 }
 
+bool InventorySystem::ItemAccessibleDuringPolymorph(objHndl item)
+{
+	if (!config.wildShapeUsableItems)
+		return false;
+
+	auto itemObj = objSystem->GetObject(item);
+	if (!itemObj) return false;
+	
+	auto objType = itemObj->type;
+	if (objType == obj_t_weapon)
+		return false;
+	auto wearFlags = itemObj->GetInt32(obj_f_item_wear_flags);
+	if (objType == obj_t_armor) {
+		if (wearFlags & OIF_WEAR_ARMOR) {
+			auto armorFlags = itemObj->GetInt32(obj_f_armor_flags);
+			auto armorType = GetArmorType(armorFlags);
+			if (armorType != ARMOR_TYPE_SHIELD)
+				return false;
+		}
+		if ( (wearFlags & (OIF_WEAR_NECKLACE | OIF_WEAR_RING | OIF_WEAR_CLOAK | OIF_WEAR_BRACERS) ) ) {
+			return true;
+		}
+	}
+	if (objType == obj_t_food) {
+		return true;
+	}
+	if (objType == obj_t_generic) {
+		if (wearFlags & OIF_USES_WAND_ANIM)
+			return false;
+		return true;
+	}
+
+	return false;
+}
+
 objHndl InventorySystem::GetItemAtInvIdx(objHndl handle, uint32_t nIdx){
 	auto invenField = obj_f_begin;  
 	auto invenNumField = obj_f_begin;  inventory.GetInventoryNumField(handle);
+	auto regardPolymorph = false; // New! House Rules option to allow polymorphed to benefit from items
 	if (objects.IsCritter(handle)){
-		if (d20Sys.d20Query(handle, DK_QUE_Polymorphed))
-			return objHndl::null;
+		if (d20Sys.d20Query(handle, DK_QUE_Polymorphed)) {
+			if (!config.wildShapeUsableItems) {
+				return objHndl::null;
+			}
+			regardPolymorph = true;
+		}
+			
 		invenField = inventory.GetInventoryListField(handle);
 		invenNumField = inventory.GetInventoryNumField(handle);
 	}
@@ -284,6 +326,7 @@ objHndl InventorySystem::GetItemAtInvIdx(objHndl handle, uint32_t nIdx){
 	auto obj = objSystem->GetObject(handle);
 	auto numItems = obj->GetInt32(invenNumField);
 			
+	auto result = objHndl::null;
 	for (auto i=0; i < numItems; i++){
 		auto item = obj->GetObjHndl(invenField, i);
 		if (!item) {
@@ -293,10 +336,19 @@ objHndl InventorySystem::GetItemAtInvIdx(objHndl handle, uint32_t nIdx){
 			auto itemName = objects.getInt32(item, obj_f_name);
 			logger->debug("obj {} name {} contains object {} name {}", handle, obj->GetInt32(obj_f_name), item, itemName);
 		}
-		if (inventory.GetInventoryLocation(item) == nIdx)
-			return item;
+		if (inventory.GetInventoryLocation(item) == nIdx) {
+			result = item;
+			break;
+		}
 	}
-	return objHndl::null;
+
+	if (regardPolymorph && result != objHndl::null) {
+		if (!inventory.ItemAccessibleDuringPolymorph(result))
+			return objHndl::null;
+		
+	}
+
+	return result;
 }
 
 objHndl InventorySystem::FindMatchingStackableItem(objHndl receiver, objHndl item){
@@ -371,6 +423,27 @@ void InventorySystem::WieldBest(objHndl handle, int invSlot, objHndl target){
 	auto existingItem = GetItemAtInvIdx(handle, invSlot);
 
 	temple::GetRef<void(__cdecl)(objHndl, int, objHndl)>(0x1006CCC0)(handle, invSlot, target);
+}
+
+/* Originally 0x100FEFA0 */
+bool InventorySystem::IsItemEffectingConditions(objHndl objHndItem, uint32_t itemInvLocation)
+{
+	auto itemObj = objSystem->GetObject(objHndItem);
+	if (!itemObj) return FALSE;
+	auto itemWearFlags = itemObj->GetInt32(obj_f_item_wear_flags);
+
+	
+	if (itemWearFlags || itemObj->type == obj_t_weapon) {
+		return IsInvIdxWorn(itemInvLocation);
+	}
+	if (itemObj->type == obj_t_armor) {
+		auto armorFlags = itemObj->GetInt32(obj_f_armor_flags);
+		if (GetArmorType(armorFlags) == ArmorType::ARMOR_TYPE_SHIELD)
+			return IsInvIdxWorn(itemInvLocation);
+		// Apparently it relies on worn armors having wear flags? a bit weird...
+	}
+	
+	return true;
 }
 
 int InventorySystem::GetItemWieldCondArg(objHndl item, uint32_t condId, int argOffset)

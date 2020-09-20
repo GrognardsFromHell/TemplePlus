@@ -8,6 +8,7 @@
 #include "gamesystems/objects/objsystem.h"
 #include <gamesystems/gamesystems.h>
 #include "d20_race.h"
+#include <config\config.h>
 
 
 D20StatusSystem d20StatusSys;
@@ -278,7 +279,9 @@ void D20StatusSystem::initItemConditions(objHndl objHnd)
 	if (obj->IsCritter()) {
 		objects.dispatch.DispatcherClearItemConds(dispatcher);
 		auto polyProto = d20Sys.d20Query(objHnd, DK_QUE_Polymorphed);
-		if (!polyProto)
+		auto itemsAreUsable = config.wildShapeUsableItems; // there are also feats that preserve your armor/shield bonuses, todo...
+		
+		if (!polyProto || itemsAreUsable)
 		{
 			uint32_t invenCount = obj->GetInt32(obj_f_critter_inventory_num);
 			for (uint32_t i = 0; i < invenCount; i++)
@@ -286,14 +289,21 @@ void D20StatusSystem::initItemConditions(objHndl objHnd)
 				objHndl objHndItem = obj->GetObjHndl(obj_f_critter_inventory_list_idx, i);
 				auto item = objSystem->GetObject(objHndItem);
 				uint32_t itemInvLocation = item->GetInt32(obj_f_item_inv_location);
-				if (inventory.IsItemEffectingConditions(objHndItem, itemInvLocation)) {
-					//inventory.sub_100FF500(dispatcher, objHndItem, itemInvLocation);
+				auto isInEffect = inventory.IsItemEffectingConditions(objHndItem, itemInvLocation);
+				if (isInEffect && polyProto && itemsAreUsable) {
+					isInEffect = false;
+					if (inventory.ItemAccessibleDuringPolymorph(objHndItem))
+						isInEffect = true;
+					// Todo Wild Armor/Shield
+				}
+				if (isInEffect) {
 					InitFromItemConditionFields(dispatcher, objHndItem, itemInvLocation); // sets args[2] equal to the itemInvLocation
 				}
 			}
 		}
-		else {
-			// New! Adds monster conditions (as parsed from protos.tab and stored in the protos objects) instead of item conditions
+		
+		if (polyProto){
+			// New! Adds monster conditions (as parsed from protos.tab and stored in the protos objects)
 			auto protoHandle = objects.GetProtoHandle(polyProto);
 			if (protoHandle) {
 				auto protoObj = objSystem->GetObject(protoHandle);
@@ -322,6 +332,7 @@ void D20StatusSystem::initItemConditions(objHndl objHnd)
 	}
 }
 
+/* 0x100FF500*/
 void D20StatusSystem::InitFromItemConditionFields(Dispatcher * dispatcher, objHndl item, int invIdx){
 
 	auto itemObj = gameSystems->GetObj().GetObject(item);

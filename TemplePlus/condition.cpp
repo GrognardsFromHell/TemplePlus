@@ -5059,6 +5059,12 @@ int ItemCallbacks::UseableItemRadialEntry(DispatcherCallbackArgs args){
 	auto objType = itemObj->type;
 	int useMagicDeviceSkillBase = critterSys.SkillBaseGet(args.objHndCaller, skill_use_magic_device);
 
+	// Added to allow polymorphers to enjoy their inventory when using the House Rules option
+	if (d20Sys.d20Query(args.objHndCaller, DK_QUE_Polymorphed)) {
+		if (objType != obj_t_food)
+			return 0;
+	}
+
 	if (objType != obj_t_food && !inventory.IsIdentified(itemHandle))
 		return 0;
 	
