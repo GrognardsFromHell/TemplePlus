@@ -12,6 +12,7 @@
 #include "gamesystem.h"
 #include "util/savegame.h"
 #include <tig/tig_texture.h>
+#include <config\config.h>
 
 struct GsiData {
 	string filename;
@@ -59,7 +60,7 @@ static GsiData GatherGsiData(const string &filename, const string &displayName) 
 	GsiData result;
 	result.filename = filename;
 	result.displayName = displayName;
-	result.moduleName = "ToEE";
+	result.moduleName = config.defaultModule; //"ToEE";
 	
 	auto leader = party.GetLeader();
 	result.leaderName = objects.GetDisplayName(leader, leader);
