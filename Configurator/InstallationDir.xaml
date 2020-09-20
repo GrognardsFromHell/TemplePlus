@@ -6,7 +6,7 @@
       xmlns:local="clr-namespace:TemplePlusConfig"
       xmlns:fa="http://schemas.fontawesome.io/icons/"
       mc:Ignorable="d"
-      d:DesignHeight="180" d:DesignWidth="300">
+      d:DesignHeight="180" d:DesignWidth="694">
 
     <StackPanel>
         <TextBlock TextWrapping="Wrap" Margin="0,0,0,10">
@@ -29,8 +29,13 @@
                              Visibility="Collapsed" />
             <fa:ImageAwesome Icon="Exclamation" Foreground="Red" Width="16" Height="16" x:Name="NotOkIcon"
                              Visibility="Collapsed" />
-            <Label x:Name="InstallationDirStatus" Margin="5,0,0,0"
+            <Label x:Name="InstallationDirStatus" Margin="5,0,0,0" Width="250" HorizontalAlignment="Left"
                    Content="{Binding InstallationPathStatus.Status, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:InstallationDir}}}" />
+            <Label HorizontalAlignment="Left" Margin="5,0,0,0" Visibility="Collapsed" Name="ModuleNameLabel">Module:</Label>
+            <ComboBox VerticalAlignment="Center" SelectedItem="{Binding ModuleName}" ItemsSource="{Binding InstallationPathStatus.ModuleNames}"  
+                      Name="ModuleSelectComboBox"
+                      ToolTip="Select Module"/>
         </DockPanel>
+        
     </StackPanel>
 </UserControl>

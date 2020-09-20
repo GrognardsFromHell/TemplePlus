@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Collections.Generic;
 
 namespace TemplePlusConfig
 {
@@ -63,7 +64,16 @@ namespace TemplePlusConfig
                 }
             }
 
-            return new InstallationDirStatus {Valid = true, Status = dllVersion.Description, IsCo8 = dllVersion.Co8};
+            var result = new InstallationDirStatus { Valid = true, Status = dllVersion.Description, IsCo8 = dllVersion.Co8, ModuleNames = new List<string>() };
+            DirectoryInfo di = new DirectoryInfo(Path.Combine(path, "modules"));
+            FileInfo[] rgFiles = di.GetFiles("*.dat", SearchOption.TopDirectoryOnly);
+
+            foreach (FileInfo datFile in rgFiles)
+            {
+                result.ModuleNames.Add(datFile.Name.Split('.')[0]);
+            }
+            return result;
+
         }
 
         private static InstallationDirStatus CreateInvalid(string reason)
@@ -72,7 +82,8 @@ namespace TemplePlusConfig
             {
                 Valid = false,
                 Status = reason,
-                IsCo8 = false
+                IsCo8 = false,
+                ModuleNames = new List<string>()
             };
         }
     }
@@ -84,5 +95,7 @@ namespace TemplePlusConfig
         public string Status { get; set; }
 
         public bool IsCo8 { get; set; }
+
+        public List<string> ModuleNames { get; set; }
     }
 }

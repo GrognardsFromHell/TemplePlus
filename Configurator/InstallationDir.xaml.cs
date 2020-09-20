@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Collections.Generic;
 using Microsoft.Win32;
 using Microsoft.WindowsAPICodePack.Dialogs;
 
@@ -21,15 +22,21 @@ namespace TemplePlusConfig
             "InstallationPathStatus", typeof (InstallationDirStatus), typeof (InstallationDir),
             new PropertyMetadata(default(InstallationDirStatus)));
 
+        public static readonly DependencyProperty ModuleNameProperty = DependencyProperty.Register(
+            "ModuleName", typeof(string), typeof(InstallationDir), new PropertyMetadata(default(string)));
 
+        public static readonly DependencyProperty ModuleNamesProperty = DependencyProperty.Register(
+            "ModuleNames", typeof(string), typeof(InstallationDir), new PropertyMetadata(default(string)));
 
 
         public InstallationDir()
         {
             InitializeComponent();
 
-            DependencyPropertyDescriptor.FromProperty(InstallationPathProperty, typeof (InstallationDir))
+            DependencyPropertyDescriptor.FromProperty(InstallationPathProperty, typeof(InstallationDir))
                 .AddValueChanged(this, (sender, args) => RevalidateInstallationDir());
+            DependencyPropertyDescriptor.FromProperty(InstallationPathProperty, typeof(InstallationDir))
+                .AddValueChanged(this, (sender, args) => ResetModuleName());
         }
 
         public string InstallationPath
@@ -53,9 +60,33 @@ namespace TemplePlusConfig
             set { InstallationPathStatus.IsCo8= value; }
         }
 
+        public string ModuleName
+        {
+            get { return (string)GetValue(ModuleNameProperty); }
+            set { SetValue(ModuleNameProperty, value); }
+        }
+
+        public List<string> ModuleNames {
+            get { 
+                return InstallationPathStatus.ModuleNames; 
+            }
+        }
+
         private void RevalidateInstallationDir()
         {
             InstallationPathStatus = InstallationDirValidator.Validate(InstallationPath);
+            ModuleSelectComboBox.ItemsSource = InstallationPathStatus.ModuleNames;
+            ModuleSelectComboBox.SelectedIndex = 0;
+            if (InstallationPathStatus.ModuleNames != null && InstallationPathStatus.ModuleNames.Count > 1)
+            {
+                ModuleNameLabel.Visibility = Visibility.Visible;
+                ModuleSelectComboBox.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                ModuleNameLabel.Visibility = Visibility.Collapsed;
+                ModuleSelectComboBox.Visibility = Visibility.Collapsed;
+            }
 
             if (InstallationPathStatus.Valid)
             {
@@ -66,7 +97,12 @@ namespace TemplePlusConfig
             {
                 OkIcon.Visibility = Visibility.Collapsed;
                 NotOkIcon.Visibility = Visibility.Visible;
+                ModuleNameLabel.Visibility = Visibility.Collapsed;
             }
+        }
+        private void ResetModuleName()
+        {
+            ModuleName = "ToEE";
         }
 
         private void BrowseButton_Click(object sender, RoutedEventArgs e)
