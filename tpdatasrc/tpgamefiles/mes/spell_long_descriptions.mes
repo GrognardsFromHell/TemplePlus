@@ -683,7 +683,7 @@ Casting:         1  std action   [Abjuration, V,S,M]
 Range:               Personal  or touch
 Target:            You or creature touched
 Duration:      10 min/level}
-{5189} Gaseous Form {Subject gains DR 10/magic,  is immune to poison and critical  hits,  can’t attack or cast most spells,  and has movement  reduced to 10.
+{5189} Gaseous Form {Subject gains DR 10/magic,  is immune to poison and critical  hits,  can't attack or cast most spells,  and has movement  reduced to 10.
 Casting:         1  std action   [Transmutation, S,M/DF]
 Range:               Touch
 Target:            Willing corporeal creature touched
@@ -972,7 +972,7 @@ Range:               Close,  25  feet  + 5/2 levels
 Effect:              see text 
 Duration:      1  min/level.}
 {5271}{Lesser Planar Binding}
-{5272} Lesser Restoration {Cures 4 points of temporary ability damage to one of the subject’s ability scores.
+{5272} Lesser Restoration {Cures 4 points of temporary ability damage to one of the subject's ability scores.
 
 Casting:         3 rounds   [Conjuration,  V,S]
 Range:               Touch
@@ -2159,22 +2159,22 @@ Casting:         1  std action   [Divination, V,S]
 Range:               Personal
 Target:            You
 Duration:     1 hour/level or until discharged}
-{6001} Touch of Fatigue {If you succeed on a touch attack the subject is fatigued for the spell’s duration.  This spell has no effect on a creature that is already fatigued.
+{6001} Touch of Fatigue {If you succeed on a touch attack the subject is fatigued for the spell's duration.  This spell has no effect on a creature that is already fatigued.
 Casting:    1  std action   [Necromancy, V,S,M]
 Range:          Touch
 Target:        Living creature touched
 Duration: 1 round/level,   Save: Fort negates,   SR: Yes}
-{6002} Ray of Exhaustion {[Necromancy] On a successful ranged touch attack, the subject is exhausted (or fatigued on a successful save) for the spell’s duration.
+{6002} Ray of Exhaustion {[Necromancy] On a successful ranged touch attack, the subject is exhausted (or fatigued on a successful save) for the spell's duration.
 Casting:       1  std action   [Necromancy, V,S,M]
 Range:             Close,  25  feet  + 5/2 levels
 Effect:            Ray,  ranged touch attack
 Duration:    1 round/level,    Save: Fort partial,    SR: Yes}
-{6003} Waves of Fatigue {[Necromancy] Waves of negative energy render all living creatures in the spell’s area fatigued. It has no effect on a fatigued creature.
+{6003} Waves of Fatigue {[Necromancy] Waves of negative energy render all living creatures in the spell's area fatigued. It has no effect on a fatigued creature.
 Casting:         1  std action   [Necromancy, V,S]
 Range:               30 ft.
 Effect:              Cone-shaped burst
 Duration:      Instantaneous,    Save: No,    SR: Yes}
-{6004} Waves of Exhaustion {[Necromancy] Waves of negative energy cause all living creatures in the spell’s area to become exhausted. It has no effect on a exhausted creature.
+{6004} Waves of Exhaustion {[Necromancy] Waves of negative energy cause all living creatures in the spell's area to become exhausted. It has no effect on a exhausted creature.
 Casting:         1  std action   [Necromancy, V,S]
 Range:               60 ft.
 Area:                   Cone-shaped burst
