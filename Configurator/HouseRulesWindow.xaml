@@ -46,7 +46,7 @@
             <CheckBox VerticalAlignment="Center" Content="Extended Spell Descriptions" IsChecked="{Binding ExtendedSpellDescriptions}" Margin="0,5,10,5" ToolTip="Longer spell descriptions with better formatting."/>
         </StackPanel>
         
-        <StackPanel HorizontalAlignment="Left" Height="137" VerticalAlignment="Top" Width="188" Margin="238,10,0,0">
+        <StackPanel HorizontalAlignment="Left" Height="170" VerticalAlignment="Top" Width="188" Margin="238,10,0,0">
             <Label VerticalAlignment="Center" Content="Ruleset" Margin="0,0,10,0" />
             <StackPanel Orientation="Horizontal">
                 <Label VerticalAlignment="Center" Content="HP on Level Up" Height="27" />
@@ -59,6 +59,7 @@
             </StackPanel>
             <CheckBox VerticalAlignment="Center" Content="Allow XP overflow" IsChecked="{Binding AllowXpOverflow}" Margin="0,5,35,5" ToolTip="Allows experience points to accumulate beyond the limit of the next level."/>
             <CheckBox VerticalAlignment="Center" Content="Lax Rules" IsChecked="{Binding LaxRules}" Margin="0,5,35,5" ToolTip="Relax some restrictions such as craft MAA spell requirements, alignment restrictions for Prestige Classes." Initialized="CheckBox_Initialized" Unchecked="CheckBox_Unchecked" Checked="CheckBox_Checked"/>
+            <CheckBox VerticalAlignment="Center" Content="Stricter Rules Enforcement" IsChecked="{Binding StricterRulesEnforcement}" Margin="0,5,25,5" ToolTip="Change grease size to 5 foot radius."/>
         </StackPanel>
         <GridSplitter x:Name="gridSplitter_Copy" HorizontalAlignment="Left" Height="360" Margin="431,10,0,0" VerticalAlignment="Top" Width="3"/>
         <StackPanel HorizontalAlignment="Left" Height="137" VerticalAlignment="Top" Width="206" Margin="450,10,0,0">

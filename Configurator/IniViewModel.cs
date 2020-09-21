@@ -99,6 +99,10 @@ namespace TemplePlusConfig
 
         public static readonly DependencyProperty LaxRulesProperty = DependencyProperty.Register(
           "LaxRules", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+
+        public static readonly DependencyProperty StricterRulesEnforcementProperty = DependencyProperty.Register(
+          "StricterRulesEnforcement", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+
         public static readonly DependencyProperty DisableAlignmentRestrictionsProperty = DependencyProperty.Register(
           "DisableAlignmentRestrictions", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
         public static readonly DependencyProperty DisableCraftingSpellReqsProperty = DependencyProperty.Register(
@@ -325,6 +329,12 @@ namespace TemplePlusConfig
         {
             get { return (bool)GetValue(LaxRulesProperty); }
             set { SetValue(LaxRulesProperty, value); }
+        }
+
+        public bool StricterRulesEnforcement
+        {
+            get { return (bool)GetValue(StricterRulesEnforcementProperty); }
+            set { SetValue(StricterRulesEnforcementProperty, value); }
         }
         public bool DisableAlignmentRestrictions
         {
@@ -601,6 +611,13 @@ namespace TemplePlusConfig
             {
                 LaxRules = laxRules;
             }
+
+            bool stricterRulesEnforcement;
+            if (bool.TryParse(tpData["stricterRulesEnforcement"], out stricterRulesEnforcement))
+            {
+                StricterRulesEnforcement = stricterRulesEnforcement;
+            }
+
             bool disableAlignmentRestrictions;
             if (bool.TryParse(tpData["disableAlignmentRestrictions"], out disableAlignmentRestrictions))
             {
@@ -682,6 +699,7 @@ namespace TemplePlusConfig
                     break;
             }
             tpData["laxRules"] = LaxRules ? "true" : "false";
+            tpData["stricterRulesEnforcement"] = StricterRulesEnforcement ? "true" : "false";
 
             tpData["disableAlignmentRestrictions"] = DisableAlignmentRestrictions ? "true" : "false";
             tpData["disableCraftingSpellReqs"] = DisableCraftingSpellReqs ? "true" : "false";
