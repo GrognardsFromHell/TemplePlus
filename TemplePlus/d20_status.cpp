@@ -8,6 +8,7 @@
 #include "gamesystems/objects/objsystem.h"
 #include <gamesystems/gamesystems.h>
 #include "d20_race.h"
+#include <config\config.h>
 
 
 D20StatusSystem d20StatusSys;
@@ -141,7 +142,7 @@ void D20StatusSystem::D20StatusInit(objHndl objHnd)
 
 	initItemConditions(objHnd);
 
-	d20StatusSys.D20StatusInitFromInternalFields(objHnd, dispatcher);
+	d20StatusSys.D20StatusInitFromInternalFields(objHnd, dispatcher); // triggers Dispatch for dispTypeConditionAddFromD20StatusInit
 
 	d20ObjRegistrySys.Append(objHnd);
 
@@ -277,7 +278,10 @@ void D20StatusSystem::initItemConditions(objHndl objHnd)
 
 	if (obj->IsCritter()) {
 		objects.dispatch.DispatcherClearItemConds(dispatcher);
-		if (!d20Sys.d20Query(objHnd, DK_QUE_Polymorphed))
+		auto polyProto = d20Sys.d20Query(objHnd, DK_QUE_Polymorphed);
+		auto itemsAreUsable = config.wildShapeUsableItems; // there are also feats that preserve your armor/shield bonuses, todo...
+		
+		if (!polyProto || itemsAreUsable)
 		{
 			uint32_t invenCount = obj->GetInt32(obj_f_critter_inventory_num);
 			for (uint32_t i = 0; i < invenCount; i++)
@@ -285,16 +289,50 @@ void D20StatusSystem::initItemConditions(objHndl objHnd)
 				objHndl objHndItem = obj->GetObjHndl(obj_f_critter_inventory_list_idx, i);
 				auto item = objSystem->GetObject(objHndItem);
 				uint32_t itemInvLocation = item->GetInt32(obj_f_item_inv_location);
-				if (inventory.IsItemEffectingConditions(objHndItem, itemInvLocation)) {
-					//inventory.sub_100FF500(dispatcher, objHndItem, itemInvLocation);
+				auto isInEffect = inventory.IsItemEffectingConditions(objHndItem, itemInvLocation);
+				if (isInEffect && polyProto && itemsAreUsable) {
+					isInEffect = false;
+					if (inventory.ItemAccessibleDuringPolymorph(objHndItem))
+						isInEffect = true;
+					// Todo Wild Armor/Shield
+				}
+				if (isInEffect) {
 					InitFromItemConditionFields(dispatcher, objHndItem, itemInvLocation); // sets args[2] equal to the itemInvLocation
 				}
+			}
+		}
+		
+		if (polyProto){
+			// New! Adds monster conditions (as parsed from protos.tab and stored in the protos objects)
+			auto protoHandle = objects.GetProtoHandle(polyProto);
+			if (protoHandle) {
+				auto protoObj = objSystem->GetObject(protoHandle);
+				if (!protoObj) return;
+
+				
+				auto condArray = protoObj->GetInt32Array(obj_f_conditions);
+				auto condArgArray = protoObj->GetInt32Array(obj_f_condition_arg0);
+				auto argIdx = 0u;
+
+				for (auto i = 0u; i < condArray.GetSize(); ++i) {
+					int condArgs[64] = { 0, };
+					auto monsterCondId = condArray[i]; //conds.GetByName("Tripping Bite");
+					auto monsterCond = conds.GetById(monsterCondId); // this should be assured due to check in proto parser for valid conds (protos.cpp)
+					if (!monsterCond) continue;
+					for (auto j = 0; j < monsterCond->numArgs; ++j) {
+						condArgs[j] = condArgArray[argIdx++];
+					}
+
+					conds.InitItemCondFromCondStructAndArgs(dispatcher, monsterCond, condArgs);
+				}
+				
 			}
 		}
 
 	}
 }
 
+/* 0x100FF500*/
 void D20StatusSystem::InitFromItemConditionFields(Dispatcher * dispatcher, objHndl item, int invIdx){
 
 	auto itemObj = gameSystems->GetObj().GetObject(item);

@@ -13,11 +13,11 @@ uint32_t animalCompanionProtos[animalCompanionArraySize] = { 14265,14503,14004,1
 uint32_t animalCompanionLevelRestrictions[animalCompanionArraySize] = { 0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,   0,0,0,0,  0,0,0,0,   0, 0, 0, 0, 0, 3, 3, 6, 9, 3, 12 };
 */
 
-const uint8_t animalCompanionArraySize = 11 ; //adjust if you add more ACs!!
+const uint8_t animalCompanionArraySize = 12 ; //adjust if you add more ACs!!
 const uint8_t animalIndexOffsetMax = animalIndexOffset + animalCompanionArraySize;
 
-uint32_t animalCompanionProtos[animalCompanionArraySize] = {  14050, 14049, 14051, 14056, 14362, 14090, 14052, 14053, 14054, 14055, 14506 };
-uint32_t animalCompanionLevelRestrictions[animalCompanionArraySize] = { 0, 0, 0, 0, 0, 3, 3, 6, 9, 3, 12 };
+uint32_t animalCompanionProtos[animalCompanionArraySize] = {  14050, 14049, 14051, 14056, 14362, 14090, 14052, 14053, 14054, 14055, 14391, 14506 }; // 14391 - Dire Wolf, 14506 - Dire Bear
+uint32_t animalCompanionLevelRestrictions[animalCompanionArraySize] = { 0, 0, 0, 0, 0, 3, 3, 6, 9, 3, 6, 12 };
 
 
 

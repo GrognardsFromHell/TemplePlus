@@ -313,7 +313,7 @@ int D20StatsSystem::GetType3StatBase(const objHndl & handle, Stat stat) const
 	case stat_gender:
 		return (int)(objects.getInt32(handle, obj_f_critter_gender));
 	case stat_size:
-		return dispatch.DispatchGetSizeCategory(handle);
+		return objects.GetSize(handle);
 	case stat_alignment:
 		return (int)(objects.getInt32(handle, obj_f_critter_alignment));
 	case stat_experience:

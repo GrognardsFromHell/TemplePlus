@@ -108,6 +108,7 @@ struct TemplePlusConfig
 	bool extendedSpellDescriptions = false;
 	int walkDistanceFt = 0;
 	bool disableChooseRandomSpell_RegardInvulnerableStatus = false;
+	bool wildShapeUsableItems = false; // allows some worn items to be used
 
 	std::unordered_map<std::string, VanillaSetting> vanillaSettings;
 	void AddVanillaSetting(const std::string &name, 

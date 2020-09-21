@@ -15,13 +15,6 @@ struct PickerArgs;
 
 #pragma region Spell Structs
 
-struct SpellEntryLevelSpec
-{
-	uint32_t spellClass;
-	uint32_t slotLevel;
-	SpellEntryLevelSpec() { spellClass = 0; slotLevel = 0; }
-};
-
 struct SpellMultiOption
 {
 	int value;
@@ -31,39 +24,7 @@ struct SpellMultiOption
 enum SpellRangeType : uint32_t;
 enum Domain;
 
-struct SpellEntry{
-	uint32_t spellEnum;
-	uint32_t spellSchoolEnum;
-	uint32_t spellSubSchoolEnum;
-	uint32_t spellDescriptorBitmask;
-	uint32_t spellComponentBitmask;
-	uint32_t costGp;
-	uint32_t costXp;
-	uint32_t castingTimeType;
-	SpellRangeType spellRangeType;
-	uint32_t spellRange;
-	uint32_t savingThrowType;
-	uint32_t spellResistanceCode;
-	SpellEntryLevelSpec spellLvls[10];
-	uint32_t spellLvlsNum;
-	uint32_t projectileFlag;
-	uint64_t flagsTargetBitmask;
-	uint64_t incFlagsTargetBitmask;
-	uint64_t excFlagsTargetBitmask;
-	uint64_t modeTargetSemiBitmask; // UiPickerType
-	uint32_t minTarget;
-	uint32_t maxTarget;
-	int radiusTarget; //note:	if it's negative, then its absolute value is used as SpellRangeType for mode_target personal; if it's positive, it's a specified number(in feet ? )
-	int degreesTarget;
-	uint32_t aiTypeBitmask; // see AiSpellType in spell_structs.h
-	uint32_t pad;
 
-	//UiPickerType GetModeTarget() const;
-	SpellEntry();
-	explicit SpellEntry(uint32_t spellEnum);
-	bool IsBaseModeTarget(UiPickerType type);
-	int SpellLevelForSpellClass(int spellClass); // returns -1 if none
-};
 
 struct SpellEntryExt {
 	std::vector<SpellEntryLevelSpec> levelSpecs;
@@ -403,23 +364,5 @@ uint32_t __cdecl _spellRegistryCopy(uint32_t spellEnum, SpellEntry * spellEntry)
 uint32_t _GetSpellEnumFromSpellId(uint32_t spellId);
 uint32_t _GetSpellPacketBody(uint32_t spellId, SpellPacketBody * spellPktBodyOut);
 void _SetSpontaneousCastingAltNode(objHndl obj, int nodeIdx, SpellStoreData* spellData);
-
-
-
-
-
-enum SpellRangeType : uint32_t
-{
-	SRT_Specified = 0,
-		SRT_Personal = 1,
-		SRT_Touch,
-		SRT_Close,
-		SRT_Medium,
-		SRT_Long,
-		SRT_Unlimited,
-		SRT_Special_Inivibility_Purge
-};
-
-
 
 

@@ -188,7 +188,8 @@ static ConfigSetting configSettings[] = {
 	CONF_INT(walkDistanceFt),
 	CONF_BOOL(newAnimSystem),
 	CONF_BOOL(upscaleLinearFiltering),
-	CONF_BOOL(disableChooseRandomSpell_RegardInvulnerableStatus)
+	CONF_BOOL(disableChooseRandomSpell_RegardInvulnerableStatus),
+	CONF_BOOL(wildShapeUsableItems)
 };
 
 void TemplePlusConfig::Load() {

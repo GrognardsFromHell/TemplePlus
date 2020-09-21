@@ -1807,7 +1807,7 @@ int __cdecl GlobalToHitBonus(DispatcherCallbackArgs args)
 	}
 
 	// size bonus / penalty
-	int sizeCategory = dispatch.DispatchGetSizeCategory(args.objHndCaller);
+	int sizeCategory = critterSys.GetSize(args.objHndCaller);
 	int sizeCatBonus = critterSys.GetBonusFromSizeCategory(sizeCategory);
 	bonusSys.bonusAddToBonusList(&dispIo->bonlist, sizeCatBonus, 0, 115);
 
@@ -2153,7 +2153,7 @@ int GlobalGetArmorClass(DispatcherCallbackArgs args) // the basic AC value (init
 	}
 
 	// add size bonus / penalty to AC
-	int sizeCat = dispatch.DispatchGetSizeCategory(args.objHndCaller);
+	int sizeCat = critterSys.GetSize(args.objHndCaller);
 	int sizeCatBonus = critterSys.GetBonusFromSizeCategory(sizeCat);
 	bonusSys.bonusAddToBonusList(bonlist, sizeCatBonus, 0, 115); 
 
@@ -5058,6 +5058,12 @@ int ItemCallbacks::UseableItemRadialEntry(DispatcherCallbackArgs args){
 	auto itemObj = gameSystems->GetObj().GetObject(itemHandle);
 	auto objType = itemObj->type;
 	int useMagicDeviceSkillBase = critterSys.SkillBaseGet(args.objHndCaller, skill_use_magic_device);
+
+	// Added to allow polymorphers to enjoy their inventory when using the House Rules option
+	if (d20Sys.d20Query(args.objHndCaller, DK_QUE_Polymorphed)) {
+		if (objType != obj_t_food)
+			return 0;
+	}
 
 	if (objType != obj_t_food && !inventory.IsIdentified(itemHandle))
 		return 0;

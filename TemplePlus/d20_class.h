@@ -25,6 +25,7 @@ enum WildShapeProtoIdx : int {
 	WS_Brown_Bear,
 	WS_Polar_Bear,
 	WS_Legendary_Rat,
+	WS_Dire_Wolf,
 	WS_Dire_Bear,
 	WS_Giant_Snake,
 	WS_Hill_Giant,
@@ -145,6 +146,7 @@ public:
 	{ WS_Brown_Bear,{ 14053, 7 } }, // large, 6HD
 	{ WS_Polar_Bear ,{ 14054, 8 } }, // large, 8HD
 	{ WS_Legendary_Rat ,{ 14451, 6 } },
+	{ WS_Dire_Wolf,{ 14391, 8 } }, // large, 6HD
 	{ WS_Dire_Bear ,{ 14506, 12 } },
 	{ WS_Giant_Snake ,{ 14449, 10 } },
 	{ WS_Hill_Giant ,{ 14217, 10000 } }, // this is added via a special option

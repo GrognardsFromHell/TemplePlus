@@ -111,6 +111,8 @@ namespace TemplePlusConfig
           "DisableMulticlassXpPenalty", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
         public static readonly DependencyProperty ShowTargetingCirclesInFogOfWarProperty = DependencyProperty.Register(
           "ShowTargetingCirclesInFogOfWar", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+        public static readonly DependencyProperty WildshapeUsableItemsProperty = DependencyProperty.Register(
+          "WildshapeUsableItems", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
         
 
         public IEnumerable<HpOnLevelUpType> HpOnLevelUpTypes => Enum.GetValues(typeof (HpOnLevelUpType))
@@ -355,6 +357,11 @@ namespace TemplePlusConfig
         {
             get { return (bool)GetValue(ShowTargetingCirclesInFogOfWarProperty); }
             set { SetValue(ShowTargetingCirclesInFogOfWarProperty, value); }
+        }
+        public bool WildshapeUsableItems
+        {
+            get { return (bool)GetValue(WildshapeUsableItemsProperty); }
+            set { SetValue(WildshapeUsableItemsProperty, value); }
         }
 
         public bool NeedsCo8Defaults { get; internal set; }
@@ -638,7 +645,11 @@ namespace TemplePlusConfig
             {
                 ShowTargetingCirclesInFogOfWar = showTargetingCirclesInFogOfWar;
             }
-
+            bool wildshapeUsableItems;
+            if (bool.TryParse(tpData["wildShapeUsableItems"], out wildshapeUsableItems))
+            {
+                WildshapeUsableItems = wildshapeUsableItems;
+            }
         }
 
         public void SaveToIni(IniData iniData)
@@ -705,7 +716,8 @@ namespace TemplePlusConfig
             tpData["disableCraftingSpellReqs"] = DisableCraftingSpellReqs ? "true" : "false";
             tpData["disableMulticlassXpPenalty"] = DisableMulticlassXpPenalty ? "true" : "false";
             tpData["showTargetingCirclesInFogOfWar"] = ShowTargetingCirclesInFogOfWar ? "true" : "false";
-
+            tpData["wildShapeUsableItems"] = WildshapeUsableItems ? "true" : "false";
+            
 
             tpData["pointBuyPoints"] = PointBuyPoints.ToString();
             tpData["renderWidth"] = RenderWidth.ToString();

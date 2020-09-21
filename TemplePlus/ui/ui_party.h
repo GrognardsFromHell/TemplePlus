@@ -67,7 +67,7 @@ struct IndicatorSpec{
 	IndicatorSpec(std::string &filename, std::string &help, int indType);
 };
 
-class UiParty
+class LegacyUiParty
 {
 	friend class UiPartyHooks;
 public:
@@ -93,4 +93,4 @@ protected:
 	std::map<int, IndicatorSpec> buffDebuffSpecs;
 };
 
-extern UiParty uiParty;
+extern LegacyUiParty uiParty;

@@ -75,6 +75,19 @@ static std::vector<CondStruct*> condStructs;
 static int mMonModFactionNew;
 static bool mMonModFactionIsOverride = false;
 
+const char* itemTypes[] = { "All", "Weapon" , "Ammo", "Armor & Wearables", "Potion", "Scroll", "Wand", "Magical Item", "Other" };
+enum class DmItemType: int {
+Weapon= 0,
+Ammo,
+Armor,
+Potion,
+Scroll, 
+Wand,
+MagicalItem,
+Other,
+Count
+};
+
 
 void DungeonMaster::Render() {
 
@@ -144,20 +157,28 @@ void DungeonMaster::Render() {
 		ImGui::TreePop();
 	}
 
+	// Items
+	if (ImGui::TreeNodeEx("Items", ImGuiTreeNodeFlags_CollapsingHeader)) {
+
+		//if (ImGui::CollapsingHeader("Filter"))
+		RenderItemFilter();
+
+		for (auto it : items) {
+			if (FilterItemResult(it.second)) {
+				RenderItem(it.second);
+			}
+		}
+
+		ImGui::TreePop();
+	}
+
 	// Spawn Party from Save
 	if (ImGui::TreeNodeEx("Import Rival Party", ImGuiTreeNodeFlags_CollapsingHeader)){
 		RenderVsParty();
 		ImGui::TreePop();
 	}
 
-	//// Weapons Tree
-	//if (ImGui::TreeNodeEx("Weapons", ImGuiTreeNodeFlags_CollapsingHeader)) {
-
-	//	for (auto it : weapons) {
-	//		ImGui::BulletText("%d | %s ", it.first, it.second.name.c_str());
-	//	}
-	//	ImGui::TreePop();
-	//}
+	
 	isMoused |= ImGui::IsWindowHovered();
 	ImGui::End();
 
@@ -441,13 +462,17 @@ void DungeonMaster::InitEntry(int protoNum){
 	if (obj->IsNPC()){
 
 		auto race = obj->GetInt32(obj_f_critter_race);
-		auto newRecord = DungeonMaster::Record();
+		auto newRecord = DungeonMaster::CritterRecord();
 		newRecord.protoId = protoNum;
 		auto desc = description.getDisplayName(protHndl);
-		if (desc)
+		if (desc) {
 			newRecord.name = desc;
-		else
+			newRecord.lowerName = tolower(desc);
+		}
+		else {
 			newRecord.name = "Unknown";
+		}
+			
 		
 		// get category
 		newRecord.monsterCat = critterSys.GetCategory(protHndl);
@@ -486,15 +511,56 @@ void DungeonMaster::InitEntry(int protoNum){
 		
 	}
 
-	if (obj->type == obj_t_weapon){
-		auto newRecord = DungeonMaster::Record();
-		newRecord.protoId = protoNum;
+	if (obj->IsItem()){
+		auto newr = DungeonMaster::ItemRecord();
+		auto itemWearFlags = objects.GetItemWearFlags(protHndl);
+		auto itemFlags = objects.GetItemFlags(protHndl);
+
+		if (itemFlags & OIF_NO_DISPLAY) {
+			return;
+		}
+
+		newr.protoId = protoNum;
 		auto desc = description.getDisplayName(protHndl);
-		if (desc)
-			newRecord.name = desc;
-		else
-			newRecord.name = "Unknown";
-		weapons[protoNum] = newRecord;
+		if (desc) {
+			newr.name = desc;
+			newr.lowerName = tolower(desc);
+		}
+		else {
+			newr.name = "Unknown";
+			newr.lowerName = tolower("Unknown");
+		}
+		
+		newr.itemType;
+		if (obj->type == obj_t_weapon) {
+			newr.itemType = (int)DmItemType::Weapon;
+		}
+		if (obj->type == obj_t_ammo) {
+			newr.itemType = (int)DmItemType::Ammo;
+		}
+		else if (obj->type == obj_t_armor) {
+			auto armorFlags = obj->GetInt32(obj_f_armor_flags);
+			//auto armorType = inventory.GetArmorType(armorFlags);
+			newr.itemType = (int)DmItemType::Armor;
+		}
+		else if (obj->type == obj_t_food) {
+			newr.itemType = (int)DmItemType::Potion;
+		}
+		else if (obj->type == obj_t_scroll) {
+			newr.itemType = (int)DmItemType::Scroll;
+		}
+		else if (obj->type == obj_t_generic) {
+			if (itemFlags & OIF_USES_WAND_ANIM)
+				newr.itemType = (int)DmItemType::Wand;
+			else if (itemFlags & OIF_IS_MAGICAL) {
+				newr.itemType = (int)DmItemType::MagicalItem;
+			}
+			else {
+				newr.itemType = (int)DmItemType::Other;
+			}
+		}
+
+		items[protoNum] = newr;
 	}
 
 }
@@ -554,7 +620,7 @@ void DungeonMaster::InitCaches(){
 
 }
 
-void DungeonMaster::RenderMonster(Record& record){
+void DungeonMaster::RenderMonster(CritterRecord& record){
 	
 	if (ImGui::TreeNode(fmt::format("{} | {} ({} HD)", record.protoId, record.name.c_str(), record.hitDice).c_str())) {
 		auto protHndl = objSystem->GetProtoHandle(record.protoId);
@@ -635,7 +701,9 @@ void DungeonMaster::RenderMonsterModify(){
 
 void DungeonMaster::ApplyMonsterModify(objHndl handle){
 	auto obj = objSystem->GetObject(handle);
-
+	if (!obj->IsCritter()) {
+		return;
+	}
 	// Factions
 	if (mMonModFactionIsOverride){
 		obj->ClearArray(obj_f_npc_faction);
@@ -654,7 +722,7 @@ void DungeonMaster::ApplyMonsterModify(objHndl handle){
 }
 
 
-bool DungeonMaster::FilterResult(Record & record){
+bool DungeonMaster::FilterResult(CritterRecord & record){
 
 	if (mCategoryFilter > 0) {
 		MonsterCategory asdf = (MonsterCategory)(mCategoryFilter - 1);
@@ -684,6 +752,67 @@ bool DungeonMaster::FilterResult(Record & record){
 
 	if (record.protoId > 14999)
 		return false;
+
+	return true;
+}
+
+void DungeonMaster::RenderItem(ItemRecord& record)
+{
+
+	if (ImGui::TreeNode(fmt::format("{} | {}", record.protoId, record.name.c_str()).c_str())) {
+		auto protHndl = objSystem->GetProtoHandle(record.protoId);
+		
+		if (ImGui::Button("Give")) {
+			auto leader = party.GetConsciousPartyLeader();
+			auto loc = objects.GetLocation(leader);
+
+			auto handleNew = gameSystems->GetObj().CreateObject(protHndl, loc);
+			if (handleNew) {
+				if (!inventory.SetItemParent(handleNew, leader, ItemInsertFlags::IIF_None)) {
+					objects.Destroy(handleNew);
+				}
+				else {
+					auto obj = gameSystems->GetObj().GetObject(handleNew);
+					obj->SetItemFlag(OIF_IDENTIFIED, 1);
+				}
+			}
+		}
+		
+		ImGui::SameLine();
+		if (ImGui::Button("Spawn")) {
+			ActivateSpawn(record.protoId);
+		}
+
+		// auto obj = objSystem->GetObject(protHndl);
+		ImGui::TreePop();
+	}
+
+}
+void DungeonMaster::RenderItemFilter()
+{
+	ImGui::Combo("Item type", &mItemProtoFilter, itemTypes, sizeof(itemTypes)/sizeof(itemTypes[0]), 8);
+	if (ImGui::InputText("Name", &mItemNameFilterBuf[0], 256) ){
+		
+		std::string itemNameIn = mItemNameFilterBuf.data();
+		mItemNameFilter.resize( itemNameIn.length()); // This discards trailing null-bytes
+		mItemNameFilter = tolower(itemNameIn);
+		trim(mItemNameFilter);
+		
+	};
+}
+
+bool DungeonMaster::FilterItemResult(ItemRecord& record)
+{
+	if (mItemProtoFilter > 0) {
+		if (record.itemType != (mItemProtoFilter-1) )
+			return false;
+	}
+
+	if (mItemNameFilter.size() > 0) {
+		if (record.lowerName.find(mItemNameFilter) == std::string::npos ) {
+			return false;
+		}
+	}
 
 	return true;
 }
@@ -1190,6 +1319,8 @@ void DungeonMaster::RenderEditedObj() {
 			auto condTmp = dispatcher->conditions;
 			if (fieldType == obj_f_permanent_mods)
 				condTmp = dispatcher->permanentMods;
+			else if (fieldType == obj_f_item_pad_wielder_condition_array)
+				condTmp = dispatcher->itemConds;
 
 			for (; condTmp; condTmp = condTmp->nextCondNode) {
 				if (condTmp->IsExpired())
@@ -1215,6 +1346,7 @@ void DungeonMaster::RenderEditedObj() {
 		auto dispatcher = obj->GetDispatcher();
 		displayCondUi(mEditedObj, dispatcher, obj_f_conditions);
 		displayCondUi(mEditedObj, dispatcher, obj_f_permanent_mods);
+		displayCondUi(mEditedObj, dispatcher, obj_f_item_pad_wielder_condition_array);
 		
 		ImGui::TreePop();
 	}
@@ -1416,6 +1548,10 @@ void DungeonMaster::ApplyObjEdit(objHndl handle){
 	d20StatusSys.D20StatusRefresh(handle);
 }
 
+
+DungeonMaster::DungeonMaster() : mItemNameFilterBuf({ '\0', })
+{
+}
 
 bool DungeonMaster::IsActive() {
 	return isActive;

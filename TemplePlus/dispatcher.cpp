@@ -13,6 +13,7 @@
 #include "gamesystems/gamesystems.h"
 #include "ui/ui_party.h"
 #include "python/python_dispatcher.h"
+#include <critter.h>
 
 // Dispatcher System Function Replacements
 class DispatcherReplacements : public TempleFix {
@@ -59,6 +60,16 @@ public:
 		});
 		
 		replaceFunction(0x1004D360, Dispatch54AoE);
+
+		replaceFunction<BOOL(__cdecl)(objHndl,enum_disp_type, D20DispatcherKey, DispIO*)>(0x1004CDB0, [](objHndl item, enum_disp_type dispType, D20DispatcherKey dispKey, DispIO* evtObj) {
+			dispatch.DispatchForItem(item, dispType, dispKey, evtObj);
+			return 0;
+		});
+		
+		replaceFunction<BOOL(__cdecl)(objHndl, D20DispatcherKey)>(0x1004CEB0, [](objHndl item, D20DispatcherKey dispKey) {
+			return dispatch.DispatchItemQuery(item, dispKey);
+		});
+			
 	}
 } dispatcherReplacements;
 
@@ -72,14 +83,6 @@ int DispatcherReplacements::Dispatch54AoE(objHndl handle, DispIO* evtObj, D20Dis
 	return 0;
 }
 
-struct DispatcherSystemAddresses : temple::AddressTable
-{
-	int(__cdecl *DispatchAttackBonus)(objHndl attacker, objHndl victim, DispIoAttackBonus *dispIoIn, enum_disp_type, int key);
-	DispatcherSystemAddresses()
-	{
-		rebase(DispatchAttackBonus, 0x1004DEC0);
-	}
-} addresses;
 
 #pragma region Dispatcher System Implementation
 DispatcherSystem dispatch;
@@ -620,7 +623,6 @@ int DispatcherSystem::DispatchAttackBonus(objHndl objHnd, objHndl victim, DispIo
 	DispatcherProcessor(dispatcher, dispType, key, dispIoToUse);
 	return bonusSys.getOverallBonus(&dispIoToUse->bonlist);
 
-	// return addresses.DispatchAttackBonus(objHnd, victim, dispIo, dispType, key);
 }
 
 int DispatcherSystem::DispatchToHitBonusBase(objHndl objHndCaller, DispIoAttackBonus* dispIo){
@@ -632,22 +634,30 @@ int DispatcherSystem::DispatchToHitBonusBase(objHndl objHndCaller, DispIoAttackB
 	return DispatchAttackBonus(objHndCaller, objHndl::null, dispIo, dispTypeToHitBonusBase, key);
 }
 
-int DispatcherSystem::DispatchGetSizeCategory(objHndl obj)
+int DispatcherSystem::DispatchGetSizeCategory(objHndl handle)
 {
-	Dispatcher * dispatcher = objects.GetDispatcher(obj);
-	DispIoD20Query dispIo; 
+	auto obj = objSystem->GetObject(handle);
+	if (!obj) return 0;
 
-	if (dispatcherValid(dispatcher))
-	{
-		dispIo.dispIOType = dispIOTypeQuery;
-		dispIo.return_val = objects.getInt32(obj, obj_f_size);
-		dispIo.data1 = 0;
-		dispIo.data2 = 0;
-		DispatcherProcessor(
-			(Dispatcher *)dispatcher, dispTypeGetSizeCategory,	0, &dispIo);
-		return dispIo.return_val;
+	Dispatcher * dispatcher = obj->GetDispatcher();
+	if (!dispatcherValid(dispatcher)) return 0;
+
+	DispIoD20Query dispIo;
+	dispIo.return_val = obj->GetInt32(obj_f_size);
+	
+	if (objects.IsCritter(handle) ) {
+		auto polymorphHandle = critterSys.GetPolymorphedHandle(handle);
+		if (polymorphHandle) {
+			auto polyObj = objSystem->GetObject(polymorphHandle);
+			if (polyObj) {
+				dispIo.return_val = polyObj->GetInt32(obj_f_size);
+			}
+		}
 	}
-	return 0;
+
+	DispatcherProcessor( dispatcher, dispTypeGetSizeCategory,	0, &dispIo);
+	return dispIo.return_val;
+	
 }
 
 void DispatcherSystem::DispatchConditionRemove(Dispatcher* dispatcher, CondNode* cond)
@@ -941,6 +951,7 @@ int DispatcherSystem::DispatchGetBonus(objHndl critter, DispIoBonusList* eventOb
 
 }
 
+/*  0x1004CEB0 */
 int DispatcherSystem::DispatchItemQuery(objHndl item, D20DispatcherKey key)
 {
 	DispIoD20Query evtObj;

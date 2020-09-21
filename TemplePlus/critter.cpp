@@ -169,6 +169,12 @@ private:
 			return (int)critterSys.GetNumNaturalAttacks(handle);
 		});
 
+
+		// GetSize
+		replaceFunction<int(__cdecl)(objHndl)>(0x1004D690, [](objHndl handle) {
+			return critterSys.GetSize(handle);
+			});
+
 	}
 
 private:
@@ -868,6 +874,11 @@ bool LegacyCritterSystem::CanSense(objHndl critter, objHndl tgt)
 	return critterReplacements.CanSense(critter, tgt);
 }
 
+int LegacyCritterSystem::GetSize(objHndl handle)
+{
+	return dispatch.DispatchGetSizeCategory(handle);
+}
+
 int LegacyCritterSystem::GetLevel(objHndl critter) {
 	return objects.StatLevelGet(critter, stat_level);
 }
@@ -886,6 +897,17 @@ Race LegacyCritterSystem::GetRace(objHndl critter, bool getBaseRace) {
 
 Gender LegacyCritterSystem::GetGender(objHndl critter) {
 	return (Gender)objects.StatLevelGet(critter, stat_gender);
+}
+
+objHndl LegacyCritterSystem::GetPolymorphedHandle(objHndl handle)
+{
+	if (!handle) return objHndl::null;
+	auto protoId = d20Sys.d20Query(handle, DK_QUE_Polymorphed);
+	if (!protoId)
+		return objHndl::null;
+	
+	auto protoHandle = objSystem->GetProtoHandle(protoId);
+	return protoHandle;
 }
 
 std::string LegacyCritterSystem::GetHairStylePreviewTexture(HairStyle style)

@@ -2,7 +2,7 @@
 #include "common.h"
 #include "dispatcher.h"
 #include <map>
-
+#include "tig/tig_mes.h"
 
 enum EquipSlot : uint32_t;
 
@@ -72,7 +72,8 @@ struct InventorySystem : temple::AddressTable
 
 	static bool IsInvIdxWorn(int invIdx); // does the inventory index refer to a designated "worn item" slot?
 
-	bool InventorySystem::IsIncompatibleWithDruid(objHndl item, objHndl critter);
+	bool IsIncompatibleWithDruid(objHndl item, objHndl critter);
+	bool ItemAccessibleDuringPolymorph(objHndl item);
 
 	objHndl(__cdecl *GetSubstituteInventory)  (objHndl);
 	objHndl GetItemAtInvIdx(objHndl, uint32_t nIdx); // returns the item at obj_f_critter_inventory subIdx nIdx  (or obj_f_container_inventory for containers); Note the difference to ItemWornAt! (this is a more low level function)
@@ -80,8 +81,7 @@ struct InventorySystem : temple::AddressTable
 	void WieldBest(objHndl handle, int invSlot, objHndl target);
 	
 
-	void (__cdecl *sub_100FF500)(Dispatcher *dispatcher, objHndl objHndItem, uint32_t itemInvLocation);
-	uint32_t(__cdecl *IsItemEffectingConditions)(objHndl objHndItem, uint32_t itemInvLocation);
+	bool IsItemEffectingConditions(objHndl objHndItem, uint32_t itemInvLocation);
 	
 	/*
 	 finds the argument argOffset for the specified condition in obj_f_item_pad_wielder_condition_array
@@ -234,8 +234,6 @@ struct InventorySystem : temple::AddressTable
 		rebase(_GetWieldType,    0x10066580);
 		//rebase(FindMatchingStackableItem, 0x10067DF0);
 
-		rebase(sub_100FF500, 0x100FF500);
-		rebase(IsItemEffectingConditions, 0x100FEFA0);
 
 		rebase(_FindItemByName, 0x100643F0);
 		rebase(_FindItemByProto, 0x100644B0);
