@@ -80,6 +80,9 @@ static bool SetCursorFromShaderId(int shaderId) {
 /* 0x101DD070 */
 void MouseFuncs::SetPos(int x, int y, int wheelDelta)
 {
+
+	//return temple::GetRef<void(__cdecl)(int, int, int)>(0x101DD070)(x, y, wheelDelta);
+
 	TigMsgMouse msg;
 	msg.createdMs = timeGetTime();
 	msg.type = TigMsgType::MOUSE;
@@ -147,7 +150,7 @@ void MouseFuncs::SetPos(int x, int y, int wheelDelta)
 	auto& mouseSettings = temple::GetRef<int[3]>(0x1030095C);
 
 	for (int i = 0; i < 3; ++i) {
-		if ((downFlags[i] | downFlags[i]) & mouseState->flags) {
+		if ((downFlags[i] | downFlags2[i]) & mouseState->flags) {
 			msg.buttonStateFlags |= 2 * mouseSettings[i];
 		}
 	}
