@@ -12,6 +12,8 @@
 #include <atlcomcli.h>
 #include <util/fixes.h>
 #include <graphics/mdfmaterials.h>
+#include <tig\tig_msg.h>
+#include <messages\messagequeue.h>
 
 MouseFuncs mouseFuncs;
 temple::GlobalStruct<TigMouseState, 0x10D25184> mouseState;
@@ -73,6 +75,86 @@ static bool SetCursorFromShaderId(int shaderId) {
 
 	tig->GetRenderingDevice().SetCursor(hotspotX, hotspotY, primaryTexture);
 	return true;
+}
+
+/* 0x101DD070 */
+void MouseFuncs::SetPos(int x, int y, int wheelDelta)
+{
+	TigMsgMouse msg;
+	msg.createdMs = timeGetTime();
+	msg.type = TigMsgType::MOUSE;
+	msg.buttonStateFlags = 0;
+	 
+
+	auto& mouseIsStatic = temple::GetRef<int>(0x10D25588);
+	auto& mouseLastChange = temple::GetRef<int>(0x10D251C4);
+	auto systemTime = temple::GetRef<int>(0x11E74578);
+
+	static int slowMoveRefX = mouseState->x, slowMoveRefY = mouseState->y;
+	
+	auto slowMoveDelta = abs(x - slowMoveRefX) + abs(y - slowMoveRefY);
+	auto timeDeltaMs = systemTime - mouseLastChange;
+	if (x != mouseState->x || y != mouseState->y ) {
+		mouseIsStatic = 0;
+		//if (slowMoveDelta  > 0) { // this was the effective vanilla condition
+		// There was an issue where POS_CHANGE_SLOW wasn't fired, which caused issues with
+		// hovering items in the inventory UI.
+		// Not sure why, but in debug mode I see that these mouse messages would be farther apart,
+		// i.e. with bigger time and x,y deltas. The only difference is slower framerate, so maybe
+		// the cause of this bug is the increased frame rate - the smaller deltas between messages
+		// means you'd never cross the 35ms threshold (below).
+		if (slowMoveDelta > 5*timeDeltaMs || timeDeltaMs > 250) {
+
+			/*TigCharMsg chrMsg;
+			chrMsg.type = TigMsgType::CHAR;
+			chrMsg.charCode = 'Y';
+			chrMsg.createdMs = msg.createdMs;
+			chrMsg._unused1 = timeDeltaMs;
+			chrMsg._unused2 = slowMoveDelta;
+			chrMsg._unused3 = slowX + slowY;
+			messageQueue->Enqueue(chrMsg);*/
+
+			slowMoveRefX = x; slowMoveRefY = y;
+			mouseLastChange = systemTime;
+		}
+		msg.buttonStateFlags = MouseStateFlags::MSF_POS_CHANGE;
+
+	}
+	else if (!mouseIsStatic &&	( systemTime > (mouseLastChange + 35) ) ) {
+		mouseIsStatic = 1;
+		msg.buttonStateFlags |= MouseStateFlags::MSF_POS_CHANGE_SLOW;
+	}
+	//if (msg.buttonStateFlags == 0) { // DEBUG - none of the above:
+	//	TigCharMsg chrMsg;
+	//	chrMsg.type = TigMsgType::CHAR;
+	//	chrMsg.charCode = 'Z';
+	//	chrMsg.createdMs = msg.createdMs;
+	//	chrMsg._unused1 = systemTime;
+	//	chrMsg._unused2 = mouseLastChange;
+	//	chrMsg._unused3 = x+y;
+	//	messageQueue->Enqueue(chrMsg);
+	//}
+	if (wheelDelta) {
+		msg.buttonStateFlags |= MouseStateFlags::MSF_SCROLLWHEEL_CHANGE;
+	}
+
+	mouseState->x = msg.x = x;
+	mouseState->y = msg.y = y;
+	msg.arg3 = wheelDelta;
+
+	auto& downFlags = temple::GetRef<int[3]>(0x10300944);
+	auto& downFlags2 = temple::GetRef<int[3]>(0x10300938);
+	auto& mouseSettings = temple::GetRef<int[3]>(0x1030095C);
+
+	for (int i = 0; i < 3; ++i) {
+		if ((downFlags[i] | downFlags[i]) & mouseState->flags) {
+			msg.buttonStateFlags |= 2 * mouseSettings[i];
+		}
+	}
+
+	if (msg.buttonStateFlags) {
+		messageQueue->Enqueue(msg);
+	}
 }
 
 void MouseFuncs::RefreshCursor() {
@@ -199,5 +281,11 @@ public:
 			return (CursorDrawCallback)mouseFuncs.GetCursorDrawCallbackId();
 		});
 
+		//Mouse SetPos
+		replaceFunction<void(__cdecl)(int, int, int)>(0x101DD070, [](int x, int y, int wheelDelta) {
+			return mouseFuncs.SetPos(x, y, wheelDelta);
+			});
+			
+
 	}
-} fix;
+} mouseFixes;

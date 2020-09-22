@@ -20,6 +20,9 @@ public:
 
 	void PollExternalEvents();
 
+	void DebugMessages();
+	eastl::deque<Message>& GetDebugMsgs();
+
 private:
 	eastl::deque<Message> mQueue;
 };
