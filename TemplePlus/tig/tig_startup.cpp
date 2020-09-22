@@ -275,6 +275,39 @@ void TigInitializer::LoadDataFiles() {
 		
 	}
 
+	// Adding support for module data folders ("Module Core"), distinct from module map data (mainly MOBs and ground art) which is loaded later.
+	// Note: cannot load module here. Crash issue arises due to party pool loader (0x10165790), and who knows, there might be more...
+	{
+		std::string moduleName = config.defaultModule;
+		std::string moduleBase;
+		if (!VfsPath::IsFileSystem(moduleName)) {
+			moduleBase = VfsPath::Concat(".\\Modules\\", moduleName);
+		}
+		else {
+			moduleBase = moduleName;
+		}
+
+		auto moduleCoreDatName = moduleBase + "_core.dat";
+		auto moduleDir = moduleBase + "_core";
+
+		auto tioVfs = static_cast<temple::TioVfs*>(vfs.get());
+
+		logger->info("Module core archive: {}", moduleCoreDatName);
+		if (vfs->FileExists(moduleCoreDatName)) {
+			if (!tioVfs->AddPath(moduleCoreDatName)) {
+				throw TempleException("Unable to load module archive {}", moduleCoreDatName);
+			}
+		}
+
+		logger->info("Module core directory: {}", moduleDir);
+		if (vfs->DirExists(moduleDir)) {
+			if (!tioVfs->AddPath(moduleDir)) {
+				throw TempleException("Unable to add module directory: {}", moduleDir);
+			}	
+		}
+
+	}
+
 	// overrides for testing (mainly for co8fixes so there's no need to repack the archive). Also for user mods.
 	tio_mkdir(fmt::format("overrides").c_str());
 	tio_path_add(fmt::format("overrides").c_str());

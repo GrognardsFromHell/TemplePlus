@@ -46,7 +46,8 @@ enum class ObjScriptEvent : uint32_t {
 	Trap,
 	TrueSeeing,
 	SpellCast,
-	UnlockAttempt
+	UnlockAttempt,
+	Count // number of items
 };
 
 class PythonObjIntegration : public PythonIntegration {

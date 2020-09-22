@@ -12,6 +12,9 @@ namespace TemplePlusConfig
         public static readonly DependencyProperty InstallationPathProperty = DependencyProperty.Register(
             "InstallationPath", typeof (string), typeof (IniViewModel), new PropertyMetadata(default(string)));
 
+        public static readonly DependencyProperty ModuleNameProperty = DependencyProperty.Register(
+            "ModuleName", typeof(string), typeof(IniViewModel), new PropertyMetadata(default(string)));
+
         public static readonly DependencyProperty RenderWidthProperty = DependencyProperty.Register(
             "RenderWidth", typeof (int), typeof (IniViewModel), new PropertyMetadata(default(int)));
 
@@ -149,6 +152,18 @@ namespace TemplePlusConfig
             set
             {
                 SetValue(InstallationPathProperty, value);
+            }
+        }
+
+        public string ModuleName
+        {
+            get
+            {
+                return (string)GetValue(ModuleNameProperty);
+            }
+            set
+            {
+                SetValue(ModuleNameProperty, value);
             }
         }
 
@@ -389,6 +404,7 @@ namespace TemplePlusConfig
         {
             var tpData = iniData["TemplePlus"];
             InstallationPath = tpData["toeeDir"];
+            ModuleName = tpData["defaultModule"];
 
             DisableAutomaticUpdates = tpData["autoUpdate"] != "true";
 
@@ -662,6 +678,7 @@ namespace TemplePlusConfig
             }
             
             tpData["toeeDir"] = InstallationPath;
+            tpData["defaultModule"] = ModuleName;
             tpData["autoUpdate"] = DisableAutomaticUpdates ? "false" : "true";
             switch (HpOnLevelUp)
             {

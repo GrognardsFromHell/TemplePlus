@@ -53,6 +53,6 @@
             </StackPanel>
 
         </DockPanel>
-        <Image x:Name="image" Height="347" Canvas.Left="240" Canvas.Top="52" Width="450" Source="configuratorBg.png"/>
+        <Image x:Name="image" Height="347" Canvas.Left="240" Canvas.Top="67" Width="450" Source="configuratorBg.png"/>
     </Canvas>
 </Window>
