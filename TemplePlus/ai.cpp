@@ -1961,7 +1961,9 @@ int AiSystem::UpdateAiFlags(objHndl handle, AiFightStatus aiFightStatus, objHndl
 		/* 
 		 * Adding because of changes to shouldRemove
 		 */
-		combatSys.enterCombat(handle, false);
+		if (objects.IsCritter(target)) { // in case it's a trap
+			combatSys.enterCombat(handle, false);
+		}
 		/*
 		 *
 		 */
@@ -3815,6 +3817,9 @@ public:
 			return aiSys.ConsiderTarget(obj, tgt);
 		});
 
+		replaceFunction<void(__cdecl)(objHndl, objHndl, int, int)>(0x1005E8D0, [](objHndl agitator, objHndl provokedNpc, int rangeIdx, int flags) {
+			return aiSys.ProvokeHostility(agitator, provokedNpc, rangeIdx, flags);
+			});
 
 		static int(*orgScriptExecute)(objHndl, objHndl, int, int, SAN, void*) = 
 			replaceFunction<int(objHndl, objHndl, int, int, SAN, void*)>(0x10025D60, [](objHndl triggerer, objHndl attachee, int a3, int a4, SAN san, void* a6)->int
