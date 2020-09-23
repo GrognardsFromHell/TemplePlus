@@ -2,7 +2,9 @@ from toee import *
 from Co8 import D20CO8_F_POISON
 
 def san_trap( trap, triggerer ):
+	#print "Trap sprung"
 	if (trap.id == 16):
+		#print "ID 16"
 		# numP = 210 / (game.party_npc_size() + game.party_pc_size())
 		# for obj in game.obj_list_vicinity( triggerer.location, OLC_CRITTERS ):
 			# obj.stat_base_set(stat_experience, (obj.stat_level_get(stat_experience) - numP))
@@ -22,6 +24,7 @@ def san_trap( trap, triggerer ):
 		game.global_flags[874] = 1
 
 	if (trap.id == 6):
+		#print "ID 6"
 		# numP = 210 / (game.party_npc_size() + game.party_pc_size())
 		# for obj in game.obj_list_vicinity( triggerer.location, OLC_CRITTERS ):
 			# obj.stat_base_set(stat_experience, (obj.stat_level_get(stat_experience) - numP))
@@ -36,7 +39,9 @@ def san_trap( trap, triggerer ):
 								obj.condition_add_with_args("Poisoned",dmg.damage.bonus,0)
 						else:
 							obj.reflex_save_and_damage( trap.obj, 16, D20_Save_Reduction_Half, D20STD_F_SPELL_DESCRIPTOR_FIRE, dmg.damage, dmg.type, D20DAP_NORMAL )
-	
-	game.new_sid = 0
+	#print "newsid = 0"
+	#game.new_sid = 0
+	print "Trap script ID changed to 0"
+	trap.obj.scripts[39] = 0 # fixes re-arming when doing disable device
 
 	return SKIP_DEFAULT
