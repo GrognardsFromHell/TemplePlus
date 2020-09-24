@@ -191,6 +191,7 @@ LRESULT MainWindow::WndProcTrampoline(HWND hWnd, UINT msg, WPARAM wparam, LPARAM
 
 }
 
+/* 0x101DE9A0 */
 LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 
 	if (hWnd != mHwnd || !tig) {
@@ -329,9 +330,12 @@ LRESULT MainWindow::WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 	}
 
 	// Previously, ToEE called a global window proc here but it did nothing useful.
-	return DefWindowProcA(hWnd, msg, wparam, lparam);
+	auto result = DefWindowProcA(hWnd, msg, wparam, lparam);
+	
+	return result;
 }
 
+/* 0x101DD070 */
 void MainWindow::UpdateMousePos(int xAbs, int yAbs, int wheelDelta) {
 	if (mMouseMoveHandler) {
 		mMouseMoveHandler(xAbs, yAbs, wheelDelta);

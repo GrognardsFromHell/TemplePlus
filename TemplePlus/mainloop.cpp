@@ -137,6 +137,8 @@ void GameLoop::Run() {
 	GameView gameView(mTig.GetMainWindow(), mTig.GetRenderingDevice(), config.renderWidth, config.renderHeight);
 
 	TigMsg msg;
+	static eastl::deque<TigMsg> msgDebug;
+
 	auto quit = false;
 	while (!quit) {
 
@@ -144,7 +146,9 @@ void GameLoop::Run() {
 
 		// Read user input and external system events (such as time)
 		messageQueue->PollExternalEvents();			
-		
+		if (mDiagScreen->IsEnabled()) {	
+			messageQueue->DebugMessages();
+		}
 		mGameSystems.AdvanceTime();
 
 		// This locks the cursor to our window if we are in the foreground and it's enabled
@@ -202,6 +206,7 @@ void GameLoop::Run() {
 				mDiagScreen->Toggle();
 				UIShowDebug();
 			}
+			
 
 			// I have not found any place where message type 7 is queued,
 			// so i removed the out of place re-rendering of the game frame
