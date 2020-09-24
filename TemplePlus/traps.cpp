@@ -45,7 +45,7 @@ public:
 	static int TrapLineParser(const TigTabParser* parser, int lineIdx, char** content) {
 		auto trapSpecs = temple::GetRef<Trap*>(0x10AA329C);
 		auto& trapCount = temple::GetRef<int>(0x11E61524);
-		auto &trap = trapSpecs[trapCount];
+		auto &trap = trapSpecs[trapCount++];
 
 		if (*content[0] == '\0')
 			return 17;
@@ -66,7 +66,7 @@ public:
 		if (!temple::GetRef<BOOL(__cdecl)(const char*, int*)>(0x10050B50)(content[2], &trap.flags)) {
 			return 17;
 		}
-		
+		 
 		trap.partSysName = _strdup(content[3]);
 		trap.searchDC = atol(content[4]);
 		trap.disableDC= atol(content[5]);
@@ -80,6 +80,7 @@ public:
 
 			if (!parseTrapDamage(content[7 + i], &trap.damage[i]))
 				return 17;
+			trap.damageCount++;
 		}
 		trap.CR = atol(content[12]);
 		trap.id = atol(content[13]);
@@ -88,6 +89,7 @@ public:
 
 	void apply() override {
 		
+
 		replaceFunction<BOOL(__cdecl)(const GameSystemConf&)>(0x10050DA0, [](const GameSystemConf& conf)->BOOL {
 
 			if (!mesFuncs.Open("mes\\trap.mes", temple::GetPointer<MesHandle>(0x10AA32A0))) {

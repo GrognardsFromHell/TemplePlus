@@ -2125,6 +2125,37 @@ public:
 
     writeCall(0x100148EA, HookedGetRunSpeed);
 
+    //Push Goal Hit By Weapon
+    replaceFunction<int(__cdecl)(objHndl, objHndl)>(0x10015820, [](objHndl attacker, objHndl tgt)->int {
+        if (!attacker || !tgt)
+            return FALSE;
+        auto attackerObj = objSystem->GetObject(attacker);
+        if (!attackerObj) return FALSE;
+
+        if (critterSys.IsDeadOrUnconscious(tgt))
+            return FALSE;
+
+        if (!gameSystems->GetAnim().Interrupt(tgt, AnimGoalPriority::AGP_4, false))
+            return FALSE;
+
+        AnimSlotGoalStackEntry agd;
+        if (!agd.InitWithInterrupt(tgt, AnimGoalType::ag_hit_by_weapon))
+            return FALSE;
+
+        
+        if (attackerObj->IsCritter()) { // added if... fix for issue where traps cause combat to start (with no actual combatants around)
+            combatSys.enterCombat(tgt);
+        }
+        
+        agd.target.obj = attacker;
+        agd.scratchVal6.number = 5;
+        AnimSlotId* animIdGlobal = addresses.animIdGlobal;
+        if (agd.Push(animIdGlobal))
+            return TRUE;
+
+        return FALSE;
+        });
+
   }
 } animHooks;
 

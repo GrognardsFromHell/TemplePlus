@@ -21,7 +21,7 @@ def san_trap( trap, triggerer ):
 						else:
 							obj.reflex_save_and_damage( trap.obj, 21, D20_Save_Reduction_Half, D20STD_F_SPELL_DESCRIPTOR_FIRE, dmg.damage, dmg.type, D20DAP_NORMAL )
 	if (triggerer.map == 5067):
-		game.global_flags[874] == 1
+		game.global_flags[874] = 1
 
 	if (trap.id == 6):
 		#print "ID 6"
