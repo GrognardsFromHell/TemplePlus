@@ -2,6 +2,9 @@
 #include "messagequeue.h"
 #include "ui/ui.h"
 
+eastl::deque<Message> debugMsgs;
+bool mDebugMsgsEn;
+
 static struct MessageQueueFuncs : temple::AddressTable {
 	
 	BOOL *tigProcessEvents;
@@ -25,6 +28,16 @@ MessageQueue::~MessageQueue() {
 
 void MessageQueue::Enqueue(const TigMsgBase& msg) {
 	mQueue.push_back((TigMsg&)msg);
+	/*if (mDebugMsgsEn && msg.type != TigMsgType::UPDATE_TIME) {
+		debugMsgs.push_front((Message&)msg);
+		if (msg.type == TigMsgType::MOUSE) {
+			auto msgMouse = (TigMsgMouse&)msg;
+			if (msgMouse.buttonStateFlags & MSF_POS_CHANGE_SLOW) {
+				debugMsgs.push_front((Message&)msg);
+			}
+		}
+	}*/
+		
 }
 
 bool MessageQueue::Process(Message &unhandledMsgOut) {
@@ -92,6 +105,24 @@ void MessageQueue::PollExternalEvents()
 
 	static auto sound_process_loop = temple::GetPointer<void()>(0x101e4360);
 	sound_process_loop();
+}
+
+
+void MessageQueue::DebugMessages()
+{
+	for (auto& msg : mQueue) {
+		if (msg.type != TigMsgType::UPDATE_TIME)
+			debugMsgs.push_front(msg);
+	}
+	while (debugMsgs.size() > 100)
+		debugMsgs.pop_back();
+
+	mDebugMsgsEn = true;
+}
+
+eastl::deque<Message>& MessageQueue::GetDebugMsgs()
+{
+	return debugMsgs;
 }
 
 MessageQueue* messageQueue = nullptr;

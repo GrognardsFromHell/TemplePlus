@@ -9,6 +9,8 @@
 #include "animgoals/animgoals_debugrenderer.h"
 
 #include <debugui.h>
+#include <messages\messagequeue.h>
+#include <tig\tig_keyboard.h>
 
 static bool debugUiVisible = false;
 
@@ -179,6 +181,39 @@ void UIRenderDebug()
 		ImGui::Checkbox("Debug Clipping", &config.debugClipping);
 		ImGui::Checkbox("Debug Particle Systems", &config.debugPartSys);
 		ImGui::Checkbox("Draw Cylinder Hitboxes", &config.drawObjCylinders);
+	}
+
+	if (messageQueue)
+	if (ImGui::CollapsingHeader("Message Debugging")) {
+		static bool debugMsgs;
+		ImGui::Checkbox("Debug Messages", &debugMsgs);
+		if (debugMsgs) {
+			auto& dbgQueue = messageQueue->GetDebugMsgs();
+			for (auto& msg : dbgQueue) {
+				std::string text;
+				text += "Time " + std::to_string(msg.createdMs);
+				switch (msg.type) {
+				case TigMsgType::MOUSE:
+					text += fmt::format(" Mouse ({}, {}) {} flags: 0x{:x}", msg.arg1, msg.arg2, msg.arg3, msg.arg4);
+					break;
+				case TigMsgType::CHAR:
+					text += fmt::format(" Char 0x{:x} {} {} {}", ((TigCharMsg&)msg).charCode, ((TigCharMsg&)msg)._unused1, ((TigCharMsg&)msg)._unused2, ((TigCharMsg&)msg)._unused3);
+					break;
+				case TigMsgType::KEYSTATECHANGE:
+					text += fmt::format(" Keystate 0x{:x} down: {}", ((TigKeyStateChangeMsg&)msg).key, ((TigKeyStateChangeMsg&)msg).down);
+					break;
+				case TigMsgType::KEYDOWN:
+					text += fmt::format(" Key Down ({}, {})", msg.arg1, msg.arg2);
+					break;
+				case TigMsgType::WIDGET:
+					text += fmt::format(" Widget {}, {}, {}, {}", msg.arg1, msg.arg2, msg.arg3, msg.arg4);
+					break;
+					
+				}
+				ImGui::BulletText(text.c_str());
+				
+			}
+		}
 	}
 
 	ImGui::End();
