@@ -9,6 +9,10 @@
 #include "gamesystems/map/sector.h"
 #include "raycast.h"
 
+//rendering
+#include <tig\tig_startup.h>
+#include <graphics/shaperenderer3d.h>
+
 PathNodeSys pathNodeSys;
 char PathNodeSys::pathNodesLoadDir[260];
 char PathNodeSys::pathNodesSaveDir[260];
@@ -169,9 +173,6 @@ BOOL PathNodeSys::LoadNodeFromFile(TioFile* file, MapPathNodeList** nodeOut)
 	if (!newNode)
 		return 0;
 
-	newNode->flags = (PathNodeFlags)0;
-	newNode->node.flags = (PathNodeFlags)0;
-	newNode->node.neighbours = 0;
 	if (!tio_fread(&newNode->node.id, 4, 1, file)
 		|| !tio_fread(&newNode->node.nodeLoc, sizeof(LocAndOffsets), 1, file)
 		|| !tio_fread(&newNode->node.neighboursCount, 4, 1, file))
@@ -393,19 +394,19 @@ void PathNodeSys::RecalculateNeighbours(MapPathNodeList* node)
 {
 	if (!node)
 		return;
-	auto i = pathNodeList;
+	auto neighbor = pathNodeList;
 	PathQuery pathQ;
 	PathQueryResult path;
-	while (i)
+	while (neighbor)
 	{
-		if (node->node.id == i->node.id)
+		if (node->node.id == neighbor->node.id)
 		{
-			i = i->next;
+			neighbor = neighbor->next;
 			continue;
 		}
 			
 		pathQ.from = node->node.nodeLoc;
-		pathQ.to = i->node.nodeLoc;
+		pathQ.to = neighbor->node.nodeLoc;
 		pathQ.flags = (PathQueryFlags) (PQF_DONT_USE_STRAIGHT_LINE | PQF_DONT_USE_PATHNODES | PQF_TO_EXACT | PQF_IGNORE_CRITTERS | PQF_IGNORE_CRITTERS_ON_DESTINATION);
 		pathQ.critter = 0;
 		pathQ.flags2 = 0;
@@ -416,14 +417,14 @@ void PathNodeSys::RecalculateNeighbours(MapPathNodeList* node)
 
 			if ( pathLen < 6 * fromToDist && node->node.neighboursCount < MAX_NEIGHBOURS) // prevent extremely roundabout links
 			{
-			int neighSizeNew = 4 * (node->node.neighboursCount + 1);
-				auto neighCntNew = ++node->node.neighboursCount;
-				// int * neighboursNew = (int*)realloc(neighbours, neighSizeNew);
 				
-
+				auto neighCntNew = ++node->node.neighboursCount;
+				//int neighSizeNew = 4 * (node->node.neighboursCount + 1);
+				// int *neighboursNew = (int*)realloc(neighbours, neighSizeNew);
+				
 				//node->node.neighbours = neighboursNew;
-				//neighboursNew[neighCntNew - 1] = i->node.id;
-				node->node.neighbours[neighCntNew - 1] = i->node.id;
+				//neighboursNew[neighCntNew - 1] = neighbor->node.id;
+				node->node.neighbours[neighCntNew - 1] = neighbor->node.id;
 
 				// node->node.neighDistances = (float*)realloc(node->node.neighDistances, neighSizeNew);
 				if  (path.flags & PF_STRAIGHT_LINE_SUCCEEDED)
@@ -438,7 +439,7 @@ void PathNodeSys::RecalculateNeighbours(MapPathNodeList* node)
 				int aha = 0;
 			}
 		}
-		i = i->next;
+		neighbor = neighbor->next;
 	}
 	*(int*)&node->node.flags |= PNF_NEIGHBOUR_DISTANCES_SET;
 }
@@ -499,11 +500,13 @@ void PathNodeSys::RecalculateAllNeighbours()
 		}
 		node = node->next;
 	}
+
+	mNeedsRecalcNeighbours = false;
 }
 
 
 
-BOOL PathNodeSys::FlushNodes()
+BOOL PathNodeSys::FlushNodes(const char* saveDir)
 {
 	int status = 0;
 	int foundReleased = 0;
@@ -522,8 +525,11 @@ BOOL PathNodeSys::FlushNodes()
 
 	char fileName[260];
 	char fileNameSupplem[260];
-	_snprintf(fileName, 260, "%s\\%s", pathNodesSaveDir, "pathnodenew.pnd");
-	_snprintf(fileNameSupplem, 260, "%s\\%s", pathNodesSaveDir, "pathnodedist.pnd");
+	if (!saveDir || !saveDir[0]){
+		saveDir = pathNodesSaveDir;
+	}
+	_snprintf(fileName, 260, "%s\\%s", saveDir, "pathnodenew.pnd");
+	_snprintf(fileNameSupplem, 260, "%s\\%s", saveDir, "pathnodedist.pnd");
 	auto file = tio_fopen(fileName, "wb");
 	if (!file)
 		return 0;
@@ -687,6 +693,38 @@ BOOL PathNodeSys::WriteNodeToFile(MapPathNodeList* node, TioFile* file)
 		return 1;
 	}
 	return result;
+}
+
+
+void PathNodeSys::apply()
+{
+	
+	//rebase(GetPathNode, 0x100A9660);
+	//rebase(FindClosestPathNode, 0x100A96A0);
+	//_FindPathBetweenNodes = temple::GetPointer<>(0x100A9E30);
+	//pathNodeList = temple::GetPointer<MapPathNodeList*>(0x10BA62B0);
+	replaceFunction(0x100A9720, SetDirs);
+	replaceFunction(0x100A9C00, LoadNodesCurrent);
+	replaceFunction(0x100A9DA0, Reset);
+	replaceFunction(0x100A9DD0, FreeAndLoad);
+	hasClearanceData = false;
+	for (int i = 1; i <= MAX_OBJ_RADIUS_SUBTILES; i++)
+	{
+		clearanceProfiles[i - 1].InitWithRadius(i * INCH_PER_TILE / 3);
+	}
+	
+	
+	auto pathnodeListAddr = &pathNodeList;
+	write(0x100A9460+1, &pathnodeListAddr, 4);
+}
+
+MapPathNodeList* PathNodeSys::GetPathNodeListEntry(int id)
+{
+	auto node = pathNodeList;
+	while (node && node->node.id != id){
+		node = node->next;
+	}
+	return node;
 }
 
 bool PathNodeSys::WriteNodeDistToFile(MapPathNodeList* node, TioFile* file)
@@ -1010,20 +1048,113 @@ int PathNodeSys::FindPathBetweenNodes(int fromNodeId, int toNodeId, int* nodeIds
 	// return _FindPathBetweenNodes(fromNodeId, toNodeId, nodeIds, maxChainLength);
 }
 
+void PathNodeSys::AddPathNode(LocAndOffsets& loc, bool recalcNeighbours)
+{
+	mNeedsRecalcNeighbours = true;
+
+	MapPathNodeList* newNode = new MapPathNodeList();
+
+	if (!newNode) return;
+
+	newNode->node.id = GetNewId();
+	newNode->node.nodeLoc = loc;
+	
+
+	newNode->node.neighbours = new int32_t[MAX_NEIGHBOURS];
+	newNode->node.neighDistances = new float[MAX_NEIGHBOURS];
+	
+	
+	if (recalcNeighbours) {
+		RecalculateNeighbours(newNode);
+		for (auto i = 0; i < newNode->node.neighboursCount; ++i) {
+			auto neighbour = GetPathNodeListEntry(newNode->node.neighbours[i]);
+			if (neighbour) {
+				RecalculateNeighbours(neighbour);
+			}
+		}
+	}
+
+	// prepend to list (should not affect neighbour search since it does SANS_PATHNODE pathfinding)
+	newNode->next = pathNodeList;
+	pathNodeList = newNode;
+	
+	mNeedsRecalcNeighbours = true;
+}
+
 BOOL PathNodeSys::GetPathNode(int id, MapPathNode* pathNodeOut)
+{
+	auto node = GetPathNodeListEntry(id);
+	if (!node)
+		return 0;
+	*pathNodeOut = node->node;
+	return 1;
+}
+
+bool PathNodeSys::PathNodeExists(int id)
 {
 	auto node = pathNodeList;
 	if (node)
 	{
-		while( node && node->node.id != id)
+		while (node && node->node.id != id)
 		{
 			node = node->next;
 		}
 		if (!node)
-			return 0;
-		*pathNodeOut = node->node;
-		return 1;
+			return false;
+		return true;
 	}
-	return 0;
+	return false;
 }
 
+
+void PathNodeSys::SetPathNodeVisibile(bool setting)
+{
+	mRenderPathNodesEn = setting;
+}
+
+/* replaces 0x100A9390 (not a 1:1 recreation however) */
+void PathNodeSys::RenderPathNodes(int tileX1, int tileX2, int tileY1, int tileY2)
+{
+	if (!mRenderPathNodesEn)
+		return;
+
+	auto node = pathNodeList;
+	
+	auto& renderer3d = tig->GetShapeRenderer3d();
+	XMCOLOR nodeBorderColor(0.95f, 0.95f, 0.05f, 1.0f);
+	XMCOLOR aoeBorderColor(0.1f, 0.9f, 0.1f, 1.0f);
+	XMCOLOR circleFillColor(0.0f, 0.0f, 0.0f, 0.0f);
+
+	for (auto node = pathNodeList; node; node = node->next) {
+		auto nodeLoc = node->node.nodeLoc;
+		
+		if (nodeLoc.location.locx < tileX1 || nodeLoc.location.locx > tileX2 ||
+			nodeLoc.location.locy < tileY1 || nodeLoc.location.locy > tileY2)
+			continue;
+
+		auto pos = nodeLoc.ToInches3D();
+
+		renderer3d.DrawFilledCircle(pos, 6, nodeBorderColor, circleFillColor, false);
+		renderer3d.DrawFilledCircle(pos, 600, aoeBorderColor, circleFillColor, false);
+
+	}
+}
+
+int PathNodeSys::GetNewId(){
+	auto node = pathNodeList;
+	if (!node)
+		return 0;
+
+	int nextId = 0;
+	const int MAX_ID = 1<<20;
+	for (int i = 0; PathNodeExists(i) && i < MAX_ID; i++) {
+		nextId++;
+	}
+
+	return nextId++;
+}
+
+MapPathNodeList::MapPathNodeList()
+{
+	memset(this, 0, sizeof(MapPathNodeList));
+}

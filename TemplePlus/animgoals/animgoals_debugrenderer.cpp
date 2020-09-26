@@ -22,11 +22,12 @@
 
 bool AnimGoalsDebugRenderer::enabled_ = false;
 bool AnimGoalsDebugRenderer::showObjectNames_ = false;
+bool AnimGoalsDebugRenderer::pathsEnabled_ = false;
 
 void AnimGoalsDebugRenderer::RenderAllAnimGoals(int tileX1, int tileX2, int tileY1, int tileY2)
 {
 
-	if (!enabled_) {
+	if (!enabled_ && !pathsEnabled_) {
 		return;
 	}
 
@@ -40,7 +41,15 @@ void AnimGoalsDebugRenderer::RenderAllAnimGoals(int tileX1, int tileX2, int tile
 
 					auto obj = sector.GetObjectsAt(tx, ty);
 					while (obj) {
-						RenderAnimGoals(obj->handle);
+
+						//if (pathsEnabled_) // included in render all
+						{
+							RenderCurrentGoalPath(obj->handle);
+						}
+							
+						if (enabled_) {
+							RenderAnimGoals(obj->handle);
+						}
 						obj = obj->next;
 					}
 
@@ -54,7 +63,7 @@ void AnimGoalsDebugRenderer::RenderAllAnimGoals(int tileX1, int tileX2, int tile
 void AnimGoalsDebugRenderer::RenderAnimGoals(objHndl handle)
 {
 
-	RenderCurrentGoalPath(handle);
+	//RenderCurrentGoalPath(handle);
 
 	auto worldLocAboveHead = objects.GetLocationFull(handle).ToInches3D(objects.GetRenderHeight(handle));
 

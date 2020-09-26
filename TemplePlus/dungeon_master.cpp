@@ -53,6 +53,9 @@
 #include "python/python_integration_obj.h"
 #include "python/python_header.h"
 
+#include <path_node.h>
+#include <animgoals/animgoals_debugrenderer.h>
+
 DungeonMaster dmSys;
 
 static std::vector<VfsSearchResult> mFlist;
@@ -171,6 +174,11 @@ void DungeonMaster::Render() {
 
 		ImGui::TreePop();
 	}
+
+	if (ImGui::CollapsingHeader("Pathfinding")) {
+		RenderPathfinding();
+	}
+
 
 	// Spawn Party from Save
 	if (ImGui::TreeNodeEx("Import Rival Party", ImGuiTreeNodeFlags_CollapsingHeader)){
@@ -299,6 +307,9 @@ bool DungeonMaster::HandleMsg(const TigMsg & msg){
 			return true;
 
 		if (HandleEditing(msg))
+			return true;
+
+		if (HandlePathnode(msg))
 			return true;
 	}
 
@@ -450,6 +461,45 @@ bool DungeonMaster::HandleMoving(const TigMsg & msg)
 			return true;
 		}
 	}
+	return false;
+}
+
+bool DungeonMaster::HandlePathnode(const TigMsg& msg)
+{
+	if (!IsActionActive())
+		return false;
+
+	if (mActionType != DungeonMasterAction::PathnodeCreate)
+		return false;
+
+	if (msg.type == TigMsgType::MOUSE) {
+		auto& mouseMsg = *(TigMsgMouse*)&msg;
+
+		// RMB - click (so it seizes the event and doesn't spawn a radial menu)
+		if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_RMB_CLICK) {
+			DeactivateAction();
+			return true;
+		}
+
+		if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_LMB_RELEASED) {
+			
+			LocAndOffsets mouseLoc;
+			locSys.GetLocFromScreenLocPrecise(mouseMsg.x, mouseMsg.y, mouseLoc);
+
+			pathNodeSys.AddPathNode(mouseLoc, true);
+
+
+			// if Alt key is pressed, keep the action active
+			if (!infrastructure::gKeyboard.IsKeyPressed(VK_LMENU) && !infrastructure::gKeyboard.IsKeyPressed(VK_RMENU)) {
+				DeactivateAction();
+			}
+
+			dmSys.SetIsHandlingMsg(true);
+
+			return true;
+		}
+	}
+
 	return false;
 }
 
@@ -1449,6 +1499,53 @@ void DungeonMaster::RenderFudgeRolls(){
 	ImGui::RadioButton("Max", &mForceRollType, 4);
 
 
+}
+
+void DungeonMaster::RenderPathfinding()
+{
+	static bool showPathNodes;
+	ImGui::Checkbox("Show Pathnodes", &showPathNodes);
+	pathNodeSys.SetPathNodeVisibile(showPathNodes);
+	AnimGoalsDebugRenderer::EnablePaths(showPathNodes);
+	
+
+	if (ImGui::Button("Create Path Node")) {
+		showPathNodes = true;
+		pathNodeSys.SetPathNodeVisibile(showPathNodes);
+		ActivateAction(DungeonMasterAction::PathnodeCreate);
+	}
+
+	/*if (ImGui::Button("Delete Path Node")) {
+	}*/
+
+	if (ImGui::Button("Recalc All Neighbours")) {
+		pathNodeSys.RecalculateAllNeighbours();
+	}
+	if (ImGui::IsItemHovered()) ImGui::SetTooltip("Recalculates all neighbours and traversal distances between them. This may take a while.");
+
+	static std::string saveFolder = "";
+	static bool persistNodes = false;
+	if (ImGui::Button("Save Nodes")) {	
+		auto mapId = gameSystems->GetMap().GetCurrentMapId();
+		auto mapName = gameSystems->GetMap().GetMapName(mapId);
+		if (persistNodes) {
+			saveFolder = fmt::format("maps\\{}", mapName);
+		}
+		else {
+			saveFolder = fmt::format("New Pathnodes\\{}", mapName);
+		}
+		tio_mkdir(saveFolder.c_str());
+		pathNodeSys.FlushNodes(saveFolder.c_str());
+	}
+	if (ImGui::IsItemHovered())		ImGui::SetTooltip("Dumps path nodes to file.");
+	ImGui::SameLine();
+	ImGui::Checkbox("Persist", &persistNodes);
+	if (ImGui::IsItemHovered())		ImGui::SetTooltip("If false, the changes will be temporary (reversed on reloading the map or save). If true, they'll replace the previous nodes completely.");
+
+	if (saveFolder.size()) {
+		ImGui::Text(fmt::format("Saved to: modules\\{}\\{}",config.defaultModule,saveFolder).c_str() );
+	}
+	
 }
 
 void DungeonMaster::SetObjEditor(objHndl handle){
