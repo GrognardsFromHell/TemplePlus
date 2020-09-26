@@ -65,6 +65,7 @@ static bool isActionActive = false;
 static bool isMinimized = false;
 static bool isMoused = false;
 static bool isHandlingMsg = false;
+static bool showPathNodes;
 
 // monster modify
 DungeonMaster::CritterBooster critBoost;
@@ -466,38 +467,90 @@ bool DungeonMaster::HandleMoving(const TigMsg & msg)
 
 bool DungeonMaster::HandlePathnode(const TigMsg& msg)
 {
-	if (!IsActionActive())
-		return false;
-
-	if (mActionType != DungeonMasterAction::PathnodeCreate)
-		return false;
-
+	
 	if (msg.type == TigMsgType::MOUSE) {
 		auto& mouseMsg = *(TigMsgMouse*)&msg;
 
-		// RMB - click (so it seizes the event and doesn't spawn a radial menu)
-		if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_RMB_CLICK) {
-			DeactivateAction();
-			return true;
+		LocAndOffsets mouseLoc;
+		locSys.GetLocFromScreenLocPrecise(mouseMsg.x, mouseMsg.y, mouseLoc);
+
+
+		if (showPathNodes && (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_POS_CHANGE)){
+			auto okToPickNew = true;
+			if (mActionType == DungeonMasterAction::PathnodeMove) {
+				okToPickNew = pathNodeSys.MoveActiveNode(&mouseLoc);
+			}
+			if (okToPickNew){
+				pathNodeSys.SetActiveNodeFromLoc(mouseLoc);
+			}
 		}
 
-		if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_LMB_RELEASED) {
-			
-			LocAndOffsets mouseLoc;
-			locSys.GetLocFromScreenLocPrecise(mouseMsg.x, mouseMsg.y, mouseLoc);
+		if (!IsActionActive())
+			return false;
 
-			pathNodeSys.AddPathNode(mouseLoc, true);
-
-
-			// if Alt key is pressed, keep the action active
-			if (!infrastructure::gKeyboard.IsKeyPressed(VK_LMENU) && !infrastructure::gKeyboard.IsKeyPressed(VK_RMENU)) {
+		if (mActionType == DungeonMasterAction::PathnodeCreate ) {
+			// RMB - click (so it seizes the event and doesn't spawn a radial menu)
+			if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_RMB_CLICK) {
 				DeactivateAction();
+				return true;
 			}
 
-			dmSys.SetIsHandlingMsg(true);
+			if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_LMB_RELEASED) {
+				pathNodeSys.AddPathNode(mouseLoc, true);
 
-			return true;
+				// if Alt key is pressed, keep the action active
+				if (!infrastructure::gKeyboard.IsKeyPressed(VK_LMENU) && !infrastructure::gKeyboard.IsKeyPressed(VK_RMENU)) {
+					DeactivateAction();
+				}
+
+				dmSys.SetIsHandlingMsg(true);
+				return true;
+			}
 		}
+
+		if (mActionType == DungeonMasterAction::PathnodeDelete) {
+			// RMB - click (so it seizes the event and doesn't spawn a radial menu)
+			if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_RMB_CLICK) {
+				DeactivateAction();
+				return true;
+			}
+
+			if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_LMB_RELEASED) {
+				pathNodeSys.DeleteActiveNode();
+
+				// if Alt key is pressed, keep the action active
+				if (!infrastructure::gKeyboard.IsKeyPressed(VK_LMENU) && !infrastructure::gKeyboard.IsKeyPressed(VK_RMENU)) {
+					DeactivateAction();
+				}
+
+				dmSys.SetIsHandlingMsg(true);
+				return true;
+			}
+		}
+
+		if (mActionType == DungeonMasterAction::PathnodeMove) {
+			// RMB - click (so it seizes the event and doesn't spawn a radial menu)
+			if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_RMB_CLICK) {
+				pathNodeSys.CancelMoveActiveNode();
+				DeactivateAction();
+				return true;
+			}
+
+			if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_LMB_RELEASED) {
+				auto finishedMoving = pathNodeSys.MoveActiveNode();
+
+				// if Alt key is pressed, keep the action active
+				if (finishedMoving && !infrastructure::gKeyboard.IsKeyPressed(VK_LMENU) && !infrastructure::gKeyboard.IsKeyPressed(VK_RMENU)) {
+					DeactivateAction();
+				}
+
+				dmSys.SetIsHandlingMsg(true);
+				return true;
+			}
+		}
+			
+		return false;
+
 	}
 
 	return false;
@@ -1503,17 +1556,29 @@ void DungeonMaster::RenderFudgeRolls(){
 
 void DungeonMaster::RenderPathfinding()
 {
-	static bool showPathNodes;
 	ImGui::Checkbox("Show Pathnodes", &showPathNodes);
 	pathNodeSys.SetPathNodeVisibile(showPathNodes);
 	AnimGoalsDebugRenderer::EnablePaths(showPathNodes);
 	
 
-	if (ImGui::Button("Create Path Node")) {
+	if (ImGui::Button("Create Node")) {
 		showPathNodes = true;
 		pathNodeSys.SetPathNodeVisibile(showPathNodes);
 		ActivateAction(DungeonMasterAction::PathnodeCreate);
 	}
+	ImGui::SameLine();
+	if (ImGui::Button("Move")) {
+		showPathNodes = true;
+		pathNodeSys.SetPathNodeVisibile(showPathNodes);
+		ActivateAction(DungeonMasterAction::PathnodeMove);
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Delete")) {
+		showPathNodes = true;
+		pathNodeSys.SetPathNodeVisibile(showPathNodes);
+		ActivateAction(DungeonMasterAction::PathnodeDelete);
+	}
+	
 
 	/*if (ImGui::Button("Delete Path Node")) {
 	}*/

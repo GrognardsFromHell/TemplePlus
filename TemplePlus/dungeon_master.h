@@ -99,7 +99,9 @@ public:
 		Spawn,
 		Clone,
 		Move,
-		PathnodeCreate
+		PathnodeCreate,
+		PathnodeDelete,
+		PathnodeMove,
 	};
 
 protected:

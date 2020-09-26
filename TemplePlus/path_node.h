@@ -145,8 +145,9 @@ public:
 	static bool LoadNeighDistFromFile(TioFile* file, MapPathNodeList* node);
 	static BOOL LoadNodesCurrent();
 	static void FreeNode(MapPathNodeList* node);
-	static BOOL FreeAndLoad(char* loadDir, char*saveDir);
-	static void Reset();
+	void PopNode(MapPathNodeList* node);
+	BOOL FreeAndLoad(char* loadDir, char*saveDir);
+	void Reset();
 	static void SetDirs(char *loadDir, char*saveDir);
 
 	static void RecalculateNeighbours(MapPathNodeList* node);
@@ -170,7 +171,11 @@ public:
 
 	void SetPathNodeVisibile(bool setting);
 	void RenderPathNodes(int tileX1, int tileX2, int tileY1, int tileY2);
-	
+	bool SetActiveNodeFromLoc(LocAndOffsets& loc);
+	void DeleteActiveNode();
+	bool MoveActiveNode(LocAndOffsets * newLoc = nullptr); // return true if finished moving (second left click)
+	void CancelMoveActiveNode();
+
 	int GetNewId();
 
 	void apply() override;
@@ -178,6 +183,8 @@ public:
 private:
 	bool mNeedsRecalcNeighbours = false;
 	bool mRenderPathNodesEn = false;
+	MapPathNodeList* mActivePathNode = nullptr;
+	LocAndOffsets mPathnodeMoveRef = LocAndOffsets::null;
 	static MapPathNodeList* GetPathNodeListEntry(int id);
 };
 

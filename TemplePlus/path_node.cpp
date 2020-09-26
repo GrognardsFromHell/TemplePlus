@@ -366,6 +366,25 @@ void PathNodeSys::FreeNode(MapPathNodeList* pn)
 	free( pn);
 }
 
+void PathNodeSys::PopNode(MapPathNodeList* node)
+{
+	
+	if (!pathNodeList || !node)
+		return;
+
+	if (node == pathNodeList) {
+		pathNodeList = node->next;
+		return;
+	}
+	
+	auto prev = pathNodeList;
+	while ( prev->next && prev->next != node) {
+		prev = prev->next;
+	}
+	prev->next = node->next;
+	
+}
+
 BOOL PathNodeSys::FreeAndLoad(char* loadDir, char* saveDir)
 {
 	Reset();
@@ -382,6 +401,8 @@ void PathNodeSys::Reset()
 		FreeNode(node);
 		node = pathNodeList;
 	}
+	mActivePathNode = nullptr;
+	mPathnodeMoveRef = LocAndOffsets::null;
 }
 
 void PathNodeSys::SetDirs(char* loadDir, char* saveDir)
@@ -705,8 +726,12 @@ void PathNodeSys::apply()
 	//pathNodeList = temple::GetPointer<MapPathNodeList*>(0x10BA62B0);
 	replaceFunction(0x100A9720, SetDirs);
 	replaceFunction(0x100A9C00, LoadNodesCurrent);
-	replaceFunction(0x100A9DA0, Reset);
-	replaceFunction(0x100A9DD0, FreeAndLoad);
+	replaceFunction<void(__cdecl)()>(0x100A9DA0, []() {
+		pathNodeSys.Reset();
+		});
+	replaceFunction<BOOL(__cdecl)(char*,char*)>(0x100A9DD0, [](char* loadDir, char*saveDir) {
+		return pathNodeSys.FreeAndLoad(loadDir, saveDir);
+		});
 	hasClearanceData = false;
 	for (int i = 1; i <= MAX_OBJ_RADIUS_SUBTILES; i++)
 	{
@@ -1123,6 +1148,10 @@ void PathNodeSys::RenderPathNodes(int tileX1, int tileX2, int tileY1, int tileY2
 	auto& renderer3d = tig->GetShapeRenderer3d();
 	XMCOLOR nodeBorderColor(0.95f, 0.95f, 0.05f, 1.0f);
 	XMCOLOR aoeBorderColor(0.1f, 0.9f, 0.1f, 1.0f);
+
+	XMCOLOR activeNodeBorderColor(0.95f, 0.95f, 0.95f, 1.0f);
+	XMCOLOR activeAoeBorderColor(0.95f, 0.9f, 0.95f, 1.0f);
+
 	XMCOLOR circleFillColor(0.0f, 0.0f, 0.0f, 0.0f);
 
 	for (auto node = pathNodeList; node; node = node->next) {
@@ -1134,10 +1163,86 @@ void PathNodeSys::RenderPathNodes(int tileX1, int tileX2, int tileY1, int tileY2
 
 		auto pos = nodeLoc.ToInches3D();
 
+		if (node == mActivePathNode) {
+			renderer3d.DrawFilledCircle(pos, 8, activeNodeBorderColor, circleFillColor, false);
+			renderer3d.DrawFilledCircle(pos, 603, activeAoeBorderColor, circleFillColor, false);
+		}
+
+
 		renderer3d.DrawFilledCircle(pos, 6, nodeBorderColor, circleFillColor, false);
 		renderer3d.DrawFilledCircle(pos, 600, aoeBorderColor, circleFillColor, false);
 
 	}
+}
+
+bool PathNodeSys::SetActiveNodeFromLoc(LocAndOffsets& loc)
+{
+	mActivePathNode = nullptr;
+	
+	int nodeId = -1;
+	if (!pathNodeSys.FindClosestPathNode(&loc, &nodeId)) {
+		return false;
+	}
+	
+	constexpr float DIST_THRESH = 2 * INCH_PER_FEET;
+	auto node = GetPathNodeListEntry(nodeId);
+	if (locSys.Distance3d(node->node.nodeLoc, loc) < DIST_THRESH) {
+		mActivePathNode = node;
+		return true;
+	}
+	return false;
+}
+
+void PathNodeSys::DeleteActiveNode(){
+	if (!mActivePathNode)
+		return;
+
+	PopNode(mActivePathNode);
+	FreeNode(mActivePathNode);
+	mActivePathNode = nullptr;
+}
+
+bool PathNodeSys::MoveActiveNode(LocAndOffsets* newLoc)
+{
+	
+	if (newLoc) { // comes from move handler, only if in PathNodeMove mode; return value says if it's ok to set new active node
+		if (!mActivePathNode) {
+			return true;
+		}
+
+		auto pickedNodeToMove = mPathnodeMoveRef != LocAndOffsets::null;
+		if (pickedNodeToMove) {
+			mActivePathNode->node.nodeLoc = *newLoc;
+			return false;
+		}
+		else {
+			return true;
+		}
+		
+	}
+	else { // comes from click handler
+		if (!mActivePathNode)
+			return false;
+		if (mPathnodeMoveRef == LocAndOffsets::null) { // first click - node picked, get ref and start moving
+			mPathnodeMoveRef = mActivePathNode->node.nodeLoc;
+			return false;
+		}
+		else { // already got ref, so time to finish moving
+			mPathnodeMoveRef = LocAndOffsets::null;
+			return true;
+		}
+	}
+	
+	return false;
+}
+
+void PathNodeSys::CancelMoveActiveNode(){
+	if (!mActivePathNode)
+		return;
+	if (mPathnodeMoveRef == LocAndOffsets::null) {
+		return;
+	}
+	mPathnodeMoveRef = LocAndOffsets::null;
 }
 
 int PathNodeSys::GetNewId(){
