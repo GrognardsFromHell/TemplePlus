@@ -667,7 +667,8 @@ void PathNodeSys::GenerateClearanceFile(const char * saveDir)
 	logger->info("Processing complete; saving to file clearance.bin");
 	clearanceData.clrIdx.numSectors = idx + 1;
 	clearanceData.secClr = secClrData;
-	
+	hasClearanceData = true;
+
 	char fileName[260];
 	if (!saveDir || !saveDir[0]) {
 		saveDir = pathNodesSaveDir;

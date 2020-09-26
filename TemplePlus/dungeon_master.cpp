@@ -1586,11 +1586,13 @@ void DungeonMaster::RenderPathfinding()
 	if (ImGui::IsItemHovered()) ImGui::SetTooltip("Recalculates all neighbours and traversal distances between them. This may take a while.");
 
 	static std::string saveFolder = "";
-	static bool persistNodes = false;
+	static std::string saveFolderClearance = "";
+	static bool persist = false;
+
 	if (ImGui::Button("Save Nodes")) {	
 		auto mapId = gameSystems->GetMap().GetCurrentMapId();
 		auto mapName = gameSystems->GetMap().GetMapName(mapId);
-		if (persistNodes) {
+		if (persist) {
 			saveFolder = fmt::format("maps\\{}", mapName);
 		}
 		else {
@@ -1600,21 +1602,12 @@ void DungeonMaster::RenderPathfinding()
 		pathNodeSys.FlushNodes(saveFolder.c_str());
 	}
 	if (ImGui::IsItemHovered())		ImGui::SetTooltip("Dumps path nodes to file.");
-	ImGui::SameLine();
-	ImGui::Checkbox("Persist", &persistNodes);
-	if (ImGui::IsItemHovered())		ImGui::SetTooltip("If false, the changes will be temporary (reversed on reloading the map or save). If true, they'll replace the previous nodes completely.");
-
-	if (saveFolder.size()) {
-		ImGui::Text(fmt::format("Saved nodes to: modules\\{}\\{}",config.defaultModule,saveFolder).c_str() );
-	}
 	
-
-	static std::string saveFolderClearance = "";
-	static bool persistClearance = false;
+	ImGui::SameLine();
 	if (ImGui::Button("Generate Clearances")) {
 		auto mapId = gameSystems->GetMap().GetCurrentMapId();
 		auto mapName = gameSystems->GetMap().GetMapName(mapId);
-		if (persistClearance) {
+		if (persist) {
 			saveFolderClearance = fmt::format("maps\\{}", mapName);
 		}
 		else {
@@ -1623,9 +1616,15 @@ void DungeonMaster::RenderPathfinding()
 		tio_mkdir(saveFolderClearance.c_str());
 		pathNodeSys.GenerateClearanceFile(saveFolderClearance.c_str());
 	}
-	ImGui::SameLine();
-	ImGui::Checkbox("Persist", &persistClearance);
 	if (ImGui::IsItemHovered())		ImGui::SetTooltip("Generate tile clearance data. This speeds up pathfinding and allows the engine to do some more demanding PF queries.");
+	
+	ImGui::SameLine();
+	ImGui::Checkbox("Persist", &persist);
+	if (ImGui::IsItemHovered())		ImGui::SetTooltip("If false, the changes will be temporary (reversed on reloading the map or save). If true, they'll stick around.");
+
+	if (saveFolder.size()) {
+		ImGui::Text(fmt::format("Saved nodes to: modules\\{}\\{}", config.defaultModule, saveFolder).c_str());
+	}
 	if (saveFolderClearance.size()) {
 		ImGui::Text(fmt::format("Saved clearances to: modules\\{}\\{}", config.defaultModule, saveFolderClearance).c_str());
 	}
