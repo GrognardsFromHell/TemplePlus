@@ -584,7 +584,7 @@ BOOL PathNodeSys::FlushNodes(const char* saveDir)
 	return status;
 }
 
-void PathNodeSys::GenerateClearanceFile()
+void PathNodeSys::GenerateClearanceFile(const char * saveDir)
 {	
 
 	logger->info("Generating clearance data.");
@@ -667,7 +667,14 @@ void PathNodeSys::GenerateClearanceFile()
 	logger->info("Processing complete; saving to file clearance.bin");
 	clearanceData.clrIdx.numSectors = idx + 1;
 	clearanceData.secClr = secClrData;
-	auto fil = tio_fopen("clearance.bin", "wb" );
+	
+	char fileName[260];
+	if (!saveDir || !saveDir[0]) {
+		saveDir = pathNodesSaveDir;
+	}
+	_snprintf(fileName, 260, "%s\\%s", saveDir, "clearance.bin");
+
+	auto fil = tio_fopen(fileName, "wb" );
 	tio_fwrite(&clearanceData.clrIdx, sizeof(clearanceData.clrIdx), 1, fil);
 	tio_fwrite(clearanceData.secClr, sizeof(SectorClearanceData), clearanceData.clrIdx.numSectors, fil);
 	logger->info("Wrote to file. Closing.");
@@ -1242,6 +1249,7 @@ void PathNodeSys::CancelMoveActiveNode(){
 	if (mPathnodeMoveRef == LocAndOffsets::null) {
 		return;
 	}
+	mActivePathNode->node.nodeLoc = mPathnodeMoveRef;
 	mPathnodeMoveRef = LocAndOffsets::null;
 }
 

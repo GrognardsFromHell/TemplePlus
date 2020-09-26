@@ -155,7 +155,7 @@ public:
 	static bool WriteNodeDistToFile(MapPathNodeList* node, TioFile* tioFile);
 	BOOL FlushNodes(const char* saveDir = nullptr);
 
-	static void GenerateClearanceFile();
+	static void GenerateClearanceFile(const char* saveDir = nullptr);
 	static int CalcClearanceFromNearbyObjects(objHndl obj, float clearanceReq);
 
 	void FindPathNodeAppend(const FindPathNodeData &);

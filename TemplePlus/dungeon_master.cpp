@@ -1580,9 +1580,6 @@ void DungeonMaster::RenderPathfinding()
 	}
 	
 
-	/*if (ImGui::Button("Delete Path Node")) {
-	}*/
-
 	if (ImGui::Button("Recalc All Neighbours")) {
 		pathNodeSys.RecalculateAllNeighbours();
 	}
@@ -1597,7 +1594,7 @@ void DungeonMaster::RenderPathfinding()
 			saveFolder = fmt::format("maps\\{}", mapName);
 		}
 		else {
-			saveFolder = fmt::format("New Pathnodes\\{}", mapName);
+			saveFolder = fmt::format("DM_PF\\{}", mapName);
 		}
 		tio_mkdir(saveFolder.c_str());
 		pathNodeSys.FlushNodes(saveFolder.c_str());
@@ -1608,9 +1605,31 @@ void DungeonMaster::RenderPathfinding()
 	if (ImGui::IsItemHovered())		ImGui::SetTooltip("If false, the changes will be temporary (reversed on reloading the map or save). If true, they'll replace the previous nodes completely.");
 
 	if (saveFolder.size()) {
-		ImGui::Text(fmt::format("Saved to: modules\\{}\\{}",config.defaultModule,saveFolder).c_str() );
+		ImGui::Text(fmt::format("Saved nodes to: modules\\{}\\{}",config.defaultModule,saveFolder).c_str() );
 	}
 	
+
+	static std::string saveFolderClearance = "";
+	static bool persistClearance = false;
+	if (ImGui::Button("Generate Clearances")) {
+		auto mapId = gameSystems->GetMap().GetCurrentMapId();
+		auto mapName = gameSystems->GetMap().GetMapName(mapId);
+		if (persistClearance) {
+			saveFolderClearance = fmt::format("maps\\{}", mapName);
+		}
+		else {
+			saveFolderClearance = fmt::format("DM_PF\\{}", mapName);
+		}
+		tio_mkdir(saveFolderClearance.c_str());
+		pathNodeSys.GenerateClearanceFile(saveFolderClearance.c_str());
+	}
+	ImGui::SameLine();
+	ImGui::Checkbox("Persist", &persistClearance);
+	if (ImGui::IsItemHovered())		ImGui::SetTooltip("Generate tile clearance data. This speeds up pathfinding and allows the engine to do some more demanding PF queries.");
+	if (saveFolderClearance.size()) {
+		ImGui::Text(fmt::format("Saved clearances to: modules\\{}\\{}", config.defaultModule, saveFolderClearance).c_str());
+	}
+
 }
 
 void DungeonMaster::SetObjEditor(objHndl handle){
