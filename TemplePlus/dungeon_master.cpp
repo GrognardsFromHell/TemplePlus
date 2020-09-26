@@ -490,7 +490,7 @@ bool DungeonMaster::HandlePathnode(const TigMsg& msg)
 
 		if (mActionType == DungeonMasterAction::PathnodeCreate ) {
 			// RMB - click (so it seizes the event and doesn't spawn a radial menu)
-			if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_RMB_CLICK) {
+			if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_RMB_RELEASED) {
 				DeactivateAction();
 				return true;
 			}
@@ -498,10 +498,10 @@ bool DungeonMaster::HandlePathnode(const TigMsg& msg)
 			if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_LMB_RELEASED) {
 				pathNodeSys.AddPathNode(mouseLoc, true);
 
-				// if Alt key is pressed, keep the action active
-				if (!infrastructure::gKeyboard.IsKeyPressed(VK_LMENU) && !infrastructure::gKeyboard.IsKeyPressed(VK_RMENU)) {
-					DeactivateAction();
-				}
+				//// if Alt key is pressed, keep the action active
+				//if (!infrastructure::gKeyboard.IsKeyPressed(VK_LMENU) && !infrastructure::gKeyboard.IsKeyPressed(VK_RMENU)) {
+				//	DeactivateAction();
+				//}
 
 				dmSys.SetIsHandlingMsg(true);
 				return true;
@@ -510,7 +510,7 @@ bool DungeonMaster::HandlePathnode(const TigMsg& msg)
 
 		if (mActionType == DungeonMasterAction::PathnodeDelete) {
 			// RMB - click (so it seizes the event and doesn't spawn a radial menu)
-			if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_RMB_CLICK) {
+			if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_RMB_RELEASED) {
 				DeactivateAction();
 				return true;
 			}
@@ -518,10 +518,10 @@ bool DungeonMaster::HandlePathnode(const TigMsg& msg)
 			if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_LMB_RELEASED) {
 				pathNodeSys.DeleteActiveNode();
 
-				// if Alt key is pressed, keep the action active
-				if (!infrastructure::gKeyboard.IsKeyPressed(VK_LMENU) && !infrastructure::gKeyboard.IsKeyPressed(VK_RMENU)) {
-					DeactivateAction();
-				}
+				//// if Alt key is pressed, keep the action active
+				//if (!infrastructure::gKeyboard.IsKeyPressed(VK_LMENU) && !infrastructure::gKeyboard.IsKeyPressed(VK_RMENU)) {
+				//	DeactivateAction();
+				//}
 
 				dmSys.SetIsHandlingMsg(true);
 				return true;
@@ -530,7 +530,7 @@ bool DungeonMaster::HandlePathnode(const TigMsg& msg)
 
 		if (mActionType == DungeonMasterAction::PathnodeMove) {
 			// RMB - click (so it seizes the event and doesn't spawn a radial menu)
-			if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_RMB_CLICK) {
+			if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_RMB_RELEASED) {
 				pathNodeSys.CancelMoveActiveNode();
 				DeactivateAction();
 				return true;
@@ -539,10 +539,10 @@ bool DungeonMaster::HandlePathnode(const TigMsg& msg)
 			if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_LMB_RELEASED) {
 				auto finishedMoving = pathNodeSys.MoveActiveNode();
 
-				// if Alt key is pressed, keep the action active
-				if (finishedMoving && !infrastructure::gKeyboard.IsKeyPressed(VK_LMENU) && !infrastructure::gKeyboard.IsKeyPressed(VK_RMENU)) {
-					DeactivateAction();
-				}
+				//// if Alt key is pressed, keep the action active
+				//if (finishedMoving && !infrastructure::gKeyboard.IsKeyPressed(VK_LMENU) && !infrastructure::gKeyboard.IsKeyPressed(VK_RMENU)) {
+				//	DeactivateAction();
+				//}
 
 				dmSys.SetIsHandlingMsg(true);
 				return true;
