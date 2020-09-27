@@ -55,6 +55,7 @@
 
 #include <path_node.h>
 #include <animgoals/animgoals_debugrenderer.h>
+#include <gamesystems\tilerender.h>
 
 DungeonMaster dmSys;
 
@@ -65,7 +66,8 @@ static bool isActionActive = false;
 static bool isMinimized = false;
 static bool isMoused = false;
 static bool isHandlingMsg = false;
-static bool showPathNodes;
+static bool showPathNodes = false;
+static bool showTiles = false;
 
 // monster modify
 DungeonMaster::CritterBooster critBoost;
@@ -180,6 +182,9 @@ void DungeonMaster::Render() {
 		RenderPathfinding();
 	}
 
+	if (ImGui::CollapsingHeader("Sector Tiles")) {
+		RenderSector();
+	}
 
 	// Spawn Party from Save
 	if (ImGui::TreeNodeEx("Import Rival Party", ImGuiTreeNodeFlags_CollapsingHeader)){
@@ -1583,7 +1588,7 @@ void DungeonMaster::RenderPathfinding()
 	if (ImGui::Button("Recalc All Neighbours")) {
 		pathNodeSys.RecalculateAllNeighbours();
 	}
-	if (ImGui::IsItemHovered()) ImGui::SetTooltip("Recalculates all neighbours and traversal distances between them. This may take a while.");
+	if (ImGui::IsItemHovered()) ImGui::SetTooltip("Recalculates all neighbours and traversal distances between them.");
 
 	static std::string saveFolder = "";
 	static std::string saveFolderClearance = "";
@@ -1616,7 +1621,7 @@ void DungeonMaster::RenderPathfinding()
 		tio_mkdir(saveFolderClearance.c_str());
 		pathNodeSys.GenerateClearanceFile(saveFolderClearance.c_str());
 	}
-	if (ImGui::IsItemHovered())		ImGui::SetTooltip("Generate tile clearance data. This speeds up pathfinding and allows the engine to do some more demanding PF queries.");
+	if (ImGui::IsItemHovered())		ImGui::SetTooltip("Generate tile clearance data. This speeds up pathfinding and allows the engine to do some more demanding PF queries. This may take a while.");
 	
 	ImGui::SameLine();
 	ImGui::Checkbox("Persist", &persist);
@@ -1629,6 +1634,12 @@ void DungeonMaster::RenderPathfinding()
 		ImGui::Text(fmt::format("Saved clearances to: modules\\{}\\{}", config.defaultModule, saveFolderClearance).c_str());
 	}
 
+}
+
+void DungeonMaster::RenderSector()
+{
+	ImGui::Checkbox("Show Blockers", &showTiles);
+	TileRenderer::Enable(showTiles);
 }
 
 void DungeonMaster::SetObjEditor(objHndl handle){

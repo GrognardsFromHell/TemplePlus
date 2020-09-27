@@ -72,10 +72,10 @@ public:
 struct SectorTile;
 enum class TileMaterial : uint8_t;
 
-class TileSystem : public GameSystem {
+class TileSystem : public GameSystem, public BufferResettingGameSystem {
 public:
 	static constexpr auto Name = "Tile";
-	TileSystem();
+	TileSystem(const GameSystemConf& config);
 	~TileSystem();
 	const std::string &GetName() const override;
 
@@ -83,6 +83,7 @@ public:
 	TileMaterial GetMaterial(locXY location);
 	
 	// Previously had reset buffers @ 0x100ab7c0 (now unused)
+	void ResetBuffers(const RebuildBufferInfo& rebuildInfo) override;
 };
 
 class ONameSystem : public GameSystem, public ModuleAwareGameSystem {

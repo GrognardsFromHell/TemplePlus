@@ -51,7 +51,7 @@ struct TemplePlusConfig
 	int sectorCacheSize = 128; // Default is now 128 (ToEE was 16)
 	int screenshotQuality = 80; // 1-100, Default is 80
 	bool debugPartSys = false;
-	bool debugClipping = true;
+	bool debugClipping = false;
 	bool drawObjCylinders = false;
 	bool newAnimSystem = false;
 

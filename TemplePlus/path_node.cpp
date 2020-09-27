@@ -19,7 +19,6 @@ char PathNodeSys::pathNodesSaveDir[260];
 MapPathNodeList * PathNodeSys::pathNodeList;
 MapClearanceData PathNodeSys::clearanceData;
 bool PathNodeSys::hasClearanceData = false;
-ClearanceProfile PathNodeSys::clearanceProfiles[30];
 struct PathNodeSysAddresses : temple::AddressTable
 {
 	
@@ -590,7 +589,8 @@ void PathNodeSys::GenerateClearanceFile(const char * saveDir)
 	logger->info("Generating clearance data.");
 	int idx = -1;
 	auto secClrData = new SectorClearanceData();
-	clearanceData.clrIdx.Reset();
+	clearanceData.Reset();
+
 	for (int secY = 0; secY < 16; secY++)
 	{
 		for (int secX = 0; secX < 16; secX++)
@@ -741,10 +741,6 @@ void PathNodeSys::apply()
 		return pathNodeSys.FreeAndLoad(loadDir, saveDir);
 		});
 	hasClearanceData = false;
-	for (int i = 1; i <= MAX_OBJ_RADIUS_SUBTILES; i++)
-	{
-		clearanceProfiles[i - 1].InitWithRadius(i * INCH_PER_TILE / 3);
-	}
 	
 	
 	auto pathnodeListAddr = &pathNodeList;
@@ -1271,4 +1267,36 @@ int PathNodeSys::GetNewId(){
 MapPathNodeList::MapPathNodeList()
 {
 	memset(this, 0, sizeof(MapPathNodeList));
+}
+
+void MapClearanceData::Reset()
+{
+	if (this->secClr) {
+		free(secClr);
+		secClr = nullptr;
+	}
+	clrIdx.Reset();
+}
+
+MapClearanceData::MapClearanceData()
+{
+	secClr = nullptr;
+	Reset();
+}
+
+ClearanceIndex::ClearanceIndex()
+{
+	Reset();
+}
+
+void ClearanceIndex::Reset()
+{
+	numSectors = 0;
+	for (int i = 0; i < 16; i++)
+	{
+		for (int j = 0; j < 16; j++)
+		{
+			clrAddr[i][j] = -1;
+		}
+	}
 }

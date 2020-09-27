@@ -27,6 +27,7 @@
 #include "lightningrenderer.h"
 #include "ui_intgame_renderer.h"
 #include "fogrenderer.h"
+#include "tilerender.h"
 #include "map/sector.h"
 #include <path_node.h>
 
@@ -155,6 +156,10 @@ GameRenderer::GameRenderer(TigInitializer &tig,
 		gameSystems.GetAAS(),
 		*mAasRenderer,
 		gameSystems.GetParticleSys());
+    mTileRenderer = std::make_unique<TileRenderer>(
+        tig.GetMdfFactory(),
+        tig.GetRenderingDevice());
+
 	mGmeshRenderer = std::make_unique<GMeshRenderer>(*mAasRenderer,
 		*mMapObjectRenderer,
 		gameSystems.GetGMesh());
@@ -246,11 +251,15 @@ void GameRenderer::Render() {
 void GameRenderer::RenderWorld(RenderWorldInfo *info) {
 	
   if (mRenderingDevice.BeginFrame()) {
+
+    
     // renderFuncs.RenderGround(info);
     mGameSystems.GetTerrain().Render();
 
     renderFuncs.PerformFogChecks();
 
+    
+    mGameSystems.GetClipping().SetDebug(config.debugClipping);
     mGameSystems.GetClipping().Render();
     // renderFuncs.RenderClipping();
 
@@ -271,6 +280,11 @@ void GameRenderer::RenderWorld(RenderWorldInfo *info) {
 	mFogOfWarRenderer->Render();
     // renderFuncs.RenderFogOfWar();
 
+    if (TileRenderer::IsEnabled()){
+        static auto renderTileOverlays = temple::GetRef<void(__cdecl)(RenderWorldInfo*)>(0x100ABC40);
+        renderTileOverlays(info);
+    }
+
 	mMapObjectRenderer->RenderOccludedMapObjects((int)info->tiles->x1, (int)info->tiles->x2, (int)info->tiles->y1,
 		(int)info->tiles->y2);
     /*graphics->EnableLighting();
@@ -283,9 +297,11 @@ void GameRenderer::RenderWorld(RenderWorldInfo *info) {
     renderFuncs.RenderTextFloaters(info);
 
     if (config.debugClipping) { 
-        auto &renderClippingFlags = temple::GetRef<int>(0x10B3DB00) = 0x1B;
+        /*auto &renderClippingFlags = temple::GetRef<int>(0x10B3DB00) = 0x1B;
         renderClippingFlags |= 0x1B;
         renderFuncs.RenderClipping();
+        auto& clippersVisibilityFlags = temple::GetRef<int>(0x10B3DB00);
+        clippersVisibilityFlags = 0x1F; */
     }
 
     pathNodeSys.RenderPathNodes((int)info->tiles->x1, (int)info->tiles->x2, (int)info->tiles->y1,
@@ -297,4 +313,5 @@ void GameRenderer::RenderWorld(RenderWorldInfo *info) {
 
     mRenderingDevice.Present();
   }
+
 }

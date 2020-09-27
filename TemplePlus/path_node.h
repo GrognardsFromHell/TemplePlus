@@ -12,62 +12,13 @@
 struct TioFile;
 struct RenderWorldInfo;
 
-struct ClearanceProfile
-{
-	uint8_t radius;
-	uint8_t clearance[MAX_OBJ_RADIUS_SUBTILES * 6 + 1][MAX_OBJ_RADIUS_SUBTILES * 6 + 1];
-	ClearanceProfile()
-	{
-		radius = 1;
-		memset(clearance, 255, sizeof(clearance));
-
-	}
-	void InitWithRadius(float radiusF)
-	{
-		radius = static_cast<uint8_t>(radiusF / (INCH_PER_TILE / 3));
-		memset(clearance, 255, sizeof(clearance));
-		int i0 = MAX_OBJ_RADIUS_SUBTILES * 6 / 2;
-		for (int ny = 0; ny < MAX_OBJ_RADIUS_SUBTILES * 6 + 1; ny++)
-		{
-			for (int nx = 0; nx < MAX_OBJ_RADIUS_SUBTILES * 6 + 1; nx++)
-			{
-				if (ny == 45 && radius == 29)
-				{
-					int dummy = 1;
-				}
-				clearance[ny][nx] = (uint8_t) max(0.0001f, sqrtf(
-					min({ powf(nx - 0.0f, 2.0f), powf(nx - 0.0f - 1, 2.0f), powf(nx - i0 + 1.0f, 2.0f) })
-					+ min({ powf(ny - 0.0f, 2.0f), powf(ny - 0.0f - 1, 2.0f), powf(ny - i0 + 1.0f, 2.0f) }
-				)) - radius);
-				//		clearance[ny][nx] = sqrt(
-				//			min( pow(nx -i0 ,2), pow(nx-i0+1,2), pow(nx-i0-1,2) )
-				//			+ min(pow(ny-i0, 2), pow(ny-i0 + 1, 2), pow(ny-i0 - 1, 2))
-				//			);
-			}
-		}
-	};
-
-};
-
 struct ClearanceIndex // Holds the mapping from sector (Y,X) into SectorClearanceData[] array index; -1 if none exists
 {
 	unsigned char numSectors;
 	uint16_t clrAddr[16][16]; // sectorY, sectorX
-	ClearanceIndex()
-	{
-		Reset();
-	}
-	void Reset()
-	{
-		numSectors = 0;
-		for (int i = 0; i < 16; i++)
-		{
-			for (int j = 0; j < 16; j++)
-			{
-				clrAddr[i][j] = -1;
-			}
-		}
-	}
+	ClearanceIndex();
+	
+	void Reset();
 };
 
 struct SectorClearanceData
@@ -79,6 +30,9 @@ struct MapClearanceData
 {
 	ClearanceIndex clrIdx;
 	SectorClearanceData * secClr;
+
+	void Reset();
+	MapClearanceData();
 };
 
 struct MapPathNode
@@ -128,10 +82,8 @@ public:
 	void RecipDebug(); // debugging for non-reciprocating neighbour nodes (i.e. finds situations where A->B but not B->A)
 	static char pathNodesLoadDir[260];
 	static char pathNodesSaveDir[260];
-	static ClearanceProfile clearanceProfiles[MAX_OBJ_RADIUS_SUBTILES];
 	static MapClearanceData clearanceData;
 	static bool hasClearanceData;
-	//const int testSizeofClearanceData = sizeof(clearanceData);
 
 	static MapPathNodeList * pathNodeList;
 	MapPathNodeList _pathNodeList[MaxPathNodes]; //  will replace the referenced list once we're done

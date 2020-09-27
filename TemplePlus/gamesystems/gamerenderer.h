@@ -22,6 +22,7 @@ class GMeshRenderer;
 class LightningRenderer;
 class FogOfWarRenderer;
 class IntgameRenderer;
+class TileRenderer;
 
 class GameRenderer {
 public:
@@ -52,6 +53,7 @@ private:
 	std::unique_ptr<LightningRenderer> mLightningRenderer;
 	std::unique_ptr<FogOfWarRenderer> mFogOfWarRenderer;
 	std::unique_ptr<IntgameRenderer> mIntgameRenderer;
+	std::unique_ptr <TileRenderer> mTileRenderer;
 };
 
 extern GameRenderer *gameRenderer;

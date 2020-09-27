@@ -665,7 +665,7 @@ void GameSystems::InitializeSystems(LoadingScreen& loadingScreen) {
 	loadingScreen.SetProgress(20 / 79.0f);
 	mLight = InitializeSystem<LightSystem>(loadingScreen, mConfig);
 	loadingScreen.SetProgress(21 / 79.0f);
-	mTile = InitializeSystem<TileSystem>(loadingScreen);
+	mTile = InitializeSystem<TileSystem>(loadingScreen, mConfig);
 	loadingScreen.SetProgress(22 / 79.0f);
 	mOName = InitializeSystem<ONameSystem>(loadingScreen, mConfig);
 	loadingScreen.SetProgress(23 / 79.0f);
