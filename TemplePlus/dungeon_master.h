@@ -40,12 +40,14 @@ public:
 	void RenderEditedObj();
 	void RenderVsParty();
 	void RenderFudgeRolls();
+	void RenderPathfinding();
 
 	bool HandleMsg(const TigMsg & msg);
 	bool HandleSpawning(const TigMsg & msg);
 	bool HandleCloning(const TigMsg& msg);
 	bool HandleEditing(const TigMsg & msg);
 	bool HandleMoving(const TigMsg &msg);
+	bool HandlePathnode(const TigMsg& msg);
 
 	void InitEntry(int protoNum);
 	void InitCaches();
@@ -96,7 +98,10 @@ public:
 		None,
 		Spawn,
 		Clone,
-		Move
+		Move,
+		PathnodeCreate,
+		PathnodeDelete,
+		PathnodeMove,
 	};
 
 protected:

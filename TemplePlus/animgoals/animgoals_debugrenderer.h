@@ -13,6 +13,10 @@ public:
 		enabled_ = enable;
 	}
 
+	static void EnablePaths(bool enable) {
+		pathsEnabled_ = enable;
+	}
+
 	static void EnableObjectNames(bool enable) {
 		showObjectNames_ = enable;
 	}
@@ -24,5 +28,7 @@ private:
 	static bool enabled_;
 
 	static bool showObjectNames_;
+
+	static bool pathsEnabled_;
 
 };

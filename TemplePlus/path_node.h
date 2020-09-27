@@ -10,6 +10,7 @@
 #define MAX_OBJ_RADIUS_SUBTILES MAX_OBJ_RADIUS_TILES*3 // the maximum object radius supported by clearance mapping, expressed in subtiles
 
 struct TioFile;
+struct RenderWorldInfo;
 
 struct ClearanceProfile
 {
@@ -102,6 +103,7 @@ struct MapPathNodeList
 	int field4;
 	MapPathNode node;
 	MapPathNodeList * next;
+	MapPathNodeList();
 };
 
 const int TestSizeMapPathNodeList = sizeof(MapPathNodeList); //  should be 48 (0x30)
@@ -143,16 +145,17 @@ public:
 	static bool LoadNeighDistFromFile(TioFile* file, MapPathNodeList* node);
 	static BOOL LoadNodesCurrent();
 	static void FreeNode(MapPathNodeList* node);
-	static BOOL FreeAndLoad(char* loadDir, char*saveDir);
-	static void Reset();
+	void PopNode(MapPathNodeList* node);
+	BOOL FreeAndLoad(char* loadDir, char*saveDir);
+	void Reset();
 	static void SetDirs(char *loadDir, char*saveDir);
 
 	static void RecalculateNeighbours(MapPathNodeList* node);
-	static void RecalculateAllNeighbours();
+	void RecalculateAllNeighbours();
 	static bool WriteNodeDistToFile(MapPathNodeList* node, TioFile* tioFile);
-	static BOOL FlushNodes();
+	BOOL FlushNodes(const char* saveDir = nullptr);
 
-	static void GenerateClearanceFile();
+	static void GenerateClearanceFile(const char* saveDir = nullptr);
 	static int CalcClearanceFromNearbyObjects(objHndl obj, float clearanceReq);
 
 	void FindPathNodeAppend(const FindPathNodeData &);
@@ -160,25 +163,29 @@ public:
 	int PopMinHeuristicNodeLegacy(FindPathNodeData* fpndOut); // output is 1 on success 0 on fail (if all nodes are negative distance)
 	BOOL FindClosestPathNode(LocAndOffsets * loc, int * nodeIdOut);
 	int FindPathBetweenNodes(int fromNodeId, int toNodeId, int *nodeIds, int maxChainLength);
+	void AddPathNode(LocAndOffsets& loc, bool recalcNeighbours=false);
 	static BOOL GetPathNode(int id, MapPathNode * pathNodeOut);
-	static BOOL WriteNodeToFile(MapPathNodeList*, TioFile*);
-	void apply() override
-	{
-		//rebase(GetPathNode, 0x100A9660);
-		//rebase(FindClosestPathNode, 0x100A96A0);
-		//_FindPathBetweenNodes = temple::GetPointer<>(0x100A9E30);
-		//pathNodeList = temple::GetPointer<MapPathNodeList*>(0x10BA62B0);
-		replaceFunction(0x100A9720, SetDirs);
-		replaceFunction(0x100A9C00, LoadNodesCurrent);
-		replaceFunction(0x100A9DA0, Reset);
-		replaceFunction(0x100A9DD0, FreeAndLoad);
-		hasClearanceData = false;
-		for (int i = 1; i <= MAX_OBJ_RADIUS_SUBTILES;i++)
-		{
-			clearanceProfiles[i-1].InitWithRadius(i *INCH_PER_TILE/3);
-		}
-	}
 	
+	static bool PathNodeExists(int id);
+	static BOOL WriteNodeToFile(MapPathNodeList*, TioFile*);
+
+	void SetPathNodeVisibile(bool setting);
+	void RenderPathNodes(int tileX1, int tileX2, int tileY1, int tileY2);
+	bool SetActiveNodeFromLoc(LocAndOffsets& loc);
+	void DeleteActiveNode();
+	bool MoveActiveNode(LocAndOffsets * newLoc = nullptr); // return true if finished moving (second left click)
+	void CancelMoveActiveNode();
+
+	int GetNewId();
+
+	void apply() override;
+
+private:
+	bool mNeedsRecalcNeighbours = false;
+	bool mRenderPathNodesEn = false;
+	MapPathNodeList* mActivePathNode = nullptr;
+	LocAndOffsets mPathnodeMoveRef = LocAndOffsets::null;
+	static MapPathNodeList* GetPathNodeListEntry(int id);
 };
 
 extern PathNodeSys pathNodeSys;

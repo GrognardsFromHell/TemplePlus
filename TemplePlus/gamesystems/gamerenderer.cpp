@@ -28,6 +28,7 @@
 #include "ui_intgame_renderer.h"
 #include "fogrenderer.h"
 #include "map/sector.h"
+#include <path_node.h>
 
 using namespace gfx;
 using namespace temple;
@@ -280,6 +281,16 @@ void GameRenderer::RenderWorld(RenderWorldInfo *info) {
     renderFuncs.RenderUiRelated(info);
     renderFuncs.RenderTextBubbles(info);
     renderFuncs.RenderTextFloaters(info);
+
+    if (config.debugClipping) { 
+        auto &renderClippingFlags = temple::GetRef<int>(0x10B3DB00) = 0x1B;
+        renderClippingFlags |= 0x1B;
+        renderFuncs.RenderClipping();
+    }
+
+    pathNodeSys.RenderPathNodes((int)info->tiles->x1, (int)info->tiles->x2, (int)info->tiles->y1,
+        (int)info->tiles->y2);
+
 
 	AnimGoalsDebugRenderer::RenderAllAnimGoals((int)info->tiles->x1, (int)info->tiles->x2, (int)info->tiles->y1,
 		(int)info->tiles->y2);
