@@ -3095,7 +3095,7 @@ BOOL UiItemCreation::MaaItemMsg(int widId, TigMsg* msg){
 
 BOOL UiItemCreation::MaaEffectMsg(int widId, TigMsg* msg){
 
-	if (msg->type != TigMsgType::WIDGET || msg->arg2 != 1)
+	if (msg->type != TigMsgType::WIDGET || ((TigMsgWidget*)msg)->widgetEventType != TigMsgWidgetEvent::MouseReleased)
 		return false;
 
 	craftedItemNamePos = craftedItemName.size();
@@ -3116,13 +3116,13 @@ BOOL UiItemCreation::MaaEffectMsg(int widId, TigMsg* msg){
 	if (MaaEffectIsInAppliedList(effIdx))
 		return true;
 
-	int surplusXp = GetSurplusXp(itemCreationCrafter);
+	/*int surplusXp = GetSurplusXp(itemCreationCrafter);
 	if (MaaXpCost(effIdx) > surplusXp)
 		return true;
 
 	auto cpCost = MaaCpCost(effIdx);
 	if (cpCost > party.GetMoney())
-		return true;
+		return true;*/
 
 	if (HasNecessaryEffects(effIdx))
 		maaSelectedEffIdx = effIdx;
@@ -3271,28 +3271,31 @@ void UiItemCreation::MaaEffectGetTextStyle(int effIdx, objHndl crafter, TigTextS
 		}
 	}
 
-	int surplusXp = d20LevelSys.GetSurplusXp(crafter);
-	if (MaaXpCost(effIdx) > surplusXp){
-		style = temple::GetPointer<TigTextStyle>(0x10BECDB0);
-		return;
-	}
-
-	auto cpCost = MaaCpCost(effIdx);
-	if (cpCost > party.GetMoney())
-	{
-		style = temple::GetPointer<TigTextStyle>(0x10BED8B8);
-		return;
-	}
-
-	if (!HasNecessaryEffects(effIdx)){
+	if (!HasNecessaryEffects(effIdx)) {
 		style = temple::GetPointer<TigTextStyle>(0x10BEE2E0);
 		return;
 	}
 
 
-
 	if (effIdx == maaSelectedEffIdx){
 		style = temple::GetPointer<TigTextStyle>(0x10BEDF70);
+		return;
+	}
+
+	// if it's just XP/CP, let the user pick it to see the required resources
+	int surplusXp = d20LevelSys.GetSurplusXp(crafter);
+	auto insuffXp = MaaXpCost(effIdx) > surplusXp;
+	if (insuffXp) {
+		//style = temple::GetPointer<TigTextStyle>(0x10BECDB0);
+		style = temple::GetPointer<TigTextStyle>(0x10BEDDF0);
+		return;
+	}
+
+	auto cpCost = MaaCpCost(effIdx);
+	auto insuffCp = cpCost > party.GetMoney();
+	if (insuffCp) {
+		//style = temple::GetPointer<TigTextStyle>(0x10BED8B8);
+		style = temple::GetPointer<TigTextStyle>(0x10BEDDF0);
 		return;
 	}
 
@@ -3323,13 +3326,13 @@ BOOL UiItemCreation::MaaEffectAddMsg(int widId, TigMsg* msg)
 	if (MaaEffectIsInAppliedList(effIdx))
 		return true;
 
-	int surplusXp = GetSurplusXp(itemCreationCrafter);
+	/*int surplusXp = GetSurplusXp(itemCreationCrafter);
 	if (MaaXpCost(effIdx) > surplusXp)
 		return true;
 
 	auto cpCost = MaaCpCost(effIdx);
 	if (cpCost > party.GetMoney())
-		return true;
+		return true;*/
 
 	if (HasNecessaryEffects(effIdx))
 	{
