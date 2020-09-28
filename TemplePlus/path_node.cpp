@@ -12,6 +12,8 @@
 //rendering
 #include <tig\tig_startup.h>
 #include <graphics/shaperenderer3d.h>
+#include <graphics\textengine.h>
+#include "ui/widgets/widget_styles.h"
 
 PathNodeSys pathNodeSys;
 char PathNodeSys::pathNodesLoadDir[260];
@@ -19,7 +21,6 @@ char PathNodeSys::pathNodesSaveDir[260];
 MapPathNodeList * PathNodeSys::pathNodeList;
 MapClearanceData PathNodeSys::clearanceData;
 bool PathNodeSys::hasClearanceData = false;
-ClearanceProfile PathNodeSys::clearanceProfiles[30];
 struct PathNodeSysAddresses : temple::AddressTable
 {
 	
@@ -590,7 +591,8 @@ void PathNodeSys::GenerateClearanceFile(const char * saveDir)
 	logger->info("Generating clearance data.");
 	int idx = -1;
 	auto secClrData = new SectorClearanceData();
-	clearanceData.clrIdx.Reset();
+	clearanceData.Reset();
+
 	for (int secY = 0; secY < 16; secY++)
 	{
 		for (int secX = 0; secX < 16; secX++)
@@ -667,7 +669,8 @@ void PathNodeSys::GenerateClearanceFile(const char * saveDir)
 	logger->info("Processing complete; saving to file clearance.bin");
 	clearanceData.clrIdx.numSectors = idx + 1;
 	clearanceData.secClr = secClrData;
-	
+	hasClearanceData = true;
+
 	char fileName[260];
 	if (!saveDir || !saveDir[0]) {
 		saveDir = pathNodesSaveDir;
@@ -740,10 +743,6 @@ void PathNodeSys::apply()
 		return pathNodeSys.FreeAndLoad(loadDir, saveDir);
 		});
 	hasClearanceData = false;
-	for (int i = 1; i <= MAX_OBJ_RADIUS_SUBTILES; i++)
-	{
-		clearanceProfiles[i - 1].InitWithRadius(i * INCH_PER_TILE / 3);
-	}
 	
 	
 	auto pathnodeListAddr = &pathNodeList;
@@ -1161,6 +1160,9 @@ void PathNodeSys::RenderPathNodes(int tileX1, int tileX2, int tileY1, int tileY2
 
 	XMCOLOR circleFillColor(0.0f, 0.0f, 0.0f, 0.0f);
 
+	static gfx::TextStyle textStyle = widgetTextStyles->GetTextStyle("default");
+	auto& textEngine = tig->GetRenderingDevice().GetTextEngine();
+
 	for (auto node = pathNodeList; node; node = node->next) {
 		auto nodeLoc = node->node.nodeLoc;
 		
@@ -1170,9 +1172,38 @@ void PathNodeSys::RenderPathNodes(int tileX1, int tileX2, int tileY1, int tileY2
 
 		auto pos = nodeLoc.ToInches3D();
 
+
 		if (node == mActivePathNode) {
+
+			auto topOfNode = tig->GetRenderingDevice().GetCamera().WorldToScreenUi(pos);
+
 			renderer3d.DrawFilledCircle(pos, 8, activeNodeBorderColor, circleFillColor, false);
 			renderer3d.DrawFilledCircle(pos, 603, activeAoeBorderColor, circleFillColor, false);
+
+			gfx::FormattedText t;
+			t.defaultStyle = textStyle;
+			t.defaultStyle.align = gfx::TextAlign::Center;
+			
+			auto text = fmt::format("Node {}, neighbs:\n", node->node.id);
+			for (auto i = 0; i < node->node.neighboursCount; ++i) {
+				text += fmt::format("{}{} ({:.2f})", i==0 ? "" : ", ", node->node.neighbours[i], node->node.neighDistances[i]);
+			}
+			t.text = local_to_ucs2(text);
+			auto& nameStyle = t.formats.push_back();
+			nameStyle.startChar = 0;
+			nameStyle.length = 5;
+			nameStyle.style = t.defaultStyle;
+
+			gfx::TextMetrics nameMetrics;
+			nameMetrics.width = 120;
+			textEngine.MeasureText(t, nameMetrics);
+
+			TigRect nameRect;
+			nameRect.x = topOfNode.x- nameMetrics.width/2;
+			nameRect.width = nameMetrics.width;
+			nameRect.y = topOfNode.y - nameMetrics.height - 2;
+			nameRect.height = nameMetrics.height;
+			textEngine.RenderText(nameRect, t);
 		}
 
 
@@ -1270,4 +1301,36 @@ int PathNodeSys::GetNewId(){
 MapPathNodeList::MapPathNodeList()
 {
 	memset(this, 0, sizeof(MapPathNodeList));
+}
+
+void MapClearanceData::Reset()
+{
+	if (this->secClr) {
+		free(secClr);
+		secClr = nullptr;
+	}
+	clrIdx.Reset();
+}
+
+MapClearanceData::MapClearanceData()
+{
+	secClr = nullptr;
+	Reset();
+}
+
+ClearanceIndex::ClearanceIndex()
+{
+	Reset();
+}
+
+void ClearanceIndex::Reset()
+{
+	numSectors = 0;
+	for (int i = 0; i < 16; i++)
+	{
+		for (int j = 0; j < 16; j++)
+		{
+			clrAddr[i][j] = -1;
+		}
+	}
 }

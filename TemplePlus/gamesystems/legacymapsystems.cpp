@@ -172,11 +172,17 @@ void LightSystem::SetMapId(int mapId)
 //* Tile
 //*****************************************************************************
 
-TileSystem::TileSystem() {
+TileSystem::TileSystem(const GameSystemConf& config) {
 	// Was previously 0x100ab590 (see class comment)
+	auto startup = temple::GetPointer<int(const GameSystemConf*)>(0x100AB590);
+	if (!startup(&config)) {
+		throw TempleException("Unable to initialize game system Tile");
+	}
 }
 TileSystem::~TileSystem() {
 	// Was previously 0x100ac8a0 (see class comment)
+	auto shutdown = temple::GetPointer<void()>(0x100AC8A0);
+	shutdown();
 }
 const std::string &TileSystem::GetName() const {
 	static std::string name("Tile");
@@ -195,6 +201,12 @@ SectorTile TileSystem::GetTile(locXY location) {
 TileMaterial TileSystem::GetMaterial(locXY location) {
 	static auto map_tile_get_footstep_sound = temple::GetPointer<int(locXY loc)>(0x100ab870);
 	return (TileMaterial) map_tile_get_footstep_sound(location);
+}
+
+void TileSystem::ResetBuffers(const RebuildBufferInfo& rebuildInfo)
+{
+	auto resetBuffers = temple::GetPointer<void(const RebuildBufferInfo*)>(0x100AB7C0);
+	resetBuffers(&rebuildInfo);
 }
 
 //*****************************************************************************

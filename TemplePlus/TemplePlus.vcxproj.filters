@@ -531,6 +531,7 @@
     <ClCompile Include="animgoals\animgoals_debugrenderer.cpp" />
     <ClCompile Include="animgoals\animgoals_callbacks.cpp" />
     <ClCompile Include="poison.cpp" />
+    <ClCompile Include="gamesystems\tilerender.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -1006,6 +1007,7 @@
     <ClInclude Include="animgoals\animgoals_debugrenderer.h" />
     <ClInclude Include="animgoals\anim_slot.h" />
     <ClInclude Include="animgoals\animgoals_callbacks.h" />
+    <ClInclude Include="gamesystems\tilerender.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

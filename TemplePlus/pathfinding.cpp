@@ -499,7 +499,7 @@ uint32_t Pathfinding::ShouldUsePathnodes(Path* pathQueryResult, PathQuery* pathQ
 	LocAndOffsets from = pathQuery->from;
 	if (!(pathQuery->flags & PQF_DONT_USE_PATHNODES))
 	{
-		if (combatSys.isCombatActive())
+		if (false /*combatSys.isCombatActive()*/ )
 		{
 			if (locSys.distBtwnLocAndOffs(pathQueryResult->from, pathQueryResult->to) > (float)600.0)
 			{
@@ -507,9 +507,24 @@ uint32_t Pathfinding::ShouldUsePathnodes(Path* pathQueryResult, PathQuery* pathQ
 			}
 			
 		}
-		else if (locSys.distBtwnLocAndOffs(pathQueryResult->from, pathQueryResult->to) > (float)600.0)
-		{
-			return true;
+		else {
+			// check if the closest nodes (from/to) are neighbours; if so, return false so that it tries a direct path search first
+			MapPathNode fromNode, toNode;
+			int fromId, toId;
+			pathNodeSys.FindClosestPathNode(&from, &fromId);
+			pathNodeSys.FindClosestPathNode(&pathQueryResult->to, &toId);
+			if (!pathNodeSys.GetPathNode(fromId, &fromNode) || !pathNodeSys.GetPathNode(toId, &toNode))
+				return false;
+			for (int i = 0; i < fromNode.neighboursCount; ++i) {
+				auto neighbour = fromNode.neighbours[i];
+				if (neighbour == toId)
+					return false;
+			}
+
+			if (locSys.distBtwnLocAndOffs(pathQueryResult->from, pathQueryResult->to) > (float)600.0)
+			{
+				return true;
+			}
 		}
 	}
 	return result;
@@ -707,6 +722,7 @@ bool Pathfinding::TargetSurrounded(Path* pqr, PathQuery* pq)
 
 }
 
+
 int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 {
 	if (config.pathfindingDebugMode)
@@ -717,17 +733,17 @@ int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 	Path pathLocal;
 
 	pathQueryLocal = *pq;
-	pathQueryLocal.to = path->to;
+	pathQueryLocal.to   = path->to;
 	pathQueryLocal.from = path->from;
 	pathQueryLocal.flags = (PathQueryFlags)(
 		(uint32_t)pathQueryLocal.flags | PQF_ALLOW_ALTERNATIVE_TARGET_TILE | PQF_STRAIGHT_LINE_ONLY_FOR_SANS_NODE);
 	PathInit(&pathLocal, &pathQueryLocal);
-	pathQueryLocal.to = path->to;
+	pathQueryLocal.to   = path->to;
 	pathQueryLocal.from = path->from;
 	pathQueryLocal.flags = (PathQueryFlags)(
 		(uint32_t)pathQueryLocal.flags  | PQF_ALLOW_ALTERNATIVE_TARGET_TILE | PQF_STRAIGHT_LINE_ONLY_FOR_SANS_NODE);
 	pathLocal.from = path->from;
-	pathLocal.to = pathQueryLocal.to;
+	pathLocal.to   = pathQueryLocal.to;
 
 
 	int result = FindPathStraightLine(&pathLocal, &pathQueryLocal);
@@ -742,7 +758,7 @@ int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 
 
 
-	auto from = path->from;
+	//auto from = path->from;
 	int nodeTotal = 0;
 	int fromClosestId, toClosestId;
 	int chainLength;
@@ -771,40 +787,32 @@ int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 	}
 
 
-	MapPathNode nodeTemp1, nodeTemp0;
+	
 	int i0 = 0;
 
-
+	
+	// Attempt straight line from 2nd last pathnode to destination (or general short PF if has clearance data)
+	// If this is possible, shorten the path to avoid a zigzag going from the last node to destination
 	if (chainLength>1)
 	{
-		pathNodeSys.GetPathNode(nodeIds[1], &nodeTemp1);
-		pathNodeSys.GetPathNode(nodeIds[0], &nodeTemp0);
-		float distFromSecond = locSys.distBtwnLocAndOffs(from, nodeTemp1.nodeLoc);
-		if (distFromSecond < 614.0)
-		{
-			if (locSys.distBtwnLocAndOffs(nodeTemp0.nodeLoc, nodeTemp1.nodeLoc) > distFromSecond)
-				i0 = 1;
-		}
-
-		// attempt straight line from 2nd last pathnode to destination
-		// if this is possible, it will shorten the path and avoid a zigzag going from the last node to destination
-		pathNodeSys.GetPathNode(nodeIds[chainLength - 2], &nodeTemp1);
-		pathNodeSys.GetPathNode(nodeIds[chainLength - 1], &nodeTemp0);
+		MapPathNode node2ndLast, nodeLast;
+		pathNodeSys.GetPathNode(nodeIds[chainLength - 2], &node2ndLast);
+		pathNodeSys.GetPathNode(nodeIds[chainLength - 1], &nodeLast);
 		if (! (pathQueryLocal.flags & PQF_TARGET_OBJ))
 		{
 			pathQueryLocal = * pq;
 			pathQueryLocal.to = path->to;
-			pathQueryLocal.from = nodeTemp1.nodeLoc;
+			pathQueryLocal.from = node2ndLast.nodeLoc;
 			pathQueryLocal.flags = (PathQueryFlags)(
 				(uint32_t)pathQueryLocal.flags & (~(PQF_ADJUST_RADIUS | PQF_TARGET_OBJ)) 
 				| PQF_ALLOW_ALTERNATIVE_TARGET_TILE | ((!pathNodeSys.hasClearanceData)* PQF_STRAIGHT_LINE_ONLY_FOR_SANS_NODE));
 			PathInit(&pathLocal, &pathQueryLocal);
 			pathQueryLocal.to = path->to;
-			pathQueryLocal.from = nodeTemp1.nodeLoc;
+			pathQueryLocal.from = node2ndLast.nodeLoc;
 			pathQueryLocal.flags = (PathQueryFlags)(
 				(uint32_t)pathQueryLocal.flags & (~(PQF_ADJUST_RADIUS | PQF_TARGET_OBJ))
 				| PQF_ALLOW_ALTERNATIVE_TARGET_TILE | ( (!pathNodeSys.hasClearanceData)* PQF_STRAIGHT_LINE_ONLY_FOR_SANS_NODE));
-			pathLocal.from = nodeTemp1.nodeLoc;
+			pathLocal.from = node2ndLast.nodeLoc;
 			pathLocal.to = pathQueryLocal.to;
 			int nodeCountAdded = FindPathSansNodes(&pathQueryLocal, &pathLocal);
 			if (nodeCountAdded)
@@ -813,53 +821,95 @@ int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 			}
 		} else
 		{
-			float distSecondLastToDestination = locSys.distBtwnLocAndOffs(path->to, nodeTemp1.nodeLoc);
+			float distSecondLastToDestination = locSys.distBtwnLocAndOffs(path->to, node2ndLast.nodeLoc);
 			if (distSecondLastToDestination < 400.0)
 			{
-				if (locSys.distBtwnLocAndOffs(nodeTemp0.nodeLoc, nodeTemp1.nodeLoc) > distSecondLastToDestination)
+				if (locSys.distBtwnLocAndOffs(nodeLast.nodeLoc, node2ndLast.nodeLoc) > distSecondLastToDestination)
 					chainLength--;
 			}
 		}
 
 	}
 
+	// Attempt straight line from origin to 2nd node (or general short PF if has clearance data)
+	// If this is possible, shorten the path
+	// Note: The case where chainLength == 2 (initial) should have been already tested in principle... but we'll leave the check just in case
+	if (chainLength > 1) {
+
+		MapPathNode nodeFirst, nodeSecond;
+		pathNodeSys.GetPathNode(nodeIds[0], &nodeFirst);
+		pathNodeSys.GetPathNode(nodeIds[1], &nodeSecond);
+		
+		if (!(pathQueryLocal.flags & PQF_TARGET_OBJ))
+		{
+			pathQueryLocal = *pq;
+			pathQueryLocal.from  = path->from;
+			pathQueryLocal.to    = nodeSecond.nodeLoc;
+			pathQueryLocal.flags = (PathQueryFlags)(
+				(uint32_t)pathQueryLocal.flags & (~(PQF_ADJUST_RADIUS | PQF_TARGET_OBJ))
+				| PQF_ALLOW_ALTERNATIVE_TARGET_TILE | ((!pathNodeSys.hasClearanceData) * PQF_STRAIGHT_LINE_ONLY_FOR_SANS_NODE));
+			PathInit(&pathLocal, &pathQueryLocal);
+			pathLocal.from = pathQueryLocal.from  = path->from;
+			pathLocal.to   = pathQueryLocal.to    = nodeSecond.nodeLoc;
+			pathQueryLocal.flags = (PathQueryFlags)(
+				(uint32_t)pathQueryLocal.flags & (~(PQF_ADJUST_RADIUS | PQF_TARGET_OBJ))
+				| PQF_ALLOW_ALTERNATIVE_TARGET_TILE | ((!pathNodeSys.hasClearanceData) * PQF_STRAIGHT_LINE_ONLY_FOR_SANS_NODE));
+			
+			int nodeCountAdded = FindPathSansNodes(&pathQueryLocal, &pathLocal);
+			if (nodeCountAdded){
+				/*memcpy(&nodeIds[0], &nodeIds[1], chainLength-1);
+				chainLength--;*/
+				i0 = 1;
+			}
+		}
+		else {
+			float distFromSecond = locSys.distBtwnLocAndOffs(path->from, nodeSecond.nodeLoc);
+			if (distFromSecond < 614.0)
+			{
+				if (locSys.distBtwnLocAndOffs(nodeFirst.nodeLoc, nodeSecond.nodeLoc) > distFromSecond)
+					i0 = 1;
+			}
+		}
+		
+	}
+
 	// add paths from node to node
 	bool destinationReached = false;
+	auto curLoc = path->from;
+	MapPathNode nodeTemp1;
 	for (int i = i0; i < chainLength; i++)
 	{
 		// define the queries, init etc.
-		
-		
 		{
-		pathNodeSys.GetPathNode(nodeIds[i], &nodeTemp1);
+			pathNodeSys.GetPathNode(nodeIds[i], &nodeTemp1);
 			pathQueryLocal = *pq;
-		pathQueryLocal.flags = (PathQueryFlags)(
-			(uint32_t)pathQueryLocal.flags & (~(PQF_ADJUST_RADIUS | PQF_TARGET_OBJ)) | PQF_ALLOW_ALTERNATIVE_TARGET_TILE
-			//(uint32_t)pathQueryLocal.flags | PQF_ALLOW_ALTERNATIVE_TARGET_TILE
-			);
-		pathQueryLocal.from = from;
-		pathQueryLocal.to = nodeTemp1.nodeLoc;
-		
-		PathInit(&pathLocal, &pathQueryLocal);
-
-			pathQueryLocal = *pq;
-		pathQueryLocal.flags = (PathQueryFlags)(
+			pathQueryLocal.flags = (PathQueryFlags)(
 				(uint32_t)pathQueryLocal.flags & (~(PQF_ADJUST_RADIUS | PQF_TARGET_OBJ)) | PQF_ALLOW_ALTERNATIVE_TARGET_TILE
-			//(uint32_t)pathQueryLocal.flags & (~(PQF_ADJUST_RADIUS | PQF_TARGET_OBJ)) | PQF_ALLOW_ALTERNATIVE_TARGET_TILE
-			);
-
-		pathLocal.from = pathQueryLocal.from = from;
-		pathLocal.to = pathQueryLocal.to = nodeTemp1.nodeLoc;
-		pathLocal.nodeCount = pathLocal.nodeCount2 = pathLocal.nodeCount3 = 0;
+				//(uint32_t)pathQueryLocal.flags | PQF_ALLOW_ALTERNATIVE_TARGET_TILE
+				);
+			pathQueryLocal.from = curLoc;
+			pathQueryLocal.to   = nodeTemp1.nodeLoc;
 		
-		if (!GetAlternativeTargetLocation(&pathLocal, &pathQueryLocal)) // verifies that the destination is clear, and if not, tries to get an available tile
-		{
-			logger->warn("Warning: pathnode not clear");
-		}
-		if (pathLocal.to != nodeTemp1.nodeLoc) //  path "To" location has been adjusted
-		{
-			nodeTemp1.nodeLoc = pathLocal.to;
-		}
+			PathInit(&pathLocal, &pathQueryLocal);
+
+			pathQueryLocal = *pq;
+			pathQueryLocal.flags = (PathQueryFlags)(
+					(uint32_t)pathQueryLocal.flags & (~(PQF_ADJUST_RADIUS | PQF_TARGET_OBJ)) | PQF_ALLOW_ALTERNATIVE_TARGET_TILE
+				//(uint32_t)pathQueryLocal.flags & (~(PQF_ADJUST_RADIUS | PQF_TARGET_OBJ)) | PQF_ALLOW_ALTERNATIVE_TARGET_TILE
+				);
+
+			pathLocal.from = pathQueryLocal.from = curLoc;
+			pathLocal.to   = pathQueryLocal.to   = nodeTemp1.nodeLoc;
+			pathLocal.nodeCount = pathLocal.nodeCount2 = pathLocal.nodeCount3 = 0;
+		
+			if (!GetAlternativeTargetLocation(&pathLocal, &pathQueryLocal)) // verifies that the destination is clear, and if not, tries to get an available tile
+			{
+				logger->warn("Warning: pathnode not clear");
+			}
+			if (pathLocal.to != nodeTemp1.nodeLoc) //  path "To" location has been adjusted
+			{
+				nodeTemp1.nodeLoc = pathLocal.to;
+			}
 		}
 
 		// attempt PF
@@ -870,13 +920,11 @@ int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 			pathQueryLocal.flags = (PathQueryFlags)(
 				(uint32_t)pathQueryLocal.flags & (~(PQF_ADJUST_RADIUS )) | PQF_ALLOW_ALTERNATIVE_TARGET_TILE
 				);
-			pathQueryLocal.from = from;
-			pathQueryLocal.to = nodeTemp1.nodeLoc;
-			pathLocal.from = from;
+			pathLocal.from = pathQueryLocal.from = curLoc;
+			pathLocal.to   = pathQueryLocal.to   = nodeTemp1.nodeLoc;
 			pathLocal.nodeCount = 0;
 			pathLocal.nodeCount2 = 0;
 			pathLocal.nodeCount3 = 0;
-			pathLocal.to = pathQueryLocal.to;
 
 			nodeCountAdded = FindPathSansNodes(&pathQueryLocal, &pathLocal);
 		}
@@ -887,19 +935,19 @@ int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 			
 		memcpy(&path->nodes[nodeTotal], pathLocal.nodes, sizeof(LocAndOffsets) * nodeCountAdded);
 		nodeTotal += nodeCountAdded;
-		from = nodeTemp1.nodeLoc;
+		curLoc = nodeTemp1.nodeLoc;
 
 		if (i == chainLength - 2 && (pq->flags & PQF_TARGET_OBJ)) // the before last node - try bypassing and going directly to critter
 		{
 			pathQueryLocal = *pq;
-			pathQueryLocal.from = from;
-			pathQueryLocal.to = path->to;
+			pathQueryLocal.from = curLoc;
+			pathQueryLocal.to   = path->to;
 
 			PathInit(&pathLocal, &pathQueryLocal);
 
 			pathQueryLocal = *pq;
-			pathLocal.from = pathQueryLocal.from = from;
-			pathLocal.to = pathQueryLocal.to = path->to;
+			pathLocal.from = pathQueryLocal.from = curLoc;
+			pathLocal.to   = pathQueryLocal.to   = path->to;
 			
 			nodeCountAdded = FindPathSansNodes(&pathQueryLocal, &pathLocal);
 			if (nodeCountAdded )
@@ -926,21 +974,20 @@ int Pathfinding::FindPathUsingNodes(PathQuery* pq, Path* path)
 
 	// now path from the last location (can be an adjusted path node) to the final destination
 	pathQueryLocal = *pq;
-	pathQueryLocal.from = from;
-	pathQueryLocal.to = path->to;
+	pathQueryLocal.from = curLoc;
+	pathQueryLocal.to   = path->to;
 
 	PathInit(&pathLocal, &pathQueryLocal);
 
 	pathQueryLocal= * pq;
-	pathLocal.from = pathQueryLocal.from = from;
-	pathLocal.to = pathQueryLocal.to = path->to;
+	pathLocal.from = pathQueryLocal.from = curLoc;
+	pathLocal.to   = pathQueryLocal.to   = path->to;
 
 	int nodeCountAdded = FindPathSansNodes(&pathQueryLocal, &pathLocal);
 	if (   (!nodeCountAdded  && (pathLocal.to != pathLocal.from) )  // there's a possibility that the "from" is within reach, in which case the search will set the To same as From
 		|| (nodeCountAdded + nodeTotal > pq->maxShortPathFindLength))
 	{
-		if (config.pathfindingDebugMode)
-		{
+		if (config.pathfindingDebugMode){
 			nodeCountAdded = FindPathSansNodes(&pathQueryLocal, &pathLocal);
 		}
 		return 0;
@@ -2142,7 +2189,7 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 
 	int shiftedXidx, shiftedYidx, newIdx;
 
-	float requisiteClearance = 0.0;
+	float requisiteClearance = 1.0f;
 	if (pq->critter)
 		requisiteClearance = objects.GetRadius(pq->critter);
 	float diagonalClearance = requisiteClearance * 0.7f;
@@ -2273,8 +2320,7 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 					int sstx = shiftedSubtile.x % 192;
 					if (direction % 2) // xy straight
 					{
-						if (PathNodeSys::clearanceData.secClr[secClrIdx].val[shiftedSubtile.y % 192][shiftedSubtile.x % 192] < requisiteClearance)
-						{
+						if (PathNodeSys::clearanceData.secClr[secClrIdx].val[ssty][sstx] < requisiteClearance){
 							//if (config.pathfindingDebugMode)
 							//{
 							//	//logger->info("Pathfinding clearance too small:  {},  clearance value {}", subPathTo, PathNodeSys::clearanceData.secClr[secClrIdx].val[shiftedSubtile.y % 192][shiftedSubtile.x % 192]);
@@ -2284,7 +2330,7 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 					}
 					else // xy diagonal
 					{
-						if (PathNodeSys::clearanceData.secClr[secClrIdx].val[shiftedSubtile.y % 192][shiftedSubtile.x % 192] < diagonalClearance)
+						if (PathNodeSys::clearanceData.secClr[secClrIdx].val[ssty][sstx] < diagonalClearance)
 						{
 							/*if (config.pathfindingDebugMode)
 							{

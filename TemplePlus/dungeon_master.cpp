@@ -55,6 +55,7 @@
 
 #include <path_node.h>
 #include <animgoals/animgoals_debugrenderer.h>
+#include <gamesystems\tilerender.h>
 
 DungeonMaster dmSys;
 
@@ -65,7 +66,8 @@ static bool isActionActive = false;
 static bool isMinimized = false;
 static bool isMoused = false;
 static bool isHandlingMsg = false;
-static bool showPathNodes;
+static bool showPathNodes = false;
+static bool showTiles = false;
 
 // monster modify
 DungeonMaster::CritterBooster critBoost;
@@ -180,6 +182,9 @@ void DungeonMaster::Render() {
 		RenderPathfinding();
 	}
 
+	if (ImGui::CollapsingHeader("Sector Tiles")) {
+		RenderSector();
+	}
 
 	// Spawn Party from Save
 	if (ImGui::TreeNodeEx("Import Rival Party", ImGuiTreeNodeFlags_CollapsingHeader)){
@@ -311,6 +316,9 @@ bool DungeonMaster::HandleMsg(const TigMsg & msg){
 			return true;
 
 		if (HandlePathnode(msg))
+			return true;
+
+		if (HandlePaintTiles(msg))
 			return true;
 	}
 
@@ -553,6 +561,47 @@ bool DungeonMaster::HandlePathnode(const TigMsg& msg)
 
 	}
 
+	return false;
+}
+
+bool DungeonMaster::HandlePaintTiles(const TigMsg& msg){
+
+	if (msg.type == TigMsgType::MOUSE) {
+		auto& mouseMsg = *(TigMsgMouse*)&msg;
+
+		LocAndOffsets mouseLoc;
+		locSys.GetLocFromScreenLocPrecise(mouseMsg.x, mouseMsg.y, mouseLoc);
+		
+		if (!IsActionActive())
+			return false;
+
+		if (mActionType == DungeonMasterAction::PaintTileBlock) {
+			if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_RMB_RELEASED) {
+				DeactivateAction();
+				return true;
+			}
+
+			if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_LMB_RELEASED) {
+				int flags = (int)sectorSys.GetTileFlags(mouseLoc);
+				int blockerMask = TileFlags::BlockX0Y0 | TileFlags::BlockX1Y0 | TileFlags::BlockX2Y0
+					| TileFlags::BlockX0Y1 | TileFlags::BlockX1Y1 | TileFlags::BlockX2Y1
+					| TileFlags::BlockX0Y2 | TileFlags::BlockX1Y2 | TileFlags::BlockX2Y2;
+				
+				if (flags & blockerMask) {
+					flags &= ~blockerMask;
+				}
+				else {
+					flags |= blockerMask;
+				}
+				
+				sectorSys.SetTileFlags(mouseLoc, (TileFlags)flags);
+
+				dmSys.SetIsHandlingMsg(true);
+				return true;
+			}
+		}
+
+	}
 	return false;
 }
 
@@ -1583,14 +1632,16 @@ void DungeonMaster::RenderPathfinding()
 	if (ImGui::Button("Recalc All Neighbours")) {
 		pathNodeSys.RecalculateAllNeighbours();
 	}
-	if (ImGui::IsItemHovered()) ImGui::SetTooltip("Recalculates all neighbours and traversal distances between them. This may take a while.");
+	if (ImGui::IsItemHovered()) ImGui::SetTooltip("Recalculates all neighbours and traversal distances between them.");
 
 	static std::string saveFolder = "";
-	static bool persistNodes = false;
+	static std::string saveFolderClearance = "";
+	static bool persist = false;
+
 	if (ImGui::Button("Save Nodes")) {	
 		auto mapId = gameSystems->GetMap().GetCurrentMapId();
 		auto mapName = gameSystems->GetMap().GetMapName(mapId);
-		if (persistNodes) {
+		if (persist) {
 			saveFolder = fmt::format("maps\\{}", mapName);
 		}
 		else {
@@ -1600,21 +1651,12 @@ void DungeonMaster::RenderPathfinding()
 		pathNodeSys.FlushNodes(saveFolder.c_str());
 	}
 	if (ImGui::IsItemHovered())		ImGui::SetTooltip("Dumps path nodes to file.");
-	ImGui::SameLine();
-	ImGui::Checkbox("Persist", &persistNodes);
-	if (ImGui::IsItemHovered())		ImGui::SetTooltip("If false, the changes will be temporary (reversed on reloading the map or save). If true, they'll replace the previous nodes completely.");
-
-	if (saveFolder.size()) {
-		ImGui::Text(fmt::format("Saved nodes to: modules\\{}\\{}",config.defaultModule,saveFolder).c_str() );
-	}
 	
-
-	static std::string saveFolderClearance = "";
-	static bool persistClearance = false;
+	ImGui::SameLine();
 	if (ImGui::Button("Generate Clearances")) {
 		auto mapId = gameSystems->GetMap().GetCurrentMapId();
 		auto mapName = gameSystems->GetMap().GetMapName(mapId);
-		if (persistClearance) {
+		if (persist) {
 			saveFolderClearance = fmt::format("maps\\{}", mapName);
 		}
 		else {
@@ -1623,13 +1665,30 @@ void DungeonMaster::RenderPathfinding()
 		tio_mkdir(saveFolderClearance.c_str());
 		pathNodeSys.GenerateClearanceFile(saveFolderClearance.c_str());
 	}
+	if (ImGui::IsItemHovered())		ImGui::SetTooltip("Generate tile clearance data. This speeds up pathfinding and allows the engine to do some more demanding PF queries. This may take a while.");
+	
 	ImGui::SameLine();
-	ImGui::Checkbox("Persist", &persistClearance);
-	if (ImGui::IsItemHovered())		ImGui::SetTooltip("Generate tile clearance data. This speeds up pathfinding and allows the engine to do some more demanding PF queries.");
+	ImGui::Checkbox("Persist", &persist);
+	if (ImGui::IsItemHovered())		ImGui::SetTooltip("If false, the changes will be temporary (reversed on reloading the map or save). If true, they'll stick around.");
+
+	if (saveFolder.size()) {
+		ImGui::Text(fmt::format("Saved nodes to: modules\\{}\\{}", config.defaultModule, saveFolder).c_str());
+	}
 	if (saveFolderClearance.size()) {
 		ImGui::Text(fmt::format("Saved clearances to: modules\\{}\\{}", config.defaultModule, saveFolderClearance).c_str());
 	}
 
+}
+
+void DungeonMaster::RenderSector()
+{
+	ImGui::Checkbox("Show Blockers", &showTiles);
+	TileRenderer::Enable(showTiles);
+
+	ImGui::Text("Paint");
+	if (ImGui::Button("Blocker")) {
+		ActivateAction(DungeonMasterAction::PaintTileBlock);
+	}
 }
 
 void DungeonMaster::SetObjEditor(objHndl handle){

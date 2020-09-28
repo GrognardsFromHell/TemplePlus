@@ -98,6 +98,7 @@
     <ClCompile Include="gamesystems\particlesystems.cpp" />
     <ClCompile Include="gamesystems\partsystemsrenderer.cpp" />
     <ClCompile Include="gamesystems\staticmeshes.cpp" />
+    <ClCompile Include="gamesystems\tilerender.cpp" />
     <ClCompile Include="gamesystems\ui_intgame_renderer.cpp" />
     <ClCompile Include="gameview.cpp" />
     <ClCompile Include="general_condition_fixes.cpp" />
@@ -354,6 +355,7 @@
     <ClInclude Include="gamesystems\objects\objsystem.h" />
     <ClInclude Include="gamesystems\objfade.h" />
     <ClInclude Include="gamesystems\random_encounter.h" />
+    <ClInclude Include="gamesystems\tilerender.h" />
     <ClInclude Include="gamesystems\ui_intgame_renderer.h" />
     <ClInclude Include="gameview.h" />
     <ClInclude Include="InfinityEngine.h" />

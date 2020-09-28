@@ -41,6 +41,7 @@ public:
 	void RenderVsParty();
 	void RenderFudgeRolls();
 	void RenderPathfinding();
+	void RenderSector();
 
 	bool HandleMsg(const TigMsg & msg);
 	bool HandleSpawning(const TigMsg & msg);
@@ -48,6 +49,7 @@ public:
 	bool HandleEditing(const TigMsg & msg);
 	bool HandleMoving(const TigMsg &msg);
 	bool HandlePathnode(const TigMsg& msg);
+	bool HandlePaintTiles(const TigMsg& msg);
 
 	void InitEntry(int protoNum);
 	void InitCaches();
@@ -102,6 +104,7 @@ public:
 		PathnodeCreate,
 		PathnodeDelete,
 		PathnodeMove,
+		PaintTileBlock,
 	};
 
 protected:
