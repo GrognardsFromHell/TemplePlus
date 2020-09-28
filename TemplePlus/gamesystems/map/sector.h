@@ -406,7 +406,7 @@ public:
 	static BOOL IsPointInterceptedBySegment(float absVx, float absVy, float radiusAdjAmt, RaycastPointSearchPacket * srchPkt);
 
 	TileFlags GetTileFlags(LocAndOffsets loc);
-
+	bool SetTileFlags(LocAndOffsets loc, TileFlags flags);
 
 	static BOOL(__cdecl * orgSectorCacheFind)(SectorLoc secLoc, int * secCacheIdx);
 

@@ -12,6 +12,8 @@
 //rendering
 #include <tig\tig_startup.h>
 #include <graphics/shaperenderer3d.h>
+#include <graphics\textengine.h>
+#include "ui/widgets/widget_styles.h"
 
 PathNodeSys pathNodeSys;
 char PathNodeSys::pathNodesLoadDir[260];
@@ -1158,6 +1160,9 @@ void PathNodeSys::RenderPathNodes(int tileX1, int tileX2, int tileY1, int tileY2
 
 	XMCOLOR circleFillColor(0.0f, 0.0f, 0.0f, 0.0f);
 
+	static gfx::TextStyle textStyle = widgetTextStyles->GetTextStyle("default");
+	auto& textEngine = tig->GetRenderingDevice().GetTextEngine();
+
 	for (auto node = pathNodeList; node; node = node->next) {
 		auto nodeLoc = node->node.nodeLoc;
 		
@@ -1167,9 +1172,38 @@ void PathNodeSys::RenderPathNodes(int tileX1, int tileX2, int tileY1, int tileY2
 
 		auto pos = nodeLoc.ToInches3D();
 
+
 		if (node == mActivePathNode) {
+
+			auto topOfNode = tig->GetRenderingDevice().GetCamera().WorldToScreenUi(pos);
+
 			renderer3d.DrawFilledCircle(pos, 8, activeNodeBorderColor, circleFillColor, false);
 			renderer3d.DrawFilledCircle(pos, 603, activeAoeBorderColor, circleFillColor, false);
+
+			gfx::FormattedText t;
+			t.defaultStyle = textStyle;
+			t.defaultStyle.align = gfx::TextAlign::Center;
+			
+			auto text = fmt::format("Node {}, neighbs:\n", node->node.id);
+			for (auto i = 0; i < node->node.neighboursCount; ++i) {
+				text += fmt::format("{}{} ({:.2f})", i==0 ? "" : ", ", node->node.neighbours[i], node->node.neighDistances[i]);
+			}
+			t.text = local_to_ucs2(text);
+			auto& nameStyle = t.formats.push_back();
+			nameStyle.startChar = 0;
+			nameStyle.length = 5;
+			nameStyle.style = t.defaultStyle;
+
+			gfx::TextMetrics nameMetrics;
+			nameMetrics.width = 120;
+			textEngine.MeasureText(t, nameMetrics);
+
+			TigRect nameRect;
+			nameRect.x = topOfNode.x- nameMetrics.width/2;
+			nameRect.width = nameMetrics.width;
+			nameRect.y = topOfNode.y - nameMetrics.height - 2;
+			nameRect.height = nameMetrics.height;
+			textEngine.RenderText(nameRect, t);
 		}
 
 

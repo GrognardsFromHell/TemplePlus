@@ -507,9 +507,24 @@ uint32_t Pathfinding::ShouldUsePathnodes(Path* pathQueryResult, PathQuery* pathQ
 			}
 			
 		}
-		else if (locSys.distBtwnLocAndOffs(pathQueryResult->from, pathQueryResult->to) > (float)600.0)
-		{
-			return true;
+		else {
+			// check if the closest nodes (from/to) are neighbours; if so, return false so that it tries a direct path search first
+			MapPathNode fromNode, toNode;
+			int fromId, toId;
+			pathNodeSys.FindClosestPathNode(&from, &fromId);
+			pathNodeSys.FindClosestPathNode(&pathQueryResult->to, &toId);
+			if (!pathNodeSys.GetPathNode(fromId, &fromNode) || !pathNodeSys.GetPathNode(toId, &toNode))
+				return false;
+			for (int i = 0; i < fromNode.neighboursCount; ++i) {
+				auto neighbour = fromNode.neighbours[i];
+				if (neighbour == toId)
+					return false;
+			}
+
+			if (locSys.distBtwnLocAndOffs(pathQueryResult->from, pathQueryResult->to) > (float)600.0)
+			{
+				return true;
+			}
 		}
 	}
 	return result;
@@ -2142,7 +2157,7 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 
 	int shiftedXidx, shiftedYidx, newIdx;
 
-	float requisiteClearance = 0.0;
+	float requisiteClearance = 1.0f;
 	if (pq->critter)
 		requisiteClearance = objects.GetRadius(pq->critter);
 	float diagonalClearance = requisiteClearance * 0.7f;
@@ -2273,8 +2288,7 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 					int sstx = shiftedSubtile.x % 192;
 					if (direction % 2) // xy straight
 					{
-						if (PathNodeSys::clearanceData.secClr[secClrIdx].val[shiftedSubtile.y % 192][shiftedSubtile.x % 192] < requisiteClearance)
-						{
+						if (PathNodeSys::clearanceData.secClr[secClrIdx].val[ssty][sstx] < requisiteClearance){
 							//if (config.pathfindingDebugMode)
 							//{
 							//	//logger->info("Pathfinding clearance too small:  {},  clearance value {}", subPathTo, PathNodeSys::clearanceData.secClr[secClrIdx].val[shiftedSubtile.y % 192][shiftedSubtile.x % 192]);
@@ -2284,7 +2298,7 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 					}
 					else // xy diagonal
 					{
-						if (PathNodeSys::clearanceData.secClr[secClrIdx].val[shiftedSubtile.y % 192][shiftedSubtile.x % 192] < diagonalClearance)
+						if (PathNodeSys::clearanceData.secClr[secClrIdx].val[ssty][sstx] < diagonalClearance)
 						{
 							/*if (config.pathfindingDebugMode)
 							{

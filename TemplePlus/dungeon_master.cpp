@@ -317,6 +317,9 @@ bool DungeonMaster::HandleMsg(const TigMsg & msg){
 
 		if (HandlePathnode(msg))
 			return true;
+
+		if (HandlePaintTiles(msg))
+			return true;
 	}
 
 	return false;
@@ -558,6 +561,47 @@ bool DungeonMaster::HandlePathnode(const TigMsg& msg)
 
 	}
 
+	return false;
+}
+
+bool DungeonMaster::HandlePaintTiles(const TigMsg& msg){
+
+	if (msg.type == TigMsgType::MOUSE) {
+		auto& mouseMsg = *(TigMsgMouse*)&msg;
+
+		LocAndOffsets mouseLoc;
+		locSys.GetLocFromScreenLocPrecise(mouseMsg.x, mouseMsg.y, mouseLoc);
+		
+		if (!IsActionActive())
+			return false;
+
+		if (mActionType == DungeonMasterAction::PaintTileBlock) {
+			if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_RMB_RELEASED) {
+				DeactivateAction();
+				return true;
+			}
+
+			if (mouseMsg.buttonStateFlags & MouseStateFlags::MSF_LMB_RELEASED) {
+				int flags = (int)sectorSys.GetTileFlags(mouseLoc);
+				int blockerMask = TileFlags::BlockX0Y0 | TileFlags::BlockX1Y0 | TileFlags::BlockX2Y0
+					| TileFlags::BlockX0Y1 | TileFlags::BlockX1Y1 | TileFlags::BlockX2Y1
+					| TileFlags::BlockX0Y2 | TileFlags::BlockX1Y2 | TileFlags::BlockX2Y2;
+				
+				if (flags & blockerMask) {
+					flags &= ~blockerMask;
+				}
+				else {
+					flags |= blockerMask;
+				}
+				
+				sectorSys.SetTileFlags(mouseLoc, (TileFlags)flags);
+
+				dmSys.SetIsHandlingMsg(true);
+				return true;
+			}
+		}
+
+	}
 	return false;
 }
 
@@ -1640,6 +1684,11 @@ void DungeonMaster::RenderSector()
 {
 	ImGui::Checkbox("Show Blockers", &showTiles);
 	TileRenderer::Enable(showTiles);
+
+	ImGui::Text("Paint");
+	if (ImGui::Button("Blocker")) {
+		ActivateAction(DungeonMasterAction::PaintTileBlock);
+	}
 }
 
 void DungeonMaster::SetObjEditor(objHndl handle){

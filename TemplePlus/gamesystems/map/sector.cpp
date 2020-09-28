@@ -116,6 +116,24 @@ public:
 			sectorSys.SectorListReturnToPool(list);
 		});
 
+
+		static BOOL(__cdecl * orgAddObject)(SectorObjects*, objHndl) =
+			replaceFunction<BOOL(__cdecl)(SectorObjects*, objHndl)>(0x100C1AD0, [](SectorObjects* objs, objHndl handle)->BOOL {
+				static auto objlistInsertInternal = temple::GetRef<BOOL(__cdecl)(SectorObjects*, objHndl)>(0x100C1A20);
+				if (objlistInsertInternal(objs, handle)) {
+					if (objects.IsStatic(handle))
+						objs->staticObjsDirty = 1;
+					return TRUE;
+				}
+				return FALSE;
+				//return orgAddObject(objs, handle);
+				});
+
+		static BOOL(__cdecl * orgObjlistInsertInternal)(SectorObjects*, objHndl) = 
+			replaceFunction<BOOL(__cdecl)(SectorObjects*, objHndl)>(0x100C1A20, [](SectorObjects*objs, objHndl handle)->BOOL {
+			return orgObjlistInsertInternal(objs, handle);
+			});
+
 		static BOOL(__cdecl*orgSectorLoadObjs)(SectorObjects*, TioFile *, SectorLoc)
 		=replaceFunction<BOOL(__cdecl)(SectorObjects* , TioFile* , SectorLoc )>(0x100C1B20,
 			[](SectorObjects* secObjs, TioFile* file, SectorLoc sectorLoc) {
@@ -571,6 +589,27 @@ TileFlags LegacySectorSystem::GetTileFlags(LocAndOffsets loc)
 
 	SectorUnlock(secLoc);
 	return flags;
+}
+
+bool LegacySectorSystem::SetTileFlags(LocAndOffsets loc, TileFlags flags)
+{
+	SectorLoc secLoc(loc.location);
+	Sector* sect;
+	int lockStatus = SectorLock(secLoc, &sect);
+	if (!lockStatus){
+		return false;
+	}
+
+	locXY baseTile = secLoc.GetBaseTile();
+	int deltaX = loc.location.locx - baseTile.locx;
+	int deltaY = loc.location.locy - baseTile.locy;
+
+	int tileIdx = deltaX + SECTOR_SIDE_SIZE * deltaY;
+
+	sect->tilePkt.tiles[tileIdx].flags = flags;
+
+	SectorUnlock(secLoc);
+	return true;
 }
 
 static int64_t MakeSectorLoc(int x, int y) {
