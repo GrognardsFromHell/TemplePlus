@@ -152,7 +152,7 @@ void MapSystem::LoadModule() {
 				} else if (!strncmp(value.data(), "OUTDOOR", value.size())) {
 					entry.flags |= 2;
 				} else if (!strncmp(value.data(), "UNFOGGED", value.size())) {
-					if (!alwaysFog)
+					if (!alwaysFog || entry.type == MapType::ShoppingMap)
 						entry.flags |= 4;
 				} else if (!strncmp(value.data(), "BEDREST", value.size())) {
 					entry.flags |= 8;
