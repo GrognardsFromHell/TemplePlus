@@ -31,6 +31,7 @@
 #include "gamesystems/legacysystems.h"
 #include "gamesystems/objfade.h"
 #include "party.h"
+#include "d20_race.h"
 
 Objects objects;
 
@@ -527,9 +528,15 @@ Dice Objects::GetHitDice(objHndl handle) {
 int Objects::GetHitDiceNum(objHndl handle) {
 	auto obj = objSystem->GetObject(handle);
 	size_t result = obj->GetInt32Array(obj_f_critter_level_idx).GetSize();
-	if (GetType(handle) == obj_t_npc) {
+	if (obj->IsNPC()) {
 		result += _GetInternalFieldInt32Array(handle, obj_f_npc_hitdice_idx, 0);
 	}
+	else { // HD for new PC races
+		Dice racialHd = d20RaceSys.GetHitDice(critterSys.GetRace(handle, false));
+		auto racialHdCount = racialHd.GetCount();
+		result += racialHdCount;
+	}
+	
 	return result;
 }
 
@@ -1062,6 +1069,11 @@ public:
 			
 			return objects.IsPortalLocked(handle);
 		});
+
+		// Fixes issue with Troll PC characters dying to cloudkill despite level adj
+		replaceFunction<int(__cdecl)(objHndl)>(0x100801D0, [](objHndl handle)->int {
+			return objects.GetHitDiceNum(handle);
+			});
 
 }
 } objReplacements;
