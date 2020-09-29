@@ -73,21 +73,31 @@ void ModSupport::DetectCo8ActiveModule(){
 
 bool ModSupport::IsCo8NCEdition() const
 {
+	if (!mInited)
+		throw TempleException("ModSupport uninited");
 	return mIsCo8NC;
 }
 
 bool ModSupport::IsKotB() const
 {
+	if (!mInited)
+		throw TempleException("ModSupport uninited");
 	return mIsKotB;
 }
 
 bool ModSupport::IsIWD() const
 {
+	if (!mInited)
+		throw TempleException("ModSupport uninited");
 	return mIsIWD;
 }
 
 bool ModSupport::IsCo8() const
 {
+	if (!mInited) {
+		return temple::Dll::GetInstance().HasCo8Hooks();
+	}
+		
 	return mIsCo8;
 }
 

@@ -37,7 +37,25 @@ public:
 };
 
 constexpr int ACQUIRED_LOCATIONS_CO8 = 21;
+constexpr int ACQUIRED_LOCATIONS_VANILLA = 14;
 constexpr int TRAILDOT_MAX = 80;
+
+
+struct WorldmapWidgetsVanilla
+{
+	LgcyWindow* mainWnd;
+	LgcyButton* worldmapBtn;
+	LgcyButton* curMapBtn;
+	LgcyButton* locationBtns[14];
+	LgcyButton* locationRingBtns[14];
+	LgcyButton* scriptBtns[14];
+	LgcyButton* URHereBtn;
+	LgcyButton* trailDots[TRAILDOT_MAX];
+	LgcyButton* exitBtn;
+	LgcyWindow* selectionWnd;
+	LgcyButton* acquiredLocations[ACQUIRED_LOCATIONS_VANILLA];
+	LgcyButton* centerOnPartyBtn;
+};
 struct WorldmapWidgetsCo8
 {
 	LgcyWindow * mainWnd;
@@ -167,11 +185,12 @@ public:
 			ui_worldmap().Show(2);
 		});
 
-		// This fixes an out of bounds write caused by spell slinger hacks
-		writeNoops(0x10159ABC);
+		
+		if (modSupport.IsCo8())
+		{
+			
+			writeNoops(0x10159ABC); // This fixes an out of bounds write caused by spell slinger hacks
 
-
-		if (modSupport.IsCo8()){
 			replaceFunction<void()>(0x1015EA20, UiWorldmapMakeTripWrapper);
 		}
 		

@@ -246,6 +246,7 @@ void TigInitializer::LoadDataFiles() {
 	if (temple::Dll::GetInstance().HasCo8Hooks()){
 		modSupport.mIsCo8 = true;
 		modSupport.DetectCo8ActiveModule();
+		modSupport.mInited = true;
 		if (modSupport.IsKotB()){
 			logger->info("KotB module detected; registering  kotbfixes.dat.");
 			result = tio_path_add(fmt::format("{}\\kotbfixes.dat", tpDataPath).c_str());
