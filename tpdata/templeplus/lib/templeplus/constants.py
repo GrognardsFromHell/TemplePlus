@@ -3489,6 +3489,7 @@ ET_OnDispatchSpellDamage = 97
 ET_OnSpellResistanceCheckBonus = 98
 ET_OnTargetSpellDCBonus = 99 #DC bonus based on the target of a spell
 ET_OnIgnoreDruidOathCheck = 100 #Should a druid oath be ignored
+ET_OnSpellCasterGeneral = 101
 
 # Event Keys
 
@@ -3843,6 +3844,9 @@ EK_LVL_Feats_Finalize = 402
 EK_LVL_Spells_Activate = 500
 EK_LVL_Spells_Check_Complete = 501
 EK_LVL_Spells_Finalize = 502
+
+EK_SPELL_Base_Caster_Level = 1000
+EK_SPELL_Base_Caster_Level_2 = 1001 # for second stage of calculating base caster level (useful for stuff like Practiced Spellcaster)
 
 D20ADF_None = 0
 D20ADF_Unk1 = 1

@@ -120,6 +120,7 @@ struct DispatcherSystem : temple::AddressTable
 	double DispatchRangeBonus(objHndl obj, objHndl weaponUsed);
 	int DispatchSpellListLevelExtension(objHndl obj, Stat casterClass);
 	int DispatchGetBaseCasterLevel(objHndl obj, Stat casterClass);
+	int DispatchGetCasterLevelStage2(objHndl handle, Stat casterClass, int initialVal);
 
 	int DispatchLevelupSystemEvent(objHndl handle, Stat casterClass, D20DispatcherKey evtType);
 	void DispatchLevelupSpellsFinalize(objHndl handle, Stat casterClass);

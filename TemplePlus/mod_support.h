@@ -16,6 +16,7 @@ private:
 	bool mIsKotB = false;
 	bool mIsIWD = false;
 	bool mIsCo8 = false;
+	bool mInited = false;
 };
 
 extern ModSupport modSupport;

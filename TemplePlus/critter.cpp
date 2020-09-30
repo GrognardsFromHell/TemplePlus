@@ -1714,7 +1714,9 @@ int LegacyCritterSystem::GetCasterLevel(objHndl obj){
 }
 
 int LegacyCritterSystem::GetCasterLevelForClass(objHndl handle, Stat classCode){
-	return dispatch.DispatchGetBaseCasterLevel(handle, classCode);
+	auto baseCasterLevel = dispatch.DispatchGetBaseCasterLevel(handle, classCode);
+	auto casterLevel = dispatch.DispatchGetCasterLevelStage2(handle, classCode, baseCasterLevel); // currently just for Practiced Spellcaster
+	return casterLevel;
 }
 
 int LegacyCritterSystem::GetSpellListLevelExtension(objHndl handle, Stat classCode)

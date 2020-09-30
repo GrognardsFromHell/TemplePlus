@@ -795,6 +795,20 @@ int DispatcherSystem::DispatchGetBaseCasterLevel(objHndl handle, Stat casterClas
 	return evtObj.bonlist.GetEffectiveBonusSum();
 }
 
+int DispatcherSystem::DispatchGetCasterLevelStage2(objHndl handle, Stat casterClass, int initialVal) {
+	auto objDispatcher = gameSystems->GetObj().GetObject(handle)->GetDispatcher();
+	if (!objDispatcher->IsValid())
+		return 0;
+
+	EvtObjSpellCaster evtObj;
+	evtObj.handle = handle;
+	evtObj.arg0 = casterClass;
+	evtObj.bonlist.AddBonus(initialVal, 1, 102);
+
+	DispatcherProcessor(objDispatcher, dispTypeSpellCasterGeneral, DK_SPELL_Base_Caster_Level_2, &evtObj);
+	return evtObj.bonlist.GetEffectiveBonusSum();
+}
+
 int DispatcherSystem::DispatchLevelupSystemEvent(objHndl handle, Stat casterClass, D20DispatcherKey evtType)
 {
 	auto objDispatcher = gameSystems->GetObj().GetObject(handle)->GetDispatcher();
