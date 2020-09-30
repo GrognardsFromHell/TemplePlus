@@ -1762,7 +1762,8 @@ enum D20DispatcherKey : uint32_t {
 	DK_LVL_Spells_Check_Complete = 501,
 	DK_LVL_Spells_Finalize = 502,
 
-	DK_SPELL_Base_Caster_Level = 0x1000
+	DK_SPELL_Base_Caster_Level = 1000,
+	DK_SPELL_Base_Caster_Level_2 = 1001
 };
 
 enum enum_dispIO_type : uint32_t {
@@ -1805,6 +1806,7 @@ enum enum_dispIO_type : uint32_t {
 
 };
 
+// Note: if you add new stuff here, it must be on top! Otherwise python sync is ruined
 enum enum_disp_type : uint32_t {
 	dispType0 = 0,
 	dispTypeConditionAdd,
@@ -1834,8 +1836,8 @@ enum enum_disp_type : uint32_t {
 	dispTypeCurrentHP,
 	dispTypeMaxHP,
 	dispTypeInitiativeMod,
-	dispTypeD20Signal,
-	dispTypeD20Query,
+	dispTypeD20Signal = 28,
+	dispTypeD20Query = 29,
 	dispTypeSkillLevel,
 	dispTypeRadialMenuEntry,
 	dispTypeTooltip,
@@ -1865,27 +1867,27 @@ enum enum_disp_type : uint32_t {
 	dispTypeProjectileDestroyed, // Used to stop the particle effects for arrows
 	dispType57, // Unused
 	dispType58, // Unused
-	dispTypeGetAbilityLoss,
+	dispTypeGetAbilityLoss = 59,
 
 	dispTypeGetAttackDice,
 	dispTypeGetLevel, // Class or Character Level (using stat enum)
-	dispTypeImmunityTrigger,
+	dispTypeImmunityTrigger = 62,
 	dispType63,
 	dispTypeSpellImmunityCheck, 
 	dispTypeEffectTooltip, // for those little bonus flags on top of portraits
 	dispTypeStatBaseGet, // looks like this is intended to replace StatBaseGet function for Critters with Dispatchers
 	dispTypeWeaponGlowType, // Returns the ID of the weapon glow to use (0 = no glow, 1-10 are specific glow types, check mapobjrenderer)
 	dispTypeItemForceRemove, // has a single function associated with this - 10104410 int __cdecl ItemForceRemoveCallback_SetItemPadWielderArgs(Dispatcher_Callback_Args args);
-	dispTypeArmorToHitPenalty, // none exist apparently
+	dispTypeArmorToHitPenalty = 69, // none exist apparently
 
 	dispTypeMaxDexAcBonus,
 	dispTypeGetSizeCategory,
 	dispTypeBucklerAcPenalty,
 
-	dispTypeGetModelScale, // NEW! used for modifying the model scale with messing with internal fields
-	dispTypePythonQuery, // NEW! for handling python dispatcher queries
-	dispTypePythonSignal,
-	dispTypePythonActionCheck,
+	dispTypeGetModelScale = 73, // NEW! used for modifying the model scale with messing with internal fields
+	dispTypePythonQuery = 74, // NEW! for handling python dispatcher queries
+	dispTypePythonSignal = 75,
+	dispTypePythonActionCheck = 76,
 	dispTypePythonActionPerform,
 	dispTypePythonActionFrame,
 	dispTypePythonActionAdd, // add to sequence
@@ -1897,7 +1899,7 @@ enum enum_disp_type : uint32_t {
 	dispTypePythonUnused7, // for expansion
 	dispTypePythonUnused8, // for expansion
 	dispTypePythonUnused9, // for expansion
-	dispTypeSpellListExtension, // NEW! used for extending spell-casting classes by other classes (as with Prestige Classes)
+	dispTypeSpellListExtension = 88, // NEW! used for extending spell-casting classes by other classes (as with Prestige Classes)
 	dispTypeGetBaseCasterLevel,
 	dispTypeLevelupSystemEvent,
 
@@ -1910,9 +1912,10 @@ enum enum_disp_type : uint32_t {
     dispConfirmCriticalBonus,
 	dispRangeIncrementBonus,
     dispTypeDealingDamageSpell,
-    dispTypeSpellResistanceCasterLevelCheck,
-	dispTypeTargetSpellDCBonus,
-	dispTypeIgnoreDruidOathCheck,
+    dispTypeSpellResistanceCasterLevelCheck = 98,
+	dispTypeTargetSpellDCBonus = 99,
+	dispTypeIgnoreDruidOathCheck = 100,
+	dispTypeSpellCasterGeneral = 101, // Uses EvtObjSpellCaster, to be used with specific keys only!
 	dispTypeCount // used just for size definition purposes
 
 

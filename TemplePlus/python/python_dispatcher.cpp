@@ -455,7 +455,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 				bonlist.SetOverallCap(bonflags, newCap, newCapType, bonusMesline);
 			 })
 			.def("modify", &BonusList::ModifyBonus)
-			.def("get_sum", &BonusList::GetEffectiveBonusSum)
+			.def("get_sum",   &BonusList::GetEffectiveBonusSum)
 			.def("get_total", &BonusList::GetEffectiveBonusSum)
 			.def("add_zeroed", &BonusList::ZeroBonusSetMeslineNum, "Adds a zero-value bonus (usually to represent nullified bonuses)")
 			.def("add_cap", [](BonusList & bonlist, int bonType, int value, int mesline) {
@@ -1284,6 +1284,7 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 	case dispTypeSpellListExtension:
 	case dispTypeGetBaseCasterLevel:
 	case dispTypeLevelupSystemEvent:
+	case dispTypeSpellCasterGeneral:
 		pbEvtObj = py::cast(static_cast<EvtObjSpellCaster*>(args.dispIO));
 		break;
 
