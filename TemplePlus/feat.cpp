@@ -805,9 +805,17 @@ uint32_t LegacyFeatSystem::FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, 
 			return TRUE;
 
 		if (featReqCode == featReqCodeMinCasterLevel){
+			// temporarily add the level to calculate the new caster level
+			auto obj = objSystem->GetObject(objHnd);
+			auto critterLvls = obj->GetInt32Array(obj_f_critter_level_idx).GetSize();
+			obj->SetInt32(obj_f_critter_level_idx, critterLvls, classCodeBeingLevelledUp);
 			auto casterLevel = critterSys.GetCasterLevel(objHnd);
+			obj->RemoveInt32(obj_f_critter_level_idx, critterLvls); 
+			
+			
 
 			if (d20ClassSys.IsCastingClass(classCodeBeingLevelledUp, true)){
+
 				auto classLeveledNew = critterSys.GetCasterLevelForClass(objHnd, classCodeBeingLevelledUp) + 1;
 				if (classLeveledNew > casterLevel)
 					casterLevel = classLeveledNew;
