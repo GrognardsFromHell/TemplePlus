@@ -1971,6 +1971,8 @@ BOOL UiCharEditor::FeatsWndMsg(int widId, TigMsg * msg)
 
 			feat = (feat_enums)mSelectableFeats[featIdx].featEnum;
 
+			if (FeatAlreadyPicked(feat)) // fixes being able to right click and gain the feat more than once when you shouldn't
+				break;
 
 			if (IsSelectingNormalFeat() && selPkt.feat0 == FEAT_NONE){
 				selPkt.feat0 = feat;
@@ -3218,8 +3220,14 @@ int UiCharEditor::GetNewLvl(Stat classEnum){ // default is classEnum  = stat_lev
 
 class UiCharEditorHooks : public TempleFix {
 	
+	static int HookedHasFeatCountByClassSimple(objHndl handle, feat_enums feat) {
+		return feats.HasFeatCountByClass(handle, feat) > 0 ? 1 : 0;
+	}
 
 	void apply() override {
+
+		// Fixes error - apparently a player somehow managed to get a MM feat (extend spell) more than once
+		redirectCall(0x101BA672, HookedHasFeatCountByClassSimple);
 
 		// general
 		replaceFunction<void(int)>(0x10148880, [](int widId){
