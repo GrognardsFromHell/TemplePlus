@@ -49,7 +49,7 @@ struct HotkeyAddresses : temple::AddressTable
 		rebase(keyIdxToBind, 0x115B1ED0);
 		rebase(radMenuEntryToBind, 0x115B1ED4);
 	}
-} addresses;
+} hkAddresses;
 
 
 class HotkeyReplacements : TempleFix
@@ -174,11 +174,14 @@ int HotkeySystem::SaveHotkeys(TioFile* file)
 {
 	for (int i = 0; i < NUM_ASSIGNABLE_HOTKEYS; i++)
 	{
-		if (addresses.hotkeyTable[i].d20ActionType != -2)
+		RadialMenuEntry radMenu = hkAddresses.hotkeyTable[i];
+		if (radMenu.d20ActionType != -2)
 		{
+			char hkText[128] = { 0, };
+			memcpy(hkText, &hkAddresses.hotkeyTexts[128 * i], 128);
 			if (!tio_fwrite(&i, sizeof(i), 1, file)
-				|| tio_fwrite(&addresses.hotkeyTable[i], sizeof(RadialMenuEntry), 1, file) != 1
-				|| tio_fwrite(&addresses.hotkeyTexts[128 * i], 1, 128, file) != 128)
+				|| tio_fwrite(&radMenu, sizeof(RadialMenuEntry), 1, file) != 1
+				|| tio_fwrite(hkText, 1, 128, file) != 128)
 				return 0;
 		}
 	}
@@ -190,11 +193,14 @@ int HotkeySystem::SaveHotkeys(FILE* file)
 {
 	for (int i = 0; i < NUM_ASSIGNABLE_HOTKEYS; i++)
 	{
-		if (addresses.hotkeyTable[i].d20ActionType != -2)
+		RadialMenuEntry radMenu = hkAddresses.hotkeyTable[i];
+		if (radMenu.d20ActionType != -2)
 		{
+			char hkText[128] = { 0, };
+			memcpy(hkText, &hkAddresses.hotkeyTexts[128 * i], 128);
 			if (!fwrite(&i, sizeof(i), 1, file)
-				|| fwrite(&addresses.hotkeyTable[i], sizeof(RadialMenuEntry), 1, file) != 1
-				|| fwrite(&addresses.hotkeyTexts[128 * i], 1, 128, file) != 128)
+				|| fwrite(&radMenu, sizeof(RadialMenuEntry), 1, file) != 1
+				|| fwrite(&hkAddresses.hotkeyTexts[128 * i], 1, 128, file) != 128)
 				return 0;
 		}
 	}
@@ -207,11 +213,19 @@ int HotkeySystem::LoadHotkeys(GameSystemSaveFile* gsFile)
 	int buffer;
 	while (tio_fread(&buffer, sizeof(buffer), 1, gsFile->file) == 1)
 	{
-		if (buffer == -1) return 1; //terminator char
-		if (tio_fread(&addresses.hotkeyTable[buffer], sizeof(RadialMenuEntry), 1, gsFile->file) != 1 )
+		if (buffer == -1) { //terminator char
+			return 1; 
+		}
+
+		RadialMenuEntry radMenu;
+		if (tio_fread(&radMenu, sizeof(RadialMenuEntry), 1, gsFile->file) != 1 )
 			break;
-		if (tio_fread(&addresses.hotkeyTexts[buffer], 1, 128, gsFile->file) != 128 )
+		hkAddresses.hotkeyTable[buffer] = radMenu;
+
+		char hkText[128];
+		if (tio_fread(hkText, 1, 128, gsFile->file) != 128 )
 			break;
+		memcpy(&hkAddresses.hotkeyTexts[128 * buffer], hkText, 128);
 	}
 	return 0;
 }
@@ -220,20 +234,28 @@ void HotkeySystem::HotkeyInit()
 {
 	for (int i = 0; i < NUM_ASSIGNABLE_HOTKEYS; i++)
 	{
-		addresses.hotkeyTable[i].d20ActionType = D20A_UNASSIGNED;
+		hkAddresses.hotkeyTable[i].d20ActionType = D20A_UNASSIGNED;
 	}
-	mesFuncs.Open("mes\\hotkeys.mes", addresses.hotkeyMes);
+	mesFuncs.Open("mes\\hotkeys.mes", hkAddresses.hotkeyMes);
 	auto file = fopen("hotkeys.sco", "rb");
 	int buffer;
 	if (file)
 	{
 		while (fread(&buffer, sizeof(buffer), 1, file) == 1)
 		{
-			if (buffer == -1) break; //terminator char
-			if (fread(&addresses.hotkeyTable[buffer], sizeof(RadialMenuEntry), 1, file) != 1)
+			if (buffer == -1) {
+				break; //terminator char
+			}
+			RadialMenuEntry radMenu;
+			if (fread(&radMenu, sizeof(RadialMenuEntry), 1, file) != 1)
 				break;
-			if (fread(&addresses.hotkeyTexts[buffer], 1, 128, file) != 128)
+			hkAddresses.hotkeyTable[buffer] = radMenu;
+
+			char hkText[128];
+			if (fread(hkText, 1, 128, file) != 128)
 				break;
+			memcpy(&hkAddresses.hotkeyTexts[128 * buffer], hkText, 128);
+
 		}
 		fclose(file);
 	}
@@ -242,7 +264,7 @@ void HotkeySystem::HotkeyInit()
 
 void HotkeySystem::HotkeyExit()
 {
-	mesFuncs.Close(*addresses.hotkeyMes);
+	mesFuncs.Close(*hkAddresses.hotkeyMes);
 	//auto file = tio_fopen("hotkeys.sco", "wb");
 
 	//tio_fclose(file);
@@ -252,16 +274,18 @@ void HotkeySystem::HotkeyAssignCallback(int cancelFlag)
 {
 	if (!cancelFlag)
 	{
-		auto hotkeyTable = addresses.hotkeyTable;
-		auto hkIdx = *addresses.keyIdxToBind;
+		auto hotkeyTable = hkAddresses.hotkeyTable;
+		auto hkIdx = *hkAddresses.keyIdxToBind;
+		auto radMenuEntryToBind = *hkAddresses.radMenuEntryToBind;
 
-		int radMenuIdx = addresses.HotkeyTableSearch(*addresses.radMenuEntryToBind);
+		int radMenuIdx = hkAddresses.HotkeyTableSearch(radMenuEntryToBind);
 		if (radMenuIdx != -1)
 			hotkeyTable[radMenuIdx].d20ActionType = D20A_UNASSIGNED;
 
-		hotkeyTable[hkIdx] = **addresses.radMenuEntryToBind;
-		strncpy(&addresses.hotkeyTexts[128 * hkIdx], (*addresses.radMenuEntryToBind)->text, 127);
-		hotkeyTable[hkIdx].text = &addresses.hotkeyTexts[128 * hkIdx];
+		hotkeyTable[hkIdx] = *radMenuEntryToBind;
+		auto hkText = &hkAddresses.hotkeyTexts[128 * hkIdx];
+		strncpy(hkText, radMenuEntryToBind->text, 127);
+		hotkeyTable[hkIdx].text = hkText;
 
 		auto file = fopen("hotkeys.sco", "wb");
 		SaveHotkeys(file);
