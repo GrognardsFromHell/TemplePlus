@@ -142,13 +142,15 @@ void GameLoop::Run() {
 	auto quit = false;
 	while (!quit) {
 
-		tig->GetDebugUI().NewFrame();
+		
 
 		// Read user input and external system events (such as time)
 		messageQueue->PollExternalEvents();			
 		if (mDiagScreen->IsEnabled()) {	
 			messageQueue->DebugMessages();
 		}
+		tig->GetDebugUI().NewFrame(); // needs to be after process_window_messages which is inside messageQueue->PollExternalEvents(), in order to process mousewheel messages
+
 		mGameSystems.AdvanceTime();
 
 		// This locks the cursor to our window if we are in the foreground and it's enabled
