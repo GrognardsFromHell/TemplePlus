@@ -86,6 +86,29 @@ void UiLoadGame::Hide2()
 	ui_loadgame_hide2();
 }
 
+static class UiLoadGameHooks: public TempleFix {
+public:
+	void apply() override {
+		static LgcyWidgetHandleMsgFn orgLoadgameWndMsg;
+
+		// Hook to allow scrollwheel to affect loadgame UI
+		orgLoadgameWndMsg = replaceFunction<BOOL(LgcyWidgetId, TigMsg*)>(0x101775C0, [](LgcyWidgetId widId, TigMsg* msg) {
+			auto result = orgLoadgameWndMsg(widId, msg);
+			if (msg->type == TigMsgType::MOUSE) {
+				auto msgMouse = (TigMsgMouse*)msg;
+				if (msgMouse->buttonStateFlags & MouseStateFlags::MSF_SCROLLWHEEL_CHANGE) {
+					auto scrollbarId = temple::GetRef<LgcyWidgetId>(0x10C07C90);
+					auto scrollBar = uiManager->GetScrollBar(scrollbarId);
+					if (scrollBar) {
+						scrollBar->HandleMessage(*msg);
+					}
+				}
+			}
+			return result;
+			});
+	}
+} uiLoadgameHooks;
+
 //*****************************************************************************
 //* SaveGame
 //*****************************************************************************
