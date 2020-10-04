@@ -5250,7 +5250,7 @@ int ItemCallbacks::UseableItemActionCheck(DispatcherCallbackArgs args){
 
 	// ensure is identified
 	if (objType != obj_t_food && !inventory.IsIdentified(itemHandle) && party.IsInParty(args.objHndCaller)){
-		logger->debug("Item is not identified! Item: {}", description.getDisplayName(itemHandle));
+		logger->debug("Item is not identified! Item: {}", itemHandle);
 		dispIo->returnVal = AEC_INVALID_ACTION;
 		return IEC_Cannot_Wield_Magical;
 	}

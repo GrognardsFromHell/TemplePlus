@@ -2110,8 +2110,7 @@ public:
   static BOOL TargetDistChecker(objHndl handle, objHndl tgt);
 
   static float HookedGetRunSpeed(objHndl handle, obj_f field);
-  static int PushGoalHitByWeapon(objHndl attacker, objHndl tgt);
-
+  
   void apply() override {
 
       // Animation pathing stuff
@@ -2126,7 +2125,10 @@ public:
 
       writeCall(0x100148EA, HookedGetRunSpeed);
 
-      replaceFunction(0x10015820, PushGoalHitByWeapon);
+      //Push Goal Hit By Weapon
+      replaceFunction<int(__cdecl)(objHndl, objHndl)>(0x10015820, [](objHndl attacker, objHndl tgt)->int {
+          return gameSystems->GetAnim().PushGoalHitByWeapon(attacker, tgt);
+      });
   }
 } animHooks;
 
@@ -2409,27 +2411,25 @@ float AnimSystemHooks::HookedGetRunSpeed(objHndl handle, obj_f field){ // this i
     return val;
 }
 
-//Push Goal Hit By Weapon
-int AnimSystemHooks::PushGoalHitByWeapon(objHndl attacker, objHndl tgt)
-{
-    if (!attacker || !tgt)
+int AnimSystem::PushGoalHitByWeapon(objHndl attacker, objHndl defender) {
+    if (!attacker || !defender)
         return FALSE;
     auto attackerObj = objSystem->GetObject(attacker);
     if (!attackerObj) return FALSE;
 
-    if (critterSys.IsDeadOrUnconscious(tgt))
+    if (critterSys.IsDeadOrUnconscious(defender))
         return FALSE;
 
-    if (!gameSystems->GetAnim().Interrupt(tgt, AnimGoalPriority::AGP_4, false))
+    if (!gameSystems->GetAnim().Interrupt(defender, AnimGoalPriority::AGP_4, false))
         return FALSE;
 
     AnimSlotGoalStackEntry agd;
-    if (!agd.InitWithInterrupt(tgt, AnimGoalType::ag_hit_by_weapon))
+    if (!agd.InitWithInterrupt(defender, AnimGoalType::ag_hit_by_weapon))
         return FALSE;
 
 
     if (attackerObj->IsCritter()) { // added if... fix for issue where traps cause combat to start (with no actual combatants around)
-        combatSys.enterCombat(tgt);
+        combatSys.enterCombat(defender);
     }
 
     agd.target.obj = attacker;
@@ -2441,6 +2441,3 @@ int AnimSystemHooks::PushGoalHitByWeapon(objHndl attacker, objHndl tgt)
     return FALSE;
 }
 
-int AnimSystem::PushGoalHitByWeapon(objHndl attacker, objHndl defender) {
-    return animHooks.PushGoalHitByWeapon(attacker, defender);
-}
