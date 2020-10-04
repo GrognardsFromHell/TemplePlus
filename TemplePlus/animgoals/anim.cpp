@@ -2110,6 +2110,7 @@ public:
   static BOOL TargetDistChecker(objHndl handle, objHndl tgt);
 
   static float HookedGetRunSpeed(objHndl handle, obj_f field);
+  static int PushGoalHitByWeapon(objHndl attacker, objHndl tgt);
 
   void apply() override {
 
@@ -2123,39 +2124,9 @@ public:
 
       replaceFunction(0x10017BF0, TargetDistChecker);
 
-    writeCall(0x100148EA, HookedGetRunSpeed);
+      writeCall(0x100148EA, HookedGetRunSpeed);
 
-    //Push Goal Hit By Weapon
-    replaceFunction<int(__cdecl)(objHndl, objHndl)>(0x10015820, [](objHndl attacker, objHndl tgt)->int {
-        if (!attacker || !tgt)
-            return FALSE;
-        auto attackerObj = objSystem->GetObject(attacker);
-        if (!attackerObj) return FALSE;
-
-        if (critterSys.IsDeadOrUnconscious(tgt))
-            return FALSE;
-
-        if (!gameSystems->GetAnim().Interrupt(tgt, AnimGoalPriority::AGP_4, false))
-            return FALSE;
-
-        AnimSlotGoalStackEntry agd;
-        if (!agd.InitWithInterrupt(tgt, AnimGoalType::ag_hit_by_weapon))
-            return FALSE;
-
-        
-        if (attackerObj->IsCritter()) { // added if... fix for issue where traps cause combat to start (with no actual combatants around)
-            combatSys.enterCombat(tgt);
-        }
-        
-        agd.target.obj = attacker;
-        agd.scratchVal6.number = 5;
-        AnimSlotId* animIdGlobal = addresses.animIdGlobal;
-        if (agd.Push(animIdGlobal))
-            return TRUE;
-
-        return FALSE;
-        });
-
+      replaceFunction(0x10015820, PushGoalHitByWeapon);
   }
 } animHooks;
 
@@ -2436,4 +2407,40 @@ float AnimSystemHooks::HookedGetRunSpeed(objHndl handle, obj_f field){ // this i
     if (config.equalizeMoveSpeed && party.IsInParty(handle))
         return (float) config.speedupFactor;
     return val;
+}
+
+//Push Goal Hit By Weapon
+int AnimSystemHooks::PushGoalHitByWeapon(objHndl attacker, objHndl tgt)
+{
+    if (!attacker || !tgt)
+        return FALSE;
+    auto attackerObj = objSystem->GetObject(attacker);
+    if (!attackerObj) return FALSE;
+
+    if (critterSys.IsDeadOrUnconscious(tgt))
+        return FALSE;
+
+    if (!gameSystems->GetAnim().Interrupt(tgt, AnimGoalPriority::AGP_4, false))
+        return FALSE;
+
+    AnimSlotGoalStackEntry agd;
+    if (!agd.InitWithInterrupt(tgt, AnimGoalType::ag_hit_by_weapon))
+        return FALSE;
+
+
+    if (attackerObj->IsCritter()) { // added if... fix for issue where traps cause combat to start (with no actual combatants around)
+        combatSys.enterCombat(tgt);
+    }
+
+    agd.target.obj = attacker;
+    agd.scratchVal6.number = 5;
+    AnimSlotId* animIdGlobal = addresses.animIdGlobal;
+    if (agd.Push(animIdGlobal))
+        return TRUE;
+
+    return FALSE;
+}
+
+int AnimSystem::PushGoalHitByWeapon(objHndl attacker, objHndl defender) {
+    return animHooks.PushGoalHitByWeapon(attacker, defender);
 }

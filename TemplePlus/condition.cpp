@@ -5249,7 +5249,8 @@ int ItemCallbacks::UseableItemActionCheck(DispatcherCallbackArgs args){
 	int useMagicDeviceSkillBase = critterSys.SkillBaseGet(args.objHndCaller, skill_use_magic_device);
 
 	// ensure is identified
-	if (objType != obj_t_food && !inventory.IsIdentified(itemHandle)){
+	if (objType != obj_t_food && !inventory.IsIdentified(itemHandle) && party.IsInParty(args.objHndCaller)){
+		logger->debug("Item is not identified! Item: {}", description.getDisplayName(itemHandle));
 		dispIo->returnVal = AEC_INVALID_ACTION;
 		return IEC_Cannot_Wield_Magical;
 	}

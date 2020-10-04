@@ -174,6 +174,7 @@ public:
 	int PushAttackAnim(objHndl actor, objHndl target, int unk1, int hitAnimIdx, int playCrit, int useSecondaryAnim);
 	int GetActionAnimId(objHndl objHndl);
 	int PushAttemptAttack(objHndl attacker, objHndl defender);
+	int PushGoalHitByWeapon(objHndl attacker, objHndl defender);
 	int PushDodge(objHndl attacker, objHndl dodger);
 	int PushAnimate(objHndl obj, int anim);
 

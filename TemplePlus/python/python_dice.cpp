@@ -52,7 +52,7 @@ static PyObject* PyDice_Dice_GetPacked(PyObject* obj, void*) {
 
 static int PyDice_Dice_SetPacked(PyObject* obj, PyObject* value, void*) {
 	auto self = (PyDice*)obj;
-	if (PyInt_Check(value)) {
+	if (PyLong_Check(value) || PyInt_Check(value)) {
 		int packed = PyInt_AsLong(value);
 		auto dice = Dice::FromPacked(packed);
 		self->size = dice.GetSides();
