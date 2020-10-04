@@ -1424,6 +1424,8 @@ uint32_t LegacyCombatSystem::UseItem(objHndl performer, objHndl item, objHndl ta
 {
 	logger->info("Use Item:: {} on {}...", description.getDisplayName(item), description.getDisplayName(target), description.getDisplayName(performer));
 	if (!item || !target) return AEC_INVALID_ACTION;
+	if (objects.GetFlags(item) & (OF_OFF | OF_DESTROYED))
+		return AEC_OUT_OF_CHARGES;
 
 	auto itemObj = objSystem->GetObject(item);
 	if (!itemObj->GetSpellArray(obj_f_item_spell_idx).GetSize())
@@ -1461,7 +1463,7 @@ uint32_t LegacyCombatSystem::UseItem(objHndl performer, objHndl item, objHndl ta
 	D20ActionType d20type = D20A_USE_ITEM;
 	if (itemObj->type == obj_t_generic)
 		d20type = D20A_USE_POTION;
-	d20Sys.GlobD20ActnSetTypeAndData1(d20type, 0);
+	d20Sys.GlobD20ActnSetTypeAndData1(d20type, itemIdx);
 	actSeqSys.ActSeqCurSetSpellPacket(&spellPktBody, 1);
 	D20SpellData d20SpellData;
 	d20Sys.D20ActnSetSpellData(&d20SpellData, spellPktBody.spellEnum, spellPktBody.spellClass, spellPktBody.casterLevel, itemIdx, 0);

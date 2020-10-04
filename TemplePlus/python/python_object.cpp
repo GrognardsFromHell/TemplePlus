@@ -1442,7 +1442,7 @@ static PyObject* PyObjHandle_ConditionsGet(PyObject* obj, PyObject* args) {
 	long kind = 0;
 	if (PyTuple_GET_SIZE(args) > 0) {
 		PyObject* arg = PyTuple_GET_ITEM(args, 0);
-		if (PyInt_Check(arg)) {
+		if (PyInt_Check(arg) || PyLong_Check(arg)) {
 			kind = PyInt_AsLong(arg);
 		}
 	}
@@ -2328,6 +2328,19 @@ static PyObject* PyObjHandle_AnimGoalPushAttack(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(gameSystems->GetAnim().PushAttackAnim(self->handle, tgt, -1, animIdx, isCrit, isSecondary));
 }
 
+static PyObject* PyObjHandle_AnimGoalPushHitByWeapon(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	objHndl tgt = objHndl::null;
+	if (!PyArg_ParseTuple(args, "O&|iii:objhndl.anim_goal_push_hit_by_weapon", &ConvertObjHndl, &tgt)) {
+		return 0;
+	}
+	return PyInt_FromLong(gameSystems->GetAnim().PushGoalHitByWeapon(self->handle, tgt));
+}
+
 static PyObject* PyObjHandle_AnimGoalPushUseObject(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -2900,10 +2913,14 @@ static PyObject* PyObjHandle_SpellKnownAdd(PyObject* obj, PyObject* args) {
 	int spellIdx;
 	int spellClassCode;
 	int slotLevel;
-	if (!PyArg_ParseTuple(args, "iii:objhndl.spell_known_add", &spellIdx, &spellClassCode, &slotLevel)) {
+	int isDomain = 0;
+	if (!PyArg_ParseTuple(args, "iii|i:objhndl.spell_known_add", &spellIdx, &spellClassCode, &slotLevel, &isDomain)) {
 		return 0;
 	}
-	spellSys.SpellKnownAdd(self->handle, spellIdx, (spellClassCode & 0x7F) | 0x80, slotLevel, 1, 0);
+	spellClassCode = spellClassCode & 0x7F;
+	if (!isDomain)
+		spellClassCode = spellClassCode | 0x80;
+	spellSys.SpellKnownAdd(self->handle, spellIdx, spellClassCode, slotLevel, 1, 0);
 	Py_RETURN_NONE;
 }
 
@@ -2915,10 +2932,14 @@ static PyObject* PyObjHandle_SpellMemorizedAdd(PyObject* obj, PyObject* args) {
 	int spellIdx;
 	int spellClassCode;
 	int slotLevel;
-	if (!PyArg_ParseTuple(args, "iii:objhndl.spell_memorized_add", &spellIdx, &spellClassCode, &slotLevel)) {
+	int isDomain = 0;
+	if (!PyArg_ParseTuple(args, "iii|i:objhndl.spell_memorized_add", &spellIdx, &spellClassCode, &slotLevel, &isDomain)) {
 		return 0;
 	}
-	spellSys.SpellMemorizedAdd(self->handle, spellIdx, (spellClassCode & 0x7F) | 0x80, slotLevel, 2, 0);
+	spellClassCode = spellClassCode & 0x7F;
+	if (!isDomain)
+		spellClassCode = spellClassCode | 0x80;
+	spellSys.SpellMemorizedAdd(self->handle, spellIdx, spellClassCode, slotLevel, 2, 0);
 	Py_RETURN_NONE;
 }
 
@@ -3021,7 +3042,7 @@ static PyObject* PyObjHandle_AiStrategySetCustom(PyObject* obj, PyObject* args) 
 
 	int save = 1;
 	auto psave = PyTuple_GetItem(args, 1);
-	if (PyLong_Check(psave)) {
+	if (PyLong_Check(psave) || PyInt_Check(psave)) {
 		save = PyLong_AsLong(psave);
 	}
 
@@ -3518,6 +3539,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "anim_callback", PyObjHandle_AnimCallback, METH_VARARGS, NULL },
 	{ "anim_goal_interrupt", PyObjHandle_AnimGoalInterrupt, METH_VARARGS, NULL },
 	{ "anim_goal_push_attack", PyObjHandle_AnimGoalPushAttack, METH_VARARGS, NULL },
+	{ "anim_goal_push_hit_by_weapon", PyObjHandle_AnimGoalPushHitByWeapon, METH_VARARGS, NULL },
 	{ "anim_goal_use_object", PyObjHandle_AnimGoalPushUseObject, METH_VARARGS, NULL },
 	{ "anim_goal_get_new_id", PyObjHandle_AnimGoalGetNewId, METH_VARARGS, NULL },
 	{ "apply_projectile_particles", PyObjHandle_ApplyProjectileParticles, METH_VARARGS, NULL },
