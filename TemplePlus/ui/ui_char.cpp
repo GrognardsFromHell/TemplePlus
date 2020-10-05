@@ -105,7 +105,7 @@ public:
 	static int StatsLvlBtnRenderHook(objHndl handle);
 #pragma endregion
 
-	#pragma region Spellbook functions
+#pragma region Spellbook functions
 	static BOOL MemorizeSpellMsg(int widId, TigMsg* tigMsg);
 	static BOOL(*orgMemorizeSpellMsg)(int widId, TigMsg* tigMsg);
 
@@ -122,10 +122,10 @@ public:
 	static void(*orgSpellsShow)(objHndl obj);
 	static BOOL IsSpecializationSchoolSlot(int idx);
 	static int HookedCharSpellGetSpellbookScrollbarY();
-	#pragma endregion 
+#pragma endregion 
 
 
-	#pragma region Inventory (Looting / Bartering / Applying Spell (e.g. Read Magic))
+#pragma region Inventory (Looting / Bartering / Applying Spell (e.g. Read Magic))
 	static objHndl GetCurrentCritter(); // gets a handle on the critter with inventory open
 	static objHndl GetCritterLooted(); // this may be a substitute inventory object when buying from NPCs with shops
 	static objHndl GetVendor();
@@ -1473,6 +1473,39 @@ void CharUiSystem::apply(){
 
 	writeNoops(0x101B957E); // so it doesn't decrement the spells memorized num (this causes weirdness in right clicking from the spellbook afterwards)
 
+	// UiCharSpellPopupInterfaceCallback hook
+	// Fixes issue when adding MM effect that is at the highest known spell level or higher.
+	// Previously it would add it at the top of the spell list. It's just a visual glitch since re-entering the spell book
+	// fixed this, but it was still confusing.
+	// There's still an issue when the new spell level is 9, in that the game doesn't add a Spell Level 9 label, but at least
+	// it's at the bottom.
+	static void(__cdecl * orgMetamagicCallback)(int) = replaceFunction<void(__cdecl)(int)>(0x101B5310, [](int popupBtnIdx) {
+		
+		auto& navClassTabIdx = temple::GetRef<int>(0x10D18F68);
+		auto charSpellPackets = addresses.uiCharSpellPackets;
+		auto &curSpellList = charSpellPackets[navClassTabIdx].spellsKnown;
+		auto orgFirstSpellLevel = curSpellList.spells[0].spellLevel;
+
+		orgMetamagicCallback(popupBtnIdx);
+		
+		auto &spellCount = curSpellList.count;
+		auto &firstSpell = curSpellList.spells[0]; // if the MM callback fucks up, the new MM spell ends up here
+		if (firstSpell.spellLevel > orgFirstSpellLevel) {
+
+			auto& lastSpell = curSpellList.spells[spellCount - 1];
+			
+			if (firstSpell.spellLevel > lastSpell.spellLevel) {
+				// add spell level label
+				SpellStoreData spellLabel(0, firstSpell.spellLevel, firstSpell.classCode, 0,0);
+				curSpellList.spells[spellCount++] = spellLabel;
+				
+			}
+			auto newSpell = firstSpell;
+			memcpy(&curSpellList.spells[0], &curSpellList.spells[1], sizeof(SpellStoreData) * spellCount);
+			curSpellList.spells[spellCount - 1] = newSpell;
+		}
+		});
+	
 	
 	static void(__cdecl* orgCharLootingShow)(objHndl) = replaceFunction<void(__cdecl)(objHndl)>(0x1013F6C0, [](objHndl handle) {
 		orgCharLootingShow(handle);

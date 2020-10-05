@@ -69,7 +69,7 @@ def PrBeadsTickdown(attachee, args, evt_obj):
 	return 0
 
 def PrayerEffectTooltip(attachee, args, evt_obj):
-	evt_obj.append(52, -2, "Karmic Prayer (" + str(args.get_arg(2)) + " rounds)")
+	evt_obj.append(tpdp.hash("PRAYER_BEADS_KARMA"), -2, "Karmic Prayer (" + str(args.get_arg(2)) + " rounds)")
 	return 0
 
 

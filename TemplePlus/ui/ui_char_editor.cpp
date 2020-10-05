@@ -590,7 +590,7 @@ PYBIND11_EMBEDDED_MODULE(char_editor, mm) {
 	.def("set_bonus_feats", [](std::vector<FeatInfo> & fti){
 		chargen.SetBonusFeats(fti);
 	})
-	.def("get_spell_enums", []()->std::vector<KnownSpellInfo>& {
+	.def("get_spell_enums", []()->std::vector<KnownSpellInfo>& { // the right hand side ("Chosen Spells")
 		return chargen.GetKnownSpellInfo();
 	})
 	.def("set_spell_enums", [](std::vector<KnownSpellInfo> &ksi){
@@ -601,6 +601,16 @@ PYBIND11_EMBEDDED_MODULE(char_editor, mm) {
 		auto &spInfo = chargen.GetKnownSpellInfo();
 		for (auto i = 0u; i < ksi.size(); i++){
 			spInfo.push_back(ksi[i]);
+		}
+	})
+	
+	.def("get_available_spells", []()->std::vector<KnownSpellInfo>& { // the left hand side ("Available Spells")
+		return chargen.GetAvailableSpells();
+	})
+	.def("append_available_spells", [](std::vector<KnownSpellInfo>& ksi) {
+		auto& avSpells = chargen.GetAvailableSpells();
+		for (auto i = 0u; i < ksi.size(); i++) {
+			avSpells.push_back(ksi[i]);
 		}
 	})
 	.def("has_armored_arcane_caster_feature", []()->bool
@@ -645,10 +655,20 @@ PYBIND11_EMBEDDED_MODULE(char_editor, mm) {
 	})
 	.def("get_max_spell_level", [](const objHndl & handle, int classEnum, int characterLvl)
 	{
-		return spellSys.GetMaxSpellLevel(handle, (Stat)classEnum, characterLvl);
+		auto &pkt = chargen.GetCharEditorSelPacket();
+		auto orgStatLvl = 0;
+		if (pkt.statBeingRaised >= stat_strength && pkt.statBeingRaised <= stat_charisma) {
+			orgStatLvl = objects.StatLevelGetBase(handle, pkt.statBeingRaised);
+			objects.StatLevelSetBase(handle,pkt.statBeingRaised, orgStatLvl + 1);
+		}
+		auto result = spellSys.GetMaxSpellLevel(handle, (Stat)classEnum, characterLvl);
+		if (orgStatLvl > 0) {
+			objects.StatLevelSetBase(handle, pkt.statBeingRaised, orgStatLvl);
+		}
+		return result;
 	})
 	.def("get_known_class_spells", [](objHndl handle, int classEnum)->std::vector<KnownSpellInfo>
-	{ // get all spells belonging to the classEnum
+	{ // get all spells the character knows that belong to the classEnum
 		auto knownSpells = std::vector<KnownSpellInfo>();
 		knownSpells.reserve(SPELL_ENUM_MAX_EXPANDED);
 		int _knownSpells[SPELL_ENUM_MAX_EXPANDED] = { 0, };
@@ -685,12 +705,7 @@ PYBIND11_EMBEDDED_MODULE(char_editor, mm) {
 		return spellSys.GetSpellLevelBySpellClass(spEnum, spellClass);
 	})
 	
-	.def("append_available_spells", [](std::vector<KnownSpellInfo> & ksi){
-		auto &avSpells = chargen.GetAvailableSpells();
-		for (auto i = 0u; i < ksi.size(); i++) {
-			avSpells.push_back(ksi[i]);
-		}
-	})
+	
 	.def("spell_known_add", [](std::vector<KnownSpellInfo> &ksi){
 		auto handle = chargen.GetEditedChar();
 		for (auto it: ksi){
@@ -1526,16 +1541,7 @@ void UiCharEditor::SpellsActivate() {
 	auto &avSpInfo = chargen.GetAvailableSpells();
 	auto &knSpInfo = chargen.GetKnownSpellInfo();
 
-	// get the new caster level for the levelled class (1 indicates a newly taken class)
-	auto casterLvlNew = 1;
-	auto classLeveled = selPkt.classCode;
-	auto lvls = obj->GetInt32Array(obj_f_critter_level_idx);
-	for (auto i = 0u; i < lvls.GetSize(); i++) {
-		auto classCode = static_cast<Stat>(lvls[i]);
-		if (classLeveled == classCode) // is the same the one being levelled
-			casterLvlNew++;
-	}
-
+	
 	auto &needPopulateEntries = temple::GetRef<int>(0x10C4D4C4);
 
 	static auto setScrollbars = []() {
@@ -1601,6 +1607,59 @@ BOOL UiCharEditor::SpellsCheckComplete(){
 	if (needPopulateEntries == 1)
 		return false;
 
+	/*
+	auto CheckFullyLearnedSpells = [&]() {
+		auto &avSpells = chargen.GetAvailableSpells();
+		auto& knSpInfo = chargen.GetKnownSpellInfo();
+		uint8_t mFullyLearned[NUM_SPELL_LEVELS] = { 1, }; // assume they're all fully learned initially, and search for unknown spells to unmark
+
+		// loop through vacant slots
+		for (auto j = 0u; j < knSpInfo.size(); j++) {
+			auto& spInfo = knSpInfo[j];
+			auto curSpellLvl = -1;
+
+			if (spInfo.spellClass != spClass)
+				continue;
+			if (spellSys.IsLabel(spInfo.spEnum)) {
+				curSpellLvl = spInfo.spellLevel;
+				if (curSpellLvl > spLevel)
+					break;
+				continue;
+			}
+
+			if (spInfo.spEnum == spEnum) {
+				foundSpell = true;
+				break;
+			}
+		}
+
+		// loop through available spells, if any are unknown then unmark in fullyLearned
+		for (auto i = 0; i < avSpells.size(); ++i) {
+			auto& spell = avSpells[i];
+			auto spEnum = spell.spEnum;
+			auto spClass = spell.spellClass;
+			auto spLevel = spell.spellLevel;
+
+			
+			if (spell.spellLevel < 0 || spellSys.IsLabel(spEnum))
+				continue;
+			if (chargen.SpellIsAlreadyKnown(spEnum, spClass))
+				continue;
+			if (chargen.SpellIsForbidden(spEnum))
+				continue;
+			
+			// spell is not known by char, check if it's on the right hand side already
+			
+			auto foundSpell = false;
+			
+			if (!foundSpell) {
+				fullyLearned[spLevel] = 0;
+			}
+
+		}
+	};
+	CheckFullyLearnedSpells();
+	*/
 	return d20ClassSys.LevelupSpellsCheckComplete(GetEditedChar(), selPkt.classCode);
 
 }
@@ -1971,6 +2030,8 @@ BOOL UiCharEditor::FeatsWndMsg(int widId, TigMsg * msg)
 
 			feat = (feat_enums)mSelectableFeats[featIdx].featEnum;
 
+			if (FeatAlreadyPicked(feat)) // fixes being able to right click and gain the feat more than once when you shouldn't
+				break;
 
 			if (IsSelectingNormalFeat() && selPkt.feat0 == FEAT_NONE){
 				selPkt.feat0 = feat;
@@ -3049,13 +3110,14 @@ BOOL UiCharEditor::SpellsAvailableEntryBtnMsg(int widId, TigMsg * msg)
 					if (!uiManager->DoesWidgetContain(spellsChosenBtnIds[chosenWidIdx], msgW->x, msgW->y))
 						continue;
 
-					if (rhsSpInfo.spellLevel == -1 // wildcard slot
+					if (rhsSpInfo.spellLevel == -1 // wildcard slot (a la Wizards)
 						|| rhsSpInfo.spellLevel == spLvl 
 						   && rhsSpInfo.spFlag != 0
 						   && (rhsSpInfo.spFlag != 1 || !selPkt.spellEnumToRemove)
-						){
+						)
+					{
 						
-						if (rhsSpInfo.spFlag == 1){ // replaceable spell
+						if (rhsSpInfo.spFlag == 1){ // replaceable spell - replace it, and remember which one we removed
 							knSpInfo[i].spFlag = 2;
 							selPkt.spellEnumToRemove = rhsSpInfo.spEnum;
 						} 
@@ -3218,8 +3280,14 @@ int UiCharEditor::GetNewLvl(Stat classEnum){ // default is classEnum  = stat_lev
 
 class UiCharEditorHooks : public TempleFix {
 	
+	static int HookedHasFeatCountByClassSimple(objHndl handle, feat_enums feat) {
+		return feats.HasFeatCountByClass(handle, feat) > 0 ? 1 : 0;
+	}
 
 	void apply() override {
+
+		// Fixes error - apparently a player somehow managed to get a MM feat (extend spell) more than once
+		redirectCall(0x101BA672, HookedHasFeatCountByClassSimple);
 
 		// general
 		replaceFunction<void(int)>(0x10148880, [](int widId){

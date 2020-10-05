@@ -11,7 +11,13 @@ struct GameSystemConf;
 
 struct KnownSpellInfo {
 	int spEnum = 0;
-	uint8_t spFlag = 0;
+	
+	/* spFlag (not actually flag, just status)
+	1 - denotes a replaceable spell (e.g. for sorcerers)
+	2 - replaced spell (i.e. the slot had a previous spell and now has a new one)
+	3 - new spell slot; use 0 for the spell level labels
+	*/
+	uint8_t spFlag = 0; 
 	int spellClass = 0;
 	int spellLevel = 0;
 	KnownSpellInfo() { spEnum = 0; spFlag = 0; spellClass = 0; };

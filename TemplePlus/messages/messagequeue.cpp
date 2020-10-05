@@ -125,4 +125,13 @@ eastl::deque<Message>& MessageQueue::GetDebugMsgs()
 	return debugMsgs;
 }
 
+void MessageQueue::InsertDebugMsg(const Message& msg)
+{
+	if (!mDebugMsgsEn) {
+		return;
+	}
+
+	debugMsgs.push_front(msg);
+}
+
 MessageQueue* messageQueue = nullptr;

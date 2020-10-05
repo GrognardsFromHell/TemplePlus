@@ -25,6 +25,8 @@
 #include "tig/tig_loadingscreen.h"
 #include "tig/tig_console.h"
 #include "gamesystems/d20/d20_help.h"
+#include <messages\messagequeue.h>
+#include "ui_dialog.h"
 
 //*****************************************************************************
 //* MainMenu-UI
@@ -86,6 +88,29 @@ void UiLoadGame::Hide2()
 	ui_loadgame_hide2();
 }
 
+static class UiLoadGameHooks: public TempleFix {
+public:
+	void apply() override {
+		static LgcyWidgetHandleMsgFn orgLoadgameWndMsg;
+
+		// Hook to allow scrollwheel to affect loadgame UI
+		orgLoadgameWndMsg = replaceFunction<BOOL(LgcyWidgetId, TigMsg*)>(0x101775C0, [](LgcyWidgetId widId, TigMsg* msg) {
+			auto result = orgLoadgameWndMsg(widId, msg);
+			if (msg->type == TigMsgType::MOUSE) {
+				auto msgMouse = (TigMsgMouse*)msg;
+				if (msgMouse->buttonStateFlags & MouseStateFlags::MSF_SCROLLWHEEL_CHANGE) {
+					auto scrollbarId = temple::GetRef<LgcyWidgetId>(0x10C07C90);
+					auto scrollBar = uiManager->GetScrollBar(scrollbarId);
+					if (scrollBar) {
+						scrollBar->HandleMessage(*msg);
+					}
+				}
+			}
+			return result;
+			});
+	}
+} uiLoadgameHooks;
+
 //*****************************************************************************
 //* SaveGame
 //*****************************************************************************
@@ -126,6 +151,29 @@ void UiSaveGame::Hide2()
 	static auto ui_savegame_hide2 = temple::GetPointer<int()>(0x10175ae0);
 	ui_savegame_hide2();
 }
+
+static class UiSaveGameHooks : public TempleFix {
+public:
+	void apply() override {
+		static LgcyWidgetHandleMsgFn orgSavegameWndMsg;
+
+		// Hook to allow scrollwheel to affect loadgame UI
+		orgSavegameWndMsg = replaceFunction<BOOL(LgcyWidgetId, TigMsg*)>(0x10175E80, [](LgcyWidgetId widId, TigMsg* msg) {
+			auto result = orgSavegameWndMsg(widId, msg);
+			if (msg->type == TigMsgType::MOUSE) {
+				auto msgMouse = (TigMsgMouse*)msg;
+				if (msgMouse->buttonStateFlags & MouseStateFlags::MSF_SCROLLWHEEL_CHANGE) {
+					auto scrollbarId = temple::GetRef<LgcyWidgetId>(0x10C07348);
+					auto scrollBar = uiManager->GetScrollBar(scrollbarId);
+					if (scrollBar) {
+						scrollBar->HandleMessage(*msg);
+					}
+				}
+			}
+			return result;
+			});
+	}
+} uiSavegameHooks;
 
 //*****************************************************************************
 //* IntgameSelect
@@ -1292,17 +1340,20 @@ void UiOptions::Show(bool fromMainMenu) {
 //* UI-Manager
 //*****************************************************************************
 
+
+
+
 #pragma pack(push, 1)
 struct LgcyHotKeySpec {
 	int field0;
 	int field4;
-	int kbModifier;
-	int hotKeyId;
+	int modifier;
+	int eventCode;
 	int field10;
-	int tigArg1;
-	int tigArg2;
-	int tigArg1_2;
-	int tigArg2_2;
+	int primaryKeyCode;
+	int primaryOnDown;
+	int secondaryKeyCode;
+	int secondaryOnDown;
 };
 #pragma pack(pop)
 using DfltHotKeySpecs = LgcyHotKeySpec[62];
@@ -1390,11 +1441,22 @@ static std::vector<HotKeySpec> sDefaultHotKeys{
 	HotKeySpec{true,  true,  HotKeyModifier::Shift, InGameHotKey::EndTurnNonParty, 0x1c, 0}, // shift + DIK_RETURN
 };
 
+struct KeyHandleStruc {
+	int count;
+	int events[4];
+};
+
 UiKeyManager::UiKeyManager(const UiSystemConf &config) {
     auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x10143bd0);
     if (!startup(&config)) {
         throw TempleException("Unable to initialize game system UI-Manager");
     }
+
+	//static auto& hotkeySpecs = temple::GetRef<LgcyHotKeySpec[62]>(0x10BE7020);
+	/*for (int i = (int)InGameHotKey::SelectChar1; i <= (int)InGameHotKey::SelectChar8; ++i) {
+		hotkeySpecs[i].primaryOnDown = 1; // not such a good idea because it normally only handles key up events (see HandleNonCombat msg)
+	}*/
+	
 }
 UiKeyManager::~UiKeyManager() {
     auto shutdown = temple::GetPointer<void()>(0x101431a0);
@@ -1454,12 +1516,12 @@ bool UiKeyManager::HandleKeyEvent(const InGameKeyEvent & msg)
 {
 	static auto UiManagerKeyEventHandler = temple::GetPointer<BOOL(const InGameKeyEvent &kbMsg)>(0x10143d60);
 	static auto &keycfgEvents = temple::GetRef<KeyConfEvent[61]>(0x10BE7020);
-
+	
 	auto res = true;
 	int modifier = GetKeyEventModifier();
-	auto evt = temple::GetRef<int(__cdecl)(const InGameKeyEvent &, int)>(0x101431F0)(msg, modifier);
+	auto evt = (int)GetKeyEvent(msg, modifier);
 	auto evtName = keycfgEvents[evt].eventName;
-
+	
 	if (DontHandle(evtName)){
 		return false;
 	}
@@ -1552,6 +1614,50 @@ bool UiKeyManager::HandleKeyEvent(const InGameKeyEvent & msg)
 	// return UiManagerKeyEventHandler(msg) != 0;
 }
 
+/* 0x101431F0 */
+InGameHotKey UiKeyManager::GetKeyEvent(const InGameKeyEvent& msg, int modifier)
+{
+	/*auto result = temple::GetRef<int(__cdecl)(const InGameKeyEvent&, int)>(0x101431F0)(msg, modifier);
+	return result;*/
+
+	static auto& keyHandlings = temple::GetRef<KeyHandleStruc[255]>(0x10BE7900);
+	static auto& hotkeySpecs = temple::GetRef<LgcyHotKeySpec[62]>(0x10BE7020);
+	auto tigMsg = (TigKeyStateChangeMsg&)msg.msg;
+
+	// Fix for using num keys for dialog responses causing character select change
+	if (uiSystems->GetDlg().IsActive() /*&& mDownInDialog == -1*/ && tigMsg.down) { // note: when dialog is active, it should only get here when it's down anyway...
+		mDownInDialog = tigMsg.key;
+	}
+	
+	
+
+	auto count = keyHandlings[tigMsg.key].count;
+	
+	for (auto i = 0; i < count; ++i) {
+		auto evtId = keyHandlings[tigMsg.key].events[i];
+		auto& entry = hotkeySpecs[evtId];
+		if (entry.primaryKeyCode & tigMsg.key && LOBYTE(entry.primaryOnDown) == LOBYTE(tigMsg.down)
+			|| entry.secondaryKeyCode & tigMsg.key && LOBYTE(entry.secondaryOnDown) == LOBYTE(tigMsg.down)) {
+
+			if (entry.modifier == modifier) {
+
+				// Fix for using num keys for dialog responses causing character select change
+				if (mDownInDialog == tigMsg.key && !tigMsg.down) {
+					mDownInDialog = -1;
+					if ((int)entry.eventCode >= (int)InGameHotKey::SelectChar1
+						&& (int)entry.eventCode <= (int)InGameHotKey::SelectChar8) {
+						return InGameHotKey::None;
+					}
+				}
+
+				return (InGameHotKey)entry.eventCode;
+			}
+
+		}
+	}
+	return InGameHotKey::None;
+}
+
 bool UiKeyManager::CharacterSelect(const InGameKeyEvent& msg, int modifier, int keyEvt){
 
 	if (mDoYouWantToQuitActive)
@@ -1603,7 +1709,16 @@ bool UiKeyManager::CombatToggle()
 	}
 	return false;
 }
-
+//static class UiKeyManagerHooks : public TempleFix {
+//public:
+//	void apply() override {
+//		static LgcyWidgetHandleMsgFn orgRefreshKeyConfig;
+//		orgRefreshKeyConfig = replaceFunction<BOOL(LgcyWidgetId, TigMsg*)>(0x10143270, [](LgcyWidgetId widId, TigMsg* msg) {
+//			auto result = orgRefreshKeyConfig(widId, msg);
+//			return result;
+//			});
+//	}
+//} uiKeyManangerHooks;
 //*****************************************************************************
 //* Help Manager-UI
 //*****************************************************************************

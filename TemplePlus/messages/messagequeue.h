@@ -22,6 +22,7 @@ public:
 
 	void DebugMessages();
 	eastl::deque<Message>& GetDebugMsgs();
+	void InsertDebugMsg(const Message& msg);
 
 private:
 	eastl::deque<Message> mQueue;
