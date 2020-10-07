@@ -1014,7 +1014,8 @@ uint32_t LegacyFeatSystem::FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, 
 		// Ability Score
 		else if (featReqCode >= stat_strength && featReqCode <= stat_charisma){
 			if (abilityScoreBeingIncreased == featReqCode) { featReqCodeArg--; }
-			if ((int)templeFuncs.ObjStatBaseDispatch(objHnd, featReqCode, nullptr) < featReqCodeArg){
+			Stat abilityStat = (Stat)featReqCode;
+			if ( objects.StatLevelGetBaseWithModifiers(objHnd, abilityStat, nullptr) < featReqCodeArg){
 				return 0;
 			}
 		}
@@ -1545,7 +1546,7 @@ int _IsWeaponSpecializationFeat(feat_enums feat)
 
 uint32_t _WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat classBeingLeveled, WeaponTypes wpnType)
 {
-	if (templeFuncs.sub_100664B0(objHnd, wpnType) == 3){ return 0; } // weapon size sthg
+	if (templeFuncs.sub_100664B0(objHnd, wpnType) == 3){ return 0; } // 3 means weapon size is more than wielder size+1
 
 	if (weapons.IsSimple(wpnType))
 	{

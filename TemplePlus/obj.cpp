@@ -840,6 +840,7 @@ int Objects::StatLevelGetBase(objHndl obj, Stat stat)
 	return _StatLevelGetBase(obj, stat);
 }
 
+/* 0x1004E810 */
 int Objects::StatLevelGetBaseWithModifiers(objHndl handle, Stat stat, DispIoBonusList*evtObj){
 
 	auto objBody = objSystem->GetObject(handle);

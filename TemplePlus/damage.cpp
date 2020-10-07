@@ -146,7 +146,7 @@ int DamagePacket::AddDamageDice(uint32_t dicePacked, DamageType damType, int dam
 }
 
 BOOL DamagePacket::AddDamageBonus(int32_t damBonus, int bonType, int bonMesline, const char* causeDesc){
-	bonuses.AddBonusWithDesc(damBonus, bonType, bonMesline, (char*)causeDesc);
+	bonuses.AddBonusWithDesc(damBonus, bonType, bonMesline, causeDesc);
 	return 1;
 }
 

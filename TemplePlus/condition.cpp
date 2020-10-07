@@ -193,6 +193,7 @@ public:
 class ItemCallbacks
 {
 public:
+	static int __cdecl AttributeBaseBonus(DispatcherCallbackArgs args);
 	static int __cdecl SkillBonus(DispatcherCallbackArgs args);
 
 	static int __cdecl UseableItemRadialEntry(DispatcherCallbackArgs args);
@@ -2990,7 +2991,9 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 12, dispTypeD20Signal, DK_SIG_Combat_End, spCallbacks.HezrouStenchCureNausea,0,0 );
 	DispatcherHookInit(cond, 13, dispTypeD20Query, DK_QUE_Critter_Has_Condition, spCallbacks.HasCondition, (uint32_t)cond, 0);
 	DispatcherHookInit(cond, 14, dispTypeConditionAddPre, DK_NONE, ConditionOverrideBy, (uint32_t)conds.GetByName("sp-Neutralize Poison"), 0); // make neutralie poison remove existing stench effect
-	
+#pragma endregion
+
+#pragma region Items
 	// Necklace of Adaptation
 
 	auto itemForceRemoveCallback = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x10104410);
@@ -3004,7 +3007,14 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 1, dispTypeSpellImmunityCheck,0, immunityCheckHandler, 4,0);
 	DispatcherHookInit(cond, 2, dispTypeImmunityTrigger, DK_IMMUNITY_SPECIAL, immunityTriggerCallback, 0x10, 0);
 
+	{
+		static CondStructNew condAttrEnhBonus;
+		condAttrEnhBonus.ExtendExisting("Attribute Enhancement Bonus");
+		condAttrEnhBonus.AddHook(enum_disp_type::dispTypeStatBaseGet, D20DispatcherKey::DK_NONE, itemCallbacks.AttributeBaseBonus);
+	}
+
 #pragma endregion
+
 
 	static CondStructNew preferOneHanded("Prefer One Handed Wield", 1);
 	preferOneHanded.AddHook(dispTypeD20Query, DK_QUE_Is_Preferring_One_Handed_Wield, genericCallbacks.PreferOneHandedWieldQuery);
@@ -4159,7 +4169,7 @@ int SpellCallbacks::SkillBonus(DispatcherCallbackArgs args){
 	if (args.dispKey == skillEnum + 20 || skillEnum == -1) {
 		auto dispIo = dispatch.DispIoCheckIoType10((DispIoObjBonus*)args.dispIO);
 		auto spellName = spellSys.GetSpellName(spellPkt.spellEnum);
-		dispIo->bonOut->AddBonusWithDesc(bonValue, bonType, 113, (char*)spellName); // 113 is ~Spell~[TAG_SPELLS] in bonus.mes
+		dispIo->bonOut->AddBonusWithDesc(bonValue, bonType, 113, spellName); // 113 is ~Spell~[TAG_SPELLS] in bonus.mes
 	}
 	return 0;
 }
@@ -5036,6 +5046,23 @@ int SpellCallbacks::AoeSpellRemove(DispatcherCallbackArgs args){
 #pragma endregion
 
 #pragma region Item Callbacks
+int __cdecl ItemCallbacks::AttributeBaseBonus(DispatcherCallbackArgs args)
+{ // based on (but not replacing) 0x101011F0
+	Stat stat = (Stat)args.GetCondArg(0);
+	auto bonus = args.GetCondArg(1);
+	if (args.dispKey  == stat+1) {
+		GET_DISPIO(dispIOTypeBonusList, DispIoBonusList);
+		if (!(dispIo->flags & 4)) {
+			return 0;
+		}
+			
+		auto invIdx = args.GetCondArg(2);
+		auto item = inventory.GetItemAtInvIdx(args.objHndCaller,invIdx);
+		
+		dispIo->bonlist.AddBonusWithDesc(bonus, 12, 112, description.getDisplayName(item));
+	}
+	return 0;
+}
 int ItemCallbacks::SkillBonus(DispatcherCallbackArgs args)
 {
 	auto skillEnum = args.GetCondArg(0);
@@ -5047,7 +5074,7 @@ int ItemCallbacks::SkillBonus(DispatcherCallbackArgs args)
 		auto item = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
 		auto dispIo =dispatch.DispIoCheckIoType10(args.dispIO);
 		auto itemName = description.getDisplayName(item, args.objHndCaller);
-		dispIo->bonOut->AddBonusWithDesc(bonValue, bonType, 112, const_cast<char*>(itemName));
+		dispIo->bonOut->AddBonusWithDesc(bonValue, bonType, 112, itemName);
 	}
 	return 0;
 }
