@@ -286,7 +286,13 @@ struct DispIoCondStruct : DispIO { // DispIoType = 1
 
 struct DispIoBonusList : DispIO { // DispIoType = 2  used for fetching ability scores (dispType 10, 66), and Cur/Max HP 
 	BonusList bonlist;
-	uint32_t flags; // checked in 0x100C5C30 vs 2 for eagle's splendor spell (used to ignore the bonus from the spell)
+	/*
+	Dispatch46GetSpellDcBase (0x1004FF90) sets this to 1
+	Checked in 0x100C5C30 vs 2 for eagle's splendor spell (used to ignore the bonus from the spell);
+	  I haven't seen that flag set anywhere though
+	  Temple+ : added flag 0x4 for statLevelBase query that includes permanent effect items (e.g. "Attribute Enhancement Bonus" condition)
+	*/
+	uint32_t flags; 
 	DispIoBonusList(){
 		dispIOType = dispIOTypeBonusList;
 		flags = 0;

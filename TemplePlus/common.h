@@ -165,7 +165,7 @@ struct BonusList
 	*/
 	int AddBonus(int value, int bonType, int mesline);
 	BOOL AddBonus(int value, int bonType, std::string & text);
-	int AddBonusWithDesc(int value, int bonType, int mesline, char* descr);
+	int AddBonusWithDesc(int value, int bonType, int mesline, const char* descr);
 	int AddBonusWithDesc(int value, int bonType, std::string &text, char* descr);
 	int AddBonusFromFeat(int value, int bonType, int mesline, feat_enums feat); // same as the above, but it also gets the feat name automatically
 	int AddBonusFromFeat(int value, int bonType, int mesline, std::string &feat); 

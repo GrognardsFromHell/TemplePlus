@@ -137,11 +137,11 @@ bool BonusList::IsBonusCapped(size_t bonusIdx, size_t* cappedByIdx) const {
 
 }
 
-int BonusList::AddBonusWithDesc(int value, int bonType, int mesline, char* descr)
+int BonusList::AddBonusWithDesc(int value, int bonType, int mesline, const char* descr)
 {
 	if (AddBonus(value, bonType, mesline ))
 	{
-		bonusEntries[bonCount - 1].bonusDescr = descr;
+		bonusEntries[bonCount - 1].bonusDescr = (char*) descr;
 		return 1;
 	}
 	return 0;

@@ -739,7 +739,9 @@ int LegacySpellSystem::GetMaxSpellLevel(objHndl objHnd, Stat classCode, int char
 
 
 	auto spellStat = d20ClassSys.GetSpellStat(classCode);
-	auto spellStatLevel = objects.StatLevelGetBaseWithModifiers(objHnd, spellStat);
+	DispIoBonusList evtObj;
+	evtObj.flags |= 0x4; // new! accounts for permanent item bonuses (see expanded Attribute Enhancement Bonus)
+	auto spellStatLevel = objects.StatLevelGetBaseWithModifiers(objHnd, spellStat, &evtObj);
 
 	if (spellStatLevel - 10 < result)
 		result = spellStatLevel - 10;
