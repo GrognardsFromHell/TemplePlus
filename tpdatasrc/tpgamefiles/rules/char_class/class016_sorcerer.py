@@ -144,7 +144,7 @@ def InitSpellSelection( obj, classLvlNew = -1, classLvlIncrement = 1):
 		classLvlNew = classLvl + 1
 	maxSpellLvl = char_editor.get_max_spell_level( obj, classEnum, classLvlNew ) # this regards spell list extension by stuff like Mystic Theurge
 	
-	# Available Spells
+	# Available Spells (spells you can choose, on the left side)
 	spAvail = char_editor.get_learnable_spells(obj, classEnum, maxSpellLvl)
 	# add spell level labels
 	for p in range(0,maxSpellLvl+1):
@@ -152,7 +152,8 @@ def InitSpellSelection( obj, classLvlNew = -1, classLvlIncrement = 1):
 	spAvail.sort()
 	char_editor.append_available_spells(spAvail)
 	
-	# newly taken class
+	# Create Known Spells list (right side) spEnums
+	# Case 1 - newly taken class
 	if classLvlNew == 1:
 		spEnums = []
 		spEnums.append(char_editor.KnownSpellInfo(spell_label_level_0, 0, classEnum)) # add "Level 0" label
@@ -164,17 +165,25 @@ def InitSpellSelection( obj, classLvlNew = -1, classLvlIncrement = 1):
 		char_editor.append_spell_enums(spEnums)
 		return 0
 	
-	# Incrementing class level
+	# Case 2 - Incrementing class level
 	spellListLvl = obj.stat_level_get(stat_spell_list_level, classEnum) + classLvlIncrement # the effective level for getting the number of spells known
-	spEnums = char_editor.get_known_class_spells(obj, classEnum) # get all spells known for this class
-	for spellLvl in range(0, maxSpellLvl+1):
-		spEnums.append(char_editor.KnownSpellInfo(spell_label_level_0 + spellLvl, 0, classEnum))  # add label
-		# add spells
-		newSpellsKnownCount = char_class_utils.GetSpellsKnownAddedCount( spells_known , spellListLvl, spellLvl)
-		print "new num spells for spell level " + str(spellLvl) + ": " + str(newSpellsKnownCount)
-		for q in range(0, newSpellsKnownCount):
-			spEnums.append(char_editor.KnownSpellInfo(spell_new_slot_lvl_0 + spellLvl, 3, classEnum))
+	if spellListLvl <= 20:
+		spEnums = char_editor.get_known_class_spells(obj, classEnum) # get all spells known by this character for this class
+		for spellLvl in range(0, maxSpellLvl+1):
+			spEnums.append(char_editor.KnownSpellInfo(spell_label_level_0 + spellLvl, 0, classEnum))  # add label
+			# add spells
+			newSpellsKnownCount = char_class_utils.GetSpellsKnownAddedCount( spells_known , spellListLvl, spellLvl)
+			# print("new num spells for spell level " + str(spellLvl) + ": " + str(newSpellsKnownCount))
+			for q in range(0, newSpellsKnownCount):
+				spEnums.append(char_editor.KnownSpellInfo(spell_new_slot_lvl_0 + spellLvl, 3, classEnum))
+	else: # Epic Level sorcerer - add a single spell of any level (kind of like a freebie Spell knowledge feat, since there isn't one yet)
+		spEnums = []
+		vacant_slot = char_editor.KnownSpellInfo(spell_vacant, 3, classEnum) # sets it to spell level -1
+		spEnums.append(vacant_slot)
+		char_editor.append_spell_enums(spEnums)
+		return 0
 	
+	# Handle spell replacement on even levels
 	isReplacing = 0
 	if spellListLvl >= 4 and (spellListLvl % 2) == 0: # spell replacement
 		isReplacing = 1
@@ -196,6 +205,7 @@ def InitSpellSelection( obj, classLvlNew = -1, classLvlIncrement = 1):
 		if char_editor.get_spell_level(spEnum, classEnum) <= maxSpellLvl-2:
 			spEnums[p].spell_status = 1 # marked as replaceable
 	
+	# Finally, return spEnums list to the engine
 	spEnums.sort()
 	char_editor.append_spell_enums(spEnums)
 	return 0
