@@ -1592,10 +1592,11 @@ void UiCharEditor::SpellsActivate() {
 
 	setScrollbars();
 	needPopulateEntries = 0; // needPopulateEntries
+
 }
 
 BOOL UiCharEditor::SpellsCheckComplete(){
-	auto selPkt = GetCharEditorSelPacket();
+	auto &selPkt = GetCharEditorSelPacket();
 	auto handle = GetEditedChar();
 
 	if (!selectingSpells) {
@@ -1607,59 +1608,7 @@ BOOL UiCharEditor::SpellsCheckComplete(){
 	if (needPopulateEntries == 1)
 		return false;
 
-	/*
-	auto CheckFullyLearnedSpells = [&]() {
-		auto &avSpells = chargen.GetAvailableSpells();
-		auto& knSpInfo = chargen.GetKnownSpellInfo();
-		uint8_t mFullyLearned[NUM_SPELL_LEVELS] = { 1, }; // assume they're all fully learned initially, and search for unknown spells to unmark
-
-		// loop through vacant slots
-		for (auto j = 0u; j < knSpInfo.size(); j++) {
-			auto& spInfo = knSpInfo[j];
-			auto curSpellLvl = -1;
-
-			if (spInfo.spellClass != spClass)
-				continue;
-			if (spellSys.IsLabel(spInfo.spEnum)) {
-				curSpellLvl = spInfo.spellLevel;
-				if (curSpellLvl > spLevel)
-					break;
-				continue;
-			}
-
-			if (spInfo.spEnum == spEnum) {
-				foundSpell = true;
-				break;
-			}
-		}
-
-		// loop through available spells, if any are unknown then unmark in fullyLearned
-		for (auto i = 0; i < avSpells.size(); ++i) {
-			auto& spell = avSpells[i];
-			auto spEnum = spell.spEnum;
-			auto spClass = spell.spellClass;
-			auto spLevel = spell.spellLevel;
-
-			
-			if (spell.spellLevel < 0 || spellSys.IsLabel(spEnum))
-				continue;
-			if (chargen.SpellIsAlreadyKnown(spEnum, spClass))
-				continue;
-			if (chargen.SpellIsForbidden(spEnum))
-				continue;
-			
-			// spell is not known by char, check if it's on the right hand side already
-			
-			auto foundSpell = false;
-			
-			if (!foundSpell) {
-				fullyLearned[spLevel] = 0;
-			}
-
-		}
-	};
-	CheckFullyLearnedSpells();
-	*/
+	
 	return d20ClassSys.LevelupSpellsCheckComplete(GetEditedChar(), selPkt.classCode);
 
 }
