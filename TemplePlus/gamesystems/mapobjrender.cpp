@@ -343,6 +343,10 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 
 void MapObjectRenderer::RenderObjectInUi(objHndl handle, int x, int y, float rotation, float scale) {
 
+	// This is a hack to get it to be centered,
+	// in reality this would really need a rewrite of the entire camera system :-|
+	y -= 15;
+
 	auto worldPos = mDevice.GetCamera().ScreenToWorld((float)x, (float)y);
 
 	auto animatedModel = objects.GetAnimHandle(handle);
@@ -350,10 +354,9 @@ void MapObjectRenderer::RenderObjectInUi(objHndl handle, int x, int y, float rot
 	auto animParams = objects.GetAnimParams(handle);
 	animParams.x = 0;
 	animParams.y = 0;
-	animParams.offsetX = worldPos.x + 865.70398f;
-	animParams.offsetZ = 1200.0f;
-	animParams.offsetY = worldPos.z + 865.70398f;
-	animParams.scale *= scale;
+	animParams.offsetX = 0;
+	animParams.offsetY = 0;
+	animParams.offsetZ = 0;
 	animParams.rotation = XM_PI + rotation;
 	animParams.rotationPitch = 0;
 	
@@ -367,7 +370,23 @@ void MapObjectRenderer::RenderObjectInUi(objHndl handle, int x, int y, float rot
 	lights[1].color = { 1, 1, 1, 0 };
 	lights[1].dir = { 0, 0.7071200013160706, -0.7071200013160706f, 0 };
 
-	mAasRenderer.Render(animatedModel.get(), animParams, lights);
+	// Use a GPU-side transform matrix instead of modifying the AAS model
+	MdfRenderOverrides overrides;
+	overrides.useWorldMatrix = true;
+	auto transform = DirectX::XMMatrixAffineTransformation(
+		DirectX::XMVectorSet(scale, scale, scale, 1.0f),
+		DirectX::XMVectorZero(),
+		DirectX::XMQuaternionIdentity(),
+		DirectX::XMVectorSet(
+			worldPos.x + 865.70398f,
+			1200.0f,
+			worldPos.z + 865.70398f,
+			0
+		)
+	);
+	XMStoreFloat4x4(&overrides.worldMatrix, transform);
+
+	mAasRenderer.Render(animatedModel.get(), animParams, lights, &overrides);
 
 	if (objects.IsCritter(handle)) {
 		auto weaponPrim = critterSys.GetWornItem(handle, EquipSlot::WeaponPrimary);
