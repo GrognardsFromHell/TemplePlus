@@ -343,11 +343,8 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 
 void MapObjectRenderer::RenderObjectInUi(objHndl handle, int x, int y, float rotation, float scale) {
 
-	// This is a hack to get it to be centered,
-	// in reality this would really need a rewrite of the entire camera system :-|
-	y -= 15;
-
-	auto worldPos = mDevice.GetCamera().ScreenToWorld((float)x, (float)y);
+	// The y-15 is a hack to get it to be centered, in reality this would really need a rewrite of the entire camera system :-|
+	auto worldPos = mDevice.GetCamera().ScreenToWorld((float)x, (float)y - 15);
 
 	auto animatedModel = objects.GetAnimHandle(handle);
 
