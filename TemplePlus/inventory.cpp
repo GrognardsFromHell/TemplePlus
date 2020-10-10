@@ -1414,7 +1414,7 @@ int InventorySystem::GetWieldType(objHndl wielder, objHndl item, bool regardEnla
 	
 	auto wielderSize = critterSys.GetSize(wielder);
 	auto wielderSizeBase = regardEnlargement ? gameSystems->GetObj().GetObject(wielder)->GetInt32(obj_f_size) : wielderSize;
-	auto itemSize = itemObj->GetInt32(obj_f_size);
+	auto itemSize = itemObj->GetInt32(obj_f_size); // size_medium is 5
 
 	auto wieldType = 3;
 
@@ -1456,22 +1456,24 @@ int InventorySystem::GetWieldType(objHndl wielder, objHndl item, bool regardEnla
 		return wieldType;
 	} 
 	
-	if (weaponType != wt_dwarven_waraxe)
-	{
-		return wieldType;
+	if (weaponType == wt_dwarven_waraxe) {
+		if (feats.HasFeatCountByClass(wielder, FEAT_EXOTIC_WEAPON_PROFICIENCY_DWARVEN_WARAXE) || objects.StatLevelGet(wielder, stat_race) == race_dwarf)
+		{
+			return wieldType;
+		}
+		
+		// no exotic feat or dwarfness: medium creatures must dual wield
+		if (wielderSize ==  5)
+		{
+			return 2;
+		}
+		else if (wielderSize > 5) { // large creatures can wield it single handed
+			return 1;
+		}
+		return 3;
 	}
 
-	if (feats.HasFeatCountByClass(wielder, FEAT_EXOTIC_WEAPON_PROFICIENCY_DWARVEN_WARAXE) || objects.StatLevelGet(wielder, stat_race) == race_dwarf)
-	{
-		return wieldType;
-	} 
-	
-	if (wielderSize == 5)
-	{
-		return 2;
-	} 
-
-	return 2 * (wielderSize <= 5) + 1;	
+	return wieldType;
 }
 
 int InventorySystem::GetWeaponAnimId(objHndl item, objHndl wielder){
@@ -1906,17 +1908,17 @@ ItemErrorCode InventorySystem::ItemTransferFromTo(objHndl owner, objHndl receive
 			}
 		}
 
-		// Workaround for armor that causes crashes on dwarves
-		if (invSlot == InvIdxForSlot(EquipSlot::Armor)){
-			if (result == IEC_OK || flags & IIF_Allow_Swap) {
-				if (critterSys.GetRace(owner) == Race::race_dwarf) {
-					auto armorMeshId = itemObj->GetInt32(obj_f_base_mesh);
-					if (armorMeshId == 12172) {
-						return IEC_Has_No_Art;
-					}
-				}
-			}
-		}
+		//// Workaround for armor that causes crashes on dwarves
+		//if (invSlot == InvIdxForSlot(EquipSlot::Armor)){
+		//	if (result == IEC_OK || flags & IIF_Allow_Swap) {
+		//		if (critterSys.GetRace(owner) == Race::race_dwarf) {
+		//			auto armorMeshId = itemObj->GetInt32(obj_f_base_mesh);
+		//			if (armorMeshId == 12172) {
+		//				return IEC_Has_No_Art;
+		//			}
+		//		}
+		//	}
+		//}
 
 		if (result != IEC_OK){
 			if (!(flags & IIF_Allow_Swap)){
@@ -1960,16 +1962,16 @@ ItemErrorCode InventorySystem::ItemTransferSwap(objHndl owner, objHndl receiver,
 		return IEC_Cannot_Transfer;
 	}
 
-	// Workaround for specific armor model that causes crashes on dwarves
-	if (equippedItemSlot == InvIdxForSlot(EquipSlot::Armor) && receiverObj->IsCritter()) {
-		if (critterSys.GetRace(receiver) == Race::race_dwarf) {
+	//// Workaround for specific armor model that causes crashes on dwarves
+	//if (equippedItemSlot == InvIdxForSlot(EquipSlot::Armor) && receiverObj->IsCritter()) {
+	//	if (critterSys.GetRace(receiver) == Race::race_dwarf) {
 
-			auto armorMeshId = itemObj->GetInt32(obj_f_base_mesh);
-			if (armorMeshId == 12172) {
-				return IEC_Has_No_Art;
-			}
-		}
-	}
+	//		auto armorMeshId = itemObj->GetInt32(obj_f_base_mesh);
+	//		if (armorMeshId == 12172) {
+	//			return IEC_Has_No_Art;
+	//		}
+	//	}
+	//}
 	
 	static auto itemTransferSwap = temple::GetRef<ItemErrorCode(__cdecl)(objHndl, objHndl, objHndl, objHndl, int*, int, int, int)>(0x1006AB50);
 	auto result = itemTransferSwap(owner, receiver, item, itemPrevious, a4, equippedItemSlot, destItemSlotMaybe, flags);
