@@ -407,6 +407,11 @@ bool MapSystem::LoadGame(GameSystemSaveFile* saveFile) {
 		auto mapFleeFh = vfs->Open("Save\\Current\\map_mapflee.bin", "rb");
 		MapFleeSaveData fleeData;
 		vfs->Read(&fleeData, sizeof(fleeData), mapFleeFh);
+		mFleeInfo.mapId = fleeData.mapId;
+		mFleeInfo.isFleeing = fleeData.isFleeing != 0;
+		mFleeInfo.enterLocation.locx = fleeData.enterX;
+		mFleeInfo.enterLocation.locy = fleeData.enterY;
+		mFleeInfo.location = fleeData.loc;
 		vfs->Close(mapFleeFh);
 	}
 	
