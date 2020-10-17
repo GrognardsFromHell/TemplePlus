@@ -498,6 +498,10 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			auto _damType = (DamageType)damType;
 			damPkt.AddDR(amount, _damType, damMesLine);
 		}, "Adds damage resistance.")
+		.def("add_mod_factor", [](DamagePacket& damPkt, float factor, int damType, int damMesLine) {
+			auto _damType = (DamageType)damType;
+			damPkt.AddModFactor(factor, _damType, damMesLine);
+		}, "Adds a modification factor to damage.")
 		.def_readwrite("final_damage", &DamagePacket::finalDamage, "Final Damage Value")
 		.def_readwrite("flags", &DamagePacket::flags, "1 - maximized, 2 - empowered")
 		.def_readwrite("bonus_list", &DamagePacket::bonuses)
