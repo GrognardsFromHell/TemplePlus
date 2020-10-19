@@ -1178,38 +1178,25 @@ namespace aas {
 			if (submesh.vertexCount > 0) {
 				auto position_out = submesh.positions.get();
 				auto normal_out = submesh.normals.get();
-				auto j = submesh.vertex_copy_positions.get();
-				auto v49 = &vectors[-(*j + 1)];			
-				j++;
-				while (1)
-				{
-					*position_out = *v49;
-					auto v51 = *j;
-					for (j = j + 1; v51 >= 0; v51 = *(j - 1))
-					{
-						auto v53 = &vectors[v51];
-						++j;
-						position_out->x += v53->x;
-						position_out->y += v53->y;
-						position_out->z += v53->z;
+				auto cp_pos = submesh.vertex_copy_positions.get();
+				while (*cp_pos != -32768) {
+					*position_out = vectors[-(*cp_pos++  +1)];
+					while(*cp_pos >= 0) {
+						position_out->x += vectors[*cp_pos].x;
+						position_out->y += vectors[*cp_pos].y;
+						position_out->z += vectors[*cp_pos].z;
+						cp_pos++;
 					}
-					auto v54 = &vectors[-(v51 + 1)];
-				
-					*normal_out = *v54;
-					auto v55 = *j;
-					for (j = j + 1; v55 >= 0; v55 = *(j - 1))
-					{
-						auto v56 = &vectors[v55];
-						++j;
-						normal_out->x += v56->x;
-						normal_out->y += v56->y;
-						normal_out->z += v56->z;
+					
+					*normal_out = vectors[-(*cp_pos++  +1)];
+					while(*cp_pos >= 0) {
+						normal_out->x += vectors[*cp_pos].x;
+						normal_out->y += vectors[*cp_pos].y;
+						normal_out->z += vectors[*cp_pos].z;
+						cp_pos++;
 					}
-					if (v55 == -32768)
-						break;
 					++position_out;
 					++normal_out;
-					v49 = &vectors[-(v55 + 1)];
 				}
 			}
 
