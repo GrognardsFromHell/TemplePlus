@@ -45,7 +45,16 @@ namespace aas {
 		uint16_t primCount;
 		uint16_t field_E;
 		std::unique_ptr<BoneElementCount[]> bone_elem_counts;
+		/*
+		buffer containing positions + normals of vertices, transformed to SKM bone system
+		*/
 		std::unique_ptr<float[]> bone_floats;
+		/*
+		indices into bone_floats; can be negative, indicating it's the first contribution:
+		*p_position  = bone_floats[ -(*cp_pos+1)] when negative,
+		            += bone_floats[ *cp_pos     ] when positive
+		then moves to normal and so on, terminated by -32768
+		*/
 		std::unique_ptr<short[]> vertex_copy_positions;
 		std::unique_ptr<DX::XMFLOAT2[]> uv;
 		std::unique_ptr<DX::XMFLOAT4[]> positions;
@@ -129,9 +138,9 @@ namespace aas {
 
 	struct AasVertexState {
 		int16_t count;
-		int16_t array1[6];
-		int16_t array2[6];
-		int16_t array3[6];
+		int16_t ska_bone_matrix_idx[6]; // ska_bone_idx + 1
+		int16_t pos_vec_offset[6];
+		int16_t normal_vec_offset[6];
 		int16_t field26; // padding??
 		DX::XMFLOAT2 uv;
 	};
@@ -142,7 +151,7 @@ namespace aas {
 		int next;
 	};
 
-	int workset_add(AasWorkSet *scratch_space, int *scratch_space_size, const DX::XMFLOAT4 &vector, float bone_weight, int *heap_pos_out, int *some_count)
+	int workset_add(AasWorkSet *workset, int *worset_size, const DX::XMFLOAT4 &vector, float bone_weight, int *heap_pos_out, int *ska_bone_affected_count)
 	{
 		int insert_pos = 0;
 
@@ -152,7 +161,7 @@ namespace aas {
 			auto cur_heap_pos = *heap_pos_out;
 
 			while (true) {
-				auto &cur_entry = scratch_space[cur_heap_pos];
+				auto &cur_entry = workset[cur_heap_pos];
 
 				if (distanceSquared3(cur_entry.vector, vector) == 0.0f && bone_weight == cur_entry.weight)
 				{
@@ -167,12 +176,12 @@ namespace aas {
 			}
 		}
 
-		auto heap_pos = *scratch_space_size;
-		*pos_out_ = (*scratch_space_size)++;
-		++*some_count;
-		scratch_space[heap_pos].vector = vector;
-		scratch_space[heap_pos].weight = bone_weight;
-		scratch_space[heap_pos].next = -1;
+		auto heap_pos = *worset_size;
+		*pos_out_ = (*worset_size)++;
+		++*ska_bone_affected_count;
+		workset[heap_pos].vector = vector;
+		workset[heap_pos].weight = bone_weight;
+		workset[heap_pos].next = -1;
 		return insert_pos;
 	}
 
@@ -467,8 +476,8 @@ namespace aas {
 	}
 
 	struct PosPair {
-		int first_position_idx;
-		int first_normal_idx;
+		int first_position_idx; // index into worset
+		int first_normal_idx;   // index into worset
 	};
 
 	void AnimatedModel::Method11() {
@@ -480,7 +489,7 @@ namespace aas {
 		Mesh *bone_mapping_mesh = nullptr;
 		BoneMapping bone_mapping[1024];
 		int used_ska_bone_count = 0; // Built by bone_mapping, may include gaps
-		PosPair pos_pairs[1024];
+		PosPair pos_pairs[1024]; // index is bone_matrix_idx (= ska_bone_idx + 1)
 		struct {
 			int pos_count;
 			int normals_count;
@@ -488,7 +497,7 @@ namespace aas {
 			int pos_vec_start;
 			int normals_float_start;
 			int normals_vec_start;
-		} ska_bone_affected_count[1024];
+		} ska_bone_affected_count[1024]; // index is bone_matrix_idx (= ska_bone_idx + 1)
 
 		// Mapping between index of vertex in SKM file, and index of vertex in submesh vertex array
 		int16_t vertex_idx_mapping[0x7FFF];
@@ -589,12 +598,16 @@ namespace aas {
 						int vertex_bone_attach_count = 0;
 						float vertex_bone_attach_weights[6];
 						int16_t vertex_bone_attach_ska_ids[6]; // Attached bones mapped to SKA bone ids
-						DX::XMFLOAT4 attachment_positions[6];
-						DX::XMFLOAT4 attachment_normals[6];
+						DX::XMFLOAT4 attachment_positions_transformed[6]; // normally, these are the positions transformed into the SKM bone's space
+						DX::XMFLOAT4 attachment_normals_transformed[6];
 
 						for (int attachment_idx = 0; attachment_idx < vertex.attachmentCount; attachment_idx++) {
-							auto attachment_bone_mapping = bone_mapping[vertex.attachmentBone[attachment_idx]];
+							auto org_skm_bone_idx = vertex.attachmentBone[attachment_idx];
+							auto attachment_bone_mapping = bone_mapping[org_skm_bone_idx];
 							auto attachment_skm_bone_idx = attachment_bone_mapping.skm_bone_idx; // even the SKM bone can be remapped...
+							if (org_skm_bone_idx != attachment_skm_bone_idx) {
+								auto asdf = 1; // for debug
+							}
 							auto attachment_ska_bone_idx = attachment_bone_mapping.ska_bone_idx;
 							auto attachment_weight = vertex.attachmentWeight[attachment_idx];
 
@@ -614,8 +627,8 @@ namespace aas {
 							}
 
 							auto attachment_idx_out = vertex_bone_attach_count++;
-							auto &attachment_position = attachment_positions[attachment_idx_out];
-							auto &attachment_normal = attachment_normals[attachment_idx_out];
+							auto &attachment_position = attachment_positions_transformed[attachment_idx_out];
+							auto &attachment_normal = attachment_normals_transformed[attachment_idx_out];
 
 							vertex_bone_attach_ska_ids[attachment_idx_out] = attachment_ska_bone_idx;
 							vertex_bone_attach_weights[attachment_idx_out] = attachment_weight;
@@ -634,6 +647,9 @@ namespace aas {
 								attachment_position = transformPosition(skm_bone.full_world_inverse, attachment_position);
 								attachment_normal = transformNormal(skm_bone.full_world_inverse, attachment_normal);
 							}
+							else {
+								auto asdf = 1; // debug
+							}
 
 							// NOTE: ToEE computed bounding boxes for each bone here, but it didn't seem to be used
 
@@ -643,8 +659,8 @@ namespace aas {
 						if (vertex_bone_attach_count == 0) {
 							vertex_bone_attach_weights[0] = 1.0f;
 							vertex_bone_attach_ska_ids[0] = -1;
-							attachment_positions[0] = vertex.pos;
-							attachment_normals[0] = vertex.normal;
+							attachment_positions_transformed[0] = vertex.pos;
+							attachment_normals_transformed[0] = vertex.normal;
 							vertex_bone_attach_count = 1;
 						}
 
@@ -656,13 +672,13 @@ namespace aas {
 							auto weight = vertex_bone_attach_weights[i];
 							auto ska_bone_idx = vertex_bone_attach_ska_ids[i];
 							auto bone_matrix_idx = ska_bone_idx + 1;
-							cur_vertex_state.array1[i] = bone_matrix_idx;
+							cur_vertex_state.ska_bone_matrix_idx[i] = bone_matrix_idx;
 
 							DX::XMFLOAT4 weighted_pos;
-							weighted_pos.x = weight * attachment_positions[i].x;
-							weighted_pos.y = weight * attachment_positions[i].y;
-							weighted_pos.z = weight * attachment_positions[i].z;
-							cur_vertex_state.array2[i] = workset_add(&workset[0],
+							weighted_pos.x = weight * attachment_positions_transformed[i].x;
+							weighted_pos.y = weight * attachment_positions_transformed[i].y;
+							weighted_pos.z = weight * attachment_positions_transformed[i].z;
+							cur_vertex_state.pos_vec_offset[i] = workset_add(&workset[0],
 								&workset_count,
 								weighted_pos,
 								weight,
@@ -671,10 +687,10 @@ namespace aas {
 							);
 
 							DX::XMFLOAT4 weighted_normal;
-							weighted_normal.x = weight * attachment_normals[i].x;
-							weighted_normal.y = weight * attachment_normals[i].y;
-							weighted_normal.z = weight * attachment_normals[i].z;
-							cur_vertex_state.array3[i] = workset_add(&workset[0],
+							weighted_normal.x = weight * attachment_normals_transformed[i].x;
+							weighted_normal.y = weight * attachment_normals_transformed[i].y;
+							weighted_normal.z = weight * attachment_normals_transformed[i].z;
+							cur_vertex_state.normal_vec_offset[i] = workset_add(&workset[0],
 								&workset_count,
 								weighted_normal,
 								0.0,
@@ -769,8 +785,8 @@ namespace aas {
 				submesh.uv[i].y = 1.0f - cur_vertex_state.uv.y;
 
 				for (int j = 0; j < cur_vertex_state.count; j++) {
-					// TODO: Is this the "target" position in the positions array?
-					auto x = ska_bone_affected_count[cur_vertex_state.array1[j]].pos_vec_start + cur_vertex_state.array2[j];
+					// Index into bone_floats_transformed array
+					auto x = ska_bone_affected_count[cur_vertex_state.ska_bone_matrix_idx[j]].pos_vec_start + cur_vertex_state.pos_vec_offset[j];
 					if (j == 0) {
 						x = -1 - x;
 					}
@@ -778,8 +794,8 @@ namespace aas {
 				}
 
 				for (int j = 0; j < cur_vertex_state.count; j++) {
-					// TODO: Is this the "target" position in the positions array?
-					auto x = ska_bone_affected_count[cur_vertex_state.array1[j]].normals_vec_start + cur_vertex_state.array3[j];
+					// Index into bone_floats_transformed array
+					auto x = ska_bone_affected_count[cur_vertex_state.ska_bone_matrix_idx[j]].normals_vec_start + cur_vertex_state.normal_vec_offset[j];
 					if (j == 0) {
 						x = -1 - x;
 					}
@@ -1141,12 +1157,12 @@ namespace aas {
 		Method19();
 
 		if (submesh.fullyInitialized) {
-			static DX::XMFLOAT4A vectors[0x5FFF6];
-			auto vec_out = &vectors[0];
-
+			static DX::XMFLOAT4A bone_floats_transformed[0x5FFF6];
+			
 			// The cur_pos "w" component is (in reality) the attachment weight
 			auto cur_float_in = submesh.bone_floats.get();
 			auto bones = skeleton->GetBones();
+			auto vec_out = &bone_floats_transformed[0];
 
 			for (int16_t bone_idx = 0; bone_idx <= bones.size(); bone_idx++) {
 				Matrix3x4 bone_matrix = boneMatrices[bone_idx];
@@ -1180,19 +1196,19 @@ namespace aas {
 				auto normal_out = submesh.normals.get();
 				auto cp_pos = submesh.vertex_copy_positions.get();
 				while (*cp_pos != -32768) {
-					*position_out = vectors[-(*cp_pos++  +1)];
+					*position_out = bone_floats_transformed[-(*cp_pos++  +1)];
 					while(*cp_pos >= 0) {
-						position_out->x += vectors[*cp_pos].x;
-						position_out->y += vectors[*cp_pos].y;
-						position_out->z += vectors[*cp_pos].z;
+						position_out->x += bone_floats_transformed[*cp_pos].x;
+						position_out->y += bone_floats_transformed[*cp_pos].y;
+						position_out->z += bone_floats_transformed[*cp_pos].z;
 						cp_pos++;
 					}
 					
-					*normal_out = vectors[-(*cp_pos++  +1)];
+					*normal_out = bone_floats_transformed[-(*cp_pos++  +1)];
 					while(*cp_pos >= 0) {
-						normal_out->x += vectors[*cp_pos].x;
-						normal_out->y += vectors[*cp_pos].y;
-						normal_out->z += vectors[*cp_pos].z;
+						normal_out->x += bone_floats_transformed[*cp_pos].x;
+						normal_out->y += bone_floats_transformed[*cp_pos].y;
+						normal_out->z += bone_floats_transformed[*cp_pos].z;
 						cp_pos++;
 					}
 					++position_out;
