@@ -1279,6 +1279,15 @@ PyObject* PyGame_CreateHistoryFromPattern(PyObject*, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+PyObject* PyGame_SpellMesline(PyObject*, PyObject* args) {
+	int line;
+	if (!PyArg_ParseTuple(args, "i:game.get_spell_mesline", &line)) {
+		Py_RETURN_NONE;
+	}
+	
+	auto text = spellSys.GetSpellMesline(line);
+	return PyString_FromString(text);
+}
 
 PyObject* PyGame_WrittenUiShow(PyObject*, PyObject* args) {
 	objHndl handle;
@@ -1331,6 +1340,7 @@ static PyMethodDef PyGameMethods[]{
 	{ "create_history_freeform", PyGame_CreateHistoryFreeform, METH_VARARGS, NULL },
 	{ "create_history_from_id", PyGame_CreateHistoryFromId, METH_VARARGS, NULL },
 	{ "create_history_from_pattern", PyGame_CreateHistoryFromPattern, METH_VARARGS, NULL },
+	{ "get_spell_mesline", PyGame_SpellMesline, METH_VARARGS, NULL },
 	{"fade_and_teleport", PyGame_FadeAndTeleport, METH_VARARGS, NULL},
 	{"fade", PyGame_Fade, METH_VARARGS, NULL},
 	{ "fnn", PyGame_FindNpcNear, METH_VARARGS, NULL },

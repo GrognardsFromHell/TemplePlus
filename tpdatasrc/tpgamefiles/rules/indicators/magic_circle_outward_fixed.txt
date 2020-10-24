@@ -2,4 +2,4 @@ ID_string: MAGIC_CIRCLE_OUTWARD_FIXED
 effect_type: 0
 texture_file: art\interface\player_conditions\buffs\Spell Magic Circle.tga
 help_topic: TAG_ROOT
-tooltip_base_text: Magic Circle Against
+tooltip_base_text: 

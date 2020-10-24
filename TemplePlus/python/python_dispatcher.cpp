@@ -837,6 +837,9 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			.def("check_spell_resistance", [](SpellPacketBody&pkt, objHndl tgt){
 				return pkt.CheckSpellResistance(tgt);
 			})
+			.def("check_spell_resistance_force", [](SpellPacketBody& pkt, objHndl tgt) {
+				return pkt.CheckSpellResistance(tgt, true);  //Force the check even if the spell wouldn't normally allow it
+			})
 			.def("trigger_aoe_hit", [](SpellPacketBody&pkt) {
 				if (!pkt.spellEnum)
 					return;
