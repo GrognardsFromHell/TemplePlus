@@ -997,22 +997,22 @@ Range:               Touch
 Target:            Creature touched
 Duration:      1  hour/level (D)}
 {5281}{Mage Hand}
-{5282} Magic Circle against Chaos {Gives +2  deflection bonus to AC  against chaos creatures to the caster only.  No other aspects of this spell work.
+{5282} Magic Circle against Chaos {Gives +2 deflection bonus to AC and +2 resistance bonus to saves, against chaotic creatures only. Prevents mind control and contact with any non-lawful summoned creatures.
 Casting:         1  std action   [Abjuration, V,S]
 Range:               Touch  
 Area:                   10-foot  radius from touched creature 
 Duration:      10 min/level}
-{5283} Magic Circle against Evil {Gives +2  deflection bonus to AC  against evil creatures to the caster only.  No other aspects of this spell work.
+{5283} Magic Circle against Evil {Gives +2 deflection bonus to AC and +2 resistance bonus to saves, against evil creatures only. Prevents mind control and contact with any non-good summoned creatures.
 Casting:         1  std action   [Abjuration, V,S]
 Range:               Touch  
 Area:                   10-foot  radius from touched creature 
 Duration:      10 min/level}
-{5284} Magic Circle against Good {Gives +2  deflection bonus to AC  against good creatures to the caster only.  No other aspects of this spell work.
+{5284} Magic Circle against Good {Gives +2 deflection bonus to AC and +2 resistance bonus to saves, against good creatures only. Prevents mind control and contact with any non-evil summoned creatures.
 Casting:         1  std action   [Abjuration, V,S]
 Range:               Touch  
 Area:                   10-foot  radius from touched creature 
 Duration:      10 min/level}
-{5285} Magic Circle against Law {Gives +2  deflection bonus to AC  against lawful creatures to the caster only.  No other aspects of this spell work.
+{5285} Magic Circle against Law {Gives +2 deflection bonus to AC and +2 resistance bonus to saves, against lawful creatures only. Prevents mind control and contact with any non-chaotic summoned creatures.
 Casting:         1  std action   [Abjuration, V,S]
 Range:               Touch  
 Area:                   10-foot  radius from touched creature 
