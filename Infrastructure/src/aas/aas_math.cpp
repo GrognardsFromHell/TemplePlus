@@ -51,4 +51,14 @@ namespace aas {
 		return result;
 	}
 
+	Matrix3x4 Matrix3x4::From4x4(const DX::XMFLOAT4X4& ref)
+	{
+		Matrix3x4 result;
+		auto ref_t = DX::XMMatrixTranspose( DX::XMLoadFloat4x4(&ref) );
+		memcpy(&result, &ref_t, sizeof(Matrix3x4));
+		
+		return result;
+	}
+	
+
 }

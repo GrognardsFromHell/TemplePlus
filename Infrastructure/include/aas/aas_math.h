@@ -95,6 +95,11 @@ namespace aas {
 			return data()[col * 4 + row];
 		}
 
+		Matrix3x4& operator =(const Matrix3x4& ref) {
+			memcpy(this, &ref, sizeof(Matrix3x4));
+			return *this;
+		}
+
 		bool operator==(const Matrix3x4 &o) const {
 			return m00 == o.m00
 				&& m01 == o.m01
@@ -123,6 +128,8 @@ namespace aas {
 			result(3, 3) = 1;
 			return result;
 		}
+
+		static Matrix3x4 From4x4(const DX::XMFLOAT4X4& ref);
 	};
 
 	struct Quaternion {

@@ -5,6 +5,7 @@
 #include "aas/aas_model_factory.h"
 #include "aas/aas.h"
 #include "aas_animated_model.h"
+#include "aas/aas_debugger.h"
 
 namespace aas {
 
@@ -329,4 +330,13 @@ namespace aas {
 		aasSystem_->ReleaseModel(handle);
 	}
 
+
+	void AnimatedModelFactory::ForceFrame(bool en, float frame) {
+		AasDebugger::SetForcedFrame(en, frame);
+	}
+	void AnimatedModelFactory::ForceWorldMatrix(bool en, DirectX::XMFLOAT4X4& worldMat)
+	{
+		AasDebugger::SetForcedWorldMatrix(en, worldMat);
+	}
+	
 }

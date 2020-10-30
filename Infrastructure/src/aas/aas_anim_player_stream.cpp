@@ -3,6 +3,7 @@
 
 #include "aas_anim_player_stream.h"
 #include "aas_skeleton.h"
+#include "aas/aas_debugger.h"
 
 namespace aas {
 
@@ -43,6 +44,9 @@ namespace aas {
 		//static auto orgMethod = temple::GetPointer<int(AnimPlayerStream*, float frame)>(0x1026b740);
 		//orgMethod(this, frame);
 		//return;
+		if (AasDebugger::IsForcedFrame()) {
+			frame = AasDebugger::GetForcedFrame();
+		}
 
 		auto frameRounded = floor(frame);
 		if (floor(this->currentFrame) == frameRounded) {
@@ -66,7 +70,7 @@ namespace aas {
 
 		int16_t* keyframeData = (int16_t*)this->keyframePtr;
 		auto keyframeFrame = (*(uint16_t*)keyframeData) / 2;
-
+		
 		// advance the frames
 		while (keyframeFrame <= frameRounded) {
 

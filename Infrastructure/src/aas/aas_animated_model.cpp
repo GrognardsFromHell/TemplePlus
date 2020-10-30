@@ -12,6 +12,7 @@
 #include "aas_cloth_sim.h"
 #include "aas_cloth_sim_mesh.h"
 #include "aas_anim_player.h"
+#include "aas/aas_debugger.h"
 
 namespace aas {
 
@@ -937,7 +938,11 @@ namespace aas {
 	// Originally @ 0x102682a0
 	void AnimatedModel::Method19()
 	{
-
+		if (AasDebugger::IsForcedWorldMat()) {
+			DirectX::XMFLOAT4X4 wm;
+			AasDebugger::GetForcedWorldMatrix(wm);
+			worldMatrix = Matrix3x4::From4x4(wm);
+		}
 		if (drivenTime <= 0.0f && drivenDistance <= 0.0f && drivenRotation <= 0.0f && currentWorldMatrix == worldMatrix) {
 			return;
 		}

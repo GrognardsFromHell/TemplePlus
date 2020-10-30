@@ -9,6 +9,7 @@
 #include "aas_anim_events.h"
 #include "aas_mesh.h"
 #include "aas_skeleton.h"
+#include "aas/aas_debugger.h"
 
 namespace aas {
 

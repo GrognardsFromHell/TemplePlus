@@ -163,6 +163,7 @@
     <ClInclude Include="breakpad\scoped_ptr.h" />
     <ClInclude Include="breakpad\string_utils-inl.h" />
     <ClInclude Include="include\aas\aas.h" />
+    <ClInclude Include="include\aas\aas_debugger.h" />
     <ClInclude Include="include\aas\aas_model_factory.h" />
     <ClInclude Include="include\aas\aas_renderer.h" />
     <ClInclude Include="include\graphics\collision.h" />
@@ -274,6 +275,7 @@
     <ClCompile Include="include\fmt\posix.cc" />
     <ClCompile Include="include\fmt\printf.cc" />
     <ClCompile Include="src\aas\aas.cpp" />
+    <ClCompile Include="src\aas\aas_debugger.cpp" />
     <ClCompile Include="src\aas\aas_math.cpp" />
     <ClCompile Include="src\aas\aas_renderer.cpp" />
     <ClCompile Include="src\aas\aas_animated_model.cpp" />

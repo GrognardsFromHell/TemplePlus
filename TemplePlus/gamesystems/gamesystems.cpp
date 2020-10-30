@@ -423,6 +423,7 @@ void GameSystems::InitAnimationSystem() {
 
 }
 
+/* Originally 0x10004230 */
 std::string GameSystems::ResolveSkaFile(int meshId) const {
 
 	auto it = mMeshesById.find(meshId);

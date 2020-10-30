@@ -430,7 +430,15 @@ namespace gfx {
 		bool rotation3d = false; // Enables use of rotationRoll/rotationPitch/rotationYaw
 	};
 
-	class AnimatedModelFactory {
+	class IAnimationDebugger {
+		virtual void ForceFrame(bool en, float frame);
+		virtual void ForceWorldMatrix(bool en, DirectX::XMFLOAT4X4& worldMat);
+	};
+	inline void IAnimationDebugger::ForceFrame(bool en, float frame) {
+	}
+	inline void IAnimationDebugger::ForceWorldMatrix(bool en, DirectX::XMFLOAT4X4& worldMat) {
+	}
+	class AnimatedModelFactory : IAnimationDebugger {
 	public:
 		virtual ~AnimatedModelFactory() {
 		}
