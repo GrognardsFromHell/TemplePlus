@@ -44,8 +44,10 @@ namespace aas {
 		//static auto orgMethod = temple::GetPointer<int(AnimPlayerStream*, float frame)>(0x1026b740);
 		//orgMethod(this, frame);
 		//return;
-		if (AasDebugger::IsForcedFrame()) {
+		if (AasDebugger::IsForcedFrame() && frame < 32766.0) {
 			frame = AasDebugger::GetForcedFrame();
+			if (frame < -1.f)
+				frame = -1.f;
 		}
 
 		auto frameRounded = floor(frame);

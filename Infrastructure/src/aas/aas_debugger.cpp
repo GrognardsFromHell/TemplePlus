@@ -38,7 +38,7 @@ void AasDebugger::GetForcedWorldMatrix(DirectX::XMFLOAT4X4& worldMat)
 
 void AasDebugger::SetForcedWorldMatrix(bool en, const DirectX::XMFLOAT4X4& worldMat)
 {
-	isForcedFrame = en;
+	isForcedWorldMat = en;
 	if (en) {
 		forcedWorldMat = worldMat;
 	}

@@ -338,5 +338,12 @@ namespace aas {
 	{
 		AasDebugger::SetForcedWorldMatrix(en, worldMat);
 	}
+
+	void AnimatedModelFactory::GetWorldMatrix(gfx::AnimatedModelParams& params, DirectX::XMFLOAT4X4& worldMat)
+	{
+		auto aasParams(AnimatedModelAdapter::Convert(params));
+		auto wm3x4 = aasSystem_->GetWorldMatrix(aasParams);
+		worldMat = wm3x4.ToFloat4x4();
+	}
 	
 }

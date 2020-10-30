@@ -123,6 +123,8 @@ namespace aas {
 			std::string_view boneName,
 			DX::XMFLOAT4X4 *worldMatrixOut);
 
+		Matrix3x4 GetWorldMatrix(const AasAnimParams& params) const;
+
 		void SetTime(AasHandle handle, float time, const AasAnimParams &params);
 
 		void ReplaceMaterial(AasHandle handle, gfx::MaterialPlaceholderSlot slot, AasMaterial material);
@@ -147,7 +149,6 @@ namespace aas {
 		ActiveModel &GetActiveModel(AasHandle handle) const;
 		AasHandle FindFreeHandle() const;
 
-		Matrix3x4 GetWorldMatrix(const AasAnimParams &params) const;
 		Matrix3x4 GetWorldMatrixForParticles(const AasAnimParams &params) const;
 
 

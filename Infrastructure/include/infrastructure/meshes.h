@@ -431,14 +431,18 @@ namespace gfx {
 	};
 
 	class IAnimationDebugger {
+	public:
 		virtual void ForceFrame(bool en, float frame);
 		virtual void ForceWorldMatrix(bool en, DirectX::XMFLOAT4X4& worldMat);
+		virtual void GetWorldMatrix(gfx::AnimatedModelParams &aasParams, DirectX::XMFLOAT4X4& worldMat);
 	};
 	inline void IAnimationDebugger::ForceFrame(bool en, float frame) {
 	}
 	inline void IAnimationDebugger::ForceWorldMatrix(bool en, DirectX::XMFLOAT4X4& worldMat) {
 	}
-	class AnimatedModelFactory : IAnimationDebugger {
+	inline void IAnimationDebugger::GetWorldMatrix(gfx::AnimatedModelParams &aasParams, DirectX::XMFLOAT4X4& worldMat) {
+	}
+	class AnimatedModelFactory : public IAnimationDebugger {
 	public:
 		virtual ~AnimatedModelFactory() {
 		}

@@ -42,6 +42,7 @@ namespace aas {
 
 		void ForceFrame(bool en, float frame) override;
 		void ForceWorldMatrix(bool en, DirectX::XMFLOAT4X4& worldMat) override;
+		void GetWorldMatrix(gfx::AnimatedModelParams &aasParams, DirectX::XMFLOAT4X4& worldMat) override;
 
 	private:
 		// This is the mapping loaded from meshes.mes

@@ -11,8 +11,16 @@
 #include <debugui.h>
 #include <messages\messagequeue.h>
 #include <tig\tig_keyboard.h>
+#include <objlist.h>
+#include <tig\tig_mouse.h>
+#include <location.h>
+#include <gamesystems\gamesystems.h>
+#include "infrastructure/meshes.h"
+#include <aas\aas.h>
+#include <temple\meshes.h>
 
 static bool debugUiVisible = false;
+objHndl debuggedObj = objHndl::null;
 
 void UIShowDebug()
 {
@@ -152,6 +160,54 @@ static void DrawWidgetTreeNode(int widgetId) {
 
 }
 
+static void DrawAnimationMenu() {
+	static bool debugAnimationChecked = false;
+	ImGui::Checkbox("Debug animation", &debugAnimationChecked);
+
+	{
+		static bool forceFrameEn = false;
+		static float debugAnimForceFrame = 0.0f;
+		ImGui::Checkbox("Force frame", &forceFrameEn);
+		ImGui::SameLine();
+		ImGui::InputFloat("Frame#", &debugAnimForceFrame, 0.5f, 2.f, 1, ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue); 
+		gameSystems->GetAAS().ForceFrame(debugAnimationChecked && forceFrameEn, debugAnimForceFrame);
+	}
+	
+	static DirectX::XMFLOAT4X4 wm;
+	{
+		static bool forceWmEn = false;
+		ImGui::Checkbox("Force World Matrix", &forceWmEn);
+		
+		ImGui::InputFloat4("R0", &wm._11);
+		ImGui::InputFloat4("R1", &wm._21);
+		ImGui::InputFloat4("R2", &wm._31);
+		ImGui::InputFloat4("R3", &wm._41);
+		gameSystems->GetAAS().ForceWorldMatrix(debugAnimationChecked && forceWmEn, wm);
+	}
+	
+	
+	
+	
+	// Critters on screen
+	ObjList olist;
+	LocAndOffsets loc;
+	auto mouseLoc = mouseFuncs.GetPos();
+	locSys.GetLocFromScreenLocPrecise(mouseLoc.x, mouseLoc.y, loc);
+	
+	olist.ListVicinity(loc.location, OLC_CRITTERS);
+	for (auto &obj :olist) {
+		if (ImGui::Button(fmt::format("{}", obj).c_str())) {
+			debuggedObj = obj;
+
+			auto aasHandle = objects.GetAnimHandle(obj);
+			gfx::AnimatedModelPtr model(aasHandle);
+			auto aasParams = objects.GetAnimParams(obj);
+			gameSystems->GetAAS().GetWorldMatrix(aasParams, wm);
+			
+		}
+	}
+}
+
 void UIRenderDebug()
 {
 	if (!debugUiVisible) {
@@ -181,6 +237,9 @@ void UIRenderDebug()
 		ImGui::Checkbox("Debug Clipping", &config.debugClipping);
 		ImGui::Checkbox("Debug Particle Systems", &config.debugPartSys);
 		ImGui::Checkbox("Draw Cylinder Hitboxes", &config.drawObjCylinders);
+	}
+	if (ImGui::CollapsingHeader("Animation Debugging")) {
+		DrawAnimationMenu();
 	}
 
 	if (messageQueue)
