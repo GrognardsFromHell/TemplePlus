@@ -86,7 +86,7 @@ struct SpellPacketBody{
 	// fetches from the SpellsCastRegistry. If it fails, the spellId will be 0 (as in the Reset function)
 	bool AddTarget(objHndl tgt, int partsysId, int replaceExisting); // will add target (or replace its partsys if it already exists)
 	bool SavingThrow(objHndl target, D20SavingThrowFlag flags);
-	bool CheckSpellResistance(objHndl tgt);
+	bool CheckSpellResistance(objHndl tgt, bool forceCheck = false);
 	const char* GetName(); // get the spell name
 
 	bool IsVancian();
@@ -253,7 +253,7 @@ struct LegacySpellSystem : temple::AddressTable
 		Plays the Fizzle particles and does a sound
 	*/
 	BOOL PlayFizzle(objHndl handle);
-	int CheckSpellResistance(SpellPacketBody* spellPkt, objHndl obj);
+	int CheckSpellResistance(SpellPacketBody* spellPkt, objHndl obj, bool forceCheck = false);
 
 	void SpellBeginRound(objHndl); // plays the OnBeginRound python script
 	objHndl mSpellBeginRoundObj = objHndl::null; // supplemental info for the OnBeginRound invocation to identify whose round is beginning...

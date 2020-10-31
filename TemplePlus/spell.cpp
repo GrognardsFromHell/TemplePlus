@@ -333,8 +333,8 @@ bool SpellPacketBody::SavingThrow(objHndl target, D20SavingThrowFlag flags) {
 	return damage.SavingThrowSpell(target, caster, dc, (SavingThrowType)spEntry.savingThrowType, flags, spellId );
 }
 
-bool SpellPacketBody::CheckSpellResistance(objHndl tgt){
-	return spellSys.CheckSpellResistance(this, tgt) != FALSE;
+bool SpellPacketBody::CheckSpellResistance(objHndl tgt, bool forceCheck){
+	return spellSys.CheckSpellResistance(this, tgt, forceCheck) != FALSE;
 }
 
 const char* SpellPacketBody::GetName(){
@@ -2806,7 +2806,7 @@ BOOL LegacySpellSystem::PlayFizzle(objHndl handle)
 	return 1;
 }
 
-int LegacySpellSystem::CheckSpellResistance(SpellPacketBody* spellPkt, objHndl handle)
+int LegacySpellSystem::CheckSpellResistance(SpellPacketBody* spellPkt, objHndl handle, bool forceCheck)
 {
 	// check spell immunity
 	DispIoImmunity dispIo;
@@ -2820,8 +2820,8 @@ int LegacySpellSystem::CheckSpellResistance(SpellPacketBody* spellPkt, objHndl h
 		return 1;
 	}
 
-	// does spell allow saving?
-	if (dispIo.spellEntry.spellResistanceCode != 1)
+	// does spell allow SR (force flag will check anyway)
+	if ((dispIo.spellEntry.spellResistanceCode != 1) && !forceCheck)
 	{
 		return 0;
 	}
