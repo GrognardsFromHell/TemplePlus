@@ -402,7 +402,7 @@ namespace aas {
 	static std::optional<AnimEventType> GetEventType(std::string_view type) {
 		if (!_stricmp(type.data(), "script")) {
 			return AnimEventType::Script;
-		} else if (_stricmp(type.data(), "end")) {
+		} else if (!_stricmp(type.data(), "end")) {
 			return AnimEventType::End;
 		} else if (!_stricmp(type.data(), "action")) {
 			return AnimEventType::Action;
