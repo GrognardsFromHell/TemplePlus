@@ -196,11 +196,12 @@ public:
 	const std::string &GetName() const override;
 };
 
-class D20System : public GameSystem, public ResetAwareGameSystem, public TimeAwareGameSystem {
+class D20System : public GameSystem, public ResetAwareGameSystem, public TimeAwareGameSystem, public ModuleAwareGameSystem {
 public:
 	static constexpr auto Name = "D20";
 	D20System(const GameSystemConf &config);
 	~D20System();
+	void LoadModule() override;
 	void Reset() override;
 	void AdvanceTime(uint32_t time) override;
 	const std::string &GetName() const override;
