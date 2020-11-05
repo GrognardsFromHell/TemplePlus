@@ -65,6 +65,12 @@ namespace gfx {
 			mScale = scale;
 			mDirty = true;
 		}
+
+		void SetCameraAngle(float angleRad) {
+			mCameraElevationAngleRad = -angleRad;
+			mDirty = true;
+		}
+
 		float GetScale() const {
 			return mScale;
 		}
@@ -117,6 +123,15 @@ namespace gfx {
 		float mXTranslation = 0.0f;
 		float mYTranslation = 0.0f;
 		float mScale = 1.0f;
+		/*
+			The ToEE camera angle is arcsin(0.7) ~= 44.42°.
+			The reason here is, that Troika used a 20 by 14 grid
+			and 14 / 20 = 0,7. So this ensures that the rotation
+			to the isometric perspective makes the height of tiles
+			70% of the width.
+		*/
+		static constexpr float DEFAULT_ANGLE = -0.77539754f;
+		float mCameraElevationAngleRad = DEFAULT_ANGLE;
 		float mScreenWidth;
 		float mScreenHeight;
 		bool mDirty = true;

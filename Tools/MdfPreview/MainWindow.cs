@@ -197,6 +197,7 @@ namespace MdfPreview
         private void rotation_Scroll(object sender, EventArgs e)
         {
             _mdfPreviewNative.Rotation = rotation.Value;
+            label1.Text = "Rotation " + rotation.Value.ToString();
         }
 
         private void trackBar1_Scroll(object sender, EventArgs e)
@@ -204,6 +205,46 @@ namespace MdfPreview
             _mdfPreviewNative.Scale = trackBar1.Value / 100.0f;
         }
 
+        private void trackBar2_Scroll(object sender, EventArgs e)
+        {
+            _mdfPreviewNative.OffsetZ = trackBar2.Value;
+        }
+
+        private void label3_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void loopAnimation_CheckedChanged(object sender, EventArgs e)
+        {
+            _mdfPreviewNative.LoopAnimation = loopAnimation.Checked;
+        }
+
+        private void trackBar3_Scroll(object sender, EventArgs e)
+        {
+            _mdfPreviewNative.AnimationType = trackBar3.Value;
+            labelAnimType.Text = "Animation Type " + trackBar3.Value.ToString();
+        }
+
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+            _mdfPreviewNative.CombatAnimation = checkBox1.Checked;
+        }
+
+        private void splitContainer1_Panel1_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void checkBox2_CheckedChanged(object sender, EventArgs e)
+        {
+            _mdfPreviewNative.PauseAnimation = pauseAnimChkBox.Checked;
+        }
     }
 
 }

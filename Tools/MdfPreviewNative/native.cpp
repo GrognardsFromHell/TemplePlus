@@ -20,6 +20,7 @@
 #include <particles/render.h>
 
 #include <regex>
+#include <aas\aas_model_factory.h>
 
 using namespace DirectX;
 using namespace gfx;
@@ -90,7 +91,7 @@ struct MdfPreviewNative {
 	std::unique_ptr<BufferBinding> bufferBinding;	
 	std::unique_ptr<MdfMaterialFactory> materialFactory;
 	MdfRenderMaterialPtr material;
-	std::unique_ptr<AasAnimatedModelFactory> aasFactory;
+	std::unique_ptr<AnimatedModelFactory> aasFactory;
 	std::unique_ptr<ShapeRenderer2d> shapeRenderer2d;
 	std::unique_ptr<ShapeRenderer3d> shapeRenderer3d;
 	std::unique_ptr<aas::Renderer> aasRenderer;
@@ -100,6 +101,9 @@ struct MdfPreviewNative {
 
 	AnimatedModelParams aasParams;
 	AnimatedModelPtr model;
+	gfx::EncodedAnimId curAnimId = EncodedAnimId(2);
+	bool loopAnim = false;
+	bool pauseAnim = false;
 
 	VertexBufferPtr sphereVertices;
 	IndexBufferPtr sphereIndices;
@@ -227,8 +231,11 @@ API void MdfPreviewNative_InitDevice(MdfPreviewNative *native,
 	
 	native->aasParams.rotation = XMConvertToRadians(135);
 	
-	native->aasFactory = std::make_unique<AasAnimatedModelFactory>(aasConfig);
-
+	native->aasFactory = std::make_unique<aas::AnimatedModelFactory>(
+		aasConfig.resolveSkaFile,
+		aasConfig.resolveSkmFile,
+		aasConfig.runScript,
+		aasConfig.resolveMaterial);
 	native->shapeRenderer2d = std::make_unique<ShapeRenderer2d>(*native->device);
 	native->shapeRenderer3d = std::make_unique<ShapeRenderer3d>(*native->device);
 
@@ -306,8 +313,14 @@ API void MdfPreviewNative_Render(MdfPreviewNative *native) {
 		globalLight.color = XMFLOAT4(1, 1, 1, 1);
 		globalLight.dir = XMFLOAT4(-0.6324094f, -0.7746344f, 0, 0);
 		std::vector<Light3d> lights{ globalLight };
-
-		native->model->Advance(0.033f, 0, 0, native->aasParams);
+		
+		if (!native->pauseAnim) {
+			auto events = native->model->Advance(0.033f, 3.0f, 0.063f, native->aasParams);
+			if (events.IsEnd() && native->loopAnim) {
+				native->model->SetAnimId(native->curAnimId);
+			}
+		}
+		
 		native->aasRenderer->Render(native->model.get(), native->aasParams, lights);
 
 		native->SimulateAndRenderParticles();
@@ -342,12 +355,25 @@ API bool MdfPreviewNative_SetModel(MdfPreviewNative *native,
 		auto feetMdf(native->materialFactory->LoadMaterial("art\\meshes\\PCs\\PC_Human_Male\\feet.mdf"));
 		native->model->AddReplacementMaterial(gfx::MaterialPlaceholderSlot::BOOTS, feetMdf);
 
+		MdfPreviewNative_SetAnimation(native, (int)WeaponAnim::LeftAttack, true);
+		
+		native->device->GetCamera().SetCameraAngle(0.f);
+
 		return true;
 	} catch (std::exception &e) {
 		native->error = e.what();
 		return false;
 	}
 
+}
+
+API void MdfPreviewNative_SetAnimation(MdfPreviewNative* native, int animId, bool combatAnimation)
+{
+	auto newAnimId = combatAnimation ? EncodedAnimId( (WeaponAnim)animId )  : EncodedAnimId(animId);
+	native->curAnimId = newAnimId;
+	if (native->model) {
+		native->model->SetAnimId(native->curAnimId);
+	}
 }
 
 API bool MdfPreviewNative_SetMaterial(MdfPreviewNative *native, const char *name) {
@@ -458,6 +484,30 @@ API void MdfPreviewNative_SetRotation(MdfPreviewNative *native, float rotation) 
 
 API void MdfPreviewNative_SetScale(MdfPreviewNative *native, float scale) {
 	native->device->GetCamera().SetScale(scale);
+}
+
+API void MdfPreviewNative_SetOffsetZ(MdfPreviewNative* native, float offz)
+{
+	native->aasParams.offsetZ= offz;
+}
+
+API void MdfPreviewNative_SetLoopAnimation(MdfPreviewNative* native, bool loopEn)
+{
+	native->loopAnim = loopEn;
+}
+
+API void MdfPreviewNative_SetPauseAnimation(MdfPreviewNative* native, bool en)
+{
+	native->pauseAnim = en;
+}
+
+API void MdfPreviewNative_SetCombatAnimation(MdfPreviewNative* native, bool en)
+{
+	auto curAnum = native->curAnimId;
+	if (curAnum.IsWeaponAnim() == en) {
+		return;
+	}
+
 }
 
 void MdfPreviewNative::SpawnParticles(const std::string &name) {

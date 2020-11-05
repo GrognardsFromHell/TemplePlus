@@ -226,14 +226,7 @@ namespace gfx {
 
 		XMStoreFloat4x4(&mProjection, projection);
 
-		/*
-			This is x for sin(x) = 0.7, so x is roughly 44.42°.
-			The reason here is, that Troika used a 20 by 14 grid
-			and 14 / 20 = 0,7. So this ensures that the rotation
-			to the isometric perspective makes the height of tiles
-			70% of the width.
-		*/
-		auto view = XMMatrixRotationX(-0.77539754f); // Roughly 45° (but not exact)
+		auto view = XMMatrixRotationX(mCameraElevationAngleRad);
 
 		auto dxOrigin = - mScreenWidth * 0.5f;
 		auto dyOrigin = - mScreenHeight * 0.5f;

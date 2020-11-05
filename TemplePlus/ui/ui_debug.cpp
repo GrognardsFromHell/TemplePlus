@@ -6,6 +6,7 @@
 #include "tig/tig_startup.h"
 #include "config/config.h"
 #include <graphics/shaperenderer2d.h>
+#include <graphics/device.h>
 #include "animgoals/animgoals_debugrenderer.h"
 
 #include <debugui.h>
@@ -237,6 +238,9 @@ void UIRenderDebug()
 		ImGui::Checkbox("Debug Clipping", &config.debugClipping);
 		ImGui::Checkbox("Debug Particle Systems", &config.debugPartSys);
 		ImGui::Checkbox("Draw Cylinder Hitboxes", &config.drawObjCylinders);
+		static float cameraAngleDeg = 44.427004f;
+		ImGui::SliderFloat("Camera Angle", &cameraAngleDeg, 0.f, 90.f);
+		tig->GetRenderingDevice().GetCamera().SetCameraAngle( deg2rad(cameraAngleDeg));
 	}
 	if (ImGui::CollapsingHeader("Animation Debugging")) {
 		DrawAnimationMenu();

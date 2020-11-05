@@ -25,8 +25,16 @@ extern "C" {
 	API bool MdfPreviewNative_SetModel(MdfPreviewNative *native,
 		const char *skmFilename,
 		const char *skaFilename);
+	API void MdfPreviewNative_SetAnimation(MdfPreviewNative* native, int animId, bool combatAnim);
 	API void MdfPreviewNative_SetRotation(MdfPreviewNative *native, float rotation);
 	API void MdfPreviewNative_SetScale(MdfPreviewNative *native, float scale);
+	API void MdfPreviewNative_SetOffsetZ(MdfPreviewNative* native, float offz);
+	API void MdfPreviewNative_SetLoopAnimation(MdfPreviewNative* native, bool loopEn);
+	API void MdfPreviewNative_SetPauseAnimation(MdfPreviewNative* native, bool en);
+	
+	
+	
+	
 	API char *MdfPreviewNative_GetError(MdfPreviewNative *native);
 	API char *MdfPreviewNative_GetAndClearLog(MdfPreviewNative *native);
 }

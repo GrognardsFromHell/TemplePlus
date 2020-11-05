@@ -99,6 +99,61 @@ namespace MdfPreview
             }
         }
 
+        public float OffsetZ
+        {
+            set
+            {
+                MdfPreviewNative_SetOffsetZ(_handle, value);
+            }
+        }
+
+        private int animationType = 0;
+        public int AnimationType
+        {
+            get
+            {
+                return animationType;
+            }
+            set
+            {
+                animationType = value;
+                MdfPreviewNative_SetAnimation(_handle, value, CombatAnimation);
+            }
+        }
+        
+
+        public bool LoopAnimation
+        {
+            set
+            {
+                MdfPreviewNative_SetLoopAnimation(_handle, value);
+            }
+        }
+
+        public bool PauseAnimation
+        {
+            set
+            {
+                MdfPreviewNative_SetPauseAnimation(_handle, value);
+            }
+        }
+        
+
+        private bool combatAnimation = false;
+        public bool CombatAnimation
+        {
+            get
+            {
+                return combatAnimation;
+            }
+            set
+            {
+                combatAnimation = value;
+                MdfPreviewNative_SetAnimation(_handle, AnimationType, combatAnimation);
+            }
+        }
+        
+
         public string GetAndClearLog()
         {
             return MdfPreviewNative_GetAndClearLog(_handle);
@@ -145,6 +200,9 @@ namespace MdfPreview
         private extern static bool MdfPreviewNative_SetModel(IntPtr native, string skmFile, string skaFile);
 
         [DllImport("MdfPreviewNative.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        private extern static void MdfPreviewNative_SetAnimation(IntPtr native, int animId, bool combatANim);
+
+        [DllImport("MdfPreviewNative.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         private extern static string MdfPreviewNative_GetError(IntPtr native);
 
         [DllImport("MdfPreviewNative.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
@@ -159,6 +217,19 @@ namespace MdfPreview
         [DllImport("MdfPreviewNative.dll", CallingConvention = CallingConvention.Cdecl)]
         private extern static void MdfPreviewNative_SetScale(IntPtr native, float scale);
 
+        [DllImport("MdfPreviewNative.dll", CallingConvention = CallingConvention.Cdecl)]
+        private extern static void MdfPreviewNative_SetOffsetZ(IntPtr native, float offz);
+
+        [DllImport("MdfPreviewNative.dll", CallingConvention = CallingConvention.Cdecl)]
+        private extern static void MdfPreviewNative_SetLoopAnimation(IntPtr native, bool loopEn);
+
+        [DllImport("MdfPreviewNative.dll", CallingConvention = CallingConvention.Cdecl)]
+        private extern static void MdfPreviewNative_SetPauseAnimation(IntPtr native, bool loopEn);
+        
+
+        [DllImport("MdfPreviewNative.dll", CallingConvention = CallingConvention.Cdecl)]
+        private extern static void MdfPreviewNative_SetCombatAnimation(IntPtr native, bool en);
+        
         public void Dispose()
         {
             if (_handle != IntPtr.Zero)
