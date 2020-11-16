@@ -60,7 +60,6 @@ class RE_entry:
 
 def encounter_exists( setup, encounter ):
 	if not (os.path.exists('.\encounterpacks')):
-		print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
 		return random_encounter.encounter_exists(setup, encounter)
 	print "Testing encounter_exists"
 	if (setup.flags & ES_F_SLEEP_ENCOUNTER):
