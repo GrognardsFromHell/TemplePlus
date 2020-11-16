@@ -3,21 +3,26 @@ from utilities import *
 from math import *
 import random_encounter
 
-from py00439script_daemon import *
-from py00334generic_spawner import *
-from co8Util.ObjHandling import *
-from co8Util.PersistentData import *
-
 import os
 import sys
 from toee import *
 #name convention for encounterpacks is EncounterPack + Creator name + pack number
 #the file must contain a function called EncounterExpander which takes 4 parameters (setup, encounter, re_list, m)
 #and returns the list of encounters re_list
+expand = False
 if(os.path.exists('.\encounterpacks')):
-	sys.path.insert(0, '.\encounterpacks')
-	encounterpacks = os.listdir('.\encounterpacks')    #to install a new encounterpack simply create a folder called encounterpacks in your main TOEE folder and save the file there
-
+	try:
+		sys.path.insert(0, '.\encounterpacks')
+		encounterpacks = os.listdir('.\encounterpacks')    #to install a new encounterpack simply create a folder called encounterpacks in your main TOEE folder and save the file there
+		for f in encounterpacks:
+			print (f)
+		from py00439script_daemon import *
+		from py00334generic_spawner import *
+		from co8Util.ObjHandling import *
+		from co8Util.PersistentData import *
+		expand = True
+	except ImportError:
+		expand = False
 class RE_entry:
 	# Description:
 
@@ -59,7 +64,7 @@ class RE_entry:
 
 
 def encounter_exists( setup, encounter ):
-	if not (os.path.exists('.\encounterpacks')):
+	if not expand:
 		return random_encounter.encounter_exists(setup, encounter)
 	print "Testing encounter_exists"
 	if (setup.flags & ES_F_SLEEP_ENCOUNTER):
@@ -506,8 +511,7 @@ def check_sleep_encounter( setup, encounter ):
 	return 0
 
 def get_sleep_encounter_enemies( enemy_list, encounter ):
-	for f in encounterpacks:
-		print (f)
+	for f in encounterpacks:		
 		enemy_list = __import__(os.path.splitext(f)[0]).SleepEncounterExpander(encounter, enemy_list)
 	total = len( enemy_list )
 	n = game.random_range(0,total-1)	
@@ -749,8 +753,7 @@ def get_scrub_daytime( encounter ):
 		if game.party_alignment &  ALIGNMENT_EVIL != 0:
 			re_list.append( RE_entry( 11,    ( (14896, 2, 4, 1), (14895, 3, 5), (14894, 2, 3, 0.5) ,),      1022 )     ) # Holy Rollers
 	
-	for f in encounterpacks:
-		print (f)
+	for f in encounterpacks:		
 		re_list = __import__(os.path.splitext(f)[0]).EncounterExpander(encounter, re_list)
 
 	aaa = game.random_range(0, len(re_list)-1 )
@@ -791,8 +794,7 @@ def get_scrub_nighttime( encounter ):
 		re_list.append( RE_entry( 11,    ( (14510, 1*m, 3*m, 1), (14299, 1*m, 3*m) ) ,      1028 )     ) # Huge Fire elementals and fire snakes
 		re_list.append( RE_entry( 14,    ( (14958, 1*m, 1*m, 1), (14893, 2*m, 4*m, 1), ) ,      1017 )     ) # Nightwalker and Greater Shadows
 	
-	for f in encounterpacks:
-		print (f)
+	for f in encounterpacks:		
 		re_list = __import__(os.path.splitext(f)[0]).EncounterExpander(encounter, re_list)
 
 	aaa = game.random_range(0, len(re_list)-1 )
@@ -835,8 +837,7 @@ def get_forest_daytime( encounter ):
 		if game.party_alignment &  ALIGNMENT_EVIL != 0:
 			re_list.append( RE_entry( 12,    ( (14896, 2*m, 4*m, 1), (14895, 3*m, 5*m), (14894, 2*m, 3*m, 0.5) ,),      1016 )     ) # Holy Rollers
 
-	for f in encounterpacks:
-		print (f)
+	for f in encounterpacks:		
 		re_list = __import__(os.path.splitext(f)[0]).EncounterExpander(encounter, re_list)
 	aaa = game.random_range(0, len(re_list)-1 )
 	encounter.enemies = re_list[aaa].get_enemies()
@@ -871,8 +872,7 @@ def get_forest_nighttime( encounter ):
 		re_list.append( RE_entry( 14,    ( (14958, 1, 1, 1), (14893, 2*m, 4*m, 0.5), ) ,      1019 )     ) # Nightwalker and Greater Shadows
 
 
-	for f in encounterpacks:
-		print (f)
+	for f in encounterpacks:		
 		re_list = __import__(os.path.splitext(f)[0]).EncounterExpander(encounter, re_list)
 	aaa = game.random_range(0, len(re_list)-1 )
 	encounter.enemies = re_list[aaa].get_enemies()
@@ -911,8 +911,7 @@ def get_swamp_daytime( encounter ):
 		re_list.append( RE_entry( 12,    ( (14261, 1*m, 4*m, 1), ),      1026 )     ) # Vodyanoi
 		re_list.append( RE_entry( 9,    ( (14279, 2, 3, 1), (14375, 2, 4),  ),      1027 )     ) # Seahags and watersnakes
 
-	for f in encounterpacks:
-		print (f)
+	for f in encounterpacks:		
 		re_list = __import__(os.path.splitext(f)[0]).EncounterExpander(encounter, re_list)
 	aaa = game.random_range(0, len(re_list)-1 )
 	encounter.enemies = re_list[aaa].get_enemies()
@@ -950,8 +949,7 @@ def get_swamp_nighttime( encounter ):
 		re_list.append( RE_entry( 9,    ( (14279, 1*m, 3*m, 1), (14375, 1*m, 3*m),  ),      1013 )     ) # Seahags and watersnakes
 		re_list.append( RE_entry( 9,    ( (14824, 1*m, 3*m, 1), (14825, 1*m, 3*m, 1), ),      1014 )     ) # Ettin & Hill giant zombies
 
-	for f in encounterpacks:
-		print (f)
+	for f in encounterpacks:		
 		re_list = __import__(os.path.splitext(f)[0]).EncounterExpander(encounter, re_list)
 	aaa = game.random_range(0, len(re_list)-1 )
 	encounter.enemies = re_list[aaa].get_enemies()
@@ -988,8 +986,7 @@ def get_riverside_daytime( encounter ):
 		if game.party_alignment &  ALIGNMENT_EVIL != 0:
 			re_list.append( RE_entry( 12,    ( (14896, 2*m2, 4*m2, 1), (14895, 3*m2, 5*m2), (14894, 2*m2, 3*m2, 0.5) ,),      1013 )     ) # Holy Rollers
 	
-	for f in encounterpacks:
-		print (f)
+	for f in encounterpacks:		
 		re_list = __import__(os.path.splitext(f)[0]).EncounterExpander(encounter, re_list)
 	aaa = game.random_range(0, len(re_list)-1 )
 	encounter.enemies = re_list[aaa].get_enemies()
@@ -1024,8 +1021,7 @@ def get_riverside_nighttime( encounter ):
 		re_list.append( RE_entry( 12,    ( (14261, 1*m, 4*m, 1), ),      1013 )     ) # Vodyanoi
 		re_list.append( RE_entry( 9,    ( (14279, 1*m, 3*m, 1), (14375, 1*m, 3*m), (14240, 1*m, 3*m), ),      1014 )     ) # Seahags and watersnakes and kapoacinths
 
-	for f in encounterpacks:
-		print (f)
+	for f in encounterpacks:		
 		re_list = __import__(os.path.splitext(f)[0]).EncounterExpander(encounter, re_list)
 	aaa = game.random_range(0, len(re_list)-1 )
 	encounter.enemies = re_list[aaa].get_enemies()
