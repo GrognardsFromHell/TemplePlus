@@ -202,6 +202,7 @@ static void __cdecl RandomEncounterCreate(RandomEncounter* encounter) {
 		addresses.MapChange(); // No idea what this does
 	}
 	auto result = pythonObjIntegration.ExecuteScript("random_encounter", "encounter_create", args);
+
 	Py_DECREF(args);
 
 	if (!result) {
@@ -230,7 +231,7 @@ static BOOL __cdecl RandomEncounterExists(const RandomEncounterSetup* setup, Ran
 	Py_INCREF(encounter);
 
 	auto result = pythonObjIntegration.ExecuteScript("expanded_encounters", "encounter_exists", args);
-	
+
 	Py_DECREF(args);
 
 	if (!result) {
