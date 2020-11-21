@@ -974,6 +974,7 @@ namespace aas {
 		for (int i = 0; i < bones.size(); i++) {
 			auto rotation = rotationMatrix(Quaternion(boneState[i].rotation));
 			auto scale = scaleMatrix(boneState[i].scale.x, boneState[i].scale.y, boneState[i].scale.z);
+			auto translation = translationMatrix(boneState[i].translation.x, boneState[i].translation.y, boneState[i].translation.z);
 
 			auto &boneMatrix = boneMatrices[1 + i];
 			boneMatrix = multiplyMatrix3x3(scale, rotation);
@@ -987,9 +988,11 @@ namespace aas {
 				auto parent_scale_mat = scaleMatrix(1.0f / parent_scale.x, 1.0f / parent_scale.y, 1.0f / parent_scale.z);
 				boneMatrix = multiplyMatrix3x4_3x3(boneMatrix, parent_scale_mat);
 			}
+			auto trans_parent_mat = multiplyMatrix3x4(translation, boneMatrices[1 + parentId]);
+			auto res = multiplyMatrix3x4(boneMatrix, trans_parent_mat);
+			boneMatrix = res;
 
-			auto translation = translationMatrix(boneState[i].translation.x, boneState[i].translation.y, boneState[i].translation.z);
-			boneMatrix = multiplyMatrix3x4(boneMatrix, multiplyMatrix3x4(translation, boneMatrices[1 + parentId]));
+			//boneMatrix = multiplyMatrix3x4(boneMatrix, multiplyMatrix3x4(translation, boneMatrices[1 + parentId]));
 		}
 
 		drivenTime = 0;
