@@ -1869,6 +1869,27 @@ void LegacySpellSystem::SpellsCastReset(objHndl handle, Stat classEnum){
 	}
 }
 
+/* 0x10075BC0 */
+void LegacySpellSystem::SpellKnownRemove(objHndl handle, SpellStoreData& spData)
+{
+	auto obj = objSystem->GetObject(handle);
+
+	auto numKnown = obj->GetSpellArray(obj_f_critter_spells_known_idx).GetSize();
+
+	for (auto i = 0u; i < numKnown ; ++i){
+		
+		auto knSpell = obj->GetSpell(obj_f_critter_spells_known_idx, i);
+		if (knSpell.classCode == spData.classCode 
+			&& knSpell.spellLevel == spData.spellLevel
+			&& knSpell.spellEnum == spData.spellEnum)
+		{
+			spellSys.spellRemoveFromStorage(handle, obj_f_critter_spells_known_idx, &knSpell, 0);
+			return;
+		}
+	}
+}
+
+/* 0x10075A10 */
 void LegacySpellSystem::SpellMemorizedAdd(objHndl handle, int spellEnum, int spellClass, int spellLvl,
 	int spellStoreData, int metaMagicData){
 	if (!handle) return;

@@ -157,14 +157,32 @@ public:
     const std::string &GetName() const override;
 };
 
-
+class UiPromptListEntry;
 class UiPopup : public UiSystem {
+	friend class UiPopupReplacement;
 public:
     static constexpr auto Name = "Popup-UI";
     UiPopup(const UiSystemConf &config);
     ~UiPopup();
     void Reset() override;
     const std::string &GetName() const override;
+
+	/*
+	  buttonTextType: 0 for Okay / Cancel, 1 for Yes/No
+	*/
+	int VanillaPopupShow(const char* bodyText, const char* title, int buttonTextType, int(__cdecl* callback)(int), int flag);
+
+	int FindPopupBtnIdx(int widId);
+	void ExecuteCallback(int popupIdx, int btnIdx);
+
+	UiPromptListEntry& GetCurPopup();
+
+protected:
+	BOOL UiPopupMsg(int widId, TigMsg* msg);
+	BOOL UiPopupWndMsg(int widId, TigMsg* msg);
+	int GetCurrentPopupIdx();
+	void SetCurrentPopupIdx(int popupIdx);
+	UiPromptListEntry& GetPopupByType(int popupType);
 };
 
 class UiTextDialog : public UiSystem {

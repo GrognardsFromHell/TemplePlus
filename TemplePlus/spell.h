@@ -281,6 +281,7 @@ struct LegacySpellSystem : temple::AddressTable
 	void SpellsPendingToMemorizedByClass(objHndl handle, Stat classEnum);
 	void SpellsCastReset(objHndl handle, Stat classEnum = (Stat)-1);
 	int (__cdecl *SpellKnownAdd)(objHndl ObjHnd, int nSpellIdx, int nSpellClassCode, int nSpellCasterLevel, int nSpellStoreData, int nMetamagicData);
+	void SpellKnownRemove(objHndl handle, SpellStoreData& spData);
 	void SpellMemorizedAdd(objHndl ObjHnd, int spellEnum, int spellClass, int spellLvl, int nSpellStoreData, int nMetamagicData);
 	void ForgetMemorized(objHndl handle);
 	LegacySpellSystem()
