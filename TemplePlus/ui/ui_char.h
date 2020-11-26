@@ -17,6 +17,7 @@ enum class UiCharDisplayType : uint32_t {
 };
 
 struct UiSystemConf;
+class UiCharImpl;
 
 class UiChar : public UiSystem {
 public:
@@ -107,6 +108,7 @@ public:
 	void LootingWidgetsInit();
 
 private:
+	std::unique_ptr<UiCharImpl> mImpl;
 	objHndl & mInventoryObj = temple::GetRef<objHndl>(0x10BEECC0);
 	objHndl &mLootedObj = temple::GetRef<objHndl>(0x10BE6EC0);
 	BOOL &mInventoryObjState = temple::GetRef<BOOL>(0x10EF97C4);

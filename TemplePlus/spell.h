@@ -174,6 +174,7 @@ struct LegacySpellSystem : temple::AddressTable
 	int ParseSpellSpecString(SpellStoreData* spell, char* spellString);
 
 	const char* GetSpellMesline(uint32_t line) const;
+	const char* GetDomainName(int domain) const;
 	const char* GetSpellDescription(uint32_t spellEnum) const;
 	bool CheckAbilityScoreReqForSpell(objHndl handle, uint32_t spellEnum, int statBeingRaised) const;
 	bool IsNaturalSpellsPerDayDepleted(const objHndl& handle, uint32_t spell_level, uint32_t spellClass);
@@ -202,6 +203,7 @@ struct LegacySpellSystem : temple::AddressTable
 	uint32_t spellMemorizedQueryGetData(objHndl objHnd, uint32_t spellEnum, uint32_t* classCodesOut, uint32_t* slotLevelsOut, uint32_t* count);
 	bool numSpellsKnownTooHigh(objHndl objHnd);
 	bool numSpellsMemorizedTooHigh(objHndl objHnd);
+	bool SpellOpposesCritterAlignment(SpellStoreData& spData, objHndl handle);
 
 	// SpellClass 
 	bool isDomainSpell(uint32_t spellClassCode);

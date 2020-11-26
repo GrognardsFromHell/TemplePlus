@@ -168,6 +168,7 @@ static ConfigSetting configSettings[] = {
 	CONF_BOOL(showNpcStats),
 	CONF_BOOL(newClasses),
 	CONF_BOOL(newRaces),
+	CONF_BOOL(metamagicStacking),
 	CONF_BOOL(monstrousRaces),
 	CONF_BOOL(forgottenRealmsRaces),
 	CONF_BOOL(laxRules),

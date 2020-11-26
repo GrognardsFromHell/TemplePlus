@@ -31,6 +31,9 @@
 #include <ui\ui_popup.h>
 #include <combat.h>
 
+class UiCharImpl;
+UiCharImpl* uiCharImpl = nullptr;
+
 #define NUM_SPELLBOOK_SLOTS 18 // 18 in vanilla
 #define MM_FEAT_COUNT_VANILLA 9
 
@@ -101,7 +104,10 @@ struct UiCharAddresses : temple::AddressTable
 	LgcyWindow** uiCharSpellsSpellsPerDayWnd;
 	LgcyWindow** uiCharSpellsPerDayLevelBtns; // array of 6 buttons for levels 0-5
 	UiMetaMagicData* uiMetaMagicData;
-	UiMetaMagicData* uiMetaMagicDataModified;
+	UiMetaMagicData* uiMetaMagicDataOrg;
+	int* uiCharSpellsDraggedWidId;
+	char** uiCharSpellFontName;
+	int *uiCharSpellFontSize;
 
 	int * wndDisplayed; // 0 thru 4 - inventories (1-4 were meant for the various "bags"); 5 - Skills; 6 - Feats ; 7 - Spells
 
@@ -116,11 +122,23 @@ struct UiCharAddresses : temple::AddressTable
 		rebase(uiCharSpellsNavClassTabIdx, 0x10D18F68);
 		rebase(wndDisplayed, 0x10BE9948);
 		rebase(uiMetaMagicData, 0x10C818B8);
-		rebase(uiMetaMagicDataModified, 0x10C816E0);
+		rebase(uiMetaMagicDataOrg, 0x10C816E0);
+		
+		rebase(uiCharSpellFontName, 0x10C81B78);
+		rebase(uiCharSpellFontSize, 0x10C81B7C);
+		
+		rebase(uiCharSpellsDraggedWidId, 0x10C816CC);
 	}
 } uiCharAddresses;
 
-
+class UiCharImpl {
+	friend class CharUiSystem;
+	friend class UiChar;
+public:
+	UiCharImpl();
+protected:
+	MesHandle& uiCharSpellsUiText = temple::GetRef<MesHandle>(0x10C81590);
+};
 
 class CharUiSystem : TempleFix
 {
@@ -136,6 +154,8 @@ public:
 
 #pragma region Spellbook functions
 	static UiCharSpellPacket& GetUiCharSpellPacket(int idx = -1);
+	static UiCharSpellsNavPacket& GetUiCharSpellsNavPacket(int idx = -1);
+	
 
 	static BOOL MemorizeSpellMsg(int widId, TigMsg* tigMsg);
 	static BOOL(*orgMemorizeSpellMsg)(int widId, TigMsg* tigMsg);
@@ -143,12 +163,15 @@ public:
 	static bool CharSpellsNavClassTabMsg(int widId, TigMsg* tigMsg);
 	static bool(*orgCharSpellsNavClassTabMsg)(int widId, TigMsg* tigMsg);
 
+	static void SpellbookSpellsRender(int widId, TigMsg& tigMsg);
 	static BOOL SpellbookSpellsMsg(int widId, TigMsg* tigMsg){
 		return orgSpellbookSpellsMsg(widId, tigMsg);
 	};
 	static BOOL(*orgSpellbookSpellsMsg)(int widId, TigMsg* tigMsg);
+
 	static BOOL SpellMetamagicBtnMsg(int widId, TigMsg& tigMsg);
 	static BOOL SpellPopupAppliedWndMsg(int widId, TigMsg& tigMsg);
+	static void SpellMetamagicDotsRender(int x, int y, int mmData);
 
 	static int specSlotIndices[NUM_SPELL_LEVELS]; // indices of the Specialization School spell slots in the GUI 
 	static void SpellsShow(objHndl obj);
@@ -378,6 +401,13 @@ int CharUiSystem::StatsLvlBtnRenderHook(objHndl handle){
 	return critterSys.GetEffectiveLevel(handle);
 }
 
+UiCharSpellsNavPacket& CharUiSystem::GetUiCharSpellsNavPacket(int idx)
+{
+	if (idx == -1) {
+		idx = *uiCharAddresses.uiCharSpellsNavClassTabIdx;
+	}
+	return uiCharAddresses.uiCharSpellsNavPackets[idx];
+}
 UiCharSpellPacket& CharUiSystem::GetUiCharSpellPacket(int idx)
 {
 	if (idx == -1) {
@@ -388,10 +418,7 @@ UiCharSpellPacket& CharUiSystem::GetUiCharSpellPacket(int idx)
 
 BOOL CharUiSystem::MemorizeSpellMsg(int widId, TigMsg* tigMsg){
 
-	auto charSpellPackets = uiCharAddresses.uiCharSpellPackets;
-	auto& uiCharSpellsNavClassTabIdx = temple::GetRef<int>(0x10D18F68);
-
-	auto &curSpellPacket = charSpellPackets[uiCharSpellsNavClassTabIdx];
+	auto& curSpellPacket = GetUiCharSpellPacket();
 
 	auto widIdx = WidgetIdIndexOf(widId, &curSpellPacket.memorizeSpellWnds[0], NUM_SPELLBOOK_SLOTS);
 	auto scrollbarId = curSpellPacket.memorizeScrollbar->widgetId;
@@ -948,13 +975,113 @@ BOOL CharUiSystem::IsSpecializationSchoolSlot(int idx)
 
 int CharUiSystem::HookedCharSpellGetSpellbookScrollbarY()
 {
-	auto tabIdx = *uiCharAddresses.uiCharSpellsNavClassTabIdx;
-	auto scrollbar = uiCharAddresses.uiCharSpellPackets[tabIdx].spellbookScrollbar;
+	auto scrollbar = GetUiCharSpellPacket().spellbookScrollbar;
 	if (scrollbar) {
 		return (scrollbar->GetY());
 	}
 	logger->warn("Null scrollbar! Returning y=0");
 	return 0;
+}
+
+/* 0x101B6FD0 */
+void CharUiSystem::SpellbookSpellsRender(int widId, TigMsg& tigMsg)
+{
+	auto handle = GetCurrentCritter();
+	auto obj = objSystem->GetObject(handle); if (!obj) return;
+	auto& uiCharSpellPkt = GetUiCharSpellPacket();
+	auto& uiCharSpellNav = GetUiCharSpellsNavPacket();
+
+	auto wizSpec = spellSys.getWizSchool(handle);
+	if (spellSys.GetCastingClass(uiCharSpellNav.spellClassCode) != stat_level_wizard) {
+		wizSpec = 0u;
+	}
+
+	if (uiSystems->GetChar().GetInventoryObjectState() == 1 && *uiCharAddresses.uiCharSpellsDraggedWidId  == widId) {
+		return;
+	}
+
+	auto wnd = uiManager->GetWindow(widId); if (!wnd) return;
+	
+	UiRenderer::PushFont(*uiCharAddresses.uiCharSpellFontName, *uiCharAddresses.uiCharSpellFontSize);
+	// look up widget's idx in list
+	auto widgetIdx = -1;
+	for (auto i = 0; i < NUM_SPELLBOOK_SLOTS; ++i) {
+		if (uiCharSpellPkt.spellbookSpellWnds[i]->widgetId == widId) {
+			widgetIdx = i;
+			break;
+		}
+	}
+
+	auto scrollbarY = 0;
+	if (uiManager->ScrollbarGetY(uiCharSpellPkt.spellbookScrollbar->widgetId, &scrollbarY)) {
+		scrollbarY = -1; // fail case
+	}
+	auto &spData = uiCharSpellPkt.spellsKnown.spells[widgetIdx + scrollbarY];
+
+
+	auto alignOpposed = spellSys.SpellOpposesCritterAlignment(spData, handle);
+	
+	TigTextStyle style;
+	auto txtR = temple::GetRef<int>(0x10C81B88);
+	auto txtG = temple::GetRef<int>(0x10C81B8C);
+	auto txtB = temple::GetRef<int>(0x10C81B90);
+	auto txtA = temple::GetRef<int>(0x10C81B94);
+
+	ColorRect textColor = !alignOpposed ? 
+		ColorRect( XMCOLOR((float)txtR, (float)txtG, (float)txtB, (float)txtA))
+		: ColorRect(XMCOLOR(0xFF5D5D5D));
+	ColorRect shadowColor(XMCOLOR(0, 0, 0, 255));
+	ColorRect spellLabelColor(XMCOLOR(0xFF4D7197));
+	ColorRect wizSpecColor(XMCOLOR(0xFFFFFF80));
+	style.textColor = &textColor;
+	style.shadowColor = &shadowColor;
+	style.flags = 0x4008; // drop shadow + truncate too long text with ellipsis
+	style.kerning = 1;
+	style.tracking = 2;
+
+	if (!spData.spellEnum) { // spell label
+
+		if ((int)spData.spellLevel > -1) {
+			style.textColor = &spellLabelColor;
+			MesLine mesLine;
+			mesFuncs.ReadLineDirect(uiCharImpl->uiCharSpellsUiText, 3, &mesLine);
+			auto text = fmt::format("{} {}", mesLine.value, spData.spellLevel);
+			auto rect = TigRect(-8, 0, wnd->width, wnd->height);
+			UiRenderer::DrawTextInWidget(widId, text, rect, style);
+			UiRenderer::PopFont();
+			return;
+		}
+	}
+	else if (spData.spellEnum > 0) {
+		std::string text;
+		if (spellSys.isDomainSpell(spData.classCode)) {
+			text = fmt::format("{} ({})", spellSys.GetSpellMesline(spData.spellEnum), spellSys.GetDomainName( spData.classCode) );
+		}
+		else {
+			if (wizSpec && spellSys.GetSpellSchool(spData.spellEnum) == wizSpec) {
+				style.textColor = &wizSpecColor;
+			}
+			text = fmt::format("{}", spellSys.GetSpellMesline(spData.spellEnum));
+		}
+		
+		auto rect = TigRect(0, 0, wnd->width, wnd->height);
+		UiRenderer::DrawTextInWidget(widId, text, rect, style);
+
+		auto measRect = UiRenderer::MeasureTextSize(text, style);
+		SpellMetamagicDotsRender(wnd->x + rect.x + measRect.width + 2, wnd->y + 2, spData.metaMagicData);
+
+		UiRenderer::PopFont();
+		return;
+
+	}
+	else if (spData.spellEnum == -1 && spData.spellLevel > -1) {
+		// does this ever happen??
+	}
+	
+	
+	UiRenderer::PopFont();
+
+	
 }
 
 /* Originally 0x101BA580 */
@@ -989,7 +1116,7 @@ BOOL CharUiSystem::SpellMetamagicBtnMsg(int widId, TigMsg& tigMsg)
 	auto& spell = uiCharSpellPkt.spellsKnown.spells[spellBtnIdx];
 	mmData.Reset(handle, spell);
 	if (mmData.appliedCount)
-		memcpy(uiCharAddresses.uiMetaMagicDataModified, uiCharAddresses.uiMetaMagicData, /*sizeof(UiMetaMagicData)*/ 212);
+		memcpy(uiCharAddresses.uiMetaMagicDataOrg, uiCharAddresses.uiMetaMagicData, /*sizeof(UiMetaMagicData)*/ 212);
 	
 	UiPromptPacket uiPrompt;
 	uiPrompt.idx = 1;
@@ -1017,7 +1144,7 @@ BOOL CharUiSystem::SpellMetamagicBtnMsg(int widId, TigMsg& tigMsg)
 BOOL CharUiSystem::SpellPopupAppliedWndMsg(int widId, TigMsg& tigMsg)
 {
 	auto& uiMmData = *uiCharAddresses.uiMetaMagicData;
-	auto& uiMmDataMod = *uiCharAddresses.uiMetaMagicDataModified;
+	auto& uiMmDataMod = *uiCharAddresses.uiMetaMagicDataOrg;
 
 	if (tigMsg.type == TigMsgType::MOUSE) { // remove MM effect
 		auto msgMouse = (TigMsgMouse&)tigMsg;
@@ -1136,15 +1263,22 @@ BOOL CharUiSystem::SpellPopupAppliedWndMsg(int widId, TigMsg& tigMsg)
 		// Check if effect can be applied only once (on/off)
 		for (auto i = 0; i < uiMmData.appliedCount; ++i) {
 			if (uiMmData.appliedMmFeats[i] == availFeat) {
-				if (availFeat != FEAT_HEIGHTEN_SPELL &&
-					availFeat != FEAT_EXTEND_SPELL &&
-					availFeat != FEAT_ENLARGE_SPELL &&
-					availFeat != FEAT_EMPOWER_SPELL ) { 
-					// Vanilla was just Heighten
-					// it looks like Moebius tried to do this for all MM effects
-					// that can be added multiple times. Widen was left out however.
-					return TRUE;
+				// Vanilla only allowed Heighten to pass through
+				if (availFeat == FEAT_HEIGHTEN_SPELL) {
+					continue;
 				}
+				// In Moebius/Co8 DLL
+				// It looks like Moebius tried to expand this in his stacking MM
+				// mod. Widen was left out however (he tested feat enum with & 0x100)
+				// Since this is not RAW, this has been converted to a House Rules option.
+				if (config.metamagicStacking && 
+					(availFeat == FEAT_EXTEND_SPELL ||
+					availFeat == FEAT_ENLARGE_SPELL ||
+					availFeat == FEAT_EMPOWER_SPELL ||
+					availFeat == FEAT_WIDEN_SPELL) ){
+						continue;
+				}
+				return TRUE;
 			}
 		}
 
@@ -1225,6 +1359,53 @@ BOOL CharUiSystem::SpellPopupAppliedWndMsg(int widId, TigMsg& tigMsg)
 	}
 	else {
 		return FALSE;
+	}
+}
+
+/* 0x101B5740 signature changed*/
+void CharUiSystem::SpellMetamagicDotsRender(int x, int y, int mmDataRaw)
+{
+	auto& spellsTextures = temple::GetRef<int*>(0x10C816D8);
+	MetaMagicData mmData(mmDataRaw);
+
+	constexpr int DOT_SIZE = 10;
+	const TigRect SRC_RECT(0, 0, DOT_SIZE, DOT_SIZE);
+	TigRect destRect(x, y, DOT_SIZE, DOT_SIZE);
+	
+	if (mmData.metaMagicEmpowerSpellCount > 0) {
+		UiRenderer::DrawTexture(spellsTextures[0], destRect, SRC_RECT);
+		destRect.x += DOT_SIZE;
+	}
+	if (mmData.metaMagicEnlargeSpellCount > 0) {
+		UiRenderer::DrawTexture(spellsTextures[1], destRect, SRC_RECT);
+		destRect.x += DOT_SIZE;
+	}
+	if (mmData.metaMagicExtendSpellCount > 0) {
+		UiRenderer::DrawTexture(spellsTextures[2], destRect, SRC_RECT);
+		destRect.x += DOT_SIZE;
+	}if (mmData.metaMagicHeightenSpellCount> 0) {
+		UiRenderer::DrawTexture(spellsTextures[4], destRect, SRC_RECT);
+		destRect.x += DOT_SIZE;
+	}
+	if (mmData.metaMagicFlags & MetaMagicFlags::MetaMagic_Maximize) {
+		UiRenderer::DrawTexture(spellsTextures[4], destRect, SRC_RECT);
+		destRect.x += DOT_SIZE;
+	}
+	if (mmData.metaMagicFlags & MetaMagicFlags::MetaMagic_Quicken) {
+		UiRenderer::DrawTexture(spellsTextures[5], destRect, SRC_RECT);
+		destRect.x += DOT_SIZE;
+	}
+	if (mmData.metaMagicFlags & MetaMagicFlags::MetaMagic_Silent) {
+		UiRenderer::DrawTexture(spellsTextures[6], destRect, SRC_RECT);
+		destRect.x += DOT_SIZE;
+	}
+	if (mmData.metaMagicFlags & MetaMagicFlags::MetaMagic_Still) {
+		UiRenderer::DrawTexture(spellsTextures[7], destRect, SRC_RECT);
+		destRect.x += DOT_SIZE;
+	}
+	if (mmData.metaMagicWidenSpellCount> 0) {
+		UiRenderer::DrawTexture(spellsTextures[8], destRect, SRC_RECT);
+		destRect.x += DOT_SIZE;
 	}
 }
 
@@ -1768,6 +1949,8 @@ UiChar::UiChar(const UiSystemConf &config) {
 		throw TempleException("Unable to initialize game system Char-UI");
 	}
 	LootingWidgetsInit();
+	mImpl = std::make_unique<UiCharImpl>();
+	uiCharImpl = mImpl.get();
 }
 UiChar::~UiChar() {
 	auto shutdown = temple::GetPointer<void()>(0x10149820);
@@ -1849,7 +2032,7 @@ void CharUiSystem::apply(){
 	// Feats
 	replaceFunction(0x101BBDB0, FeatsShow);
 
-
+	// Spells
 
 	//orgSpellbookSpellsMsg = replaceFunction(0x101B8F10, SpellbookSpellsMsg);
 	orgMemorizeSpellMsg = replaceFunction(0x101B9360, MemorizeSpellMsg);
@@ -1857,6 +2040,7 @@ void CharUiSystem::apply(){
 	redirectCall(0x101B6ED8, TabNameReplacement);
 	replaceFunction(0x101B2EE0, IsSpecializationSchoolSlot);
 	orgSpellsShow = replaceFunction(0x101B5D80, SpellsShow);
+	replaceFunction(0x101B6FD0, SpellbookSpellsRender);
 
 	static BOOL(__cdecl* orgMetamagicBtnMsg)(int, TigMsg&) = replaceFunction<BOOL(__cdecl)(int, TigMsg&)>(0x101BA580, [](int widId, TigMsg& msg) {
 		return SpellMetamagicBtnMsg(widId, msg);
@@ -1889,7 +2073,7 @@ void CharUiSystem::apply(){
 		auto &curSpellList = charSpellPackets[navClassTabIdx].spellsKnown;
 		auto orgFirstSpellLevel = curSpellList.spells[0].spellLevel;
 		auto& uiMmData    = *uiCharAddresses.uiMetaMagicData;
-		auto &uiMmDataMod = *uiCharAddresses.uiMetaMagicDataModified;
+		auto &uiMmDataMod = *uiCharAddresses.uiMetaMagicDataOrg;
 
 		orgMetamagicCallback(popupBtnIdx);
 		/*
@@ -2100,4 +2284,9 @@ void SpellList::Remove(int idx)
 	count--;
 	return;
 	
+}
+
+UiCharImpl::UiCharImpl()
+{
+	uiCharImpl = this;
 }
