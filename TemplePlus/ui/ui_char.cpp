@@ -27,6 +27,8 @@
 #include "gamesystems/d20/d20_help.h"
 #include "objlist.h"
 #include "pathfinding.h"
+#include "ui_item_creation.h"
+#include "ui_popup.h"
 
 #define NUM_SPELLBOOK_SLOTS 18 // 18 in vanilla
 
@@ -134,7 +136,7 @@ public:
 	static BOOL (*orgInventorySlotMsg)(int widId, TigMsg* msg);
 	static char* HookedItemDescriptionBarter(objHndl obj, objHndl item);
 	static void ItemGetDescrAddon(objHndl obj, objHndl item, std::string&); // makes an addon string for the item description boxes
-	void LongDescriptionPopupCreate(objHndl item);
+	static void LongDescriptionPopupCreate(objHndl item);
 
 	static void TotalWeightOutputBtnTooltip(int x, int y, int *widId);
 
@@ -151,8 +153,11 @@ public:
 
 protected:
 	void apply() override;
+	static char _descLong[10000];
 
 } charUiSys;
+
+char CharUiSystem::_descLong[10000];
 
 void CharUiSystem::ClassLevelBtnRender(int widId){
 	auto btn = uiManager->GetButton(widId);
@@ -1135,8 +1140,8 @@ void CharUiSystem::ItemGetDescrAddon(objHndl obj, objHndl item, std::string& add
 			
 			else{
 				
-				addStr = fmt::format("{}: {}  [{}]", d20Stats.GetStatName(stat_caster_level), casterLevel, spellSys.GetSpellMesline(15000 + spellEntry.spellSchoolEnum));
-			}
+					addStr = fmt::format("{}: {}  [{}]", d20Stats.GetStatName(stat_caster_level), casterLevel, spellSys.GetSpellMesline(15000 + spellEntry.spellSchoolEnum));
+				}
 		else
 			addStr = fmt::format("{}: {}", d20Stats.GetStatName(stat_caster_level), casterLevel);
 	}
@@ -1149,8 +1154,27 @@ void CharUiSystem::ItemGetDescrAddon(objHndl obj, objHndl item, std::string& add
 	}
 }
 
-void CharUiSystem::LongDescriptionPopupCreate(objHndl item){
-	temple::GetRef<void(__cdecl)(objHndl)>(0x10144400)(item);
+void CharUiSystem::LongDescriptionPopupCreate(objHndl item)
+{
+	if (!uiPopupHandler.PopupsAllInactive()) {
+		if (description.LongDescriptionHas(item)) {
+			auto currentCritter = GetCurrentCritter();
+			std::string descText = description.GetLongDescription(item, currentCritter);
+			
+			// Add the item creation mes line for the conditions in a ; delimited list to the description
+			auto itemObj = gameSystems->GetObj().GetObject(item);
+			if (itemObj->type == obj_t_armor || itemObj->type == obj_t_weapon) {
+				auto &itemCreationUI = uiSystems->GetItemCreation();
+				const auto addStr = itemCreationUI.GetEffectDescription(item);
+				descText += "\n\n";
+				descText += addStr;
+			}
+
+			strcpy_s(_descLong, descText.c_str());  //Copy to a buffer before displaying
+			auto displayName = description.getDisplayName(item, currentCritter);
+			uiPopupHandler.VanillaPopupShow(_descLong, displayName);
+		}
+	}
 }
 
 void CharUiSystem::TotalWeightOutputBtnTooltip(int x, int y, int* widId)
@@ -1405,6 +1429,7 @@ void CharUiSystem::apply(){
 
 	replaceFunction(0x10144B40, ClassLevelBtnRender);
 	replaceFunction(0x10145020, AlignGenderRaceBtnRender);
+	replaceFunction(0x10144400, LongDescriptionPopupCreate);
 
 	if (temple::Dll::GetInstance().HasCo8Hooks()) {
 		writeHex(0x1011DD4D, "90 90 90 90 90"); // disabling stat text draw calls

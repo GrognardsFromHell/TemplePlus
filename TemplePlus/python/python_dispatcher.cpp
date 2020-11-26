@@ -502,6 +502,10 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			auto _damType = (DamageType)damType;
 			damPkt.AddModFactor(factor, _damType, damMesLine);
 		}, "Adds a modification factor to damage.")
+		.def("get_overall_damage_by_type", [](DamagePacket& damPkt, int damType) {
+			const auto _damType = static_cast<DamageType>(damType);
+			return damPkt.GetOverallDamageByType(_damType);
+		}, "Gets the total damage of a piticular type.")
 		.def_readwrite("final_damage", &DamagePacket::finalDamage, "Final Damage Value")
 		.def_readwrite("flags", &DamagePacket::flags, "1 - maximized, 2 - empowered")
 		.def_readwrite("bonus_list", &DamagePacket::bonuses)

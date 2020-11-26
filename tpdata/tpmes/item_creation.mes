@@ -80,6 +80,21 @@
 {1213}{Spell Resistance 19}
 {1214}{Twilight}
 {1215}{Freedom}
+{1216}{Fire Resistance}
+{1217}{Fire Res, Imp}
+{1218}{Fire Res, Greater}
+{1219}{Cold Resistance}
+{1220}{Cold Res, Imp}
+{1221}{Cold Res, Greater}
+{1222}{Elec Resistance}
+{1223}{Elec Res, Imp}
+{1224}{Elec Res, Greater}
+{1225}{Acid Resistance}
+{1226}{Acid Res, Imp}
+{1227}{Acid Res, Greater}
+{1228}{Sonic Resistance}
+{1229}{Sonic Res, Imp}
+{1230}{Sonic Res, Greater}
 
 // shield bonuses
 {1400}{+1}
@@ -96,6 +111,21 @@
 {1411}{Spell Resistance 15}
 {1412}{Spell Resistance 17}
 {1413}{Spell Resistance 19}
+{1414}{Fire Resistance}
+{1415}{Fire Res, Imp}
+{1416}{Fire Res, Greater}
+{1417}{Cold Resistance}
+{1418}{Cold Res, Imp}
+{1419}{Cold Res, Greater}
+{1420}{Elec Resistance}
+{1421}{Elec Res, Imp}
+{1422}{Elec Res, Greater}
+{1423}{Acid Resistance}
+{1424}{Acid Res, Imp}
+{1425}{Acid Res, Greater}
+{1426}{Sonic Resistance}
+{1427}{Sonic Res, Imp}
+{1428}{Sonic Res, Greater}
 
 // 10000-19999 Misc. Strings Used
 

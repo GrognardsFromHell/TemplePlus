@@ -3,7 +3,7 @@
 #include "ui.h"
 #include "tig/tig_keyboard.h"
 
-UiPopup uiPopup;
+UiPopupHandler uiPopupHandler;
 
 class UiPopupReplacement : public TempleFix
 {
@@ -11,19 +11,18 @@ class UiPopupReplacement : public TempleFix
 		
 		//UiPopupMsg
 		replaceFunction<BOOL(int, TigMsg*)>(0x10171B50, [](int widId, TigMsg* msg){
-			return uiPopup.UiPopupMsg(widId, msg);
+			return uiPopupHandler.UiPopupMsg(widId, msg);
 		});
 
 		// Wnd Msg
 		replaceFunction<BOOL(int, TigMsg*)>(0x10171050, [](int widId, TigMsg* msg){
-			return uiPopup.UiPopupWndMsg(widId, msg);
+			return uiPopupHandler.UiPopupWndMsg(widId, msg);
 		});
 
 	}
 } uiPopupFixes;
 
-
-BOOL UiPopup::UiPopupMsg(int widId, TigMsg * msg){
+BOOL UiPopupHandler::UiPopupMsg(int widId, TigMsg * msg){
 
 	uiManager->GetButton(widId);
 
@@ -47,7 +46,7 @@ BOOL UiPopup::UiPopupMsg(int widId, TigMsg * msg){
 	return FALSE;
 }
 
-BOOL UiPopup::UiPopupWndMsg(int widId, TigMsg * msg)
+BOOL UiPopupHandler::UiPopupWndMsg(int widId, TigMsg * msg)
 {
 	if (msg->type == TigMsgType::MOUSE)
 		return TRUE;
@@ -70,16 +69,21 @@ BOOL UiPopup::UiPopupWndMsg(int widId, TigMsg * msg)
 	return FALSE;
 }
 
-UiPromptListEntry& UiPopup::GetPopupByType(int popupType){
+UiPromptListEntry& UiPopupHandler::GetPopupByType(int popupType){
 	Expects(popupType < 5 && popupType >= 0);
 	return temple::GetRef<UiPromptListEntry[]>(0x10C03BD8)[popupType];
 }
 
-int UiPopup::VanillaPopupShow(const char * bodyText, const char * title, int buttonTextType, int(*callback)(int), int(*callback2)(int)){
+int UiPopupHandler::VanillaPopupShow(const char * bodyText, const char * title, int buttonTextType, int(*callback)(int), int(*callback2)(int)){
 	return temple::GetRef<int(__cdecl)(const char * , const char * , int(*)(int), int(*)(int))>(0x1017CF20)(bodyText, title, callback, callback2);
 }
 
-int UiPopup::FindPopupBtnIdx(int widId){
+int UiPopupHandler::PopupsAllInactive()
+{
+	return temple::GetRef<int(__cdecl)()>(0x10171A70)();
+}
+
+int UiPopupHandler::FindPopupBtnIdx(int widId){
 
 	auto result = 0;
 	auto &popup = GetCurPopup();
@@ -92,7 +96,7 @@ int UiPopup::FindPopupBtnIdx(int widId){
 	return 3;
 }
 
-void UiPopup::ExecuteCallback(int popupIdx, int btnIdx){
+void UiPopupHandler::ExecuteCallback(int popupIdx, int btnIdx){
 	// temple::GetRef<void(__cdecl)(int, int)>(0x101719D0)(popupIdx, btnIdx);
 
 	auto &popup = GetPopupByType(popupIdx);
@@ -120,15 +124,15 @@ void UiPopup::ExecuteCallback(int popupIdx, int btnIdx){
 	}
 }
 
-UiPromptListEntry & UiPopup::GetCurPopup(){
+UiPromptListEntry & UiPopupHandler::GetCurPopup(){
 	return temple::GetRef<UiPromptListEntry[]>(0x10C03BD8)[GetCurrentPopupIdx()];
 }
 
-int UiPopup::GetCurrentPopupIdx(){
+int UiPopupHandler::GetCurrentPopupIdx(){
 	return temple::GetRef<int>(0x102FC218);
 }
 
-void UiPopup::SetCurrentPopupIdx(int popupIdx){
+void UiPopupHandler::SetCurrentPopupIdx(int popupIdx){
 	temple::GetRef<int>(0x102FC218) = popupIdx;
 }
 
