@@ -62,6 +62,9 @@ namespace TemplePlusConfig
 
         public static readonly DependencyProperty AllowXpOverflowProperty = DependencyProperty.Register(
            "AllowXpOverflow", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+        public static readonly DependencyProperty MetamagicStackingProperty = DependencyProperty.Register(
+           "MetamagicStacking", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+        
 
         public static readonly DependencyProperty SlowerLevellingProperty = DependencyProperty.Register(
            "SlowerLevelling", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
@@ -139,6 +142,7 @@ namespace TemplePlusConfig
             WalkDistanceFt = 0;
             SlowerLevelling = false;
             AllowXpOverflow = false;
+            MetamagicStacking = false;
             NumberOfPcs = NumberOfPcsType.PCs_5_NPCs_3;
             NeedsCo8Defaults = false;
         }
@@ -257,6 +261,13 @@ namespace TemplePlusConfig
             get { return (bool)GetValue(AllowXpOverflowProperty); }
             set { SetValue(AllowXpOverflowProperty, value); }
         }
+
+        public bool MetamagicStacking
+        {
+            get { return (bool)GetValue(MetamagicStackingProperty); }
+            set { SetValue(MetamagicStackingProperty, value); }
+        }
+        
 
         public bool SlowerLevelling
         {
@@ -547,6 +558,13 @@ namespace TemplePlusConfig
                 AllowXpOverflow = allowXpOverflow;
             }
 
+            bool metamagicStacking;
+            if (bool.TryParse(tpData["metamagicStacking"], out metamagicStacking))
+            {
+                MetamagicStacking = metamagicStacking;
+            }
+            
+
             bool slowerLevelling;
             if (bool.TryParse(tpData["slowerLevelling"], out slowerLevelling))
             {
@@ -776,6 +794,7 @@ namespace TemplePlusConfig
                     break;
             }
             tpData["allowXpOverflow"] = AllowXpOverflow ? "true" : "false";
+            tpData["metamagicStacking"] = MetamagicStacking ? "true" : "false";
             tpData["slowerLevelling"] = SlowerLevelling ? "true" : "false";
             tpData["newClasses"] = NewClasses? "true" : "false";
             tpData["newRaces"] = NewRaces? "true" : "false";

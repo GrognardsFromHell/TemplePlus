@@ -61,6 +61,7 @@ namespace TemplePlusConfig
                 {
                     App._iniViewModel.NumberOfPcs = NumberOfPcsType.Flexible;
                     App._iniViewModel.MaxLevel    = 30;
+                    App._iniViewModel.MetamagicStacking = true; // this is true ever since Moebius patch...
                 }
             }
 
