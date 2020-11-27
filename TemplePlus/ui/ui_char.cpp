@@ -12,6 +12,7 @@
 #include <tig/tig_font.h>
 #include "ui_render.h"
 #include <critter.h>
+#include "feat.h"
 #include <d20_level.h>
 #include <gamesystems/gamesystems.h>
 #include "tig/tig_font.h"
@@ -27,8 +28,20 @@
 #include "gamesystems/d20/d20_help.h"
 #include "objlist.h"
 #include "pathfinding.h"
+#include <ui\ui_popup.h>
+#include <combat.h>
+
+class UiCharImpl;
+UiCharImpl* uiCharImpl = nullptr;
 
 #define NUM_SPELLBOOK_SLOTS 18 // 18 in vanilla
+#define MM_FEAT_COUNT_VANILLA 9
+
+feat_enums metaMagicStandardFeats[MM_FEAT_COUNT_VANILLA] = {
+	FEAT_EMPOWER_SPELL, FEAT_ENLARGE_SPELL, FEAT_EXTEND_SPELL, FEAT_HEIGHTEN_SPELL,
+	FEAT_MAXIMIZE_SPELL, FEAT_QUICKEN_SPELL, FEAT_SILENT_SPELL, FEAT_STILL_SPELL,
+	FEAT_WIDEN_SPELL,
+};
 
 constexpr int WEAP_COMBO_MAIN = 1;
 constexpr int WEAP_COMBO_SECONDARY = 2;
@@ -41,6 +54,8 @@ struct SpellList
 {
 	SpellStoreData spells[SPELL_ENUM_MAX_VANILLA];
 	uint32_t count;
+public:
+	void Remove(int idx);
 };
 
 struct UiCharSpellPacket
@@ -64,6 +79,19 @@ struct UiCharSpellsNavPacket
 	int numSpellsForLvl[NUM_SPELL_LEVELS]; // starting from level 0 (cantrips), and including bonus from ability modifier and school specialization
 };
 
+struct UiMetaMagicData {
+	SpellStoreData spellData;
+	int availableCount;
+	feat_enums availableMmFeats[MM_FEAT_COUNT_VANILLA];
+	int appliedCount;
+	feat_enums appliedMmFeats[MM_FEAT_COUNT_VANILLA];
+
+public:
+	void Clear();
+	void Reset(objHndl handle, SpellStoreData &spell);
+	void AddAppliedCount(feat_enums feat, int count);
+};
+
 static_assert(sizeof(UiCharSpellsNavPacket) == 0x30, "UiCharSpellPacket should have size 48"); //  48
 
 struct UiCharAddresses : temple::AddressTable
@@ -75,6 +103,11 @@ struct UiCharAddresses : temple::AddressTable
 	LgcyWindow** uiCharSpellsNavClassTabWnd;
 	LgcyWindow** uiCharSpellsSpellsPerDayWnd;
 	LgcyWindow** uiCharSpellsPerDayLevelBtns; // array of 6 buttons for levels 0-5
+	UiMetaMagicData* uiMetaMagicData;
+	UiMetaMagicData* uiMetaMagicDataOrg;
+	int* uiCharSpellsDraggedWidId;
+	char** uiCharSpellFontName;
+	int *uiCharSpellFontSize;
 
 	int * wndDisplayed; // 0 thru 4 - inventories (1-4 were meant for the various "bags"); 5 - Skills; 6 - Feats ; 7 - Spells
 
@@ -88,10 +121,24 @@ struct UiCharAddresses : temple::AddressTable
 		rebase(uiCharSpellPackets, 0x10C81E24);
 		rebase(uiCharSpellsNavClassTabIdx, 0x10D18F68);
 		rebase(wndDisplayed, 0x10BE9948);
+		rebase(uiMetaMagicData, 0x10C818B8);
+		rebase(uiMetaMagicDataOrg, 0x10C816E0);
+		
+		rebase(uiCharSpellFontName, 0x10C81B78);
+		rebase(uiCharSpellFontSize, 0x10C81B7C);
+		
+		rebase(uiCharSpellsDraggedWidId, 0x10C816CC);
 	}
-} addresses;
+} uiCharAddresses;
 
-
+class UiCharImpl {
+	friend class CharUiSystem;
+	friend class UiChar;
+public:
+	UiCharImpl();
+protected:
+	MesHandle& uiCharSpellsUiText = temple::GetRef<MesHandle>(0x10C81590);
+};
 
 class CharUiSystem : TempleFix
 {
@@ -106,22 +153,41 @@ public:
 #pragma endregion
 
 #pragma region Spellbook functions
+	static UiCharSpellPacket& GetUiCharSpellPacket(int idx = -1);
+	static UiCharSpellsNavPacket& GetUiCharSpellsNavPacket(int idx = -1);
+	
+
 	static BOOL MemorizeSpellMsg(int widId, TigMsg* tigMsg);
 	static BOOL(*orgMemorizeSpellMsg)(int widId, TigMsg* tigMsg);
 
 	static bool CharSpellsNavClassTabMsg(int widId, TigMsg* tigMsg);
 	static bool(*orgCharSpellsNavClassTabMsg)(int widId, TigMsg* tigMsg);
 
+	static void SpellbookSpellsRender(int widId, TigMsg& tigMsg);
 	static BOOL SpellbookSpellsMsg(int widId, TigMsg* tigMsg){
 		return orgSpellbookSpellsMsg(widId, tigMsg);
 	};
 	static BOOL(*orgSpellbookSpellsMsg)(int widId, TigMsg* tigMsg);
 
+	static BOOL SpellMetamagicBtnMsg(int widId, TigMsg& tigMsg);
+	static BOOL SpellPopupAppliedWndMsg(int widId, TigMsg& tigMsg);
+	static void SpellMetamagicDotsRender(int x, int y, int mmData);
+
 	static int specSlotIndices[NUM_SPELL_LEVELS]; // indices of the Specialization School spell slots in the GUI 
 	static void SpellsShow(objHndl obj);
 	static void(*orgSpellsShow)(objHndl obj);
 	static BOOL IsSpecializationSchoolSlot(int idx);
+	
+	
 	static int HookedCharSpellGetSpellbookScrollbarY();
+	static int SpellMetamagicGetBtnIdx(int widId);
+
+	static int SpellMetamagicAppliedGetIdx(int widId);
+	static feat_enums SpellMetamagicAppliedGetFeat(int widId);
+	static int SpellMetamagicAvailableGetIdx(int widId);
+	static feat_enums SpellMetamagicAvailableGetFeat(int widId);
+
+	static int SpellMetaMagicFeatGetSpellLevelModifier(feat_enums feat);
 #pragma endregion 
 
 
@@ -335,12 +401,24 @@ int CharUiSystem::StatsLvlBtnRenderHook(objHndl handle){
 	return critterSys.GetEffectiveLevel(handle);
 }
 
+UiCharSpellsNavPacket& CharUiSystem::GetUiCharSpellsNavPacket(int idx)
+{
+	if (idx == -1) {
+		idx = *uiCharAddresses.uiCharSpellsNavClassTabIdx;
+	}
+	return uiCharAddresses.uiCharSpellsNavPackets[idx];
+}
+UiCharSpellPacket& CharUiSystem::GetUiCharSpellPacket(int idx)
+{
+	if (idx == -1) {
+		idx = *uiCharAddresses.uiCharSpellsNavClassTabIdx;
+	}
+	return uiCharAddresses.uiCharSpellPackets[idx];
+}
+
 BOOL CharUiSystem::MemorizeSpellMsg(int widId, TigMsg* tigMsg){
 
-	auto charSpellPackets = addresses.uiCharSpellPackets;
-	auto& uiCharSpellsNavClassTabIdx = temple::GetRef<int>(0x10D18F68);
-
-	auto &curSpellPacket = charSpellPackets[uiCharSpellsNavClassTabIdx];
+	auto& curSpellPacket = GetUiCharSpellPacket();
 
 	auto widIdx = WidgetIdIndexOf(widId, &curSpellPacket.memorizeSpellWnds[0], NUM_SPELLBOOK_SLOTS);
 	auto scrollbarId = curSpellPacket.memorizeScrollbar->widgetId;
@@ -400,10 +478,10 @@ bool CharUiSystem::CharSpellsNavClassTabMsg(int widId, TigMsg* tigMsg)
 	//For a change of tab, hide memorized spells for all new natural casting classes
 	if (uiCharSpellsNavClassTabIdxBefore != uiCharSpellsNavClassTabIdxAfter) {
 
-		auto navClassPackets = addresses.uiCharSpellsNavPackets;
+		auto navClassPackets = uiCharAddresses.uiCharSpellsNavPackets;
 		auto spellClassCode = navClassPackets[uiCharSpellsNavClassTabIdxAfter].spellClassCode;
 		auto classCode = spellSys.GetCastingClass(spellClassCode);
-		auto& curCharSpellPkt = addresses.uiCharSpellPackets[uiCharSpellsNavClassTabIdxAfter];
+		auto& curCharSpellPkt = uiCharAddresses.uiCharSpellPackets[uiCharSpellsNavClassTabIdxAfter];
 
 		if (d20ClassSys.IsNaturalCastingClass(classCode) && !spellSys.isDomainSpell(spellClassCode) 
 			&& (classCode != stat_level_sorcerer) && (classCode != stat_level_bard)) {
@@ -425,8 +503,8 @@ void CharUiSystem::SpellsShow(objHndl obj)
 	
 	auto dude = temple::GetRef<objHndl>(0x10BE9940); // critter with inventory open
 
-	auto navClassPackets = addresses.uiCharSpellsNavPackets;
-	auto charSpellPackets = addresses.uiCharSpellPackets;
+	auto navClassPackets = uiCharAddresses.uiCharSpellsNavPackets;
+	auto charSpellPackets = uiCharAddresses.uiCharSpellPackets;
 
 	auto spellsMainWnd = temple::GetRef<LgcyWindow*>(0x10C81BC0);
 	auto spellsMainWndId = spellsMainWnd->widgetId;
@@ -464,10 +542,10 @@ void CharUiSystem::SpellsShow(objHndl obj)
 	};
 
 	uiManager->SetHidden(spellsMainWndId, false);
-	uiManager->SetHidden((*addresses.uiCharSpellsNavClassTabWnd)->widgetId, false);
-	uiManager->SetHidden((*addresses.uiCharSpellsSpellsPerDayWnd)->widgetId, false);
+	uiManager->SetHidden((*uiCharAddresses.uiCharSpellsNavClassTabWnd)->widgetId, false);
+	uiManager->SetHidden((*uiCharAddresses.uiCharSpellsSpellsPerDayWnd)->widgetId, false);
 	uiManager->BringToFront(spellsMainWndId);
-	uiManager->BringToFront((*addresses.uiCharSpellsSpellsPerDayWnd)->widgetId);
+	uiManager->BringToFront((*uiCharAddresses.uiCharSpellsSpellsPerDayWnd)->widgetId);
 
 	UiRenderer::PushFont(PredefinedFont::ARIAL_12);
 
@@ -609,7 +687,7 @@ void CharUiSystem::SpellsShow(objHndl obj)
 	if (!uiCharSpellTabsCount)
 	{
 		UiRenderer::PopFont();
-		uiManager->BringToFront((*addresses.uiCharSpellsNavClassTabWnd)->widgetId);
+		uiManager->BringToFront((*uiCharAddresses.uiCharSpellsNavClassTabWnd)->widgetId);
 		return;
 	}
 
@@ -876,10 +954,10 @@ void CharUiSystem::SpellsShow(objHndl obj)
 
 	UiRenderer::PopFont();
 
-	uiManager->BringToFront((*addresses.uiCharSpellsNavClassTabWnd)->widgetId);
+	uiManager->BringToFront((*uiCharAddresses.uiCharSpellsNavClassTabWnd)->widgetId);
 
 
-	auto charSpellPkts = &addresses.uiCharSpellPackets[0];
+	auto charSpellPkts = &uiCharAddresses.uiCharSpellPackets[0];
 	
 }
 
@@ -894,14 +972,525 @@ BOOL CharUiSystem::IsSpecializationSchoolSlot(int idx)
 	return 0;
 }
 
+
 int CharUiSystem::HookedCharSpellGetSpellbookScrollbarY()
 {
-	auto tabIdx = *addresses.uiCharSpellsNavClassTabIdx;
-	auto scrollbar = addresses.uiCharSpellPackets[tabIdx].spellbookScrollbar;
+	auto scrollbar = GetUiCharSpellPacket().spellbookScrollbar;
 	if (scrollbar) {
 		return (scrollbar->GetY());
 	}
 	logger->warn("Null scrollbar! Returning y=0");
+	return 0;
+}
+
+/* 0x101B6FD0 */
+void CharUiSystem::SpellbookSpellsRender(int widId, TigMsg& tigMsg)
+{
+	auto handle = GetCurrentCritter();
+	auto obj = objSystem->GetObject(handle); if (!obj) return;
+	auto& uiCharSpellPkt = GetUiCharSpellPacket();
+	auto& uiCharSpellNav = GetUiCharSpellsNavPacket();
+
+	auto wizSpec = spellSys.getWizSchool(handle);
+	if (spellSys.GetCastingClass(uiCharSpellNav.spellClassCode) != stat_level_wizard) {
+		wizSpec = 0u;
+	}
+
+	if (uiSystems->GetChar().GetInventoryObjectState() == 1 && *uiCharAddresses.uiCharSpellsDraggedWidId  == widId) {
+		return;
+	}
+
+	auto wnd = uiManager->GetWindow(widId); if (!wnd) return;
+	
+	UiRenderer::PushFont(*uiCharAddresses.uiCharSpellFontName, *uiCharAddresses.uiCharSpellFontSize);
+	// look up widget's idx in list
+	auto widgetIdx = -1;
+	for (auto i = 0; i < NUM_SPELLBOOK_SLOTS; ++i) {
+		if (uiCharSpellPkt.spellbookSpellWnds[i]->widgetId == widId) {
+			widgetIdx = i;
+			break;
+		}
+	}
+
+	auto scrollbarY = 0;
+	if (uiManager->ScrollbarGetY(uiCharSpellPkt.spellbookScrollbar->widgetId, &scrollbarY)) {
+		scrollbarY = -1; // fail case
+	}
+	auto &spData = uiCharSpellPkt.spellsKnown.spells[widgetIdx + scrollbarY];
+
+
+	auto alignOpposed = spellSys.SpellOpposesCritterAlignment(spData, handle);
+	
+	TigTextStyle style;
+	auto txtR = temple::GetRef<int>(0x10C81B88);
+	auto txtG = temple::GetRef<int>(0x10C81B8C);
+	auto txtB = temple::GetRef<int>(0x10C81B90);
+	auto txtA = temple::GetRef<int>(0x10C81B94);
+
+	ColorRect textColor = !alignOpposed ? 
+		ColorRect( XMCOLOR((float)txtR, (float)txtG, (float)txtB, (float)txtA))
+		: ColorRect(XMCOLOR(0xFF5D5D5D));
+	ColorRect shadowColor(XMCOLOR(0, 0, 0, 255));
+	ColorRect spellLabelColor(XMCOLOR(0xFF4D7197));
+	ColorRect wizSpecColor(XMCOLOR(0xFFFFFF80));
+	style.textColor = &textColor;
+	style.shadowColor = &shadowColor;
+	style.flags = 0x4008; // drop shadow + truncate too long text with ellipsis
+	style.kerning = 1;
+	style.tracking = 2;
+
+	if (!spData.spellEnum) { // spell label
+
+		if ((int)spData.spellLevel > -1) {
+			style.textColor = &spellLabelColor;
+			MesLine mesLine;
+			mesFuncs.ReadLineDirect(uiCharImpl->uiCharSpellsUiText, 3, &mesLine);
+			auto text = fmt::format("{} {}", mesLine.value, spData.spellLevel);
+			auto rect = TigRect(-8, 0, wnd->width, wnd->height);
+			UiRenderer::DrawTextInWidget(widId, text, rect, style);
+			UiRenderer::PopFont();
+			return;
+		}
+	}
+	else if (spData.spellEnum > 0) {
+		std::string text;
+		if (spellSys.isDomainSpell(spData.classCode)) {
+			text = fmt::format("{} ({})", spellSys.GetSpellMesline(spData.spellEnum), spellSys.GetDomainName( spData.classCode) );
+		}
+		else {
+			if (wizSpec && spellSys.GetSpellSchool(spData.spellEnum) == wizSpec) {
+				style.textColor = &wizSpecColor;
+			}
+			text = fmt::format("{}", spellSys.GetSpellMesline(spData.spellEnum));
+		}
+		
+		auto rect = TigRect(0, 0, wnd->width, wnd->height);
+		UiRenderer::DrawTextInWidget(widId, text, rect, style);
+
+		auto measRect = UiRenderer::MeasureTextSize(text, style);
+		SpellMetamagicDotsRender(wnd->x + rect.x + measRect.width + 2, wnd->y + 2, spData.metaMagicData);
+
+		UiRenderer::PopFont();
+		return;
+
+	}
+	else if (spData.spellEnum == -1 && spData.spellLevel > -1) {
+		// does this ever happen??
+	}
+	
+	
+	UiRenderer::PopFont();
+
+	
+}
+
+/* Originally 0x101BA580 */
+BOOL CharUiSystem::SpellMetamagicBtnMsg(int widId, TigMsg& tigMsg)
+{
+	auto msgType = tigMsg.type;
+	if (msgType != TigMsgType::WIDGET) {
+		return TRUE;
+	}
+	auto& msgWidget = (TigMsgWidget&)tigMsg;
+	if (msgWidget.widgetEventType != TigMsgWidgetEvent::MouseReleased) {
+		return TRUE;
+	}
+	auto handle = uiSystems->GetChar().GetCritter();
+	if (!feats.HasMetamagicFeat(handle)) {
+		return TRUE;
+	}
+
+	auto widIdx = SpellMetamagicGetBtnIdx(widId);
+	auto scrollbarY = HookedCharSpellGetSpellbookScrollbarY(); // fixed bug in vanilla - would always get the first tab
+	auto spellBtnIdx = scrollbarY + widIdx;
+
+	auto& uiCharSpellPkt = GetUiCharSpellPacket();
+	auto spellEnum = uiCharSpellPkt.spellsKnown.spells[spellBtnIdx].spellEnum;
+	if (spellEnum <= 0)
+		return TRUE;
+
+	logger->debug("metamagic button#{} for spell {} pressed!", spellBtnIdx, spellSys.GetSpellMesline(spellEnum));
+	
+	// Init uiMetaMagicData
+	auto& mmData = *uiCharAddresses.uiMetaMagicData;
+	auto& spell = uiCharSpellPkt.spellsKnown.spells[spellBtnIdx];
+	mmData.Reset(handle, spell);
+	if (mmData.appliedCount)
+		memcpy(uiCharAddresses.uiMetaMagicDataOrg, uiCharAddresses.uiMetaMagicData, /*sizeof(UiMetaMagicData)*/ 212);
+	
+	UiPromptPacket uiPrompt;
+	uiPrompt.idx = 1;
+
+	uiPrompt.image = temple::GetRef<int*>(0x10C81594)[0];
+	uiPrompt.btnNormalTexture   = temple::GetRef<int>(0x10C815C4);
+	uiPrompt.btn2NormalTexture  = temple::GetRef<int>(0x10C81598);
+	uiPrompt.btnHoverTexture    = temple::GetRef<int>(0x10C816C8);
+	uiPrompt.btn2HoverTexture   = temple::GetRef<int>(0x10C816D0);
+	uiPrompt.btnPressedTexture  = temple::GetRef<int>(0x10C81BBC);
+	uiPrompt.btn2PressedTexture = temple::GetRef<int>(0x10C816D4);
+	uiPrompt.wndRect            = temple::GetRef<TigRect>(0x10C81AA0);
+	uiPrompt.okRect             = temple::GetRef<TigRect>(0x10C81AB0);
+	uiPrompt.cancelRect         = temple::GetRef<TigRect>(0x10C81AC0);
+	uiPrompt.onPopupShow        = temple::GetRef<int(__cdecl)()>(0x101B51F0);
+	uiPrompt.onPopupHide        = temple::GetRef<void(__cdecl)()>(0x101B52A0);
+	uiPrompt.callback           = temple::GetRef<void(__cdecl)(int)>(0x101B5310);
+	uiPrompt.okBtnText          = combatSys.GetCombatMesLine(6009);
+	uiPrompt.cancelBtnText      = combatSys.GetCombatMesLine(6010);
+	uiPrompt.Show(1, 0);
+
+	return TRUE;
+}
+
+BOOL CharUiSystem::SpellPopupAppliedWndMsg(int widId, TigMsg& tigMsg)
+{
+	auto& uiMmData = *uiCharAddresses.uiMetaMagicData;
+	auto& uiMmDataMod = *uiCharAddresses.uiMetaMagicDataOrg;
+
+	if (tigMsg.type == TigMsgType::MOUSE) { // remove MM effect
+		auto msgMouse = (TigMsgMouse&)tigMsg;
+		if (msgMouse.buttonStateFlags & MouseStateFlags::MSF_LMB_CLICK)
+			return TRUE;
+		if (!(msgMouse.buttonStateFlags & (MSF_LMB_RELEASED | MSF_RMB_RELEASED)))
+			return TRUE;
+		if (uiSystems->GetChar().GetInventoryObjectState() == 1)
+			return TRUE;
+		auto feat = SpellMetamagicAppliedGetFeat(widId);
+		if (feat >= FEAT_NONE)
+			return TRUE;
+		logger->debug("{} pressed", feats.GetFeatName(feat));
+		auto idx = SpellMetamagicAppliedGetIdx(widId) 
+			      + temple::GetRef<int>(0x10C81988); // probably some deprecated scrollbar, seems to be always 0
+		uiMmData.spellData.spellLevel -= SpellMetaMagicFeatGetSpellLevelModifier(feat);
+		switch (feat) {
+			case FEAT_EMPOWER_SPELL:
+				uiMmData.spellData.metaMagicData.metaMagicEmpowerSpellCount -= 1;
+				break;
+			case FEAT_ENLARGE_SPELL:
+				uiMmData.spellData.metaMagicData.metaMagicEnlargeSpellCount -= 1;
+				break;
+			case FEAT_EXTEND_SPELL:
+				uiMmData.spellData.metaMagicData.metaMagicExtendSpellCount -= 1;
+				break;
+			case FEAT_HEIGHTEN_SPELL:
+				uiMmData.spellData.metaMagicData.metaMagicHeightenSpellCount -= 1;
+				break;
+			case FEAT_MAXIMIZE_SPELL:
+				uiMmData.spellData.metaMagicData.metaMagicFlags &= ~(MetaMagicFlags::MetaMagic_Maximize);
+				break;
+			case FEAT_QUICKEN_SPELL:
+				uiMmData.spellData.metaMagicData.metaMagicFlags &= ~(MetaMagicFlags::MetaMagic_Quicken);
+				break;
+			case FEAT_SILENT_SPELL:
+				uiMmData.spellData.metaMagicData.metaMagicFlags &= ~(MetaMagicFlags::MetaMagic_Silent);
+				break;
+			case FEAT_STILL_SPELL:
+				uiMmData.spellData.metaMagicData.metaMagicFlags &= ~(MetaMagicFlags::MetaMagic_Still);
+				break;
+			case FEAT_WIDEN_SPELL:
+				uiMmData.spellData.metaMagicData.metaMagicWidenSpellCount -= 1;
+				break;
+			default:
+				break;
+		}
+		if (uiMmData.appliedCount <= 1) {
+			uiMmData.appliedMmFeats[idx] = FEAT_NONE;
+		}
+		else {
+			if (idx == uiMmData.appliedCount - 1) {
+				uiMmData.appliedMmFeats[idx] = FEAT_NONE;
+			}
+			else if (idx < uiMmData.appliedCount -1){
+				uiMmData.appliedMmFeats[idx] = uiMmData.appliedMmFeats[uiMmData.appliedCount - 1];
+			}
+		}
+		uiMmData.appliedCount--;
+		if (!uiMmData.appliedCount) {
+			auto &uiCharSpellPkt = GetUiCharSpellPacket();
+			auto knownCount = uiCharSpellPkt.spellsKnown.count;
+			for (auto i = 0u; i < knownCount; ++i) {
+				auto& knSpell = uiCharSpellPkt.spellsKnown.spells[i];
+				if (knSpell.spellLevel != uiMmDataMod.spellData.spellLevel
+					|| knSpell.spellEnum != uiMmDataMod.spellData.spellEnum) {
+					continue;
+				}
+				// found spell with same enum and spell level
+				if (uiMmDataMod.spellData.spellEnum == 0)
+					break;
+				// is this buggy? removes spell with same level & enum, with no regard to MM modifiers
+				spellSys.SpellKnownRemove( GetCurrentCritter(), uiMmDataMod.spellData);
+				uiCharSpellPkt.spellsKnown.Remove(i);
+				break;
+			}
+		}
+		return TRUE;
+	}
+
+	else if (tigMsg.type == TigMsgType::WIDGET) {
+		auto msgWid = (TigMsgWidget&)tigMsg;
+
+		auto& spellFeat = temple::GetRef<int>(0x10300258);
+		auto& mmAvailWnds = temple::GetRef<LgcyWindow* [9]>(0x10C81934);
+		
+		auto widEvt = msgWid.widgetEventType;
+		switch (widEvt) {
+		case TigMsgWidgetEvent::Clicked:
+		case TigMsgWidgetEvent::MouseReleased :
+		case TigMsgWidgetEvent::MouseReleasedAtDifferentButton :
+			break;
+		case TigMsgWidgetEvent::Entered :
+			spellFeat = FEAT_NONE;
+			return FALSE;
+		case TigMsgWidgetEvent::Exited :
+		case TigMsgWidgetEvent::Scrolled:
+		default:
+			return FALSE;
+		}
+		auto widIdOrg = msgWid.widgetId;
+		if (widIdOrg == widId)
+			return FALSE;
+		logger->debug("CharUiSystem::SpellPopupAppliedWndMsg: Mouse up =( {} )", widId);
+		auto availIdx = SpellMetamagicAvailableGetIdx(widIdOrg);
+		auto appliedIdx = SpellMetamagicAppliedGetIdx(widId);
+		if (appliedIdx < 0 || availIdx < 0) {
+			return TRUE;
+		}
+		appliedIdx += temple::GetRef<int>(0x10C81988); // probably some deprecated scrollbar, seems to be always 0
+		if (appliedIdx < 0) return FALSE;
+		if (appliedIdx > uiMmData.appliedCount) appliedIdx = uiMmData.appliedCount;
+		auto appliedFeat = SpellMetamagicAppliedGetFeat(widId);
+		auto availFeat   = SpellMetamagicAvailableGetFeat(widIdOrg);
+
+		// Check if effect can be applied only once (on/off)
+		for (auto i = 0; i < uiMmData.appliedCount; ++i) {
+			if (uiMmData.appliedMmFeats[i] == availFeat) {
+				// Vanilla only allowed Heighten to pass through
+				if (availFeat == FEAT_HEIGHTEN_SPELL) {
+					continue;
+				}
+				// In Moebius/Co8 DLL
+				// It looks like Moebius tried to expand this in his stacking MM
+				// mod. Widen was left out however (he tested feat enum with & 0x100)
+				// Since this is not RAW, this has been converted to a House Rules option.
+				if (config.metamagicStacking && 
+					(availFeat == FEAT_EXTEND_SPELL ||
+					availFeat == FEAT_ENLARGE_SPELL ||
+					availFeat == FEAT_EMPOWER_SPELL ||
+					availFeat == FEAT_WIDEN_SPELL) ){
+						continue;
+				}
+				return TRUE;
+			}
+		}
+
+		if (appliedFeat != FEAT_NONE) { // replacing an existing effect
+			uiMmData.spellData.spellLevel -= SpellMetaMagicFeatGetSpellLevelModifier(appliedFeat);
+			switch (appliedFeat) {
+			case FEAT_EMPOWER_SPELL:
+				uiMmData.spellData.metaMagicData.metaMagicEmpowerSpellCount -= 1;
+				break;
+			case FEAT_ENLARGE_SPELL:
+				uiMmData.spellData.metaMagicData.metaMagicEnlargeSpellCount -= 1;
+				break;
+			case FEAT_EXTEND_SPELL:
+				uiMmData.spellData.metaMagicData.metaMagicExtendSpellCount -= 1;
+				break;
+			case FEAT_HEIGHTEN_SPELL:
+				uiMmData.spellData.metaMagicData.metaMagicHeightenSpellCount -= 1;
+				break;
+			case FEAT_MAXIMIZE_SPELL:
+				uiMmData.spellData.metaMagicData.metaMagicFlags &= ~(MetaMagicFlags::MetaMagic_Maximize);
+				break;
+			case FEAT_QUICKEN_SPELL:
+				uiMmData.spellData.metaMagicData.metaMagicFlags &= ~(MetaMagicFlags::MetaMagic_Quicken);
+				break;
+			case FEAT_SILENT_SPELL:
+				uiMmData.spellData.metaMagicData.metaMagicFlags &= ~(MetaMagicFlags::MetaMagic_Silent);
+				break;
+			case FEAT_STILL_SPELL:
+				uiMmData.spellData.metaMagicData.metaMagicFlags &= ~(MetaMagicFlags::MetaMagic_Still);
+				break;
+			case FEAT_WIDEN_SPELL:
+				uiMmData.spellData.metaMagicData.metaMagicWidenSpellCount -= 1;
+				break;
+			default:
+				break;
+			}
+		}
+
+		auto spellLevelNew = uiMmData.spellData.spellLevel + SpellMetaMagicFeatGetSpellLevelModifier(availFeat);
+		if (spellLevelNew > NUM_SPELL_LEVELS-1) {
+			return TRUE;
+		}
+		uiMmData.spellData.spellLevel = spellLevelNew;
+		switch (availFeat) {
+		case FEAT_EMPOWER_SPELL:
+			uiMmData.spellData.metaMagicData.metaMagicEmpowerSpellCount += 1;
+			break;
+		case FEAT_ENLARGE_SPELL:
+			uiMmData.spellData.metaMagicData.metaMagicEnlargeSpellCount += 1;
+			break;
+		case FEAT_EXTEND_SPELL:
+			uiMmData.spellData.metaMagicData.metaMagicExtendSpellCount  += 1;
+			break;
+		case FEAT_HEIGHTEN_SPELL:
+			uiMmData.spellData.metaMagicData.metaMagicHeightenSpellCount += 1;
+			break;
+		case FEAT_MAXIMIZE_SPELL:
+			uiMmData.spellData.metaMagicData.metaMagicFlags |= (MetaMagicFlags::MetaMagic_Maximize);
+			break;
+		case FEAT_QUICKEN_SPELL:
+			uiMmData.spellData.metaMagicData.metaMagicFlags |= (MetaMagicFlags::MetaMagic_Quicken);
+			break;
+		case FEAT_SILENT_SPELL:
+			uiMmData.spellData.metaMagicData.metaMagicFlags |= (MetaMagicFlags::MetaMagic_Silent);
+			break;
+		case FEAT_STILL_SPELL:
+			uiMmData.spellData.metaMagicData.metaMagicFlags |= (MetaMagicFlags::MetaMagic_Still);
+			break;
+		case FEAT_WIDEN_SPELL:
+			uiMmData.spellData.metaMagicData.metaMagicWidenSpellCount += 1;
+			break;
+		default:
+			break;
+		}
+		uiMmData.appliedCount++;
+		uiMmData.appliedMmFeats[appliedIdx] = availFeat;
+		return TRUE;
+	}
+	else {
+		return FALSE;
+	}
+}
+
+/* 0x101B5740 signature changed*/
+void CharUiSystem::SpellMetamagicDotsRender(int x, int y, int mmDataRaw)
+{
+	auto& spellsTextures = temple::GetRef<int*>(0x10C816D8);
+	MetaMagicData mmData(mmDataRaw);
+
+	constexpr int DOT_SIZE = 10;
+	const TigRect SRC_RECT(0, 0, DOT_SIZE, DOT_SIZE);
+	TigRect destRect(x, y, DOT_SIZE, DOT_SIZE);
+	
+	if (mmData.metaMagicEmpowerSpellCount > 0) {
+		UiRenderer::DrawTexture(spellsTextures[0], destRect, SRC_RECT);
+		destRect.x += DOT_SIZE;
+	}
+	if (mmData.metaMagicEnlargeSpellCount > 0) {
+		UiRenderer::DrawTexture(spellsTextures[1], destRect, SRC_RECT);
+		destRect.x += DOT_SIZE;
+	}
+	if (mmData.metaMagicExtendSpellCount > 0) {
+		UiRenderer::DrawTexture(spellsTextures[2], destRect, SRC_RECT);
+		destRect.x += DOT_SIZE;
+	}if (mmData.metaMagicHeightenSpellCount> 0) {
+		UiRenderer::DrawTexture(spellsTextures[4], destRect, SRC_RECT);
+		destRect.x += DOT_SIZE;
+	}
+	if (mmData.metaMagicFlags & MetaMagicFlags::MetaMagic_Maximize) {
+		UiRenderer::DrawTexture(spellsTextures[4], destRect, SRC_RECT);
+		destRect.x += DOT_SIZE;
+	}
+	if (mmData.metaMagicFlags & MetaMagicFlags::MetaMagic_Quicken) {
+		UiRenderer::DrawTexture(spellsTextures[5], destRect, SRC_RECT);
+		destRect.x += DOT_SIZE;
+	}
+	if (mmData.metaMagicFlags & MetaMagicFlags::MetaMagic_Silent) {
+		UiRenderer::DrawTexture(spellsTextures[6], destRect, SRC_RECT);
+		destRect.x += DOT_SIZE;
+	}
+	if (mmData.metaMagicFlags & MetaMagicFlags::MetaMagic_Still) {
+		UiRenderer::DrawTexture(spellsTextures[7], destRect, SRC_RECT);
+		destRect.x += DOT_SIZE;
+	}
+	if (mmData.metaMagicWidenSpellCount> 0) {
+		UiRenderer::DrawTexture(spellsTextures[8], destRect, SRC_RECT);
+		destRect.x += DOT_SIZE;
+	}
+}
+
+int CharUiSystem::SpellMetamagicGetBtnIdx(int widId)
+{
+	auto& uiCharSpellPacket = GetUiCharSpellPacket();
+	for (auto i = 0; i < NUM_SPELLBOOK_SLOTS; ++i) {
+		if (uiCharSpellPacket.metamagicButtons[i]->widgetId == widId)
+			return i;
+	}
+	return -1;
+}
+
+int CharUiSystem::SpellMetamagicAppliedGetIdx(int widId)
+{
+	auto& popupAppliedWnds = temple::GetRef<LgcyWindow* [MM_FEAT_COUNT_VANILLA]>(0x10C81958);
+	for (auto i = 0; i < MM_FEAT_COUNT_VANILLA; ++i) {
+		if (popupAppliedWnds[i]->widgetId == widId)
+			return i;
+	}
+
+	return -1;
+}
+
+int CharUiSystem::SpellMetamagicAvailableGetIdx(int widId)
+{
+	auto& popupAvailWnds = temple::GetRef<LgcyWindow* [MM_FEAT_COUNT_VANILLA]>(0x10C81934);
+	for (auto i = 0; i < MM_FEAT_COUNT_VANILLA; ++i) {
+		if (popupAvailWnds[i]->widgetId == widId)
+			return i;
+	}
+
+	return -1;
+}
+
+feat_enums CharUiSystem::SpellMetamagicAvailableGetFeat(int widId)
+{
+	auto& uiMmData = *uiCharAddresses.uiMetaMagicData;
+	auto& popupAvailWnds = temple::GetRef<LgcyWindow* [MM_FEAT_COUNT_VANILLA]>(0x10C81934);
+	for (auto i = 0; i < MM_FEAT_COUNT_VANILLA && i < uiMmData.availableCount; ++i) {
+		if (popupAvailWnds[i]->widgetId == widId) {
+			return uiMmData.availableMmFeats[i];
+		}
+			
+	}
+
+	return FEAT_NONE;
+}
+
+/* 0x101B5590 */
+feat_enums CharUiSystem::SpellMetamagicAppliedGetFeat(int widId)
+{
+	auto& uiMmData = *uiCharAddresses.uiMetaMagicData;
+	auto& popupAppliedWnds = temple::GetRef<LgcyWindow* [MM_FEAT_COUNT_VANILLA]>(0x10C81958);
+	for (auto i = 0; i < MM_FEAT_COUNT_VANILLA && i < uiMmData.appliedCount; ++i) {
+		if (popupAppliedWnds[i]->widgetId == widId)
+			return uiMmData.appliedMmFeats[i];
+	}
+
+	return FEAT_NONE;
+}
+
+int CharUiSystem::SpellMetaMagicFeatGetSpellLevelModifier(feat_enums feat)
+{
+	switch (feat) {
+	case FEAT_EMPOWER_SPELL:
+		return 2;
+	case FEAT_ENLARGE_SPELL:
+	case FEAT_EXTEND_SPELL:
+	case FEAT_HEIGHTEN_SPELL:
+		return 1;
+	case FEAT_MAXIMIZE_SPELL:
+		return 3;
+	case FEAT_QUICKEN_SPELL:
+		return 4;
+	case FEAT_SILENT_SPELL:
+		return 1;
+	case FEAT_STILL_SPELL:
+		return 1;
+	case FEAT_WIDEN_SPELL:
+		return 3;
+	default:
+		return 0;
+	}
+
 	return 0;
 }
 
@@ -1360,6 +1949,8 @@ UiChar::UiChar(const UiSystemConf &config) {
 		throw TempleException("Unable to initialize game system Char-UI");
 	}
 	LootingWidgetsInit();
+	mImpl = std::make_unique<UiCharImpl>();
+	uiCharImpl = mImpl.get();
 }
 UiChar::~UiChar() {
 	auto shutdown = temple::GetPointer<void()>(0x10149820);
@@ -1441,7 +2032,7 @@ void CharUiSystem::apply(){
 	// Feats
 	replaceFunction(0x101BBDB0, FeatsShow);
 
-
+	// Spells
 
 	//orgSpellbookSpellsMsg = replaceFunction(0x101B8F10, SpellbookSpellsMsg);
 	orgMemorizeSpellMsg = replaceFunction(0x101B9360, MemorizeSpellMsg);
@@ -1449,24 +2040,18 @@ void CharUiSystem::apply(){
 	redirectCall(0x101B6ED8, TabNameReplacement);
 	replaceFunction(0x101B2EE0, IsSpecializationSchoolSlot);
 	orgSpellsShow = replaceFunction(0x101B5D80, SpellsShow);
+	replaceFunction(0x101B6FD0, SpellbookSpellsRender);
 
 	static BOOL(__cdecl* orgMetamagicBtnMsg)(int, TigMsg&) = replaceFunction<BOOL(__cdecl)(int, TigMsg&)>(0x101BA580, [](int widId, TigMsg& msg) {
-		auto msgType = msg.type;
-		if (msgType != TigMsgType::WIDGET){
-			return TRUE;
-		}
-		auto &msgWidget = (TigMsgWidget&)msg;
-		if (msgWidget.widgetEventType != TigMsgWidgetEvent::MouseReleased ){
-			return TRUE;
-		}
-		auto handle = uiSystems->GetChar().GetCritter();
-		if (!feats.HasMetamagicFeat(handle)){
-			return TRUE;
-		}
-
-		return orgMetamagicBtnMsg(widId, msg);
+		return SpellMetamagicBtnMsg(widId, msg);
+		// return orgMetamagicBtnMsg(widId, msg);
 
 	});
+
+	static BOOL(__cdecl * orgMetamagicAppliedWngMsg)(int, TigMsg&) = replaceFunction<BOOL(__cdecl)(int, TigMsg&)>(0x101B9880, [](int widId, TigMsg& msg) {
+		return SpellPopupAppliedWndMsg(widId, msg);
+		// return orgMetamagicAppliedWngMsg(widId, msg);
+		});
 
 	// UiCharSpellGetScrollbarY  has bug when called from Spellbook, it receives the first tab's scrollbar always
 	writeCall(0x101BA5D9, HookedCharSpellGetSpellbookScrollbarY);
@@ -1480,13 +2065,39 @@ void CharUiSystem::apply(){
 	// There's still an issue when the new spell level is 9, in that the game doesn't add a Spell Level 9 label, but at least
 	// it's at the bottom.
 	static void(__cdecl * orgMetamagicCallback)(int) = replaceFunction<void(__cdecl)(int)>(0x101B5310, [](int popupBtnIdx) {
+
 		
+
 		auto& navClassTabIdx = temple::GetRef<int>(0x10D18F68);
-		auto charSpellPackets = addresses.uiCharSpellPackets;
+		auto charSpellPackets = uiCharAddresses.uiCharSpellPackets;
 		auto &curSpellList = charSpellPackets[navClassTabIdx].spellsKnown;
 		auto orgFirstSpellLevel = curSpellList.spells[0].spellLevel;
+		auto& uiMmData    = *uiCharAddresses.uiMetaMagicData;
+		auto &uiMmDataMod = *uiCharAddresses.uiMetaMagicDataOrg;
 
 		orgMetamagicCallback(popupBtnIdx);
+		/*
+		auto idxToInsert = 0;
+		if (popupBtnIdx) {
+			logger->debug("CharUiSystem::MetamagicCallback: no metamagic spell created");
+		}
+		else {
+			auto& spell = uiMmData.spellData;
+			logger->debug("CharUiSystem::MetamagicCallback: spell {}, new_level {}", spellSys.GetSpellMesline(spell.spellEnum), spell.spellLevel );
+
+			if (spell.metaMagicData == 0u) {
+				logger->debug("CharUiSystem::MetamagicCallback: no metamagic spell created");
+			}
+			else {
+				if (uiMmDataMod.appliedCount == uiMmData.appliedCount) {
+				 blah blah refactor
+				}
+			}
+		}
+
+		uiMmDataMod.Clear();
+		*/
+
 		
 		auto &spellCount = curSpellList.count;
 		auto &firstSpell = curSpellList.spells[0]; // if the MM callback fucks up, the new MM spell ends up here
@@ -1601,3 +2212,81 @@ bool(*CharUiSystem::orgCharSpellsNavClassTabMsg)(int widId, TigMsg* tigMsg);
 void(*CharUiSystem::orgSpellsShow)(objHndl obj);
 BOOL(*CharUiSystem::orgInventorySlotMsg)(int widId, TigMsg* msg);
 int CharUiSystem::specSlotIndices[10];
+
+void UiMetaMagicData::Clear()
+{
+	memset(this, 0, sizeof(UiMetaMagicData));
+	for (auto i = 0; i < MM_FEAT_COUNT_VANILLA; ++i) {
+		appliedMmFeats[i] = availableMmFeats[i] = FEAT_NONE;
+	}
+}
+
+void UiMetaMagicData::Reset(objHndl handle, SpellStoreData& spell)
+{
+	availableCount = appliedCount = 0;
+	for (auto i = 0; i < MM_FEAT_COUNT_VANILLA; ++i) {
+		appliedMmFeats[i] = FEAT_NONE;
+		availableMmFeats[i] = FEAT_NONE;
+	}
+	spellData = spell;
+
+	//for (auto feat : feats.metamagicFeats) {
+	for (auto i = 0; i < MM_FEAT_COUNT_VANILLA; ++i) {
+		auto feat = metaMagicStandardFeats[i];
+		if (feat == FEAT_SILENT_SPELL && spellData.classCode == spellSys.GetSpellClass(stat_level_bard))
+			continue;
+		if (feats.HasFeatCountByClass(handle, feat)) { // fixed issue in vanilla - checked exactly == 1, but sometimes you got 2 here (likely due to the feat right click selection bug :P)
+			availableMmFeats[availableCount++] = feat;
+		}
+	}
+
+	auto mmData = spellData.metaMagicData;
+	if (mmData.metaMagicFlags & MetaMagicFlags::MetaMagic_Maximize) {
+		appliedMmFeats[appliedCount++] = FEAT_MAXIMIZE_SPELL;
+	}
+	if (mmData.metaMagicFlags & MetaMagicFlags::MetaMagic_Quicken) {
+		appliedMmFeats[appliedCount++] = FEAT_QUICKEN_SPELL;
+	}
+	if (mmData.metaMagicFlags & MetaMagicFlags::MetaMagic_Silent) {
+		appliedMmFeats[appliedCount++] = FEAT_QUICKEN_SPELL; // hmmm? maybe Moebius changed this
+	}
+	if (mmData.metaMagicFlags & MetaMagicFlags::MetaMagic_Still) {
+		appliedMmFeats[appliedCount++] = FEAT_QUICKEN_SPELL; // hmmm? maybe Moebius changed this
+	}
+	
+	AddAppliedCount(FEAT_EMPOWER_SPELL, mmData.metaMagicEmpowerSpellCount);
+	AddAppliedCount(FEAT_ENLARGE_SPELL, mmData.metaMagicEnlargeSpellCount);
+	AddAppliedCount(FEAT_EXTEND_SPELL, mmData.metaMagicExtendSpellCount);
+	AddAppliedCount(FEAT_HEIGHTEN_SPELL, mmData.metaMagicHeightenSpellCount);
+	AddAppliedCount(FEAT_WIDEN_SPELL, mmData.metaMagicWidenSpellCount & 3);
+	
+}
+
+void UiMetaMagicData::AddAppliedCount(feat_enums feat, int count)
+{
+	for (auto i = 0; i < count && appliedCount < MM_FEAT_COUNT_VANILLA; ++i) {
+		appliedMmFeats[appliedCount++] = feat;
+	}
+}
+
+void SpellList::Remove(int idx)
+{
+	if (idx >= count || idx < 0)
+		return;
+
+	for (auto i=idx; i < count-1; ++i ){
+		spells[i] = spells[i + 1];
+	}
+
+	auto& spell = spells[count - 1];
+	memset(&spell, 0, sizeof(spell));
+	spell.spellLevel = -1;
+	count--;
+	return;
+	
+}
+
+UiCharImpl::UiCharImpl()
+{
+	uiCharImpl = this;
+}

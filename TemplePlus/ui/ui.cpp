@@ -362,7 +362,7 @@ LgcyButtonState UiManager::GetButtonState(LgcyWidgetId widId) {
 	return button->buttonState;
 }
 
-bool UiManager::ScrollbarGetY(int widId, int * scrollbarY) {
+bool UiManager::ScrollbarGetY(LgcyWidgetId widId, int * scrollbarY) {
 	auto widget = (LgcyScrollBar*) GetWidget(widId);
 	if (!widget || widget->type != LgcyWidgetType::Scrollbar)
 		return true;
