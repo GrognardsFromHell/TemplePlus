@@ -56,12 +56,22 @@ void LegacySkillSystem::FloatError(const objHndl& obj, int errorOffset){
 	floatSys.floatMesLine(obj, 1, FloatLineColor::White, mesline.value);
 }
 
+const char* LegacySkillSystem::GetSkillName(SkillEnum skillEnum)
+{
+	return temple::GetRef<const char* []>(0x10AB70B0)[skillEnum];
+}
+
 const char * LegacySkillSystem::GetSkillHelpTopic(SkillEnum skillEnum){
 	MesLine mesline(10200 + skillEnum);
 	auto skillRulesMes = temple::GetRef<MesHandle>(0x10AB72B8);
 	if (mesFuncs.GetLine(skillRulesMes, &mesline))
 		return mesline.value;
 	return nullptr;
+}
+
+Stat LegacySkillSystem::GetSkillStat(SkillEnum skillEnum)
+{
+	return skillPropsTable[skillEnum].stat;
 }
 
 LegacySkillSystem::LegacySkillSystem(){
