@@ -17,6 +17,7 @@
 #include <gamesystems/gamesystems.h>
 #include "tig/tig_font.h"
 #include "tig/tig_startup.h"
+#include <graphics/shaperenderer2d.h>
 #include "fonts/fonts.h"
 #include "ui_tooltip.h"
 #include "ui_assets.h"
@@ -31,11 +32,17 @@
 #include <ui\ui_popup.h>
 #include <combat.h>
 
+UiChar& ui_char() {
+	return uiSystems->GetChar();
+}
+
 class UiCharImpl;
 UiCharImpl* uiCharImpl = nullptr;
 
 #define NUM_SPELLBOOK_SLOTS 18 // 18 in vanilla
 #define MM_FEAT_COUNT_VANILLA 9
+#define SKILL_BTN_COUNT 20
+#define SKILL_COUNT_VANILLA 21
 
 feat_enums metaMagicStandardFeats[MM_FEAT_COUNT_VANILLA] = {
 	FEAT_EMPOWER_SPELL, FEAT_ENLARGE_SPELL, FEAT_EXTEND_SPELL, FEAT_HEIGHTEN_SPELL,
@@ -132,15 +139,44 @@ struct UiCharAddresses : temple::AddressTable
 } uiCharAddresses;
 
 class UiCharImpl {
-	friend class CharUiSystem;
+	friend class UiCharHooks;
 	friend class UiChar;
 public:
 	UiCharImpl();
+
+	void SkillsWidgetsInit();
+	void SkillsBtnRender(int widId);
+	void SkillsHide();
+
+	bool SkillsBtnMsg(int widId, TigMsg& msg);
+	void SkillsBtnTooltip(int x, int y, int* widgetId);
+
 protected:
-	MesHandle& uiCharSpellsUiText = temple::GetRef<MesHandle>(0x10C81590);
+	MesHandle &uiCharSpellsUiText = temple::GetRef<MesHandle>(0x10C81590);
+		
+	int& skillsTooltipStyle = temple::GetRef<int>(0x10D19F20);
+	
+	LgcyWindow*& skillsWnd = temple::GetRef<LgcyWindow*>(0x10D1A330);
+	int& skillsWndX = temple::GetRef<int>(0x10D19EA8);
+	int& skillsWndY = temple::GetRef<int>(0x10D19EAC);
+	int& skillsWndW = temple::GetRef<int>(0x10D19EB0);
+	int& skillsWndH = temple::GetRef<int>(0x10D19EB4);
+	
+	LgcyScrollBar*& skillsScrollbar = temple::GetRef<LgcyScrollBar*>(0x10D1A334);
+	int& skillsWndScrollbarX = temple::GetRef<int>(0x10D19EB8);
+	int& skillsWndScrollbarY = temple::GetRef<int>(0x10D19EBC);
+	int& skillsWndScrollbarH = temple::GetRef<int>(0x10D19EC4);
+
+	LgcyButton* (&skillsBtns)[] = temple::GetRef<LgcyButton* []>(0x10D1A338);
+	int& skillsBtnX = temple::GetRef<int>(0x10D19EC8);
+	int& skillsBtnY = temple::GetRef<int>(0x10D19ECC);
+	int& skillsBtnW = temple::GetRef<int>(0x10D19ED0);
+	int& skillsBtnH = temple::GetRef<int>(0x10D19ED4);
+
+	BOOL& skillsActive = temple::GetRef<BOOL>(0x10D1A388);
 };
 
-class CharUiSystem : TempleFix
+class UiCharHooks : TempleFix
 {
 public: 
 	#pragma region Main Wnd
@@ -220,7 +256,7 @@ protected:
 
 } charUiSys;
 
-void CharUiSystem::ClassLevelBtnRender(int widId){
+void UiCharHooks::ClassLevelBtnRender(int widId){
 	auto btn = uiManager->GetButton(widId);
 	const int maxWidth = 340;
 	UiRenderer::PushFont(temple::GetRef<char*>(0x10BE93A4), temple::GetRef<int>(0x10BE93A0) );
@@ -312,7 +348,7 @@ void CharUiSystem::ClassLevelBtnRender(int widId){
 	UiRenderer::PopFont();
 }
 
-void CharUiSystem::AlignGenderRaceBtnRender(int widId){
+void UiCharHooks::AlignGenderRaceBtnRender(int widId){
 	auto btn = uiManager->GetButton(widId);
 	const int maxWidth = 200;
 	UiRenderer::PushFont(temple::GetRef<char*>(0x10BE9394), temple::GetRef<int>(0x10BE9390));
@@ -397,18 +433,18 @@ void CharUiSystem::AlignGenderRaceBtnRender(int widId){
 	UiRenderer::PopFont();
 }
 
-int CharUiSystem::StatsLvlBtnRenderHook(objHndl handle){
+int UiCharHooks::StatsLvlBtnRenderHook(objHndl handle){
 	return critterSys.GetEffectiveLevel(handle);
 }
 
-UiCharSpellsNavPacket& CharUiSystem::GetUiCharSpellsNavPacket(int idx)
+UiCharSpellsNavPacket& UiCharHooks::GetUiCharSpellsNavPacket(int idx)
 {
 	if (idx == -1) {
 		idx = *uiCharAddresses.uiCharSpellsNavClassTabIdx;
 	}
 	return uiCharAddresses.uiCharSpellsNavPackets[idx];
 }
-UiCharSpellPacket& CharUiSystem::GetUiCharSpellPacket(int idx)
+UiCharSpellPacket& UiCharHooks::GetUiCharSpellPacket(int idx)
 {
 	if (idx == -1) {
 		idx = *uiCharAddresses.uiCharSpellsNavClassTabIdx;
@@ -416,7 +452,7 @@ UiCharSpellPacket& CharUiSystem::GetUiCharSpellPacket(int idx)
 	return uiCharAddresses.uiCharSpellPackets[idx];
 }
 
-BOOL CharUiSystem::MemorizeSpellMsg(int widId, TigMsg* tigMsg){
+BOOL UiCharHooks::MemorizeSpellMsg(int widId, TigMsg* tigMsg){
 
 	auto& curSpellPacket = GetUiCharSpellPacket();
 
@@ -452,7 +488,7 @@ BOOL CharUiSystem::MemorizeSpellMsg(int widId, TigMsg* tigMsg){
 	return orgMemorizeSpellMsg(widId, tigMsg);
 }
 
-const char *CharUiSystem::TabNameReplacement(int stat)
+const char *UiCharHooks::TabNameReplacement(int stat)
 // Replace the tab text (in method UiCharSpellsNavClassTabRender) with long or short text for the names as appropriate
 {
 	auto uiCharSpellTabsCount = temple::GetRef<int>(0x10D18F6C);
@@ -467,7 +503,7 @@ const char *CharUiSystem::TabNameReplacement(int stat)
 	return res;
 }
 
-bool CharUiSystem::CharSpellsNavClassTabMsg(int widId, TigMsg* tigMsg)
+bool UiCharHooks::CharSpellsNavClassTabMsg(int widId, TigMsg* tigMsg)
 {
 	auto uiCharSpellsNavClassTabIdxBefore = temple::GetRef<int>(0x10D18F68);
 
@@ -495,7 +531,7 @@ bool CharUiSystem::CharSpellsNavClassTabMsg(int widId, TigMsg* tigMsg)
 	return ret;
 }
 
-void CharUiSystem::SpellsShow(objHndl obj)
+void UiCharHooks::SpellsShow(objHndl obj)
 {
 
 	//orgSpellsShow(obj);
@@ -961,7 +997,7 @@ void CharUiSystem::SpellsShow(objHndl obj)
 	
 }
 
-BOOL CharUiSystem::IsSpecializationSchoolSlot(int idx)
+BOOL UiCharHooks::IsSpecializationSchoolSlot(int idx)
 {
 	auto numSpecSlots = temple::GetRef<int>(0x10D18F64);
 	for (int i = 0; i < numSpecSlots;i++)
@@ -973,7 +1009,7 @@ BOOL CharUiSystem::IsSpecializationSchoolSlot(int idx)
 }
 
 
-int CharUiSystem::HookedCharSpellGetSpellbookScrollbarY()
+int UiCharHooks::HookedCharSpellGetSpellbookScrollbarY()
 {
 	auto scrollbar = GetUiCharSpellPacket().spellbookScrollbar;
 	if (scrollbar) {
@@ -984,7 +1020,7 @@ int CharUiSystem::HookedCharSpellGetSpellbookScrollbarY()
 }
 
 /* 0x101B6FD0 */
-void CharUiSystem::SpellbookSpellsRender(int widId, TigMsg& tigMsg)
+void UiCharHooks::SpellbookSpellsRender(int widId, TigMsg& tigMsg)
 {
 	auto handle = GetCurrentCritter();
 	auto obj = objSystem->GetObject(handle); if (!obj) return;
@@ -1085,7 +1121,7 @@ void CharUiSystem::SpellbookSpellsRender(int widId, TigMsg& tigMsg)
 }
 
 /* Originally 0x101BA580 */
-BOOL CharUiSystem::SpellMetamagicBtnMsg(int widId, TigMsg& tigMsg)
+BOOL UiCharHooks::SpellMetamagicBtnMsg(int widId, TigMsg& tigMsg)
 {
 	auto msgType = tigMsg.type;
 	if (msgType != TigMsgType::WIDGET) {
@@ -1141,7 +1177,7 @@ BOOL CharUiSystem::SpellMetamagicBtnMsg(int widId, TigMsg& tigMsg)
 	return TRUE;
 }
 
-BOOL CharUiSystem::SpellPopupAppliedWndMsg(int widId, TigMsg& tigMsg)
+BOOL UiCharHooks::SpellPopupAppliedWndMsg(int widId, TigMsg& tigMsg)
 {
 	auto& uiMmData = *uiCharAddresses.uiMetaMagicData;
 	auto& uiMmDataMod = *uiCharAddresses.uiMetaMagicDataOrg;
@@ -1248,7 +1284,7 @@ BOOL CharUiSystem::SpellPopupAppliedWndMsg(int widId, TigMsg& tigMsg)
 		auto widIdOrg = msgWid.widgetId;
 		if (widIdOrg == widId)
 			return FALSE;
-		logger->debug("CharUiSystem::SpellPopupAppliedWndMsg: Mouse up =( {} )", widId);
+		logger->debug("UiCharHooks::SpellPopupAppliedWndMsg: Mouse up =( {} )", widId);
 		auto availIdx = SpellMetamagicAvailableGetIdx(widIdOrg);
 		auto appliedIdx = SpellMetamagicAppliedGetIdx(widId);
 		if (appliedIdx < 0 || availIdx < 0) {
@@ -1363,7 +1399,7 @@ BOOL CharUiSystem::SpellPopupAppliedWndMsg(int widId, TigMsg& tigMsg)
 }
 
 /* 0x101B5740 signature changed*/
-void CharUiSystem::SpellMetamagicDotsRender(int x, int y, int mmDataRaw)
+void UiCharHooks::SpellMetamagicDotsRender(int x, int y, int mmDataRaw)
 {
 	auto& spellsTextures = temple::GetRef<int*>(0x10C816D8);
 	MetaMagicData mmData(mmDataRaw);
@@ -1409,7 +1445,7 @@ void CharUiSystem::SpellMetamagicDotsRender(int x, int y, int mmDataRaw)
 	}
 }
 
-int CharUiSystem::SpellMetamagicGetBtnIdx(int widId)
+int UiCharHooks::SpellMetamagicGetBtnIdx(int widId)
 {
 	auto& uiCharSpellPacket = GetUiCharSpellPacket();
 	for (auto i = 0; i < NUM_SPELLBOOK_SLOTS; ++i) {
@@ -1419,7 +1455,7 @@ int CharUiSystem::SpellMetamagicGetBtnIdx(int widId)
 	return -1;
 }
 
-int CharUiSystem::SpellMetamagicAppliedGetIdx(int widId)
+int UiCharHooks::SpellMetamagicAppliedGetIdx(int widId)
 {
 	auto& popupAppliedWnds = temple::GetRef<LgcyWindow* [MM_FEAT_COUNT_VANILLA]>(0x10C81958);
 	for (auto i = 0; i < MM_FEAT_COUNT_VANILLA; ++i) {
@@ -1430,7 +1466,7 @@ int CharUiSystem::SpellMetamagicAppliedGetIdx(int widId)
 	return -1;
 }
 
-int CharUiSystem::SpellMetamagicAvailableGetIdx(int widId)
+int UiCharHooks::SpellMetamagicAvailableGetIdx(int widId)
 {
 	auto& popupAvailWnds = temple::GetRef<LgcyWindow* [MM_FEAT_COUNT_VANILLA]>(0x10C81934);
 	for (auto i = 0; i < MM_FEAT_COUNT_VANILLA; ++i) {
@@ -1441,7 +1477,7 @@ int CharUiSystem::SpellMetamagicAvailableGetIdx(int widId)
 	return -1;
 }
 
-feat_enums CharUiSystem::SpellMetamagicAvailableGetFeat(int widId)
+feat_enums UiCharHooks::SpellMetamagicAvailableGetFeat(int widId)
 {
 	auto& uiMmData = *uiCharAddresses.uiMetaMagicData;
 	auto& popupAvailWnds = temple::GetRef<LgcyWindow* [MM_FEAT_COUNT_VANILLA]>(0x10C81934);
@@ -1456,7 +1492,7 @@ feat_enums CharUiSystem::SpellMetamagicAvailableGetFeat(int widId)
 }
 
 /* 0x101B5590 */
-feat_enums CharUiSystem::SpellMetamagicAppliedGetFeat(int widId)
+feat_enums UiCharHooks::SpellMetamagicAppliedGetFeat(int widId)
 {
 	auto& uiMmData = *uiCharAddresses.uiMetaMagicData;
 	auto& popupAppliedWnds = temple::GetRef<LgcyWindow* [MM_FEAT_COUNT_VANILLA]>(0x10C81958);
@@ -1468,7 +1504,7 @@ feat_enums CharUiSystem::SpellMetamagicAppliedGetFeat(int widId)
 	return FEAT_NONE;
 }
 
-int CharUiSystem::SpellMetaMagicFeatGetSpellLevelModifier(feat_enums feat)
+int UiCharHooks::SpellMetaMagicFeatGetSpellLevelModifier(feat_enums feat)
 {
 	switch (feat) {
 	case FEAT_EMPOWER_SPELL:
@@ -1494,17 +1530,17 @@ int CharUiSystem::SpellMetaMagicFeatGetSpellLevelModifier(feat_enums feat)
 	return 0;
 }
 
-objHndl CharUiSystem::GetCurrentCritter()
+objHndl UiCharHooks::GetCurrentCritter()
 {
 	return temple::GetRef<objHndl>(0x10BE9940);
 }
 
-objHndl CharUiSystem::GetCritterLooted()
+objHndl UiCharHooks::GetCritterLooted()
 {
 	return temple::GetRef<objHndl>(0x10BE6EC0);
 }
 
-objHndl CharUiSystem::GetVendor()
+objHndl UiCharHooks::GetVendor()
 {
 	return temple::GetRef<objHndl>(0x10BE6EC8);
 }
@@ -1579,7 +1615,7 @@ void UiChar::HideLooting(){
 }
 
 
-int CharUiSystem::InventorySlotMsg(int widId, TigMsg* msg)
+int UiCharHooks::InventorySlotMsg(int widId, TigMsg* msg)
 {
 	// Alt-click to Quicksell
 	if (uiSystems->GetChar().IsLootingActive())
@@ -1648,7 +1684,7 @@ int CharUiSystem::InventorySlotMsg(int widId, TigMsg* msg)
 	return orgInventorySlotMsg(widId, msg);
 }
 
-char* CharUiSystem::HookedItemDescriptionBarter(objHndl obj, objHndl item)
+char* UiCharHooks::HookedItemDescriptionBarter(objHndl obj, objHndl item)
 {
 	// append item non-profiency etc. warnings to barter tooltip
 	auto orgItemDescriptionBarter = temple::GetRef<char*(__cdecl)(objHndl, objHndl)>(0x10123220);
@@ -1691,7 +1727,7 @@ char* CharUiSystem::HookedItemDescriptionBarter(objHndl obj, objHndl item)
 	return strOut;
 }
 
-void CharUiSystem::ItemGetDescrAddon(objHndl obj, objHndl item, std::string& addStr){
+void UiCharHooks::ItemGetDescrAddon(objHndl obj, objHndl item, std::string& addStr){
 	auto itemObj = gameSystems->GetObj().GetObject(item);
 	if (itemObj->type == obj_t_food || itemObj->type == obj_t_scroll){
 		
@@ -1738,11 +1774,11 @@ void CharUiSystem::ItemGetDescrAddon(objHndl obj, objHndl item, std::string& add
 	}
 }
 
-void CharUiSystem::LongDescriptionPopupCreate(objHndl item){
+void UiCharHooks::LongDescriptionPopupCreate(objHndl item){
 	temple::GetRef<void(__cdecl)(objHndl)>(0x10144400)(item);
 }
 
-void CharUiSystem::TotalWeightOutputBtnTooltip(int x, int y, int* widId)
+void UiCharHooks::TotalWeightOutputBtnTooltip(int x, int y, int* widId)
 {
 
 	LgcyButton * btn = uiManager->GetButton(*widId);
@@ -1846,12 +1882,12 @@ void CharUiSystem::TotalWeightOutputBtnTooltip(int x, int y, int* widId)
 }
 
 /* 0x10144350 */
-objHndl CharUiSystem::GetBag(){
+objHndl UiCharHooks::GetBag(){
 	return objHndl::null;
 }
 
 /* 0x101A2FB0 */
-void CharUiSystem::WeaponComboActivate(objHndl handle, int weaponCombo)
+void UiCharHooks::WeaponComboActivate(objHndl handle, int weaponCombo)
 {
 	auto bag = GetBag();
 
@@ -1900,7 +1936,7 @@ void CharUiSystem::WeaponComboActivate(objHndl handle, int weaponCombo)
 	}
 }
 
-void CharUiSystem::FeatsShow(){
+void UiCharHooks::FeatsShow(){
 	auto dude = temple::GetRef<objHndl>(0x10BE9940); // critter with inventory open
 
 	temple::GetRef<int>(0x10D19E8C) = 1; // featsActive
@@ -1990,7 +2026,7 @@ void UiChar::SetCritter(objHndl handle) {
 	ui_show_charui(handle);
 }
 
-void CharUiSystem::apply(){
+void UiCharHooks::apply(){
 	
 	replaceFunction(0x101A2FB0, WeaponComboActivate);
 
@@ -2079,14 +2115,14 @@ void CharUiSystem::apply(){
 		/*
 		auto idxToInsert = 0;
 		if (popupBtnIdx) {
-			logger->debug("CharUiSystem::MetamagicCallback: no metamagic spell created");
+			logger->debug("UiCharHooks::MetamagicCallback: no metamagic spell created");
 		}
 		else {
 			auto& spell = uiMmData.spellData;
-			logger->debug("CharUiSystem::MetamagicCallback: spell {}, new_level {}", spellSys.GetSpellMesline(spell.spellEnum), spell.spellLevel );
+			logger->debug("UiCharHooks::MetamagicCallback: spell {}, new_level {}", spellSys.GetSpellMesline(spell.spellEnum), spell.spellLevel );
 
 			if (spell.metaMagicData == 0u) {
-				logger->debug("CharUiSystem::MetamagicCallback: no metamagic spell created");
+				logger->debug("UiCharHooks::MetamagicCallback: no metamagic spell created");
 			}
 			else {
 				if (uiMmDataMod.appliedCount == uiMmData.appliedCount) {
@@ -2204,14 +2240,26 @@ void CharUiSystem::apply(){
 
 	replaceFunction(0x10155D20, TotalWeightOutputBtnTooltip);
 
+	replaceFunction<void(__cdecl)(int)>(0x101BD850, [](int widId)->void {
+		return uiCharImpl->SkillsBtnRender(widId);
+	});
+
+	replaceFunction<void(__cdecl)()>(0x101BE110, []()->void {
+		return;
+		//return uiCharImpl->SkillsWidgetsInit();
+	});
+
+	replaceFunction<void(__cdecl)()>(0x101BCC60, []() {
+		return uiCharImpl->SkillsHide();
+		});
 }
 
-BOOL(*CharUiSystem::orgSpellbookSpellsMsg)(int widId, TigMsg* tigMsg);
-BOOL(*CharUiSystem::orgMemorizeSpellMsg)(int widId, TigMsg* tigMsg);
-bool(*CharUiSystem::orgCharSpellsNavClassTabMsg)(int widId, TigMsg* tigMsg);
-void(*CharUiSystem::orgSpellsShow)(objHndl obj);
-BOOL(*CharUiSystem::orgInventorySlotMsg)(int widId, TigMsg* msg);
-int CharUiSystem::specSlotIndices[10];
+BOOL(*UiCharHooks::orgSpellbookSpellsMsg)(int widId, TigMsg* tigMsg);
+BOOL(*UiCharHooks::orgMemorizeSpellMsg)(int widId, TigMsg* tigMsg);
+bool(*UiCharHooks::orgCharSpellsNavClassTabMsg)(int widId, TigMsg* tigMsg);
+void(*UiCharHooks::orgSpellsShow)(objHndl obj);
+BOOL(*UiCharHooks::orgInventorySlotMsg)(int widId, TigMsg* msg);
+int UiCharHooks::specSlotIndices[10];
 
 void UiMetaMagicData::Clear()
 {
@@ -2289,4 +2337,197 @@ void SpellList::Remove(int idx)
 UiCharImpl::UiCharImpl()
 {
 	uiCharImpl = this;
+	SkillsWidgetsInit();
+	//auto &skillsBtns = temple::GetRef<LgcyButton* []>(0x10D1A338);
+}
+
+void UiCharImpl::SkillsWidgetsInit()
+{
+	LgcyWindow wnd(skillsWndX, skillsWndY, skillsWndW, skillsWndH);
+	memcpy(wnd.name, "char_skills_ui_main_window", sizeof("char_skills_ui_main_window"));
+	wnd.render = temple::GetRef<void(__cdecl)(int)>(0x101BCD50);
+	wnd.handleMessage = temple::GetRef<BOOL(__cdecl)(LgcyWidgetId, TigMsg*)>(0x101BD0C0);
+	uiManager->AddWindow(wnd);
+	skillsWnd = uiManager->GetWindow(wnd.widgetId);
+
+	LgcyScrollBar scrollbar;
+	scrollbar.Init(skillsWndScrollbarX, skillsWndScrollbarY, skillsWndScrollbarH);
+	scrollbar.yMax = SkillEnum::skill_count - 20; // 1 
+	scrollbar.scrollQuantum = 1;
+	scrollbar.field8C= 1;
+	uiManager->AddScrollBar(scrollbar);
+	uiManager->AddChild(skillsWnd->widgetId, scrollbar.widgetId);
+	skillsScrollbar = uiManager->GetScrollBar(scrollbar.widgetId);
+
+	
+	for (auto i = 0; i < SKILL_BTN_COUNT; ++i) {
+		auto btnId = wnd.AddChildButton("char_skills_ui_skill_button",
+			skillsBtnX, skillsBtnY + i * skillsBtnH, skillsBtnW, skillsBtnH,
+			[](int widId) {
+				return uiCharImpl->SkillsBtnRender(widId);
+			},
+			temple::GetRef<BOOL(__cdecl)(LgcyWidgetId, TigMsg*)>(0x101BE050),
+				[](int x, int y, int* widgetId)->void {
+				return uiCharImpl->SkillsBtnTooltip(x, y, widgetId);
+			}
+		);
+		skillsBtns[i] = uiManager->GetButton(btnId);
+	}
+}
+
+/* 0x101BD850 */
+void UiCharImpl::SkillsBtnRender(int widId)
+{
+	auto& shapeRenderer = tig->GetShapeRenderer2d();
+
+	auto btn = uiManager->GetButton(widId);
+	
+	auto idx = -1;
+	for (auto i = 0; i < SKILL_BTN_COUNT; ++i) {
+		if (skillsBtns[i]->widgetId == widId) {
+			idx = i;
+			break;
+		}
+	}
+
+	int scrollbarY = 0;
+	uiManager->ScrollbarGetY(skillsScrollbar->widgetId, &scrollbarY);
+	auto skillIdx = scrollbarY + idx;
+	if (skillIdx < 0 || skillIdx >= SkillEnum::skill_count /*SKILL_COUNT_VANILLA*/) {
+		return;
+	}
+	auto skillEnum = (SkillEnum)skillIdx; // TODO generalize (e.g. for alphabetaical sorting when adding new skills)
+	auto handle = ui_char().GetCritter();
+	BonusList bonlist;
+	double skillLevel = (double)dispatch.dispatch1ESkillLevel(handle, skillEnum, &bonlist, objHndl::null, 1);
+	int skillBase  = critterSys.SkillBaseGet(handle, skillEnum);
+	auto skillValue = skillLevel + 0.5 * skillBase;
+	auto skillBaseRound = skillBase / 2;
+	skillValue -= skillBaseRound;
+	auto abilityModifier = bonlist.bonusEntries[1].bonValue;
+	float skillRank = 0.5f * (float)skillBase;
+
+	auto bonValue = 0;
+	for (auto i = 2; i < bonlist.bonCount; ++i) {
+		bonValue += bonlist.bonusEntries[i].bonValue;
+	}
+
+	
+	shapeRenderer.DrawRectangleOutlineVanilla({skillsScrollbar->x - 38.f, btn->y+1.f}, 
+						{skillsScrollbar->x-8.f, btn->height + btn->y-1.f},	{ 0xFF80A0C0 }); //fixme
+	
+	auto& ttStyle = tooltips.GetStyle(skillsTooltipStyle);
+	UiRenderer::PushFont(ttStyle.fontName, ttStyle.fontSize);
+
+	TigTextStyle style(
+		&ColorRect(XMCOLOR(0xFFFFFFFF)), 
+		&ColorRect(XMCOLOR(0xFF000000)), 
+		&ColorRect(XMCOLOR(0x99111111)));
+	style.flags = 8;
+	style.kerning = 2;
+	style.tracking = 2;
+
+	if (btn->buttonState == LgcyButtonState::Hovered || btn->buttonState == LgcyButtonState::Down) {
+		// Skill breakdown display
+		{ // Skill Rank
+			auto text = fmt::format("{:.1f}", skillRank);
+			auto textMeas = UiRenderer::MeasureTextSize(text, style);
+			auto x = (skillRank >= 10.0f || skillRank < 0.0f) ? 240 : 242;
+			auto rect = TigRect(x + btn->x, 55 + skillsWnd->y, 0, 0); // nice one ToEE
+			UiRenderer::DrawText(text, rect, style);
+		}
+		{ // Ability Modifier
+			auto text = fmt::format("{:d}", abilityModifier);
+			auto textMeas = UiRenderer::MeasureTextSize(text, style);
+			auto x = (abilityModifier >= 10 || abilityModifier < 0) ? 245 : 247;
+			auto rect = TigRect(x + btn->x, 96 + skillsWnd->y, textMeas.width, textMeas.height); // bravo
+			UiRenderer::DrawText(text, rect, style);
+		}
+		{ // Ability Score name
+			auto stat = skillSys.GetSkillStat(skillEnum);
+			auto statShortName = d20Stats.GetStatShortName(stat);
+			auto text = fmt::format("{}", statShortName);
+			auto textMeas = UiRenderer::MeasureTextSize(text, style);
+			auto x = 196;
+			auto rect = TigRect(x + btn->x, 96 + skillsWnd->y, textMeas.width, textMeas.height); // respect
+			UiRenderer::DrawText(text, rect, style);
+		}
+		{ // Bonus value (Miscellaneous)
+			auto text = fmt::format("{:d}", bonValue);
+			auto textMeas = UiRenderer::MeasureTextSize(text, style);
+			auto x = (bonValue >= 10 || bonValue < 0) ? 245 : 247;
+			auto rect = TigRect(x + btn->x, 137 + skillsWnd->y, textMeas.width, textMeas.height); // huzzah
+			UiRenderer::DrawText(text, rect, style);
+		}
+		{
+			ColorRect textColor2(XMCOLOR(0xFF0D6BE3));
+			style.textColor = &textColor2;
+			UiRenderer::PushFont(PredefinedFont::ARIAL_BOLD_24);
+
+			auto text = fmt::format("{:.1f}", skillValue);
+			auto textMeas = UiRenderer::MeasureTextSize(text, style);
+			auto x = (skillValue >= 10 || skillValue < 0) ? 232 : 234;
+			auto rect = TigRect(x + btn->x, skillsWnd->y + 172, 0, 0); // rejoice
+			UiRenderer::DrawText(text, rect, style);
+
+			UiRenderer::PopFont();
+		}
+		
+	}
+	
+	{	// Skill value	
+		auto text = fmt::format("{:.1f}", skillValue);
+		auto textMeas = UiRenderer::MeasureTextSize(text, style);
+		auto x = (skillValue >= 10 || skillValue < 0) ? -35 : -32;
+		auto rect = TigRect(x + skillsScrollbar->x, btn->y + 1, textMeas.width, textMeas.height);
+		UiRenderer::DrawText(text, rect, style);
+	}
+	{ // Skill Name
+		auto skillName = skillSys.GetSkillName(skillEnum);
+		auto text = fmt::format("{}", skillName);
+		auto textMeas = UiRenderer::MeasureTextSize(text, style);
+		auto rect = TigRect(4 + btn->x, 1 + btn->y, textMeas.width, textMeas.height);
+		UiRenderer::DrawText(text, rect, style);
+	}
+
+	UiRenderer::PopFont();
+}
+
+void UiCharImpl::SkillsHide()
+{
+	skillsActive = 0;
+	uiManager->SetHidden(skillsWnd->widgetId, true);
+	uiManager->ScrollbarSetY(skillsScrollbar->widgetId, 0);
+}
+
+/* 0x101BDFC0 */
+void UiCharImpl::SkillsBtnTooltip(int x, int y, int* widgetId)
+{
+	auto widId = *widgetId;
+	auto btn = uiManager->GetButton(widId);
+	if (!btn) return;
+	if (btn->buttonState != LgcyButtonState::Hovered) return;
+	auto idx = -1;
+	for (auto i = 0; i < SKILL_BTN_COUNT; ++i) {
+		if (skillsBtns[i]->widgetId == widId) {
+			idx = i;
+			break;
+		}
+	}
+	if (idx == -1) return;
+
+	auto scrollbarY = 0;
+	uiManager->ScrollbarGetY(skillsScrollbar->widgetId, &scrollbarY);
+	auto skillIdx = scrollbarY + idx;
+	if (skillIdx >= SkillEnum::skill_count /*SKILL_COUNT_VANILLA*/) {
+		return;
+	}
+
+	auto skillEnum = (SkillEnum)skillIdx; // todo revamp
+
+	auto tooltipBuf = temple::GetRef<char[1024]>(0x10D19F28);
+	auto setTooltipText = temple::GetRef<void(__cdecl)(int, const char*, int)>(0x10162980);
+	setTooltipText(skillEnum,tooltipBuf, 1024);
+
+	temple::GetRef<void(__cdecl)(const char*)>(0x10162C00)(tooltipBuf);
 }
