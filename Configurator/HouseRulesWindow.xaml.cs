@@ -24,6 +24,14 @@ namespace TemplePlusConfig
             InitializeComponent();
 
             DataContext = App._iniViewModel;
+
+            if (this.LaxRulesCheckbox.IsChecked.Value){
+                this.LaxRulesPanel.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                this.LaxRulesPanel.Visibility = Visibility.Collapsed;
+            }
         }
 
         private void button_Click(object sender, RoutedEventArgs e){
@@ -33,19 +41,19 @@ namespace TemplePlusConfig
 
         private void CheckBox_Checked(object sender, RoutedEventArgs e)
         {
-            this.Width = 670;
+            this.LaxRulesPanel.Visibility = Visibility.Visible;
         }
 
         private void CheckBox_Unchecked(object sender, RoutedEventArgs e)
         {
-            this.Width = 438;
+            this.LaxRulesPanel.Visibility = Visibility.Collapsed;
         }
 
         private void CheckBox_Initialized(object sender, EventArgs e)
         {
 
             var chkbx = sender as CheckBox;
-           if (chkbx != null && chkbx.IsChecked != null){
+           if (chkbx != null && chkbx.IsChecked != null && this.LaxRulesPanel != null){
                 if (chkbx.IsChecked == true){
                     CheckBox_Checked(sender, null);
                 }

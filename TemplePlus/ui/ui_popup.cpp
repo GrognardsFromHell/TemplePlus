@@ -2,8 +2,42 @@
 #include "ui_popup.h"
 #include "ui.h"
 #include "tig/tig_keyboard.h"
+#include "ui/ui_legacysystems.h"
 
-UiPopupHandler uiPopupHandler;
+struct UiPromptListEntry {
+	int flags; // 1 - execute callback after reseting the prompt (otherwise does so before)
+	int isActive;
+	LgcyWindow* wnd;
+	LgcyButton* btns[3];
+	UiPromptPacket prompt;
+	void ResetWnd();
+};
+
+//*****************************************************************************
+//* Popup-UI
+//*****************************************************************************
+UiPopup* uiPopup = nullptr;
+
+UiPopup::UiPopup(const UiSystemConf& config) {
+	auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x10171df0);
+	if (!startup(&config)) {
+		throw TempleException("Unable to initialize game system Popup-UI");
+	}
+	uiPopup = this;
+}
+UiPopup::~UiPopup() {
+	auto shutdown = temple::GetPointer<void()>(0x10171510);
+	shutdown();
+}
+void UiPopup::Reset() {
+	auto reset = temple::GetPointer<void()>(0x10171e70);
+	reset();
+}
+const std::string& UiPopup::GetName() const {
+	static std::string name("Popup-UI");
+	return name;
+}
+
 
 class UiPopupReplacement : public TempleFix
 {
@@ -11,18 +45,19 @@ class UiPopupReplacement : public TempleFix
 		
 		//UiPopupMsg
 		replaceFunction<BOOL(int, TigMsg*)>(0x10171B50, [](int widId, TigMsg* msg){
-			return uiPopupHandler.UiPopupMsg(widId, msg);
+			return uiPopup->UiPopupMsg(widId, msg);
 		});
 
 		// Wnd Msg
 		replaceFunction<BOOL(int, TigMsg*)>(0x10171050, [](int widId, TigMsg* msg){
-			return uiPopupHandler.UiPopupWndMsg(widId, msg);
+			return uiPopup->UiPopupWndMsg(widId, msg);
 		});
 
 	}
 } uiPopupFixes;
 
-BOOL UiPopupHandler::UiPopupMsg(int widId, TigMsg * msg){
+
+BOOL UiPopup::UiPopupMsg(int widId, TigMsg * msg){
 
 	uiManager->GetButton(widId);
 
@@ -46,7 +81,7 @@ BOOL UiPopupHandler::UiPopupMsg(int widId, TigMsg * msg){
 	return FALSE;
 }
 
-BOOL UiPopupHandler::UiPopupWndMsg(int widId, TigMsg * msg)
+BOOL UiPopup::UiPopupWndMsg(int widId, TigMsg * msg)
 {
 	if (msg->type == TigMsgType::MOUSE)
 		return TRUE;
@@ -69,21 +104,21 @@ BOOL UiPopupHandler::UiPopupWndMsg(int widId, TigMsg * msg)
 	return FALSE;
 }
 
-UiPromptListEntry& UiPopupHandler::GetPopupByType(int popupType){
+UiPromptListEntry& UiPopup::GetPopupByType(int popupType){
 	Expects(popupType < 5 && popupType >= 0);
 	return temple::GetRef<UiPromptListEntry[]>(0x10C03BD8)[popupType];
 }
 
-int UiPopupHandler::VanillaPopupShow(const char * bodyText, const char * title, int buttonTextType, int(*callback)(int), int(*callback2)(int)){
-	return temple::GetRef<int(__cdecl)(const char * , const char * , int(*)(int), int(*)(int))>(0x1017CF20)(bodyText, title, callback, callback2);
+int UiPopup::VanillaPopupShow(const char * bodyText, const char * title, int buttonTextType, int(__cdecl*callback)(int), int flag){
+	return temple::GetRef<int(__cdecl)(const char * , const char * , int(*)(int), int)>(0x1017CF20)(bodyText, title, callback, flag);
 }
 
-int UiPopupHandler::PopupsAllInactive()
+int UiPopup::PopupsAllInactive()
 {
 	return temple::GetRef<int(__cdecl)()>(0x10171A70)();
 }
 
-int UiPopupHandler::FindPopupBtnIdx(int widId){
+int UiPopup::FindPopupBtnIdx(int widId){
 
 	auto result = 0;
 	auto &popup = GetCurPopup();
@@ -96,7 +131,7 @@ int UiPopupHandler::FindPopupBtnIdx(int widId){
 	return 3;
 }
 
-void UiPopupHandler::ExecuteCallback(int popupIdx, int btnIdx){
+void UiPopup::ExecuteCallback(int popupIdx, int btnIdx){
 	// temple::GetRef<void(__cdecl)(int, int)>(0x101719D0)(popupIdx, btnIdx);
 
 	auto &popup = GetPopupByType(popupIdx);
@@ -110,8 +145,8 @@ void UiPopupHandler::ExecuteCallback(int popupIdx, int btnIdx){
 	popup.isActive = 0;
 	SetCurrentPopupIdx(-1);
 	uiManager->SetHidden(wnd->widgetId, true);
-	if (popup.prompt.renderFuncMaybe){
-		popup.prompt.renderFuncMaybe();
+	if (popup.prompt.onPopupHide){
+		popup.prompt.onPopupHide();
 	}
 
 	popup.ResetWnd();
@@ -124,18 +159,30 @@ void UiPopupHandler::ExecuteCallback(int popupIdx, int btnIdx){
 	}
 }
 
-UiPromptListEntry & UiPopupHandler::GetCurPopup(){
+UiPromptListEntry & UiPopup::GetCurPopup(){
 	return temple::GetRef<UiPromptListEntry[]>(0x10C03BD8)[GetCurrentPopupIdx()];
 }
 
-int UiPopupHandler::GetCurrentPopupIdx(){
+int UiPopup::GetCurrentPopupIdx(){
 	return temple::GetRef<int>(0x102FC218);
 }
 
-void UiPopupHandler::SetCurrentPopupIdx(int popupIdx){
+void UiPopup::SetCurrentPopupIdx(int popupIdx){
 	temple::GetRef<int>(0x102FC218) = popupIdx;
 }
 
+UiPromptPacket::UiPromptPacket()
+{
+	Reset();
+}
+
+/* Originally 0x10171580 */
+int UiPromptPacket::Show(int promptIdx, int flags)
+{
+	return temple::GetRef<int(__cdecl)(UiPromptPacket*, int, int)>(0x10171580)(this, promptIdx, flags);
+}
+
+/* 0x101709E0 */
 void UiPromptPacket::Reset(){
 	memset(this, 0, sizeof(UiPromptPacket));
 	this->idx = -1;
@@ -156,7 +203,7 @@ void UiPromptListEntry::ResetWnd(){
 		btn->x = btn->y = btn->xrelated = btn->yrelated = 0;
 		btn->width = btn->height = 0;
 	}
-	this->prompt.texture0 = 0;
-	this->prompt.texture1 = 0;
-	this->prompt.texture2 = 0;
+	this->prompt.btnNormalTexture  = 0;
+	this->prompt.btn2NormalTexture = 0;
+	this->prompt.btn3NormalTexture = 0;
 }
