@@ -113,6 +113,11 @@ int UiPopup::VanillaPopupShow(const char * bodyText, const char * title, int but
 	return temple::GetRef<int(__cdecl)(const char * , const char * , int(*)(int), int)>(0x1017CF20)(bodyText, title, callback, flag);
 }
 
+int UiPopup::PopupsAllInactive()
+{
+	return temple::GetRef<int(__cdecl)()>(0x10171A70)();
+}
+
 int UiPopup::FindPopupBtnIdx(int widId){
 
 	auto result = 0;

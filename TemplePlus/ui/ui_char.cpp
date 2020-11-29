@@ -31,6 +31,7 @@
 #include "pathfinding.h"
 #include <ui\ui_popup.h>
 #include <combat.h>
+#include "ui_item_creation.h"
 
 UiChar& ui_char() {
 	return uiSystems->GetChar();
@@ -236,7 +237,7 @@ public:
 	static BOOL (*orgInventorySlotMsg)(int widId, TigMsg* msg);
 	static char* HookedItemDescriptionBarter(objHndl obj, objHndl item);
 	static void ItemGetDescrAddon(objHndl obj, objHndl item, std::string&); // makes an addon string for the item description boxes
-	void LongDescriptionPopupCreate(objHndl item);
+	static void LongDescriptionPopupCreate(objHndl item);
 
 	static void TotalWeightOutputBtnTooltip(int x, int y, int *widId);
 
@@ -253,8 +254,11 @@ public:
 
 protected:
 	void apply() override;
+	static char _descLong[10000];
 
 } charUiSys;
+
+char UiCharHooks::_descLong[10000];
 
 void UiCharHooks::ClassLevelBtnRender(int widId){
 	auto btn = uiManager->GetButton(widId);
@@ -1774,8 +1778,29 @@ void UiCharHooks::ItemGetDescrAddon(objHndl obj, objHndl item, std::string& addS
 	}
 }
 
-void UiCharHooks::LongDescriptionPopupCreate(objHndl item){
-	temple::GetRef<void(__cdecl)(objHndl)>(0x10144400)(item);
+void UiCharHooks::LongDescriptionPopupCreate(objHndl item)
+{
+	auto &popupHandler = uiSystems->GetPopup();
+
+	if (!popupHandler.PopupsAllInactive()) {
+		if (description.LongDescriptionHas(item)) {
+			auto currentCritter = GetCurrentCritter();
+			std::string descText = description.GetLongDescription(item, currentCritter);
+			
+			// Add the item creation mes line for the conditions in a ; delimited list to the description
+			auto itemObj = gameSystems->GetObj().GetObject(item);
+			if (itemObj->type == obj_t_armor || itemObj->type == obj_t_weapon) {
+				auto &itemCreationUI = uiSystems->GetItemCreation();
+				const auto addStr = itemCreationUI.GetEffectDescription(item);
+				descText += "\n\n";
+				descText += addStr;
+            }
+
+			strcpy_s(_descLong, descText.c_str());  //Copy to a buffer before displaying
+			auto displayName = description.getDisplayName(item, currentCritter);
+			popupHandler.VanillaPopupShow(_descLong, displayName);
+		}
+	}
 }
 
 void UiCharHooks::TotalWeightOutputBtnTooltip(int x, int y, int* widId)
@@ -2032,6 +2057,7 @@ void UiCharHooks::apply(){
 
 	replaceFunction(0x10144B40, ClassLevelBtnRender);
 	replaceFunction(0x10145020, AlignGenderRaceBtnRender);
+	replaceFunction(0x10144400, LongDescriptionPopupCreate);
 
 	if (temple::Dll::GetInstance().HasCo8Hooks()) {
 		writeHex(0x1011DD4D, "90 90 90 90 90"); // disabling stat text draw calls

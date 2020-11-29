@@ -170,7 +170,9 @@ public:
 	/*
 	  buttonTextType: 0 for Okay / Cancel, 1 for Yes/No
 	*/
-	int VanillaPopupShow(const char* bodyText, const char* title, int buttonTextType, int(__cdecl* callback)(int), int flag);
+	int VanillaPopupShow(const char* bodyText, const char* title, int buttonTextType = 0, 
+		int(__cdecl* callback)(int) = nullptr, int flag = 0);
+	int PopupsAllInactive();
 
 	int FindPopupBtnIdx(int widId);
 	void ExecuteCallback(int popupIdx, int btnIdx);
