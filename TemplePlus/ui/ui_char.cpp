@@ -153,6 +153,9 @@ public:
 	void SkillsBtnTooltip(int x, int y, int* widgetId);
 
 protected:
+	void CreateSkillsMap();
+	std::vector<SkillEnum> skillsMap; // maps running index to SkillEnum (used for keeping track of enabled skills and sorting alphabetically)
+
 	MesHandle &uiCharSpellsUiText = temple::GetRef<MesHandle>(0x10C81590);
 		
 	int& skillsTooltipStyle = temple::GetRef<int>(0x10D19F20);
@@ -2369,6 +2372,8 @@ UiCharImpl::UiCharImpl()
 
 void UiCharImpl::SkillsWidgetsInit()
 {
+	CreateSkillsMap();
+
 	LgcyWindow wnd(skillsWndX, skillsWndY, skillsWndW, skillsWndH);
 	memcpy(wnd.name, "char_skills_ui_main_window", sizeof("char_skills_ui_main_window"));
 	wnd.render = temple::GetRef<void(__cdecl)(int)>(0x101BCD50);
@@ -2378,7 +2383,8 @@ void UiCharImpl::SkillsWidgetsInit()
 
 	LgcyScrollBar scrollbar;
 	scrollbar.Init(skillsWndScrollbarX, skillsWndScrollbarY, skillsWndScrollbarH);
-	scrollbar.yMax = SkillEnum::skill_count - 20; // 1 
+	scrollbar.yMax = (int)skillsMap.size() - SKILL_BTN_COUNT;
+	if (scrollbar.yMax < 0) scrollbar.yMax = 0;
 	scrollbar.scrollQuantum = 1;
 	scrollbar.field8C= 1;
 	uiManager->AddScrollBar(scrollbar);
@@ -2419,30 +2425,31 @@ void UiCharImpl::SkillsBtnRender(int widId)
 	int scrollbarY = 0;
 	uiManager->ScrollbarGetY(skillsScrollbar->widgetId, &scrollbarY);
 	auto skillIdx = scrollbarY + idx;
-	if (skillIdx < 0 || skillIdx >= SkillEnum::skill_count /*SKILL_COUNT_VANILLA*/) {
+	if (skillIdx < 0 || skillIdx >= skillsMap.size()) {
 		return;
 	}
-	auto skillEnum = (SkillEnum)skillIdx; // TODO generalize (e.g. for alphabetaical sorting when adding new skills)
+	auto skillEnum = skillsMap[skillIdx];
 	auto handle = ui_char().GetCritter();
+	auto obj = objSystem->GetObject(handle); if (!obj) return;
 	BonusList bonlist;
 	double skillLevel = (double)dispatch.dispatch1ESkillLevel(handle, skillEnum, &bonlist, objHndl::null, 1);
-	int skillBase  = critterSys.SkillBaseGet(handle, skillEnum);
-	auto skillValue = skillLevel + 0.5 * skillBase;
-	auto skillBaseRound = skillBase / 2;
+	int skillIdxVal  = obj->GetInt32(obj_f_critter_skill_idx, skillEnum);
+	auto skillValue = skillLevel + 0.5 * skillIdxVal;
+	auto skillBaseRound = skillIdxVal / 2;
 	skillValue -= skillBaseRound;
 	auto abilityModifier = bonlist.bonusEntries[1].bonValue;
-	float skillRank = 0.5f * (float)skillBase;
+	float skillRank = 0.5f * (float)skillIdxVal;
 
 	auto bonValue = 0;
 	for (auto i = 2; i < bonlist.bonCount; ++i) {
 		bonValue += bonlist.bonusEntries[i].bonValue;
 	}
 
-	
-	shapeRenderer.DrawRectangleOutlineVanilla({skillsScrollbar->x - 38.f, btn->y+1.f}, 
-						{skillsScrollbar->x-8.f, btn->height + btn->y-1.f},	{ 0xFF80A0C0 }); //fixme
-	
 	auto& ttStyle = tooltips.GetStyle(skillsTooltipStyle);
+
+	shapeRenderer.DrawRectangleOutlineVanilla({skillsScrollbar->x - 38.f, btn->y+1.f}, 
+						{skillsScrollbar->x-8.f, btn->height + btn->y-1.f},	{ 0xFF80A0C0 });
+	
 	UiRenderer::PushFont(ttStyle.fontName, ttStyle.fontSize);
 
 	TigTextStyle style(
@@ -2493,6 +2500,7 @@ void UiCharImpl::SkillsBtnRender(int widId)
 			auto text = fmt::format("{:.1f}", skillValue);
 			auto textMeas = UiRenderer::MeasureTextSize(text, style);
 			auto x = (skillValue >= 10 || skillValue < 0) ? 232 : 234;
+			if (skillValue <= -10) x -= 10;
 			auto rect = TigRect(x + btn->x, skillsWnd->y + 172, 0, 0); // rejoice
 			UiRenderer::DrawText(text, rect, style);
 
@@ -2505,14 +2513,17 @@ void UiCharImpl::SkillsBtnRender(int widId)
 		auto text = fmt::format("{:.1f}", skillValue);
 		auto textMeas = UiRenderer::MeasureTextSize(text, style);
 		auto x = (skillValue >= 10 || skillValue < 0) ? -35 : -32;
-		auto rect = TigRect(x + skillsScrollbar->x, btn->y + 1, textMeas.width, textMeas.height);
+		if (skillValue <= -10) x -= 4;
+		auto rect = TigRect(x + skillsScrollbar->x, btn->y + ((ttStyle.fontSize > 10) ? 0 : 1), textMeas.width, textMeas.height);
 		UiRenderer::DrawText(text, rect, style);
 	}
 	{ // Skill Name
 		auto skillName = skillSys.GetSkillName(skillEnum);
 		auto text = fmt::format("{}", skillName);
 		auto textMeas = UiRenderer::MeasureTextSize(text, style);
-		auto rect = TigRect(4 + btn->x, 1 + btn->y, textMeas.width, textMeas.height);
+		auto rect = TigRect(4 + btn->x, btn->y + ((ttStyle.fontSize > 10) ? 0 : 1), 
+			(skillsScrollbar->x -36 - (4 + btn->x)) /*textMeas.width*/, textMeas.height);
+		style.flags |= 0x4000;
 		UiRenderer::DrawText(text, rect, style);
 	}
 
@@ -2545,15 +2556,36 @@ void UiCharImpl::SkillsBtnTooltip(int x, int y, int* widgetId)
 	auto scrollbarY = 0;
 	uiManager->ScrollbarGetY(skillsScrollbar->widgetId, &scrollbarY);
 	auto skillIdx = scrollbarY + idx;
-	if (skillIdx >= SkillEnum::skill_count /*SKILL_COUNT_VANILLA*/) {
+	if (skillIdx >= skillsMap.size()) {
 		return;
 	}
 
-	auto skillEnum = (SkillEnum)skillIdx; // todo revamp
+	auto skillEnum = skillsMap[skillIdx];
 
 	auto tooltipBuf = temple::GetRef<char[1024]>(0x10D19F28);
 	auto setTooltipText = temple::GetRef<void(__cdecl)(int, const char*, int)>(0x10162980);
 	setTooltipText(skillEnum,tooltipBuf, 1024);
 
 	temple::GetRef<void(__cdecl)(const char*)>(0x10162C00)(tooltipBuf);
+}
+
+void UiCharImpl::CreateSkillsMap()
+{
+	/*skillSys.skillPropsTable[SkillEnum::skill_knowledge_arcana].classFlags &= ~0x80000000;
+	skillSys.skillPropsTable[SkillEnum::skill_knowledge_nature].classFlags &= ~0x80000000;
+	skillSys.skillPropsTable[SkillEnum::skill_knowledge_religion].classFlags &= ~0x80000000;
+	skillSys.skillPropsTable[SkillEnum::skill_alchemy].classFlags &= ~0x80000000;
+	skillSys.skillPropsTable[SkillEnum::skill_use_rope].classFlags &= ~0x80000000;*/
+	for (auto i = 0; i < SkillEnum::skill_count; ++i) {
+		auto skillEnum = (SkillEnum)i;
+		if (skillSys.IsEnabled(skillEnum))
+			skillsMap.push_back(skillEnum);
+	}
+
+	std::sort(skillsMap.begin(), skillsMap.end(), [](const SkillEnum& a, const SkillEnum& b)->bool {
+		auto name1 = skillSys.GetSkillName(a);
+		auto name2 = skillSys.GetSkillName(b);
+		auto nameCmp = _strcmpi(name1, name2);
+		return nameCmp < 0;
+		});
 }
