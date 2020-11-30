@@ -32,6 +32,7 @@
 #include <ui\ui_popup.h>
 #include <combat.h>
 #include "ui_item_creation.h"
+#include <history.h>
 
 UiChar& ui_char() {
 	return uiSystems->GetChar();
@@ -2033,6 +2034,23 @@ const std::string &UiChar::GetName() const {
 	return name;
 }
 
+/* originally 0x10162C00 */
+void UiChar::TextboxSetText(const char* txt)
+{
+	if (!txt) {
+		return;
+	}
+	auto textboxBuffer = temple::GetRef<char[1024]>(0x10BF0390);
+	textboxBuffer[0] = 0;
+	
+	auto pos = 0;
+	while( txt[pos] && pos < 1024) {
+		textboxBuffer[pos] = txt[pos];
+		pos++;
+	}
+	textboxBuffer[pos < 1024 ? pos : 1023] = 0;
+}
+
 void UiChar::Show(UiCharDisplayType type)
 {
 	static auto ui_show_charui = temple::GetPointer<void(UiCharDisplayType)>(0x10148e20);
@@ -2398,8 +2416,10 @@ void UiCharImpl::SkillsWidgetsInit()
 			[](int widId) {
 				return uiCharImpl->SkillsBtnRender(widId);
 			},
-			temple::GetRef<BOOL(__cdecl)(LgcyWidgetId, TigMsg*)>(0x101BE050),
-				[](int x, int y, int* widgetId)->void {
+			[](int widId, TigMsg* msg) ->BOOL{
+				return uiCharImpl->SkillsBtnMsg(widId, *msg);
+			},
+			[](int x, int y, int* widgetId)->void {
 				return uiCharImpl->SkillsBtnTooltip(x, y, widgetId);
 			}
 		);
@@ -2535,6 +2555,53 @@ void UiCharImpl::SkillsHide()
 	skillsActive = 0;
 	uiManager->SetHidden(skillsWnd->widgetId, true);
 	uiManager->ScrollbarSetY(skillsScrollbar->widgetId, 0);
+}
+
+/* 0x101BE050 */
+bool UiCharImpl::SkillsBtnMsg(int widId, TigMsg& msg)
+{
+	if (msg.type == TigMsgType::MOUSE) {
+		TigMsgMouse& msgMouse= (TigMsgMouse&)msg;
+		if (msgMouse.buttonStateFlags & MouseStateFlags::MSF_SCROLLWHEEL_CHANGE) {
+			if (skillsScrollbar->handleMessage) {
+				return skillsScrollbar->handleMessage(skillsScrollbar->widgetId, &msg);
+			}
+		}
+		if (msgMouse.buttonStateFlags & MouseStateFlags::MSF_LMB_RELEASED) {
+			auto widIdx = -1;
+			for (auto i = 0; i < SKILL_BTN_COUNT; ++i) {
+				if (widId == skillsBtns[i]->widgetId) {
+					widIdx = i;
+					break;
+				}
+			}
+			int scrollbarY = 0;
+			uiManager->ScrollbarGetY(skillsScrollbar->widgetId, &scrollbarY);
+			auto skillIdx = scrollbarY + widIdx;
+			if (skillIdx >= 0 && skillIdx < skillsMap.size()) {
+				auto skillEnum = skillsMap[skillIdx];
+				auto handle = ui_char().GetCritter();
+				BonusList bonlist;
+				dispatch.dispatch1ESkillLevel(handle, skillEnum, &bonlist, objHndl::null, 0);
+				auto histId = histSys.RollHistoryType7Add(handle, &bonlist, 1000 + skillEnum, 0);
+				temple::GetRef<void(__cdecl)(int)>(0x100E6D50)(histId);
+			}
+			
+		}
+
+		return true;
+	}
+	else if (msg.type == TigMsgType::WIDGET) {
+		TigMsgWidget& msgWid = (TigMsgWidget&)msg;
+		if (msgWid.widgetEventType == TigMsgWidgetEvent::Scrolled) {
+			return true;
+		}
+		if (msgWid.widgetEventType == TigMsgWidgetEvent::Exited) {
+			ui_char().TextboxSetText("");
+		}
+		return false;
+	}
+	return false;
 }
 
 /* 0x101BDFC0 */
