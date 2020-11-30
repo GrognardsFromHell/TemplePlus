@@ -28,6 +28,8 @@ public:
 	void ResizeViewport(const UiResizeArgs &resizeArgs) override;
 	const std::string &GetName() const override;
 
+	void TextboxSetText(const char* txt);
+
 	// Was @ 101F97D0 (GetInventoryObjState)
 	bool GetInventoryObjectState() const {
 		return mInventoryObjState != 0;
