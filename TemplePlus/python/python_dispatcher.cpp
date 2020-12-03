@@ -33,6 +33,7 @@
 #include "history.h"
 #include "bonus.h"
 #include "config/config.h"
+#include <mod_support.h>
 
 namespace py = pybind11;
 
@@ -147,6 +148,9 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		else if (configItemLower == "hponlevelup") {
 			return config.hpOnLevelup;
 		}
+		else if (configItemLower == "defaultmodule") {
+			return config.defaultModule;
+		}
 
 		logger->warn("Can't get config item {}.", configItem);
 		return std::string("");
@@ -163,11 +167,14 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		else if (configItemLower == "disabletargetsurrounded") {
 			config.disableTargetSurrounded = value;
 		}
-		else if ("disablechooserandomspell_regardinvulnerablestatus") {
+		else if (configItemLower == "disablechooserandomspell_regardinvulnerablestatus") {
 			config.disableChooseRandomSpell_RegardInvulnerableStatus = value;
 		}
-		else if ("stricterrulesenforcement") {
+		else if (configItemLower == "stricterrulesenforcement") {
 			config.stricterRulesEnforcement = value;
+		}
+		else if (configItemLower == "iszmod") {
+			modSupport.SetIsZMOD(value);
 		}
 		else {
 			logger->warn("Can't set config item {}.", configItem);
@@ -190,6 +197,9 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		}
 		else if (configItemLower == "stricterrulesenforcement") {
 			return config.stricterRulesEnforcement;
+		}
+		else if (configItemLower == "iszmod") {
+			return modSupport.IsZMOD();
 		}
 		logger->warn("Can't get config item {}.", configItem);
 		return false;

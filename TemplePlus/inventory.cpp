@@ -17,7 +17,7 @@
 #include "gamesystems/objects/objevent.h"
 #include "ui/ui_logbook.h"
 #include <config\config.h>
-
+#include <mod_support.h>
 
 InventorySystem inventory;
 
@@ -193,6 +193,14 @@ public:
 
 		replaceFunction<int(__cdecl)(objHndl, objHndl)>(0x10066730, [](objHndl item, objHndl wielder){
 			return inventory.GetWeaponAnimId(item, wielder);
+		});
+
+		replaceFunction<int(__cdecl)(objHndl, objHndl, objHndl, SkillEnum)>(0x10069970, [](objHndl item, objHndl appraiser, objHndl vendor, SkillEnum skillEnum) {
+			return inventory.GetAppraisedWorth(item, appraiser, vendor, skillEnum);
+		});
+
+		replaceFunction<int(__cdecl)(objHndl, objHndl, objHndl, int)>(0x100698E0, [](objHndl item, objHndl parent, objHndl appraiser, int skillIdx) {
+			return inventory.GetAppraisedTransactionSum(item, parent, appraiser, (SkillEnum)skillIdx);
 		});
 	};
 
@@ -1355,8 +1363,51 @@ void InventorySystem::ItemPlaceInIdx(objHndl item, int idx)
 
 int InventorySystem::GetAppraisedWorth(objHndl item, objHndl appraiser, objHndl vendor, SkillEnum skillEnum)
 {
-	auto getAppraisedWorth = temple::GetRef<int(__cdecl)(objHndl, objHndl, objHndl, SkillEnum)>(0x10069970);
-	return getAppraisedWorth(item, appraiser, vendor, skillEnum);
+	auto skillLevel = dispatch.dispatch1ESkillLevel(appraiser, skillEnum, nullptr, objHndl::null, 1);
+	if (skillLevel > 19) skillLevel = 19;
+
+	double price = (double)GetSellWorth(item, appraiser, vendor, skillEnum);
+	if (!price)
+		return 0;
+
+	double result = ((double)skillLevel * 0.029999999 + 0.40000001) * price;
+
+	if (modSupport.IsZMOD()) {
+		auto getInvenSourceType = temple::GetRef<int(__cdecl)(objHndl)>(0x10064040);
+		auto invenSourceType = getInvenSourceType(vendor);
+
+		// if invenSourceType is not specified, then do not lower price
+		if (!invenSourceType) {
+			return (int)result;
+		}
+	} 
+	auto getIsInVendorBuyList = temple::GetRef<int(__cdecl)(objHndl, objHndl)>(0x10066CD0);
+	auto isInVendorBuyList = getIsInVendorBuyList(item, vendor);
+	if (!isInVendorBuyList)
+		result = result * 0.5;
+	return (int)result;
+}
+
+int InventorySystem::GetAppraisedTransactionSum(objHndl item, objHndl parent, objHndl appraiser, SkillEnum skillEnum)
+{
+	auto skillLevel = dispatch.dispatch1ESkillLevel(appraiser, skillEnum, nullptr, objHndl::null, 1);
+	if (skillLevel > 19) skillLevel = 19;
+
+	double price = (double)GetSellWorth(item, parent, appraiser, skillEnum);
+	if (!price)
+		return 0;
+
+	if (modSupport.IsZMOD()){
+		return (int)price;
+	}
+	double result = ((1.6 - (double)skillLevel * 0.029999999)) * price;
+	return (int)result;
+}
+
+int InventorySystem::GetSellWorth(objHndl item, objHndl appraiser, objHndl vendor, SkillEnum skillEnum)
+{
+	auto getSellWorth = temple::GetRef<int(__cdecl)(objHndl, objHndl, objHndl, int)>(0x10067D20);
+	return getSellWorth(item, appraiser, vendor, skillEnum);
 }
 
 void InventorySystem::MoneyToCoins(int money, int* plat, int* gold, int* silver, int* copper)
