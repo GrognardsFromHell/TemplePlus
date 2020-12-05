@@ -9,7 +9,8 @@ enum class StringTokenType : uint32_t {
 	Number,
 	QuotedString,
 	Unk4,
-	Unk5
+	Unk5,
+	Plus = '+'
 };
 
 struct StringToken {
