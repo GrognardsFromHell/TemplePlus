@@ -1,3 +1,4 @@
+import tpdp
 from toee import *
 
 def OnBeginSpellCast( spell ):
@@ -15,9 +16,16 @@ def	OnSpellEffect( spell ):
 	bonus = 1 + (spell.caster_level / 3)
 	num_of_images = spell.roll_dice_with_metamagic(1, 4, bonus)
 
-	#Maximum of 8 images from the spell description
-	if num_of_images > 8:
-		num_of_images = 8
+	spellPkt = tpdp.SpellPacket(spell.id)
+	mmData = tpdp.MetaMagicData(spellPkt.get_metamagic_data())
+	
+	#Maximum of 8 images from the spell description (empower to 12)
+	if mmData.get_empower_count() > 0:
+		ImageCap = 12
+	else:
+		ImageCap = 8
+
+	num_of_images = min(ImageCap, num_of_images)
 
 	print "num of images=", num_of_images, "bonus=", bonus
 
