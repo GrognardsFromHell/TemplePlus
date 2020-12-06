@@ -101,6 +101,9 @@
 {1234}{Stamina}
 {1235}{Stamina, Imp}
 {1236}{Stamina, Greater}
+{1237}{Axeblock}
+{1238}{Hammerblock}
+{1239}{Spearblock}
 
 // shield bonuses
 {1400}{+1}
@@ -132,6 +135,9 @@
 {1426}{Sonic Resistance}
 {1427}{Sonic Res, Imp}
 {1428}{Sonic Res, Greater}
+{1429}{Axeblock}
+{1430}{Hammerblock}
+{1431}{Spearblock}
 
 // 10000-19999 Misc. Strings Used
 
