@@ -179,9 +179,10 @@ struct InventorySystem : temple::AddressTable
 	/*
 		gets the item's sell price (in Copper Pieces) when dealing with a vendor
 	*/
+	int GetSellWorth(objHndl item, objHndl appraiser, objHndl vendor, SkillEnum skillEnum);
 	int GetAppraisedWorth(objHndl item, objHndl appraiser, objHndl vendor, SkillEnum skillEnum);
 	int GetAppraisedTransactionSum(objHndl item, objHndl parent, objHndl appraiser, SkillEnum skillEnum);
-	int GetSellWorth(objHndl item, objHndl appraiser, objHndl vendor, SkillEnum skillEnum);
+	int IsTradeGoods(objHndl item);
 	void MoneyToCoins(int appraisedWorth, int* plat, int* gold, int* silver, int* copper);
 	int32_t GetCoinWorth(int32_t coinType);
 

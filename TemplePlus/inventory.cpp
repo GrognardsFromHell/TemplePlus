@@ -1361,6 +1361,17 @@ void InventorySystem::ItemPlaceInIdx(objHndl item, int idx)
 	TransferWithFlags(item, parent, idx, 4, objHndl::null);
 }
 
+int InventorySystem::IsTradeGoods(objHndl item)
+{
+	auto type = objects.GetType(item);
+	auto cat = objects.getInt32(item, obj_f_category);
+	if (type == obj_t_generic && cat == 5) // jewelry / gems
+		return 1;
+	if (type == obj_t_armor && cat == 17) // stackable jewelry
+		return 1;
+	return 0;
+}
+
 int InventorySystem::GetAppraisedWorth(objHndl item, objHndl appraiser, objHndl vendor, SkillEnum skillEnum)
 {
 	auto skillLevel = dispatch.dispatch1ESkillLevel(appraiser, skillEnum, nullptr, objHndl::null, 1);
@@ -1373,6 +1384,9 @@ int InventorySystem::GetAppraisedWorth(objHndl item, objHndl appraiser, objHndl 
 	double result = ((double)skillLevel * 0.029999999 + 0.40000001) * price;
 
 	if (modSupport.IsZMOD()) {
+		if (IsTradeGoods(item)) {
+			return objects.getInt32(item, obj_f_item_worth);
+		}
 		auto getInvenSourceType = temple::GetRef<int(__cdecl)(objHndl)>(0x10064040);
 		auto invenSourceType = getInvenSourceType(vendor);
 

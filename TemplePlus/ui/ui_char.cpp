@@ -27,6 +27,7 @@
 #include "gamesystems/d20/d20_help.h"
 #include "objlist.h"
 #include "pathfinding.h"
+#include "mod_support.h"
 
 #define NUM_SPELLBOOK_SLOTS 18 // 18 in vanilla
 
@@ -1145,6 +1146,29 @@ void CharUiSystem::ItemGetDescrAddon(objHndl obj, objHndl item, std::string& add
 		auto remCharges = gameSystems->GetObj().GetObject(item)->GetInt32(obj_f_item_spell_charges_idx);
 		if (remCharges > 0){
 			addStr = fmt::format("Remaining Charges: {}", remCharges);
+		}
+	}
+
+	if (modSupport.IsZMOD())
+	{
+		auto itemFlags = itemObj->GetItemFlags();
+		if (!(itemFlags & OIF_IS_MAGICAL) || (itemFlags & OIF_IDENTIFIED))
+		{
+			int worth = gameSystems->GetObj().GetObject(item)->GetInt32(obj_f_item_worth);
+			if (worth > 0) {
+				int plat = 0, gold = 0, silver = 0, copper = 0;
+				inventory.MoneyToCoins(worth, &plat, &gold, &silver, &copper);
+				gold += plat * 10;
+				addStr = fmt::format((addStr.length() > 0) ? "{0}\nPrice: {1}" : "Price: {1}{2}{3}"
+					, addStr
+					, (gold || (!silver && !copper)) ? fmt::format("{0} gp ", gold) : ""
+					, (silver) ? fmt::format("{0} sp ", silver) : ""
+					, (copper) ? fmt::format("{0} cp ", copper) : ""
+				);
+			}
+		}
+		else {
+			addStr = fmt::format((addStr.length() > 0) ? "{0}\nPrice: Unidentified" : "Price: Unidentified", addStr);
 		}
 	}
 }

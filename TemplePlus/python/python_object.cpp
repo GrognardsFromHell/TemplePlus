@@ -2430,23 +2430,33 @@ static PyObject* PyObjHandle_StandpointSet(PyObject* obj, PyObject* args) {
 		return PyInt_FromLong(0);
 	}
 	StandPointType type;
-	int jumpPointId;
-	if (!PyArg_ParseTuple(args, "ii:objhndl.standpoint_set", &type, &jumpPointId)) {
-		return 0;
-	}
-
-	JumpPoint jumpPoint;
-	if (!maps.GetJumpPoint(jumpPointId, jumpPoint)) {
-		PyErr_Format(PyExc_ValueError, "Unknown jump point id %d used to set a standpoint.", jumpPointId);
-		return 0;
-	}
-
 	StandPoint standPoint;
-	standPoint.location.location = jumpPoint.location;
+	standPoint.location = LocAndOffsets::null;
 	standPoint.location.off_x = 0;
 	standPoint.location.off_y = 0;
-	standPoint.mapId = jumpPoint.mapId;
-	standPoint.jumpPointId = jumpPointId;
+	standPoint.mapId = 0;
+	standPoint.jumpPointId = -1;
+	if (!PyArg_ParseTuple(args, "ii|Liff:objhndl.standpoint_set", &type, &standPoint.jumpPointId, &standPoint.location.location, &standPoint.mapId, &standPoint.location.off_x, &standPoint.location.off_y)) {
+		return 0;
+	}
+
+	if (standPoint.jumpPointId >= 0) {
+		JumpPoint jumpPoint;
+		if (!maps.GetJumpPoint(standPoint.jumpPointId, jumpPoint)) {
+			PyErr_Format(PyExc_ValueError, "Unknown jump point id %d used to set a standpoint.", standPoint.jumpPointId);
+			return 0;
+		}
+
+		standPoint.location.location = jumpPoint.location;
+		standPoint.location.off_x = 0;
+		standPoint.location.off_y = 0;
+		standPoint.mapId = jumpPoint.mapId;
+	}
+	else {
+		if (!standPoint.mapId) {
+			standPoint.mapId = maps.GetCurrentMapId();
+		}
+	}
 	critterSys.SetStandPoint(self->handle, type, standPoint);
 	Py_RETURN_NONE;
 }
