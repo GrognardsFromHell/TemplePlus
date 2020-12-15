@@ -1814,7 +1814,7 @@ void UiCharHooks::LongDescriptionPopupCreate(objHndl item)
 		if (description.LongDescriptionHas(item)) {
 			auto currentCritter = GetCurrentCritter();
 			std::string descText = description.GetLongDescription(item, currentCritter);
-
+			
 			// Add the item creation mes line for the conditions in a ; delimited list to the description
 			auto itemObj = gameSystems->GetObj().GetObject(item);
 			if (itemObj->type == obj_t_armor || itemObj->type == obj_t_weapon) {
@@ -1822,7 +1822,11 @@ void UiCharHooks::LongDescriptionPopupCreate(objHndl item)
 				const auto addStr = itemCreationUI.GetEffectDescription(item);
 				descText += "\n\n";
 				descText += addStr;
-			}
+            }
+
+			strcpy_s(_descLong, descText.c_str());  //Copy to a buffer before displaying
+			auto displayName = description.getDisplayName(item, currentCritter);
+			popupHandler.VanillaPopupShow(_descLong, displayName);
 		}
 	}
 }
