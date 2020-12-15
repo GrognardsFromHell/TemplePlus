@@ -5,6 +5,7 @@
 
 UiTooltips tooltips;
 
+/* 0x101238B0 */
 TooltipStyle& UiTooltips::GetStyle(int idx) const {
 	auto& ttStyles = temple::GetRef<TooltipStyle*>(0x10BDE3C8);
 	return ttStyles[idx];

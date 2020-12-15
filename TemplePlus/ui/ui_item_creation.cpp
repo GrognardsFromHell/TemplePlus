@@ -40,6 +40,7 @@
 #include "ui_assets.h"
 #include "d20_race.h"
 #include "gamesystems/d20/d20stats.h"
+#include "bonus.h"
 
 #define NUM_ITEM_ENHANCEMENT_SPECS 41
 #define NUM_APPLIED_BONUSES_MAX 9 // number of bonuses that can be applied on item creation
@@ -250,6 +251,7 @@ UiItemCreation::UiItemCreation(const UiSystemConf &config) {
 
 	craftedItemExistingEffectiveBonus = -1; // stores the crafted item existing (pre-crafting) effective bonus
 											//craftingItemIdx = -1;
+	craftedItemExtraGold = 0;  //stores the crafted item existing (pre-crafting) extra gold cost
 
 	memset(numItemsCrafting, 0, sizeof(numItemsCrafting));
 	memset(craftedItemHandles, 0, sizeof(craftedItemHandles));
@@ -587,6 +589,10 @@ bool UiItemCreation::IsOutmoded(int effIdx){
 		for (auto it: appliedBonusIndices){
 			if (it == itEnh->upgradesTo)
 				return true;
+
+			//Removes the start effect after it is added (otherwise it displays the greyed start effect and the second effect)
+			if ((it == effIdx) && (itEnh->downgradesTo == CRAFT_EFFECT_INVALID))
+				return true;
 		}
 		itEnh = &itemEnhSpecs[itEnh->upgradesTo];
 	}
@@ -601,7 +607,7 @@ bool UiItemCreation::MaaEffectIsApplicable(int effIdx){
 
 	if (itEnh.flags & IESF_INCREMENTAL){
 		// not the root and hasn't got the prerequisite effect level
-		if (itEnh.downgradesTo != CRAFT_EFFECT_INVALID && !HasNecessaryEffects(effIdx)  )
+		if (itEnh.downgradesTo != CRAFT_EFFECT_INVALID && !HasNecessaryEffects(effIdx))
 			return false;
 		if (IsOutmoded(effIdx))
 			return false;
@@ -762,7 +768,54 @@ int UiItemCreation::MaaGetEffIdxForEnhBonus(int enhBon, objHndl itemHandle){
 	return CRAFT_EFFECT_INVALID;
 }
 	
+std::string UiItemCreation::GetEffectDescription(objHndl item)
+{
+	std::string res;
 
+	auto obj = gameSystems->GetObj().GetObject(item);
+	auto condArray = obj->GetInt32Array(obj_f_item_pad_wielder_condition_array);
+	for (auto i = 0u; i < condArray.GetSize(); i++) {
+		const auto condID = condArray[i];
+		for (auto& itemEnh : itemEnhSpecs) {
+			if (condID == itemEnh.second.condId) {
+
+				//Some upgradables have the same condition, in that case check the bonuse also
+				if (itemEnh.second.flags & (IESF_ENH_BONUS | IESF_INCREMENTAL)) {
+					const auto bonus = inventory.GetItemWieldCondArg(item, condID, 0);
+					if (bonus != itemEnh.second.data.enhBonus) {
+						continue;
+					}
+				}
+
+				//Add Enhancement to the +X for weapons, armor and shields
+				std::string effName = GetItemCreationMesLine(1000 + itemEnh.first);
+				if (itemEnh.second.flags & IESF_ENH_BONUS ) {
+					MesLine mesLine;
+					mesLine.key = 147;
+					bonusSys.GetBonusMesLine(mesLine);
+					std::string mesValue(mesLine.value);
+
+					//Clip off the link that does not slow correctly in the popup
+					if (!mesValue.empty() && mesValue[0] == '~') {
+						mesValue = mesValue.substr(1, mesValue.size() - 1);
+						const auto clipIdx = mesValue.find('~');
+						mesValue = mesValue.substr(0, clipIdx);
+					}
+					effName += " ";
+					effName += mesValue;
+				}
+
+				if (res.size() > 0) {
+					res += "; ";
+				}
+				res += effName;
+				break;
+			}
+		}
+	}
+
+	return res;
+}
 	
 
 bool UiItemCreation::ItemWielderCondsContainEffect(int effIdx, objHndl item)
@@ -1270,6 +1323,7 @@ void UiItemCreation::LoadMaaSpecs()
 		std::string spellReqs;
 		std::string featReqs; // TODO
 		std::string antecedent;
+		std::string extraGold;
 	};
 
 	auto maaSpecLineParser = [this](const TabFileRecord &record)
@@ -1285,6 +1339,7 @@ void UiItemCreation::LoadMaaSpecs()
 		tabEntry.spellReqs = record[7].AsString();
 		tabEntry.featReqs = record[8].AsString();
 		tabEntry.antecedent = record[9].AsString();
+		tabEntry.extraGold = record[10].AsString();
 		
 		auto effIdx = std::stoi(tabEntry.id);
 		auto condName = tabEntry.condName;
@@ -1369,6 +1424,13 @@ void UiItemCreation::LoadMaaSpecs()
 			itEnh.downgradesTo = std::stoi(tabEntry.antecedent);
 		} else {
 			itEnh.downgradesTo = CRAFT_EFFECT_INVALID;
+		}
+
+		//Get Extra Gold Cost (Optional Field)
+		if (tabEntry.extraGold.empty()) {
+			itemExtraGold[effIdx] = 0;
+		} else {
+			itemExtraGold[effIdx] = std::stoi(tabEntry.extraGold);
 		}
 
 		return 0;
@@ -2408,6 +2470,7 @@ void UiItemCreation::MaaInitCraftedItem(objHndl itemHandle){
 
 	craftedItemName.clear();
 	craftedItemExistingEffectiveBonus = 0;
+	craftedItemExtraGold = 0;
 	appliedBonusIndices.clear();
 	if (!itemHandle){
 		return;
@@ -2421,6 +2484,7 @@ void UiItemCreation::MaaInitCraftedItem(objHndl itemHandle){
 			
 			if (it.second.flags & ItemEnhancementSpecFlags::IESF_ENH_BONUS){
 				craftedItemExistingEffectiveBonus += it.second.effectiveBonus;
+				craftedItemExtraGold += itemExtraGold[it.first];
 				appliedBonusIndices.push_back(it.first);
 				/*if (!ItemWielderCondsContainEffect(it.second.upgradesTo, itemHandle)) {
 					
@@ -2428,6 +2492,7 @@ void UiItemCreation::MaaInitCraftedItem(objHndl itemHandle){
 			}
 			else if (!ItemWielderCondsContainEffect(it.second.upgradesTo, itemHandle)){
 				craftedItemExistingEffectiveBonus += it.second.effectiveBonus;
+				craftedItemExtraGold += itemExtraGold[it.first];
 				appliedBonusIndices.push_back(it.first);
 			}
 		}
@@ -2673,8 +2738,6 @@ void UiItemCreation::CreateItemFinalize(objHndl crafter, objHndl item){
 			} 
 		}
 
-
-
 		auto itemWorthDelta = 100;
 		if (itemObj->type == obj_t_weapon){
 			itemWorthDelta *= GoldBaseWorthVsEffectiveBonus[effBonus] - GoldBaseWorthVsEffectiveBonus[craftedItemExistingEffectiveBonus];
@@ -2682,6 +2745,9 @@ void UiItemCreation::CreateItemFinalize(objHndl crafter, objHndl item){
 		else{
 			itemWorthDelta *= GoldCraftCostVsEffectiveBonus[effBonus] - GoldCraftCostVsEffectiveBonus[craftedItemExistingEffectiveBonus];
 		}
+
+		const int extraCostDelta = 100 * (MaaGetTotalExtraCost(CRAFT_EFFECT_INVALID) - craftedItemExtraGold);
+		itemWorthDelta += extraCostDelta;
 
 		auto itemWorthRegardIdentified = temple::GetRef<int(__cdecl)(objHndl)>(0x10067C90)(item);
 
@@ -3341,6 +3407,33 @@ BOOL UiItemCreation::MaaEffectAddMsg(int widId, TigMsg* msg)
 	}
 	
 	return true;
+}
+
+int UiItemCreation::MaaGetTotalExtraCost(int effIdx)
+{
+	int extraCost = 0;
+	for (auto it : appliedBonusIndices) {
+		if (it != CRAFT_EFFECT_INVALID)
+			extraCost += itemExtraGold[it];
+	}
+
+	if (effIdx == CRAFT_EFFECT_INVALID)
+		return extraCost;
+
+	// add the bonus level of the new effect
+	auto& itEnh = itemEnhSpecs[effIdx];
+
+	if (itEnh.flags & IESF_INCREMENTAL) {
+		if (itEnh.downgradesTo != CRAFT_EFFECT_INVALID) {
+			const auto downgradeIdx = itEnh.downgradesTo;
+			auto downgradeCost = itemExtraGold[downgradeIdx];
+			extraCost -= downgradeCost;
+		}
+	}
+
+	extraCost += itemExtraGold[effIdx];
+
+	return extraCost;
 }
 
 int UiItemCreation::MaaGetTotalEffectiveBonus(int effIdx){
@@ -4071,10 +4164,18 @@ int UiItemCreation::MaaCpCost(int effIdx){
 	if (effBonus > 29)
 		effBonus = 29;
 
+	int TotalCost = 0;
 	if (gameSystems->GetObj().GetObject(itemHandle)->type == obj_t_weapon){
-		return 50 * (GoldBaseWorthVsEffectiveBonus[effBonus] - GoldBaseWorthVsEffectiveBonus[craftedItemExistingEffectiveBonus]);
+		TotalCost = 50 * (GoldBaseWorthVsEffectiveBonus[effBonus] - GoldBaseWorthVsEffectiveBonus[craftedItemExistingEffectiveBonus]);
 	}
-	return 50 * (GoldCraftCostVsEffectiveBonus[effBonus] - GoldCraftCostVsEffectiveBonus[craftedItemExistingEffectiveBonus]);
+	else {
+		TotalCost = 50 * (GoldCraftCostVsEffectiveBonus[effBonus] - GoldCraftCostVsEffectiveBonus[craftedItemExistingEffectiveBonus]);
+	}
+
+	const int extraCost = 50 * (MaaGetTotalExtraCost(effIdx) - craftedItemExtraGold);
+	TotalCost += extraCost;
+
+	return TotalCost;
 }
 
 int UiItemCreation::MaaXpCost(int effIdx){
@@ -4105,8 +4206,16 @@ int UiItemCreation::MaaXpCost(int effIdx){
 	if (effBonus > 29)
 		effBonus = 29;
 
+	int TotalCost = 0;
 	if (gameSystems->GetObj().GetObject(itemHandle)->type == obj_t_weapon) {
-		return (GoldBaseWorthVsEffectiveBonus[effBonus] - GoldBaseWorthVsEffectiveBonus[craftedItemExistingEffectiveBonus]) / 25;
+		TotalCost = (GoldBaseWorthVsEffectiveBonus[effBonus] - GoldBaseWorthVsEffectiveBonus[craftedItemExistingEffectiveBonus]) / 25;
 	}
-	return (GoldCraftCostVsEffectiveBonus[effBonus] - GoldCraftCostVsEffectiveBonus[craftedItemExistingEffectiveBonus]) / 25;
+	else {
+		TotalCost = (GoldCraftCostVsEffectiveBonus[effBonus] - GoldCraftCostVsEffectiveBonus[craftedItemExistingEffectiveBonus]) / 25;
+	}
+
+	const int extraCost = (MaaGetTotalExtraCost(effIdx) - craftedItemExtraGold) / 25;
+	TotalCost += extraCost;
+
+	return TotalCost;
 }

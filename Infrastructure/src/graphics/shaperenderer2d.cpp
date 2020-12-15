@@ -326,7 +326,26 @@ void ShapeRenderer2d::DrawLines(gsl::span<Line2d> lines) {
 
 }
 
-	void ShapeRenderer2d::DrawRectangleOutline(XMFLOAT2 topLeft, XMFLOAT2 bottomRight, XMCOLOR color) {
+void ShapeRenderer2d::DrawRectangleOutlineVanilla(XMFLOAT2 topLeft, XMFLOAT2 bottomRight, XMCOLOR color)
+{
+
+	// In Vanilla, pixel coverage for these lines was ~50% leading to a darker
+	// color being drawn. This was inconsistent across drivers/fullscreen/windowed,
+	// so this ends up being an approximation...
+	color.r /= 2;
+	color.g /= 2;
+	color.b /= 2;
+
+	// To compensate for Vanilla's misuse of D3D8 line rasterization, we have to expand
+	// the actual rectangle by 1 in both dimensions.
+	XMFLOAT2 extendedBottomRight = bottomRight;
+	extendedBottomRight.x++;
+	extendedBottomRight.y++;
+
+	DrawRectangleOutline(topLeft, extendedBottomRight, color);
+}
+
+void ShapeRenderer2d::DrawRectangleOutline(XMFLOAT2 topLeft, XMFLOAT2 bottomRight, XMCOLOR color) {
 		
 		float left = topLeft.x;
 		float top = topLeft.y;

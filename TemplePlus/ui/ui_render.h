@@ -50,6 +50,10 @@ public:
 	static void PopFont();
 
 	/*
+		Draws text.
+	*/
+	static bool DrawText(const string& text, const TigRect& rect, const TigTextStyle& style);
+	/*
 		Draws text positioned relative to widget.
 	*/
 	static bool DrawTextInWidget(int widgetId, const string &text, const TigRect &rect, const TigTextStyle &style);

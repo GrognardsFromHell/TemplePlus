@@ -16,6 +16,13 @@ TigTextStyle::TigTextStyle(ColorRect * color){
 	this->textColor = color;
 }
 
+TigTextStyle::TigTextStyle(const ColorRect* textColor, const ColorRect* shadowColor, const ColorRect* backgroundColor)
+{
+	this->textColor = (ColorRect * )textColor;
+	this->shadowColor= (ColorRect*)shadowColor;
+	this->bgColor= (ColorRect*)backgroundColor;
+}
+
 TigTextStyle::TigTextStyle(){
 }
 
