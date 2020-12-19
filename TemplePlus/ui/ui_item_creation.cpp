@@ -66,6 +66,7 @@ const std::unordered_map<std::string, uint32_t> ItemEnhSpecFlagDict = {
 	{"iesf_plus_bonus",IESF_ENH_BONUS },
 	{"iesf_incremental", IESF_INCREMENTAL },
 	{"iesf_noncore", IESF_NONCORE },
+	{"iesf_light_only", IESF_LIGHT_ONLY },
 };
 
 int WandCraftCostCp=0;
@@ -644,9 +645,14 @@ bool UiItemCreation::MaaEffectIsApplicable(int effIdx){
 						return false;
 				} 
 				else{
-
 					if (!(itEnh.flags & IESF_ARMOR))
 						return false;
+
+					if (itEnh.flags & IESF_LIGHT_ONLY) {
+						if (armorType != ARMOR_TYPE_LIGHT) {
+							return false;
+						}
+					}
 				}
 			}
 		}
