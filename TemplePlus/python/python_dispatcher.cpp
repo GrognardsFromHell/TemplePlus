@@ -33,6 +33,7 @@
 #include "history.h"
 #include "bonus.h"
 #include "config/config.h"
+#include "gamesystems/gamesystems.h"
 
 namespace py = pybind11;
 
@@ -930,6 +931,12 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			D20Actn* d20a= (D20Actn*)evtObj.data1;
 			return *d20a;
 		}, "Used for Q_IsActionInvalid_CheckAction callbacks to get a D20Action from the data1 field")
+		.def("get_obj_from_args", [](DispIoD20Query& evtObj)->objHndl& {
+			objHndl handle{ ((((uint64_t)evtObj.data2) << 32) | evtObj.data1) };
+			if (!gameSystems->GetObj().IsValidHandle(handle))
+				handle = objHndl::null;
+			return handle;
+		}, "Used for python queries that have a handle as the parameter.")
 		;
 
 	py::class_<DispIOTurnBasedStatus, DispIO>(m, "EventObjTurnBasedStatus")
