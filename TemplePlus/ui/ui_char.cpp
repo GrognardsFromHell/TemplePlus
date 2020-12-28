@@ -34,6 +34,8 @@
 #include "ui_item_creation.h"
 #include <history.h>
 
+#include "condition.h"
+
 UiChar& ui_char() {
 	return uiSystems->GetChar();
 }
@@ -2259,7 +2261,7 @@ void UiCharHooks::apply(){
 			auto maxSpeed = dispatch.DispatchItemQuery(item, DK_QUE_Armor_Get_Max_Speed);
 			auto dexBonusString = dexBonus == 100 ? fmt::format(" - ") : fmt::format("{:+d}", dexBonus);
 			auto maxSpeedString = maxSpeed == 100 ? fmt::format(" - ") : fmt::format("{}", maxSpeed);
-			auto armorCheckPenalty = temple::GetRef<int(__cdecl)(objHndl)>(0x1004F0D0)(item);
+			auto armorCheckPenalty = GetArmorCheckPenalty(item);
 			auto spellFailureChance = itemObj->GetInt32(obj_f_armor_arcane_spell_failure);
 			spellFailureChance += dispatch.DispatchItemQuery(item, DK_QUE_Get_Arcane_Spell_Failure);
 			if (spellFailureChance < 0) spellFailureChance = 0;
@@ -2366,10 +2368,10 @@ void UiMetaMagicData::AddAppliedCount(feat_enums feat, int count)
 
 void SpellList::Remove(int idx)
 {
-	if (idx >= count || idx < 0)
+	if (idx >= static_cast<int>(count) || idx < 0)
 		return;
 
-	for (auto i=idx; i < count-1; ++i ){
+	for (auto i=idx; i < static_cast<int>(count)-1; ++i ){
 		spells[i] = spells[i + 1];
 	}
 
@@ -2445,7 +2447,7 @@ void UiCharImpl::SkillsBtnRender(int widId)
 	int scrollbarY = 0;
 	uiManager->ScrollbarGetY(skillsScrollbar->widgetId, &scrollbarY);
 	auto skillIdx = scrollbarY + idx;
-	if (skillIdx < 0 || skillIdx >= skillsMap.size()) {
+	if (skillIdx < 0 || static_cast<size_t>(skillIdx) >= skillsMap.size()) {
 		return;
 	}
 	auto skillEnum = skillsMap[skillIdx];
@@ -2461,7 +2463,7 @@ void UiCharImpl::SkillsBtnRender(int widId)
 	float skillRank = 0.5f * (float)skillIdxVal;
 
 	auto bonValue = 0;
-	for (auto i = 2; i < bonlist.bonCount; ++i) {
+	for (uint32_t i = 2; i < bonlist.bonCount; ++i) {
 		bonValue += bonlist.bonusEntries[i].bonValue;
 	}
 
@@ -2578,7 +2580,7 @@ bool UiCharImpl::SkillsBtnMsg(int widId, TigMsg& msg)
 			int scrollbarY = 0;
 			uiManager->ScrollbarGetY(skillsScrollbar->widgetId, &scrollbarY);
 			auto skillIdx = scrollbarY + widIdx;
-			if (skillIdx >= 0 && skillIdx < skillsMap.size()) {
+			if (skillIdx >= 0 && static_cast<size_t>(skillIdx) < skillsMap.size()) {
 				auto skillEnum = skillsMap[skillIdx];
 				auto handle = ui_char().GetCritter();
 				BonusList bonlist;
@@ -2623,7 +2625,7 @@ void UiCharImpl::SkillsBtnTooltip(int x, int y, int* widgetId)
 	auto scrollbarY = 0;
 	uiManager->ScrollbarGetY(skillsScrollbar->widgetId, &scrollbarY);
 	auto skillIdx = scrollbarY + idx;
-	if (skillIdx >= skillsMap.size()) {
+	if (skillIdx >= static_cast<int>(skillsMap.size())) {
 		return;
 	}
 

@@ -66,6 +66,7 @@ const std::unordered_map<std::string, uint32_t> ItemEnhSpecFlagDict = {
 	{"iesf_plus_bonus",IESF_ENH_BONUS },
 	{"iesf_incremental", IESF_INCREMENTAL },
 	{"iesf_noncore", IESF_NONCORE },
+	{"iesf_light_only", IESF_LIGHT_ONLY },
 };
 
 int WandCraftCostCp=0;
@@ -644,9 +645,14 @@ bool UiItemCreation::MaaEffectIsApplicable(int effIdx){
 						return false;
 				} 
 				else{
-
 					if (!(itEnh.flags & IESF_ARMOR))
 						return false;
+
+					if (itEnh.flags & IESF_LIGHT_ONLY) {
+						if (armorType != ARMOR_TYPE_LIGHT) {
+							return false;
+						}
+					}
 				}
 			}
 		}
@@ -1403,20 +1409,26 @@ void UiItemCreation::LoadMaaSpecs()
 			}
 		}
 
-		// get spellReqs
+		// get spellReqs, Format: ('A''B''C' = A or B or C) ('D'+'E'+'F' = D and E and F
 		if (!tabEntry.spellReqs.empty() && !(config.laxRules && config.disableCraftingSpellReqs))
 		{
 			StringTokenizer spellReqTok(tabEntry.spellReqs);
+			bool andSpell = false;
+			int idx = 0;
 			while (spellReqTok.next())
 			{
 				auto& tok = spellReqTok.token();
-				if (tok.type != StringTokenType::QuotedString)
+				if (tok.type == StringTokenType::Plus) {
+					if (idx > 0) {
+						idx--;  //Add to the same map entry
+					}
+				} else  if (tok.type != StringTokenType::QuotedString)
 					continue;
 				auto spellEnum = spellSys.GetSpellEnum(tok.text);
 				if (spellEnum){
-					itEnh.reqs.spells[0].push_back(spellEnum);
+					idx++;
+					itEnh.reqs.spells[idx].push_back(spellEnum);
 				}
-				// TODO: implement AND/OR support (currently just Brilliant Radiance has this, not yet implemented anyway)
 			}
 		}
 		
@@ -2906,17 +2918,23 @@ bool UiItemCreation::MaaCrafterMeetsReqs(int effIdx, objHndl crafter)
 		return false;
 	}
 		
-	// todo: implement AND/OR conditions
 	if (itEnh.reqs.spells.size() > 0){
-		auto spellKnown = false;
+		auto hasReq = false;
 		for (auto it : itEnh.reqs.spells) {
+			auto spellsFound = true;
 			for (auto it2 : it.second)
 			{
-				if (spellSys.spellKnownQueryGetData(crafter, it2, nullptr, nullptr, nullptr))
-					spellKnown = true;
+				if (!spellSys.spellKnownQueryGetData(crafter, it2, nullptr, nullptr, nullptr)) {
+					spellsFound = false;
+					break;
+				}
+			}
+			if (spellsFound) {
+				hasReq = true;
+				break;
 			}
 		}
-		if (!spellKnown && !(config.laxRules && config.disableCraftingSpellReqs))
+		if (!hasReq && !(config.laxRules && config.disableCraftingSpellReqs))
 			return false;
 	}
 	
@@ -3264,19 +3282,27 @@ int UiItemCreation::MaaEffectTooltip(int x, int y, int * widId){
 			text.append(fmt::format("\n{} {}", uiAssets->GetStatMesLine(238), uiAssets->GetStatMesLine(8004)));
 	}
 	
+	// Note:  The display might need a tweek if there is every something with really complicated requirements 
+	// but this should be good enough pretty much anything published
 	if (itEnh.reqs.spells.size()) {
 		text.append("\nSpells: ");
-		bool isFirst = true;
-		for (auto it : itEnh.reqs.spells){
-			for (auto it2 : it.second) {
-				if (isFirst) {
-					text.append(fmt::format("{}", spellSys.GetSpellName(it2)));
-					isFirst = false;
-				}
-				else
-					text.append(fmt::format(",  or {}", spellSys.GetSpellName(it2)));
-				
+		auto firstReq = true;
+		for (auto it : itEnh.reqs.spells) {
+			auto firstSpell = true;
+
+			if (!firstReq) {
+				text.append(",  or ");
 			}
+			for (auto it2 : it.second) {
+				if (firstSpell) {
+					text.append(fmt::format("{}", spellSys.GetSpellName(it2)));
+					firstSpell = false;
+				}
+				else {
+					text.append(fmt::format(", and {}", spellSys.GetSpellName(it2)));
+				}
+			}
+			firstReq = false;
 		}
 	}
 	
