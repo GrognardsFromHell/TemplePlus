@@ -78,6 +78,7 @@
 242	Armor Blurring	IESF_ARMOR IESF_NONCORE	1	0		C5	'blur'					
 243	Armor Displacement	IESF_ARMOR IESF_NONCORE	1	0		C5	'displacement'				
 244	Armor Mobility	IESF_ENABLED IESF_ARMOR IESF_NONCORE IESF_LIGHT_ONLY	1	0		C5	'cats grace'				
+245	Armor Commander	IESF_ENABLED IESF_ARMOR IESF_NONCORE	0	0		C5	'eagles splendor'				2000
 400	Shield Enhancement Bonus	IESF_ENABLED IESF_SHIELD IESF_PLUS_BONUS	1	1		C3		
 401	Shield Enhancement Bonus	IESF_ENABLED IESF_SHIELD IESF_PLUS_BONUS	1	2		C6			400
 402	Shield Enhancement Bonus	IESF_ENABLED IESF_SHIELD IESF_PLUS_BONUS	1	3		C9			401
