@@ -1374,7 +1374,8 @@ int InventorySystem::IsTradeGoods(objHndl item)
 
 int InventorySystem::GetAppraisedWorth(objHndl item, objHndl appraiser, objHndl vendor, SkillEnum skillEnum)
 {
-	auto skillLevel = dispatch.dispatch1ESkillLevel(appraiser, skillEnum, nullptr, objHndl::null, 1);
+	auto skillLevelGet_1007D430 = temple::GetRef<double(__cdecl)(objHndl, int)>(0x1007D430);
+	auto skillLevel = skillLevelGet_1007D430(appraiser, skillEnum);
 	if (skillLevel > 19) skillLevel = 19;
 
 	double price = (double)GetSellWorth(item, appraiser, vendor, skillEnum);
@@ -1404,7 +1405,8 @@ int InventorySystem::GetAppraisedWorth(objHndl item, objHndl appraiser, objHndl 
 
 int InventorySystem::GetAppraisedTransactionSum(objHndl item, objHndl parent, objHndl appraiser, SkillEnum skillEnum)
 {
-	auto skillLevel = dispatch.dispatch1ESkillLevel(appraiser, skillEnum, nullptr, objHndl::null, 1);
+	auto skillLevelGet_1007D430 = temple::GetRef<double(__cdecl)(objHndl, int)>(0x1007D430);
+	auto skillLevel = skillLevelGet_1007D430(appraiser, skillEnum);
 	if (skillLevel > 19) skillLevel = 19;
 
 	double price = (double)GetSellWorth(item, parent, appraiser, skillEnum);

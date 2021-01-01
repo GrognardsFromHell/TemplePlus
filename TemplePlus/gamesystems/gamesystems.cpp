@@ -791,7 +791,6 @@ void GameSystems::InitializeSystems(LoadingScreen& loadingScreen) {
 	loadingScreen.SetProgress(79 / 79.0f);
 	mPathX = InitializeSystem<PathXSystem>(loadingScreen, mConfig);
 	mPoison = InitializeSystem<PoisonSystem>(loadingScreen);
-	skillSys.Init();
 }
 
 void GameSystems::EndGame() {
