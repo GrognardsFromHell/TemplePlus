@@ -2473,9 +2473,10 @@ void UiCharImpl::SkillsBtnRender(int widId)
 						{skillsScrollbar->x-8.f, btn->height + btn->y-1.f},	{ 0xFF80A0C0 });
 	
 	UiRenderer::PushFont(ttStyle.fontName, ttStyle.fontSize);
-
+	ColorRect whiteColor (XMCOLOR(0xFFFFFFFF));
+	ColorRect textColor2(XMCOLOR(0xFF0D6BE3));
 	TigTextStyle style(
-		&ColorRect(XMCOLOR(0xFFFFFFFF)), 
+		&whiteColor,
 		&ColorRect(XMCOLOR(0xFF000000)), 
 		&ColorRect(XMCOLOR(0x99111111)));
 	style.flags = 8;
@@ -2515,7 +2516,6 @@ void UiCharImpl::SkillsBtnRender(int widId)
 			UiRenderer::DrawText(text, rect, style);
 		}
 		{
-			ColorRect textColor2(XMCOLOR(0xFF0D6BE3));
 			style.textColor = &textColor2;
 			UiRenderer::PushFont(PredefinedFont::ARIAL_BOLD_24);
 
