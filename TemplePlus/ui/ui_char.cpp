@@ -33,6 +33,7 @@
 #include <combat.h>
 #include "ui_item_creation.h"
 #include <history.h>
+#include "mod_support.h"
 
 #include "condition.h"
 
@@ -1782,7 +1783,30 @@ void UiCharHooks::ItemGetDescrAddon(objHndl obj, objHndl item, std::string& addS
 			addStr = fmt::format("Remaining Charges: {}", remCharges);
 		}
 	}
+	if (modSupport.IsZMOD())
+	{
+		auto itemFlags = itemObj->GetItemFlags();
+		if (!(itemFlags & OIF_IS_MAGICAL) || (itemFlags & OIF_IDENTIFIED))
+		{
+			int worth = gameSystems->GetObj().GetObject(item)->GetInt32(obj_f_item_worth);
+			if (worth > 0) {
+				int plat = 0, gold = 0, silver = 0, copper = 0;
+				inventory.MoneyToCoins(worth, &plat, &gold, &silver, &copper);
+				gold += plat * 10;
+				addStr = fmt::format((addStr.length() > 0) ? "{0}\nPrice: {1}" : "Price: {1}{2}{3}"
+					, addStr
+					, (gold || (!silver && !copper)) ? fmt::format("{0} gp ", gold) : ""
+					, (silver) ? fmt::format("{0} sp ", silver) : ""
+					, (copper) ? fmt::format("{0} cp ", copper) : ""
+				);
+			}
+		}
+		else {
+			addStr = fmt::format((addStr.length() > 0) ? "{0}\nPrice: Unidentified" : "Price: Unidentified", addStr);
+		}
+	}
 }
+
 
 void UiCharHooks::LongDescriptionPopupCreate(objHndl item)
 {
@@ -2580,6 +2604,7 @@ bool UiCharImpl::SkillsBtnMsg(int widId, TigMsg& msg)
 			int scrollbarY = 0;
 			uiManager->ScrollbarGetY(skillsScrollbar->widgetId, &scrollbarY);
 			auto skillIdx = scrollbarY + widIdx;
+      
 			if (skillIdx >= 0 && static_cast<size_t>(skillIdx) < skillsMap.size()) {
 				auto skillEnum = skillsMap[skillIdx];
 				auto handle = ui_char().GetCritter();

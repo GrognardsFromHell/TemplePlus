@@ -287,6 +287,7 @@ void TigInitializer::LoadDataFiles() {
 		else {
 			moduleBase = moduleName;
 		}
+		modSupport.DetectZMOD();
 
 		auto moduleCoreDatName = moduleBase + "_core.dat";
 		auto moduleDir = moduleBase + "_core";

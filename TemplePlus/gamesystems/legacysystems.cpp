@@ -579,6 +579,7 @@ SkillSystem::SkillSystem(const GameSystemConf &config) {
 	if (!startup(&config)) {
 		throw TempleException("Unable to initialize game system Skill");
 	}
+	skillSys.Init();
 }
 SkillSystem::~SkillSystem() {
 	auto shutdown = temple::GetPointer<void()>(0x1007d0c0);
