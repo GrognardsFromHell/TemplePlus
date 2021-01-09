@@ -5389,7 +5389,7 @@ int __cdecl ItemCallbacks::MaxDexBonus(objHndl armor)
 		auto parent = inventory.GetParent(armor);
 		if (parent) {
 			auto obj = objSystem->GetObject(parent);
-			if ((obj != nullptr) && (obj->GetInt32(obj_f_type) == obj_t_pc)) {
+			if ((obj != nullptr) && (obj->IsPC() || obj->IsNPC())) {
 				auto adjustment = d20Sys.D20QueryPython(parent, "Max Dex Bonus Adjustment", armor);
 				res += adjustment;
 			}
@@ -5408,7 +5408,7 @@ int __cdecl ItemCallbacks::ArmorCheckPenalty(objHndl armor)
 		auto parent = inventory.GetParent(armor);
 		if (parent) {
 			auto obj = objSystem->GetObject(parent);
-			if ((obj != nullptr) && (obj->GetInt32(obj_f_type) == obj_t_pc)) {
+			if ((obj != nullptr) && (obj->IsPC() || obj->IsNPC())) {
 				auto adjustment = d20Sys.D20QueryPython(parent, "Armor Check Penalty Adjustment", armor);
 				res += adjustment;  //The adjustment is a positive value, the penalty is a negative value
 				res = std::min(res, 0);
