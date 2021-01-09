@@ -39,7 +39,9 @@ struct LegacySkillSystem : temple::AddressTable {
 	Stat GetSkillStat(SkillEnum skillEnum);
 
 	LegacySkillSystem();
-	
+
+	void LoadSkillsProps(const std::string& path);
+	void Init();
 };
 
 extern LegacySkillSystem skillSys;
