@@ -37,6 +37,7 @@
 #include "gamesystems/d20/d20stats.h"
 #include "d20_race.h"
 #include "ai.h"
+#include "ui/ui_systems.h"
 
 #define CB int(__cdecl)(DispatcherCallbackArgs)
 using DispCB = int(__cdecl )(DispatcherCallbackArgs);
@@ -210,6 +211,7 @@ public:
 	static int __cdecl WeaponViciousBlowback(DispatcherCallbackArgs args); // TODO (need to replace the damage calculation function to do this right...)
 	static int __cdecl WeaponWounding(DispatcherCallbackArgs args);
 	static int __cdecl WeaponThundering(DispatcherCallbackArgs args);
+	static int __cdecl ArmorShadowSilentMovesSkillBonus(DispatcherCallbackArgs args);
 
 	static int __cdecl WeaponDamageBonus(DispatcherCallbackArgs args);
 
@@ -499,6 +501,9 @@ public:
 
 		// Fixes Weapon Damage Bonus for ammo items
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FFE90, itemCallbacks.WeaponDamageBonus);
+
+		// Allow silent moves and shadow armor to have multipe levels
+		replaceFunction<int(DispatcherCallbackArgs)>(0x10102370, itemCallbacks.ArmorShadowSilentMovesSkillBonus);
 
 		// Cast Defensively Aoo Trigger Query, SpellInterrupted Query
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100F8BE0, genericCallbacks.CastDefensivelyAooTrigger);
@@ -5564,6 +5569,26 @@ int ItemCallbacks::WeaponWounding(DispatcherCallbackArgs args){
 
 
 	
+}
+
+int __cdecl ItemCallbacks::ArmorShadowSilentMovesSkillBonus(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIoTypeObjBonus, DispIoObjBonus);
+
+	auto inventoryIdx = args.GetCondArg(2);
+	auto value = args.GetCondArg(0);  //Now supporting multiple values for improved and greater
+	value = std::max(value, 5);  //In case this is an old cond which would possible have a 0 value instead of 5
+	
+	auto item = inventory.GetItemAtInvIdx(args.objHndCaller, inventoryIdx);
+	
+	const char* desc = nullptr;
+	if (item != objHndl::null) {
+		desc = description.getDisplayName(item);
+	}
+
+	dispIo->bonOut->AddBonusWithDesc(value, 34, 112, desc);
+
+	return 0;
 }
 
 int ItemCallbacks::WeaponThundering(DispatcherCallbackArgs args){
