@@ -37,7 +37,6 @@
 #include "gamesystems/d20/d20stats.h"
 #include "d20_race.h"
 #include "ai.h"
-#include "ui/ui_systems.h"
 
 #define CB int(__cdecl)(DispatcherCallbackArgs)
 using DispCB = int(__cdecl )(DispatcherCallbackArgs);
