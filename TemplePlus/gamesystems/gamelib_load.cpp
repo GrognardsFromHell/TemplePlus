@@ -186,6 +186,13 @@ bool GameSystems::LoadGame(const string& filename) {
 		return false;
 	}
 
+	{
+		// user savehook
+		auto saveHookArgs = Py_BuildValue("(s)", filename.c_str());
+		pythonObjIntegration.ExecuteScript("templeplus.savehook", "load", saveHookArgs);
+		Py_DECREF(saveHookArgs);
+	}
+
 	addresses.UiMmRelated2(63);
 	
 	logger->info("Completed loading of save game");
@@ -195,7 +202,7 @@ bool GameSystems::LoadGame(const string& filename) {
 	if (temple::Dll::GetInstance().HasCo8Hooks()){
 		// Co8 load hook
 		auto loadHookArgs = Py_BuildValue("(s)", filename.c_str());
-		pythonObjIntegration.ExecuteScript("templeplus.savehook", "load", loadHookArgs);
+		pythonObjIntegration.ExecuteScript("templeplus.savehook", "post_load", loadHookArgs);
 		Py_DECREF(loadHookArgs);
 
 		if (modSupport.IsCo8NCEdition()){
