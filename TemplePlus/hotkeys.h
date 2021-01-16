@@ -12,6 +12,7 @@ public:
 	int SaveHotkeys(TioFile * file);
 	int SaveHotkeys(FILE * file);
 	int LoadHotkeys(GameSystemSaveFile * file);
+	int LoadHotkeys(TioFile* file);
 	void HotkeyInit();
 	void HotkeyExit();
 	void HotkeyAssignCallback(int cancelFlag);

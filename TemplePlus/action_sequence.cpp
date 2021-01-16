@@ -2209,7 +2209,18 @@ int32_t ActionSequenceSystem::InterruptNonCounterspell(D20Actn* d20a)
 
 int32_t ActionSequenceSystem::InterruptCounterspell(D20Actn* d20a)
 {
-	uint32_t result = 0;
+	auto result = FALSE;
+	
+	for (auto rdyAction = ReadiedActionGetNext(nullptr, d20a);
+		rdyAction!= nullptr; rdyAction = ReadiedActionGetNext(rdyAction, d20a)) {
+		if (rdyAction->readyType == ReadyVsTypeEnum::RV_Counterspell) {
+			InterruptSwitchActionSequence(rdyAction);
+			result = TRUE;
+		}
+	}
+
+	return result;
+	/*uint32_t result = 0;
 	__asm{
 		push esi;
 		push ecx;
@@ -2223,7 +2234,7 @@ int32_t ActionSequenceSystem::InterruptCounterspell(D20Actn* d20a)
 		pop ecx;
 		pop esi;
 	}
-	return result;
+	return result;*/
 
 }
 
@@ -2314,6 +2325,11 @@ ReadiedActionPacket* ActionSequenceSystem::ReadiedActionGetNext(ReadiedActionPac
 
 void ActionSequenceSystem::InterruptSwitchActionSequence(ReadiedActionPacket* readiedAction)
 {
+	if (!readiedAction->interrupter) {
+		logger->error("InterruptSwitchActionSequence: Null objHnd! Aborting.");
+		return;
+	}
+
 	if (readiedAction->readyType == RV_Counterspell)
 		return addresses.Counterspell_sthg(readiedAction);
 	

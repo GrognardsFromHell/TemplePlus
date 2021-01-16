@@ -421,29 +421,6 @@ const std::string &UiScrollpane::GetName() const {
 
 
 //*****************************************************************************
-//* Popup-UI
-//*****************************************************************************
-
-UiPopup::UiPopup(const UiSystemConf &config) {
-    auto startup = temple::GetPointer<int(const UiSystemConf*)>(0x10171df0);
-    if (!startup(&config)) {
-        throw TempleException("Unable to initialize game system Popup-UI");
-    }
-}
-UiPopup::~UiPopup() {
-    auto shutdown = temple::GetPointer<void()>(0x10171510);
-    shutdown();
-}
-void UiPopup::Reset() {
-    auto reset = temple::GetPointer<void()>(0x10171e70);
-    reset();
-}
-const std::string &UiPopup::GetName() const {
-    static std::string name("Popup-UI");
-    return name;
-}
-
-//*****************************************************************************
 //* TextDialog-UI
 //*****************************************************************************
 

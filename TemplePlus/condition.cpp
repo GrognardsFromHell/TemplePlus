@@ -199,6 +199,8 @@ public:
 	static int __cdecl UseableItemRadialEntry(DispatcherCallbackArgs args);
 	static int __cdecl UseableItemActionCheck(DispatcherCallbackArgs args);
 
+	static int __cdecl ArmorCheckPenalty(objHndl armor);
+	static int __cdecl MaxDexBonus(objHndl armor);
 	static int __cdecl BucklerToHitPenalty(DispatcherCallbackArgs args);
 	static int __cdecl BucklerAcPenalty(DispatcherCallbackArgs args);
 	static int __cdecl WeaponMerciful(DispatcherCallbackArgs);
@@ -210,6 +212,10 @@ public:
 	static int __cdecl WeaponThundering(DispatcherCallbackArgs args);
 
 	static int __cdecl WeaponDamageBonus(DispatcherCallbackArgs args);
+
+	int (*oldMaxDexBonus)(objHndl armor) = nullptr;
+	int (*oldArmorCheckPenalty)(objHndl armor) = nullptr;
+
 } itemCallbacks;
 
 
@@ -478,6 +484,11 @@ public:
 		// buckler AC penalty
 		replaceFunction<int(DispatcherCallbackArgs)>(0x10104E40, itemCallbacks.BucklerAcPenalty);
 
+		// Max Dex Bonus
+		itemCallbacks.oldMaxDexBonus = replaceFunction<int(objHndl armor)>(0x1004F200, itemCallbacks.MaxDexBonus);
+
+		// Armor Check Penalty
+		itemCallbacks.oldArmorCheckPenalty = replaceFunction<int(objHndl armor)>(0x1004F0D0, itemCallbacks.ArmorCheckPenalty);
 
 
 		// Druid wild shape
@@ -3781,6 +3792,18 @@ int RendOnDamage(DispatcherCallbackArgs args)
 	return 0;
 }
 
+// Added so other parts of the code can access the max dex bonus and armor check penalty
+
+int GetMaxDexBonus(objHndl armor)
+{
+	return itemCallbacks.MaxDexBonus(armor);
+}
+
+int GetArmorCheckPenalty(objHndl armor)
+{
+	return itemCallbacks.ArmorCheckPenalty(armor);
+}
+
 
 int ClassAbilityCallbacks::FeatCraftWondrousRadial(DispatcherCallbackArgs args){
 	return ItemCreationBuildRadialMenuEntry(args, CraftWondrous, "TAG_CRAFT_WONDROUS", 5070);
@@ -5352,6 +5375,44 @@ int ItemCallbacks::BucklerToHitPenalty(DispatcherCallbackArgs args)
 	return 0;
 }
 
+int __cdecl ItemCallbacks::MaxDexBonus(objHndl armor)
+{
+	auto res = itemCallbacks.oldMaxDexBonus(armor);
+	
+	//Query for max dex bonus adjustment
+	if (armor) {
+		auto parent = inventory.GetParent(armor);
+		if (parent) {
+			auto obj = objSystem->GetObject(parent);
+			if ((obj != nullptr) && (obj->GetInt32(obj_f_type) == obj_t_pc)) {
+				auto adjustment = d20Sys.D20QueryPython(parent, "Max Dex Bonus Adjustment", armor);
+				res += adjustment;
+			}
+		}
+	}
+    
+	return res;
+}
+
+int __cdecl ItemCallbacks::ArmorCheckPenalty(objHndl armor)
+{
+	auto res = itemCallbacks.oldArmorCheckPenalty(armor);
+	
+	//Query for armor check penalty adjustment
+	if (armor) {
+		auto parent = inventory.GetParent(armor);
+		if (parent) {
+			auto obj = objSystem->GetObject(parent);
+			if ((obj != nullptr) && (obj->GetInt32(obj_f_type) == obj_t_pc)) {
+				auto adjustment = d20Sys.D20QueryPython(parent, "Armor Check Penalty Adjustment", armor);
+				res += adjustment;  //The adjustment is a positive value, the penalty is a negative value
+				res = std::min(res, 0);
+			}
+		}
+	}
+
+	return res;
+}
 
 int __cdecl ItemCallbacks::BucklerAcPenalty(DispatcherCallbackArgs args)
 {

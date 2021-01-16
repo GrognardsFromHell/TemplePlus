@@ -123,7 +123,8 @@ struct LgcyWindow : public LgcyWidget {
 	int AddChildButton(const std::string &btnName, int xRelative, int yRelative, int w, int h
 		, LgcyWidgetRenderFn renderHandler
 		, LgcyWidgetHandleMsgFn msgHandler
-		, LgcyWidgetRenderTooltipFn tooltipHandler = nullptr); // returns ID of new button
+		, LgcyWidgetRenderTooltipFn tooltipHandler = nullptr,
+		bool useDefaultSounds = true); // returns ID of new button
 };
 
 /*

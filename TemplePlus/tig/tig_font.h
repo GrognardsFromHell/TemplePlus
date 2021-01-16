@@ -58,6 +58,7 @@ struct TigTextStyle
 
 	static const TigTextStyle standardWhite;
 	TigTextStyle(ColorRect * color);
+	TigTextStyle( const ColorRect* textColor, const ColorRect*shadowColor, const ColorRect*backgroundColor);
 	TigTextStyle();
 	void SetColors(ColorRect * color);
 };

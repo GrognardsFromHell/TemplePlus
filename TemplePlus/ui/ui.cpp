@@ -326,7 +326,9 @@ BOOL UiManager::ButtonInit(LgcyButton* widg, char* buttonName, int parentId, int
 LgcyWidgetId UiManager::AddButton(LgcyButton& button)
 {
 	button.type = LgcyWidgetType::Button;
-	return AddWidget(&button, __FILE__, __LINE__);
+	auto widgetId = AddWidget(&button, __FILE__, __LINE__);
+	button.widgetId = widgetId;
+	return widgetId;
 }
 
 LgcyWidgetId UiManager::AddButton(LgcyButton &button, LgcyWidgetId parentId)
@@ -339,7 +341,9 @@ LgcyWidgetId UiManager::AddButton(LgcyButton &button, LgcyWidgetId parentId)
 LgcyWidgetId UiManager::AddScrollBar(LgcyScrollBar& scrollBar)
 {
 	scrollBar.type = LgcyWidgetType::Scrollbar;
-	return AddWidget(&scrollBar, __FILE__, __LINE__);
+	auto widgetId = AddWidget(&scrollBar, __FILE__, __LINE__);
+	scrollBar.widgetId = widgetId;
+	return widgetId;
 }
 
 LgcyWidgetId UiManager::AddScrollBar(LgcyScrollBar& scrollBar, LgcyWidgetId parentId)
@@ -362,7 +366,7 @@ LgcyButtonState UiManager::GetButtonState(LgcyWidgetId widId) {
 	return button->buttonState;
 }
 
-bool UiManager::ScrollbarGetY(int widId, int * scrollbarY) {
+bool UiManager::ScrollbarGetY(LgcyWidgetId widId, int * scrollbarY) {
 	auto widget = (LgcyScrollBar*) GetWidget(widId);
 	if (!widget || widget->type != LgcyWidgetType::Scrollbar)
 		return true;
@@ -1097,7 +1101,7 @@ LgcyWindow::LgcyWindow(int x, int y, int w, int h) : LgcyWindow()
 	this->height = h;
 }
 
-int LgcyWindow::AddChildButton(const std::string & btnName, int xRelative, int yRelative, int w, int h, LgcyWidgetRenderFn renderHandler, LgcyWidgetHandleMsgFn msgHandler, LgcyWidgetRenderTooltipFn tooltipHandler)
+int LgcyWindow::AddChildButton(const std::string & btnName, int xRelative, int yRelative, int w, int h, LgcyWidgetRenderFn renderHandler, LgcyWidgetHandleMsgFn msgHandler, LgcyWidgetRenderTooltipFn tooltipHandler, bool useDefaultSounds)
 {
 	LgcyButton btn(btnName.c_str(), this->widgetId, xRelative, yRelative, w, h);
 	btn.x += this->x; btn.y += this->y;
@@ -1107,7 +1111,8 @@ int LgcyWindow::AddChildButton(const std::string & btnName, int xRelative, int y
 	if (nullptr != tooltipHandler){
 		btn.renderTooltip = tooltipHandler;
 	}
-	btn.SetDefaultSounds();
+	if (useDefaultSounds)
+		btn.SetDefaultSounds();
 	int btnId = uiManager->AddButton(btn, this->widgetId);
 	
 	return btnId;

@@ -998,7 +998,7 @@ BOOL AnimSystem::ProcessAnimEvent(const TimeEvent *evt) {
           break;
         case AnimStateTransition::DelayCustom:
           // Used by some goal states to set their desired dynamic delay
-          delay = *animAddresses.customDelayInMs;
+          delay = *animAddresses.customDelayInMs; 
           break;
         case AnimStateTransition::DelayRandom:
           // Calculates the animation delay randomly in a range from 0 to 300

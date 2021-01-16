@@ -125,6 +125,14 @@ void UiRenderer::PopFont() {
 	tigFont.PopFont();
 }
 
+bool UiRenderer::DrawText(const string& text, const TigRect& rect, const TigTextStyle& style)
+{
+	if (text.empty())
+		return 1;
+
+	return tigFont.Draw(text.c_str(), rect, style) == TRUE;
+}
+
 bool UiRenderer::DrawTextInWidget(int widgetId, const string &text, const TigRect &rect, const TigTextStyle &style) {
 	auto wid = uiManager->GetWidget(widgetId);
 	if (!wid)

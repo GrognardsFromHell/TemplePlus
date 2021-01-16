@@ -210,20 +210,25 @@ int HotkeySystem::SaveHotkeys(FILE* file)
 
 int HotkeySystem::LoadHotkeys(GameSystemSaveFile* gsFile)
 {
+	return LoadHotkeys(gsFile->file);
+}
+
+int HotkeySystem::LoadHotkeys(TioFile* file)
+{
 	int buffer;
-	while (tio_fread(&buffer, sizeof(buffer), 1, gsFile->file) == 1)
+	while (tio_fread(&buffer, sizeof(buffer), 1, file) == 1)
 	{
 		if (buffer == -1) { //terminator char
-			return 1; 
+			return 1;
 		}
 
 		RadialMenuEntry radMenu;
-		if (tio_fread(&radMenu, sizeof(RadialMenuEntry), 1, gsFile->file) != 1 )
+		if (tio_fread(&radMenu, sizeof(RadialMenuEntry), 1, file) != 1)
 			break;
 		hkAddresses.hotkeyTable[buffer] = radMenu;
 
 		char hkText[128];
-		if (tio_fread(hkText, 1, 128, gsFile->file) != 128 )
+		if (tio_fread(hkText, 1, 128, file) != 128)
 			break;
 		memcpy(&hkAddresses.hotkeyTexts[128 * buffer], hkText, 128);
 	}
@@ -236,30 +241,7 @@ void HotkeySystem::HotkeyInit()
 	{
 		hkAddresses.hotkeyTable[i].d20ActionType = D20A_UNASSIGNED;
 	}
-	mesFuncs.Open("mes\\hotkeys.mes", hkAddresses.hotkeyMes);
-	auto file = fopen("hotkeys.sco", "rb");
-	int buffer;
-	if (file)
-	{
-		while (fread(&buffer, sizeof(buffer), 1, file) == 1)
-		{
-			if (buffer == -1) {
-				break; //terminator char
-			}
-			RadialMenuEntry radMenu;
-			if (fread(&radMenu, sizeof(RadialMenuEntry), 1, file) != 1)
-				break;
-			hkAddresses.hotkeyTable[buffer] = radMenu;
-
-			char hkText[128];
-			if (fread(hkText, 1, 128, file) != 128)
-				break;
-			memcpy(&hkAddresses.hotkeyTexts[128 * buffer], hkText, 128);
-
-		}
-		fclose(file);
-	}
-	
+	mesFuncs.Open("mes\\hotkeys.mes", hkAddresses.hotkeyMes);	
 }
 
 void HotkeySystem::HotkeyExit()
@@ -287,9 +269,9 @@ void HotkeySystem::HotkeyAssignCallback(int cancelFlag)
 		strncpy(hkText, radMenuEntryToBind->text, 127);
 		hotkeyTable[hkIdx].text = hkText;
 
-		auto file = fopen("hotkeys.sco", "wb");
+		auto file = tio_fopen("hotkeys.sco", "wb");
 		SaveHotkeys(file);
-		fclose(file);
+		tio_fclose(file);
 
 	}
 }

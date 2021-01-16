@@ -93,10 +93,13 @@ void MouseFuncs::SetPos(int x, int y, int wheelDelta)
 	auto& mouseLastChange = temple::GetRef<int>(0x10D251C4);
 	auto systemTime = temple::GetRef<int>(0x11E74578);
 
+	
+
 	static int slowMoveRefX = mouseState->x, slowMoveRefY = mouseState->y;
 	
 	auto slowMoveDelta = abs(x - slowMoveRefX) + abs(y - slowMoveRefY);
-	auto timeDeltaMs = systemTime - mouseLastChange;
+	// systemTime += 2793682137;
+	auto timeDeltaMs = abs(systemTime - mouseLastChange); // abs delta in case the time stamp is above the integer limit
 	if (x != mouseState->x || y != mouseState->y ) {
 		mouseIsStatic = 0;
 		//if (slowMoveDelta  > 0) { // this was the effective vanilla condition
