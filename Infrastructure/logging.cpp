@@ -30,6 +30,8 @@ void InitLogging(const std::wstring &logFile)
 		// Always log to a file
 		DeleteFile(logFile.c_str());
 		auto fileSink = std::make_shared<spdlog::sinks::simple_file_sink_mt>(ucs2_to_local(logFile), true);
+		// This is slower but prevents logs from being truncated on crash
+		fileSink->set_force_flush(true);
 		auto debugSink = std::make_shared<spdlog::sinks::msvc_sink_mt>();
 		spdlog::drop_all(); // Reset all previous loggers
 		logger = spdlog::create("core", {fileSink, debugSink});
