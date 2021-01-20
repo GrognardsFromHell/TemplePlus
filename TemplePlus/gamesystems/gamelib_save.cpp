@@ -211,6 +211,14 @@ bool GameSystems::SaveGame(const string& filename, const string& displayName) {
 
 	tio_fclose(file);
 
+	{
+		// user savehook
+		auto saveHookArgs = Py_BuildValue("(s)", filename.c_str());
+		pythonObjIntegration.ExecuteScript("templeplus.savehook", "save", saveHookArgs);
+		Py_DECREF(saveHookArgs);
+	}
+
+
 	if (!addresses.UiSaveGame()) {
 		tio_remove(fullPath);
 		return false;
@@ -256,7 +264,7 @@ bool GameSystems::SaveGame(const string& filename, const string& displayName) {
 
 	// co8 savehook
 	auto saveHookArgs = Py_BuildValue("(s)", filename.c_str());
-	pythonObjIntegration.ExecuteScript("templeplus.savehook", "save", saveHookArgs);
+	pythonObjIntegration.ExecuteScript("templeplus.savehook", "post_save", saveHookArgs);
 	Py_DECREF(saveHookArgs);
 
 	return true;
