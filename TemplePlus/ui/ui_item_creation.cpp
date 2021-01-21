@@ -3305,7 +3305,12 @@ int UiItemCreation::MaaEffectTooltip(int x, int y, int * widId){
 			firstReq = false;
 		}
 	}
-	
+
+	text.append("\n");
+	auto desc = GetItemCreationMesLine(effIdx + 2000);
+	if (desc) {
+		text += desc;
+	}
 
 	
 	
