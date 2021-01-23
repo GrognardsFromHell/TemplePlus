@@ -61,7 +61,7 @@
 {1032}{Vicious}
 {1033}{Vorpal}
 {1034}{Wounding}
-
+{1035}{Warning}
 
 // armor bonuses
 {1200}{+1}
@@ -187,6 +187,7 @@
 {2032}{Deals an extra 2d6 disruptive damage to the opponent and 1d6 disruptive damage to the wielder.}
 {2033}{Upon a natural 20 (followed by a successful confirmation), the weapon severs the opponent's head.}
 {2034}{Deals 1 point of constitution damage from blood loss when it hits a creature.}
+{2035}{Bonus of 5 on initiative.}
 
 // Armor Enhancement Strings
 {2200}{+1 enhancement bonus to AC.}

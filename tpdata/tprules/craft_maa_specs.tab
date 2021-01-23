@@ -33,6 +33,7 @@
 32	Weapon Vicious	IESF_WEAPON IESF_MELEE	1	0		C9	'vampiric touch'	
 33	Weapon Vorpal	IESF_WEAPON	5	0		C18	'circle of death'+'keen edge'	
 34	Weapon Wounding	IESF_ENABLED IESF_WEAPON	2	0		C10	'mordenkainens sword'	
+35	Weapon Warning	IESF_ENABLED IESF_WEAPON IESF_NONCORE	1	0		C7	'cats grace'	
 200	Armor Enhancement Bonus	IESF_ENABLED IESF_ARMOR IESF_PLUS_BONUS	1	1		C3		
 201	Armor Enhancement Bonus	IESF_ENABLED IESF_ARMOR IESF_PLUS_BONUS	1	2		C6			200
 202	Armor Enhancement Bonus	IESF_ENABLED IESF_ARMOR IESF_PLUS_BONUS	1	3		C9			201
