@@ -102,6 +102,9 @@ namespace temple {
 		SetCurrentDirectory(installationDir.c_str());
 		SetDllDirectory(installationDir.c_str());
 
+		// temple.dll will replace the unhandled exception filter with it's internal CRT handler,
+		// but we want to continue using the breakpad filter for crash reporting, so we save it here
+		auto currentHandler = SetUnhandledExceptionFilter(nullptr);
 
 		// Try to load it
 		mDllHandle = LoadLibrary(dllPath);
@@ -109,6 +112,9 @@ namespace temple {
 			throw TempleException("Unable to load temple.dll from {}: {}",
 			                      ucs2_to_utf8(dllPath), GetLastWin32Error());
 		}
+
+		// Restore the previous unhandled exception handler (from Breakpad)
+		SetUnhandledExceptionFilter(currentHandler);
 
 		// calculate the offset from the default 0x10000000 base address
 		auto baseAddr = reinterpret_cast<uint32_t>(mDllHandle);
