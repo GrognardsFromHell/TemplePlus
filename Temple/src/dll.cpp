@@ -14,6 +14,10 @@
 
 #include "temple/dll.h"
 
+static void* WINAPI PreventSetUnhandledExceptionFilter(void* exc) {
+	return nullptr;
+}
+
 namespace temple {
 
 	constexpr uint32_t defaultBaseAddr = 0x10000000;
@@ -87,6 +91,7 @@ namespace temple {
 		static void DebugMessage(const char* message);
 	};
 
+
 	DllImpl::DllImpl(const std::wstring& installationDir) {
 
 		wchar_t dllPath[MAX_PATH];
@@ -128,6 +133,8 @@ namespace temple {
 			throw TempleException(msg);
 		}
 
+		void* original;
+		MH_CreateHook(SetUnhandledExceptionFilter, (void*)PreventSetUnhandledExceptionFilter, &original);
 	}
 
 	DllImpl::~DllImpl() {
