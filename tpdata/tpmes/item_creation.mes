@@ -62,6 +62,7 @@
 {1033}{Vorpal}
 {1034}{Wounding}
 {1035}{Warning}
+{1036}{Berserker}
 
 // armor bonuses
 {1200}{+1}
@@ -188,6 +189,7 @@
 {2033}{Upon a natural 20 (followed by a successful confirmation), the weapon severs the opponent's head.}
 {2034}{Deals 1 point of constitution damage from blood loss when it hits a creature.}
 {2035}{Bonus of 5 on initiative.}
+{2036}{Deals an extra 1d8 damage while raging for two-handed weapons only.}
 
 // Armor Enhancement Strings
 {2200}{+1 enhancement bonus to AC.}

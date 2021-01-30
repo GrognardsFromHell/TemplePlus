@@ -36,7 +36,8 @@ enum ItemEnhancementSpecFlags{
 	IESF_ENH_BONUS = 0x200, // special casing for the enhancement bonus (the +X for weapons/armors)
 	IESF_INCREMENTAL = 0x400, // indicates that there are multiple progressive versions of this that supercede each other
 	IESF_NONCORE = 0x800, // enhancement based on non-core rules material (e.g. splatbook/fanmade), enabled only when non-core materials config is set 
-	IESF_LIGHT_ONLY = 0x1000 // only for light armor 
+	IESF_LIGHT_ONLY = 0x1000, // only for light armor 
+	IESF_TWO_HANDED = 0x2000 // two handed weapon only
 };
 
 struct ItemEnhancementSpec {

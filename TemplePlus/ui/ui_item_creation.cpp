@@ -59,6 +59,7 @@ const std::unordered_map<std::string, uint32_t> ItemEnhSpecFlagDict = {
 	{"iesf_armor",IESF_ARMOR },
 	{"iesf_shield",IESF_SHIELD },
 	{"iesf_ranged",IESF_RANGED },
+	{"iesf_two_handed", IESF_TWO_HANDED },
 
 	{"iesf_melee",IESF_MELEE },
 	{"iesf_thrown",IESF_THROWN },
@@ -632,6 +633,13 @@ bool UiItemCreation::MaaEffectIsApplicable(int effIdx){
 					auto weapFlags = static_cast<WeaponFlags>(gameSystems->GetObj().GetObject(itemHandle)->GetInt32(obj_f_weapon_flags));
 					if (!(weapFlags & WeaponFlags::OWF_THROWABLE))
 						return false;
+				}
+
+				if (itEnh.flags & IESF_TWO_HANDED) {
+					auto wieldType = inventory.GetWieldType(mItemCreationCrafter, itemHandle);
+					if (wieldType != 2) {
+						return false;
+					}
 				}
 
 			}
