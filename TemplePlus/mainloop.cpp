@@ -141,9 +141,6 @@ void GameLoop::Run() {
 
 	auto quit = false;
 	while (!quit) {
-
-		
-
 		// Read user input and external system events (such as time)
 		messageQueue->PollExternalEvents();			
 		if (mDiagScreen->IsEnabled()) {	
