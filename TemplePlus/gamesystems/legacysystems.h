@@ -48,6 +48,7 @@ public:
 	const std::string &GetName() const override;
 };
 
+
 class TeleportSystem : public GameSystem, public ResetAwareGameSystem, public TimeAwareGameSystem {
 public:
 	static constexpr auto Name = "Teleport";
@@ -58,6 +59,7 @@ public:
 	const std::string &GetName() const override;
 
 	bool IsObjectTeleporting(objHndl handle) const;
+	bool DaynightXferLoad();
 };
 
 class SectorSystem : public GameSystem, public SaveGameAwareGameSystem, public ResetAwareGameSystem {
