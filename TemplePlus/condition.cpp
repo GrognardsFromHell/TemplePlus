@@ -5237,6 +5237,10 @@ int ItemCallbacks::UseableItemRadialEntry(DispatcherCallbackArgs args){
 
 				auto protoHandle = objSystem->GetProtoHandle(protoId);
 				auto protoObj = objSystem->GetObject(protoHandle);
+				if (!protoObj) {
+					logger->error("Multioption radial: missing proto, ID {}", protoId);
+					continue;
+				}
 				radChild.text = (char*)description.GetDescriptionString(protoObj->GetInt32(obj_f_description));
 
 			}
@@ -5251,7 +5255,6 @@ int ItemCallbacks::UseableItemRadialEntry(DispatcherCallbackArgs args){
 		}
 
 		auto radnow = radialMenus.GetForObj(handle);
-		auto asd = 1;
 	}
 	
 
