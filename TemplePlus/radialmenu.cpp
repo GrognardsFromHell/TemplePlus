@@ -583,6 +583,10 @@ void RadialMenus::AddSpell(objHndl handle, SpellStoreData & spData, int & specNo
 
 			auto protoHandle = objSystem->GetProtoHandle(protoId);
 			auto protoObj = objSystem->GetObject(protoHandle);
+			if (!protoObj) {
+				logger->error("Multioption radial: missing proto, ID {}", protoId);
+				continue;
+			}
 			entry.text = (char*)description.GetDescriptionString(protoObj->GetInt32(obj_f_description));
 
 		} else	{
