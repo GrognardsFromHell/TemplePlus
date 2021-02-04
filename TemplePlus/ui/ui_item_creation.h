@@ -265,6 +265,7 @@ protected:
 
 	std::map<int, int> itemExtraGold; // Extra gold cost associated with the item
 	std::map<int, ItemEnhancementSpec> itemEnhSpecs; // the idx has a reserved value of -1 for "none"
+	std::vector<int> itemEnhIdxSorted;
 	
 	
 	int& maaSelectedEffIdx = mMaaSelectedEffIdx; // currently selected craftable effect

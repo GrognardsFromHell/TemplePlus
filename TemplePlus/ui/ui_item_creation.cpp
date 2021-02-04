@@ -675,15 +675,18 @@ int UiItemCreation::GetEffIdxFromWidgetIdx(int widIdx){
 	// auto scrollbar2Y = temple::GetRef<int>(0x10BECDA8);
 	auto adjIdx = mMaaApplicableEffectsScrollbarY + widIdx; // this is the overall index for the effect
 	auto validCount = 0;
-	for (auto it: itemEnhSpecs){
-		if (MaaEffectIsApplicable(it.first) && !(it.second.flags & IESF_ENH_BONUS)){
-			if (validCount == adjIdx){
-				return it.first;
+	for (auto idx : itemEnhIdxSorted) {  //Using the sorted effect list so effects will display in sorted order
+		if (MaaEffectIsApplicable(idx)) {
+			auto effect = itemEnhSpecs[idx];
+			if (!(effect.flags & IESF_ENH_BONUS)) {
+				if (validCount == adjIdx) {
+					return idx;
+				}
+				validCount++;
 			}
-			validCount++;
 		}
-			
 	}
+
 	return CRAFT_EFFECT_INVALID;
 }
 
@@ -3800,6 +3803,14 @@ bool UiItemCreation::InitItemCreationRules(){
 		}
 		
 	}
+
+	// Create a list of indexes sorted by the Mes file name
+	for (auto& itemEnh : itemEnhSpecs) {
+		itemEnhIdxSorted.push_back(itemEnh.first);
+	}
+	std::sort(itemEnhIdxSorted.begin(), itemEnhIdxSorted.end(), [&](int n1, int n2) {
+		return (_strcmpi(GetItemCreationMesLine(1000 + n1), GetItemCreationMesLine(1000 + n2)) < 0); }
+	);
 
 	mesFuncs.Close(icrules);
 
