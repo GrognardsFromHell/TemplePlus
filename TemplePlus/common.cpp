@@ -215,7 +215,7 @@ int BonusList::AddCap(int capType, int capValue, uint32_t bonMesLineNum){
 	
 }
 
-int BonusList::AddCapWithDescr(int capType, int capValue, uint32_t bonMesLineNum, char* capDescr){
+int BonusList::AddCapWithDescr(int capType, int capValue, uint32_t bonMesLineNum, const char* capDescr){
 
 	if (AddCap(capType, capValue, bonMesLineNum) == 1){
 		bonCaps[bonCapperCount - 1].bonCapDescr = capDescr;

@@ -173,7 +173,7 @@ struct BonusList
 	BOOL ZeroBonusSetMeslineNum(int mesline);
 
 	int AddCap(int capType, int capValue, uint32_t bonMesLineNum);
-	int AddCapWithDescr(int capType, int capValue, uint32_t bonMesLineNum, char* capDescr);
+	int AddCapWithDescr(int capType, int capValue, uint32_t bonMesLineNum, const char* capDescr);
 	int AddCapWithCustomDescr(int capType, int capValue, uint32_t bonMesLineNum, std::string &textArg);
 
 	BOOL SetOverallCap(int BonFlags, int newCap, int newCapType, int newCapMesLineNum, char *capDescr = nullptr);
