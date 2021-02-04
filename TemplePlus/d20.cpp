@@ -1128,7 +1128,7 @@ ActionErrorCode D20ActionCallbacks::PerformStandardAttack(D20Actn* d20a)
 		hitAnimIdx = (d20a->data1 - (ATTACK_CODE_NATURAL_ATTACK + 1)) % 3;
 	}
 
-	d20Sys.ToHitProc(d20a);
+	combatSys.ToHitProcessing(*d20a);
 
 	int caflags = d20a->d20Caf;
 	if (caflags & D20CAF_CRITICAL
