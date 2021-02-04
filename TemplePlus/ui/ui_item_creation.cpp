@@ -2603,6 +2603,7 @@ void UiItemCreation::MaaInitWnd(int wndId){
 		auto helpId = ElfHash::Hash("TAG_CRAFT_MAGIC_ARMS_ARMOR_POPUP");
 		auto popupType0 = temple::GetRef<int(__cdecl)(int, int(__cdecl*)(), const char*)>(0x100E6F10);
 		popupType0(helpId, []() { return itemCreation().ItemCreationShow(objHndl::null, ItemCreationType::Inactive); }, title);
+		itemCreationType = ItemCreationType::Inactive;  //Necessary to set when the dialog is forced closed or it will still think it is opened 
 	}
 	craftedItemNamePos = craftedItemName.size();
 }
