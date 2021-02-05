@@ -3318,10 +3318,26 @@ int UiItemCreation::MaaEffectTooltip(int x, int y, int * widId){
 		}
 	}
 
-	text.append("\n");
+	// Get the description and cut into multiple lines at about 40 characters (max 3 in practice)
 	auto desc = GetItemCreationMesLine(effIdx + 2000);
 	if (desc) {
-		text += desc;
+		std::string descText = desc;
+		while (descText.size() > 40) {
+			auto nIdx = descText.find(' ', 40);  //Find the end of the word after character 40
+			if (nIdx != std::string::npos) {
+				std::string descText1 = descText.substr(0, nIdx);
+				text.push_back('\n');
+				text += descText1;
+				descText = descText.substr(nIdx + 1, descText.size() - nIdx - 1);
+			}
+			else {
+				break;  //Don't break this line there is nothing after the end of the last word
+			}
+		}
+		if (!descText.empty()) {
+			text.push_back('\n');
+			text += descText;
+		}
 	}
 
 	
