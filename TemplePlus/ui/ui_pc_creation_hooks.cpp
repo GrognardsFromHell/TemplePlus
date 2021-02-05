@@ -56,6 +56,9 @@ public:
 		replaceFunction<void(__cdecl)(int widgetId)>(0x1011ED80, [](int id){
 			uiPcCreation.MainWndRender(id);
 		});
+		replaceFunction<BOOL(__cdecl)(int, TigMsg*)>(0x1011c1c0, [](int widgetId, TigMsg* msg) { 
+			return uiPcCreation.MainWndMsg(widgetId, msg);
+		});
 
 		// Chargen Race System
 		replaceFunction<void(__cdecl)()>(0x1018A7D0, [](){	uiSystems->GetPcCreation().GetRace().Show();	});

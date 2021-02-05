@@ -201,6 +201,7 @@ public:
 
 	static int __cdecl ArmorCheckPenalty(objHndl armor);
 	static int __cdecl MaxDexBonus(objHndl armor);
+	static int __cdecl ArmorBonusAcBonusCapValue(DispatcherCallbackArgs args);
 	static int __cdecl BucklerToHitPenalty(DispatcherCallbackArgs args);
 	static int __cdecl BucklerAcPenalty(DispatcherCallbackArgs args);
 	static int __cdecl WeaponMerciful(DispatcherCallbackArgs);
@@ -484,6 +485,9 @@ public:
 
 		// buckler AC penalty
 		replaceFunction<int(DispatcherCallbackArgs)>(0x10104E40, itemCallbacks.BucklerAcPenalty);
+
+		// Armor AC Bonus Cap - disregard cap >= 100 (so as to not clog the buffer)
+		replaceFunction<int(DispatcherCallbackArgs)>(0x10100720, itemCallbacks.ArmorBonusAcBonusCapValue);
 
 		// Max Dex Bonus
 		itemCallbacks.oldMaxDexBonus = replaceFunction<int(objHndl armor)>(0x1004F200, itemCallbacks.MaxDexBonus);
@@ -5237,6 +5241,10 @@ int ItemCallbacks::UseableItemRadialEntry(DispatcherCallbackArgs args){
 
 				auto protoHandle = objSystem->GetProtoHandle(protoId);
 				auto protoObj = objSystem->GetObject(protoHandle);
+				if (!protoObj) {
+					logger->error("Multioption radial: missing proto, ID {}", protoId);
+					continue;
+				}
 				radChild.text = (char*)description.GetDescriptionString(protoObj->GetInt32(obj_f_description));
 
 			}
@@ -5251,7 +5259,6 @@ int ItemCallbacks::UseableItemRadialEntry(DispatcherCallbackArgs args){
 		}
 
 		auto radnow = radialMenus.GetForObj(handle);
-		auto asd = 1;
 	}
 	
 
@@ -5396,6 +5403,21 @@ int __cdecl ItemCallbacks::MaxDexBonus(objHndl armor)
 	}
     
 	return res;
+}
+
+int __cdecl ItemCallbacks::ArmorBonusAcBonusCapValue(DispatcherCallbackArgs args)
+{
+	auto invIdx = args.GetCondArg(2);
+	auto item = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
+	GET_DISPIO(dispIOTypeAttackBonus, DispIoAttackBonus);
+
+	auto itemName = description._getDisplayName(item, args.objHndCaller);
+	auto maxDexBon = itemCallbacks.MaxDexBonus(item);
+	if (maxDexBon >= 100) { // prevent clogging bonus cap buffer with these values
+		return 0;
+	}
+	dispIo->bonlist.AddCapWithDescr(3, maxDexBon, 112, itemName);
+	return 0;
 }
 
 int __cdecl ItemCallbacks::ArmorCheckPenalty(objHndl armor)

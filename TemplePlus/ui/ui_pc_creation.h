@@ -200,7 +200,7 @@ public:
 	void StateTitleRender(int widId);
 	BOOL FinishBtnMsg(int widId, TigMsg* msg); // goes after the original FinishBtnMsg
 	void MainWndRender(int id);
-
+	BOOL MainWndMsg(int id, TigMsg* msg);
 
 	
 	void RenderCharInfos(int widId);
