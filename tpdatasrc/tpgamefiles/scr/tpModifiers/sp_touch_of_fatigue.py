@@ -21,7 +21,8 @@ def TouchOfFatigueEffectTooltip(attachee, args, evt_obj):
 	return 0
 	
 def TouchOfFatigueHasSpellActive(attachee, args, evt_obj):
-	evt_obj.return_val = 1
+	if evt_obj.data1 == 1001:
+		evt_obj.return_val = 1
 	return 0
 	
 def TouchOfFatigueHoldingCharge(attachee, args, evt_obj):
