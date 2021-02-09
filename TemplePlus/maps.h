@@ -21,7 +21,7 @@ struct LgcyJumpPoint {
 struct DayNightXfer
 {
 	ObjectId objId;
-	int defaultMapMaybe; // possibly "initial map"
+	int currentMap; // possibly "initial map"
 	int dayMapId;
 	LocAndOffsets loc;
 	int nightMapId;

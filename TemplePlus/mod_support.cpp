@@ -71,6 +71,14 @@ void ModSupport::DetectCo8ActiveModule(){
 	}
 } 
 
+void ModSupport::DetectZMOD() {
+	mIsZMOD = false;
+	if (!config.defaultModule.empty() && (tolower(config.defaultModule).find("zmod") != std::string::npos))
+	{
+		mIsZMOD = true;
+	}
+}
+
 bool ModSupport::IsCo8NCEdition() const
 {
 	if (!mInited)
@@ -99,6 +107,18 @@ bool ModSupport::IsCo8() const
 	}
 		
 	return mIsCo8;
+}
+
+bool ModSupport::IsZMOD() const
+{
+	if (!mInited)
+		throw TempleException("ModSupport uninited");
+	return mIsZMOD;
+}
+
+void ModSupport::SetIsZMOD(bool value)
+{
+	mIsZMOD = value;
 }
 
 void ModSupport::SetNCGameFlag(bool value){

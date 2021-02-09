@@ -760,6 +760,17 @@ static PyObject*PyObjHandle_GetItemWearFlags(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(res);
 }
 
+static PyObject* PyObjHandle_GetMaxDexBonus(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	auto res = GetMaxDexBonus(self->handle);
+
+	return PyInt_FromLong(res);
+}
+
 // turns out you could already get this via .stat_base_get(stat_attack_bonus). Leaving it for backward compatibility...
 static PyObject* PyObjHandle_GetBaseAttackBonus(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
@@ -2430,23 +2441,33 @@ static PyObject* PyObjHandle_StandpointSet(PyObject* obj, PyObject* args) {
 		return PyInt_FromLong(0);
 	}
 	StandPointType type;
-	int jumpPointId;
-	if (!PyArg_ParseTuple(args, "ii:objhndl.standpoint_set", &type, &jumpPointId)) {
-		return 0;
-	}
-
-	JumpPoint jumpPoint;
-	if (!maps.GetJumpPoint(jumpPointId, jumpPoint)) {
-		PyErr_Format(PyExc_ValueError, "Unknown jump point id %d used to set a standpoint.", jumpPointId);
-		return 0;
-	}
-
 	StandPoint standPoint;
-	standPoint.location.location = jumpPoint.location;
+	standPoint.location = LocAndOffsets::null;
 	standPoint.location.off_x = 0;
 	standPoint.location.off_y = 0;
-	standPoint.mapId = jumpPoint.mapId;
-	standPoint.jumpPointId = jumpPointId;
+	standPoint.mapId = 0;
+	standPoint.jumpPointId = -1;
+	if (!PyArg_ParseTuple(args, "ii|Liff:objhndl.standpoint_set", &type, &standPoint.jumpPointId, &standPoint.location.location, &standPoint.mapId, &standPoint.location.off_x, &standPoint.location.off_y)) {
+		return 0;
+	}
+
+	if (standPoint.jumpPointId >= 0) {
+		JumpPoint jumpPoint;
+		if (!maps.GetJumpPoint(standPoint.jumpPointId, jumpPoint)) {
+			PyErr_Format(PyExc_ValueError, "Unknown jump point id %d used to set a standpoint.", standPoint.jumpPointId);
+			return 0;
+		}
+
+		standPoint.location.location = jumpPoint.location;
+		standPoint.location.off_x = 0;
+		standPoint.location.off_y = 0;
+		standPoint.mapId = jumpPoint.mapId;
+	}
+	else {
+		if (!standPoint.mapId) {
+			standPoint.mapId = maps.GetCurrentMapId();
+		}
+	}
 	critterSys.SetStandPoint(self->handle, type, standPoint);
 	Py_RETURN_NONE;
 }
@@ -3614,6 +3635,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "get_character_base_classes", PyObjHandle_GetCharacterBaseClassesSet, METH_VARARGS, "Get tuple with base classes enums" },
 	{ "get_initiative", PyObjHandle_GetInitiative, METH_VARARGS, NULL },
 	{ "get_item_wear_flags", PyObjHandle_GetItemWearFlags, METH_VARARGS, NULL },
+	{ "get_max_dex_bonus", PyObjHandle_GetMaxDexBonus, METH_VARARGS, NULL },
     { "get_deity", PyObjHandle_GetDeity, METH_VARARGS, NULL },
 	{ "get_weapon_type", PyObjHandle_GetWeaponType, METH_VARARGS, NULL },
 	{ "get_wield_type", PyObjHandle_GetWieldType, METH_VARARGS, NULL },
