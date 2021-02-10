@@ -27,7 +27,8 @@ def MindBlankEffectTooltip(attachee, args, evt_obj):
 	return 0
 	
 def MindBlankHasSpellActive(attachee, args, evt_obj):
-	evt_obj.return_val = 1
+	if evt_obj.data1 == 308:
+		evt_obj.return_val = 1
 	return 0
 	
 def MindBlankKilled(attachee, args, evt_obj):
