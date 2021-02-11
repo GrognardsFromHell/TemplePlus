@@ -61,7 +61,8 @@
 {1032}{Vicious}
 {1033}{Vorpal}
 {1034}{Wounding}
-
+{1035}{Warning}
+{1036}{Berserker}
 
 // armor bonuses
 {1200}{+1}
@@ -148,6 +149,134 @@
 {1429}{Axeblock}
 {1430}{Hammerblock}
 {1431}{Spearblock}
+
+// 2000-2999:  Descriptions
+
+// Weapon Enhancement Strings
+{2000}{+1 Enhancement bonus to hit and damage.}
+{2001}{+2 Enhancement bonus to hit and damage.}
+{2002}{+3 Enhancement bonus to hit and damage.}
+{2003}{+4 Enhancement bonus to hit and damage.}
+{2004}{+5 Enhancement bonus to hit and damage.}
+{2005}{Makes the weapon chaos-aligned and deals 2d6 extra damage against all of lawful alignment.}
+{2006}{Makes the weapon lawful-aligned and deals 2d6 extra damage against all of chaotic alignment.}
+{2007}{Effective enhancement bonus is +2 better and deals 2d6 extra damage against a particular foe.}
+{2008}{Ignores armor and shield bonuses to AC (including any enhancement bonuses).}
+{2009}{As a standard action, a dancing weapon can be loosed to attack on its own.}
+{2010}{A defending weapon allows the wielder to transfer some or all of its enhancement bonus to his AC.}
+{2011}{A weapon of distance has double the range increment of other weapons of its kind.}
+{2012}{Any undead creature struck in combat must succeed on a DC 14 Will save or be destroyed.}
+{2013}{Deals an extra 1d6 points of fire damage on a successful hit.}
+{2014}{Functions as a flaming weapon that does an extra 1d10 on critical (more for higher crit multipliers).}
+{2015}{Deals an extra 1d6 points of cold damage on a successful hit.}
+{2016}{Deals normal damage to incorporeal creatures and negates the 50% chance to avoid damage.}
+{2017}{Makes the weapon good-aligned and deals 2d6 extra damage against all of evil alignment.}
+{2018}{Functions as a frost weapon that does an extra 1d10 on critical (more for higher crit multipliers).}
+{2019}{Doubles the threat range of a weapon.}
+{2020}{Allows use of special ki attacks through the weapon as if unarmed.}
+{2021}{The weapon deals an extra 1d6 points of damage, and all damage it deals is nonlethal damage.}
+{2022}{Allows a wielder with the Cleave feat to make one additional cleave attempt in a round.}
+{2023}{Returns to the thrower just before the creature’s next turn (thrown weapons only).}
+{2024}{Negates any miss chances such as from concealment (thrown weapons only).}
+{2025}{Deals an extra 1d6 points of electricity damage on a successful hit.}
+{2026}{Functions as a shocking weapon that does an extra 1d10 on critical (more for higher crit multipliers).}
+{2027}{Allows one extra attack with this weapon (does not stack with haste).}
+{2028}{Store a single targeted spell of up to 3rd level in the weapon.}
+{2029}{Gains a range increment of 10 feet (melee weapons only).}
+{2030}{On a critical, 1d8 points of sonic damage (more for higher crit multipliers) and DC 14 save or be deafened.}
+{2031}{Makes the weapon evil-aligned and deals 2d6 extra damage against all of good alignment.}
+{2032}{Deals an extra 2d6 disruptive damage to the opponent and 1d6 disruptive damage to the wielder.}
+{2033}{Upon a natural 20 (followed by a successful confirmation), the weapon severs the opponent's head.}
+{2034}{Deals 1 point of constitution damage from blood loss when it hits a creature.}
+{2035}{Bonus of 5 on initiative.}
+{2036}{Deals an extra 1d8 damage while raging for two-handed weapons only.}
+
+// Armor Enhancement Strings
+{2200}{+1 enhancement bonus to AC.}
+{2201}{+2 enhancement bonus to AC.}
+{2202}{+3 enhancement bonus to AC.}
+{2203}{+4 enhancement bonus to AC.}
+{2204}{+5 enhancement bonus to AC.}
+{2205}{Grants a 25% chance to avoid a critical hit.}
+{2206}{Changes shape to assume the appearance of a normal set of clothing.}
+{2207}{Grants a +5 competence bonus on escape artist checks.}
+{2208}{Grants a +5 competence bonus on hide checks.}
+{2209}{Grants a +5 competence bonus on move silently checks.}
+{2210}{Grants spell resistance 13.}
+{2211}{Grants spell resistance 15.}
+{2212}{Grants spell resistance 17.}
+{2213}{Grants spell resistance 19.}
+{2214}{Arcane spell failure chance reduced by 10%.}
+{2215}{Grants continual freedom of movement.}
+{2216}{Absorbs the first 10 points of fire damage per attack.}
+{2217}{Absorbs the first 20 points of fire damage per attack.}
+{2218}{Absorbs the first 30 points of fire damage per attack.}
+{2219}{Absorbs the first 10 points of cold damage per attack.}
+{2220}{Absorbs the first 20 points of cold damage per attack.}
+{2221}{Absorbs the first 30 points of cold damage per attack.}
+{2222}{Absorbs the first 10 points of electricity damage per attack.}
+{2223}{Absorbs the first 20 points of electricity damage per attack.}
+{2224}{Absorbs the first 30 points of electricity damage per attack.}
+{2225}{Absorbs the first 10 points of acid damage per attack.}
+{2226}{Absorbs the first 20 points of acid damage per attack.}
+{2227}{Absorbs the first 30 points of acid damage per attack.}
+{2228}{Absorbs the first 10 points of sonic damage per attack.}
+{2229}{Absorbs the first 10 points of sonic damage per attack.}
+{2230}{Absorbs the first 10 points of sonic damage per attack.}
+{2231}{Grants +1 resistance bonus on reflex saves.}
+{2232}{Grants +3 resistance bonus on reflex saves.}
+{2233}{Grants +5 resistance bonus on reflex saves.}
+{2234}{Grants +1 resistance bonus on fortitude saves.}
+{2235}{Grants +3 resistance bonus on fortitude saves.}
+{2236}{Grants +5 resistance bonus on fortitude saves.}
+{2237}{Grants DR 5/bludgeoning or piercing.}
+{2238}{Grants DR 5/bludgeoning or slashing.}
+{2239}{Grants DR 5/piercing or slashing.}
+{2240}{Grants +5 feet to land speed.}
+{2241}{Max dex bonus is 1 higher and armor check penalty 2 less.}
+{2242}{Grants use of blur 3/day for 5 rounds.}
+{2243}{Grants use of displacement 1/day  for 5 rounds.}
+{2244}{Grants benefit of Mobility feat (light armor only).}
+{2245}{Grants +2 on diplomacy, allies within 30 ft. gain +1 on will saves and -5 on hide.}
+{2246}{Grants a +10 competence bonus on hide checks.}
+{2247}{Grants a +15 competence bonus on hide checks.}
+{2248}{Grants a +10 competence bonus on move silently checks.}
+{2249}{Grants a +15 competence bonus on move silently checks.}
+
+// Shield Enhancement Strings
+{2400}{+1 Shield enhancement bonus to AC.}
+{2401}{+2 Shield enhancement bonus to AC.}
+{2402}{+3 Shield enhancement bonus to AC.}
+{2403}{+4 Shield enhancement bonus to AC.}
+{2404}{+5 Shield enhancement bonus to AC.}
+{2405}{Floats providing protection normally but freeing up both hands.}
+{2406}{Once per round make a DC 20 Reflex save to avoid ranged damage.}
+{2407}{Deals damage as if it were two size categories larger.}
+{2408}{2/day all within 20 feet except the wielder make a DC 14 Reflex save or be blinded for 1d4 rounds.}
+{2409}{Grants a 25% chance to avoid a critical hit.}
+{2410}{Grants spell resistance 13.}
+{2411}{Grants Spell resistance 15.}
+{2412}{Grants Spell resistance 17.}
+{2413}{Grants Spell resistance 19.}
+{2414}{Absorbs the first 10 points of fire damage per attack.}
+{2415}{Absorbs the first 20 points of fire damage per attack.}
+{2416}{Absorbs the first 30 points of fire damage per attack.}
+{2417}{Absorbs the first 10 points of cold damage per attack.}
+{2418}{Absorbs the first 20 points of cold damage per attack.}
+{2419}{Absorbs the first 30 points of cold damage per attack.}
+{2420}{Absorbs the first 10 points of electricity damage per attack.}
+{2421}{Absorbs the first 20 points of electricity damage per attack.}
+{2422}{Absorbs the first 30 points of electricity damage per attack.}
+{2423}{Absorbs the first 10 points of acid damage per attack.}
+{2424}{Absorbs the first 20 points of acid damage per attack.}
+{2425}{Absorbs the first 30 points of acid damage per attack.}
+{2426}{Absorbs the first 10 points of sonic damage per attack.}
+{2427}{Absorbs the first 20 points of sonic damage per attack.}
+{2428}{Absorbs the first 30 points of sonic damage per attack.}
+{2429}{Grants DR 5/bludgeoning or piercing.}
+{2430}{Grants DR 5/bludgeoning or slashing.}
+{2431}{Grants DR 5/piercing or slashing.}
+
 
 // 10000-19999 Misc. Strings Used
 

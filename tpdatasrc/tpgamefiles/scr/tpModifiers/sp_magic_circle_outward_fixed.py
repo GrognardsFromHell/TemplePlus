@@ -102,7 +102,18 @@ def MagicCircleOutwardAoEEntered(attachee, args, evt_obj):
 	return 0
 	
 def MagicCircleOutwardHasSpellActive(attachee, args, evt_obj):
-	evt_obj.return_val = 1
+	if type == 1:
+		if evt_obj.data1 == 284:
+			evt_obj.return_val = 1
+	elif type == 2:
+		if evt_obj.data1 == 283:
+			evt_obj.return_val = 1
+	elif type == 3:
+		if evt_obj.data1 == 285:
+			evt_obj.return_val = 1
+	elif type == 4:
+		if evt_obj.data1 == 282:
+			evt_obj.return_val = 1
 	return 0
 	
 def MagicCircleOutwardKilled(attachee, args, evt_obj):

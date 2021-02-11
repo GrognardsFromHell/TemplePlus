@@ -59,6 +59,7 @@ const std::unordered_map<std::string, uint32_t> ItemEnhSpecFlagDict = {
 	{"iesf_armor",IESF_ARMOR },
 	{"iesf_shield",IESF_SHIELD },
 	{"iesf_ranged",IESF_RANGED },
+	{"iesf_two_handed", IESF_TWO_HANDED },
 
 	{"iesf_melee",IESF_MELEE },
 	{"iesf_thrown",IESF_THROWN },
@@ -634,6 +635,13 @@ bool UiItemCreation::MaaEffectIsApplicable(int effIdx){
 						return false;
 				}
 
+				if (itEnh.flags & IESF_TWO_HANDED) {
+					auto wieldType = inventory.GetWieldType(mItemCreationCrafter, itemHandle);
+					if (wieldType != 2) {
+						return false;
+					}
+				}
+
 			}
 			if (itemObj->type == obj_t_armor)
 			{
@@ -667,15 +675,18 @@ int UiItemCreation::GetEffIdxFromWidgetIdx(int widIdx){
 	// auto scrollbar2Y = temple::GetRef<int>(0x10BECDA8);
 	auto adjIdx = mMaaApplicableEffectsScrollbarY + widIdx; // this is the overall index for the effect
 	auto validCount = 0;
-	for (auto it: itemEnhSpecs){
-		if (MaaEffectIsApplicable(it.first) && !(it.second.flags & IESF_ENH_BONUS)){
-			if (validCount == adjIdx){
-				return it.first;
+	for (auto idx : itemEnhIdxSorted) {  //Using the sorted effect list so effects will display in sorted order
+		if (MaaEffectIsApplicable(idx)) {
+			auto effect = itemEnhSpecs[idx];
+			if (!(effect.flags & IESF_ENH_BONUS)) {
+				if (validCount == adjIdx) {
+					return idx;
+				}
+				validCount++;
 			}
-			validCount++;
 		}
-			
 	}
+
 	return CRAFT_EFFECT_INVALID;
 }
 
@@ -2603,6 +2614,7 @@ void UiItemCreation::MaaInitWnd(int wndId){
 		auto helpId = ElfHash::Hash("TAG_CRAFT_MAGIC_ARMS_ARMOR_POPUP");
 		auto popupType0 = temple::GetRef<int(__cdecl)(int, int(__cdecl*)(), const char*)>(0x100E6F10);
 		popupType0(helpId, []() { return itemCreation().ItemCreationShow(objHndl::null, ItemCreationType::Inactive); }, title);
+		itemCreationType = ItemCreationType::Inactive;  //Necessary to set when the dialog is forced closed or it will still think it is opened 
 	}
 	craftedItemNamePos = craftedItemName.size();
 }
@@ -3305,7 +3317,28 @@ int UiItemCreation::MaaEffectTooltip(int x, int y, int * widId){
 			firstReq = false;
 		}
 	}
-	
+
+	// Get the description and cut into multiple lines at about 40 characters (max 3 in practice)
+	auto desc = GetItemCreationMesLine(effIdx + 2000);
+	if (desc) {
+		std::string descText = desc;
+		while (descText.size() > 40) {
+			auto nIdx = descText.find(' ', 40);  //Find the end of the word after character 40
+			if (nIdx != std::string::npos) {
+				std::string descText1 = descText.substr(0, nIdx);
+				text.push_back('\n');
+				text += descText1;
+				descText = descText.substr(nIdx + 1, descText.size() - nIdx - 1);
+			}
+			else {
+				break;  //Don't break this line there is nothing after the end of the last word
+			}
+		}
+		if (!descText.empty()) {
+			text.push_back('\n');
+			text += descText;
+		}
+	}
 
 	
 	
@@ -3787,6 +3820,14 @@ bool UiItemCreation::InitItemCreationRules(){
 		}
 		
 	}
+
+	// Create a list of indexes sorted by the Mes file name
+	for (auto& itemEnh : itemEnhSpecs) {
+		itemEnhIdxSorted.push_back(itemEnh.first);
+	}
+	std::sort(itemEnhIdxSorted.begin(), itemEnhIdxSorted.end(), [&](int n1, int n2) {
+		return (_strcmpi(GetItemCreationMesLine(1000 + n1), GetItemCreationMesLine(1000 + n2)) < 0); }
+	);
 
 	mesFuncs.Close(icrules);
 
