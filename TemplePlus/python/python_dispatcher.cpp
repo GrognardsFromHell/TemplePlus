@@ -33,6 +33,8 @@
 #include "history.h"
 #include "bonus.h"
 #include "config/config.h"
+#include <mod_support.h>
+#include "gamesystems/gamesystems.h"
 
 namespace py = pybind11;
 
@@ -147,6 +149,9 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		else if (configItemLower == "hponlevelup") {
 			return config.hpOnLevelup;
 		}
+		else if (configItemLower == "defaultmodule") {
+			return config.defaultModule;
+		}
 
 		logger->warn("Can't get config item {}.", configItem);
 		return std::string("");
@@ -163,11 +168,14 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		else if (configItemLower == "disabletargetsurrounded") {
 			config.disableTargetSurrounded = value;
 		}
-		else if ("disablechooserandomspell_regardinvulnerablestatus") {
+		else if (configItemLower == "disablechooserandomspell_regardinvulnerablestatus") {
 			config.disableChooseRandomSpell_RegardInvulnerableStatus = value;
 		}
-		else if ("stricterrulesenforcement") {
+		else if (configItemLower == "stricterrulesenforcement") {
 			config.stricterRulesEnforcement = value;
+		}
+		else if (configItemLower == "iszmod") {
+			modSupport.SetIsZMOD(value);
 		}
 		else {
 			logger->warn("Can't set config item {}.", configItem);
@@ -190,6 +198,9 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		}
 		else if (configItemLower == "stricterrulesenforcement") {
 			return config.stricterRulesEnforcement;
+		}
+		else if (configItemLower == "iszmod") {
+			return modSupport.IsZMOD();
 		}
 		logger->warn("Can't get config item {}.", configItem);
 		return false;
@@ -451,6 +462,9 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			{
 				return bonlist.AddBonusFromFeat(value, bonType, mesline, feat);
 			})
+			.def("set_cap_with_custom_descr", [](BonusList& bonlist, int newCap, int newCapType, int bonusMesline, std::string& textArg) {
+				bonlist.AddCapWithCustomDescr(newCap, newCapType, bonusMesline, textArg);
+			})
 			.def("set_overall_cap", [](BonusList & bonlist, int bonflags, int newCap, int newCapType, int bonusMesline) {
 				bonlist.SetOverallCap(bonflags, newCap, newCapType, bonusMesline);
 			 })
@@ -498,6 +512,14 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			auto _damType = (DamageType)damType;
 			damPkt.AddDR(amount, _damType, damMesLine);
 		}, "Adds damage resistance.")
+		.def("add_mod_factor", [](DamagePacket& damPkt, float factor, int damType, int damMesLine) {
+			auto _damType = (DamageType)damType;
+			damPkt.AddModFactor(factor, _damType, damMesLine);
+		}, "Adds a modification factor to damage.")
+		.def("get_overall_damage_by_type", [](DamagePacket& damPkt, int damType) {
+			const auto _damType = static_cast<DamageType>(damType);
+			return damPkt.GetOverallDamageByType(_damType);
+		}, "Gets the total damage of a piticular type.")
 		.def_readwrite("final_damage", &DamagePacket::finalDamage, "Final Damage Value")
 		.def_readwrite("flags", &DamagePacket::flags, "1 - maximized, 2 - empowered")
 		.def_readwrite("bonus_list", &DamagePacket::bonuses)
@@ -841,6 +863,9 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			.def("check_spell_resistance", [](SpellPacketBody&pkt, objHndl tgt){
 				return pkt.CheckSpellResistance(tgt);
 			})
+			.def("check_spell_resistance_force", [](SpellPacketBody& pkt, objHndl tgt) {
+				return pkt.CheckSpellResistance(tgt, true);  //Force the check even if the spell wouldn't normally allow it
+			})
 			.def("trigger_aoe_hit", [](SpellPacketBody&pkt) {
 				if (!pkt.spellEnum)
 					return;
@@ -927,6 +952,12 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			D20Actn* d20a= (D20Actn*)evtObj.data1;
 			return *d20a;
 		}, "Used for Q_IsActionInvalid_CheckAction callbacks to get a D20Action from the data1 field")
+		.def("get_obj_from_args", [](DispIoD20Query& evtObj)->objHndl {
+			objHndl handle{ ((((uint64_t)evtObj.data2) << 32) | evtObj.data1) };
+			if (!gameSystems->GetObj().IsValidHandle(handle))
+				handle = objHndl::null;
+			return handle;
+		}, "Used for python queries that have a handle as the parameter.")
 		;
 
 	py::class_<DispIOTurnBasedStatus, DispIO>(m, "EventObjTurnBasedStatus")

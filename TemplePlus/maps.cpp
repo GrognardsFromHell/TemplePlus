@@ -5,10 +5,12 @@
 #include "location.h"
 #include "util/fixes.h"
 #include "gamesystems/gamesystems.h"
+#include "gamesystems/legacysystems.h"
 #include "fade.h"
 #include "gamesystems/legacymapsystems.h"
 #include "infrastructure/tabparser.h"
 #include "tig/tig_tabparser.h"
+#include <infrastructure/vfs.h>
 
 struct MapAddresses : temple::AddressTable {
 	
@@ -69,6 +71,66 @@ struct MapAddresses : temple::AddressTable {
 };
 MapAddresses mapAddresses;
 
+bool ReadDaynightXferEntry(Vfs::FileHandle file, DayNightXfer*& dnx);
+DayNightXfer* CreateDaynightEntry(ObjectId id, int daymapId, LocAndOffsets daymapLoc, int nightmapId, LocAndOffsets nightmapLoc);
+bool TeleportSystem::DaynightXferLoad()
+{
+	auto dnxFile = fmt::format("Save\\Current\\daynight.nxd");
+	if (!vfs->FileExists(dnxFile)) {
+		dnxFile = fmt::format("rules\\daynight.nxd");
+	}
+	auto f = vfs->Open(dnxFile, "rb");
+	if (!f) {
+		return false;
+	}
+
+	auto& dnxList = temple::GetRef<DayNightXfer*>(0x10AB7548);
+	// free all current nodes
+	for (auto node = dnxList; dnxList; node = dnxList) {
+		auto nextNode = node->next;
+		dnxList = nextNode;
+		free(node);
+	}
+
+	// parse nodes from file
+	DayNightXfer* node = nullptr;
+	while (ReadDaynightXferEntry(f, node)) {
+		//preprend node
+		node->next = dnxList;
+		dnxList = node;
+	}
+	vfs->Close(f);
+	return true;
+}
+
+bool ReadDaynightXferEntry(Vfs::FileHandle file, DayNightXfer*& dnx)
+{
+	DayNightXfer tmpNode;
+	if (!vfs->Read(&tmpNode.objId, sizeof(tmpNode.objId), file)
+		|| !vfs->Read(&tmpNode.currentMap, sizeof(tmpNode.currentMap), file)
+		|| !vfs->Read(&tmpNode.dayMapId, sizeof(tmpNode.dayMapId), file)
+		|| !vfs->Read(&tmpNode.loc, sizeof(tmpNode.loc), file)
+		|| !vfs->Read(&tmpNode.nightMapId, sizeof(tmpNode.nightMapId), file)
+		|| !vfs->Read(&tmpNode.nightLoc, sizeof(tmpNode.nightLoc), file)
+		) {
+		return false;
+	}
+
+	auto newNode = CreateDaynightEntry(tmpNode.objId, tmpNode.dayMapId, tmpNode.loc, tmpNode.nightMapId, tmpNode.nightLoc);
+	dnx = newNode;
+	if (!newNode)
+		return false;
+
+	newNode->currentMap = tmpNode.currentMap;
+	return true;
+}
+
+DayNightXfer* CreateDaynightEntry(ObjectId id, int daymapId, LocAndOffsets daymapLoc, int nightmapId, LocAndOffsets nightmapLoc)
+{
+	return temple::GetRef< DayNightXfer*(__cdecl)(ObjectId , int , LocAndOffsets , int , LocAndOffsets )>(
+		0x10084C00)(id , daymapId, daymapLoc, nightmapId, nightmapLoc);
+}
+
 class GameSystemReplacements : TempleFix
 {
 public:
@@ -105,11 +167,16 @@ public:
 		static DayNightXfer* (__cdecl*orgDaynightListPop)() = replaceFunction< DayNightXfer*(__cdecl)()>(0x10084D00, []()
 		{
 			auto result = orgDaynightListPop();
-			if (result && result->defaultMapMaybe == 5199 && result->dayMapId == 5189){
-				result->defaultMapMaybe = 5189;
+			if (result && result->currentMap == 5199 && result->dayMapId == 5189){
+				result->currentMap = 5189;
 			}
 			return result;
 		});
+
+		static BOOL(__cdecl * DaynightXferLoad)() = replaceFunction<BOOL(__cdecl)()>(0x100851C0, []()
+			{
+				return gameSystems->GetTeleport().DaynightXferLoad() ? TRUE: FALSE;
+			});
 
 
 		replaceFunction<void(__cdecl)(locXY)>(0x10005BC0, [](locXY locXy){

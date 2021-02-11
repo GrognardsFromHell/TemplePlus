@@ -356,6 +356,9 @@ int DisarmedReminder(DispatcherCallbackArgs args);
 int DisarmedWeaponRetrieve(DispatcherCallbackArgs args);
 int DisarmedRetrieveWeaponRadialMenu(DispatcherCallbackArgs args);
 
+int GetMaxDexBonus(objHndl armor);
+int GetArmorCheckPenalty(objHndl armor);
+
 int RendOnDamage(DispatcherCallbackArgs args);
 
 int AidAnotherRadialMenu(DispatcherCallbackArgs args);

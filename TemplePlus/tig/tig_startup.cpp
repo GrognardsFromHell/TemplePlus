@@ -243,10 +243,10 @@ void TigInitializer::LoadDataFiles() {
 		logger->error("Unable to add archive tpdata\\clearances.dat");
 	}
 
+	modSupport.mInited = true;
 	if (temple::Dll::GetInstance().HasCo8Hooks()){
 		modSupport.mIsCo8 = true;
 		modSupport.DetectCo8ActiveModule();
-		modSupport.mInited = true;
 		if (modSupport.IsKotB()){
 			logger->info("KotB module detected; registering  kotbfixes.dat.");
 			result = tio_path_add(fmt::format("{}\\kotbfixes.dat", tpDataPath).c_str());
@@ -287,6 +287,7 @@ void TigInitializer::LoadDataFiles() {
 		else {
 			moduleBase = moduleName;
 		}
+		modSupport.DetectZMOD();
 
 		auto moduleCoreDatName = moduleBase + "_core.dat";
 		auto moduleDir = moduleBase + "_core";

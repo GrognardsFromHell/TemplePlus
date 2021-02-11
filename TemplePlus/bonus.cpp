@@ -111,8 +111,8 @@ uint32_t BonusSystem::bonusCapAdd(BonusList* bonList, int capType, int capValue,
 {
 	MesLine mesLine;
 	if (bonList->bonCapperCount >= 10) {
-		auto breakPointDummy = 1;
-		if (bonList->bonCapperCount >= BonusListMax) return 0;// bug? there's only 10 slots (this is the original code!)
+		return FALSE;
+		//if (bonList->bonCapperCount >= BonusListMax) return 0;// vanilla bug - fixed (caused terrible crashes when e.g. wearing more than 10 armors...)
 	} 
 
 	mesLine.key = bonMesLineNum;

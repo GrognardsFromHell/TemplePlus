@@ -77,6 +77,8 @@ struct LegacyD20System : temple::AddressTable
 	uint64_t d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, uint32_t arg1 =0 , uint32_t arg2 =0);
 	uint64_t d20QueryReturnData(objHndl objHnd, D20DispatcherKey dispKey, CondStruct *arg1, uint32_t arg2);
 	int D20QueryPython(const objHndl& handle, const std::string& queryKey, int arg1 = 0, int arg2 = 0);
+    int D20QueryPython(const objHndl& handle, const std::string& queryKey, objHndl argObj);
+
 
 	D20ADF GetActionFlags(D20ActionType d20ActionType);
 	

@@ -21,7 +21,7 @@ Breakpad::Breakpad(const std::wstring &crashDumpFolder)
 		MessageBox(NULL, msg.c_str(), L"TemplePlus Crashed - Oops!", MB_OK);
 
 	});
-	
+
 }
 
 Breakpad::~Breakpad()

@@ -30,6 +30,7 @@
 #include "turn_based.h"
 #include "d20_race.h"
 #include "ai.h"
+#include <hotkeys.h>
 
 
 //*****************************************************************************
@@ -578,6 +579,7 @@ SkillSystem::SkillSystem(const GameSystemConf &config) {
 	if (!startup(&config)) {
 		throw TempleException("Unable to initialize game system Skill");
 	}
+	skillSys.Init();
 }
 SkillSystem::~SkillSystem() {
 	auto shutdown = temple::GetPointer<void()>(0x1007d0c0);
@@ -867,6 +869,14 @@ D20System::~D20System() {
 	auto shutdown = temple::GetPointer<void()>(0x1004c950);
 	shutdown();
 	damage.Exit();
+}
+void D20System::LoadModule()
+{
+	auto file = tio_fopen("hotkeys.sco", "rb");
+	if (file) {
+		hotkeys.LoadHotkeys(file);
+		tio_fclose(file);
+	}
 }
 void D20System::Reset() {
 	auto reset = temple::GetPointer<void()>(0x1004c9b0);

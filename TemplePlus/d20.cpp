@@ -817,6 +817,7 @@ void LegacyD20System::D20SignalPython(const objHndl & handle, int queryKey, int 
 	dispatcher->Process(enum_disp_type::dispTypePythonSignal, static_cast<D20DispatcherKey>(queryKey), &dispIo);
 	return;
 }
+
 #pragma endregion
 
 void LegacyD20System::D20ActnInit(objHndl objHnd, D20Actn* d20a)
@@ -1127,7 +1128,7 @@ ActionErrorCode D20ActionCallbacks::PerformStandardAttack(D20Actn* d20a)
 		hitAnimIdx = (d20a->data1 - (ATTACK_CODE_NATURAL_ATTACK + 1)) % 3;
 	}
 
-	d20Sys.ToHitProc(d20a);
+	combatSys.ToHitProcessing(*d20a);
 
 	int caflags = d20a->d20Caf;
 	if (caflags & D20CAF_CRITICAL
@@ -1387,6 +1388,10 @@ int LegacyD20System::D20QueryPython(const objHndl& handle, const string& queryKe
 	dispIo.data2 = arg2;
 	dispatcher->Process(enum_disp_type::dispTypePythonQuery, static_cast<D20DispatcherKey>(ElfHash::Hash(queryKey)), &dispIo);
 	return dispIo.return_val;
+}
+
+int LegacyD20System::D20QueryPython(const objHndl& handle, const string& queryKey, objHndl argObj) {
+	return D20QueryPython(handle, queryKey, argObj.GetHandleLower(), argObj.GetHandleUpper());
 }
 
 D20ADF LegacyD20System::GetActionFlags(D20ActionType d20ActionType){

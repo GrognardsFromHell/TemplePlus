@@ -199,6 +199,9 @@ public:
 	static int __cdecl UseableItemRadialEntry(DispatcherCallbackArgs args);
 	static int __cdecl UseableItemActionCheck(DispatcherCallbackArgs args);
 
+	static int __cdecl ArmorCheckPenalty(objHndl armor);
+	static int __cdecl MaxDexBonus(objHndl armor);
+	static int __cdecl ArmorBonusAcBonusCapValue(DispatcherCallbackArgs args);
 	static int __cdecl BucklerToHitPenalty(DispatcherCallbackArgs args);
 	static int __cdecl BucklerAcPenalty(DispatcherCallbackArgs args);
 	static int __cdecl WeaponMerciful(DispatcherCallbackArgs);
@@ -208,8 +211,13 @@ public:
 	static int __cdecl WeaponViciousBlowback(DispatcherCallbackArgs args); // TODO (need to replace the damage calculation function to do this right...)
 	static int __cdecl WeaponWounding(DispatcherCallbackArgs args);
 	static int __cdecl WeaponThundering(DispatcherCallbackArgs args);
+	static int __cdecl ArmorShadowSilentMovesSkillBonus(DispatcherCallbackArgs args);
 
 	static int __cdecl WeaponDamageBonus(DispatcherCallbackArgs args);
+
+	int (*oldMaxDexBonus)(objHndl armor) = nullptr;
+	int (*oldArmorCheckPenalty)(objHndl armor) = nullptr;
+
 } itemCallbacks;
 
 
@@ -478,6 +486,14 @@ public:
 		// buckler AC penalty
 		replaceFunction<int(DispatcherCallbackArgs)>(0x10104E40, itemCallbacks.BucklerAcPenalty);
 
+		// Armor AC Bonus Cap - disregard cap >= 100 (so as to not clog the buffer)
+		replaceFunction<int(DispatcherCallbackArgs)>(0x10100720, itemCallbacks.ArmorBonusAcBonusCapValue);
+
+		// Max Dex Bonus
+		itemCallbacks.oldMaxDexBonus = replaceFunction<int(objHndl armor)>(0x1004F200, itemCallbacks.MaxDexBonus);
+
+		// Armor Check Penalty
+		itemCallbacks.oldArmorCheckPenalty = replaceFunction<int(objHndl armor)>(0x1004F0D0, itemCallbacks.ArmorCheckPenalty);
 
 
 		// Druid wild shape
@@ -488,6 +504,9 @@ public:
 
 		// Fixes Weapon Damage Bonus for ammo items
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FFE90, itemCallbacks.WeaponDamageBonus);
+
+		// Allow silent moves and shadow armor to have multipe levels
+		replaceFunction<int(DispatcherCallbackArgs)>(0x10102370, itemCallbacks.ArmorShadowSilentMovesSkillBonus);
 
 		// Cast Defensively Aoo Trigger Query, SpellInterrupted Query
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100F8BE0, genericCallbacks.CastDefensivelyAooTrigger);
@@ -3781,6 +3800,18 @@ int RendOnDamage(DispatcherCallbackArgs args)
 	return 0;
 }
 
+// Added so other parts of the code can access the max dex bonus and armor check penalty
+
+int GetMaxDexBonus(objHndl armor)
+{
+	return itemCallbacks.MaxDexBonus(armor);
+}
+
+int GetArmorCheckPenalty(objHndl armor)
+{
+	return itemCallbacks.ArmorCheckPenalty(armor);
+}
+
 
 int ClassAbilityCallbacks::FeatCraftWondrousRadial(DispatcherCallbackArgs args){
 	return ItemCreationBuildRadialMenuEntry(args, CraftWondrous, "TAG_CRAFT_WONDROUS", 5070);
@@ -5210,6 +5241,10 @@ int ItemCallbacks::UseableItemRadialEntry(DispatcherCallbackArgs args){
 
 				auto protoHandle = objSystem->GetProtoHandle(protoId);
 				auto protoObj = objSystem->GetObject(protoHandle);
+				if (!protoObj) {
+					logger->error("Multioption radial: missing proto, ID {}", protoId);
+					continue;
+				}
 				radChild.text = (char*)description.GetDescriptionString(protoObj->GetInt32(obj_f_description));
 
 			}
@@ -5224,7 +5259,6 @@ int ItemCallbacks::UseableItemRadialEntry(DispatcherCallbackArgs args){
 		}
 
 		auto radnow = radialMenus.GetForObj(handle);
-		auto asd = 1;
 	}
 	
 
@@ -5352,6 +5386,59 @@ int ItemCallbacks::BucklerToHitPenalty(DispatcherCallbackArgs args)
 	return 0;
 }
 
+int __cdecl ItemCallbacks::MaxDexBonus(objHndl armor)
+{
+	auto res = itemCallbacks.oldMaxDexBonus(armor);
+	
+	//Query for max dex bonus adjustment
+	if (armor) {
+		auto parent = inventory.GetParent(armor);
+		if (parent) {
+			auto obj = objSystem->GetObject(parent);
+			if ((obj != nullptr) && (obj->IsPC() || obj->IsNPC())) {
+				auto adjustment = d20Sys.D20QueryPython(parent, "Max Dex Bonus Adjustment", armor);
+				res += adjustment;
+			}
+		}
+	}
+    
+	return res;
+}
+
+int __cdecl ItemCallbacks::ArmorBonusAcBonusCapValue(DispatcherCallbackArgs args)
+{
+	auto invIdx = args.GetCondArg(2);
+	auto item = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
+	GET_DISPIO(dispIOTypeAttackBonus, DispIoAttackBonus);
+
+	auto itemName = description._getDisplayName(item, args.objHndCaller);
+	auto maxDexBon = itemCallbacks.MaxDexBonus(item);
+	if (maxDexBon >= 100) { // prevent clogging bonus cap buffer with these values
+		return 0;
+	}
+	dispIo->bonlist.AddCapWithDescr(3, maxDexBon, 112, itemName);
+	return 0;
+}
+
+int __cdecl ItemCallbacks::ArmorCheckPenalty(objHndl armor)
+{
+	auto res = itemCallbacks.oldArmorCheckPenalty(armor);
+	
+	//Query for armor check penalty adjustment
+	if (armor) {
+		auto parent = inventory.GetParent(armor);
+		if (parent) {
+			auto obj = objSystem->GetObject(parent);
+			if ((obj != nullptr) && (obj->IsPC() || obj->IsNPC())) {
+				auto adjustment = d20Sys.D20QueryPython(parent, "Armor Check Penalty Adjustment", armor);
+				res += adjustment;  //The adjustment is a positive value, the penalty is a negative value
+				res = std::min(res, 0);
+			}
+		}
+	}
+
+	return res;
+}
 
 int __cdecl ItemCallbacks::BucklerAcPenalty(DispatcherCallbackArgs args)
 {
@@ -5503,6 +5590,26 @@ int ItemCallbacks::WeaponWounding(DispatcherCallbackArgs args){
 
 
 	
+}
+
+int __cdecl ItemCallbacks::ArmorShadowSilentMovesSkillBonus(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIoTypeObjBonus, DispIoObjBonus);
+
+	auto inventoryIdx = args.GetCondArg(2);
+	auto value = args.GetCondArg(0);  //Now supporting multiple values for improved and greater
+	value = std::max(value, 5);  //In case this is an old cond which would possible have a 0 value instead of 5
+	
+	auto item = inventory.GetItemAtInvIdx(args.objHndCaller, inventoryIdx);
+	
+	const char* desc = nullptr;
+	if (item != objHndl::null) {
+		desc = description.getDisplayName(item);
+	}
+
+	dispIo->bonOut->AddBonusWithDesc(value, 34, 112, desc);
+
+	return 0;
 }
 
 int ItemCallbacks::WeaponThundering(DispatcherCallbackArgs args){

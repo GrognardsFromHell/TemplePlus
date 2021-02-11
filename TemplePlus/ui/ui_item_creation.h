@@ -35,7 +35,8 @@ enum ItemEnhancementSpecFlags{
 	IESF_UNK100 = 0x100, // only used in Keen
 	IESF_ENH_BONUS = 0x200, // special casing for the enhancement bonus (the +X for weapons/armors)
 	IESF_INCREMENTAL = 0x400, // indicates that there are multiple progressive versions of this that supercede each other
-	IESF_NONCORE = 0x800 // enhancement based on non-core rules material (e.g. splatbook/fanmade), enabled only when non-core materials config is set 
+	IESF_NONCORE = 0x800, // enhancement based on non-core rules material (e.g. splatbook/fanmade), enabled only when non-core materials config is set 
+	IESF_LIGHT_ONLY = 0x1000 // only for light armor 
 };
 
 struct ItemEnhancementSpec {
@@ -121,6 +122,7 @@ public:
 		void MaaEffectGetTextStyle(int effIdx, objHndl crafter, TigTextStyle* & style);
 	BOOL MaaEffectAddMsg(int widId, TigMsg* msg);
 	int MaaGetTotalEffectiveBonus(int effIdx);
+	int MaaGetTotalExtraCost(int effIdx);
 	void MaaAppendEnhancement(int effIdx);
 	BOOL MaaEffectRemoveMsg(int widId, TigMsg* msg);
 	BOOL MaaAppliedBtnMsg(int widId, TigMsg* msg);
@@ -187,6 +189,9 @@ public:
 	UiItemCreation();
 
 	int GetItemCreationType();
+
+	std::map<int, ItemEnhancementSpec> &GetItemEnhSpecs() { return itemEnhSpecs; }
+	std::string GetEffectDescription(objHndl item);
 	
 protected:
 
@@ -257,6 +262,7 @@ protected:
 
 	MesHandle mItemCreationMes; // tpmes\\item_creation.mes
 
+	std::map<int, int> itemExtraGold; // Extra gold cost associated with the item
 	std::map<int, ItemEnhancementSpec> itemEnhSpecs; // the idx has a reserved value of -1 for "none"
 	
 	
@@ -268,6 +274,7 @@ protected:
 	int GoldBaseWorthVsEffectiveBonus[30]; // lookup table for base worth (in GP) vs. effective enhancement level
 	int GoldCraftCostVsEffectiveBonus[30]; // lookup table for craft cost (in GP) vs. effective enhancement level
 	int craftedItemExistingEffectiveBonus; // stores the crafted item existing (pre-crafting) effective bonus
+	int craftedItemExtraGold;  // stores the crafted item existing (pre-crafting) extra gold cost
 	int& craftingItemIdx = mCraftingItemIdx; //temple::GetRef<int>(0x10BEE398);
 
 	uint32_t numItemsCrafting[8]; // for each Item Creation type

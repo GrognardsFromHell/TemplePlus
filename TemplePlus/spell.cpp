@@ -333,8 +333,8 @@ bool SpellPacketBody::SavingThrow(objHndl target, D20SavingThrowFlag flags) {
 	return damage.SavingThrowSpell(target, caster, dc, (SavingThrowType)spEntry.savingThrowType, flags, spellId );
 }
 
-bool SpellPacketBody::CheckSpellResistance(objHndl tgt){
-	return spellSys.CheckSpellResistance(this, tgt) != FALSE;
+bool SpellPacketBody::CheckSpellResistance(objHndl tgt, bool forceCheck){
+	return spellSys.CheckSpellResistance(this, tgt, forceCheck) != FALSE;
 }
 
 const char* SpellPacketBody::GetName(){
@@ -783,6 +783,11 @@ const char* LegacySpellSystem::GetSpellMesline(uint32_t lineNumber) const{
 
 	mesFuncs.GetLine_Safe(*spellMes, &mesLine);
 	return mesLine.value;
+}
+
+const char* LegacySpellSystem::GetDomainName(int domainEnum) const
+{
+	return GetSpellMesline(4000 + domainEnum);
 }
 
 const char * LegacySpellSystem::GetSpellDescription(uint32_t spellEnum) const
@@ -1869,6 +1874,27 @@ void LegacySpellSystem::SpellsCastReset(objHndl handle, Stat classEnum){
 	}
 }
 
+/* 0x10075BC0 */
+void LegacySpellSystem::SpellKnownRemove(objHndl handle, SpellStoreData& spData)
+{
+	auto obj = objSystem->GetObject(handle);
+
+	auto numKnown = obj->GetSpellArray(obj_f_critter_spells_known_idx).GetSize();
+
+	for (auto i = 0u; i < numKnown ; ++i){
+		
+		auto knSpell = obj->GetSpell(obj_f_critter_spells_known_idx, i);
+		if (knSpell.classCode == spData.classCode 
+			&& knSpell.spellLevel == spData.spellLevel
+			&& knSpell.spellEnum == spData.spellEnum)
+		{
+			spellSys.spellRemoveFromStorage(handle, obj_f_critter_spells_known_idx, &knSpell, 0);
+			return;
+		}
+	}
+}
+
+/* 0x10075A10 */
 void LegacySpellSystem::SpellMemorizedAdd(objHndl handle, int spellEnum, int spellClass, int spellLvl,
 	int spellStoreData, int metaMagicData){
 	if (!handle) return;
@@ -2376,6 +2402,44 @@ bool LegacySpellSystem::numSpellsMemorizedTooHigh(objHndl objHnd)
 	return 0;
 }
 
+/* 0x101B5AD0 */
+bool LegacySpellSystem::SpellOpposesCritterAlignment(SpellStoreData& spData, objHndl handle)
+{
+	auto obj = objSystem->GetObject(handle);
+	if (!obj) return false;
+	if (!spData.spellEnum) return false;
+
+	if (isDomainSpell(spData.classCode) || spellSys.GetCastingClass(spData.classCode) == stat_level_cleric) {
+
+		SpellEntry spEntry(spData.spellEnum);
+		if (!spEntry.spellEnum) return false;
+		auto critterAlignment = obj->GetInt32(obj_f_critter_alignment);
+		auto alignmentChoice = obj->GetInt32(obj_f_critter_alignment_choice);
+		auto descriptor = spEntry.spellDescriptorBitmask;
+
+		if (
+			(descriptor & D20SpellDescriptors::D20SPELL_DESCRIPTOR_EVIL) 
+			 && (critterAlignment & Alignment::ALIGNMENT_GOOD || alignmentChoice == 1)
+			||
+			(descriptor & D20SpellDescriptors::D20SPELL_DESCRIPTOR_GOOD)
+			 && (critterAlignment & Alignment::ALIGNMENT_EVIL || alignmentChoice == 2)
+			||
+			(descriptor & D20SpellDescriptors::D20SPELL_DESCRIPTOR_LAWFUL)
+			&& (critterAlignment & Alignment::ALIGNMENT_CHAOTIC )
+			||
+			(descriptor & D20SpellDescriptors::D20SPELL_DESCRIPTOR_CHAOTIC)
+			&& (critterAlignment & Alignment::ALIGNMENT_LAWFUL)
+			) 
+		{
+			return true;
+		}
+
+		
+	}
+
+	return false;
+}
+
 bool LegacySpellSystem::isDomainSpell(uint32_t spellClassCode){
 	return (spellClassCode & 0x80) == 0;
 }
@@ -2806,7 +2870,7 @@ BOOL LegacySpellSystem::PlayFizzle(objHndl handle)
 	return 1;
 }
 
-int LegacySpellSystem::CheckSpellResistance(SpellPacketBody* spellPkt, objHndl handle)
+int LegacySpellSystem::CheckSpellResistance(SpellPacketBody* spellPkt, objHndl handle, bool forceCheck)
 {
 	// check spell immunity
 	DispIoImmunity dispIo;
@@ -2820,8 +2884,8 @@ int LegacySpellSystem::CheckSpellResistance(SpellPacketBody* spellPkt, objHndl h
 		return 1;
 	}
 
-	// does spell allow saving?
-	if (dispIo.spellEntry.spellResistanceCode != 1)
+	// does spell allow SR (force flag will check anyway)
+	if ((dispIo.spellEntry.spellResistanceCode != 1) && !forceCheck)
 	{
 		return 0;
 	}

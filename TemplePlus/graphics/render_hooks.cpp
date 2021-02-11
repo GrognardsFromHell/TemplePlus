@@ -216,6 +216,7 @@ int RenderHooks::ShaderRender2d(const Render2dArgs* args) {
 	return 0;
 }
 
+/* 0x101D9300  see UiRenderer::DrawTexture */
 int RenderHooks::TextureRender2d(const Render2dArgs* args) {
 
 	auto &shapeRenderer = tig->GetShapeRenderer2d();

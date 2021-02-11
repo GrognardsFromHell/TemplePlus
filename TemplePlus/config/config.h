@@ -94,6 +94,7 @@ struct TemplePlusConfig
 	bool disableDoorRelocking = false;
 	bool newClasses = false; // Prestige classes and such
 	bool newRaces = false; // Drow etc.
+	bool metamagicStacking = false; // Allows stacking of Meta Magic feats
 	bool monstrousRaces = false; // monstrous races. unbalanced as hell ><
 	bool forgottenRealmsRaces = false;  //Races from the forgotten realms campaign setting (Gold Dwarf, Genasi, ...)
 	bool nonCoreMaterials = false; // splatbooks, fan suggestions etc

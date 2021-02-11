@@ -72,6 +72,7 @@ namespace gfx {
 
 		void DrawLines(gsl::span<Line2d> lines);
 
+		void DrawRectangleOutlineVanilla(XMFLOAT2 topLeft, XMFLOAT2 bottomRight, XMCOLOR color);
 		void DrawRectangleOutline(XMFLOAT2 topLeft, XMFLOAT2 bottomRight, XMCOLOR color);
 
 		void DrawFullScreenQuad();

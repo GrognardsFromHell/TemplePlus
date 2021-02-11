@@ -329,112 +329,12 @@ public:
 		return fmt::format("0x{:x}", address);
 	}
 
+	void DumpGoalSetups();
+
 	virtual void apply() override {
-		using AnimGoalArray = const AnimGoal*[82];
-		AnimGoalArray& goals = temple::GetRef<AnimGoalArray>(0x102BD1B0);
-
-
-		auto fh = fopen("anim_goal_setup.cpp", "wt");
-
-		for (auto entry : goalfunc_names) {
-			fmt::print(fh, "int {}(AnimSlot &slot); // Originally @ 0x{:x}\n", entry.second, entry.first);
-		}
-
-		for (auto entry : goalfunc_names) {
-			fmt::print(fh, "\n// Originally @ 0x{:x}\n", entry.first);
-			fmt::print(fh, "int {}(AnimSlot &slot) {{\n", entry.second);
-			fmt::print(fh, "\tstatic org = temple::GetRef<GoalCallback>(0x{:x});\n", entry.first);
-			fmt::print(fh, "\treturn org(slot);\n");
-			fmt::print(fh, "}}\n");
-		}
-
-		for (int i = 0; i < ag_count; i++) {
-			auto goal = goals[i];
-			auto goalName = GetAnimGoalTypeName((AnimGoalType)i);
-			if (!goal) {
-				fmt::print(fh, "\n");
-				fmt::print(fh, "// {} was undefined\n", goalName);
-				fmt::print(fh, "\n");
-				continue;
-			}
-
-			auto builderVar = std::string(GetAnimGoalTypeName((AnimGoalType)i));
-			if (builderVar.find("ag_") == 0) {
-				builderVar.replace(0, 3, "");
-			}
-
-			fmt::print(fh, "// {}\n", goalName);
-			fmt::print(fh, "auto {} = AnimGoalBuilder(goals_[{}])", builderVar, goalName);
-			fmt::print(fh, "\n\t.SetPriority({})", GetAnimGoalPriorityText(goal->priority));
-			if (goal->interruptAll) {
-				fmt::print(fh, "\n\t.SetInterruptAll(true)");
-			}
-			if (goal->field_C) {
-				fmt::print(fh, "\n\t.SetFieldC(true)");
-			}
-			if (goal->field_10) {
-				fmt::print(fh, "\n\t.SetField10(true)");
-			}
-			if (goal->relatedGoal[0] != -1) {
-				fmt::print(fh, "\n\t.SetRelatedGoals(");
-				for (int j = 0; j < 3; j++) {
-					if (goal->relatedGoal[j] == -1) {
-						break;
-					}
-					if (j > 0) {
-						fmt::print(fh, ", ");
-					}
-					fmt::print(fh, "{}", GetAnimGoalTypeName((AnimGoalType) goal->relatedGoal[j]));
-				}
-				fmt::print(fh, ")");
-			}
-			fmt::print(fh, ";\n");
-
-			for (int j = -1; j < goal->statecount; j++) {
-				AnimGoalState state;
-				if (j == -1) {
-					state = goal->state_special;
-					if (!state.callback) {
-						continue;
-					}
-					fmt::print(fh, "{}.AddCleanup({})", builderVar, GetCallbackFunctionRef((uint32_t)state.callback));
-				} else {
-					state = goal->states[j];
-					fmt::print(fh, "{}.AddState({}) // Index {}", builderVar, GetCallbackFunctionRef((uint32_t)state.callback), j);
-				}
-
-				Expects(state.argInfo2 == -1 || state.argInfo1 != -1);
-
-				if (state.argInfo1 != -1) {
-					fmt::print(fh, "\n\t.SetArgs({}", GetArgInfoText(state.argInfo1));
-
-					if (state.argInfo2 != -1) {
-						fmt::print(fh, ", {}", GetArgInfoText(state.argInfo2));
-					}
-					fmt::print(fh, ")");
-				}
-
-				if (state.flagsData != -1) {
-					fmt::print(fh, "\n\t.SetFlagsData({})", state.flagsData);
-				}
-
-				// Print transitions
-				if (j != -1) {
-					fmt::print(fh, "\n\t.OnSuccess({})", GetTransitionArgs(state.afterSuccess));
-				}
-				if (j != -1) {
-					fmt::print(fh, "\n\t.OnFailure({})", GetTransitionArgs(state.afterFailure));
-				}
-
-				fmt::print(fh, ";\n");
-			}
-
-			fmt::print(fh, "\n");
-
-		}
-
-		fclose(fh);
-
+		
+		// DumpGoalSetups();
+		
 		// All functions that use 102BD1B0 should now be replaced (the goals array)
 		// breakRegion(0x102BD1B0, 0x102BD2F4);
 
@@ -632,3 +532,111 @@ public:
 	}
 
 } hooks;
+
+void AnimGoalsHooks::DumpGoalSetups()
+{
+	using AnimGoalArray = const AnimGoal* [82];
+	AnimGoalArray& goals = temple::GetRef<AnimGoalArray>(0x102BD1B0);
+
+	auto fh = fopen("anim_goal_setup.cpp", "wt");
+
+	for (auto entry : goalfunc_names) {
+		fmt::print(fh, "int {}(AnimSlot &slot); // Originally @ 0x{:x}\n", entry.second, entry.first);
+	}
+
+	for (auto entry : goalfunc_names) {
+		fmt::print(fh, "\n// Originally @ 0x{:x}\n", entry.first);
+		fmt::print(fh, "int {}(AnimSlot &slot) {{\n", entry.second);
+		fmt::print(fh, "\tstatic org = temple::GetRef<GoalCallback>(0x{:x});\n", entry.first);
+		fmt::print(fh, "\treturn org(slot);\n");
+		fmt::print(fh, "}}\n");
+	}
+
+	for (int i = 0; i < ag_count; i++) {
+		auto goal = goals[i];
+		auto goalName = GetAnimGoalTypeName((AnimGoalType)i);
+		if (!goal) {
+			fmt::print(fh, "\n");
+			fmt::print(fh, "// {} was undefined\n", goalName);
+			fmt::print(fh, "\n");
+			continue;
+		}
+
+		auto builderVar = std::string(GetAnimGoalTypeName((AnimGoalType)i));
+		if (builderVar.find("ag_") == 0) {
+			builderVar.replace(0, 3, "");
+		}
+
+		fmt::print(fh, "// {}\n", goalName);
+		fmt::print(fh, "auto {} = AnimGoalBuilder(goals_[{}])", builderVar, goalName);
+		fmt::print(fh, "\n\t.SetPriority({})", GetAnimGoalPriorityText(goal->priority));
+		if (goal->interruptAll) {
+			fmt::print(fh, "\n\t.SetInterruptAll(true)");
+		}
+		if (goal->field_C) {
+			fmt::print(fh, "\n\t.SetFieldC(true)");
+		}
+		if (goal->field_10) {
+			fmt::print(fh, "\n\t.SetField10(true)");
+		}
+		if (goal->relatedGoal[0] != -1) {
+			fmt::print(fh, "\n\t.SetRelatedGoals(");
+			for (int j = 0; j < 3; j++) {
+				if (goal->relatedGoal[j] == -1) {
+					break;
+				}
+				if (j > 0) {
+					fmt::print(fh, ", ");
+				}
+				fmt::print(fh, "{}", GetAnimGoalTypeName((AnimGoalType)goal->relatedGoal[j]));
+			}
+			fmt::print(fh, ")");
+		}
+		fmt::print(fh, ";\n");
+
+		for (int j = -1; j < goal->statecount; j++) {
+			AnimGoalState state;
+			if (j == -1) {
+				state = goal->state_special;
+				if (!state.callback) {
+					continue;
+				}
+				fmt::print(fh, "{}.AddCleanup({})", builderVar, GetCallbackFunctionRef((uint32_t)state.callback));
+			}
+			else {
+				state = goal->states[j];
+				fmt::print(fh, "{}.AddState({}) // Index {}", builderVar, GetCallbackFunctionRef((uint32_t)state.callback), j);
+			}
+
+			Expects(state.argInfo2 == -1 || state.argInfo1 != -1);
+
+			if (state.argInfo1 != -1) {
+				fmt::print(fh, "\n\t.SetArgs({}", GetArgInfoText(state.argInfo1));
+
+				if (state.argInfo2 != -1) {
+					fmt::print(fh, ", {}", GetArgInfoText(state.argInfo2));
+				}
+				fmt::print(fh, ")");
+			}
+
+			if (state.flagsData != -1) {
+				fmt::print(fh, "\n\t.SetFlagsData({})", state.flagsData);
+			}
+
+			// Print transitions
+			if (j != -1) {
+				fmt::print(fh, "\n\t.OnSuccess({})", GetTransitionArgs(state.afterSuccess));
+			}
+			if (j != -1) {
+				fmt::print(fh, "\n\t.OnFailure({})", GetTransitionArgs(state.afterFailure));
+			}
+
+			fmt::print(fh, ";\n");
+		}
+
+		fmt::print(fh, "\n");
+
+	}
+
+	fclose(fh);
+}

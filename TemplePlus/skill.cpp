@@ -5,6 +5,8 @@
 #include "util/fixes.h"
 #include "float_line.h"
 #include "d20.h"
+#include <infrastructure/json11.hpp>
+#include <infrastructure/vfs.h>
 
 #pragma region SkillSystem Implementation
 LegacySkillSystem skillSys;
@@ -56,6 +58,11 @@ void LegacySkillSystem::FloatError(const objHndl& obj, int errorOffset){
 	floatSys.floatMesLine(obj, 1, FloatLineColor::White, mesline.value);
 }
 
+const char* LegacySkillSystem::GetSkillName(SkillEnum skillEnum)
+{
+	return temple::GetRef<const char* []>(0x10AB70B0)[skillEnum];
+}
+
 const char * LegacySkillSystem::GetSkillHelpTopic(SkillEnum skillEnum){
 	MesLine mesline(10200 + skillEnum);
 	auto skillRulesMes = temple::GetRef<MesHandle>(0x10AB72B8);
@@ -64,9 +71,59 @@ const char * LegacySkillSystem::GetSkillHelpTopic(SkillEnum skillEnum){
 	return nullptr;
 }
 
+Stat LegacySkillSystem::GetSkillStat(SkillEnum skillEnum)
+{
+	return skillPropsTable[skillEnum].stat;
+}
+
 LegacySkillSystem::LegacySkillSystem(){
 	bonus = &bonusSys;
 	macRebase(skillPropsTable, 102CBA30)
 }
 
+void LegacySkillSystem::Init()
+{
+	LoadSkillsProps("rules\\skills_props.json");
+}
+
+void LegacySkillSystem::LoadSkillsProps(const std::string& path)
+{
+	std::string error;
+	if (!vfs->FileExists(path)) return;
+	json11::Json json = json.parse(vfs->ReadAsString(path), error);
+
+	if (json.is_null()) {
+		throw TempleException("Unable to parse skills_props.json from {}: {}", path, error);
+	}
+
+	if (!json.is_array()) {
+		throw TempleException("skills_props.json must start with an array at the root");
+	}
+
+	for (auto& item : json.array_items()) {
+		if (!item.is_object()) {
+			logger->warn("Skipping skill that is not an object.");
+			continue;
+		}
+		auto idNode = item["id"];
+		if (!idNode.is_number()) {
+			logger->warn("Skipping skill that is missing 'id' attribute.");
+			continue;
+		}
+		uint32_t id = (uint32_t)item["id"].int_value();
+		if (id < 0 || id >= SkillEnum::skill_count) {
+			logger->warn("Skipping skill that is out of bounds.");
+			continue;
+		}
+
+		if (!item["enabled"].is_number()) {
+			logger->warn("Skipping skill that is missing 'enabled' int attribute.");
+			continue;
+		}
+		uint32_t enabled = (uint32_t)item["enabled"].int_value();
+		if (enabled)
+			skillPropsTable[id].classFlags &= ~0x80000000;
+		else skillPropsTable[id].classFlags |= 0x80000000;
+	}
+}
 #pragma endregion

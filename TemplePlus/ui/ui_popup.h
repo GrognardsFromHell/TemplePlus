@@ -12,21 +12,21 @@ struct UiPromptPacket {
 	TigRect textRect;
 	const char* wndTitle;
 	int image;
-	int texture0;
-	int texture1;
-	int texture2;
+	int btnNormalTexture;
+	int btn2NormalTexture;
+	int btn3NormalTexture;
 	int btnHoverTexture;
-	int texture4;
-	int texture5;
+	int btn2HoverTexture;
+	int btn3HoverTexture;
 	int btnPressedTexture;
-	int texture7;
-	int texture8;
+	int btn2PressedTexture;
+	int btn3PressedTexture;
 	int btnDisabledTexture;
-	int texture10;
-	int field50;
-	int(__cdecl* someCallback)();
-	void(__cdecl* renderFuncMaybe)();
-	void(__cdecl* callback)(int);
+	int btn2DisabledTexture;
+	int btn3DisabledTexture;
+	int(__cdecl* onPopupShow)();
+	void(__cdecl* onPopupHide)();
+	void(__cdecl* callback)(int popupBtnIdx);
 	TigRect wndRect;
 	TigRect okRect;
 	const char* okBtnText;
@@ -37,41 +37,9 @@ struct UiPromptPacket {
 	int unkAC;
 	int unkB0;
 
+	UiPromptPacket();
+	int Show(int promptIdx, int flag);
 	void Reset();
 };
 
-const int testSizeofPromptPacket = sizeof(UiPromptPacket); // hsould be 180 (0xB4)
-
-struct UiPromptListEntry {
-	int flags; // 1 - execute callback after reseting the prompt (otherwise does so before)
-	int isActive;
-	LgcyWindow * wnd;
-	LgcyButton * btns[3];
-	UiPromptPacket prompt;
-	void ResetWnd();
-};
-
-
-class UiPopup
-{
-	friend class UiPopupReplacement;
-public:
-
-	/*
-	  buttonTextType: 0 for Okay / Cancel, 1 for Yes/No
-	  haven't seen the second callback actually used, might be debug?
-	*/
-	int VanillaPopupShow(const char *bodyText, const char *title, int buttonTextType, int(__cdecl *callback)(int), int(__cdecl *optionalCallback)(int)); 
-
-	int FindPopupBtnIdx(int widId);
-	void ExecuteCallback(int popupIdx, int btnIdx);
-	
-	UiPromptListEntry & GetCurPopup();
-
-protected:
-	BOOL UiPopupMsg(int widId, TigMsg* msg);
-	BOOL UiPopupWndMsg(int widId, TigMsg* msg);
-	int GetCurrentPopupIdx();
-	void SetCurrentPopupIdx(int popupIdx);
-	UiPromptListEntry & GetPopupByType(int popupType);
-};
+const int testSizeofPromptPacket = sizeof(UiPromptPacket); // should be 180 (0xB4)

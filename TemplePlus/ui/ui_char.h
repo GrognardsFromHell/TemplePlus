@@ -17,6 +17,7 @@ enum class UiCharDisplayType : uint32_t {
 };
 
 struct UiSystemConf;
+class UiCharImpl;
 
 class UiChar : public UiSystem {
 public:
@@ -26,6 +27,8 @@ public:
 	void Reset() override;
 	void ResizeViewport(const UiResizeArgs &resizeArgs) override;
 	const std::string &GetName() const override;
+
+	void TextboxSetText(const char* txt);
 
 	// Was @ 101F97D0 (GetInventoryObjState)
 	bool GetInventoryObjectState() const {
@@ -107,6 +110,7 @@ public:
 	void LootingWidgetsInit();
 
 private:
+	std::unique_ptr<UiCharImpl> mImpl;
 	objHndl & mInventoryObj = temple::GetRef<objHndl>(0x10BEECC0);
 	objHndl &mLootedObj = temple::GetRef<objHndl>(0x10BE6EC0);
 	BOOL &mInventoryObjState = temple::GetRef<BOOL>(0x10EF97C4);

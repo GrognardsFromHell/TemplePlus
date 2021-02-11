@@ -49,10 +49,12 @@
 #include "ui/ui_char.h"
 #include "infrastructure/elfhash.h"
 #include "ui/ui_alert.h"
+#include <fmt/format.h>
 
 #include <pybind11/embed.h>
 namespace py = pybind11;
 
+std::map<std::string, MesHandle> mesMap;
 
 static PyObject *encounterQueue = nullptr;
 
@@ -1279,6 +1281,38 @@ PyObject* PyGame_CreateHistoryFromPattern(PyObject*, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+PyObject* PyGame_SpellMesline(PyObject*, PyObject* args) {
+	int line;
+	if (!PyArg_ParseTuple(args, "i:game.get_spell_mesline", &line)) {
+		Py_RETURN_NONE;
+	}
+	
+	auto text = spellSys.GetSpellMesline(line);
+	return PyString_FromString(text);
+}
+
+PyObject* PyGame_Mesline(PyObject*, PyObject* args) {
+	int line;
+	char *file;
+	if (!PyArg_ParseTuple(args, "si:game.get_mesline", &file, &line)) {
+		Py_RETURN_NONE;
+	}
+
+	//Keep the meshandles in a map for the future if it is new
+	if (mesMap.find(file) == mesMap.end()) {
+		MesHandle m;
+		bool bRes = mesFuncs.Open(file, &m);
+		if (!bRes) {
+			return PyString_FromString(fmt::format("Error! Unable to open mesfile {}", file).c_str());
+		}
+		else {
+			mesMap.emplace(file, m);
+		}
+	}
+	MesLine mesLine(line);
+	mesFuncs.GetLine_Safe(mesMap[file], &mesLine);
+	return PyString_FromString(mesLine.value);
+}
 
 PyObject* PyGame_WrittenUiShow(PyObject*, PyObject* args) {
 	objHndl handle;
@@ -1331,6 +1365,8 @@ static PyMethodDef PyGameMethods[]{
 	{ "create_history_freeform", PyGame_CreateHistoryFreeform, METH_VARARGS, NULL },
 	{ "create_history_from_id", PyGame_CreateHistoryFromId, METH_VARARGS, NULL },
 	{ "create_history_from_pattern", PyGame_CreateHistoryFromPattern, METH_VARARGS, NULL },
+	{ "get_spell_mesline", PyGame_SpellMesline, METH_VARARGS, NULL },
+	{ "get_mesline", PyGame_Mesline, METH_VARARGS, NULL },
 	{"fade_and_teleport", PyGame_FadeAndTeleport, METH_VARARGS, NULL},
 	{"fade", PyGame_Fade, METH_VARARGS, NULL},
 	{ "fnn", PyGame_FindNpcNear, METH_VARARGS, NULL },
@@ -1471,6 +1507,12 @@ void PyGame_Exit() {
 	encounterQueue = nullptr;
 	Py_XDECREF(dialogPickerArgs.isValidTarget);
 	dialogPickerArgs.isValidTarget = nullptr;
+
+	//Cleanup any stored mes file handles
+	for (const auto& mes : mesMap) {
+		mesFuncs.Close(mes.second);
+	}
+	mesMap.clear();
 }
 
 void PyGame_Reset() {

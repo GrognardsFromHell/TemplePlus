@@ -33,11 +33,15 @@ struct LegacySkillSystem : temple::AddressTable {
 	*/
 	void FloatError(const objHndl& obj, int errorOffset);
 
+	const char* GetSkillName(SkillEnum skillEnum);
 	const char *GetSkillHelpTopic(SkillEnum skillEnum);
 
+	Stat GetSkillStat(SkillEnum skillEnum);
 
 	LegacySkillSystem();
-	
+
+	void LoadSkillsProps(const std::string& path);
+	void Init();
 };
 
 extern LegacySkillSystem skillSys;

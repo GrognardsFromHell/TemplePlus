@@ -2713,7 +2713,7 @@ void UiPcCreation::GenderFinalize(CharEditorSelectionPacket& selPkt, objHndl& ha
 	}
 
 	auto animHandle = objects.GetAnimHandle(handle);
-	gfx::AnimatedModelParams animParams;
+	auto animParams = objects.GetAnimParams(handle);
 	animHandle->Advance(1.0, 0, 0, animParams);
 
 	if (selPkt.isPointbuy){
@@ -2838,6 +2838,76 @@ void UiPcCreation::MainWndRender(int id) {
 
 	auto renderCharModel = temple::GetRef<void(__cdecl)(int)>(0x1011C320);
 	renderCharModel(id);
+}
+
+BOOL UiPcCreation::MainWndMsg(int widgetId, TigMsg* msg) {
+	if (*feats.charEditorObjHnd)
+	{
+		static auto lastAnimTime = timeGetTime();
+		auto now = timeGetTime();
+		// Do not allow more than 1 second of animation at once
+		auto elapsedTime = std::min(1.0f, (now - lastAnimTime) / 1000.0f);
+		lastAnimTime = now;
+
+		auto anim = objects.GetAnimHandle(*feats.charEditorObjHnd);
+		if (anim) {
+			// Vanilla did not properly initialize the AAS params here
+			auto animParams = objects.GetAnimParams(*feats.charEditorObjHnd);
+			anim->Advance(elapsedTime, 0, 0, animParams);
+		}
+	}
+
+	// The following code handles rotating the character model preview
+	static auto &uiPcCreationWnd = temple::GetRef<LgcyWindow>(0x11e73e40);
+	static int rotateState = 0;
+	static int rotatePivot = 0;
+
+	switch (msg->type) {
+	case TigMsgType::MOUSE:
+	{
+		int x = msg->arg1;
+		int y = msg->arg2;
+		if (x < uiPcCreationWnd.x + 26
+			|| x > uiPcCreationWnd.x + 214
+			|| y < uiPcCreationWnd.y + 52
+			|| y > uiPcCreationWnd.y + 233)
+		{
+			// Mouse has left character portrait
+			rotateState = 0;
+		}
+		else if (rotateState == 1)
+		{
+			rotatePivot = x;
+			rotateState = 2;
+		}
+		else if (rotateState == 2)
+		{
+			// One full rotation for every 200 pixel mouse movement
+			auto rotationDelta = ((int) x - rotatePivot) / 200.0f * XM_2PI;
+			rotatePivot = x;
+			static auto& modelRotation = temple::GetRef<float>(0x10bddd28);
+			modelRotation = modelRotation - rotationDelta;
+			// Normalize rotation to [0,2pi], note that this does not need to be fully accurate
+			modelRotation = modelRotation - XM_2PI * std::floor((modelRotation + XM_PI) * XM_1DIV2PI);
+		}
+		return TRUE;
+	}
+
+	case TigMsgType::WIDGET:
+	{
+		auto widgetMsg = (TigMsgWidget*) msg;
+		if (widgetMsg->widgetEventType == TigMsgWidgetEvent::Clicked) {
+			rotateState = 1;
+		} else if (widgetMsg->widgetEventType == TigMsgWidgetEvent::MouseReleased
+			|| widgetMsg->widgetEventType == TigMsgWidgetEvent::Exited) {
+			rotateState = 0;
+		}
+		return TRUE;
+	}
+
+	default:
+		return FALSE;
+	}
 }
 
 void UiPcCreation::RenderCharInfos(int widId){
