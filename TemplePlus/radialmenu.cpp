@@ -990,6 +990,33 @@ RadialMenuEntrySlider::RadialMenuEntrySlider(int combatMesLine, int _minArg, int
 	callback = (BOOL(__cdecl*)(objHndl, RadialMenuEntry*))temple::GetPointer(0x100F0200);
 }
 
+RadialMenuEntrySlider::RadialMenuEntrySlider(const std::string& bodyText, const std::string& titleText, int _minArg, int _maxArg, const std::string& helpId)
+{
+	type = RadialMenuEntryType::Slider;
+	{
+		auto textId = ElfHash::Hash(bodyText);
+		auto textCache = radialMenus.radMenuStrings.find(textId);
+		if (textCache == radialMenus.radMenuStrings.end()) {
+			radialMenus.radMenuStrings[textId] = bodyText;
+		}
+		this->text = (char*)radialMenus.radMenuStrings[textId].c_str();
+	}
+	if (titleText.size() > 0){
+		auto textId = ElfHash::Hash(titleText);
+		auto textCache = radialMenus.radMenuStrings.find(textId);
+		if (textCache == radialMenus.radMenuStrings.end()) {
+			radialMenus.radMenuStrings[textId] = bodyText;
+		}
+		this->field4 = reinterpret_cast<int>(radialMenus.radMenuStrings[textId].c_str() );
+	}
+
+	this->helpId = ElfHash::Hash(helpId);
+	maxArg = max(0, _maxArg);
+	minArg = _minArg;
+	
+	callback = (BOOL(__cdecl*)(objHndl, RadialMenuEntry*))temple::GetPointer(0x100F0200);
+}
+
 RadialMenuEntryAction::RadialMenuEntryAction(int combatMesLine, D20ActionType d20aType, int data1, uint32_t HelpId) : RadialMenuEntry() {
 	type = RadialMenuEntryType::Action;
 	if (combatMesLine > 0)
