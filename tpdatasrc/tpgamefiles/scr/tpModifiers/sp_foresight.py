@@ -50,7 +50,8 @@ def ForesightSpellEnd(attachee, args, evt_obj):
 	return 0
 	
 def ForesightHasSpellActive(attachee, args, evt_obj):
-	evt_obj.return_val = 1
+	if evt_obj.data1 == 186:
+		evt_obj.return_val = 1
 	return 0
 	
 def ForesightKilled(attachee, args, evt_obj):
