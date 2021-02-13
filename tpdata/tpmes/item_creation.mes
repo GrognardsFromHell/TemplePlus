@@ -63,6 +63,7 @@
 {1034}{Wounding}
 {1035}{Warning}
 {1036}{Berserker}
+{1037}{Hunting}
 
 // armor bonuses
 {1200}{+1}
@@ -190,6 +191,7 @@
 {2034}{Deals 1 point of constitution damage from blood loss when it hits a creature.}
 {2035}{Bonus of 5 on initiative.}
 {2036}{Deals an extra 1d8 damage while raging for two-handed weapons only.}
+{2037}{+4 on damage rolls against favored enemies.}
 
 // Armor Enhancement Strings
 {2200}{+1 enhancement bonus to AC.}
