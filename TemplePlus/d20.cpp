@@ -100,6 +100,7 @@ public:
 	static ActionErrorCode ActionCostStandardAttack(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
 	static ActionErrorCode ActionCostMoveAction(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
 	static ActionErrorCode ActionCostNull(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
+	static ActionErrorCode ActionCostSwift(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
 	static ActionErrorCode ActionCostStandardAction(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
 	static ActionErrorCode ActionCostWhirlwindAttack(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
 
@@ -374,6 +375,29 @@ int LegacyD20System::CastSpellProcessTargets(D20Actn* d20a, SpellPacketBody& spe
 	return spellPkt.targetCount;
 }
 
+ActionErrorCode LegacyD20System::CombatActionCostFromSpellCastingTime(uint32_t spellCastingTime, int &actionCostOut)
+{
+	switch (spellCastingTime) {
+	case 0: // "1 Action"
+		actionCostOut = 2;
+		return AEC_OK;
+	case 1: // "Full Round"
+		actionCostOut = 4;
+		return AEC_OK;
+	case 2: // "Out of Combat" there was a check for combat here but it's done at the start of the function anyway, and it didn't do anything anyway except print "spells with casttime_out_of_combat need an 'action cost' > 'full_round'!"
+		actionCostOut = 4;
+		return AEC_OK;
+	case 3: // "Safe"
+		actionCostOut = 4;
+		return AEC_OUT_OF_COMBAT_ONLY;
+	case 4: // "Free Action"
+		actionCostOut = 0;
+		return AEC_OK;
+	default:
+		return AEC_OK;
+	}
+}
+
 void LegacyD20System::NewD20ActionsInit()
 {
 	tabSys.tabFileStatusInit(d20ActionsTabFile, d20actionTabLineParser);
@@ -634,6 +658,8 @@ ActionErrorCode LegacyD20System::GetPyActionCost(D20Actn * d20a, TurnBasedStatus
 			return d20Callbacks.ActionCostPartialCharge(d20a, tbStat, acp);
 		case ActionCostType::FullRound:
 			return d20Callbacks.ActionCostFullRound(d20a, tbStat, acp);
+		case ActionCostType::Swift:
+			return d20Callbacks.ActionCostSwift(d20a, tbStat, acp);
 		default:
 			return d20Callbacks.ActionCostNull(d20a, tbStat, acp);
 	}
@@ -928,7 +954,7 @@ int32_t LegacyD20System::D20ActionTriggersAoO(D20Actn* d20a, TurnBasedStatus* tb
 {
 	//uint32_t result = 0;
 	ActnSeq * actSeq = *actSeqSys.actSeqCur;
-	if (actSeq->tbStatus.tbsFlags & TBSF_CritterSpell)
+	if (actSeq->tbStatus.tbsFlags & TBSF_AvoidAoO)
 		return 0;
 
 
@@ -2362,8 +2388,8 @@ ActionErrorCode D20ActionCallbacks::ActionCostCastSpell(D20Actn * d20a, TurnBase
 	// Quicken Spell handling
 	auto tbsFlags = tbStat->tbsFlags;
 	if (mmData.metaMagicFlags & MetaMagicFlags::MetaMagic_Quicken){
-		if (!(tbsFlags & TurnBasedStatusFlags::TBSF_FreeActionSpellPerformed)){
-			tbStat->tbsFlags |= TurnBasedStatusFlags::TBSF_FreeActionSpellPerformed;
+		if (!(tbsFlags & TurnBasedStatusFlags::TBSF_SwiftActionPerformed)){
+			tbStat->tbsFlags |= TurnBasedStatusFlags::TBSF_SwiftActionPerformed;
 			acp->hourglassCost = 0;
 			return AEC_OK;
 		}
@@ -2375,31 +2401,21 @@ ActionErrorCode D20ActionCallbacks::ActionCostCastSpell(D20Actn * d20a, TurnBase
 	tbStat->numBonusAttacks = 0;
 	tbStat->attackModeCode = 0;
 
-	switch (spEntry.castingTimeType) {
-	case 0: // standard
-		acp->hourglassCost = 2;
-		return AEC_OK;
-	case 1: // full round
-		acp->hourglassCost = 4;
-		return AEC_OK;
-	case 2: // there was a check for combat here but it's done at the start of the function anyway, and it didn't do anything anyway except print "spells with casttime_out_of_combat need an 'action cost' > 'full_round'!"
-		return AEC_OK;
-	case 3:
-		return AEC_OUT_OF_COMBAT_ONLY;
-	case 4:
-		if (tbsFlags & TurnBasedStatusFlags::TBSF_FreeActionSpellPerformed){ // if already performed free action spell
+	ActionErrorCode result = d20Sys.CombatActionCostFromSpellCastingTime(spEntry.castingTimeType, acp->hourglassCost);
+	
+	if (acp->hourglassCost == 0) { // allow only 1 swift action
+		if (tbsFlags & TurnBasedStatusFlags::TBSF_SwiftActionPerformed) { // if already performed swift action
 			acp->hourglassCost = 2;
 			return AEC_OK;
 		}
-		else{
-			tbStat->tbsFlags |= TurnBasedStatusFlags::TBSF_FreeActionSpellPerformed;
+		else {
+			tbStat->tbsFlags |= TurnBasedStatusFlags::TBSF_SwiftActionPerformed;
 			acp->hourglassCost = 0;
 			return AEC_OK;
 		}
-	default:
-		return AEC_OK;
 	}
-	return AEC_OK;
+	
+	return result;
 }
 
 ActionErrorCode D20ActionCallbacks::ActionCostFullRound(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp){
@@ -3290,6 +3306,19 @@ ActionErrorCode D20ActionCallbacks::ActionCostNull(D20Actn* d20a, TurnBasedStatu
 	acp->hourglassCost = 0;
 	acp->chargeAfterPicker = 0;
 	acp->moveDistCost = 0;
+	return AEC_OK;
+}
+
+ActionErrorCode D20ActionCallbacks::ActionCostSwift(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp)
+{
+	if (tbStat->tbsFlags & TBSF_SwiftActionPerformed) {
+		return AEC_INVALID_ACTION;
+	}
+	
+	acp->hourglassCost = 0;	
+	acp->chargeAfterPicker = 0;
+	acp->moveDistCost = 0;
+	tbStat->tbsFlags |= TBSF_SwiftActionPerformed;
 	return AEC_OK;
 }
 

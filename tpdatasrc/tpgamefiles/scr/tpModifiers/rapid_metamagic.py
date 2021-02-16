@@ -1,6 +1,7 @@
 from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
+import tpactions
 
 print "Registering Rapid Metamagic"
 
@@ -20,7 +21,7 @@ def RapidMMActionCostMod(attachee, args, evt_obj):
     if spEntry.spell_enum == 0:
         return 0
 
-    castingTimeType = spEntry.casting_time
+    casting_time_type = spEntry.casting_time
     mmData = spData.get_metamagic_data()
     isQuicken = mmData.get_quicken()
 
@@ -29,6 +30,10 @@ def RapidMMActionCostMod(attachee, args, evt_obj):
         evt_obj.turnbased_status.flags |= TBSF_FreeActionSpellPerformed
         #print "reducing cost to 0"
         return 0
+
+    # restore the original spell's casting time
+    action_err_code, action_cost_org = tpactions.action_cost_from_spell_casting_time(casting_time_type)
+
 
     return 0
 

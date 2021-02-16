@@ -130,7 +130,16 @@ PYBIND11_EMBEDDED_MODULE(tpactions, m) {
 	m.def("get_cur_seq", []()->ActnSeq &{
 		return **actSeqSys.actSeqCur;
 	});
-
+	
+	m.def("action_cost_from_spell_casting_time", [](int castingTimeType)->std::vector<int> {
+		int hourglassCost = 0;
+		auto result = d20Sys.CombatActionCostFromSpellCastingTime(castingTimeType, hourglassCost);
+		std::vector<int> ret(2);
+		ret[0] = (int)result;
+		ret[1] = (int)hourglassCost;
+		return ret;
+		}
+	);
 }
 
 PythonD20ActionIntegration::PythonD20ActionIntegration()

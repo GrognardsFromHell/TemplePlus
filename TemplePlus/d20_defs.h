@@ -102,7 +102,8 @@ enum class ActionCostType : int {
 	Move,
 	Standard,
 	PartialCharge,
-	FullRound
+	FullRound,
+	Swift // new in Temple+
 };
 
 struct ActionCostPacket

@@ -1347,7 +1347,7 @@ void DungeonMaster::RenderEditedObj() {
 				
 				if (!feats.IsFeatMultiSelectMaster(featEnum)){
 					if (ImGui::Button("Add")) {
-						feats.FeatAdd(mEditedObj, featEnum);
+						feats.FeatAdd(mEditedObj, featEnum, false);
 						critEditor.feats.push_back(featEnum);
 					}
 				}
@@ -1365,7 +1365,7 @@ void DungeonMaster::RenderEditedObj() {
 						subFeat = childFeats[subFeatCur];
 					}
 					if (ImGui::Button("Add")) {
-						feats.FeatAdd(mEditedObj, subFeat);
+						feats.FeatAdd(mEditedObj, subFeat, false); // not checking prereqs because some of them may use the char editor interface which needs a handle
 						critEditor.feats.push_back(subFeat);
 					}
 				}

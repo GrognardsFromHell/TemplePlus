@@ -994,14 +994,14 @@ RadialMenuEntrySlider::RadialMenuEntrySlider(int combatMesLine, int _minArg, int
 	callback = (BOOL(__cdecl*)(objHndl, RadialMenuEntry*))temple::GetPointer(0x100F0200);
 }
 
-RadialMenuEntrySlider::RadialMenuEntrySlider(const std::string& bodyText, const std::string& titleText, int _minArg, int _maxArg, const std::string& helpId)
+RadialMenuEntrySlider::RadialMenuEntrySlider(const std::string& radialText, const std::string& titleText, int _minArg, int _maxArg, const std::string& helpId)
 {
 	type = RadialMenuEntryType::Slider;
 	{
-		auto textId = ElfHash::Hash(bodyText);
+		auto textId = ElfHash::Hash(radialText);
 		auto textCache = radialMenus.radMenuStrings.find(textId);
 		if (textCache == radialMenus.radMenuStrings.end()) {
-			radialMenus.radMenuStrings[textId] = bodyText;
+			radialMenus.radMenuStrings[textId] = radialText;
 		}
 		this->text = (char*)radialMenus.radMenuStrings[textId].c_str();
 	}
@@ -1009,7 +1009,7 @@ RadialMenuEntrySlider::RadialMenuEntrySlider(const std::string& bodyText, const 
 		auto textId = ElfHash::Hash(titleText);
 		auto textCache = radialMenus.radMenuStrings.find(textId);
 		if (textCache == radialMenus.radMenuStrings.end()) {
-			radialMenus.radMenuStrings[textId] = bodyText;
+			radialMenus.radMenuStrings[textId] = titleText;
 		}
 		this->field4 = reinterpret_cast<int>(radialMenus.radMenuStrings[textId].c_str() );
 	}

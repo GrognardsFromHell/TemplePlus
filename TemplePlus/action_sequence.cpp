@@ -831,7 +831,7 @@ int ActionSequenceSystem::ActionAddToSeq()
 	if (d20ActnType == D20A_CAST_SPELL
 		&& curSeq->spellPktBody.spellEnum >= 600)
 	{
-		curSeq->tbStatus.tbsFlags |= TBSF_CritterSpell; // perhaps bug that it's not affecting the local copy?? TODO
+		curSeq->tbStatus.tbsFlags |= TBSF_AvoidAoO; // perhaps bug that it's not affecting the local copy?? TODO
 		curSeq->spellPktBody.spellEnumOriginal = curSeq->spellPktBody.spellEnum;
 	}
 	if (d20ActnType == D20A_PYTHON_ACTION){

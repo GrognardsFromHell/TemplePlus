@@ -117,6 +117,7 @@ struct LegacyD20System : temple::AddressTable
 	int32_t (__cdecl *_d20aTriggersAOO)(void * iO); // d20a @<esi> // 1008A9C0
 	bool SpellIsInterruptedCheck(D20Actn *d20a, int invIdx, SpellStoreData *spellData);
 	int CastSpellProcessTargets(D20Actn *d20a, SpellPacketBody &spellPkt);
+	ActionErrorCode CombatActionCostFromSpellCastingTime(uint32_t spellCastingTime, int & actionCostOut); // gets action cost (in the context of combat mode) based on spell casting time
 
 	void (__cdecl *CreateRollHistory)(int idx);
 
