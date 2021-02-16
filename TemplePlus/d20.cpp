@@ -393,6 +393,9 @@ ActionErrorCode LegacyD20System::CombatActionCostFromSpellCastingTime(uint32_t s
 	case 4: // "Free Action"
 		actionCostOut = 0;
 		return AEC_OK;
+	case 5: // "Swift Action"
+		actionCostOut = 0;
+		return AEC_OK;
 	default:
 		return AEC_OK;
 	}
@@ -2390,6 +2393,7 @@ ActionErrorCode D20ActionCallbacks::ActionCostCastSpell(D20Actn * d20a, TurnBase
 	if (mmData.metaMagicFlags & MetaMagicFlags::MetaMagic_Quicken){
 		if (!(tbsFlags & TurnBasedStatusFlags::TBSF_SwiftActionPerformed)){
 			tbStat->tbsFlags |= TurnBasedStatusFlags::TBSF_SwiftActionPerformed;
+			tbStat->tbsFlags |= TurnBasedStatusFlags::TBSF_AvoidAoO; // fix quickened spells incurring AoOs
 			acp->hourglassCost = 0;
 			return AEC_OK;
 		}
@@ -2410,6 +2414,7 @@ ActionErrorCode D20ActionCallbacks::ActionCostCastSpell(D20Actn * d20a, TurnBase
 		}
 		else {
 			tbStat->tbsFlags |= TurnBasedStatusFlags::TBSF_SwiftActionPerformed;
+			tbStat->tbsFlags |= TurnBasedStatusFlags::TBSF_AvoidAoO; // fix quickened spells incurring AoOs
 			acp->hourglassCost = 0;
 			return AEC_OK;
 		}
