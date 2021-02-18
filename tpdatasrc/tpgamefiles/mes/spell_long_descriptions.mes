@@ -211,7 +211,7 @@ Duration:      Inst.,    Save: see text,    SR: Yes}
 Casting:         1  std action   [Necromancy, V,S,M]
 Range:               Medium,  100  feet  + 10/level  
 Effect:              40-foot  radius burst
-Duration:      Inst.,    Save: Fort negates,    SR: Yes}}
+Duration:      Inst.,    Save: Fort negates,    SR: Yes}
 {5061} Inflict Light, Mass {Deals negative  energy damage of 1d8 +1  per level,  max +25,  to one creature  per  level.  Cures undead.
 
 Casting:         1  std action   [Necromancy, V,S]
@@ -1234,7 +1234,7 @@ Duration:      see text,    Save: None,    SR: Yes}
 Casting:         1  std action   [Enchantment, V]
 Range:               Close,  25  feet  + 5/2 levels 
 Target:            One  creature with 100 hp or less
-Duration:      inst.,    Save: None,    SR: Yes}}
+Duration:      inst.,    Save: None,    SR: Yes}
 {5358} Power Word Stun {Stuns one  creature.  50 HP or less for 4d4 rounds,  51-100 HP for 2d4 rounds,  101-150 HP for 1d4 rnds.
 
 Casting:         1  std action   [Enchantment, V]
@@ -1814,7 +1814,7 @@ Duration:      1  round/level,    Save: None,    SR: Yes}
 Casting:         1  std action   [Evocation, V]
 Range:               Personal
 Area:                   40-foot  radius burst
-Duration:      Inst.,   Save: No (Will  for banish),   SR:Yes}}
+Duration:      Inst.,   Save: No (Will  for banish),   SR:Yes}
 {5540}{Word of Recall}
 {5541}{Zone of Truth}
 {5542} Blight {One plant  creature takes 1d6 points of damage per caster level,  max 15d6.
@@ -2011,7 +2011,7 @@ Duration:      1  min/level}
 Casting:         1  std action   [Conjuration, V,S]
 Range:               Close,  25  feet  + 5/2 levels 
 Target:            1  creature/level, no more than 30' apart 
-Duration:      Inst.,    Save: Will  half  undead,    SR: Yes}}
+Duration:      Inst.,    Save: Will  half  undead,    SR: Yes}
 {5578} Cure Serious Wounds, Mass {Cures 3d8 damage +1  per caster  level,  max +35,  to one creature per  level.  Damages undead  instead.
 
 Casting:         1  std action   [Conjuration, V,S]
