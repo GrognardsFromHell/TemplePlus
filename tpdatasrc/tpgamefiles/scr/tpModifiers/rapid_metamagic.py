@@ -10,6 +10,9 @@ def RapidMMActionCostMod(attachee, args, evt_obj):
     if evt_obj.d20a.action_type != tpdp.D20ActionType.CastSpell:
         return 0
 
+    if not game.combat_is_active():
+        return 0
+
     if evt_obj.cost_orig.action_cost <= 2: # original is already less than full round
         return 0
     if evt_obj.cost_new.action_cost <= 0: # adjusted amount is already free action
@@ -32,8 +35,13 @@ def RapidMMActionCostMod(attachee, args, evt_obj):
         return 0
 
     # restore the original spell's casting time
-    action_err_code, action_cost_org = tpactions.action_cost_from_spell_casting_time(casting_time_type)
-
+    action_err_code, action_cost_base = tpactions.action_cost_from_spell_casting_time(casting_time_type)
+    if action_err_code != AEC_OK: # should only be AEC_OUT_OF_COMBAT...
+        return 0
+    
+    if action_cost_base < evt_obj.cost_orig.action_cost:
+        evt_obj.cost_new.action_cost = action_cost_base
+    
 
     return 0
 
