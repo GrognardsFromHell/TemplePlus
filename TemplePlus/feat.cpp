@@ -121,6 +121,19 @@ FeatFixes featFixes;
 
 # pragma region LegacyFeatSystem Implementations
 
+// Originally 0x1007CF30; added checkPrereq option
+void LegacyFeatSystem::FeatAdd(objHndl handle, feat_enums feat, bool checkPrereq){
+	if (!handle)
+		return;
+	auto obj = objSystem->GetObject(handle);
+	if (!obj) 
+		return;
+	if (checkPrereq && !FeatPrereqsCheck(handle, feat, nullptr, 0, (Stat)0 ,(Stat)0) ){
+		std::string featName (GetFeatName(feat));
+		logger->warn("Warning: {} does not meet prereqs for feat {} (adding anyway)", handle, featName);
+	}
+	obj->AppendInt32(obj_f_critter_feat_idx, (int)feat);
+}
 
 LegacyFeatSystem::LegacyFeatSystem()
 {
@@ -139,7 +152,6 @@ LegacyFeatSystem::LegacyFeatSystem()
 	rebase(charEditorObjHnd, 0x11E741A0);		// TODO: move this to the appropriate system
 	rebase(charEditorClassCode, 0x11E72FC0);	// TODO: move this to the appropriate system
 	rebase(ToEE_WeaponFeatCheck, 0x1007C4F0);
-	rebase(FeatAdd, 0x1007CF30);
 
 	int _racialFeatsTable[VANILLA_NUM_RACES * 10] = { -1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,

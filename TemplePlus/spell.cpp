@@ -1972,6 +1972,32 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 {
 	char textBuf[1000] = { 0, };
 	static auto spellEntryLineParser = temple::GetRef<BOOL(__cdecl)(char *, int &, int &, int&)>(0x1007A890);
+	
+	static std::function findInMapping = [](const std::map<string, int> & options, const char* txt, int& valueOut)->bool {
+		for (auto ch = txt; *ch; ch++) {
+			if (*ch == ':' || *ch == ' ')
+				continue;
+
+			auto found = false;
+			std::string text(ch);
+			text = tolower(text);
+			for (auto it : options) {
+				if (!_strnicmp(it.first.c_str(), ch, strlen(it.first.c_str()))) {
+					valueOut = it.second;
+					return true;
+				}
+			}
+
+			if (ch[0]) {
+				logger->warn("SpellEntryFileParse: type not found: {}", ch);
+			}
+			else {
+				logger->warn("Spell Array: blank text", ch);
+			}
+			return false;
+		}
+	};
+	
 	while (tio_fgets(textBuf, 1000, tf))
 	{
 		int fieldType, value, value2;
@@ -2059,32 +2085,30 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 
 		else if (!_strnicmp(textBuf, "Saving Throw", 12)) {
 			static std::map<string, int> saveThrowStrings = {
-				{ "fortitude", 3 }, // lol bug; fixed inside SavingThrowSpell
+				{ "fortitude", 3 }, // lol bug; fixed inside SavingThrowSpell (to avoid changing all the spell rules...)
 				{ "willpower", (int)SavingThrowType::Will },
 				{ "will", (int)SavingThrowType::Will },
 				{ "reflex", (int)SavingThrowType::Reflex },
 				{ "none", 0}, // bug! this will count as fortitude. Seems mostly harmless though as usually saving throws are directly handled in the script file or just hardcoded in the gameplay callbacks.
 			};
-
-
-			for (auto ch = textBuf + 12; *ch; ch++) {
-				if (*ch == ':' || *ch == ' ')
-					continue;
-
-				auto found = false;
-				std::string text(ch);
-				text = tolower(text);
-				for (auto it : saveThrowStrings) {
-					if (!_strnicmp(it.first.c_str(), ch, strlen(it.first.c_str()))) {
-						spEntry.savingThrowType = it.second;
-						found = true;
-						break;
-					}
-				}
-				if (!found){
-					logger->warn("Spell Array: Saving Throw type not found: {}", ch);
-				}
-				break;
+			auto value = 0;
+			if (findInMapping(saveThrowStrings, textBuf + 12, value)) {
+				spEntry.savingThrowType = value;
+			}
+			
+		}
+		else if (!_strnicmp(textBuf, "Casting Time", 12)) {
+			static std::map<string, int> castingTimeStrings = {
+				{ "Swift Action", 4 }, // ??
+				{ "Free Action", 4 }, 
+				{ "Safe", 3 },
+				{ "Out of Combat", 2 },
+				{ "Full Round", 1 },
+				{ "1 action", 0},
+			};
+			auto value = 0;
+			if (findInMapping(castingTimeStrings, textBuf + 12, value)) {
+				spEntry.castingTimeType = value;
 			}
 		}
 

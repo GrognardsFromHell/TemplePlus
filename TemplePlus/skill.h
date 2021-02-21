@@ -42,6 +42,8 @@ struct LegacySkillSystem : temple::AddressTable {
 
 	void LoadSkillsProps(const std::string& path);
 	void Init();
+	
+	void DoForAllSkills(std::function<void(SkillEnum)> cb, bool activeOnly = true);
 };
 
 extern LegacySkillSystem skillSys;

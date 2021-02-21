@@ -104,6 +104,7 @@ struct RadialMenuEntryParent : RadialMenuEntry {
 
 struct RadialMenuEntrySlider : RadialMenuEntry{
 	RadialMenuEntrySlider( int combatMesLine, int _minArg, int _maxArg, void* actualArg, int combatMesHeaderTextLine, uint32_t helpId);
+	RadialMenuEntrySlider(const std::string& radialText, const std::string& titleText, int _minArg, int _maxArg, const std::string & helpId);
 };
 
 struct RadialMenuEntryAction : RadialMenuEntry

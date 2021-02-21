@@ -270,7 +270,7 @@ struct SpellEntry {
 	uint32_t spellComponentBitmask;
 	uint32_t costGp;
 	uint32_t costXp;
-	uint32_t castingTimeType;
+	uint32_t castingTimeType; // 0 - "1 Action", 1 - "Full Round", 2 - "Out of Combat", 3 - "Safe", 4 - "Free Action"
 	SpellRangeType spellRangeType;
 	uint32_t spellRange;
 	uint32_t savingThrowType;

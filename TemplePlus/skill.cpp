@@ -86,6 +86,18 @@ void LegacySkillSystem::Init()
 	LoadSkillsProps("rules\\skills_props.json");
 }
 
+void LegacySkillSystem::DoForAllSkills( std::function<void(SkillEnum)> cb, bool activeOnly)
+{
+	for (auto i = 0; i < SkillEnum::skill_count; ++i) {
+		auto skEnum = (SkillEnum)i;
+		if (activeOnly && !IsEnabled(skEnum)) {
+			continue;
+		}
+
+		cb(skEnum);
+	}
+}
+
 void LegacySkillSystem::LoadSkillsProps(const std::string& path)
 {
 	std::string error;

@@ -516,7 +516,8 @@ int GoalHasDoorInPath(AnimSlot &slot) {
 
 	// Effectively this builds a world position that is one tile ahead of the current
 	// position along the critter's trajectory
-	auto testPosVec = currentPosWorld + INCH_PER_TILE * XMVector2Normalize(nextPathPosWorld - currentPosWorld);
+	auto directionVec = XMVector3Normalize(nextPathPosWorld - currentPosWorld);
+	auto testPosVec = currentPosWorld + INCH_PER_TILE * directionVec;
 	XMFLOAT3 testPos;
 	XMStoreFloat3(&testPos, testPosVec);
 
@@ -791,8 +792,10 @@ int GoalIsLiveCritterNear(AnimSlot &slot) {
 
 // Originally @ 0x10011600
 int GoalSetRunningFlag(AnimSlot &slot) {
-	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10011600);
-	return org(slot);
+	// static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10011600);
+	Expects(slot.animObj);
+	slot.flags |= AnimSlotFlag::ASF_RUNNING;
+	return TRUE;
 }
 
 // Originally @ 0x10011660

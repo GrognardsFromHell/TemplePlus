@@ -4,6 +4,7 @@
 #include "common.h"
 #include <tig/tig_msg.h>
 #include "spell_structs.h"
+#include "skill.h"
 //#include <infrastructure\vfs.h>
 
 //struct VfsSearchResult;
@@ -72,6 +73,7 @@ public:
 		std::vector<int> factions;
 		int hitDice;
 		std::map<Stat, int> classLevels;
+		std::map<SkillEnum, int> skillRanks; // is actually 2 * skill rank, display is halved (for supporting half ranks)
 	};
 
 	struct ItemRecord : Record {

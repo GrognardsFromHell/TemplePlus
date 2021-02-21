@@ -57,16 +57,16 @@ ostream &operator<<(ostream &str, ActionErrorCode id);
 enum TurnBasedStatusFlags : uint32_t
 {
 	TBSF_NONE = 0,
-	TBSF_1 = 1,
+	TBSF_1 = 1, // looks like no one actually sets this flag?? is checked in the context of movement sometimes
 	TBSF_Movement = 2,
-	TBSF_Movement2 = 4,
+	TBSF_Movement2 = 4, // 5ft step movement
 	TBSF_TouchAttack = 8, // denotes that you're doing a touch attack
-	TBSF_CritterSpell = 0x10, // denotes that the spell being cast is actually a critter's natural ability, so don't provoke AoO
+	TBSF_AvoidAoO = 0x10, // the action doesn't provoke AoO. Used for Swift Actions and Creature Spells (spell enums 600-699)
 	TBSF_HasActedThisRound = 0x20, // prevents you from dragging the portrait in the initiative row
 	TBSF_FullAttack = 0x40,
 	TBSF_80 = 0x80,
 	TBSF_100 = 0x100,
-	TBSF_FreeActionSpellPerformed = 0x200, // already performed free-action spell this round (e.g. from Quickened metamagic feat), cannot do another
+	TBSF_SwiftActionPerformed = 0x200, // already performed swift action spell this round (e.g. Quickened spell), cannot do another
 	TBSF_400 = 0x400,
 	TBSF_ChangedWornItem = 0x800 // denotes that you've changed items in the inventory during combat (to prevent double-charging you); unflags this when hiding the inventory
 };

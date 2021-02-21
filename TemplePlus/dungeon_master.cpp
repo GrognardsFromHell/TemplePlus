@@ -73,6 +73,7 @@ static bool showTiles = false;
 DungeonMaster::CritterBooster critBoost;
 DungeonMaster::ObjEditor critEditor;
 static std::vector<std::string> classNames; // offset by 1 wrt the d20ClassSys.classEnums vector
+static std::vector<std::string> skillNames;
 static std::map<int, std::string> spellNames;
 static std::map<int, std::string> featNames;
 static std::vector<int> featSelectionList;
@@ -648,6 +649,14 @@ void DungeonMaster::InitEntry(int protoNum){
 			newRecord.classLevels[classLvl]++;
 		}
 
+		// Skill ranks
+		auto skillRanks = obj->GetInt32Array(obj_f_critter_skill_idx);
+		skillSys.DoForAllSkills([&](SkillEnum skill) {
+			auto skillRnk = skillRanks[skill];
+			newRecord.skillRanks[skill] = skillRnk;
+		});
+		
+
 		auto hdNum = objects.GetHitDiceNum(protHndl);
 		newRecord.hitDice = hdNum;
 
@@ -722,13 +731,21 @@ void DungeonMaster::InitCaches(){
 	for (auto it : d20ClassSys.classEnums) {
 		classNames.push_back(d20Stats.GetStatName((Stat)it));
 	}
-
+	
+	// Spells
 	spellSys.DoForSpellEntries([](SpellEntry &spEntry) {
 		auto spEnum = spEntry.spellEnum;
 		if (spEnum  < 3000) { // the range above 3000 is reserved for class pseudo spells
 			spellNames[spEnum] = spellSys.GetSpellName(spEnum);
 		}
 	});
+
+	// Skills
+	skillSys.DoForAllSkills( [](SkillEnum skill) {
+		auto skillName = skillSys.GetSkillName(skill);
+		skillNames.push_back(skillName);
+		});
+	
 
 	// Feats
 	feats.DoForAllFeats([](int featEnum) {
@@ -1258,6 +1275,33 @@ void DungeonMaster::RenderEditedObj() {
 		ImGui::TreePop();
 	}
 
+	// Skills
+	if (ImGui::TreeNodeEx("Skill Ranks", ImGuiTreeNodeFlags_CollapsingHeader)) {
+		static int skillCur = 0;
+		static auto skillNameGetter = [](void* data, int idx, const char** outTxt)->bool
+		{
+			if ((uint32_t)idx >= skillNames.size())
+				return false;
+			*outTxt = skillNames[idx].c_str();
+			return true;
+		};
+
+
+		std::vector<float> skillRnkChang;
+		auto skillIdx = 0;
+		for (auto it : critEditor.skillRanks) {
+			auto skill = it.first;
+			if (!skillSys.IsEnabled(skill))
+				continue;
+			skillRnkChang.push_back(it.second / 2.0f);
+			if (ImGui::InputFloat(skillSys.GetSkillName(skill), &skillRnkChang[skillIdx] , 0.5f, 1.0f, 1) ){
+				critEditor.skillRanks[skill] = round( 2.0 * skillRnkChang[skillIdx] );
+			}
+			skillIdx++;
+		}
+		ImGui::TreePop();
+	}
+
 	// Feats
 	if (ImGui::TreeNodeEx("Feats", ImGuiTreeNodeFlags_CollapsingHeader)){
 
@@ -1303,7 +1347,7 @@ void DungeonMaster::RenderEditedObj() {
 				
 				if (!feats.IsFeatMultiSelectMaster(featEnum)){
 					if (ImGui::Button("Add")) {
-						feats.FeatAdd(mEditedObj, featEnum);
+						feats.FeatAdd(mEditedObj, featEnum, false);
 						critEditor.feats.push_back(featEnum);
 					}
 				}
@@ -1321,7 +1365,7 @@ void DungeonMaster::RenderEditedObj() {
 						subFeat = childFeats[subFeatCur];
 					}
 					if (ImGui::Button("Add")) {
-						feats.FeatAdd(mEditedObj, subFeat);
+						feats.FeatAdd(mEditedObj, subFeat, false); // not checking prereqs because some of them may use the char editor interface which needs a handle
 						critEditor.feats.push_back(subFeat);
 					}
 				}
@@ -1723,6 +1767,13 @@ void DungeonMaster::SetObjEditor(objHndl handle){
 		critEditor.scripts.push_back(script.scriptId);
 	}
 
+	// Skill ranks
+	auto skillRanks = obj->GetInt32Array(obj_f_critter_skill_idx);
+	skillSys.DoForAllSkills([&](SkillEnum skill) {
+		auto skillRnk = skillRanks[skill];
+		critEditor.skillRanks[skill] = skillRnk;
+		});
+
 	// Feats
 	static objHndl thisHandle;
 	thisHandle = handle;
@@ -1761,6 +1812,17 @@ void DungeonMaster::ApplyObjEdit(objHndl handle){
 	for (auto it : critEditor.stats) {
 		obj->SetInt32(obj_f_critter_abilities_idx, statIdx++, it);
 	}
+
+	// Skills
+	{
+		obj->ClearArray(obj_f_critter_skill_idx);
+		for (auto it : critEditor.skillRanks) {
+			auto skillValue = it.second;
+			auto skill = it.first;
+			obj->SetInt32(obj_f_critter_skill_idx, skill, it.second);
+		}
+	}
+	
 
 	// Scripts
 	auto scriptIdx = 0u;

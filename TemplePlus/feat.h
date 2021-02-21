@@ -176,7 +176,7 @@ struct LegacyFeatSystem : temple::AddressTable
 
 
 	void(__cdecl *ToEE_WeaponFeatCheck)();
-	uint32_t(__cdecl *FeatAdd)(objHndl, feat_enums);
+	void FeatAdd(objHndl handle, feat_enums feat, bool checkPrereq = false); // note: checkPrereq only generates a warning if it's not met
 
 	uint32_t(__cdecl *featTabLineParser)(TabFileStatus*, uint32_t, const char**);
 	LegacyFeatSystem();
