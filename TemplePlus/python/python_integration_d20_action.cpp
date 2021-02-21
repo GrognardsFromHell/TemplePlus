@@ -131,12 +131,10 @@ PYBIND11_EMBEDDED_MODULE(tpactions, m) {
 		return **actSeqSys.actSeqCur;
 	});
 	
-	m.def("action_cost_from_spell_casting_time", [](int castingTimeType)->std::vector<int> {
+	m.def("action_cost_from_spell_casting_time", [](int castingTimeType)->std::tuple<int, int> {
 		int hourglassCost = 0;
 		auto result = d20Sys.CombatActionCostFromSpellCastingTime(castingTimeType, hourglassCost);
-		std::vector<int> ret(2);
-		ret[0] = (int)result;
-		ret[1] = (int)hourglassCost;
+		std::tuple<int, int> ret( {(int)result, hourglassCost} ) ;
 		return ret;
 		}
 	);

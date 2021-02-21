@@ -1974,7 +1974,7 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 	static auto spellEntryLineParser = temple::GetRef<BOOL(__cdecl)(char *, int &, int &, int&)>(0x1007A890);
 	
 	static std::function findInMapping = [](const std::map<string, int> & options, const char* txt, int& valueOut)->bool {
-		for (auto ch = txt + 12; *ch; ch++) {
+		for (auto ch = txt; *ch; ch++) {
 			if (*ch == ':' || *ch == ' ')
 				continue;
 
