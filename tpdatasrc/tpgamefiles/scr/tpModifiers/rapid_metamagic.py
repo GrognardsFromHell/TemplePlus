@@ -3,10 +3,12 @@ from toee import *
 import tpdp
 import tpactions
 
+
 print "Registering Rapid Metamagic"
 
 
 def RapidMMActionCostMod(attachee, args, evt_obj):
+    
     if evt_obj.d20a.action_type != tpdp.D20ActionType.CastSpell:
         return 0
 
@@ -31,15 +33,16 @@ def RapidMMActionCostMod(attachee, args, evt_obj):
     if isQuicken and not (evt_obj.turnbased_status.flags & TBSF_FreeActionSpellPerformed):
         evt_obj.cost_new.action_cost = 0
         evt_obj.turnbased_status.flags |= TBSF_FreeActionSpellPerformed
-        #print "reducing cost to 0"
+        #print("RapidMM: reducing cost to 0")
         return 0
-
+    #print('RapidMM restore orig time: ')
     # restore the original spell's casting time
     action_err_code, action_cost_base = tpactions.action_cost_from_spell_casting_time(casting_time_type)
     if action_err_code != AEC_OK: # should only be AEC_OUT_OF_COMBAT...
         return 0
     
     if action_cost_base < evt_obj.cost_orig.action_cost:
+        #print('new action cost: ', action_cost_base)
         evt_obj.cost_new.action_cost = action_cost_base
     
 
