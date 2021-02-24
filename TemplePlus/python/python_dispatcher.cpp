@@ -772,6 +772,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("spell_enum", &SpellEntry::spellEnum)
 		.def_readwrite("spell_school_enum", &SpellEntry::spellSchoolEnum)
 		.def_readwrite("spell_subschool_enum", &SpellEntry::spellSubSchoolEnum)
+		.def_readwrite("spell_component_flags", &SpellEntry::spellComponentBitmask)
 		.def_readwrite("descriptor", &SpellEntry::spellDescriptorBitmask)
 		.def_readwrite("casting_time", &SpellEntry::castingTimeType)
 		.def_readwrite("saving_throw_type", &SpellEntry::savingThrowType)
