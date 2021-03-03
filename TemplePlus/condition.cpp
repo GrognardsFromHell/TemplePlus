@@ -1842,7 +1842,8 @@ int __cdecl GlobalToHitBonus(DispatcherCallbackArgs args)
 			int numEnemiesCanMelee = combatSys.GetEnemiesCanMelee(dispIo->attackPacket.victim, canMeleeList);
 			if (numEnemiesCanMelee > 0
 				&& (numEnemiesCanMelee != 1 || canMeleeList[0]!= args.objHndCaller)
-				&& !feats.HasFeatCount(args.objHndCaller, FEAT_PRECISE_SHOT))
+				&& !feats.HasFeatCount(args.objHndCaller, FEAT_PRECISE_SHOT)
+				&& !d20Sys.D20QueryPython(args.objHndCaller, "No Shot into Melee Penalty"))
 				bonusSys.bonusAddToBonusList(&dispIo->bonlist, -4, 0, 150); 
 		
 			// range penalty 

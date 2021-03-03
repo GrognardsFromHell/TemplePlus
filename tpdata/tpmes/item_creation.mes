@@ -64,6 +64,7 @@
 {1035}{Warning}
 {1036}{Berserker}
 {1037}{Hunting}
+{1038}{Precise}
 
 // armor bonuses
 {1200}{+1}
@@ -192,6 +193,7 @@
 {2035}{Bonus of +5 on initiative.}
 {2036}{Deals an extra 1d8 damage while raging for two-handed weapons only.}
 {2037}{+4 on damage rolls against favored enemies.}
+{2038}{Can be shot or thrown at an opponent in melee without a -4 penalty (ranged weapons only). }
 
 // Armor Enhancement Strings
 {2200}{+1 enhancement bonus to AC.}
@@ -320,3 +322,4 @@
 {20102}{Alignment: Evil}
 {20103}{Alignment: Chaotic}
 {20104}{INVALID PREREQ}
+{20105}{Feats: }

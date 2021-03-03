@@ -1338,7 +1338,7 @@ void UiItemCreation::LoadMaaSpecs()
 		std::string classReq; // class req
 		std::string charReqs; // Character Level, Alignment
 		std::string spellReqs;
-		std::string featReqs; // TODO
+		std::string featReqs;
 		std::string antecedent;
 		std::string extraGold;
 	};
@@ -1443,6 +1443,21 @@ void UiItemCreation::LoadMaaSpecs()
 			}
 		}
 		
+		if (!tabEntry.featReqs.empty()) {
+			StringTokenizer spellReqTok(tabEntry.featReqs);
+			while (spellReqTok.next())
+			{
+				auto& tok = spellReqTok.token();
+				if (tok.type == StringTokenType::QuotedString) {
+					const auto featReq = static_cast<feat_enums>(ElfHash::Hash(tok.text));  //New feat
+					itEnh.reqs.featReq.push_back(featReq);
+				}
+				else if (tok.type == StringTokenType::Number) {
+					itEnh.reqs.featReq.push_back(static_cast<feat_enums>(tok.numberInt));  //Old Feat
+				}
+			}
+		}
+
 		if (!tabEntry.antecedent.empty()) {
 			itEnh.downgradesTo = std::stoi(tabEntry.antecedent);
 		} else {
@@ -2929,6 +2944,13 @@ bool UiItemCreation::MaaCrafterMeetsReqs(int effIdx, objHndl crafter)
 		if (!(objects.StatLevelGet(crafter,stat_alignment) & itEnh.reqs.alignment))
 		return false;
 	}
+	if (itEnh.reqs.featReq.size() > 0) {
+		for (auto& feat : itEnh.reqs.featReq) {
+			if (!feats.HasFeatCount(crafter, feat)) {
+				return false;
+			}
+		}
+	}
 		
 	if (itEnh.reqs.spells.size() > 0){
 		auto hasReq = false;
@@ -3292,6 +3314,19 @@ int UiItemCreation::MaaEffectTooltip(int x, int y, int * widId){
 			text.append(fmt::format("\n{} {}", uiAssets->GetStatMesLine(238), uiAssets->GetStatMesLine(8022)));
 		else if (itEnh.reqs.alignment & ALIGNMENT_CHAOTIC)
 			text.append(fmt::format("\n{} {}", uiAssets->GetStatMesLine(238), uiAssets->GetStatMesLine(8004)));
+	}
+
+	if (itEnh.reqs.featReq.size() > 0) {
+		text += "\n";
+		text += GetItemCreationMesLine(20105);
+		bool first = true;
+		for (auto feat : itEnh.reqs.featReq) {
+			if (!first) {
+				text += ",";
+			}
+			text += feats.GetFeatName(feat);
+			first = false;
+		}
 	}
 	
 	// Note:  The display might need a tweek if there is every something with really complicated requirements 
