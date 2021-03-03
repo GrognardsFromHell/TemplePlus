@@ -6,6 +6,7 @@
 
 struct TioFile;
 class OutputStream;
+struct GameTime;
 
 class InputStream {
 public:
@@ -60,6 +61,8 @@ public:
 		ReadRaw(&id, sizeof(id));
 		return id;
 	}
+
+	void ReadGameTime(GameTime& gameTimeOut);
 
 	float ReadFloat() {
 		float value;
@@ -124,6 +127,21 @@ public:
 	 */
 	std::string ReadStringFixed(size_t size) {
 		std::vector<char> buffer(size + 1, 0);
+		ReadRaw(&buffer[0], size);
+		std::string result;
+		result.assign(buffer.data(), size);
+		return result;
+	}
+
+	/**
+	 * Reads a finite length string from the file. Ensures the string is properly null terminated.
+	 */
+	std::string ReadStringMaxSize(size_t maxSize) {
+		auto size = ReadUInt32();
+		if (size > maxSize) {
+			throw TempleException("ReadStringMaxSize: String length greater than expected");
+		}
+		std::vector<char> buffer(size+ 1, 0);
 		ReadRaw(&buffer[0], size);
 		std::string result;
 		result.assign(buffer.data(), size);
@@ -235,10 +253,18 @@ public:
 		WriteUInt32(str.size());
 		WriteRaw(str.c_str(), str.size());
 	}
+
+	void WriteStringMaxSize(const std::string& str, size_t maxSize) {
+		auto size = min(maxSize, str.size());
+		WriteUInt32(size);
+		WriteRaw(str.c_str(), size);
+	}
 	
 	void WriteObjectId(const ObjectId &id) {
 		WriteRaw(&id, sizeof(ObjectId));
 	}
+
+	void WriteGameTime(const GameTime& time);
 
 protected:
 	virtual void WriteRaw(const void* buffer, size_t count) = 0;

@@ -13,6 +13,8 @@
 #include "gamesystems/objects/objsystem.h"
 #include <infrastructure/elfhash.h>
 #include "gamesystems/gamesystems.h"
+#include "gamesystems/mapsystem.h"
+#include "gamesystems/legacysystems.h"
 #include "gamesystems/particlesystems.h"
 #include <particles/instances.h>
 #include "particles.h"
@@ -29,6 +31,8 @@
 #include "condition.h"
 #include "dice.h"
 #include "config\config.h"
+#include <gametime.h>
+#include <infrastructure/vfs.h>
 
 static_assert(sizeof(SpellStoreData) == (32U), "SpellStoreData structure has the wrong size!");
 
@@ -36,10 +40,128 @@ static_assert(sizeof(SpellStoreData) == (32U), "SpellStoreData structure has the
 #define SPELL_LIKE_ABILITY_RANGE 699 // Monster spell-like abilities are up to here
 #define CLASS_SPELL_LIKE_ABILITY_START 3000 // new in Temple+ - this is the range used for class spells
 
+class SpellWriter { //utility class for saving spell data to file
+public:
+	static bool WriteHandle(objHndl obj, OutputStream& stream)
+	{
+		ObjectId objId;
+		if (obj)
+		{
+			auto isValidHandle = objSystem->IsValidHandle(obj);
+			if (!isValidHandle) {
+				auto dummy = 1;
+			}
+			auto objBod = objSystem->GetObject(obj);
+			if (objBod && isValidHandle)
+				objId = objSystem->GetObject(obj)->id;
+			else
+			{
+				objId.subtype = ObjectIdKind::Null;
+				logger->warn("SpellSave: Invalid obj handle caught while saving!");
+			}
+		}
+		else
+		{
+			objId.subtype = ObjectIdKind::Null;
+		}
+		stream.WriteObjectId(objId);
+		return true;
+	};
+	static bool WritePartsys(int partsysId, OutputStream& stream)
+	{
+		int partsysHash = 0;
+		if (partsysId) {
+			auto partSys = gameSystems->GetParticleSys().GetByHandle(partsysId);
+			if (partSys)
+				partsysHash = gameSystems->GetParticleSys().GetByHandle(partsysId)->GetSpec()->GetNameHash();
+			else
+			{
+				logger->debug("Tried to serialize an invalid partsysId");
+			}
+		}
+		stream.WriteInt32(partsysHash);
+		return true;
+	};
+	static bool WriteHandleArray(objHndl objs[], uint32_t num, OutputStream& streama)
+	{
+		for (auto i = 0u; i < num; i++)
+		{
+			if (!WriteHandle(objs[i], streama))
+				return false;
+		}
+		return true;
+	};
+	static bool WritePartsysArray(uint32_t partsys[], uint32_t num, OutputStream& stream)
+	{
+		for (auto i = 0u; i < num; i++)
+		{
+			if (!WritePartsys(partsys[i], stream))
+				return false;
+		}
+		return true;
+	};
+	static bool WriteSpellObjArray(SpellObj spellObjs[], uint32_t num, OutputStream& stream)
+	{
+		for (auto i = 0u; i < num; i++)
+		{
+			if (!WriteHandle(spellObjs[i].obj, stream))
+				return false;
+			if (!WritePartsys(spellObjs[i].partySysId, stream))
+				return false;
+		}
+		return true;
+	};
+};
+
 struct SpellCondListEntry {
 	CondStruct *condition;
 	int unknown;
 };
+
+class SpellDebugObjInfo {
+public:
+	std::string name = "";
+	ObjectId id = ObjectId::CreateNull();
+	static constexpr int sMaxNameSize = 64;
+
+	SpellDebugObjInfo() { }
+	SpellDebugObjInfo(objHndl handle) {
+		auto obj = objSystem->GetObject(handle);
+		if (!obj) {
+			logger->error("SpellDebugObjInfo: Invalid handle detected! {}", handle);
+			return;
+		}
+		name = fmt::format("{}", handle);
+		id = obj->id;
+	};
+
+	void Write(OutputStream& file) {
+		file.WriteStringMaxSize(name, sMaxNameSize);
+		file.WriteObjectId(id);
+	};
+
+	SpellDebugObjInfo(InputStream& file) {
+		name = file.ReadStringMaxSize(sMaxNameSize);
+		id = file.ReadObjectId();
+	}
+};
+
+class SpellDebugRecord : public SpellPacketBody {
+public:
+	static constexpr int MAGIC_NUMBER = 0xc00fc00f; // for serialization
+	GameTime castingTime;
+	int castingMapId;
+
+	SpellDebugObjInfo casterDebug;
+	std::vector<SpellDebugObjInfo > targetListDebug;
+
+	SpellDebugRecord(const SpellPacketBody& spellPkt);
+	SpellDebugRecord(InputStream& file);
+	
+	bool Write(OutputStream & file);
+	
+};
+
 
 
 static struct SpellAddresses : temple::AddressTable {
@@ -69,6 +191,7 @@ static struct SpellAddresses : temple::AddressTable {
 
 IdxTableWrapper<SpellEntry> spellEntryRegistry(0x10AAF428);
 IdxTableWrapper<SpellPacket> spellsCastRegistry(0x10AAF218);
+std::map<int, std::unique_ptr<SpellDebugRecord>> spellDebugRecords;
 
 BOOL _CheckSpellResistanceUsercallWrapper(objHndl objHnd);
 
@@ -624,6 +747,9 @@ BOOL LegacySpellSystem::RegisterSpell(SpellPacketBody & spellPkt, int spellId)
 	
 	spellsCastRegistry.put(spellId, newPkt);
 	logger->info("New spell registered: id {}, spell enum {}", spellId, spEnum);
+
+	spellDebugRecords.emplace(spellId, make_unique<SpellDebugRecord>(newPkt.spellPktBody) );
+
 	return TRUE;
 }
 
@@ -1254,6 +1380,10 @@ void LegacySpellSystem::SpellSavePruneInactive() const
 			logger->warn("Spell id {} ({}) has been pruned because the spell has num_targets > 0 but there are no targets!", spellPacketBody.spellId, spellName);
 			shouldPrune = true;
 		}
+		else if (spellPacketBody.spellEnum == 0) { // added in Temple+
+			logger->warn("Spell id {} (caster: {}) has been pruned because the spell has spellEnum == 0.", spellPacketBody.spellId, spellPacketBody.caster);
+			shouldPrune = true;
+		}
 		
 		if (shouldPrune) {
 			numPruned++;
@@ -1275,6 +1405,60 @@ void LegacySpellSystem::SpellSavePruneInactive() const
 		auto spellName = GetSpellName(it.spellEnum);
 		logger->debug("{}, targetCount {}", spellName, it.targetCount);
 	}
+}
+
+
+void LegacySpellSystem::SaveDebugRecords() const
+{
+	
+	//auto tioFile = tio_fopen("Save\\Current\\spell_debug_records.bin", "wb");
+	VfsOutputStream tioFile("Save\\Current\\spell_debug_records.bin", "wb");
+	{
+		
+		for (auto& it : spellDebugRecords) {
+			MemoryOutputStream buf;
+			auto spellId = it.first;
+			auto &spell = *it.second.get();
+
+			auto spellName = GetSpellName(spell.spellEnum); // for debug
+
+			// Write Debugdata
+			{
+				spell.Write(buf);
+			}
+			auto &memBuf = buf.GetBuffer();
+			
+			tioFile.WriteUInt32(memBuf.size());
+			tioFile.WriteBytes(&memBuf[0], memBuf.size());
+		}
+
+	}
+	
+}
+
+void LegacySpellSystem::LoadDebugRecords() {
+	spellDebugRecords.clear();
+
+	try {
+		auto data = vfs->ReadAsBinary("Save\\Current\\spell_debug_records.bin");
+		MemoryInputStream file(data);
+		
+		
+		while (file.GetPos() < data.size()) {
+			
+			auto newDebugRecord = make_unique<SpellDebugRecord>(file);
+			spellDebugRecords.emplace(newDebugRecord.get()->spellId, std::move(newDebugRecord));
+		}
+		
+	}
+	catch (TempleException e){
+		logger->info(e.what());
+	}
+	
+}
+
+void LegacySpellSystem::ResetDebugRecords() {
+	spellDebugRecords.clear();
 }
 
 SpellMapTransferInfo LegacySpellSystem::SaveSpellForTeleport(const SpellPacket& data)
@@ -1374,87 +1558,19 @@ void LegacySpellSystem::SpellSave()
 	// Clean up previous transfer info
 	spellMapTransInfo.clear();
 	spellMapTransInfo.reserve(spellsCastRegistry.itemCount());
-	for (auto it : spellsCastRegistry) {
+	for (auto &it : spellsCastRegistry) {
 		spellMapTransInfo.emplace_back(SaveSpellForTeleport(*it.data));
 	}
 
 }
 
+/* 0x10079220 */
 int LegacySpellSystem::SpellSave(TioOutputStream& file)
 {
-	static auto SerializeHandleToFile = [](objHndl obj, TioOutputStream& stream)
-	{
-		ObjectId objId;
-		if (obj)
-		{
-			auto isValidHandle = objSystem->IsValidHandle(obj);
-			if (!isValidHandle){
-				auto dummy = 1;
-			}
-			auto objBod = objSystem->GetObject(obj);
-			if (objBod && isValidHandle)
-				objId = objSystem->GetObject(obj)->id;
-			else
-			{
-				objId.subtype = ObjectIdKind::Null;
-				logger->warn("SpellSave: Invalid obj handle caught while saving!");
-			}
-		}
-		else
-		{
-			objId.subtype = ObjectIdKind::Null;
-		}
-		stream.WriteObjectId(objId);
-		return true;
-	};
-	static auto SerializePartsysToFile = [](int partsysId, TioOutputStream&stream)
-	{
-		int partsysHash = 0;
-		if (partsysId){
-			auto partSys = gameSystems->GetParticleSys().GetByHandle(partsysId);
-			if (partSys)
-				partsysHash = gameSystems->GetParticleSys().GetByHandle(partsysId)->GetSpec()->GetNameHash();
-			else
-			{
-				logger->debug("Tried to serialize an invalid partsysId");
-			}
-		}
-		stream.WriteInt32(partsysHash);
-		return true;
-	};
-	static auto SerializeHandlesToFile = [](objHndl objs[], uint32_t num, TioOutputStream&streama)
-	{
-		for (auto i = 0u; i < num; i++)
-		{
-			if (!SerializeHandleToFile(objs[i], streama))
-				return false;
-		}
-		return true;
-	};
-	static auto SerializePartSystemsToFile = [](uint32_t partsys[], uint32_t num, TioOutputStream&stream)
-	{
-		for (auto i = 0u; i < num; i++)
-		{
-			if (!SerializePartsysToFile(partsys[i], stream))
-				return false;
-		}
-		return true;
-	};
-	static auto SerializeSpellObjsToFile = [](SpellObj spellObjs[], uint32_t num, TioOutputStream&stream)
-	{
-		for (auto i = 0u; i < num; i++)
-		{
-			if (!SerializeHandleToFile(spellObjs[i].obj, stream))
-				return false;
-			if (!SerializePartsysToFile(spellObjs[i].partySysId, stream))
-				return false;
-		}
-		return true;
-	};
 
 	int numSerialized = 0;
 
-	for (auto it: spellsCastRegistry){
+	for (auto &it: spellsCastRegistry){
 		
 		if (!it.data->isActive)
 		{
@@ -1474,12 +1590,12 @@ int LegacySpellSystem::SpellSave(TioOutputStream& file)
 		file.WriteInt32(pkt.animFlags);
 
 		// caster
-		if (!SerializeHandleToFile(pkt.caster, file))
+		if (!SpellWriter::WriteHandle(pkt.caster, file))
 		{
 			return false;
 		}
 			
-		if (!SerializePartsysToFile(pkt.casterPartsysId, file))
+		if (!SpellWriter::WritePartsys(pkt.casterPartsysId, file))
 			return false;
 
 		file.WriteInt32(pkt.spellClass);
@@ -1491,10 +1607,10 @@ int LegacySpellSystem::SpellSave(TioOutputStream& file)
 		file.WriteInt32(pkt.numSpellObjs);
 		
 
-		if (!SerializeHandleToFile(pkt.aoeObj, file))
+		if (!SpellWriter::WriteHandle(pkt.aoeObj, file))
 			return false;
 
-		if (!SerializeSpellObjsToFile(pkt.spellObjs, 128, file))
+		if (!SpellWriter::WriteSpellObjArray(pkt.spellObjs, 128, file))
 		{
 			return false;
 		}
@@ -1503,18 +1619,18 @@ int LegacySpellSystem::SpellSave(TioOutputStream& file)
 		// targets
 		file.WriteInt32(pkt.orgTargetCount);
 		file.WriteInt32(pkt.targetCount);
-		if (!SerializeHandlesToFile(pkt.targetListHandles, 32, file))
+		if (!SpellWriter::WriteHandleArray(pkt.targetListHandles, 32, file))
 		{
 			return false;
 		}
 			
 
-		if (!SerializePartSystemsToFile(pkt.targetListPartsysIds, 32, file))
+		if (!SpellWriter::WritePartsysArray(pkt.targetListPartsysIds, 32, file))
 			return false;
 
 		// projectiles
 		file.WriteInt32(pkt.projectileCount);
-		if (!SerializeHandlesToFile(pkt.projectiles, 5, file))
+		if (!SpellWriter::WriteHandleArray(pkt.projectiles, 5, file))
 			return false;
 
 		file.WriteInt64(pkt.aoeCenter.location.location);
@@ -1996,6 +2112,7 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 			}
 			return false;
 		}
+		return false;
 	};
 	
 	while (tio_fgets(textBuf, 1000, tf))
@@ -2984,7 +3101,7 @@ void LegacySpellSystem::SpellBeginRound(objHndl handle){
 
 	std::vector<int> spellIds;
 
-	for (auto it: spellsCastRegistry){
+	for (const auto &it: spellsCastRegistry){
 		if (it.data->isActive == 1)
 			spellIds.push_back(it.id);
 	}
@@ -3128,6 +3245,22 @@ void SpellPacketBody::TriggerAoeHitScript(){
 	pySpellIntegration.SpellTrigger(this->spellId, SpellEvent::AreaOfEffectHit);
 }
 
+SpellComponentFlag SpellPacketBody::GetSpellComponentFlags()
+{
+	SpellEntry spEntry(spellEnum);
+	if (spEntry.spellEnum == 0) {
+		return SpellComponentFlag();
+	}
+	auto result = spEntry.spellComponentBitmask;
+	MetaMagicData mmData(this->metaMagicData);
+	if (mmData.metaMagicFlags & MetaMagic_Still)
+		result &= ~(SpellComponentFlag::SpellComponent_Somatic);
+	if (mmData.metaMagicFlags & MetaMagic_Silent)
+		result &= ~(SpellComponentFlag::SpellComponent_Verbal);
+
+	return (SpellComponentFlag)result;
+}
+
 uint32_t __cdecl _getWizSchool(objHndl objHnd)
 {
 	return spellSys.getWizSchool(objHnd);
@@ -3173,3 +3306,236 @@ void _SetSpontaneousCastingAltNode(objHndl obj, int nodeIdx, SpellStoreData* spe
 	spellSys.SetSpontaneousCastingAltNode(obj, nodeIdx, spellData);
 }
 #pragma endregion 
+
+SpellDebugRecord::SpellDebugRecord(const SpellPacketBody& spellPkt)
+{
+	memcpy(this, &spellPkt, sizeof (SpellPacketBody) );
+	castingTime = gameTimeSys.GetElapsed();
+	casterDebug = SpellDebugObjInfo(this->caster);
+	castingMapId = gameSystems->GetMap().GetCurrentMapId();
+	for (auto i = 0; i < this->targetCount; ++i) {
+		targetListDebug.push_back(SpellDebugObjInfo(this->targetListHandles[i]));
+	}
+
+}
+
+bool SpellDebugRecord::Write(OutputStream& file)
+{
+
+	// Write SpellPacketBody data
+	{
+		auto& spell = *this;
+		file.WriteInt32(spell.spellId);
+
+		auto curSpellPkt = spellsCastRegistry.get(spellId);
+		if (curSpellPkt != nullptr) { // active spell - compare vs. record
+			auto& pkt = curSpellPkt->spellPktBody;
+			file.WriteInt32(curSpellPkt->isActive);
+		}
+		else {
+			file.WriteInt32(0);
+		}
+
+		file.WriteInt32(spell.spellEnum);
+		file.WriteInt32(spell.spellEnumOriginal);
+		file.WriteInt32(spell.animFlags);
+
+		//// caster
+		//SpellWriter::WriteHandle(spell.caster, file);
+		//SpellWriter::WritePartsys(spell.casterPartsysId, file);
+
+		file.WriteInt32(spell.spellClass);
+		file.WriteInt32(spell.spellKnownSlotLevel);
+		file.WriteInt32(spell.casterLevel);
+		file.WriteInt32(spell.dc);
+
+		//// spell objs
+		//file.WriteInt32(spell.numSpellObjs);
+
+		/*SpellWriter::WriteHandle(spell.aoeObj, file);
+		SpellWriter::WriteSpellObjArray(spell.spellObjs, 128, file);*/
+
+		//// targets
+		//file.WriteInt32(spell.orgTargetCount);
+		//file.WriteInt32(spell.targetCount);
+		//SpellWriter::WriteHandleArray(spell.targetListHandles, 32, file);
+		//SpellWriter::WritePartsysArray(spell.targetListPartsysIds, 32, file);
+
+		//// projectiles
+		//file.WriteInt32(spell.projectileCount);
+		//SpellWriter::WriteHandleArray(spell.projectiles, 5, file);
+
+		file.WriteInt64(spell.aoeCenter.location.location);
+		/*file.WriteFloat(spell.aoeCenter.location.off_x);
+		file.WriteFloat(spell.aoeCenter.location.off_y);
+		file.WriteFloat(spell.aoeCenter.off_z);*/
+		file.WriteInt32(spell.duration);
+		file.WriteInt32(spell.durationRemaining);
+		file.WriteInt32(spell.spellRange);
+		file.WriteInt32(spell.savingThrowResult);
+		file.WriteInt32(spell.metaMagicData);
+		//file.WriteInt32(spell.spellId);
+	}
+
+	file.WriteGameTime(castingTime);
+	file.WriteInt32(castingMapId);
+	
+	casterDebug.Write(file);
+	file.WriteInt32(targetListDebug.size());
+	for (auto& it : targetListDebug) {
+		it.Write(file);
+	}
+
+	file.WriteInt32(MAGIC_NUMBER);
+
+	return true;
+}
+
+SpellDebugRecord::SpellDebugRecord(InputStream& file) {
+
+	auto size = file.ReadUInt32();
+
+	auto& spell = *this;
+	{
+		spell.spellId = file.ReadInt32();
+
+		auto isActive = file.ReadInt32();
+
+		spell.spellEnum = file.ReadInt32();
+		spell.spellEnumOriginal = file.ReadInt32();
+		spell.animFlags = file.ReadInt32();
+
+		spell.spellClass = file.ReadInt32();
+		spell.spellKnownSlotLevel = file.ReadInt32();
+		spell.casterLevel = file.ReadInt32();
+		spell.dc = file.ReadInt32();
+
+		spell.aoeCenter.location.location = locXY::fromField(file.ReadUInt64());
+		
+		spell.duration = file.ReadInt32();
+		spell.durationRemaining = file.ReadInt32();
+		spell.spellRange = file.ReadInt32();
+		spell.savingThrowResult = file.ReadInt32();
+		spell.metaMagicData = file.ReadInt32();
+	}
+	
+	file.ReadGameTime(castingTime);
+	castingMapId = file.ReadInt32();
+
+	casterDebug = SpellDebugObjInfo(file);
+	
+	auto targetListSize = file.ReadInt32();
+	if (targetListSize > MAX_SPELL_TARGETS) {
+		throw TempleException("SpellDebugRecord: targetlist size exceeds limit ({})", MAX_SPELL_TARGETS);
+	}
+	
+	for (auto i = 0; i < targetListSize; ++i) {
+		targetListDebug.push_back(SpellDebugObjInfo(file));
+	}
+	
+	auto magicNumber = file.ReadInt32();
+	if (magicNumber != MAGIC_NUMBER) {
+		throw TempleException("SpellDebugRecord: targetlist size exceeds limit ({})", MAX_SPELL_TARGETS);
+	}
+	
+}
+//*****************************************************************************
+//* SpellSystem
+//*****************************************************************************
+
+bool SpellSystem::Save(TioFile* file) {
+
+	logger->debug("Saving Spells: {} spells initially in SpellsCastRegistry.", spellSys.spellCastIdxTable->itemCount);
+	spellSys.SpellSavePruneInactive();
+	logger->debug("Saving Spells: {} spells after pruning.", spellSys.spellCastIdxTable->itemCount);
+
+	TioOutputStream tios(file);
+
+	auto spellIdSerial = temple::GetPointer<int>(0x10AAF204);
+	tios.WriteInt32(*spellIdSerial);
+
+	int numSpells = spellSys.spellCastIdxTable->itemCount;
+	tios.WriteInt32(numSpells);
+
+	auto numSerialized = spellSys.SpellSave(tios);
+	if (numSerialized != numSpells)
+	{
+		logger->error("Serialized wrong number of spells! SAVE IS CORRUPT! Serialized: {}, expected: {}", numSerialized, numSpells);
+	}
+
+	spellSys.SaveDebugRecords();
+
+	return TRUE;
+}
+
+SpellSystem::SpellSystem(const GameSystemConf& config) {
+	auto startup = temple::GetPointer<int(const GameSystemConf*)>(0x1007b740);
+	if (!startup(&config)) {
+		throw TempleException("Unable to initialize game system Spell");
+	}
+	spellSys.Init(config);
+}
+SpellSystem::~SpellSystem() {
+	auto shutdown = temple::GetPointer<void()>(0x100791d0);
+	mesFuncs.Close(spellSys.spellEnumsExt);
+	mesFuncs.Close(spellSys.spellMesExt);
+	if (config.extendedSpellDescriptions) {
+		mesFuncs.Close(spellSys.spellMesLong);
+	}
+	shutdown();
+
+}
+
+void SpellSystem::Reset() {
+	auto reset = temple::GetPointer<void()>(0x100750f0);
+	reset();
+
+	spellSys.ResetDebugRecords();
+}
+
+const std::string& SpellSystem::GetName() const {
+	static std::string name("Spell");
+	return name;
+}
+
+/* 0x100792A0 */
+bool SpellSystem::Load(GameSystemSaveFile* file) {
+	spellSys.LoadDebugRecords();
+
+	{
+		logger->info("Loading Spells: {} spells initially in SpellsCastRegistry.", spellSys.spellCastIdxTable->itemCount);
+
+		auto spellIdSerial = temple::GetPointer<uint32_t>(0x10AAF204);
+		tio_fread(spellIdSerial, sizeof(int), 1, file->file);
+
+		uint32_t numSpells;
+		if (tio_fread(&numSpells, 4, 1, file->file) != 1)
+			return FALSE;
+
+		Expects(numSpells >= 0);
+		Expects(*spellIdSerial >= numSpells);
+
+		if (numSpells <= 0)
+			return TRUE;
+
+		uint32_t spellId;
+		SpellPacket pkt;
+
+		for (uint32_t i = 0; i < numSpells; i++) {
+			if (spellSys.LoadActiveSpellElement(file->file, spellId, pkt) != 1) {
+				logger->warn("Loading Spells: Failure! {} spells in SpellsCastRegistry after loading.", spellSys.spellCastIdxTable->itemCount);
+				return FALSE;
+			}
+			if (!(spellId <= *spellIdSerial)) {
+				logger->warn("Invalid spellId {} detected, greater than spellIdSerial!", spellId);
+			}
+			if (!pkt.spellPktBody.caster) {
+				logger->warn("Null caster object!", spellId);
+			}
+			spellSys.SpellsCastRegistryPut(spellId, pkt);
+		}
+		logger->info("Loading Spells: {} spells in SpellsCastRegistry after loading.", spellSys.spellCastIdxTable->itemCount);
+	}
+	
+	return TRUE;
+}

@@ -816,6 +816,10 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			.def("get_metamagic_data", [](SpellPacketBody&pkt) {
 				return pkt.metaMagicData;
 			})
+			.def("get_spell_component_flags", [](SpellPacketBody& pkt) {
+				auto result = (uint32_t)pkt.GetSpellComponentFlags();
+				return result;
+			})
 			.def("get_target",[](SpellPacketBody &pkt, int idx)->objHndl
 			{
 				if (idx < (int)pkt.targetCount)
