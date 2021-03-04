@@ -244,7 +244,25 @@ public:
 } fragarachAoOFix;
 
 
+// Bardic Inspire Courage Function Replacements
+class BardicInspireCourageFix : public TempleFix
+{
+public:
+	static int BardicInspiredCourageInitArgs(DispatcherCallbackArgs args);
+	static int BardicInspiredCourageRefresh(DispatcherCallbackArgs args);
+	static int BardicInspiredCourageToHit(DispatcherCallbackArgs args);
+	static int BardicInspiredCourageDamBon(DispatcherCallbackArgs args);
+	static int BardicInspiredCourageSaveThrowBon(DispatcherCallbackArgs args);
+	void apply() override
+	{
+		replaceFunction(0x100EA510, BardicInspiredCourageRefresh);
+		replaceFunction(0x100EA5C0, BardicInspiredCourageInitArgs);
+		replaceFunction(0x100EA5F0, BardicInspiredCourageToHit);
+		replaceFunction(0x100EA630, BardicInspiredCourageDamBon);
+		replaceFunction(0x100EA670, BardicInspiredCourageSaveThrowBon);
 
+	}
+} bardicInspireCourageFix;
 uint32_t GetCourageBonus(objHndl objHnd)
 {
 	auto bonVal = 1;
@@ -352,7 +370,7 @@ int BardicInspiredCourageInitGetBonusRounds()
 	return bonusRounds;
 }
 
-uint32_t __cdecl BardicInspiredCourageInitArgs(DispatcherCallbackArgs args)
+int __cdecl BardicInspireCourageFix::BardicInspiredCourageInitArgs(DispatcherCallbackArgs args)
 {
 	auto bonusRounds = BardicInspiredCourageInitGetBonusRounds();
 	
@@ -379,25 +397,6 @@ uint32_t __cdecl BardicInspiredCourageInitArgs(DispatcherCallbackArgs args)
 	return 0;
 };
 
-
-// Bardic Inspire Courage Function Replacements
-class BardicInspireCourageFix : public TempleFix
-{
-public:
-	static int BardicInspiredCourageRefresh(DispatcherCallbackArgs args);
-	static int BardicInspiredCourageToHit(DispatcherCallbackArgs args);
-	static int BardicInspiredCourageDamBon(DispatcherCallbackArgs args);
-	static int BardicInspiredCourageSaveThrowBon(DispatcherCallbackArgs args);
-	void apply() override
-	{
-		replaceFunction(0x100EA510, BardicInspiredCourageRefresh);
-		replaceFunction(0x100EA5C0, BardicInspiredCourageInitArgs);
-		replaceFunction(0x100EA5F0, BardicInspiredCourageToHit);
-		replaceFunction(0x100EA630, BardicInspiredCourageDamBon);
-		replaceFunction(0x100EA670, BardicInspiredCourageSaveThrowBon);
-		
-	}
-} bardicInspireCourageFix;
 
 // Sorcerer Spell Failure Double Debit Fix
 class SorcererFailureDoubleChargeFix : public TempleFix
