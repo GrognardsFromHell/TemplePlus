@@ -1830,7 +1830,12 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 				dispatcher->Process(dispConfirmCriticalBonus, DK_NONE, &dispIoToHitBon);
 				toHitBonFinal = dispIoToHitBon.bonlist.GetEffectiveBonusSum();
 				
-				critHitRoll = Dice::Roll(1, 20);
+				if (!d20Sys.D20QueryPython(performer, "Always Confirm Criticals")) {
+					critHitRoll = Dice::Roll(1, 20);
+				}
+				else {
+					critHitRoll = 20;
+				}
 
 				// RerollCritical handling (e.g. from Luck domain)
 				if (isMiss(critHitRoll, toHitBonFinal, tgtAcFinal) && d20Sys.d20Query(performer, DK_QUE_RerollCritical)){

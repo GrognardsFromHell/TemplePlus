@@ -35,7 +35,6 @@ def CrossbowSniperDamageBonus(attachee, args, evt_obj):
 	return 0
 	
 def CrossbowSniperSneakAttackRangeIncrease(attachee, args, evt_obj):
-	print "CrossbowSniperSneakAttackRangeIncrease"
 	wpn = attachee.item_worn_at(3)
 	active = CrossbowSniperFeatActive(attachee, wpn)
 	if active:
@@ -43,7 +42,6 @@ def CrossbowSniperSneakAttackRangeIncrease(attachee, args, evt_obj):
 	return 0
 	
 def CrossbowSniperSkirmishRangeIncrease(attachee, args, evt_obj):
-	print "CrossbowSniperSkirmishRangeIncrease"
 	wpn = attachee.item_worn_at(3)
 	active = CrossbowSniperFeatActive(attachee, wpn)
 	if active:
