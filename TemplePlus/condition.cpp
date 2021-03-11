@@ -6764,8 +6764,12 @@ int ClassAbilityCallbacks::SneakAttackDamage(DispatcherCallbackArgs args) {
 	if (atkPkt.flags & D20CAF_NO_PRECISION_DAMAGE)
 		return 0;
 
-	// limit to 30'
-	bool withinRange = (locSys.DistanceToObj(args.objHndCaller, tgt) < 30.0);
+	
+	int rangeLimit = 30; // limit to 30' normally
+	const auto rangeIncrease = d20Sys.D20QueryPython(args.objHndCaller, "Sneak Attack Range Increase");
+	rangeLimit += rangeIncrease;
+
+	bool withinRange = (locSys.DistanceToObj(args.objHndCaller, tgt) < rangeLimit);
 	if (!withinRange) {
 		withinRange = d20Sys.D20QueryPython(args.objHndCaller, "Disable Sneak Attack Range Requirement");  //See if range requirement is disabled
 	}
