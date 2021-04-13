@@ -26,4 +26,4 @@ def ShieldedCastingDisableAOO(attachee, args, evt_obj):
 
 shieldedCasting = PythonModifier("Shielded Casting Feat", 2) # Spare, Spare
 shieldedCasting.MapToFeat("Shielded Casting")
-shieldedCasting.AddHook(ET_OnD20PythonQuery, "Disable AOO", ShieldedCastingDisableAOO, ())
+shieldedCasting.AddHook(ET_OnD20PythonQuery, "Does Not Provoke AOO", ShieldedCastingDisableAOO, ())
