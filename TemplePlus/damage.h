@@ -44,7 +44,7 @@ struct DamagePacket {
 	int attackPowerType; // see D20DAP
 	int finalDamage;
 	int flags; // 1 - Maximized (takes max value of damage dice) ; 2 - Empowered (1.5x on rolls)
-	int field51c;
+	// int field51c; // looks like a mistake... see 0x10047C80
 
 	int AddEtherealImmunity();
 	int AddDamageDice(uint32_t dicePacked, DamageType damType, int damageMesLine, const char* description = nullptr);
@@ -65,6 +65,7 @@ struct DispIoDamage : DispIO { // Io type 4
 	int padding;
 	AttackPacket attackPacket;
 	DamagePacket damage;
+	int padding2;
 
 	DispIoDamage() {
 		dispIOType = dispIOTypeDamage;

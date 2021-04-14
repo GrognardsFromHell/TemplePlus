@@ -39,6 +39,8 @@ struct HistoryEntryType0 : HistoryEntry{
 struct HistoryEntryType1 : HistoryEntry
 {
 	DamagePacket dmgPkt;
+
+	HistoryEntryType1(objHndl attacker, objHndl tgt, DamagePacket* dmg);
 };
 
 
@@ -260,6 +262,15 @@ int HistorySystem::CreateRollHistoryLineFromMesfile(int historyMesLine, objHndl 
 	return addresses.CreateRollHistoryLineFromMesfile(historyMesLine, obj, obj2);
 }
 
+int HistorySystem::RollHistoryAddType1DamageRoll(objHndl attacker, objHndl tgt, DamagePacket* dmg)
+{
+	HistoryEntryType1 hist(attacker, tgt, dmg);
+
+	auto id = RollHistoryAdd(&hist);
+	AppendHistoryId(id);
+	return id;
+}
+
 int HistorySystem::RollHistoryType2Add(objHndl obj, uint32_t dicePacked, int rollResult, int dc, int skillIdx, BonusList* bonlist)
 {
 	HistoryEntryType2 hist(obj, dicePacked, rollResult, dc, skillIdx, bonlist);
@@ -435,4 +446,12 @@ HistoryEntryType2::HistoryEntryType2(objHndl obj, uint32_t dicePacked, int rollR
 	this->dicePacked = dicePacked;
 	this->rollResult = rollResult;
 	this->bonlist = *Bonlist;
+}
+
+HistoryEntryType1::HistoryEntryType1(objHndl attacker, objHndl tgt, DamagePacket* dmg)
+{
+	this->histType = 1;
+	this->obj = attacker;
+	this->obj2 = tgt;
+	memcpy(&this->dmgPkt, dmg, sizeof(DamagePacket));
 }

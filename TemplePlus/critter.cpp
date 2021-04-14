@@ -673,6 +673,31 @@ void LegacyCritterSystem::CritterHpChanged(objHndl obj, objHndl assailant, int d
 	addresses.CritterHpChanged(obj, assailant, damAmt);
 }
 
+/* 0x1001DAF0 */
+int LegacyCritterSystem::GetHpDamage(objHndl handle)
+{
+	auto obj = objSystem->GetObject(handle);
+	if (!obj)
+		return 0;
+	return obj->GetInt32(obj_f_hp_damage);
+}
+
+/* 0x1001DBA0 */
+void LegacyCritterSystem::SetHpDamage(objHndl handle, int damage)
+{
+	if (damage < 0)
+		damage = 0;
+	auto obj = objSystem->GetObject(handle);
+	if (!obj) return;
+	obj->SetInt32(obj_f_hp_damage, damage);
+	if (damage > 0 && obj->IsNPC()) {
+		static auto scheduleHealing = temple::GetRef<void(__cdecl)(objHndl, BOOL)>(0x1007F140);
+		scheduleHealing(handle, FALSE);
+	}
+	static auto ui_unk_1009A3F0 = temple::GetRef<void(__cdecl)(objHndl)>(0x1009A3F0);
+	ui_unk_1009A3F0(handle);
+}
+
 static_assert(temple::validate_size<StandPoint, 0x20>::value, "Invalid size");
 
 void LegacyCritterSystem::SetStandPoint(objHndl critter, StandPointType type, const StandPoint& standpoint) {
@@ -774,6 +799,14 @@ void LegacyCritterSystem::BalorDeath(objHndl npc) {
 
 void LegacyCritterSystem::SetConcealed(objHndl critter, int concealed) {
 	addresses.SetConcealed(critter, concealed);
+}
+
+int LegacyCritterSystem::GetSubdualDamage(objHndl critter)
+{
+	auto obj = objSystem->GetObject(critter);
+	if (!obj) return 0;
+
+	return obj->GetInt32(obj_f_critter_subdual_damage);
 }
 
 void LegacyCritterSystem::SetConcealedWithFollowers(objHndl obj, int newState){

@@ -30,6 +30,12 @@ void UiLogbook::IncreaseCritHits(objHndl handle){
 	}
 }
 
+void UiLogbook::RecordHighestDamage(BOOL isWeaponDamage, int damageAmt, objHndl attacker, objHndl tgt)
+{
+	static auto uiBridgeRecordHighestDam = temple::GetRef<void(__cdecl)(BOOL, int, objHndl, objHndl)>(0x1009AA10);
+	uiBridgeRecordHighestDam(isWeaponDamage, damageAmt, attacker, tgt);
+}
+
 void UiLogbook::MarkKey(int keyId, const GameTime& gameTime){
 	temple::GetRef<void(__cdecl)(int, GameTime)>(0x1009A7B0)(keyId, gameTime);
 }

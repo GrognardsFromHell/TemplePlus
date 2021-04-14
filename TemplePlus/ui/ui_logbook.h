@@ -23,6 +23,7 @@ class UiLogbook
 {
 public:
 	void IncreaseCritHits(objHndl handle);
+	void RecordHighestDamage(BOOL isWeaponDamage, int damageAmt, objHndl attacker, objHndl tgt);
 	void MarkKey(int keyId, const GameTime& gameTime);
 
 protected:
