@@ -97,6 +97,7 @@ public:
 	uint32_t * ConditionArrayDomainsArg1;
 	uint32_t * ConditionArrayDomainsArg2;
 	CondFeatDictionary * FeatConditionDict; //102EEBF0   includes feats
+	uint32_t FeatConditionDictSize;
 	CondStruct * ConditionAttackOfOpportunity;
 	CondStruct * ConditionCastDefensively;
 	CondStruct * ConditionCombatCasting;
