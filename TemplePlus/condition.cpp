@@ -2473,11 +2473,16 @@ public:
 void _FeatConditionsRegister()
 {
 
-	// In moebiues DLL the condition table was moved and extended
+	// In moebiues DLL the condition table was moved and extended; the starting point is different in Co8 3.0.4 and 4.0 unfortunately
 	auto condCount = 84u;
-	if (temple::Dll::GetInstance().IsVanillaDll()) {
-		conds.FeatConditionDict = temple::GetPointer<CondFeatDictionary>(0x102EEC40);
-		condCount = 79u;
+	CondFeatDictionary* dllFeatCondPtr = *temple::GetPointer<CondFeatDictionary*>(0x100F7BC0 + 2);
+
+	//if (temple::Dll::GetInstance().IsVanillaDll()) 
+	{
+		auto vanillaFeatCondTable = temple::GetPointer<CondFeatDictionary>(0x102EEC40);
+		conds.FeatConditionDict = dllFeatCondPtr;// temple::GetPointer<CondFeatDictionary>(0x102EEC40);
+		condCount = 79 + (vanillaFeatCondTable - dllFeatCondPtr )  ; //79u;
+		conds.FeatConditionDictSize = condCount;
 	}
 
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionAttackOfOpportunity);
@@ -2506,40 +2511,43 @@ void _FeatConditionsRegister()
 	brewPotion.AddToFeatDictionary(FEAT_BREW_POTION);
 
 	// Scribe Scroll
-	static CondStructNew scribeScroll("Scribe Scroll", 0);
-	//scribeScroll.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatScribeScrollRadialMenu);
-	scribeScroll.AddHook(dispTypeRadialMenuEntry, DK_NONE, [](DispatcherCallbackArgs args){
-		conds.AddTo(args.objHndCaller, "Scribe Scroll Level Set", { 1, 0 });
-		return 0;
+static CondStructNew scribeScroll("Scribe Scroll", 0);
+//scribeScroll.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatScribeScrollRadialMenu);
+scribeScroll.AddHook(dispTypeRadialMenuEntry, DK_NONE, [](DispatcherCallbackArgs args) {
+	conds.AddTo(args.objHndCaller, "Scribe Scroll Level Set", { 1, 0 });
+	return 0;
 	});
-	scribeScroll.AddToFeatDictionary(FEAT_SCRIBE_SCROLL);
-	
-	// Forge Ring
-	static CondStructNew forgeRing("Forge Ring", 0);
-	forgeRing.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatForgeRingRadial);
-	forgeRing.AddToFeatDictionary(FEAT_FORGE_RING);
+scribeScroll.AddToFeatDictionary(FEAT_SCRIBE_SCROLL);
 
-	// Craft Staff
-	static CondStructNew craftStaff("Craft Staff", 0);
-	craftStaff.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatCraftStaffRadial);
-	craftStaff.AddToFeatDictionary(FEAT_CRAFT_STAFF);
+// Forge Ring
+static CondStructNew forgeRing("Forge Ring", 0);
+forgeRing.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatForgeRingRadial);
+forgeRing.AddToFeatDictionary(FEAT_FORGE_RING);
 
-	// Craft Rod
-	static CondStructNew craftRod("Craft Rod", 0);
-	craftRod.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatCraftRodRadial);
-	craftRod.AddToFeatDictionary(FEAT_CRAFT_ROD);
+// Craft Staff
+static CondStructNew craftStaff("Craft Staff", 0);
+craftStaff.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatCraftStaffRadial);
+craftStaff.AddToFeatDictionary(FEAT_CRAFT_STAFF);
 
-	// Craft Magic Arms and Armor
-	static CondStructNew craftMaa("Craft Magic Arms and Armor", 0);
-	craftMaa.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatCraftMagicArmsAndArmorRadial);
-	craftMaa.AddToFeatDictionary(FEAT_CRAFT_MAGIC_ARMS_AND_ARMOR);
+// Craft Rod
+static CondStructNew craftRod("Craft Rod", 0);
+craftRod.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatCraftRodRadial);
+craftRod.AddToFeatDictionary(FEAT_CRAFT_ROD);
 
-	for (auto i = 0u; i < condCount; i++){
-		conds.hashmethods.CondStructAddToHashtable(conds.FeatConditionDict[i].condStruct.old);
-	}
+// Craft Magic Arms and Armor
+static CondStructNew craftMaa("Craft Magic Arms and Armor", 0);
+craftMaa.AddHook(dispTypeRadialMenuEntry, DK_NONE, classAbilityCallbacks.FeatCraftMagicArmsAndArmorRadial);
+craftMaa.AddToFeatDictionary(FEAT_CRAFT_MAGIC_ARMS_AND_ARMOR);
+
+for (auto i = 0u; i < condCount; i++) {
+	auto condPtr = conds.FeatConditionDict[i].condStruct.old;
+	if (condPtr == nullptr) // in vanilla there were 79 conditions in this array, and it was preceded by nulls. Moebius gradually used up this space to add feats.
+		continue;
+	conds.hashmethods.CondStructAddToHashtable(condPtr);
+}
 }
 
-uint32_t  _GetCondStructFromFeat(feat_enums featEnum, CondStruct ** condStructOut, uint32_t * argout)
+uint32_t  _GetCondStructFromFeat(feat_enums featEnum, CondStruct** condStructOut, uint32_t* argout)
 {
 	switch (featEnum)
 	{
@@ -2583,33 +2591,49 @@ uint32_t  _GetCondStructFromFeat(feat_enums featEnum, CondStruct ** condStructOu
 		*argout = featEnum - FEAT_GREATER_WEAPON_SPECIALIZATION_GAUNTLET;
 		return 1;
 	}
-	
+
 	// Search the new Feat-CondStruct dictionary
 	auto it = conditions.condDict.find(featEnum);
-	if (it != conditions.condDict.end()){
-		if (it->second.featEnum == featEnum && it->second.condStruct.cs != nullptr){
+	if (it != conditions.condDict.end()) {
+		if (it->second.featEnum == featEnum && it->second.condStruct.cs != nullptr) {
 			*condStructOut = static_cast<CondStruct*>(it->second.condStruct.old);
 			*argout = it->second.condArg;
 			return 1;
 		}
 	};
 
-	feat_enums * featFromDict = & ( conds.FeatConditionDict->featEnum );
+	feat_enums* featFromDict = &(conds.FeatConditionDict->featEnum);
 	uint32_t iter = 0;
-	while (
-		( (int32_t)featEnum != featFromDict[0] || featFromDict[1] != -1)
-		&&  ( (int32_t)featEnum < (int32_t)featFromDict[0] 
-				|| (int32_t)featEnum >= (int32_t)featFromDict[1]  )
-		)
-	{
-		iter += 16;
-		featFromDict += 4;
-		if (iter >= 0x540){ return 0; }
+	for (auto i = 0; i < conds.FeatConditionDictSize; ++i) {
+		auto &featCondSpec = conds.FeatConditionDict[i];
+		auto featFromDict = featCondSpec.featEnum;
+		if (
+				(featEnum == featFromDict && featCondSpec.featEnumMax  == -1)
+			|| 	( featEnum >= featFromDict && featEnum < featCondSpec.featEnumMax )
+			)
+		{
+			*condStructOut = featCondSpec.condStruct.old;
+			*argout = featEnum + featCondSpec.condArg - featFromDict;
+			return TRUE;
+		}
 	}
 
-	*condStructOut = (CondStruct *)*(featFromDict - 1);
-	*argout = featEnum + featFromDict[2] - featFromDict[0];
-	return 1;
+	return FALSE;
+
+	//while (
+	//	( (int32_t)featEnum != featFromDict[0] || featFromDict[1] != -1)
+	//	&&  ( (int32_t)featEnum < (int32_t)featFromDict[0] 
+	//			|| (int32_t)featEnum >= (int32_t)featFromDict[1]  )
+	//	)
+	//{
+	//	iter += 16;
+	//	featFromDict += 4;
+	//	if (iter >= conds.FeatConditionDictSize * 16){ return 0; }
+	//}
+
+	//*condStructOut = (CondStruct *)*(featFromDict - 1);
+	//*argout = featEnum + featFromDict[2] - featFromDict[0];
+	//return 1;
 }
 
 uint32_t _CondStructAddToHashtable(CondStruct * condStruct)
@@ -3872,7 +3896,7 @@ int ConditionFunctionReplacement::RemoveDiseasePerform(DispatcherCallbackArgs ar
 
 void ConditionFunctionReplacement::HookSpellCallbacks()
 {
-
+	replaceFunction(0x100D3620, SpellCallbacks::HasSpellEffectActive);
 	replaceFunction(0x100D3100, SpellCallbacks::ConcentratingActionSequenceHandler);
 	replaceFunction(0x100D32B0, SpellCallbacks::ConcentratingActionRecipientHandler);
 

@@ -117,7 +117,14 @@ XPAward::XPAward(){
 		if (!config.slowerLevelling || level < 3)
 			table[level - 1][level - CRMIN] = level * 300;
 		else
-			table[level - 1][level - CRMIN] = (int)(level * 300 * (1 - min(0.66f, 0.66f * powf(level - 2.0f, 0.1f) / powf(16.0f, 0.1f))));
+			table[level - 1][level - CRMIN] = (int)(
+					level * 300 * 
+						(
+							1 - min(0.66f, 
+								    0.66f * powf(level - 2.0f, 0.1f) / powf(16.0f, 0.1f)
+							    )
+						)
+				);
 	}
 
 	// Fill out the bottom left portion - CRs less than level - from highest to lowest
