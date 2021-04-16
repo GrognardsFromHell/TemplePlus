@@ -26,4 +26,8 @@ GameTime GameTimeSystem::ElapsedGetDelta(GameTime* gtime)
 	return result;
 }
 
+GameTime GameTimeSystem::GetElapsed() {
+	return *addresses.gameTimeElapsed;
+}
+
 void(__cdecl*GameTimeSystem::orgGameTimeAdd)(GameTime* timeDelta);

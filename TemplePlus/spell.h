@@ -10,6 +10,7 @@
 struct GameSystemConf;
 class TioOutputStream;
 struct PickerArgs;
+class SpellDebugRecord;
 
 #define MAX_SPELLS_KNOWN 384
 
@@ -103,6 +104,7 @@ struct SpellPacketBody{
 	bool RemoveObjFromTargetList(const objHndl& objHnd);
 	bool EndPartsysForTgtObj(const objHndl& handle);
 	void TriggerAoeHitScript();
+	SpellComponentFlag GetSpellComponentFlags();
 };
 
 const uint32_t TestSizeOfSpellPacketBody = sizeof(SpellPacketBody); // should be 0xAE8  (2792)
@@ -266,6 +268,9 @@ struct LegacySpellSystem : temple::AddressTable
 	void SpellSave(); // packs the spells cast registry to SpellMapTransferInfo data structs
 	int SpellSave(TioOutputStream&); // saves the spells cast registry to file
 		void SpellSavePruneInactive() const;
+		void SaveDebugRecords() const;
+		void LoadDebugRecords();
+		void ResetDebugRecords();
 		
 	SpellMapTransferInfo SaveSpellForTeleport(const SpellPacket& data);
 		

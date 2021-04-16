@@ -15,6 +15,7 @@
 #include "animgoals/anim.h"
 #include "ui/ui_logbook.h"
 #include "party.h"
+#include <condition.h>
 
 static_assert(temple::validate_size<DispIoDamage, 0x550>::value, "DispIoDamage");
 
@@ -585,8 +586,122 @@ int Damage::DealWeaponlikeSpellDamage(objHndl tgt, objHndl attacker, const Dice 
 	return -1;
 }
 
+/* 0x100B6B30 */
 void Damage::DamageCritter(objHndl attacker, objHndl tgt, DispIoDamage & evtObjDam){
-	temple::GetRef<void(__cdecl)(objHndl, objHndl, DispIoDamage&)>(0x100B6B30)(attacker, tgt, evtObjDam);
+	//return temple::GetRef<void(__cdecl)(objHndl, objHndl, DispIoDamage&)>(0x100B6B30)(attacker, tgt, evtObjDam);
+	
+	auto tgtObj = objSystem->GetObject(tgt);
+	if (!tgtObj) return;
+
+	auto skipHitAnim = critterSys.IsDeadOrUnconscious(tgt) 
+		|| (d20Sys.d20Query(tgt, DK_QUE_Prone) != 0);
+	
+
+	if (tgtObj->GetFlags() & OF_INVULNERABLE) {
+		evtObjDam.damage.AddModFactor(0.0f, DamageType::Unspecified, 104);
+	}
+
+	evtObjDam.damage.CalcFinalDamage();
+	dispatch.DispatchDamage(tgt, &evtObjDam, dispTypeTakingDamage, DK_NONE);
+	if (evtObjDam.attackPacket.flags & D20CAF_TRAP) {
+		attacker = objHndl::null;
+	}
+	else if (attacker != objHndl::null) {
+		dispatch.DispatchDamage(attacker, &evtObjDam, dispTypeDealingDamage2, DK_NONE);
+	}
+	dispatch.DispatchDamage(tgt, &evtObjDam, dispTypeTakingDamage2, DK_NONE);
+
+	if (attacker) {
+		tgtObj->SetObjHndl(obj_f_last_hit_by, attacker);
+	}
+
+	auto damTot = evtObjDam.damage.GetOverallDamage();
+	if (damTot < 0) damTot = 0;
+
+	auto hpDam = critterSys.GetHpDamage(tgt);
+	auto hpDamNew = hpDam + damTot;
+	critterSys.SetHpDamage(tgt, hpDamNew);
+
+	// Add roll history entry
+	auto histId = histSys.RollHistoryAddType1DamageRoll(attacker, tgt, &evtObjDam.damage );
+	histSys.CreateRollHistoryString(histId);
+
+	d20Sys.d20SendSignal(tgt, D20DispatcherKey::DK_SIG_HP_Changed, -damTot, damTot < 0 ? -1 : 0);
+
+	if (damTot > 0) {
+		if (tgt) {
+			conds.AddTo(tgt, "Damaged", { damTot, 0 });
+		}
+
+		// bells and whistles
+		if (attacker && tgt) {
+			auto isWeaponDamage = temple::GetRef<BOOL>(0x10BCA8AC);
+			uiLogbook.RecordHighestDamage(isWeaponDamage, damTot, attacker, tgt);
+			if (attacker != tgt && critterSys.IsFriendly(attacker, tgt)) {
+				auto dlgGetFriendlyFireVoiceLine = temple::GetRef<void(__cdecl)(objHndl, objHndl, char*, int*)>(0x10037450);
+
+				char ffText[1000]; int soundId;
+				
+				dlgGetFriendlyFireVoiceLine(tgt, attacker, ffText, &soundId);
+				critterSys.PlayCritterVoiceLine(tgt, attacker, ffText, soundId);
+				
+			}
+		}
+	}
+
+	auto subdualDamTot = evtObjDam.damage.GetOverallDamageByType(DamageType::Subdual);
+	if (subdualDamTot < 0) subdualDamTot = 0;
+	if (subdualDamTot > 0) {
+		if (tgt) {
+			conds.AddTo(tgt, "Damaged", { subdualDamTot , 0 });
+		}
+	}
+	auto subdualDam = critterSys.GetSubdualDamage(tgt);
+	critterSys.SetSubdualDamage(tgt, subdualDam + subdualDamTot);
+	d20Sys.d20SendSignal(tgt, D20DispatcherKey::DK_SIG_HP_Changed, -subdualDamTot, subdualDamTot < 0 ? -1 : 0 );
+
+	// Float line "xxx HP"
+	{
+		auto floatLineColor = FloatLineColor::Red; // default
+		auto colorObj = tgtObj;
+		if (attacker) {
+			auto attackerObj = objSystem->GetObject(attacker);
+			if (attackerObj) colorObj = attackerObj;
+		}
+		if (colorObj->IsPC()) {
+			floatLineColor = FloatLineColor::White;
+		}
+		else {
+			if (colorObj->IsNPC()) {
+				auto leader = critterSys.GetLeaderForNpc(tgt);
+				if (party.IsInParty(leader)) {
+					floatLineColor = FloatLineColor::Yellow;
+				}
+			}
+		}
+		if (damTot > 0 || subdualDamTot == 0) {
+			constexpr int combatMesline_HP = 1;
+			
+			auto text = fmt::format("{} {}", damTot, combatSys.GetCombatMesLine(combatMesline_HP));
+			if (text[0])
+				floatSys.floatMesLine(tgt, 2, floatLineColor, text.c_str());
+		}
+		if (subdualDamTot > 0) {
+			constexpr int combatMesline_Nonlethal = 25;
+
+			auto text = fmt::format("{} {}", subdualDamTot, combatSys.GetCombatMesLine(combatMesline_Nonlethal));
+			if (text[0])
+				floatSys.floatMesLine(tgt, 2, floatLineColor, text.c_str());
+		}
+	}
+	
+	// Push hit animation
+	if (attacker) {
+		if (!skipHitAnim) {
+			gameSystems->GetAnim().PushGoalHitByWeapon(attacker, tgt);
+		}
+	}
+
 }
 
 void Damage::Heal(objHndl target, objHndl healer, const Dice& dice, D20ActionType actionType) {

@@ -46,6 +46,7 @@ class GameTimeSystem : TempleFix
 {
 public: 
 	static GameTime ElapsedGetDelta(GameTime * gtime);
+	static GameTime GetElapsed();
 	static void GameTimeAdd(GameTime* timeDelta)
 	{
 		orgGameTimeAdd(timeDelta);

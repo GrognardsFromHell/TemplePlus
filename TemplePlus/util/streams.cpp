@@ -4,6 +4,7 @@
 
 #include <infrastructure/vfs.h>
 #include <tio/tio.h>
+#include "gametime.h"
 
 void InputStream::CopyTo(OutputStream& out, size_t bytes) {
 
@@ -22,6 +23,11 @@ void InputStream::CopyTo(OutputStream& out, size_t bytes) {
 		out.WriteBytes(&buffer[0], bytes);
 	}
 
+}
+
+void InputStream::ReadGameTime(GameTime& gameTimeOut)
+{
+	ReadRaw(&gameTimeOut, sizeof(GameTime));
 }
 
 VfsInputStream::VfsInputStream(const std::string& filename) : mFilename(filename) {
@@ -96,4 +102,8 @@ void MemoryOutputStream::WriteRaw(const void* buffer, size_t count) {
 
 size_t MemoryOutputStream::GetPos() const {
 	return mBuffer.size();
+}
+
+void OutputStream::WriteGameTime(const GameTime& time) {
+	WriteRaw(&time, sizeof(GameTime));
 }

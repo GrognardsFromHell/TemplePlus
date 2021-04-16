@@ -244,17 +244,102 @@ public:
 } fragarachAoOFix;
 
 
+// Bardic Inspire Courage Function Replacements
+class BardicInspireCourageFix : public TempleFix
+{
+public:
+	static int BardicInspiredCourageInitArgs(DispatcherCallbackArgs args);
+	static int BardicInspiredCourageRefresh(DispatcherCallbackArgs args);
+	static int BardicInspiredCourageToHit(DispatcherCallbackArgs args);
+	static int BardicInspiredCourageDamBon(DispatcherCallbackArgs args);
+	static int BardicInspiredCourageSaveThrowBon(DispatcherCallbackArgs args);
+	void apply() override
+	{
+		replaceFunction(0x100EA510, BardicInspiredCourageRefresh);
+		replaceFunction(0x100EA5C0, BardicInspiredCourageInitArgs);
+		replaceFunction(0x100EA5F0, BardicInspiredCourageToHit);
+		replaceFunction(0x100EA630, BardicInspiredCourageDamBon);
+		replaceFunction(0x100EA670, BardicInspiredCourageSaveThrowBon);
 
+	}
+} bardicInspireCourageFix;
 uint32_t GetCourageBonus(objHndl objHnd)
 {
+	auto bonVal = 1;
 	auto bardLvl = (int32_t)objects.StatLevelGet(objHnd, stat_level_bard);
 	auto bardicMusicLevelBonus = d20Sys.D20QueryPython(objHnd, "Bardic Music Bonus Levels");
+	auto ibBonus = d20Sys.D20QueryPython(objHnd, "Inspirational Boost");
+	bonVal += ibBonus;
+
 	bardLvl += bardicMusicLevelBonus;
-	if (bardLvl < 8) return 1;
-	if (bardLvl < 14) return 2;
-	if (bardLvl < 20) return 3;
-	return 4;
+	if (bardLvl < 8) return bonVal;
+	if (bardLvl < 14) return bonVal+1;
+	if (bardLvl < 20) return bonVal+2;
+
+	return bonVal+3;
 };
+
+
+int GetPartyHighestCourageBonus(objHndl attachee) {
+	auto bonVal = 1;
+	// workaround for getting a handle on the singer...
+	if (party.IsInParty(attachee)) {
+		
+		for (auto i = 0u; i < party.GroupListGetLen(); i++) {
+			auto dude = party.GroupListGetMemberN(i);
+			if (!dude)
+				continue;
+			auto dudeBonVal = GetCourageBonus(dude);
+			if (dudeBonVal > bonVal)
+				bonVal = dudeBonVal;
+		}
+		
+	}
+	return bonVal;
+}
+
+int BardicInspireCourageFix::BardicInspiredCourageToHit(DispatcherCallbackArgs args) {
+	GET_DISPIO(dispIOTypeAttackBonus, DispIoAttackBonus);
+	if (!args.GetCondArg(1))
+		return 0;
+
+	auto bonVal = GetPartyHighestCourageBonus(args.objHndCaller);
+
+	dispIo->bonlist.AddBonus(bonVal, 13, 191);
+	return 0;
+}
+
+int BardicInspireCourageFix::BardicInspiredCourageDamBon(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIOTypeDamage, DispIoDamage);
+
+	if (!args.GetCondArg(1))
+		return 0;
+
+	auto bonVal = GetPartyHighestCourageBonus(args.objHndCaller);
+
+	dispIo->damage.AddDamageBonus(bonVal, 13, 191);
+	return 0;
+}
+
+int BardicInspireCourageFix::BardicInspiredCourageSaveThrowBon(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIOTypeSavingThrow, DispIoSavingThrow);
+
+	if (!args.GetCondArg(1))
+		return 0;
+
+	auto flags = dispIo->flags;
+	if ( (flags & D20SavingThrowFlag::D20STF_CHARM) // fixes vanilla bug - was _TRAP instead of _CHARM
+		|| (flags&D20SavingThrowFlag::D20STF_SPELL_DESCRIPTOR_FEAR) ) {
+		auto bonVal = GetPartyHighestCourageBonus(args.objHndCaller);
+
+		dispIo->bonlist.AddBonus(bonVal, 13, 191);
+	}
+	
+	return 0;
+}
+
 
 int BardicInspiredCourageInitGetBonusRounds()
 // Helper Function that finds the number of extra rounds to allow inspire courage to last after the bard stops singing
@@ -285,7 +370,7 @@ int BardicInspiredCourageInitGetBonusRounds()
 	return bonusRounds;
 }
 
-uint32_t __cdecl BardicInspiredCourageInitArgs(DispatcherCallbackArgs args)
+int __cdecl BardicInspireCourageFix::BardicInspiredCourageInitArgs(DispatcherCallbackArgs args)
 {
 	auto bonusRounds = BardicInspiredCourageInitGetBonusRounds();
 	
@@ -305,27 +390,13 @@ uint32_t __cdecl BardicInspiredCourageInitArgs(DispatcherCallbackArgs args)
 		logger->info("Bardic Inspired Courage dispatched from non-critter! Mon seigneur {}", 
 			description.getDisplayName(args.objHndCaller));
 	}
-	//conds.CondNodeSetArg(args.subDispNode->condNode, 3, courageBonus);
+	//conds.CondNodeSetArg(args.subDispNode->condNode, 3, courageBonus); 
+	// The Spell Slinger fix changed the number of args from 3 to 4
+	// This may cause issues with non-Co8 installations so instead of this we calculate
+	// the bonus on the fly instead
 	return 0;
 };
 
-
-// Bardic Inspire Courage Function Replacements
-class BardicInspireCourageFix : public TempleFix
-{
-public:
-	static int BardicInspiredCourageRefresh(DispatcherCallbackArgs args);
-	static int BardicInspiredCourageToHit(DispatcherCallbackArgs args);
-	static int BardicInspiredCourageDamBon(DispatcherCallbackArgs args);
-	void apply() override
-	{
-		replaceFunction(0x100EA510, BardicInspiredCourageRefresh);
-		replaceFunction(0x100EA5C0, BardicInspiredCourageInitArgs);
-		replaceFunction(0x100EA5F0, BardicInspiredCourageToHit);
-		replaceFunction(0x100EA630, BardicInspiredCourageDamBon);
-		
-	}
-} bardicInspireCourageFix;
 
 // Sorcerer Spell Failure Double Debit Fix
 class SorcererFailureDoubleChargeFix : public TempleFix
@@ -560,68 +631,6 @@ static class SkillMeasureFix : public TempleFix {
 	};
 } skillMeasureFix;
 
-int BardicInspireCourageFix::BardicInspiredCourageToHit(DispatcherCallbackArgs args){
-	GET_DISPIO(dispIOTypeAttackBonus, DispIoAttackBonus);
-	if (!args.GetCondArg(1))
-		return 0;
-	auto bonVal = 1;
-	if (party.IsInParty(args.objHndCaller)){
-		auto brdLvl = 0;
-		for (auto i=0u; i<party.GroupListGetLen(); i++){
-			auto dude = party.GroupListGetMemberN(i);
-			if (!dude)
-				continue;
-			auto dudeBrdLvl = objects.StatLevelGet(dude, stat_level_bard);
-			auto bardicMusicLevelBonus = d20Sys.D20QueryPython(dude, "Bardic Music Bonus Levels");
-			dudeBrdLvl += bardicMusicLevelBonus;
-			if (dudeBrdLvl > brdLvl)
-				brdLvl = dudeBrdLvl;
-		}
-		if (brdLvl < 8) 
-			bonVal =1;
-		else if (brdLvl < 14) 
-			bonVal = 2;
-		else if (brdLvl < 20) 
-			bonVal = 3;
-		else
-			bonVal = 4;
-	}
-	dispIo->bonlist.AddBonus(bonVal, 13, 191);
-	return 0;
-}
-
-int BardicInspireCourageFix::BardicInspiredCourageDamBon(DispatcherCallbackArgs args)
-{
-	GET_DISPIO(dispIOTypeDamage, DispIoDamage);
-	
-	if (!args.GetCondArg(1))
-		return 0;
-
-	auto bonVal = 1;
-	if (party.IsInParty(args.objHndCaller)) {
-		auto brdLvl = 0;
-		for (auto i = 0u; i<party.GroupListGetLen(); i++) {
-			auto dude = party.GroupListGetMemberN(i);
-			if (!dude)
-				continue;
-			auto dudeBrdLvl = objects.StatLevelGet(dude, stat_level_bard);
-			auto bardicMusicLevelBonus = d20Sys.D20QueryPython(dude, "Bardic Music Bonus Levels");
-			dudeBrdLvl += bardicMusicLevelBonus;
-			if (dudeBrdLvl > brdLvl)
-				brdLvl = dudeBrdLvl;
-		}
-		if (brdLvl < 8)
-			bonVal = 1;
-		else if (brdLvl < 14)
-			bonVal = 2;
-		else if (brdLvl < 20)
-			bonVal = 3;
-		else
-			bonVal = 4;
-	}
-	dispIo->damage.AddDamageBonus(bonVal, 13, 191);
-	return 0;
-}
 
 int BardicInspireCourageFix::BardicInspiredCourageRefresh(DispatcherCallbackArgs args)
 {

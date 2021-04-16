@@ -628,6 +628,24 @@ static PyObject* PyObjHandle_CanFindPathToObj(PyObject* obj, PyObject* args) {
 }
 
 
+static PyObject* PyObjHandle_CanMelee(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	objHndl targetObj;
+	if (!PyArg_ParseTuple(args, "O&:objhndl.can_melee", &ConvertObjHndl, &targetObj)) {
+		return 0;
+	}
+	if (!targetObj)
+		return PyInt_FromLong(0);
+
+	auto result = combatSys.CanMeleeTarget(self->handle, targetObj);
+	
+	return PyInt_FromLong(result);
+}
+
 static PyObject* PyObjHandle_SkillLevelGet(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 
@@ -3578,6 +3596,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"cast_spell", PyObjHandle_CastSpell, METH_VARARGS, NULL },
 	{"can_cast_spell", PyObjHandle_CanCastSpell, METH_VARARGS, NULL },
 	{"can_find_path_to_obj", PyObjHandle_CanFindPathToObj, METH_VARARGS, NULL },
+	{"can_melee", PyObjHandle_CanMelee, METH_VARARGS, NULL },
 	{"can_see", PyObjHandle_HasLos, METH_VARARGS, NULL },
 	{"can_sense", PyObjHandle_CanSense, METH_VARARGS, NULL },
 	{ "can_sneak_attack", PyObjHandle_CanSneakAttack, METH_VARARGS, NULL },

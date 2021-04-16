@@ -177,8 +177,10 @@ struct LegacyCritterSystem : temple::AddressTable
 		Same as Kill, but applies condition "Killed By Death Effect" before killing.
 	*/
 	void KillByEffect(objHndl critter, objHndl killer = objHndl::null);
-
+	int GetHpDamage(objHndl handle);
+	void SetHpDamage(objHndl handle, int damage);
 	void CritterHpChanged(objHndl obj, objHndl assailant, int damAmt);
+	
 		
 	/*
 		Changes one of the standpoints for a critter.
@@ -192,6 +194,7 @@ struct LegacyCritterSystem : temple::AddressTable
 
 
 	void GenerateHp(objHndl critter); // sets the field obj_f_hp_pts according to class levels and NPC hit die using dice throws
+	int GetSubdualDamage(objHndl critter);
 	/*
 		Sets the overall subdual damage received by the critter.
 	*/
