@@ -625,6 +625,7 @@ void Objects::Move(objHndl handle, LocAndOffsets toLocation) {
 
 #include "combat.h"
 #include "turn_based.h"
+#include <objlist.h>
 
 SecretDoorFlag Objects::GetSecretDoorFlags(objHndl handle) {
 	return (SecretDoorFlag) _GetInternalFieldInt32(handle, obj_f_secretdoor_flags);
@@ -933,6 +934,70 @@ BOOL Objects::IsPortalLocked(const objHndl& handle){
 	return temple::GetRef<BOOL(__cdecl)(objHndl)>(0x1001FD70)(handle);
 }
 
+bool Objects::OpenLock(objHndl handle, bool isTimeEvent, bool openAdjacent)
+{
+	if (!handle)
+		return FALSE;
+
+	auto obj = objSystem->GetObject(handle);
+	auto protoId = objSystem->GetProtoId(handle);
+	if (protoId == 1000  // generic door
+		|| (obj->type != obj_t_container && obj->type != obj_t_portal)) {
+		return FALSE;
+	}
+
+	auto flagsField = obj_f_portal_flags;
+	if (obj->type == obj_t_container)
+		flagsField = obj_f_container_flags;
+
+	auto flags = obj->GetInt32(flagsField);
+	if (!config.disableDoorRelocking
+		&& (flags & PortalFlag::OPF_LOCKED)) { // this is the same enum value for container
+		TimeEvent evt;
+		evt.system = TimeEventType::Lock;
+		evt.params[0].handle = handle;
+		gameSystems->GetTimeEvent().Schedule(evt, 3600000);
+	}
+
+	flags &= ~OPF_LOCKED;
+	if (isTimeEvent && !config.disableDoorRelocking) {
+		flags |= OPF_LOCKED;
+	}
+	obj->SetInt32(flagsField, flags);
+
+	// added: open adjacent door (for double doors)
+	if (openAdjacent && !isTimeEvent && obj->type == obj_t_portal) {
+		auto loc = obj->GetLocationFull();
+		
+		// check ±5 tiles away in X/Y directions
+		TileRect rects[2];
+		rects[0].x1 = max(0, (int)loc.location.locx - 5 );
+		rects[0].x2 = loc.location.locx + 5;
+		rects[0].y1 = rects[0].y2 = loc.location.locy;
+
+		rects[1].y1 = max(0, (int)loc.location.locy - 5);
+		rects[1].y2 = loc.location.locy + 5;
+		rects[1].x1 = rects[1].x2 = loc.location.locx;
+
+		for (auto ri = 0; ri < 2; ++ri) {
+			ObjList objList;
+			objList.ListRect(rects[ri], ObjectListFilter::OLC_PORTAL);
+			for (int i = 0; i < objList.size(); i++) {
+				auto doorhandle = objList[i];
+				if (handle == doorhandle)
+					continue;
+				auto distance = locSys.DistanceToObj(doorhandle, handle); // regards radius; double doors should have near 0 distance (or even negative distance) due to this
+				if (distance > 1) // disregard far doors
+					continue;
+				OpenLock(doorhandle, false, false);
+			}
+		}
+	}
+
+
+	return IsPortalLocked(handle) != 0;
+}
+
 int Objects::IsCritterProne(objHndl handle){
 	auto obj = gameSystems->GetObj().GetObject(handle);
 	if (obj->GetFlags() & (OF_OFF | OF_DESTROYED))
@@ -1037,38 +1102,10 @@ public:
 		writeCall(0x10023F1F, HookedGetModelScale); // Render related
 		writeCall(0x10021E9F, HookedGetModelScale);
 		
-		// RelockPortalSchedule
+		// OpenLock
 		static BOOL(__cdecl*orgRelockPortalSchedule)(objHndl, int) = replaceFunction<BOOL(__cdecl)(objHndl, int)>(0x1001FE40, [](objHndl handle, int isTimeEvent)->BOOL {
-			if (!handle)
-				return FALSE;
-
-			auto obj = objSystem->GetObject(handle);
-			auto protoId = objSystem->GetProtoId(handle);
-			if (protoId == 1000  // generic door
-				|| (obj->type != obj_t_container && obj->type != obj_t_portal)){ 
-				return FALSE;
-			}
-
-			auto flagsField = obj_f_portal_flags;
-			if (obj->type == obj_t_container)
-				flagsField = obj_f_container_flags;
-
-			auto flags = obj->GetInt32(flagsField);
-			if (!config.disableDoorRelocking 
-				&&	flags & PortalFlag::OPF_LOCKED){ // this is the same enum value for container
-				TimeEvent evt;
-				evt.system = TimeEventType::Lock;
-				evt.params[0].handle = handle;
-				gameSystems->GetTimeEvent().Schedule(evt, 3600000);
-			}
-
-			flags &= ~OPF_LOCKED;
-			if (isTimeEvent && !config.disableDoorRelocking){
-				flags |= OPF_LOCKED;
-			}
-			obj->SetInt32(flagsField, flags);
-			
-			return objects.IsPortalLocked(handle);
+			auto openAdjacent = true; // fix for when opening double doors
+			return objects.OpenLock(handle, isTimeEvent != 0, openAdjacent) ? TRUE : FALSE;
 		});
 
 		// Fixes issue with Troll PC characters dying to cloudkill despite level adj
