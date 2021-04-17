@@ -2609,7 +2609,8 @@ uint32_t  _GetCondStructFromFeat(feat_enums featEnum, CondStruct** condStructOut
 		auto featFromDict = featCondSpec.featEnum;
 		if (
 				(featEnum == featFromDict && featCondSpec.featEnumMax  == -1)
-			|| 	( featEnum >= featFromDict && featEnum < featCondSpec.featEnumMax )
+			|| 	(featCondSpec.featEnumMax != -1 
+				&& featEnum >= featFromDict && (int)featEnum < (int)featCondSpec.featEnumMax )
 			)
 		{
 			*condStructOut = featCondSpec.condStruct.old;
