@@ -8,6 +8,7 @@
 #include <critter.h>
 #include <util/fixes.h>
 #include <infrastructure/mesparser.h>
+#include <gamesystems/objects/objsystem.h>
 
 PythonObjIntegration pythonObjIntegration;
 
@@ -98,6 +99,12 @@ static void PcStart(objHndl pc) {
 			auto protoIds = split(it->second, ' ', true);
 			for (auto protoIdStr : protoIds) {
 				auto protoId = stoi(protoIdStr);
+				auto protoHandle = objSystem->GetProtoHandle(protoId);
+				if (!protoHandle) { // fixes crash issue in Terra Arcanum Co8 3.0.4 start_equipment.mes
+					logger->error("PCStart: invalid proto specified: {}", protoId); 
+					continue;
+				}
+					
 				critterSys.GiveItem(pc, protoId);
 			}
 		}
