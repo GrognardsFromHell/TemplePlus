@@ -297,6 +297,7 @@ struct Objects : temple::AddressTable {
 	int GetModFromStatLevel(int statLevel); // returns modifier from stat level e.g. Dex 15 -> +2
 	bool IsPortalOpen(objHndl obj);
 	BOOL IsPortalLocked(const objHndl& handle);
+	bool OpenLock(objHndl handle, bool isTimeEvent, bool openAdjacent = false);
 	
 	int GetTempId(objHndl handle);
 	int GetAlpha(objHndl handle);
