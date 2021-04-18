@@ -1448,6 +1448,33 @@ static PyObject* PyObjHandle_ItemConditionAdd(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(1);
 }
 
+static PyObject* PyObjHandle_ItemD20Query(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	if (PyTuple_GET_SIZE(args) < 1) {
+		PyErr_SetString(PyExc_RuntimeError, "item_d20_query called with no arguments!");
+		return PyInt_FromLong(0);
+	}
+
+	PyObject* arg = PyTuple_GET_ITEM(args, 0);
+	/*if (PyString_Check(arg)) {
+		auto argString = fmt::format("{}", PyString_AsString(arg));
+		return PyInt_FromLong(d20Sys.D20QueryPython(self->handle, argString));
+	}*/
+
+	int queryKey;
+	if (!PyArg_ParseTuple(args, "i:objhndl.item_d20_query", &queryKey)) {
+		return 0;
+	}
+	auto dispatcherKey = (D20DispatcherKey)(DK_QUE_Helpless + queryKey);
+	auto result = dispatch.DispatchItemQuery(self->handle, dispatcherKey);
+	return PyInt_FromLong(result);
+}
+
+
 static PyObject* PyObjHandle_ConditionAddWithArgs(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 
@@ -3687,6 +3714,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "is_spell_known", PyObjHandle_IsSpellKnown, METH_VARARGS, NULL },
 	{ "is_buckler", PyObjHandle_IsBuckler, METH_VARARGS, NULL },
 	{ "item_condition_add_with_args", PyObjHandle_ItemConditionAdd, METH_VARARGS, NULL },
+	{ "item_d20_query", PyObjHandle_ItemD20Query, METH_VARARGS, NULL },
 	{ "item_find", PyObjHandle_ItemFind, METH_VARARGS, NULL },
 	{ "item_get", PyObjHandle_ItemGet, METH_VARARGS, NULL },
 	{ "item_transfer_to", PyObjHandle_ItemTransferTo, METH_VARARGS, NULL },
