@@ -7,8 +7,9 @@ import tpdp
 print "Registering Shielded Casting"
 
 def ShieldedCastingDisableAOO(attachee, args, evt_obj):
-	#Used by the C++ side to make sure the condition does not get added multiple times
-	if evt_obj.data1 != tpdp.D20ActionType.CastSpell:
+	#Only effects spell casting
+	action = evt_obj.get_d20_action()
+	if action.action_type != tpdp.D20ActionType.CastSpell:
 		return 0
 		
 	#Must be wearing a shield
@@ -20,10 +21,10 @@ def ShieldedCastingDisableAOO(attachee, args, evt_obj):
 	if item.is_buckler():
 		return 0
 	
-	evt_obj.return_val = 1 #Avoid AOO
+	evt_obj.return_val = 0 #Avoid AOO
 	
 	return 0
 
 shieldedCasting = PythonModifier("Shielded Casting Feat", 2) # Spare, Spare
 shieldedCasting.MapToFeat("Shielded Casting")
-shieldedCasting.AddHook(ET_OnD20PythonQuery, "Does Not Provoke AOO", ShieldedCastingDisableAOO, ())
+shieldedCasting.AddHook(ET_OnD20Query, EK_Q_ActionTriggersAOO, ShieldedCastingDisableAOO, ())

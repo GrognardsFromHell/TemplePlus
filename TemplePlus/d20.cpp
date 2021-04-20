@@ -960,11 +960,6 @@ int32_t LegacyD20System::D20ActionTriggersAoO(D20Actn* d20a, TurnBasedStatus* tb
 	if (actSeq->tbStatus.tbsFlags & TBSF_AvoidAoO)
 		return 0;
 
-	const auto disableAOO = d20Sys.D20QueryPython(d20a->d20APerformer, "Does Not Provoke AOO", d20a->d20ActType);
-	if (disableAOO) {
-		return 0;
-	}
-
 	auto flags = d20a->GetActionDefinitionFlags();
 	if ( (flags & D20ADF::D20ADF_QueryForAoO)
 		&& d20QueryWithData(d20a->d20APerformer, DK_QUE_ActionTriggersAOO, (int)d20a, 0))
