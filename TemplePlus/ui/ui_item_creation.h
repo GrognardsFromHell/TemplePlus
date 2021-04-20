@@ -53,6 +53,7 @@ struct ItemEnhancementSpec {
 		uint32_t minLevel;
 		Alignment alignment;
 		Stat classReq;
+		std::vector<feat_enums> featReq;
 		std::map<int, std::vector<uint32_t>> spells; // each entry in the map is considered a sufficient condition
 		EnhReqs(){
 			minLevel = 0;

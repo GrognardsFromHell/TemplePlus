@@ -1,0 +1,5 @@
+name: Crossbow Sniper
+flags: 12582928
+prereqs:  266 1
+description: When using a crossbow for which you have the Weapon Focus feat, you gain a bonus on damage rolls equal to 1/2 your Dexterity bonus and skirmish or sneak attack range is increased to 60 feet.
+prereq descr: Weapon Proficiency & Focus (Hand, heavy, or light crossbow), BAB +1

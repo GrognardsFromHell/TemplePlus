@@ -1,0 +1,5 @@
+name: Shielded Casting
+flags: 12582912
+prereqs: 
+description: As long as you have a light shield, heavy shield, or tower shield ready, you do not provoke attacks of opportunity for casting spells in combat.
+prereq descr:  Combat Casting, Concentration 5 ranks, Shield Proficiency

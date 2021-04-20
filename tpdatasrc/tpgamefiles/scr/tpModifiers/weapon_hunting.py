@@ -4,7 +4,7 @@ import tpdp
 
 #Magic Item Compendium, p. 7
 
-print "Adding Warning Weapon"
+print "Adding Hunting Weapon"
 
 def HuntingWeaponDealingDamage(attachee, args, evt_obj):
 	target = evt_obj.attack_packet.target
