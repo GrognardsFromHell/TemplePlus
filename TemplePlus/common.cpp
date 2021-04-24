@@ -42,7 +42,7 @@ int BonusList::GetEffectiveBonusSum() const {
 				value = capValue;
 			}
 		}
-
+		
 		if (!IsBonusSuppressed(i, nullptr)) {
 			result += value;
 		}
@@ -110,6 +110,8 @@ bool BonusList::IsBonusCapped(size_t bonusIdx, size_t* cappedByIdx) const {
 	auto foundCap = false;
 
 	auto& bonus = bonusEntries[bonusIdx];
+	if (bonus.bonValue < 0)
+		return IsPenaltyCapped(bonusIdx, cappedByIdx);
 
 	for (size_t i = 0; i < bonCapperCount; ++i) {
 
@@ -135,6 +137,49 @@ bool BonusList::IsBonusCapped(size_t bonusIdx, size_t* cappedByIdx) const {
 
 	return true;
 
+}
+
+bool BonusList::IsPenaltyCapped(size_t bonusIdx, size_t* cappedByIdx) const
+{
+	// Added Temple+: penalty caps are specified by the negative of the bonus type
+	// Penalty capping bonus type = 0 is not supported (no actual use cases AFAIK)
+
+	int restrictiveCap = -255;
+	auto foundCap = false;
+
+	auto& bonus = bonusEntries[bonusIdx];
+	auto penaltyValue = bonus.bonValue;
+
+	if (penaltyValue >= 0) {
+		return false;
+	}
+
+	for (size_t i = 0; i < bonCapperCount; ++i) {
+
+		
+		auto penaltyCapType = -bonCaps[i].bonType; 
+		if (penaltyCapType <= 0) // penalty caps are specified by strictly negative bonus type
+			continue;
+		if (penaltyCapType != bonus.bonType) {
+			continue;
+		}
+
+		int capVal = bonCaps[i].capValue;
+		if (capVal > restrictiveCap) {
+			restrictiveCap = capVal;
+			if (cappedByIdx) {
+				*cappedByIdx = i;
+			}
+			foundCap = true;
+		}
+
+	}
+
+	if (!foundCap) {
+		return false;
+	}
+
+	return penaltyValue < restrictiveCap;
 }
 
 int BonusList::AddBonusWithDesc(int value, int bonType, int mesline, const char* descr)

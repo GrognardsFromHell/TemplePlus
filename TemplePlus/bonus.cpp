@@ -170,7 +170,7 @@ void BonusSystem::initBonusList(BonusList* bonusList){
 
 int32_t BonusSystem::getOverallBonus(BonusList* bonList)
 {
-	return _getOverallBonus(bonList);
+	return bonList->GetEffectiveBonusSum();
 }
 
 uint32_t BonusSystem::getNumBonuses(BonusList* bonList)
@@ -253,9 +253,10 @@ uint32_t _bonusCapAddWithDescr(BonusList* bonList, int capType, int capValue, ui
 	return bonusSys.bonusCapAddWithDescr(bonList, capType, capValue, bonMesLineNum, capDescr);
 }
 
-uint32_t _isBonusCapped(BonusList* bonList, int bonIdx, int* capperIdx)
+uint32_t _isBonusCapped(BonusList* bonList, size_t bonIdx, size_t* capperIdx)
 {
-	return bonusSys.isBonusCapped(bonList, bonIdx, capperIdx);
+	//return bonusSys.isBonusCapped(bonList, bonIdx, capperIdx);
+	return bonList->IsBonusCapped(bonIdx, capperIdx);
 }
 
 uint32_t _getNumBonuses(BonusList* bonList)

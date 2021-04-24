@@ -938,6 +938,24 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("return_val", &DispIoD20Signal::return_val)
 		.def_readwrite("data1", &DispIoD20Signal::data1)
 		.def_readwrite("data2", &DispIoD20Signal::data2)
+		.def("get_obj_from_args", [](DispIoD20Query& evtObj)->objHndl {
+			
+			auto handle = objHndl::FromUpperAndLower(evtObj.data2, evtObj.data1);
+			if (!gameSystems->GetObj().IsValidHandle(handle))
+				handle = objHndl::null;
+			return handle;
+			}, "Used for python signals that have a handle as the parameter.")
+		.def("set_args_from_obj", [](DispIoD20Query& evtObj, objHndl & handle)->void {
+
+				if (objSystem->IsValidHandle(handle)) {
+					evtObj.data1 = handle.GetHandleLower();
+					evtObj.data2 = handle.GetHandleUpper();
+				}
+				else {
+					logger->error("EventObjD20Signal::set_args_from_obj - invalid handle specified, ignoring.");
+				}
+
+			}, "Used for python signals that have a handle as the parameter.")
 		.def("get_d20_action", [](DispIoD20Signal& evtObj)->D20Actn& {
 			D20Actn* d20a = (D20Actn*)evtObj.data1;
 			return *d20a;
@@ -963,6 +981,17 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 				handle = objHndl::null;
 			return handle;
 		}, "Used for python queries that have a handle as the parameter.")
+		.def("set_args_from_obj", [](DispIoD20Query& evtObj, objHndl& handle)->void {
+
+			if (objSystem->IsValidHandle(handle)) {
+				evtObj.data1 = handle.GetHandleLower();
+				evtObj.data2 = handle.GetHandleUpper();
+			}
+			else {
+				logger->error("EventObjD20Signal::set_args_from_obj - invalid handle specified, ignoring.");
+			}
+
+		}, "Used for python signals that have a handle as the parameter.")
 		;
 
 	py::class_<DispIOTurnBasedStatus, DispIO>(m, "EventObjTurnBasedStatus")

@@ -44,7 +44,7 @@ uint32_t _bonusAddToBonusList(BonusList* bonList, int32_t bonValue, int32_t bonT
 uint32_t _bonusAddToBonusListWithDescr(BonusList* bonList, int32_t bonValue, int32_t bonType, uint32_t bonMesLineNum, char * bonDescr);
 uint32_t _bonusCapAdd(BonusList* bonList, int capType, int capValue, uint32_t bonMesLineNum);
 uint32_t _bonusCapAddWithDescr(BonusList* bonList, int capType, int capValue, uint32_t bonMesLineNum, char* capDescr);
-uint32_t _isBonusCapped(BonusList* bonList, int bonIdx, int* capperIdx);
+uint32_t _isBonusCapped(BonusList* bonList, size_t bonIdx, size_t* capperIdx);
 uint32_t _getNumBonuses(BonusList * bonList);
 uint32_t _zeroBonusSetMeslineNum(BonusList* bonList, uint32_t zeroBonusMesLineNum);
 uint32_t _bonusSetOverallCap(uint32_t bonFlags, BonusList* bonList, int32_t newCap, int a4, uint32_t bonMesLineNum, char* capDescr);
