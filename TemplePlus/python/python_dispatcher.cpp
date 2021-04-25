@@ -820,6 +820,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 				auto result = (uint32_t)pkt.GetSpellComponentFlags();
 				return result;
 			})
+			.def_readonly("target_count", &SpellPacketBody::targetCount)
 			.def("get_target",[](SpellPacketBody &pkt, int idx)->objHndl
 			{
 				if (idx < (int)pkt.targetCount)
