@@ -59,6 +59,10 @@ public:
 			return dispatch.DispatchD20ActionCheck(d20a, tbStat, dispType);
 		});
 		
+		replaceFunction<void(__cdecl)(objHndl, int)>(0x1004E730, [](objHndl handle, int numRounds)->void {
+			return dispatch.Dispatch48BeginRound(handle, numRounds);
+		});
+
 		replaceFunction(0x1004D360, Dispatch54AoE);
 
 		replaceFunction<BOOL(__cdecl)(objHndl,enum_disp_type, D20DispatcherKey, DispIO*)>(0x1004CDB0, [](objHndl item, enum_disp_type dispType, D20DispatcherKey dispKey, DispIO* evtObj) {
@@ -484,8 +488,7 @@ void DispatcherSystem::Dispatch48BeginRound(objHndl obj, int numRounds) const
 		DispIoD20Signal dispIo;
 		dispIo.data1 = 1; // num rounds
 		dispatch.DispatcherProcessor(dispatcher, dispTypeBeginRound, DK_NONE, &dispIo);
-		static void(*onBeginRoundSpell)(objHndl) = temple::GetRef<void(__cdecl)(objHndl)>(0x100766E0);
-		onBeginRoundSpell(obj);
+		spellSys.SpellBeginRound(obj);
 	}
 }
 

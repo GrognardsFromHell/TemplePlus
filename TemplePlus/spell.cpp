@@ -3094,6 +3094,7 @@ void LegacySpellSystem::SpellsCastRegistryPut(int spellId, SpellPacket& pkt)
 	spellsCastRegistry.put(spellId, pkt);
 }
 
+/* 0x100766E0 */
 void LegacySpellSystem::SpellBeginRound(objHndl handle){
 	auto & spellsCastCount = temple::GetRef<int>(0x10AAF424);
 
