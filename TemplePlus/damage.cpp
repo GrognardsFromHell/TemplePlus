@@ -174,13 +174,14 @@ void DamagePacket::AddAttackPower(int attackPower)
 	this->attackPowerType |= attackPower;
 }
 
-void DamagePacket::CalcFinalDamage(){ // todo hook this
+/* 0x100E16F0 */
+void DamagePacket::CalcFinalDamage(){
 	for (auto i=0u; i < this->diceCount; i++){
 		auto &dice = this->dice[i];
 		if (dice.rolledDamage < 0){
-			Dice diceUnpacked;
-			diceUnpacked.FromPacked(dice.dicePacked);
-			if (this->flags & 1) // maximiuzed
+			 
+			Dice diceUnpacked = Dice::FromPacked(dice.dicePacked);
+			if (this->flags & 1) // maximized
 			{
 				dice.rolledDamage = diceUnpacked.GetModifier() + diceUnpacked.GetCount() * diceUnpacked.GetSides();
 			} else // normal
@@ -195,9 +196,10 @@ void DamagePacket::CalcFinalDamage(){ // todo hook this
 		}
 	}
 
-	this->finalDamage = temple::GetRef<int(__cdecl)(DamagePacket*, DamageType)>(0x100E1210)(this, DamageType::Unspecified);
+	this->finalDamage = GetOverallDamageByType(DamageType::Unspecified);
 }
 
+/* 0x100E1210 */
 int DamagePacket::GetOverallDamageByType(DamageType damType)
 {
 	auto damTot = (double)0.0;
@@ -630,7 +632,7 @@ void Damage::DamageCritter(objHndl attacker, objHndl tgt, DispIoDamage & evtObjD
 
 	if (damTot > 0) {
 		if (tgt) {
-			conds.AddTo(tgt, "Damaged", { damTot, 0 });
+			conds.AddTo(tgt, "Damaged", { damTot, });
 		}
 
 		// bells and whistles
@@ -653,7 +655,7 @@ void Damage::DamageCritter(objHndl attacker, objHndl tgt, DispIoDamage & evtObjD
 	if (subdualDamTot < 0) subdualDamTot = 0;
 	if (subdualDamTot > 0) {
 		if (tgt) {
-			conds.AddTo(tgt, "Damaged", { subdualDamTot , 0 });
+			conds.AddTo(tgt, "Damaged", { subdualDamTot ,  });
 		}
 	}
 	auto subdualDam = critterSys.GetSubdualDamage(tgt);
