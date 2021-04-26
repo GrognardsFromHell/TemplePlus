@@ -1446,9 +1446,16 @@ int GenericCallbacks::CastDefensivelyAooTrigger(DispatcherCallbackArgs args){
 	auto isSet = args.GetCondArg(0);
 	auto d20a = (D20Actn*)(dispIo->data1);
 
-	if (d20a->d20ActType== D20A_CAST_SPELL && isSet){
-		dispIo->return_val = 0;
-		return 0;
+	if (d20a->d20ActType== D20A_CAST_SPELL){
+		if (isSet) {
+			dispIo->return_val = 0;
+			return 0;
+		}
+		// Added for swift/quickened to not provoke AOOs
+		if (d20a->d20Caf & D20CAF_FREE_ACTION) {
+			dispIo->return_val = 0;
+			return 0;
+		}
 	}
 	
 	

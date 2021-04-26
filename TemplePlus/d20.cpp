@@ -2393,7 +2393,8 @@ ActionErrorCode D20ActionCallbacks::ActionCostCastSpell(D20Actn * d20a, TurnBase
 	if (mmData.metaMagicFlags & MetaMagicFlags::MetaMagic_Quicken){
 		if (!(tbsFlags & TurnBasedStatusFlags::TBSF_SwiftActionPerformed)){
 			tbStat->tbsFlags |= TurnBasedStatusFlags::TBSF_SwiftActionPerformed;
-			tbStat->tbsFlags |= TurnBasedStatusFlags::TBSF_AvoidAoO; // fix quickened spells incurring AoOs
+			// tbStat->tbsFlags |= TurnBasedStatusFlags::TBSF_AvoidAoO; // fix quickened spells incurring AoOs
+			d20a->d20Caf |= D20CAF_FREE_ACTION;
 			acp->hourglassCost = 0;
 			return AEC_OK;
 		}
@@ -2414,8 +2415,9 @@ ActionErrorCode D20ActionCallbacks::ActionCostCastSpell(D20Actn * d20a, TurnBase
 		}
 		else {
 			tbStat->tbsFlags |= TurnBasedStatusFlags::TBSF_SwiftActionPerformed;
-			tbStat->tbsFlags |= TurnBasedStatusFlags::TBSF_AvoidAoO; // fix quickened spells incurring AoOs
+			// tbStat->tbsFlags |= TurnBasedStatusFlags::TBSF_AvoidAoO; // fix quickened spells incurring AoOs
 			acp->hourglassCost = 0;
+			d20a->d20Caf |= D20CAF_FREE_ACTION;
 			return AEC_OK;
 		}
 	}
@@ -3052,6 +3054,17 @@ ActionErrorCode D20ActionCallbacks::AddToSeqSpellCast(D20Actn * d20a, ActnSeq * 
 		return (ActionErrorCode)actSeqSys.AddToSeqWithTarget(d20a, seq, tbStat);
 	}
 	seq->d20ActArray[seq->d20ActArrayNum++] = *d20a;
+
+	//int hourglassCost = 0;
+	//ActionErrorCode result = d20Sys.CombatActionCostFromSpellCastingTime(spellEntry.castingTimeType, hourglassCost);
+
+	//if (hourglassCost == 0) { // allow only 1 swift action
+	//	if (!(tbStat->tbsFlags & TurnBasedStatusFlags::TBSF_SwiftActionPerformed)) {
+	//		//tbStat->tbsFlags |= TurnBasedStatusFlags::TBSF_SwiftActionPerformed;
+	//		tbStat->tbsFlags |= TurnBasedStatusFlags::TBSF_AvoidAoO; // fix quickened spells incurring AoOs
+	//	}
+	//} // this avoids AoOs for the rest of the round too
+
 	return ActionErrorCode::AEC_OK;
 }
 
