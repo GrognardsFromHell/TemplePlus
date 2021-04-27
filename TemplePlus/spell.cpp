@@ -773,6 +773,11 @@ int LegacySpellSystem::CopyLearnableSpells(objHndl& handle, int spellClass, std:
 
 	for (auto it : spellEntryRegistry) {
 		auto spEntry = it.data;
+		// new spells from supplemental materials are generally added above enum 802 in Temple+
+		if (spEntry->spellEnum > SPELL_ENUM_MAX_VANILLA) {
+			if (!config.nonCoreMaterials)
+				continue;
+		}
 		if (GetSpellLevelBySpellClass(spEntry->spellEnum, spellClass) >= 0)	{
 			entries.push_back(*spEntry);
 		}

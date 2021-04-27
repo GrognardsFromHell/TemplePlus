@@ -1583,7 +1583,7 @@ void UiCharEditor::SpellsActivate() {
 	for (auto i = 0u; i < knSpInfo.size(); i++){
 		auto spEnum = knSpInfo[i].spEnum;
 		if (spellSys.IsNewSlotDesignator(spEnum)){
-			knSpInfo[i].spEnum = 802;
+			knSpInfo[i].spEnum = SPELL_ENUM_VACANT;
 			knSpInfo[i].spFlag = 3;
 		}
 	}
