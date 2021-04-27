@@ -943,6 +943,24 @@ int DispatcherSystem::Dispatch60GetAttackDice(objHndl obj, DispIoAttackDice* dis
 
 }
 
+int DispatcherSystem::Dispatch61GetLevel(objHndl handle, Stat stat, BonusList* bonlist, objHndl someObj)
+{
+	auto obj = objSystem->GetObject(handle);
+	if (!obj)
+		return 0;
+	auto dispatcher = obj->GetDispatcher();
+	if (!dispatcher->IsValid())
+		return 0;
+	DispIoObjBonus evtObj;
+	evtObj.obj = someObj;
+	if (bonlist) {
+		evtObj.bonOut = bonlist;
+	}
+	dispatcher->Process(enum_disp_type::dispTypeGetLevel, (D20DispatcherKey)( stat + D20DispatcherKey::DK_CL_Level), &evtObj);
+	auto result = evtObj.bonOut->GetEffectiveBonusSum();
+	return result;
+}
+
 int DispatcherSystem::DispatchGetBonus(objHndl critter, DispIoBonusList* eventObj, enum_disp_type dispType, D20DispatcherKey key) {
 
 	DispIoBonusList dispIo;
