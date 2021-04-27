@@ -525,11 +525,18 @@ Dice Objects::GetHitDice(objHndl handle) {
 }
 
 // Reimplements 100801D0
-int Objects::GetHitDiceNum(objHndl handle) {
+int Objects::GetHitDiceNum(objHndl handle, bool getBase) {
 	auto obj = objSystem->GetObject(handle);
-	size_t result = obj->GetInt32Array(obj_f_critter_level_idx).GetSize();
+	auto result = 0;
+	if (getBase) {
+		result = obj->GetInt32Array(obj_f_critter_level_idx).GetSize();
+	}
+	else {
+		result = dispatch.Dispatch61GetLevel(handle, Stat::stat_level);
+	}
+
 	if (obj->IsNPC()) {
-		result += _GetInternalFieldInt32Array(handle, obj_f_npc_hitdice_idx, 0);
+		result += obj->GetInt32(obj_f_npc_hitdice_idx, 0);
 	}
 	else { // HD for new PC races
 		Dice racialHd = d20RaceSys.GetHitDice(critterSys.GetRace(handle, false));

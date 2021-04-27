@@ -121,7 +121,7 @@ struct Objects : temple::AddressTable {
 	void SetScriptAttachment(objHndl handle, int index, const ObjectScript &script);
 
 	Dice GetHitDice(objHndl handle); // This only makes sense for NPCs
-	int GetHitDiceNum(objHndl handle);
+	int GetHitDiceNum(objHndl handle, bool getBase = true); // getBase = true is vanilla behavior; otherwise this does a dispatch taking into account negative levels
 	int GetSize(objHndl handle);
 	
 	// Get NPC reaction towards another critter
