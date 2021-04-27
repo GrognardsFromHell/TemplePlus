@@ -1207,22 +1207,37 @@ void DungeonMaster::RenderEditedObj() {
 
 	ImGui::Text(fmt::format("Factions: {}", critEditor.factions).c_str());
 
-	auto curHp = objects.GetHPCur(mEditedObj);
-	auto maxHp = objects.StatLevelGet(mEditedObj, Stat::stat_hp_max);
-	ImGui::Text(fmt::format("HP: {}/{}", curHp, maxHp).c_str());
-	ImGui::SameLine();
-	auto hpDmg = obj->GetInt32(obj_f_hp_damage);
-	ImGui::PushItemWidth(85);
-	if (ImGui::InputInt("Damage: ", &hpDmg)){
-		if (hpDmg >=0 ){
-			obj->SetInt32(obj_f_hp_damage, hpDmg);
+	// HP
+	{
+		auto curHp = objects.GetHPCur(mEditedObj);
+		auto maxHp = objects.StatLevelGet(mEditedObj, Stat::stat_hp_max);
+		ImGui::Text(fmt::format("HP: {}/{}", curHp, maxHp).c_str());
+		ImGui::SameLine();
+
+		auto hpDmg = obj->GetInt32(obj_f_hp_damage);
+		auto baseHp = obj->GetInt32(obj_f_hp_pts);
+		ImGui::PushItemWidth(85);
+		if (ImGui::InputInt("Damage ", &hpDmg)) {
+			if (hpDmg >= 0) {
+				obj->SetInt32(obj_f_hp_damage, hpDmg);
+			}
 		}
+		ImGui::PopItemWidth();
+
+		ImGui::SameLine();
+		if (ImGui::Button("Heal")) {
+			obj->SetInt32(obj_f_hp_damage, 0);
+		}
+
+		ImGui::PushItemWidth(85);
+		if (ImGui::InputInt("Base HP", &baseHp)) {
+			if (baseHp >= 0) {
+				obj->SetInt32(obj_f_hp_pts, baseHp);
+			}
+		}
+		ImGui::PopItemWidth();
 	}
-	ImGui::PopItemWidth();
-	ImGui::SameLine();
-	if (ImGui::Button("Heal")){
-		obj->SetInt32(obj_f_hp_damage, 0);
-	}
+	
 	
 
 	// Stats
@@ -1238,6 +1253,25 @@ void DungeonMaster::RenderEditedObj() {
 			}
 			statIdx++;
 		}
+		ImGui::TreePop();
+	}
+
+	if (obj->IsNPC() && ImGui::TreeNodeEx("NPC properties", ImGuiTreeNodeFlags_CollapsingHeader) ) {
+
+		auto hitDiceNum = obj->GetInt32(obj_f_npc_hitdice_idx, 0);
+		if (ImGui::InputInt("HD ", &hitDiceNum)) {
+			if (hitDiceNum >= 0) {
+				obj->SetInt32(obj_f_npc_hitdice_idx, 0, hitDiceNum);
+			}
+		}
+
+		auto npAcBonus = obj->GetInt32(obj_f_npc_ac_bonus);
+		if (ImGui::InputInt("AC Bonus ", &npAcBonus)) {
+			if (npAcBonus >= 0) {
+				obj->SetInt32(obj_f_npc_ac_bonus, 0, npAcBonus);
+			}
+		}
+		
 		ImGui::TreePop();
 	}
 
