@@ -1856,7 +1856,7 @@ enum enum_disp_type : uint32_t {
 	dispTypeSpellResistanceMod,
 	dispTypeSpellDcBase, // haven't seen this actually used, just the mod dispatch (for Spell Focus and the Gnome bonus for Illusion spells)
 	dispTypeSpellDcMod,
-	dispTypeBeginRound, // immediately followed by the OnBeginRound spell trigger. Commonly used for spell countdown / removal when finished
+	dispTypeBeginRound, // immediately followed by the OnBeginRound spell trigger. Commonly used for spell countdown / removal when finished. Note: normally this is reserved for critters, but some spells will explicitly add items/objects to the d20 object registry (via d20_status_init), whose member get BeginRound events.
 	dispTypeReflexThrow,
 	dispTypeDeflectArrows,
 	dispTypeGetNumAttacksBase,
