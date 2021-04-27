@@ -17,6 +17,8 @@ public:
 
 	static int WeaponKeenQuery(DispatcherCallbackArgs args);
 	static int TempNegativeLevelOnAdd(DispatcherCallbackArgs args); // fixes critters dying due to neg HP
+	static int WeaponKeenCritHitRange(DispatcherCallbackArgs args);
+	static int ImprovedCriticalGetCritThreatRange(DispatcherCallbackArgs args);
 
 	void apply() override {
 
@@ -39,6 +41,8 @@ public:
 		
 		replaceFunction(0x100FF670, WeaponKeenQuery);
 		replaceFunction(0x100EF540, TempNegativeLevelOnAdd); // fixes NPCs with no class levels instantly dying due to temp negative level
+		replaceFunction(0x100FFD20, WeaponKeenCritHitRange); // fixes Weapon Keen stacking (Keen Edge spell / Keen enchantment)
+		replaceFunction(0x100F8320, ImprovedCriticalGetCritThreatRange); // fixes stacking with Keen Edge spell / Keen enchantment
 	}
 } genCondFixes;
 
@@ -98,5 +102,60 @@ int GeneralConditionFixes::TempNegativeLevelOnAdd(DispatcherCallbackArgs args)
 	args.SetCondArg(0, highestClass);
 	critterSys.CritterHpChanged(args.objHndCaller, objHndl::null, 0); // hmmm?
 
+	return 0;
+}
+
+int GeneralConditionFixes::WeaponKeenCritHitRange(DispatcherCallbackArgs args)
+{
+	auto bonValue = 1;
+	auto invIdx = args.GetCondArg(2);
+
+	auto itemHndl = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
+	
+	GET_DISPIO(dispIOTypeAttackBonus, DispIoAttackBonus);
+	
+	auto weapUsed = dispIo->attackPacket.GetWeaponUsed();
+	auto weapObj = objSystem->GetObject(weapUsed);
+	if (!weapObj) {
+		return 0;
+	}
+	
+	auto weapFlags = weapObj->GetInt32(obj_f_weapon_flags);
+	
+	if ( itemHndl == weapUsed
+		|| ( (weapFlags& WeaponFlags::OWF_RANGED_WEAPON) && inventory.ItemWornAt(args.objHndCaller, EquipSlot::Ammo) == weapUsed)) // keen arrows? shuriken?
+	{
+		bonValue = weapObj->GetInt32(obj_f_weapon_crit_range);
+	}
+	auto weaponName = description.getDisplayName(weapUsed, args.objHndCaller);
+	dispIo->bonlist.AddBonusWithDesc(bonValue, 12, 246, weaponName); // fix: was untyped bonus, allowing stacking
+	return 0;
+}
+
+int GeneralConditionFixes::ImprovedCriticalGetCritThreatRange(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIOTypeAttackBonus, DispIoAttackBonus);
+
+	auto threatRangeSize = 1;
+	auto featEnum = (feat_enums)args.GetCondArg(0);
+	auto impCriticalWeapType = (WeaponTypes)args.GetCondArg(1);
+
+	auto weapUsed = dispIo->attackPacket.GetWeaponUsed();
+	
+	auto weapType = WeaponTypes::wt_unarmed_strike_medium_sized_being;
+	if (weapUsed) {
+		auto weapObj = objSystem->GetObject(weapUsed);
+		if (!weapObj) {
+			return 0;
+		}
+		weapType = (WeaponTypes)weapObj->GetInt32(obj_f_weapon_type);
+		threatRangeSize = weapObj->GetInt32(obj_f_weapon_crit_range);
+	}
+	
+	if (weapType == impCriticalWeapType) {
+		auto featName = feats.GetFeatName(featEnum);
+		
+		dispIo->bonlist.AddBonusWithDesc(threatRangeSize, 12, 114, featName); // fix: was untyped bonus in vanilla, leading to stacking with Keen weapons
+	}
 	return 0;
 }
