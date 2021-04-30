@@ -88,6 +88,8 @@ enhancedJavelins.AddHook(ET_OnDealingDamage, EK_NONE, featEnhancedJavelinsDamage
 
 def featResistanceToElectricity(attachee, args, evt_obj):
     classLevel = attachee.stat_level_get(classEnum)
+    if classLevel >= 9:
+        return 0
     if classLevel < 4:
         resistanceBonus = 5
     elif classLevel < 7:
@@ -115,7 +117,7 @@ def featShockWeapon(attachee, args, evt_obj):
             critMultiplier = evt_obj.damage_packet.critical_multiplier
             if critMultiplier > 4: #unsure if needed; D20SRD description ends at x4
                 critMultiplier = 4
-            bonusDiceBurst.number = critMultiplier - 1
+            bonusDiceBurst.number = critMultiplier
             evt_obj.damage_packet.add_dice(bonusDiceBurst, D20DT_ELECTRICITY, 100) #ID 100 in damage.mes is Weapon
     return 0
 
@@ -129,15 +131,12 @@ def featThunderingWeaponDamage(attachee, args, evt_obj):
     target = evt_obj.attack_packet.target
     if not usedWeapon.obj_get_int(obj_f_weapon_type) in weaponList:
         return 0
-    print "passed weapon test"
     if evt_obj.attack_packet.get_flags() & D20CAF_CRITICAL:
-        print "passed crit flag"
         bonusDice = dice_new('1d8')
         critMultiplier = evt_obj.damage_packet.critical_multiplier
-        print "critMultiplier: {}".format(critMultiplier)
         if critMultiplier > 4: #unsure if needed; D20SRD description ends at x4
             critMultiplier = 4
-        bonusDice = critMultiplier - 1
+        bonusDice.number = critMultiplier
         evt_obj.damage_packet.add_dice(bonusDice, D20DT_SONIC, 100) #ID 1012 in damage.mes is Weapon
         # Thundering Weapons deafens on a critical hit on a failed dc save 14
         saveDc = 14
@@ -151,6 +150,14 @@ def featThunderingWeaponDamage(attachee, args, evt_obj):
 thunderingWeapon = PythonModifier("Stormlord Thundering Weapon Feat", 0)
 thunderingWeapon.MapToFeat("Stormlord Thundering Weapon")
 thunderingWeapon.AddHook(ET_OnDealingDamage, EK_NONE, featThunderingWeaponDamage, ())
+
+def featImmunityToElectricity(attachee, args, evt_obj):
+    evt_obj.damage_packet.add_mod_factor(0.0, D20DT_ELECTRICITY, 132) #ID 132 in damage.mes is Immunity
+    return 0
+
+electricityImmunity = PythonModifier("Stormlord Immunity to Electricity Feat", 0)
+electricityImmunity.MapToFeat("Stormlord Immunity to Electricity")
+electricityImmunity.AddHook(ET_OnTakingDamage , EK_NONE, featImmunityToElectricity, ())
 
 ##### Spell casting
 
