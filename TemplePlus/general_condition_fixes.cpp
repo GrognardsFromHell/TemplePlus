@@ -8,6 +8,9 @@
 #include "ui/ui_legacysystems.h"
 #include "ui/ui_char.h"
 #include <critter.h>
+#include <combat.h>
+#include <history.h>
+#include <d20_level.h>
 
 #define CONDFIX(fname) static int fname ## (DispatcherCallbackArgs args);
 #define HOOK_ORG(fname) static int (__cdecl* org ##fname)(DispatcherCallbackArgs) = replaceFunction<int(__cdecl)(DispatcherCallbackArgs)>
@@ -17,6 +20,8 @@ public:
 
 	static int WeaponKeenQuery(DispatcherCallbackArgs args);
 	static int TempNegativeLevelOnAdd(DispatcherCallbackArgs args); // fixes critters dying due to neg HP
+	static int PermanentNegativeLevelOnAdd(DispatcherCallbackArgs args); // fixes critters dying due to neg HP
+	
 	static int WeaponKeenCritHitRange(DispatcherCallbackArgs args);
 	static int ImprovedCriticalGetCritThreatRange(DispatcherCallbackArgs args);
 
@@ -38,9 +43,21 @@ public:
 			sdd.data1.sVal = 0xAF;
 			write(0x102E7400, &sdd, sizeof(sdd));
 		}
+		{ // Fix for Negative Level (Temp/Negative) being removed on death
+			SubDispDefNew sdd;
+			sdd.dispKey = DK_SIG_Killed;
+			sdd.dispType = dispTypeD20Signal;
+			sdd.dispCallback = [](DispatcherCallbackArgs args) {
+				// originally this removed the condition
+				return 0;
+			};
+			write(0x102E7298, &sdd, sizeof(sdd)); // Temp Negative Level
+			write(0x102E736C, &sdd, sizeof(sdd)); // Perm Negative Level
+		}
 		
 		replaceFunction(0x100FF670, WeaponKeenQuery);
 		replaceFunction(0x100EF540, TempNegativeLevelOnAdd); // fixes NPCs with no class levels instantly dying due to temp negative level
+		replaceFunction(0x100EB6A0, PermanentNegativeLevelOnAdd); // fixes NPCs with no class levels instantly dying due to temp negative level
 		replaceFunction(0x100FFD20, WeaponKeenCritHitRange); // fixes Weapon Keen stacking (Keen Edge spell / Keen enchantment)
 		replaceFunction(0x100F8320, ImprovedCriticalGetCritThreatRange); // fixes stacking with Keen Edge spell / Keen enchantment
 	}
@@ -102,6 +119,38 @@ int GeneralConditionFixes::TempNegativeLevelOnAdd(DispatcherCallbackArgs args)
 	args.SetCondArg(0, highestClass);
 	critterSys.CritterHpChanged(args.objHndCaller, objHndl::null, 0); // hmmm?
 
+	return 0;
+}
+
+int GeneralConditionFixes::PermanentNegativeLevelOnAdd(DispatcherCallbackArgs args)
+{
+	auto highestLvl = 0;
+	auto highestClass = 0;
+
+	
+	critterSys.CritterHpChanged(args.objHndCaller, objHndl::null, -5);
+
+	// fix for negative levels killing critters without class levels - 
+	// instead of class levels, get the hit dice num (taking into account previous negative levels etc)
+	//auto lvl = dispatch.Dispatch61GetLevel(args.objHndCaller, Stat::stat_level, nullptr, objHndl::null);
+	auto hd = objects.GetHitDiceNum(args.objHndCaller, /*getBase=*/ false);
+	if (hd <= 0) {
+		critterSys.Kill(args.objHndCaller);
+	}
+	else {
+		auto xp0 = d20LevelSys.GetXpRequireForLevel(hd);
+		auto xp1 = d20LevelSys.GetXpRequireForLevel(hd+1);
+		auto newXp = (xp0 >=0 && xp1 > 0 && xp1 > xp0 ) ? (xp0 + xp1) / 2 : 0;
+
+		// set negative XP
+		objects.setInt32(args.objHndCaller, obj_f_critter_experience, newXp);
+	}
+
+	histSys.CreateRollHistoryLineFromMesfile(22, args.objHndCaller, objHndl::null); // [ACTOR] ~loses a level permanently~[TAG_LEVEL_LOSS]!
+	combatSys.FloatCombatLine(args.objHndCaller, 126); //"Permanant Level Loss"
+
+	args.SetCondArg(1, hd+1);
+	
 	return 0;
 }
 
