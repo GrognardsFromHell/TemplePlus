@@ -29,7 +29,7 @@ static_assert(XPTABLE_MAXLEVEL >= 20, "XPTABLE_MAXLEVEL for XP award definition 
 
 // static int XPAwardTable[XPTABLE_MAXLEVEL][CRMAX - CRMIN + 1] = {};
 
-
+/* 0x100B5480 */
 BOOL XPAward::XpGainProcess(objHndl handle, int xpGainRaw){
 
 
@@ -202,6 +202,7 @@ public:
 	void apply() override;
 } xpTableFix;
 
+/* 0x100B5700 */
 void XPTableForHighLevels::GiveXPAwards(){
 	float fNumLivingPartyMembers = 0.0;
 
@@ -283,6 +284,23 @@ void XPTableForHighLevels::apply() {
 	replaceFunction<void(__cdecl)()>(0x100B5700, []() {
 		xpTableFix.GiveXPAwards(); }
 	);
+	
+	// GetLevelForXp (used for restoration)
+	replaceFunction<int(__cdecl)(int)>(0x10080300, [](int xp)->int {
+		int maxLvl = (int)config.maxLevel;
+		auto xpMaxLvl = d20LevelSys.GetXpRequireForLevel(maxLvl);
+		if (xp <= xpMaxLvl) {
+			for (int lvl = maxLvl; lvl > 0; --lvl) {
+				if (xp >= d20LevelSys.GetXpRequireForLevel(lvl)) {
+					return lvl;
+				}
+			}
+			return 0;
+		} 
+		else {
+			return maxLvl + 1;
+		}
+		});
 
 	xpawarddd = new XPAward();
 
