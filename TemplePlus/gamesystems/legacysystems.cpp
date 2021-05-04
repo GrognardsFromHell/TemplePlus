@@ -607,14 +607,14 @@ bool SkillSystem::ReadUnknown(GameSystemSaveFile * saveFile, int & unk){
 //*****************************************************************************
 
 FeatSystem::FeatSystem(const GameSystemConf &config) {
-	auto startup = temple::GetPointer<int(const GameSystemConf*)>(0x1007bfa0);
-	if (!startup(&config)) {
+	//auto startup = temple::GetPointer<int(const GameSystemConf*)>();
+	
+	if (!feats.FeatSystemInit() ) {
 		throw TempleException("Unable to initialize game system Feat");
 	}
 }
 FeatSystem::~FeatSystem() {
-	auto shutdown = temple::GetPointer<void()>(0x1007b900);
-	shutdown();
+	feats.FeatSystemShutdown();
 }
 const std::string &FeatSystem::GetName() const {
 	static std::string name("Feat");
