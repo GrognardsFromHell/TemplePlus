@@ -265,6 +265,7 @@ bool HelpSystem::IsClickForHelpActive(){
 	return temple::GetRef<int>(0x10BDE3D8) != 0;
 }
 
+/* 0x10124A40 */
 void HelpSystem::PresentWikiHelp(int helpIdx, D20HelpType helpType){
 
 	auto helpId = GetTAG_ROOT();

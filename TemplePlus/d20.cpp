@@ -2912,6 +2912,7 @@ ActionErrorCode D20ActionCallbacks::ActionCheckAidAnotherWakeUp(D20Actn* d20a, T
 	return AEC_OK;
 };
 
+/* 0x10093CB0 */
 ActionErrorCode D20ActionCallbacks::ActionCheckCastSpell(D20Actn* d20a, TurnBasedStatus* tbStat) {
 	int spEnum, spellEnumOrg, spellClass, spellLvl, invIdx;
 	MetaMagicData mmData;

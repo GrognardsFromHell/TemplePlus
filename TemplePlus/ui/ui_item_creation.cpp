@@ -834,7 +834,7 @@ std::string UiItemCreation::GetEffectDescription(objHndl item)
 	return res;
 }
 	
-
+/* 0x1014F310 */
 bool UiItemCreation::ItemWielderCondsContainEffect(int effIdx, objHndl item)
 {
 	if (effIdx == CRAFT_EFFECT_INVALID)
