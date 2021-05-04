@@ -47,6 +47,9 @@ public:
 		replaceFunction(0x1007B9C0, _GetFeatName);
 		replaceFunction(0x1007B9D0, _GetFeatDescription);
 		replaceFunction(0x1007BA10, _GetFeatPrereqDescription);
+		replaceFunction<const char*(__cdecl)(feat_enums)>(0x1007BAD0, [](feat_enums feat)->const char* {
+			return feats.GetFeatHelpTopic(feat);
+			});
 
 		
 		
@@ -185,6 +188,8 @@ LegacyFeatSystem::LegacyFeatSystem()
 	metamagicFeats.insert(FEAT_SILENT_SPELL);
 
 }
+
+/* 0x1007bfa0 */
 BOOL LegacyFeatSystem::FeatSystemInit()
 {
 	if (mesFuncs.Open("mes\\feat.mes", feats.featMes) && mesFuncs.Open("rules\\feat_enum.mes", feats.featEnumsMes) && mesFuncs.Open("tpmes\\feat.mes", &feats.featMesNew))
@@ -232,6 +237,14 @@ BOOL LegacyFeatSystem::FeatSystemInit()
 	
 	return 0;
 
+}
+
+/* 0x1007b900 */
+void LegacyFeatSystem::FeatSystemShutdown(){
+	tabSys.tabFileStatusDealloc(feats.featTabFile);
+	mesFuncs.Close(*feats.featEnumsMes);
+	mesFuncs.Close(*feats.featMes);
+	mesFuncs.Close(feats.featMesNew);
 }
 
 void LegacyFeatSystem::_GeneratePowerCriticalChildFeats(const NewFeatSpec &parentFeat)
@@ -1162,6 +1175,7 @@ char* LegacyFeatSystem::GetFeatPrereqDescription(feat_enums feat)
 	return result;
 }
 
+/* 0x1007BAD0 */
 const char * LegacyFeatSystem::GetFeatHelpTopic(feat_enums feat){
 
 	MesLine line(feat+10000);
