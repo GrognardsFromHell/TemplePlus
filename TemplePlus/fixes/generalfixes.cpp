@@ -128,8 +128,8 @@ public:
 		// breakfree_on_entanglement_fix.txt
 		writeHex(0x100D4259, "90 90 90 90  90 90");
 		
-
-		
+		// Garl Glittergold fix: Trickery domain instead of Travel
+		writeHex(0x102729A4, "14");
 
 		
 		if (temple::Dll::GetInstance().HasCo8Hooks())
