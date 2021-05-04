@@ -24,6 +24,7 @@ public:
 	
 	static int WeaponKeenCritHitRange(DispatcherCallbackArgs args);
 	static int ImprovedCriticalGetCritThreatRange(DispatcherCallbackArgs args);
+	
 
 	void apply() override {
 
@@ -55,11 +56,19 @@ public:
 			write(0x102E736C, &sdd, sizeof(sdd)); // Perm Negative Level
 		}
 		
+		{ // Fix Shocking Burst, Icy Burst damage type
+			int buff = 9;
+			write(0x102F0D94, &buff, sizeof(buff));
+			buff = 8;
+			write(0x102F0CFC, &buff, sizeof(buff));
+		}
+
 		replaceFunction(0x100FF670, WeaponKeenQuery);
 		replaceFunction(0x100EF540, TempNegativeLevelOnAdd); // fixes NPCs with no class levels instantly dying due to temp negative level
 		replaceFunction(0x100EB6A0, PermanentNegativeLevelOnAdd); // fixes NPCs with no class levels instantly dying due to temp negative level
 		replaceFunction(0x100FFD20, WeaponKeenCritHitRange); // fixes Weapon Keen stacking (Keen Edge spell / Keen enchantment)
 		replaceFunction(0x100F8320, ImprovedCriticalGetCritThreatRange); // fixes stacking with Keen Edge spell / Keen enchantment
+		
 	}
 } genCondFixes;
 
@@ -208,3 +217,4 @@ int GeneralConditionFixes::ImprovedCriticalGetCritThreatRange(DispatcherCallback
 	}
 	return 0;
 }
+
