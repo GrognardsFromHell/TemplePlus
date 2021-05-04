@@ -73,6 +73,8 @@ public:
 
 	static int Condition_sp_False_Life_Init(DispatcherCallbackArgs args);
 
+	static int SpellResistance_SpellResistanceMod(DispatcherCallbackArgs args);
+
 	void apply() override {
 
 		// Magic Circle Taking Damage - didn't check that attacker is not null
@@ -353,8 +355,17 @@ public:
 		replaceFunction(0x100D6660, SpikeStonesHitTrigger);
 
 		replaceFunction(0x100D62E0, SpikeGrowthHitTrigger);
+
+		replaceFunction(0x100CAA30, SpellResistance_SpellResistanceMod); // fixes Spell Resistance stacking
+		{ // Remove ImmunityCheck hook
+			SubDispDefNew sdd(dispTypeSpellImmunityCheck, DK_NONE, [](DispatcherCallbackArgs args)->int {
+				
+				return 0;
+				}, 0u, 0);
+			write(0x102DF544, &sdd, sizeof(SubDispDefNew));
+		}
 	}
-} spellConditionFixes;
+} spellConditionFixes; 
 
 
 void SpellConditionFixes::VampiricTouchFix()
@@ -1304,6 +1315,15 @@ int SpellConditionFixes::Condition_sp_False_Life_Init(DispatcherCallbackArgs arg
 		logger->error("Condition_sp_False_Life_Init:  Unable to add Temporary_Hit_Points condition.", spellID);
 	}
 
+	return 0;
+}
+
+/* 0x100CAA30 */
+int SpellConditionFixes::SpellResistance_SpellResistanceMod(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIoTypeBonusListAndSpellEntry, DispIOBonusListAndSpellEntry);
+	auto bonusAmt = args.GetCondArg(2);
+	dispIo->bonList->AddBonus(bonusAmt, 36, 203);
 	return 0;
 }
 
