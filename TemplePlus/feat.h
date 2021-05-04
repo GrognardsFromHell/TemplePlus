@@ -181,6 +181,7 @@ struct LegacyFeatSystem : temple::AddressTable
 	uint32_t(__cdecl *featTabLineParser)(TabFileStatus*, uint32_t, const char**);
 	LegacyFeatSystem();
 	BOOL FeatSystemInit();
+	void FeatSystemShutdown();
 protected:
 	std::map<feat_enums, NewFeatSpec> mNewFeats;
 	void _GetNewFeatsFromFile();
