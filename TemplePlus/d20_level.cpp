@@ -45,6 +45,13 @@ public:
 		replaceFunction<void(objHndl, int, int)>(0x1007DAA0, [](objHndl obj, int skillEnum, int numAdd){
 			d20LevelSys.AddSkillPoints(obj, skillEnum, numAdd);
 		});
+
+		replaceFunction<int(__cdecl)(int)>(0x100802E0, [](int lvl)->int {
+				if (lvl > config.maxLevel+1) {
+					lvl = config.maxLevel+1;
+				}
+				return d20LevelSys.GetXpRequireForLevel(lvl);
+			});
 	}
 } d20LevelHooks;
 
@@ -103,6 +110,7 @@ void D20LevelSystem::AddSkillPoints(objHndl handle, int skillEnum, int numAdded)
 	obj->SetInt32(obj_f_critter_skill_idx, skill, skillPtNew);
 }
 
+/* 0x100802E0 */
 uint32_t D20LevelSystem::GetXpRequireForLevel(uint32_t level)
 {
 	if (level < 0 || level >= XP_REQ_TABLE_MAX_LEVEL)

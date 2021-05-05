@@ -324,7 +324,7 @@ private:
 	void(__cdecl * _spellPacketBodyReset)(SpellPacketBody * spellPktBody);
 	void(__cdecl * _spellPacketSetCasterLevel)(SpellPacketBody * spellPktBody);
 	uint32_t(__cdecl * _pickerArgsFromSpellEntry)(SpellEntry * spellEntry, PickerArgs * pickArgs, objHndl objHnd, uint32_t casterLevel);
-	//uint32_t(__cdecl * Spell_Range_Sthg_From_SpellEntry_sub_100772A0)(SpellEntry *spellEntry, );
+	
 };
 
 extern LegacySpellSystem spellSys;

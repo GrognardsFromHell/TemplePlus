@@ -285,6 +285,10 @@ public:
 		replaceFunction<void(__cdecl)(int)>(0x1007A440, [](int spellId){
 			spellSys.IdentifySpellCast(spellId);
 		});
+
+		replaceFunction<int(__cdecl)(objHndl, Stat, int)>(0x100765B0, [](objHndl handle, Stat classCode, int casterLvl)->int {
+			return spellSys.GetMaxSpellLevel(handle, classCode, casterLvl);
+			});
 	}
 } spellFuncReplacements;
 
@@ -860,6 +864,7 @@ uint32_t LegacySpellSystem::ConfigSpellTargetting(PickerArgs* args, SpellPacketB
 	//return addresses.ConfigSpellTargetting(pickerArgs, spellPktBody);
 }
 
+/* 0x100765B0 */
 int LegacySpellSystem::GetMaxSpellLevel(objHndl objHnd, Stat classCode, int characterLvl)
 {
 	if (characterLvl <= 0)
@@ -881,8 +886,6 @@ int LegacySpellSystem::GetMaxSpellLevel(objHndl objHnd, Stat classCode, int char
 		result = -1;
 
 	return result;
-
-	//return addresses.GetMaxSpellSlotLevel(objHnd, classCode, characterLvl);
 }
 
 int LegacySpellSystem::GetNumSpellsPerDay(objHndl handle, Stat classCode, int spellLvl){
@@ -2689,6 +2692,7 @@ bool LegacySpellSystem::GetMultiSelectOptions(int spellEnum, std::vector<SpellMu
 	return true;
 }
 
+/* 0x100772A0 */
 uint32_t LegacySpellSystem::pickerArgsFromSpellEntry(SpellEntry* spEntry, PickerArgs * args, objHndl caster, uint32_t casterLvl){
 
 	args->flagsTarget = (UiPickerFlagsTarget)spEntry->flagsTargetBitmask;

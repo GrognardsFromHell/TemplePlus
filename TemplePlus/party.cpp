@@ -146,6 +146,7 @@ bool LegacyPartySystem::IsInParty(objHndl critter){
 	return party.ObjIsInGroupArray(addresses.groupList, critter);
 }
 
+/* 0x1002BBE0 */
 uint32_t LegacyPartySystem::AddToPCGroup(objHndl objHnd)
 {
 	auto npcFollowers = GroupNPCFollowersLen();
@@ -154,16 +155,16 @@ uint32_t LegacyPartySystem::AddToPCGroup(objHndl objHnd)
 	if ( pcs < config.maxPCs
 		|| config.maxPCsFlexible && (npcFollowers + pcs < PARTY_SIZE_MAX))
 	{
-		auto v2 = ObjAddToGroupArray(addresses.groupPcs, objHnd);
-		if (v2)
+		auto addOk = ObjAddToGroupArray(addresses.groupPcs, objHnd);
+		if (addOk)
 		{
-			v2 = ObjAddToGroupArray(addresses.groupList, objHnd);
-			if (v2)
+			addOk = ObjAddToGroupArray(addresses.groupList, objHnd);
+			if (addOk)
 			{
 				addresses.AddToCurrentlySelected(objHnd);
 			}
 		}
-		return v2;
+		return addOk;
 	}
 	return 0;
 }

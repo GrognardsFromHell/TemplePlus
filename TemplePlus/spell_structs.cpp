@@ -66,6 +66,7 @@ bool SpellStoreData::operator<(const SpellStoreData& sp2){
 	return nameCmp < 0;
 }
 
+/* 0x100794F0 */
 SpellComponentFlag SpellStoreData::GetSpellComponentFlags(){
 
 	SpellEntry spEntry(this->spellEnum);
