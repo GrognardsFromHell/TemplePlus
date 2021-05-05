@@ -69,6 +69,25 @@ public:
 		replaceFunction(0x100FFD20, WeaponKeenCritHitRange); // fixes Weapon Keen stacking (Keen Edge spell / Keen enchantment)
 		replaceFunction(0x100F8320, ImprovedCriticalGetCritThreatRange); // fixes stacking with Keen Edge spell / Keen enchantment
 		
+		// Amulet of Natural Armor - bonus type changed to 10 so it doesn't stack with other enhancement bonuses (Barkskin, Righteous Might)
+		replaceFunction<int(DispatcherCallbackArgs)>(0x10104AB0, [](DispatcherCallbackArgs args)->int {
+			GET_DISPIO(dispIOTypeAttackBonus, DispIoAttackBonus);
+			auto bonVal = args.GetCondArg(0);
+			auto invIdx = args.GetCondArg(2);
+			auto item = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
+			
+			auto itemName = description.getDisplayName(item, args.objHndCaller);
+			if (itemName)
+				dispIo->bonlist.AddBonusWithDesc(bonVal, 10, 112, itemName); // bonus type changed to 10
+			else {
+				dispIo->bonlist.AddBonus(bonVal, 10, 112); // bonus type changed to 10
+			}
+			
+			return 0;
+			});
+
+
+
 	}
 } genCondFixes;
 

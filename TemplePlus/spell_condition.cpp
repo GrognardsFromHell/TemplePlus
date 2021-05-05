@@ -364,6 +364,68 @@ public:
 				}, 0u, 0);
 			write(0x102DF544, &sdd, sizeof(SubDispDefNew));
 		}
+
+		// Righteous Might & Animal Growth Natural AC
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100C6050, [](DispatcherCallbackArgs args)->int {
+			GET_DISPIO(dispIOTypeAttackBonus, DispIoAttackBonus);
+			if (args.GetData2() == 0x112) { // Animal Growth
+				dispIo->bonlist.AddBonus(args.GetData1(), 35, args.GetData2()); // bonus type changed back to 35 so it stacks with other bonuses to nat armor
+			}
+			else { // Righteous Might
+				// changed bonus type to natural armor enhancement bonus (10), also corrected amulet to this
+				dispIo->bonlist.AddBonus(args.GetData1(), 10, args.GetData2());
+			}
+			
+			return 0;
+			});
+
+		
+
+		// Righteous Might Stat Bonus
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100CA440, [](DispatcherCallbackArgs args)->int {
+			GET_DISPIO(dispIOTypeBonusList, DispIoBonusList);
+			auto statDispatched = (Stat)(args.dispKey - 1);
+			if (statDispatched == args.GetData1()) {
+				if (statDispatched == stat_strength) {
+					dispIo->bonlist.AddBonus(4, 35, args.GetData2());
+				}
+				if (statDispatched == stat_constitution) {
+					dispIo->bonlist.AddBonus(2, 35, args.GetData2());
+				}
+			}
+			return 0;
+			});
+
+		{ // Righteous Might 
+			// remove to hit bonus
+			int val = 0;
+			write(0x102DDEB0, &val, sizeof(val));
+			// change Natural AC Bonus value to +2
+			val = 2;
+			write(0x102DDEB8 + offsetof(SubDispDef, data1), &val, sizeof(val));
+		}
+
+		// Righteous Might DR
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100CA3F0, [](DispatcherCallbackArgs args)->int {
+			GET_DISPIO(dispIOTypeDamage, DispIoDamage);
+			auto alignmentChoice = objects.getInt32(args.objHndCaller, obj_f_critter_alignment_choice);
+			auto drType = alignmentChoice != 0 ? D20DAP_HOLY : D20DAP_UNHOLY;
+			auto spellId = args.GetCondArg(0);
+			SpellPacketBody spPkt(spellId);
+			if (!spPkt.spellEnum) {
+				return 0;
+			}
+			auto casterLvl = spPkt.casterLevel;
+			auto drAmt = 3;
+			if (casterLvl >= 15) {
+				drAmt = 9;
+			}
+			else if (casterLvl >= 12) {
+				drAmt = 6;
+			}
+			dispIo->damage.AddPhysicalDR(drAmt, drType, 104);
+			return 0;
+			});
 	}
 } spellConditionFixes; 
 
