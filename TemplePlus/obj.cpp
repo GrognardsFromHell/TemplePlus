@@ -833,6 +833,7 @@ bool Objects::IsUntargetable(objHndl handle)
 	return false;
 }
 
+/* 0x10074800 */
 int Objects::StatLevelGet(objHndl obj, Stat stat)
 {
 	return _StatLevelGet(obj, stat);
