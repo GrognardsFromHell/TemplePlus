@@ -1188,6 +1188,7 @@ BOOL UiCharHooks::SpellMetamagicBtnMsg(int widId, TigMsg& tigMsg)
 	return TRUE;
 }
 
+/* 0x101B9880 */
 BOOL UiCharHooks::SpellPopupAppliedWndMsg(int widId, TigMsg& tigMsg)
 {
 	auto& uiMmData = *uiCharAddresses.uiMetaMagicData;
@@ -1263,7 +1264,7 @@ BOOL UiCharHooks::SpellPopupAppliedWndMsg(int widId, TigMsg& tigMsg)
 				// found spell with same enum and spell level
 				if (uiMmDataMod.spellData.spellEnum == 0)
 					break;
-				// is this buggy? removes spell with same level & enum, with no regard to MM modifiers
+				// Removes spell with same level & enum & MM effects
 				spellSys.SpellKnownRemove( GetCurrentCritter(), uiMmDataMod.spellData);
 				uiCharSpellPkt.spellsKnown.Remove(i);
 				break;
@@ -1515,6 +1516,7 @@ feat_enums UiCharHooks::SpellMetamagicAppliedGetFeat(int widId)
 	return FEAT_NONE;
 }
 
+/* 0x10077100 */
 int UiCharHooks::SpellMetaMagicFeatGetSpellLevelModifier(feat_enums feat)
 {
 	switch (feat) {

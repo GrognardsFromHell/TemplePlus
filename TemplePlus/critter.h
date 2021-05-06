@@ -180,6 +180,7 @@ struct LegacyCritterSystem : temple::AddressTable
 	int GetHpDamage(objHndl handle);
 	void SetHpDamage(objHndl handle, int damage);
 	void CritterHpChanged(objHndl obj, objHndl assailant, int damAmt);
+	bool ShouldParalyzeByAbilityScore(objHndl handle);
 	
 		
 	/*

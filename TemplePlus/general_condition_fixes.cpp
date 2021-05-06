@@ -11,6 +11,7 @@
 #include <combat.h>
 #include <history.h>
 #include <d20_level.h>
+#include <damage.h>
 
 #define CONDFIX(fname) static int fname ## (DispatcherCallbackArgs args);
 #define HOOK_ORG(fname) static int (__cdecl* org ##fname)(DispatcherCallbackArgs) = replaceFunction<int(__cdecl)(DispatcherCallbackArgs)>
@@ -20,6 +21,7 @@ public:
 
 	static int WeaponKeenQuery(DispatcherCallbackArgs args);
 	static int TempNegativeLevelOnAdd(DispatcherCallbackArgs args); // fixes critters dying due to neg HP
+	static int TempNegativeLevelNewday(DispatcherCallbackArgs args);
 	static int PermanentNegativeLevelOnAdd(DispatcherCallbackArgs args); // fixes critters dying due to neg HP
 	
 	static int WeaponKeenCritHitRange(DispatcherCallbackArgs args);
@@ -65,6 +67,7 @@ public:
 
 		replaceFunction(0x100FF670, WeaponKeenQuery);
 		replaceFunction(0x100EF540, TempNegativeLevelOnAdd); // fixes NPCs with no class levels instantly dying due to temp negative level
+		replaceFunction(0x100EB620, TempNegativeLevelNewday); // fixes NPCs with no class levels instantly dying due to temp negative level
 		replaceFunction(0x100EB6A0, PermanentNegativeLevelOnAdd); // fixes NPCs with no class levels instantly dying due to temp negative level
 		replaceFunction(0x100FFD20, WeaponKeenCritHitRange); // fixes Weapon Keen stacking (Keen Edge spell / Keen enchantment)
 		replaceFunction(0x100F8320, ImprovedCriticalGetCritThreatRange); // fixes stacking with Keen Edge spell / Keen enchantment
@@ -147,6 +150,32 @@ int GeneralConditionFixes::TempNegativeLevelOnAdd(DispatcherCallbackArgs args)
 	args.SetCondArg(0, highestClass);
 	critterSys.CritterHpChanged(args.objHndCaller, objHndl::null, 0); // hmmm?
 
+	return 0;
+}
+
+int GeneralConditionFixes::TempNegativeLevelNewday(DispatcherCallbackArgs args)
+{
+	auto classCode = args.GetCondArg(0);
+	auto saveThrowDc = args.GetCondArg(1);
+
+	// New: if save throw DC is set to negative value, the save throw/perm level is skipped
+	// Used for Enervation spell effect
+	if (saveThrowDc < 0) {
+		args.RemoveCondition();
+		return 0;
+	}
+
+	if (saveThrowDc == 0) {
+		saveThrowDc = 14; // default value when DC not specified
+	}
+
+	if (damage.SavingThrow(args.objHndCaller, objHndl::null, saveThrowDc, SavingThrowType::Fortitude, 0) ) {
+		args.RemoveCondition(); // fixed: not being removed on successful save
+	}
+	else {
+		args.RemoveCondition();
+		conds.AddTo(args.objHndCaller, "Perm Negative Level", { classCode, 0, 0 });
+	}
 	return 0;
 }
 

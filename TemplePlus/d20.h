@@ -65,6 +65,7 @@ struct LegacyD20System : temple::AddressTable
 	void d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, int32_t arg1, int32_t arg2);
 	void d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, D20Actn* arg1, int32_t arg2);
 	void d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, objHndl arg);
+	void d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, int64_t arg);
 	void D20SignalPython(const objHndl& handle, const std::string& queryKey, int arg1 = 0, int arg2 = 0);
 	void D20SignalPython(const objHndl& handle, int queryKey, int arg1 = 0, int arg2 = 0);
 

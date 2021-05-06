@@ -660,6 +660,7 @@ int LegacyCritterSystem::SoundmapCritter(objHndl critter, int id) {
 	return addresses.SoundmapCritter(critter, id);
 }
 
+/* 0x100B8A00 */
 void LegacyCritterSystem::Kill(objHndl critter, objHndl killer) {
 	return addresses.Kill(critter, killer);
 }
@@ -668,9 +669,38 @@ void LegacyCritterSystem::KillByEffect(objHndl critter, objHndl killer) {
 	return addresses.KillByEffect(critter, killer);
 }
 
+/* 0x100B8AA0 */
 void LegacyCritterSystem::CritterHpChanged(objHndl obj, objHndl assailant, int damAmt)
 {
-	addresses.CritterHpChanged(obj, assailant, damAmt);
+	
+	d20Sys.d20SendSignal(obj, DK_SIG_HP_Changed, (int64_t)damAmt);
+	if (critterSys.IsDeadNullDestroyed(obj)) {
+		critterSys.Kill(obj, assailant);
+	}
+
+	if (dispatch.Dispatch10AbilityScoreLevelGet(obj, stat_constitution, nullptr) <= 0) {
+		if (!d20Sys.d20Query(obj, DK_QUE_Critter_Has_No_Con_Score)) {
+			critterSys.Kill(obj, assailant);
+		}
+	}
+
+	if (ShouldParalyzeByAbilityScore(obj)) {
+		conds.AddTo(obj, "Paralyzed - Ability Score", {});
+	}
+}
+
+ /* 0x1004E9F0 */
+bool LegacyCritterSystem::ShouldParalyzeByAbilityScore(objHndl handle)
+{
+	for (auto stat = (int)stat_strength; stat <= stat_charisma; ++stat) {
+		if (stat == stat_constitution) {
+			continue; // negative CON kills, rather than paralyzes
+		}
+		if (dispatch.Dispatch10AbilityScoreLevelGet(handle, (Stat)stat, nullptr) <= 0) {
+			return true;
+		}
+	}
+	return false;
 }
 
 /* 0x1001DAF0 */

@@ -810,6 +810,20 @@ void LegacyD20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, ob
 	dispatch.DispatcherProcessor(dispatcher, dispTypeD20Signal, dispKey, &dispIO);
 }
 
+void LegacyD20System::d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, int64_t arg)
+{
+	DispIoD20Signal dispIO;
+	Dispatcher* dispatcher = objects.GetDispatcher(objHnd);
+	if (!dispatch.dispatcherValid(dispatcher))
+	{
+		logger->info("d20SendSignal(): Object {} lacks a Dispatcher", objHnd);
+		return;
+	}
+	dispIO.dispIOType = dispIoTypeSendSignal;
+	*(int64_t*)&dispIO.data1 = arg;
+	dispatch.DispatcherProcessor(dispatcher, dispTypeD20Signal, dispKey, &dispIO);
+}
+
 void LegacyD20System::D20SignalPython(const objHndl& handle, const std::string& queryKey, int arg1, int arg2){
 
 	if (!handle) {
