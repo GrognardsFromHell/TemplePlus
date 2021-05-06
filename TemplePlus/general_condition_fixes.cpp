@@ -160,23 +160,21 @@ int GeneralConditionFixes::TempNegativeLevelNewday(DispatcherCallbackArgs args)
 	// New: if save throw DC is set to negative value, the save throw/perm level is skipped
 	// Used for Enervation spell effect
 	auto noPermEffect = saveThrowDc < 0; 
-	
 
-	// The condition is going to get removed, so max HP is going up by 5
-	// To prevent resurrection, apply 5 HP damage
-	// If critter is not dead, then it's fine
 	auto isDead = critterSys.IsDeadNullDestroyed(args.objHndCaller);
-	if (isDead) {
-		auto dmgNew = critterSys.GetHpDamage(args.objHndCaller) + 5;
-		critterSys.SetHpDamage(args.objHndCaller, dmgNew);
-	}
-
 	
 	if (saveThrowDc == 0) {
 		saveThrowDc = 14; // default value when DC not specified
 	}
 
 	if (noPermEffect || damage.SavingThrow(args.objHndCaller, objHndl::null, saveThrowDc, SavingThrowType::Fortitude, 0) ) {
+		// The condition is going to get removed, so max HP is going up by 5
+		// To prevent resurrection when critter is already dead, apply 5 HP damage
+		// If critter is not dead, then it's fine
+		if (isDead) {
+			auto dmgNew = critterSys.GetHpDamage(args.objHndCaller) + 5;
+			critterSys.SetHpDamage(args.objHndCaller, dmgNew);
+		}
 		args.RemoveCondition(); // fixed: not being removed on successful save
 		if (!isDead) {
 			critterSys.CritterHpChanged(args.objHndCaller, objHndl::null, 5); // 
