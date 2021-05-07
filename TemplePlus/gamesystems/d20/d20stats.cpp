@@ -415,6 +415,10 @@ StatType D20StatsSystem::GetType(Stat stat) {
 		return StatType::Race;
 	}
 
+	if (stat >= stat_level && stat <=  127) {
+		return StatType::Level;
+	}
+
 	switch (stat) {
 	case stat_strength:
 	case stat_dexterity:
