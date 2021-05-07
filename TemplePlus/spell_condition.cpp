@@ -446,7 +446,7 @@ void SpellConditionFixes::VampiricTouchFix()
 
 
 	//Perform Touch Attack mod:
-	redirectCall(0x100B2CC9, PyPerformTouchAttack_PatchedCallToHitProcessing);
+	//redirectCall(0x100B2CC9, PyPerformTouchAttack_PatchedCallToHitProcessing); // done directly in python_object.cpp now
 	return;
 }
 
@@ -688,8 +688,7 @@ void PyPerformTouchAttack_PatchedCallToHitProcessing( D20Actn * pd20A, D20Actn d
 		}
 	}
 	
-
-	d20Sys.ToHitProc(pd20A);
+	combatSys.ToHitProcessing(*pd20A);
 	return;
 	
 }
