@@ -639,6 +639,13 @@ bool LegacyCombatSystem::HasLineOfAttackFromPosition(LocAndOffsets fromPosition,
 	return false;
 }
 
+/* 0x100B4D00 */
+objHndl LegacyCombatSystem::CreateProjectileAndThrow(locXY origin, int projectileProto, LocAndOffsets tgtLoc, int missX, int missY, objHndl thrower, objHndl tgt)
+{
+	static auto createAndThrow = temple::GetRef<objHndl(__cdecl)(locXY, int, int, int, LocAndOffsets, objHndl, objHndl)>(0x100B4D00);
+	return createAndThrow(origin, projectileProto, missX, missY, tgtLoc, thrower, tgt);
+}
+
 void LegacyCombatSystem::AddToInitiativeWithinRect(objHndl handle) const
 {
 
@@ -1628,6 +1635,7 @@ int LegacyCombatSystem::DispelRoll(objHndl obj, BonusList* bonlist, int modifier
 	return d20RollRes - dc + bonlist->GetEffectiveBonusSum();
 }
 
+/* 0x100B7160 */
 void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 	auto performer = d20a.d20APerformer;
 	auto d20Data = d20a.data1;

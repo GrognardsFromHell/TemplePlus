@@ -373,6 +373,7 @@ SpellPacketBody::SpellPacketBody(uint32_t spellId){
 		memset(this, 0, sizeof(SpellPacketBody));
 }
 
+/* 0x10075730 */
 bool SpellPacketBody::UpdateSpellsCastRegistry() const
 {
 	if (!spellId)

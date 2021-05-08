@@ -241,6 +241,7 @@ enum SpellAnimationFlag : int32_t
 {
 	SAF_UNK8 = 0x8,
 	SAF_ID_ATTEMPTED = 0x10,
+	SAF_PROJECTILE_STHG = 0x20,
 };
 
 enum SpellRangeType : uint32_t

@@ -3273,8 +3273,31 @@ void ActionSequenceSystem::FullAttackCostCalculate(D20Actn* d20a, TurnBasedStatu
 	*baseAttackNumCode = numAttacksBase + _attackTypeCodeHigh - 1 + usingOffhand;
 }
 
-int ActionSequenceSystem::TouchAttackAddToSeq(D20Actn* d20Actn, ActnSeq* actnSeq, TurnBasedStatus* turnBasedStatus){
-	return addresses.TouchAttackAddToSeq(d20Actn, actnSeq, turnBasedStatus);
+/* 0x10096760 */
+int ActionSequenceSystem::TouchAttackAddToSeq(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat){
+	if (!d20a->d20ATarget)
+		return AEC_TARGET_INVALID;
+	if (!d20Sys.d20Query(d20a->d20APerformer, DK_QUE_HoldingCharge))
+		return AddToSeqWithTarget(d20a, actSeq, tbStat);
+
+	d20a->d20ActType = D20A_TOUCH_ATTACK;
+	auto spellId = d20Sys.d20QueryReturnData(d20a->d20APerformer, DK_QUE_HoldingCharge, 0u, 0u);
+	d20a->spellId = spellId;
+
+	auto reach = critterSys.GetReach(d20a->d20APerformer, d20a->d20ActType);
+	if (locSys.DistanceToObj(d20a->d20APerformer, d20a->d20ATarget) > reach) {
+		SpellPacketBody spPkt(spellId);
+		const int PRODUCE_FLAME_ENUM = 364;
+		if (!spPkt.spellEnum || spPkt.spellEnum != PRODUCE_FLAME_ENUM) {
+			return AddToSeqWithTarget(d20a, actSeq, tbStat);
+		}
+	}
+
+	if (tbStat->tbsFlags & TBSF_TouchAttack) {
+		d20a->d20Caf |= D20CAF_FREE_ACTION;
+	}
+	actSeq->d20ActArray[actSeq->d20ActArrayNum++] = *d20a;
+	return AEC_OK;
 }
 
 int ActionSequenceSystem::ActionCostProcess(TurnBasedStatus* tbStat, D20Actn* d20a)

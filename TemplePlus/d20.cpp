@@ -125,6 +125,7 @@ public:
 	static ActionErrorCode PerformSneak(D20Actn* d20a);
 	static ActionErrorCode PerformStandardAttack(D20Actn* d20a);
 	static ActionErrorCode PerformStopConcentration(D20Actn* d20a);
+	static ActionErrorCode PerformTouchAttack(D20Actn* d20a);
 	static ActionErrorCode PerformTripAttack(D20Actn* d20a);
 	static ActionErrorCode PerformUseItem(D20Actn* d20a);
 	static ActionErrorCode PerformBreakFree(D20Actn* d20a);
@@ -469,20 +470,43 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Type = D20A_CAST_SPELL;
 	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqSpellCast;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformCastSpell;
+	d20Defs[d20Type].actionFrameFunc = d20Callbacks.ActionFrameSpell;
 	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckCastSpell;
 	d20Defs[d20Type].projectileHitFunc = d20Callbacks.ProjectileHitSpell;
 	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostCastSpell;
 	d20Defs[d20Type].flags = static_cast<D20ADF>(d20Defs[d20Type].flags | (D20ADF::D20ADF_Breaks_Concentration)); // casting spells should break concentration since active concentration requires a standard action!
 
+	d20Type = D20A_ATTACK_OF_OPPORTUNITY;
+	d20Defs[d20Type].performFunc = d20Callbacks.PerformAoo;
+	d20Defs[d20Type].actionFrameFunc = d20Callbacks.ActionFrameAoo;
+
+	d20Type = D20A_TOUCH_ATTACK;
+	d20Defs[d20Type].actionFrameFunc = d20Callbacks.ActionFrameTouchAttack;
+	d20Defs[d20Type].performFunc = d20Callbacks.PerformTouchAttack;
+
+	d20Type = D20A_CHARGE;
+	d20Defs[d20Type].performFunc = d20Callbacks.PerformCharge;
+	d20Defs[d20Type].actionFrameFunc = d20Callbacks.ActionFrameCharge;
+
+	d20Type = D20A_DEATH_TOUCH;
+	d20Defs[d20Type].performFunc = d20Callbacks.PerformTouchAttack;
+
+	d20Type = D20A_BARDIC_MUSIC;
+	d20Defs[d20Type].flags = (D20ADF)(D20ADF_MagicEffectTargeting | D20ADF_Breaks_Concentration);
 
 	d20Type = D20A_USE_ITEM;
 	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqSpellCast;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformUseItem;
 	d20Defs[d20Type].flags = D20ADF(D20ADF_QueryForAoO | D20ADF_MagicEffectTargeting);
 
-	d20Type = D20A_USE_POTION;
-	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqSpellCast;
-	d20Defs[d20Type].performFunc = d20Callbacks.PerformUseItem;
+	d20Type = D20A_STOP_CONCENTRATION;
+	d20Defs[d20Type].performFunc = d20Callbacks.PerformStopConcentration;
+
+	d20Type = D20A_TRIP;
+	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqTripAttack;
+	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckTripAttack;
+	d20Defs[d20Type].turnBasedStatusCheck = d20Callbacks.StdAttackTurnBasedStatusCheck;
+	d20Defs[d20Type].actionFrameFunc = d20Callbacks.ActionFrameTripAttack;
 
 	d20Type = D20A_ACTIVATE_DEVICE_SPELL;
 	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqSpellCast;
@@ -494,31 +518,16 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Type = D20A_DISMISS_SPELLS;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformDismissSpell;
 
-	d20Type = D20A_STOP_CONCENTRATION;
-	d20Defs[d20Type].performFunc = d20Callbacks.PerformStopConcentration;
-
-	d20Type = D20A_BARDIC_MUSIC;
-	d20Defs[d20Type].flags = (D20ADF)( D20ADF_MagicEffectTargeting | D20ADF_Breaks_Concentration );
-
-	d20Type = D20A_TRIP;
-	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqTripAttack;
-	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckTripAttack;
-	d20Defs[d20Type].turnBasedStatusCheck = d20Callbacks.StdAttackTurnBasedStatusCheck;
-	d20Defs[d20Type].actionFrameFunc = d20Callbacks.ActionFrameTripAttack;
+	d20Type = D20A_USE_POTION;
+	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqSpellCast;
+	d20Defs[d20Type].performFunc = d20Callbacks.PerformUseItem;
 
 
-	d20Type = D20A_ATTACK_OF_OPPORTUNITY;
-	d20Defs[d20Type].performFunc = d20Callbacks.PerformAoo;
-	d20Defs[d20Type].actionFrameFunc = d20Callbacks.ActionFrameAoo;
 
 
-	d20Type = D20A_CHARGE;
-	d20Defs[d20Type].performFunc = d20Callbacks.PerformCharge;
-	d20Defs[d20Type].actionFrameFunc = d20Callbacks.ActionFrameCharge;
+	
 
-
-	d20Type = D20A_TOUCH_ATTACK;
-	d20Defs[d20Type].actionFrameFunc = d20Callbacks.ActionFrameTouchAttack;
+	
 
 	d20Type = D20A_DISARM;
 	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqWithTarget;
@@ -1191,6 +1200,43 @@ ActionErrorCode D20ActionCallbacks::PerformStopConcentration(D20Actn* d20a){
 	return AEC_OK;
 }
 
+/* 0x10090610 */
+ActionErrorCode D20ActionCallbacks::PerformTouchAttack(D20Actn* d20a)
+{
+	d20a->d20Caf |=D20CAF_TOUCH_ATTACK;
+	
+	if (d20Sys.d20Query(d20a->d20APerformer, DK_QUE_HoldingCharge))
+	{
+		SpellPacketBody spPkt(d20a->spellId);
+		if (!spPkt.spellEnum) {
+			logger->error("PerformTouchAttack(): unable to retrieve spell_packet for TOUCH_ATTACK\n");
+			return AEC_OK;
+		}
+			
+		
+		if (d20a->d20Caf & D20CAF_RANGED) {
+			spPkt.targetListHandles[0] = d20a->d20ATarget;
+			spPkt.UpdateSpellsCastRegistry();
+			spPkt.UpdatePySpell();
+			d20a->d20ActType = D20A_CAST_SPELL;
+			d20a->data1 = 0;
+			d20a->d20SpellData.Set(spPkt.spellEnum, spPkt.spellClass, spPkt.spellKnownSlotLevel, INV_IDX_INVALID, 0);
+			return (ActionErrorCode)ActionFrameSpell(d20a);
+		}
+	}
+
+	if (!(d20a->d20Caf & D20CAF_RANGED))
+	{
+		combatSys.ToHitProcessing(*d20a);
+		
+		if (gameSystems->GetAnim().PushAttemptAttack(d20a->d20APerformer, d20a->d20ATarget)) {
+			d20a->animID = gameSystems->GetAnim().GetActionAnimId(d20a->d20APerformer);
+			d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
+		}
+	}
+	return AEC_OK;
+}
+
 ActionErrorCode D20ActionCallbacks::PerformTripAttack(D20Actn* d20a)
 {
 	if (!d20a->d20ATarget)
@@ -1203,7 +1249,7 @@ ActionErrorCode D20ActionCallbacks::PerformTripAttack(D20Actn* d20a)
 	
 	d20a->d20Caf |= D20CAF_TOUCH_ATTACK;
 	combatSys.ToHitProcessing(*d20a);
-	//d20Sys.ToHitProc(d20a);
+	
 	if (gameSystems->GetAnim().PushAttemptAttack(d20a->d20APerformer, d20a->d20ATarget)){
 		d20a->animID = gameSystems->GetAnim().GetActionAnimId(d20a->d20APerformer);
 		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
@@ -1905,20 +1951,120 @@ BOOL D20ActionCallbacks::ActionFrameSpell(D20Actn * d20a){
 
 
 	auto performer = d20a->d20APerformer;
-	auto perfLoc = objSystem->GetObject(performer)->GetLocation();
-	objHndl targets[MAX_SPELL_TARGETS] = { 0, };
-
-	/*
-	TODO...
-	*/
-
-	for (auto i=0; i < numTgts; i++){
-		pkt.targetListHandles[i] = targets[i];
+	auto origin = objSystem->GetObject(performer)->GetLocation();
+	if (!(d20a->d20Caf & D20CAF_HIT)) {
+		offx = rngSys.GetInt(-30, 30);
+		offy = rngSys.GetInt(-30, 30);
 	}
 
+	auto destLoc = d20a->destLoc;
+
+	const int MAGIC_MISSILE_ENUM = 288;
+	const int PRODUCE_FLAME_ENUM = 364;
+	if (pkt.spellEnum == MAGIC_MISSILE_ENUM) {
+		projectileProto = 3004;
+	}
+	else if (pkt.spellEnum == PRODUCE_FLAME_ENUM) {
+		spEntry.modeTargetSemiBitmask = (uint64_t) UiPickerType::Single;
+		if (*actSeqSys.actSeqCur) { // also checked that it's diff than -2836... bug?
+			auto tbStat = actSeqSys.curSeqGetTurnBasedStatus();
+			tbStat->tbsFlags &= ~TBSF_TouchAttack;
+			d20a->d20Caf &= ~D20CAF_FREE_ACTION;
+		}
+	}
+	else {
+		projectileProto = 3000;
+	}
+
+	std::vector<objHndl> finalTargets;
+	if (spEntry.IsBaseModeTarget(UiPickerType::Multi)) {
+		pkt.projectileCount = pkt.targetCount;
+
+		for (auto i = 0; i < pkt.targetCount; ++i) {
+			auto tgtHandle = pkt.targetListHandles[i];
+			auto projHandle = combatSys.CreateProjectileAndThrow(origin, projectileProto, destLoc, offx, offy, d20a->d20APerformer, tgtHandle);
+			auto projectile = objSystem->GetObject(projHandle);
+			projectile->SetFloat(obj_f_offset_z, 60.0f);
+			projectile->SetInt32(obj_f_projectile_flags_combat, 0);
+			pkt.projectiles[i] = projHandle;
+
+			auto tgtObj = objSystem->GetObject(tgtHandle);
+			if (!tgtObj) continue;
+			if (!tgtObj->IsCritter()) {
+				pySpellIntegration.SpellTriggerProjectile(d20a->spellId, SpellEvent::BeginProjectile, projHandle, i);
+				projectile->SetFlag(OF_DONTDRAW, true);
+				if (d20a->ProjectileAppend(projHandle, objHndl::null)) {
+					d20a->d20Caf |= D20CAF_NEED_PROJECTILE_HIT;
+				}
+			}
+			else {
+				d20a->d20ATarget = tgtHandle;
+				if (!d20Sys.D20QueryWithDataDefaultTrue(tgtHandle, DK_QUE_CanBeAffected_ActionFrame, d20a, 0)) {
+					continue;
+				}
+				pySpellIntegration.SpellTriggerProjectile(d20a->spellId, SpellEvent::BeginProjectile, projHandle, i);
+				projectile->SetFlag(OF_DONTDRAW, true);
+				if (d20a->ProjectileAppend(projHandle, objHndl::null)) {
+					d20a->d20Caf |= D20CAF_NEED_PROJECTILE_HIT;
+				}
+				finalTargets.push_back(tgtHandle);
+			}
+		}
+	}
+	else if 
+		(spEntry.IsBaseModeTarget(UiPickerType::Single)
+		|| spEntry.IsBaseModeTarget(UiPickerType::Area)) 
+	{
+		pkt.projectileCount = 1;
+		auto projectileTgt = (spEntry.IsBaseModeTarget(UiPickerType::Single)
+			|| (pkt.animFlags & SpellAnimationFlag::SAF_PROJECTILE_STHG)) ? d20a->d20ATarget : objHndl::null;
+		auto projHandle = combatSys.CreateProjectileAndThrow(origin, projectileProto, destLoc, offx, offy, d20a->d20APerformer, projectileTgt);
+		if (!projHandle)
+			return FALSE;
+		auto projectile = objSystem->GetObject(projHandle);
+		if (!projectile) return FALSE;
+		projectile->SetFloat(obj_f_offset_z, 60.0f);
+		projectile->SetInt32(obj_f_projectile_flags_combat, 0);
+		pkt.projectiles[0] = projHandle;
+		if (d20a->ProjectileAppend(projHandle, objHndl::null)) {
+			d20a->d20Caf |= D20CAF_NEED_PROJECTILE_HIT;
+		}
+		if (pkt.targetCount > 0) {
+			for (auto i = 0; i < pkt.targetCount; ++i) {
+				auto tgtHandle = pkt.targetListHandles[i];
+				auto tgtObj = objSystem->GetObject(tgtHandle);
+				if (!tgtObj) continue;
+				if (!tgtObj->IsCritter()) {
+					pySpellIntegration.SpellTriggerProjectile(d20a->spellId, SpellEvent::BeginProjectile, projHandle, 0);
+					projectile->SetFlag(OF_DONTDRAW, true);
+				}
+				else {
+					d20a->d20ATarget = tgtHandle;
+					if (!d20Sys.D20QueryWithDataDefaultTrue(tgtHandle, DK_QUE_CanBeAffected_ActionFrame, d20a, 0)){
+						continue;
+					}
+					pySpellIntegration.SpellTriggerProjectile(d20a->spellId, SpellEvent::BeginProjectile, projHandle, 0);
+					projectile->SetFlag(OF_DONTDRAW, true);
+					finalTargets.push_back(tgtHandle);
+				}
+			}
+		}
+		else {
+			d20a->d20ATarget = objHndl::null;
+			pySpellIntegration.SpellTriggerProjectile(d20a->spellId, SpellEvent::BeginProjectile, projHandle, 0);
+			projectile->SetFlag(OF_DONTDRAW, true);
+		}
+	}
+
+	
+	for (auto i=0; i < numTgts; i++){
+		pkt.targetListHandles[i] = finalTargets[i];
+	}
+	// clear the rest
 	for (auto i = numTgts; i < MAX_SPELL_TARGETS; i++){
 		pkt.targetListHandles[i] = objHndl::null;
 	}
+	pkt.targetCount = finalTargets.size();
 
 	spellSys.UpdateSpellPacket(pkt);
 	pySpellIntegration.UpdateSpell(pkt.spellId);
@@ -3392,6 +3538,7 @@ ActionErrorCode D20ActionCallbacks::ActionCostWhirlwindAttack(D20Actn* d20a, Tur
 	return AEC_OK;
 }
 
+/* 0x1008B1E0 */
 BOOL D20Actn::ProjectileAppend(objHndl projHndl, objHndl thrownItem){
 	if (!projHndl)
 		return FALSE;
