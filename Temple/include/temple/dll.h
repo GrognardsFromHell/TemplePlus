@@ -47,6 +47,7 @@ namespace temple {
 		void SetReservedMemory(void*);
 
 		bool IsVanillaDll() const;
+		bool IsExpandedWorldmapDll() const; // Since Co8 5.0.2
 
 		static Dll& GetInstance();
 	
