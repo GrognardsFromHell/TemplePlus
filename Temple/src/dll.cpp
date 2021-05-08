@@ -277,6 +277,12 @@ namespace temple {
 
 	}
 
+	bool Dll::IsExpandedWorldmapDll() const
+	{
+		auto pathIdTablePtr = temple::GetRef<void*>(0x1015ED83 + 3);
+		return pathIdTablePtr == temple::GetPointer(0x11EA4100);
+	}
+
 	void Dll::RegisterAddressPtr(void** ref) {
 		// We manipulate the actual pointer value as-if it were a 32-bit integer,
 		// so we treat the pointer to the function pointer like a pointer to an int
