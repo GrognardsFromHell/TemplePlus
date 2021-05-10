@@ -49,6 +49,10 @@ def OnEndProjectile(spell, projectile, index_of_target):
 			target.float_mesfile_line('mes\\combat.mes', 6016, tf_red)
 			target_item.partsys_id = game.particles('sp-Enervation-hit', target)
 
+			# set attribute for proper XP award in case of death
+			if target.type == obj_t_npc:
+				target.obj_set_obj(obj_f_last_hit_by, spell.caster)
+
 			for i in range(dam_amount):
 				# Args are:
 				#	class affected
