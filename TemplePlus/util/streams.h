@@ -200,6 +200,10 @@ public:
 	size_t GetPos() const override {
 		return (size_t)(mCurrent - mData.data());
 	}
+
+	bool AtEnd() const {
+		return (mCurrent >= mData.data() + mData.size() );
+	}
 private:
 	const uint8_t* mCurrent;
 	gsl::span<const uint8_t> mData;

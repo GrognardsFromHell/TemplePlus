@@ -705,7 +705,7 @@ int MapSystem::GetMapIdByType(MapType type)
 bool MapSystem::IsRandomEncounterMap(int mapId) const
 {
 	auto maxRange = 5077;
-	if (temple::Dll::GetInstance().HasCo8Hooks())
+	if (temple::Dll::GetInstance().IsExpandedWorldmapDll())
 		maxRange = 5078;
 
 	return mapId >= 5070 && mapId <= maxRange;

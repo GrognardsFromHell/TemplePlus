@@ -354,6 +354,7 @@ int MapSystemHooks::map_get_highest_map_id()
 	return gameSystems->GetMap().GetHighestMapId();
 }
 
+/* 0x10070fd0 */
 BOOL MapSystemHooks::map_try_get_startpos(int mapId, uint64_t * startX, uint64_t * startY)
 {
 	auto startPos = gameSystems->GetMap().GetStartPos(mapId);
