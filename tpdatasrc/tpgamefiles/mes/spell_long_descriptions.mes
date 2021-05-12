@@ -558,8 +558,18 @@ Casting:         1  std action   [Abjuration, V,S]
 Range:               Touch
 Target:            Creature touched
 Duration:      24 hours}
-{5150}{Energy Drain}
-{5151}{Enervation}
+{5150} Energy Drain {Ranged touch attack bestows 2d4 temporary negative levels on target.
+
+Casting:         1 std action    [Necromancy, V,S]
+Range:               Close,  25  feet  + 5/2 levels
+Target:            One creature
+Duration:      Inst.,         Save: Fort. partial,    SR: Yes}
+{5151} Enervation {Ranged touch attack bestows 1d4 temporary negative levels on target.
+
+Casting:         1 std action    [Necromancy, V,S]
+Range:               Close,  25  feet  + 5/2 levels
+Target:            One creature
+Duration:      Inst.,         Save: None,             SR: Yes}
 {5152} Enlarge Person {Humanoid grows by one size category,  +2  Str,  -2  Dex,  -1  attack and AC.  Reach increases.  Weapons enlarge,  dealing more damage.
 Casting:         1  round   [Transmutation, V,S,M]
 Range:               Close,  25  feet  + 5/2 levels

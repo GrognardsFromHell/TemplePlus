@@ -32,6 +32,16 @@
 {9727}{} // spell hit
 {9728}{} // spell struck
 
+// [150] *[Energy Drain]
+{9000}{} // spell begin
+{9001}{} // spell end
+{9002}{} // spell effect
+{9003}{} // spell new round
+{9004}{spells\sp_enervation_proj.wav} // spell projectile begin
+{9005}{} // spell projectile end
+{9006}{} // spell projectile in-flight
+{9007}{spells\sp_enervation_hit.wav} // spell hit
+
 // [1000] *[Moment of Prescience]
 {26000}{} // spell begin
 {26001}{spells\sp_arcane_eye.WAV} // spell end
