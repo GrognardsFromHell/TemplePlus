@@ -249,6 +249,7 @@ public:
 	bool IsVisible();
 	void DialogBtnHide(); // Hides the Dialog History button
 	void DialogHistoryBtnToggle(); // Toggles visibility between the Minimize and Maximize buttons
+	void FlashMapBtn(); // plays bling sound and flashes the map button
 };
 
 class UiDM : public UiSystem {

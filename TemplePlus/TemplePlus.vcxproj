@@ -372,6 +372,7 @@
     <ClInclude Include="rng.h" />
     <ClInclude Include="tig\tig_console.h" />
     <ClInclude Include="tig\tig_keyboard.h" />
+    <ClInclude Include="tig\tig_timer.h" />
     <ClInclude Include="tutorial.h" />
     <ClInclude Include="ui\ui_char.h" />
     <ClInclude Include="ui\ui_chargen.h" />

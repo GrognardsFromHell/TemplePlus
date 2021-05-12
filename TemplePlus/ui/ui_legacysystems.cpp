@@ -608,6 +608,11 @@ void UiUtilityBar::DialogHistoryBtnToggle()
 	temple::GetRef<void(__cdecl)()>(0x10121AC0)();
 }
 
+void UiUtilityBar::FlashMapBtn()
+{
+	return temple::GetRef<void(__cdecl)()>(0x1010F130)();
+}
+
 //*****************************************************************************
 //*DM-UI
 //*****************************************************************************

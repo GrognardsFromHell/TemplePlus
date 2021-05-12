@@ -566,6 +566,16 @@ void UiManager::SetHidden(LgcyWidgetId id, bool hidden)
 
 }
 
+void UiManager::SetHidden_Safe(LgcyWidgetId id, bool hidden)
+{
+	auto widget = GetWidget(id);
+	if (!widget) {
+		return;
+	}
+		
+	SetHidden(id, hidden);
+}
+
 /* 0x101F9420 */
 void UiManager::RemoveWidget(LgcyWidgetId id)
 {

@@ -1008,6 +1008,9 @@
     <ClInclude Include="animgoals\anim_slot.h" />
     <ClInclude Include="animgoals\animgoals_callbacks.h" />
     <ClInclude Include="gamesystems\tilerender.h" />
+    <ClInclude Include="tig\tig_timer.h">
+      <Filter>tig</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

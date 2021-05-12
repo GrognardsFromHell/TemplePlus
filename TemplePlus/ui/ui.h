@@ -273,6 +273,7 @@ public:
 	void BringToFront(LgcyWidgetId id);
 	void SendToBack(LgcyWidgetId id);
 	void SetHidden(LgcyWidgetId id, bool hidden);
+	void SetHidden_Safe(LgcyWidgetId id, bool hidden);
 	bool IsHidden(int widId) const {
 		auto widget = GetWidget(widId);
 		return !widget || widget->IsHidden();

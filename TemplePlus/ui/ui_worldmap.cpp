@@ -5,6 +5,7 @@
 
 #include "ui_worldmap.h"
 #include "ui_systems.h"
+#include "ui_legacysystems.h"
 
 #include <temple/dll.h>
 #include "tig/tig_msg.h"
@@ -13,6 +14,9 @@
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/mapsystem.h"
 #include "mod_support.h"
+#include <infrastructure/vfs.h>
+#include "util/streams.h"
+#include <infrastructure/binaryreader.h>
 
 //*****************************************************************************
 //* Worldmap-UI
@@ -21,19 +25,130 @@
 constexpr int HOMMLET_MAIN = 5001;
 constexpr int HOMMLET_NORTH = 15001;
 constexpr int HOMMLET_CASTLE = 25001;
+constexpr int LOCATION_NONE = -1; // for locations with no fixed worldmap position, e.g. random encounters
+
+typedef int LocationId; // Location on the worldmap
+typedef int AreaId; // Game Area
+typedef int MapId; // Map ID
+
+struct LocationProps {
+	bool knownByDefault = false;
+	MapId mapId = 0; // Note: the actual MapId is % 10000 of this; e.g. Hommlet hotspots are 5001, 15001, 25001
+	AreaId areaId = 0;
+	locXY startLoc = locXY::fromField( (uint64_t)-1); // if left at -1, the location will be retrieved from MapList.mes values
+};
+
+enum MapVisibility : uint32_t {
+	MV_HIDDEN = 0,
+	MV_FADING = 1,
+	MV_VISIBLE =2,
+	// above this - time stamp
+};
+struct LocationState {
+	MapVisibility scriptWriting; // originally array at 0x11EA4A00
+	MapVisibility mapBtn; // originally array at 0x11EA4900
+};
+
+enum LocationVisitedFlags : uint32_t {
+	LVF_LocationVisible = 1,
+	LVF_ScriptVisible = 2
+};
+struct LocationVisited {
+	LocationId locId;
+	int flags;
+};
+struct LocationWidgets {
+	LgcyWidgetId locationBtn;
+	LgcyWidgetId locationRingBtn;
+	LgcyWidgetId scriptBtn;
+	LgcyWidgetId acquiredLocationBtn;
+};
+
+struct LgcyWorldmapPath {
+	int startX;
+	int startY;
+	int endX;
+	int endY;
+	int count;
+	char* directions;
+};
+
+struct WorldmapPath {
+	int startX;
+	int startY;
+	int endX;
+	int endY;
+	int count;
+	std::vector<uint8_t> directions;
+};
+
 
 class UiWorldmapImpl {
 	friend class UiWorldmap;
 	friend class WorldmapFix;
 public:
+	
 	UiWorldmapImpl();
+
+	bool LoadGame(const UiSaveFile& save);
 
 	bool OnDestinationReached();
 
-	std::vector<int> areaToLocId;
+	std::vector<LocationId> mAreaToLocId;
+	std::vector<MapId> locToMapId;
+	std::vector<uint32_t> scriptWritingStatus;
+	std::vector<LocationProps> locationProps;
+	std::vector<LocationState> locationStates;
+	std::vector<LocationVisited> locationsVisited;
 
 	int &mNeedToClearEncounterMap = temple::GetRef<int>(0x10BEF800);
 	int &mTeleportMapId = temple::GetRef<int>(0x102FB3CC);
+	int& mRandomEncounterStatus = temple::GetRef<int>(0x102FB3D0);
+	int& mRandomEncounterX = temple::GetRef<int>(0x102FB3D4);
+	int& mRandomEncounterY = temple::GetRef<int>(0x102FB3D8);
+	BOOL& mPermanentPermissionToExitEncounterMap = temple::GetRef<BOOL>(0x10BF37A4); // actually a UiRandomEncounter member
+
+	LocationId& mDialogueDestLocId = temple::GetRef<LocationId>(0x102FB3E8);
+
+	BOOL& mIsMakingTrip = temple::GetRef<BOOL>(0x10BEF7FC);
+	
+
+protected:
+	void InitLocations();
+	std::vector<int> mTeleportMapIdTable; // map ID to teleport for each location; originally 0x102972BC (Vanilla) 0x11EA3710 (Co8 5.0.2+)
+	int& mLocationsVisitedCount = temple::GetRef<int>(0x10BEF810);
+
+	void InitWidgets();
+		void GetUiLocations();
+	void LoadPaths();
+	std::vector<int> mPathIdTable;
+	
+	int mPathIdTableWidth;
+	std::vector<WorldmapPath> mPaths; // originally 0x10BEEE98 (vanilla) 0x11EA2406 (Co8 5.0.2+)
+	int mPathIdMax;
+
+	void SetMapVisited(MapId mapId);
+	LocationId GetLocationFromMap(MapId mapId); // note: this is strictly for the "start" maps of the area, i.e. indoors or connected maps don't count
+	LocationId GetLocationFromArea(AreaId areaId);
+	int GetLocationVisited(LocationId); // for the text list of "Locations Visited"
+
+	void SetLocationVisited(LocationId locId);
+
+	int GetAreaFromMap(MapId mapId);
+	void MarkAreaKnown(AreaId areaId);
+
+	
+
+	BOOL MakeTripFromAreaToArea(int fromId, int toId);
+
+	void UnhideLocationBtns();
+
+	
+
+	std::vector<LocationWidgets> locWidgets;
+	bool AcquiredLocationBtnMsg(LgcyWidgetId widId, TigMsg* msg);
+
+	int& mLocationsRevealingCount = temple::GetRef<int>(0x10BEF7F4);
 };
 
 constexpr int ACQUIRED_LOCATIONS_CO8 = 21;
@@ -71,15 +186,7 @@ struct WorldmapWidgetsCo8
 	LgcyButton * acquiredLocations[ACQUIRED_LOCATIONS_CO8];
 	LgcyButton * centerOnPartyBtn;
 };
-struct WorldmapPath
-{
-	int startX;
-	int startY;
-	int unk8;
-	int unkC;
-	int count;
-	char* directions;
-};
+
 UiWorldmapImpl *wmImpl = nullptr;
 
 UiWorldmap::UiWorldmap(int width, int height) {
@@ -116,8 +223,7 @@ bool UiWorldmap::SaveGame(TioFile *file) {
 	return save(file) == 1;
 }
 bool UiWorldmap::LoadGame(const UiSaveFile &save) {
-	auto load = temple::GetPointer<int(const UiSaveFile*)>(0x1015e0f0);
-	return load(&save) == 1;
+	return wmImpl->LoadGame(save);
 }
 const std::string &UiWorldmap::GetName() const {
 	static std::string name("Worldmap-UI");
@@ -135,10 +241,11 @@ void UiWorldmap::Hide(){
 	return ui_hide_worldmap();
 }
 
+/* 0x10160450 */
 void UiWorldmap::TravelToArea(int area)
 {
-	static auto ui_worldmap_travel_by_dialog = temple::GetPointer<void(int)>(0x10160450);
-	ui_worldmap_travel_by_dialog(area);
+	wmImpl->mDialogueDestLocId = wmImpl->mAreaToLocId[area];
+	Show(2);
 }
 
 bool UiWorldmap::NeedToClearEncounterMap(){
@@ -171,105 +278,55 @@ void UiWorldmapMakeTripWrapper();
 class WorldmapFix : TempleFix
 {
 public:
-	static int GetAreaFromMap(int mapId);
 	static int CanAccessWorldmap();
 	static BOOL UiWorldmapMakeTripCdecl(int fromId, int toId);
 
 	void apply() override {
+		// UiWorldmapTravelByDialogue
 		replaceFunction<void(int)>(0x10160450, [](int destArea) {
-			auto &uiWorldmapDestLocId = temple::GetRef<int>(0x102FB3E8);
-			//auto &uiWorldmapAreaToLocId_Table = temple::GetRef<int[]>(0x11EA3610); // this is the Co8 location
-			
-			uiWorldmapDestLocId = wmImpl->areaToLocId[destArea];
-
-			ui_worldmap().Show(2);
+			ui_worldmap().TravelToArea(destArea);
 		});
 
 		
 		if (modSupport.IsCo8())
 		{
-			
 			writeNoops(0x10159ABC); // This fixes an out of bounds write caused by spell slinger hacks
-
-			replaceFunction<void()>(0x1015EA20, UiWorldmapMakeTripWrapper);
 		}
-		
+		replaceFunction<void()>(0x1015EA20, UiWorldmapMakeTripWrapper);
 		
 		// UiWorldmapAcquiredLocationBtnMsg 
-		if (false)
-		static BOOL(__cdecl*orgUiWorldmapAcquiredLocationBtnMsg)(LgcyWidgetId, TigMsg *) = replaceFunction<BOOL(__cdecl)(LgcyWidgetId, TigMsg *)>(0x1015F320, [](LgcyWidgetId widId, TigMsg *msg){
-			
-			if (msg->type == TigMsgType::MOUSE){
-				return TRUE;
-			}
-			if (!msg->IsWidgetEvent(TigMsgWidgetEvent::MouseReleased)){
-				return FALSE;
-			}
+		replaceFunction<BOOL(__cdecl)(LgcyWidgetId, TigMsg *)>(0x1015F320, [](LgcyWidgetId widId, TigMsg *msg){
+			return wmImpl->AcquiredLocationBtnMsg(widId, msg) ? TRUE: FALSE;
+		});
 
-			if (!modSupport.IsCo8()) {
-				return orgUiWorldmapAcquiredLocationBtnMsg(widId, msg);
-			}
+		replaceFunction<int(__cdecl)(int)>(0x1006EC30, [](int mapId)->int {
+			return wmImpl->GetAreaFromMap(mapId);
+		});
 
-			auto & mIsMakingTrip = temple::GetRef<int>(0x10BEF7FC);
-			auto & mWorldmapWidgets = temple::GetRef<WorldmapWidgetsCo8*>(0x10BEF2D0);
-			auto & mLocationsVisitedCount = temple::GetRef<int>(0x10BEF810);
-			auto & mLocationVisitedFlags = temple::GetRef<int[ACQUIRED_LOCATIONS_CO8]>(0x11EA4800);
-			
-			if (mIsMakingTrip){
-				return FALSE;
-			}
+		replaceFunction<BOOL(__cdecl)()>(0x1015E840, []()->BOOL {
+			return wmImpl->OnDestinationReached() ? TRUE : FALSE;
+		});
 
-			
-			
-			auto btn = uiManager->GetButton(widId);
-			auto locIdx = -1;
-			auto foundLocIdx = false;
-			for (auto i = 0; i < ACQUIRED_LOCATIONS_CO8; ++i){
-				if (btn == mWorldmapWidgets->acquiredLocations[i]){
-					locIdx = i; foundLocIdx = true;
-					break;
-				}
-			}
-			if (!foundLocIdx){
-				auto locationRingIdx = -1;
-				for (auto i = 0; i < ACQUIRED_LOCATIONS_CO8; ++i){
-					if (btn == mWorldmapWidgets->locationRingBtns[i]){
-						locationRingIdx = i;
-						break;
-					}
-				}
-				for (auto i =0; i < mLocationsVisitedCount; ++i){
-					//if (modSupport.IsCo8())
-					{
-						// auto & mLocationVisitedFlags = temple::GetRef<int[ACQUIRED_LOCATIONS_CO8]>(0x11EA4800);
-						if ((mLocationVisitedFlags[i] >> 8) == locationRingIdx) {
-							locIdx = i;
-							break;
-						}
-					}
-					/*else{
-						auto & mLocationVisitedFlags = temple::GetRef<int[ACQUIRED_LOCATIONS_CO8]>(0x10BEF78C);
-						if ((mLocationVisitedFlags[i] >> 8) == locationRingIdx) {
-							locIdx = i;
-							break;
-						}
-					}*/
-					
-				}
-			}
-			auto curLocId = temple::GetRef<int(__cdecl)()>(0x1015DF70)();
-
-			return orgUiWorldmapAcquiredLocationBtnMsg(widId, msg);
-
-			/*UiWorldmapMakeTripCdecl(curLocId, mLocationVisitedFlags[locIdx] >> 8);
-			return TRUE;*/
+		replaceFunction<BOOL(__cdecl)(UiSaveFile&)>(0x1015E0F0, [](UiSaveFile& save)->BOOL {
+			return wmImpl->LoadGame(save) ? TRUE:FALSE;
 		});
 	}
 
 } worldmapFix;
 
-int WorldmapFix::GetAreaFromMap(int mapId)
-{ // this might be co8 specific so not sure if to hook this
+/* 0x1006EC30 */
+int UiWorldmapImpl::GetAreaFromMap(MapId mapId)
+{
+
+	if (temple::Dll::GetInstance().IsExpandedWorldmapDll()) {
+		if (mapId == 5078 && maps.IsCurrentMapOutdoor()) {
+			// Fix for Livonya's slaughtered caravan mod in Co8 5.0.2+
+			// Co8 has changed its map to 5078, but the area is still defined as 4
+			// This causes you to start map navigation as if on the Temple, which can cause a hang if you go on to Nulb (since it's a short path)
+			return 0; // set to random enc map
+		}
+	}
+
 	int result;
 	switch (mapId)
 	{
@@ -396,6 +453,8 @@ int WorldmapFix::GetAreaFromMap(int mapId)
 	case 5113:
 		result = 12;
 		break;
+
+	// Co8 new areas
 	case 5121:
 		result = 14;
 		break;
@@ -454,6 +513,11 @@ int WorldmapFix::CanAccessWorldmap()
 		break;
 	}
 	return result;
+}
+
+BOOL WorldmapFix::UiWorldmapMakeTripCdecl(int fromId, int toId)
+{
+	return wmImpl->MakeTripFromAreaToArea(fromId, toId);
 }
 
 int convertSpecialId(int id) {
@@ -518,32 +582,26 @@ void GetWorldXyById(int id, int& toX, int&toY){
 	}
 }
 
-BOOL WorldmapFix::UiWorldmapMakeTripCdecl(int fromId, int toId) {
+/* 0x1015EA20 */
+BOOL UiWorldmapImpl::MakeTripFromAreaToArea(int fromId, int toId) {
 	auto &mTeleportMapId = temple::GetRef<int>(0x102FB3CC);
-	auto &mTeleportMapIdTable = temple::GetRef<int[ACQUIRED_LOCATIONS_CO8]>(0x11EA3710);
 	auto &mToId = temple::GetRef<int>(0x102FB3E0);
 	auto &mFromId = temple::GetRef<int>(0x102FB3E4);
-	auto & mIsMakingTrip = temple::GetRef<int>(0x10BEF7FC);
-	auto &mRandomEncounterStatus = temple::GetRef<int>(0x102FB3D0);
+	
 	auto &mTrailDotInitialIdx = temple::GetRef<int>(0x102FB3DC);
 	auto &mTrailDotCount = temple::GetRef<int>(0x10BEF7F8);
 	auto &mXoffset = temple::GetRef<int>(0x102FB3EC);
 	auto &mYoffset = temple::GetRef<int>(0x102FB3F0);
 	auto &someX_10BEF7CC = temple::GetRef<int>(0x10BEF7CC);
 	auto &someY_10BEF7D0 = temple::GetRef<int>(0x10BEF7D0);
-	auto &mRandomEncounterX = temple::GetRef<int>(0x102FB3D4);
-	auto &mRandomEncounterY = temple::GetRef<int>(0x102FB3D8);
 	auto & mWorldmapWidgets = temple::GetRef<WorldmapWidgetsCo8*>(0x10BEF2D0);
 	auto &mWorldmapState = temple::GetRef<int>(0x10BEF808);
-	auto &mPaths = temple::GetRef<WorldmapPath[190]>(0x11EA2406);
 
-
-
-	constexpr int PATH_ID_TABLE_WIDTH = 20;
-	auto &mPathIdTable = temple::GetRef<int[PATH_ID_TABLE_WIDTH*PATH_ID_TABLE_WIDTH]>(0x11EA4100);
-
+	
 	mTeleportMapId = mTeleportMapIdTable[toId];
 	auto toIdOrg = toId;
+
+
 	if ( fromId == -1 ){ // random encounter map
 		toIdOrg = mToId;
 	}
@@ -559,6 +617,7 @@ BOOL WorldmapFix::UiWorldmapMakeTripCdecl(int fromId, int toId) {
 	auto toX = 0, toY = 0;
 	GetWorldXyById(toId, toX, toY);
 	
+		
 
 	// If exiting a random encounter and going to a different location than origin/prev. destination
 	// Make a beeline path
@@ -623,14 +682,14 @@ BOOL WorldmapFix::UiWorldmapMakeTripCdecl(int fromId, int toId) {
 
 	
 	if (!endTrip){
-		auto pathId_raw = mPathIdTable[toId + PATH_ID_TABLE_WIDTH * fromId];
+		auto pathId_raw = mPathIdTable[toId + mPathIdTableWidth * fromId];
 		logger->info("***************************from {} to {}", fromId, toId);
-		
-		if (!(pathId_raw > -191 && pathId_raw <= 191)){
+
+		if (!(pathId_raw > -mPathIdMax && pathId_raw <= mPathIdMax)){
 			endTrip = true;
 			logger->info("Bad pathId, setting to no path");
 		};
-		if (pathId_raw == 191){
+		if (pathId_raw == mPathIdMax){
 			endTrip = true;
 		}
 		else{
@@ -648,7 +707,7 @@ BOOL WorldmapFix::UiWorldmapMakeTripCdecl(int fromId, int toId) {
 				traildot->x = wmPath.startX + deltaX;
 				traildot->y = wmPath.startY + deltaY;
 				auto dotIdx = 1;
-				for (auto i = 1; i <= wmPath.count; ++i) {
+				for (auto i = 1; i <= wmPath.directions.size(); ++i) {
 					traildot = mWorldmapWidgets->trailDots[dotIdx];
 					switch (wmPath.directions[i - 1]) {
 					case 5:
@@ -697,7 +756,7 @@ BOOL WorldmapFix::UiWorldmapMakeTripCdecl(int fromId, int toId) {
 				traildot->x = wmPath.startX + deltaX;
 				traildot->y = wmPath.startY + deltaY;
 				auto dotIdx = 1;
-				for (auto i = 1; i <= wmPath.count; ++i) {
+				for (auto i = 1; i <= wmPath.directions.size(); ++i) {
 					traildot = mWorldmapWidgets->trailDots[mTrailDotCount- dotIdx];
 					switch (wmPath.directions[i - 1]) {
 					case 5:
@@ -760,7 +819,7 @@ BOOL WorldmapFix::UiWorldmapMakeTripCdecl(int fromId, int toId) {
 		}
 	}
 
-	if (wmImpl->OnDestinationReached()){
+	if (OnDestinationReached()){
 		return TRUE;
 	}
 	mIsMakingTrip = FALSE;
@@ -769,36 +828,108 @@ BOOL WorldmapFix::UiWorldmapMakeTripCdecl(int fromId, int toId) {
 
 UiWorldmapImpl::UiWorldmapImpl(){
 
-	// Todo read this from file to support new modules
-	areaToLocId.resize(64, 0);
-	int i = 0;
-	for (auto it : {
-	-1,
-	9,
-	1, // Area 2 - Moathouse
-	3,
-	6,
-	0,
-	4,
-	7,
-	2,
-	5,
-	8,
-	12,
-	13,
-	0,
-	14,
-	15,
-	16,
-		}){
-		areaToLocId[i++] = it;
+	InitLocations();
+	
+	for (auto locId = 0; locId < locationProps.size(); ++locId) {
+		
+		if (locationProps[locId].knownByDefault) {
+			LocationVisited locVisit;
+			locVisit.locId = locId;
+			locVisit.flags = LVF_LocationVisible | LVF_ScriptVisible; 
+			locationsVisited.push_back(locVisit);
+			// uiManager->SetHidden_Safe(locWidgets[locId].locationRingBtn, false); // TODO
+		}
 	}
+
+	LoadPaths();
+}
+
+/* 0x1015E0F0 */
+bool UiWorldmapImpl::LoadGame(const UiSaveFile& save)
+{
+	// Co8: 4 * (1 + ACQUIRED_LOCATIONS_CO8 + 5)
+	// Vanilla: 4 * (1 + ACQUIRED_LOCATIONS_VANILLA + 5)
+
+	if (tio_fread(&mLocationsVisitedCount, 4, 1, save.file) != 1) {
+		logger->error("UiWorldmap: failed to read mLocationsVisitedCount");
+		return false;
+	}
+
+	auto isCo8Save = false;
+	auto curpos = vfs->Tell(save.file);
+	auto remaining = vfs->Length(save.file) - curpos;
+	if (remaining >= sizeof(int) * (ACQUIRED_LOCATIONS_CO8 + 5 + 1) ){
+		vfs->Seek(save.file, 4 * (20 + 5), SeekDir::Current);
+		int sentinelCheck;
+		vfs->Read(&sentinelCheck, sizeof(int), save.file);
+		if (sentinelCheck == 0xBEEFCAFE) {
+			isCo8Save = true;
+		}
+		vfs->Seek(save.file, -4 * (20 + 5 + 1), SeekDir::Current);
+	}
+
+	if (temple::Dll::GetInstance().IsExpandedWorldmapDll()) {
+		// todo check if you can detect vanilla save and modify this...
+		auto& mLocationsVisitedFlags = temple::GetRef<int[ACQUIRED_LOCATIONS_CO8]>(0x11EA4800);
+		if (tio_fread(&mLocationsVisitedFlags, 20*4, 1, save.file) != 1) {
+			logger->error("UiWorldmap: failed to read mLocationsVisitedFlags");
+			return false;
+		}
+		locationsVisited.clear();
+		for (auto i = 0; i < mLocationsVisitedCount; ++i) {
+			LocationVisited locVis;
+			locVis.locId = mLocationsVisitedFlags[i] >> 8;
+			locVis.flags = mLocationsVisitedFlags[i] & 0xFF;
+			locationsVisited.push_back(locVis);
+		}
+	}
+	else {
+		auto& mLocationsVisitedFlags = temple::GetRef<int[ACQUIRED_LOCATIONS_VANILLA]>(0x10BEF78C);
+		if (tio_fread(&mLocationsVisitedFlags, ACQUIRED_LOCATIONS_VANILLA*4, 1, save.file) != 1) {
+			logger->error("UiWorldmap: failed to read mLocationsVisitedFlags");
+			return false;
+		}
+		locationsVisited.clear();
+		for (auto i = 0; i < mLocationsVisitedCount; ++i) {
+			LocationVisited locVis;
+			locVis.locId = mLocationsVisitedFlags[i] >> 8;
+			locVis.flags = mLocationsVisitedFlags[i] & 0xFF;
+			locationsVisited.push_back(locVis);
+		}
+	}
+	temple::GetRef<void(__cdecl)()>(0x1015DFD0)(); // UnhideLocations
+
+	if (tio_fread(&mRandomEncounterX, 4, 1, save.file) != 1) {
+		logger->error("UiWorldmap: failed to read ");
+		return false;
+	}
+
+	if (tio_fread(&mRandomEncounterY, 4, 1, save.file) != 1) {
+		logger->error("UiWorldmap: failed to read ");
+		return false;
+	}
+
+	if (tio_fread(&mRandomEncounterStatus, 4, 1, save.file) != 1) {
+		logger->error("UiWorldmap: failed to read ");
+		return false;
+	}
+
+	if (tio_fread(&mNeedToClearEncounterMap, 4, 1, save.file) != 1) {
+		logger->error("UiWorldmap: failed to read ");
+		return false;
+	}
+
+	if (tio_fread(&mPermanentPermissionToExitEncounterMap, 4, 1, save.file) != 1) {
+		logger->error("UiWorldmap: failed to read ");
+		return false;
+	}
+
+	return true;
 }
 
 // 0x1015E840
 bool UiWorldmapImpl::OnDestinationReached()
 {
-
 	//rndEncDetails = nullptr;
 	auto &mRndEncDetails = temple::GetRef<void*>(0x10BEF814);
 	mRndEncDetails = nullptr;
@@ -806,21 +937,41 @@ bool UiWorldmapImpl::OnDestinationReached()
 	mNeedToClearEncounterMap = FALSE;
 	FadeAndTeleportArgs fadeArgs;
 	auto &mapSystem = gameSystems->GetMap();
-	// Todo: modularize
-	if (mTeleportMapId == HOMMLET_MAIN){
-		fadeArgs.destLoc = { 623, 421 };
+	
+
+	auto locId = GetLocationFromMap(mTeleportMapId);
+	if (locId != LOCATION_NONE) {
+		auto wrappedMapId = mTeleportMapId % 10000;
+
+		auto &locProps = locationProps[locId];
+		if (locProps.startLoc.locx != -1 && locProps.startLoc.locy != -1) {
+			fadeArgs.destLoc = locProps.startLoc;
+		}
+		else {
+			fadeArgs.destLoc = mapSystem.GetStartPos(wrappedMapId);
+		}
+		mTeleportMapId = wrappedMapId;
 	}
-	else if (mTeleportMapId == HOMMLET_NORTH){
-		fadeArgs.destLoc = { 512, 221 };
-		mTeleportMapId = HOMMLET_MAIN;
+	else {
+		logger->error("OnDestinationReached(): Could not find teleport map! Using hardcoded alternative.");
+
+		if (mTeleportMapId == HOMMLET_MAIN) {
+			fadeArgs.destLoc = { 623, 421 };
+		}
+		else if (mTeleportMapId == HOMMLET_NORTH) {
+			fadeArgs.destLoc = { 512, 221 };
+			mTeleportMapId = HOMMLET_MAIN;
+		}
+		else if (mTeleportMapId == HOMMLET_CASTLE) {
+			fadeArgs.destLoc = { 433, 626 };
+			mTeleportMapId = HOMMLET_MAIN;
+		}
+		else {
+			fadeArgs.destLoc = mapSystem.GetStartPos(mTeleportMapId);
+		}
 	}
-	else if (mTeleportMapId == HOMMLET_CASTLE){
-		fadeArgs.destLoc = { 433, 626 };
-		mTeleportMapId = HOMMLET_MAIN;
-	}
-	else{
-		fadeArgs.destLoc = mapSystem.GetStartPos(mTeleportMapId);
-	}
+	
+	
 
 	
 	fadeArgs.flags = FadeAndTeleportFlags::ftf_unk200;
@@ -838,7 +989,330 @@ bool UiWorldmapImpl::OnDestinationReached()
 	ui_worldmap().Hide();
 	fade.FadeAndTeleport(fadeArgs);
 	return FALSE;
-	//return temple::GetRef<BOOL(__cdecl)()>(0x1015E840)() != FALSE;
+}
+
+void UiWorldmapImpl::InitLocations()
+{
+	const int MAX_NUM_AREAS = 64;
+	const int MAX_NUM_LOCATIONS = 64;
+
+	// Todo read this from file to support new modules
+	mTeleportMapIdTable.resize(MAX_NUM_LOCATIONS, 0);
+	mAreaToLocId.resize(MAX_NUM_AREAS, 0);
+
+	if (temple::Dll::GetInstance().IsExpandedWorldmapDll()) {
+		memcpy(&mTeleportMapIdTable[0], temple::GetPointer(0x11EA3710), ACQUIRED_LOCATIONS_CO8 * sizeof(int));
+		memcpy(&mAreaToLocId[0], temple::GetPointer(0x11EA3610), 64 * sizeof(int));
+		// In Co8 this should be
+		//mAreaToLocId = {
+		//-1, // Area 0 - unknown area
+		//9, // Area 1  - Hommlet
+		//1, // Area 2 - Moathouse
+		//3,
+		//6,
+		//0,
+		//4,
+		//7,
+		//2,
+		//5,
+		//8,
+		//12,
+		//13,
+		//0, // vanilla limit
+		//14, // new Co8 areas
+		//15,
+		//16,
+		//};
+	}
+	else {
+		memcpy(&mTeleportMapIdTable[0], temple::GetPointer(0x102972BC), ACQUIRED_LOCATIONS_VANILLA * sizeof(int));
+		memcpy(&mAreaToLocId[0], temple::GetPointer(0x10297250), 13 * sizeof(int));
+	}
+	
+
+	locToMapId = { // Co8 setup
+		5094,  //0
+		5002,
+		5091,
+		5051,
+		5068,
+		5095,  // 5
+		5062,
+		5093,
+		5069,
+		HOMMLET_NORTH,
+		HOMMLET_MAIN, // 10
+		HOMMLET_CASTLE,
+		5112,
+		5113,
+		// new Co8 areas:
+		5121,  // 14
+		5132,  // 15
+		5108   // 16
+	};
+	locToMapId.resize(MAX_NUM_LOCATIONS, 0);
+	
+	for (auto i = 0; i < MAX_NUM_LOCATIONS; ++i) {
+		auto props = LocationProps();
+		props.mapId = locToMapId[i];
+		locationProps.push_back(props);
+	}
+	
+	// Hommlet special locations
+	for (auto locId = 9; locId <= 11; locId++) {
+		locationProps[locId].knownByDefault = true;
+	}
+	locationProps[9].startLoc.locx = temple::GetRef<int>(0x1015E8AB + 1);
+	locationProps[9].startLoc.locy = temple::GetRef<int>(0x1015E8B0 + 1);
+
+	locationProps[10].startLoc.locx = temple::GetRef<int>(0x1015E8B7 + 1);
+	locationProps[10].startLoc.locy = temple::GetRef<int>(0x1015E8BC + 1);
+
+	locationProps[11].startLoc.locx = temple::GetRef<int>(0x1015E89F + 1);
+	locationProps[11].startLoc.locy = temple::GetRef<int>(0x1015E8A4 + 1);
+}
+
+void UiWorldmapImpl::InitWidgets()
+{
+	// TODO
+	//LgcyWindow wnd(,)
+}
+
+void UiWorldmapImpl::GetUiLocations()
+{
+
+}
+
+void UiWorldmapImpl::LoadPaths()
+{
+	auto rawData (vfs->ReadAsBinary("art\\interface\\worldmap_ui\\worldmap_ui_paths.bin"));
+	MemoryInputStream reader(rawData);
+	
+	auto numPaths = reader.ReadInt32();
+	logger->info("Loading worldmap paths ({})", numPaths);
+	try {
+		while (!reader.AtEnd()) {
+			WorldmapPath wmp;
+			wmp.startX = reader.ReadInt32();
+			wmp.startY = reader.ReadInt32();
+			wmp.endX = reader.ReadInt32();
+			wmp.endY = reader.ReadInt32();
+			wmp.count = reader.ReadInt32();
+
+			if ((wmp.count % 4) > 0) {
+				wmp.count += 4 - (wmp.count % 4);
+			}
+			wmp.directions.resize(wmp.count);
+			reader.ReadBytes(&wmp.directions[0], wmp.count);
+			mPaths.push_back(wmp);
+		}
+	}
+	catch(...) {
+
+	}
+	logger->info("Loaded {} worldmap paths", mPaths.size());
+
+
+	if (temple::Dll::GetInstance().IsExpandedWorldmapDll()) {
+		mPathIdMax = 191;
+		mPathIdTableWidth = 20;
+		mPathIdTable.resize(mPathIdTableWidth * mPathIdTableWidth);
+		memcpy(&mPathIdTable[0], temple::GetPointer(0x11EA4100), mPathIdTable.size() * sizeof(int) );
+	}
+	else { // vanilla
+		mPathIdMax = 46;
+		mPathIdTableWidth = 12;
+		mPathIdTable.resize(mPathIdTableWidth * mPathIdTableWidth);
+		memcpy(&mPathIdTable[0], temple::GetPointer(0x102972F8), mPathIdTable.size() * sizeof(int));
+	}
+}
+
+LocationId UiWorldmapImpl::GetLocationFromMap(MapId mapId){
+	for (auto i = 0; i < locationProps.size(); ++i) {
+		auto& locProps = locationProps[i];
+		if (locProps.mapId == mapId) {
+			return (LocationId)i;
+		}
+	}
+	return LOCATION_NONE;
+}
+
+LocationId UiWorldmapImpl::GetLocationFromArea(AreaId areaId) {
+	for (auto i = 0; i < mAreaToLocId.size(); ++i) {
+		if (mAreaToLocId[i] == areaId) {
+			return (LocationId )i;
+		}
+	}
+	return LOCATION_NONE;
+}
+
+int UiWorldmapImpl::GetLocationVisited(LocationId locId)
+{
+	for (auto i = 0; i < locationsVisited.size(); ++i) {
+		if (locationsVisited[i].locId == locId) {
+			return i;
+		}
+	}
+	return LOCATION_NONE;
+}
+
+/* 0x101596A0 */
+void UiWorldmapImpl::SetMapVisited(MapId mapId)
+{
+	auto locId = GetLocationFromMap(mapId);
+	SetLocationVisited(locId);
+}
+// refactored from SetLocationVisited
+void UiWorldmapImpl::SetLocationVisited(LocationId locId)
+{
+	if (locId == LOCATION_NONE || locId >= locationProps.size()) {
+		return;
+	}
+	LocationProps& locProps = locationProps[locId];
+	if (locProps.knownByDefault)
+		return;
+	
+	auto& locState = locationStates[locId];
+	if (locState.scriptWriting == MV_VISIBLE) {
+		return;
+	}
+
+	MarkAreaKnown(locProps.areaId);
+
+	auto locVisited = GetLocationVisited(locId);
+	if (locVisited == LOCATION_NONE) {
+		return;
+	}
+	locationsVisited[locVisited].flags |= LVF_ScriptVisible;
+	locState.scriptWriting = MV_FADING;
+	
+	auto btnId = locWidgets[locId].scriptBtn;
+	if (uiManager->GetButton(btnId)) {
+		uiManager->SetHidden(btnId, false);
+	}
+	
+}
+
+/* 0x101595E0 */
+void UiWorldmapImpl::MarkAreaKnown(AreaId areaId)
+{
+	auto locId = GetLocationFromArea(areaId);
+	if (locId == LOCATION_NONE || locId >= locationProps.size()) {
+		return;
+	}
+	LocationProps& locProps = locationProps[locId];
+	if (locProps.knownByDefault)
+		return;
+
+	auto& locState = locationStates[locId];
+	if (locState.mapBtn == MV_VISIBLE) {
+		return;
+	}
+
+	auto locVisited = GetLocationVisited(locId);
+	if (locVisited != LOCATION_NONE) {
+		return;
+	}
+
+	// Add new location
+	mLocationsRevealingCount++;
+	
+	auto locVisitedNew = LocationVisited();
+	locVisitedNew.locId = locId;
+	locVisitedNew.flags = LVF_LocationVisible;
+	
+	locationsVisited.push_back(locVisitedNew);
+
+	locState.mapBtn = MV_FADING;
+	uiManager->SetHidden_Safe(locWidgets[locId].locationBtn, false);
+	uiManager->SetHidden_Safe(locWidgets[locId].locationRingBtn, false);
+	
+	uiSystems->GetUtilityBar().FlashMapBtn();
+
+}
+
+/* 0x1015DFD0 */
+void UiWorldmapImpl::UnhideLocationBtns()
+{
+	for (auto i = 0; i < locationsVisited.size(); ++i) {
+		auto locVis = locationsVisited[i];
+		auto locId = locVis.locId;
+		
+		auto& widg = locWidgets[locId];
+		auto& locStat = locationStates[locId];
+		if (locVis.flags & LVF_LocationVisible) {
+			uiManager->SetHidden_Safe(widg.locationBtn, false);
+			uiManager->SetHidden_Safe(widg.locationRingBtn, false);
+			locStat.mapBtn = MV_VISIBLE;
+		}
+		if (locVis.flags & LVF_ScriptVisible) {
+			uiManager->SetHidden_Safe(widg.scriptBtn, false);
+			locStat.scriptWriting = MV_VISIBLE;
+		}
+		
+	}
+}
+
+bool UiWorldmapImpl::AcquiredLocationBtnMsg(LgcyWidgetId widId, TigMsg* msg)
+{
+	if (msg->type == TigMsgType::MOUSE) {
+		return TRUE;
+	}
+	if (!msg->IsWidgetEvent(TigMsgWidgetEvent::MouseReleased)) {
+		return FALSE;
+	}
+
+	auto& mIsMakingTrip = temple::GetRef<int>(0x10BEF7FC);
+	auto& mWorldmapWidgets = temple::GetRef<WorldmapWidgetsCo8*>(0x10BEF2D0);
+	auto& mLocationsVisitedCount = temple::GetRef<int>(0x10BEF810);
+	auto mLocationVisitedFlags = temple::Dll::GetInstance().IsExpandedWorldmapDll() ? 
+		temple::GetRef<int[ACQUIRED_LOCATIONS_CO8]>(0x11EA4800) :
+		temple::GetRef<int[ACQUIRED_LOCATIONS_VANILLA]>(0x10BEF78C);
+
+	if (mIsMakingTrip) {
+		return FALSE;
+	}
+
+
+
+	auto btn = uiManager->GetButton(widId);
+	auto locIdx = -1;
+	auto foundLocIdx = false;
+	// search for the button in the acquired locations buttons
+	for (auto i = 0; i < ACQUIRED_LOCATIONS_CO8; ++i) {
+		if (btn == mWorldmapWidgets->acquiredLocations[i]) {
+			locIdx = i; foundLocIdx = true;
+			break;
+		}
+	}
+	if (!foundLocIdx) { // search for the button in the location ring buttons
+		auto locationRingIdx = -1;
+		for (auto i = 0; i < ACQUIRED_LOCATIONS_CO8; ++i) {
+			if (btn == mWorldmapWidgets->locationRingBtns[i]) {
+				locationRingIdx = i;
+				break;
+			}
+		}
+
+		for (auto i = 0; i < mLocationsVisitedCount; ++i) {
+			{
+				auto locIdVisited = mLocationVisitedFlags[i] >> 8;
+				if (locIdVisited == locationRingIdx) {
+					locIdx = i;
+					break;
+				}
+			}
+		}
+	}
+	if (locIdx == -1) {
+		logger->error("UiWorldmap: Couldn't find location button??");
+		return FALSE;
+	}
+
+	auto curLocId = temple::GetRef<int(__cdecl)()>(0x1015DF70)();
+
+	MakeTripFromAreaToArea(curLocId, mLocationVisitedFlags[locIdx] >> 8);
+	return TRUE;
 }
 
 void __declspec(naked) UiWorldmapMakeTripWrapper() {
