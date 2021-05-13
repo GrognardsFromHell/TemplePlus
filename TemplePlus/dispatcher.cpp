@@ -482,7 +482,7 @@ void DispatcherSystem::Dispatch48BeginRound(objHndl obj, int numRounds) const
 	auto dispatcher = gameSystems->GetObj().GetObject(obj)->GetDispatcher();
 	if (dispatcher->IsValid()) {
 		DispIoD20Signal dispIo;
-		dispIo.data1 = 1; // num rounds
+		(int64_t&)(dispIo.data1) = numRounds;
 		dispatch.DispatcherProcessor(dispatcher, dispTypeBeginRound, DK_NONE, &dispIo);
 		static void(*onBeginRoundSpell)(objHndl) = temple::GetRef<void(__cdecl)(objHndl)>(0x100766E0);
 		onBeginRoundSpell(obj);
