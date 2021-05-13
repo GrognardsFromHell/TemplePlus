@@ -479,8 +479,11 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 		pickArgs.spellEnum = spellEnum;
 		pickArgs.callback = [](const PickerResult & result, void* cbArgs) { actSeqSys.SpellPickerCallback(result, (SpellPacketBody*)cbArgs); };
 		// Modify the PickerArgs
-		if (d20Sys.globD20Action->d20ActType == D20A_PYTHON_ACTION)
-			pythonD20ActionIntegration.ModifyPicker(d20Sys.globD20Action->data1, &pickArgs);
+		if (d20Sys.globD20Action->d20ActType == D20A_PYTHON_ACTION) {
+			auto pyActionEnum = d20Sys.globD20Action->GetPythonActionEnum();
+			pythonD20ActionIntegration.ModifyPicker(pyActionEnum, &pickArgs);
+		}
+			
 
 		*actSeqPickerActive = 1;
 		uiPicker.ShowPicker(pickArgs, &curSeq->spellPktBody);
@@ -836,7 +839,7 @@ int ActionSequenceSystem::ActionAddToSeq()
 		
 	}
 	if (d20ActnType == D20A_PYTHON_ACTION){
-		d20Sys.globD20ActionKey = (D20DispatcherKey) d20Sys.globD20Action->data1;
+		d20Sys.globD20ActionKey = (D20DispatcherKey) d20Sys.globD20Action->GetPythonActionEnum();
 	}
 	auto actnCheckFunc = d20Sys.d20Defs[d20ActnType].actionCheckFunc;
 	if (actnCheckFunc)
@@ -1465,7 +1468,8 @@ int ActionSequenceSystem::GetNewHourglassState(objHndl performer, D20ActionType 
 
 	auto activeMenu = radialMenus.GetActiveRadialMenu();
 	if (d20ActionType == D20A_PYTHON_ACTION && radialMenus.lastPythonActionNode > 0 ){
-		d20a.data1= (D20DispatcherKey)activeMenu->nodes[radialMenus.lastPythonActionNode].entry.dispKey;
+		auto pyActionEnum = (D20DispatcherKey)activeMenu->nodes[radialMenus.lastPythonActionNode].entry.dispKey;
+		d20a.SetPythonActionEnum(pyActionEnum);
 	}
 
 	if (d20SpellData)

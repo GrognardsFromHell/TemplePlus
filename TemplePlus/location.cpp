@@ -210,6 +210,14 @@ float LocationSys::DistanceToObj(objHndl from, objHndl to){
 	return result;
 }
 
+float LocationSys::DistanceToObj_NonNegative(objHndl from, objHndl to)
+{
+	auto result = DistanceToObj(from, to);
+	if (result < 0.f)
+		result = 0.f;
+	return result;
+}
+
 float LocationSys::DistanceToLoc(objHndl from, LocAndOffsets loc) {
 	auto objLoc = objects.GetLocationFull(from);
 	auto distance = Distance3d(objLoc, loc);
