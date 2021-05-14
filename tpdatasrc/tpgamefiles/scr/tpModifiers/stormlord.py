@@ -2,6 +2,7 @@ from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
 import char_class_utils
+import tpactions
 
 ###################################################
 
@@ -15,7 +16,12 @@ print "Registering {}".format(GetConditionName())
 
 classEnum = stat_level_stormlord
 classSpecModule = __import__('class038_stormlord')
+
 ###################################################
+
+########## Python Action ID's ##########
+pythonActionStormId = 3801
+########################################
 
 
 #### standard callbacks - BAB and Save values
@@ -46,12 +52,14 @@ classSpecObj.AddHook(ET_OnSaveThrowLevel, EK_SAVE_FORTITUDE, OnGetSaveThrowFort,
 classSpecObj.AddHook(ET_OnSaveThrowLevel, EK_SAVE_REFLEX, OnGetSaveThrowReflex, ())
 classSpecObj.AddHook(ET_OnSaveThrowLevel, EK_SAVE_WILL, OnGetSaveThrowWill, ())
 
-## Stormlord Feats
+#### Stormlord Feats ####
 
+## Define Stormlord Weapons; list can be extended if ever necessary ##
 def stormlordWeapons():
     weaponList = [wt_javelin, wt_longspear, wt_shortspear, wt_spear]
     return weaponList
 
+## Enhanced Javelins ##
 def featEnhancedJavelinsToHit(attachee, args, evt_obj):
     usedWeapon = evt_obj.attack_packet.get_weapon_used()
     if usedWeapon.obj_get_int(obj_f_weapon_type) == wt_javelin:
@@ -86,6 +94,7 @@ enhancedJavelins.MapToFeat("Stormlord Enhanced Javelins")
 enhancedJavelins.AddHook(ET_OnToHitBonus2, EK_NONE, featEnhancedJavelinsToHit, ())
 enhancedJavelins.AddHook(ET_OnDealingDamage, EK_NONE, featEnhancedJavelinsDamage, ())
 
+## Resistance to Electricity ##
 def featResistanceToElectricity(attachee, args, evt_obj):
     classLevel = attachee.stat_level_get(classEnum)
     if classLevel >= 9:
@@ -103,6 +112,8 @@ electricityResistance = PythonModifier("Stormlord Resistance to Electricity Feat
 electricityResistance.MapToFeat("Stormlord Resistance to Electricity")
 electricityResistance.AddHook(ET_OnTakingDamage , EK_NONE, featResistanceToElectricity, ())
 
+## Shock Weapon ##
+## Should not stack with existing shock property on weapon but can't be queried at the moment ##
 def featShockWeapon(attachee, args, evt_obj):
     usedWeapon = evt_obj.attack_packet.get_weapon_used()
     weaponList = stormlordWeapons()
@@ -115,8 +126,8 @@ def featShockWeapon(attachee, args, evt_obj):
         if evt_obj.attack_packet.get_flags() & D20CAF_CRITICAL:
             bonusDiceBurst = dice_new('1d10')
             critMultiplier = evt_obj.damage_packet.critical_multiplier
-            if critMultiplier > 4: #unsure if needed; D20SRD description ends at x4
-                critMultiplier = 4
+            if critMultiplier > 3: #unsure if needed; D20SRD description ends at x4
+                critMultiplier = 3
             bonusDiceBurst.number = critMultiplier
             evt_obj.damage_packet.add_dice(bonusDiceBurst, D20DT_ELECTRICITY, 100) #ID 100 in damage.mes is Weapon
     return 0
@@ -125,6 +136,8 @@ shockWeapon = PythonModifier("Stormlord Shock Weapon Feat", 0)
 shockWeapon.MapToFeat("Stormlord Shock Weapon")
 shockWeapon.AddHook(ET_OnDealingDamage, EK_NONE, featShockWeapon, ())
 
+## Thundering Weapon ##
+## Should not stack with existing thundering property on weapon but can't be queried at the moment ##
 def featThunderingWeaponDamage(attachee, args, evt_obj):
     usedWeapon = evt_obj.attack_packet.get_weapon_used()
     weaponList = stormlordWeapons()
@@ -134,8 +147,8 @@ def featThunderingWeaponDamage(attachee, args, evt_obj):
     if evt_obj.attack_packet.get_flags() & D20CAF_CRITICAL:
         bonusDice = dice_new('1d8')
         critMultiplier = evt_obj.damage_packet.critical_multiplier
-        if critMultiplier > 4: #unsure if needed; D20SRD description ends at x4
-            critMultiplier = 4
+        if critMultiplier > 3: #unsure if needed; D20SRD description ends at x4
+            critMultiplier = 3
         bonusDice.number = critMultiplier
         evt_obj.damage_packet.add_dice(bonusDice, D20DT_SONIC, 100) #ID 1012 in damage.mes is Weapon
         # Thundering Weapons deafens on a critical hit on a failed dc save 14
@@ -151,6 +164,7 @@ thunderingWeapon = PythonModifier("Stormlord Thundering Weapon Feat", 0)
 thunderingWeapon.MapToFeat("Stormlord Thundering Weapon")
 thunderingWeapon.AddHook(ET_OnDealingDamage, EK_NONE, featThunderingWeaponDamage, ())
 
+## Immunity to Electricity ##
 def featImmunityToElectricity(attachee, args, evt_obj):
     evt_obj.damage_packet.add_mod_factor(0.0, D20DT_ELECTRICITY, 132) #ID 132 in damage.mes is Immunity
     return 0
@@ -158,6 +172,31 @@ def featImmunityToElectricity(attachee, args, evt_obj):
 electricityImmunity = PythonModifier("Stormlord Immunity to Electricity Feat", 0)
 electricityImmunity.MapToFeat("Stormlord Immunity to Electricity")
 electricityImmunity.AddHook(ET_OnTakingDamage , EK_NONE, featImmunityToElectricity, ())
+
+
+## Storm of Elemental Fury ##
+## Deactivated until Storm is merged into temple+ ##
+#def radialStormOfElementalFury(attachee, args, evt_obj):
+#    stormSpellStore = PySpellStore(spell_storm_of_elemental_fury, 137, 7)
+#    stormSlaId = tpdp.RadialMenuEntryPythonAction(stormSpellStore, D20A_PYTHON_ACTION, pythonActionStormId, 1171, "TAG_CLASS_FEATURES_MARSHAL_STORM_OF_ELEMENTAL_FURY")
+#    stormSlaId.add_child_to_standard(attachee, tpdp.RadialMenuStandardNode.Class)
+#    return 0
+
+def pythonActionPerformStorm(attachee, args, evt_obj):
+    currentSequence = tpactions.get_cur_seq()
+    spellPacket = currentSequence.spell_packet
+    newSpellId = tpactions.get_new_spell_id()
+    #evt_obj.d20a.spell_id = newSpellId
+    spellPacket.caster_level = 17 #set caster level manually, SLA is cast as a level 17 cleric
+    tpactions.register_spell_cast(spellPacket, newSpellId)
+    tpactions.trigger_spell_effect(evt_obj.d20a.spell_id)
+    return 0
+
+#stormlordSLA = PythonModifier("Stormlord Storm of Elemental Fury SLA", 0)
+#stormlordSLA.MapToFeat("Stormlord Storm of Elemental Fury")
+#stormlordSLA.AddHook(ET_OnBuildRadialMenuEntry , EK_NONE, radialStormOfElementalFury, ())
+#stormlordSLA.AddHook(ET_OnD20PythonActionPerform, pythonActionStormId, pythonActionPerformStorm, ())
+
 
 ##### Spell casting
 
