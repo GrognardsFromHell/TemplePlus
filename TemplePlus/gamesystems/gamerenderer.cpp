@@ -132,8 +132,10 @@ static struct GameRenderFuncs : temple::AddressTable {
 } renderFuncs;
 
 GameRenderer::GameRenderer(TigInitializer &tig,
+                           WorldCamera &camera,
                            GameSystems &gameSystems)
     : mRenderingDevice(tig.GetRenderingDevice()), 
+      mCamera(camera),
 	  mGameSystems(gameSystems)      
 {
 
@@ -152,6 +154,7 @@ GameRenderer::GameRenderer(TigInitializer &tig,
 		*mAasRenderer);
 	mParticleSysRenderer = std::make_unique<ParticleSystemsRenderer>(
 		tig.GetRenderingDevice(),
+        mCamera,
 		tig.GetShapeRenderer2d(),
 		gameSystems.GetAAS(),
 		*mAasRenderer,

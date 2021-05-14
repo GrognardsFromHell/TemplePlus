@@ -28,6 +28,7 @@
 #include "gamesystems/objfade.h"
 #include "gamesystems/objects/objsystem.h"
 #include "gamesystems/map/gmesh.h"
+#include "../gameview.h"
 #include "animgoals/anim.h"
 
 #include "mapsystem.h"
@@ -770,8 +771,7 @@ void GameSystems::InitializeSystems(LoadingScreen& loadingScreen) {
 	loadingScreen.SetProgress(69 / 79.0f);
 	mUiArtManager = InitializeSystem<UiArtManagerSystem>(loadingScreen, mConfig);
 	loadingScreen.SetProgress(70 / 79.0f);
-	mParticleSys = InitializeSystem<ParticleSysSystem>(loadingScreen, 
-		mTig.GetRenderingDevice().GetCamera());
+	mParticleSys = InitializeSystem<ParticleSysSystem>(loadingScreen, gameView->GetCamera());
 	loadingScreen.SetProgress(71 / 79.0f);
 	mCheats = InitializeSystem<CheatsSystem>(loadingScreen, mConfig);
 	loadingScreen.SetProgress(72 / 79.0f);

@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <memory>
+
 #include "../infrastructure/location.h"
 #include "collision.h"
 #include "math.h"
@@ -12,7 +14,6 @@ namespace gfx {
 	 */
 	class WorldCamera {
 	public:
-
 		bool IsBoxOnScreen(XMFLOAT2 point, 
 			float left, float top, float right, float bottom) const;
 		
@@ -48,7 +49,10 @@ namespace gfx {
 			return mCurScreenOffset;
 		}
 
-		void SetScreenWidth(float width, float height) {
+		void SetScreenSize(float width, float height) {
+			if (std::abs(width - mScreenWidth) < 0.01f || std::abs(height - mScreenHeight) < 0.01f) {
+				return;
+			}
 			mScreenWidth = width;
 			mScreenHeight = height;
 			mDirty = true;

@@ -9,7 +9,7 @@
 #include "clipping.h"
 #include "graphics/shaders.h"
 #include "clippingmesh.h"
-
+#include "../../gameview.h"
 #include "config/config.h"
 
 using namespace gfx;
@@ -213,16 +213,13 @@ void ClippingSystem::Render() {
 		mImpl->mDevice.SetMaterial(mImpl->material);
 	}
 
-	auto& camera = mImpl->mDevice.GetCamera();
+	auto& camera = gameView->GetCamera();
 
 	ClippingGlobals globals;
 	globals.viewProj = camera.GetViewProj();
 
 	// For clipping purposes
-	auto screenCenterWorld = camera.ScreenToWorld(
-		camera.GetScreenWidth() * 0.5f, 
-		camera.GetScreenHeight() * 0.5f
-	);
+	auto screenCenterWorld = gameView->GetScreenCenterInWorld3d();
 
 	for (auto& mesh : mImpl->mClippingMeshes) {
 				

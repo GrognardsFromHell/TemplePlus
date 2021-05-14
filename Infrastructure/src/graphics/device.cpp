@@ -31,10 +31,13 @@ void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const Buf
 	switch (format) {
 	case BufferFormat::A8:
 		f.writer() << "A8";
+		break;
 	case BufferFormat::A8R8G8B8:
 		f.writer() << "A8R8G8B8";
+		break;
 	case BufferFormat::X8R8G8B8:
 		f.writer() << "X8R8G8B8";
+		break;
 	}
 }
 
@@ -109,6 +112,9 @@ RenderingDevice::RenderingDevice(HWND windowHandle, uint32_t adapterIdx, bool de
   renderingDevice = this;
   
   mImpl->debugDevice = debugDevice;
+
+  mDefaultCamera = std::make_shared<WorldCamera>();
+  mCurrentCamera = mDefaultCamera;
 
   HRESULT status;
 
@@ -242,6 +248,11 @@ RenderingDevice::RenderingDevice(HWND windowHandle, uint32_t adapterIdx, bool de
 
 RenderingDevice::~RenderingDevice() { renderingDevice = nullptr; }
 
+void RenderingDevice::SetCurrentCamera(WorldCameraPtr camera)
+{
+	mCurrentCamera = camera ? camera : mDefaultCamera;
+}
+
 void RenderingDevice::SetAntiAliasing(bool enable, uint32_t samples, uint32_t quality) {
 
 	mImpl->msaaQuality = quality;
@@ -358,10 +369,6 @@ void RenderingDevice::PushRenderTarget(
   assert(!depthStencilBuffer ||
          colorBuffer->GetSize() == depthStencilBuffer->GetSize());
 
-  // Set the camera size to the size of the new render target
-  auto &size = colorBuffer->GetSize();
-  mCamera.SetScreenWidth((float)size.width, (float)size.height);
-
   // Activate the render target on the device
   auto rtv = colorBuffer->mRtView;
   ID3D11DepthStencilView *depthStencilView = nullptr; // Optional!
@@ -373,12 +380,15 @@ void RenderingDevice::PushRenderTarget(
   mImpl->textEngine->SetRenderTarget(colorBuffer->mTexture);
 
   // Set the viewport accordingly
-  CD3D11_VIEWPORT viewport(0.0f, 0.0f, (float)size.width, (float)size.height);
+  auto& size = colorBuffer->GetSize();
+  CD3D11_VIEWPORT viewport(0.0f, 0.0f, static_cast<float>(size.width), static_cast<float>(size.height));
   mContext->RSSetViewports(1, &viewport);
 
   mRenderTargetStack.push_back({colorBuffer, depthStencilBuffer});
 
   ResetScissorRect();
+
+  UpdateDefaultCameraScreenSize();
 
 }
 
@@ -399,10 +409,6 @@ void RenderingDevice::PopRenderTarget() {
 
   auto &newTarget = mRenderTargetStack.back();
 
-  // Set the camera size to the size of the new render target
-  auto &size = newTarget.colorBuffer->GetSize();
-  mCamera.SetScreenWidth((float)size.width, (float)size.height);
-
   // Activate the render target on the device
   auto rtv = newTarget.colorBuffer->mRtView;
   ID3D11DepthStencilView *depthStencilView = nullptr; // Optional!
@@ -414,10 +420,13 @@ void RenderingDevice::PopRenderTarget() {
   mImpl->textEngine->SetRenderTarget(newTarget.colorBuffer->mTexture);
 
   // Set the viewport accordingly
-  CD3D11_VIEWPORT viewport(0.0f, 0.0f, (float)size.width, (float)size.height);
+  auto& size = newTarget.colorBuffer->GetSize();
+  CD3D11_VIEWPORT viewport(0.0f, 0.0f, static_cast<float>(size.width), static_cast<float>(size.height));
   mContext->RSSetViewports(1, &viewport);
 
   ResetScissorRect();
+  
+  UpdateDefaultCameraScreenSize();
 
 }
 
@@ -589,6 +598,13 @@ CComPtr<IDXGIAdapter1> RenderingDevice::GetAdapter(size_t index) {
   return adapter;
 }
 
+void RenderingDevice::UpdateDefaultCameraScreenSize()
+{
+	auto& currentTarget = mRenderTargetStack.back();
+	auto& currentSize = currentTarget.colorBuffer->GetSize();
+	mDefaultCamera->SetScreenSize((float) currentSize.width, (float) currentSize.height);
+}
+
 const eastl::vector<DisplayDevice> &RenderingDevice::GetDisplayDevices() {
   // Recreate the DXGI factory if we want to enumerate a new list of devices
   if (!mDisplayDevices.empty() && mDxgiFactory->IsCurrent()) {
@@ -697,10 +713,11 @@ void RenderingDevice::SetVertexShaderConstant(uint32_t startRegister,
                                               StandardSlotSemantic semantic) {
   switch (semantic) {
   case StandardSlotSemantic::ViewProjMatrix:
-    SetVertexShaderConstants(startRegister, mCamera.GetViewProj());
+    SetVertexShaderConstants(startRegister, mCurrentCamera->GetViewProj());
     break;
   case StandardSlotSemantic::UiProjMatrix:
-    SetVertexShaderConstants(startRegister, mCamera.GetUiProjection());
+    SetVertexShaderConstants(startRegister, mCurrentCamera->GetUiProjection());
+	break;
   default:
     break;
   }
@@ -710,10 +727,10 @@ void RenderingDevice::SetPixelShaderConstant(uint32_t startRegister,
                                              StandardSlotSemantic semantic) {
   switch (semantic) {
   case StandardSlotSemantic::ViewProjMatrix:
-    SetPixelShaderConstants(startRegister, mCamera.GetViewProj());
+    SetPixelShaderConstants(startRegister, mCurrentCamera->GetViewProj());
     break;
   case StandardSlotSemantic::UiProjMatrix:
-    SetPixelShaderConstants(startRegister, mCamera.GetUiProjection());
+    SetPixelShaderConstants(startRegister, mCurrentCamera->GetUiProjection());
     break;
   default:
     break;
@@ -1311,8 +1328,9 @@ void RenderingDevice::TakeScaledScreenshot(const std::string &filename,
 	  PushRenderTarget(stretchedRt, nullptr);
 	  ShapeRenderer2d renderer(*this);
 	  
-	  auto w = (float)mCamera.GetScreenWidth();
-	  auto h = (float)mCamera.GetScreenHeight();
+	  auto w = mCurrentCamera->GetScreenWidth();
+	  auto h = mCurrentCamera->GetScreenHeight();
+	
 	  renderer.DrawRectangle(0, 0, w, h, tmpTexWrapper);
 
 	  PopRenderTarget();

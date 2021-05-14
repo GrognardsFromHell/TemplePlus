@@ -193,7 +193,7 @@ namespace gfx {
 		}
 
 		Shape3dGlobals globals;
-		globals.viewProj = device.GetCamera().GetViewProj();
+		globals.viewProj = device.GetCurrentCamera().GetViewProj();
 		XMStoreFloat4(&globals.colors, PackedVector::XMLoadColor(&color));
 		
 		device.SetVertexShaderConstants(0, globals);
@@ -204,7 +204,7 @@ namespace gfx {
 		device.SetMaterial(quadMaterial);
 
 		Shape3dGlobals globals;
-		globals.viewProj = device.GetCamera().GetViewProj();
+		globals.viewProj = device.GetCurrentCamera().GetViewProj();
 		XMStoreFloat4(&globals.colors, PackedVector::XMLoadColor(&color));
 
 		device.SetVertexShaderConstants(0, globals);

@@ -86,8 +86,8 @@ struct MovieRect {
 static MovieRect GetMovieRect(int movieWidth, int movieHeight) {
 	auto &device = tig->GetRenderingDevice();
 
-	auto screenWidth = device.GetCamera().GetScreenWidth();
-	auto screenHeight = device.GetCamera().GetScreenHeight();
+	auto screenWidth = device.GetCurrentCamera().GetScreenWidth();
+	auto screenHeight = device.GetCurrentCamera().GetScreenHeight();
 
 	// Fit movie into rect
 	float wFactor = screenWidth / movieWidth;
@@ -155,7 +155,7 @@ private:
 
 		auto extents = UiRenderer::MeasureTextSize(mLine->text, mSubtitleStyle, 700, 150);
 		
-		auto& camera = mDevice.GetCamera();
+		auto& camera = mDevice.GetCurrentCamera();
 
 		extents.x = (int)((camera.GetScreenWidth() - extents.width) / 2);
 		extents.y = (int)(camera.GetScreenHeight() - camera.GetScreenHeight() / 10);
@@ -312,7 +312,7 @@ int __cdecl HookedPlayMovieSlide(const char* imageFile, const char* soundFile, c
 
 	auto &textureSize = texture->GetSize();
 
-	auto &camera = device.GetCamera();
+	auto &camera = device.GetCurrentCamera();
 	TigRect bbRect(0, 0, (int)camera.GetScreenWidth(), (int)camera.GetScreenHeight());
 	TigRect destRect(0, 0, textureSize.width, textureSize.height);
 	destRect.FitInto(bbRect);

@@ -30,10 +30,25 @@ public:
 	 */
 	XMINT2 MapFromScene(int x, int y) const;
 
+	/*
+	 * returns the camera used to render the scene
+	 */
+	gfx::WorldCamera& GetCamera() {
+		return *mCamera;
+	}
+
+	/**
+	 * Gets the world coordinate that is at the center of the screen.
+	 */
+	XMFLOAT3 GetScreenCenterInWorld3d();
+
 private:
+	friend class GameLoop;
+
 	gfx::ResizeListenerRegistration mResizeListener;
 	MainWindow &mMainWindow;
 	gfx::RenderingDevice &mDevice;
+	gfx::WorldCameraPtr mCamera;
 	int mWidth;
 	int mHeight;
 	float mSceneScale;

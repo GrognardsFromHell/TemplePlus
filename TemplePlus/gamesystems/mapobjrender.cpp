@@ -14,6 +14,7 @@
 #include <graphics/shaperenderer2d.h>
 #include <aas/aas_renderer.h>
 #include "../critter.h"
+#include "gameview.h"
 #include <graphics/dynamictexture.h>
 
 #include "froggrapplecontroller.h"
@@ -344,7 +345,7 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 void MapObjectRenderer::RenderObjectInUi(objHndl handle, int x, int y, float rotation, float scale) {
 
 	// The y-15 is a hack to get it to be centered, in reality this would really need a rewrite of the entire camera system :-|
-	auto worldPos = mDevice.GetCamera().ScreenToWorld((float)x, (float)y - 15);
+	auto worldPos = gameView->GetCamera().ScreenToWorld((float)x, (float)y - 15);
 
 	auto animatedModel = objects.GetAnimHandle(handle);
 
@@ -884,7 +885,7 @@ bool MapObjectRenderer::IsObjectOnScreen(LocAndOffsets &location, float offsetZ,
 {
 
 	auto centerOfTile3d = location.ToInches3D();
-	auto screenPos = mDevice.GetCamera().WorldToScreenUi(centerOfTile3d);
+	auto screenPos = gameView->GetCamera().WorldToScreenUi(centerOfTile3d);
 
 	// This checks if the object's screen bounding box is off screen
 	auto bbLeft = screenPos.x - radius;
@@ -892,8 +893,8 @@ bool MapObjectRenderer::IsObjectOnScreen(LocAndOffsets &location, float offsetZ,
 	auto bbTop = screenPos.y - (offsetZ + renderHeight + radius) * cos45;
 	auto bbBottom = bbTop + (2 * radius + renderHeight) * cos45;
 
-	auto screenWidth = mDevice.GetCamera().GetScreenWidth();
-	auto screenHeight = mDevice.GetCamera().GetScreenHeight();
+	auto screenWidth = gameView->GetCamera().GetScreenWidth();
+	auto screenHeight = gameView->GetCamera().GetScreenHeight();
 	if (bbRight < 0 || bbBottom < 0 || bbLeft > screenWidth || bbTop > screenHeight) {
 		return false;
 	}
@@ -1067,7 +1068,7 @@ public:
 
 			// Char creation makes assumption about the main menu which no longer hold, so we
 			// manually restore the 1x scale of the normal world before we render
-			auto &camera = tig->GetRenderingDevice().GetCamera();
+			auto &camera = gameView->GetCamera();
 			auto orgScale = camera.GetScale();
 			camera.SetScale(1.0f);
 			if (charGen) {

@@ -3,6 +3,7 @@
 
 #include "animgoals_debugrenderer.h"
 #include "party.h"
+#include "gameview.h"
 
 #include <tig/tig_startup.h>
 #include <graphics/device.h>
@@ -67,7 +68,7 @@ void AnimGoalsDebugRenderer::RenderAnimGoals(objHndl handle)
 
 	auto worldLocAboveHead = objects.GetLocationFull(handle).ToInches3D(objects.GetRenderHeight(handle));
 
-	auto topOfObjectInUi = tig->GetRenderingDevice().GetCamera().WorldToScreenUi(worldLocAboveHead);
+	auto topOfObjectInUi = gameView->GetCamera().WorldToScreenUi(worldLocAboveHead);
 
 	auto &renderer2d = tig->GetShapeRenderer2d();
 

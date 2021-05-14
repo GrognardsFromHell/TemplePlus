@@ -51,11 +51,11 @@ extern "C" {
 	}
 
 	API void ParticleSystem_SetPos(TempleDll* dll, float screenX, float screenY) {
-		auto worldPos = dll->renderingDevice.GetCamera().ScreenToWorld(screenX, screenY);
+		auto worldPos = dll->camera->ScreenToWorld(screenX, screenY);
 	}
 
 	API void ParticleSystem_SetObjPos(TempleDll* dll, float screenX, float screenY) {
-		auto worldPos = dll->renderingDevice.GetCamera().ScreenToWorld(screenX, screenY);
+		auto worldPos = dll->camera->ScreenToWorld(screenX, screenY);
 	}
 
 	API void ParticleSystem_Render(TempleDll* dll) {

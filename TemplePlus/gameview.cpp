@@ -8,10 +8,13 @@
 GameView::GameView(MainWindow &mainWindow, gfx::RenderingDevice &device, int width, int height)
     : mMainWindow(mainWindow), mDevice(device), mWidth(width), mHeight(height),
       mResizeListener(device.AddResizeListener(
-          [this](int w, int h) { this->Resize(w, h); })) {
+          [this](int w, int h) { this->Resize(w, h); })),
+
+	mCamera(std::make_shared<gfx::WorldCamera>()) {
+	mCamera->SetScreenSize((float) width, (float) height);
 	
-	auto &camera = device.GetCamera();
-	Resize((int) camera.GetScreenWidth(), (int) camera.GetScreenHeight());
+	auto &backBufferSize = device.GetBackBufferSize();
+	Resize(backBufferSize.width, backBufferSize.height);
 
 	mainWindow.SetMouseMoveHandler([this](int x, int y, int wheelDelta) {
 		// Map to game view
@@ -90,6 +93,15 @@ XMINT2 GameView::MapFromScene(int x, int y) const{
 	localY += mSceneRect.y+1;
 
 	return{ (int)localX, (int)localY };
+}
+
+XMFLOAT3 GameView::GetScreenCenterInWorld3d()
+{
+	auto& camera = GetCamera();
+	return camera.ScreenToWorld(
+		camera.GetScreenWidth() * 0.5f,
+		camera.GetScreenHeight() * 0.5f
+	);
 }
 
 void GameView::Resize(int width, int height)

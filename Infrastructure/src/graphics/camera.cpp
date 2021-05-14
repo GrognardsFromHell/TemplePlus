@@ -191,8 +191,8 @@ namespace gfx {
 	XMFLOAT3 WorldCamera::TileToWorld(locXY tilePos)
 	{
 		auto result = XMFLOAT3();
-		result.x = (tilePos.locy - tilePos.locx - 1) * 20;
-		result.y = (tilePos.locy + tilePos.locx ) * 14;
+		result.x = (float)((tilePos.locy - tilePos.locx - 1) * 20);
+		result.y = (float)((tilePos.locy + tilePos.locx) * 14);
 		result.z = 0;
 
 		return result;

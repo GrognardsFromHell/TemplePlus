@@ -8,6 +8,7 @@
 #include "obj.h"
 #include "gamesystems/map/sector.h"
 #include "raycast.h"
+#include "gameview.h"
 
 //rendering
 #include <tig\tig_startup.h>
@@ -1175,7 +1176,7 @@ void PathNodeSys::RenderPathNodes(int tileX1, int tileX2, int tileY1, int tileY2
 
 		if (node == mActivePathNode) {
 
-			auto topOfNode = tig->GetRenderingDevice().GetCamera().WorldToScreenUi(pos);
+			auto topOfNode = gameView->GetCamera().WorldToScreenUi(pos);
 
 			renderer3d.DrawFilledCircle(pos, 8, activeNodeBorderColor, circleFillColor, false);
 			renderer3d.DrawFilledCircle(pos, 603, activeAoeBorderColor, circleFillColor, false);
