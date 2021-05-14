@@ -85,7 +85,7 @@ struct LogAppender : spdlog::sinks::base_sink<std::mutex>
 
 struct MdfPreviewNative {
 	std::unique_ptr<RenderingDevice> device;
-	WorldCameraPtr camera;
+	WorldCamera* camera = nullptr;
 	VertexBufferPtr vertexBuffer;
 	IndexBufferPtr indexBuffer;
 	std::unique_ptr<BufferBinding> bufferBinding;	
@@ -155,7 +155,6 @@ API MdfPreviewNative* MdfPreviewNative_Load(const wchar_t* installPath,
 	
 	auto result(new MdfPreviewNative);
 	result->logAppender = debugSink;
-	result->camera = std::make_shared<WorldCamera>();
 	return result;
 }
 
@@ -168,7 +167,7 @@ API void MdfPreviewNative_InitDevice(MdfPreviewNative *native,
 	HWND handle,
 	int renderWidth, int renderHeight) {
 	native->device = std::make_unique<RenderingDevice>(handle);
-	native->device->SetCurrentCamera(native->camera);
+	native->camera = &native->device->GetCurrentCamera();
 
 	std::array<MdfVertex, 4> corners;
 	corners[0].pos = XMFLOAT4(-1, 1, 0.5f, 1);

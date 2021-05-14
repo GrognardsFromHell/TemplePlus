@@ -30,7 +30,7 @@ struct TempleDll {
 	static temple::AasConfig CreateAasConfig();
 
 	gfx::RenderingDevice renderingDevice;
-	gfx::WorldCameraPtr camera;
+	gfx::WorldCamera &camera;
 	gfx::MdfMaterialFactory mdfFactory;
 	temple::AasConfig aasConfig;
 	gfx::ShapeRenderer2d shapeRenderer2d;

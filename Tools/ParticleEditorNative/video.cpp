@@ -80,7 +80,7 @@ bool ParticleSystem_RenderVideo(TempleDll *dll, XMCOLOR background, const wchar_
 	
 	dll->renderingDevice.PushRenderTarget(renderTarget, depthTarget);
 
-	dll->camera->CenterOn(0, 0, 0);
+	dll->camera.CenterOn(0, 0, 0);
 
 	int frameId = 0;
 
