@@ -71,6 +71,9 @@ namespace TemplePlusConfig
 
             foreach (FileInfo datFile in rgFiles)
             {
+                if (datFile.Name.EndsWith("_core.dat", System.StringComparison.OrdinalIgnoreCase)){ // ignore MODULENAME_core.dat
+                    continue;
+                }
                 result.ModuleNames.Add(datFile.Name.Split('.')[0]);
             }
             return result;
