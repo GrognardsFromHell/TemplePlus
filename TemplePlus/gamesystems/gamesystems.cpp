@@ -688,7 +688,7 @@ void GameSystems::InitializeSystems(LoadingScreen& loadingScreen) {
 	loadingScreen.SetProgress(31 / 79.0f);
 	mJumpPoint = InitializeSystem<JumpPointSystem>(loadingScreen);
 	loadingScreen.SetProgress(32 / 79.0f);
-	mClipping = InitializeSystem<ClippingSystem>(loadingScreen, mTig.GetRenderingDevice());
+	mClipping = InitializeSystem<ClippingSystem>(loadingScreen, mTig.GetRenderingDevice(), *mTig.GetGameView().GetCamera());
 	mTerrain = InitializeSystem<TerrainSystem>(loadingScreen, mTig.GetRenderingDevice(),
 		mTig.GetShapeRenderer2d());
 	loadingScreen.SetProgress(33 / 79.0f);
@@ -771,7 +771,7 @@ void GameSystems::InitializeSystems(LoadingScreen& loadingScreen) {
 	loadingScreen.SetProgress(69 / 79.0f);
 	mUiArtManager = InitializeSystem<UiArtManagerSystem>(loadingScreen, mConfig);
 	loadingScreen.SetProgress(70 / 79.0f);
-	mParticleSys = InitializeSystem<ParticleSysSystem>(loadingScreen, gameView->GetCamera());
+	mParticleSys = InitializeSystem<ParticleSysSystem>(loadingScreen, *gameView->GetCamera());
 	loadingScreen.SetProgress(71 / 79.0f);
 	mCheats = InitializeSystem<CheatsSystem>(loadingScreen, mConfig);
 	loadingScreen.SetProgress(72 / 79.0f);

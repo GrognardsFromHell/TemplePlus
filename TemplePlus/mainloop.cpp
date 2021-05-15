@@ -99,7 +99,7 @@ GameLoop::GameLoop(TigInitializer& tig, GameSystems& gameSystems, Updater &updat
 	: mTig(tig),
 	  mGameSystems(gameSystems),
 	  mUpdater(updater),
-	  mGameRenderer(tig, gameView->GetCamera(), mGameSystems) {
+	  mGameRenderer(tig, *gameView->GetCamera(), mGameSystems) {
 
 	mDiagScreen = std::make_unique<DiagScreen>(tig.GetRenderingDevice(),
 		gameSystems,
@@ -126,17 +126,16 @@ GameLoop::~GameLoop() {
 	temple_main, there is no need to hook this function in temple.dll
 */
 void GameLoop::Run() {
-	auto& camera = gameView->GetCamera();
+	auto& gameView = mTig.GetGameView();
+
 	// Is this a center map kind of deal?
-	auto worldPos = camera.ScreenToWorld(400, 300);
+	auto worldPos = gameView.ScreenToWorld(400, 300);
 	locXY loc{ (uint32_t)(worldPos.x / INCH_PER_TILE), (uint32_t)(worldPos.z / INCH_PER_TILE) };
 	mainLoop.sub_1002A580(loc);
 
 	mainLoop.QueueFidgetAnimEvent();
 
 	TigMsg msg;
-
-	auto& gameView = mTig.GetGameView();
 
 	auto quit = false;
 	while (!quit) {
@@ -260,7 +259,7 @@ void GameLoop::RenderFrame() {
 	mouseFuncs.InvokeCursorDrawCallback();
 	mouseFuncs.DrawItemUnderCursor(); // This draws dragged items
 
-	// Reset the render target
+	// Reset the render target and camera
 	device.PopRenderTarget();
 	device.SetCurrentCamera(nullptr);
 	

@@ -68,7 +68,7 @@ void AnimGoalsDebugRenderer::RenderAnimGoals(objHndl handle)
 
 	auto worldLocAboveHead = objects.GetLocationFull(handle).ToInches3D(objects.GetRenderHeight(handle));
 
-	auto topOfObjectInUi = gameView->GetCamera().WorldToScreenUi(worldLocAboveHead);
+	auto topOfObjectInUi = gameView->WorldToScreenUi(worldLocAboveHead);
 
 	auto &renderer2d = tig->GetShapeRenderer2d();
 

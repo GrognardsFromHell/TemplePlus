@@ -150,6 +150,7 @@ GameRenderer::GameRenderer(TigInitializer &tig,
 	mMapObjectRenderer = std::make_unique<MapObjectRenderer>(
 		gameSystems, 
 		tig.GetRenderingDevice(), 
+        camera,
 		tig.GetMdfFactory(),
 		*mAasRenderer);
 	mParticleSysRenderer = std::make_unique<ParticleSystemsRenderer>(

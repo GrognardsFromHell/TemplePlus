@@ -250,7 +250,7 @@ void UiInGame::HandleNonCombatKeyStateChange(const TigMsg& msg){
 		else if (hotkeys.IsNormalNonreservedHotkey(msga.key)){
 			if (hotkeys.IsKeyPressed(VK_LCONTROL) || hotkeys.IsKeyPressed(VK_RCONTROL)) { // assign hotkey
 				auto leaderLoc = objects.GetLocationFull(leader);
-				auto screenPos = gameView->GetCamera().WorldToScreenUi(leaderLoc.ToInches3D());
+				auto screenPos = gameView->WorldToScreenUi(leaderLoc.ToInches3D());
 
 				radialMenus.SpawnMenu(int(screenPos.x), int(screenPos.y));
 				radialMenus.MsgHandler(&msg);

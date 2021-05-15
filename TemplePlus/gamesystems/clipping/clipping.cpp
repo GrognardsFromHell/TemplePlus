@@ -16,11 +16,21 @@ using namespace gfx;
 
 class ClippingSystem::Impl {
 public:
-	explicit Impl(RenderingDevice& g);
+	explicit Impl(RenderingDevice& g, WorldCamera& camera) : 
+		device(g),
+		camera(camera),
+		material(CreateMaterial(g)),
+		debugMaterial(CreateDebugMaterial(g)),
+		mBufferBinding(material.GetVertexShader())
+	{
+		mBufferBinding.AddBuffer(nullptr, 0, sizeof(XMFLOAT3))
+			.AddElement(VertexElementType::Float3, VertexElementSemantic::Position);
+	}
 
 	std::vector<std::unique_ptr<ClippingMesh>> mClippingMeshes;
 
-	RenderingDevice& mDevice;
+	RenderingDevice& device;
+	WorldCamera& camera;
 	Material material;
 	Material debugMaterial;
 	BufferBinding mBufferBinding;
@@ -30,18 +40,6 @@ public:
 	static Material CreateMaterial(RenderingDevice &device);
 	static Material CreateDebugMaterial(RenderingDevice &device);
 };
-
-ClippingSystem::Impl::Impl(RenderingDevice& g) 
-	: mDevice(g), 
-	  material(CreateMaterial(g)),
-	  debugMaterial(CreateDebugMaterial(g)),
-	  mBufferBinding(material.GetVertexShader())
-{
-
-	mBufferBinding.AddBuffer(nullptr, 0, sizeof(XMFLOAT3))
-		.AddElement(VertexElementType::Float3, VertexElementSemantic::Position);
-
-}
 
 Material ClippingSystem::Impl::CreateMaterial(RenderingDevice& device) {
 	RasterizerSpec rasterizerState;
@@ -73,7 +71,8 @@ Material ClippingSystem::Impl::CreateDebugMaterial(RenderingDevice& device) {
 
 }
 
-ClippingSystem::ClippingSystem(RenderingDevice& g) : mImpl(std::make_unique<Impl>(g)) {
+ClippingSystem::ClippingSystem(RenderingDevice& g, WorldCamera &camera) 
+	: mImpl(std::make_unique<Impl>(g, camera)) {
 }
 
 ClippingSystem::~ClippingSystem() {
@@ -142,7 +141,7 @@ void ClippingSystem::LoadMeshes(const std::string& directory) {
 
 		try {
 			mImpl->mClippingMeshes.emplace_back(
-				std::make_unique<ClippingMesh>(mImpl->mDevice, meshFilename)
+				std::make_unique<ClippingMesh>(mImpl->device, meshFilename)
 			);
 		} catch (TempleException &e) {
 			logger->error("Failed to load clipping mesh {}: {}", filename, e.what());
@@ -199,7 +198,7 @@ struct ClippingGlobals {
 
 void ClippingSystem::Render() {
 
-	gfx::PerfGroup perfGroup(mImpl->mDevice, "Clipping");
+	gfx::PerfGroup perfGroup(mImpl->device, "Clipping");
 
 	mImpl->rendered = 0;
 
@@ -208,12 +207,12 @@ void ClippingSystem::Render() {
 	}
 	
 	if (mImpl->debug) {
-		mImpl->mDevice.SetMaterial(mImpl->debugMaterial);
+		mImpl->device.SetMaterial(mImpl->debugMaterial);
 	} else {
-		mImpl->mDevice.SetMaterial(mImpl->material);
+		mImpl->device.SetMaterial(mImpl->material);
 	}
 
-	auto& camera = gameView->GetCamera();
+	auto& camera = mImpl->camera;
 
 	ClippingGlobals globals;
 	globals.viewProj = camera.GetViewProj();
@@ -229,7 +228,7 @@ void ClippingSystem::Render() {
 	
 		mImpl->mBufferBinding.SetBuffer(0, mesh->GetVertexBuffer());
 		mImpl->mBufferBinding.Bind();
-		mImpl->mDevice.SetIndexBuffer(*mesh->GetIndexBuffer());
+		mImpl->device.SetIndexBuffer(*mesh->GetIndexBuffer());
 		
 		for (auto& obj : mesh->GetInstances()) {
 			XMFLOAT3 sphereCenter = mesh->GetBoundingSphereOrigin();
@@ -264,9 +263,9 @@ void ClippingSystem::Render() {
 			globals.scale.y = obj.scaleY;
 			globals.scale.z = obj.scaleZ;
 			
-			mImpl->mDevice.SetVertexShaderConstants(0, globals);
+			mImpl->device.SetVertexShaderConstants(0, globals);
 
-			mImpl->mDevice.DrawIndexed(
+			mImpl->device.DrawIndexed(
 				gfx::PrimitiveType::TriangleList,
 				mesh->GetVertexCount(),
 				mesh->GetTriCount() * 3

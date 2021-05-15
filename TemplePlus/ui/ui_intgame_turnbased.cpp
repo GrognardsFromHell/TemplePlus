@@ -871,7 +871,7 @@ void UiIntegameTurnbasedRepl::RenderAooIndicator(const LocAndOffsets& location, 
 	auto texWidth = (float) texture->GetContentRect().width;
 	auto texHeight = (float) texture->GetContentRect().height;
 
-	auto screenPos = gameView->GetCamera().WorldToScreenUi(location.ToInches3D());
+	auto screenPos = gameView->WorldToScreenUi(location.ToInches3D());
 	auto x = (float)(screenPos.x - texWidth / 2);
 	auto y = (float)(screenPos.y - texHeight / 2);
 

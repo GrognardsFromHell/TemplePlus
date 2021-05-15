@@ -1176,7 +1176,7 @@ void PathNodeSys::RenderPathNodes(int tileX1, int tileX2, int tileY1, int tileY2
 
 		if (node == mActivePathNode) {
 
-			auto topOfNode = gameView->GetCamera().WorldToScreenUi(pos);
+			auto topOfNode = gameView->WorldToScreenUi(pos);
 
 			renderer3d.DrawFilledCircle(pos, 8, activeNodeBorderColor, circleFillColor, false);
 			renderer3d.DrawFilledCircle(pos, 603, activeAoeBorderColor, circleFillColor, false);

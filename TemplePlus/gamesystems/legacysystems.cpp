@@ -1930,11 +1930,10 @@ void MapFoggingSystem::InitScreenBuffers() {
 	mScreenHeight = config.renderHeight;
 
 	// Calculate the tile locations in each corner of the screen
-	auto& camera = gameView->GetCamera();
-	auto topLeftLoc = camera.ScreenToTile(0, 0);
-	auto topRightLoc = camera.ScreenToTile(mScreenWidth, 0);
-	auto bottomLeftLoc = camera.ScreenToTile(0, mScreenHeight);
-	auto bottomRightLoc = camera.ScreenToTile(mScreenWidth, mScreenHeight);
+	auto topLeftLoc = gameView->ScreenToTile(0, 0);
+	auto topRightLoc = gameView->ScreenToTile(mScreenWidth, 0);
+	auto bottomLeftLoc = gameView->ScreenToTile(0, mScreenHeight);
+	auto bottomRightLoc = gameView->ScreenToTile(mScreenWidth, mScreenHeight);
 
 	mFogMinX = topRightLoc.location.locx;
 	mFogMinY = topLeftLoc.location.locy;

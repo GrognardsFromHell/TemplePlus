@@ -143,7 +143,7 @@ bool PickObjectOnScreen(int x, int y, objHndl * pickedHandle, GameRaycastFlags f
 		flags = GRF_HITTEST_3D;
 	}
 
-	auto worldCoord = gameView->GetCamera().ScreenToWorld((float) x, (float) y);
+	auto worldCoord = gameView->ScreenToWorld((float) x, (float) y);
 
 	bool hitTest3d = flags & GRF_HITTEST_3D;
 	Ray3d ray;
@@ -155,7 +155,7 @@ bool PickObjectOnScreen(int x, int y, objHndl * pickedHandle, GameRaycastFlags f
 	float closestMeshHit = std::numeric_limits<float>::max();
 
 	if (hitTest3d) {
-		ray = gameView->GetCamera().GetPickRay((float) x, (float) y);
+		ray = gameView->GetPickRay((float) x, (float) y);
 	}
 
 	auto worldLoc = LocAndOffsets::FromInches(worldCoord);

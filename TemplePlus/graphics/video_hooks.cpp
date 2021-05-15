@@ -263,10 +263,10 @@ void VideoFixes::UpdateProjMatrices(const TigMatrices& matrices) {
 
 	auto& device = tig->GetRenderingDevice();
 
-	gameView->GetCamera().SetTranslation(transX, transY);
-	gameView->GetCamera().SetScale(matrices.scale);
+	gameView->SetTranslation(transX, transY);
+	gameView->SetZoom(matrices.scale);
 
-	auto viewProjNew(gameView->GetCamera().GetViewProj());
+	auto viewProjNew(gameView->GetCamera()->GetViewProj());
 	auto viewProjOld(temple::GetRef<XMFLOAT4X4>(0x11E75788));
 	XMFLOAT4X4 diff;
 	XMStoreFloat4x4(&diff, XMLoadFloat4x4(&viewProjNew) - XMLoadFloat4x4(&viewProjOld));

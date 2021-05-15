@@ -102,11 +102,6 @@ namespace gfx {
 		 */
 		Ray3d GetPickRay(float x, float y);
 
-		XMFLOAT2 ScreenToTileLegacy(int x, int y);
-
-		LocAndOffsets ScreenToTile(int screenX, int screenY);
-		XMFLOAT3 TileToWorld(locXY tilePos);
-
 		void CenterOn(float x, float y, float z);
 
 		const XMFLOAT4X4 &GetUiProjection() {

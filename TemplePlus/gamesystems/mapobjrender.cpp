@@ -50,10 +50,12 @@ static struct MapRenderAddresses : temple::AddressTable {
 
 MapObjectRenderer::MapObjectRenderer(GameSystems& gameSystems, 
 	gfx::RenderingDevice& device, 
+	gfx::WorldCamera& camera,
 	gfx::MdfMaterialFactory &mdfFactory,
 	aas::Renderer &aasRenderer)
 	: mGameSystems(gameSystems),
 	  mDevice(device),
+	  mCamera(camera),
 	  mAasRenderer(aasRenderer) {
 
 	mHighlightMaterial = mdfFactory.LoadMaterial("art/meshes/hilight.mdf");
@@ -345,7 +347,7 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 void MapObjectRenderer::RenderObjectInUi(objHndl handle, int x, int y, float rotation, float scale) {
 
 	// The y-15 is a hack to get it to be centered, in reality this would really need a rewrite of the entire camera system :-|
-	auto worldPos = gameView->GetCamera().ScreenToWorld((float)x, (float)y - 15);
+	auto worldPos = mCamera.ScreenToWorld((float)x, (float)y - 15);
 
 	auto animatedModel = objects.GetAnimHandle(handle);
 
@@ -885,7 +887,7 @@ bool MapObjectRenderer::IsObjectOnScreen(LocAndOffsets &location, float offsetZ,
 {
 
 	auto centerOfTile3d = location.ToInches3D();
-	auto screenPos = gameView->GetCamera().WorldToScreenUi(centerOfTile3d);
+	auto screenPos = gameView->WorldToScreenUi(centerOfTile3d);
 
 	// This checks if the object's screen bounding box is off screen
 	auto bbLeft = screenPos.x - radius;
@@ -893,8 +895,8 @@ bool MapObjectRenderer::IsObjectOnScreen(LocAndOffsets &location, float offsetZ,
 	auto bbTop = screenPos.y - (offsetZ + renderHeight + radius) * cos45;
 	auto bbBottom = bbTop + (2 * radius + renderHeight) * cos45;
 
-	auto screenWidth = gameView->GetCamera().GetScreenWidth();
-	auto screenHeight = gameView->GetCamera().GetScreenHeight();
+	auto screenWidth = gameView->GetWidth();
+	auto screenHeight = gameView->GetHeight();
 	if (bbRight < 0 || bbBottom < 0 || bbLeft > screenWidth || bbTop > screenHeight) {
 		return false;
 	}
@@ -1068,15 +1070,14 @@ public:
 
 			// Char creation makes assumption about the main menu which no longer hold, so we
 			// manually restore the 1x scale of the normal world before we render
-			auto &camera = gameView->GetCamera();
-			auto orgScale = camera.GetScale();
-			camera.SetScale(1.0f);
+			auto orgScale = gameView->GetZoom();
+			gameView->SetZoom(1.0f);
 			if (charGen) {
-				x = (int)((camera.GetScreenWidth() - 788) / 2) + 120;
-				y = (int)((camera.GetScreenHeight() - 497) / 2) + 180;
+				x = (int)((gameView->GetWidth() - 788) / 2) + 120;
+				y = (int)((gameView->GetHeight() - 497) / 2) + 180;
 			}
 			gameRenderer->GetMapObjectRenderer().RenderObjectInUi(objId, x, y, rotation, 1.5f);
-			camera.SetScale(orgScale);
+			gameView->SetZoom(orgScale);
 			return 0;
 		});
 	}

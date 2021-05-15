@@ -772,9 +772,9 @@ PyObject* PyGame_ObjCreate(PyObject*, PyObject* args) {
 	if (loc.locx == 0 && loc.locy == 0) {
 		auto mousePos = mouseFuncs.GetPos();
 		auto& device = tig->GetRenderingDevice();
-		auto worldPos = gameView->GetCamera().ScreenToWorld((float) mousePos.x, (float) mousePos.y);
+		auto worldPos = gameView->ScreenToWorld((float) mousePos.x, (float) mousePos.y);
 		loc.locx = (int)(worldPos.x / INCH_PER_TILE);
-		loc.locy = (int)(worldPos.x / INCH_PER_TILE);		
+		loc.locy = (int)(worldPos.x / INCH_PER_TILE);
 	}
 
 	// resolve the proto handle for the prototype number
