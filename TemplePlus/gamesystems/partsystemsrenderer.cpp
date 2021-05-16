@@ -19,11 +19,13 @@ using namespace particles;
 
 ParticleSystemsRenderer::ParticleSystemsRenderer(
 	RenderingDevice &renderingDevice,
+	WorldCamera &camera,
 	ShapeRenderer2d &shapeRenderer2d,
 	AnimatedModelFactory &modelFactory,
 	AnimatedModelRenderer &modelRenderer,
 	ParticleSysSystem &particleSysSystem
 	) : mRenderingDevice(renderingDevice), 
+		mCamera(camera),
 		mShapeRenderer2d(shapeRenderer2d),		
 		mParticleSysSystem(particleSysSystem) {
 
@@ -44,8 +46,6 @@ void ParticleSystemsRenderer::Render()
 
 	gfx::PerfGroup perfGroup(mRenderingDevice, "Particles");
 
-	auto& camera = mRenderingDevice.GetCamera();
-
 	mTotalLastFrame = 0;
 	mRenderedLastFrame = 0;
 
@@ -58,7 +58,7 @@ void ParticleSystemsRenderer::Render()
 
 		auto screenBounds(partSys.GetScreenBounds());
 
-		if (!camera.IsBoxOnScreen(partSys.GetScreenPosAbs(),
+		if (!mCamera.IsBoxOnScreen(partSys.GetScreenPosAbs(),
 			screenBounds.left, screenBounds.top,
 			screenBounds.right, screenBounds.bottom)) {
 			continue;
@@ -96,20 +96,18 @@ void ParticleSystemsRenderer::Render()
 
 void ParticleSystemsRenderer::RenderDebugInfo(const particles::PartSys &sys)
 {
-	auto& camera = mRenderingDevice.GetCamera();
-
-	auto dx = camera.Get2dTranslation().x;
-	auto dy = camera.Get2dTranslation().y;
+	auto dx = mCamera.Get2dTranslation().x;
+	auto dy = mCamera.Get2dTranslation().y;
 
 	auto screenX = dx - sys.GetScreenPosAbs().x;
 	auto screenY = dy - sys.GetScreenPosAbs().y;
 	auto screenBounds(sys.GetScreenBounds());
 
-	screenX *= camera.GetScale();
-	screenY *= camera.GetScale();
+	screenX *= mCamera.GetScale();
+	screenY *= mCamera.GetScale();
 
-	screenX += camera.GetScreenWidth() * 0.5f;
-	screenY += camera.GetScreenHeight() * 0.5f;
+	screenX += mCamera.GetScreenWidth() * 0.5f;
+	screenY += mCamera.GetScreenHeight() * 0.5f;
 
 	float left = { screenX + screenBounds.left };
 	float top = { screenY + screenBounds.top };

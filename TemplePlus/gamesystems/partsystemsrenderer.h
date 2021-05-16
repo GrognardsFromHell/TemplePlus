@@ -6,6 +6,7 @@ namespace gfx {
 	class ShapeRenderer2d;
 	class AnimatedModelFactory;
 	class AnimatedModelRenderer;
+	class WorldCamera;
 }
 namespace particles {
 	class ParticleRendererManager;
@@ -18,6 +19,7 @@ class ParticleSystemsRenderer {
 public:
 	ParticleSystemsRenderer(
 		gfx::RenderingDevice &mRenderingDevice,
+		gfx::WorldCamera &mCamera,
 		gfx::ShapeRenderer2d &mShapeRenderer2d,
 		gfx::AnimatedModelFactory &modelFactory,
 		gfx::AnimatedModelRenderer &modelRenderer,
@@ -42,6 +44,7 @@ public:
 
 private:
 	gfx::RenderingDevice &mRenderingDevice;
+	gfx::WorldCamera &mCamera;
 	gfx::ShapeRenderer2d &mShapeRenderer2d;
 	ParticleSysSystem &mParticleSysSystem;
 

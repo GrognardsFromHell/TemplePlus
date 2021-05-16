@@ -99,9 +99,9 @@ namespace gfx {
 
 		XMMATRIX viewProj;
 		if (overrides && overrides->uiProjection) {
-			viewProj = XMLoadFloat4x4(&device.GetCamera().GetUiProjection());
+			viewProj = XMLoadFloat4x4(&device.GetCurrentCamera().GetUiProjection());
 		} else {
-			viewProj = XMLoadFloat4x4(&device.GetCamera().GetViewProj());
+			viewProj = XMLoadFloat4x4(&device.GetCurrentCamera().GetViewProj());
 		}
 
 		// Should we use a separate world matrix?

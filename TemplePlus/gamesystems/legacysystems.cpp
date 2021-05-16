@@ -30,6 +30,7 @@
 #include "turn_based.h"
 #include "d20_race.h"
 #include "ai.h"
+#include "gameview.h"
 #include <hotkeys.h>
 
 
@@ -1929,10 +1930,10 @@ void MapFoggingSystem::InitScreenBuffers() {
 	mScreenHeight = config.renderHeight;
 
 	// Calculate the tile locations in each corner of the screen
-	auto topLeftLoc = mDevice.GetCamera().ScreenToTile(0, 0);
-	auto topRightLoc = mDevice.GetCamera().ScreenToTile(mScreenWidth, 0);
-	auto bottomLeftLoc = mDevice.GetCamera().ScreenToTile(0, mScreenHeight);
-	auto bottomRightLoc = mDevice.GetCamera().ScreenToTile(mScreenWidth, mScreenHeight);
+	auto topLeftLoc = gameView->ScreenToTile(0, 0);
+	auto topRightLoc = gameView->ScreenToTile(mScreenWidth, 0);
+	auto bottomLeftLoc = gameView->ScreenToTile(0, mScreenHeight);
+	auto bottomRightLoc = gameView->ScreenToTile(mScreenWidth, mScreenHeight);
 
 	mFogMinX = topRightLoc.location.locx;
 	mFogMinY = topLeftLoc.location.locy;
