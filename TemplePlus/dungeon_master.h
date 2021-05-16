@@ -54,6 +54,7 @@ public:
 
 	void InitEntry(int protoNum);
 	void InitCaches();
+	void InitObjEditor();
 
 	void GotoArena();
 	void TransitionToMap(int mapId);
@@ -113,6 +114,8 @@ protected:
 	//bool mIsVisible = false;
 	// bool mIsActive = true;
 	bool mJustOpened = false;
+
+	void SetMoused(bool state);
 
 	int mForceRollType; // 0 - normal, 1 - rolls 1s, 2 - roll avg (e.g. 10s), 3 - avg+2, 4 - rolls 20s
 

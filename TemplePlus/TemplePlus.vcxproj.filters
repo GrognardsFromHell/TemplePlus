@@ -450,9 +450,6 @@
       <Filter>ui</Filter>
     </ClCompile>
     <ClCompile Include="rng.cpp" />
-    <ClCompile Include="dungeon_master.cpp">
-      <Filter>Mods and Fixes</Filter>
-    </ClCompile>
     <ClCompile Include="general_condition_fixes.cpp">
       <Filter>Mods and Fixes\Condition Fixes</Filter>
     </ClCompile>
@@ -532,6 +529,12 @@
     <ClCompile Include="animgoals\animgoals_callbacks.cpp" />
     <ClCompile Include="poison.cpp" />
     <ClCompile Include="gamesystems\tilerender.cpp" />
+    <ClCompile Include="dungeon_master.cpp">
+      <Filter>Dungeon Master</Filter>
+    </ClCompile>
+    <ClCompile Include="dungeon_master_obj_editor.cpp">
+      <Filter>Dungeon Master</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -936,9 +939,6 @@
       <Filter>ui</Filter>
     </ClInclude>
     <ClInclude Include="rng.h" />
-    <ClInclude Include="dungeon_master.h">
-      <Filter>Mods and Fixes</Filter>
-    </ClInclude>
     <ClInclude Include="ui\ui_dm.h">
       <Filter>ui</Filter>
     </ClInclude>
@@ -1008,6 +1008,9 @@
     <ClInclude Include="animgoals\anim_slot.h" />
     <ClInclude Include="animgoals\animgoals_callbacks.h" />
     <ClInclude Include="gamesystems\tilerender.h" />
+    <ClInclude Include="dungeon_master.h">
+      <Filter>Dungeon Master</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">
@@ -1036,6 +1039,9 @@
     </Filter>
     <Filter Include="Mods and Fixes\Condition Fixes">
       <UniqueIdentifier>{0e53287e-d500-4b3d-a274-09c4e0cf6dbf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Dungeon Master">
+      <UniqueIdentifier>{868c4975-9e38-4f4c-87f3-8e6d4bfc3e58}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
