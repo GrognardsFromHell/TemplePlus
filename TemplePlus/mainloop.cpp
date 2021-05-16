@@ -99,7 +99,7 @@ GameLoop::GameLoop(TigInitializer& tig, GameSystems& gameSystems, Updater &updat
 	: mTig(tig),
 	  mGameSystems(gameSystems),
 	  mUpdater(updater),
-	  mGameRenderer(tig, mGameSystems) {
+	  mGameRenderer(tig, *gameView->GetCamera(), mGameSystems) {
 
 	mDiagScreen = std::make_unique<DiagScreen>(tig.GetRenderingDevice(),
 		gameSystems,
@@ -126,18 +126,16 @@ GameLoop::~GameLoop() {
 	temple_main, there is no need to hook this function in temple.dll
 */
 void GameLoop::Run() {
-	auto& camera = mTig.GetRenderingDevice().GetCamera();
+	auto& gameView = mTig.GetGameView();
+
 	// Is this a center map kind of deal?
-	auto worldPos = camera.ScreenToWorld(400, 300);
+	auto worldPos = gameView.ScreenToWorld(400, 300);
 	locXY loc{ (uint32_t)(worldPos.x / INCH_PER_TILE), (uint32_t)(worldPos.z / INCH_PER_TILE) };
 	mainLoop.sub_1002A580(loc);
 
 	mainLoop.QueueFidgetAnimEvent();
 
-	GameView gameView(mTig.GetMainWindow(), mTig.GetRenderingDevice(), config.renderWidth, config.renderHeight);
-
 	TigMsg msg;
-	static eastl::deque<TigMsg> msgDebug;
 
 	auto quit = false;
 	while (!quit) {
@@ -226,8 +224,8 @@ void GameLoop::Run() {
 }
 
 void GameLoop::RenderFrame() {
-
-	auto& device = tig->GetRenderingDevice();
+	
+	auto& device = mTig.GetRenderingDevice();
 
 	// Recreate the render targets if AA changed
 	if (config.antialiasing != mSceneColor->IsMultiSampled()) {
@@ -240,6 +238,7 @@ void GameLoop::RenderFrame() {
 	device.BeginFrame();
 
 	device.PushRenderTarget(mSceneColor, mSceneDepth);
+	device.SetCurrentCamera(mTig.GetGameView().mCamera);
 
 	device.ClearCurrentColorTarget(XMCOLOR(0, 0, 0, 1));
 	device.ClearCurrentDepthTarget();
@@ -260,17 +259,18 @@ void GameLoop::RenderFrame() {
 	mouseFuncs.InvokeCursorDrawCallback();
 	mouseFuncs.DrawItemUnderCursor(); // This draws dragged items
 
-	// Reset the render target
+	// Reset the render target and camera
 	device.PopRenderTarget();
+	device.SetCurrentCamera(nullptr);
 	
 	// Copy from the actual render target to the back buffer and scale / position accordingly
 	TigRect destRect{ 
 		0, 
 		0,
-		(int) device.GetCamera().GetScreenWidth(),
-		(int) device.GetCamera().GetScreenHeight()
+		(int)device.GetCurrentCamera().GetScreenWidth(),
+		(int)device.GetCurrentCamera().GetScreenHeight()
 	};
-	TigRect srcRect{0, 0, config.renderWidth, config.renderHeight};
+	TigRect srcRect{0, 0, gameView->GetWidth(), gameView->GetHeight()};
 	srcRect.FitInto(destRect);
 
 	gfx::SamplerType2d samplerType = gfx::SamplerType2d::CLAMP;
@@ -297,13 +297,11 @@ void GameLoop::RenderFrame() {
 	static auto& gfadeEnabled = temple::GetRef<BOOL>(0x10D25118);
 	static auto& gfadeColor = temple::GetRef<XMCOLOR>(0x10D24A28);
 	if (gfadeEnabled) {
-		auto w = (float) device.GetCamera().GetScreenWidth();
-		auto h = (float)device.GetCamera().GetScreenHeight();
+		auto w = (float)device.GetCurrentCamera().GetScreenWidth();
+		auto h = (float)device.GetCurrentCamera().GetScreenHeight();
 		tig->GetShapeRenderer2d().DrawRectangle(0, 0, w, h, gfadeColor);
 	}
 	
-	// ImGui::ShowTestWindow();
-
 	device.Present();
 
 	device.EndPerfGroup();

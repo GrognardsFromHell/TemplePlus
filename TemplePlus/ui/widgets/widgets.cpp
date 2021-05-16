@@ -96,9 +96,7 @@ void WidgetBase::Render()
 	}
 
 	if (mSizeToParent) {
-		int containerWidth = mParent ? mParent->GetWidth() : (int)tig->GetRenderingDevice().GetCamera().GetScreenWidth();
-		int containerHeight = mParent ? mParent->GetHeight() : (int)tig->GetRenderingDevice().GetCamera().GetScreenHeight();
-		SetSize({ containerWidth, containerHeight });
+		SetSize(mParent ? mParent->GetSize() : uiManager->GetCanvasSize());
 	}
 
 	TigRect contentArea(GetContentArea());
@@ -119,7 +117,7 @@ void WidgetBase::Render()
 	}
 	
 	if (mCenterHorizontally) {
-		int containerWidth = mParent ? mParent->GetWidth() : (int)tig->GetRenderingDevice().GetCamera().GetScreenWidth();		
+		int containerWidth = mParent ? mParent->GetWidth() : uiManager->GetCanvasWidth();		
 		int x = (containerWidth - GetWidth()) / 2;
 		if (x != GetX()) {
 			SetX(x);
@@ -128,7 +126,7 @@ void WidgetBase::Render()
 	}
 
 	if (mCenterVertically) {
-		int containerHeight = mParent ? mParent->GetHeight() : (int)tig->GetRenderingDevice().GetCamera().GetScreenHeight();
+		int containerHeight = mParent ? mParent->GetHeight() : uiManager->GetCanvasHeight();
 		int y = (containerHeight - GetHeight()) / 2;
 		if (y != GetY()) {
 			SetY(y);

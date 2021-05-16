@@ -73,6 +73,7 @@ namespace temple {
 class TextLayouter;
 class DebugUI;
 class Console;
+class GameView;
 
 // RAII for TIG initialization
 class TigInitializer {
@@ -128,6 +129,10 @@ public:
 		return *mMovieSystem;
 	}
 
+	GameView& GetGameView() {
+		return *mGameView;
+	}
+
 private:
 
 	using TigSystemPtr = std::unique_ptr<class LegacyTigSystem>;
@@ -157,6 +162,7 @@ private:
 	std::unique_ptr<temple::MovieSystem> mMovieSystem;
 	std::unique_ptr<class LegacyVideoSystem> mLegacyVideoSystem;
 	std::unique_ptr<class MessageQueue> mMessageQueue;
+	std::unique_ptr<GameView> mGameView;
 
 	// Contains all systems that have already been started
 	std::vector<TigSystemPtr> mStartedSystems;
