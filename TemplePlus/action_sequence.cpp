@@ -3497,7 +3497,7 @@ int ActionSequenceSystem::UnspecifiedAttackAddToSeq(D20Actn* d20a, ActnSeq* actS
 		{
 			actSeq->d20ActArray[actSeq->d20ActArrayNum++] = d20aCopy;
 			d20aCopy.d20ActType = inventory.IsThrowingWeapon(weapon) != 0 ? 
-				(inventory.IsGrenade(weapon) ? D20A_THROW:D20A_THROW_GRENADE) : D20A_STANDARD_RANGED_ATTACK;
+				(inventory.IsGrenade(weapon) ? D20A_THROW_GRENADE: D20A_THROW) : D20A_STANDARD_RANGED_ATTACK;
 			return UnspecifiedAttackAddToSeqRangedMulti(actSeq, &d20aCopy, &tbStatCopy);
 		}
 		d20aCopy = *d20a;
