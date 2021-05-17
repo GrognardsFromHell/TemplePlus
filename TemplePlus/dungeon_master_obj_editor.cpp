@@ -16,6 +16,33 @@ static std::vector<std::string> classNames; // offset by 1 wrt the d20ClassSys.c
 static std::vector<std::string> skillNames;
 static std::map<int, std::string> spellNames;
 static std::map<int, std::string> featNames;
+static std::map<Alignment, std::string> alignmentNames = {
+	{ALIGNMENT_CHAOTIC_EVIL, "Chaotic Evil"} ,
+	{ALIGNMENT_CHAOTIC_GOOD, "Chaotic Good"} ,
+	{ALIGNMENT_CHAOTIC, "Chaotic Neutral"} ,
+
+	{ALIGNMENT_LAWFUL_EVIL, "Lawful Evil"} ,
+	{ALIGNMENT_LAWFUL_GOOD, "Lawful Good"} ,
+	{ALIGNMENT_LAWFUL, "Lawful Neutral"} ,
+	
+	{ALIGNMENT_GOOD, "Neutral Good"} ,
+	{ALIGNMENT_EVIL, "Neutral Evil"} ,
+
+	{ALIGNMENT_NEUTRAL, "True Neutral"} ,
+};
+static std::vector<int> alignmentSelectionList = {
+	ALIGNMENT_TRUE_NEUTRAL,
+	ALIGNMENT_LAWFUL_NEUTRAL,
+	ALIGNMENT_CHAOTIC_NEUTRAL,
+
+	ALIGNMENT_NEUTRAL_GOOD,
+	ALIGNMENT_LAWFUL_NEUTRAL,
+	ALIGNMENT_CHAOTIC_GOOD,
+
+	ALIGNMENT_NEUTRAL_EVIL,
+	ALIGNMENT_LAWFUL_EVIL,
+	ALIGNMENT_CHAOTIC_EVIL,
+};
 static std::vector<int> featSelectionList;
 static std::vector<CondStruct*> condStructs;
 
@@ -154,6 +181,41 @@ void DungeonMaster::RenderEditedObj() {
 		ImGui::TreePop();
 	}
 
+	// Critter Attributes (Alignment...)
+	if (ImGui::TreeNodeEx("Critter Attributes", ImGuiTreeNodeFlags_CollapsingHeader)) {
+		auto curAlignment = (Alignment)obj->GetInt32(obj_f_critter_alignment);
+		auto curAlignmentChoice = (Alignment)obj->GetInt32(obj_f_critter_alignment_choice);
+		static char* alignChoiceNames[2] = { "Negative", "Positive" };
+		ImGui::Text( fmt::format("Alignment: {}", alignmentNames[curAlignment] ).c_str());
+		ImGui::Text( fmt::format("Alignment Choice: {}", alignChoiceNames[curAlignmentChoice]).c_str());
+
+		static int alignmentIdx = 0;
+		static int alignmentChoiceIdx = 0;
+		static auto alignmentNameGetter = [](void* data, int idx, const char** outTxt)->bool {
+			if ((uint32_t)idx >= alignmentSelectionList.size())
+				return false;
+			auto alignment = (Alignment) alignmentSelectionList[idx];
+			*outTxt = alignmentNames[alignment].c_str();
+			return true;
+		};
+		if (ImGui::Combo("Change Alignment", &alignmentIdx, alignmentNameGetter, nullptr, alignmentSelectionList.size(), alignmentSelectionList.size())) {
+			if (alignmentIdx >= 0) {
+				auto newAlignment = (Alignment)alignmentSelectionList[alignmentIdx];
+				obj->SetInt32(obj_f_critter_alignment, newAlignment);
+			}
+		}
+		
+		if (ImGui::Combo("Change Alignment Choice", &alignmentChoiceIdx, (const char**)alignChoiceNames, 2, 2)) {
+			if (alignmentChoiceIdx >= 0 && alignmentChoiceIdx < 2) {
+				obj->SetInt32(obj_f_critter_alignment_choice, alignmentChoiceIdx);
+			}
+		}
+		
+		ImGui::TreePop();
+	}
+	
+
+	// NPC props
 	if (obj->IsNPC() && ImGui::TreeNodeEx("NPC properties", ImGuiTreeNodeFlags_CollapsingHeader)) {
 
 		auto hitDiceNum = obj->GetInt32(obj_f_npc_hitdice_idx, 0);
