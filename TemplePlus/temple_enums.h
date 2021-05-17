@@ -2659,7 +2659,8 @@ enum WeaponAmmoType
 	wat_sai,
 	wat_shuriken, // 15
 	wat_ball_of_fire,
-	wat_bottle
+	wat_bottle,
+	wat_unk18, 
 };
 
 #pragma endregion 

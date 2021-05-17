@@ -110,6 +110,7 @@ struct InventorySystem : temple::AddressTable
 	
 	int IsNormalCrossbow(objHndl weapon);
 	int IsThrowingWeapon(objHndl weapon);
+	bool IsGrenade(objHndl weapon);
 	bool UsesWandAnim(const objHndl item);
 	static bool IsTripWeapon(objHndl weapon);
 	ArmorType GetArmorType(int armorFlags);
