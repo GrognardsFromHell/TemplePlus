@@ -1996,7 +1996,6 @@ BOOL D20ActionCallbacks::ActionFrameQuiveringPalm(D20Actn* d20a){
 BOOL D20ActionCallbacks::ActionFrameSpell(D20Actn * d20a){
 
 	auto projectileProto = 3000;
-	auto numTgts = 0;
 	auto offx = 0;
 	auto offy = 0;
 	
@@ -2129,11 +2128,11 @@ BOOL D20ActionCallbacks::ActionFrameSpell(D20Actn * d20a){
 	}
 
 	
-	for (auto i=0; i < numTgts; i++){
+	for (auto i=0; i < finalTargets.size() && i < MAX_SPELL_TARGETS; i++){
 		pkt.targetListHandles[i] = finalTargets[i];
 	}
 	// clear the rest
-	for (auto i = numTgts; i < MAX_SPELL_TARGETS; i++){
+	for (auto i = finalTargets.size(); i < MAX_SPELL_TARGETS; i++){
 		pkt.targetListHandles[i] = objHndl::null;
 	}
 	pkt.targetCount = finalTargets.size();
