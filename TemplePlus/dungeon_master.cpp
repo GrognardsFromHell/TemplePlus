@@ -722,7 +722,7 @@ void DungeonMaster::InitEntry(int protoNum){
 
 void DungeonMaster::InitCaches(){
 	
-
+	InitObjEditor();
 }
 
 
