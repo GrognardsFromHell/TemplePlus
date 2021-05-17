@@ -710,6 +710,101 @@ StandPoint LegacyCritterSystem::GetStandPoint(objHndl critter, StandPointType ty
 	return result;
 }
 
+
+int LegacyCritterSystem::GetWaypointsCount(objHndl critter)
+{
+	return (int)objects.getArrayFieldInt64(critter, obj_f_npc_waypoints_idx, 0);
+}
+
+bool LegacyCritterSystem::GetWaypoint(objHndl critter, int index, Waypoint& wp)
+{
+	if (index >= GetWaypointsCount(critter))
+		return false;
+	union conv32
+	{
+		uint32_t u32; // here_write_bits
+		float    f32; // here_read_float
+	} u;
+
+	auto arrSize = objects.getArrayFieldInt64Size(critter, obj_f::obj_f_npc_waypoints_idx);
+	if (arrSize <= 2 + index * 8 + 7)
+		return 0;
+
+	int arr[16] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	for (int row = 0; row < 8; row++)
+	{
+		int64_t v = objects.getArrayFieldInt64(critter, obj_f::obj_f_npc_waypoints_idx, 2 + index * 8 + row);
+		int32_t y = (int32_t)(v & 0xFFFFFFFFLL);
+		int32_t x = (int32_t)((v & 0xFFFFFFFF00000000LL) >> 32);
+		arr[row * 2] = y;
+		arr[row * 2 + 1] = x;
+	}
+	wp.flags = arr[0];
+	wp.location.location.locx = arr[1];
+	wp.location.location.locy = arr[2];
+	u.u32 = arr[3];
+	wp.location.off_x = u.f32;
+	u.u32 = arr[4];
+	wp.location.off_y = u.f32;
+	u.u32 = arr[5];
+	wp.rotation = u.f32;
+	wp.delay = arr[8];
+
+	wp.anims[0] = (arr[6] & 0x000000ff);
+	wp.anims[1] = (arr[6] & 0x0000ff00) >> 8;
+	wp.anims[2] = (arr[6] & 0x00ff0000) >> 16;
+	wp.anims[3] = (arr[6] & 0xff000000) >> 24;
+	wp.anims[4] = (arr[7] & 0x000000ff);
+	wp.anims[5] = (arr[7] & 0x0000ff00) >> 8;
+	wp.anims[6] = (arr[7] & 0x00ff0000) >> 16;
+	wp.anims[7] = (arr[7] & 0xff000000) >> 24;
+	return true;
+}
+
+void LegacyCritterSystem::SetWaypointsCount(objHndl critter, int count)
+{
+	auto obj = objSystem->GetObject(critter);
+	obj->ClearArray(obj_f_npc_waypoints_idx);
+	if (count > 0) {
+		obj->SetInt64(obj_f_npc_waypoints_idx, 0, count);
+		for (int idx = 1; idx < count + 2; idx++)
+			obj->SetInt64(obj_f_npc_waypoints_idx, idx, 0);
+	}
+}
+
+void LegacyCritterSystem::SetWaypoint(objHndl critter, int index, const Waypoint& wp)
+{
+	int arr[16] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	{
+		union conv32
+		{
+			uint32_t u32; // here_write_bits
+			float    f32; // here_read_float
+		} u;
+		arr[0] = (int)wp.flags;
+		arr[1] = wp.location.location.locx;
+		arr[2] = wp.location.location.locy;
+		u.f32 = wp.location.off_x; arr[3] = u.u32;
+		u.f32 = wp.location.off_y; arr[4] = u.u32;
+		u.f32 = wp.rotation; arr[5] = u.u32;
+		arr[8] = wp.delay;
+		arr[6] = wp.anims[3];
+		arr[6] = (arr[6] << 8) + wp.anims[3];
+		arr[6] = (arr[6] << 8) + wp.anims[1];
+		arr[6] = (arr[6] << 8) + wp.anims[0];
+		arr[7] = wp.anims[7];
+		arr[7] = (arr[7] << 8) + wp.anims[6];
+		arr[7] = (arr[7] << 8) + wp.anims[5];
+		arr[7] = (arr[7] << 8) + wp.anims[4];
+	}
+	auto obj = objSystem->GetObject(critter);
+	for (int row = 0; row < 8; row++)
+	{
+		int64_t v = ((int64_t)arr[row * 2 + 1]) << 32 | (int64_t)arr[row * 2];
+		obj->SetInt64(obj_f_npc_waypoints_idx, 2 + index * 8 + row, v);
+	}
+}
+
 void LegacyCritterSystem::GenerateHp(objHndl handle){
 	if (!handle){
 		return;

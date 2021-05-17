@@ -84,6 +84,24 @@ struct HairStyle {
 	}
 };
 
+enum WaypointFlag : uint32_t {
+	FixedRotation = 1,
+	Delay = 2,
+	Animate = 4
+};
+
+#pragma pack(push, 1)
+struct Waypoint {
+	uint32_t flags = 0;
+
+	LocAndOffsets location = LocAndOffsets::null;
+	float rotation = 0;
+	uint32_t delay = 0;
+
+	uint32_t anims[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+};
+#pragma pack(pop)
+
 struct LegacyCritterSystem : temple::AddressTable
 {
 
@@ -192,6 +210,10 @@ struct LegacyCritterSystem : temple::AddressTable
 	*/
 	StandPoint GetStandPoint(objHndl critter, StandPointType type);
 
+	int GetWaypointsCount(objHndl critter);
+	bool LegacyCritterSystem::GetWaypoint(objHndl critter, int index, Waypoint& wp);
+	void SetWaypointsCount(objHndl critter, int count);
+	void SetWaypoint(objHndl critter, int index, const Waypoint& waypoint);
 
 	void GenerateHp(objHndl critter); // sets the field obj_f_hp_pts according to class levels and NPC hit die using dice throws
 	int GetSubdualDamage(objHndl critter);

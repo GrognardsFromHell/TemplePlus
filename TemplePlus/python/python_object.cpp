@@ -2854,9 +2854,30 @@ static PyObject* PyObjHandle_GetIdxInt(PyObject* obj, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "i|i:objhndl.obj_get_idx_int", &field, &subIdx)) {
 		return 0;
 	}
-	assert(subIdx >= 0);
-	auto value = objects.getArrayFieldInt32(self->handle, field, subIdx);
+	assert(subIdx >= -1); // return size of array if -1
+	int32_t value;
+	if (subIdx >= 0)
+		value = objects.getArrayFieldInt32(self->handle, field, subIdx);
+	else value = objects.getArrayFieldInt32Size(self->handle, field);
 	return PyInt_FromLong(value);
+}
+
+static PyObject* PyObjHandle_GetIdxInt64(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	obj_f field;
+	int subIdx = 0;
+	if (!PyArg_ParseTuple(args, "i|i:objhndl.obj_get_idx_int64", &field, &subIdx)) {
+		return 0;
+	}
+	assert(subIdx >= -1); // return size of array if -1
+	int64_t value;
+	if (subIdx >= 0)
+		value = objects.getArrayFieldInt64(self->handle, field, subIdx);
+	else value = objects.getArrayFieldInt64Size(self->handle, field);
+	return PyLong_FromLong((long)value);
 }
 
 static PyObject* PyObjHandle_GetInt64(PyObject* obj, PyObject* args) {
@@ -2884,6 +2905,125 @@ static PyObject* PyObjHandle_GetObj(PyObject* obj, PyObject* args) {
 	auto value = objects.getObjHnd(self->handle, field);
 	return PyObjHndl_Create(value);
 }
+
+static PyObject* PyObjHandle_GetWaypoints(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	int count = critterSys.GetWaypointsCount(self->handle);
+	if (!count)
+		Py_RETURN_NONE;
+	auto list = PyList_New(0);
+	Waypoint wp;
+	for (int idx = 0; idx < count; idx++)
+	{
+		critterSys.GetWaypoint(self->handle, idx, wp);
+		auto dict = PyDict_New();
+		PyList_Append(list, dict);
+		{
+			PyDict_SetItemString(dict, "flags", PyLong_FromLong((long)wp.flags));
+			PyDict_SetItemString(dict, "x", PyInt_FromLong(wp.location.location.locx));
+			PyDict_SetItemString(dict, "y", PyInt_FromLong(wp.location.location.locy));
+			PyDict_SetItemString(dict, "off_x", PyFloat_FromDouble(wp.location.off_x));
+			PyDict_SetItemString(dict, "off_y", PyFloat_FromDouble(wp.location.off_y));
+			PyDict_SetItemString(dict, "rotation", PyFloat_FromDouble(wp.rotation));
+			PyDict_SetItemString(dict, "delay", PyInt_FromLong(wp.delay));
+			PyDict_SetItemString(dict, "anim1", PyInt_FromSize_t(wp.anims[0]));
+			PyDict_SetItemString(dict, "anim2", PyInt_FromSize_t(wp.anims[1]));
+			PyDict_SetItemString(dict, "anim3", PyInt_FromSize_t(wp.anims[2]));
+			PyDict_SetItemString(dict, "anim4", PyInt_FromSize_t(wp.anims[3]));
+			PyDict_SetItemString(dict, "anim5", PyInt_FromSize_t(wp.anims[4]));
+			PyDict_SetItemString(dict, "anim6", PyInt_FromSize_t(wp.anims[5]));
+			PyDict_SetItemString(dict, "anim7", PyInt_FromSize_t(wp.anims[6]));
+			PyDict_SetItemString(dict, "anim8", PyInt_FromSize_t(wp.anims[7]));
+		}
+		Py_DecRef(dict);
+	}
+	return list;
+};
+
+static PyObject* PyObjHandle_SetWaypoints(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	if (PyTuple_GET_SIZE(args) < 1 || !PyList_Check(PyTuple_GET_ITEM(args, 0))) {
+		PyErr_SetString(PyExc_RuntimeError, "npc_waypoints_set args should have list of dicts as first argument!");
+		return false;
+	}
+
+	auto list = PyTuple_GET_ITEM(args, 0);
+	int count = PyList_GET_SIZE(list);
+
+	critterSys.SetWaypointsCount(self->handle, count);
+	Waypoint wp;
+	for (int idx = 0; idx < count; idx++)
+	{
+		auto dict = PyList_GetItem(list, idx);
+		if (!dict) {
+			PyErr_SetString(PyExc_RuntimeError, "npc_waypoints_set list contains None at ?");
+			critterSys.SetWaypointsCount(self->handle, 0);
+			return false;
+		}
+		if (!PyDict_Check(dict)) {
+			dict = PyObject_GetAttr(dict, PyString_FromString("__dict__"));
+			if (!dict || !PyDict_Check(dict)) {
+				PyErr_SetString(PyExc_RuntimeError, "npc_waypoints_set list item should be either dict or object!");
+				critterSys.SetWaypointsCount(self->handle, 0);
+				return false;
+			}
+		}
+		auto flags = PyDict_GetItem(dict, PyString_FromString("flags"));
+		if (flags) wp.flags = _PyInt_AsInt(flags);
+
+		auto x = PyDict_GetItem(dict, PyString_FromString("x"));
+		if (x) wp.location.location.locx = _PyInt_AsInt(x);
+
+		auto y = PyDict_GetItem(dict, PyString_FromString("y"));
+		if (y) wp.location.location.locy = _PyInt_AsInt(y);
+
+		auto off_x = PyDict_GetItem(dict, PyString_FromString("off_x"));
+		if (off_x) wp.location.off_x = (float)PyFloat_AsDouble(off_x);
+
+		auto off_y = PyDict_GetItem(dict, PyString_FromString("off_y"));
+		if (off_y) wp.location.off_y = (float)PyFloat_AsDouble(off_y);
+
+		auto rotation = PyDict_GetItem(dict, PyString_FromString("rotation"));
+		if (rotation) wp.rotation = (float)PyFloat_AsDouble(rotation);
+
+		auto delay = PyDict_GetItem(dict, PyString_FromString("delay"));
+		if (delay) wp.delay = _PyInt_AsInt(delay);
+
+		auto anim1 = PyDict_GetItem(dict, PyString_FromString("anim1"));
+		if (anim1) wp.anims[0] = _PyInt_AsInt(anim1);
+
+		auto anim2 = PyDict_GetItem(dict, PyString_FromString("anim2"));
+		if (anim2) wp.anims[1] = _PyInt_AsInt(anim2);
+
+		auto anim3 = PyDict_GetItem(dict, PyString_FromString("anim3"));
+		if (anim3) wp.anims[2] = _PyInt_AsInt(anim3);
+
+		auto anim4 = PyDict_GetItem(dict, PyString_FromString("anim4"));
+		if (anim4) wp.anims[3] = _PyInt_AsInt(anim4);
+
+		auto anim5 = PyDict_GetItem(dict, PyString_FromString("anim5"));
+		if (anim5) wp.anims[4] = _PyInt_AsInt(anim5);
+
+		auto anim6 = PyDict_GetItem(dict, PyString_FromString("anim6"));
+		if (anim6) wp.anims[5] = _PyInt_AsInt(anim6);
+
+		auto anim7 = PyDict_GetItem(dict, PyString_FromString("anim7"));
+		if (anim7) wp.anims[6] = _PyInt_AsInt(anim7);
+
+		auto anim8 = PyDict_GetItem(dict, PyString_FromString("anim8"));
+		if (anim8) wp.anims[7] = _PyInt_AsInt(anim8);
+
+		critterSys.SetWaypoint(self->handle, idx, wp);
+	}
+	Py_RETURN_NONE;
+};
 
 static PyObject* PyObjHandle_GetSpell(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
@@ -3740,11 +3880,14 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "npc_flags_get", GetFlags<obj_f_npc_flags>, METH_VARARGS, NULL },
 	{ "npc_flag_set", SetFlag<obj_f_npc_flags>, METH_VARARGS, NULL },
 	{ "npc_flag_unset", ClearFlag<obj_f_npc_flags>, METH_VARARGS, NULL },
-	
+	{ "npc_waypoints_get", PyObjHandle_GetWaypoints, METH_VARARGS, "Gets Waypoints list" },
+	{ "npc_waypoints_set", PyObjHandle_SetWaypoints, METH_VARARGS, "Sets Waypoints from list of dict" },
+
 	{ "object_event_append", PyObjHandle_ObjectEventAppend, METH_VARARGS, NULL },
 	{ "object_event_append_wall", PyObjHandle_WallEventAppend, METH_VARARGS, NULL },
 	{ "obj_get_int", PyObjHandle_GetInt, METH_VARARGS, NULL },
 	{ "obj_get_idx_int", PyObjHandle_GetIdxInt, METH_VARARGS, NULL },
+	{ "obj_get_idx_int64", PyObjHandle_GetIdxInt64, METH_VARARGS, NULL },
 	{ "obj_get_int64", PyObjHandle_GetInt64, METH_VARARGS, "Gets 64 bit field" },
 	{ "obj_get_obj", PyObjHandle_GetObj, METH_VARARGS, "Gets Object field" },
 	{ "obj_get_spell", PyObjHandle_GetSpell, METH_VARARGS, NULL },

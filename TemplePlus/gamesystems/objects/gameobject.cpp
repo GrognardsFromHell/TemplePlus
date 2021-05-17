@@ -84,6 +84,11 @@ int32_t GameObjectBody::GetInt32(obj_f field) const
 
 }
 
+int32_t GameObjectBody::GetInt32Size(obj_f field) const
+{
+	return GetInt32Array(field).GetSize();
+}
+
 float GameObjectBody::GetFloat(obj_f field) const
 {
 	Expects(objectFields.GetType(field) == ObjectFieldType::Float32);
@@ -112,6 +117,11 @@ int64_t GameObjectBody::GetInt64(obj_f field) const
 	} else {
 		return **storageLoc;
 	}
+}
+
+int32_t GameObjectBody::GetInt64Size(obj_f field) const
+{
+	return GetInt64Array(field).GetSize();
 }
 
 objHndl GameObjectBody::GetObjHndl(obj_f field) const

@@ -39,6 +39,9 @@ struct Objects : temple::AddressTable {
 	void SetFieldObjHnd(objHndl obj, obj_f field, objHndl value);
 	void setInt32(objHndl obj, obj_f field, uint32_t dataIn);
 	int32_t getArrayFieldInt32(objHndl obj, obj_f field, uint32_t index);
+	int32_t getArrayFieldInt32Size(objHndl obj, obj_f field);
+	int64_t getArrayFieldInt64(objHndl obj, obj_f field, uint32_t index);
+	int32_t getArrayFieldInt64Size(objHndl obj, obj_f field);
 	objHndl getArrayFieldObj(objHndl obj, obj_f field, uint32_t index);
 	int GetAasHandle(objHndl handle);
 	gfx::AnimatedModelPtr GetAnimHandle(objHndl obj);
