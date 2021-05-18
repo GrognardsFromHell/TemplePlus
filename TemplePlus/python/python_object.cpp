@@ -2854,11 +2854,21 @@ static PyObject* PyObjHandle_GetIdxInt(PyObject* obj, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "i|i:objhndl.obj_get_idx_int", &field, &subIdx)) {
 		return 0;
 	}
-	assert(subIdx >= -1); // return size of array if -1
-	int32_t value;
-	if (subIdx >= 0)
-		value = objects.getArrayFieldInt32(self->handle, field, subIdx);
-	else value = objects.getArrayFieldInt32Size(self->handle, field);
+	assert(subIdx >= 0);
+	int32_t value = objects.getArrayFieldInt32(self->handle, field, subIdx);
+	return PyInt_FromLong(value);
+}
+
+static PyObject* PyObjHandle_GetIdxIntSize(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	obj_f field;
+	if (!PyArg_ParseTuple(args, "i:objhndl.obj_get_idx_int_size", &field)) {
+		return 0;
+	}
+	int32_t value = objects.getArrayFieldInt32Size(self->handle, field);
 	return PyInt_FromLong(value);
 }
 
@@ -2872,11 +2882,22 @@ static PyObject* PyObjHandle_GetIdxInt64(PyObject* obj, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "i|i:objhndl.obj_get_idx_int64", &field, &subIdx)) {
 		return 0;
 	}
-	assert(subIdx >= -1); // return size of array if -1
-	int64_t value;
-	if (subIdx >= 0)
-		value = objects.getArrayFieldInt64(self->handle, field, subIdx);
-	else value = objects.getArrayFieldInt64Size(self->handle, field);
+	assert(subIdx >= 0);
+	int64_t value = objects.getArrayFieldInt64(self->handle, field, subIdx);
+	return PyLong_FromLong((long)value);
+}
+
+static PyObject* PyObjHandle_GetIdxInt64Size(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	obj_f field;
+	if (!PyArg_ParseTuple(args, "i:objhndl.obj_get_idx_int64_size", &field)) {
+		return 0;
+	}
+	assert(subIdx >= 0);
+	int64_t value = objects.getArrayFieldInt64Size(self->handle, field);
 	return PyLong_FromLong((long)value);
 }
 
@@ -3888,6 +3909,8 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "obj_get_int", PyObjHandle_GetInt, METH_VARARGS, NULL },
 	{ "obj_get_idx_int", PyObjHandle_GetIdxInt, METH_VARARGS, NULL },
 	{ "obj_get_idx_int64", PyObjHandle_GetIdxInt64, METH_VARARGS, NULL },
+	{ "obj_get_idx_int_size", PyObjHandle_GetIdxIntSize, METH_VARARGS, NULL },
+	{ "obj_get_idx_int64_size", PyObjHandle_GetIdxInt64Size, METH_VARARGS, NULL },
 	{ "obj_get_int64", PyObjHandle_GetInt64, METH_VARARGS, "Gets 64 bit field" },
 	{ "obj_get_obj", PyObjHandle_GetObj, METH_VARARGS, "Gets Object field" },
 	{ "obj_get_spell", PyObjHandle_GetSpell, METH_VARARGS, NULL },
