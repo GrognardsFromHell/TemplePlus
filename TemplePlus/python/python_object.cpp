@@ -3049,6 +3049,26 @@ static PyObject* PyObjHandle_SetWaypoints(PyObject* obj, PyObject* args) {
 
 		critterSys.SetWaypoint(self->handle, idx, wp);
 	}
+
+	// loop reset
+	{
+		int loop_reset = 0;
+		if (PyTuple_GET_SIZE(args) > 1 && PyInt_Check(PyTuple_GET_ITEM(args, 1))) {
+			loop_reset = _PyInt_AsInt(PyTuple_GET_ITEM(args, 1));
+		}
+
+		if (loop_reset) {
+			auto gameObj = objSystem->GetObject(self->handle);
+			gameObj->SetInt32(obj_f::obj_f_npc_waypoint_current, 0);
+			gameObj->SetInt64(obj_f::obj_f_npc_ai_flags64, gameObj->GetInt64(obj_f::obj_f_npc_ai_flags64) & ~(AiFlag::WaypointDelay | AiFlag::WaypointDelayed));
+			gameObj->SetInt32(obj_f::obj_f_npc_waypoint_anim, 0);
+			gameSystems->GetAnim().Interrupt(self->handle, AnimGoalPriority::AGP_4, false);
+			if (count > 0 && critterSys.GetWaypoint(self->handle, 0, wp)) {
+				gameSystems->GetAnim().PushWalkToTile(self->handle, wp.location);
+			}
+		}
+	}
+
 	Py_RETURN_NONE;
 };
 
