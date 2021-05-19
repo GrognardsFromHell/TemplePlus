@@ -2970,7 +2970,13 @@ static PyObject* PyObjHandle_SetWaypoints(PyObject* obj, PyObject* args) {
 		return PyInt_FromLong(0);
 	}
 
-	if (PyTuple_GET_SIZE(args) < 1 || !PyList_Check(PyTuple_GET_ITEM(args, 0))) {
+	if (PyTuple_GET_SIZE(args) < 1 || PyTuple_GET_ITEM(args, 0) == Py_None)
+	{
+		critterSys.SetWaypointsCount(self->handle, 0);
+		Py_RETURN_NONE;
+	}
+
+	if (!PyList_Check(PyTuple_GET_ITEM(args, 0))) {
 		PyErr_SetString(PyExc_RuntimeError, "npc_waypoints_set args should have list of dicts as first argument!");
 		return false;
 	}

@@ -102,6 +102,35 @@ struct Waypoint {
 };
 #pragma pack(pop)
 
+struct WaypointPacked {
+	uint32_t flags = 0; // 4
+	LocAndOffsets location = LocAndOffsets::null; // 20
+	float rotation = 0; // 24
+	uint8_t anims[8] = { 0, 0, 0, 0, 0, 0, 0, 0 }; // 32
+	uint32_t delay = 0; // 36
+	uint32_t padding[7] = { 0, 0, 0, 0, 0, 0, 0}; // 64
+
+	WaypointPacked() {};
+
+	WaypointPacked(const Waypoint &wp){
+		flags = wp.flags;
+		location = wp.location;
+		rotation = wp.rotation;
+		delay = wp.delay;
+		for (int i = 0; i < 8; i++)
+			anims[i] = wp.anims[i];
+	}
+
+	void AssignToWaypoint(Waypoint& wp) {
+		wp.flags = flags;
+		wp.location = location;
+		wp.rotation = rotation;
+		wp.delay = delay;
+		for (int i = 0; i < 8; i++)
+			wp.anims[i] = anims[i];
+	}
+};
+
 struct LegacyCritterSystem : temple::AddressTable
 {
 
