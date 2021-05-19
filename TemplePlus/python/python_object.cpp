@@ -719,6 +719,23 @@ static PyObject* PyObjHandle_SkillRoll(PyObject* obj, PyObject* args) {
 
 	return PyInt_FromLong(result);
 }
+static PyObject* PyObjHandle_SkillRollDelta(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+
+	if (!self->handle)
+		return 0;
+
+	SkillEnum skillId;
+	int dc, flags = 0;
+	if (!PyArg_ParseTuple(args, "ii|i:objhndl.skill_roll_delta", &skillId, &dc, &flags)) {
+		return 0;
+	}
+
+	int deltaFromDc;
+	auto result = skillSys.SkillRoll(self->handle, skillId, dc, &deltaFromDc, flags);
+
+	return PyInt_FromLong(deltaFromDc);
+}
 
 
 static PyObject* PyObjHandle_HasMet(PyObject* obj, PyObject* args) {
@@ -3791,6 +3808,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "skill_ranks_get", PyObjHandle_SkillRanksGet, METH_VARARGS, NULL },
 	{ "skill_ranks_set", PyObjHandle_SkillRanksSet, METH_VARARGS, NULL },
 	{ "skill_roll", PyObjHandle_SkillRoll, METH_VARARGS, NULL },
+	{ "skill_roll_delta", PyObjHandle_SkillRollDelta, METH_VARARGS, "Does a Skill Roll, but returns the delta from the skill roll DC." },
 	{ "soundmap_critter", PyObjHandle_SoundmapCritter, METH_VARARGS, NULL },
 	{ "spell_known_add", PyObjHandle_SpellKnownAdd, METH_VARARGS, NULL },
 	{ "spell_memorized_add", PyObjHandle_SpellMemorizedAdd, METH_VARARGS, NULL },

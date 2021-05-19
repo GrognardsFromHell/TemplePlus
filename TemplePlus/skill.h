@@ -9,8 +9,10 @@ struct SkillProps;
 enum SkillEnum : uint32_t;
 
 enum SkillRollFlags : int {
+	SRF_Unk_1 = 0x1, // this is the default setting for normal usage (where the others are not set), usage unknown but it's the same as SkillLevelGet flags (I have yet to find if this is actually used anywhere...)
 	SRF_Hide_Failed_Search = 0x4, // for use with Search skill
-	SRF_Force_Hide_Failed_Search = 0x8,
+	SRF_Trap_Search = 0x8, // indicates trap search; will only show roll breakdown for successful results; Find Traps spell looks for this
+	SRF_Spell_School = 0x10, 
 	SRF_Take_20 = 0x2000
 };
 
@@ -25,6 +27,7 @@ struct LegacySkillSystem : temple::AddressTable {
 	/*
 		does a skill roll and logs to history
 		special casing for Search skill
+		flags: see SkillRollFlags
 	*/
 	BOOL SkillRoll(objHndl performer, SkillEnum skillEnum, int dc, int* resultDeltaFromDc, int flags) const;
 
