@@ -84,6 +84,53 @@ struct HairStyle {
 	}
 };
 
+enum WaypointFlag : uint32_t {
+	FixedRotation = 1,
+	Delay = 2,
+	Animate = 4
+};
+
+#pragma pack(push, 1)
+struct Waypoint {
+	uint32_t flags = 0;
+
+	LocAndOffsets location = LocAndOffsets::null;
+	float rotation = 0;
+	uint32_t delay = 0;
+
+	uint32_t anims[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+};
+#pragma pack(pop)
+
+struct WaypointPacked {
+	uint32_t flags = 0; // 4
+	LocAndOffsets location = LocAndOffsets::null; // 20
+	float rotation = 0; // 24
+	uint8_t anims[8] = { 0, 0, 0, 0, 0, 0, 0, 0 }; // 32
+	uint32_t delay = 0; // 36
+	uint32_t padding[7] = { 0, 0, 0, 0, 0, 0, 0}; // 64
+
+	WaypointPacked() {};
+
+	WaypointPacked(const Waypoint &wp){
+		flags = wp.flags;
+		location = wp.location;
+		rotation = wp.rotation;
+		delay = wp.delay;
+		for (int i = 0; i < 8; i++)
+			anims[i] = wp.anims[i];
+	}
+
+	void AssignToWaypoint(Waypoint& wp) {
+		wp.flags = flags;
+		wp.location = location;
+		wp.rotation = rotation;
+		wp.delay = delay;
+		for (int i = 0; i < 8; i++)
+			wp.anims[i] = anims[i];
+	}
+};
+
 struct LegacyCritterSystem : temple::AddressTable
 {
 
@@ -193,6 +240,10 @@ struct LegacyCritterSystem : temple::AddressTable
 	*/
 	StandPoint GetStandPoint(objHndl critter, StandPointType type);
 
+	int GetWaypointsCount(objHndl critter);
+	bool GetWaypoint(objHndl critter, int index, Waypoint& wp);
+	void SetWaypointsCount(objHndl critter, int count);
+	void SetWaypoint(objHndl critter, int index, const Waypoint& waypoint);
 
 	void GenerateHp(objHndl critter); // sets the field obj_f_hp_pts according to class levels and NPC hit die using dice throws
 	int GetSubdualDamage(objHndl critter);

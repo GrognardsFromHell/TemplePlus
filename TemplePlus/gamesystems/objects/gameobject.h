@@ -106,10 +106,12 @@ struct GameObjectBody {
 
 	// Convenience array accessors
 	int32_t GetInt32(obj_f field, size_t index) const;
+	int32_t GetInt32Size(obj_f field) const;
 	void SetInt32(obj_f field, size_t index, int32_t value);
 	void AppendInt32(obj_f field, int32_t value);
 	void RemoveInt32(obj_f field, size_t index);
 	int64_t GetInt64(obj_f field, size_t index) const;
+	int32_t GetInt64Size(obj_f field) const;
 	void SetInt64(obj_f field, size_t index, int64_t value);
 	void RemoveInt64(obj_f field, size_t index);
 	ObjectId GetObjectId(obj_f field, size_t index) const;
