@@ -380,7 +380,7 @@ namespace aas {
 		for (size_t i = 0; i < materials.size(); i++) {
 			
 			auto matHandle = matResolver->Acquire(materials[i], mesh->GetFilename());
-			if (!matHandle) {
+			if (!matHandle || matHandle == (aas::AasMaterial)-1) {
 				throw TempleException("Failed to acquire material '{}' for mesh '{}'",
 					materials[i], mesh->GetFilename());
 			}
@@ -1061,6 +1061,9 @@ namespace aas {
 
 		for (auto &submesh : submeshes) {
 			auto resolver = submesh.materialResolver;
+			if ( (int32_t&)(submesh.materialId) == -1) { // in case the materialId is invalid, skip it
+				continue;
+			}
 			if (resolver->IsMaterialPlaceholder(submesh.materialId)) {
 				auto submeshSlot = resolver->GetMaterialPlaceholderSlot(submesh.materialId);
 				if (submeshSlot == slot) {

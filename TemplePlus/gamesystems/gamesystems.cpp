@@ -449,8 +449,12 @@ std::string GameSystems::ResolveSkmFile(int meshId) const {
 int GameSystems::ResolveMaterial(const std::string& materialName) const {
 	auto material(mTig.GetMdfFactory().LoadMaterial(materialName));
 	if (!material) {
-		logger->error("Unable to load material {}", materialName);
-		return -1;
+		logger->error("Unable to load material {}, using wg_law.mdf instead", materialName);
+		material = mTig.GetMdfFactory().LoadMaterial("art/meshes/wg_law.mdf");
+		if (!material) {
+			return -1;
+		}
+		return material->GetId();
 	}
 	return material->GetId();
 }
