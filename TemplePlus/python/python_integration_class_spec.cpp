@@ -14,9 +14,9 @@ PythonClassSpecIntegration pythonClassIntegration;
 PYBIND11_EMBEDDED_MODULE(d20class, m) {
 	m.doc() = "D20 Class module, used for D20 Class specs.";
 
-	m.def("get_spell_stat", [](int classEnum) {
+	m.def("get_spell_stat", [](int classEnum)->int {
 		auto classStat = (Stat)classEnum;
-		return d20ClassSys.GetSpellStat(classStat);
+		return (int)d20ClassSys.GetSpellStat(classStat);
 	});
 }
 
