@@ -2913,7 +2913,6 @@ static PyObject* PyObjHandle_GetIdxInt64Size(PyObject* obj, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "i:objhndl.obj_get_idx_int64_size", &field)) {
 		return 0;
 	}
-	assert(subIdx >= 0);
 	int64_t value = objects.getArrayFieldInt64Size(self->handle, field);
 	return PyLong_FromLong((long)value);
 }
