@@ -1493,6 +1493,7 @@ static PyObject* PyObjHandle_ItemConditionHas(PyObject* obj, PyObject* args) {
 }
 
 
+
 static PyObject* PyObjHandle_ItemD20Query(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {

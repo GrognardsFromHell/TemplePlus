@@ -454,6 +454,22 @@ bool InventorySystem::IsItemEffectingConditions(objHndl objHndItem, uint32_t ite
 	return true;
 }
 
+bool InventorySystem::ItemHasCondition(objHndl item, uint32_t condId) const
+{
+	auto itemObj = gameSystems->GetObj().GetObject(item);
+	if (!itemObj)
+		return false;
+	
+	auto condArray = itemObj->GetInt32Array(obj_f_item_pad_wielder_condition_array);
+	
+	for (auto i = 0u; i < condArray.GetSize(); ++i) {
+		if (condArray[i] == condId)
+			return true;
+	}
+
+	return false;
+}
+
 int InventorySystem::GetItemWieldCondArg(objHndl item, uint32_t condId, int argOffset)
 {
 	// loops through the item wielder conditions to find condId
