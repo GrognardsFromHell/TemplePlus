@@ -1465,6 +1465,34 @@ static PyObject* PyObjHandle_ItemConditionAdd(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(1);
 }
 
+
+static PyObject* PyObjHandle_ItemConditionHas(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	char* condName = nullptr;
+	if (!PyArg_ParseTuple(args, "s:objhndl.item_has_condition", &condName)) {
+		return 0;
+	}
+	if (!condName) {
+		return 0;
+	}
+
+	auto condId = conds.hashmethods.StringHash(condName);
+	auto cond = conds.GetById(condId);
+	if (!cond) {
+		logger->warn("item_has_condition: Nonexistant condition {}", condName);
+		return PyInt_FromLong(0);
+	}
+
+	auto result = inventory.ItemHasCondition(self->handle, condId);
+	
+	return PyInt_FromLong(result ? TRUE: FALSE);
+}
+
+
 static PyObject* PyObjHandle_ItemD20Query(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -3917,6 +3945,8 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "is_spell_known", PyObjHandle_IsSpellKnown, METH_VARARGS, NULL },
 	{ "is_buckler", PyObjHandle_IsBuckler, METH_VARARGS, NULL },
 	{ "item_condition_add_with_args", PyObjHandle_ItemConditionAdd, METH_VARARGS, NULL },
+	{ "item_condition_has", PyObjHandle_ItemConditionHas, METH_VARARGS, NULL },
+	{ "item_has_condition", PyObjHandle_ItemConditionHas, METH_VARARGS, NULL },
 	{ "item_d20_query", PyObjHandle_ItemD20Query, METH_VARARGS, NULL },
 	{ "item_find", PyObjHandle_ItemFind, METH_VARARGS, NULL },
 	{ "item_get", PyObjHandle_ItemGet, METH_VARARGS, NULL },
