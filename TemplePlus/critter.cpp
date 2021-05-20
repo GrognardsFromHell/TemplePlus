@@ -740,6 +740,52 @@ StandPoint LegacyCritterSystem::GetStandPoint(objHndl critter, StandPointType ty
 	return result;
 }
 
+
+int LegacyCritterSystem::GetWaypointsCount(objHndl critter)
+{
+	return (int)objects.getArrayFieldInt64(critter, obj_f_npc_waypoints_idx, 0);
+}
+
+bool LegacyCritterSystem::GetWaypoint(objHndl critter, int index, Waypoint& wp)
+{
+	if (index >= GetWaypointsCount(critter))
+		return false;
+	WaypointPacked wpp;
+	auto obj = objSystem->GetObject(critter);
+	int64_t* wpRaw = (int64_t*)&wpp;
+	for (int row = 0; row < sizeof(WaypointPacked) / sizeof(int64_t); row++)
+	{
+		*wpRaw = obj->GetInt64(obj_f_npc_waypoints_idx, 2 + index * 8 + row);
+		wpRaw++;
+	}
+	wpp.AssignToWaypoint(wp);
+
+	return true;
+}
+
+void LegacyCritterSystem::SetWaypointsCount(objHndl critter, int count)
+{
+	auto obj = objSystem->GetObject(critter);
+	obj->ClearArray(obj_f_npc_waypoints_idx);
+	if (count > 0) {
+		obj->SetInt64(obj_f_npc_waypoints_idx, 0, count);
+		for (int idx = 1; idx < count * sizeof(WaypointPacked) / sizeof(int64_t) + 2; idx++)
+			obj->SetInt64(obj_f_npc_waypoints_idx, idx, 0);
+	}
+}
+
+void LegacyCritterSystem::SetWaypoint(objHndl critter, int index, const Waypoint& wp)
+{
+	WaypointPacked wpp(wp);
+	auto obj = objSystem->GetObject(critter);
+	int64_t* wpRaw = (int64_t*)&wpp;
+	for (int row = 0; row < sizeof(WaypointPacked) / sizeof(int64_t); row++)
+	{
+		obj->SetInt64(obj_f_npc_waypoints_idx, 2 + index * 8 + row, *wpRaw);
+		wpRaw++;
+	}
+}
+
 void LegacyCritterSystem::GenerateHp(objHndl handle){
 	if (!handle){
 		return;

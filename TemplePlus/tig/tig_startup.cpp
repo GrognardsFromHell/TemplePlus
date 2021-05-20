@@ -23,6 +23,8 @@
 #include "../tio/tio.h"
 #include "tig_console.h"
 
+#include "../gameview.h"
+
 #include "../config/config.h"
 #include <fstream>
 #include <mod_support.h>
@@ -151,6 +153,8 @@ TigInitializer::TigInitializer(HINSTANCE hInstance)
 	mConsole = std::make_unique<Console>();
 	// mStartedSystems.emplace_back(StartSystem("console.c", 0x101E0290, 0x101DFBC0));
 	mStartedSystems.emplace_back(StartSystem("loadscreen.c", 0x101E8260, TigShutdownNoop));
+
+	mGameView = std::make_unique<GameView>(*mMainWindow, *mRenderingDevice, config.renderWidth, config.renderHeight);
 
 	*tigInternal.consoleDisabled = false; // tig init disables console by default
 }

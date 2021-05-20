@@ -89,7 +89,7 @@ struct LegacyD20System : temple::AddressTable
 	void D20ActnInit(objHndl objHnd, D20Actn * d20a);
 	void GlobD20ActnSetTypeAndData1(D20ActionType d20type, uint32_t data1);
 	void globD20ActnSetPerformer(objHndl objHnd);
-	int GlobD20ActnSetTarget(objHndl objHnd, LocAndOffsets * loc);
+	ActionErrorCode GlobD20ActnSetTarget(objHndl objHnd, LocAndOffsets * loc);
 	void GlobD20ActnSetD20CAF(D20CAF d20_caf); // OR's flags
 	void GlobD20ActnInit();
 	void d20aTriggerCombatCheck(ActnSeq* actSeq, int32_t idx);//1008AE90    ActnSeq * @<eax>
@@ -225,6 +225,10 @@ struct D20Actn{
 	int FilterSpellTargets(SpellPacketBody& spellPkt); // returns number of remaining targets
 	D20ADF GetActionDefinitionFlags();
 	bool IsMeleeHit();
+
+	// Python action section
+	D20DispatcherKey GetPythonActionEnum();
+	void SetPythonActionEnum(D20DispatcherKey pyActionEnum); // piggyback on distTraversed (used to be data1); todo revisit this in the future
 };
 
 const auto TestSizeOfD20Action = sizeof(D20Actn); // should be 88 (0x58)

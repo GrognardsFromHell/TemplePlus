@@ -32,6 +32,7 @@ struct LocationSys : temple::AddressTable
 
 	// Distance between two objects in feet
 	float DistanceToObj(objHndl from, objHndl to);
+	float DistanceToObj_NonNegative(objHndl from, objHndl to); // as above but not less than 0.0
 
 	// Distance between from and loc in inches (without the obj radius)
 	float DistanceToLoc(objHndl from, LocAndOffsets loc);

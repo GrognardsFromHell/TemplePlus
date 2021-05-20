@@ -2754,14 +2754,15 @@ int AiSystem::AiTotalDefence(AiTactic* aiTac)
 
 int AiSystem::AiPythonAction(AiTactic* aiTac)
 {
-	auto actEnum = aiTac->field4;
+	auto actEnum = (D20DispatcherKey)aiTac->field4;
 	if (!actEnum) 
 		return FALSE;
 
 	int initialActNum = (*actSeqSys.actSeqCur)->d20ActArrayNum;
 	actSeqSys.curSeqReset(aiTac->performer);
 	d20Sys.GlobD20ActnInit();
-	d20Sys.GlobD20ActnSetTypeAndData1(D20A_PYTHON_ACTION, actEnum);
+	d20Sys.GlobD20ActnSetTypeAndData1(D20A_PYTHON_ACTION, 0);
+	d20Sys.globD20Action->SetPythonActionEnum(actEnum);
 	d20Sys.GlobD20ActnSetTarget(aiTac->target, 0);
 	actSeqSys.ActionAddToSeq();
 	if (actSeqSys.ActionSequenceChecksWithPerformerLocation() != AEC_OK) {

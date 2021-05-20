@@ -32,6 +32,8 @@ public:
 	
 	static int SpellFocusDcMod(DispatcherCallbackArgs args);
 
+	static int PurityOfBodyPreventDisease(DispatcherCallbackArgs args); // Fixes Monk's Purity of Body; currently it prevents Magical Disease (Contagion) rather than normal disease (as by Monster Melee Disease e.g. dire rats)
+
 	void apply() override {
 
 		//replaceFunction(0x100FC050, SpellFocusDcMod);
@@ -77,6 +79,8 @@ public:
 		replaceFunction(0x100F7490, MonsterOozeSplittingOnDamage);
 
 		replaceFunction(0x100EEE70, DiplomacySkillSynergy); // fixes skill synergy bonuses to diplomacy not stacking
+
+		replaceFunction(0x100FAFB0, PurityOfBodyPreventDisease);
 
 		// fixes animal companion runoff crash (it didn't null the second part of the obj handle stored in args[1,2]
 		static void (__cdecl*orgCompanionRunoff)(SubDispNode*, objHndl , objHndl ) = replaceFunction<void(__cdecl)(SubDispNode*, objHndl, objHndl)>(0x100FC3D0, [](SubDispNode* sdn, objHndl owner, objHndl handle){
@@ -169,6 +173,8 @@ public:
 			return result;
 		});
 
+
+		
 	}
 } abilityConditionFixes;
 
@@ -340,5 +346,33 @@ int AbilityConditionFixes::SpellFocusDcMod(DispatcherCallbackArgs args)
 	if ( feat - FEAT_SPELL_FOCUS_ABJURATION == spellSchool || feat - FEAT_GREATER_SPELL_FOCUS_ABJURATION == spellSchool){
 		dispIo->bonList->AddBonusFromFeat(1, 0, 114, feat);
 	}
+	return 0;
+}
+
+int AbilityConditionFixes::PurityOfBodyPreventDisease(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIoTypeCondStruct, DispIoCondStruct);
+	auto incomingCond = dispIo->condStruct;
+	auto refCond = (CondStruct*)args.GetData1();
+	if (!refCond)
+		return 0;
+	refCond = conds.GetByName(refCond->condName); // retrieve condition by name
+	if (!refCond)
+		return 0;
+	if (refCond != incomingCond) {
+		return 0;
+	}
+	
+	// Incubating_Disease args are: 
+	// arg[0] : 0 - natural, 1 - from contagion spell
+	// arg[1] : disease type ID (e.g. Filth Fever is 4)
+	// arg[2] : Incubation duration in days (randomized by disease type as 1dN)
+	constexpr int DISEASE_ORIGIN_NATURAL = 0;
+	auto diseaseOriginId = dispIo->arg1;
+	auto isNatural = diseaseOriginId == DISEASE_ORIGIN_NATURAL;
+	if (!isNatural) {
+		return 0;
+	}
+	dispIo->outputFlag = 0; // interdict natural disease
 	return 0;
 }

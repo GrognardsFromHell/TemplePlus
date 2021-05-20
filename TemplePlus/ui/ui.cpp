@@ -10,6 +10,7 @@
 #include "widgets/widgets.h"
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/legacysystems.h"
+#include "gameview.h"
 
 UiManager *uiManager;
 
@@ -987,6 +988,11 @@ bool UiManager::ProcessMessage(TigMsg &msg)
 		return false;
 	}
 
+}
+
+gfx::Size UiManager::GetCanvasSize() const
+{
+	return { gameView->GetWidth(), gameView->GetHeight() };
 }
 
 bool UiManager::ProcessWidgetMessage(TigMsg & msg)

@@ -85,6 +85,7 @@ struct LogAppender : spdlog::sinks::base_sink<std::mutex>
 
 struct MdfPreviewNative {
 	std::unique_ptr<RenderingDevice> device;
+	WorldCamera* camera = nullptr;
 	VertexBufferPtr vertexBuffer;
 	IndexBufferPtr indexBuffer;
 	std::unique_ptr<BufferBinding> bufferBinding;	
@@ -166,6 +167,7 @@ API void MdfPreviewNative_InitDevice(MdfPreviewNative *native,
 	HWND handle,
 	int renderWidth, int renderHeight) {
 	native->device = std::make_unique<RenderingDevice>(handle);
+	native->camera = &native->device->GetCurrentCamera();
 
 	std::array<MdfVertex, 4> corners;
 	corners[0].pos = XMFLOAT4(-1, 1, 0.5f, 1);
@@ -267,11 +269,11 @@ API void MdfPreviewNative_FreeDevice(MdfPreviewNative *native) {
 }
 
 API void MdfPreviewNative_SetCameraPos(MdfPreviewNative *native, float x, float y) {
-	native->device->GetCamera().SetTranslation(x, y);
+	native->camera->SetTranslation(x, y);
 }
 API void MdfPreviewNative_GetCameraPos(MdfPreviewNative *native, float* x, float* y) {
 	
-	auto translation = native->device->GetCamera().GetTranslation();
+	auto translation = native->camera->GetTranslation();
 	*x = translation.x;
 	*y = translation.y;
 
@@ -291,7 +293,7 @@ API void MdfPreviewNative_Render(MdfPreviewNative *native) {
 	globalLight.range = 800;
 		
 	if (native->material) {
-		native->device->GetCamera().SetIdentityTransform(true);
+		native->camera->SetIdentityTransform(true);
 
 		std::vector<Light3d> lights{ globalLight };
 		native->material->Bind(*native->device, lights);
@@ -301,7 +303,7 @@ API void MdfPreviewNative_Render(MdfPreviewNative *native) {
 	}
 
 	if (native->model) {
-		native->device->GetCamera().SetIdentityTransform(false);
+		native->camera->SetIdentityTransform(false);
 
 		globalLight.color = XMFLOAT4(1, 1, 1, 1);
 		globalLight.dir = XMFLOAT4(-0.6324094f, -0.7746344f, 0, 0);
@@ -322,7 +324,7 @@ API bool MdfPreviewNative_SetModel(MdfPreviewNative *native,
 	const char *skaFilename) {
 
 	native->material.reset();
-	native->device->GetCamera().CenterOn(0, 0, 0);
+	native->camera->CenterOn(0, 0, 0);
 
 	try {
 		EncodedAnimId idleId(WeaponAnim::Idle);
@@ -457,7 +459,7 @@ API void MdfPreviewNative_SetRotation(MdfPreviewNative *native, float rotation) 
 }
 
 API void MdfPreviewNative_SetScale(MdfPreviewNative *native, float scale) {
-	native->device->GetCamera().SetScale(scale);
+	native->camera->SetScale(scale);
 }
 
 void MdfPreviewNative::SpawnParticles(const std::string &name) {
@@ -606,7 +608,7 @@ bool PartSysExternal::GetBonePos(ObjHndl obj, int boneIdx, Vec3& pos) {
 
 void PartSysExternal::WorldToScreen(const Vec3& worldPos, Vec2& screenPos) {
 
-	screenPos = mNative.device->GetCamera().WorldToScreen(worldPos);
+	screenPos = mNative.camera->WorldToScreen(worldPos);
 
 }
 
@@ -615,7 +617,7 @@ API void MdfPreviewNative_SetRenderSize(MdfPreviewNative *native, int w, int h) 
 }
 
 API void MdfPreviewNative_ScreenToWorld(MdfPreviewNative *native, float x, float y, float* xOut, float *yOut, float *zOut) {
-	auto world = native->device->GetCamera().ScreenToWorld(x, y);
+	auto world = native->camera->ScreenToWorld(x, y);
 	*xOut = world.x;
 	*yOut = world.y;
 	*zOut = world.z;

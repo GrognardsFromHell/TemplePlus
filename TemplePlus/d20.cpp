@@ -191,6 +191,9 @@ public:
 		replaceFunction(0x100920B0, PerformActivateReadiedAction);
 
 		replaceFunction(0x100949E0, _GlobD20ActnInit);
+		replaceFunction<ActionErrorCode(__cdecl)(objHndl, LocAndOffsets*)>(0x10092E50, [](objHndl handle, LocAndOffsets* loc)->ActionErrorCode {
+			return d20Sys.GlobD20ActnSetTarget(handle, loc);
+			});
 		
 
 		
@@ -653,12 +656,12 @@ std::string & LegacyD20System::GetPythonActionName(D20DispatcherKey key) const
 
 ActionErrorCode LegacyD20System::GetPyActionCost(D20Actn * d20a, TurnBasedStatus * tbStat, ActionCostPacket * acp){
 	
-	auto actionKey = d20a->data1;
-	if (!actionKey){
-		actionKey = d20Sys.globD20ActionKey;
+	auto pyActionEnum = d20a->GetPythonActionEnum();
+	if (!pyActionEnum){
+		pyActionEnum = d20Sys.globD20ActionKey;
 	}
 
-	switch (pyactions[actionKey].costType){
+	switch (pyactions[pyActionEnum].costType){
 	
 		case ActionCostType::Null:
 			return d20Callbacks.ActionCostNull(d20a, tbStat, acp);
@@ -916,9 +919,76 @@ void LegacyD20System::globD20ActnSetPerformer(objHndl objHnd)
 	(*globD20Action).d20APerformer = objHnd;
 }
 
-int LegacyD20System::GlobD20ActnSetTarget(objHndl objHnd, LocAndOffsets * loc)
+ActionErrorCode LegacyD20System::GlobD20ActnSetTarget(objHndl handle, LocAndOffsets * loc)
 {
-	return addresses.GlobD20ActnSetTarget(objHnd, loc);
+	auto tgtClassif = TargetClassification(globD20Action);
+	auto isPyAction = globD20Action->d20ActType == D20A_PYTHON_ACTION;
+	
+	switch (tgtClassif) {
+	case D20TargetClassification::Target0:
+		{
+			globD20Action->d20ATarget = handle;
+			if (handle) {
+				globD20Action->destLoc = objects.GetLocationFull(handle);
+				if (!isPyAction) { // Python Action hijacks this field now
+					globD20Action->distTraversed = locSys.DistanceToObj_NonNegative(globD20Action->d20APerformer, handle);
+				}
+			}
+			else {
+				if (loc) {
+					globD20Action->destLoc = *loc;
+				}
+				
+				if (!isPyAction) {  // Python Action hijacks this field now
+					globD20Action->distTraversed = 0.f;
+				}
+				
+			}
+		}
+		break;
+	case D20TargetClassification::D20TC_Movement:
+		{
+			if (loc) {
+				globD20Action->destLoc = *loc;
+			}
+			else {
+				globD20Action->destLoc = objects.GetLocationFull(handle);
+				globD20Action->d20ATarget = handle;
+			}
+			static auto getAnimPathDistanceEstimate = temple::GetRef<double(__cdecl)(objHndl, locXY, int, float)>(0x100B4830);
+			globD20Action->distTraversed = getAnimPathDistanceEstimate(globD20Action->d20APerformer, globD20Action->destLoc.location, 0, 0.0f);
+		}
+		break;
+	case D20TargetClassification::D20TC_SingleExcSelf:
+	case D20TargetClassification::D20TC_SingleIncSelf:
+	case D20TargetClassification::D20TC_ItemInteraction:
+		{
+			if (loc) {
+				globD20Action->destLoc = *loc;
+			}
+			else if (handle) {
+				globD20Action->destLoc = objects.GetLocationFull(handle);
+			}
+			globD20Action->d20ATarget = handle;
+		}
+		break;
+	case D20TargetClassification::D20TC_CastSpell:
+		{
+			if (loc) {
+				globD20Action->destLoc = *loc;
+			}
+			else if (handle) {
+				globD20Action->destLoc = objects.GetLocationFull(handle);
+			}
+			globD20Action->d20ATarget = handle;
+			
+		}
+		return AEC_OK;
+	default:
+		break;
+	}
+	return TargetCheck(globD20Action) != FALSE ? AEC_OK : AEC_TARGET_INVALID;
+	//return addresses.GlobD20ActnSetTarget(handle, loc);
 }
 
 void LegacyD20System::GlobD20ActnSetD20CAF(D20CAF d20_caf){
@@ -1301,7 +1371,8 @@ D20TargetClassification LegacyD20System::TargetClassification(D20Actn* d20a)
 	auto d20DefFlags = d20Defs[d20a->d20ActType].flags; // direct access to action flags - intentional
 
 	if (d20DefFlags & D20ADF_Python){
-		return pyactions[d20a->data1].tgtClass;
+		auto pyActionEnum = d20a->GetPythonActionEnum();
+		return pyactions[pyActionEnum].tgtClass;
 	}
 
 	if (d20DefFlags & D20ADF::D20ADF_Movement)
@@ -1819,7 +1890,8 @@ ActionErrorCode D20ActionCallbacks::PerformFullAttack(D20Actn* d20a){
 
 ActionErrorCode D20ActionCallbacks::PerformPython(D20Actn* d20a){
 	DispIoD20ActionTurnBased dispIo(d20a);
-	dispIo.DispatchPythonActionPerform((D20DispatcherKey)d20a->data1);
+	auto pyActionEnum = d20a->GetPythonActionEnum();
+	dispIo.DispatchPythonActionPerform(pyActionEnum);
 	
 	return (ActionErrorCode)dispIo.returnVal; 
 }
@@ -1921,10 +1993,10 @@ BOOL D20ActionCallbacks::ActionFrameQuiveringPalm(D20Actn* d20a){
 	return FALSE;
 }
 
+/* 0x1008DEA0 */
 BOOL D20ActionCallbacks::ActionFrameSpell(D20Actn * d20a){
 
 	auto projectileProto = 3000;
-	auto numTgts = 0;
 	auto offx = 0;
 	auto offy = 0;
 	
@@ -1966,7 +2038,7 @@ BOOL D20ActionCallbacks::ActionFrameSpell(D20Actn * d20a){
 	}
 	else if (pkt.spellEnum == PRODUCE_FLAME_ENUM) {
 		spEntry.modeTargetSemiBitmask = (uint64_t) UiPickerType::Single;
-		if (*actSeqSys.actSeqCur) { // also checked that it's diff than -2836... bug?
+		if (*actSeqSys.actSeqCur) { // also checked that it's diff than -2836... bug? looks like they meant to check actSeqCur->tbStatus.hourglassState != 0
 			auto tbStat = actSeqSys.curSeqGetTurnBasedStatus();
 			tbStat->tbsFlags &= ~TBSF_TouchAttack;
 			d20a->d20Caf &= ~D20CAF_FREE_ACTION;
@@ -2057,11 +2129,11 @@ BOOL D20ActionCallbacks::ActionFrameSpell(D20Actn * d20a){
 	}
 
 	
-	for (auto i=0; i < numTgts; i++){
+	for (auto i=0; i < finalTargets.size() && i < MAX_SPELL_TARGETS; i++){
 		pkt.targetListHandles[i] = finalTargets[i];
 	}
 	// clear the rest
-	for (auto i = numTgts; i < MAX_SPELL_TARGETS; i++){
+	for (auto i = finalTargets.size(); i < MAX_SPELL_TARGETS; i++){
 		pkt.targetListHandles[i] = objHndl::null;
 	}
 	pkt.targetCount = finalTargets.size();
@@ -2082,7 +2154,7 @@ BOOL D20ActionCallbacks::ActionFrameStandardAttack(D20Actn* d20a){
 	histSys.CreateRollHistoryString(d20a->rollHistId1);
 	histSys.CreateRollHistoryString(d20a->rollHistId2);
 	histSys.CreateRollHistoryString(d20a->rollHistId0);
-	//auto makeAttack = temple::GetRef<int(__cdecl)(objHndl, objHndl, int, D20CAF, D20ActionType)>(0x100B7950);
+	
 	damage.DealAttackDamage(d20a->d20APerformer, d20a->d20ATarget, d20a->data1, static_cast<D20CAF>(d20a->d20Caf), d20a->d20ActType);
 	return TRUE;
 }
@@ -2401,7 +2473,8 @@ BOOL D20ActionCallbacks::ActionFrameDisarm(D20Actn* d20a){
 
 BOOL D20ActionCallbacks::ActionFramePython(D20Actn* d20a){
 	DispIoD20ActionTurnBased dispIo(d20a);
-	dispIo.DispatchPythonActionFrame((D20DispatcherKey)d20a->data1);
+	auto pyActionEnum = d20a->GetPythonActionEnum();
+	dispIo.DispatchPythonActionFrame( pyActionEnum );
 
 	return TRUE;
 }
@@ -2739,7 +2812,8 @@ BOOL D20ActionCallbacks::ProjectileHitSpell(D20Actn * d20a, objHndl projectile, 
 }
 
 BOOL D20ActionCallbacks::ProjectileHitPython(D20Actn * d20a, objHndl projectile, objHndl obj2){
-	return pythonD20ActionIntegration.PyProjectileHit((D20DispatcherKey)d20a->data1, d20a, projectile, obj2);
+	auto pyActionEnum = d20a->GetPythonActionEnum();
+	return pythonD20ActionIntegration.PyProjectileHit(pyActionEnum, d20a, projectile, obj2);
 }
 
 ActionErrorCode D20ActionCallbacks::PerformAidAnotherWakeUp(D20Actn* d20a){
@@ -3184,7 +3258,8 @@ ActionErrorCode D20ActionCallbacks::AddToSeqCharge(D20Actn* d20a, ActnSeq* actSe
 
 ActionErrorCode D20ActionCallbacks::AddToSeqPython(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat){
 	
-	return pythonD20ActionIntegration.PyAddToSeq((D20DispatcherKey)d20a->data1, d20a, actSeq, tbStat);
+	auto pyActionEnum = d20a->GetPythonActionEnum();
+	return pythonD20ActionIntegration.PyAddToSeq(pyActionEnum, d20a, actSeq, tbStat);
 	
 }
 
@@ -3603,4 +3678,17 @@ D20ADF D20Actn::GetActionDefinitionFlags(){
 
 bool D20Actn::IsMeleeHit(){
 	return ((d20Caf & D20CAF_HIT) && !(d20Caf & D20CAF_RANGED));
+}
+
+D20DispatcherKey D20Actn::GetPythonActionEnum()
+{
+	// Python action enum will now be stored in distTraversed
+	// This field is only set for Move actions, which are unlikely
+	// to be defined in Python actions.
+	return (D20DispatcherKey&) (this->distTraversed);
+}
+
+void D20Actn::SetPythonActionEnum(D20DispatcherKey pyActionEnum)
+{
+	(D20DispatcherKey&)(this->distTraversed) = pyActionEnum;
 }

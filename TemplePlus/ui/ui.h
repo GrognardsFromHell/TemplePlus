@@ -7,6 +7,7 @@
 #include "tig/tig.h"
 #include <obj.h>
 #include <util/fixes.h>
+#include <graphics/textures.h>
 
 #define ACTIVE_WIDGET_CAP 3000
 
@@ -321,6 +322,16 @@ public:
 		if (mMouseCaptureWidgetId == widgetId) {
 			mMouseCaptureWidgetId = -1;
 		}
+	}
+
+	gfx::Size GetCanvasSize() const;
+
+	int GetCanvasWidth() const {
+		return GetCanvasSize().width;
+	}
+
+	int GetCanvasHeight() const {
+		return GetCanvasSize().height;
 	}
 
 private:

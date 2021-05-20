@@ -31,9 +31,9 @@ namespace particles {
 		These vectors can be multiplied with screen space
 		coordinates to get world coordinates.
 		*/
-		XMFLOAT4 screenSpaceUnitX;
-		XMFLOAT4 screenSpaceUnitY;
-		XMFLOAT4 screenSpaceUnitZ;
+		XMFLOAT4 screenSpaceUnitX{};
+		XMFLOAT4 screenSpaceUnitY{};
+		XMFLOAT4 screenSpaceUnitZ{};
 
 		NO_COPY_OR_MOVE(ParticleRenderer);
 	private:

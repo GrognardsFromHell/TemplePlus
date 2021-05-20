@@ -447,7 +447,7 @@ void ShapeRenderer2d::DrawRectangleOutline(XMFLOAT2 topLeft, XMFLOAT2 bottomRigh
 		bufferBinding.Bind();
 
 		PieSegmentGlobals globals;
-		globals.projMat = device.GetCamera().GetUiProjection();
+		globals.projMat = device.GetCurrentCamera().GetUiProjection();
 		XMStoreFloat4(&globals.colors, PackedVector::XMLoadColor(&color1));
 		device.SetVertexShaderConstants(0, globals);
 

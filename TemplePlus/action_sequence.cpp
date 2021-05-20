@@ -479,8 +479,11 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 		pickArgs.spellEnum = spellEnum;
 		pickArgs.callback = [](const PickerResult & result, void* cbArgs) { actSeqSys.SpellPickerCallback(result, (SpellPacketBody*)cbArgs); };
 		// Modify the PickerArgs
-		if (d20Sys.globD20Action->d20ActType == D20A_PYTHON_ACTION)
-			pythonD20ActionIntegration.ModifyPicker(d20Sys.globD20Action->data1, &pickArgs);
+		if (d20Sys.globD20Action->d20ActType == D20A_PYTHON_ACTION) {
+			auto pyActionEnum = d20Sys.globD20Action->GetPythonActionEnum();
+			pythonD20ActionIntegration.ModifyPicker(pyActionEnum, &pickArgs);
+		}
+			
 
 		*actSeqPickerActive = 1;
 		uiPicker.ShowPicker(pickArgs, &curSeq->spellPktBody);
@@ -836,7 +839,7 @@ int ActionSequenceSystem::ActionAddToSeq()
 		
 	}
 	if (d20ActnType == D20A_PYTHON_ACTION){
-		d20Sys.globD20ActionKey = (D20DispatcherKey) d20Sys.globD20Action->data1;
+		d20Sys.globD20ActionKey = (D20DispatcherKey) d20Sys.globD20Action->GetPythonActionEnum();
 	}
 	auto actnCheckFunc = d20Sys.d20Defs[d20ActnType].actionCheckFunc;
 	if (actnCheckFunc)
@@ -1465,7 +1468,8 @@ int ActionSequenceSystem::GetNewHourglassState(objHndl performer, D20ActionType 
 
 	auto activeMenu = radialMenus.GetActiveRadialMenu();
 	if (d20ActionType == D20A_PYTHON_ACTION && radialMenus.lastPythonActionNode > 0 ){
-		d20a.data1= (D20DispatcherKey)activeMenu->nodes[radialMenus.lastPythonActionNode].entry.dispKey;
+		auto pyActionEnum = (D20DispatcherKey)activeMenu->nodes[radialMenus.lastPythonActionNode].entry.dispKey;
+		d20a.SetPythonActionEnum(pyActionEnum);
 	}
 
 	if (d20SpellData)
@@ -3399,6 +3403,12 @@ int ActionSequenceSystem::UnspecifiedAttackAddToSeqRangedMulti(ActnSeq* actSeq, 
 		if (ammoType >= wat_dagger && ammoType <= wat_bottle) // thrown weapons
 		{
 			d20a->d20Caf |= D20CAF_THROWN;
+
+			if (d20a->d20ActType == D20A_THROW_GRENADE) {
+				d20a->d20Caf |= D20CAF_THROWN_GRENADE | D20CAF_TOUCH_ATTACK;
+			}
+
+			// unless it's a shuriken or you have quickdraw, reduce number of attacks to 1
 			if (ammoType != wat_shuriken && !feats.HasFeatCount(d20a->d20APerformer, FEAT_QUICK_DRAW))
 			{
 				baseAttackNumCode = attackModeCode + 1;
@@ -3486,15 +3496,30 @@ int ActionSequenceSystem::UnspecifiedAttackAddToSeq(D20Actn* d20a, ActnSeq* actS
 		if (numAttacks > 1 && !TurnBasedStatusUpdate(&tbStatCopy, &d20aCopy))
 		{
 			actSeq->d20ActArray[actSeq->d20ActArrayNum++] = d20aCopy;
-			d20aCopy.d20ActType = inventory.IsThrowingWeapon(weapon) != 0 ? D20A_THROW : D20A_STANDARD_RANGED_ATTACK;
+			d20aCopy.d20ActType = inventory.IsThrowingWeapon(weapon) != 0 ? 
+				(inventory.IsGrenade(weapon) ? D20A_THROW_GRENADE: D20A_THROW) : D20A_STANDARD_RANGED_ATTACK;
 			return UnspecifiedAttackAddToSeqRangedMulti(actSeq, &d20aCopy, &tbStatCopy);
 		}
 		d20aCopy = *d20a;
-		d20aCopy.d20ActType = inventory.IsThrowingWeapon(weapon) != 0 ? D20A_THROW : D20A_STANDARD_RANGED_ATTACK;
+		
+		/*d20aCopy.d20ActType = inventory.IsThrowingWeapon(weapon) != 0 ? D20A_THROW : D20A_STANDARD_RANGED_ATTACK;
 		if (d20aCopy.d20ActType == D20A_THROW)
 		{
 			d20aCopy.d20Caf |= D20CAF_THROWN;
+		}*/
+		if (!inventory.IsThrowingWeapon(weapon)) {
+			d20aCopy.d20ActType = D20A_STANDARD_RANGED_ATTACK;
 		}
+		else { // Throwing weapon; fixed not setting action to D20A_THROW_GRENADE for grenades, which caused holy water and Jaer's sphere to reappear on the corpse
+			d20aCopy.d20ActType = D20A_THROW;
+			d20aCopy.d20Caf |= D20CAF_THROWN;
+			if (inventory.IsGrenade(weapon)) {
+				d20aCopy.d20ActType = D20A_THROW_GRENADE;
+				d20aCopy.d20Caf |= D20CAF_THROWN_GRENADE | D20CAF_TOUCH_ATTACK;
+			}
+		}
+
+		
 		int result = TurnBasedStatusUpdate(&d20aCopy, &tbStatCopy);
 		if (!result)
 		{

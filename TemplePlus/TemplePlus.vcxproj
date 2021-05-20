@@ -29,6 +29,7 @@
     <ClCompile Include="d20_race.cpp" />
     <ClCompile Include="diag\proto_cols.cpp" />
     <ClCompile Include="dungeon_master.cpp" />
+    <ClCompile Include="dungeon_master_obj_editor.cpp" />
     <ClCompile Include="fixes\pointbuyconfig.cpp" />
     <ClCompile Include="d20_levelup.cpp" />
     <ClCompile Include="d20_obj_registry.cpp" />

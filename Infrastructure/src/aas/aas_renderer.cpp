@@ -282,7 +282,7 @@ void Renderer::RenderGeometryShadow(gfx::AnimatedModel * model,
 	mDevice.SetMaterial(mGeometryShadowMaterial);
 
 	ShadowGlobals globals;
-	globals.projMatrix = mDevice.GetCamera().GetViewProj();
+	globals.projMatrix = mDevice.GetCurrentCamera().GetViewProj();
 	globals.globalLightDir = globalLight.dir;
 	globals.offsetZ = { params.offsetZ, 0, 0, 0 };
 	globals.alpha = { alpha, 0, 0, 0 };

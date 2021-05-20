@@ -15,6 +15,7 @@
 #include "config/config.h"
 #include "util/fixes.h"
 #include "mainwindow.h"
+#include "../gameview.h"
 #include <tig/tig_startup.h>
 
 #include "legacyvideosystem.h"
@@ -262,10 +263,10 @@ void VideoFixes::UpdateProjMatrices(const TigMatrices& matrices) {
 
 	auto& device = tig->GetRenderingDevice();
 
-	device.GetCamera().SetTranslation(transX, transY);
-	device.GetCamera().SetScale(matrices.scale);
+	gameView->SetTranslation(transX, transY);
+	gameView->SetZoom(matrices.scale);
 
-	auto viewProjNew(tig->GetRenderingDevice().GetCamera().GetViewProj());
+	auto viewProjNew(gameView->GetCamera()->GetViewProj());
 	auto viewProjOld(temple::GetRef<XMFLOAT4X4>(0x11E75788));
 	XMFLOAT4X4 diff;
 	XMStoreFloat4x4(&diff, XMLoadFloat4x4(&viewProjNew) - XMLoadFloat4x4(&viewProjOld));

@@ -6,6 +6,7 @@
 #define API __declspec(dllexport)
 
 #include <graphics/device.h>
+#include <graphics/camera.h>
 #include <graphics/mdfmaterials.h>
 #include <graphics/shaperenderer2d.h>
 #include <graphics/shaperenderer3d.h>
@@ -29,6 +30,7 @@ struct TempleDll {
 	static temple::AasConfig CreateAasConfig();
 
 	gfx::RenderingDevice renderingDevice;
+	gfx::WorldCamera &camera;
 	gfx::MdfMaterialFactory mdfFactory;
 	temple::AasConfig aasConfig;
 	gfx::ShapeRenderer2d shapeRenderer2d;

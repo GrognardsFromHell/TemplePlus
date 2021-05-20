@@ -76,6 +76,19 @@ int32_t Objects::getArrayFieldInt32(objHndl obj, obj_f field, uint32_t index) {
 	return objSystem->GetObject(obj)->GetInt32(field, index);
 }
 
+int32_t Objects::getArrayFieldInt32Size(objHndl obj, obj_f field) {
+	return objSystem->GetObject(obj)->GetInt32Size(field);
+}
+
+int64_t Objects::getArrayFieldInt64(objHndl obj, obj_f field, uint32_t index) {
+	return objSystem->GetObject(obj)->GetInt64(field, index);
+}
+
+int32_t Objects::getArrayFieldInt64Size(objHndl obj, obj_f field) {
+	return objSystem->GetObject(obj)->GetInt64Size(field);
+}
+
+
 objHndl Objects::getArrayFieldObj(objHndl obj, obj_f field, uint32_t index) {
 	return objSystem->GetObject(obj)->GetObjHndl(field, index);
 }

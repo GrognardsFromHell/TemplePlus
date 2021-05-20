@@ -4,6 +4,7 @@
 class TigInitializer;
 namespace gfx {
 	class RenderingDevice;
+	class WorldCamera;
 }
 namespace aas {
 	class Renderer;
@@ -26,7 +27,7 @@ class TileRenderer;
 
 class GameRenderer {
 public:
-	GameRenderer(TigInitializer &tig, GameSystems &gameSystems);
+	GameRenderer(TigInitializer &tig, gfx::WorldCamera &camera, GameSystems &gameSystems);
 	~GameRenderer();
 
 	void Render();
@@ -44,6 +45,7 @@ private:
 	void RenderWorld(RenderWorldInfo *info);
 	
 	gfx::RenderingDevice& mRenderingDevice;
+	gfx::WorldCamera& mCamera;
 	GameSystems &mGameSystems;
 
 	std::unique_ptr<aas::Renderer> mAasRenderer;

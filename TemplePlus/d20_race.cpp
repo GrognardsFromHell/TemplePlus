@@ -101,7 +101,7 @@ protected:
 
 PYBIND11_EMBEDDED_MODULE(race_defs, m) {
 
-	m.doc() = "Temple+ Char Editor, used for extending the ToEE character editor.";
+	m.doc() = "Temple+ Race Definitions, used for python-based race definitions.";
 
 	m.def("GetRaceFileList", []() {
 		auto result = std::vector<std::string>();
