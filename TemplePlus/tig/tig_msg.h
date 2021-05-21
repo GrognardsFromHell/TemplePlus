@@ -74,7 +74,7 @@ struct TigMsgMouse : TigMsgBase // type 0
 
 struct TigKeyStateChangeMsg : TigMsgBase // type 5
 {
-	uint32_t key; // DINPUT KEY
+	uint32_t key; // DINPUT KEY (DIK_)
 	BOOL down; // false = up, true = down
 	uint32_t _unused1;
 	uint32_t _unused2;

@@ -127,6 +127,10 @@ public:
 	TigRect GetContentArea(bool includingMargins = false) const; 
 	TigRect GetVisibleArea() const;
 
+	void SetUpdateTimeMsgHandler(std::function<void(uint32_t timeMs)> handler) {
+		mUpdateTimeHandler = handler;
+	}
+
 	void SetMouseMsgHandler(std::function<bool(const TigMouseMsg &msg)> handler) {
 		mMouseMsgHandler = handler;
 	}
@@ -165,6 +169,7 @@ protected:
 	bool mAutoSizeWidth = true;
 	bool mAutoSizeHeight = true;
 	RECT mMargins = {0,0,0,0};
+	std::function<void(uint32_t timeMs)> mUpdateTimeHandler;
 	std::function<bool(const TigMouseMsg &msg)> mMouseMsgHandler;
 	std::function<bool(const TigMsgWidget &msg)> mWidgetMsgHandler;
 	std::function<bool(const TigKeyStateChangeMsg &msg)> mKeyStateChangeHandler;

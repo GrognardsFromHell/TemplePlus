@@ -17,6 +17,8 @@
 #include <infrastructure/vfs.h>
 #include "util/streams.h"
 #include <infrastructure/binaryreader.h>
+#include <ui/widgets/widgets.h>
+#include <tig/tig_keyboard.h>
 
 //*****************************************************************************
 //* Worldmap-UI
@@ -115,6 +117,9 @@ public:
 
 protected:
 	void InitLocations();
+	MesFile::Content mWidgetLocations;
+	MesFile::Content mLargeTexturesMes;  // 0_worldmap_ui_large_textures.mes
+
 	std::vector<int> mTeleportMapIdTable; // map ID to teleport for each location; originally 0x102972BC (Vanilla) 0x11EA3710 (Co8 5.0.2+)
 	int& mLocationsVisitedCount = temple::GetRef<int>(0x10BEF810);
 
@@ -144,6 +149,7 @@ protected:
 	void UnhideLocationBtns();
 
 	
+	std::unique_ptr< WidgetContainer> mWnd;
 
 	std::vector<LocationWidgets> locWidgets;
 	bool AcquiredLocationBtnMsg(LgcyWidgetId widId, TigMsg* msg);
@@ -234,10 +240,12 @@ void UiWorldmap::Show(int mode)
 {
 	static auto ui_show_worldmap = temple::GetPointer<void(int mode)>(0x1015f140);
 	ui_show_worldmap(mode);
+	mImpl->mWnd->Show();
 }
 
 void UiWorldmap::Hide(){
 	static auto ui_hide_worldmap = temple::GetRef<void(__cdecl)()>(0x1015E210);
+	mImpl->mWnd->Hide();
 	return ui_hide_worldmap();
 }
 
@@ -842,6 +850,7 @@ UiWorldmapImpl::UiWorldmapImpl(){
 	}
 
 	LoadPaths();
+	InitWidgets();
 }
 
 /* 0x1015E0F0 */
@@ -993,6 +1002,7 @@ bool UiWorldmapImpl::OnDestinationReached()
 
 void UiWorldmapImpl::InitLocations()
 {
+
 	const int MAX_NUM_AREAS = 64;
 	const int MAX_NUM_LOCATIONS = 64;
 
@@ -1074,12 +1084,60 @@ void UiWorldmapImpl::InitLocations()
 
 void UiWorldmapImpl::InitWidgets()
 {
+	std::string basePath ("art/interface/worldmap_ui/");
+
+	mLargeTexturesMes = MesFile::ParseFile(basePath + "0_worldmap_ui_large_textures.mes");
+	GetUiLocations();
+	
 	// TODO
-	//LgcyWindow wnd(,)
+	
+	
+	auto getLoc = [&](int idx)->int {
+		return std::stol(mWidgetLocations[idx]);
+	};
+	auto SetWidFromMes = [&](WidgetBase& widg, int baseIdx)->void {
+		widg.SetPos(getLoc(baseIdx + 0), getLoc(baseIdx + 1));
+		widg.SetSize({ getLoc(baseIdx + 2), getLoc(baseIdx + 3) });
+	};
+
+	// Main Window
+	{
+		mWnd = std::make_unique<WidgetContainer>(0,0);
+		SetWidFromMes(*mWnd, 10);
+		auto mainBg = std::make_unique<WidgetImage>(basePath + mLargeTexturesMes[10]);
+		mWnd->AddContent(std::move(mainBg));
+		mWnd->SetUpdateTimeMsgHandler([](uint32_t) {
+			auto handler = temple::GetRef<BOOL(__cdecl)(int widId, TigMsg& msg)>(0x1015E990);
+			handler(-1, TigMsg()); // args aren't used in practice
+			});
+		mWnd->SetKeyStateChangeHandler([&](const TigKeyStateChangeMsg& msg)->bool {
+			if (mIsMakingTrip) {
+				return true;
+			}
+			if (msg.key == DIK_ESCAPE && !msg.down) {
+				ui_worldmap().Hide();
+			}
+			return true;
+			});
+	}
+	
+	// Exit Button
+	{
+		auto exitBtn = std::make_unique<WidgetButton>();
+		SetWidFromMes(*exitBtn, 20);
+		WidgetButtonStyle;
+		exitBtn->SetStyle("main-exit-button");
+		mWnd->Add(std::move(exitBtn));
+	}
+	
+
+	
 }
 
 void UiWorldmapImpl::GetUiLocations()
 {
+	// Todo: separate this file to modular locations that can have satellite locations
+	mWidgetLocations = MesFile::ParseFile("art/interface/worldmap_ui/0_worldmap_ui_locations.mes");
 
 }
 

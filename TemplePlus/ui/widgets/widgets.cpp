@@ -305,6 +305,9 @@ bool WidgetBase::HandleMouseMessage(const TigMouseMsg & msg)
 
 void WidgetBase::OnUpdateTime(uint32_t timeMs)
 {
+	if (mUpdateTimeHandler) {
+		mUpdateTimeHandler(timeMs);
+	}
 }
 
 WidgetContainer::WidgetContainer(int width, int height)

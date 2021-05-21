@@ -49,6 +49,16 @@
 	  "pressedImage": "art/interface/char_ui/char_looting_ui/ActionPointerClicked.tga",
 	  "disabledImage": "art/interface/char_ui/char_looting_ui/ActionPointerDisabled.tga"
     },
+	
+	{
+		"id": "main-exit-button",
+		"inherit": "default-sounds",
+		"normalImage": "art/interface/char_ui/main_exit_button_hover_off.tga",
+		"hoverImage": "art/interface/char_ui/main_exit_button_hover_on.tga",
+		"pressedImage": "art/interface/char_ui/main_exit_button_pressed.tga",
+      	"disabledImage": "art/interface/char_ui/main_exit_button_disabled.tga"
+	},
+
 	{
       "id": "chargen-button",
 	    "inherit": "default-sounds",
