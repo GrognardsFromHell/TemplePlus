@@ -123,7 +123,7 @@ protected:
 	std::vector<int> mTeleportMapIdTable; // map ID to teleport for each location; originally 0x102972BC (Vanilla) 0x11EA3710 (Co8 5.0.2+)
 	int& mLocationsVisitedCount = temple::GetRef<int>(0x10BEF810);
 
-	void InitWidgets();
+	void InitWidgets(int w, int h);
 		void GetUiLocations();
 	void LoadPaths();
 	std::vector<int> mPathIdTable;
@@ -850,7 +850,7 @@ UiWorldmapImpl::UiWorldmapImpl(){
 	}
 
 	LoadPaths();
-	InitWidgets();
+	InitWidgets(config.renderWidth, config.renderHeight);
 }
 
 /* 0x1015E0F0 */
@@ -1082,7 +1082,7 @@ void UiWorldmapImpl::InitLocations()
 	locationProps[11].startLoc.locy = temple::GetRef<int>(0x1015E8A4 + 1);
 }
 
-void UiWorldmapImpl::InitWidgets()
+void UiWorldmapImpl::InitWidgets(int w, int h)
 {
 	std::string basePath ("art/interface/worldmap_ui/");
 
@@ -1090,20 +1090,26 @@ void UiWorldmapImpl::InitWidgets()
 	GetUiLocations();
 	
 	// TODO
-	
-	
+	auto refX = 0, refY = 0;
+
 	auto getLoc = [&](int idx)->int {
 		return std::stol(mWidgetLocations[idx]);
 	};
-	auto SetWidFromMes = [&](WidgetBase& widg, int baseIdx)->void {
-		widg.SetPos(getLoc(baseIdx + 0), getLoc(baseIdx + 1));
+	auto SetWidFromMes = [&](WidgetBase& widg, int baseIdx)->void { // used for the buttons, since the mesfile coords are absolute but our widget system uses relative coords
+		//widg.SetAutoSizeHeight(false); widg.SetAutoSizeWidth(false);
+		//widg.SetMargins({ 0,0,0,0 });
+		widg.SetPos(getLoc(baseIdx + 0) - refX, getLoc(baseIdx + 1) - refY);
 		widg.SetSize({ getLoc(baseIdx + 2), getLoc(baseIdx + 3) });
 	};
 
+
+	refX = getLoc(10); refY = getLoc(11);
 	// Main Window
 	{
 		mWnd = std::make_unique<WidgetContainer>(0,0);
-		SetWidFromMes(*mWnd, 10);
+		
+		mWnd->SetPos(getLoc(10) + (w - 800) / 2, getLoc(11) + (h - 600) / 2 ) ;
+		mWnd->SetSize({ getLoc(12), getLoc(13) });
 		auto mainBg = std::make_unique<WidgetImage>(basePath + mLargeTexturesMes[10]);
 		mWnd->AddContent(std::move(mainBg));
 		mWnd->SetUpdateTimeMsgHandler([](uint32_t) {
@@ -1124,13 +1130,16 @@ void UiWorldmapImpl::InitWidgets()
 	// Exit Button
 	{
 		auto exitBtn = std::make_unique<WidgetButton>();
+		
 		SetWidFromMes(*exitBtn, 20);
-		WidgetButtonStyle;
 		exitBtn->SetStyle("main-exit-button");
+		exitBtn->SetClickHandler([&](int x, int y) {
+			if (mIsMakingTrip)
+				return false;
+			ui_worldmap().Hide();
+			});
 		mWnd->Add(std::move(exitBtn));
 	}
-	
-
 	
 }
 

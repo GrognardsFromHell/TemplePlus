@@ -91,6 +91,7 @@ void MessageQueue::ProcessMessages()
 		;
 }
 
+/* 0x101DF440 */
 void MessageQueue::PollExternalEvents()
 {
 	// TODO: Move these dependencies out and make it a parameterizable "external event producer"

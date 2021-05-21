@@ -73,7 +73,9 @@ public:
 	int GetHeight() const {
 		return GetSize().height;
 	}
-
+	void SetMargins(const RECT &margins) {
+		mMargins = margins;
+	}
 	LgcyWidgetId GetWidgetId() const {
 		return mWidget->widgetId;
 	}

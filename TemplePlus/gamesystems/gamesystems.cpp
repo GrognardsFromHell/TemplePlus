@@ -459,6 +459,7 @@ int GameSystems::ResolveMaterial(const std::string& materialName) const {
 	return material->GetId();
 }
 
+/* 0x10002170 */
 void GameSystems::AdvanceTime() {
 
 	auto now = timeGetTime();

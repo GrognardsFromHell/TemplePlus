@@ -122,6 +122,7 @@ GameLoop::~GameLoop() {
 }
 
 /*
+* 0x100010F0
 	This replaces the main loop that is called by temple_main. Since we already replaced
 	temple_main, there is no need to hook this function in temple.dll
 */
