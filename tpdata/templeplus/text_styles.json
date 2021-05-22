@@ -37,6 +37,13 @@
     "align": "center"
   },
   {
+    "id": "worldmap-big-button-text",
+    "fontFamily": "Priory-12",
+    "pointSize": 12,
+    "foreground": "#ffffff",
+    "align": "center"
+  },
+  {
     "id": "priory-title",
     "fontFamily": "Priory-12",
     "pointSize": 12,

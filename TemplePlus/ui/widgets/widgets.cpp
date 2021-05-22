@@ -42,6 +42,16 @@ void WidgetBase::AddContent(std::unique_ptr<WidgetContent> content)
 	mContent.emplace_back(std::move(content));
 }
 
+std::unique_ptr<WidgetContent>&  WidgetBase::AddContentText(const std::string& text)
+{
+	//auto styleId = contentJson["style"].string_value();
+	auto textContent = std::make_unique<WidgetText>();
+	//textContent->SetStyleId(styleId);
+	textContent->SetText(text);
+	AddContent(std::move(textContent));
+	return mContent[mContent.size()-1];
+}
+
 void WidgetBase::Show()
 {
 	SetVisible(true);

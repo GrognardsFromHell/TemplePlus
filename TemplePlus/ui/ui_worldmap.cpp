@@ -1085,6 +1085,7 @@ void UiWorldmapImpl::InitLocations()
 void UiWorldmapImpl::InitWidgets(int w, int h)
 {
 	std::string basePath ("art/interface/worldmap_ui/");
+	std::string townmapPath("art/interface/townmap_ui/");
 
 	mLargeTexturesMes = MesFile::ParseFile(basePath + "0_worldmap_ui_large_textures.mes");
 	GetUiLocations();
@@ -1139,6 +1140,18 @@ void UiWorldmapImpl::InitWidgets(int w, int h)
 			ui_worldmap().Hide();
 			});
 		mWnd->Add(std::move(exitBtn));
+	}
+
+	// "World Map" Button
+	{
+		auto wmBtn = std::make_unique<WidgetButton>();
+
+		SetWidFromMes(*wmBtn, 30);
+		auto myStyle = wmBtn->GetStyle();
+		wmBtn->SetStyle("worldmap-townmap-button");
+		auto townmapTexts = MesFile::ParseFile("mes/townmap_ui_text.mes");
+		wmBtn->AddContentText(townmapTexts[11]); // World Map
+		mWnd->Add(std::move(wmBtn));
 	}
 	
 }

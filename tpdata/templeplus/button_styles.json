@@ -58,11 +58,20 @@
 		"pressedImage": "art/interface/char_ui/main_exit_button_pressed.tga",
       	"disabledImage": "art/interface/char_ui/main_exit_button_disabled.tga"
 	},
+	{
+		"id": "worldmap-townmap-button",
+		"inherit": "default-sounds",
+		"textStyle": "chargen-button-text",
+		"normalImage": "art/interface/townmap_ui/map_button_selected.tga",
+		"hoverImage": "art/interface/townmap_ui/map_button_hover.tga",
+		"pressedImage": "art/interface/townmap_ui/map_button_selected.tga",
+      	"disabledImage": "art/interface/townmap_ui/map_button_disabled.tga"
+	},
 
 	{
       "id": "chargen-button",
 	    "inherit": "default-sounds",
-      "textStyle": "chargen-button-text",
+      "textStyle": "worldmap-big-button-text",
       "normalImage": "art/interface/pc_creation/button_active_normal.tga",
       "hoverImage": "art/interface/pc_creation/button_active_hover.tga",
       "pressedImage": "art/interface/pc_creation/button_active_click.tga",
