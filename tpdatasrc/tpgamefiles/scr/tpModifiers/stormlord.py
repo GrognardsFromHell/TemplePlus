@@ -230,11 +230,19 @@ def setInitialStatusOfAura(attachee, args, evt_obj):
     args.set_arg(0, 0)
     return 0
 
-cracklingAura = PythonModifier("Stormlord Crackling Aura", 2)
+def cracklingAuraTeleport(attachee, args, evt_obj):
+    if args.get_arg(0):
+        game.particles_end(args.get_arg(1))
+        particlesID = game.particles("Electricity Aura", attachee)
+        args.set_arg(1, particlesID)
+    return 0
+
+cracklingAura = PythonModifier("Stormlord Crackling Aura", 2) #isActiveFlag, particlesID
 cracklingAura.MapToFeat("Stormlord Resistance to Electricity")
 cracklingAura.AddHook(ET_OnBuildRadialMenuEntry , EK_NONE, particlesRadial, ())
 cracklingAura.AddHook(ET_OnD20PythonActionPerform, pythonActionCracklingAuraID, toggleCracklingAura, ())
 cracklingAura.AddHook(ET_OnConditionAdd, EK_NONE, setInitialStatusOfAura, ())
+cracklingAura.AddHook(ET_OnD20Signal, EK_S_Teleport_Reconnect, cracklingAuraTeleport, ())
 
 ##### Spell casting
 
