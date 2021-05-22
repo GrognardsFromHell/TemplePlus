@@ -21,6 +21,7 @@ classSpecModule = __import__('class038_stormlord')
 
 ########## Python Action ID's ##########
 pythonActionStormId = 3801
+pythonActionCracklingAuraID = 3802
 ########################################
 
 
@@ -203,6 +204,38 @@ def pythonActionPerformStorm(attachee, args, evt_obj):
 #stormlordSLA.AddHook(ET_OnD20PythonActionPerform, pythonActionStormId, pythonActionPerformStorm, ())
 
 
+#### Stormlord Particles ####
+
+def particlesRadial(attachee, args, evt_obj):
+    print "particlesRadial Hook"
+    if args.get_arg(0):
+        toggleEffectId = tpdp.RadialMenuEntryPythonAction("Deactivate Crackling Aura", D20A_PYTHON_ACTION, pythonActionCracklingAuraID, 0, "TAG_STORMLORDS")
+    else:
+        toggleEffectId = tpdp.RadialMenuEntryPythonAction("Activate Crackling Aura", D20A_PYTHON_ACTION, pythonActionCracklingAuraID, 1, "TAG_STORMLORDS")
+    toggleEffectId.add_child_to_standard(attachee, tpdp.RadialMenuStandardNode.Class)
+    return 0
+
+def toggleCracklingAura(attachee, args, evt_obj):
+    toggleSignal = evt_obj.d20a.data1
+    if toggleSignal:
+        particlesID = game.particles("Electricity Aura", attachee)
+        args.set_arg(0, 1)
+        args.set_arg(1, particlesID)
+    else:
+        game.particles_end(args.get_arg(1))
+        args.set_arg(0, 0)
+    return 0
+
+def setInitialStatusOfAura(attachee, args, evt_obj):
+    args.set_arg(0, 0)
+    return 0
+
+cracklingAura = PythonModifier("Stormlord Crackling Aura", 2)
+cracklingAura.MapToFeat("Stormlord Resistance to Electricity")
+cracklingAura.AddHook(ET_OnBuildRadialMenuEntry , EK_NONE, particlesRadial, ())
+cracklingAura.AddHook(ET_OnD20PythonActionPerform, pythonActionCracklingAuraID, toggleCracklingAura, ())
+cracklingAura.AddHook(ET_OnConditionAdd, EK_NONE, setInitialStatusOfAura, ())
+
 ##### Spell casting
 
 # configure the spell casting condition to hold the highest Divine classs
@@ -268,3 +301,4 @@ spellCasterSpecObj.AddHook(ET_OnSpellListExtensionGet, EK_NONE, OnSpellListExten
 spellCasterSpecObj.AddHook(ET_OnLevelupSystemEvent, EK_LVL_Spells_Activate, OnInitLevelupSpellSelection, ())
 spellCasterSpecObj.AddHook(ET_OnLevelupSystemEvent, EK_LVL_Spells_Check_Complete, OnLevelupSpellsCheckComplete, ())
 spellCasterSpecObj.AddHook(ET_OnLevelupSystemEvent, EK_LVL_Spells_Finalize, OnLevelupSpellsFinalize, ())
+
