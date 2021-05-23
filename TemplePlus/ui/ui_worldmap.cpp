@@ -2,10 +2,12 @@
 #include "util/fixes.h"
 #include "common.h"
 #include "maps.h"
+#include <tig/tig_keyboard.h>
 
 #include "ui_worldmap.h"
 #include "ui_systems.h"
 #include "ui_legacysystems.h"
+#include "ui_townmap.h"
 
 #include <temple/dll.h>
 #include "tig/tig_msg.h"
@@ -18,7 +20,7 @@
 #include "util/streams.h"
 #include <infrastructure/binaryreader.h>
 #include <ui/widgets/widgets.h>
-#include <tig/tig_keyboard.h>
+
 
 //*****************************************************************************
 //* Worldmap-UI
@@ -94,6 +96,8 @@ public:
 
 	bool LoadGame(const UiSaveFile& save);
 
+	void Show(int state);
+
 	bool OnDestinationReached();
 
 	std::vector<LocationId> mAreaToLocId;
@@ -113,10 +117,19 @@ public:
 	LocationId& mDialogueDestLocId = temple::GetRef<LocationId>(0x102FB3E8);
 
 	BOOL& mIsMakingTrip = temple::GetRef<BOOL>(0x10BEF7FC);
-	
+	/*
+	0 - Switched from townmap UI, or door with obj_f_scenery_flags: OSCF_USE_OPEN_WORLDMAP
+	1- ??
+	2 - travel by dialogue
+	3 - entered from random encounter map
+	*/
+	int& mWorldmapState = temple::GetRef<int>(0x10BEF808);
+	BOOL& mIsVisible = temple::GetRef<BOOL>(0x10BEF7DC);
 
 protected:
 	void InitLocations();
+	bool mIsCo8 = false;
+
 	MesFile::Content mWidgetLocations;
 	MesFile::Content mLargeTexturesMes;  // 0_worldmap_ui_large_textures.mes
 
@@ -150,6 +163,8 @@ protected:
 
 	
 	std::unique_ptr< WidgetContainer> mWnd;
+	LgcyWidgetId mCurrentMapBtn = -1;
+	LgcyWidgetId mCenterOnPartyBtn = -1;
 
 	std::vector<LocationWidgets> locWidgets;
 	bool AcquiredLocationBtnMsg(LgcyWidgetId widId, TigMsg* msg);
@@ -240,7 +255,7 @@ void UiWorldmap::Show(int mode)
 {
 	static auto ui_show_worldmap = temple::GetPointer<void(int mode)>(0x1015f140);
 	ui_show_worldmap(mode);
-	mImpl->mWnd->Show();
+	mImpl->Show(mode); 
 }
 
 void UiWorldmap::Hide(){
@@ -326,7 +341,7 @@ public:
 int UiWorldmapImpl::GetAreaFromMap(MapId mapId)
 {
 
-	if (temple::Dll::GetInstance().IsExpandedWorldmapDll()) {
+	if (mIsCo8) {
 		if (mapId == 5078 && maps.IsCurrentMapOutdoor()) {
 			// Fix for Livonya's slaughtered caravan mod in Co8 5.0.2+
 			// Co8 has changed its map to 5078, but the area is still defined as 4
@@ -603,7 +618,7 @@ BOOL UiWorldmapImpl::MakeTripFromAreaToArea(int fromId, int toId) {
 	auto &someX_10BEF7CC = temple::GetRef<int>(0x10BEF7CC);
 	auto &someY_10BEF7D0 = temple::GetRef<int>(0x10BEF7D0);
 	auto & mWorldmapWidgets = temple::GetRef<WorldmapWidgetsCo8*>(0x10BEF2D0);
-	auto &mWorldmapState = temple::GetRef<int>(0x10BEF808);
+	
 
 	
 	mTeleportMapId = mTeleportMapIdTable[toId];
@@ -836,6 +851,8 @@ BOOL UiWorldmapImpl::MakeTripFromAreaToArea(int fromId, int toId) {
 
 UiWorldmapImpl::UiWorldmapImpl(){
 
+	mIsCo8 = temple::Dll::GetInstance().IsExpandedWorldmapDll();
+
 	InitLocations();
 	
 	for (auto locId = 0; locId < locationProps.size(); ++locId) {
@@ -850,7 +867,23 @@ UiWorldmapImpl::UiWorldmapImpl(){
 	}
 
 	LoadPaths();
+
+	for (auto i = 0; i < (mIsCo8 ? ACQUIRED_LOCATIONS_CO8 : ACQUIRED_LOCATIONS_VANILLA); ++i) {
+		locWidgets.push_back(LocationWidgets());
+	}
+	
 	InitWidgets(config.renderWidth, config.renderHeight);
+}
+
+void UiWorldmapImpl::Show(int state) {
+	
+	mWorldmapState = state;
+	mIsVisible = TRUE;
+
+	mWnd->Show();
+	((WidgetButton*)uiManager->GetAdvancedWidget(mCurrentMapBtn))->SetDisabled(mWorldmapState == 3);
+	((WidgetButton*)uiManager->GetAdvancedWidget(mCenterOnPartyBtn))->SetDisabled(mWorldmapState == 3);
+	
 }
 
 /* 0x1015E0F0 */
@@ -877,7 +910,7 @@ bool UiWorldmapImpl::LoadGame(const UiSaveFile& save)
 		vfs->Seek(save.file, -4 * (20 + 5 + 1), SeekDir::Current);
 	}
 
-	if (temple::Dll::GetInstance().IsExpandedWorldmapDll()) {
+	if (mIsCo8) {
 		// todo check if you can detect vanilla save and modify this...
 		auto& mLocationsVisitedFlags = temple::GetRef<int[ACQUIRED_LOCATIONS_CO8]>(0x11EA4800);
 		if (tio_fread(&mLocationsVisitedFlags, 20*4, 1, save.file) != 1) {
@@ -1010,7 +1043,7 @@ void UiWorldmapImpl::InitLocations()
 	mTeleportMapIdTable.resize(MAX_NUM_LOCATIONS, 0);
 	mAreaToLocId.resize(MAX_NUM_AREAS, 0);
 
-	if (temple::Dll::GetInstance().IsExpandedWorldmapDll()) {
+	if (mIsCo8) {
 		memcpy(&mTeleportMapIdTable[0], temple::GetPointer(0x11EA3710), ACQUIRED_LOCATIONS_CO8 * sizeof(int));
 		memcpy(&mAreaToLocId[0], temple::GetPointer(0x11EA3610), 64 * sizeof(int));
 		// In Co8 this should be
@@ -1088,6 +1121,7 @@ void UiWorldmapImpl::InitWidgets(int w, int h)
 	std::string townmapPath("art/interface/townmap_ui/");
 
 	mLargeTexturesMes = MesFile::ParseFile(basePath + "0_worldmap_ui_large_textures.mes");
+	auto townmapTexts = MesFile::ParseFile("mes/townmap_ui_text.mes");
 	GetUiLocations();
 	
 	// TODO
@@ -1096,21 +1130,28 @@ void UiWorldmapImpl::InitWidgets(int w, int h)
 	auto getLoc = [&](int idx)->int {
 		return std::stol(mWidgetLocations[idx]);
 	};
+	refX = getLoc(10); refY = getLoc(11);
+
 	auto SetWidFromMes = [&](WidgetBase& widg, int baseIdx)->void { // used for the buttons, since the mesfile coords are absolute but our widget system uses relative coords
 		//widg.SetAutoSizeHeight(false); widg.SetAutoSizeWidth(false);
 		//widg.SetMargins({ 0,0,0,0 });
-		widg.SetPos(getLoc(baseIdx + 0) - refX, getLoc(baseIdx + 1) - refY);
+		widg.SetPos(getLoc(baseIdx + 0), getLoc(baseIdx + 1) );
 		widg.SetSize({ getLoc(baseIdx + 2), getLoc(baseIdx + 3) });
 	};
+	auto AdjChildPos = [&](WidgetBase& widg, WidgetBase& parent) {
+		widg.SetX(widg.GetX() - parent.GetX());
+		widg.SetY(widg.GetY() - parent.GetY());
+	};
+	
+	// TODO tooltips
 
-
-	refX = getLoc(10); refY = getLoc(11);
+	
 	// Main Window
 	{
 		mWnd = std::make_unique<WidgetContainer>(0,0);
 		
-		mWnd->SetPos(getLoc(10) + (w - 800) / 2, getLoc(11) + (h - 600) / 2 ) ;
 		mWnd->SetSize({ getLoc(12), getLoc(13) });
+		SetWidFromMes(*mWnd, 10);
 		auto mainBg = std::make_unique<WidgetImage>(basePath + mLargeTexturesMes[10]);
 		mWnd->AddContent(std::move(mainBg));
 		mWnd->SetUpdateTimeMsgHandler([](uint32_t) {
@@ -1139,6 +1180,7 @@ void UiWorldmapImpl::InitWidgets(int w, int h)
 				return false;
 			ui_worldmap().Hide();
 			});
+		AdjChildPos(*exitBtn, *mWnd);
 		mWnd->Add(std::move(exitBtn));
 	}
 
@@ -1148,12 +1190,93 @@ void UiWorldmapImpl::InitWidgets(int w, int h)
 
 		SetWidFromMes(*wmBtn, 30);
 		auto myStyle = wmBtn->GetStyle();
-		wmBtn->SetStyle("worldmap-townmap-button");
-		auto townmapTexts = MesFile::ParseFile("mes/townmap_ui_text.mes");
-		wmBtn->AddContentText(townmapTexts[11]); // World Map
+		wmBtn->SetStyle("worldmap-worldmap-button"); // TODO the vanilla text had kerning = 0 which gave it different look
+		wmBtn->SetText(townmapTexts[11]);
+		AdjChildPos(*wmBtn, *mWnd);
 		mWnd->Add(std::move(wmBtn));
 	}
+	// "Current Map" Button
+	{
+		auto btn = std::make_unique<WidgetButton>();
+
+		SetWidFromMes(*btn, 40);
+		btn->SetStyle("worldmap-currentmap-button");
+		btn->SetText(townmapTexts[12]);
+		btn->SetWidgetMsgHandler([&](const TigMsgWidget& msg) ->bool{
+			if (mWorldmapState == 3) {
+				return true;
+			}
+			if (msg.widgetEventType == TigMsgWidgetEvent::MouseReleased) {
+				if (mIsMakingTrip) {
+					return true;
+				}
+				ui_worldmap().Hide();
+				uiSystems->GetTownmap().Show();
+				return true;
+			}
+			return false;
+			});
+		mCurrentMapBtn = btn->GetWidgetId();
+		AdjChildPos(*btn, *mWnd);
+		mWnd->Add(std::move(btn));
+	}
 	
+	// Selection window (acquired locations text entries)
+	{
+		auto wnd = std::make_unique<WidgetContainer>(0,0);
+		SetWidFromMes(*wnd, 60);
+		
+		
+		auto btnSpacing = getLoc(79);
+		auto btnHeight = getLoc(78);
+		for (auto i = 0u; i < locWidgets.size(); ++i) {
+			auto btn = std::make_unique<WidgetButton>();
+			auto btnId = btn->GetWidgetId();
+			btn->SetText("East Hommlet");
+			locWidgets[i].acquiredLocationBtn = btnId;
+
+			SetWidFromMes(*btn, 75);
+			btn->SetMargins({ 10,0,0,0 });
+			btn->SetY(btn->GetY() + i * (btnSpacing + btnHeight));
+			btn->SetStyle("worldmap-acquired-location");
+			
+			btn->SetWidgetMsgHandler([&, btnId](const TigMsgWidget& msg) ->bool {
+				return AcquiredLocationBtnMsg(btnId, (TigMsg*) &msg);
+				});
+			AdjChildPos(*btn, *wnd);
+			wnd->Add(std::move(btn));
+		}
+		AdjChildPos(*wnd, *mWnd);
+		mWnd->Add(std::move(wnd));
+	}
+	
+	// Center on party button
+	{
+		auto btn = std::make_unique<WidgetButton>();
+
+		SetWidFromMes(*btn, 90);
+		btn->SetStyle("worldmap-center-on-party-button");
+		btn->SetWidgetMsgHandler([&](const TigMsgWidget& msg) ->bool {
+			if (mWorldmapState == 3) {
+				return true;
+			}
+			if (msg.widgetEventType == TigMsgWidgetEvent::MouseReleased) {
+				if (!mIsMakingTrip) {
+					ui_worldmap().Hide();
+					uiSystems->GetTownmap().Show();
+				}
+				temple::GetRef<void(__cdecl)(int, const TigMsgWidget&)>(0x1012C660)(-1, msg); // UiTownmap center on party
+				return true;
+			}
+			return false;
+			});
+		mCenterOnPartyBtn = btn->GetWidgetId();
+		AdjChildPos(*btn, *mWnd);
+		mWnd->Add(std::move(btn));
+	}
+
+
+	mWnd->SetPos(getLoc(10) + (w - 800) / 2, getLoc(11) + (h - 600) / 2);
 }
 
 void UiWorldmapImpl::GetUiLocations()
@@ -1193,7 +1316,7 @@ void UiWorldmapImpl::LoadPaths()
 	logger->info("Loaded {} worldmap paths", mPaths.size());
 
 
-	if (temple::Dll::GetInstance().IsExpandedWorldmapDll()) {
+	if (mIsCo8) {
 		mPathIdMax = 191;
 		mPathIdTableWidth = 20;
 		mPathIdTable.resize(mPathIdTableWidth * mPathIdTableWidth);
@@ -1342,10 +1465,9 @@ bool UiWorldmapImpl::AcquiredLocationBtnMsg(LgcyWidgetId widId, TigMsg* msg)
 		return FALSE;
 	}
 
-	auto& mIsMakingTrip = temple::GetRef<int>(0x10BEF7FC);
 	auto& mWorldmapWidgets = temple::GetRef<WorldmapWidgetsCo8*>(0x10BEF2D0);
 	auto& mLocationsVisitedCount = temple::GetRef<int>(0x10BEF810);
-	auto mLocationVisitedFlags = temple::Dll::GetInstance().IsExpandedWorldmapDll() ? 
+	auto mLocationVisitedFlags = mIsCo8 ? 
 		temple::GetRef<int[ACQUIRED_LOCATIONS_CO8]>(0x11EA4800) :
 		temple::GetRef<int[ACQUIRED_LOCATIONS_VANILLA]>(0x10BEF78C);
 

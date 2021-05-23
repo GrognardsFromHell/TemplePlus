@@ -36,7 +36,11 @@ public:
 	virtual WidgetBase *PickWidget(int x, int y);
 
 	void AddContent(std::unique_ptr<WidgetContent> content);
-	std::unique_ptr<WidgetContent>&  AddContentText(const std::string& text);
+	WidgetText&  AddContentText(const std::string& text, const std::string& styleId = "");
+
+	const eastl::vector<std::unique_ptr<WidgetContent>>& GetContent() const {
+		return mContent;
+	}
 
 	void Show();
 	void Hide();

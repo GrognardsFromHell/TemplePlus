@@ -36,6 +36,22 @@
     "foreground": "#ffffff",
     "align": "center"
   },
+
+  {
+    "id": "worldmap-small-button-text",
+    "fontFamily": "Priory-12",
+    "pointSize": 12,
+    "foreground": "#b4b4b4",
+    "align": "left"
+  },
+  {
+    "id": "worldmap-small-button-text-hovered",
+    "fontFamily": "Priory-12",
+    "pointSize": 12,
+    "foreground": "#00c6ff",
+    "align": "left"
+  },
+
   {
     "id": "worldmap-big-button-text",
     "fontFamily": "Priory-12",

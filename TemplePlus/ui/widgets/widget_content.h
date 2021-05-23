@@ -31,6 +31,12 @@ public:
 		return mPreferredSize;
 	}
 
+	virtual bool IsText() const {
+		return false;
+	}
+	virtual bool IsImage() const {
+		return false;
+	}
 
 	void SetX(int x) {
 		mX = x;
@@ -71,6 +77,9 @@ protected:
 class WidgetImage : public WidgetContent {
 public:
 	WidgetImage(const std::string &path);
+	bool IsImage() const override {
+		return true;
+	}
 
 	void Render() override;
 
@@ -86,7 +95,12 @@ public:
 	WidgetText();
 	WidgetText(const std::string &text, const std::string &styleId);
 
+	bool IsText() const override {
+		return true;
+	}
+
 	void SetText(const std::string &text);
+	std::string GetText();
 
 	void SetStyleId(const std::string &id);
 	const std::string &GetStyleId() const;

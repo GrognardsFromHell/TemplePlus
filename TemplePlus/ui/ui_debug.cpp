@@ -86,6 +86,25 @@ static void DrawLegacyWidgetTreeNode(LgcyWidget *widget) {
 
 }
 
+void DrawContentTreeNode(WidgetContent* content) {
+	std::string textEntry;
+	if (content->IsText()) {
+		textEntry += "[txt]: ";
+		textEntry += ((WidgetText*)content)->GetText();
+	}
+	else if (content->IsImage()) {
+		textEntry += "[img] ";
+	}
+	else {
+		textEntry += "[unk] ";
+	}
+	ImGui::BulletText(textEntry.c_str());
+	ImGui::BulletText(" X:%d Y:%d FixedW:%d FixedH:%d", content->GetX(), content->GetY(), content->GetFixedWidth(), content->GetFixedHeight());
+	auto &contentArea = content->GetContentArea();
+	ImGui::BulletText("Content area: X:%d Y:%d W:%d H:%d", contentArea.x, contentArea.y, contentArea.width, contentArea.height);
+	
+}
+
 static void DrawAdvWidgetTreeNode(WidgetBase *widget) {
 	
 	std::string textEntry;
@@ -133,6 +152,10 @@ static void DrawAdvWidgetTreeNode(WidgetBase *widget) {
 		for (auto &child : window->GetChildren()) {
 			DrawAdvWidgetTreeNode(child.get());
 		}
+	}
+
+	for (auto& content : widget->GetContent()) {
+		DrawContentTreeNode(content.get());
 	}
 
 	ImGui::TreePop();

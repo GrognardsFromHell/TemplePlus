@@ -144,6 +144,11 @@ void WidgetText::SetText(const std::string & text)
 	UpdateBounds();
 }
 
+std::string WidgetText::GetText()
+{
+	return ucs2_to_local(mText.text);
+}
+
 void WidgetText::SetStyleId(const std::string & id)
 {
 	mStyleId = id;

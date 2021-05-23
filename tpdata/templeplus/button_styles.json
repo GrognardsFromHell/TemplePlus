@@ -59,19 +59,45 @@
       	"disabledImage": "art/interface/char_ui/main_exit_button_disabled.tga"
 	},
 	{
-		"id": "worldmap-townmap-button",
+		"id": "worldmap-worldmap-button",
 		"inherit": "default-sounds",
-		"textStyle": "chargen-button-text",
+		"textStyle": "worldmap-big-button-text",
 		"normalImage": "art/interface/townmap_ui/map_button_selected.tga",
-		"hoverImage": "art/interface/townmap_ui/map_button_hover.tga",
+		"hoverImage": "art/interface/townmap_ui/map_button_selected.tga",
 		"pressedImage": "art/interface/townmap_ui/map_button_selected.tga",
       	"disabledImage": "art/interface/townmap_ui/map_button_disabled.tga"
 	},
+	{
+		"id": "worldmap-currentmap-button",
+		"inherit": "default-sounds",
+		"textStyle": "worldmap-big-button-text",
+		"normalImage": "art/interface/townmap_ui/map_button_selected.tga",
+		"hoverImage": "art/interface/townmap_ui/map_button_hover.tga",
+		"pressedImage": "art/interface/townmap_ui/map_button_pressed.tga",
+      	"disabledImage": "art/interface/townmap_ui/map_button_disabled.tga"
+	},
+	{
+		"id": "worldmap-center-on-party-button",
+		"inherit": "default-sounds",
+		"textStyle": "worldmap-big-button-text",
+		"normalImage": "art/interface/townmap_ui/center_on_party_normal.tga",
+		"hoverImage": "art/interface/townmap_ui/center_on_party_hover.tga",
+		"pressedImage": "art/interface/townmap_ui/center_on_party_pressed.tga",
+      	"disabledImage": "art/interface/worldmap_ui/center_on_party_grey.tga"
+	},
+	{
+		"id": "worldmap-acquired-location",
+		"inherit": "default-sounds",
+		"textStyle": "worldmap-small-button-text",
+		"hoverTextStyle": "worldmap-small-button-text-hovered"
+
+	},
+	
 
 	{
       "id": "chargen-button",
 	    "inherit": "default-sounds",
-      "textStyle": "worldmap-big-button-text",
+      "textStyle": "chargen-button-text",
       "normalImage": "art/interface/pc_creation/button_active_normal.tga",
       "hoverImage": "art/interface/pc_creation/button_active_hover.tga",
       "pressedImage": "art/interface/pc_creation/button_active_click.tga",
