@@ -21,7 +21,6 @@ classSpecModule = __import__('class038_stormlord')
 
 ########## Python Action ID's ##########
 pythonActionStormId = 3801
-pythonActionCracklingAuraID = 3802
 ########################################
 
 
@@ -214,23 +213,23 @@ def particlesRadial(attachee, args, evt_obj):
 
 def triggerCracklingAura(attachee, args, evt_obj):
     if args.get_arg(0):
-        if not args.get_arg(2): #query is triggered more than once on combat enter
+        if not args.get_arg(1): #query is triggered more than once on combat enter
             particlesID = game.particles("Electricity Aura", attachee)
             args.set_arg(1, particlesID)
-            args.set_arg(2, 1)
     return 0
 
 def deactivateCracklingAura(attachee, args, evt_obj):
     particlesID = args.get_arg(1)
-    game.particles_end(particlesID)
-    args.set_arg(2, 0)
-    return 0
+    if particlesID:
+        game.particles_end(particlesID)
+        args.set_arg(1, 0)
+        return 0
 
 def setInitialStatusOfAura(attachee, args, evt_obj):
     args.set_arg(0, 0)
     return 0
 
-cracklingAura = PythonModifier("Stormlord Crackling Aura", 3) #isActiveFlag, particlesID, isTriggered
+cracklingAura = PythonModifier("Stormlord Crackling Aura", 2) #isActiveFlag, particlesID
 cracklingAura.MapToFeat("Stormlord Resistance to Electricity")
 cracklingAura.AddHook(ET_OnBuildRadialMenuEntry , EK_NONE, particlesRadial, ())
 cracklingAura.AddHook(ET_OnD20Query, EK_Q_EnterCombat, triggerCracklingAura, ())
