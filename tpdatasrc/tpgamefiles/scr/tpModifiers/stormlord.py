@@ -207,42 +207,36 @@ def pythonActionPerformStorm(attachee, args, evt_obj):
 #### Stormlord Particles ####
 
 def particlesRadial(attachee, args, evt_obj):
-    print "particlesRadial Hook"
-    if args.get_arg(0):
-        toggleEffectId = tpdp.RadialMenuEntryPythonAction("Deactivate Crackling Aura", D20A_PYTHON_ACTION, pythonActionCracklingAuraID, 0, "TAG_STORMLORDS")
-    else:
-        toggleEffectId = tpdp.RadialMenuEntryPythonAction("Activate Crackling Aura", D20A_PYTHON_ACTION, pythonActionCracklingAuraID, 1, "TAG_STORMLORDS")
+    toggleEffectId = tpdp.RadialMenuEntryToggle("Crackling Aura", "TAG_STORMLORDS")
+    toggleEffectId.link_to_args(args, 0)
     toggleEffectId.add_child_to_standard(attachee, tpdp.RadialMenuStandardNode.Class)
     return 0
 
-def toggleCracklingAura(attachee, args, evt_obj):
-    toggleSignal = evt_obj.d20a.data1
-    if toggleSignal:
-        particlesID = game.particles("Electricity Aura", attachee)
-        args.set_arg(0, 1)
-        args.set_arg(1, particlesID)
-    else:
-        game.particles_end(args.get_arg(1))
-        args.set_arg(0, 0)
+def triggerCracklingAura(attachee, args, evt_obj):
+    if args.get_arg(0):
+        if not args.get_arg(2): #query is triggered more than once on combat enter
+            particlesID = game.particles("Electricity Aura", attachee)
+            args.set_arg(1, particlesID)
+            args.set_arg(2, 1)
+    return 0
+
+def deactivateCracklingAura(attachee, args, evt_obj):
+    particlesID = args.get_arg(1)
+    game.particles_end(particlesID)
+    args.set_arg(2, 0)
     return 0
 
 def setInitialStatusOfAura(attachee, args, evt_obj):
     args.set_arg(0, 0)
     return 0
 
-def cracklingAuraTeleport(attachee, args, evt_obj):
-    if args.get_arg(0):
-        game.particles_end(args.get_arg(1))
-        particlesID = game.particles("Electricity Aura", attachee)
-        args.set_arg(1, particlesID)
-    return 0
-
-cracklingAura = PythonModifier("Stormlord Crackling Aura", 2) #isActiveFlag, particlesID
+cracklingAura = PythonModifier("Stormlord Crackling Aura", 3) #isActiveFlag, particlesID, isTriggered
 cracklingAura.MapToFeat("Stormlord Resistance to Electricity")
 cracklingAura.AddHook(ET_OnBuildRadialMenuEntry , EK_NONE, particlesRadial, ())
-cracklingAura.AddHook(ET_OnD20PythonActionPerform, pythonActionCracklingAuraID, toggleCracklingAura, ())
+cracklingAura.AddHook(ET_OnD20Query, EK_Q_EnterCombat, triggerCracklingAura, ())
+cracklingAura.AddHook(ET_OnD20Signal, EK_S_Combat_End, deactivateCracklingAura, ())
 cracklingAura.AddHook(ET_OnConditionAdd, EK_NONE, setInitialStatusOfAura, ())
-cracklingAura.AddHook(ET_OnD20Signal, EK_S_Teleport_Reconnect, cracklingAuraTeleport, ())
+
 
 ##### Spell casting
 
