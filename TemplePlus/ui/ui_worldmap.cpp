@@ -40,6 +40,7 @@ struct LocationProps {
 	MapId mapId = 0; // Note: the actual MapId is % 10000 of this; e.g. Hommlet hotspots are 5001, 15001, 25001
 	AreaId areaId = 0;
 	locXY startLoc = locXY::fromField( (uint64_t)-1); // if left at -1, the location will be retrieved from MapList.mes values
+	std::string name; // originally 0x11EA4000
 };
 
 enum MapVisibility : uint32_t {
@@ -65,7 +66,6 @@ struct LocationWidgets {
 	LgcyWidgetId locationBtn;
 	LgcyWidgetId locationRingBtn;
 	LgcyWidgetId scriptBtn;
-	LgcyWidgetId acquiredLocationBtn;
 };
 
 struct LgcyWorldmapPath {
@@ -128,6 +128,7 @@ public:
 
 protected:
 	void InitLocations();
+		void ReadLocationNames();
 	bool mIsCo8 = false;
 
 	MesFile::Content mWidgetLocations;
@@ -138,6 +139,7 @@ protected:
 
 	void InitWidgets(int w, int h);
 		void GetUiLocations();
+	void UpdateWidgets();
 	void LoadPaths();
 	std::vector<int> mPathIdTable;
 	
@@ -160,13 +162,15 @@ protected:
 	BOOL MakeTripFromAreaToArea(int fromId, int toId);
 
 	void UnhideLocationBtns();
+	void UpdateAcquiredLocationsBtns();
 
-	
-	std::unique_ptr< WidgetContainer> mWnd;
+	// Widgets
+	std::unique_ptr<WidgetContainer> mWnd;
 	LgcyWidgetId mCurrentMapBtn = -1;
 	LgcyWidgetId mCenterOnPartyBtn = -1;
-
+	std::vector<LgcyWidgetId> acquiredLocationBtns;
 	std::vector<LocationWidgets> locWidgets;
+
 	bool AcquiredLocationBtnMsg(LgcyWidgetId widId, TigMsg* msg);
 
 	int& mLocationsRevealingCount = temple::GetRef<int>(0x10BEF7F4);
@@ -873,6 +877,8 @@ UiWorldmapImpl::UiWorldmapImpl(){
 	}
 	
 	InitWidgets(config.renderWidth, config.renderHeight);
+	UpdateWidgets();
+	
 }
 
 void UiWorldmapImpl::Show(int state) {
@@ -940,6 +946,7 @@ bool UiWorldmapImpl::LoadGame(const UiSaveFile& save)
 		}
 	}
 	temple::GetRef<void(__cdecl)()>(0x1015DFD0)(); // UnhideLocations
+	UpdateAcquiredLocationsBtns();
 
 	if (tio_fread(&mRandomEncounterX, 4, 1, save.file) != 1) {
 		logger->error("UiWorldmap: failed to read ");
@@ -1113,6 +1120,23 @@ void UiWorldmapImpl::InitLocations()
 
 	locationProps[11].startLoc.locx = temple::GetRef<int>(0x1015E89F + 1);
 	locationProps[11].startLoc.locy = temple::GetRef<int>(0x1015E8A4 + 1);
+
+	ReadLocationNames();
+}
+
+void UiWorldmapImpl::ReadLocationNames()
+{
+	auto mesContent = MesFile::ParseFile("mes/worldmap_location_names_text.mes");
+	auto count = 0;
+	
+	for (auto &it : mesContent) {
+		if (count >= locationProps.size()) {
+			break;
+		}
+		it.second;
+		locationProps[count].name = it.second;
+		count++;
+	}
 }
 
 void UiWorldmapImpl::InitWidgets(int w, int h)
@@ -1232,8 +1256,8 @@ void UiWorldmapImpl::InitWidgets(int w, int h)
 		for (auto i = 0u; i < locWidgets.size(); ++i) {
 			auto btn = std::make_unique<WidgetButton>();
 			auto btnId = btn->GetWidgetId();
-			btn->SetText("East Hommlet");
-			locWidgets[i].acquiredLocationBtn = btnId;
+			// btn->SetText("East Hommlet");
+			acquiredLocationBtns.push_back(btnId);
 
 			SetWidFromMes(*btn, 75);
 			btn->SetMargins({ 10,0,0,0 });
@@ -1284,6 +1308,11 @@ void UiWorldmapImpl::GetUiLocations()
 	// Todo: separate this file to modular locations that can have satellite locations
 	mWidgetLocations = MesFile::ParseFile("art/interface/worldmap_ui/0_worldmap_ui_locations.mes");
 
+}
+
+void UiWorldmapImpl::UpdateWidgets()
+{
+	UpdateAcquiredLocationsBtns();
 }
 
 void UiWorldmapImpl::LoadPaths()
@@ -1454,6 +1483,31 @@ void UiWorldmapImpl::UnhideLocationBtns()
 		}
 		
 	}
+}
+
+void UiWorldmapImpl::UpdateAcquiredLocationsBtns()
+{
+	for (auto i = 0; i < locationsVisited.size() && i < acquiredLocationBtns.size(); ++i) {
+		auto locVis = locationsVisited[i];
+		
+		
+
+		auto widId = acquiredLocationBtns[i];
+		auto widget = (WidgetButton*)uiManager->GetAdvancedWidget(widId);
+		
+		uiManager->SetHidden_Safe(widId, false);
+
+		auto locId = locVis.locId;
+		if (locId >=0 && locId < locationProps.size()) {
+			auto& locProps = locationProps[locId];
+			widget->SetText(locProps.name);
+		}
+		else {
+			widget->SetText(fmt::format("BAD LOCATION ID: {}", locId));
+		}
+
+	}
+
 }
 
 bool UiWorldmapImpl::AcquiredLocationBtnMsg(LgcyWidgetId widId, TigMsg* msg)
