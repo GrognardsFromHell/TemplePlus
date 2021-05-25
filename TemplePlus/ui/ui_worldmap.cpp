@@ -1124,6 +1124,7 @@ void UiWorldmapImpl::InitLocations()
 	ReadLocationNames();
 }
 
+// 0x1015DE80
 void UiWorldmapImpl::ReadLocationNames()
 {
 	auto mesContent = MesFile::ParseFile("mes/worldmap_location_names_text.mes");
@@ -1533,14 +1534,24 @@ bool UiWorldmapImpl::AcquiredLocationBtnMsg(LgcyWidgetId widId, TigMsg* msg)
 
 	auto btn = uiManager->GetButton(widId);
 	auto locIdx = -1;
+	auto destLocId = LOCATION_NONE;
 	auto foundLocIdx = false;
 	// search for the button in the acquired locations buttons
 	for (auto i = 0; i < ACQUIRED_LOCATIONS_CO8; ++i) {
 		if (btn == mWorldmapWidgets->acquiredLocations[i]) {
 			locIdx = i; foundLocIdx = true;
+			destLocId = mLocationVisitedFlags[locIdx] >> 8;
 			break;
 		}
 	}
+	// Worldmap replacement:
+	for (auto i = 0; i < acquiredLocationBtns.size(); ++i) {
+		if (widId == acquiredLocationBtns[i]) {
+			locIdx = i; foundLocIdx = true;
+			destLocId = locationsVisited[locIdx].locId;
+		}
+	}
+
 	if (!foundLocIdx) { // search for the button in the location ring buttons
 		auto locationRingIdx = -1;
 		for (auto i = 0; i < ACQUIRED_LOCATIONS_CO8; ++i) {
@@ -1555,6 +1566,7 @@ bool UiWorldmapImpl::AcquiredLocationBtnMsg(LgcyWidgetId widId, TigMsg* msg)
 				auto locIdVisited = mLocationVisitedFlags[i] >> 8;
 				if (locIdVisited == locationRingIdx) {
 					locIdx = i;
+					destLocId = mLocationVisitedFlags[locIdx] >> 8;
 					break;
 				}
 			}
@@ -1567,7 +1579,7 @@ bool UiWorldmapImpl::AcquiredLocationBtnMsg(LgcyWidgetId widId, TigMsg* msg)
 
 	auto curLocId = temple::GetRef<int(__cdecl)()>(0x1015DF70)();
 
-	MakeTripFromAreaToArea(curLocId, mLocationVisitedFlags[locIdx] >> 8);
+	MakeTripFromAreaToArea(curLocId, destLocId);
 	return TRUE;
 }
 
