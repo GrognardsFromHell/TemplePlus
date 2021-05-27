@@ -86,6 +86,16 @@
       	"disabledImage": "art/interface/worldmap_ui/center_on_party_grey.tga"
 	},
 	{
+		"id": "worldmap-u-r-here-button",
+		"inherit": "default-sounds",
+		"textStyle": "worldmap-big-button-text",
+		"normalImage": "art/interface/worldmap_ui/worldmap_you_are_here.tga",
+		"hoverImage": "art/interface/worldmap_ui/worldmap_you_are_here.tga",
+		"pressedImage": "art/interface/worldmap_ui/worldmap_you_are_here.tga",
+      	"disabledImage": "art/interface/worldmap_ui/worldmap_you_are_here.tga"
+	},
+	
+	{
 		"id": "worldmap-acquired-location",
 		"inherit": "default-sounds",
 		"textStyle": "worldmap-small-button-text",

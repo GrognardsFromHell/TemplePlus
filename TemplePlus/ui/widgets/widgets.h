@@ -307,7 +307,7 @@ public:
 	 directly fetch style from widgetButtonStyles
 	 */
 	void SetStyle(const eastl::string& styleName);
-	const WidgetButtonStyle &GetStyle() 
+	const WidgetButtonStyle &GetStyle() // if you need to set image directly, use this
 	{
 		return mStyle;
 	}

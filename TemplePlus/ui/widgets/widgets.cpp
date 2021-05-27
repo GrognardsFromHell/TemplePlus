@@ -595,6 +595,7 @@ void WidgetButton::SetText(const std::string & text)
 	UpdateAutoSize();
 }
 
+
 void WidgetButton::UpdateContent()
 {
 

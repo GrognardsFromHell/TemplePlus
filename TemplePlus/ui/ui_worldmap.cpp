@@ -20,6 +20,8 @@
 #include "util/streams.h"
 #include <infrastructure/binaryreader.h>
 #include <ui/widgets/widgets.h>
+#include <gametime.h>
+#include <tig/tig_timer.h>
 
 
 //*****************************************************************************
@@ -125,6 +127,7 @@ public:
 	*/
 	int& mWorldmapState = temple::GetRef<int>(0x10BEF808);
 	BOOL& mIsVisible = temple::GetRef<BOOL>(0x10BEF7DC);
+	int& mWorldmapTime = temple::GetRef<int>(0x10BEF784);
 
 protected:
 	void InitLocations();
@@ -167,7 +170,9 @@ protected:
 	// Widgets
 	std::unique_ptr<WidgetContainer> mWnd;
 	LgcyWidgetId mCurrentMapBtn = -1;
-	LgcyWidgetId mCenterOnPartyBtn = -1;
+	LgcyWidgetId mCenterOnPartyBtn = -1, mURHereBtn = -1;
+	int mURHereBtnR = 24; // radius
+
 	std::vector<LgcyWidgetId> acquiredLocationBtns;
 	std::vector<LocationWidgets> locWidgets;
 
@@ -883,13 +888,23 @@ UiWorldmapImpl::UiWorldmapImpl(){
 
 void UiWorldmapImpl::Show(int state) {
 	
+	// Hide UIs
+
+	if (!mIsVisible) {
+		// disable drawing, portraits, disable time advance
+		// hide util bar
+		// save effects volume
+		// set effects volume to 0
+	}
+
 	mWorldmapState = state;
 	mIsVisible = TRUE;
 
 	mWnd->Show();
 	((WidgetButton*)uiManager->GetAdvancedWidget(mCurrentMapBtn))->SetDisabled(mWorldmapState == 3);
 	((WidgetButton*)uiManager->GetAdvancedWidget(mCenterOnPartyBtn))->SetDisabled(mWorldmapState == 3);
-	
+
+	mWorldmapTime = TigGetSystemTime();
 }
 
 /* 0x1015E0F0 */
@@ -1146,6 +1161,7 @@ void UiWorldmapImpl::InitWidgets(int w, int h)
 	std::string townmapPath("art/interface/townmap_ui/");
 
 	mLargeTexturesMes = MesFile::ParseFile(basePath + "0_worldmap_ui_large_textures.mes");
+	auto textures = MesFile::ParseFile(basePath + "0_worldmap_ui_textures.mes");
 	auto townmapTexts = MesFile::ParseFile("mes/townmap_ui_text.mes");
 	GetUiLocations();
 	
@@ -1179,9 +1195,17 @@ void UiWorldmapImpl::InitWidgets(int w, int h)
 		SetWidFromMes(*mWnd, 10);
 		auto mainBg = std::make_unique<WidgetImage>(basePath + mLargeTexturesMes[10]);
 		mWnd->AddContent(std::move(mainBg));
-		mWnd->SetUpdateTimeMsgHandler([](uint32_t) {
+		mWnd->SetUpdateTimeMsgHandler([&](uint32_t) {
 			auto handler = temple::GetRef<BOOL(__cdecl)(int widId, TigMsg& msg)>(0x1015E990);
 			handler(-1, TigMsg()); // args aren't used in practice
+
+			int elapsedTime = TigElapsedSystemTime(mWorldmapTime);
+			auto btn = (WidgetButton*)uiManager->GetAdvancedWidget(mURHereBtn);
+			if (!btn) return;
+			auto s = (int)(5.f * sinf(elapsedTime * 0.004f)) / 2;
+			btn->SetSize({ mURHereBtnR + 2 * s , mURHereBtnR + 2 * s });
+			auto x0 = 40, y0 = 40;
+			btn->SetPos(x0 - s, y0 - s);
 			});
 		mWnd->SetKeyStateChangeHandler([&](const TigKeyStateChangeMsg& msg)->bool {
 			if (mIsMakingTrip) {
@@ -1300,6 +1324,68 @@ void UiWorldmapImpl::InitWidgets(int w, int h)
 		mWnd->Add(std::move(btn));
 	}
 
+	// Locations & Script Buttons
+	{
+		
+		std::vector<int> mesInds = { 950, 1050, 1150, 1250, 1350, 1450, 1550, 1650, 1670, 1764, 1864, 1964, 2064, 2164, };
+		std::vector<int> textureInds =       { 10 ,20 ,30 ,40 ,50 ,60 ,70 ,80, 90, -1,-1,-1, 100,110 };
+		std::vector<int> scriptTextureInds = { 120,130,140,150,160,170,180,190,200};
+		Expects(mesInds.size() == textureInds.size());
+		
+		for (auto i = 0u; i < mesInds.size(); ++i) {
+			auto btn = std::make_unique<WidgetButton>();
+			SetWidFromMes(*btn, mesInds[i]);
+
+			auto style = btn->GetStyle();
+			if (textureInds[i] != -1) {
+				style.normalImagePath = basePath + textures[ textureInds[i] ];
+			}
+			btn->SetStyle(style);
+
+			auto btnId = btn->GetWidgetId();
+			locWidgets[i].locationBtn = btnId;
+
+
+			btn->SetWidgetMsgHandler([&, btnId](const TigMsgWidget& msg) ->bool {
+				return AcquiredLocationBtnMsg(btnId, (TigMsg*)&msg);
+				});
+			AdjChildPos(*btn, *mWnd);
+			mWnd->Add(std::move(btn));
+		}
+		for (auto i = 0u; i < scriptTextureInds.size(); ++i) {
+			auto btn = std::make_unique<WidgetButton>();
+			SetWidFromMes(*btn, mesInds[i]+10);
+
+			auto style = btn->GetStyle();
+			if (scriptTextureInds[i] != -1) {
+				style.normalImagePath = basePath + textures[scriptTextureInds[i]];
+			}
+			btn->SetStyle(style);
+
+			auto btnId = btn->GetWidgetId();
+			locWidgets[i].locationBtn = btnId;
+
+
+			btn->SetWidgetMsgHandler([&, btnId](const TigMsgWidget& msg) ->bool {
+				return AcquiredLocationBtnMsg(btnId, (TigMsg*)&msg);
+				});
+			AdjChildPos(*btn, *mWnd);
+			mWnd->Add(std::move(btn));
+		}
+	}
+
+	// You Are Here button
+	{
+		auto btn = std::make_unique<WidgetButton>();
+
+		auto style = btn->GetStyle();
+		style.normalImagePath = basePath + "worldmap_you_are_here.tga";
+		btn->SetStyle(style);
+
+		mURHereBtn = btn->GetWidgetId();
+		AdjChildPos(*btn, *mWnd);
+		mWnd->Add(std::move(btn));
+	}
 
 	mWnd->SetPos(getLoc(10) + (w - 800) / 2, getLoc(11) + (h - 600) / 2);
 }
