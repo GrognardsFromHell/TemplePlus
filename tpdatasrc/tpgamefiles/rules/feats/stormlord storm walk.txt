@@ -1,0 +1,5 @@
+name: Stormlord Storm Walk
+flags: 8
+prereqs:
+description: Not implemented yet.
+prereq descr: Stormlord Level 3.

@@ -1,0 +1,5 @@
+name: Stormlord Immunity to Electricity
+flags: 8
+prereqs:
+description: At 9th level, a stormlord gains immunity to electricity.
+prereq descr: Stormlord Level 9.
