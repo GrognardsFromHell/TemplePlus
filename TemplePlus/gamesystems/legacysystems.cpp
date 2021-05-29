@@ -1024,16 +1024,35 @@ const std::string &SoundGameSystem::GetName() const {
 	return name;
 }
 
+int SoundGameSystem::StreamInit(int& streamIdOut, int streamType)
+{
+	static auto streamInit = temple::GetRef<int(__cdecl)(int&, int)>(0x101E45B0);
+	auto result = streamInit(streamIdOut, streamType);
+	return result;
+}
+
+void SoundGameSystem::PlayInStream(int streamId, int soundId)
+{
+	static auto playInStream = temple::GetRef<void(__cdecl)(int, int)>(0x101E38D0);
+	playInStream(streamId, soundId);
+}
+
+void SoundGameSystem::StreamEnd(int streamId)
+{
+	static auto streamEnd = temple::GetRef<void(__cdecl)(int)>(0x101E36D0);
+	streamEnd(streamId);
+}
+
 void SoundGameSystem::SetSoundSchemeIds(int scheme1, int scheme2)
 {
 	static auto soundscheme_set = temple::GetPointer<void(int, int)>(0x1003c4d0);
 	soundscheme_set(scheme1, scheme2);
 }
 
-void SoundGameSystem::StopAll(bool flag)
+void SoundGameSystem::StopAll(int fadeoutTime)
 {
-	static auto soundgame_stop_all = temple::GetPointer<void(int a1)>(0x1003c5b0);
-	soundgame_stop_all(flag ? TRUE : FALSE);
+	static auto soundgame_stop_all = temple::GetPointer<void(int)>(0x1003c5b0);
+	soundgame_stop_all(fadeoutTime);
 }
 
 //*****************************************************************************
