@@ -43,8 +43,8 @@ struct LoadingScreen::Impl {
 
 void LoadingScreen::Impl::Layout() {
 	
-	auto centerX = device.GetCamera().GetScreenWidth() / 2.0f;
-	auto centerY = device.GetCamera().GetScreenHeight() / 2.0f;
+	auto centerX = device.GetCurrentCamera().GetScreenWidth() / 2.0f;
+	auto centerY = device.GetCurrentCamera().GetScreenHeight() / 2.0f;
 
 	auto imgX = (int)(centerX - imageFile->GetWidth() / 2.0f);
 	auto imgY = (int)(centerY - imageFile->GetHeight() / 2.0f);

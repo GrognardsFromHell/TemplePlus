@@ -10,6 +10,7 @@
 #include "party.h"
 #include "obj.h"
 #include "util/fixes.h"
+#include "gameview.h"
 #include "tig/tig_msg.h"
 #include "ui/ui.h"
 #include "ui/ui_picker.h"
@@ -870,7 +871,7 @@ void UiIntegameTurnbasedRepl::RenderAooIndicator(const LocAndOffsets& location, 
 	auto texWidth = (float) texture->GetContentRect().width;
 	auto texHeight = (float) texture->GetContentRect().height;
 
-	auto screenPos = tig->GetRenderingDevice().GetCamera().WorldToScreenUi(location.ToInches3D());
+	auto screenPos = gameView->WorldToScreenUi(location.ToInches3D());
 	auto x = (float)(screenPos.x - texWidth / 2);
 	auto y = (float)(screenPos.y - texHeight / 2);
 

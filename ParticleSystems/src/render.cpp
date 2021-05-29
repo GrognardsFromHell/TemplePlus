@@ -79,7 +79,7 @@ namespace particles {
 
 				XMStoreFloat4x4(
 					&worldMatrix,
-					localMat * XMLoadFloat4x4(&mDevice.GetCamera().GetViewProj())
+					localMat * XMLoadFloat4x4(&mDevice.GetCurrentCamera().GetViewProj())
 				);
 				ExtractScreenSpaceUnitVectors(worldMatrix);
 				return true;
@@ -102,7 +102,7 @@ namespace particles {
 
 					XMStoreFloat4x4(
 						&worldMatrix,
-						XMLoadFloat4x4(&boneMatrix) * XMLoadFloat4x4(&mDevice.GetCamera().GetViewProj())
+						XMLoadFloat4x4(&boneMatrix) * XMLoadFloat4x4(&mDevice.GetCurrentCamera().GetViewProj())
 						);
 					ExtractScreenSpaceUnitVectors(worldMatrix);
 					return true;
@@ -116,7 +116,7 @@ namespace particles {
 
 					XMStoreFloat4x4(
 						&worldMatrix,
-						XMMatrixTranslation(x, y, z) * XMLoadFloat4x4(&mDevice.GetCamera().GetViewProj())
+						XMMatrixTranslation(x, y, z) * XMLoadFloat4x4(&mDevice.GetCurrentCamera().GetViewProj())
 						);
 
 					ExtractScreenSpaceUnitVectors(worldMatrix);
@@ -126,13 +126,13 @@ namespace particles {
 				return false;
 			}
 
-			worldMatrix = mDevice.GetCamera().GetViewProj();
+			worldMatrix = mDevice.GetCurrentCamera().GetViewProj();
 			ExtractScreenSpaceUnitVectors(worldMatrix);
 			return true;
 		}
 
 		if (particleSpace == PartSysParticleSpace::World) {
-			worldMatrix = mDevice.GetCamera().GetViewProj();
+			worldMatrix = mDevice.GetCurrentCamera().GetViewProj();
 			ExtractScreenSpaceUnitVectors(worldMatrix);
 			return true;
 		}
@@ -158,7 +158,7 @@ namespace particles {
 						boneMatrix._43)
 					); // TODO: This might not be needed...
 			}
-			worldMatrix = mDevice.GetCamera().GetViewProj();
+			worldMatrix = mDevice.GetCurrentCamera().GetViewProj();
 			ExtractScreenSpaceUnitVectors2(boneMatrix);
 			return true;
 		}
@@ -170,7 +170,7 @@ namespace particles {
 		} else {
 			XMStoreFloat4x4(&matrix, XMMatrixIdentity());
 		}
-		worldMatrix = mDevice.GetCamera().GetViewProj();
+		worldMatrix = mDevice.GetCurrentCamera().GetViewProj();
 		ExtractScreenSpaceUnitVectors2(matrix);
 		return true;
 	}

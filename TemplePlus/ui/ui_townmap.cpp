@@ -133,12 +133,11 @@ void UiTownmap::Hide()
 
 void UiTownmap::PositionsInit(){
 	auto N_maps = gameSystems->GetMap().GetHighestMapId();
-	auto& device = tig->GetRenderingDevice();
 
 	for (auto i = 0; i < N_maps; i++){
 		auto &pos = mPositions[i];
 		auto startLoc = gameSystems->GetMap().GetStartPos(i + 5000);	
-		pos = device.GetCamera().TileToWorld( startLoc );
+		pos = gameView->TileToWorld( startLoc );
 	}
 }
 

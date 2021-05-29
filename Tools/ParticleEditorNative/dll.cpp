@@ -14,6 +14,7 @@ std::string lastError;
 
 TempleDll::TempleDll(const std::wstring &installationDir)
 	: renderingDevice(nullptr, 0, true),
+	camera(renderingDevice.GetCurrentCamera()),
 	mdfFactory(renderingDevice),
 	aasConfig(CreateAasConfig()),
 	aasFactory(aasConfig),
@@ -119,9 +120,9 @@ void TempleDll_SetRenderTarget(TempleDll *templeDll, IUnknown *surface) {
 
 void TempleDll_CenterOn(TempleDll *dll, float x, float y, float z)
 {
-	dll->renderingDevice.GetCamera().CenterOn(x, y, z);
+	dll->camera.CenterOn(x, y, z);
 }
 
 void TempleDll_SetScale(TempleDll *templeDll, float scale) {
-	templeDll->renderingDevice.GetCamera().SetScale(scale);
+	templeDll->camera.SetScale(scale);
 }

@@ -288,6 +288,10 @@ void D20StatusSystem::initItemConditions(objHndl objHnd)
 			{
 				objHndl objHndItem = obj->GetObjHndl(obj_f_critter_inventory_list_idx, i);
 				auto item = objSystem->GetObject(objHndItem);
+				if (!item) {
+					logger->error("Critter {} has invalid inventory mismatch between obj_f_critter_inventory_num and obj_f_critter_inventory_list_idx, null item handle at index {} / {}", objHnd, i, invenCount);
+					continue;
+				}
 				uint32_t itemInvLocation = item->GetInt32(obj_f_item_inv_location);
 				auto isInEffect = inventory.IsItemEffectingConditions(objHndItem, itemInvLocation);
 				if (isInEffect && polyProto && itemsAreUsable) {

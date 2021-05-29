@@ -4,8 +4,21 @@
 #include <gamesystems/objects/objsystem.h>
 #include "python_object.h"
 #include <config/config.h>
+#include <pybind11/embed.h>
+
+namespace py = pybind11;
 
 PythonClassSpecIntegration pythonClassIntegration;
+
+
+PYBIND11_EMBEDDED_MODULE(d20class, m) {
+	m.doc() = "D20 Class module, used for D20 Class specs.";
+
+	m.def("get_spell_stat", [](int classEnum)->int {
+		auto classStat = (Stat)classEnum;
+		return (int)d20ClassSys.GetSpellStat(classStat);
+	});
+}
 
 PythonClassSpecIntegration::PythonClassSpecIntegration()
 	:PythonIntegration("rules\\char_class\\Class*.py", "(class(\\d{3,}).*)\\.py"){

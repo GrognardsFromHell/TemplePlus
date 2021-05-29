@@ -5,6 +5,7 @@
 namespace gfx {
 	struct AnimatedModelParams;
 	class RenderingDevice;
+	class WorldCamera;
 	struct Light3d;
 	class AnimatedModel;
 	class MdfMaterialFactory;
@@ -28,6 +29,7 @@ public:
 
 	MapObjectRenderer(GameSystems& gameSystems, 
 		gfx::RenderingDevice& device, 
+		gfx::WorldCamera& camera,
 		gfx::MdfMaterialFactory &mdfFactory,
 		aas::Renderer &aasRenderer);
 	~MapObjectRenderer();
@@ -66,6 +68,7 @@ public:
 private:
 	GameSystems& mGameSystems;
 	gfx::RenderingDevice& mDevice;
+	gfx::WorldCamera& mCamera;
 	aas::Renderer &mAasRenderer;
 	ShadowType mShadowType = ShadowType::ShadowMap;
 	gfx::MdfRenderMaterialPtr mBlobShadowMaterial;

@@ -4,6 +4,7 @@
 
 namespace gfx {
 	class RenderingDevice;
+	class WorldCamera;
 }
 
 class BinaryReader;
@@ -12,7 +13,7 @@ class ClippingSystem : public GameSystem {
 public:	
 	static constexpr auto Name = "Clipping";
 
-	explicit ClippingSystem(gfx::RenderingDevice& g);
+	explicit ClippingSystem(gfx::RenderingDevice& g, gfx::WorldCamera& camera);
 	~ClippingSystem();
 
 	void Load(const std::string& directory);

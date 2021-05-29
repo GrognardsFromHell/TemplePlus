@@ -600,12 +600,12 @@ bool ObjSystem::ValidateInventory(const GameObjectBody * container, obj_f idxFie
 			objectFields.GetFieldName(countField), objectFields.GetFieldName(idxField));
 		return false;
 	}
-
+	auto containerHandle = GetHandleById(container->id);
 	for (size_t i = 0; i < actualCount; ++i) {
 		auto itemId = container->GetObjectId(idxField, i);
-
-		auto positional = fmt::format("Entry {} in {}@{} of {}",
-			itemId.ToString(), objectFields.GetFieldName(idxField), i, container->id.ToString());
+		
+		auto positional = fmt::format("Entry {} in {}@{} of {} ({})",
+			itemId.ToString(), objectFields.GetFieldName(idxField), i, container->id.ToString(), containerHandle);
 
 		if (itemId.IsNull()) {
 			logger->error("{} is null", positional);

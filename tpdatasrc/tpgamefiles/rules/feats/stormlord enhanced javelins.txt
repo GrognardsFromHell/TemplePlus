@@ -1,0 +1,5 @@
+name: Stormlord Enhanced Javelins
+flags: 8
+prereqs:
+description: Any javelin thrown by a stormlord counts as a +1 magic weapon. This bonus increases at 6th level to +2 and at 10th level to +3.
+prereq descr: Stormlord Level 1.

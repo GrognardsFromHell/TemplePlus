@@ -1993,10 +1993,10 @@ BOOL D20ActionCallbacks::ActionFrameQuiveringPalm(D20Actn* d20a){
 	return FALSE;
 }
 
+/* 0x1008DEA0 */
 BOOL D20ActionCallbacks::ActionFrameSpell(D20Actn * d20a){
 
 	auto projectileProto = 3000;
-	auto numTgts = 0;
 	auto offx = 0;
 	auto offy = 0;
 	
@@ -2038,7 +2038,7 @@ BOOL D20ActionCallbacks::ActionFrameSpell(D20Actn * d20a){
 	}
 	else if (pkt.spellEnum == PRODUCE_FLAME_ENUM) {
 		spEntry.modeTargetSemiBitmask = (uint64_t) UiPickerType::Single;
-		if (*actSeqSys.actSeqCur) { // also checked that it's diff than -2836... bug?
+		if (*actSeqSys.actSeqCur) { // also checked that it's diff than -2836... bug? looks like they meant to check actSeqCur->tbStatus.hourglassState != 0
 			auto tbStat = actSeqSys.curSeqGetTurnBasedStatus();
 			tbStat->tbsFlags &= ~TBSF_TouchAttack;
 			d20a->d20Caf &= ~D20CAF_FREE_ACTION;
@@ -2129,11 +2129,11 @@ BOOL D20ActionCallbacks::ActionFrameSpell(D20Actn * d20a){
 	}
 
 	
-	for (auto i=0; i < numTgts; i++){
+	for (auto i=0; i < finalTargets.size() && i < MAX_SPELL_TARGETS; i++){
 		pkt.targetListHandles[i] = finalTargets[i];
 	}
 	// clear the rest
-	for (auto i = numTgts; i < MAX_SPELL_TARGETS; i++){
+	for (auto i = finalTargets.size(); i < MAX_SPELL_TARGETS; i++){
 		pkt.targetListHandles[i] = objHndl::null;
 	}
 	pkt.targetCount = finalTargets.size();
@@ -2154,7 +2154,7 @@ BOOL D20ActionCallbacks::ActionFrameStandardAttack(D20Actn* d20a){
 	histSys.CreateRollHistoryString(d20a->rollHistId1);
 	histSys.CreateRollHistoryString(d20a->rollHistId2);
 	histSys.CreateRollHistoryString(d20a->rollHistId0);
-	//auto makeAttack = temple::GetRef<int(__cdecl)(objHndl, objHndl, int, D20CAF, D20ActionType)>(0x100B7950);
+	
 	damage.DealAttackDamage(d20a->d20APerformer, d20a->d20ATarget, d20a->data1, static_cast<D20CAF>(d20a->d20Caf), d20a->d20ActType);
 	return TRUE;
 }

@@ -454,6 +454,22 @@ bool InventorySystem::IsItemEffectingConditions(objHndl objHndItem, uint32_t ite
 	return true;
 }
 
+bool InventorySystem::ItemHasCondition(objHndl item, uint32_t condId) const
+{
+	auto itemObj = gameSystems->GetObj().GetObject(item);
+	if (!itemObj)
+		return false;
+	
+	auto condArray = itemObj->GetInt32Array(obj_f_item_pad_wielder_condition_array);
+	
+	for (auto i = 0u; i < condArray.GetSize(); ++i) {
+		if (condArray[i] == condId)
+			return true;
+	}
+
+	return false;
+}
+
 int InventorySystem::GetItemWieldCondArg(objHndl item, uint32_t condId, int argOffset)
 {
 	// loops through the item wielder conditions to find condId
@@ -571,23 +587,37 @@ int InventorySystem::IsNormalCrossbow(objHndl weapon)
 
 int InventorySystem::IsThrowingWeapon(objHndl weapon)
 {
-	if (objects.GetType(weapon) == obj_t_weapon)
+	if (objects.GetType(weapon) != obj_t_weapon)
 	{
-		WeaponAmmoType ammoType = (WeaponAmmoType)objects.getInt32(weapon, obj_f_weapon_ammo_type);
-		if (ammoType > wat_dagger && ammoType <= wat_bottle) // thrown weapons   TODO: should this include daggers??
+		return FALSE;
+	}
+	WeaponAmmoType ammoType = (WeaponAmmoType)objects.getInt32(weapon, obj_f_weapon_ammo_type);
+	if (ammoType > wat_dagger && ammoType <= wat_bottle) // thrown weapons   TODO: should this include daggers??
+	{
+		return 1;
+	}
+	if (ammoType == wat_dagger)
+	{
+		WeaponFlags weaponFlags = (WeaponFlags)objects.getInt32(weapon, obj_f_weapon_flags);
+		if (weaponFlags & OWF_DEFAULT_THROWS)
 		{
 			return 1;
 		}
-		if (ammoType == wat_dagger)
-		{
-			WeaponFlags weaponFlags = (WeaponFlags)objects.getInt32(weapon, obj_f_weapon_flags);
-			if (weaponFlags & OWF_DEFAULT_THROWS)
-			{
-				return 1;
-			}
-		}
 	}
-	return 0;
+	
+	return FALSE;
+}
+
+bool InventorySystem::IsGrenade(objHndl weapon)
+{
+	if (objects.GetType(weapon) != obj_t_weapon) {
+		return false;
+	}
+	WeaponAmmoType ammoType = (WeaponAmmoType)objects.getInt32(weapon, obj_f_weapon_ammo_type);
+	if (ammoType >= wat_ball_of_fire && ammoType <= wat_unk18){
+		return true;
+	}
+	return false;
 }
 
 bool InventorySystem::UsesWandAnim(const objHndl item){

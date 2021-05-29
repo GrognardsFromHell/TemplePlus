@@ -39,6 +39,7 @@ namespace gfx {
 	using DepthStencilStatePtr = std::shared_ptr<DepthStencilState>;
 	using BlendStatePtr = std::shared_ptr<BlendState>;
 	using RasterizerStatePtr = std::shared_ptr<RasterizerState>;
+	using WorldCameraPtr = std::shared_ptr<WorldCamera>;
 
 	using ResizeListener = std::function<void(int w, int h)>;
 
@@ -302,9 +303,17 @@ namespace gfx {
 			return mTextures;
 		}
 
-		WorldCamera& GetCamera() {
-			return mCamera;
+		/**
+		 * Returns the current camera used to render.
+		 */
+		WorldCamera &GetCurrentCamera() {
+			return *mCurrentCamera;
 		}
+
+		/**
+		 * Returns the camera that will be used for rendering.
+		 */
+		void SetCurrentCamera(WorldCameraPtr camera);
 
 		void SetAntiAliasing(bool enable, uint32_t samples, uint32_t quality);
 		
@@ -406,6 +415,8 @@ namespace gfx {
 		gsl::span<uint8_t> MapVertexBufferRaw(VertexBuffer &buffer, MapMode mode);
 		
 		CComPtr<IDXGIAdapter1> GetAdapter(size_t index);
+
+		void UpdateDefaultCameraScreenSize();
 		
 		int mBeginSceneDepth = 0;
 		
@@ -452,7 +463,8 @@ namespace gfx {
 
 		Shaders mShaders;
 		Textures mTextures;
-		WorldCamera mCamera;
+		WorldCameraPtr mDefaultCamera;
+		WorldCameraPtr mCurrentCamera;
 
 		struct Impl;
 		std::unique_ptr<Impl> mImpl;

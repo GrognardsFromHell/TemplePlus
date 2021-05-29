@@ -28,6 +28,7 @@
 #include "gamesystems/objfade.h"
 #include "gamesystems/objects/objsystem.h"
 #include "gamesystems/map/gmesh.h"
+#include "../gameview.h"
 #include "animgoals/anim.h"
 
 #include "mapsystem.h"
@@ -448,8 +449,12 @@ std::string GameSystems::ResolveSkmFile(int meshId) const {
 int GameSystems::ResolveMaterial(const std::string& materialName) const {
 	auto material(mTig.GetMdfFactory().LoadMaterial(materialName));
 	if (!material) {
-		logger->error("Unable to load material {}", materialName);
-		return -1;
+		logger->error("Unable to load material {}, using wg_law.mdf instead", materialName);
+		material = mTig.GetMdfFactory().LoadMaterial("art/meshes/wg_law.mdf");
+		if (!material) {
+			return -1;
+		}
+		return material->GetId();
 	}
 	return material->GetId();
 }
@@ -687,7 +692,7 @@ void GameSystems::InitializeSystems(LoadingScreen& loadingScreen) {
 	loadingScreen.SetProgress(31 / 79.0f);
 	mJumpPoint = InitializeSystem<JumpPointSystem>(loadingScreen);
 	loadingScreen.SetProgress(32 / 79.0f);
-	mClipping = InitializeSystem<ClippingSystem>(loadingScreen, mTig.GetRenderingDevice());
+	mClipping = InitializeSystem<ClippingSystem>(loadingScreen, mTig.GetRenderingDevice(), *mTig.GetGameView().GetCamera());
 	mTerrain = InitializeSystem<TerrainSystem>(loadingScreen, mTig.GetRenderingDevice(),
 		mTig.GetShapeRenderer2d());
 	loadingScreen.SetProgress(33 / 79.0f);
@@ -770,8 +775,7 @@ void GameSystems::InitializeSystems(LoadingScreen& loadingScreen) {
 	loadingScreen.SetProgress(69 / 79.0f);
 	mUiArtManager = InitializeSystem<UiArtManagerSystem>(loadingScreen, mConfig);
 	loadingScreen.SetProgress(70 / 79.0f);
-	mParticleSys = InitializeSystem<ParticleSysSystem>(loadingScreen, 
-		mTig.GetRenderingDevice().GetCamera());
+	mParticleSys = InitializeSystem<ParticleSysSystem>(loadingScreen, *gameView->GetCamera());
 	loadingScreen.SetProgress(71 / 79.0f);
 	mCheats = InitializeSystem<CheatsSystem>(loadingScreen, mConfig);
 	loadingScreen.SetProgress(72 / 79.0f);

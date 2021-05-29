@@ -3403,6 +3403,12 @@ int ActionSequenceSystem::UnspecifiedAttackAddToSeqRangedMulti(ActnSeq* actSeq, 
 		if (ammoType >= wat_dagger && ammoType <= wat_bottle) // thrown weapons
 		{
 			d20a->d20Caf |= D20CAF_THROWN;
+
+			if (d20a->d20ActType == D20A_THROW_GRENADE) {
+				d20a->d20Caf |= D20CAF_THROWN_GRENADE | D20CAF_TOUCH_ATTACK;
+			}
+
+			// unless it's a shuriken or you have quickdraw, reduce number of attacks to 1
 			if (ammoType != wat_shuriken && !feats.HasFeatCount(d20a->d20APerformer, FEAT_QUICK_DRAW))
 			{
 				baseAttackNumCode = attackModeCode + 1;
@@ -3490,15 +3496,30 @@ int ActionSequenceSystem::UnspecifiedAttackAddToSeq(D20Actn* d20a, ActnSeq* actS
 		if (numAttacks > 1 && !TurnBasedStatusUpdate(&tbStatCopy, &d20aCopy))
 		{
 			actSeq->d20ActArray[actSeq->d20ActArrayNum++] = d20aCopy;
-			d20aCopy.d20ActType = inventory.IsThrowingWeapon(weapon) != 0 ? D20A_THROW : D20A_STANDARD_RANGED_ATTACK;
+			d20aCopy.d20ActType = inventory.IsThrowingWeapon(weapon) != 0 ? 
+				(inventory.IsGrenade(weapon) ? D20A_THROW_GRENADE: D20A_THROW) : D20A_STANDARD_RANGED_ATTACK;
 			return UnspecifiedAttackAddToSeqRangedMulti(actSeq, &d20aCopy, &tbStatCopy);
 		}
 		d20aCopy = *d20a;
-		d20aCopy.d20ActType = inventory.IsThrowingWeapon(weapon) != 0 ? D20A_THROW : D20A_STANDARD_RANGED_ATTACK;
+		
+		/*d20aCopy.d20ActType = inventory.IsThrowingWeapon(weapon) != 0 ? D20A_THROW : D20A_STANDARD_RANGED_ATTACK;
 		if (d20aCopy.d20ActType == D20A_THROW)
 		{
 			d20aCopy.d20Caf |= D20CAF_THROWN;
+		}*/
+		if (!inventory.IsThrowingWeapon(weapon)) {
+			d20aCopy.d20ActType = D20A_STANDARD_RANGED_ATTACK;
 		}
+		else { // Throwing weapon; fixed not setting action to D20A_THROW_GRENADE for grenades, which caused holy water and Jaer's sphere to reappear on the corpse
+			d20aCopy.d20ActType = D20A_THROW;
+			d20aCopy.d20Caf |= D20CAF_THROWN;
+			if (inventory.IsGrenade(weapon)) {
+				d20aCopy.d20ActType = D20A_THROW_GRENADE;
+				d20aCopy.d20Caf |= D20CAF_THROWN_GRENADE | D20CAF_TOUCH_ATTACK;
+			}
+		}
+
+		
 		int result = TurnBasedStatusUpdate(&d20aCopy, &tbStatCopy);
 		if (!result)
 		{

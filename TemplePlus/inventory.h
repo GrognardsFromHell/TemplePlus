@@ -83,6 +83,7 @@ struct InventorySystem : temple::AddressTable
 
 	bool IsItemEffectingConditions(objHndl objHndItem, uint32_t itemInvLocation);
 	
+	bool ItemHasCondition(objHndl item, uint32_t condId) const;
 	/*
 	 finds the argument argOffset for the specified condition in obj_f_item_pad_wielder_condition_array
 	*/
@@ -110,6 +111,7 @@ struct InventorySystem : temple::AddressTable
 	
 	int IsNormalCrossbow(objHndl weapon);
 	int IsThrowingWeapon(objHndl weapon);
+	bool IsGrenade(objHndl weapon);
 	bool UsesWandAnim(const objHndl item);
 	static bool IsTripWeapon(objHndl weapon);
 	ArmorType GetArmorType(int armorFlags);

@@ -281,6 +281,23 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		return result;
 	});
 
+	m.def("dispatch_ability_check", [](objHndl handle, objHndl opponent, int statUsed, BonusList& bonlist, int flags)->int { // used in Trip attempts
+		auto obj = objSystem->GetObject(handle);
+		if (!obj) {
+			return 0;
+		}
+		
+		auto dispatcher = obj->GetDispatcher();
+		DispIoObjBonus dispIo;
+		if (!dispatcher->IsValid())
+			return 0;
+		dispIo.bonOut = &bonlist;
+		dispIo.flags = flags;
+		dispIo.obj = opponent;
+		dispatch.DispatcherProcessor(dispatcher, dispTypeAbilityCheckModifier, DK_STAT_STRENGTH + statUsed, &dispIo);
+		return dispIo.bonOut->GetEffectiveBonusSum();
+	});
+
 	m.def("create_history_type6_opposed_check", [](objHndl performer, objHndl defender, int performerRoll, int defenderRoll
 		, BonusList& performerBonList, BonusList& defenderBonList, uint32_t combatMesLineTitle, uint32_t combatMesLineResult, uint32_t flag)-> int
 	{

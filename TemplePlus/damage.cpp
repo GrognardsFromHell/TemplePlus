@@ -115,6 +115,9 @@ class DamageHooks: TempleFix
 			return pkt->GetOverallDamage();
 		});
 
+		replaceFunction<int(__cdecl)(objHndl, objHndl, int, D20CAF, D20ActionType)>(0x100B7950, [](objHndl attacker, objHndl tgt, int d20Data, D20CAF flags, D20ActionType actionType) {
+			return damage.DealAttackDamage(attacker, tgt, d20Data, flags, actionType);
+		});
 	}
 } damageHooks;
 
