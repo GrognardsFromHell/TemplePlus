@@ -70,6 +70,8 @@ static struct CritterAddresses : temple::AddressTable {
 
 	void(__cdecl*GetCritterVoiceLine)(objHndl obj, objHndl fellow, char* str, int* soundId);
 	int (__cdecl*PlayCritterVoiceLine)(objHndl obj, objHndl fellow, char* str, int soundId);
+
+	int(__cdecl* GetCritterMap)(objHndl critter);
 	CritterAddresses() {
 		rebase(PlayCritterVoiceLine, 0x10036120);
 		rebase(GetCritterVoiceLine, 0x100373C0);
@@ -97,6 +99,7 @@ static struct CritterAddresses : temple::AddressTable {
 		rebase(TakeMoney, 0x1007FA40);
 		rebase(GetWeaponAnim, 0x10020B60);
 		rebase(CritterHpChanged, 0x100B8AA0);
+		rebase(GetCritterMap, 0x10080790);
 	}
 
 	
@@ -1472,6 +1475,11 @@ bool LegacyCritterSystem::CanBarbarianRage(objHndl obj)
 	if (isFatigued)
 		return false;
 	return true;
+}
+
+int LegacyCritterSystem::GetCritterMap(objHndl critter)
+{
+	return addresses.GetCritterMap(critter);
 }
 
 MonsterCategory LegacyCritterSystem::GetCategory(objHndl objHnd)

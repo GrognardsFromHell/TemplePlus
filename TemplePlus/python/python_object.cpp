@@ -627,6 +627,49 @@ static PyObject* PyObjHandle_CanFindPathToObj(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(static_cast<long>(pathLen));
 }
 
+static PyObject* PyObjHandle_FindPathToObj(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	auto handle = self->handle;
+
+	objHndl tgtObj;
+	int flags;
+
+	PathQuery pathQ;
+	PathQueryResult pqr;
+
+	// get target
+	if (!PyArg_ParseTuple(args, "O&|i:objhndl.find_path_to_obj", &ConvertObjHndl, &tgtObj, &flags)) {
+		return 0;
+	}
+
+
+	pathQ.critter = self->handle;
+	pathQ.from = objSystem->GetObject(self->handle)->GetLocationFull();
+	pathQ.targetObj = tgtObj;
+	if (pathQ.critter == pathQ.targetObj)
+		return PyInt_FromLong(0);
+
+	const float fourPointSevenPlusEight = 4.714045f + 8.0f;
+	pathQ.flags = static_cast<PathQueryFlags>(PathQueryFlags::PQF_TO_EXACT | PathQueryFlags::PQF_HAS_CRITTER | PathQueryFlags::PQF_800
+		| PathQueryFlags::PQF_TARGET_OBJ | PathQueryFlags::PQF_ADJUST_RADIUS);
+	*((int*)&pathQ.flags) |= flags;
+
+	auto reach = critterSys.GetReach(self->handle, D20A_UNSPECIFIED_MOVE);
+	if (reach < 0.1) { reach = 3.0; }
+	pathQ.distanceToTargetMin = 0.0;
+	pathQ.tolRadius = reach * 12.0f - fourPointSevenPlusEight;
+
+	auto nodeCount = pathfindingSys.FindPath(&pathQ, &pqr);
+	if (!pqr.IsComplete())
+		Py_RETURN_NONE;
+	
+	py::object pyLoc = py::cast(pqr.to);
+	pyLoc.inc_ref();
+	return pyLoc.ptr();
+}
 
 static PyObject* PyObjHandle_CanMelee(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
@@ -2562,6 +2605,30 @@ static PyObject* PyObjHandle_StandpointSet(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+static PyObject* PyObjHandle_StandpointGet(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	StandPointType type = StandPointType::Day;
+	if (!PyArg_ParseTuple(args, "|i:objhndl.standpoint_get", &type)) {
+		return 0;
+	}
+
+	StandPoint standPoint = critterSys.GetStandPoint(self->handle, type);
+	auto dict = PyDict_New();
+	{
+		PyDict_SetItemString(dict, "mapId", PyInt_FromLong(standPoint.mapId));
+		PyDict_SetItemString(dict, "location", PyLong_FromLongLong(standPoint.location.location));
+		PyDict_SetItemString(dict, "loc_x", PyInt_FromLong(standPoint.location.location.locx));
+		PyDict_SetItemString(dict, "loc_y", PyInt_FromLong(standPoint.location.location.locy));
+		PyDict_SetItemString(dict, "off_x", PyFloat_FromDouble(standPoint.location.off_x));
+		PyDict_SetItemString(dict, "off_y", PyFloat_FromDouble(standPoint.location.off_y));
+		PyDict_SetItemString(dict, "jumpPointId", PyInt_FromLong(standPoint.jumpPointId));
+	}
+	return dict;
+}
+
 static PyObject* PyObjHandle_RunOff(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -3854,6 +3921,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"cast_spell", PyObjHandle_CastSpell, METH_VARARGS, NULL },
 	{"can_cast_spell", PyObjHandle_CanCastSpell, METH_VARARGS, NULL },
 	{"can_find_path_to_obj", PyObjHandle_CanFindPathToObj, METH_VARARGS, NULL },
+	{"find_path_to_obj", PyObjHandle_FindPathToObj, METH_VARARGS, NULL },
 	{"can_melee", PyObjHandle_CanMelee, METH_VARARGS, NULL },
 	{"can_see", PyObjHandle_HasLos, METH_VARARGS, NULL },
 	{"can_sense", PyObjHandle_CanSense, METH_VARARGS, NULL },
@@ -4041,6 +4109,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "spells_cast_reset", PyObjHandle_SpellsCastReset, METH_VARARGS, NULL },
 	{ "spells_memorized_forget", PyObjHandle_MemorizedForget, METH_VARARGS, NULL },
 	{ "spontaneous_spell_level_can_cast", PyObjHandle_SpontaneousSpellLevelCanCast, METH_VARARGS, NULL },
+	{ "standpoint_get", PyObjHandle_StandpointGet, METH_VARARGS, NULL },
 	{ "standpoint_set", PyObjHandle_StandpointSet, METH_VARARGS, NULL },
 	{"stat_level_get", PyObjHandle_StatLevelGet, METH_VARARGS, NULL},
 	{"stat_base_get", PyObjHandle_StatLevelGetBase, METH_VARARGS, NULL},
