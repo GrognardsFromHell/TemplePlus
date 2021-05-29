@@ -4,6 +4,32 @@
 #include "util/fixes.h"
 #include <tig/tig_sound.h>
 
+struct SoundStream {
+	char isUsed;
+	char field1;
+	char field2;
+	char field3;
+	int flags; // 1 - stream playing; 2 - quick playing; 0x400 - 3d playing
+	int fadeoutTime;
+	int fieldC;
+	int loopCount;
+	void* streamSthg;
+	int quickLoadMemSthg;
+	int m3dSampleSthg;
+	int prevStreamIdMaybe;
+	char filename[260];
+	int soundId;
+	int curVolume;
+	int balance;
+	void* fileData;
+	int is2DPositional;
+	int field13c;
+	int64_t x;
+	int64_t y;
+	int soundSizeType; // 2 - medium
+	int field154;
+};
+
 Sound sound;
 std::map<int, std::string> Sound::mUserSounds;
 
@@ -86,7 +112,7 @@ public:
 				if (result != 0) {
 					logger->debug("Failed to allocate stream! Stream ID {}, sound type {}", *streamId, soundType);
 				}
-				auto &mss = temple::GetRef<MilesSoundSthg[]>(0x10EE7578)[*streamId];
+				auto &mss = temple::GetRef<SoundStream[]>(0x10EE7578)[*streamId];
 				if (mss.streamSthg) {
 					logger->debug("Non-null mss_stream caught");
 				};
@@ -94,7 +120,7 @@ public:
 			}
 
 			// Fix for allocating music
-			auto &streamSlots = temple::GetRef<MilesSoundSthg[]>(0x10EE7578);
+			auto &streamSlots = temple::GetRef<SoundStream[]>(0x10EE7578);
 			auto newStreamId = -1;
 			
 			for (auto i=2; i <= 5; i++){
@@ -114,13 +140,13 @@ public:
 
 
 			if (newStreamId != -1){
-				memset(&streamSlots[newStreamId], 0, sizeof(MilesSoundSthg));
-				streamSlots[newStreamId].field20 = -1;
+				memset(&streamSlots[newStreamId], 0, sizeof(SoundStream));
+				streamSlots[newStreamId].prevStreamIdMaybe = -1;
 				streamSlots[newStreamId].isUsed = 1;
 				streamSlots[newStreamId].flags = 0x100;
-				streamSlots[newStreamId].field10 = 1;
+				streamSlots[newStreamId].loopCount = 1;
 				streamSlots[newStreamId].curVolume = 127;
-				streamSlots[newStreamId].field130 = 64;
+				streamSlots[newStreamId].balance = 64;
 				*streamId = newStreamId;
 			}
 
@@ -132,10 +158,10 @@ public:
 			}
 
 			if (soundType == 1 && *streamId == 1){
-				logger->warn("Music stream given ID 1!");
+				logger->warn("Music stream given ID 1!"); // in vanilla 0x101E4440 could return streamId = 1 which could conflict with voice streams
 			}
 
-			auto &mss = temple::GetRef<MilesSoundSthg[]>(0x10EE7578)[*streamId];
+			auto &mss = temple::GetRef<SoundStream[]>(0x10EE7578)[*streamId];
 			if (mss.streamSthg){
 				logger->debug("Non-null mss_stream caught");
 			};
@@ -152,7 +178,7 @@ public:
 				return;
 			}
 				
-			auto &mss = temple::GetRef<MilesSoundSthg[]>(0x10EE7578)[streamId];
+			auto &mss = temple::GetRef<SoundStream[]>(0x10EE7578)[streamId];
 			auto flags = mss.flags;
 			if (flags & 1){
 				auto asdf = mss.streamSthg;
