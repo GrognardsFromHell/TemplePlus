@@ -1,0 +1,5 @@
+name: Arcane Boost
+flags: 8
+prereqs:
+description:  Beginning at 4th level, you gain the ability to burn arcane energy to empower your martial abilities. As a swift action, you can spend one of your uncast spells or spell slots to grant yourself one of the following insight bonuses for 1 round.
+prereq descr: Abjurant Champion level 4.

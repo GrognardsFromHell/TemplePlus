@@ -1096,6 +1096,8 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 
 	py::class_<EvtObjMetaMagic, DispIO>(m, "EvtObjMetaMagic", "Used for modifying metamagic data")
 		.def_readwrite("meta_magic", &EvtObjMetaMagic::mmData)
+		.def_readwrite("spell_enum", &EvtObjMetaMagic::spellEnum)
+		.def_readwrite("spell_level", &EvtObjMetaMagic::spellLevel)
 		;
 
 	py::class_<EvtObjSpecialAttack, DispIO>(m, "EvtObjSpecialAttack", "Used for applying effects")
