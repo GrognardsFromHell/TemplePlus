@@ -10,7 +10,7 @@ enum class TigSoundType : uint32_t {
 };
 
 struct TigSoundAddresses : temple::AddressTable {
-
+	TigSoundAddresses();
 	int *movieVolume;
 
 	int (__cdecl *AllocStream)(int *streamId, TigSoundType type);
