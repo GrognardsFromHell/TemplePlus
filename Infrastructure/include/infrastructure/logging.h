@@ -10,4 +10,4 @@
 // Global TemplePlus logger
 extern std::shared_ptr<spdlog::logger> logger;
 
-void InitLogging(const std::wstring &logFile);
+void InitLogging(const std::wstring &logFile, spdlog::level::level_enum logLevel = spdlog::level::debug);
