@@ -37,6 +37,9 @@
 #include "infrastructure/vfs.h"
 #include "util/streams.h"
 #include "infrastructure/elfhash.h"
+#include "mod_support.h"
+#include "legacyscriptsystem.h"
+#include "maps.h"
 
 
 struct AiSystem aiSys;
@@ -4109,13 +4112,17 @@ BOOL AiPacket::WieldBestItem(){
 		return FALSE;
 
 	if (aiFlags & AiFlag::CheckWield && !combatSys.isCombatActive()){
-		inventory.WieldBestAll(obj, target);
+		if (!modSupport.IsZMOD()) {
+			inventory.WieldBestAll(obj, target);
+		}
 	    aiFlags =	objSystem->GetObject(obj)->GetInt64(obj_f_npc_ai_flags64);
 		aiFlags &= ~(AiFlag::CheckWeapon | AiFlag::CheckWield);
 		objSystem->GetObject(obj)->SetInt64(obj_f_npc_ai_flags64, aiFlags);
 	}
 	else if (aiFlags & AiFlag::CheckWeapon){
-		inventory.WieldBest(obj, 200 + EquipSlot::WeaponPrimary, target);
+		if (!modSupport.IsZMOD()) {
+			inventory.WieldBest(obj, 200 + EquipSlot::WeaponPrimary, target);
+		}
 		aiFlags = objSystem->GetObject(obj)->GetInt64(obj_f_npc_ai_flags64);
 		aiFlags &= ~(AiFlag::CheckWeapon );
 		objSystem->GetObject(obj)->SetInt64(obj_f_npc_ai_flags64, aiFlags);;
@@ -4133,6 +4140,9 @@ BOOL AiPacket::WieldBestItem(){
 
 BOOL AiPacket::SelectHealSpell(){
 	if (critterSys.IsSleeping(obj) || aiFightStatus == AIFS_FLEEING)
+		return FALSE;
+
+	if (modSupport.IsZMOD())
 		return FALSE;
 
 	auto doHealSpell = 1;

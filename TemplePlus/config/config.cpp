@@ -144,6 +144,7 @@ static ConfigSetting configSettings[] = {
 	CONF_INT(renderWidth),
 	CONF_INT(renderHeight),
 	CONF_BOOL(debugMessageEnable),
+	CONF_INT(logLevel),
 	CONF_BOOL(lockCursor),
 	CONF_BOOL(showExactHPforNPCs),
 	CONF_STRING_LIST(additionalTioPaths, ';'),

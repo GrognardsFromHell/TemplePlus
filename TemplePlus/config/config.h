@@ -64,6 +64,7 @@ struct TemplePlusConfig
 	bool editor = false;
 
 	// debug msgs
+	int logLevel = 1; // debug; set to trace (0) for more
 	bool debugMessageEnable = true; // ToEE debug spam
 	bool featPrereqWarnings = false;
 	bool spellAlreadyKnownWarnings = false;

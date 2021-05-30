@@ -5388,6 +5388,7 @@ int ItemCallbacks::UseableItemActionCheck(DispatcherCallbackArgs args){
 
 	if (objType == obj_t_scroll && !spellSys.CheckAbilityScoreReqForSpell(args.objHndCaller, spData.spellEnum, -1) && !useMagicDeviceSkillBase){
 		dispIo->returnVal = AEC_INVALID_ACTION;
+		logger->trace("UseableItemActionCheck: Not enough ability score to use scroll!");
 		return IEC_Cannot_Wield_Magical;
 	}
 

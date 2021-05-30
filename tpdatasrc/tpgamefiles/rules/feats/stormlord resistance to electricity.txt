@@ -1,0 +1,5 @@
+name: Stormlord Resistance to Electricity
+flags: 8
+prereqs:
+description: : As a stormlord gains levels in this prestige class, he becomes increasingly resistant to electrical energy, starting at 1st level with resistance to electricity 5. This bonus increases at 4th and 7th level by an additional 5.
+prereq descr: Stormlord Level 1.

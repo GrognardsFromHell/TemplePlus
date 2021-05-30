@@ -1,0 +1,5 @@
+name: Stormlord Storm of Elemental Fury
+flags: 8
+prereqs:
+description: At 10th level, a stormlord can summon a storm of great magnitude and power. Once per day, a stormlord can use storm of elemental fury as if he were a 17th-level cleric.
+prereq descr: Stormlord Level 10.
