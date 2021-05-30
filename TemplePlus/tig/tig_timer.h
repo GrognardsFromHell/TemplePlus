@@ -3,7 +3,7 @@
 #include <memory>
 #include <timeapi.h>
 
-
+/* 0x101E3500 */
 uint32_t TigGetSystemTime() {
 	return timeGetTime();
 }

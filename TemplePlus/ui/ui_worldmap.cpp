@@ -14,6 +14,7 @@
 #include "fade.h"
 #include "party.h"
 #include "gamesystems/gamesystems.h"
+#include "gamesystems/legacysystems.h"
 #include "gamesystems/mapsystem.h"
 #include "mod_support.h"
 #include <infrastructure/vfs.h>
@@ -22,6 +23,7 @@
 #include <ui/widgets/widgets.h>
 #include <gametime.h>
 #include <tig/tig_timer.h>
+#include <tig/tig_sound.h>
 
 
 //*****************************************************************************
@@ -52,8 +54,8 @@ enum MapVisibility : uint32_t {
 	// above this - time stamp
 };
 struct LocationState {
-	MapVisibility scriptWriting; // originally array at 0x11EA4A00
-	MapVisibility mapBtn; // originally array at 0x11EA4900
+	MapVisibility scriptWriting; // originally array at 0x11EA4A00 (Co8)
+	MapVisibility mapBtn; // originally array at 0x11EA4900 (Co8)
 };
 
 enum LocationVisitedFlags : uint32_t {
@@ -143,6 +145,9 @@ protected:
 	void InitWidgets(int w, int h);
 		void GetUiLocations();
 	void UpdateWidgets();
+	void AnimateButtons();
+		void URHereAnimate();
+		void FadeInLocations();
 	void LoadPaths();
 	std::vector<int> mPathIdTable;
 	
@@ -164,7 +169,7 @@ protected:
 
 	BOOL MakeTripFromAreaToArea(int fromId, int toId);
 
-	void UnhideLocationBtns();
+	void UpdateLocationStates();
 	void UpdateAcquiredLocationsBtns();
 
 	// Widgets
@@ -178,7 +183,13 @@ protected:
 
 	bool AcquiredLocationBtnMsg(LgcyWidgetId widId, TigMsg* msg);
 
-	int& mLocationsRevealingCount = temple::GetRef<int>(0x10BEF7F4);
+	
+	BOOL& mFadingInLocationBtn = temple::GetRef<BOOL>(0x10BEF820);
+	int& mLocationsFadingCount = temple::GetRef<int>(0x10BEF7F4); // hmm this isn't saved to game... could cause issues
+
+	int& mLocationSoundStream = temple::GetRef<int>(0x10BEEE6C);
+	int& mTrailDotSoundStream = temple::GetRef<int>(0x10BEF780);
+	
 };
 
 constexpr int ACQUIRED_LOCATIONS_CO8 = 21;
@@ -960,7 +971,7 @@ bool UiWorldmapImpl::LoadGame(const UiSaveFile& save)
 			locationsVisited.push_back(locVis);
 		}
 	}
-	temple::GetRef<void(__cdecl)()>(0x1015DFD0)(); // UnhideLocations
+	UpdateLocationStates(); //temple::GetRef<void(__cdecl)()>(0x1015DFD0)();
 	UpdateAcquiredLocationsBtns();
 
 	if (tio_fread(&mRandomEncounterX, 4, 1, save.file) != 1) {
@@ -1121,6 +1132,8 @@ void UiWorldmapImpl::InitLocations()
 		auto props = LocationProps();
 		props.mapId = locToMapId[i];
 		locationProps.push_back(props);
+		auto state = LocationState();
+		locationStates.push_back(state);
 	}
 	
 	// Hommlet special locations
@@ -1198,14 +1211,7 @@ void UiWorldmapImpl::InitWidgets(int w, int h)
 		mWnd->SetUpdateTimeMsgHandler([&](uint32_t) {
 			auto handler = temple::GetRef<BOOL(__cdecl)(int widId, TigMsg& msg)>(0x1015E990);
 			handler(-1, TigMsg()); // args aren't used in practice
-
-			int elapsedTime = TigElapsedSystemTime(mWorldmapTime);
-			auto btn = (WidgetButton*)uiManager->GetAdvancedWidget(mURHereBtn);
-			if (!btn) return;
-			auto s = (int)(5.f * sinf(elapsedTime * 0.004f)) / 2;
-			btn->SetSize({ mURHereBtnR + 2 * s , mURHereBtnR + 2 * s });
-			auto x0 = 40, y0 = 40;
-			btn->SetPos(x0 - s, y0 - s);
+			AnimateButtons();
 			});
 		mWnd->SetKeyStateChangeHandler([&](const TigKeyStateChangeMsg& msg)->bool {
 			if (mIsMakingTrip) {
@@ -1332,7 +1338,8 @@ void UiWorldmapImpl::InitWidgets(int w, int h)
 		std::vector<int> scriptTextureInds = { 120,130,140,150,160,170,180,190,200};
 		Expects(mesInds.size() == textureInds.size());
 		
-		for (auto i = 0u; i < mesInds.size(); ++i) {
+		// Location Btns
+		for (auto i = 0u; i < textureInds.size(); ++i) {
 			auto btn = std::make_unique<WidgetButton>();
 			SetWidFromMes(*btn, mesInds[i]);
 
@@ -1345,13 +1352,13 @@ void UiWorldmapImpl::InitWidgets(int w, int h)
 			auto btnId = btn->GetWidgetId();
 			locWidgets[i].locationBtn = btnId;
 
-
 			btn->SetWidgetMsgHandler([&, btnId](const TigMsgWidget& msg) ->bool {
 				return AcquiredLocationBtnMsg(btnId, (TigMsg*)&msg);
 				});
 			AdjChildPos(*btn, *mWnd);
 			mWnd->Add(std::move(btn));
 		}
+		// Script Btns
 		for (auto i = 0u; i < scriptTextureInds.size(); ++i) {
 			auto btn = std::make_unique<WidgetButton>();
 			SetWidFromMes(*btn, mesInds[i]+10);
@@ -1363,7 +1370,7 @@ void UiWorldmapImpl::InitWidgets(int w, int h)
 			btn->SetStyle(style);
 
 			auto btnId = btn->GetWidgetId();
-			locWidgets[i].locationBtn = btnId;
+			locWidgets[i].scriptBtn = btnId;
 
 
 			btn->SetWidgetMsgHandler([&, btnId](const TigMsgWidget& msg) ->bool {
@@ -1400,6 +1407,71 @@ void UiWorldmapImpl::GetUiLocations()
 void UiWorldmapImpl::UpdateWidgets()
 {
 	UpdateAcquiredLocationsBtns();
+}
+
+void UiWorldmapImpl::AnimateButtons()
+{
+	URHereAnimate();
+	FadeInLocations();
+}
+
+void UiWorldmapImpl::URHereAnimate()
+{
+	int elapsedTime = TigElapsedSystemTime(mWorldmapTime);
+	auto btn = (WidgetButton*)uiManager->GetAdvancedWidget(mURHereBtn);
+	if (btn) {
+		auto s = (int)(5.f * sinf(elapsedTime * 0.004f)) / 2;
+		btn->SetSize({ mURHereBtnR + 2 * s , mURHereBtnR + 2 * s });
+		auto x0 = 40, y0 = 40;
+		btn->SetPos(x0 - s, y0 - s);
+	}
+}
+
+void UiWorldmapImpl::FadeInLocations()
+{
+	auto locId = 0;
+	for (auto locId = 0; locId < locationStates.size(); ++locId) {
+		auto& state = locationStates[locId];
+		if (state.mapBtn == MV_FADING) {
+			if (mFadingInLocationBtn || tigSoundAddresses.IsStreamPlaying(mLocationSoundStream) ) {
+				continue;
+			}
+			mFadingInLocationBtn = 1;
+			state.mapBtn = (MapVisibility)TigGetSystemTime();
+			tigSoundAddresses.PlayInStream(mLocationSoundStream, 3000); //snd_interface.mes worldmap_location.wav
+			return;
+		}
+		if (state.scriptWriting == MV_FADING) {
+			if (mLocationsFadingCount > 0) {
+				continue;
+			}
+			mFadingInLocationBtn = 1;
+			state.scriptWriting = (MapVisibility)TigGetSystemTime();
+			tigSoundAddresses.PlayInStream(mLocationSoundStream, 3001); //snd_interface.mes worldmap_writing.wav
+			return;
+		}
+
+		if (state.mapBtn > MV_VISIBLE) { // indicates reference timestamp was set, thus animation is ongoing
+			auto timeStamp = (uint32_t)state.mapBtn;
+			auto elapsedTime = ((int)TigElapsedSystemTime(timeStamp)) * 0.0002f; // 1/5sec
+			if (elapsedTime >= 1.0f) {
+				state.mapBtn = MV_VISIBLE;
+				mLocationsFadingCount--;
+				mFadingInLocationBtn = FALSE;
+				return; // so they appear one by one
+			}
+			// TODO set alpha
+		}
+		if (state.scriptWriting > MV_VISIBLE) {
+			auto timeStamp = (uint32_t)state.scriptWriting;
+			auto elapsedTime = ((int)TigElapsedSystemTime(timeStamp)) * 0.0002f; // 1/5sec
+			if (elapsedTime >= 1.0f) {
+				state.scriptWriting = MV_VISIBLE;
+				return; // so they appear one by one
+			}
+			// TODO set alpha
+		}
+	}
 }
 
 void UiWorldmapImpl::LoadPaths()
@@ -1534,7 +1606,7 @@ void UiWorldmapImpl::MarkAreaKnown(AreaId areaId)
 	}
 
 	// Add new location
-	mLocationsRevealingCount++;
+	mLocationsFadingCount++;
 	
 	auto locVisitedNew = LocationVisited();
 	locVisitedNew.locId = locId;
@@ -1551,7 +1623,7 @@ void UiWorldmapImpl::MarkAreaKnown(AreaId areaId)
 }
 
 /* 0x1015DFD0 */
-void UiWorldmapImpl::UnhideLocationBtns()
+void UiWorldmapImpl::UpdateLocationStates()
 {
 	for (auto i = 0; i < locationsVisited.size(); ++i) {
 		auto locVis = locationsVisited[i];
