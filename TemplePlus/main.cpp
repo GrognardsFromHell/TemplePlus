@@ -9,7 +9,7 @@
 
 #include "util/datadump.h"
 
-void InitLogging(const std::wstring &logFile);
+void InitLogging(const std::wstring &logFile, spdlog::level::level_enum logLevel);
 
 // Defined in temple_main.cpp for now
 int TempleMain(HINSTANCE hInstance, const string& commandLine);
