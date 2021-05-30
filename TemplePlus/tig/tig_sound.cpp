@@ -7,7 +7,7 @@ TigSoundAddresses::TigSoundAddresses() {
 
 	rebase(AllocStream, 0x101E45B0);
 	rebase(SetStreamVolume, 0x101E3B60);
-	rebase(LoadSound, 0x101E3B00);
+	rebase(PlayOnce, 0x101E3B00);
 	rebase(IsStreamPlaying, 0x101E3D40);
 	rebase(IsStreamActive, 0x101E3DC0);
 	rebase(FreeStream, 0x101E36D0);
@@ -15,16 +15,26 @@ TigSoundAddresses::TigSoundAddresses() {
 
 TigSoundAddresses tigSoundAddresses;
 
-kiuuhgjkh
-int TigSoundAddresses::StreamInit(int& streamIdOut, int streamType)
+
+bool TigSoundAddresses::PlayInStream(int streamId, int soundId)
 {
-	static auto streamInit = temple::GetRef<int(__cdecl)(int&, int)>(0x101E45B0);
-	auto result = streamInit(streamIdOut, streamType);
-	return result;
+	static auto playInStream = temple::GetRef<BOOL(__cdecl)(int, int)>(0x101E38D0);
+	return playInStream(streamId, soundId) != FALSE;
 }
 
-void TigSoundAddresses::PlayInStream(int streamId, int soundId)
+bool TigSoundStreamWrapper::Play(int soundId)
 {
-	static auto playInStream = temple::GetRef<void(__cdecl)(int, int)>(0x101E38D0);
-	playInStream(streamId, soundId);
+	Expects(mStreamId != -1);
+	return tigSoundAddresses.PlayInStream(mStreamId, soundId);
+}
+
+bool TigSoundStreamWrapper::Play(const string& filename, TigSoundType type)
+{
+	assert(mStreamId == -1);
+	tigSoundAddresses.AllocStream(&mStreamId, type);
+	tigSoundAddresses.PlayOnce(mStreamId, filename.c_str(), 0, true, -1);
+	if (!tigSoundAddresses.IsStreamActive(mStreamId)) {
+		mStreamId = -1;
+	}
+	return mStreamId != -1;
 }
