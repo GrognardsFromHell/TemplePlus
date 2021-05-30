@@ -285,11 +285,6 @@ public:
 	void AdvanceTime(uint32_t time) override;
 	const std::string &GetName() const override;
 
-	// stream types: 0 - sound effect, 1 - music, 2 - voice, 3 - scatter (3d?)
-	int StreamInit(int& streamIdOut, int streamType); 
-	void PlayInStream(int streamId, int soundId);
-	void StreamEnd(int streamId);
-
 	void SetSoundSchemeIds(int scheme1, int scheme2);
 
 

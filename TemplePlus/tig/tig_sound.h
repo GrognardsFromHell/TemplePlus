@@ -20,17 +20,10 @@ struct TigSoundAddresses : temple::AddressTable {
 	bool (__cdecl *IsStreamActive)(int streamId);
 	void (__cdecl *FreeStream)(int streamId);
 
-	TigSoundAddresses() {
-		rebase(movieVolume, 0x103010F8); // 0-127
+	int StreamInit(int& streamIdOut, int streamType);
+	void PlayInStream(int streamId, int soundId);
+	void StreamEnd(int streamId);
 
-		rebase(AllocStream, 0x101E45B0);
-		rebase(SetStreamVolume, 0x101E3B60);
-		rebase(LoadSound, 0x101E3B00);
-		rebase(IsStreamPlaying, 0x101E3D40);
-		rebase(IsStreamActive, 0x101E3DC0);
-		rebase(FreeStream, 0x101E36D0);
-	}
-	
 };
 
 extern TigSoundAddresses tigSoundAddresses;
