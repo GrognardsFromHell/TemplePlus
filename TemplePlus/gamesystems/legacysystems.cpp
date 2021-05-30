@@ -1024,24 +1024,6 @@ const std::string &SoundGameSystem::GetName() const {
 	return name;
 }
 
-int SoundGameSystem::StreamInit(int& streamIdOut, int streamType)
-{
-	static auto streamInit = temple::GetRef<int(__cdecl)(int&, int)>(0x101E45B0);
-	auto result = streamInit(streamIdOut, streamType);
-	return result;
-}
-
-void SoundGameSystem::PlayInStream(int streamId, int soundId)
-{
-	static auto playInStream = temple::GetRef<void(__cdecl)(int, int)>(0x101E38D0);
-	playInStream(streamId, soundId);
-}
-
-void SoundGameSystem::StreamEnd(int streamId)
-{
-	static auto streamEnd = temple::GetRef<void(__cdecl)(int)>(0x101E36D0);
-	streamEnd(streamId);
-}
 
 void SoundGameSystem::SetSoundSchemeIds(int scheme1, int scheme2)
 {
