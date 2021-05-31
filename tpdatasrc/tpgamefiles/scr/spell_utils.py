@@ -255,7 +255,7 @@ class TouchModifier(PythonModifier):
     # An argument is reserved for time limited touch spells,
     # however, and the countdown hook can be added in such a case.
     def __init__(self, name, argn):
-        PythonModifier.__init__(self, name, 3+argn)
+        PythonModifier.__init__(self, name, 3+argn, 0)
 
         self.AddHook(ET_OnGetTooltip, EK_NONE, touchTooltip, ())
         self.AddHook(ET_OnGetEffectTooltip, EK_NONE, touchEffectTooltip, ())
