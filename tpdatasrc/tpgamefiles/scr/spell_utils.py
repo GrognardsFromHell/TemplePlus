@@ -177,6 +177,17 @@ def End(attachee, args, evt_obj):
     args.remove_spell()
     return 0
 
+# End the spell if another spell is cast by the condition
+# target. The callback is invoked for targets of spells as
+# well, so it's necessary to check the spell packet to see
+# if the caster is the same as the attachee.
+def touchOtherCast(attachee, args, evt_obj):
+    spell_id = evt_obj.data1
+    packet = tpdp.SpellPacket(spell_id)
+    if packet.caster == attachee:
+        End(attachee, args, evt_obj)
+    return 0
+
 # Common code for handling touch attack charges.
 #
 # 1) Decrements number of charges if positive
@@ -244,7 +255,7 @@ class TouchModifier(PythonModifier):
     # An argument is reserved for time limited touch spells,
     # however, and the countdown hook can be added in such a case.
     def __init__(self, name, argn):
-        PythonModifier.__init__(self, name, 3+argn)
+        PythonModifier.__init__(self, name, 3+argn, 0)
 
         self.AddHook(ET_OnGetTooltip, EK_NONE, touchTooltip, ())
         self.AddHook(ET_OnGetEffectTooltip, EK_NONE, touchEffectTooltip, ())
@@ -259,7 +270,7 @@ class TouchModifier(PythonModifier):
                 touchTouchAttackAdded, ())
 
         # casting another spell ends held charge spells
-        self.AddHook(ET_OnD20Signal, EK_S_Spell_Cast, End, ())
+        self.AddHook(ET_OnD20Signal, EK_S_Spell_Cast, touchOtherCast, ())
 
         # modify the menus to allow for touch attacks
         self.AddHook(ET_OnConditionAdd, EK_NONE, touchAdd, ())
