@@ -37,10 +37,10 @@ class_skills = (skill_alchemy, skill_balance, skill_bluff, skill_climb, skill_cr
 # added Blindness/Deafness and Ghoul Touch to level 2
 # added slow and vampiric touch to level 3
 spell_list = {
-	1: (spell_disguise_self, spell_detect_poison, spell_feather_fall, spell_ghost_sound, spell_grease, spell_jump, spell_obscuring_mist, spell_sleep, spell_true_strike),
-	2: (spell_alter_self, spell_blindness_deafness, spell_cats_grace, spell_foxs_cunning, spell_ghoul_touch, spell_illusory_script, spell_invisibility, spell_pass_without_trace, spell_spider_climb, spell_undetectable_alignment),
-	3: (spell_deep_slumber, spell_deeper_darkness, spell_false_life, spell_magic_circle_against_good, spell_slow, spell_vampiric_touch, spell_misdirection, spell_nondetection),
-	4: (spell_clairaudience_clairvoyance, spell_dimension_door, spell_freedom_of_movement, spell_glibness, spell_improved_invisibility, spell_locate_creature, spell_modify_memory, spell_poison)
+	1: (spell_critical_strike, spell_disguise_self, spell_detect_poison, spell_distract_assailant, spell_feather_fall, spell_ghost_sound, spell_grease, spell_insightfull_feint, spell_jump, spell_lightfoot, spell_obscuring_mist, spell_shock_and_awe, spell_sleep, spell_snipers_shot, spell_sticky_fingers, spell_true_strike),
+	2: (spell_alter_self, spell_blindness_deafness, spell_cats_grace, spell_fell_the_greatest_foe, spell_fire_shuriken, spell_foxs_cunning, spell_ghoul_touch, spell_illusory_script, spell_invisibility, spell_invisibility_swift, spell_pass_without_trace, spell_phantom_foe, spell_spider_climb, spell_veil_of_shadow, spell_undetectable_alignment),
+	3: (spell_deep_slumber, spell_deeper_darkness, spell_false_life, spell_find_the_gap, spell_magic_circle_against_good, spell_slow, spell_vampiric_touch, spell_misdirection, spell_nondetection, spell_wraithstrike),
+	4: (spell_clairaudience_clairvoyance, spell_dimension_door, spell_freedom_of_movement, spell_glibness, spell_heart_ripper, spell_improved_invisibility, spell_locate_creature, spell_modify_memory, spell_poison)
 }
 
 spells_per_day = {

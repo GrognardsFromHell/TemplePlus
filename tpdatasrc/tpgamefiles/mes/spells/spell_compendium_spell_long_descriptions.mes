@@ -1,0 +1,843 @@
+// Additional spells added by Sagenlicht
+
+{6050} Sound Lance {Projectile of intense sonic energy that deals 1d8/level (max 10d8) sonic damage.
+
+Casting:         1  std action  [Evocation,V,S]
+Range:               Medium (100ft. +10 ft./level)
+Target:             One creature or object
+Duration:      Instantaneous,    Save: Fort half,    SR: Yes}
+
+{6052} Camouflage {Gain a +10 circumstance bonus to Hide
+
+School:          Transmutation
+Casting:         1  std action [V,S]
+Range:               Personal
+Target:             Self
+Duration:      10 mins/level}
+
+{6053} Appraising Touch {For 1 hour/level +10 insight bonus to Appraise
+
+School:          Divination
+Casting:         1  std action [V,S]
+Range:               Personal
+Target:             Self
+Duration:      1 hour/level}
+
+{6054} Phantom Threat {Target is always flanked for the spell duration.
+
+School:          Illusion(Phantasm)[Mind-Affecting]
+Casting:         1  std action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One Creature
+Duration:      1 round/level,  Save: Will negates,  SR: Yes}
+
+{6055} Distort Speech {Target has a 50% Chance to miscast spells.
+
+School:          Transmutation[Sonic]
+Casting:         1  std action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:                One Creature
+Duration:      1 rnd/lvl,  Save: Fort negates,  SR: Yes}
+
+{6056} Distract {HD<6: -4 penalty on Concentration, Listen, Search, and Spot. Limited to single standard or move action.
+[Enchantment](Compulsion)[Mind-Affecting]
+Casting:         1  std action [S]
+Range:               Medium (100ft. +10 ft./level)
+Target:              One Creature/level
+Duration:      1 rnd/lvl,  Save: Will negates,  SR: Yes}
+
+{6057} Focusing Chant {+1 Circumstance Bonus to Attack Rolls, Skill and Ability Checks.
+[Enchantment](Compulsion)[Mind-Affecting]
+Casting:         1  swift action [V]
+Range:               Personal
+Target:             Self
+Duration:      1 minute}
+
+{6058} Herald's Call {Any creature with 5 Hit Dice or less is slowed.
+[Enchantment](Compulsion)
+[Mind-Affecting][Sonic]
+Casting:         1  Swift action [V,S]
+Range:               20 ft.
+Target:               burst centered on you
+Duration:      1 round,  Save: Will negates,  SR: Yes}
+
+{6059} Improvisation {Bonus pool with 2/level, usable on attack rolls, skill and ability checks, no single bonus greater than one-half caster level.
+School:          Transmutation
+Casting:         1  std action [V,S]
+Range:               Personal
+Target:             Self         Duration: 1 round/level}
+
+{6061} Inspirational Boost {Increased morale bonus of Inspire Courage by 1.
+School:          [Enchantment](Compulsion) [Mind-Affecting][Sonic]
+Casting:         1 Swift [V,S]
+Range:               Personal
+Target:             You
+Duration:      special,  Save: None,  SR: No}
+
+{6062} Invisibility, Swift {Invisible for 1 round as a swift action.
+
+School:          Illusion(Glamer)
+Casting:         1  swift action [V]
+Range:               Personal
+Target:             Self
+Duration:      1 round}
+
+{6063} Ironguts {+5 Alchemical Bonus to Fort. Saves vs. poisons.
+
+School:          Abjuration
+Casting:         1  std action [V,S,M]
+Range:               Touch
+Target:             Creature touched
+Duration:      1 min/level, Save: Will negates,  SR: Yes}
+
+{6064} Ironthunder Horn  {Trips enemies in range.
+
+School:          Transmutation [Sonic]
+Casting:         1  std action [V,S]
+Range:               30 feet
+Area:                   Cone-shaped burst
+Duration:      Inst.,  Save: Reflex negates,  SR: Yes}
+
+{6065} Insidious Rhythm {Target gets a -4 penalty on Intelligence-based skill checks and Concentration checks and spells cast require a Concentration check (DC equal to Insidious Rhythm's save DC + spell's level) or fail.
+
+School:          [Enchantment] (Compulsion) [Mind-Affecting]
+Casting:         1  swift action [V,S]
+Range:               Medium (100ft. +10 ft./level)
+Target:             One Creature
+Duration:      1 min/level,  Save: Will negates,  SR: Yes}
+
+{6066} Master's Touch {Grants proficiency for worn weapon or shield.
+
+School:          [Divination]
+Casting:         1  std action [V]
+Range:               Personal
+Target:             Self
+Duration:      1 min/level}
+
+{6067} Serene Visage {One-half level Insight Bonus to Bluff (max +10).
+
+School:          Illusion(Glamer)
+Casting:         1  std action [V]
+Range:               Personal
+Target:             Self
+Duration:      1 min/level}
+
+{6068} Shock and Awe {Enemies get -10 to Initiative if flatfooted.
+
+School:          [Enchantment][Mind-Affecting]
+Casting:         1  swift action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One Creature/lvl within 30 ft. each
+Duration:      1 round,  Save: No,  SR: Yes}
+
+{6069} Sticky Fingers {+10 untyped bonus to Sleight Of Hand
+
+School:          Transmutation
+Casting:         1  std action [V,S]
+Range:               Personal
+Target:             Self
+Duration:      1 round}
+
+{6070} Undersong {Use Perform Checks for Concentration Checks.
+
+School:          [Transmutation]
+Casting:         1  std action [V]
+Range:               Personal
+Target:             Self
+Duration:      10 min/level}
+
+{6071} Distract Assailant {Target is flatfooted until start of its turn.
+
+School:          Enchant.(Compulsion)[Mind-Affecting]
+Casting:         1  std action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:                   One Creature
+Duration:      1 round/level,  Save: Will negates,  SR: Yes}
+
+{6072} Insightful Feint {Gain a +10 insight bonus to your next Feint Check.
+
+School:          Divination
+Casting:         1  swift action [V]
+Range:               Personal
+Target:             Self
+Duration:      1 round}
+
+{6073} Lightfoot {You provoke no attacks of opportunity when moving.
+School:          Transmutation
+Casting:         1  swift action [V]
+Range:               Personal
+Target:             Self
+Duration:      1 round}
+
+{6074} Sniper's Shot {No range limit to ranged sneak attacks.
+
+School:          Divination
+Casting:         1  swift action [V]
+Range:               Personal
+Target:             Self
+Duration:      1 round}
+
+{6075} Sonic Weapon {Weapon deals 1d6 extra sonic damage.
+
+School:          Transmutation[Sonic]
+Casting:         1  std action [V]
+Range:               Personal
+Target:             Weapon touched
+Duration:      1 minute/level}
+
+{6076} Bonefiddle {3d6 sonic damage at start of each turn, -20 Move Silently.
+School:          Necromancy
+Casting:         1  std action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One Creature
+Duration:      1 rnd/lvl,  Save: Fort negates,  SR: Yes}
+
+{6077} Cloud of Bewilderment {All living creatures inside cloud are nauseated and concealed
+School:          Conjuration
+Casting:         1  std action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Area:             10-ft. radius
+Duration:      1 rnd/lvl,  Save: Fort negates,  SR: No}
+
+{6078} Curse of the Impending Blades{Target takes a -2 penalty to AC.
+
+School:          Necromancy
+Casting:         1  std action [V,S]
+Range:               Medium (100ft. +10 ft./level)
+Target:             One Creature
+Duration:      1 min/level,  Save: None,  SR: Yes}
+
+{6079} Wave of Grief {-3 penalty on Attack Rolls, Saving Throws, Ability and Skill Checks.
+School:          Enchantment[Evil][Mind-Affecting]
+Casting:         1  std action [V,S]
+Range:               30 feet
+Area:                   Cone-shaped burst
+Duration:      Inst.,  Save: Will negates,  SR: Yes}
+
+{6080} Harmonic Chorus {Target gains a +2 morale bonus to caster level and spell DCs.
+          Enchantment(Compulsion)[Mind-Affecting]
+Casting:         1  std action [V,S,M]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One Creature
+Duration:      1 round/level, Save: Will negates,  SR: Yes}
+
+{6081} Iron Silence {No armor check penalty to Hide and Move Silently.
+
+School:          Transmutation
+Casting:         1  std action [V]
+Range:               Armor touched
+Target:             Self
+Duration:      1 hour/level}
+
+{6082} War Cry {+4 bonus on attack and damage when charging. On damage save vs. will or be panicked for 1 round.
+School:          Enchantment (Compulsion)[Mind-Affecting][Sonic]
+Casting:         1  swift action [V, S]
+Range:               Personal
+Target:             Self, Duration: 1 round}
+
+{6084} Bladeweave {Once per round, target that you successfully attacked with a melee weapon is dazed for 1 round.
+School:          Illusion(Pattern)
+Casting:         1  swift action [V]
+Range:               Personal
+Target:             Self
+Duration:      1 round/level}
+
+{6085} Fell the Greatest Foe {On melee attack: 1d6 bonus damage for every size category smaller than target.
+
+School:          Transmutation
+Casting:         1  std action [V,S]
+Range:               Touch
+Target:             Creature touched
+Duration:      1 min/level, Save: No,  SR: No}
+
+{6086} Fire Shuriken {Create Fire Shuriken that deal 3d6 fire damage.
+School:          Evocation[Fire]
+Casting:         1  std action [V,S]
+Range:               Personal
+Effect:             One magical shuriken/3 levels
+Duration:      Inst.}
+
+{6087} Phantom Foe {Target counts always as flanked and has a 50% miss chance on attacks
+School:          Illusion(Phantasm)[Mind-Affecting]
+Casting:         1  std action [V,S]
+Range:               Touch
+Target:             Creature touched
+Duration:      1 min/level, Save: Will negates,  SR: No}
+
+{6088} Veil of Shadow {Gain 20% Concealment Chance, dispelled by Daylight.
+
+School:          Evocation[Darkness]
+Casting:         1  std action [V,S]
+Range:               Personal
+Target:             You
+Duration:      1 min/level, Save: No,  SR: No}
+
+{6089} Curse of Impending Blades Mass {Enemies in range takes a -2 penalty to AC.
+
+School:          Necromancy
+Casting:         1  std action [V,S]
+Range:               Medium (100ft. +10 ft./level)
+Area:             20-ft. radius
+Duration:      1 min/level,  Save: None,  SR: Yes}
+
+{6090} Dissonant Chord {Creatures in area take 1d8 / two caster level (max 5d8) points of sonic damage.
+School:          Evocation[Sonic]
+Casting:         1  std action [V,S]
+Range:               centered around caster
+Area:                10-ft. radius
+Duration:      Inst.,  Save: Fort half,  SR: Yes}
+
+{6091} Haunting Tune {Targets that fail their saves become shaken.
+School: [Enchantment] (Compulsion) [Fear] [Mind-Affecting] [Sonic]
+Casting:         1  std action [S]
+Range:               Medium (100ft. +10 ft./level)
+Target:              One Creature/level
+Duration:      10 min/lvl,  Save: Will negates,  SR: Yes}
+
+{6092} Love's Lament {Creatures take 1d6 points of Wisdom damage and are nauseated for 1d4 rounds.
+School:          Enchantment(Compulsion)[Mind-Affecting]
+Casting:         1  std action [V,S]
+Range:               60 feet
+Area:                   Cone-shaped burst
+Duration:      Inst.,  Save: Will negates,  SR: Yes}
+
+{6093} Ray of Dizziness {Limited to a move or a standard action each round.
+School:          Enchantment (Compulsion) [Mind-Affecting]
+Casting:         1  std action [S]
+Range:               Medium (100ft. +10 ft./level)
+Effect:              Ray
+Duration:      1 rnd/lvl,  Save: None,  SR: Yes}
+
+{6094} Wounding Whispers {On dealt melee damage: deal 1d6 points of sonic damage +1 point per caster level.
+School:          Abjuration [Sonic]
+Casting:         1  std action [V,S]
+Range:               Personal
+Target:             You
+Duration:      1 round/level, Save: No,  SR: Yes}
+
+{6095} Dirge of Discord {Creatures affected by this spell take a -4 penalty on attack rolls and Dexterity, a 50% reduction in their speed (to a minimum of 5 feet), and must make a Concentration check to cast any spell.
+[Enchantment](Compulsion)[Evil][Mind-Affecting]
+Casting:         1  std action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Area:             20-ft. radius
+Duration:      1 rnd/lvl,  Save: Will negates,  SR: Yes}
+
+{6096} Allegro {Targets gains a 30-foot enhancement bonus to their speed, up to a maximum of double the creature's land speed.
+School:          Transmutation
+Casting:         1  swift action [V,S]
+Range:               centered around caster
+Area:                20-ft. radius
+Duration:      1 min/level,  Save: None,  SR: Yes}
+
+{6097} Find the Gap {Your first melee or ranged attack each round is resolved as a touch attack.
+School:          Divination
+Casting:         1  std action [V]
+Range:               Personal
+Target:             Self
+Duration:      1 round/level}
+
+{6098} Wraithstrike {Melee attacks are resolved as touch attacks.
+
+School:          Transmutation
+Casting:         1  swift action [V]
+Range:               Personal
+Target:             Self
+Duration:      1 round}
+
+{6099} Resonating Bolt {Bolt that deals 1d4 points of sonic damage per caster level (maximum 10d4).
+School:          Evocation[Sonic]
+Casting:         1 std action [V,S]
+Range:               60ft.
+Area:                60-ft. line
+Duration:      Inst,  Save: Reflex half,  SR: Yes}
+
+{6100} Resistance, Greater {Target gains a +3 resistance bonus on saves.
+
+School:          Abjuration
+Casting:         1  std action [V,S]
+Range:               Touch
+Target:             Creature touched
+Duration:      24 hours, Save: Will None,  SR: No}
+
+{6101} Fugue {Creatures that fail their save become affected by the haunting fugue in semirandom ways (See below).
+School:          Evocation [Sonic]
+Casting:         1  std action [V,S]
+Range:               Medium (100ft. +10 ft./level)
+Area:             30-ft. radius
+Duration:      1 rnd/lvl,  Save: Will negates,  SR: Yes
+
+Perform check equals or exceeds the required DC.
+DC	Result
+15	Victim takes 3d6 points of nonlethal damage
+20	Victim takes 3d6 points of sonic damage
+25	Victim is knocked prone
+30	Victim is nauseated for 1 round
+35	Victim is stunned for 1 round
+40	Victim attacks nearest target}
+
+{6102} Sirine's Grace {Gain a +4 enhancement bonus to Charisma and Dexterity, a deflection bonus to AC equal to your Charisma modifier, and a +8 bonus on Perform checks.
+School:          Evocation
+Casting:         1  std action [V,S]
+Range:               Personal
+Target:             Self
+Duration:      1 round/level}
+
+{6103} Dolorous Blow {[Transmutation] For the duration of the spell, the weapon's threat range is doubled, and its critical threats automatically confirm, so every threat is a critical hit. Multiple effects that increase a weapon's threat range don't stack.
+School:          Transmutation
+Casting:         1  std action [V,S]
+Range:               Personal
+Target:             Self
+Duration:      1 min/level}
+
+{6105} Cacophonic Burst {Deals 1d6 points of sonic damage per caster level (maximum 15d6).
+School:          Evocation [Sonic]
+Casting:         1  std action [V,S]
+Range:               Long (400ft. +40 ft./level)
+Area:             20-ft. radius
+Duration:      Inst.,  Save: Reflex half,  SR: Yes}
+
+{6106} Wail of Doom {Each creature takes 1d4 points of damage per caster level (maximum 15d4) and becomes panicked for 1 round per caster level. A successful Will save halves the damage, reduces the panicked effect to shaken, and reduces the duration of the shaken effect to 1 round.
+School:          Necromancy[Fear][Mind-Affecting][Sonic]
+Casting:         1  std action [V,S]
+Range:               30 feet
+Area:                   Cone-shaped burst
+Duration:      Inst.,  Save: Will partial,  SR: Yes}
+
+{6107} Heart Rippper{Slay a living target with equal or lesser HD, else stun for 1d4.
+
+School:          Necromancy[Death]
+Casting:         1  std action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One living creature
+Duration:      Inst., see txt,  Save: Fortitude negates,  SR: Yes}
+
+{6108} Dirge {Each round, enemies in the area takes 2 points of Strength and Dexterity damage. Fortitude save needs to be done every round.
+School:          Evocation[Sonic]
+Casting:         1  std action [V,S]
+Range:               centered around caster
+Area:                50-ft. radius
+Duration:      1 rnd/level,  Save: Fort negates,  SR: Yes}
+
+{6109} Nixies Grace {Gain a DR 5/cold iron, +6 bonus to Dexterity, a +2 bonus to Wisdom and a +8 bonus to Charisma.
+School:          Transmutation[Water] 
+Casting:         1  std action [V,S]
+Range:               Personal
+Target:             Self
+Duration:      1 min/level}
+
+{6110} Ray of Light {Target is blinded for 1d4 rounds on a successful ranged touch attack.
+School:          Evocation[Light]
+Casting:         1  std action [V,S]
+Range:               Close (25ft. +5 ft./2 level)
+Effect:              Ray
+Duration:      Inst.,  Save: None,  SR: Yes}
+
+{6111} Resistance Superior {You grant the subject a +6 resistance bonus on saves.
+
+School:          Abjuration
+Casting:         1  std action [V,S]
+Range:               Touch
+Target:             Creature touched
+Duration:      24 hours, Save: Will None,  SR: No}
+
+{6112} Strategic Charge {You gain the benefit of the Mobility feat, even if you not meet the prerequisites.
+School:          Abjuration
+Casting:         1  swift action [V]
+Range:               Personal
+Target:             Self
+Duration:      1 round/level}
+
+{6113} Blessed Aim {This spell grants your allies within the spread a +2 morale bonus on ranged attack rolls.
+School:          Divination
+Casting:         1  std action [V,S]
+Range:               centered around caster
+Area:                50-ft. radius
+Duration:      1 minute/level,  Save: none,  SR: No}
+
+{6114} Clear Mind {You gain a +4 sacred bonus on saving throws made against mind-affecting spells and effects.
+School:          Abjuration
+Casting:         1  std action [V,S]
+Range:               Personal
+Target:             Self
+Duration:      10 minutes/level}
+
+{6115} Deafening Clang {The weapon deals an additional 1d6 points of sonic damage and any creature struck by the weapon must succeed on a Fortitude saving throw or be deafened for 1 minute.
+School:          Transmutation[Sonic]
+Casting:         1  swift action [V]
+Range:               Personal
+Target:             Weapon touched
+Duration:      1 round}
+
+{6118} Faith Healing {Heal 1d8 + level (max. 5) on target that worships same deity.
+
+School:          Conjuration(Healing)
+Casting:         1  std action [V,S]
+Range:               Touch
+Target:             Creature touched
+Duration:      Inst., Save: Will negates,  SR: Yes}
+
+{6119} Summon Undead I {You summon an undead creature.
+
+School:          [Conjuration](Summoning)[Evil]
+Casting:         Full round [V,S]
+Range:               Close (25ft. +5 ft./2 level)
+Effect:              One summoned creature
+Duration:      1 round/level, Save: No,  SR: No}
+
+{6120} Angelskin {Target gains damage reduction 5/evil.
+
+School:          [Abjuration][Good]
+Casting:         1  std action [V,S]
+Range:               Touch
+Target:             Creature touched
+Duration:      1 round/level, Save: None,  SR: No}
+
+{6121} Demonhide {Target gains damage reduction 5/good.
+
+School:          [Abjuration][Evil]
+Casting:         1  std action [V,S]
+Range:               Touch
+Target:             Creature touched
+Duration:      1 round/level, Save: None,  SR: No}
+
+{6122} Summon Undead II {You summon an undead creature.
+
+School:          [Conjuration](Summoning)[Evil]
+Casting:         Full round [V,S]
+Range:               Close (25ft. +5 ft./2 level)
+Effect:              One summoned creature
+Duration:      1 round/level, Save: No,  SR: No}
+
+{6123} Hand of Divinity {Target gets a +2 bonus on saving throws if same deity or same alignment as deity.
+School:          Evocation
+Casting:         Full round [V,S]
+Range:               Touch
+Target:             Creature touched
+Duration:      1 minute/level, Save: None,  SR: No}
+
+{6124} Curse of Ill Fortune {Target gets a -3 penalty on attack rolls, saving throws, ability checks and skill checks.
+School:          [Necromancy]
+Casting:         1  std action [V,S]
+Range:            Medium (100 ft. +10 ft./level)
+Target:          One living creature
+Duration:        1 minute/level, Save: Will negates,  SR: Yes}
+
+{6125} Awaken Sin {Target takes 1d6 points of nonlethal damage per caster level (maximum 10d6) and is stunned for 1 round. If target is knocked unconscious, it also takes 1d6 points of Wisdom damage.
+School:          Enchantment(Compulsion)[Fear][Good] [Mind-Affecting]
+Casting:         1 std action [V,S]
+Range:               Touch
+Target:           One evil creature with Intelligence 3+
+Duration:      Inst., Save: Will negates,  SR: Yes}
+
+{6126} Checkmate's Light {You imbue the touched weapon with a +1 enhancement bonus per three caster levels (max +5) and it is treated as lawful-aligned for the purpose of overcoming damage reduction. Any creature within the radius of its clear illumination (20 feet) gets a +1 morale bonus on saving throws against fear effects.
+
+School:          Evocation[Lawful]
+Casting:         1 std action [V,S]
+Range:               Touch
+Target:           Melee Weapon
+Duration:      1 round/level, Save: None,  SR: No}
+
+{6127} Cloak of Bravery {Allies gain a morale bonus on saves against fear effects equal to your casterlevel (max +10.)
+School:          Abjuration [Mind-Affecting]
+Casting:         1 std action [V,S]
+Range:               60 ft.
+Area:                   60 ft.-radius centered on you
+Duration:      10 minutes/level, Save: None,  SR: No}
+
+{6128} Divine Protection {Allies gain a +1 morale bonus to their AC and on saving throws.
+School:          Enchantment(Compulsion)[Mind-Aff.]
+Casting:         1 std action [V,S]
+Range:             Medium (100 ft. + 10 ft./level)
+Targets:         Allies in a 20-ft.-radius burst
+Duration:      1 minutes/level, Save: None,  SR: No}
+
+{6129} Quick March {Increase allies base land speed by 30 feet.
+
+School:          [Transmutation]
+Casting:         1 swift action [V,S]
+Range:            Medium (100 ft. + 10 ft./level)
+Targets:         Allies in a 20-ft.-radius burst
+Duration:       1 round, Save: None,  SR: No}
+
+{6130} Shield of Warding {Shield grants its wielder a +1 sacred bonus to AC and on Reflex saves, +1 per five caster levels (max +5).
+
+School:          Abjuration[Good]
+Casting:         1 std action [V,S]
+Range:              Touch
+Target:            Shield touched
+Duration:      1 minute/level, Save: None,  SR: No}
+
+{6131} Blessing of Bahamut {You gain damage reduction 10/magic.
+
+School:          Abjuration[Good]
+Casting:         1 std action [V,S]
+Range:              Personal
+Target:            You
+Duration:      1 round/level, Save: None,  SR: No}
+
+{6132} Diamondsteel {Get DR/adamantine equal to half AC bonus of worn armor.
+
+School:          Transmutation
+Casting:         1 std action [V,S]
+Range:              Touch
+Target:            Armor touched
+Duration:      1 round/level, Save: None,  SR: No}
+
+{6133} Righteous Fury {You gain 5 temporary hit points per caster level (max. 50) and a +4 sacred bonus to Strength.
+School:          [Transmutation]
+Casting:         1 std action [V,S]
+Range:              Personal
+Target:            You
+Duration:      1 round/level, Save: None,  SR: No}
+
+{6134} Undead Bane Weapon {Against Undead, weapon has a +2 higher enhancement bonus and deals an extra 2d6 damage. Weapon counts as good-alignment for the purpose of overcoming DR.
+School:          Transmutation
+Casting:         1 std action [V,S]
+Range:              Touch
+Target:            Weapon touched
+Duration:      1 hour/level, Save: None,  SR: No}
+
+{6136} Axiomatic Storm {Chaotic creatures take 2d6 damage each round (chaotic outsider take double damage). Once per round a random chaotic outsider takes 5d6 acid damage. -4 penalty to Listen, Spot and Search checks and to ranged attacks in, into or out of the storm.
+School:          Conjuration(Creation)[Lawful][Water]
+Casting:         1 action [V,S]
+Range:               Personal 
+Area:             20 ft.
+Duration:      1 round/level,  Save: None negates,  SR: No}
+
+{6137} Holy Storm {Evil creatures take 2d6 damage each round (evil outsider take double damage). -4 penalty to Listen, Spot and Search checks and to ranged attacks in, into or out of the storm.
+School:          Conjuration(Creation)[Good][Water]
+Casting:         1 action [V,S]
+Range:               Personal 
+Area:             20 ft.
+Duration:      1 round/level,  Save: None negates,  SR: No}
+
+{6138} Unholy Storm {Good creatures take 2d6 damage each round (good outsider take double damage). -4 penalty to Listen, Spot and Search checks and to ranged attacks in, into or out of the storm.
+School:          Conjuration(Creation)[Evil][Water]
+Casting:         1 action [V,S]
+Range:               Personal 
+Area:             20 ft.
+Duration:      1 round/level,  Save: None,  SR: No}
+
+{6139} Summon Undead III {Summons Undead to aid in battle
+School:          Conjuration(Summoning)[Evil]
+Casting:         Full round [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Effect:              One summoned creature
+Duration:      1 round/level,  Save: None,  SR: No}
+
+{6140} Visage of the Deity lesser {You get +4 to Charisma and resistance 10 to acid, cold and electricity if good or cold and fire if evil.
+School:          Transmutation
+Casting:         1 action [V,S]
+Range:               Personal 
+Target:             Personal
+Duration:      1 round/level,  Save: None,  SR: No}
+
+{6141} Lawful Sword {Weapon becomes a +5 axiomatic weapon for the duration of the spell.
+School:          Evocation[Lawful]
+Casting:         1 action [V,S]
+Range:               Personal 
+Target:             Personal
+Duration:      1 round/level,  Save: None,  SR: No}
+
+{6142} Summon Undead IV {Summon Undead to aid in battle.
+School:          Conjuration(Summoning)[Evil]
+Casting:         Full round [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             Area
+Duration:      1 round/level,  Save: None,  SR: No}
+
+{6143} Castigate {Creatures take 1d4/level(max 10d4) sonic damage if alignment completly differs, 1d4/2 levels (max 5d4) if they differ only on one axis and no damage if same alignment.
+School:          Evocation[Sonic]
+Casting:         1 action [V]
+Range:               Personal
+Area:               10-ft.radius burst centered on you
+Duration:      Inst.,  Save: Fortitude negates,  SR: Yes}
+
+{6144} Summon Undead V {Summon Undead to aid in Battle
+School:          Conjuration(Summoning)[Evil]
+Casting:         Full round [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             Area
+Duration:      1 round/level,  Save: None,  SR: No}
+
+{6145} Conviction {Target gets a +2 morale bonus to saves +1 additional for every 6 levels (max +5 at level 18).
+School:          Abjuration
+Casting:         1 action [V,S]
+Range:               Touch 
+Target:             Touch
+Duration:      10 min/level,  Save: None,  SR: No}
+
+{6146} Foundation of Stone {+2 to AC and +4 to Strength checks to avoid bull rushed or being tripped.
+School:          Transmutation[Earth]
+Casting:         1 action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             Multi
+Duration:      1 round/level,  Save: None,  SR: No}
+
+{6147} Nightshield {+1 (+2 at level 6 and +3 at level 9) bonus to saving throws and immunity to Magic Missile.
+School:          Abjuration
+Casting:         1 action [V,S]
+Range:               Personal 
+Target:             Personal
+Duration:      1 min/level,  Save: None,  SR: No}
+
+{6148} Nimbus of Light {Deal 1d8 + 1 point of damage per round elapsed since spell was cast (max is your level).
+School:          Evocation[Light]
+Casting:         1 action [V,S]
+Range:               Personal 
+Target:             Personal
+Duration:      1 min/level,  Save: None,  SR: No}
+
+{6149} Brambles {Wooden melee weapon gets +1 bonus to hit and +1 per casterlevel (max +10) on damage rolls.
+School:          Transmutation
+Casting:         1 action [V,S]
+Range:               Touch 
+Target:             Weapon touched
+Duration:      1 round/level,  Save: None,  SR: No}
+
+{6150} Deific Vengeance {Deal 1d6/two levels(max 5d6) damage or 1d6/level(max 10d6) damage if target is undead.
+School:          Conjuration(Summoning)
+Casting:         1 action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One creature
+Duration:      Inst.,  Save: Willpower half,  SR: Yes}
+
+{6151} Frost Breath {Deal 1d4 cold per two caster levels (max 5d4). Creatures that fail the save are dazed for 1 round.
+School:          Evocation[Cold]
+Casting:         1 action [V,S]
+Range:               30 ft.
+Area:               Cone-shaped burst
+Duration:      Inst.,  Save: Reflex half,  SR: Yes}
+
+{6152} Ghost Touch Armor {Armor gains Ghost Touch special ability.
+School:          Transmutation
+Casting:         1 action [V, S]
+Range:               Touch 
+Target:             Armor touched
+Duration:      1 min/level,  Save: None,  SR: No}
+
+{6153} Aid Mass {Like spell Aid, but on multiple targets and temp HP are 1d8 + level (max 15).
+School:          Enchantment(Compulsion)[Mind-Aff.]
+Casting:         1 action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One creature/level
+Duration:      1 min/level,  Save: None,  SR: No}
+
+{6154} Align Weapon Mass {Add the good, evil, lawful or chaotic property to weapons.
+School:          Transmutation
+Casting:         1 action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One creature/level
+Duration:      1 min/level,  Save: None,  SR: No}
+
+{6155} Bless Weapon Swift {Weapon becomes good aligned and bypasses magic DR on evil creatures.
+School:          Transmutation
+Casting:         Swift Action [V]
+Range:               Personal 
+Target:             Personal
+Duration:      1 round,  Save: None,  SR: No}
+
+{6156} Anarchic Storm {Lawful creatures take 2d6 damage each round (lawful outsider take double damage). Once per round a random lawful outsider takes 5d6 electricity damage. -4 penalty to Listen, Spot and Search checks and to ranged attacks in, into or out of the storm.
+School:          Conjuration(Creation)[Chaotic][Water]
+Casting:         1 action [V,S]
+Range:               Personal 
+Area:               20 ft.
+Duration:      1 round/level,  Save: None,  SR: No}
+
+{6157} Clutch of Orcus {Target takes 1d12 damage/round and is paralyzed. Fortitude save each round to end spell immediately.
+School:          Necromancy[Evil]
+Casting:         1 action [V,S]
+Range:               Medium (100ft. + 10ft./level)
+Target:             One humanoid
+Duration:      1 round/level,  Save: Fortitude negates,  SR: Yes}
+
+{6158} Conviction Mass {Allies get a +2 morale bonus to saves +1 additional for every 6 levels (max +5 at level 18).
+School:          Abjuration
+Casting:         1 action [V,S]
+Range:               Medium (100ft. + 10ft./level)
+Area:                20 ft. burst
+Duration:      10 min/level,  Save: None,  SR: No}
+
+{6159} Corona of Cold {Aura of Cold surrounds you that deals 1d12 cold damage every round and grants fire resistance 10. On failed saving throw targets also suffer a -2 penalty to Strength and Dexterity and its movement is halved.
+School:          Evocation[Cold]
+Casting:         1 action [V,S]
+Range:               Personal 
+Area:             10 ft.
+Duration:      1 round/level,  Save: Fortitude negates,  SR: Yes}
+
+{6161} Demon Dirge {Living creature with both the chaotic and evil subtype takes 2d6 damage each round. Stunned in addtion on a failed fortitude if target also has the demon subtype.
+School:          Transmutation
+Casting:         1 action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One living creature
+Duration:      1d6 rounds,  Save: None(see text),  SR: Yes}
+
+{6162} Devil Blight {Living creature with both the lawful and evil subtype takes 2d6 damage each round. Stunned in addtion on a failed fortitude if target also has the devil subtype.
+School:          Transmutation
+Casting:         1 action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One living creature
+Duration:      1d6 rounds,  Save: None (see text),  SR: Yes}
+
+{6163} Energy Vortex {Deal 1d8 + 1 point/level (max +20) to creatures around you of element type chosen at cast. Deal twice damage if you are willing to take damage as well.
+School:          Evocation
+Casting:         1 action [V,S]
+Range:               Personal
+Area:                20ft.-radius burst centered on you
+Duration:      Inst.,  Save: Reflex half,  SR: Yes}
+
+{6164} Grace {You get -20 to hide checks, +2 sacred bonus to Dexterity, +10 movement speed and your melee weapon and touch attacks are good aligned.
+School:          Transmutation[Good]
+Casting:         Free Action [V]
+Range:               Personal 
+Target:             Personal
+Duration:      1 round/level,  Save: None,  SR: No}
+
+{6165} Resist Energy Mass {As Resist Elements but on multiple targets
+School:          Abjuration
+Casting:         1 action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One creature/level within 30 ft. each
+Duration:      10 minutes/level,  Save: None,  SR: No}
+
+{6166} Nauseating Breath {Any creature in cone is nauseated on a failed Fortitude Save for 1d6 rounds.
+School:          Conjuration(Creation)
+Casting:         1 action [V,S]
+Range:               30 ft.
+Area:               Cone-shaped burst
+Duration:      Inst.,  Save: Fortitude negates,  SR: No}
+
+{6167} Slashing Darkness {Deal 1d8/two levels (max 5d8) to a creature or heal an undead for same amount.
+School:          Evocation
+Casting:         1 action [V,S]
+Range:               Medium (100ft. + 10ft./level)
+Target:             One creature
+Duration:      Instantaneous,  Save: None,  SR: Yes}
+
+{6168} Spikes {Wooden melee weapon gets +2 bonus to hit, +1 per casterlevel (max +10) on damage rolls and has double threat range.
+School:          Transmutation
+Casting:         1 action [V,S]
+Range:               Touch 
+Target:             Weapon touched
+Duration:      1 round/level,  Save: None,  SR: No}
+
+{6169} Tremor {Creatures in area must make a reflex save or be knocked prone each round, spells require a Concentration Check DC 15 + Spell Level.
+School:          Evocation[Earth]
+Casting:         1 action [V,S]
+Range:               Medium (100ft. + 10ft./level)
+Target:             Area
+Duration:      1,  Save: Reflex negates,  SR: No}
+
+{6170} Weapon of Energy {Add an elemental burst effect to a weapon. Element is chosen when cast.
+School:          Transmutation
+Casting:         1 action [V,S]
+Range:               Touch
+Target:             Touch
+Duration:      1,  Save: None negates,  SR: No}
+
+{6171} Storm of Elemental Fury {TBD
+School:          Conjuration(Summoning)
+Casting:         1 action [V,S]
+Range:               Long
+Target:             Area
+Duration:      4,  Save: Fortitude negates,  SR: Yes}
