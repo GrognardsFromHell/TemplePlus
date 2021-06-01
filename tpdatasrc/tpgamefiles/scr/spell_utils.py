@@ -83,9 +83,9 @@ def addDimiss(attachee, args, evt_obj):
     return 0
 
 #[pytonModifier].AddHook(ET_OnD20Signal, EK_S_Temporary_Hit_Points_Removed, spell_utils.removeTempHp, ())
-# needed in combination with condition_add_with_args('Temporary_Hit_Points', 0, spell.duration, tempHpAmount)
+# needed in combination with condition_add_with_args('Temporary_Hit_Points', spell.id, spell.duration, tempHpAmount)
 def removeTempHp(attachee, args, evt_obj):
-    attachee.d20_send_signal(S_Spell_End, 'Temporary_Hit_Points')
+    attachee.d20_send_signal(S_Spell_End, args.get_arg(0))
     return 0
 
 ### Other useful functions ###
