@@ -226,7 +226,7 @@ def deactivateCracklingAura(attachee, args, evt_obj):
         return 0
 
 def setInitialStatusOfAura(attachee, args, evt_obj):
-    args.set_arg(0, 0)
+    args.set_arg(0, 1)
     return 0
 
 cracklingAura = PythonModifier("Stormlord Crackling Aura", 2) #isActiveFlag, particlesID
