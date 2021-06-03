@@ -236,19 +236,20 @@ def AbjurantChampionArcaneBoostRadial(attachee, args, evt_obj):
 	return 0
 	
 def AbjurantChampionArcaneBoostPerform(attachee, args, evt_obj):
-	cur_seq = tpactions.get_cur_seq()
+	spell_packet = tpdp.SpellPacket(attachee, evt_obj.d20a.spell_data)
 	
-	#Create the effect to count the spell as used
-	cur_seq.spell_packet.debit_spell()
+	#Count the spell as used up
+	spell_packet.debit_spell()
 	
+	#Create the effect based on the level of the spell
 	type = evt_obj.d20a.data1
 	amount = 0
 	if type == 1 or type == 3 or type ==4:
-		amount = cur_seq.spell_packet.spell_known_slot_level #Hit, AC, Save Equal to Spell Level
+		amount = spell_packet.spell_known_slot_level #Hit, AC, Save Equal to Spell Level
 	elif type == 2:
-		amount = 2 * cur_seq.spell_packet.spell_known_slot_level #Damage Equal to Twice Spell Level
+		amount = 2 * spell_packet.spell_known_slot_level #Damage Equal to Twice Spell Level
 	else:
-		amount = 5 * cur_seq.spell_packet.spell_known_slot_level #Energy Resistance Equal to Five Times Spell Level
+		amount = 5 * spell_packet.spell_known_slot_level #Energy Resistance Equal to Five Times Spell Level
 	
 	#Add the effect with two parameters:  effect type and effect bonus
 	attachee.condition_add_with_args("Arcane Boost Effect", type, amount, 0, 0)
