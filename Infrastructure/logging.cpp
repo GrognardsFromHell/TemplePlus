@@ -22,9 +22,16 @@ public:
 } loggingPreInitializer;
 
 
-void InitLogging(const std::wstring &logFile)
+void InitLogging(const std::wstring &logFile, spdlog::level::level_enum logLevel)
 {
-	spdlog::set_level(spdlog::level::debug);
+	if ((int)logLevel < 0) {
+		logLevel = spdlog::level::trace;
+	}
+	else if ((int)logLevel > spdlog::level::off ) {
+		logLevel = spdlog::level::off;
+	}
+
+	spdlog::set_level(logLevel);
 
 	try {
 		// Always log to a file

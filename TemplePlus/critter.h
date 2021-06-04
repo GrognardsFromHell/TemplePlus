@@ -369,6 +369,7 @@ struct LegacyCritterSystem : temple::AddressTable
 		Can the critter enter Barbarian rage? Currently assumes only Barbarians can TODO: update when adding other classes or check directly if it has the Barbarian Rage condition
 	*/
 	bool CanBarbarianRage(objHndl performer);
+	int GetCritterMap(objHndl critter);
 
 #pragma region Category
 	MonsterCategory GetCategory(objHndl objHnd);

@@ -1024,16 +1024,17 @@ const std::string &SoundGameSystem::GetName() const {
 	return name;
 }
 
+
 void SoundGameSystem::SetSoundSchemeIds(int scheme1, int scheme2)
 {
 	static auto soundscheme_set = temple::GetPointer<void(int, int)>(0x1003c4d0);
 	soundscheme_set(scheme1, scheme2);
 }
 
-void SoundGameSystem::StopAll(bool flag)
+void SoundGameSystem::StopAll(int fadeoutTime)
 {
-	static auto soundgame_stop_all = temple::GetPointer<void(int a1)>(0x1003c5b0);
-	soundgame_stop_all(flag ? TRUE : FALSE);
+	static auto soundgame_stop_all = temple::GetPointer<void(int)>(0x1003c5b0);
+	soundgame_stop_all(fadeoutTime);
 }
 
 //*****************************************************************************

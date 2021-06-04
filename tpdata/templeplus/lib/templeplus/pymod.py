@@ -32,10 +32,20 @@ class PythonModifier(tpdp.ModifierSpec):
 	def AddSpellTouchAttackDischargeRadialMenuHook(self):
 		#Adds the standard discharge radial menu
 		self.add_spell_touch_attack_discharge_radial_menu_hook()
+	
 	def AddSpellTeleportPrepareStandard(self):
+		# If caster not in party: remove_spell, remove_spell_mod
+		# If attachee is not in party:
+		#     if target_count <= 1: remove_spell(), remove_spell_mod()
+		# else:
+		#		removes attachee from target list
+		# Note that this applies to spell objects! (possible Co8 mod trouble)
 		self.add_spell_teleport_prepare_standard()
 	def AddSpellTeleportReconnectStandard(self):
+		# Does nothing... oops!
+		# Is generally handled centrally in the spell system now
 		self.add_spell_teleport_reconnect_standard()
+	
 	def AddSpellDispelCheckStandard(self):
 		self.add_spell_dispel_check_standard()
 

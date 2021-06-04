@@ -287,8 +287,9 @@ public:
 
 	void SetSoundSchemeIds(int scheme1, int scheme2);
 
+
 	// Used when starting the game
-	void StopAll(bool flag);
+	void StopAll(int fadeoutTime);
 
 };
 
