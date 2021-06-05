@@ -36,6 +36,11 @@ struct LegacySkillSystem : temple::AddressTable {
 	*/
 	void FloatError(const objHndl& obj, int errorOffset);
 
+	/*
+		do skill check vs 10
+	*/
+	BOOL SkillCheckDefaultDC(SkillEnum skillEnum, objHndl performer, int flag);
+
 	const char* GetSkillName(SkillEnum skillEnum);
 	const char *GetSkillHelpTopic(SkillEnum skillEnum);
 
