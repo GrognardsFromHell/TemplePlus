@@ -373,6 +373,57 @@ SpellPacketBody::SpellPacketBody(uint32_t spellId){
 		memset(this, 0, sizeof(SpellPacketBody));
 }
 
+SpellPacketBody::SpellPacketBody(objHndl spellCaster, D20SpellData& spellData)
+{
+	memset(this, 0, sizeof(SpellPacketBody));
+
+	unsigned spellEnum, spellEnumOrg, spellClassCode, spellSlotLevel, itemSpellData, spellMetaMagicData;
+	D20SpellDataExtractInfo(&spellData, &spellEnum, &spellEnumOrg, &spellClassCode, &spellSlotLevel, &itemSpellData, &spellMetaMagicData);
+
+	//From ::TargetCheck
+	spellEnum = spellEnum;
+	spellEnumOriginal = spellEnumOrg;
+	caster = spellCaster;
+	spellClass = spellClassCode;
+	spellKnownSlotLevel = spellSlotLevel;
+	metaMagicData = spellMetaMagicData;
+	invIdx = itemSpellData;
+
+	SpellEntry spellEntry;
+
+	if (!spellSys.spellRegistryCopy(spellEnum, &spellEntry))
+	{
+		// set caster level
+		if (itemSpellData == INV_IDX_INVALID) {
+			spellSys.SpellPacketSetCasterLevel(this);
+		}
+		else { // item spell
+			casterLevel = max(1, 2 * static_cast<int>(spellSlotLevel) - 1); // todo special handling for Magic domain
+		}
+
+		spellRange = spellSys.GetSpellRange(&spellEntry, casterLevel, caster);
+
+		bool noTargets = false;
+		if ((spellEntry.modeTargetSemiBitmask & 0xFF) != static_cast<unsigned>(UiPickerType::Personal)
+			|| spellEntry.radiusTarget < 0
+			|| (spellEntry.flagsTargetBitmask & UiPickerFlagsTarget::Radius))
+		{
+			noTargets = true;
+		}
+		orgTargetCount = 1;
+		targetCount = 1;
+		targetListHandles[0] = caster;
+		aoeCenter.location = objects.GetLocationFull(caster);
+		aoeCenter.off_z = objects.GetOffsetZ(caster);
+		if (spellEntry.radiusTarget > 0) {
+			spellRange = spellEntry.radiusTarget;
+		}
+	} else {
+		logger->warn("Spell Packet: failed to retrieve spell entry {}!\n", spellEnum);
+	}
+
+}
+
 /* 0x10075730 */
 bool SpellPacketBody::UpdateSpellsCastRegistry() const
 {
@@ -2703,7 +2754,7 @@ uint32_t LegacySpellSystem::pickerArgsFromSpellEntry(SpellEntry* spEntry, Picker
 	args->minTargets = spEntry->minTarget;
 	args->maxTargets = spEntry->maxTarget;
 	args->radiusTarget = spEntry->radiusTarget;
-	args->degreesTarget = spEntry->degreesTarget;
+	args->degreesTarget = static_cast<float>(spEntry->degreesTarget);
 	if (spEntry->spellRangeType != SRT_Specified){
 		args->range = spellSys.GetSpellRangeExact(spEntry->spellRangeType, casterLvl, caster);
 	} 
@@ -3122,7 +3173,7 @@ void LegacySpellSystem::SpellBeginRound(objHndl handle){
 
 	for (auto it: spellIds){
 		SpellPacketBody spellPkt(it);
-		for (auto i = 0; i<spellPkt.targetCount; i++){
+		for (unsigned int i = 0; i<spellPkt.targetCount; i++){
 			if ( spellPkt.targetListHandles[i] == handle){
 				mSpellBeginRoundObj = handle;
 				pySpellIntegration.SpellTrigger(it, SpellEvent::BeginRound);
@@ -3197,7 +3248,7 @@ BOOL __declspec(naked) _CheckSpellResistanceUsercallWrapper(objHndl objHnd) {
 
 void SpellPacketBody::DoForTargetList(std::function<void(const objHndl& )> cb){
 	auto orgTgtCount = this->targetCount;
-	for (auto i=0; i < this->targetCount; ){
+	for (unsigned int i=0; i < this->targetCount; ){
 		auto handle = this->targetListHandles[i];
 		if (!handle)
 			continue;
@@ -3226,7 +3277,7 @@ bool SpellPacketBody::RemoveObjFromTargetList(const objHndl& handle){
 	targetListPartsysIds[targetCount - 1] = 0;
 
 	// remove the handle
-	for (int i=idx; i < targetCount-1; i++){
+	for (int i=idx; i < static_cast<int>(targetCount)-1; i++){
 		targetListHandles[i] = targetListHandles[i + 1];
 	}
 	targetListHandles[targetCount - 1] = objHndl::null;
@@ -3324,7 +3375,7 @@ SpellDebugRecord::SpellDebugRecord(const SpellPacketBody& spellPkt)
 	castingTime = gameTimeSys.GetElapsed();
 	casterDebug = SpellDebugObjInfo(this->caster);
 	castingMapId = gameSystems->GetMap().GetCurrentMapId();
-	for (auto i = 0; i < this->targetCount; ++i) {
+	for (unsigned int i = 0; i < this->targetCount; ++i) {
 		targetListDebug.push_back(SpellDebugObjInfo(this->targetListHandles[i]));
 	}
 

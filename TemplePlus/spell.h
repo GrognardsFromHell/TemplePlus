@@ -75,6 +75,7 @@ struct SpellPacketBody{
 	uint32_t field_AE4;
 	SpellPacketBody();
 	SpellPacketBody(uint32_t spellId);
+	SpellPacketBody(objHndl spellCaster, D20SpellData& spellData);
 	/*
 	// updates the spell in the SpellsCast registry *if it is still active*
 	*/

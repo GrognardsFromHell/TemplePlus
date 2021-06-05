@@ -1,0 +1,5 @@
+name: Swift Abjuration
+flags: 8
+prereqs:
+description:  Beginning at 2nd level, you can cast abjuration spells as a swift action, as if you had applied the Quicken Spell feat to them (but without any change in level). The maximum level of spell you can quicken in this way is equal to 1/2 your class level (rounded up).
+prereq descr: Abjurant Champion level 2.

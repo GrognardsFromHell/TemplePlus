@@ -697,12 +697,14 @@ void DispatcherSystem::DispatchConditionRemove(Dispatcher* dispatcher, CondNode*
 	cond->flags |= 1;
 }
 
-void DispatcherSystem::DispatchMetaMagicModify(objHndl obj, MetaMagicData& mmData)
+void DispatcherSystem::DispatchMetaMagicModify(objHndl obj, MetaMagicData& mmData, unsigned char spellLevel, uint16_t spellEnum)
 {
 	auto _dispatcher = objects.GetDispatcher(obj);
 	if (!dispatch.dispatcherValid(_dispatcher)) return;
 	EvtObjMetaMagic dispIo;
 	dispIo.mmData = mmData;
+	dispIo.spellEnum = spellEnum;
+	dispIo.spellLevel = spellLevel;
 	DispatcherProcessor(_dispatcher, dispTypeMetaMagicMod, 0, &dispIo);
 	mmData = dispIo.mmData;
 }

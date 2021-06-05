@@ -98,7 +98,7 @@
 {1042}{}
 {1043}{}
 {1044}{}
-{1045}{}
+{1045}{Abch}
 {1046}{Sct}
 {1047}{Wrmg}
 {1048}{Bglr}
@@ -295,7 +295,6 @@ Feats: Spell Focus (conjuration).
 Spells: Able to cast lesser planar ally.}
 
 {13027}Favored Soul{Favored souls cast divine spells by means of an innate connection rather than through laborious training and prayer, so their divine connection is natural rather than learned.}
-
 {13031}Stormlord{Stormlords wield thunder and lightning like a warrior wields his sword. They serve their patron deity through random, spectacular acts of violence.
 
 Requirements
@@ -307,6 +306,14 @@ Base Save Bonus: Fort +4.}
 // Feat: Endurance (non in the game)
 // Patron: Talos
 // Special: The character must have been hit by a bolt of lightning, whether a natural bolt or one created by magic, and survived.
+
+{13038}Abjurant Champion{The abjurant champion focuses his arcane abilities both to augment his personal defense and to hinder enemy spellcasters.
+
+Requirements
+Base Attack Bonus: +5
+Feats:  Combat Casting
+Special:  Can cast 1st-level arcane spells and knows 1 abjuration spell of first level or greater.
+}
 
 {13039}Scout{A scout has some training in weapons and a unique combat style that favors fast movement and devastating attacks.}
 {13040}Warmage{A warmage is a militant spellcaster whose training focuses on battlefield magic.}
@@ -334,3 +341,5 @@ Charisma: 11 or higher.}
 Charisma: 11 or higher.}
 {20048} Beguiler {Beguiler requirements:
 Intelligence: 11 or higher.}
+{20045} Abjurant Champion {Abjurant Champion requirements:
+BAB +5, Combat Casting, Cast 1st-level arcane spells, and knows 1 abjuration spell of first level or greater}

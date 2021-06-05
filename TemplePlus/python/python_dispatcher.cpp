@@ -817,6 +817,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 
 
 		py::class_<SpellPacketBody>(m, "SpellPacket")
+			.def(py::init<objHndl, D20SpellData>(), py::arg("caster"), py::arg("spell_data"))
 			.def(py::init<uint32_t>(), py::arg("spell_id"))
 			.def_readwrite("spell_enum", &SpellPacketBody::spellEnum)
 			.def_readwrite("spell_known_slot_level", &SpellPacketBody::spellKnownSlotLevel)
@@ -1113,6 +1114,8 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 
 	py::class_<EvtObjMetaMagic, DispIO>(m, "EvtObjMetaMagic", "Used for modifying metamagic data")
 		.def_readwrite("meta_magic", &EvtObjMetaMagic::mmData)
+		.def_readwrite("spell_enum", &EvtObjMetaMagic::spellEnum)
+		.def_readwrite("spell_level", &EvtObjMetaMagic::spellLevel)
 		;
 
 	py::class_<EvtObjSpecialAttack, DispIO>(m, "EvtObjSpecialAttack", "Used for applying effects")

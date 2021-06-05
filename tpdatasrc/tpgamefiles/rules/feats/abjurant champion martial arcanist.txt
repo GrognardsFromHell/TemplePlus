@@ -1,0 +1,5 @@
+name: Martial Arcanist
+flags: 8
+prereqs:
+description:   At 5th level, you master the art of combining your militant and mystical training. From this point on, your caster level in a chosen arcane spellcasting class is equal to your base attack bonus (unless it would otherwise be higher).
+prereq descr: Abjurant Champion level 5.
