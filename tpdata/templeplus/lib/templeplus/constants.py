@@ -3302,6 +3302,14 @@ spell_slashing_darkness = 1167
 spell_spikes = 1168
 spell_tremor = 1169
 spell_weapon_of_energy = 1170
+spell_inevitable_defeat = 1302
+spell_kelgores_fire_bolt = 1303
+spell_rouse = 1305
+spell_bigbys_tripping_hand = 1306
+spell_vertigo = 1307
+spell_whelm = 1308
+spell_mass_whelm = 1309
+spell_whelming_blast = 1310
 
 spell_new_slot_lvl_0 = 1605
 spell_new_slot_lvl_1 = 1606
