@@ -73,6 +73,12 @@ def IsAlignmentCompatible(alignment):
 
 
 def ObjMeetsPrereqs( obj ):
+	
+	#Maximum number of levels is 5
+	classLvl = obj.stat_level_get(classEnum)
+	if classLvl >= 5:
+		return 0
+
 	if obj.arcane_spell_level_can_cast() < 1:
 		return 0
 	if obj.get_base_attack_bonus() < 5:
