@@ -60,8 +60,12 @@ def TouchOfFatigueTouchAttack(attachee, args, evt_obj):
 	return 0
 	
 def TouchOfFatigueSpellCast(attachee, args, evt_obj):
-	args.condition_remove()
-	args.remove_spell()
+	#End the spell if the character casts another spell
+	spell_id = evt_obj.data1
+	packet = tpdp.SpellPacket(spell_id)
+	if packet.caster == attachee:
+		args.condition_remove()
+		args.remove_spell()
 	return 0
 	
 def TouchOfFatigueConditionAdd(attachee, args, evt_obj):

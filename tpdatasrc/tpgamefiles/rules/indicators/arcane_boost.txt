@@ -1,0 +1,5 @@
+ID_string: ARCANE_BOOST
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\ArcaneBoost.tga
+help_topic: TAG_ROOT
+tooltip_base_text:Arcane Boost

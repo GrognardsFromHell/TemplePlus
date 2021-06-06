@@ -1,0 +1,5 @@
+name: Extended Abjuration
+flags: 8
+prereqs:
+description:  You depend on your abjuration spells to protect you in combat. Double the duration of abjuration spells you cast, as if you had applied the Extend Spell feat to them (but without any change in level or casting time).
+prereq descr: Abjurant Champion level 1.

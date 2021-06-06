@@ -115,7 +115,7 @@ struct DispatcherSystem : temple::AddressTable
 	void DispatchSpellResistanceCasterLevelCheck(objHndl caster, objHndl target, BonusList *bonlist, SpellPacketBody*spellPkt);
 	void DispatchTargetSpellDCBonus(objHndl caster, objHndl target, BonusList *bonlist, SpellPacketBody*spellPkt);
 	bool DispatchIgnoreDruidOathCheck(objHndl character, objHndl item);
-	void DispatchMetaMagicModify(objHndl obj, MetaMagicData& mmData);
+	void DispatchMetaMagicModify(objHndl obj, MetaMagicData& mmData, unsigned char spellLevel, uint16_t spellEnum);
 	void DispatchSpecialAttack(objHndl obj, int attack, objHndl target);
 	double DispatchRangeBonus(objHndl obj, objHndl weaponUsed);
 	int DispatchSpellListLevelExtension(objHndl obj, Stat casterClass);
@@ -581,6 +581,8 @@ struct EvtObjSpellCaster: DispIO // type 34 (NEW!)
 struct EvtObjMetaMagic : DispIO // type 35 (NEW!)
 {
 	MetaMagicData mmData;
+	int spellLevel;
+	uint32_t spellEnum;
 };
 
 struct EvtObjSpecialAttack : DispIO // type 36 (NEW!)
