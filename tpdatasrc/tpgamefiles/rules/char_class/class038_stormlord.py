@@ -78,12 +78,10 @@ def IsAlignmentCompatible( alignment):
     allowedAlignments = [ALIGNMENT_CHAOTIC_EVIL, ALIGNMENT_CHAOTIC_NEUTRAL, ALIGNMENT_NEUTRAL_EVIL]
     if alignment in allowedAlignments:
         return 1
-    else:
-        return 0
+    return 0
 
 def ObjMeetsPrereqs( obj ):
     requiredFeats = [feat_weapon_focus_halfspear, feat_weapon_focus_shortspear, feat_weapon_focus_longspear, feat_weapon_focus_javelin]
-    objFeats = obj.feats
     if obj.divine_spell_level_can_cast() < 3:
         return 0
     elif obj.stat_level_get(stat_save_fortitude) < 4:
@@ -92,10 +90,9 @@ def ObjMeetsPrereqs( obj ):
 #        return 0
     elif not obj.has_feat(feat_great_fortitude):
         return 0
-    elif not any(feat in objFeats for feat in requiredFeats):
+    elif not any(obj.has_feat(feat) for feat in requiredFeats):
         return 0
-    else:
-        return 1
+    return 1
 
 
 # Levelup
