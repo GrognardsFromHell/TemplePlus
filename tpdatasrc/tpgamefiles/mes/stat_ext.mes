@@ -298,8 +298,8 @@ Spells: Able to cast lesser planar ally.}
 {13031}Stormlord{Stormlords wield thunder and lightning like a warrior wields his sword. They serve their patron deity through random, spectacular acts of violence.
 
 Requirements
-Alignment: As for a cleric of Talos (CE,CN, NE)
-Feats: Great Fortitude, Weapon Focus (any spear or javelin)
+Alignment: As for a cleric of Talos (CE, CN, NE)
+Feats: Great Fortitude, Weapon Focus (deity favored weapon or javelin)
 Spells: Able to cast 3rd-level divine spells.
 Base Save Bonus: Fort +4.}
 // Not implemented:

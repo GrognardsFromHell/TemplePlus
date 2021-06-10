@@ -1,5 +1,5 @@
 name: Stormlord Shock Weapon
 flags: 8
 prereqs:
-description: Any spear or javelin used by a stormlord of 2nd level or higher is treated as a shock weapon (dealing an extra 1d6 points of electricity damage). The weapon loses this ability when leaving the hand of the stormlord. For a stormlord of 8th level or higher, any spear or javelin he uses is instead treated as a shocking burst weapon.
+description: Any favored weapon or javelin used by a stormlord of 2nd level or higher is treated as a shock weapon (dealing an extra 1d6 points of electricity damage). The weapon loses this ability when leaving the hand of the stormlord. For a stormlord of 8th level or higher, any favored weapon or javelin he uses is instead treated as a shocking burst weapon.
 prereq descr: Stormlord Level 2.
