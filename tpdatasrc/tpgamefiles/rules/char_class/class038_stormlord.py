@@ -81,7 +81,10 @@ def IsAlignmentCompatible( alignment):
     return 0
 
 def ObjMeetsPrereqs( obj ):
-    requiredFeats = [feat_weapon_focus_halfspear, feat_weapon_focus_shortspear, feat_weapon_focus_longspear, feat_weapon_focus_javelin]
+    objDeity = obj.get_deity()
+    deityFavWeapon = game.get_deity_favored_weapon(objDeity)
+    wfFavWeapon = feat_weapon_focus_gauntlet + deityFavWeapon
+    wfList = [feat_weapon_focus_javelin, wfFavWeapon]
     if obj.divine_spell_level_can_cast() < 3:
         return 0
     elif obj.stat_level_get(stat_save_fortitude) < 4:
@@ -90,7 +93,7 @@ def ObjMeetsPrereqs( obj ):
 #        return 0
     elif not obj.has_feat(feat_great_fortitude):
         return 0
-    elif not any(obj.has_feat(feat) for feat in requiredFeats):
+    elif not any(obj.has_feat(feat) for feat in wfList):
         return 0
     return 1
 

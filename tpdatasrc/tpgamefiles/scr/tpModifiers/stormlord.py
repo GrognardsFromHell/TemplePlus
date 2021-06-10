@@ -55,8 +55,10 @@ classSpecObj.AddHook(ET_OnSaveThrowLevel, EK_SAVE_WILL, OnGetSaveThrowWill, ())
 #### Stormlord Feats ####
 
 ## Define Stormlord Weapons; list can be extended if ever necessary ##
-def stormlordWeapons():
-    weaponList = [wt_javelin, wt_longspear, wt_shortspear, wt_spear]
+def stormlordWeapons(attachee):
+    stormlordDeity = attachee.get_deity()
+    deityFavWeapon = game.get_deity_favored_weapon(stormlordDeity)
+    weaponList = [wt_javelin, deityFavWeapon]
     return weaponList
 
 ## Enhanced Javelins ##
