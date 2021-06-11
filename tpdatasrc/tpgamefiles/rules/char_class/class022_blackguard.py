@@ -38,9 +38,9 @@ class_skills = (skill_alchemy, skill_concentration, skill_craft, skill_diplomacy
 
 
 spell_list = {
-	1: (spell_cause_fear, spell_cure_light_wounds, spell_doom, spell_inflict_light_wounds, spell_magic_weapon, spell_summon_monster_i),
-	2: (spell_bulls_strength, spell_cure_moderate_wounds, spell_darkness, spell_death_knell, spell_eagles_splendor, spell_mass_inflict_moderate_wounds, spell_shatter, spell_summon_monster_ii),
-	3: (spell_contagion, spell_cure_serious_wounds, spell_deeper_darkness, spell_inflict_serious_wounds, spell_protection_from_elements, spell_summon_monster_iii),
+	1: (spell_blessed_aim, spell_faith_healing, spell_cause_fear, spell_cure_light_wounds, spell_doom, spell_inflict_light_wounds, spell_magic_weapon, spell_strategic_charge, spell_summon_monster_i, spell_summon_undead_i),
+	2: (spell_bulls_strength, spell_cure_moderate_wounds, spell_curse_of_ill_fortune, spell_darkness, spell_death_knell, spell_demonhide, spell_eagles_splendor, spell_hand_of_divinity, spell_mass_inflict_moderate_wounds, spell_shatter, spell_summon_monster_ii, spell_summon_undead_ii, spell_veil_of_shadow, spell_wave_of_grief),
+	3: (spell_contagion, spell_cure_serious_wounds, spell_deeper_darkness, spell_inflict_serious_wounds, spell_protection_from_elements, spell_summon_monster_iii, spell_summon_undead_iii, spell_unholy_storm, spell_weapon_of_the_deity),
 	4: (spell_cure_critical_wounds, spell_freedom_of_movement, spell_inflict_critical_wounds, spell_poison, spell_summon_monster_iv)
 }
 

@@ -1,0 +1,358 @@
+// Additional spells added by Sagenlicht
+
+{1050}{Sound Lance}
+{1051}{Critical Strike}
+{1052}{Camouflage}
+{1053}{Appraising Touch}
+{1054}{Phantom Threat}
+{1055}{Distort Speech}
+{1056}{Distract}
+{1057}{Focusing Chant}
+{1058}{Heralds Call}
+{1059}{Improvisation}
+{1061}{Inspirational Boost}
+{1062}{Invisibility Swift}
+{1063}{Ironguts}
+{1064}{Ironthunder Horn}
+{1065}{Insidious Rhythm}
+{1066}{Masters Touch}
+{1067}{Serene Visage}
+{1068}{Shock and Awe}
+{1069}{Sticky Fingers}
+{1070}{Undersong}
+{1071}{Distract Assailant}
+{1072}{Insightful Feint}
+{1073}{Lightfoot}
+{1074}{Snipers Shot}
+{1075}{Sonic Weapon}
+{1076}{Bonefiddle}
+{1077}{Cloud of Bewilderment}
+{1078}{Curse of Impending Blades}
+{1079}{Wave of Grief}
+{1080}{Harmonic Chorus}
+{1081}{Iron Silence}
+{1082}{War Cry}
+{1083}{Whirling Blade}
+{1084}{Bladeweave}
+{1085}{Fell the Greatest Foe}
+{1086}{Fire Shuriken}
+{1087}{Phantom Foe}
+{1088}{Veil of Shadow}
+{1089}{Curse of Impending Blades Mass}
+{1090}{Dissonant Chord}
+{1091}{Haunting Tune}
+{1092}{Loves Lament}
+{1093}{Ray of Dizziness}
+{1094}{Wounding Whispers}
+{1095}{Dirge of Discord}
+{1096}{Allegro}
+{1097}{Find the Gap}
+{1098}{Wraithstrike}
+{1099}{Resonating Bolt}
+{1100}{Resistance Greater}
+{1101}{Fugue}
+{1102}{Sirines Grace}
+{1103}{Dolorous Blow}
+{1105}{Cacophonic Burst}
+{1106}{Wail of Doom}
+{1107}{Heart Ripper}
+{1108}{Dirge}
+{1109}{Nixies Grace}
+{1110}{Ray of Light}
+{1111}{Resistance Superior}
+{1112}{Strategic Charge}
+{1113}{Blessed Aim}
+{1114}{Clear Mind}
+{1115}{Deafening Clang}
+{1116}{Grave Strike}
+{1118}{Faith Healing}
+{1119}{Summon Undead I}
+{1120}{Angelskin}
+{1121}{Demonhide}
+{1122}{Summon Undead II}
+{1123}{Hand of Divinity}
+{1124}{Curse of Ill Fortune}
+{1125}{Awaken Sin}
+{1126}{Checkmates Light}
+{1127}{Cloak of Bravery}
+{1128}{Divine Protection}
+{1129}{Quick March}
+{1130}{Shield of Warding}
+{1131}{Blessing of Bahamut}
+{1132}{Diamondsteel}
+{1133}{Righteous Fury}
+{1134}{Undead Bane Weapon}
+{1135}{Weapon of the Deity}
+{1136}{Axiomatic Storm}
+{1137}{Holy Storm}
+{1138}{Unholy Storm}
+{1139}{Summon Undead III}
+{1140}{Visage of the Deity lesser}
+{1141}{Lawful Sword}
+{1142}{Summon Undead IV}
+{1143}{Castigate}
+{1144}{Summon Undead V}
+{1145}{Conviction}
+{1146}{Foundation of Stone}
+{1147}{Nightshield}
+{1148}{Nimbus of Light}
+{1149}{Brambles}
+{1150}{Deific Vengeance}
+{1151}{Frost Breath}
+{1152}{Ghost Touch Armor}
+{1153}{Aid Mass}
+{1154}{Align Weapon Mass}
+{1155}{Bless Weapon Swift}
+{1156}{Anarchic Storm}
+{1157}{Clutch of Orcus}
+{1158}{Conviction Mass}
+{1159}{Corona of Cold}
+{1161}{Demon Dirge}
+{1162}{Devil Blight}
+{1163}{Energy Vortex}
+{1164}{Grace}
+{1165}{Resist Energy Mass}
+{1166}{Nauseating Breath}
+{1167}{Slashing Darkness}
+{1168}{Spikes}
+{1169}{Tremor}
+{1170}{Weapon of Energy}
+{1171}{Storm of Elemental Fury}
+
+{6050}{Sound Lance}
+{6051}{Critical Strike}
+{6052}{Camouflage}
+{6053}{Appraising Touch}
+{6054}{Phantom Threat}
+{6055}{Distort Speech}
+{6056}{Distract}
+{6057}{Focusing Chant}
+{6058}{Heralds Call}
+{6059}{Improvisation}
+{6061}{Inspirational Boost}
+{6062}{Invisibility Swift}
+{6063}{Ironguts}
+{6064}{Ironthunder Horn}
+{6065}{Insidious Rhythm}
+{6066}{Masters Touch}
+{6067}{Serene Visage}
+{6068}{Shock and Awe}
+{6069}{Sticky Fingers}
+{6070}{Undersong}
+{6071}{Distract Assailant}
+{6072}{Insightful Feint}
+{6073}{Lightfoot}
+{6074}{Snipers Shot}
+{6075}{Sonic Weapon}
+{6076}{Bonefiddle}
+{6077}{Cloud of Bewilderment}
+{6078}{Curse of Impending Blades}
+{6079}{Wave of Grief}
+{6080}{Harmonic Chorus}
+{6081}{Iron Silence}
+{6082}{War Cry}
+{6083}{Whirling Blade}
+{6084}{Bladeweave}
+{6085}{Fell the Greatest Foe}
+{6086}{Fire Shuriken}
+{6087}{Phantom Foe}
+{6088}{Veil of Shadow}
+{6089}{Curse of Impending Blades Mass}
+{6090}{Dissonant Chord}
+{6091}{Haunting Tune}
+{6092}{Loves Lament}
+{6093}{Ray of Dizziness}
+{6094}{Wounding Whispers}
+{6095}{Dirge of Discord}
+{6096}{Allegro}
+{6097}{Find the Gap}
+{6098}{Wraithstrike}
+{6099}{Resonating Bolt}
+{6100}{Resistance Greater}
+{6101}{Fugue}
+{6102}{Sirines Grace}
+{6103}{Dolorous Blow}
+{6105}{Cacophonic Burst}
+{6106}{Wail of Doom}
+{6107}{Heart Ripper}
+{6108}{Dirge}
+{6109}{Nixies Grace}
+{6110}{Ray of Light}
+{6111}{Resistance Superior}
+{6112}{Strategic Charge}
+{6113}{Blessed Aim}
+{6114}{Clear Mind}
+{6115}{Deafening Clang}
+{6116}{Grave Strike}
+{6118}{Faith Healing}
+{6119}{Summon Undead I}
+{6120}{Angelskin}
+{6121}{Demonhide}
+{6122}{Summon Undead II}
+{6123}{Hand of Divinity}
+{6124}{Curse of Ill Fortune}
+{6125}{Awaken Sin}
+{6126}{Checkmates Light}
+{6127}{Cloak of Bravery}
+{6128}{Divine Protection}
+{6129}{Quick March}
+{6130}{Shield of Warding}
+{6131}{Blessing of Bahamut}
+{6132}{Diamondsteel}
+{6133}{Righteous Fury}
+{6134}{Undead Bane Weapon}
+{6135}{Weapon of the Deity}
+{6136}{Axiomatic Storm}
+{6137}{Holy Storm}
+{6138}{Unholy Storm}
+{6139}{Summon Undead III}
+{6140}{Visage of the Deity lesser}
+{6141}{Lawful Sword}
+{6142}{Summon Undead IV}
+{6143}{Castigate}
+{6144}{Summon Undead V}
+{6145}{Conviction}
+{6146}{Foundation of Stone}
+{6147}{Nightshield}
+{6148}{Nimbus of Light}
+{6149}{Brambles}
+{6150}{Deific Vengeance}
+{6151}{Frost Breath}
+{6152}{Ghost Touch Armor}
+{6153}{Aid Mass}
+{6154}{Align Weapon Mass}
+{6155}{Bless Weapon Swift}
+{6156}{Anarchic Storm}
+{6157}{Clutch of Orcus}
+{6158}{Conviction Mass}
+{6159}{Corona of Cold}
+{6161}{Demon Dirge}
+{6162}{Devil Blight}
+{6163}{Energy Vortex}
+{6164}{Grace}
+{6165}{Resist Energy Mass}
+{6166}{Nauseating Breath}
+{6167}{Slashing Darkness}
+{6168}{Spikes}
+{6169}{Tremor}
+{6170}{Weapon of Energy}
+{6171}{Storm of Elemental Fury}
+
+{21050}{TAG_SPELLS_SOUND_LANCE}
+{21051}{TAG_SPELLS_CRITICAL_STRIKE}
+{21052}{TAG_SPELLS_CAMOUFLAGE}
+{21053}{TAG_SPELLS_APPRAISING_TOUCH}
+{21054}{TAG_SPELLS_PHANTOM_THREAT}
+{21055}{TAG_SPELLS_DISTORT_SPEECH}
+{21056}{TAG_SPELLS_DISTRACT}
+{21057}{TAG_SPELLS_FOCUSING_CHANT}
+{21058}{TAG_SPELLS_HERALDS_CALL}
+{21059}{TAG_SPELLS_IMPROVISATION}
+{21061}{TAG_SPELLS_INSPIRATIONAL_BOOST}
+{21062}{TAG_SPELLS_INVISIBILTY_SWIFT}
+{21063}{TAG_SPELLS_IRONGUTS}
+{21064}{TAG_SPELLS_IRONTHUNDER_HORN}
+{21065}{TAG_SPELLS_INSIDIOUS_RHYTHM}
+{21066}{TAG_SPELLS_MASTERS_TOUCH}
+{21067}{TAG_SPELLS_SERENE_VISAGE}
+{21068}{TAG_SPELLS_SHOCK_AND_AWE}
+{21069}{TAG_SPELLS_STICKY_FINGERS}
+{21070}{TAG_SPELLS_UNDERSONG}
+{21071}{TAG_SPELLS_DISTRACT_ASSAILANT}
+{21072}{TAG_SPELLS_INSIGHTFUL_FEINT}
+{21073}{TAG_SPELLS_LIGHTFOOT}
+{21074}{TAG_SPELLS_SNIPERS_SHOT}
+{21075}{TAG_SPELLS_SONIC_WEAPON}
+{21076}{TAG_SPELLS_BONEFIDDLE}
+{21077}{TAG_SPELLS_CLOUD_OF_BEWILDERMENT}
+{21078}{TAG_SPELLS_CURSE_OF_IMPENDING_BLADES}
+{21079}{TAG_SPELLS_WAVE_OF_GRIEF}
+{21080}{TAG_SPELLS_HARMONIC_CHORUS}
+{21081}{TAG_SPELLS_IRON_SILENCE}
+{21082}{TAG_SPELLS_WAR_CRY}
+{21083}{TAG_SPELLS_WHIRLING_BLADE}
+{21084}{TAG_SPELLS_BLADEWEAVE}
+{21085}{TAG_SPELLS_FELL_THE_GREATEST_FOE}
+{21086}{TAG_SPELLS_FIRE_SHURIKEN}
+{21087}{TAG_SPELLS_PHANTOM_FOE}
+{21088}{TAG_SPELLS_VEIL_OF_SHADOW}
+{21089}{TAG_SPELLS_CURSE_OF_IMPENDING_BLADES_MASS}
+{21090}{TAG_SPELLS_DISSONANT_CHORD}
+{21091}{TAG_SPELLS_HAUNTING_TUNE}
+{21092}{TAG_SPELLS_LOVES_LAMENT}
+{21093}{TAG_SPELLS_RAY_OF_DIZZINESS}
+{21094}{TAG_SPELLS_WOUNDING_WHISPERS}
+{21095}{TAG_SPELLS_DIRGE_OF_DISCORD}
+{21096}{TAG_SPELLS_ALLEGRO}
+{21097}{TAG_SPELLS_FIND_THE_GAP}
+{21098}{TAG_SPELLS_WRAITHSTRIKE}
+{21099}{TAG_SPELLS_RESONATING_BOLT}
+{21100}{TAG_SPELLS_RESISTANCE}
+{21101}{TAG_SPELLS_FUGUE}
+{21102}{TAG_SPELLS_SIRINES_GRACE}
+{21103}{TAG_SPELLS_DOLOROUS_BLOW}
+{21105}{TAG_SPELLS_CACOPHONIC_BURST}
+{21106}{TAG_SPELLS_WAIL_OF_DOOM}
+{21107}{TAG_SPELLS_HEART_RIPPER}
+{21108}{TAG_SPELLS_DIRGE}
+{21109}{TAG_SPELLS_NIXIES_GRACE}
+{21110}{TAG_SPELLS_RAY_OF_LIGHT}
+{21111}{TAG_SPELLS_RESISTANCE_SUPERIOR}
+{21112}{TAG_SPELLS_STRATEGIC_CHARGE}
+{21113}{TAG_SPELLS_BLESSED_AIM}
+{21114}{TAG_SPELLS_CLEAR_MIND}
+{21115}{TAG_SPELLS_DEAFENING_CLANG}
+{21116}{TAG_SPELLS_GRAVE_STRIKE}
+{21118}{TAG_SPELLS_FAITH_HEALING}
+{21119}{TAG_SPELLS_SUMMON_UNDEAD_I}
+{21120}{TAG_SPELLS_ANGELSKIN}
+{21121}{TAG_SPELLS_DEMONHIDE}
+{21122}{TAG_SPELLS_SUMMON_UNDEAD_II}
+{21123}{TAG_SPELLS_HAND_OF_DIVINITY}
+{21124}{TAG_SPELLS_CURSE_OF_ILL_FORTUNE}
+{21125}{TAG_SPELLS_AWAKEN_SIN}
+{21126}{TAG_SPELLS_CHECKMATES_LIGHT}
+{21127}{TAG_SPELLS_CLOAK_OF_BRAVERY}
+{21128}{TAG_SPELLS_DIVINE_PROTECTION}
+{21129}{TAG_SPELLS_QUICK_MARCH}
+{21130}{TAG_SPELLS_SHIELD_OF_WARDING}
+{21131}{TAG_SPELLS_BLESSING_OF_BAHAMUT}
+{21132}{TAG_SPELLS_DIAMONDSTEEL}
+{21133}{TAG_SPELLS_RIGHTEOUS_FURY}
+{21134}{TAG_SPELLS_UNDEAD_BANE_WEAPON}
+{21135}{TAG_SPELLS_WEAPON_OF_THE_DEITY}
+{21136}{TAG_SPELLS_AXIOMATIC_STORM}
+{21137}{TAG_SPELLS_HOLY_STORM}
+{21138}{TAG_SPELLS_UNHOLY_STORM}
+{21139}{TAG_SPELLS_SUMMON_UNDEAD_III}
+{21140}{TAG_SPELLS_VISAGE_OF_THE_DEITY_LESSER}
+{21141}{TAG_SPELLS_LAWFUL_SWORD}
+{21142}{TAG_SPELLS_SUMMON_UNDEAD_IV}
+{21143}{TAG_SPELLS_CASTIGATE}
+{21144}{TAG_SPELLS_SUMMON_UNDEAD_V}
+{21145}{TAG_SPELLS_CONVICTION}
+{21146}{TAG_SPELLS_FOUNDATION_OF_STONE}
+{21147}{TAG_SPELLS_NIGHTSHIELD}
+{21148}{TAG_SPELLS_NIMBUS_OF_LIGHT}
+{21149}{TAG_SPELLS_BRAMBLES}
+{21150}{TAG_SPELLS_DEIFIC_VENGEANCE}
+{21151}{TAG_SPELLS_FROST_BREATH}
+{21152}{TAG_SPELLS_GHOST_TOUCH_ARMOR}
+{21153}{TAG_SPELLS_AID_MASS}
+{21154}{TAG_SPELLS_ALIGN_WEAPON_MASS}
+{21155}{TAG_SPELLS_BLESS_WEAPON_SWIFT}
+{21156}{TAG_SPELLS_ANARCHIC_STORM}
+{21157}{TAG_SPELLS_CLUTCH_OF_ORCUS}
+{21158}{TAG_SPELLS_CONVICTION_MASS}
+{21159}{TAG_SPELLS_CORONA_OF_COLD}
+{21161}{TAG_SPELLS_DEMON_DIRGE}
+{21162}{TAG_SPELLS_DEVIL_BLIGHT}
+{21163}{TAG_SPELLS_ENERGY_VORTEX}
+{21164}{TAG_SPELLS_GRACE}
+{21165}{TAG_SPELLS_RESIST_ENERGY_MASS}
+{21166}{TAG_SPELLS_NAUSEATING_BREATH}
+{21167}{TAG_SPELLS_SLASHING_DARKNESS}
+{21168}{TAG_SPELLS_SPIKES}
+{21169}{TAG_SPELLS_TREMOR}
+{21170}{TAG_SPELLS_WEAPON_OF_ENERGY}
+{21171}{TAG_SPELLS_STORM_OF_ELEMENTAL_FURY}

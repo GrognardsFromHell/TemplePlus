@@ -1,0 +1,28 @@
+; spells_radial_menu_options.mes
+; HTN 9/25/02 - it's my birthday! :D
+;
+; used for radial menu options
+
+
+; alignment axis (used by align weapon + align weapon mass)
+{3000}{4}
+{3001}{Good}
+{3002}{Evil}
+{3003}{Lawful}
+{3004}{Chaotic}
+
+; item target
+{3010}{2}
+{3011}{Mainhand}
+{3012}{Offhand}
+
+; energy vortex
+{3020}{8}
+{3021}{Acid}
+{3022}{Cold}
+{3023}{Electricity}
+{3024}{Fire}
+{3025}{Acid amplified}
+{3026}{Cold amplified}
+{3027}{Electricity amplified}
+{3028}{Fire amplified}

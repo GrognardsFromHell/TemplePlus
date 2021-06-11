@@ -1,0 +1,1364 @@
+// This file controls [SPELL] sounds of spells added by Sagenlicht
+//
+// it uses sound IDs beginning with 27000 
+//
+// * Banks of 20 sounds per spells are used from 6000 to 19999
+//   the bank consists of the following fields:
+//
+//   00 - spell begin                (before cast anim)
+//   01 - spell end                  (end of spell)
+//   02 - spell effect               (after cast anim)
+//   03 - spell new round            (spells with duration)
+//   04 - spell projectile begin     (only projectile spells)
+//   05 - spell projectile end       (only projectile spells)
+//   06 - spell projectile in-flight (only projectile spells) ***not implemented yet
+//   07 - spell hit                  (sound to play when a spell "hits")
+//   08 - spell struck				 (sound to play if shield spell struck)
+//   09 - reserved, N/A
+//   10 - reserved, N/A
+//   11 - reserved, N/A
+//   12 - reserved, N/A
+//   13 - reserved, N/A
+//   14 - reserved, N/A
+//   15 - reserved, N/A
+//   16 - reserved, N/A
+//   17 - reserved, N/A
+//   18 - reserved, N/A
+//   19 - reserved, N/A
+
+// to figure out your BASE_NUMBER, use this formula:
+//     BASE_NUMBER = 6000 + (20 * spell_number)
+//
+// where spell_number is the spell# associated with a spell (see mes/spells.mes)
+// e.g. SPELL_NONE is 0 (6000), SPELL_AID is 1 (5020), SPELL_ZONE_OF_TRUTH is 541 (16820)
+
+// [1050] *[Sound Lance]
+{27000}{} // spell begin
+{27001}{} // spell end
+{27002}{} // spell effect
+{27003}{} // spell new round
+{27004}{spells\sp_sound_blast.WAV} // spell projectile begin
+{27005}{} // spell projectile end
+{27006}{} // spell projectile in-flight
+{27007}{} // spell hit
+{27008}{} // spell struck
+
+// [1051] *[Critical Strike]
+{27020}{} // spell begin
+{27021}{} // spell end
+{27022}{spells\sp_holy_smite.WAV} // spell effect
+{27023}{} // spell new round
+{27024}{} // spell projectile begin
+{27025}{} // spell projectile end
+{27026}{} // spell projectile in-flight
+{27027}{} // spell hit
+{27028}{} // spell struck
+
+// [1052] *[Camouflage]
+{27040}{} // spell begin
+{27041}{} // spell end
+{27042}{spells\sp_reduce.WAV} // spell effect
+{27043}{} // spell new round
+{27044}{} // spell projectile begin
+{27045}{} // spell projectile end
+{27046}{} // spell projectile in-flight
+{27047}{} // spell hit
+{27048}{} // spell struck
+
+// [1053] *[Appraising Touch]
+{27060}{} // spell begin
+{27061}{} // spell end
+{27062}{spells\sp_heroism.WAV} // spell effect
+{27063}{} // spell new round
+{27064}{} // spell projectile begin
+{27065}{} // spell projectile end
+{27066}{} // spell projectile in-flight
+{27067}{} // spell hit
+{27068}{} // spell struck
+
+// [1054] *[Phantom Threat]
+{27080}{} // spell begin
+{27081}{spells\sp_mind_fog_end.WAV} // spell end
+{27082}{spells\sp_mind_fog.WAV} // spell effect
+{27083}{} // spell new round
+{27084}{} // spell projectile begin
+{27085}{} // spell projectile end
+{27086}{} // spell projectile in-flight
+{27087}{} // spell hit
+{27088}{} // spell struck
+
+// [1055] *[Distort Speech]
+{27100}{} // spell begin
+{27101}{} // spell end
+{27102}{spells\sp_mord_faith_hound.WAV} // spell effect
+{27103}{} // spell new round
+{27104}{} // spell projectile begin
+{27105}{} // spell projectile end
+{27106}{} // spell projectile in-flight
+{27107}{} // spell hit
+{27108}{} // spell struck
+
+// [1056] *[Distract]
+{27120}{} // spell begin
+{27121}{} // spell end
+{27122}{spells\sp_hypnotism.WAV} // spell effect
+{27123}{} // spell new round
+{27124}{} // spell projectile begin
+{27125}{} // spell projectile end
+{27126}{} // spell projectile in-flight
+{27127}{} // spell hit
+{27128}{} // spell struck
+
+// [1057] *[Focusing Chant]
+{27140}{} // spell begin
+{27141}{} // spell end
+{27142}{spells\sp_focusing_chant.mp3} // spell effect
+{27143}{} // spell new round
+{27144}{} // spell projectile begin
+{27145}{} // spell projectile end
+{27146}{} // spell projectile in-flight
+{27147}{} // spell hit
+{27148}{} // spell struck
+
+// [1058] *[Heralds Call]
+{27160}{} // spell begin
+{27161}{} // spell end
+{27162}{spells\sp_emotion_hate_hit.WAV} // spell effect
+{27163}{} // spell new round
+{27164}{} // spell projectile begin
+{27165}{} // spell projectile end
+{27166}{} // spell projectile in-flight
+{27167}{} // spell hit
+{27168}{} // spell struck
+
+// [1059] *[Improvisation]
+{27180}{} // spell begin
+{27181}{} // spell end
+{27182}{spells\sp_coomand.WAV} // spell effect
+{27183}{} // spell new round
+{27184}{} // spell projectile begin
+{27185}{} // spell projectile end
+{27186}{} // spell projectile in-flight
+{27187}{} // spell hit
+{27188}{} // spell struck
+
+// [1061] *[Inspirational Boost]
+{27220}{} // spell begin
+{27221}{} // spell end
+{27222}{} // spell effect
+{27223}{} // spell new round
+{27224}{} // spell projectile begin
+{27225}{} // spell projectile end
+{27226}{} // spell projectile in-flight
+{27227}{} // spell hit
+{27228}{} // spell struck
+
+// [1062] *[Invisibility Swift]
+{27240}{} // spell begin
+{27241}{} // spell end
+{27242}{spells\sp_invisibilty.WAV} // spell effect
+{27243}{} // spell new round
+{27244}{} // spell projectile begin
+{27245}{} // spell projectile end
+{27246}{} // spell projectile in-flight
+{27247}{} // spell hit
+{27248}{} // spell struck
+
+// [1063] *[Ironguts]
+{27260}{} // spell begin
+{27261}{} // spell end
+{27262}{spells\sp_delay_pison.WAV} // spell effect
+{27263}{} // spell new round
+{27264}{} // spell projectile begin
+{27265}{} // spell projectile end
+{27266}{} // spell projectile in-flight
+{27267}{} // spell hit
+{27268}{} // spell struck
+
+// [1064] *[Ironthunder Horn]
+{27280}{} // spell begin
+{27281}{} // spell end
+{27282}{spells\sp_deeper_darkness.WAV} // spell effect
+{27283}{} // spell new round
+{27284}{} // spell projectile begin
+{27285}{} // spell projectile end
+{27286}{} // spell projectile in-flight
+{27287}{} // spell hit
+{27288}{} // spell struck
+
+// [1065] *[Insidious Rhythm]
+{27300}{} // spell begin
+{27301}{} // spell end
+{27302}{spells\competence_drum.WAV} // spell effect
+{27303}{} // spell new round
+{27304}{} // spell projectile begin
+{27305}{} // spell projectile end
+{27306}{} // spell projectile in-flight
+{27307}{} // spell hit
+{27308}{} // spell struck
+
+// [1066] *[Masters Touch]
+{27320}{} // spell begin
+{27321}{} // spell end
+{27322}{spells\sp_guidance.WAV} // spell effect
+{27323}{} // spell new round
+{27324}{} // spell projectile begin
+{27325}{} // spell projectile end
+{27326}{} // spell projectile in-flight
+{27327}{} // spell hit
+{27328}{} // spell struck
+
+// [1067] *[Serene Visage]
+{27340}{} // spell begin
+{27341}{} // spell end
+{27342}{spells\sp_clairvoyance.WAV} // spell effect
+{27343}{} // spell new round
+{27344}{} // spell projectile begin
+{27345}{} // spell projectile end
+{27346}{} // spell projectile in-flight
+{27347}{} // spell hit
+{27348}{} // spell struck
+
+// [1068] *[Shock and Awe]
+{27360}{} // spell begin
+{27361}{} // spell end
+{27362}{spells\sp_suggestion.WAV} // spell effect
+{27363}{} // spell new round
+{27364}{} // spell projectile begin
+{27365}{} // spell projectile end
+{27366}{} // spell projectile in-flight
+{27367}{} // spell hit
+{27368}{} // spell struck
+
+// [1069] *[Sticky Fingers]
+{27380}{} // spell begin
+{27381}{} // spell end
+{27382}{spells\sp_chill_touch.WAV} // spell effect
+{27383}{} // spell new round
+{27384}{} // spell projectile begin
+{27385}{} // spell projectile end
+{27386}{} // spell projectile in-flight
+{27387}{} // spell hit
+{27388}{} // spell struck
+
+// [1070] *[Undersong]
+{27400}{} // spell begin
+{27401}{} // spell end
+{27402}{spells\sp_CalmAnimals.WAV} // spell effect
+{27403}{} // spell new round
+{27404}{} // spell projectile begin
+{27405}{} // spell projectile end
+{27406}{} // spell projectile in-flight
+{27407}{} // spell hit
+{27408}{} // spell struck
+
+// [1071] *[Distract Assailant]
+{27420}{} // spell begin
+{27421}{} // spell end
+{27422}{spells\sp_fear.WAV} // spell effect
+{27423}{} // spell new round
+{27424}{} // spell projectile begin
+{27425}{} // spell projectile end
+{27426}{} // spell projectile in-flight
+{27427}{} // spell hit
+{27428}{} // spell struck
+
+// [1072] *[Insightful Feint]
+{27440}{} // spell begin
+{27441}{} // spell end
+{27442}{spells\sp_darkness.WAV} // spell effect
+{27443}{} // spell new round
+{27444}{} // spell projectile begin
+{27445}{} // spell projectile end
+{27446}{} // spell projectile in-flight
+{27447}{} // spell hit
+{27448}{} // spell struck
+
+// [1073] *[Lightfoot]
+{27460}{} // spell begin
+{27461}{spells\sp_expeditious_retreat_end.WAV} // spell end
+{27462}{spells\sp_expeditious_retreat.WAV} // spell effect
+{27463}{} // spell new round
+{27464}{} // spell projectile begin
+{27465}{} // spell projectile end
+{27466}{} // spell projectile in-flight
+{27467}{} // spell hit
+{27468}{} // spell struck
+
+// [1074] *[Snipers Shot]
+{27480}{} // spell begin
+{27481}{} // spell end
+{27482}{spells\sp_holy_smite_hit.WAV} // spell effect
+{27483}{} // spell new round
+{27484}{} // spell projectile begin
+{27485}{} // spell projectile end
+{27486}{} // spell projectile in-flight
+{27487}{} // spell hit
+{27488}{} // spell struck
+
+// [1075] *[Sonic Weapon]
+{27500}{} // spell begin
+{27501}{} // spell end
+{27502}{spells\sp_sonic_weapon.mp3} // spell effect
+{27503}{} // spell new round
+{27504}{} // spell projectile begin
+{27505}{} // spell projectile end
+{27506}{} // spell projectile in-flight
+{27507}{} // spell hit
+{27508}{} // spell struck
+
+// [1076] *[Bonefiddle]
+{27520}{spells\sp_bonefiddle.mp3} // spell begin
+{27521}{} // spell end
+{27522}{} // spell effect
+{27523}{} // spell new round
+{27524}{} // spell projectile begin
+{27525}{} // spell projectile end
+{27526}{} // spell projectile in-flight
+{27527}{} // spell hit
+{27528}{} // spell struck
+
+// [1077] *[Cloud of Bewilderment]
+{27540}{} // spell begin
+{27541}{} // spell end
+{27542}{spells\sp_cloud_kill_hit.WAV} // spell effect
+{27543}{} // spell new round
+{27544}{} // spell projectile begin
+{27545}{} // spell projectile end
+{27546}{} // spell projectile in-flight
+{27547}{} // spell hit
+{27548}{} // spell struck
+
+// [1078] *[Curse of Impending Blades]
+{27560}{} // spell begin
+{27561}{} // spell end
+{27562}{spells\sp_curse.WAV} // spell effect
+{27563}{} // spell new round
+{27564}{} // spell projectile begin
+{27565}{} // spell projectile end
+{27566}{} // spell projectile in-flight
+{27567}{} // spell hit
+{27568}{} // spell struck
+
+// [1079] *[Wave of Grief]
+{27580}{} // spell begin
+{27581}{} // spell end
+{27582}{spells\sp_curse.WAV} // spell effect
+{27583}{} // spell new round
+{27584}{} // spell projectile begin
+{27585}{} // spell projectile end
+{27586}{} // spell projectile in-flight
+{27587}{} // spell hit
+{27588}{} // spell struck
+
+// [1080] *[Harmonic Chorus]
+{27600}{} // spell begin
+{27601}{} // spell end
+{27602}{spells\competence_female.WAV} // spell effect
+{27603}{} // spell new round
+{27604}{} // spell projectile begin
+{27605}{} // spell projectile end
+{27606}{} // spell projectile in-flight
+{27607}{} // spell hit
+{27608}{} // spell struck
+
+// [1081] *[Iron Silence]
+{27620}{spells\sp_silence.WAV} // spell begin
+{27621}{} // spell end
+{27622}{} // spell effect
+{27623}{} // spell new round
+{27624}{} // spell projectile begin
+{27625}{} // spell projectile end
+{27626}{} // spell projectile in-flight
+{27627}{} // spell hit
+{27628}{} // spell struck
+
+// [1082] *[War Cry]
+{27640}{spells\sp_shout2.WAV} // spell begin
+{27641}{} // spell end
+{27642}{} // spell effect
+{27643}{} // spell new round
+{27644}{} // spell projectile begin
+{27645}{} // spell projectile end
+{27646}{} // spell projectile in-flight
+{27647}{} // spell hit
+{27648}{} // spell struck
+
+// [1083] *[Whirling Blade]
+{27660}{} // spell begin
+{27661}{} // spell end
+{27662}{} // spell effect
+{27663}{} // spell new round
+{27664}{} // spell projectile begin
+{27665}{} // spell projectile end
+{27666}{} // spell projectile in-flight
+{27667}{} // spell hit
+{27668}{} // spell struck
+
+// [1084] *[Bladeweave]
+{27680}{spells\sp_daylight_end.WAV} // spell begin
+{27681}{} // spell end
+{27682}{} // spell effect
+{27683}{} // spell new round
+{27684}{} // spell projectile begin
+{27685}{} // spell projectile end
+{27686}{} // spell projectile in-flight
+{27687}{} // spell hit
+{27688}{} // spell struck
+
+// [1085] *[Fell the Greatest Foe]
+{27700}{} // spell begin
+{27701}{} // spell end
+{27702}{spells\sp_holy_smite.WAV} // spell effect
+{27703}{} // spell new round
+{27704}{} // spell projectile begin
+{27705}{} // spell projectile end
+{27706}{} // spell projectile in-flight
+{27707}{} // spell hit
+{27708}{} // spell struck
+
+// [1086] *[Fire Shuriken]
+{27720}{} // spell begin
+{27721}{} // spell end
+{27722}{spells\sp_holy_smite.WAV} // spell effect
+{27723}{} // spell new round
+{27724}{} // spell projectile begin
+{27725}{} // spell projectile end
+{27726}{} // spell projectile in-flight
+{27727}{} // spell hit
+{27728}{} // spell struck
+
+// [1087] *[Phantom Foe]
+{27740}{} // spell begin
+{27741}{spells\sp_mind_fog_end.WAV} // spell end
+{27742}{spells\sp_mind_fog.WAV} // spell effect
+{27743}{} // spell new round
+{27744}{} // spell projectile begin
+{27745}{} // spell projectile end
+{27746}{} // spell projectile in-flight
+{27747}{} // spell hit
+{27748}{} // spell struck
+
+// [1088] *[Veil of Shadow]
+{27760}{} // spell begin
+{27761}{} // spell end
+{27762}{spells\sp_blur.WAV} // spell effect
+{27763}{} // spell new round
+{27764}{} // spell projectile begin
+{27765}{} // spell projectile end
+{27766}{} // spell projectile in-flight
+{27767}{} // spell hit
+{27768}{} // spell struck
+
+// [1089] *[Curse of Impending Blades]
+{27780}{} // spell begin
+{27781}{} // spell end
+{27782}{spells\sp_curse.WAV} // spell effect
+{27783}{} // spell new round
+{27784}{} // spell projectile begin
+{27785}{} // spell projectile end
+{27786}{} // spell projectile in-flight
+{27787}{} // spell hit
+{27788}{} // spell struck
+
+// [1090] *[Dissonant Chord]
+{27800}{} // spell begin
+{27801}{} // spell end
+{27802}{spells\sp_sound_blast.WAV} // spell effect
+{27803}{} // spell new round
+{27804}{} // spell projectile begin
+{27805}{} // spell projectile end
+{27806}{} // spell projectile in-flight
+{27807} {} // spell hit
+{27808}{} // spell struck
+
+// [1091] *[Haunting Tune]
+{27820}{spells\sp_haunting_tune.mp3} // spell begin
+{27821}{} // spell end
+{27822}{} // spell effect
+{27823}{} // spell new round
+{27824}{} // spell projectile begin
+{27825}{} // spell projectile end
+{27826}{} // spell projectile in-flight
+{27827}{} // spell hit
+{27828}{} // spell struck
+
+// [1092] *[Loves Lament]
+{27840}{spells\sp_haunting_tune.mp3} // spell begin
+{27841}{} // spell end
+{27842}{} // spell effect
+{27843}{} // spell new round
+{27844}{} // spell projectile begin
+{27845}{} // spell projectile end
+{27846}{} // spell projectile in-flight
+{27847}{} // spell hit
+{27848}{} // spell struck
+
+// [1093] *[Ray of Dizziness]
+{27860}{} // spell begin
+{27861}{} // spell end
+{27862}{} // spell effect
+{27863}{} // spell new round
+{27864}{spells\sp_disease_shakes.WAV} // spell projectile begin
+{27865}{} // spell projectile end
+{27866}{} // spell projectile in-flight
+{27867}{} // spell hit
+{27868}{} // spell struck
+
+// [1094] *[Wounding Whispers]
+{27880}{} // spell begin
+{27881}{} // spell end
+{27882}{} // spell effect
+{27883}{} // spell new round
+{27884}{} // spell projectile begin
+{27885}{} // spell projectile end
+{27886}{} // spell projectile in-flight
+{27887}{} // spell hit
+{27888}{} // spell struck
+
+// [1095] *[Dirge of Discord]
+{27900}{} // spell begin
+{27901}{} // spell end
+{27902}{} // spell effect
+{27903}{} // spell new round
+{27904}{} // spell projectile begin
+{27905}{} // spell projectile end
+{27906}{} // spell projectile in-flight
+{27907}{} // spell hit
+{27908}{} // spell struck
+
+// [1096] *[Allegro]
+{27920}{spells\sp_expeditious_retreat.WAV} // spell begin
+{27921}{} // spell end
+{27922}{} // spell effect
+{27923}{} // spell new round
+{27924}{} // spell projectile begin
+{27925}{} // spell projectile end
+{27926}{} // spell projectile in-flight
+{27927}{} // spell hit
+{27928}{} // spell struck
+
+// [1097] *[Find the Gap]
+{27940}{} // spell begin
+{27941}{} // spell end
+{27942}{} // spell effect
+{27943}{} // spell new round
+{27944}{} // spell projectile begin
+{27945}{} // spell projectile end
+{27946}{} // spell projectile in-flight
+{27947}{} // spell hit
+{27948}{} // spell struck
+
+// [1098] *[Wraithstrike]
+{27960}{} // spell begin
+{27961}{} // spell end
+{27962}{} // spell effect
+{27963}{} // spell new round
+{27964}{} // spell projectile begin
+{27965}{} // spell projectile end
+{27966}{} // spell projectile in-flight
+{27967}{} // spell hit
+{27968}{} // spell struck
+
+// [1099] *[Resonating Bolt]
+{27980}{} // spell begin
+{27981}{} // spell end
+{27982}{} // spell effect
+{27983}{} // spell new round
+{27984}{} // spell projectile begin
+{27985}{} // spell projectile end
+{27986}{} // spell projectile in-flight
+{27987}{} // spell hit
+{27988}{} // spell struck
+
+// [1100] *[Resistance Greater]
+{28000}{} // spell begin
+{28001}{spells\sp_resistance_end.WAV} // spell end
+{28002}{spells\sp_resistance.WAV} // spell effect
+{28003}{} // spell new round
+{28004}{} // spell projectile begin
+{28005}{} // spell projectile end
+{28006}{} // spell projectile in-flight
+{28007}{} // spell hit
+{28008}{} // spell struck
+
+// [1101] *[Fugue]
+{28020}{} // spell begin
+{28021}{} // spell end
+{28022}{} // spell effect
+{28023}{} // spell new round
+{28024}{} // spell projectile begin
+{28025}{} // spell projectile end
+{28026}{} // spell projectile in-flight
+{28027}{} // spell hit
+{28028}{} // spell struck
+
+// [1102] *[Sirines Grace]
+{28040}{} // spell begin
+{28041}{} // spell end
+{28042}{} // spell effect
+{28043}{} // spell new round
+{28044}{} // spell projectile begin
+{28045}{} // spell projectile end
+{28046}{} // spell projectile in-flight
+{28047}{} // spell hit
+{28048}{} // spell struck
+
+// [1103] *[Dolorous Blow]
+{28060}{} // spell begin
+{28061}{} // spell end
+{28062}{} // spell effect
+{28063}{} // spell new round
+{28064}{} // spell projectile begin
+{28065}{} // spell projectile end
+{28066}{} // spell projectile in-flight
+{28067}{} // spell hit
+{28068}{} // spell struck
+
+// [1104] *[Bolts of Bedevilment]
+{28080}{} // spell begin
+{28081}{} // spell end
+{28082}{} // spell effect
+{28083}{} // spell new round
+{28084}{} // spell projectile begin
+{28085}{} // spell projectile end
+{28086}{} // spell projectile in-flight
+{28087}{} // spell hit
+{28088}{} // spell struck
+
+// [1105] *[Cacophonic Burst]
+{28100}{} // spell begin
+{28101}{} // spell end
+{28102}{} // spell effect
+{28103}{} // spell new round
+{28104}{} // spell projectile begin
+{28105}{} // spell projectile end
+{28106}{} // spell projectile in-flight
+{28107}{} // spell hit
+{28108}{} // spell struck
+
+// [1106] *[Wail of Doom]
+{28120}{} // spell begin
+{28121}{} // spell end
+{28122}{} // spell effect
+{28123}{} // spell new round
+{28124}{} // spell projectile begin
+{28125}{} // spell projectile end
+{28126}{} // spell projectile in-flight
+{28127}{} // spell hit
+{28128}{} // spell struck
+
+// [1107] *[Heart Ripper]
+{28140}{} // spell begin
+{28141}{} // spell end
+{28142}{} // spell effect
+{28143}{} // spell new round
+{28144}{} // spell projectile begin
+{28145}{} // spell projectile end
+{28146}{} // spell projectile in-flight
+{28147}{} // spell hit
+{28148}{} // spell struck
+
+// [1108] *[Dirge]
+{28160}{} // spell begin
+{28161}{} // spell end
+{28162}{} // spell effect
+{28163}{} // spell new round
+{28164}{} // spell projectile begin
+{28165}{} // spell projectile end
+{28166}{} // spell projectile in-flight
+{28167}{} // spell hit
+{28168}{} // spell struck
+
+// [1109] *[Nixies Grace]
+{28180}{} // spell begin
+{28181}{} // spell end
+{28182}{} // spell effect
+{28183}{} // spell new round
+{28184}{} // spell projectile begin
+{28185}{} // spell projectile end
+{28186}{} // spell projectile in-flight
+{28187}{} // spell hit
+{28188}{} // spell struck
+
+// [1110] *[Ray of Light]
+{28200}{} // spell begin
+{28201}{} // spell end
+{28202}{} // spell effect
+{28203}{} // spell new round
+{28204}{} // spell projectile begin
+{28205}{} // spell projectile end
+{28206}{} // spell projectile in-flight
+{28207}{} // spell hit
+{28208}{} // spell struck
+
+// [1111] *[Resistance Superior]
+{28220}{} // spell begin
+{28221}{} // spell end
+{28222}{spells\sp_resistance.WAV} // spell effect
+{28223}{} // spell new round
+{28224}{} // spell projectile begin
+{28225}{} // spell projectile end
+{28226}{} // spell projectile in-flight
+{28227}{} // spell hit
+{28228}{} // spell struck
+
+// [1112] *[Strategic Charge]
+{28240}{} // spell begin
+{28241}{} // spell end
+{28242}{spells\sp_expeditious_retreat.WAV} // spell effect
+{28243}{} // spell new round
+{28244}{} // spell projectile begin
+{28245}{} // spell projectile end
+{28246}{} // spell projectile in-flight
+{28247}{} // spell hit
+{28248}{} // spell struck
+
+// [1113] *[Blessed Aim]
+{28260}{} // spell begin
+{28261}{} // spell end
+{28262}{spells\sp_bless_weapon_loop.WAV} // spell effect
+{28263}{} // spell new round
+{28264}{} // spell projectile begin
+{28265}{} // spell projectile end
+{28266}{} // spell projectile in-flight
+{28267}{} // spell hit
+{28268}{} // spell struck
+
+// [1114] *[Clear Mind]
+{28280}{} // spell begin
+{28281}{} // spell end
+{28282}{spells\sp_reduce.WAV} // spell effect
+{28283}{} // spell new round
+{28284}{} // spell projectile begin
+{28285}{} // spell projectile end
+{28286}{} // spell projectile in-flight
+{28287}{} // spell hit
+{28288}{} // spell struck
+
+// [1115] *[Deafening Clang]
+{28300}{} // spell begin
+{28301}{} // spell end
+{28302}{spells\sp_sonic_weapon.mp3} // spell effect
+{28303}{} // spell new round
+{28304}{} // spell projectile begin
+{28305}{} // spell projectile end
+{28306}{} // spell projectile in-flight
+{28307}{} // spell hit
+{28308}{} // spell struck
+
+// [1116] *[Grave Strike]
+{28320}{} // spell begin
+{28321}{} // spell end
+{28322}{} // spell effect
+{28323}{} // spell new round
+{28324}{} // spell projectile begin
+{28325}{} // spell projectile end
+{28326}{} // spell projectile in-flight
+{28327}{} // spell hit
+{28328}{} // spell struck
+
+// [1117] *[]
+{28340}{} // spell begin
+{28341}{} // spell end
+{28342}{} // spell effect
+{28343}{} // spell new round
+{28344}{} // spell projectile begin
+{28345}{} // spell projectile end
+{28346}{} // spell projectile in-flight
+{28347}{} // spell hit
+{28348}{} // spell struck
+
+// [1118] *[Faith Healing]
+{28360}{} // spell begin
+{28361}{} // spell end
+{28362}{spells\sp_cure_light.WAV} // spell effect
+{28363}{} // spell new round
+{28364}{} // spell projectile begin
+{28365}{} // spell projectile end
+{28366}{} // spell projectile in-flight
+{28367}{} // spell hit
+{28368}{} // spell struck
+
+// [1119] *[Summon Undead I]
+{28380}{} // spell begin
+{28381}{spells\sp_summon_monster1_end.WAV} // spell end
+{28382}{spells\sp_summon_monster1.WAV} // spell effect
+{28383}{} // spell new round
+{28384}{} // spell projectile begin
+{28385}{} // spell projectile end
+{28386}{} // spell projectile in-flight
+{28387}{} // spell hit
+{28388}{} // spell struck
+
+// [1120] *[Angelskin]
+{28400}{} // spell begin
+{28401}{} // spell end
+{28402}{} // spell effect
+{28403}{} // spell new round
+{28404}{} // spell projectile begin
+{28405}{} // spell projectile end
+{28406}{} // spell projectile in-flight
+{28407}{} // spell hit
+{28408}{} // spell struck
+
+// [1121] *[Demonhide]
+{28420}{} // spell begin
+{28421}{} // spell end
+{28422}{} // spell effect
+{28423}{} // spell new round
+{28424}{} // spell projectile begin
+{28425}{} // spell projectile end
+{28426}{} // spell projectile in-flight
+{28427}{} // spell hit
+{28428}{} // spell struck
+
+// [1122] *[Summon Undead II]
+{28440}{} // spell begin
+{28441}{spells\sp_summon_monster1_end.WAV} // spell end
+{28442}{spells\sp_summon_monster1.WAV} // spell effect
+{28443}{} // spell new round
+{28444}{} // spell projectile begin
+{28445}{} // spell projectile end
+{28446}{} // spell projectile in-flight
+{28447}{} // spell hit
+{28448}{} // spell struck
+
+// [1123] *[Hand of Divinity]
+{28460}{} // spell begin
+{28461}{} // spell end
+{28462}{} // spell effect
+{28463}{} // spell new round
+{28464}{} // spell projectile begin
+{28465}{} // spell projectile end
+{28466}{} // spell projectile in-flight
+{28467}{} // spell hit
+{28468}{} // spell struck
+
+// [1124] *[Curse of Ill Fortune]
+{28480}{} // spell begin
+{28481}{} // spell end
+{28482}{spells\curse.wav} // spell effect
+{28483}{} // spell new round
+{28484}{} // spell projectile begin
+{28485}{} // spell projectile end
+{28486}{} // spell projectile in-flight
+{28487}{} // spell hit
+{28488}{} // spell struck
+
+// [1125] *[Awaken Sin]
+{28500}{} // spell begin
+{28501}{} // spell end
+{28502}{} // spell effect
+{28503}{} // spell new round
+{28504}{} // spell projectile begin
+{28505}{} // spell projectile end
+{28506}{} // spell projectile in-flight
+{28507}{} // spell hit
+{28508}{} // spell struck
+
+// [1126] *[Checkmates Light]
+{28520}{} // spell begin
+{28521}{} // spell end
+{28522}{} // spell effect
+{28523}{} // spell new round
+{28524}{} // spell projectile begin
+{28525}{} // spell projectile end
+{28526}{} // spell projectile in-flight
+{28527}{} // spell hit
+{28528}{} // spell struck
+
+// [1127] *[Cloak of Bravery]
+{28540}{} // spell begin
+{28541}{} // spell end
+{28542}{} // spell effect
+{28543}{} // spell new round
+{28544}{} // spell projectile begin
+{28545}{} // spell projectile end
+{28546}{} // spell projectile in-flight
+{28547}{} // spell hit
+{28548}{} // spell struck
+
+// [1128] *[Divine Protection]
+{28560}{spells\sp_shield_of_faith.WAV} // spell begin
+{28561}{} // spell end
+{28562}{} // spell effect
+{28563}{} // spell new round
+{28564}{} // spell projectile begin
+{28565}{} // spell projectile end
+{28566}{} // spell projectile in-flight
+{28567}{} // spell hit
+{28568}{} // spell struck
+
+// [1129] *[Quick March]
+{28580}{} // spell begin
+{28581}{} // spell end
+{28582}{} // spell effect
+{28583}{} // spell new round
+{28584}{} // spell projectile begin
+{28585}{} // spell projectile end
+{28586}{} // spell projectile in-flight
+{28587}{} // spell hit
+{28588}{} // spell struck
+
+// [1130] *[Shield of Warding]
+{28600}{spells\sp_shield_of_faith.WAV} // spell begin
+{28601}{} // spell end
+{28602}{} // spell effect
+{28603}{} // spell new round
+{28604}{} // spell projectile begin
+{28605}{} // spell projectile end
+{28606}{} // spell projectile in-flight
+{28607}{} // spell hit
+{28608}{} // spell struck
+
+// [1131] *[Blessing of Bahamut]
+{28620}{spells\sp_bless.WAV} // spell begin
+{28621}{} // spell end
+{28622}{} // spell effect
+{28623}{} // spell new round
+{28624}{} // spell projectile begin
+{28625}{} // spell projectile end
+{28626}{} // spell projectile in-flight
+{28627}{} // spell hit
+{28628}{} // spell struck
+
+// [1132] *[Diamondsteel]
+{28640}{spells\sp_stoneskin.WAV} // spell begin
+{28641}{} // spell end
+{28642}{} // spell effect
+{28643}{} // spell new round
+{28644}{} // spell projectile begin
+{28645}{} // spell projectile end
+{28646}{} // spell projectile in-flight
+{28647}{} // spell hit
+{28648}{} // spell struck
+
+// [1133] *[Righteous Fury]
+{28660}{spells\sp_prayer_burst.WAV} // spell begin
+{28661}{} // spell end
+{28662}{spells\sp_prayer_burst_favor.WAV} // spell effect
+{28663}{} // spell new round
+{28664}{} // spell projectile begin
+{28665}{} // spell projectile end
+{28666}{} // spell projectile in-flight
+{28667}{} // spell hit
+{28668}{} // spell struck
+
+// [1134] *[Undead Bane Weapon]
+{28680}{spells\sp_bless_weapon_loop.WAV} // spell begin
+{28681}{} // spell end
+{28682}{} // spell effect
+{28683}{} // spell new round
+{28684}{} // spell projectile begin
+{28685}{} // spell projectile end
+{28686}{} // spell projectile in-flight
+{28687}{} // spell hit
+{28688}{} // spell struck
+
+// [1135] *[Weapon of the Deity]
+{28700}{} // spell begin
+{28701}{} // spell end
+{28702}{} // spell effect
+{28703}{} // spell new round
+{28704}{} // spell projectile begin
+{28705}{} // spell projectile end
+{28706}{} // spell projectile in-flight
+{28707}{} // spell hit
+{28708}{} // spell struck
+
+// [1136] *[Axiomatic Storm]
+{28720}{} // spell begin
+{28721}{spells\sp_sleet_storm_end.WAV} // spell end
+{28722}{spells\sp_sleet_storm_loop.WAV} // spell effect
+{28723}{} // spell new round
+{28724}{} // spell projectile begin
+{28725}{} // spell projectile end
+{28726}{} // spell projectile in-flight
+{28727}{} // spell hit
+{28728}{} // spell struck
+
+// [1137] *[Holy Storm]
+{28740}{} // spell begin
+{28741}{spells\sp_sleet_storm_end.WAV} // spell end
+{28742}{spells\sp_sleet_storm_loop.WAV} // spell effect
+{28743}{} // spell new round
+{28744}{} // spell projectile begin
+{28745}{} // spell projectile end
+{28746}{} // spell projectile in-flight
+{28747}{} // spell hit
+{28748}{} // spell struck
+
+// [1138] *[Unholy Storm]
+{28760}{} // spell begin
+{28761}{spells\sp_sleet_storm_end.WAV} // spell end
+{28762}{spells\sp_sleet_storm_loop.WAV} // spell effect
+{28763}{} // spell new round
+{28764}{} // spell projectile begin
+{28765}{} // spell projectile end
+{28766}{} // spell projectile in-flight
+{28767}{} // spell hit
+{28768}{} // spell struck
+
+// [1139] *[Summon Undead III]
+{28780}{} // spell begin
+{28781}{spells\sp_summon_monster1_end.WAV} // spell end
+{28782}{spells\sp_summon_monster1.WAV} // spell effect
+{28783}{} // spell new round
+{28784}{} // spell projectile begin
+{28785}{} // spell projectile end
+{28786}{} // spell projectile in-flight
+{28787}{} // spell hit
+{28788}{} // spell struck
+
+// [1140] *[Visage of the Deity lesser]
+{28800}{} // spell begin
+{28801}{} // spell end
+{28802}{} // spell effect
+{28803}{} // spell new round
+{28804}{} // spell projectile begin
+{28805}{} // spell projectile end
+{28806}{} // spell projectile in-flight
+{28807}{} // spell hit
+{28808}{} // spell struck
+
+// [1141] *[Lawful Sword]
+{28820}{spells\sp_bless_weapon_loop.WAV} // spell begin
+{28821}{} // spell end
+{28822}{} // spell effect
+{28823}{} // spell new round
+{28824}{} // spell projectile begin
+{28825}{} // spell projectile end
+{28826}{} // spell projectile in-flight
+{28827}{} // spell hit
+{28828}{} // spell struck
+
+// [1142] *[Summon Undead IV]
+{28840}{} // spell begin
+{28841}{spells\sp_summon_monster1_end.WAV} // spell end
+{28842}{spells\sp_summon_monster1.WAV} // spell effect
+{28843}{} // spell new round
+{28844}{} // spell projectile begin
+{28845}{} // spell projectile end
+{28846}{} // spell projectile in-flight
+{28847}{} // spell hit
+{28848}{} // spell struck
+
+// [1143] *[Castigate]
+{28860}{spells\sp_shout2.WAV} // spell begin
+{28861}{} // spell end
+{28862}{} // spell effect
+{28863}{} // spell new round
+{28864}{} // spell projectile begin
+{28865}{} // spell projectile end
+{28866}{} // spell projectile in-flight
+{28867}{} // spell hit
+{28868}{} // spell struck
+
+// [1144] *[Summon Undead V]
+{28880}{} // spell begin
+{28881}{spells\sp_summon_monster1_end.WAV} // spell end
+{28882}{spells\sp_summon_monster1.WAV} // spell effect
+{28883}{} // spell new round
+{28884}{} // spell projectile begin
+{28885}{} // spell projectile end
+{28886}{} // spell projectile in-flight
+{28887}{} // spell hit
+{28888}{} // spell struck
+
+// [1145] *[Conviction]
+{28900}{spells\sp_bless.WAV} // spell begin
+{28901}{} // spell end
+{28902}{} // spell effect
+{28903}{} // spell new round
+{28904}{} // spell projectile begin
+{28905}{} // spell projectile end
+{28906}{} // spell projectile in-flight
+{28907}{} // spell hit
+{28908}{} // spell struck
+
+// [1146] *[Foundation of Stone]
+{28920}{spells\sp_stoneskin.WAV} // spell begin
+{28921}{} // spell end
+{28922}{} // spell effect
+{28923}{} // spell new round
+{28924}{} // spell projectile begin
+{28925}{} // spell projectile end
+{28926}{} // spell projectile in-flight
+{28927}{} // spell hit
+{28928}{} // spell struck
+
+// [1147] *[Nightshield]
+{28940}{spells\sp_shield.WAV} // spell begin
+{28941}{} // spell end
+{28942}{} // spell effect
+{28943}{} // spell new round
+{28944}{} // spell projectile begin
+{28945}{} // spell projectile end
+{28946}{} // spell projectile in-flight
+{28947}{} // spell hit
+{28948}{} // spell struck
+
+// [1148] *[Nimbus of Light]
+{28960}{} // spell begin
+{28961}{} // spell end
+{28962}{} // spell effect
+{28963}{} // spell new round
+{28964}{} // spell projectile begin
+{28965}{} // spell projectile end
+{28966}{} // spell projectile in-flight
+{28967}{} // spell hit
+{28968}{} // spell struck
+
+// [1149] *[Brambles]
+{28980}{spells\sp_tree_shape.WAV} // spell begin
+{28981}{spells\sp_tree_shape_end.WAV} // spell end
+{28982}{} // spell effect
+{28983}{} // spell new round
+{28984}{} // spell projectile begin
+{28985}{} // spell projectile end
+{28986}{} // spell projectile in-flight
+{28987}{} // spell hit
+{28988}{} // spell struck
+
+// [1150] *[Deific Vengeance]
+{29000}{spells\sp_bless.WAV} // spell begin
+{29001}{} // spell end
+{29002}{} // spell effect
+{29003}{} // spell new round
+{29004}{} // spell projectile begin
+{29005}{} // spell projectile end
+{29006}{} // spell projectile in-flight
+{29007}{} // spell hit
+{29008}{} // spell struck
+
+// [1151] *[Frost Breath]
+{29020}{spells\sp_cone_of_cold.WAV} // spell begin
+{29021}{} // spell end
+{29022}{} // spell effect
+{29023}{} // spell new round
+{29024}{} // spell projectile begin
+{29025}{} // spell projectile end
+{29026}{} // spell projectile in-flight
+{29027}{} // spell hit
+{29028}{} // spell struck
+
+// [1152] *[Ghost Touch Armor]
+{29040}{} // spell begin
+{29041}{} // spell end
+{29042}{} // spell effect
+{29043}{} // spell new round
+{29044}{} // spell projectile begin
+{29045}{} // spell projectile end
+{29046}{} // spell projectile in-flight
+{29047}{} // spell hit
+{29048}{} // spell struck
+
+// [1153] *[Aid Mass]
+{29060}{spells\sp_Aid_END.wav} // spell begin
+{29061}{} // spell end
+{29062}{spells\sp_Aid_start.wav} // spell effect
+{29063}{} // spell new round
+{29064}{} // spell projectile begin
+{29065}{} // spell projectile end
+{29066}{} // spell projectile in-flight
+{29067}{} // spell hit
+{29068}{} // spell struck
+
+// [1154] *[Align Weapon Mass]
+{29080}{spells\sp_bless_weapon.WAV} // spell begin
+{29081}{spells\sp_bless_weapon_end.WAV} // spell end
+{29082}{} // spell effect
+{29083}{} // spell new round
+{29084}{} // spell projectile begin
+{29085}{} // spell projectile end
+{29086}{} // spell projectile in-flight
+{29087}{} // spell hit
+{29088}{} // spell struck
+
+// [1155] *[Bless Weapon Swift]
+{29100}{spells\sp_bless_weapon.WAV} // spell begin
+{29101}{spells\sp_bless_weapon_end.WAV} // spell end
+{29102}{} // spell effect
+{29103}{} // spell new round
+{29104}{} // spell projectile begin
+{29105}{} // spell projectile end
+{29106}{} // spell projectile in-flight
+{29107}{} // spell hit
+{29108}{} // spell struck
+
+// [1156] *[Anarchic Storm]
+{29120}{} // spell begin
+{29121}{spells\sp_sleet_storm_end.WAV} // spell end
+{29122}{spells\sp_sleet_storm_loop.WAV} // spell effect
+{29123}{} // spell new round
+{29124}{} // spell projectile begin
+{29125}{} // spell projectile end
+{29126}{} // spell projectile in-flight
+{29127}{} // spell hit
+{29128}{} // spell struck
+
+// [1157] *[Clutch of Orcus]
+{29140}{spells\sp_slay_living.WAV} // spell begin
+{29141}{} // spell end
+{29142}{} // spell effect
+{29143}{} // spell new round
+{29144}{} // spell projectile begin
+{29145}{} // spell projectile end
+{29146}{} // spell projectile in-flight
+{29147}{} // spell hit
+{29148}{} // spell struck
+
+// [1158] *[Conviction Mass]
+{29160}{spells\sp_bless.WAV} // spell begin
+{29161}{} // spell end
+{29162}{} // spell effect
+{29163}{} // spell new round
+{29164}{} // spell projectile begin
+{29165}{} // spell projectile end
+{29166}{} // spell projectile in-flight
+{29167}{} // spell hit
+{29168}{} // spell struck
+
+// [1159] *[Corona of Cold]
+{29180}{spells\sp_chill_metal.WAV} // spell begin
+{29181}{} // spell end
+{29182}{} // spell effect
+{29183}{} // spell new round
+{29184}{} // spell projectile begin
+{29185}{} // spell projectile end
+{29186}{} // spell projectile in-flight
+{29187}{} // spell hit
+{29188}{} // spell struck
+
+// [1160] *[]
+{29200}{} // spell begin
+{29201}{} // spell end
+{29202}{} // spell effect
+{29203}{} // spell new round
+{29204}{} // spell projectile begin
+{29205}{} // spell projectile end
+{29206}{} // spell projectile in-flight
+{29207}{} // spell hit
+{29208}{} // spell struck
+
+// [1161] *[Demon Dirge]
+{29220}{} // spell begin
+{29221}{} // spell end
+{29222}{spells\sp_arcane_lock.WAV} // spell effect
+{29223}{} // spell new round
+{29224}{} // spell projectile begin
+{29225}{} // spell projectile end
+{29226}{} // spell projectile in-flight
+{29227}{} // spell hit
+{29228}{} // spell struck
+
+// [1162] *[Devil Blight]
+{29240}{} // spell begin
+{29241}{} // spell end
+{29242}{spells\sp_arcane_lock.WAV} // spell effect
+{29243}{} // spell new round
+{29244}{} // spell projectile begin
+{29245}{} // spell projectile end
+{29246}{} // spell projectile in-flight
+{29247}{} // spell hit
+{29248}{} // spell struck
+
+// [1163] *[Energy Vortex]
+{29260}{} // spell begin
+{29261}{} // spell end
+{29262}{spells\sp_endure_acid.WAV} // spell effect
+{29263}{} // spell new round
+{29264}{} // spell projectile begin
+{29265}{} // spell projectile end
+{29266}{} // spell projectile in-flight
+{29267}{} // spell hit
+{29268}{} // spell struck
+
+// [1164] *[Grace]
+{29280}{spells\sp_daylight.WAV} // spell begin
+{29281}{} // spell end
+{29282}{} // spell effect
+{29283}{} // spell new round
+{29284}{} // spell projectile begin
+{29285}{} // spell projectile end
+{29286}{} // spell projectile in-flight
+{29287}{} // spell hit
+{29288}{} // spell struck
+
+// [1165] *[Resist Energy Mass]
+{29300}{spells\sp_resistance.WAV} // spell begin
+{29301}{} // spell end
+{29302}{} // spell effect
+{29303}{} // spell new round
+{29304}{} // spell projectile begin
+{29305}{} // spell projectile end
+{29306}{} // spell projectile in-flight
+{29307}{} // spell hit
+{29308}{} // spell struck
+
+// [1166] *[Nauseating Breath]
+{29320}{spells\sp_cloud_kill_hit.WAV} // spell begin
+{29321}{} // spell end
+{29322}{} // spell effect
+{29323}{} // spell new round
+{29324}{} // spell projectile begin
+{29325}{} // spell projectile end
+{29326}{} // spell projectile in-flight
+{29327}{} // spell hit
+{29328}{} // spell struck
+
+// [1167] *[Slashing Darkness]
+{29340}{} // spell begin
+{29341}{} // spell end
+{29342}{} // spell effect
+{29343}{} // spell new round
+{29344}{spells\sp_enervation_proj.WAV} // spell projectile begin
+{29345}{} // spell projectile end
+{29346}{} // spell projectile in-flight
+{29347}{spells\sp_enervation_hit.wav} // spell hit
+{29348}{} // spell struck
+
+// [1168] *[Spikes]
+{29360}{spells\sp_tree_shape.WAV} // spell begin
+{29361}{spells\sp_tree_shape_end.WAV} // spell end
+{29362}{} // spell effect
+{29363}{} // spell new round
+{29364}{} // spell projectile begin
+{29365}{} // spell projectile end
+{29366}{} // spell projectile in-flight
+{29367}{} // spell hit
+{29368}{} // spell struck
+
+// [1169] *[Tremor]
+{29380}{} // spell begin
+{29381}{} // spell end
+{29382}{} // spell effect
+{29383}{} // spell new round
+{29384}{} // spell projectile begin
+{29385}{} // spell projectile end
+{29386}{} // spell projectile in-flight
+{29387}{} // spell hit
+{29388}{} // spell struck
+
+// [1170] *[Weapon of Energy]
+{29400}{} // spell begin
+{29401}{} // spell end
+{29402}{} // spell effect
+{29403}{} // spell new round
+{29404}{} // spell projectile begin
+{29405}{} // spell projectile end
+{29406}{} // spell projectile in-flight
+{29407}{} // spell hit
+{29408}{} // spell struck
+
+// [1171] *[Storm of Elemental Fury]
+{29420}{} // spell begin
+{29421}{} // spell end
+{29422}{} // spell effect
+{29423}{} // spell new round
+{29424}{} // spell projectile begin
+{29425}{} // spell projectile end
+{29426}{} // spell projectile in-flight
+{29427}{} // spell hit
+{29428}{} // spell struck

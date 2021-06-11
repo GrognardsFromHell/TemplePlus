@@ -1,0 +1,241 @@
+//Additional spells added by Sagenlicht
+
+// Spell Names
+{1050}{Sound Lance}
+{1051}{Critical Strike}
+{1052}{Camouflage}
+{1053}{Appraising Touch}
+{1054}{Phantom Threat}
+{1055}{Distort Speech}
+{1056}{Distract}
+{1057}{Focusing Chant}
+{1058}{Herald's Call}
+{1059}{Improvisation}
+{1061}{Inspirational Boost}
+{1062}{Invisibility, Swift}
+{1063}{Ironguts}
+{1064}{Ironthunder Horn}
+{1065}{Insidious Rhythm}
+{1066}{Master's Touch}
+{1067}{Serene Visage}
+{1068}{Shock and Awe}
+{1069}{Sticky Fingers}
+{1070}{Undersong}
+{1071}{Distract Assailant}
+{1072}{Insightful Feint}
+{1073}{Lightfoot}
+{1074}{Sniper's Shot}
+{1075}{Sonic Weapon}
+{1076}{Bonefiddle}
+{1077}{Cloud of Bewilderment}
+{1078}{Curse of Impending Blades}
+{1079}{Wave of Grief}
+{1080}{Harmonic Chorus}
+{1081}{Iron Silence}
+{1082}{War Cry}
+{1083}{Whirling Blades}
+{1084}{Bladeweave}
+{1085}{Fell the Greatest Foe}
+{1086}{Fire Shuriken}
+{1087}{Phantom Foe}
+{1088}{Veil of Shadow}
+{1089}{Curse of Imp. Blades Mass}
+{1090}{Dissonant Chord}
+{1091}{Haunting Tune}
+{1092}{Love's Lament}
+{1093}{Ray of Dizziness}
+{1094}{Wounding Whispers}
+{1095}{Dirge of Discord}
+{1096}{Allegro}
+{1097}{Find the Gap}
+{1098}{Wraithstrike}
+{1099}{Resonating Bolt}
+{1100}{Resistance, Greater}
+{1101}{Fugue}
+{1102}{Sirine's Grace}
+{1103}{Dolorous Blow}
+{1105}{Cacophonic Burst}
+{1106}{Wail of Doom}
+{1107}{Heart Rippper}
+{1108}{Dirge}
+{1109}{Nixie's Grace}
+{1110}{Ray of Light}
+{1111}{Resistance Superior}
+{1112}{Strategic Charge}
+{1113}{Blessed Aim}
+{1114}{Clear Mind}
+{1115}{Deafening Clang}
+{1116}{Grave Strike}
+{1118}{Faith Healing}
+{1119}{Summon Undead I}
+{1120}{Angelskin}
+{1121}{Demonhide}
+{1122}{Summon Undead II}
+{1123}{Hand of Divinity}
+{1124}{Curse of Ill Fortune}
+{1125}{Awaken Sin}
+{1126}{Checkmate's Light}
+{1127}{Cloak of Bravery}
+{1128}{Divine Protection}
+{1129}{Quick March}
+{1130}{Shield of Warding}
+{1131}{Blessing of Bahamut}
+{1132}{Diamondsteel}
+{1133}{Righteous Fury}
+{1134}{Undead Bane Weapon}
+{1135}{Weapon of the Deity}
+{1136}{Axiomatic Storm}
+{1137}{Holy Storm}
+{1138}{Unholy Storm}
+{1139}{Summon Undead III}
+{1140}{Visage of the Deity, lesser}
+{1141}{Lawful Sword}
+{1142}{Summon Undead IV}
+{1143}{Castigate}
+{1144}{Summon Undead V}
+{1145}{Conviction}
+{1146}{Foundation of Stone}
+{1147}{Nightshield}
+{1148}{Nimbus of Light}
+{1149}{Brambles}
+{1150}{Deific Vengeance}
+{1151}{Frost Breath}
+{1152}{Ghost Touch Armor}
+{1153}{Aid, Mass}
+{1154}{Align Weapon, Mass}
+{1155}{Bless Weapon, Swift}
+{1156}{Anarchic Storm}
+{1157}{Clutch of Orcus}
+{1158}{Conviction Mass}
+{1159}{Corona of Cold}
+{1161}{Demon Dirge}
+{1162}{Devil Blight}
+{1163}{Energy Vortex}
+{1164}{Grace}
+{1165}{Resist Energy, Mass}
+{1166}{Nauseating Breath}
+{1167}{Slashing Darkness}
+{1168}{Spikes}
+{1169}{Tremor}
+{1170}{Weapon of Energy}
+{1171}{Storm of Elemental Fury}
+
+// Spell Descriptions
+{6050} Sound Lance {[Evocation] Projectile of intense sonic energy that deals 1d8/level (max 10d8) sonic damage.}
+{6051} Critical Strike {[Divination] Against flanked or dexterity denied foes gain 1d6 damage, +4 to confirm critical hits and weapon is considered to be keen.}
+{6052} Camouflage {[Transmutation] For 10 min/level gain a +10 circumstance bonus to Hide.}
+{6053} Appraising Touch {[Divination] For 1 hour/level +10 insight bonus to Appraise.}
+{6054} Phantom Threat {[Illusion](Phantasm)[Mind-Affecting] Target is always flanked for 1 round/lvl.}
+{6055} Distort Speech {[Transmutation] Target has a 50% Chance to miscast spells that have a verbal component.}
+{6056} Distract {[Enchantment](Compulsion)[Mind-Affecting] Creatures take a —4 penalty on all Concentration, Listen, Search, and Spot checks, and can take only a single standard or move action each round, but not both. Creatures with more than 6 HD are unaffected.}
+{6057} Focusing Chant {[Enchantment](Compulsion)[Mind-Affecting] Get +1 Circumstance Bonus to Attack Rolls, Skill and Ability Checks for 1 Minute.}
+{6058} Herald's Call {[Enchantment](Compulsion)[Mind-Affecting][Sonic] Any creature with 5 Hit Dice or less is slowed as the slow spell for 1 round.}
+{6059} Improvisation {[Transmutation] Bonus pool with 2/level, usable on attack rolls, skill and ability checks, no single bonus greater than one-half caster level.}
+{6061} Inspirational Boost {[Enchantment](Compulsion)[Mind-Affecting] Increased morale bonus of Inspire Courage by 1.}
+{6062} Invisibility, Swift {[Illusion](Glamer) Invisible for 1 round as a swift action.}
+{6063} Ironguts {[Abjuration] +5 Alchemical Bonus to Fortitude Saves vs. poisons.}
+{6064} Ironthunder Horn {[Transmutation][Sonic] Trip enemies on a failed Relflex Save in a 30ft. cone.}
+{6065} Insidious Rhythm {[Enchantment](Compulsion)[Mind-Affecting] Target gets a —4 penalty on Intelligence-based skill checks and Concentration checks. Target spells cast require a Concentration check (DC equal to Insidious Rhythm's save DC + spell's level) or fail.}
+{6066} Master's Touch {[Divination] Grants proficiency in held mainhand or offhand weapon or worn shield for 1 minute/level.}
+{6067} Serene Visage {[Illusion](Glamer) One-half casterlevel Insight Bonus to Bluff (max +10).}
+{6068} Shock and Awe {[Enchantment][Mind-Affecting] 1 enemy/level get -10 to Initiative if flatfooted.}
+{6069} Sticky Fingers {[Transmutation] For 1 round a +10 untyped bonus to Sleight Of Hand.}
+{6070} Undersong {[Transmutation] For 10 minutes/level use Perform Checks for Concentration Checks.}
+{6071} Distract Assailant {Enchantment(Compulsion)[Mind-Affecting]Target is flat-footed until the beginning of its next turn.}
+{6072} Insightful Feint {[Divination] Gain a +10 insight bonus to your next Feint Check.}
+{6073} Lightfoot {[Transmutation] You provoke no attacks of opportunity when moving.}
+{6074} Sniper's Shot {[Divination] No range limit to ranged sneak attacks.}
+{6075} Sonic Weapon {[Transmutation][Sonic] Weapon deals 1d6 extra sonic damage.}
+{6076} Bonefiddle {[Necromancy] 3d6 sonic damage at start of turn, -20 Move Silently.}
+{6077} Cloud of Bewilderment {[Conjuration]All living creatures inside cloud are nauseated and concealed}
+{6078} Curse of Impending Blades {[Necromancy] Target takes a -2 penalty to AC.}
+{6079} Wave of Grief {[Enchantment][Evil][Mind-Affecting] -3 penalty on attack rolls, saving throws, ability checks, and skill checks.}
+{6080} Harmonic Chorus {Enchantment(Compulsion)[Mind-Affecting] Target gains a +2 morale bonus to caster level and spell DCs.}
+{6081} Iron Silence {[Transmutation] No armor check penalty to Hide and Move Silently.}
+{6082} War Cry {[Enchantment](Compulsion)[Mind-Affecting][Sonic] +4 morale bonus on attack rolls and damage rolls made as part of a charge. Damaged targets must succeed on a Will save or become panicked for 1 round.}
+{6083} Whirling Blades{}
+{6084} Bladeweave {[Illusion](Pattern) Once per round, target that you successfully attacked with a melee weapon is dazed for 1 round.}
+{6085} Fell the Greatest Foe {[Transmutation] On melee attack: 1d6 bonus damage for every size category smaller than target.}
+{6086} Fire Shuriken {[Evocation][Fire] Create Fire Shuriken that deal 3d6 fire damage.}
+{6087} Phantom Foe {[Illusion](Phantasm)[Mind-Affecting] Target counts always as flanked and has a 50% miss chance on attacks}
+{6088} Veil of Shadow {[Evocation][Darkness] Gain 20% Concealment Chance, dispelled by Daylight.}
+{6089} Curse of Impending Blades Mass {[Necromancy] Enemies in range takes a -2 penalty to AC.}
+{6090} Dissonant Chord {Evocation[Sonic] Creatures (other than you) in the affected area take 1d8 points of sonic damage per two caster levels (maximum 5d8).}
+{6091} Haunting Tune {[Enchantment](Compulsion)[Fear][Mind-Affecting][Sonic]Targets that fail their saves become shaken.}
+{6092} Love's Lament {[Enchantment](Compulsion)[Mind-Affecting] Creatures within the area of this spell that fail their saves take 1d6 points of Wisdom damage and are nauseated for 1d4 rounds.}
+{6093} Ray of Dizziness {[Enchantment(Compulsion)[Mind-Affecting] Limited to a move or a standard action each round.}
+{6094} Wounding Whispers {[Abjuration[Sonic] Any creature striking you with its body or a handheld weapon takes 1d6 points of sonic damage +1 point per caster level.}
+{6095} Dirge of Discord {[Enchantment](Compulsion)[Evil][Mind-Affecting] Creatures affected by this spell take a —4 penalty on attack rolls and Dexterity, a 50% reduction in their speed (to a minimum of 5 feet), and must make a Concentration check to cast any spell.}
+{6096} Allegro {[Transmutation] Each creature within the spell's area gains a 30-foot enhancement bonus to its land speed, up to a maximum of double the creature's land speed.}
+{6097} Find the Gap {[Divination] Your first melee or ranged attack each round is resolved as a touch attack.}
+{6098} Wraithstrike {[Transmutation] Melee attacks are melee touch attacks.}
+{6099} Resonating Bolt {[Evocation][Sonic] The bolt of sonic energy deals 1d4 points of sonic damage per caster level (maximum 10d4).}
+{6100} Resistance, Greater {[Abjuration] You grant the subject a +3 resistance bonus on saves.}
+{6101} Fugue {[Evocation [Sonic] Creatures that fail their save become affected by the haunting fugue in semirandom ways.}
+{6102} Sirine's Grace {[Evocation] gain a +4 enhancement bonus to Charisma and Dexterity, a deflection bonus to AC equal to your Charisma modifier, and a +8 bonus on Perform checks.}
+{6103} Dolorous Blow {[Transmutation] For the duration of the spell, the weapon's threat range is doubled, and its critical threats automatically confirm, so every threat is a critical hit. Multiple effects that increase a weapon's threat range don't stack.}
+{6105} Cacophonic Burst {[Evocation][Sonic] Deals 1d6 points of sonic damage per caster level (maximum 15d6) to all creatures within the area.}
+{6106} Wail of Doom {[Necromancy][Fear, Mind-Affecting, Sonic] . Each creature takes 1d4 points of damage per caster level (maximum 15d4) and becomes panicked for 1 round per caster level. A successful Will save halves the damage, reduces the panicked effect to shaken, and reduces the duration of the shaken effect to 1 round.}
+{6107} Heart Rippper{[Necromancy][Death] On a failed save, instantly slay a living target with equal or lesser HD, else stun.}
+{6108} Dirge {[Evocation][Sonic] Each round, enemies in the area takes 2 points of Strength and Dexterity damage. Fortitude save needs to be done every round.}
+{6109} Nixie's Grace {[Transmutation][Water] Gain a DR 5/cold iron, +6 enhancement bonus to Dexterity, a +2 enhancement bonus to Wisdom and a +8 enhancement bonus to Charisma.}
+{6110} Ray of Light {[Evocation][Light] Target is blinded for 1d4 rounds on a successful ranged touch attack.}
+{6111} Resistance Superior {[Abjuration] You grant the subject a +6 resistance bonus on saves.}
+{6112} Strategic Charge {[Abjuration] You gain the benefit of the Mobility feat, even if you not meet the prerequisites. You do not have to be charging to gain this benefit.}
+{6113} Blessed Aim {[Divination] This spell grants your allies within the spread a +2 morale bonus on ranged attack rolls.}
+{6114} Clear Mind {[Abjuration] You gain a +4 sacred bonus on saving throws made against mind-affecting spells and effects.}
+{6115} Deafening Clang {[Transmutation][Sonic] The weapon deals 1d6 points of sonic damage with each successful hit, and any creature struck by the weapon must succeed on a Fortitude saving throw or be deafened for 1 minute.}
+{6116} Grave Strike {[Divination][Good] For 1 round, you can deliver sneak attacks against undead as if they were not immune to extra damage from sneak attacks.}
+{6118} Faith Healing {[Conjuration](Healing) Heal 1d8 + level (max. 5) on target that worships same deity.}
+{6119} Summon Undead I {[Conjuration](Summoning)[Evil] You summon an undead creature.}
+{6120} Angelskin {[Abjuration][Good] Target gains damage reduction 5/evil.}
+{6121} Demonhide {[Abjuration][Evil] Target gains damage reduction 5/good.}
+{6122} Summon Undead II {[Conjuration](Summoning)[Evil] You summon an undead creature.}
+{6123} Hand of Divinity {[Evocation] Target gets a +2 bonus on saving throws if same deity or same alignment as deity.}
+{6124} Curse of Ill Fortune {[Necromancy] Target gets a -3 penalty on attack rolls, saving throws, ability checks and skill checks.}
+{6125} Awaken Sin {[Enchantment(Compulsion)[Fear][Good][Mind-Affecting] Target takes 1d6 points of nonlethal damage per caster level (maximum 10d6) and is stunned for 1 round. If target is knocked unconscious, it also takes 1d6 points of Wisdom damage.}
+{6126} Checkmate's Light {[Evocation][Lawful] You imbue the touched weapon with a +1 enhancement bonus per three caster levels (maximum +5 at 15th level) and it is treated as lawful-aligned for the purpose of overcoming damage reduction. Any creature within the radius of its clear illumination (20 feet) gets a +1 morale bonus on saving throws against fear effects.}
+{6127} Cloak of Bravery {[Abjuration][Mind-Affecting] All allies within the emanation gain a morale bonus on saves against fear effects equal to your casterlevel (max +10.)}
+{6128} Divine Protection {[Enchantment](Compulsion)[Mind-Affecting] Allies gain a +1 morale bonus to their AC and on saving throws.}
+{6129} Quick March {[Transmutation] Increase allies base land speed by 30 feet.}
+{6130} Shield of Warding {[Abjuration][Good] Shield or buckler grants its wielder a +1 sacred bonus to AC and on Reflex saves, +1 per five caster levels (max +5).}
+{6131} Blessing of Bahamut {[Abjuration [Good] You gain damage reduction 10/magic.}
+{6132} Diamondsteel {[Transmutation] Get DR/adamantine equal to half AC bonus of worn armor}
+{6133} Righteous Fury {[Transmutation] You gain 5 temporary hit points per caster level (maximum 50) and a +4 sacred bonus to Strength.}
+{6134} Undead Bane Weapon {[Transmutation] Against Undead, weapon has a +2 higher enhancement bonus and deals an extra 2d6 damage. Weapon counts as good-alignment for the purpose of overcoming DR.}
+{6135} Weapon of the Deity {[}
+{6136} Axiomatic Storm {[Conjuration](Creation)[Lawful][Water] Chaotic creatures take 2d6 damage per round (chaotic outsider 4d6). Once per round a random chaotic outsider takes 5d6 acid damage. Everyone gets -4 on Listen, Spot and Search checks and -4 ranged attack penalty while in the storm.}
+{6137} Holy Storm {[Conjuration](Creation)[Good][Water] Evil creatures take 2d6 damage per round (evil outsider 4d6). Everyone gets -4 on Listen, Spot and Search checks and -4 ranged attack penalty while in the storm.}
+{6138} Unholy Storm {[Conjuration](Creation)[Evil][Water] Good creatures take 2d6 damage per round (good outsider 4d6). Everyone gets -4 on Listen, Spot and Search checks and -4 ranged attack penalty while in the storm.}
+{6139} Summon Undead III {[Conjuration](Summoning)[Evil] You summon an undead creature.}
+{6140} Visage of the Deity, lesser {[Transmutation] You get +4 to Charisma and resistance 10 to acid, cold and electricity if good or cold and fire if evil.}
+{6141} Lawful Sword {[Evocation][Lawful] Weapon becomes a +5 axiomatic weapon for the duration of the spell.}
+{6142} Summon Undead IV {[Conjuration[(Summoning)[Evil] Summon Undead to aid in battle.}
+{6143} Castigate {[Evocation][Sonic] Creatures take 10d4 damage if alignment completly differs, 5d4 if they differ only on one axis and no damage if same alignment.}
+{6144} Summon Undead V {Summon Undead to aid in Battle}
+{6145} Conviction {Abjuration Target gets a +2 morale bonus to saves +1 additional for every 6 levels (max +5 at level 18).}
+{6146} Foundation of Stone {Transmutation[Earth] +2 to AC and +4 to Strength checks to avoid bull rushed or being tripped.}
+{6147} Nightshield {Abjuration +1 (+2 at level 6 and +3 at level 9) bonus to saving throws and immunity to Magic Missile.}
+{6148} Nimbus of Light {Evocation[Light] Deal 1d8 + 1 point of damage per round elapsed since spell was cast (max is your level).}
+{6149} Brambles {[Transmutation] Wood melee weapon gets +1 bonus to hit and +1 per casterlevel (max +10) on damage rolls.}
+{6150} Deific Vengeance {[Conjuration](Summoning) Deal 1d6/two levels(max 5d6) damage or 1d6/level damage if target is undead.}
+{6151} Frost Breath {[Evocation][Cold] Deal 1d4 cold per two caster levels (max 5d4). Creatures that fail the save are dazed for 1 round.}
+{6152} Ghost Touch Armor {[Transmutation] Armor gains Ghost Touch special ability.}
+{6153} Aid, Mass {[Enchantment](Compulsion)[Mind-Affecting] Like spell Aid, but on multiple targets and temp HP are 1d8 + level (max 15).}
+{6154} Align Weapon, Mass {Transmutation Add the good, evil, lawful or chaotic property to weapons.}
+{6155} Bless Weapon, Swift {Transmutation Weapon becomes good aligned and bypasses magic DR on evil creatures.}
+{6156} Anarchic Storm {Conjuration(Creation)[Chaotic][Water]  Chaotic creatures take 2d6 damage per round (chaotic outsider 4d6). Once per round a random chaotic outsider takes 5d6 acid damage. Everyone gets -4 on Listen, Spot and Search checks and -4 ranged attack penalty while in the storm.}
+{6157} Clutch of Orcus {Necromancy[Evil] Target takes 1d12 damage/round and is paralyzed. Fortitude save each round to end spell.}
+{6158} Conviction Mass {Abjuration Targets get a +2 morale bonus to saves +1 additional for every 6 levels (max +5 at level 18).}
+{6159} Corona of Cold {Evocation[Cold] Aura of Cold surrounds you that deals 1d12 cold damage every round and grants fire resistance 10. On failed saving throws targets also suffer a -2 penalty to Strength and Dexterity.}
+{6161} Demon Dirge {Transmutation Living creature with both chaotic and evil subtypes takes 2d6 damage each round. Stunned in addtion on a failed fortitude if target also has the demon subtype.}
+{6162} Devil Blight {Transmutation Living creature with both lawful and evil subtypes takes 2d6 damage each round. Stunned in addtion on a failed fortitude if target also has the devil subtype.}
+{6163} Energy Vortex {Evocation Deal 1d8 + 1 point/level (max +20) to creatures around you of element type chosen at cast. Deal twice damage if you are willing to take damage as well.}
+{6164} Grace {Transmutation[Good] You get -20 to hide, +2 sacred bonus to Dexterity, +10 movement speed and melee weapon and touch attacks are good aligned.}
+{6165} Resist Energy, Mass {Abjuration As Resist Energy but on multiple targets}
+{6166} Nauseating Breath {Conjuration(Creation) Any creature in cone is nauseated on a failed Fortitude Save for 1d6 rounds.}
+{6167} Slashing Darkness {Evocation Deal 1d8/two levels (max 5d8) to a creature or heal an undead for same amount.}
+{6168} Spikes {Transmutation Wooden melee weapon gets +2 bonus to hit, +1 per casterlevel (max +10) on damage rolls and has double threat range.}
+{6169} Tremor {Evocation[Earth] Creatures in area must make a reflex save or be knocked prone each round, spells require a Concentration Check DC 15 + Spell Level.}
+{6170} Weapon of Energy {Transmutation Add an elemental burst effect to a weapon. Element is chosen when cast.}
+{6171} Storm of Elemental Fury {Conjuration(Summoning) TBD}
