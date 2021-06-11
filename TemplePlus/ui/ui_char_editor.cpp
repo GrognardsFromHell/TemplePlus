@@ -799,18 +799,8 @@ void UiCharEditor::BtnStatesUpdate(int systemId){
 			mIsSelectingBonusFeat = true;
 		}
 
-		
-		if (classCode == stat_level_cleric) {
-			if (classLvlNew == 1)
-				uiManager->SetButtonState(stateBtnIds[2], LgcyButtonState::Normal); // features
-		}
-		if (classCode == stat_level_ranger) {
-			if (classLvlNew == 1 || classLvlNew == 2 || !(classLvlNew % 5))
-				uiManager->SetButtonState(stateBtnIds[2], LgcyButtonState::Normal); // features
-		}
-		if (classCode == stat_level_wizard) {
-			if (classLvlNew == 1)
-				uiManager->SetButtonState(stateBtnIds[2], LgcyButtonState::Normal); // wizard special school
+		if (d20ClassSys.IsSelectingFeaturesOnLevelup(handle, classCode)) { // vanilla: was hardcoded for Wiz/Clr level == 1, Rgr lvl in [1,2, every 5th level]
+			uiManager->SetButtonState(stateBtnIds[2], LgcyButtonState::Normal); // features
 		}
 	}
 	

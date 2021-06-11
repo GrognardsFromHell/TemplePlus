@@ -40,6 +40,7 @@ enum class ClassSpecFunc : int {
 	GetFeats,
 
 	// levelup callbacks
+	IsSelectingFeaturesOnLevelup,
 	IsSelectingFeatsOnLevelup,
 	LevelupGetBonusFeats,
 
@@ -92,6 +93,7 @@ public:
 	Stat GetDeityClass(int classEnum);
 
 	// levelup
+	bool IsSelectingFeaturesOnLevelup(objHndl handle, Stat classEnum);
 	bool IsSelectingFeatsOnLevelup(objHndl handle, Stat classEnum);
 	void LevelupGetBonusFeats(objHndl handle, Stat classEnum);
 
