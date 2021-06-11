@@ -156,14 +156,22 @@ void MergeContents(MesHandle tgt, MesHandle src) {
 
 	auto newLen = mes->rawBufferLen + mes2->rawBufferLen;
 	auto contentsExt = (char*) realloc(mes->rawBuffer, newLen);
+	auto oldBuffer = mes->rawBuffer;
 	if (!contentsExt) {
 		return;
 	}
+	memcpy(contentsExt, mes->rawBuffer, mes->rawBufferLen);
 	mes->rawBuffer = contentsExt;
 	memcpy( &mes->rawBuffer[mes->rawBufferLen], mes2->rawBuffer, mes2->rawBufferLen);
 	auto newlinesStart = &mes->rawBuffer[mes->rawBufferLen];
 	mes->rawBufferLen = newLen;
 	
+	// updates line pointers to realloc'd buffer
+	for (auto i = 0; i < mes->numLines; ++i) {
+		auto offset = mes->lines[i].value - oldBuffer;
+		mes->lines[i].value = mes->rawBuffer + offset;
+	}
+
 	// co-iterate over lines, may need to overwrite some (cannot have duplicates!)
 	auto tgtPos = 0, tgtKey = 0;
 	MesLine *tgtMesLine = &mes->lines[tgtPos];
