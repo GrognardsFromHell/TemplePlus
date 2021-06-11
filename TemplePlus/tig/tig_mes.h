@@ -10,6 +10,7 @@ struct MesLine {
 	uint32_t key;
 	const char *value;
 	MesLine();
+	MesLine(MesHandle src, MesHandle tgt);
 	MesLine(uint32_t key);
 	MesLine(uint32_t key, const char* line);
 };
