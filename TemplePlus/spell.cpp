@@ -373,6 +373,57 @@ SpellPacketBody::SpellPacketBody(uint32_t spellId){
 		memset(this, 0, sizeof(SpellPacketBody));
 }
 
+SpellPacketBody::SpellPacketBody(objHndl spellCaster, D20SpellData& spellData)
+{
+	memset(this, 0, sizeof(SpellPacketBody));
+
+	unsigned spellEnum, spellEnumOrg, spellClassCode, spellSlotLevel, itemSpellData, spellMetaMagicData;
+	D20SpellDataExtractInfo(&spellData, &spellEnum, &spellEnumOrg, &spellClassCode, &spellSlotLevel, &itemSpellData, &spellMetaMagicData);
+
+	//From ::TargetCheck
+	spellEnum = spellEnum;
+	spellEnumOriginal = spellEnumOrg;
+	caster = spellCaster;
+	spellClass = spellClassCode;
+	spellKnownSlotLevel = spellSlotLevel;
+	metaMagicData = spellMetaMagicData;
+	invIdx = itemSpellData;
+
+	SpellEntry spellEntry;
+
+	if (!spellSys.spellRegistryCopy(spellEnum, &spellEntry))
+	{
+		// set caster level
+		if (itemSpellData == INV_IDX_INVALID) {
+			spellSys.SpellPacketSetCasterLevel(this);
+		}
+		else { // item spell
+			casterLevel = max(1, 2 * static_cast<int>(spellSlotLevel) - 1); // todo special handling for Magic domain
+		}
+
+		spellRange = spellSys.GetSpellRange(&spellEntry, casterLevel, caster);
+
+		bool noTargets = false;
+		if ((spellEntry.modeTargetSemiBitmask & 0xFF) != static_cast<unsigned>(UiPickerType::Personal)
+			|| spellEntry.radiusTarget < 0
+			|| (spellEntry.flagsTargetBitmask & UiPickerFlagsTarget::Radius))
+		{
+			noTargets = true;
+		}
+		orgTargetCount = 1;
+		targetCount = 1;
+		targetListHandles[0] = caster;
+		aoeCenter.location = objects.GetLocationFull(caster);
+		aoeCenter.off_z = objects.GetOffsetZ(caster);
+		if (spellEntry.radiusTarget > 0) {
+			spellRange = spellEntry.radiusTarget;
+		}
+	} else {
+		logger->warn("Spell Packet: failed to retrieve spell entry {}!\n", spellEnum);
+	}
+
+}
+
 /* 0x10075730 */
 bool SpellPacketBody::UpdateSpellsCastRegistry() const
 {
@@ -2098,7 +2149,7 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 	char textBuf[1000] = { 0, };
 	static auto spellEntryLineParser = temple::GetRef<BOOL(__cdecl)(char *, int &, int &, int&)>(0x1007A890);
 	
-	static std::function findInMapping = [](const std::map<string, int> & options, const char* txt, int& valueOut)->bool {
+	static std::function findInMapping = [&](const std::map<string, int> & options, const char* txt, int& valueOut)->bool {
 		for (auto ch = txt; *ch; ch++) {
 			if (*ch == ':' || *ch == ' ')
 				continue;
@@ -2114,7 +2165,7 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 			}
 
 			if (ch[0]) {
-				logger->warn("SpellEntryFileParse: type not found: {}", ch);
+				logger->warn("SpellEntryFileParse: type not found: {}, spell {}", ch, spEntry.spellEnum);
 			}
 			else {
 				logger->warn("Spell Array: blank text", ch);
@@ -2127,6 +2178,7 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 	while (tio_fgets(textBuf, 1000, tf))
 	{
 		int fieldType, value, value2;
+		auto parseOk = true;
 
 		if (!_strnicmp(textBuf, "choices", 7)){
 			
@@ -2135,6 +2187,11 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 				if (*ch == ':'){
 					StringTokenizer choiceToks(ch+1);
 					while (choiceToks.next()) {
+
+						if (choiceToks.token().type != StringTokenType::Number) {
+							continue;
+						}
+
 						SpellMultiOption mOpt;
 						mOpt.value = atol(choiceToks.token().text);
 						mMultiOptions[spEntry.spellEnum].push_back(mOpt);
@@ -2142,6 +2199,7 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 					break;
 				}
 			}
+			parseOk = true;
 		}
 		else if (!_strnicmp(textBuf, "proto choices", 13)) {
 
@@ -2150,6 +2208,9 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 					StringTokenizer choiceToks(ch + 1);
 					while (choiceToks.next()) {
 						SpellMultiOption mOpt;
+						if (choiceToks.token().type != StringTokenType::Number) {
+							continue;
+						}
 						mOpt.value = atol(choiceToks.token().text);
 						mOpt.isProto = true;
 						if (mOpt.value < 14000 || mOpt.value >= 15000)
@@ -2216,12 +2277,29 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 				{ "will", (int)SavingThrowType::Will },
 				{ "reflex", (int)SavingThrowType::Reflex },
 				{ "none", 0}, // bug! this will count as fortitude. Seems mostly harmless though as usually saving throws are directly handled in the script file or just hardcoded in the gameplay callbacks.
+				{ "no", 0},   // added support for "No"; suffers same bug as above
 			};
 			auto value = 0;
 			if (findInMapping(saveThrowStrings, textBuf + 12, value)) {
 				spEntry.savingThrowType = value;
 			}
 			
+		}
+		else if (!_strnicmp(textBuf, "Level", 5)) {
+			auto text = trim(std::string(textBuf+5));
+			if (text.size() < 2) { // empty line (e.g. in Rudy's mods)
+				logger->warn("SpellEntryFileParse: blank line in spell {} Level: {}", spEntry.spellEnum, text);
+				continue;
+			}
+			else if (spellEntryLineParser(textBuf, fieldType, value, value2)) { // todo maybe expand to new classes?
+				if (spEntry.spellLvlsNum < 10){
+					spEntry.spellLvls[spEntry.spellLvlsNum].spellClass = value;
+					spEntry.spellLvls[spEntry.spellLvlsNum++].slotLevel = value2;
+				}
+			}
+			else {
+				parseOk = false;
+			}
 		}
 		else if (!_strnicmp(textBuf, "Casting Time", 12)) {
 			static std::map<string, int> castingTimeStrings = {
@@ -2237,84 +2315,109 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 				spEntry.castingTimeType = value;
 			}
 		}
-
-		else if (spellEntryLineParser(textBuf, fieldType, value, value2)){
-			switch (fieldType)
-			{
-			case 0:
-				spEntry.spellSchoolEnum = value;
-				break;
-			case 1:
-				spEntry.spellSubSchoolEnum = value;
-				break;
-			case 2:
-				spEntry.spellDescriptorBitmask |= value;
-				break;
-			case 3:
-				if (spEntry.spellLvlsNum< 10)
-				{
-					spEntry.spellLvls[spEntry.spellLvlsNum].spellClass = value;
-					spEntry.spellLvls[spEntry.spellLvlsNum++].slotLevel = value2;
-				}
-				break;
-			case 4:
-				spEntry.spellComponentBitmask |= value;
-				if (value == 4){
-					spEntry.costXp = value2;
-				}
-				else if (value == 8){
-					spEntry.costGp = value2;
-				}
-					
-				break;
-			case 5:
-				spEntry.castingTimeType = value;
-				break;
-			case 6:
-				spEntry.spellRangeType = (SpellRangeType)value;
-				spEntry.spellRange = value2;
-				break;
-			case 7:
-				spEntry.savingThrowType = value;
-				break;
-			case 8:
-				spEntry.spellResistanceCode = value;
-				break;
-			case 9:
-				spEntry.projectileFlag = value;
-				break;
-			case 10:
-				spEntry.flagsTargetBitmask |= temple::GetRef<uint64_t[]>(0x102BF800)[value];
-				break;
-			case 11:
-				spEntry.incFlagsTargetBitmask |= temple::GetRef<uint64_t[]>(0x102BF840)[value];
-				break;
-			case 12:
-				spEntry.excFlagsTargetBitmask |= temple::GetRef<uint64_t[]>(0x102BF840)[value];
-				break;
-			case 13:
-				spEntry.modeTargetSemiBitmask |= temple::GetRef<uint64_t[]>(0x102BF898)[value];
-				break;
-			case 14:
-				spEntry.minTarget = value;
-				break;
-			case 15:
-				spEntry.maxTarget = value;
-				break;
-			case 16:
-				spEntry.radiusTarget = value;
-				break;
-			case 17:
-				spEntry.degreesTarget = value;
-				break;
-			case 18:
+		else if (!_strnicmp(textBuf, "ai_type", 7)) { 
+			// fixes issue with trailing newline - vanilla used !stricmp instead of !strnicmp for some reason
+			static std::map<string, int> aiTypeStrings = {
+					{ "ai_action_summon"     , 0 },
+					{ "ai_action_offensive"  , 1 },
+					{ "ai_action_defensive"  , 2 },
+					{ "ai_action_flee"       , 3 },
+					{ "ai_action_heal_heavy" , 4 },
+					{ "ai_action_heal_medium", 5 },
+					{ "ai_action_heal_light" , 6 },
+					{ "ai_action_cure_poison", 7 },
+					{ "ai_action_resurrect"  , 8 },
+			};
+			auto value = 0;
+			if (findInMapping(aiTypeStrings, textBuf + 7, value)) {
 				spEntry.aiTypeBitmask |= (1 << value);
-				break;
-			default:
-				logger->warn("Unhandled spell field {}", fieldType);
-				break;
+			}
+		}
+		else  {
+			parseOk = false;
+			if (spellEntryLineParser(textBuf, fieldType, value, value2)) {
+				switch (fieldType)
+				{
+				case 0:
+					spEntry.spellSchoolEnum = value;
+					break;
+				case 1:
+					spEntry.spellSubSchoolEnum = value;
+					break;
+				case 2:
+					spEntry.spellDescriptorBitmask |= value;
+					break;
+				case 3:
+					if (spEntry.spellLvlsNum < 10)
+					{
+						spEntry.spellLvls[spEntry.spellLvlsNum].spellClass = value;
+						spEntry.spellLvls[spEntry.spellLvlsNum++].slotLevel = value2;
+					}
+					break;
+				case 4:
+					spEntry.spellComponentBitmask |= value;
+					if (value == 4) {
+						spEntry.costXp = value2;
+					}
+					else if (value == 8) {
+						spEntry.costGp = value2;
+					}
+
+					break;
+				case 5:
+					spEntry.castingTimeType = value;
+					break;
+				case 6:
+					spEntry.spellRangeType = (SpellRangeType)value;
+					spEntry.spellRange = value2;
+					break;
+				case 7:
+					spEntry.savingThrowType = value;
+					break;
+				case 8:
+					spEntry.spellResistanceCode = value;
+					break;
+				case 9:
+					spEntry.projectileFlag = value;
+					break;
+				case 10:
+					spEntry.flagsTargetBitmask |= temple::GetRef<uint64_t[]>(0x102BF800)[value];
+					break;
+				case 11:
+					spEntry.incFlagsTargetBitmask |= temple::GetRef<uint64_t[]>(0x102BF840)[value];
+					break;
+				case 12:
+					spEntry.excFlagsTargetBitmask |= temple::GetRef<uint64_t[]>(0x102BF840)[value];
+					break;
+				case 13:
+					spEntry.modeTargetSemiBitmask |= temple::GetRef<uint64_t[]>(0x102BF898)[value];
+					break;
+				case 14:
+					spEntry.minTarget = value;
+					break;
+				case 15:
+					spEntry.maxTarget = value;
+					break;
+				case 16:
+					spEntry.radiusTarget = value;
+					break;
+				case 17:
+					spEntry.degreesTarget = value;
+					break;
+				case 18:
+					spEntry.aiTypeBitmask |= (1 << value);
+					break;
+				default:
+					logger->warn("Unhandled spell field {}", fieldType);
+					break;
+				}
+				parseOk = true;
 			}
 			
+		}
+
+		if (!parseOk){
+			logger->info("Bad spell rules file: spell enum {}", spEntry.spellEnum);
 		}
 	}
 	return true;
@@ -2703,7 +2806,7 @@ uint32_t LegacySpellSystem::pickerArgsFromSpellEntry(SpellEntry* spEntry, Picker
 	args->minTargets = spEntry->minTarget;
 	args->maxTargets = spEntry->maxTarget;
 	args->radiusTarget = spEntry->radiusTarget;
-	args->degreesTarget = spEntry->degreesTarget;
+	args->degreesTarget = static_cast<float>(spEntry->degreesTarget);
 	if (spEntry->spellRangeType != SRT_Specified){
 		args->range = spellSys.GetSpellRangeExact(spEntry->spellRangeType, casterLvl, caster);
 	} 
@@ -3122,7 +3225,7 @@ void LegacySpellSystem::SpellBeginRound(objHndl handle){
 
 	for (auto it: spellIds){
 		SpellPacketBody spellPkt(it);
-		for (auto i = 0; i<spellPkt.targetCount; i++){
+		for (unsigned int i = 0; i<spellPkt.targetCount; i++){
 			if ( spellPkt.targetListHandles[i] == handle){
 				mSpellBeginRoundObj = handle;
 				pySpellIntegration.SpellTrigger(it, SpellEvent::BeginRound);
@@ -3197,7 +3300,7 @@ BOOL __declspec(naked) _CheckSpellResistanceUsercallWrapper(objHndl objHnd) {
 
 void SpellPacketBody::DoForTargetList(std::function<void(const objHndl& )> cb){
 	auto orgTgtCount = this->targetCount;
-	for (auto i=0; i < this->targetCount; ){
+	for (unsigned int i=0; i < this->targetCount; ){
 		auto handle = this->targetListHandles[i];
 		if (!handle)
 			continue;
@@ -3226,7 +3329,7 @@ bool SpellPacketBody::RemoveObjFromTargetList(const objHndl& handle){
 	targetListPartsysIds[targetCount - 1] = 0;
 
 	// remove the handle
-	for (int i=idx; i < targetCount-1; i++){
+	for (int i=idx; i < static_cast<int>(targetCount)-1; i++){
 		targetListHandles[i] = targetListHandles[i + 1];
 	}
 	targetListHandles[targetCount - 1] = objHndl::null;
@@ -3324,7 +3427,7 @@ SpellDebugRecord::SpellDebugRecord(const SpellPacketBody& spellPkt)
 	castingTime = gameTimeSys.GetElapsed();
 	casterDebug = SpellDebugObjInfo(this->caster);
 	castingMapId = gameSystems->GetMap().GetCurrentMapId();
-	for (auto i = 0; i < this->targetCount; ++i) {
+	for (unsigned int i = 0; i < this->targetCount; ++i) {
 		targetListDebug.push_back(SpellDebugObjInfo(this->targetListHandles[i]));
 	}
 

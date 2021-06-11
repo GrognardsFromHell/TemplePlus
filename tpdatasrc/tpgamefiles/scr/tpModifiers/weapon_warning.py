@@ -2,7 +2,7 @@ from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
 
-#Magic Item Compendium, p. 7
+#Magic Item Compendium, p. 46
 
 print "Adding Warning Weapon"
 

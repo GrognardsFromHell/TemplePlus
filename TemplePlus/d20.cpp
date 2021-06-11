@@ -2609,7 +2609,7 @@ ActionErrorCode D20ActionCallbacks::ActionCostCastSpell(D20Actn * d20a, TurnBase
 	d20a->d20SpellData.Extract(&spEnum, nullptr, &spellClass, &spLvl, &invIdx, &mmData);
 
 	//Modify metamagic information for quicken if necessary
-	dispatch.DispatchMetaMagicModify(d20Sys.globD20Action->d20APerformer, mmData);
+	dispatch.DispatchMetaMagicModify(d20Sys.globD20Action->d20APerformer, mmData, spLvl, spEnum);
 
 	SpellEntry spEntry(spEnum);
 
@@ -2979,7 +2979,7 @@ ActionErrorCode D20ActionCallbacks::PerformCastSpell(D20Actn* d20a){
 	auto spellPktOld = spellPkt;  //For Debiting spells (has the original meta magic data)
 
 	//Get the metamagic data
-	dispatch.DispatchMetaMagicModify(d20Sys.globD20Action->d20APerformer, d20a->d20SpellData.metaMagicData);
+	dispatch.DispatchMetaMagicModify(d20Sys.globD20Action->d20APerformer, d20a->d20SpellData.metaMagicData, d20a->d20SpellData.spellSlotLevel, d20a->d20SpellData.spellEnumOrg);
 	
 	// Make sure the spell packet has the correct meta magic data (it will not if metamagic data has been modified)
 	spellPkt.metaMagicData = d20a->d20SpellData.metaMagicData;

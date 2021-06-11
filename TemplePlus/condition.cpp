@@ -132,6 +132,8 @@ public:
 	static int __cdecl SpellRemoveMod(DispatcherCallbackArgs args); // fixes issue with dismissing multiple spells
 	static int __cdecl AoeSpellRemove(DispatcherCallbackArgs args);
 
+	static int D20ModsSpellsSpellBonus(DispatcherCallbackArgs args);
+	int (*oldD20ModsSpellsSpellBonus)(DispatcherCallbackArgs) = nullptr;
 	
 } spCallbacks;
 
@@ -538,6 +540,8 @@ public:
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100CBAB0, spCallbacks.SpellRemoveMod);
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100DC100, spCallbacks.SpellModCountdownRemove);
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100D3430, spCallbacks.AoeSpellRemove);
+
+		spCallbacks.oldD20ModsSpellsSpellBonus = replaceFunction(0x100C4440, spCallbacks.D20ModsSpellsSpellBonus);
 
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100F72E0, genericCallbacks.MonsterRegenerationOnDamage);
 
@@ -2612,7 +2616,7 @@ uint32_t  _GetCondStructFromFeat(feat_enums featEnum, CondStruct** condStructOut
 
 	feat_enums* featFromDict = &(conds.FeatConditionDict->featEnum);
 	uint32_t iter = 0;
-	for (auto i = 0; i < conds.FeatConditionDictSize; ++i) {
+	for (uint32_t i = 0; i < conds.FeatConditionDictSize; ++i) {
 		auto &featCondSpec = conds.FeatConditionDict[i];
 		auto featFromDict = featCondSpec.featEnum;
 		if (
@@ -5106,6 +5110,22 @@ int SpellCallbacks::AoeSpellRemove(DispatcherCallbackArgs args){
 	return 0;
 }
 
+
+int SpellCallbacks::D20ModsSpellsSpellBonus(DispatcherCallbackArgs args) {
+	// Special handling for shield
+	const int MesLine = args.GetData2();
+	if (MesLine == 0xfd) {
+		GET_DISPIO(dispIOTypeAttackBonus, DispIoAttackBonus);;
+		int bonValue = args.GetCondArg(2);
+		bonValue += d20Sys.D20QueryPython(args.objHndCaller, "Abjuration Spell Shield Bonus", 0, 0);
+		const int bonusType = args.GetData1();
+		dispIo->bonlist.AddBonus(bonValue, bonusType, MesLine);
+		return 0;
+	}
+
+	// Otherwise use the old function
+	return spCallbacks.oldD20ModsSpellsSpellBonus(args);
+}
 
 #pragma endregion
 

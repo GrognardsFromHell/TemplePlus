@@ -1,0 +1,5 @@
+name: Abjurant Armor
+flags: 8
+prereqs:
+description:  Any time you cast an abjuration spell that grants you an armor bonus or shield bonus to AC, you can increase the value of the bonus by your abjurant champion class level. Abjurant champions rely on shield and similar spells instead of actual armor.
+prereq descr: Abjurant Champion level 1.

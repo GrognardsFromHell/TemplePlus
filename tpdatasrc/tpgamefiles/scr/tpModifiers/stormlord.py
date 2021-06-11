@@ -55,8 +55,10 @@ classSpecObj.AddHook(ET_OnSaveThrowLevel, EK_SAVE_WILL, OnGetSaveThrowWill, ())
 #### Stormlord Feats ####
 
 ## Define Stormlord Weapons; list can be extended if ever necessary ##
-def stormlordWeapons():
-    weaponList = [wt_javelin, wt_longspear, wt_shortspear, wt_spear]
+def stormlordWeapons(attachee):
+    stormlordDeity = attachee.get_deity()
+    deityFavWeapon = game.get_deity_favored_weapon(stormlordDeity)
+    weaponList = [wt_javelin, deityFavWeapon]
     return weaponList
 
 ## Enhanced Javelins ##
@@ -226,7 +228,7 @@ def deactivateCracklingAura(attachee, args, evt_obj):
         return 0
 
 def setInitialStatusOfAura(attachee, args, evt_obj):
-    args.set_arg(0, 0)
+    args.set_arg(0, 1)
     return 0
 
 cracklingAura = PythonModifier("Stormlord Crackling Aura", 2) #isActiveFlag, particlesID
