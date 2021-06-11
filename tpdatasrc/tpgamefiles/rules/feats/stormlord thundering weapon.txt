@@ -1,5 +1,5 @@
 name: Stormlord Thundering Weapon
 flags: 8
 prereqs:
-description: For a stormlord of 5th level or higher, any spear or javelin he uses is treated as a thundering weapon. The weapon loses this ability when leaving the hand of the stormlord. This effect stacks with that of the stormlord's shock weapon ability.
+description: For a stormlord of 5th level or higher, any favored weapon or javelin he uses is treated as a thundering weapon. The weapon loses this ability when leaving the hand of the stormlord. This effect stacks with that of the stormlord's shock weapon ability.
 prereq descr: Stormlord Level 5.
