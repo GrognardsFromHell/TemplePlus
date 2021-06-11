@@ -8,6 +8,7 @@
 MesFuncs mesFuncs;
 
 void MergeContents(MesHandle tgt, MesHandle src);
+bool FindMesHandle(const char* fname, MesHandle & handleOut);
 
 struct MesFileEntry {
 	char fileName[260];
@@ -78,13 +79,16 @@ void MesFuncHooks::apply()
 
 	static bool(__cdecl * orgOpen)(const char*, MesHandle*) = replaceFunction<bool(__cdecl)(const char*, MesHandle*)>(0x101E6D00, [](const char* fname, MesHandle* handle)->bool {
 
-		static auto findHandle = temple::GetRef<BOOL(__cdecl)(const char*, MesHandle*)>(0x101E63E0);
+		//static auto findHandleAllocIfNot = temple::GetRef<BOOL(__cdecl)(const char*, MesHandle*)>(0x101E63E0);
 
-		auto isAlreadyOpen = findHandle(fname, handle);
+		auto mesEntryList = temple::GetRef<MesFileEntry*>(0x10EEEA00);
+
+		auto isAlreadyOpen = FindMesHandle(fname, *handle);
 
 		if (!orgOpen(fname, handle)) {
 			return false;
 		}
+		auto mes = &mesEntryList[*handle]; // for debug
 
 		if (isAlreadyOpen) { // extend only once
 			return true;
@@ -107,8 +111,8 @@ void MesFuncHooks::apply()
 		if (tio_fileexists(extFname.c_str() ) ){
 			MesHandle tmp;
 			if (orgOpen(extFname.c_str(), &tmp)) {
-				//mesFuncs.CopyContents(*handle, tmp);
 				MergeContents(*handle, tmp);
+				
 				mesFuncs.Close(tmp);
 			}
 
@@ -121,7 +125,6 @@ void MesFuncHooks::apply()
 			auto combinedFname = fmt::format("{}\\{}", baseDir, flist.files[i].name);
 			MesHandle tmp;
 			if (orgOpen(combinedFname.c_str(), &tmp)) {
-				//mesFuncs.CopyContents(*handle, tmp);
 				MergeContents(*handle, tmp);
 				mesFuncs.Close(tmp);
 			}
@@ -159,9 +162,10 @@ void MergeContents(MesHandle tgt, MesHandle src) {
 	mes->rawBuffer = contentsExt;
 	memcpy( &mes->rawBuffer[mes->rawBufferLen], mes2->rawBuffer, mes2->rawBufferLen);
 	auto newlinesStart = &mes->rawBuffer[mes->rawBufferLen];
+	mes->rawBufferLen = newLen;
 	
 	// co-iterate over lines, may need to overwrite some (cannot have duplicates!)
-	auto tgtPos = 0;
+	auto tgtPos = 0, tgtKey = 0;
 	MesLine *tgtMesLine = &mes->lines[tgtPos];
 	
 	std::vector<int> indicesToPush;
@@ -171,21 +175,23 @@ void MergeContents(MesHandle tgt, MesHandle src) {
 
 		for (auto j = tgtPos; j < mes->numLines; ++j) {
 			tgtMesLine = &mes->lines[j];
-			auto tgtKey = tgtMesLine->key;
+			tgtKey = tgtMesLine->key;
 			if (srcKey > tgtKey) {
 				tgtPos++;
 				continue;
 			}
 
-			else if (srcKey == tgtKey) { // overwrite
-				auto lineOffset = srcMesLine->value - mes2->rawBuffer;
-				tgtMesLine->value = &newlinesStart[lineOffset];
-			}
-			else /* if (srcKey < tgtKey) */{
-				indicesToPush.push_back(i);
-			}
 			break;
 		}
+		
+		if (srcKey == tgtKey) { // overwrite
+			auto lineOffset = srcMesLine->value - mes2->rawBuffer;
+			tgtMesLine->value = &newlinesStart[lineOffset];
+		}
+		else /* if (srcKey < tgtKey) */ {
+			indicesToPush.push_back(i);
+		}
+		
 	}
 
 	if (!indicesToPush.size()) {
@@ -193,7 +199,9 @@ void MergeContents(MesHandle tgt, MesHandle src) {
 	}
 
 	auto linesExt = (MesLine*)realloc(mes->lines, sizeof(MesLine) * (mes->numLines + indicesToPush.size()));
-	if (!linesExt) return;
+	if (!linesExt) {
+		return;
+	}
 	mes->lines = linesExt;
 	
 	auto newMesLinesStart = &mes->lines[mes->numLines];
@@ -205,17 +213,34 @@ void MergeContents(MesHandle tgt, MesHandle src) {
 		auto srcMesText = &newlinesStart[lineOffset];
 
 
-		auto tgtMesLine = &newMesLinesStart[i];
+		tgtMesLine = &newMesLinesStart[i];
 
 		tgtMesLine->key   = srcMesLine->key;
 		tgtMesLine->value = srcMesText;
-		
-		
 	}
 
 	mes->numLines += indicesToPush.size();
-	std::sort(&mes->lines[0], &mes->lines[mes->numLines - 1], [](MesLine& a, MesLine& b) {
+	std::sort(&mes->lines[0], &mes->lines[mes->numLines], [](MesLine& a, MesLine& b) {
 		return a.key < b.key;
 		});
+
 	return;
+}
+
+bool FindMesHandle(const char* fname, MesHandle& handleOut)
+{ 
+	auto mesfileCount = temple::GetRef<int>(0x10EEE9FC);
+	auto mesEntryList = temple::GetRef<MesFileEntry*>(0x10EEEA00);
+
+	for (auto i = 0; i < mesfileCount; ++i) {
+		if (!mesEntryList[i].refCount) {
+			continue;
+		}
+		if (!_stricmp(fname, mesEntryList[i].fileName)) {
+			handleOut = i;
+			return true;
+		}
+	}
+
+	return false;
 }
