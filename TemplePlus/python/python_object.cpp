@@ -41,6 +41,7 @@
 #include "ui/ui_legacysystems.h"
 #include "ui/ui_char_editor.h"
 #include "pathfinding.h"
+#include "secret_door.h"
 
 #include <pybind11/embed.h>
 #include <pybind11/cast.h>
@@ -2054,7 +2055,7 @@ static PyObject* PyObjHandle_SecretdoorDetect(PyObject* obj, PyObject* args) {
 		PyErr_SetString(PyExc_ValueError, "Called with an invalid viewer.");
 		return 0;
 	}
-	auto result = objects.SecretdoorDetect(self->handle, viewer);
+	auto result = secretdoorSys.SecretDoorDetect(self->handle, viewer);
 	return PyInt_FromLong(result);
 }
 
