@@ -1,0 +1,19 @@
+School: Evocation
+Descriptor: Sonic
+Level: Clr 4
+Level: Pal 4
+Component: V
+Casting Time: 1 action
+Range: Personal
+Saving Throw: Fortitude
+Spell Resistance: Yes
+Projectile: No
+flags_Target: Range
+flags_Target: Radius
+inc_flags_Target: Other
+exc_flags_Target: Dead
+exc_flags_Target: Non-critter
+exc_flags_Target: Self
+mode_Target: Personal
+radius_Target: 10
+ai_type: ai_action_offensive

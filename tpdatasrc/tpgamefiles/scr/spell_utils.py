@@ -30,16 +30,29 @@ def spellTime(duration):
 
 ### Standard Hooks invoked with AddHook ###
 
-#[pytonModifier].AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, ())
+#[pytonModifier].AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, ()) or
+#[pytonModifier].AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, (spell_enum,))
+#The second one is needed, if tooltip of a different spell should be shown
+#e.g. single target version when mass version is cast
 def spellTooltip(attachee, args, evt_obj):
-    name = spellName(args.get_arg(0))
+    if args.get_param(0):
+        name = game.get_spell_mesline(args.get_param(0))
+    else:
+        name = spellName(args.get_arg(0))
     duration = spellTime(args.get_arg(1))
     evt_obj.append("{} ({})".format(name, duration))
     return 0
 
-#[pytonModifier].AddHook(ET_OnGetEffectTooltip, EK_NONE, spell_utils.spellEffectTooltip, ())
+#[pytonModifier].AddHook(ET_OnGetEffectTooltip, EK_NONE, spell_utils.spellEffectTooltip, ()) or
+#[pytonModifier].AddHook(ET_OnGetEffectTooltip, EK_NONE, spell_utils.spellEffectTooltip, (spell_enum,))
+#The second one is needed, if Effect Tooltip of a different spell should be shown
+#e.g. single target version when mass version is cast
 def spellEffectTooltip(attachee, args, evt_obj):
-    key = spellKey(args.get_arg(0))
+    if args.get_param(0):
+        name = game.get_spell_mesline(args.get_param(0)).upper().replace(" ", "_")
+        key = tpdp.hash(name)
+    else:
+        key = spellKey(args.get_arg(0))
     duration = spellTime(args.get_arg(1))
     evt_obj.append(key, -2, " ({})".format(duration))
     return 0

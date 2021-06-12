@@ -1,0 +1,5 @@
+ID_string: DEMON_DIRGE
+effect_type: 1
+texture_file: art\interface\player_conditions\ailments\spell doom.tga
+help_topic: TAG_SPELLS_DEMON_DIRGE
+tooltip_base_text: Demon Dirge

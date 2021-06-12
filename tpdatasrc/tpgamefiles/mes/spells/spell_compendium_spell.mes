@@ -60,7 +60,7 @@
 {1108}{Dirge}
 {1109}{Nixie's Grace}
 {1110}{Ray of Light}
-{1111}{Resistance Superior}
+{1111}{Resistance, Superior}
 {1112}{Strategic Charge}
 {1113}{Blessed Aim}
 {1114}{Clear Mind}
@@ -119,6 +119,7 @@
 {1169}{Tremor}
 {1170}{Weapon of Energy}
 {1171}{Storm of Elemental Fury}
+{1172}{Acid Fog}
 
 // Spell Descriptions
 {6050} Sound Lance {[Evocation] Projectile of intense sonic energy that deals 1d8/level (max 10d8) sonic damage.}
@@ -180,7 +181,7 @@
 {6108} Dirge {[Evocation][Sonic] Each round, enemies in the area takes 2 points of Strength and Dexterity damage. Fortitude save needs to be done every round.}
 {6109} Nixie's Grace {[Transmutation][Water] Gain a DR 5/cold iron, +6 enhancement bonus to Dexterity, a +2 enhancement bonus to Wisdom and a +8 enhancement bonus to Charisma.}
 {6110} Ray of Light {[Evocation][Light] Target is blinded for 1d4 rounds on a successful ranged touch attack.}
-{6111} Resistance Superior {[Abjuration] You grant the subject a +6 resistance bonus on saves.}
+{6111} Resistance, Superior {[Abjuration] You grant the subject a +6 resistance bonus on saves.}
 {6112} Strategic Charge {[Abjuration] You gain the benefit of the Mobility feat, even if you not meet the prerequisites. You do not have to be charging to gain this benefit.}
 {6113} Blessed Aim {[Divination] This spell grants your allies within the spread a +2 morale bonus on ranged attack rolls.}
 {6114} Clear Mind {[Abjuration] You gain a +4 sacred bonus on saving throws made against mind-affecting spells and effects.}
@@ -239,3 +240,4 @@
 {6169} Tremor {Evocation[Earth] Creatures in area must make a reflex save or be knocked prone each round, spells require a Concentration Check DC 15 + Spell Level.}
 {6170} Weapon of Energy {Transmutation Add an elemental burst effect to a weapon. Element is chosen when cast.}
 {6171} Storm of Elemental Fury {Conjuration(Summoning) TBD}
+{6172} Acid Fog {Conjuration(Creation)[Acid] tbd}

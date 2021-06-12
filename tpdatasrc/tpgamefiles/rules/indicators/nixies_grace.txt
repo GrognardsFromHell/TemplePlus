@@ -1,0 +1,5 @@
+ID_string: NIXIE'S_GRACE
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\spell heroism.tga
+help_topic: TAG_SPELLS_NIXIES_GRACE
+tooltip_base_text: Nixies Grace

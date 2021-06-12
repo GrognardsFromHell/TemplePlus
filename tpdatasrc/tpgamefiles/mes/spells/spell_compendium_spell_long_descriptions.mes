@@ -841,3 +841,10 @@ Casting:         1 action [V,S]
 Range:               Long
 Target:             Area
 Duration:      4,  Save: Fortitude negates,  SR: Yes}
+
+{6172} Acid Fog {tbd
+School:          Conjuration(Creation)[Acid]
+Casting:         1 action [V,S]
+Range:               Medium (100ft. + 10ft./level)
+Area:                 20-ft. radius spread
+Duration:      1 round/level,  Save: None,  SR: No}
