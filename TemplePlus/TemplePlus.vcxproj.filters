@@ -535,6 +535,9 @@
     <ClCompile Include="dungeon_master_obj_editor.cpp">
       <Filter>Dungeon Master</Filter>
     </ClCompile>
+    <ClCompile Include="python\python_gui.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
