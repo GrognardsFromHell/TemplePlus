@@ -160,7 +160,7 @@ void MergeContents(MesHandle tgt, MesHandle src) {
 	if (!contentsExt) {
 		return;
 	}
-	memcpy(contentsExt, mes->rawBuffer, mes->rawBufferLen);
+	
 	mes->rawBuffer = contentsExt;
 	memcpy( &mes->rawBuffer[mes->rawBufferLen], mes2->rawBuffer, mes2->rawBufferLen);
 	auto newlinesStart = &mes->rawBuffer[mes->rawBufferLen];
