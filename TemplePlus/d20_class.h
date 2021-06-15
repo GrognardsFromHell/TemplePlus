@@ -182,6 +182,8 @@ public:
 	bool IsSelectingFeatsOnLevelup(objHndl handle, Stat classEnum);
 	void LevelupGetBonusFeats( objHndl handle, Stat classEnum);
 
+	bool IsSelectingFeaturesOnLevelup(objHndl handle, Stat classEnum);
+
 	bool IsSelectingSpellsOnLevelup(objHndl handle, Stat classEnum);
 	void LevelupInitSpellSelection(objHndl handle, Stat classEnum, int classLvlNew = -1, int classLvlIncrease = 1);
 	bool LevelupSpellsCheckComplete(objHndl handle, Stat classEnum);

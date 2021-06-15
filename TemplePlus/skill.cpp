@@ -7,6 +7,7 @@
 #include "d20.h"
 #include <infrastructure/json11.hpp>
 #include <infrastructure/vfs.h>
+#include "critter.h"
 
 #pragma region SkillSystem Implementation
 LegacySkillSystem skillSys;
@@ -56,6 +57,23 @@ void LegacySkillSystem::FloatError(const objHndl& obj, int errorOffset){
 	auto skillMes = temple::GetRef<MesHandle>(0x10AB7158);
 	mesFuncs.GetLine_Safe(skillMes, &mesline);
 	floatSys.floatMesLine(obj, 1, FloatLineColor::White, mesline.value);
+}
+
+// Originally @ 0x1007D720
+
+BOOL LegacySkillSystem::SkillCheckDefaultDC(SkillEnum skillEnum, objHndl performer, int flag)
+{
+	if (skillPropsTable[skillEnum].stat == Stat::stat_intelligence && d20Sys.d20Query(performer, D20DispatcherKey::DK_QUE_CannotUseIntSkill))
+		return FALSE;
+	if (skillPropsTable[skillEnum].stat == Stat::stat_charisma && d20Sys.d20Query(performer, D20DispatcherKey::DK_QUE_CannotUseChaSkill))
+		return FALSE;
+	if (!skillPropsTable[skillEnum].unskilledUseAllow && critterSys.SkillBaseGet(performer, skillEnum) <= 0)
+		return FALSE;
+
+	BonusList bonList;
+	auto skillResult = dispatch.dispatch1ESkillLevel(performer, skillEnum, &bonList, objHndl::null, flag);
+	auto roll = Dice(1, 20, 0).Roll();
+	return roll + skillResult >= 10;
 }
 
 const char* LegacySkillSystem::GetSkillName(SkillEnum skillEnum)

@@ -118,6 +118,12 @@ def ObjMeetsPrereqs( obj ):
 
 ## Levelup callbacks
 
+def IsSelectingFeaturesOnLevelup( obj ):
+	newLvl = obj.stat_level_get( classEnum ) + 1
+	if newLvl == 1:
+		return 1
+	return 0
+
 def IsSelectingFeatsOnLevelup( obj ):
 	newLvl = obj.stat_level_get( classEnum ) + 1
 	if newLvl % 5 == 0:

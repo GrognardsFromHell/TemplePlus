@@ -213,10 +213,6 @@ struct Objects : temple::AddressTable {
 		_ContainerToggleOpen(handle);
 	}
 
-	bool SecretdoorDetect(objHndl door, objHndl viewer) {
-		return _SecretdoorDetect(door, viewer);
-	}
-
 	bool IsUndetectedSecretDoor(objHndl handle) {
 		auto flags = GetSecretDoorFlags(handle);
 		return (flags & OSDF_SECRET_DOOR) && !(flags & OSDF_SECRET_DOOR_FOUND);
@@ -369,7 +365,6 @@ private:
 	void (__cdecl *_PortalToggleOpen)(objHndl handle);
 	void (__cdecl *_ContainerToggleOpen)(objHndl handle);
 
-	bool (__cdecl *_SecretdoorDetect)(objHndl door, objHndl viewer);
 	bool (__cdecl *_HasSpellEffects)(objHndl obj);
 
 	void (__cdecl *_Destroy)(objHndl obj);

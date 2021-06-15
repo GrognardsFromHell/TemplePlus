@@ -110,6 +110,12 @@ def IsAlignmentCompatible( alignment):
 def ObjMeetsPrereqs( obj ):
 	return 1
 
+def IsSelectingFeaturesOnLevelup( obj ):
+	newLvl = obj.stat_level_get( classEnum ) + 1
+	if newLvl == 1 or newLvl == 2 or (newLvl % 5) == 0:
+		return 1
+	return 0
+
 def LevelupSpellsFinalize( obj, classLvlNew = -1 ):
 	classLvl = obj.stat_level_get(classEnum)
 	classLvlNew = classLvl + 1

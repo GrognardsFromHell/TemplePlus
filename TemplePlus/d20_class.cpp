@@ -709,6 +709,11 @@ void D20ClassSystem::LevelupGetBonusFeats(objHndl handle, Stat classEnum){
 	pythonClassIntegration.LevelupGetBonusFeats(handle, classEnum);
 }
 
+bool D20ClassSystem::IsSelectingFeaturesOnLevelup(objHndl handle, Stat classEnum)
+{
+	return pythonClassIntegration.IsSelectingFeaturesOnLevelup(handle, classEnum);
+}
+
 bool D20ClassSystem::IsSelectingSpellsOnLevelup(objHndl handle, Stat classEnum){
 
 	return pythonClassIntegration.IsSelectingSpellsOnLevelup(handle, classEnum);

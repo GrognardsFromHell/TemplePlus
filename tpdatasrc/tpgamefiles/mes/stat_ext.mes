@@ -295,11 +295,10 @@ Feats: Spell Focus (conjuration).
 Spells: Able to cast lesser planar ally.}
 
 {13027}Favored Soul{Favored souls cast divine spells by means of an innate connection rather than through laborious training and prayer, so their divine connection is natural rather than learned.}
-{13031}Stormlord{Stormlords wield thunder and lightning like a warrior wields his sword. They serve their patron deity through random, spectacular acts of violence.
+{13031}Stormlord{Stormlords wield thunder and lightning like a warrior wields his sword. They serve their deity through random, spectacular acts of violence.
 
-Requirements: Alignment CE/CN/NE, Base Fort Save +4.
-Feats: Great Fortitude, Weapon Focus (deity's weapon or javelin)
-Spells: Able to cast 3rd-level divine spells.}
+Requirements: Alignment CE/CN/NE, Base Fort Save +4, able to cast 3rd-level divine spells.
+Feats: Great Fortitude, Weapon Focus (deity's weapon or javelin)}
 // Not implemented:
 // Feat: Endurance (non in the game)
 // Patron: Talos
@@ -307,9 +306,7 @@ Spells: Able to cast 3rd-level divine spells.}
 
 {13038}Abjurant Champion{The abjurant champion focuses his arcane abilities both to augment his personal defense and to hinder enemy spellcasters.
 
-Requirements
-Base Attack Bonus: +5
-Feats:  Combat Casting
+Requirements: Base Attack Bonus +5, Feats: Combat Casting
 Special:  Can cast 1st-level arcane spells and knows 1 abjuration spell of first level or greater.
 }
 
@@ -319,11 +316,10 @@ Special:  Can cast 1st-level arcane spells and knows 1 abjuration spell of first
 {13042}Swashbuckler{The swashbuckler embodies the concepts of daring and panache.}
 {13075}Fochlucan Lyrist{The Fochlucan lyrist is a Warrior, thief, spy, poet and woodland champion.
 
-Requirements
-Skills: Decipher Script 7, Diplomacy 7, Gather Information 7, Perform 13, Sleight of Hand 7.
-Alignment: Neutral good, neutral, chaotic neutral, or neutral evil.
-Spells: Casts 1st-level arcane and divine spells.
-Special: Bardic knowledge, Speak Language (Druidic) and evasion abilities.
+Requirements: Alignment NG/TN/CN/NE.
+Bardic knowledge, Speak Druidic, Evasion.
+Spells: 1st-level arcane and divine spells.
+Decipher Script 7, Diplomacy 7, Gather Information 7, Perform 13, Sleight of Hand 7
 }
 
 // Cannot Pick Class Short Help Goes in the range of 20007+
@@ -335,9 +331,10 @@ Spells: Ability to cast 1st level arcane spells.}
 
 {20034} Favored Soul {Favored Soul requirements:
 Charisma: 11 or higher.}
+{20045} Abjurant Champion {Abjurant Champion requirements:
+BAB +5, Combat Casting, Cast 1st-level arcane spells, and knows 1 abjuration spell of first level or greater}
 {20047} Warmage {Warmage requirements:
 Charisma: 11 or higher.}
 {20048} Beguiler {Beguiler requirements:
 Intelligence: 11 or higher.}
-{20045} Abjurant Champion {Abjurant Champion requirements:
-BAB +5, Combat Casting, Cast 1st-level arcane spells, and knows 1 abjuration spell of first level or greater}
+
