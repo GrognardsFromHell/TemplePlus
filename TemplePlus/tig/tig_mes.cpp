@@ -141,7 +141,7 @@ void MergeContents(MesHandle tgt, MesHandle src) {
 		logger->error("Tried to merge invalid mes handle! handles {} {} count: {}", tgt, src, mesfileCount);
 		return;
 	}
-
+	 
 	auto mesEntryList = temple::GetRef<MesFileEntry*>(0x10EEEA00);
 
 	auto mes = &mesEntryList[tgt];
