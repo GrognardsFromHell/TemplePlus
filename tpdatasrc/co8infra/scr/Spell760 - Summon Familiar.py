@@ -4,24 +4,16 @@ from utilities import *
 
 from Co8 import *
 
-familiar_table = {
-12045: 14900,
-12046: 14901,
-12047: 14902,
-12048: 14903,
-12049: 14904,
-12050: 14905,
-12051: 14906,
-12052: 14907,
-12053: 14908,
-12054: 14909
-}
+from familiar_protos import familiar_table # modularize for KotB
 
 def OnBeginSpellCast( spell ):
 	print "Summon Familiar OnBeginSpellCast"
+	print("Removing caster from target list")
+	spell.target_list.remove_target(spell.caster) # added because OnBeginRound can fire before OnSpellEffect
 	print "spell.target_list=", spell.target_list
 	print "spell.caster=", spell.caster, " caster.level= ", spell.caster_level
 	#game.particles( "sp-conjuration-conjure", spell.caster )
+	
 
 def	OnSpellEffect( spell ):
 	print "Summon Familiar OnSpellEffect"
@@ -33,17 +25,19 @@ def	OnSpellEffect( spell ):
 	inv_proto = FindFamiliarProto( spell.caster, 0 )
 	familiar = spell.caster.item_find_by_proto( inv_proto )
 	if ( get_ID( familiar ) != 0 ):
+		spell.spell_end( spell.id , 1)
 		return SKIP_DEFAULT
 	
 	# get the proto_id for this familiar 
 	familiar_proto_id = FindFamiliarProto( spell.caster, 1 )
 	if (familiar_proto_id == 0):	#  not a recognized familiar type
+		spell.spell_end( spell.id , 1)
 		return SKIP_DEFAULT
 	
 	# creates random ID number
 	ID_number = game.random_range( 1,2147483647 )
 	ID_number = ID_number^game.random_range( 1,2147483647 )#xor with next "random" number in line, should be more random
-		
+	
 	# create familiar
 	spell.summon_monsters( 1, familiar_proto_id )
 	
@@ -125,32 +119,57 @@ def	OnSpellEffect( spell ):
 	#familiar_obj.condition_add_with_args( 'sp-Summoned', spell.id, spell.duration, 0 )
 	
 	# add familiar to target list
-	spell.num_of_targets = 1
+	spell.num_of_targets = 2
 	spell.target_list[0].obj = familiar_obj
+	spell.target_list[1].obj = spell.caster # so it triggers OnBeginRound even if the familiar is gone, and ends the spell
 
-	spell.spell_end( spell.id )
+	#spell.spell_end( spell.id )
 
 def OnBeginRound( spell ):
 	familiar_obj = spell.target_list[0].obj
-	print("Familiar obj: " , familiar_obj, "Spell ID:", spell.id)
+	print ("Summon Familiar OnBeginRound", "Spell ID: ", spell.id, 'Familiar obj: ', familiar_obj)
+
+	if ( familiar_obj.object_flags_get() & OF_DESTROYED):
+		print("Familiar obj is destroyed, ending spell")
+		spell.spell_end( spell.id , 1)
+		return
 	
 	if familiar_obj.stat_level_get(stat_hp_current) <= -10:
 		# Remove familiar if dead after one day.
 		game.timevent_add( RemoveDead, ( spell.caster, familiar_obj ), 86400000) # 1000 = 1 second
 		return
+	
 	if familiar_obj.type == obj_t_pc:
+		print("Familiar obj is PC, terminating spell")
 		spell.spell_end( spell.id , 1)
-		print("Bad familiar obj handle, terminating spell")
 		return
 	
+	
+
 	if familiar_obj not in game.party:
-		if familiar_obj.type == obj_t_npc:
-			familiar_obj.destroy()
+		print("Familiar is not in party, terminating spell")
 		for f,p in familiar_table.items():
-			itemA = spell.caster.item_find_by_proto( f )
-			if itemA != OBJ_HANDLE_NULL:
-				clear_ID( itemA )
-	print "Summon Familiar OnBeginRound"
+			if familiar_obj.proto == p:
+				spell.target_list.remove(familiar_obj)
+				familiar_obj.destroy()
+				spell.spell_end( spell.id , 1)
+				return
+	
+	familiar_id = get_ID(familiar_obj)
+	if familiar_id == 0:
+		return
+	for f,p in familiar_table.items():
+		if familiar_obj.proto != p:
+			continue
+		itemA = spell.caster.item_find_by_proto( f )
+		if itemA == OBJ_HANDLE_NULL:
+			continue
+		
+		item_id = get_ID(itemA)
+		if item_id != familiar_id:
+			print('Summon Familiar OnBeginRound: found ID mismatch, ({:d} vs {:d}) correcting'.format(familiar_id, item_id))
+			set_ID(itemA, familiar_id)
+		return
 
 def OnEndSpellCast( spell ):
 	print "Summon Familiar OnEndSpellCast"
@@ -244,6 +263,7 @@ def Will( npc ):
 	return bonus
 
 def RemoveDead(npc, critter):
+	print('Summon Familiar: Removing dead familiar')
 	if critter.stat_level_get(stat_hp_current) <= -10:
 		npc.follower_remove(critter)
 	return
