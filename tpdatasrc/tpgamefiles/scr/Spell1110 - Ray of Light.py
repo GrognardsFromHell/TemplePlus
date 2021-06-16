@@ -22,10 +22,6 @@ def OnEndProjectile( spell, projectile, index_of_target ):
     spell.duration = 0
     game.particles_end(projectile.obj_get_int(obj_f_projectile_part_sys_id))
 
-############   Weapon Focus Ray Fix   ############
-    spell.caster.condition_add('Wf Ray Fix', 0)
-############ Weapon Focus Ray Fix End ############
-
     if spell.caster.perform_touch_attack(spellTarget.obj) & D20CAF_HIT:
         spellTarget.partsys_id = game.particles('sp-Arcane Eye-END', spellTarget.obj)
         blindnessDurationDice = dice_new('1d4')

@@ -26,10 +26,6 @@ def OnEndProjectile(spell, projectile, index_of_target):
 
     game.particles_end(projectile.obj_get_int(obj_f_projectile_part_sys_id))
 
-############   Weapon Focus Ray Fix   ############
-    spell.caster.condition_add('Wf Ray Fix', 0)
-############ Weapon Focus Ray Fix End ############
-
     attackResult = spell.caster.perform_touch_attack(spellTarget.obj)
 
     if attackResult & D20CAF_HIT:

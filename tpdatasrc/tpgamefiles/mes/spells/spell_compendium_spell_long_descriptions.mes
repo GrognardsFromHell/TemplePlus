@@ -842,7 +842,7 @@ Range:               Long
 Target:             Area
 Duration:      4,  Save: Fortitude negates,  SR: Yes}
 
-{6172} Acid Fog {tbd
+{6172} Acid Fog {While inside Acid Fog, targets are concealed, can only move 5 feet, are immune to ranged attacks and take 2d6 acid damage every turn.
 School:          Conjuration(Creation)[Acid]
 Casting:         1 action [V,S]
 Range:               Medium (100ft. + 10ft./level)

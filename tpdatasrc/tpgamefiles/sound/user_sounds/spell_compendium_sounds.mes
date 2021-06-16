@@ -112,7 +112,7 @@
 // [1057] *[Focusing Chant]
 {27140}{} // spell begin
 {27141}{} // spell end
-{27142}{spells\sp_focusing_chant.mp3} // spell effect
+{27142}{} // spell effect
 {27143}{} // spell new round
 {27144}{} // spell projectile begin
 {27145}{} // spell projectile end
@@ -299,7 +299,7 @@
 // [1075] *[Sonic Weapon]
 {27500}{} // spell begin
 {27501}{} // spell end
-{27502}{spells\sp_sonic_weapon.mp3} // spell effect
+{27502}{} // spell effect
 {27503}{} // spell new round
 {27504}{} // spell projectile begin
 {27505}{} // spell projectile end
@@ -308,7 +308,7 @@
 {27508}{} // spell struck
 
 // [1076] *[Bonefiddle]
-{27520}{spells\sp_bonefiddle.mp3} // spell begin
+{27520}{} // spell begin
 {27521}{} // spell end
 {27522}{} // spell effect
 {27523}{} // spell new round
@@ -473,7 +473,7 @@
 {27808}{} // spell struck
 
 // [1091] *[Haunting Tune]
-{27820}{spells\sp_haunting_tune.mp3} // spell begin
+{27820}{} // spell begin
 {27821}{} // spell end
 {27822}{} // spell effect
 {27823}{} // spell new round
@@ -484,7 +484,7 @@
 {27828}{} // spell struck
 
 // [1092] *[Loves Lament]
-{27840}{spells\sp_haunting_tune.mp3} // spell begin
+{27840}{} // spell begin
 {27841}{} // spell end
 {27842}{} // spell effect
 {27843}{} // spell new round
@@ -739,7 +739,7 @@
 // [1115] *[Deafening Clang]
 {28300}{} // spell begin
 {28301}{} // spell end
-{28302}{spells\sp_sonic_weapon.mp3} // spell effect
+{28302}{} // spell effect
 {28303}{} // spell new round
 {28304}{} // spell projectile begin
 {28305}{} // spell projectile end
