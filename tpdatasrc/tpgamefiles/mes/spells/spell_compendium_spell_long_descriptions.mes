@@ -848,3 +848,10 @@ Casting:         1 action [V,S]
 Range:               Medium (100ft. + 10ft./level)
 Area:                 20-ft. radius spread
 Duration:      1 round/level,  Save: None,  SR: No}
+
+{6173} Touch of Madness {Target must make a Will Saving Throw after a successful touch attack or be dazed for 1 round/level.
+School:          Enchantment[Mind-Affecting]
+Casting:         1 action [V,S]
+Range:               Touch 
+Target:             One living creature
+Duration:      1 round/level,  Save: Will negates,  SR: Yes}

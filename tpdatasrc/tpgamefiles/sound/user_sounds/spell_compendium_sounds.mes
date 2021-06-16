@@ -1373,3 +1373,14 @@
 {29446}{} // spell projectile in-flight
 {29447}{} // spell hit
 {29448}{} // spell struck
+
+// [1173] *[Touch of Madness]
+{29460}{} // spell begin
+{29461}{} // spell end
+{29462}{spells\sp_animal_trance.WAV} // spell effect
+{29463}{} // spell new round
+{29464}{} // spell projectile begin
+{29465}{} // spell projectile end
+{29466}{} // spell projectile in-flight
+{29467}{} // spell hit
+{29468}{} // spell struck

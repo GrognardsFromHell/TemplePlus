@@ -1,0 +1,20 @@
+School: Enchantment
+Descriptor: Mind-Affecting
+Level: Madness 2
+Component: V
+Component: S
+Casting Time: 1 action
+Range: Touch
+Saving Throw: Willpower
+Spell Resistance: Yes
+Projectile: No
+flags_Target: Range
+inc_flags_Target: Other
+exc_flags_Target: Dead
+exc_flags_Target: Non-critter
+exc_flags_Target: Self
+mode_Target: Single
+min_Target: 1
+max_Target: 1
+radius_Target: 0
+ai_type: ai_action_offensive
