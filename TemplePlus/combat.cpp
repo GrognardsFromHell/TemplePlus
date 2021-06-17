@@ -1639,7 +1639,6 @@ int LegacyCombatSystem::DispelRoll(objHndl obj, BonusList* bonlist, int modifier
 void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 	auto performer = d20a.d20APerformer;
 	auto d20Data = d20a.data1;
-	auto caflags = d20a.d20Caf;
 	auto tgt = d20a.d20ATarget;
 	if (!tgt)
 		return;
