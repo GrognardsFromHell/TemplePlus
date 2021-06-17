@@ -394,6 +394,9 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def("__repr__", [](DispatcherCallbackArgs &args)->std::string{
 			return fmt::format("EventArgs: Type = {} , Key = {}", args.dispType, args.dispKey);
 		})
+		.def("get_cond_name", [](DispatcherCallbackArgs& args) -> std::string {
+			return std::string(args.subDispNode->condNode->condStruct->condName);
+			})
 		.def("get_arg", &DispatcherCallbackArgs::GetCondArg)
 		.def("set_arg", &DispatcherCallbackArgs::SetCondArg)
 		.def("get_obj_from_args", &DispatcherCallbackArgs::GetCondArgObjHndl)
