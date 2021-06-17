@@ -46,7 +46,7 @@ for feat in range(feat_weapon_focus_gauntlet, feat_weapon_focus_gauntlet + feat_
     arg_weapon_type = feat - feat_weapon_focus_gauntlet
     wfMod.MapToFeat(feat, feat_cond_arg2 = arg_weapon_type)
 
-wfMod.AddHook(ET_OnConditionAddPre, EK_NONE, pymod_utils.preventDupSameArg)
+wfMod.AddHook(ET_OnConditionAddPre, EK_NONE, pymod_utils.preventDupSameArg, ())
 wfMod.AddHook(ET_OnToHitBonus2, EK_NONE, weaponFocusBonusToHit, ())
 
 
@@ -56,5 +56,5 @@ for feat in range(feat_greater_weapon_focus_gauntlet, feat_greater_weapon_focus_
     arg_weapon_type = feat - feat_greater_weapon_focus_gauntlet
     gwfMod.MapToFeat(feat, feat_cond_arg2 = arg_weapon_type)
 
-gwfMod.AddHook(ET_OnConditionAddPre, EK_NONE, pymod_utils.preventDupSameArg)
+gwfMod.AddHook(ET_OnConditionAddPre, EK_NONE, pymod_utils.preventDupSameArg, ())
 gwfMod.AddHook(ET_OnToHitBonus2, EK_NONE, weaponFocusBonusToHit, ())
