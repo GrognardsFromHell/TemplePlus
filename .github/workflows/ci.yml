@@ -11,7 +11,7 @@ jobs:
     - uses: nuget/setup-nuget@v1
     - name: Download and Extract Dependencies
       run: |
-        curl -L -o dependencies.7z https://github.com/GrognardsFromHell/Dependencies/releases/download/v1.8/dependencies.7z
+        curl -L -o dependencies.7z https://github.com/GrognardsFromHell/Dependencies/releases/download/v1.9/dependencies.7z
         7z x dependencies.7z
     - name: Install NuGet packages
       run: |
