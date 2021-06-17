@@ -1637,11 +1637,12 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 		return;
 
 	// mirror image processing
-	auto mirrorImageCond = conds.GetByName("sp-Mirror Image");
-	if (d20Sys.d20QueryWithData(tgt, DK_QUE_Critter_Has_Condition, mirrorImageCond, 0)){
-		auto spellId = (uint32_t) d20Sys.d20QueryReturnData(tgt, DK_QUE_Critter_Has_Condition, mirrorImageCond, 0);
+	auto numMirrorImages = d20Sys.d20Query(tgt, DK_QUE_Critter_Has_Mirror_Image);
+	if (numMirrorImages > 0){
+		auto spellId = (uint32_t)d20Sys.d20QueryReturnData(tgt, DK_QUE_Critter_Has_Mirror_Image);
 		SpellPacketBody spellPkt(spellId);
-		Dice dice(1,spellPkt.targetCount);
+		//Dice dice(1,spellPkt.targetCount);
+		Dice dice(1, 1 + numMirrorImages);
 		if (dice.Roll() != 1 ){ // mirror image nominally struck
 			DispIoAttackBonus mirrorImAc;
 			mirrorImAc.attackPacket.flags = (D20CAF)(d20a.d20Caf | D20CAF_TOUCH_ATTACK);
