@@ -58,6 +58,45 @@ int BonusList::GetEffectiveBonusSum() const {
 	return result;
 }
 
+/* 0x100E6680 */
+int BonusList::GetHighestBonus() const
+{
+	int result = 0;
+
+	for (size_t i = 0; i < bonCount; ++i) {
+		auto& bonus = bonusEntries[i];
+
+		auto value = bonus.bonValue;
+
+		// Apply bonus caps if necessary
+		size_t capIdx;
+		if (IsBonusCapped(i, &capIdx)) {
+			auto capValue = bonCaps[capIdx].capValue;
+
+			// Handles malus / bonus capping separately
+			if (value > 0 && value > capValue) {
+				value = capValue;
+			}
+			else if (value < 0 && value < capValue) {
+				value = capValue;
+			}
+		}
+
+		if (!IsBonusSuppressed(i, nullptr) && result < value) {
+			result = value;
+		}
+	}
+
+	if (bonFlags & 1 && result > overallCapHigh.bonValue) {
+		result = overallCapHigh.bonValue;
+	}
+	if (bonFlags & 2 && result < overallCapLow.bonValue) {
+		result = overallCapLow.bonValue;
+	}
+
+	return result;
+}
+
 bool BonusList::IsBonusSuppressed(size_t bonusIdx, size_t* suppressedByIdx) const {
 	Expects(bonusIdx < bonCount);
 

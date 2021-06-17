@@ -146,6 +146,7 @@ struct BonusList
 	}
 
 	int GetEffectiveBonusSum() const;
+	int GetHighestBonus() const; // including cap effects and such; used for Blindness miss chance calculation
 
 	/**
 	 * Returns true if the given bonus is suppressed by another bonus (i.e. of the same type and

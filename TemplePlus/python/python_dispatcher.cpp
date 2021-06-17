@@ -491,6 +491,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			.def("modify", &BonusList::ModifyBonus)
 			.def("get_sum",   &BonusList::GetEffectiveBonusSum)
 			.def("get_total", &BonusList::GetEffectiveBonusSum)
+			.def("get_highest", &BonusList::GetHighestBonus)
 			.def("add_zeroed", &BonusList::ZeroBonusSetMeslineNum, "Adds a zero-value bonus (usually to represent nullified bonuses)")
 			.def("add_cap", [](BonusList & bonlist, int bonType, int value, int mesline) {
 				 bonlist.AddCap(bonType, value, mesline); }, "Adds cap for a particular bonus type")

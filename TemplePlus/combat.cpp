@@ -1698,7 +1698,8 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 		auto dispatcher = gameSystems->GetObj().GetObject(attacker)->GetDispatcher();
 		DispIoObjBonus dispIo;
 		dispatcher->Process(dispTypeGetAttackerConcealmentMissChance, DK_NONE, &dispIo);
-		return temple::GetRef<int(__cdecl)(BonusList&)>(0x100E6680)(dispIo.bonlist); // special bonus handler for blindness miss chance
+		return dispIo.bonlist.GetHighestBonus();
+		//return temple::GetRef<int(__cdecl)(BonusList&)>(0x100E6680)(dispIo.bonlist); // special bonus handler for blindness miss chance
 	};
 
 	auto defenderMissChance = getDefenderConcealmentMissChance(performer, tgt, d20a);
