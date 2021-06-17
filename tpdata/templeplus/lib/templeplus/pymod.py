@@ -8,6 +8,13 @@ class PythonModifier(tpdp.ModifierSpec):
 	def AddItemForceRemoveHandler(self): # in charge of backing up condition args
 		self.add_item_force_remove_callback()
 	def MapToFeat(self, feat_enum, feat_list_max = -1, feat_cond_arg2 = 0):
+		# Feats are mapped to Modifier + arg
+		# The associated Modifier is instantiated with 2 args:
+		# arg[0] = feat enum
+		# arg[1] = feat_cond_arg2 - usually used for "feat lists" to denote specialized type, such as weapon_focus_X or skill_focus_X
+		# For feat lists, the vanilla engine was using range(feat_enum, feat_list_max), 
+		# but for Temple+ feats we just use a normal dictionary.
+		# So just loop over all sub-feats + their desired arg[1] and leave feat_list_max = -1
 		self.add_to_feat_dict(feat_enum, feat_list_max, feat_cond_arg2)
 	# Spell related standard hooks
 	def AddSpellCountdownStandardHook(self):
