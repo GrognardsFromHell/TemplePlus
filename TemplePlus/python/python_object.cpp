@@ -1015,6 +1015,23 @@ static PyObject* PyObjHandle_HasLos(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(obstacles == 0);
 }
 
+static PyObject* PyObjHandle_CanBlindsee(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	objHndl target;
+	if (!PyArg_ParseTuple(args, "O&:objHndl.can_blindsee", &ConvertObjHndl, &target)) {
+		return 0;
+	}
+	if (!target) {
+		return PyInt_FromLong(0);
+	}
+	auto result = critterSys.CanSeeWithBlindsight(self->handle, target) ? 1 : 0;
+	return PyInt_FromLong(result);
+}
+
+
 /*
 	Pretty stupid name. Checks if the critter currently wears an item with the
 	given name id.
@@ -3925,6 +3942,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"find_path_to_obj", PyObjHandle_FindPathToObj, METH_VARARGS, NULL },
 	{"can_melee", PyObjHandle_CanMelee, METH_VARARGS, NULL },
 	{"can_see", PyObjHandle_HasLos, METH_VARARGS, NULL },
+	{"can_blindsee", PyObjHandle_CanBlindsee, METH_VARARGS, "obj has blind sight, and target is within observation range of blindsight ability"},
 	{"can_sense", PyObjHandle_CanSense, METH_VARARGS, NULL },
 	{ "can_sneak_attack", PyObjHandle_CanSneakAttack, METH_VARARGS, NULL },
 	{ "concealed_set", PyObjHandle_ConcealedSet, METH_VARARGS, NULL },
