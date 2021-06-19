@@ -17,9 +17,29 @@
 #include "party.h"
 #include <condition.h>
 #include "python/python_integration_obj.h"
+#include "python/python_object.h"
 #include "pybind11/pybind11.h"
 
 namespace py = pybind11;
+
+template <> class py::detail::type_caster<objHndl> {
+public:
+	bool load(handle src, bool) {
+		value = PyObjHndl_AsObjHndl(src.ptr());
+		success = true;
+		return true;
+	}
+
+	static handle cast(const objHndl& src, return_value_policy /* policy */, handle /* parent */) {
+		return PyObjHndl_Create(src);
+	}
+
+	PYBIND11_TYPE_CASTER(objHndl, _("objHndl"));
+protected:
+	bool success = false;
+};
+
+
 
 static_assert(temple::validate_size<DispIoDamage, 0x550>::value, "DispIoDamage");
 
@@ -736,7 +756,8 @@ void Damage::DamageCritter(objHndl attacker, objHndl tgt, DispIoDamage & evtObjD
 void Damage::DamageCritterPython(objHndl attacker, objHndl tgt, DispIoDamage& evtObjDam)
 {
 	py::object pyEvtObjDam = py::cast<DispIoDamage*>(&evtObjDam);
-	py::tuple args = py::make_tuple( py::cast<objHndl>(attacker), py::cast<objHndl>(tgt),pyEvtObjDam);
+	py::object pyAttacker = py::cast(attacker);
+	py::tuple args = py::make_tuple( pyAttacker, py::cast<objHndl>(tgt),pyEvtObjDam);
 
 	auto result = pythonObjIntegration.ExecuteScript("d20_combat.damage_critter", "damage_critter", args.ptr());
 	Py_DECREF(result);
