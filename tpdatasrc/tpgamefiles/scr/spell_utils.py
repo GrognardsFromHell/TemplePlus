@@ -244,8 +244,8 @@ class TouchModifier(PythonModifier):
     # Touch modifiers have at least 3 arguments
     #
     #  0: spell_id
-    #  1: duration, -1 to not display
-    #  2: num_charges, -1 for until duration expires
+    #  1: duration, negative to not display
+    #  2: num_charges, negative for until duration expires
     #
     # the given argument number is for additional arguments beyond
     # this.
