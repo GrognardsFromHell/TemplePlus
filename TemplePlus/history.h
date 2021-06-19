@@ -17,12 +17,12 @@ struct HistorySystem : temple::AddressTable
 	HistorySystem();
 	int CreateRollHistoryLineFromMesfile(int historyMesLine, objHndl obj, objHndl obj2);
 	int RollHistoryAddType1DamageRoll(objHndl attacker, objHndl tgt, DamagePacket* dmg);
-	int RollHistoryType2Add(objHndl obj, uint32_t dicePacked, int rollResult, int dc, int skillIdx, BonusList* bonlist); // Skill Check
-	int RollHistoryType3Add(objHndl handle, int dc, SavingThrowType saveType, int flags, uint32_t dicePacked, int d20RollRes, BonusList* bonlist); // Saving Throw
-	int RollHistoryType4Add(objHndl obj, int dc, const char* text, uint32_t dicePacked, int d20RollRes, BonusList* bonlist); // MiscCheckRoll
-	int RollHistoryType7Add(objHndl obj, BonusList* bonlist, int line, int unk); // Misc Bonus
-	int RollHistoryType0Add(int RollResult, int unk, objHndl Obj, objHndl Obj2, BonusList* Bonlist, BonusList* Bonlist2, D20CAF flags); // Attack roll
-	int RollHistoryType5Add(objHndl obj, objHndl tgt, int defenderMissChance, int combatMesLine, int missChanceRoll, int combatMesLineResult, int combatMesLineCheckType); // Percent Chance Roll
+	int RollHistoryAddType2SkillRoll(objHndl obj, uint32_t dicePacked, int rollResult, int dc, int skillIdx, BonusList* bonlist); // Skill Check
+	int RollHistoryAddType3SavingThrow(objHndl handle, int dc, SavingThrowType saveType, int flags, uint32_t dicePacked, int d20RollRes, BonusList* bonlist); // Saving Throw
+	int RollHistoryAddType4MiscCheckRoll(objHndl obj, int dc, const char* text, uint32_t dicePacked, int d20RollRes, BonusList* bonlist); // MiscCheckRoll
+	int RollHistoryAddType7MiscBonus(objHndl obj, BonusList* bonlist, int line, int unk); // Misc Bonus
+	int RollHistoryAddType0AttackRoll(int RollResult, int unk, objHndl Obj, objHndl Obj2, BonusList* Bonlist, BonusList* Bonlist2, D20CAF flags); // Attack roll
+	int RollHistoryAddType5PercentChanceRoll(objHndl obj, objHndl tgt, int defenderMissChance, int combatMesLine, int missChanceRoll, int combatMesLineResult, int combatMesLineCheckType); // Percent Chance Roll
 
 	// 1 - Damage Roll
 	// 2 - Skill Roll

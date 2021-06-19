@@ -788,14 +788,14 @@ bool Damage::SavingThrow(objHndl handle, objHndl attacker, int dc, SavingThrowTy
 	evtObj.rollResult = diceResult;
 	if (diceResult + saveThrowMod < dc || diceResult == 1){
 		if (d20Sys.d20Query(handle, DK_QUE_RerollSavingThrow)){
-			histSys.RollHistoryType3Add(handle, dc, saveType, flags, dice.ToPacked(), diceResult, &evtObj.bonlist);
+			histSys.RollHistoryAddType3SavingThrow(handle, dc, saveType, flags, dice.ToPacked(), diceResult, &evtObj.bonlist);
 			diceResult = dice.Roll();
 			flags |= 1;
 		}
 	}
 
 	auto finalSaveThrowMod = dispatch.Dispatch44FinalSaveThrow(handle, saveType, &evtObj);
-	auto histId = histSys.RollHistoryType3Add(handle, dc, saveType, flags, dice.ToPacked(), diceResult, &evtObj.bonlist);
+	auto histId = histSys.RollHistoryAddType3SavingThrow(handle, dc, saveType, flags, dice.ToPacked(), diceResult, &evtObj.bonlist);
 	histSys.CreateRollHistoryString(histId);
 
 	if (diceResult == 1){

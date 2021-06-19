@@ -4199,13 +4199,13 @@ int SpellCallbacks::ArmorSpellFailure(DispatcherCallbackArgs args){
 	if (rollRes <= failChance){
 		floatSys.FloatCombatLine(args.objHndCaller, 57); // Miscast (Armor)!
 		dispIo->return_val = 1;
-		auto histId = histSys.RollHistoryType5Add(args.objHndCaller, objHndl::null, failChance, 59, rollRes, 57, 192); // Arcane Spell Failure due to Armor
+		auto histId = histSys.RollHistoryAddType5PercentChanceRoll(args.objHndCaller, objHndl::null, failChance, 59, rollRes, 57, 192); // Arcane Spell Failure due to Armor
 		histSys.CreateRollHistoryString(histId);
 		histSys.CreateRollHistoryLineFromMesfile(29, args.objHndCaller, objHndl::null); // [ACTOR] ~loses spell~[TAG_ARCANE_SPELL_FAILURE] due to armor.
 		return 0;
 	}
 
-	auto histId = histSys.RollHistoryType5Add(args.objHndCaller, objHndl::null, failChance, 59, rollRes, 62, 192); // Arcane Spell Failure due to Armor
+	auto histId = histSys.RollHistoryAddType5PercentChanceRoll(args.objHndCaller, objHndl::null, failChance, 59, rollRes, 62, 192); // Arcane Spell Failure due to Armor
 	histSys.CreateRollHistoryString(histId);
 
 	return 0;

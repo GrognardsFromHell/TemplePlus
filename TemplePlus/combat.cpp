@@ -1627,7 +1627,7 @@ void LegacyCombatSystem::AddToInitiative(objHndl critter){
 int LegacyCombatSystem::DispelRoll(objHndl obj, BonusList* bonlist, int modifier, int dc, const char* text, int *rollHistId){
 	Dice dice(1, 20, modifier);
 	auto d20RollRes = dice.Roll();
-	int rollResId = histSys.RollHistoryType4Add(obj, dc, text, dice.ToPacked(), d20RollRes, bonlist);
+	int rollResId = histSys.RollHistoryAddType4MiscCheckRoll(obj, dc, text, dice.ToPacked(), d20RollRes, bonlist);
 	if (rollHistId)
 		*rollHistId = rollResId;
 	else
@@ -1711,10 +1711,10 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 		// roll 1d100
 		auto missChanceRoll = Dice::Roll(1, 100, 0);
 		if (missChanceRoll > defenderMissChance){ // success
-			d20a.rollHistId1 = histSys.RollHistoryType5Add(performer, tgt, defenderMissChance, 60, missChanceRoll, 194, 193);
+			d20a.rollHistId1 = histSys.RollHistoryAddType5PercentChanceRoll(performer, tgt, defenderMissChance, 60, missChanceRoll, 194, 193);
 		} 
 		else { // failure
-			d20a.rollHistId1 = histSys.RollHistoryType5Add(performer, tgt, defenderMissChance, 60, missChanceRoll, 195, 193);
+			d20a.rollHistId1 = histSys.RollHistoryAddType5PercentChanceRoll(performer, tgt, defenderMissChance, 60, missChanceRoll, 195, 193);
 
 
 			// Blind Fight handling (second chance)
@@ -1722,10 +1722,10 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 				return;
 			missChanceRoll = Dice::Roll(1, 100, 0);
 			if (missChanceRoll <= defenderMissChance) {
-				histSys.RollHistoryType5Add(performer, tgt, defenderMissChance, 61, missChanceRoll, 195, 193);
+				histSys.RollHistoryAddType5PercentChanceRoll(performer, tgt, defenderMissChance, 61, missChanceRoll, 195, 193);
 				return;
 			}
-			d20a.rollHistId2 = histSys.RollHistoryType5Add(performer, tgt, defenderMissChance, 61, missChanceRoll, 194, 193);
+			d20a.rollHistId2 = histSys.RollHistoryAddType5PercentChanceRoll(performer, tgt, defenderMissChance, 61, missChanceRoll, 194, 193);
 		}
 	}
 
@@ -1809,7 +1809,7 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 		// check miss
 		if (IS_MISS){
 			if (d20Sys.d20Query(performer, DK_QUE_RerollAttack)){
-				histSys.RollHistoryType0Add(toHitRoll, -1, performer, tgt, &dispIoToHitBon.bonlist, &dispIoTgtAc.bonlist, dispIoToHitBon.attackPacket.flags);
+				histSys.RollHistoryAddType0AttackRoll(toHitRoll, -1, performer, tgt, &dispIoToHitBon.bonlist, &dispIoTgtAc.bonlist, dispIoToHitBon.attackPacket.flags);
 				toHitRoll = Dice::Roll(1, 20);
 				dispIoToHitBon.attackPacket.flags = (D20CAF)(dispIoToHitBon.attackPacket.flags | D20CAF_REROLL);
 			}
@@ -1848,7 +1848,7 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 
 				// RerollCritical handling (e.g. from Luck domain)
 				if (isMiss(critHitRoll, toHitBonFinal, tgtAcFinal) && d20Sys.d20Query(performer, DK_QUE_RerollCritical)){
-					histSys.RollHistoryType0Add(toHitRoll, critHitRoll, performer, tgt, &dispIoToHitBon.bonlist, &dispIoTgtAc.bonlist, dispIoToHitBon.attackPacket.flags);
+					histSys.RollHistoryAddType0AttackRoll(toHitRoll, critHitRoll, performer, tgt, &dispIoToHitBon.bonlist, &dispIoTgtAc.bonlist, dispIoToHitBon.attackPacket.flags);
 					critHitRoll = Dice::Roll(1, 20);
 				}
 
@@ -1879,7 +1879,7 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 
 	// all this hard work just to set a couple of flags :D
 	d20a.d20Caf = dispIoToHitBon.attackPacket.flags;
-	d20a.rollHistId0 = histSys.RollHistoryType0Add(toHitRoll, critHitRoll, performer, tgt, &dispIoToHitBon.bonlist, &dispIoTgtAc.bonlist, dispIoToHitBon.attackPacket.flags);
+	d20a.rollHistId0 = histSys.RollHistoryAddType0AttackRoll(toHitRoll, critHitRoll, performer, tgt, &dispIoToHitBon.bonlist, &dispIoTgtAc.bonlist, dispIoToHitBon.attackPacket.flags);
 	
 	// there were some additional debug stubs here (nullsubs)
 }

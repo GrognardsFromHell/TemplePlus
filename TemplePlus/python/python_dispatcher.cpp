@@ -309,13 +309,13 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 	m.def("create_history_dc_roll", [](objHndl performer, int dc, Dice& dice, int roll, std::string& text, BonusList& bonlist)-> int
 	{
 		auto ptext = bonusSys.CacheCustomText(text);
-		auto rollHistId = histSys.RollHistoryType4Add(performer, dc, ptext, dice.ToPacked(), roll, (BonusList*)&bonlist);
+		auto rollHistId = histSys.RollHistoryAddType4MiscCheckRoll(performer, dc, ptext, dice.ToPacked(), roll, (BonusList*)&bonlist);
 		return rollHistId;
 	});
 
 	m.def("create_history_attack_roll", [](objHndl performer, objHndl target, int roll, BonusList& bonlistAttacker, BonusList& bonlistTarget, uint32_t flags)-> int
 	{
-		auto rollHistId = histSys.RollHistoryType0Add(roll, -1, performer, target, (BonusList*)&bonlistAttacker, (BonusList*)&bonlistTarget, (D20CAF)flags);
+		auto rollHistId = histSys.RollHistoryAddType0AttackRoll(roll, -1, performer, target, (BonusList*)&bonlistAttacker, (BonusList*)&bonlistTarget, (D20CAF)flags);
 		return rollHistId;
 	});
 
