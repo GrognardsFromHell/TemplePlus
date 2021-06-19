@@ -1,3 +1,7 @@
+import tpdp
+import roll_history
+import logbook
+
 def deal_attack_damage(attacker, tgt, d20_data, flags, action_type): 
     # return value is used by Coup De Grace
     

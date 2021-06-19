@@ -4,9 +4,6 @@ import tpdp
 import logbook
 import roll_history
 
-class Error(Exception):
-    pass
-
 debug_enabled = False
 
 def debug_print(*args):
@@ -22,11 +19,6 @@ def handle_sanctuary():
 
 def add_percent_chance_history_stub():
     return
-
-class MissingHistoryWindow(Error):
-    def __init__(self, callback, message):
-        self.callback = callback
-        self.message = message
 
 
 def mirror_image_attack_roll(d20a, spell_id):
@@ -151,7 +143,6 @@ def to_hit_processing(d20a):
     if concealmentMissChance > 0:
         is_success, miss_chance_roll = rollConcealment(concealmentMissChance)
         if is_success:
-            #raise MissingHistoryWindow("RollHistoryType5Add", "Concealment History Window")
             roll_id = roll_history.add_percent_chance_roll(performer, target, concealmentMissChance, 60, miss_chance_roll, 194, 193)
             d20a.roll_id_1 = roll_id
         else: # concealment miss
