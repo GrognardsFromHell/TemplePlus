@@ -2066,6 +2066,28 @@ static PyObject* PyObjHandle_SoundmapCritter(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(soundId);
 }
 
+static PyObject* PyObjHandle_SoundPlayFriendlyFire(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return 0;
+	}
+
+	objHndl ffer;
+	if (!PyArg_ParseTuple(args, "O&:objhndl.sound_play_friendly_fire", &ConvertObjHndl, &ffer)) {
+		return 0;
+	}
+
+	auto dlgGetFriendlyFireVoiceLine = temple::GetRef<void(__cdecl)(objHndl, objHndl, char*, int*)>(0x10037450);
+
+	char ffText[1000]; int soundId;
+	dlgGetFriendlyFireVoiceLine(self->handle, ffer, ffText, &soundId);
+
+	critterSys.PlayCritterVoiceLine(self->handle, ffer, ffText, soundId);
+	
+	Py_RETURN_NONE;
+}
+
+
 static PyObject* PyObjHandle_Footstep(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	auto soundId = critterSys.SoundmapCritter(self->handle, 7);
@@ -4159,6 +4181,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "skill_roll", PyObjHandle_SkillRoll, METH_VARARGS, NULL },
 	{ "skill_roll_delta", PyObjHandle_SkillRollDelta, METH_VARARGS, "Does a Skill Roll, but returns the delta from the skill roll DC." },
 	{ "soundmap_critter", PyObjHandle_SoundmapCritter, METH_VARARGS, NULL },
+	{ "sound_play_friendly_fire", PyObjHandle_SoundPlayFriendlyFire, METH_VARARGS, NULL},
 	{ "spell_known_add", PyObjHandle_SpellKnownAdd, METH_VARARGS, NULL },
 	{ "spell_memorized_add", PyObjHandle_SpellMemorizedAdd, METH_VARARGS, NULL },
 	{ "spell_damage", PyObjHandle_SpellDamage, METH_VARARGS, NULL },
