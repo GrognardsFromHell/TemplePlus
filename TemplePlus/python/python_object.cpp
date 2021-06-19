@@ -2211,6 +2211,19 @@ static PyObject* PyObjHandle_GetInitiative(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(combatSys.GetInitiative(self->handle));
 }
 
+static PyObject* PyObjHandle_SetHpDamage(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return 0;
+	}
+	int hpDam;
+	if (!PyArg_ParseTuple(args, "i:objhndl.set_hp_damage", &hpDam)) {
+		return 0;
+	}
+	critterSys.SetHpDamage(self->handle, hpDam);
+	Py_RETURN_NONE;
+}
+
 static PyObject* PyObjHandle_SetInitiative(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -4123,6 +4136,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "saving_throw_with_args", PyObjHandle_SavingThrow, METH_VARARGS, NULL },
 	{ "saving_throw_spell", PyObjHandle_SavingThrowSpell, METH_VARARGS, NULL },
 	{ "secretdoor_detect", PyObjHandle_SecretdoorDetect, METH_VARARGS, NULL },
+	{ "set_hp_damage", PyObjHandle_SetHpDamage, METH_VARARGS, NULL },
 	{ "set_initiative", PyObjHandle_SetInitiative, METH_VARARGS, NULL },
 	{ "skill_level_get", PyObjHandle_SkillLevelGet, METH_VARARGS, NULL},
 	{ "skill_ranks_get", PyObjHandle_SkillRanksGet, METH_VARARGS, NULL },
