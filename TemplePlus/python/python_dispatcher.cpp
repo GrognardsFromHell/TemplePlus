@@ -949,6 +949,14 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 	py::class_<DispIoDamage, DispIO>(m, "EventObjDamage", "Used for damage dice and such")
 		.def_readwrite("attack_packet", &DispIoDamage::attackPacket)
 		.def_readwrite("damage_packet", &DispIoDamage::damage)
+		.def("dispatch", [](DispIoDamage& evtObj, objHndl handle, int dispType, int dispKey ) {
+			auto dispType_ = (enum_disp_type)dispType;
+			auto dispKey_ = (D20DispatcherKey)dispKey;
+			dispatch.DispatchDamage(handle, &evtObj, dispType_, dispKey_);
+			})
+		.def("dispatch_spell_damage", [](DispIoDamage& evtObj, objHndl handle, objHndl target, SpellPacketBody & pkt) {
+				dispatch.DispatchSpellDamage(handle, &evtObj.damage, target, &pkt);
+			})
 		;
 
 
