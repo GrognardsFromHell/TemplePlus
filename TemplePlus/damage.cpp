@@ -16,6 +16,10 @@
 #include "ui/ui_logbook.h"
 #include "party.h"
 #include <condition.h>
+#include "python/python_integration_obj.h"
+#include "pybind11/pybind11.h"
+
+namespace py = pybind11;
 
 static_assert(temple::validate_size<DispIoDamage, 0x550>::value, "DispIoDamage");
 
@@ -380,6 +384,9 @@ void Damage::DealSpellDamage(objHndl tgt, objHndl attacker, const Dice& dice, Da
 
 int Damage::DealAttackDamage(objHndl attacker, objHndl tgt, int d20Data, D20CAF flags, D20ActionType actionType)
 {
+
+	auto pyResult = DealAttackDamagePython(attacker, tgt, d20Data, flags, actionType);
+
 	aiSys.ProvokeHostility(attacker, tgt, 1, 0);
 
 	auto tgtObj = objSystem->GetObject(tgt);
@@ -492,7 +499,22 @@ int Damage::DealAttackDamage(objHndl attacker, objHndl tgt, int d20Data, D20CAF 
 		d20Sys.d20SendSignal(attacker, DK_SIG_Dropped_Enemy, (int)&evtObjDam, 0);
 	}
 
-	return addresses.GetDamageTypeOverallDamage(&evtObjDam.damage, DamageType::Unspecified);
+	return evtObjDam.damage.GetOverallDamageByType(DamageType::Unspecified);
+	//addresses.GetDamageTypeOverallDamage(&evtObjDam.damage, DamageType::Unspecified);
+}
+
+int Damage::DealAttackDamagePython(objHndl attacker, objHndl tgt, int d20Data, D20CAF flags, D20ActionType actionType)
+{
+	py::tuple args = py::make_tuple(py::cast<objHndl>(attacker), py::cast<objHndl>(tgt), d20Data, static_cast<int>(flags), static_cast<int>(actionType));
+
+	auto pyResult = pythonObjIntegration.ExecuteScript("d20_combat.damage_critter", "deal_attack_damage", args.ptr());
+	auto result = -1;
+	if (PyInt_Check(pyResult)) {
+		result = _PyInt_AsInt(pyResult);
+	}
+	Py_DECREF(pyResult);
+	
+	return result;
 }
 
 int Damage::DealWeaponlikeSpellDamage(objHndl tgt, objHndl attacker, const Dice & dice, DamageType type, int attackPower, int damFactor, int damageDescId, D20ActionType actionType, int spellId, D20CAF flags, int prjoectileIdx)
@@ -595,6 +617,8 @@ int Damage::DealWeaponlikeSpellDamage(objHndl tgt, objHndl attacker, const Dice 
 void Damage::DamageCritter(objHndl attacker, objHndl tgt, DispIoDamage & evtObjDam){
 	//return temple::GetRef<void(__cdecl)(objHndl, objHndl, DispIoDamage&)>(0x100B6B30)(attacker, tgt, evtObjDam);
 	
+	DamageCritterPython(attacker, tgt, evtObjDam);
+
 	auto tgtObj = objSystem->GetObject(tgt);
 	if (!tgtObj) return;
 
@@ -707,6 +731,15 @@ void Damage::DamageCritter(objHndl attacker, objHndl tgt, DispIoDamage & evtObjD
 		}
 	}
 
+}
+
+void Damage::DamageCritterPython(objHndl attacker, objHndl tgt, DispIoDamage& evtObjDam)
+{
+	py::object pyEvtObjDam = py::cast<DispIoDamage*>(&evtObjDam);
+	py::tuple args = py::make_tuple( py::cast<objHndl>(attacker), py::cast<objHndl>(tgt),pyEvtObjDam);
+
+	auto result = pythonObjIntegration.ExecuteScript("d20_combat.damage_critter", "damage_critter", args.ptr());
+	Py_DECREF(result);
 }
 
 void Damage::Heal(objHndl target, objHndl healer, const Dice& dice, D20ActionType actionType) {

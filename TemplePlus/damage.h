@@ -100,9 +100,11 @@ public:
 		int spellId, int flags);
 
 	/*
-		deals damage from a successful weapon attack
+		deals damage from a successful weapon attack.
+		Return value is used by Coup De Grace action.
 	*/
 	int DealAttackDamage(objHndl attacker, objHndl tgt, int d20Data, D20CAF flags, D20ActionType actionType);
+	
 	/*
 	    used for spells that have an attack roll
 	*/
@@ -139,6 +141,9 @@ public:
 private:
 	void Init();
 	void Exit() const;
+
+	void DamageCritterPython(objHndl attacker, objHndl tgt, DispIoDamage& evtObjDam);
+	int DealAttackDamagePython(objHndl attacker, objHndl tgt, int d20Data, D20CAF flags, D20ActionType actionType);
 };
 
 extern Damage damage;
