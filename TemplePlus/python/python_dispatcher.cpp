@@ -313,9 +313,9 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		return rollHistId;
 	});
 	
-	m.def("create_history_attack_roll", [](objHndl performer, objHndl target, int roll, BonusList& bonlistAttacker, BonusList& bonlistTarget, uint32_t flags)-> int
+	m.def("create_history_attack_roll", [](objHndl performer, objHndl target, int roll, BonusList& bonlistAttacker, BonusList& bonlistTarget, uint32_t flags, int critHitRoll = -1)-> int
 	{
-		auto rollHistId = histSys.RollHistoryAddType0AttackRoll(roll, -1, performer, target, (BonusList*)&bonlistAttacker, (BonusList*)&bonlistTarget, (D20CAF)flags);
+		auto rollHistId = histSys.RollHistoryAddType0AttackRoll(roll, critHitRoll, performer, target, (BonusList*)&bonlistAttacker, (BonusList*)&bonlistTarget, (D20CAF)flags);
 		return rollHistId;
 	});
 
