@@ -2224,6 +2224,20 @@ static PyObject* PyObjHandle_SetHpDamage(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+static PyObject* PyObjHandle_SetSubdualDamage(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return 0;
+	}
+	int dam;
+	if (!PyArg_ParseTuple(args, "i:objhndl.set_subdual_damage", &dam)) {
+		return 0;
+	}
+	critterSys.SetSubdualDamage(self->handle, dam);
+	Py_RETURN_NONE;
+}
+
+
 static PyObject* PyObjHandle_SetInitiative(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -4138,6 +4152,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "secretdoor_detect", PyObjHandle_SecretdoorDetect, METH_VARARGS, NULL },
 	{ "set_hp_damage", PyObjHandle_SetHpDamage, METH_VARARGS, NULL },
 	{ "set_initiative", PyObjHandle_SetInitiative, METH_VARARGS, NULL },
+	{ "set_subdual_damage", PyObjHandle_SetSubdualDamage, METH_VARARGS, NULL },
 	{ "skill_level_get", PyObjHandle_SkillLevelGet, METH_VARARGS, NULL},
 	{ "skill_ranks_get", PyObjHandle_SkillRanksGet, METH_VARARGS, NULL },
 	{ "skill_ranks_set", PyObjHandle_SkillRanksSet, METH_VARARGS, NULL },
