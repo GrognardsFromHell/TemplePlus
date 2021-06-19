@@ -21,6 +21,17 @@ void LocAndOffsets::Normalize() {
 	NormalizeAxis(off_y, location.locy);
 }
 
+void BonusList::Reset()
+{
+	memset(this, 0, sizeof(BonusList));
+	/*this->bonCount = 0;
+	this->bonCapperCount = 0;
+	this->zeroBonusCount = 0;
+	this->bonFlags = 0;*/
+	this->overallCapHigh.bonValue = 0x7fffFFFF;
+	this->overallCapLow.bonValue = 0x80000001;
+}
+
 int BonusList::GetEffectiveBonusSum() const {
 
 	int result = 0;

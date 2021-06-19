@@ -468,6 +468,11 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 	#pragma region Bonuslist etc
 	py::class_<BonusList>(m, "BonusList")
 			.def(py::init())
+			.def("__copy__", [](const BonusList& src) {
+					BonusList bonlist = src;
+					return bonlist;
+				})
+			.def("reset", &BonusList::Reset)
 			.def("add", [](BonusList & bonlist, int value, int bonType, int mesline) {
 				bonlist.AddBonus(value, bonType, mesline);
 			}, "Adds a bonus entry. Args are: value, type, and bonus.mes line number")
@@ -949,6 +954,10 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 
 	py::class_<DispIoAttackBonus, DispIO>(m, "EventObjAttack", "Used for fetching attack or AC bonuses")
 		.def(py::init())
+		.def("__copy__", [](const DispIoAttackBonus& self) {
+			DispIoAttackBonus copy = self;
+			return copy;
+			})
 		.def_readwrite("bonus_list", &DispIoAttackBonus::bonlist)
 		.def_readwrite("attack_packet", &DispIoAttackBonus::attackPacket)
 		.def("dispatch", [](DispIoAttackBonus& evtObj, objHndl handle, objHndl target, int disp_type, int disp_key)->int {
