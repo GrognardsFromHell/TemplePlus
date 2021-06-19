@@ -2,6 +2,7 @@ from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
 import logbook
+import roll_history
 
 class Error(Exception):
     pass
@@ -112,8 +113,8 @@ def rollConcealment(concealmentMissChance):
     concealmentDice = dice_new("1d100")
     concealmentDiceRoll = concealmentDice.roll()
     if concealmentDiceRoll > concealmentMissChance:
-        return True
-    return False
+        return True, concealmentDiceRoll
+    return False, concealmentDiceRoll
 
 def toHitResult(performerToHit, targetAc):
     toHitDice = dice_new("1d20")
@@ -145,21 +146,29 @@ def to_hit_processing(d20a):
     targetConcealment = getDefenderConcealment(d20a)
     performerCanSuppressConcealment = getSuppressConcealment(performer, target)
     if performerCanSuppressConcealment:
-        targetConcealmentValue = 0
+        targetConcealment = 0
     concealmentMissChance = max(targetConcealment, getAttackerConcealment(performer))
     if concealmentMissChance > 0:
-        if rollConcealment(concealmentMissChance):
+        is_success, miss_chance_roll = rollConcealment(concealmentMissChance)
+        if is_success:
             #raise MissingHistoryWindow("RollHistoryType5Add", "Concealment History Window")
-            add_percent_chance_history_stub()
-        else:
-            add_percent_chance_history_stub
-            if performer.has_feat(feat_blind_fight):
-                if rollConcealment(concealmentMissChance):
-                    add_percent_chance_history_stub()
-                else:
-                    add_percent_chance_history_stub()
-                    return
-            return
+            roll_id = roll_history.add_percent_chance_roll(performer, target, concealmentMissChance, 60, miss_chance_roll, 194, 193)
+            d20a.roll_id_1 = roll_id
+        else: # concealment miss
+            roll_id = roll_history.add_percent_chance_roll(performer, target, concealmentMissChance, 60, miss_chance_roll, 195, 193)
+            d20a.roll_id_1 = roll_id
+
+            # Blind fight - give second chance
+            if not performer.has_feat(feat_blind_fight):
+                return
+
+            is_success, miss_chance_roll = rollConcealment(concealmentMissChance)
+            if not is_success:
+                roll_id = roll_history.add_percent_chance_roll(performer, target, concealmentMissChance, 61, miss_chance_roll, 195, 193)
+                return
+            
+            roll_id = roll_history.add_percent_chance_roll(performer, target, concealmentMissChance, 61, miss_chance_roll, 194, 193)
+            d20a.roll_id_2 = roll_id
 
     #ToHitBonus Actions
     debug_print("To Hit")

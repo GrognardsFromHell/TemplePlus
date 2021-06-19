@@ -538,6 +538,9 @@
     <ClCompile Include="python\python_logbook.cpp">
       <Filter>python</Filter>
     </ClCompile>
+    <ClCompile Include="python\python_roll_history.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
