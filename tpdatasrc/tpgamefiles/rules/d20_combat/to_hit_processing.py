@@ -1,6 +1,7 @@
 from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
+import logbook
 
 class Error(Exception):
     pass
@@ -17,14 +18,6 @@ def handle_sanctuary():
     print("Missing sanctuary handling")
     return
 
-def logbook_increase_consecutive_hits():
-    print("Missing logbook func")
-    # raise LogbookError("temple::GetRef<void(__cdecl)(objHndl)>(0x1009A9B0)(performer);", "// logbook consecutive hits handling")
-    return
-
-def logbook_increase_consecutive_misses():
-    print("Missing logbook func")
-    return
 
 def add_percent_chance_history_stub():
     return
@@ -227,7 +220,7 @@ def to_hit_processing(d20a):
                 flags |= D20CAF_REROLL
                 to_hit_eo.attack_packet.set_flags(flags)
                 if not rerollDidHit:
-                    logbook_increase_consecutive_misses()
+                    logbook.inc_misses(performer)
                 else:
                     attackDidHit = True
 
@@ -242,7 +235,7 @@ def to_hit_processing(d20a):
     flags = to_hit_eo.attack_packet.get_flags()
     flags |= D20CAF_HIT
     to_hit_eo.attack_packet.set_flags(flags)
-    logbook_increase_consecutive_hits()
+    logbook.inc_hits(performer)
     
 
     #Check if attack was a critical hit

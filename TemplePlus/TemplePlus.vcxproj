@@ -138,6 +138,7 @@
     <ClCompile Include="python\python_integration_d20_action.cpp" />
     <ClCompile Include="python\python_integration_feat.cpp" />
     <ClCompile Include="python\python_integration_race.cpp" />
+    <ClCompile Include="python\python_logbook.cpp" />
     <ClCompile Include="raycast.cpp" />
     <ClCompile Include="obj_hooks.cpp" />
     <ClCompile Include="particles.cpp" />
