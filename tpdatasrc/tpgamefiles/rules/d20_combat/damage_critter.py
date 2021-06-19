@@ -90,10 +90,10 @@ def damage_critter(attacker, tgt, evt_obj_dam):
         floatColor = tf_red
     if damTot:
         combatMesLine = game.get_mesline("mes/combat.mes", 1)
-        tgt.float_text_line("{} {}".format(damTot, combatMesLine))
+        tgt.float_text_line("{} {}".format(damTot, combatMesLine), floatColor)
     elif subdualDamTot:
         combatMesLine = game.get_mesline("mes/combat.mes", 25)
-        tgt.float_text_line("{} {}".format(subdualDamTot, combatMesLine))
+        tgt.float_text_line("{} {}".format(subdualDamTot, combatMesLine), floatColor)
 
     #Push hit Animation
     if attacker:
