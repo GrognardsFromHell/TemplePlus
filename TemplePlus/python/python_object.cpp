@@ -1892,6 +1892,17 @@ static PyObject* PyObjHandle_FloatTextLine(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+static PyObject* PyObjHandle_GetAmmoUsed(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyObjHndl_CreateNull();
+	}
+
+	auto result = combatSys.CheckRangedWeaponAmmo(self->handle);	
+	return PyObjHndl_Create(result);
+}
+
+
 // Generic methods to get/set/clear flags
 template <obj_f flagsField>
 static PyObject* GetFlags(PyObject* obj, PyObject*) {
@@ -3993,6 +4004,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "float_mesfile_line", PyObjHandle_FloatMesFileLine, METH_VARARGS, NULL },
 	{ "float_text_line", PyObjHandle_FloatTextLine, METH_VARARGS, NULL },
 
+	{ "get_ammo_used", PyObjHandle_GetAmmoUsed, METH_VARARGS, "gets the handle of the ammo object. Checks validity - does it match the weapon? Otherwise returns null"},
 	{ "get_base_attack_bonus", PyObjHandle_GetBaseAttackBonus, METH_VARARGS, NULL },
 	{ "get_category_type", PyObjHandle_GetCategoryType, METH_VARARGS, NULL },
 	{ "get_character_classes", PyObjHandle_GetCharacterAllClassesSet, METH_VARARGS, "Get tuple with classes enums" },
