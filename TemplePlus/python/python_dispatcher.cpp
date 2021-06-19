@@ -547,6 +547,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			const auto _damType = static_cast<DamageType>(damType);
 			return damPkt.GetOverallDamageByType(_damType);
 		}, "Gets the total damage of a piticular type.")
+		.def("calc_final_damage", &DamagePacket::CalcFinalDamage)
 		.def_readwrite("final_damage", &DamagePacket::finalDamage, "Final Damage Value")
 		.def_readwrite("flags", &DamagePacket::flags, "1 - maximized, 2 - empowered")
 		.def_readwrite("bonus_list", &DamagePacket::bonuses)
