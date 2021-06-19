@@ -312,7 +312,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		auto rollHistId = histSys.RollHistoryAddType4MiscCheckRoll(performer, dc, ptext, dice.ToPacked(), roll, (BonusList*)&bonlist);
 		return rollHistId;
 	});
-
+	
 	m.def("create_history_attack_roll", [](objHndl performer, objHndl target, int roll, BonusList& bonlistAttacker, BonusList& bonlistTarget, uint32_t flags)-> int
 	{
 		auto rollHistId = histSys.RollHistoryAddType0AttackRoll(roll, -1, performer, target, (BonusList*)&bonlistAttacker, (BonusList*)&bonlistTarget, (D20CAF)flags);
