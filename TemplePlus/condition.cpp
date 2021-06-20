@@ -421,6 +421,7 @@ public:
 		replaceFunction(0x100EE050, GlobalGetArmorClass);
 		replaceFunction(0x100EE280, GlobalToHitBonus);
 		replaceFunction(0x100EE760, GlobalOnDamage);
+		replaceFunction(0x100EEBF0, GenericCallbacks::GlobalHpChanged);
 
 		replaceFunction(0x100DB690, DispelCheck);
 		replaceFunction(0x100DCF10, DispelAlignmentTouchAttackSignalHandler);
@@ -1359,7 +1360,7 @@ int GenericCallbacks::GlobalHpChanged(DispatcherCallbackArgs args){
 	auto hpCur = objects.StatLevelGet(handle, stat_hp_current);
 	auto subdualDam = obj->GetInt32(obj_f_critter_subdual_damage);
 	auto lastHitBy = obj->GetObjHndl(obj_f_last_hit_by);
-	auto hpChange = dispIo->data2;
+	auto &hpChange = (int64_t&)(dispIo->data1);
 
 	// Kill
 	if (hpCur <= -10){

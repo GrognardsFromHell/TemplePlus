@@ -317,7 +317,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 	{
 		auto rollHistId = histSys.RollHistoryAddType0AttackRoll(roll, critHitRoll, performer, target, (BonusList*)&bonlistAttacker, (BonusList*)&bonlistTarget, (D20CAF)flags);
 		return rollHistId;
-	});
+	}, py::arg("performer"), py::arg("target"), py::arg("roll_result"), py::arg("bonus_list_attacker"), py::arg("bonus_list_defender"), py::arg("flags"), py::arg("critical_hit_roll") = -1);
 
 	m.def("get_condition_ref", [](std::string& text)-> int
 	{
