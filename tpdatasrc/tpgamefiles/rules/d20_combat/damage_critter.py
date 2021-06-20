@@ -100,5 +100,5 @@ def damage_critter(attacker, tgt, evt_obj_dam):
     #Push hit Animation
     if attacker:
         if not skipHitAnim:
-            tgt.anim_goal_push_attack(attacker)
+            tgt.anim_goal_push_hit_by_weapon(attacker)
     return
