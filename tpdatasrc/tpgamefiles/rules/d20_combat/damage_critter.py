@@ -15,7 +15,7 @@ def missing_stub(msg):
     return 0
 
 def checkAnimationSkip(tgt):
-    if tgt.d20_query(Q_Dead):
+    if tgt.is_unconscious() or tgt.d20_query(Q_Prone):
         return True
     return False
 
