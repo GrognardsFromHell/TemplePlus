@@ -72,8 +72,7 @@ def damage_critter(attacker, tgt, evt_obj_dam):
     game.create_history_from_id(history_roll_id)
 
     #Send Signal HP_Changed
-    damTot_sign_extend = -1 if damTot > 0 else 0
-    tgt.d20_send_signal(S_HP_Changed, -damTot, damTot_sign_extend)
+    tgt.d20_send_signal(S_HP_Changed, -damTot, -1 if damTot > 0 else 0)
 
     #Triggers for dealing damage
     if damTot:
