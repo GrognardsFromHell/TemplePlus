@@ -2066,6 +2066,28 @@ static PyObject* PyObjHandle_SoundmapCritter(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(soundId);
 }
 
+static PyObject* PyObjHandle_SoundPlayFriendlyFire(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return 0;
+	}
+
+	objHndl ffer;
+	if (!PyArg_ParseTuple(args, "O&:objhndl.sound_play_friendly_fire", &ConvertObjHndl, &ffer)) {
+		return 0;
+	}
+
+	auto dlgGetFriendlyFireVoiceLine = temple::GetRef<void(__cdecl)(objHndl, objHndl, char*, int*)>(0x10037450);
+
+	char ffText[1000]; int soundId;
+	dlgGetFriendlyFireVoiceLine(self->handle, ffer, ffText, &soundId);
+
+	critterSys.PlayCritterVoiceLine(self->handle, ffer, ffText, soundId);
+	
+	Py_RETURN_NONE;
+}
+
+
 static PyObject* PyObjHandle_Footstep(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	auto soundId = critterSys.SoundmapCritter(self->handle, 7);
@@ -2210,6 +2232,33 @@ static PyObject* PyObjHandle_GetInitiative(PyObject* obj, PyObject* args) {
 	}
 	return PyInt_FromLong(combatSys.GetInitiative(self->handle));
 }
+
+static PyObject* PyObjHandle_SetHpDamage(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return 0;
+	}
+	int hpDam;
+	if (!PyArg_ParseTuple(args, "i:objhndl.set_hp_damage", &hpDam)) {
+		return 0;
+	}
+	critterSys.SetHpDamage(self->handle, hpDam);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_SetSubdualDamage(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return 0;
+	}
+	int dam;
+	if (!PyArg_ParseTuple(args, "i:objhndl.set_subdual_damage", &dam)) {
+		return 0;
+	}
+	critterSys.SetSubdualDamage(self->handle, dam);
+	Py_RETURN_NONE;
+}
+
 
 static PyObject* PyObjHandle_SetInitiative(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
@@ -4123,13 +4172,16 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "saving_throw_with_args", PyObjHandle_SavingThrow, METH_VARARGS, NULL },
 	{ "saving_throw_spell", PyObjHandle_SavingThrowSpell, METH_VARARGS, NULL },
 	{ "secretdoor_detect", PyObjHandle_SecretdoorDetect, METH_VARARGS, NULL },
+	{ "set_hp_damage", PyObjHandle_SetHpDamage, METH_VARARGS, NULL },
 	{ "set_initiative", PyObjHandle_SetInitiative, METH_VARARGS, NULL },
+	{ "set_subdual_damage", PyObjHandle_SetSubdualDamage, METH_VARARGS, NULL },
 	{ "skill_level_get", PyObjHandle_SkillLevelGet, METH_VARARGS, NULL},
 	{ "skill_ranks_get", PyObjHandle_SkillRanksGet, METH_VARARGS, NULL },
 	{ "skill_ranks_set", PyObjHandle_SkillRanksSet, METH_VARARGS, NULL },
 	{ "skill_roll", PyObjHandle_SkillRoll, METH_VARARGS, NULL },
 	{ "skill_roll_delta", PyObjHandle_SkillRollDelta, METH_VARARGS, "Does a Skill Roll, but returns the delta from the skill roll DC." },
 	{ "soundmap_critter", PyObjHandle_SoundmapCritter, METH_VARARGS, NULL },
+	{ "sound_play_friendly_fire", PyObjHandle_SoundPlayFriendlyFire, METH_VARARGS, NULL},
 	{ "spell_known_add", PyObjHandle_SpellKnownAdd, METH_VARARGS, NULL },
 	{ "spell_memorized_add", PyObjHandle_SpellMemorizedAdd, METH_VARARGS, NULL },
 	{ "spell_damage", PyObjHandle_SpellDamage, METH_VARARGS, NULL },

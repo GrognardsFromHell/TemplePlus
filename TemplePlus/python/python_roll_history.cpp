@@ -5,6 +5,7 @@
 #include "python_object.h"
 #include <pybind11/embed.h>
 #include "../history.h"
+#include "../damage.h"
 
 namespace py = pybind11;
 
@@ -28,7 +29,15 @@ protected:
 
 PYBIND11_EMBEDDED_MODULE(roll_history, m) {
 	
+	
+
+	m.def("add_damage_roll", [](objHndl attacker, objHndl tgt, DamagePacket& dmg) ->int{
+		auto id = histSys.RollHistoryAddType1DamageRoll(attacker, tgt, &dmg);
+		return id;
+		});
+
 	m.def("add_percent_chance_roll", [](objHndl performer, objHndl tgt, int failChance, int combatMesTitle, int rollResult, int combatMeslineResultText, int combatMeslineCheckType ) {
-		histSys.RollHistoryAddType5PercentChanceRoll(performer, tgt, failChance, combatMesTitle, rollResult, combatMeslineResultText, combatMeslineCheckType);
+		auto id = histSys.RollHistoryAddType5PercentChanceRoll(performer, tgt, failChance, combatMesTitle, rollResult, combatMeslineResultText, combatMeslineCheckType);
+		return id;
 		});
 }

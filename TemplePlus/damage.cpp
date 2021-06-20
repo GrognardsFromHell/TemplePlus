@@ -637,8 +637,9 @@ int Damage::DealWeaponlikeSpellDamage(objHndl tgt, objHndl attacker, const Dice 
 void Damage::DamageCritter(objHndl attacker, objHndl tgt, DispIoDamage & evtObjDam){
 	//return temple::GetRef<void(__cdecl)(objHndl, objHndl, DispIoDamage&)>(0x100B6B30)(attacker, tgt, evtObjDam);
 	
-	DamageCritterPython(attacker, tgt, evtObjDam);
+	return DamageCritterPython(attacker, tgt, evtObjDam);
 
+	// replaced with Python handling, keeping this for reference
 	auto tgtObj = objSystem->GetObject(tgt);
 	if (!tgtObj) return;
 
@@ -675,7 +676,8 @@ void Damage::DamageCritter(objHndl attacker, objHndl tgt, DispIoDamage & evtObjD
 	auto histId = histSys.RollHistoryAddType1DamageRoll(attacker, tgt, &evtObjDam.damage );
 	histSys.CreateRollHistoryString(histId);
 
-	d20Sys.d20SendSignal(tgt, D20DispatcherKey::DK_SIG_HP_Changed, -damTot, damTot < 0 ? -1 : 0);
+	int64_t hpChanged = -damTot;
+	d20Sys.d20SendSignal(tgt, D20DispatcherKey::DK_SIG_HP_Changed, hpChanged);
 
 	if (damTot > 0) {
 		if (tgt) {
