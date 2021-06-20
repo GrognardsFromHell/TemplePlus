@@ -637,8 +637,9 @@ int Damage::DealWeaponlikeSpellDamage(objHndl tgt, objHndl attacker, const Dice 
 void Damage::DamageCritter(objHndl attacker, objHndl tgt, DispIoDamage & evtObjDam){
 	//return temple::GetRef<void(__cdecl)(objHndl, objHndl, DispIoDamage&)>(0x100B6B30)(attacker, tgt, evtObjDam);
 	
-	DamageCritterPython(attacker, tgt, evtObjDam);
+	return DamageCritterPython(attacker, tgt, evtObjDam);
 
+	// replaced with Python handling, keeping this for reference
 	auto tgtObj = objSystem->GetObject(tgt);
 	if (!tgtObj) return;
 
