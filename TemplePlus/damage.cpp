@@ -675,7 +675,8 @@ void Damage::DamageCritter(objHndl attacker, objHndl tgt, DispIoDamage & evtObjD
 	auto histId = histSys.RollHistoryAddType1DamageRoll(attacker, tgt, &evtObjDam.damage );
 	histSys.CreateRollHistoryString(histId);
 
-	d20Sys.d20SendSignal(tgt, D20DispatcherKey::DK_SIG_HP_Changed, -damTot, damTot < 0 ? -1 : 0);
+	int64_t hpChanged = -damTot;
+	d20Sys.d20SendSignal(tgt, D20DispatcherKey::DK_SIG_HP_Changed, hpChanged);
 
 	if (damTot > 0) {
 		if (tgt) {

@@ -4,7 +4,7 @@ import logbook
 
 def deal_attack_damage(attacker, tgt, d20_data, flags, action_type): 
     # return value is used by Coup De Grace
-    
+    print('Quel dommage')
     #...
     # should call damage_critter() eventually
     #...
@@ -18,6 +18,23 @@ def checkAnimationSkip(tgt):
     if tgt.d20_query(Q_Dead):
         return True
     return False
+
+def float_hp_damage(attacker, tgt, damTot, subdualDamTot):
+
+    leaderOfAttacker = attacker.leader_get()
+    if leaderOfAttacker in game.party:
+        floatColor = tf_yellow
+    elif attacker.type == obj_t_pc:
+        floatColor = tf_white
+    else:
+        floatColor = tf_red
+    if damTot:
+        combatMesLine = game.get_mesline("mes/combat.mes", 1) # HP
+        tgt.float_text_line("{} {}".format(damTot, combatMesLine), floatColor)
+    elif subdualDamTot:
+        combatMesLine = game.get_mesline("mes/combat.mes", 25) # Nonlethal
+        tgt.float_text_line("{} {}".format(subdualDamTot, combatMesLine), floatColor)
+    return
 
 def damage_critter(attacker, tgt, evt_obj_dam):
     if not tgt:
@@ -41,11 +58,12 @@ def damage_critter(attacker, tgt, evt_obj_dam):
     evt_obj_dam.dispatch(tgt, ET_OnTakingDamage2, EK_NONE)
 
     #Set last hit by
-    missing_stub("tgt.obj_set_int(obj_f_last_hit_by, attacker) #attacker needs to be an int")
+    if attacker != OBJ_HANDLE_NULL:
+        tgt.obj_set_obj(obj_f_last_hit_by, attacker)
 
     #Assign damage
     damTot = max(evt_obj_dam.damage_packet.get_overall_damage(), 0)
-    hpDam = tgt.stat_level_get(stat_hp_max) - tgt.stat_level_get(stat_hp_current) #python_object has no get_hp_damage
+    hpDam = tgt.obj_get_int(obj_f_hp_damage)
     hpDam += damTot
     tgt.set_hp_damage(hpDam)
 
@@ -54,14 +72,8 @@ def damage_critter(attacker, tgt, evt_obj_dam):
     game.create_history_from_id(history_roll_id)
 
     #Send Signal HP_Changed
-    #d20Sys.d20SendSignal(tgt, D20DispatcherKey::DK_SIG_HP_Changed, -damTot, damTot < 0 ? -1 : 0);
-    #How can damTot be below 0 at this point? I don't think it can be
-    #def not in my code but in the c++ as well:
-    #auto damTot = evtObjDam.damage.GetOverallDamage();
-    #if (damTot < 0) damTot = 0;
-    #will keep the orig line for now but would suggest to simply use 0
-    signalCode = -1 if damTot < 0 else 0
-    tgt.d20_send_signal(S_HP_Changed, -damTot, signalCode);
+    damTot_sign_extend = -1 if damTot > 0 else 0
+    tgt.d20_send_signal(S_HP_Changed, -damTot, damTot_sign_extend)
 
     #Triggers for dealing damage
     if damTot:
@@ -73,29 +85,21 @@ def damage_critter(attacker, tgt, evt_obj_dam):
             logbook.record_highest_damage(isWeaponDamage, damTot, attacker, tgt)
             #Check for friendly fire
             if attacker != tgt and attacker.is_friendly(tgt):
-                missing_stub("tgt.sound_play_friendly_fire() # I don't know what arg to pass")
+                tgt.sound_play_friendly_fire(attacker)
 
-    #Subdual Damage TBD
-    missing_stub("Subdual Damage")
-    subdualDamTot = 0
+    #Subdual Damage
+    subdualDamTot = evt_obj_dam.damage_packet.get_overall_damage_by_type(D20DT_SUBDUAL)
+    if subdualDamTot > 0 and tgt != OBJ_HANDLE_NULL:
+        tgt.condition_add("Damaged", subdualDamTot)
+    subdual_dam = tgt.obj_get_int(obj_f_critter_subdual_damage)
+    tgt.set_subdual_damage(subdual_dam + subdualDamTot)
+    tgt.d20_send_signal(S_HP_Changed, subdualDamTot, -1 if subdualDamTot > 0 else 0)
 
     #Create Floatline
-    #python_object has no isPC or isNPC
-    leaderOfAttacker = attacker.leader_get()
-    if leaderOfAttacker in game.party:
-        floatColor = tf_yellow
-    elif attacker in game.party:
-        floatColor = tf_white
-    else:
-        floatColor = tf_red
-    if damTot:
-        combatMesLine = game.get_mesline("mes/combat.mes", 1)
-        tgt.float_text_line("{} {}".format(damTot, combatMesLine), floatColor)
-    elif subdualDamTot:
-        combatMesLine = game.get_mesline("mes/combat.mes", 25)
-        tgt.float_text_line("{} {}".format(subdualDamTot, combatMesLine), floatColor)
+    float_hp_damage(attacker, tgt, damTot, subdualDamTot)
 
     #Push hit Animation
     if attacker:
         if not skipHitAnim:
-            missing_stub("gameSystems->GetAnim().PushGoalHitByWeapon(attacker, tgt);")
+            tgt.anim_goal_push_attack(attacker)
+    return
