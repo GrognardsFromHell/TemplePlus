@@ -12,8 +12,19 @@ def debug_print(*args):
             print arg,
     return
 
-def handle_sanctuary():
-    print("Missing sanctuary handling")
+def handle_sanctuary(to_hit_eo, d20a):
+    tgt = d20a.target
+    if tgt == OBJ_HANDLE_NULL or not tgt.is_critter():
+        return
+    if d20a.query_can_be_affected_action_perform(tgt):
+        return
+    flags = to_hit_eo.attack_packet.get_flags()
+    if flags & D20CAF_CRITICAL:
+        flags &= ~D20CAF_CRITICAL
+    if flags & D20CAF_HIT:
+        flags &= ~D20CAF_HIT
+        to_hit_eo.bonus_list.add_zeroed(262) # Action lost due to Sanctuary
+    to_hit_eo.attack_packet.set_flags(flags)
     return
 
 
@@ -287,8 +298,7 @@ def to_hit_processing(d20a):
     #unsure why it is not simply tgt, will copy it
     to_hit_eo.dispatch(to_hit_eo.attack_packet.target, OBJ_HANDLE_NULL, ET_OnDeflectArrows, EK_NONE)
 
-    # TODO
-    handle_sanctuary()
+    handle_sanctuary(to_hit_eo, d20a)
     
     #Set flags
     debug_print("Final")
