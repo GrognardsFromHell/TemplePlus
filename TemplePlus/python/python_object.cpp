@@ -2840,6 +2840,17 @@ static PyObject* PyObjHandle_IsCategorySubtype(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(result);
 }
 
+static PyObject* PyObjHandle_IsCritter(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	
+	auto result = (int) objects.IsCritter(self->handle);
+	return PyInt_FromLong(result);
+}
+
+
 static PyObject* PyObjHandle_RumorLogAdd(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -4086,6 +4097,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "is_active_combatant", PyObjHandle_IsActiveCombatant, METH_VARARGS, NULL },
 	{ "is_category_type", PyObjHandle_IsCategoryType, METH_VARARGS, NULL },
 	{ "is_category_subtype", PyObjHandle_IsCategorySubtype, METH_VARARGS, NULL },
+	{ "is_critter", PyObjHandle_IsCritter, METH_VARARGS, NULL},
 	{ "is_favored_enemy", PyObjHandle_FavoredEnemy, METH_VARARGS, NULL },
 	{ "is_flanked_by", PyObjHandle_IsFlankedBy, METH_VARARGS, NULL },
 	{ "is_friendly", PyObjHandle_IsFriendly, METH_VARARGS, NULL },
