@@ -11,7 +11,7 @@ def sereneVisageSpellBonusToBluff(attachee, args, evt_obj):
     evt_obj.bonus_list.add(bonusValue, bonusType, "~Serene Visage~[TAG_SPELLS_SERENE_VISAGE] ~Insight~[TAG_MODIFIER_INSIGHT] Bonus")
     return 0
 
-sereneVisageSpell = PythonModifier("sp-Serene Visage", 3) # spell_id, duration, bonusValue
+sereneVisageSpell = PythonModifier("sp-Serene Visage", 4) # spell_id, duration, bonusValue, empty
 sereneVisageSpell.AddHook(ET_OnGetSkillLevel, EK_SKILL_BLUFF, sereneVisageSpellBonusToBluff,())
 sereneVisageSpell.AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, ())
 sereneVisageSpell.AddHook(ET_OnGetEffectTooltip, EK_NONE, spell_utils.spellEffectTooltip, ())

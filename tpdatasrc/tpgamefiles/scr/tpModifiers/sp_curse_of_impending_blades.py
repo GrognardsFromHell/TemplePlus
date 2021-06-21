@@ -19,7 +19,7 @@ def curseOfImpendingBladesSpellCheckRemoveBySpell(attachee, args, evt_obj):
         args.remove_spell_mod()
     return 0
 
-curseOfImpendingBladesSpell = PythonModifier("sp-Curse of Impending Blades", 2) # spell_id, duration
+curseOfImpendingBladesSpell = PythonModifier("sp-Curse of Impending Blades", 3) # spell_id, duration, empty
 curseOfImpendingBladesSpell.AddHook(ET_OnGetAC, EK_NONE, curseOfImpendingBladesSpellPenaltyToAc,())
 curseOfImpendingBladesSpell.AddHook(ET_OnConditionAddPre, EK_NONE, curseOfImpendingBladesSpellCheckRemoveBySpell, ())
 curseOfImpendingBladesSpell.AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, (spell_curse_of_impending_blades,))

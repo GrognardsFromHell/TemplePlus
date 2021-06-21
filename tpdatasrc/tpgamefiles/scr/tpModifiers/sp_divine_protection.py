@@ -11,7 +11,7 @@ def divineProtectionSpellBonus(attachee, args, evt_obj):
     evt_obj.bonus_list.add(bonusValue, bonusType, "~Morale~[TAG_MODIFIER_MORALE] : ~Divine Protection~[TAG_SPELLS_DIVINE_PROTECTION]")
     return 0
 
-divineProtectionSpell = PythonModifier("sp-Divine Protection", 2) # spell_id, duration
+divineProtectionSpell = PythonModifier("sp-Divine Protection", 3) # spell_id, duration, empty
 divineProtectionSpell.AddHook(ET_OnGetAC, EK_NONE, divineProtectionSpellBonus,())
 divineProtectionSpell.AddHook(ET_OnSaveThrowLevel, EK_NONE, divineProtectionSpellBonus,())
 divineProtectionSpell.AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, ())

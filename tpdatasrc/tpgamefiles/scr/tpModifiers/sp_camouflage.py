@@ -11,7 +11,7 @@ def camouflageSpellBonusToHide(attachee, args, evt_obj):
     evt_obj.bonus_list.add(bonusValue, bonusType, "~Camouflage~[TAG_SPELLS_CAMOUFLAGE] ~Circumstance~[TAG_MODIFIER_CIRCUMSTANCE] Bonus")
     return 0
 
-camouflageSpell = PythonModifier("sp-Camouflage", 2) # spell_id, duration
+camouflageSpell = PythonModifier("sp-Camouflage", 3) # spell_id, duration, empty
 camouflageSpell.AddHook(ET_OnGetSkillLevel, EK_SKILL_HIDE, camouflageSpellBonusToHide,())
 camouflageSpell.AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, ())
 camouflageSpell.AddHook(ET_OnGetEffectTooltip, EK_NONE, spell_utils.spellEffectTooltip, ())

@@ -17,7 +17,7 @@ def demonDirgeSpellOnBeginRound(attachee, args, evt_obj):
     attachee.spell_damage(spellPacket.caster, damageType, spellDamageDice, D20DAP_UNSPECIFIED, D20A_CAST_SPELL, args.get_arg(0))
     return 0
 
-demonDirgeSpell = PythonModifier("sp-Demon Dirge", 2) # spell_id, duration
+demonDirgeSpell = PythonModifier("sp-Demon Dirge", 3) # spell_id, duration, empty
 demonDirgeSpell.AddHook(ET_OnBeginRound, EK_NONE, demonDirgeSpellOnBeginRound, ())
 demonDirgeSpell.AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, ())
 demonDirgeSpell.AddHook(ET_OnGetEffectTooltip, EK_NONE, spell_utils.spellEffectTooltip, ())

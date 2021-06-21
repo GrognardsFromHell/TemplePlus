@@ -19,7 +19,7 @@ def curseOfIllFortuneSpellCheckRemoveBySpell(attachee, args, evt_obj):
         args.remove_spell_mod()
     return 0
 
-curseOfIllFortuneSpell = PythonModifier("sp-Curse of Ill Fortune", 2) # spell_id, duration
+curseOfIllFortuneSpell = PythonModifier("sp-Curse of Ill Fortune", 3) # spell_id, duration, empty
 curseOfIllFortuneSpell.AddHook(ET_OnToHitBonus2, EK_NONE, curseOfIllFortuneSpellPenalty,())
 curseOfIllFortuneSpell.AddHook(ET_OnSaveThrowLevel, EK_NONE, curseOfIllFortuneSpellPenalty,())
 curseOfIllFortuneSpell.AddHook(ET_OnGetAbilityCheckModifier, EK_NONE, curseOfIllFortuneSpellPenalty,())

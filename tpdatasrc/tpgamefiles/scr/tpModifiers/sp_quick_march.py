@@ -18,7 +18,7 @@ def quickMarchSpellMovementBonus(attachee, args, evt_obj):
     evt_obj.bonus_list.add(bonusValue, bonusType ,"~Quick March~[TAG_SPELLS_QUICK_MARCH] ~Enhancement~[TAG_ENHANCEMENT] Bonus")
     return 0
 
-quickMarchSpell = PythonModifier("sp-Quick March", 2) # spell_id, duration
+quickMarchSpell = PythonModifier("sp-Quick March", 3) # spell_id, duration, empty
 quickMarchSpell.AddHook(ET_OnConditionAdd, EK_NONE, quickMarchSpellCorrectDurationForCaster,())
 quickMarchSpell.AddHook(ET_OnGetMoveSpeedBase, EK_NONE, quickMarchSpellMovementBonus,())
 quickMarchSpell.AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, ())

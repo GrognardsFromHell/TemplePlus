@@ -11,7 +11,7 @@ def waveOfGriefSpellPenalty(attachee, args, evt_obj):
     evt_obj.bonus_list.add(bonusValue ,bonusType, "~Wave of Grief~[TAG_SPELLS_WAVE_OF_GRIEF] Penalty")
     return 0
 
-waveOfGriefSpell = PythonModifier("sp-Wave of Grief", 2) # spell_id, duration
+waveOfGriefSpell = PythonModifier("sp-Wave of Grief", 3) # spell_id, duration, empty
 waveOfGriefSpell.AddHook(ET_OnToHitBonus2, EK_NONE, waveOfGriefSpellPenalty,())
 waveOfGriefSpell.AddHook(ET_OnGetSkillLevel, EK_NONE, waveOfGriefSpellPenalty,())
 waveOfGriefSpell.AddHook(ET_OnGetAbilityCheckModifier, EK_NONE, waveOfGriefSpellPenalty,())

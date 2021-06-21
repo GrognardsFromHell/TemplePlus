@@ -11,7 +11,7 @@ def appraisingTouchSpellBonusToAppraise(attachee, args, evt_obj):
     evt_obj.bonus_list.add(bonusValue, bonusType, "~Appraising Touch~[TAG_SPELLS_APPRAISING_TOUCH] ~Insight~[TAG_MODIFIER_INSIGHT] Bonus")
     return 0
 
-appraisingTouchSpell = PythonModifier("sp-Appraising Touch", 2) # spell_id, duration
+appraisingTouchSpell = PythonModifier("sp-Appraising Touch", 3) # spell_id, duration, empty
 appraisingTouchSpell.AddHook(ET_OnGetSkillLevel, EK_SKILL_APPRAISE, appraisingTouchSpellBonusToAppraise, ())
 appraisingTouchSpell.AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, ())
 appraisingTouchSpell.AddHook(ET_OnGetEffectTooltip, EK_NONE, spell_utils.spellEffectTooltip, ())

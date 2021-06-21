@@ -11,7 +11,7 @@ def stickyFingersSpellSkillBonus(attachee, args, evt_obj):
     evt_obj.bonus_list.add(bonusValue, bonusType, "~Sticky Fingers~[TAG_SPELLS_STICKY_FINGERS] Bonus")
     return 0
 
-stickyFingersSpell = PythonModifier("sp-Sticky Fingers", 2) # spell_id, duration
+stickyFingersSpell = PythonModifier("sp-Sticky Fingers", 3) # spell_id, duration, empty
 stickyFingersSpell.AddHook(ET_OnGetSkillLevel, EK_SKILL_PICK_POCKET, stickyFingersSpellSkillBonus,())
 stickyFingersSpell.AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, ())
 stickyFingersSpell.AddHook(ET_OnGetEffectTooltip, EK_NONE, spell_utils.spellEffectTooltip, ())

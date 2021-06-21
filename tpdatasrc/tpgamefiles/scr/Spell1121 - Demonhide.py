@@ -11,9 +11,18 @@ def OnSpellEffect(spell):
     spell.duration = 1 * spell.caster_level # 1 round/level
     spellTarget = spell.target_list[0]
     spellTargetAlignment = spellTarget.obj.stat_level_get(stat_alignment)
+    radialChoice = spell.spell_get_menu_arg(RADIAL_MENU_PARAM_MIN_SETTING)
+
+    if radialChoice == 1:
+        drBreakType = D20DAP_COLD #COLD = Cold Iron
+    elif radialChoice == 2:
+        drBreakType = D20DAP_HOLY
+    else:
+        #Fallback
+        drBreakType = D20DAP_HOLY
 
     if spellTargetAlignment & ALIGNMENT_EVIL: #Demonhide works only on evil targets
-        if spellTarget.obj.condition_add_with_args('sp-Demonhide', spell.id, spell.duration):
+        if spellTarget.obj.condition_add_with_args('sp-Demonhide', spell.id, spell.duration, drBreakType):
             spellTarget.partsys_id = game.particles('sp-Demonhide', spellTarget.obj)
         else:
             spellTarget.obj.float_mesfile_line('mes\\spell.mes', 30000)

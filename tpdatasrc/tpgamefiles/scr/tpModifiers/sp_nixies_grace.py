@@ -29,12 +29,12 @@ def nixiesGraceSpellCharismaBonus(attachee, args, evt_obj):
 
 def nixiesGraceSpellColdIronDr(attachee, args, evt_obj):
     drAmount = 5
-    drBreakType = D20DAP_COLD
+    drBreakType = D20DAP_COLD #COLD = Cold Iron
     damageMesId = 126 #ID126 in damage.mes is DR
     evt_obj.damage_packet.add_physical_damage_res(drAmount, drBreakType, damageMesId)
     return 0
 
-nixiesGraceSpell = PythonModifier("sp-Nixies Grace", 2) # spell_id, duration
+nixiesGraceSpell = PythonModifier("sp-Nixies Grace", 3) # spell_id, duration, empty
 nixiesGraceSpell.AddHook(ET_OnTakingDamage, EK_NONE, nixiesGraceSpellColdIronDr,())
 nixiesGraceSpell.AddHook(ET_OnAbilityScoreLevel, EK_STAT_CHARISMA, nixiesGraceSpellCharismaBonus,())
 nixiesGraceSpell.AddHook(ET_OnAbilityScoreLevel, EK_STAT_DEXTERITY, nixiesGraceSpellDexterityBonus,())
