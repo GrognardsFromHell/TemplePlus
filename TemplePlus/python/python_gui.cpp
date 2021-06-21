@@ -89,18 +89,18 @@ PYBIND11_EMBEDDED_MODULE(tpgui, m) {
 	m.doc() = "Temple+ GUI, used for custom user UIs.";
 
 	m.def("_add_container", [](const std::string& id, int w, int h) {
-		WidgetContainer wnd(w, h);
-		wnd.SetId(id);
-		return wnd.GetWidgetId();
+		auto wnd = std::make_unique<WidgetContainer>(w, h);
+		wnd->SetId(id);
+		return wnd;
 		});
 
 	m.def("_add_button", [](const std::string& id, int w=-1, int h=-1) {
-		WidgetButton btn;
-		btn.SetId(id);
+		auto btn = std::make_unique<WidgetButton >();
+		btn->SetId(id);
 		if (w > 0 && h > 0) {
-			btn.SetSize({ w,h });
+			btn->SetSize({ w,h });
 		}
-		return btn.GetWidgetId();
+		return btn;
 		});
 
 	m.def("_get_container", &GetContainer, py::return_value_policy::reference);
