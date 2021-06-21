@@ -2,6 +2,14 @@ import tpdp
 import roll_history
 import logbook
 
+debug_enabled = True
+
+def debug_print(*args):
+    if debug_enabled:
+        for arg in args:
+            print arg,
+    return
+
 def playSoundEffect(weaponUsed, attacker, tgt, sound_number):
     missing_stub("auto soundId = inventory.GetSoundIdForItemEvent(weaponUsed, attacker, tgt, 6); sound tbd")
     missing_stub("sound.PlaySoundAtObj(soundId, attacker); sound tbd")
@@ -10,9 +18,6 @@ def playSoundEffect(weaponUsed, attacker, tgt, sound_number):
 def deal_attack_damage(attacker, tgt, d20_data, flags, action_type): 
     # return value is used by Coup De Grace
     print('Quel dommage')
-
-    #Get Python damage
-    missing_stub("auto pyResult = DealAttackDamagePython(attacker, tgt, d20Data, flags, actionType)")
 
     #Provoke Hostility
     missing_stub("aiSys.ProvokeHostility(attacker, tgt, 1, 0);")
@@ -35,20 +40,20 @@ def deal_attack_damage(attacker, tgt, d20_data, flags, action_type):
     if evt_obj_dam.attack_packet.get_flags() & D20CAF_TOUCH_ATTACK:
         evt_obj_dam.attack_packet.set_weapon_used(unarmed)
     elif evt_obj_dam.attack_packet.get_flags() & D20CAF_SECONDARY_WEAPON:
-        offhandItem = performer.item_worn_at(item_wear_weapon_secondary)
+        offhandItem = attacker.item_worn_at(item_wear_weapon_secondary)
         if offhandItem.type != obj_t_weapon:
             evt_obj_dam.attack_packet.set_weapon_used(unarmed)
         else:
             evt_obj_dam.attack_packet.set_weapon_used(offhandItem)
     else:
-        mainhandItem = performer.item_worn_at(item_wear_weapon_primary)
+        mainhandItem = attacker.item_worn_at(item_wear_weapon_primary)
         if mainhandItem.type != obj_t_weapon:
             evt_obj_dam.attack_packet.set_weapon_used(unarmed)
         else:
             evt_obj_dam.attack_packet.set_weapon_used(mainhandItem)
 
     #Check ammo
-    evt_obj_dam.attack_packet.ammo_item = performer.get_ammo_used()
+    evt_obj_dam.attack_packet.ammo_item = attacker.get_ammo_used()
 
     #Check Concealment Miss
     #Remark: I can't remember that D20CAF_CONCEALMENT_MISS was actually set
@@ -57,13 +62,13 @@ def deal_attack_damage(attacker, tgt, d20_data, flags, action_type):
         missing_stub("histSys.CreateRollHistoryLineFromMesfile(11, attacker, tgt); to what mesfile this is referring to?")
         attacker.float_mesfile_line('mes\\combat.mes', 45) # Miss (Concealment)
         playSoundEffect(evt_obj_dam.attack_packet.get_weapon_used(), attacker, tgt, 6)
-        attacker.d20_send_signal(S_Attack_Made, (int)&evt_obj_dam, 0)
+        missing_stub("attacker.d20_send_signal(S_Attack_Made, int(&evt_obj_dam), 0)")
         return -1;
 
     #Check normal Miss
     if not flags & D20CAF_HIT:
         attacker.float_mesfile_line('mes\\combat.mes', 29) # Miss
-        attacker.d20_send_signal(S_Attack_Made, (int)&evt_obj_dam, 0)
+        missing_stub("attacker.d20_send_signal(S_Attack_Made, int(&evt_obj_dam), 0)")
         playSoundEffect(evt_obj_dam.attack_packet.get_weapon_used(), attacker, tgt, 6)
         #Check if arrow was deflected
         if flags & D20CAF_DEFLECT_ARROWS:
@@ -78,15 +83,60 @@ def deal_attack_damage(attacker, tgt, d20_data, flags, action_type):
 
     #Check Friendly Fire
     #if (tgt && attacker && critterSys.NpcAllegianceShared(tgt, attacker) && combatSys.AffiliationSame(tgt, attacker))
-    if attacker != tgt and attacker.is_friendly(tgt):
+    #if attacker != tgt and attacker.is_friendly(tgt):
+    if attacker.allegiance_shared(tgt):
         tgt.float_mesfile_line('mes\\combat.mes', 107) # Friendly Fire
 
     #Check if is already unconscious
-    isUnconsciousAlready = tgt.is_unconscious()
+    wasAlreadyUnconscious = tgt.is_unconscious()
 
-    # should call damage_critter() eventually
-    #...
-    return -1
+    #dispatch damage
+    evt_obj_dam.dispatch(attacker, ET_OnDealingDamage, EK_NONE)
+
+    #handle critical hit
+    if evt_obj_dam.attack_packet.get_flags() & D20CAF_CRITICAL:
+        #create evt_obj_crit_dice
+        evt_obj_crit_dice = tpdp.EventObjAttack()
+        evt_obj_crit_dice.attack_packet.action_type = action_type
+        evt_obj_crit_dice.attack_packet.attacker = attacker
+        evt_obj_crit_dice.attack_packet.target = tgt
+        evt_obj_crit_dice.attack_packet.event_key = d20_data
+        evt_obj_crit_dice.attack_packet.set_flags(flags)
+        evt_obj_crit_dice.attack_packet.set_weapon_used(evt_obj_dam.attack_packet.get_weapon_used())
+        #Check ammo
+        evt_obj_crit_dice.attack_packet.ammo_item = attacker.get_ammo_used()
+        #apply extra damage
+        extraDamageDice = evt_obj_crit_dice.dispatch(attacker, OBJ_HANDLE_NULL, ET_OnGetCriticalHitExtraDice, EK_NONE)
+        debug_print("Debug extraDamageDice: {}".format(extraDamageDice))
+        missing_stub("auto critMultiplierApply = temple::GetRef<BOOL(__cdecl)(DamagePacket&, int, int)>(0x100E1640); // damagepacket, multiplier, damage.mes line")
+        missing_stub("critMultiplierApply(evtObjDam.damage, extraHitDice + 1, 102);")
+        attacker.float_mesfile_line('mes\\combat.mes', 12) #{12}{Critical Hit!}
+        #play crit hit sound
+        soundIdTarget = tgt.soundmap_critter(0)
+        game.sound_local_obj(tgt, soundIdTarget)
+        playSoundEffect(evt_obj_crit_dice.attack_packet.get_weapon_used(), attacker, tgt, 7)
+        #Logbook increase crit count
+        logbook.inc_criticals(attacker)
+    else:
+        #if no crit only play sound
+        playSoundEffect(evt_obj_crit_dice.attack_packet.get_weapon_used(), attacker, tgt, 5)
+
+    #Logbook
+    missing_stub("temple::GetRef<int>(0x10BCA8AC) = 1; // physical damage Flag used for logbook recording")
+
+    #Call damage_critter
+    damage_critter(attacker, tgt, evt_obj_dam)
+
+    #Play damage particle effects
+    #TBD
+
+    #Send signals
+    missing_stub("attacker.d20_send_signal(S_Attack_Made, int(&evt_obj_dam), 0)")
+    if not wasAlreadyUnconscious and tgt.is_unconscious():
+        missing_stub("attacker.d20_send_signal(S_Dropped_Enemy, int(&evt_obj_dam), 0)")
+
+    debug_print("Debug: print overall damage: {}".format(evt_obj_dam.damage_packet.get_overall_damage()))
+    return evt_obj_dam.damage_packet.get_overall_damage()
 
 def missing_stub(msg):
     print msg
