@@ -137,15 +137,13 @@ struct BonusList
 	uint32_t bonFlags; // init 0; 0x1 - overallCapHigh set; 0x2 - overallCapLow set; 0x4 - force cap override (otherwise it can only impose restrictions i.e. it will only change the cap if it's lower than the current one)
 
 	BonusList()	{
-		this->bonCount = 0;
-		this->bonCapperCount = 0;
-		this->zeroBonusCount = 0;
-		this->bonFlags = 0;
-		this->overallCapHigh.bonValue = 0x7fffFFFF;
-		this->overallCapLow.bonValue = 0x80000001;
+		Reset();
 	}
 
+	void Reset();
+
 	int GetEffectiveBonusSum() const;
+	int GetHighestBonus() const; // including cap effects and such; used for Blindness miss chance calculation
 
 	/**
 	 * Returns true if the given bonus is suppressed by another bonus (i.e. of the same type and

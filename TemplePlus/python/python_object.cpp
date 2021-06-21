@@ -41,6 +41,7 @@
 #include "ui/ui_legacysystems.h"
 #include "ui/ui_char_editor.h"
 #include "pathfinding.h"
+#include "secret_door.h"
 
 #include <pybind11/embed.h>
 #include <pybind11/cast.h>
@@ -1014,6 +1015,23 @@ static PyObject* PyObjHandle_HasLos(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(obstacles == 0);
 }
 
+static PyObject* PyObjHandle_CanBlindsee(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	objHndl target;
+	if (!PyArg_ParseTuple(args, "O&:objHndl.can_blindsee", &ConvertObjHndl, &target)) {
+		return 0;
+	}
+	if (!target) {
+		return PyInt_FromLong(0);
+	}
+	auto result = critterSys.CanSeeWithBlindsight(self->handle, target) ? 1 : 0;
+	return PyInt_FromLong(result);
+}
+
+
 /*
 	Pretty stupid name. Checks if the critter currently wears an item with the
 	given name id.
@@ -1874,6 +1892,17 @@ static PyObject* PyObjHandle_FloatTextLine(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+static PyObject* PyObjHandle_GetAmmoUsed(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyObjHndl_CreateNull();
+	}
+
+	auto result = combatSys.CheckRangedWeaponAmmo(self->handle);	
+	return PyObjHndl_Create(result);
+}
+
+
 // Generic methods to get/set/clear flags
 template <obj_f flagsField>
 static PyObject* GetFlags(PyObject* obj, PyObject*) {
@@ -2037,6 +2066,28 @@ static PyObject* PyObjHandle_SoundmapCritter(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(soundId);
 }
 
+static PyObject* PyObjHandle_SoundPlayFriendlyFire(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return 0;
+	}
+
+	objHndl ffer;
+	if (!PyArg_ParseTuple(args, "O&:objhndl.sound_play_friendly_fire", &ConvertObjHndl, &ffer)) {
+		return 0;
+	}
+
+	auto dlgGetFriendlyFireVoiceLine = temple::GetRef<void(__cdecl)(objHndl, objHndl, char*, int*)>(0x10037450);
+
+	char ffText[1000]; int soundId;
+	dlgGetFriendlyFireVoiceLine(self->handle, ffer, ffText, &soundId);
+
+	critterSys.PlayCritterVoiceLine(self->handle, ffer, ffText, soundId);
+	
+	Py_RETURN_NONE;
+}
+
+
 static PyObject* PyObjHandle_Footstep(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	auto soundId = critterSys.SoundmapCritter(self->handle, 7);
@@ -2054,7 +2105,7 @@ static PyObject* PyObjHandle_SecretdoorDetect(PyObject* obj, PyObject* args) {
 		PyErr_SetString(PyExc_ValueError, "Called with an invalid viewer.");
 		return 0;
 	}
-	auto result = objects.SecretdoorDetect(self->handle, viewer);
+	auto result = secretdoorSys.SecretDoorDetect(self->handle, viewer);
 	return PyInt_FromLong(result);
 }
 
@@ -2181,6 +2232,33 @@ static PyObject* PyObjHandle_GetInitiative(PyObject* obj, PyObject* args) {
 	}
 	return PyInt_FromLong(combatSys.GetInitiative(self->handle));
 }
+
+static PyObject* PyObjHandle_SetHpDamage(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return 0;
+	}
+	int hpDam;
+	if (!PyArg_ParseTuple(args, "i:objhndl.set_hp_damage", &hpDam)) {
+		return 0;
+	}
+	critterSys.SetHpDamage(self->handle, hpDam);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_SetSubdualDamage(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return 0;
+	}
+	int dam;
+	if (!PyArg_ParseTuple(args, "i:objhndl.set_subdual_damage", &dam)) {
+		return 0;
+	}
+	critterSys.SetSubdualDamage(self->handle, dam);
+	Py_RETURN_NONE;
+}
+
 
 static PyObject* PyObjHandle_SetInitiative(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
@@ -2761,6 +2839,17 @@ static PyObject* PyObjHandle_IsCategorySubtype(PyObject* obj, PyObject* args) {
 	auto result = critterSys.IsCategorySubtype(self->handle, (MonsterSubcategoryFlag)type);
 	return PyInt_FromLong(result);
 }
+
+static PyObject* PyObjHandle_IsCritter(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	
+	auto result = (int) objects.IsCritter(self->handle);
+	return PyInt_FromLong(result);
+}
+
 
 static PyObject* PyObjHandle_RumorLogAdd(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
@@ -3924,6 +4013,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"find_path_to_obj", PyObjHandle_FindPathToObj, METH_VARARGS, NULL },
 	{"can_melee", PyObjHandle_CanMelee, METH_VARARGS, NULL },
 	{"can_see", PyObjHandle_HasLos, METH_VARARGS, NULL },
+	{"can_blindsee", PyObjHandle_CanBlindsee, METH_VARARGS, "obj has blind sight, and target is within observation range of blindsight ability"},
 	{"can_sense", PyObjHandle_CanSense, METH_VARARGS, NULL },
 	{ "can_sneak_attack", PyObjHandle_CanSneakAttack, METH_VARARGS, NULL },
 	{ "concealed_set", PyObjHandle_ConcealedSet, METH_VARARGS, NULL },
@@ -3974,6 +4064,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "float_mesfile_line", PyObjHandle_FloatMesFileLine, METH_VARARGS, NULL },
 	{ "float_text_line", PyObjHandle_FloatTextLine, METH_VARARGS, NULL },
 
+	{ "get_ammo_used", PyObjHandle_GetAmmoUsed, METH_VARARGS, "gets the handle of the ammo object. Checks validity - does it match the weapon? Otherwise returns null"},
 	{ "get_base_attack_bonus", PyObjHandle_GetBaseAttackBonus, METH_VARARGS, NULL },
 	{ "get_category_type", PyObjHandle_GetCategoryType, METH_VARARGS, NULL },
 	{ "get_character_classes", PyObjHandle_GetCharacterAllClassesSet, METH_VARARGS, "Get tuple with classes enums" },
@@ -4006,6 +4097,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "is_active_combatant", PyObjHandle_IsActiveCombatant, METH_VARARGS, NULL },
 	{ "is_category_type", PyObjHandle_IsCategoryType, METH_VARARGS, NULL },
 	{ "is_category_subtype", PyObjHandle_IsCategorySubtype, METH_VARARGS, NULL },
+	{ "is_critter", PyObjHandle_IsCritter, METH_VARARGS, NULL},
 	{ "is_favored_enemy", PyObjHandle_FavoredEnemy, METH_VARARGS, NULL },
 	{ "is_flanked_by", PyObjHandle_IsFlankedBy, METH_VARARGS, NULL },
 	{ "is_friendly", PyObjHandle_IsFriendly, METH_VARARGS, NULL },
@@ -4092,13 +4184,16 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "saving_throw_with_args", PyObjHandle_SavingThrow, METH_VARARGS, NULL },
 	{ "saving_throw_spell", PyObjHandle_SavingThrowSpell, METH_VARARGS, NULL },
 	{ "secretdoor_detect", PyObjHandle_SecretdoorDetect, METH_VARARGS, NULL },
+	{ "set_hp_damage", PyObjHandle_SetHpDamage, METH_VARARGS, NULL },
 	{ "set_initiative", PyObjHandle_SetInitiative, METH_VARARGS, NULL },
+	{ "set_subdual_damage", PyObjHandle_SetSubdualDamage, METH_VARARGS, NULL },
 	{ "skill_level_get", PyObjHandle_SkillLevelGet, METH_VARARGS, NULL},
 	{ "skill_ranks_get", PyObjHandle_SkillRanksGet, METH_VARARGS, NULL },
 	{ "skill_ranks_set", PyObjHandle_SkillRanksSet, METH_VARARGS, NULL },
 	{ "skill_roll", PyObjHandle_SkillRoll, METH_VARARGS, NULL },
 	{ "skill_roll_delta", PyObjHandle_SkillRollDelta, METH_VARARGS, "Does a Skill Roll, but returns the delta from the skill roll DC." },
 	{ "soundmap_critter", PyObjHandle_SoundmapCritter, METH_VARARGS, NULL },
+	{ "sound_play_friendly_fire", PyObjHandle_SoundPlayFriendlyFire, METH_VARARGS, NULL},
 	{ "spell_known_add", PyObjHandle_SpellKnownAdd, METH_VARARGS, NULL },
 	{ "spell_memorized_add", PyObjHandle_SpellMemorizedAdd, METH_VARARGS, NULL },
 	{ "spell_damage", PyObjHandle_SpellDamage, METH_VARARGS, NULL },

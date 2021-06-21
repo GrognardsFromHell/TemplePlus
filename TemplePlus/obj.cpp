@@ -345,7 +345,6 @@ Objects::Objects()
 	
 	rebase(_IsPlayerControlled, 0x1002B390);
 
-	rebase(_SecretdoorDetect,	0x10046920);
 	rebase(_FadeTo,				0x1004C390);
 	rebase(_GetSize,			0x1004D690);
 

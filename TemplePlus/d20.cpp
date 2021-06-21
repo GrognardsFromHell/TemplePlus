@@ -3651,13 +3651,13 @@ int D20Actn::FilterSpellTargets(SpellPacketBody & spellPkt){
 		// "Spell failure due to Blink" roll
 		auto rollRes = Dice(1, 100, 0).Roll();
 		if (rollRes >= 50) {
-			histSys.RollHistoryType5Add(d20a->d20APerformer, d20a->d20ATarget, 50, 111, rollRes, 62, 192);
+			histSys.RollHistoryAddType5PercentChanceRoll(d20a->d20APerformer, d20a->d20ATarget, 50, 111, rollRes, 62, 192);
 			return false;
 		}
 		else {
 			floatSys.FloatSpellLine(d20a->d20APerformer, 30015, FloatLineColor::White);
 			gameSystems->GetParticleSys().CreateAtObj("Fizzle", d20a->d20ATarget);
-			histSys.RollHistoryType5Add(d20a->d20APerformer, d20a->d20ATarget, 50, 111, rollRes, 112, 192); // Miscast (Blink)!
+			histSys.RollHistoryAddType5PercentChanceRoll(d20a->d20APerformer, d20a->d20ATarget, 50, 111, rollRes, 112, 192); // Miscast (Blink)!
 			if (*actSeqSys.actSeqCur) {
 				(*actSeqSys.actSeqCur)->spellPktBody.Reset();
 				return false; // this was the original code, not sure if ok

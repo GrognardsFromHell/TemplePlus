@@ -76,8 +76,8 @@ def addConcentration(attachee, args, evt_obj):
     spellPacket.caster.condition_add_with_args('sp-Concentrating', args.get_arg(0))
     return 0
 
-#[pytonModifier].AddHook(ET_OnConditionAdd, EK_NONE, spell_utils.addDimiss, ())
-def addDimiss(attachee, args, evt_obj):
+#[pytonModifier].AddHook(ET_OnConditionAdd, EK_NONE, spell_utils.addDismiss, ())
+def addDismiss(attachee, args, evt_obj):
     spellPacket = tpdp.SpellPacket(args.get_arg(0))
     spellPacket.caster.condition_add_with_args('Dismiss', args.get_arg(0))
     return 0
@@ -244,8 +244,8 @@ class TouchModifier(PythonModifier):
     # Touch modifiers have at least 3 arguments
     #
     #  0: spell_id
-    #  1: duration, -1 to not display
-    #  2: num_charges, -1 for until duration expires
+    #  1: duration, negative to not display
+    #  2: num_charges, negative for until duration expires
     #
     # the given argument number is for additional arguments beyond
     # this.
