@@ -11,7 +11,7 @@ def OnSpellEffect(spell):
     targetsToRemove = []
     spell.duration = 1 * spell.caster_level # 1 round/cl
 
-    game.particles('sp-Sound Burst', spell.caster)
+    game.particles('sp-Wave of Grief', spell.caster)
 
     for spellTarget in spell.target_list:
         #Saving Throw to negate
@@ -22,7 +22,7 @@ def OnSpellEffect(spell):
         else:
             if spellTarget.obj.condition_add_with_args('sp-Wave of Grief', spell.id, spell.duration):
                 spellTarget.obj.float_mesfile_line('mes\\spell.mes', 30002)
-                spellTarget.partsys_id = game.particles('sp-Shout-Hit', spellTarget.obj)
+                spellTarget.partsys_id = game.particles('sp-Wave of Grief-hit', spellTarget.obj)
             else:
                 spellTarget.obj.float_mesfile_line('mes\\spell.mes', 30000)
                 game.particles('Fizzle', spellTarget.obj)

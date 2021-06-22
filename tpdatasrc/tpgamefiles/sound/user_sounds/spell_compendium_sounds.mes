@@ -110,7 +110,7 @@
 {27128}{} // spell struck
 
 // [1057] *[Focusing Chant]
-{27140}{} // spell begin
+{27140}{spells\competence_female.WAV} // spell begin
 {27141}{} // spell end
 {27142}{} // spell effect
 {27143}{} // spell new round
@@ -341,9 +341,9 @@
 {27568}{} // spell struck
 
 // [1079] *[Wave of Grief]
-{27580}{} // spell begin
+{27580}{spells\sp_goul_touch.WAV} // spell begin
 {27581}{} // spell end
-{27582}{spells\sp_curse.WAV} // spell effect
+{27582}{} // spell effect
 {27583}{} // spell new round
 {27584}{} // spell projectile begin
 {27585}{} // spell projectile end
@@ -450,10 +450,10 @@
 {27767}{} // spell hit
 {27768}{} // spell struck
 
-// [1089] *[Curse of Impending Blades]
-{27780}{} // spell begin
+// [1089] *[Curse of Impending Blades Mass]
+{27780}{spells\sp_Bestow_Curse.wav} // spell begin
 {27781}{} // spell end
-{27782}{spells\sp_curse.WAV} // spell effect
+{27782}{} // spell effect
 {27783}{} // spell new round
 {27784}{} // spell projectile begin
 {27785}{} // spell projectile end
@@ -594,7 +594,7 @@
 {28028}{} // spell struck
 
 // [1102] *[Sirines Grace]
-{28040}{} // spell begin
+{28040}{spells\sp_daylight.WAV} // spell begin
 {28041}{} // spell end
 {28042}{} // spell effect
 {28043}{} // spell new round
@@ -629,7 +629,7 @@
 // [1105] *[Cacophonic Burst]
 {28100}{} // spell begin
 {28101}{} // spell end
-{28102}{} // spell effect
+{28102}{spells\sp_sound_blast.WAV} // spell effect
 {28103}{} // spell new round
 {28104}{} // spell projectile begin
 {28105}{} // spell projectile end
@@ -671,7 +671,7 @@
 {28168}{} // spell struck
 
 // [1109] *[Nixies Grace]
-{28180}{} // spell begin
+{28180}{spells\sp_daylight.WAV} // spell begin
 {28181}{} // spell end
 {28182}{} // spell effect
 {28183}{} // spell new round
@@ -682,7 +682,7 @@
 {28188}{} // spell struck
 
 // [1110] *[Ray of Light]
-{28200}{} // spell begin
+{28200}{spells\sp_daylight.WAV} // spell begin
 {28201}{} // spell end
 {28202}{} // spell effect
 {28203}{} // spell new round
@@ -794,7 +794,7 @@
 // [1120] *[Angelskin]
 {28400}{} // spell begin
 {28401}{} // spell end
-{28402}{} // spell effect
+{28402}{spells\sp_darkvision.WAV} // spell effect
 {28403}{} // spell new round
 {28404}{} // spell projectile begin
 {28405}{} // spell projectile end
@@ -805,7 +805,7 @@
 // [1121] *[Demonhide]
 {28420}{} // spell begin
 {28421}{} // spell end
-{28422}{} // spell effect
+{28422}{spells\sp_BarkSkin.WAV} // spell effect
 {28423}{} // spell new round
 {28424}{} // spell projectile begin
 {28425}{} // spell projectile end
@@ -838,7 +838,7 @@
 // [1124] *[Curse of Ill Fortune]
 {28480}{} // spell begin
 {28481}{} // spell end
-{28482}{spells\curse.wav} // spell effect
+{28482}{spells\sp_bestow_curse.wav} // spell effect
 {28483}{} // spell new round
 {28484}{} // spell projectile begin
 {28485}{} // spell projectile end
@@ -849,7 +849,7 @@
 // [1125] *[Awaken Sin]
 {28500}{} // spell begin
 {28501}{} // spell end
-{28502}{} // spell effect
+{28502}{spells\sp_doom.WAV} // spell effect
 {28503}{} // spell new round
 {28504}{} // spell projectile begin
 {28505}{} // spell projectile end
@@ -893,7 +893,7 @@
 // [1129] *[Quick March]
 {28580}{} // spell begin
 {28581}{} // spell end
-{28582}{} // spell effect
+{28582}{spells\sp_expeditious_retreat.WAV} // spell effect
 {28583}{} // spell new round
 {28584}{} // spell projectile begin
 {28585}{} // spell projectile end
@@ -1012,7 +1012,7 @@
 {28788}{} // spell struck
 
 // [1140] *[Visage of the Deity lesser]
-{28800}{} // spell begin
+{28800}{spells\sp_minor_globe_invuner.WAV} // spell begin
 {28801}{} // spell end
 {28802}{} // spell effect
 {28803}{} // spell new round
