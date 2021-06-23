@@ -1849,8 +1849,8 @@ BOOL D20ActionCallbacks::ActionFrameSpell(D20Actn * d20a){
 		return FALSE;
 
 
-	if (spEntry.spellRangeType == SRT_Personal 
-		|| spEntry.spellRangeType == SRT_Touch	&& !(d20a->d20Caf & D20CAF_RANGED)){
+	if ( (spEntry.spellRangeType == SRT_Personal || spEntry.spellRangeType == SRT_Touch)
+		&& !(d20a->d20Caf & D20CAF_RANGED)){
 		return FALSE;
 	}
 
