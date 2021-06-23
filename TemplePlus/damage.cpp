@@ -521,7 +521,7 @@ int Damage::DealAttackDamage(objHndl attacker, objHndl tgt, int d20Data, D20CAF 
 	DamageCritter(attacker, tgt, evtObjDam);
 
 	// play damage effect particles
-	evtObjDam.damage.PlayPfx();
+	evtObjDam.damage.PlayPfx(tgt);
 
 	d20Sys.d20SendSignal(attacker, DK_SIG_Attack_Made, (int)&evtObjDam, 0);
 
