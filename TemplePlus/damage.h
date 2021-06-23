@@ -56,6 +56,8 @@ struct DamagePacket {
 	int GetOverallDamageByType(DamageType damType);
 	int GetOverallDamage();
 	int AddModFactor(float factor, DamageType damType, int damageMesLine);
+	BOOL CriticalMultiplierApply(int multiplier);
+	void PlayPfx(objHndl target);
 	DamagePacket();
 	
 };

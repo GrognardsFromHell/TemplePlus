@@ -325,6 +325,19 @@ int DamagePacket::AddModFactor(float factor, DamageType damType, int damageMesLi
 	return FALSE;
 }
 
+BOOL DamagePacket::CriticalMultiplierApply(int multiplier)
+{
+	static auto critMultiplierApply = temple::GetRef<BOOL(__cdecl)(DamagePacket&, int, int)>(0x100E1640); // damagepacket, multiplier, damage.mes line
+	return critMultiplierApply(*this, multiplier, 102);
+}
+
+void DamagePacket::PlayPfx(objHndl tgt)
+{
+	for (auto i = 0u; i < diceCount; i++) {
+		temple::GetRef<void(__cdecl)(objHndl, DamageType, int)>(0x10016A90)(tgt, dice[i].type, dice[i].rolledDamage);
+	}
+}
+
 DamagePacket::DamagePacket(){
 	diceCount = 0;
 	damResCount = 0;
@@ -486,8 +499,8 @@ int Damage::DealAttackDamage(objHndl attacker, objHndl tgt, int d20Data, D20CAF 
 			evtObjCritDice.attackPacket.weaponUsed = objHndl::null;
 		evtObjCritDice.attackPacket.ammoItem = combatSys.CheckRangedWeaponAmmo(attacker);
 		auto extraHitDice = dispatch.DispatchAttackBonus(attacker, objHndl::null, &evtObjCritDice, dispTypeGetCriticalHitExtraDice, DK_NONE);
-		auto critMultiplierApply = temple::GetRef<BOOL(__cdecl)(DamagePacket&, int, int)>(0x100E1640); // damagepacket, multiplier, damage.mes line
-		critMultiplierApply(evtObjDam.damage, extraHitDice + 1, 102);
+		
+		evtObjDam.damage.CriticalMultiplierApply(extraHitDice + 1);
 		floatSys.FloatCombatLine(attacker, 12);
 		
 		// play sound
@@ -508,9 +521,7 @@ int Damage::DealAttackDamage(objHndl attacker, objHndl tgt, int d20Data, D20CAF 
 	DamageCritter(attacker, tgt, evtObjDam);
 
 	// play damage effect particles
-	for (auto i=0u; i < evtObjDam.damage.diceCount; i++){
-		temple::GetRef<void(__cdecl)(objHndl, DamageType, int)>(0x10016A90)(tgt, evtObjDam.damage.dice[i].type, evtObjDam.damage.dice[i].rolledDamage);
-	}
+	evtObjDam.damage.PlayPfx(tgt);
 
 	d20Sys.d20SendSignal(attacker, DK_SIG_Attack_Made, (int)&evtObjDam, 0);
 

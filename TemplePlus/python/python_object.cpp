@@ -1187,9 +1187,15 @@ static PyObject* PyObjHandle_Attack(PyObject* obj, PyObject* args) {
 	}
 
 	objHndl target;
-	if (!PyArg_ParseTuple(args, "O&:objhndl.attack", &ConvertObjHndl, &target)) {
+	int flags = 2;
+	int rangeType = 1;
+	if (!PyArg_ParseTuple(args, "O&|ii:objhndl.attack", &ConvertObjHndl, &target, &rangeType, &flags)) {
 		return 0;
 	}
+	if (rangeType < 0)
+		rangeType = 0;
+	else if (rangeType > 3)
+		rangeType = 3;
 
 	if (!target){
 		logger->warn("Python attack called with null target");
@@ -2066,6 +2072,22 @@ static PyObject* PyObjHandle_SoundmapCritter(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(soundId);
 }
 
+static PyObject* PyObjHandle_SoundmapItem(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(-1);
+	}
+	int soundmapId;
+	objHndl item = objHndl::null, tgt = objHndl::null;
+	if (!PyArg_ParseTuple(args, "O&O&i:objhndl.soundmap_item", &ConvertObjHndl, &item, & ConvertObjHndl, &tgt , &soundmapId)) {
+		return PyInt_FromLong(-1);
+	}
+
+	auto soundId = inventory.GetSoundIdForItemEvent(item, self->handle, tgt, soundmapId);
+	return PyInt_FromLong(soundId);
+}
+
+
 static PyObject* PyObjHandle_SoundPlayFriendlyFire(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -2550,17 +2572,31 @@ static PyObject* PyObjHandle_AnimGoalPushAttack(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(gameSystems->GetAnim().PushAttackAnim(self->handle, tgt, -1, animIdx, isCrit, isSecondary));
 }
 
+static PyObject* PyObjHandle_AnimGoalPushDodge(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	objHndl attacker = objHndl::null;
+	if (!PyArg_ParseTuple(args, "O&|iii:objhndl.anim_goal_push_dodge", &ConvertObjHndl, &attacker)) {
+		return 0;
+	}
+	return PyInt_FromLong(gameSystems->GetAnim().PushDodge(attacker, self->handle));
+}
+
+
 static PyObject* PyObjHandle_AnimGoalPushHitByWeapon(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
 		return PyInt_FromLong(0);
 	}
 
-	objHndl tgt = objHndl::null;
-	if (!PyArg_ParseTuple(args, "O&|iii:objhndl.anim_goal_push_hit_by_weapon", &ConvertObjHndl, &tgt)) {
+	objHndl attacker = objHndl::null;
+	if (!PyArg_ParseTuple(args, "O&|iii:objhndl.anim_goal_push_hit_by_weapon", &ConvertObjHndl, &attacker)) {
 		return 0;
 	}
-	return PyInt_FromLong(gameSystems->GetAnim().PushGoalHitByWeapon(self->handle, tgt));
+	return PyInt_FromLong(gameSystems->GetAnim().PushGoalHitByWeapon( attacker, self->handle));
 }
 
 static PyObject* PyObjHandle_AnimGoalPushUseObject(PyObject* obj, PyObject* args) {
@@ -3891,6 +3927,17 @@ static PyObject* PyObjHandle_Dominate(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(result);
 }
 
+
+
+static PyObject* PyObjHandle_IsDeadNullDestroyed(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(1);
+	}
+	auto result = critterSys.IsDeadNullDestroyed(self->handle);
+	return PyInt_FromLong(result);
+}
+
 static PyObject* PyObjHandle_IsUnconscious(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -3992,6 +4039,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "anim_callback", PyObjHandle_AnimCallback, METH_VARARGS, NULL },
 	{ "anim_goal_interrupt", PyObjHandle_AnimGoalInterrupt, METH_VARARGS, NULL },
 	{ "anim_goal_push_attack", PyObjHandle_AnimGoalPushAttack, METH_VARARGS, NULL },
+	{ "anim_goal_push_dodge", PyObjHandle_AnimGoalPushDodge, METH_VARARGS, NULL },
 	{ "anim_goal_push_hit_by_weapon", PyObjHandle_AnimGoalPushHitByWeapon, METH_VARARGS, NULL },
 	{ "anim_goal_use_object", PyObjHandle_AnimGoalPushUseObject, METH_VARARGS, NULL },
 	{ "anim_goal_get_new_id", PyObjHandle_AnimGoalGetNewId, METH_VARARGS, NULL },
@@ -4098,6 +4146,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "is_category_type", PyObjHandle_IsCategoryType, METH_VARARGS, NULL },
 	{ "is_category_subtype", PyObjHandle_IsCategorySubtype, METH_VARARGS, NULL },
 	{ "is_critter", PyObjHandle_IsCritter, METH_VARARGS, NULL},
+	{ "is_dead_or_destroyed", PyObjHandle_IsDeadNullDestroyed, METH_VARARGS, NULL},
 	{ "is_favored_enemy", PyObjHandle_FavoredEnemy, METH_VARARGS, NULL },
 	{ "is_flanked_by", PyObjHandle_IsFlankedBy, METH_VARARGS, NULL },
 	{ "is_friendly", PyObjHandle_IsFriendly, METH_VARARGS, NULL },
@@ -4193,6 +4242,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "skill_roll", PyObjHandle_SkillRoll, METH_VARARGS, NULL },
 	{ "skill_roll_delta", PyObjHandle_SkillRollDelta, METH_VARARGS, "Does a Skill Roll, but returns the delta from the skill roll DC." },
 	{ "soundmap_critter", PyObjHandle_SoundmapCritter, METH_VARARGS, NULL },
+	{ "soundmap_item", PyObjHandle_SoundmapItem, METH_VARARGS, NULL },
 	{ "sound_play_friendly_fire", PyObjHandle_SoundPlayFriendlyFire, METH_VARARGS, NULL},
 	{ "spell_known_add", PyObjHandle_SpellKnownAdd, METH_VARARGS, NULL },
 	{ "spell_memorized_add", PyObjHandle_SpellMemorizedAdd, METH_VARARGS, NULL },

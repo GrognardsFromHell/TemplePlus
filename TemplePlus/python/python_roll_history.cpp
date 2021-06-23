@@ -29,7 +29,9 @@ protected:
 
 PYBIND11_EMBEDDED_MODULE(roll_history, m) {
 	
-	
+	m.def("add_from_pattern", [](int historyMesline, objHndl handle, objHndl handle2) {
+		histSys.CreateRollHistoryLineFromMesfile(historyMesline, handle, handle2);
+		});
 
 	m.def("add_damage_roll", [](objHndl attacker, objHndl tgt, DamagePacket& dmg) ->int{
 		auto id = histSys.RollHistoryAddType1DamageRoll(attacker, tgt, &dmg);
