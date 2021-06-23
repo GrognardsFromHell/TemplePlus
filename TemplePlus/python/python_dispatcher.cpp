@@ -549,12 +549,14 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		}, "Gets the total damage of a particular type.")
 		.def("get_overall_damage", &DamagePacket::GetOverallDamage)
 		.def("calc_final_damage", &DamagePacket::CalcFinalDamage)
+		.def("play_pfx", &DamagePacket::PlayPfx)
 		.def_readwrite("final_damage", &DamagePacket::finalDamage, "Final Damage Value")
 		.def_readwrite("flags", &DamagePacket::flags, "1 - maximized, 2 - empowered")
 		.def_readwrite("bonus_list", &DamagePacket::bonuses)
 		.def_readwrite("critical_multiplier", &DamagePacket::critHitMultiplier, "1 by default, gets increased by various things")
 		.def("critical_multiplier_apply", &DamagePacket::CriticalMultiplierApply)
-		.def_readwrite("attack_power", &DamagePacket::attackPowerType, "See D20DAP_");
+		.def_readwrite("attack_power", &DamagePacket::attackPowerType, "See D20DAP_")
+	;
 
 	py::class_<MetaMagicData>(m, "MetaMagicData")
 		.def(py::init<>())

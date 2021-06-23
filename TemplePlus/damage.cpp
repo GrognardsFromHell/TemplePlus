@@ -331,6 +331,13 @@ BOOL DamagePacket::CriticalMultiplierApply(int multiplier)
 	return critMultiplierApply(*this, multiplier, 102);
 }
 
+void DamagePacket::PlayPfx(objHndl tgt)
+{
+	for (auto i = 0u; i < diceCount; i++) {
+		temple::GetRef<void(__cdecl)(objHndl, DamageType, int)>(0x10016A90)(tgt, dice[i].type, dice[i].rolledDamage);
+	}
+}
+
 DamagePacket::DamagePacket(){
 	diceCount = 0;
 	damResCount = 0;
@@ -514,9 +521,7 @@ int Damage::DealAttackDamage(objHndl attacker, objHndl tgt, int d20Data, D20CAF 
 	DamageCritter(attacker, tgt, evtObjDam);
 
 	// play damage effect particles
-	for (auto i=0u; i < evtObjDam.damage.diceCount; i++){
-		temple::GetRef<void(__cdecl)(objHndl, DamageType, int)>(0x10016A90)(tgt, evtObjDam.damage.dice[i].type, evtObjDam.damage.dice[i].rolledDamage);
-	}
+	evtObjDam.damage.PlayPfx();
 
 	d20Sys.d20SendSignal(attacker, DK_SIG_Attack_Made, (int)&evtObjDam, 0);
 
