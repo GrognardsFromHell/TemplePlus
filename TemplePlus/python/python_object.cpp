@@ -2072,6 +2072,22 @@ static PyObject* PyObjHandle_SoundmapCritter(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(soundId);
 }
 
+static PyObject* PyObjHandle_SoundmapItem(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(-1);
+	}
+	int soundmapId;
+	objHndl item = objHndl::null, tgt = objHndl::null;
+	if (!PyArg_ParseTuple(args, "O&O&i:objhndl.soundmap_item", &ConvertObjHndl, &item, & ConvertObjHndl, &tgt , &soundmapId)) {
+		return PyInt_FromLong(-1);
+	}
+
+	auto soundId = inventory.GetSoundIdForItemEvent(item, self->handle, tgt, soundmapId);
+	return PyInt_FromLong(soundId);
+}
+
+
 static PyObject* PyObjHandle_SoundPlayFriendlyFire(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -4226,6 +4242,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "skill_roll", PyObjHandle_SkillRoll, METH_VARARGS, NULL },
 	{ "skill_roll_delta", PyObjHandle_SkillRollDelta, METH_VARARGS, "Does a Skill Roll, but returns the delta from the skill roll DC." },
 	{ "soundmap_critter", PyObjHandle_SoundmapCritter, METH_VARARGS, NULL },
+	{ "soundmap_item", PyObjHandle_SoundmapItem, METH_VARARGS, NULL },
 	{ "sound_play_friendly_fire", PyObjHandle_SoundPlayFriendlyFire, METH_VARARGS, NULL},
 	{ "spell_known_add", PyObjHandle_SpellKnownAdd, METH_VARARGS, NULL },
 	{ "spell_memorized_add", PyObjHandle_SpellMemorizedAdd, METH_VARARGS, NULL },
