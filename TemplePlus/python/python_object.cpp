@@ -1187,9 +1187,15 @@ static PyObject* PyObjHandle_Attack(PyObject* obj, PyObject* args) {
 	}
 
 	objHndl target;
-	if (!PyArg_ParseTuple(args, "O&:objhndl.attack", &ConvertObjHndl, &target)) {
+	int flags = 2;
+	int rangeType = 1;
+	if (!PyArg_ParseTuple(args, "O&|ii:objhndl.attack", &ConvertObjHndl, &target, &rangeType, &flags)) {
 		return 0;
 	}
+	if (rangeType < 0)
+		rangeType = 0;
+	else if (rangeType > 3)
+		rangeType = 3;
 
 	if (!target){
 		logger->warn("Python attack called with null target");
@@ -3905,6 +3911,17 @@ static PyObject* PyObjHandle_Dominate(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(result);
 }
 
+
+
+static PyObject* PyObjHandle_IsDeadNullDestroyed(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(1);
+	}
+	auto result = critterSys.IsDeadNullDestroyed(self->handle);
+	return PyInt_FromLong(result);
+}
+
 static PyObject* PyObjHandle_IsUnconscious(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -4113,6 +4130,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "is_category_type", PyObjHandle_IsCategoryType, METH_VARARGS, NULL },
 	{ "is_category_subtype", PyObjHandle_IsCategorySubtype, METH_VARARGS, NULL },
 	{ "is_critter", PyObjHandle_IsCritter, METH_VARARGS, NULL},
+	{ "is_dead_or_destroyed", PyObjHandle_IsDeadNullDestroyed, METH_VARARGS, NULL},
 	{ "is_favored_enemy", PyObjHandle_FavoredEnemy, METH_VARARGS, NULL },
 	{ "is_flanked_by", PyObjHandle_IsFlankedBy, METH_VARARGS, NULL },
 	{ "is_friendly", PyObjHandle_IsFriendly, METH_VARARGS, NULL },
