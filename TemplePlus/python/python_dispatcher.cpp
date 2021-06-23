@@ -949,6 +949,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("flags", &DispIoSavingThrow::flags);
 
 	py::class_<DispIoDamage, DispIO>(m, "EventObjDamage", "Used for damage dice and such")
+		.def(py::init())
 		.def_readwrite("attack_packet", &DispIoDamage::attackPacket)
 		.def_readwrite("damage_packet", &DispIoDamage::damage)
 		.def("dispatch", [](DispIoDamage& evtObj, objHndl handle, int dispType, int dispKey ) {
