@@ -10,22 +10,26 @@ def debug_print(*args):
             print arg,
     return
 
-def playSoundEffect(weaponUsed, attacker, tgt, sound_number):
+def missing_stub(msg):
+    print msg
+    return 0
+
+def playSoundEffect(weaponUsed, attacker, tgt, sound_event):
     missing_stub("auto soundId = inventory.GetSoundIdForItemEvent(weaponUsed, attacker, tgt, 6); sound tbd")
-    missing_stub("sound.PlaySoundAtObj(soundId, attacker); sound tbd")
+    sound_id = attacker.soundmap_item(weaponUsed, tgt, sound_event)
+    game.sound_local_obj(sound_id, attacker)
     return
 
 def deal_attack_damage(attacker, tgt, d20_data, flags, action_type): 
     # return value is used by Coup De Grace
 
     #Provoke Hostility
-    missing_stub("aiSys.ProvokeHostility(attacker, tgt, 1, 0);")
-
+    attacker.attack(tgt, 1, 0)
+    
     #Check if target is alive
-    missing_stub("if critterSys.IsDeadNullDestroyed(tgt), is it enough to just query if dead?")
-    if tgt.d20_query(Q_Dead):
+    if tgt == OBJ_HANDLE_NULL or tgt.is_dead_or_destroyed():
         return -1
-
+    
     #Create evt_obj_dam
     evt_obj_dam = tpdp.EventObjDamage()
     evt_obj_dam.attack_packet.action_type = action_type
@@ -55,29 +59,28 @@ def deal_attack_damage(attacker, tgt, d20_data, flags, action_type):
     evt_obj_dam.attack_packet.ammo_item = attacker.get_ammo_used()
 
     #Check Concealment Miss
-    #Remark: I can't remember that D20CAF_CONCEALMENT_MISS was actually set
-    #in to_hit_processing
+    # is this actually set anywhere? check!
     if flags & D20CAF_CONCEALMENT_MISS:
-        missing_stub("histSys.CreateRollHistoryLineFromMesfile(11, attacker, tgt); to what mesfile this is referring to?")
+        roll_history.add_from_pattern(11, attacker, tgt)
         attacker.float_mesfile_line('mes\\combat.mes', 45) # Miss (Concealment)
         playSoundEffect(evt_obj_dam.attack_packet.get_weapon_used(), attacker, tgt, 6)
-        missing_stub("attacker.d20_send_signal(S_Attack_Made, int(&evt_obj_dam), 0)")
+        evt_obj_dam.send_signal(attacker, S_Attack_Made)
         return -1
 
     #Check normal Miss
-    if not flags & D20CAF_HIT:
+    if (flags & D20CAF_HIT) == 0:
         attacker.float_mesfile_line('mes\\combat.mes', 29) # Miss
-        missing_stub("attacker.d20_send_signal(S_Attack_Made, int(&evt_obj_dam), 0)")
+        evt_obj_dam.send_signal(attacker, S_Attack_Made)
         playSoundEffect(evt_obj_dam.attack_packet.get_weapon_used(), attacker, tgt, 6)
         #Check if arrow was deflected
         if flags & D20CAF_DEFLECT_ARROWS:
             tgt.float_mesfile_line('mes\\combat.mes', 5052) #{5052}{Deflect Arrows}
-            missing_stub("histSys.CreateRollHistoryLineFromMesfile(12, attacker, tgt)")
+            roll_history.add_from_pattern(12, attacker, tgt)
         #dodge animation
         if tgt.is_unconscious() or tgt.d20_query(Q_Prone):
             return -1
         else:
-            missing_stub("gameSystems->GetAnim().PushDodge(attacker, tgt); #dumb question: where can I lookup those anim_goals?")
+            tgt.anim_goal_push_dodge(attacker)
         return -1
 
     #Check Friendly Fire
@@ -100,46 +103,44 @@ def deal_attack_damage(attacker, tgt, d20_data, flags, action_type):
         evt_obj_crit_dice.attack_packet.attacker = attacker
         evt_obj_crit_dice.attack_packet.target = tgt
         evt_obj_crit_dice.attack_packet.event_key = d20_data
-        evt_obj_crit_dice.attack_packet.set_flags(flags)
+        evt_obj_crit_dice.attack_packet.set_flags(evt_obj_dam.attack_packet.get_flags())
         evt_obj_crit_dice.attack_packet.set_weapon_used(evt_obj_dam.attack_packet.get_weapon_used())
         #Check ammo
         evt_obj_crit_dice.attack_packet.ammo_item = attacker.get_ammo_used()
         #apply extra damage
         extraDamageDice = evt_obj_crit_dice.dispatch(attacker, OBJ_HANDLE_NULL, ET_OnGetCriticalHitExtraDice, EK_NONE)
         debug_print("Debug extraDamageDice: {}".format(extraDamageDice))
-        missing_stub("auto critMultiplierApply = temple::GetRef<BOOL(__cdecl)(DamagePacket&, int, int)>(0x100E1640); // damagepacket, multiplier, damage.mes line")
-        missing_stub("critMultiplierApply(evtObjDam.damage, extraHitDice + 1, 102);")
+        
+        evt_obj_dam.damage.critical_multiplier_apply(extraHitDice + 1)
         attacker.float_mesfile_line('mes\\combat.mes', 12) #{12}{Critical Hit!}
         #play crit hit sound
         soundIdTarget = tgt.soundmap_critter(0)
-        game.sound_local_obj(tgt, soundIdTarget)
+        game.sound_local_obj(soundIdTarget, tgt)
         playSoundEffect(evt_obj_crit_dice.attack_packet.get_weapon_used(), attacker, tgt, 7)
         #Logbook increase crit count
         logbook.inc_criticals(attacker)
     else:
         #if no crit only play sound
-        playSoundEffect(evt_obj_crit_dice.attack_packet.get_weapon_used(), attacker, tgt, 5)
+        playSoundEffect(evt_obj_dam.attack_packet.get_weapon_used(), attacker, tgt, 5)
 
     #Logbook
-    missing_stub("temple::GetRef<int>(0x10BCA8AC) = 1; // physical damage Flag used for logbook recording")
-
+    logbook.is_weapon_damage = 1 # used for recording attack damage
+    
     #Call damage_critter
     damage_critter(attacker, tgt, evt_obj_dam)
 
     #Play damage particle effects
-    missing_stub("pfx")
+    evt_obj_dam.damage.play_pfx(tgt)
     
     #Send signals
-    missing_stub("attacker.d20_send_signal(S_Attack_Made, int(&evt_obj_dam), 0)")
+    evt_obj_dam.send_signal(attacker, S_Attack_Made)
     if not wasAlreadyUnconscious and tgt.is_unconscious():
-        missing_stub("attacker.d20_send_signal(S_Dropped_Enemy, int(&evt_obj_dam), 0)")
-
+        evt_obj_dam.send_signal(attacker, S_Dropped_Enemy)
+        
     debug_print("Debug: print overall damage: {}".format(evt_obj_dam.damage_packet.get_overall_damage()))
-    return evt_obj_dam.damage_packet.get_overall_damage()
+    overall_dam = evt_obj_dam.damage_packet.get_overall_damage()
+    return overall_dam
 
-def missing_stub(msg):
-    print msg
-    return 0
 
 def checkAnimationSkip(tgt):
     if tgt.is_unconscious() or tgt.d20_query(Q_Prone):
