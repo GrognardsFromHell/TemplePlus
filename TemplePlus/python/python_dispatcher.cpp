@@ -553,6 +553,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("flags", &DamagePacket::flags, "1 - maximized, 2 - empowered")
 		.def_readwrite("bonus_list", &DamagePacket::bonuses)
 		.def_readwrite("critical_multiplier", &DamagePacket::critHitMultiplier, "1 by default, gets increased by various things")
+		.def("critical_multiplier_apply", &DamagePacket::CriticalMultiplierApply)
 		.def_readwrite("attack_power", &DamagePacket::attackPowerType, "See D20DAP_");
 
 	py::class_<MetaMagicData>(m, "MetaMagicData")
