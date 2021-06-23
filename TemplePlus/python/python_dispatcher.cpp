@@ -960,6 +960,10 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def("dispatch_spell_damage", [](DispIoDamage& evtObj, objHndl handle, objHndl target, SpellPacketBody & pkt) {
 				dispatch.DispatchSpellDamage(handle, &evtObj.damage, target, &pkt);
 			})
+		.def("send_signal", [](DispIoDamage& evtObj, objHndl handle, int signalCode) {
+				auto dispKey = (D20DispatcherKey)(signalCode + DK_SIG_HP_Changed);
+				d20Sys.d20SendSignal(handle, dispKey, (int)&evtObj, 0);
+			})
 		;
 
 
