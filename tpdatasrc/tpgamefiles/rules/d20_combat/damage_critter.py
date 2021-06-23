@@ -84,9 +84,7 @@ def deal_attack_damage(attacker, tgt, d20_data, flags, action_type):
         return -1
 
     #Check Friendly Fire
-    #if (tgt && attacker && critterSys.NpcAllegianceShared(tgt, attacker) && combatSys.AffiliationSame(tgt, attacker))
-    #if attacker != tgt and attacker.is_friendly(tgt):
-    if attacker.allegiance_shared(tgt):
+    if attacker.allegiance_shared(tgt) and (tgt in game.party) == (attacker in game.party):
         tgt.float_mesfile_line('mes\\combat.mes', 107) # Friendly Fire
 
     #Check if is already unconscious
