@@ -17,7 +17,6 @@ def playSoundEffect(weaponUsed, attacker, tgt, sound_number):
 
 def deal_attack_damage(attacker, tgt, d20_data, flags, action_type): 
     # return value is used by Coup De Grace
-    print('Quel dommage')
 
     #Provoke Hostility
     missing_stub("aiSys.ProvokeHostility(attacker, tgt, 1, 0);")
@@ -25,7 +24,7 @@ def deal_attack_damage(attacker, tgt, d20_data, flags, action_type):
     #Check if target is alive
     missing_stub("if critterSys.IsDeadNullDestroyed(tgt), is it enough to just query if dead?")
     if tgt.d20_query(Q_Dead):
-        return -1;
+        return -1
 
     #Create evt_obj_dam
     evt_obj_dam = tpdp.EventObjDamage()
@@ -63,7 +62,7 @@ def deal_attack_damage(attacker, tgt, d20_data, flags, action_type):
         attacker.float_mesfile_line('mes\\combat.mes', 45) # Miss (Concealment)
         playSoundEffect(evt_obj_dam.attack_packet.get_weapon_used(), attacker, tgt, 6)
         missing_stub("attacker.d20_send_signal(S_Attack_Made, int(&evt_obj_dam), 0)")
-        return -1;
+        return -1
 
     #Check normal Miss
     if not flags & D20CAF_HIT:
@@ -79,7 +78,7 @@ def deal_attack_damage(attacker, tgt, d20_data, flags, action_type):
             return -1
         else:
             missing_stub("gameSystems->GetAnim().PushDodge(attacker, tgt); #dumb question: where can I lookup those anim_goals?")
-        return -1;
+        return -1
 
     #Check Friendly Fire
     #if (tgt && attacker && critterSys.NpcAllegianceShared(tgt, attacker) && combatSys.AffiliationSame(tgt, attacker))
@@ -128,8 +127,8 @@ def deal_attack_damage(attacker, tgt, d20_data, flags, action_type):
     damage_critter(attacker, tgt, evt_obj_dam)
 
     #Play damage particle effects
-    #TBD
-
+    missing_stub("pfx")
+    
     #Send signals
     missing_stub("attacker.d20_send_signal(S_Attack_Made, int(&evt_obj_dam), 0)")
     if not wasAlreadyUnconscious and tgt.is_unconscious():
@@ -156,12 +155,17 @@ def float_hp_damage(attacker, tgt, damTot, subdualDamTot):
         floatColor = tf_white
     else:
         floatColor = tf_red
-    if subdualDamTot:
+
+    if damTot != 0 and subdualDamTot != 0:
+        combatMesLine = game.get_mesline("mes/combat.mes", 1) # HP
+        tgt.float_text_line("{} {}".format(damTot, combatMesLine), floatColor)
         combatMesLine = game.get_mesline("mes/combat.mes", 25) # Nonlethal
         tgt.float_text_line("{} {}".format(subdualDamTot, combatMesLine), floatColor)
-    #Changed to if else, because there was no 0 HP damage float
+    elif subdualDamTot !=0: # damTot ==0
+        combatMesLine = game.get_mesline("mes/combat.mes", 25) # Nonlethal
+        tgt.float_text_line("{} {}".format(subdualDamTot, combatMesLine), floatColor)
     #if attack deals 0 damage to due damage reduction/resistance
-    else:
+    else: # subdualDamTot ==0; damTot can be 0 or not
         combatMesLine = game.get_mesline("mes/combat.mes", 1) # HP
         tgt.float_text_line("{} {}".format(damTot, combatMesLine), floatColor)
     return
