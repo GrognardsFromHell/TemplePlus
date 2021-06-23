@@ -2592,11 +2592,11 @@ static PyObject* PyObjHandle_AnimGoalPushHitByWeapon(PyObject* obj, PyObject* ar
 		return PyInt_FromLong(0);
 	}
 
-	objHndl tgt = objHndl::null;
-	if (!PyArg_ParseTuple(args, "O&|iii:objhndl.anim_goal_push_hit_by_weapon", &ConvertObjHndl, &tgt)) {
+	objHndl attacker = objHndl::null;
+	if (!PyArg_ParseTuple(args, "O&|iii:objhndl.anim_goal_push_hit_by_weapon", &ConvertObjHndl, &attacker)) {
 		return 0;
 	}
-	return PyInt_FromLong(gameSystems->GetAnim().PushGoalHitByWeapon(self->handle, tgt));
+	return PyInt_FromLong(gameSystems->GetAnim().PushGoalHitByWeapon( attacker, self->handle));
 }
 
 static PyObject* PyObjHandle_AnimGoalPushUseObject(PyObject* obj, PyObject* args) {
