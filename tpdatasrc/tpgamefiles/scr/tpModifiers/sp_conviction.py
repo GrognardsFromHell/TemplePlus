@@ -11,7 +11,7 @@ def convictionSpellBonusToSaves(attachee, args, evt_obj):
     evt_obj.bonus_list.add(bonusValue, bonusType, "~Morale~[TAG_MODIFIER_MORALE] : ~Conviction~[TAG_SPELLS_CONVICTION]")
     return 0
 
-convictionSpell = PythonModifier("sp-Conviction", 4) # spell_id, duration, bonusValue, empty
+convictionSpell = PythonModifier("sp-Conviction", 4, False) # spell_id, duration, bonusValue, empty
 convictionSpell.AddHook(ET_OnSaveThrowLevel, EK_NONE, convictionSpellBonusToSaves, ())
 convictionSpell.AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, (spell_conviction,))
 convictionSpell.AddHook(ET_OnGetEffectTooltip, EK_NONE, spell_utils.spellEffectTooltip, (spell_conviction,))

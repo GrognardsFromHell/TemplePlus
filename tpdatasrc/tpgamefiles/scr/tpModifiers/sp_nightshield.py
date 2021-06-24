@@ -16,7 +16,7 @@ def nightshieldSpellHasSpellActive(attachee, args, evt_obj):
         evt_obj.return_val = 1
     return 0
 
-nightshieldSpell = PythonModifier("sp-Nightshield", 4) # spell_id, duration, spellBonus, empty
+nightshieldSpell = PythonModifier("sp-Nightshield", 4, False) # spell_id, duration, spellBonus, empty
 nightshieldSpell.AddHook(ET_OnSaveThrowLevel, EK_NONE, nightshieldSpellBonusToSaves, ())
 nightshieldSpell.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, nightshieldSpellHasSpellActive, ())
 nightshieldSpell.AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, ())

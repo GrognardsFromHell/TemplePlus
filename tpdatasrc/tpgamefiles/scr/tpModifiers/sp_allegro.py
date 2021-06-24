@@ -12,7 +12,7 @@ def allegroSpellMovementBonus(attachee, args, evt_obj):
     evt_obj.bonus_list.add(bonusValue, bonusType ,"~Allegro~[TAG_SPELLS_ALLEGRO] ~Enhancement~[TAG_ENHANCEMENT_BONUS] Bonus")
     return 0
 
-allegroSpell = PythonModifier("sp-Allegro", 3) # spell_id, duration, empty
+allegroSpell = PythonModifier("sp-Allegro", 3, False) # spell_id, duration, empty
 allegroSpell.AddHook(ET_OnGetMoveSpeedBase, EK_NONE, allegroSpellMovementBonus,())
 allegroSpell.AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, ())
 allegroSpell.AddHook(ET_OnGetEffectTooltip, EK_NONE, spell_utils.spellEffectTooltip, ())

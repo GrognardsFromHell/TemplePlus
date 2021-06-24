@@ -11,7 +11,7 @@ def resistanceGreaterSpellBonus(attachee, args, evt_obj):
     evt_obj.bonus_list.add(bonusValue, bonusType, "~Resistance, Superior~[TAG_SPELLS_RESISTANCE_SUPERIOR] ~Resistance~[TAG_MODIFIER_RESISTANCE] Bonus")
     return 0
 
-resistanceGreaterSpell = PythonModifier("sp-Resistance Superior", 3) # spell_id, duration, empty
+resistanceGreaterSpell = PythonModifier("sp-Resistance Superior", 3, False) # spell_id, duration, empty
 resistanceGreaterSpell.AddHook(ET_OnSaveThrowLevel, EK_NONE, resistanceGreaterSpellBonus,())
 resistanceGreaterSpell.AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, ())
 resistanceGreaterSpell.AddHook(ET_OnGetEffectTooltip, EK_NONE, spell_utils.spellEffectTooltip, ())

@@ -12,7 +12,7 @@ def blessedAimSpellBonus(attachee, args, evt_obj):
         evt_obj.bonus_list.add(bonusValue, bonusType, "~Blessed Aim~[~Morale~[TAG_MODIFIER_MORALE] : TAG_SPELLS_BLESSED_AIM]")
     return 0
 
-blessedAimSpell = PythonModifier("sp-Blessed Aim", 3) # spell_id, duration, empty
+blessedAimSpell = PythonModifier("sp-Blessed Aim", 3, False) # spell_id, duration, empty
 blessedAimSpell.AddHook(ET_OnToHitBonus2, EK_NONE, blessedAimSpellBonus,())
 blessedAimSpell.AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, ())
 blessedAimSpell.AddHook(ET_OnGetEffectTooltip, EK_NONE, spell_utils.spellEffectTooltip, ())
