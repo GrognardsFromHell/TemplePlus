@@ -103,8 +103,8 @@ def removeTempHp(attachee, args, evt_obj):
 
 #Used to replace same condition to prevent duplicates
 def replaceCondition(attachee, args, evt_obj):
-    name = spellName(args.get_arg(0))
-    if evt_obj.is_modifier("sp-{}".format(name)):
+    conditionName = args.get_cond_name()
+    if evt_obj.is_modifier("{}".format(conditionName)):
         args.remove_spell()
         args.remove_spell_mod()
     return 0
