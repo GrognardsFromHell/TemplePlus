@@ -25,11 +25,12 @@ def sirinesGraceSpellAcBonus(attachee, args, evt_obj):
     evt_obj.bonus_list.add(bonusValue, bonusType, "~Deflection~[TAG_DEFLECTION_BONUS] : ~Sirines Grace~[TAG_SPELLS_SIRINES_GRACE]")
     return 0
 
-sirinesGraceSpell = PythonModifier("sp-Sirines Grace", 3) # spell_id, duration, empty
+sirinesGraceSpell = PythonModifier("sp-Sirines Grace", 3, False) # spell_id, duration, empty
 sirinesGraceSpell.AddHook(ET_OnGetAC, EK_NONE, sirinesGraceSpellAcBonus,())
 sirinesGraceSpell.AddHook(ET_OnGetSkillLevel, EK_SKILL_PERFORM, sirinesGraceSpellPerformBonus,())
 sirinesGraceSpell.AddHook(ET_OnAbilityScoreLevel, EK_STAT_CHARISMA, sirinesGraceSpellAbilityBonus,())
 sirinesGraceSpell.AddHook(ET_OnAbilityScoreLevel, EK_STAT_DEXTERITY, sirinesGraceSpellAbilityBonus,())
+sirinesGraceSpell.AddHook(ET_OnConditionAddPre, EK_NONE, spell_utils.replaceCondition, ())
 sirinesGraceSpell.AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, ())
 sirinesGraceSpell.AddHook(ET_OnGetEffectTooltip, EK_NONE, spell_utils.spellEffectTooltip, ())
 sirinesGraceSpell.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, spell_utils.queryActiveSpell, ())

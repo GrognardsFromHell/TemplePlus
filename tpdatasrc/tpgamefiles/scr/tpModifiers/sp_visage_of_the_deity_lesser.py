@@ -24,9 +24,10 @@ def visageOfTheDeityLesserSpellElementalResistance(attachee, args, evt_obj):
         evt_obj.damage_packet.add_damage_resistance(resistanceValue, D20DT_FIRE, damageMesId)
     return 0
 
-visageOfTheDeityLesserSpell = PythonModifier("sp-Visage of the Deity lesser", 3) # spell_id, duration, empty
+visageOfTheDeityLesserSpell = PythonModifier("sp-Visage of the Deity lesser", 3, False) # spell_id, duration, empty
 visageOfTheDeityLesserSpell.AddHook(ET_OnAbilityScoreLevel, EK_STAT_CHARISMA, visageOfTheDeityLesserSpellAbilityBonus, ())
 visageOfTheDeityLesserSpell.AddHook(ET_OnTakingDamage , EK_NONE, visageOfTheDeityLesserSpellElementalResistance,())
+visageOfTheDeityLesserSpell.AddHook(ET_OnConditionAddPre, EK_NONE, spell_utils.replaceCondition, ())
 visageOfTheDeityLesserSpell.AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, ())
 visageOfTheDeityLesserSpell.AddHook(ET_OnGetEffectTooltip, EK_NONE, spell_utils.spellEffectTooltip, ())
 visageOfTheDeityLesserSpell.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, spell_utils.queryActiveSpell, ())

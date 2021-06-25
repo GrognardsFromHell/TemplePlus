@@ -14,12 +14,13 @@ def curseOfIllFortuneSpellPenalty(attachee, args, evt_obj):
 def curseOfIllFortuneSpellCheckRemoveBySpell(attachee, args, evt_obj):
     #Limited Wish, Miracle and Wish also remove Curses
     if (evt_obj.is_modifier("sp-Break Enchantment")
-    or evt_obj.is_modifier("sp-Remove Curse")):
+    or evt_obj.is_modifier("sp-Remove Curse")
+    or evt_obj.is_modifier("sp-Curse of Ill Fortune")): #prevent duplicate
         args.remove_spell()
         args.remove_spell_mod()
     return 0
 
-curseOfIllFortuneSpell = PythonModifier("sp-Curse of Ill Fortune", 3) # spell_id, duration, empty
+curseOfIllFortuneSpell = PythonModifier("sp-Curse of Ill Fortune", 3, False) # spell_id, duration, empty
 curseOfIllFortuneSpell.AddHook(ET_OnToHitBonus2, EK_NONE, curseOfIllFortuneSpellPenalty,())
 curseOfIllFortuneSpell.AddHook(ET_OnSaveThrowLevel, EK_NONE, curseOfIllFortuneSpellPenalty,())
 curseOfIllFortuneSpell.AddHook(ET_OnGetAbilityCheckModifier, EK_NONE, curseOfIllFortuneSpellPenalty,())

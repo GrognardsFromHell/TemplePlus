@@ -12,8 +12,9 @@ def angelskinSpellEvilDr(attachee, args, evt_obj):
     evt_obj.damage_packet.add_physical_damage_res(drAmount, drBreakType, damageMesId)
     return 0
 
-angelskinSpell = PythonModifier("sp-Angelskin", 3) # spell_id, duration, empty
+angelskinSpell = PythonModifier("sp-Angelskin", 3, False) # spell_id, duration, empty
 angelskinSpell.AddHook(ET_OnTakingDamage , EK_NONE, angelskinSpellEvilDr,())
+angelskinSpell.AddHook(ET_OnConditionAddPre, EK_NONE, spell_utils.replaceCondition, ())
 angelskinSpell.AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, ())
 angelskinSpell.AddHook(ET_OnGetEffectTooltip, EK_NONE, spell_utils.spellEffectTooltip, ())
 angelskinSpell.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, spell_utils.queryActiveSpell, ())

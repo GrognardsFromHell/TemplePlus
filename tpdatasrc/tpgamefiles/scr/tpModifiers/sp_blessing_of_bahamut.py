@@ -12,8 +12,9 @@ def blessingOfBahamutSpellGrantDr(attachee, args, evt_obj):
     evt_obj.damage_packet.add_physical_damage_res(drAmount, drBreakType, damageMesId)
     return 0
 
-blessingOfBahamutSpell = PythonModifier("sp-Blessing of Bahamut", 3) # spell_id, duration, empty
+blessingOfBahamutSpell = PythonModifier("sp-Blessing of Bahamut", 3, False) # spell_id, duration, empty
 blessingOfBahamutSpell.AddHook(ET_OnTakingDamage, EK_NONE, blessingOfBahamutSpellGrantDr,())
+blessingOfBahamutSpell.AddHook(ET_OnConditionAddPre, EK_NONE, spell_utils.replaceCondition, ())
 blessingOfBahamutSpell.AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, ())
 blessingOfBahamutSpell.AddHook(ET_OnGetEffectTooltip, EK_NONE, spell_utils.spellEffectTooltip, ())
 blessingOfBahamutSpell.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, spell_utils.queryActiveSpell, ())

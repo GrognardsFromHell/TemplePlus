@@ -101,6 +101,15 @@ def removeTempHp(attachee, args, evt_obj):
     attachee.d20_send_signal(S_Spell_End, args.get_arg(0))
     return 0
 
+#Used to replace same condition to prevent duplicates
+def replaceCondition(attachee, args, evt_obj):
+    name = spellName(args.get_arg(0))
+    if evt_obj.is_modifier("sp-{}".format(name)):
+        args.remove_spell()
+        args.remove_spell_mod()
+    return 0
+
+
 ### Other useful functions ###
 
 # Skill Check with history windows #

@@ -14,12 +14,13 @@ def curseOfImpendingBladesSpellPenaltyToAc(attachee, args, evt_obj):
 def curseOfImpendingBladesSpellCheckRemoveBySpell(attachee, args, evt_obj):
     #Limited Wish, Miracle and Wish also remove Curses
     if (evt_obj.is_modifier("sp-Break Enchantment")
-    or evt_obj.is_modifier("sp-Remove Curse")):
+    or evt_obj.is_modifier("sp-Remove Curse")
+    or evt_obj.is_modifier("sp-Curse of Impending Blades")):
         args.remove_spell()
         args.remove_spell_mod()
     return 0
 
-curseOfImpendingBladesSpell = PythonModifier("sp-Curse of Impending Blades", 3) # spell_id, duration, empty
+curseOfImpendingBladesSpell = PythonModifier("sp-Curse of Impending Blades", 3, False) # spell_id, duration, empty
 curseOfImpendingBladesSpell.AddHook(ET_OnGetAC, EK_NONE, curseOfImpendingBladesSpellPenaltyToAc,())
 curseOfImpendingBladesSpell.AddHook(ET_OnConditionAddPre, EK_NONE, curseOfImpendingBladesSpellCheckRemoveBySpell, ())
 curseOfImpendingBladesSpell.AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, (spell_curse_of_impending_blades,))
