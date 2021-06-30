@@ -27,8 +27,9 @@ def OnSpellEffect(spell):
                 spellTarget.obj.float_mesfile_line('mes\\spell.mes', 30000)
                 game.particles('Fizzle', spellTarget.obj)
                 targetsToRemove.append(spellTarget.obj)
-    
-    spell.target_list.remove_list(targetsToRemove)
+
+    if targetsToRemove:
+        spell.target_list.remove_list(targetsToRemove)
     spell.spell_end(spell.id)
 
 def OnBeginRound(spell):

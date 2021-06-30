@@ -21,7 +21,7 @@ def OnSpellEffect(spell):
 
     if targetsToRemove:
         spell.target_list.remove_list(targetsToRemove)
-        spell.spell_end(spell.id)
+    spell.spell_end(spell.id)
 
 def OnBeginRound(spell):
     print "Allegro OnBeginRound"

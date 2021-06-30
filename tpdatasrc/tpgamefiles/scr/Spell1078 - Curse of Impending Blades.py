@@ -17,7 +17,7 @@ def OnSpellEffect(spell):
         game.create_history_freeform("{} is affected by ~Curse of Impending Blades~[TAG_SPELLS_CURSE_OF_IMPENDING_BLADES]\n\n".format(spellTarget.obj.description))
         spellTarget.partsys_id = game.particles('sp-Bestow Curse', spellTarget.obj)
     else:
-        print "Failed to apply condition"
+        spellTarget.obj.float_mesfile_line('mes\\spell.mes', 30000)
         game.particles('Fizzle', spellTarget.obj)
         spell.target_list.remove_target(spellTarget.obj)
         spell.spell_end(spell.id)

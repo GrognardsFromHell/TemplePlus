@@ -13,7 +13,7 @@ def OnBeginRound(spell):
 
 def OnBeginProjectile(spell, projectile, index_of_target):
     print "Ray of Light OnBeginProjectile"
-    projectile.obj_set_int(obj_f_projectile_part_sys_id, game.particles('sp-Ray of Frost', projectile))
+    projectile.obj_set_int(obj_f_projectile_part_sys_id, game.particles('sp-Searing Light', projectile))
 
 def OnEndProjectile( spell, projectile, index_of_target ):
     print "Ray of Light OnEndProjectile"
@@ -26,9 +26,11 @@ def OnEndProjectile( spell, projectile, index_of_target ):
         spellTarget.partsys_id = game.particles('sp-Arcane Eye-END', spellTarget.obj)
         blindnessDurationDice = dice_new('1d4')
         blindnessDuration = blindnessDurationDice.roll()
-        spellTarget.obj.condition_add('Blindness', blindnessDuration)
-        spellTarget.obj.float_text_line("Blinded", tf_red)
-        game.create_history_freeform("{} is ~blinded~[TAG_BLINDED]\n\n".format(spellTarget.obj.description))
+        if spellTarget.obj.condition_add('Blindness', blindnessDuration):
+            spellTarget.obj.float_text_line("Blinded", tf_red)
+            game.create_history_freeform("{} is ~blinded~[TAG_BLINDED]\n\n".format(spellTarget.obj.description))
+        else:
+            game.particles('Fizzle', spellTarget.obj)
     else:
         spellTarget.obj.float_mesfile_line('mes\\spell.mes', 30007)
         game.particles('Fizzle', spellTarget.obj)

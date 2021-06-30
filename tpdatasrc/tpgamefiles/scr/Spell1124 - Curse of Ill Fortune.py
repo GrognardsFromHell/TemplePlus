@@ -12,7 +12,7 @@ def OnSpellEffect(spell):
     spellTarget = spell.target_list[0]
     
     if spellTarget.obj.is_category_type(mc_type_construct) or spellTarget.obj.is_category_type(mc_type_undead): # curse affects only living targets
-        spellTarget.obj.float_text_line("Unaffected due to Racial Immunity") #Mimics the original game message
+        spellTarget.obj.float_text_line("Not a living creature")
         game.particles('Fizzle', spellTarget.obj)
         spell.target_list.remove_target(spellTarget.obj)
     else:

@@ -19,6 +19,7 @@ def OnSpellEffect(spell):
         spellDamageDice.number = min((spell.caster_level/2), 5) #capped at CL 10
     damageType = D20DT_MAGIC #In the spell compendium, damage is actually untyped damage; should it be switched to D20DT_UNSPECIFIED?
 
+    game.particles('sp-Deific Vengeance', spellTarget.obj)
     #Saving Throw for half damage
     if spellTarget.obj.saving_throw_spell(spell.dc, saveType, saveDescriptor, spell.caster, spell.id): #success
         spellTarget.obj.float_mesfile_line('mes\\spell.mes', 30001)

@@ -29,7 +29,8 @@ def OnSpellEffect(spell):
             spellTarget.obj.float_mesfile_line('mes\\spell.mes', 30002)
             spellTarget.obj.spell_damage(spell.caster, damageType, spellDamageDice, D20DAP_UNSPECIFIED, D20A_CAST_SPELL, spell.id)
             spellTarget.obj.float_text_line("Stunned", tf_red)
-            spellTarget.obj.condition_add_with_args('Stunned', 1, 0)
+            stunDuration = 1
+            spellTarget.obj.condition_add_with_args('Stunned', stunDuration, 0)
             #if unconscious after damage from awaken sin, additional wisdom damage
             if spellTarget.obj.is_unconscious():
                 wisdomDamageDice = dice_new('1d6')

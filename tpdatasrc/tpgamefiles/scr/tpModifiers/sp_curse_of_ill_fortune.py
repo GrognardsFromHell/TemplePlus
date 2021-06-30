@@ -25,7 +25,7 @@ curseOfIllFortuneSpell.AddHook(ET_OnToHitBonus2, EK_NONE, curseOfIllFortuneSpell
 curseOfIllFortuneSpell.AddHook(ET_OnSaveThrowLevel, EK_NONE, curseOfIllFortuneSpellPenalty,())
 curseOfIllFortuneSpell.AddHook(ET_OnGetAbilityCheckModifier, EK_NONE, curseOfIllFortuneSpellPenalty,())
 curseOfIllFortuneSpell.AddHook(ET_OnGetSkillLevel, EK_NONE, curseOfIllFortuneSpellPenalty,())
-curseOfIllFortuneSpell.AddHook(ET_OnD20Signal, EK_S_Spell_Cast, curseOfIllFortuneSpellCheckRemoveBySpell, ())
+curseOfIllFortuneSpell.AddHook(ET_OnConditionAddPre, EK_NONE, curseOfIllFortuneSpellCheckRemoveBySpell, ())
 curseOfIllFortuneSpell.AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, (spell_curse_of_ill_fortune,))
 curseOfIllFortuneSpell.AddHook(ET_OnGetEffectTooltip, EK_NONE, spell_utils.spellEffectTooltip, (spell_curse_of_ill_fortune,))
 curseOfIllFortuneSpell.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, spell_utils.queryActiveSpell, ())

@@ -23,6 +23,8 @@ sp-Corona of Cold	New Emitter			0	1		Object YPR				Disc	Same as Emitter	Polar		f
 sp-Corona of Cold	New Emitter			0	1		Object YPR				Disc	Same as Emitter	Polar		flare-1	5	Add	0				0	0	0	0	0	0	0	40	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	100,0	0	0	0,-1000	0	0	255	255	255	255						
 sp-Daze2	perma daze			120	30		Bones				Sprite		Polar		flare-1	30	Add	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360	0?100	#radius	1?10	0	0	0?360	0	0	0,255,0	255,128	255,128	255,255						
 sp-Daze2	Daze hit			15	300		Bones				Sprite		Polar		flare-1	15	Add	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360	0?100	#radius	1?30	0	0	0?360	0	0	0,255,0	255,128	255,128	255,255						
+sp-Deific Vengeance	imploding star	0		10	5						Disc				flare-1	30	Add	0				0	0	0	0	0	0	0	40	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	100,0	0	0	0?360	0	0	255	255,255	255,255	255,0						4
+sp-Deific Vengeance	lights			25	20		Object Pos				Disc		Polar	Polar	flare-1	30	Add	0				0	0	0	0	0	0	0	40	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	-30	0?360	0?360	#radius	10,0	0	0	0	0	0	0,255,0	255,255	255,255	255,0						20
 sp-Demonhide	redHero			perm	30		Bones				Sprite				flare-1	30	Add	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	8?15	0	0	0	0	0	255	127	0	0						
 sp-Demonhide	redHeroStart			5	200		Bones				Sprite				flare-1	30	Add	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4,30	0	0	0	0	0	0,150,100,50,0	127	0	0						
 sp-Demonhide1	New Emitter			perm	30		Node Pos	bip01 r hand			Disc	World	Polar		strike	15	Add	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	10	0	0	0?360	0	0	64,0	255	64	64						2
