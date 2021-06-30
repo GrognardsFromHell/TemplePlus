@@ -1,0 +1,5 @@
+ID_string: BLESSING_OF_BAHAMUT
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\spell shield of faith.tga
+help_topic: TAG_SPELLS_BLESSING_OF_BAHAMUT
+tooltip_base_text: Blessing od Bahamut

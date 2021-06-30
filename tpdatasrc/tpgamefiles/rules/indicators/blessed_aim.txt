@@ -1,0 +1,5 @@
+ID_string: BLESSED_AIM
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Spell True Strike.tga
+help_topic: TAG_SPELLS_BLESSED_AIM
+tooltip_base_text: Blessed Aim

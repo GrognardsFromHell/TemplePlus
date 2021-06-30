@@ -1,0 +1,20 @@
+School: Necromancy
+Level: Brd 3
+Level: Rgr 3
+Level: Sor 3
+Level: Wiz 3
+Component: V
+Component: S
+Casting Time: 1 action
+Range: Medium
+Saving Throw: None
+Spell Resistance: Yes
+Projectile: No
+flags_Target: Range
+inc_flags_Target: Other
+exc_flags_Target: Self
+exc_flags_Target: Dead
+exc_flags_Target: Non-critter
+mode_Target: Area
+radius_Target: 20
+ai_type: ai_action_offensive

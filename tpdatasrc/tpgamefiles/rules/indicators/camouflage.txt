@@ -1,0 +1,5 @@
+ID_string: CAMOUFLAGE
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Spell Meld Into Stone.tga
+help_topic: TAG_SPELLS_CAMOUFLAGE
+tooltip_base_text: Camouflage

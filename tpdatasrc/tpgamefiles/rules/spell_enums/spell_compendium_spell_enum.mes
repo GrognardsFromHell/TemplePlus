@@ -118,6 +118,8 @@
 {1169}{Tremor}
 {1170}{Weapon of Energy}
 {1171}{Storm of Elemental Fury}
+{1172}{Acid Fog}
+{1173}{Touch of Madness}
 
 {6050}{Sound Lance}
 {6051}{Critical Strike}
@@ -237,6 +239,8 @@
 {6169}{Tremor}
 {6170}{Weapon of Energy}
 {6171}{Storm of Elemental Fury}
+{6172}{Acid Fog}
+{6173}{Touch of Madness}
 
 {21050}{TAG_SPELLS_SOUND_LANCE}
 {21051}{TAG_SPELLS_CRITICAL_STRIKE}
@@ -356,3 +360,5 @@
 {21169}{TAG_SPELLS_TREMOR}
 {21170}{TAG_SPELLS_WEAPON_OF_ENERGY}
 {21171}{TAG_SPELLS_STORM_OF_ELEMENTAL_FURY}
+{21172}{TAG_SPELLS_ACID_FOG}
+{21173}{TAG_SPELLS_TOUCH_OF_MADNESS}

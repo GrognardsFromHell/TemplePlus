@@ -1,0 +1,26 @@
+School: Abjuration
+Level: Clr 3
+Level:  Drd 3
+Level:  Sor 4
+Level:  Wiz 4
+Component: V
+Component: S
+Casting Time: 1 action
+Range: Close
+Saving Throw: None
+Spell Resistance: No
+Projectile: No
+flags_Target: Range
+inc_flags_Target: Other
+inc_flags_Target: Self
+exc_flags_Target: Dead
+exc_flags_Target: Non-critter
+mode_Target: Multi
+mode_Target: Once-Multi
+mode_Target: Any 30 Feet
+mode_Target: End Early Multi
+min_Target: 1
+max_Target: 0
+radius_Target: 0
+ai_type: ai_action_defensive
+choices: 0121 0122 0123 0124 0125

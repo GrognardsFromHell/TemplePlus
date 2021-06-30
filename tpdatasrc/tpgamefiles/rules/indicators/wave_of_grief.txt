@@ -1,0 +1,5 @@
+ID_string: WAVE_OF_GRIEF
+effect_type: 1
+texture_file: art\interface\player_conditions\ailments\spell curse of impending blades.tga
+help_topic: TAG_SPELLS_WAVE_OF_GRIEF
+tooltip_base_text: Wave of Grief

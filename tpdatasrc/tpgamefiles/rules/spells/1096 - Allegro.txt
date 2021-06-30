@@ -1,0 +1,18 @@
+School: Transmutation
+Level: Brd 3
+Component: V
+Component: S
+Casting Time: Swift Action
+Range: Personal
+Saving Throw: None
+Spell Resistance: Yes
+Projectile: No
+flags_Target: Range
+flags_Target: Radius
+inc_flags_Target: Self
+inc_flags_Target: Other
+exc_flags_Target: Dead
+exc_flags_Target: Non-critter
+mode_Target: Personal
+radius_Target: 20
+ai_type: ai_action_defensive

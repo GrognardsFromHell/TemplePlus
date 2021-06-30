@@ -1,0 +1,5 @@
+ID_string: RESISTANCE,_SUPERIOR
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Spell Resistance.tga
+help_topic: TAG_SPELLS_RESISTANCE_SUPERIOR
+tooltip_base_text: Resistance, Superior

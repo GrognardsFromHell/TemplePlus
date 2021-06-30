@@ -1,0 +1,5 @@
+ID_string: APPRAISING_TOUCH
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\spell heroism.tga
+help_topic: TAG_SPELLS_APPRAISING_TOUCH
+tooltip_base_text: Appraising Touch

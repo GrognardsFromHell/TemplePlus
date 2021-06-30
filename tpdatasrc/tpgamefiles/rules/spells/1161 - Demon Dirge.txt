@@ -1,0 +1,21 @@
+School: Transmutation
+Level: Clr 3
+Level:  Sor 3
+Level:  Wiz 3
+Component: V
+Component: S
+Casting Time: 1 action
+Range: Close
+Saving Throw: None
+Spell Resistance: Yes
+Projectile: No
+flags_Target: Range
+inc_flags_Target: Other
+exc_flags_Target: Dead
+exc_flags_Target: Non-critter
+exc_flags_Target: Self
+mode_Target: Single
+min_Target: 1
+max_Target: 1
+radius_Target: 0
+ai_type: ai_action_offensive

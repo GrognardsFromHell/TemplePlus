@@ -1,0 +1,5 @@
+ID_string: DEMONHIDE
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\spell demonhide.tga
+help_topic: TAG_SPELLS_DEMONHIDE
+tooltip_base_text: Demonhide

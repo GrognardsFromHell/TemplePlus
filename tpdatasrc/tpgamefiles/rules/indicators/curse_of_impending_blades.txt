@@ -1,0 +1,5 @@
+ID_string: CURSE_OF_IMPENDING_BLADES
+effect_type: 1
+texture_file: art\interface\player_conditions\ailments\spell curse of impending blades.tga
+help_topic: TAG_SPELLS_CURSE_OF_IMPENDING_BLADES
+tooltip_base_text: Curse of Impending Blades

@@ -1,0 +1,18 @@
+School: Transmutation
+Level: Clr 3
+Level: Pal 4
+Component: V
+Component: S
+Casting Time: 1 action
+Range: Personal
+Saving Throw: None
+Spell Resistance: No
+Projectile: No
+flags_Target: Range
+inc_flags_Target: Self
+exc_flags_Target: Dead
+exc_flags_Target: Non-critter
+exc_flags_Target: Other
+mode_Target: Personal
+radius_Target: 0
+ai_type: ai_action_defensive

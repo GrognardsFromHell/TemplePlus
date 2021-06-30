@@ -841,3 +841,17 @@ Casting:         1 action [V,S]
 Range:               Long
 Target:             Area
 Duration:      4,  Save: Fortitude negates,  SR: Yes}
+
+{6172} Acid Fog {While inside Acid Fog, targets are concealed, can only move 5 feet, are immune to ranged attacks and take 2d6 acid damage every turn.
+School:          Conjuration(Creation)[Acid]
+Casting:         1 action [V,S]
+Range:               Medium (100ft. + 10ft./level)
+Area:                 20-ft. radius spread
+Duration:      1 round/level,  Save: None,  SR: No}
+
+{6173} Touch of Madness {Target must make a Will Saving Throw after a successful touch attack or be dazed for 1 round/level.
+School:          Enchantment[Mind-Affecting]
+Casting:         1 action [V,S]
+Range:               Touch 
+Target:             One living creature
+Duration:      1 round/level,  Save: Will negates,  SR: Yes}
