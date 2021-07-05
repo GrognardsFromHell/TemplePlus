@@ -54,3 +54,11 @@ def targetIsPcPartyNotDead(target):
 
 	return False
 
+def isUnconcealed(critter):
+	flags = critter.obj_get_int(obj_f_flags)
+	if flags & OCF_MOVING_SILENTLY:
+		return 0
+	if flags & OCF_IS_CONCEALED:
+		return 0
+
+	return 1
