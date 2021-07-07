@@ -7,12 +7,31 @@ debug_enabled = True
 def debug_print(*args):
     if debug_enabled:
         for arg in args:
-            print arg,
+            print arg
     return
 
 def missing_stub(msg):
     print msg
     return 0
+
+def floatFriendlyFire(attacker, tgt):
+    if attacker.allegiance_shared(tgt) and (tgt in game.party) == (attacker in game.party):
+        tgt.float_mesfile_line('mes\\combat.mes', 107) # Friendly Fire
+    return
+
+def getUsedWeapon(flags, attacker):
+    unarmed = OBJ_HANDLE_NULL
+    if flags & D20CAF_TOUCH_ATTACK:
+        return unarmed
+    elif flags & D20CAF_SECONDARY_WEAPON:
+        offhandItem = attacker.item_worn_at(item_wear_weapon_secondary)
+        if offhandItem.type == obj_t_weapon:
+            return offhandItem
+    else:
+        mainhandItem = attacker.item_worn_at(item_wear_weapon_primary)
+        if mainhandItem.type == obj_t_weapon:
+            return mainhandItem
+    return unarmed
 
 def playSoundEffect(weaponUsed, attacker, tgt, sound_event):
     missing_stub("auto soundId = inventory.GetSoundIdForItemEvent(weaponUsed, attacker, tgt, 6); sound tbd")
@@ -32,28 +51,16 @@ def deal_attack_damage(attacker, tgt, d20_data, flags, action_type):
     
     #Create evt_obj_dam
     evt_obj_dam = tpdp.EventObjDamage()
-    evt_obj_dam.attack_packet.action_type = action_type
+    missing_stub("evt_obj_dam.attack_packet.action_type = action_type #this returns an error")
     evt_obj_dam.attack_packet.attacker = attacker
     evt_obj_dam.attack_packet.target = tgt
     evt_obj_dam.attack_packet.event_key = d20_data
     evt_obj_dam.attack_packet.set_flags(flags)
 
     #Set weapon used
-    unarmed = OBJ_HANDLE_NULL
-    if evt_obj_dam.attack_packet.get_flags() & D20CAF_TOUCH_ATTACK:
-        evt_obj_dam.attack_packet.set_weapon_used(unarmed)
-    elif evt_obj_dam.attack_packet.get_flags() & D20CAF_SECONDARY_WEAPON:
-        offhandItem = attacker.item_worn_at(item_wear_weapon_secondary)
-        if offhandItem.type != obj_t_weapon:
-            evt_obj_dam.attack_packet.set_weapon_used(unarmed)
-        else:
-            evt_obj_dam.attack_packet.set_weapon_used(offhandItem)
-    else:
-        mainhandItem = attacker.item_worn_at(item_wear_weapon_primary)
-        if mainhandItem.type != obj_t_weapon:
-            evt_obj_dam.attack_packet.set_weapon_used(unarmed)
-        else:
-            evt_obj_dam.attack_packet.set_weapon_used(mainhandItem)
+    usedWeapon = getUsedWeapon(evt_obj_dam.attack_packet.get_flags(), attacker)
+    debug_print("debug usedWeapon: {}".format(usedWeapon))
+    evt_obj_dam.attack_packet.set_weapon_used(usedWeapon)
 
     #Check ammo
     evt_obj_dam.attack_packet.ammo_item = attacker.get_ammo_used()
@@ -83,9 +90,8 @@ def deal_attack_damage(attacker, tgt, d20_data, flags, action_type):
             tgt.anim_goal_push_dodge(attacker)
         return -1
 
-    #Check Friendly Fire
-    if attacker.allegiance_shared(tgt) and (tgt in game.party) == (attacker in game.party):
-        tgt.float_mesfile_line('mes\\combat.mes', 107) # Friendly Fire
+    #Check if Friendly Fire and trigger float if true
+    floatFriendlyFire(attacker, tgt)
 
     #Check if is already unconscious
     wasAlreadyUnconscious = tgt.is_unconscious()
@@ -97,7 +103,7 @@ def deal_attack_damage(attacker, tgt, d20_data, flags, action_type):
     if evt_obj_dam.attack_packet.get_flags() & D20CAF_CRITICAL:
         #create evt_obj_crit_dice
         evt_obj_crit_dice = tpdp.EventObjAttack()
-        evt_obj_crit_dice.attack_packet.action_type = action_type
+        missing_stub("evt_obj_crit_dice.attack_packet.action_type = action_type #this returns an error")
         evt_obj_crit_dice.attack_packet.attacker = attacker
         evt_obj_crit_dice.attack_packet.target = tgt
         evt_obj_crit_dice.attack_packet.event_key = d20_data
@@ -106,10 +112,10 @@ def deal_attack_damage(attacker, tgt, d20_data, flags, action_type):
         #Check ammo
         evt_obj_crit_dice.attack_packet.ammo_item = attacker.get_ammo_used()
         #apply extra damage
-        extraDamageDice = evt_obj_crit_dice.dispatch(attacker, OBJ_HANDLE_NULL, ET_OnGetCriticalHitExtraDice, EK_NONE)
-        debug_print("Debug extraDamageDice: {}".format(extraDamageDice))
+        extraHitDice = evt_obj_crit_dice.dispatch(attacker, OBJ_HANDLE_NULL, ET_OnGetCriticalHitExtraDice, EK_NONE)
+        debug_print("Debug extraHitDice: {}".format(extraHitDice))
         
-        evt_obj_dam.damage.critical_multiplier_apply(extraHitDice + 1)
+        evt_obj_dam.damage_packet.critical_multiplier_apply(extraHitDice + 1)
         attacker.float_mesfile_line('mes\\combat.mes', 12) #{12}{Critical Hit!}
         #play crit hit sound
         soundIdTarget = tgt.soundmap_critter(0)
@@ -128,7 +134,7 @@ def deal_attack_damage(attacker, tgt, d20_data, flags, action_type):
     damage_critter(attacker, tgt, evt_obj_dam)
 
     #Play damage particle effects
-    evt_obj_dam.damage.play_pfx(tgt)
+    evt_obj_dam.damage_packet.play_pfx(tgt)
     
     #Send signals
     evt_obj_dam.send_signal(attacker, S_Attack_Made)
@@ -139,6 +145,76 @@ def deal_attack_damage(attacker, tgt, d20_data, flags, action_type):
     overall_dam = evt_obj_dam.damage_packet.get_overall_damage()
     return overall_dam
 
+def deal_spell_damage(tgt, attacker, dice, damageType, attackPower, reduction, damageDescId, action_type, spellId, flags):
+    spellPacket = tpdp.spellPacket(spellId)
+    if not tgt:
+        return
+
+    #Check if Friendly Fire and trigger float if true
+    floatFriendlyFire(attacker, tgt)
+
+    #Provoke Hostility
+    #missing_stub("aiSys.ProvokeHostility(attacker, tgt, 1, 0);")
+    attacker.attack(tgt, 1, 0)
+
+    #Check if target is alive
+    if tgt == OBJ_HANDLE_NULL or tgt.is_dead_or_destroyed():
+        return
+
+    #create evt_obj_dam
+    evt_obj_dam = tpdp.EventObjDamage()
+    missing_stub("evt_obj_dam.attack_packet.action_type = action_type #this returns an error")
+    evt_obj_dam.attack_packet.attacker = attacker
+    evt_obj_dam.attack_packet.target = tgt
+    evt_obj_dam.attack_packet.event_key = 1 #Took this from the c++ code, not sure if a hard number is good
+    evt_obj_dam.attack_packet.set_flags(flags)
+
+    #Set weapon used
+    if attacker.is_critter():
+        usedWeapon = getUsedWeapon(evt_obj_dam.attack_packet.get_flags(), attacker)
+        evt_obj_dam.attack_packet.set_weapon_used(usedWeapon)
+        #Check ammo
+        evt_obj_dam.attack_packet.ammo_item = attacker.get_ammo_used()
+    else:
+        evt_obj_dam.attack_packet.set_weapon_used(OBJ_HANDLE_NULL)
+        evt_obj_dam.attack_packet.ammo_item = OBJ_HANDLE_NULL
+
+    #Add damage mod factor
+    if reduction != 100:
+        #addresses.AddDamageModFactor(&evtObjDam.damage,  reduction * 0.01f, type, damageDescId);
+        evt_obj_dam.damage_packet.add_mod_factor((reduction * 0.01), damageType, damageDescId)
+
+    #Add damage dice
+    #If we could get a string support for add_dice
+    #we could get rid of this ugly ID 103 in damage.mes
+    #ID 103 = Unknown
+    #Could be replaced by:
+    #spellEnum = tpdp.SpellPacket(spellId).spell_enum
+    #spellName = game.get_spell_mesline(spellEnum)
+    #spellNameTag = spellName.upper().replace(" ", "_")
+    #evt_obj_dam.damage_packet.add_dice_with_custom_string(dice, damageType, "~{}~[TAG_SPELLS_{}]".format(spellName, spellNameTag))
+    evt_obj_dam.damage_packet.add_dice(dice, damageType, 103)
+
+    #Add attackPower
+    evt_obj_dam.damage_packet.attack_power(attackPower)
+
+    #set MetaMagic
+    metaMagicData = spellPacket.get_metamagic_data()
+    if missing_stub("if (mmData.metaMagicEmpowerSpellCount)"):
+        missing_stub("evtObjDam.damage.flags |= 2; // empowered")
+    if missing_stub("if (mmData.metaMagicFlags & 1)"):
+        missing_stub("evtObjDam.damage.flags |= 1; // maximized")
+
+    #Dispatch damage
+    evt_obj_dam.damage_packet.dispatch_spell_damage(attacker, tgt, spellPacket)
+
+    #Logbook
+    logbook.is_weapon_damage = 0 # used for recording attack damage
+
+    #Call Damage Critter
+    damage_critter(attacker, tgt, evt_obj_dam)
+
+    return
 
 def checkAnimationSkip(tgt):
     if tgt.is_unconscious() or tgt.d20_query(Q_Prone):
