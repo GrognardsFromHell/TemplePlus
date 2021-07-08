@@ -45,6 +45,23 @@
 
 namespace py = pybind11;
 
+template <> class py::detail::type_caster<objHndl> {
+public:
+	bool load(handle src, bool) {
+		value = PyObjHndl_AsObjHndl(src.ptr());
+		success = true;
+		return true;
+	}
+
+	static handle cast(const objHndl& src, return_value_policy /* policy */, handle /* parent */) {
+		return PyObjHndl_Create(src);
+	}
+
+	PYBIND11_TYPE_CASTER(objHndl, _("objHndl"));
+protected:
+	bool success = false;
+};
+
 struct AiSystem aiSys;
 AiParamPacket * AiSystem::aiParams;
 
@@ -171,8 +188,7 @@ uint32_t AiSystem::StrategyParse(objHndl objHnd, objHndl target)
 	auto pyResult = pythonObjIntegration.ExecuteScript("d20_ai.combat_strategy", "execute_strategy", args.ptr());
 	if (PyInt_Check(pyResult)) {
 		auto result = _PyInt_AsInt(pyResult);
-		if (result)
-			return TRUE;
+		return result != 0 ? TRUE : FALSE;
 	}
 
 	AiCombatRole role = GetRole(objHnd);
@@ -667,8 +683,8 @@ BOOL AiSystem::ConsiderTarget(objHndl obj, objHndl tgt)
 	if (!tgt || tgt == obj)
 		return 0;
 
-	py::tuple args = py::make_tuple(py::cast(obj), py::cast<objHndl>(tgt));
-	auto pyResult = pythonObjIntegration.ExecuteScript("d20_ai.targetting", "consider_target", args.ptr());
+	py::tuple args = py::make_tuple(py::cast<objHndl>(obj), py::cast<objHndl>(tgt));
+	auto pyResult = pythonObjIntegration.ExecuteScript("d20_ai.targeting", "consider_target", args.ptr());
 	if (PyInt_Check(pyResult)) {
 		auto result = _PyInt_AsInt(pyResult);
 		return result;
