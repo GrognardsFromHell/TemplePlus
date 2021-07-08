@@ -34,7 +34,6 @@ def getUsedWeapon(flags, attacker):
     return unarmed
 
 def playSoundEffect(weaponUsed, attacker, tgt, sound_event):
-    missing_stub("auto soundId = inventory.GetSoundIdForItemEvent(weaponUsed, attacker, tgt, 6); sound tbd")
     sound_id = attacker.soundmap_item(weaponUsed, tgt, sound_event)
     game.sound_local_obj(sound_id, attacker)
     return
@@ -51,7 +50,7 @@ def deal_attack_damage(attacker, tgt, d20_data, flags, action_type):
     
     #Create evt_obj_dam
     evt_obj_dam = tpdp.EventObjDamage()
-    missing_stub("evt_obj_dam.attack_packet.action_type = action_type #this returns an error")
+    evt_obj_dam.attack_packet.action_type = tpdp.D20ActionType(action_type)
     evt_obj_dam.attack_packet.attacker = attacker
     evt_obj_dam.attack_packet.target = tgt
     evt_obj_dam.attack_packet.event_key = d20_data
@@ -103,7 +102,7 @@ def deal_attack_damage(attacker, tgt, d20_data, flags, action_type):
     if evt_obj_dam.attack_packet.get_flags() & D20CAF_CRITICAL:
         #create evt_obj_crit_dice
         evt_obj_crit_dice = tpdp.EventObjAttack()
-        missing_stub("evt_obj_crit_dice.attack_packet.action_type = action_type #this returns an error")
+        evt_obj_crit_dice.attack_packet.action_type = tpdp.D20ActionType(action_type)
         evt_obj_crit_dice.attack_packet.attacker = attacker
         evt_obj_crit_dice.attack_packet.target = tgt
         evt_obj_crit_dice.attack_packet.event_key = d20_data
