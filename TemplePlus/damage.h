@@ -101,6 +101,8 @@ public:
 	void DealSpellDamage(objHndl victim, objHndl attacker, const Dice &dice, DamageType type, int attackPower, int reduction, int damageDescId, D20ActionType actionType,
 		int spellId, int flags);
 
+	
+
 	/*
 		deals damage from a successful weapon attack.
 		Return value is used by Coup De Grace action.
@@ -146,6 +148,7 @@ private:
 
 	void DamageCritterPython(objHndl attacker, objHndl tgt, DispIoDamage& evtObjDam);
 	int DealAttackDamagePython(objHndl attacker, objHndl tgt, int d20Data, D20CAF flags, D20ActionType actionType);
+	void DealSpellDamagePython(objHndl tgt, objHndl attacker, const Dice& dice, DamageType type, int attackPower, int reduction, int damageDescId, D20ActionType actionType, int spellId, int flags);
 };
 
 extern Damage damage;

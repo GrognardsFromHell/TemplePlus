@@ -19,6 +19,7 @@
 #include "python/python_integration_obj.h"
 #include "python/python_object.h"
 #include "pybind11/pybind11.h"
+#include "python/python_dice.h"
 
 namespace py = pybind11;
 
@@ -35,6 +36,24 @@ public:
 	}
 
 	PYBIND11_TYPE_CASTER(objHndl, _("objHndl"));
+protected:
+	bool success = false;
+};
+template <> class py::detail::type_caster<Dice> {
+public:
+	bool load(handle src, bool) {
+		Dice dice;
+		ConvertDice(src.ptr(), &dice);
+		value = dice;
+		success = true;
+		return true;
+	}
+
+	static handle cast(const Dice& src, return_value_policy /* policy */, handle /* parent */) {
+		return PyDice_FromDice(src);
+	}
+
+	PYBIND11_TYPE_CASTER(Dice, _("PyDice"));
 protected:
 	bool success = false;
 };
@@ -358,7 +377,7 @@ void Damage::DealDamage(objHndl victim, objHndl attacker, const Dice& dice, Dama
 
 void Damage::DealSpellDamage(objHndl tgt, objHndl attacker, const Dice& dice, DamageType type, int attackPower, int reduction, int damageDescId, D20ActionType actionType, int spellId, int flags) {
 
-	auto pyResult = DealSpellDamagePython(tgt, attacker, dice, type, attackPower, reduction, damageDescId, actionType, spellId, flags);
+	return DealSpellDamagePython(tgt, attacker, dice, type, attackPower, reduction, damageDescId, actionType, spellId, flags);
 
 	SpellPacketBody spPkt(spellId);
 	if (!tgt)
@@ -417,25 +436,20 @@ void Damage::DealSpellDamage(objHndl tgt, objHndl attacker, const Dice& dice, Da
 
 }
 
-int Damage::DealSpellDamagePython(objHndl tgt, objHndl attacker, const Dice& dice, DamageType type, int attackPower, int reduction, int damageDescId, D20ActionType actionType, int spellId, int flags)
+void Damage::DealSpellDamagePython(objHndl tgt, objHndl attacker, const Dice& dice, DamageType type, int attackPower, int reduction, int damageDescId, D20ActionType actionType, int spellId, int flags)
 {
-	py::object pyDice = py::cast<Dice*>(&dice);
+	py::object pyDice = py::cast<Dice>( dice);
 	py::tuple args = py::make_tuple(py::cast<objHndl>(tgt), py::cast<objHndl>(attacker), pyDice, static_cast<int>(type), static_cast<int>(attackPower), reduction, damageDescId, static_cast<int>(actionType), spellId, static_cast<int>(flags));
 	
-	auto pyResult = pythonObjIntegration.ExecuteScript("d20_combat.damage_critter", "deal_spell_damage", args.ptr());
-	auto result = -1;
-	if (PyInt_Check(pyResult)) {
-		result = _PyInt_AsInt(pyResult);
-	}
-	Py_DECREF(pyResult);
+	pythonObjIntegration.ExecuteScript("d20_combat.damage_critter", "deal_spell_damage", args.ptr());
 	
-	return result;
 }
 
 int Damage::DealAttackDamage(objHndl attacker, objHndl tgt, int d20Data, D20CAF flags, D20ActionType actionType)
 {
 
 	auto pyResult = DealAttackDamagePython(attacker, tgt, d20Data, flags, actionType);
+	return pyResult;
 
 	aiSys.ProvokeHostility(attacker, tgt, 1, 0);
 

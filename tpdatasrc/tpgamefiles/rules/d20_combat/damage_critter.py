@@ -114,10 +114,10 @@ def deal_attack_damage(attacker, tgt, d20_data, flags, action_type):
         #Check ammo
         evt_obj_crit_dice.attack_packet.ammo_item = attacker.get_ammo_used()
         #apply extra damage
-        extraHitDice = evt_obj_crit_dice.dispatch(attacker, OBJ_HANDLE_NULL, ET_OnGetCriticalHitExtraDice, EK_NONE)
-        debug_print("Debug extraHitDice: {}".format(extraHitDice))
+        extraDamageDice = evt_obj_crit_dice.dispatch(attacker, OBJ_HANDLE_NULL, ET_OnGetCriticalHitExtraDice, EK_NONE)
+        debug_print("Debug extraDamageDice: {}".format(extraDamageDice))
         
-        evt_obj_dam.damage_packet.critical_multiplier_apply(extraHitDice + 1)
+        evt_obj_dam.damage_packet.critical_multiplier_apply(extraDamageDice + 1)
         attacker.float_mesfile_line('mes\\combat.mes', 12) #{12}{Critical Hit!}
         #play crit hit sound
         soundIdTarget = tgt.soundmap_critter(0)
