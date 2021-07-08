@@ -14,9 +14,13 @@ def missing_stub(msg):
     print msg
     return 0
 
+#attacker.allegiance_shared(tgt) is not working
 def floatFriendlyFire(attacker, tgt):
     if attacker.allegiance_shared(tgt) and (tgt in game.party) == (attacker in game.party):
+        debug_print("Debug: Friendly Fire triggered")
         tgt.float_mesfile_line('mes\\combat.mes', 107) # Friendly Fire
+    else:
+        debug_print("Debug: Friendly Fire NOT triggered", "Debug attacker.allegiance_shared(tgt): {}".format(attacker.allegiance_shared(tgt)), "Debug tgt in game.party: {}".format(tgt in game.party), "Debug attacker in game.party: {}".format(attacker in game.party))
     return
 
 def getUsedWeapon(flags, attacker):
@@ -58,7 +62,6 @@ def deal_attack_damage(attacker, tgt, d20_data, flags, action_type):
 
     #Set weapon used
     usedWeapon = getUsedWeapon(evt_obj_dam.attack_packet.get_flags(), attacker)
-    debug_print("debug usedWeapon: {}".format(usedWeapon))
     evt_obj_dam.attack_packet.set_weapon_used(usedWeapon)
 
     #Check ammo

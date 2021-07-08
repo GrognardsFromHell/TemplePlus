@@ -358,6 +358,8 @@ void Damage::DealDamage(objHndl victim, objHndl attacker, const Dice& dice, Dama
 
 void Damage::DealSpellDamage(objHndl tgt, objHndl attacker, const Dice& dice, DamageType type, int attackPower, int reduction, int damageDescId, D20ActionType actionType, int spellId, int flags) {
 
+	auto pyResult = DealSpellDamagePython(tgt, attacker, dice, type, attackPower, reduction, damageDescId, actionType, spellId, flags);
+
 	SpellPacketBody spPkt(spellId);
 	if (!tgt)
 		return;
@@ -413,6 +415,21 @@ void Damage::DealSpellDamage(objHndl tgt, objHndl attacker, const Dice& dice, Da
 
 	//addresses.DoSpellDamage(tgt, attacker, dice.ToPacked(), type, attackPower, reduction, damageDescId, actionType, spellId, flags);
 
+}
+
+int Damage::DealSpellDamagePython(objHndl tgt, objHndl attacker, const Dice& dice, DamageType type, int attackPower, int reduction, int damageDescId, D20ActionType actionType, int spellId, int flags)
+{
+	py::object pyDice = py::cast<Dice*>(&dice);
+	py::tuple args = py::make_tuple(py::cast<objHndl>(tgt), py::cast<objHndl>(attacker), pyDice, static_cast<int>(type), static_cast<int>(attackPower), reduction, damageDescId, static_cast<int>(actionType), spellId, static_cast<int>(flags));
+	
+	auto pyResult = pythonObjIntegration.ExecuteScript("d20_combat.damage_critter", "deal_spell_damage", args.ptr());
+	auto result = -1;
+	if (PyInt_Check(pyResult)) {
+		result = _PyInt_AsInt(pyResult);
+	}
+	Py_DECREF(pyResult);
+	
+	return result;
 }
 
 int Damage::DealAttackDamage(objHndl attacker, objHndl tgt, int d20Data, D20CAF flags, D20ActionType actionType)
