@@ -15,7 +15,6 @@ def missing_stub(msg):
     return 0
 
 def playSoundEffect(weaponUsed, attacker, tgt, sound_event):
-    missing_stub("auto soundId = inventory.GetSoundIdForItemEvent(weaponUsed, attacker, tgt, 6); sound tbd")
     sound_id = attacker.soundmap_item(weaponUsed, tgt, sound_event)
     game.sound_local_obj(sound_id, attacker)
     return
@@ -32,7 +31,7 @@ def deal_attack_damage(attacker, tgt, d20_data, flags, action_type):
     
     #Create evt_obj_dam
     evt_obj_dam = tpdp.EventObjDamage()
-    evt_obj_dam.attack_packet.action_type = action_type
+    evt_obj_dam.attack_packet.action_type = tpdp.D20ActionType(action_type)
     evt_obj_dam.attack_packet.attacker = attacker
     evt_obj_dam.attack_packet.target = tgt
     evt_obj_dam.attack_packet.event_key = d20_data
@@ -97,7 +96,7 @@ def deal_attack_damage(attacker, tgt, d20_data, flags, action_type):
     if evt_obj_dam.attack_packet.get_flags() & D20CAF_CRITICAL:
         #create evt_obj_crit_dice
         evt_obj_crit_dice = tpdp.EventObjAttack()
-        evt_obj_crit_dice.attack_packet.action_type = action_type
+        evt_obj_crit_dice.attack_packet.action_type = tpdp.D20ActionType(action_type)
         evt_obj_crit_dice.attack_packet.attacker = attacker
         evt_obj_crit_dice.attack_packet.target = tgt
         evt_obj_crit_dice.attack_packet.event_key = d20_data
@@ -109,7 +108,7 @@ def deal_attack_damage(attacker, tgt, d20_data, flags, action_type):
         extraDamageDice = evt_obj_crit_dice.dispatch(attacker, OBJ_HANDLE_NULL, ET_OnGetCriticalHitExtraDice, EK_NONE)
         debug_print("Debug extraDamageDice: {}".format(extraDamageDice))
         
-        evt_obj_dam.damage.critical_multiplier_apply(extraHitDice + 1)
+        evt_obj_dam.damage_packet.critical_multiplier_apply(extraDamageDice + 1)
         attacker.float_mesfile_line('mes\\combat.mes', 12) #{12}{Critical Hit!}
         #play crit hit sound
         soundIdTarget = tgt.soundmap_critter(0)
@@ -128,7 +127,7 @@ def deal_attack_damage(attacker, tgt, d20_data, flags, action_type):
     damage_critter(attacker, tgt, evt_obj_dam)
 
     #Play damage particle effects
-    evt_obj_dam.damage.play_pfx(tgt)
+    evt_obj_dam.damage_packet.play_pfx(tgt)
     
     #Send signals
     evt_obj_dam.send_signal(attacker, S_Attack_Made)

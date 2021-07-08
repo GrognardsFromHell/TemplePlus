@@ -419,6 +419,7 @@ int Damage::DealAttackDamage(objHndl attacker, objHndl tgt, int d20Data, D20CAF 
 {
 
 	auto pyResult = DealAttackDamagePython(attacker, tgt, d20Data, flags, actionType);
+	return pyResult;
 
 	aiSys.ProvokeHostility(attacker, tgt, 1, 0);
 
