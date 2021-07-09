@@ -846,8 +846,8 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			.def("get_spell_casting_class", [](SpellPacketBody&pkt) {
 				return static_cast<int>(spellSys.GetCastingClass(pkt.spellClass));
 				})
-			.def("get_metamagic_data", [](SpellPacketBody&pkt) {
-				return pkt.metaMagicData;
+			.def("get_metamagic_data", [](SpellPacketBody&pkt) -> MetaMagicData {
+				return MetaMagicData(pkt.metaMagicData);
 			})
 			.def("get_spell_component_flags", [](SpellPacketBody& pkt) {
 				auto result = (uint32_t)pkt.GetSpellComponentFlags();
