@@ -175,6 +175,8 @@ protected:
 
 class WidgetContainer : public WidgetBase {
 public:
+	WidgetContainer(const WidgetContainer&) = delete; // delete copy constructor, for pybind
+
 	WidgetContainer(int width, int height);
 
 	virtual void Add(std::unique_ptr<WidgetBase> childWidget);
@@ -283,6 +285,7 @@ struct WidgetButtonStyle {
 
 class WidgetButton : public WidgetButtonBase {
 public:
+	WidgetButton(const WidgetButton&) = delete; // delete copy constructor, for pybind
 
 	WidgetButton();
 

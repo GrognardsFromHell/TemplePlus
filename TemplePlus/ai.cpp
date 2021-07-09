@@ -21,6 +21,10 @@
 #include "python/python_integration_obj.h"
 #include "python/python_object.h"
 #include "pybind11/pybind11.h"
+#include "pybind11/embed.h"
+#include <pybind11/cast.h>
+#include <pybind11/stl.h>
+
 #include "util/fixes.h"
 #include "party.h"
 #include "ui/ui_picker.h"
@@ -82,7 +86,11 @@ struct AiSystemAddresses : temple::AddressTable
 }addresses;
 
 
-PYBIND11_MODULE(tpai, m) {
+PYBIND11_EMBEDDED_MODULE(tpai, m) {
+
+	m.doc() = "Temple+ AI module, used for pythonizing the AI.";
+
+
 	py::class_<AiTacticDef>(m, "AiTacticDef")
 		.def("get_name", [](AiTacticDef& self)->std::string {
 			return self.name;

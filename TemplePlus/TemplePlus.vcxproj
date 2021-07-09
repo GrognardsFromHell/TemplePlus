@@ -132,6 +132,7 @@
     <ClCompile Include="portrait.cpp" />
     <ClCompile Include="protos.cpp" />
     <ClCompile Include="python\python_bonus.cpp" />
+    <ClCompile Include="python\python_gui.cpp" />
     <ClCompile Include="python\python_integration_class_spec.cpp" />
     <ClCompile Include="python\python_damage.cpp" />
     <ClCompile Include="python\python_dispatcher.cpp" />
