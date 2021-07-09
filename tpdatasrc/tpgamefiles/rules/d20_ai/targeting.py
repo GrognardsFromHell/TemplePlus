@@ -99,7 +99,7 @@ def detect(attacker, target):
 
 	unconcealed = isUnconcealed(target)
 
-	canHear = missing_stub("CanHear(attacker, target, unconcealed)")
-	noLOS = missing_stub("!HasLineOfSight(attacker, target)")
+	result = attacker.can_hear(target, unconcealed)
+	result = result or not attacker.has_los(target)
 
-	return canHear or noLOS
+	return result

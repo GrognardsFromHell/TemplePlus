@@ -21,7 +21,7 @@ def isBusted(obj):
 # Check if `target` is charmed by `critter`
 def isCharmedBy(critter, target):
 	if target.d20_query(Q_Critter_Is_Charmed):
-		charmer = target.d20_query_get_data(Q_Critter_Is_Charmed, 0)
+		charmer = target.d20_query_get_obj(Q_Critter_Is_Charmed, 0)
 		return charmer == critter
 
 	return 0
