@@ -74,6 +74,11 @@ namespace py = pybind11;
 //NAMESPACE_END(detail)
 //NAMESPACE_END(PYBIND11_NAMESPACE)
 
+using WidgetRegistry = std::map<std::string, WidgetBase*>;
+
+std::map<std::string, WidgetRegistry> pythonWidgets;
+
+
 
 WidgetContainer* GetContainer(int widId) {
 	auto wnd = (WidgetContainer*)uiManager->GetAdvancedWidget(widId);
@@ -83,6 +88,7 @@ WidgetContainer* GetContainer(int widId) {
 	return wnd;
 }
 
+// Don't use this yet!
 
 PYBIND11_EMBEDDED_MODULE(tpgui, m) {
 
