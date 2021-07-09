@@ -549,11 +549,14 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		}, "Gets the total damage of a particular type.")
 		.def("get_overall_damage", &DamagePacket::GetOverallDamage)
 		.def("calc_final_damage", &DamagePacket::CalcFinalDamage)
+		.def("play_pfx", &DamagePacket::PlayPfx)
 		.def_readwrite("final_damage", &DamagePacket::finalDamage, "Final Damage Value")
 		.def_readwrite("flags", &DamagePacket::flags, "1 - maximized, 2 - empowered")
 		.def_readwrite("bonus_list", &DamagePacket::bonuses)
 		.def_readwrite("critical_multiplier", &DamagePacket::critHitMultiplier, "1 by default, gets increased by various things")
-		.def_readwrite("attack_power", &DamagePacket::attackPowerType, "See D20DAP_");
+		.def("critical_multiplier_apply", &DamagePacket::CriticalMultiplierApply)
+		.def_readwrite("attack_power", &DamagePacket::attackPowerType, "See D20DAP_")
+	;
 
 	py::class_<MetaMagicData>(m, "MetaMagicData")
 		.def(py::init<>())
@@ -843,8 +846,8 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			.def("get_spell_casting_class", [](SpellPacketBody&pkt) {
 				return static_cast<int>(spellSys.GetCastingClass(pkt.spellClass));
 				})
-			.def("get_metamagic_data", [](SpellPacketBody&pkt) {
-				return pkt.metaMagicData;
+			.def("get_metamagic_data", [](SpellPacketBody&pkt) -> MetaMagicData {
+				return MetaMagicData(pkt.metaMagicData);
 			})
 			.def("get_spell_component_flags", [](SpellPacketBody& pkt) {
 				auto result = (uint32_t)pkt.GetSpellComponentFlags();
@@ -949,6 +952,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("flags", &DispIoSavingThrow::flags);
 
 	py::class_<DispIoDamage, DispIO>(m, "EventObjDamage", "Used for damage dice and such")
+		.def(py::init())
 		.def_readwrite("attack_packet", &DispIoDamage::attackPacket)
 		.def_readwrite("damage_packet", &DispIoDamage::damage)
 		.def("dispatch", [](DispIoDamage& evtObj, objHndl handle, int dispType, int dispKey ) {
@@ -958,6 +962,10 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			})
 		.def("dispatch_spell_damage", [](DispIoDamage& evtObj, objHndl handle, objHndl target, SpellPacketBody & pkt) {
 				dispatch.DispatchSpellDamage(handle, &evtObj.damage, target, &pkt);
+			})
+		.def("send_signal", [](DispIoDamage& evtObj, objHndl handle, int signalCode) {
+				auto dispKey = (D20DispatcherKey)(signalCode + DK_SIG_HP_Changed);
+				d20Sys.d20SendSignal(handle, dispKey, (int)&evtObj, 0);
 			})
 		;
 

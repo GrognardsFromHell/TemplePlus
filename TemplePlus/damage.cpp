@@ -19,6 +19,7 @@
 #include "python/python_integration_obj.h"
 #include "python/python_object.h"
 #include "pybind11/pybind11.h"
+#include "python/python_dice.h"
 
 namespace py = pybind11;
 
@@ -35,6 +36,24 @@ public:
 	}
 
 	PYBIND11_TYPE_CASTER(objHndl, _("objHndl"));
+protected:
+	bool success = false;
+};
+template <> class py::detail::type_caster<Dice> {
+public:
+	bool load(handle src, bool) {
+		Dice dice;
+		ConvertDice(src.ptr(), &dice);
+		value = dice;
+		success = true;
+		return true;
+	}
+
+	static handle cast(const Dice& src, return_value_policy /* policy */, handle /* parent */) {
+		return PyDice_FromDice(src);
+	}
+
+	PYBIND11_TYPE_CASTER(Dice, _("PyDice"));
 protected:
 	bool success = false;
 };
@@ -325,6 +344,19 @@ int DamagePacket::AddModFactor(float factor, DamageType damType, int damageMesLi
 	return FALSE;
 }
 
+BOOL DamagePacket::CriticalMultiplierApply(int multiplier)
+{
+	static auto critMultiplierApply = temple::GetRef<BOOL(__cdecl)(DamagePacket&, int, int)>(0x100E1640); // damagepacket, multiplier, damage.mes line
+	return critMultiplierApply(*this, multiplier, 102);
+}
+
+void DamagePacket::PlayPfx(objHndl tgt)
+{
+	for (auto i = 0u; i < diceCount; i++) {
+		temple::GetRef<void(__cdecl)(objHndl, DamageType, int)>(0x10016A90)(tgt, dice[i].type, dice[i].rolledDamage);
+	}
+}
+
 DamagePacket::DamagePacket(){
 	diceCount = 0;
 	damResCount = 0;
@@ -344,6 +376,8 @@ void Damage::DealDamage(objHndl victim, objHndl attacker, const Dice& dice, Dama
 }
 
 void Damage::DealSpellDamage(objHndl tgt, objHndl attacker, const Dice& dice, DamageType type, int attackPower, int reduction, int damageDescId, D20ActionType actionType, int spellId, int flags) {
+
+	return DealSpellDamagePython(tgt, attacker, dice, type, attackPower, reduction, damageDescId, actionType, spellId, flags);
 
 	SpellPacketBody spPkt(spellId);
 	if (!tgt)
@@ -402,10 +436,20 @@ void Damage::DealSpellDamage(objHndl tgt, objHndl attacker, const Dice& dice, Da
 
 }
 
+void Damage::DealSpellDamagePython(objHndl tgt, objHndl attacker, const Dice& dice, DamageType type, int attackPower, int reduction, int damageDescId, D20ActionType actionType, int spellId, int flags, int projectileIdx, bool isWeaponlike)
+{
+	py::object pyDice = py::cast<Dice>( dice);
+	py::tuple args = py::make_tuple(py::cast<objHndl>(tgt), py::cast<objHndl>(attacker), pyDice, static_cast<int>(type), static_cast<int>(attackPower), reduction, damageDescId, static_cast<int>(actionType), spellId, static_cast<int>(flags), projectileIdx, isWeaponlike);
+	
+	pythonObjIntegration.ExecuteScript("d20_combat.damage_critter", "deal_spell_damage", args.ptr());
+	
+}
+/* 0x100B7950 */
 int Damage::DealAttackDamage(objHndl attacker, objHndl tgt, int d20Data, D20CAF flags, D20ActionType actionType)
 {
 
 	auto pyResult = DealAttackDamagePython(attacker, tgt, d20Data, flags, actionType);
+	return pyResult;
 
 	aiSys.ProvokeHostility(attacker, tgt, 1, 0);
 
@@ -461,7 +505,9 @@ int Damage::DealAttackDamage(objHndl attacker, objHndl tgt, int d20Data, D20CAF 
 		return -1;
 	}
 
-	if (tgt && attacker && critterSys.NpcAllegianceShared(tgt, attacker) && combatSys.AffiliationSame(tgt, attacker)){
+	if (tgt && attacker && combatSys.AffiliationSame(tgt, attacker) 
+		&& (!tgtObj->IsNPC() || critterSys.NpcAllegianceShared(tgt, attacker))) // fixes NPC "Friendly fire" floats for factionless NPCs
+	{
 		floatSys.FloatCombatLine(tgt, 107); // Friendly Fire
 	}
 
@@ -486,8 +532,8 @@ int Damage::DealAttackDamage(objHndl attacker, objHndl tgt, int d20Data, D20CAF 
 			evtObjCritDice.attackPacket.weaponUsed = objHndl::null;
 		evtObjCritDice.attackPacket.ammoItem = combatSys.CheckRangedWeaponAmmo(attacker);
 		auto extraHitDice = dispatch.DispatchAttackBonus(attacker, objHndl::null, &evtObjCritDice, dispTypeGetCriticalHitExtraDice, DK_NONE);
-		auto critMultiplierApply = temple::GetRef<BOOL(__cdecl)(DamagePacket&, int, int)>(0x100E1640); // damagepacket, multiplier, damage.mes line
-		critMultiplierApply(evtObjDam.damage, extraHitDice + 1, 102);
+		
+		evtObjDam.damage.CriticalMultiplierApply(extraHitDice + 1);
 		floatSys.FloatCombatLine(attacker, 12);
 		
 		// play sound
@@ -508,9 +554,7 @@ int Damage::DealAttackDamage(objHndl attacker, objHndl tgt, int d20Data, D20CAF 
 	DamageCritter(attacker, tgt, evtObjDam);
 
 	// play damage effect particles
-	for (auto i=0u; i < evtObjDam.damage.diceCount; i++){
-		temple::GetRef<void(__cdecl)(objHndl, DamageType, int)>(0x10016A90)(tgt, evtObjDam.damage.dice[i].type, evtObjDam.damage.dice[i].rolledDamage);
-	}
+	evtObjDam.damage.PlayPfx(tgt);
 
 	d20Sys.d20SendSignal(attacker, DK_SIG_Attack_Made, (int)&evtObjDam, 0);
 
@@ -537,8 +581,12 @@ int Damage::DealAttackDamagePython(objHndl attacker, objHndl tgt, int d20Data, D
 	return result;
 }
 
-int Damage::DealWeaponlikeSpellDamage(objHndl tgt, objHndl attacker, const Dice & dice, DamageType type, int attackPower, int damFactor, int damageDescId, D20ActionType actionType, int spellId, D20CAF flags, int prjoectileIdx)
+int Damage::DealWeaponlikeSpellDamage(objHndl tgt, objHndl attacker, const Dice & dice, DamageType type, int attackPower, int damFactor, int damageDescId, D20ActionType actionType, int spellId, D20CAF flags, int projectileIdx)
 {
+
+	DealSpellDamagePython(tgt, attacker, dice, type, attackPower, damFactor, damageDescId, actionType, spellId, flags, projectileIdx, true);
+	return 0;
+
 
 	SpellPacketBody spPkt(spellId);
 	if (!tgt)
@@ -559,7 +607,7 @@ int Damage::DealWeaponlikeSpellDamage(objHndl tgt, objHndl attacker, const Dice 
 	evtObjDam.attackPacket.d20ActnType = actionType;
 	evtObjDam.attackPacket.attacker = attacker;
 	evtObjDam.attackPacket.victim = tgt;
-	evtObjDam.attackPacket.dispKey = prjoectileIdx;
+	evtObjDam.attackPacket.dispKey = projectileIdx;
 	evtObjDam.attackPacket.flags = (D20CAF)(flags | D20CAF_HIT);
 
 	if (attacker && objects.IsCritter(attacker)) {

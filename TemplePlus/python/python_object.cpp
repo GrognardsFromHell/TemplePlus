@@ -1015,6 +1015,34 @@ static PyObject* PyObjHandle_HasLos(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(obstacles == 0);
 }
 
+
+
+// CanSee and HasLos are the same
+static PyObject* PyObjHandle_CanHear(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	objHndl target;
+	int tileRangeIdx = -1;
+	if (!PyArg_ParseTuple(args, "O&|i:objHndl.can_hear", &ConvertObjHndl, &target, &tileRangeIdx)) {
+		return 0;
+	}
+	if (!target) {
+		return PyInt_FromLong(0);
+	}
+
+	if (tileRangeIdx < 0 || tileRangeIdx > 3) {
+		
+		tileRangeIdx = 
+			(!critterSys.IsMovingSilently(target)
+			&& !critterSys.IsConcealed(target)) ? 1 : 0;
+	}
+
+	auto obstacles = aiSys.CannotHear(self->handle, target, tileRangeIdx);
+	return PyInt_FromLong(obstacles == 0);
+}
+
 static PyObject* PyObjHandle_CanBlindsee(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -1187,9 +1215,15 @@ static PyObject* PyObjHandle_Attack(PyObject* obj, PyObject* args) {
 	}
 
 	objHndl target;
-	if (!PyArg_ParseTuple(args, "O&:objhndl.attack", &ConvertObjHndl, &target)) {
+	int flags = 2;
+	int rangeType = 1;
+	if (!PyArg_ParseTuple(args, "O&|ii:objhndl.attack", &ConvertObjHndl, &target, &rangeType, &flags)) {
 		return 0;
 	}
+	if (rangeType < 0)
+		rangeType = 0;
+	else if (rangeType > 3)
+		rangeType = 3;
 
 	if (!target){
 		logger->warn("Python attack called with null target");
@@ -2066,6 +2100,22 @@ static PyObject* PyObjHandle_SoundmapCritter(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(soundId);
 }
 
+static PyObject* PyObjHandle_SoundmapItem(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(-1);
+	}
+	int soundmapId;
+	objHndl item = objHndl::null, tgt = objHndl::null;
+	if (!PyArg_ParseTuple(args, "O&O&i:objhndl.soundmap_item", &ConvertObjHndl, &item, & ConvertObjHndl, &tgt , &soundmapId)) {
+		return PyInt_FromLong(-1);
+	}
+
+	auto soundId = inventory.GetSoundIdForItemEvent(item, self->handle, tgt, soundmapId);
+	return PyInt_FromLong(soundId);
+}
+
+
 static PyObject* PyObjHandle_SoundPlayFriendlyFire(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -2414,13 +2464,31 @@ static PyObject* PyObjHandle_D20QueryGetData(PyObject* obj, PyObject* args) {
 	if (!self->handle) {
 		return PyInt_FromLong(0);
 	}
-	int queryKey, testData;
-	if (!PyArg_ParseTuple(args, "ii:objhndl.d20_query_get_data", &queryKey, &testData)) {
+	int queryKey, testData = 0;
+	if (!PyArg_ParseTuple(args, "i|i:objhndl.d20_query_get_data", &queryKey, &testData)) {
 		return 0;
 	}
 	auto dispatcherKey = (D20DispatcherKey)(DK_QUE_Helpless + queryKey);
 	auto result = d20Sys.d20QueryReturnData(self->handle, dispatcherKey);
 	return PyLong_FromLongLong(result);
+}
+
+static PyObject* PyObjHandle_D20QueryGetObj(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	int queryKey, testData = 0;
+	if (!PyArg_ParseTuple(args, "i|i:objhndl.d20_query_get_obj", &queryKey, &testData)) {
+		return 0;
+	}
+	auto dispatcherKey = (D20DispatcherKey)(DK_QUE_Helpless + queryKey);
+	objHndl handle;
+	handle = d20Sys.d20QueryReturnData(self->handle, dispatcherKey);
+	if (!handle) {
+		return PyObjHndl_CreateNull();
+	}
+	return PyObjHndl_Create(handle);
 }
 
 static PyObject* PyObjHandle_CritterGetAlignment(PyObject* obj, PyObject* args) {
@@ -2550,17 +2618,31 @@ static PyObject* PyObjHandle_AnimGoalPushAttack(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(gameSystems->GetAnim().PushAttackAnim(self->handle, tgt, -1, animIdx, isCrit, isSecondary));
 }
 
+static PyObject* PyObjHandle_AnimGoalPushDodge(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	objHndl attacker = objHndl::null;
+	if (!PyArg_ParseTuple(args, "O&|iii:objhndl.anim_goal_push_dodge", &ConvertObjHndl, &attacker)) {
+		return 0;
+	}
+	return PyInt_FromLong(gameSystems->GetAnim().PushDodge(attacker, self->handle));
+}
+
+
 static PyObject* PyObjHandle_AnimGoalPushHitByWeapon(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
 		return PyInt_FromLong(0);
 	}
 
-	objHndl tgt = objHndl::null;
-	if (!PyArg_ParseTuple(args, "O&|iii:objhndl.anim_goal_push_hit_by_weapon", &ConvertObjHndl, &tgt)) {
+	objHndl attacker = objHndl::null;
+	if (!PyArg_ParseTuple(args, "O&|iii:objhndl.anim_goal_push_hit_by_weapon", &ConvertObjHndl, &attacker)) {
 		return 0;
 	}
-	return PyInt_FromLong(gameSystems->GetAnim().PushGoalHitByWeapon(self->handle, tgt));
+	return PyInt_FromLong(gameSystems->GetAnim().PushGoalHitByWeapon( attacker, self->handle));
 }
 
 static PyObject* PyObjHandle_AnimGoalPushUseObject(PyObject* obj, PyObject* args) {
@@ -3891,6 +3973,17 @@ static PyObject* PyObjHandle_Dominate(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(result);
 }
 
+
+
+static PyObject* PyObjHandle_IsDeadNullDestroyed(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(1);
+	}
+	auto result = critterSys.IsDeadNullDestroyed(self->handle);
+	return PyInt_FromLong(result);
+}
+
 static PyObject* PyObjHandle_IsUnconscious(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -3992,6 +4085,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "anim_callback", PyObjHandle_AnimCallback, METH_VARARGS, NULL },
 	{ "anim_goal_interrupt", PyObjHandle_AnimGoalInterrupt, METH_VARARGS, NULL },
 	{ "anim_goal_push_attack", PyObjHandle_AnimGoalPushAttack, METH_VARARGS, NULL },
+	{ "anim_goal_push_dodge", PyObjHandle_AnimGoalPushDodge, METH_VARARGS, NULL },
 	{ "anim_goal_push_hit_by_weapon", PyObjHandle_AnimGoalPushHitByWeapon, METH_VARARGS, NULL },
 	{ "anim_goal_use_object", PyObjHandle_AnimGoalPushUseObject, METH_VARARGS, NULL },
 	{ "anim_goal_get_new_id", PyObjHandle_AnimGoalGetNewId, METH_VARARGS, NULL },
@@ -4011,6 +4105,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"can_cast_spell", PyObjHandle_CanCastSpell, METH_VARARGS, NULL },
 	{"can_find_path_to_obj", PyObjHandle_CanFindPathToObj, METH_VARARGS, NULL },
 	{"find_path_to_obj", PyObjHandle_FindPathToObj, METH_VARARGS, NULL },
+	{ "can_hear", PyObjHandle_CanHear, METH_VARARGS, NULL},
 	{"can_melee", PyObjHandle_CanMelee, METH_VARARGS, NULL },
 	{"can_see", PyObjHandle_HasLos, METH_VARARGS, NULL },
 	{"can_blindsee", PyObjHandle_CanBlindsee, METH_VARARGS, "obj has blind sight, and target is within observation range of blindsight ability"},
@@ -4040,6 +4135,7 @@ static PyMethodDef PyObjHandleMethods[] = {
     { "d20_query_with_object", PyObjHandle_D20QueryWithObject, METH_VARARGS, NULL },
 	{ "d20_query_test_data", PyObjHandle_D20QueryTestData, METH_VARARGS, NULL },
 	{ "d20_query_get_data", PyObjHandle_D20QueryGetData, METH_VARARGS, NULL },
+	{ "d20_query_get_obj", PyObjHandle_D20QueryGetObj, METH_VARARGS, NULL },
 	{ "d20_send_signal", PyObjHandle_D20SendSignal, METH_VARARGS, NULL },
 	{ "d20_send_signal_ex", PyObjHandle_D20SendSignalEx, METH_VARARGS, NULL },
 	{ "d20_status_init", PyObjHandle_D20StatusInit, METH_VARARGS, NULL },
@@ -4098,6 +4194,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "is_category_type", PyObjHandle_IsCategoryType, METH_VARARGS, NULL },
 	{ "is_category_subtype", PyObjHandle_IsCategorySubtype, METH_VARARGS, NULL },
 	{ "is_critter", PyObjHandle_IsCritter, METH_VARARGS, NULL},
+	{ "is_dead_or_destroyed", PyObjHandle_IsDeadNullDestroyed, METH_VARARGS, NULL},
 	{ "is_favored_enemy", PyObjHandle_FavoredEnemy, METH_VARARGS, NULL },
 	{ "is_flanked_by", PyObjHandle_IsFlankedBy, METH_VARARGS, NULL },
 	{ "is_friendly", PyObjHandle_IsFriendly, METH_VARARGS, NULL },
@@ -4193,6 +4290,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "skill_roll", PyObjHandle_SkillRoll, METH_VARARGS, NULL },
 	{ "skill_roll_delta", PyObjHandle_SkillRollDelta, METH_VARARGS, "Does a Skill Roll, but returns the delta from the skill roll DC." },
 	{ "soundmap_critter", PyObjHandle_SoundmapCritter, METH_VARARGS, NULL },
+	{ "soundmap_item", PyObjHandle_SoundmapItem, METH_VARARGS, NULL },
 	{ "sound_play_friendly_fire", PyObjHandle_SoundPlayFriendlyFire, METH_VARARGS, NULL},
 	{ "spell_known_add", PyObjHandle_SpellKnownAdd, METH_VARARGS, NULL },
 	{ "spell_memorized_add", PyObjHandle_SpellMemorizedAdd, METH_VARARGS, NULL },
