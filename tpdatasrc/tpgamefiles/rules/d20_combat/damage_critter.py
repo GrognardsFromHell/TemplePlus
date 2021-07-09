@@ -148,8 +148,11 @@ def deal_attack_damage(attacker, tgt, d20_data, flags, action_type):
     return overall_dam
 
 def deal_spell_damage(tgt, attacker, dice, damageType, attackPower, reduction, damageDescId, action_type, spellId, flags):
-    spellPacket = tpdp.spellPacket(spellId)
+    debug_print("Debug Hook deal_spell_damage")
+    debug_print("Debug spell target: {}".format(tgt), "Debug spell caster: {}".format(attacker), "Debug Dice: {}".format(dice), "Debug damageType: {}".format(damageType), "Debug attackPower: {}".format(attackPower), "Debug reduction: {}".format(reduction), "Debug damageDescId: {}".format(damageDescId), "Debug action_type: {}".format(action_type), "Debug spellId: {}".format(spellId), "Debug flags: {}".format(flags))
+    spellPacket = tpdp.SpellPacket(spellId)
     if not tgt:
+        debug_print("Debug No Target!")
         return
 
     #Check if Friendly Fire and trigger float if true
@@ -161,11 +164,12 @@ def deal_spell_damage(tgt, attacker, dice, damageType, attackPower, reduction, d
 
     #Check if target is alive
     if tgt == OBJ_HANDLE_NULL or tgt.is_dead_or_destroyed():
+        debug_print("Debug target destroyed!")
         return
 
     #create evt_obj_dam
     evt_obj_dam = tpdp.EventObjDamage()
-    missing_stub("evt_obj_dam.attack_packet.action_type = action_type #this returns an error")
+    evt_obj_dam.attack_packet.action_type = tpdp.D20ActionType(action_type)
     evt_obj_dam.attack_packet.attacker = attacker
     evt_obj_dam.attack_packet.target = tgt
     evt_obj_dam.attack_packet.event_key = 1 #Took this from the c++ code, not sure if a hard number is good
@@ -198,7 +202,7 @@ def deal_spell_damage(tgt, attacker, dice, damageType, attackPower, reduction, d
     evt_obj_dam.damage_packet.add_dice(dice, damageType, 103)
 
     #Add attackPower
-    evt_obj_dam.damage_packet.attack_power(attackPower)
+    evt_obj_dam.damage_packet.attack_power |= attackPower
 
     #set MetaMagic
     metaMagicData = spellPacket.get_metamagic_data()
@@ -208,7 +212,8 @@ def deal_spell_damage(tgt, attacker, dice, damageType, attackPower, reduction, d
         missing_stub("evtObjDam.damage.flags |= 1; // maximized")
 
     #Dispatch damage
-    evt_obj_dam.damage_packet.dispatch_spell_damage(attacker, tgt, spellPacket)
+    overall_dam = evt_obj_dam.dispatch_spell_damage(attacker, tgt, spellPacket)
+    debug_print("Debug spell overall_dam: {}".format(overall_dam))
 
     #Logbook
     logbook.is_weapon_damage = 0 # used for recording attack damage
