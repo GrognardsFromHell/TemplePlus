@@ -148,7 +148,7 @@ private:
 
 	void DamageCritterPython(objHndl attacker, objHndl tgt, DispIoDamage& evtObjDam);
 	int DealAttackDamagePython(objHndl attacker, objHndl tgt, int d20Data, D20CAF flags, D20ActionType actionType);
-	void DealSpellDamagePython(objHndl tgt, objHndl attacker, const Dice& dice, DamageType type, int attackPower, int reduction, int damageDescId, D20ActionType actionType, int spellId, int flags);
+	void DealSpellDamagePython(objHndl tgt, objHndl attacker, const Dice& dice, DamageType type, int attackPower, int reduction, int damageDescId, D20ActionType actionType, int spellId, int flags, int projectileIdx = 1, bool isWeaponlike = false);
 };
 
 extern Damage damage;

@@ -154,7 +154,7 @@ def deal_attack_damage(attacker, tgt, d20_data, flags, action_type):
     overall_dam = evt_obj_dam.damage_packet.get_overall_damage()
     return overall_dam
 
-def deal_spell_damage(tgt, attacker, dice, damageType, attackPower, reduction, damageDescId, action_type, spellId, flags):
+def deal_spell_damage(tgt, attacker, dice, damageType, attackPower, reduction, damageDescId, action_type, spellId, flags, projectile_idx = 1, is_weaponlike = False):
     debug_print("Debug Hook deal_spell_damage")
     debug_print("Debug spell target: {}".format(tgt), "Debug spell caster: {}".format(attacker), "Debug Dice: {}".format(dice), "Debug damageType: {}".format(damageType), "Debug attackPower: {}".format(attackPower), "Debug reduction: {}".format(reduction), "Debug damageDescId: {}".format(damageDescId), "Debug action_type: {}".format(action_type), "Debug spellId: {}".format(spellId), "Debug flags: {}".format(flags))
     spellPacket = tpdp.SpellPacket(spellId)
@@ -174,16 +174,20 @@ def deal_spell_damage(tgt, attacker, dice, damageType, attackPower, reduction, d
         debug_print("Debug target destroyed!")
         return
 
+    if is_weaponlike:    
+        if tgt.is_flanked_by(attacker):
+            flags |= D20CAF_FLANKED
+
     #create evt_obj_dam
     evt_obj_dam = tpdp.EventObjDamage()
     evt_obj_dam.attack_packet.action_type = tpdp.D20ActionType(action_type)
     evt_obj_dam.attack_packet.attacker = attacker
     evt_obj_dam.attack_packet.target = tgt
-    evt_obj_dam.attack_packet.event_key = 1 #Took this from the c++ code, not sure if a hard number is good
-    evt_obj_dam.attack_packet.set_flags(flags)
+    evt_obj_dam.attack_packet.event_key = projectile_idx
+    evt_obj_dam.attack_packet.set_flags(flags | D20CAF_HIT)
 
     #Set weapon used
-    if attacker.is_critter():
+    if attacker != OBJ_HANDLE_NULL and attacker.is_critter():
         usedWeapon = getUsedWeapon(evt_obj_dam.attack_packet.get_flags(), attacker)
         evt_obj_dam.attack_packet.set_weapon_used(usedWeapon)
         #Check ammo
@@ -194,8 +198,22 @@ def deal_spell_damage(tgt, attacker, dice, damageType, attackPower, reduction, d
 
     #Add damage mod factor
     if reduction != 100:
-        #addresses.AddDamageModFactor(&evtObjDam.damage,  reduction * 0.01f, type, damageDescId);
         evt_obj_dam.damage_packet.add_mod_factor((reduction * 0.01), damageType, damageDescId)
+
+    if is_weaponlike:
+        if flags & D20CAF_CONCEALMENT_MISS:
+            roll_history.add_from_pattern(11, attacker, tgt)
+            attacker.float_mesfile_line('mes\\combat.mes', 45) # Miss (Concealment)
+            # note: do net send S_Attack_Made because casting a spell is not considered an attack action
+            return
+        if (flags & D20CAF_HIT) == 0:
+            attacker.float_mesfile_line("mes\\combat.mes", 29) # miss
+            # play dodge animation
+            if tgt.is_unconscious() or tgt.d20_query(Q_Prone):
+                return
+            else:
+                tgt.anim_goal_push_dodge(attacker)
+            return
 
     #Add damage dice
     #If we could get a string support for add_dice
@@ -217,6 +235,38 @@ def deal_spell_damage(tgt, attacker, dice, damageType, attackPower, reduction, d
         evt_obj_dam.damage_packet.flags |= 2; # empowered
     if  metaMagicData.get_maximize():
         evt_obj_dam.damage_packet.flags |= 1; # maximized
+
+    if is_weaponlike:
+            #handle critical hit
+        if evt_obj_dam.attack_packet.get_flags() & D20CAF_CRITICAL:
+            
+            # should this section apply?
+
+            # #create evt_obj_crit_dice
+            # evt_obj_crit_dice = tpdp.EventObjAttack()
+            # evt_obj_crit_dice.attack_packet.action_type = tpdp.D20ActionType(action_type)
+            # evt_obj_crit_dice.attack_packet.attacker = attacker
+            # evt_obj_crit_dice.attack_packet.target = tgt
+            # evt_obj_crit_dice.attack_packet.event_key = d20_data
+            # evt_obj_crit_dice.attack_packet.set_flags(evt_obj_dam.attack_packet.get_flags())
+            # evt_obj_crit_dice.attack_packet.set_weapon_used(evt_obj_dam.attack_packet.get_weapon_used())
+            # #Check ammo
+            # evt_obj_crit_dice.attack_packet.ammo_item = attacker.get_ammo_used()
+            # #apply extra damage
+            # extraDamageDice = evt_obj_crit_dice.dispatch(attacker, OBJ_HANDLE_NULL, ET_OnGetCriticalHitExtraDice, EK_NONE)
+            # debug_print("Debug extraDamageDice: {}".format(extraDamageDice))
+
+            extraDamageDice = 1
+            evt_obj_dam.damage_packet.critical_multiplier_apply(extraDamageDice + 1)
+            attacker.float_mesfile_line('mes\\combat.mes', 12) #{12}{Critical Hit!}
+            #play crit hit sound
+            soundIdTarget = tgt.soundmap_critter(0)
+            game.sound_local_obj(soundIdTarget, tgt)
+            playSoundEffect(evt_obj_crit_dice.attack_packet.get_weapon_used(), attacker, tgt, 7)
+            #Logbook increase crit count
+            logbook.inc_criticals(attacker)
+        evt_obj_dam.dispatch( attacker, ET_OnDealingDamageWeaponlikeSpell, EK_NONE)
+        
 
     #Dispatch damage
     overall_dam = evt_obj_dam.dispatch_spell_damage(attacker, tgt, spellPacket)

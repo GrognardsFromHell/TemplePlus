@@ -436,10 +436,10 @@ void Damage::DealSpellDamage(objHndl tgt, objHndl attacker, const Dice& dice, Da
 
 }
 
-void Damage::DealSpellDamagePython(objHndl tgt, objHndl attacker, const Dice& dice, DamageType type, int attackPower, int reduction, int damageDescId, D20ActionType actionType, int spellId, int flags)
+void Damage::DealSpellDamagePython(objHndl tgt, objHndl attacker, const Dice& dice, DamageType type, int attackPower, int reduction, int damageDescId, D20ActionType actionType, int spellId, int flags, int projectileIdx, bool isWeaponlike)
 {
 	py::object pyDice = py::cast<Dice>( dice);
-	py::tuple args = py::make_tuple(py::cast<objHndl>(tgt), py::cast<objHndl>(attacker), pyDice, static_cast<int>(type), static_cast<int>(attackPower), reduction, damageDescId, static_cast<int>(actionType), spellId, static_cast<int>(flags));
+	py::tuple args = py::make_tuple(py::cast<objHndl>(tgt), py::cast<objHndl>(attacker), pyDice, static_cast<int>(type), static_cast<int>(attackPower), reduction, damageDescId, static_cast<int>(actionType), spellId, static_cast<int>(flags), projectileIdx, isWeaponlike);
 	
 	pythonObjIntegration.ExecuteScript("d20_combat.damage_critter", "deal_spell_damage", args.ptr());
 	
@@ -581,8 +581,12 @@ int Damage::DealAttackDamagePython(objHndl attacker, objHndl tgt, int d20Data, D
 	return result;
 }
 
-int Damage::DealWeaponlikeSpellDamage(objHndl tgt, objHndl attacker, const Dice & dice, DamageType type, int attackPower, int damFactor, int damageDescId, D20ActionType actionType, int spellId, D20CAF flags, int prjoectileIdx)
+int Damage::DealWeaponlikeSpellDamage(objHndl tgt, objHndl attacker, const Dice & dice, DamageType type, int attackPower, int damFactor, int damageDescId, D20ActionType actionType, int spellId, D20CAF flags, int projectileIdx)
 {
+
+	DealSpellDamagePython(tgt, attacker, dice, type, attackPower, damFactor, damageDescId, actionType, spellId, flags, projectileIdx, true);
+	return 0;
+
 
 	SpellPacketBody spPkt(spellId);
 	if (!tgt)
@@ -603,7 +607,7 @@ int Damage::DealWeaponlikeSpellDamage(objHndl tgt, objHndl attacker, const Dice 
 	evtObjDam.attackPacket.d20ActnType = actionType;
 	evtObjDam.attackPacket.attacker = attacker;
 	evtObjDam.attackPacket.victim = tgt;
-	evtObjDam.attackPacket.dispKey = prjoectileIdx;
+	evtObjDam.attackPacket.dispKey = projectileIdx;
 	evtObjDam.attackPacket.flags = (D20CAF)(flags | D20CAF_HIT);
 
 	if (attacker && objects.IsCritter(attacker)) {
