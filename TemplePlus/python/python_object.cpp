@@ -1015,6 +1015,34 @@ static PyObject* PyObjHandle_HasLos(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(obstacles == 0);
 }
 
+
+
+// CanSee and HasLos are the same
+static PyObject* PyObjHandle_CanHear(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	objHndl target;
+	int tileRangeIdx = -1;
+	if (!PyArg_ParseTuple(args, "O&|i:objHndl.can_hear", &ConvertObjHndl, &target, &tileRangeIdx)) {
+		return 0;
+	}
+	if (!target) {
+		return PyInt_FromLong(0);
+	}
+
+	if (tileRangeIdx < 0 || tileRangeIdx > 3) {
+		
+		tileRangeIdx = 
+			(!critterSys.IsMovingSilently(target)
+			&& !critterSys.IsConcealed(target)) ? 1 : 0;
+	}
+
+	auto obstacles = aiSys.CannotHear(self->handle, target, tileRangeIdx);
+	return PyInt_FromLong(obstacles == 0);
+}
+
 static PyObject* PyObjHandle_CanBlindsee(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -2436,13 +2464,31 @@ static PyObject* PyObjHandle_D20QueryGetData(PyObject* obj, PyObject* args) {
 	if (!self->handle) {
 		return PyInt_FromLong(0);
 	}
-	int queryKey, testData;
-	if (!PyArg_ParseTuple(args, "ii:objhndl.d20_query_get_data", &queryKey, &testData)) {
+	int queryKey, testData = 0;
+	if (!PyArg_ParseTuple(args, "i|i:objhndl.d20_query_get_data", &queryKey, &testData)) {
 		return 0;
 	}
 	auto dispatcherKey = (D20DispatcherKey)(DK_QUE_Helpless + queryKey);
 	auto result = d20Sys.d20QueryReturnData(self->handle, dispatcherKey);
 	return PyLong_FromLongLong(result);
+}
+
+static PyObject* PyObjHandle_D20QueryGetObj(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	int queryKey, testData = 0;
+	if (!PyArg_ParseTuple(args, "i|i:objhndl.d20_query_get_obj", &queryKey, &testData)) {
+		return 0;
+	}
+	auto dispatcherKey = (D20DispatcherKey)(DK_QUE_Helpless + queryKey);
+	objHndl handle;
+	handle = d20Sys.d20QueryReturnData(self->handle, dispatcherKey);
+	if (!handle) {
+		return PyObjHndl_CreateNull();
+	}
+	return PyObjHndl_Create(handle);
 }
 
 static PyObject* PyObjHandle_CritterGetAlignment(PyObject* obj, PyObject* args) {
@@ -4059,6 +4105,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"can_cast_spell", PyObjHandle_CanCastSpell, METH_VARARGS, NULL },
 	{"can_find_path_to_obj", PyObjHandle_CanFindPathToObj, METH_VARARGS, NULL },
 	{"find_path_to_obj", PyObjHandle_FindPathToObj, METH_VARARGS, NULL },
+	{ "can_hear", PyObjHandle_CanHear, METH_VARARGS, NULL},
 	{"can_melee", PyObjHandle_CanMelee, METH_VARARGS, NULL },
 	{"can_see", PyObjHandle_HasLos, METH_VARARGS, NULL },
 	{"can_blindsee", PyObjHandle_CanBlindsee, METH_VARARGS, "obj has blind sight, and target is within observation range of blindsight ability"},
@@ -4088,6 +4135,7 @@ static PyMethodDef PyObjHandleMethods[] = {
     { "d20_query_with_object", PyObjHandle_D20QueryWithObject, METH_VARARGS, NULL },
 	{ "d20_query_test_data", PyObjHandle_D20QueryTestData, METH_VARARGS, NULL },
 	{ "d20_query_get_data", PyObjHandle_D20QueryGetData, METH_VARARGS, NULL },
+	{ "d20_query_get_obj", PyObjHandle_D20QueryGetObj, METH_VARARGS, NULL },
 	{ "d20_send_signal", PyObjHandle_D20SendSignal, METH_VARARGS, NULL },
 	{ "d20_send_signal_ex", PyObjHandle_D20SendSignalEx, METH_VARARGS, NULL },
 	{ "d20_status_init", PyObjHandle_D20StatusInit, METH_VARARGS, NULL },

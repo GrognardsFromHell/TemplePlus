@@ -1,11 +1,12 @@
 from toee import *
+import tpai
 from d20_ai_utils import *
 
 def missing_stub(msg):
 	print msg
 	return 0
 
-def considerTarget(attacker, target):
+def consider_target(attacker, target):
 	if attacker == target: return 0
 
 	attacker_flags = target.obj_get_int(obj_f_critter_flags)
@@ -103,3 +104,7 @@ def detect(attacker, target):
 	result = result or not attacker.has_los(target)
 
 	return result
+
+def execute_strategy(obj, target):
+
+    return None # this causes the engine to ignore the result; return 0 / 1 to make it work
