@@ -14,13 +14,20 @@ def missing_stub(msg):
     print msg
     return 0
 
+def party_affiliation_cmp(attacker, tgt):
+    return (tgt in game.party) == (attacker in game.party)
+
 #attacker.allegiance_shared(tgt) is not working
 def floatFriendlyFire(attacker, tgt):
-    if attacker.allegiance_shared(tgt) and (tgt in game.party) == (attacker in game.party):
+    if attacker == OBJ_HANDLE_NULL or tgt == OBJ_HANDLE_NULL:
+        return
+    if not party_affiliation_cmp(attacker, tgt):
+        return
+    if tgt.type != obj_t_npc or attacker.allegiance_shared(tgt):
         debug_print("Debug: Friendly Fire triggered")
         tgt.float_mesfile_line('mes\\combat.mes', 107) # Friendly Fire
-    else:
-        debug_print("Debug: Friendly Fire NOT triggered", "Debug attacker.allegiance_shared(tgt): {}".format(attacker.allegiance_shared(tgt)), "Debug tgt in game.party: {}".format(tgt in game.party), "Debug attacker in game.party: {}".format(attacker in game.party))
+    # else:
+    #     debug_print("Debug: Friendly Fire NOT triggered", "Debug attacker.allegiance_shared(tgt): {}".format(attacker.allegiance_shared(tgt)), "Debug tgt in game.party: {}".format(tgt in game.party), "Debug attacker in game.party: {}".format(attacker in game.party))
     return
 
 def getUsedWeapon(flags, attacker):
@@ -206,10 +213,10 @@ def deal_spell_damage(tgt, attacker, dice, damageType, attackPower, reduction, d
 
     #set MetaMagic
     metaMagicData = spellPacket.get_metamagic_data()
-    if missing_stub("if (mmData.metaMagicEmpowerSpellCount)"):
-        missing_stub("evtObjDam.damage.flags |= 2; // empowered")
-    if missing_stub("if (mmData.metaMagicFlags & 1)"):
-        missing_stub("evtObjDam.damage.flags |= 1; // maximized")
+    if metaMagicData.get_empower_count():
+        evt_obj_dam.damage_packet.flags |= 2; # empowered
+    if  metaMagicData.get_maximize():
+        evt_obj_dam.damage_packet.flags |= 1; # maximized
 
     #Dispatch damage
     overall_dam = evt_obj_dam.dispatch_spell_damage(attacker, tgt, spellPacket)

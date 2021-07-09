@@ -444,7 +444,7 @@ void Damage::DealSpellDamagePython(objHndl tgt, objHndl attacker, const Dice& di
 	pythonObjIntegration.ExecuteScript("d20_combat.damage_critter", "deal_spell_damage", args.ptr());
 	
 }
-
+/* 0x100B7950 */
 int Damage::DealAttackDamage(objHndl attacker, objHndl tgt, int d20Data, D20CAF flags, D20ActionType actionType)
 {
 
@@ -505,7 +505,9 @@ int Damage::DealAttackDamage(objHndl attacker, objHndl tgt, int d20Data, D20CAF 
 		return -1;
 	}
 
-	if (tgt && attacker && critterSys.NpcAllegianceShared(tgt, attacker) && combatSys.AffiliationSame(tgt, attacker)){
+	if (tgt && attacker && combatSys.AffiliationSame(tgt, attacker) 
+		&& (!tgtObj->IsNPC() || critterSys.NpcAllegianceShared(tgt, attacker))) // fixes NPC "Friendly fire" floats for factionless NPCs
+	{
 		floatSys.FloatCombatLine(tgt, 107); // Friendly Fire
 	}
 
