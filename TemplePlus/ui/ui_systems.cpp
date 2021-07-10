@@ -10,6 +10,7 @@
 #include "ui_char.h"
 #include "ui_townmap.h"
 #include "ui_dialog.h"
+#include "ui_python.h"
 
 UiSystems* uiSystems = nullptr;
 
@@ -63,6 +64,7 @@ UiSystems::UiSystems(int width, int height)
 	mSlider = InitializeSystem<UiSlider>(config);
 	mWritten = InitializeSystem<UiWritten>(config);
 	mCharmap = InitializeSystem<UiCharmap>(config);
+	mPython = InitializeSystem<UiPython>(config);
 
 	if (!uiSystems) {
 		uiSystems = this;
@@ -118,6 +120,7 @@ UiSystems::~UiSystems()
 	mLoadGame.reset();
 	mMM.reset();
 	mMainMenu.reset();
+	mPython.reset();
 }
 
 void UiSystems::Reset()

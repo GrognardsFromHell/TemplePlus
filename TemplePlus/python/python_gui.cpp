@@ -4,6 +4,8 @@
 #include <pybind11/stl.h>
 #include <ui/ui.h>
 #include <ui/widgets/widgets.h>
+#include <tig/tig_startup.h>
+#include <graphics/device.h>
 
 namespace py = pybind11;
 //
@@ -73,51 +75,134 @@ namespace py = pybind11;
 //
 //NAMESPACE_END(detail)
 //NAMESPACE_END(PYBIND11_NAMESPACE)
-
-using WidgetRegistry = std::map<std::string, WidgetBase*>;
-
-std::map<std::string, WidgetRegistry> pythonWidgets;
+#include "ui/ui_python.h"
+#include <ui/ui_systems.h>
 
 
+UiPython * uiPython = nullptr;
 
-WidgetContainer* GetContainer(int widId) {
-	auto wnd = (WidgetContainer*)uiManager->GetAdvancedWidget(widId);
-	if (!wnd || !wnd->IsContainer()) {
-		return nullptr;
-	}
-	return wnd;
+UiPython::UiPython(const UiSystemConf& config) {
+	uiPython = this;
+}
+UiPython::~UiPython() {
+	
+}
+const std::string& UiPython::GetName() const {
+	static std::string name("python_ui");
+	return name;
 }
 
-// Don't use this yet!
+WidgetContainer* UiPython::GetRootWidget(const std::string& id)
+{
+	return nullptr;
+}
+
+WidgetBase* UiPython::GetWidget(const std::string& id)
+{
+	auto wid = pyWidgets.find(id);
+	if (wid == pyWidgets.end()) {
+		return nullptr;
+	}
+	return wid->second;
+}
+
+WidgetContainer* UiPython::AddRootWidget(const std::string& id)
+{
+	if (GetWidget(id) != nullptr) {
+		logger->error("UiPython::AddRootWidget: Widget id={} already exists", id);
+		return nullptr;
+	}
+	auto wnd = std::make_unique<WidgetContainer>(0, 0);
+	wnd->SetId(id);
+	auto result = wnd.get();
+
+	mRootWidgets[id] = std::move(wnd);
+	pyWidgets[id] = result;
+
+	return result;
+}
+
+void UiPython::AddWidget(WidgetBase* wid)
+{
+	pyWidgets[wid->GetId()] = wid;
+}
+
+WidgetContainer* GetContainer(const std::string & id) {
+	auto wid = uiPython->GetWidget(id);
+	if (!wid || !wid->IsContainer()) return nullptr;
+
+	return (WidgetContainer*)(wid);
+}
+WidgetButton* GetButton(const std::string& id) {
+	auto wid = uiPython->GetWidget(id);
+	if (!wid || !wid->IsButton()) return nullptr;
+
+	return (WidgetButton*)(wid);
+}
 
 PYBIND11_EMBEDDED_MODULE(tpgui, m) {
 
 	m.doc() = "Temple+ GUI, used for custom user UIs.";
 
-	m.def("_add_container", [](const std::string& id, int w, int h) {
-		auto wnd = std::make_unique<WidgetContainer>(w, h);
-		wnd->SetId(id);
-		return wnd;
-		});
+	m.def("_add_root_container", [](const std::string& id, int w, int h)->WidgetContainer* {
+		auto wid = uiPython->AddRootWidget(id);
+		if (!wid) {
+			return nullptr;
+		}
+		wid->SetSize({ w,h });
+		return wid;
+		}, py::return_value_policy::reference);
 
-	m.def("_add_button", [](const std::string& id, int w=-1, int h=-1) {
+	m.def("_add_container", [](const std::string & parentId, const std::string& id, int w, int h)->WidgetContainer* {
+		
+		if (uiPython->GetWidget(id)) {
+			logger->error("_add_container: Widget id={} already exists", id);
+			return nullptr;
+		}
+		auto parent = GetContainer(parentId);
+		if (!parent) {
+			logger->error("_add_container: Parent id={} does not exist", id);
+			return nullptr;
+		}
+
+		auto wnd = std::make_unique<WidgetContainer>(w, h);
+		uiPython->AddWidget(wnd.get());
+		wnd->SetId(id);
+		auto result = wnd.get();
+
+		parent->Add(std::move(wnd));
+
+		return result;
+		} , py::return_value_policy::reference);
+
+	m.def("_add_button", [](const std::string& parentId, const std::string& id, int w=-1, int h=-1)->WidgetButton* {
+		if (uiPython->GetWidget(id) != nullptr) {
+			logger->error("_add_button: Widget id={} already exists", id);
+			return nullptr;
+		}
+		auto parent = GetContainer(parentId);
+		if (!parent) {
+			logger->error("_add_button: Parent id={} does not exist", id);
+			return nullptr;
+		}
+		
 		auto btn = std::make_unique<WidgetButton >();
 		btn->SetId(id);
 		if (w > 0 && h > 0) {
 			btn->SetSize({ w,h });
 		}
-		return btn;
-		});
+		auto result = btn.get();
 
-	m.def("_get_container", &GetContainer, py::return_value_policy::reference);
+		uiPython->AddWidget(btn.get());
+		parent->Add(std::move(btn));
 
-	m.def("_get_button", [](int widId)->WidgetButton* {
-		auto btn = (WidgetButton*)uiManager->GetAdvancedWidget(widId);
-		if (!btn || !btn->IsButton()) {
-			return nullptr;
-		}
-		return btn;
+		return result;
 		}, py::return_value_policy::reference);
+
+
+	m.def("_get_container", &GetContainer , py::return_value_policy::reference);
+
+	m.def("_get_button", &GetButton, py::return_value_policy::reference);
 
 	py::class_<WidgetBase>(m, "Widget")
 		.def_property_readonly("id", &WidgetBase::GetWidgetId)
@@ -154,13 +239,38 @@ PYBIND11_EMBEDDED_MODULE(tpgui, m) {
 		;
 
 	py::class_<WidgetContainer, WidgetBase>(m, "Container")
-		.def(py::init<int, int>(), py::arg("width") = 0, py::arg("height") = 0)
-		.def("add_child", [](WidgetContainer & me, WidgetBase * childWidget)->void {
-			me.Add( std::unique_ptr<WidgetBase>( childWidget) );		
-			})
-		.def("add_content", [](WidgetContainer& me, WidgetContent* content)->void {
+		//.def(py::init<int, int>(), py::arg("width") = 0, py::arg("height") = 0)
+		/*.def("add_child", [](WidgetContainer & me, WidgetBase * childWidget)->void {
+			if (childWidget->GetParent()) {
+				logger->error("child widget is already parented!");
+				return;
+			}
+
+			me.Add( std::unique_ptr<WidgetBase>( childWidget) );
+			})*/
+		.def("add_image", [](WidgetContainer& self, const std::string& path) ->WidgetImage*{
+			
+			if (!tig->GetRenderingDevice().GetTextures().Resolve(path, false)->IsValid()) {
+				logger->error("add_image: Invalid image path");
+				return nullptr;
+			}
+			auto img = std::make_unique<WidgetImage>(path);
+			auto result = img.get();
+			self.AddContent(std::move(img));
+			return result;
+			}, py::return_value_policy::reference)
+		.def("add_text", [](WidgetContainer& self, const std::string& text, const std::string & textStyleId)->WidgetText* 
+			{
+				auto txt = std::make_unique<WidgetText>(text, textStyleId);
+				auto result = txt.get();
+				self.AddContent(std::move(txt));
+				return result; 
+			}, 
+			py::arg("text") = "", py::arg("text_style_id") = "", py::return_value_policy::reference)
+		/*.def("add_content", [](WidgetContainer& me, WidgetContent* content)->void {
+				
 				me.AddContent(std::unique_ptr<WidgetContent>(content));
-			})
+			})*/
 		//.def_property_readonly("children", []() ->std::vector<int> {}&WidgetContainer::GetChildren) // eastl bah
 		;
 	py::class_<WidgetButtonStyle>(m, "ButtonStyle")
