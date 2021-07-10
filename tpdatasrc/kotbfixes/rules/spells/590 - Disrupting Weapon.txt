@@ -1,0 +1,18 @@
+School: Transmutation
+Level: Clr 5
+Component: V
+Component: S
+Casting Time: 1 action
+Range: Touch
+Saving Throw: None
+Spell Resistance: No
+Projectile: No
+flags_Target: None
+inc_flags_Target: Self
+inc_flags_Target: Other
+exc_flags_Target: Dead
+mode_Target: Inventory
+min_Target: 1
+max_Target: 1
+radius_Target: 0
+ai_type: ai_action_defensive
