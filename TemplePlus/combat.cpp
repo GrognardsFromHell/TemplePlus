@@ -32,6 +32,7 @@
 #include "d20_obj_registry.h"
 #include "animgoals/anim.h"
 #include "pybind11/pybind11.h"
+#include <dungeon_master.h>
 
 namespace py = pybind11;
 
@@ -983,7 +984,7 @@ void LegacyCombatSystem::Subturn()
 		
 		uiCombatInitiativePortraitsReset(combatSubturnTimeEvent);
 
-		party.AddToCurrentlySelected(actor);
+		party.AddToCurrentlySelected(actor, dmSys.IsControllingNpcs());
 		temple::GetRef<objHndl>(0x10AA8430) = actor; // looks like a write-only debug thing?
 
 		// there was a call to some nullsub here

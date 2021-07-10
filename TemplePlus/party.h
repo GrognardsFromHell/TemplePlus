@@ -36,7 +36,7 @@ struct LegacyPartySystem : temple::AddressTable
 	uint32_t AddToNpcGroup(objHndl objHnd);
 
 	// Currently Selected Group
-	void AddToCurrentlySelected(objHndl obj);
+	void AddToCurrentlySelected(objHndl obj, bool forceAdd = false);
 	void CurrentlySelectedClear();
 	uint32_t CurrentlySelectedNum();
 	objHndl GetCurrentlySelected(int n);

@@ -143,6 +143,8 @@ void DungeonMaster::Render() {
 	// Monster Tree
 	if (ImGui::TreeNodeEx("Monsters", ImGuiTreeNodeFlags_CollapsingHeader)) {
 
+		ImGui::Checkbox("Control NPCs", &mControlNpcs);
+
 		if (ImGui::CollapsingHeader("Filter"))
 			RenderMonsterFilter();
 		if (ImGui::CollapsingHeader("Modify"))
@@ -1317,6 +1319,11 @@ int DungeonMaster::GetDiceRollForcing(){
 	if (IsUnavailable()) // so it doesn't affect PC creation stat rolls
 		return 0;
 	return mForceRollType;
+}
+
+bool DungeonMaster::IsControllingNpcs()
+{
+	return mControlNpcs;
 }
 
 bool DungeonMaster::IsMoused(){
