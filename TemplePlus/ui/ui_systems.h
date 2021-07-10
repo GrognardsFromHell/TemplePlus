@@ -50,6 +50,7 @@ class UiHelpManager;
 class UiSlider;
 class UiWritten;
 class UiCharmap;
+class UiPython;
 
 class UiSystems {
 public:
@@ -233,6 +234,11 @@ public:
 		return *mCharmap;
 	}
 
+	UiPython& GetPython() const {
+		Expects(!!mPython);
+		return *mPython;
+	}
+
 	void Reset();
 
 	void ResizeViewport(int width, int height);
@@ -294,6 +300,7 @@ private:
 	std::unique_ptr<UiSlider> mSlider;
 	std::unique_ptr<UiWritten> mWritten;
 	std::unique_ptr<UiCharmap> mCharmap;
+	std::unique_ptr<UiPython> mPython;
 };
 
 /*
