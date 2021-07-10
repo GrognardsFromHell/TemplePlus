@@ -1557,6 +1557,12 @@ static PyObject* PyObjHandle_ItemConditionAdd(PyObject* obj, PyObject* args) {
 	}
 
 	conds.AddToItem(self->handle, cond, condArgs);
+	
+	auto parent = inventory.GetParent(self->handle);
+	if (parent && objSystem->IsValidHandle(parent)) {
+		d20StatusSys.initItemConditions(parent);
+	}
+	
 	return PyInt_FromLong(1);
 }
 
