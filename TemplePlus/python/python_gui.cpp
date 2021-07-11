@@ -83,6 +83,7 @@ UiPython * uiPython = nullptr;
 
 UiPython::UiPython(const UiSystemConf& config) {
 	uiPython = this;
+
 }
 UiPython::~UiPython() {
 	
@@ -92,10 +93,6 @@ const std::string& UiPython::GetName() const {
 	return name;
 }
 
-WidgetContainer* UiPython::GetRootWidget(const std::string& id)
-{
-	return nullptr;
-}
 
 WidgetBase* UiPython::GetWidget(const std::string& id)
 {
