@@ -2,6 +2,7 @@ from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
 from utilities import *
+from spell_utils import countAfterConcentration
 print "Registering sp-Wall of Fire"
 
 # args: (0-7)
@@ -83,16 +84,6 @@ def OnWallAoEEntered(attachee, args, evt_obj):
 	return 0
 
 
-def OnConcentrationBroken(attachee, args, evt_obj):
-	#print "Concentration broken"
-	spellId = args.get_arg(0)
-	spell_packet = tpdp.SpellPacket(spellId)
-	if spell_packet.spell_enum == 0:
-		return 0
-	args.remove_spell()
-	#args.remove_spell_mod()
-	return 0
-
 def OnCombatEnd(attachee, args, evt_obj):
 	#print "Combat End"
 	spellId = args.get_arg(0)
@@ -108,9 +99,8 @@ def OnCombatEnd(attachee, args, evt_obj):
 wallOfFire = PythonModifier("sp-Wall of Fire", 8)
 wallOfFire.AddHook(ET_OnConditionAdd, EK_NONE, WallOfFireOnAdd, ())
 wallOfFire.AddHook(ET_OnObjectEvent, EK_OnEnterAoE, OnWallAoEEntered, ())
-wallOfFire.AddHook(ET_OnD20Signal, EK_S_Concentration_Broken, OnConcentrationBroken, ())
 wallOfFire.AddHook(ET_OnD20Signal, EK_S_Combat_End, OnCombatEnd, ())
-wallOfFire.AddSpellCountdownStandardHook()
+wallOfFire.AddHook(ET_OnBeginRound, EK_NONE, countAfterConcentration, ())
 wallOfFire.AddAoESpellEndStandardHook()
 
 #wallOfFire.AddSpellDismissStandardHook() # oops, Wall of Fire doesn't have Dismiss (but it does have COncentration...)
@@ -180,5 +170,3 @@ wallOfFireHit.AddHook(ET_OnConditionAdd, EK_NONE, WallOfFireHitDamage, ())
 wallOfFireHit.AddHook(ET_OnD20Signal, EK_S_Spell_End, EndSpellMod, ())
 wallOfFireHit.AddHook(ET_OnD20Signal, EK_S_Killed, EndSpellMod, ())
 wallOfFireHit.AddHook(ET_OnObjectEvent, EK_OnLeaveAoE, OnWallAoEExit, ())
-wallOfFireHit.AddHook(ET_OnD20Signal, EK_S_Concentration_Broken, EndSpellMod, ())
-wallOfFireHit.AddSpellCountdownStandardHook()
