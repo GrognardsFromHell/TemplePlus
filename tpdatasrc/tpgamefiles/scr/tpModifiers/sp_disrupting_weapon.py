@@ -23,15 +23,11 @@ def AddChar(weapon, args, evt_obj):
 	weapon.item_condition_add_with_args(
 			'Disrupting Weapon', dc, clvl, 0, 0, spell_id)
 	parent = weapon.obj_get_obj(obj_f_item_parent)
-	if parent != OBJ_HANDLE_NULL:
-		# doesn't work, need a way to refresh item-based status
-		parent.d20_status_init()
 
 	return 0
 
 def OnEnd(weapon, args, evt_obj):
 	# need a way to undo the item_condition_add_with_args
-	# also a way to refresh item-based status on the character afterwards
 	return 0
 
 def Yes(weapon, args, evt_obj):
