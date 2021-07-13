@@ -91,7 +91,7 @@ struct InventorySystem : temple::AddressTable
 	/*
 		removes a condition along with its accompanying args in obj_f_item_pad_wielder_condition_array and obj_f_item_pad_wielder_argument_array
 	*/
-	static void RemoveWielderCond(objHndl item, uint32_t condId);
+	static void RemoveWielderCond(objHndl item, uint32_t condId, int spellId = -1);
 
 	objHndl ItemWornAt(objHndl, EquipSlot nItemSlot) const;
 	objHndl ItemWornAt(objHndl, int nItemSlot) const;

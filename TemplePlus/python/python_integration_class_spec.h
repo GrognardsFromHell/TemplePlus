@@ -41,6 +41,10 @@ enum class ClassSpecFunc : int {
 
 	// levelup callbacks
 	IsSelectingFeaturesOnLevelup,
+	LevelupFeaturesInit,
+	LevelupFeaturesCheck,
+	LevelupFeaturesFinalize,
+
 	IsSelectingFeatsOnLevelup,
 	LevelupGetBonusFeats,
 
@@ -94,6 +98,10 @@ public:
 
 	// levelup
 	bool IsSelectingFeaturesOnLevelup(objHndl handle, Stat classEnum);
+	void LevelupFeaturesInit(objHndl handle, Stat classEnum, int classLvlNew = -1);
+	bool LevelupFeaturesCheckComplete(objHndl handle, Stat classEnum, int classLvlNew = -1);
+	void LevelupFeaturesFinalize(objHndl handle, Stat classEnum, int classLvlNew = -1);
+
 	bool IsSelectingFeatsOnLevelup(objHndl handle, Stat classEnum);
 	void LevelupGetBonusFeats(objHndl handle, Stat classEnum);
 

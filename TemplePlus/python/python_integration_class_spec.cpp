@@ -318,6 +318,50 @@ bool PythonClassSpecIntegration::IsSelectingFeaturesOnLevelup(objHndl handle, St
 	return result;
 }
 
+void PythonClassSpecIntegration::LevelupFeaturesInit(objHndl handle, Stat classEnum, int classLvlNew)
+{
+	auto classSpecEntry = mScripts.find(classEnum);
+	if (classSpecEntry == mScripts.end())
+		return;
+
+	auto attachee = PyObjHndl_Create(handle);
+	auto args = Py_BuildValue("(Oi)", attachee, classLvlNew);
+	Py_DECREF(attachee);
+
+	RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::LevelupFeaturesInit, args);
+	Py_DECREF(args);
+}
+
+bool PythonClassSpecIntegration::LevelupFeaturesCheckComplete(objHndl handle, Stat classEnum, int classLvlNew)
+{
+	auto classSpecEntry = mScripts.find(classEnum);
+	if (classSpecEntry == mScripts.end())
+		return false;
+
+	auto obj = gameSystems->GetObj().GetObject(handle);
+	auto attachee = PyObjHndl_Create(handle);
+	auto args = Py_BuildValue("(Oi)", attachee, classLvlNew);
+	Py_DECREF(attachee);
+
+	auto result = RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::LevelupFeaturesCheck, args) != 0;
+	Py_DECREF(args);
+	return result != 0;
+}
+
+void PythonClassSpecIntegration::LevelupFeaturesFinalize(objHndl handle, Stat classEnum, int classLvlNew)
+{
+	auto classSpecEntry = mScripts.find(classEnum);
+	if (classSpecEntry == mScripts.end())
+		return;
+
+	auto attachee = PyObjHndl_Create(handle);
+	auto args = Py_BuildValue("(Oi)", attachee, classLvlNew);
+	Py_DECREF(attachee);
+
+	RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::LevelupFeaturesFinalize, args);
+	Py_DECREF(args);
+}
+
 bool PythonClassSpecIntegration::IsSelectingFeatsOnLevelup(objHndl handle, Stat classEnum)
 {
 	auto classSpecEntry = mScripts.find(classEnum);
@@ -426,6 +470,9 @@ static std::map<ClassSpecFunc, std::string> classSpecFunctions = {
 	{ ClassSpecFunc::GetFeats,"GetClassFeats" },
 
 	{ ClassSpecFunc::IsSelectingFeaturesOnLevelup, "IsSelectingFeaturesOnLevelup" },
+	{ ClassSpecFunc::LevelupFeaturesInit, "LevelupFeaturesInit"},
+	{ ClassSpecFunc::LevelupFeaturesFinalize, "LevelupFeaturesFinalize" },
+
 	{ ClassSpecFunc::IsSelectingFeatsOnLevelup, "IsSelectingFeatsOnLevelup" },
 	{ ClassSpecFunc::LevelupGetBonusFeats, "LevelupGetBonusFeats" },
 
