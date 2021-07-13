@@ -504,22 +504,41 @@ int InventorySystem::GetItemWieldCondArg(objHndl item, uint32_t condId, int argO
 
 }
 
-void InventorySystem::RemoveWielderCond(objHndl item, uint32_t condId){
+/* 0x10105110 
+ Added spellId optional condition
+*/
+void InventorySystem::RemoveWielderCond(objHndl item, uint32_t condId, int spellId){
 	if (!condId || !item)
 		return;
+	auto wCond = conds.GetById(condId);
+	if (!wCond) {
+		logger->error("InventorySystem::RemoveWielderCond: Invalid condition! Item {}", description.getDisplayName(item));
+		return;
+	}
+	if (spellId >= 0 && wCond->numArgs < 5) {
+		logger->error("RemoveWielderCond: encountered item condition removal with spell ID key, but condition has less than 5 args!");
+		return;
+	}
+
 	auto itemObj = gameSystems->GetObj().GetObject(item);
 	auto wielderConds = itemObj->GetInt32Array(obj_f_item_pad_wielder_condition_array);
 	auto wielderArgs = itemObj->GetInt32Array(obj_f_item_pad_wielder_argument_array);
 	auto argIdx = 0;
-	for (auto i = 0u; i < wielderConds.GetSize();i++)
+	for (auto i = 0u; i < wielderConds.GetSize(); i++)
 	{
 		auto wCondId = wielderConds[i];
-		auto wCond = conds.GetById(wCondId);
-		if (!wCond) {
-			logger->error("InventorySystem::RemoveWielderCond: Invalid condition! Item {}" , description.getDisplayName(item));
-			return;
+		
+		auto isMatch = wCondId == condId;
+		
+		// T+: added check for spellId
+		if (isMatch && spellId >= 0) {
+			auto condSpellId = itemObj->GetInt32(obj_f_item_pad_wielder_argument_array, argIdx + 4);
+			if (condSpellId != spellId) {
+				isMatch = false;
+			}
 		}
-		if (wCondId == condId){
+
+		if (isMatch){
 			for (auto j = i + 1; j < wielderConds.GetSize(); j++ )
 				itemObj->SetInt32(obj_f_item_pad_wielder_condition_array, j - 1,
 					itemObj->GetInt32(obj_f_item_pad_wielder_condition_array, j));
