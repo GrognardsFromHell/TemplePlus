@@ -13,7 +13,7 @@ def	OnSpellEffect( spell ):
 	target_item = spell.target_list[0]
 
 	if target_item.obj.is_friendly( spell.caster ):
-		if (target_item.obj.is_category_type( mc_type_humanoid )) and (target_item.obj.get_size < STAT_SIZE_LARGE):
+		if target_item.obj.is_category_type( mc_type_humanoid ):
 			return_val = target_item.obj.condition_add_with_args( 'sp-Reduce', spell.id, spell.duration, 0 )
 			if return_val == 1:
 				target_item.partsys_id = game.particles( 'sp-Reduce Person', target_item.obj )
@@ -27,7 +27,7 @@ def	OnSpellEffect( spell ):
 			spell.target_list.remove_target( target_item.obj )
 
 	else:
-		if (target_item.obj.is_category_type( mc_type_humanoid )) and (target_item.obj.get_size < STAT_SIZE_LARGE):
+		if target_item.obj.is_category_type( mc_type_humanoid ):
 			if not target_item.obj.saving_throw_spell( spell.dc, D20_Save_Fortitude, D20STD_F_NONE, spell.caster, spell.id ):
 
 				# saving throw unsuccesful
