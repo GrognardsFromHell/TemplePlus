@@ -1430,6 +1430,96 @@ static PyObject* PyObjHandle_ItemConditionAdd(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(1);
 }
 
+static PyObject* PyObjHandle_ItemConditionRemove(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle || !objSystem->IsValidHandle(self->handle)) {
+		return PyInt_FromLong(0);
+	}
+
+	CondStruct* cond;
+	auto spellId = -1;
+	
+	{
+		char* condName = nullptr;
+		if (!PyArg_ParseTuple(args, "s|i:objhndl.item_condition_remove", &condName, &spellId)) {
+			return PyInt_FromLong(0);
+		}
+		cond = conds.GetByName(condName);
+		if (!cond) {
+			PyErr_Format(PyExc_ValueError, "Unknown condition name: %s", condName);
+			return PyInt_FromLong(0);
+		}
+	}
+	
+
+	auto condId = conds.hashmethods.GetCondStructHashkey(cond);
+	inventory.RemoveWielderCond(self->handle, condId, spellId);
+
+	auto parent = inventory.GetParent(self->handle);
+	if (parent && objSystem->IsValidHandle(parent)) {
+		d20StatusSys.initItemConditions(parent);
+	}
+
+	return PyInt_FromLong(1);
+}
+
+
+
+
+static PyObject* PyObjHandle_ItemConditionHas(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	char* condName = nullptr;
+	if (!PyArg_ParseTuple(args, "s:objhndl.item_has_condition", &condName)) {
+		return 0;
+	}
+	if (!condName) {
+		return 0;
+	}
+
+	auto condId = conds.hashmethods.StringHash(condName);
+	auto cond = conds.GetById(condId);
+	if (!cond) {
+		logger->warn("item_has_condition: Nonexistant condition {}", condName);
+		return PyInt_FromLong(0);
+	}
+
+	auto result = inventory.ItemHasCondition(self->handle, condId);
+	
+	return PyInt_FromLong(result ? TRUE: FALSE);
+}
+
+
+static PyObject* PyObjHandle_ItemD20Query(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	if (PyTuple_GET_SIZE(args) < 1) {
+		PyErr_SetString(PyExc_RuntimeError, "item_d20_query called with no arguments!");
+		return PyInt_FromLong(0);
+	}
+
+	PyObject* arg = PyTuple_GET_ITEM(args, 0);
+	/*if (PyString_Check(arg)) {
+		auto argString = fmt::format("{}", PyString_AsString(arg));
+		return PyInt_FromLong(d20Sys.D20QueryPython(self->handle, argString));
+	}*/
+
+	int queryKey;
+	if (!PyArg_ParseTuple(args, "i:objhndl.item_d20_query", &queryKey)) {
+		return 0;
+	}
+	auto dispatcherKey = (D20DispatcherKey)(DK_QUE_Helpless + queryKey);
+	auto result = dispatch.DispatchItemQuery(self->handle, dispatcherKey);
+	return PyInt_FromLong(result);
+}
+
+
 static PyObject* PyObjHandle_ConditionAddWithArgs(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 
@@ -2741,6 +2831,28 @@ static PyObject* PyObjHandle_SetIdxInt(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+static PyObject* PyObjHandle_DelIdxInt(PyObject* pyobj, PyObject* args) {
+	auto self = GetSelf(pyobj);
+	if (!self->handle) {
+		Py_RETURN_NONE;
+	}
+	auto obj = objSystem->GetObject(self->handle);
+	if (!obj) Py_RETURN_NONE;
+
+	obj_f field;
+
+	int value, idx = 0;
+	if (!PyArg_ParseTuple(args, "iii:objhndl.obj_del_idx_int", &field, &idx, &value)) {
+		return 0;
+	}
+	if (idx < obj->GetInt32Array(field).GetSize()) {
+		obj->RemoveInt32(field, idx);
+	}
+	
+	Py_RETURN_NONE;
+}
+
+
 static PyObject* PyObjHandle_SetIdxInt64(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -3668,6 +3780,10 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "is_spell_known", PyObjHandle_IsSpellKnown, METH_VARARGS, NULL },
 	{ "is_buckler", PyObjHandle_IsBuckler, METH_VARARGS, NULL },
 	{ "item_condition_add_with_args", PyObjHandle_ItemConditionAdd, METH_VARARGS, NULL },
+	{ "item_condition_has", PyObjHandle_ItemConditionHas, METH_VARARGS, NULL },
+	{ "item_condition_remove", PyObjHandle_ItemConditionRemove, METH_VARARGS, NULL },
+	{ "item_has_condition", PyObjHandle_ItemConditionHas, METH_VARARGS, NULL },
+	{ "item_d20_query", PyObjHandle_ItemD20Query, METH_VARARGS, NULL },
 	{ "item_find", PyObjHandle_ItemFind, METH_VARARGS, NULL },
 	{ "item_get", PyObjHandle_ItemGet, METH_VARARGS, NULL },
 	{ "item_transfer_to", PyObjHandle_ItemTransferTo, METH_VARARGS, NULL },
@@ -3696,6 +3812,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	
 	{ "object_event_append", PyObjHandle_ObjectEventAppend, METH_VARARGS, NULL },
 	{ "object_event_append_wall", PyObjHandle_WallEventAppend, METH_VARARGS, NULL },
+	{ "obj_del_idx_int", PyObjHandle_DelIdxInt, METH_VARARGS, NULL },
 	{ "obj_get_int", PyObjHandle_GetInt, METH_VARARGS, NULL },
 	{ "obj_get_idx_int", PyObjHandle_GetIdxInt, METH_VARARGS, NULL },
 	{ "obj_get_int64", PyObjHandle_GetInt64, METH_VARARGS, "Gets 64 bit field" },
