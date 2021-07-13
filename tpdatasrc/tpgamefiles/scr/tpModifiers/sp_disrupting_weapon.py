@@ -1,6 +1,7 @@
 from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
+from spell_utils import verifyItem
 
 # Object spell effect
 # args:
@@ -51,12 +52,6 @@ wpn.AddSpellCountdownStandardHook()
 #  2: weapon location #
 #  3: spare
 #  4: spell id
-
-def verifyItem(item, args):
-	item_loc = item.obj_get_int(obj_f_item_inv_location)
-	target_loc = args.get_arg(2)
-
-	return item_loc == target_loc
 
 def Disrupt(attacker, args, evt_obj):
 	weapon = evt_obj.attack_packet.get_weapon_used()

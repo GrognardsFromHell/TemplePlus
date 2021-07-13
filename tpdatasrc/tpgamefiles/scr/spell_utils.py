@@ -103,6 +103,27 @@ def skillCheck(attachee, skillEnum, skillCheckDc):
     checkResult = True if skillRollResult >= skillCheckDc else False
     return checkResult
 
+### Item Condition functions
+
+# An item condition is a condition that should be applied to a
+# character when they hold/wear an item (hold/wear depending on the
+# item). Callbacks should be written as if the condition is applied to
+# the character, even though the condition is initially applied to the
+# item.
+#
+# These conditions should have at least 5 arguments, and argument #2
+# is automatically set by the engine to the inventory location of the
+# item providing the condition. By convention argument #4 is the spell
+# id if the item condition is added by a spell.
+
+# Verifies an item object against the engine-set inventory location
+# for the effect.
+def verifyItem(item, args):
+    item_loc = item.obj_get_int(obj_f_item_inv_location)
+    target_loc = args.get_arg(2)
+
+    return item_loc == target_loc
+
 ### Utilities for defining touch attacks with held charge ###
 
 # Keys off 'SPELL_NAME_CHARGE' so that a buff indicator for the holding
