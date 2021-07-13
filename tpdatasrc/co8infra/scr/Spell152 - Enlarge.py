@@ -72,6 +72,13 @@ def OnSpellEffect( spell ):
 
 				game.particles( 'Fizzle', target_item.obj )
 				spell.target_list.remove_target( target_item.obj )
+	else: # not a humanoid
+		target_item.obj.float_mesfile_line( 'mes\\spell.mes', 30000 )
+		target_item.obj.float_mesfile_line( 'mes\\spell.mes', 31004 )
+
+		game.particles( 'Fizzle', target_item.obj )
+		spell.target_list.remove_target( target_item.obj )
+
 	print "spell.target_list=", spell.target_list
 	spell.spell_end( spell.id )
 
