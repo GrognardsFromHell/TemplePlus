@@ -25,7 +25,7 @@ def	OnSpellEffect( spell ):
 			target_item_obj = target_item.obj
 
 	if not target_item_obj.is_friendly( spell.caster ):
-		if (target_item_obj.is_category_type( mc_type_humanoid )) and (target_item_obj.get_size < STAT_SIZE_LARGE):
+		if target_item_obj.is_category_type( mc_type_humanoid ):
 
 			if not target_item_obj.saving_throw_spell( spell.dc, D20_Save_Will, D20STD_F_NONE, spell.caster, spell.id ):
 				# saving throw unsuccessful
