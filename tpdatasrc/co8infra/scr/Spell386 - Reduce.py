@@ -17,6 +17,9 @@ def	OnSpellEffect( spell ):
 			return_val = target_item.obj.condition_add_with_args( 'sp-Reduce', spell.id, spell.duration, 0 )
 			if return_val == 1:
 				target_item.partsys_id = game.particles( 'sp-Reduce Person', target_item.obj )
+			else:
+				# sp-Reduce not added, probably dispelled sp-Enlarge
+				spell.target_list.remove_target(target_item.obj)
 
 		else:
 			# not a humanoid
@@ -36,6 +39,9 @@ def	OnSpellEffect( spell ):
 				return_val = target_item.obj.condition_add_with_args( 'sp-Reduce', spell.id, spell.duration, 0 )
 				if return_val == 1:
 					target_item.partsys_id = game.particles( 'sp-Reduce Person', target_item.obj )
+				else:
+					# sp-Reduce not added, probably dispelled sp-Enlarge
+					spell.target_list.remove_target(target_item.obj)
 
 			else:
 
