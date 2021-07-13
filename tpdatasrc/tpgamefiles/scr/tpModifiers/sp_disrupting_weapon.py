@@ -28,7 +28,7 @@ def AddChar(weapon, args, evt_obj):
 	return 0
 
 def OnEnd(weapon, args, evt_obj):
-	# need a way to undo the item_condition_add_with_args
+	weapon.item_condition_remove('Disrupting Weapon', args.get_arg(0))
 	return 0
 
 def Yes(weapon, args, evt_obj):
