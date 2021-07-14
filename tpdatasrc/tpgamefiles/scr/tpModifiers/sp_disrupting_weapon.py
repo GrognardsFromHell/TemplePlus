@@ -31,10 +31,6 @@ def OnEnd(weapon, args, evt_obj):
 	weapon.item_condition_remove('Disrupting Weapon', args.get_arg(0))
 	return 0
 
-def Yes(weapon, args, evt_obj):
-	evt_obj.return_val = 1
-	return 0
-
 wpn = PythonModifier('sp-Disrupting Weapon', 5, 1)
 # Note: no tooltip because it doesn't seem to matter
 wpn.AddHook(ET_OnConditionAdd, EK_NONE, AddChar, ())
