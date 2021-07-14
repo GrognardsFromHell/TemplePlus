@@ -1,3 +1,4 @@
+{590}{Disrupting Weapon}
 {1000}{Moment of Prescience}
 {1001}{Touch of Fatigue}
 {1002}{Ray of Exhaustion}
@@ -10,6 +11,8 @@
 
 {5150} Energy Drain {[Necromancy] Ranged touch attack inflicts 2d4 negative levels.}
 {5151} Enervation {[Necromancy] Ranged touch attack inflicts 1d4 negative levels.}
+{5590} Disrupting Weapon {[Transmutation] Makes a melee weapon deadly to
+undead.}
 {5309} Mind Fog {[Enchantment] Subjects in fog get -10 to Wisdom and Will checks.}
 {5522}{[Evocation] Creates a 10' wide curtain of fire that deals an initial 2d4 fire damage and 2d6 +1/lvl to creatures passing through it.}
 {5186}{[Divination] This spell grants you a powerful sixth sense in relation to yourself or another.}

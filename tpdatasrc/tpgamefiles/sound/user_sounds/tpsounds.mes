@@ -42,6 +42,17 @@
 {9006}{} // spell projectile in-flight
 {9007}{spells\sp_enervation_hit.wav} // spell hit
 
+// 590: Disrupting Weapon
+{17800} {} // begin
+{17801} {} // end
+{17802} {spells\sp_bless_weapon.wav} // effect
+{17803} {} // new round
+{17804} {} // projectile begin
+{17805} {} // projectile end
+{17806} {} // projectile in flight
+{17807} {} // hit
+{17808} {} // struck
+
 // [1000] *[Moment of Prescience]
 {26000}{} // spell begin
 {26001}{spells\sp_arcane_eye.WAV} // spell end
