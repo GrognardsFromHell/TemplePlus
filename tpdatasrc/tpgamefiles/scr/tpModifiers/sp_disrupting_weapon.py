@@ -73,8 +73,7 @@ def Disrupt(attacker, args, evt_obj):
 	game.particles('sp-Destroy Undead', target)
 	target.critter_kill()
 	msg = game.get_mesline('mes\\combat.mes', 7000)
-	game.create_history_freeform(msg)
-	game.create_history_freeform("\n")
+	game.create_history_freeform("{}\n\n".format(msg))
 
 	return 0
 
