@@ -2,6 +2,7 @@
 #include <pybind11/embed.h>
 #include <pybind11/cast.h>
 #include <pybind11/stl.h>
+#include <pybind11/functional.h>
 #include <ui/ui.h>
 #include <ui/widgets/widgets.h>
 #include <tig/tig_startup.h>
@@ -194,7 +195,7 @@ PYBIND11_EMBEDDED_MODULE(tpgui, m) {
 		parent->Add(std::move(btn));
 
 		return result;
-		}, py::return_value_policy::reference);
+		}, py::arg("parent_id"), py::arg("id"), py::arg("width") = -1, py::arg("height") = -1,py::return_value_policy::reference);
 
 
 	m.def("_get_container", &GetContainer , py::return_value_policy::reference);
@@ -284,6 +285,14 @@ PYBIND11_EMBEDDED_MODULE(tpgui, m) {
 		.def_property("active", &WidgetButton::IsActive, &WidgetButton::SetActive)
 		.def_property("disabled", &WidgetButton::IsDisabled, &WidgetButton::SetDisabled)
 		.def_property("style", &WidgetButton::GetStyle, py::overload_cast<const WidgetButtonStyle&>(&WidgetButton::SetStyle))
+		.def("set_style_id", [](WidgetButton& self, const std::string & styleName) {
+			eastl::string s(styleName.c_str());
+			self.SetStyle(s);
+			})
+		.def("set_text", &WidgetButton::SetText)
+		.def("set_click_handler", [](WidgetButton &self, std::function<void()> funcy) {
+			self.SetClickHandler(funcy);
+			})
 		;
 
 
