@@ -4012,7 +4012,7 @@ D20ACT_Move_Action = 1
 D20ACT_Standard_Action = 2
 D20ACT_Partial_Charge = 3
 D20ACT_Full_Round_Action = 4
-D20ACT_Swift_Action = 5
+D20ACT_Swift_Action = 5 # Like Free Action but once a round
 
 # Targeting classification enums
 D20TC_Target0 = 0 # without targeting
