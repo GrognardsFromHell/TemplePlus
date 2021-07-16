@@ -1,0 +1,21 @@
+School: Enchantment
+Subschool: Compulsion
+Descriptor: Mind-Affecting
+Level: Sor 7
+Level: Wiz 7
+Component: V
+Component: S
+Casting Time: 1 action
+Range: Medium
+Saving Throw: Willpower
+Spell Resistance: Yes
+Projectile: No
+flags_Target: Range
+inc_flags_Target: Self
+inc_flags_Target: Other
+exc_flags_Target: Dead
+exc_flags_Target: Non-critter
+exc_flags_Target: Friendly
+mode_Target: Area
+radius_Target: 30
+ai_type: ai_action_offensive
