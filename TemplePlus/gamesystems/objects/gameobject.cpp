@@ -185,7 +185,7 @@ ObjectId GameObjectBody::GetObjectId(obj_f field) const
 	auto storageLoc = GetStorageLocation<ObjectId*>(field);
 
 	// Null handles are considered valid by this function
-	if (!storageLoc) {
+	if (!storageLoc || !*storageLoc) {
 		ObjectId result;
 		result.subtype = ObjectIdKind::Null;
 		return result;
