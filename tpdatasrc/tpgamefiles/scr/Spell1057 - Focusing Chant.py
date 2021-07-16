@@ -17,7 +17,7 @@ def OnSpellEffect(spell):
         spellTarget.obj.float_mesfile_line('mes\\spell.mes', 30000)
         game.particles('Fizzle', spellTarget.obj)
         spell.target_list.remove_target(spellTarget.obj)
-        spell.spell_end(spell.id
+        spell.spell_end(spell.id)
 
 def OnBeginRound(spell):
     print "Focusing Chant OnBeginRound"
