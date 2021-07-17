@@ -21,5 +21,5 @@ mode_Target: Any 30 Feet
 mode_Target: End Early Multi
 radius_Target: 0
 min_Target: 1
-max_Target: 99
+max_Target: 30
 ai_type: ai_action_offensive
