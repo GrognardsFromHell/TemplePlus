@@ -12,7 +12,7 @@ def curseOfImpendingBladesSpellPenaltyToAc(attachee, args, evt_obj):
     return 0
 
 def curseOfImpendingBladesSpellCheckRemoveBySpell(attachee, args, evt_obj):
-    if spell_utils.checkCurseRemoval(evt_obj):
+    if evt_obj.is_modifier("sp-Remove Curse"):
         args.remove_spell()
         args.remove_spell_mod()
     return 0

@@ -150,15 +150,6 @@ def skillCheck(attachee, skillEnum, skillCheckDc):
     checkResult = True if skillRollResult >= skillCheckDc else False
     return checkResult
 
-#Check if a spell that remove curses is cast
-#This list can be expanded if new curse removal spells are added
-#Limited Wish, Miracle and Wish also remove Curses but are not added to the game
-def checkCurseRemoval(evt_obj):
-    if (evt_obj.is_modifier("sp-Break Enchantment")
-    or evt_obj.is_modifier("sp-Remove Curse")):
-        return True
-    return False
-
 ### Item Condition functions
 
 # An item condition is a condition that should be applied to a

@@ -7,13 +7,12 @@ print "Registering sp-Focusing Chant"
 
 def focusingChantSpellBonus(attachee, args, evt_obj):
     bonusValue = 1 #Focusing Chant adds a +1 Circumstance Bonus to Attack Rolls, Skill and Ability Checks
-    bonusType = 21 #ID 21 = Circumstance (stacking)
+    bonusType = 159 #New ID for Focusing Chant
     evt_obj.bonus_list.add(bonusValue ,bonusType ,"~Focusing Chant~[TAG_SPELLS_FOCUSING_CHANT] ~Circumstance~[TAG_MODIFIER_CIRCUMSTANCE] Bonus")
     return 0
 
 focusingChantSpell = PythonModifier("sp-Focusing Chant", 3, False) # spell_id, duration, empty
 focusingChantSpell.AddHook(ET_OnToHitBonus2, EK_NONE, focusingChantSpellBonus,())
-focusingChantSpell.AddHook(ET_OnConditionAddPre, EK_NONE, spell_utils.replaceCondition, ()) #Circumstance is a stacking modifier, would like to keep it for lore reasons
 focusingChantSpell.AddHook(ET_OnGetSkillLevel, EK_NONE, focusingChantSpellBonus,())
 focusingChantSpell.AddHook(ET_OnGetAbilityCheckModifier, EK_NONE, focusingChantSpellBonus,())
 focusingChantSpell.AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, ())
