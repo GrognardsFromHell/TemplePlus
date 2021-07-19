@@ -14,7 +14,7 @@ def blessingOfBahamutSpellGrantDr(attachee, args, evt_obj):
 
 blessingOfBahamutSpell = PythonModifier("sp-Blessing of Bahamut", 3, False) # spell_id, duration, empty
 blessingOfBahamutSpell.AddHook(ET_OnTakingDamage, EK_NONE, blessingOfBahamutSpellGrantDr,())
-blessingOfBahamutSpell.AddHook(ET_OnConditionAddPre, EK_NONE, spell_utils.replaceCondition, ())
+blessingOfBahamutSpell.AddHook(ET_OnConditionAddPre, EK_NONE, spell_utils.replaceCondition, ()) #damage reduction does stack; so I need replaceCondition
 blessingOfBahamutSpell.AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, ())
 blessingOfBahamutSpell.AddHook(ET_OnGetEffectTooltip, EK_NONE, spell_utils.spellEffectTooltip, ())
 blessingOfBahamutSpell.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, spell_utils.queryActiveSpell, ())

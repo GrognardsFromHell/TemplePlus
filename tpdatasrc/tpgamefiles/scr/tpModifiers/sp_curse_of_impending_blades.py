@@ -7,15 +7,12 @@ print "Registering sp-Curse of Impending Blades"
 
 def curseOfImpendingBladesSpellPenaltyToAc(attachee, args, evt_obj):
     bonusValue = -2 #Curse of Impending Blades is a -2 penalty to AC
-    bonusType = 0 #ID 0 = Untyped (stacking)
+    bonusType = 163 #New ID for Curse of Impending Blades
     evt_obj.bonus_list.add(bonusValue, bonusType, "~Curse of Impending Blades~[TAG_SPELLS_CURSE_OF_IMPENDING_BLADES] penalty")
     return 0
 
 def curseOfImpendingBladesSpellCheckRemoveBySpell(attachee, args, evt_obj):
-    #Limited Wish, Miracle and Wish also remove Curses
-    if (evt_obj.is_modifier("sp-Break Enchantment")
-    or evt_obj.is_modifier("sp-Remove Curse")
-    or evt_obj.is_modifier("sp-Curse of Impending Blades")):
+    if spell_utils.checkCurseRemoval(evt_obj):
         args.remove_spell()
         args.remove_spell_mod()
     return 0

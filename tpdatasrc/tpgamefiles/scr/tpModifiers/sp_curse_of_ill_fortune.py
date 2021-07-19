@@ -7,15 +7,12 @@ print "Registering sp-Curse of Ill Fortune"
 
 def curseOfIllFortuneSpellPenalty(attachee, args, evt_obj):
     bonusValue = -3 #Curse gives -3 on attack rolls, saves, ability checks and skill checks
-    bonusType = 0 #ID 0 = Untyped (stacking)
+    bonusType = 162 #New ID for Curse of Ill Fortune
     evt_obj.bonus_list.add(bonusValue, bonusType, "~Curse of Ill Fortune~[TAG_SPELLS_CURSE_OF_ILL_FORTUNE] penalty")
     return 0
 
 def curseOfIllFortuneSpellCheckRemoveBySpell(attachee, args, evt_obj):
-    #Limited Wish, Miracle and Wish also remove Curses
-    if (evt_obj.is_modifier("sp-Break Enchantment")
-    or evt_obj.is_modifier("sp-Remove Curse")
-    or evt_obj.is_modifier("sp-Curse of Ill Fortune")): #prevent duplicate
+    if spell_utils.checkCurseRemoval(evt_obj):
         args.remove_spell()
         args.remove_spell_mod()
     return 0

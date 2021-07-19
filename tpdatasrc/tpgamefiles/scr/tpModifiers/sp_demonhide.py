@@ -14,7 +14,7 @@ def demonhideSpellGrantDr(attachee, args, evt_obj):
 
 demonhideSpell = PythonModifier("sp-Demonhide", 4, False) # spell_id, duration, drBreakType, empty
 demonhideSpell.AddHook(ET_OnTakingDamage, EK_NONE, demonhideSpellGrantDr,())
-demonhideSpell.AddHook(ET_OnConditionAddPre, EK_NONE, spell_utils.replaceCondition, ())
+demonhideSpell.AddHook(ET_OnConditionAddPre, EK_NONE, spell_utils.replaceCondition, ()) #damage reduction does stack; so I need replaceCondition
 demonhideSpell.AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, ())
 demonhideSpell.AddHook(ET_OnGetEffectTooltip, EK_NONE, spell_utils.spellEffectTooltip, ())
 demonhideSpell.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, spell_utils.queryActiveSpell, ())

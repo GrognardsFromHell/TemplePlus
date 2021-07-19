@@ -39,7 +39,7 @@ nixiesGraceSpell.AddHook(ET_OnTakingDamage, EK_NONE, nixiesGraceSpellColdIronDr,
 nixiesGraceSpell.AddHook(ET_OnAbilityScoreLevel, EK_STAT_CHARISMA, nixiesGraceSpellCharismaBonus,())
 nixiesGraceSpell.AddHook(ET_OnAbilityScoreLevel, EK_STAT_DEXTERITY, nixiesGraceSpellDexterityBonus,())
 nixiesGraceSpell.AddHook(ET_OnAbilityScoreLevel, EK_STAT_WISDOM, nixiesGraceSpellWisdomBonus,())
-nixiesGraceSpell.AddHook(ET_OnConditionAddPre, EK_NONE, spell_utils.replaceCondition, ())
+nixiesGraceSpell.AddHook(ET_OnConditionAddPre, EK_NONE, spell_utils.replaceCondition, ()) #damage reduction does stack; so I need replaceCondition
 nixiesGraceSpell.AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, ())
 nixiesGraceSpell.AddHook(ET_OnGetEffectTooltip, EK_NONE, spell_utils.spellEffectTooltip, ())
 nixiesGraceSpell.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, spell_utils.queryActiveSpell, ())

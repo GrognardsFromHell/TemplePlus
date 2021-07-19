@@ -7,7 +7,7 @@ print "Registering sp-Wave of Grief"
 
 def waveOfGriefSpellPenalty(attachee, args, evt_obj):
     bonusValue = -3 #Wave of Grief is a -3 penalty on Attack Rolls, saves and ability and skill checks
-    bonusType = 0 #ID 0 = Untyped (stacking)
+    bonusType = 164 #New ID for Wave of Grief
     evt_obj.bonus_list.add(bonusValue ,bonusType, "~Wave of Grief~[TAG_SPELLS_WAVE_OF_GRIEF] Penalty")
     return 0
 
@@ -16,7 +16,6 @@ waveOfGriefSpell.AddHook(ET_OnToHitBonus2, EK_NONE, waveOfGriefSpellPenalty,())
 waveOfGriefSpell.AddHook(ET_OnGetSkillLevel, EK_NONE, waveOfGriefSpellPenalty,())
 waveOfGriefSpell.AddHook(ET_OnGetAbilityCheckModifier, EK_NONE, waveOfGriefSpellPenalty,())
 waveOfGriefSpell.AddHook(ET_OnSaveThrowLevel, EK_NONE, waveOfGriefSpellPenalty,())
-waveOfGriefSpell.AddHook(ET_OnConditionAddPre, EK_NONE, spell_utils.replaceCondition, ())
 waveOfGriefSpell.AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, ())
 waveOfGriefSpell.AddHook(ET_OnGetEffectTooltip, EK_NONE, spell_utils.spellEffectTooltip, ())
 waveOfGriefSpell.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, spell_utils.queryActiveSpell, ())

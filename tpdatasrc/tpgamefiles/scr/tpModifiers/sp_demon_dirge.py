@@ -19,7 +19,7 @@ def demonDirgeSpellOnBeginRound(attachee, args, evt_obj):
 
 demonDirgeSpell = PythonModifier("sp-Demon Dirge", 3, False) # spell_id, duration, empty
 demonDirgeSpell.AddHook(ET_OnBeginRound, EK_NONE, demonDirgeSpellOnBeginRound, ())
-demonDirgeSpell.AddHook(ET_OnConditionAddPre, EK_NONE, spell_utils.replaceCondition, ())
+demonDirgeSpell.AddHook(ET_OnConditionAddPre, EK_NONE, spell_utils.replaceCondition, ()) #deals damage, replaceCondition is needed
 demonDirgeSpell.AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, ())
 demonDirgeSpell.AddHook(ET_OnGetEffectTooltip, EK_NONE, spell_utils.spellEffectTooltip, ())
 demonDirgeSpell.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, spell_utils.queryActiveSpell, ())

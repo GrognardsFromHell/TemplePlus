@@ -13,7 +13,7 @@ def camouflageSpellBonusToHide(attachee, args, evt_obj):
 
 camouflageSpell = PythonModifier("sp-Camouflage", 3, False) # spell_id, duration, empty
 camouflageSpell.AddHook(ET_OnGetSkillLevel, EK_SKILL_HIDE, camouflageSpellBonusToHide,())
-camouflageSpell.AddHook(ET_OnConditionAddPre, EK_NONE, spell_utils.replaceCondition, ())
+camouflageSpell.AddHook(ET_OnConditionAddPre, EK_NONE, spell_utils.replaceCondition, ()) #Circumstance is a stacking modifier, would like to keep it for lore reasons
 camouflageSpell.AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, ())
 camouflageSpell.AddHook(ET_OnGetEffectTooltip, EK_NONE, spell_utils.spellEffectTooltip, ())
 camouflageSpell.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, spell_utils.queryActiveSpell, ())

@@ -70,11 +70,6 @@ def spellKilled(attachee, args, evt_obj):
     args.remove_spell_mod()
     return 0
 
-#[pytonModifier].AddHook(ET_OnD20Signal, EK_S_Spell_End, spell_utils.spellEnd, ())
-def spellEnd(attachee, args, evt_obj):
-    print "{} SpellEnd".format(spellName(args.get_arg(0)))
-    return 0
-
 #[pytonModifier].AddHook(ET_OnD20Signal, EK_S_Concentration_Broken, spell_utils.checkRemoveSpell, ())
 #[pytonModifier].AddHook(ET_OnD20Signal, EK_S_Dismiss_Spells, spell_utils.checkRemoveSpell, ())
 def checkRemoveSpell(attachee, args, evt_obj):
@@ -101,10 +96,40 @@ def removeTempHp(attachee, args, evt_obj):
     attachee.d20_send_signal(S_Spell_End, args.get_arg(0))
     return 0
 
+def casterIsConcentrating(spellId):
+    packet = tpdp.SpellPacket(spellId)
+
+    caster = packet.caster
+    if caster.d20_query(Q_Critter_Is_Concentrating):
+        conId = caster.d20_query_get_data(Q_Critter_Is_Concentrating)
+        return spellId == conId
+    else: return False
+
+# Some spells have a duration like:
+#
+#   Concentration + 2 rounds
+#   Concentration + 1 round/level
+#
+# This function implements that behavior when installed as a
+# hook for ET_OnBeginRound. It decrements the condition's duration
+# only after concentration is broken by the caster.
+def countAfterConcentration(attachee, args, evt_obj):
+    if casterIsConcentrating(args.get_arg(0)): return 0
+
+    newDur = args.get_arg(1) - evt_obj.data1
+    if newDur >= 0:
+        args.set_arg(1, newDur)
+        return 0
+
+    args.remove_spell_with_key(EK_S_Concentration_Broken)
+
+    return 0
+
 #Used to replace same condition to prevent duplicates
 def replaceCondition(attachee, args, evt_obj):
     conditionName = args.get_cond_name()
-    if evt_obj.is_modifier("{}".format(conditionName)):
+    #if evt_obj.is_modifier("{}".format(conditionName)):
+    if evt_obj.is_modifier(conditionName):
         args.remove_spell()
         args.remove_spell_mod()
     return 0
@@ -124,6 +149,36 @@ def skillCheck(attachee, skillEnum, skillCheckDc):
     game.create_history_from_id(skillHistoryId)
     checkResult = True if skillRollResult >= skillCheckDc else False
     return checkResult
+
+#Check if a spell that remove curses is cast
+#This list can be expanded if new curse removal spells are added
+#Limited Wish, Miracle and Wish also remove Curses but are not added to the game
+def checkCurseRemoval(evt_obj):
+    if (evt_obj.is_modifier("sp-Break Enchantment")
+    or evt_obj.is_modifier("sp-Remove Curse")):
+        return True
+    return False
+
+### Item Condition functions
+
+# An item condition is a condition that should be applied to a
+# character when they hold/wear an item (hold/wear depending on the
+# item). Callbacks should be written as if the condition is applied to
+# the character, even though the condition is initially applied to the
+# item.
+#
+# These conditions should have at least 5 arguments, and argument #2
+# is automatically set by the engine to the inventory location of the
+# item providing the condition. By convention argument #4 is the spell
+# id if the item condition is added by a spell.
+
+# Verifies an item object against the engine-set inventory location
+# for the effect.
+def verifyItem(item, args):
+    item_loc = item.obj_get_int(obj_f_item_inv_location)
+    target_loc = args.get_arg(2)
+
+    return item_loc == target_loc
 
 ### Utilities for defining touch attacks with held charge ###
 

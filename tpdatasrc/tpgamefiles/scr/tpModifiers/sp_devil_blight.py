@@ -19,7 +19,7 @@ def devilBlightSpellOnBeginRound(attachee, args, evt_obj):
 
 devilBlightSpell = PythonModifier("sp-Devil Blight", 3, False) # spell_id, duration, empty
 devilBlightSpell.AddHook(ET_OnBeginRound, EK_NONE, devilBlightSpellOnBeginRound, ())
-devilBlightSpell.AddHook(ET_OnConditionAddPre, EK_NONE, spell_utils.replaceCondition, ())
+devilBlightSpell.AddHook(ET_OnConditionAddPre, EK_NONE, spell_utils.replaceCondition, ()) #deals damage, replaceCondition is needed
 devilBlightSpell.AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, ())
 devilBlightSpell.AddHook(ET_OnGetEffectTooltip, EK_NONE, spell_utils.spellEffectTooltip, ())
 devilBlightSpell.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, spell_utils.queryActiveSpell, ())

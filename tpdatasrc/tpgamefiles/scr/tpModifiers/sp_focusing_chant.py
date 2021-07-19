@@ -13,7 +13,7 @@ def focusingChantSpellBonus(attachee, args, evt_obj):
 
 focusingChantSpell = PythonModifier("sp-Focusing Chant", 3, False) # spell_id, duration, empty
 focusingChantSpell.AddHook(ET_OnToHitBonus2, EK_NONE, focusingChantSpellBonus,())
-focusingChantSpell.AddHook(ET_OnConditionAddPre, EK_NONE, spell_utils.replaceCondition, ())
+focusingChantSpell.AddHook(ET_OnConditionAddPre, EK_NONE, spell_utils.replaceCondition, ()) #Circumstance is a stacking modifier, would like to keep it for lore reasons
 focusingChantSpell.AddHook(ET_OnGetSkillLevel, EK_NONE, focusingChantSpellBonus,())
 focusingChantSpell.AddHook(ET_OnGetAbilityCheckModifier, EK_NONE, focusingChantSpellBonus,())
 focusingChantSpell.AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, ())

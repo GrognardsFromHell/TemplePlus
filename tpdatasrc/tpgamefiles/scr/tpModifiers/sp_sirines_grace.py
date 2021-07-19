@@ -15,7 +15,7 @@ def sirinesGraceSpellAbilityBonus(attachee, args, evt_obj):
 
 def sirinesGraceSpellPerformBonus(attachee, args, evt_obj):
     bonusValue = 8 #Sirines Grace adds a +8 untyped Bonus to Perform
-    bonusType = 0 #ID 0 = Untyped (stacking)
+    bonusType = 155 #New ID for Sirines Grace
     evt_obj.bonus_list.add(bonusValue, bonusType, "~Sirines Grace~[TAG_SPELLS_SIRINES_GRACE] Bonus")
     return 0
 
@@ -30,7 +30,6 @@ sirinesGraceSpell.AddHook(ET_OnGetAC, EK_NONE, sirinesGraceSpellAcBonus,())
 sirinesGraceSpell.AddHook(ET_OnGetSkillLevel, EK_SKILL_PERFORM, sirinesGraceSpellPerformBonus,())
 sirinesGraceSpell.AddHook(ET_OnAbilityScoreLevel, EK_STAT_CHARISMA, sirinesGraceSpellAbilityBonus,())
 sirinesGraceSpell.AddHook(ET_OnAbilityScoreLevel, EK_STAT_DEXTERITY, sirinesGraceSpellAbilityBonus,())
-sirinesGraceSpell.AddHook(ET_OnConditionAddPre, EK_NONE, spell_utils.replaceCondition, ())
 sirinesGraceSpell.AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, ())
 sirinesGraceSpell.AddHook(ET_OnGetEffectTooltip, EK_NONE, spell_utils.spellEffectTooltip, ())
 sirinesGraceSpell.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, spell_utils.queryActiveSpell, ())
