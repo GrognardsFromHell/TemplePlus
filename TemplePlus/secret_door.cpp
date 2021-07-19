@@ -210,7 +210,7 @@ int SecretDoorSys::SecretDoorRollAndReveal(objHndl secdoor, objHndl seeker, Bonu
 	//Dice dice(1, 20, 0);
 	auto rollResult = 20 + searchLevel; // Take 20
 	if (rollResult >= DC) {
-		//auto histId = histSys.RollHistoryType2Add(seeker, dice.ToPacked(), 20, DC, SkillEnum::skill_search-2, bonList); // see HistoryType2Parse
+		//auto histId = histSys.RollHistoryAddType2SkillRoll(seeker, dice.ToPacked(), 20, DC, SkillEnum::skill_search-2, bonList); // see HistoryType2Parse
 		//histSys.CreateRollHistoryString(histId);
 
 		return secretdoorSys.SecretDoorDetect(secdoor, seeker);

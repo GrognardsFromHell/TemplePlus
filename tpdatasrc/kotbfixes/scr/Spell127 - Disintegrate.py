@@ -33,25 +33,6 @@ def OnEndProjectile( spell, projectile, index_of_target ):
 	target_item = spell.target_list[0]
 	game.particles_end( projectile.obj_get_int( obj_f_projectile_part_sys_id ) )
 
-	####################################################
-	# WF Ray fix added by Shiningted (& two lines below)
-	####################################################
-
-	has_it = 0
-	x = 0
-	y = 0
-
-	if spell.caster.has_feat(feat_weapon_focus_ray):
-		# game.particles( "sp-summon monster I", game.party[0] )
-		has_it = 1
-		x = spell.caster.stat_base_get(stat_dexterity)
-		y = x + 2
-		if spell.caster.has_feat(feat_greater_weapon_focus_ray):
-			y = y + 2
-		spell.caster.stat_base_set(stat_dexterity, y)
-
-	####################################################
-
 	return_val = spell.caster.perform_touch_attack( target_item.obj )
 
 	if return_val & D20CAF_HIT:
@@ -101,9 +82,6 @@ def OnEndProjectile( spell, projectile, index_of_target ):
 
 	if changed_con == 1:
 		target_item.obj.stat_base_set(stat_constitution, -1)
-
-	if has_it == 1:
-		spell.caster.stat_base_set(stat_dexterity, x)
 
 	spell.target_list.remove_target( target_item.obj )
 	spell.spell_end( spell.id )

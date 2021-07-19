@@ -161,7 +161,7 @@ uint32_t LegacyPartySystem::AddToPCGroup(objHndl objHnd)
 			addOk = ObjAddToGroupArray(addresses.groupList, objHnd);
 			if (addOk)
 			{
-				addresses.AddToCurrentlySelected(objHnd);
+				AddToCurrentlySelected(objHnd);
 			}
 		}
 		return addOk;
@@ -185,7 +185,7 @@ uint32_t LegacyPartySystem::AddToNpcGroup(objHndl objHnd)
 			v2 = ObjAddToGroupArray(addresses.groupList, objHnd);
 			if (v2)
 			{
-				addresses.AddToCurrentlySelected(objHnd);
+				AddToCurrentlySelected(objHnd);
 			}
 		}
 		return v2;
@@ -193,9 +193,9 @@ uint32_t LegacyPartySystem::AddToNpcGroup(objHndl objHnd)
 	return 0;
 }
 
-void LegacyPartySystem::AddToCurrentlySelected(objHndl obj)
+void LegacyPartySystem::AddToCurrentlySelected(objHndl obj, bool forceAdd)
 {
-	if (ObjIsInGroupArray(addresses.groupList, obj))
+	if (forceAdd || ObjIsInGroupArray(addresses.groupList, obj))
 		ObjAddToGroupArray(addresses.groupCurrentlySelected, obj);
 }
 

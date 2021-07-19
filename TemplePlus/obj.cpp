@@ -645,6 +645,7 @@ void Objects::Move(objHndl handle, LocAndOffsets toLocation) {
 #include "combat.h"
 #include "turn_based.h"
 #include <objlist.h>
+#include <dungeon_master.h>
 
 SecretDoorFlag Objects::GetSecretDoorFlags(objHndl handle) {
 	return (SecretDoorFlag) _GetInternalFieldInt32(handle, obj_f_secretdoor_flags);
@@ -761,6 +762,10 @@ bool Objects::IsPlayerControlled(objHndl handle){
 
 	if (!handle)
 		return false;
+
+	if (dmSys.IsControllingNpcs()) {
+		return true;
+	}
 
 	if (!party.IsInParty(handle)) {
 		return false;
@@ -1133,6 +1138,10 @@ public:
 			return objects.GetHitDiceNum(handle);
 			});
 
+
+		replaceFunction<BOOL(__cdecl)(objHndl)>(0x1002B390, [](objHndl handle) ->BOOL {
+			return objects.IsPlayerControlled(handle) ? TRUE:FALSE;
+			});
 }
 } objReplacements;
 

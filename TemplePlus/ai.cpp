@@ -20,6 +20,11 @@
 #include "weapon.h"
 #include "python/python_integration_obj.h"
 #include "python/python_object.h"
+#include "pybind11/pybind11.h"
+#include "pybind11/embed.h"
+#include <pybind11/cast.h>
+#include <pybind11/stl.h>
+
 #include "util/fixes.h"
 #include "party.h"
 #include "ui/ui_picker.h"
@@ -42,6 +47,25 @@
 #include "maps.h"
 
 
+namespace py = pybind11;
+
+template <> class py::detail::type_caster<objHndl> {
+public:
+	bool load(handle src, bool) {
+		value = PyObjHndl_AsObjHndl(src.ptr());
+		success = true;
+		return true;
+	}
+
+	static handle cast(const objHndl& src, return_value_policy /* policy */, handle /* parent */) {
+		return PyObjHndl_Create(src);
+	}
+
+	PYBIND11_TYPE_CASTER(objHndl, _("objHndl"));
+protected:
+	bool success = false;
+};
+
 struct AiSystem aiSys;
 AiParamPacket * AiSystem::aiParams;
 
@@ -60,6 +84,29 @@ struct AiSystemAddresses : temple::AddressTable
 
 	
 }addresses;
+
+
+PYBIND11_EMBEDDED_MODULE(tpai, m) {
+
+	m.doc() = "Temple+ AI module, used for pythonizing the AI.";
+
+
+	py::class_<AiTacticDef>(m, "AiTacticDef")
+		.def("get_name", [](AiTacticDef& self)->std::string {
+			return self.name;
+			})
+		.def("execute", [](AiTacticDef& self, AiTactic& aiTac)->uint32_t {
+				return self.aiFunc(&aiTac);
+			})
+		;
+	py::class_<AiTactic>(m, "AiTactic")
+		.def_readwrite("performer", &AiTactic::performer)
+		.def_readwrite("target", &AiTactic::target)
+		.def_readwrite("id", &AiTactic::tacIdx)
+		.def_readwrite("spell_pkt", &AiTactic::spellPktBody)
+		.def_readwrite("d20_spell_data", &AiTactic::d20SpellData)
+		;
+}
 
 void AiParamPacket::GetForCritter(objHndl handle){
 	*this = aiSys.GetAiParams(handle);
@@ -144,6 +191,13 @@ uint32_t AiSystem::StrategyParse(objHndl objHnd, objHndl target)
 	aiTac.target = target;
 
 	#pragma endregion
+	
+	py::tuple args = py::make_tuple(py::cast(objHnd), py::cast<objHndl>(target));
+	auto pyResult = pythonObjIntegration.ExecuteScript("d20_ai.combat_strategy", "execute_strategy", args.ptr());
+	if (PyInt_Check(pyResult)) {
+		auto result = _PyInt_AsInt(pyResult);
+		return result != 0 ? TRUE : FALSE;
+	}
 
 	AiCombatRole role = GetRole(objHnd);
 	if (role != AiCombatRole::caster)
@@ -636,6 +690,13 @@ BOOL AiSystem::ConsiderTarget(objHndl obj, objHndl tgt)
 {
 	if (!tgt || tgt == obj)
 		return 0;
+
+	py::tuple args = py::make_tuple(py::cast<objHndl>(obj), py::cast<objHndl>(tgt));
+	auto pyResult = pythonObjIntegration.ExecuteScript("d20_ai.targeting", "consider_target", args.ptr());
+	if (PyInt_Check(pyResult)) {
+		auto result = _PyInt_AsInt(pyResult);
+		return result;
+	}
 
 	auto tgtObj = gameSystems->GetObj().GetObject(tgt);
 	if ( tgtObj->GetFlags() & (OF_INVULNERABLE | OF_DONTDRAW | OF_OFF | OF_DESTROYED) ){
@@ -3632,6 +3693,16 @@ public:
 	void apply() override 
 	{
 		logger->info("Replacing AI functions...");
+
+		/*replaceFunction<BOOL(__cdecl)(objHndl, objHndl)>(0x, []() {
+			py::tuple args = py::make_tuple(py::cast(critter1), py::cast<objHndl>(critter2));
+			auto pyResult = pythonObjIntegration.ExecuteScript("d20_ai.friendship", "is_friendly", args.ptr());
+			if (PyInt_Check(pyResult)) {
+				auto result = _PyInt_AsInt(pyResult);
+				if (result)
+					return TRUE;
+			}
+			});*/
 
 		// AiFightStatusProcess
 		replaceFunction<void(__cdecl)(objHndl, objHndl)>(0x1005CD50, [](objHndl handle, objHndl newTgt){

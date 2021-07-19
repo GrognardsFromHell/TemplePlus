@@ -3,7 +3,7 @@ version: 0.1.0-pre+{build}
 image: Visual Studio 2019
 
 install:
-  - appveyor DownloadFile https://github.com/GrognardsFromHell/Dependencies/releases/download/v1.8/dependencies.7z
+  - appveyor DownloadFile https://github.com/GrognardsFromHell/Dependencies/releases/download/v1.9/dependencies.7z
   - 7z x dependencies.7z
   - nuget install Squirrel.Windows -OutputDirectory Squirrel -Verbosity Detailed
 

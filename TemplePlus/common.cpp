@@ -21,6 +21,17 @@ void LocAndOffsets::Normalize() {
 	NormalizeAxis(off_y, location.locy);
 }
 
+void BonusList::Reset()
+{
+	memset(this, 0, sizeof(BonusList));
+	/*this->bonCount = 0;
+	this->bonCapperCount = 0;
+	this->zeroBonusCount = 0;
+	this->bonFlags = 0;*/
+	this->overallCapHigh.bonValue = 0x7fffFFFF;
+	this->overallCapLow.bonValue = 0x80000001;
+}
+
 int BonusList::GetEffectiveBonusSum() const {
 
 	int result = 0;
@@ -45,6 +56,45 @@ int BonusList::GetEffectiveBonusSum() const {
 		
 		if (!IsBonusSuppressed(i, nullptr)) {
 			result += value;
+		}
+	}
+
+	if (bonFlags & 1 && result > overallCapHigh.bonValue) {
+		result = overallCapHigh.bonValue;
+	}
+	if (bonFlags & 2 && result < overallCapLow.bonValue) {
+		result = overallCapLow.bonValue;
+	}
+
+	return result;
+}
+
+/* 0x100E6680 */
+int BonusList::GetHighestBonus() const
+{
+	int result = 0;
+
+	for (size_t i = 0; i < bonCount; ++i) {
+		auto& bonus = bonusEntries[i];
+
+		auto value = bonus.bonValue;
+
+		// Apply bonus caps if necessary
+		size_t capIdx;
+		if (IsBonusCapped(i, &capIdx)) {
+			auto capValue = bonCaps[capIdx].capValue;
+
+			// Handles malus / bonus capping separately
+			if (value > 0 && value > capValue) {
+				value = capValue;
+			}
+			else if (value < 0 && value < capValue) {
+				value = capValue;
+			}
+		}
+
+		if (!IsBonusSuppressed(i, nullptr) && result < value) {
+			result = value;
 		}
 	}
 

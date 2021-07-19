@@ -1099,6 +1099,7 @@ feat_greater_weapon_focus_repeating_crossbow = 133
 feat_greater_weapon_focus_net = 134
 feat_greater_weapon_focus_grapple = 135
 feat_greater_weapon_focus_ray = 136
+feat_greater_weapon_focus_count = feat_greater_weapon_focus_ray - feat_greater_weapon_focus_gauntlet + 1
 feat_greater_weapon_specialization = 137
 feat_heighten_spell = 138
 feat_improved_bull_rush = 139
@@ -1451,6 +1452,7 @@ feat_weapon_focus_repeating_crossbow = 485
 feat_weapon_focus_net = 486
 feat_weapon_focus_grapple = 487
 feat_weapon_focus_ray = 488
+feat_weapon_focus_count = feat_weapon_focus_ray - feat_weapon_focus_gauntlet + 1
 feat_weapon_specialization_gauntlet = 489
 feat_weapon_specialization_unarmed_strike_medium_sized_being = 490
 feat_weapon_specialization_unarmed_strike_small_being = 491
@@ -4010,7 +4012,7 @@ D20ACT_Move_Action = 1
 D20ACT_Standard_Action = 2
 D20ACT_Partial_Charge = 3
 D20ACT_Full_Round_Action = 4
-D20ACT_Swift_Action = 5
+D20ACT_Swift_Action = 5 # Like Free Action but once a round
 
 # Targeting classification enums
 D20TC_Target0 = 0 # without targeting

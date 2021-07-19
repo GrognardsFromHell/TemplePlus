@@ -535,6 +535,15 @@
     <ClCompile Include="dungeon_master_obj_editor.cpp">
       <Filter>Dungeon Master</Filter>
     </ClCompile>
+    <ClCompile Include="python\python_logbook.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_roll_history.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
+    <ClCompile Include="python\python_gui.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -1010,6 +1019,9 @@
     <ClInclude Include="gamesystems\tilerender.h" />
     <ClInclude Include="dungeon_master.h">
       <Filter>Dungeon Master</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ui_python.h">
+      <Filter>ui</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

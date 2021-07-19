@@ -20,25 +20,6 @@ def OnBeginProjectile( spell, projectile, index_of_target ):
 def OnEndProjectile( spell, projectile, index_of_target ):
 	print "Scorching Ray OnEndProjectile"
 
-	####################################################
-	# WF Ray fix added by Shiningted (& two lines below)
-	####################################################
-
-	has_it = 0
-	x = 0
-	y = 0
-
-	if spell.caster.has_feat(feat_weapon_focus_ray):
-		# game.particles( "sp-summon monster I", game.party[0] )
-		has_it = 1
-		x = spell.caster.stat_base_get(stat_dexterity)
-		y = x + 2
-		if spell.caster.has_feat(feat_greater_weapon_focus_ray):
-			y = y + 2
-		spell.caster.stat_base_set(stat_dexterity, y)
-
-	####################################################
-
 	projectiles = min(3, (spell.caster_level + 1) / 4)
 	if index_of_target < projectiles:
 		spell.duration = 0
@@ -67,9 +48,6 @@ def OnEndProjectile( spell, projectile, index_of_target ):
 			target.obj.float_mesfile_line( 'mes\\spell.mes', 30007 )
 
 			game.particles( 'Fizzle', target.obj )
-
-	if has_it == 1:
-		spell.caster.stat_base_set(stat_dexterity, x)
 
 	spell.num_of_projectiles = spell.num_of_projectiles - 1
 	if ( spell.num_of_projectiles == 0 ):

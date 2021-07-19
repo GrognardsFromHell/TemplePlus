@@ -34,6 +34,7 @@ public:
 
 	
 	int GetDiceRollForcing();
+	bool IsControllingNpcs();
 
 	void Render();
 	void RenderDmButton();
@@ -118,6 +119,7 @@ protected:
 	void SetMoused(bool state);
 
 	int mForceRollType; // 0 - normal, 1 - rolls 1s, 2 - roll avg (e.g. 10s), 3 - avg+2, 4 - rolls 20s
+	bool mControlNpcs = false;
 
 	void RenderMonster(CritterRecord& record);
 	void RenderMonsterFilter();

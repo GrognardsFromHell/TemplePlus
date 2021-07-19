@@ -56,6 +56,8 @@ struct DamagePacket {
 	int GetOverallDamageByType(DamageType damType);
 	int GetOverallDamage();
 	int AddModFactor(float factor, DamageType damType, int damageMesLine);
+	BOOL CriticalMultiplierApply(int multiplier);
+	void PlayPfx(objHndl target);
 	DamagePacket();
 	
 };
@@ -99,10 +101,14 @@ public:
 	void DealSpellDamage(objHndl victim, objHndl attacker, const Dice &dice, DamageType type, int attackPower, int reduction, int damageDescId, D20ActionType actionType,
 		int spellId, int flags);
 
+	
+
 	/*
-		deals damage from a successful weapon attack
+		deals damage from a successful weapon attack.
+		Return value is used by Coup De Grace action.
 	*/
 	int DealAttackDamage(objHndl attacker, objHndl tgt, int d20Data, D20CAF flags, D20ActionType actionType);
+	
 	/*
 	    used for spells that have an attack roll
 	*/
@@ -139,6 +145,10 @@ public:
 private:
 	void Init();
 	void Exit() const;
+
+	void DamageCritterPython(objHndl attacker, objHndl tgt, DispIoDamage& evtObjDam);
+	int DealAttackDamagePython(objHndl attacker, objHndl tgt, int d20Data, D20CAF flags, D20ActionType actionType);
+	void DealSpellDamagePython(objHndl tgt, objHndl attacker, const Dice& dice, DamageType type, int attackPower, int reduction, int damageDescId, D20ActionType actionType, int spellId, int flags, int projectileIdx = 1, bool isWeaponlike = false);
 };
 
 extern Damage damage;

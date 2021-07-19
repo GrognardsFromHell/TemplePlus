@@ -35,6 +35,12 @@ static struct PythonCheatsAddresses : temple::AddressTable {
 } addresses;
 
 static PyObject *PyCheats_GetAttr(PyObject*, char *name) {
+	
+	if (!_stricmp(name, "critical")) {
+		auto alwaysCrit = temple::GetRef<int>(0x10BCA8B0);
+		return PyInt_FromLong(alwaysCrit);
+	}
+	
 	for (int i = 0; i < cheatCount; ++i) {
 		auto cheat = addresses.cheats[i];
 		if (!_stricmp(name, cheat.name) && cheat.handler) {
@@ -47,6 +53,15 @@ static PyObject *PyCheats_GetAttr(PyObject*, char *name) {
 
 static int PyCheats_SetAttr(PyObject*, char *name, PyObject *value) {
 	auto intVal = PyInt_AsLong(value);
+
+	if (!_stricmp(name, "critical")) {
+		auto &alwaysCrit = temple::GetRef<int>(0x10BCA8B0);
+		auto &alwaysCritPfx = temple::GetRef<int>(0x10300D10);
+		alwaysCrit = intVal;
+		alwaysCritPfx = intVal;
+		logger->info("Cheats: critical set to {}", intVal);
+		return 0;
+	}
 
 	for (int i = 0; i < cheatCount; ++i) {
 		auto cheat = addresses.cheats[i];

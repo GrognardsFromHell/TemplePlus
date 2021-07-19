@@ -30,6 +30,16 @@ void UiLogbook::IncreaseCritHits(objHndl handle){
 	}
 }
 
+void UiLogbook::IncreaseHits(objHndl handle)
+{
+	temple::GetRef<void(__cdecl)(objHndl)>(0x1009A9B0)(handle);
+}
+
+void UiLogbook::IncreaseMisses(objHndl handle)
+{
+	temple::GetRef<void(__cdecl)(objHndl)>(0x1009A9D0)(handle);
+}
+
 void UiLogbook::RecordHighestDamage(BOOL isWeaponDamage, int damageAmt, objHndl attacker, objHndl tgt)
 {
 	static auto uiBridgeRecordHighestDam = temple::GetRef<void(__cdecl)(BOOL, int, objHndl, objHndl)>(0x1009AA10);

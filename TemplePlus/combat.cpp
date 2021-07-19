@@ -31,7 +31,10 @@
 #include "config/config.h"
 #include "d20_obj_registry.h"
 #include "animgoals/anim.h"
+#include "pybind11/pybind11.h"
+#include <dungeon_master.h>
 
+namespace py = pybind11;
 
 struct CombatSystemAddresses : temple::AddressTable
 {
@@ -981,7 +984,7 @@ void LegacyCombatSystem::Subturn()
 		
 		uiCombatInitiativePortraitsReset(combatSubturnTimeEvent);
 
-		party.AddToCurrentlySelected(actor);
+		party.AddToCurrentlySelected(actor, dmSys.IsControllingNpcs());
 		temple::GetRef<objHndl>(0x10AA8430) = actor; // looks like a write-only debug thing?
 
 		// there was a call to some nullsub here
@@ -1624,10 +1627,10 @@ void LegacyCombatSystem::AddToInitiative(objHndl critter){
 	tbSys.AddToInitiative(critter);
 }
 
-int LegacyCombatSystem::DispelRoll(objHndl obj, BonusList* bonlist, int modifier, int dc, const char* text, int *rollHistId){
+int LegacyCombatSystem::MiscCheckRoll(objHndl obj, BonusList* bonlist, int modifier, int dc, const char* text, int *rollHistId){
 	Dice dice(1, 20, modifier);
 	auto d20RollRes = dice.Roll();
-	int rollResId = histSys.RollHistoryType4Add(obj, dc, text, dice.ToPacked(), d20RollRes, bonlist);
+	int rollResId = histSys.RollHistoryAddType4MiscCheckRoll(obj, dc, text, dice.ToPacked(), d20RollRes, bonlist);
 	if (rollHistId)
 		*rollHistId = rollResId;
 	else
@@ -1639,17 +1642,22 @@ int LegacyCombatSystem::DispelRoll(objHndl obj, BonusList* bonlist, int modifier
 void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 	auto performer = d20a.d20APerformer;
 	auto d20Data = d20a.data1;
-	auto caflags = d20a.d20Caf;
 	auto tgt = d20a.d20ATarget;
+
+	return ToHitProcessingPython(d20a);
+
+	// replaced with python, keeping this here for reference
+
 	if (!tgt)
 		return;
 
 	// mirror image processing
-	auto mirrorImageCond = conds.GetByName("sp-Mirror Image");
-	if (d20Sys.d20QueryWithData(tgt, DK_QUE_Critter_Has_Condition, mirrorImageCond, 0)){
-		auto spellId = (uint32_t) d20Sys.d20QueryReturnData(tgt, DK_QUE_Critter_Has_Condition, mirrorImageCond, 0);
+	auto numMirrorImages = d20Sys.d20Query(tgt, DK_QUE_Critter_Has_Mirror_Image);
+	if (numMirrorImages > 0){
+		auto spellId = (uint32_t)d20Sys.d20QueryReturnData(tgt, DK_QUE_Critter_Has_Mirror_Image);
 		SpellPacketBody spellPkt(spellId);
-		Dice dice(1,spellPkt.targetCount);
+		//Dice dice(1,spellPkt.targetCount);
+		Dice dice(1, 1 + numMirrorImages);
 		if (dice.Roll() != 1 ){ // mirror image nominally struck
 			DispIoAttackBonus mirrorImAc;
 			mirrorImAc.attackPacket.flags = (D20CAF)(d20a.d20Caf | D20CAF_TOUCH_ATTACK);
@@ -1660,7 +1668,7 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 			DispIoAttackBonus mirrorImToHit;
 			mirrorImToHit.Dispatch(performer, objHndl::null, dispTypeToHitBonus2, DK_NONE);
 			auto spName = spellPkt.GetName();
-			auto dispelRes = DispelRoll(performer, &mirrorImToHit.bonlist, 0, tgtAc, spName, &d20a.rollHistId0  );
+			auto dispelRes = MiscCheckRoll(performer, &mirrorImToHit.bonlist, 0, tgtAc, spName, &d20a.rollHistId0  );
 			if (dispelRes >= 0)	{
 				d20Sys.d20SendSignal(tgt, DK_SIG_Spell_Mirror_Image_Struck, spellPkt.spellId, 0);
 				floatSys.FloatCombatLine(tgt, 109);
@@ -1697,7 +1705,7 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 		auto dispatcher = gameSystems->GetObj().GetObject(attacker)->GetDispatcher();
 		DispIoObjBonus dispIo;
 		dispatcher->Process(dispTypeGetAttackerConcealmentMissChance, DK_NONE, &dispIo);
-		return temple::GetRef<int(__cdecl)(BonusList&)>(0x100E6680)(dispIo.bonlist); // special bonus handler for blindness miss chance
+		return dispIo.bonlist.GetHighestBonus();
 	};
 
 	auto defenderMissChance = getDefenderConcealmentMissChance(performer, tgt, d20a);
@@ -1710,10 +1718,10 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 		// roll 1d100
 		auto missChanceRoll = Dice::Roll(1, 100, 0);
 		if (missChanceRoll > defenderMissChance){ // success
-			d20a.rollHistId1 = histSys.RollHistoryType5Add(performer, tgt, defenderMissChance, 60, missChanceRoll, 194, 193);
+			d20a.rollHistId1 = histSys.RollHistoryAddType5PercentChanceRoll(performer, tgt, defenderMissChance, 60, missChanceRoll, 194, 193);
 		} 
 		else { // failure
-			d20a.rollHistId1 = histSys.RollHistoryType5Add(performer, tgt, defenderMissChance, 60, missChanceRoll, 195, 193);
+			d20a.rollHistId1 = histSys.RollHistoryAddType5PercentChanceRoll(performer, tgt, defenderMissChance, 60, missChanceRoll, 195, 193);
 
 
 			// Blind Fight handling (second chance)
@@ -1721,10 +1729,10 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 				return;
 			missChanceRoll = Dice::Roll(1, 100, 0);
 			if (missChanceRoll <= defenderMissChance) {
-				histSys.RollHistoryType5Add(performer, tgt, defenderMissChance, 61, missChanceRoll, 195, 193);
+				histSys.RollHistoryAddType5PercentChanceRoll(performer, tgt, defenderMissChance, 61, missChanceRoll, 195, 193);
 				return;
 			}
-			d20a.rollHistId2 = histSys.RollHistoryType5Add(performer, tgt, defenderMissChance, 61, missChanceRoll, 194, 193);
+			d20a.rollHistId2 = histSys.RollHistoryAddType5PercentChanceRoll(performer, tgt, defenderMissChance, 61, missChanceRoll, 194, 193);
 		}
 	}
 
@@ -1808,7 +1816,7 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 		// check miss
 		if (IS_MISS){
 			if (d20Sys.d20Query(performer, DK_QUE_RerollAttack)){
-				histSys.RollHistoryType0Add(toHitRoll, -1, performer, tgt, &dispIoToHitBon.bonlist, &dispIoTgtAc.bonlist, dispIoToHitBon.attackPacket.flags);
+				histSys.RollHistoryAddType0AttackRoll(toHitRoll, -1, performer, tgt, &dispIoToHitBon.bonlist, &dispIoTgtAc.bonlist, dispIoToHitBon.attackPacket.flags);
 				toHitRoll = Dice::Roll(1, 20);
 				dispIoToHitBon.attackPacket.flags = (D20CAF)(dispIoToHitBon.attackPacket.flags | D20CAF_REROLL);
 			}
@@ -1847,7 +1855,7 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 
 				// RerollCritical handling (e.g. from Luck domain)
 				if (isMiss(critHitRoll, toHitBonFinal, tgtAcFinal) && d20Sys.d20Query(performer, DK_QUE_RerollCritical)){
-					histSys.RollHistoryType0Add(toHitRoll, critHitRoll, performer, tgt, &dispIoToHitBon.bonlist, &dispIoTgtAc.bonlist, dispIoToHitBon.attackPacket.flags);
+					histSys.RollHistoryAddType0AttackRoll(toHitRoll, critHitRoll, performer, tgt, &dispIoToHitBon.bonlist, &dispIoTgtAc.bonlist, dispIoToHitBon.attackPacket.flags);
 					critHitRoll = Dice::Roll(1, 20);
 				}
 
@@ -1878,9 +1886,18 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 
 	// all this hard work just to set a couple of flags :D
 	d20a.d20Caf = dispIoToHitBon.attackPacket.flags;
-	d20a.rollHistId0 = histSys.RollHistoryType0Add(toHitRoll, critHitRoll, performer, tgt, &dispIoToHitBon.bonlist, &dispIoTgtAc.bonlist, dispIoToHitBon.attackPacket.flags);
+	d20a.rollHistId0 = histSys.RollHistoryAddType0AttackRoll(toHitRoll, critHitRoll, performer, tgt, &dispIoToHitBon.bonlist, &dispIoTgtAc.bonlist, dispIoToHitBon.attackPacket.flags);
 	
 	// there were some additional debug stubs here (nullsubs)
+}
+
+void LegacyCombatSystem::ToHitProcessingPython(D20Actn& d20a)
+{
+	py::object pyd20a = py::cast<D20Actn*>(&d20a);
+	py::tuple args = py::make_tuple(pyd20a);
+
+	auto result = pythonObjIntegration.ExecuteScript("d20_combat.to_hit_processing", "to_hit_processing", args.ptr());
+	Py_DECREF(result);
 }
 
 bool LegacyCombatSystem::TripCheck(objHndl handle, objHndl target){

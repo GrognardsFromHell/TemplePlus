@@ -132,12 +132,15 @@
     <ClCompile Include="portrait.cpp" />
     <ClCompile Include="protos.cpp" />
     <ClCompile Include="python\python_bonus.cpp" />
+    <ClCompile Include="python\python_gui.cpp" />
     <ClCompile Include="python\python_integration_class_spec.cpp" />
     <ClCompile Include="python\python_damage.cpp" />
     <ClCompile Include="python\python_dispatcher.cpp" />
     <ClCompile Include="python\python_integration_d20_action.cpp" />
     <ClCompile Include="python\python_integration_feat.cpp" />
     <ClCompile Include="python\python_integration_race.cpp" />
+    <ClCompile Include="python\python_logbook.cpp" />
+    <ClCompile Include="python\python_roll_history.cpp" />
     <ClCompile Include="raycast.cpp" />
     <ClCompile Include="obj_hooks.cpp" />
     <ClCompile Include="particles.cpp" />
@@ -379,6 +382,7 @@
     <ClInclude Include="ui\ui_debug.h" />
     <ClInclude Include="ui\ui_dm.h" />
     <ClInclude Include="ui\ui_pc_creation.h" />
+    <ClInclude Include="ui\ui_python.h" />
     <ClInclude Include="ui\ui_townmap.h" />
     <ClInclude Include="ui\ui_worldmap.h" />
     <ClInclude Include="ui\widgets\widgets.h" />

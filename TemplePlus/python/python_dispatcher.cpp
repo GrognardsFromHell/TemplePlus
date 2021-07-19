@@ -309,15 +309,15 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 	m.def("create_history_dc_roll", [](objHndl performer, int dc, Dice& dice, int roll, std::string& text, BonusList& bonlist)-> int
 	{
 		auto ptext = bonusSys.CacheCustomText(text);
-		auto rollHistId = histSys.RollHistoryType4Add(performer, dc, ptext, dice.ToPacked(), roll, (BonusList*)&bonlist);
+		auto rollHistId = histSys.RollHistoryAddType4MiscCheckRoll(performer, dc, ptext, dice.ToPacked(), roll, (BonusList*)&bonlist);
 		return rollHistId;
 	});
-
-	m.def("create_history_attack_roll", [](objHndl performer, objHndl target, int roll, BonusList& bonlistAttacker, BonusList& bonlistTarget, uint32_t flags)-> int
+	
+	m.def("create_history_attack_roll", [](objHndl performer, objHndl target, int roll, BonusList& bonlistAttacker, BonusList& bonlistTarget, uint32_t flags, int critHitRoll = -1)-> int
 	{
-		auto rollHistId = histSys.RollHistoryType0Add(roll, -1, performer, target, (BonusList*)&bonlistAttacker, (BonusList*)&bonlistTarget, (D20CAF)flags);
+		auto rollHistId = histSys.RollHistoryAddType0AttackRoll(roll, critHitRoll, performer, target, (BonusList*)&bonlistAttacker, (BonusList*)&bonlistTarget, (D20CAF)flags);
 		return rollHistId;
-	});
+	}, py::arg("performer"), py::arg("target"), py::arg("roll_result"), py::arg("bonus_list_attacker"), py::arg("bonus_list_defender"), py::arg("flags"), py::arg("critical_hit_roll") = -1);
 
 	m.def("get_condition_ref", [](std::string& text)-> int
 	{
@@ -394,6 +394,9 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def("__repr__", [](DispatcherCallbackArgs &args)->std::string{
 			return fmt::format("EventArgs: Type = {} , Key = {}", args.dispType, args.dispKey);
 		})
+		.def("get_cond_name", [](DispatcherCallbackArgs& args) -> std::string {
+			return std::string(args.subDispNode->condNode->condStruct->condName);
+			})
 		.def("get_arg", &DispatcherCallbackArgs::GetCondArg)
 		.def("set_arg", &DispatcherCallbackArgs::SetCondArg)
 		.def("get_obj_from_args", &DispatcherCallbackArgs::GetCondArgObjHndl)
@@ -465,6 +468,11 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 	#pragma region Bonuslist etc
 	py::class_<BonusList>(m, "BonusList")
 			.def(py::init())
+			.def("__copy__", [](const BonusList& src) {
+					BonusList bonlist = src;
+					return bonlist;
+				})
+			.def("reset", &BonusList::Reset)
 			.def("add", [](BonusList & bonlist, int value, int bonType, int mesline) {
 				bonlist.AddBonus(value, bonType, mesline);
 			}, "Adds a bonus entry. Args are: value, type, and bonus.mes line number")
@@ -488,6 +496,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			.def("modify", &BonusList::ModifyBonus)
 			.def("get_sum",   &BonusList::GetEffectiveBonusSum)
 			.def("get_total", &BonusList::GetEffectiveBonusSum)
+			.def("get_highest", &BonusList::GetHighestBonus)
 			.def("add_zeroed", &BonusList::ZeroBonusSetMeslineNum, "Adds a zero-value bonus (usually to represent nullified bonuses)")
 			.def("add_cap", [](BonusList & bonlist, int bonType, int value, int mesline) {
 				 bonlist.AddCap(bonType, value, mesline); }, "Adds cap for a particular bonus type")
@@ -499,7 +508,8 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 
 	 py::class_<AttackPacket>(m, "AttackPacket")
 		.def(py::init())
-		.def("get_weapon_used", &AttackPacket::GetWeaponUsed)
+		.def("get_weapon_used", &AttackPacket::GetWeaponUsed, "gets used weapon, subject to manipulation via D20CAF flags")
+		.def("set_weapon_used", [](AttackPacket& pkt, objHndl wpn) ->void { pkt.weaponUsed = wpn; })
 		.def("is_offhand_attack", &AttackPacket::IsOffhandAttack)
 		.def_readwrite("attacker", &AttackPacket::attacker)
 		.def_readwrite("target", &AttackPacket::victim)
@@ -536,12 +546,17 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def("get_overall_damage_by_type", [](DamagePacket& damPkt, int damType) {
 			const auto _damType = static_cast<DamageType>(damType);
 			return damPkt.GetOverallDamageByType(_damType);
-		}, "Gets the total damage of a piticular type.")
+		}, "Gets the total damage of a particular type.")
+		.def("get_overall_damage", &DamagePacket::GetOverallDamage)
+		.def("calc_final_damage", &DamagePacket::CalcFinalDamage)
+		.def("play_pfx", &DamagePacket::PlayPfx)
 		.def_readwrite("final_damage", &DamagePacket::finalDamage, "Final Damage Value")
 		.def_readwrite("flags", &DamagePacket::flags, "1 - maximized, 2 - empowered")
 		.def_readwrite("bonus_list", &DamagePacket::bonuses)
 		.def_readwrite("critical_multiplier", &DamagePacket::critHitMultiplier, "1 by default, gets increased by various things")
-		.def_readwrite("attack_power", &DamagePacket::attackPowerType, "See D20DAP_");
+		.def("critical_multiplier_apply", &DamagePacket::CriticalMultiplierApply)
+		.def_readwrite("attack_power", &DamagePacket::attackPowerType, "See D20DAP_")
+	;
 
 	py::class_<MetaMagicData>(m, "MetaMagicData")
 		.def(py::init<>())
@@ -831,8 +846,8 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			.def("get_spell_casting_class", [](SpellPacketBody&pkt) {
 				return static_cast<int>(spellSys.GetCastingClass(pkt.spellClass));
 				})
-			.def("get_metamagic_data", [](SpellPacketBody&pkt) {
-				return pkt.metaMagicData;
+			.def("get_metamagic_data", [](SpellPacketBody&pkt) -> MetaMagicData {
+				return MetaMagicData(pkt.metaMagicData);
 			})
 			.def("get_spell_component_flags", [](SpellPacketBody& pkt) {
 				auto result = (uint32_t)pkt.GetSpellComponentFlags();
@@ -937,13 +952,30 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("flags", &DispIoSavingThrow::flags);
 
 	py::class_<DispIoDamage, DispIO>(m, "EventObjDamage", "Used for damage dice and such")
+		.def(py::init())
 		.def_readwrite("attack_packet", &DispIoDamage::attackPacket)
 		.def_readwrite("damage_packet", &DispIoDamage::damage)
+		.def("dispatch", [](DispIoDamage& evtObj, objHndl handle, int dispType, int dispKey ) {
+			auto dispType_ = (enum_disp_type)dispType;
+			auto dispKey_ = (D20DispatcherKey)dispKey;
+			dispatch.DispatchDamage(handle, &evtObj, dispType_, dispKey_);
+			})
+		.def("dispatch_spell_damage", [](DispIoDamage& evtObj, objHndl handle, objHndl target, SpellPacketBody & pkt) {
+				dispatch.DispatchSpellDamage(handle, &evtObj.damage, target, &pkt);
+			})
+		.def("send_signal", [](DispIoDamage& evtObj, objHndl handle, int signalCode) {
+				auto dispKey = (D20DispatcherKey)(signalCode + DK_SIG_HP_Changed);
+				d20Sys.d20SendSignal(handle, dispKey, (int)&evtObj, 0);
+			})
 		;
 
 
 	py::class_<DispIoAttackBonus, DispIO>(m, "EventObjAttack", "Used for fetching attack or AC bonuses")
 		.def(py::init())
+		.def("__copy__", [](const DispIoAttackBonus& self) {
+			DispIoAttackBonus copy = self;
+			return copy;
+			})
 		.def_readwrite("bonus_list", &DispIoAttackBonus::bonlist)
 		.def_readwrite("attack_packet", &DispIoAttackBonus::attackPacket)
 		.def("dispatch", [](DispIoAttackBonus& evtObj, objHndl handle, objHndl target, int disp_type, int disp_key)->int {

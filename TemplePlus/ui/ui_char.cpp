@@ -2612,7 +2612,7 @@ bool UiCharImpl::SkillsBtnMsg(int widId, TigMsg& msg)
 				auto handle = ui_char().GetCritter();
 				BonusList bonlist;
 				dispatch.dispatch1ESkillLevel(handle, skillEnum, &bonlist, objHndl::null, 0);
-				auto histId = histSys.RollHistoryType7Add(handle, &bonlist, 1000 + skillEnum, 0);
+				auto histId = histSys.RollHistoryAddType7MiscBonus(handle, &bonlist, 1000 + skillEnum, 0);
 				temple::GetRef<void(__cdecl)(int)>(0x100E6D50)(histId);
 			}
 			
