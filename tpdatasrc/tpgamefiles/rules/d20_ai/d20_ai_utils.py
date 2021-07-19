@@ -62,3 +62,21 @@ def isUnconcealed(critter):
 		return 0
 
 	return 1
+
+def hasNullFaction(critter):
+	if not critter.type == obj_t_npc:
+		return True
+	elif critter.is_in_party:
+		return False
+
+	return critter.faction_has(0)
+
+def getLeaderForNPC(critter):
+	if critter.type != obj_t_npc:
+		return OBJ_HANDLE_NULL
+
+	leader = critter
+	while leader != OBJ_HANDLE_NULL and leader.type != obj_t_pc:
+		leader = leader.leader_get
+
+	return leader

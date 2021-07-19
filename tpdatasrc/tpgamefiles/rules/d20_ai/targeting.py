@@ -6,7 +6,10 @@ def missing_stub(msg):
 	print msg
 	return 0
 
-def consider_target(attacker, target):
+# aiSearchingTgt is used to avoid infinite looping since
+# consider_target calls will_kos which calls consider_target.
+# In the C(++), this is a global variable. Trying to avoid that.
+def consider_target(attacker, target, aiSearchingTgt=False):
 	if attacker == target: return 0
 
 	attacker_flags = target.obj_get_int(obj_f_critter_flags)
@@ -25,7 +28,7 @@ def consider_target(attacker, target):
 		if target.is_dead_or_destroyed(): return 0
 		if target.is_unconscious():
 			if attacker_flags & OCF_NON_LETHAL_COMBAT: return 0
-			if target != findSuitableTarget(attacker): return 0
+			if target != find_suitable_target(attacker, aiSearchingTgt): return 0
 
 		if target == a_leader: return 0
 
@@ -46,9 +49,7 @@ def consider_target(attacker, target):
 
 	return 1
 
-def findSuitableTarget(attacker):
-	# Not sure what this is
-	aiSearchingTgt = missing_stub("GetRef<BOOL>(0x10AA73B4)")
+def find_suitable_target(attacker, aiSearchingTgt):
 	if aiSearchingTgt: return OBJ_HANDLE_NULL
 
 	aiSearchingTgt = 1
@@ -74,7 +75,7 @@ def findSuitableTarget(attacker):
 		if detect(attacker, target):
 			if target.is_category_type(obj_t_pc):
 				turn_towards = target
-			if missing_stub("WillKos(attacker, target)"):
+			if will_kos(attacker, target, aiSearchingTgt):
 				kos_candidate = target
 				break
 
@@ -94,7 +95,7 @@ def findSuitableTarget(attacker):
 
 	return kos_candidate
 
-# Common check during findSuitableTarget
+# Common check during find_suitable_target
 def detect(attacker, target):
 	if target == OBJ_HANDLE_NULL: return False
 
@@ -104,6 +105,62 @@ def detect(attacker, target):
 	result = result or not attacker.has_los(target)
 
 	return result
+
+def will_kos(attacker, target, aiSearchingTgt):
+	if not consider_target(attacker, target, aiSearchingTgt):
+		return 0
+
+	leader = getLeaderForNPC(attacker)
+
+	if not missing_stub('ExecuteObjectScript(target, attacker, WillKos)'):
+		return 0
+
+	if missing_stub('AiListFind(attacker, target, 1)'):
+		return 0
+
+	aaifs = missing_stub('GetAiFightStatus(attacker)')
+	if aaifs.flags == AIFS_SURRENDERED and aaifs.target == target:
+		return 0
+
+	isInParty = attacker in game.party
+
+	if leader != OBJ_HANDLE_NULL and not isInParty:
+		npcFlags = attacker.npc_flags_get()
+		if (npcFlags & ONF_KOS) and not (npcFlags & ONF_KOS_OVERRIDE):
+			allegiance = attacker.allegiance_shared(target)
+			faction = target.type == obj_t_pc or not hasNullFaction(target)
+
+			if allegiance and faction:
+				return 1
+
+			if target.d20_query(Q_Critter_Is_Charmed):
+				charmer = target.d20_query_get_obj(Q_Critter_Is_Charmed)
+				rec = will_kos(attacker, charmer, aiFindingTarget)
+				if rec: return rec
+
+		# check AI params hostility threshold
+		if target.type == obj_t_pc:
+			aiParams = missing_stub('attacker.get_ai_params')
+			reaction = attacker.reaction_get(target)
+			if reaction <= aiParams.hostility_threshold)::
+				return 2
+
+			return 0
+
+	if target.type == obj_t_npc:
+		return 0
+
+	taifs = missing_stub('GetAiFightStatus(target)')
+	if taifs.flags != AIFS_FIGHTING or taifs.target != OBJ_HANDLE_NULL:
+		return 0
+	if attacker.allegiance_strength(taifs.target) == 0:
+		return 0
+
+	leader = attacker.leader_get()
+	if attacker.cannot_hate(target, leader):
+		return 4
+
+	return 0
 
 def execute_strategy(obj, target):
 
