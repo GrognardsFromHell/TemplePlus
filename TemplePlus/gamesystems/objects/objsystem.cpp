@@ -371,7 +371,7 @@ objHndl ObjSystem::LoadFromFile(TioFile* file) {
 	auto handle = mObjRegistry->Add(std::move(obj));
 	if (!id.IsNull()) {
 		mObjRegistry->AddToIndex(handle, id);
-		//logger->info("Loaded object {}", id.ToString());
+		logger->trace("Loaded object {} to handle {}", id.ToString(), handle);
 	}
 
 	FindNodeAllocate(handle);

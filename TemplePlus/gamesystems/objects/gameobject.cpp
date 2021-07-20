@@ -7,6 +7,7 @@
 #include "arrayidxbitmaps.h"
 #include "tio/tio.h"
 #include "util/streams.h"
+#include <config/config.h>
 
 GameObjectBody::~GameObjectBody()
 {
@@ -715,6 +716,11 @@ void GameObjectBody::UnfreezeIds()
 		return;
 	}
 
+	if (IsCritter()) {
+		logger->trace("  Unfreezing {}", objSystem->GetHandleById(this->id) );
+	}
+	
+
 	ForEachField([=](obj_f field, void **storageLocation) {
 		if (!*storageLocation) {
 			return true;
@@ -731,6 +737,17 @@ void GameObjectBody::UnfreezeIds()
 			}
 		} else if (fieldType == ObjectFieldType::ObjArray) {
 			auto objectIdArray = GameObjectIdArray(reinterpret_cast<ArrayHeader**>(storageLocation));
+
+			if (field == obj_f_critter_inventory_list_idx) {
+				objectIdArray.ForEachIndex([&](size_t idx) {
+					auto& objId = objectIdArray[idx];
+					auto handle = objSystem->GetHandleById(objId);
+					if (!handle) {
+						logger->error("Null inventory item! idx = {}, GUID = {}", idx, objId.ToString());
+					}
+				});
+			};
+
 			objectIdArray.ForEachIndex([&](size_t idx) {
 				auto &objId = objectIdArray[idx];
 				auto handle = objSystem->GetHandleById(objId);

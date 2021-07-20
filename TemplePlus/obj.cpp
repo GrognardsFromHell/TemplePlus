@@ -430,7 +430,7 @@ float Objects::GetRadius(objHndl handle)
 		}		
 	}
 
-	logger->debug("GetRadius: Radius not yet set, now calculating.");
+	logger->debug("GetRadius: {} Radius not yet set, now calculating.", handle);
 	
 	auto model = GetAnimHandle(handle);
 	if (!model)
@@ -709,7 +709,7 @@ void Objects::Destroy(objHndl ObjHnd) {
 				cancelDialog(v3, 0);
 		}
 		moveContentToLoc(ObjHnd, 1);
-}
+	}
 
 	gameSystems->GetAnim().ClearForObject(ObjHnd);
 	

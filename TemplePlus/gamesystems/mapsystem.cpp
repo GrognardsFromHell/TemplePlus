@@ -1235,6 +1235,7 @@ void MapSystem::LoadMapInfo(const std::string & dataDir)
 
 }
 
+/* 0x100717E0 */
 void MapSystem::ReadMapMobiles(const std::string &dataDir, const std::string &saveDir)
 {
 	auto readObject = temple::GetPointer<BOOL(objHndl*, const char*)>(0x100DE690);
@@ -1250,9 +1251,9 @@ void MapSystem::ReadMapMobiles(const std::string &dataDir, const std::string &sa
 		if (!readObject(&handle, filename.c_str())) {
 			logger->warn("Unable to load mobile object {} for level {}",
 				filename, dataDir);
-		} else if (config.debugMessageEnable)
+		} else //if (config.debugMessageEnable)
 		{
-			//logger->debug("Loaded MOB obj {} ({})", description.getDisplayName(handle), objSystem->GetObject(handle)->id.ToString() );
+			logger->trace("Loaded MOB obj {} ({})", handle, objSystem->GetObject(handle)->id.ToString() );
 		}
 	}
 
@@ -1293,10 +1294,10 @@ void MapSystem::ReadMapMobiles(const std::string &dataDir, const std::string &sa
 
 			auto obj = objSystem->GetObject(handle);
 			obj->LoadDiffsFromFile(handle, fh);
-			//logger->debug("Loaded {} ({}) from diff file.", description.getDisplayName(handle), objSystem->GetObject(handle)->id.ToString());
+			logger->trace("Loaded {} ({}) from diff file.", handle, objSystem->GetObject(handle)->id.ToString());
 
 			if (objects.GetFlags(handle) & OF_EXTINCT) {
-				//logger->debug("{} ({}) is extinct.", description.getDisplayName(handle), handle);
+				logger->trace("{} is extinct.", handle);
 				gameSystems->GetObj().Remove(handle);
 			}
 		}
@@ -1321,8 +1322,12 @@ void MapSystem::ReadMapMobiles(const std::string &dataDir, const std::string &sa
 		while (!reader.AtEnd()) {
 			auto objId = reader.Read<ObjectId>();
 			auto handle = gameSystems->GetObj().GetHandleById(objId);
+			
 			if (handle) {
-				logger->debug("{} ({}) is destroyed.", description.getDisplayName(handle), objSystem->GetObject(handle)->id.ToString());
+				auto obj = objSystem->GetObject(handle);
+				auto flags = obj->GetFlags();
+				
+				logger->debug("{} ({}) is destroyed.", handle, obj->id.ToString());
 				gameSystems->GetObj().Remove(handle);
 			}
 		}
@@ -1355,7 +1360,7 @@ void MapSystem::ReadDynamicMobiles(const std::string & saveDir)
 	while (true) {
 		try {
 			auto handle = objSystem->LoadFromFile(fh);
-			//logger->debug("Loaded dynamic object {} ({})", description.getDisplayName(handle) ,	objSystem->GetObject(handle)->id.ToString());
+			logger->trace("Loaded dynamic object {} ({})", description.getDisplayName(handle) ,	objSystem->GetObject(handle)->id.ToString());
 		} catch (TempleException &e) {
 			logger->error("Unable to load object: {}", e.what());
 			break;
@@ -1379,6 +1384,25 @@ void MapSystem::MapLoadPostprocess()
 	gameSystems->GetD20().ResetRadialMenus();
 
 	objSystem->ForEachObj([&](objHndl handle, GameObjectBody& obj) {
+		
+		auto flags = obj.GetFlags();
+		auto isDestroyed = flags & (OF_DESTROYED | OF_OFF);
+		logger->trace("MapLoadPostProcess: obj {} GUID: {} destroyed/off? {}", handle, obj.id.ToString(), isDestroyed);
+		if (objects.IsEquipment(handle)) {
+
+			auto parentId = obj.GetObjectId(obj_f_item_parent);
+			auto parentHndl = objSystem->GetHandleById(parentId);
+			logger->trace("  Parent GUID: {} handle: {}", parentId.ToString(), parentHndl);
+			if ( (flags & OF_INVENTORY) && !parentHndl ) {
+				logger->trace("    Unparented inventory item?? {}", handle);
+			}
+			else if (parentHndl && (flags & OF_INVENTORY) == 0) {
+				logger->trace("    Parented item not flagged as inventory?? {}", handle);
+			}
+			
+			
+			
+		}
 		if (!obj.IsStatic()) {
 			obj.UnfreezeIds();
 		}
@@ -1457,10 +1481,10 @@ void MapSystem::SaveMapMobiles() {
 		if (obj.HasFlag(OF_DESTROYED) || obj.HasFlag(OF_EXTINCT)) {
 			if (obj.HasFlag(OF_EXTINCT))
 			{
-				//logger->debug("Writing extinct object {} as destroyed obj ({})", description.getDisplayName(handle),	objSystem->GetObject(handle)->id.ToString());
+				logger->trace("Writing extinct object {} as destroyed obj ({})", handle,	objSystem->GetObject(handle)->id.ToString());
 			} else
 			{
-				//logger->debug("Writing destroyed object {} as destroyed obj  ({})", description.getDisplayName(handle),	objSystem->GetObject(handle)->id.ToString());
+				logger->trace("Writing destroyed object {} as destroyed obj  ({})", handle,	objSystem->GetObject(handle)->id.ToString());
 			}
 			// Write the object id of the destroyed obj to mobile.des
 			vfs->Write(&obj.id, sizeof(obj.id), destrFh);
