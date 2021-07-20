@@ -699,6 +699,12 @@ OPF_BUSTED = 0x80
 OPF_NOT_STICKY = 0x100
 OPF_OPEN = 0x200
 
+# Scenery Flags
+OSF_BUSTED = 0x2
+
+# Trap Flags
+OTF_BUSTED = 0x2
+
 Q_Helpless = 0
 Q_SneakAttack = 1
 Q_OpponentSneakAttack = 2
