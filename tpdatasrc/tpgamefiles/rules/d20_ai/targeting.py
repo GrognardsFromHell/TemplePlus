@@ -13,7 +13,7 @@ def consider_target(attacker, target, aiSearchingTgt=False):
 	if attacker == target: return 0
 
 	attacker_flags = target.obj_get_int(obj_f_critter_flags)
-  ignore_flags = OF_INVULNERABLE | OF_DONTDRAW | OF_OFF | OF_DESTROYED
+	ignore_flags = OF_INVULNERABLE | OF_DONTDRAW | OF_OFF | OF_DESTROYED
 	target_flags = target.obj_get_int(obj_f_critter_flags)
 
 	if target_flags & ignore_flags: return 0
@@ -53,7 +53,7 @@ def find_suitable_target(attacker, aiSearchingTgt):
 	if aiSearchingTgt: return OBJ_HANDLE_NULL
 
 	aiSearchingTgt = 1
-	objToTurnTowards = OBJ_HANDLE_NULL
+	turn_towards = OBJ_HANDLE_NULL
 
 	leader = attacker.leader_get()
 
@@ -112,14 +112,14 @@ def will_kos(attacker, target, aiSearchingTgt):
 
 	leader = getLeaderForNPC(attacker)
 
-	if not missing_stub('ExecuteObjectScript(target, attacker, WillKos)'):
+	if not attacker.object_script_execute(target, san_will_kos):
 		return 0
 
 	if missing_stub('AiListFind(attacker, target, 1)'):
 		return 0
 
-	aaifs = missing_stub('GetAiFightStatus(attacker)')
-	if aaifs.flags == AIFS_SURRENDERED and aaifs.target == target:
+	aaifs = AiFightStatus(attacker)
+	if aaifs.status == AIFS_SURRENDERED and aaifs.target == target:
 		return 0
 
 	isInParty = attacker in game.party
@@ -135,14 +135,14 @@ def will_kos(attacker, target, aiSearchingTgt):
 
 			if target.d20_query(Q_Critter_Is_Charmed):
 				charmer = target.d20_query_get_obj(Q_Critter_Is_Charmed)
-				rec = will_kos(attacker, charmer, aiFindingTarget)
+				rec = will_kos(attacker, charmer, aiSearchingTgt)
 				if rec: return rec
 
 		# check AI params hostility threshold
 		if target.type == obj_t_pc:
-			aiParams = missing_stub('attacker.get_ai_params')
+			aiParams = tpai.AiParams(attacker)
 			reaction = attacker.reaction_get(target)
-			if reaction <= aiParams.hostility_threshold)::
+			if reaction <= aiParams.hostility_threshold:
 				return 2
 
 			return 0
@@ -150,8 +150,8 @@ def will_kos(attacker, target, aiSearchingTgt):
 	if target.type == obj_t_npc:
 		return 0
 
-	taifs = missing_stub('GetAiFightStatus(target)')
-	if taifs.flags != AIFS_FIGHTING or taifs.target != OBJ_HANDLE_NULL:
+	taifs = AiFightStatus(target)
+	if taifs.status != AIFS_FIGHTING or taifs.target != OBJ_HANDLE_NULL:
 		return 0
 	if attacker.allegiance_strength(taifs.target) == 0:
 		return 0
@@ -164,4 +164,4 @@ def will_kos(attacker, target, aiSearchingTgt):
 
 def execute_strategy(obj, target):
 
-    return None # this causes the engine to ignore the result; return 0 / 1 to make it work
+	return None # this causes the engine to ignore the result; return 0 / 1 to make it work

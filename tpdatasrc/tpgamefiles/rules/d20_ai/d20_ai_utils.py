@@ -80,3 +80,48 @@ def getLeaderForNPC(critter):
 		leader = leader.leader_get
 
 	return leader
+
+
+	
+
+def getAiFightingStatus(critter):
+	aifs = AiFightingStatus()
+
+	crit_flags = critter.obj_get_int(obj_f_critter_flags)
+
+	if crit_flags & OCF_FLEEING:
+		return AIFS_FLEEING, critter.obj_get_obj(obj_f_critter_fleeing_from)
+
+	if crit_flags & OCF_SURRENDERED:
+		return AIFS_SURRENDERED, critter.obj_get_obj(obj_f_critter_fleeing_from)
+
+	ai_flags = critter.obj_get_int64(obj_f_npc_ai_flags64)
+
+	if ai_flags & AiFlag_Fighting:
+		return AIFS_FIGHTING, critter.obj_get_obj(obj_f_npc_combat_focus)
+
+	if ai_flags & AiFlag_FindingHelp:
+		return AIFS_FINDING_HELP, critter.obj_get_obj(obj_f_npc_combat_focus)
+
+
+	return AIFS_NONE, OBJ_HANDLE_NULL
+
+class AiFightStatus:
+	def __init__(self, critter):
+		s, t = getAiFightingStatus(critter)
+		self.status = s
+		self.target = t
+		return
+
+def aiListFind(obj, tgt, list_type):
+	if obj == OBJ_HANDLE_NULL or obj.type != obj_t_npc: return False
+	
+	N = obj.obj_get_idx_int_size(obj_f_npc_ai_list_type_idx)
+	if N == 0: return False
+
+	N = min(N, obj.obj_get_idx_int_size(obj_f_npc_ai_list_idx) )
+
+	# for i in range(N):
+	# 	entry_type = 
+
+	return False
