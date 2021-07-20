@@ -304,7 +304,16 @@ void DungeonMaster::RenderEditedObj() {
 		ImGui::Text(fmt::format("obj_f_critter_inventory_num: {}", invenCountField).c_str());
 		for (auto i = 0u; i < invenCount; ++i) {
 			auto itemHandle = obj->GetObjHndl(obj_f_critter_inventory_list_idx,i);
-			ImGui::Text(fmt::format("{} : {}", i, itemHandle).c_str());
+			auto item = objSystem->GetObject(itemHandle);
+			
+			if (item) {
+				auto itemInvIdx = item->GetInt32(obj_f_item_inv_location);
+				ImGui::Text(fmt::format("{} (inv idx = {}): {} {}", i, itemInvIdx, itemHandle, item->id.ToString()).c_str());
+			}
+			else {
+				ImGui::Text(fmt::format("{} : {}", i, itemHandle).c_str());
+			}
+			
 		}
 		ImGui::TreePop();
 	}
