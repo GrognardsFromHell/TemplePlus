@@ -610,6 +610,10 @@ AIFS_SURRENDERED = 3
 AIFS_FINDING_HELP = 4
 AIFS_BEING_DRAWN = 5 # TODO for Harpy Song, opposite of fleeing
 
+AI_LIST_ENEMY = 0 # THE SHITLIST!!!
+AI_LIST_ALLY = 1
+
+
 # Weapon Flags
 OWF_LOUD = 1
 OWF_SILENT= 2 

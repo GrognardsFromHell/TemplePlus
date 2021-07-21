@@ -23,7 +23,7 @@ def consider_target(attacker, target, aiSearchingTgt=False):
 	if not target.is_critter():
 		if isBusted(target): return 0
 	else:
-		if missing_stub("NpcAiListFindAlly(attacker, target)"): return 0
+		if aiListFind(attacker, target, AI_LIST_ALLY): return 0
 		if target == OBJ_HANDLE_NULL: return 0
 		if target.is_dead_or_destroyed(): return 0
 		if target.is_unconscious():
@@ -115,7 +115,7 @@ def will_kos(attacker, target, aiSearchingTgt):
 	if not attacker.object_script_execute(target, san_will_kos):
 		return 0
 
-	if missing_stub('AiListFind(attacker, target, 1)'):
+	if aiListFind(attacker, target, AI_LIST_ALLY): # friend list
 		return 0
 
 	aaifs = AiFightStatus(attacker)
