@@ -588,6 +588,32 @@ ONF_BACKING_OFF = 0x10000000
 ONF_NO_ATTACK = 0x20000000
 ONF_BOSS_MONSTER = 0x40000000
 
+# AI flags
+AiFlag_FindingHelp = 0x1
+AiFlag_WaypointDelay = 0x2
+AiFlag_WaypointDelayed = 0x4
+AiFlag_RunningOff = 0x8
+AiFlag_Fighting = 0x10
+AiFlag_CheckGrenade = 0x20
+AiFlag_CheckWield = 0x40
+AiFlag_CheckWeapon = 0x80
+AiFlag_LookForWeapon = 0x100
+AiFlag_LookForArmor = 0x200
+AiFlag_LookForAmmo = 0x400
+AiFlag_HasSpokenFlee = 0x800
+
+# AI Fight Status
+AIFS_NONE = 0
+AIFS_FIGHTING = 1
+AIFS_FLEEING = 2
+AIFS_SURRENDERED = 3
+AIFS_FINDING_HELP = 4
+AIFS_BEING_DRAWN = 5 # TODO for Harpy Song, opposite of fleeing
+
+AI_LIST_ENEMY = 0 # THE SHITLIST!!!
+AI_LIST_ALLY = 1
+
+
 # Weapon Flags
 OWF_LOUD = 1
 OWF_SILENT= 2 
@@ -698,6 +724,12 @@ OPF_LOCKED_NIGHT = 0x40
 OPF_BUSTED = 0x80
 OPF_NOT_STICKY = 0x100
 OPF_OPEN = 0x200
+
+# Scenery Flags
+OSF_BUSTED = 0x2
+
+# Trap Flags
+OTF_BUSTED = 0x2
 
 Q_Helpless = 0
 Q_SneakAttack = 1

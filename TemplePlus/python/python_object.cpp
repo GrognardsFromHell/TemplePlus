@@ -3246,6 +3246,37 @@ static PyObject* PyObjHandle_GetIdxInt64Size(PyObject* obj, PyObject* args) {
 	return PyLong_FromLong((long)value);
 }
 
+static PyObject* PyObjHandle_GetIdxObj(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	obj_f field;
+	int subIdx = 0;
+	if (!PyArg_ParseTuple(args, "i|i:objhndl.obj_get_idx_obj", &field, &subIdx)) {
+		return 0;
+	}
+	assert(subIdx >= 0);
+	auto result = objSystem->GetObject(self->handle)->GetObjHndl(field);
+	
+	return PyObjHndl_Create(result);
+}
+
+static PyObject* PyObjHandle_GetIdxObjSize(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	obj_f field;
+	if (!PyArg_ParseTuple(args, "i:objhndl.obj_get_idx_obj_size", &field)) {
+		return 0;
+	}
+	auto result = objSystem->GetObject(self->handle)->GetObjectIdArray(field).GetSize();
+	return PyLong_FromLong((long)result);
+}
+
+
+
 static PyObject* PyObjHandle_GetInt64(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -4307,6 +4338,8 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "obj_get_idx_int64_size", PyObjHandle_GetIdxInt64Size, METH_VARARGS, NULL },
 	{ "obj_get_int64", PyObjHandle_GetInt64, METH_VARARGS, "Gets 64 bit field" },
 	{ "obj_get_obj", PyObjHandle_GetObj, METH_VARARGS, "Gets Object field" },
+	{ "obj_get_idx_obj", PyObjHandle_GetIdxObj, METH_VARARGS, "Gets Object Array field" },
+	{ "obj_get_idx_obj_size", PyObjHandle_GetIdxObjSize, METH_VARARGS, "Gets Object Array field" },
 	{ "obj_get_spell", PyObjHandle_GetSpell, METH_VARARGS, NULL },
 	{ "obj_remove_from_all_groups", PyObjHandle_RemoveFromAllGroups, METH_VARARGS, "Removes the object from all the groups (GroupList, PCs, NPCs, AI controlled followers, Currently Selected" },
 	{ "obj_set_int", PyObjHandle_SetInt, METH_VARARGS, NULL },
