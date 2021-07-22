@@ -1,0 +1,771 @@
+set(PROJECT_NAME TemplePlus)
+
+################################################################################
+# Source groups
+################################################################################
+set(no_group_source_files
+    "animgoals/anim.cpp"
+    "animgoals/anim.h"
+    "animgoals/anim_slot.h"
+    "animgoals/animgoal.cpp"
+    "animgoals/animgoal.h"
+    "animgoals/animgoals.cpp"
+    "animgoals/animgoals.h"
+    "animgoals/animgoals_callbacks.cpp"
+    "animgoals/animgoals_callbacks.h"
+    "animgoals/animgoals_debugrenderer.cpp"
+    "animgoals/animgoals_debugrenderer.h"
+    "animgoals/animgoals_hooks.cpp"
+    "animgoals/animgoals_stackentry.cpp"
+    "animgoals/animgoals_stackentry.h"
+    "common.cpp"
+    "config/config_hooks.cpp"
+    "d20_defs.cpp"
+    "damage.cpp"
+    "damage.h"
+    "debugMessageToggles.cpp"
+    "diag/diag.cpp"
+    "diag/diag.h"
+    "diag/proto_cols.cpp"
+    "dialog.cpp"
+    "dialog.h"
+    "dice.cpp"
+    "dice.h"
+    "fade.cpp"
+    "fade.h"
+    "fixes/keyboard.cpp"
+    "fixes/light_load.cpp"
+    "fixes/messages.cpp"
+    "fixes/sector_cache_size.cpp"
+    "float_line.cpp"
+    "float_line.h"
+    "fonts/fonts.h"
+    "fonts/fonts_hooks.cpp"
+    "fonts/fonts_layout.cpp"
+    "fonts/fonts_mapping.cpp"
+    "fonts/fonts_mapping.h"
+    "fonts/fonts_render.cpp"
+    "frozen_obj_ref.cpp"
+    "frozen_obj_ref.h"
+    "frozen_obj_ref_hooks.cpp"
+    "gamesystems/aas_hooks.cpp"
+    "gamesystems/aas_hooks.h"
+    "gamesystems/clipping/clipping.cpp"
+    "gamesystems/clipping/clipping.h"
+    "gamesystems/clipping/clipping_hooks.cpp"
+    "gamesystems/clipping/clippingmesh.cpp"
+    "gamesystems/clipping/clippingmesh.h"
+    "gamesystems/d20/d20_help.cpp"
+    "gamesystems/d20/d20_help.h"
+    "gamesystems/d20/d20stats.cpp"
+    "gamesystems/d20/d20stats.h"
+    "gamesystems/deity/legacydeitysystem.cpp"
+    "gamesystems/deity/legacydeitysystem.h"
+    "gamesystems/fogrenderer.cpp"
+    "gamesystems/fogrenderer.h"
+    "gamesystems/froggrapplecontroller.cpp"
+    "gamesystems/froggrapplecontroller.h"
+    "gamesystems/gamerenderer.cpp"
+    "gamesystems/gamerenderer.h"
+    "gamesystems/gamesystem.h"
+    "gamesystems/gamesystems.cpp"
+    "gamesystems/gamesystems.h"
+    "gamesystems/legacy.cpp"
+    "gamesystems/legacy.h"
+    "gamesystems/legacymapsystems.cpp"
+    "gamesystems/legacymapsystems.h"
+    "gamesystems/legacysystems.cpp"
+    "gamesystems/legacysystems.h"
+    "gamesystems/lightningrenderer.cpp"
+    "gamesystems/lightningrenderer.h"
+    # "gamesystems/loadingscreen.h"
+    "gamesystems/map/gmesh.cpp"
+    "gamesystems/map/gmesh.h"
+    "gamesystems/mapobjrender.cpp"
+    "gamesystems/mapobjrender.h"
+    "gamesystems/mappreprocessor.cpp"
+    "gamesystems/mappreprocessor.h"
+    "gamesystems/mapsystem.cpp"
+    "gamesystems/mapsystem.h"
+    "gamesystems/mapsystem_hooks.cpp"
+    "gamesystems/objects/arrayidxbitmaps.cpp"
+    "gamesystems/objects/arrayidxbitmaps.h"
+    "gamesystems/objects/arrayidxbitmaps_hooks.cpp"
+    "gamesystems/objects/gameobject.cpp"
+    "gamesystems/objects/gameobject.h"
+    "gamesystems/objects/objarrays.h"
+    "gamesystems/objects/objevent.cpp"
+    "gamesystems/objects/objevent.h"
+    "gamesystems/objects/objfields.cpp"
+    "gamesystems/objects/objfields.h"
+    "gamesystems/objects/objfind.cpp"
+    "gamesystems/objects/objfind.h"
+    "gamesystems/objects/objid_hooks.cpp"
+    "gamesystems/objects/objprotos.cpp"
+    "gamesystems/objects/objregistry.cpp"
+    "gamesystems/objects/objregistry.h"
+    "gamesystems/objects/objregistry_hooks.cpp"
+    "gamesystems/objects/objsystem.cpp"
+    "gamesystems/objects/objsystem.h"
+    "gamesystems/objects/objsystem_hooks.cpp"
+    "gamesystems/objfade.cpp"
+    "gamesystems/objfade.h"
+    "gamesystems/particlesystems.cpp"
+    "gamesystems/particlesystems.h"
+    "gamesystems/particlesystems_hooks.cpp"
+    "gamesystems/partsystemsrenderer.cpp"
+    "gamesystems/partsystemsrenderer.h"
+    "gamesystems/random_encounter.h"
+    "gamesystems/staticmeshes.cpp"
+    "gamesystems/staticmeshes.h"
+    "gamesystems/tilerender.cpp"
+    "gamesystems/tilerender.h"
+    "gamesystems/timeevents.cpp"
+    "gamesystems/timeevents.h"
+    "gametime.cpp"
+    "gametime.h"
+    "gameview.cpp"
+    "gameview.h"
+    "goalfuncnames.h"
+    "graphics/imgfile.cpp"
+    "graphics/imgfile.h"
+    "graphics/legacyvideosystem.h"
+    "graphics/loadingscreen.cpp"
+    "graphics/loadingscreen.h"
+    "graphics/mapterrain.cpp"
+    "graphics/mapterrain.h"
+    "graphics/materials_hooks.cpp"
+    "graphics/materials_hooks.h"
+    "graphics/rectangle.cpp"
+    "graphics/rectangle.h"
+    "graphics/render_hooks.cpp"
+    "graphics/render_hooks.h"
+    "graphics/renderstates_hooks.cpp"
+    "graphics/renderstates_hooks.h"
+    "graphics/textures_hooks.cpp"
+    "graphics/video_hooks.cpp"
+    "graphics/video_hooks.h"
+    "InfinityEngine.cpp"
+    "InfinityEngine.h"
+    "legacyscriptsystem.cpp"
+    "legacyscriptsystem.h"
+    "location.cpp"
+    "location.h"
+    "main.cpp"
+    "mainloop.cpp"
+    "mainloop.h"
+    "mainwindow.cpp"
+    "mainwindow.h"
+    "manifest.xml"
+    "map_obj.cpp"
+    "map_obj.h"
+    "messages/messagequeue.cpp"
+    "messages/messagequeue.h"
+    "movies.cpp"
+    "movies.h"
+    "obj_hooks.cpp"
+    "obj_structs.cpp"
+    "objlist.cpp"
+    "objlist.h"
+    "particles.cpp"
+    "particles.h"
+    "pathfinding.cpp"
+    "pathfinding.h"
+    "poison.cpp"
+    "poison.h"
+    "portrait_in_mainmenu.cpp"
+    "protos.cpp"
+    "python/python_integration_race.cpp"
+    "quest.cpp"
+    "quest.h"
+    "radialmenu.cpp"
+    "radialmenu.h"
+    "raycast.cpp"
+    "raycast.h"
+    "raycast_hooks.cpp"
+    "reputations.cpp"
+    "reputations.h"
+    "resource.h"
+    "rng.cpp"
+    "rng.h"
+    "sound.cpp"
+    "sound.h"
+    "stdafx.cpp"
+    "stdafx.h"
+    "tab_file.cpp"
+    "tab_file.h"
+    "temple_enums.cpp"
+    "temple_enums.h"
+    "temple_functions.cpp"
+    "temple_functions.h"
+    "temple_main.cpp"
+    "textbubbles.cpp"
+    "textbubbles.h"
+    "tio/tio.h"
+    "tio/tio_utils.cpp"
+    "tio/tio_utils.h"
+    "traps.cpp"
+    "traps.h"
+    "tutorial.cpp"
+    "tutorial.h"
+    "ui/widgets/widget_content.cpp"
+    "ui/widgets/widget_content.h"
+    "ui/widgets/widget_doc.cpp"
+    "ui/widgets/widget_doc.h"
+    "ui/widgets/widget_styles.cpp"
+    "ui/widgets/widget_styles.h"
+    "ui/widgets/widgets.cpp"
+    "ui/widgets/widgets.h"
+    "updater/updater.cpp"
+    "updater/updater.h"
+    "util/datadump.cpp"
+    "util/datadump.h"
+    "util/savegame.cpp"
+    "util/savegame.h"
+    "util/streams.cpp"
+    "util/streams.h"
+)
+source_group("" FILES ${no_group_source_files})
+
+set(Dungeon_Master
+    "dungeon_master.cpp"
+    "dungeon_master.h"
+    "dungeon_master_obj_editor.cpp"
+)
+source_group("Dungeon Master" FILES ${Dungeon_Master})
+
+set(Map_System
+    "gamesystems/map/sector.cpp"
+    "gamesystems/map/sector.h"
+    "maps.cpp"
+    "maps.h"
+    "path_node.cpp"
+    "path_node.h"
+)
+source_group("Map System" FILES ${Map_System})
+
+set(Mods_and_Fixes
+    "action_sequence.cpp"
+    "action_sequence.h"
+    "ai.cpp"
+    "ai.h"
+    "animalcompanion.cpp"
+    "attackrollcpp.cpp"
+    "bonus.cpp"
+    "bonus.h"
+    "bonusspells.cpp"
+    "combat.cpp"
+    "combat.h"
+    "common.h"
+    "condition.cpp"
+    "condition.h"
+    "critter.cpp"
+    "critter.h"
+    "d20.cpp"
+    "d20.h"
+    "d20_class.cpp"
+    "d20_class.h"
+    "d20_defs.h"
+    "d20_level.cpp"
+    "d20_level.h"
+    "d20_levelup.cpp"
+    "d20_levelup.h"
+    "d20_obj_registry.cpp"
+    "d20_obj_registry.h"
+    "d20_race.cpp"
+    "d20_race.h"
+    "d20_status.cpp"
+    "d20_status.h"
+    "description.cpp"
+    "description.h"
+    "dispatcher.cpp"
+    "dispatcher.h"
+    "faction.cpp"
+    "faction.h"
+    "feat.cpp"
+    "feat.h"
+    "fixes/generalfixes.cpp"
+    "fixes/pointbuyconfig.cpp"
+    "gamesystems/gamelib_load.cpp"
+    "gamesystems/gamelib_save.cpp"
+    "history.cpp"
+    "history.h"
+    "inventory.cpp"
+    "inventory.h"
+    "mod_support.cpp"
+    "mod_support.h"
+    "obj.cpp"
+    "obj.h"
+    "obj_structs.h"
+    "party.cpp"
+    "party.h"
+    "portrait.cpp"
+    "secret_door.cpp"
+    "secret_door.h"
+    "skill.cpp"
+    "skill.h"
+    "spell.cpp"
+    "spell.h"
+    "spell_structs.cpp"
+    "spell_structs.h"
+    "turn_based.cpp"
+    "turn_based.h"
+    "util/fixes.cpp"
+    "util/fixes.h"
+    "weapon.cpp"
+    "weapon.h"
+    "xp.cpp"
+    "xp.h"
+)
+source_group("Mods and Fixes" FILES ${Mods_and_Fixes})
+
+set(Mods_and_Fixes__Condition_Fixes
+    "ability_fixes.cpp"
+    "general_condition_fixes.cpp"
+    "spell_condition.cpp"
+)
+source_group("Mods and Fixes\\Condition Fixes" FILES ${Mods_and_Fixes__Condition_Fixes})
+
+set(generic_data_structures
+    "hashtable.h"
+    "idxtables.cpp"
+    "idxtables.h"
+)
+source_group("generic data structures" FILES ${generic_data_structures})
+
+set(python
+    "python/python_areas.cpp"
+    "python/python_areas.h"
+    "python/python_bonus.cpp"
+    "python/python_bonus.h"
+    "python/python_cheats.cpp"
+    "python/python_cheats.h"
+    "python/python_console.cpp"
+    "python/python_console.h"
+    "python/python_consoleout.cpp"
+    "python/python_consoleout.h"
+    "python/python_counters.cpp"
+    "python/python_counters.h"
+    "python/python_damage.cpp"
+    "python/python_damage.h"
+    "python/python_debug.cpp"
+    "python/python_debug.h"
+    "python/python_dice.cpp"
+    "python/python_dice.h"
+    "python/python_dispatcher.cpp"
+    "python/python_dispatcher.h"
+    "python/python_embed.cpp"
+    "python/python_embed.h"
+    "python/python_error.h"
+    "python/python_game.cpp"
+    "python/python_game.h"
+    "python/python_globalflags.cpp"
+    "python/python_globalflags.h"
+    "python/python_globalvars.cpp"
+    "python/python_globalvars.h"
+    "python/python_header.h"
+    "python/python_importer.cpp"
+    "python/python_importer.h"
+    "python/python_integration.cpp"
+    "python/python_integration.h"
+    "python/python_integration_brawl.cpp"
+    "python/python_integration_class_spec.cpp"
+    "python/python_integration_class_spec.h"
+    "python/python_integration_d20_action.cpp"
+    "python/python_integration_d20_action.h"
+    "python/python_integration_encounter.cpp"
+    "python/python_integration_feat.cpp"
+    "python/python_integration_feat.h"
+    "python/python_integration_obj.cpp"
+    "python/python_integration_obj.h"
+    "python/python_integration_race.h"
+    "python/python_integration_spells.cpp"
+    "python/python_integration_spells.h"
+    "python/python_logbook.cpp"
+    "python/python_module.cpp"
+    "python/python_module.h"
+    "python/python_object.cpp"
+    "python/python_object.h"
+    "python/python_objectscripts.cpp"
+    "python/python_objectscripts.h"
+    "python/python_quests.cpp"
+    "python/python_quests.h"
+    "python/python_roll_history.cpp"
+    "python/python_scripts.cpp"
+    "python/python_spell.cpp"
+    "python/python_spell.h"
+    "python/python_support.h"
+    "python/python_time.cpp"
+    "python/python_time.h"
+    "python/python_timeevents.cpp"
+    "python/python_timeevents.h"
+    "python/python_tio.cpp"
+    "python/python_tio.h"
+    "python/python_trap.cpp"
+    "python/python_trap.h"
+    "python/pythonglobal.cpp"
+    "python/pythonglobal.h"
+)
+source_group("python" FILES ${python})
+
+set(tig
+    "tig/tig.cpp"
+    "tig/tig.h"
+    "tig/tig_console.cpp"
+    "tig/tig_console.h"
+    "tig/tig_console_wrapper.cpp"
+    "tig/tig_font.cpp"
+    "tig/tig_font.h"
+    "tig/tig_keyboard.h"
+    "tig/tig_loadingscreen.cpp"
+    "tig/tig_loadingscreen.h"
+    "tig/tig_mes.cpp"
+    "tig/tig_mes.h"
+    "tig/tig_mouse.cpp"
+    "tig/tig_mouse.h"
+    "tig/tig_msg.h"
+    "tig/tig_shader.cpp"
+    "tig/tig_shader.h"
+    "tig/tig_sound.cpp"
+    "tig/tig_sound.h"
+    "tig/tig_startup.cpp"
+    "tig/tig_startup.h"
+    "tig/tig_tabparser.h"
+    "tig/tig_texture.cpp"
+    "tig/tig_texture.h"
+    "tig/tig_tokenizer.cpp"
+    "tig/tig_tokenizer.h"
+)
+source_group("tig" FILES ${tig})
+
+set(ui
+    "gamesystems/ui_intgame_renderer.cpp"
+    "gamesystems/ui_intgame_renderer.h"
+    "hotkeys.cpp"
+    "hotkeys.h"
+    "ui/ui.cpp"
+    "ui/ui.h"
+    "ui/ui_alert.cpp"
+    "ui/ui_alert.h"
+    "ui/ui_assets.cpp"
+    "ui/ui_assets.h"
+    "ui/ui_char.cpp"
+    "ui/ui_char.h"
+    "ui/ui_char_editor.cpp"
+    "ui/ui_char_editor.h"
+    "ui/ui_char_editor_feats.cpp"
+    "ui/ui_char_highresfix.cpp"
+    "ui/ui_charegen.cpp"
+    "ui/ui_chargen.cpp"
+    "ui/ui_chargen.h"
+    "ui/ui_combat.cpp"
+    "ui/ui_combat.h"
+    "ui/ui_debug.cpp"
+    "ui/ui_debug.h"
+    "ui/ui_dialog.cpp"
+    "ui/ui_dialog.h"
+    "ui/ui_dm.cpp"
+    "ui/ui_dm.h"
+    "ui/ui_ingame.cpp"
+    "ui/ui_ingame.h"
+    "ui/ui_ingame_wrapper.cpp"
+    "ui/ui_intgame_select.cpp"
+    "ui/ui_intgame_select.h"
+    "ui/ui_intgame_turnbased.cpp"
+    "ui/ui_intgame_turnbased.h"
+    # "ui/ui_intgame_wrapper.h"
+    "ui/ui_item_creation.cpp"
+    "ui/ui_item_creation.h"
+    "ui/ui_legacysystems.cpp"
+    "ui/ui_legacysystems.h"
+    "ui/ui_logbook.cpp"
+    "ui/ui_logbook.h"
+    "ui/ui_mainmenu.cpp"
+    "ui/ui_mainmenu.h"
+    "ui/ui_mainmenu_wrapper.cpp"
+    "ui/ui_party.cpp"
+    "ui/ui_party.h"
+    "ui/ui_pc_creation.cpp"
+    "ui/ui_pc_creation.h"
+    "ui/ui_pc_creation_hooks.cpp"
+    "ui/ui_picker.cpp"
+    "ui/ui_picker.h"
+    "ui/ui_popup.cpp"
+    "ui/ui_popup.h"
+    "ui/ui_render.cpp"
+    "ui/ui_render.h"
+    "ui/ui_slider.cpp"
+    "ui/ui_slider.h"
+    "ui/ui_sticky.cpp"
+    "ui/ui_sticky.h"
+    "ui/ui_system.h"
+    "ui/ui_systems.cpp"
+    "ui/ui_systems.h"
+    "ui/ui_systems_hooks.cpp"
+    "ui/ui_tooltip.cpp"
+    "ui/ui_tooltip.h"
+    "ui/ui_townmap.cpp"
+    "ui/ui_townmap.h"
+    "ui/ui_turn_based.cpp"
+    "ui/ui_turn_based.h"
+    "ui/ui_tutorial.cpp"
+    "ui/ui_tutorial.h"
+    "ui/ui_utility_bar.cpp"
+    "ui/ui_worldmap.cpp"
+    "ui/ui_worldmap.h"
+    "ui/ui_wrapper.cpp"
+)
+source_group("ui" FILES ${ui})
+
+set(utils
+    "config/config.cpp"
+    "config/config.h"
+    "obj_fieldnames.cpp"
+    "obj_fieldnames.h"
+    "util/folderutils.cpp"
+    "util/folderutils.h"
+)
+source_group("utils" FILES ${utils})
+
+set(ALL_FILES
+    ${no_group_source_files}
+    ${Dungeon_Master}
+    ${Map_System}
+    ${Mods_and_Fixes}
+    ${Mods_and_Fixes__Condition_Fixes}
+    ${generic_data_structures}
+    ${python}
+    ${tig}
+    ${ui}
+    ${utils}
+)
+
+################################################################################
+# Target
+################################################################################
+add_executable(${PROJECT_NAME} ${ALL_FILES})
+
+add_precompiled_header(${PROJECT_NAME} "stdafx.h" "stdafx.cpp")
+
+use_props(${PROJECT_NAME} "${CMAKE_CONFIGURATION_TYPES}" "${DEFAULT_CXX_PROPS}")
+set(ROOT_NAMESPACE TemplePlus)
+
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    VS_GLOBAL_KEYWORD "Win32Proj"
+)
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    INTERPROCEDURAL_OPTIMIZATION_RELEASE     "TRUE"
+)
+################################################################################
+# MSVC runtime library
+################################################################################
+get_property(MSVC_RUNTIME_LIBRARY_DEFAULT TARGET ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY)
+string(CONCAT "MSVC_RUNTIME_LIBRARY_STR"
+    $<$<CONFIG:Debug>:
+        MultiThreadedDebug
+    >
+    $<$<CONFIG:Release>:
+        MultiThreaded
+    >
+    $<$<CONFIG:TestWithIda>:
+        MultiThreadedDebug
+    >
+    $<$<NOT:$<OR:$<CONFIG:Debug>,$<CONFIG:Release>,$<CONFIG:TestWithIda>>>:${MSVC_RUNTIME_LIBRARY_DEFAULT}>
+)
+set_target_properties(${PROJECT_NAME} PROPERTIES MSVC_RUNTIME_LIBRARY ${MSVC_RUNTIME_LIBRARY_STR})
+
+################################################################################
+# Include directories
+################################################################################
+target_include_directories(${PROJECT_NAME} PUBLIC
+    "${CMAKE_CURRENT_SOURCE_DIR}/.;"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../dependencies/include;"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../MinHook/include;"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../Infrastructure/include;"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../D3D8Adapter/include"
+)
+
+################################################################################
+# Compile definitions
+################################################################################
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    "$<$<CONFIG:Debug>:"
+        "_SCL_SECURE_NO_WARNINGS;"
+        "_DEBUG;"
+        "$ENV{MSBuildDefines}"
+    ">"
+    "$<$<CONFIG:Release>:"
+        "_SCL_SECURE_NO_WARNINGS;"
+        "NDEBUG;"
+        "$ENV{MSBuildDefines}"
+    ">"
+    "$<$<CONFIG:TestWithIda>:"
+        "_DEBUG"
+    ">"
+    "WIN32;"
+    "_WINDOWS;"
+    "UNICODE;"
+    "_UNICODE"
+)
+set_source_files_properties(gamesystems/objects/objregistry_hooks.cpp PROPERTIES
+    COMPILE_DEFINITIONS_DEBUG "_SCL_SECURE_NO_WARNINGS;WIN32;_WINDOWS;$ENV{MSBuildDefines}"
+)
+
+################################################################################
+# Compile and link options
+################################################################################
+if(MSVC)
+    target_compile_options(${PROJECT_NAME} PRIVATE
+        $<$<CONFIG:Debug>:
+            /MP;
+            /Gm-;
+            /Od
+        >
+        $<$<CONFIG:Release>:
+            /GL-;
+            /O2;
+            /Oi
+        >
+        $<$<CONFIG:TestWithIda>:
+            /Od;
+            /wd4996
+        >
+        /std:c++17;
+        /arch:SSE2;
+        /W3;
+        ${DEFAULT_CXX_DEBUG_INFORMATION_FORMAT};
+        ${DEFAULT_CXX_EXCEPTION_HANDLING}
+    )
+    string(CONCAT FILE_CL_OPTIONS
+        "$<$<CONFIG:Debug>:"
+            "/O2;/Oi;/Zi;/GS-;/Y-"
+        ">"
+    )
+    source_file_compile_options(gamesystems/objects/objregistry_hooks.cpp ${FILE_CL_OPTIONS})
+    string(CONCAT FILE_CL_OPTIONS
+        "/Y-"
+    )
+    source_file_compile_options(graphics/video_hooks.cpp ${FILE_CL_OPTIONS})
+    string(CONCAT FILE_CL_OPTIONS
+        "/Y-"
+    )
+    source_file_compile_options(portrait_in_mainmenu.cpp ${FILE_CL_OPTIONS})
+    target_link_options(${PROJECT_NAME} PRIVATE
+        $<$<CONFIG:Debug>:
+            /DELAYLOAD:d2d1.dll;
+            /DELAYLOAD:psapi.dll;
+            /DEBUG:FULL;
+            /DYNAMICBASE:NO;
+            /INCREMENTAL
+        >
+        $<$<CONFIG:Release>:
+            /DELAYLOAD:d2d1.dll;
+            /DELAYLOAD:psapi.dll;
+            /DEBUG;
+            /OPT:REF;
+            /LTCG;
+            /OPT:ICF;
+            /DYNAMICBASE:NO;
+            /INCREMENTAL:NO
+        >
+        $<$<CONFIG:TestWithIda>:
+            /DELAYLOAD:bcrypt.dll;
+            /DELAYLOAD:d3d9.dll;
+            /DEBUG;
+            /INCREMENTAL
+        >
+        /DELAYLOAD:crypt32.dll;
+        /DELAYLOAD:ws2_32.dll;
+        /DELAYLOAD:oleaut32.dll;
+        /DELAYLOAD:shell32.dll;
+        /DELAYLOAD:advapi32.dll;
+        /DELAYLOAD:gdi32.dll;
+        /DELAYLOAD:user32.dll;
+        /DELAYLOAD:tio.dll;
+        /DELAYLOAD:winmm.dll;
+        /DELAYLOAD:shlwapi.dll;
+        /DELAYLOAD:ole32.dll;
+        /DELAYLOAD:D3dcompiler_47.dll;
+        /SUBSYSTEM:WINDOWS
+    )
+endif()
+
+################################################################################
+# Post build events
+################################################################################
+add_custom_command_if(
+    TARGET ${PROJECT_NAME}
+    POST_BUILD
+    COMMANDS
+    COMMAND       $<CONFIG:Debug> "$<SHELL_PATH:${CMAKE_CURRENT_SOURCE_DIR}/>\\..\\tpdatasrc\\PackFiles.bat"
+    COMMAND     $<CONFIG:Release> "$<SHELL_PATH:${CMAKE_CURRENT_SOURCE_DIR}/>\\..\\tpdatasrc\\PackFiles.bat"
+    COMMAND $<CONFIG:TestWithIda> "$<SHELL_PATH:${CMAKE_CURRENT_SOURCE_DIR}/>\\..\\tpdatasrc\\PackFiles.bat"
+)
+
+################################################################################
+# Dependencies
+################################################################################
+add_dependencies(${PROJECT_NAME}
+    Infrastructure
+    ParticleSystems
+    Temple
+    EASTL
+)
+
+# Link with other targets.
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    Infrastructure
+    ParticleSystems
+    Temple
+)
+
+set(ADDITIONAL_LIBRARY_DEPENDENCIES
+    "$<$<CONFIG:Debug>:"
+        "d2d1;"
+        "dwrite;"
+        "dxguid;"
+        "d3d11;"
+        "dxgi;"
+        "d3dcompiler;"
+        "EASTL;"
+        "psapi;"
+        "turbojpeg-static_d;"
+        "particlesystems;"
+        "temple;"
+        "Infrastructure;"
+        "d3d9;"
+        "python27_d"
+    ">"
+    "$<$<CONFIG:Release>:"
+        "d2d1;"
+        "dwrite;"
+        "dxguid;"
+        "d3d11;"
+        "dxgi;"
+        "d3dcompiler;"
+        "EASTL;"
+        "psapi;"
+        "turbojpeg-static;"
+        "particlesystems;"
+        "temple;"
+        "Infrastructure;"
+        "python27"
+    ">"
+    "$<$<CONFIG:TestWithIda>:"
+        "d3d9;"
+        "pythonembed_d"
+    ">"
+    "tio\tio;"
+    "winmm;"
+    "Crypt32;"
+    "ws2_32;"
+    "libeay32;"
+    "ssleay32"
+)
+target_link_libraries(${PROJECT_NAME} PRIVATE "${ADDITIONAL_LIBRARY_DEPENDENCIES}")
+
+target_link_directories(${PROJECT_NAME} PRIVATE
+    "${CMAKE_SOURCE_DIR}/dependencies/lib;"
+    "${OUTPUT_DIRECTORY}"
+)
+
