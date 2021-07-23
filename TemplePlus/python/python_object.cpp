@@ -224,6 +224,14 @@ static PyObject* PyObjHandle_BeginDialog(PyObject* obj, PyObject* args) {
 		gameSystems->GetTimeEvent().Schedule(evt, 1);
 		uiPicker.CancelPicker();
 		
+		// Temple+: added this, otherwise the combat continues briefly and goes on to the next combatant who can start an action
+		// the dialog event callback does this anyway, but 1ms later
+		auto leader = party.GetConsciousPartyLeader();
+		if (leader) {
+			combatSys.CritterExitCombatMode(leader);
+		}
+		
+
 	} else
 	{
 		// TODO: Add a "Party Leader Override" option that attempts to initiate dialogue with the Party Leader if possible
