@@ -32,46 +32,56 @@ def spellTime(duration):
 
 # Handles tooltip requests for a condition. Can be installed as:
 #
-#   [pytonModifier].AddHook(
-#     ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, ())
+# [pytonModifier].AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, ()) or
+# [pytonModifier].AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, (spell_enum,))
 #
-# Optionally, a parameter can be supplied. If it is 1, an appropriate
-# duration will be reported for spells that only start counting down
+# The second one is needed, if tooltip of a different spell should be shown
+# e.g. single target version when mass version is cast
+#
+# Optionally, 1 can be passed as a 2nd parameter. If 1 is passed
+# then an appropriate duration will be reported
+# for spells that only start counting down
 # after the caster's concentration is broken:
 #
-#   modifier.AddHook(
-#     ET_OnGetTooltip, EK_NONE, spellTooltip, (1))
+# [pytonModifier].AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, (0, 1))
 def spellTooltip(attachee, args, evt_obj):
     spellId = args.get_arg(0)
-    name = spellName(spellId)
     duration = spellTime(args.get_arg(1))
-
-    if args.get_param(0) == 1 and casterIsConcentrating(spellId):
+    if args.get_param(1) == 1 and casterIsConcentrating(spellId):
+        name = spellName(spellId)
         duration = "Concentration + {}".format(duration)
-
+    elif args.get_param(0):
+        name = game.get_spell_mesline(args.get_param(0))
+    else:
+        name = spellName(spellId)
     evt_obj.append("{} ({})".format(name, duration))
     return 0
 
 # Handles effect tooltip (the tooltip of the icon on the portrait)
 # requests for a condition. Can be installed as:
 #
-#   [pytonModifier].AddHook(
-#     ET_OnGetEffectTooltip, EK_NONE, spell_utils.spellEffectTooltip, ())
+# [pytonModifier].AddHook(ET_OnGetEffectTooltip, EK_NONE, spell_utils.spellEffectTooltip, ()) or
+# [pytonModifier].AddHook(ET_OnGetEffectTooltip, EK_NONE, spell_utils.spellEffectTooltip, (spell_enum,))
+# The second one is needed, if Effect Tooltip of a different spell should be shown
+# e.g. single target version when mass version is cast
 #
-# Optionally, a parameter can be supplied. If it is 1, an appropriate
-# duration will be reported for spells that only start counting down
+# Optionally, 1 can be passed as a 2nd parameter. If 1 is passed,
+# then an appropriate duration will be reported
+# for spells that only start counting down
 # after the caster's concentration is broken:
 #
-#   modifier.AddHook(
-#     ET_OnGetEffectTooltip, EK_NONE, spellEffectTooltip, (1))
+# [pytonModifier].AddHook(ET_OnGetEffectTooltip, EK_NONE, spell_utils.spellEffectTooltip, (0, 1))
 def spellEffectTooltip(attachee, args, evt_obj):
     spellId = args.get_arg(0)
-    key = spellKey(spellId)
     duration = spellTime(args.get_arg(1))
-
-    if args.get_param(0) == 1 and casterIsConcentrating(spellId):
+    if args.get_param(1) == 1 and casterIsConcentrating(spellId):
         duration = "Concentration + {}".format(duration)
-
+        key = spellKey(spellId)
+    elif args.get_param(0):
+        name = game.get_spell_mesline(args.get_param(0)).upper().replace(" ", "_")
+        key = tpdp.hash(name)
+    else:
+        key = spellKey(spellId)
     evt_obj.append(key, -2, " ({})".format(duration))
     return 0
 
@@ -86,11 +96,6 @@ def queryActiveSpell(attachee, args, evt_obj):
 def spellKilled(attachee, args, evt_obj):
     args.remove_spell()
     args.remove_spell_mod()
-    return 0
-
-#[pytonModifier].AddHook(ET_OnD20Signal, EK_S_Spell_End, spell_utils.spellEnd, ())
-def spellEnd(attachee, args, evt_obj):
-    print "{} SpellEnd".format(spellName(args.get_arg(0)))
     return 0
 
 #[pytonModifier].AddHook(ET_OnD20Signal, EK_S_Concentration_Broken, spell_utils.checkRemoveSpell, ())
@@ -148,6 +153,14 @@ def countAfterConcentration(attachee, args, evt_obj):
 
     return 0
 
+#Used to replace same condition to prevent duplicates
+def replaceCondition(attachee, args, evt_obj):
+    conditionName = args.get_cond_name()
+    #if evt_obj.is_modifier("{}".format(conditionName)):
+    if evt_obj.is_modifier(conditionName):
+        args.remove_spell()
+        args.remove_spell_mod()
+    return 0
 
 ### Other useful functions ###
 

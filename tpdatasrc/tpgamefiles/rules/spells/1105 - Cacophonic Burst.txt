@@ -1,0 +1,19 @@
+School: Evocation
+Descriptor: Sonic
+Level: Brd 5
+Level: Sor 5
+Component: V
+Component: S
+Casting Time: 1 action
+Range: Long
+Saving Throw: Reflex
+Spell Resistance: Yes
+Projectile: No
+flags_Target: Range
+inc_flags_Target: Other
+exc_flags_Target: Self
+exc_flags_Target: Dead
+exc_flags_Target: Non-critter
+mode_Target: Area
+radius_Target: 20
+ai_type: ai_action_offensive
