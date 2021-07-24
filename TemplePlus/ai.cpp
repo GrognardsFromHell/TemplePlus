@@ -106,6 +106,11 @@ PYBIND11_EMBEDDED_MODULE(tpai, m) {
 		.def_readwrite("spell_pkt", &AiTactic::spellPktBody)
 		.def_readwrite("d20_spell_data", &AiTactic::d20SpellData)
 		;
+
+	py::class_<AiParamPacket>(m, "AiParams")
+		.def(py::init<objHndl>())
+		.def_readwrite("hostility_threshold", &AiParamPacket::hostilityThreshold)
+		;
 }
 
 void AiParamPacket::GetForCritter(objHndl handle){

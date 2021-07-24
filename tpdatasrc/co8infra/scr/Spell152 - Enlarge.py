@@ -45,6 +45,9 @@ def OnSpellEffect( spell ):
 
 
 				target_item.partsys_id = game.particles( 'sp-Enlarge', target_item.obj )
+			else:
+				# sp-Enlarge not applied, probably dispelled sp-Reduce
+				spell.target_list.remove_target(target_item.obj)
 		else:
 			if not target_item.obj.saving_throw_spell( spell.dc, D20_Save_Fortitude, D20STD_F_NONE, spell.caster, spell.id ):
 
@@ -61,13 +64,23 @@ def OnSpellEffect( spell ):
 				if return_val == 1:
 					target_item.partsys_id = game.particles( 'sp-Enlarge', target_item.obj )
 				else:
-					# saving throw successful
-					target_item.obj.float_mesfile_line( 'mes\\spell.mes', 30001 )
+					# sp-Enlarge not applied, probably dispelled sp-Reduce
+					spell.target_list.remove_target(target_item.obj)
+			else:
+				# saving throw successful
+				target_item.obj.float_mesfile_line( 'mes\\spell.mes', 30001 )
 
-					game.particles( 'Fizzle', target_item.obj )
-	#								spell.target_list.remove_target( target_item.obj )
+				game.particles( 'Fizzle', target_item.obj )
+				spell.target_list.remove_target( target_item.obj )
+	else: # not a humanoid
+		target_item.obj.float_mesfile_line( 'mes\\spell.mes', 30000 )
+		target_item.obj.float_mesfile_line( 'mes\\spell.mes', 31004 )
+
+		game.particles( 'Fizzle', target_item.obj )
+		spell.target_list.remove_target( target_item.obj )
+
 	print "spell.target_list=", spell.target_list
-#	spell.spell_end( spell.id )
+	spell.spell_end( spell.id )
 
 
 def OnBeginRound( spell ):
