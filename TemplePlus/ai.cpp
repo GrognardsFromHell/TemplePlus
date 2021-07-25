@@ -108,7 +108,9 @@ PYBIND11_EMBEDDED_MODULE(tpai, m) {
 		;
 
 	py::class_<AiParamPacket>(m, "AiParams")
-		.def(py::init<objHndl>())
+		.def("__init__", [](AiParamPacket & self, objHndl handle) {
+		self.GetForCritter(handle);}
+		)
 		.def_readwrite("hostility_threshold", &AiParamPacket::hostilityThreshold)
 		;
 }

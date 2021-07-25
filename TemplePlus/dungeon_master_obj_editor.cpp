@@ -297,6 +297,11 @@ void DungeonMaster::RenderEditedObj() {
 	}
 
 	if (ImGui::TreeNodeEx("Inventory", ImGuiTreeNodeFlags_CollapsingHeader)) {
+
+		if(ImGui::Button("Prune invalids")) {
+			obj->PruneNullInventoryItems();
+		}
+
 		auto invArr = obj->GetObjectIdArray(obj_f_critter_inventory_list_idx);
 		auto invenCount = invArr.GetSize();
 		
