@@ -114,14 +114,22 @@ class AiFightStatus:
 		return
 
 def aiListFind(obj, tgt, list_type):
+	'''
+	Finds tgt in obj's obj_f_npc_ai_list_idx, while also matching list_type 
+	to the corresponding entry in obj_f_npc_ai_list_type_idx
+	'''
 	if obj == OBJ_HANDLE_NULL or obj.type != obj_t_npc: return False
 	
 	N = obj.obj_get_idx_int_size(obj_f_npc_ai_list_type_idx)
+	N = min(N, obj.obj_get_idx_obj_size(obj_f_npc_ai_list_idx) )
 	if N == 0: return False
 
-	N = min(N, obj.obj_get_idx_int_size(obj_f_npc_ai_list_idx) )
-
-	# for i in range(N):
-	# 	entry_type = 
+	for i in range(N):
+		entry_type = obj.obj_get_idx_int(obj_f_npc_ai_list_type_idx, i)
+		if entry_type != list_type:
+			continue
+		list_obj = obj.obj_get_idx_int(obj_f_npc_ai_list_idx, i)
+		if list_obj == tgt:
+			return True
 
 	return False

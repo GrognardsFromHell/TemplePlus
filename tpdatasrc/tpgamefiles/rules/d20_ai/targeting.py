@@ -49,6 +49,11 @@ def consider_target(attacker, target, aiSearchingTgt=False):
 
 	return 1
 
+def getFriendsCombatFocus(obj, friend, leader):
+	if friend.type != obj_t_npc:
+		return OBJ_HANDLE_NULL
+	aifs = tpai.AiFightStatus(friend)
+
 def find_suitable_target(attacker, aiSearchingTgt):
 	if aiSearchingTgt: return OBJ_HANDLE_NULL
 
@@ -79,7 +84,7 @@ def find_suitable_target(attacker, aiSearchingTgt):
 				kos_candidate = target
 				break
 
-			friendFocus = GetFriendsCombatFocus(attacker, target, leader)
+			friendFocus = getFriendsCombatFocus(attacker, target, leader)
 			if friendFocus != OBJ_HANDLE_NULL:
 				kos_candidate = friendFocus
 				break
