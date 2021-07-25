@@ -179,6 +179,9 @@ struct GameObjectBody {
 	 */
 	void FreezeIds();
 
+	// Removes bad inventory array entries
+	void PruneNullInventoryItems();
+
 	std::unique_ptr<GameObjectBody> Clone() const;
 
 #pragma region Object Field Getters and Setters

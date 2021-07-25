@@ -806,6 +806,44 @@ void GameObjectBody::FreezeIds()
 	SetInternalFlags(internalFlags);
 }
 
+void GameObjectBody::PruneNullInventoryItems()
+{
+	auto handle = objSystem->GetHandleById(this->id);
+	if (!handle) return;
+
+	auto flags = GetInternalFlags();
+	if (flags & 1) { // obj refs are still frozen
+		logger->error("PruneNullInventoryItems: cannot do for frozen refs. Obj {} {}", handle, id.ToString());
+		return;
+	}
+
+
+	auto invenField = inventory.GetInventoryListField(handle);
+	auto invenCountField = inventory.GetInventoryNumField(handle);
+
+	auto invenCountFromField = GetInt32(invenCountField);
+	auto invenCount = GetObjectIdArray(invenField).GetSize();
+	if (invenCount != invenCountFromField) {
+		logger->error("Inventory array count does not equal associated num field.  Array: {}, Field: {}", invenCount, invenCountFromField);
+	}
+
+	for (auto i = 0; i < invenCount; ++i) {
+		auto item = GetObjHndl(invenField, i);
+		if (!item) {
+			logger->error("PruneNullInventoryItems: null inventory item (idx {}) on {}!", i, handle);
+
+			auto lastItem = GetObjHndl(invenField, invenCount - 1);
+			SetObjHndl(invenField, i--, lastItem);
+
+			RemoveObjectId(invenField, invenCount - 1);
+			invenCountFromField--;
+			invenCount--;
+			SetInt32(invenCountField, invenCountFromField);
+			continue;
+		}
+	}
+}
+
 std::unique_ptr<GameObjectBody> GameObjectBody::Clone() const {
 	
 	if (!id.IsPermanent() && !id.IsPositional()) {

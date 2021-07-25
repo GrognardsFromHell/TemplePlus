@@ -128,6 +128,12 @@ void ObjSystem::UnfreezeIds(objHndl handle)
 	obj->UnfreezeIds();
 }
 
+void ObjSystem::PruneNullInventoryIds(objHndl handle)
+{
+	auto obj = GetObject(handle);
+	obj->PruneNullInventoryItems();
+}
+
 bool ObjSystem::IsValidHandle(objHndl handle)
 {
 	if (!handle) {
