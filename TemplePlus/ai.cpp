@@ -1,4 +1,4 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "common.h"
 #include <tig/tig_tabparser.h>
 
@@ -3061,7 +3061,7 @@ int AiSystem::Flank(AiTactic* aiTac)
 		if (!pathfindingSys.PathDestIsClear(performer, &flankLoc))
 		{
 			bool foundFlankLoc = false;
-			// try to tweak the angle; the flank check looks for the range of 120 - 240°, so we'll try 135,165,195,225
+			// try to tweak the angle; the flank check looks for the range of 120 - 240ï¿½, so we'll try 135,165,195,225
 			float tweakAngles[4] = { -15.0, 15.0, -45.0, 45.0 };
 			for (int j = 0; j < 4; j++)
 			{
