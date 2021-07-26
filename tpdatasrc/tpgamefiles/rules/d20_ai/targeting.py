@@ -49,6 +49,58 @@ def consider_target(attacker, target, aiSearchingTgt=False):
 
 	return 1
 
+def getFriendsCombatFocus(obj, friend, leader, aiSearchingTgt = False):
+	if friend.type != obj_t_npc:
+		return OBJ_HANDLE_NULL
+
+	# moved this check here since it's gating anyway; used to be after consider_target
+	if obj.allegiance_strength(friend) == 0:
+		return OBJ_HANDLE_NULL
+
+	aifs = tpai.AiFightStatus(friend)
+	tgt = aifs.target
+	if tgt == OBJ_HANDLE_NULL:
+		return tgt
+	if not aifs.status in [AIFS_FIGHTING, AIFS_FLEEING, AIFS_SURRENDERED]:
+		return OBJ_HANDLE_NULL
+
+	if obj.cannot_hate(tgt, leader):
+		return OBJ_HANDLE_NULL
+
+	if not consider_target(obj, tgt, aiSearchingTgt):
+		return OBJ_HANDLE_NULL
+
+	if not detect(obj, tgt):
+		return OBJ_HANDLE_NULL
+
+	# new in Temple+ : check pathfinding short distances (to simulate sensing nearby critters)
+	pf_flags = PQF_HAS_CRITTER | PQF_IGNORE_CRITTERS | PQF_800 \
+		| PQF_TARGET_OBJ | PQF_ADJUST_RADIUS | PQF_ADJ_RADIUS_REQUIRE_LOS \
+		| PQF_DONT_USE_PATHNODES | PQF_A_STAR_TIME_CAPPED
+	
+	# TODO
+	missing_stub("tpconfig.alertAiThroughDoors")
+	# if tpconfig.alertAiThroughDoors:
+	# 	pf_flags |= PQF_DOORS_ARE_BLOCKING
+
+	path_len = obj.can_find_path_to_obj(tgt, pf_flags)
+	PATH_LEN_MAX = 40
+	if path_len < PATH_LEN_MAX:
+		return tgt
+	
+	# Hmm, this section skips the detection check, might need to be revisited
+	if not obj in game.party:
+		for pc in game.party:
+			path_len = obj.can_find_path_to_obj(tgt, pf_flags)
+			if path_len < PATH_LEN_MAX:
+				return pc
+
+	return OBJ_HANDLE_NULL
+
+def getTargetFromDeadFriend(obj, friend):
+	missing_stub("getTargetFromDeadFriend")
+	return OBJ_HANDLE_NULL
+
 def find_suitable_target(attacker, aiSearchingTgt):
 	if aiSearchingTgt: return OBJ_HANDLE_NULL
 
@@ -79,12 +131,12 @@ def find_suitable_target(attacker, aiSearchingTgt):
 				kos_candidate = target
 				break
 
-			friendFocus = GetFriendsCombatFocus(attacker, target, leader)
+			friendFocus = getFriendsCombatFocus(attacker, target, leader, aiSearchingTgt)
 			if friendFocus != OBJ_HANDLE_NULL:
 				kos_candidate = friendFocus
 				break
 
-		deadFriend = GetTargetFromDeadFriend(attacker, target)
+		deadFriend = getTargetFromDeadFriend(attacker, target)
 		if detect(attacker, deadFriend):
 			kos_candidate = deadFriend
 			break
