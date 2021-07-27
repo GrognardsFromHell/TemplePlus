@@ -56,6 +56,9 @@ public:
 	// Converts object fields and object array fields from IDs to handles
 	void UnfreezeIds(objHndl handle);
 
+	// Prunes null inventory items
+	void PruneNullInventoryIds(objHndl handle);
+
 	// Checks if the given handle points to an active object. Null handles
 	// are considered valid
 	bool IsValidHandle(objHndl handle);

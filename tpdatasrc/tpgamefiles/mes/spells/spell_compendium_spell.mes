@@ -60,7 +60,7 @@
 {1108}{Dirge}
 {1109}{Nixie's Grace}
 {1110}{Ray of Light}
-{1111}{Resistance Superior}
+{1111}{Resistance, Superior}
 {1112}{Strategic Charge}
 {1113}{Blessed Aim}
 {1114}{Clear Mind}
@@ -119,6 +119,8 @@
 {1169}{Tremor}
 {1170}{Weapon of Energy}
 {1171}{Storm of Elemental Fury}
+{1172}{Acid Fog}
+{1173}{Touch of Madness}
 
 // Spell Descriptions
 {6050} Sound Lance {[Evocation] Projectile of intense sonic energy that deals 1d8/level (max 10d8) sonic damage.}
@@ -180,7 +182,7 @@
 {6108} Dirge {[Evocation][Sonic] Each round, enemies in the area takes 2 points of Strength and Dexterity damage. Fortitude save needs to be done every round.}
 {6109} Nixie's Grace {[Transmutation][Water] Gain a DR 5/cold iron, +6 enhancement bonus to Dexterity, a +2 enhancement bonus to Wisdom and a +8 enhancement bonus to Charisma.}
 {6110} Ray of Light {[Evocation][Light] Target is blinded for 1d4 rounds on a successful ranged touch attack.}
-{6111} Resistance Superior {[Abjuration] You grant the subject a +6 resistance bonus on saves.}
+{6111} Resistance, Superior {[Abjuration] You grant the subject a +6 resistance bonus on saves.}
 {6112} Strategic Charge {[Abjuration] You gain the benefit of the Mobility feat, even if you not meet the prerequisites. You do not have to be charging to gain this benefit.}
 {6113} Blessed Aim {[Divination] This spell grants your allies within the spread a +2 morale bonus on ranged attack rolls.}
 {6114} Clear Mind {[Abjuration] You gain a +4 sacred bonus on saving throws made against mind-affecting spells and effects.}
@@ -212,30 +214,32 @@
 {6141} Lawful Sword {[Evocation][Lawful] Weapon becomes a +5 axiomatic weapon for the duration of the spell.}
 {6142} Summon Undead IV {[Conjuration[(Summoning)[Evil] Summon Undead to aid in battle.}
 {6143} Castigate {[Evocation][Sonic] Creatures take 10d4 damage if alignment completly differs, 5d4 if they differ only on one axis and no damage if same alignment.}
-{6144} Summon Undead V {Summon Undead to aid in Battle}
-{6145} Conviction {Abjuration Target gets a +2 morale bonus to saves +1 additional for every 6 levels (max +5 at level 18).}
-{6146} Foundation of Stone {Transmutation[Earth] +2 to AC and +4 to Strength checks to avoid bull rushed or being tripped.}
-{6147} Nightshield {Abjuration +1 (+2 at level 6 and +3 at level 9) bonus to saving throws and immunity to Magic Missile.}
-{6148} Nimbus of Light {Evocation[Light] Deal 1d8 + 1 point of damage per round elapsed since spell was cast (max is your level).}
+{6144} Summon Undead V {[Conjuration](Summoning)[Evil] Summon Undead to aid in Battle}
+{6145} Conviction {[Abjuration] Target gets a +2 morale bonus to saves +1 additional for every 6 levels (max +5 at level 18).}
+{6146} Foundation of Stone {[Transmutation][Earth] +2 to AC and +4 to Strength checks to avoid bull rushed or being tripped.}
+{6147} Nightshield {[Abjuration] +1 (+2 at level 6 and +3 at level 9) bonus to saving throws and immunity to Magic Missile.}
+{6148} Nimbus of Light {[Evocation][Light] Deal 1d8 + 1 point of damage per round elapsed since spell was cast (max is your level).}
 {6149} Brambles {[Transmutation] Wood melee weapon gets +1 bonus to hit and +1 per casterlevel (max +10) on damage rolls.}
 {6150} Deific Vengeance {[Conjuration](Summoning) Deal 1d6/two levels(max 5d6) damage or 1d6/level damage if target is undead.}
 {6151} Frost Breath {[Evocation][Cold] Deal 1d4 cold per two caster levels (max 5d4). Creatures that fail the save are dazed for 1 round.}
 {6152} Ghost Touch Armor {[Transmutation] Armor gains Ghost Touch special ability.}
 {6153} Aid, Mass {[Enchantment](Compulsion)[Mind-Affecting] Like spell Aid, but on multiple targets and temp HP are 1d8 + level (max 15).}
-{6154} Align Weapon, Mass {Transmutation Add the good, evil, lawful or chaotic property to weapons.}
-{6155} Bless Weapon, Swift {Transmutation Weapon becomes good aligned and bypasses magic DR on evil creatures.}
-{6156} Anarchic Storm {Conjuration(Creation)[Chaotic][Water]  Chaotic creatures take 2d6 damage per round (chaotic outsider 4d6). Once per round a random chaotic outsider takes 5d6 acid damage. Everyone gets -4 on Listen, Spot and Search checks and -4 ranged attack penalty while in the storm.}
-{6157} Clutch of Orcus {Necromancy[Evil] Target takes 1d12 damage/round and is paralyzed. Fortitude save each round to end spell.}
-{6158} Conviction Mass {Abjuration Targets get a +2 morale bonus to saves +1 additional for every 6 levels (max +5 at level 18).}
-{6159} Corona of Cold {Evocation[Cold] Aura of Cold surrounds you that deals 1d12 cold damage every round and grants fire resistance 10. On failed saving throws targets also suffer a -2 penalty to Strength and Dexterity.}
-{6161} Demon Dirge {Transmutation Living creature with both chaotic and evil subtypes takes 2d6 damage each round. Stunned in addtion on a failed fortitude if target also has the demon subtype.}
-{6162} Devil Blight {Transmutation Living creature with both lawful and evil subtypes takes 2d6 damage each round. Stunned in addtion on a failed fortitude if target also has the devil subtype.}
-{6163} Energy Vortex {Evocation Deal 1d8 + 1 point/level (max +20) to creatures around you of element type chosen at cast. Deal twice damage if you are willing to take damage as well.}
-{6164} Grace {Transmutation[Good] You get -20 to hide, +2 sacred bonus to Dexterity, +10 movement speed and melee weapon and touch attacks are good aligned.}
-{6165} Resist Energy, Mass {Abjuration As Resist Energy but on multiple targets}
-{6166} Nauseating Breath {Conjuration(Creation) Any creature in cone is nauseated on a failed Fortitude Save for 1d6 rounds.}
-{6167} Slashing Darkness {Evocation Deal 1d8/two levels (max 5d8) to a creature or heal an undead for same amount.}
-{6168} Spikes {Transmutation Wooden melee weapon gets +2 bonus to hit, +1 per casterlevel (max +10) on damage rolls and has double threat range.}
-{6169} Tremor {Evocation[Earth] Creatures in area must make a reflex save or be knocked prone each round, spells require a Concentration Check DC 15 + Spell Level.}
-{6170} Weapon of Energy {Transmutation Add an elemental burst effect to a weapon. Element is chosen when cast.}
-{6171} Storm of Elemental Fury {Conjuration(Summoning) TBD}
+{6154} Align Weapon, Mass {T[ransmutation] Add the good, evil, lawful or chaotic property to weapons.}
+{6155} Bless Weapon, Swift {[Transmutation] Weapon becomes good aligned and bypasses magic DR on evil creatures.}
+{6156} Anarchic Storm {[Conjuration](Creation)[Chaotic][Water]  Chaotic creatures take 2d6 damage per round (chaotic outsider 4d6). Once per round a random chaotic outsider takes 5d6 acid damage. Everyone gets -4 on Listen, Spot and Search checks and -4 ranged attack penalty while in the storm.}
+{6157} Clutch of Orcus {[Necromancy][Evil] Target takes 1d12 damage/round and is paralyzed. Fortitude save each round to end spell.}
+{6158} Conviction Mass {[Abjuration] Targets get a +2 morale bonus to saves +1 additional for every 6 levels (max +5 at level 18).}
+{6159} Corona of Cold {[Evocation][Cold] Aura of Cold surrounds you that deals 1d12 cold damage every round and grants fire resistance 10. On failed saving throws targets also suffer a -2 penalty to Strength and Dexterity.}
+{6161} Demon Dirge {[Transmutation] Living creature with both chaotic and evil subtypes takes 2d6 damage each round. Stunned in addtion on a failed fortitude if target also has the demon subtype.}
+{6162} Devil Blight {[Transmutation] Living creature with both lawful and evil subtypes takes 2d6 damage each round. Stunned in addtion on a failed fortitude if target also has the devil subtype.}
+{6163} Energy Vortex {[Evocation] Deal 1d8 + 1 point/level (max +20) to creatures around you of element type chosen at cast. Deal twice damage if you are willing to take damage as well.}
+{6164} Grace {[Transmutation][Good] You get -20 to hide, +2 sacred bonus to Dexterity, +10 movement speed and melee weapon and touch attacks are good aligned.}
+{6165} Resist Energy, Mass {[Abjuration] As Resist Energy but on multiple targets}
+{6166} Nauseating Breath {[Conjuration](Creation) Any creature in cone is nauseated on a failed Fortitude Save for 1d6 rounds.}
+{6167} Slashing Darkness {[Evocation] Deal 1d8/two levels (max 5d8) to a creature or heal an undead for same amount.}
+{6168} Spikes {[Transmutation] Wooden melee weapon gets +2 bonus to hit, +1 per casterlevel (max +10) on damage rolls and has double threat range.}
+{6169} Tremor {[Evocation][Earth] Creatures in area must make a reflex save or be knocked prone each round, spells require a Concentration Check DC 15 + Spell Level.}
+{6170} Weapon of Energy {[Transmutation] Add an elemental burst effect to a weapon. Element is chosen when cast.}
+{6171} Storm of Elemental Fury {[Conjuration](Summoning) TBD}
+{6172} Acid Fog {[Conjuration](Creation)[Acid] While inside Acid Fog, targets are concealed, can only move 5 feet, are immune to ranged attacks and take 2d6 acid damage every turn.}
+{6173} Touch of Madness {[Enchantment][Mind-Affecting] Target must make a Will Saving Throw after a successful touch attack or be dazed for 1 round/level.}

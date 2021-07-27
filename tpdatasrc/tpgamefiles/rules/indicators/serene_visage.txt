@@ -1,0 +1,5 @@
+ID_string: SERENE_VISAGE
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\spell heroism.tga
+help_topic: TAG_SPELLS_SERENE_VISAGE
+tooltip_base_text: Serene Visage

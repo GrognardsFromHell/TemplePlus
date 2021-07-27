@@ -1,0 +1,21 @@
+School: Enchantment
+Subschool: Compulsion
+Descriptor: Mind-Affecting
+Descriptor: Sonic
+Level: Brd 1
+Component: V
+Component: S
+Casting Time: Swift Action
+Range: Personal
+Saving Throw: Willpower
+Spell Resistance: Yes
+Projectile: No
+flags_Target: Range
+inc_flags_Target: Other
+exc_flags_Target: Self
+exc_flags_Target: Dead
+exc_flags_Target: Non-critter
+mode_Target: Personal
+flags_Target: Radius
+radius_Target: 20
+ai_type: ai_action_offensive

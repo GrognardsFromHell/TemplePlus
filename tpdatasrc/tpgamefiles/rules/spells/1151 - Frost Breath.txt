@@ -1,0 +1,24 @@
+School: Evocation
+Descriptor: Cold
+Level: Clr 2
+Level:  Drd 2
+Level:  Sor 2
+Level:  Wiz 2
+Component: V
+Component: S
+Casting Time: 1 action
+Range: Specified 30
+Saving Throw: Reflex
+Spell Resistance: Yes
+Projectile: No
+flags_Target: Range
+flags_Target: Degrees
+flags_Target: Fixed-radius
+inc_flags_Target: Other
+exc_flags_Target: Dead
+exc_flags_Target: Non-critter
+exc_flags_Target: Self
+mode_Target: Cone
+radius_Target: 60
+degrees_Target: 90
+ai_type: ai_action_offensive

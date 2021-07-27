@@ -26,3 +26,15 @@
 {3026}{Cold amplified}
 {3027}{Electricity amplified}
 {3028}{Fire amplified}
+
+; demonhide
+{3030}{2}
+{3031}{Cold Iron}
+{3032}{Good}
+
+; elements without sonic
+{3040} {4}
+{3041} {Acid}
+{3042} {Cold}
+{3043} {Electricity}
+{3044} {Fire}

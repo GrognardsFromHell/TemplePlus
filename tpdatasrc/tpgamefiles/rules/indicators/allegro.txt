@@ -1,0 +1,5 @@
+ID_string: ALLEGRO
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\spell undersong.tga
+help_topic: TAG_SPELLS_ALLEGRO
+tooltip_base_text: Allegro

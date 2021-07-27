@@ -1,0 +1,5 @@
+ID_string: STICKY_FINGERS
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\spell heroism.tga
+help_topic: TAG_SPELLS_STICKY_FINGERS
+tooltip_base_text: Sticky Fingers
