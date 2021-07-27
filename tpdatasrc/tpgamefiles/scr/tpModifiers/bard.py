@@ -136,7 +136,7 @@ def stopSingingRadial(attachee, args, evt_obj):
 	#Add radial menu entry
 	#0x100FE220 generates Bardic Music RadialMenuEntryParent
 	#But I do not know how to access its ID
-	if attachee.skill_level_get(skill_perform) > 3:
+	if args.get_arg(1):
 		radialStopSingingId = tpdp.RadialMenuEntryPythonAction("Stop Singing", D20A_PYTHON_ACTION, pythonActionStopSingingEnum, 0, "TAG_CLASS_FEATURES_BARD_BARDIC_MUSIC")
 		radialStopSingingId.add_as_child(attachee, tpdp.RadialMenuStandardNode.Class)
 	return 0
