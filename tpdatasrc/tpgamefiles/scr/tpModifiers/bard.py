@@ -114,6 +114,8 @@ classSpecExtender.AddHook(ET_OnD20Query, EK_Q_Get_Arcane_Spell_Failure, BardSpel
 
 
 bardFascEnum = 801
+pythonActionStopSingingEnum = 810
+
 
 def GetBardicMusicType(attachee, args, evt_obj):
 	evt_obj.return_val = args.get_arg(1)
@@ -130,8 +132,27 @@ def BardicMusicEnd(attachee, args, evt_obj):
 	args.set_arg(4,0) # target handle upper
 	return 0
 
+def stopSingingRadial(attachee, args, evt_obj):
+	#Add radial menu entry
+	#0x100FE220 generates Bardic Music RadialMenuEntryParent
+	#But I do not know how to access its ID
+	if attachee.skill_level_get(skill_perform) > 3:
+		radialStopSingingId = tpdp.RadialMenuEntryPythonAction("Stop Singing", D20A_PYTHON_ACTION, pythonActionStopSingingEnum, 0, "TAG_CLASS_FEATURES_BARD_BARDIC_MUSIC")
+		radialStopSingingId.add_as_child(attachee, tpdp.RadialMenuStandardNode.Class)
+	return 0
+
+def stopSingingSignal(attachee, args, evt_obj):
+	if args.get_arg(1):
+		attachee.float_text_line("Stopped Singing")
+		attachee.d20_send_signal("Bardic Music End")
+	else:
+		attachee.float_text_line("Not Singing")
+	return 0
+
 bardicMus = PythonModifier()
 bardicMus.ExtendExisting("Bardic Music")
 bardicMus.AddHook(ET_OnD20PythonQuery, "Bardic Music Type", GetBardicMusicType, ())
 bardicMus.AddHook(ET_OnD20PythonSignal, "Bardic Music End", BardicMusicEnd, ())
 #bardicMus.AddHook(ET_OnD20PythonActionPerform, bardFascEnum, OnStudyTargetPerform, ())
+bardicMus.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, stopSingingRadial, ())
+bardicMus.AddHook(ET_OnD20PythonActionPerform, pythonActionStopSingingEnum, stopSingingSignal, ())
