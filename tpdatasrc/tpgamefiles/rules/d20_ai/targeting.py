@@ -2,6 +2,16 @@ from toee import *
 import tpai
 from d20_ai_utils import *
 
+debug_enabled = False
+
+def debug_print(*args):
+    if debug_enabled:
+        for arg in args:
+            print arg,
+    return
+
+
+
 def missing_stub(msg):
 	print msg
 	return 0
@@ -11,7 +21,8 @@ def missing_stub(msg):
 # In the C(++), this is a global variable. Trying to avoid that.
 def consider_target(attacker, target, aiSearchingTgt=False):
 	if attacker == target: return 0
-
+	# if aiSearchingTgt == False:
+	# 	debug_print("consider_target: " + str(attacker) + " considering " + str(target))
 	attacker_flags = target.obj_get_int(obj_f_critter_flags)
 	ignore_flags = OF_INVULNERABLE | OF_DONTDRAW | OF_OFF | OF_DESTROYED
 	target_flags = target.obj_get_int(obj_f_critter_flags)
@@ -49,6 +60,67 @@ def consider_target(attacker, target, aiSearchingTgt=False):
 
 	return 1
 
+def getFriendsCombatFocus(obj, friend, leader, aiSearchingTgt = False):
+	if friend.type != obj_t_npc:
+		return OBJ_HANDLE_NULL
+
+	# moved this check here since it's gating anyway; used to be after consider_target
+	if obj.allegiance_strength(friend) == 0:
+		return OBJ_HANDLE_NULL
+
+	aifs = tpai.AiFightStatus(friend)
+	tgt = aifs.target
+	if tgt == OBJ_HANDLE_NULL:
+		return tgt
+	if not aifs.status in [AIFS_FIGHTING, AIFS_FLEEING, AIFS_SURRENDERED]:
+		return OBJ_HANDLE_NULL
+
+	if obj.cannot_hate(tgt, leader):
+		return OBJ_HANDLE_NULL
+
+	if not consider_target(obj, tgt, aiSearchingTgt):
+		return OBJ_HANDLE_NULL
+
+	if not detect(obj, tgt):
+		return OBJ_HANDLE_NULL
+
+	# new in Temple+ : check pathfinding short distances (to simulate sensing nearby critters)
+	pf_flags = PQF_HAS_CRITTER | PQF_IGNORE_CRITTERS | PQF_800 \
+		| PQF_TARGET_OBJ | PQF_ADJUST_RADIUS | PQF_ADJ_RADIUS_REQUIRE_LOS \
+		| PQF_DONT_USE_PATHNODES | PQF_A_STAR_TIME_CAPPED
+	
+	# TODO
+	missing_stub("tpconfig.alertAiThroughDoors")
+	# if tpconfig.alertAiThroughDoors:
+	# 	pf_flags |= PQF_DOORS_ARE_BLOCKING
+
+	path_len = obj.can_find_path_to_obj(tgt, pf_flags)
+	PATH_LEN_MAX = 40
+	if path_len < PATH_LEN_MAX:
+		return tgt
+	
+	# Hmm, this section skips the detection check, might need to be revisited
+	if not obj in game.party:
+		for pc in game.party:
+			path_len = obj.can_find_path_to_obj(tgt, pf_flags)
+			if path_len < PATH_LEN_MAX:
+				return pc
+
+	return OBJ_HANDLE_NULL
+
+def getTargetFromDeadFriend(obj, friend):
+	if friend == OBJ_HANDLE_NULL: return OBJ_HANDLE_NULL
+	if not friend.is_dead_or_destroyed(): return OBJ_HANDLE_NULL
+	if friend.type != obj_t_npc: return OBJ_HANDLE_NULL
+	if aiListFind(obj, friend, AI_LIST_ALLY): return OBJ_HANDLE_NULL # is this a bug?
+	
+	if obj.allegiance_strength(friend) == 0:
+		return OBJ_HANDLE_NULL
+	tgt = friend.obj_get_obj(obj_f_npc_combat_focus)
+	if not consider_target(obj, tgt, True): 
+		return OBJ_HANDLE_NULL
+	return tgt
+
 def find_suitable_target(attacker, aiSearchingTgt):
 	if aiSearchingTgt: return OBJ_HANDLE_NULL
 
@@ -79,12 +151,12 @@ def find_suitable_target(attacker, aiSearchingTgt):
 				kos_candidate = target
 				break
 
-			friendFocus = GetFriendsCombatFocus(attacker, target, leader)
+			friendFocus = getFriendsCombatFocus(attacker, target, leader, aiSearchingTgt)
 			if friendFocus != OBJ_HANDLE_NULL:
 				kos_candidate = friendFocus
 				break
 
-		deadFriend = GetTargetFromDeadFriend(attacker, target)
+		deadFriend = getTargetFromDeadFriend(attacker, target)
 		if detect(attacker, deadFriend):
 			kos_candidate = deadFriend
 			break
@@ -162,6 +234,3 @@ def will_kos(attacker, target, aiSearchingTgt):
 
 	return 0
 
-def execute_strategy(obj, target):
-
-	return None # this causes the engine to ignore the result; return 0 / 1 to make it work
