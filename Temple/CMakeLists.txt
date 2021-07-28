@@ -3,7 +3,7 @@ set(PROJECT_NAME Temple)
 ################################################################################
 # Source groups
 ################################################################################
-set(Header_Files
+set(HEADERS
     "include/temple/dll.h"
     "include/temple/materials.h"
     "include/temple/meshes.h"
@@ -12,37 +12,22 @@ set(Header_Files
     "include/temple/vfs.h"
     "include/tig/texture.h"
 )
-source_group("Header Files" FILES ${Header_Files})
 
-set(Source_Files
+set(SOURCES
     "src/dll.cpp"
     "src/meshes.cpp"
     "src/moviesystem.cpp"
     "src/soundsystem.cpp"
     "src/vfs.cpp"
 )
-source_group("Source Files" FILES ${Source_Files})
-
-set(ALL_FILES
-    ${Header_Files}
-    ${Source_Files}
-)
 
 ################################################################################
 # Target
 ################################################################################
-add_library(${PROJECT_NAME} STATIC ${ALL_FILES})
+add_library(${PROJECT_NAME} STATIC ${HEADERS} ${SOURCES})
 
 use_props(${PROJECT_NAME} "${CMAKE_CONFIGURATION_TYPES}" "${DEFAULT_CXX_PROPS}")
-set(ROOT_NAMESPACE TempleWrappers)
 
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    VS_GLOBAL_KEYWORD "Win32Proj"
-)
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    INTERPROCEDURAL_OPTIMIZATION_RELEASE     "TRUE"
-    INTERPROCEDURAL_OPTIMIZATION_TESTWITHIDA "TRUE"
-)
 ################################################################################
 # MSVC runtime library
 ################################################################################
@@ -128,30 +113,7 @@ endif()
 ################################################################################
 # Dependencies
 ################################################################################
-add_dependencies(${PROJECT_NAME}
-    Infrastructure
-)
 
-# Link with other targets.
-target_link_libraries(${PROJECT_NAME} PUBLIC
-    Infrastructure
-)
+target_link_libraries(${PROJECT_NAME} PRIVATE Infrastructure minhook)
 
-set(ADDITIONAL_LIBRARY_DEPENDENCIES
-    "$<$<CONFIG:Debug>:"
-        "minhook_d"
-    ">"
-    "$<$<CONFIG:Release>:"
-        "minhook"
-    ">"
-    "$<$<CONFIG:TestWithIda>:"
-        "minhook"
-    ">"
-    "Infrastructure"
-)
-target_link_libraries(${PROJECT_NAME} PUBLIC "${ADDITIONAL_LIBRARY_DEPENDENCIES}")
-
-target_link_directories(${PROJECT_NAME} PUBLIC
-    "${OUTPUT_DIRECTORY}"
-)
-
+target_link_directories(${PROJECT_NAME} PUBLIC "${OUTPUT_DIRECTORY}")

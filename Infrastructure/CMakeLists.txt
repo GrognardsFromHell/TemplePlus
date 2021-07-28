@@ -3,13 +3,8 @@ set(PROJECT_NAME Infrastructure)
 ################################################################################
 # Source groups
 ################################################################################
-# set(no_group_source_files
-#     "breakpad/LICENSE"
-#     "include/spdlog/LICENSE"
-# )
-# source_group("" FILES ${no_group_source_files})
 
-set(Header_Files
+set(HEADERS
     # "breakpad/breakpad_types.h"
     # "breakpad/crash_generation_client.h"
     # "breakpad/exception_handler.h"
@@ -127,9 +122,8 @@ set(Header_Files
     "src/graphics/shaders_compiler.h"
     "stb_image.h"
 )
-source_group("Header Files" FILES ${Header_Files})
 
-set(Source_Files
+set(SOURCES
     "breakpad.cpp"
     "crypto.cpp"
     "d3d.cpp"
@@ -186,29 +180,15 @@ set(Source_Files
     "vfs.cpp"
     "windows.cpp"
 )
-source_group("Source Files" FILES ${Source_Files})
-
-set(ALL_FILES
-    ${no_group_source_files}
-    ${Header_Files}
-    ${Source_Files}
-)
 
 ################################################################################
 # Target
 ################################################################################
-add_library(${PROJECT_NAME} STATIC ${ALL_FILES})
+add_library(${PROJECT_NAME} STATIC ${HEADERS} ${SOURCES})
+target_link_libraries(${PROJECT_NAME} PUBLIC EASTL)
 
 use_props(${PROJECT_NAME} "${CMAKE_CONFIGURATION_TYPES}" "${DEFAULT_CXX_PROPS}")
-set(ROOT_NAMESPACE Infrastructure)
 
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    VS_GLOBAL_KEYWORD "Win32Proj"
-)
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    INTERPROCEDURAL_OPTIMIZATION_RELEASE     "TRUE"
-    INTERPROCEDURAL_OPTIMIZATION_TESTWITHIDA "TRUE"
-)
 ################################################################################
 # MSVC runtime library
 ################################################################################
@@ -230,13 +210,10 @@ set_target_properties(${PROJECT_NAME} PROPERTIES MSVC_RUNTIME_LIBRARY ${MSVC_RUN
 ################################################################################
 # Include directories
 ################################################################################
-message("Infrastructure include directory: ${CMAKE_CURRENT_SOURCE_DIR}/include")
-message("Source Dir: ${CMAKE_SOURCE_DIR}")
 
 target_include_directories(${PROJECT_NAME} PUBLIC
     #"/usr/share/mingw-w64/include"
     "${CMAKE_CURRENT_SOURCE_DIR}/include"
-    "${CMAKE_SOURCE_DIR}/dependencies/include"
 )
 
 ################################################################################
@@ -298,20 +275,5 @@ endif()
 ################################################################################
 # Dependencies
 ################################################################################
-add_dependencies(${PROJECT_NAME}
-    EASTL
-)
-
-set(ADDITIONAL_LIBRARY_DEPENDENCIES
-    "$<$<CONFIG:Debug>:"
-        "crash_reporting_d"
-    ">"
-    "$<$<CONFIG:Release>:"
-        "crash_reporting"
-    ">"
-    "$<$<CONFIG:TestWithIda>:"
-        "crash_reporting"
-    ">"
-)
-target_link_libraries(${PROJECT_NAME} PUBLIC "${ADDITIONAL_LIBRARY_DEPENDENCIES}")
+target_link_libraries(${PROJECT_NAME} PRIVATE EASTL crash_reporting)
 

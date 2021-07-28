@@ -3,7 +3,7 @@ set(PROJECT_NAME EASTL)
 ################################################################################
 # Source groups
 ################################################################################
-set(Header_Files
+set(HEADERS
     "include/EABase/config/eacompiler.h"
     "include/EABase/config/eacompilertraits.h"
     "include/EABase/config/eaplatform.h"
@@ -111,9 +111,8 @@ set(Header_Files
     "include/EASTL/version.h"
     "include/EASTL/weak_ptr.h"
 )
-source_group("Header Files" FILES ${Header_Files})
 
-set(Source_Files
+set(SOURCES
     "source/allocator_eastl.cpp"
     "source/assert.cpp"
     "source/fixed_pool.cpp"
@@ -124,28 +123,14 @@ set(Source_Files
     "source/string.cpp"
     "source/thread_support.cpp"
 )
-source_group("Source Files" FILES ${Source_Files})
-
-set(ALL_FILES
-    ${Header_Files}
-    ${Source_Files}
-)
 
 ################################################################################
 # Target
 ################################################################################
-add_library(${PROJECT_NAME} STATIC ${ALL_FILES})
+add_library(${PROJECT_NAME} STATIC ${HEADERS} ${SOURCES})
 
 use_props(${PROJECT_NAME} "${CMAKE_CONFIGURATION_TYPES}" "${DEFAULT_CXX_PROPS}")
-set(ROOT_NAMESPACE EASTL)
 
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    VS_GLOBAL_KEYWORD "Win32Proj"
-)
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    INTERPROCEDURAL_OPTIMIZATION_RELEASE     "TRUE"
-    INTERPROCEDURAL_OPTIMIZATION_TESTWITHIDA "TRUE"
-)
 ################################################################################
 # MSVC runtime library
 ################################################################################

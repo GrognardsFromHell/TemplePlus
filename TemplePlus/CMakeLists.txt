@@ -1,5 +1,8 @@
 set(PROJECT_NAME TemplePlus)
 
+add_library(tio STATIC IMPORTED)
+set_target_properties(tio PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/tio/tio.lib)
+
 ################################################################################
 # Source groups
 ################################################################################
@@ -363,6 +366,7 @@ set(python
     "python/python_globalflags.h"
     "python/python_globalvars.cpp"
     "python/python_globalvars.h"
+    "python/python_gui.cpp"
     "python/python_header.h"
     "python/python_importer.cpp"
     "python/python_importer.h"
@@ -405,6 +409,7 @@ set(python
     "python/python_trap.h"
     "python/pythonglobal.cpp"
     "python/pythonglobal.h"
+    "ui/ui_python.h"
 )
 source_group("python" FILES ${python})
 
@@ -548,14 +553,7 @@ add_executable(${PROJECT_NAME} ${ALL_FILES})
 add_precompiled_header(${PROJECT_NAME} "stdafx.h" "stdafx.cpp")
 
 use_props(${PROJECT_NAME} "${CMAKE_CONFIGURATION_TYPES}" "${DEFAULT_CXX_PROPS}")
-set(ROOT_NAMESPACE TemplePlus)
 
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    VS_GLOBAL_KEYWORD "Win32Proj"
-)
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    INTERPROCEDURAL_OPTIMIZATION_RELEASE     "TRUE"
-)
 ################################################################################
 # MSVC runtime library
 ################################################################################
@@ -705,67 +703,29 @@ add_custom_command_if(
 ################################################################################
 # Dependencies
 ################################################################################
-add_dependencies(${PROJECT_NAME}
-    Infrastructure
-    ParticleSystems
-    Temple
-    EASTL
-)
-
 # Link with other targets.
 target_link_libraries(${PROJECT_NAME} PRIVATE
+    EASTL
     Infrastructure
     ParticleSystems
     Temple
+    libjpegturbo
+    python
+    libeay
+    ssleay
+    tio
 )
 
-set(ADDITIONAL_LIBRARY_DEPENDENCIES
-    "$<$<CONFIG:Debug>:"
-        "d2d1;"
-        "dwrite;"
-        "dxguid;"
-        "d3d11;"
-        "dxgi;"
-        "d3dcompiler;"
-        "EASTL;"
-        "psapi;"
-        "turbojpeg-static_d;"
-        "particlesystems;"
-        "temple;"
-        "Infrastructure;"
-        "d3d9;"
-        "python27_d"
-    ">"
-    "$<$<CONFIG:Release>:"
-        "d2d1;"
-        "dwrite;"
-        "dxguid;"
-        "d3d11;"
-        "dxgi;"
-        "d3dcompiler;"
-        "EASTL;"
-        "psapi;"
-        "turbojpeg-static;"
-        "particlesystems;"
-        "temple;"
-        "Infrastructure;"
-        "python27"
-    ">"
-    "$<$<CONFIG:TestWithIda>:"
-        "d3d9;"
-        "pythonembed_d"
-    ">"
-    "tio\tio;"
-    "winmm;"
-    "Crypt32;"
-    "ws2_32;"
-    "libeay32;"
-    "ssleay32"
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    d2d1.lib
+    dwrite.lib
+    dxguid.lib
+    d3d11.lib
+    dxgi.lib
+    d3dcompiler.lib
+    winmm.lib
+    Crypt32.lib
+    ws2_32.lib
+    delayimp.lib
+    psapi.lib
 )
-target_link_libraries(${PROJECT_NAME} PRIVATE "${ADDITIONAL_LIBRARY_DEPENDENCIES}")
-
-target_link_directories(${PROJECT_NAME} PRIVATE
-    "${CMAKE_SOURCE_DIR}/dependencies/lib;"
-    "${OUTPUT_DIRECTORY}"
-)
-

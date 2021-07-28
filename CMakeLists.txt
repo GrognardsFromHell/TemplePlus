@@ -4,6 +4,9 @@ set(CMAKE_SYSTEM_VERSION 10.0 CACHE STRING "" FORCE)
 
 project(TemplePlus CXX)
 
+# We generally use LTCG a.k.a. INTERPROCEDURAL_OPTIMIZATION
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
+
 ################################################################################
 # Set target arch type if empty. Visual studio solution generator provides it.
 ################################################################################
@@ -83,6 +86,36 @@ include(CMake/GlobalSettingsInclude.cmake OPTIONAL)
 # Use solution folders feature
 ################################################################################
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
+##### Define pseudo-target for dependencies
+set(DEPENDENCIES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/)
+
+add_library(crash_reporting STATIC IMPORTED GLOBAL)
+set_target_properties(crash_reporting PROPERTIES IMPORTED_LOCATION ${DEPENDENCIES_DIR}lib/crash_reporting.lib)
+set_target_properties(crash_reporting PROPERTIES IMPORTED_LOCATION_DEBUG ${DEPENDENCIES_DIR}lib/crash_reporting_d.lib)
+target_include_directories(crash_reporting INTERFACE ${DEPENDENCIES_DIR}/include)
+
+add_library(minhook STATIC IMPORTED GLOBAL)
+set_target_properties(minhook PROPERTIES IMPORTED_LOCATION ${DEPENDENCIES_DIR}lib/minhook.lib)
+set_target_properties(minhook PROPERTIES IMPORTED_LOCATION_DEBUG ${DEPENDENCIES_DIR}lib/minhook_d.lib)
+target_include_directories(minhook INTERFACE ${DEPENDENCIES_DIR}/include)
+
+add_library(libjpegturbo STATIC IMPORTED GLOBAL)
+set_target_properties(libjpegturbo PROPERTIES IMPORTED_LOCATION ${DEPENDENCIES_DIR}lib/turbojpeg-static.lib)
+set_target_properties(libjpegturbo PROPERTIES IMPORTED_LOCATION_DEBUG ${DEPENDENCIES_DIR}lib/turbojpeg-static_d.lib)
+target_include_directories(libjpegturbo INTERFACE ${DEPENDENCIES_DIR}/include)
+
+add_library(python STATIC IMPORTED GLOBAL)
+set_target_properties(python PROPERTIES IMPORTED_LOCATION ${DEPENDENCIES_DIR}lib/python27.lib)
+set_target_properties(python PROPERTIES IMPORTED_LOCATION_DEBUG ${DEPENDENCIES_DIR}lib/python27_d.lib)
+target_include_directories(python INTERFACE ${DEPENDENCIES_DIR}/include)
+
+add_library(libeay STATIC IMPORTED GLOBAL)
+set_target_properties(libeay PROPERTIES IMPORTED_LOCATION ${DEPENDENCIES_DIR}lib/libeay32.lib)
+target_include_directories(libeay INTERFACE ${DEPENDENCIES_DIR}/include)
+add_library(ssleay STATIC IMPORTED GLOBAL)
+set_target_properties(ssleay PROPERTIES IMPORTED_LOCATION ${DEPENDENCIES_DIR}lib/ssleay32.lib)
+target_include_directories(ssleay INTERFACE ${DEPENDENCIES_DIR}/include)
 
 ################################################################################
 # Sub-projects
