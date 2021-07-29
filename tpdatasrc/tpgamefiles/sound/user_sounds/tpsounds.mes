@@ -42,6 +42,10 @@
 {9006}{} // spell projectile in-flight
 {9007}{spells\sp_enervation_hit.wav} // spell hit
 
+// [242] *[Implosion]
+{10847}{spells\sp_implosion_hit.mp3} // hit
+{10849}{spells\sp_implosion_miss.mp3} // miss
+
 // 590: Disrupting Weapon
 {17800} {} // begin
 {17801} {} // end
