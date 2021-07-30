@@ -185,13 +185,13 @@ def to_hit_processing(d20a):
         to_hit_eo.attack_packet.set_weapon_used(unarmed)
     elif to_hit_eo.attack_packet.get_flags() & D20CAF_SECONDARY_WEAPON:
         offhandItem = performer.item_worn_at(item_wear_weapon_secondary)
-        if offhandItem.type != obj_t_weapon:
+        if offhandItem == OBJ_HANDLE_NULL or offhandItem.type != obj_t_weapon:
             to_hit_eo.attack_packet.set_weapon_used(unarmed)
         else:
             to_hit_eo.attack_packet.set_weapon_used(offhandItem)
     else:
         mainhandItem = performer.item_worn_at(item_wear_weapon_primary)
-        if mainhandItem.type != obj_t_weapon:
+        if mainhandItem == OBJ_HANDLE_NULL or mainhandItem.type != obj_t_weapon:
             to_hit_eo.attack_packet.set_weapon_used(unarmed)
         else:
             to_hit_eo.attack_packet.set_weapon_used(mainhandItem)
