@@ -2709,6 +2709,11 @@ bool LegacySpellSystem::GetSpellTargets(objHndl obj, objHndl tgt, SpellPacketBod
 		}
 		uiPicker.GetListRange(&loc, &pickArgs);
 		break;
+	case UiPickerType::Ray:
+		if (!tgt) return false;
+		loc = objSystem->GetObject(tgt)->GetLocationFull();
+		uiPicker.GetListRange(&loc, &pickArgs);
+		break;
 	default:
 		break;
 	} 
