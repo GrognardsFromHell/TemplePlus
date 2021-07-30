@@ -79,7 +79,7 @@ def DivineSpellPowerCasterLevelBonus(attachee, args, evt_obj):
 		# Prevent invalid caster levels
 		casterBonus = args.get_arg(1)
 		casterLevel = evt_obj.return_val + casterBonus
-		evt_obj.return_val += max(casterLevel, 1)
+		evt_obj.return_val = max(casterLevel, 1)
 		
 	return 0
 

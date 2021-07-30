@@ -2222,7 +2222,7 @@ ActionErrorCode D20ActionCallbacks::ActionCheckPython(D20Actn* d20a, TurnBasedSt
 
 	DispIoD20ActionTurnBased evtObj(d20a);
 
-	evtObj.DispatchPythonActionCheck((D20DispatcherKey)d20a->data1);
+	evtObj.DispatchPythonActionCheck((D20DispatcherKey)d20a->GetPythonActionEnum());
 
 	return (ActionErrorCode)evtObj.returnVal;
 
