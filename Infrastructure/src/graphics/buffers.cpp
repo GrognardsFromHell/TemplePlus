@@ -12,7 +12,7 @@ IndexBuffer::IndexBuffer(CComPtr<ID3D11Buffer> buffer, size_t count)
 IndexBuffer::~IndexBuffer() {
 }
 
-void IndexBuffer::Update(gsl::span<uint16_t> data) {
+void IndexBuffer::Update(std::span<uint16_t> data) {
 	renderingDevice->UpdateBuffer(*this, data);
 }
 
@@ -22,7 +22,7 @@ VertexBuffer::VertexBuffer(CComPtr<ID3D11Buffer> buffer, size_t size) : mSize(si
 VertexBuffer::~VertexBuffer() {
 }
 
-void VertexBuffer::Update(gsl::span<const uint8_t> data) {
+void VertexBuffer::Update(std::span<const uint8_t> data) {
 	renderingDevice->UpdateBuffer(*this, data);
 }
 

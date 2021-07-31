@@ -132,323 +132,323 @@ public:
 	}
 
 	VagrantSystem& GetVagrant() const {
-		Expects(!!mVagrant);
+		assert(!!mVagrant);
 		return *mVagrant;
 	}
 	DescriptionSystem& GetDescription() const {
-		Expects(!!mDescription);
+		assert(!!mDescription);
 		return *mDescription;
 	}
 	ItemEffectSystem& GetItemEffect() const {
-		Expects(!!mItemEffect);
+		assert(!!mItemEffect);
 		return *mItemEffect;
 	}
 	TeleportSystem& GetTeleport() const {
-		Expects(!!mTeleport);
+		assert(!!mTeleport);
 		return *mTeleport;
 	}
 	SectorSystem& GetSector() const {
-		Expects(!!mSector);
+		assert(!!mSector);
 		return *mSector;
 	}
 	RandomSystem& GetRandom() const {
-		Expects(!!mRandom);
+		assert(!!mRandom);
 		return *mRandom;
 	}
 	CritterSystem& GetCritter() const {
-		Expects(!!mCritter);
+		assert(!!mCritter);
 		return *mCritter;
 	}
 	ScriptNameSystem& GetScriptName() const {
-		Expects(!!mScriptName);
+		assert(!!mScriptName);
 		return *mScriptName;
 	}
 	PortraitSystem& GetPortrait() const {
-		Expects(!!mPortrait);
+		assert(!!mPortrait);
 		return *mPortrait;
 	}
 	SkillSystem& GetSkill() const {
-		Expects(!!mSkill);
+		assert(!!mSkill);
 		return *mSkill;
 	}
 	FeatSystem& GetFeat() const {
-		Expects(!!mFeat);
+		assert(!!mFeat);
 		return *mFeat;
 	}
 	SpellSystem& GetSpell() const {
-		Expects(!!mSpell);
+		assert(!!mSpell);
 		return *mSpell;
 	}
 	StatSystem& GetStat() const {
-		Expects(!!mStat);
+		assert(!!mStat);
 		return *mStat;
 	}
 	ScriptSystem& GetScript() const {
-		Expects(!!mScript);
+		assert(!!mScript);
 		return *mScript;
 	}
 	LevelSystem& GetLevel() const {
-		Expects(!!mLevel);
+		assert(!!mLevel);
 		return *mLevel;
 	}
 	D20System& GetD20() const {
-		Expects(!!mD20);
+		assert(!!mD20);
 		return *mD20;
 	}
 	MapSystem& GetMap() const {
-		Expects(!!mMap);
+		assert(!!mMap);
 		return *mMap;
 	}
 	ScrollSystem& GetScroll() const {
-		Expects(!!mScroll);
+		assert(!!mScroll);
 		return *mScroll;
 	}
 	LocationSystem& GetLocation() const {
-		Expects(!!mLocation);
+		assert(!!mLocation);
 		return *mLocation;
 	}
 	LightSystem& GetLight() const {
-		Expects(!!mLight);
+		assert(!!mLight);
 		return *mLight;
 	}
 	TileSystem& GetTile() const {
-		Expects(!!mTile);
+		assert(!!mTile);
 		return *mTile;
 	}
 	ONameSystem& GetOName() const {
-		Expects(!!mOName);
+		assert(!!mOName);
 		return *mOName;
 	}
 	ObjectNodeSystem& GetObjectNode() const {
-		Expects(!!mObjectNode);
+		assert(!!mObjectNode);
 		return *mObjectNode;
 	}
 	ObjSystem& GetObj() const {
-		Expects(!!mObj);
+		assert(!!mObj);
 		return *mObj;
 	}
 	ProtoSystem& GetProto() const {
-		Expects(!!mProto);
+		assert(!!mProto);
 		return *mProto;
 	}
 	ObjectSystem& GetObject() const {
-		Expects(!!mObject);
+		assert(!!mObject);
 		return *mObject;
 	}
 	MapSectorSystem& GetMapSector() const {
-		Expects(!!mMapSector);
+		assert(!!mMapSector);
 		return *mMapSector;
 	}
 	SectorVBSystem& GetSectorVB() const {
-		Expects(!!mSectorVB);
+		assert(!!mSectorVB);
 		return *mSectorVB;
 	}
 	TextBubbleSystem& GetTextBubble() const {
-		Expects(!!mTextBubble);
+		assert(!!mTextBubble);
 		return *mTextBubble;
 	}
 	TextFloaterSystem& GetTextFloater() const {
-		Expects(!!mTextFloater);
+		assert(!!mTextFloater);
 		return *mTextFloater;
 	}
 	JumpPointSystem& GetJumpPoint() const {
-		Expects(!!mJumpPoint);
+		assert(!!mJumpPoint);
 		return *mJumpPoint;
 	}
 	TerrainSystem& GetTerrain() const {
-		Expects(!!mTerrain);
+		assert(!!mTerrain);
 		return *mTerrain;
 	}
 	ClippingSystem& GetClipping() const {
-		Expects(!!mClipping);
+		assert(!!mClipping);
 		return *mClipping;
 	}
 	HeightSystem& GetHeight() const {
-		Expects(!!mHeight);
+		assert(!!mHeight);
 		return *mHeight;
 	}
 	GMeshSystem& GetGMesh() const {
-		Expects(!!mGMesh);
+		assert(!!mGMesh);
 		return *mGMesh;
 	}
 	PathNodeSystem& GetPathNode() const {
-		Expects(!!mPathNode);
+		assert(!!mPathNode);
 		return *mPathNode;
 	}
 	LightSchemeSystem& GetLightScheme() const {
-		Expects(!!mLightScheme);
+		assert(!!mLightScheme);
 		return *mLightScheme;
 	}
 	PlayerSystem& GetPlayer() const {
-		Expects(!!mPlayer);
+		assert(!!mPlayer);
 		return *mPlayer;
 	}
 	AreaSystem& GetArea() const {
-		Expects(!!mArea);
+		assert(!!mArea);
 		return *mArea;
 	}
 	DialogSystem& GetDialog() const {
-		Expects(!!mDialog);
+		assert(!!mDialog);
 		return *mDialog;
 	}
 	SoundMapSystem& GetSoundMap() const {
-		Expects(!!mSoundMap);
+		assert(!!mSoundMap);
 		return *mSoundMap;
 	}
 	SoundGameSystem& GetSoundGame() const {
-		Expects(!!mSoundGame);
+		assert(!!mSoundGame);
 		return *mSoundGame;
 	}
 	ItemSystem& GetItem() const {
-		Expects(!!mItem);
+		assert(!!mItem);
 		return *mItem;
 	}
 	CombatSystem& GetCombat() const {
-		Expects(!!mCombat);
+		assert(!!mCombat);
 		return *mCombat;
 	}
 	TimeEventSystem& GetTimeEvent() const {
-		Expects(!!mTimeEvent);
+		assert(!!mTimeEvent);
 		return *mTimeEvent;
 	}
 	RumorSystem& GetRumor() const {
-		Expects(!!mRumor);
+		assert(!!mRumor);
 		return *mRumor;
 	}
 	QuestSystem& GetQuest() const {
-		Expects(!!mQuest);
+		assert(!!mQuest);
 		return *mQuest;
 	}
 	AISystem& GetAI() const {
-		Expects(!!mAI);
+		assert(!!mAI);
 		return *mAI;
 	}
 	AnimSystem& GetAnim() const {
-		Expects(!!mAnim);
+		assert(!!mAnim);
 		return *mAnim;
 	}
 	AnimPrivateSystem& GetAnimPrivate() const {
-		Expects(!!mAnimPrivate);
+		assert(!!mAnimPrivate);
 		return *mAnimPrivate;
 	}
 	ReputationSystem& GetReputation() const {
-		Expects(!!mReputation);
+		assert(!!mReputation);
 		return *mReputation;
 	}
 	ReactionSystem& GetReaction() const {
-		Expects(!!mReaction);
+		assert(!!mReaction);
 		return *mReaction;
 	}
 	TileScriptSystem& GetTileScript() const {
-		Expects(!!mTileScript);
+		assert(!!mTileScript);
 		return *mTileScript;
 	}
 	SectorScriptSystem& GetSectorScript() const {
-		Expects(!!mSectorScript);
+		assert(!!mSectorScript);
 		return *mSectorScript;
 	}
 	WPSystem& GetWP() const {
-		Expects(!!mWP);
+		assert(!!mWP);
 		return *mWP;
 	}
 	InvenSourceSystem& GetInvenSource() const {
-		Expects(!!mInvenSource);
+		assert(!!mInvenSource);
 		return *mInvenSource;
 	}
 	TownMapSystem& GetTownMap() const {
-		Expects(!!mTownMap);
+		assert(!!mTownMap);
 		return *mTownMap;
 	}
 	GMovieSystem& GetGMovie() const {
-		Expects(!!mGMovie);
+		assert(!!mGMovie);
 		return *mGMovie;
 	}
 	BrightnessSystem& GetBrightness() const {
-		Expects(!!mBrightness);
+		assert(!!mBrightness);
 		return *mBrightness;
 	}
 	GFadeSystem& GetGFade() const {
-		Expects(!!mGFade);
+		assert(!!mGFade);
 		return *mGFade;
 	}
 	AntiTeleportSystem& GetAntiTeleport() const {
-		Expects(!!mAntiTeleport);
+		assert(!!mAntiTeleport);
 		return *mAntiTeleport;
 	}
 	TrapSystem& GetTrap() const {
-		Expects(!!mTrap);
+		assert(!!mTrap);
 		return *mTrap;
 	}
 	MonsterGenSystem& GetMonsterGen() const {
-		Expects(!!mMonsterGen);
+		assert(!!mMonsterGen);
 		return *mMonsterGen;
 	}
 	PartySystem& GetParty() const {
-		Expects(!!mParty);
+		assert(!!mParty);
 		return *mParty;
 	}
 	D20LoadSaveSystem& GetD20LoadSave() const {
-		Expects(!!mD20LoadSave);
+		assert(!!mD20LoadSave);
 		return *mD20LoadSave;
 	}
 	GameInitSystem& GetGameInit() const {
-		Expects(!!mGameInit);
+		assert(!!mGameInit);
 		return *mGameInit;
 	}
 	ObjFadeSystem& GetObjFade() const {
-		Expects(!!mObjFade);
+		assert(!!mObjFade);
 		return *mObjFade;
 	}
 	DeitySystem& GetDeity() const {
-		Expects(!!mDeity);
+		assert(!!mDeity);
 		return *mDeity;
 	}
 	UiArtManagerSystem& GetUiArtManager() const {
-		Expects(!!mUiArtManager);
+		assert(!!mUiArtManager);
 		return *mUiArtManager;
 	}
 	ParticleSysSystem& GetParticleSys() const {
-		Expects(!!mParticleSys);
+		assert(!!mParticleSys);
 		return *mParticleSys;
 	}
 	CheatsSystem& GetCheats() const {
-		Expects(!!mCheats);
+		assert(!!mCheats);
 		return *mCheats;
 	}
 	D20RollsSystem& GetD20Rolls() const {
-		Expects(!!mD20Rolls);
+		assert(!!mD20Rolls);
 		return *mD20Rolls;
 	}
 	SecretdoorSystem& GetSecretdoor() const {
-		Expects(!!mSecretdoor);
+		assert(!!mSecretdoor);
 		return *mSecretdoor;
 	}
 	MapFoggingSystem& GetMapFogging() const {
-		Expects(!!mMapFogging);
+		assert(!!mMapFogging);
 		return *mMapFogging;
 	}
 	RandomEncounterSystem& GetRandomEncounter() const {
-		Expects(!!mRandomEncounter);
+		assert(!!mRandomEncounter);
 		return *mRandomEncounter;
 	}
 	ObjectEventSystem& GetObjectEvent() const {
-		Expects(!!mObjectEvent);
+		assert(!!mObjectEvent);
 		return *mObjectEvent;
 	}
 	FormationSystem& GetFormation() const {
-		Expects(!!mFormation);
+		assert(!!mFormation);
 		return *mFormation;
 	}
 	ItemHighlightSystem& GetItemHighlight() const {
-		Expects(!!mItemHighlight);
+		assert(!!mItemHighlight);
 		return *mItemHighlight;
 	}
 	PathXSystem& GetPathX() const {
-		Expects(!!mPathX);
+		assert(!!mPathX);
 		return *mPathX;
 	}
 	PoisonSystem& GetPoison() const {
-		Expects(!!mPoison);
+		assert(!!mPoison);
 		return *mPoison;
 	}
 
@@ -458,7 +458,7 @@ public:
 	}
 
 	gfx::AnimatedModelFactory& GetAAS() const {
-		Expects(!!mAAS);
+		assert(!!mAAS);
 		return *mAAS;
 	}
 

@@ -58,184 +58,184 @@ public:
 	~UiSystems();
 
 	UiMainMenu& GetMainMenu() const {
-		Expects(!!mMainMenu);
+		assert(!!mMainMenu);
 		return *mMainMenu;
 	}
 	UiMM& GetMM() const {
-		Expects(!!mMM);
+		assert(!!mMM);
 		return *mMM;
 	}
 	UiLoadGame& GetLoadGame() const {
-		Expects(!!mLoadGame);
+		assert(!!mLoadGame);
 		return *mLoadGame;
 	}
 	UiSaveGame& GetSaveGame() const {
-		Expects(!!mSaveGame);
+		assert(!!mSaveGame);
 		return *mSaveGame;
 	}
 	UiInGame& GetInGame() const {
-		Expects(!!mInGame);
+		assert(!!mInGame);
 		return *mInGame;
 	}
 	UiInGameSelect& GetInGameSelect() const {
-		Expects(!!mInGameSelect);
+		assert(!!mInGameSelect);
 		return *mInGameSelect;
 	}
 	UiRadialMenu& GetRadialMenu() const {
-		Expects(!!mRadialMenu);
+		assert(!!mRadialMenu);
 		return *mRadialMenu;
 	}
 	UiTurnBased& GetTurnBased() const {
-		Expects(!!mTurnBased);
+		assert(!!mTurnBased);
 		return *mTurnBased;
 	}
 	UiAnim& GetAnim() const {
-		Expects(!!mAnim);
+		assert(!!mAnim);
 		return *mAnim;
 	}
 	UiTB& GetTB() const {
-		Expects(!!mTB);
+		assert(!!mTB);
 		return *mTB;
 	}
 	UiWMapRnd& GetWMapRnd() const {
-		Expects(!!mWMapRnd);
+		assert(!!mWMapRnd);
 		return *mWMapRnd;
 	}
 	UiCombat& GetCombat() const {
-		Expects(!!mCombat);
+		assert(!!mCombat);
 		return *mCombat;
 	}
 	UiSlide& GetSlide() const {
-		Expects(!!mSlide);
+		assert(!!mSlide);
 		return *mSlide;
 	}
 	UiDlg& GetDlg() const {
-		Expects(!!mDlg);
+		assert(!!mDlg);
 		return *mDlg;
 	}
 	UiPcCreationSys& GetPcCreation() const {
-		Expects(!!mPcCreation);
+		assert(!!mPcCreation);
 		return *mPcCreation;
 	}
 	UiChar& GetChar() const {
-		Expects(!!mChar);
+		assert(!!mChar);
 		return *mChar;
 	}
 	UiToolTip& GetToolTip() const {
-		Expects(!!mToolTip);
+		assert(!!mToolTip);
 		return *mToolTip;
 	}
 	UiLogbook& GetLogbook() const {
-		Expects(!!mLogbook);
+		assert(!!mLogbook);
 		return *mLogbook;
 	}
 	UiScrollpane& GetScrollpane() const {
-		Expects(!!mScrollpane);
+		assert(!!mScrollpane);
 		return *mScrollpane;
 	}
 	UiTownmap& GetTownmap() const {
-		Expects(!!mTownmap);
+		assert(!!mTownmap);
 		return *mTownmap;
 	}
 	UiPopup& GetPopup() const {
-		Expects(!!mPopup);
+		assert(!!mPopup);
 		return *mPopup;
 	}
 	UiTextDialog& GetTextDialog() const {
-		Expects(!!mTextDialog);
+		assert(!!mTextDialog);
 		return *mTextDialog;
 	}
 	UiFocusManager& GetFocusManager() const {
-		Expects(!!mFocusManager);
+		assert(!!mFocusManager);
 		return *mFocusManager;
 	}
 	UiWorldmap& GetWorldmap() const {
-		Expects(!!mWorldmap);
+		assert(!!mWorldmap);
 		return *mWorldmap;
 	}
 	UiRandomEncounter& GetRandomEncounter() const {
-		Expects(!!mRandomEncounter);
+		assert(!!mRandomEncounter);
 		return *mRandomEncounter;
 	}
 	UiHelp& GetHelp() const {
-		Expects(!!mHelp);
+		assert(!!mHelp);
 		return *mHelp;
 	}
 	UiItemCreation& GetItemCreation() const {
-		Expects(!!mItemCreation);
+		assert(!!mItemCreation);
 		return *mItemCreation;
 	}
 	UiSkillMastery& GetSkillMastery() const {
-		Expects(!!mSkillMastery);
+		assert(!!mSkillMastery);
 		return *mSkillMastery;
 	}
 	UiUtilityBar& GetUtilityBar() const {
-		Expects(!!mUtilityBar);
+		assert(!!mUtilityBar);
 		return *mUtilityBar;
 	}
 	UiDM & GetDM() const {
-		Expects(!!mDungeonMaster);
+		assert(!!mDungeonMaster);
 		return *mDungeonMaster;
 	}
 	UiTrack& GetTrack() const {
-		Expects(!!mTrack);
+		assert(!!mTrack);
 		return *mTrack;
 	}
 	UiPartyPool& GetPartyPool() const {
-		Expects(!!mPartyPool);
+		assert(!!mPartyPool);
 		return *mPartyPool;
 	}
 	UiPccPortrait& GetPccPortrait() const {
-		Expects(!!mPccPortrait);
+		assert(!!mPccPortrait);
 		return *mPccPortrait;
 	}
 	UiParty& GetParty() const {
-		Expects(!!mParty);
+		assert(!!mParty);
 		return *mParty;
 	}
 	UiFormation& GetFormation() const {
-		Expects(!!mFormation);
+		assert(!!mFormation);
 		return *mFormation;
 	}
 	UiCamping& GetCamping() const {
-		Expects(!!mCamping);
+		assert(!!mCamping);
 		return *mCamping;
 	}
 	UiHelpInventory& GetHelpInventory() const {
-		Expects(!!mHelpInventory);
+		assert(!!mHelpInventory);
 		return *mHelpInventory;
 	}
 	UiPartyQuickview& GetPartyQuickview() const {
-		Expects(!!mPartyQuickview);
+		assert(!!mPartyQuickview);
 		return *mPartyQuickview;
 	}
 	UiOptions& GetOptions() const {
-		Expects(!!mOptions);
+		assert(!!mOptions);
 		return *mOptions;
 	}
 	UiKeyManager& GetManager() const {
-		Expects(!!mManager);
+		assert(!!mManager);
 		return *mManager;
 	}
 	UiHelpManager& GetHelpManager() const {
-		Expects(!!mHelpManager);
+		assert(!!mHelpManager);
 		return *mHelpManager;
 	}
 	UiSlider& GetSlider() const {
-		Expects(!!mSlider);
+		assert(!!mSlider);
 		return *mSlider;
 	}
 	UiWritten& GetWritten() const {
-		Expects(!!mWritten);
+		assert(!!mWritten);
 		return *mWritten;
 	}
 	UiCharmap& GetCharmap() const {
-		Expects(!!mCharmap);
+		assert(!!mCharmap);
 		return *mCharmap;
 	}
 
 	UiPython& GetPython() const {
-		Expects(!!mPython);
+		assert(!!mPython);
 		return *mPython;
 	}
 

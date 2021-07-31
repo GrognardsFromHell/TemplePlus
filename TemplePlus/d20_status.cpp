@@ -323,7 +323,7 @@ void D20StatusSystem::initItemConditions(objHndl objHnd)
 					auto monsterCondId = condArray[i]; //conds.GetByName("Tripping Bite");
 					auto monsterCond = conds.GetById(monsterCondId); // this should be assured due to check in proto parser for valid conds (protos.cpp)
 					if (!monsterCond) continue;
-					for (auto j = 0; j < monsterCond->numArgs; ++j) {
+					for (auto j = 0u; j < monsterCond->numArgs; ++j) {
 						condArgs[j] = condArgArray[argIdx++];
 					}
 
@@ -340,7 +340,7 @@ void D20StatusSystem::initItemConditions(objHndl objHnd)
 void D20StatusSystem::InitFromItemConditionFields(Dispatcher * dispatcher, objHndl item, int invIdx){
 
 	auto itemObj = gameSystems->GetObj().GetObject(item);
-	auto &itemConds = itemObj->GetInt32Array(obj_f_item_pad_wielder_condition_array);
+	auto itemConds = itemObj->GetInt32Array(obj_f_item_pad_wielder_condition_array);
 	auto itemArgs = itemObj->GetInt32Array(obj_f_item_pad_wielder_argument_array);
 	int condArgs[64];
 

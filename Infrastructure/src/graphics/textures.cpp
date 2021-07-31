@@ -167,15 +167,15 @@ private:
 	void MarkUsed();
 
 	void Load() {
-		Expects(!mResourceView);
+		assert(!mResourceView);
 		mResourceView = mLoader->Load(mFilename, mContentRect, mSize);
 		
 		if (mResourceView) {
 			mMetadataValid = true;
 						
 			// The texture should not be in the MRU cache at this point
-			Expects(!this->mNextMoreRecentlyUsed);
-			Expects(!this->mNextLessRecentlyUsed);
+			assert(!this->mNextMoreRecentlyUsed);
+			assert(!this->mNextLessRecentlyUsed);
 			MakeMru();
 		}
 	}
@@ -243,7 +243,7 @@ void FileTexture::MarkUsed() {
 
 void FileTexture::MakeMru() {
 	if (mLoader->mMostRecentlyUsed) {
-		Expects(!mLoader->mMostRecentlyUsed->mNextMoreRecentlyUsed);
+		assert(!mLoader->mMostRecentlyUsed->mNextMoreRecentlyUsed);
 		mLoader->mMostRecentlyUsed->mNextMoreRecentlyUsed = this;		
 	}
 
@@ -258,21 +258,21 @@ void FileTexture::MakeMru() {
 
 void FileTexture::DisconnectMru() {
 	if (mNextLessRecentlyUsed) {
-		Expects(mNextLessRecentlyUsed->mNextMoreRecentlyUsed == this);
+		assert(mNextLessRecentlyUsed->mNextMoreRecentlyUsed == this);
 		mNextLessRecentlyUsed->mNextMoreRecentlyUsed = mNextMoreRecentlyUsed;
 	}
 	if (mNextMoreRecentlyUsed) {
-		Expects(mNextMoreRecentlyUsed->mNextLessRecentlyUsed == this);
+		assert(mNextMoreRecentlyUsed->mNextLessRecentlyUsed == this);
 		mNextMoreRecentlyUsed->mNextLessRecentlyUsed = mNextLessRecentlyUsed;
 	}
 	if (mLoader->mLeastRecentlyUsed == this) {
 		mLoader->mLeastRecentlyUsed = mNextMoreRecentlyUsed;
-		Expects(!mNextMoreRecentlyUsed
+		assert(!mNextMoreRecentlyUsed
 			|| mLoader->mLeastRecentlyUsed->mNextLessRecentlyUsed == nullptr);
 	}
 	if (mLoader->mMostRecentlyUsed == this) {
 		mLoader->mMostRecentlyUsed = mNextLessRecentlyUsed;
-		Expects(!mNextLessRecentlyUsed
+		assert(!mNextLessRecentlyUsed
 			|| mLoader->mMostRecentlyUsed->mNextMoreRecentlyUsed == nullptr);
 	}
 	mNextLessRecentlyUsed = nullptr;
@@ -318,8 +318,8 @@ gfx::TextureRef Textures::Resolve(const std::string& filename, bool withMipMaps)
 
 	auto texture(std::make_shared<FileTexture>(mLoader, id, filename));
 
-	Expects(mTexturesByName.find(filenameLower) == mTexturesByName.end());
-	Expects(mTexturesById.find(id) == mTexturesById.end());
+	assert(mTexturesByName.find(filenameLower) == mTexturesByName.end());
+	assert(mTexturesById.find(id) == mTexturesById.end());
 	mTexturesByName[filenameLower] = texture;
 	mTexturesById[id] = texture;
 
@@ -351,8 +351,8 @@ gfx::TextureRef Textures::Override(const std::string & filename, bool withMipMap
 
 	auto texture(std::make_shared<FileTexture>(mLoader, id, filename));
 
-	//Expects(mTexturesByName.find(filenameLower) == mTexturesByName.end());
-	//Expects(mTexturesById.find(id) == mTexturesById.end());
+	//assert(mTexturesByName.find(filenameLower) == mTexturesByName.end());
+	//assert(mTexturesById.find(id) == mTexturesById.end());
 	mTexturesByName[filenameLower] = texture;
 	mTexturesById[id] = texture;
 

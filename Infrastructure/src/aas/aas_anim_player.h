@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <gsl/span>
+#include <span>
 
 #include "aas/aas_math.h"
 
@@ -50,7 +50,7 @@ namespace aas {
 		void GetRotationPerSec(float* rotationPerSec);
 		void AdvanceEvents(float timeChanged, float distanceChanged, float rotationChanged);
 		void FadeInOrOut(float timeChanged);
-		void method6(gsl::span<SkelBoneState> boneStateOut, float timeChanged, float distanceChanged, float rotationChanged);
+		void method6(std::span<SkelBoneState> boneStateOut, float timeChanged, float distanceChanged, float rotationChanged);
 		void SetTime(float time);
 		float GetCurrentFrame();
 		float method9();

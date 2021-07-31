@@ -69,7 +69,7 @@ namespace gfx {
 		}
 
 		void Bind(RenderingDevice& g, 
-			gsl::span<Light3d> lights,
+			std::span<Light3d> lights,
 			const MdfRenderOverrides *overrides = nullptr);
 
 	private:
@@ -81,10 +81,10 @@ namespace gfx {
 		Material mDeviceMaterial;
 
 		void BindShader(RenderingDevice &device,
-			gsl::span<Light3d> lights,
+			std::span<Light3d> lights,
 			const MdfRenderOverrides *overrides) const;
 		void BindVertexLighting(MdfGlobalConstants &globals,
-			gsl::span<Light3d> lights,
+			std::span<Light3d> lights,
 			bool ignoreLighting) const;
 	};
 

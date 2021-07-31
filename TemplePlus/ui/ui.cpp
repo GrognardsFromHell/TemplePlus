@@ -44,7 +44,7 @@ private:
 static ButtonClickBehavior buttonClickBehavior;
 
 UiManager::UiManager() {
-	Expects(uiManager == nullptr);
+	assert(uiManager == nullptr);
 	uiManager = this;
 }
 
@@ -357,13 +357,13 @@ LgcyWidgetId UiManager::AddScrollBar(LgcyScrollBar& scrollBar, LgcyWidgetId pare
 void UiManager::SetButtonState(LgcyWidgetId widgetId, LgcyButtonState newState)
 {
 	auto button = GetButton(widgetId);
-	Expects(button);
+	assert(button);
 	button->buttonState = newState;
 }
 
 LgcyButtonState UiManager::GetButtonState(LgcyWidgetId widId) {
 	auto button = GetButton(widId);
-	Expects(button);
+	assert(button);
 	return button->buttonState;
 }
 
@@ -408,7 +408,7 @@ bool UiManager::ScrollbarGetY(LgcyWidgetId widId, int * scrollbarY) {
 void UiManager::ScrollbarSetYmax(LgcyWidgetId widId, int yMax)
 {
 	LgcyScrollBar *widg = GetScrollBar(widId);
-	Expects(widg);
+	assert(widg);
 	widg->yMax = yMax;
 }
 

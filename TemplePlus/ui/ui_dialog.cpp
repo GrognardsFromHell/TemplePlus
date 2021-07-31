@@ -172,7 +172,7 @@ class UiDialogHooks : public TempleFix
 /* 0x1014dd40 */
 UiDlg::UiDlg(const UiSystemConf &config) {
 	mImpl = std::make_unique<UiDialogImpl>(config);
-	Expects(!uiDialog);
+	assert(!uiDialog);
 	uiDialog = this;
 	dlgImpl = mImpl.get();
 }

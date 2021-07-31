@@ -1,5 +1,6 @@
 #include "video_hooks.h"
 
+#include <fmt/xchar.h>
 #include <MinHook.h>
 
 #include <platform/windows.h>

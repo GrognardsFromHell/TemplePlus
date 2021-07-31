@@ -154,7 +154,7 @@ namespace aas {
 		}
 	}
 
-	void AnimPlayer::method6(gsl::span<SkelBoneState> boneStateOut, float timeChanged, float distanceChanged, float rotationChanged)
+	void AnimPlayer::method6(std::span<SkelBoneState> boneStateOut, float timeChanged, float distanceChanged, float rotationChanged)
 	{
 
 		//static auto AasRunningAnim_method6 = temple::GetPointer<void __fastcall(AnimPlayer *self, int dummy, SkelBoneState *bones, float timeChanged, float distanceChanged, float rotationChanged)>(0x1026add0);
@@ -212,14 +212,14 @@ namespace aas {
 			// Get the bone data for each stream
 			SkelBoneState boneData[4 * 1024];			 // 4 streams with at most 1024 bones each
 			for (int i = 0; i < streamCount; i++) {
-				streams[i]->GetBoneState(gsl::span(&boneData[i * 1024], 1024));
+				streams[i]->GetBoneState(std::span(&boneData[i * 1024], 1024));
 			}
 
 			auto boneCount = ownerAnim->skeleton->GetBones().size();
-			Expects(boneCount <= 1024);
+			assert(boneCount <= 1024);
 
 			SkelBoneState boneDataTemp[1024];
-			gsl::span<SkelBoneState> boneDataBuf = boneDataTemp;
+			std::span<SkelBoneState> boneDataBuf = boneDataTemp;
 			if (weight == 1.0f) {
 				boneDataBuf = boneStateOut;
 			}
@@ -231,7 +231,7 @@ namespace aas {
 			for (auto i = 1; i < ownerAnim->variationCount; i++) {
 				if (streamVariationIndices[i] < 4) {
 					auto factor = ownerAnim->variations[i].factor;
-					SkelBoneState::Lerp(boneDataBuf, boneDataBuf, gsl::span(&boneData[1024 * streamVariationIndices[i]], 1024), boneCount, factor);
+					SkelBoneState::Lerp(boneDataBuf, boneDataBuf, std::span(&boneData[1024 * streamVariationIndices[i]], 1024), boneCount, factor);
 				}
 			}
 
@@ -292,12 +292,12 @@ namespace aas {
 	{
 		//static auto orgMethod = temple::GetPointer<int __fastcall(AnimPlayer*, void*, AnimatedModel*, int boneIdx, int animIdx, IAnimEventHandler*)>(0x1026a680);
 		//return orgMethod(this, 0, owner, boneIdx, animIdx, eventHandler);
-		Expects(!streamCount && owner && !ownerAnim);
+		assert(!streamCount && owner && !ownerAnim);
 		auto skeleton = owner->skeleton;
-		Expects(skeleton);
+		assert(skeleton);
 
 		auto anims = skeleton->GetAnimations();
-		Expects(animIdx >= 0 && animIdx < anims.size());
+		assert(animIdx >= 0 && animIdx < (int) anims.size());
 
 		this->animation = &anims[animIdx];
 		this->distancePerSecond = animation->streams[0].dps;

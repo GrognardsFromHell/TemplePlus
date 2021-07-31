@@ -57,8 +57,8 @@ public:
 ObjRegistry::It ObjRegistryHooks::it;
 
 void ObjRegistryHooks::Object_Tables_Init(int nToEEObject_BodySize, BOOL editor) {
-	Expects(nToEEObject_BodySize == sizeof(GameObjectBody));
-	Expects(editor == FALSE);
+	assert(nToEEObject_BodySize == sizeof(GameObjectBody));
+	assert(editor == FALSE);
 }
 
 ObjectId* ObjRegistryHooks::Object_Tables_GetIdByHandle(ObjectId* idOut, objHndl handle) {

@@ -115,11 +115,11 @@ public:
 
 
 	ClassChargen& GetClass() const {
-		Expects(!!mClass);
+		assert(!!mClass);
 		return *mClass;
 	}
 	RaceChargen& GetRace() const {
-		Expects(!!mRace);
+		assert(!!mRace);
 		return *mRace;
 	}
 

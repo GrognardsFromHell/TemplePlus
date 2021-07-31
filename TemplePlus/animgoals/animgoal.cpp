@@ -26,8 +26,3 @@ std::string_view GetAnimGoalPriorityText(AnimGoalPriority priority)
 		return "AGP_UNKNOWN"sv;
 	}
 }
-
-void format_arg(fmt::BasicFormatter<char>& f, const char *& format_str, AnimGoalPriority priority)
-{
-	f.writer() << GetAnimGoalPriorityText(priority);
-}

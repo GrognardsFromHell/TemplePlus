@@ -192,23 +192,23 @@ namespace temple {
 			return mSubmesh->primCount;
 		}
 
-		gsl::span<DirectX::XMFLOAT4> GetPositions() override {
+		std::span<DirectX::XMFLOAT4> GetPositions() override {
 			auto data = reinterpret_cast<DirectX::XMFLOAT4*>(mSubmesh->positions);
-			return gsl::span(data, GetVertexCount());
+			return std::span(data, GetVertexCount());
 		}
 
-		gsl::span<DirectX::XMFLOAT4> GetNormals() override {
+		std::span<DirectX::XMFLOAT4> GetNormals() override {
 			auto data = reinterpret_cast<DirectX::XMFLOAT4*>(mSubmesh->normals);
-			return gsl::span(data, GetVertexCount());
+			return std::span(data, GetVertexCount());
 		}
 
-		gsl::span<DirectX::XMFLOAT2> GetUV() override {
+		std::span<DirectX::XMFLOAT2> GetUV() override {
 			auto data = reinterpret_cast<DirectX::XMFLOAT2*>(mSubmesh->uv);
-			return gsl::span(data, GetVertexCount());
+			return std::span(data, GetVertexCount());
 		}
 
-		gsl::span<uint16_t> GetIndices() override {
-			return gsl::span(mSubmesh->indices, GetPrimitiveCount() * 3);
+		std::span<uint16_t> GetIndices() override {
+			return std::span(mSubmesh->indices, GetPrimitiveCount() * 3);
 		}
 
 	private:
@@ -611,7 +611,7 @@ namespace temple {
 	}
 
 	AasAnimatedModelFactory::AasAnimatedModelFactory(const AasConfig& config) : mConfig(config) {
-		Expects(!sInstance);
+		assert(!sInstance);
 		sInstance = this;
 
 		LegacyAasConfig legacyConfig;
@@ -621,7 +621,7 @@ namespace temple {
 			if (sInstance->mConfig.resolveSkaFile) {
 				auto filename(sInstance->mConfig.resolveSkaFile(meshId));
 				if (!filename.empty()) {
-					Expects(filename.size() < MAX_PATH);
+					assert(filename.size() < MAX_PATH);
 					strncpy(filenameOut, filename.c_str(), MAX_PATH);
 					return AAS_OK;
 				}
@@ -632,7 +632,7 @@ namespace temple {
 			if (sInstance->mConfig.resolveSkmFile) {
 				auto filename(sInstance->mConfig.resolveSkmFile(meshId));
 				if (!filename.empty()) {
-					Expects(filename.size() < MAX_PATH);
+					assert(filename.size() < MAX_PATH);
 					strncpy(filenameOut, filename.c_str(), MAX_PATH);
 					return AAS_OK;
 				}

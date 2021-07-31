@@ -638,8 +638,8 @@ LockedMapSector::~LockedMapSector() {
 }
 
 SectorObjectsNode* LockedMapSector::GetObjectsAt(int x, int y) const {
-	Expects(x >= 0 && x < 64);
-	Expects(y >= 0 && y < 64);
+	assert(x >= 0 && x < 64);
+	assert(y >= 0 && y < 64);
 
 	return mSector->objects.tiles[x + y * SECTOR_SIDE_SIZE];
 }

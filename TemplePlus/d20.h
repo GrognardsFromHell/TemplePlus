@@ -306,7 +306,7 @@ uint32_t _D20Query(objHndl objHnd, D20DispatcherKey dispKey);
 void _d20SendSignal(objHndl objHnd, D20DispatcherKey dispKey, int32_t arg1, int32_t arg2);
 void __cdecl D20SpellDataSetSpontCast(D20SpellData*, SpontCastType spontCastType);
 void D20SpellDataExtractInfo
-(D20SpellData * d20SpellData, uint32_t * spellEnum, uint32_t * spellEnumOriginal, uint32_t * spellClassCode, uint32_t * spellSlotLevel, uint32_t * itemSpellData, uint32_t * metaMagicData);
+(const D20SpellData * d20SpellData, uint32_t * spellEnum, uint32_t * spellEnumOriginal, uint32_t * spellClassCode, uint32_t * spellSlotLevel, uint32_t * itemSpellData, uint32_t * metaMagicData);
 void _D20ActnInitUsercallWrapper(objHndl objHnd);
 void _d20ActnSetSpellData(D20SpellData * d20SpellData, uint32_t spellEnumOrg, uint32_t spellClassCode, uint32_t spellSlotLevel, uint32_t itemSpellData, uint32_t metaMagicData);
 void _globD20aSetTypeAndData1(D20ActionType d20type, uint32_t data1);

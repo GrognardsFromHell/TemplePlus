@@ -24,7 +24,7 @@ bool TigSoundAddresses::PlayInStream(int streamId, int soundId)
 
 bool TigSoundStreamWrapper::Play(int soundId)
 {
-	Expects(mStreamId != -1);
+	assert(mStreamId != -1);
 	return tigSoundAddresses.PlayInStream(mStreamId, soundId);
 }
 

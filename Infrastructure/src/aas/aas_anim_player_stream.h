@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <gsl/span>
+#include <span>
 
 #include "aas/aas_math.h"
 
@@ -54,7 +54,7 @@ namespace aas {
 
 		void SetFrame(float frame);
 		void Initialize(const SkelAnim *animation, int streamIdx);
-		void GetBoneState(gsl::span<SkelBoneState> boneStateOut);
+		void GetBoneState(std::span<SkelBoneState> boneStateOut);
 		float GetCurrentFrame() const;
 	};
 

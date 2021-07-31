@@ -265,7 +265,7 @@ public:
 
 	static int __cdecl FeatIronWillSave(DispatcherCallbackArgs args);
 
-	static int ItemCreationBuildRadialMenuEntry(DispatcherCallbackArgs args, ItemCreationType itemCreationType, char* helpSystemString, MesHandle combatMesLine);
+	static int ItemCreationBuildRadialMenuEntry(DispatcherCallbackArgs args, ItemCreationType itemCreationType, const char* helpSystemString, MesHandle combatMesLine);
 	
 	
 	static int DruidWildShapeInit(DispatcherCallbackArgs args);
@@ -5969,7 +5969,7 @@ int ClassAbilityCallbacks::FeatIronWillSave(DispatcherCallbackArgs args){
 	return 0;
 }
 
-int ClassAbilityCallbacks::ItemCreationBuildRadialMenuEntry(DispatcherCallbackArgs args, ItemCreationType itemCreationType, char* helpSystemString, MesHandle combatMesLine)
+int ClassAbilityCallbacks::ItemCreationBuildRadialMenuEntry(DispatcherCallbackArgs args, ItemCreationType itemCreationType, const char* helpSystemString, MesHandle combatMesLine)
 {
 	if (combatSys.isCombatActive()) { return 0; }
 	MesLine mesLine;

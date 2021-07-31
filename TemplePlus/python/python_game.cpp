@@ -254,27 +254,27 @@ static PyObject* PyGame_CharUIDisplayType(PyObject* obj, void*) {
 
 
 static PyGetSetDef PyGameGettersSetters[] = {
-	{"party_alignment", PyGame_GetPartyAlignment, NULL, NULL },
-	{"story_state", PyGame_GetStoryState, PyGame_SetStoryState, NULL },
-	{"sid", PyGame_GetSid, NULL, NULL },
-	{"new_sid", PyGame_GetNewSid, PyGame_SetNewSid, NULL },
-	{"selected", PyGame_GetPartySelected, NULL, NULL},
-	{"party", PyGame_GetParty, NULL, NULL},
-	{"hovered", PyGame_GetHovered, NULL, NULL},
-	{"maps_visited", PyGame_GetMapsVisited, NULL, NULL},
-	{"leader", PyGame_GetLeader, NULL, NULL},
-	{"elader", PyGame_GetLeader, NULL, NULL }, // commonly made typo so might as well support it :D
-	{"time", PyGame_GetTime, NULL, NULL},
-	{"global_vars", PyGame_GetGlobalVars, NULL, NULL},
-	{"ggv", PyGame_GetGlobalVars, NULL, NULL },
-	{"global_flags", PyGame_GetGlobalFlags, NULL, NULL},
-	{"ggf", PyGame_GetGlobalFlags, NULL, NULL },
-	{"quests", PyGame_GetQuests, NULL, NULL},
-	{"areas", PyGame_GetAreas, NULL, NULL},
-	{"counters", PyGame_GetCounters, NULL, NULL},
-	{"encounter_queue", PyGame_GetEncounterQueue, NULL, NULL},
-	{"combat_turn", PyGame_GetCombatTurn, NULL, NULL},
-	{"char_ui_display_type", PyGame_CharUIDisplayType, NULL, NULL},
+	{(char*) "party_alignment", PyGame_GetPartyAlignment, NULL, NULL },
+	{(char*) "story_state", PyGame_GetStoryState, PyGame_SetStoryState, NULL },
+	{(char*) "sid", PyGame_GetSid, NULL, NULL },
+	{(char*) "new_sid", PyGame_GetNewSid, PyGame_SetNewSid, NULL },
+	{(char*) "selected", PyGame_GetPartySelected, NULL, NULL},
+	{(char*) "party", PyGame_GetParty, NULL, NULL},
+	{(char*) "hovered", PyGame_GetHovered, NULL, NULL},
+	{(char*) "maps_visited", PyGame_GetMapsVisited, NULL, NULL},
+	{(char*) "leader", PyGame_GetLeader, NULL, NULL},
+	{(char*) "elader", PyGame_GetLeader, NULL, NULL }, // commonly made typo so might as well support it :D
+	{(char*) "time", PyGame_GetTime, NULL, NULL},
+	{(char*) "global_vars", PyGame_GetGlobalVars, NULL, NULL},
+	{(char*) "ggv", PyGame_GetGlobalVars, NULL, NULL },
+	{(char*) "global_flags", PyGame_GetGlobalFlags, NULL, NULL},
+	{(char*) "ggf", PyGame_GetGlobalFlags, NULL, NULL },
+	{(char*) "quests", PyGame_GetQuests, NULL, NULL},
+	{(char*) "areas", PyGame_GetAreas, NULL, NULL},
+	{(char*) "counters", PyGame_GetCounters, NULL, NULL},
+	{(char*) "encounter_queue", PyGame_GetEncounterQueue, NULL, NULL},
+	{(char*) "combat_turn", PyGame_GetCombatTurn, NULL, NULL},
+	{(char*) "char_ui_display_type", PyGame_CharUIDisplayType, NULL, NULL},
 	{NULL, NULL, NULL, NULL}
 };
 
@@ -1173,7 +1173,7 @@ static void __cdecl PyGame_PickerCallback(const PickerResult &result, void*) {
 	} else {
 		// Something has been picked. Is it a valid target?
 		auto targetObj = PyObjHndl_Create(result.handle);
-		auto isValidObj = PyObject_CallFunction(dialogPickerArgs.isValidTarget, "O", targetObj);
+		auto isValidObj = PyObject_CallFunction(dialogPickerArgs.isValidTarget, (char*) "O", targetObj);
 
 		if (!isValidObj) {
 			// Call resulted in an exception

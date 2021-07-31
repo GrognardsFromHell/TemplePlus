@@ -201,7 +201,7 @@ void ShapeRenderer2d::DrawRectangle(float x, float y, float width, float height,
 
 }
 
-void ShapeRenderer2d::DrawRectangle(gsl::span<Vertex2d, 4> corners,
+void ShapeRenderer2d::DrawRectangle(std::span<Vertex2d, 4> corners,
 	gfx::Texture* texture,
 	gfx::Texture* mask,
 	SamplerType2d samplerType,
@@ -210,7 +210,7 @@ void ShapeRenderer2d::DrawRectangle(gsl::span<Vertex2d, 4> corners,
 	auto& samplerState = getSamplerState(samplerType);
 
 	if (texture && mask) {
-		Expects(blending);
+		assert(blending);
 		mImpl->device.SetMaterial(mImpl->texturedWithMaskMaterial);
 		mImpl->device.SetSamplerState(0, samplerState);
 		mImpl->device.SetSamplerState(1, samplerState);
@@ -251,7 +251,7 @@ void ShapeRenderer2d::DrawRectangle(gsl::span<Vertex2d, 4> corners,
 		}
 	}
 
-	void ShapeRenderer2d::DrawRectangle(gsl::span<Vertex2d, 4> corners,
+	void ShapeRenderer2d::DrawRectangle(std::span<Vertex2d, 4> corners,
 		const gfx::MdfRenderMaterialPtr& material) {
 
 		MdfRenderOverrides overrides;
@@ -275,7 +275,7 @@ void ShapeRenderer2d::DrawRectangle(gsl::span<Vertex2d, 4> corners,
 		mImpl->device.DrawIndexed(PrimitiveType::TriangleList, 4, 6);
 	}
 
-	void ShapeRenderer2d::DrawRectangle(gsl::span<Vertex2d, 4> corners) {
+	void ShapeRenderer2d::DrawRectangle(std::span<Vertex2d, 4> corners) {
 
 		for (auto &vertex : corners) {
 			vertex.normal = XMFLOAT4(0, 0, -1, 0);
@@ -293,7 +293,7 @@ void ShapeRenderer2d::DrawRectangle(gsl::span<Vertex2d, 4> corners,
 	mImpl->device.DrawIndexed(PrimitiveType::TriangleList, 4, 6);
 }
 
-void ShapeRenderer2d::DrawLines(gsl::span<Line2d> lines) {
+void ShapeRenderer2d::DrawLines(std::span<Line2d> lines) {
 
 	mImpl->device.SetMaterial(mImpl->lineMaterial);
 
@@ -403,7 +403,7 @@ void ShapeRenderer2d::DrawRectangleOutline(XMFLOAT2 topLeft, XMFLOAT2 bottomRigh
 		XMCOLOR color1, 
 		XMCOLOR color2) {
 
-		Expects(segments <= MaxSegments);
+		assert(segments <= MaxSegments);
 
 		auto posCount = segments * 2 + 2;
 		

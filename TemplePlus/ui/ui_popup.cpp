@@ -105,7 +105,7 @@ BOOL UiPopup::UiPopupWndMsg(int widId, TigMsg * msg)
 }
 
 UiPromptListEntry& UiPopup::GetPopupByType(int popupType){
-	Expects(popupType < 5 && popupType >= 0);
+	assert(popupType < 5 && popupType >= 0);
 	return temple::GetRef<UiPromptListEntry[]>(0x10C03BD8)[popupType];
 }
 

@@ -1568,7 +1568,7 @@ void UiChar::LootingWidgetsInit(){
 	mNextBtn->SetPos(0,0);
 	mNextBtn->SetStyle("action-pointer-next");
 	mNextBtn->SetClickHandler([&](){
-		auto &lootedCritter = uiSystems->GetChar().GetLootedObject();
+		auto lootedCritter = uiSystems->GetChar().GetLootedObject();
 		mCrittersLootedIdx++;
 		if (mCrittersLootedIdx >= static_cast<int>(mCrittersLootedList.size()))
 			mCrittersLootedIdx = 0;
@@ -2501,10 +2501,12 @@ void UiCharImpl::SkillsBtnRender(int widId)
 	UiRenderer::PushFont(ttStyle.fontName, ttStyle.fontSize);
 	ColorRect whiteColor (XMCOLOR(0xFFFFFFFF));
 	ColorRect textColor2(XMCOLOR(0xFF0D6BE3));
+	ColorRect shadow(XMCOLOR(0xFF000000));
+	ColorRect background(XMCOLOR(0x99111111));
 	TigTextStyle style(
 		&whiteColor,
-		&ColorRect(XMCOLOR(0xFF000000)), 
-		&ColorRect(XMCOLOR(0x99111111)));
+		&shadow,
+		&background);
 	style.flags = 8;
 	style.kerning = 2;
 	style.tracking = 2;

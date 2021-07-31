@@ -97,7 +97,7 @@ protected:
 
 
 void AddPyHook(CondStructNew& condStr, uint32_t dispType, uint32_t dispKey, PyObject* pycallback, PyObject* pydataTuple) {
-	Expects(condStr.numHooks < 99);
+	assert(condStr.numHooks < 99);
 	condStr.subDispDefs[condStr.numHooks++] = { (enum_disp_type)dispType, (D20DispatcherKey)dispKey, PyModHookWrapper, (uint32_t)pycallback, (uint32_t)pydataTuple };
 }
 
@@ -333,12 +333,12 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def(py::init())
 		.def(py::init<std::string, int, bool>(), py::arg("name"), py::arg("numArgs"), py::arg("preventDup") = true)
 		.def("add_hook", [](CondStructNew &condStr, uint32_t dispType, uint32_t dispKey, py::function &pycallback, py::tuple &pydataTuple) {
-				Expects(condStr.numHooks < 99);
+				assert(condStr.numHooks < 99);
 				pydataTuple.inc_ref();
 				condStr.subDispDefs[condStr.numHooks++] = { (enum_disp_type)dispType, (D20DispatcherKey)dispKey, PyModHookWrapper, (uint32_t)pycallback.ptr(), (uint32_t)pydataTuple.ptr() };
 		}, "Add callback hook")
 		.def("add_hook", [](CondStructNew &condStr, uint32_t dispType, std::string dispKey, py::function &pycallback, py::tuple &pydataTuple) {
-			Expects(condStr.numHooks < 99);
+			assert(condStr.numHooks < 99);
 			pydataTuple.inc_ref();
 			condStr.subDispDefs[condStr.numHooks++] = { (enum_disp_type)dispType, (D20DispatcherKey)ElfHash::Hash(dispKey), PyModHookWrapper, (uint32_t)pycallback.ptr(), (uint32_t)pydataTuple.ptr() };
 		}, "Add callback hook")
@@ -1525,8 +1525,8 @@ PyObject *PyModifierSpec_AddHookPreventDup(PyObject *obj, PyObject *args) {
 };
 
 static PyMemberDef PyModifierSpec_Members[] = {
-	{ "num_args", T_INT, offsetof(PyModifierSpec, condSpec.numArgs), 0, NULL },
-	{ "num_hooks", T_INT, offsetof(PyModifierSpec, condSpec.numHooks), 0, NULL },
+	{ (char*) "num_args", T_INT, offsetof(PyModifierSpec, condSpec.numArgs), 0, NULL },
+	{ (char*) "num_hooks", T_INT, offsetof(PyModifierSpec, condSpec.numHooks), 0, NULL },
 	{ NULL, NULL, NULL, NULL, NULL }
 };
 
@@ -1643,8 +1643,8 @@ PyObject* PyEventArgs_GetAttachee(PyObject *obj, void *) {
 }
 
 static PyGetSetDef PyEventArgsGetSet[] = {
-	{ "event_obj", PyEventArgs_GetEventObject, NULL, NULL },
-	{ "attachee", PyEventArgs_GetAttachee, NULL, NULL },
+	{ (char*) "event_obj", PyEventArgs_GetEventObject, NULL, NULL },
+	{ (char*) "attachee", PyEventArgs_GetAttachee, NULL, NULL },
 	{ NULL, NULL, NULL, NULL }
 };
 

@@ -415,7 +415,7 @@ public:
 
 		// anim_make_goal_self_true
 		replaceFunction<int(AnimSlotGoalStackEntry *, objHndl, AnimGoalType)>(0x100556c0, [](AnimSlotGoalStackEntry *pGoalData, objHndl handle, AnimGoalType goalType) {
-			Expects(pGoalData);
+			assert(pGoalData);
 			return pGoalData->InitWithInterrupt(handle, goalType) ? 1 : 0;
 		});
 
@@ -460,7 +460,7 @@ public:
 
 		// Push Goal Impl
 		replaceFunction<BOOL(__cdecl)(AnimSlotGoalStackEntry*, AnimSlotId*, int, int)>(0x10056600, [](AnimSlotGoalStackEntry* gdata, AnimSlotId*slotId, int allocSlot, int flags) {
-			Expects(gdata);
+			assert(gdata);
 			if (allocSlot != 1) {
 				throw TempleException("Push Goal should never be called with allocSlot=false");
 			}
@@ -492,7 +492,7 @@ public:
 
 		// Push Goal
 		replaceFunction<BOOL(__cdecl)(AnimSlotGoalStackEntry*, AnimSlotId*)>(0x10056D20, [](AnimSlotGoalStackEntry* gdata, AnimSlotId*slotId) {
-			Expects(gdata);
+			assert(gdata);
 			return gameSystems->GetAnim().PushGoal(*gdata, slotId) ? TRUE : FALSE;
 		});
 
@@ -608,7 +608,7 @@ void AnimGoalsHooks::DumpGoalSetups()
 				fmt::print(fh, "{}.AddState({}) // Index {}", builderVar, GetCallbackFunctionRef((uint32_t)state.callback), j);
 			}
 
-			Expects(state.argInfo2 == -1 || state.argInfo1 != -1);
+			assert(state.argInfo2 == -1 || state.argInfo1 != -1);
 
 			if (state.argInfo1 != -1) {
 				fmt::print(fh, "\n\t.SetArgs({}", GetArgInfoText(state.argInfo1));

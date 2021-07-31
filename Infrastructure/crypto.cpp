@@ -41,16 +41,18 @@ namespace crypto {
 
 		std::string RawHashToStr(const std::vector<uint8_t> &hash) {
 			// Convert vector to lower case hex string
-			fmt::MemoryWriter result;
+			std::string buffer;
+			buffer.reserve(2 * hash.size());
+			auto it = std::back_inserter(buffer);
 			for (auto octet : hash) {
-				result << fmt::pad(fmt::hex(octet), 2, '0');
+			    fmt::format_to(it, "{:#02x}", octet);
 			}
-			return result.str();
+			return buffer;
 		}
 
 	}
 
-	std::string MD5AsString(gsl::span<uint8_t> data) {
+	std::string MD5AsString(std::span<uint8_t> data) {
 
 		auto alg = GetMd5Alg();
 

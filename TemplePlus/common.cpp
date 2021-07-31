@@ -109,7 +109,7 @@ int BonusList::GetHighestBonus() const
 }
 
 bool BonusList::IsBonusSuppressed(size_t bonusIdx, size_t* suppressedByIdx) const {
-	Expects(bonusIdx < bonCount);
+	assert(bonusIdx < bonCount);
 
 	auto curHighest = bonusEntries[bonusIdx].bonValue;
 	auto type = bonusEntries[bonusIdx].bonType;

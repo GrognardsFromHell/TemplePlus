@@ -101,11 +101,6 @@ std::string_view GetAnimGoalTypeName(AnimGoalType type) {
 	return sUnknownGoalType;
 }
 
-void format_arg(fmt::BasicFormatter<char>& f, const char *& format_str, const AnimGoalType & id)
-{
-	f.format(GetAnimGoalTypeName(id).data());
-}
-
 using GoalCallback = int(__cdecl *)(AnimSlot&);
 
 class AnimGoalStateBuilder {
@@ -125,14 +120,14 @@ public:
 	}
 
 	AnimGoalStateBuilder &OnSuccess(int transition, int delay = 0) {
-		//Expects(transition != 0);
+		//assert(transition != 0);
 		state_.afterSuccess.newState = transition;
 		state_.afterSuccess.delay = delay;
 		return *this;
 	}
 
 	AnimGoalStateBuilder &OnFailure(int transition, int delay = 0) {
-		//Expects(transition != 0);
+		//assert(transition != 0);
 		state_.afterFailure.newState = transition;
 		state_.afterFailure.delay = delay;
 		return *this;

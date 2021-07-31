@@ -48,7 +48,15 @@ enum AnimGoalProperty {
 
 std::string_view GetAnimGoalPriorityText(AnimGoalPriority priority);
 
-void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, AnimGoalPriority priority);
+namespace fmt {
+    template<>
+    struct formatter<AnimGoalPriority> : simple_formatter {
+        template<typename FormatContext>
+        auto format(const AnimGoalPriority &priority, FormatContext &ctx) {
+            return format_to(ctx.out(), GetAnimGoalPriorityText(priority));
+        }
+    };
+}
 
 enum AnimStateTransitionFlags : uint32_t
 {

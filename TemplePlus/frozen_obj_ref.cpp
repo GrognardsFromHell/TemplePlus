@@ -46,7 +46,7 @@ bool FrozenObjRef::Save(const objHndl & handle, const FrozenObjRef *ref, void * 
 // Originally @ 0x10020370
 bool FrozenObjRef::Load(objHndl * handleOut, FrozenObjRef * ref, void * fh)
 {
-	Expects(handleOut);
+	assert(handleOut);
 
 	ObjectId objId;
 	locXY location;

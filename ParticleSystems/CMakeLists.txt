@@ -117,7 +117,6 @@ if(MSVC)
             /O2;
             /Oi
         >
-        /std:c++17;
         /arch:SSE2;
         /W3;
         ${DEFAULT_CXX_DEBUG_INFORMATION_FORMAT};

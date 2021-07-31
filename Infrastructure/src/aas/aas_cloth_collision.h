@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <gsl/gsl>
+#include <span>
 
 namespace aas {
 
@@ -39,6 +39,6 @@ namespace aas {
 	 * Extract the cloth collision information from a list of bones.
 	 * The information is parsed from the bone names.
 	 */
-	CollisionGeometry FindCollisionGeometry(gsl::span<SkelBone> bones);
+	CollisionGeometry FindCollisionGeometry(std::span<SkelBone> bones);
 
 }

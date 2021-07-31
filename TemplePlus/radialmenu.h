@@ -67,7 +67,7 @@ enum class RadialMenuEntryFlags : int
 };
 
 struct RadialMenuEntry {
-	char *text; // Text to display
+	const char *text; // Text to display
 	int field4; // string for popup dialog title, so far
 	uint32_t textHash; // ELF hash of "text"
 	int fieldc;
@@ -200,7 +200,7 @@ public:
 	int AddParentChildNode(objHndl objHndCaller, RadialMenuEntry* radialMenuEntry, int parentIdx); // adds a child who's a parent itself
 	int AddParentChildNodeClickable(objHndl objHndCaller, RadialMenuEntry* radialMenuEntry, int parentIdx); // adds a child who's a parent itself, and one that can eb clicked
 	int AddRootNode(objHndl obj, const RadialMenuEntry * entry); // might be more accurate to say "parentless node"; this is used for adding spontaneous spells, which are tucked away until needed
-	int RadialMenus::AddRootParentNode(objHndl obj, RadialMenuEntry* entry);
+	int AddRootParentNode(objHndl obj, RadialMenuEntry* entry);
 	void SetMorphsTo(objHndl obj, int nodeIdx, int spontSpellNode);
 	void SetCallbackCopyEntryToSelected(RadialMenuEntry* radEntry);
 

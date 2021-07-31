@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <gsl/gsl>
+#include <string_view>
 
 struct ScanWordResult;
 struct GlyphVertex2d;
@@ -22,7 +22,7 @@ public:
 	explicit FontRenderer(gfx::RenderingDevice& g);
 	~FontRenderer();
 
-	void RenderRun(cstring_span<> text,
+	void RenderRun(std::string_view text,
 		int x,
 		int y,
 		const TigRect& bounds,
@@ -51,7 +51,7 @@ public:
 	TextLayouter(gfx::RenderingDevice& device, gfx::ShapeRenderer2d& shapeRenderer);
 	~TextLayouter();
 
-	void LayoutAndDraw(gsl::cstring_span<> text, const TigFont &font, TigRect& extents, TigTextStyle& style);
+	void LayoutAndDraw(std::string_view text, const TigFont &font, TigRect& extents, TigTextStyle& style);
 
 	void Measure(const TigFont &font, const TigTextStyle &style, TigFontMetrics &metrics);
 
@@ -66,16 +66,16 @@ private:
 		const TigFont& font,
 		const TigTextStyle& style,
 		int remainingSpace);
-	std::pair<int, int> TextLayouter::MeasureCharRun(cstring_span<> text,
+	std::pair<int, int> MeasureCharRun(std::string_view text,
 		const TigTextStyle& style,
 		const TigRect& extents,
 		int extentsWidth,
 		const TigFont& font,
 		int linePadding,
 		bool lastLine);
-	bool HasMoreText(cstring_span<> text, int tabWidth);
+	bool HasMoreText(std::string_view text, int tabWidth);
 
-	void LayoutAndDrawVanilla(gsl::cstring_span<> text, 
+	void LayoutAndDrawVanilla(std::string_view text,
 		const TigFont &font, 
 		TigRect& extents, 
 		TigTextStyle& style);

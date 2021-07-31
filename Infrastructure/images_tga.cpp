@@ -1,3 +1,6 @@
+
+#include <cassert>
+
 #include "infrastructure/images.h"
 #include "infrastructure/exception.h"
 
@@ -37,7 +40,7 @@ namespace gfx {
 	};
 #pragma pack(pop)
 
-	bool DetectTga(span<uint8_t> data, ImageFileInfo& info) {
+	bool DetectTga(std::span<uint8_t> data, ImageFileInfo& info) {
 
 		if (data.size() < sizeof(TgaHeader)) {
 			return false;
@@ -65,7 +68,7 @@ namespace gfx {
 
 	}
 
-	std::unique_ptr<uint8_t[]> DecodeTga(span<uint8_t> data) {
+	std::unique_ptr<uint8_t[]> DecodeTga(std::span<uint8_t> data) {
 
 		if (data.size() < sizeof(TgaHeader)) {
 			throw TempleException("Not enough data for TGA header");
@@ -94,7 +97,7 @@ namespace gfx {
 
 		if (header->bpp == 24) {
 			auto srcPitch = header->width * 3;
-			Expects((int) srcSize >= header->height * srcPitch);			
+			assert((int) srcSize >= header->height * srcPitch);
 			for (int y = 0; y < header->height; ++y) {
 				auto src = srcStart + (header->height - y - 1) * srcPitch;
 				for (int x = 0; x < header->width; ++x) {
@@ -106,7 +109,7 @@ namespace gfx {
 			}
 		} else {
 			auto srcPitch = header->width * 4;
-			Expects((int) srcSize >= header->height * srcPitch);
+			assert((int) srcSize >= header->height * srcPitch);
 			for (int y = 0; y < header->height; ++y) {
 				auto src = srcStart + (header->height - y - 1) * srcPitch;
 				for (int x = 0; x < header->width; ++x) {

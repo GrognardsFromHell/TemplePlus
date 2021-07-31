@@ -30,7 +30,7 @@ namespace aas {
 
 		void Render(gfx::AnimatedModel *model,
 			const gfx::AnimatedModelParams& params,
-			gsl::span<gfx::Light3d> lights,
+			std::span<gfx::Light3d> lights,
 			const gfx::MdfRenderOverrides *materialOverrides = nullptr) override;
 
 		void RenderWithoutMaterial(gfx::AnimatedModel *model,
@@ -41,8 +41,8 @@ namespace aas {
 			const gfx::Light3d &globalLight,
 			float alpha);
 
-		void RenderShadowMapShadow(gsl::span<gfx::AnimatedModel*> models,
-			gsl::span<const gfx::AnimatedModelParams*> modelParams,
+		void RenderShadowMapShadow(std::span<gfx::AnimatedModel*> models,
+			std::span<const gfx::AnimatedModelParams*> modelParams,
 			const XMFLOAT3 &center,
 			float radius,
 			float height,

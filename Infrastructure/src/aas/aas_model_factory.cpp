@@ -49,7 +49,7 @@ namespace aas {
 
 	gfx::MaterialPlaceholderSlot MaterialResolver::GetMaterialPlaceholderSlot(AasMaterial material) const
 	{
-		Expects(IsMaterialPlaceholder(material));
+		assert(IsMaterialPlaceholder(material));
 
 		uint32_t id = reinterpret_cast<uint32_t>(material) & 0xFF000000;
 

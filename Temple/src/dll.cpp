@@ -1,3 +1,4 @@
+
 #include <platform/windows.h>
 #include <Shlwapi.h>
 #include <MinHook.h>
@@ -9,6 +10,7 @@
 #include <infrastructure/exception.h>
 #include <infrastructure/logging.h>
 #include <infrastructure/stringutil.h>
+#include <fmt/xchar.h>
 
 #include "hde/hde32.h"
 

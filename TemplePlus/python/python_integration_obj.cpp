@@ -212,7 +212,7 @@ static PyObject* CreateDialogLocals(const DialogState* dialog, int pickedLine) {
 static void RunDialogAction(const char* actionString, DialogState* dialog, int pickedLine) {
 	logger->debug("Running dialog actions '{}'", actionString);
 
-	auto commands = split(actionString, ';', true);
+	auto commands = split(std::string_view(actionString), ';', true);
 
 	// Set script context so counters will work
 	pythonObjIntegration.SetCounterContext(dialog->npc, dialog->dialogScriptId, ObjScriptEvent::Dialog);
@@ -235,7 +235,7 @@ static void RunDialogAction(const char* actionString, DialogState* dialog, int p
 	for (const auto& command : commands) {
 		logger->debug("Running dialog action '{}'", command);
 
-		auto result = PyRun_String(command.c_str(), Py_single_input, globalsDict, locals);
+		auto result = PyRun_String(command.data(), Py_single_input, globalsDict, locals);
 
 		if (!result) {
 			PyErr_Print();

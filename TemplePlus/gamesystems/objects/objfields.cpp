@@ -699,7 +699,7 @@ const char * ObjectFields::GetFieldName(obj_f field) const
 
 const char * ObjectFields::GetTypeName(ObjectFieldType type)
 {
-	Expects(type >= ObjectFieldType::None && type <= ObjectFieldType::Float32);
+	assert(type >= ObjectFieldType::None && type <= ObjectFieldType::Float32);
 
 	static const char *PropTypes[] = {
 		"None",

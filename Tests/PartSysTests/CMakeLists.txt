@@ -109,7 +109,6 @@ if(MSVC)
             /Oi;
             /arch:SSE2
         >
-        /std:c++17;
         /W3;
         ${DEFAULT_CXX_DEBUG_INFORMATION_FORMAT};
         ${DEFAULT_CXX_EXCEPTION_HANDLING}

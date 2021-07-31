@@ -111,7 +111,7 @@ namespace aas {
 
 		// Determine all vertices that are in some way influenced by the cloth simulation
 		auto vertices = mesh.GetVertices();
-		for (int i = 0; i < vertices.size(); i++) {
+		for (auto i = 0u; i < vertices.size(); i++) {
 			auto &vertex = vertices[i];
 
 			// TODO: Also, the bone mapping should be used here!

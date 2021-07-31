@@ -1,6 +1,7 @@
 
 #include "stdafx.h"
 #include <VersionHelpers.h>
+#include <fmt/xchar.h>
 
 static IKnownFolderManager* GetFolderManager() {
 	static CComPtr<IKnownFolderManager> mgr;

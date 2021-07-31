@@ -304,7 +304,7 @@ bool PythonIntegration::LoadScript(int scriptId, ScriptRecord &scriptOut) {
 	}
 
 	auto func = PyDict_GetItemString(MainModuleDict, "critter_is_unconscious");
-	Expects(func != nullptr);
+	assert(func != nullptr);
 
 	// We have not yet loaded the Python module
 	if (!script.module) {

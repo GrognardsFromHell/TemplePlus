@@ -20,8 +20,8 @@ namespace aas {
 	{
 		auto header = *reinterpret_cast<SkelFileHeader*>(data_.data());
 
-		bones_ = gsl::span(reinterpret_cast<SkelBone*>(&data_[header.boneDataStart]), header.boneCount);
-		animations_ = gsl::span(reinterpret_cast<SkelAnim*>(&data_[header.animationDataStart]), header.animationCount);
+		bones_ = std::span(reinterpret_cast<SkelBone*>(&data_[header.boneDataStart]), header.boneCount);
+		animations_ = std::span(reinterpret_cast<SkelAnim*>(&data_[header.animationDataStart]), header.animationCount);
 	}
 
 	const SkelBone * Skeleton::FindBoneByName(std::string_view name) const
@@ -64,15 +64,15 @@ namespace aas {
 		return std::make_unique<Skeleton>(std::string(filename), std::move(buffer));
 	}
 
-	void SkelBoneState::Lerp(gsl::span<SkelBoneState> out,
-		const gsl::span<SkelBoneState> from,
-		const gsl::span<SkelBoneState> to,
+	void SkelBoneState::Lerp(std::span<SkelBoneState> out,
+		const std::span<SkelBoneState> from,
+		const std::span<SkelBoneState> to,
 		int boneCount,
 		float fraction) {
 
-		Expects(boneCount<= from.size());
-		Expects(boneCount<= to.size());
-		Expects(boneCount<= out.size());
+		assert(boneCount<= from.size());
+		assert(boneCount<= to.size());
+		assert(boneCount<= out.size());
 		
 		//static auto orgMethod = temple::GetPointer<void(SkaBoneData *out, const SkaBoneData *from, const SkaBoneData *to, int boneCount, float fraction)>(0x10269ee0);
 		//orgMethod(out, from, to, boneCount, fraction);

@@ -139,7 +139,7 @@ GameRenderer::GameRenderer(TigInitializer &tig,
 	  mGameSystems(gameSystems)      
 {
 
-	Expects(!gameRenderer);
+	assert(!gameRenderer);
 
 	mAasRenderer = std::make_unique<aas::Renderer>(
 		gameSystems.GetAAS(), 

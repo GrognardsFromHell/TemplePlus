@@ -203,7 +203,7 @@ int UiPicker::ShowPicker(const PickerArgs& args, void* callbackArgs) {
 	memset(&picker.args.result, 0, sizeof(PickerResult));
 
 	auto modeTarget = picker.args.GetBaseModeTarget();
-	Expects(modeTarget >= UiPickerType::None && modeTarget <= UiPickerType::Wall);
+	assert(modeTarget >= UiPickerType::None && modeTarget <= UiPickerType::Wall);
 
 	auto initer = GetPickerSpec(modeTarget).init;
 	if (initer)

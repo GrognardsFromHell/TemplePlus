@@ -91,10 +91,18 @@ enum AnimGoalType : uint32_t {
 	ag_count = 82
 };
 
+// Allows for direct use of AnimSlotId in format() strings
 std::string_view GetAnimGoalTypeName(AnimGoalType type);
 
-// Allows for direct use of AnimSlotId in format() strings
-void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const AnimGoalType &id);
+namespace fmt {
+    template<>
+    struct formatter<AnimGoalType> : simple_formatter {
+        template<typename FormatContext>
+        auto format(const AnimGoalType &type, FormatContext &ctx) {
+            return format_to(ctx.out(), GetAnimGoalTypeName(type));
+        }
+    };
+}
 
 class AnimationGoals {
 public:

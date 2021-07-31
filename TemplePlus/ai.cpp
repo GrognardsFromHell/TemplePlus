@@ -391,7 +391,7 @@ void AiSystem::ClearAiFlag(objHndl npc, AiFlag flag) {
 AiParamPacket AiSystem::GetAiParams(objHndl obj)
 {
 	auto aiParamIdx = gameSystems->GetObj().GetObject(obj)->GetInt32(obj_f_npc_ai_data);
-	Expects(aiParamIdx >= 0 && aiParamIdx < 100000);
+	assert(aiParamIdx >= 0 && aiParamIdx < 100000);
 	return aiParams[aiParamIdx];
 
 }
@@ -2636,7 +2636,7 @@ int AiSystem::ChooseRandomSpell(AiPacket* aiPkt)
 	}
 
 	auto aiDataIdx = objects.getInt32(obj, obj_f_npc_ai_data);
-	Expects(aiDataIdx >= 0 && aiDataIdx <= 150);
+	assert(aiDataIdx >= 0 && aiDataIdx <= 150);
 	AiParamPacket aiParam = aiParams[aiDataIdx];
 	
 	if (aiParam.defensiveSpellChance > rngSys.GetInt(1,100))

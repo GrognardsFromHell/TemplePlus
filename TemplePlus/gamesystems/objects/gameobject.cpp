@@ -64,7 +64,7 @@ bool GameObjectBody::IsStackable() const{
 
 int32_t GameObjectBody::GetInt32(obj_f field) const
 {
-	Expects(objectFields.GetType(field) == ObjectFieldType::Int32);
+	assert(objectFields.GetType(field) == ObjectFieldType::Int32);
 
 	if (field == obj_f_type) {
 		return type;
@@ -92,7 +92,7 @@ int32_t GameObjectBody::GetInt32Size(obj_f field) const
 
 float GameObjectBody::GetFloat(obj_f field) const
 {
-	Expects(objectFields.GetType(field) == ObjectFieldType::Float32);
+	assert(objectFields.GetType(field) == ObjectFieldType::Float32);
 
 	if (field == obj_f_speed_run)
 	{
@@ -111,7 +111,7 @@ float GameObjectBody::GetFloat(obj_f field) const
 
 int64_t GameObjectBody::GetInt64(obj_f field) const
 {
-	Expects(objectFields.GetType(field) == ObjectFieldType::Int64);
+	assert(objectFields.GetType(field) == ObjectFieldType::Int64);
 	auto storageLoc = GetStorageLocation<int64_t*>(field);
 	if (!storageLoc || !*storageLoc) {
 		return int64_t();
@@ -127,7 +127,7 @@ int32_t GameObjectBody::GetInt64Size(obj_f field) const
 
 objHndl GameObjectBody::GetObjHndl(obj_f field) const
 {
-	Expects(objectFields.GetType(field) == ObjectFieldType::Obj);
+	assert(objectFields.GetType(field) == ObjectFieldType::Obj);
 
 	// Special case for prototype handle
 	if (field == obj_f_prototype_handle) {
@@ -145,7 +145,7 @@ objHndl GameObjectBody::GetObjHndl(obj_f field) const
 
 bool GameObjectBody::GetValidObjHndl(obj_f field, objHndl * handleOut)
 {
-	Expects(objectFields.GetType(field) == ObjectFieldType::Obj);
+	assert(objectFields.GetType(field) == ObjectFieldType::Obj);
 
 	// Special case for prototype handle
 	if (field == obj_f_prototype_handle) {
@@ -190,7 +190,7 @@ bool GameObjectBody::GetValidObjHndl(obj_f field, objHndl * handleOut)
 
 ObjectId GameObjectBody::GetObjectId(obj_f field) const
 {
-	Expects(objectFields.GetType(field) == ObjectFieldType::Obj);
+	assert(objectFields.GetType(field) == ObjectFieldType::Obj);
 
 	// Keep in mind that handles are stored in the form of ObjectIds
 	auto storageLoc = GetStorageLocation<ObjectId*>(field);
@@ -207,7 +207,7 @@ ObjectId GameObjectBody::GetObjectId(obj_f field) const
 
 const char * GameObjectBody::GetString(obj_f field) const
 {
-	Expects(objectFields.GetType(field) == ObjectFieldType::String);
+	assert(objectFields.GetType(field) == ObjectFieldType::String);
 
 	// Keep in mind that handles are stored in the form of ObjectIds
 	auto storageLoc = GetStorageLocation<const char*>(field);
@@ -217,7 +217,7 @@ const char * GameObjectBody::GetString(obj_f field) const
 
 void GameObjectBody::SetString(obj_f field, const char * text)
 {
-	Expects(objectFields.GetType(field) == ObjectFieldType::String);
+	assert(objectFields.GetType(field) == ObjectFieldType::String);
 
 	auto storageLoc = GetMutableStorageLocation<char*>(field);
 	if (*storageLoc) {
@@ -228,7 +228,7 @@ void GameObjectBody::SetString(obj_f field, const char * text)
 
 GameInt32ReadOnlyArray GameObjectBody::GetInt32Array(obj_f field) const
 {
-	Expects(objectFields.GetType(field) == ObjectFieldType::Int32Array
+	assert(objectFields.GetType(field) == ObjectFieldType::Int32Array
 		|| objectFields.GetType(field) == ObjectFieldType::AbilityArray);
 
 	auto storageLoc = GetStorageLocation<ArrayHeader*>(field);
@@ -237,7 +237,7 @@ GameInt32ReadOnlyArray GameObjectBody::GetInt32Array(obj_f field) const
 
 GameInt64ReadOnlyArray GameObjectBody::GetInt64Array(obj_f field) const
 {
-	Expects(objectFields.GetType(field) == ObjectFieldType::Int64Array);
+	assert(objectFields.GetType(field) == ObjectFieldType::Int64Array);
 
 	auto storageLoc = GetStorageLocation<ArrayHeader*>(field);
 	return GameInt64ReadOnlyArray(const_cast<ArrayHeader**>(storageLoc));
@@ -245,7 +245,7 @@ GameInt64ReadOnlyArray GameObjectBody::GetInt64Array(obj_f field) const
 
 GameObjectIdReadOnlyArray GameObjectBody::GetObjectIdArray(obj_f field) const
 {
-	Expects(objectFields.GetType(field) == ObjectFieldType::ObjArray);
+	assert(objectFields.GetType(field) == ObjectFieldType::ObjArray);
 
 	auto storageLoc = GetStorageLocation<ArrayHeader*>(field);
 	return GameObjectIdReadOnlyArray(const_cast<ArrayHeader**>(storageLoc));
@@ -253,7 +253,7 @@ GameObjectIdReadOnlyArray GameObjectBody::GetObjectIdArray(obj_f field) const
 
 GameScriptReadOnlyArray GameObjectBody::GetScriptArray(obj_f field) const
 {
-	Expects(objectFields.GetType(field) == ObjectFieldType::ScriptArray);
+	assert(objectFields.GetType(field) == ObjectFieldType::ScriptArray);
 
 	auto storageLoc = GetStorageLocation<ArrayHeader*>(field);
 	return GameScriptReadOnlyArray(const_cast<ArrayHeader**>(storageLoc));
@@ -261,7 +261,7 @@ GameScriptReadOnlyArray GameObjectBody::GetScriptArray(obj_f field) const
 
 GameSpellReadOnlyArray GameObjectBody::GetSpellArray(obj_f field) const
 {
-	Expects(objectFields.GetType(field) == ObjectFieldType::SpellArray);
+	assert(objectFields.GetType(field) == ObjectFieldType::SpellArray);
 
 	auto storageLoc = GetStorageLocation<ArrayHeader*>(field);
 	return GameSpellReadOnlyArray(const_cast<ArrayHeader**>(storageLoc));
@@ -269,7 +269,7 @@ GameSpellReadOnlyArray GameObjectBody::GetSpellArray(obj_f field) const
 
 GameInt32Array GameObjectBody::GetMutableInt32Array(obj_f field)
 {
-	Expects(objectFields.GetType(field) == ObjectFieldType::Int32Array
+	assert(objectFields.GetType(field) == ObjectFieldType::Int32Array
 		|| objectFields.GetType(field) == ObjectFieldType::AbilityArray);
 
 	auto storageLoc = GetMutableStorageLocation<ArrayHeader*>(field);
@@ -278,7 +278,7 @@ GameInt32Array GameObjectBody::GetMutableInt32Array(obj_f field)
 
 GameInt64Array GameObjectBody::GetMutableInt64Array(obj_f field)
 {
-	Expects(objectFields.GetType(field) == ObjectFieldType::Int64Array);
+	assert(objectFields.GetType(field) == ObjectFieldType::Int64Array);
 
 	auto storageLoc = GetMutableStorageLocation<ArrayHeader*>(field);
 	return GameInt64Array(storageLoc);
@@ -286,7 +286,7 @@ GameInt64Array GameObjectBody::GetMutableInt64Array(obj_f field)
 
 GameObjectIdArray GameObjectBody::GetMutableObjectIdArray(obj_f field)
 {
-	Expects(objectFields.GetType(field) == ObjectFieldType::ObjArray);
+	assert(objectFields.GetType(field) == ObjectFieldType::ObjArray);
 
 	auto storageLoc = GetMutableStorageLocation<ArrayHeader*>(field);
 	return GameObjectIdArray(storageLoc);
@@ -294,7 +294,7 @@ GameObjectIdArray GameObjectBody::GetMutableObjectIdArray(obj_f field)
 
 GameScriptArray GameObjectBody::GetMutableScriptArray(obj_f field)
 {
-	Expects(objectFields.GetType(field) == ObjectFieldType::ScriptArray);
+	assert(objectFields.GetType(field) == ObjectFieldType::ScriptArray);
 
 	auto storageLoc = GetMutableStorageLocation<ArrayHeader*>(field);
 	return GameScriptArray(storageLoc);
@@ -302,7 +302,7 @@ GameScriptArray GameObjectBody::GetMutableScriptArray(obj_f field)
 
 GameSpellArray GameObjectBody::GetMutableSpellArray(obj_f field)
 {
-	Expects(objectFields.GetType(field) == ObjectFieldType::SpellArray);
+	assert(objectFields.GetType(field) == ObjectFieldType::SpellArray);
 
 	auto storageLoc = GetMutableStorageLocation<ArrayHeader*>(field);
 	return GameSpellArray(storageLoc);
@@ -342,7 +342,7 @@ void GameObjectBody::WriteFieldToStream(ObjectFieldType type, const void* value,
 	case ObjectFieldType::Obj: 
 		if (value) {
 			stream.WriteUInt8(1);
-			Expects(reinterpret_cast<const ObjectId*>(value)->IsPersistable());
+			assert(reinterpret_cast<const ObjectId*>(value)->IsPersistable());
 			stream.WriteObjectId(*(const ObjectId*)value);
 		} else {
 			stream.WriteUInt8(0);
@@ -432,7 +432,7 @@ objHndl GameObjectBody::GetObjHndl(obj_f field, size_t index) const
 }
 
 bool GameObjectBody::GetValidObjHndl(obj_f field, size_t index, objHndl* handleOut) {
-	Expects(objectFields.GetType(field) == ObjectFieldType::ObjArray);
+	assert(objectFields.GetType(field) == ObjectFieldType::ObjArray);
 
 	// Get the stored object id
 	auto objId = GetObjectId(field, index);
@@ -494,7 +494,7 @@ void GameObjectBody::RemoveSpell(obj_f field, size_t index)
 
 void GameObjectBody::ClearArray(obj_f field)
 {
-	Expects(!IsProto());
+	assert(!IsProto());
 
 	switch (objectFields.GetType(field)) {
 		case ObjectFieldType::Int32Array:
@@ -522,7 +522,7 @@ void GameObjectBody::ClearArray(obj_f field)
 
 void GameObjectBody::SetInt32(obj_f field, int32_t value)
 {
-	Expects(objectFields.GetFieldDef(field).type == ObjectFieldType::Int32);
+	assert(objectFields.GetFieldDef(field).type == ObjectFieldType::Int32);
 	auto storageLoc = GetMutableStorageLocation<int32_t>(field);
 	if (!storageLoc) {
 		logger->error("Trying to set field {} on object {}, whose type doesn't support it.", 
@@ -534,7 +534,7 @@ void GameObjectBody::SetInt32(obj_f field, int32_t value)
 
 void GameObjectBody::SetFloat(obj_f field, float value)
 {
-	Expects(objectFields.GetFieldDef(field).type == ObjectFieldType::Float32);
+	assert(objectFields.GetFieldDef(field).type == ObjectFieldType::Float32);
 	auto storageLoc = GetMutableStorageLocation<float>(field);
 	if (!storageLoc) {
 		logger->error("Trying to set field {} on object {}, whose type doesn't support it.",
@@ -546,7 +546,7 @@ void GameObjectBody::SetFloat(obj_f field, float value)
 
 void GameObjectBody::SetInt64(obj_f field, int64_t value)
 {
-	Expects(objectFields.GetFieldDef(field).type == ObjectFieldType::Int64);
+	assert(objectFields.GetFieldDef(field).type == ObjectFieldType::Int64);
 	auto storageLoc = GetMutableStorageLocation<int64_t*>(field);
 	if (!storageLoc) {
 		logger->error("Trying to set field {} on object {}, whose type doesn't support it.",
@@ -587,7 +587,7 @@ void GameObjectBody::SetObjectId(obj_f field, const ObjectId &value)
 {
 	// TODO: Additional validation regarding internal flags that checks whether
 	// this id is valid for the id storage state of this object (persistent ids vs. handles)
-	Expects(objectFields.GetFieldDef(field).type == ObjectFieldType::Obj);
+	assert(objectFields.GetFieldDef(field).type == ObjectFieldType::Obj);
 	auto storageLoc = GetMutableStorageLocation<ObjectId*>(field);
 	if (!storageLoc) {
 		logger->error("Trying to set field {} on object {}, whose type doesn't support it.",
@@ -603,13 +603,13 @@ void GameObjectBody::SetObjectId(obj_f field, const ObjectId &value)
 
 uint32_t GameObjectBody::GetInternalFlags() const
 {
-	Expects(!IsProto());
+	assert(!IsProto());
 	return transientProps.internalFlags;
 }
 
 void GameObjectBody::SetInternalFlags(uint32_t internalFlags)
 {
-	Expects(!IsProto());
+	assert(!IsProto());
 	transientProps.internalFlags = internalFlags;
 }
 
@@ -827,7 +827,7 @@ void GameObjectBody::PruneNullInventoryItems()
 		logger->error("Inventory array count does not equal associated num field.  Array: {}, Field: {}", invenCount, invenCountFromField);
 	}
 
-	for (auto i = 0; i < invenCount; ++i) {
+	for (auto i = 0u; i < invenCount; ++i) {
 		auto item = GetObjHndl(invenField, i);
 		if (!item) {
 			logger->error("PruneNullInventoryItems: null inventory item (idx {}) on {}!", i, handle);
@@ -960,7 +960,7 @@ void GameObjectBody::ForEachChild(std::function<void(objHndl item)> callback) co
 
 bool GameObjectBody::Write(OutputStream &stream) const
 {
-	Expects(!IsProto());
+	assert(!IsProto());
 
 	stream.WriteUInt32(0x77);
 	stream.WriteObjectId(protoId);
@@ -982,7 +982,7 @@ bool GameObjectBody::Write(OutputStream &stream) const
 
 void GameObjectBody::WriteDiffsToStream(OutputStream &stream) const {
 
-	Expects(hasDifs == 1);
+	assert(hasDifs == 1);
 
 	stream.WriteUInt32(0x77); // Version
 	stream.WriteUInt32(0x12344321); // Magic header
@@ -1097,7 +1097,7 @@ bool GameObjectBody::ValidateFieldForType(obj_f field) const
 
 void ** GameObjectBody::GetTransientStorage(obj_f field)
 {
-	Expects(objectFields.IsTransient(field));
+	assert(objectFields.IsTransient(field));
 	int index = field - obj_f_transient_begin - 1;
 	auto storagePtr = reinterpret_cast<void**>(&transientProps);
 	return &storagePtr[index];
@@ -1105,7 +1105,7 @@ void ** GameObjectBody::GetTransientStorage(obj_f field)
 
 void * const * GameObjectBody::GetTransientStorage(obj_f field) const
 {
-	Expects(objectFields.IsTransient(field));
+	assert(objectFields.IsTransient(field));
 	int index = field - obj_f_transient_begin - 1;
 	auto storagePtr = reinterpret_cast<void* const *>(&transientProps);
 	return &storagePtr[index];
@@ -1113,13 +1113,13 @@ void * const * GameObjectBody::GetTransientStorage(obj_f field) const
 
 bool GameObjectBody::HasDataForField(const ObjectFieldDef &field) const
 {
-	Expects(!IsProto());
+	assert(!IsProto());
 	return (propCollBitmap[field.bitmapBlockIdx] & field.bitmapMask) != 0;
 }
 
 size_t GameObjectBody::GetPropCollIdx(const ObjectFieldDef & field) const
 {
-	Expects(!IsProto());
+	assert(!IsProto());
 
 	size_t count = 0;
 	for (int i = 0; i < field.bitmapBlockIdx; ++i) {

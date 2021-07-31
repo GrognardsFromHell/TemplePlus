@@ -5,6 +5,7 @@
 #include "party.h"
 #include "gameview.h"
 
+#include <fmt/xchar.h>
 #include <tig/tig_startup.h>
 #include <graphics/device.h>
 #include <graphics/camera.h>
@@ -152,7 +153,7 @@ void AnimGoalsDebugRenderer::RenderAnimGoals(objHndl handle)
 			XMFLOAT2 from{ (float) x, y - 1.0f };
 			XMFLOAT2 to{ x + 120.0f, y - 1.0f };
 			gfx::Line2d line(from, to, XMCOLOR(0xFFFFFFFF));
-			renderer2d.DrawLines(gsl::span(&line, 1));
+			renderer2d.DrawLines(std::span(&line, 1));
 
 			gfx::FormattedText t;
 			t.defaultStyle = textStyle;

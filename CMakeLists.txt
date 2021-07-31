@@ -5,7 +5,12 @@ set(CMAKE_SYSTEM_VERSION 10.0 CACHE STRING "" FORCE)
 project(TemplePlus CXX)
 
 # We generally use LTCG a.k.a. INTERPROCEDURAL_OPTIMIZATION
-set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
+include(CheckIPOSupported)
+check_ipo_supported()
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION true)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED true)
 
 ################################################################################
 # Set target arch type if empty. Visual studio solution generator provides it.
@@ -14,10 +19,6 @@ if(NOT CMAKE_VS_PLATFORM_NAME)
     set(CMAKE_VS_PLATFORM_NAME "Win32")
 endif()
 message("${CMAKE_VS_PLATFORM_NAME} architecture in use")
-
-# if(NOT ("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "Win32"))
-#     message(FATAL_ERROR "${CMAKE_VS_PLATFORM_NAME} arch is not supported!")
-# endif()
 
 ################################################################################
 # Global configuration types
@@ -44,6 +45,8 @@ endif()
 # Global linker options
 ################################################################################
 if(MSVC)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
     # remove default flags provided with CMake for MSVC
     set(CMAKE_EXE_LINKER_FLAGS "")
     set(CMAKE_MODULE_LINKER_FLAGS "")
@@ -64,23 +67,9 @@ if(MSVC)
 endif()
 
 ################################################################################
-# Nuget packages function stub.
-################################################################################
-function(use_package TARGET PACKAGE VERSION)
-    message(WARNING "No implementation of use_package. Create yours. "
-                    "Package \"${PACKAGE}\" with version \"${VERSION}\" "
-                    "for target \"${TARGET}\" is ignored!")
-endfunction()
-
-################################################################################
 # Common utils
 ################################################################################
 include(CMake/Utils.cmake)
-
-################################################################################
-# Additional Global Settings(add specific info there)
-################################################################################
-include(CMake/GlobalSettingsInclude.cmake OPTIONAL)
 
 ################################################################################
 # Use solution folders feature
@@ -120,7 +109,7 @@ target_include_directories(ssleay INTERFACE ${DEPENDENCIES_DIR}/include)
 ################################################################################
 # Sub-projects
 ################################################################################
-add_subdirectory(EASTL)
+add_subdirectory(thirdparty)
 add_subdirectory(Infrastructure)
 add_subdirectory(ParticleSystems)
 add_subdirectory(Temple)

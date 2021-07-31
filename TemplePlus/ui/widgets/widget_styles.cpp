@@ -5,17 +5,21 @@
 #include <infrastructure/json11.hpp>
 #include <infrastructure/vfs.h>
 
-namespace eastl {
-	void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const string &text) {
-		f.writer().write("{}", text.c_str());
-	}
+namespace fmt {
+    template<>
+    struct formatter<eastl::string> : formatter<const char*> {
+        template<typename FormatContext>
+        auto format(const eastl::string &v, FormatContext &ctx) {
+            return formatter<const char*>::format(v.c_str(), ctx);
+        }
+    };
 }
 
 WidgetTextStyles* widgetTextStyles = nullptr;
 
 WidgetTextStyles::WidgetTextStyles()
 {
-	Expects(!widgetTextStyles);
+	assert(!widgetTextStyles);
 	widgetTextStyles = this;
 
 	LoadStylesFile("templeplus/text_styles.json");
@@ -233,7 +237,7 @@ WidgetButtonStyles* widgetButtonStyles = nullptr;
 
 WidgetButtonStyles::WidgetButtonStyles()
 {
-	Expects(!widgetButtonStyles);
+	assert(!widgetButtonStyles);
 	widgetButtonStyles = this;
 	LoadStylesFile("templeplus/button_styles.json");
 }

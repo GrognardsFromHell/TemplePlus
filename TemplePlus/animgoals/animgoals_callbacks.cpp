@@ -496,7 +496,7 @@ int GoalHasDoorInPath(AnimSlot &slot) {
 	return org(slot);*/
 
 	auto obj = slot.param1.obj;
-	Expects(obj);
+	assert(obj);
 
 	auto nextPathPos = slot.path.GetNextNode();
 	if (!nextPathPos) {
@@ -507,12 +507,14 @@ int GoalHasDoorInPath(AnimSlot &slot) {
 	auto testHeight = 36.0f;
 
 	using namespace DirectX;
-	auto nextPathPosWorld = XMLoadFloat3(&nextPathPos->ToInches3D(testHeight));
+	XMFLOAT3 nextPathPosWorldTmp(nextPathPos->ToInches3D(testHeight));
+	auto nextPathPosWorld = XMLoadFloat3(&nextPathPosWorldTmp);
 
 	auto currentPos = objects.GetLocationFull(obj);
 	auto radius = objects.GetRadius(obj);
 
-	auto currentPosWorld = XMLoadFloat3(&currentPos.ToInches3D(testHeight));
+	XMFLOAT3 currentPosWorldTmp(currentPos.ToInches3D(testHeight));
+	auto currentPosWorld = XMLoadFloat3(&currentPosWorldTmp);
 
 	// Effectively this builds a world position that is one tile ahead of the current
 	// position along the critter's trajectory
@@ -793,7 +795,7 @@ int GoalIsLiveCritterNear(AnimSlot &slot) {
 // Originally @ 0x10011600
 int GoalSetRunningFlag(AnimSlot &slot) {
 	// static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x10011600);
-	Expects(slot.animObj);
+	assert(slot.animObj);
 	slot.flags |= AnimSlotFlag::ASF_RUNNING;
 	return TRUE;
 }

@@ -113,7 +113,7 @@ void TigTabParser::Process()
 		int colIdx = 0;
 		for ( ; *curPos != '\n' && colIdx < maxColumns; colIdx++)
 		{
-			Expects(colIdx < maxColumns);
+			assert(colIdx < maxColumns);
 			columns[colIdx] = curPos;
 			bool trimmedCharsSkipped = false;
 			while (*curPos != '\n')

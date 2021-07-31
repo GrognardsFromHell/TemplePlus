@@ -1,11 +1,11 @@
 
 #pragma once
 
-#include <gsl/gsl>
 #include <string>
 #include <memory>
 #include <vector>
 #include <string_view>
+#include <span>
 
 #include "aas/aas_math.h"
 
@@ -56,16 +56,16 @@ namespace aas {
 			return materials_[materialIdx];
 		}
 
-		gsl::span<MeshBone> GetBones() const {
+		std::span<MeshBone> GetBones() const {
 			return bones_;
 		}
 
 		const MeshBone &GetBone(int boneIdx) const {
-			Expects(boneIdx >= 0 && boneIdx < bones_.size());
+			assert(boneIdx >= 0 && boneIdx < (int) bones_.size());
 			return bones_[boneIdx];
 		}
 
-		gsl::span<MeshVertex> GetVertices() const {
+		std::span<MeshVertex> GetVertices() const {
 			return vertices_;
 		}
 
@@ -81,7 +81,7 @@ namespace aas {
 			return vertices_[vertexIdx];
 		}
 
-		gsl::span<MeshFace> GetFaces() const {
+		std::span<MeshFace> GetFaces() const {
 			return faces_;
 		}
 
@@ -101,9 +101,9 @@ namespace aas {
 		std::vector<std::string_view> materials_;
 		
 		// These are views into the data buffer
-		gsl::span<MeshBone> bones_;
-		gsl::span<MeshVertex> vertices_;
-		gsl::span<MeshFace> faces_;
+		std::span<MeshBone> bones_;
+		std::span<MeshVertex> vertices_;
+		std::span<MeshFace> faces_;
 	};
 
 	std::unique_ptr<Mesh> LoadMeshFile(std::string_view filename);

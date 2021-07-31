@@ -1,8 +1,8 @@
 #pragma once
 
 #include <graphics/math.h>
-
 #include <fmt/format.h>
+#include <infrastructure/stringutil.h>
 
 #include <cstdint>
 
@@ -78,7 +78,29 @@ struct LocFull {
 
 #pragma pack(pop)
 
-void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const locXY &loc);
-void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const LocAndOffsets &loc);
-void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const LocFull &loc);
+namespace fmt {
+    template<>
+    struct formatter<locXY> : simple_formatter {
+        template<typename FormatContext>
+        auto format(const locXY &v, FormatContext &ctx) {
+            return format_to(ctx.out(), "{},{}", v.locx, v.locy);
+        }
+    };
 
+    template<>
+    struct formatter<LocAndOffsets> : simple_formatter {
+        template<typename FormatContext>
+        auto format(const LocAndOffsets &v, FormatContext &ctx) {
+            return format_to(ctx.out(), "{},{},{}", v.location, v.location.locx, v.location.locy);
+        }
+    };
+
+    template<>
+    struct formatter<LocFull> : simple_formatter {
+        template<typename FormatContext>
+        auto format(const LocFull &v, FormatContext &ctx) {
+            return format_to(ctx.out(), "{},{}", v.location, v.off_z);
+        }
+    };
+
+}

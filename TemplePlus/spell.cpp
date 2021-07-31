@@ -373,7 +373,7 @@ SpellPacketBody::SpellPacketBody(uint32_t spellId){
 		memset(this, 0, sizeof(SpellPacketBody));
 }
 
-SpellPacketBody::SpellPacketBody(objHndl spellCaster, D20SpellData& spellData)
+SpellPacketBody::SpellPacketBody(objHndl spellCaster, const D20SpellData& spellData)
 {
 	memset(this, 0, sizeof(SpellPacketBody));
 
@@ -458,7 +458,7 @@ bool SpellPacketBody::FindObj(objHndl obj, int* idx) const
 
 bool SpellPacketBody::InsertToPartsysList(uint32_t idx, int partsysId)
 {
-	Expects(idx < 32 && idx >= 0);
+	assert(idx < 32 && idx >= 0);
 	if (idx >= targetCount && idx < 32){
 		targetListPartsysIds[idx] = partsysId;
 		return true;
@@ -470,7 +470,7 @@ bool SpellPacketBody::InsertToPartsysList(uint32_t idx, int partsysId)
 }
 
 bool SpellPacketBody::InsertToTargetList(uint32_t idx, objHndl tgt){
-	Expects(idx >= 0 && idx < 32 && idx <= targetCount);
+	assert(idx >= 0 && idx < 32 && idx <= targetCount);
 	for (int i = targetCount; i > (int) idx; i--){
 		targetListHandles[i] = targetListHandles[i-1];
 	}
@@ -853,11 +853,11 @@ uint32_t LegacySpellSystem::ConfigSpellTargetting(PickerArgs* args, SpellPacketB
 
 		// add for the benefit of AI casters
 		if (args->IsBaseModeTarget(UiPickerType::Multi) && args->result.handle) {
-			auto N = 1;
+			auto N = 1u;
 			if (!args->IsModeTargetFlagSet(UiPickerType::OnceMulti)) {
 				N = MAX_SPELL_TARGETS;
 			}
-			for (; spPkt->targetCount < args->maxTargets && spPkt->targetCount < N; spPkt->targetCount++) {
+			for (; spPkt->targetCount < (uint32_t) args->maxTargets && spPkt->targetCount < N; spPkt->targetCount++) {
 				spPkt->targetListHandles[spPkt->targetCount] = args->result.handle;
 			}
 		}
@@ -882,7 +882,7 @@ uint32_t LegacySpellSystem::ConfigSpellTargetting(PickerArgs* args, SpellPacketB
 			}
 			// else apply the rest of the targeting to the last object
 			else if (args->IsBaseModeTarget(UiPickerType::Multi) && !args->IsModeTargetFlagSet(UiPickerType::OnceMulti)) {
-				while (spPkt->targetCount < args->maxTargets) {
+				while (spPkt->targetCount < (uint32_t) args->maxTargets) {
 					spPkt->targetListHandles[spPkt->targetCount++] = objNode->handle;
 				}
 				objNode = nullptr;
@@ -1486,7 +1486,7 @@ void LegacySpellSystem::SaveDebugRecords() const
 			{
 				spell.Write(buf);
 			}
-			auto &memBuf = buf.GetBuffer();
+			auto memBuf = buf.GetBuffer();
 			
 			tioFile.WriteUInt32(memBuf.size());
 			tioFile.WriteBytes(&memBuf[0], memBuf.size());
@@ -1526,7 +1526,7 @@ SpellMapTransferInfo LegacySpellSystem::SaveSpellForTeleport(const SpellPacket& 
 	SpellMapTransferInfo result;
 
 	auto spellEnum = data.spellPktBody.spellEnum;
-	Expects(spellEnum > 0 && spellEnum < 10000); // keeping a margin for now because co8 has messed with this a bit
+	assert(spellEnum > 0 && spellEnum < 10000); // keeping a margin for now because co8 has messed with this a bit
 	if (spellEnum > SPELL_ENUM_MAX_EXPANDED)	{
 		logger->warn("Spell enum beyond expected range encountered: {}", spellEnum);
 	}
@@ -1809,7 +1809,7 @@ bool LegacySpellSystem::LoadActiveSpellElement(TioFile* file, uint32_t& spellId,
 		return false;
 	if (!tio_fread(&pkt.isActive, sizeof(int), 1, file))
 		return false;
-	///Expects(pkt.isActive);
+	///assert(pkt.isActive);
 	if (!pkt.isActive){
 		logger->debug("Spell was inactive!");
 	}
@@ -1825,7 +1825,7 @@ bool LegacySpellSystem::LoadActiveSpellElement(TioFile* file, uint32_t& spellId,
 	ObjectId objId;
 	if (!tio_fread(&objId, sizeof(ObjectId), 1, file))
 		return false;
-	//Expects(objId.subtype != ObjectIdKind::Null);
+	//assert(objId.subtype != ObjectIdKind::Null);
 	pkt.spellPktBody.caster = objSystem->GetHandleById(objId);
 
 	// get the caster partsys
@@ -1960,7 +1960,7 @@ bool LegacySpellSystem::LoadActiveSpellElement(TioFile* file, uint32_t& spellId,
 		return false;
 	if (!tio_fread(&pkt.spellPktBody.spellId, sizeof(int), 1, file))
 		return false;
-	Expects(pkt.spellPktBody.spellId >= 0);
+	assert(pkt.spellPktBody.spellId >= 0);
 
 	auto spellName = GetSpellName(pkt.spellPktBody.spellEnum);
 	logger->info("SpellLoad: Loaded spell {} id {}", spellName, spellId);
@@ -2286,7 +2286,8 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 			
 		}
 		else if (!_strnicmp(textBuf, "Level", 5)) {
-			auto text = trim(std::string(textBuf+5));
+		    std::string text(textBuf + 5);
+		    trim(text);
 			if (text.size() < 2) { // empty line (e.g. in Rudy's mods)
 				logger->warn("SpellEntryFileParse: blank line in spell {} Level: {}", spEntry.spellEnum, text);
 				continue;
@@ -3626,8 +3627,8 @@ bool SpellSystem::Load(GameSystemSaveFile* file) {
 		if (tio_fread(&numSpells, 4, 1, file->file) != 1)
 			return FALSE;
 
-		Expects(numSpells >= 0);
-		Expects(*spellIdSerial >= numSpells);
+		assert(numSpells >= 0);
+		assert(*spellIdSerial >= numSpells);
 
 		if (numSpells <= 0)
 			return TRUE;

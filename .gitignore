@@ -252,3 +252,5 @@ _Pvt_Extensions
 
 /tpdata/.idea
 /.idea
+
+/cmake-build-*

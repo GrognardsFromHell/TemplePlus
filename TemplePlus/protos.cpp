@@ -150,7 +150,7 @@ int ProtosHooks::ParseCondition(int colIdx, objHndl handle, char * content, int 
 		return 1;
 	}
 
-	Expects(stage == lastStage + 1);
+	assert(stage == lastStage + 1);
 	lastStage = stage;
 		
 
@@ -419,7 +419,7 @@ int ProtosHooks::ParseSpell(int colIdx, objHndl handle, char* content, obj_f fie
 		auto shouldAddKnown = true;
 		std::vector<int> spellClasses, spellLevels;
 		if (obj->IsCritter() && spellSys.SpellKnownQueryGetData(handle, spEnum, spellClasses, spellLevels)){
-			for (auto i=0; i < spellClasses.size(); i++){
+			for (auto i=0u; i < spellClasses.size(); i++){
 				if (spellClasses[i] == spClass && spellLevels[i] == spLvl){
 					shouldAddKnown = false;
 					break;

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include <gsl/span>
+#include <span>
 
 namespace crypto {
 
@@ -10,6 +10,6 @@ namespace crypto {
 		provided data view and return it as a lowercase hex
 		string.
 	*/
-	std::string MD5AsString(gsl::span<uint8_t> data);
+	std::string MD5AsString(std::span<uint8_t> data);
 
 }

@@ -140,7 +140,7 @@ void TempleFix::writeNoops(uint32_t offset) {
 	hde32_disasm(realAddress, &oldInstruction);
 
 	uint8_t noopBytes[32];
-	Expects(oldInstruction.len <= sizeof(noopBytes));
+	assert(oldInstruction.len <= sizeof(noopBytes));
 	memset(noopBytes, 0x90, oldInstruction.len);
 	write(offset, &noopBytes[0], oldInstruction.len);
 
@@ -150,7 +150,7 @@ void TempleFix::breakRegion(uint32_t from, uint32_t to)
 {
 	size_t size = to - from;
 
-	Expects(to > from);
+	assert(to > from);
 
 	// Unprotect the entire area
 	MemoryUnprotector unprotector(from, size);

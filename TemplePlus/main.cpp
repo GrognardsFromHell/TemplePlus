@@ -9,6 +9,8 @@
 
 #include "util/datadump.h"
 
+#include <fmt/xchar.h>
+
 void InitLogging(const std::wstring &logFile, spdlog::level::level_enum logLevel);
 
 // Defined in temple_main.cpp for now
@@ -56,7 +58,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	if (dll.HasBeenRebased()) {
 		auto moduleName = dll.FindConflictingModule();
-		auto msg = format(L"Module '{}' caused temple.dll to be loaded at a different address than usual.\n"
+		auto msg = fmt::format(L"Module '{}' caused temple.dll to be loaded at a different address than usual.\n"
 			                L"This will most likely lead to crashes.", moduleName);
 		MessageBox(nullptr, msg.c_str(), L"Module Conflict", MB_OK | MB_ICONWARNING);
 	}

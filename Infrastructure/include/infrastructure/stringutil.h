@@ -1,7 +1,5 @@
 #pragma once
 
-#include <gsl/string_span>
-
 #include <fmt/format.h>
 
 #include <string>
@@ -36,13 +34,13 @@ inline std::string &trim(std::string &s) {
 	return ltrim(rtrim(s));
 }
 
-inline std::vector<gsl::cstring_span<>>& split(gsl::cstring_span<> s, 
+inline std::vector<std::string_view>& split(std::string_view s,
 	char delim, 
-	std::vector<gsl::cstring_span<>>& elems, 
+	std::vector<std::string_view>& elems,
 	bool trimItems = false, 
 	bool keepEmpty = false) {
 
-	int pos = 0;
+	auto pos = 0u;
 	while (pos < s.size()) {
 		auto ch = s[pos++];
 
@@ -79,7 +77,7 @@ inline std::vector<gsl::cstring_span<>>& split(gsl::cstring_span<> s,
 		}
 
 		if (count != 0) {
-			elems.push_back(s.subspan(start, count));
+			elems.push_back(s.substr(start, count));
 		} else if (keepEmpty) {
 			elems.push_back({});
 		}
@@ -89,8 +87,8 @@ inline std::vector<gsl::cstring_span<>>& split(gsl::cstring_span<> s,
 	return elems;
 }
 
-inline std::vector<gsl::cstring_span<>> split(gsl::cstring_span<> s, char delim, bool trim = false, bool keepEmpty = false) {
-	std::vector<gsl::cstring_span<>> elems;
+inline std::vector<std::string_view> split(std::string_view s, char delim, bool trim = false, bool keepEmpty = false) {
+	std::vector<std::string_view> elems;
 	split(s, delim, elems, trim, keepEmpty);
 	return elems;
 }
@@ -161,21 +159,32 @@ inline std::string toupper(const std::string &s) {
 	}
 }
 
-// Nice to have operator for serializing vectors in the logger
-namespace std {
-	template<typename T>
-	void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const std::vector<T> &v) {
-		using namespace std;
+struct simple_formatter {
+    constexpr auto parse(fmt::format_parse_context& ctx) -> decltype(ctx.begin()) {
+        if (ctx.begin() != ctx.end() && *ctx.begin() != '}')
+            throw fmt::format_error("invalid format");
+        return ctx.begin();
+    }
+};
 
-		f.writer().write("[");
-		for (size_t i = 0; i < v.size(); ++i) {
-			f.writer().write("{}", v[i]);
-			if (i != v.size() - 1) {
-				f.writer().write(", ");
-			}
-		}
-		f.writer().write("]");
-	}
+// Nice to have operator for serializing vectors in the logger
+namespace fmt {
+    template<typename Value>
+    struct formatter<std::vector<Value>> : simple_formatter {
+
+        template<typename FormatContext>
+        auto format(const std::vector<Value> &v, FormatContext &ctx) {
+            auto &&out = ctx.out();
+            format_to(out, "[");
+            for (size_t i = 0; i < v.size(); ++i) {
+                format_to(out, "{}", v[i]);
+                if (i != v.size() - 1) {
+                    format_to(out, ", ");
+                }
+            }
+            return format_to(out, "]");
+        }
+    };
 }
 
 inline bool endsWith(const std::string &str, const std::string &suffix) {

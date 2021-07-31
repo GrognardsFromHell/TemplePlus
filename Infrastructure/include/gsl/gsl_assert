@@ -139,7 +139,6 @@ namespace details
 
 #endif
 
-#define Expects(cond) GSL_CONTRACT_CHECK("Precondition", cond)
 #define Ensures(cond) GSL_CONTRACT_CHECK("Postcondition", cond)
 
 #endif // GSL_CONTRACTS_H

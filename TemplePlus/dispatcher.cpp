@@ -1369,38 +1369,38 @@ CondStructNew::CondStructNew(CondStruct& existingCondStruct){
 }
 
 void CondStructNew::AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(* callback)(DispatcherCallbackArgs)){
-	Expects(numHooks < 99);
+	assert(numHooks < 99);
 	subDispDefs[numHooks++] = { dispType, dispKey, callback, static_cast<uint32_t>(0), static_cast<uint32_t>(0) };
 }
 
 void CondStructNew::AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(* callback)(DispatcherCallbackArgs), uint32_t data1, uint32_t data2){
-	Expects(numHooks < 99);
+	assert(numHooks < 99);
 	subDispDefs[numHooks++] = {dispType, dispKey, callback, data1, data2};
 }
 
 void CondStructNew::AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(* callback)(DispatcherCallbackArgs), CondStructNew* data1, uint32_t data2){
-	Expects(numHooks < 99);
+	assert(numHooks < 99);
 	subDispDefs[numHooks++] = { dispType, dispKey, callback, data1, data2 };
 }
 
 void CondStructNew::AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(*callback)(DispatcherCallbackArgs), CondStruct * data1, uint32_t data2)
 {
-	Expects(numHooks < 99);
+	assert(numHooks < 99);
 	subDispDefs[numHooks++] = { dispType, dispKey, callback, (CondStructNew*)data1, data2 };
 }
 
 //void CondStructNew::AddHook(enum_disp_type dispType, D20DispatcherKey dispKey, int(* callback)(DispatcherCallbackArgs), uint32_t data1, const char* data2) 
 //{
-//	Expects(numHooks < 99);
+//	assert(numHooks < 99);
 //	subDispDefs[numHooks++] = { dispType, dispKey, callback, data1, data2 };
 //}
 
 //void CondStructNew::AddPyHook(enum_disp_type dispType, D20DispatcherKey dispKey, PyObject* pycallback, PyObject* pydataTuple){
-//	Expects(numHooks < 99);
+//	assert(numHooks < 99);
 //	subDispDefs[numHooks++] = { dispType, dispKey, PyModHookWrapper, (uint32_t) pycallback, (uint32_t) pydataTuple};
 //}
 //void CondStructNew::AddPyHook(enum_disp_type dispType, D20DispatcherKey dispKey, pybind11::function pycallback,pybind11::tuple pydataTuple) {
-//		Expects(numHooks < 99);
+//		assert(numHooks < 99);
 //		subDispDefs[numHooks++] = { dispType, dispKey, PyModHookWrapper, (uint32_t) pycallback.ptr(), (uint32_t) pydataTuple.ptr()};
 //	}
 

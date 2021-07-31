@@ -22,8 +22,8 @@ static PyObject* PyTrapDamage_GetType(PyObject *obj, void*) {
 }
 
 static PyGetSetDef PyTrapDamage_GetSet[] = {
-	{ "damage", PyTrapDamage_GetDamage, NULL, NULL },
-	{ "type", PyTrapDamage_GetType, NULL, NULL },
+	{ (char*) "damage", PyTrapDamage_GetDamage, NULL, NULL },
+	{ (char*) "type", PyTrapDamage_GetType, NULL, NULL },
 	{ NULL, NULL, NULL, NULL }
 };
 
@@ -166,11 +166,11 @@ static PyObject *PyTrap_GetDamage(PyObject *obj, void*) {
 }
 
 static PyGetSetDef PyTrap_GetSet[] = {
-	{ "obj", PyTrap_GetObj, NULL, NULL },
-	{ "id", PyTrap_GetId, NULL, NULL },
-	{ "san", PyTrap_GetSan, NULL, NULL },
-	{ "partsys", PyTrap_GetPartSys, NULL, NULL },
-	{ "damage", PyTrap_GetDamage, NULL, NULL },
+	{ (char*)"obj", PyTrap_GetObj, NULL, NULL },
+	{ (char*)"id", PyTrap_GetId, NULL, NULL },
+	{ (char*)"san", PyTrap_GetSan, NULL, NULL },
+	{ (char*)"partsys", PyTrap_GetPartSys, NULL, NULL },
+	{ (char*)"damage", PyTrap_GetDamage, NULL, NULL },
 	{ NULL, NULL, NULL, NULL }
 };
 

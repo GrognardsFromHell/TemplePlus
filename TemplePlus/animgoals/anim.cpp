@@ -739,7 +739,7 @@ BOOL AnimSystem::ProcessAnimEvent(const TimeEvent *evt) {
   AnimSlotId triggerId = {evt->params[0].int32, evt->params[1].int32,
                           evt->params[2].int32};
 
-  Expects(triggerId.slotIndex >= 0 && triggerId.slotIndex < 512);
+  assert(triggerId.slotIndex >= 0 && triggerId.slotIndex < 512);
 
   auto &slot = mSlots[triggerId.slotIndex];
 
@@ -1182,9 +1182,9 @@ std::optional<AnimSlotId> AnimSystem::HasAttackAnim(objHndl handle, objHndl targ
 // Originally @ 0x100551a0
 bool AnimSystem::CurrentGoalHasField10_1(const AnimSlot &slot) const
 {
-    Expects(slot.IsActive());
-    Expects(slot.pCurrentGoal);
-    Expects(slot.pCurrentGoal && !slot.IsStackEmpty());
+    assert(slot.IsActive());
+    assert(slot.pCurrentGoal);
+    assert(slot.pCurrentGoal && !slot.IsStackEmpty());
 
 	auto &goal = animationGoals_->GetByType(slot.pCurrentGoal->goalType);
     
@@ -1442,7 +1442,7 @@ static void SaveGoalProperty(AnimGoalDataType dataType, const AnimParam &param, 
         }
         break;
     case AGDT_OBJ:
-        Expects(objRef);
+        assert(objRef);
         if (!FrozenObjRef::Save(param.obj, objRef, fh)) {
             throw TempleException("Failed to save object parameter of anim goal.");
         }
@@ -1529,7 +1529,7 @@ bool AnimSystem::PushGoal(const AnimSlotGoalStackEntry &stackEntry, AnimSlotId *
 // Originally @ 0x10056600
 bool AnimSystem::PushGoalInternal(const AnimSlotGoalStackEntry &stackEntry, AnimSlotId * slotIdOut, int flags)
 {
-	Expects(animationGoals_->IsValidType(stackEntry.goalType));
+	assert(animationGoals_->IsValidType(stackEntry.goalType));
 
 	// Don't push new goals while animations are loaded from the savegame
 	if (animSysIsLoading) {
@@ -1829,7 +1829,7 @@ void AnimSystem::InterruptGoalsByType(objHndl handle, AnimGoalType type, AnimGoa
 	} else {
 		auto &goal = animationGoals_->GetByType(keep);
 		interruptPriority = goal.priority;
-		Expects(interruptPriority >= AGP_NONE && interruptPriority <= AGP_HIGHEST);
+		assert(interruptPriority >= AGP_NONE && interruptPriority <= AGP_HIGHEST);
 		if (goal.interruptAll) {
 			interruptPriority = AGP_NONE;
 		}
@@ -1846,7 +1846,7 @@ void AnimSystem::InterruptGoalsByType(objHndl handle, AnimGoalType type, AnimGoa
 // Originally @ 0x1000c8d0
 void AnimSystem::InterruptAllGoalsUpToPriority(AnimGoalPriority priority)
 {
-	Expects(priority >= AGP_NONE && priority <= AGP_HIGHEST);
+	assert(priority >= AGP_NONE && priority <= AGP_HIGHEST);
 	for (auto &slot : mSlots) {
 		if (slot.IsActive()) {
 			if (!InterruptGoals(slot, priority)) {
@@ -1860,10 +1860,10 @@ void AnimSystem::InterruptAllGoalsUpToPriority(AnimGoalPriority priority)
 // Originally @ 0x10056a50
 bool AnimSystem::AddSubGoal(const AnimSlotId & id, const AnimSlotGoalStackEntry & stackEntry)
 {
-	Expects(stackEntry.goalType >= 0 && stackEntry.goalType < ag_count);
+	assert(stackEntry.goalType >= 0 && stackEntry.goalType < ag_count);
 	// Previously, ToEE had a failsafe here which might actually not have worked anyway (for null anim ids)
 	// But checking the code, this function is never called with a null anim id anyway
-	Expects(!id.IsNull());
+	assert(!id.IsNull());
 
 	auto slot = GetSlot(id);
 	if (!slot) {
@@ -1875,7 +1875,7 @@ bool AnimSystem::AddSubGoal(const AnimSlotId & id, const AnimSlotGoalStackEntry 
 		return false;
 	}
 
-	Expects(!slot->IsStackEmpty());
+	assert(!slot->IsStackEmpty());
 
 	// Since this is "prepending" to the stack
 	// We have to move all stack entries backwards
@@ -2083,7 +2083,7 @@ void AnimSystem::IncreaseActiveGoalCount(const AnimSlot & slot, const AnimGoal &
 {
 	if (goal.priority >= AGP_2 && !goal.interruptAll && !CurrentGoalHasField10_1(slot))
 	{
-		Expects(mActiveGoalCount >= 0);
+		assert(mActiveGoalCount >= 0);
 		++mActiveGoalCount;
 	}
 }

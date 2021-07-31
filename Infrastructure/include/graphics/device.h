@@ -1,11 +1,11 @@
 
 #pragma once
 
-#include <gsl/gsl>
-
 #include <memory>
 #include <list>
 #include <chrono>
+#include <span>
+#include <functional>
 
 #include <EASTL/fixed_vector.h>
 #include <EASTL/map.h>
@@ -134,8 +134,8 @@ namespace gfx {
 	class MappedBuffer {
 	public:
 
-		using View = gsl::span<TElement>;
-		using Iterator = gsl::contiguous_span_iterator<View>;
+		using View = std::span<TElement>;
+		using Iterator = View::iterator;
 
 		MappedBuffer(TBuffer &buffer,
 			RenderingDevice &device,
@@ -257,9 +257,9 @@ namespace gfx {
 		RenderTargetDepthStencilPtr CreateRenderTargetDepthStencil(int width, int height, bool multiSampled = false);
 
 		template<typename T>
-		VertexBufferPtr CreateVertexBuffer(gsl::span<T> data, bool immutable = true);
-		VertexBufferPtr CreateVertexBufferRaw(gsl::span<const uint8_t> data, bool immutable = true);
-		IndexBufferPtr CreateIndexBuffer(gsl::span<const uint16_t> data, bool immutable = true);
+		VertexBufferPtr CreateVertexBuffer(std::span<T> data, bool immutable = true);
+		VertexBufferPtr CreateVertexBufferRaw(std::span<const uint8_t> data, bool immutable = true);
+		IndexBufferPtr CreateIndexBuffer(std::span<const uint16_t> data, bool immutable = true);
 
 		void SetMaterial(const Material &material);
 		void SetVertexShaderConstant(uint32_t startRegister, StandardSlotSemantic semantic);
@@ -318,18 +318,18 @@ namespace gfx {
 		void SetAntiAliasing(bool enable, uint32_t samples, uint32_t quality);
 		
 		template<typename T>
-		void UpdateBuffer(VertexBuffer &buffer, gsl::span<T> data) {
+		void UpdateBuffer(VertexBuffer &buffer, std::span<T> data) {
 			UpdateBuffer(buffer, data.data(), data.size_bytes());
 		}
 
 		void UpdateBuffer(VertexBuffer &buffer, const void *data, size_t size);
 		
-		void UpdateBuffer(IndexBuffer &buffer, gsl::span<uint16_t> data);
+		void UpdateBuffer(IndexBuffer &buffer, std::span<uint16_t> data);
 				
 		template<typename TElement>
 		MappedVertexBuffer<TElement> Map(VertexBuffer &buffer, gfx::MapMode mode = gfx::MapMode::Discard) {
 			auto data = MapVertexBufferRaw(buffer, mode);
-			auto castData = gsl::span<TElement>((TElement*)data.data(), data.size() / sizeof(TElement));
+			auto castData = std::span<TElement>((TElement*)data.data(), data.size() / sizeof(TElement));
 			return MappedVertexBuffer<TElement>(buffer, *this, castData, 0);
 		}
 		void Unmap(VertexBuffer &buffer);
@@ -412,7 +412,7 @@ namespace gfx {
 		void VSSetConstantBuffer(uint32_t slot, ID3D11Buffer *buffer);
 		void PSSetConstantBuffer(uint32_t slot, ID3D11Buffer *buffer);
 
-		gsl::span<uint8_t> MapVertexBufferRaw(VertexBuffer &buffer, MapMode mode);
+		std::span<uint8_t> MapVertexBufferRaw(VertexBuffer &buffer, MapMode mode);
 		
 		CComPtr<IDXGIAdapter1> GetAdapter(size_t index);
 
@@ -471,8 +471,8 @@ namespace gfx {
 	};
 	
 	template <typename T>
-	VertexBufferPtr RenderingDevice::CreateVertexBuffer(gsl::span<T> data, bool immutable) {
-		return CreateVertexBufferRaw(gsl::span(reinterpret_cast<const uint8_t*>(&data[0]), data.size_bytes()), immutable);
+	VertexBufferPtr RenderingDevice::CreateVertexBuffer(std::span<T> data, bool immutable) {
+		return CreateVertexBufferRaw(std::span(reinterpret_cast<const uint8_t*>(&data[0]), data.size_bytes()), immutable);
 	}
 
 	extern RenderingDevice *renderingDevice;

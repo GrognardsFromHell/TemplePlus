@@ -277,7 +277,7 @@ void LegacyFeatSystem::_AddFeat(const NewFeatSpec &featSpec)
 {
 	if (featSpec.name.size()) {
 		auto featId = static_cast<feat_enums>(ElfHash::Hash(featSpec.name));
-		Expects(static_cast<uint32_t>(featId) > NUM_FEATS && static_cast<uint32_t>(featId) > 1000); // ensure no collision with the normal ToEE feats, and also > 1000 so that it meshes with the feat prerequisites check
+		assert(static_cast<uint32_t>(featId) > NUM_FEATS && static_cast<uint32_t>(featId) > 1000); // ensure no collision with the normal ToEE feats, and also > 1000 so that it meshes with the feat prerequisites check
 		mNewFeats[featId] = featSpec;
 		newFeats.push_back(featId);
 	}

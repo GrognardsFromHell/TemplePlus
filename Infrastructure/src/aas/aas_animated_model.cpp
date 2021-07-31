@@ -1,6 +1,8 @@
 
 #define _SCL_SECURE_NO_WARNINGS
 
+#include <array>
+
 #include <DirectXMath.h>
 #include <fmt/format.h>
 #include <infrastructure/exception.h>
@@ -105,7 +107,7 @@ namespace aas {
 
 		auto ska_bone_count = 0;
 
-		for (int i = 0; i < bones.size(); i++) {
+		for (auto i = 0u; i < bones.size(); i++) {
 			auto &bone = bones[i];
 
 			auto effective_skm_bone = -1;
@@ -296,7 +298,7 @@ namespace aas {
 
 	void AnimatedModel::SetSkeleton(std::shared_ptr<Skeleton> skeleton) {
 
-		Expects(!this->skeleton);
+		assert(!this->skeleton);
 
 		this->skeleton = skeleton;
 		scale = 1.0f;
@@ -386,7 +388,7 @@ namespace aas {
 			}
 			
 			auto submesh = GetOrAddSubmesh(matHandle, matResolver);
-			Expects(submesh);
+			assert(submesh);
 
 			if (submesh->AttachMesh(mesh, i) < 0) {
 				throw TempleException("Failed to attach mesh '{}' with material index '{}' to material group.",
@@ -948,7 +950,7 @@ namespace aas {
 
 		auto running_anim = runningAnimsHead;
 		if (!running_anim || running_anim->weight != 1.0f || running_anim->fadingSpeed < 0.0) {
-			for (int i = 0; i < bones.size(); i++) {
+			for (auto i = 0u; i < bones.size(); i++) {
 				boneState[i] = bones[i].initialState;
 			}
 		}
@@ -966,7 +968,7 @@ namespace aas {
 		auto scaleMat = scaleMatrix(scale, scale, scale);
 		boneMatrices[0] = multiplyMatrix3x3_3x4(scaleMat, worldMatrix);
 		
-		for (int i = 0; i < bones.size(); i++) {
+		for (auto i = 0u; i < bones.size(); i++) {
 			auto rotation = rotationMatrix(Quaternion(boneState[i].rotation));
 			auto scale = scaleMatrix(boneState[i].scale.x, boneState[i].scale.y, boneState[i].scale.z);
 
@@ -1103,10 +1105,10 @@ namespace aas {
 		SubmeshAdapter(
 			int vertexCount,
 			int primitiveCount,
-			gsl::span<DX::XMFLOAT4> positions,
-			gsl::span<DX::XMFLOAT4> normals,
-			gsl::span<DX::XMFLOAT2> uv,
-			gsl::span<uint16_t> indices
+			std::span<DX::XMFLOAT4> positions,
+			std::span<DX::XMFLOAT4> normals,
+			std::span<DX::XMFLOAT2> uv,
+			std::span<uint16_t> indices
 		) : vertexCount_(vertexCount), primitiveCount_(primitiveCount), positions_(positions), normals_(normals), uv_(uv), indices_(indices) {}
 		SubmeshAdapter() {}
 
@@ -1118,19 +1120,19 @@ namespace aas {
 		{
 			return primitiveCount_;
 		}
-		virtual gsl::span<DX::XMFLOAT4> GetPositions() override
+		virtual std::span<DX::XMFLOAT4> GetPositions() override
 		{
 			return positions_;
 		}
-		virtual gsl::span<DX::XMFLOAT4> GetNormals() override
+		virtual std::span<DX::XMFLOAT4> GetNormals() override
 		{
 			return normals_;
 		}
-		virtual gsl::span<DX::XMFLOAT2> GetUV() override
+		virtual std::span<DX::XMFLOAT2> GetUV() override
 		{
 			return uv_;
 		}
-		virtual gsl::span<uint16_t> GetIndices() override
+		virtual std::span<uint16_t> GetIndices() override
 		{
 			return indices_;
 		}
@@ -1138,10 +1140,10 @@ namespace aas {
 	private:
 		int vertexCount_ = 0;
 		int primitiveCount_ = 0;
-		gsl::span<DX::XMFLOAT4> positions_;
-		gsl::span<DX::XMFLOAT4> normals_;
-		gsl::span<DX::XMFLOAT2> uv_;
-		gsl::span<uint16_t> indices_;
+		std::span<DX::XMFLOAT4> positions_;
+		std::span<DX::XMFLOAT4> normals_;
+		std::span<DX::XMFLOAT2> uv_;
+		std::span<uint16_t> indices_;
 	};
 
 	std::unique_ptr<gfx::Submesh> AnimatedModel::GetSubmesh(int submeshIdx)
@@ -1167,7 +1169,7 @@ namespace aas {
 			auto bones = skeleton->GetBones();
 			auto vec_out = &bone_floats_transformed[0];
 
-			for (int16_t bone_idx = 0; bone_idx <= bones.size(); bone_idx++) {
+			for (uint16_t bone_idx = 0; bone_idx <= bones.size(); bone_idx++) {
 				Matrix3x4 bone_matrix = boneMatrices[bone_idx];
 
 				auto elem_counts = submesh.bone_elem_counts[bone_idx];
@@ -1320,18 +1322,18 @@ namespace aas {
 		return std::make_unique<SubmeshAdapter>(
 			submesh.vertexCount,
 			submesh.primCount,
-			gsl::span(submesh.positions.get(), submesh.vertexCount),
-			gsl::span(submesh.normals.get(), submesh.vertexCount),
-			gsl::span(submesh.uv.get(), submesh.vertexCount),
-			gsl::span(submesh.indices.get(), submesh.primCount * 3)
+			std::span(submesh.positions.get(), submesh.vertexCount),
+			std::span(submesh.normals.get(), submesh.vertexCount),
+			std::span(submesh.uv.get(), submesh.vertexCount),
+			std::span(submesh.indices.get(), submesh.primCount * 3)
 		);
 
 	}
 
 	void AnimatedModel::AddRunningAnim(AnimPlayer *player)
 	{
-		Expects(skeleton);
-		Expects(!player->ownerAnim);
+		assert(skeleton);
+		assert(!player->ownerAnim);
 
 		player->ownerAnim = this;
 
@@ -1426,7 +1428,7 @@ namespace aas {
 		}
 
 		auto anims = skeleton->GetAnimations();
-		if (animIdx < 0 || animIdx >= anims.size()) {
+		if (animIdx < 0 || animIdx >= (int) anims.size()) {
 			return nullptr;
 		}
 

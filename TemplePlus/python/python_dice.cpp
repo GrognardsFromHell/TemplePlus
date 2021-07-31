@@ -94,10 +94,10 @@ PyObject *PyDice_New(PyTypeObject *subtype, PyObject *args, PyObject *kwds) {
 }
 
 static PyMemberDef PyDice_Members[] = {
-	{ "number", T_INT, offsetof(PyDice, number), 0, NULL },
-	{ "size", T_INT, offsetof(PyDice, size), 0, NULL },
-	{ "bonus", T_INT, offsetof(PyDice, bonus), 0, NULL },
-	{ "num", T_INT, offsetof(PyDice, number), 0, NULL }, // because a few spell scripts use this, guess it's accepted because originally it did an _strnicmp using the input length
+	{ (char*) "number", T_INT, offsetof(PyDice, number), 0, NULL },
+	{ (char*) "size", T_INT, offsetof(PyDice, size), 0, NULL },
+	{ (char*) "bonus", T_INT, offsetof(PyDice, bonus), 0, NULL },
+	{ (char*) "num", T_INT, offsetof(PyDice, number), 0, NULL }, // because a few spell scripts use this, guess it's accepted because originally it did an _strnicmp using the input length
 	{NULL, NULL, NULL, NULL, NULL }
 };
 
@@ -108,7 +108,7 @@ static PyMethodDef PyDice_Methods[] = {
 };
 
 static PyGetSetDef PyDice_GetSets[] = {
-	{"packed", PyDice_Dice_GetPacked, PyDice_Dice_SetPacked, NULL},
+	{(char*) "packed", PyDice_Dice_GetPacked, PyDice_Dice_SetPacked, NULL},
 	{NULL, NULL, NULL, NULL}
 };
 

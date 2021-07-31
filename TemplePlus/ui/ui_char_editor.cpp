@@ -243,7 +243,7 @@ public:
 
 
 	CharEditorClassSystem& GetClass() const {
-		Expects(!!mClass);
+		assert(!!mClass);
 		return *mClass;
 	}
 
@@ -2097,7 +2097,7 @@ BOOL UiCharEditor::FeatsEntryBtnMsg(int widId, TigMsg * msg){
 			temple::GetRef<void(char*)>(0x10162C00)(temple::GetRef<char[1024]>(0x10C76B48)); // UiCharTextboxSet
 			return TRUE;
 		case TigMsgWidgetEvent::Exited:
-			temple::GetRef<void(__cdecl)(char *)>(0x10162C00)(""); // UiCharTextboxSet
+			temple::GetRef<void(__cdecl)(const char *)>(0x10162C00)(""); // UiCharTextboxSet
 			return TRUE;
 		default:
 			return FALSE;
@@ -2147,7 +2147,7 @@ BOOL UiCharEditor::FeatsExistingBtnMsg(int widId, TigMsg* msg)
 		temple::GetRef<void(char*)>(0x10162C00)(temple::GetRef<char[1024]>(0x10C76B48)); // UiCharTextboxSet
 		return TRUE;
 	case TigMsgWidgetEvent::Exited:
-		temple::GetRef<void(__cdecl)(char *)>(0x10162C00)(""); // UiCharTextboxSet
+		temple::GetRef<void(__cdecl)(const char *)>(0x10162C00)(""); // UiCharTextboxSet
 		return TRUE;
 	default:
 		return FALSE;
@@ -2899,7 +2899,7 @@ void UiCharEditor::SpellsPerDayUpdate(){
 
 	spellsPerDayTexts.clear();
 	for (auto i = 0; i < SPELLS_PER_DAY_BOXES_COUNT; i++){
-		auto &handle = GetEditedChar();
+		auto handle = GetEditedChar();
 		auto casterLvl = objects.StatLevelGet(handle, selPkt.classCode);
 		auto numSpells = d20ClassSys.GetNumSpellsFromClass(handle, selPkt.classCode, i, casterLvl);
 		if (numSpells < 0)
@@ -3076,7 +3076,7 @@ BOOL UiCharEditor::SpellsAvailableEntryBtnMsg(int widId, TigMsg * msg)
 				temple::GetRef<void(char*)>(0x10162C00)(temple::GetRef<char[1024]>(0x10C732B0)); // UiCharTextboxSet
 				return 1;
 			case TigMsgWidgetEvent::Exited: 
-				temple::GetRef<void(__cdecl)(char *)>(0x10162C00)(""); // UiCharTextboxSet
+				temple::GetRef<void(__cdecl)(const char *)>(0x10162C00)(""); // UiCharTextboxSet
 				return 1;
 			default: 
 				return 0;
@@ -3092,7 +3092,7 @@ BOOL UiCharEditor::SpellsAvailableEntryBtnMsg(int widId, TigMsg * msg)
 	}*/
 
 	if (msgW->widgetEventType == TigMsgWidgetEvent::Exited) {
-		temple::GetRef<void(__cdecl)(char *)>(0x10162C00)(""); // UiCharTextboxSet
+		temple::GetRef<void(__cdecl)(const char *)>(0x10162C00)(""); // UiCharTextboxSet
 		return 1;
 	}
 

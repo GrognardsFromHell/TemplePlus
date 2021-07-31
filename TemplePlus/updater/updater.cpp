@@ -8,6 +8,7 @@
 #include <platform/windows.h>
 
 #include <infrastructure/json11.hpp>
+#include <fmt/xchar.h>
 
 struct Updater::Impl {
 	~Impl();

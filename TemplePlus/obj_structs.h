@@ -1,6 +1,6 @@
 #pragma once
 
-#include <gsl/gsl>
+#include <infrastructure/stringutil.h>
 #include <fmt/format.h>
 
 #include "temple_enums.h"
@@ -56,7 +56,17 @@ inline bool operator >(const objHndl &a, const objHndl &b) {
 	return a.handle > b.handle;
 }
 
-void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const objHndl &s);
+fmt::appender format(fmt::appender, const objHndl &handle);
+
+namespace fmt {
+    template<>
+    struct formatter<objHndl> : simple_formatter {
+        template<typename FormatContext>
+        appender format(const objHndl &handle, FormatContext &ctx) {
+            return ::format(ctx.out(), handle);
+        }
+    };
+}
 
 namespace std {
 	template <> struct hash<objHndl> {
@@ -129,12 +139,12 @@ struct ObjectId {
 	}
 
 	int GetPrototypeId() const {
-		Expects(IsPrototype());
+		assert(IsPrototype());
 		return body.protoId;
 	}
 
 	objHndl GetHandle() const {
-		Expects(IsHandle());
+		assert(IsHandle());
 		return body.handle;
 	}
 

@@ -5,6 +5,8 @@
 
 #include <string>
 #include <string_view>
+#include <span>
+#include <vector>
 #include <memory>
 
 #include "aas/aas_math.h"
@@ -47,12 +49,12 @@ namespace aas {
 		uint16_t unk;
 		SkelAnimStream streams[10];
 
-		const gsl::span<SkelAnimEvent> GetEventData() const {
+		const std::span<SkelAnimEvent> GetEventData() const {
 			if (eventCount == 0) {
 				return {};
 			} else {
 				auto data = (SkelAnimEvent*)(((char*)this) + eventOffset);
-				return gsl::span(data, eventCount);
+				return std::span(data, eventCount);
 			}
 		}
 
@@ -66,9 +68,9 @@ namespace aas {
 		DX::XMFLOAT4 rotation;
 		DX::XMFLOAT4 translation;
 
-		static void Lerp(gsl::span<SkelBoneState> out,
-			const gsl::span<SkelBoneState> from,
-			const gsl::span<SkelBoneState> to,
+		static void Lerp(std::span<SkelBoneState> out,
+			const std::span<SkelBoneState> from,
+			const std::span<SkelBoneState> to,
 			int count,
 			float fraction);
 	};
@@ -86,11 +88,11 @@ namespace aas {
 	public:
 		Skeleton(std::string filename, std::vector<uint8_t> data);
 
-		gsl::span<SkelBone> GetBones() const {
+		std::span<SkelBone> GetBones() const {
 			return bones_;
 		}
 
-		gsl::span<SkelAnim> GetAnimations() const {
+		std::span<SkelAnim> GetAnimations() const {
 			return animations_;
 		}
 
@@ -122,8 +124,8 @@ namespace aas {
 		std::vector<uint8_t> data_;
 
 		// These are views into the data buffer
-		gsl::span<SkelBone> bones_;
-		gsl::span<SkelAnim> animations_;
+		std::span<SkelBone> bones_;
+		std::span<SkelAnim> animations_;
 	};
 
 	std::unique_ptr<Skeleton> LoadSkeletonFile(std::string_view filename);

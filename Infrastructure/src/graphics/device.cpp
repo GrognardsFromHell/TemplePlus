@@ -1,4 +1,6 @@
 
+#include <cassert>
+
 #include "graphics/device.h"
 #include "graphics/bufferbinding.h"
 #include "graphics/dynamictexture.h"
@@ -6,13 +8,61 @@
 #include "infrastructure/images.h"
 #include "infrastructure/infrastructure.h"
 #include "infrastructure/vfs.h"
+#include "infrastructure/stringutil.h"
 #include "graphics/shaperenderer2d.h"
 #include "graphics/textengine.h"
 
 #include <VersionHelpers.h>
 
+namespace fmt {
+    template<>
+    struct formatter<gfx::BufferFormat> : simple_formatter {
+        template<typename FormatContext>
+        auto format(const gfx::BufferFormat &v, FormatContext &ctx) {
+            switch (v) {
+                case gfx::BufferFormat::A8:
+                    return format_to(ctx.out(), "A8");
+                case gfx::BufferFormat::A8R8G8B8:
+                    return format_to(ctx.out(), "A8R8G8B8");
+                case gfx::BufferFormat::X8R8G8B8:
+                    return format_to(ctx.out(), "X8R8G8B8");
+            }
+        }
+    };
+
+    template<>
+    struct formatter<D3D_FEATURE_LEVEL> : simple_formatter {
+        template<typename FormatContext>
+        auto format(const D3D_FEATURE_LEVEL &level, FormatContext &ctx) {
+            switch (level) {
+                case D3D_FEATURE_LEVEL_1_0_CORE:
+                    return format_to(ctx.out(), "D3D_FEATURE_LEVEL_1_0_CORE");
+                case D3D_FEATURE_LEVEL_9_1:
+                    return format_to(ctx.out(), "D3D_FEATURE_LEVEL_9_1");
+                case D3D_FEATURE_LEVEL_9_2:
+                    return format_to(ctx.out(), "D3D_FEATURE_LEVEL_9_2");
+                case D3D_FEATURE_LEVEL_9_3:
+                    return format_to(ctx.out(), "D3D_FEATURE_LEVEL_9_3");
+                case D3D_FEATURE_LEVEL_10_0:
+                    return format_to(ctx.out(), "D3D_FEATURE_LEVEL_10_0");
+                case D3D_FEATURE_LEVEL_10_1:
+                    return format_to(ctx.out(), "D3D_FEATURE_LEVEL_10_1");
+                case D3D_FEATURE_LEVEL_11_0:
+                    return format_to(ctx.out(), "D3D_FEATURE_LEVEL_11_0");
+                case D3D_FEATURE_LEVEL_11_1:
+                    return format_to(ctx.out(), "D3D_FEATURE_LEVEL_11_1");
+                case D3D_FEATURE_LEVEL_12_0:
+                    return format_to(ctx.out(), "D3D_FEATURE_LEVEL_12_0");
+                case D3D_FEATURE_LEVEL_12_1:
+                    return format_to(ctx.out(), "D3D_FEATURE_LEVEL_12_1");
+            }
+        }
+    };
+
+}
+
 namespace gfx {
-	
+
 RenderingDevice *renderingDevice = nullptr;
 
 ResourceListener::~ResourceListener() {}
@@ -25,46 +75,6 @@ ResourceListenerRegistration::ResourceListenerRegistration(
 
 ResourceListenerRegistration::~ResourceListenerRegistration() {
   mDevice.RemoveResourceListener(mListener);
-}
-
-void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const BufferFormat &format) {
-	switch (format) {
-	case BufferFormat::A8:
-		f.writer() << "A8";
-		break;
-	case BufferFormat::A8R8G8B8:
-		f.writer() << "A8R8G8B8";
-		break;
-	case BufferFormat::X8R8G8B8:
-		f.writer() << "X8R8G8B8";
-		break;
-	}
-}
-
-void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const D3D_FEATURE_LEVEL &level) {
-	switch (level) {
-	case D3D_FEATURE_LEVEL_9_1:
-		f.writer() << "D3D_FEATURE_LEVEL_9_1";
-		break;
-	case D3D_FEATURE_LEVEL_9_2:
-		f.writer() << "D3D_FEATURE_LEVEL_9_2";
-		break;
-	case D3D_FEATURE_LEVEL_9_3:
-		f.writer() << "D3D_FEATURE_LEVEL_9_3";
-		break;
-	case D3D_FEATURE_LEVEL_10_0:
-		f.writer() << "D3D_FEATURE_LEVEL_10_0";
-		break;
-	case D3D_FEATURE_LEVEL_10_1:
-		f.writer() << "D3D_FEATURE_LEVEL_10_1";
-		break;
-	case D3D_FEATURE_LEVEL_11_0:
-		f.writer() << "D3D_FEATURE_LEVEL_11_0";
-		break;
-	case D3D_FEATURE_LEVEL_11_1:
-		f.writer() << "D3D_FEATURE_LEVEL_11_1";
-		break;
-	}
 }
 
 struct RenderingDevice::Impl {
@@ -108,9 +118,9 @@ struct RenderingDevice::Impl {
 RenderingDevice::RenderingDevice(HWND windowHandle, uint32_t adapterIdx, bool debugDevice)
     : mWindowHandle(windowHandle), mShaders(*this),
       mTextures(*this, 128 * 1024 * 1024), mImpl(std::make_unique<Impl>()) {
-  Expects(!renderingDevice);
+  assert(!renderingDevice);
   renderingDevice = this;
-  
+
   mImpl->debugDevice = debugDevice;
 
   mDefaultCamera = std::make_shared<WorldCamera>();
@@ -136,7 +146,7 @@ RenderingDevice::RenderingDevice(HWND windowHandle, uint32_t adapterIdx, bool de
     mAdapter = GetAdapter(displayDevices[0].id);
     if (!mAdapter) {
       throw TempleException(
-          R"(Couldn't retrieve your configured graphics adapter, 
+          R"(Couldn't retrieve your configured graphics adapter,
 					but also couldn't fall back to the default adapter.)");
     }
   }
@@ -237,9 +247,9 @@ RenderingDevice::RenderingDevice(HWND windowHandle, uint32_t adapterIdx, bool de
   // Create centralized constant buffers for the vertex and pixel shader stages
   mVsConstantBuffer = CreateConstantBuffer(nullptr, MaxVsConstantBufferSize);
   mPsConstantBuffer = CreateConstantBuffer(nullptr, MaxPsConstantBufferSize);
-  
+
   // TODO: color bullshit is not yet done (tig_d3d_init_handleformat et al)
-  
+
   for (auto &listener : mResourcesListeners) {
     listener->CreateResources(*this);
   }
@@ -260,7 +270,7 @@ void RenderingDevice::SetAntiAliasing(bool enable, uint32_t samples, uint32_t qu
 
   if (mImpl->antiAliasing != enable) {
 	  mImpl->antiAliasing = enable;
-	
+
 	// Recreate all rasterizer states to set the multisampling flag accordingly
 	for (auto &entry : mImpl->rasterizerStates) {
 		auto gpuState = entry.second->mGpuState;
@@ -291,7 +301,7 @@ void RenderingDevice::UpdateBuffer(VertexBuffer &buffer, const void *data,
 }
 
 void RenderingDevice::UpdateBuffer(IndexBuffer &buffer,
-                                   gsl::span<uint16_t> data) {
+                                   std::span<uint16_t> data) {
   UpdateResource(buffer.mBuffer, data.data(), data.size_bytes());
 }
 
@@ -313,7 +323,7 @@ MappedIndexBuffer RenderingDevice::Map(IndexBuffer &buffer, gfx::MapMode mode) {
 
   D3D11_MAPPED_SUBRESOURCE mapped;
   D3DVERIFY(mContext->Map(buffer.mBuffer, 0, mapMode, 0, &mapped));
-  auto data = gsl::span((uint16_t *)mapped.pData, buffer.mCount);
+  auto data = std::span((uint16_t *)mapped.pData, buffer.mCount);
 
   return MappedIndexBuffer(buffer, *this, data, 0);
 }
@@ -329,7 +339,7 @@ MappedTexture RenderingDevice::Map(DynamicTexture &texture, gfx::MapMode mode) {
   D3DVERIFY(mContext->Map(texture.mTexture, 0, mapMode, 0, &mapped));
   auto size = texture.GetSize().width * texture.GetSize().height *
               texture.GetBytesPerPixel();
-  auto data = gsl::span((uint8_t *)mapped.pData, size);
+  auto data = std::span((uint8_t *)mapped.pData, size);
   auto rowPitch = mapped.RowPitch;
 
   return MappedTexture(texture, *this, data, rowPitch);
@@ -339,14 +349,14 @@ void RenderingDevice::Unmap(DynamicTexture &texture) {
   mContext->Unmap(texture.mTexture, 0);
 }
 
-gsl::span<uint8_t> RenderingDevice::MapVertexBufferRaw(VertexBuffer &buffer,
+std::span<uint8_t> RenderingDevice::MapVertexBufferRaw(VertexBuffer &buffer,
                                                        MapMode mode) {
   auto mapMode = ConvertMapMode(mode);
 
   D3D11_MAPPED_SUBRESOURCE mapped;
   D3DVERIFY(mContext->Map(buffer.mBuffer, 0, mapMode, 0, &mapped));
 
-  return gsl::span((uint8_t *)mapped.pData, buffer.mSize);
+  return std::span((uint8_t *)mapped.pData, buffer.mSize);
 }
 
 void RenderingDevice::Unmap(VertexBuffer &buffer) {
@@ -404,7 +414,7 @@ void RenderingDevice::PopRenderTarget() {
   if (mRenderTargetStack.empty()) {
 	  mContext->OMSetRenderTargets(0, nullptr, nullptr);
 	  mImpl->textEngine->SetRenderTarget(nullptr);
-	  return;	  
+	  return;
   }
 
   auto &newTarget = mRenderTargetStack.back();
@@ -425,14 +435,14 @@ void RenderingDevice::PopRenderTarget() {
   mContext->RSSetViewports(1, &viewport);
 
   ResetScissorRect();
-  
+
   UpdateDefaultCameraScreenSize();
 
 }
 
 ResizeListenerRegistration RenderingDevice::AddResizeListener(ResizeListener listener)
 {
-	auto newKey = ++mResizeListenersKey;	
+	auto newKey = ++mResizeListenersKey;
 	mResizeListeners[newKey] = listener;
 	return ResizeListenerRegistration(*this, newKey);
 }
@@ -786,7 +796,7 @@ static D3D11_BLEND ConvertBlendOperand(BlendOperand op) {
 }
 
 BlendStatePtr RenderingDevice::CreateBlendState(const BlendSpec &spec) {
-  
+
 	// Check if we have a matching state already
 	auto it = mImpl->blendStates.find(spec);
 
@@ -852,7 +862,7 @@ static D3D11_COMPARISON_FUNC ConvertComparisonFunc(ComparisonFunc func) {
 
 DepthStencilStatePtr
 RenderingDevice::CreateDepthStencilState(const DepthStencilSpec &spec) {
-	
+
 	// Check if we have a matching state already
 	auto it = mImpl->depthStencilStates.find(spec);
 
@@ -1134,7 +1144,7 @@ void RenderingDevice::SetCursor(int hotspotX, int hotspotY,
 	} else {
 		cursor = it->second;
 	}
-		
+
   SetClassLong(mWindowHandle, GCL_HCURSOR, (LONG)cursor);
   ::SetCursor(cursor);
   mImpl->currentCursor = cursor;
@@ -1153,7 +1163,7 @@ void RenderingDevice::HideCursor() {
 }
 
 VertexBufferPtr
-RenderingDevice::CreateVertexBufferRaw(gsl::span<const uint8_t> data,
+RenderingDevice::CreateVertexBufferRaw(std::span<const uint8_t> data,
                                        bool immutable) {
   // Create a dynamic or immutable vertex buffer depending on the immutable flag
 	CD3D11_BUFFER_DESC bufferDesc(
@@ -1173,7 +1183,7 @@ RenderingDevice::CreateVertexBufferRaw(gsl::span<const uint8_t> data,
 }
 
 IndexBufferPtr
-RenderingDevice::CreateIndexBuffer(gsl::span<const uint16_t> data,
+RenderingDevice::CreateIndexBuffer(std::span<const uint16_t> data,
                                    bool immutable) {
   CD3D11_BUFFER_DESC bufferDesc(
 	  data.size_bytes(),
@@ -1200,13 +1210,13 @@ void RenderingDevice::ResizeBuffers(int w, int h) {
 	if (GetCurrentRederTargetColorBuffer() == mBackBufferNew) {
 		mImpl->textEngine->SetRenderTarget(nullptr);
 	}
-	
+
 	// Somewhat annoyingly, we have to release all existing buffers
 	mBackBufferNew->mRtView.Release();
 	mBackBufferNew->mTexture.Release();
 	mBackBufferDepthStencil->mDsView.Release();
 	mBackBufferDepthStencil->mTextureNew.Release();
-	
+
 	D3DVERIFY(mSwapChain->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, 0));
 
 	// Get the backbuffer from the swap chain
@@ -1225,13 +1235,13 @@ void RenderingDevice::ResizeBuffers(int w, int h) {
 	backBufferTexture->GetDesc(&backBufferDesc);
 	gfx::Size backBufferSize{ (int)backBufferDesc.Width,
 		(int)backBufferDesc.Height };
-	
+
 	// Update the back buffer render target
 	mBackBufferNew->mTexture = backBufferTexture;
 	mBackBufferNew->mSize = backBufferSize;
 	mBackBufferNew->mContentRect = { 0, 0, backBufferSize.width, backBufferSize.height };
 	mBackBufferNew->mRtView = backBufferView;
-	
+
 	// This works because the actual dx11 surfaces are independently reference counted
 	auto newDs = CreateRenderTargetDepthStencil(backBufferSize.width, backBufferSize.height);
 	mBackBufferDepthStencil->mDsView = newDs->mDsView;
@@ -1287,7 +1297,7 @@ void RenderingDevice::TakeScaledScreenshot(const std::string &filename,
 
   CComPtr<ID3D11Texture2D> stagingTex;
   D3DVERIFY(mD3d11Device->CreateTexture2D(&stagingDesc, nullptr, &stagingTex));
-  
+
   if (stretch) {
 	  // Create a default texture to copy the current RT to that we can use as a src for the blitting
 	  CD3D11_TEXTURE2D_DESC tmpDesc(currentTargetDesc);
@@ -1324,13 +1334,13 @@ void RenderingDevice::TakeScaledScreenshot(const std::string &filename,
 	  // Create a texture the size of the target and stretch into it via a blt
 	  // the target also needs to be a render target for that to work
 	  auto stretchedRt = CreateRenderTargetTexture(currentTarget->GetFormat(), width, height);
-	  
+
 	  PushRenderTarget(stretchedRt, nullptr);
 	  ShapeRenderer2d renderer(*this);
-	  
+
 	  auto w = mCurrentCamera->GetScreenWidth();
 	  auto h = mCurrentCamera->GetScreenHeight();
-	
+
 	  renderer.DrawRectangle(0, 0, w, h, tmpTexWrapper);
 
 	  PopRenderTarget();
@@ -1371,7 +1381,7 @@ void RenderingDevice::TakeScaledScreenshot(const std::string &filename,
 
 BufferBinding RenderingDevice::CreateMdfBufferBinding() {
 
-  auto &vs = GetShaders().LoadVertexShader(
+  auto vs = GetShaders().LoadVertexShader(
       "mdf_vs",
       {
           {"TEXTURE_STAGES", "1"} // Necessary so the input struct gets the UVs
@@ -1407,7 +1417,7 @@ RenderingDevice::CreateDynamicTexture(gfx::BufferFormat format, int width,
                                       int height) {
 
   Size size{width, height};
-    
+
   uint32_t bytesPerPixel;
   auto formatNew = ConvertFormat(format, &bytesPerPixel);
 
@@ -1470,7 +1480,7 @@ RenderingDevice::CreateRenderTargetTexture(gfx::BufferFormat format, int width, 
 	  bindFlags = D3D11_BIND_RENDER_TARGET;
 	  sampleCount = mImpl->msaaSamples;
 	  sampleQuality = mImpl->msaaQuality;
-  } else 
+  } else
 	  logger->info("not using multisampling");
 
   logger->info("width {} height {}", width, height);
@@ -1530,7 +1540,7 @@ RenderTargetTexturePtr RenderingDevice::CreateRenderTargetForNativeSurface(ID3D1
 }
 
 RenderTargetTexturePtr RenderingDevice::CreateRenderTargetForSharedSurface(IUnknown * surface)
-{	
+{
 	CComPtr<IDXGIResource> dxgiResource;
 
 	if (FAILED(CComPtr<IUnknown>(surface).QueryInterface(&dxgiResource))) {

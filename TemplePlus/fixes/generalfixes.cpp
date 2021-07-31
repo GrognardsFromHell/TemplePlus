@@ -263,7 +263,7 @@ public:
 
 	}
 } bardicInspireCourageFix;
-uint32_t GetCourageBonus(objHndl objHnd)
+int GetCourageBonus(objHndl objHnd)
 {
 	auto bonVal = 1;
 	auto bardLvl = (int32_t)objects.StatLevelGet(objHnd, stat_level_bard);

@@ -29,7 +29,7 @@ ObjSystem::ObjSystem(const GameSystemConf &config) {
 	mObjRegistry = std::make_unique<ObjRegistry>();
 	mObjFind = std::make_unique<ObjFindSupport>();
 
-	Expects(!objSystem);
+	assert(!objSystem);
 	objSystem = this;
 
 }
@@ -38,7 +38,7 @@ ObjSystem::~ObjSystem() {
 	auto shutdown = temple::GetPointer<void()>(0x1009c8c0);
 	shutdown();
 
-	Expects(objSystem == this);
+	assert(objSystem == this);
 	objSystem = nullptr;
 }
 
@@ -251,7 +251,7 @@ objHndl ObjSystem::GetProtoHandle(uint16_t protoId)
 objHndl ObjSystem::CreateObject(objHndl protoHandle, locXY location)
 {
 	auto protoObj = GetObject(protoHandle);
-	Expects(protoObj && protoObj->IsProto());
+	assert(protoObj && protoObj->IsProto());
 		
 	auto newHandle = mObjRegistry->Add(std::make_unique<GameObjectBody>());
 	auto obj = mObjRegistry->Get(newHandle);

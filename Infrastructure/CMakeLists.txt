@@ -21,13 +21,6 @@ set(HEADERS
     "include/aas/aas_model_factory.h"
     "include/aas/aas_renderer.h"
     "include/debugui.h"
-    "include/fmt/container.h"
-    "include/fmt/format.h"
-    "include/fmt/ostream.h"
-    "include/fmt/posix.h"
-    "include/fmt/printf.h"
-    "include/fmt/string.h"
-    "include/fmt/time.h"
     "include/graphics/bufferbinding.h"
     "include/graphics/buffers.h"
     "include/graphics/camera.h"
@@ -45,8 +38,6 @@ set(HEADERS
     "include/gsl/gsl"
     "include/gsl/gsl_assert"
     "include/gsl/gsl_util"
-    "include/gsl/span"
-    "include/gsl/string_span"
     "include/imconfig.h"
     "include/imgui.h"
     "include/infrastructure/binaryreader.h"
@@ -75,40 +66,6 @@ set(HEADERS
     "include/infrastructure/vfs.h"
     "include/platform/d3d.h"
     "include/platform/windows.h"
-    "include/spdlog/async_logger.h"
-    "include/spdlog/common.h"
-    "include/spdlog/details/async_log_helper.h"
-    "include/spdlog/details/async_logger_impl.h"
-    "include/spdlog/details/file_helper.h"
-    # "include/spdlog/details/line_logger.h"
-    "include/spdlog/details/log_msg.h"
-    "include/spdlog/details/logger_impl.h"
-    "include/spdlog/details/mpmc_blocking_q.h"
-    # "include/spdlog/details/mpmc_bounded_q.h"
-    "include/spdlog/details/null_mutex.h"
-    "include/spdlog/details/os.h"
-    "include/spdlog/details/pattern_formatter_impl.h"
-    "include/spdlog/details/registry.h"
-    "include/spdlog/details/spdlog_impl.h"
-    "include/spdlog/fmt/fmt.h"
-    "include/spdlog/fmt/ostr.h"
-    "include/spdlog/formatter.h"
-    "include/spdlog/logger.h"
-    "include/spdlog/sinks/android_sink.h"
-    "include/spdlog/sinks/ansicolor_sink.h"
-    "include/spdlog/sinks/base_sink.h"
-    "include/spdlog/sinks/dist_sink.h"
-    "include/spdlog/sinks/file_sinks.h"
-    "include/spdlog/sinks/msvc_sink.h"
-    "include/spdlog/sinks/null_sink.h"
-    "include/spdlog/sinks/ostream_sink.h"
-    "include/spdlog/sinks/sink.h"
-    "include/spdlog/sinks/stdout_sinks.h"
-    "include/spdlog/sinks/syslog_sink.h"
-    "include/spdlog/sinks/wincolor_sink.h"
-    "include/spdlog/sinks/windebug_sink.h"
-    "include/spdlog/spdlog.h"
-    "include/spdlog/tweakme.h"
     "src/aas/aas_anim_events.h"
     "src/aas/aas_anim_player.h"
     "src/aas/aas_anim_player_stream.h"
@@ -131,10 +88,6 @@ set(SOURCES
     "images.cpp"
     "images_jpeg.cpp"
     "images_tga.cpp"
-    "include/fmt/format.cc"
-    "include/fmt/ostream.cc"
-    "include/fmt/posix.cc"
-    "include/fmt/printf.cc"
     "json11.cpp"
     "keyboard.cpp"
     "logging.cpp"
@@ -185,7 +138,7 @@ set(SOURCES
 # Target
 ################################################################################
 add_library(${PROJECT_NAME} STATIC ${HEADERS} ${SOURCES})
-target_link_libraries(${PROJECT_NAME} PUBLIC EASTL)
+target_link_libraries(${PROJECT_NAME} PUBLIC EASTL fmtlib spdlog)
 
 use_props(${PROJECT_NAME} "${CMAKE_CONFIGURATION_TYPES}" "${DEFAULT_CXX_PROPS}")
 
@@ -252,23 +205,11 @@ if(MSVC)
             /O2;
             /Oi
         >
-        /std:c++17;
         /arch:SSE2;
         /W3;
         ${DEFAULT_CXX_DEBUG_INFORMATION_FORMAT};
         ${DEFAULT_CXX_EXCEPTION_HANDLING};
         /Y-
-    )
-    target_link_options(${PROJECT_NAME} PRIVATE
-        $<$<CONFIG:Release>:
-            /OPT:REF;
-            /OPT:ICF
-        >
-        $<$<CONFIG:TestWithIda>:
-            /OPT:REF;
-            /OPT:ICF
-        >
-        /SUBSYSTEM:WINDOWS
     )
 endif()
 

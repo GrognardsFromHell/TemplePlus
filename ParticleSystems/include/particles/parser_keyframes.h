@@ -19,10 +19,10 @@ namespace particles {
 	class ParserKeyframes {
 	public:
 
-		static PartSysParamKeyframes* Parse(gsl::cstring_span<> value, float parentLifespan);
+		static PartSysParamKeyframes* Parse(std::string_view value, float parentLifespan);
 
 	private:
-		static bool ParseKeyframe(gsl::cstring_span<> value, float lifespan, PartSysParamKeyframe& frame);
+		static bool ParseKeyframe(std::string_view value, float lifespan, PartSysParamKeyframe& frame);
 		static bool IsStartTimeAscending(const std::vector<PartSysParamKeyframe>& frames);
 		static void PostprocessFrames(std::vector<PartSysParamKeyframe>& frames);
 	};

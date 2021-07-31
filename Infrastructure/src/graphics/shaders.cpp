@@ -8,13 +8,16 @@
 #include "infrastructure/vfs.h"
 #include "shaders_compiler.h"
 
+#include <d3d11shader.h>
+#include <d3dcompiler.h>
+
 namespace gfx {
 
 	template<typename T>
 	void Shader<T>::PrintConstantBuffers()
 	{
 		CComPtr<ID3D11ShaderReflection> reflector;
-		D3DVERIFY(D3D11Reflect(code.data(), code.size(), &reflector));
+		D3DVERIFY(D3DReflect(mCompiledShader.data(), mCompiledShader.size(), IID_ID3D11ShaderReflection, (void**) &reflector));
 
 		D3D11_SHADER_DESC shaderDesc;
 		D3DVERIFY(reflector->GetDesc(&shaderDesc));

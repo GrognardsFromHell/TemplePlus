@@ -31,7 +31,7 @@ namespace gfx {
 		mResourceView.Release();
 	}
 
-	void DynamicTexture::UpdateRaw(gsl::span<uint8_t> data, size_t pitch)
+	void DynamicTexture::UpdateRaw(std::span<uint8_t> data, size_t pitch)
 	{
 		auto mapped = renderingDevice->Map(*this);
 

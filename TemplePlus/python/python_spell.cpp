@@ -594,27 +594,27 @@ static PyObject* PySpell_GetSpell(PyObject* obj, void*) {
 }
 
 static PyGetSetDef PySpellGetSet[] = {
-	{ "begin_round_obj", PySpell_GetBeginRoundObj, NULL, NULL },
-	{"caster", PySpell_GetCaster, PySpell_SetCaster, NULL},
-	{"caster_class", PySpell_GetCasterClass, NULL, NULL},
-	{"spell_level", PySpell_GetSpellLevel, NULL, NULL},
-	{"range_exact", PySpell_GetRangeExact, PySpell_SetRangeExact, NULL},
-	{"target_loc", PySpell_GetTargetLoc, PySpell_SetTargetLoc, NULL},
-	{"target_loc_off_x", PySpell_GetTargetLocOffX, NULL, NULL},
-	{"target_loc_off_y", PySpell_GetTargetLocOffY, NULL, NULL},
-	{"target_loc_off_z", PySpell_GetTargetLocOffZ, NULL, NULL},
-	{"target_loc_full", PySpell_GetTargetLocFull, NULL, NULL },
-	{"caster_level", PySpell_GetCasterLevel, PySpell_SetCasterLevel, NULL},
-	{"dc", PySpell_GetDC, PySpell_SetDC, NULL},
-	{"id", PySpell_GetId, NULL, NULL},
-	{"duration", PySpell_GetDuration, PySpell_SetDuration, NULL},
-	{ "duration_remaining", PySpell_GetDurationRemain, NULL, NULL },
-	{"num_of_targets", PySpell_GetNumOfTargets, PySpell_SetNumOfTargets, NULL},
-	{"num_of_projectiles", PySpell_GetNumOfProjectiles, PySpell_SetNumOfProjectiles, NULL},
-	{"caster_partsys_id", PySpell_GetCasterPartsysId, PySpell_SetCasterPartsysId, NULL},
-	{"target_list", PySpell_GetTargetList, NULL, NULL},
-	{"spell_radius", PySpell_GetSpellRadius, NULL, NULL},
-	{"spell", PySpell_GetSpell, NULL, NULL},
+	{ (char*) "begin_round_obj", PySpell_GetBeginRoundObj, NULL, NULL },
+	{ (char*) "caster", PySpell_GetCaster, PySpell_SetCaster, NULL},
+	{ (char*) "caster_class", PySpell_GetCasterClass, NULL, NULL},
+	{ (char*) "spell_level", PySpell_GetSpellLevel, NULL, NULL},
+	{ (char*) "range_exact", PySpell_GetRangeExact, PySpell_SetRangeExact, NULL},
+	{ (char*) "target_loc", PySpell_GetTargetLoc, PySpell_SetTargetLoc, NULL},
+	{ (char*) "target_loc_off_x", PySpell_GetTargetLocOffX, NULL, NULL},
+	{ (char*) "target_loc_off_y", PySpell_GetTargetLocOffY, NULL, NULL},
+	{ (char*) "target_loc_off_z", PySpell_GetTargetLocOffZ, NULL, NULL},
+	{ (char*) "target_loc_full", PySpell_GetTargetLocFull, NULL, NULL },
+	{ (char*) "caster_level", PySpell_GetCasterLevel, PySpell_SetCasterLevel, NULL},
+	{ (char*) "dc", PySpell_GetDC, PySpell_SetDC, NULL},
+	{ (char*) "id", PySpell_GetId, NULL, NULL},
+	{ (char*) "duration", PySpell_GetDuration, PySpell_SetDuration, NULL},
+	{ (char*) "duration_remaining", PySpell_GetDurationRemain, NULL, NULL },
+	{ (char*) "num_of_targets", PySpell_GetNumOfTargets, PySpell_SetNumOfTargets, NULL},
+	{ (char*) "num_of_projectiles", PySpell_GetNumOfProjectiles, PySpell_SetNumOfProjectiles, NULL},
+	{ (char*) "caster_partsys_id", PySpell_GetCasterPartsysId, PySpell_SetCasterPartsysId, NULL},
+	{ (char*) "target_list", PySpell_GetTargetList, NULL, NULL},
+	{ (char*) "spell_radius", PySpell_GetSpellRadius, NULL, NULL},
+	{ (char*) "spell", PySpell_GetSpell, NULL, NULL},
 	{NULL, NULL, NULL, NULL}
 };
 
@@ -844,8 +844,8 @@ static int PySpellTargetsEntry_SetPartsysId(PyObject *obj, PyObject *value, void
 }
 
 static PyGetSetDef PySpellTargetsEntryGetSet[] = {
-	{ "obj", PySpellTargetsEntry_GetObj, PySpellTargetsEntry_SetObj, NULL },
-	{ "partsys_id", PySpellTargetsEntry_GetPartsysId, PySpellTargetsEntry_SetPartsysId, NULL },
+	{ (char*) "obj", PySpellTargetsEntry_GetObj, PySpellTargetsEntry_SetObj, NULL },
+	{ (char*) "partsys_id", PySpellTargetsEntry_GetPartsysId, PySpellTargetsEntry_SetPartsysId, NULL },
 	{NULL, NULL, NULL, NULL}
 };
 
@@ -1265,10 +1265,10 @@ static PyObject* PySpellStore_GetName(PyObject* obj, void*) {
 	return PyString_FromString(spellSys.GetSpellName(self->spellData.spellEnum));
 }
 static PyGetSetDef PySpellStoreGetSet[] = {
-	{ "spell_enum", PySpellStore_GetEnum, PySpellStore_SetEnum, NULL },
-	{ "spell_level", PySpellStore_GetLevel, PySpellStore_SetLevel, NULL },
-	{ "spell_class", PySpellStore_GetClass, PySpellStore_SetClass, NULL },
-	{ "spell_name", PySpellStore_GetName, NULL, NULL },
+	{ (char*)"spell_enum", PySpellStore_GetEnum, PySpellStore_SetEnum, NULL },
+	{ (char*)"spell_level", PySpellStore_GetLevel, PySpellStore_SetLevel, NULL },
+	{ (char*)"spell_class", PySpellStore_GetClass, PySpellStore_SetClass, NULL },
+	{ (char*)"spell_name", PySpellStore_GetName, NULL, NULL },
 	{ NULL, NULL, NULL, NULL }
 };
 

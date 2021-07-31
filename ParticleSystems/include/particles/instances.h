@@ -216,7 +216,7 @@ public:
   }
   bool HasRenderState() const { return !!mRenderState; }
   PartSysEmitterRenderState &GetRenderState() {
-    Expects(HasRenderState());
+    assert(HasRenderState());
     return *mRenderState;
   }
 

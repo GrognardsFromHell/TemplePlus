@@ -1580,7 +1580,7 @@ bool LegacyD20System::D20QueryWithDataDefaultTrue(objHndl obj, D20DispatcherKey 
 #pragma region D20 Spell Stuff
 
 void D20SpellDataExtractInfo
-  (D20SpellData * d20SpellData	, uint32_t * spellEnum		, uint32_t * spellEnumOriginal	, 
+  (const D20SpellData * d20SpellData	, uint32_t * spellEnum		, uint32_t * spellEnumOriginal	,
    uint32_t * spellClassCode	, uint32_t * spellSlotLevel	, uint32_t * itemSpellData		, 
    uint32_t * metaMagicData)
 {

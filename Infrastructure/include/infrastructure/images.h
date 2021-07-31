@@ -1,11 +1,11 @@
 #pragma once
 
 #include <vector>
+#include <span>
+#include <memory>
+#include <string>
 
-#include <gsl/gsl>
 #include <atlcomcli.h>
-
-using gsl::span;
 
 namespace gfx {
 
@@ -32,11 +32,11 @@ namespace gfx {
 		Tries to detect the image format of the given data by
 		inspecting the header only.
 	*/
-	ImageFileInfo DetectImageFormat(span<uint8_t> data);
+	ImageFileInfo DetectImageFormat(std::span<uint8_t> data);
 
-	bool DetectTga(span<uint8_t> data, ImageFileInfo &info);
+	bool DetectTga(std::span<uint8_t> data, ImageFileInfo &info);
 
-	std::unique_ptr<uint8_t[]> DecodeTga(span<uint8_t> data);
+	std::unique_ptr<uint8_t[]> DecodeTga(std::span<uint8_t> data);
 
 	/*
 		Specifies the pixel format of the uncompressed data
@@ -68,12 +68,12 @@ namespace gfx {
 		ImageFileInfo info;
 	};
 
-	DecodedImage DecodeFontArt(const span<uint8_t> data);
+	DecodedImage DecodeFontArt(const std::span<uint8_t> data);
 
-	DecodedImage DecodeImage(const span<uint8_t> data);
+	DecodedImage DecodeImage(const std::span<uint8_t> data);
 
-	DecodedImage DecodeCombinedImage(const std::string &filename, span<uint8_t> data);
+	DecodedImage DecodeCombinedImage(const std::string &filename, std::span<uint8_t> data);
 
-	HCURSOR LoadImageToCursor(const span<uint8_t> data, uint32_t hotspotX, uint32_t hotspotY);
+	HCURSOR LoadImageToCursor(const std::span<uint8_t> data, uint32_t hotspotX, uint32_t hotspotY);
 
 }

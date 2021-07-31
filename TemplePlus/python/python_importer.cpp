@@ -98,7 +98,7 @@ PyTempleImporter::PyTempleImporter() {
 	mFinder = PyObject_New(PyObject, &PyTempleImporterType);
 
 	// Insert into python meta_path system
-	auto path_hooks = PySys_GetObject("meta_path");
+	auto path_hooks = PySys_GetObject((char*) "meta_path");
 	PyList_Insert(path_hooks, 0, mFinder);
 }
 

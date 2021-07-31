@@ -229,7 +229,6 @@ struct Pathfinding : temple::AddressTable {
 	BOOL PathStraightLineIsClear(Path* pqr, PathQuery* pq, LocAndOffsets subPathFrom, LocAndOffsets subPathTo); // including static obstacles it seems
 	BOOL PathAdjRadiusLosClear(Path* pqr, PathQuery* pq, LocAndOffsets subPathFrom, LocAndOffsets subPathTo);
 	ScreenDirections GetDirection(int a1, int a2, int a3);
-	int FindPathShortDistanceSansTargetLegacy(PathQuery * pq, Path* pqr);
 	int FindPathShortDistanceSansTarget(PathQuery * pq, Path* pqr);
 
 	/*

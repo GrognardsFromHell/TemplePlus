@@ -86,7 +86,7 @@ static TigConfig createTigConfig(HINSTANCE hInstance);
 TigInitializer::TigInitializer(HINSTANCE hInstance)
 	: mConfig(createTigConfig(hInstance)) {
 
-	Expects(tig == nullptr);
+	assert(tig == nullptr);
 	tig = this;
 
 	StopwatchReporter reporter("TIG initialized in {}");

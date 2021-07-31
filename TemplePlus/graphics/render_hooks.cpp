@@ -486,7 +486,7 @@ void RenderHooks::RenderImgFile(ImgFile* img, int x, int y) {
 			auto rowHeight = std::min(256, curY);
 			curY -= rowHeight;
 
-			auto &texture = textures.GetById(*texId++);
+			auto texture = textures.GetById(*texId++);
 			
 			auto destX = static_cast<float>(x + curX);
 			auto destY = static_cast<float>(y + curY);

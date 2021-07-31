@@ -96,7 +96,7 @@ void MapSystem::LoadModule() {
 	auto mapList = MesFile::ParseFile("Rules\\MapList.mes");
 	auto mapNames = MesFile::ParseFile("mes\\map_names.mes");
 
-	std::vector<gsl::cstring_span<>> parts;
+	std::vector<std::string_view> parts;
 
 	bool alwaysFog = false;
 	bool alwaysUnfog = false;
@@ -749,7 +749,7 @@ void MapSystem::ClearDispatchers()
 
 void MapSystem::ClearObjects()
 {
-	Expects(!mClearingMap);
+	assert(!mClearingMap);
 
 	mClearingMap = true;
 
@@ -1118,7 +1118,7 @@ void MapSystem::OpenMap(const MapListEntry *mapEntry)
 
 	auto prpFilename = fmt::format("{}\\map.prp", dataDir);
 	auto prpContent = vfs->ReadAsBinary(prpFilename);
-	Expects(prpContent.size() >= 24);
+	assert(prpContent.size() >= 24);
 
 	BinaryReader reader(prpContent);
 	auto mapProperties = reader.Read<MapProperties>();

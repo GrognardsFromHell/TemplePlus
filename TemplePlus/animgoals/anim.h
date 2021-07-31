@@ -36,8 +36,14 @@ struct AnimSlotId {
 #pragma pack(pop)
 
 // Allows for direct use of AnimSlotId in format() strings
-inline void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const AnimSlotId &id) {
-	f.writer().write("{}", id.ToString());
+namespace fmt {
+    template<>
+    struct formatter<AnimSlotId> : simple_formatter {
+        template<typename FormatContext>
+        auto format(const AnimSlotId &id, FormatContext &ctx) {
+            return format_to(ctx.out(), id.ToString());
+        }
+    };
 }
 
 struct PathQueryResult;

@@ -1,7 +1,6 @@
 
+#include <string_view>
 #include <vector>
-
-#include <gsl/string_span>
 
 #include "infrastructure/tabparser.h"
 #include "infrastructure/stringutil.h"
@@ -9,9 +8,7 @@
 
 std::string TabFileRecord::mMissingColumn;
 
-using strview = gsl::cstring_span<gsl::dynamic_extent>;
-
-static strview PostProcessColumn(strview column);
+static std::string_view PostProcessColumn(std::string_view column);
 
 class LineReader {
 public:
@@ -36,16 +33,16 @@ public:
 			count++;
 		}
 		
-		mCurLine = strview(&mContent[start], count);
+		mCurLine = std::string_view(&mContent[start], count);
 		return true;
 	}
 
-	strview GetLine() const {
+	std::string_view GetLine() const {
 		return mCurLine;
 	}
 
 private:
-	strview mCurLine;
+    std::string_view mCurLine;
 	const std::string &mContent;
 	size_t mPos = 0;
 
@@ -86,7 +83,7 @@ void TabFile::ParseString(const std::string &content, const TabFile::Callback &c
 
 }
 
-static strview PostProcessColumn(strview column) {
+static std::string_view PostProcessColumn(std::string_view column) {
 	// ToEE will remove trailing vertical tabs and spaces
 	int junkAtEnd = 0;
 	for (int i = column.size() - 1; i >= 0; i--) {
@@ -98,7 +95,7 @@ static strview PostProcessColumn(strview column) {
 		junkAtEnd++;
 	}
 	if (junkAtEnd > 0) {
-		return column.subspan(0, column.size() - junkAtEnd);
+		return column.substr(0, column.size() - junkAtEnd);
 	} else {
 		return column;
 	}

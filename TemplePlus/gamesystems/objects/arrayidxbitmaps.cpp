@@ -81,7 +81,7 @@ void ArrayIndexBitmaps::Free(ArrayIdxMapId id)
 		Shrink(id, mArrays[id].count - 2);
 	}
 
-	Expects(arr.count == 2);
+	assert(arr.count == 2);
 
 	// Reset the bitmaps
 	for (size_t i = 0; i < arr.count; ++i) {
@@ -309,7 +309,7 @@ void ArrayIndexBitmaps::Shrink(ArrayIdxMapId id, size_t shrinkBy)
 {
 	auto& arr = mArrays[id];
 
-	Expects(shrinkBy <= arr.count);
+	assert(shrinkBy <= arr.count);
 	arr.count -= shrinkBy;
 	
 	// Iterator to the first element to be removed

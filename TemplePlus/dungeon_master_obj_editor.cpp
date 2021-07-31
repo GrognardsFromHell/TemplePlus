@@ -185,9 +185,9 @@ void DungeonMaster::RenderEditedObj() {
 	if (ImGui::TreeNodeEx("Critter Attributes", ImGuiTreeNodeFlags_CollapsingHeader)) {
 		auto curAlignment = (Alignment)obj->GetInt32(obj_f_critter_alignment);
 		auto curAlignmentChoice = (Alignment)obj->GetInt32(obj_f_critter_alignment_choice);
-		static char* alignChoiceNames[2] = { "Negative", "Positive" };
-		ImGui::Text( fmt::format("Alignment: {}", alignmentNames[curAlignment] ).c_str());
-		ImGui::Text( fmt::format("Alignment Choice: {}", alignChoiceNames[curAlignmentChoice]).c_str());
+		static const char* alignChoiceNames[2] = { "Negative", "Positive" };
+		ImGui::Text("Alignment: %s", alignmentNames[curAlignment].c_str());
+		ImGui::Text("Alignment Choice: %s", alignChoiceNames[curAlignmentChoice]);
 
 		static int alignmentIdx = 0;
 		static int alignmentChoiceIdx = 0;
@@ -289,7 +289,7 @@ void DungeonMaster::RenderEditedObj() {
 				continue;
 			skillRnkChang.push_back(it.second / 2.0f);
 			if (ImGui::InputFloat(skillSys.GetSkillName(skill), &skillRnkChang[skillIdx], 0.5f, 1.0f, 1)) {
-				critEditor.skillRanks[skill] = round(2.0 * skillRnkChang[skillIdx]);
+				critEditor.skillRanks[skill] = (int) roundf(2.0f * skillRnkChang[skillIdx]);
 			}
 			skillIdx++;
 		}
@@ -375,7 +375,7 @@ void DungeonMaster::RenderEditedObj() {
 				else {
 
 					auto subfeatNameGetter = [](void* data, int idx, const char** outTxt)->bool {
-						if (idx >= childFeats.size())
+						if (idx < 0 || (size_t) idx >= childFeats.size())
 							return false;
 						auto feat = static_cast<feat_enums>(childFeats[idx]);
 						*outTxt = feats.GetFeatName(feat);
