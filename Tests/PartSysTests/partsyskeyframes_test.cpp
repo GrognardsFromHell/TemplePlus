@@ -52,7 +52,7 @@ static std::vector<PartSysParamKeyframe> Parse(const std::string &spec, float li
 TEST(PartSysKeyframes, TestOldBugOnlyPreFrame) {
 	auto frames = Parse("255(2),255(3),197", 0.5f);
 	auto actual = BuildFrameString(frames);
-	auto expected = "255@0 -> 255@0.1 -> 197@0.333333 -> 197@0.5";
+	auto expected = "255@0 -> 255@0.1 -> 197@0.33333334 -> 197@0.5";
 	ASSERT_EQ(expected, actual);
 }
 
@@ -66,7 +66,7 @@ TEST(PartSysKeyframes, TestOldBugWithPostFrame) {
 	
 	auto frames = Parse("255(6),255(10)", 1);
 	auto actual = BuildFrameString(frames);
-	auto expected = "255@0 -> 255@0.333333 -> 255@0.666667 -> 255@1";
+	auto expected = "255@0 -> 255@0.33333334 -> 255@0.6666667 -> 255@1";
 	ASSERT_EQ(expected, actual);
 
 }

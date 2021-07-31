@@ -1,4 +1,3 @@
-#define _CRT_SECURE_NO_WARNINGS
 
 #include <platform/d3d.h>
 
@@ -33,7 +32,4 @@ using fmt::format;
 
 #include "MinHook.h"
 
-#define Py_NO_ENABLE_SHARED
-#include "Python.h"
-#undef _GNU_SOURCE // Defined by python for some reason
-#undef LONG_LONG
+#include <pybind11/pybind11.h>

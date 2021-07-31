@@ -5,17 +5,6 @@ set(PROJECT_NAME Infrastructure)
 ################################################################################
 
 set(HEADERS
-    # "breakpad/breakpad_types.h"
-    # "breakpad/crash_generation_client.h"
-    # "breakpad/exception_handler.h"
-    # "breakpad/guid_string.h"
-    # "breakpad/ipc_protocol.h"
-    # "breakpad/minidump_cpu_amd64.h"
-    # "breakpad/minidump_cpu_x86.h"
-    # "breakpad/minidump_exception_win32.h"
-    # "breakpad/minidump_format.h"
-    # "breakpad/scoped_ptr.h"
-    # "breakpad/string_utils-inl.h"
     "include/aas/aas.h"
     "include/aas/aas_math.h"
     "include/aas/aas_model_factory.h"
@@ -140,81 +129,22 @@ set(SOURCES
 add_library(${PROJECT_NAME} STATIC ${HEADERS} ${SOURCES})
 target_link_libraries(${PROJECT_NAME} PUBLIC EASTL fmtlib spdlog)
 
-use_props(${PROJECT_NAME} "${CMAKE_CONFIGURATION_TYPES}" "${DEFAULT_CXX_PROPS}")
-
-################################################################################
-# MSVC runtime library
-################################################################################
-get_property(MSVC_RUNTIME_LIBRARY_DEFAULT TARGET ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY)
-string(CONCAT "MSVC_RUNTIME_LIBRARY_STR"
-    $<$<CONFIG:Debug>:
-        MultiThreadedDebug
-    >
-    $<$<CONFIG:Release>:
-        MultiThreaded
-    >
-    $<$<CONFIG:TestWithIda>:
-        MultiThreaded
-    >
-    $<$<NOT:$<OR:$<CONFIG:Debug>,$<CONFIG:Release>,$<CONFIG:TestWithIda>>>:${MSVC_RUNTIME_LIBRARY_DEFAULT}>
-)
-set_target_properties(${PROJECT_NAME} PROPERTIES MSVC_RUNTIME_LIBRARY ${MSVC_RUNTIME_LIBRARY_STR})
-
 ################################################################################
 # Include directories
 ################################################################################
-
-target_include_directories(${PROJECT_NAME} PUBLIC
-    #"/usr/share/mingw-w64/include"
-    "${CMAKE_CURRENT_SOURCE_DIR}/include"
-)
-
-################################################################################
-# Compile definitions
-################################################################################
-target_compile_definitions(${PROJECT_NAME} PRIVATE
-    "$<$<CONFIG:Debug>:"
-        "_DEBUG"
-    ">"
-    "$<$<CONFIG:Release>:"
-        "NDEBUG"
-    ">"
-    "$<$<CONFIG:TestWithIda>:"
-        "NDEBUG"
-    ">"
-    "WIN32;"
-    "_LIB;"
-    "$ENV{MSBuildDefines};"
-    "UNICODE;"
-    "_UNICODE"
-)
-
-################################################################################
-# Compile and link options
-################################################################################
-if(MSVC)
-    target_compile_options(${PROJECT_NAME} PRIVATE
-        $<$<CONFIG:Debug>:
-            /Od
-        >
-        $<$<CONFIG:Release>:
-            /O2;
-            /Oi
-        >
-        $<$<CONFIG:TestWithIda>:
-            /O2;
-            /Oi
-        >
-        /arch:SSE2;
-        /W3;
-        ${DEFAULT_CXX_DEBUG_INFORMATION_FORMAT};
-        ${DEFAULT_CXX_EXCEPTION_HANDLING};
-        /Y-
-    )
-endif()
+target_include_directories(${PROJECT_NAME} PUBLIC include)
 
 ################################################################################
 # Dependencies
 ################################################################################
-target_link_libraries(${PROJECT_NAME} PRIVATE EASTL crash_reporting)
+target_link_libraries(${PROJECT_NAME} PRIVATE EASTL crash_reporting libjpegturbo)
 
+# System library dependencies for Direct3D/DirectWrite/Direct2D
+target_link_libraries(${PROJECT_NAME} PUBLIC
+        d2d1.lib
+        dwrite.lib
+        dxguid.lib
+        d3d11.lib
+        dxgi.lib
+        d3dcompiler.lib
+)

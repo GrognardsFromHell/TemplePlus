@@ -4,7 +4,6 @@
 #include <particles/parser.h>
 #include <infrastructure/vfs.h>
 #include <infrastructure/stringutil.h>
-#include <fmt/format.h>
 
 using namespace particles;
 
@@ -71,7 +70,7 @@ TEST_F(PartSysParserTest, TestKeyFrameParsing) {
 		auto emitter = partSys->GetEmitters()[emitterIdx];
 		auto param = emitter->GetParam(paramIdx);
 		float lifespan = (paramIdx >= part_accel_X) ? emitter->GetParticleLifespan() : emitter->GetLifespan();
-		auto msg = fmt::format(L"Sys: {} Emitter: {} Param: {} (Lifespan: {})", partSysName, emitter->GetName(), paramIdx, lifespan);
+		auto msg = fmt::format("Sys: {} Emitter: {} Param: {} (Lifespan: {})", partSysName, emitter->GetName(), paramIdx, lifespan);
 
 		ASSERT_NE(static_cast<void*>(nullptr), param) << msg;
 		ASSERT_EQ((int) PSPT_KEYFRAMES, (int) param->GetType()) << msg;
@@ -117,7 +116,7 @@ TEST_F(PartSysParserTest, TestMaxParticleCalculations) {
 		}
 		auto emitter = partSys->GetEmitters()[emitterIdx];
 
-		auto msg = fmt::format(L"Sys: {} Emitter: {}", partSysName, emitter->GetName());
+		auto msg = fmt::format("Sys: {} Emitter: {}", partSysName, emitter->GetName());
 
 		auto maxParticles = stoi(parts[2]);
 		ASSERT_EQ(maxParticles, emitter->GetMaxParticles()) << msg;

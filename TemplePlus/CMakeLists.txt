@@ -1,5 +1,9 @@
 set(PROJECT_NAME TemplePlus)
 
+#
+# This is a fake generated .lib file that simplifies using imports from tio.dll, which
+# we reuse from the original game.
+#
 add_library(tio STATIC IMPORTED)
 set_target_properties(tio PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/tio/tio.lib)
 
@@ -548,129 +552,30 @@ set(ALL_FILES
 ################################################################################
 # Target
 ################################################################################
-add_executable(${PROJECT_NAME} ${ALL_FILES})
+add_executable(${PROJECT_NAME} WIN32 ${ALL_FILES})
 
 add_precompiled_header(${PROJECT_NAME} "stdafx.h" "stdafx.cpp")
-
-use_props(${PROJECT_NAME} "${CMAKE_CONFIGURATION_TYPES}" "${DEFAULT_CXX_PROPS}")
-
-################################################################################
-# MSVC runtime library
-################################################################################
-get_property(MSVC_RUNTIME_LIBRARY_DEFAULT TARGET ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY)
-string(CONCAT "MSVC_RUNTIME_LIBRARY_STR"
-    $<$<CONFIG:Debug>:
-        MultiThreadedDebug
-    >
-    $<$<CONFIG:Release>:
-        MultiThreaded
-    >
-    $<$<CONFIG:TestWithIda>:
-        MultiThreadedDebug
-    >
-    $<$<NOT:$<OR:$<CONFIG:Debug>,$<CONFIG:Release>,$<CONFIG:TestWithIda>>>:${MSVC_RUNTIME_LIBRARY_DEFAULT}>
-)
-set_target_properties(${PROJECT_NAME} PROPERTIES MSVC_RUNTIME_LIBRARY ${MSVC_RUNTIME_LIBRARY_STR})
 
 ################################################################################
 # Include directories
 ################################################################################
-target_include_directories(${PROJECT_NAME} PUBLIC
-    "${CMAKE_CURRENT_SOURCE_DIR}/.;"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../dependencies/include;"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../MinHook/include;"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../Infrastructure/include;"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../D3D8Adapter/include"
-)
-
-################################################################################
-# Compile definitions
-################################################################################
-target_compile_definitions(${PROJECT_NAME} PRIVATE
-    "$<$<CONFIG:Debug>:"
-        "_SCL_SECURE_NO_WARNINGS;"
-        "_DEBUG;"
-        "$ENV{MSBuildDefines}"
-    ">"
-    "$<$<CONFIG:Release>:"
-        "_SCL_SECURE_NO_WARNINGS;"
-        "NDEBUG;"
-        "$ENV{MSBuildDefines}"
-    ">"
-    "$<$<CONFIG:TestWithIda>:"
-        "_DEBUG"
-    ">"
-    "WIN32;"
-    "_WINDOWS;"
-    "UNICODE;"
-    "_UNICODE"
-)
-set_source_files_properties(gamesystems/objects/objregistry_hooks.cpp PROPERTIES
-    COMPILE_DEFINITIONS_DEBUG "_SCL_SECURE_NO_WARNINGS;WIN32;_WINDOWS;$ENV{MSBuildDefines}"
-)
+target_include_directories(${PROJECT_NAME} PRIVATE .)
 
 ################################################################################
 # Compile and link options
 ################################################################################
 if(MSVC)
-    target_compile_options(${PROJECT_NAME} PRIVATE
-        $<$<CONFIG:Debug>:
-            /MP;
-            /Gm-;
-            /Od
-        >
-        $<$<CONFIG:Release>:
-            /GL-;
-            /O2;
-            /Oi
-        >
-        $<$<CONFIG:TestWithIda>:
-            /Od;
-            /wd4996
-        >
-        /arch:SSE2;
-        /W3;
-        ${DEFAULT_CXX_DEBUG_INFORMATION_FORMAT};
-        ${DEFAULT_CXX_EXCEPTION_HANDLING}
-    )
-    string(CONCAT FILE_CL_OPTIONS
-        "$<$<CONFIG:Debug>:"
-            "/O2;/Oi;/Zi;/GS-;/Y-"
-        ">"
-    )
-    source_file_compile_options(gamesystems/objects/objregistry_hooks.cpp ${FILE_CL_OPTIONS})
-    string(CONCAT FILE_CL_OPTIONS
-        "/Y-"
-    )
-    source_file_compile_options(graphics/video_hooks.cpp ${FILE_CL_OPTIONS})
-    string(CONCAT FILE_CL_OPTIONS
-        "/Y-"
-    )
-    source_file_compile_options(portrait_in_mainmenu.cpp ${FILE_CL_OPTIONS})
+    #
+    # Delay-Loading is needed to prevent any dependency from accidentally
+    # being remapped into the memory space required to load temple.dll into.
+    #
     target_link_options(${PROJECT_NAME} PRIVATE
-        $<$<CONFIG:Debug>:
-            /DELAYLOAD:d2d1.dll;
-            /DELAYLOAD:psapi.dll;
-            /DEBUG:FULL;
-            /DYNAMICBASE:NO;
-            /INCREMENTAL
-        >
-        $<$<CONFIG:Release>:
-            /DELAYLOAD:d2d1.dll;
-            /DELAYLOAD:psapi.dll;
-            /DEBUG;
-            /OPT:REF;
-            /LTCG;
-            /OPT:ICF;
-            /DYNAMICBASE:NO;
-            /INCREMENTAL:NO
-        >
-        $<$<CONFIG:TestWithIda>:
-            /DELAYLOAD:bcrypt.dll;
-            /DELAYLOAD:d3d9.dll;
-            /DEBUG;
-            /INCREMENTAL
-        >
+        /DELAYLOAD:bcrypt.dll;
+        /DELAYLOAD:d3d9.dll;
+        /DELAYLOAD:d2d1.dll;
+        /DELAYLOAD:dwrite.dll;
+        /DELAYLOAD:dxgi.dll;
+        /DELAYLOAD:psapi.dll;
         /DELAYLOAD:crypt32.dll;
         /DELAYLOAD:ws2_32.dll;
         /DELAYLOAD:oleaut32.dll;
@@ -678,13 +583,20 @@ if(MSVC)
         /DELAYLOAD:advapi32.dll;
         /DELAYLOAD:gdi32.dll;
         /DELAYLOAD:user32.dll;
+        /DELAYLOAD:imm32.dll;
         /DELAYLOAD:tio.dll;
         /DELAYLOAD:winmm.dll;
         /DELAYLOAD:shlwapi.dll;
         /DELAYLOAD:ole32.dll;
         /DELAYLOAD:D3dcompiler_47.dll;
-        /SUBSYSTEM:WINDOWS
     )
+endif()
+
+################################################################################
+# Setup defines for building releases via CI/CD on Github
+################################################################################
+if (TP_RELEASE_BUILD)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE -DTP_RELEASE_BUILD -D_TP_VERSION=${TP_VERSION} -D_TP_COMMIT=${TP_COMMIT} )
 endif()
 
 ################################################################################
@@ -708,23 +620,12 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Infrastructure
     ParticleSystems
     Temple
-    libjpegturbo
-    python
-    libeay
-    ssleay
+    minhook
+    Python2::Python
     tio
-)
-
-target_link_libraries(${PROJECT_NAME} PRIVATE
-    d2d1.lib
-    dwrite.lib
-    dxguid.lib
-    d3d11.lib
-    dxgi.lib
-    d3dcompiler.lib
+    ZLIB::ZLIB
+    # for timeGetTime
     winmm.lib
-    Crypt32.lib
-    ws2_32.lib
+    # For delay-loading
     delayimp.lib
-    psapi.lib
 )

@@ -1,6 +1,6 @@
 
 #include "stdafx.h"
-#include "Python.h"
+#include <Python.h>
 #include "osdefs.h"
 #include "tio/tio.h"
 #include "python_importer.h"

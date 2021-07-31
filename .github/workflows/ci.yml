@@ -20,7 +20,8 @@ jobs:
     - name: Build
       run: |
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars32.bat"
-        msbuild TemplePlus.sln /p:Configuration=Release /p:Platform=Win32 /p:MSBuildDefines="_TP_VERSION=%BUILD_NUMBER%;_TP_COMMIT=%COMMIT_ID%;TP_RELEASE_BUILD" /verbosity:minimal
+        cmake -GNinja -Bbuild -DCMAKE_BUILD_TYPE=Release -DTP_VERSION=%BUILD_NUMBER% -DTP_COMMIT=%COMMIT_ID% -DTP_RELEASE_BUILD=ON
+        cmake --build build
       # Need to use cmd because of the vcvars32 batch file
       shell: cmd
       env:

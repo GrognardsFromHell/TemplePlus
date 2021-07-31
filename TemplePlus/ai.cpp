@@ -199,7 +199,7 @@ uint32_t AiSystem::StrategyParse(objHndl objHnd, objHndl target)
 
 	#pragma endregion
 	
-	py::tuple args = py::make_tuple(py::cast(objHnd), py::cast<objHndl>(target));
+	py::tuple args = py::make_tuple(py::cast(objHnd), py::cast(target));
 	auto pyResult = pythonObjIntegration.ExecuteScript("d20_ai.combat_strategy", "execute_strategy", args.ptr());
 	if (PyInt_Check(pyResult)) {
 		auto result = _PyInt_AsInt(pyResult);
@@ -698,7 +698,7 @@ BOOL AiSystem::ConsiderTarget(objHndl obj, objHndl tgt)
 	if (!tgt || tgt == obj)
 		return 0;
 
-	py::tuple args = py::make_tuple(py::cast<objHndl>(obj), py::cast<objHndl>(tgt));
+	py::tuple args = py::make_tuple(py::cast(obj), py::cast(tgt));
 	auto pyResult = pythonObjIntegration.ExecuteScript("d20_ai.targeting", "consider_target", args.ptr());
 	if (PyInt_Check(pyResult)) {
 		auto result = _PyInt_AsInt(pyResult);
@@ -3702,7 +3702,7 @@ public:
 		logger->info("Replacing AI functions...");
 
 		/*replaceFunction<BOOL(__cdecl)(objHndl, objHndl)>(0x, []() {
-			py::tuple args = py::make_tuple(py::cast(critter1), py::cast<objHndl>(critter2));
+			py::tuple args = py::make_tuple(py::cast(critter1), py::cast(critter2));
 			auto pyResult = pythonObjIntegration.ExecuteScript("d20_ai.friendship", "is_friendly", args.ptr());
 			if (PyInt_Check(pyResult)) {
 				auto result = _PyInt_AsInt(pyResult);

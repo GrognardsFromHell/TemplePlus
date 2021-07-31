@@ -1,6 +1,4 @@
 
-#define _SCL_SECURE_NO_WARNINGS
-
 #include <array>
 
 #include <DirectXMath.h>

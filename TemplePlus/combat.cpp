@@ -1893,7 +1893,7 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 
 void LegacyCombatSystem::ToHitProcessingPython(D20Actn& d20a)
 {
-	py::object pyd20a = py::cast<D20Actn*>(&d20a);
+	py::object pyd20a = py::cast(&d20a);
 	py::tuple args = py::make_tuple(pyd20a);
 
 	auto result = pythonObjIntegration.ExecuteScript("d20_combat.to_hit_processing", "to_hit_processing", args.ptr());

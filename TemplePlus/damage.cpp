@@ -18,7 +18,6 @@
 #include <condition.h>
 #include "python/python_integration_obj.h"
 #include "python/python_object.h"
-#include "pybind11/pybind11.h"
 #include "python/python_dice.h"
 
 namespace py = pybind11;
@@ -27,7 +26,6 @@ template <> class py::detail::type_caster<objHndl> {
 public:
 	bool load(handle src, bool) {
 		value = PyObjHndl_AsObjHndl(src.ptr());
-		success = true;
 		return true;
 	}
 
@@ -36,16 +34,11 @@ public:
 	}
 
 	PYBIND11_TYPE_CASTER(objHndl, _("objHndl"));
-protected:
-	bool success = false;
 };
 template <> class py::detail::type_caster<Dice> {
 public:
 	bool load(handle src, bool) {
-		Dice dice;
-		ConvertDice(src.ptr(), &dice);
-		value = dice;
-		success = true;
+		ConvertDice(src.ptr(), &value);
 		return true;
 	}
 
@@ -54,11 +47,7 @@ public:
 	}
 
 	PYBIND11_TYPE_CASTER(Dice, _("PyDice"));
-protected:
-	bool success = false;
 };
-
-
 
 static_assert(temple::validate_size<DispIoDamage, 0x550>::value, "DispIoDamage");
 
@@ -438,8 +427,8 @@ void Damage::DealSpellDamage(objHndl tgt, objHndl attacker, const Dice& dice, Da
 
 void Damage::DealSpellDamagePython(objHndl tgt, objHndl attacker, const Dice& dice, DamageType type, int attackPower, int reduction, int damageDescId, D20ActionType actionType, int spellId, int flags, int projectileIdx, bool isWeaponlike)
 {
-	py::object pyDice = py::cast<Dice>( dice);
-	py::tuple args = py::make_tuple(py::cast<objHndl>(tgt), py::cast<objHndl>(attacker), pyDice, static_cast<int>(type), static_cast<int>(attackPower), reduction, damageDescId, static_cast<int>(actionType), spellId, static_cast<int>(flags), projectileIdx, isWeaponlike);
+    py::object pyDice = py::cast(dice);
+	py::tuple args = py::make_tuple(py::cast(tgt), py::cast(attacker), pyDice, static_cast<int>(type), static_cast<int>(attackPower), reduction, damageDescId, static_cast<int>(actionType), spellId, static_cast<int>(flags), projectileIdx, isWeaponlike);
 	
 	pythonObjIntegration.ExecuteScript("d20_combat.damage_critter", "deal_spell_damage", args.ptr());
 	
@@ -569,7 +558,7 @@ int Damage::DealAttackDamage(objHndl attacker, objHndl tgt, int d20Data, D20CAF 
 
 int Damage::DealAttackDamagePython(objHndl attacker, objHndl tgt, int d20Data, D20CAF flags, D20ActionType actionType)
 {
-	py::tuple args = py::make_tuple(py::cast<objHndl>(attacker), py::cast<objHndl>(tgt), d20Data, static_cast<int>(flags), static_cast<int>(actionType));
+	py::tuple args = py::make_tuple(py::cast(attacker), py::cast(tgt), d20Data, static_cast<int>(flags), static_cast<int>(actionType));
 
 	auto pyResult = pythonObjIntegration.ExecuteScript("d20_combat.damage_critter", "deal_attack_damage", args.ptr());
 	auto result = -1;
@@ -805,9 +794,9 @@ void Damage::DamageCritter(objHndl attacker, objHndl tgt, DispIoDamage & evtObjD
 
 void Damage::DamageCritterPython(objHndl attacker, objHndl tgt, DispIoDamage& evtObjDam)
 {
-	py::object pyEvtObjDam = py::cast<DispIoDamage*>(&evtObjDam);
+	py::object pyEvtObjDam = py::cast(&evtObjDam);
 	py::object pyAttacker = py::cast(attacker);
-	py::tuple args = py::make_tuple( pyAttacker, py::cast<objHndl>(tgt),pyEvtObjDam);
+	py::tuple args = py::make_tuple( pyAttacker, py::cast(tgt),pyEvtObjDam);
 
 	auto result = pythonObjIntegration.ExecuteScript("d20_combat.damage_critter", "damage_critter", args.ptr());
 	Py_DECREF(result);

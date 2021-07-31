@@ -26,6 +26,8 @@ namespace fmt {
                     return format_to(ctx.out(), "A8R8G8B8");
                 case gfx::BufferFormat::X8R8G8B8:
                     return format_to(ctx.out(), "X8R8G8B8");
+                default:
+                    return format_to(ctx.out(), "UNKNOWN");
             }
         }
     };
@@ -55,6 +57,8 @@ namespace fmt {
                     return format_to(ctx.out(), "D3D_FEATURE_LEVEL_12_0");
                 case D3D_FEATURE_LEVEL_12_1:
                     return format_to(ctx.out(), "D3D_FEATURE_LEVEL_12_1");
+                default:
+                    return format_to(ctx.out(), "UNKNOWN");
             }
         }
     };

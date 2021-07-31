@@ -26,88 +26,10 @@ set(SOURCES
 ################################################################################
 add_library(${PROJECT_NAME} STATIC ${HEADERS} ${SOURCES})
 
-use_props(${PROJECT_NAME} "${CMAKE_CONFIGURATION_TYPES}" "${DEFAULT_CXX_PROPS}")
-
-################################################################################
-# MSVC runtime library
-################################################################################
-get_property(MSVC_RUNTIME_LIBRARY_DEFAULT TARGET ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY)
-string(CONCAT "MSVC_RUNTIME_LIBRARY_STR"
-    $<$<CONFIG:Debug>:
-        MultiThreadedDebug
-    >
-    $<$<CONFIG:Release>:
-        MultiThreaded
-    >
-    $<$<CONFIG:TestWithIda>:
-        MultiThreaded
-    >
-    $<$<NOT:$<OR:$<CONFIG:Debug>,$<CONFIG:Release>,$<CONFIG:TestWithIda>>>:${MSVC_RUNTIME_LIBRARY_DEFAULT}>
-)
-set_target_properties(${PROJECT_NAME} PROPERTIES MSVC_RUNTIME_LIBRARY ${MSVC_RUNTIME_LIBRARY_STR})
-
 ################################################################################
 # Include directories
 ################################################################################
-target_include_directories(${PROJECT_NAME} PUBLIC
-    "${CMAKE_CURRENT_SOURCE_DIR}/include"
-)
-
-################################################################################
-# Compile definitions
-################################################################################
-target_compile_definitions(${PROJECT_NAME} PRIVATE
-    "$<$<CONFIG:Debug>:"
-        "_DEBUG"
-    ">"
-    "$<$<CONFIG:Release>:"
-        "NDEBUG"
-    ">"
-    "$<$<CONFIG:TestWithIda>:"
-        "NDEBUG"
-    ">"
-    "WIN32;"
-    "_CRT_SECURE_NO_WARNINGS;"
-    "_SCL_SECURE_NO_WARNINGS;"
-    "_LIB;"
-    "UNICODE;"
-    "_UNICODE"
-)
-
-################################################################################
-# Compile and link options
-################################################################################
-if(MSVC)
-    target_compile_options(${PROJECT_NAME} PRIVATE
-        $<$<CONFIG:Debug>:
-            /Od
-        >
-        $<$<CONFIG:Release>:
-            /O2;
-            /Oi
-        >
-        $<$<CONFIG:TestWithIda>:
-            /O2;
-            /Oi
-        >
-        /arch:SSE2;
-        /W3;
-        ${DEFAULT_CXX_DEBUG_INFORMATION_FORMAT};
-        ${DEFAULT_CXX_EXCEPTION_HANDLING};
-        /Y-
-    )
-    target_link_options(${PROJECT_NAME} PRIVATE
-        $<$<CONFIG:Release>:
-            /OPT:REF;
-            /OPT:ICF
-        >
-        $<$<CONFIG:TestWithIda>:
-            /OPT:REF;
-            /OPT:ICF
-        >
-        /SUBSYSTEM:WINDOWS
-    )
-endif()
+target_include_directories(${PROJECT_NAME} PUBLIC include)
 
 ################################################################################
 # Dependencies
@@ -115,4 +37,5 @@ endif()
 
 target_link_libraries(${PROJECT_NAME} PRIVATE Infrastructure minhook)
 
-target_link_directories(${PROJECT_NAME} PUBLIC "${OUTPUT_DIRECTORY}")
+# Needed for EnumProcessModules/GetModuleInformation
+target_link_libraries(${PROJECT_NAME} PUBLIC psapi.lib)

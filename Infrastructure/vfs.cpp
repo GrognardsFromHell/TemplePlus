@@ -1,4 +1,3 @@
-#define _CRT_SECURE_NO_WARNINGS
 #include "infrastructure/vfs.h"
 
 #include <cstdio>
