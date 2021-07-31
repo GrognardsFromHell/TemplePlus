@@ -809,7 +809,8 @@ BOOL LegacyCombatSystem::StartCombat(objHndl combatInitiator, int setToFirstInit
 void LegacyCombatSystem::EndTurn()
 {
 	auto actor = tbSys.turnBasedGetCurrentActor();
-	
+	logger->info("EndTurn: actor {}", actor);
+
 	if (party.IsInParty(actor)){
 		static auto uiCombatInitiativePortraitsReset = temple::GetRef<int(__cdecl*)(int)>(0x10AA83FC);
 		uiCombatInitiativePortraitsReset(0);
@@ -856,8 +857,9 @@ void LegacyCombatSystem::EndTurn()
 			i++;
 	}
 	
-	if (tbSys.turnBasedGetCurrentActor()){
-		actSeqSys.TurnStart(tbSys.turnBasedGetCurrentActor());
+	auto newActor = tbSys.turnBasedGetCurrentActor();
+	if (newActor){
+		actSeqSys.TurnStart(newActor);
 	}
 
 	if (AllCombatantsFarFromParty()){
@@ -891,7 +893,10 @@ void LegacyCombatSystem::Subturn()
 	auto actor = tbSys.turnBasedGetCurrentActor();
 	auto partyLeader = party.GetConsciousPartyLeader();
 
+	logger->info("Subturn: actor {}", actor);
+
 	if (!actSeqSys.isPerforming(actor) ){
+		logger->info("   ...is not performing.");
 		if (party.IsInParty(actor))
 			combatSys.AddToInitiativeWithinRect(actor);
 		else if (!critterSys.IsFriendly(actor, partyLeader)){
@@ -997,6 +1002,8 @@ void LegacyCombatSystem::Subturn()
 
 	// non-player controlled
 
+	logger->info("   ...is non-player controlled actor.");
+
 	uiCombatInitiativePortraitsReset(0);
 	temple::GetRef<objHndl>(0x10AA8430) = actor; // looks like a write-only debug thing?
 	auto combatSubturnCallback = temple::GetRef<void(__cdecl*)(objHndl)>(0x10AA8400);
@@ -1004,8 +1011,11 @@ void LegacyCombatSystem::Subturn()
 		combatSubturnCallback(actor);
 	}
 
-	if (actSeqSys.isPerforming(actor))
+	if (actSeqSys.isPerforming(actor)) {
+		logger->info("   ...is performing.");
 		return;
+	}
+		
 
 	if (!pythonObjIntegration.ExecuteObjectScript(actor, actor, ObjScriptEvent::StartCombat)){
 		logger->info("Skipping AI Process for {} (script)", actor);
@@ -1013,10 +1023,9 @@ void LegacyCombatSystem::Subturn()
 		return;
 	}
 	
-	logger->info("Calling AI Process for {}", actor);
-	combatSys.TurnProcessAi(actor);
+	logger->info("Subturn: calling AI Process for {}", actor);
 
-	// combatAddresses.Subturn();
+	combatSys.TurnProcessAi(actor);
 }
 
 void LegacyCombatSystem::TurnStart2(int prevInitiativeIdx)

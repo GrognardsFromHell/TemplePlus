@@ -189,7 +189,7 @@ ActionSequenceSystem::ActionSequenceSystem()
 	object = &objects;
 	turnbased = &tbSys;
 	rebase(actSeqCur, 0x1186A8F0);
-	rebase(tbStatus118CD3C0,0x118CD3C0); 
+	rebase(simulsTbStatus,0x118CD3C0); 
 
 	rebase(actnProcState, 0x10B3D5A4);
 
@@ -690,6 +690,7 @@ void ActionSequenceSystem::ActionTypeAutomatedSelection(objHndl handle)
 
 }
 
+/* 0x10099430 */
 void ActionSequenceSystem::TurnStart(objHndl obj)
 {
 	logger->debug("*** NEXT TURN *** starting for {}. CurSeq: {}", obj, (void*)(*actSeqSys.actSeqCur));
@@ -746,9 +747,9 @@ void ActionSequenceSystem::TurnStart(objHndl obj)
 	d20Sys.globD20ActnSetPerformer(obj);
 	for (int i = 0; i < ACT_SEQ_ARRAY_SIZE; i++) {
 
-		if ((actSeqArray[i].seqOccupied & 1)
+		if ((actSeqArray[i].seqOccupied & SEQF_PERFORMING)
 			&& actSeqArray[i].performer == obj) {
-			actSeqArray[i].seqOccupied &= ~1;
+			actSeqArray[i].seqOccupied &= ~SEQF_PERFORMING;
 			logger->info("Clearing outstanding sequence [{}]", i);
 		}
 	}
@@ -2522,6 +2523,8 @@ uint32_t ActionSequenceSystem::curSeqNext()
 			combatSys.CombatAdvanceTurn(tbSys.turnBasedGetCurrentActor());
 			return 1;
 		}
+
+
 		if (!objects.IsPlayerControlled((*actSeqCur)->performer))
 		{
 			if (isSimultPerformer((*actSeqCur)->performer)
@@ -2529,6 +2532,20 @@ uint32_t ActionSequenceSystem::curSeqNext()
 			{
 				combatSys.CombatAdvanceTurn(tbSys.turnBasedGetCurrentActor());
 			}
+			
+			// added this clause in Temple+ because AI Flank was fubaring things
+			// Example scenario: 2 npcs go after PC. First has normal attack closest AI, 2nd has flank AI tactic.
+			// It starts executing the first in simuls, and then the 2nd NPC aborts the simuls.
+			// It resets the 2nd NPCs sequence and performs it (with no actions actually applied)
+			// Without this clause, it reaches the next "else" and re-starts the 2nd NPC's round before
+			// the simuls finishes, thus causing havoc. This fix will lead it into IsLastSimulsPerformer inside
+			// CombatAdvanceTurn, which will cause it to either return, or restore the sequence if appropriate
+			else if (IsLastSimultPopped((*actSeqCur)->performer) && !IsSimulsCompleted()) {
+				logger->info("curSeqNext: simuls not completed");
+				//combatSys.CombatAdvanceTurn(tbSys.turnBasedGetCurrentActor());
+				return TRUE;
+			}
+
 			else
 			{
 				(*actSeqCur)->seqOccupied &= 0xFFFFfffe;
@@ -2814,7 +2831,7 @@ void ActionSequenceSystem::sequencePerform()
 			logger->debug("SequencePerform: Switched sequence slot from combat trigger!");
 			curSeq = *actSeqCur;
 		}
-		logger->debug("SequencePerform: \t {} performing sequence ({})...", description.getDisplayName(curSeq->performer), (void*)curSeq);
+		logger->debug("SequencePerform: \t {} performing sequence ({})...", curSeq->performer, (void*)curSeq);
 		if (isSimultPerformer(curSeq->performer))
 		{ 
 			logger->debug("simultaneously...");
@@ -3115,7 +3132,7 @@ uint32_t ActionSequenceSystem::simulsOk(ActnSeq* actSeq)
 	{
 		*numSimultPerformers = 0;
 		*simultPerformerQueue = 0i64;
-		logger->debug("first simul actor, proceeding");
+		logger->debug("first simul actor, proceeding"); // aborts simuls
 
 	}
 	return 1;
@@ -3142,7 +3159,7 @@ uint32_t ActionSequenceSystem::simulsAbort(objHndl objHnd)
 			}
 			else{
 				*numSimultPerformers = *simulsIdx;
-				memcpy(tbStatus118CD3C0, &(*actSeqCur)->tbStatus, sizeof(TurnBasedStatus));
+				*simulsTbStatus = (*actSeqCur)->tbStatus;
 				logger->debug("Simul aborted {} ({})", objHnd, *simulsIdx);
 				return 1;
 			}
@@ -3165,7 +3182,7 @@ uint32_t ActionSequenceSystem::isSomeoneAlreadyActingSimult(objHndl objHnd)
 		auto perf = simultPerformerQueue[i];
 		for (auto j = 0; j < ACT_SEQ_ARRAY_SIZE; j++)
 		{
-			if (actSeqArray[j].seqOccupied &&actSeqArray[j].performer == perf) return 1;
+			if ( (actSeqArray[j].seqOccupied & SEQF_PERFORMING) &&actSeqArray[j].performer == perf) return 1;
 		}
 	}
 	return 0;
@@ -3184,7 +3201,32 @@ BOOL ActionSequenceSystem::IsLastSimultPopped(objHndl obj)
 
 BOOL ActionSequenceSystem::IsLastSimulsPerformer(objHndl obj)
 {
-	return addresses.IsLastSimulsPerformer(obj);
+	if (*numSimultPerformers <= 0) {
+		return FALSE;
+	}
+	if (obj == simultPerformerQueue[*numSimultPerformers - 1] && !IsSimulsCompleted()) {
+		return TRUE;
+	}
+	if (SimulsRestoreSeqTo(obj)) {
+		aiSys.AiProcess(obj);
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+BOOL ActionSequenceSystem::SimulsRestoreSeqTo(objHndl handle)
+{
+	if (handle != simultPerformerQueue[*numSimultPerformers]) { // bug??
+		return FALSE;
+	}
+	logger->info("Restore Aborted: Reseting Sequence {}", handle);
+	curSeqReset(handle);
+	auto seq = *actSeqCur;
+	seq->tbStatus = *simulsTbStatus;
+	*numSimultPerformers = 0;
+	simultPerformerQueue[0] = objHndl::null;
+	return TRUE;
 }
 
 BOOL ActionSequenceSystem::SimulsAdvance()
