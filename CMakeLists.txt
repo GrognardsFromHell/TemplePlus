@@ -1,13 +1,18 @@
 cmake_minimum_required(VERSION 3.15.0 FATAL_ERROR)
 
+# Generally target Windows 10 SDK
 set(CMAKE_SYSTEM_VERSION 10.0 CACHE STRING "" FORCE)
 
 project(TemplePlus CXX)
 
-# We generally use LTCG a.k.a. INTERPROCEDURAL_OPTIMIZATION
+# We generally use LTCG a.k.a. INTERPROCEDURAL_OPTIMIZATION, but do not rely on it
 include(CheckIPOSupported)
-check_ipo_supported()
-set(CMAKE_INTERPROCEDURAL_OPTIMIZATION true)
+check_ipo_supported(RESULT ltcg_result OUTPUT ltcg_output)
+if(ltcg_result)
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION true)
+else()
+    message(WARNING "IPO/LTCG is not supported: ${ltcg_output}")
+endif()
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED true)

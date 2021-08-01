@@ -127,7 +127,7 @@ set(SOURCES
 # Target
 ################################################################################
 add_library(${PROJECT_NAME} STATIC ${HEADERS} ${SOURCES})
-target_link_libraries(${PROJECT_NAME} PUBLIC EASTL fmtlib spdlog)
+target_link_libraries(${PROJECT_NAME} PUBLIC EASTL fmt::fmt spdlog)
 
 ################################################################################
 # Include directories
@@ -137,7 +137,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC include)
 ################################################################################
 # Dependencies
 ################################################################################
-target_link_libraries(${PROJECT_NAME} PRIVATE EASTL crash_reporting libjpegturbo)
+target_link_libraries(${PROJECT_NAME} PRIVATE crash_reporting libjpegturbo)
 
 # System library dependencies for Direct3D/DirectWrite/Direct2D
 target_link_libraries(${PROJECT_NAME} PUBLIC
