@@ -32,12 +32,15 @@ set(SOURCES
     "src/render_quad.cpp"
     "src/simulation.cpp"
     "src/spec.cpp"
+    "src/pch.h"
 )
 
 ################################################################################
 # Target
 ################################################################################
 add_library(${PROJECT_NAME} ${SOURCES} ${HEADERS})
+
+target_precompile_headers(${PROJECT_NAME} PRIVATE "src/pch.h")
 
 ################################################################################
 # Include directories

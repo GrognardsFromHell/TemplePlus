@@ -1,24 +1,11 @@
 
-set(PROJECT_NAME EASTL)
+set(PROJECT_NAME MinHook)
 
-cmake_minimum_required(VERSION 3.15)
-project(${PROJECT_NAME} CXX)
+cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
+project(${PROJECT_NAME} C)
 
-find_package(EABase REQUIRED)
-
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
-
-########################################################################
-# Extract the version number from EASTL's version.h to avoid having to
-# maintain the version in multiple places.
-########################################################################
-file(READ "${CMAKE_CURRENT_SOURCE_DIR}/include/EASTL/internal/config.h" EASTL_VERSION_H)
-if(EASTL_VERSION_H MATCHES ".*EASTL_VERSION[ \\t]+\"([^\"]+).*$")
-    set(PROJECT_VERSION ${CMAKE_MATCH_1})
-else()
-    message(FATAL_ERROR "Cannot determine EASTL version from config.h: ${EASTL_VERSION_H}")
-endif()
+set(MINHOOK_VERSION "" CACHE STRING "The project version to use. Can't be extracted from source code")
+set(PROJECT_VERSION ${MINHOOK_VERSION})
 
 ########################################################################
 # Creating a reusable CMake package is far more involved than it should be
@@ -63,22 +50,32 @@ configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
 # Set up the actual targets
 ########################################################################
 
-file(GLOB EASTL_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp)
-add_library(EASTL ${EASTL_SOURCES})
+set(SOURCES
+    src/hde/hde32.c
+    src/buffer.c
+    src/hook.c
+    src/trampoline.c
+)
 
-target_compile_definitions(EASTL PUBLIC EASTL_OPENSOURCE=1)
-if (MSVC)
-    target_compile_definitions(EASTL PUBLIC _CRT_SECURE_NO_WARNINGS _SCL_SECURE_NO_WARNINGS)
-endif ()
+add_library(${PROJECT_NAME} ${SOURCES})
+target_include_directories(${PROJECT_NAME} PRIVATE include)
 
-target_link_libraries(EASTL PUBLIC EABase::EABase)
+# To differentiate between MinHook.lib and MinHookd.lib
+set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION} DEBUG_POSTFIX "d")
+target_include_directories(${PROJECT_NAME} INTERFACE $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
-target_include_directories(EASTL PUBLIC
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+# Enable PDB files even for static libs
+set_target_properties(${PROJECT_NAME} PROPERTIES
+        COMPILE_PDB_NAME ${PROJECT_NAME}
+        COMPILE_PDB_NAME_DEBUG ${PROJECT_NAME}d
+        COMPILE_PDB_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
 
-install(TARGETS EASTL EXPORT ${targets_export_name})
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(TARGETS ${PROJECT_NAME} EXPORT ${targets_export_name})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/$<TARGET_FILE_BASE_NAME:${PROJECT_NAME}>.pdb DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(DIRECTORY include/ DESTINATION include)
+install(FILES src/hde/hde32.h src/hde/pstdint.h DESTINATION include/hde)
+install(FILES src/trampoline.h DESTINATION include)
 
 # The following installs are for the CMake package files
 install(FILES ${project_config} ${version_config} DESTINATION ${cmake_pkg_install_dir})

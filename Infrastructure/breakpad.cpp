@@ -1,5 +1,5 @@
 
-#include "crash_reporting.h"
+#include <breakpad/crash_reporting.h>
 
 #include "infrastructure/breakpad.h"
 #include <fmt/format.h>

@@ -6,7 +6,6 @@
 #include <graphics/materials.h>
 
 #include "particles/parser.h"
-#include "particles/params.h"
 #include "particles/parser_params.h"
 
 namespace particles {

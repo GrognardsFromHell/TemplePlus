@@ -5,7 +5,9 @@ set(CMAKE_SYSTEM_VERSION 10.0 CACHE STRING "" FORCE)
 
 project(TemplePlus CXX)
 
-# We generally use LTCG a.k.a. INTERPROCEDURAL_OPTIMIZATION, but do not rely on it
+include(CMake/DefaultBuildType.cmake)
+
+# We generally use LTCG a.k.a. INTERPROCEDURAL_OPTIMIZATION, but do not require it
 include(CheckIPOSupported)
 check_ipo_supported(RESULT ltcg_result OUTPUT ltcg_output)
 if(ltcg_result)
@@ -16,6 +18,9 @@ endif()
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED true)
+
+# Copy everything to the same output directory to avoid trouble with DLLs not being found
+SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 ################################################################################
 # Configuration properties set by the CI/CD for making release builds
@@ -31,16 +36,6 @@ if(NOT CMAKE_VS_PLATFORM_NAME)
     set(CMAKE_VS_PLATFORM_NAME "Win32")
 endif()
 message("${CMAKE_VS_PLATFORM_NAME} architecture in use")
-
-################################################################################
-# Global configuration types
-################################################################################
-set(CMAKE_CONFIGURATION_TYPES
-    "Debug"
-    "Release"
-    "TestWithIda"
-    CACHE STRING "" FORCE
-)
 
 ################################################################################
 # Global compiler options
@@ -80,7 +75,7 @@ endif()
 # Global linker options
 ################################################################################
 if(MSVC)
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 
     #
     # Linker Options:
@@ -115,52 +110,6 @@ include(CMake/Utils.cmake)
 # Use solution folders feature
 ################################################################################
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-
-##### Define pseudo-target for dependencies
-set(DEPENDENCIES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/)
-
-add_library(crash_reporting STATIC IMPORTED GLOBAL)
-set_target_properties(crash_reporting PROPERTIES IMPORTED_LOCATION ${DEPENDENCIES_DIR}lib/crash_reporting.lib)
-set_target_properties(crash_reporting PROPERTIES IMPORTED_LOCATION_DEBUG ${DEPENDENCIES_DIR}lib/crash_reporting_d.lib)
-target_include_directories(crash_reporting INTERFACE ${DEPENDENCIES_DIR}/include)
-
-add_library(minhook STATIC IMPORTED GLOBAL)
-set_target_properties(minhook PROPERTIES IMPORTED_LOCATION ${DEPENDENCIES_DIR}lib/minhook.lib)
-set_target_properties(minhook PROPERTIES IMPORTED_LOCATION_DEBUG ${DEPENDENCIES_DIR}lib/minhook_d.lib)
-target_include_directories(minhook INTERFACE ${DEPENDENCIES_DIR}/include)
-
-add_library(libjpegturbo STATIC IMPORTED GLOBAL)
-set_target_properties(libjpegturbo PROPERTIES IMPORTED_LOCATION ${DEPENDENCIES_DIR}lib/turbojpeg-static.lib)
-set_target_properties(libjpegturbo PROPERTIES IMPORTED_LOCATION_DEBUG ${DEPENDENCIES_DIR}lib/turbojpeg-static_d.lib)
-target_include_directories(libjpegturbo INTERFACE ${DEPENDENCIES_DIR}/include)
-
-#add_library(python STATIC IMPORTED GLOBAL)
-#set_target_properties(python PROPERTIES IMPORTED_LOCATION ${DEPENDENCIES_DIR}lib/python27.lib)
-#set_target_properties(python PROPERTIES IMPORTED_LOCATION_DEBUG ${DEPENDENCIES_DIR}lib/python27_d.lib)
-#target_include_directories(python INTERFACE ${DEPENDENCIES_DIR}/include)
-
-#add_library(libeay STATIC IMPORTED GLOBAL)
-#set_target_properties(libeay PROPERTIES IMPORTED_LOCATION ${DEPENDENCIES_DIR}lib/libeay32.lib)
-#target_include_directories(libeay INTERFACE ${DEPENDENCIES_DIR}/include)
-#add_library(ssleay STATIC IMPORTED GLOBAL)
-#set_target_properties(ssleay PROPERTIES IMPORTED_LOCATION ${DEPENDENCIES_DIR}lib/ssleay32.lib)
-#target_include_directories(ssleay INTERFACE ${DEPENDENCIES_DIR}/include)
-
-################################################################################
-# FFMPEG Dependency
-################################################################################
-add_library(ffmpeg::swscale UNKNOWN IMPORTED)
-set_target_properties(ffmpeg::swscale PROPERTIES IMPORTED_LOCATION ${DEPENDENCIES_DIR}lib/swscale.lib)
-add_library(ffmpeg::avcodec UNKNOWN IMPORTED)
-set_target_properties(ffmpeg::avcodec PROPERTIES IMPORTED_LOCATION ${DEPENDENCIES_DIR}lib/avcodec.lib)
-add_library(ffmpeg::avformat UNKNOWN IMPORTED)
-set_target_properties(ffmpeg::avformat PROPERTIES IMPORTED_LOCATION ${DEPENDENCIES_DIR}lib/avformat.lib)
-add_library(ffmpeg::avutil UNKNOWN IMPORTED)
-set_target_properties(ffmpeg::avutil PROPERTIES IMPORTED_LOCATION ${DEPENDENCIES_DIR}lib/avutil.lib)
-
-add_library(ffmpeg INTERFACE IMPORTED)
-target_include_directories(ffmpeg INTERFACE ${DEPENDENCIES_DIR}/include)
-target_link_libraries(ffmpeg INTERFACE ffmpeg::swscale ffmpeg::avcodec ffmpeg::avformat ffmpeg::avutil)
 
 ################################################################################
 # Sub-projects

@@ -197,7 +197,7 @@ set(no_group_source_files
     "rng.h"
     "sound.cpp"
     "sound.h"
-    "stdafx.cpp"
+    "pch.cpp"
     "stdafx.h"
     "tab_file.cpp"
     "tab_file.h"
@@ -554,7 +554,7 @@ set(ALL_FILES
 ################################################################################
 add_executable(${PROJECT_NAME} WIN32 ${ALL_FILES})
 
-add_precompiled_header(${PROJECT_NAME} "stdafx.h" "stdafx.cpp")
+add_precompiled_header(${PROJECT_NAME} "stdafx.h" "pch.cpp")
 
 ################################################################################
 # Include directories
@@ -596,7 +596,7 @@ endif()
 # Setup defines for building releases via CI/CD on Github
 ################################################################################
 if (TP_RELEASE_BUILD)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE -DTP_RELEASE_BUILD -D_TP_VERSION=${TP_VERSION} -D_TP_COMMIT=${TP_COMMIT} )
+    target_compile_definitions(${PROJECT_NAME} PRIVATE TP_RELEASE_BUILD _TP_VERSION=${TP_VERSION} _TP_COMMIT=${TP_COMMIT})
 endif()
 
 ################################################################################
@@ -615,15 +615,17 @@ add_custom_command_if(
 # Dependencies
 ################################################################################
 # Link with other targets.
-target_link_libraries(${PROJECT_NAME} PRIVATE
-    EASTL
+target_link_libraries(${PROJECT_NAME} PUBLIC
+    EASTL::EASTL
     Infrastructure
     ParticleSystems
     Temple
-    minhook
+    MinHook::MinHook
     Python2::Python
     tio
-    ZLIB::ZLIB
+    zlib::zlib
+    pybind11::pybind11
+    libjpeg-turbo::turbojpeg
     # for timeGetTime
     winmm.lib
     # For delay-loading

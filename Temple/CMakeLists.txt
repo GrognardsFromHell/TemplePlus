@@ -35,7 +35,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC include)
 # Dependencies
 ################################################################################
 
-target_link_libraries(${PROJECT_NAME} PRIVATE Infrastructure minhook)
+target_link_libraries(${PROJECT_NAME} PRIVATE Infrastructure MinHook::MinHook)
 
 # Needed for EnumProcessModules/GetModuleInformation
 target_link_libraries(${PROJECT_NAME} PUBLIC psapi.lib)
