@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.15.0 FATAL_ERROR)
+cmake_policy(SET CMP0111 NEW)
 
 # Generally target Windows 10 SDK
 set(CMAKE_SYSTEM_VERSION 10.0 CACHE STRING "" FORCE)
@@ -50,13 +51,16 @@ if(MSVC)
     # /Oi -> enable intrinsic functions
     # /arch:SSE2 -> allow unconditional use of SSE2
     # /W3 -> warnings, warnings, warnings
+    # /RTC1 -> Runtime error checks
 
     # Flags for all configs
     set(COMMON_CXX_FLAGS "/EHsc /Zi /arch:SSE2 /W3")
+    message("${CMAKE_CXX_FLAGS}")
     set(CMAKE_CXX_FLAGS "")
-    set(CMAKE_CXX_FLAGS_DEBUG "${COMMON_CXX_FLAGS} /Od")
-    set(CMAKE_CXX_FLAGS_RELEASE "${COMMON_CXX_FLAGS} /O2 /Oi")
-    set(CMAKE_CXX_FLAGS_TESTWITHIDA "${CMAKE_CXX_FLAGS_RELEASE}")
+    set(CMAKE_CXX_FLAGS_DEBUG "${COMMON_CXX_FLAGS} /Od /RTC1")
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+    set(CMAKE_CXX_FLAGS_RELEASE "${COMMON_CXX_FLAGS} /O2 /Oi /DNDEBUG")
+    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 
     add_compile_definitions(
             _CRT_SECURE_NO_WARNINGS # Disables nagging about fopen_s etc.
@@ -64,10 +68,6 @@ if(MSVC)
             UNICODE # needed to get the Unicode versions of Win32 APIs
             _UNICODE # needed to get the Unicode versions of MSVCRT APIs
             WIN32 # Generally set on Windows
-            # The following sets NDEBUG / _DEBUG accordingly
-            "$<$<CONFIG:Debug>:_DEBUG>"
-            "$<$<CONFIG:Release>:NDEBUG>"
-            "$<$<CONFIG:TestWithIda>:NDEBUG>"
     )
 endif()
 

@@ -1,4 +1,10 @@
 
+# Prefer RelWithDebInfo artifacts, if available, "" signifies the import lib without a configuration-name
+# as is used for some imported libs like Python and ffmpeg
+set(CMAKE_MAP_IMPORTED_CONFIG_RELEASE RelWithDebInfo Release MinSizeRel Debug "")
+set(CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO RelWithDebInfo Release MinSizeRel Debug "")
+set(CMAKE_MAP_IMPORTED_CONFIG_MINSIZEREL MinSizeRel RelWithDebInfo Release Debug "")
+
 ######################################################################
 # External Python Install
 # This needs to come before pybind11 so it won't search again
@@ -82,10 +88,8 @@ function(copy_dependencies CONFIG)
     endif()
 
     foreach (TARGET IN LISTS IMPORTED_TARGETS)
+        # This works thanks to CMAKE_MAP_IMPORTED_CONFIG_*
         get_target_property(LOCATION ${TARGET} LOCATION_${CONFIG})
-        if (NOT "${LOCATION}")
-            get_target_property(LOCATION ${TARGET} LOCATION)
-        endif()
         file(INSTALL ${LOCATION} DESTINATION ${OUTPUT_DIR})
     endforeach ()
 endfunction()

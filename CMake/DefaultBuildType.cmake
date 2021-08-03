@@ -2,7 +2,6 @@
 set(CMAKE_CONFIGURATION_TYPES
         "Debug"
         "Release"
-        "TestWithIda"
         CACHE STRING "" FORCE
         )
 
