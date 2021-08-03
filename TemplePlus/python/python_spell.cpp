@@ -67,7 +67,7 @@ struct PySpellStore {
 const int testSizeofPyspell = sizeof PySpell; // should be 680 (due to HEAD_EXTRA is +8 relative to toee)
 
 // Contains all active spells
-typedef unordered_map<int, PySpell*> ActiveSpellMap;
+typedef std::unordered_map<int, PySpell*> ActiveSpellMap;
 static ActiveSpellMap activeSpells;
 
 /******************************************************************************
@@ -128,7 +128,7 @@ static PyObject *PySpell_SpellTargetListSort(PyObject *obj, PyObject *args) {
 	}
 	
 	// Copy them over for much easier sorting using STL
-	vector<PySpellTarget> targets(self->targetCount);
+	std::vector<PySpellTarget> targets(self->targetCount);
 	for (int i = 0; i < self->targetCount; ++i) {
 		targets[i] = self->targets[i];
 	}
@@ -136,7 +136,7 @@ static PyObject *PySpell_SpellTargetListSort(PyObject *obj, PyObject *args) {
 	switch (criteria) {
 		// This seems pretty useless
 	case OBJ_HANDLE:
-		sort(targets.begin(), targets.end(), [=] (const PySpellTarget &a, const PySpellTarget &b) {
+	    std::sort(targets.begin(), targets.end(), [=] (const PySpellTarget &a, const PySpellTarget &b) {
 			if (!descending) {
 				return a.obj.handle < b.obj.handle;
 			} else {
@@ -145,7 +145,7 @@ static PyObject *PySpell_SpellTargetListSort(PyObject *obj, PyObject *args) {
 		});
 		break;
 	case HIT_DICE: 
-		sort(targets.begin(), targets.end(), [=](const PySpellTarget &a, const PySpellTarget &b) {
+	    std::sort(targets.begin(), targets.end(), [=](const PySpellTarget &a, const PySpellTarget &b) {
 			auto diceA = objects.GetHitDiceNum(a.obj);
 			auto diceB = objects.GetHitDiceNum(b.obj);
 			if (!descending) {
@@ -156,7 +156,7 @@ static PyObject *PySpell_SpellTargetListSort(PyObject *obj, PyObject *args) {
 		});
 		break;
 	case HIT_DICE_THEN_DIST: 
-		sort(targets.begin(), targets.end(), [=](const PySpellTarget &a, const PySpellTarget &b) {
+	    std::sort(targets.begin(), targets.end(), [=](const PySpellTarget &a, const PySpellTarget &b) {
 			auto diceA = objects.GetHitDiceNum(a.obj);
 			auto diceB = objects.GetHitDiceNum(b.obj);
 			if (diceA != diceB) {
@@ -177,7 +177,7 @@ static PyObject *PySpell_SpellTargetListSort(PyObject *obj, PyObject *args) {
 		});
 		break;
 	case DIST: 
-		sort(targets.begin(), targets.end(), [=](const PySpellTarget &a, const PySpellTarget &b) {
+	    std::sort(targets.begin(), targets.end(), [=](const PySpellTarget &a, const PySpellTarget &b) {
 			auto distA = locSys.DistanceToLoc(a.obj, self->targetLocation.location);
 			auto distB = locSys.DistanceToLoc(b.obj, self->targetLocation.location);
 			if (!descending) {
@@ -188,7 +188,7 @@ static PyObject *PySpell_SpellTargetListSort(PyObject *obj, PyObject *args) {
 		});
 		break;
 	case DIST_FROM_CASTER:
-		sort(targets.begin(), targets.end(), [=](const PySpellTarget &a, const PySpellTarget &b) {
+	    std::sort(targets.begin(), targets.end(), [=](const PySpellTarget &a, const PySpellTarget &b) {
 			// In vanilla, this still just sorts between the target loc and obj. It's fixed here
 			auto distA = locSys.DistanceToObj(a.obj, self->caster);
 			auto distB = locSys.DistanceToObj(b.obj, self->caster);

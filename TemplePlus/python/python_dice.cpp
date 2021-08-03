@@ -13,7 +13,7 @@ struct PyDice {
 
 PyObject *PyDice_Repr(PyObject *obj) {
 	auto self = (PyDice*) obj;
-	string text;
+	std::string text;
 	if (self->bonus == 0) {
 		text = fmt::format("{}d{}", self->number, self->size);
 	} else {

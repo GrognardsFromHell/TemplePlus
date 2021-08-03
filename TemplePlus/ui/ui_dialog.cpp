@@ -368,7 +368,7 @@ void UiDlg::Unk() {
 	addresses.Unk();
 }
 
-void UiDlg::ShowTextBubble(objHndl speaker, objHndl speakingTo, const string &text, int speechId) {
+void UiDlg::ShowTextBubble(objHndl speaker, objHndl speakingTo, const std::string &text, int speechId) {
 	addresses.ShowTextBubble(speaker, speakingTo, text.c_str(), speechId);
 }
 

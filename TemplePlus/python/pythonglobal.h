@@ -13,6 +13,6 @@ public:
 	
 	static void installExtensions();
 private:
-	static vector<PythonGlobalExtension*> &extensions();
+	static std::vector<PythonGlobalExtension*> &extensions();
 };
 

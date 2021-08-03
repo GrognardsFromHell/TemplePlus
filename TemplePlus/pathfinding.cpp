@@ -1172,7 +1172,7 @@ int Pathfinding::FindPathShortDistanceAdjRadius(PathQuery* pq, Path* pqr)
 	if (deltaSubtileX > gridSize / 2 || deltaSubtileY > gridSize / 2)
 		return 0;
 
-	int lowerSubtileX = min(fromSubtileX, toSubtileX);	int lowerSubtileY = min(fromSubtileY, toSubtileY);
+	int lowerSubtileX = std::min(fromSubtileX, toSubtileX);	int lowerSubtileY = std::min(fromSubtileY, toSubtileY);
 
 	int cornerX = lowerSubtileX + deltaSubtileX / 2 - gridSize / 2;	int cornerY = lowerSubtileY + deltaSubtileY / 2 - gridSize / 2;
 
@@ -1733,7 +1733,7 @@ BOOL Pathfinding::PathStraightLineIsClear(Path* pqr, PathQuery* pq, LocAndOffset
 	auto dx = abs(static_cast<int>(to.location.locx - from.location.locx));
 	auto dy = abs(static_cast<int>(to.location.locy - from.location.locy));
 
-	if ( max( dx, dy) >= SECTOR_SIDE_SIZE * 3 - 1 || (dx + dy  >= 5 * SECTOR_SIDE_SIZE-1)) // RayCast supports up to a span of 4 sectors
+	if ( std::max( dx, dy) >= SECTOR_SIDE_SIZE * 3 - 1 || (dx + dy  >= 5 * SECTOR_SIDE_SIZE-1)) // RayCast supports up to a span of 4 sectors
 		return 0;
 
 	
@@ -1908,7 +1908,7 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 	}
 		
 	
-	int lowerSubtileX = min(fromSubtileX, toSubtileX);	int lowerSubtileY = min(fromSubtileY, toSubtileY);
+	int lowerSubtileX = std::min(fromSubtileX, toSubtileX);	int lowerSubtileY = std::min(fromSubtileY, toSubtileY);
 
 	int cornerX = lowerSubtileX + deltaSubtileX / 2 - gridSize/2;	int cornerY = lowerSubtileY + deltaSubtileY / 2 - gridSize/2;
 

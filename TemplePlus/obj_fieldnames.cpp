@@ -437,7 +437,7 @@ static const char *objectFieldNames[] = {
 
 static const uint32_t objectFieldCount = sizeof(objectFieldNames) / sizeof(const char*);
 
-string GetFieldName(int objFieldIdx) {
+std::string GetFieldName(int objFieldIdx) {
 
 	if (objFieldIdx < 0 || objFieldIdx >= objectFieldCount) {
 		assert(objFieldIdx < 0 || objFieldIdx >= objectFieldCount);

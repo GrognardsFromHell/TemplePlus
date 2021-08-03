@@ -59,6 +59,6 @@ void LegacyParticles::LightningBolt(objHndl caster, LocAndOffsets target) {
 	addresses.LightningBolt(caster, target);
 }
 
-void LegacyParticles::ChainLightning(objHndl caster, const vector<objHndl>& targets) {
+void LegacyParticles::ChainLightning(objHndl caster, const std::vector<objHndl>& targets) {
 	addresses.ChainLightning(caster, targets.size(), targets.data());
 }

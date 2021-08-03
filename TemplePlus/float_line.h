@@ -16,7 +16,7 @@ struct FloatLineSystem : temple::AddressTable
 
 
 	void FloatCombatLine(objHndl obj, int line);
-	void FloatCombatLineWithExtraString(const objHndl& obj, int combatMesLine, const string& cs, const string& cs2);
+	void FloatCombatLineWithExtraString(const objHndl& obj, int combatMesLine, const std::string& cs, const std::string& cs2);
 
 	/*
 		Float a text line from mes/spells.mes with an optional prefix and suffix text.

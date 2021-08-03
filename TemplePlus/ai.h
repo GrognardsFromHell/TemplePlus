@@ -249,7 +249,7 @@ struct AiSystem : temple::AddressTable
 	// Init
 	void StrategyTabLineParseTactic(AiStrategy*, const char * tacName, const char * middleString, const char* spellString);
 	void StrategyTabLineParseTacticMiddleString(AiStrategy* aiStrat, int idx, const char* middleString);
-	void ParseStrategyLine(AiStrategy& stratOut, const std::vector<string>& strings);
+	void ParseStrategyLine(AiStrategy& stratOut, const std::vector<std::string>& strings);
 	int StrategyTabLineParser(const TigTabParser* tabFile, int n, char ** strings);
 	void InitCustomStrategies();
 	void SetCustomStrategy(objHndl handle, const std::vector<std::string>& stringVector, int save);

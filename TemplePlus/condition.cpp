@@ -609,7 +609,7 @@ void _CondNodeSetArg(CondNode* condNode, uint32_t argIdx, uint32_t argVal)
 uint32_t _ConditionAddDispatch(Dispatcher* dispatcher, CondNode** ppCondNode, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4) {
 	assert(condStruct->numArgs >= 0 && condStruct->numArgs <= 8);
 
-	vector<int> args;
+	std::vector<int> args;
 	if (condStruct->numArgs > 0) {
 		args.push_back(arg1);
 	}
@@ -627,7 +627,7 @@ uint32_t _ConditionAddDispatch(Dispatcher* dispatcher, CondNode** ppCondNode, Co
 	return _ConditionAddDispatchArgs(dispatcher, ppCondNode, condStruct, args);
 };
 
-uint32_t _ConditionAddDispatchArgs(Dispatcher* dispatcher, CondNode** ppCondNode, CondStruct* condStruct, const vector<int> &args) {
+uint32_t _ConditionAddDispatchArgs(Dispatcher* dispatcher, CondNode** ppCondNode, CondStruct* condStruct, const std::vector<int> &args) {
 	assert(condStruct->numArgs >= args.size());
 
 	// pre-add section (may abort adding condition, or cause another condition to be deleted first)
@@ -1048,7 +1048,7 @@ int GenericCallbacks::SpellResistanceTooltip(DispatcherCallbackArgs args){
 
 	auto dispIo = dispatch.DispIoCheckIoType9(args.dispIO);
 	auto srMod = args.GetCondArg(1);
-	string text( fmt::format("{} [{}]" ,combatSys.GetCombatMesLine(args.GetData1()), srMod) );
+	std::string text( fmt::format("{} [{}]" ,combatSys.GetCombatMesLine(args.GetData1()), srMod) );
 
 	dispIo->Append(text);
 
@@ -2660,7 +2660,7 @@ CondStruct * _GetCondStructFromHashcode(uint32_t key)
 	return conds.hashmethods.GetCondStruct(key);
 }
 
-CondStruct* ConditionSystem::GetByName(const string& name) {
+CondStruct* ConditionSystem::GetByName(const std::string& name) {
 	auto key = ElfHash::Hash(name.c_str());
 	return hashmethods.GetCondStruct(key);
 }
@@ -2683,7 +2683,7 @@ void ConditionSystem::DoForAllCondStruct(void(*cb)(CondStruct &condStruct)){
 	
 }
 
-void ConditionSystem::AddToItem(objHndl item, const CondStruct* cond, const vector<int>& args) {
+void ConditionSystem::AddToItem(objHndl item, const CondStruct* cond, const std::vector<int>& args) {
 	assert(args.size() == cond->numArgs);
 
 	auto obj = objSystem->GetObject(item);
@@ -2701,7 +2701,7 @@ void ConditionSystem::AddToItem(objHndl item, const CondStruct* cond, const vect
 	}
 }
 
-bool ConditionSystem::AddTo(objHndl handle, const CondStruct* cond, const vector<int>& args) {
+bool ConditionSystem::AddTo(objHndl handle, const CondStruct* cond, const std::vector<int>& args) {
 	assert(args.size() == cond->numArgs);
 
 	auto dispatcher = objects.GetDispatcher(handle);
@@ -2714,7 +2714,7 @@ bool ConditionSystem::AddTo(objHndl handle, const CondStruct* cond, const vector
 	return _ConditionAddDispatchArgs(dispatcher, &dispatcher->conditions, const_cast<CondStruct*>(cond), args) != 0;
 }
 
-bool ConditionSystem::AddTo(objHndl handle, const string& name, const vector<int>& args) {
+bool ConditionSystem::AddTo(objHndl handle, const std::string& name, const std::vector<int>& args) {
 	auto cond = GetByName(name);
 	if (!cond) {
 		logger->warn("Unable to find condition {}", name);
@@ -2724,7 +2724,7 @@ bool ConditionSystem::AddTo(objHndl handle, const string& name, const vector<int
 	return AddTo(handle, cond, args);
 }
 
-bool ConditionSystem::ConditionAddDispatchArgs(Dispatcher* dispatcher, CondNode** nodes, CondStruct* condStruct, const vector<int>& args)
+bool ConditionSystem::ConditionAddDispatchArgs(Dispatcher* dispatcher, CondNode** nodes, CondStruct* condStruct, const std::vector<int>& args)
 {
 	return _ConditionAddDispatchArgs(dispatcher, nodes, condStruct, args) != 0;
 
@@ -3513,7 +3513,7 @@ int __cdecl CombatExpertiseRadialMenu(DispatcherCallbackArgs args)
 	int bab = dispatch.DispatchToHitBonusBase(args.objHndCaller, 0);
 	if (bab > 0)
 	{
-		auto maxArg = feats.HasFeatCount(args.objHndCaller, FEAT_SUPERIOR_EXPERTISE)? bab:min(5, bab);
+	    auto maxArg = feats.HasFeatCount(args.objHndCaller, FEAT_SUPERIOR_EXPERTISE)? bab:std::min(5, bab);
 		RadialMenuEntrySlider radEntry(5007,0, maxArg, args.GetCondArgPtr(0), -1, ElfHash::Hash("TAG_COMBAT_EXPERTISE") );
 		int parentNode = radialMenus.GetStandardNode(RadialMenuStandardNode::Feats);
 		radialMenus.AddChildNode(args.objHndCaller, &radEntry, parentNode);
@@ -5204,7 +5204,7 @@ int ItemCallbacks::UseableItemRadialEntry(DispatcherCallbackArgs args){
 		// clerics with magic domain
 		else if (spellSys.IsArcaneSpellClass(spData.classCode)) {
 			auto clrLvl = objects.StatLevelGet(handle, stat_level_cleric);
-			if (clrLvl > 0 && max(1, clrLvl / 2) >= (int)spData.spellLevel && critterSys.HasDomain(handle, Domain_Magic))
+			if (clrLvl > 0 && std::max(1, clrLvl / 2) >= (int)spData.spellLevel && critterSys.HasDomain(handle, Domain_Magic))
 				isOk = true;
 		}
 
@@ -5397,7 +5397,7 @@ int ItemCallbacks::UseableItemActionCheck(DispatcherCallbackArgs args){
 		// clerics with magic domain
 		else if (spellSys.IsArcaneSpellClass(spData.classCode)) {  
 			auto clrLvl = objects.StatLevelGet(handle, stat_level_cleric);
-			if (clrLvl > 0 && max(1, clrLvl / 2) >= (int)spData.spellLevel && critterSys.HasDomain(handle, Domain_Magic))
+			if (clrLvl > 0 && std::max(1, clrLvl / 2) >= (int)spData.spellLevel && critterSys.HasDomain(handle, Domain_Magic))
 				isOk = true;
 		}
 
@@ -5775,7 +5775,7 @@ int ClassAbilityCallbacks::FeatEmptyBodyReduceRounds(DispatcherCallbackArgs args
 	}
 
 	D20Actn*d20a = dispIo->d20a;
-	args.SetCondArg(2, max(0,numRoundsRem - (int)d20a->data1));
+	args.SetCondArg(2, std::max(0,numRoundsRem - (int)d20a->data1));
 
 	return 0;
 }
@@ -5825,7 +5825,7 @@ int ClassAbilityCallbacks::GetNumRoundsRemaining(DispatcherCallbackArgs args){
 			numRounds = 1;
 		}
 		if (numRounds > args.GetCondArg(2))
-			numRounds = max(0, (int)args.GetCondArg(2));
+		    numRounds = std::max(0, (int)args.GetCondArg(2));
 		
 		dispIo->data2 = numRounds;
 	} 
@@ -5919,7 +5919,7 @@ int ClassAbilityCallbacks::FeatScribeScrollRadialMenu(DispatcherCallbackArgs arg
 	int newParent = radialMenus.AddParentChildNode(args.objHndCaller, &radMenuScribeScroll, radialMenus.GetStandardNode(RadialMenuStandardNode::Feats));
 
 
-	auto setWandLevelMaxArg = min(20, critterSys.GetCasterLevel(args.objHndCaller));
+	auto setWandLevelMaxArg = std::min(20, critterSys.GetCasterLevel(args.objHndCaller));
 	RadialMenuEntrySlider setScrollLevel(6017, 1, setWandLevelMaxArg, args.GetCondArgPtr(0), 6019, ElfHash::Hash("TAG_SCRIBE_SCROLL"));
 	radialMenus.AddChildNode(args.objHndCaller, &setScrollLevel, newParent);
 
@@ -5944,7 +5944,7 @@ int ClassAbilityCallbacks::FeatCraftWandRadial(DispatcherCallbackArgs args){
 	int newParent = radialMenus.AddParentChildNode(args.objHndCaller, &radMenuCraftWand, radialMenus.GetStandardNode(RadialMenuStandardNode::Feats));
 
 
-	auto setWandLevelMaxArg = min(20, critterSys.GetCasterLevel(args.objHndCaller));
+	auto setWandLevelMaxArg = std::min(20, critterSys.GetCasterLevel(args.objHndCaller));
 	RadialMenuEntrySlider setWandLevel(6017,1, setWandLevelMaxArg, args.GetCondArgPtr(0), 6019, ElfHash::Hash("TAG_CRAFT_WAND"));
 	radialMenus.AddChildNode(args.objHndCaller, &setWandLevel, newParent);
 

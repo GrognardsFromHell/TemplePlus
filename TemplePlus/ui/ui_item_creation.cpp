@@ -1145,7 +1145,7 @@ void UiItemCreation::ItemCreationCraftingCostTexts(int widgetId, objHndl objHndI
 	craftingCostCP = itemWorth / 2;
 	craftingCostXP = itemWorth / 2500;
 	
-	string text;
+	std::string text;
 	// "Item Cost: %d"
 	if (*insuffXp || *insuffCp || *insuffSkill || *insuffPrereq){
 		
@@ -1533,7 +1533,7 @@ uint32_t UiItemCreation::CraftedWandWorth(objHndl item, int casterLevelNew){
 	// retrieve Spell Known data
 	int spellLevelBase = spellData.spellLevel; // default value
 	CraftedWandSpellGet(item, spellData, &spellLevelBase);
-	auto casterLevelBase = max(1, spellLevelBase * 2 - 1);
+	auto casterLevelBase = std::max(1, spellLevelBase * 2 - 1);
 	auto casterClass = (Stat)spellSys.GetCastingClass(spellData.classCode);
 	auto minCasterLevel = (int)d20ClassSys.GetMinCasterLevelForSpellLevel(casterClass, spellLevelBase);
 	if (minCasterLevel >= 1) {
@@ -1696,7 +1696,7 @@ uint32_t UiItemCreation::ScribedScrollWorth(objHndl item, int casterLevelNew)
 	// retrieve Spell Known data (e.g. for Bards) and caster level (as modified by user selection)
 	int spellLevelBase = spellData.spellLevel; // default value
 	ScribedScrollSpellGet(item, spellData, &spellLevelBase);
-	auto casterLevelBase = max(1,spellLevelBase * 2 - 1);
+	auto casterLevelBase = std::max(1,spellLevelBase * 2 - 1);
 	auto casterClass = (Stat)spellSys.GetCastingClass(spellData.classCode);
 	auto minCasterLevel = (int)d20ClassSys.GetMinCasterLevelForSpellLevel(casterClass, spellLevelBase);
 	if (minCasterLevel >= 1) {
@@ -1728,7 +1728,7 @@ uint32_t UiItemCreation::ScribedScrollWorth(objHndl item, int casterLevelNew)
 	return itemWorthBase + materialCost * 100;
 }
 
-static vector<objHndl> craftingProtoHandles[8];
+static std::vector<objHndl> craftingProtoHandles[8];
 
 const char *getProtoName(objHndl protoHandle) {
 	/*
@@ -1977,7 +1977,7 @@ std::string UiItemCreation::PrintPrereqToken(const char * reqTxt)
 		result = fmt::format("{}", mesLine.value);
 		break;
 	case 'C': // level
-		mesLine.key = 20000 + min(20l, atol(reqTxt+1) );
+	mesLine.key = 20000 + std::min(20l, atol(reqTxt+1) );
 		mesFuncs.GetLine_Safe(mItemCreationMes, &mesLine);
 		result = fmt::format("{}", mesLine.value);
 		break;

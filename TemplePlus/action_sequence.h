@@ -52,7 +52,7 @@ enum ActionErrorCode : uint32_t
 };
 
 // Allows for direct use of ActionErrorCode in format() strings
-ostream &operator<<(ostream &str, ActionErrorCode id);
+std::ostream &operator<<(std::ostream &str, ActionErrorCode id);
 
 enum TurnBasedStatusFlags : uint32_t
 {

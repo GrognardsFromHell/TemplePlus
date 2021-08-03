@@ -652,7 +652,7 @@ SecretDoorFlag Objects::GetSecretDoorFlags(objHndl handle) {
 }
 
 void Objects::Destroy(objHndl ObjHnd) {
-	static set<objHndl> destroyed;
+    static std::set<objHndl> destroyed;
 	std::string name = this->GetDisplayName(ObjHnd, ObjHnd);
 	logger->info("Destroying {}", name);
 	if (destroyed.find(ObjHnd) != destroyed.end()) {
@@ -814,7 +814,7 @@ bool Objects::IsPlayerControlled(objHndl handle){
 	//return _IsPlayerControlled(handle);
 }
 
-string Objects::GetDisplayName(objHndl obj, objHndl observer) {
+std::string Objects::GetDisplayName(objHndl obj, objHndl observer) {
 	char name[512];
 	_GetDisplayName(obj, observer, name);
 	return name;
@@ -994,13 +994,13 @@ bool Objects::OpenLock(objHndl handle, bool isTimeEvent, bool openAdjacent)
 	if (openAdjacent && !isTimeEvent && obj->type == obj_t_portal) {
 		auto loc = obj->GetLocationFull();
 		
-		// check ±5 tiles away in X/Y directions
+		// check ï¿½5 tiles away in X/Y directions
 		TileRect rects[2];
-		rects[0].x1 = max(0, (int)loc.location.locx - 5 );
+		rects[0].x1 = std::max(0, (int)loc.location.locx - 5 );
 		rects[0].x2 = loc.location.locx + 5;
 		rects[0].y1 = rects[0].y2 = loc.location.locy;
 
-		rects[1].y1 = max(0, (int)loc.location.locy - 5);
+		rects[1].y1 = std::max(0, (int)loc.location.locy - 5);
 		rects[1].y2 = loc.location.locy + 5;
 		rects[1].x1 = rects[1].x2 = loc.location.locx;
 

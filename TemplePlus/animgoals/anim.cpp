@@ -2132,8 +2132,8 @@ public:
   }
 } animHooks;
 
-static string getDelayText(AnimStateTransition trans) {
-  string delay = "";
+static std::string getDelayText(AnimStateTransition trans) {
+  std::string delay = "";
   if (trans.delay == AnimStateTransition::DelayRandom) {
     delay = ", delay: random";
   } else if (trans.delay == AnimStateTransition::DelayCustom) {
@@ -2146,10 +2146,10 @@ static string getDelayText(AnimStateTransition trans) {
   return delay;
 }
 
-static void getTransitionText(string &diagramText, int &j,
+static void getTransitionText(std::string &diagramText, int &j,
                               const AnimStateTransition &transition,
                               const char *condition) {
-  string delay = getDelayText(transition);
+  std::string delay = getDelayText(transition);
   auto newState = transition.newState;
   if (newState & 0xFF000000) {
     logger->info("New state flags {:x}", newState);
@@ -2188,7 +2188,7 @@ std::string GetAnimParamName(int animParamType) {
   } else if (animParamType == 34) {
     return "TARGET_LOC_PRECISE";
   } else {
-    return to_string(animParamType);
+    return std::to_string(animParamType);
   }
 }
 
@@ -2218,8 +2218,8 @@ TransitionToJson(const AnimStateTransition &transition) {
 }
 
 static json11::Json::object StateToJson(const AnimGoalState &state,
-                                        map<uint32_t, string> &goalFuncNames,
-                                        map<uint32_t, string> &goalFuncDescs) {
+                                        std::map<uint32_t, std::string> &goalFuncNames,
+                                        std::map<uint32_t, std::string> &goalFuncDescs) {
   using namespace json11;
   Json::object result{
       {"callback", fmt::format("0x{:x}", (uint32_t)state.callback)},
@@ -2228,7 +2228,7 @@ static json11::Json::object StateToJson(const AnimGoalState &state,
       {"refToOtherGoalType", state.flagsData}};
 
   if (state.afterSuccess.newState == state.afterFailure.newState &&
-      state.afterSuccess.delay == state.afterFailure.delay) {
+    state.afterSuccess.delay == state.afterFailure.delay) {
     result["transition"] = TransitionToJson(state.afterSuccess);
   } else {
     result["trueTransition"] = TransitionToJson(state.afterSuccess);

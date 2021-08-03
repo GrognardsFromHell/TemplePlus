@@ -260,7 +260,7 @@ public:
 	}
 
 	void WriteStringMaxSize(const std::string& str, size_t maxSize) {
-		auto size = min(maxSize, str.size());
+	    auto size = std::min(maxSize, str.size());
 		WriteUInt32(size);
 		WriteRaw(str.c_str(), size);
 	}

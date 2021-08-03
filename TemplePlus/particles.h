@@ -37,7 +37,7 @@ public:
 	// Special effects
 	void CallLightning(LocAndOffsets location);
 	void LightningBolt(objHndl caster, LocAndOffsets target);
-	void ChainLightning(objHndl caster, const vector<objHndl> &targets);
+	void ChainLightning(objHndl caster, const std::vector<objHndl> &targets);
 };
 
 extern LegacyParticles legacyParticles;

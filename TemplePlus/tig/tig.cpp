@@ -199,7 +199,7 @@ void TigRect::FitInto(const TigRect& boundingRect) {
 	float h = static_cast<float>(boundingRect.height);
 	float wFactor = (float)w / width;
 	float hFactor = (float)h / height;
-	float scale = min(wFactor, hFactor);
+	float scale = std::min(wFactor, hFactor);
 	width = (int)round(scale * width);
 	height = (int)round(scale * height);
 

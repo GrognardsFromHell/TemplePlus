@@ -11,6 +11,8 @@
 #include "obj.h"
 #include "gamesystems/gamesystems.h"
 
+using namespace std::literals;
+
 static int HandleOptionalSlotResult(std::optional<AnimSlotId> slotId, AnimSlotId *slotIdOut) {
 	if (slotId) {
 		if (slotIdOut) {
@@ -208,7 +210,7 @@ public:
 			return "TARGET_LOC_PRECISE";
 		}
 		else {
-			return to_string(animParamType);
+			return std::to_string(animParamType);
 		}
 	}
 

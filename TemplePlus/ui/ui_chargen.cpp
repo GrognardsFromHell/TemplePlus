@@ -18,9 +18,9 @@ void PagianatedChargenSystem::SetPage(int page){
 	mPageUpdateHandler();
 }
 
-void PagianatedChargenSystem::AddPageButtonsToWnd(unique_ptr<WidgetContainer>& wnd)
+void PagianatedChargenSystem::AddPageButtonsToWnd(std::unique_ptr<WidgetContainer>& wnd)
 {
-	auto nextBtn = make_unique<ChargenBigButton>();
+    auto nextBtn = std::make_unique<ChargenBigButton>();
 	nextBtn->SetPos(310, 200);
 	nextBtn->SetText("NEXT");
 	//auto &pbtn = *nextBtn;
@@ -30,7 +30,7 @@ void PagianatedChargenSystem::AddPageButtonsToWnd(unique_ptr<WidgetContainer>& w
 	mNextBtnId = nextBtn->GetWidgetId();
 	nextBtn->SetActivationState(ChargenBigButton::ChargenButtonActivationState::Active);
 
-	auto prevBtn = make_unique<ChargenBigButton>();
+	auto prevBtn = std::make_unique<ChargenBigButton>();
 	prevBtn->SetPos(10, 200);
 	prevBtn->SetText("PREV");
 	

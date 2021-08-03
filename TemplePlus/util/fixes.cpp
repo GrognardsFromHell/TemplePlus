@@ -7,8 +7,8 @@
 #include "trampoline.h"
 #include "hde/hde32.h"
 
-vector<TempleFix*> &TempleFixes::fixes() {
-	static vector<TempleFix*> activeFixes;
+std::vector<TempleFix*> &TempleFixes::fixes() {
+    static std::vector<TempleFix*> activeFixes;
 	return activeFixes;
 }
 
@@ -40,7 +40,7 @@ void TempleFix::read(uint32_t offset, void* buffer, size_t size) {
 	memcpy(buffer, temple::Dll::GetInstance().GetAddress(offset), size);
 }
 
-void TempleFix::writeHex(uint32_t offset, const string &hexPattern) {
+void TempleFix::writeHex(uint32_t offset, const std::string &hexPattern) {
 	// at most 128 bytes supported due to the buffer below
 	assert(hexPattern.size() <= 256);
 	assert(hexPattern.size() >= 2);

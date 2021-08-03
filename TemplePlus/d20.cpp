@@ -366,13 +366,13 @@ int LegacyD20System::CastSpellProcessTargets(D20Actn* d20a, SpellPacketBody& spe
 
 	}
 	if (targets.size() > 0){
-		memcpy(spellPkt.targetListHandles, &targets[0], min(sizeof spellPkt.targetListHandles, targets.size() * sizeof(objHndl)));
+	    memcpy(spellPkt.targetListHandles, &targets[0], std::min(sizeof spellPkt.targetListHandles, targets.size() * sizeof(objHndl)));
 	}
 	
 	for (int i = targets.size(); i < 32; i++){
 		spellPkt.targetListHandles[i] = 0;
 	}
-	spellPkt.targetCount = min(32u, targets.size());
+	spellPkt.targetCount = std::min(32u, targets.size());
 
 	spellSys.UpdateSpellPacket(spellPkt);
 	pySpellIntegration.UpdateSpell(spellPkt.spellId);
@@ -1469,7 +1469,7 @@ int LegacyD20System::TargetCheck(D20Actn* d20a)
 				spellSys.SpellPacketSetCasterLevel(&curSeq->spellPktBody);
 			}
 			else{ // item spell
-				curSeq->spellPktBody.casterLevel = max(1, 2 * static_cast<int>(spellSlotLevel) - 1); // todo special handling for Magic domain
+			    curSeq->spellPktBody.casterLevel = std::max(1, 2 * static_cast<int>(spellSlotLevel) - 1); // todo special handling for Magic domain
 			}
 				
 
@@ -1536,7 +1536,7 @@ uint64_t LegacyD20System::d20QueryReturnData(objHndl objHnd, D20DispatcherKey di
 	return d20QueryReturnData(objHnd, dispKey, (uint32_t)arg1, arg2);
 }
 
-int LegacyD20System::D20QueryPython(const objHndl& handle, const string& queryKey, int arg1, int arg2){
+int LegacyD20System::D20QueryPython(const objHndl& handle, const std::string& queryKey, int arg1, int arg2){
 	
 	Dispatcher * dispatcher = objects.GetDispatcher(handle);
 	if (!dispatch.dispatcherValid(dispatcher)) { return 0; }
@@ -1549,7 +1549,7 @@ int LegacyD20System::D20QueryPython(const objHndl& handle, const string& queryKe
 	return dispIo.return_val;
 }
 
-int LegacyD20System::D20QueryPython(const objHndl& handle, const string& queryKey, objHndl argObj) {
+int LegacyD20System::D20QueryPython(const objHndl& handle, const std::string& queryKey, objHndl argObj) {
 	return D20QueryPython(handle, queryKey, argObj.GetHandleLower(), argObj.GetHandleUpper());
 }
 
@@ -2904,7 +2904,7 @@ ActionErrorCode D20ActionCallbacks::PerformCastItemSpell(D20Actn* d20a){
 		else if (spellSys.IsArcaneSpellClass(spellClass) ){
 			auto clrLvl = objects.StatLevelGet(caster, stat_level_cleric);
 			if (clrLvl > 0 && critterSys.HasDomain(caster, Domain_Magic)
-				&& spellLvl <= max(1,clrLvl/2) )
+			    && spellLvl <= std::max(1,clrLvl/2) )
 				isOk = true;
 		}
 

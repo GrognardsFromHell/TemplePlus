@@ -212,7 +212,7 @@ public:
 	void RenderCharHpAc(int widId); // HP AC
 	void RenderCharMovementInit(int widId); // Movement speed, Initiative
 	void RenderCharToHitBonus(int widId); // Melee, Ranged To Hit Bonuses
-	void DrawTextInWidgetCentered(int widgetId, const string & text, const TigRect & rect, const TigTextStyle & style);
+	void DrawTextInWidgetCentered(int widgetId, const std::string & text, const TigRect & rect, const TigTextStyle & style);
 
 	// stats
 	int GetRolledStatIdx(int x, int y, int *xyOut = nullptr); // gets the index of the Rolled Stats button according to the mouse position. Returns -1 if none.
@@ -375,7 +375,7 @@ public:
 	eastl::vector<TigRect> featsMultiBtnRects;
 	eastl::vector<TigRect> featsBtnRects, featsExistingBtnRects;
 	eastl::hash_map<int, std::string> featsMasterFeatStrings;
-	eastl::vector<string> spellsPerDayTexts;
+	eastl::vector<std::string> spellsPerDayTexts;
 	eastl::vector<TigRect> spellsPerDayTextRects;
 	eastl::vector<TigRect> spellsPerDayBorderRects;
 	eastl::vector<TigRect> spellsLevelLabelRects;

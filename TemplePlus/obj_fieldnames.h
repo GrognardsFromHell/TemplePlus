@@ -2,4 +2,4 @@
 #pragma once
 
 
-string GetFieldName(int objFieldIdx);
+std::string GetFieldName(int objFieldIdx);

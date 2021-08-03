@@ -8,7 +8,7 @@
 #include "python_embed.h"
 #include <infrastructure/elfhash.h>
 
-PythonIntegration::PythonIntegration(const string& searchPattern, const string& filenameRegexp, bool isHashId) {
+PythonIntegration::PythonIntegration(const std::string& searchPattern, const std::string& filenameRegexp, bool isHashId) {
 	mSearchPattern = searchPattern;
 	mFilenameRegexp = filenameRegexp;
 	mIsHashId = isHashId;
@@ -25,12 +25,12 @@ void PythonIntegration::LoadScripts() {
 	TioFileList list;
 	tio_filelist_create(&list, mSearchPattern.c_str());
 
-	regex scriptRegex(mFilenameRegexp, regex_constants::ECMAScript | regex_constants::icase);
-	smatch scriptMatch;
+	std::regex scriptRegex(mFilenameRegexp, std::regex_constants::ECMAScript | std::regex_constants::icase);
+	std::smatch scriptMatch;
 
 	for (auto i = 0; i < list.count; ++i) {
 		auto &file = list.files[i];
-		string scriptName = file.name; // This is only the filename (no directory)
+		std::string scriptName = file.name; // This is only the filename (no directory)
 
 		// Is it a proper script file?
 		if (!regex_match(scriptName, scriptMatch, scriptRegex)) {

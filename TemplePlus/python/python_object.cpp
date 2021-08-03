@@ -1161,7 +1161,7 @@ static PyObject* PyObjHandle_ArcaneSpellLevelCanCast(PyObject* obj, PyObject* ar
 	for (auto it: d20ClassSys.classEnums){
 		auto classEnum = (Stat)it;
 		if (d20ClassSys.IsArcaneCastingClass(classEnum)){
-			arcaneSpellLvlMax = max(arcaneSpellLvlMax , spellSys.GetMaxSpellLevel(self->handle, classEnum, 0));
+		    arcaneSpellLvlMax = std::max(arcaneSpellLvlMax , spellSys.GetMaxSpellLevel(self->handle, classEnum, 0));
 		}
 	}
 	
@@ -1183,7 +1183,7 @@ static PyObject* PyObjHandle_DivineSpellLevelCanCast(PyObject* obj, PyObject* ar
 	for (auto it : d20ClassSys.classEnums) {
 		auto classEnum = (Stat)it;
 		if (d20ClassSys.IsDivineCastingClass(classEnum)) {
-			divineSpellLvlMax = max(divineSpellLvlMax, spellSys.GetMaxSpellLevel(self->handle, classEnum, 0));
+			divineSpellLvlMax = std::max(divineSpellLvlMax, spellSys.GetMaxSpellLevel(self->handle, classEnum, 0));
 		}
 	}
 
@@ -1205,7 +1205,7 @@ static PyObject* PyObjHandle_SpontaneousSpellLevelCanCast(PyObject* obj, PyObjec
 	for (auto it : d20ClassSys.classEnums) {
 		auto classEnum = (Stat)it;
 		if (d20ClassSys.IsNaturalCastingClass(classEnum)) {
-			spontCastLvl = max(spontCastLvl, spellSys.GetMaxSpellLevel(self->handle, classEnum, 0));
+		    spontCastLvl = std::max(spontCastLvl, spellSys.GetMaxSpellLevel(self->handle, classEnum, 0));
 		}
 	}
 
@@ -1513,7 +1513,7 @@ static PyObject* PyObjHandle_ReputationRemove(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
-static bool ParseCondNameAndArgs(PyObject* args, CondStruct*& condStructOut, vector<int>& argsOut) {
+static bool ParseCondNameAndArgs(PyObject* args, CondStruct*& condStructOut, std::vector<int>& argsOut) {
 	// First arg has to be the condition name
 	if (PyTuple_GET_SIZE(args) < 1 || !PyString_Check(PyTuple_GET_ITEM(args, 0))) {
 		PyErr_SetString(PyExc_RuntimeError, "item_condition_add_with_args has to be "
@@ -1529,7 +1529,7 @@ static bool ParseCondNameAndArgs(PyObject* args, CondStruct*& condStructOut, vec
 	}
 
 	// Following arguments all have to be integers and gel with the condition argument count
-	vector<int> condArgs(cond->numArgs, 0);
+	std::vector<int> condArgs(cond->numArgs, 0);
 	for (unsigned int i = 0; i < cond->numArgs; ++i) {
 		if ((uint32_t) PyTuple_GET_SIZE(args) > i + 1) {
 			auto item = PyTuple_GET_ITEM(args, i + 1);
@@ -1559,7 +1559,7 @@ static PyObject* PyObjHandle_ItemConditionAdd(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 
 	CondStruct* cond;
-	vector<int> condArgs;
+	std::vector<int> condArgs;
 	if (!ParseCondNameAndArgs(args, cond, condArgs)) {
 		return 0;
 	}
@@ -1668,7 +1668,7 @@ static PyObject* PyObjHandle_ConditionAddWithArgs(PyObject* obj, PyObject* args)
 	auto self = GetSelf(obj);
 
 	CondStruct* cond;
-	vector<int> condArgs;
+	std::vector<int> condArgs;
 	if (!ParseCondNameAndArgs(args, cond, condArgs)) {
 		return 0;
 	}
@@ -3671,7 +3671,7 @@ static PyObject* PyObjHandle_AiStrategySetCustom(PyObject* obj, PyObject* args) 
 		Py_RETURN_NONE;
 	}
 
-	std::vector<string> stringVector;
+	std::vector<std::string> stringVector;
 	for (auto i=0; i < count; i++){
 		const char* s = PyString_AsString( PyList_GET_ITEM(strings, i));
 		stringVector.push_back(s);

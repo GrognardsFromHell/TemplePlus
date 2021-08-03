@@ -503,7 +503,7 @@ void ObjSystem::ForEachObj(std::function<void(objHndl, GameObjectBody&)> callbac
 
 }
 
-objHndl ObjSystem::FindObjectByIdStr(string id_str)
+objHndl ObjSystem::FindObjectByIdStr(std::string id_str)
 {
 	for (auto& entry : *mObjRegistry) {
 		if (entry.second->IsProto()) {

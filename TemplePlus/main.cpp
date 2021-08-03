@@ -14,7 +14,7 @@
 void InitLogging(const std::wstring &logFile, spdlog::level::level_enum logLevel);
 
 // Defined in temple_main.cpp for now
-int TempleMain(HINSTANCE hInstance, const string& commandLine);
+int TempleMain(HINSTANCE hInstance, const std::string& commandLine);
 
 // This is required to get "new style" common dialogs like message boxes
 #pragma comment(linker,"\"/manifestdependency:type='win32' \

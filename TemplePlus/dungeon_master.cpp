@@ -1155,8 +1155,8 @@ void DungeonMaster::RenderVsParty(){
 	if (mFlist.size() && ImGui::TreeNodeEx("Save Games", ImGuiTreeNodeFlags_CollapsingHeader)) {
 		for (int i = (int)mFlist.size()-1; i >= 0; i--) {
 			auto &fileEntry = mFlist[i];
-			regex saveFnameRegex("(slot\\d{4})(.*)\\.gsi", regex_constants::ECMAScript | regex_constants::icase);
-			smatch saveFnameMatch;
+			std::regex saveFnameRegex("(slot\\d{4})(.*)\\.gsi", std::regex_constants::ECMAScript | std::regex_constants::icase);
+			std::smatch saveFnameMatch;
 
 			if (!regex_match(fileEntry.filename, saveFnameMatch, saveFnameRegex)) {
 				continue;

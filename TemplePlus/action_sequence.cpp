@@ -4117,7 +4117,7 @@ const char*actionErrorCodeStrings[] =
 	"AEC_NOT_IN_COMBAT",
 	"AEC_AREA_NOT_SAFE"
 };
-ostream & operator<<(ostream & str, ActionErrorCode aec)
+std::ostream & operator<<(std::ostream & str, ActionErrorCode aec)
 {
 	size_t i = (size_t)aec;
 	if (i <= AEC_AREA_NOT_SAFE) {

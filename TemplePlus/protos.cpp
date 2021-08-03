@@ -70,7 +70,7 @@ public:
 } protosHooks;
 
 int ProtosHooks::ParseCondition(int colIdx, objHndl handle, char * content, int condIdx, int stage, int unused, int unused2){
-	static std::unordered_map<string, int> attributeEnumTable({
+    static std::unordered_map<std::string, int> attributeEnumTable({
 		{"attribute_strength", stat_strength},
 		{"attribute_dexterity", stat_dexterity},
 		{"attribute_constitution", stat_constitution },
@@ -79,13 +79,13 @@ int ProtosHooks::ParseCondition(int colIdx, objHndl handle, char * content, int 
 		{"attribute_charisma", stat_charisma },
 	});
 	
-	static std::unordered_map<string, int> savingThrowEnumTable({
+    static std::unordered_map<std::string, int> savingThrowEnumTable({
 		{"saving_throw_fortitude", (int)SavingThrowType::Fortitude},
 		{"saving_throw_reflex", (int)SavingThrowType::Reflex},
 		{"saving_throw_will", (int)SavingThrowType::Will}
 	});
 
-	static std::unordered_map<string, int> typeEnumTable({
+    static std::unordered_map<std::string, int> typeEnumTable({
 		{"type_animal", 0},
 		{"type_beast", 1 },
 		{ "type_construct", 2 },
@@ -117,7 +117,7 @@ int ProtosHooks::ParseCondition(int colIdx, objHndl handle, char * content, int 
 		{ "type_humanoid_subtype_", 27 }
 	});
 
-	static std::unordered_map<string, int> craftingEnumTable({
+    static std::unordered_map<std::string, int> craftingEnumTable({
 		{ "nothing", 0},
 		{ "potion", 1},
 		{ "scroll", 2},

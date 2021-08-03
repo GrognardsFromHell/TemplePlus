@@ -15,14 +15,14 @@
 #include <config\config.h>
 
 struct GsiData {
-	string filename;
-	string displayName;
-	string moduleName;
+	std::string filename;
+	std::string displayName;
+	std::string moduleName;
 	int leaderPortrait;
 	int leaderLevel;
 	locXY leaderLoc;
 	GameTime time;
-	string leaderName;
+	std::string leaderName;
 	int mapNumber;
 	int storyState;
 };
@@ -56,7 +56,7 @@ struct InSaveGame {
 	}
 };
 
-static GsiData GatherGsiData(const string &filename, const string &displayName) {
+static GsiData GatherGsiData(const std::string &filename, const std::string &displayName) {
 	GsiData result;
 	result.filename = filename;
 	result.displayName = displayName;
@@ -77,7 +77,7 @@ static GsiData GatherGsiData(const string &filename, const string &displayName) 
 static bool SaveGsiData(const GsiData &saveInfo) {
 
 	// Remove existing GSI for the slots
-	string globPattern = fmt::format("save\\{}*.gsi", saveInfo.filename);
+	std::string globPattern = fmt::format("save\\{}*.gsi", saveInfo.filename);
 	TioFileList list;
 	tio_filelist_create(&list, globPattern.c_str());
 	for (int i = 0; i < list.count; ++i) {
@@ -125,7 +125,7 @@ static bool SaveGsiData(const GsiData &saveInfo) {
 	return success;
 }
 
-bool GameSystems::SaveGame(const string& filename, const string& displayName) {
+bool GameSystems::SaveGame(const std::string& filename, const std::string& displayName) {
 
 	InSaveGame inSave;
 	addresses.UiMmRelated(63);

@@ -298,7 +298,7 @@ BOOL UiManager::ButtonInit(LgcyButton* widg, char* buttonName, int parentId, int
 	if (buttonName)
 	{
 		char * c = buttonName;
-		memcpy(widg->name, buttonName, min(sizeof(widg->name), strlen(buttonName)));
+		memcpy(widg->name, buttonName, std::min(sizeof(widg->name), strlen(buttonName)));
 	}
 	widg->x = x;
 	widg->xrelated = x;

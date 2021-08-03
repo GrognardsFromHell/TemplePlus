@@ -3,32 +3,12 @@
 #include "tio.h"
 #include "tio_utils.h"
 
-bool TioDirExists(const string &filename) {
+bool TioDirExists(const std::string &filename) {
 	TioFileListFile f;
 	return tio_fileexists(filename.c_str(), &f) && f.attribs & 0x20;
 }
 
-vector<uint8_t> *TioReadBinaryFile(const string &filename) {
-	TioFileListFile info;
-
-	if (!tio_fileexists(filename.c_str(), &info)) {
-		return nullptr;
-	}
-
-	auto result = new vector<uint8_t>(info.sizeInBytes);
-	
-	auto fh = tio_fopen(filename.c_str(), "rb");
-	if (tio_fread(result->data(), 1, result->size(), fh) != result->size()) {
-		tio_fclose(fh);
-		return nullptr;
-	}
-
-	tio_fclose(fh);
-
-	return result;
-}
-
-bool TioClearDir(const string& path) {
+bool TioClearDir(const std::string& path) {
 	
 	if (!TioDirExists(path)) {
 		return false;

@@ -3,6 +3,8 @@
 
 std::string_view GetAnimGoalPriorityText(AnimGoalPriority priority)
 {
+    using namespace std::literals;
+
 	switch (priority) {
 	case 0:
 		return "AGP_NONE"sv;

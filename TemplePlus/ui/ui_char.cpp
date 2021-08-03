@@ -667,7 +667,7 @@ void UiCharHooks::SpellsShow(objHndl obj)
 		if (n1 > nMemo)
 			nMemo = n1;
 
-		int nKnown = max(0, critterSys.SpellNumByFieldAndClass(dude, obj_f_critter_spells_known_idx, spellClassCode)-2);
+		int nKnown = std::max(0, critterSys.SpellNumByFieldAndClass(dude, obj_f_critter_spells_known_idx, spellClassCode)-2);
 		
 		uiManager->ScrollbarSetYmax(charSpellPackets[nTabIdx].spellbookScrollbar->widgetId, nKnown);
 		uiManager->ScrollbarSetYmax(charSpellPackets[nTabIdx].memorizeScrollbar->widgetId, nMemo-2 <=0 ? 0 : nMemo-2);
@@ -695,7 +695,7 @@ void UiCharHooks::SpellsShow(objHndl obj)
 		if (n1 > nMemo)
 			nMemo = n1;
 
-		int nKnown = max(0, critterSys.DomainSpellNumByField(dude, obj_f_critter_spells_known_idx) - 2);
+		int nKnown = std::max(0, critterSys.DomainSpellNumByField(dude, obj_f_critter_spells_known_idx) - 2);
 
 
 		uiManager->ScrollbarSetYmax(charSpellPackets[nTabIdx].spellbookScrollbar->widgetId, nKnown);
@@ -1656,7 +1656,7 @@ int UiCharHooks::InventorySlotMsg(int widId, TigMsg* msg)
 					int plat =0, gold=0, silver=0, copper=0;
 					if (appraisedWorth && uiSystems->GetChar().IsBartering()) {
 						
-						int qty = max(1, inventory.GetQuantity(item));
+					    int qty = std::max(1, inventory.GetQuantity(item));
 						appraisedWorth *= qty;
 						inventory.MoneyToCoins(appraisedWorth, &plat, &gold, &silver, &copper);
 					}
@@ -1749,7 +1749,7 @@ void UiCharHooks::ItemGetDescrAddon(objHndl obj, objHndl item, std::string& addS
 
 		auto spellData = itemObj->GetSpell(obj_f_item_spell_idx, 0);
 		int spellLevel = spellData.spellLevel;
-		int casterLevel = max(1, spellLevel * 2 - 1);
+		int casterLevel = std::max(1, spellLevel * 2 - 1);
 		SpellEntry spellEntry(spellData.spellEnum);
 		if (spellEntry.spellSchoolEnum > 8 || spellEntry.spellSchoolEnum < 0)
 			spellEntry.spellSchoolEnum = 0;

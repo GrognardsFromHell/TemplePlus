@@ -660,8 +660,8 @@ const RadialMenu* RadialMenus::GetForObj(objHndl handle) {
 	return addresses.GetRadialMenu(handle);
 }
 
-vector<const RadialMenu*> RadialMenus::GetAll() {
-	vector<const RadialMenu*> result;
+std::vector<const RadialMenu*> RadialMenus::GetAll() {
+    std::vector<const RadialMenu*> result;
 
 	for (int i = 0; i < *addresses.radialMenuCount; ++i) {
 		result.push_back(addresses.radialMenus + i);
@@ -985,7 +985,7 @@ RadialMenuEntrySlider::RadialMenuEntrySlider(int combatMesLine, int _minArg, int
 {
 	type = RadialMenuEntryType::Slider;
 	text = combatSys.GetCombatMesLine(combatMesLine);
-	maxArg = max(0, _maxArg);
+	maxArg = std::max(0, _maxArg);
 	minArg = 0;
 	actualArg = reinterpret_cast<int>(_actualArg);
 	if (combatMesHeaderText != -1)
@@ -1015,7 +1015,7 @@ RadialMenuEntrySlider::RadialMenuEntrySlider(const std::string& radialText, cons
 	}
 
 	this->helpId = ElfHash::Hash(helpId);
-	maxArg = max(0, _maxArg);
+	maxArg = std::max(0, _maxArg);
 	minArg = _minArg;
 	
 	callback = (BOOL(__cdecl*)(objHndl, RadialMenuEntry*))temple::GetPointer(0x100F0200);

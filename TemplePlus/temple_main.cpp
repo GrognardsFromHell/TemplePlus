@@ -97,7 +97,7 @@ struct ObjPropDef {
 };
 #pragma pack(pop)
 
-int TempleMain(HINSTANCE hInstance, const string &commandLine) {
+int TempleMain(HINSTANCE hInstance, const std::string &commandLine) {
 
 	if (!config.engineEnhancements) {
 		temple::GetRef<int>(0x10307284) = 800;

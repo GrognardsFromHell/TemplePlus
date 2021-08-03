@@ -17,7 +17,7 @@ struct PyDamagePacket {
 
 PyObject *PyDamagePacket_Repr(PyObject *obj) {
 	auto self = (PyDamagePacket*)obj;
-	string text;
+	std::string text;
 
 	text = fmt::format("DamagePacket[ Dice: {}]", self->dam->diceCount);
 

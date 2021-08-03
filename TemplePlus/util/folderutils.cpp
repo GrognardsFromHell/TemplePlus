@@ -21,7 +21,7 @@ static IKnownFolderManager* GetFolderManager() {
 
 }
 
-static wstring GetKnownFolder(const KNOWNFOLDERID &folderId) {
+static std::wstring GetKnownFolder(const KNOWNFOLDERID &folderId) {
 	
 	auto mgr = GetFolderManager();
 
@@ -41,12 +41,12 @@ static wstring GetKnownFolder(const KNOWNFOLDERID &folderId) {
 		return L"";
 	}
 
-	wstring result(folderPath);
+	std::wstring result(folderPath);
 	CoTaskMemFree(folderPath);
 	return result;
 }
 
-static wstring GetKnownSubFolder(const KNOWNFOLDERID &folderId, const wchar_t *subFolder) {
+static std::wstring GetKnownSubFolder(const KNOWNFOLDERID &folderId, const wchar_t *subFolder) {
 
 	auto folder = GetKnownFolder(folderId);
 
@@ -62,12 +62,12 @@ static wstring GetKnownSubFolder(const KNOWNFOLDERID &folderId, const wchar_t *s
 
 }
 
-wstring GetScreenshotFolder() {
+std::wstring GetScreenshotFolder() {
 	static auto sScreenshotFolder = GetKnownFolder(FOLDERID_SavedGames);
 	return sScreenshotFolder;
 }
 
-wstring GetUserDataFolder() {
+std::wstring GetUserDataFolder() {
 	static auto sUserDataFolder = GetKnownSubFolder(FOLDERID_SavedGames, L"TemplePlus\\");
 
 	return sUserDataFolder;

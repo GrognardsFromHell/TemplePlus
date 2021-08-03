@@ -28,7 +28,7 @@ bool TigSoundStreamWrapper::Play(int soundId)
 	return tigSoundAddresses.PlayInStream(mStreamId, soundId);
 }
 
-bool TigSoundStreamWrapper::Play(const string& filename, TigSoundType type)
+bool TigSoundStreamWrapper::Play(const std::string& filename, TigSoundType type)
 {
 	assert(mStreamId == -1);
 	tigSoundAddresses.AllocStream(&mStreamId, type);

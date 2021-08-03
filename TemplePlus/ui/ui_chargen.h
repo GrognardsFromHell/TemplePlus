@@ -60,7 +60,7 @@ public:
 	int GetPage() { return mWndPage; }
 	void SetPageCount(int pageCount);
 	void SetPage(int page);
-	void AddPageButtonsToWnd( unique_ptr<WidgetContainer> &);
+	void AddPageButtonsToWnd(std::unique_ptr<WidgetContainer> &);
 	void SetPageUpdateHandler(std::function<void()> updateHandler);
 protected:
 	int mWndPage = 0;
@@ -102,18 +102,18 @@ class IPagedButton
 {
 public:
 	void SetPage(int page) { mCurPage = page; };
-	void SetPageText(int page, const string &text) { pagedText[page] = text; }
+	void SetPageText(int page, const std::string &text) { pagedText[page] = text; }
 	void SetPageDatum(int page, int datum) { pagedData[page] = datum; }
 
 	int GetPage() { return mCurPage; };
 	int GetPageCount() { return pagedData.size(); }
 	int GetDatum() { return pagedData[mCurPage]; }
-	string GetText() { return pagedText[mCurPage]; }
+	std::string GetText() { return pagedText[mCurPage]; }
 
 protected:
 	int mCurPage = 0;
 	std::map<int, int> pagedData; // mapping of page number :  datum
-	std::map<int, string> pagedText; // mapping of page number : text
+	std::map<int, std::string> pagedText; // mapping of page number : text
 };
 
 class ChargenPagedButton : public ChargenBigButton, public IPagedButton

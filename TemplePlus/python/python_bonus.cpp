@@ -14,7 +14,7 @@ struct PyBonusList {
 
 PyObject *PyBonusList_Repr(PyObject *obj) {
 	auto self = (PyBonusList*)obj;
-	string text;
+	std::string text;
 	
 	text = fmt::format("BonustList[{}]", self->bonlist->bonCount);
 		

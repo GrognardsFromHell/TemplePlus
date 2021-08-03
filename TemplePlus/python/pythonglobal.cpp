@@ -35,7 +35,7 @@ void PythonGlobalExtension::installExtensions() {
 
 }
 
-vector<PythonGlobalExtension*>& PythonGlobalExtension::extensions() {
-	static auto extensions = new vector<PythonGlobalExtension*>;
+std::vector<PythonGlobalExtension*>& PythonGlobalExtension::extensions() {
+    static auto extensions = new std::vector<PythonGlobalExtension*>;
 	return *extensions;
 }

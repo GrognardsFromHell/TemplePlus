@@ -120,7 +120,7 @@ XPAward::XPAward(){
 			table[level - 1][level - CRMIN] = (int)(
 					level * 300 * 
 						(
-							1 - min(0.66f, 
+                            1 - std::min(0.66f,
 								    0.66f * powf(level - 2.0f, 0.1f) / powf(16.0f, 0.1f)
 							    )
 						)
@@ -148,17 +148,17 @@ XPAward::XPAward(){
 			else if (cr == level - 1) {
 				assert(i >= 1);
 				if (config.slowerLevelling)
-					table[i][j] = min(table[i - 1][j], (table[i][j + 1] * 6) / 11);
+				    table[i][j] = std::min(table[i - 1][j], (table[i][j + 1] * 6) / 11);
 				else
-					table[i][j] = min(table[i - 1][j], (table[i][j+1] * 2) /3);
+				    table[i][j] = std::min(table[i - 1][j], (table[i][j+1] * 2) /3);
 			}
 			else {
 				assert(i >= 1);
 				assert(j + 2 < CRCOUNT);
 				if (config.slowerLevelling)
-					table[i][j] = min(table[i - 1][j], ( table[i][j + 2] * 3) / 10);
+				    table[i][j] = std::min(table[i - 1][j], ( table[i][j + 2] * 3) / 10);
 				else
-					table[i][j] = min(table[i - 1][j], table[i][j + 2] / 2);
+				    table[i][j] = std::min(table[i - 1][j], table[i][j + 2] / 2);
 			}
 		}
 	}
@@ -179,12 +179,12 @@ XPAward::XPAward(){
 			else if (cr_off == 1){
 				assert(j >= 1);
 				assert(i + 1 < XPTABLE_MAXLEVEL);
-				table[i][j] = max((table[i][j - 1] * 3) / 2, table[i + 1][j]);
+				table[i][j] = std::max((table[i][j - 1] * 3) / 2, table[i + 1][j]);
 			}
 			else {
 				assert(i + 1 < XPTABLE_MAXLEVEL);
 				assert(j >= 2);
-				table[i][j] = max(table[i][j - 2] * 2, table[i + 1][j]);
+				table[i][j] = std::max(table[i][j - 2] * 2, table[i + 1][j]);
 			}
 		}
 	}

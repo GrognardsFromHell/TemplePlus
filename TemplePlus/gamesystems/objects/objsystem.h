@@ -103,7 +103,7 @@ public:
 	/**
 	 * Finds object based on id.toString() == id_str.
 	 */
-	objHndl FindObjectByIdStr(string id_str);
+	objHndl FindObjectByIdStr(std::string id_str);
 
 	/**
 	 * Create a new empty prototype object.

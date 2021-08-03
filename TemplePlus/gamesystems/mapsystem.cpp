@@ -246,7 +246,7 @@ static void SaveIdxTable(const std::map<int32_t, T> &values, TioFile* file) {
 }
 
 template<typename T>
-static map<int32_t,T> LoadIdxTable(TioFile* file) {
+static std::map<int32_t,T> LoadIdxTable(TioFile* file) {
 	uint32_t magicNumber;
 	if (tio_fread(&magicNumber, sizeof(uint32_t), 1, file) != 1
 		|| magicNumber != 0xAB1EE1BA) {

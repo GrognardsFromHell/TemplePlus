@@ -125,7 +125,7 @@ void UiRenderer::PopFont() {
 	tigFont.PopFont();
 }
 
-bool UiRenderer::DrawText(const string& text, const TigRect& rect, const TigTextStyle& style)
+bool UiRenderer::DrawText(const std::string& text, const TigRect& rect, const TigTextStyle& style)
 {
 	if (text.empty())
 		return 1;
@@ -133,7 +133,7 @@ bool UiRenderer::DrawText(const string& text, const TigRect& rect, const TigText
 	return tigFont.Draw(text.c_str(), rect, style) == TRUE;
 }
 
-bool UiRenderer::DrawTextInWidget(int widgetId, const string &text, const TigRect &rect, const TigTextStyle &style) {
+bool UiRenderer::DrawTextInWidget(int widgetId, const std::string &text, const TigRect &rect, const TigTextStyle &style) {
 	auto wid = uiManager->GetWidget(widgetId);
 	if (!wid)
 		return 1;
@@ -147,7 +147,7 @@ bool UiRenderer::DrawTextInWidget(int widgetId, const string &text, const TigRec
 	// return uiRenderFuncs.DrawTextInWidget(widgetId, text.c_str(), rect, style);
 }
 
-bool UiRenderer::DrawTextInWidgetCentered(int widgetId, const string & text, const TigRect & rect, const TigTextStyle & style)
+bool UiRenderer::DrawTextInWidgetCentered(int widgetId, const std::string & text, const TigRect & rect, const TigTextStyle & style)
 {
 	auto meas = MeasureTextSize(text, style);
 	TigRect rect2( (rect.width - meas.width)/2 + rect.x, 
@@ -156,11 +156,11 @@ bool UiRenderer::DrawTextInWidgetCentered(int widgetId, const string & text, con
 	return DrawTextInWidget(widgetId, text, rect2, style);
 }
 
-bool UiRenderer::RenderText(const string &text, TigRect &rect, const TigTextStyle &style) {
+bool UiRenderer::RenderText(const std::string &text, TigRect &rect, const TigTextStyle &style) {
 	return tigFont.Draw(text.c_str(), rect, style) == 0;
 }
 
-TigRect UiRenderer::MeasureTextSize(const string &text, const TigTextStyle &style, int maxWidth, int maxHeight) {
+TigRect UiRenderer::MeasureTextSize(const std::string &text, const TigTextStyle &style, int maxWidth, int maxHeight) {
 	TigFontMetrics metrics;
 	metrics.text = text.c_str();
 	metrics.width = maxWidth;

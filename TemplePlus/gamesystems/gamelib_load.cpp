@@ -47,7 +47,7 @@ struct InLoadGame {
 	}
 };
 
-bool GameSystems::LoadGame(const string& filename) {
+bool GameSystems::LoadGame(const std::string& filename) {
 
 	logger->debug("Loading savegame from {}", filename);
 

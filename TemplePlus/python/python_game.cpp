@@ -116,7 +116,7 @@ static struct PyGameAddresses : temple::AddressTable {
 */
 
 // Generic function to build a tuple of handles from a count and a getter
-static PyObject* BuildHandleList(int count, function<objHndl(int)> getCallback) {
+static PyObject* BuildHandleList(int count, std::function<objHndl(int)> getCallback) {
 	auto result = PyTuple_New(count);
 
 	for (auto i = 0; i < count; ++i) {
@@ -1011,7 +1011,7 @@ PyObject* PyGame_PfxChainLightning(PyObject*, PyObject* args) {
 	}
 
 	// This is very much at the wrong location (should be in spell). but hrm.
-	vector<objHndl> targets;
+	std::vector<objHndl> targets;
 	for (int i = 0; i < targetCount; ++i) {
 		targets.push_back(PySpell_GetTargetHandle(spell, i));
 	}

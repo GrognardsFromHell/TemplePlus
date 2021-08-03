@@ -6,6 +6,8 @@
 #include "animgoals.h"
 #include "animgoals_callbacks.h"
 
+using namespace std::literals;
+
 static const char *animGoalTypeNames[ag_count] = {
 	"ag_animate",
 	"ag_animate_loop",

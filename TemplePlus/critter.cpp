@@ -909,7 +909,7 @@ uint32_t LegacyCritterSystem::Dominate(objHndl critter, objHndl caster) {
 	
 	floatSys.FloatSpellLine(critter, 20018, FloatLineColor::Red);  // Float a "charmed!" line above the critter
 
-	vector<int> args(3);
+	std::vector<int> args(3);
 
 	args[0] = gameSystems->GetParticleSys().CreateAtObj("sp-Dominate Person", critter);
 	args[1] = (caster.handle >> 32) & 0xFFFFFFFF;

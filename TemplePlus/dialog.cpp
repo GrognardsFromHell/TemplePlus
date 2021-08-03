@@ -90,16 +90,16 @@ DialogLine &DialogLine::operator=(DialogLineNew &src){
 	return dest;
 }
 
-string DialogScripts::GetFilename(int scriptId) {
+std::string DialogScripts::GetFilename(int scriptId) {
 	char filename[MAX_PATH];
 	if (addresses.GetFilename(scriptId, filename)) {
 		return filename;
 	} else {
-		return string();		
+		return std::string();
 	}
 }
 
-bool DialogScripts::Load(const string& filename, int& dlgHandle) {
+bool DialogScripts::Load(const std::string& filename, int& dlgHandle) {
 	DialogFile *&mFileEntries = temple::GetRef<DialogFile*>(0x108ED0CC);
 	int &mFileEntryCount = temple::GetRef<int>(0x108ED0C4);
 
@@ -146,7 +146,7 @@ DialogFile* DialogScripts::GetDialogFileEntry(int dlgHandle){
 	return &mFileEntries[dlgHandle];
 }
 
-ostream & operator<<(ostream & result, DialogLine &line){
+std::ostream & operator<<(std::ostream & result, DialogLine &line){
 	/*
 	{1}{NPC txt}{Gender}{     }{speechId }{        }{}
 	{2}{PC txt }{      }{minIq}{testField}{answerId}{effectField}
@@ -209,7 +209,7 @@ void DialogScripts::SaveToFile(int dlgHandle){
 
 	std::string newFileName(fmt::format("", fileEntry->filename));
 	//auto newFile = fopen("shit.mes", "wb");
-	ofstream newFile("shit.mes");
+	std::ofstream newFile("shit.mes");
 
 	for (auto i=0; i < fileEntry->lineCount; i++){
 		auto line = fileEntry->lines[i];
@@ -277,17 +277,17 @@ bool DialogScripts::GetFileEntryByFilename(const std::string & filename, int &dl
 
 
 struct DlgParser {
-	stringstream ss;
-	string lineBuf; // buffer for storing a line's content
+	std::stringstream ss;
+	std::string lineBuf; // buffer for storing a line's content
 
-	stringstream bracketStream;
-	string bracketContent;
+	std::stringstream bracketStream;
+	std::string bracketContent;
 	
 
 	bool GetSingleLine(DialogLineNew &line, int&fileLine);
 	bool GetBracketContent(int &fileLine);
 
-	DlgParser(string & fileContents):ss(fileContents){};
+	DlgParser(std::string & fileContents):ss(fileContents){};
 };
 
 bool DlgParser::GetSingleLine(DialogLineNew& line, int& fileLine){
@@ -373,10 +373,10 @@ bool DlgParser::GetSingleLine(DialogLineNew& line, int& fileLine){
 }
 
 bool DlgParser::GetBracketContent(int &fileLine){
-	string brBuf;
+    std::string brBuf;
 	const int MAX_TEXT_SIZE = 1000;
 	
-	getline(ss, brBuf, '{');
+	std::getline(ss, brBuf, '{');
 	if (ss.eof()) { // no new brackets found
 		return false;
 	}
@@ -392,7 +392,7 @@ bool DlgParser::GetBracketContent(int &fileLine){
 	
 	
 	// get bracket content
-	getline(ss, brBuf, '}');
+	std::getline(ss, brBuf, '}');
 	if (ss.eof()) {
 		logger->error("Unclosed bracket found! Line {}", fileLine);
 		return false;

@@ -129,7 +129,7 @@ void SaveGame::Load(const std::string &path) {
 }
 
 template<typename T>
-static map<int32_t, T> LoadIdxTable(InputStream& stream) {
+static std::map<int32_t, T> LoadIdxTable(InputStream& stream) {
 	auto magicNumber = stream.ReadUInt32();
 	if (magicNumber != 0xAB1EE1BA) {
 		throw TempleException("Unable to read the idx table header");

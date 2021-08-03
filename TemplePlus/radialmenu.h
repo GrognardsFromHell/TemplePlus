@@ -180,7 +180,7 @@ public:
 	/*
 		Gets all currently used radial menus.
 	*/
-	vector<const RadialMenu*> GetAll();
+	std::vector<const RadialMenu*> GetAll();
 
 	/*
 		Returns the last selected radial menu entry.

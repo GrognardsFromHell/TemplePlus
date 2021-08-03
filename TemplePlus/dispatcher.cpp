@@ -1492,7 +1492,7 @@ int DispIoAttackBonus::Dispatch(objHndl obj, objHndl obj2, enum_disp_type dispTy
 	return dispatch.DispatchAttackBonus(obj, obj2, this, dispType, key);
 }
 
-void DispIoTooltip::Append(string& cs)
+void DispIoTooltip::Append(std::string& cs)
 {
 	if (numStrings < 10)
 	{

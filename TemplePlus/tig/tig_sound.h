@@ -37,7 +37,7 @@ public:
 
 	
 	bool Play(int soundId);
-	bool Play(const string& filename, TigSoundType type);
+	bool Play(const std::string& filename, TigSoundType type);
 
 	void SetVolume(int volume) {
 		tigSoundAddresses.SetStreamVolume(mStreamId, volume);

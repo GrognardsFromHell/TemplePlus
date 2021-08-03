@@ -8,8 +8,8 @@
 */
 struct ScriptRecord {
 	int id;
-	string moduleName;
-	string filename;
+	std::string moduleName;
+	std::string filename;
 	PyObject *module = nullptr; // If not null, owns the ref
 	bool loadingError = false;
 };
@@ -22,7 +22,7 @@ public:
 	typedef int ScriptId;
 	typedef int EventId;
 
-	PythonIntegration(const string &searchPattern, const string &filenameRegexp, bool hashId = false);
+	PythonIntegration(const std::string &searchPattern, const std::string &filenameRegexp, bool hashId = false);
 	virtual ~PythonIntegration();
 
 	void LoadScripts();
@@ -45,13 +45,13 @@ public:
 protected:
 	virtual const char *GetFunctionName(EventId eventId) = 0;
 	void AddGlobalsOnDemand(PyObject* dict);
-	typedef unordered_map<int, ScriptRecord> ScriptCache;
+	typedef std::unordered_map<int, ScriptRecord> ScriptCache;
 	ScriptCache mScripts;
 private:
 	
 	bool mIsHashId;
-	string mSearchPattern;
-	string mFilenameRegexp;
+	std::string mSearchPattern;
+	std::string mFilenameRegexp;
 };
 
 

@@ -429,7 +429,7 @@ BOOL AiSystem::AiListFind(objHndl aiHandle, objHndl tgt, int typeToFind){
 		return FALSE;
 
 	auto aiListCount = obj->GetObjectIdArray(obj_f_npc_ai_list_idx).GetSize();
-	auto N = min(aiListCount, typeListCount);
+	auto N = std::min(aiListCount, typeListCount);
 
 	for (auto i=0u; i < N; i++){
 		auto aiListType = obj->GetInt32(obj_f_npc_ai_list_type_idx, i);
@@ -2148,7 +2148,7 @@ void AiSystem::StrategyTabLineParseTacticMiddleString(AiStrategy* aiStrat, int i
 	}
 }
 
-void AiSystem::ParseStrategyLine(AiStrategy & newStrategy, const std::vector< string>& strings)
+void AiSystem::ParseStrategyLine(AiStrategy & newStrategy, const std::vector<std::string>& strings)
 {
 	newStrategy.numTactics = 0;
 	if (!strings.size())

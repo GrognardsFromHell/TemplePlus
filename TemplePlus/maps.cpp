@@ -192,9 +192,9 @@ int(__cdecl*GameSystemReplacements::orgField1C)(GameSystemConf*) ;
 
 Maps maps;
 
-vector<int> Maps::GetVisited() {
+std::vector<int> Maps::GetVisited() {
 
-	vector<int> result(100);
+    std::vector<int> result(100);
 	auto realCount = mapAddresses.GetVisitedMaps(result.data(), result.size());
 
 	if (realCount > result.size()) {
