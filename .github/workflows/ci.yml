@@ -9,10 +9,18 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - uses: nuget/setup-nuget@v1
-    - name: Download and Extract Dependencies
+    - name: Cache third-party dependencies
+      id: cache-thirdparty
+      uses: actions/cache@v2
+      with:
+        path: thirdparty/external/packages
+        key: ${{ hashFiles('thirdparty/external/**/*') }}
+    - name: Build third-party dependencies
+      if: steps.cache-primes.outputs.cache-hit != 'true'
       run: |
-        curl -L -o dependencies.7z https://github.com/GrognardsFromHell/Dependencies/releases/download/v1.9/dependencies.7z
-        7z x dependencies.7z
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars32.bat"
+        cd thirdparty\external\packages
+        call regenerate.cmd
     - name: Install NuGet packages
       run: |
         nuget install Squirrel.Windows -OutputDirectory Squirrel -Verbosity Detailed
