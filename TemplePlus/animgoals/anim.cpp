@@ -2097,7 +2097,7 @@ void AnimSystem::DecreaseActiveGoalCount(const AnimSlot & slot, const AnimGoal &
 }
 
 std::string AnimSlotId::ToString() const {
-  return format("[{}:{}r{}]", slotIndex, uniqueId, field_8);
+  return fmt::format("[{}:{}r{}]", slotIndex, uniqueId, field_8);
 }
 
 static class AnimSystemHooks : public TempleFix {
@@ -2141,7 +2141,7 @@ static string getDelayText(AnimStateTransition trans) {
   } else if (trans.delay == AnimStateTransition::DelaySlot) {
     delay = ", delay: slot";
   } else if (trans.delay != 0) {
-    delay = format(", delay: {}", trans.delay);
+    delay = fmt::format(", delay: {}", trans.delay);
   }
   return delay;
 }
@@ -2154,24 +2154,24 @@ static void getTransitionText(string &diagramText, int &j,
   if (newState & 0xFF000000) {
     logger->info("New state flags {:x}", newState);
     if ((newState & 0x30000000) == 0x30000000) {
-      diagramText += format("state{} --> [*] : [{}{}]\n", j, condition, delay);
+      diagramText += fmt::format("state{} --> [*] : [{}{}]\n", j, condition, delay);
     } else if ((newState & TRANSITION_GOAL) == TRANSITION_GOAL) {
       auto newGoal = newState & 0xFFF;
-      diagramText += format("state{} --> [*] : [{}{}] to {}\n", j, condition,
+      diagramText += fmt::format("state{} --> [*] : [{}{}] to {}\n", j, condition,
                             delay, (AnimGoalType) newGoal);
     } else if ((newState & TRANSITION_UNK1) == TRANSITION_UNK1) {
-      diagramText += format("state{} --> [*] : [{}{}, flags: 0x90]\n", j,
+      diagramText += fmt::format("state{} --> [*] : [{}{}, flags: 0x90]\n", j,
                             condition, delay);
     } else if (newState & TRANSITION_LOOP) {
       diagramText +=
-          format("state{} --> state0 : [{}{}, reset]\n", j, condition, delay);
+          fmt::format("state{} --> state0 : [{}{}, reset]\n", j, condition, delay);
     } else {
-      diagramText += format("state{} --> state0 : [{}{}, flags: {}]\n", j,
+      diagramText += fmt::format("state{} --> state0 : [{}{}, flags: {}]\n", j,
                             condition, delay, newState);
     }
   } else {
     // Normal transition
-    diagramText += format("state{} --> state{} : [{}{}]\n", j, newState - 1,
+    diagramText += fmt::format("state{} --> state{} : [{}{}]\n", j, newState - 1,
                           condition, delay);
   }
 }

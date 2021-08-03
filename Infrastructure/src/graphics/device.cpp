@@ -21,13 +21,13 @@ namespace fmt {
         auto format(const gfx::BufferFormat &v, FormatContext &ctx) {
             switch (v) {
                 case gfx::BufferFormat::A8:
-                    return format_to(ctx.out(), "A8");
+                    return fmt::format_to(ctx.out(), "A8");
                 case gfx::BufferFormat::A8R8G8B8:
-                    return format_to(ctx.out(), "A8R8G8B8");
+                    return fmt::format_to(ctx.out(), "A8R8G8B8");
                 case gfx::BufferFormat::X8R8G8B8:
-                    return format_to(ctx.out(), "X8R8G8B8");
+                    return fmt::format_to(ctx.out(), "X8R8G8B8");
                 default:
-                    return format_to(ctx.out(), "UNKNOWN");
+                    return fmt::format_to(ctx.out(), "UNKNOWN");
             }
         }
     };
@@ -38,27 +38,27 @@ namespace fmt {
         auto format(const D3D_FEATURE_LEVEL &level, FormatContext &ctx) {
             switch (level) {
                 case D3D_FEATURE_LEVEL_1_0_CORE:
-                    return format_to(ctx.out(), "D3D_FEATURE_LEVEL_1_0_CORE");
+                    return fmt::format_to(ctx.out(), "D3D_FEATURE_LEVEL_1_0_CORE");
                 case D3D_FEATURE_LEVEL_9_1:
-                    return format_to(ctx.out(), "D3D_FEATURE_LEVEL_9_1");
+                    return fmt::format_to(ctx.out(), "D3D_FEATURE_LEVEL_9_1");
                 case D3D_FEATURE_LEVEL_9_2:
-                    return format_to(ctx.out(), "D3D_FEATURE_LEVEL_9_2");
+                    return fmt::format_to(ctx.out(), "D3D_FEATURE_LEVEL_9_2");
                 case D3D_FEATURE_LEVEL_9_3:
-                    return format_to(ctx.out(), "D3D_FEATURE_LEVEL_9_3");
+                    return fmt::format_to(ctx.out(), "D3D_FEATURE_LEVEL_9_3");
                 case D3D_FEATURE_LEVEL_10_0:
-                    return format_to(ctx.out(), "D3D_FEATURE_LEVEL_10_0");
+                    return fmt::format_to(ctx.out(), "D3D_FEATURE_LEVEL_10_0");
                 case D3D_FEATURE_LEVEL_10_1:
-                    return format_to(ctx.out(), "D3D_FEATURE_LEVEL_10_1");
+                    return fmt::format_to(ctx.out(), "D3D_FEATURE_LEVEL_10_1");
                 case D3D_FEATURE_LEVEL_11_0:
-                    return format_to(ctx.out(), "D3D_FEATURE_LEVEL_11_0");
+                    return fmt::format_to(ctx.out(), "D3D_FEATURE_LEVEL_11_0");
                 case D3D_FEATURE_LEVEL_11_1:
-                    return format_to(ctx.out(), "D3D_FEATURE_LEVEL_11_1");
+                    return fmt::format_to(ctx.out(), "D3D_FEATURE_LEVEL_11_1");
                 case D3D_FEATURE_LEVEL_12_0:
-                    return format_to(ctx.out(), "D3D_FEATURE_LEVEL_12_0");
+                    return fmt::format_to(ctx.out(), "D3D_FEATURE_LEVEL_12_0");
                 case D3D_FEATURE_LEVEL_12_1:
-                    return format_to(ctx.out(), "D3D_FEATURE_LEVEL_12_1");
+                    return fmt::format_to(ctx.out(), "D3D_FEATURE_LEVEL_12_1");
                 default:
-                    return format_to(ctx.out(), "UNKNOWN");
+                    return fmt::format_to(ctx.out(), "UNKNOWN");
             }
         }
     };

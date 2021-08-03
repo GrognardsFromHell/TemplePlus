@@ -928,15 +928,15 @@ static PyObject* PySpellTargets_Repr(PyObject* obj) {
 		return PyString_FromString("No targets");
 	}
 
-	auto text = format("number of targets: ({}) - ", spell->targetCount);
+	auto text = fmt::format("number of targets: ({}) - ", spell->targetCount);
 
 	for (auto i = 0; i < spell->targetCount; ++i) {
 		auto targetObj = spell->targets[i].obj;
 		if (obj) {
 			auto displayName = objects.GetDisplayName(targetObj, objHndl::null);
-			text.append(format("{}[{}({})]", i, displayName, targetObj));
+			text.append(fmt::format("{}[{}({})]", i, displayName, targetObj));
 		} else {
-			text.append(format("{}[OBJ_HANDLE_NULL], ", i));
+			text.append(fmt::format("{}[OBJ_HANDLE_NULL], ", i));
 		}
 	}
 

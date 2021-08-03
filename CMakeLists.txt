@@ -12,7 +12,7 @@ include(CMake/DefaultBuildType.cmake)
 include(CheckIPOSupported)
 check_ipo_supported(RESULT ltcg_result OUTPUT ltcg_output)
 if(ltcg_result)
-    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION true)
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
 else()
     message(WARNING "IPO/LTCG is not supported: ${ltcg_output}")
 endif()
@@ -54,12 +54,10 @@ if(MSVC)
     # /RTC1 -> Runtime error checks
 
     # Flags for all configs
-    set(COMMON_CXX_FLAGS "/EHsc /Zi /arch:SSE2 /W3")
-    message("${CMAKE_CXX_FLAGS}")
-    set(CMAKE_CXX_FLAGS "")
-    set(CMAKE_CXX_FLAGS_DEBUG "${COMMON_CXX_FLAGS} /Od /RTC1")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zi /arch:SSE2 /W3")
+    set(CMAKE_CXX_FLAGS_DEBUG "/Od /RTC1")
     set(CMAKE_C_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-    set(CMAKE_CXX_FLAGS_RELEASE "${COMMON_CXX_FLAGS} /O2 /Oi /DNDEBUG")
+    set(CMAKE_CXX_FLAGS_RELEASE "/O2 /Oi /DNDEBUG")
     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 
     add_compile_definitions(
@@ -67,7 +65,6 @@ if(MSVC)
             _SCL_SECURE_NO_WARNINGS
             UNICODE # needed to get the Unicode versions of Win32 APIs
             _UNICODE # needed to get the Unicode versions of MSVCRT APIs
-            WIN32 # Generally set on Windows
     )
 endif()
 

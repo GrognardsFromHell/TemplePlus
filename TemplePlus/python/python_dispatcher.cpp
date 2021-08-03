@@ -1233,7 +1233,7 @@ PyObject *PyModifierSpec_Repr(PyObject *obj) {
 	auto self = (PyModifierSpec*)obj;
 	string text;
 
-	text = format("Modifier Spec: {}", self->condSpec.condName);
+	text = fmt::format("Modifier Spec: {}", self->condSpec.condName);
 
 	return PyString_FromString(text.c_str());
 }
@@ -1614,7 +1614,7 @@ bool ConvertDamagePacket(PyObject* obj, CondStructNew **pCondStructNew) {
 PyObject *PyEventArgs_Repr(PyObject *obj) {
 	auto self = (PyEventArgs*)obj;
 	string text;
-	text = format("Event Args [{}][{}]", self->args.dispType, self->args.dispKey);
+	text = fmt::format("Event Args [{}][{}]", self->args.dispType, self->args.dispKey);
 	return PyString_FromString(text.c_str());
 }
 
@@ -1709,7 +1709,7 @@ PyTypeObject PyEventArgsType = {
 PyObject *PyDispatchEventObject_Repr(PyObject *obj) {
 	auto self = (PyDispatchEventObject*)obj;
 	string text;
-	text = format("EventObject [{}]", self->evtObj->dispIOType);
+	text = fmt::format("EventObject [{}]", self->evtObj->dispIOType);
 	return PyString_FromString(text.c_str());
 }
 

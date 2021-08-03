@@ -175,14 +175,14 @@ namespace fmt {
         template<typename FormatContext>
         auto format(const std::vector<Value> &v, FormatContext &ctx) {
             auto &&out = ctx.out();
-            format_to(out, "[");
+            fmt::format_to(out, "[");
             for (size_t i = 0; i < v.size(); ++i) {
-                format_to(out, "{}", v[i]);
+                fmt::format_to(out, "{}", v[i]);
                 if (i != v.size() - 1) {
-                    format_to(out, ", ");
+                    fmt::format_to(out, ", ");
                 }
             }
-            return format_to(out, "]");
+            return fmt::format_to(out, "]");
         }
     };
 }

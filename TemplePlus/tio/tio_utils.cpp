@@ -35,14 +35,14 @@ bool TioClearDir(const string& path) {
 	}
 
 	TioFileList list;
-	auto globPattern = format("{}\\*.*", path);
+	auto globPattern = fmt::format("{}\\*.*", path);
 	tio_filelist_create(&list, globPattern.c_str());
 
 	bool success = true;
 
 	for (int i = 0; i < list.count; ++i) {
 		auto &file = list.files[i];
-		auto filepath = format("{}\\{}", path, file.name);
+		auto filepath = fmt::format("{}\\{}", path, file.name);
 				
 		if (!(file.attribs & 0x20)) {
 			if (tio_remove(filepath.c_str())) {

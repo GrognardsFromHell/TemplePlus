@@ -16,7 +16,7 @@ PyObject *PyBonusList_Repr(PyObject *obj) {
 	auto self = (PyBonusList*)obj;
 	string text;
 	
-	text = format("BonustList[{}]", self->bonlist->bonCount);
+	text = fmt::format("BonustList[{}]", self->bonlist->bonCount);
 		
 	return PyString_FromString(text.c_str());
 }

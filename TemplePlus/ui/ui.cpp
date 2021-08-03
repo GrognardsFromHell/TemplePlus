@@ -458,7 +458,7 @@ void UiManager::AddWindow(LgcyWidgetId id)
 
 	auto window = GetWindow(id);
 	if (!window) {
-		throw new TempleException(format("Trying to add widget {} as a window which isn't a window.", id));
+		throw new TempleException(fmt::format("Trying to add widget {} as a window which isn't a window.", id));
 	}
 
 	// Don't add it, if it's hidden

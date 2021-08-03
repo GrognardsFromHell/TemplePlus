@@ -18,16 +18,16 @@ namespace google_breakpad {
 /*
 	Abstracts the interface to Google breakpad
 */
-class BREAKPAD_API InProcessCrashReporting {
+class InProcessCrashReporting {
 public:
-	InProcessCrashReporting(const std::wstring &minidump_folder,
+    BREAKPAD_API InProcessCrashReporting(const std::wstring &minidump_folder,
                             std::function<void(const std::wstring&)> crash_callback);
-	~InProcessCrashReporting();
+    BREAKPAD_API ~InProcessCrashReporting();
 
     // Helper functions to cause crashes for testing
-    void DerefZeroCrash();
-    void InvalidParamCrash();
-    void PureCallCrash();
+    BREAKPAD_API void DerefZeroCrash();
+    BREAKPAD_API void InvalidParamCrash();
+    BREAKPAD_API void PureCallCrash();
 
 private:
     struct Detail;

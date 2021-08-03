@@ -2139,7 +2139,7 @@ void AiSystem::StrategyTabLineParseTacticMiddleString(AiStrategy* aiStrat, int i
 		}
 		else 
 		if (objSystem) {
-			objHndl found = objSystem->FindObjectByIdStr(format("{}", middleString));
+			objHndl found = objSystem->FindObjectByIdStr(fmt::format("{}", middleString));
 			if (found) {
 				aiStrat->spellsKnown[idx].pad2 = found.GetHandleLower();
 				aiStrat->spellsKnown[idx].pad3 = found.GetHandleUpper();

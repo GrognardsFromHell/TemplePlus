@@ -29,14 +29,14 @@ std::ostream &operator <<(std::ostream &out, const objHndl &handle) {
 
 fmt::appender format(fmt::appender out, const objHndl &handle) {
     if (!handle || !objSystem->IsValidHandle(handle)) {
-        return format_to(out, "OBJ_HANDLE_NULL");
+        return fmt::format_to(out, "OBJ_HANDLE_NULL");
     } else {
         auto d = description.getDisplayName(handle);
         if (d != nullptr) {
-            return format_to(out, "{} [0x{:x}]", d, handle.handle);
+            return fmt::format_to(out, "{} [0x{:x}]", d, handle.handle);
         }
         else {
-            return format_to(out, "DESCRIPTION MISSING [0x{:x}]", handle.handle);
+            return fmt::format_to(out, "DESCRIPTION MISSING [0x{:x}]", handle.handle);
         }
     }
 }

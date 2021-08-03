@@ -1149,10 +1149,10 @@ void UiItemCreation::ItemCreationCraftingCostTexts(int widgetId, objHndl objHndI
 	// "Item Cost: %d"
 	if (*insuffXp || *insuffCp || *insuffSkill || *insuffPrereq){
 		
-		text = format("{} @{}{}", *itemCreationAddresses.itemCreationUIStringItemCost, *(insuffCp)+1, craftingCostCP / 100);
+		text = fmt::format("{} @{}{}", *itemCreationAddresses.itemCreationUIStringItemCost, *(insuffCp)+1, craftingCostCP / 100);
 	} else {
 		//_snprintf(text, 128, "%s @3%d", *itemCreationAddresses.itemCreationUIStringItemCost, craftingCostCP / 100);
-		text = format("{} @3{}", *itemCreationAddresses.itemCreationUIStringItemCost, craftingCostCP / 100);
+		text = fmt::format("{} @3{}", *itemCreationAddresses.itemCreationUIStringItemCost, craftingCostCP / 100);
 	};
 
 
@@ -1166,19 +1166,19 @@ void UiItemCreation::ItemCreationCraftingCostTexts(int widgetId, objHndl objHndI
 	if (itemCreationType == IC_Alchemy){ 
 		// placeholder - they do similar bullshit in the code :P but I guess it can be modified easily enough!
 		if (*insuffXp || *insuffCp || *insuffSkill || *insuffPrereq){
-			text = format("{} @{}{}", *itemCreationAddresses.itemCreationUIStringSkillRequired, *insuffSkill + 1, craftingCostXP);
+			text = fmt::format("{} @{}{}", *itemCreationAddresses.itemCreationUIStringSkillRequired, *insuffSkill + 1, craftingCostXP);
 		}
 		else {
-			text = format("{} @3{}", *itemCreationAddresses.itemCreationUIStringSkillRequired, craftingCostXP);
+			text = fmt::format("{} @3{}", *itemCreationAddresses.itemCreationUIStringSkillRequired, craftingCostXP);
 		};
 	}
 	else
 	{
 		if (*insuffXp || *insuffCp || *insuffSkill || *insuffPrereq){
-			text = format("{} @{}{}", *itemCreationAddresses.itemCreationUIStringXPCost, *(insuffXp) + 1, craftingCostXP);
+			text = fmt::format("{} @{}{}", *itemCreationAddresses.itemCreationUIStringXPCost, *(insuffXp) + 1, craftingCostXP);
 		}
 		else {
-			text = format("{} @3{}", *itemCreationAddresses.itemCreationUIStringXPCost, craftingCostXP);
+			text = fmt::format("{} @3{}", *itemCreationAddresses.itemCreationUIStringXPCost, craftingCostXP);
 		};
 	};
 
@@ -1186,7 +1186,7 @@ void UiItemCreation::ItemCreationCraftingCostTexts(int widgetId, objHndl objHndI
 	rect.y += 11;
 
 	// "Value: %d"
-	text = format("{} @1{}", *itemCreationAddresses.itemCreationUIStringValue, itemWorth / 100);
+	text = fmt::format("{} @1{}", *itemCreationAddresses.itemCreationUIStringValue, itemWorth / 100);
 
 	UiRenderer::DrawTextInWidget(widgetId, text, rect, *itemCreationAddresses.itemCreationTextStyle2);
 
@@ -1210,7 +1210,7 @@ void UiItemCreation::ItemCreationCraftingCostTexts(int widgetId, objHndl objHndI
 		char asdf[1000];
 		sprintf(asdf, "Crafted Caster Level: " );
 		
-		text = format("{} @3{}", asdf, casterLevelNew);
+		text = fmt::format("{} @3{}", asdf, casterLevelNew);
 		if (prereqString){
 			UiRenderer::DrawTextInWidget(widgetId, text, rect, *itemCreationAddresses.itemCreationTextStyle);
 		}

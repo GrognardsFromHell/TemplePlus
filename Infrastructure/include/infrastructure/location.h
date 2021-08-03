@@ -83,7 +83,7 @@ namespace fmt {
     struct formatter<locXY> : simple_formatter {
         template<typename FormatContext>
         auto format(const locXY &v, FormatContext &ctx) {
-            return format_to(ctx.out(), "{},{}", v.locx, v.locy);
+            return fmt::format_to(ctx.out(), "{},{}", v.locx, v.locy);
         }
     };
 
@@ -91,7 +91,7 @@ namespace fmt {
     struct formatter<LocAndOffsets> : simple_formatter {
         template<typename FormatContext>
         auto format(const LocAndOffsets &v, FormatContext &ctx) {
-            return format_to(ctx.out(), "{},{},{}", v.location, v.location.locx, v.location.locy);
+            return fmt::format_to(ctx.out(), "{},{},{}", v.location, v.location.locx, v.location.locy);
         }
     };
 
@@ -99,7 +99,7 @@ namespace fmt {
     struct formatter<LocFull> : simple_formatter {
         template<typename FormatContext>
         auto format(const LocFull &v, FormatContext &ctx) {
-            return format_to(ctx.out(), "{},{}", v.location, v.off_z);
+            return fmt::format_to(ctx.out(), "{},{}", v.location, v.off_z);
         }
     };
 

@@ -79,7 +79,7 @@ static PyObject* PyObjHandle_Repr(PyObject* obj) {
 		return PyString_FromString("OBJ_HANDLE_NULL");
 	} else {
 		auto name = objects.GetDisplayName(self->handle, self->handle);
-		auto displayName = format("{}({})", name, self->handle);
+		auto displayName = fmt::format("{}({})", name, self->handle);
 
 		return PyString_FromString(displayName.c_str());
 	}
@@ -2428,7 +2428,7 @@ static PyObject* PyObjHandle_D20QueryHasCond(PyObject* obj, PyObject* args) {
 		return 0;
 	}
 
-	auto cond = conds.GetByName(format("{}", name));
+	auto cond = conds.GetByName(fmt::format("{}", name));
 	if (!cond) {
 		return PyInt_FromLong(0);
 	}
@@ -4591,7 +4591,7 @@ static int PyObjHandle_SetOriginMapId(PyObject* obj, PyObject* value, void*) {
 		return -1;
 	}
 	if (!maps.IsValidMapId(mapId)) {
-		auto msg = format("Map id {} is invalid.", mapId);
+		auto msg = fmt::format("Map id {} is invalid.", mapId);
 		PyErr_SetString(PyExc_ValueError, msg.c_str());
 		return -1;
 	}
@@ -4905,7 +4905,7 @@ static int PyObjHandle_Init(PyObject* obj, PyObject* args, PyObject* kwargs) {
 
 		// The obj handle is invalid
 		if (!self->id) {
-			auto msg = format("The object handle {} is invalid.", self->handle);
+			auto msg = fmt::format("The object handle {} is invalid.", self->handle);
 			PyErr_SetString(PyExc_ValueError, msg.c_str());
 			// Reset the handle to the null handle
 			self->handle = 0;

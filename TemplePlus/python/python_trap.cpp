@@ -90,7 +90,7 @@ static PyObject *PyTrap_Repr(PyObject *obj) {
 
 	auto triggerName = pythonObjIntegration.GetEventName(trap->trigger);
 
-	string result = format("Trap({},{},{},{},{})", trap->name, triggerName, trap->partSysName, trap->replaceWith, "xx");
+	string result = fmt::format("Trap({},{},{},{},{})", trap->name, triggerName, trap->partSysName, trap->replaceWith, "xx");
 	return PyString_FromString(result.c_str());
 }
 

@@ -69,7 +69,7 @@ bool GameSystems::LoadGame(const string& filename) {
 
 	logger->info("Restoring save archive...");
 	
-	auto path = format("save\\{}", filename);
+	auto path = fmt::format("save\\{}", filename);
 	try {
 		SaveGameArchive::Unpack(path.c_str(), "Save\\Current");
 	} catch (const std::exception &e) {

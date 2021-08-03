@@ -28,7 +28,6 @@ using namespace std;
 #include <math.h>
 
 #include <infrastructure/infrastructure.h>
-using fmt::format;
 
 #include "MinHook.h"
 

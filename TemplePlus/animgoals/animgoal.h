@@ -53,7 +53,7 @@ namespace fmt {
     struct formatter<AnimGoalPriority> : simple_formatter {
         template<typename FormatContext>
         auto format(const AnimGoalPriority &priority, FormatContext &ctx) {
-            return format_to(ctx.out(), GetAnimGoalPriorityText(priority));
+            return fmt::format_to(ctx.out(), GetAnimGoalPriorityText(priority));
         }
     };
 }

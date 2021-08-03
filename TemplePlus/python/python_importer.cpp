@@ -227,14 +227,14 @@ ModuleInfo PyTempleImporter::GetModuleInfo(const string& fullname) {
 				}
 			}
 
-			auto path = format("{}{}{}", prefix, relPath, entry.suffix);
+			auto path = fmt::format("{}{}{}", prefix, relPath, entry.suffix);
 
 			TioFile *fh;
 			if ((fh = tio_fopen(path.c_str(), "rb")) != nullptr) {
 				result.found = true;
 				result.package = (entry.type & IFT_PACKAGE) != 0;
 				if (result.package) {
-					result.packagePath = format("{}{}{}", prefix, relPath, SEP);
+					result.packagePath = fmt::format("{}{}{}", prefix, relPath, SEP);
 				}
 
 				if (entry.type & IFT_BYTECODE) {

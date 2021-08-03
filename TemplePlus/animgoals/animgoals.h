@@ -99,7 +99,7 @@ namespace fmt {
     struct formatter<AnimGoalType> : simple_formatter {
         template<typename FormatContext>
         auto format(const AnimGoalType &type, FormatContext &ctx) {
-            return format_to(ctx.out(), GetAnimGoalTypeName(type));
+            return fmt::format_to(ctx.out(), GetAnimGoalTypeName(type));
         }
     };
 }

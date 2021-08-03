@@ -940,7 +940,7 @@ bool DungeonMaster::PseudoLoad(std::string filename){
 		logger->error("Error clearing folder Save\\ArenaTmp");
 		return false;
 	}
-	auto path = format("save\\{}", filename);
+	auto path = fmt::format("save\\{}", filename);
 	try {
 		SaveGameArchive::Unpack(path.c_str(), "Save\\ArenaTmp");
 	}

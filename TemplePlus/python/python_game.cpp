@@ -1345,7 +1345,7 @@ static PyObject* PyGame_GetObjById(PyObject*, PyObject* args) {
 	if (!name) {
 		return PyObjHndl_CreateNull();
 	}
-	auto handle = objSystem->FindObjectByIdStr(format("{}", name));
+	auto handle = objSystem->FindObjectByIdStr(fmt::format("{}", name));
 	return PyObjHndl_Create(handle);
 }
 

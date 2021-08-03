@@ -41,7 +41,7 @@ namespace fmt {
     struct formatter<AnimSlotId> : simple_formatter {
         template<typename FormatContext>
         auto format(const AnimSlotId &id, FormatContext &ctx) {
-            return format_to(ctx.out(), id.ToString());
+            return fmt::format_to(ctx.out(), id.ToString());
         }
     };
 }

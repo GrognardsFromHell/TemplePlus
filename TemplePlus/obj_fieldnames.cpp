@@ -441,7 +441,7 @@ string GetFieldName(int objFieldIdx) {
 
 	if (objFieldIdx < 0 || objFieldIdx >= objectFieldCount) {
 		assert(objFieldIdx < 0 || objFieldIdx >= objectFieldCount);
-		return format("UnknownField{}", objFieldIdx);
+		return fmt::format("UnknownField{}", objFieldIdx);
 	}
 
 	return objectFieldNames[objFieldIdx];

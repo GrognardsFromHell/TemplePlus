@@ -15,9 +15,9 @@ PyObject *PyDice_Repr(PyObject *obj) {
 	auto self = (PyDice*) obj;
 	string text;
 	if (self->bonus == 0) {
-		text = format("{}d{}", self->number, self->size);
+		text = fmt::format("{}d{}", self->number, self->size);
 	} else {
-		text = format("{}d{}{:+d}", self->number, self->size, self->bonus);
+		text = fmt::format("{}d{}{:+d}", self->number, self->size, self->bonus);
 	}
 	return PyString_FromString(text.c_str());
 }
