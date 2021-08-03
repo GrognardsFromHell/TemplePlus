@@ -19,7 +19,7 @@ jobs:
       if: steps.cache-primes.outputs.cache-hit != 'true'
       run: |
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars32.bat"
-        cd thirdparty\external\packages
+        cd thirdparty\external
         call regenerate.cmd
       shell: cmd
     - name: Install NuGet packages
