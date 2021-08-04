@@ -231,14 +231,14 @@ set(no_group_source_files
     "util/savegame.h"
     "util/streams.cpp"
     "util/streams.h"
-)
+    )
 source_group("" FILES ${no_group_source_files})
 
 set(Dungeon_Master
     "dungeon_master.cpp"
     "dungeon_master.h"
     "dungeon_master_obj_editor.cpp"
-)
+    )
 source_group("Dungeon Master" FILES ${Dungeon_Master})
 
 set(Map_System
@@ -248,7 +248,7 @@ set(Map_System
     "maps.h"
     "path_node.cpp"
     "path_node.h"
-)
+    )
 source_group("Map System" FILES ${Map_System})
 
 set(Mods_and_Fixes
@@ -323,21 +323,21 @@ set(Mods_and_Fixes
     "weapon.h"
     "xp.cpp"
     "xp.h"
-)
+    )
 source_group("Mods and Fixes" FILES ${Mods_and_Fixes})
 
 set(Mods_and_Fixes__Condition_Fixes
     "ability_fixes.cpp"
     "general_condition_fixes.cpp"
     "spell_condition.cpp"
-)
+    )
 source_group("Mods and Fixes\\Condition Fixes" FILES ${Mods_and_Fixes__Condition_Fixes})
 
 set(generic_data_structures
     "hashtable.h"
     "idxtables.cpp"
     "idxtables.h"
-)
+    )
 source_group("generic data structures" FILES ${generic_data_structures})
 
 set(python
@@ -414,7 +414,7 @@ set(python
     "python/pythonglobal.cpp"
     "python/pythonglobal.h"
     "ui/ui_python.h"
-)
+    )
 source_group("python" FILES ${python})
 
 set(tig
@@ -444,7 +444,7 @@ set(tig
     "tig/tig_texture.h"
     "tig/tig_tokenizer.cpp"
     "tig/tig_tokenizer.h"
-)
+    )
 source_group("tig" FILES ${tig})
 
 set(ui
@@ -523,7 +523,7 @@ set(ui
     "ui/ui_worldmap.cpp"
     "ui/ui_worldmap.h"
     "ui/ui_wrapper.cpp"
-)
+    )
 source_group("ui" FILES ${ui})
 
 set(utils
@@ -533,7 +533,7 @@ set(utils
     "obj_fieldnames.h"
     "util/folderutils.cpp"
     "util/folderutils.h"
-)
+    )
 source_group("utils" FILES ${utils})
 
 set(ALL_FILES
@@ -548,7 +548,7 @@ set(ALL_FILES
     ${ui}
     ${utils}
     resource.rc
-)
+    )
 
 ################################################################################
 # Target
@@ -565,40 +565,40 @@ target_include_directories(${PROJECT_NAME} PRIVATE .)
 ################################################################################
 # Compile and link options
 ################################################################################
-if(MSVC)
-    #
-    # Delay-Loading is needed to prevent any dependency from accidentally
-    # being remapped into the memory space required to load temple.dll into.
-    #
-    target_link_options(${PROJECT_NAME} PRIVATE
-        /DELAYLOAD:bcrypt.dll;
-        /DELAYLOAD:d3d9.dll;
-        /DELAYLOAD:d2d1.dll;
-        /DELAYLOAD:dwrite.dll;
-        /DELAYLOAD:dxgi.dll;
-        /DELAYLOAD:psapi.dll;
-        /DELAYLOAD:crypt32.dll;
-        /DELAYLOAD:ws2_32.dll;
-        /DELAYLOAD:oleaut32.dll;
-        /DELAYLOAD:shell32.dll;
-        /DELAYLOAD:advapi32.dll;
-        /DELAYLOAD:gdi32.dll;
-        /DELAYLOAD:user32.dll;
-        /DELAYLOAD:imm32.dll;
-        /DELAYLOAD:tio.dll;
-        /DELAYLOAD:winmm.dll;
-        /DELAYLOAD:shlwapi.dll;
-        /DELAYLOAD:ole32.dll;
-        /DELAYLOAD:D3dcompiler_47.dll;
-    )
-endif()
+if (MSVC)
+  #
+  # Delay-Loading is needed to prevent any dependency from accidentally
+  # being remapped into the memory space required to load temple.dll into.
+  #
+  target_link_options(${PROJECT_NAME} PRIVATE
+      /DELAYLOAD:bcrypt.dll;
+      /DELAYLOAD:d3d9.dll;
+      /DELAYLOAD:d2d1.dll;
+      /DELAYLOAD:dwrite.dll;
+      /DELAYLOAD:dxgi.dll;
+      /DELAYLOAD:psapi.dll;
+      /DELAYLOAD:crypt32.dll;
+      /DELAYLOAD:ws2_32.dll;
+      /DELAYLOAD:oleaut32.dll;
+      /DELAYLOAD:shell32.dll;
+      /DELAYLOAD:advapi32.dll;
+      /DELAYLOAD:gdi32.dll;
+      /DELAYLOAD:user32.dll;
+      /DELAYLOAD:imm32.dll;
+      /DELAYLOAD:tio.dll;
+      /DELAYLOAD:winmm.dll;
+      /DELAYLOAD:shlwapi.dll;
+      /DELAYLOAD:ole32.dll;
+      /DELAYLOAD:D3dcompiler_47.dll;
+      )
+endif ()
 
 ################################################################################
 # Setup defines for building releases via CI/CD on Github
 ################################################################################
 if (TP_RELEASE_BUILD)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE TP_RELEASE_BUILD _TP_VERSION=${TP_VERSION} _TP_COMMIT=${TP_COMMIT})
-endif()
+  target_compile_definitions(${PROJECT_NAME} PRIVATE TP_RELEASE_BUILD _TP_VERSION=${TP_VERSION} _TP_COMMIT=${TP_COMMIT})
+endif ()
 
 ################################################################################
 # Post build events
@@ -607,9 +607,7 @@ add_custom_command_if(
     TARGET ${PROJECT_NAME}
     POST_BUILD
     COMMANDS
-    COMMAND       $<CONFIG:Debug> "$<SHELL_PATH:${CMAKE_CURRENT_SOURCE_DIR}/>\\..\\tpdatasrc\\PackFiles.bat"
-    COMMAND     $<CONFIG:Release> "$<SHELL_PATH:${CMAKE_CURRENT_SOURCE_DIR}/>\\..\\tpdatasrc\\PackFiles.bat"
-    COMMAND $<CONFIG:TestWithIda> "$<SHELL_PATH:${CMAKE_CURRENT_SOURCE_DIR}/>\\..\\tpdatasrc\\PackFiles.bat"
+    COMMAND "$<SHELL_PATH:${CMAKE_CURRENT_SOURCE_DIR}/>\\..\\tpdatasrc\\PackFiles.bat"
 )
 
 ################################################################################
@@ -632,3 +630,64 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     # For delay-loading
     delayimp.lib
 )
+
+if (${CMAKE_VERSION} VERSION_LESS "3.21.0")
+  message("Not creating install targets. Please use CMake 3.21 or newer")
+else ()
+  install(TARGETS ${PROJECT_NAME}
+      RUNTIME_DEPENDENCIES
+      PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "tio\\.dll"
+      POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
+      DIRECTORIES ${Python2_RUNTIME_LIBRARY_DIRS}
+      DESTINATION .
+      )
+  install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/../tpdata
+      DESTINATION .
+      MESSAGE_NEVER
+      # Exclude stuff like .idea from pycharm
+      PATTERN .* EXCLUDE)
+
+  # Install the Python library
+  file(TO_CMAKE_PATH "${Python2_STDLIB}" Python2_STDLIB)
+  file(TO_CMAKE_PATH "${Python2_RUNTIME_LIBRARY_DIRS}" Python2_RUNTIME_LIBRARY_DIRS)
+
+  install(DIRECTORY "${Python2_RUNTIME_LIBRARY_DIRS}/DLLs/"
+      DESTINATION lib
+      MESSAGE_NEVER
+      FILES_MATCHING
+      PATTERN unicodedata.pyd
+      PATTERN _ctypes.pyd
+      PATTERN _elementtree.pyd
+      PATTERN _hashlib.pyd
+      PATTERN _socket.pyd
+      PATTERN _ssl.pyd
+      PATTERN bz2.pyd
+      PATTERN pyexpat.pyd
+      PATTERN select.pyd
+  )
+  install(DIRECTORY "${Python2_STDLIB}"
+      DESTINATION .
+      MESSAGE_NEVER
+      # Long list of modules we don't need...
+      PATTERN site-packages EXCLUDE
+      PATTERN test EXCLUDE
+      PATTERN plat-* EXCLUDE
+      PATTERN multiprocessing EXCLUDE
+      PATTERN idlelib EXCLUDE
+      PATTERN lib2to3 EXCLUDE
+      PATTERN lib-tk EXCLUDE
+      PATTERN email EXCLUDE
+      PATTERN curses EXCLUDE
+      PATTERN bsddb EXCLUDE
+      PATTERN ensurepip EXCLUDE
+      PATTERN distutils EXCLUDE
+      PATTERN msilib EXCLUDE
+      PATTERN pydoc_data EXCLUDE
+      PATTERN sqlite3 EXCLUDE
+      PATTERN unittest EXCLUDE
+      PATTERN wsgiref EXCLUDE
+    )
+  # Install the Python interpreter
+  file(TO_CMAKE_PATH "${Python2_EXECUTABLE}" Python2_EXECUTABLE)
+  install(FILES "${Python2_EXECUTABLE}" DESTINATION .)
+endif ()

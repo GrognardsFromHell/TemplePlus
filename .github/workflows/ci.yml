@@ -31,8 +31,13 @@ jobs:
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars32.bat"
         cmake -GNinja -Bbuild -DCMAKE_BUILD_TYPE=Release -DTP_VERSION=%BUILD_NUMBER% -DTP_COMMIT=%COMMIT_ID% -DTP_RELEASE_BUILD=ON
         cmake --build build
+        cmake --install build --prefix install
       # Need to use cmd because of the vcvars32 batch file
       shell: cmd
       env:
         BUILD_NUMBER: ${GITHUB_RUN_NUMBER}
         COMMIT_ID: ${GITHUB_SHA::8}
+    - uses: actions/upload-artifact@v2
+      with:
+        name: install
+        path: install
