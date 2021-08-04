@@ -245,7 +245,7 @@ struct SectorObjects {
 	BOOL staticObjsDirty;
 	int objectsRead;
 };
-const int testSizeofSectorObjects = sizeof SectorObjects; // should be 16392 (0x4008)
+const int testSizeofSectorObjects = sizeof(SectorObjects); // should be 16392 (0x4008)
 struct SectorVB{
 	SectorLoc secLoc;
 	int flags;

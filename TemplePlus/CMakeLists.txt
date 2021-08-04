@@ -548,12 +548,13 @@ set(ALL_FILES
     ${ui}
     ${utils}
     resource.rc
+    TemplePlus.def
     )
 
 ################################################################################
 # Target
 ################################################################################
-add_executable(${PROJECT_NAME} WIN32 ${ALL_FILES})
+add_library(${PROJECT_NAME} SHARED ${ALL_FILES})
 
 add_precompiled_header(${PROJECT_NAME} "stdafx.h" "pch.cpp")
 
@@ -566,31 +567,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE .)
 # Compile and link options
 ################################################################################
 if (MSVC)
-  #
-  # Delay-Loading is needed to prevent any dependency from accidentally
-  # being remapped into the memory space required to load temple.dll into.
-  #
-  target_link_options(${PROJECT_NAME} PRIVATE
-      /DELAYLOAD:bcrypt.dll;
-      /DELAYLOAD:d3d9.dll;
-      /DELAYLOAD:d2d1.dll;
-      /DELAYLOAD:dwrite.dll;
-      /DELAYLOAD:dxgi.dll;
-      /DELAYLOAD:psapi.dll;
-      /DELAYLOAD:crypt32.dll;
-      /DELAYLOAD:ws2_32.dll;
-      /DELAYLOAD:oleaut32.dll;
-      /DELAYLOAD:shell32.dll;
-      /DELAYLOAD:advapi32.dll;
-      /DELAYLOAD:gdi32.dll;
-      /DELAYLOAD:user32.dll;
-      /DELAYLOAD:imm32.dll;
-      /DELAYLOAD:tio.dll;
-      /DELAYLOAD:winmm.dll;
-      /DELAYLOAD:shlwapi.dll;
-      /DELAYLOAD:ole32.dll;
-      /DELAYLOAD:D3dcompiler_47.dll;
-      )
+  # tio.dll is only available once we've added the game directory to the DLL path
+  target_link_options(${PROJECT_NAME} PRIVATE /DELAYLOAD:tio.dll)
 endif ()
 
 ################################################################################
@@ -631,9 +609,32 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     delayimp.lib
 )
 
+################################################################################
+# Launcher
+################################################################################
+set(LAUNCHER_NAME ${PROJECT_NAME}Launcher)
+add_executable(${LAUNCHER_NAME} WIN32 resource.rc launcher.cpp)
+target_link_options(${LAUNCHER_NAME} PRIVATE /DELAYLOAD:$<TARGET_FILE_BASE_NAME:${PROJECT_NAME}>)
+target_link_libraries(${LAUNCHER_NAME} PRIVATE ${PROJECT_NAME} delayimp.lib)
+
+################################################################################
+# Install
+################################################################################
 if (${CMAKE_VERSION} VERSION_LESS "3.21.0")
   message("Not creating install targets. Please use CMake 3.21 or newer")
 else ()
+  # This copies the C++ runtime files into our app directory so that users do 
+  # not need to install the redistributable.
+  set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP TRUE)
+  include(InstallRequiredSystemLibraries)
+  list(FILTER CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS EXCLUDE REGEX concrt)
+  install(FILES ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS} DESTINATION .)
+
+  install(TARGETS ${LAUNCHER_NAME}
+    RENAME ${PROJECT_NAME}
+    DESTINATION .
+  )
+
   install(TARGETS ${PROJECT_NAME}
       RUNTIME_DEPENDENCIES
       PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "tio\\.dll"

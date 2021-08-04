@@ -135,7 +135,7 @@ namespace gfx {
 	public:
 
 		using View = std::span<TElement>;
-		using Iterator = View::iterator;
+		using Iterator = typename View::iterator;
 
 		MappedBuffer(TBuffer &buffer,
 			RenderingDevice &device,

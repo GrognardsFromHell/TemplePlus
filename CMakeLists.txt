@@ -4,7 +4,7 @@ cmake_policy(SET CMP0111 NEW)
 # Generally target Windows 10 SDK
 set(CMAKE_SYSTEM_VERSION 10.0 CACHE STRING "" FORCE)
 
-project(TemplePlus CXX)
+project(TemplePlus C CXX)
 
 include(CMake/DefaultBuildType.cmake)
 

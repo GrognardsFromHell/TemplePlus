@@ -16,23 +16,13 @@ void InitLogging(const std::wstring &logFile, spdlog::level::level_enum logLevel
 // Defined in temple_main.cpp for now
 int TempleMain(HINSTANCE hInstance, const std::string& commandLine);
 
-// This is required to get "new style" common dialogs like message boxes
-#pragma comment(linker,"\"/manifestdependency:type='win32' \
-name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
-processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
-
 static void SetIniPath();
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int showCmd) {
-
-	/*VirtualAlloc(reinterpret_cast<void*>(0x10000000),
-		1,
-		MEM_RESERVE,
-		PAGE_NOACCESS);*/
+int LaunchGame(HINSTANCE hInstance, LPSTR lpCmdLine, void *reservedTempleArea, size_t reservedTempleAreaSize) {
 
 	// We reserve space for temple.dll as early as possible to avoid rebasing of temple.dll
 	auto& dll = temple::Dll::GetInstance();
-	dll.ReserveMemoryRange();
+	dll.SetReservedMemory(reservedTempleArea, reservedTempleAreaSize);
 
 	// Cannot get known folders without initializing COM sadly
 	ComInitializer comInitializer;
