@@ -97,8 +97,8 @@ def getDefenderConcealment(d20a):
     return defenderConcealment.dispatch(target, OBJ_HANDLE_NULL, ET_OnGetDefenderConcealmentMissChance, EK_NONE)
 
 def getAttackerConcealment(performer):
-    performerConcealment = tpdp.EventObjAttack()
-    performerConcealment.dispatch(performer, OBJ_HANDLE_NULL, ET_OnGetAttackerConcealmentMissChance, EK_NONE)
+    performerConcealment = tpdp.EventObjObjectBonus()
+    performerConcealment.dispatch(performer, ET_OnGetAttackerConcealmentMissChance, EK_NONE)
     return performerConcealment.bonus_list.get_highest()
 
 def getSuppressConcealment(performer, target):

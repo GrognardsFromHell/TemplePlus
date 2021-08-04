@@ -1055,10 +1055,20 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("num_strings", &DispIoTooltip::numStrings);
 
 	py::class_<DispIoObjBonus, DispIO>(m, "EventObjObjectBonus", "Used for Item Bonuses, initiative modifiers and others.")
+		.def(py::init())
 		.def_readwrite("bonus_list", &DispIoObjBonus::bonOut)
 		.def_readwrite("flags", &DispIoObjBonus::flags)
 		.def_readwrite("return_val", &DispIoObjBonus::flags) // I think that field is also used for return_val somewhere... not 100% sure though. also leaving it for backward compatibility
 		.def_readwrite("obj", &DispIoObjBonus::obj)
+		.def("dispatch", [](DispIoObjBonus& evtObj, objHndl handle, int disp_type, int disp_key)->void{
+				auto obj = objSystem->GetObject(handle);
+				if (!obj) return;
+				auto disp = obj->GetDispatcher();
+				if (!dispatch.dispatcherValid(disp)) return;
+				auto dispType = (enum_disp_type)disp_type;
+				dispatch.DispatcherProcessor(disp, dispType, disp_key, &evtObj);
+				return;
+			}, "")
 		;
 
 	py::class_<DispIoDispelCheck, DispIO>(m, "EventObjDispelCheck", "Dispel Check Event")
