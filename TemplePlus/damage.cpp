@@ -573,7 +573,7 @@ int Damage::DealAttackDamagePython(objHndl attacker, objHndl tgt, int d20Data, D
 
 	auto pyResult = pythonObjIntegration.ExecuteScript("d20_combat.damage_critter", "deal_attack_damage", args.ptr());
 	auto result = -1;
-	if (PyInt_Check(pyResult)) {
+	if (PyLong_Check(pyResult)) {
 		result = _PyInt_AsInt(pyResult);
 	}
 	Py_DECREF(pyResult);
