@@ -122,9 +122,10 @@ void MesFuncHooks::apply()
 		TioFileList flist;
 		tio_filelist_create(&flist, extDirPat.c_str());
 		for (auto i = 0u; i < flist.count; ++i) {
-			auto combinedFname = fmt::format("{}\\{}", baseDir, flist.files[i].name);
+			auto combinedFname = fmt::format("{}_ext\\{}", baseDir, flist.files[i].name);
 			MesHandle tmp;
 			if (orgOpen(combinedFname.c_str(), &tmp)) {
+				logger->trace("Opened mes extension file: {}", combinedFname);
 				MergeContents(*handle, tmp);
 				mesFuncs.Close(tmp);
 			}
