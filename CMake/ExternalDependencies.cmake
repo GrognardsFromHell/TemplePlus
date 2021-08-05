@@ -80,25 +80,15 @@ set(IMPORTED_TARGETS
 ######################################################################
 # Copy all binary dependencies to their output directories
 ######################################################################
-get_property(GENERATOR_IS_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
-function(copy_dependencies CONFIG)
-    set(OUTPUT_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CONFIG}}")
-    if (NOT "${OUTPUT_DIR}")
-        set(OUTPUT_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
-    endif()
-
+#get_property(GENERATOR_IS_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+function(copy_dependencies TARGET_NAME)
     foreach (TARGET IN LISTS IMPORTED_TARGETS)
-        # This works thanks to CMAKE_MAP_IMPORTED_CONFIG_*
-        get_target_property(LOCATION ${TARGET} LOCATION_${CONFIG})
-        file(INSTALL ${LOCATION} DESTINATION ${OUTPUT_DIR})
+        add_custom_command(TARGET ${TARGET_NAME} 
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different  
+                "$<TARGET_FILE:${TARGET}>"  
+                "$<TARGET_FILE_DIR:${TARGET_NAME}>"
+            COMMENT "Copying ${TARGET}"
+        )
     endforeach ()
 endfunction()
-if (${GENERATOR_IS_MULTI_CONFIG})
-    foreach (CONFIG IN LISTS CMAKE_CONFIGURATION_TYPES)
-        message("Copying dependency DLLs for config ${CONFIG}")
-        copy_dependencies(${CONFIG})
-    endforeach ()
-else ()
-    message("Copying dependency DLLs")
-    copy_dependencies(${CMAKE_BUILD_TYPE})
-endif ()

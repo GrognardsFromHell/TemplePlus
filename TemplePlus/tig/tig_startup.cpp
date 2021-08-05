@@ -177,6 +177,11 @@ static std::string FindTpData() {
 	}
 #endif
 
+	auto fromEnvironment = getenv("TP_DATA");
+	if (fromEnvironment) {
+		return fromEnvironment;
+	}
+
 	return "tpdata"; // Just fall back to this then...
 
 }

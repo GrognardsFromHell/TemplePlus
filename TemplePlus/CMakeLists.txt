@@ -617,6 +617,13 @@ add_executable(${LAUNCHER_NAME} WIN32 resource.rc launcher.cpp)
 target_link_options(${LAUNCHER_NAME} PRIVATE /DELAYLOAD:$<TARGET_FILE_BASE_NAME:${PROJECT_NAME}>)
 target_link_libraries(${LAUNCHER_NAME} PRIVATE ${PROJECT_NAME} delayimp.lib)
 
+# Run from where the project sources are so that tpdata is picked up without having to copy it first
+get_filename_component(LAUNCH_WORKDIR ${CMAKE_CURRENT_LIST_DIR}/../tpdata ABSOLUTE)
+set_target_properties(${LAUNCHER_NAME} PROPERTIES VS_DEBUGGER_ENVIRONMENT "TP_DATA=$<SHELL_PATH:${LAUNCH_WORKDIR}>")
+
+# Ensure dependency DLLs are copied to executable directory
+copy_dependencies(${LAUNCHER_NAME})
+
 ################################################################################
 # Install
 ################################################################################
