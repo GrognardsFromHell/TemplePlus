@@ -1376,13 +1376,18 @@ int GenericCallbacks::GlobalHpChanged(DispatcherCallbackArgs args){
 	auto isDying = false;
 	auto hasDiehard = feats.HasFeatCountByClass(args.objHndCaller, FEAT_DIEHARD);
 
-	if (hpCur < 0 && !hasDiehard){
-		knockedOut = true;
-		if (hpChange < 0){
-			isDying = true;
+	if (hpCur <= 0  ){
+		addDisabled = true;
+
+		if (hpCur < 0 && !hasDiehard) {
+			knockedOut = true;
+			if (hpChange < 0) {
+				isDying = true;
+			}
 		}
+		
 	}
-	if (subdualDam >= hpCur){
+	else if (subdualDam >= hpCur){
 		if (!hasDiehard)
 			knockedOut = true;
 		else
@@ -1404,7 +1409,7 @@ int GenericCallbacks::GlobalHpChanged(DispatcherCallbackArgs args){
 		return 0;
 	}
 	// Mark Disabled
-	else if (hpCur <= 0 ) {
+	else if (addDisabled) {
 		conds.AddTo(args.objHndCaller, "Disabled", {});
 		return 0;
 	}
