@@ -64,7 +64,7 @@ struct IndicatorSpec{
 	int helpTopicId;
 	int type; // 0 - buff, 1 - ailment, 2 - condition
 	IndicatorSpec() {};
-	IndicatorSpec(std::string &filename, std::string &help, int indType);
+	IndicatorSpec(const std::string &filename, const std::string &help, int indType);
 };
 
 class LegacyUiParty

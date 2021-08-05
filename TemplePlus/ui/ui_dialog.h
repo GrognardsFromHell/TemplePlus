@@ -40,7 +40,7 @@ public:
 		The NPC also turns towards the target it is speaking to.
 		The voice sample with the id given in speechId is played back if it is not -1.
 	*/
-	void ShowTextBubble(objHndl speaker, objHndl speakingTo, const string &text, int speechId = -1);
+	void ShowTextBubble(objHndl speaker, objHndl speakingTo, const std::string &text, int speechId = -1);
 
 	void ShowHistory(); // TODO
 

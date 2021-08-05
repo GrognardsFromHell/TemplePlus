@@ -739,7 +739,7 @@ BOOL AnimSystem::ProcessAnimEvent(const TimeEvent *evt) {
   AnimSlotId triggerId = {evt->params[0].int32, evt->params[1].int32,
                           evt->params[2].int32};
 
-  Expects(triggerId.slotIndex >= 0 && triggerId.slotIndex < 512);
+  assert(triggerId.slotIndex >= 0 && triggerId.slotIndex < 512);
 
   auto &slot = mSlots[triggerId.slotIndex];
 
@@ -1182,9 +1182,9 @@ std::optional<AnimSlotId> AnimSystem::HasAttackAnim(objHndl handle, objHndl targ
 // Originally @ 0x100551a0
 bool AnimSystem::CurrentGoalHasField10_1(const AnimSlot &slot) const
 {
-    Expects(slot.IsActive());
-    Expects(slot.pCurrentGoal);
-    Expects(slot.pCurrentGoal && !slot.IsStackEmpty());
+    assert(slot.IsActive());
+    assert(slot.pCurrentGoal);
+    assert(slot.pCurrentGoal && !slot.IsStackEmpty());
 
 	auto &goal = animationGoals_->GetByType(slot.pCurrentGoal->goalType);
     
@@ -1442,7 +1442,7 @@ static void SaveGoalProperty(AnimGoalDataType dataType, const AnimParam &param, 
         }
         break;
     case AGDT_OBJ:
-        Expects(objRef);
+        assert(objRef);
         if (!FrozenObjRef::Save(param.obj, objRef, fh)) {
             throw TempleException("Failed to save object parameter of anim goal.");
         }
@@ -1529,7 +1529,7 @@ bool AnimSystem::PushGoal(const AnimSlotGoalStackEntry &stackEntry, AnimSlotId *
 // Originally @ 0x10056600
 bool AnimSystem::PushGoalInternal(const AnimSlotGoalStackEntry &stackEntry, AnimSlotId * slotIdOut, int flags)
 {
-	Expects(animationGoals_->IsValidType(stackEntry.goalType));
+	assert(animationGoals_->IsValidType(stackEntry.goalType));
 
 	// Don't push new goals while animations are loaded from the savegame
 	if (animSysIsLoading) {
@@ -1829,7 +1829,7 @@ void AnimSystem::InterruptGoalsByType(objHndl handle, AnimGoalType type, AnimGoa
 	} else {
 		auto &goal = animationGoals_->GetByType(keep);
 		interruptPriority = goal.priority;
-		Expects(interruptPriority >= AGP_NONE && interruptPriority <= AGP_HIGHEST);
+		assert(interruptPriority >= AGP_NONE && interruptPriority <= AGP_HIGHEST);
 		if (goal.interruptAll) {
 			interruptPriority = AGP_NONE;
 		}
@@ -1846,7 +1846,7 @@ void AnimSystem::InterruptGoalsByType(objHndl handle, AnimGoalType type, AnimGoa
 // Originally @ 0x1000c8d0
 void AnimSystem::InterruptAllGoalsUpToPriority(AnimGoalPriority priority)
 {
-	Expects(priority >= AGP_NONE && priority <= AGP_HIGHEST);
+	assert(priority >= AGP_NONE && priority <= AGP_HIGHEST);
 	for (auto &slot : mSlots) {
 		if (slot.IsActive()) {
 			if (!InterruptGoals(slot, priority)) {
@@ -1860,10 +1860,10 @@ void AnimSystem::InterruptAllGoalsUpToPriority(AnimGoalPriority priority)
 // Originally @ 0x10056a50
 bool AnimSystem::AddSubGoal(const AnimSlotId & id, const AnimSlotGoalStackEntry & stackEntry)
 {
-	Expects(stackEntry.goalType >= 0 && stackEntry.goalType < ag_count);
+	assert(stackEntry.goalType >= 0 && stackEntry.goalType < ag_count);
 	// Previously, ToEE had a failsafe here which might actually not have worked anyway (for null anim ids)
 	// But checking the code, this function is never called with a null anim id anyway
-	Expects(!id.IsNull());
+	assert(!id.IsNull());
 
 	auto slot = GetSlot(id);
 	if (!slot) {
@@ -1875,7 +1875,7 @@ bool AnimSystem::AddSubGoal(const AnimSlotId & id, const AnimSlotGoalStackEntry 
 		return false;
 	}
 
-	Expects(!slot->IsStackEmpty());
+	assert(!slot->IsStackEmpty());
 
 	// Since this is "prepending" to the stack
 	// We have to move all stack entries backwards
@@ -2083,7 +2083,7 @@ void AnimSystem::IncreaseActiveGoalCount(const AnimSlot & slot, const AnimGoal &
 {
 	if (goal.priority >= AGP_2 && !goal.interruptAll && !CurrentGoalHasField10_1(slot))
 	{
-		Expects(mActiveGoalCount >= 0);
+		assert(mActiveGoalCount >= 0);
 		++mActiveGoalCount;
 	}
 }
@@ -2097,7 +2097,7 @@ void AnimSystem::DecreaseActiveGoalCount(const AnimSlot & slot, const AnimGoal &
 }
 
 std::string AnimSlotId::ToString() const {
-  return format("[{}:{}r{}]", slotIndex, uniqueId, field_8);
+  return fmt::format("[{}:{}r{}]", slotIndex, uniqueId, field_8);
 }
 
 static class AnimSystemHooks : public TempleFix {
@@ -2132,8 +2132,8 @@ public:
   }
 } animHooks;
 
-static string getDelayText(AnimStateTransition trans) {
-  string delay = "";
+static std::string getDelayText(AnimStateTransition trans) {
+  std::string delay = "";
   if (trans.delay == AnimStateTransition::DelayRandom) {
     delay = ", delay: random";
   } else if (trans.delay == AnimStateTransition::DelayCustom) {
@@ -2141,37 +2141,37 @@ static string getDelayText(AnimStateTransition trans) {
   } else if (trans.delay == AnimStateTransition::DelaySlot) {
     delay = ", delay: slot";
   } else if (trans.delay != 0) {
-    delay = format(", delay: {}", trans.delay);
+    delay = fmt::format(", delay: {}", trans.delay);
   }
   return delay;
 }
 
-static void getTransitionText(string &diagramText, int &j,
+static void getTransitionText(std::string &diagramText, int &j,
                               const AnimStateTransition &transition,
                               const char *condition) {
-  string delay = getDelayText(transition);
+  std::string delay = getDelayText(transition);
   auto newState = transition.newState;
   if (newState & 0xFF000000) {
     logger->info("New state flags {:x}", newState);
     if ((newState & 0x30000000) == 0x30000000) {
-      diagramText += format("state{} --> [*] : [{}{}]\n", j, condition, delay);
+      diagramText += fmt::format("state{} --> [*] : [{}{}]\n", j, condition, delay);
     } else if ((newState & TRANSITION_GOAL) == TRANSITION_GOAL) {
       auto newGoal = newState & 0xFFF;
-      diagramText += format("state{} --> [*] : [{}{}] to {}\n", j, condition,
+      diagramText += fmt::format("state{} --> [*] : [{}{}] to {}\n", j, condition,
                             delay, (AnimGoalType) newGoal);
     } else if ((newState & TRANSITION_UNK1) == TRANSITION_UNK1) {
-      diagramText += format("state{} --> [*] : [{}{}, flags: 0x90]\n", j,
+      diagramText += fmt::format("state{} --> [*] : [{}{}, flags: 0x90]\n", j,
                             condition, delay);
     } else if (newState & TRANSITION_LOOP) {
       diagramText +=
-          format("state{} --> state0 : [{}{}, reset]\n", j, condition, delay);
+          fmt::format("state{} --> state0 : [{}{}, reset]\n", j, condition, delay);
     } else {
-      diagramText += format("state{} --> state0 : [{}{}, flags: {}]\n", j,
+      diagramText += fmt::format("state{} --> state0 : [{}{}, flags: {}]\n", j,
                             condition, delay, newState);
     }
   } else {
     // Normal transition
-    diagramText += format("state{} --> state{} : [{}{}]\n", j, newState - 1,
+    diagramText += fmt::format("state{} --> state{} : [{}{}]\n", j, newState - 1,
                           condition, delay);
   }
 }
@@ -2188,7 +2188,7 @@ std::string GetAnimParamName(int animParamType) {
   } else if (animParamType == 34) {
     return "TARGET_LOC_PRECISE";
   } else {
-    return to_string(animParamType);
+    return std::to_string(animParamType);
   }
 }
 
@@ -2218,8 +2218,8 @@ TransitionToJson(const AnimStateTransition &transition) {
 }
 
 static json11::Json::object StateToJson(const AnimGoalState &state,
-                                        map<uint32_t, string> &goalFuncNames,
-                                        map<uint32_t, string> &goalFuncDescs) {
+                                        std::map<uint32_t, std::string> &goalFuncNames,
+                                        std::map<uint32_t, std::string> &goalFuncDescs) {
   using namespace json11;
   Json::object result{
       {"callback", fmt::format("0x{:x}", (uint32_t)state.callback)},
@@ -2228,7 +2228,7 @@ static json11::Json::object StateToJson(const AnimGoalState &state,
       {"refToOtherGoalType", state.flagsData}};
 
   if (state.afterSuccess.newState == state.afterFailure.newState &&
-      state.afterSuccess.delay == state.afterFailure.delay) {
+    state.afterSuccess.delay == state.afterFailure.delay) {
     result["transition"] = TransitionToJson(state.afterSuccess);
   } else {
     result["trueTransition"] = TransitionToJson(state.afterSuccess);

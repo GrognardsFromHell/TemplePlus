@@ -1,6 +1,6 @@
 
 #include "stdafx.h"
-#include "Python.h"
+#include <Python.h>
 #include "osdefs.h"
 #include "marshal.h"
 #include "tio/tio.h"

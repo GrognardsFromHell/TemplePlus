@@ -43,8 +43,7 @@ namespace temple {
 		bool HasCo8Hooks();
 
 		std::wstring FindConflictingModule();
-		void ReserveMemoryRange();
-		void SetReservedMemory(void*);
+		void SetReservedMemory(void*, size_t);
 
 		bool IsVanillaDll() const;
 		bool IsExpandedWorldmapDll() const; // Since Co8 5.0.2

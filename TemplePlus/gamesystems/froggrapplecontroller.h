@@ -22,7 +22,7 @@ public:
 	void AdvanceAndRender(objHndl obj, 
 		const gfx::AnimatedModelParams &animParams,
 		gfx::AnimatedModel &model,
-		gsl::span<gfx::Light3d> lights,
+		std::span<gfx::Light3d> lights,
 		float alpha);
 
 private:
@@ -38,7 +38,7 @@ private:
 	void CreateIndexBuffer();
 	void RenderTongue(const GrappleState &grappleState,
 		const XMFLOAT4X4 &worldMatrixOrigin,
-		gsl::span<gfx::Light3d> lights,
+		std::span<gfx::Light3d> lights,
 		float alpha);
 
 	objHndl GetGrappledOpponent(objHndl giantFrog);

@@ -113,13 +113,13 @@ public:
 		Retrieves the filename of the dialog scrpt for the given script id.
 		Returns an empty string if it fails.
 	*/
-	string GetFilename(int scriptId);
+	std::string GetFilename(int scriptId);
 
 	/*
 		Loads the dialog file identified by the given filename and returns true 
 		on success. Stores the handle for the loaded dialog in dlgHandle
 	*/
-	bool Load(const string &filename, int &dlgHandle);
+	bool Load(const std::string &filename, int &dlgHandle);
 
 	/*
 		Loads the dialog line specified by reqNpcLineId. 

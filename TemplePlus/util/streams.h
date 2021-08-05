@@ -1,6 +1,7 @@
 
 #pragma once
 #include <cstdint>
+#include <span>
 #include <obj_structs.h>
 #include <common.h>
 
@@ -186,13 +187,13 @@ private:
 
 class MemoryInputStream : public InputStream {
 public:
-	MemoryInputStream(gsl::span<const uint8_t> data)
+	MemoryInputStream(std::span<const uint8_t> data)
 		: mCurrent(data.data()), mData(data) {
-		Expects(mData.size() >= 0);
+		assert(mData.size() >= 0);
 	}
 
 	void ReadRaw(void* buffer, size_t count) override {
-		Expects(GetPos() + count <= static_cast<size_t>(mData.size()));
+		assert(GetPos() + count <= static_cast<size_t>(mData.size()));
 		memcpy(buffer, mCurrent, count);
 		mCurrent += count;
 	}
@@ -206,7 +207,7 @@ public:
 	}
 private:
 	const uint8_t* mCurrent;
-	gsl::span<const uint8_t> mData;
+	std::span<const uint8_t> mData;
 };
 
 class OutputStream {
@@ -259,7 +260,7 @@ public:
 	}
 
 	void WriteStringMaxSize(const std::string& str, size_t maxSize) {
-		auto size = min(maxSize, str.size());
+	    auto size = std::min(maxSize, str.size());
 		WriteUInt32(size);
 		WriteRaw(str.c_str(), size);
 	}
@@ -305,7 +306,7 @@ public:
 		mBuffer.reserve(initialCapacity);		
 	}
 	
-	gsl::span<const uint8_t> GetBuffer() const {
+	std::span<const uint8_t> GetBuffer() const {
 		return mBuffer;
 	}
 

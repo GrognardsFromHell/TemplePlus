@@ -3,7 +3,8 @@
 
 #include <infrastructure/vfs.h>
 #include <infrastructure/logging.h>
-#include "spdlog/spdlog.h"
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/base_sink.h>
 
 #include <temple/vfs.h>
 #include <temple/dll.h>
@@ -71,15 +72,15 @@ struct LogAppender : spdlog::sinks::base_sink<std::mutex>
 {
 	std::string logLines;
 
-	void _sink_it(const spdlog::details::log_msg& msg) override
+	void sink_it_(const spdlog::details::log_msg& msg) override
 	{
 		if (!logLines.empty()) {
 			logLines.append("\n");
 		}
-		logLines.append(msg.formatted.str());
+		logLines.append(msg.payload.data());
 	}
 
-	void _flush() override {}
+	void flush_() override {}
 
 };
 
@@ -132,7 +133,7 @@ API MdfPreviewNative* MdfPreviewNative_Load(const wchar_t* installPath,
 
 	auto debugSink = std::make_shared<LogAppender>();
 	spdlog::drop_all(); // Reset all previous loggers
-	logger = spdlog::create("core", { debugSink });
+	logger = std::make_shared<spdlog::logger>("core", debugSink);
 
 	temple::Dll::GetInstance().Load(installPath);
 

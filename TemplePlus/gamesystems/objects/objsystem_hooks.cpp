@@ -448,7 +448,7 @@ private:
 
 	static GameObjectBody* GetObj(objHndl obj) {
 		auto result = objSystem->GetObject(obj);
-		Expects(!!result);
+		assert(!!result);
 		return result;
 	}
 

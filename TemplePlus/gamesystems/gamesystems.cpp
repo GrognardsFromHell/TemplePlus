@@ -478,7 +478,7 @@ void GameSystems::LoadModule(const std::string& moduleName) {
 
 	auto tioVfs = static_cast<temple::TioVfs*>(vfs.get());
 
-	constexpr char* saveDir = "Save\\Current";
+	constexpr auto saveDir = "Save\\Current";
 	if (vfs->DirExists(saveDir) && !tioVfs->IsDirEmpty(saveDir) && !tioVfs->CleanDir(saveDir)) {
 		throw TempleException("Unable to clean current savegame folder from previous data: {}", saveDir);
 	}

@@ -187,7 +187,7 @@ void Renderer::RecalcNormals(int vertexCount, const XMFLOAT4* pos, XMFLOAT4* nor
 
 void Renderer::Render(gfx::AnimatedModel *model,
 	const gfx::AnimatedModelParams& params,
-	gsl::span<Light3d> lights,
+	std::span<Light3d> lights,
 	const MdfRenderOverrides *materialOverrides) {
 
 	auto &renderData = model->GetOrCreateRenderState<AasRenderData>();
@@ -311,8 +311,8 @@ struct ShadowShaderGlobals {
 	XMFLOAT4 color;
 };
 
-void Renderer::RenderShadowMapShadow(gsl::span<gfx::AnimatedModel*> models,
-										gsl::span<const gfx::AnimatedModelParams*> modelParams,
+void Renderer::RenderShadowMapShadow(std::span<gfx::AnimatedModel*> models,
+										std::span<const gfx::AnimatedModelParams*> modelParams,
 										const XMFLOAT3 &center,
 										float radius,
 										float height,
@@ -320,7 +320,7 @@ void Renderer::RenderShadowMapShadow(gsl::span<gfx::AnimatedModel*> models,
 										float alpha,
 										bool softShadows) {
 
-	Expects(models.size() == modelParams.size());
+	assert(models.size() == modelParams.size());
 
 	float shadowMapWorldX, shadowMapWorldWidth,
 		shadowMapWorldZ, shadowMapWorldHeight;
@@ -360,7 +360,7 @@ void Renderer::RenderShadowMapShadow(gsl::span<gfx::AnimatedModel*> models,
 
 	mDevice.ClearCurrentColorTarget(XMCOLOR(0, 0, 0, 0));
 
-	for (int i = 0; i < models.size(); ++i) {
+	for (auto i = 0u; i < models.size(); ++i) {
 		RenderWithoutMaterial(models[i], *modelParams[i]);
 	}
 		

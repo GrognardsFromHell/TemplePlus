@@ -97,15 +97,3 @@ void LocAndOffsets::Regularize(){
 //	off_x = offx;
 //	off_y = offy;
 //}
-
-void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const locXY &loc) {
-	f.writer().write("{},{}", loc.locx, loc.locy);
-}
-
-void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const LocAndOffsets &loc) {
-	f.writer().write("{},{},{},{}", loc.location.locx, loc.location.locy, loc.off_x, loc.off_y);
-}
-
-void format_arg(fmt::BasicFormatter<char> &f, const char *&format_str, const LocFull &loc) {
-	f.writer().write("{},{}", loc.location, loc.off_z);
-}

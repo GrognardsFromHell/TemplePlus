@@ -55,7 +55,7 @@ static int ui_add_button(LgcyButton *widget, size_t widgetSize, LgcyWidgetId *as
 static int ui_copy_widget(LgcyWidgetId id, LgcyWidget *widgetOut) {
 	auto widget = uiManager->GetWidget(id);
 	if (!widget) {
-		throw new TempleException(format("Trying to access widget id {} which does not exist.", id));
+		throw new TempleException(fmt::format("Trying to access widget id {} which does not exist.", id));
 	}
 	memcpy(widgetOut, widget, widget->size);
 	return 0;
@@ -64,7 +64,7 @@ static int ui_copy_widget(LgcyWidgetId id, LgcyWidget *widgetOut) {
 static int ui_widget_set(LgcyWidgetId id, const LgcyWidget *widgetData) {
 	auto widget = uiManager->GetWidget(id);
 	if (!widget) {
-		throw new TempleException(format("Trying to access widget id {} which does not exist.", id));
+		throw new TempleException(fmt::format("Trying to access widget id {} which does not exist.", id));
 	}
 	assert(widgetData->size == widget->size);
 	if (widgetData->widgetId == -1){

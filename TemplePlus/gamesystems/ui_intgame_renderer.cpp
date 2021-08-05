@@ -122,7 +122,7 @@ void IntgameRenderer::Render(size_t vertexCount, XMFLOAT4* positions, XMFLOAT4* 
 
 	vbLock.Unmap();
 
-	mIndexBuffer->Update(gsl::span(indices, primCount * 3));
+	mIndexBuffer->Update(std::span(indices, primCount * 3));
 
 	mBufferBinding.Bind();
 	mDevice.SetIndexBuffer(*mIndexBuffer);

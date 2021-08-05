@@ -172,7 +172,7 @@ void InfiniData::ReadBif( std::vector<uint8_t> &bifBytes){
 		for (auto j = 0; j < tileCount; j++){
 			IeBitmapFromTile bm(*tiledata);
 			
-			string fname(fmt::format("AR{}.bmp", j));
+			std::string fname(fmt::format("AR{}.bmp", j));
 			auto f = tio_fopen(fname.c_str(), "wb");
 			tio_fwrite(&bm, 1, sizeof(IeBitmapFromTile), f);
 			tio_fclose(f);

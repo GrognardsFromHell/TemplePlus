@@ -279,7 +279,7 @@ BOOL LegacyCombatSystem::CanMeleeTargetAtLocRegardItem(objHndl obj, objHndl weap
 	}
 	float objReach = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK),
 		tgtRadius = locSys.InchesToFeet(objects.GetRadius(target));
-	auto distToLoc = max((float)0.0,locSys.DistanceToLocFeet(obj, loc));
+	auto distToLoc = std::max((float)0.0,locSys.DistanceToLocFeet(obj, loc));
 	if (tgtRadius + objReach < distToLoc)
 		return 0;
 	return TRUE;
@@ -341,7 +341,7 @@ BOOL LegacyCombatSystem::CanMeleeTargetFromLoc(objHndl obj, objHndl target, LocA
 				return 0;
 			float objReach = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK);
 			float tgtRadius = objects.GetRadius(target) / 12.0f;
-			if (max(static_cast<float>(0.0),
+			if (std::max(static_cast<float>(0.0),
 				locSys.DistanceToLocFeet(target, objLoc)) - tgtRadius > objReach)
 				return 0;
 		}
@@ -366,7 +366,7 @@ bool LegacyCombatSystem::CanMeleeTargetFromLocRegardItem(objHndl obj, objHndl we
 	}
 	float objReach  = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK),
 		  tgtRadius = locSys.InchesToFeet(objects.GetRadius(target));
-	auto distToLoc = max((float)0.0, locSys.DistanceToLocFeet(target, objLoc));
+	auto distToLoc = std::max((float)0.0, locSys.DistanceToLocFeet(target, objLoc));
 
 	if (tgtRadius + objReach < distToLoc)
 		return 0;
@@ -396,7 +396,7 @@ BOOL LegacyCombatSystem::CanMeleeTarget(objHndl obj, objHndl target){
 	if (!objects.getArrayFieldInt32(obj, obj_f_critter_attacks_idx, 0))
 		return 0;
 	auto objReach = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK);
-	if (objReach > max(static_cast<float>(0.0), locSys.DistanceToObj(obj, target)))
+	if (objReach > std::max(static_cast<float>(0.0), locSys.DistanceToObj(obj, target)))
 		return 1;
 	return 0;
 }
@@ -417,7 +417,7 @@ BOOL LegacyCombatSystem::CanMeleeTargetRegardWeapon(objHndl obj, objHndl weapon,
 			return 0;
 	}
 	float objReach = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK);
-	auto distToTgt = max((float)0.0, locSys.DistanceToObj(obj, target));
+	auto distToTgt = std::max((float)0.0, locSys.DistanceToObj(obj, target));
 	if ( objReach <= distToTgt)
 		return 0;
 	return 1;
@@ -1902,7 +1902,7 @@ void LegacyCombatSystem::ToHitProcessing(D20Actn& d20a){
 
 void LegacyCombatSystem::ToHitProcessingPython(D20Actn& d20a)
 {
-	py::object pyd20a = py::cast<D20Actn*>(&d20a);
+	py::object pyd20a = py::cast(&d20a);
 	py::tuple args = py::make_tuple(pyd20a);
 
 	auto result = pythonObjIntegration.ExecuteScript("d20_combat.to_hit_processing", "to_hit_processing", args.ptr());

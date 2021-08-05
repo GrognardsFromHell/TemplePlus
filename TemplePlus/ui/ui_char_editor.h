@@ -104,8 +104,8 @@ public:
 	bool IsClassBonusFeat(feat_enums feat);
 	bool IsBonusFeatDisregardingPrereqs(feat_enums feat);
 
-	eastl::vector<string> levelLabels;
-	eastl::vector<string> spellLevelLabels;
+	eastl::vector<std::string> levelLabels;
+	eastl::vector<std::string> spellLevelLabels;
 
 protected:
 	std::vector<KnownSpellInfo> mSpellInfo;

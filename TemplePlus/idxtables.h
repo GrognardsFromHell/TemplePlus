@@ -1,6 +1,8 @@
 #pragma once
 
+#include <iterator>
 #include <temple/dll.h>
+#include <infrastructure/exception.h>
 
 template <typename T>
 struct IdxTableNode : temple::TempleAlloc
@@ -41,7 +43,16 @@ class IdxTableIterator
 public:
 	friend class IdxTableWrapper<T>;
 
-	IdxTableIterator& operator ++()
+	using value_type = T;
+
+	using reference = IdxTableNode<T> const&;
+	using pointer   = IdxTableNode<T> const*;
+
+	using difference_type = std::ptrdiff_t;
+
+	using iterator_category = std::input_iterator_tag;
+
+	IdxTableIterator& operator ++() noexcept
 	{
 		// find next
 		if (mBucket >= mTable->bucketCount)
@@ -70,30 +81,29 @@ public:
 		return *this;
 	}
 
-	const IdxTableNode<T>& operator *()
+	constexpr reference operator *() noexcept
 	{
 		return *mNode;
 	}
 
-	inline bool operator==(const IdxTableIterator<T>& b)
+	constexpr bool operator==(const IdxTableIterator<T>& b) noexcept
 	{
 		return mTable == b.mTable &&
 			mNode == b.mNode &&
 			mBucket == b.mBucket;
 	}
 
-	template <typename T>
-	inline bool operator!=(const IdxTableIterator<T>& b)
+	constexpr bool operator!=(const IdxTableIterator<T>& b) noexcept
 	{
 		return !(*this == b);
 	}
 
 private:
-	explicit IdxTableIterator(const IdxTable<T>* table, IdxTableNode<T>* node, int bucket) : mTable(table), mNode(node), mBucket(bucket)
+    explicit IdxTableIterator(const IdxTable<T>* table, IdxTableNode<T>* node, int bucket) noexcept : mTable(table), mNode(node), mBucket(bucket)
 	{
 	}
 
-	explicit IdxTableIterator(const IdxTable<T>* table) : mTable(table), mNode(nullptr), mBucket(0)
+	explicit IdxTableIterator(const IdxTable<T>* table) noexcept : mTable(table), mNode(nullptr), mBucket(0)
 	{
 		for (mBucket = 0; mBucket < table->bucketCount; ++mBucket)
 		{
@@ -118,12 +128,12 @@ template <typename T>
 class IdxTableWrapper
 {
 public:
-	IdxTableWrapper(uint32_t address) : mTable(reinterpret_cast<IdxTable<T>*>(address))
+	explicit IdxTableWrapper(uint32_t address) : mTable(reinterpret_cast<IdxTable<T>*>(address))
 	{
 		temple::Dll::RegisterAddressPtr(reinterpret_cast<void**>(&mTable));
 	}
 
-	IdxTableWrapper(IdxTable<T>* pointer) : mTable(pointer)
+	explicit IdxTableWrapper(IdxTable<T>* pointer) : mTable(pointer)
 	{
 	}
 
@@ -224,8 +234,8 @@ public:
 
 	IdxTableIterator<T> erase(IdxTableIterator<T> it)
 	{
-		Expects(it.mTable == this->mTable);
-		Expects(it.mNode != nullptr);
+		assert(it.mTable == this->mTable);
+		assert(it.mNode != nullptr);
 		auto bucketId = it.mBucket;
 		IdxTableNode<T> *prevNode = nullptr;
 		IdxTableNode<T> *node = mTable->buckets[bucketId];

@@ -1,5 +1,12 @@
 set(PROJECT_NAME TemplePlus)
 
+#
+# This is a fake generated .lib file that simplifies using imports from tio.dll, which
+# we reuse from the original game.
+#
+add_library(tio STATIC IMPORTED)
+set_target_properties(tio PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/tio/tio.lib)
+
 ################################################################################
 # Source groups
 ################################################################################
@@ -190,7 +197,7 @@ set(no_group_source_files
     "rng.h"
     "sound.cpp"
     "sound.h"
-    "stdafx.cpp"
+    "pch.cpp"
     "stdafx.h"
     "tab_file.cpp"
     "tab_file.h"
@@ -224,14 +231,14 @@ set(no_group_source_files
     "util/savegame.h"
     "util/streams.cpp"
     "util/streams.h"
-)
+    )
 source_group("" FILES ${no_group_source_files})
 
 set(Dungeon_Master
     "dungeon_master.cpp"
     "dungeon_master.h"
     "dungeon_master_obj_editor.cpp"
-)
+    )
 source_group("Dungeon Master" FILES ${Dungeon_Master})
 
 set(Map_System
@@ -241,7 +248,7 @@ set(Map_System
     "maps.h"
     "path_node.cpp"
     "path_node.h"
-)
+    )
 source_group("Map System" FILES ${Map_System})
 
 set(Mods_and_Fixes
@@ -316,21 +323,21 @@ set(Mods_and_Fixes
     "weapon.h"
     "xp.cpp"
     "xp.h"
-)
+    )
 source_group("Mods and Fixes" FILES ${Mods_and_Fixes})
 
 set(Mods_and_Fixes__Condition_Fixes
     "ability_fixes.cpp"
     "general_condition_fixes.cpp"
     "spell_condition.cpp"
-)
+    )
 source_group("Mods and Fixes\\Condition Fixes" FILES ${Mods_and_Fixes__Condition_Fixes})
 
 set(generic_data_structures
     "hashtable.h"
     "idxtables.cpp"
     "idxtables.h"
-)
+    )
 source_group("generic data structures" FILES ${generic_data_structures})
 
 set(python
@@ -363,6 +370,7 @@ set(python
     "python/python_globalflags.h"
     "python/python_globalvars.cpp"
     "python/python_globalvars.h"
+    "python/python_gui.cpp"
     "python/python_header.h"
     "python/python_importer.cpp"
     "python/python_importer.h"
@@ -405,7 +413,8 @@ set(python
     "python/python_trap.h"
     "python/pythonglobal.cpp"
     "python/pythonglobal.h"
-)
+    "ui/ui_python.h"
+    )
 source_group("python" FILES ${python})
 
 set(tig
@@ -435,7 +444,7 @@ set(tig
     "tig/tig_texture.h"
     "tig/tig_tokenizer.cpp"
     "tig/tig_tokenizer.h"
-)
+    )
 source_group("tig" FILES ${tig})
 
 set(ui
@@ -514,7 +523,7 @@ set(ui
     "ui/ui_worldmap.cpp"
     "ui/ui_worldmap.h"
     "ui/ui_wrapper.cpp"
-)
+    )
 source_group("ui" FILES ${ui})
 
 set(utils
@@ -524,7 +533,7 @@ set(utils
     "obj_fieldnames.h"
     "util/folderutils.cpp"
     "util/folderutils.h"
-)
+    )
 source_group("utils" FILES ${utils})
 
 set(ALL_FILES
@@ -538,157 +547,36 @@ set(ALL_FILES
     ${tig}
     ${ui}
     ${utils}
-)
+    resource.rc
+    TemplePlus.def
+    )
 
 ################################################################################
 # Target
 ################################################################################
-add_executable(${PROJECT_NAME} ${ALL_FILES})
+add_library(${PROJECT_NAME} SHARED ${ALL_FILES})
 
-add_precompiled_header(${PROJECT_NAME} "stdafx.h" "stdafx.cpp")
-
-use_props(${PROJECT_NAME} "${CMAKE_CONFIGURATION_TYPES}" "${DEFAULT_CXX_PROPS}")
-set(ROOT_NAMESPACE TemplePlus)
-
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    VS_GLOBAL_KEYWORD "Win32Proj"
-)
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    INTERPROCEDURAL_OPTIMIZATION_RELEASE     "TRUE"
-)
-################################################################################
-# MSVC runtime library
-################################################################################
-get_property(MSVC_RUNTIME_LIBRARY_DEFAULT TARGET ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY)
-string(CONCAT "MSVC_RUNTIME_LIBRARY_STR"
-    $<$<CONFIG:Debug>:
-        MultiThreadedDebug
-    >
-    $<$<CONFIG:Release>:
-        MultiThreaded
-    >
-    $<$<CONFIG:TestWithIda>:
-        MultiThreadedDebug
-    >
-    $<$<NOT:$<OR:$<CONFIG:Debug>,$<CONFIG:Release>,$<CONFIG:TestWithIda>>>:${MSVC_RUNTIME_LIBRARY_DEFAULT}>
-)
-set_target_properties(${PROJECT_NAME} PROPERTIES MSVC_RUNTIME_LIBRARY ${MSVC_RUNTIME_LIBRARY_STR})
+add_precompiled_header(${PROJECT_NAME} "stdafx.h" "pch.cpp")
 
 ################################################################################
 # Include directories
 ################################################################################
-target_include_directories(${PROJECT_NAME} PUBLIC
-    "${CMAKE_CURRENT_SOURCE_DIR}/.;"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../dependencies/include;"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../MinHook/include;"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../Infrastructure/include;"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../D3D8Adapter/include"
-)
-
-################################################################################
-# Compile definitions
-################################################################################
-target_compile_definitions(${PROJECT_NAME} PRIVATE
-    "$<$<CONFIG:Debug>:"
-        "_SCL_SECURE_NO_WARNINGS;"
-        "_DEBUG;"
-        "$ENV{MSBuildDefines}"
-    ">"
-    "$<$<CONFIG:Release>:"
-        "_SCL_SECURE_NO_WARNINGS;"
-        "NDEBUG;"
-        "$ENV{MSBuildDefines}"
-    ">"
-    "$<$<CONFIG:TestWithIda>:"
-        "_DEBUG"
-    ">"
-    "WIN32;"
-    "_WINDOWS;"
-    "UNICODE;"
-    "_UNICODE"
-)
-set_source_files_properties(gamesystems/objects/objregistry_hooks.cpp PROPERTIES
-    COMPILE_DEFINITIONS_DEBUG "_SCL_SECURE_NO_WARNINGS;WIN32;_WINDOWS;$ENV{MSBuildDefines}"
-)
+target_include_directories(${PROJECT_NAME} PRIVATE .)
 
 ################################################################################
 # Compile and link options
 ################################################################################
-if(MSVC)
-    target_compile_options(${PROJECT_NAME} PRIVATE
-        $<$<CONFIG:Debug>:
-            /MP;
-            /Gm-;
-            /Od
-        >
-        $<$<CONFIG:Release>:
-            /GL-;
-            /O2;
-            /Oi
-        >
-        $<$<CONFIG:TestWithIda>:
-            /Od;
-            /wd4996
-        >
-        /std:c++17;
-        /arch:SSE2;
-        /W3;
-        ${DEFAULT_CXX_DEBUG_INFORMATION_FORMAT};
-        ${DEFAULT_CXX_EXCEPTION_HANDLING}
-    )
-    string(CONCAT FILE_CL_OPTIONS
-        "$<$<CONFIG:Debug>:"
-            "/O2;/Oi;/Zi;/GS-;/Y-"
-        ">"
-    )
-    source_file_compile_options(gamesystems/objects/objregistry_hooks.cpp ${FILE_CL_OPTIONS})
-    string(CONCAT FILE_CL_OPTIONS
-        "/Y-"
-    )
-    source_file_compile_options(graphics/video_hooks.cpp ${FILE_CL_OPTIONS})
-    string(CONCAT FILE_CL_OPTIONS
-        "/Y-"
-    )
-    source_file_compile_options(portrait_in_mainmenu.cpp ${FILE_CL_OPTIONS})
-    target_link_options(${PROJECT_NAME} PRIVATE
-        $<$<CONFIG:Debug>:
-            /DELAYLOAD:d2d1.dll;
-            /DELAYLOAD:psapi.dll;
-            /DEBUG:FULL;
-            /DYNAMICBASE:NO;
-            /INCREMENTAL
-        >
-        $<$<CONFIG:Release>:
-            /DELAYLOAD:d2d1.dll;
-            /DELAYLOAD:psapi.dll;
-            /DEBUG;
-            /OPT:REF;
-            /LTCG;
-            /OPT:ICF;
-            /DYNAMICBASE:NO;
-            /INCREMENTAL:NO
-        >
-        $<$<CONFIG:TestWithIda>:
-            /DELAYLOAD:bcrypt.dll;
-            /DELAYLOAD:d3d9.dll;
-            /DEBUG;
-            /INCREMENTAL
-        >
-        /DELAYLOAD:crypt32.dll;
-        /DELAYLOAD:ws2_32.dll;
-        /DELAYLOAD:oleaut32.dll;
-        /DELAYLOAD:shell32.dll;
-        /DELAYLOAD:advapi32.dll;
-        /DELAYLOAD:gdi32.dll;
-        /DELAYLOAD:user32.dll;
-        /DELAYLOAD:tio.dll;
-        /DELAYLOAD:winmm.dll;
-        /DELAYLOAD:shlwapi.dll;
-        /DELAYLOAD:ole32.dll;
-        /DELAYLOAD:D3dcompiler_47.dll;
-        /SUBSYSTEM:WINDOWS
-    )
-endif()
+if (MSVC)
+  # tio.dll is only available once we've added the game directory to the DLL path
+  target_link_options(${PROJECT_NAME} PRIVATE /DELAYLOAD:tio.dll)
+endif ()
+
+################################################################################
+# Setup defines for building releases via CI/CD on Github
+################################################################################
+if (TP_RELEASE_BUILD)
+  target_compile_definitions(${PROJECT_NAME} PRIVATE TP_RELEASE_BUILD _TP_VERSION=${TP_VERSION} _TP_COMMIT=${TP_COMMIT})
+endif ()
 
 ################################################################################
 # Post build events
@@ -697,75 +585,117 @@ add_custom_command_if(
     TARGET ${PROJECT_NAME}
     POST_BUILD
     COMMANDS
-    COMMAND       $<CONFIG:Debug> "$<SHELL_PATH:${CMAKE_CURRENT_SOURCE_DIR}/>\\..\\tpdatasrc\\PackFiles.bat"
-    COMMAND     $<CONFIG:Release> "$<SHELL_PATH:${CMAKE_CURRENT_SOURCE_DIR}/>\\..\\tpdatasrc\\PackFiles.bat"
-    COMMAND $<CONFIG:TestWithIda> "$<SHELL_PATH:${CMAKE_CURRENT_SOURCE_DIR}/>\\..\\tpdatasrc\\PackFiles.bat"
+    COMMAND "$<SHELL_PATH:${CMAKE_CURRENT_SOURCE_DIR}/>\\..\\tpdatasrc\\PackFiles.bat"
 )
 
 ################################################################################
 # Dependencies
 ################################################################################
-add_dependencies(${PROJECT_NAME}
-    Infrastructure
-    ParticleSystems
-    Temple
-    EASTL
-)
-
 # Link with other targets.
-target_link_libraries(${PROJECT_NAME} PRIVATE
+target_link_libraries(${PROJECT_NAME} PUBLIC
+    EASTL::EASTL
     Infrastructure
     ParticleSystems
     Temple
+    MinHook::MinHook
+    Python2::Python
+    tio
+    zlib::zlib
+    pybind11::pybind11
+    libjpeg-turbo::turbojpeg
+    # for timeGetTime
+    winmm.lib
+    # For delay-loading
+    delayimp.lib
 )
 
-set(ADDITIONAL_LIBRARY_DEPENDENCIES
-    "$<$<CONFIG:Debug>:"
-        "d2d1;"
-        "dwrite;"
-        "dxguid;"
-        "d3d11;"
-        "dxgi;"
-        "d3dcompiler;"
-        "EASTL;"
-        "psapi;"
-        "turbojpeg-static_d;"
-        "particlesystems;"
-        "temple;"
-        "Infrastructure;"
-        "d3d9;"
-        "python27_d"
-    ">"
-    "$<$<CONFIG:Release>:"
-        "d2d1;"
-        "dwrite;"
-        "dxguid;"
-        "d3d11;"
-        "dxgi;"
-        "d3dcompiler;"
-        "EASTL;"
-        "psapi;"
-        "turbojpeg-static;"
-        "particlesystems;"
-        "temple;"
-        "Infrastructure;"
-        "python27"
-    ">"
-    "$<$<CONFIG:TestWithIda>:"
-        "d3d9;"
-        "pythonembed_d"
-    ">"
-    "tio\tio;"
-    "winmm;"
-    "Crypt32;"
-    "ws2_32;"
-    "libeay32;"
-    "ssleay32"
-)
-target_link_libraries(${PROJECT_NAME} PRIVATE "${ADDITIONAL_LIBRARY_DEPENDENCIES}")
+################################################################################
+# Launcher
+################################################################################
+set(LAUNCHER_NAME ${PROJECT_NAME}Launcher)
+add_executable(${LAUNCHER_NAME} WIN32 resource.rc launcher.cpp)
+target_link_options(${LAUNCHER_NAME} PRIVATE /DELAYLOAD:$<TARGET_FILE_BASE_NAME:${PROJECT_NAME}>)
+target_link_libraries(${LAUNCHER_NAME} PRIVATE ${PROJECT_NAME} delayimp.lib)
 
-target_link_directories(${PROJECT_NAME} PRIVATE
-    "${CMAKE_SOURCE_DIR}/dependencies/lib;"
-    "${OUTPUT_DIRECTORY}"
-)
+# Run from where the project sources are so that tpdata is picked up without having to copy it first
+get_filename_component(LAUNCH_WORKDIR ${CMAKE_CURRENT_LIST_DIR}/../tpdata ABSOLUTE)
+set_target_properties(${LAUNCHER_NAME} PROPERTIES VS_DEBUGGER_ENVIRONMENT "TP_DATA=$<SHELL_PATH:${LAUNCH_WORKDIR}>")
 
+# Ensure dependency DLLs are copied to executable directory
+copy_dependencies(${LAUNCHER_NAME})
+
+################################################################################
+# Install
+################################################################################
+if (${CMAKE_VERSION} VERSION_LESS "3.21.0")
+  message("Not creating install targets. Please use CMake 3.21 or newer")
+else ()
+  # This copies the C++ runtime files into our app directory so that users do 
+  # not need to install the redistributable.
+  set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP TRUE)
+  include(InstallRequiredSystemLibraries)
+  list(FILTER CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS EXCLUDE REGEX concrt)
+  install(FILES ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS} DESTINATION .)
+
+  install(TARGETS ${LAUNCHER_NAME}
+    RENAME ${PROJECT_NAME}
+    DESTINATION .
+  )
+
+  install(TARGETS ${PROJECT_NAME}
+      RUNTIME_DEPENDENCIES
+      PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "tio\\.dll"
+      POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
+      DIRECTORIES ${Python2_RUNTIME_LIBRARY_DIRS}
+      DESTINATION .
+      )
+  install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/../tpdata
+      DESTINATION .
+      MESSAGE_NEVER
+      # Exclude stuff like .idea from pycharm
+      PATTERN .* EXCLUDE)
+
+  # Install the Python library
+  file(TO_CMAKE_PATH "${Python2_STDLIB}" Python2_STDLIB)
+  file(TO_CMAKE_PATH "${Python2_RUNTIME_LIBRARY_DIRS}" Python2_RUNTIME_LIBRARY_DIRS)
+
+  install(DIRECTORY "${Python2_RUNTIME_LIBRARY_DIRS}/DLLs/"
+      DESTINATION lib
+      MESSAGE_NEVER
+      FILES_MATCHING
+      PATTERN unicodedata.pyd
+      PATTERN _ctypes.pyd
+      PATTERN _elementtree.pyd
+      PATTERN _hashlib.pyd
+      PATTERN _socket.pyd
+      PATTERN _ssl.pyd
+      PATTERN bz2.pyd
+      PATTERN pyexpat.pyd
+      PATTERN select.pyd
+  )
+  install(DIRECTORY "${Python2_STDLIB}"
+      DESTINATION .
+      MESSAGE_NEVER
+      # Long list of modules we don't need...
+      PATTERN site-packages EXCLUDE
+      PATTERN test EXCLUDE
+      PATTERN plat-* EXCLUDE
+      PATTERN multiprocessing EXCLUDE
+      PATTERN idlelib EXCLUDE
+      PATTERN lib2to3 EXCLUDE
+      PATTERN lib-tk EXCLUDE
+      PATTERN email EXCLUDE
+      PATTERN curses EXCLUDE
+      PATTERN bsddb EXCLUDE
+      PATTERN ensurepip EXCLUDE
+      PATTERN distutils EXCLUDE
+      PATTERN msilib EXCLUDE
+      PATTERN pydoc_data EXCLUDE
+      PATTERN sqlite3 EXCLUDE
+      PATTERN unittest EXCLUDE
+      PATTERN wsgiref EXCLUDE
+    )
+  # Install the Python interpreter
+  file(TO_CMAKE_PATH "${Python2_EXECUTABLE}" Python2_EXECUTABLE)
+  install(FILES "${Python2_EXECUTABLE}" DESTINATION .)
+endif ()

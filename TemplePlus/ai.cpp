@@ -199,7 +199,7 @@ uint32_t AiSystem::StrategyParse(objHndl objHnd, objHndl target)
 
 	#pragma endregion
 	
-	py::tuple args = py::make_tuple(py::cast(objHnd), py::cast<objHndl>(target));
+	py::tuple args = py::make_tuple(py::cast(objHnd), py::cast(target));
 	auto pyResult = pythonObjIntegration.ExecuteScript("d20_ai.combat_strategy", "execute_strategy", args.ptr());
 	if (PyInt_Check(pyResult)) {
 		auto result = _PyInt_AsInt(pyResult);
@@ -391,7 +391,7 @@ void AiSystem::ClearAiFlag(objHndl npc, AiFlag flag) {
 AiParamPacket AiSystem::GetAiParams(objHndl obj)
 {
 	auto aiParamIdx = gameSystems->GetObj().GetObject(obj)->GetInt32(obj_f_npc_ai_data);
-	Expects(aiParamIdx >= 0 && aiParamIdx < 100000);
+	assert(aiParamIdx >= 0 && aiParamIdx < 100000);
 	return aiParams[aiParamIdx];
 
 }
@@ -429,7 +429,7 @@ BOOL AiSystem::AiListFind(objHndl aiHandle, objHndl tgt, int typeToFind){
 		return FALSE;
 
 	auto aiListCount = obj->GetObjectIdArray(obj_f_npc_ai_list_idx).GetSize();
-	auto N = min(aiListCount, typeListCount);
+	auto N = std::min(aiListCount, typeListCount);
 
 	for (auto i=0u; i < N; i++){
 		auto aiListType = obj->GetInt32(obj_f_npc_ai_list_type_idx, i);
@@ -698,7 +698,7 @@ BOOL AiSystem::ConsiderTarget(objHndl obj, objHndl tgt)
 	if (!tgt || tgt == obj)
 		return 0;
 
-	py::tuple args = py::make_tuple(py::cast<objHndl>(obj), py::cast<objHndl>(tgt));
+	py::tuple args = py::make_tuple(py::cast(obj), py::cast(tgt));
 	auto pyResult = pythonObjIntegration.ExecuteScript("d20_ai.targeting", "consider_target", args.ptr());
 	if (PyInt_Check(pyResult)) {
 		auto result = _PyInt_AsInt(pyResult);
@@ -2139,7 +2139,7 @@ void AiSystem::StrategyTabLineParseTacticMiddleString(AiStrategy* aiStrat, int i
 		}
 		else 
 		if (objSystem) {
-			objHndl found = objSystem->FindObjectByIdStr(format("{}", middleString));
+			objHndl found = objSystem->FindObjectByIdStr(fmt::format("{}", middleString));
 			if (found) {
 				aiStrat->spellsKnown[idx].pad2 = found.GetHandleLower();
 				aiStrat->spellsKnown[idx].pad3 = found.GetHandleUpper();
@@ -2148,7 +2148,7 @@ void AiSystem::StrategyTabLineParseTacticMiddleString(AiStrategy* aiStrat, int i
 	}
 }
 
-void AiSystem::ParseStrategyLine(AiStrategy & newStrategy, const std::vector< string>& strings)
+void AiSystem::ParseStrategyLine(AiStrategy & newStrategy, const std::vector<std::string>& strings)
 {
 	newStrategy.numTactics = 0;
 	if (!strings.size())
@@ -2636,7 +2636,7 @@ int AiSystem::ChooseRandomSpell(AiPacket* aiPkt)
 	}
 
 	auto aiDataIdx = objects.getInt32(obj, obj_f_npc_ai_data);
-	Expects(aiDataIdx >= 0 && aiDataIdx <= 150);
+	assert(aiDataIdx >= 0 && aiDataIdx <= 150);
 	AiParamPacket aiParam = aiParams[aiDataIdx];
 	
 	if (aiParam.defensiveSpellChance > rngSys.GetInt(1,100))
@@ -3702,7 +3702,7 @@ public:
 		logger->info("Replacing AI functions...");
 
 		/*replaceFunction<BOOL(__cdecl)(objHndl, objHndl)>(0x, []() {
-			py::tuple args = py::make_tuple(py::cast(critter1), py::cast<objHndl>(critter2));
+			py::tuple args = py::make_tuple(py::cast(critter1), py::cast(critter2));
 			auto pyResult = pythonObjIntegration.ExecuteScript("d20_ai.friendship", "is_friendly", args.ptr());
 			if (PyInt_Check(pyResult)) {
 				auto result = _PyInt_AsInt(pyResult);

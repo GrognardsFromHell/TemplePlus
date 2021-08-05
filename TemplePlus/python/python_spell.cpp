@@ -67,7 +67,7 @@ struct PySpellStore {
 const int testSizeofPyspell = sizeof PySpell; // should be 680 (due to HEAD_EXTRA is +8 relative to toee)
 
 // Contains all active spells
-typedef unordered_map<int, PySpell*> ActiveSpellMap;
+typedef std::unordered_map<int, PySpell*> ActiveSpellMap;
 static ActiveSpellMap activeSpells;
 
 /******************************************************************************
@@ -128,7 +128,7 @@ static PyObject *PySpell_SpellTargetListSort(PyObject *obj, PyObject *args) {
 	}
 	
 	// Copy them over for much easier sorting using STL
-	vector<PySpellTarget> targets(self->targetCount);
+	std::vector<PySpellTarget> targets(self->targetCount);
 	for (int i = 0; i < self->targetCount; ++i) {
 		targets[i] = self->targets[i];
 	}
@@ -136,7 +136,7 @@ static PyObject *PySpell_SpellTargetListSort(PyObject *obj, PyObject *args) {
 	switch (criteria) {
 		// This seems pretty useless
 	case OBJ_HANDLE:
-		sort(targets.begin(), targets.end(), [=] (const PySpellTarget &a, const PySpellTarget &b) {
+	    std::sort(targets.begin(), targets.end(), [=] (const PySpellTarget &a, const PySpellTarget &b) {
 			if (!descending) {
 				return a.obj.handle < b.obj.handle;
 			} else {
@@ -145,7 +145,7 @@ static PyObject *PySpell_SpellTargetListSort(PyObject *obj, PyObject *args) {
 		});
 		break;
 	case HIT_DICE: 
-		sort(targets.begin(), targets.end(), [=](const PySpellTarget &a, const PySpellTarget &b) {
+	    std::sort(targets.begin(), targets.end(), [=](const PySpellTarget &a, const PySpellTarget &b) {
 			auto diceA = objects.GetHitDiceNum(a.obj);
 			auto diceB = objects.GetHitDiceNum(b.obj);
 			if (!descending) {
@@ -156,7 +156,7 @@ static PyObject *PySpell_SpellTargetListSort(PyObject *obj, PyObject *args) {
 		});
 		break;
 	case HIT_DICE_THEN_DIST: 
-		sort(targets.begin(), targets.end(), [=](const PySpellTarget &a, const PySpellTarget &b) {
+	    std::sort(targets.begin(), targets.end(), [=](const PySpellTarget &a, const PySpellTarget &b) {
 			auto diceA = objects.GetHitDiceNum(a.obj);
 			auto diceB = objects.GetHitDiceNum(b.obj);
 			if (diceA != diceB) {
@@ -177,7 +177,7 @@ static PyObject *PySpell_SpellTargetListSort(PyObject *obj, PyObject *args) {
 		});
 		break;
 	case DIST: 
-		sort(targets.begin(), targets.end(), [=](const PySpellTarget &a, const PySpellTarget &b) {
+	    std::sort(targets.begin(), targets.end(), [=](const PySpellTarget &a, const PySpellTarget &b) {
 			auto distA = locSys.DistanceToLoc(a.obj, self->targetLocation.location);
 			auto distB = locSys.DistanceToLoc(b.obj, self->targetLocation.location);
 			if (!descending) {
@@ -188,7 +188,7 @@ static PyObject *PySpell_SpellTargetListSort(PyObject *obj, PyObject *args) {
 		});
 		break;
 	case DIST_FROM_CASTER:
-		sort(targets.begin(), targets.end(), [=](const PySpellTarget &a, const PySpellTarget &b) {
+	    std::sort(targets.begin(), targets.end(), [=](const PySpellTarget &a, const PySpellTarget &b) {
 			// In vanilla, this still just sorts between the target loc and obj. It's fixed here
 			auto distA = locSys.DistanceToObj(a.obj, self->caster);
 			auto distB = locSys.DistanceToObj(b.obj, self->caster);
@@ -594,27 +594,27 @@ static PyObject* PySpell_GetSpell(PyObject* obj, void*) {
 }
 
 static PyGetSetDef PySpellGetSet[] = {
-	{ "begin_round_obj", PySpell_GetBeginRoundObj, NULL, NULL },
-	{"caster", PySpell_GetCaster, PySpell_SetCaster, NULL},
-	{"caster_class", PySpell_GetCasterClass, NULL, NULL},
-	{"spell_level", PySpell_GetSpellLevel, NULL, NULL},
-	{"range_exact", PySpell_GetRangeExact, PySpell_SetRangeExact, NULL},
-	{"target_loc", PySpell_GetTargetLoc, PySpell_SetTargetLoc, NULL},
-	{"target_loc_off_x", PySpell_GetTargetLocOffX, NULL, NULL},
-	{"target_loc_off_y", PySpell_GetTargetLocOffY, NULL, NULL},
-	{"target_loc_off_z", PySpell_GetTargetLocOffZ, NULL, NULL},
-	{"target_loc_full", PySpell_GetTargetLocFull, NULL, NULL },
-	{"caster_level", PySpell_GetCasterLevel, PySpell_SetCasterLevel, NULL},
-	{"dc", PySpell_GetDC, PySpell_SetDC, NULL},
-	{"id", PySpell_GetId, NULL, NULL},
-	{"duration", PySpell_GetDuration, PySpell_SetDuration, NULL},
-	{ "duration_remaining", PySpell_GetDurationRemain, NULL, NULL },
-	{"num_of_targets", PySpell_GetNumOfTargets, PySpell_SetNumOfTargets, NULL},
-	{"num_of_projectiles", PySpell_GetNumOfProjectiles, PySpell_SetNumOfProjectiles, NULL},
-	{"caster_partsys_id", PySpell_GetCasterPartsysId, PySpell_SetCasterPartsysId, NULL},
-	{"target_list", PySpell_GetTargetList, NULL, NULL},
-	{"spell_radius", PySpell_GetSpellRadius, NULL, NULL},
-	{"spell", PySpell_GetSpell, NULL, NULL},
+	{ (char*) "begin_round_obj", PySpell_GetBeginRoundObj, NULL, NULL },
+	{ (char*) "caster", PySpell_GetCaster, PySpell_SetCaster, NULL},
+	{ (char*) "caster_class", PySpell_GetCasterClass, NULL, NULL},
+	{ (char*) "spell_level", PySpell_GetSpellLevel, NULL, NULL},
+	{ (char*) "range_exact", PySpell_GetRangeExact, PySpell_SetRangeExact, NULL},
+	{ (char*) "target_loc", PySpell_GetTargetLoc, PySpell_SetTargetLoc, NULL},
+	{ (char*) "target_loc_off_x", PySpell_GetTargetLocOffX, NULL, NULL},
+	{ (char*) "target_loc_off_y", PySpell_GetTargetLocOffY, NULL, NULL},
+	{ (char*) "target_loc_off_z", PySpell_GetTargetLocOffZ, NULL, NULL},
+	{ (char*) "target_loc_full", PySpell_GetTargetLocFull, NULL, NULL },
+	{ (char*) "caster_level", PySpell_GetCasterLevel, PySpell_SetCasterLevel, NULL},
+	{ (char*) "dc", PySpell_GetDC, PySpell_SetDC, NULL},
+	{ (char*) "id", PySpell_GetId, NULL, NULL},
+	{ (char*) "duration", PySpell_GetDuration, PySpell_SetDuration, NULL},
+	{ (char*) "duration_remaining", PySpell_GetDurationRemain, NULL, NULL },
+	{ (char*) "num_of_targets", PySpell_GetNumOfTargets, PySpell_SetNumOfTargets, NULL},
+	{ (char*) "num_of_projectiles", PySpell_GetNumOfProjectiles, PySpell_SetNumOfProjectiles, NULL},
+	{ (char*) "caster_partsys_id", PySpell_GetCasterPartsysId, PySpell_SetCasterPartsysId, NULL},
+	{ (char*) "target_list", PySpell_GetTargetList, NULL, NULL},
+	{ (char*) "spell_radius", PySpell_GetSpellRadius, NULL, NULL},
+	{ (char*) "spell", PySpell_GetSpell, NULL, NULL},
 	{NULL, NULL, NULL, NULL}
 };
 
@@ -844,8 +844,8 @@ static int PySpellTargetsEntry_SetPartsysId(PyObject *obj, PyObject *value, void
 }
 
 static PyGetSetDef PySpellTargetsEntryGetSet[] = {
-	{ "obj", PySpellTargetsEntry_GetObj, PySpellTargetsEntry_SetObj, NULL },
-	{ "partsys_id", PySpellTargetsEntry_GetPartsysId, PySpellTargetsEntry_SetPartsysId, NULL },
+	{ (char*) "obj", PySpellTargetsEntry_GetObj, PySpellTargetsEntry_SetObj, NULL },
+	{ (char*) "partsys_id", PySpellTargetsEntry_GetPartsysId, PySpellTargetsEntry_SetPartsysId, NULL },
 	{NULL, NULL, NULL, NULL}
 };
 
@@ -928,15 +928,15 @@ static PyObject* PySpellTargets_Repr(PyObject* obj) {
 		return PyString_FromString("No targets");
 	}
 
-	auto text = format("number of targets: ({}) - ", spell->targetCount);
+	auto text = fmt::format("number of targets: ({}) - ", spell->targetCount);
 
 	for (auto i = 0; i < spell->targetCount; ++i) {
 		auto targetObj = spell->targets[i].obj;
 		if (obj) {
 			auto displayName = objects.GetDisplayName(targetObj, objHndl::null);
-			text.append(format("{}[{}({})]", i, displayName, targetObj));
+			text.append(fmt::format("{}[{}({})]", i, displayName, targetObj));
 		} else {
-			text.append(format("{}[OBJ_HANDLE_NULL], ", i));
+			text.append(fmt::format("{}[OBJ_HANDLE_NULL], ", i));
 		}
 	}
 
@@ -1265,10 +1265,10 @@ static PyObject* PySpellStore_GetName(PyObject* obj, void*) {
 	return PyString_FromString(spellSys.GetSpellName(self->spellData.spellEnum));
 }
 static PyGetSetDef PySpellStoreGetSet[] = {
-	{ "spell_enum", PySpellStore_GetEnum, PySpellStore_SetEnum, NULL },
-	{ "spell_level", PySpellStore_GetLevel, PySpellStore_SetLevel, NULL },
-	{ "spell_class", PySpellStore_GetClass, PySpellStore_SetClass, NULL },
-	{ "spell_name", PySpellStore_GetName, NULL, NULL },
+	{ (char*)"spell_enum", PySpellStore_GetEnum, PySpellStore_SetEnum, NULL },
+	{ (char*)"spell_level", PySpellStore_GetLevel, PySpellStore_SetLevel, NULL },
+	{ (char*)"spell_class", PySpellStore_GetClass, PySpellStore_SetClass, NULL },
+	{ (char*)"spell_name", PySpellStore_GetName, NULL, NULL },
 	{ NULL, NULL, NULL, NULL }
 };
 

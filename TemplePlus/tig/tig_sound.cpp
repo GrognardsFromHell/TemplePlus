@@ -24,11 +24,11 @@ bool TigSoundAddresses::PlayInStream(int streamId, int soundId)
 
 bool TigSoundStreamWrapper::Play(int soundId)
 {
-	Expects(mStreamId != -1);
+	assert(mStreamId != -1);
 	return tigSoundAddresses.PlayInStream(mStreamId, soundId);
 }
 
-bool TigSoundStreamWrapper::Play(const string& filename, TigSoundType type)
+bool TigSoundStreamWrapper::Play(const std::string& filename, TigSoundType type)
 {
 	assert(mStreamId == -1);
 	tigSoundAddresses.AllocStream(&mStreamId, type);

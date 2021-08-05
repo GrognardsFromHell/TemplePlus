@@ -139,7 +139,7 @@ GameRenderer::GameRenderer(TigInitializer &tig,
 	  mGameSystems(gameSystems)      
 {
 
-	Expects(!gameRenderer);
+	assert(!gameRenderer);
 
 	mAasRenderer = std::make_unique<aas::Renderer>(
 		gameSystems.GetAAS(), 
@@ -212,7 +212,7 @@ void GameRenderer::Render() {
   // TigRect rect(0, 0, graphics->GetSceneWidth(), graphics->GetSceneHeight());
   // renderFuncs.ScratchbufferRelated(rect);
 
-  if (renderFuncs.gameDrawEnableCount <= 0) {
+  if (*renderFuncs.gameDrawEnableCount <= 0) {
     return;
   }
 

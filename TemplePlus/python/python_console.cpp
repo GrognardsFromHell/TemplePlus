@@ -13,7 +13,7 @@ PyConsole::~PyConsole() {
 	Py_DECREF(mLocals);
 }
 
-void PyConsole::Exec(const string& command) {
+void PyConsole::Exec(const std::string& command) {
 
 	auto globals = PyModule_GetDict(mMainModule);
 	auto result = PyRun_String(command.c_str(), Py_single_input, globals, mLocals);

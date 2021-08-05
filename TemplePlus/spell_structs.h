@@ -158,12 +158,12 @@ struct SpellStoreData
 		padSpellStore = 0;
 	}*/
 
-	SpellStoreData(int SpellEnum, int SpellLevel, int ClassCode, MetaMagicData mmData, SpellStoreState SpellStoreData) :SpellStoreData() {
+	SpellStoreData(int SpellEnum, int SpellLevel, int ClassCode, MetaMagicData mmData, SpellStoreState state) :SpellStoreData() {
 		spellEnum = SpellEnum;
 		classCode = ClassCode;
 		spellLevel = SpellLevel;
 		metaMagicData = mmData;
-		spellStoreState = SpellStoreData;
+		spellStoreState = state;
 	}
 
 	SpellStoreData(int SpellEnum, int SpellLevel, int ClassCode, MetaMagicData mmData) :SpellStoreData() {

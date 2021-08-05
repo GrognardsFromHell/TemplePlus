@@ -21,7 +21,7 @@ static PyObject *PyTioFile_Read(PyObject *obj, PyObject *countObj) {
 		return 0;
 	}
 
-	vector<char> buffer(size);
+	std::vector<char> buffer(size);
 	int readSize = tio_fread(buffer.data(), 1, buffer.size(), file);
 	
 	return PyString_FromStringAndSize(buffer.data(), readSize);
@@ -30,7 +30,7 @@ static PyObject *PyTioFile_Read(PyObject *obj, PyObject *countObj) {
 static PyObject *PyTioFile_Readline(PyObject *obj, PyObject *) {
 	auto file = GetTioFile(obj);
 
-	vector<char> result;
+	std::vector<char> result;
 	char b;
 	while (tio_fread(&b, 1, 1, file) == 1) {
 		result.push_back(b);

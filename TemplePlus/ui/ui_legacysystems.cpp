@@ -1222,7 +1222,7 @@ int UiCamping::GetHealingAmount(objHndl handle, int restPeriods){
 	
 	auto lvl = objects.StatLevelGet(handle, stat_level);
 	auto hdCount = objects.GetHitDiceNum(handle);
-	auto healQuantum = max(hdCount, lvl);
+	auto healQuantum = std::max(hdCount, lvl);
 
 	auto healerMod = GetHealingAmountMod();
 
@@ -1243,7 +1243,7 @@ int UiCamping::GetHealingAmountMod(){
 
 			auto maxClrSpellLvl = spellSys.GetMaxSpellLevel(partyMember, stat_level_cleric);
 			auto maxDrdSpellLvl = spellSys.GetMaxSpellLevel(partyMember, stat_level_druid);
-			healerMod = max(healerMod, max(maxClrSpellLvl * 5, maxDrdSpellLvl * 4));
+			healerMod = std::max(healerMod, std::max(maxClrSpellLvl * 5, maxDrdSpellLvl * 4));
 		}
 	}
 

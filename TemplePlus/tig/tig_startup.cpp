@@ -86,7 +86,7 @@ static TigConfig createTigConfig(HINSTANCE hInstance);
 TigInitializer::TigInitializer(HINSTANCE hInstance)
 	: mConfig(createTigConfig(hInstance)) {
 
-	Expects(tig == nullptr);
+	assert(tig == nullptr);
 	tig = this;
 
 	StopwatchReporter reporter("TIG initialized in {}");
@@ -176,6 +176,11 @@ static std::string FindTpData() {
 		return ownFilename;
 	}
 #endif
+
+	auto fromEnvironment = getenv("TP_DATA");
+	if (fromEnvironment) {
+		return fromEnvironment;
+	}
 
 	return "tpdata"; // Just fall back to this then...
 

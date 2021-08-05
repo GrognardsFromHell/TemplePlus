@@ -11,7 +11,7 @@ UiAssets *uiAssets;
 
 UiAssets::UiAssets()
 {
-	Expects(!uiAssets);
+	assert(!uiAssets);
 	uiAssets = this;
 
 	mTranslationFiles["main_menu"] = MesFile::ParseFile("mes/mainmenu.mes");

@@ -28,7 +28,7 @@ static int PyQuest_SetState(PyObject *obj, PyObject *value, void *) {
 }
 
 static PyGetSetDef PyQuestGetSet[] = {
-	{ "state", PyQuest_GetState, PyQuest_SetState, NULL },
+	{ (char*) "state", PyQuest_GetState, PyQuest_SetState, NULL },
 	{ NULL, NULL, NULL, NULL }
 };
 

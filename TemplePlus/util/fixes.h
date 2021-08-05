@@ -52,7 +52,7 @@ protected:
 
 	template<typename T>
 	T* replaceFunction(uint32_t offset, T* replaceWith) {
-		return (T*)replaceFunctionInternal(offset, replaceWith);
+		return (T*)replaceFunctionInternal(offset, (void*) replaceWith);
 	}
 	void writeCall(uint32_t offset, void* redirectTo);
 	void writeJump(uint32_t offset, void* redirectTo);

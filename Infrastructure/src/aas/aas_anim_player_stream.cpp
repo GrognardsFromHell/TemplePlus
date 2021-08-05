@@ -172,7 +172,7 @@ namespace aas {
 		auto streamBones = this->bones;
 
 		// Initialize this stream with the initial state from the skeleton
-		for (auto i = 0; i < bones.size(); i++) {
+		for (auto i = 0u; i < bones.size(); i++) {
 			auto &sBone = streamBones[i];
 			auto &fBone = bones[i];
 			sBone.scale = fBone.initialState.scale;
@@ -227,12 +227,12 @@ namespace aas {
 		SetFrame(0.0);
 	}
 
-	void AnimPlayerStream::GetBoneState(gsl::span<SkelBoneState> boneStateOut)
+	void AnimPlayerStream::GetBoneState(std::span<SkelBoneState> boneStateOut)
 	{
 		// static auto orgMethod = temple::GetPointer<void(AnimPlayerStream *self, SkaBoneData *bonesOut)>(0x1026ba10);
 		// return orgMethod(this, boneStateOut);
 
-		Expects(boneCount <= boneStateOut.size());
+		assert(boneCount <= (int) boneStateOut.size());
 
 		auto currentFrame = this->currentFrame;
 		auto currentFrameCeil = (int)ceil(currentFrame);

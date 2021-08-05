@@ -277,7 +277,7 @@ void LegacyFeatSystem::_AddFeat(const NewFeatSpec &featSpec)
 {
 	if (featSpec.name.size()) {
 		auto featId = static_cast<feat_enums>(ElfHash::Hash(featSpec.name));
-		Expects(static_cast<uint32_t>(featId) > NUM_FEATS && static_cast<uint32_t>(featId) > 1000); // ensure no collision with the normal ToEE feats, and also > 1000 so that it meshes with the feat prerequisites check
+		assert(static_cast<uint32_t>(featId) > NUM_FEATS && static_cast<uint32_t>(featId) > 1000); // ensure no collision with the normal ToEE feats, and also > 1000 so that it meshes with the feat prerequisites check
 		mNewFeats[featId] = featSpec;
 		newFeats.push_back(featId);
 	}
@@ -857,13 +857,13 @@ uint32_t LegacyFeatSystem::FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, 
 
 
 			auto palLvl = objects.StatLevelGet(objHnd, stat_level_paladin);
-			auto paladinTurnLvl = max(0, palLvl + (classCodeBeingLevelledUp == stat_level_paladin) - 3);
+			auto paladinTurnLvl = std::max(0, palLvl + (classCodeBeingLevelledUp == stat_level_paladin) - 3);
 			
 			auto clericLvl = objects.StatLevelGet(objHnd, stat_level_cleric);
 			auto clericTurnLvl = clericLvl + (classCodeBeingLevelledUp == stat_level_cleric) - 0;
 
-			auto otherTurnLvl = max(0, d20Sys.D20QueryPython(objHnd, "Turn Undead Level", 0, classCodeBeingLevelledUp));
-			otherTurnLvl += max(0, d20Sys.D20QueryPython(objHnd, "Turn Undead Level", 1, classCodeBeingLevelledUp));
+			auto otherTurnLvl = std::max(0, d20Sys.D20QueryPython(objHnd, "Turn Undead Level", 0, classCodeBeingLevelledUp));
+			otherTurnLvl += std::max(0, d20Sys.D20QueryPython(objHnd, "Turn Undead Level", 1, classCodeBeingLevelledUp));
 			
 			auto highestTurnLvl = clericTurnLvl + paladinTurnLvl + otherTurnLvl;
 
@@ -1063,13 +1063,13 @@ uint32_t LegacyFeatSystem::FeatPrereqsCheck(objHndl objHnd, feat_enums featIdx, 
 	return TRUE;
 };
 
-vector<feat_enums> LegacyFeatSystem::GetFeats(objHndl handle) {
+std::vector<feat_enums> LegacyFeatSystem::GetFeats(objHndl handle) {
 
 	auto obj = objSystem->GetObject(handle);
 	auto feats = obj->GetInt32Array(obj_f_critter_feat_idx);
 
 	auto featCount = feats.GetSize();
-	vector<feat_enums> result(featCount);
+	std::vector<feat_enums> result(featCount);
 
 	for (size_t i = 0; i < featCount; ++i) {
 		result[i] = (feat_enums) feats[i];

@@ -2,8 +2,8 @@
 #pragma once
 
 #include <memory>
+#include <span>
 
-#include <gsl/gsl>
 #include "../platform/d3d.h"
 #include "../infrastructure/macros.h"
 
@@ -15,7 +15,7 @@ public:
 	IndexBuffer(CComPtr<ID3D11Buffer> buffer, size_t count);
 	~IndexBuffer();
 
-	void Update(gsl::span<uint16_t> data);
+	void Update(std::span<uint16_t> data);
 
 	NO_COPY_OR_MOVE(IndexBuffer)
 private:
@@ -34,11 +34,11 @@ public:
 	VertexBuffer(CComPtr<ID3D11Buffer> vertexBufferNew, size_t size);
 	~VertexBuffer();
 
-	void Update(gsl::span<const uint8_t> data);
+	void Update(std::span<const uint8_t> data);
 
 	template <typename T>
-	void Update(gsl::span<T> data) {
-		Update(gsl::span(reinterpret_cast<const uint8_t*>(&data[0]), data.size_bytes()));
+	void Update(std::span<T> data) {
+		Update(std::span(reinterpret_cast<const uint8_t*>(&data[0]), data.size_bytes()));
 	}
 
 	NO_COPY_OR_MOVE(VertexBuffer);

@@ -1,5 +1,8 @@
+#include "stdafx.h"
+
 #include "video_hooks.h"
 
+#include <fmt/xchar.h>
 #include <MinHook.h>
 
 #include <platform/windows.h>
@@ -7,7 +10,6 @@
 #include <graphics/device.h>
 
 #include <infrastructure/exception.h>
-#include <infrastructure/stringutil.h>
 #include <infrastructure/logging.h>
 #include <util/folderutils.h>
 
@@ -16,7 +18,6 @@
 #include "util/fixes.h"
 #include "mainwindow.h"
 #include "../gameview.h"
-#include <tig/tig_startup.h>
 
 #include "legacyvideosystem.h"
 #include <temple/vfs.h>

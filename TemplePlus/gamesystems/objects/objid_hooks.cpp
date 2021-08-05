@@ -4,6 +4,8 @@
 
 #include <obj.h>
 #include <maps.h>
+#include <obj_structs.h>
+
 struct ObjectId;
 
 static class ObjectIdHooks : public TempleFix {

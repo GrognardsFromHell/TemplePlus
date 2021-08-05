@@ -52,27 +52,27 @@ public:
 	/*
 		Draws text.
 	*/
-	static bool DrawText(const string& text, const TigRect& rect, const TigTextStyle& style);
+	static bool DrawText(const std::string& text, const TigRect& rect, const TigTextStyle& style);
 	/*
 		Draws text positioned relative to widget.
 	*/
-	static bool DrawTextInWidget(int widgetId, const string &text, const TigRect &rect, const TigTextStyle &style);
+	static bool DrawTextInWidget(int widgetId, const std::string &text, const TigRect &rect, const TigTextStyle &style);
 
 	/*
 	Draws text positioned relative to widget.
 	Will center the text relative to the specified rect.
 	*/
-	static bool DrawTextInWidgetCentered(int widgetId, const string &text, const TigRect &rect, const TigTextStyle &style);
+	static bool DrawTextInWidgetCentered(int widgetId, const std::string &text, const TigRect &rect, const TigTextStyle &style);
 
 	/*
 		Draws text positioned in screen coordinates. Width of rectangle may be 0 to cause automatic
 		measurement of the text.
 	*/
-	static bool RenderText(const string &text, TigRect &rect, const TigTextStyle &style);
+	static bool RenderText(const std::string &text, TigRect &rect, const TigTextStyle &style);
 
 	/*
 		Measures the given text and returns the bounding rect.
 	*/
-	static TigRect MeasureTextSize(const string &text, const TigTextStyle &style, int maxWidth = 0, int maxHeight = 0);
+	static TigRect MeasureTextSize(const std::string &text, const TigTextStyle &style, int maxWidth = 0, int maxHeight = 0);
 
 };

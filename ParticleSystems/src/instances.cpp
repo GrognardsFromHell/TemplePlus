@@ -1,5 +1,3 @@
-#include "..\include\particles\instances.h"
-#include "..\include\particles\instances.h"
 #include "particles/instances.h"
 #include "particles/simulation.h"
 #include "particles/bones.h"

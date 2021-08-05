@@ -6,7 +6,7 @@ public:
 	PyConsole();
 	~PyConsole();
 
-	void Exec(const string &command);
+	void Exec(const std::string &command);
 private:
 	PyObject *mLocals = nullptr;
 	PyObject *mMainModule = nullptr;

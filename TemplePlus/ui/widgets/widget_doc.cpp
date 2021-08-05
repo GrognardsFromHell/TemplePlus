@@ -268,13 +268,13 @@ WidgetDoc WidgetDoc::Load(const std::string & path)
 
 std::unique_ptr<WidgetBase> WidgetDoc::TakeRootWidget()
 {
-	Expects(!!mRootWidget);
+	assert(!!mRootWidget);
 	return std::move(mRootWidget);
 }
 
 std::unique_ptr<WidgetContainer> WidgetDoc::TakeRootContainer()
 {
-	Expects(!!mRootWidget);
+	assert(!!mRootWidget);
 	if (!mRootWidget->IsContainer()) {
 		throw TempleException("Expected root widget in '{}' to be a container.");
 	}

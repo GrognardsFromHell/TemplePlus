@@ -2,10 +2,10 @@
 
 #include <memory>
 #include <string>
+#include <span>
 #include <unordered_map>
 
 #include <DirectXMath.h>
-#include <gsl/span>
 
 struct Ray3d;
 
@@ -300,10 +300,10 @@ namespace gfx {
 
 		virtual int GetVertexCount() = 0;
 		virtual int GetPrimitiveCount() = 0;
-		virtual gsl::span<DirectX::XMFLOAT4> GetPositions() = 0;
-		virtual gsl::span<DirectX::XMFLOAT4> GetNormals() = 0;
-		virtual gsl::span<DirectX::XMFLOAT2> GetUV() = 0;
-		virtual gsl::span<uint16_t> GetIndices() = 0;
+		virtual std::span<DirectX::XMFLOAT4> GetPositions() = 0;
+		virtual std::span<DirectX::XMFLOAT4> GetNormals() = 0;
+		virtual std::span<DirectX::XMFLOAT2> GetUV() = 0;
+		virtual std::span<uint16_t> GetIndices() = 0;
 	};
 
 	class IRenderState {
@@ -463,7 +463,7 @@ namespace gfx {
 
 		virtual void Render(AnimatedModel *model,
 			const AnimatedModelParams& params,
-			gsl::span<Light3d> lights,
+			std::span<Light3d> lights,
 			const MdfRenderOverrides *materialOverrides = nullptr) = 0;
 	};
 

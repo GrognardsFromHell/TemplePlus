@@ -5,32 +5,32 @@
 
 TemplePlusConfig config;
 
-typedef INI <string, string, string> ini_t;
+typedef INI <std::string, std::string, std::string> ini_t;
 
 static ini_t ini("TemplePlus.ini", false);
 
 class ConfigSetting {
 public:
-	template<class T> using Setter = function<void(T)>;
-	template<class T> using Getter = function<T()>;
+    template<class T> using Setter = std::function<void(T)>;
+    template<class T> using Getter = std::function<T()>;
 	
-	static ConfigSetting String(const char *option, Setter<string> setter, Getter<string> getter, const char *description = nullptr) {
+	static ConfigSetting String(const char *option, Setter<std::string> setter, Getter<std::string> getter, const char *description = nullptr) {
 		return ConfigSetting(option, setter, getter, description);
 	}
 
-	static ConfigSetting WString(const char *option, Setter<wstring> setter, Getter<wstring> getter, const char *description = nullptr) {
+	static ConfigSetting WString(const char *option, Setter<std::wstring> setter, Getter<std::wstring> getter, const char *description = nullptr) {
 		auto getterAdapter = [=] {
 			return ucs2_to_utf8(getter());
 		};
-		auto setterAdapter = [=](string value) {
+		auto setterAdapter = [=](std::string value) {
 			setter(utf8_to_ucs2(value));
 		};
 
 		return ConfigSetting(option, setterAdapter, getterAdapter, description);
 	}
-	static ConfigSetting StringList(const char *option, char sep, Setter<const vector<string>&> setter, Getter<vector<string>> getter, const char *description = nullptr) {
+	static ConfigSetting StringList(const char *option, char sep, Setter<const std::vector<std::string>&> setter, Getter<std::vector<std::string>> getter, const char *description = nullptr) {
 		auto getterAdapter = [=] {
-			string result;
+		    std::string result;
 			for (auto &str : getter()) {
 				if (!result.empty()) {
 					result += sep;
@@ -39,11 +39,11 @@ public:
 			}
 			return result;
 		};
-		auto setterAdapter = [=](string x) {
-			vector<string> result;
-			stringstream ss(x);
-			string token;
-			while (getline(ss, token, sep)) {
+		auto setterAdapter = [=](std::string x) {
+		    std::vector<std::string> result;
+		    std::stringstream ss(x);
+		    std::string token;
+		    while (std::getline(ss, token, sep)) {
 				if (!token.empty()) {
 					result.push_back(token);
 				}
@@ -58,7 +58,7 @@ public:
 		auto getterAdapter = [=] {
 			return getter() ? "true" : "false";
 		};
-		auto setterAdapter = [=] (string x) {
+		auto setterAdapter = [=] (std::string x) {
 			setter(x == "true" || x == "1");
 		};
 
@@ -67,9 +67,9 @@ public:
 
 	static ConfigSetting Int(const char *option, Setter<int> setter, Getter<int> getter, const char *description = nullptr) {
 		auto getterAdapter = [=] {
-			return to_string(getter());
+		    return std::to_string(getter());
 		};
-		auto setterAdapter = [=](string x) {
+		auto setterAdapter = [=](std::string x) {
 			setter(stoi(x));
 		};
 
@@ -78,9 +78,9 @@ public:
 
 	static ConfigSetting Double(const char *option, Setter<double> setter, Getter<double> getter, const char *description = nullptr) {
 		auto getterAdapter = [=] {
-			return to_string(getter());
+		    return std::to_string(getter());
 		};
-		auto setterAdapter = [=](string x) {
+		auto setterAdapter = [=](std::string x) {
 			setter(stod(x));
 		};
 
@@ -91,31 +91,31 @@ public:
 		return mOption;
 	}
 
-	Setter<string> setter() const {
+	Setter<std::string> setter() const {
 		return mSetter;
 	}
 
-	Getter<string> getter() const {
+	Getter<std::string> getter() const {
 		return mGetter;
 	}
 
 private:
 	ConfigSetting(const char *option, 
-		Setter<string> setter, 
-		Getter<string> getter,
+		Setter<std::string> setter,
+		Getter<std::string> getter,
 		const char *comment)
 		: mOption(option), mComment(comment), mSetter(setter), mGetter(getter) {
 	}
 
 	const char *mOption;
 	const char *mComment;
-	Setter<string> mSetter;
-	Getter<string> mGetter;
+	Setter<std::string> mSetter;
+	Getter<std::string> mGetter;
 };
 
-#define CONF_STRING(FIELDNAME) ConfigSetting::String(#FIELDNAME, [] (string val) { config.FIELDNAME = val; }, [] { return config.FIELDNAME; })
-#define CONF_WSTRING(FIELDNAME) ConfigSetting::WString(#FIELDNAME, [] (wstring val) { config.FIELDNAME = val; }, [] { return config.FIELDNAME; })
-#define CONF_STRING_LIST(FIELDNAME, SEP) ConfigSetting::StringList(#FIELDNAME, SEP, [] (const vector<string> &val) { config.FIELDNAME = val; }, [] { return config.FIELDNAME; })
+#define CONF_STRING(FIELDNAME) ConfigSetting::String(#FIELDNAME, [] (std::string val) { config.FIELDNAME = val; }, [] { return config.FIELDNAME; })
+#define CONF_WSTRING(FIELDNAME) ConfigSetting::WString(#FIELDNAME, [] (std::wstring val) { config.FIELDNAME = val; }, [] { return config.FIELDNAME; })
+#define CONF_STRING_LIST(FIELDNAME, SEP) ConfigSetting::StringList(#FIELDNAME, SEP, [] (const std::vector<std::string> &val) { config.FIELDNAME = val; }, [] { return config.FIELDNAME; })
 #define CONF_INT(FIELDNAME) ConfigSetting::Int(#FIELDNAME, [] (int val) { config.FIELDNAME = val; }, [] { return config.FIELDNAME; })
 #define CONF_BOOL(FIELDNAME) ConfigSetting::Bool(#FIELDNAME, [] (bool val) { config.FIELDNAME = val; }, [] { return config.FIELDNAME; })
 #define CONF_DOUBLE(FIELDNAME) ConfigSetting::Double(#FIELDNAME, [] (double val) { config.FIELDNAME = val; }, [] { return config.FIELDNAME; })

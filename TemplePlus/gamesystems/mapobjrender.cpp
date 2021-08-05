@@ -908,7 +908,7 @@ bool MapObjectRenderer::IsObjectOnScreen(LocAndOffsets &location, float offsetZ,
 void MapObjectRenderer::RenderMirrorImages(objHndl obj,
 										   const gfx::AnimatedModelParams &animParams,
 										   gfx::AnimatedModel &model,
-										   gsl::span<Light3d> lights)
+										   std::span<Light3d> lights)
 {
 	auto mirrorImages = d20Sys.d20Query(obj, DK_QUE_Critter_Has_Mirror_Image);
 
@@ -1000,8 +1000,8 @@ void MapObjectRenderer::RenderShadowMapShadow(objHndl obj,
 	}
 
 	mAasRenderer.RenderShadowMapShadow(
-		gsl::span(&models[0], modelCount),
-		gsl::span(&params[0], modelCount),
+		std::span(&models[0], modelCount),
+		std::span(&params[0], modelCount),
 		worldPos,
 		radius,
 		height,

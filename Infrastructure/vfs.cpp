@@ -1,4 +1,3 @@
-#define _CRT_SECURE_NO_WARNINGS
 #include "infrastructure/vfs.h"
 
 #include <cstdio>
@@ -141,7 +140,7 @@ bool Vfs::IsDirEmpty(std::string_view path) {
 	return Search(globPattern).empty();
 }
 
-void Vfs::WriteBinaryFile(std::string_view path, gsl::span<uint8_t> data) {
+void Vfs::WriteBinaryFile(std::string_view path, std::span<uint8_t> data) {
 	
 	auto fh(Open(path, "wb"));
 	if (!fh) {

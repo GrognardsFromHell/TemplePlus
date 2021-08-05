@@ -172,7 +172,7 @@ public:
 	// additional dispatcher functions are called for the party (DK_NEWDAY_CALENDARICAL)
 	void AddTime(int timeInMs);
 
-	string FormatTime(const GameTime &time);
+	std::string FormatTime(const GameTime &time);
 
 	/**
 	 * Removes all time events of the given system type without calling their expiry function.

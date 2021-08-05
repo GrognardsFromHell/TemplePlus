@@ -42,7 +42,7 @@ extern StringTokenizerFuncs stringTokenizerFuncs;
 // Uses the ToEE internal string tokenizer
 class StringTokenizer {
 public:
-	explicit StringTokenizer(const string &line) : mTokenizerId(0) {
+	explicit StringTokenizer(const std::string &line) : mTokenizerId(0) {
 		int errorCode;
 		if ((errorCode = stringTokenizerFuncs.Create(line.c_str(), &mTokenizerId)) != 0) {
 			logger->error("Unable to create tokenizer for string {}: {}", line, errorCode);

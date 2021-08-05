@@ -1,5 +1,4 @@
 
-#include <gsl/gsl>
 #include <memory>
 #include <aas/aas_math.h>
 
@@ -8,7 +7,7 @@
 
 namespace aas {
 
-	CollisionGeometry FindCollisionGeometry(gsl::span<SkelBone> bones)
+	CollisionGeometry FindCollisionGeometry(std::span<SkelBone> bones)
 	{
 		CollisionGeometry result;
 
@@ -17,7 +16,7 @@ namespace aas {
 		CollisionCylinder* cylindersTail = nullptr;
 
 		// Parse cloth bone state from Skeleton
-		for (auto i = 0; i < bones.size(); i++) {
+		for (auto i = 0u; i < bones.size(); i++) {
 
 			auto namePos = bones[i].name;
 			if (!_strnicmp("#Sphere", namePos, 7)) {

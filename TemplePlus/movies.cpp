@@ -92,7 +92,7 @@ static MovieRect GetMovieRect(int movieWidth, int movieHeight) {
 	// Fit movie into rect
 	float wFactor = screenWidth / movieWidth;
 	float hFactor = screenHeight / movieHeight;
-	float scale = min(wFactor, hFactor);
+	float scale = std::min(wFactor, hFactor);
 	float movieW = scale * movieWidth;
 	float movieH = scale * movieHeight;
 

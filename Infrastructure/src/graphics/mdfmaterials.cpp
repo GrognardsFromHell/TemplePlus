@@ -81,7 +81,7 @@ namespace gfx {
 	}
 
 	void MdfRenderMaterial::Bind(RenderingDevice& device, 
-		gsl::span<Light3d> lights,
+		std::span<Light3d> lights,
 		const MdfRenderOverrides *overrides) {
 
 		device.SetMaterial(mDeviceMaterial);
@@ -91,7 +91,7 @@ namespace gfx {
 	}
 
 	void MdfRenderMaterial::BindShader(RenderingDevice &device,
-		gsl::span<Light3d> lights,
+		std::span<Light3d> lights,
 		const MdfRenderOverrides *overrides) const {
 
 		// Fill out the globals for the shader
@@ -118,7 +118,8 @@ namespace gfx {
 		if (overrides && overrides->overrideColor) {
 			 color = XMLoadColor(&overrides->overrideColor);
 		} else {
-			color = XMLoadColor(&XMCOLOR(mSpec->diffuse));
+		    XMCOLOR diffuse(mSpec->diffuse);
+			color = XMLoadColor(&diffuse);
 		}
 		XMStoreFloat4(&globals.matDiffuse, color);
 		if (overrides && overrides->alpha != 1.0f) {
@@ -155,7 +156,7 @@ namespace gfx {
 	}
 
 	void MdfRenderMaterial::BindVertexLighting(MdfGlobalConstants &globals,
-		gsl::span<Light3d> lights,
+		std::span<Light3d> lights,
 		bool ignoreLighting) const {
 
 		constexpr auto MaxLights = MdfGlobalConstants::MaxLights;
@@ -248,7 +249,8 @@ namespace gfx {
 		globals.fMaterialPower = { mSpec->specularPower, 0, 0, 0 };
 
 		// Set the specular color
-		XMStoreFloat4(&globals.matSpecular, XMLoadColor(&XMCOLOR(mSpec->specular)));
+		XMCOLOR specular(mSpec->specular);
+		XMStoreFloat4(&globals.matSpecular, XMLoadColor(&specular));
 
 		globals.lightCount[0] = directionalCount;
 		globals.lightCount[1] = globals.lightCount[0] + pointCount;
@@ -313,7 +315,7 @@ namespace gfx {
 			gfx::MdfParser parser(name, mdfContent);
 			auto mdfMaterial(parser.Parse());
 
-			Expects(mNextFreeId < 0x80000000);
+			assert(mNextFreeId < 0x80000000);
 			// Assign ID
 			auto id = mNextFreeId++;
 
@@ -325,7 +327,7 @@ namespace gfx {
 			mNameRegistry[nameLower] = result;
 
 			return result;
-		} catch (std::exception& e) {
+		} catch (std::exception&) {
 			// logger->error("Unable to load MDF file '{}': {}", name, e.what()); // produces massive logspam when casting spells
 			return nullptr;
 		}
@@ -358,9 +360,8 @@ namespace gfx {
 
 		ReplacementSet set;
 
-		using gsl::cstring_span;
-		std::vector<cstring_span<>> elems;
-		std::vector<cstring_span<>> subElems;
+		std::vector<std::string_view> elems;
+		std::vector<std::string_view> subElems;
 		std::string slotName, mdfName;
 		split(entry, ' ', elems, true);
 
@@ -464,7 +465,7 @@ namespace gfx {
 		depthStencilState.depthFunc = ComparisonFunc::LessEqual;
 
 		// Resolve texture references based on type
-		Expects(spec.samplers.size() <= 4);
+		assert(spec.samplers.size() <= 4);
 
 		Shaders::ShaderDefines psDefines;
 		Shaders::ShaderDefines vsDefines;

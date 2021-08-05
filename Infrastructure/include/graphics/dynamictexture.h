@@ -1,8 +1,7 @@
 
 #pragma once
 
-#include <gsl/gsl>
-
+#include <span>
 #include <memory>
 #include <atlcomcli.h>
 
@@ -55,16 +54,16 @@ namespace gfx {
 		}
 
 		template<typename T>
-		void Update(gsl::span<T> data) {
+		void Update(std::span<T> data) {
 			UpdateRaw(
-				gsl::span(reinterpret_cast<uint8_t*>(&data[0]), data.size_bytes()), 
+				std::span(reinterpret_cast<uint8_t*>(&data[0]), data.size_bytes()),
 				mSize.width * sizeof(T)
 			);
 		}
 
 	private:
 
-		void UpdateRaw(gsl::span<uint8_t> data, size_t pitch);
+		void UpdateRaw(std::span<uint8_t> data, size_t pitch);
 
 		CComPtr<ID3D11DeviceContext> mContext;
 		CComPtr<ID3D11Texture2D> mTexture;

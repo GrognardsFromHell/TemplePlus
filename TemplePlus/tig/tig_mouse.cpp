@@ -18,7 +18,7 @@
 MouseFuncs mouseFuncs;
 temple::GlobalStruct<TigMouseState, 0x10D25184> mouseState;
 
-vector<int> stashedCursorShaderIds;
+static std::vector<int> stashedCursorShaderIds;
 
 struct OriginalMouseFuncs : temple::AddressTable {
 

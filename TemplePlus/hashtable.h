@@ -102,7 +102,7 @@ struct ToEEHashtableSystem : temple::AddressTable
 		return 0x11;	
 	}
 
-	uint32_t StringHash(char * stringIn)
+	uint32_t StringHash(const char * stringIn)
 	{
 		return ELFhash(stringIn);
 	}
@@ -150,5 +150,5 @@ private:
 		return (uint32_t *)operator new(sizeof(uint32_t) * capacity);
 	}
 
-	uint32_t(__cdecl* ELFhash)(char * stringIn);
+	uint32_t(__cdecl* ELFhash)(const char * stringIn);
 };

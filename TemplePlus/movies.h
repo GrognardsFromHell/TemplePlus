@@ -22,7 +22,7 @@ struct MovieFuncs : temple::AddressTable {
 	void (__cdecl *PlayMovieId)(int movieId, int flags, int soundtrackId);
 
 	void (__cdecl *PlayLegalMovies)() = nullptr; // No longer used (see gamesystems.cpp)
-	void (__cdecl *PlayMovie)(char* filename, int, int, int);
+	void (__cdecl *PlayMovie)(const char* filename, int, int, int);
 	void (__cdecl *PlayMovieSlide)(uint32_t, uint32_t, const SubtitleLine *subtitles, uint32_t, uint32_t);
 	void (__cdecl *PlayMovieBink)(const char *filename, const SubtitleLine *subtitles, int flags, int soundtrackId);
 

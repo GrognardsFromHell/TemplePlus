@@ -373,7 +373,7 @@ SpellPacketBody::SpellPacketBody(uint32_t spellId){
 		memset(this, 0, sizeof(SpellPacketBody));
 }
 
-SpellPacketBody::SpellPacketBody(objHndl spellCaster, D20SpellData& spellData)
+SpellPacketBody::SpellPacketBody(objHndl spellCaster, const D20SpellData& spellData)
 {
 	memset(this, 0, sizeof(SpellPacketBody));
 
@@ -398,7 +398,7 @@ SpellPacketBody::SpellPacketBody(objHndl spellCaster, D20SpellData& spellData)
 			spellSys.SpellPacketSetCasterLevel(this);
 		}
 		else { // item spell
-			casterLevel = max(1, 2 * static_cast<int>(spellSlotLevel) - 1); // todo special handling for Magic domain
+		    casterLevel = std::max(1, 2 * static_cast<int>(spellSlotLevel) - 1); // todo special handling for Magic domain
 		}
 
 		spellRange = spellSys.GetSpellRange(&spellEntry, casterLevel, caster);
@@ -458,7 +458,7 @@ bool SpellPacketBody::FindObj(objHndl obj, int* idx) const
 
 bool SpellPacketBody::InsertToPartsysList(uint32_t idx, int partsysId)
 {
-	Expects(idx < 32 && idx >= 0);
+	assert(idx < 32 && idx >= 0);
 	if (idx >= targetCount && idx < 32){
 		targetListPartsysIds[idx] = partsysId;
 		return true;
@@ -470,7 +470,7 @@ bool SpellPacketBody::InsertToPartsysList(uint32_t idx, int partsysId)
 }
 
 bool SpellPacketBody::InsertToTargetList(uint32_t idx, objHndl tgt){
-	Expects(idx >= 0 && idx < 32 && idx <= targetCount);
+	assert(idx >= 0 && idx < 32 && idx <= targetCount);
 	for (int i = targetCount; i > (int) idx; i--){
 		targetListHandles[i] = targetListHandles[i-1];
 	}
@@ -741,7 +741,7 @@ void LegacySpellSystem::RegisterAdvancedLearningClass(Stat classEnum)
 	advancedLearningClasses.push_back(classEnum);
 }
 
-const vector<Stat> &LegacySpellSystem::GetClassesWithAdvancedLearning()
+const std::vector<Stat> &LegacySpellSystem::GetClassesWithAdvancedLearning()
 {
 	return advancedLearningClasses;
 }
@@ -804,7 +804,7 @@ BOOL LegacySpellSystem::RegisterSpell(SpellPacketBody & spellPkt, int spellId)
 	spellsCastRegistry.put(spellId, newPkt);
 	logger->info("New spell registered: id {}, spell enum {}", spellId, spEnum);
 
-	spellDebugRecords.emplace(spellId, make_unique<SpellDebugRecord>(newPkt.spellPktBody) );
+	spellDebugRecords.emplace(spellId, std::make_unique<SpellDebugRecord>(newPkt.spellPktBody) );
 
 	return TRUE;
 }
@@ -853,11 +853,11 @@ uint32_t LegacySpellSystem::ConfigSpellTargetting(PickerArgs* args, SpellPacketB
 
 		// add for the benefit of AI casters
 		if (args->IsBaseModeTarget(UiPickerType::Multi) && args->result.handle) {
-			auto N = 1;
+			auto N = 1u;
 			if (!args->IsModeTargetFlagSet(UiPickerType::OnceMulti)) {
 				N = MAX_SPELL_TARGETS;
 			}
-			for (; spPkt->targetCount < args->maxTargets && spPkt->targetCount < N; spPkt->targetCount++) {
+			for (; spPkt->targetCount < (uint32_t) args->maxTargets && spPkt->targetCount < N; spPkt->targetCount++) {
 				spPkt->targetListHandles[spPkt->targetCount] = args->result.handle;
 			}
 		}
@@ -882,7 +882,7 @@ uint32_t LegacySpellSystem::ConfigSpellTargetting(PickerArgs* args, SpellPacketB
 			}
 			// else apply the rest of the targeting to the last object
 			else if (args->IsBaseModeTarget(UiPickerType::Multi) && !args->IsModeTargetFlagSet(UiPickerType::OnceMulti)) {
-				while (spPkt->targetCount < args->maxTargets) {
+				while (spPkt->targetCount < (uint32_t) args->maxTargets) {
 					spPkt->targetListHandles[spPkt->targetCount++] = objNode->handle;
 				}
 				objNode = nullptr;
@@ -1486,7 +1486,7 @@ void LegacySpellSystem::SaveDebugRecords() const
 			{
 				spell.Write(buf);
 			}
-			auto &memBuf = buf.GetBuffer();
+			auto memBuf = buf.GetBuffer();
 			
 			tioFile.WriteUInt32(memBuf.size());
 			tioFile.WriteBytes(&memBuf[0], memBuf.size());
@@ -1506,7 +1506,7 @@ void LegacySpellSystem::LoadDebugRecords() {
 		
 		while (file.GetPos() < data.size()) {
 			
-			auto newDebugRecord = make_unique<SpellDebugRecord>(file);
+		    auto newDebugRecord = std::make_unique<SpellDebugRecord>(file);
 			spellDebugRecords.emplace(newDebugRecord.get()->spellId, std::move(newDebugRecord));
 		}
 		
@@ -1526,7 +1526,7 @@ SpellMapTransferInfo LegacySpellSystem::SaveSpellForTeleport(const SpellPacket& 
 	SpellMapTransferInfo result;
 
 	auto spellEnum = data.spellPktBody.spellEnum;
-	Expects(spellEnum > 0 && spellEnum < 10000); // keeping a margin for now because co8 has messed with this a bit
+	assert(spellEnum > 0 && spellEnum < 10000); // keeping a margin for now because co8 has messed with this a bit
 	if (spellEnum > SPELL_ENUM_MAX_EXPANDED)	{
 		logger->warn("Spell enum beyond expected range encountered: {}", spellEnum);
 	}
@@ -1809,7 +1809,7 @@ bool LegacySpellSystem::LoadActiveSpellElement(TioFile* file, uint32_t& spellId,
 		return false;
 	if (!tio_fread(&pkt.isActive, sizeof(int), 1, file))
 		return false;
-	///Expects(pkt.isActive);
+	///assert(pkt.isActive);
 	if (!pkt.isActive){
 		logger->debug("Spell was inactive!");
 	}
@@ -1825,7 +1825,7 @@ bool LegacySpellSystem::LoadActiveSpellElement(TioFile* file, uint32_t& spellId,
 	ObjectId objId;
 	if (!tio_fread(&objId, sizeof(ObjectId), 1, file))
 		return false;
-	//Expects(objId.subtype != ObjectIdKind::Null);
+	//assert(objId.subtype != ObjectIdKind::Null);
 	pkt.spellPktBody.caster = objSystem->GetHandleById(objId);
 
 	// get the caster partsys
@@ -1902,7 +1902,7 @@ bool LegacySpellSystem::LoadActiveSpellElement(TioFile* file, uint32_t& spellId,
 		}	
 	}
 	if (targets.size()){
-		memcpy(pkt.spellPktBody.targetListHandles, &targets[0], min(targets.size() * sizeof(objHndl), 32 * sizeof(objHndl)));
+	    memcpy(pkt.spellPktBody.targetListHandles, &targets[0], std::min(targets.size() * sizeof(objHndl), 32 * sizeof(objHndl)));
 	}
 	
 	memset(&pkt.spellPktBody.targetListHandles[targets.size()], 0, (32 - targets.size()) * sizeof(objHndl));
@@ -1960,7 +1960,7 @@ bool LegacySpellSystem::LoadActiveSpellElement(TioFile* file, uint32_t& spellId,
 		return false;
 	if (!tio_fread(&pkt.spellPktBody.spellId, sizeof(int), 1, file))
 		return false;
-	Expects(pkt.spellPktBody.spellId >= 0);
+	assert(pkt.spellPktBody.spellId >= 0);
 
 	auto spellName = GetSpellName(pkt.spellPktBody.spellEnum);
 	logger->info("SpellLoad: Loaded spell {} id {}", spellName, spellId);
@@ -2149,7 +2149,7 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 	char textBuf[1000] = { 0, };
 	static auto spellEntryLineParser = temple::GetRef<BOOL(__cdecl)(char *, int &, int &, int&)>(0x1007A890);
 	
-	static std::function findInMapping = [&](const std::map<string, int> & options, const char* txt, int& valueOut)->bool {
+	static std::function findInMapping = [&](const std::map<std::string, int> & options, const char* txt, int& valueOut)->bool {
 		for (auto ch = txt; *ch; ch++) {
 			if (*ch == ':' || *ch == ' ')
 				continue;
@@ -2225,7 +2225,7 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 		}
 		
 		else if(!_strnicmp(textBuf, "mode_target", 11)){
-			static std::map<string, UiPickerType> modeTgtStrings = {
+		    static std::map<std::string, UiPickerType> modeTgtStrings = {
 				{ "none", UiPickerType::None},
 				{ "single", UiPickerType::Single },
 				{ "multi", UiPickerType::Multi },
@@ -2271,7 +2271,7 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 		}
 
 		else if (!_strnicmp(textBuf, "Saving Throw", 12)) {
-			static std::map<string, int> saveThrowStrings = {
+		    static std::map<std::string, int> saveThrowStrings = {
 				{ "fortitude", 3 }, // lol bug; fixed inside SavingThrowSpell (to avoid changing all the spell rules...)
 				{ "willpower", (int)SavingThrowType::Will },
 				{ "will", (int)SavingThrowType::Will },
@@ -2286,7 +2286,8 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 			
 		}
 		else if (!_strnicmp(textBuf, "Level", 5)) {
-			auto text = trim(std::string(textBuf+5));
+		    std::string text(textBuf + 5);
+		    trim(text);
 			if (text.size() < 2) { // empty line (e.g. in Rudy's mods)
 				logger->warn("SpellEntryFileParse: blank line in spell {} Level: {}", spEntry.spellEnum, text);
 				continue;
@@ -2302,7 +2303,7 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 			}
 		}
 		else if (!_strnicmp(textBuf, "Casting Time", 12)) {
-			static std::map<string, int> castingTimeStrings = {
+		    static std::map<std::string, int> castingTimeStrings = {
 				{ "Swift Action", 4 }, // ??
 				{ "Free Action", 4 }, 
 				{ "Safe", 3 },
@@ -2317,7 +2318,7 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 		}
 		else if (!_strnicmp(textBuf, "ai_type", 7)) { 
 			// fixes issue with trailing newline - vanilla used !stricmp instead of !strnicmp for some reason
-			static std::map<string, int> aiTypeStrings = {
+			static std::map<std::string, int> aiTypeStrings = {
 					{ "ai_action_summon"     , 0 },
 					{ "ai_action_offensive"  , 1 },
 					{ "ai_action_defensive"  , 2 },
@@ -3631,8 +3632,8 @@ bool SpellSystem::Load(GameSystemSaveFile* file) {
 		if (tio_fread(&numSpells, 4, 1, file->file) != 1)
 			return FALSE;
 
-		Expects(numSpells >= 0);
-		Expects(*spellIdSerial >= numSpells);
+		assert(numSpells >= 0);
+		assert(*spellIdSerial >= numSpells);
 
 		if (numSpells <= 0)
 			return TRUE;

@@ -46,11 +46,11 @@ void ModSupport::DetectCo8ActiveModule(){
 		return;
 	}
 
-	wfstream tfexIni(tfexIniPath);
+	std::wfstream tfexIni(tfexIniPath);
 	if (!tfexIni.is_open())
 		return;
 		
-	wstring shit;
+	std::wstring shit;
 	while (std::getline(tfexIni, shit) && !mIsCo8NC){
 		if (shit.find(L"New Content") != shit.npos) {
 			mIsCo8NC = true;

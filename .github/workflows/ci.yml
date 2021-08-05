@@ -9,10 +9,19 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - uses: nuget/setup-nuget@v1
-    - name: Download and Extract Dependencies
+    - name: Cache third-party dependencies
+      id: cache-thirdparty
+      uses: actions/cache@v2
+      with:
+        path: thirdparty/external/packages
+        key: ${{ hashFiles('thirdparty/external/**/*') }}
+    - name: Build third-party dependencies
+      if: steps.cache-thirdparty.outputs.cache-hit != 'true'
       run: |
-        curl -L -o dependencies.7z https://github.com/GrognardsFromHell/Dependencies/releases/download/v1.9/dependencies.7z
-        7z x dependencies.7z
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars32.bat"
+        cd thirdparty\external
+        call regenerate.cmd
+      shell: cmd
     - name: Install NuGet packages
       run: |
         nuget install Squirrel.Windows -OutputDirectory Squirrel -Verbosity Detailed
@@ -20,9 +29,15 @@ jobs:
     - name: Build
       run: |
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars32.bat"
-        msbuild TemplePlus.sln /p:Configuration=Release /p:Platform=Win32 /p:MSBuildDefines="_TP_VERSION=%BUILD_NUMBER%;_TP_COMMIT=%COMMIT_ID%;TP_RELEASE_BUILD" /verbosity:minimal
+        cmake -GNinja -Bbuild -DCMAKE_BUILD_TYPE=Release -DTP_VERSION=%BUILD_NUMBER% -DTP_COMMIT=%COMMIT_ID% -DTP_RELEASE_BUILD=ON
+        cmake --build build
+        cmake --install build --prefix install
       # Need to use cmd because of the vcvars32 batch file
       shell: cmd
       env:
         BUILD_NUMBER: ${GITHUB_RUN_NUMBER}
         COMMIT_ID: ${GITHUB_SHA::8}
+    - uses: actions/upload-artifact@v2
+      with:
+        name: install
+        path: install

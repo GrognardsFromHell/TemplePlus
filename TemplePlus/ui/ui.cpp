@@ -44,7 +44,7 @@ private:
 static ButtonClickBehavior buttonClickBehavior;
 
 UiManager::UiManager() {
-	Expects(uiManager == nullptr);
+	assert(uiManager == nullptr);
 	uiManager = this;
 }
 
@@ -298,7 +298,7 @@ BOOL UiManager::ButtonInit(LgcyButton* widg, char* buttonName, int parentId, int
 	if (buttonName)
 	{
 		char * c = buttonName;
-		memcpy(widg->name, buttonName, min(sizeof(widg->name), strlen(buttonName)));
+		memcpy(widg->name, buttonName, std::min(sizeof(widg->name), strlen(buttonName)));
 	}
 	widg->x = x;
 	widg->xrelated = x;
@@ -357,13 +357,13 @@ LgcyWidgetId UiManager::AddScrollBar(LgcyScrollBar& scrollBar, LgcyWidgetId pare
 void UiManager::SetButtonState(LgcyWidgetId widgetId, LgcyButtonState newState)
 {
 	auto button = GetButton(widgetId);
-	Expects(button);
+	assert(button);
 	button->buttonState = newState;
 }
 
 LgcyButtonState UiManager::GetButtonState(LgcyWidgetId widId) {
 	auto button = GetButton(widId);
-	Expects(button);
+	assert(button);
 	return button->buttonState;
 }
 
@@ -408,7 +408,7 @@ bool UiManager::ScrollbarGetY(LgcyWidgetId widId, int * scrollbarY) {
 void UiManager::ScrollbarSetYmax(LgcyWidgetId widId, int yMax)
 {
 	LgcyScrollBar *widg = GetScrollBar(widId);
-	Expects(widg);
+	assert(widg);
 	widg->yMax = yMax;
 }
 
@@ -458,7 +458,7 @@ void UiManager::AddWindow(LgcyWidgetId id)
 
 	auto window = GetWindow(id);
 	if (!window) {
-		throw new TempleException(format("Trying to add widget {} as a window which isn't a window.", id));
+		throw new TempleException(fmt::format("Trying to add widget {} as a window which isn't a window.", id));
 	}
 
 	// Don't add it, if it's hidden

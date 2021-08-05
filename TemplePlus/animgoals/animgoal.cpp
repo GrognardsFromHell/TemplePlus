@@ -3,6 +3,8 @@
 
 std::string_view GetAnimGoalPriorityText(AnimGoalPriority priority)
 {
+    using namespace std::literals;
+
 	switch (priority) {
 	case 0:
 		return "AGP_NONE"sv;
@@ -25,9 +27,4 @@ std::string_view GetAnimGoalPriorityText(AnimGoalPriority priority)
 	default:
 		return "AGP_UNKNOWN"sv;
 	}
-}
-
-void format_arg(fmt::BasicFormatter<char>& f, const char *& format_str, AnimGoalPriority priority)
-{
-	f.writer() << GetAnimGoalPriorityText(priority);
 }

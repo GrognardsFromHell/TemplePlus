@@ -1,6 +1,5 @@
 
-#include <memory>
-#include <string>
+#include "stdafx.h"
 
 #include "graphics/video_hooks.h"
 #include "util/fixes.h"

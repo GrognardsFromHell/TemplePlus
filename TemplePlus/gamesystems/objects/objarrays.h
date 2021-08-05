@@ -26,7 +26,7 @@ class GameObjectReadOnlyArrayHelper {
 public:
 	GameObjectReadOnlyArrayHelper(ArrayHeader** storageLocation)
 		: mStorageLocation(storageLocation) {
-		Expects(!mStorageLocation || !(*mStorageLocation) || (*mStorageLocation)->elSize == sizeof(T));
+		assert(!mStorageLocation || !(*mStorageLocation) || (*mStorageLocation)->elSize == sizeof(T));
 	}
 
 	size_t GetSize() const {
@@ -63,93 +63,93 @@ template<typename T>
 class GameObjectArrayHelper : public GameObjectReadOnlyArrayHelper<T> {
 public:
 	GameObjectArrayHelper(ArrayHeader** storageLocation)
-		: GameObjectReadOnlyArrayHelper(storageLocation) {		
+		: GameObjectReadOnlyArrayHelper<T>(storageLocation) {
 	}
 
 	void Set(size_t index, const T& value) {
-		if (!mStorageLocation) {
+		if (!this->mStorageLocation) {
 			// The type of the object didn't support this field
 			return;
 		}
 
 		// Initialize the array storage if necessary
-		if (!*mStorageLocation) {
-			*mStorageLocation = (ArrayHeader*)malloc(sizeof(ArrayHeader));
-			(*mStorageLocation)->count = 0;
-			(*mStorageLocation)->elSize = sizeof(T);
-			(*mStorageLocation)->idxBitmapId = arrayIdxBitmaps.Allocate();
+		if (!*this->mStorageLocation) {
+			*this->mStorageLocation = (ArrayHeader*)malloc(sizeof(ArrayHeader));
+			(*this->mStorageLocation)->count = 0;
+			(*this->mStorageLocation)->elSize = sizeof(T);
+			(*this->mStorageLocation)->idxBitmapId = arrayIdxBitmaps.Allocate();
 		}
 
-		auto packedIdx = GetPackedIndex(index);
+		auto packedIdx = this->GetPackedIndex(index);
 
 		// Add the corresponding index position
-		if (!HasIndex(index)) {
-			arrayIdxBitmaps.AddIndex((*mStorageLocation)->idxBitmapId, index);
+		if (!this->HasIndex(index)) {
+			arrayIdxBitmaps.AddIndex((*this->mStorageLocation)->idxBitmapId, index);
 
 			// Resize the array storage
-			*mStorageLocation = (ArrayHeader*)realloc(*mStorageLocation, 
+			*this->mStorageLocation = (ArrayHeader*)realloc(*this->mStorageLocation,
 				sizeof(ArrayHeader) 
-				+ (*mStorageLocation)->count * sizeof(T)
+				+ (*this->mStorageLocation)->count * sizeof(T)
 				+ sizeof(T));
 
 			// Move back everything behind the packed Idx
-			for (size_t i = (*mStorageLocation)->count; i > packedIdx; --i) {
-				*reinterpret_cast<T*>((*mStorageLocation)->GetData(i)) 
-					= *reinterpret_cast<T*>((*mStorageLocation)->GetData(i - 1));
+			for (size_t i = (*this->mStorageLocation)->count; i > packedIdx; --i) {
+				*reinterpret_cast<T*>((*this->mStorageLocation)->GetData(i))
+					= *reinterpret_cast<T*>((*this->mStorageLocation)->GetData(i - 1));
 			}
 
-			(*mStorageLocation)->count++;
+			(*this->mStorageLocation)->count++;
 		}
 		
-		*reinterpret_cast<T*>((*mStorageLocation)->GetData(packedIdx)) = value;
+		*reinterpret_cast<T*>((*this->mStorageLocation)->GetData(packedIdx)) = value;
 	}
 
 	void Remove(size_t index) {
-		if (!mStorageLocation) {
+	    if (!this->mStorageLocation) {
 			// The type of the object didn't support this field
 			return;
 		}
 
-		if (!*mStorageLocation) {
+	    if (!*this->mStorageLocation) {
 			return; // No storage allocated anyway
 		}
 
-		if (!HasIndex(index)) {
+	    if (!this->HasIndex(index)) {
 			return; // Index is already removed
 		}
 
 		// If the array only consist of the element we are removing, deallocate it
-		if ((*mStorageLocation)->count == 1) {
+		if ((*this->mStorageLocation)->count == 1) {
 			Clear();
 			return;
 		}
 
-		size_t storageIndex = GetPackedIndex(index);
-		arrayIdxBitmaps.RemoveIndex((*mStorageLocation)->idxBitmapId, index);
+		size_t storageIndex = this->GetPackedIndex(index);
+		arrayIdxBitmaps.RemoveIndex((*this->mStorageLocation)->idxBitmapId, index);
 
-		T* arr = reinterpret_cast<T*>((*mStorageLocation)->GetData());
+		T* arr = reinterpret_cast<T*>((*this->mStorageLocation)->GetData());
 		// Copy all the data from the back one place forward
-		for (size_t i = storageIndex; i < (*mStorageLocation)->count - 1; ++i) {
+		for (size_t i = storageIndex; i < (*this->mStorageLocation)->count - 1; ++i) {
 			arr[i] = arr[i + 1];
 		}		
-		(*mStorageLocation)->count--;
-		*mStorageLocation = reinterpret_cast<ArrayHeader*>(
-			realloc(*mStorageLocation, sizeof(ArrayHeader) + sizeof(T) * (*mStorageLocation)->count)
+		(*this->mStorageLocation)->count--;
+		*this->mStorageLocation = reinterpret_cast<ArrayHeader*>(
+			realloc(*this->mStorageLocation, sizeof(ArrayHeader) + sizeof(T) * (*this->mStorageLocation)->count)
 		);
 	}
 
 	void Clear() {
-		if (!mStorageLocation) {
+		if (!this->mStorageLocation) {
 			// The type of the object didn't support this field
 			return;
 		}
 
-		if (!*mStorageLocation) {
+		if (!*this->mStorageLocation) {
 			return; // Already reset
 		}
-		arrayIdxBitmaps.Free((*mStorageLocation)->idxBitmapId);
-		free(*mStorageLocation);
-		*mStorageLocation = nullptr;
+		arrayIdxBitmaps.Free((*this->mStorageLocation)->idxBitmapId);
+		free(*this->mStorageLocation);
+		*this->mStorageLocation = nullptr;
 	}
 
 	/**
@@ -157,23 +157,23 @@ public:
 	 * Also passes a mutable data pointer.
 	 */
 	void ForEachIndex(std::function<void(size_t)> callback) {
-		if (!mStorageLocation) {
+	    if (!this->mStorageLocation) {
 			// The type of the object didn't support this field
 			return;
 		}
 
-		if (!*mStorageLocation) {
+	    if (!*this->mStorageLocation) {
 			return;
 		}
 
-		arrayIdxBitmaps.ForEachIndex((*mStorageLocation)->idxBitmapId, [=](size_t realIdx) {
+	    arrayIdxBitmaps.ForEachIndex((*this->mStorageLocation)->idxBitmapId, [=](size_t realIdx) {
 			callback(realIdx);
 			return true;
 		});
 	}
 
 	void Append(const T& value)	{
-		Set(GetSize(), value);
+	    Set(this->GetSize(), value);
 	};
 
 };

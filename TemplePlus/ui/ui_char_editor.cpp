@@ -217,7 +217,7 @@ public:
 	eastl::vector<TigRect> featsMultiBtnRects;
 	eastl::vector<TigRect> featsBtnRects, featsExistingBtnRects;
 	eastl::hash_map<int, std::string> featsMasterFeatStrings;
-	eastl::vector<string> spellsPerDayTexts;
+	eastl::vector<std::string> spellsPerDayTexts;
 	eastl::vector<TigRect> spellsPerDayTextRects;
 	eastl::vector<TigRect> spellsNewSpellsBoxRects;
 	
@@ -243,7 +243,7 @@ public:
 
 
 	CharEditorClassSystem& GetClass() const {
-		Expects(!!mClass);
+		assert(!!mClass);
 		return *mClass;
 	}
 
@@ -1381,7 +1381,7 @@ void UiCharEditor::FeatsActivate(){
 	featsExistingScrollbar = *uiManager->GetScrollBar(featsExistingScrollbarId);
 	featsExistingScrollbar.scrollbarY = 0;
 	featsExistingScrollbarY = 0;
-	featsExistingScrollbar.yMax = max((int)mExistingFeats.size() - FEATS_EXISTING_BTN_COUNT, 0);
+	featsExistingScrollbar.yMax = std::max((int)mExistingFeats.size() - FEATS_EXISTING_BTN_COUNT, 0);
 	*uiManager->GetScrollBar(featsExistingScrollbarId) = featsExistingScrollbar;
 
 	// Available feats
@@ -1421,7 +1421,7 @@ void UiCharEditor::FeatsActivate(){
 	featsScrollbar = *uiManager->GetScrollBar(featsScrollbarId);
 	featsScrollbar.scrollbarY = 0;
 	featsScrollbarY= 0;
-	featsScrollbar.yMax = max((int)mSelectableFeats.size() - FEATS_AVAIL_BTN_COUNT, 0);
+	featsScrollbar.yMax = std::max((int)mSelectableFeats.size() - FEATS_AVAIL_BTN_COUNT, 0);
 	*uiManager->GetScrollBar(featsScrollbarId) = featsScrollbar ;
 }
 
@@ -1538,7 +1538,7 @@ void UiCharEditor::SpellsActivate() {
 		auto sbId = uiCharEditor.spellsScrollbarId;
 		uiManager->ScrollbarSetY(sbId, 0);
 		int numEntries = (int)chargen.GetAvailableSpells().size();
-		uiManager->ScrollbarSetYmax(sbId, max(0, numEntries - uiCharEditor.SPELLS_BTN_COUNT));
+		uiManager->ScrollbarSetYmax(sbId, std::max(0, numEntries - uiCharEditor.SPELLS_BTN_COUNT));
 		uiCharEditor.spellsScrollbar = *uiManager->GetScrollBar(sbId);
 		uiCharEditor.spellsScrollbar.y = 0;
 		uiCharEditor.spellsScrollbarY = 0;
@@ -1547,7 +1547,7 @@ void UiCharEditor::SpellsActivate() {
 		auto sbAddedId = uiCharEditor.spellsScrollbar2Id;
 		int numAdded = (int)chargen.GetKnownSpellInfo().size();
 		uiManager->ScrollbarSetY(sbAddedId, 0); 
-		uiManager->ScrollbarSetYmax(sbAddedId, max(0, numAdded - uiCharEditor.SPELLS_BTN_COUNT));
+		uiManager->ScrollbarSetYmax(sbAddedId, std::max(0, numAdded - uiCharEditor.SPELLS_BTN_COUNT));
 		uiCharEditor.spellsScrollbar2 = *uiManager->GetScrollBar(sbAddedId);
 		uiCharEditor.spellsScrollbar2.y = 0;
 		uiCharEditor.spellsScrollbar2Y = 0;
@@ -2097,7 +2097,7 @@ BOOL UiCharEditor::FeatsEntryBtnMsg(int widId, TigMsg * msg){
 			temple::GetRef<void(char*)>(0x10162C00)(temple::GetRef<char[1024]>(0x10C76B48)); // UiCharTextboxSet
 			return TRUE;
 		case TigMsgWidgetEvent::Exited:
-			temple::GetRef<void(__cdecl)(char *)>(0x10162C00)(""); // UiCharTextboxSet
+			temple::GetRef<void(__cdecl)(const char *)>(0x10162C00)(""); // UiCharTextboxSet
 			return TRUE;
 		default:
 			return FALSE;
@@ -2147,7 +2147,7 @@ BOOL UiCharEditor::FeatsExistingBtnMsg(int widId, TigMsg* msg)
 		temple::GetRef<void(char*)>(0x10162C00)(temple::GetRef<char[1024]>(0x10C76B48)); // UiCharTextboxSet
 		return TRUE;
 	case TigMsgWidgetEvent::Exited:
-		temple::GetRef<void(__cdecl)(char *)>(0x10162C00)(""); // UiCharTextboxSet
+		temple::GetRef<void(__cdecl)(const char *)>(0x10162C00)(""); // UiCharTextboxSet
 		return TRUE;
 	default:
 		return FALSE;
@@ -2250,7 +2250,7 @@ void UiCharEditor::FeatsMultiSelectActivate(feat_enums feat) {
 	featsMultiSelectScrollbar = *uiManager->GetScrollBar(featsMultiSelectScrollbarId);
 	featsMultiSelectScrollbar.scrollbarY = 0;
 	featsMultiSelectScrollbarY = 0;
-	featsMultiSelectScrollbar.yMax = max(0, (int)mMultiSelectFeats.size() - FEATS_MULTI_BTN_COUNT);
+	featsMultiSelectScrollbar.yMax = std::max(0, (int)mMultiSelectFeats.size() - FEATS_MULTI_BTN_COUNT);
 	featsMultiSelectScrollbar = *uiManager->GetScrollBar(featsMultiSelectScrollbarId);
 	uiManager->SetButtonState(featsMultiOkBtnId, LgcyButtonState::Disabled);
 
@@ -2899,7 +2899,7 @@ void UiCharEditor::SpellsPerDayUpdate(){
 
 	spellsPerDayTexts.clear();
 	for (auto i = 0; i < SPELLS_PER_DAY_BOXES_COUNT; i++){
-		auto &handle = GetEditedChar();
+		auto handle = GetEditedChar();
 		auto casterLvl = objects.StatLevelGet(handle, selPkt.classCode);
 		auto numSpells = d20ClassSys.GetNumSpellsFromClass(handle, selPkt.classCode, i, casterLvl);
 		if (numSpells < 0)
@@ -3076,7 +3076,7 @@ BOOL UiCharEditor::SpellsAvailableEntryBtnMsg(int widId, TigMsg * msg)
 				temple::GetRef<void(char*)>(0x10162C00)(temple::GetRef<char[1024]>(0x10C732B0)); // UiCharTextboxSet
 				return 1;
 			case TigMsgWidgetEvent::Exited: 
-				temple::GetRef<void(__cdecl)(char *)>(0x10162C00)(""); // UiCharTextboxSet
+				temple::GetRef<void(__cdecl)(const char *)>(0x10162C00)(""); // UiCharTextboxSet
 				return 1;
 			default: 
 				return 0;
@@ -3092,7 +3092,7 @@ BOOL UiCharEditor::SpellsAvailableEntryBtnMsg(int widId, TigMsg * msg)
 	}*/
 
 	if (msgW->widgetEventType == TigMsgWidgetEvent::Exited) {
-		temple::GetRef<void(__cdecl)(char *)>(0x10162C00)(""); // UiCharTextboxSet
+		temple::GetRef<void(__cdecl)(const char *)>(0x10162C00)(""); // UiCharTextboxSet
 		return 1;
 	}
 

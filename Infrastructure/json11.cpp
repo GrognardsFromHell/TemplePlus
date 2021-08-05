@@ -20,7 +20,6 @@
  */
 
  // MSVC++ fixes
-#define _CRT_SECURE_NO_WARNINGS
 
 #include "infrastructure/json11.hpp"
 #include <cassert>

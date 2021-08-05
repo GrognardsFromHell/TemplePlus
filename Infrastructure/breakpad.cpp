@@ -1,8 +1,9 @@
 
-#include "crash_reporting.h"
+#include <breakpad/crash_reporting.h>
 
 #include "infrastructure/breakpad.h"
 #include <fmt/format.h>
+#include <fmt/xchar.h>
 #include "platform/windows.h"
 
 Breakpad::Breakpad(const std::wstring &crashDumpFolder)
@@ -24,6 +25,4 @@ Breakpad::Breakpad(const std::wstring &crashDumpFolder)
 
 }
 
-Breakpad::~Breakpad()
-{
-}
+Breakpad::~Breakpad() = default;

@@ -21,8 +21,8 @@ public:
 	void apply() override {
 
 		// hook the buff/debuff icon so it doesn't try to get a spell name if the spellEnum is -2
-		static char* (__cdecl* orgBuffDebuffGetBaseText)(BuffDebuffPacket*, int, int) = 
-			replaceFunction<char*(__cdecl)(BuffDebuffPacket* , int , int )>(0x100F45A0, [](BuffDebuffPacket* bdb, int iconType, int iconIdx)->char*{
+		static const char* (__cdecl* orgBuffDebuffGetBaseText)(BuffDebuffPacket*, int, int) =
+			replaceFunction<const char*(__cdecl)(BuffDebuffPacket* , int , int )>(0x100F45A0, [](BuffDebuffPacket* bdb, int iconType, int iconIdx)->const char*{
 			if (iconType == 0){ // buff
 				auto spEnum = bdb->buffs[iconIdx ].spellEnum;
 				if (spEnum == -2){
@@ -379,7 +379,7 @@ void LegacyUiParty::GetNewIndicatorSpecs()
 		}
 
 		if (indSpec.id) {
-			Expects((uint32_t)indSpec.id > INDICATOR_COUNT_VANILLA ); // ensure no collision with the normal ToEE indicator IDs
+			assert((uint32_t)indSpec.id > INDICATOR_COUNT_VANILLA ); // ensure no collision with the normal ToEE indicator IDs
 			buffDebuffSpecs[indSpec.id] = indSpec;
 		}
 
@@ -390,7 +390,7 @@ void LegacyUiParty::GetNewIndicatorSpecs()
 	tio_filelist_destroy(&flist);
 }
 
-IndicatorSpec::IndicatorSpec(std::string & filename, std::string & help, int indType){
+IndicatorSpec::IndicatorSpec(const std::string & filename, const std::string & help, int indType){
 	this->textureFilename = filename;
 	this->helpTopicName = help;
 	this->helpTopicId = ElfHash::Hash(help);

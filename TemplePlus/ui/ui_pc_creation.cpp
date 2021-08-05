@@ -974,7 +974,7 @@ void UiPcCreation::FeatsActivate()
 	featsExistingScrollbar = *uiManager->GetScrollBar(featsExistingScrollbarId);
 	featsExistingScrollbar.scrollbarY = 0;
 	featsExistingScrollbarY = 0;
-	featsExistingScrollbar.yMax = max((int)mExistingFeats.size() - FEATS_EXISTING_BTN_COUNT, 0);
+	featsExistingScrollbar.yMax = std::max((int)mExistingFeats.size() - FEATS_EXISTING_BTN_COUNT, 0);
 	*uiManager->GetScrollBar(featsExistingScrollbarId) = featsExistingScrollbar;
 
 	// Available feats
@@ -1014,7 +1014,7 @@ void UiPcCreation::FeatsActivate()
 	featsScrollbar = *uiManager->GetScrollBar(featsScrollbarId);
 	featsScrollbar.scrollbarY = 0;
 	featsScrollbarY = 0;
-	featsScrollbar.yMax = max((int)mSelectableFeats.size() - FEATS_AVAIL_BTN_COUNT, 0);
+	featsScrollbar.yMax = std::max((int)mSelectableFeats.size() - FEATS_AVAIL_BTN_COUNT, 0);
 	*uiManager->GetScrollBar(featsScrollbarId) = featsScrollbar;
 }
 
@@ -1287,7 +1287,7 @@ BOOL UiPcCreation::FeatsEntryBtnMsg(int widId, TigMsg* msg)
 		temple::GetRef<void(__cdecl)(feat_enums)>(0x1011BB50)(FeatsMultiGetFirst(feat));
 		return TRUE;
 	case TigMsgWidgetEvent::Exited:
-		temple::GetRef<void(__cdecl)(char *)>(0x10162C00)(""); // UiCharTextboxSet
+		temple::GetRef<void(__cdecl)(const char *)>(0x10162C00)(""); // UiCharTextboxSet
 		return TRUE;
 	default:
 		return FALSE;
@@ -1335,7 +1335,7 @@ BOOL UiPcCreation::FeatsExistingBtnMsg(int widId, TigMsg* msg)
 		temple::GetRef<void(__cdecl)(feat_enums)>(0x1011BB50)(FeatsMultiGetFirst(feat));
 		return TRUE;
 	case TigMsgWidgetEvent::Exited:
-		temple::GetRef<void(__cdecl)(char *)>(0x10162C00)(""); // UiCharTextboxSet
+		temple::GetRef<void(__cdecl)(const char *)>(0x10162C00)(""); // UiCharTextboxSet
 		return TRUE;
 	default:
 		return FALSE;
@@ -1888,7 +1888,7 @@ void UiPcCreation::FeatsMultiSelectActivate(feat_enums feat)
 	featsMultiSelectScrollbar = *uiManager->GetScrollBar(featsMultiSelectScrollbarId);
 	featsMultiSelectScrollbar.scrollbarY = 0;
 	featsMultiSelectScrollbarY = 0;
-	featsMultiSelectScrollbar.yMax = max(0, (int)mMultiSelectFeats.size() - FEATS_MULTI_BTN_COUNT);
+	featsMultiSelectScrollbar.yMax = std::max(0, (int)mMultiSelectFeats.size() - FEATS_MULTI_BTN_COUNT);
 	featsMultiSelectScrollbar = *uiManager->GetScrollBar(featsMultiSelectScrollbarId);
 	uiManager->SetButtonState(featsMultiOkBtnId, LgcyButtonState::Disabled);
 
@@ -2123,7 +2123,7 @@ void UiPcCreation::SpellsActivate()
 		auto sbId = uiPcCreation.spellsScrollbarId;
 		uiManager->ScrollbarSetY(sbId, 0);
 		int numEntries = (int)chargen.GetAvailableSpells().size();
-		uiManager->ScrollbarSetYmax(sbId, max(0, numEntries - uiPcCreation.SPELLS_BTN_COUNT));
+		uiManager->ScrollbarSetYmax(sbId, std::max(0, numEntries - uiPcCreation.SPELLS_BTN_COUNT));
 		uiPcCreation.spellsScrollbar = *uiManager->GetScrollBar(sbId);
 		uiPcCreation.spellsScrollbar.y = 0;
 		uiPcCreation.spellsScrollbarY = 0;
@@ -2132,7 +2132,7 @@ void UiPcCreation::SpellsActivate()
 		auto sbAddedId = uiPcCreation.spellsScrollbar2Id;
 		int numAdded = (int)chargen.GetKnownSpellInfo().size();
 		uiManager->ScrollbarSetY(sbAddedId, 0);
-		uiManager->ScrollbarSetYmax(sbAddedId, max(0, numAdded - uiPcCreation.SPELLS_BTN_COUNT));
+		uiManager->ScrollbarSetYmax(sbAddedId, std::max(0, numAdded - uiPcCreation.SPELLS_BTN_COUNT));
 		uiPcCreation.spellsScrollbar2 = *uiManager->GetScrollBar(sbAddedId);
 		uiPcCreation.spellsScrollbar2.y = 0;
 		uiPcCreation.spellsScrollbar2Y = 0;
@@ -2341,7 +2341,7 @@ void UiPcCreation::SpellsPerDayUpdate()
 
 	spellsPerDayTexts.clear();
 	for (auto i = 0; i < SPELLS_PER_DAY_BOXES_COUNT; i++) {
-		auto &handle = GetEditedChar();
+		auto handle = GetEditedChar();
 		auto casterLvl = objects.StatLevelGet(handle, selPkt.classCode);
 		auto numSpells = d20ClassSys.GetNumSpellsFromClass(handle, selPkt.classCode, i, casterLvl);
 		if (numSpells < 0)
@@ -2539,7 +2539,7 @@ BOOL UiPcCreation::SpellsAvailableEntryBtnMsg(int widId, TigMsg * msg)
 			temple::GetRef<void(char*)>(0x10162C00)(temple::GetRef<char[1024]>(0x10C732B0)); // UiCharTextboxSet
 			return 1;
 		case TigMsgWidgetEvent::Exited:
-			temple::GetRef<void(__cdecl)(char *)>(0x10162C00)(""); // UiCharTextboxSet
+			temple::GetRef<void(__cdecl)(const char *)>(0x10162C00)(""); // UiCharTextboxSet
 			return 1;
 		default:
 			return 0;
@@ -2555,7 +2555,7 @@ BOOL UiPcCreation::SpellsAvailableEntryBtnMsg(int widId, TigMsg * msg)
 	}*/
 
 	if (msgW->widgetEventType == TigMsgWidgetEvent::Exited) {
-		temple::GetRef<void(__cdecl)(char *)>(0x10162C00)(""); // UiCharTextboxSet
+		temple::GetRef<void(__cdecl)(const char *)>(0x10162C00)(""); // UiCharTextboxSet
 		return 1;
 	}
 
@@ -3144,7 +3144,7 @@ void UiPcCreation::RenderCharToHitBonus(int widId){
 	}
 }
 
-void UiPcCreation::DrawTextInWidgetCentered(int widgetId, const string & text, const TigRect & rect, const TigTextStyle & style)
+void UiPcCreation::DrawTextInWidgetCentered(int widgetId, const std::string & text, const TigRect & rect, const TigTextStyle & style)
 {
 	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
 	UiRenderer::DrawTextInWidgetCentered(widgetId, text, rect, style);
@@ -3322,7 +3322,7 @@ bool RaceChargen::WidgetsInit(int w, int h){
 	// Race Buttons
 	auto x = 156, y = 24;
 	for (auto it: d20RaceSys.vanillaRaceEnums){
-		auto newBtn = make_unique<ChargenPagedButton>();
+	    auto newBtn = std::make_unique<ChargenPagedButton>();
 		newBtn->SetPos(x, y);
 		
 		for (auto i= it; i < d20RaceSys.selectableBaseRaces.size(); i+= 7){
@@ -3373,7 +3373,7 @@ bool RaceChargen::WidgetsInit(int w, int h){
 	// Subrace Buttons
 	x = 306; y = 24;
 	for (auto it : {0,1,2,3,4,5,6}) {
-		auto newBtn = make_unique<ChargenPagedButton>();
+	    auto newBtn = std::make_unique<ChargenPagedButton>();
 		auto race = (Race)it;
 		auto raceName = toupper(d20Stats.GetRaceName(race));
 		newBtn->SetPos(x, y);
@@ -3536,7 +3536,7 @@ ClassChargen::ClassChargen(const UiSystemConf & conf){
 
 BOOL ChargenSystem::SystemInit(const UiSystemConf *) {
 
-	mWnd = make_unique<WidgetContainer>(431, 250);
+    mWnd = std::make_unique<WidgetContainer>(431, 250);
 
 	MakeStateTitle();
 	return TRUE;
@@ -3598,7 +3598,7 @@ void ChargenSystem::UpdateDescriptionBox() {
 
 void ChargenSystem::MakeStateTitle()
 {
-	auto stateTitle = make_unique<WidgetText>();
+    auto stateTitle = std::make_unique<WidgetText>();
 	stateTitle->SetX(4); stateTitle->SetY(4);
 	stateTitle->SetFixedHeight(14);
 	stateTitle->SetCenterVertically(true);

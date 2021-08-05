@@ -10,7 +10,6 @@
 #include "tig/tig_font.h"
 #include "fonts.h"
 
-using namespace gsl;
 using namespace gfx;
 
 // First character found in the FNT files
@@ -109,7 +108,7 @@ FontRenderer::FontRenderer(RenderingDevice& device)
 FontRenderer::~FontRenderer() {
 }
 
-void FontRenderer::RenderRun(cstring_span<> text,
+void FontRenderer::RenderRun(std::string_view text,
                              int x,
                              int y,
                              const TigRect& bounds,
@@ -182,8 +181,8 @@ void FontRenderer::RenderRun(cstring_span<> text,
 
 		x += style.kerning + glyph.width_line;
 
-		Expects(!(style.flags & 0x1000));
-		Expects(!(style.flags & 0x2000));
+		assert(!(style.flags & 0x1000));
+		assert(!(style.flags & 0x2000));
 
 		// Drop Shadow
 		if (style.flags & 8) {

@@ -19,7 +19,7 @@ inline HRESULT _HandleD3dError(const char* method, HRESULT result) {
 
 #define D3DLOG(CMD) _HandleD3dError(#CMD, CMD)
 
-inline void _assertD3dSuccess(const char* method, HRESULT result) {
+inline constexpr void _assertD3dSuccess(const char* method, HRESULT result) {
 	if (result != S_OK) {
 		ThrowD3dAssertion(method, result);
 	}

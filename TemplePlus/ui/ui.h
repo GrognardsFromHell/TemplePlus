@@ -201,7 +201,7 @@ public:
 
 	const char *sourceFile;
 	uint32_t sourceLine;
-	unique_ptr<LgcyWidget, LgcyWidgetDeleter> widget;
+	std::unique_ptr<LgcyWidget, LgcyWidgetDeleter> widget;
 	WidgetBase *advancedWidget = nullptr;
 };
 

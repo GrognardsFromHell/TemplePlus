@@ -23,16 +23,16 @@ namespace aas {
 	Mesh::Mesh(std::string filename, std::vector<uint8_t> data)
 		: filename_(std::move(filename)), data_(std::move(data))
 	{
-		Expects(data_.size() >= sizeof(MeshDataHeader));
+		assert(data_.size() >= sizeof(MeshDataHeader));
 
 		auto header = *reinterpret_cast<const MeshDataHeader*>(data_.data());
 
-		Expects(data_.size() >= header.boneDataStart + sizeof(MeshBone) * header.boneCount);
-		Expects(data_.size() >= header.materialDataStart + sizeof(MeshMaterial) * header.materialCount);
-		Expects(data_.size() >= header.vertexDataStart + sizeof(MeshVertex) * header.vertexCount);
-		Expects(data_.size() >= header.faceDataStart + sizeof(MeshFace) * header.faceCount);
+		assert(data_.size() >= header.boneDataStart + sizeof(MeshBone) * header.boneCount);
+		assert(data_.size() >= header.materialDataStart + sizeof(MeshMaterial) * header.materialCount);
+		assert(data_.size() >= header.vertexDataStart + sizeof(MeshVertex) * header.vertexCount);
+		assert(data_.size() >= header.faceDataStart + sizeof(MeshFace) * header.faceCount);
 
-		bones_ = gsl::span(reinterpret_cast<MeshBone*>(&data_[header.boneDataStart]), header.boneCount);
+		bones_ = std::span(reinterpret_cast<MeshBone*>(&data_[header.boneDataStart]), header.boneCount);
 		
 		auto materials = reinterpret_cast<MeshMaterial*>(&data_[header.materialDataStart]);
 		materials_.resize(header.materialCount);
@@ -40,8 +40,8 @@ namespace aas {
 			materials_[i] = std::string_view(materials[i].id);
 		}
 
-		vertices_ = gsl::span(reinterpret_cast<MeshVertex*>(&data_[header.vertexDataStart]), header.vertexCount);
-		faces_ = gsl::span(reinterpret_cast<MeshFace*>(&data_[header.faceDataStart]), header.faceCount);
+		vertices_ = std::span(reinterpret_cast<MeshVertex*>(&data_[header.vertexDataStart]), header.vertexCount);
+		faces_ = std::span(reinterpret_cast<MeshFace*>(&data_[header.faceDataStart]), header.faceCount);
 
 
 	}

@@ -1,6 +1,7 @@
+#include <cassert>
 #include <cctype>
+#include <algorithm>
 
-#include <gsl/gsl>
 #include "infrastructure/tokenizer.h"
 #include "infrastructure/exception.h"
 
@@ -48,7 +49,7 @@ bool Tokenizer::IsIdentifier(const char* identifier) const {
 	
 	// In debug mode ensure that the identifier 
 	// being passed in is lowercase
-	Expects(std::all_of(identifier, identifier + strlen(identifier), [](char a)
+	assert(std::all_of(identifier, identifier + strlen(identifier), [](char a)
 		{
 			return tolower(a) == a;
 		}));
@@ -81,7 +82,7 @@ bool Tokenizer::LineHasMoreChars() const {
 
 bool Tokenizer::ReadNumber() {
 
-	Expects(LineHasMoreChars());
+	assert(LineHasMoreChars());
 
 	auto startOfToken = mLinePos;
 
@@ -233,23 +234,23 @@ bool Tokenizer::ReadIdentifier() {
 }
 
 char Tokenizer::PeekChar() {
-	Expects(LineHasMoreChars());
+	assert(LineHasMoreChars());
 	return mLine[mLinePos];
 }
 
 void Tokenizer::SkipChar() {
-	Expects(LineHasMoreChars());
+	assert(LineHasMoreChars());
 	mLinePos++;
 }
 
 char Tokenizer::TakeChar() {
-	Expects(LineHasMoreChars());
+	assert(LineHasMoreChars());
 	return mLine[mLinePos++];
 }
 
 void Tokenizer::UngetChar() {
 	mLinePos--;
-	Expects(mLinePos >= 0);
+	assert(mLinePos >= 0);
 }
 
 void Tokenizer::SkipSpaceAndControl() {

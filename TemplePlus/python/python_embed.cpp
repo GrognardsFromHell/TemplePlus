@@ -59,19 +59,21 @@ void PythonPrepareGlobalNamespace() {
 
 static bool __cdecl PythonInit(GameSystemConf *conf) {
 
-	static char* sArgv = "";
+    static char programName[255] = "TemplePlus.exe";
+	static char sArgv[1] = {0};
+	static char* sArgvv = &sArgv[0];
 
 	Py_OptimizeFlag++;
 	Py_VerboseFlag++;
 	Py_NoSiteFlag++;
-	Py_SetProgramName("TemplePlus.exe");
+	Py_SetProgramName(programName);
 
 	Py_Initialize();
 
-	PySys_SetArgv(0, &sArgv);
+	PySys_SetArgv(0, &sArgvv);
 	
-	PySys_SetObject("stderr", PyTempleConsoleOut_New());
-	PySys_SetObject("stdout", PyTempleConsoleOut_New());
+	PySys_SetObject((char*) "stderr", PyTempleConsoleOut_New());
+	PySys_SetObject((char*) "stdout", PyTempleConsoleOut_New());
 		
 	PyTempleImporter_Install();
 	PyToeeInitModule();

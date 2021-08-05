@@ -1145,14 +1145,14 @@ void UiItemCreation::ItemCreationCraftingCostTexts(int widgetId, objHndl objHndI
 	craftingCostCP = itemWorth / 2;
 	craftingCostXP = itemWorth / 2500;
 	
-	string text;
+	std::string text;
 	// "Item Cost: %d"
 	if (*insuffXp || *insuffCp || *insuffSkill || *insuffPrereq){
 		
-		text = format("{} @{}{}", *itemCreationAddresses.itemCreationUIStringItemCost, *(insuffCp)+1, craftingCostCP / 100);
+		text = fmt::format("{} @{}{}", *itemCreationAddresses.itemCreationUIStringItemCost, *(insuffCp)+1, craftingCostCP / 100);
 	} else {
 		//_snprintf(text, 128, "%s @3%d", *itemCreationAddresses.itemCreationUIStringItemCost, craftingCostCP / 100);
-		text = format("{} @3{}", *itemCreationAddresses.itemCreationUIStringItemCost, craftingCostCP / 100);
+		text = fmt::format("{} @3{}", *itemCreationAddresses.itemCreationUIStringItemCost, craftingCostCP / 100);
 	};
 
 
@@ -1166,19 +1166,19 @@ void UiItemCreation::ItemCreationCraftingCostTexts(int widgetId, objHndl objHndI
 	if (itemCreationType == IC_Alchemy){ 
 		// placeholder - they do similar bullshit in the code :P but I guess it can be modified easily enough!
 		if (*insuffXp || *insuffCp || *insuffSkill || *insuffPrereq){
-			text = format("{} @{}{}", *itemCreationAddresses.itemCreationUIStringSkillRequired, *insuffSkill + 1, craftingCostXP);
+			text = fmt::format("{} @{}{}", *itemCreationAddresses.itemCreationUIStringSkillRequired, *insuffSkill + 1, craftingCostXP);
 		}
 		else {
-			text = format("{} @3{}", *itemCreationAddresses.itemCreationUIStringSkillRequired, craftingCostXP);
+			text = fmt::format("{} @3{}", *itemCreationAddresses.itemCreationUIStringSkillRequired, craftingCostXP);
 		};
 	}
 	else
 	{
 		if (*insuffXp || *insuffCp || *insuffSkill || *insuffPrereq){
-			text = format("{} @{}{}", *itemCreationAddresses.itemCreationUIStringXPCost, *(insuffXp) + 1, craftingCostXP);
+			text = fmt::format("{} @{}{}", *itemCreationAddresses.itemCreationUIStringXPCost, *(insuffXp) + 1, craftingCostXP);
 		}
 		else {
-			text = format("{} @3{}", *itemCreationAddresses.itemCreationUIStringXPCost, craftingCostXP);
+			text = fmt::format("{} @3{}", *itemCreationAddresses.itemCreationUIStringXPCost, craftingCostXP);
 		};
 	};
 
@@ -1186,7 +1186,7 @@ void UiItemCreation::ItemCreationCraftingCostTexts(int widgetId, objHndl objHndI
 	rect.y += 11;
 
 	// "Value: %d"
-	text = format("{} @1{}", *itemCreationAddresses.itemCreationUIStringValue, itemWorth / 100);
+	text = fmt::format("{} @1{}", *itemCreationAddresses.itemCreationUIStringValue, itemWorth / 100);
 
 	UiRenderer::DrawTextInWidget(widgetId, text, rect, *itemCreationAddresses.itemCreationTextStyle2);
 
@@ -1210,7 +1210,7 @@ void UiItemCreation::ItemCreationCraftingCostTexts(int widgetId, objHndl objHndI
 		char asdf[1000];
 		sprintf(asdf, "Crafted Caster Level: " );
 		
-		text = format("{} @3{}", asdf, casterLevelNew);
+		text = fmt::format("{} @3{}", asdf, casterLevelNew);
 		if (prereqString){
 			UiRenderer::DrawTextInWidget(widgetId, text, rect, *itemCreationAddresses.itemCreationTextStyle);
 		}
@@ -1533,7 +1533,7 @@ uint32_t UiItemCreation::CraftedWandWorth(objHndl item, int casterLevelNew){
 	// retrieve Spell Known data
 	int spellLevelBase = spellData.spellLevel; // default value
 	CraftedWandSpellGet(item, spellData, &spellLevelBase);
-	auto casterLevelBase = max(1, spellLevelBase * 2 - 1);
+	auto casterLevelBase = std::max(1, spellLevelBase * 2 - 1);
 	auto casterClass = (Stat)spellSys.GetCastingClass(spellData.classCode);
 	auto minCasterLevel = (int)d20ClassSys.GetMinCasterLevelForSpellLevel(casterClass, spellLevelBase);
 	if (minCasterLevel >= 1) {
@@ -1696,7 +1696,7 @@ uint32_t UiItemCreation::ScribedScrollWorth(objHndl item, int casterLevelNew)
 	// retrieve Spell Known data (e.g. for Bards) and caster level (as modified by user selection)
 	int spellLevelBase = spellData.spellLevel; // default value
 	ScribedScrollSpellGet(item, spellData, &spellLevelBase);
-	auto casterLevelBase = max(1,spellLevelBase * 2 - 1);
+	auto casterLevelBase = std::max(1,spellLevelBase * 2 - 1);
 	auto casterClass = (Stat)spellSys.GetCastingClass(spellData.classCode);
 	auto minCasterLevel = (int)d20ClassSys.GetMinCasterLevelForSpellLevel(casterClass, spellLevelBase);
 	if (minCasterLevel >= 1) {
@@ -1728,7 +1728,7 @@ uint32_t UiItemCreation::ScribedScrollWorth(objHndl item, int casterLevelNew)
 	return itemWorthBase + materialCost * 100;
 }
 
-static vector<objHndl> craftingProtoHandles[8];
+static std::vector<objHndl> craftingProtoHandles[8];
 
 const char *getProtoName(objHndl protoHandle) {
 	/*
@@ -1977,7 +1977,7 @@ std::string UiItemCreation::PrintPrereqToken(const char * reqTxt)
 		result = fmt::format("{}", mesLine.value);
 		break;
 	case 'C': // level
-		mesLine.key = 20000 + min(20l, atol(reqTxt+1) );
+	mesLine.key = 20000 + std::min(20l, atol(reqTxt+1) );
 		mesFuncs.GetLine_Safe(mItemCreationMes, &mesLine);
 		result = fmt::format("{}", mesLine.value);
 		break;

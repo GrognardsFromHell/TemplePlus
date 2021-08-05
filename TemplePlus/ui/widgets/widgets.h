@@ -45,7 +45,7 @@ public:
 	void BringToFront();
 		
 	void SetParent(WidgetContainer *parent) {
-		Expects(!mParent || mParent == parent);
+		assert(!mParent || mParent == parent);
 		mParent = parent;
 	}
 	WidgetContainer *GetParent() const {

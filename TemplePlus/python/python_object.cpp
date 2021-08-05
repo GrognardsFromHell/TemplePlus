@@ -79,7 +79,7 @@ static PyObject* PyObjHandle_Repr(PyObject* obj) {
 		return PyString_FromString("OBJ_HANDLE_NULL");
 	} else {
 		auto name = objects.GetDisplayName(self->handle, self->handle);
-		auto displayName = format("{}({})", name, self->handle);
+		auto displayName = fmt::format("{}({})", name, self->handle);
 
 		return PyString_FromString(displayName.c_str());
 	}
@@ -1161,7 +1161,7 @@ static PyObject* PyObjHandle_ArcaneSpellLevelCanCast(PyObject* obj, PyObject* ar
 	for (auto it: d20ClassSys.classEnums){
 		auto classEnum = (Stat)it;
 		if (d20ClassSys.IsArcaneCastingClass(classEnum)){
-			arcaneSpellLvlMax = max(arcaneSpellLvlMax , spellSys.GetMaxSpellLevel(self->handle, classEnum, 0));
+		    arcaneSpellLvlMax = std::max(arcaneSpellLvlMax , spellSys.GetMaxSpellLevel(self->handle, classEnum, 0));
 		}
 	}
 	
@@ -1183,7 +1183,7 @@ static PyObject* PyObjHandle_DivineSpellLevelCanCast(PyObject* obj, PyObject* ar
 	for (auto it : d20ClassSys.classEnums) {
 		auto classEnum = (Stat)it;
 		if (d20ClassSys.IsDivineCastingClass(classEnum)) {
-			divineSpellLvlMax = max(divineSpellLvlMax, spellSys.GetMaxSpellLevel(self->handle, classEnum, 0));
+			divineSpellLvlMax = std::max(divineSpellLvlMax, spellSys.GetMaxSpellLevel(self->handle, classEnum, 0));
 		}
 	}
 
@@ -1205,7 +1205,7 @@ static PyObject* PyObjHandle_SpontaneousSpellLevelCanCast(PyObject* obj, PyObjec
 	for (auto it : d20ClassSys.classEnums) {
 		auto classEnum = (Stat)it;
 		if (d20ClassSys.IsNaturalCastingClass(classEnum)) {
-			spontCastLvl = max(spontCastLvl, spellSys.GetMaxSpellLevel(self->handle, classEnum, 0));
+		    spontCastLvl = std::max(spontCastLvl, spellSys.GetMaxSpellLevel(self->handle, classEnum, 0));
 		}
 	}
 
@@ -1513,7 +1513,7 @@ static PyObject* PyObjHandle_ReputationRemove(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
-static bool ParseCondNameAndArgs(PyObject* args, CondStruct*& condStructOut, vector<int>& argsOut) {
+static bool ParseCondNameAndArgs(PyObject* args, CondStruct*& condStructOut, std::vector<int>& argsOut) {
 	// First arg has to be the condition name
 	if (PyTuple_GET_SIZE(args) < 1 || !PyString_Check(PyTuple_GET_ITEM(args, 0))) {
 		PyErr_SetString(PyExc_RuntimeError, "item_condition_add_with_args has to be "
@@ -1529,7 +1529,7 @@ static bool ParseCondNameAndArgs(PyObject* args, CondStruct*& condStructOut, vec
 	}
 
 	// Following arguments all have to be integers and gel with the condition argument count
-	vector<int> condArgs(cond->numArgs, 0);
+	std::vector<int> condArgs(cond->numArgs, 0);
 	for (unsigned int i = 0; i < cond->numArgs; ++i) {
 		if ((uint32_t) PyTuple_GET_SIZE(args) > i + 1) {
 			auto item = PyTuple_GET_ITEM(args, i + 1);
@@ -1559,7 +1559,7 @@ static PyObject* PyObjHandle_ItemConditionAdd(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 
 	CondStruct* cond;
-	vector<int> condArgs;
+	std::vector<int> condArgs;
 	if (!ParseCondNameAndArgs(args, cond, condArgs)) {
 		return 0;
 	}
@@ -1668,7 +1668,7 @@ static PyObject* PyObjHandle_ConditionAddWithArgs(PyObject* obj, PyObject* args)
 	auto self = GetSelf(obj);
 
 	CondStruct* cond;
-	vector<int> condArgs;
+	std::vector<int> condArgs;
 	if (!ParseCondNameAndArgs(args, cond, condArgs)) {
 		return 0;
 	}
@@ -2428,7 +2428,7 @@ static PyObject* PyObjHandle_D20QueryHasCond(PyObject* obj, PyObject* args) {
 		return 0;
 	}
 
-	auto cond = conds.GetByName(format("{}", name));
+	auto cond = conds.GetByName(fmt::format("{}", name));
 	if (!cond) {
 		return PyInt_FromLong(0);
 	}
@@ -3362,7 +3362,7 @@ static PyObject* PyObjHandle_SetWaypoints(PyObject* obj, PyObject* args) {
 
 	if (!PyList_Check(PyTuple_GET_ITEM(args, 0))) {
 		PyErr_SetString(PyExc_RuntimeError, "npc_waypoints_set args should have list of dicts as first argument!");
-		return false;
+		return nullptr;
 	}
 
 	auto list = PyTuple_GET_ITEM(args, 0);
@@ -3376,14 +3376,14 @@ static PyObject* PyObjHandle_SetWaypoints(PyObject* obj, PyObject* args) {
 		if (!dict) {
 			PyErr_SetString(PyExc_RuntimeError, "npc_waypoints_set list contains None at ?");
 			critterSys.SetWaypointsCount(self->handle, 0);
-			return false;
+			return nullptr;
 		}
 		if (!PyDict_Check(dict)) {
 			dict = PyObject_GetAttr(dict, PyString_FromString("__dict__"));
 			if (!dict || !PyDict_Check(dict)) {
 				PyErr_SetString(PyExc_RuntimeError, "npc_waypoints_set list item should be either dict or object!");
 				critterSys.SetWaypointsCount(self->handle, 0);
-				return false;
+				return nullptr;
 			}
 		}
 		auto flags = PyDict_GetItem(dict, PyString_FromString("flags"));
@@ -3671,7 +3671,7 @@ static PyObject* PyObjHandle_AiStrategySetCustom(PyObject* obj, PyObject* args) 
 		Py_RETURN_NONE;
 	}
 
-	std::vector<string> stringVector;
+	std::vector<std::string> stringVector;
 	for (auto i=0; i < count; i++){
 		const char* s = PyString_AsString( PyList_GET_ITEM(strings, i));
 		stringVector.push_back(s);
@@ -4591,7 +4591,7 @@ static int PyObjHandle_SetOriginMapId(PyObject* obj, PyObject* value, void*) {
 		return -1;
 	}
 	if (!maps.IsValidMapId(mapId)) {
-		auto msg = format("Map id {} is invalid.", mapId);
+		auto msg = fmt::format("Map id {} is invalid.", mapId);
 		PyErr_SetString(PyExc_ValueError, msg.c_str());
 		return -1;
 	}
@@ -4825,37 +4825,37 @@ static PyObject* PyObjHandle_GetID(PyObject* obj, void*) {
 }
 
 PyGetSetDef PyObjHandleGetSets[] = {
-	{ "area", PyObjHandle_GetArea, NULL, NULL, NULL },
-	{"char_classes", PyObjHandle_GetCharacterClasses, NULL, "a tuple containing the character classes array", NULL },
-	{ "highest_arcane_class", PyObjHandle_GetHighestArcaneClass, NULL, "Highest Arcane spell casting class", NULL },
-	{ "highest_divine_class", PyObjHandle_GetHighestDivineClass, NULL, "Highest Divine spell casting class", NULL },
-    { "highest_arcane_caster_level", PyObjHandle_GetHighestArcaneCasterLevel, NULL, "Highest Arcane caster level", NULL },
-    { "highest_divine_caster_level", PyObjHandle_GetHighestDivineCasterLevel, NULL, "Highest Divine caster level", NULL },
-	{"description", PyObjHandle_GetDescription, NULL, NULL },
-	{"name", PyObjHandle_GetNameId, NULL, NULL},
-	{"location", PyObjHandle_GetLocation, NULL, NULL},
-	{ "location_full", PyObjHandle_GetLocationFull, NULL, NULL },
-	{"type", PyObjHandle_GetType, NULL, NULL},
-	{"radius", PyObjHandle_GetRadius, PyObjHandle_SetRadius, NULL},
-	{"height", PyObjHandle_GetRenderHeight, PyObjHandle_SetRenderHeight, NULL},
-	{"rotation", PyObjHandle_GetRotation, PyObjHandle_SetRotation, NULL},
-	{"map", PyObjHandle_GetMap, NULL, NULL, NULL},
-	{"hit_dice", PyObjHandle_GetHitDice, NULL, NULL},
-	{"hit_dice_num", PyObjHandle_GetHitDiceNum, NULL, NULL},
-	{"get_size", PyObjHandle_GetSize, NULL, NULL},
-	{"off_x", PyObjHandle_GetOffsetX, NULL, NULL},
-	{"off_y", PyObjHandle_GetOffsetY, NULL, NULL},
-	{"scripts", PyObjHandle_GetScripts, NULL, NULL},
-	{"origin", PyObjHandle_GetOriginMapId, PyObjHandle_SetOriginMapId, NULL},
-	{"substitute_inventory", PyObjHandle_GetSubstituteInventory, PyObjHandle_SetSubstituteInventory, NULL},
-	{"factions", PyObjHandle_GetFactions, NULL, NULL },
-	{"feats", PyObjHandle_GetFeats, NULL, NULL},
-	{"spells_known", PyObjHandle_GetSpellsKnown, NULL, NULL },
-	{"spells_memorized", PyObjHandle_GetSpellsMemorized, NULL, NULL },
-	{"loots", PyObjHandle_GetLoots, PyObjHandle_SetLoots, NULL},
-	{"proto", PyObjHandle_GetProto, NULL, NULL },
-	{"__safe_for_unpickling__", PyObjHandle_SafeForUnpickling, NULL, NULL},
-	{"id", PyObjHandle_GetID, NULL, NULL },
+	{ (char*) "area", PyObjHandle_GetArea, NULL, NULL, NULL },
+	{ (char*) "char_classes", PyObjHandle_GetCharacterClasses, NULL, (char*) "a tuple containing the character classes array", NULL },
+	{ (char*) "highest_arcane_class", PyObjHandle_GetHighestArcaneClass, NULL, (char*) "Highest Arcane spell casting class", NULL },
+	{ (char*) "highest_divine_class", PyObjHandle_GetHighestDivineClass, NULL, (char*) "Highest Divine spell casting class", NULL },
+	{ (char*) "highest_arcane_caster_level", PyObjHandle_GetHighestArcaneCasterLevel, NULL, (char*) "Highest Arcane caster level", NULL },
+	{ (char*) "highest_divine_caster_level", PyObjHandle_GetHighestDivineCasterLevel, NULL, (char*) "Highest Divine caster level", NULL },
+	{ (char*) "description", PyObjHandle_GetDescription, NULL, NULL },
+	{ (char*) "name", PyObjHandle_GetNameId, NULL, NULL},
+	{ (char*) "location", PyObjHandle_GetLocation, NULL, NULL},
+	{ (char*) "location_full", PyObjHandle_GetLocationFull, NULL, NULL },
+	{ (char*) "type", PyObjHandle_GetType, NULL, NULL},
+	{ (char*) "radius", PyObjHandle_GetRadius, PyObjHandle_SetRadius, NULL},
+	{ (char*) "height", PyObjHandle_GetRenderHeight, PyObjHandle_SetRenderHeight, NULL},
+	{ (char*) "rotation", PyObjHandle_GetRotation, PyObjHandle_SetRotation, NULL},
+	{ (char*) "map", PyObjHandle_GetMap, NULL, NULL, NULL},
+	{ (char*) "hit_dice", PyObjHandle_GetHitDice, NULL, NULL},
+	{ (char*) "hit_dice_num", PyObjHandle_GetHitDiceNum, NULL, NULL},
+	{ (char*) "get_size", PyObjHandle_GetSize, NULL, NULL},
+	{ (char*) "off_x", PyObjHandle_GetOffsetX, NULL, NULL},
+	{ (char*) "off_y", PyObjHandle_GetOffsetY, NULL, NULL},
+	{ (char*) "scripts", PyObjHandle_GetScripts, NULL, NULL},
+	{ (char*) "origin", PyObjHandle_GetOriginMapId, PyObjHandle_SetOriginMapId, NULL},
+	{ (char*) "substitute_inventory", PyObjHandle_GetSubstituteInventory, PyObjHandle_SetSubstituteInventory, NULL},
+	{ (char*) "factions", PyObjHandle_GetFactions, NULL, NULL },
+	{ (char*) "feats", PyObjHandle_GetFeats, NULL, NULL},
+	{ (char*) "spells_known", PyObjHandle_GetSpellsKnown, NULL, NULL },
+	{ (char*) "spells_memorized", PyObjHandle_GetSpellsMemorized, NULL, NULL },
+	{ (char*) "loots", PyObjHandle_GetLoots, PyObjHandle_SetLoots, NULL},
+	{ (char*) "proto", PyObjHandle_GetProto, NULL, NULL },
+	{ (char*) "__safe_for_unpickling__", PyObjHandle_SafeForUnpickling, NULL, NULL},
+	{ (char*) "id", PyObjHandle_GetID, NULL, NULL },
 	{NULL, NULL, NULL, NULL}
 };
 
@@ -4905,7 +4905,7 @@ static int PyObjHandle_Init(PyObject* obj, PyObject* args, PyObject* kwargs) {
 
 		// The obj handle is invalid
 		if (!self->id) {
-			auto msg = format("The object handle {} is invalid.", self->handle);
+			auto msg = fmt::format("The object handle {} is invalid.", self->handle);
 			PyErr_SetString(PyExc_ValueError, msg.c_str());
 			// Reset the handle to the null handle
 			self->handle = 0;

@@ -114,7 +114,7 @@ public:
 		return mNewSid;
 	}
 
-	string GetEventName(ObjScriptEvent evt) {
+	std::string GetEventName(ObjScriptEvent evt) {
 		return GetFunctionName((EventId)evt);
 	}
 

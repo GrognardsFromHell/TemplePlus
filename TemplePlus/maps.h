@@ -5,7 +5,7 @@
 
 struct JumpPoint {
 	int id;
-	string mapName;
+	std::string mapName;
 	int mapId;
 	locXY location;
 };
@@ -33,7 +33,7 @@ struct DayNightXfer
 
 class Maps {
 public:
-	vector<int> GetVisited();
+    std::vector<int> GetVisited();
 	int GetCurrentMapId();
 	int GetCurrentAreaId();
 	bool IsValidMapId(int mapId);

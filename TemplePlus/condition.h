@@ -180,7 +180,7 @@ public:
 		Returns the condition definition with the given name,
 		null if none exists.
 	*/
-	CondStruct *GetByName(const string &name);
+	CondStruct *GetByName(const std::string &name);
 	CondStruct* GetById(const int condId);
 
 	void DoForAllCondStruct( void(__cdecl*cb)(CondStruct & condStruct));
@@ -189,21 +189,21 @@ public:
 		Adds a condition to an item's obj_f_item_pad_wielder_condition_array and 
 		obj_f_item_pad_wielder_argument_array.
 	*/
-	void AddToItem(objHndl item, const CondStruct *cond, const vector<int> &args);
+	void AddToItem(objHndl item, const CondStruct *cond, const std::vector<int> &args);
 
 	/*
 		Adds a condition to an object. There is no type restriction for the target
 		object, but usually it should be a critter.
 	*/
-	bool AddTo(objHndl handle, const CondStruct* cond, const vector<int> &args);
+	bool AddTo(objHndl handle, const CondStruct* cond, const std::vector<int> &args);
 
 	/*
 		Adds a condition to an object by name. There is no type restriction for the target
 		object, but usually it should be a critter.
 	*/
-	bool AddTo(objHndl handle, const string &name, const vector<int> &args);
+	bool AddTo(objHndl handle, const std::string &name, const std::vector<int> &args);
 
-	bool ConditionAddDispatchArgs(Dispatcher * dispatcher, CondNode **, CondStruct* condStruct, const vector<int> &args);
+	bool ConditionAddDispatchArgs(Dispatcher * dispatcher, CondNode **, CondStruct* condStruct, const std::vector<int> &args);
 
 	/*
 		Get/Set a Condition Node's arg. Often used in the init callbacks of various conditions.
@@ -293,7 +293,7 @@ struct CondFeatDictionary  // maps feat enums to CondStructs
 int32_t _CondNodeGetArg(CondNode* condNode, uint32_t argIdx);
 void _CondNodeSetArg(CondNode* condNode, uint32_t argIdx, uint32_t argVal);
 uint32_t _ConditionAddDispatch(Dispatcher* dispatcher, CondNode** ppCondNode, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, uint32_t arg3, uint32_t arg4);
-uint32_t _ConditionAddDispatchArgs(Dispatcher* dispatcher, CondNode** ppCondNode, CondStruct* condStruct, const vector<int> &args);
+uint32_t _ConditionAddDispatchArgs(Dispatcher* dispatcher, CondNode** ppCondNode, CondStruct* condStruct, const std::vector<int> &args);
 void _CondNodeAddToSubDispNodeArray(Dispatcher* dispatcher, CondNode* condNode);
 uint32_t _ConditionAddToAttribs_NumArgs0(Dispatcher* dispatcher, CondStruct* condStruct, bool isInternalUse = true);
 uint32_t _ConditionAddToAttribs_NumArgs2(Dispatcher* dispatcher, CondStruct* condStruct, uint32_t arg1, uint32_t arg2, bool isInternalUse = true);

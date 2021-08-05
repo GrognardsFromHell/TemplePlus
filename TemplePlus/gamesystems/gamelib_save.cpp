@@ -15,14 +15,14 @@
 #include <config\config.h>
 
 struct GsiData {
-	string filename;
-	string displayName;
-	string moduleName;
+	std::string filename;
+	std::string displayName;
+	std::string moduleName;
 	int leaderPortrait;
 	int leaderLevel;
 	locXY leaderLoc;
 	GameTime time;
-	string leaderName;
+	std::string leaderName;
 	int mapNumber;
 	int storyState;
 };
@@ -56,7 +56,7 @@ struct InSaveGame {
 	}
 };
 
-static GsiData GatherGsiData(const string &filename, const string &displayName) {
+static GsiData GatherGsiData(const std::string &filename, const std::string &displayName) {
 	GsiData result;
 	result.filename = filename;
 	result.displayName = displayName;
@@ -77,16 +77,16 @@ static GsiData GatherGsiData(const string &filename, const string &displayName) 
 static bool SaveGsiData(const GsiData &saveInfo) {
 
 	// Remove existing GSI for the slots
-	string globPattern = format("save\\{}*.gsi", saveInfo.filename);
+	std::string globPattern = fmt::format("save\\{}*.gsi", saveInfo.filename);
 	TioFileList list;
 	tio_filelist_create(&list, globPattern.c_str());
 	for (int i = 0; i < list.count; ++i) {
-		auto filename = format("save\\{}", list.files[i].name);		
+		auto filename = fmt::format("save\\{}", list.files[i].name);
 		tio_remove(filename.c_str());
 	}
 	tio_filelist_destroy(&list);
 
-	auto filename = format("save\\{}{}.gsi", saveInfo.filename, saveInfo.displayName);
+	auto filename = fmt::format("save\\{}{}.gsi", saveInfo.filename, saveInfo.displayName);
 	auto file = tio_fopen(filename.c_str(), "wb");	
 	if (!file) {
 		logger->error("Unable to open {} for writing.", filename);
@@ -125,7 +125,7 @@ static bool SaveGsiData(const GsiData &saveInfo) {
 	return success;
 }
 
-bool GameSystems::SaveGame(const string& filename, const string& displayName) {
+bool GameSystems::SaveGame(const std::string& filename, const std::string& displayName) {
 
 	InSaveGame inSave;
 	addresses.UiMmRelated(63);
@@ -233,7 +233,7 @@ bool GameSystems::SaveGame(const string& filename, const string& displayName) {
 	}
 
 	// Create savegame archive
-	auto archiveName = format("save\\{}", filename);
+	auto archiveName = fmt::format("save\\{}", filename);
 
 	try {
 		SaveGameArchive::Create("Save\\Current", archiveName);
@@ -247,7 +247,7 @@ bool GameSystems::SaveGame(const string& filename, const string& displayName) {
 	logger->info("Game save created successfully.");
 
 	// Rename screenshots
-	auto screenDestName = format("save\\{}l.jpg", filename);
+	auto screenDestName = fmt::format("save\\{}l.jpg", filename);
 	int textId;
 	if (tio_fileexists(screenDestName.c_str())) {
 		tio_remove(screenDestName.c_str());
@@ -255,7 +255,7 @@ bool GameSystems::SaveGame(const string& filename, const string& displayName) {
 	tio_rename("save\\templ.jpg", screenDestName.c_str());
 	textureFuncs.RegisterTextureOverride(screenDestName.c_str(), &textId); // override previous texture if any
 
-	screenDestName = format("save\\{}s.jpg", filename);
+	screenDestName = fmt::format("save\\{}s.jpg", filename);
 	if (tio_fileexists(screenDestName.c_str())) {
 		tio_remove(screenDestName.c_str());
 	}

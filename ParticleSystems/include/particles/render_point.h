@@ -2,6 +2,8 @@
 
 #include "render.h"
 
+#include <span>
+
 #include <platform/d3d.h>
 #include <atlcomcli.h>
 
@@ -52,7 +54,7 @@ namespace particles {
 
 		virtual void FillVertex(const PartSysEmitter& emitter, 
 			int particleIdx, 
-			gsl::span<SpriteVertex, 4> vertices) = 0;
+			std::span<SpriteVertex, 4> vertices) = 0;
 
 	};
 
@@ -66,7 +68,7 @@ namespace particles {
 
 		void FillVertex(const PartSysEmitter& emitter,
 			int particleIdx,
-			gsl::span<SpriteVertex, 4> vertices) override;
+			std::span<SpriteVertex, 4> vertices) override;
 	};
 
 	class DiscParticleRenderer : public QuadParticleRenderer {
@@ -79,7 +81,7 @@ namespace particles {
 
 		void FillVertex(const PartSysEmitter& emitter,
 			int particleIdx,
-			gsl::span<SpriteVertex, 4> vertices) override;
+			std::span<SpriteVertex, 4> vertices) override;
 
 	};
 

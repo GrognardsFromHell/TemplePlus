@@ -105,7 +105,7 @@ void LocationSystem::CenterOn(int tileX, int tileY)
 
 void LocationSystem::CenterOnSmooth(int tileX, int tileY) {
 
-	auto map_location_get_translation_delta = temple::GetRef<BOOL(__cdecl)(int , int , int64_t &, int64_t&)>(0x10029810);
+	auto map_location_get_translation_delta = temple::GetPointer<BOOL(__cdecl)(int , int , int64_t &, int64_t&)>(0x10029810);
 	int64_t deltax, deltay;
 
 	map_location_get_translation_delta(tileX, tileY, deltax, deltay);

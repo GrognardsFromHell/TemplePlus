@@ -100,11 +100,12 @@ namespace particles {
 		int i = 0;
 		while (it.HasNext()) {
 			auto particleIdx = it.Next();
-			FillVertex(emitter, particleIdx, { &sUpdateBuffer[i], 4 });
+			std::span<SpriteVertex, 4> vertexSegment(&sUpdateBuffer[i], 4);
+			FillVertex(emitter, particleIdx, vertexSegment);
 			i += 4;
 		}
 
-		renderState.vertexBuffer->Update<SpriteVertex>({ sUpdateBuffer.data(), 4 * totalCount });
+		renderState.vertexBuffer->Update<SpriteVertex>({ sUpdateBuffer.data(), 4u * totalCount });
 
 		mDevice.SetMaterial(renderState.material);
 		renderState.bufferBinding.Bind();
@@ -115,7 +116,7 @@ namespace particles {
 
 	void SpriteParticleRenderer::FillVertex(const PartSysEmitter &emitter,
 		int particleIdx,
-		gsl::span<SpriteVertex, 4> vertices) {
+		std::span<SpriteVertex, 4> vertices) {
 
 		// Calculate the particle scale (default is 1)
 		auto scale = 1.0f;
@@ -181,7 +182,7 @@ namespace particles {
 
 	void DiscParticleRenderer::FillVertex(const PartSysEmitter &emitter,
 		int particleIdx,
-		gsl::span<SpriteVertex, 4> vertex) {
+		std::span<SpriteVertex, 4> vertex) {
 
 		// Calculate the particle scale (default is 1)
 		auto scale = 1.0f;

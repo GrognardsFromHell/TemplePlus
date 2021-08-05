@@ -47,7 +47,7 @@ struct InLoadGame {
 	}
 };
 
-bool GameSystems::LoadGame(const string& filename) {
+bool GameSystems::LoadGame(const std::string& filename) {
 
 	logger->debug("Loading savegame from {}", filename);
 
@@ -69,7 +69,7 @@ bool GameSystems::LoadGame(const string& filename) {
 
 	logger->info("Restoring save archive...");
 	
-	auto path = format("save\\{}", filename);
+	auto path = fmt::format("save\\{}", filename);
 	try {
 		SaveGameArchive::Unpack(path.c_str(), "Save\\Current");
 	} catch (const std::exception &e) {

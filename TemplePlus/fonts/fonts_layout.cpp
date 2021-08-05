@@ -63,7 +63,7 @@ void ApplyStyle(const TigTextStyle &style, int tabPos, gfx::TextStyle &textStyle
 	}
 }
 
-static FormattedText ProcessString(const TextStyle& defaultStyle, const TigTextStyle &tigStyle, gsl::cstring_span<> text)
+static FormattedText ProcessString(const TextStyle& defaultStyle, const TigTextStyle &tigStyle, std::string_view text)
 {
 	FormattedText result;
 	result.defaultStyle = defaultStyle;
@@ -71,7 +71,7 @@ static FormattedText ProcessString(const TextStyle& defaultStyle, const TigTextS
 
 	bool inColorRange = false;
 	bool inEscape = false;
-	for (int i = 0; i < text.size(); i++) {
+	for (auto i = 0u; i < text.size(); i++) {
 		auto ch = text[i];
 		if (ch == '@') {
 			inEscape = true;
@@ -126,7 +126,7 @@ static FormattedText ProcessString(const TextStyle& defaultStyle, const TigTextS
 	return result;
 }
 
-void TextLayouter::LayoutAndDraw(gsl::cstring_span<> text, const TigFont& font, TigRect& extents, TigTextStyle& style) {
+void TextLayouter::LayoutAndDraw(std::string_view text, const TigFont& font, TigRect& extents, TigTextStyle& style) {
 
 	if (text.length() == 0) {
 		return;
@@ -153,7 +153,7 @@ void TextLayouter::LayoutAndDraw(gsl::cstring_span<> text, const TigFont& font, 
 	if (isLegacyFormattedStr) {
 		formatted = ProcessString(textStyle, style, text);
 	} else {
-		formatted.text = local_to_ucs2(to_string(text));
+		formatted.text = local_to_ucs2(std::string(text));
 		formatted.defaultStyle = textStyle;
 	}
 
@@ -214,7 +214,7 @@ void TextLayouter::Measure(const TigFont &font, const TigTextStyle & style, TigF
 	textMetrics.height = metrics.height;
 
 	if (strchr(metrics.text, '@')) {
-		auto formatted = ProcessString(textStyle, style, { metrics.text, (int)strlen(metrics.text) });
+	    auto formatted = ProcessString(textStyle, style, std::string_view(metrics.text, (int)strlen(metrics.text)));
 		mTextEngine.MeasureText(formatted, textMetrics);
 	} else {
 		mTextEngine.MeasureText(textStyle, metrics.text, textMetrics);
@@ -312,7 +312,7 @@ int TextLayouter::GetGlyphIdx(char ch, const char* text) {
 			case 0x94:
 				return GetGlyphIdx('"', text);
 			case 0x95:
-				return GetGlyphIdx('·', text);
+				return GetGlyphIdx('ï¿½', text);
 			case 0x96:
 			case 0x97:
 				return GetGlyphIdx('-', text);
@@ -332,7 +332,7 @@ int TextLayouter::GetGlyphIdx(char ch, const char* text) {
 }
 
 
-std::pair<int, int> TextLayouter::MeasureCharRun(cstring_span<> text,
+std::pair<int, int> TextLayouter::MeasureCharRun(std::string_view text,
 	const TigTextStyle& style,
 	const TigRect& extents,
 	int extentsWidth,
@@ -407,7 +407,7 @@ std::pair<int, int> TextLayouter::MeasureCharRun(cstring_span<> text,
 				break;
 			}
 		}
-		else if ( ch  == '’') // special casing this motherfucker
+		else if ( ch  == 'ï¿½') // special casing this motherfucker
 		{
 			ch ='\'';
 			auto glyphIdx = GetGlyphIdx(ch, &text[0]);
@@ -445,7 +445,7 @@ std::pair<int, int> TextLayouter::MeasureCharRun(cstring_span<> text,
 	return std::make_pair(wordCountWithPadding, lineWidth);
 }
 
-bool TextLayouter::HasMoreText(cstring_span<> text, int tabWidth) {
+bool TextLayouter::HasMoreText(std::string_view text, int tabWidth) {
 	// We're on the last line and truncation is active
 	// This will seek to the next word
 	auto it = text.begin();
@@ -475,7 +475,7 @@ bool TextLayouter::HasMoreText(cstring_span<> text, int tabWidth) {
 	return false;
 }
 
-void TextLayouter::LayoutAndDrawVanilla(gsl::cstring_span<> text, const TigFont & font, TigRect & extents, TigTextStyle & style)
+void TextLayouter::LayoutAndDrawVanilla(std::string_view text, const TigFont & font, TigRect & extents, TigTextStyle & style)
 {
 	auto lastLine = false;
 	auto extentsWidth = extents.width;
@@ -535,7 +535,7 @@ void TextLayouter::LayoutAndDrawVanilla(gsl::cstring_span<> text, const TigFont 
 	auto currentY = extents.y;
 	for (auto startOfWord = 0; startOfWord < textLength; ++startOfWord) {
 		int wordsOnLine, lineWidth;
-		std::tie(wordsOnLine, lineWidth) = MeasureCharRun(text.subspan(startOfWord),
+		std::tie(wordsOnLine, lineWidth) = MeasureCharRun(text.substr(startOfWord),
 			style,
 			extents,
 			extentsWidth,
@@ -565,7 +565,7 @@ void TextLayouter::LayoutAndDrawVanilla(gsl::cstring_span<> text, const TigFont 
 					lastIdx = wordInfo.idxBeforePadding;
 				}
 				else {
-					if (!HasMoreText(text.subspan(lastIdx), tabWidth)) {
+					if (!HasMoreText(text.substr(lastIdx), tabWidth)) {
 						wordInfo.drawEllipsis = false;
 						wordWidth = wordInfo.fullWidth;
 					}
@@ -600,7 +600,7 @@ void TextLayouter::LayoutAndDrawVanilla(gsl::cstring_span<> text, const TigFont 
 			}
 			else if (lastIdx >= wordInfo.firstIdx)
 				mRenderer.RenderRun(
-					text.subspan(wordInfo.firstIdx, lastIdx - wordInfo.firstIdx),
+					text.substr(wordInfo.firstIdx, lastIdx - wordInfo.firstIdx),
 					x,
 					currentY,
 					extents,
@@ -611,7 +611,7 @@ void TextLayouter::LayoutAndDrawVanilla(gsl::cstring_span<> text, const TigFont 
 
 			// We're on the last line, the word has been truncated, ellipsis needs to be drawn
 			if (lastLine && style.flags & 0x4000 && wordInfo.drawEllipsis) {
-				mRenderer.RenderRun(span(sEllipsis, strlen(sEllipsis)),
+				mRenderer.RenderRun(std::string_view(sEllipsis, strlen(sEllipsis)),
 					extents.x + currentX,
 					currentY,
 					extents,
@@ -702,7 +702,7 @@ uint32_t TextLayouter::CountLinesVanilla(uint32_t maxWidth, uint32_t maxLines, c
 		// Measure the length of the current word
 		for (; i < length; i++) {
 			ch = text[i];
-			if (ch == '’') // fix for this character that sometimes appears in vanilla
+			if (ch == 'ï¿½') // fix for this character that sometimes appears in vanilla
 				ch = '\'';
 			// Skip @[0-9]
 			if (ch == '@' && i + 1 < length && text[i + 1] >= '0' && text[i + 1] <= '9') {
@@ -822,7 +822,7 @@ ScanWordResult TextLayouter::ScanWord(const char* text,
 			nextCh = text[i + 1];
 		}
 
-		if (curCh == '’')
+		if (curCh == 'ï¿½')
 			curCh = const_cast<char*>(text)[i] = '\'';
 
 		// Simply skip @t without increasing the width

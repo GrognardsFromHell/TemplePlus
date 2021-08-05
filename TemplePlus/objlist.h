@@ -111,7 +111,7 @@ public:
 		}
 
 		objHndl operator *() const { 
-			Expects(item_);
+			assert(item_);
 			return item_->handle;
 		}
 

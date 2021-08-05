@@ -27,7 +27,7 @@ void FloatLineSystem::FloatCombatLine(objHndl obj, int line)
 	floatMesLine(obj, 1, floatColor, combatSys.GetCombatMesLine(line));
 }
 
-void FloatLineSystem::FloatCombatLineWithExtraString(const objHndl& obj, int combatMesLine, const string& cs, const string& cs2){
+void FloatLineSystem::FloatCombatLineWithExtraString(const objHndl& obj, int combatMesLine, const std::string& cs, const std::string& cs2){
 	int objType;
 	FloatLineColor floatColor;
 	objHndl npcLeader;

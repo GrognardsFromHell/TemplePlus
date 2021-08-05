@@ -3,9 +3,8 @@
 
 #include <functional>
 #include <vector>
+#include <string_view>
 #include <map>
-
-#include <gsl/string_span>
 
 class TabFileColumn {
 	friend class TabFileRecord;
@@ -19,7 +18,7 @@ public:
 		return !IsEmpty();
 	}
 
-	operator gsl::cstring_span<>() const {
+	operator std::string_view() const {
 		return mValue;
 	}
 
@@ -50,9 +49,9 @@ public:
 	}
 
 private:
-	explicit TabFileColumn(gsl::cstring_span<> value) : mValue(value) {
+	explicit TabFileColumn(std::string_view value) : mValue(value) {
 	}
-	gsl::cstring_span<> mValue;	
+	std::string_view mValue;
 };
 
 class TabFileRecord {
@@ -77,7 +76,7 @@ private:
 	static std::string mMissingColumn;
 
 	int mLineNumber = 0;
-	std::vector<gsl::cstring_span<>> mColumns;
+	std::vector<std::string_view> mColumns;
 };
 
 class TabFile {

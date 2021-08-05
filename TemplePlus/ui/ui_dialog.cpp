@@ -172,7 +172,7 @@ class UiDialogHooks : public TempleFix
 /* 0x1014dd40 */
 UiDlg::UiDlg(const UiSystemConf &config) {
 	mImpl = std::make_unique<UiDialogImpl>(config);
-	Expects(!uiDialog);
+	assert(!uiDialog);
 	uiDialog = this;
 	dlgImpl = mImpl.get();
 }
@@ -368,7 +368,7 @@ void UiDlg::Unk() {
 	addresses.Unk();
 }
 
-void UiDlg::ShowTextBubble(objHndl speaker, objHndl speakingTo, const string &text, int speechId) {
+void UiDlg::ShowTextBubble(objHndl speaker, objHndl speakingTo, const std::string &text, int speechId) {
 	addresses.ShowTextBubble(speaker, speakingTo, text.c_str(), speechId);
 }
 

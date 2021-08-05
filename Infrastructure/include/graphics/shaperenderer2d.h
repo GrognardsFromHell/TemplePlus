@@ -2,8 +2,7 @@
 #pragma once
 
 #include <memory>
-
-#include <gsl/span>
+#include <span>
 
 #include "graphics/math.h"
 #include "infrastructure/macros.h"
@@ -59,18 +58,18 @@ namespace gfx {
 			DrawRectangle(x, y, width, height, nullptr, color);
 		}
 
-		void DrawRectangle(gsl::span<Vertex2d, 4> corners,
+		void DrawRectangle(std::span<Vertex2d, 4> corners,
 			gfx::Texture* texture,
 			gfx::Texture* mask = nullptr,
 			SamplerType2d samplerType = SamplerType2d::CLAMP,
 			bool blending = true);
 
-		void DrawRectangle(gsl::span<Vertex2d, 4> corners,
+		void DrawRectangle(std::span<Vertex2d, 4> corners,
 			const gfx::MdfRenderMaterialPtr &material);
 
-		void DrawRectangle(gsl::span<Vertex2d, 4> corners);
+		void DrawRectangle(std::span<Vertex2d, 4> corners);
 
-		void DrawLines(gsl::span<Line2d> lines);
+		void DrawLines(std::span<Line2d> lines);
 
 		void DrawRectangleOutlineVanilla(XMFLOAT2 topLeft, XMFLOAT2 bottomRight, XMCOLOR color);
 		void DrawRectangleOutline(XMFLOAT2 topLeft, XMFLOAT2 bottomRight, XMCOLOR color);

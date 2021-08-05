@@ -48,8 +48,8 @@ struct PyRandomEncounterSetup {
 };
 
 static PyMemberDef PyRandomEncounterSetupMembers[] = {
-	{ "terrain", T_INT, offsetof(PyRandomEncounterSetup, terrain), NULL, NULL },
-	{ "flags", T_INT, offsetof(PyRandomEncounterSetup, flags), NULL, NULL },
+	{ (char*) "terrain", T_INT, offsetof(PyRandomEncounterSetup, terrain), NULL, NULL },
+	{ (char*) "flags", T_INT, offsetof(PyRandomEncounterSetup, flags), NULL, NULL },
 	{ NULL, NULL, NULL, NULL, NULL }
 };
 
@@ -109,13 +109,13 @@ struct PyRandomEncounter {
 };
 
 static PyMemberDef PyRandomEncounterMembers[] = {
-	{ "id", T_INT, offsetof(PyRandomEncounter, id), NULL, NULL },
-	{ "flags", T_INT, offsetof(PyRandomEncounter, flags), NULL, NULL },
-	{ "title", T_INT, offsetof(PyRandomEncounter, title), NULL, NULL },
-	{ "dc", T_INT, offsetof(PyRandomEncounter, dc), NULL, NULL },
-	{ "map", T_INT, offsetof(PyRandomEncounter, map), NULL, NULL },
-	{ "enemies", T_OBJECT_EX, offsetof(PyRandomEncounter, enemies), NULL, NULL },
-	{ "location", T_LONGLONG, offsetof(PyRandomEncounter, location), NULL, NULL },
+	{ (char*) "id", T_INT, offsetof(PyRandomEncounter, id), NULL, NULL },
+	{ (char*) "flags", T_INT, offsetof(PyRandomEncounter, flags), NULL, NULL },
+	{ (char*) "title", T_INT, offsetof(PyRandomEncounter, title), NULL, NULL },
+	{ (char*) "dc", T_INT, offsetof(PyRandomEncounter, dc), NULL, NULL },
+	{ (char*) "map", T_INT, offsetof(PyRandomEncounter, map), NULL, NULL },
+	{ (char*) "enemies", T_OBJECT_EX, offsetof(PyRandomEncounter, enemies), NULL, NULL },
+	{ (char*) "location", T_LONGLONG, offsetof(PyRandomEncounter, location), NULL, NULL },
 	{ NULL, NULL, NULL, NULL, NULL }
 };
 

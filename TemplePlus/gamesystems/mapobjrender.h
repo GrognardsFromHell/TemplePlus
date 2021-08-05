@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include <span>
 #include <obj.h>
 
 namespace gfx {
@@ -92,7 +93,7 @@ private:
 	void RenderMirrorImages(objHndl handle,
 		const gfx::AnimatedModelParams &animParams,
 		gfx::AnimatedModel &model,
-		gsl::span<gfx::Light3d> lights);
+		std::span<gfx::Light3d> lights);
 
 	void RenderShadowMapShadow(objHndl handle, 
 		const gfx::AnimatedModelParams &animParams, 

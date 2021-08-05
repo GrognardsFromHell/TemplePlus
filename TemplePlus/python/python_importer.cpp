@@ -1,6 +1,6 @@
 
 #include "stdafx.h"
-#include "Python.h"
+#include <Python.h>
 #include "osdefs.h"
 #include "tio/tio.h"
 #include "python_importer.h"
@@ -13,7 +13,7 @@ enum ImporterFileType {
 };
 
 struct PyTempleImporterSearchOrder {
-	string suffix;
+    std::string suffix;
 	int type;
 };
 
@@ -21,9 +21,9 @@ struct ModuleInfo {
 	bool found = false;
 	bool package = false;
 	uint32_t lastModified = 0; // Applies to source
-	string sourcePath;
-	string compiledPath;
-	string packagePath; // Path to directory without __init__.py suffix if package=true
+	std::string sourcePath;
+	std::string compiledPath;
+	std::string packagePath; // Path to directory without __init__.py suffix if package=true
 };
 
 class PyTempleImporter {
@@ -38,15 +38,15 @@ public:
 
 	void CreateSearchOrder();
 
-	ModuleInfo GetModuleInfo(const string &fullname);
+	ModuleInfo GetModuleInfo(const std::string &fullname);
 
-	static PyObject *ReadData(const string &path);
+	static PyObject *ReadData(const std::string &path);
 
 	static PyTempleImporter *instance;
 
 	PyObject *mFinder;
-	vector<PyTempleImporterSearchOrder> mSearchOrder;
-	vector<string> mSearchPath;
+	std::vector<PyTempleImporterSearchOrder> mSearchOrder;
+	std::vector<std::string> mSearchPath;
 };
 
 PyTempleImporter* PyTempleImporter::instance = nullptr;
@@ -98,7 +98,7 @@ PyTempleImporter::PyTempleImporter() {
 	mFinder = PyObject_New(PyObject, &PyTempleImporterType);
 
 	// Insert into python meta_path system
-	auto path_hooks = PySys_GetObject("meta_path");
+	auto path_hooks = PySys_GetObject((char*) "meta_path");
 	PyList_Insert(path_hooks, 0, mFinder);
 }
 
@@ -188,25 +188,25 @@ void PyTempleImporter::CreateSearchOrder() {
 	non-package .pyc, .pyo and .py entries. The .pyc and .pyo entries
 	are swapped by initzipimport() if we run in optimized mode. Also,
 	'/' is replaced by SEP there. */
-	mSearchOrder.push_back({ SEP + string("__init__.pyc"), IFT_PACKAGE | IFT_BYTECODE });
-	mSearchOrder.push_back({ SEP + string("__init__.pyo"), IFT_PACKAGE | IFT_BYTECODE });
-	mSearchOrder.push_back({ SEP + string("__init__.py"), IFT_PACKAGE | IFT_SOURCE });
+	mSearchOrder.push_back({ SEP + std::string("__init__.pyc"), IFT_PACKAGE | IFT_BYTECODE });
+	mSearchOrder.push_back({ SEP + std::string("__init__.pyo"), IFT_PACKAGE | IFT_BYTECODE });
+	mSearchOrder.push_back({ SEP + std::string("__init__.py"), IFT_PACKAGE | IFT_SOURCE });
 	mSearchOrder.push_back({ ".pyc", IFT_BYTECODE });
 	mSearchOrder.push_back({ ".pyo", IFT_BYTECODE });
 	mSearchOrder.push_back({ ".py", IFT_SOURCE });
 	mSearchOrder.push_back({ "", IFT_NONE });
 
 	if (Py_OptimizeFlag) {
-		swap(mSearchOrder[0], mSearchOrder[1]);
-		swap(mSearchOrder[3], mSearchOrder[4]);
+		std::swap(mSearchOrder[0], mSearchOrder[1]);
+		std::swap(mSearchOrder[3], mSearchOrder[4]);
 	}
 }
 
-ModuleInfo PyTempleImporter::GetModuleInfo(const string& fullname) {
+ModuleInfo PyTempleImporter::GetModuleInfo(const std::string& fullname) {
 
 	ModuleInfo result;
 
-	string relPath = fullname;
+	std::string relPath = fullname;
 	for (auto &ch : relPath) {
 		if (ch == '.') {
 			ch = SEP;
@@ -227,14 +227,14 @@ ModuleInfo PyTempleImporter::GetModuleInfo(const string& fullname) {
 				}
 			}
 
-			auto path = format("{}{}{}", prefix, relPath, entry.suffix);
+			auto path = fmt::format("{}{}{}", prefix, relPath, entry.suffix);
 
 			TioFile *fh;
 			if ((fh = tio_fopen(path.c_str(), "rb")) != nullptr) {
 				result.found = true;
 				result.package = (entry.type & IFT_PACKAGE) != 0;
 				if (result.package) {
-					result.packagePath = format("{}{}{}", prefix, relPath, SEP);
+					result.packagePath = fmt::format("{}{}{}", prefix, relPath, SEP);
 				}
 
 				if (entry.type & IFT_BYTECODE) {
@@ -273,7 +273,7 @@ ModuleInfo PyTempleImporter::GetModuleInfo(const string& fullname) {
 
 }
 
-PyObject* PyTempleImporter::ReadData(const string& path) {
+PyObject* PyTempleImporter::ReadData(const std::string& path) {
 	auto fh = tio_fopen(path.c_str(), "rb");
 
 	if (!fh) {
