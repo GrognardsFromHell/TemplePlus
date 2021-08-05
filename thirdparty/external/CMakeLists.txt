@@ -371,6 +371,7 @@ if (BUILD_GOOGLETEST)
             URL_HASH ${GOOGLETEST_URL_HASH}
             PREFIX ${external_dir}/GTest-${CONFIG}
             CMAKE_ARGS ${CMAKE_ARGS}
+            "-DBUILD_SHARED_LIBS=ON"
             "-DCMAKE_BUILD_TYPE=${CONFIG}"
             "-DCMAKE_INSTALL_PREFIX:PATH=${installs_dir}/GTest-${CONFIG}"
         )

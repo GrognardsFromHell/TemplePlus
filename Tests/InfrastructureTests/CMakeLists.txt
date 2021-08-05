@@ -26,5 +26,5 @@ add_precompiled_header(${PROJECT_NAME} "stdafx.h" "stdafx.cpp")
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     Infrastructure
-    gmock_main
+    GTest::gmock_main
 )
