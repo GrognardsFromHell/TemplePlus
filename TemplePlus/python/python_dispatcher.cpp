@@ -276,7 +276,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		DispIoBonusList evtObjAbScore;
 		evtObjAbScore.flags |= 1; // effect unknown??
 		evtObjAbScore.bonlist = bonList;
-		auto result = dispatch.Dispatch10AbilityScoreLevelGet(obj, (Stat)stat, &evtObjAbScore);
+		auto result = objects.abilityScoreLevelGet(obj, (Stat)stat, &evtObjAbScore);
 		bonList = evtObjAbScore.bonlist;
 		return result;
 	});

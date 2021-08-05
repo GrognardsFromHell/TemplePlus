@@ -786,7 +786,7 @@ BOOL LegacySpellSystem::RegisterSpell(SpellPacketBody & spellPkt, int spellId)
 		spellStat = d20ClassSys.GetSpellDcStat(spellSys.GetCastingClass(spellClass));
 	}
 
-	dc += spLvl + objects.GetModFromStatLevel( dispatch.Dispatch10AbilityScoreLevelGet(spellPkt.caster, spellStat, &evtObjAbScore) );
+	dc += spLvl + objects.GetModFromStatLevel( objects.abilityScoreLevelGet(spellPkt.caster, spellStat, &evtObjAbScore) );
 
 	// Spell DC Mod
 	DispIOBonusListAndSpellEntry evtObjDcMod;
@@ -1012,7 +1012,7 @@ bool LegacySpellSystem::CheckAbilityScoreReqForSpell(objHndl handle, uint32_t sp
 			spellStat = stat_wisdom;
 		}
 		
-		statLvl = dispatch.Dispatch10AbilityScoreLevelGet(handle, spellStat, nullptr);
+		statLvl = objects.abilityScoreLevelGet(handle, spellStat, nullptr);
 		if (statBeingRaised == spellStat)
 			++statLvl;
 
@@ -1028,7 +1028,7 @@ bool LegacySpellSystem::CheckAbilityScoreReqForSpell(objHndl handle, uint32_t sp
 
 				auto classEnum = spellSys.GetCastingClass(lvlSpec.spellClass);
 				spellStat = d20ClassSys.GetSpellStat(classEnum);
-				statLvl = dispatch.Dispatch10AbilityScoreLevelGet(handle, spellStat, nullptr);
+				statLvl = objects.abilityScoreLevelGet(handle, spellStat, nullptr);
 				if (statBeingRaised == spellStat)
 					++statLvl;
 

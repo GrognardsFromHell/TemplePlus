@@ -681,7 +681,7 @@ void LegacyCritterSystem::CritterHpChanged(objHndl obj, objHndl assailant, int d
 		critterSys.Kill(obj, assailant);
 	}
 
-	if (dispatch.Dispatch10AbilityScoreLevelGet(obj, stat_constitution, nullptr) <= 0) {
+	if (objects.abilityScoreLevelGet(obj, stat_constitution, nullptr) <= 0) {
 		if (!d20Sys.d20Query(obj, DK_QUE_Critter_Has_No_Con_Score)) {
 			critterSys.Kill(obj, assailant);
 		}
@@ -699,7 +699,7 @@ bool LegacyCritterSystem::ShouldParalyzeByAbilityScore(objHndl handle)
 		if (stat == stat_constitution) {
 			continue; // negative CON kills, rather than paralyzes
 		}
-		if (dispatch.Dispatch10AbilityScoreLevelGet(handle, (Stat)stat, nullptr) <= 0) {
+		if (objects.abilityScoreLevelGet(handle, (Stat)stat, nullptr) <= 0) {
 			return true;
 		}
 	}
