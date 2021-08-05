@@ -1,6 +1,4 @@
 
-#include <gsl/gsl>
-
 #include "infrastructure/keyboard.h"
 #include "infrastructure/logging.h"
 #include "platform/windows.h"

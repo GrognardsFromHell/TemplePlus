@@ -42,6 +42,12 @@ set(FFMPEG_DEV_URL_HASH SHA256=2cfc802561d68e58ba3185276d244eac3a6163998ab3ea9b8
 set(FFMPEG_BIN_URL https://github.com/GrognardsFromHell/Dependencies/raw/master/ffmpeg-3.4.1-win32-shared.zip)
 set(FFMPEG_BIN_URL_HASH SHA256=74628044181069d9ea9967a64c196418d1b1d04f724499845a2f36dbf1371d93)
 
+set(DIRECTXMATH_URL https://codeload.github.com/microsoft/DirectXMath/tar.gz/refs/tags/jan2021)
+set(DIRECTXMATH_URL_HASH SHA256=d5fff421b15e3815c6a5fcefa257a64780acad0975cd5f45c5428470a39bb9d5)
+
+set(GOOGLETEST_URL https://codeload.github.com/google/googletest/tar.gz/refs/tags/release-1.11.0)
+set(GOOGLETEST_URL_HASH SHA256=b4870bf121ff7795ba20d20bcdd8627b8e088f2d1dab299a031c1034eddc93d5)
+
 #############################################################################
 # Options to disable individual parts for quicker debugging
 #############################################################################
@@ -55,6 +61,8 @@ set(BUILD_SPDLOG ON CACHE BOOL "Include spdlog in build (implies fmtlib)")
 set(BUILD_ZLIB ON CACHE BOOL "Include zlib in build")
 set(BUILD_PYBIND11 ON CACHE BOOL "Include pybind11 in build")
 set(BUILD_FFMPEG ON CACHE BOOL "Include ffmpeg in build")
+set(BUILD_DIRECTXMATH ON CACHE BOOL "Include DirectXMath in build")
+set(BUILD_GOOGLETEST ON CACHE BOOL "Include GoogleTest in build")
 
 #############################################################################
 # Use the following for testing individual parts of the build
@@ -69,6 +77,8 @@ set(BUILD_FFMPEG ON CACHE BOOL "Include ffmpeg in build")
 #set(BUILD_ZLIB OFF)
 #set(BUILD_PYBIND11 OFF)
 #set(BUILD_FFMPEG OFF)
+#set(BUILD_DIRECTXMATH OFF)
+#set(BUILD_GOOGLETEST OFF)
 
 #############################################################################
 # Common Options for building
@@ -330,4 +340,41 @@ if (BUILD_PYBIND11)
             "-DPYBIND11_NOPYTHON=ON"
     )
     install(DIRECTORY ${installs_dir}/pybind11/ DESTINATION pybind11)
+endif ()
+
+#############################################################################
+# DirectXMath
+# https://github.com/microsoft/DirectXMath
+# Is header-only
+#############################################################################
+if (BUILD_DIRECTXMATH)
+    ExternalProject_Add(
+            DirectXMath
+            URL ${DIRECTXMATH_URL}
+            URL_HASH ${DIRECTXMATH_URL_HASH}
+            PREFIX ${external_dir}/DirectXMath
+            CMAKE_ARGS ${CMAKE_ARGS}
+            "-DCMAKE_INSTALL_PREFIX:PATH=${installs_dir}/DirectXMath"
+    )
+    install(DIRECTORY ${installs_dir}/DirectXMath/ DESTINATION DirectXMath)
+endif ()
+
+#############################################################################
+# GoogleTest
+# https://github.com/google/googletest/
+#############################################################################
+if (BUILD_GOOGLETEST)
+    foreach (CONFIG IN ITEMS relwithdebinfo debug)
+        ExternalProject_Add(
+            GTest-${CONFIG}
+            URL ${GOOGLETEST_URL}
+            URL_HASH ${GOOGLETEST_URL_HASH}
+            PREFIX ${external_dir}/GTest-${CONFIG}
+            CMAKE_ARGS ${CMAKE_ARGS}
+            "-DCMAKE_BUILD_TYPE=${CONFIG}"
+            "-DCMAKE_INSTALL_PREFIX:PATH=${installs_dir}/GTest-${CONFIG}"
+        )
+        # This will merge debug/release versions
+        install(DIRECTORY ${installs_dir}/GTest-${CONFIG}/ DESTINATION GTest)
+    endforeach ()
 endif ()

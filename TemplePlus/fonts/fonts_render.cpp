@@ -10,7 +10,6 @@
 #include "tig/tig_font.h"
 #include "fonts.h"
 
-using namespace gsl;
 using namespace gfx;
 
 // First character found in the FNT files

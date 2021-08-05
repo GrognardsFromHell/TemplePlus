@@ -9,7 +9,6 @@ struct TigFont;
 struct TigTextStyle;
 struct TigRect;
 struct TigFontMetrics;
-using namespace gsl;
 
 namespace gfx {
 	class RenderingDevice;

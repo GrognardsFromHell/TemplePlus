@@ -112,7 +112,6 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 # Sub-projects
 ################################################################################
 include(CMake/ExternalDependencies.cmake)
-add_subdirectory(thirdparty)
 add_subdirectory(Infrastructure)
 add_subdirectory(ParticleSystems)
 add_subdirectory(Temple)
@@ -122,4 +121,3 @@ add_subdirectory(Tests/PartSysTests)
 add_subdirectory(Tools/MdfLint)
 add_subdirectory(Tools/MdfPreviewNative)
 add_subdirectory(Tools/ParticleEditorNative)
-

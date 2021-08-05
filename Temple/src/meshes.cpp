@@ -9,7 +9,6 @@
 
 #include "temple/dll.h"
 #include "temple/meshes.h"
-#include <gsl/gsl>
 #include "../../TemplePlus/tio/tio.h"
 #include "infrastructure/vfs.h"
 

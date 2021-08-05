@@ -1,5 +1,4 @@
 
-#include <gsl/gsl>
 #include <memory>
 #include <aas/aas_math.h>
 

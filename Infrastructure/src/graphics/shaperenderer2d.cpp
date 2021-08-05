@@ -8,8 +8,6 @@
 #include "graphics/textures.h"
 #include "graphics/shaperenderer2d.h"
 
-#include <gsl/gsl>
-
 using namespace DirectX;
 
 namespace gfx {

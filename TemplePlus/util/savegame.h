@@ -6,8 +6,6 @@
 #include <set>
 #include <map>
 
-#include <gsl/gsl>
-
 #include <gamesystems/map/sector.h>
 
 #include "streams.h"

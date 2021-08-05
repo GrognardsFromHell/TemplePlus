@@ -11,12 +11,12 @@
 class BinaryReader {
 public:
 
-	explicit BinaryReader(std::span<uint8_t> data) : mData(data) {}
+	explicit BinaryReader(std::span<const uint8_t> data) : mData(data) {}
 
 	template<typename T>
 	T Read() {
 		assert(mData.size() >= sizeof(T));
-		auto result{ *reinterpret_cast<T*>(&mData[0]) };
+		auto result{ *reinterpret_cast<const T*>(&mData[0]) };
 		mData = mData.subspan(sizeof(T));
 		return result;
 	}
@@ -31,9 +31,9 @@ public:
 	}
 
 	bool AtEnd() const {
-		return mData.size() == 0;
+		return mData.empty();
 	}
 
 private:
-	std::span<uint8_t> mData;
+	std::span<const uint8_t> mData;
 };

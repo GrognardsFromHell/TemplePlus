@@ -39,6 +39,8 @@ find_package(spdlog CONFIG REQUIRED PATHS ${THIRDPARTY_PACKAGES_DIR})
 find_package(libjpeg-turbo CONFIG REQUIRED PATHS ${THIRDPARTY_PACKAGES_DIR})
 find_package(pybind11 CONFIG REQUIRED PATHS ${THIRDPARTY_PACKAGES_DIR})
 find_package(zlib CONFIG REQUIRED PATHS ${THIRDPARTY_PACKAGES_DIR})
+find_package(DirectXMath CONFIG REQUIRED PATHS ${THIRDPARTY_PACKAGES_DIR})
+find_package(GTest CONFIG REQUIRED PATHS ${THIRDPARTY_PACKAGES_DIR})
 
 ######################################################################
 # Dump Version Info
@@ -54,6 +56,8 @@ message("spdlog Version: ${spdlog_VERSION}")
 message("pybind11 Version: ${pybind11_VERSION}")
 message("zlib Version: ${zlib_VERSION}")
 message("libjpeg-turbo Version: ${libjpeg-turbo_VERSION}")
+message("GTest Version: ${GTest_VERSION}")
+message("DirectXMath Version: ${DirectXMath_VERSION}")
 
 ######################################################################
 # ffmpeg

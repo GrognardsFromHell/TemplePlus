@@ -36,7 +36,7 @@ namespace gfx {
 		tjhandle mHandle;
 	};
 
-	ImageFileInfo DetectImageFormat(std::span<uint8_t> data) {
+	ImageFileInfo DetectImageFormat(std::span<const uint8_t> data) {
 		ImageFileInfo info;
 
 		stbi__context ctx;
@@ -50,7 +50,7 @@ namespace gfx {
 		}
 
 		TjDecompressHandle handle;
-		if (tjDecompressHeader(handle, &data[0], data.size_bytes(), &info.width, &info.height) == 0) {
+		if (tjDecompressHeader(handle, const_cast<uint8_t*>(&data[0]), data.size_bytes(), &info.width, &info.height) == 0) {
 			info.hasAlpha = false;
 			info.format = ImageFileFormat::JPEG;
 			return info;
@@ -72,11 +72,11 @@ namespace gfx {
 		return info;
 	}
 
-	std::unique_ptr<uint8_t[]> DecodeJpeg(const std::span<uint8_t> data) {
+	std::unique_ptr<uint8_t[]> DecodeJpeg(const std::span<const uint8_t> data) {
 		TjDecompressHandle handle;
 
 		int w, h;
-		tjDecompressHeader(handle, &data[0], data.size_bytes(), &w, &h);
+		tjDecompressHeader(handle, const_cast<uint8_t*>(&data[0]), data.size_bytes(), &w, &h);
 
 		std::unique_ptr<uint8_t[]> result(new uint8_t[w * h * 4]);
 		auto status = tjDecompress2(handle, &data[0], data.size_bytes(), &result[0], w, w * 4, h, TJPF_BGRX, 0);
@@ -87,7 +87,7 @@ namespace gfx {
 		return result;
 	}
 
-	DecodedImage DecodeFontArt(const std::span<uint8_t> data) {
+	DecodedImage DecodeFontArt(const std::span<const uint8_t> data) {
 
 		// 256x256 image with 8bit alpha
 		assert(data.size() == 256 * 256);
@@ -122,7 +122,7 @@ namespace gfx {
 		return filenamePattern;
 	}
 
-	DecodedImage DecodeCombinedImage(const std::string &filename, const std::span<uint8_t> imgData) {
+	DecodedImage DecodeCombinedImage(const std::string &filename, std::span<const uint8_t> imgData) {
 
 		BinaryReader reader(imgData);
 
@@ -166,7 +166,7 @@ namespace gfx {
 
 	}
 
-	DecodedImage DecodeImage(const std::span<uint8_t> data) {
+	DecodedImage DecodeImage(std::span<const uint8_t> data) {
 
 		DecodedImage result;
 		result.info = DetectImageFormat(data);
@@ -195,7 +195,7 @@ namespace gfx {
 		return result;
 	}
 
-	HCURSOR LoadImageToCursor(const std::span<uint8_t> data, uint32_t hotspotX, uint32_t hotspotY) {
+	HCURSOR LoadImageToCursor(std::span<const uint8_t> data, uint32_t hotspotX, uint32_t hotspotY) {
 
 		auto img(DecodeImage(data));
 		auto w = img.info.width;
