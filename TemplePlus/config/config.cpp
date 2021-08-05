@@ -191,7 +191,8 @@ static ConfigSetting configSettings[] = {
 	CONF_BOOL(newAnimSystem),
 	CONF_BOOL(upscaleLinearFiltering),
 	CONF_BOOL(disableChooseRandomSpell_RegardInvulnerableStatus),
-	CONF_BOOL(wildShapeUsableItems)
+	CONF_BOOL(wildShapeUsableItems),
+	CONF_INT(npcStatBoost)
 };
 
 void TemplePlusConfig::Load() {

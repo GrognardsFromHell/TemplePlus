@@ -69,6 +69,10 @@
                         <Label VerticalAlignment="Center" Content="HP for NPC HD" Height="27" />
                         <ComboBox VerticalAlignment="Center" SelectedValue="{Binding HpForNPCHd}"  ItemsSource="{Binding HpForNPCHdTypes}"/>
                     </StackPanel>
+                    <StackPanel Orientation="Horizontal"  Margin="0,5,10,5" ToolTip="Boosts the stats of every creature outside the party by this amount.">
+                        <Label VerticalAlignment="Center" Content="NPC Stat Boost" Height="25"/>
+                        <TextBox Width="50" VerticalAlignment="Center" Text="{Binding NpcStatBoost}" />
+                    </StackPanel>
                 </StackPanel>
             </TabItem>
         </TabControl>
