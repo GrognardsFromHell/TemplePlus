@@ -467,7 +467,7 @@ namespace TemplePlusConfig
             }
 
             int npcStatBoost;
-            if (int.TryParse(tpData["NpcStatBoost"] , out npcStatBoost) )
+            if (int.TryParse(tpData["npcStatBoost"] , out npcStatBoost) )
             {
                 NpcStatBoost = npcStatBoost;
             }
