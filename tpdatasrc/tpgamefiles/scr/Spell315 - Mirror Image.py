@@ -17,7 +17,7 @@ def	OnSpellEffect( spell ):
 	num_of_images = spell.roll_dice_with_metamagic(1, 4, bonus)
 
 	spellPkt = tpdp.SpellPacket(spell.id)
-	mmData = tpdp.MetaMagicData(spellPkt.get_metamagic_data())
+	mmData = spellPkt.get_metamagic_data()
 	
 	#Maximum of 8 images from the spell description (empower to 12)
 	if mmData.get_empower_count() > 0:
