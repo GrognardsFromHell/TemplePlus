@@ -1116,7 +1116,7 @@ uint32_t ActionSequenceSystem::MoveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 		if (pathQ.critter == pathQ.targetObj)
 			return ActionErrorCode::AEC_TARGET_INVALID;
 
-		const float fourPointSevenPlusEight = 4.714045f + 8.0f;
+		const float fourPointSevenPlusEight = (INCH_PER_SUBTILE/2) + 8.0f;
 		pathQ.flags = static_cast<PathQueryFlags>(PathQueryFlags::PQF_TO_EXACT | PathQueryFlags::PQF_HAS_CRITTER | PathQueryFlags::PQF_800
 			| PathQueryFlags::PQF_TARGET_OBJ | PathQueryFlags::PQF_ADJUST_RADIUS | PathQueryFlags::PQF_ADJ_RADIUS_REQUIRE_LOS);
 		
