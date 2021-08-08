@@ -6436,7 +6436,7 @@ int ClassAbilityCallbacks::BardMusicCheck(DispatcherCallbackArgs args){
 		return 0;
 	}
 
-	if (args.GetCondArg(0) <= 0){
+	if (args.GetCondArg(0) <= 0 || bmType == BM_SUGGESTION){
 		dispIo->returnVal = AEC_OUT_OF_CHARGES;
 	}
 
