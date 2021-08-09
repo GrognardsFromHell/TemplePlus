@@ -201,7 +201,7 @@ def to_hit_processing(d20a):
     to_hit_eo.attack_packet.set_flags(flags)
     to_hit_eo.dispatch(performer, OBJ_HANDLE_NULL, ET_OnGetBucklerAcPenalty , EK_NONE)
     to_hit_eo.dispatch(performer, OBJ_HANDLE_NULL, ET_OnToHitBonus2, EK_NONE) # // note: the "Global" condition has ToHitBonus2 hook that dispatches the ToHitBonusBase
-    to_hit_bon_final = to_hit_eo.dispatch(performer, OBJ_HANDLE_NULL, ET_OnToHitBonusFromDefenderCondition, EK_NONE)
+    to_hit_bon_final = to_hit_eo.dispatch(target, OBJ_HANDLE_NULL, ET_OnToHitBonusFromDefenderCondition, EK_NONE)
 
     #targetAc Actions
     debug_print("Target AC")
@@ -209,7 +209,7 @@ def to_hit_processing(d20a):
     target_ac_eo.bonus_list.reset()
     
     target_ac_eo.dispatch(target, OBJ_HANDLE_NULL, ET_OnGetAC, EK_NONE)
-    tgt_ac_final = target_ac_eo.dispatch(target, OBJ_HANDLE_NULL, ET_OnGetAcModifierFromAttacker, EK_NONE)
+    tgt_ac_final = target_ac_eo.dispatch(performer, OBJ_HANDLE_NULL, ET_OnGetAcModifierFromAttacker, EK_NONE)
 
     #Check if attacks hits
     attackDidHit, toHitRoll = toHitResult(to_hit_bon_final, tgt_ac_final)
