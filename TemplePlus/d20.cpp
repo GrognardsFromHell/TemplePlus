@@ -2852,7 +2852,11 @@ ActionErrorCode D20ActionCallbacks::PerformAoo(D20Actn* d20a)
 
 	if (d20Sys.d20Query(d20a->d20APerformer, DK_QUE_Trip_AOO) && !d20Sys.d20Query(d20a->d20ATarget, DK_QUE_Prone) )	{
 		return PerformTripAttack(d20a);
-	} 
+	}
+	/* Temple+ todo: add doing AoO with held charge
+	if (d20Sys.d20Query(d20a->d20APerformer, DK_QUE_HoldingCharge)) {
+
+	}*/
 	// else do standard attack
 	return PerformStandardAttack(d20a);
 }
