@@ -262,7 +262,7 @@ def deal_spell_damage(tgt, attacker, dice, damageType, attackPower, reduction, d
             #play crit hit sound
             soundIdTarget = tgt.soundmap_critter(0)
             game.sound_local_obj(soundIdTarget, tgt)
-            playSoundEffect(evt_obj_crit_dice.attack_packet.get_weapon_used(), attacker, tgt, 7)
+            playSoundEffect(evt_obj_dam.attack_packet.get_weapon_used(), attacker, tgt, 7)
             #Logbook increase crit count
             logbook.inc_criticals(attacker)
         evt_obj_dam.dispatch( attacker, ET_OnDealingDamageWeaponlikeSpell, EK_NONE)
