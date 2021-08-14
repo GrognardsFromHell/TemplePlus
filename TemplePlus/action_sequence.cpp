@@ -715,31 +715,7 @@ void ActionSequenceSystem::TurnStart(objHndl obj)
 
 	// check for interrupter sequence
 	if (*addresses.actSeqInterrupt) {
-
-		// switch sequences
-		auto actSeq = *addresses.actSeqInterrupt;
-		*actSeqCur = actSeq;
-		*addresses.actSeqInterrupt = actSeq->interruptSeq;
-		auto curIdx = actSeq->d20aCurIdx;
-		logger->info("Switching to Interrupt sequence, actor {}", description.getDisplayName(actSeq->performer));
-		if (curIdx <  actSeq->d20ActArrayNum) {
-
-			auto d20a = &actSeq->d20ActArray[curIdx];
-
-			if (InterruptNonCounterspell(d20a))
-				return;
-
-			if (d20a->d20ActType == D20A_CAST_SPELL) {
-				auto d20SpellData = &d20a->d20SpellData;
-				if (d20Sys.d20QueryWithData(actSeq->performer, DK_QUE_SpellInterrupted, d20SpellData, 0)) {
-					d20a->d20Caf &= ~D20CAF_NEED_ANIM_COMPLETED;
-					gameSystems->GetAnim().Interrupt(actSeq->performer, AnimGoalPriority::AGP_5, 0);
-				}
-			}
-		}
-
-
-		sequencePerform();
+		HandleInterruptSequence();
 		return;
 	}
 
@@ -2157,6 +2133,39 @@ bool ActionSequenceSystem::SpellTargetsFilterInvalid(D20Actn& d20a){
 	return valid && curSeq->spellPktBody.targetCount > 0;
 }
 
+/* 0x100993A0 */
+void ActionSequenceSystem::HandleInterruptSequence()
+{
+	// switch sequences
+	auto actSeq = *addresses.actSeqInterrupt;
+	*actSeqCur = actSeq;
+	*addresses.actSeqInterrupt = actSeq->interruptSeq;
+	auto curIdx = actSeq->d20aCurIdx;
+	logger->info("Switching to Interrupt sequence, actor {}", actSeq->performer);
+	if (curIdx >= 0 && curIdx < actSeq->d20ActArrayNum) { // fixed issue with negative curIdx
+
+		auto d20a = &actSeq->d20ActArray[curIdx];
+
+		if (InterruptNonCounterspell(d20a))
+			return;
+
+		if (d20a->d20ActType == D20A_CAST_SPELL) {
+			auto d20SpellData = &d20a->d20SpellData;
+			if (d20Sys.d20QueryWithData(actSeq->performer, DK_QUE_SpellInterrupted, d20SpellData, 0)) {
+				d20a->d20Caf &= ~D20CAF_NEED_ANIM_COMPLETED;
+				gameSystems->GetAnim().Interrupt(actSeq->performer, AnimGoalPriority::AGP_5, 0);
+			}
+		}
+	}
+	else {
+		logger->info("Interrupt sequence invalid action idx: {} / {}", curIdx, actSeq->d20ActArrayNum);
+	}
+
+
+	sequencePerform();
+	return;
+}
+
 int32_t ActionSequenceSystem::InterruptNonCounterspell(D20Actn* d20a)
 {
 	auto readiedAction = ReadiedActionGetNext(nullptr, d20a);
@@ -2807,7 +2816,7 @@ void ActionSequenceSystem::sequencePerform()
 	// is curSeq ok to perform?
 	if (!actSeqOkToPerform())
 	{
-		logger->debug("SequencePerform: \t Sequence given while performing previous action - aborted.");
+		logger->debug("SequencePerform: \t Sequence given while performing previous action - aborted. Performer: {}", (*actSeqCur)->performer);
 		d20->D20ActnInit(d20->globD20Action->d20APerformer, d20->globD20Action);
 		return;
 	}

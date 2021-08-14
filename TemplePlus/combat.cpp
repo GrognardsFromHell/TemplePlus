@@ -274,7 +274,11 @@ BOOL LegacyCombatSystem::CanMeleeTargetAtLocRegardItem(objHndl obj, objHndl weap
 	} else
 	{
 		CritterFlag critterFlags = critterSys.GetCritterFlags(obj);
-		if ((critterFlags & OCF_MONSTER) == 0 && !feats.HasFeatCountByClass(obj, FEAT_IMPROVED_UNARMED_STRIKE))
+		bool canAttackUnarmed = (critterFlags & OCF_MONSTER) != 0
+			|| feats.HasFeatCountByClass(obj, FEAT_IMPROVED_UNARMED_STRIKE) != 0
+			// || d20Sys.d20Query(obj, DK_QUE_HoldingCharge) != 0 // added in Temple+: holding the charge allows making AoOs
+			;
+		if ( !canAttackUnarmed)
 			return 0;
 	}
 	float objReach = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK),
@@ -361,7 +365,11 @@ bool LegacyCombatSystem::CanMeleeTargetFromLocRegardItem(objHndl obj, objHndl we
 	else
 	{
 		CritterFlag critterFlags = critterSys.GetCritterFlags(obj);
-		if ((critterFlags & OCF_MONSTER) == 0 && !feats.HasFeatCountByClass(obj, FEAT_IMPROVED_UNARMED_STRIKE))
+		bool canAttackUnarmed = (critterFlags & OCF_MONSTER) != 0
+			|| feats.HasFeatCountByClass(obj, FEAT_IMPROVED_UNARMED_STRIKE) != 0
+			// || d20Sys.d20Query(obj, DK_QUE_HoldingCharge) != 0 // added in Temple+: holding the charge allows making AoOs
+			;
+		if (!canAttackUnarmed)
 			return 0;
 	}
 	float objReach  = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK),

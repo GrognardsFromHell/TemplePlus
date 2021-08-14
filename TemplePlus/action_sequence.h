@@ -182,6 +182,7 @@ struct ActionSequenceSystem : temple::AddressTable
 	int32_t DoAoosByAdjcentEnemies(objHndl);
 	
 	bool SpellTargetsFilterInvalid(D20Actn &d20a);
+	void HandleInterruptSequence();
 	int32_t InterruptNonCounterspell(D20Actn *d20a);
 	int32_t InterruptCounterspell(D20Actn *d20a);
 	int32_t GetCurSeqD20ActionCount();
