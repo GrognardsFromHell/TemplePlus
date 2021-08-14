@@ -325,6 +325,8 @@ public:
 	//Old version of the function to be used within the replacement
 	int (*oldTurnUndeadPerform)(DispatcherCallbackArgs) = nullptr;
 	
+	void ReplaceTouchSpellHandling_SIG_SPELL_CAST();
+
 	void apply() override {
 		logger->info("Replacing Condition-related Functions");
 
@@ -2472,6 +2474,7 @@ class Conditions
 {
 public:
 	static void AddConditionsToTable();
+	void ReplaceTouchSpellHandling_SIG_SPELL_CAST();
 	std::map<feat_enums,CondFeatDictionary> condDict;
 } conditions;
 
@@ -3987,6 +3990,70 @@ int ConditionFunctionReplacement::AnimalCompanionLevelHook(objHndl objHnd, Stat 
 	return result;
 }
 
+// Fixes issue where you are the TARGET of a spell rather than caster, which would cause spell removal. E.g. Produce Flame.
+// Unfortunately this has to be done outside spell_remove(), because some spell legitimately use it (Spike Stones / Growth effect is removed by healing spells)
+// So likewise, this adds a wrapper for the touch spells where remove_spell and remove_spell_mod are directly called for S_Spell_Cast
+void ConditionFunctionReplacement::ReplaceTouchSpellHandling_SIG_SPELL_CAST()
+{
+	
+	static void(__cdecl* removeSpellCb)(SubDispNode*, objHndl, enum_disp_type, uint32_t, DispIO*)  = temple::GetRef<void(__cdecl)(SubDispNode*, objHndl , enum_disp_type , uint32_t , DispIO*)>(0x100D7620);
+	static void(__cdecl* removeSpellModCb)(SubDispNode*, objHndl, enum_disp_type, uint32_t, DispIO*) = temple::GetRef<void(__cdecl)(SubDispNode*, objHndl, enum_disp_type, uint32_t, DispIO*)>(0x100CBAB0);
+
+	static auto touchSpellRemover = [](SubDispNode* subDispNode, objHndl objHndCaller, enum_disp_type dispType, uint32_t dispKey, DispIO* dispIO) {
+		DispIoD20Signal* evtObj = nullptr;
+		if (dispIO)
+			evtObj = dispatch.DispIoCheckIoType6(dispIO);
+		if (!evtObj) return;
+		auto spellId = evtObj->data1;
+		SpellPacketBody spPkt(spellId);
+		if (!spPkt.spellEnum)
+			return;
+		if (spPkt.caster != objHndCaller) { // do not remove this spell when spell is cast by someone else i.e. you are the target of the spell rather than the caster
+			return;
+		}
+		removeSpellCb(subDispNode, objHndCaller, dispType, dispKey, dispIO);
+		return;
+	};
+	static auto touchSpellModRemover = [](SubDispNode* subDispNode, objHndl objHndCaller, enum_disp_type dispType, uint32_t dispKey, DispIO* dispIO) {
+		DispIoD20Signal* evtObj = nullptr;
+		if (dispIO)
+			evtObj = dispatch.DispIoCheckIoType6(dispIO);
+		if (!evtObj) return;
+		auto spellId = evtObj->data1;
+		SpellPacketBody spPkt(spellId);
+		if (!spPkt.spellEnum)
+			return;
+		if (spPkt.caster != objHndCaller) { // do not remove this spell when spell is cast by someone else i.e. you are the target of the spell rather than the caster
+			return;
+		}
+		removeSpellModCb(subDispNode, objHndCaller, dispType, dispKey, dispIO);
+		return;
+	};
+
+
+	conds.DoForAllCondStruct([](CondStruct& cs) {
+		
+		const int MAX_SDDS = 100;
+		for (int i = 0; i < MAX_SDDS; ++i) {
+			auto &sdd = cs.subDispDefs[i];
+			if (sdd.dispType == dispType0) {
+				break;
+			}
+			if (sdd.dispType == enum_disp_type::dispTypeD20Signal && sdd.dispKey == DK_SIG_Spell_Cast) {
+
+				if (sdd.dispCallback == removeSpellCb) {
+					sdd.dispCallback = touchSpellRemover;
+				}
+				if (sdd.dispCallback == (void*)addresses.RemoveSpellMod) {
+					sdd.dispCallback = touchSpellModRemover;
+				}
+			}
+		}
+		
+		}
+	);
+}
+
 
 bool ConditionFunctionReplacement::StunningFistHook(objHndl objHnd, objHndl caster, int DC, int saveType, int flags)
 {
@@ -4983,6 +5050,7 @@ int SpellCallbacks::SpellRemoveMod(DispatcherCallbackArgs args){
 		logger->warn("Caught a DK_SIG_Sequence, make sure we are removing spell_mod properly...");
 	}
 
+	
 	switch (args.dispKey){
 	case DK_SIG_Killed:
 	case DK_SIG_Critter_Killed:
@@ -5003,6 +5071,7 @@ int SpellCallbacks::SpellRemoveMod(DispatcherCallbackArgs args){
 
 	auto spellId = args.GetCondArg(0);
 	SpellPacketBody spPkt(spellId);
+
 	switch (args.GetData1()){
 	case 2:
 		if (args.dispKey == DK_SIG_Remove_Concentration){
@@ -7093,6 +7162,8 @@ void Conditions::AddConditionsToTable(){
 
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondTirelessRage);
 	*/
+
+	condFuncReplacement.ReplaceTouchSpellHandling_SIG_SPELL_CAST();
 
 	auto tpModule = PyImport_ImportModule("tpModifiers");
 }
