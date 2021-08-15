@@ -1026,6 +1026,10 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			D20Actn* d20a= (D20Actn*)evtObj.data1;
 			return *d20a;
 		}, "Used for Q_IsActionInvalid_CheckAction callbacks to get a D20Action from the data1 field")
+		.def("get_d20_spell_data", [](DispIoD20Query& evtObj)->D20SpellData& {
+			D20SpellData* d20sd = (D20SpellData*)evtObj.data1;
+			return *d20sd;
+		}, "Used for Q_SpellInterrupted callbacks to get a D20SpellData from the data1 field")
 		.def("get_obj_from_args", [](DispIoD20Query& evtObj)->objHndl {
 			objHndl handle{ ((((uint64_t)evtObj.data2) << 32) | evtObj.data1) };
 			if (!gameSystems->GetObj().IsValidHandle(handle))
