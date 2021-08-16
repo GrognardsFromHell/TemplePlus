@@ -207,6 +207,7 @@ struct ActionSequenceSystem : temple::AddressTable
 	void sequencePerform();
 	void ActionBroadcastAndSignalMoved();
 	int ActionFrameProcess(objHndl obj);
+	void PerformOnProjectileComplete(objHndl projectile, objHndl thrower);
 	void PerformOnAnimComplete(objHndl obj, int animId); // runs any actions that need to be run when the animation finishes
 
 	unsigned int ChargeAttackAddToSeq(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);

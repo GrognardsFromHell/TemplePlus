@@ -157,6 +157,9 @@ public:
 		replaceFunction(0x100933F0, ActionFrameProcess);
 		orgTurnStart = replaceFunction(0x10099430, TurnStart);
 		replaceFunction(0x100999E0, GreybarReset);
+		replaceFunction<void(__cdecl)(objHndl, objHndl)>(0x10099B10, [](objHndl projectile, objHndl thrower) {
+			actSeqSys.PerformOnProjectileComplete(projectile, thrower); }
+		);
 		replaceFunction(0x10099CF0, PerformOnAnimComplete);
 
 		replaceFunction(0x100959B0, ChargeAttackAddToSeq);
@@ -2141,7 +2144,7 @@ void ActionSequenceSystem::HandleInterruptSequence()
 	*actSeqCur = actSeq;
 	*addresses.actSeqInterrupt = actSeq->interruptSeq;
 	auto curIdx = actSeq->d20aCurIdx;
-	logger->info("Switching to Interrupt sequence, actor {}", actSeq->performer);
+	logger->info("Switching to pre-interrupt sequence, actor {}", actSeq->performer);
 	if (curIdx >= 0 && curIdx < actSeq->d20ActArrayNum) { // fixed issue with negative curIdx
 
 		auto d20a = &actSeq->d20ActArray[curIdx];
@@ -2929,6 +2932,69 @@ int ActionSequenceSystem::ActionFrameProcess(objHndl obj)
 	
 	logger->debug("ActionFrameProcess: \t Calling action frame function");
 	return actFrameFunc(d20a);	
+}
+
+/* 0x10099B10 */
+void ActionSequenceSystem::PerformOnProjectileComplete(objHndl projectile, objHndl thrower)
+{
+	logger->info("Projectile hit (thrown by {})", thrower);
+	if (!isPerforming(thrower)) {
+		if (isSimultPerformer(thrower)) {
+			if (IsSimulsCompleted()) {
+				logger->info("\t\t (not performing, but advancing turn anyway)");
+				auto actor = tbSys.turnBasedGetCurrentActor();
+				combatSys.CombatAdvanceTurn(actor);
+			}
+		}
+		logger->info("\t\t not performing");
+		return;
+	}
+
+	auto succeeded = true;
+	auto curSeq = *actSeqCur;
+	if (!curSeq || curSeq->performer != thrower || (curSeq->seqOccupied & SEQF_PERFORMING) == 0) {
+		succeeded = false;
+		logger->debug("\t\t thrower is not current sequence performer, trying to switch...");
+	}
+	succeeded = SequenceSwitch(thrower) != 0;
+
+	if (!succeeded) {
+		logger->debug("\t\t failed");
+		return;
+	}
+
+	static auto GetSpellProjectile = temple::GetRef<ProjectileEntry* (__cdecl)(objHndl)>(0x1008B250);
+	auto spProjectile = GetSpellProjectile(projectile);
+	if (!spProjectile) {
+		logger->debug("\t\t No projectile found!");
+		return;
+	}
+
+	auto d20a = spProjectile->d20a;
+	if (thrower == d20a->d20APerformer) {
+		d20a->d20Caf &= ~D20CAF_NEED_PROJECTILE_HIT;
+		auto projectileHitFunc = d20Sys.d20Defs[d20a->d20ActType].projectileHitFunc;
+		if (projectileHitFunc) {
+			projectileHitFunc(d20a, projectile, spProjectile->ammoItem);
+		}
+		if (actSeqOkToPerform()) {
+			logger->info("\t\t action completed.");
+			ActionBroadcastAndSignalMoved();
+			ActionPerform();
+			while (isPerforming((*actSeqCur)->performer)) {
+				if (!actSeqOkToPerform())
+					break;
+				ActionPerform();
+			}
+		}
+		else {
+			logger->info("\t\t action not completed.");
+		}
+	}
+	spProjectile->projectile = objHndl::null;
+	spProjectile->d20a = nullptr;
+	spProjectile->ammoItem = objHndl::null;
+	return;
 }
 
 unsigned int ActionSequenceSystem::ChargeAttackAddToSeq(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat)

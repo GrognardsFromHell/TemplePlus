@@ -343,7 +343,10 @@ int UiIntegameTurnbasedRepl::UiIntgamePathSequenceHandler(TigMsgMouse* msg) {
 
 	if (performSeq) {
 		intgameAddresses.UiActionBarGetValuesFromMovement();
-		logger->info("UiIntgame: \t Issuing Sequence for current actor {} ({}), cur seq: {}", description.getDisplayName(actor), actor, (void*)(*actSeqSys.actSeqCur));
+		logger->info("UiIntgame: \t Issuing Sequence for current actor {}, cur seq: {}", actor, (void*)(*actSeqSys.actSeqCur));
+		if (*actSeqSys.actSeqCur) {
+			logger->debug("\t\t num actions: {}, action[0] type: {}", (*actSeqSys.actSeqCur)->d20ActArrayNum, (*actSeqSys.actSeqCur)->d20ActArray[0].d20ActType);
+		}
 		actSeqSys.sequencePerform();
 		tgtFromPortraits = 0i64;
 		isWaypointMode = 0;

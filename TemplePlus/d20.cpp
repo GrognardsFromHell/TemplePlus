@@ -3629,12 +3629,6 @@ ActionErrorCode D20ActionCallbacks::ActionCostWhirlwindAttack(D20Actn* d20a, Tur
 BOOL D20Actn::ProjectileAppend(objHndl projHndl, objHndl thrownItem){
 	if (!projHndl)
 		return FALSE;
-	struct ProjectileEntry{
-		D20Actn * d20a;
-		int pad4;
-		objHndl projectile;
-		objHndl ammoItem;
-	};
 	auto projectileArray = temple::GetRef<ProjectileEntry[20]>(0x118A0720);
 	for (auto i = 0; i < 20; i++){
 		if (!projectileArray[i].projectile)	{
