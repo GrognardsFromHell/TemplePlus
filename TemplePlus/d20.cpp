@@ -1285,6 +1285,7 @@ ActionErrorCode D20ActionCallbacks::PerformTouchAttack(D20Actn* d20a)
 			
 		
 		if (d20a->d20Caf & D20CAF_RANGED) {
+			logger->info("PerformTouchAttack: Changing action to D20A_CAST_SPELL, tgt: {}", d20a->d20ATarget);
 			spPkt.targetListHandles[0] = d20a->d20ATarget;
 			spPkt.UpdateSpellsCastRegistry();
 			spPkt.UpdatePySpell();
@@ -1994,7 +1995,7 @@ BOOL D20ActionCallbacks::ActionFrameQuiveringPalm(D20Actn* d20a){
 }
 
 /* 0x1008DEA0 */
-BOOL D20ActionCallbacks::ActionFrameSpell(D20Actn * d20a){
+BOOL D20ActionCallbacks::ActionFrameSpell(D20Actn * d20a) {
 
 	auto projectileProto = 3000;
 	auto offx = 0;
@@ -2004,10 +2005,13 @@ BOOL D20ActionCallbacks::ActionFrameSpell(D20Actn * d20a){
 	int spellEnum, spellClass, spellLvl;
 	d20a->d20SpellData.Extract(&spellEnum, nullptr, &spellClass, &spellLvl, nullptr, nullptr);
 
+	logger->debug("ActionFrameSpell: \t spell {}", spellEnum);
+
 	SpellEntry spEntry(spellEnum);
 	if (!spEntry.projectileFlag)
 		return FALSE;
 
+	logger->trace("\t\t\t is projectile.");
 
 	if ( (spEntry.spellRangeType == SRT_Personal || spEntry.spellRangeType == SRT_Touch)
 		&& !(d20a->d20Caf & D20CAF_RANGED)){
@@ -2051,6 +2055,7 @@ BOOL D20ActionCallbacks::ActionFrameSpell(D20Actn * d20a){
 	std::vector<objHndl> finalTargets;
 	if (spEntry.IsBaseModeTarget(UiPickerType::Multi)) {
 		pkt.projectileCount = pkt.targetCount;
+		logger->trace("\t\t\t multi projectile; initial tgt count {}", pkt.targetCount);
 
 		for (auto i = 0; i < pkt.targetCount; ++i) {
 			auto tgtHandle = pkt.targetListHandles[i];
@@ -2072,6 +2077,7 @@ BOOL D20ActionCallbacks::ActionFrameSpell(D20Actn * d20a){
 			else {
 				d20a->d20ATarget = tgtHandle;
 				if (!d20Sys.D20QueryWithDataDefaultTrue(tgtHandle, DK_QUE_CanBeAffected_ActionFrame, d20a, 0)) {
+					logger->debug("\t\t\t target {} filtered out due to DK_QUE_CanBeAffected_ActionFrame.", tgtHandle);
 					continue;
 				}
 				pySpellIntegration.SpellTriggerProjectile(d20a->spellId, SpellEvent::BeginProjectile, projHandle, i);
@@ -2088,6 +2094,7 @@ BOOL D20ActionCallbacks::ActionFrameSpell(D20Actn * d20a){
 		|| spEntry.IsBaseModeTarget(UiPickerType::Area)) 
 	{
 		pkt.projectileCount = 1;
+		logger->trace("\t\t\t single projectile.");
 		auto projectileTgt = (spEntry.IsBaseModeTarget(UiPickerType::Single)
 			|| (pkt.animFlags & SpellAnimationFlag::SAF_PROJECTILE_STHG)) ? d20a->d20ATarget : objHndl::null;
 		auto projHandle = combatSys.CreateProjectileAndThrow(origin, projectileProto, destLoc, offx, offy, d20a->d20APerformer, projectileTgt);
@@ -2113,6 +2120,7 @@ BOOL D20ActionCallbacks::ActionFrameSpell(D20Actn * d20a){
 				else {
 					d20a->d20ATarget = tgtHandle;
 					if (!d20Sys.D20QueryWithDataDefaultTrue(tgtHandle, DK_QUE_CanBeAffected_ActionFrame, d20a, 0)){
+						logger->debug("\t\t\t target {} filtered out due to DK_QUE_CanBeAffected_ActionFrame.", tgtHandle);
 						continue;
 					}
 					pySpellIntegration.SpellTriggerProjectile(d20a->spellId, SpellEvent::BeginProjectile, projHandle, 0);

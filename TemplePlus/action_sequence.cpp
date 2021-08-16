@@ -766,13 +766,13 @@ void ActionSequenceSystem::TurnStart(objHndl obj)
 	simulsEnqueue();
 
 	if (objects.IsPlayerControlled(obj) && critterSys.IsDeadOrUnconscious(obj)) {
-		logger->info("Action for {} ending turn (unconscious)...", description.getDisplayName(d20Sys.globD20Action->d20APerformer));
+		logger->info("Action for {} ending turn (unconscious)...", d20Sys.globD20Action->d20APerformer);
 		combatSys.CombatAdvanceTurn(obj);
 		return;
 	}
 
 	if (objBody->GetFlags() & OF_OFF) {
-		logger->info("Action for {} ending turn (OF_OFF)", description.getDisplayName(d20Sys.globD20Action->d20APerformer));
+		logger->info("Action for {} ending turn (OF_OFF)", d20Sys.globD20Action->d20APerformer);
 		combatSys.CombatAdvanceTurn(obj);
 		return;
 	}
@@ -1063,7 +1063,7 @@ uint32_t ActionSequenceSystem::MoveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 	LocAndOffsets * actSeqPerfLoc;
 	ActionCostPacket actCost;
 
-	//logger->debug("Parsing move sequence for {}, d20 action {}", description.getDisplayName(d20aIn->d20APerformer), d20ActionNames[d20aIn->d20ActType]);
+	//logger->debug("Parsing move sequence for {}, d20 action {}", d20aIn->d20APerformer, d20ActionNames[d20aIn->d20ActType]);
 	
 	seqCheckFuncs(&tbStatCopy);
 	
@@ -1138,9 +1138,9 @@ uint32_t ActionSequenceSystem::MoveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 		}
 
 		if (pathQ.targetObj)
-			logger->debug("MoveSequenceParse: FAILED PATH... {} attempted from {} to {} ({})", description.getDisplayName(pqResult->mover), pqResult->from, pqResult->to, description.getDisplayName(pathQ.targetObj));
+			logger->debug("MoveSequenceParse: FAILED PATH... {} attempted from {} to {} ({})", pqResult->mover, pqResult->from, pqResult->to, pathQ.targetObj);
 		else
-			logger->debug("MoveSequenceParse: FAILED PATH... {} attempted from {} to {}", description.getDisplayName(pqResult->mover), pqResult->from, pqResult->to);
+			logger->debug("MoveSequenceParse: FAILED PATH... {} attempted from {} to {}", pqResult->mover, pqResult->from, pqResult->to);
 		
 
 
@@ -2206,19 +2206,6 @@ int32_t ActionSequenceSystem::InterruptNonCounterspell(D20Actn* d20a)
 	InterruptSwitchActionSequence(readiedAction);
 	return 1;
 
-	/*uint32_t result = 0;
-	__asm{
-		push esi;
-		push ecx;
-		mov ecx, this;
-		mov esi, [ecx]._InterruptNonCounterspell;
-		mov eax, d20a;
-		call esi;
-		mov result, eax;
-		pop ecx;
-		pop esi;
-	}
-	return result;*/
 }
 
 int32_t ActionSequenceSystem::InterruptCounterspell(D20Actn* d20a)
@@ -2350,7 +2337,7 @@ void ActionSequenceSystem::InterruptSwitchActionSequence(ReadiedActionPacket* re
 	(*actSeqCur)->interruptSeq = *addresses.actSeqInterrupt;
 	*addresses.actSeqInterrupt = *actSeqCur;
 	combatSys.FloatCombatLine((*actSeqCur)->performer, 158); // Action Interrupted
-	logger->debug("{} interrupted by {}!", description.getDisplayName((*actSeqCur)->performer), description.getDisplayName( readiedAction->interrupter));
+	logger->debug("{} interrupted by {}!", (*actSeqCur)->performer, readiedAction->interrupter);
 	histSys.CreateRollHistoryLineFromMesfile(7, readiedAction->interrupter, (*addresses.actSeqInterrupt)->performer);
 	AssignSeq(readiedAction->interrupter);
 	(*actSeqCur)->prevSeq = nullptr;
@@ -2776,13 +2763,15 @@ void ActionSequenceSystem::ActionPerform()
 						directionsDebug.emplace_back(d20a->path->nodes[i]);
 					}
 					if (d20a->d20ATarget)
-						logger->debug("Move Action: {} going from {} to {} ({}), nodes used: {}", description.getDisplayName(d20a->path->mover), d20a->path->from, d20a->path->to, description.getDisplayName(d20a->d20ATarget), directionsDebug);
+						logger->debug("Move Action: {} going from {} to {} ({}), nodes used: {}", d20a->path->mover, d20a->path->from, d20a->path->to, d20a->d20ATarget, directionsDebug);
 					else
-						logger->debug("Move Action: {} going from {} to {}, nodes used: {}", description.getDisplayName(d20a->path->mover), d20a->path->from, d20a->path->to, directionsDebug);
+						logger->debug("Move Action: {} going from {} to {}, nodes used: {}", d20a->path->mover, d20a->path->from, d20a->path->to, directionsDebug);
 				}*/
 
 
 				ActionErrorCode performResult = static_cast<ActionErrorCode>(d20->d20Defs[d20a->d20ActType].performFunc(d20a));
+				logger->debug("\t\t\t Callback Done. Result: {}", performResult);
+
 				InterruptNonCounterspell(d20a);
 			}
 
