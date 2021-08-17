@@ -4970,7 +4970,7 @@ int __cdecl SpellCallbacks::SpellModCountdownRemove(DispatcherCallbackArgs args)
 	int durNew = dur - (int)dispIo->data1;
 	SpellPacketBody spellPkt(spellId);
 	if (!spellPkt.spellEnum){
-		logger->debug("SpellModCountdownRemove: err.... why are we counting a spell that no longer exists? spell removed without removing the appropriate conditions? -Troika");
+		logger->debug("SpellModCountdownRemove: err.... why are we counting a spell that no longer exists? spell (ID={}, dur={}) removed without removing the appropriate conditions? -Troika", spellId, dur);
 		DispatcherCallbackArgs dca2 = args;
 		dca2.dispIO = nullptr;
 		dca2.RemoveSpellMod();

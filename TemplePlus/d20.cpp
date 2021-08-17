@@ -1260,6 +1260,7 @@ ActionErrorCode D20ActionCallbacks::PerformStandardAttack(D20Actn* d20a)
 	if (gameSystems->GetAnim().PushAttackAnim(d20a->d20APerformer, d20a->d20ATarget, 0xFFFFFFFF, hitAnimIdx, playCritFlag, useSecondaryAnim))
 	{
 		d20a->animID = gameSystems->GetAnim().GetActionAnimId(d20a->d20APerformer);
+		logger->debug("PerformStandardAttack: \t animId = {}", d20a->animID);
 		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
 	}
 	return AEC_OK;

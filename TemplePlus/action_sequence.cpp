@@ -41,7 +41,7 @@ static struct ActnSeqAddresses : temple::AddressTable {
 	PickerArgs * actSeqPicker;
 	D20Actn * actSeqPickerAction;
 	ReadiedActionPacket * readiedActionCache;
-	ActnSeq** actSeqInterrupt;
+	ActnSeq** actSeqInterrupted;
 	int* seqSthg_10B3D59C;
 	int * cursorState;
 	int *aooShaderId;
@@ -70,7 +70,7 @@ static struct ActnSeqAddresses : temple::AddressTable {
 		rebase(readiedActionCache, 0x1186A900);
 		rebase(actSeqPickerAction, 0x118CD400);
 		rebase(actSeqPicker, 0x118CD460);
-		rebase(actSeqInterrupt, 0x118CD574);
+		rebase(actSeqInterrupted, 0x118CD574);
 
 		rebase(aooShaderId, 0x1186A8E8);
 		rebase(spellPickerCallback, 0x10096CC0);
@@ -716,8 +716,8 @@ void ActionSequenceSystem::TurnStart(objHndl obj)
 	if (!combatSys.isCombatActive())
 		return;
 
-	// check for interrupter sequence
-	if (*addresses.actSeqInterrupt) {
+	// check for interrupted sequence
+	if (*addresses.actSeqInterrupted) {
 		HandleInterruptSequence();
 		return;
 	}
@@ -1314,6 +1314,29 @@ uint32_t ActionSequenceSystem::actSeqOkToPerform()
 	{
 		auto caflags = curSeq->d20ActArray[curSeq->d20aCurIdx].d20Caf;
 		if (caflags & D20CAF_NEED_PROJECTILE_HIT){ return 0; }
+		
+		/* Temple + : added this to fix issue with throwing Produce Flame when there are readied actions.
+		* Scenario was this: 
+		- Archers ready vs. spell
+		- You perform Touch Attack action (ranged) by hurling the Produce Flame
+		- You get interrupted
+		- HOWEVER, you'll have already hurled your projectile
+		- This leads to you finishing your sequence while the AI possibly is still acting / animating
+		- Your sequence will as a consequence get popped
+		- However, it will still be referred to by actSeqInterrupted!
+		- Meanwhile, the AI is still acting, so when they finish they may claim
+		  the same sequence slot, thus invalidating actSeqInterrupted
+		  Consequently when the AI turn's finishes, it will try to sequence switch
+		  to an invalid actSeqInterrupted (i.e. a sequence slot now owned by the AI),
+		  which results in giving up your turn.
+		
+		What this fix does:
+		  when PerformOnProjectileComplete is called (for your projectile), this fix
+		  will indicate that the action is NOT complete, and consequently the sequence should not be cleared.
+		*/
+		if (*addresses.actSeqInterrupted == curSeq) {
+			return 0;
+		}
 		return (caflags & D20CAF_NEED_ANIM_COMPLETED) == 0;
 	}
 	return 1;
@@ -1372,7 +1395,7 @@ uint32_t ActionSequenceSystem::AssignSeq(objHndl objHnd)
 		{
 			if (prevSeq != nullptr)
 			{
-				logger->debug("Pushing sequence from {} to {}", prevSeq->performer, objHnd);
+				logger->debug("Pushing sequence from {}({}) to {}", prevSeq->performer, (void*)prevSeq, objHnd);
 			} else
 			{
 				logger->debug("Allocated sequence for {}", objHnd);
@@ -2140,11 +2163,16 @@ bool ActionSequenceSystem::SpellTargetsFilterInvalid(D20Actn& d20a){
 void ActionSequenceSystem::HandleInterruptSequence()
 {
 	// switch sequences
-	auto actSeq = *addresses.actSeqInterrupt;
+	auto actSeq = *addresses.actSeqInterrupted;
+	logger->info("Attempting switch to pre-interrupt sequence, actor {}", actSeq->performer);
+	if (! (actSeq->seqOccupied & SEQF_PERFORMING) ) {
+
+	}
+
 	*actSeqCur = actSeq;
-	*addresses.actSeqInterrupt = actSeq->interruptSeq;
+	*addresses.actSeqInterrupted = actSeq->interruptSeq;
 	auto curIdx = actSeq->d20aCurIdx;
-	logger->info("Switching to pre-interrupt sequence, actor {}", actSeq->performer);
+	
 	if (curIdx >= 0 && curIdx < actSeq->d20ActArrayNum) { // fixed issue with negative curIdx
 
 		auto d20a = &actSeq->d20ActArray[curIdx];
@@ -2337,11 +2365,11 @@ void ActionSequenceSystem::InterruptSwitchActionSequence(ReadiedActionPacket* re
 	if (readiedAction->readyType == RV_Counterspell)
 		return addresses.Counterspell_sthg(readiedAction);
 	
-	(*actSeqCur)->interruptSeq = *addresses.actSeqInterrupt;
-	*addresses.actSeqInterrupt = *actSeqCur;
+	(*actSeqCur)->interruptSeq = *addresses.actSeqInterrupted;
+	*addresses.actSeqInterrupted = *actSeqCur;
 	combatSys.FloatCombatLine((*actSeqCur)->performer, 158); // Action Interrupted
 	logger->debug("{} interrupted by {}!", (*actSeqCur)->performer, readiedAction->interrupter);
-	histSys.CreateRollHistoryLineFromMesfile(7, readiedAction->interrupter, (*addresses.actSeqInterrupt)->performer);
+	histSys.CreateRollHistoryLineFromMesfile(7, readiedAction->interrupter, (*addresses.actSeqInterrupted)->performer);
 	AssignSeq(readiedAction->interrupter);
 	(*actSeqCur)->prevSeq = nullptr;
 	auto curActor = tbSys.turnBasedGetCurrentActor();
@@ -2441,9 +2469,10 @@ uint32_t ActionSequenceSystem::curSeqNext()
 {
 	ActnSeq* curSeq = *actSeqCur;
 	objHndl performer = curSeq->performer;
-	SpellPacketBody spellPktBody;
-	curSeq->seqOccupied &= 0xffffFFFE; //unset "occupied" flag
+	SpellPacketBody spellPktBody;	
 	logger->debug("CurSeqNext: \t Sequence Completed for {} (sequence {})", curSeq->performer, (void*)curSeq);
+
+	curSeq->seqOccupied &= 0xffffFFFE; //unset "occupied" flag
 
 	int d20ActArrayNum = curSeq->d20ActArrayNum;
 	if (d20ActArrayNum > 0){
@@ -2579,12 +2608,19 @@ int ActionSequenceSystem::SequencePop()
 {
 	ActnSeq*  curSeq = *actSeqCur;
 	ActnSeq*  prevSeq = (*actSeqCur)->prevSeq;
-	curSeq->seqOccupied &= 0xFFFFfffe;
 	logger->debug("Popping sequence ( {} )", (void*)curSeq);
+
+	
+	curSeq->seqOccupied &= 0xFFFFfffe;
+
 	*actSeqCur = prevSeq;
 	curSeq->prevSeq = nullptr;
-	if (!prevSeq)
+
+	
+	if (!prevSeq) {
 		return 0;
+	}
+		
 	auto curSeqPerformer = curSeq->performer;
 	auto prevSeqPerformer = prevSeq->performer;
 	logger->debug("Popping sequence from {} to {}", 
@@ -2617,7 +2653,7 @@ int ActionSequenceSystem::SequencePop()
 		d20Sys.globD20Action->data1 = 0;
 		ActionAddToSeq();
 	}
-	*addresses.actSeqInterrupt = prevSeq->interruptSeq;
+	*addresses.actSeqInterrupted = prevSeq->interruptSeq;
 	prevSeq->interruptSeq = nullptr;
 	return 1;
 }
@@ -2813,10 +2849,10 @@ void ActionSequenceSystem::sequencePerform()
 		return;
 	}
 
-	if (*addresses.actSeqInterrupt)
+	if (*addresses.actSeqInterrupted)
 	{
 		int dummy = 1;
-		if (*addresses.actSeqInterrupt == *actSeqCur)
+		if (*addresses.actSeqInterrupted == *actSeqCur)
 		{
 			int asd = 1;
 		}
@@ -2930,7 +2966,7 @@ int ActionSequenceSystem::ActionFrameProcess(objHndl obj)
 	if (!actFrameFunc)
 		return 0;
 	
-	logger->debug("ActionFrameProcess: \t Calling action frame function");
+	logger->debug("ActionFrameProcess: \t Calling action frame function (action type {})", d20a->d20ActType);
 	return actFrameFunc(d20a);	
 }
 
@@ -2975,10 +3011,11 @@ void ActionSequenceSystem::PerformOnProjectileComplete(objHndl projectile, objHn
 		d20a->d20Caf &= ~D20CAF_NEED_PROJECTILE_HIT;
 		auto projectileHitFunc = d20Sys.d20Defs[d20a->d20ActType].projectileHitFunc;
 		if (projectileHitFunc) {
+			logger->debug("PerformOnProjectileComplete: \t\t\t calling projectileHitFunc for action type {}.", d20a->d20ActType);
 			projectileHitFunc(d20a, projectile, spProjectile->ammoItem);
 		}
 		if (actSeqOkToPerform()) {
-			logger->info("\t\t action completed.");
+			logger->info("PerformOnProjectileComplete: \t\t\t action completed.");
 			ActionBroadcastAndSignalMoved();
 			ActionPerform();
 			while (isPerforming((*actSeqCur)->performer)) {
@@ -2988,7 +3025,7 @@ void ActionSequenceSystem::PerformOnProjectileComplete(objHndl projectile, objHn
 			}
 		}
 		else {
-			logger->info("\t\t action not completed.");
+			logger->info("PerformOnProjectileComplete: \t\t\t action not completed.");
 		}
 	}
 	spProjectile->projectile = objHndl::null;
@@ -3097,6 +3134,7 @@ void ActionSequenceSystem::PerformOnAnimComplete(objHndl obj, int animId)
 
 	if (!(d20caf & D20CAF_ACTIONFRAME_PROCESSED))
 	{
+		logger->debug("PerformOnAnimComplete: \t\t processing action frame.");
 		ActionFrameProcess(obj);
 	}
 
@@ -3110,6 +3148,9 @@ void ActionSequenceSystem::PerformOnAnimComplete(objHndl obj, int animId)
 				break;
 			ActionPerform();
 		}
+	}
+	else {
+		logger->debug("PerformOnAnimComplete: \t\t not ok to perform.");
 	}
 }
 

@@ -652,6 +652,7 @@ int UiIntegameTurnbasedRepl::UiIntgameMsgHandler(int widId, TigMsg* msg) {
 						result = 1;
 				}
 				if (msg->arg4 & MSF_LMB_RELEASED) {
+					logger->debug("UiIntgameMsgHandler: \t LMB UP");
 					if (UiIntgamePathSequenceHandler(reinterpret_cast<TigMsgMouse*>(msg)))
 						result = 1;
 				}
@@ -763,7 +764,7 @@ int UiIntegameTurnbasedRepl::UiIntgameMsgHandler(int widId, TigMsg* msg) {
 	}
 
 	if (*actSeqSys.actSeqCur != initialSeq) {
-		logger->info("Sequence switch from Ui Intgame Msg Handler to {}", (void*)*actSeqSys.actSeqCur);
+		logger->info("UiIntgameMsgHandler: \t Sequence switch detected. Was {}, changed to {}",(void*)initialSeq, (void*)*actSeqSys.actSeqCur);
 	}
 
 	return result;

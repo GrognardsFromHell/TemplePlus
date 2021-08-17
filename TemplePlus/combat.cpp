@@ -1029,8 +1029,9 @@ void LegacyCombatSystem::Subturn()
 		combatSubturnCallback(actor);
 	}
 
-	if (actSeqSys.isPerforming(actor)) {
-		logger->info("   ...is performing.");
+	ActnSeq* actorSeq = nullptr;
+	if (actSeqSys.isPerforming(actor, &actorSeq)) {
+		logger->info("   ...is performing ({}). Returning.", (void*)actorSeq);
 		return;
 	}
 		
