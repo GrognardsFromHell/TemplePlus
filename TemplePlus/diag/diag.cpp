@@ -15,6 +15,7 @@
 #include "../gamesystems/clipping/clipping.h"
 #include <tig/tig_mouse.h>
 #include "location.h"
+#include <action_sequence.h>
 
 using namespace gfx;
 
@@ -103,6 +104,7 @@ void DiagScreen::Render() {
 	lines.push_back(fmt::format("intgameFocusObj: {}", intgameFocus));
 	auto intgameTarget = temple::GetRef<objHndl>(0x10C040E8);
 	lines.push_back(fmt::format("uiIntgameObjFromRaycast: {}", intgameTarget));
+	lines.push_back(fmt::format("seqPickerD20ActnType: {}", *actSeqSys.seqPickerD20ActnType));
 	
 	if (config.pathfindingDebugMode)
 	{
