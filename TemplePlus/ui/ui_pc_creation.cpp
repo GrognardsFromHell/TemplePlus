@@ -950,7 +950,7 @@ void UiPcCreation::FeatsActivate()
 		d20ClassSys.LevelupGetBonusFeats(handle, selPkt.classCode); // can call set_bonus_feats
 
 	feat_enums existingFeats[122];
-	auto existingCount = feats.FeatListGet(handle, existingFeats, selPkt.classCode, FEAT_ACROBATIC);
+	auto existingCount = feats.FeatListGet(handle, existingFeats, (Stat)0, (feat_enums)0);
 
 	mExistingFeats.clear();
 	for (auto i = 0u; i<existingCount; i++) {
