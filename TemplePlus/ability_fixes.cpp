@@ -316,10 +316,15 @@ int AbilityConditionFixes::CombatExpertiseAcBonus(DispatcherCallbackArgs args){
 		return 0;
 	}
 
-	auto attackMade = args.GetCondArg(1);
+	/*auto attackMade = args.GetCondArg(1);
 	if (!attackMade){
 		return 0;
+	}*/
+	auto attackMadeStoredValue = args.GetCondArg(1);
+	if (!attackMadeStoredValue) {
+		return 0;
 	}
+	expertiseAmt = attackMadeStoredValue;
 
 	GET_DISPIO(dispIOTypeAttackBonus, DispIoAttackBonus);
 	dispIo->bonlist.AddBonusFromFeat(expertiseAmt, 8, 114, FEAT_COMBAT_EXPERTISE);
@@ -334,7 +339,11 @@ int AbilityConditionFixes::TacticalAbusePrevention(DispatcherCallbackArgs args)
 	if (damPkt->attackPacket.flags & D20CAF_RANGED){
 		return 0;
 	}
-	args.SetCondArg(1, 1);
+	auto currentSetValue = args.GetCondArg(0);
+	auto currentArg1Value = args.GetCondArg(1);
+	int newValue = max(currentArg1Value, currentSetValue); // fixes issue where users could manipulate this at the end of turn
+	
+	args.SetCondArg(1, newValue);
 	return 0;
 }
 
