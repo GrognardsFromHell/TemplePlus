@@ -35,29 +35,6 @@
 
 
 //*****************************************************************************
-//* Vagrant
-//*****************************************************************************
-
-VagrantSystem::VagrantSystem(const GameSystemConf &config) {
-	auto startup = temple::GetPointer<int(const GameSystemConf*)>(0x10086ae0);
-	if (!startup(&config)) {
-		throw TempleException("Unable to initialize game system Vagrant");
-	}
-}
-VagrantSystem::~VagrantSystem() {
-	auto shutdown = temple::GetPointer<void()>(0x10086b10);
-	shutdown();
-}
-void VagrantSystem::AdvanceTime(uint32_t time) {
-	auto advanceTime = temple::GetPointer<void(uint32_t)>(0x10086cb0);
-	advanceTime(time);
-}
-const std::string &VagrantSystem::GetName() const {
-	static std::string name("Vagrant");
-	return name;
-}
-
-//*****************************************************************************
 //* Description
 //*****************************************************************************
 

@@ -2,6 +2,7 @@
 #include "common.h"
 #include "combat.h"
 #include "tig/tig_mes.h"
+#include "tig/tig_timer.h"
 #include "obj.h"
 #include "critter.h"
 #include "temple_functions.h"
@@ -28,6 +29,7 @@
 #include "ui/ui_dialog.h"
 #include "condition.h"
 #include "legacyscriptsystem.h"
+#include "gamesystems/legacysystems.h"
 #include "config/config.h"
 #include "d20_obj_registry.h"
 #include "animgoals/anim.h"
@@ -134,6 +136,28 @@ public:
 
 		replaceFunction(0x100629B0, _IsCloseToParty);
 		orgActionBarResetCallback = replaceFunction(0x10062E60, ActionBarResetCallback);
+
+		replaceFunction<void(__cdecl)(ActionBar*, float)>(0x10086DD0, [](ActionBar* bar, float etimeSec) {
+			bar->pulseVal += etimeSec * bar->combatDepletionSpeed;
+
+			if (bar->combatDepletionSpeed <= 0.0f) {
+				if (bar->pulseVal >= bar->endDist) {
+					return;
+				}
+				bar->pulseVal = bar->endDist;
+			}
+			else {
+				if (bar->pulseVal <= bar->endDist) {
+					return;
+				}
+				bar->pulseVal = bar->endDist;
+			}
+			if (bar->resetCallback) {
+				bar->resetCallback(bar->resetArg);
+			}
+			bar->flags &= ~1;
+		});
+
 		orgTurnStart2 = replaceFunction(0x100638F0, TurnStart2);
 		orgCombatTurnAdvance = replaceFunction(0x100634E0, CombatTurnAdvance);
 		replaceFunction<BOOL(__cdecl)()>(0x10062A30, [](){ // Combat End
@@ -2005,4 +2029,85 @@ char* _GetCombatMesLine(int line)
 uint32_t Combat_GetMesfileIdx_CombatMes()
 {
 	return *combatSys.combatMesfileIdx;
+}
+
+
+//*****************************************************************************
+//* Vagrant
+//*****************************************************************************
+uint32_t vagrantTime = 0;
+VagrantSystem::VagrantSystem(const GameSystemConf& config) {
+	auto startup = temple::GetPointer<int(const GameSystemConf*)>(0x10086ae0);
+	if (!startup(&config)) {
+		throw TempleException("Unable to initialize game system Vagrant");
+	}
+	vagrantTime = TigGetSystemTime();
+}
+VagrantSystem::~VagrantSystem() {
+	auto shutdown = temple::GetPointer<void()>(0x10086b10);
+	shutdown();
+}
+
+
+void DehangerGeneral() {
+	static objHndl performer;
+	static uint32_t refTime;
+	if (!combatSys.isCombatActive()) {
+		return;
+	}
+
+	auto curSeq = *actSeqSys.actSeqCur;
+	if (!curSeq) {
+		return;
+	}
+	if (curSeq->performer != performer) {
+		performer = curSeq->performer;
+		refTime = TigGetSystemTime();
+		return;
+	}
+	if (!objSystem->IsValidHandle(performer))
+		return;
+
+	auto etimeSec = TigElapsedSystemTime(refTime) * 0.001f;
+	if (etimeSec > 20.0f) {
+		if (actSeqSys.isPerforming(performer)) {
+			actSeqSys.GreybarReset();
+			return;
+		}
+		if (!objects.IsPlayerControlled(performer)) {
+			actSeqSys.GreybarReset();
+			return;
+		}
+	}
+}
+
+void VagrantSystem::AdvanceTime(uint32_t time) {
+	auto advanceTime = temple::GetPointer<void(uint32_t)>(0x10086cb0);
+	advanceTime(time);
+	
+	const int ACTION_BAR_COUNT = 48;
+	auto etime = TigElapsedSystemTime(vagrantTime);
+	vagrantTime = TigGetSystemTime();
+
+	auto etimeSec = etime * 0.001;
+	static auto &actionBars = temple::GetRef<ActionBar* [ACTION_BAR_COUNT]>(0x10AB7588);
+	static auto& advTimeFuncs = temple::GetRef<void(__cdecl*[2])(ActionBar*, float)>(0x102CC288);
+	for (auto i = 0; i < ACTION_BAR_COUNT; ++i) {
+		auto bar = actionBars[i];
+		if (!bar) continue;
+		if (bar->flags & 1) { // gets set on TurnStart2 for AI and UiActionBarGetValuesFromMovement for player
+			if (bar->advTimeFuncIdx <= 1 && bar->advTimeFuncIdx >= 0) {
+				if (bar->advTimeFuncIdx != 1) { // the animation counter
+					auto dbgDummy = 1;
+				}
+				advTimeFuncs[bar->advTimeFuncIdx](bar, etimeSec);
+			}
+		}
+	}
+
+	DehangerGeneral();
+}
+const std::string& VagrantSystem::GetName() const {
+	static std::string name("Vagrant");
+	return name;
 }
