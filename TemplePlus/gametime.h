@@ -18,6 +18,9 @@ struct GameTime {
 	GameTime(int days, int ms) : timeInDays(days), timeInMs(ms) {
 	}
 
+	void operator +=(const GameTime& amt);
+	GameTime operator -(const GameTime& t0);
+
 	// return 1 if t > t2, -1 if t < t2, 0 if equal
 	static int Compare(const GameTime& t, const GameTime& t2){
 		if (t2.timeInDays > t.timeInDays)
@@ -39,6 +42,8 @@ struct GameTime {
 			return{ 0, seconds * 1000 };
 		}
 	}
+
+	int ToMs();
 };
 
 // GameTime Function Replacements

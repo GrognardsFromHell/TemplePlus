@@ -1203,6 +1203,13 @@ GameTime TimeEventSystem::GetTime() {
 	return GameTime_Get();
 }
 
+/* 0x1005FC60 */
+GameTime TimeEventSystem::GetAnimTime()
+{
+	static auto GameTime_GetAnim = temple::GetPointer<uint64_t()>(0x1005FC60);
+	return GameTime_GetAnim();
+}
+
 bool TimeEventSystem::IsDaytime() {
 	static auto Is_Daytime = temple::GetPointer<BOOL()>(0x100600e0);
 	return Is_Daytime() == TRUE;
