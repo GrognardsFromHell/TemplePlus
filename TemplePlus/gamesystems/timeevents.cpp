@@ -18,6 +18,7 @@
 #include "graphics/mapterrain.h"
 #include "objfade.h"
 #include "ui/ui_dialog.h"
+#include <tig/tig_timer.h>
 
 /*
 Internal system specification used by the time event system
@@ -1112,7 +1113,7 @@ void TimeEventSystem::AdvanceTime(uint32_t newTimeMs) {
 
 			// Expire event
 			auto sysSpec = GetTimeEventTypeSpec(node->evt.system);
-
+			auto now = TigGetSystemTime();
 			if (node->IsValid(0)) {
 				lastValid = *node;
 				sysSpec.expiredCallback(&node->evt);
@@ -1121,7 +1122,9 @@ void TimeEventSystem::AdvanceTime(uint32_t newTimeMs) {
 			if (sysSpec.removedCallback) {
 				sysSpec.removedCallback(&node->evt);
 			}
-
+			/*if (TigElapsedSystemTime(now) > 100) {
+				logger->trace("Slow callback detected on system {}",(int) node->evt.system);
+			}*/
 			auto evtSystemId = node->evt.system;
 			free(node);
 

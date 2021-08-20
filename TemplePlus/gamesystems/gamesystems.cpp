@@ -463,6 +463,10 @@ void GameSystems::AdvanceTime() {
 
 	for (auto system : mTimeAwareSystems) {
 		system->AdvanceTime(now);
+		/*if (timeGetTime() - now > 200) {
+			auto asdf = 1;
+			logger->debug("{} taking longer", system->GetName());
+		}*/
 	}
 
 }

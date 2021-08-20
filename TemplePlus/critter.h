@@ -273,6 +273,7 @@ struct LegacyCritterSystem : temple::AddressTable
 	gfx::EncodedAnimId GetAnimId(objHndl critter, gfx::WeaponAnim anim);
 
 	void UpdateModelEquipment(objHndl obj);
+	void SuspendModelUpdate(bool state);
 
 	/**
 	 * This is called initially when the model is loaded for an object
@@ -380,6 +381,8 @@ private:
 	std::unordered_map<int, std::vector<std::string>> mAddMeshes;
 
 	const std::vector<std::string>& GetAddMeshes(int matIdx, int raceOffset);
+
+	bool mSuspendModelUpdate = false;
 };
 
 extern LegacyCritterSystem critterSys;
