@@ -163,6 +163,7 @@ public:
 	BOOL ScheduleNow(TimeEvent &evt);
 
 	GameTime GetTime();
+	GameTime GetAnimTime();
 
 	bool IsDaytime();
 

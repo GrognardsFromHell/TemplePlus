@@ -2036,6 +2036,7 @@ uint32_t Combat_GetMesfileIdx_CombatMes()
 //* Vagrant
 //*****************************************************************************
 uint32_t vagrantTime = 0;
+GameTime vagrantAnimTime;
 VagrantSystem::VagrantSystem(const GameSystemConf& config) {
 	auto startup = temple::GetPointer<int(const GameSystemConf*)>(0x10086ae0);
 	if (!startup(&config)) {
@@ -2051,45 +2052,78 @@ VagrantSystem::~VagrantSystem() {
 
 void DehangerGeneral() {
 	static objHndl performer;
-	static uint32_t refTime;
-	if (!combatSys.isCombatActive()) {
+	static GameTime animRefTime; // use animation clock instead of system clock
+	static float cumulativeTime = 0.0f;
+
+
+	auto curAnimTime = gameSystems->GetTimeEvent().GetAnimTime();
+	auto curSeq = *actSeqSys.actSeqCur;
+
+	if (GameTime::Compare(animRefTime, curAnimTime) > 0 
+		|| !combatSys.isCombatActive() 
+		|| !curSeq) {
+		animRefTime = curAnimTime;
+		cumulativeTime = 0.0f;
 		return;
 	}
 
-	auto curSeq = *actSeqSys.actSeqCur;
-	if (!curSeq) {
-		return;
-	}
 	if (curSeq->performer != performer) {
 		performer = curSeq->performer;
-		refTime = TigGetSystemTime();
+		animRefTime = curAnimTime;
+		cumulativeTime = 0.0f;
 		return;
 	}
 	if (!objSystem->IsValidHandle(performer))
 		return;
 
-	auto etimeSec = TigElapsedSystemTime(refTime) * 0.001f;
-	if (etimeSec > 20.0f) {
+	GameTime eTime = curAnimTime - animRefTime;
+	auto eTimeSec = eTime.ToMs() * 0.001f;
+	cumulativeTime += min( eTimeSec, 5.0f); // cap time increment
+	animRefTime = curAnimTime;
+
+	if (cumulativeTime > 20.0f) {
 		if (actSeqSys.isPerforming(performer)) {
 			actSeqSys.GreybarReset();
+			cumulativeTime = 0.0f;
 			return;
 		}
 		if (!objects.IsPlayerControlled(performer)) {
 			actSeqSys.GreybarReset();
+			cumulativeTime = 0.0f;
 			return;
 		}
 	}
 }
 
+/* 0x10086cb0 */
 void VagrantSystem::AdvanceTime(uint32_t time) {
-	auto advanceTime = temple::GetPointer<void(uint32_t)>(0x10086cb0);
-	advanceTime(time);
+	/*auto advanceTime = temple::GetPointer<void(uint32_t)>(0x10086cb0);
+	advanceTime(time);*/
 	
-	const int ACTION_BAR_COUNT = 48;
-	auto etime = TigElapsedSystemTime(vagrantTime);
-	vagrantTime = TigGetSystemTime();
+	
 
-	auto etimeSec = etime * 0.001;
+	// Temple+: changing the clock to animation clock
+	// Because the system clock continues ticking when e.g.
+	// player brings up the menu / inventory, while the anim clock
+	// does not. Also for debug mode :)
+	
+	//auto etime = TigElapsedSystemTime(vagrantTime);
+	//auto eTimeSec = etime * 0.001;
+	//vagrantTime = TigGetSystemTime();
+
+	auto curAnimTime = gameSystems->GetTimeEvent().GetAnimTime();
+	if (vagrantAnimTime.Compare(vagrantAnimTime, curAnimTime) > 0) { // if ref time is greater than current time (e.g. from loading a save), advance the ref time
+		vagrantAnimTime = curAnimTime;
+	}
+
+	GameTime eTime = curAnimTime - vagrantAnimTime;
+	auto eTimeSec = eTime.ToMs() * 0.001f;
+	if (eTimeSec > 5.0f) { // caps the increment, in case there is a time gap between current time and reference time, e.g. if you switch from an early save to a late save
+		eTimeSec = 5.0f;
+	}
+	vagrantAnimTime = curAnimTime;
+
+	const int ACTION_BAR_COUNT = 48;
 	static auto &actionBars = temple::GetRef<ActionBar* [ACTION_BAR_COUNT]>(0x10AB7588);
 	static auto& advTimeFuncs = temple::GetRef<void(__cdecl*[2])(ActionBar*, float)>(0x102CC288);
 	for (auto i = 0; i < ACTION_BAR_COUNT; ++i) {
@@ -2100,11 +2134,13 @@ void VagrantSystem::AdvanceTime(uint32_t time) {
 				if (bar->advTimeFuncIdx != 1) { // the animation counter
 					auto dbgDummy = 1;
 				}
-				advTimeFuncs[bar->advTimeFuncIdx](bar, etimeSec);
+				advTimeFuncs[bar->advTimeFuncIdx](bar, eTimeSec);
 			}
 		}
 	}
 
+	// Added a broader dehanger
+	// E.g. it catches the Co8 Lareth beacons which don't actually perform any actions
 	DehangerGeneral();
 }
 const std::string& VagrantSystem::GetName() const {
