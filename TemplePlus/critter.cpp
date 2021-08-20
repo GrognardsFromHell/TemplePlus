@@ -1336,6 +1336,8 @@ std::string LegacyCritterSystem::GetHairStyleFile(HairStyle style, const char * 
 // Originally @ 1007E9D0
 void LegacyCritterSystem::UpdateModelEquipment(objHndl obj)
 {
+	if (mSuspendModelUpdate)
+		return;
 
 	UpdateAddMeshes(obj);
 	auto raceOffset = GetModelRaceOffset(obj, false);
@@ -1373,6 +1375,11 @@ void LegacyCritterSystem::UpdateModelEquipment(objHndl obj)
 			}
 		}
 	}
+}
+
+void LegacyCritterSystem::SuspendModelUpdate(bool state)
+{
+	mSuspendModelUpdate = state;
 }
 
 void LegacyCritterSystem::AddNpcAddMeshes(objHndl obj)
