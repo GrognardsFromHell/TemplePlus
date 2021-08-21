@@ -281,6 +281,7 @@ struct LegacySpellSystem : temple::AddressTable
 	bool LoadActiveSpellElement(TioFile* file, uint32_t& spellId, SpellPacket& pkt);
 	static void SpellsCastRegistryPut(int spellId, SpellPacket&);
 	bool IsSpellActive(int spellid);
+	void DoForSpellsCastRegistry(std::function<void(SpellPacket& pkt)> cb);
 
 	CondStruct *GetCondFromSpellCondId(int id);
 	CondStruct* GetCondFromSpellEnum(int spellEnum);

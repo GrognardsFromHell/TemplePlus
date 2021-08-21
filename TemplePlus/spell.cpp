@@ -1975,6 +1975,14 @@ bool LegacySpellSystem::IsSpellActive(int spellid) {
 	return false;
 }
 
+void LegacySpellSystem::DoForSpellsCastRegistry(std::function<void(SpellPacket& pkt)> cb)
+{
+	for (auto it = spellsCastRegistry.begin(); it != spellsCastRegistry.end(); ++it) {
+		auto &pkt = *(*it).data;
+		cb(pkt);
+	}
+}
+
 CondStruct* LegacySpellSystem::GetCondFromSpellCondId(int id) {
 	if (id >= 3 && id < 254) {
 		return addresses.spellConds[id - 1].condition;

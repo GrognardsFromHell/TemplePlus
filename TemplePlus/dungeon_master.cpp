@@ -183,6 +183,10 @@ void DungeonMaster::Render() {
 		RenderSector();
 	}
 
+	if (ImGui::CollapsingHeader("Active Spells")) {
+		RenderActiveSpells();
+	}
+
 	// Spawn Party from Save
 	if (ImGui::TreeNodeEx("Import Rival Party", ImGuiTreeNodeFlags_CollapsingHeader)){
 		RenderVsParty();
@@ -1273,6 +1277,36 @@ void DungeonMaster::RenderSector()
 	if (ImGui::Button("Blocker")) {
 		ActivateAction(DungeonMasterAction::PaintTileBlock);
 	}
+}
+
+void DungeonMaster::RenderActiveSpells()
+{
+
+	spellSys.DoForSpellsCastRegistry([&](SpellPacket& data) {
+		auto &pkt = data.spellPktBody;
+		auto isActive = data.isActive;
+		if (ImGui::TreeNode(fmt::format("ID {} | {} ({}) {}", pkt.spellId, spellSys.GetSpellName(pkt.spellEnum), pkt.spellEnum, isActive != 0 ? "" : "(inactive)").c_str())) {
+			ImGui::Text(fmt::format("Caster: {}, CL {}", pkt.caster, pkt.casterLevel).c_str());
+			ImGui::Indent();
+			ImGui::Text(fmt::format("Caster partsysId: {}", pkt.casterPartsysId).c_str());
+			ImGui::Unindent();
+			ImGui::Text(fmt::format("Duration: {}/{}", pkt.durationRemaining, pkt.duration).c_str());
+
+			if (ImGui::TreeNode(fmt::format("Targets: {}", pkt.targetCount).c_str() )) {
+				for (auto i = 0; i < pkt.targetCount; ++i) {
+					ImGui::Text(fmt::format("{}: {} partsysId: {}", i, pkt.targetListHandles[i], pkt.targetListPartsysIds[i]).c_str());
+				}
+				ImGui::TreePop();
+			}
+
+			//ImGui::SameLine();
+			if (ImGui::Button("End")) {
+				spellSys.SpellEnd(pkt.spellId, 1);
+			}
+
+			ImGui::TreePop();
+		}
+	});
 }
 
 
