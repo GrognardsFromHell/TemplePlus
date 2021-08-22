@@ -9,6 +9,7 @@
 #include <graphics/textures.h>
 
 #include "../gamesystems/gamesystems.h"
+#include "../gamesystems/legacysystems.h"
 #include "../gamesystems/gamerenderer.h"
 #include "../gamesystems/mapobjrender.h"
 #include "../gamesystems/partsystemsrenderer.h"
@@ -103,6 +104,23 @@ void DiagScreen::Render() {
 	lines.push_back(fmt::format("intgameFocusObj: {}", intgameFocus));
 	auto intgameTarget = temple::GetRef<objHndl>(0x10C040E8);
 	lines.push_back(fmt::format("uiIntgameObjFromRaycast: {}", intgameTarget));
+	
+
+	lines.push_back(fmt::format("\n#Action Sequence"));
+	lines.push_back(fmt::format("seqPickerD20ActnType: {}", *actSeqSys.seqPickerD20ActnType));
+	auto curSeq = *actSeqSys.actSeqCur;
+	lines.push_back(fmt::format("curSeq: {}", (void*)curSeq ));
+	if (curSeq) {
+		lines.push_back(fmt::format("\tperformer: {}", curSeq->performer));
+		lines.push_back(fmt::format("\tflags: {}", curSeq->seqOccupied));
+		lines.push_back(fmt::format("\taction idx: {}/{}", curSeq->d20aCurIdx, curSeq->d20ActArrayNum));
+		for (auto i = 0; i < curSeq->d20aCurIdx; ++i) {
+			lines.push_back(fmt::format("\taction[{}]: {}", i, curSeq->d20ActArray[i].d20ActType));
+		}
+	}
+	lines.push_back(fmt::format("Greybar countdown: AI {} PC {}", 
+		gameSystems->GetVagrant().GetAiGreybarResetCountdownValue(), 
+		gameSystems->GetVagrant().GetPcGreybarResetCountdownValue()));
 	
 	if (config.pathfindingDebugMode)
 	{

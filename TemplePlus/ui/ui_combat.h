@@ -16,6 +16,8 @@ struct ActionBar
 	float pulseMean;
 	float pulseAmplitude;
 	float pulseTime;
+
+	bool IsActive();
 };
 
 // const int testsieofActionbar = sizeof(ActionBar); // should be 48

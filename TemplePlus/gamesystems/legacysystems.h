@@ -21,6 +21,8 @@ public:
 	~VagrantSystem();
 	void AdvanceTime(uint32_t time) override;
 	const std::string &GetName() const override;
+	float GetAiGreybarResetCountdownValue();
+	float GetPcGreybarResetCountdownValue();
 };
 
 class DescriptionSystem : public GameSystem, public SaveGameAwareGameSystem, public ModuleAwareGameSystem, public ResetAwareGameSystem {
