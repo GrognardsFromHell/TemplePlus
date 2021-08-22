@@ -1088,6 +1088,14 @@ void LegacyCombatSystem::TurnStart2(int prevInitiativeIdx)
 	Subturn();
 
 	// set action bar values
+	actor = tbSys.turnBasedGetCurrentActor(); 
+	// Temple+: updating CurrentActor here since it can change during Subturn(). 
+	// Not sure if important, but it could cause the AI greybar dehanger to continue
+	// ticking during a PC's turn if the AI finishes its turn without doing any animations.
+	// Example scenario: Crossbowman readying action just before a PC's turn.
+	// (in this example there seemed to be no unwanted effects, though perhaps it
+	// could cause issues in corner cases)
+
 	uiCombat.ActionBarUnsetFlag1(*combatAddresses.barPkt);
 	if (!objects.IsPlayerControlled(actor))
 	{
@@ -2037,6 +2045,9 @@ uint32_t Combat_GetMesfileIdx_CombatMes()
 //*****************************************************************************
 uint32_t vagrantTime = 0;
 GameTime vagrantAnimTime;
+float cumulativeTime = 0.0f;
+const int ACTION_BAR_COUNT = 48;
+
 VagrantSystem::VagrantSystem(const GameSystemConf& config) {
 	auto startup = temple::GetPointer<int(const GameSystemConf*)>(0x10086ae0);
 	if (!startup(&config)) {
@@ -2053,7 +2064,6 @@ VagrantSystem::~VagrantSystem() {
 void DehangerGeneral() {
 	static objHndl performer;
 	static GameTime animRefTime; // use animation clock instead of system clock
-	static float cumulativeTime = 0.0f;
 
 
 	auto curAnimTime = gameSystems->GetTimeEvent().GetAnimTime();
@@ -2078,20 +2088,29 @@ void DehangerGeneral() {
 
 	GameTime eTime = curAnimTime - animRefTime;
 	auto eTimeSec = eTime.ToMs() * 0.001f;
-	cumulativeTime += min( eTimeSec, 5.0f); // cap time increment
+	auto timeTick = min(eTimeSec, 5.0f);
+	
+	if (objects.IsPlayerControlled(performer)) {
+		if (actSeqSys.isPerforming(performer)) {
+			cumulativeTime += timeTick;
+		}
+		else {
+			cumulativeTime = 0.0f;
+		}
+	}
+	else {
+		if (!actSeqSys.isPerforming(performer)) {
+			cumulativeTime += timeTick;
+		}
+	}
+
+	
 	animRefTime = curAnimTime;
 
 	if (cumulativeTime > 20.0f) {
-		if (actSeqSys.isPerforming(performer)) {
-			actSeqSys.GreybarReset();
-			cumulativeTime = 0.0f;
-			return;
-		}
-		if (!objects.IsPlayerControlled(performer)) {
-			actSeqSys.GreybarReset();
-			cumulativeTime = 0.0f;
-			return;
-		}
+		actSeqSys.GreybarReset();
+		cumulativeTime = 0.0f;
+		return;
 	}
 }
 
@@ -2123,7 +2142,7 @@ void VagrantSystem::AdvanceTime(uint32_t time) {
 	}
 	vagrantAnimTime = curAnimTime;
 
-	const int ACTION_BAR_COUNT = 48;
+	
 	static auto &actionBars = temple::GetRef<ActionBar* [ACTION_BAR_COUNT]>(0x10AB7588);
 	static auto& advTimeFuncs = temple::GetRef<void(__cdecl*[2])(ActionBar*, float)>(0x102CC288);
 	for (auto i = 0; i < ACTION_BAR_COUNT; ++i) {
@@ -2146,4 +2165,30 @@ void VagrantSystem::AdvanceTime(uint32_t time) {
 const std::string& VagrantSystem::GetName() const {
 	static std::string name("Vagrant");
 	return name;
+}
+
+float VagrantSystem::GetAiGreybarResetCountdownValue()
+{
+	static auto& actionBars = temple::GetRef<ActionBar* [ACTION_BAR_COUNT]>(0x10AB7588);
+	static auto& advTimeFuncs = temple::GetRef<void(__cdecl* [2])(ActionBar*, float)>(0x102CC288);
+
+	auto resetTime = 0.0f;
+	for (auto i = 0; i < ACTION_BAR_COUNT; ++i) {
+		auto bar = actionBars[i];
+		if (!bar) continue;
+		if (bar->IsActive()) { 
+			if (bar->advTimeFuncIdx == 0 ) { // the greybar reset counter
+				if (bar->pulseVal >= resetTime) {
+					resetTime = bar->pulseVal;
+				}
+			}
+		}
+	}
+
+	return resetTime;
+}
+
+float VagrantSystem::GetPcGreybarResetCountdownValue()
+{
+	return cumulativeTime;
 }

@@ -9,6 +9,7 @@
 #include <graphics/textures.h>
 
 #include "../gamesystems/gamesystems.h"
+#include "../gamesystems/legacysystems.h"
 #include "../gamesystems/gamerenderer.h"
 #include "../gamesystems/mapobjrender.h"
 #include "../gamesystems/partsystemsrenderer.h"
@@ -118,6 +119,9 @@ void DiagScreen::Render() {
 			lines.push_back(fmt::format("\taction[{}]: {}", i, curSeq->d20ActArray[i].d20ActType));
 		}
 	}
+	lines.push_back(fmt::format("Greybar countdown: AI {} PC {}", 
+		gameSystems->GetVagrant().GetAiGreybarResetCountdownValue(), 
+		gameSystems->GetVagrant().GetPcGreybarResetCountdownValue()));
 	
 	if (config.pathfindingDebugMode)
 	{
