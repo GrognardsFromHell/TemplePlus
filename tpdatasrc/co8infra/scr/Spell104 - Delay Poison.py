@@ -15,9 +15,6 @@ def	OnSpellEffect( spell ):
 
 	if target_item.obj.is_friendly( spell.caster ):
 
-		# Neutralise any Hezrou Stench effects.
-		neutraliseStench(target_item.obj, spell.duration)
-
 		target_item.obj.condition_add_with_args( 'sp-Delay Poison', spell.id, spell.duration, 0 )
 		target_item.partsys_id = game.particles( 'sp-Delay Poison', target_item.obj )
 	else:
@@ -25,9 +22,6 @@ def	OnSpellEffect( spell ):
 
 			# saving throw unsuccesful
 			target_item.obj.float_mesfile_line( 'mes\\spell.mes', 30002 )
-
-			# Neutralise any Hezrou Stench effects.
-			neutraliseStench(target_item.obj)
 	
 			target_item.obj.condition_add_with_args( 'sp-Delay Poison', spell.id, spell.duration, 0 )
 			target_item.partsys_id = game.particles( 'sp-Delay Poison', target_item.obj )
