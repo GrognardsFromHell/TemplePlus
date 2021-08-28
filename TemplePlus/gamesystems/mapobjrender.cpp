@@ -210,7 +210,9 @@ void MapObjectRenderer::RenderObject(objHndl handle, bool showInvisible) {
 	auto renderHeight = objects.GetRenderHeight(handle);
 
 	// Take render height from the animation if necessary
-	if (renderHeight < 0) {
+	if (renderHeight < 0 
+		|| objects.IsCritterType(type) && renderHeight > 10000.0f) // added in Temple+ as failsafe for bugged heights. For reference, Zuggtmoy is 381
+	{
 		objects.UpdateRenderHeight(handle, *animatedModel);
 		renderHeight = objects.GetRenderHeight(handle);
 	}
