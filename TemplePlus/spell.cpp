@@ -1118,7 +1118,7 @@ const char* LegacySpellSystem::GetSpellEnumTAG(uint32_t spellEnum){
 
 const char* LegacySpellSystem::GetSpellName(uint32_t spellEnum) const
 {
-	if (spellEnum > SPELL_ENUM_MAX_VANILLA || static_cast<int>(spellEnum) <=0){
+	if (spellEnum > SPELL_ENUM_MAX_EXPANDED || static_cast<int>(spellEnum) <=0){
 		logger->warn("Spell Enum outside expected range: {}", spellEnum);
 	}
 	return GetSpellMesline(spellEnum);
@@ -1580,7 +1580,9 @@ void LegacySpellSystem::JammedSpellsPrune(int roundsAdvanced)
 
 void LegacySpellSystem::JammedSpellEnd(int spellId)
 {
+	
 	SpellPacketBody pkt(spellId);
+	logger->info("Detected jammed spell ID {} ({} {}), removing", spellId, pkt.spellEnum, GetSpellName(pkt.spellEnum));
 	
 	if (objSystem->IsValidHandle(pkt.caster))
 		d20Sys.d20SendSignal(pkt.caster, DK_SIG_Spell_End, spellId, 0);

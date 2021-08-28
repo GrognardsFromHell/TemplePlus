@@ -2499,12 +2499,14 @@ void UiCharImpl::SkillsBtnRender(int widId)
 						{skillsScrollbar->x-8.f, btn->height + btn->y-1.f},	{ 0xFF80A0C0 });
 	
 	UiRenderer::PushFont(ttStyle.fontName, ttStyle.fontSize);
-	ColorRect whiteColor (XMCOLOR(0xFFFFFFFF));
-	ColorRect textColor2(XMCOLOR(0xFF0D6BE3));
+	static ColorRect whiteColor (XMCOLOR(0xFFFFFFFF));
+	static ColorRect textColor2(XMCOLOR(0xFF0D6BE3));
+	static ColorRect textColor3(XMCOLOR(0xFF000000));
+	static ColorRect textColor4(XMCOLOR(0x99111111));
 	TigTextStyle style(
 		&whiteColor,
-		&ColorRect(XMCOLOR(0xFF000000)), 
-		&ColorRect(XMCOLOR(0x99111111)));
+		&textColor3,
+		&textColor4);
 	style.flags = 8;
 	style.kerning = 2;
 	style.tracking = 2;
