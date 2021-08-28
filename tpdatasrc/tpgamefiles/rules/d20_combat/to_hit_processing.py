@@ -56,7 +56,7 @@ def mirror_image_attack_roll(d20a):
 
     dex_ac_bonus = tgt_ac - tgt_ac_mod
 
-    size_offset = target.stat_level_get(stat_size) - 5
+    size_offset = target.stat_level_get(stat_size) - STAT_SIZE_MEDIUM
     size_bonus = 0
     if size_offset < 0:
         size_offset = - size_offset
