@@ -630,7 +630,7 @@ void UiCharHooks::SpellsShow(objHndl obj)
 	}
 	
 	//One more tab for clerics
-	auto clericLvl = critterSys.GetCasterLevelForClass(dude, stat_level_cleric);
+	auto clericLvl = critterSys.GetSpellListLevelForClass(dude, stat_level_cleric);
 	if (clericLvl > 0) {
 		uiCharSpellTabsCount++;
 	}

@@ -407,6 +407,7 @@ struct LegacyCritterSystem : temple::AddressTable
 	int GetCasterLevel(objHndl obj); // returns highest caster level
 	int GetCasterLevelForClass(objHndl handle, Stat classCode);
 	int GetSpellListLevelExtension(objHndl handle, Stat classCode); // modifies the effective character level for the purpose of fetching spell lists
+	int GetSpellListLevelForClass(objHndl handle, Stat classCode); // get total effective level for purpose of spell lists
 	bool IsCaster(objHndl obj);
 	static int SpellNumByFieldAndClass(objHndl obj, obj_f field, uint32_t spellClassCode);
 	bool HashMatchingClassForSpell(objHndl handle, uint32_t spellEnum) const; // checks if obj has a matching spell in their list (does not regard level)
