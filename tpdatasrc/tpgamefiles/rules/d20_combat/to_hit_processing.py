@@ -32,7 +32,7 @@ def add_percent_chance_history_stub():
     return
 
 
-def mirror_image_attack_roll(d20a, spell_id):
+def mirror_image_attack_roll(d20a):
     performer = d20a.performer
     target = d20a.target
 
@@ -51,16 +51,14 @@ def mirror_image_attack_roll(d20a, spell_id):
     to_hit = tpdp.EventObjAttack()
     to_hit.dispatch(performer, OBJ_HANDLE_NULL, ET_OnToHitBonus2, EK_NONE)
 
-    dc = 20
-    to_hit_dice = dice_new("1d{}".format(dc))
+    to_hit_dice = dice_new("1d20")
     to_hit_roll = to_hit_dice.roll()
     to_hit_bonus = to_hit.bonus_list.get_sum()
 
-    spell_enum = tpdp.SpellPacket(spell_id).spell_enum
-    spell_name = game.get_spell_mesline(spell_enum)
-
-    roll_id = tpdp.create_history_dc_roll(performer, tgt_ac, to_hit_dice, to_hit_roll, spell_name, to_hit.bonus_list)
-    result = to_hit_roll - dc + to_hit_bonus
+    roll_id = tpdp.create_history_attack_roll(
+            performer, target, to_hit_roll, to_hit.bonus_list,
+            mi_ac_evt_obj.bonus_list, to_hit.attack_packet.get_flags())
+    result = to_hit_roll - tgt_ac + to_hit_bonus
     d20a.roll_id_0 = roll_id
     return result
 
@@ -78,15 +76,13 @@ def hitMirrorImage(d20a, numberOfMirrorImages):
     #Get spell_id and spellName
     spell_id = target.d20_query_get_data(Q_Critter_Has_Mirror_Image,0)
     
-    roll_result = mirror_image_attack_roll(d20a, spell_id)
+    roll_result = mirror_image_attack_roll(d20a)
     if roll_result >= 0:
         target.d20_send_signal(S_Spell_Mirror_Image_Struck, spell_id, 0)
         target.float_mesfile_line('mes\\combat.mes', 109)
         game.create_history_from_pattern(10, performer, target)
-        return True
-    else:
-        #I am unsure how misses are actually handled in this version
-        return False
+
+    return True
 
 def getDefenderConcealment(d20a):
     target = d20a.target
