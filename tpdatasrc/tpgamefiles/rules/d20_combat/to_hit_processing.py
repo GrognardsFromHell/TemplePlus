@@ -36,7 +36,7 @@ def mirror_image_attack_roll(d20a):
     performer = d20a.performer
     target = d20a.target
 
-    #Target AC 
+    # Work out current Dex bonus to AC
     mi_ac_evt_obj = tpdp.EventObjAttack()
     mi_ac_evt_obj.attack_packet.attacker = performer
     mi_ac_evt_obj.attack_packet.target = target
@@ -45,7 +45,30 @@ def mirror_image_attack_roll(d20a):
     mi_ac_evt_obj.attack_packet.set_flags(flags)
     mi_ac_evt_obj.attack_packet.action_type = d20a.action_type
     mi_ac_evt_obj.dispatch(target, OBJ_HANDLE_NULL, ET_OnGetAC, EK_NONE)
-    tgt_ac = mi_ac_evt_obj.bonus_list.get_sum()
+
+    full_bonus = mi_ac_evt_obj.bonus_list
+    tgt_ac = full_bonus.get_sum()
+
+    dex = target.stat_level_get(stat_dexterity)
+    dex_mod = - (dex-10)/2
+    full_bonus.modify(dex_mod, 3, 104)
+    tgt_ac_mod = full_bonus.get_sum()
+
+    dex_ac_bonus = tgt_ac - tgt_ac_mod
+
+    size_offset = target.stat_level_get(stat_size) - 5
+    size_bonus = 0
+    if size_offset < 0:
+        size_offset = - size_offset
+        size_bonus = 1 << (size_offset-1)
+    elif size_offset > 0:
+        size_bonus = (-1) << (size_offset-1)
+
+    image_bonus = tpdp.BonusList()
+    image_bonus.add(10, 1, 102)
+    image_bonus.add(dex_ac_bonus, 3, 104)
+    image_bonus.add(size_bonus, 0, 115)
+    image_ac = image_bonus.get_sum()
 
     #Performer to Hit Bonus
     to_hit = tpdp.EventObjAttack()
@@ -57,8 +80,8 @@ def mirror_image_attack_roll(d20a):
 
     roll_id = tpdp.create_history_attack_roll(
             performer, target, to_hit_roll, to_hit.bonus_list,
-            mi_ac_evt_obj.bonus_list, to_hit.attack_packet.get_flags())
-    result = to_hit_roll - tgt_ac + to_hit_bonus
+            image_bonus, to_hit.attack_packet.get_flags())
+    result = to_hit_roll - image_ac + to_hit_bonus
     d20a.roll_id_0 = roll_id
     return result
 
