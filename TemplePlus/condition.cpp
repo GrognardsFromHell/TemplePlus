@@ -6373,6 +6373,7 @@ int ClassAbilityCallbacks::BardicMusicBeginRound(DispatcherCallbackArgs args){
 		if (!gameSystems->GetObj().IsValidHandle(tgt)) {
 			tgt = objHndl::null;
 		}
+		auto rollResult = 0;
 		switch (bmType)
 		{
 		case BM_INSPIRE_GREATNESS:
@@ -6385,8 +6386,7 @@ int ClassAbilityCallbacks::BardicMusicBeginRound(DispatcherCallbackArgs args){
 			party.ApplyConditionAround(args.objHndCaller, 30, "Inspired_Courage", objHndl::null);
 			return 0;
 		case BM_COUNTER_SONG: 
-			auto rollResult = 0;
-			skillSys.SkillRoll(performer, SkillEnum::skill_perform, 0, &rollResult, 1);
+			skillSys.SkillRoll(args.objHndCaller, SkillEnum::skill_perform, 0, &rollResult, 1);
 			party.ApplyConditionAroundWithArgs(args.objHndCaller, 30, "Countersong", {0, rollResult, 0});
 			return 0;
 		case BM_FASCINATE: 
@@ -6576,8 +6576,7 @@ int ClassAbilityCallbacks::BardMusicActionFrame(DispatcherCallbackArgs args){
 		partsysId = gameSystems->GetParticleSys().CreateAtObj("Bardic-Inspire Courage", args.objHndCaller);
 		break;
 	case BM_COUNTER_SONG: 
-		auto rollResult = 0;
-		skillSys.SkillRoll(performer, SkillEnum::skill_perform, 0, &rollResult, 1);
+		skillSys.SkillRoll(args.objHndCaller, SkillEnum::skill_perform, 0, &rollResult, 1);
 		party.ApplyConditionAroundWithArgs(args.objHndCaller, 30, "Countersong", {0, rollResult, 0});
 		partsysId = gameSystems->GetParticleSys().CreateAtObj("Bardic-Countersong", args.objHndCaller);
 		break;
