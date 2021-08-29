@@ -1584,13 +1584,15 @@ void LegacySpellSystem::JammedSpellEnd(int spellId)
 	SpellPacketBody pkt(spellId);
 	logger->info("Detected jammed spell ID {} ({} {}), removing", spellId, pkt.spellEnum, GetSpellName(pkt.spellEnum));
 	
-	if (objSystem->IsValidHandle(pkt.caster))
+	if (objSystem->IsValidHandle(pkt.caster)) {
 		d20Sys.d20SendSignal(pkt.caster, DK_SIG_Spell_End, spellId, 0);
 
-	pkt.EndPartsysForTgtObj(pkt.caster);
+		pkt.EndPartsysForTgtObj(pkt.caster);
 
-	pySpellIntegration.SpellSoundPlay(&pkt, SpellEvent::EndSpellCast);
-	pkt.RemoveObjFromTargetList(pkt.caster);
+		//pySpellIntegration.SpellSoundPlay(&pkt, SpellEvent::EndSpellCast);
+		pkt.RemoveObjFromTargetList(pkt.caster);
+	}
+	
 	 
 	for (auto i = 0; i < pkt.targetCount; ++i) {
 		auto tgt = pkt.targetListHandles[i];
