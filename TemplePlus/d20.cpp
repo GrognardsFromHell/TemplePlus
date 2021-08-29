@@ -285,7 +285,7 @@ bool LegacyD20System::SpellIsInterruptedCheck(D20Actn* d20a, int invIdx, SpellSt
 	if (d20a->d20Caf & D20CAF_COUNTERSPELLED)
 		return true;
 	return d20Sys.d20QueryWithData(d20a->d20APerformer, 
-		DK_QUE_SpellInterrupted, (uint32_t)&d20a->d20SpellData, 0) != 0;
+		DK_QUE_SpellInterrupted, (uint32_t)&d20a->d20SpellData, 0) != 0; // can be set to 1 by Casting Defensively and Armor Spell Failure
 }
 
 int LegacyD20System::CastSpellProcessTargets(D20Actn* d20a, SpellPacketBody& spellPkt){
