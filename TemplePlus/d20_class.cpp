@@ -604,7 +604,7 @@ int D20ClassSystem::NumDomainSpellsKnownFromClass(objHndl dude, Stat classCode)
 {
 	if (classCode != stat_level_cleric)
 		return 0;
-	auto clericLvl = critterSys.GetCasterLevelForClass(dude, stat_level_cleric);
+	auto clericLvl = critterSys.GetSpellListLevelForClass(dude, stat_level_cleric);
 	return ClericMaxSpellLvl(clericLvl) * 2;
 }
 

@@ -1848,6 +1848,13 @@ int LegacyCritterSystem::GetSpellListLevelExtension(objHndl handle, Stat classCo
 	return dispatch.DispatchSpellListLevelExtension(handle, classCode);
 }
 
+int LegacyCritterSystem::GetSpellListLevelForClass(objHndl handle, Stat classCode)
+{
+	auto base = objects.StatLevelGet(handle, classCode);
+	auto extension = GetSpellListLevelExtension(handle, classCode);
+	return base + extension;
+}
+
 bool LegacyCritterSystem::IsCaster(objHndl obj)
 {
 	return GetCasterLevel(obj) > 0;
