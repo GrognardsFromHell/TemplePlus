@@ -162,6 +162,41 @@ def replaceCondition(attachee, args, evt_obj):
         args.remove_spell_mod()
     return 0
 
+# Used to check if a condition should be removed due to a new 'save'
+# from Countersong. Each round of a countersong, the bard makes a
+# perform check, and if it is equal to or greater than the spell's
+# save DC, the spell ends as if saved against.
+#
+# Note: only spells with ongoing duration should be able to be removed
+# by countersong. For example, Sound Burst and Shout are instantaneous
+# sonic effects that can cause conditions with a duration, so those
+# conditions cannot be removed by countersong.  Another bard's
+# fascinating song may be countered, though.
+#
+# Usage:
+#   cond.AddHook(ET_OnConditionAddPre, EK_NONE, countersongRemove, ())
+def countersongRemove(attachee, args, evt_obj):
+    if not evt_obj.is_modifier('Countersong'): return 0
+
+    spellId = args.get_arg(0)
+    if spellId <= 0: return 0
+
+    packet = tpdp.SpellPacket(spellId)
+
+    # check for descriptors in the spell entry in case conditions are
+    # being reused
+    entry = tpdp.SpellEntry(packet.spell_enum)
+    sonic = 1 << (D20STD_F_SPELL_DESCRIPTOR_SONIC-1)
+    lang = 1 << (D20STD_F_SPELL_DESCRIPTOR_LANGUAGE_DEPENDENT-1)
+    mask = sonic|lang
+    if not (entry.descriptor & mask): return 0
+
+    if packet.dc <= evt_obj.arg2:
+        args.remove_spell()
+        args.remove_spell_mod()
+
+    return 0
+
 ### Other useful functions ###
 
 # Skill Check with history windows #
