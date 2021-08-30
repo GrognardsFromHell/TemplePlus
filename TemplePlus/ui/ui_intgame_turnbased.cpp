@@ -473,7 +473,7 @@ void UiIntegameTurnbasedRepl::UiIntgameGenerateSequence(int isUnnecessary) {
 			actSeqSys.TurnBasedStatusInit(actor);
 			d20Sys.GlobD20ActnInit();
 			objFromRaycast = objHndl::null;
-			logger->trace("Clearing raycast target");
+			//logger->trace("Clearing raycast target");
 		}
 		return;
 	}
