@@ -32,11 +32,11 @@ def add_percent_chance_history_stub():
     return
 
 
-def mirror_image_attack_roll(d20a, spell_id):
+def mirror_image_attack_roll(d20a):
     performer = d20a.performer
     target = d20a.target
 
-    #Target AC 
+    # Work out current Dex bonus to AC
     mi_ac_evt_obj = tpdp.EventObjAttack()
     mi_ac_evt_obj.attack_packet.attacker = performer
     mi_ac_evt_obj.attack_packet.target = target
@@ -45,22 +45,43 @@ def mirror_image_attack_roll(d20a, spell_id):
     mi_ac_evt_obj.attack_packet.set_flags(flags)
     mi_ac_evt_obj.attack_packet.action_type = d20a.action_type
     mi_ac_evt_obj.dispatch(target, OBJ_HANDLE_NULL, ET_OnGetAC, EK_NONE)
-    tgt_ac = mi_ac_evt_obj.bonus_list.get_sum()
+
+    full_bonus = mi_ac_evt_obj.bonus_list
+    tgt_ac = full_bonus.get_sum()
+
+    dex = target.stat_level_get(stat_dexterity)
+    dex_mod = - (dex-10)/2
+    full_bonus.modify(dex_mod, 3, 104)
+    tgt_ac_mod = full_bonus.get_sum()
+
+    dex_ac_bonus = tgt_ac - tgt_ac_mod
+
+    size_offset = target.stat_level_get(stat_size) - STAT_SIZE_MEDIUM
+    size_bonus = 0
+    if size_offset < 0:
+        size_offset = - size_offset
+        size_bonus = 1 << (size_offset-1)
+    elif size_offset > 0:
+        size_bonus = (-1) << (size_offset-1)
+
+    image_bonus = tpdp.BonusList()
+    image_bonus.add(10, 1, 102)
+    image_bonus.add(dex_ac_bonus, 3, 104)
+    image_bonus.add(size_bonus, 0, 115)
+    image_ac = image_bonus.get_sum()
 
     #Performer to Hit Bonus
     to_hit = tpdp.EventObjAttack()
     to_hit.dispatch(performer, OBJ_HANDLE_NULL, ET_OnToHitBonus2, EK_NONE)
 
-    dc = 20
-    to_hit_dice = dice_new("1d{}".format(dc))
+    to_hit_dice = dice_new("1d20")
     to_hit_roll = to_hit_dice.roll()
     to_hit_bonus = to_hit.bonus_list.get_sum()
 
-    spell_enum = tpdp.SpellPacket(spell_id).spell_enum
-    spell_name = game.get_spell_mesline(spell_enum)
-
-    roll_id = tpdp.create_history_dc_roll(performer, tgt_ac, to_hit_dice, to_hit_roll, spell_name, to_hit.bonus_list)
-    result = to_hit_roll - dc + to_hit_bonus
+    roll_id = tpdp.create_history_attack_roll(
+            performer, target, to_hit_roll, to_hit.bonus_list,
+            image_bonus, to_hit.attack_packet.get_flags())
+    result = to_hit_roll - image_ac + to_hit_bonus
     d20a.roll_id_0 = roll_id
     return result
 
@@ -78,15 +99,13 @@ def hitMirrorImage(d20a, numberOfMirrorImages):
     #Get spell_id and spellName
     spell_id = target.d20_query_get_data(Q_Critter_Has_Mirror_Image,0)
     
-    roll_result = mirror_image_attack_roll(d20a, spell_id)
+    roll_result = mirror_image_attack_roll(d20a)
     if roll_result >= 0:
         target.d20_send_signal(S_Spell_Mirror_Image_Struck, spell_id, 0)
         target.float_mesfile_line('mes\\combat.mes', 109)
         game.create_history_from_pattern(10, performer, target)
-        return True
-    else:
-        #I am unsure how misses are actually handled in this version
-        return False
+
+    return True
 
 def getDefenderConcealment(d20a):
     target = d20a.target

@@ -2,6 +2,7 @@
 #include "common.h"
 #include "combat.h"
 #include "tig/tig_mes.h"
+#include "tig/tig_timer.h"
 #include "obj.h"
 #include "critter.h"
 #include "temple_functions.h"
@@ -28,6 +29,7 @@
 #include "ui/ui_dialog.h"
 #include "condition.h"
 #include "legacyscriptsystem.h"
+#include "gamesystems/legacysystems.h"
 #include "config/config.h"
 #include "d20_obj_registry.h"
 #include "animgoals/anim.h"
@@ -134,6 +136,28 @@ public:
 
 		replaceFunction(0x100629B0, _IsCloseToParty);
 		orgActionBarResetCallback = replaceFunction(0x10062E60, ActionBarResetCallback);
+
+		replaceFunction<void(__cdecl)(ActionBar*, float)>(0x10086DD0, [](ActionBar* bar, float etimeSec) {
+			bar->pulseVal += etimeSec * bar->combatDepletionSpeed;
+
+			if (bar->combatDepletionSpeed <= 0.0f) {
+				if (bar->pulseVal >= bar->endDist) {
+					return;
+				}
+				bar->pulseVal = bar->endDist;
+			}
+			else {
+				if (bar->pulseVal <= bar->endDist) {
+					return;
+				}
+				bar->pulseVal = bar->endDist;
+			}
+			if (bar->resetCallback) {
+				bar->resetCallback(bar->resetArg);
+			}
+			bar->flags &= ~1;
+		});
+
 		orgTurnStart2 = replaceFunction(0x100638F0, TurnStart2);
 		orgCombatTurnAdvance = replaceFunction(0x100634E0, CombatTurnAdvance);
 		replaceFunction<BOOL(__cdecl)()>(0x10062A30, [](){ // Combat End
@@ -1029,8 +1053,9 @@ void LegacyCombatSystem::Subturn()
 		combatSubturnCallback(actor);
 	}
 
-	if (actSeqSys.isPerforming(actor)) {
-		logger->info("   ...is performing.");
+	ActnSeq* actorSeq = nullptr;
+	if (actSeqSys.isPerforming(actor, &actorSeq)) {
+		logger->info("   ...is performing ({}). Returning.", (void*)actorSeq);
 		return;
 	}
 		
@@ -1063,6 +1088,14 @@ void LegacyCombatSystem::TurnStart2(int prevInitiativeIdx)
 	Subturn();
 
 	// set action bar values
+	actor = tbSys.turnBasedGetCurrentActor(); 
+	// Temple+: updating CurrentActor here since it can change during Subturn(). 
+	// Not sure if important, but it could cause the AI greybar dehanger to continue
+	// ticking during a PC's turn if the AI finishes its turn without doing any animations.
+	// Example scenario: Crossbowman readying action just before a PC's turn.
+	// (in this example there seemed to be no unwanted effects, though perhaps it
+	// could cause issues in corner cases)
+
 	uiCombat.ActionBarUnsetFlag1(*combatAddresses.barPkt);
 	if (!objects.IsPlayerControlled(actor))
 	{
@@ -2004,4 +2037,158 @@ char* _GetCombatMesLine(int line)
 uint32_t Combat_GetMesfileIdx_CombatMes()
 {
 	return *combatSys.combatMesfileIdx;
+}
+
+
+//*****************************************************************************
+//* Vagrant
+//*****************************************************************************
+uint32_t vagrantTime = 0;
+GameTime vagrantAnimTime;
+float cumulativeTime = 0.0f;
+const int ACTION_BAR_COUNT = 48;
+
+VagrantSystem::VagrantSystem(const GameSystemConf& config) {
+	auto startup = temple::GetPointer<int(const GameSystemConf*)>(0x10086ae0);
+	if (!startup(&config)) {
+		throw TempleException("Unable to initialize game system Vagrant");
+	}
+	vagrantTime = TigGetSystemTime();
+}
+VagrantSystem::~VagrantSystem() {
+	auto shutdown = temple::GetPointer<void()>(0x10086b10);
+	shutdown();
+}
+
+
+void DehangerGeneral() {
+	static objHndl performer;
+	static GameTime animRefTime; // use animation clock instead of system clock
+
+
+	auto curAnimTime = gameSystems->GetTimeEvent().GetAnimTime();
+	auto curSeq = *actSeqSys.actSeqCur;
+
+	if (GameTime::Compare(animRefTime, curAnimTime) > 0 
+		|| !combatSys.isCombatActive() 
+		|| !curSeq) {
+		animRefTime = curAnimTime;
+		cumulativeTime = 0.0f;
+		return;
+	}
+
+	if (curSeq->performer != performer) {
+		performer = curSeq->performer;
+		animRefTime = curAnimTime;
+		cumulativeTime = 0.0f;
+		return;
+	}
+	if (!objSystem->IsValidHandle(performer))
+		return;
+
+	GameTime eTime = curAnimTime - animRefTime;
+	auto eTimeSec = eTime.ToMs() * 0.001f;
+	auto timeTick = min(eTimeSec, 5.0f);
+	
+	if (objects.IsPlayerControlled(performer)) {
+		if (actSeqSys.isPerforming(performer)) {
+			cumulativeTime += timeTick;
+		}
+		else {
+			cumulativeTime = 0.0f;
+		}
+	}
+	else {
+		if (!actSeqSys.isPerforming(performer)) {
+			cumulativeTime += timeTick;
+		}
+	}
+
+	
+	animRefTime = curAnimTime;
+
+	if (cumulativeTime > 20.0f) {
+		actSeqSys.GreybarReset();
+		cumulativeTime = 0.0f;
+		return;
+	}
+}
+
+/* 0x10086cb0 */
+void VagrantSystem::AdvanceTime(uint32_t time) {
+	/*auto advanceTime = temple::GetPointer<void(uint32_t)>(0x10086cb0);
+	advanceTime(time);*/
+	
+	
+
+	// Temple+: changing the clock to animation clock
+	// Because the system clock continues ticking when e.g.
+	// player brings up the menu / inventory, while the anim clock
+	// does not. Also for debug mode :)
+	
+	//auto etime = TigElapsedSystemTime(vagrantTime);
+	//auto eTimeSec = etime * 0.001;
+	//vagrantTime = TigGetSystemTime();
+
+	auto curAnimTime = gameSystems->GetTimeEvent().GetAnimTime();
+	if (vagrantAnimTime.Compare(vagrantAnimTime, curAnimTime) > 0) { // if ref time is greater than current time (e.g. from loading a save), advance the ref time
+		vagrantAnimTime = curAnimTime;
+	}
+
+	GameTime eTime = curAnimTime - vagrantAnimTime;
+	auto eTimeSec = eTime.ToMs() * 0.001f;
+	if (eTimeSec > 5.0f) { // caps the increment, in case there is a time gap between current time and reference time, e.g. if you switch from an early save to a late save
+		eTimeSec = 5.0f;
+	}
+	vagrantAnimTime = curAnimTime;
+
+	
+	static auto &actionBars = temple::GetRef<ActionBar* [ACTION_BAR_COUNT]>(0x10AB7588);
+	static auto& advTimeFuncs = temple::GetRef<void(__cdecl*[2])(ActionBar*, float)>(0x102CC288);
+	for (auto i = 0; i < ACTION_BAR_COUNT; ++i) {
+		auto bar = actionBars[i];
+		if (!bar) continue;
+		if (bar->flags & 1) { // gets set on TurnStart2 for AI and UiActionBarGetValuesFromMovement for player
+			if (bar->advTimeFuncIdx <= 1 && bar->advTimeFuncIdx >= 0) {
+				if (bar->advTimeFuncIdx != 1) { // the animation counter
+					auto dbgDummy = 1;
+				}
+				advTimeFuncs[bar->advTimeFuncIdx](bar, eTimeSec);
+			}
+		}
+	}
+
+	// Added a broader dehanger
+	// E.g. it catches the Co8 Lareth beacons which don't actually perform any actions
+	DehangerGeneral();
+}
+const std::string& VagrantSystem::GetName() const {
+	static std::string name("Vagrant");
+	return name;
+}
+
+float VagrantSystem::GetAiGreybarResetCountdownValue()
+{
+	static auto& actionBars = temple::GetRef<ActionBar* [ACTION_BAR_COUNT]>(0x10AB7588);
+	static auto& advTimeFuncs = temple::GetRef<void(__cdecl* [2])(ActionBar*, float)>(0x102CC288);
+
+	auto resetTime = 0.0f;
+	for (auto i = 0; i < ACTION_BAR_COUNT; ++i) {
+		auto bar = actionBars[i];
+		if (!bar) continue;
+		if (bar->IsActive()) { 
+			if (bar->advTimeFuncIdx == 0 ) { // the greybar reset counter
+				if (bar->pulseVal >= resetTime) {
+					resetTime = bar->pulseVal;
+				}
+			}
+		}
+	}
+
+	return resetTime;
+}
+
+float VagrantSystem::GetPcGreybarResetCountdownValue()
+{
+	return cumulativeTime;
 }

@@ -3483,14 +3483,11 @@ int __cdecl RecklessOffenseRadialMenuInit(DispatcherCallbackArgs args)
 
 int RecklessOffenseAcPenalty(DispatcherCallbackArgs args)
 {
-	if (conds.CondNodeGetArg(args.subDispNode->condNode, 0))
+	if (conds.CondNodeGetArg(args.subDispNode->condNode, 0) || conds.CondNodeGetArg(args.subDispNode->condNode, 1))
 	{
-		if (conds.CondNodeGetArg(args.subDispNode->condNode, 1))
-		{
-			DispIoAttackBonus* dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
-			BonusList* bonlist = &dispIo->bonlist;
-			bonusSys.bonusAddToBonusList(bonlist, -4, 8, 337);
-		}
+		DispIoAttackBonus* dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
+		BonusList* bonlist = &dispIo->bonlist;
+		bonusSys.bonusAddToBonusList(bonlist, -4, 8, 337);
 	}
 	return 0;
 }
@@ -3508,10 +3505,7 @@ int RecklessOffenseToHitBonus(DispatcherCallbackArgs args)
 
 int TacticalOptionAbusePrevention(DispatcherCallbackArgs args)
 { // signifies that an attack has been made using that tactical option (so user doesn't toggle it off and shrug off the penalties)
-	DispIoD20Signal * dispIo = dispatch.DispIoCheckIoType6(args.dispIO);
-	if (!(*(char*)(dispIo->data1 + 32) & 4))
-		_CondNodeSetArg(args.subDispNode->condNode, 1, 1);
-	return 0;
+	return temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100F7ED0)(args); // replaced in ability_fixes.cpp
 }
 
 #pragma region Barbarian Stuff
@@ -4970,7 +4964,7 @@ int __cdecl SpellCallbacks::SpellModCountdownRemove(DispatcherCallbackArgs args)
 	int durNew = dur - (int)dispIo->data1;
 	SpellPacketBody spellPkt(spellId);
 	if (!spellPkt.spellEnum){
-		logger->debug("SpellModCountdownRemove: err.... why are we counting a spell that no longer exists? spell removed without removing the appropriate conditions? -Troika");
+		logger->debug("SpellModCountdownRemove: err.... why are we counting a spell that no longer exists? spell (ID={}, dur={}) removed without removing the appropriate conditions? -Troika", spellId, dur);
 		DispatcherCallbackArgs dca2 = args;
 		dca2.dispIO = nullptr;
 		dca2.RemoveSpellMod();

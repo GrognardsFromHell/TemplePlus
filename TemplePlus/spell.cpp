@@ -545,6 +545,11 @@ bool SpellPacketBody::IsItemSpell(){
 	return invIdx != INV_IDX_INVALID;
 }
 
+bool SpellPacketBody::IsPermanent() const
+{
+	return false; // stub
+}
+
 int SpellPacketBody::GetSpellSchool()
 {
 	return spellSys.GetSpellSchool(this->spellEnum);
@@ -1113,7 +1118,7 @@ const char* LegacySpellSystem::GetSpellEnumTAG(uint32_t spellEnum){
 
 const char* LegacySpellSystem::GetSpellName(uint32_t spellEnum) const
 {
-	if (spellEnum > SPELL_ENUM_MAX_VANILLA || static_cast<int>(spellEnum) <=0){
+	if (spellEnum > SPELL_ENUM_MAX_EXPANDED || static_cast<int>(spellEnum) <=0){
 		logger->warn("Spell Enum outside expected range: {}", spellEnum);
 	}
 	return GetSpellMesline(spellEnum);
@@ -1519,6 +1524,87 @@ void LegacySpellSystem::LoadDebugRecords() {
 
 void LegacySpellSystem::ResetDebugRecords() {
 	spellDebugRecords.clear();
+}
+
+struct JammedSpellData {
+	int durationRemaining;
+	int duration;
+};
+std::map<int, JammedSpellData> jsmap;
+void LegacySpellSystem::JammedSpellsCreateRef()
+{
+	jsmap.clear();
+	for (auto it = spellsCastRegistry.begin(); it != spellsCastRegistry.end(); ++it )
+	{
+		auto& node = *it;
+
+		bool shouldPrune = false;
+		SpellPacketBody & pkt = node.data->spellPktBody;
+		if (node.data->isActive == 0)
+			continue;
+		if (!pkt.spellId || !pkt.spellEnum)
+			continue;
+		if (pkt.IsPermanent())
+			continue;
+		if (pkt.duration < 0 || pkt.durationRemaining < 0)
+			continue;
+		jsmap[pkt.spellId] = {pkt.durationRemaining,pkt.duration };
+	}
+}
+
+void LegacySpellSystem::JammedSpellsPrune(int roundsAdvanced)
+{
+	for (auto it = spellsCastRegistry.begin(); it != spellsCastRegistry.end(); ++it )
+	{
+		auto& node = *it;
+
+		bool shouldPrune = false;
+		auto& pkt = node.data->spellPktBody;
+		if (node.data->isActive == 0)
+			continue;
+		if (!pkt.spellId || !pkt.spellEnum)
+			continue;
+		if (jsmap.find(pkt.spellId) == jsmap.end())
+			continue;
+		auto &js = jsmap[pkt.spellId];
+		auto expectedDur = js.durationRemaining - roundsAdvanced;
+		if (expectedDur < 0 && pkt.durationRemaining >= 0) {
+			shouldPrune = true;
+		}
+		
+		if (shouldPrune) {
+			JammedSpellEnd(pkt.spellId);
+		}
+	}
+}
+
+void LegacySpellSystem::JammedSpellEnd(int spellId)
+{
+	
+	SpellPacketBody pkt(spellId);
+	logger->info("Detected jammed spell ID {} ({} {}), removing", spellId, pkt.spellEnum, GetSpellName(pkt.spellEnum));
+	
+	if (objSystem->IsValidHandle(pkt.caster)) {
+		d20Sys.d20SendSignal(pkt.caster, DK_SIG_Spell_End, spellId, 0);
+
+		pkt.EndPartsysForTgtObj(pkt.caster);
+
+		//pySpellIntegration.SpellSoundPlay(&pkt, SpellEvent::EndSpellCast);
+		pkt.RemoveObjFromTargetList(pkt.caster);
+	}
+	
+	 
+	for (auto i = 0; i < pkt.targetCount; ++i) {
+		auto tgt = pkt.targetListHandles[i];
+		if (!objSystem->IsValidHandle(tgt))
+			continue;
+		d20Sys.d20SendSignal(tgt, DK_SIG_Spell_End, spellId, 0);
+		pkt.EndPartsysForTgtObj(tgt);
+		pkt.RemoveObjFromTargetList(tgt);
+	}
+	
+	
+	SpellEnd(spellId, 1);
 }
 
 SpellMapTransferInfo LegacySpellSystem::SaveSpellForTeleport(const SpellPacket& data)
@@ -1973,6 +2059,14 @@ bool LegacySpellSystem::IsSpellActive(int spellid) {
 		return spellPacket.isActive == 1;
 	}
 	return false;
+}
+
+void LegacySpellSystem::DoForSpellsCastRegistry(std::function<void(SpellPacket& pkt)> cb)
+{
+	for (auto it = spellsCastRegistry.begin(); it != spellsCastRegistry.end(); ++it) {
+		auto &pkt = *(*it).data;
+		cb(pkt);
+	}
 }
 
 CondStruct* LegacySpellSystem::GetCondFromSpellCondId(int id) {

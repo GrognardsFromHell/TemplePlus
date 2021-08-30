@@ -4,6 +4,7 @@
 #include "ui_debug.h"
 #include "ui/widgets/widgets.h"
 #include "tig/tig_startup.h"
+#include "tig/tig_console.h"
 #include "config/config.h"
 #include <graphics/shaperenderer2d.h>
 #include "animgoals/animgoals_debugrenderer.h"
@@ -58,42 +59,44 @@ static void DrawLegacyWidgetTreeNode(LgcyWidget *widget) {
 
 	bool opened = ImGui::TreeNode(textEntry.c_str());
 
-	// Draw the widget outline regardless of whether the tree node is opend
-	if (ImGui::IsItemHovered()) {
-		tig->GetShapeRenderer2d().DrawRectangleOutline(
-			{ (float) widget->x, (float) widget->y },
-			{ (float) widget->x + widget->width, (float) widget->y + widget->height },
-			XMCOLOR(1, 1, 1, 1)
-		);
+// Draw the widget outline regardless of whether the tree node is opend
+if (ImGui::IsItemHovered()) {
+	tig->GetShapeRenderer2d().DrawRectangleOutline(
+		{ (float)widget->x, (float)widget->y },
+		{ (float)widget->x + widget->width, (float)widget->y + widget->height },
+		XMCOLOR(1, 1, 1, 1)
+	);
+}
+
+if (!opened) {
+	return;
+}
+
+ImGui::BulletText(" X:%d Y:%d W:%d H:%d", widget->x, widget->y, widget->width, widget->height);
+ImGui::BulletText(" Renderer: %x", widget->render);
+ImGui::BulletText(" Msg Handler: %x", widget->handleMessage);
+
+if (widget->IsWindow()) {
+	auto window = (LgcyWindow*)widget;
+	for (size_t i = 0; i < window->childrenCount; i++) {
+		DrawWidgetTreeNode(window->children[i]);
 	}
+}
 
-	if (!opened) {
-		return;
-	}
-
-	ImGui::BulletText(" X:%d Y:%d W:%d H:%d", widget->x, widget->y, widget->width, widget->height);
-	ImGui::BulletText(" Renderer: %x", widget->render);
-	ImGui::BulletText(" Msg Handler: %x", widget->handleMessage);
-
-	if (widget->IsWindow()) {
-		auto window = (LgcyWindow*)widget;
-		for (size_t i = 0; i < window->childrenCount; i++) {
-			DrawWidgetTreeNode(window->children[i]);
-		}
-	}
-
-	ImGui::TreePop();
+ImGui::TreePop();
 
 }
 
-static void DrawAdvWidgetTreeNode(WidgetBase *widget) {
-	
+static void DrawAdvWidgetTreeNode(WidgetBase* widget) {
+
 	std::string textEntry;
 	if (widget->IsContainer()) {
 		textEntry += "[cnt] ";
-	} else if (widget->IsButton()) {
+	}
+	else if (widget->IsButton()) {
 		textEntry += "[btn] ";
-	} else {
+	}
+	else {
 		textEntry += "[unk] ";
 	}
 
@@ -107,13 +110,13 @@ static void DrawAdvWidgetTreeNode(WidgetBase *widget) {
 	textEntry += widget->GetSourceURI();
 
 	bool opened = ImGui::TreeNode(textEntry.c_str());
-	
+
 	// Draw the widget outline regardless of whether the tree node is opend
 	if (ImGui::IsItemHovered()) {
 		auto contentArea = widget->GetContentArea();
 		tig->GetShapeRenderer2d().DrawRectangleOutline(
-			{ (float) contentArea.x, (float) contentArea.y },
-			{ (float) contentArea.x + contentArea.width, (float) contentArea.y + contentArea.height },
+			{ (float)contentArea.x, (float)contentArea.y },
+			{ (float)contentArea.x + contentArea.width, (float)contentArea.y + contentArea.height },
 			XMCOLOR(1, 1, 1, 1)
 		);
 	}
@@ -125,12 +128,12 @@ static void DrawAdvWidgetTreeNode(WidgetBase *widget) {
 	ImGui::BulletText(" X:%d Y:%d W:%d H:%d", widget->GetX(), widget->GetY(), widget->GetWidth(), widget->GetHeight());
 	if (!widget->IsVisible()) {
 		ImGui::SameLine();
-		ImGui::TextColored({1, 0, 0, 1}, "[Hidden]");
+		ImGui::TextColored({ 1, 0, 0, 1 }, "[Hidden]");
 	}
 
 	if (widget->IsContainer()) {
 		auto window = (WidgetContainer*)widget;
-		for (auto &child : window->GetChildren()) {
+		for (auto& child : window->GetChildren()) {
 			DrawAdvWidgetTreeNode(child.get());
 		}
 	}
@@ -140,13 +143,14 @@ static void DrawAdvWidgetTreeNode(WidgetBase *widget) {
 }
 
 static void DrawWidgetTreeNode(int widgetId) {
-	
+
 	auto widget = uiManager->GetWidget(widgetId);
 	auto advWidget = uiManager->GetAdvancedWidget(widgetId);
 
 	if (advWidget) {
 		DrawAdvWidgetTreeNode(advWidget);
-	} else {
+	}
+	else {
 		DrawLegacyWidgetTreeNode(widget);
 	}
 
@@ -158,7 +162,9 @@ void UIRenderDebug()
 		return;
 	}
 	ImGui::Begin("Debug Info", &debugUiVisible);
-
+	if (ImGui::Button("Console")) {
+		tig->GetConsole().Toggle();
+	}
 	if (ImGui::CollapsingHeader("Top Level Windows (Bottom to Top)")) {
 
 		for (auto &widgetId : uiManager->GetActiveWindows()) {

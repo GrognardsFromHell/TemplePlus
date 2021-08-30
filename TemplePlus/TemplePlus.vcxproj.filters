@@ -1023,6 +1023,9 @@
     <ClInclude Include="ui\ui_python.h">
       <Filter>ui</Filter>
     </ClInclude>
+    <ClInclude Include="tig\tig_timer.h">
+      <Filter>tig</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

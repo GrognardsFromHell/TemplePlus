@@ -44,4 +44,6 @@ sp-Small-Grease	New Emitter			perm	30						Disc		Polar		bigcircle	90	Blend	0				
 sp-Small-Grease	strike			15	100						Disc		Polar		bigcircle	90	Blend	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360	0	20?60	0,40	0	0	0	0	0	255,0	0	0	0						10
 sp-Small-Grease	black everyonce			perm	10						Disc		Polar		bigcircle	90	Blend	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360	0	20?60	0,40	0	0	0	0	0	255,0	0	0	0						2
 sp-Small-Grease	round the way grease			perm	30						Disc		Polar		bigcircle	90	Blend	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360	0	60	0,10,0	0	0	0	0	0	255,0	32	0	0						10
+sp-Obscuring Mist	mist			perm	120						Sprite		Polar		fire-sprite	120	Add	0				0	0	0	0	0	0	0	40	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	10?-10	10?-10	10?-10	0?360	0	0?240	10?30	0	0	0?360	0	0	0,32,0	255	255	255						10
+sp-Obscuring Mist	New Emitter			perm	60						Sprite		Polar		fire-sprite	120	Add	0				0	0	0	0	0	0	0	40	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360	0	240	5?15	0	0	0?360	0	0	0,32,0	255	255	255						10
 

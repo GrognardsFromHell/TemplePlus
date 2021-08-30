@@ -87,8 +87,21 @@ void Console::Render()
 		return;
 	}
 	ImGui::SameLine();
+	if (ImGui::Button(">")) {
+		std::string command = mCommandBuf;
+		command.resize(command.length()); // This discards trailing null-bytes
+		trim(command);
+		Execute(command);
+
+		std::fill(mCommandBuf.begin(), mCommandBuf.end(), '\0'); // Clear command buffer
+
+		// Refocus the control
+		ImGui::SetKeyboardFocusHere(-1);
+	}
+	ImGui::SameLine();
 	ImGui::PushItemWidth(-1);
-	if (ImGui::InputText("Input", &mCommandBuf[0], mCommandBuf.size(), ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory, Console::CommandEditCallback, this))
+	if (ImGui::InputText("Input", &mCommandBuf[0], mCommandBuf.size(), ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory,
+		Console::CommandEditCallback, this))
 	{
 		std::string command = mCommandBuf;
 		command.resize(command.length()); // This discards trailing null-bytes

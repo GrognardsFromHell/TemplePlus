@@ -298,6 +298,7 @@ void UiIntegameTurnbasedRepl::SeqPickerTargetingTypeReset() {
 	*actSeqSys.seqPickerD20ActnData1 = 0;
 }
 
+/* 0x10174790 */
 int UiIntegameTurnbasedRepl::UiIntgamePathSequenceHandler(TigMsgMouse* msg) {
 	if (uiPicker.PickerActiveCheck()) {
 		return 0;
@@ -342,17 +343,33 @@ int UiIntegameTurnbasedRepl::UiIntgamePathSequenceHandler(TigMsgMouse* msg) {
 	}
 
 	if (performSeq) {
+		
 		intgameAddresses.UiActionBarGetValuesFromMovement();
-		logger->info("UiIntgame: \t Issuing Sequence for current actor {} ({}), cur seq: {}", description.getDisplayName(actor), actor, (void*)(*actSeqSys.actSeqCur));
-		actSeqSys.sequencePerform();
-		tgtFromPortraits = 0i64;
-		isWaypointMode = 0;
-		SeqPickerTargetingTypeReset();
-		auto comrade = party.GetFellowPc(actor);
-		char text[1000];
-		int soundId;
-		critterSys.GetOkayVoiceLine(actor, comrade, text, &soundId);
-		critterSys.PlayCritterVoiceLine(actor, comrade, text, soundId);
+
+		auto curSeq = *actSeqSys.actSeqCur;
+		logger->info("UiIntgame: \t Issuing Sequence for current actor {}, cur seq: {}", actor, (void*)(*actSeqSys.actSeqCur));
+		if (*actSeqSys.actSeqCur) {
+			logger->debug("\t\t num actions: {}, action[0] type: {}", (*actSeqSys.actSeqCur)->d20ActArrayNum, (*actSeqSys.actSeqCur)->d20ActArray[0].d20ActType);
+		}
+		if (curSeq && curSeq->d20ActArrayNum > 0) {
+			actSeqSys.sequencePerform();
+			tgtFromPortraits = 0i64;
+			isWaypointMode = 0;
+			SeqPickerTargetingTypeReset();
+			auto comrade = party.GetFellowPc(actor);
+			char text[1000];
+			int soundId;
+			critterSys.GetOkayVoiceLine(actor, comrade, text, &soundId);
+			critterSys.PlayCritterVoiceLine(actor, comrade, text, soundId);
+		}
+		else { // added in Temple+: sequence could be generated with 0 actions. 
+			   // E.g. when doing a Full Attack and downing an opponent, and moving
+			   // the cursor to another critter before animation finishes.
+			   // Performing this 0-action sequence would reset the *actSeqSys.seqPickerD20ActnType
+			   // and could cause you to lose your turn on the next attack as a consequence
+			logger->debug("Sequence given with 0 actions, ignoring so as to not reset states.");
+		}
+		
 	}
 	acquireByRaycastOn = 0;
 	objFromRaycast = 0i64;
@@ -416,12 +433,16 @@ void UiIntegameTurnbasedRepl::UiIntgameGenerateSequence(int isUnnecessary) {
 
 	else{
 		auto raycastFlags = GameRaycastFlags::GRF_HITTEST_3D | GameRaycastFlags::GRF_ExcludePortals;
-
+		auto prevRaycastTgt = objFromRaycast;
 		if (!PickObjectOnScreen(x, y, &objFromRaycast, raycastFlags)) {
 			objFromRaycast = objHndl::null;
 			locSys.GetLocFromScreenLocPrecise(x, y, locFromScreenLoc);
 			actionLoc = *intgameAddresses.locFromScreenLoc;
 		}
+		if (objFromRaycast != prevRaycastTgt) {
+			logger->trace("Raycast target set: {}", objFromRaycast);
+		}
+		
 	}
 	
 
@@ -452,6 +473,7 @@ void UiIntegameTurnbasedRepl::UiIntgameGenerateSequence(int isUnnecessary) {
 			actSeqSys.TurnBasedStatusInit(actor);
 			d20Sys.GlobD20ActnInit();
 			objFromRaycast = objHndl::null;
+			logger->trace("Clearing raycast target");
 		}
 		return;
 	}
@@ -649,6 +671,7 @@ int UiIntegameTurnbasedRepl::UiIntgameMsgHandler(int widId, TigMsg* msg) {
 						result = 1;
 				}
 				if (msg->arg4 & MSF_LMB_RELEASED) {
+					logger->debug("UiIntgameMsgHandler: \t LMB UP");
 					if (UiIntgamePathSequenceHandler(reinterpret_cast<TigMsgMouse*>(msg)))
 						result = 1;
 				}
@@ -760,7 +783,7 @@ int UiIntegameTurnbasedRepl::UiIntgameMsgHandler(int widId, TigMsg* msg) {
 	}
 
 	if (*actSeqSys.actSeqCur != initialSeq) {
-		logger->info("Sequence switch from Ui Intgame Msg Handler to {}", (void*)*actSeqSys.actSeqCur);
+		logger->info("UiIntgameMsgHandler: \t Sequence switch detected. Was {}, changed to {}",(void*)initialSeq, (void*)*actSeqSys.actSeqCur);
 	}
 
 	return result;
@@ -1026,7 +1049,8 @@ void UiIntgameTurnbased::CursorRenderUpdate(){
 	if (mouseFuncs.GetCursorDrawCallbackId() == 0x1008A240){
 		mouseFuncs.SetCursorDrawCallback(nullptr, 0);
 	}
-
+	
+	// Draw remaining attacks under cursor
 	if ( ( widgetEnteredGameplay|| widgetEnteredRender || intgameTarget)
 		&& combatSys.isCombatActive() 
 		&& !*actSeqSys.actSeqPickerActive && curSeq 

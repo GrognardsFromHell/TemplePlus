@@ -5,7 +5,7 @@
 struct ActionBar
 {
 	int advTimeFuncIdx;
-	int flags;
+	int flags; // 1 - active
 	float pulseVal;
 	void(__cdecl *resetCallback)(int);
 	int resetArg;
@@ -16,6 +16,8 @@ struct ActionBar
 	float pulseMean;
 	float pulseAmplitude;
 	float pulseTime;
+
+	bool IsActive();
 };
 
 // const int testsieofActionbar = sizeof(ActionBar); // should be 48

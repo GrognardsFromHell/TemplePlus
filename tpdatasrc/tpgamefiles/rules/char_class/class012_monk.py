@@ -85,7 +85,7 @@ def ObjMeetsPrereqs( obj ):
 # Levelup
 
 def IsSelectingFeatsOnLevelup( obj ):
-	newLvl = obj.stat_level_get( classEnum ) + 1
+	newLvl = char_editor.stat_level_get( classEnum )
 	if newLvl == 2:
 		if obj.has_feat(feat_combat_reflexes) and obj.has_feat(feat_deflect_arrows):
 			return 0
@@ -97,7 +97,7 @@ def IsSelectingFeatsOnLevelup( obj ):
 	return 0
 
 def LevelupGetBonusFeats(obj):
-	newLvl = obj.stat_level_get( classEnum ) + 1
+	newLvl = char_editor.stat_level_get( classEnum )
 	bonus_feats = []
 	if newLvl == 2:
 		bonus_feats = [feat_combat_reflexes, feat_deflect_arrows]
