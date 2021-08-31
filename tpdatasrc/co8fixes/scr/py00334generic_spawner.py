@@ -7,6 +7,8 @@ import _include
 from co8Util.TimedEvent import *
 from py00439script_daemon import get_f, set_f, get_v, set_v, tpsts, record_time_stamp
 from combat_standard_routines import *
+from co8Util.PersistentData import *
+from co8Util.ObjHandling import *
 
 
 # Contained in this script:
@@ -91,6 +93,7 @@ def san_first_heartbeat( attachee, triggerer ):
 	# shop map
 		money_script()
 		shopmap_movie_check()
+		Co8PersistentData.clearData()   # clears persistent data
 	return RUN_DEFAULT
 
 

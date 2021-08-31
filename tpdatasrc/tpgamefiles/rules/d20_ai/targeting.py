@@ -2,6 +2,16 @@ from toee import *
 import tpai
 from d20_ai_utils import *
 
+debug_enabled = False
+
+def debug_print(*args):
+    if debug_enabled:
+        for arg in args:
+            print arg,
+    return
+
+
+
 def missing_stub(msg):
 	print msg
 	return 0
@@ -11,7 +21,8 @@ def missing_stub(msg):
 # In the C(++), this is a global variable. Trying to avoid that.
 def consider_target(attacker, target, aiSearchingTgt=False):
 	if attacker == target: return 0
-
+	# if aiSearchingTgt == False:
+	# 	debug_print("consider_target: " + str(attacker) + " considering " + str(target))
 	attacker_flags = target.obj_get_int(obj_f_critter_flags)
 	ignore_flags = OF_INVULNERABLE | OF_DONTDRAW | OF_OFF | OF_DESTROYED
 	target_flags = target.obj_get_int(obj_f_critter_flags)
@@ -98,8 +109,17 @@ def getFriendsCombatFocus(obj, friend, leader, aiSearchingTgt = False):
 	return OBJ_HANDLE_NULL
 
 def getTargetFromDeadFriend(obj, friend):
-	missing_stub("getTargetFromDeadFriend")
-	return OBJ_HANDLE_NULL
+	if friend == OBJ_HANDLE_NULL: return OBJ_HANDLE_NULL
+	if not friend.is_dead_or_destroyed(): return OBJ_HANDLE_NULL
+	if friend.type != obj_t_npc: return OBJ_HANDLE_NULL
+	if aiListFind(obj, friend, AI_LIST_ALLY): return OBJ_HANDLE_NULL # is this a bug?
+	
+	if obj.allegiance_strength(friend) == 0:
+		return OBJ_HANDLE_NULL
+	tgt = friend.obj_get_obj(obj_f_npc_combat_focus)
+	if not consider_target(obj, tgt, True): 
+		return OBJ_HANDLE_NULL
+	return tgt
 
 def find_suitable_target(attacker, aiSearchingTgt):
 	if aiSearchingTgt: return OBJ_HANDLE_NULL
@@ -214,6 +234,3 @@ def will_kos(attacker, target, aiSearchingTgt):
 
 	return 0
 
-def execute_strategy(obj, target):
-
-	return None # this causes the engine to ignore the result; return 0 / 1 to make it work

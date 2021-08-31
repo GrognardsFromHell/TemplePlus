@@ -197,7 +197,7 @@ int D20StatsSystem::GetValue(const objHndl & handle, Stat stat, int statArg) con
 {
 	switch (GetType(stat)){
 	case StatType::Abilities:
-		return dispatch.Dispatch10AbilityScoreLevelGet(handle, stat, nullptr);
+		return objects.abilityScoreLevelGet(handle, stat, nullptr);
 	case StatType::Level:
 		return GetLevelStat(handle, stat);
 	case StatType::Money:

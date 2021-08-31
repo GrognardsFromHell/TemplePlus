@@ -1,0 +1,5 @@
+name: Power Throw
+flags: 12582928
+prereqs: 0 13 1268 1
+description: You can power attack with thrown weapons.
+prereq descr: Brutal Throw, Power Attack, STR 13

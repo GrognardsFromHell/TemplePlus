@@ -176,7 +176,7 @@ def san_start_combat( attachee, triggerer, generated_from_timed_event_call = 0, 
 		attachee.obj_set_int(obj_f_critter_strategy, 80) # set Lareth's strat to "seek beacon"
 		
 		grease_detected = 0
-		for spell_obj in game.obj_list_cone(closest_pc_1, OLC_GENERIC, 40, 0, 360):
+		for spell_obj in game.obj_list_cone(attachee, OLC_GENERIC, 40, 0, 360):
 			# Check for active GREASE spell object
 			if spell_obj.obj_get_int(obj_f_secretdoor_dc) == 200 + (1<<15):
 				grease_detected = 1

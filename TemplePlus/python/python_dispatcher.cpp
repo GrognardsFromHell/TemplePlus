@@ -276,7 +276,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		DispIoBonusList evtObjAbScore;
 		evtObjAbScore.flags |= 1; // effect unknown??
 		evtObjAbScore.bonlist = bonList;
-		auto result = dispatch.Dispatch10AbilityScoreLevelGet(obj, (Stat)stat, &evtObjAbScore);
+		auto result = objects.abilityScoreLevelGet(obj, (Stat)stat, &evtObjAbScore);
 		bonList = evtObjAbScore.bonlist;
 		return result;
 	});
@@ -1026,6 +1026,10 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			D20Actn* d20a= (D20Actn*)evtObj.data1;
 			return *d20a;
 		}, "Used for Q_IsActionInvalid_CheckAction callbacks to get a D20Action from the data1 field")
+		.def("get_d20_spell_data", [](DispIoD20Query& evtObj)->D20SpellData& {
+			D20SpellData* d20sd = (D20SpellData*)evtObj.data1;
+			return *d20sd;
+		}, "Used for Q_SpellInterrupted callbacks to get a D20SpellData from the data1 field")
 		.def("get_obj_from_args", [](DispIoD20Query& evtObj)->objHndl {
 			objHndl handle{ ((((uint64_t)evtObj.data2) << 32) | evtObj.data1) };
 			if (!gameSystems->GetObj().IsValidHandle(handle))
@@ -1055,10 +1059,20 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("num_strings", &DispIoTooltip::numStrings);
 
 	py::class_<DispIoObjBonus, DispIO>(m, "EventObjObjectBonus", "Used for Item Bonuses, initiative modifiers and others.")
+		.def(py::init())
 		.def_readwrite("bonus_list", &DispIoObjBonus::bonOut)
 		.def_readwrite("flags", &DispIoObjBonus::flags)
 		.def_readwrite("return_val", &DispIoObjBonus::flags) // I think that field is also used for return_val somewhere... not 100% sure though. also leaving it for backward compatibility
 		.def_readwrite("obj", &DispIoObjBonus::obj)
+		.def("dispatch", [](DispIoObjBonus& evtObj, objHndl handle, int disp_type, int disp_key)->void{
+				auto obj = objSystem->GetObject(handle);
+				if (!obj) return;
+				auto disp = obj->GetDispatcher();
+				if (!dispatch.dispatcherValid(disp)) return;
+				auto dispType = (enum_disp_type)disp_type;
+				dispatch.DispatcherProcessor(disp, dispType, disp_key, &evtObj);
+				return;
+			}, "")
 		;
 
 	py::class_<DispIoDispelCheck, DispIO>(m, "EventObjDispelCheck", "Dispel Check Event")

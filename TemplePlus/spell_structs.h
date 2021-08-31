@@ -2,7 +2,7 @@
 
 #include "common.h"
 
-
+struct D20Actn;
 const uint32_t SPELL_ENUM_MAX_VANILLA = 802;
 const uint32_t SPELL_ENUM_MAX_EXPANDED = 3999;
 
@@ -295,4 +295,11 @@ struct SpellEntry {
 	explicit SpellEntry(uint32_t spellEnum);
 	bool IsBaseModeTarget(UiPickerType type);
 	int SpellLevelForSpellClass(int spellClass); // returns -1 if none
+};
+
+struct ProjectileEntry {
+	D20Actn* d20a;
+	int pad4;
+	objHndl projectile;
+	objHndl ammoItem;
 };
