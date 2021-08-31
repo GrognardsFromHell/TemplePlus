@@ -94,6 +94,7 @@ struct SpellPacketBody{
 	bool IsVancian();
 	bool IsDivine();
 	bool IsItemSpell();
+	bool IsPermanent() const;
 
 	int GetSpellSchool();
 
@@ -272,6 +273,9 @@ struct LegacySpellSystem : temple::AddressTable
 		void SaveDebugRecords() const;
 		void LoadDebugRecords();
 		void ResetDebugRecords();
+		void JammedSpellsCreateRef(); // save current duration of all active spells
+		void JammedSpellsPrune(int roundsAdvanced); // remove spells who's time should be up but for some reason weren't
+		void JammedSpellEnd(int spellId);
 		
 	SpellMapTransferInfo SaveSpellForTeleport(const SpellPacket& data);
 		
@@ -281,6 +285,7 @@ struct LegacySpellSystem : temple::AddressTable
 	bool LoadActiveSpellElement(TioFile* file, uint32_t& spellId, SpellPacket& pkt);
 	static void SpellsCastRegistryPut(int spellId, SpellPacket&);
 	bool IsSpellActive(int spellid);
+	void DoForSpellsCastRegistry(std::function<void(SpellPacket& pkt)> cb);
 
 	CondStruct *GetCondFromSpellCondId(int id);
 	CondStruct* GetCondFromSpellEnum(int spellEnum);

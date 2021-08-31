@@ -1620,9 +1620,13 @@ obj_f InventorySystem::GetInventoryNumField(objHndl objHnd)
 
 void InventorySystem::WieldBestAll(objHndl critter, objHndl tgt){
 	
+	critterSys.SuspendModelUpdate(true); // added to improve perf
 	for (auto invIdx = INVENTORY_WORN_IDX_START; invIdx <  INVENTORY_WORN_IDX_END; invIdx++){
 		WieldBest(critter, invIdx, tgt);
 	}
+	critterSys.SuspendModelUpdate(false);
+
+	critterSys.UpdateModelEquipment(critter);
 }
 
 void InventorySystem::ForceRemove(objHndl item, objHndl parent){

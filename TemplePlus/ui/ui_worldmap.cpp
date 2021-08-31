@@ -681,9 +681,9 @@ BOOL WorldmapFix::UiWorldmapMakeTripCdecl(int fromId, int toId) {
 						
 				}
 			}
-			else{
-				pathId = -1 - pathId_raw;
-				logger->info(" ************************ path id : {}", pathId);
+			else{ // pathId_raw < 0 (path from reverse)
+				pathId = -(pathId_raw+1);
+				logger->info(" ************************ path id changed to : {}", pathId);
 
 				if (pathId < 0) {
 					logger->info(" ************************ BAD PATH reseting to 0...path id : {}", pathId);
@@ -698,6 +698,7 @@ BOOL WorldmapFix::UiWorldmapMakeTripCdecl(int fromId, int toId) {
 				traildot->y = wmPath.startY + deltaY;
 				auto dotIdx = 1;
 				for (auto i = 1; i <= wmPath.count; ++i) {
+					logger->trace("i={}, dotidx={}, deltaX={}, deltaY={}", i, dotIdx, deltaX, deltaY);
 					traildot = mWorldmapWidgets->trailDots[mTrailDotCount- dotIdx];
 					switch (wmPath.directions[i - 1]) {
 					case 5:
@@ -720,6 +721,7 @@ BOOL WorldmapFix::UiWorldmapMakeTripCdecl(int fromId, int toId) {
 						break;
 					}
 					if (!(i % 12)) {
+						logger->trace("traildot[{}] x,y = {}, {}", mTrailDotCount - dotIdx,deltaX + wmPath.startX, deltaY + wmPath.startY);
 						traildot->x = deltaX + wmPath.startX;
 						traildot->y = deltaY + wmPath.startY;
 						++dotIdx;
@@ -750,7 +752,7 @@ BOOL WorldmapFix::UiWorldmapMakeTripCdecl(int fromId, int toId) {
 				auto dotCount = mTrailDotInitialIdx + 1;
 				for (auto i = 0; i < dotCount; ++i) {
 					auto dotsDest = mWorldmapWidgets->trailDots[i];
-					auto dotsSrc = mWorldmapWidgets->trailDots[mTrailDotInitialIdx + i];
+					auto dotsSrc = mWorldmapWidgets->trailDots[dotDelta + i];
 					dotsDest->x = dotsSrc->x;
 					dotsDest->y = dotsSrc->y;
 				}

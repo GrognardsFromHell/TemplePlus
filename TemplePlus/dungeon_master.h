@@ -44,6 +44,7 @@ public:
 	void RenderFudgeRolls();
 	void RenderPathfinding();
 	void RenderSector();
+	void RenderActiveSpells();
 
 	bool HandleMsg(const TigMsg & msg);
 	bool HandleSpawning(const TigMsg & msg);

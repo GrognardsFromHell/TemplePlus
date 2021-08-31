@@ -384,9 +384,16 @@ Objects::Objects()
 	rebase(_DLLFieldNames,		0x102CD840);
 }
 
+/* 0x1004E7F0 */
 uint32_t Objects::abilityScoreLevelGet(objHndl objHnd, Stat stat, DispIO* dispIO)
 {
-	return objects.dispatch.DispatchGetBonus(objHnd, (DispIoBonusList*)dispIO, dispTypeAbilityScoreLevel, (D20DispatcherKey)(stat + 1));
+	auto result = objects.dispatch.DispatchGetBonus(objHnd, (DispIoBonusList*)dispIO, dispTypeAbilityScoreLevel, (D20DispatcherKey)(stat + 1));
+	if (config.npcStatBoost > 0 && !party.IsInParty(objHnd)) {
+		if (result >= 3 || stat != Stat::stat_intelligence) { // so it doesn't change behaviors such as animal intelligence
+			result += config.npcStatBoost;
+		}
+	}
+	return result;
 }
 
 float Objects::GetRadius(objHndl handle)

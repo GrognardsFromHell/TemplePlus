@@ -41,7 +41,7 @@ static struct ActnSeqAddresses : temple::AddressTable {
 	PickerArgs * actSeqPicker;
 	D20Actn * actSeqPickerAction;
 	ReadiedActionPacket * readiedActionCache;
-	ActnSeq** actSeqInterrupt;
+	ActnSeq** actSeqInterrupted;
 	int* seqSthg_10B3D59C;
 	int * cursorState;
 	int *aooShaderId;
@@ -70,7 +70,7 @@ static struct ActnSeqAddresses : temple::AddressTable {
 		rebase(readiedActionCache, 0x1186A900);
 		rebase(actSeqPickerAction, 0x118CD400);
 		rebase(actSeqPicker, 0x118CD460);
-		rebase(actSeqInterrupt, 0x118CD574);
+		rebase(actSeqInterrupted, 0x118CD574);
 
 		rebase(aooShaderId, 0x1186A8E8);
 		rebase(spellPickerCallback, 0x10096CC0);
@@ -157,6 +157,9 @@ public:
 		replaceFunction(0x100933F0, ActionFrameProcess);
 		orgTurnStart = replaceFunction(0x10099430, TurnStart);
 		replaceFunction(0x100999E0, GreybarReset);
+		replaceFunction<void(__cdecl)(objHndl, objHndl)>(0x10099B10, [](objHndl projectile, objHndl thrower) {
+			actSeqSys.PerformOnProjectileComplete(projectile, thrower); }
+		);
 		replaceFunction(0x10099CF0, PerformOnAnimComplete);
 
 		replaceFunction(0x100959B0, ChargeAttackAddToSeq);
@@ -189,7 +192,7 @@ ActionSequenceSystem::ActionSequenceSystem()
 	object = &objects;
 	turnbased = &tbSys;
 	rebase(actSeqCur, 0x1186A8F0);
-	rebase(tbStatus118CD3C0,0x118CD3C0); 
+	rebase(simulsTbStatus,0x118CD3C0); 
 
 	rebase(actnProcState, 0x10B3D5A4);
 
@@ -693,6 +696,7 @@ void ActionSequenceSystem::ActionTypeAutomatedSelection(objHndl handle)
 
 }
 
+/* 0x10099430 */
 void ActionSequenceSystem::TurnStart(objHndl obj)
 {
 	logger->debug("*** NEXT TURN *** starting for {}. CurSeq: {}", obj, (void*)(*actSeqSys.actSeqCur));
@@ -712,33 +716,9 @@ void ActionSequenceSystem::TurnStart(objHndl obj)
 	if (!combatSys.isCombatActive())
 		return;
 
-	// check for interrupter sequence
-	if (*addresses.actSeqInterrupt) {
-
-		// switch sequences
-		auto actSeq = *addresses.actSeqInterrupt;
-		*actSeqCur = actSeq;
-		*addresses.actSeqInterrupt = actSeq->interruptSeq;
-		auto curIdx = actSeq->d20aCurIdx;
-		logger->info("Switching to Interrupt sequence, actor {}", description.getDisplayName(actSeq->performer));
-		if (curIdx <  actSeq->d20ActArrayNum) {
-
-			auto d20a = &actSeq->d20ActArray[curIdx];
-
-			if (InterruptNonCounterspell(d20a))
-				return;
-
-			if (d20a->d20ActType == D20A_CAST_SPELL) {
-				auto d20SpellData = &d20a->d20SpellData;
-				if (d20Sys.d20QueryWithData(actSeq->performer, DK_QUE_SpellInterrupted, d20SpellData, 0)) {
-					d20a->d20Caf &= ~D20CAF_NEED_ANIM_COMPLETED;
-					gameSystems->GetAnim().Interrupt(actSeq->performer, AnimGoalPriority::AGP_5, 0);
-				}
-			}
-		}
-
-
-		sequencePerform();
+	// check for interrupted sequence
+	if (*addresses.actSeqInterrupted) {
+		HandleInterruptSequence();
 		return;
 	}
 
@@ -749,9 +729,9 @@ void ActionSequenceSystem::TurnStart(objHndl obj)
 	d20Sys.globD20ActnSetPerformer(obj);
 	for (int i = 0; i < ACT_SEQ_ARRAY_SIZE; i++) {
 
-		if ((actSeqArray[i].seqOccupied & 1)
+		if ((actSeqArray[i].seqOccupied & SEQF_PERFORMING)
 			&& actSeqArray[i].performer == obj) {
-			actSeqArray[i].seqOccupied &= ~1;
+			actSeqArray[i].seqOccupied &= ~SEQF_PERFORMING;
 			logger->info("Clearing outstanding sequence [{}]", i);
 		}
 	}
@@ -789,13 +769,13 @@ void ActionSequenceSystem::TurnStart(objHndl obj)
 	simulsEnqueue();
 
 	if (objects.IsPlayerControlled(obj) && critterSys.IsDeadOrUnconscious(obj)) {
-		logger->info("Action for {} ending turn (unconscious)...", description.getDisplayName(d20Sys.globD20Action->d20APerformer));
+		logger->info("Action for {} ending turn (unconscious)...", d20Sys.globD20Action->d20APerformer);
 		combatSys.CombatAdvanceTurn(obj);
 		return;
 	}
 
 	if (objBody->GetFlags() & OF_OFF) {
-		logger->info("Action for {} ending turn (OF_OFF)", description.getDisplayName(d20Sys.globD20Action->d20APerformer));
+		logger->info("Action for {} ending turn (OF_OFF)", d20Sys.globD20Action->d20APerformer);
 		combatSys.CombatAdvanceTurn(obj);
 		return;
 	}
@@ -1086,7 +1066,7 @@ uint32_t ActionSequenceSystem::MoveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 	LocAndOffsets * actSeqPerfLoc;
 	ActionCostPacket actCost;
 
-	//logger->debug("Parsing move sequence for {}, d20 action {}", description.getDisplayName(d20aIn->d20APerformer), d20ActionNames[d20aIn->d20ActType]);
+	//logger->debug("Parsing move sequence for {}, d20 action {}", d20aIn->d20APerformer, d20ActionNames[d20aIn->d20ActType]);
 	
 	seqCheckFuncs(&tbStatCopy);
 	
@@ -1115,7 +1095,7 @@ uint32_t ActionSequenceSystem::MoveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 		if (pathQ.critter == pathQ.targetObj)
 			return ActionErrorCode::AEC_TARGET_INVALID;
 
-		const float fourPointSevenPlusEight = 4.714045f + 8.0f;
+		const float fourPointSevenPlusEight = (INCH_PER_SUBTILE/2) + 8.0f;
 		pathQ.flags = static_cast<PathQueryFlags>(PathQueryFlags::PQF_TO_EXACT | PathQueryFlags::PQF_HAS_CRITTER | PathQueryFlags::PQF_800
 			| PathQueryFlags::PQF_TARGET_OBJ | PathQueryFlags::PQF_ADJUST_RADIUS | PathQueryFlags::PQF_ADJ_RADIUS_REQUIRE_LOS);
 		
@@ -1161,9 +1141,9 @@ uint32_t ActionSequenceSystem::MoveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 		}
 
 		if (pathQ.targetObj)
-			logger->debug("MoveSequenceParse: FAILED PATH... {} attempted from {} to {} ({})", description.getDisplayName(pqResult->mover), pqResult->from, pqResult->to, description.getDisplayName(pathQ.targetObj));
+			logger->debug("MoveSequenceParse: FAILED PATH... {} attempted from {} to {} ({})", pqResult->mover, pqResult->from, pqResult->to, pathQ.targetObj);
 		else
-			logger->debug("MoveSequenceParse: FAILED PATH... {} attempted from {} to {}", description.getDisplayName(pqResult->mover), pqResult->from, pqResult->to);
+			logger->debug("MoveSequenceParse: FAILED PATH... {} attempted from {} to {}", pqResult->mover, pqResult->from, pqResult->to);
 		
 
 
@@ -1334,6 +1314,29 @@ uint32_t ActionSequenceSystem::actSeqOkToPerform()
 	{
 		auto caflags = curSeq->d20ActArray[curSeq->d20aCurIdx].d20Caf;
 		if (caflags & D20CAF_NEED_PROJECTILE_HIT){ return 0; }
+		
+		/* Temple + : added this to fix issue with throwing Produce Flame when there are readied actions.
+		* Scenario was this: 
+		- Archers ready vs. spell
+		- You perform Touch Attack action (ranged) by hurling the Produce Flame
+		- You get interrupted
+		- HOWEVER, you'll have already hurled your projectile
+		- This leads to you finishing your sequence while the AI possibly is still acting / animating
+		- Your sequence will as a consequence get popped
+		- However, it will still be referred to by actSeqInterrupted!
+		- Meanwhile, the AI is still acting, so when they finish they may claim
+		  the same sequence slot, thus invalidating actSeqInterrupted
+		  Consequently when the AI turn's finishes, it will try to sequence switch
+		  to an invalid actSeqInterrupted (i.e. a sequence slot now owned by the AI),
+		  which results in giving up your turn.
+		
+		What this fix does:
+		  when PerformOnProjectileComplete is called (for your projectile), this fix
+		  will indicate that the action is NOT complete, and consequently the sequence should not be cleared.
+		*/
+		if (*addresses.actSeqInterrupted == curSeq) {
+			return 0;
+		}
 		return (caflags & D20CAF_NEED_ANIM_COMPLETED) == 0;
 	}
 	return 1;
@@ -1392,7 +1395,7 @@ uint32_t ActionSequenceSystem::AssignSeq(objHndl objHnd)
 		{
 			if (prevSeq != nullptr)
 			{
-				logger->debug("Pushing sequence from {} to {}", prevSeq->performer, objHnd);
+				logger->debug("Pushing sequence from {}({}) to {}", prevSeq->performer, (void*)prevSeq, objHnd);
 			} else
 			{
 				logger->debug("Allocated sequence for {}", objHnd);
@@ -1515,9 +1518,9 @@ BOOL ActionSequenceSystem::SequenceSwitch(objHndl obj)
 
 	if (seqIdx >= 0)
 	{
-		logger->debug("SequenceSwitch: \t doing for {}. Previous Current Seq: {}", obj, (void*)(*actSeqCur));
+		logger->debug("SequenceSwitch: \t Last performer was {}, seq: {}", (*actSeqCur)->performer, (void*)(*actSeqCur));
 		*actSeqCur = &actSeqArray[seqIdx];
-		logger->debug("SequenceSwitch: \t new Current Seq: {}", (void*)(*actSeqCur));
+		logger->debug("\t\t switching to {}. New Current Seq: {}", obj, (void*)(*actSeqCur));
 		return 1;
 	}
 	return 0;
@@ -2022,9 +2025,8 @@ void ActionSequenceSystem::DoAoo(objHndl obj, objHndl target)
 	auto curSeq = *actSeqCur;
 	curSeq->performer = obj;
 
-	logger->debug("AOO - {} ({}) is interrupting {} ({})",
-		description.getDisplayName(obj), obj,
-		description.getDisplayName(target), target);
+	logger->debug("AOO - {} is interrupting {}",
+		 obj, target);
 
 	if (obj != d20Sys.globD20Action->d20APerformer)
 	{
@@ -2089,7 +2091,7 @@ int32_t ActionSequenceSystem::DoAoosByAdjcentEnemies(objHndl obj)
 				&& actSeqArray[j].performer == enemy)
 			{
 				okToAoo = false;
-				logger->debug("DoAoosByAdjacentEnemies({}({})): Action Aoo for {} ({}) while they are performing...", description.getDisplayName(obj), obj , description.getDisplayName(enemy), enemy);
+				logger->debug("DoAoosByAdjacentEnemies({}): Action Aoo for {} while they are performing...", obj , enemy);
 			}
 		}
 
@@ -2157,6 +2159,44 @@ bool ActionSequenceSystem::SpellTargetsFilterInvalid(D20Actn& d20a){
 	return valid && curSeq->spellPktBody.targetCount > 0;
 }
 
+/* 0x100993A0 */
+void ActionSequenceSystem::HandleInterruptSequence()
+{
+	// switch sequences
+	auto actSeq = *addresses.actSeqInterrupted;
+	logger->info("Attempting switch to pre-interrupt sequence, actor {}", actSeq->performer);
+	if (! (actSeq->seqOccupied & SEQF_PERFORMING) ) {
+
+	}
+
+	*actSeqCur = actSeq;
+	*addresses.actSeqInterrupted = actSeq->interruptSeq;
+	auto curIdx = actSeq->d20aCurIdx;
+	
+	if (curIdx >= 0 && curIdx < actSeq->d20ActArrayNum) { // fixed issue with negative curIdx
+
+		auto d20a = &actSeq->d20ActArray[curIdx];
+
+		if (InterruptNonCounterspell(d20a))
+			return;
+
+		if (d20a->d20ActType == D20A_CAST_SPELL) {
+			auto d20SpellData = &d20a->d20SpellData;
+			if (d20Sys.d20QueryWithData(actSeq->performer, DK_QUE_SpellInterrupted, d20SpellData, 0)) {
+				d20a->d20Caf &= ~D20CAF_NEED_ANIM_COMPLETED;
+				gameSystems->GetAnim().Interrupt(actSeq->performer, AnimGoalPriority::AGP_5, 0);
+			}
+		}
+	}
+	else {
+		logger->info("Interrupt sequence invalid action idx: {} / {}", curIdx, actSeq->d20ActArrayNum);
+	}
+
+
+	sequencePerform();
+	return;
+}
+
 int32_t ActionSequenceSystem::InterruptNonCounterspell(D20Actn* d20a)
 {
 	auto readiedAction = ReadiedActionGetNext(nullptr, d20a);
@@ -2197,19 +2237,6 @@ int32_t ActionSequenceSystem::InterruptNonCounterspell(D20Actn* d20a)
 	InterruptSwitchActionSequence(readiedAction);
 	return 1;
 
-	/*uint32_t result = 0;
-	__asm{
-		push esi;
-		push ecx;
-		mov ecx, this;
-		mov esi, [ecx]._InterruptNonCounterspell;
-		mov eax, d20a;
-		call esi;
-		mov result, eax;
-		pop ecx;
-		pop esi;
-	}
-	return result;*/
 }
 
 int32_t ActionSequenceSystem::InterruptCounterspell(D20Actn* d20a)
@@ -2338,11 +2365,11 @@ void ActionSequenceSystem::InterruptSwitchActionSequence(ReadiedActionPacket* re
 	if (readiedAction->readyType == RV_Counterspell)
 		return addresses.Counterspell_sthg(readiedAction);
 	
-	(*actSeqCur)->interruptSeq = *addresses.actSeqInterrupt;
-	*addresses.actSeqInterrupt = *actSeqCur;
+	(*actSeqCur)->interruptSeq = *addresses.actSeqInterrupted;
+	*addresses.actSeqInterrupted = *actSeqCur;
 	combatSys.FloatCombatLine((*actSeqCur)->performer, 158); // Action Interrupted
-	logger->debug("{} interrupted by {}!", description.getDisplayName((*actSeqCur)->performer), description.getDisplayName( readiedAction->interrupter));
-	histSys.CreateRollHistoryLineFromMesfile(7, readiedAction->interrupter, (*addresses.actSeqInterrupt)->performer);
+	logger->debug("{} interrupted by {}!", (*actSeqCur)->performer, readiedAction->interrupter);
+	histSys.CreateRollHistoryLineFromMesfile(7, readiedAction->interrupter, (*addresses.actSeqInterrupted)->performer);
 	AssignSeq(readiedAction->interrupter);
 	(*actSeqCur)->prevSeq = nullptr;
 	auto curActor = tbSys.turnBasedGetCurrentActor();
@@ -2442,9 +2469,10 @@ uint32_t ActionSequenceSystem::curSeqNext()
 {
 	ActnSeq* curSeq = *actSeqCur;
 	objHndl performer = curSeq->performer;
-	SpellPacketBody spellPktBody;
-	curSeq->seqOccupied &= 0xffffFFFE; //unset "occupied" flag
+	SpellPacketBody spellPktBody;	
 	logger->debug("CurSeqNext: \t Sequence Completed for {} (sequence {})", curSeq->performer, (void*)curSeq);
+
+	curSeq->seqOccupied &= 0xffffFFFE; //unset "occupied" flag
 
 	int d20ActArrayNum = curSeq->d20ActArrayNum;
 	if (d20ActArrayNum > 0){
@@ -2513,20 +2541,20 @@ uint32_t ActionSequenceSystem::curSeqNext()
 		// look for stuff that terminates / interrupts the turn
 		if (HasReadiedAction(d20Sys.globD20Action->d20APerformer))
 		{
-			logger->debug("CurSeqNext: \t Action for {} ({}) ending turn (readied action)...",
-				description.getDisplayName(d20Sys.globD20Action->d20APerformer),
+			logger->debug("CurSeqNext: \t Action for {} ending turn (readied action)...",
 				d20Sys.globD20Action->d20APerformer);
 			combatSys.CombatAdvanceTurn(tbSys.turnBasedGetCurrentActor());
 			return 1;
 		}
 		if (ShouldAutoendTurn(&(*actSeqCur)->tbStatus))
 		{
-			logger->debug("CurSeqNext: \t Action for {} ({}) ending turn (autoend)...",
-				description.getDisplayName(d20Sys.globD20Action->d20APerformer),
+			logger->debug("CurSeqNext: \t Action for {} ending turn (autoend)...",
 				d20Sys.globD20Action->d20APerformer);
 			combatSys.CombatAdvanceTurn(tbSys.turnBasedGetCurrentActor());
 			return 1;
 		}
+
+
 		if (!objects.IsPlayerControlled((*actSeqCur)->performer))
 		{
 			if (isSimultPerformer((*actSeqCur)->performer)
@@ -2534,6 +2562,20 @@ uint32_t ActionSequenceSystem::curSeqNext()
 			{
 				combatSys.CombatAdvanceTurn(tbSys.turnBasedGetCurrentActor());
 			}
+			
+			// added this clause in Temple+ because AI Flank was fubaring things
+			// Example scenario: 2 npcs go after PC. First has normal attack closest AI, 2nd has flank AI tactic.
+			// It starts executing the first in simuls, and then the 2nd NPC aborts the simuls.
+			// It resets the 2nd NPCs sequence and performs it (with no actions actually applied)
+			// Without this clause, it reaches the next "else" and re-starts the 2nd NPC's round before
+			// the simuls finishes, thus causing havoc. This fix will lead it into IsLastSimulsPerformer inside
+			// CombatAdvanceTurn, which will cause it to either return, or restore the sequence if appropriate
+			else if (IsLastSimultPopped((*actSeqCur)->performer) && !IsSimulsCompleted()) {
+				logger->info("curSeqNext: simuls not completed");
+				//combatSys.CombatAdvanceTurn(tbSys.turnBasedGetCurrentActor());
+				return TRUE;
+			}
+
 			else
 			{
 				(*actSeqCur)->seqOccupied &= 0xFFFFfffe;
@@ -2566,19 +2608,23 @@ int ActionSequenceSystem::SequencePop()
 {
 	ActnSeq*  curSeq = *actSeqCur;
 	ActnSeq*  prevSeq = (*actSeqCur)->prevSeq;
-	curSeq->seqOccupied &= 0xFFFFfffe;
 	logger->debug("Popping sequence ( {} )", (void*)curSeq);
+
+	
+	curSeq->seqOccupied &= 0xFFFFfffe;
+
 	*actSeqCur = prevSeq;
 	curSeq->prevSeq = nullptr;
-	if (!prevSeq)
+
+	
+	if (!prevSeq) {
 		return 0;
+	}
+		
 	auto curSeqPerformer = curSeq->performer;
 	auto prevSeqPerformer = prevSeq->performer;
-	logger->debug("Popping sequence from {} ({}) to {} ({})", 
-		description.getDisplayName(curSeqPerformer),
-		curSeqPerformer,
-		description.getDisplayName(prevSeqPerformer),
-		prevSeqPerformer);
+	logger->debug("Popping sequence from {} to {}", 
+		curSeqPerformer, prevSeqPerformer);
 	TurnBasedStatus tbStatNew;
 	tbStatNew.hourglassState = 4;
 	tbStatNew.tbsFlags = 0;
@@ -2607,7 +2653,7 @@ int ActionSequenceSystem::SequencePop()
 		d20Sys.globD20Action->data1 = 0;
 		ActionAddToSeq();
 	}
-	*addresses.actSeqInterrupt = prevSeq->interruptSeq;
+	*addresses.actSeqInterrupted = prevSeq->interruptSeq;
 	prevSeq->interruptSeq = nullptr;
 	return 1;
 }
@@ -2693,8 +2739,8 @@ void ActionSequenceSystem::ActionPerform()
 			
 			mesLine.key = errCode + 1000;
 			mesFuncs.GetLine_Safe(*actionMesHandle, &mesLine);
-			logger->debug("ActionPerform: \t Action unavailable for {} ({}): {}", 
-				objects.description.getDisplayName(d20a->d20APerformer), d20a->d20APerformer, mesLine.value );
+			logger->debug("ActionPerform: \t Action unavailable for {}: {}", 
+				d20a->d20APerformer, mesLine.value );
 			*actnProcState = errCode;
 			curSeq->tbStatus.errCode = errCode;
 			objects.floats->floatMesLine(performer, 1, FloatLineColor::Red, mesLine.value);
@@ -2756,13 +2802,15 @@ void ActionSequenceSystem::ActionPerform()
 						directionsDebug.emplace_back(d20a->path->nodes[i]);
 					}
 					if (d20a->d20ATarget)
-						logger->debug("Move Action: {} going from {} to {} ({}), nodes used: {}", description.getDisplayName(d20a->path->mover), d20a->path->from, d20a->path->to, description.getDisplayName(d20a->d20ATarget), directionsDebug);
+						logger->debug("Move Action: {} going from {} to {} ({}), nodes used: {}", d20a->path->mover, d20a->path->from, d20a->path->to, d20a->d20ATarget, directionsDebug);
 					else
-						logger->debug("Move Action: {} going from {} to {}, nodes used: {}", description.getDisplayName(d20a->path->mover), d20a->path->from, d20a->path->to, directionsDebug);
+						logger->debug("Move Action: {} going from {} to {}, nodes used: {}", d20a->path->mover, d20a->path->from, d20a->path->to, directionsDebug);
 				}*/
 
 
 				ActionErrorCode performResult = static_cast<ActionErrorCode>(d20->d20Defs[d20a->d20ActType].performFunc(d20a));
+				logger->debug("\t\t\t Callback Done. Result: {}", performResult);
+
 				InterruptNonCounterspell(d20a);
 			}
 
@@ -2796,15 +2844,15 @@ void ActionSequenceSystem::sequencePerform()
 	// is curSeq ok to perform?
 	if (!actSeqOkToPerform())
 	{
-		logger->debug("SequencePerform: \t Sequence given while performing previous action - aborted.");
+		logger->debug("SequencePerform: \t Sequence given while performing previous action - aborted. Performer: {}", (*actSeqCur)->performer);
 		d20->D20ActnInit(d20->globD20Action->d20APerformer, d20->globD20Action);
 		return;
 	}
 
-	if (*addresses.actSeqInterrupt)
+	if (*addresses.actSeqInterrupted)
 	{
 		int dummy = 1;
-		if (*addresses.actSeqInterrupt == *actSeqCur)
+		if (*addresses.actSeqInterrupted == *actSeqCur)
 		{
 			int asd = 1;
 		}
@@ -2819,7 +2867,7 @@ void ActionSequenceSystem::sequencePerform()
 			logger->debug("SequencePerform: Switched sequence slot from combat trigger!");
 			curSeq = *actSeqCur;
 		}
-		logger->debug("SequencePerform: \t {} performing sequence ({})...", description.getDisplayName(curSeq->performer), (void*)curSeq);
+		logger->debug("SequencePerform: \t {} performing sequence ({})...", curSeq->performer, (void*)curSeq);
 		if (isSimultPerformer(curSeq->performer))
 		{ 
 			logger->debug("simultaneously...");
@@ -2877,7 +2925,7 @@ void ActionSequenceSystem::ActionBroadcastAndSignalMoved()
 
 int ActionSequenceSystem::ActionFrameProcess(objHndl obj)
 {
-	logger->debug("ActionFrameProcess: \t for {} ({})", description.getDisplayName(obj), obj);
+	logger->debug("ActionFrameProcess: \t for {}", obj);
 	if (!isPerforming(obj))
 	{
 		logger->debug("Not performing!");
@@ -2893,7 +2941,7 @@ int ActionSequenceSystem::ActionFrameProcess(objHndl obj)
 
 	if (curSeq->performer != obj)
 	{
-		logger->debug("..Switching sequence from {}", (void*)curSeq);
+		logger->debug("\t..Switching sequence from {}", (void*)curSeq);
 		if (!SequenceSwitch(obj))
 		{
 			logger->debug("..failed!");
@@ -2918,8 +2966,72 @@ int ActionSequenceSystem::ActionFrameProcess(objHndl obj)
 	if (!actFrameFunc)
 		return 0;
 	
-	logger->debug("ActionFrameProcess: \t Calling action frame function");
+	logger->debug("ActionFrameProcess: \t Calling action frame function (action type {})", d20a->d20ActType);
 	return actFrameFunc(d20a);	
+}
+
+/* 0x10099B10 */
+void ActionSequenceSystem::PerformOnProjectileComplete(objHndl projectile, objHndl thrower)
+{
+	logger->info("Projectile hit (thrown by {})", thrower);
+	if (!isPerforming(thrower)) {
+		if (isSimultPerformer(thrower)) {
+			if (IsSimulsCompleted()) {
+				logger->info("\t\t (not performing, but advancing turn anyway)");
+				auto actor = tbSys.turnBasedGetCurrentActor();
+				combatSys.CombatAdvanceTurn(actor);
+			}
+		}
+		logger->info("\t\t not performing");
+		return;
+	}
+
+	auto succeeded = true;
+	auto curSeq = *actSeqCur;
+	if (!curSeq || curSeq->performer != thrower || (curSeq->seqOccupied & SEQF_PERFORMING) == 0) {
+		succeeded = false;
+		logger->debug("\t\t thrower is not current sequence performer, trying to switch...");
+	}
+	succeeded = SequenceSwitch(thrower) != 0;
+
+	if (!succeeded) {
+		logger->debug("\t\t failed");
+		return;
+	}
+
+	static auto GetSpellProjectile = temple::GetRef<ProjectileEntry* (__cdecl)(objHndl)>(0x1008B250);
+	auto spProjectile = GetSpellProjectile(projectile);
+	if (!spProjectile) {
+		logger->debug("\t\t No projectile found!");
+		return;
+	}
+
+	auto d20a = spProjectile->d20a;
+	if (thrower == d20a->d20APerformer) {
+		d20a->d20Caf &= ~D20CAF_NEED_PROJECTILE_HIT;
+		auto projectileHitFunc = d20Sys.d20Defs[d20a->d20ActType].projectileHitFunc;
+		if (projectileHitFunc) {
+			logger->debug("PerformOnProjectileComplete: \t\t\t calling projectileHitFunc for action type {}.", d20a->d20ActType);
+			projectileHitFunc(d20a, projectile, spProjectile->ammoItem);
+		}
+		if (actSeqOkToPerform()) {
+			logger->info("PerformOnProjectileComplete: \t\t\t action completed.");
+			ActionBroadcastAndSignalMoved();
+			ActionPerform();
+			while (isPerforming((*actSeqCur)->performer)) {
+				if (!actSeqOkToPerform())
+					break;
+				ActionPerform();
+			}
+		}
+		else {
+			logger->info("PerformOnProjectileComplete: \t\t\t action not completed.");
+		}
+	}
+	spProjectile->projectile = objHndl::null;
+	spProjectile->d20a = nullptr;
+	spProjectile->ammoItem = objHndl::null;
+	return;
 }
 
 unsigned int ActionSequenceSystem::ChargeAttackAddToSeq(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat)
@@ -2972,26 +3084,26 @@ void ActionSequenceSystem::PerformOnAnimComplete(objHndl obj, int animId)
 	{
 		if (animId)
 		{
-			logger->debug("PerformOnAnimComplete: \t Animation {} Completed for {} ({}); Not performing.", animId, description.getDisplayName(obj), obj);
+			logger->debug("PerformOnAnimComplete: \t Animation {} Completed for {}; Not performing.", animId, obj);
 		}
 		return;
 	}
 
-	logger->debug("PerformOnAnimComplete: \t Animation {} Completed for {} ({})", animId, description.getDisplayName(obj), obj);
+	logger->debug("PerformOnAnimComplete: \t Animation {} Completed for {}", animId, obj);
 
 	// does the Current Sequence belong to obj?
 	auto curSeq = *actSeqCur;
 	auto curSeq0 = curSeq;
 	if (!curSeq || curSeq->performer != obj || !(curSeq->seqOccupied & SEQF_PERFORMING))
 	{
-		logger->debug("\tCurrent sequence performer is {} ({}), Switching sequence...", description.getDisplayName(curSeq->performer),curSeq->performer);
+		logger->debug("\tCurrent sequence performer is {}, Switching sequence...", curSeq->performer);
 		if (!SequenceSwitch(obj))
 		{
 			logger->debug("\tFailed.");
 			return;
 		}
 		curSeq = *actSeqCur;
-		logger->debug("\tNew Current sequence performer is {} ({})", description.getDisplayName(curSeq->performer), curSeq->performer);
+		logger->debug("\tNew Current sequence performer is {}", curSeq->performer);
 	}
 
 	// is the animId ok?
@@ -3022,6 +3134,7 @@ void ActionSequenceSystem::PerformOnAnimComplete(objHndl obj, int animId)
 
 	if (!(d20caf & D20CAF_ACTIONFRAME_PROCESSED))
 	{
+		logger->debug("PerformOnAnimComplete: \t\t processing action frame.");
 		ActionFrameProcess(obj);
 	}
 
@@ -3035,6 +3148,9 @@ void ActionSequenceSystem::PerformOnAnimComplete(objHndl obj, int animId)
 				break;
 			ActionPerform();
 		}
+	}
+	else {
+		logger->debug("PerformOnAnimComplete: \t\t not ok to perform.");
 	}
 }
 
@@ -3120,7 +3236,7 @@ uint32_t ActionSequenceSystem::simulsOk(ActnSeq* actSeq)
 	{
 		*numSimultPerformers = 0;
 		*simultPerformerQueue = 0i64;
-		logger->debug("first simul actor, proceeding");
+		logger->debug("first simul actor, proceeding"); // aborts simuls
 
 	}
 	return 1;
@@ -3147,7 +3263,7 @@ uint32_t ActionSequenceSystem::simulsAbort(objHndl objHnd)
 			}
 			else{
 				*numSimultPerformers = *simulsIdx;
-				memcpy(tbStatus118CD3C0, &(*actSeqCur)->tbStatus, sizeof(TurnBasedStatus));
+				*simulsTbStatus = (*actSeqCur)->tbStatus;
 				logger->debug("Simul aborted {} ({})", objHnd, *simulsIdx);
 				return 1;
 			}
@@ -3170,7 +3286,7 @@ uint32_t ActionSequenceSystem::isSomeoneAlreadyActingSimult(objHndl objHnd)
 		auto perf = simultPerformerQueue[i];
 		for (auto j = 0; j < ACT_SEQ_ARRAY_SIZE; j++)
 		{
-			if (actSeqArray[j].seqOccupied &&actSeqArray[j].performer == perf) return 1;
+			if ( (actSeqArray[j].seqOccupied & SEQF_PERFORMING) &&actSeqArray[j].performer == perf) return 1;
 		}
 	}
 	return 0;
@@ -3189,7 +3305,32 @@ BOOL ActionSequenceSystem::IsLastSimultPopped(objHndl obj)
 
 BOOL ActionSequenceSystem::IsLastSimulsPerformer(objHndl obj)
 {
-	return addresses.IsLastSimulsPerformer(obj);
+	if (*numSimultPerformers <= 0) {
+		return FALSE;
+	}
+	if (obj == simultPerformerQueue[*numSimultPerformers - 1] && !IsSimulsCompleted()) {
+		return TRUE;
+	}
+	if (SimulsRestoreSeqTo(obj)) {
+		aiSys.AiProcess(obj);
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+BOOL ActionSequenceSystem::SimulsRestoreSeqTo(objHndl handle)
+{
+	if (handle != simultPerformerQueue[*numSimultPerformers]) { // is it the last one popped from simuls?
+		return FALSE;
+	}
+	logger->info("Restore Aborted Simuls actor: Reseting Sequence {}", handle);
+	curSeqReset(handle);
+	auto seq = *actSeqCur;
+	seq->tbStatus = *simulsTbStatus;
+	*numSimultPerformers = 0;
+	simultPerformerQueue[0] = objHndl::null;
+	return TRUE;
 }
 
 BOOL ActionSequenceSystem::SimulsAdvance()

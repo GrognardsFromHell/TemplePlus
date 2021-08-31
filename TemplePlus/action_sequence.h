@@ -95,7 +95,7 @@ struct ActionSequenceSystem : temple::AddressTable
 	uint32_t * performingDefaultAction; // inited to 0
 	uint32_t * performedDefaultAction; // inited to 0
 	uint32_t * actSeqPickerActive;
-	TurnBasedStatus * tbStatus118CD3C0;
+	TurnBasedStatus * simulsTbStatus;
 
 	D20TargetClassification * seqPickerTargetingType; // init to -1
 	D20ActionType * seqPickerD20ActnType; // init to 1
@@ -182,6 +182,7 @@ struct ActionSequenceSystem : temple::AddressTable
 	int32_t DoAoosByAdjcentEnemies(objHndl);
 	
 	bool SpellTargetsFilterInvalid(D20Actn &d20a);
+	void HandleInterruptSequence();
 	int32_t InterruptNonCounterspell(D20Actn *d20a);
 	int32_t InterruptCounterspell(D20Actn *d20a);
 	int32_t GetCurSeqD20ActionCount();
@@ -206,6 +207,7 @@ struct ActionSequenceSystem : temple::AddressTable
 	void sequencePerform();
 	void ActionBroadcastAndSignalMoved();
 	int ActionFrameProcess(objHndl obj);
+	void PerformOnProjectileComplete(objHndl projectile, objHndl thrower);
 	void PerformOnAnimComplete(objHndl obj, int animId); // runs any actions that need to be run when the animation finishes
 
 	unsigned int ChargeAttackAddToSeq(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat);
@@ -219,6 +221,7 @@ struct ActionSequenceSystem : temple::AddressTable
 	BOOL IsSimulsCompleted();
 	BOOL IsLastSimultPopped(objHndl obj); // last one that was popped, that is
 	BOOL IsLastSimulsPerformer(objHndl obj);
+	BOOL SimulsRestoreSeqTo(objHndl handle);
 	BOOL SimulsAdvance();
 
 	uint32_t ActionCostNull(D20Actn* d20Actn, TurnBasedStatus* turnBasedStatus, ActionCostPacket* actionCostPacket);

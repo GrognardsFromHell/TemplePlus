@@ -66,7 +66,11 @@ class Co8PersistentData(object):
         except KeyError:
             pass            
     removeData = staticmethod(removeData)
-        
+    
+    def clearData():
+        """Clear all data entries"""
+        Co8PersistentData.__dataDict.clear()
+    clearData = staticmethod(clearData)
 
     def save(savename):
         print "Attempting save...\n"

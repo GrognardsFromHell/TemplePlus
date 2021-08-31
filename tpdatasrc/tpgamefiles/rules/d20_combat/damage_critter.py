@@ -150,8 +150,8 @@ def deal_attack_damage(attacker, tgt, d20_data, flags, action_type):
     if not wasAlreadyUnconscious and tgt.is_unconscious():
         evt_obj_dam.send_signal(attacker, S_Dropped_Enemy)
         
-    debug_print("Debug: print overall damage: {}".format(evt_obj_dam.damage_packet.get_overall_damage()))
-    overall_dam = evt_obj_dam.damage_packet.get_overall_damage()
+    debug_print("Debug: print overall damage: {}".format(evt_obj_dam.damage_packet.get_overall_damage_by_type(D20DT_UNSPECIFIED)))
+    overall_dam = evt_obj_dam.damage_packet.get_overall_damage_by_type(D20DT_UNSPECIFIED)
     return overall_dam
 
 def deal_spell_damage(tgt, attacker, dice, damageType, attackPower, reduction, damageDescId, action_type, spellId, flags, projectile_idx = 1, is_weaponlike = False):
@@ -262,7 +262,7 @@ def deal_spell_damage(tgt, attacker, dice, damageType, attackPower, reduction, d
             #play crit hit sound
             soundIdTarget = tgt.soundmap_critter(0)
             game.sound_local_obj(soundIdTarget, tgt)
-            playSoundEffect(evt_obj_crit_dice.attack_packet.get_weapon_used(), attacker, tgt, 7)
+            playSoundEffect(evt_obj_dam.attack_packet.get_weapon_used(), attacker, tgt, 7)
             #Logbook increase crit count
             logbook.inc_criticals(attacker)
         evt_obj_dam.dispatch( attacker, ET_OnDealingDamageWeaponlikeSpell, EK_NONE)

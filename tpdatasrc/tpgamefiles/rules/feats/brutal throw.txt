@@ -1,0 +1,5 @@
+name: Brutal Throw
+flags: 4194320
+prereqs: 
+description: You can add your Strength modifier (instead of your Dexterity modifier) to attack rolls with thrown weapons.
+prereq descr: 

@@ -103,7 +103,7 @@ int TurnBasedSys::InitiativeRefresh(int initiative, int initiativeNext)
 
 void TurnBasedSys::InitiativeListNextActor()
 {
-	logger->debug("InitiativeListNextActor: Actor {} ({}) finishing.", description.getDisplayName(*turnBasedCurrentActor), *turnBasedCurrentActor);
+	logger->debug("InitiativeListNextActor: Actor {} finishing.", *turnBasedCurrentActor);
 	auto actorInitiative = objects.getInt32(*turnBasedCurrentActor, obj_f_initiative);
 	auto actorInitiativeIdx = party.ObjFindInGroupArray(groupInitiativeList, *turnBasedCurrentActor);
 	auto nextInitiativeIdx = actorInitiativeIdx + 1;
@@ -130,7 +130,7 @@ void TurnBasedSys::InitiativeListNextActor()
 	*turnBasedCurrentActor = actorNext;
 	if (actorNext)
 	{
-		logger->debug("InitiativeListNextActor: Turn Based actor changed to {} ({})", description.getDisplayName(actorNext), actorNext);
+		logger->debug("InitiativeListNextActor: Turn Based actor changed to {}", actorNext);
 		auto nextActorInitiative = objects.getInt32(actorNext, obj_f_initiative);
 		if (actorInitiative != nextActorInitiative)
 		{

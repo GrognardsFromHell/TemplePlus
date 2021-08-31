@@ -23,3 +23,8 @@ void UiCombat::ActionBarSetMovementValues(ActionBar* bar, float startDist, float
 	}
 	bar->flags |= 1;
 }
+
+bool ActionBar::IsActive()
+{
+	return (flags & 1) != 0;
+}

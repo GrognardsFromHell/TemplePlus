@@ -1078,8 +1078,13 @@ BOOL UiCamping::Camp(int hoursToRest){
 	auto restedCount = 0;
 	auto canHeal = true;
 	auto completedSuccessfully = TRUE;
+	const unsigned int HOUR_IN_MS = 3600u * 1000u;
+	const unsigned int HOUR_IN_ROUNDS = 600u;
+	
 
 	if (hoursToRest > 0) {
+
+		spellSys.JammedSpellsCreateRef();
 
 		auto sleepStatus = GetSleepStatus();
 		auto healerMod = GetHealingAmountMod();
@@ -1088,7 +1093,7 @@ BOOL UiCamping::Camp(int hoursToRest){
 		while (restedCount < hoursToRest){
 			
 			auto addTime = temple::GetRef<void(__cdecl)(unsigned int)>(0x10062390);
-			addTime(3600000u);
+			addTime(HOUR_IN_MS);
 			RandomEncounterSetup randEncSetup;
 			RandomEncounter *randEncOut;
 			if (GetSleepStatus() == 1){
@@ -1150,6 +1155,10 @@ BOOL UiCamping::Camp(int hoursToRest){
 					}
 				}
 			}
+		}
+	
+		if (restedCount > 0) {
+			spellSys.JammedSpellsPrune(restedCount * HOUR_IN_ROUNDS);
 		}
 	}
 

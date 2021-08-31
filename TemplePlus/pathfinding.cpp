@@ -1683,7 +1683,7 @@ bool Pathfinding::CanPathTo(objHndl obj, objHndl target, PathQueryFlags flags, f
 	pathQ.from = from;
 	pathQ.flags = flags;
 	auto reach = critterSys.GetReach(obj, D20A_UNSPECIFIED_ATTACK);
-	pathQ.tolRadius = reach * 12.0f - 8.0f;
+	pathQ.tolRadius = reach * 12.0f - ( INCH_PER_SUBTILE / 2 + 8.0f);
 	pathQ.targetObj = target;
 	if (config.pathfindingDebugMode)
 		logger->info("PF attempt to party member: {}", target);

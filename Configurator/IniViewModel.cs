@@ -47,6 +47,9 @@ namespace TemplePlusConfig
             "HpForNPCHd", typeof(HpForNPCHdType), typeof(IniViewModel),
             new PropertyMetadata(default(HpForNPCHdType)));
 
+        public static readonly DependencyProperty NpcStatBoostProperty = DependencyProperty.Register(
+            "NpcStatBoost", typeof(int), typeof(IniViewModel), new PropertyMetadata(default(int)));
+
         public static readonly DependencyProperty FogOfWarProperty = DependencyProperty.Register(
             "FogOfWar", typeof(FogOfWarType), typeof(IniViewModel),
             new PropertyMetadata(default(FogOfWarType)));
@@ -230,7 +233,13 @@ namespace TemplePlusConfig
             get { return (HpForNPCHdType)GetValue(HpForNPCHdProperty); }
             set { SetValue(HpForNPCHdProperty, value); }
         }
-        
+
+        public int NpcStatBoost
+        {
+            get { return (int)GetValue(NpcStatBoostProperty); }
+            set { SetValue(NpcStatBoostProperty, value); }
+        }
+
 
         public FogOfWarType FogOfWar
         {
@@ -455,6 +464,12 @@ namespace TemplePlusConfig
                         HpForNPCHd = HpForNPCHdType.Normal;
                         break;
                 }
+            }
+
+            int npcStatBoost;
+            if (int.TryParse(tpData["npcStatBoost"] , out npcStatBoost) )
+            {
+                NpcStatBoost = npcStatBoost;
             }
 
             //Handle reading in old setting (won't be written later)
@@ -729,6 +744,8 @@ namespace TemplePlusConfig
                     tpData["HpForNPCHd"] = "normal";
                     break;
             }
+
+            tpData["npcStatBoost"] = NpcStatBoost.ToString();
 
             //Set the old setting to false
             tpData["maxHpForNpcHitdice"] = "false";
