@@ -6367,6 +6367,7 @@ int ClassAbilityCallbacks::BardicMusicBeginRound(DispatcherCallbackArgs args){
 		return 0;
 
 	auto roundsLasted = args.GetCondArg(2);
+	auto endMusic = false;
 	if (dispIo->data1 <= 1){
 		args.SetCondArg(2, roundsLasted + 1);
 		auto tgt = args.GetCondArgObjHndl(3);
@@ -6386,9 +6387,16 @@ int ClassAbilityCallbacks::BardicMusicBeginRound(DispatcherCallbackArgs args){
 			party.ApplyConditionAround(args.objHndCaller, 30, "Inspired_Courage", objHndl::null);
 			return 0;
 		case BM_COUNTER_SONG: 
-			skillSys.SkillRoll(args.objHndCaller, SkillEnum::skill_perform, 0, &rollResult, 1);
-			party.ApplyConditionAroundWithArgs(args.objHndCaller, 30, "Countersong", {0, rollResult, 0});
-			return 0;
+			if (roundsLasted+1 >= 10) {
+				// countersong only lasts up to 10 rounds
+				endMusic = true;
+				BardicMusicPlaySound(bmType, args.objHndCaller, 1);  //End sound
+			}
+			else {
+				skillSys.SkillRoll(args.objHndCaller, SkillEnum::skill_perform, 0, &rollResult, 1);
+				party.ApplyConditionAroundWithArgs(args.objHndCaller, 30, "Countersong", {0, rollResult, 0});
+			}
+			break;
 		case BM_FASCINATE: 
 			if (tgt)
 				conds.AddTo(tgt, "Fascinate", {-1, 0});
@@ -6410,7 +6418,11 @@ int ClassAbilityCallbacks::BardicMusicBeginRound(DispatcherCallbackArgs args){
 		}
 
 	} 
-	else
+	else {
+		endMusic = true;
+	}
+
+	if (endMusic)
 	{
 		args.SetCondArg(2, 0);
 		args.SetCondArg(1, 0);
