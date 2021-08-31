@@ -193,22 +193,29 @@ static std::string FindPythonLibDir() {
 }
 #endif
 
+class ModOverride {
+public:
+	static bool IsModFolder(const std::string&);
+};
+
 void TigInitializer::LoadDataFiles() {
 
-	// TODO: Migrate to use of vfs
-	TioFileList list;
-	tio_filelist_create(&list, "*.dat");
+	{
+		// TODO: Migrate to use of vfs
+		TioFileList list;
+		tio_filelist_create(&list, "*.dat");
 
-	for (int i = 0; i < list.count; ++i) {
-		auto file = list.files[i];
-		logger->info("Registering archive {}", file.name);
-		int result = tio_path_add(file.name);
-		if (result != 0) {
-			logger->error("Unable to add archive {}: {}", file.name, result);
+		for (int i = 0; i < list.count; ++i) {
+			auto file = list.files[i];
+			logger->info("Registering archive {}", file.name);
+			int result = tio_path_add(file.name);
+			if (result != 0) {
+				logger->error("Unable to add archive {}: {}", file.name, result);
+			}
 		}
-	}
 
-	tio_filelist_destroy(&list);
+		tio_filelist_destroy(&list);
+	}
 
 	tio_mkdir("data");
 	tio_path_add("data");
@@ -312,7 +319,32 @@ void TigInitializer::LoadDataFiles() {
 
 	// overrides for testing (mainly for co8fixes so there's no need to repack the archive). Also for user mods.
 	tio_mkdir(fmt::format("overrides").c_str());
-	tio_path_add(fmt::format("overrides").c_str());
+	{
+		TioFileList list;
+		tio_filelist_create(&list, "overrides\\*");
+
+		for (int i = 0; i < list.count; ++i) {
+			auto file = list.files[i];
+			
+			auto fullPath = fmt::format("overrides\\{}", file.name);
+			if (!(file.attribs & TioFileAttribs::TFA_SUBDIR))
+				continue;
+				
+			if (ModOverride::IsModFolder(fullPath) ) {
+
+				logger->info("Registering override folder {}", file.name);
+				int result = tio_path_add(fullPath.c_str());
+				if (result != 0) {
+					logger->error("Unable to add archive {}: {}", file.name, result);
+				}
+			}
+			else if (file.name[0] != '.') {
+				logger->info("Ignoring override folder {}", file.name);
+			}
+		}
+
+		tio_filelist_destroy(&list);
+	}
 
 	for (auto& entry : config.additionalTioPaths) {
 		logger->info("Adding additional TIO path {}", entry);
@@ -391,4 +423,13 @@ static TigConfig createTigConfig(HINSTANCE hInstance) {
 		tigConfig.flags |= SF_ANIMCATCHUP;
 	}
 	return tigConfig;
+}
+
+
+bool ModOverride::IsModFolder(const std::string& path)
+{
+	auto specFilePath = fmt::format("{}\\mod_specs.json", path);
+	if (!vfs->FileExists(specFilePath))
+		return false;
+	return true;
 }
