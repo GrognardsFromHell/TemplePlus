@@ -469,7 +469,7 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 		MetaMagicData metaMagicData = metamagicValue;
 
 		//Modify metamagic data for enlarge and widen 
-		dispatch.DispatchMetaMagicModify(d20Sys.globD20Action->d20APerformer, metaMagicData, spellLevel, spellEnum);
+		dispatch.DispatchMetaMagicModify(d20Sys.globD20Action->d20APerformer, metaMagicData, spellLevel, spellEnum, spellClass);
 
 		auto curSeq = *actSeqSys.actSeqCur;
 		curSeq->spellPktBody.spellRange *= metaMagicData.metaMagicEnlargeSpellCount + 1;
