@@ -274,9 +274,12 @@ static BOOL RunDialogGuard(const char* expression, DialogState* dialog, int pick
 		expression++;
 	}
 
+	pythonObjIntegration.SetInDialogGuard(true);
+
 	auto globalsDict = PyModule_GetDict(script.module);
 	auto result = PyRun_String(expression, Py_eval_input, globalsDict, locals);
 	Py_DECREF(locals);
+	pythonObjIntegration.SetInDialogGuard(false);
 
 	if (!result) {
 		PyErr_Print();
