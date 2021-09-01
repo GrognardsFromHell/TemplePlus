@@ -337,6 +337,9 @@ void TigInitializer::LoadDataFiles() {
 				if (result != 0) {
 					logger->error("Unable to add archive {}: {}", file.name, result);
 				}
+				else {
+					modSupport.AddOverride(file.name);
+				}
 			}
 			else if (file.name[0] != '.') {
 				logger->info("Ignoring override folder {}", file.name);
