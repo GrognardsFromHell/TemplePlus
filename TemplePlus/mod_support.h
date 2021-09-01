@@ -12,6 +12,8 @@ public:
 	bool IsZMOD() const;
 	void SetIsZMOD(bool value);
 	static void SetNCGameFlag(bool value);
+	const std::vector<std::string>& GetOverrides();
+	void AddOverride(const std::string& overrideName);
 private:
 	void DetectCo8ActiveModule();
 	void DetectZMOD();
@@ -21,6 +23,7 @@ private:
 	bool mIsCo8 = false;
 	bool mIsZMOD = false;
 	bool mInited = false;
+	std::vector<std::string> mOverridesLoaded;
 };
 
 extern ModSupport modSupport;
