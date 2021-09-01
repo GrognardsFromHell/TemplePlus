@@ -716,8 +716,20 @@ static PyObject* PyObjHandle_SkillLevelGet(PyObject* obj, PyObject* args) {
 		}
 	}
 
+	if (config.dialogueUseBestSkillLevel && pythonObjIntegration.IsInDialogGuard()) {
+		auto maxSkillLevel = -1000;
+		for (auto i = 0; i < party.GroupPCsLen(); ++i) {
+			auto pc = party.GroupPCsGetMemberN(i);
+			if (critterSys.IsDeadNullDestroyed(pc) || critterSys.IsDeadOrUnconscious(pc) || !objSystem->IsValidHandle(pc))
+				continue;
+			auto skillLevel = dispatch.dispatch1ESkillLevel(pc, skillId, nullptr, handle, 1);
+			if (skillLevel > maxSkillLevel)
+				maxSkillLevel = skillLevel;
+		}
+		return PyInt_FromLong(maxSkillLevel);
+	}
+	
 	auto skillLevel = dispatch.dispatch1ESkillLevel(self->handle, skillId, nullptr, handle, 1);
-
 	return PyInt_FromLong(skillLevel);
 }
 
