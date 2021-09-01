@@ -76,6 +76,8 @@ struct TemplePlusConfig
 	bool NPCsLevelLikePCs = true;
 	bool showNpcStats = false;
 	bool showExactHPforNPCs = false; // draw exact HP for NPCs
+	bool showHitChances = false; // show hit chance tooltips for all attacks
+
 	int pointBuyPoints = 25; // number of Point Buy points at chargen
 	uint32_t maxPCs = 5; // max number of PCs in the party
 	bool maxPCsFlexible = false; // makes the party PC/NPC composition fluid
@@ -93,6 +95,8 @@ struct TemplePlusConfig
 	bool showTargetingCirclesInFogOfWar = false;
 	bool disableAlignmentRestrictions = false;
 	bool disableDoorRelocking = false;
+	bool dialogueUseBestSkillLevel = false; // uses best skill level from the (PC) group in dialogue checks
+
 	bool newClasses = false; // Prestige classes and such
 	bool newRaces = false; // Drow etc.
 	bool metamagicStacking = false; // Allows stacking of Meta Magic feats
@@ -105,6 +109,7 @@ struct TemplePlusConfig
 	double speedupFactor = 1.0;
 	bool equalizeMoveSpeed = true;
 	bool fastSneakAnim = false;
+	bool disableScreenShake = false; // disables screen shakes from animation
 	bool alertAiThroughDoors = false;
 	bool preferUse5FootStep = false;
 	bool extendedSpellDescriptions = false;

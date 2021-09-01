@@ -167,6 +167,8 @@ static ConfigSetting configSettings[] = {
 	CONF_INT(msaaSamples),
 	CONF_INT(msaaQuality),
 	CONF_BOOL(showNpcStats),
+	CONF_BOOL(showHitChances),
+
 	CONF_BOOL(newClasses),
 	CONF_BOOL(newRaces),
 	CONF_BOOL(metamagicStacking),
@@ -178,12 +180,16 @@ static ConfigSetting configSettings[] = {
 	CONF_BOOL(disableCraftingSpellReqs),
 	CONF_BOOL(disableMulticlassXpPenalty),
 	CONF_BOOL(disableDoorRelocking),
+	CONF_BOOL(dialogueUseBestSkillLevel),
+
 	CONF_BOOL(showTargetingCirclesInFogOfWar),
 	CONF_BOOL(nonCoreMaterials),
 	CONF_BOOL(tolerantNpcs),
 	CONF_STRING(fogOfWar),
 	CONF_DOUBLE(speedupFactor),
 	CONF_BOOL(fastSneakAnim),
+	CONF_BOOL(disableScreenShake),
+
 	CONF_BOOL(alertAiThroughDoors),
 	CONF_BOOL(preferUse5FootStep),
 	CONF_BOOL(extendedSpellDescriptions),

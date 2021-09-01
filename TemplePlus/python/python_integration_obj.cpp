@@ -9,6 +9,7 @@
 #include <util/fixes.h>
 #include <infrastructure/mesparser.h>
 #include <gamesystems/objects/objsystem.h>
+#include <config/config.h>
 
 PythonObjIntegration pythonObjIntegration;
 
@@ -319,6 +320,12 @@ int PythonObjIntegration::ExecuteObjectScript(objHndl triggerer, objHndl attache
 
 void PythonObjIntegration::RunAnimFrameScript(const std::string &command) {
 	logger->trace("Running Python command {}", command);
+
+	if (config.disableScreenShake) {
+		if (strstr(command.c_str(), "game.shake")) {
+			return;
+		}
+	}
 
 	auto locals = PyDict_New();
 
