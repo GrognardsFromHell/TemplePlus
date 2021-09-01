@@ -9,6 +9,7 @@
 #include <util/fixes.h>
 #include <infrastructure/mesparser.h>
 #include <gamesystems/objects/objsystem.h>
+#include <config/config.h>
 
 PythonObjIntegration pythonObjIntegration;
 
@@ -273,9 +274,12 @@ static BOOL RunDialogGuard(const char* expression, DialogState* dialog, int pick
 		expression++;
 	}
 
+	pythonObjIntegration.SetInDialogGuard(true);
+
 	auto globalsDict = PyModule_GetDict(script.module);
 	auto result = PyRun_String(expression, Py_eval_input, globalsDict, locals);
 	Py_DECREF(locals);
+	pythonObjIntegration.SetInDialogGuard(false);
 
 	if (!result) {
 		PyErr_Print();
@@ -319,6 +323,12 @@ int PythonObjIntegration::ExecuteObjectScript(objHndl triggerer, objHndl attache
 
 void PythonObjIntegration::RunAnimFrameScript(const std::string &command) {
 	logger->trace("Running Python command {}", command);
+
+	if (config.disableScreenShake) {
+		if (strstr(command.c_str(), "game.shake")) {
+			return;
+		}
+	}
 
 	auto locals = PyDict_New();
 

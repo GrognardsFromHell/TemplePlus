@@ -100,6 +100,9 @@ public:
 	static void AooShaderPacketAppend(LocAndOffsets* loc, int aooShaderId);
 	//static int(__cdecl*orgSeqRenderAooMovement)(D20Actn*, UiIntgameTurnbasedFlags);
 	static int SeqRenderAooMovement(D20Actn*, UiIntgameTurnbasedFlags);
+	static int SeqRenderFuncMove(D20Actn* d20a, UiIntgameTurnbasedFlags flags);
+	static int SeqRenderAttack(D20Actn* d20a, UiIntgameTurnbasedFlags flags);
+
 	static int ChooseTargetCallback(void* a)
 	{
 		logger->debug("Choose Target Callback");
@@ -143,7 +146,7 @@ public:
 	static int ActionAddToSeq();
 	static void ActSeqGetPicker();
 
-	static int SeqRenderFuncMove(D20Actn* d20a, UiIntgameTurnbasedFlags flags);
+	
 	void ActSeqApply();
 	void NaturalAttackOverwrites();
 
@@ -152,8 +155,9 @@ public:
 		NaturalAttackOverwrites();
 		replaceFunction(0x1008B140, SequenceSwitch);
 		orgSeqRenderFuncMove = replaceFunction(0x1008D090, SeqRenderFuncMove);
-		//orgSeqRenderAooMovement =
 		replaceFunction(0x10091D60, SeqRenderAooMovement);
+		replaceFunction(0x10094860, SeqRenderAttack);
+
 		replaceFunction(0x100933F0, ActionFrameProcess);
 		orgTurnStart = replaceFunction(0x10099430, TurnStart);
 		replaceFunction(0x100999E0, GreybarReset);
@@ -3961,6 +3965,27 @@ int ActnSeqReplacements::SeqRenderFuncMove(D20Actn* d20a, UiIntgameTurnbasedFlag
 	}
 	return 0;
 	//return orgSeqRenderFuncMove(d20a, flags);
+}
+
+int ActnSeqReplacements::SeqRenderAttack(D20Actn* d20a, UiIntgameTurnbasedFlags flags)
+{
+	if (!config.showHitChances)
+		flags = (UiIntgameTurnbasedFlags)0;
+
+	static auto showHitChanceTooltip = temple::GetRef<int(__cdecl)(D20Actn*, UiIntgameTurnbasedFlags)>(0x1008EDF0);
+	static auto showHitChanceAndCoverTooltip = temple::GetRef<int(__cdecl)(D20Actn*, UiIntgameTurnbasedFlags)>(0x1008F460);
+
+	auto weapon = inventory.ItemWornAt(d20a->d20APerformer, EquipSlot::WeaponPrimary);
+
+	if (weapon) {
+		if (inventory.IsRangedWeapon(weapon)) {
+			return showHitChanceAndCoverTooltip(d20a, flags);
+		}
+	}
+
+	
+	showHitChanceTooltip(d20a, flags);
+	return 0;
 }
 
 void ActnSeqReplacements::AooShaderPacketAppend(LocAndOffsets* loc, int aooShaderId)

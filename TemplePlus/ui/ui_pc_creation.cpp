@@ -1904,7 +1904,7 @@ feat_enums UiPcCreation::FeatsMultiGetFirst(feat_enums feat)
 #pragma endregion
 
 #pragma region Spells
-
+/* 0x101800E0 */
 BOOL UiPcCreation::SpellsSystemInit(UiSystemConf & conf)
 {
 	auto pcCreationMes = temple::GetRef<MesHandle>(0x11E72EF0);
@@ -1994,6 +1994,7 @@ void UiPcCreation::SpellsFree(){
 	SpellsWidgetsFree();
 }
 
+/* 0x1017FCC0 */
 BOOL UiPcCreation::SpellsWidgetsInit(){
 
 	auto &pcWnd = GetPcCreationWnd();
@@ -2535,11 +2536,10 @@ BOOL UiPcCreation::SpellsAvailableEntryBtnMsg(int widId, TigMsg * msg)
 
 			return 1;
 		case TigMsgWidgetEvent::Entered:
-			temple::GetRef<void(int, char*, size_t)>(0x10162AB0)(spEnum, temple::GetRef<char[1024]>(0x10C732B0), 1024u); // UiTooltipSetForSpell
-			temple::GetRef<void(char*)>(0x10162C00)(temple::GetRef<char[1024]>(0x10C732B0)); // UiCharTextboxSet
+			temple::GetRef<void(int)>(0x1011BA70)(spEnum); // UiPcCreationScrollboxSetSpell
 			return 1;
 		case TigMsgWidgetEvent::Exited:
-			temple::GetRef<void(__cdecl)(char *)>(0x10162C00)(""); // UiCharTextboxSet
+			ButtonEnteredHandler("TAG_CHARGEN_SPELLS");
 			return 1;
 		default:
 			return 0;
@@ -2555,7 +2555,7 @@ BOOL UiPcCreation::SpellsAvailableEntryBtnMsg(int widId, TigMsg * msg)
 	}*/
 
 	if (msgW->widgetEventType == TigMsgWidgetEvent::Exited) {
-		temple::GetRef<void(__cdecl)(char *)>(0x10162C00)(""); // UiCharTextboxSet
+		ButtonEnteredHandler("TAG_CHARGEN_SPELLS");
 		return 1;
 	}
 
