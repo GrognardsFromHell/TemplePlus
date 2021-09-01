@@ -75,6 +75,13 @@ namespace TemplePlusConfig
         public static readonly DependencyProperty TolerantTownsfolkProperty = DependencyProperty.Register(
           "TolerantTownsfolk", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
 
+        public static readonly DependencyProperty PartySkillChecksProperty = DependencyProperty.Register(
+          "PartySkillChecks", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+        
+
+        public static readonly DependencyProperty ShowHitChancesProperty = DependencyProperty.Register(
+          "ShowHitChances", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+
         public static readonly DependencyProperty TransparentNpcStatsProperty = DependencyProperty.Register(
           "TransparentNpcStats", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
 
@@ -85,6 +92,11 @@ namespace TemplePlusConfig
 
         public static readonly DependencyProperty DisableDoorRelockingProperty = DependencyProperty.Register(
           "DisableDoorRelocking", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+
+        public static readonly DependencyProperty DisableScreenShakesProperty = DependencyProperty.Register(
+          "DisableScreenShakes", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+        
+
         public static readonly DependencyProperty AlertAiThroughDoorsProperty = DependencyProperty.Register(
           "AlertAiThroughDoors", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
 
@@ -290,6 +302,18 @@ namespace TemplePlusConfig
             set { SetValue(TolerantTownsfolkProperty, value); }
         }
 
+        public bool PartySkillChecks
+        {
+            get { return (bool)GetValue(PartySkillChecksProperty); }
+            set { SetValue(PartySkillChecksProperty, value); }
+        }
+
+        public bool ShowHitChances
+        {
+            get { return (bool)GetValue(ShowHitChancesProperty); }
+            set { SetValue(ShowHitChancesProperty, value); }
+        }
+
         public bool TransparentNpcStats
         {
             get { return (bool)GetValue(TransparentNpcStatsProperty); }
@@ -316,6 +340,13 @@ namespace TemplePlusConfig
             get { return (bool)GetValue(DisableDoorRelockingProperty); }
             set { SetValue(DisableDoorRelockingProperty, value); }
         }
+
+        public bool DisableScreenShakes
+        {
+            get { return (bool)GetValue(DisableScreenShakesProperty); }
+            set { SetValue(DisableScreenShakesProperty, value); }
+        }
+
         public bool AlertAiThroughDoors
         {
             get { return (bool)GetValue(AlertAiThroughDoorsProperty); }
@@ -586,10 +617,29 @@ namespace TemplePlusConfig
                 SlowerLevelling = slowerLevelling;
             }
 
-            bool tolerantTownsfolk;
-            if (bool.TryParse(tpData["tolerantNpcs"], out tolerantTownsfolk))
             {
-                TolerantTownsfolk = tolerantTownsfolk;
+                bool tolerantTownsfolk;
+                if (bool.TryParse(tpData["tolerantNpcs"], out tolerantTownsfolk))
+                {
+                    TolerantTownsfolk = tolerantTownsfolk;
+                }
+            }
+
+            {
+                bool boolValue;
+                if (bool.TryParse(tpData["dialogueUseBestSkillLevel"], out boolValue))
+                {
+                    PartySkillChecks = boolValue;
+                }
+            }
+
+            {
+                bool boolValue;
+                if (bool.TryParse(tpData["showHitChances"], out boolValue))
+                {
+                    ShowHitChances = boolValue;
+                }
+                
             }
 
             bool showExactHPforNPCs, showNpcStats;
@@ -616,6 +666,17 @@ namespace TemplePlusConfig
             {
                 DisableDoorRelocking = disableDoorRelocking;
             }
+
+            {
+                bool disableScreenShake;
+                if (bool.TryParse(tpData["disableScreenShake"], out disableScreenShake))
+                {
+                    DisableScreenShakes = disableScreenShake;
+                }
+            }
+            
+
+
             bool alertAiThroughDoors;
             if (bool.TryParse(tpData["alertAiThroughDoors"], out alertAiThroughDoors))
             {
@@ -819,12 +880,16 @@ namespace TemplePlusConfig
             tpData["forgottenRealmsRaces"] = ForgottenRealmsRaces ? "true" : "false";
             tpData["nonCoreMaterials"] = NonCore ? "true" : "false";
             tpData["tolerantNpcs"] = TolerantTownsfolk? "true" : "false";
+            tpData["dialogueUseBestSkillLevel"] = PartySkillChecks ? "true" : "false";
             tpData["showExactHPforNPCs"] = TransparentNpcStats? "true" : "false";
             tpData["showNpcStats"] = TransparentNpcStats ? "true" : "false";
+            tpData["showHitChances"] = ShowHitChances ? "true" : "false";
             tpData["fastSneakAnim"] = FastSneaking ? "true" : "false";
             if (WalkDistanceFt < 0) WalkDistanceFt = 0;
             tpData["walkDistanceFt"] =WalkDistanceFt.ToString();
             tpData["disableDoorRelocking"] = DisableDoorRelocking? "true" : "false";
+            tpData["disableScreenShake"] = DisableScreenShakes ? "true" : "false";
+
             tpData["alertAiThroughDoors"] = AlertAiThroughDoors ? "true" : "false";
             tpData["preferUse5FootStep"] = PreferUse5FootStep ? "true" : "false";
             tpData["extendedSpellDescriptions"] = ExtendedSpellDescriptions ? "true" : "false";
