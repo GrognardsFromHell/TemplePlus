@@ -32,13 +32,8 @@ def OnSpellEffect(spell):
                 durationDice = dice_new('1d4')
                 stunDuration = durationDice.roll()
                 spellTarget.obj.condition_add('Stunned', stunDuration)
-                game.particles('sp-Daze2', spellTarget.obj)
             else:
-            ###### added, so xp will be granted ######
-                damageForXpDice = dice_new("1d1")
-                spellTarget.obj.damage(spell.caster, D20DT_UNSPECIFIED, damageForXpDice)
-            ######       xp grant fix end       ######
-                spellTarget.obj.critter_kill_by_effect() #Death Ward protects from Heart Ripper
+                spellTarget.obj.critter_kill_by_effect(spell.caster) #Death Ward protects from Heart Ripper
 
     spell.target_list.remove_target(spellTarget.obj)
     spell.spell_end(spell.id)
