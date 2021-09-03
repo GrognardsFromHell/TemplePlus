@@ -1275,7 +1275,7 @@ Dispatcher* _DispatcherInit(objHndl objHnd) {
 };
 
 void DispIOType21Init(DispIoTypeImmunityTrigger* dispIO) {
-	dispIO->dispIOType = dispIOType21;
+	dispIO->dispIOType = dispIOType21ImmunityTrigger;
 	dispIO->interrupt = 0;
 	dispIO->field_8 = 0;
 	dispIO->field_C = 0;

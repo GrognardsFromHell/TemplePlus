@@ -929,6 +929,7 @@ void LegacyCombatSystem::CombatSubturnEnd()
 	}
 }
 
+/* 0x10063760 */
 void LegacyCombatSystem::Subturn()
 {
 	

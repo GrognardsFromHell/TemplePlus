@@ -522,7 +522,7 @@ struct DispIoTypeImmunityTrigger : DispIO { // DispIoType 21
 	CondNode* condNode;
 
 	DispIoTypeImmunityTrigger() {
-		dispIOType = dispIOType21;
+		dispIOType = dispIOType21ImmunityTrigger;
 		interrupt = 0;
 		field_8 = 0;
 		condNode = nullptr;
