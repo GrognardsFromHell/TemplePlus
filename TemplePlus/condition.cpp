@@ -650,7 +650,7 @@ uint32_t _ConditionAddDispatchArgs(Dispatcher* dispatcher, CondNode** ppCondNode
 		dispIO14h.arg2 = args[1];
 	}
 
-	_DispatcherProcessor(dispatcher, dispTypeConditionAddPre, 0, (DispIO*)&dispIO14h);
+	dispatch.DispatcherProcessor(dispatcher, dispTypeConditionAddPre, 0, (DispIO*)&dispIO14h);
 
 	if (dispIO14h.outputFlag == 0) {
 		return 0;
@@ -953,6 +953,8 @@ int GenericCallbacks::TooltipUnrepeated(DispatcherCallbackArgs args)
 	return 0;
 }
 
+// Probably the only callback in the game that has non-zero return value,
+// not that it means anything :P
 int GenericCallbacks::ImmunityTrigger(DispatcherCallbackArgs args)
 {
 	GET_DISPIO(dispIOType21ImmunityTrigger, DispIoTypeImmunityTrigger);

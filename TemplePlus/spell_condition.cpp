@@ -35,6 +35,7 @@ public:
 	static void SpellDamageWeaponlikeHook(objHndl tgt, objHndl caster, int dicePacked, DamageType damType, int attackPower, D20ActionType actionType, int spellId, D20CAF flags ); // allows for sneak attack damage on chill touch
 
 	static int ImmunityCheckHandler(DispatcherCallbackArgs args);
+	static int MinorGlobeOfInvulnerabilitySuppression(DispatcherCallbackArgs args);
 
 	static int CalmEmotionsActionInvalid(DispatcherCallbackArgs args);
 	static bool ShouldRemoveCalmEmotions(objHndl handle, DispIoD20Signal *evtObj, DispatcherCallbackArgs args);
@@ -280,6 +281,7 @@ public:
 			return 0;
 		});
 		
+		replaceFunction(0x100C8F90, MinorGlobeOfInvulnerabilitySuppression);
 
 		// Fix for Shocking Grasp doing d8 instead of d6 damage
 		char sgWriteVal = 6;
@@ -589,6 +591,48 @@ int SpellConditionFixes::ImmunityCheckHandler(DispatcherCallbackArgs args)
 		}
 	}
 	
+
+	return 0;
+}
+
+int SpellConditionFixes::MinorGlobeOfInvulnerabilitySuppression(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIOType21ImmunityTrigger, DispIoTypeImmunityTrigger);
+	auto spellId = dispIo->okToAdd;
+	auto selfSpellId = args.GetCondArg(0); // of minor globe
+	if (spellId == selfSpellId) {
+		return 0;
+	}
+
+	SpellPacketBody spPkt(spellId);
+	if (!spPkt.spellEnum)
+		return 0;
+
+	const int BESTOW_CURSE_SPELL_ENUM = 28;
+	if (spPkt.spellKnownSlotLevel >= 4 || spPkt.spellEnum == BESTOW_CURSE_SPELL_ENUM)
+		return 0;
+
+	if (dispIo->field_C == 48) {
+		return 0;
+	}
+
+	// Temple+: added exceptions so that spells can end
+	if (dispIo->dispType == enum_disp_type::dispTypeD20Signal) {
+		switch (dispIo->dispKey) {
+		case DK_SIG_Killed:
+		case DK_SIG_Critter_Killed:
+		case DK_SIG_Spell_End:
+		case DK_SIG_Concentration_Broken:
+		case DK_SIG_Dismiss_Spells:
+			return 0;
+		default:
+			break;
+		}
+	}
+
+	dispIo->interrupt = 1;
+	dispIo->val2 = 10;
+	dispIo->okToAdd = selfSpellId;
 
 	return 0;
 }
