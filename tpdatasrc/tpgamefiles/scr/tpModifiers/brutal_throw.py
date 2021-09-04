@@ -6,9 +6,20 @@ import math
 
 print "Registering Brutal Throw"
 
+#Check if the weapon can only be thrown
+def IsThrownOnly(wpnType):
+	if (wpnType == wt_javelin) or (wpnType == wt_dart) or (wpnType == wt_shuriken) or (wpnType == wt_net) or (wpnType == wt_grenade):
+		return 1
+	return 0
+
 def BrutalThrowAttackBonus(attachee, args, evt_obj):
-	if evt_obj.attack_packet.get_flags() & D20CAF_THROWN == 0:
-		return 0
+
+	#Always add the bonus for thrown only weapons.  Also add the bonus if the flag is set (for weapons like dagger)
+	wpn = evt_obj.attack_packet.get_weapon_used()
+	wpnType = wpn.get_weapon_type()
+	if not IsThrownOnly(wpnType):
+		if evt_obj.attack_packet.get_flags() & D20CAF_THROWN == 0:
+			return 0
 		
 	#Add differece between strength and dex bonus
 	strScore = attachee.stat_level_get(stat_strength)
