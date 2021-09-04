@@ -188,7 +188,7 @@
 {6114} Clear Mind {[Abjuration] You gain a +4 sacred bonus on saving throws made against mind-affecting spells and effects.}
 {6115} Deafening Clang {[Transmutation][Sonic] The weapon deals 1d6 points of sonic damage with each successful hit, and any creature struck by the weapon must succeed on a Fortitude saving throw or be deafened for 1 minute.}
 {6116} Grave Strike {[Divination][Good] For 1 round, you can deliver sneak attacks against undead as if they were not immune to extra damage from sneak attacks.}
-{6118} Faith Healing {[Conjuration](Healing) Heal 1d8 + level (max. 5) on target that worships same deity.}
+{6118} Faith Healing {[Conjuration](Healing) Heal 8 + level (max. 5) on target that worships same deity.}
 {6119} Summon Undead I {[Conjuration](Summoning)[Evil] You summon an undead creature.}
 {6120} Angelskin {[Abjuration][Good] Target gains damage reduction 5/evil.}
 {6121} Demonhide {[Abjuration][Evil] Target gains damage reduction 5/good.}
