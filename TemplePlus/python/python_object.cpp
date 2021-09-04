@@ -2240,6 +2240,7 @@ static PyObject* PyObjHandle_KillByEffect(PyObject* obj, PyObject* args) {
 		return 0;
 	}
 
+	// Temple+: added optional arg to set the killer (so XP is awarded)
 	auto killer = objHndl::null;
 	if (!PyArg_ParseTuple(args, "|O&:objhndl.critter_kill_by_effect", &ConvertObjHndl, &killer)) {
 		return 0;

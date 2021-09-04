@@ -185,7 +185,7 @@ void DungeonMaster::RenderEditedObj() {
 	if (ImGui::TreeNodeEx("Critter Attributes", ImGuiTreeNodeFlags_CollapsingHeader)) {
 		auto curAlignment = (Alignment)obj->GetInt32(obj_f_critter_alignment);
 		auto curAlignmentChoice = (Alignment)obj->GetInt32(obj_f_critter_alignment_choice);
-		static char* alignChoiceNames[2] = { "Negative", "Positive" };
+		static char* alignChoiceNames[3] = { "Negative", "Positive", "(moot)"};
 		ImGui::Text( fmt::format("Alignment: {}", alignmentNames[curAlignment] ).c_str());
 		ImGui::Text( fmt::format("Alignment Choice: {}", alignChoiceNames[curAlignmentChoice]).c_str());
 
