@@ -177,6 +177,13 @@ def skillCheck(attachee, skillEnum, skillCheckDc):
     checkResult = True if skillRollResult >= skillCheckDc else False
     return checkResult
 
+# Check mc_type
+def checkCategoryType(critter, *args):
+    for mcType in args:
+        if critter.is_category_type(mcType):
+            return True
+    return False
+
 ### Item Condition functions
 
 # An item condition is a condition that should be applied to a
