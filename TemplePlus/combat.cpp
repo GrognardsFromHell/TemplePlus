@@ -923,10 +923,14 @@ void LegacyCombatSystem::Subturn()
 		logger->info("   ...is not performing.");
 		if (party.IsInParty(actor))
 			combatSys.AddToInitiativeWithinRect(actor);
+		// Temple+: added code to pull in allies
 		else if (!critterSys.IsFriendly(actor, partyLeader)){
 	
 			ObjList objList;
-			objList.ListRangeTiles(actor, 24, OLC_CRITTERS);
+			const int ALLY_ALERTING_DISTANCE = 24;
+			// test cases:
+			// moathouse frogs - 12 is enough to pull them all in
+			objList.ListRangeTiles(actor, ALLY_ALERTING_DISTANCE, OLC_CRITTERS);
 			for (auto i=0; i< objList.size(); i++){
 				auto resHandle = objList[i];
 				if (!resHandle)
@@ -953,7 +957,7 @@ void LegacyCombatSystem::Subturn()
 				if (!combatSys.HasLineOfAttack(resHandle, actor)){
 
 
-					if (locSys.DistanceToObj(actor, resHandle) > 40){
+					if (locSys.DistanceToObj(actor, resHandle) > 30){
 						continue;
 					}
 					// check pathfinding short distances
