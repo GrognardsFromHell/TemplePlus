@@ -1227,7 +1227,10 @@ uint32_t ActionSequenceSystem::MoveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 						}
 					} 
 					else {
-						if (!tbStatCopy.hourglassState || 	tbStatCopy.hourglassState == 4 && (config.preferUse5FootStep || !objects.IsPlayerControlled(d20a->d20APerformer))) { // added for AI to take 5' steps when it still has full round action to exploit
+						// Added for AI to take 5' steps when it still has full round action to exploit.  Players can select an option for them as well.  
+						// Don't use the player option for stunning fist since there wouldn't be a way to use it without the 5 foot step and full attack.
+						if (!tbStatCopy.hourglassState || 	tbStatCopy.hourglassState == 4 && ((config.preferUse5FootStep && (d20->globD20Action->d20ActType != D20A_STUNNING_FIST)) 
+							|| !objects.IsPlayerControlled(d20a->d20APerformer))) { 
 							chosenActionType = D20A_5FOOTSTEP;
 							if ( (tbStatCopy.tbsFlags & (TBSF_Movement | TBSF_Movement2)) != 0) {
 								chosenActionType = D20A_MOVE;
