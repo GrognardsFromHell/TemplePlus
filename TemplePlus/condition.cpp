@@ -6616,6 +6616,7 @@ int ClassAbilityCallbacks::BardMusicActionFrame(DispatcherCallbackArgs args){
 		bardLvl += d20Sys.D20QueryPython(args.objHndCaller, "Bardic Music Bonus Levels");
 		chaScore = objects.StatLevelGet(args.objHndCaller, stat_charisma);
 		curSeq->spellPktBody.dc = 10 + bardLvl/2 + (chaScore-10)/2;
+		curSeq->spellPktBody.casterLevel = bardLvl;
 		spellSys.RegisterSpell(curSeq->spellPktBody, spellId);
 		pySpellIntegration.SpellTrigger(spellId, SpellEvent::SpellEffect);
 		break;
