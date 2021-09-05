@@ -26,6 +26,10 @@ namespace gfx {
 		IndexBufferPtr circleIndexBuffer;
 		BufferBinding circleBinding;
 
+		VertexBufferPtr donutVertexBuffer;
+		IndexBufferPtr donutIndexBuffer;
+		BufferBinding donutBinding;
+
 		RenderingDevice &device;
 		
 		ResourceListenerRegistration mRegistration;
@@ -99,23 +103,58 @@ namespace gfx {
 			.AddElement(VertexElementType::Float4, VertexElementSemantic::Normal)
 			.AddElement(VertexElementType::Float2, VertexElementSemantic::TexCoord);
 
-		// +3 because for n lines, you need n+1 points and in this case, we have to repeat
-		// the first point again to close the loop (so +2) and also include the center point
-		// to draw a circle at the end (+3)
-		circleVertexBuffer = device.CreateEmptyVertexBuffer(sizeof(XMFLOAT3) * (sCircleSegments + 3));
+		{
+			// +3 because for n lines, you need n+1 points and in this case, we have to repeat
+			// the first point again to close the loop (so +2) and also include the center point
+			// to draw a circle at the end (+3)
+			circleVertexBuffer = device.CreateEmptyVertexBuffer(sizeof(XMFLOAT3) * (sCircleSegments + 3));
 
-		// Pre-generate the circle indexbuffer. 
-		// One triangle per circle segment
-		eastl::fixed_vector<uint16_t, sCircleSegments * 3> circleIndices;
-		for (uint16_t i = 0; i < sCircleSegments; i++) {
-			circleIndices.push_back(i + 2);
-			circleIndices.push_back(0); // The center point has to be in the triangle
-			circleIndices.push_back(i + 1);			
+			// Pre-generate the circle indexbuffer. 
+			// One triangle per circle segment
+			eastl::fixed_vector<uint16_t, sCircleSegments * 3> circleIndices;
+			for (uint16_t i = 0; i < sCircleSegments; i++) {
+				circleIndices.push_back(i + 2);
+				circleIndices.push_back(0); // The center point has to be in the triangle
+				circleIndices.push_back(i + 1);
+			}
+			circleIndexBuffer = device.CreateIndexBuffer(circleIndices, true);
+
+			circleBinding.AddBuffer(circleVertexBuffer, 0, sizeof(XMFLOAT3))
+				.AddElement(VertexElementType::Float3, VertexElementSemantic::Position);
 		}
-		circleIndexBuffer = device.CreateIndexBuffer(circleIndices, true);
+		
 
-		circleBinding.AddBuffer(circleVertexBuffer, 0, sizeof(XMFLOAT3))
-			.AddElement(VertexElementType::Float3, VertexElementSemantic::Position);
+		{
+			donutVertexBuffer = device.CreateEmptyVertexBuffer(sizeof(XMFLOAT3) * (sCircleSegments));
+			// Pre-generate the donut indexbuffer. 
+			// Two triangles per circle segment
+			eastl::fixed_vector<uint16_t, sCircleSegments * 6> donutIndices;
+			for (uint16_t i = 0; i < 2*sCircleSegments-2; i++) {
+				if (i % 2 == 0) {
+					donutIndices.push_back(i + 1);
+					donutIndices.push_back(i + 0);
+					donutIndices.push_back(i + 2);
+				}
+				else {
+					donutIndices.push_back(i);
+					donutIndices.push_back(i + 1);
+					donutIndices.push_back(i + 2);
+				}
+			}
+			donutIndices.push_back(sCircleSegments-1);
+			donutIndices.push_back(0);
+			donutIndices.push_back(1);
+
+			donutIndices.push_back(sCircleSegments - 1);
+			donutIndices.push_back(sCircleSegments - 2);
+			donutIndices.push_back(0);
+
+			donutIndexBuffer = device.CreateIndexBuffer(donutIndices, true);
+
+			donutBinding.AddBuffer(donutVertexBuffer, 0, sizeof(XMFLOAT3))
+				.AddElement(VertexElementType::Float3, VertexElementSemantic::Position);
+		}
+		
 
 		// Just the two end points of a line
 		lineVertexBuffer = device.CreateEmptyVertexBuffer(sizeof(XMFLOAT3) * 2);
@@ -220,7 +259,8 @@ namespace gfx {
 		  lineOccludedMaterial(CreateLineMaterial(device, true)),
 		  discBufferBinding(device.CreateMdfBufferBinding()),
 		  lineBinding(lineMaterial.GetVertexShader()),
-		  circleBinding(lineMaterial.GetVertexShader()) {
+		  circleBinding(lineMaterial.GetVertexShader()),
+		  donutBinding(lineMaterial.GetVertexShader()){
 	}
 
 	ShapeRenderer3d::ShapeRenderer3d(RenderingDevice& device)
@@ -365,6 +405,69 @@ namespace gfx {
 		mImpl->device.SetIndexBuffer(*mImpl->circleIndexBuffer);
 
 		mImpl->device.DrawIndexed(gfx::PrimitiveType::TriangleList, 0, sCircleSegments * 3);
+	}
+
+	void ShapeRenderer3d::DrawDonut(const XMFLOAT3& center, float radiusInner, float radiusOuter, XMCOLOR borderColor, XMCOLOR fillColor, bool occludedOnly)
+	{
+		// The positions array contains the following:
+		// 0 to sCircleSegments-1 -> Positions on the diameter of the circle
+		// sCircleSegments  -> The first position again to close the circle
+		std::array<XMFLOAT3, sCircleSegments > positions;
+
+		// A full rotation divided by the number of segments
+		auto rotPerSegment = XM_2PI / sCircleSegments;
+
+		for (auto i = 0; i < sCircleSegments ; ++i) {
+			auto rot = i * rotPerSegment;
+			auto radius = (i % 2) == 0 ? radiusInner : radiusOuter;
+			positions[i].x = center.x + cosf(rot) * radius - sinf(rot) * 0.0f;
+			positions[i].y = center.y;
+			positions[i].z = center.z + cosf(rot) * 0.0f + sinf(rot) * radius;
+		}
+		
+		mImpl->donutVertexBuffer->Update<XMFLOAT3>(positions);
+		mImpl->donutBinding.Bind();
+
+		mImpl->BindLineMaterial(fillColor, occludedOnly);
+
+		mImpl->device.SetIndexBuffer(*mImpl->donutIndexBuffer);
+
+		mImpl->device.DrawIndexed(gfx::PrimitiveType::TriangleList, 0, sCircleSegments * 6 );
+		
+		// Outline
+		mImpl->BindLineMaterial(borderColor, occludedOnly);
+
+		/*
+			Build an index buffer that draws an outline around the pie
+			segment using the previously generated positions.
+		*/
+		static constexpr size_t MaxPositions = sCircleSegments*2 + 2;
+		std::array<uint16_t, MaxPositions > outlineIndices;
+		auto i = 0;
+		auto j = 0; // The first vertex is the center vertex, so we skip it for line drawing
+		// The first run of indices is along the inner radius
+		while (i < sCircleSegments/2 ) {
+			outlineIndices[i++] = j;
+			j += 2;
+		}
+		
+		// And finally it goes back to the starting point
+		outlineIndices[sCircleSegments / 2] = 0;
+		auto ib(mImpl->device.CreateIndexBuffer(outlineIndices, false));
+		mImpl->device.SetIndexBuffer(*ib);
+
+		mImpl->device.DrawIndexed(gfx::PrimitiveType::LineStrip, sCircleSegments/2 + 1 , sCircleSegments/2 + 1 );
+		
+		i = 0;
+		j = 1;
+		while (i < sCircleSegments / 2) {
+			outlineIndices[i++] = j;
+			j += 2;
+		}
+		outlineIndices[sCircleSegments / 2] = 1;
+		ib->Update(outlineIndices);
+		mImpl->device.DrawIndexed(gfx::PrimitiveType::LineStrip, sCircleSegments / 2 + 1, sCircleSegments / 2 + 1 );
+
 	}
 
 	static constexpr float cos45 = 0.70709997f;
