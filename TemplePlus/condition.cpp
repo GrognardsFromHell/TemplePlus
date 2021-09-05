@@ -295,6 +295,7 @@ public:
 	static int BardicMusicHeroicsSaveBonus(DispatcherCallbackArgs args);
 	static int BardicMusicHeroicsAC(DispatcherCallbackArgs args);
 	static int BardicMusicSuggestionFearQuery(DispatcherCallbackArgs args);
+	static int BardicMusicSuggestionCountersong(DispatcherCallbackArgs args);
 
 	static int PaladinDivineGrace(DispatcherCallbackArgs args);
 	static int SmiteEvilToHitBonus(DispatcherCallbackArgs args);
@@ -6581,6 +6582,7 @@ int ClassAbilityCallbacks::BardMusicActionFrame(DispatcherCallbackArgs args){
 	}
 
 	auto partsysId = 0, rollResult =0, chaScore = 0, spellId = 0;
+	auto bardLvl = 0;
 	auto &curSeq = *actSeqSys.actSeqCur;
 	switch (bmType){
 	case BM_INSPIRE_COURAGE: 
@@ -6610,6 +6612,10 @@ int ClassAbilityCallbacks::BardMusicActionFrame(DispatcherCallbackArgs args){
 	case BM_SUGGESTION: 
 		partsysId = gameSystems->GetParticleSys().CreateAtObj("Bardic-Suggestion", args.objHndCaller);
 		spellId = spellSys.GetNewSpellId();
+		bardLvl = objects.StatLevelGet(args.objHndCaller, stat_level_bard);
+		bardLvl += d20Sys.D20QueryPython(args.objHndCaller, "Bardic Music Bonus Levels");
+		chaScore = objects.StatLevelGet(args.objHndCaller, stat_charisma);
+		curSeq->spellPktBody.dc = 10 + bardLvl/2 + (chaScore-10)/2;
 		spellSys.RegisterSpell(curSeq->spellPktBody, spellId);
 		pySpellIntegration.SpellTrigger(spellId, SpellEvent::SpellEffect);
 		break;
@@ -6853,6 +6859,30 @@ int ClassAbilityCallbacks::BardicMusicOnSequence(DispatcherCallbackArgs args)
 			}
 			BardicMusicPlaySound(bmType, args.objHndCaller, 1);  //End sound
 		}
+	}
+
+	return 0;
+}
+
+int ClassAbilityCallbacks::BardicMusicSuggestionCountersong(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIoTypeCondStruct, DispIoCondStruct);
+
+	auto countersongCond = conds.GetByName("Countersong");
+	if (!countersongCond || dispIo->condStruct != countersongCond)
+		return 0;
+
+	int spellId = args.GetCondArg(2);
+	SpellPacketBody spellPktBody;
+	if (!spellSys.GetSpellPacketBody(spellId, &spellPktBody))
+		return 0;
+
+	int countersongRoll = dispIo->arg2;
+
+	if (spellPktBody.dc <= countersongRoll) {
+		// Remove condition, OnBeginRound script should see this and end
+		// the spell.
+		conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
 	}
 
 	return 0;
@@ -7132,6 +7162,7 @@ void Conditions::AddConditionsToTable(){
 		bardSuggestion.AddHook(dispTypeConditionRemove, DK_NONE, genericCallbacks.EndParticlesFromArg, 1, 0);
 		bardSuggestion.AddHook(dispTypeD20Signal, DK_SIG_Killed, ConditionRemoveCallback);
 		bardSuggestion.AddHook(dispTypeD20Signal, DK_SIG_Teleport_Prepare, ConditionRemoveCallback);
+		bardSuggestion.AddHook(dispTypeConditionAddPre, DK_NONE, classAbilityCallbacks.BardicMusicSuggestionCountersong);
 	}
 
 	static CondStructNew bardInspireHeroics("Inspired Heroics", 4);
