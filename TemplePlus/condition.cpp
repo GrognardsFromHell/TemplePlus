@@ -6582,8 +6582,10 @@ int ClassAbilityCallbacks::BardMusicActionFrame(DispatcherCallbackArgs args){
 	}
 
 	auto partsysId = 0, rollResult =0, chaScore = 0, spellId = 0;
-	auto bardLvl = 0;
 	SpellPacketBody spellPktBody;
+	auto bardLvl = objects.StatLevelGet(args.objHndCaller, stat_level_bard);
+	bardLvl += d20Sys.D20QueryPython(args.objHndCaller, "Bardic Music Bonus Levels");
+
 	auto &curSeq = *actSeqSys.actSeqCur;
 	switch (bmType){
 	case BM_INSPIRE_COURAGE: 
@@ -6599,6 +6601,14 @@ int ClassAbilityCallbacks::BardMusicActionFrame(DispatcherCallbackArgs args){
 		partsysId = gameSystems->GetParticleSys().CreateAtObj("Bardic-Fascinate", args.objHndCaller);
 		spellId = spellSys.GetNewSpellId();
 		spellSys.RegisterSpell(curSeq->spellPktBody, spellId);
+
+		if (spellSys.GetSpellPacketBody(spellId, &spellPktBody)) {
+			// reset appropriate caster level; automatic packet includes
+			// Practiced Spellcaster, allowing too many targets
+			spellPktBody.casterLevel = bardLvl;
+			spellSys.UpdateSpellPacket(spellPktBody);
+		}
+
 		pySpellIntegration.SpellTrigger(spellId, SpellEvent::SpellEffect);
 		// effect now handled via spell
 		//skillSys.SkillRoll(performer, SkillEnum::skill_perform, 20, &rollResult, 1);
@@ -6613,16 +6623,15 @@ int ClassAbilityCallbacks::BardMusicActionFrame(DispatcherCallbackArgs args){
 	case BM_SUGGESTION: 
 		partsysId = gameSystems->GetParticleSys().CreateAtObj("Bardic-Suggestion", args.objHndCaller);
 
-		bardLvl = objects.StatLevelGet(args.objHndCaller, stat_level_bard);
-		bardLvl += d20Sys.D20QueryPython(args.objHndCaller, "Bardic Music Bonus Levels");
 		chaScore = objects.StatLevelGet(args.objHndCaller, stat_charisma);
 
 		spellId = spellSys.GetNewSpellId();
 		spellSys.RegisterSpell(curSeq->spellPktBody, spellId);
 
 		if (spellSys.GetSpellPacketBody(spellId, &spellPktBody)) {
-			// reset appropriate DC and spell duration; automatic packet
-			// treats it as a level 0 bard spell
+			// reset appropriate DC and caster level; automatic packet
+			// treats it as a level 0 bard spell, including Practiced
+			// Spellcaster
 			spellPktBody.dc = 10 + bardLvl/2 + (chaScore-10)/2;
 			spellPktBody.casterLevel = bardLvl;
 			spellSys.UpdateSpellPacket(spellPktBody);
