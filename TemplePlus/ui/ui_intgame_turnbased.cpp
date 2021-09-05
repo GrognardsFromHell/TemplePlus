@@ -378,6 +378,7 @@ int UiIntegameTurnbasedRepl::UiIntgamePathSequenceHandler(TigMsgMouse* msg) {
 	// return orgUiIntgamePathPreviewHandler(msg);
 }
 
+/* 0x10174100 */
 void UiIntegameTurnbasedRepl::UiIntgameGenerateSequence(int isUnnecessary) {
 	auto curSeq = *actSeqSys.actSeqCur;
 	// replacing this just for debug purposes really
@@ -497,7 +498,7 @@ void UiIntegameTurnbasedRepl::UiIntgameGenerateSequence(int isUnnecessary) {
 				actSeqSys.TurnBasedStatusInit(actor);
 				d20Sys.GlobD20ActnInit();
 				actSeqSys.ActionTypeAutomatedSelection(objFromRaycast);
-				if (!d20Sys.GlobD20ActnSetTarget(objFromRaycast, nullptr)) {
+				if (ActionErrorCode::AEC_OK == d20Sys.GlobD20ActnSetTarget(objFromRaycast, nullptr)) {
 					actSeqSys.ActionAddToSeq();
 				}
 				break;
@@ -524,7 +525,7 @@ void UiIntegameTurnbasedRepl::UiIntgameGenerateSequence(int isUnnecessary) {
 				actSeqSys.TurnBasedStatusInit(actor);
 				d20Sys.GlobD20ActnInit();
 				actSeqSys.ActionTypeAutomatedSelection(objFromRaycast);
-				if (!d20Sys.GlobD20ActnSetTarget(objFromRaycast, nullptr)) {
+				if (ActionErrorCode::AEC_OK == d20Sys.GlobD20ActnSetTarget(objFromRaycast, nullptr)) {
 					actSeqSys.ActionAddToSeq();
 				}
 				break;
@@ -541,7 +542,7 @@ void UiIntegameTurnbasedRepl::UiIntgameGenerateSequence(int isUnnecessary) {
 				actSeqSys.TurnBasedStatusInit(actor);
 				d20Sys.GlobD20ActnInit();
 				actSeqSys.ActionTypeAutomatedSelection(objFromRaycast);
-				if (!d20Sys.GlobD20ActnSetTarget(objFromRaycast, nullptr)) {
+				if (ActionErrorCode::AEC_OK == d20Sys.GlobD20ActnSetTarget(objFromRaycast, nullptr)) {
 					actSeqSys.ActionAddToSeq();
 				}
 				break;
@@ -562,7 +563,7 @@ void UiIntegameTurnbasedRepl::UiIntgameGenerateSequence(int isUnnecessary) {
 				d20Sys.GlobD20ActnSetD20CAF(D20CAF_UNNECESSARY);
 			
 			actSeqSys.ActionTypeAutomatedSelection(objHndl::null);
-			if (!d20Sys.GlobD20ActnSetTarget(objHndl::null, &actionLoc)) {
+			if (ActionErrorCode::AEC_OK == d20Sys.GlobD20ActnSetTarget(objHndl::null, &actionLoc)) {
 				actSeqSys.ActionAddToSeq();
 			}
 		}

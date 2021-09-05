@@ -859,6 +859,7 @@ int ActionSequenceSystem::ActionAddToSeq()
 	// return addresses.ActionAddToSeq();
 }
 
+/* 0x1008A100 */
 uint32_t ActionSequenceSystem::addD20AToSeq(D20Actn* d20a, ActnSeq* actSeq)
 {
 	D20ActionType d20aType = d20a->d20ActType;
@@ -2452,6 +2453,7 @@ uint32_t ActionSequenceSystem::combatTriggerSthg(ActnSeq* actSeq)
 	//return result;
 }
 
+/* 0x10094C60 */
 ActionErrorCode ActionSequenceSystem::seqCheckAction(D20Actn* d20a, TurnBasedStatus* tbStat)
 {
 	ActionErrorCode errorCode = (ActionErrorCode)TurnBasedStatusUpdate(d20a, tbStat);
@@ -2570,7 +2572,7 @@ uint32_t ActionSequenceSystem::curSeqNext()
 			// added this clause in Temple+ because AI Flank was fubaring things
 			// Example scenario: 2 npcs go after PC. First has normal attack closest AI, 2nd has flank AI tactic.
 			// It starts executing the first in simuls, and then the 2nd NPC aborts the simuls.
-			// It resets the 2nd NPCs sequence and performs it (with no actions actually applied)
+			// It resets the 2nd NPC's sequence and performs it (with no actions actually applied)
 			// Without this clause, it reaches the next "else" and re-starts the 2nd NPC's round before
 			// the simuls finishes, thus causing havoc. This fix will lead it into IsLastSimulsPerformer inside
 			// CombatAdvanceTurn, which will cause it to either return, or restore the sequence if appropriate
@@ -2590,9 +2592,9 @@ uint32_t ActionSequenceSystem::curSeqNext()
 		if (combatSys.isCombatActive()
 			&& !(*actSeqPickerActive)	&& (*actSeqCur)
 			&& objects.IsPlayerControlled((*actSeqCur)->performer)
-			&& (*actSeqCur)->tbStatus.baseAttackNumCode
+			&& (*actSeqCur)->tbStatus.attackModeCode < 
+			(*actSeqCur)->tbStatus.baseAttackNumCode
 			+ (*actSeqCur)->tbStatus.numBonusAttacks
-					> (*actSeqCur)->tbStatus.attackModeCode
 			)
 		{ // I think this is for doing full attack?
 			//if (d20Sys.d20Query((*actSeqCur)->performer, DK_QUE_Trip_AOO))
@@ -2836,6 +2838,7 @@ void ActionSequenceSystem::ActionPerform()
 
 }
 
+/* 0x100961C0 */
 void ActionSequenceSystem::sequencePerform()
 {
 	// check if OK to perform
@@ -3745,6 +3748,7 @@ void ActionSequenceSystem::AttackAppend(ActnSeq* actSeq, D20Actn* d20a, TurnBase
 	actSeq->d20ActArrayNum++;
 }
 
+/* 0x1008C4F0 */
 int ActionSequenceSystem::StdAttackTurnBasedStatusCheck(D20Actn* d20a, TurnBasedStatus* tbStat)
 {
 	int hgState = tbStat->hourglassState;
@@ -3754,8 +3758,9 @@ int ActionSequenceSystem::StdAttackTurnBasedStatusCheck(D20Actn* d20a, TurnBased
 	
 	auto tgt = d20a->d20ATarget;
 	if (*actSeqSys.performingDefaultAction && tgt && critterSys.IsDeadOrUnconscious(tgt)
-	&& (d20a->d20ActType == D20A_STANDARD_ATTACK || d20a->d20ActType == D20A_STANDARD_RANGED_ATTACK)) {
-	return AEC_TARGET_INVALID;
+		&& (d20a->d20ActType == D20A_STANDARD_ATTACK || d20a->d20ActType == D20A_STANDARD_RANGED_ATTACK)) 
+	{
+		return AEC_TARGET_INVALID;
 	}
 
 	if (hgState != -1)
