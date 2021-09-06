@@ -617,7 +617,23 @@ void RenderHooks::DrawCircle3d(LocAndOffsets center,
 	auto center3d(center.ToInches3D(y));
 
 	tig->GetShapeRenderer3d().DrawFilledCircle(
-		center3d, radius, borderColor, fillColor, specialZ
-	);
+			center3d, radius, borderColor, fillColor, specialZ);
+	
+}
 
+void RenderHooks::DrawDonut3d(LocAndOffsets center, 
+	float negElevation, 
+	XMCOLOR fillColor, 
+	XMCOLOR borderColor, 
+	float radiusOuter, float radiusInner)
+{
+	auto y = -(sinf(-0.77539754f) * negElevation);
+	auto center3d(center.ToInches3D(y));
+
+	if (radiusInner < 0)
+		tig->GetShapeRenderer3d().DrawFilledCircle(
+			center3d, radiusOuter, borderColor, fillColor, specialZ);
+	else
+		tig->GetShapeRenderer3d().DrawDonut(
+			center3d, radiusInner, radiusOuter, borderColor, fillColor, specialZ);
 }
