@@ -2268,7 +2268,7 @@ ActionErrorCode D20ActionCallbacks::LocationCheckStdAttack(D20Actn* d20a, TurnBa
 	if (tgtDist > range)
 		return AEC_TARGET_TOO_FAR;
 	// Temple+: added donut range
-	auto minDist = (config.disableReachWeaponDonut ? - 10.0 : (range - minReach)); // todo check if this 10.0 magic number is consistent with other places
+	auto minDist = (config.disableReachWeaponDonut || minReach <= 0.0f) ? -10.0 : (range - minReach); // todo check if this 10.0 magic number is consistent with other places
 	if (tgtDist < minDist)
 		return AEC_TARGET_TOO_CLOSE;
 
