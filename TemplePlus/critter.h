@@ -329,7 +329,7 @@ struct LegacyCritterSystem : temple::AddressTable
 #pragma endregion
 
 #pragma region Combat
-	float GetReach(objHndl objHndl, D20ActionType actType); // reach in feet
+	float GetReach(objHndl objHndl, D20ActionType actType, float* minReach = nullptr); // reach in feet
 	int GetBonusFromSizeCategory(int sizeCategory);
 	int GetDamageIdx(objHndl obj, int attackIdx);
 	int GetNumNaturalAttacks(objHndl handle);

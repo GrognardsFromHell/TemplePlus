@@ -36,6 +36,7 @@ struct LocationSys : temple::AddressTable
 	// Distance between from and loc in inches (without the obj radius)
 	float DistanceToLoc(objHndl from, LocAndOffsets loc);
 	float DistanceToLocFeet(objHndl obj, LocAndOffsets *loc);
+	float DistanceToLocFeet_NonNegative(objHndl obj, LocAndOffsets* loc);
 
 	/*
 		gets the higher tile delta value (absolute value)

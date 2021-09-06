@@ -306,6 +306,7 @@ BOOL LegacyCombatSystem::CanMeleeTargetAtLocRegardItem(objHndl obj, objHndl weap
 	return TRUE;
 }
 
+/* 0x100B8600 */
 BOOL LegacyCombatSystem::CanMeleeTargetAtLoc(objHndl obj, objHndl target, LocAndOffsets* loc){
 
 	if (!obj || critterSys.IsDeadOrUnconscious(obj))
@@ -318,7 +319,9 @@ BOOL LegacyCombatSystem::CanMeleeTargetAtLoc(objHndl obj, objHndl target, LocAnd
 		if (!combatSys.CanMeleeTargetAtLocRegardItem(obj, secondaryWeapon, target, loc))
 		{
 			if (!objects.getArrayFieldInt32(obj, obj_f_critter_attacks_idx, 0)){
-				// check polymorphed
+				
+				// Temple+: added check for polymorph
+				// Fixes Wildshape AoO issue
 				auto protoId = d20Sys.d20Query(obj, DK_QUE_Polymorphed);
 				if (!protoId){
 					return FALSE;
@@ -564,7 +567,9 @@ bool LegacyCombatSystem::HasLineOfAttack(objHndl obj, objHndl target)
 	objIt.origin = objects.GetLocationFull(obj);
 	LocAndOffsets tgtLoc = objects.GetLocationFull(target);
 	objIt.targetLoc = tgtLoc;
-	objIt.flags = static_cast<RaycastFlags>(RaycastFlags::StopAfterFirstBlockerFound | RaycastFlags::ExcludeItemObjects | RaycastFlags::HasTargetObj | RaycastFlags::HasSourceObj | RaycastFlags::HasRadius);
+	objIt.flags = static_cast<RaycastFlags>(RaycastFlags::StopAfterFirstBlockerFound 
+		| RaycastFlags::ExcludeItemObjects
+		| RaycastFlags::HasTargetObj | RaycastFlags::HasSourceObj | RaycastFlags::HasRadius);
 	objIt.radius = static_cast<float>(0.1);
 	bool blockerFound = false;
 	if (objIt.Raycast())

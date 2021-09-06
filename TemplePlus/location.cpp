@@ -217,6 +217,7 @@ float LocationSys::DistanceToLoc(objHndl from, LocAndOffsets loc) {
 	return distance - radius;
 }
 
+/* 0x10023800 */
 float LocationSys::DistanceToLocFeet(objHndl obj, LocAndOffsets* loc)
 {
 	auto objLoc = objects.GetLocationFull(obj);
@@ -225,13 +226,23 @@ float LocationSys::DistanceToLocFeet(objHndl obj, LocAndOffsets* loc)
 	return InchesToFeet(distance - radius);
 }
 
+/* 0x100B4940 */
+float LocationSys::DistanceToLocFeet_NonNegative(objHndl obj, LocAndOffsets* loc)
+{
+	auto result = DistanceToLocFeet(obj, loc);
+	if (result < 0.0f)
+		result = 0.0f;
+	return result;
+}
+
 
 int64_t LocationSys::GetTileDeltaMaxBtwnLocs(locXY loc1, locXY loc2){
 	return temple::GetRef<int64_t(__cdecl)(locXY, locXY)>(0x1002A030)(loc1, loc2);
 }
 
 float LocationSys::InchesToFeet(float inches) {
-	return inches / 12.0f;
+	constexpr float FEET_TO_INCH = (float)( 1 / 12.0);
+	return inches * FEET_TO_INCH;
 }
 
 LocAndOffsets LocationSys::TrimToLength(LocAndOffsets srcLoc, LocAndOffsets tgtLoc, float lengthInches){
