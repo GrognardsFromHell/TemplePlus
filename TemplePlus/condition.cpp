@@ -7239,6 +7239,11 @@ int RaceAbilityCallbacks::HalflingThrownWeaponAndSlingBonus(DispatcherCallbackAr
 			if (wpnType == wt_sling){
 				dispIo->bonlist.AddBonus(1, 0, 139);
 			}
+
+			// So that thrown only weapons (like javalins) will display on the character sheet
+			if (weapons.IsThrownOnlyWeapon(wpnType)) {
+				dispIo->bonlist.AddBonus(1, 0, 139);
+			}
 		}
 		
 	}
