@@ -1107,8 +1107,8 @@ uint32_t ActionSequenceSystem::MoveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 		
 		if (reach < 0.1){ reach = 3.0; }
 		actSeq->targetObj = d20a->d20ATarget;
-		pathQ.distanceToTargetMin = distToTgtMin * 12.0f;
-		pathQ.tolRadius = reach * 12.0f - fourPointSevenPlusEight;
+		pathQ.distanceToTargetMin = distToTgtMin * INCH_PER_FEET;
+		pathQ.tolRadius = reach * INCH_PER_FEET - fourPointSevenPlusEight;
 	} else
 	{
 		pathQ.to = d20aIn->destLoc;
@@ -1647,6 +1647,7 @@ ActionErrorCode ActionSequenceSystem::ActionSequenceChecksRegardLoc(LocAndOffset
 	return result;
 }
 
+/* 0x10097000 */
 ActionErrorCode ActionSequenceSystem::ActionSequenceChecksWithPerformerLocation()
 {
 	LocAndOffsets loc;
@@ -3678,11 +3679,18 @@ int ActionSequenceSystem::UnspecifiedAttackAddToSeq(D20Actn* d20a, ActnSeq* actS
 	}
 
 	// if out of reach, add move sequence
-	auto reach = critterSys.GetReach(d20a->d20APerformer, d20a->d20ActType);
+	auto polearmDonutReach = config.disableReachWeaponDonut ? false : true;
+	float minReach = 0.0f;
+	auto reach = critterSys.GetReach(d20a->d20APerformer, d20a->d20ActType, &minReach);
 	location->getLocAndOff(tgt, &d20aCopy.destLoc);
-	if (location->DistanceToObj(performer, tgt) > reach){
+	auto distToTgt = max(0.0f, locSys.DistanceToObj(performer, tgt));
+	if (distToTgt > reach || polearmDonutReach && distToTgt < (reach-minReach)){
 		d20aCopy.d20ActType = D20A_UNSPECIFIED_MOVE;
-		int result = MoveSequenceParse(&d20aCopy, actSeq, tbStat, 0.0, reach, 1);
+		auto distToTgtMin = minReach > 0.0f ? 
+			max(0.0f, reach - minReach + locSys.InchesToFeet(INCH_PER_SUBTILE / 2))
+			: 0.0f;
+		int result = MoveSequenceParse(&d20aCopy, actSeq, tbStat, 
+			polearmDonutReach ? distToTgtMin : 0.0, reach, 1);
 		if (result)
 			return result;
 		tbStatCopy = *tbStat;
