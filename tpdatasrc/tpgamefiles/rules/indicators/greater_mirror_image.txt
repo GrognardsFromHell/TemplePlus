@@ -1,0 +1,5 @@
+ID_string: GREATER_MIRROR_IMAGE
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\greater-mirror-image.tga
+help_topic: TAG_SPELLS_GREATER_MIRROR_IMAGE
+tooltip_base_text: Greater Mirror Image
