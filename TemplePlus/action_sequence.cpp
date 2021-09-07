@@ -3684,10 +3684,11 @@ int ActionSequenceSystem::UnspecifiedAttackAddToSeq(D20Actn* d20a, ActnSeq* actS
 	auto reach = critterSys.GetReach(d20a->d20APerformer, d20a->d20ActType, &minReach);
 	location->getLocAndOff(tgt, &d20aCopy.destLoc);
 	auto distToTgt = max(0.0f, locSys.DistanceToObj(performer, tgt));
-	if (distToTgt > reach || polearmDonutReach && distToTgt < (reach-minReach)){
+	auto tooClose = polearmDonutReach && (minReach > 0.0f) && distToTgt < (reach - minReach);
+	if (distToTgt > reach || tooClose){
 		d20aCopy.d20ActType = D20A_UNSPECIFIED_MOVE;
-		auto distToTgtMin = minReach > 0.0f ? 
-			max(0.0f, reach - minReach + locSys.InchesToFeet(INCH_PER_SUBTILE / 2))
+		auto distToTgtMin = tooClose ?
+			max(0.0f, (reach - minReach) + locSys.InchesToFeet(INCH_PER_SUBTILE / 2))
 			: 0.0f;
 		int result = MoveSequenceParse(&d20aCopy, actSeq, tbStat, 
 			polearmDonutReach ? distToTgtMin : 0.0, reach, 1);
