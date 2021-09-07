@@ -1471,7 +1471,7 @@ float LegacyCritterSystem::GetReach(objHndl obj, D20ActionType actType, /*added 
 	
 	// Temple+: added polearm minimum reach
 	if (minReach) {
-		*minReach = weaponMinReach;
+		*minReach = max(0.0f, weaponMinReach - 2.0f);
 	}
 	return maxReach;
 }
