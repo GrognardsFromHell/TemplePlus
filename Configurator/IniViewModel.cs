@@ -9,6 +9,7 @@ namespace TemplePlusConfig
 {
     public class IniViewModel : DependencyObject
     {
+#region Dependencyprops
         public static readonly DependencyProperty InstallationPathProperty = DependencyProperty.Register(
             "InstallationPath", typeof (string), typeof (IniViewModel), new PropertyMetadata(default(string)));
 
@@ -134,7 +135,10 @@ namespace TemplePlusConfig
           "ShowTargetingCirclesInFogOfWar", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
         public static readonly DependencyProperty WildshapeUsableItemsProperty = DependencyProperty.Register(
           "WildshapeUsableItems", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
-        
+        public static readonly DependencyProperty DisableReachWeaponDonutProperty = DependencyProperty.Register(
+          "DisableReachWeaponDonut", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+
+        #endregion
 
         public IEnumerable<HpOnLevelUpType> HpOnLevelUpTypes => Enum.GetValues(typeof (HpOnLevelUpType))
             .Cast<HpOnLevelUpType>();
@@ -162,6 +166,7 @@ namespace TemplePlusConfig
             NeedsCo8Defaults = false;
         }
 
+#region props
         public string InstallationPath
         {
             get
@@ -430,7 +435,16 @@ namespace TemplePlusConfig
             set { SetValue(WildshapeUsableItemsProperty, value); }
         }
 
+        public bool DisableReachWeaponDonut
+        {
+            get { return (bool)GetValue(DisableReachWeaponDonutProperty); }
+            set { SetValue(DisableReachWeaponDonutProperty, value); }
+        }
+        
+
         public bool NeedsCo8Defaults { get; internal set; }
+
+#endregion
 
         /// <summary>
         /// Tries to find an installation directory based on common locations and the Windows registry.
@@ -451,9 +465,19 @@ namespace TemplePlusConfig
 
         }
 
+
         public void LoadFromIni(IniData iniData)
         {
+
             var tpData = iniData["TemplePlus"];
+
+            Func<string, bool> TryReadBool = (name) =>
+            {
+                bool val = false;
+                bool.TryParse(tpData[name], out val);
+                return val;
+            };
+
             InstallationPath = tpData["toeeDir"];
             ModuleName = tpData["defaultModule"];
 
@@ -598,50 +622,19 @@ namespace TemplePlusConfig
             }
                 
 
-            bool allowXpOverflow;
-            if (bool.TryParse(tpData["allowXpOverflow"], out allowXpOverflow))
-            {
-                AllowXpOverflow = allowXpOverflow;
-            }
-
-            bool metamagicStacking;
-            if (bool.TryParse(tpData["metamagicStacking"], out metamagicStacking))
-            {
-                MetamagicStacking = metamagicStacking;
-            }
             
+            AllowXpOverflow = TryReadBool("allowXpOverflow");
+            
+            MetamagicStacking = TryReadBool("metamagicStacking");
+            
+            SlowerLevelling = TryReadBool("slowerLevelling") ;
+            
+            TolerantTownsfolk = TryReadBool("tolerantNpcs");
+            
+            PartySkillChecks = TryReadBool("dialogueUseBestSkillLevel");
 
-            bool slowerLevelling;
-            if (bool.TryParse(tpData["slowerLevelling"], out slowerLevelling))
-            {
-                SlowerLevelling = slowerLevelling;
-            }
-
-            {
-                bool tolerantTownsfolk;
-                if (bool.TryParse(tpData["tolerantNpcs"], out tolerantTownsfolk))
-                {
-                    TolerantTownsfolk = tolerantTownsfolk;
-                }
-            }
-
-            {
-                bool boolValue;
-                if (bool.TryParse(tpData["dialogueUseBestSkillLevel"], out boolValue))
-                {
-                    PartySkillChecks = boolValue;
-                }
-            }
-
-            {
-                bool boolValue;
-                if (bool.TryParse(tpData["showHitChances"], out boolValue))
-                {
-                    ShowHitChances = boolValue;
-                }
-                
-            }
-
+            ShowHitChances = TryReadBool("showHitChances");
+            
             bool showExactHPforNPCs, showNpcStats;
             if (bool.TryParse(tpData["showExactHPforNPCs"], out showExactHPforNPCs)
                 && bool.TryParse(tpData["showNpcStats"], out showNpcStats))
@@ -649,10 +642,8 @@ namespace TemplePlusConfig
                 TransparentNpcStats = showNpcStats && showExactHPforNPCs;
             }
 
-            bool fastSneaking;
-            if (bool.TryParse(tpData["fastSneakAnim"], out fastSneaking)){
-                FastSneaking = fastSneaking;
-            }
+            FastSneaking = TryReadBool("fastSneakAnim");
+
             int walkDistFt;
             if (int.TryParse(tpData["walkDistanceFt"], out walkDistFt))
             {
@@ -661,108 +652,47 @@ namespace TemplePlusConfig
                 WalkDistanceFt = walkDistFt;
             }
 
-            bool disableDoorRelocking;
-            if (bool.TryParse(tpData["disableDoorRelocking"], out disableDoorRelocking))
-            {
-                DisableDoorRelocking = disableDoorRelocking;
-            }
-
-            {
-                bool disableScreenShake;
-                if (bool.TryParse(tpData["disableScreenShake"], out disableScreenShake))
-                {
-                    DisableScreenShakes = disableScreenShake;
-                }
-            }
             
+            DisableDoorRelocking = TryReadBool("disableDoorRelocking");
+            
+            DisableScreenShakes = TryReadBool("disableScreenShake");
+            
+            AlertAiThroughDoors = TryReadBool("alertAiThroughDoors");
+            
+            PreferUse5FootStep = TryReadBool("preferUse5FootStep");
+            
+            ExtendedSpellDescriptions = TryReadBool("extendedSpellDescriptions");
+            
+            NewClasses = TryReadBool("newClasses");
+            
+            NonCore = TryReadBool("nonCoreMaterials");
+            
+            NewRaces = TryReadBool("newRaces");
+            
+            MonstrousRaces = TryReadBool("monstrousRaces");
+            
+            ForgottenRealmsRaces = TryReadBool("forgottenRealmsRaces");
+            
+            // Ruleset
+            
+            LaxRules = TryReadBool("laxRules");
+            StricterRulesEnforcement = TryReadBool("stricterRulesEnforcement");
+            
+            DisableAlignmentRestrictions = TryReadBool("disableAlignmentRestrictions");
+            
+            DisableCraftingSpellReqs = TryReadBool("disableCraftingSpellReqs");
+            
+            DisableMulticlassXpPenalty = TryReadBool("disableMulticlassXpPenalty");
+            
+            ShowTargetingCirclesInFogOfWar = TryReadBool("showTargetingCirclesInFogOfWar");
+            
+            WildshapeUsableItems = TryReadBool("wildShapeUsableItems");
 
+            DisableReachWeaponDonut = TryReadBool("disableReachWeaponDonut");
 
-            bool alertAiThroughDoors;
-            if (bool.TryParse(tpData["alertAiThroughDoors"], out alertAiThroughDoors))
-            {
-                AlertAiThroughDoors = alertAiThroughDoors;
-            }
-
-            bool preferUse5FootStep;
-            if (bool.TryParse(tpData["preferUse5FootStep"], out preferUse5FootStep))
-            {
-                PreferUse5FootStep = preferUse5FootStep;
-            }
-
-            bool extendedSpellDescriptions;
-            if (bool.TryParse(tpData["extendedSpellDescriptions"], out extendedSpellDescriptions))
-            {
-                ExtendedSpellDescriptions = extendedSpellDescriptions;
-            }
-
-            bool newClasses;
-            if (bool.TryParse(tpData["newClasses"], out newClasses))
-            {
-                NewClasses = newClasses;
-            }
-
-            bool nonCore;
-            if (bool.TryParse(tpData["nonCoreMaterials"], out nonCore))
-            {
-                NonCore = nonCore;
-            }
-            bool newRaces;
-            if (bool.TryParse(tpData["newRaces"], out newRaces))
-            {
-                NewRaces = newRaces;
-            }
-            bool monstrousRaces;
-            if (bool.TryParse(tpData["monstrousRaces"], out monstrousRaces))
-            {
-                MonstrousRaces = monstrousRaces;
-            }
-            bool forgottenRealmsRaces;
-            if (bool.TryParse(tpData["forgottenRealmsRaces"], out forgottenRealmsRaces))
-            {
-                ForgottenRealmsRaces = forgottenRealmsRaces;
-            }
-
-            // Lax Rules
-            bool laxRules;
-            if (bool.TryParse(tpData["laxRules"], out laxRules))
-            {
-                LaxRules = laxRules;
-            }
-
-            bool stricterRulesEnforcement;
-            if (bool.TryParse(tpData["stricterRulesEnforcement"], out stricterRulesEnforcement))
-            {
-                StricterRulesEnforcement = stricterRulesEnforcement;
-            }
-
-            bool disableAlignmentRestrictions;
-            if (bool.TryParse(tpData["disableAlignmentRestrictions"], out disableAlignmentRestrictions))
-            {
-                DisableAlignmentRestrictions = disableAlignmentRestrictions;
-            }
-            bool disableCraftingSpellReqs;
-            if (bool.TryParse(tpData["disableCraftingSpellReqs"], out disableCraftingSpellReqs))
-            {
-                DisableCraftingSpellReqs = disableCraftingSpellReqs;
-            }
-            bool disableMulticlassXpPenalty;
-            if (bool.TryParse(tpData["disableMulticlassXpPenalty"], out disableMulticlassXpPenalty))
-            {
-                DisableMulticlassXpPenalty = disableMulticlassXpPenalty;
-            }
-            bool showTargetingCirclesInFogOfWar;
-            if (bool.TryParse(tpData["showTargetingCirclesInFogOfWar"], out showTargetingCirclesInFogOfWar))
-            {
-                ShowTargetingCirclesInFogOfWar = showTargetingCirclesInFogOfWar;
-            }
-            bool wildshapeUsableItems;
-            if (bool.TryParse(tpData["wildShapeUsableItems"], out wildshapeUsableItems))
-            {
-                WildshapeUsableItems = wildshapeUsableItems;
-            }
         }
 
-        public void SaveToIni(IniData iniData)
+    public void SaveToIni(IniData iniData)
         {
             var tpData = iniData["TemplePlus"];
             if (tpData == null)
@@ -830,7 +760,8 @@ namespace TemplePlusConfig
             tpData["disableMulticlassXpPenalty"] = DisableMulticlassXpPenalty ? "true" : "false";
             tpData["showTargetingCirclesInFogOfWar"] = ShowTargetingCirclesInFogOfWar ? "true" : "false";
             tpData["wildShapeUsableItems"] = WildshapeUsableItems ? "true" : "false";
-            
+            tpData["disableReachWeaponDonut"] = DisableReachWeaponDonut ? "true" : "false";
+
 
             tpData["pointBuyPoints"] = PointBuyPoints.ToString();
             tpData["renderWidth"] = RenderWidth.ToString();
