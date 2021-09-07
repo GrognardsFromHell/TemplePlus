@@ -932,7 +932,7 @@ void UiIntegameTurnbasedRepl::UiDrawAoOThreatRanges()
 		auto circleLoc = objects.GetLocationFull(combatant);
 		auto &renderer = tig->GetShapeRenderer3d();
 		if (minReachFt > 0.0f) {
-			auto radiusInner = (reachFt-minReachFt)* INCH_PER_FEET + radiusInch;
+			auto radiusInner = minReachFt* INCH_PER_FEET + radiusInch;
 			RenderHooks::DrawDonut3d(circleLoc, 1.0, 0x40808000, 0xFF808000, circleRadius, radiusInner);
 		}
 		else {

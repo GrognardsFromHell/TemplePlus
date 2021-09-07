@@ -2538,7 +2538,7 @@ ActionErrorCode D20ActionCallbacks::LocationCheckStdAttack(D20Actn* d20a, TurnBa
 	if (tgtDist > range)
 		return AEC_TARGET_TOO_FAR;
 	// Temple+: added donut range
-	auto minDist = (config.disableReachWeaponDonut || minReach <= 0.0f) ? -10.0 : (range - minReach); // todo check if this 10.0 magic number is consistent with other places
+	auto minDist = (config.disableReachWeaponDonut || minReach <= 0.0f) ? -10.0 :  minReach; // todo check if this 10.0 magic number is consistent with other places
 	if (tgtDist < minDist)
 		return AEC_TARGET_TOO_CLOSE;
 
@@ -3503,13 +3503,13 @@ ActionErrorCode D20ActionCallbacks::AddToStandardAttack(D20Actn * d20a, ActnSeq 
 	float minReach = 0.0f;
 	auto reach = critterSys.GetReach(performer, d20a->d20ActType, &minReach);
 	auto distToTgt = max( 0.0f, locSys.DistanceToObj(performer, tgt) );
-	auto tooClose = polearmDonutReach && (minReach > 0.0f) && distToTgt < (reach - minReach);
+	auto tooClose = polearmDonutReach && (minReach > 0.0f) && distToTgt < minReach;
 	if (distToTgt > reach || tooClose){
 		d20aCopy = *d20a;
 		d20aCopy.d20ActType = D20A_UNSPECIFIED_MOVE;
 		auto destLoc = objSystem->GetObject(tgt)->GetLocationFull();
 		auto distToTgtMin = tooClose ?
-			max( 0.0f, (reach - minReach) + locSys.InchesToFeet(INCH_PER_SUBTILE / 2)) 
+			max( 0.0f, minReach + locSys.InchesToFeet(INCH_PER_SUBTILE / 2)) 
 			: 0.0f;
 		actSeqSys.MoveSequenceParse(&d20aCopy, actSeq, tbStat, 
 			polearmDonutReach ? distToTgtMin : 0.0, reach, 1);
