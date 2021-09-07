@@ -3221,11 +3221,12 @@ ActionErrorCode D20ActionCallbacks::AddToStandardAttack(D20Actn * d20a, ActnSeq 
 	float minReach = 0.0f;
 	auto reach = critterSys.GetReach(performer, d20a->d20ActType, &minReach);
 	auto distToTgt = max( 0.0f, locSys.DistanceToObj(performer, tgt) );
-	if (distToTgt > reach || polearmDonutReach && distToTgt < minReach){
+	auto tooClose = polearmDonutReach && (minReach > 0.0f) && distToTgt < (reach - minReach);
+	if (distToTgt > reach || tooClose){
 		d20aCopy = *d20a;
 		d20aCopy.d20ActType = D20A_UNSPECIFIED_MOVE;
 		auto destLoc = objSystem->GetObject(tgt)->GetLocationFull();
-		auto distToTgtMin = minReach > 0.0f ? 
+		auto distToTgtMin = tooClose ?
 			max( 0.0f, (reach - minReach) + locSys.InchesToFeet(INCH_PER_SUBTILE / 2)) 
 			: 0.0f;
 		actSeqSys.MoveSequenceParse(&d20aCopy, actSeq, tbStat, 
