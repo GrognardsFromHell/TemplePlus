@@ -150,6 +150,8 @@ public:
 	static int EffectTooltipGeneral(DispatcherCallbackArgs args);
 	static int TooltipUnrepeated(DispatcherCallbackArgs); // SubDispDef data1 denotes combat.mes line
 
+	static int ImmunityTrigger(DispatcherCallbackArgs args);
+
 	// particle systems
 	static int EndParticlesFromArg(DispatcherCallbackArgs args);
 	static int PlayParticlesSavePartsysId(DispatcherCallbackArgs args);
@@ -356,6 +358,8 @@ public:
 
 			return 0;
 		});
+
+		replaceFunction(0x100ed5a0, GenericCallbacks::ImmunityTrigger);
 
 		//dispTypeConditionAdd
 		static int(__cdecl* orgTempAbilityLoss2)(DispatcherCallbackArgs) = replaceFunction<int(__cdecl)(DispatcherCallbackArgs)>(0x100EA3B0, [](DispatcherCallbackArgs args) 
@@ -646,7 +650,7 @@ uint32_t _ConditionAddDispatchArgs(Dispatcher* dispatcher, CondNode** ppCondNode
 		dispIO14h.arg2 = args[1];
 	}
 
-	_DispatcherProcessor(dispatcher, dispTypeConditionAddPre, 0, (DispIO*)&dispIO14h);
+	dispatch.DispatcherProcessor(dispatcher, dispTypeConditionAddPre, 0, (DispIO*)&dispIO14h);
 
 	if (dispIO14h.outputFlag == 0) {
 		return 0;
@@ -945,6 +949,43 @@ int GenericCallbacks::TooltipUnrepeated(DispatcherCallbackArgs args)
 	{
 		strncpy(dispIo->strings[numstrings], mesLine, 0x100);
 		dispIo->numStrings++;
+	}
+	return 0;
+}
+
+// Probably the only callback in the game that has non-zero return value,
+// not that it means anything :P
+int GenericCallbacks::ImmunityTrigger(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIOType21ImmunityTrigger, DispIoTypeImmunityTrigger);
+	auto sddata1 = args.GetData1();
+	if (args.subDispNode->condNode != dispIo->condNode
+		|| args.dispKey != sddata1) {
+		return 0;
+	}
+
+
+
+	dispIo->interrupt = 1;
+	dispIo->SDDKey1 = sddata1;
+	switch (sddata1) {
+	case DK_IMMUNITY_SPELL:
+		dispIo->okToAdd = args.GetCondArg(0);
+		return DK_IMMUNITY_SPELL;
+	case DK_IMMUNITY_11:
+		return DK_IMMUNITY_11;
+	case DK_IMMUNITY_12:
+		return DK_IMMUNITY_12;
+	case DK_IMMUNITY_COURAGE:
+		return DK_IMMUNITY_COURAGE;
+	case DK_IMMUNITY_RACIAL:
+		return DK_IMMUNITY_RACIAL;
+	case DK_IMMUNITY_15:
+		return DK_IMMUNITY_15;
+	case DK_IMMUNITY_SPECIAL:
+		return DK_IMMUNITY_SPECIAL;
+	default:
+		break;
 	}
 	return 0;
 }
@@ -3063,14 +3104,13 @@ void ConditionSystem::RegisterNewConditions()
 
 	auto itemForceRemoveCallback = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x10104410);
 	auto immunityCheckHandler = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100ED650);
-	auto immunityTriggerCallback = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100ed5a0);
 	cond = &mCondNecklaceOfAdaptation; 
 
 	cond->condName = "Necklace of Adaptation";
 	cond->numArgs = 4;
 	DispatcherHookInit(cond, 0, dispTypeItemForceRemove, 0, itemForceRemoveCallback, 0, 0);
 	DispatcherHookInit(cond, 1, dispTypeSpellImmunityCheck,0, immunityCheckHandler, 4,0);
-	DispatcherHookInit(cond, 2, dispTypeImmunityTrigger, DK_IMMUNITY_SPECIAL, immunityTriggerCallback, 0x10, 0);
+	DispatcherHookInit(cond, 2, dispTypeImmunityTrigger, DK_IMMUNITY_SPECIAL, genericCallbacks.ImmunityTrigger, 0x10, 0);
 
 	{
 		static CondStructNew condAttrEnhBonus;

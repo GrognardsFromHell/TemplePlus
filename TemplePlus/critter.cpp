@@ -1554,9 +1554,12 @@ uint32_t LegacyCritterSystem::IsSubtypeWater(objHndl objHnd)
 	return IsCategorySubtype(objHnd, mc_subtype_water);
 }
 
-float LegacyCritterSystem::GetReach(objHndl obj, D20ActionType actType) {
+/* 0x100B52D0 */
+float LegacyCritterSystem::GetReach(objHndl obj, D20ActionType actType, /*added in Temple+:*/ float* minReach ) {
 
 	float naturalReach = (float)objects.getInt32(obj, obj_f_critter_reach);
+	
+	// Temple+: fixed wildshape reach
 	auto protoId = d20Sys.d20Query(obj, DK_QUE_Polymorphed);
 	if (protoId) {
 		auto protoHandle = gameSystems->GetObj().GetProtoHandle(protoId);
@@ -1569,20 +1572,32 @@ float LegacyCritterSystem::GetReach(objHndl obj, D20ActionType actType) {
 		naturalReach = 5.0;
 	}
 
+
+	float weaponReach = 0.0f;
+	float weaponMinReach = 0.0f;
 	if (actType != D20A_TOUCH_ATTACK)
 	{
 		objHndl weapon = inventory.GetItemAtInvIdx(obj, 203);
 		// todo: handle cases where enlarged creatures dual wield polearms ><
+		// todo: enlarge effects on reach weapon
 		if (weapon){
 			auto weapType = objects.GetWeaponType(weapon);
 			if (weapons.IsReachWeaponType(weapType)){
-				return naturalReach + 3.0f; // +5.0 - 2.0
+				weaponReach = 5.0f;
+				if (weapType != wt_spike_chain) {
+					weaponMinReach = weaponReach;
+				}
 			}
 			
-			return naturalReach - 2.0f;
 		}
 	}
-	return naturalReach - 2.0f;
+	auto maxReach = weaponReach + naturalReach - 2.0f;
+	
+	// Temple+: added polearm minimum reach
+	if (minReach) {
+		*minReach = weaponMinReach;
+	}
+	return maxReach;
 }
 
 int LegacyCritterSystem::GetBonusFromSizeCategory(int sizeCategory)

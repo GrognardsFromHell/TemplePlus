@@ -519,6 +519,7 @@ public:
 	}
 } hooks;
 
+/* 0x101140F0 */
 void MainLoopHooks::NormalLmbHandleTarget(objHndl * tgt)
 {
 	locXY tgtLoc = LocAndOffsets::null.location;

@@ -62,8 +62,9 @@ def san_start_combat( attachee, triggerer ):
 		return RUN_DEFAULT
 #		game.new_sid = 0
 	elif (obj_percent_hp(attachee) < 50):
+		# StopCombat(attachee, 0) # his pet doesn't resume attacking if so
 		for pc in game.party:
-			#if pc.type == obj_t_pc:
+			# if pc.type == obj_t_pc:
 			attachee.ai_shitlist_remove( pc )
 #		game.global_flags[822] = 1
 		if (game.global_vars[901] == 0):
@@ -127,6 +128,8 @@ def san_will_kos( attachee, triggerer ):
 
 
 def falrinth_escape( attachee, triggerer ):
+	print("falrinth_escape")
+	attachee.d20_send_signal(S_Killed) # to end all ongoing spells (won't remove Lesser Globe, but that goes away in a few rounds anyway, and technically it's supposed to be stationary anway)
 	attachee.object_flag_set(OF_OFF)
 	game.global_vars[901] = 1	## added by Gaear
 	game.timevent_add( falrinth_return, ( attachee, ), 43200000 )	## 43200000ms is 12 hours

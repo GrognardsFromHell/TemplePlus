@@ -96,6 +96,7 @@ struct TemplePlusConfig
 	bool disableAlignmentRestrictions = false;
 	bool disableDoorRelocking = false;
 	bool dialogueUseBestSkillLevel = false; // uses best skill level from the (PC) group in dialogue checks
+	bool disableReachWeaponDonut = false; // set to true to restore vanilla ToEE reach weapon behavior
 
 	bool newClasses = false; // Prestige classes and such
 	bool newRaces = false; // Drow etc.
