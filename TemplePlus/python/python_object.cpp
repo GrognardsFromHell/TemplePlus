@@ -3715,6 +3715,21 @@ static PyObject* PyObjHandle_AllegianceShared(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(critterSys.NpcAllegianceShared(self->handle, target));
 }
 
+static PyObject* PyObjHandle_AllegianceStrength(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	objHndl target;
+	if (!PyArg_ParseTuple(args, "O&:objhndl.allegiance_strength", &ConvertObjHndl, &target)) {
+		return 0;
+	}
+
+	return PyInt_FromLong(aiSys.GetAllegianceStrength(self->handle, target));
+}
+
+
 
 static PyObject* PyObjHandle_GetDeity(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
@@ -4197,6 +4212,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "ai_strategy_set_custom", PyObjHandle_AiStrategySetCustom, METH_VARARGS, NULL },
 
 	{ "allegiance_shared", PyObjHandle_AllegianceShared, METH_VARARGS, NULL },
+	{ "allegiance_strength", PyObjHandle_AllegianceStrength, METH_VARARGS, NULL },
 	{ "anim_callback", PyObjHandle_AnimCallback, METH_VARARGS, NULL },
 	{ "anim_goal_interrupt", PyObjHandle_AnimGoalInterrupt, METH_VARARGS, NULL },
 	{ "anim_goal_push_attack", PyObjHandle_AnimGoalPushAttack, METH_VARARGS, NULL },
