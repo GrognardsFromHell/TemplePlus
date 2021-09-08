@@ -272,7 +272,7 @@ uint32_t UiPicker::GetListRange(LocAndOffsets* locAndOffsets, PickerArgs* picker
 }
 
 /* 0x10137430 */
-bool UiPicker::PickerLosBlocked(objHndl handle, LocAndOffsets& loc)
+bool UiPicker::PickerLosBlocked(objHndl handle, const LocAndOffsets& loc)
 {
 	if (!handle)
 		return false;

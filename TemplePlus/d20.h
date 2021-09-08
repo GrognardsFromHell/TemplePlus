@@ -274,6 +274,9 @@ struct AiTactic
 	D20SpellData d20SpellData;
 	uint32_t field24;
 	SpellPacketBody spellPktBody;
+	
+	AiTactic();
+	bool ChooseFireballLocation(LocAndOffsets& locOut);
 };
 
 struct AiTacticDef

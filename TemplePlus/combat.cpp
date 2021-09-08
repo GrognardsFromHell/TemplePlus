@@ -1558,6 +1558,7 @@ uint32_t LegacyCombatSystem::UseItem(objHndl performer, objHndl item, objHndl ta
 	return result;
 }
 
+/* 0x100E2B80 */
 int LegacyCombatSystem::GetClosestEnemy(objHndl obj, LocAndOffsets* locOut, objHndl* objOut, float* distOut, int flags)
 {
 	return _GetClosestEnemy(obj, locOut, objOut, distOut, flags);
