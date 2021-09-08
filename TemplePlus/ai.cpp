@@ -3667,7 +3667,7 @@ public:
 		replaceFunction(0x100E41E0, CastSingle);
 		replaceFunction(0x100E43F0, AiCastParty);
 		replaceFunction(0x100E4510, CastArea);
-		//replaceFunction(0x100E5C50, CastFireball); // todo: I've added LOS check, but now the AI needs to know how to tweak it in case it's blocked but good targets are around the corner
+		replaceFunction(0x100E5C50, CastFireball); // todo: I've added LOS check, but now the AI needs to know how to tweak it in case it's blocked but good targets are around the corner
 
 		replaceFunction(0x100E46C0, AiAttack);
 		replaceFunction(0x100E46D0, AiTargetThreatened);
