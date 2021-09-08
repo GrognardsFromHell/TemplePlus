@@ -271,6 +271,37 @@ uint32_t UiPicker::GetListRange(LocAndOffsets* locAndOffsets, PickerArgs* picker
 	return addresses.sub_100BA540(locAndOffsets, pickerArgs);
 }
 
+/* 0x10137430 */
+bool UiPicker::PickerLosBlocked(objHndl handle, LocAndOffsets& loc)
+{
+	if (!handle)
+		return false;
+	auto obj = objSystem->GetObject(handle);
+	if (!obj) return false;
+
+	RaycastPacket rayPkt;
+	rayPkt.sourceObj = handle;
+	rayPkt.origin = obj->GetLocationFull();
+	rayPkt.targetLoc = loc;
+	rayPkt.flags = (RaycastFlags)(RaycastFlags::ExcludeItemObjects | RaycastFlags::StopAfterFirstBlockerFound );
+	rayPkt.Raycast();
+	
+	if (rayPkt.resultCount) {
+		for (auto i = 0; i < rayPkt.resultCount; i++) {
+			auto& rayRes = rayPkt.results[i];
+			auto resHandle = rayRes.obj;
+			if (!resHandle) {
+				if (rayRes.flags & RaycastResultFlags::BlockerSubtile)
+					return true;
+			}
+			else if (objects.IsPortal(resHandle) && !objects.IsPortalOpen(resHandle)) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
 LocAndOffsets UiPicker::GetWallEndPoint(){
 	return mWallEndPt;
 }

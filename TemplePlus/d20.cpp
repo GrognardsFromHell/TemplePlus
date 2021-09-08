@@ -3153,6 +3153,7 @@ ActionErrorCode D20ActionCallbacks::AddToSeqSimple(D20Actn*d20a, ActnSeq* actSeq
 	return actSeqSys.AddToSeqSimple(d20a, actSeq, tbStat);
 }
 
+/* 0x100958A0 */
 ActionErrorCode D20ActionCallbacks::AddToSeqSpellCast(D20Actn * d20a, ActnSeq * seq, TurnBasedStatus * tbStat){
 
 	if (d20Sys.d20Query(d20a->d20APerformer, DK_QUE_Prone)){

@@ -3941,6 +3941,12 @@ int AiReplacements::CastArea(AiTactic* aiTac){
 	if (!spellSys.pickerArgsFromSpellEntry(&spEntry, &pickArgs, performer, aiTac->spellPktBody.casterLevel)){
 		return FALSE;
 	}
+
+	// Temple+: added LOS check (since otherwise it's only done by UI code)
+	if (uiPicker.PickerLosBlocked(performer, locAndOff)) {
+		return FALSE;
+	}
+
 	uiPicker.GetListRange(&locAndOff, &pickArgs);
 	spellSys.ConfigSpellTargetting(&pickArgs, &aiTac->spellPktBody);
 	pickArgs.FreeObjlist();
