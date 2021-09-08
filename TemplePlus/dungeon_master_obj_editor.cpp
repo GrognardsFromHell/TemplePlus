@@ -408,27 +408,29 @@ void DungeonMaster::RenderEditedObj() {
 		ImGui::TreePop();
 	}
 
-	// Spells Known
+	// Spells Known & Memorized
+
+	static auto spellNameGetter = [](void* data, int idx, const char** outTxt)->bool {
+		if ((size_t)idx >= spellNames.size())
+			return false;
+		auto it = spellNames.begin();
+		std::advance(it, idx);
+		if (it == spellNames.end())
+			return false;
+
+		*outTxt = it->second.c_str();
+		return true;
+	};
+	static auto spellClassNameGetter = [](void* data, int idx, const char** outTxt)->bool
+	{
+		if ((size_t)idx >= d20ClassSys.classEnumsWithSpellLists.size())
+			return false;
+		*outTxt = d20Stats.GetStatName(d20ClassSys.classEnumsWithSpellLists[idx]);
+		return true;
+	};
+
 	if (ImGui::TreeNodeEx("Spells Known", ImGuiTreeNodeFlags_CollapsingHeader)) {
 
-		static auto spellNameGetter = [](void* data, int idx, const char** outTxt)->bool {
-			if ((size_t)idx >= spellNames.size())
-				return false;
-			auto it = spellNames.begin();
-			std::advance(it, idx);
-			if (it == spellNames.end())
-				return false;
-
-			*outTxt = it->second.c_str();
-			return true;
-		};
-		static auto spellClassNameGetter = [](void* data, int idx, const char** outTxt)->bool
-		{
-			if ((size_t)idx >= d20ClassSys.classEnumsWithSpellLists.size())
-				return false;
-			*outTxt = d20Stats.GetStatName(d20ClassSys.classEnumsWithSpellLists[idx]);
-			return true;
-		};
 
 		// Add Spell
 		if (ImGui::TreeNodeEx("Add Spell", ImGuiTreeNodeFlags_CollapsingHeader)) {
@@ -481,7 +483,84 @@ void DungeonMaster::RenderEditedObj() {
 		}
 
 		// Existing known spells
-		for (auto it : critEditor.spellsKnown) {
+		for (auto &it : critEditor.spellsKnown) {
+			if (spellNames.find(it.spellEnum) == spellNames.end())
+				continue;
+			if (ImGui::TreeNode(fmt::format("{} ({})", spellNames[it.spellEnum], it.spellEnum).c_str())) {
+				if (spellSys.isDomainSpell(it.classCode))
+					auto dummy = 1;
+				else
+					ImGui::Text(fmt::format("Spell Class: {}", d20Stats.GetStatName(spellSys.GetCastingClass(it.classCode))).c_str());
+
+				ImGui::Text(fmt::format("Spell Level: {}", it.spellLevel).c_str());
+				ImGui::TreePop();
+			}
+		}
+
+
+
+		ImGui::TreePop();
+	}
+
+	// Spells Memorized
+	if (ImGui::TreeNodeEx("Spells Memorized", ImGuiTreeNodeFlags_CollapsingHeader)) {
+
+		if (ImGui::Button("Pending to Memorized")) {
+			spellSys.SpellsPendingToMemorized(mEditedObj);
+		}
+
+		// Add Spell
+		if (ImGui::TreeNodeEx("Add Spell", ImGuiTreeNodeFlags_CollapsingHeader)) {
+			static int spellCur = 0;
+			static int spLvl = 1;
+			static int spellClassIdx = 0;
+			static int spellClassCur = 0;
+
+
+			auto getSpellEnum = []()->int {
+				auto it = spellNames.begin();
+				std::advance(it, spellCur);
+				if (it != spellNames.end())
+					return  it->first;
+				return 0;
+			};
+			auto getSpellLevelForClass = [](int spellEnum)->int {
+				SpellEntry spEntry(spellEnum);
+				return spEntry.SpellLevelForSpellClass(spellSys.GetSpellClass(spellClassCur));
+			};
+
+			auto spEnum = getSpellEnum();
+
+			if (ImGui::Combo("Spell", &spellCur, spellNameGetter, nullptr, spellNames.size(), 12)) {
+				spEnum = getSpellEnum();
+				auto spLvlSuggest = getSpellLevelForClass(spEnum);
+				if (spLvlSuggest != -1)
+					spLvl = spLvlSuggest;
+			}
+
+
+			if (spEnum) {
+				// Spell Class
+				spellClassCur = d20ClassSys.classEnumsWithSpellLists[spellClassIdx];
+				if (ImGui::Combo("Class", &spellClassIdx, spellClassNameGetter, nullptr, d20ClassSys.classEnumsWithSpellLists.size(), 8)) {
+					auto spLvlSuggest = getSpellLevelForClass(spEnum);
+					if (spLvlSuggest != -1)
+						spLvl = spLvlSuggest;
+				}
+				// Spell Level
+				ImGui::InputInt("Level", &spLvl);
+
+				if (ImGui::Button("Add")) {
+					critEditor.spellsMemorized.push_back(SpellStoreData(spEnum, spLvl, spellSys.GetSpellClass(spellClassCur), 0, SpellStoreType::spellStoreKnown));
+				}
+			}
+
+
+			ImGui::TreePop();
+		}
+
+		// Existing memorized spells
+		for (auto &it : critEditor.spellsMemorized) {
 			if (spellNames.find(it.spellEnum) == spellNames.end())
 				continue;
 			if (ImGui::TreeNode(fmt::format("{} ({})", spellNames[it.spellEnum], it.spellEnum).c_str())) {
@@ -670,6 +749,10 @@ void DungeonMaster::SetObjEditor(objHndl handle) {
 	for (auto i = 0u; i < spellsKnown.GetSize(); i++) {
 		critEditor.spellsKnown.push_back(spellsKnown[i]);
 	}
+	auto spellsMemoed= obj->GetSpellArray(obj_f_critter_spells_memorized_idx);
+	for (auto i = 0u; i < spellsMemoed.GetSize(); i++) {
+		critEditor.spellsMemorized.push_back(spellsMemoed[i]);
+	}
 
 }
 
@@ -724,9 +807,17 @@ void DungeonMaster::ApplyObjEdit(objHndl handle) {
 	// Spells
 	obj->ClearArray(obj_f_critter_spells_known_idx);
 	auto spellIdx = 0;
-	for (auto it : critEditor.spellsKnown) {
+	for (auto &it : critEditor.spellsKnown) {
 		obj->SetSpell(obj_f_critter_spells_known_idx, spellIdx++, it);
 	}
+	{
+		obj->ClearArray(obj_f_critter_spells_memorized_idx);
+		auto spellIdx = 0;
+		for (auto& it : critEditor.spellsKnown) {
+			obj->SetSpell(obj_f_critter_spells_memorized_idx, spellIdx++, it);
+		}
+	}
+	
 
 
 	d20StatusSys.D20StatusRefresh(handle);
