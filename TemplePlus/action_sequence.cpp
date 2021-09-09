@@ -3865,7 +3865,10 @@ uint32_t __declspec(naked) _moveSequenceParseUsercallWrapper(ActnSeq* actSeq, Tu
 	
 uint32_t _unspecifiedMoveAddToSeq(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* actnSthg)
 {
-	return actSeqSys.MoveSequenceParse(d20a, actSeq, actnSthg, 0.0, 0.0, 1);
+	return actSeqSys.MoveSequenceParse(d20a, actSeq, actnSthg, 0.0, 
+		/*Temple+: added this to allow archers / casters to get within firing range*/
+		(float)d20a->data1,
+		1);
 }
 
 int _UnspecifiedAttackAddToSeq(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat)

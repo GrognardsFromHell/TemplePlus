@@ -1784,7 +1784,7 @@ BOOL AiSystem::ImprovePosition(AiTactic* aiTac){
 	auto initialActNum = curSeq->d20ActArrayNum;
 
 	d20Sys.GlobD20ActnInit();
-	d20Sys.GlobD20ActnSetTypeAndData1(D20A_UNSPECIFIED_MOVE, 0);
+	d20Sys.GlobD20ActnSetTypeAndData1(D20A_UNSPECIFIED_MOVE, /*required range: */ 30);
 	d20Sys.GlobD20ActnSetTarget(aiTac->target, 0);
 	auto addToSeqError = (ActionErrorCode)actSeqSys.ActionAddToSeq();
 
@@ -1802,7 +1802,8 @@ BOOL AiSystem::ImprovePosition(AiTactic* aiTac){
 			}
 		}
 
-		// in addition, truncate the path to the least amount necessary to achieve LOS
+		// removed this part - this is now accomplished by the PF system itself
+		if (false)
 		if (curNum > 0) {
 
 
@@ -1829,6 +1830,7 @@ BOOL AiSystem::ImprovePosition(AiTactic* aiTac){
 					truncationDistance = (upperBound + lowerBound) / 2;
 					pathfindingSys.TruncatePathToDistance(path, &newDest, truncationDistance);
 					hasLineOfAttack = combatSys.HasLineOfAttackFromPosition(newDest, tgt);
+				
 					if (hasLineOfAttack) {
 						upperBound = truncationDistance;
 					}
@@ -1836,6 +1838,19 @@ BOOL AiSystem::ImprovePosition(AiTactic* aiTac){
 						lowerBound = truncationDistance;
 					}
 				}
+				/*auto destClear = pathfindingSys.PathDestIsClear(performer, &newDest);
+				while (!destClear && upperBound > 2.0f) {
+					upperBound -= 2.0f;
+					pathfindingSys.TruncatePathToDistance(path, &newDest, upperBound);
+					destClear = pathfindingSys.PathDestIsClear(performer, &newDest);
+				}
+				
+				if (upperBound <= 0.0f) {
+					logger->info("ImprovePosition: Unspecified Move failed. ");
+					actSeqSys.ActionSequenceRevertPath(initialActNum);
+					return FALSE;
+				}*/
+				
 
 				auto truncPath = pathfindingSys.FetchAvailablePQRCacheSlot();
 				if (pathfindingSys.GetPartialPath(path, truncPath, 0, upperBound)) {
