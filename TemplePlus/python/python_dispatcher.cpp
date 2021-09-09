@@ -843,6 +843,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			.def_readwrite("spell_class", &SpellPacketBody::spellClass)
 			.def_readwrite("spell_id", &SpellPacketBody::spellId)
 			.def_readwrite("caster_level", &SpellPacketBody::casterLevel)
+			.def_readwrite("dc", &SpellPacketBody::dc)
 			.def_readwrite("loc", &SpellPacketBody::aoeCenter)
 			.def_readwrite("caster", &SpellPacketBody::caster)
 			.def("get_spell_casting_class", [](SpellPacketBody&pkt) {
