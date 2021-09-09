@@ -813,7 +813,7 @@ void DungeonMaster::ApplyObjEdit(objHndl handle) {
 	{
 		obj->ClearArray(obj_f_critter_spells_memorized_idx);
 		auto spellIdx = 0;
-		for (auto& it : critEditor.spellsKnown) {
+		for (auto& it : critEditor.spellsMemorized) {
 			obj->SetSpell(obj_f_critter_spells_memorized_idx, spellIdx++, it);
 		}
 	}
