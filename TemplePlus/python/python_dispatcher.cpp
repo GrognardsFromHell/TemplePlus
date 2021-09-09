@@ -509,7 +509,9 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 	 py::class_<AttackPacket>(m, "AttackPacket")
 		.def(py::init())
 		.def("get_weapon_used", &AttackPacket::GetWeaponUsed, "gets used weapon, subject to manipulation via D20CAF flags")
-		.def("set_weapon_used", [](AttackPacket& pkt, objHndl wpn) ->void { pkt.weaponUsed = wpn; })
+		.def("set_weapon_used", [](AttackPacket& pkt, objHndl wpn) ->void { 
+			pkt.weaponUsed = wpn; 
+			})
 		.def("is_offhand_attack", &AttackPacket::IsOffhandAttack)
 		.def_readwrite("attacker", &AttackPacket::attacker)
 		.def_readwrite("target", &AttackPacket::victim)
