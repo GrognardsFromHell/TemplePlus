@@ -2897,6 +2897,7 @@ int AiSystem::Default(AiTactic* aiTac)
 		return TRUE;
 	} 
 	else{
+		actSeqSys.ActionSequenceRevertPath(initialActNum); // Temple+: fixed issue with Default tactic affecting next one to do not resetting it here
 		logger->info("AI Default SequenceCheck failed, error codes are AddToSeq: {}, Location Checs: {}", addToSeqError, performError);
 	}
 	if (!critterSys.IsWieldingRangedWeapon(aiTac->performer))
