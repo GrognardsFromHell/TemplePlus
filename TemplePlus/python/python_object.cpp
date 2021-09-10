@@ -42,6 +42,7 @@
 #include "ui/ui_char_editor.h"
 #include "pathfinding.h"
 #include "secret_door.h"
+#include "weapon.h"
 
 #include <pybind11/embed.h>
 #include <pybind11/cast.h>
@@ -3751,6 +3752,18 @@ static PyObject* PyObjHandle_GetWeaponType(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(result);
 }
 
+static PyObject* PyObjHandle_IsThrownOnlyWeapon(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	auto weaponType = objects.GetWeaponType(self->handle);
+	auto answer = weapons.IsThrownOnlyWeapon(weaponType);
+
+	return PyInt_FromLong(answer?1:0);
+}
+
 static PyObject* PyObjHandle_GetWieldType(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -4322,6 +4335,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "identify_all", PyObjHandle_IdentifyAll, METH_VARARGS, NULL },
 	{ "inventory_item", PyObjHandle_InventoryItem, METH_VARARGS, NULL },
 	{ "is_active_combatant", PyObjHandle_IsActiveCombatant, METH_VARARGS, NULL },
+	{ "is_buckler", PyObjHandle_IsBuckler, METH_VARARGS, NULL },
 	{ "is_category_type", PyObjHandle_IsCategoryType, METH_VARARGS, NULL },
 	{ "is_category_subtype", PyObjHandle_IsCategorySubtype, METH_VARARGS, NULL },
 	{ "is_critter", PyObjHandle_IsCritter, METH_VARARGS, NULL},
@@ -4329,9 +4343,10 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "is_favored_enemy", PyObjHandle_FavoredEnemy, METH_VARARGS, NULL },
 	{ "is_flanked_by", PyObjHandle_IsFlankedBy, METH_VARARGS, NULL },
 	{ "is_friendly", PyObjHandle_IsFriendly, METH_VARARGS, NULL },
-	{ "is_unconscious", PyObjHandle_IsUnconscious, METH_VARARGS, NULL },
 	{ "is_spell_known", PyObjHandle_IsSpellKnown, METH_VARARGS, NULL },
-	{ "is_buckler", PyObjHandle_IsBuckler, METH_VARARGS, NULL },
+	{ "is_unconscious", PyObjHandle_IsUnconscious, METH_VARARGS, NULL },
+	{ "is_thrown_only_weapon", PyObjHandle_IsThrownOnlyWeapon, METH_VARARGS, NULL },
+
 	{ "item_condition_add_with_args", PyObjHandle_ItemConditionAdd, METH_VARARGS, NULL },
 	{ "item_condition_has", PyObjHandle_ItemConditionHas, METH_VARARGS, NULL },
 	{ "item_condition_remove", PyObjHandle_ItemConditionRemove, METH_VARARGS, NULL },

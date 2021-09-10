@@ -1228,7 +1228,7 @@ uint32_t ActionSequenceSystem::MoveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 						}
 					} 
 					else {
-						if (!tbStatCopy.hourglassState || 	tbStatCopy.hourglassState == 4 && (config.preferUse5FootStep || !objects.IsPlayerControlled(d20a->d20APerformer))) { // added for AI to take 5' steps when it still has full round action to exploit
+						if (!tbStatCopy.hourglassState || tbStatCopy.hourglassState == 4 && (config.preferUse5FootStep || !objects.IsPlayerControlled(d20a->d20APerformer))) { // added for AI to take 5' steps when it still has full round action to exploit
 							chosenActionType = D20A_5FOOTSTEP;
 							if ( (tbStatCopy.tbsFlags & (TBSF_Movement | TBSF_Movement2)) != 0) {
 								chosenActionType = D20A_MOVE;
