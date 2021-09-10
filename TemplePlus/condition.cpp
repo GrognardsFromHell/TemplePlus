@@ -324,6 +324,7 @@ public:
 	static int ManyShotDamage(DispatcherCallbackArgs args);
 
 	static bool StunningFistHook(objHndl objHnd, objHndl caster, int DC, int saveType, int flags);
+	static int StunnedInitiativeUpdate(DispatcherCallbackArgs args);
 
 	static int AnimalCompanionLevelHook(objHndl, Stat shouldBeClassDruid);
 	
@@ -572,6 +573,9 @@ public:
 
 		// Stunning Fist extension
 		redirectCall(0x100E84B0, StunningFistHook);
+
+		// Fix Stunned countdown
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100E9500, StunnedInitiativeUpdate);
 
 		// Animal Companion Bonus Levels Extension
 		redirectCall(0x100FC18C, AnimalCompanionLevelHook);
@@ -4115,6 +4119,42 @@ bool ConditionFunctionReplacement::StunningFistHook(objHndl objHnd, objHndl cast
 	}
 
 	return result;
+}
+
+int ConditionFunctionReplacement::StunnedInitiativeUpdate(DispatcherCallbackArgs args){
+	GET_DISPIO(dispIoTypeSendSignal, DispIoD20Signal);
+
+	auto newInit = dispIo->data1;
+	auto oldInit = dispIo->data2;
+
+	// Avoid degenerate initiative wrap around signal
+	if (newInit == 0 && oldInit == 0) return 0;
+
+	auto durIx = args.GetData1();
+	auto initIx = args.GetData2();
+
+	auto duration = args.GetCondArg(durIx);
+	auto tickOn = args.GetCondArg(initIx);
+
+	if (oldInit <= newInit) {
+		if (newInit > tickOn && tickOn >= oldInit) {
+			return 0;
+		}
+	}
+	else {
+		if (oldInit <= tickOn || tickOn < newInit) {
+			return 0;
+		}
+	}
+
+	if (duration <= 1) {
+		args.RemoveCondition();
+	}
+	else {
+		args.SetCondArg(durIx, duration-1);
+	}
+
+	return 0;
 }
 
 
