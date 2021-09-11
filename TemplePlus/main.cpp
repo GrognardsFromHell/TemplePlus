@@ -35,13 +35,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// Cannot get known folders without initializing COM sadly
 	ComInitializer comInitializer;
 
-	Breakpad breakpad(GetUserDataFolder());
+	
+	{
+		Breakpad breakpad(GetUserDataFolder(), false);
+		SetIniPath();
 
-	SetIniPath();
-
-	config.Load();
-	config.Save();
-
+		config.Load();
+		config.Save();
+	}
+	
+	Breakpad breakpad(GetUserDataFolder(), config.dumpFullMemory);
 	// Append the savegame folder to the crash messages
 	breakpad.setExtraMessage(fmt::format(L"\n\nTo help us reproduce the issue, please also send us the relevant save game.\n\nSave Game Folder: {}Modules\\ToEE\\Save. \nPlease include the .TFAF, .TFAI and .GSI files!", config.toeeDir));
 

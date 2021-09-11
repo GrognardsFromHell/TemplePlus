@@ -14,7 +14,7 @@ class InProcessCrashReporting;
 */
 class Breakpad {
 public:
-	Breakpad(const std::wstring &crashDumpFolder);
+	Breakpad(const std::wstring &crashDumpFolder, bool fullDump = false);
 	~Breakpad();
 
 	void setExtraMessage(const std::wstring &extraMessage) {
