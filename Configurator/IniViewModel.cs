@@ -138,6 +138,10 @@ namespace TemplePlusConfig
         public static readonly DependencyProperty DisableReachWeaponDonutProperty = DependencyProperty.Register(
           "DisableReachWeaponDonut", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
 
+        public static readonly DependencyProperty DumpFullMemoryProperty = DependencyProperty.Register(
+          "DumpFullMemory", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+        
+
         #endregion
 
         public IEnumerable<HpOnLevelUpType> HpOnLevelUpTypes => Enum.GetValues(typeof (HpOnLevelUpType))
@@ -440,7 +444,12 @@ namespace TemplePlusConfig
             get { return (bool)GetValue(DisableReachWeaponDonutProperty); }
             set { SetValue(DisableReachWeaponDonutProperty, value); }
         }
-        
+
+        public bool DumpFullMemory
+        {
+            get { return (bool)GetValue(DumpFullMemoryProperty); }
+            set { SetValue(DumpFullMemoryProperty, value); }
+        }
 
         public bool NeedsCo8Defaults { get; internal set; }
 
@@ -480,7 +489,7 @@ namespace TemplePlusConfig
 
             InstallationPath = tpData["toeeDir"];
             ModuleName = tpData["defaultModule"];
-
+            DumpFullMemory = TryReadBool("dumpFullMemory");
             DisableAutomaticUpdates = tpData["autoUpdate"] != "true";
 
             if (tpData["hpOnLevelup"] != null)
@@ -703,6 +712,7 @@ namespace TemplePlusConfig
             
             tpData["toeeDir"] = InstallationPath;
             tpData["defaultModule"] = ModuleName;
+            tpData["dumpFullMemory"] = DumpFullMemory? "true" : "false";
             tpData["autoUpdate"] = DisableAutomaticUpdates ? "false" : "true";
             switch (HpOnLevelUp)
             {
