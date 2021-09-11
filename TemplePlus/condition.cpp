@@ -4137,11 +4137,15 @@ int ConditionFunctionReplacement::StunnedInitiativeUpdate(DispatcherCallbackArgs
 	auto tickOn = args.GetCondArg(initIx);
 
 	if (oldInit <= newInit) {
+		// Initiative wrapping around from N to N+K, so don't tick
+		// if the target is in the interval (N+K,N]
 		if (newInit > tickOn && tickOn >= oldInit) {
 			return 0;
 		}
 	}
 	else {
+		// Initiative counting down from N+K to N, so don't tick unless
+		// the target is in the interval (N+K,N]
 		if (oldInit <= tickOn || tickOn < newInit) {
 			return 0;
 		}
