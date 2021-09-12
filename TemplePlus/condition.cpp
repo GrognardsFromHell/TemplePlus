@@ -4127,8 +4127,10 @@ int ConditionFunctionReplacement::StunnedInitiativeUpdate(DispatcherCallbackArgs
 	auto newInit = dispIo->data1;
 	auto oldInit = dispIo->data2;
 
-	// Avoid degenerate initiative wrap around signal
-	if (newInit == 0 && oldInit == 0) return 0;
+	// We shouldn't get initiative updates for turns with the same
+	// initiative. In case we do, exit, because the logic below acts as
+	// if an entire round has ticked in that case.
+	if (newInit == oldInit) return 0;
 
 	auto durIx = args.GetData1();
 	auto initIx = args.GetData2();
@@ -4136,16 +4138,16 @@ int ConditionFunctionReplacement::StunnedInitiativeUpdate(DispatcherCallbackArgs
 	auto duration = args.GetCondArg(durIx);
 	auto tickOn = args.GetCondArg(initIx);
 
-	if (oldInit <= newInit) {
+	if (oldInit < newInit) {
 		// Initiative wrapping around from N to N+K, so don't tick
-		// if the target is in the interval (N+K,N]
+		// if the target is in the interval [N,N+K)
 		if (newInit > tickOn && tickOn >= oldInit) {
 			return 0;
 		}
 	}
 	else {
 		// Initiative counting down from N+K to N, so don't tick unless
-		// the target is in the interval (N+K,N]
+		// the target is in the interval [N,N+K)
 		if (oldInit <= tickOn || tickOn < newInit) {
 			return 0;
 		}
