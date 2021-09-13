@@ -1194,6 +1194,12 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("ignore_druid_oath", &EvtIgnoreDruidOathCheck::ignoreDruidOath, "True if the druid oath should be ignored for this item, false otherwise.")
 		;
 
+	py::class_<EvtObjAddMesh, DispIO>(m, "EvtObjAddMesh", "Adds addmeshes via modifiers.")
+		.def_readwrite("obj", &EvtObjAddMesh::handle, "An object")
+		.def_readonly("addmeshes", &EvtObjAddMesh::addmeshes, "The addmesh list")
+		.def("append", &EvtObjAddMesh::Append, "Adds an addmesh to the list")
+		;
+
 }
 
 
@@ -1458,6 +1464,10 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 
 	case dispTypeIgnoreDruidOathCheck:
 		pbEvtObj = py::cast(static_cast<EvtIgnoreDruidOathCheck*>(args.dispIO));
+		break;
+
+	case dispTypeAddMesh:
+		pbEvtObj = py::cast(static_cast<EvtObjAddMesh*>(args.dispIO));
 		break;
 
 	case dispTypeConditionAdd: // these are actually null

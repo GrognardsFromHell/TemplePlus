@@ -1155,6 +1155,23 @@ void LegacyCritterSystem::UpdateAddMeshes(objHndl obj)
 	if (!hairModel.empty()) {
 		model->AddAddMesh(hairModel);
 	}
+
+	EvtObjAddMesh evtAddMesh(obj);
+	auto addMeshesFromMods = evtAddMesh.DispatchGetAddMeshes();
+	for (auto& it : addMeshesFromMods) {
+		auto matIdx = it;
+		auto& addMeshes(GetAddMeshes(matIdx, raceOffset));
+
+		if (!addMeshes.empty()) {
+			model->AddAddMesh(addMeshes[0]);
+		}
+
+		// Only add the helmet part if there's no real helmet
+		if (helmetType == 0 && addMeshes.size() >= 2) {
+			model->AddAddMesh(addMeshes[1]);
+			helmetType = 2; // The addmesh counts as a large helmet
+		}
+	}
 }
 
 const std::vector<std::string>& LegacyCritterSystem::GetAddMeshes(int matIdx, int raceOffset) {

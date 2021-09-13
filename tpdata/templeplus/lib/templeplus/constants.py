@@ -3656,6 +3656,7 @@ ET_OnSpellResistanceCheckBonus = 98
 ET_OnTargetSpellDCBonus = 99 #DC bonus based on the target of a spell
 ET_OnIgnoreDruidOathCheck = 100 #Should a druid oath be ignored
 ET_OnSpellCasterGeneral = 101
+ET_OnAddMesh = 102
 
 # Event Keys
 
