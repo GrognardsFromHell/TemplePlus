@@ -29,7 +29,7 @@ class_feats = {
 class_skills = (skill_alchemy, skill_concentration, skill_craft, skill_knowledge_all, skill_profession, skill_search, skill_spellcraft)
 
 def IsEnabled():
-	return 1
+	return 0
 
 def GetHitDieType():
 	return 4
