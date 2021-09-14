@@ -9,13 +9,16 @@ print "Registering Divine Metamagic"
 #Supported Metamgic Types
 DMMEmpower = 1
 DMMMaximize = 2
-DMMQuicken = 3
+DMMHeighten = 3
 DMMExtend = 4
 DMMWiden = 5
 DMMEnlarge = 6
 DMMStill = 7
-DMMSlient = 8
-DMMHeighten = 9
+DMMSilent = 8
+DMMQuicken = 9
+
+#Text description
+dmmFeatText = ["Invalid", "Empower", "Maximize", "Heighten", "Extend", "Widen", "Enlarge", "Still", "Silent", "Quicken"]
 
 def GetTurnCost(args, Type):
 	if Type == DMMHeighten:
@@ -40,7 +43,7 @@ def HasEnoughTurnAttempts(attachee, args, Type):
 	
 	Needed = GetTurnCost(args, Type)
 
-	#Get the cost from other DMM effects in use for this spell
+	#Get the cost from other DMM effects in use for this spell (so the cost ends up correct)
 	DMMCost = attachee.d20_query("Divine Metamagic Cost")
 
 	TurnCharges = TurnCharges - DMMCost
@@ -56,17 +59,13 @@ def DMMRadial(attachee, args, evt_obj):
 	mmType = args.get_param(0)
 	
 	text = "Divine Metamagic "
-	
-	if mmType == DMMEmpower:
-		text = text + "Empower"
-	elif mmType == DMMMaximize:
-		text =  text + "Maximize"
+	text = text + dmmFeatText[mmType]
 	
 	checkboxMenu = tpdp.RadialMenuEntryToggle(text, "TAG_INTERFACE_HELP")
 	checkboxMenu.link_to_args(args, 0)
 	checkboxMenu.add_child_to_standard(attachee, tpdp.RadialMenuStandardNode.Feats)
 
-	#Heighten only (slider to check number of levels)
+	#Heighten only (slider to check number of levels to add)
 	if mmType == DMMHeighten:
 		sliderMenu = tpdp.RadialMenuEntrySlider("Divine Metamagic Heighten Levels", "Number of levels to Heighten", 1, 9, "TAG_INTERFACE_HELP")
 		sliderMenu.link_to_args(args, 2)
@@ -93,16 +92,14 @@ def DMMMetamagicUpdate(attachee, args, evt_obj):
 	#Get the metamagic info
 	metaMagicData = evt_obj.meta_magic
 
-	##...Set count to the correct amount only if adding...##
-	
 	#Apply the appropriate meta magic once only
 	if mmType == DMMEmpower:
-		if metaMagicData.get_empower_count() < 1:
+		if metaMagicData.get_empower_count() < 1:  #Only once
 			metaMagicData.set_empower_count(1)
 		else:
 			return #No effect, don't set the cost
 	elif mmType == DMMMaximize:
-		if metaMagicData.get_maximize_count() < 1:
+		if metaMagicData.get_maximize_count() < 1:    #Only once
 			metaMagicData.set_maximize_count(1)
 		else:
 			return #No effect, don't set the cost
@@ -114,6 +111,36 @@ def DMMMetamagicUpdate(attachee, args, evt_obj):
 		if newHeighten + metaMagicData.spell_level > 9:
 			return #Don't apply if the spell level would be set above 9
 		metaMagicData.set_heighten_count(newHeighten)
+	elif mmType == DMMExtend:
+		if metaMagicData.get_extend_count() < 1:  #Only once
+			metaMagicData.set_extend_count(1)
+		else:
+			return #No effect, don't set the cost
+	elif mmType == DMMWiden:
+		if metaMagicData.get_widen_count() < 1:  #Only once
+			metaMagicData.set_widen_count(1)
+		else:
+			return #No effect, don't set the cost
+	elif mmType == DMMEnlarge:
+		if metaMagicData.get_enlarge_count() < 1:  #Only once
+			metaMagicData.set_enlarge_count(1)
+		else:
+			return #No effect, don't set the cost
+	elif mmType == DMMStill:
+		if not metaMagicData.get_still():  #Only once
+			metaMagicData.set_still(true)
+		else:
+			return #No effect, don't set the cost
+	elif mmType == DMMSilent:
+		if not metaMagicData.get_silent():  #Only once
+			metaMagicData.set_silent(true)
+		else:
+			return #No effect, don't set the cost
+	elif mmType == DMMQuicken:
+		if metaMagicData.get_quicken() < 1:  #Only once
+			metaMagicData.set_quicken(1)
+		else:
+			return #No effect, don't set the cost
 
 	cost = GetTurnCost(args, mmType)
 	args.set_arg(1, cost)
@@ -144,15 +171,21 @@ def DMMAdd(attachee, args, evt_obj):
 def DMMAddFeat(FeatName, Type):
 	modifier = PythonModifier(FeatName, 4) #Enable Flag, Cost, Heighten Value (Heighten MM ONly), Spare
 	modifier.MapToFeat(FeatName)
-	modifier.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, DMMRadial, (DMMEmpower,))
-	modifier.AddHook(ET_OnMetaMagicMod, EK_NONE, DMMMetamagicUpdate, (DMMEmpower,))
-	modifier.AddHook(ET_OnD20PythonSignal, "Sudden Metamagic Deduct Charge", DMMDeduct, (DMMEmpower,))
-	modifier.AddHook(ET_OnD20PythonQuery, "Divine Metamagic Cost", DMMCostQuery, (DMMEmpower,))
-	modifier.AddHook(ET_OnConditionAdd, EK_NONE, DMMAdd, ())
+	modifier.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, DMMRadial, (Type,))
+	modifier.AddHook(ET_OnMetaMagicMod, EK_NONE, DMMMetamagicUpdate, (Type,))
+	modifier.AddHook(ET_OnD20PythonSignal, "Sudden Metamagic Deduct Charge", DMMDeduct, (Type,))
+	modifier.AddHook(ET_OnD20PythonQuery, "Divine Metamagic Cost", DMMCostQuery, (Type,))
+	modifier.AddHook(ET_OnConditionAdd, EK_NONE, DMMAdd, (Type,))
 	return modifier
 	
-dmmEmpower = DMMAddFeat("Divine Metamagic - Empower", DMMEmpower)
-dmmMaximize = DMMAddFeat("Divine Metamagic - Maximize", DMMMaximize)
-dmmHeighten = DMMAddFeat("Divine Metamagic - Heighten", DMMHeighten)
+dmmEmpowerModifier = DMMAddFeat("Divine Metamagic - Empower", DMMEmpower)
+dmmMaximizeModifier = DMMAddFeat("Divine Metamagic - Maximize", DMMMaximize)
+dmmHeightenModifier = DMMAddFeat("Divine Metamagic - Heighten", DMMHeighten)
+dmmEnlargeModifier = DMMAddFeat("Divine Metamagic - Enlarge", DMMEnlarge)
+dmmExtendModifier = DMMAddFeat("Divine Metamagic - Extend", DMMExtend)
+dmmQuickenModifier = DMMAddFeat("Divine Metamagic - Quicken", DMMQuicken)
+dmmWidenModifier = DMMAddFeat("Divine Metamagic - Widen", DMMWiden)
+dmmStillModifier = DMMAddFeat("Divine Metamagic - Still", DMMStill)
+dmmSilentModifier = DMMAddFeat("Divine Metamagic - Silent", DMMSilent)
 
 
