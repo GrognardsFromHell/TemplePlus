@@ -2077,12 +2077,6 @@ Range:               Medium,  100  feet  + 10/level
 Target:            creatures, no more than 30' apart
 Duration:      1  round/level,    Save: Will  negates,    SR: Y}
 {5589}{}
-{5590} Disrupting Weapon {Makes a weapon destroy undead on hit unless they make a will save.
-
-Casting:         1  std action   [Transmutation, V,S]
-Range:               Touch
-Target:            One melee weapon
-Duration:      1 round/level,     Save: Will negates}
 {5591}{}
 {5592}{}
 {5593}{}
@@ -2194,3 +2188,9 @@ Casting:         1  std action   [Necromancy, V,S]
 Range:               60 ft.
 Area:                   Cone-shaped burst
 Duration:      Instantaneous,    Save: No,    SR: Yes}
+{6300} Disrupting Weapon {Makes a weapon destroy undead on hit unless they make a will save.
+
+Casting:         1  std action   [Transmutation, V,S]
+Range:               Touch
+Target:            One melee weapon
+Duration:      1 round/level,     Save: Will negates}
