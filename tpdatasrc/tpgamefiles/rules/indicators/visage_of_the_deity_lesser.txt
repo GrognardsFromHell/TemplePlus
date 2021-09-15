@@ -1,5 +1,5 @@
-ID_string: VISAGE_OF_THE_DEITY_LESSER
+ID_string: VISAGE_OF_THE_DEITY,_LESSER
 effect_type: 0
-texture_file: art\interface\player_conditions\conditions\spell heroism.tga
+texture_file: art\interface\Player_Conditions\Buffs\spell heroism.tga
 help_topic: TAG_SPELLS_VISAGE_OF_THE_DEITY_LESSER
 tooltip_base_text: Visage of the Deity, lesser
