@@ -140,6 +140,7 @@ def NaturalArmorACBonus(attachee, args, evt_obj):
     evt_obj.bonus_list.add(bonus , 0, 137)
     return 0
 
-naturalArmorInc = PythonModifier("Dragon Disciple Natural Armor"(), 3)
+naturalArmorInc = PythonModifier("Dragon Disciple Natural Armor", 3)
+naturalArmorInc.MapToFeat("Dragon Disciple Natural Armor")
 naturalArmorInc.AddHook(ET_OnGetAC, EK_NONE, NaturalArmorACBonus, ())
 
