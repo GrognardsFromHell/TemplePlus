@@ -3344,6 +3344,7 @@ spell_vertigo = 1307
 spell_whelm = 1308
 spell_mass_whelm = 1309
 spell_whelming_blast = 1310
+spell_greater_mirror_image = 1311
 
 spell_new_slot_lvl_0 = 1605
 spell_new_slot_lvl_1 = 1606
@@ -3655,6 +3656,7 @@ ET_OnSpellResistanceCheckBonus = 98
 ET_OnTargetSpellDCBonus = 99 #DC bonus based on the target of a spell
 ET_OnIgnoreDruidOathCheck = 100 #Should a druid oath be ignored
 ET_OnSpellCasterGeneral = 101
+ET_OnAddMesh = 102
 
 # Event Keys
 

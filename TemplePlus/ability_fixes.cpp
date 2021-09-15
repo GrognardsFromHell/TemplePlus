@@ -339,9 +339,16 @@ int AbilityConditionFixes::TacticalAbusePrevention(DispatcherCallbackArgs args)
 	if (damPkt->attackPacket.flags & D20CAF_RANGED){
 		return 0;
 	}
+
+	// vanilla:
+	//args.SetCondArg(1, 1);
+	
+	// fixes issue where users could manipulate this at the end of turn:
+	// i.e. made an attack (set arg1 to 1), and then manipulate the value of arg0 via radial
+	// now arg1 will store the max value used this round
 	auto currentSetValue = args.GetCondArg(0);
 	auto currentArg1Value = args.GetCondArg(1);
-	int newValue = max(currentArg1Value, currentSetValue); // fixes issue where users could manipulate this at the end of turn
+	int newValue = max(currentArg1Value, currentSetValue); 
 	
 	args.SetCondArg(1, newValue);
 	return 0;

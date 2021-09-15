@@ -612,6 +612,15 @@ struct EvtIgnoreDruidOathCheck : DispIO // type 40 (NEW!)
 	bool ignoreDruidOath = false;
 };
 
+struct EvtObjAddMesh : DispIO // type 41 (new)
+{
+	objHndl handle;
+	std::vector<int> addmeshes;
+	EvtObjAddMesh(objHndl handle);
+	std::vector<int> DispatchGetAddMeshes();
+	void Append(int addmeshId); // index into addmesh.mes
+};
+
 struct EvtObjActionCost: DispIO
 {
 	ActionCostPacket acpOrig; // original

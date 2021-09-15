@@ -168,6 +168,7 @@ static ConfigSetting configSettings[] = {
 	CONF_INT(msaaQuality),
 	CONF_BOOL(showNpcStats),
 	CONF_BOOL(showHitChances),
+	CONF_BOOL(dumpFullMemory),
 
 	CONF_BOOL(newClasses),
 	CONF_BOOL(newRaces),

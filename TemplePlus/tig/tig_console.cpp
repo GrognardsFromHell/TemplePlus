@@ -15,6 +15,8 @@
 #include "gameview.h"
 #include "dialog.h"
 #include "d20_race.h"
+#include <infrastructure/vfs.h>
+#include <util/streams.h>
 
 Console::Console() : mLog(1024), mCommandHistory(100), mCommandBuf(1024, '\0') {
 }
@@ -153,6 +155,23 @@ void Console::Execute(const std::string &command, bool skipHistory)
 
 void Console::RunBatchFile(const std::string & path)
 {
+	if (!vfs->FileExists(path)) {
+		return;
+		
+	}
+	
+	auto rawData = vfs->ReadAsString(path);
+	stringstream ss(rawData);
+	string s;
+	while (!ss.eof()) {
+		getline(ss, s);
+		
+		ltrim(s);
+		if (s.size()) {
+			ExecuteScript(s);
+		}
+		
+	}
 }
 
 void Console::Show()

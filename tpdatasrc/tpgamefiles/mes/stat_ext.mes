@@ -208,7 +208,7 @@ Spells: Ability to cast an arcane spell of 3rd level+.
 }
 
 
-{13013}Archmage{--COMING SOON-- An advanced practitioner of the Art, who gains strange powers and the ability to alter spells in remarkable ways.
+{13013}Archmage{--NOT COMING SOON-- An advanced practitioner of the Art, who gains strange powers and the ability to alter spells in remarkable ways.
 
 Requirements: Ability to cast 7-th level arcane spells
 Skill ranks: Spellcraft 15
@@ -230,10 +230,10 @@ Feats: Cleave, Power Attack
 } // Special: Contact with an evil summoned outsider.
 
 
-{13016}Dragon Disciple{--NOT COMING SOON-- A descendant of dragonkind who uses their innate magical power as a catalyst to ignite their dragon blood.
+{13016}Dragon Disciple{A descendant of dragonkind who uses their innate magical power as a catalyst to ignite their dragon blood.
 
-Requirements
-Race: Any nondragon.
+Requirements:
+Level: 5
 Spellcasting: Ability to cast arcane spells without preparation.}
 
 
@@ -295,10 +295,11 @@ Feats: Spell Focus (conjuration).
 Spells: Able to cast lesser planar ally.}
 
 {13027}Favored Soul{Favored souls cast divine spells by means of an innate connection rather than through laborious training and prayer, so their divine connection is natural rather than learned.}
+
 {13031}Stormlord{Stormlords wield thunder and lightning like a warrior wields his sword. They serve their deity through random, spectacular acts of violence.
 
-Requirements: Alignment CE/CN/NE, Base Fort Save +4, able to cast 3rd-level divine spells.
-Feats: Great Fortitude, Weapon Focus (deity's weapon or javelin)}
+Requirements: CE/CN/NE, Fort Save +4, can cast 3rd-level divine spells.
+Feats: Great Fortitude, W. Focus - javelin or deity's weapon}
 // Not implemented:
 // Feat: Endurance (non in the game)
 // Patron: Talos

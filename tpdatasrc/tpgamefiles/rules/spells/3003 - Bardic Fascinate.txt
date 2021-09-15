@@ -1,5 +1,6 @@
 School: Enchantment
 Descriptor: Mind-Affecting
+Descriptor: Sonic
 Component: V
 Component: S
 Casting Time: 1 action

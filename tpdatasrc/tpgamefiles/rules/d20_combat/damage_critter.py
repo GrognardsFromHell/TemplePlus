@@ -32,9 +32,9 @@ def floatFriendlyFire(attacker, tgt):
 
 def getUsedWeapon(flags, attacker):
     unarmed = OBJ_HANDLE_NULL
-    if flags & D20CAF_TOUCH_ATTACK:
-        return unarmed
-    elif flags & D20CAF_SECONDARY_WEAPON:
+    #if flags & D20CAF_TOUCH_ATTACK:
+    #    return unarmed # this fucks up thrown grenades
+    if flags & D20CAF_SECONDARY_WEAPON:
         offhandItem = attacker.item_worn_at(item_wear_weapon_secondary)
         if offhandItem != OBJ_HANDLE_NULL and offhandItem.type == obj_t_weapon:
             return offhandItem

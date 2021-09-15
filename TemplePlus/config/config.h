@@ -68,6 +68,7 @@ struct TemplePlusConfig
 	bool debugMessageEnable = true; // ToEE debug spam
 	bool featPrereqWarnings = false;
 	bool spellAlreadyKnownWarnings = false;
+	bool dumpFullMemory = false;
 
 	// gameplay 
 	// double randomEncounterExperienceFactor = 0.7; // an additional factor; e.g. if the normal Experience Multiplier is 0.7 and this is 0.7, overall is 0.49 NOT YET IMPLEMENTED
@@ -96,6 +97,7 @@ struct TemplePlusConfig
 	bool disableAlignmentRestrictions = false;
 	bool disableDoorRelocking = false;
 	bool dialogueUseBestSkillLevel = false; // uses best skill level from the (PC) group in dialogue checks
+	bool disableReachWeaponDonut = false; // set to true to restore vanilla ToEE reach weapon behavior
 
 	bool newClasses = false; // Prestige classes and such
 	bool newRaces = false; // Drow etc.

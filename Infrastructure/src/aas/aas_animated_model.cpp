@@ -355,7 +355,7 @@ namespace aas {
 
 	void AnimatedModel::AddMesh(Mesh *mesh, IMaterialResolver *matResolver)
 	{
-		
+		// matResolver - see GameSystems::ResolveMaterial
 		/*auto org_method = temple::GetPointer<int __fastcall(IAnimatedModel*, void *, Mesh *, IAasMaterialResolver*, void *)>(0x10266a50);
 		int x = org_method(this, 0, mesh, matResolver, matResolverArg);
 

@@ -1631,3 +1631,28 @@ DispIoTypeImmunityTrigger::DispIoTypeImmunityTrigger()
 		dispKey = (D20DispatcherKey)0;
 	}
 }
+
+std::vector<int> EvtObjAddMesh::DispatchGetAddMeshes()
+{
+	auto &result = addmeshes;
+	if (!handle || !objSystem->IsValidHandle(handle))
+		return addmeshes;
+
+	auto _dispatcher = objects.GetDispatcher(handle);
+	if (!dispatch.dispatcherValid(_dispatcher)) return result;
+
+	dispatch.DispatcherProcessor(_dispatcher, dispTypeAddMesh, 0, this);
+	
+	return result;
+}
+
+void EvtObjAddMesh::Append(int addmeshId)
+{
+	addmeshes.push_back(addmeshId);
+}
+
+EvtObjAddMesh::EvtObjAddMesh(objHndl handleIn)
+{
+	this->dispIOType = evtObjTypeAddMesh;
+	handle = handleIn;
+}
