@@ -2491,13 +2491,16 @@ ActionErrorCode D20ActionCallbacks::ActionCostCastSpell(D20Actn * d20a, TurnBase
 	MetaMagicData mmData;
 	d20a->d20SpellData.Extract(&spEnum, nullptr, &spellClass, &spLvl, &invIdx, &mmData);
 
+	//For spontaneous casters don't use any changes made by metamagic modify when checking for full round cost
+	auto oldMMData = mmData;
+
 	//Modify metamagic information for quicken if necessary
 	dispatch.DispatchMetaMagicModify(d20Sys.globD20Action->d20APerformer, mmData);
 
 	SpellEntry spEntry(spEnum);
 
 	// Metamagicked spontaneous casters always cost full round to cast
-	if (mmData && !spellSys.isDomainSpell(spellClass) 
+	if (oldMMData && !spellSys.isDomainSpell(spellClass)
 		&& d20ClassSys.IsNaturalCastingClass(spellSys.GetCastingClass(spellClass))){
 		acp->hourglassCost = 4;
 		return AEC_OK;
