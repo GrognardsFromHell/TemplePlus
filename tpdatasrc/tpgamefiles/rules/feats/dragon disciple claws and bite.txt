@@ -1,0 +1,5 @@
+name: Dragon Disciple Claws and Bite
+flags: 8
+prereqs:
+description: At 2nd level, a dragon disciple gains claw and bite attacks if he does not already have them. A dragon disciple is considered proficient with these attacks. When making a full attack, a dragon disciple uses his full base attack bonus with his bite attack but takes a -5 penalty on claw attacks. The Multiattack feat reduces this penalty to only -2.
+prereq descr: Dragon Disciple level 2.

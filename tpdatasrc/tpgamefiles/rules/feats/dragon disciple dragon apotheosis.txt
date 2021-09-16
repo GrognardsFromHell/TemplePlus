@@ -1,0 +1,5 @@
+name: Dragon Disciple Dragon Apotheosis
+flags: 8
+prereqs:
+description: At 10th level, a dragon disciple takes on the half-dragon template. His breath weapon reaches full strength (as noted above), and he gains +4 to Strength and +2 to Charisma. His natural armor bonus increases to +4, and he acquires low-light vision, 60-foot darkvision, immunity to sleep and paralysis effects, and immunity to the energy type used by his breath weapon.
+prereq descr: Dragon Disciple level 5.

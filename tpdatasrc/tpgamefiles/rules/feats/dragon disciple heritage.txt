@@ -1,0 +1,5 @@
+name: Dragon Disciple Heritage
+flags: 524288
+prereqs: 23 1
+description: The player chooses a dragon variety when taking the first level in this prestige class.
+prereq descr: Dragon Disciple level 1

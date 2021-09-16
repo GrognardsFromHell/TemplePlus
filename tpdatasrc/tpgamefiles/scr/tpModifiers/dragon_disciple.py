@@ -13,7 +13,7 @@ def GetSpellCasterConditionName():
     
 print "Registering " + GetConditionName()
 
-classEnum = stat_level_eldritch_knight
+classEnum = stat_level_dragon_disciple
 classSpecModule = __import__('class023_dragon_disciple')
 ###################################################
 
@@ -47,19 +47,6 @@ classSpecObj.AddHook(ET_OnSaveThrowLevel, EK_SAVE_FORTITUDE, OnGetSaveThrowFort,
 classSpecObj.AddHook(ET_OnSaveThrowLevel, EK_SAVE_REFLEX, OnGetSaveThrowReflex, ())
 classSpecObj.AddHook(ET_OnSaveThrowLevel, EK_SAVE_WILL, OnGetSaveThrowWill, ())
 
-
-def OnGetAbilityScore(attachee, args, evt_obj):
-    #statType = args.get_param(0)
-    lvl = attachee.stat_level_get(classEnum)
-    statMod = args.get_param(1)
-    
-    newValue = statMod + evt_obj.bonus_list.get_sum()
-    if (newValue < 3): # ensure minimum stat of 3
-        statMod = 3-newValue
-    evt_obj.bonus_list.add(statMod, 0, 139)
-    return 0
-
-classSpecObj.AddHook(ET_OnAbilityScoreLevel, EK_STAT_STRENGTH, OnGetAbilityScore, ())
 
 #region Spell casting
 
@@ -132,15 +119,48 @@ spellCasterSpecObj.AddHook(ET_OnLevelupSystemEvent, EK_LVL_Spells_Finalize, OnLe
 
 #endregion
 
+##### Dragon Disciple Class Features #####
+
+### AC Bonus
 def NaturalArmorACBonus(attachee, args, evt_obj):
-    type = args.get_arg(0)
-    if type != 3:
-        return 0
-    bonus = args.get_arg(1)
-    evt_obj.bonus_list.add(bonus , 0, 137)
+    classLevel = attachee.stat_level_get(classEnum)
+    if classLevel == 1:
+        bonusValue = 1
+    elif classLevel < 7:
+        bonusValue = 2
+    elif classLevel < 10:
+        bonusValue = 3
+    else:
+        bonusValue = 4
+    bonusType = 0 #ID 0 = Stacking; Wrong Type as Touch Attacks should nullify this bonus
+    evt_obj.bonus_list.add(bonusValue, bonusType, "~Dragon Disciple Natural Armor~[TAG_CLASS_FEATURES_DRAGON_DISCIPILES_NATURAL_ARMOR_INCREASE]")
     return 0
 
-naturalArmorInc = PythonModifier("Dragon Disciple Natural Armor", 3)
+naturalArmorInc = PythonModifier("Dragon Disciple Natural Armor", 0)
 naturalArmorInc.MapToFeat("Dragon Disciple Natural Armor")
 naturalArmorInc.AddHook(ET_OnGetAC, EK_NONE, NaturalArmorACBonus, ())
 
+### Strength Bonus
+def OnGetAbilityScore(attachee, args, evt_obj):
+    #statType = args.get_param(0)
+    lvl = attachee.stat_level_get(classEnum)
+    statMod = args.get_param(1)
+    
+    newValue = statMod + evt_obj.bonus_list.get_sum()
+    if (newValue < 3): # ensure minimum stat of 3
+        statMod = 3-newValue
+    evt_obj.bonus_list.add(statMod, 0, 139)
+    return 0
+
+classSpecObj.AddHook(ET_OnAbilityScoreLevel, EK_STAT_STRENGTH, OnGetAbilityScore, ())
+
+### Breath Weapon
+
+
+### Blindsense
+
+
+#### Dragon Apotheosis
+# At 10th level, a dragon disciple takes on the half-dragon template. His breath weapon reaches full strength (as noted above), 
+# and he gains +4 to Strength and +2 to Charisma. His natural armor bonus increases to +4, and he acquires low-light vision, 
+#60-foot darkvision, immunity to sleep and paralysis effects, and immunity to the energy type used by his breath weapon.
