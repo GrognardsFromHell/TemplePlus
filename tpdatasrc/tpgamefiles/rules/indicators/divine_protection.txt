@@ -1,0 +1,5 @@
+ID_string: DIVINE_PROTECTION
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\spell shield of faith.tga
+help_topic: TAG_SPELLS_DIVINE_PROTECTION
+tooltip_base_text: Divine Protection

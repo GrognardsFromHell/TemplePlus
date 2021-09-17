@@ -57,6 +57,17 @@ public:
 		XMCOLOR fillColor,
 		bool occludedOnly = false);
 
+	/*
+		occludedOnly means that the circle will only draw
+		in already occluded areas (based on depth buffer)
+	*/
+	void DrawDonut(const XMFLOAT3& center,
+		float radiusInner,
+		float radiusOuter,
+		XMCOLOR borderColor,
+		XMCOLOR fillColor,
+		bool occludedOnly = false);
+
 	NO_COPY_OR_MOVE(ShapeRenderer3d);
 
 private:

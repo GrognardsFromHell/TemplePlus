@@ -81,6 +81,15 @@ public:
 		mAnimatedObj = handle;
 	}
 
+	// Indicates that the integration is currently executing a dialog guard script
+	// Is used to enable group-level skill checks (House Rules option)
+	bool IsInDialogGuard() {
+		return mInDialogGuard;
+	}
+	void SetInDialogGuard(bool state) {
+		mInDialogGuard = state;
+	}
+
 	// Indicates that the integration is currently executing a script attached to an obj
 	// Only if this is true do the next two properties (newsid + counters) have any actual meaning
 	bool IsInObjInvocation() {
@@ -124,6 +133,7 @@ protected:
 private:
 
 	bool mInObjInvocation = false;
+	bool mInDialogGuard = false;
 	int mNewSid = -1;
 	objHndl mAnimatedObj;
 	PyObject *mPickerObj = nullptr;

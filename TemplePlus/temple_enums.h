@@ -1788,7 +1788,7 @@ enum enum_dispIO_type : uint32_t {
 	dispIOType18,
 	dispIOType19,
 	dispIOType20,
-	dispIOType21,
+	dispIOType21ImmunityTrigger,
 	dispIOType22,
 	dispIOTypeImmunityHandler,
 	dispIOTypeEffectTooltip,
@@ -1802,8 +1802,8 @@ enum enum_dispIO_type : uint32_t {
 	dispIOType32,
 	dispIOType33,
 	evtObjTypeSpellCaster, // new! used for querying spell caster specs (caster level, learnable spells, etc.)
-	evtObjTypeActionCost // new! used for modifying action cost
-
+	evtObjTypeActionCost, // new! used for modifying action cost
+	evtObjTypeAddMesh,
 };
 
 // Note: if you add new stuff here, it must be on top! Otherwise python sync is ruined
@@ -1916,6 +1916,7 @@ enum enum_disp_type : uint32_t {
 	dispTypeTargetSpellDCBonus = 99,
 	dispTypeIgnoreDruidOathCheck = 100,
 	dispTypeSpellCasterGeneral = 101, // Uses EvtObjSpellCaster, to be used with specific keys only!
+	dispTypeAddMesh = 102, // used to fetch additional addmeshes
 	dispTypeCount // used just for size definition purposes
 
 

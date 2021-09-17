@@ -93,7 +93,7 @@ DispatcherSystem dispatch;
 
 void DispatcherSystem::DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint32_t dispKey, DispIO* dispIO)
 {
-	_DispatcherProcessor(dispatcher, dispType, dispKey, dispIO);
+	_DispatcherProcessor(dispatcher, dispType, (D20DispatcherKey)dispKey, dispIO);
 }
 
 void DispatcherSystem::DispatcherProcessorForItems(CondStruct* condStruct, int condArgs[64], enum_disp_type dispType,
@@ -1148,7 +1148,7 @@ void _PackDispatcherIntoObjFields(objHndl objHnd, Dispatcher* dispatcher)
 	dispatch.PackDispatcherIntoObjFields(objHnd, dispatcher);
 };
 
-void _DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint32_t dispKey, DispIO* dispIO) {
+void _DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, D20DispatcherKey dispKey, DispIO* dispIO) {
 	static uint32_t dispCounter = 0;
 	if (dispCounter > DISPATCHER_MAX) {
 		logger->info("Dispatcher maximum recursion reached!");
@@ -1174,6 +1174,8 @@ void _DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint3
 			if (dispIoImmunity.interrupt == 1 && dispType != dispType63) { // dispType63 is essentially <-> Minor globe of invulnerability
 				dispIoImmunity.interrupt = 0;
 				dispIoImmunity.val2 = 10;
+				dispIoImmunity.dispKey = dispKey;
+				dispIoImmunity.dispType = dispType;
 				_Dispatch63(dispatcher->objHnd, (DispIO*)&dispIoImmunity);
 				if (dispIoImmunity.interrupt == 0) {
 					subDispNode->subDispDef->dispCallback(subDispNode, dispatcher->objHnd, dispType, dispKey, (DispIO*)dispIO);
@@ -1276,7 +1278,7 @@ Dispatcher* _DispatcherInit(objHndl objHnd) {
 };
 
 void DispIOType21Init(DispIoTypeImmunityTrigger* dispIO) {
-	dispIO->dispIOType = dispIOType21;
+	dispIO->dispIOType = dispIOType21ImmunityTrigger;
 	dispIO->interrupt = 0;
 	dispIO->field_8 = 0;
 	dispIO->field_C = 0;
@@ -1300,7 +1302,7 @@ int _DispatchAttackBonus(objHndl objHnd, objHndl victim, DispIoAttackBonus* disp
 uint32_t _Dispatch62(objHndl objHnd, DispIO* dispIO, uint32_t dispKey) {
 	Dispatcher* dispatcher = (Dispatcher *)objects.GetDispatcher(objHnd);
 	if (dispatcher != nullptr && (int32_t)dispatcher != -1) {
-		_DispatcherProcessor(dispatcher, dispTypeImmunityTrigger, dispKey, dispIO);
+		_DispatcherProcessor(dispatcher, dispTypeImmunityTrigger, (D20DispatcherKey)dispKey, dispIO);
 	}
 	return 0;
 }
@@ -1309,7 +1311,7 @@ uint32_t _Dispatch62(objHndl objHnd, DispIO* dispIO, uint32_t dispKey) {
 uint32_t _Dispatch63(objHndl objHnd, DispIO* dispIO) {
 	Dispatcher* dispatcher = (Dispatcher *)objects.GetDispatcher(objHnd);
 	if (dispatcher != nullptr && (int32_t)dispatcher != -1) {
-		_DispatcherProcessor(dispatcher, dispType63, 0, dispIO);
+		_DispatcherProcessor(dispatcher, dispType63, (D20DispatcherKey)0, dispIO);
 	}
 	return 0;
 }
@@ -1613,4 +1615,45 @@ int DispIOBonusListAndSpellEntry::Dispatch(objHndl handle, enum_disp_type evtTyp
 	dispatcher->Process(evtType, DK_NONE, this);
 
 	return this->bonList->GetEffectiveBonusSum();
+}
+
+DispIoTypeImmunityTrigger::DispIoTypeImmunityTrigger()
+{
+	{
+		dispIOType = dispIOType21ImmunityTrigger;
+		interrupt = 0;
+		field_8 = 0;
+		condNode = nullptr;
+		field_C = 0;
+		SDDKey1 = 0;
+		val2 = 0;
+		okToAdd = 0;
+		dispType = (enum_disp_type)0;
+		dispKey = (D20DispatcherKey)0;
+	}
+}
+
+std::vector<int> EvtObjAddMesh::DispatchGetAddMeshes()
+{
+	auto &result = addmeshes;
+	if (!handle || !objSystem->IsValidHandle(handle))
+		return addmeshes;
+
+	auto _dispatcher = objects.GetDispatcher(handle);
+	if (!dispatch.dispatcherValid(_dispatcher)) return result;
+
+	dispatch.DispatcherProcessor(_dispatcher, dispTypeAddMesh, 0, this);
+	
+	return result;
+}
+
+void EvtObjAddMesh::Append(int addmeshId)
+{
+	addmeshes.push_back(addmeshId);
+}
+
+EvtObjAddMesh::EvtObjAddMesh(objHndl handleIn)
+{
+	this->dispIOType = evtObjTypeAddMesh;
+	handle = handleIn;
 }

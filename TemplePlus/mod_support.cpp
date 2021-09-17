@@ -124,3 +124,13 @@ void ModSupport::SetIsZMOD(bool value)
 void ModSupport::SetNCGameFlag(bool value){
 	modSupportAddresses.Set(500, value);
 }
+
+const std::vector<std::string>& ModSupport::GetOverrides()
+{
+	return mOverridesLoaded;
+}
+
+void ModSupport::AddOverride(const std::string& overrideName)
+{
+	mOverridesLoaded.push_back(overrideName);
+}

@@ -23,6 +23,8 @@
 #include <infrastructure/keyboard.h>
 #include <graphics/mdfmaterials.h>
 #include <graphics/shaperenderer2d.h>
+#include <graphics/shaperenderer3d.h>
+#include <graphics/render_hooks.h>
 #include "ui_tooltip.h"
 #include "ui_render.h"
 #include "animgoals/anim.h"
@@ -170,6 +172,7 @@ public:
 	static int IntgameValidateMouseSelection(TigMsgMouse* msg);
 
 	static void RenderAooIndicator(const LocAndOffsets& location, int materialId);
+	static void UiDrawAoOThreatRanges();
 
 	static int GetHourglassDepletionState();
 	static void HourglassUpdate(int a3, int a4, int flags);
@@ -190,6 +193,7 @@ public:
 	}
 } uiIntgameTurnbasedReplacements;
 
+/* 0x10173F70 */
 void UiIntegameTurnbasedRepl::IntgameTurnbasedRender(int widId) {
 
 	auto widEntered = *intgameAddresses.uiIntgameWidgetEnteredForRender;
@@ -265,8 +269,7 @@ void UiIntegameTurnbasedRepl::IntgameTurnbasedRender(int widId) {
 			}
 
 
-			auto drawThreatRanges = temple::GetRef<void(__cdecl)()>(0x10173C00);
-			drawThreatRanges();
+			UiDrawAoOThreatRanges();
 
 			// draw circle at waypoint / destination location
 			if (*intgameAddresses.uiIntgameWaypointMode){
@@ -274,7 +277,7 @@ void UiIntegameTurnbasedRepl::IntgameTurnbasedRender(int widId) {
 				auto actorRadius = objects.GetRadius(actor);
 				LocAndOffsets loc;
 				loc = *intgameAddresses.uiIntgameWaypointLoc;
-				intgameAddresses.RenderCircle(loc, 1.0, 0x80008000, 0xFF00FF00, actorRadius);
+				RenderHooks::DrawCircle3d(loc, 1.0, 0x80008000, 0xFF00FF00, actorRadius);
 			}
 
 		}
@@ -378,6 +381,7 @@ int UiIntegameTurnbasedRepl::UiIntgamePathSequenceHandler(TigMsgMouse* msg) {
 	// return orgUiIntgamePathPreviewHandler(msg);
 }
 
+/* 0x10174100 */
 void UiIntegameTurnbasedRepl::UiIntgameGenerateSequence(int isUnnecessary) {
 	auto curSeq = *actSeqSys.actSeqCur;
 	// replacing this just for debug purposes really
@@ -473,7 +477,7 @@ void UiIntegameTurnbasedRepl::UiIntgameGenerateSequence(int isUnnecessary) {
 			actSeqSys.TurnBasedStatusInit(actor);
 			d20Sys.GlobD20ActnInit();
 			objFromRaycast = objHndl::null;
-			logger->trace("Clearing raycast target");
+			//logger->trace("Clearing raycast target");
 		}
 		return;
 	}
@@ -497,7 +501,7 @@ void UiIntegameTurnbasedRepl::UiIntgameGenerateSequence(int isUnnecessary) {
 				actSeqSys.TurnBasedStatusInit(actor);
 				d20Sys.GlobD20ActnInit();
 				actSeqSys.ActionTypeAutomatedSelection(objFromRaycast);
-				if (!d20Sys.GlobD20ActnSetTarget(objFromRaycast, nullptr)) {
+				if (ActionErrorCode::AEC_OK == d20Sys.GlobD20ActnSetTarget(objFromRaycast, nullptr)) {
 					actSeqSys.ActionAddToSeq();
 				}
 				break;
@@ -524,7 +528,7 @@ void UiIntegameTurnbasedRepl::UiIntgameGenerateSequence(int isUnnecessary) {
 				actSeqSys.TurnBasedStatusInit(actor);
 				d20Sys.GlobD20ActnInit();
 				actSeqSys.ActionTypeAutomatedSelection(objFromRaycast);
-				if (!d20Sys.GlobD20ActnSetTarget(objFromRaycast, nullptr)) {
+				if (ActionErrorCode::AEC_OK == d20Sys.GlobD20ActnSetTarget(objFromRaycast, nullptr)) {
 					actSeqSys.ActionAddToSeq();
 				}
 				break;
@@ -541,7 +545,7 @@ void UiIntegameTurnbasedRepl::UiIntgameGenerateSequence(int isUnnecessary) {
 				actSeqSys.TurnBasedStatusInit(actor);
 				d20Sys.GlobD20ActnInit();
 				actSeqSys.ActionTypeAutomatedSelection(objFromRaycast);
-				if (!d20Sys.GlobD20ActnSetTarget(objFromRaycast, nullptr)) {
+				if (ActionErrorCode::AEC_OK == d20Sys.GlobD20ActnSetTarget(objFromRaycast, nullptr)) {
 					actSeqSys.ActionAddToSeq();
 				}
 				break;
@@ -562,7 +566,7 @@ void UiIntegameTurnbasedRepl::UiIntgameGenerateSequence(int isUnnecessary) {
 				d20Sys.GlobD20ActnSetD20CAF(D20CAF_UNNECESSARY);
 			
 			actSeqSys.ActionTypeAutomatedSelection(objHndl::null);
-			if (!d20Sys.GlobD20ActnSetTarget(objHndl::null, &actionLoc)) {
+			if (ActionErrorCode::AEC_OK == d20Sys.GlobD20ActnSetTarget(objHndl::null, &actionLoc)) {
 				actSeqSys.ActionAddToSeq();
 			}
 		}
@@ -902,6 +906,42 @@ void UiIntegameTurnbasedRepl::RenderAooIndicator(const LocAndOffsets& location, 
 
 }
 
+void UiIntegameTurnbasedRepl::UiDrawAoOThreatRanges()
+{
+	auto N = tbSys.GetInitiativeListLength();
+	auto actor = tbSys.turnBasedGetCurrentActor();
+	if (!actor) return;
+	if (actSeqSys.isPerforming(actor)) return;
+	if (!objects.IsPlayerControlled(actor)) return;
+
+	static auto aooPossibleTest = temple::GetRef<BOOL(__cdecl)(objHndl)>(0x10173B30);
+
+	for (auto i = 0; i < N; ++i) {
+		auto combatant = combatSys.GetInitiativeListMember(i);
+		if (!combatant) continue;
+		
+		if (!aooPossibleTest(combatant)) {
+			continue;
+		}
+		
+		float minReachFt = 0.0f;
+		auto reachFt = critterSys.GetReach(combatant, D20A_UNSPECIFIED_ATTACK, &minReachFt);
+		auto radiusInch = objects.GetRadius(combatant);
+		auto circleRadius = reachFt * INCH_PER_FEET + radiusInch;
+
+		auto circleLoc = objects.GetLocationFull(combatant);
+		auto &renderer = tig->GetShapeRenderer3d();
+		if (minReachFt > 0.0f) {
+			auto radiusInner = minReachFt* INCH_PER_FEET + radiusInch;
+			RenderHooks::DrawDonut3d(circleLoc, 1.0, 0x40808000, 0xFF808000, circleRadius, radiusInner);
+		}
+		else {
+			RenderHooks::DrawCircle3d(circleLoc, 1.0, 0x40808000, 0xFF808000, circleRadius);
+		}
+		
+	}
+}
+
 int UiIntegameTurnbasedRepl::GetHourglassDepletionState()
 {
 	if (*intgameAddresses.uiIntgamePathpreviewFromToDist > *intgameAddresses.uiIntgameGreenMoveLength)	{
@@ -927,7 +967,7 @@ int UiIntgameTurnbased::PathpreviewGetFromToDist(PathQueryResult* path) {
 }
 
 void UiIntgameTurnbased::RenderCircle(LocAndOffsets loc, float zoffset, int fillColor, int outlineColor, float radius) {
-	intgameAddresses.RenderCircle(loc, zoffset, fillColor, outlineColor, radius);
+	RenderHooks::DrawCircle3d(loc, zoffset, fillColor, outlineColor, radius);
 }
 
 void UiIntgameTurnbased::PathRenderEndpointCircle(LocAndOffsets* loc, objHndl obj, float zoffset) {

@@ -120,7 +120,7 @@ electricityResistance.AddHook(ET_OnTakingDamage , EK_NONE, featResistanceToElect
 def featShockWeapon(attachee, args, evt_obj):
     classLevel = attachee.stat_level_get(classEnum)
     usedWeapon = evt_obj.attack_packet.get_weapon_used()
-    weaponList = stormlordWeapons()
+    weaponList = stormlordWeapons(attachee)
     if not usedWeapon.obj_get_int(obj_f_weapon_type) in weaponList:
         return 0
     shockProperty = usedWeapon.item_has_condition('Weapon Shock')
@@ -148,7 +148,7 @@ shockWeapon.AddHook(ET_OnDealingDamage, EK_NONE, featShockWeapon, ())
 ## Thundering Weapon ##
 def featThunderingWeaponDamage(attachee, args, evt_obj):
     usedWeapon = evt_obj.attack_packet.get_weapon_used()
-    weaponList = stormlordWeapons()
+    weaponList = stormlordWeapons(attachee)
     target = evt_obj.attack_packet.target
     if not usedWeapon.obj_get_int(obj_f_weapon_type) in weaponList:
         return 0

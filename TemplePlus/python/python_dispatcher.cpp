@@ -509,7 +509,9 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 	 py::class_<AttackPacket>(m, "AttackPacket")
 		.def(py::init())
 		.def("get_weapon_used", &AttackPacket::GetWeaponUsed, "gets used weapon, subject to manipulation via D20CAF flags")
-		.def("set_weapon_used", [](AttackPacket& pkt, objHndl wpn) ->void { pkt.weaponUsed = wpn; })
+		.def("set_weapon_used", [](AttackPacket& pkt, objHndl wpn) ->void { 
+			pkt.weaponUsed = wpn; 
+			})
 		.def("is_offhand_attack", &AttackPacket::IsOffhandAttack)
 		.def_readwrite("attacker", &AttackPacket::attacker)
 		.def_readwrite("target", &AttackPacket::victim)
@@ -841,6 +843,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			.def_readwrite("spell_class", &SpellPacketBody::spellClass)
 			.def_readwrite("spell_id", &SpellPacketBody::spellId)
 			.def_readwrite("caster_level", &SpellPacketBody::casterLevel)
+			.def_readwrite("dc", &SpellPacketBody::dc)
 			.def_readwrite("loc", &SpellPacketBody::aoeCenter)
 			.def_readwrite("caster", &SpellPacketBody::caster)
 			.def("get_spell_casting_class", [](SpellPacketBody&pkt) {
@@ -1204,6 +1207,12 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("ignore_druid_oath", &EvtIgnoreDruidOathCheck::ignoreDruidOath, "True if the druid oath should be ignored for this item, false otherwise.")
 		;
 
+	py::class_<EvtObjAddMesh, DispIO>(m, "EvtObjAddMesh", "Adds addmeshes via modifiers.")
+		.def_readwrite("obj", &EvtObjAddMesh::handle, "An object")
+		.def_readonly("addmeshes", &EvtObjAddMesh::addmeshes, "The addmesh list")
+		.def("append", &EvtObjAddMesh::Append, "Adds an addmesh to the list")
+		;
+
 }
 
 
@@ -1468,6 +1477,10 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 
 	case dispTypeIgnoreDruidOathCheck:
 		pbEvtObj = py::cast(static_cast<EvtIgnoreDruidOathCheck*>(args.dispIO));
+		break;
+
+	case dispTypeAddMesh:
+		pbEvtObj = py::cast(static_cast<EvtObjAddMesh*>(args.dispIO));
 		break;
 
 	case dispTypeConditionAdd: // these are actually null

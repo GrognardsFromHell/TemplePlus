@@ -100,6 +100,9 @@ public:
 	static void AooShaderPacketAppend(LocAndOffsets* loc, int aooShaderId);
 	//static int(__cdecl*orgSeqRenderAooMovement)(D20Actn*, UiIntgameTurnbasedFlags);
 	static int SeqRenderAooMovement(D20Actn*, UiIntgameTurnbasedFlags);
+	static int SeqRenderFuncMove(D20Actn* d20a, UiIntgameTurnbasedFlags flags);
+	static int SeqRenderAttack(D20Actn* d20a, UiIntgameTurnbasedFlags flags);
+
 	static int ChooseTargetCallback(void* a)
 	{
 		logger->debug("Choose Target Callback");
@@ -143,7 +146,7 @@ public:
 	static int ActionAddToSeq();
 	static void ActSeqGetPicker();
 
-	static int SeqRenderFuncMove(D20Actn* d20a, UiIntgameTurnbasedFlags flags);
+	
 	void ActSeqApply();
 	void NaturalAttackOverwrites();
 
@@ -152,8 +155,9 @@ public:
 		NaturalAttackOverwrites();
 		replaceFunction(0x1008B140, SequenceSwitch);
 		orgSeqRenderFuncMove = replaceFunction(0x1008D090, SeqRenderFuncMove);
-		//orgSeqRenderAooMovement =
 		replaceFunction(0x10091D60, SeqRenderAooMovement);
+		replaceFunction(0x10094860, SeqRenderAttack);
+
 		replaceFunction(0x100933F0, ActionFrameProcess);
 		orgTurnStart = replaceFunction(0x10099430, TurnStart);
 		replaceFunction(0x100999E0, GreybarReset);
@@ -855,6 +859,7 @@ int ActionSequenceSystem::ActionAddToSeq()
 	// return addresses.ActionAddToSeq();
 }
 
+/* 0x1008A100 */
 uint32_t ActionSequenceSystem::addD20AToSeq(D20Actn* d20a, ActnSeq* actSeq)
 {
 	D20ActionType d20aType = d20a->d20ActType;
@@ -1102,8 +1107,8 @@ uint32_t ActionSequenceSystem::MoveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 		
 		if (reach < 0.1){ reach = 3.0; }
 		actSeq->targetObj = d20a->d20ATarget;
-		pathQ.distanceToTargetMin = distToTgtMin * 12.0f;
-		pathQ.tolRadius = reach * 12.0f - fourPointSevenPlusEight;
+		pathQ.distanceToTargetMin = distToTgtMin * INCH_PER_FEET;
+		pathQ.tolRadius = reach * INCH_PER_FEET - fourPointSevenPlusEight;
 	} else
 	{
 		pathQ.to = d20aIn->destLoc;
@@ -1223,7 +1228,7 @@ uint32_t ActionSequenceSystem::MoveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 						}
 					} 
 					else {
-						if (!tbStatCopy.hourglassState || 	tbStatCopy.hourglassState == 4 && (config.preferUse5FootStep || !objects.IsPlayerControlled(d20a->d20APerformer))) { // added for AI to take 5' steps when it still has full round action to exploit
+						if (!tbStatCopy.hourglassState || tbStatCopy.hourglassState == 4 && (config.preferUse5FootStep || !objects.IsPlayerControlled(d20a->d20APerformer))) { // added for AI to take 5' steps when it still has full round action to exploit
 							chosenActionType = D20A_5FOOTSTEP;
 							if ( (tbStatCopy.tbsFlags & (TBSF_Movement | TBSF_Movement2)) != 0) {
 								chosenActionType = D20A_MOVE;
@@ -1642,6 +1647,7 @@ ActionErrorCode ActionSequenceSystem::ActionSequenceChecksRegardLoc(LocAndOffset
 	return result;
 }
 
+/* 0x10097000 */
 ActionErrorCode ActionSequenceSystem::ActionSequenceChecksWithPerformerLocation()
 {
 	LocAndOffsets loc;
@@ -2448,6 +2454,7 @@ uint32_t ActionSequenceSystem::combatTriggerSthg(ActnSeq* actSeq)
 	//return result;
 }
 
+/* 0x10094C60 */
 ActionErrorCode ActionSequenceSystem::seqCheckAction(D20Actn* d20a, TurnBasedStatus* tbStat)
 {
 	ActionErrorCode errorCode = (ActionErrorCode)TurnBasedStatusUpdate(d20a, tbStat);
@@ -2566,7 +2573,7 @@ uint32_t ActionSequenceSystem::curSeqNext()
 			// added this clause in Temple+ because AI Flank was fubaring things
 			// Example scenario: 2 npcs go after PC. First has normal attack closest AI, 2nd has flank AI tactic.
 			// It starts executing the first in simuls, and then the 2nd NPC aborts the simuls.
-			// It resets the 2nd NPCs sequence and performs it (with no actions actually applied)
+			// It resets the 2nd NPC's sequence and performs it (with no actions actually applied)
 			// Without this clause, it reaches the next "else" and re-starts the 2nd NPC's round before
 			// the simuls finishes, thus causing havoc. This fix will lead it into IsLastSimulsPerformer inside
 			// CombatAdvanceTurn, which will cause it to either return, or restore the sequence if appropriate
@@ -2586,9 +2593,9 @@ uint32_t ActionSequenceSystem::curSeqNext()
 		if (combatSys.isCombatActive()
 			&& !(*actSeqPickerActive)	&& (*actSeqCur)
 			&& objects.IsPlayerControlled((*actSeqCur)->performer)
-			&& (*actSeqCur)->tbStatus.baseAttackNumCode
+			&& (*actSeqCur)->tbStatus.attackModeCode < 
+			(*actSeqCur)->tbStatus.baseAttackNumCode
 			+ (*actSeqCur)->tbStatus.numBonusAttacks
-					> (*actSeqCur)->tbStatus.attackModeCode
 			)
 		{ // I think this is for doing full attack?
 			//if (d20Sys.d20Query((*actSeqCur)->performer, DK_QUE_Trip_AOO))
@@ -2832,6 +2839,7 @@ void ActionSequenceSystem::ActionPerform()
 
 }
 
+/* 0x100961C0 */
 void ActionSequenceSystem::sequencePerform()
 {
 	// check if OK to perform
@@ -3671,11 +3679,19 @@ int ActionSequenceSystem::UnspecifiedAttackAddToSeq(D20Actn* d20a, ActnSeq* actS
 	}
 
 	// if out of reach, add move sequence
-	auto reach = critterSys.GetReach(d20a->d20APerformer, d20a->d20ActType);
+	auto polearmDonutReach = config.disableReachWeaponDonut ? false : true;
+	float minReach = 0.0f;
+	auto reach = critterSys.GetReach(d20a->d20APerformer, d20a->d20ActType, &minReach);
 	location->getLocAndOff(tgt, &d20aCopy.destLoc);
-	if (location->DistanceToObj(performer, tgt) > reach){
+	auto distToTgt = max(0.0f, locSys.DistanceToObj(performer, tgt));
+	auto tooClose = polearmDonutReach && (minReach > 0.0f) && distToTgt < minReach;
+	if (distToTgt > reach || tooClose){
 		d20aCopy.d20ActType = D20A_UNSPECIFIED_MOVE;
-		int result = MoveSequenceParse(&d20aCopy, actSeq, tbStat, 0.0, reach, 1);
+		auto distToTgtMin = tooClose ?
+			max(0.0f, minReach + locSys.InchesToFeet(INCH_PER_SUBTILE / 2))
+			: 0.0f;
+		int result = MoveSequenceParse(&d20aCopy, actSeq, tbStat, 
+			polearmDonutReach ? distToTgtMin : 0.0, reach, 1);
 		if (result)
 			return result;
 		tbStatCopy = *tbStat;
@@ -3741,6 +3757,7 @@ void ActionSequenceSystem::AttackAppend(ActnSeq* actSeq, D20Actn* d20a, TurnBase
 	actSeq->d20ActArrayNum++;
 }
 
+/* 0x1008C4F0 */
 int ActionSequenceSystem::StdAttackTurnBasedStatusCheck(D20Actn* d20a, TurnBasedStatus* tbStat)
 {
 	int hgState = tbStat->hourglassState;
@@ -3750,8 +3767,9 @@ int ActionSequenceSystem::StdAttackTurnBasedStatusCheck(D20Actn* d20a, TurnBased
 	
 	auto tgt = d20a->d20ATarget;
 	if (*actSeqSys.performingDefaultAction && tgt && critterSys.IsDeadOrUnconscious(tgt)
-	&& (d20a->d20ActType == D20A_STANDARD_ATTACK || d20a->d20ActType == D20A_STANDARD_RANGED_ATTACK)) {
-	return AEC_TARGET_INVALID;
+		&& (d20a->d20ActType == D20A_STANDARD_ATTACK || d20a->d20ActType == D20A_STANDARD_RANGED_ATTACK)) 
+	{
+		return AEC_TARGET_INVALID;
 	}
 
 	if (hgState != -1)
@@ -3847,7 +3865,10 @@ uint32_t __declspec(naked) _moveSequenceParseUsercallWrapper(ActnSeq* actSeq, Tu
 	
 uint32_t _unspecifiedMoveAddToSeq(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* actnSthg)
 {
-	return actSeqSys.MoveSequenceParse(d20a, actSeq, actnSthg, 0.0, 0.0, 1);
+	return actSeqSys.MoveSequenceParse(d20a, actSeq, actnSthg, 0.0, 
+		/*Temple+: added this to allow archers / casters to get within firing range*/
+		(float)d20a->data1,
+		1);
 }
 
 int _UnspecifiedAttackAddToSeq(D20Actn* d20a, ActnSeq* actSeq, TurnBasedStatus* tbStat)
@@ -3961,6 +3982,27 @@ int ActnSeqReplacements::SeqRenderFuncMove(D20Actn* d20a, UiIntgameTurnbasedFlag
 	}
 	return 0;
 	//return orgSeqRenderFuncMove(d20a, flags);
+}
+
+int ActnSeqReplacements::SeqRenderAttack(D20Actn* d20a, UiIntgameTurnbasedFlags flags)
+{
+	if (!config.showHitChances)
+		flags = (UiIntgameTurnbasedFlags)0;
+
+	static auto showHitChanceTooltip = temple::GetRef<int(__cdecl)(D20Actn*, UiIntgameTurnbasedFlags)>(0x1008EDF0);
+	static auto showHitChanceAndCoverTooltip = temple::GetRef<int(__cdecl)(D20Actn*, UiIntgameTurnbasedFlags)>(0x1008F460);
+
+	auto weapon = inventory.ItemWornAt(d20a->d20APerformer, EquipSlot::WeaponPrimary);
+
+	if (weapon) {
+		if (inventory.IsRangedWeapon(weapon)) {
+			return showHitChanceAndCoverTooltip(d20a, flags);
+		}
+	}
+
+	
+	showHitChanceTooltip(d20a, flags);
+	return 0;
 }
 
 void ActnSeqReplacements::AooShaderPacketAppend(LocAndOffsets* loc, int aooShaderId)

@@ -3,6 +3,7 @@
 #include "temple_functions.h"
 #include "tig/tig_msg.h"
 #include "tig/tig_startup.h"
+#include "tig/tig_console.h"
 #include "tig/tig_mouse.h"
 #include "gamesystems/gamesystems.h"
 #include "tig/tig_shader.h"
@@ -182,7 +183,8 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 
 	// Run console commands from "startup.txt" (working dir)
 	logger->info("[Running Startup.txt]");
-	startupRelevantFuncs.RunBatchFile("Startup.txt");
+	auto &console = tig.GetConsole();
+	console.RunBatchFile("Startup.txt");
 	logger->info("[Beginning Game]");	
 
 	Updater updater;

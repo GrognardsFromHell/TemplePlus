@@ -11,19 +11,35 @@
     <Grid Margin="0,0,2,-10">
         <TabControl>
             <TabItem Header="General">
-                <StackPanel HorizontalAlignment="Left" Height="204" VerticalAlignment="Top" Width="206" Margin="10,10,0,0">
-                    <StackPanel Orientation="Horizontal">
-                        <Label VerticalAlignment="Center" Content="Fog of War" />
-                        <ComboBox VerticalAlignment="Center" SelectedValue="{Binding FogOfWar}"  ItemsSource="{Binding FogOfWarTypes}"/>
+                <Canvas>
+                    <StackPanel HorizontalAlignment="Left" Height="280" VerticalAlignment="Top" Width="206" Margin="10,10,0,0">
+                        <StackPanel Orientation="Horizontal">
+                            <Label VerticalAlignment="Center" Content="Fog of War" />
+                            <ComboBox VerticalAlignment="Center" SelectedValue="{Binding FogOfWar}"  ItemsSource="{Binding FogOfWarTypes}"/>
+                        </StackPanel>
+                        <CheckBox VerticalAlignment="Center" Content="Show Hit Chances" IsChecked="{Binding ShowHitChances}" Margin="0,5,10,5" ToolTip="Display the to-hit chances in the attack preview mode (ALT button pressed / LMB held). Note: Does not account for more complex factors like Mirror Image."/>
+                        <CheckBox VerticalAlignment="Center" Content="Transparent NPC Stats" IsChecked="{Binding TransparentNpcStats}" Margin="0,5,0,5" ToolTip="The game will show exact HPs for critters and your NPCs' stats."/>
+                        <CheckBox VerticalAlignment="Center" Content="Extended Spell Descriptions" IsChecked="{Binding ExtendedSpellDescriptions}" Margin="0,5,10,5" ToolTip="Longer spell descriptions with better formatting."/>
+
+
+                        <CheckBox VerticalAlignment="Center" Content="Fast Sneak Animation" IsChecked="{Binding FastSneaking}" Margin="0,5,0,5" ToolTip="Makes sneak animations as fast as your normal movement."/>
+                        <CheckBox VerticalAlignment="Center" Content="Disable Door Re-Locking" IsChecked="{Binding DisableDoorRelocking}" Margin="0,5,0,5" ToolTip="Doors that were unlocked via the Open Lock skill will no longer become re-locked when you come back again."/>
+                        <CheckBox VerticalAlignment="Center" Content="Disable Screen Shakes" IsChecked="{Binding DisableScreenShakes}" Margin="0,5,10,5" ToolTip="Disables the screen shake effect from animations. For example from the Hill Giant movement - useful when using Hill Giant PCs."/>
+                        <CheckBox VerticalAlignment="Center" Content="Dump Full Memory on Crash" IsChecked="{Binding DumpFullMemory}" Margin="0,5,10,5" ToolTip="If the game crashes, it will generate a crash dump of the whole ToEE process memory. This can make it easier to debug, but the dump files will be much larger (around 400MBs). You can zip to greatly reduce the size."/>
+
                     </StackPanel>
-                    <CheckBox VerticalAlignment="Center" Content="Tolerant Townsfolk" IsChecked="{Binding TolerantTownsfolk}" Margin="0,5,0,5" ToolTip="Townsfolk will be tolerant of monstrous party members and NPCs."/>
-                    <CheckBox VerticalAlignment="Center" Content="Transparent NPC Stats" IsChecked="{Binding TransparentNpcStats}" Margin="0,5,0,5" ToolTip="The game will show exact HPs for critters and your NPCs' stats."/>
-                    <CheckBox VerticalAlignment="Center" Content="Fast Sneak Animation" IsChecked="{Binding FastSneaking}" Margin="0,5,0,5" ToolTip="Makes sneak animations as fast as your normal movement."/>
-                    <CheckBox VerticalAlignment="Center" Content="Disable Door Re-Locking" IsChecked="{Binding DisableDoorRelocking}" Margin="0,5,0,5" ToolTip="Doors that were unlocked via the Open Lock skill will no longer become re-locked when you come back again."/>
-                    <CheckBox VerticalAlignment="Center" Content="Alert AI across rooms" IsChecked="{Binding AlertAiThroughDoors}" Margin="0,5,0,5" ToolTip="AIs will alert each other even through closed doors. It's more realistic, but be aware that it may cause some fights to involve a larger number of combatants than before! Range is up to 40ft (of travel distance)."/>
-                    <CheckBox VerticalAlignment="Center" Content="Prefer 5 foot step and full attack" IsChecked="{Binding PreferUse5FootStep}" Margin="0,5,0,5" ToolTip="When an enemy is selected for attack, a 5 foot step and full round attack will be taken when possible."/>
-                    <CheckBox VerticalAlignment="Center" Content="Extended Spell Descriptions" IsChecked="{Binding ExtendedSpellDescriptions}" Margin="0,5,10,5" ToolTip="Longer spell descriptions with better formatting."/>
-                </StackPanel>
+                    <GridSplitter x:Name="GridSplitter_Gen" HorizontalAlignment="Left" Height="360" Margin="241,10,0,0" VerticalAlignment="Top" Width="3"/>
+                    <StackPanel HorizontalAlignment="Left" Height="231" VerticalAlignment="Top" Width="206" Margin="255,10,0,0" x:Name="KPanel">
+                        <Label VerticalAlignment="Center" Content="Combat Options" Margin="0,0,10,0" />
+                        <CheckBox VerticalAlignment="Center" Content="Alert AI across rooms" IsChecked="{Binding AlertAiThroughDoors}" Margin="0,5,0,5" ToolTip="AIs will alert each other even through closed doors. It's more realistic, but be aware that it may cause some fights to involve a larger number of combatants than before! Range is up to 40ft (of travel distance)."/>
+                        <CheckBox VerticalAlignment="Center" Content="Prefer 5' Step and Full Attack" IsChecked="{Binding PreferUse5FootStep}" Margin="0,5,0,5" ToolTip="When an enemy is selected for attack, a 5 foot step and full round attack will be taken when possible."/>
+
+                        <Label VerticalAlignment="Center" Content="Dialogue Options" Margin="0,0,10,0" />
+                        <CheckBox VerticalAlignment="Center" Content="Tolerant Townsfolk" IsChecked="{Binding TolerantTownsfolk}" Margin="0,5,0,5" ToolTip="Townsfolk will be tolerant of monstrous party members and NPCs."/>
+                        <CheckBox VerticalAlignment="Center" Content="Party Skill Checks" IsChecked="{Binding PartySkillChecks}" Margin="0,5,10,5" ToolTip="Dialog skill checks will take the highest skill level in the party (PCs only)."/>
+
+                    </StackPanel>
+                </Canvas>
             </TabItem>
             <TabItem Header="Extra Content">
                 <StackPanel HorizontalAlignment="Left" Height="157" VerticalAlignment="Top" Width="215" Margin="10,10,0,0">
@@ -36,30 +52,32 @@
             </TabItem>
             <TabItem Header="Ruleset">
                 <Canvas>
-                <StackPanel HorizontalAlignment="Left" Height="170" VerticalAlignment="Top" Width="188" Margin="10,10,0,0">
-                    <StackPanel Orientation="Horizontal">
-                        <Label VerticalAlignment="Center" Content="HP on Level Up" Height="27" />
-                        <ComboBox VerticalAlignment="Center" SelectedValue="{Binding HpOnLevelUp}"  ItemsSource="{Binding HpOnLevelUpTypes}"/>
-                    </StackPanel>
+                    <StackPanel HorizontalAlignment="Left" Height="231" VerticalAlignment="Top" Width="188" Canvas.Left="10" Canvas.Top="10">
+                        <StackPanel Orientation="Horizontal">
+                            <Label VerticalAlignment="Center" Content="HP on Level Up" Height="27" />
+                            <ComboBox VerticalAlignment="Center" SelectedValue="{Binding HpOnLevelUp}"  ItemsSource="{Binding HpOnLevelUpTypes}"/>
+                        </StackPanel>
 
-                    <StackPanel Orientation="Horizontal"  Margin="0,5,10,5">
-                        <Label VerticalAlignment="Center" Content="Point Buy Points:" Height="25"/>
-                        <TextBox Width="50" VerticalAlignment="Center" Text="{Binding PointBuyPoints}" />
+                        <StackPanel Orientation="Horizontal"  Margin="0,5,10,5">
+                            <Label VerticalAlignment="Center" Content="Point Buy Points:" Height="25"/>
+                            <TextBox Width="50" VerticalAlignment="Center" Text="{Binding PointBuyPoints}" />
+                        </StackPanel>
+                        <CheckBox VerticalAlignment="Center" Content="Allow XP overflow" IsChecked="{Binding AllowXpOverflow}" Margin="0,5,35,5" ToolTip="Allows experience points to accumulate beyond the limit of the next level."/>
+                        <CheckBox VerticalAlignment="Center" Content="Reach Weapons Hit Adjacents" IsChecked="{Binding DisableReachWeaponDonut}" Margin="0,5,10,5" ToolTip="Temple+ fixes reach weapons so that you cannot attack enemies within close range. This option restores the vanilla ToEE behavior, where all reach weapons behaved like Spiked Chains."/>
+
+                        <CheckBox VerticalAlignment="Center" Content="Metamagic Stacking" IsChecked="{Binding MetamagicStacking}" Margin="0,5,35,5" ToolTip="Allows stacking of Meta Magic effects such as Widen, Enlarge and Extend Spell."/>
+                        <CheckBox x:Name="LaxRulesCheckbox" VerticalAlignment="Center" Content="Lax Rules" IsChecked="{Binding LaxRules}" Margin="0,5,35,5" ToolTip="Relax some restrictions such as craft MAA spell requirements, alignment restrictions for Prestige Classes." Initialized="CheckBox_Initialized" Unchecked="CheckBox_Unchecked" Checked="CheckBox_Checked"/>
+                        <CheckBox VerticalAlignment="Center" Content="Stricter Rules Enforcement" IsChecked="{Binding StricterRulesEnforcement}" Margin="0,5,25,5" ToolTip="Change grease size to 5 foot radius."/>
                     </StackPanel>
-                    <CheckBox VerticalAlignment="Center" Content="Allow XP overflow" IsChecked="{Binding AllowXpOverflow}" Margin="0,5,35,5" ToolTip="Allows experience points to accumulate beyond the limit of the next level."/>
-                    <CheckBox VerticalAlignment="Center" Content="Metamagic Stacking" IsChecked="{Binding MetamagicStacking}" Margin="0,5,35,5" ToolTip="Allows stacking of Meta Magic effects such as Widen, Enlarge and Extend Spell."/>
-                    <CheckBox x:Name="LaxRulesCheckbox" VerticalAlignment="Center" Content="Lax Rules" IsChecked="{Binding LaxRules}" Margin="0,5,35,5" ToolTip="Relax some restrictions such as craft MAA spell requirements, alignment restrictions for Prestige Classes." Initialized="CheckBox_Initialized" Unchecked="CheckBox_Unchecked" Checked="CheckBox_Checked"/>
-                    <CheckBox VerticalAlignment="Center" Content="Stricter Rules Enforcement" IsChecked="{Binding StricterRulesEnforcement}" Margin="0,5,25,5" ToolTip="Change grease size to 5 foot radius."/>
-                </StackPanel>
-                <GridSplitter x:Name="gridSplitter_Copy" HorizontalAlignment="Left" Height="360" Margin="241,10,0,0" VerticalAlignment="Top" Width="3"/>
-                <StackPanel HorizontalAlignment="Left" Height="231" VerticalAlignment="Top" Width="206" Margin="255,10,0,0" x:Name="LaxRulesPanel">
-                    <Label VerticalAlignment="Center" Content="Lax Rules Options" Margin="0,0,10,0" />
-                    <CheckBox VerticalAlignment="Center" Content="Disable Alignment Restrictions" IsChecked="{Binding DisableAlignmentRestrictions}" Margin="0,5,10,5" ToolTip="Alignment restrictions will not apply when choosing a class with respect to the critter's alignment, nor to the party alignment."/>
-                    <CheckBox VerticalAlignment="Center" Content="Disable Crafting Spell Reqs." IsChecked="{Binding DisableCraftingSpellReqs}" Margin="0,5,10,5" ToolTip="Crafting Magic Arms and Armor or Wondrous Items will ignore spell requirements. Scrolls/Wands still apply obviously."/>
-                    <CheckBox VerticalAlignment="Center" Content="Disable Multiclass XP Penalty" IsChecked="{Binding DisableMulticlassXpPenalty}" Margin="0,5,10,5" ToolTip="Does away with Experience Point penalties for multiclassed characters."/>
-                    <CheckBox VerticalAlignment="Center" Content="Show Hidden Creature Targets" IsChecked="{Binding ShowTargetingCirclesInFogOfWar}" Margin="0,5,10,5" ToolTip="Displays the targeting circles on hidden targets when casting spells, such as those still in the fog of war, or ones that are in hiding."/>
-                    <CheckBox VerticalAlignment="Center" Content="Wildshape Usable Items" IsChecked="{Binding WildshapeUsableItems}" Margin="0,5,10,5" ToolTip="Allows you to retain bonuses from some equipment and to drink potions. Usable equipment includes Bracers, Cloaks, Helms, Neckalces, Rings."/>
-                </StackPanel>
+                    <GridSplitter x:Name="gridSplitter_Copy" HorizontalAlignment="Left" Height="360" Margin="241,10,0,0" VerticalAlignment="Top" Width="3"/>
+                    <StackPanel HorizontalAlignment="Left" Height="231" VerticalAlignment="Top" Width="206" Margin="255,10,0,0" x:Name="LaxRulesPanel">
+                        <Label VerticalAlignment="Center" Content="Lax Rules Options" Margin="0,0,10,0" />
+                        <CheckBox VerticalAlignment="Center" Content="Disable Alignment Restrictions" IsChecked="{Binding DisableAlignmentRestrictions}" Margin="0,5,10,5" ToolTip="Alignment restrictions will not apply when choosing a class with respect to the critter's alignment, nor to the party alignment."/>
+                        <CheckBox VerticalAlignment="Center" Content="Disable Crafting Spell Reqs." IsChecked="{Binding DisableCraftingSpellReqs}" Margin="0,5,10,5" ToolTip="Crafting Magic Arms and Armor or Wondrous Items will ignore spell requirements. Scrolls/Wands still apply obviously."/>
+                        <CheckBox VerticalAlignment="Center" Content="Disable Multiclass XP Penalty" IsChecked="{Binding DisableMulticlassXpPenalty}" Margin="0,5,10,5" ToolTip="Does away with Experience Point penalties for multiclassed characters."/>
+                        <CheckBox VerticalAlignment="Center" Content="Show Hidden Creature Targets" IsChecked="{Binding ShowTargetingCirclesInFogOfWar}" Margin="0,5,10,5" ToolTip="Displays the targeting circles on hidden targets when casting spells, such as those still in the fog of war, or ones that are in hiding."/>
+                        <CheckBox VerticalAlignment="Center" Content="Wildshape Usable Items" IsChecked="{Binding WildshapeUsableItems}" Margin="0,5,10,5" ToolTip="Allows you to retain bonuses from some equipment and to drink potions. Usable equipment includes Bracers, Cloaks, Helms, Neckalces, Rings."/>
+                    </StackPanel>
                 </Canvas>
             </TabItem>
             <TabItem Header="Difficulty">
@@ -76,7 +94,7 @@
                 </StackPanel>
             </TabItem>
         </TabControl>
-        
+
         <Button x:Name="button" Content="Ok" HorizontalAlignment="Left" Margin="10,0,0,15" VerticalAlignment="Bottom" Width="75" Click="button_Click"/>
 
     </Grid>

@@ -1,0 +1,5 @@
+name: Dragon Disciple Natural Armor
+flags: 8
+prereqs:
+description:   At 1st, 4th, and 7th level, a dragon disciple gains a progressive +1 increase to the character's existing natural armor (if any). As his skin thickens, a dragon disciple takes on more and more of his progenitor’s physical aspect.
+prereq descr: Dragon Disciple level 1.

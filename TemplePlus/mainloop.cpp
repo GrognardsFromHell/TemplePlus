@@ -40,6 +40,7 @@
 #include "ui/ui_legacysystems.h"
 #include "ui/ui_mainmenu.h"
 #include "ui/ui_debug.h"
+#include <mod_support.h>
 
 static GameLoop *gameLoop = nullptr;
 
@@ -447,7 +448,7 @@ void GameLoop::RenderVersion() {
 	auto rect = UiRenderer::MeasureTextSize(version, style);
 	rect.x = config.renderWidth - rect.width - 10;
 	rect.y = config.renderHeight - rect.height - 10;
-
+	
 	UiRenderer::RenderText(version, rect, style);
 
 	// Also draw the status of the auto update above the version number
@@ -459,6 +460,19 @@ void GameLoop::RenderVersion() {
 		rect.y = offset - rect.height - 5;
 
 		UiRenderer::RenderText(updateStatus, rect, style);
+	}
+
+	{
+		auto &overridesUsed = modSupport.GetOverrides();
+		for (auto i = 0; i < overridesUsed.size(); ++i) {
+			auto &txt = overridesUsed[i];
+			auto offset = rect.y;
+			rect = UiRenderer::MeasureTextSize(txt, style);
+			rect.x = config.renderWidth - rect.width - 10;
+			rect.y = offset - rect.height - 5;
+
+			UiRenderer::RenderText(txt, rect, style);
+		}
 	}
 
 	UiRenderer::PopFont();
@@ -505,6 +519,7 @@ public:
 	}
 } hooks;
 
+/* 0x101140F0 */
 void MainLoopHooks::NormalLmbHandleTarget(objHndl * tgt)
 {
 	locXY tgtLoc = LocAndOffsets::null.location;

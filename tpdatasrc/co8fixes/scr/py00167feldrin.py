@@ -22,6 +22,8 @@ def san_dying( attachee, triggerer ):
 
 
 def san_start_combat( attachee, triggerer ):
+	if attachee.is_unconscious(): # fixes issue that just stops combat
+		return RUN_DEFAULT
 	while(attachee.item_find(8903) != OBJ_HANDLE_NULL):
 		attachee.item_find(8903).destroy()
 	#if (attachee.d20_query(Q_Is_BreakFree_Possible)): # workaround no longer necessary!
