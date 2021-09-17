@@ -307,7 +307,7 @@ objHndl ObjSystem::CreateObject(objHndl protoHandle, locXY location)
 objHndl ObjSystem::LoadFromFile(TioFile* file) {
 	uint32_t header;
 	if (tio_fread(&header, sizeof(header), 1, file) != 1) {
-		throw TempleException("Couldn't read the object header.");
+		throw TempleException("ObjSystem::LoadFromFile: Couldn't read the object header.");
 	}
 
 	if (header != 0x77) {
@@ -377,7 +377,7 @@ objHndl ObjSystem::LoadFromFile(TioFile* file) {
 	auto handle = mObjRegistry->Add(std::move(obj));
 	if (!id.IsNull()) {
 		mObjRegistry->AddToIndex(handle, id);
-		logger->trace("Loaded object {} to handle {}", id.ToString(), handle);
+		logger->trace("ObjSystem::LoadFromFile: Loaded object {} to handle {}", id.ToString(), handle);
 	}
 
 	FindNodeAllocate(handle);

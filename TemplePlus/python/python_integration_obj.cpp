@@ -165,7 +165,7 @@ static int RunPythonObjScript(ObjScriptInvocation* invoc) {
 		Py_DECREF(attachee);
 	} else {
 		if (invoc->evt == ObjScriptEvent::FirstHeartbeat){
-			int dumy = 1;
+			logger->trace("Running first heartbeat script for {}", invoc->attachee);
 		}
 		auto attachee = PyObjHndl_Create(invoc->attachee);
 		args = Py_BuildValue("OO", attachee, triggerer);

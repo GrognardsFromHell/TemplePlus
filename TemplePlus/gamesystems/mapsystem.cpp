@@ -1243,7 +1243,7 @@ void MapSystem::ReadMapMobiles(const std::string &dataDir, const std::string &sa
 	// Read all mobiles that shipped with the game files
 	auto mobFiles = vfs->Search(dataDir + "\\*.mob");
 
-	logger->info("Loading {} map mobiles from {}", mobFiles.size(), dataDir);
+	logger->info("ReadMapMobiles: Loading {} map mobiles from {}", mobFiles.size(), dataDir);
 
 	for (auto &mobFile : mobFiles) {
 		auto filename = fmt::format("{}\\{}", dataDir, mobFile.filename);
@@ -1253,17 +1253,17 @@ void MapSystem::ReadMapMobiles(const std::string &dataDir, const std::string &sa
 				filename, dataDir);
 		} else //if (config.debugMessageEnable)
 		{
-			logger->trace("Loaded MOB obj {} ({})", handle, objSystem->GetObject(handle)->id.ToString() );
+			logger->trace("ReadMapMobiles: \t\tLoaded MOB obj {} ({})", handle, objSystem->GetObject(handle)->id.ToString() );
 		}
 	}
 
-	logger->info("Done loading map mobiles");
+	logger->info("ReadMapMobiles: \t\tDone loading map mobiles");
 
 	// Read all mobile differences that have accumulated for this map in the save dir
 	auto diffFilename = fmt::format("{}\\mobile.md", saveDir);
 
 	if (vfs->FileExists(diffFilename)) {
-		logger->info("Loading mobile diffs from {}", diffFilename);
+		logger->info("ReadMapMobiles: Loading mobile diffs from {}", diffFilename);
 
 		auto fh = tio_fopen(diffFilename.c_str(), "rb");
 		if (!fh) {
@@ -1304,17 +1304,17 @@ void MapSystem::ReadMapMobiles(const std::string &dataDir, const std::string &sa
 
 		tio_fclose(fh);
 
-		logger->info("Done loading map mobile diffs");
+		logger->info("ReadMapMobiles: \t\tDone loading map mobile diffs");
 
 	} else {
-		logger->info("Skipping mobile diffs, because {} is missing", diffFilename);
+		logger->info("ReadMapMobiles: \t\tSkipping mobile diffs, because {} is missing", diffFilename);
 	}
 
 	// Destroy all mobiles that had previously been destroyed	
 	auto desFilename = fmt::format("{}\\mobile.des", saveDir);
 
 	if (vfs->FileExists(desFilename)) {
-		logger->info("Loading destroyed mobile file from {}", desFilename);
+		logger->info("ReadMapMobiles: Loading destroyed mobile file from {}", desFilename);
 
 		auto desContent = vfs->ReadAsBinary(desFilename);
 		BinaryReader reader(desContent);
@@ -1327,14 +1327,14 @@ void MapSystem::ReadMapMobiles(const std::string &dataDir, const std::string &sa
 				auto obj = objSystem->GetObject(handle);
 				auto flags = obj->GetFlags();
 				
-				logger->debug("{} ({}) is destroyed.", handle, obj->id.ToString());
+				logger->debug("ReadMapMobiles: \t\t{} ({}) is destroyed.", handle, obj->id.ToString());
 				gameSystems->GetObj().Remove(handle);
 			}
 		}
 		
-		logger->info("Done loading destroyed map mobiles");
+		logger->info("ReadMapMobiles: Done loading destroyed map mobiles");
 	} else {
-		logger->info("Skipping destroyed mobile files, because {} is missing", desFilename);
+		logger->info("ReadMapMobiles: Skipping destroyed mobile files, because {} is missing", desFilename);
 	}
 	
 	ReadDynamicMobiles(saveDir);
@@ -1346,11 +1346,11 @@ void MapSystem::ReadDynamicMobiles(const std::string & saveDir)
 	auto filename = fmt::format("{}\\mobile.mdy", saveDir);
 
 	if (!vfs->FileExists(filename)) {
-		logger->info("Skipping dynamic mobiles because {} doesn't exist.", filename);
+		logger->info("ReadDynamicMobiles: Skipping dynamic mobiles because {} doesn't exist.", filename);
 		return;
 	}
 
-	logger->info("Loading dynamic mobiles from {}", filename);
+	logger->info("ReadDynamicMobiles: Loading dynamic mobiles from {}", filename);
 
 	auto fh = tio_fopen(filename.c_str(), "rb");
 	if (!fh) {
@@ -1360,7 +1360,7 @@ void MapSystem::ReadDynamicMobiles(const std::string & saveDir)
 	while (true) {
 		try {
 			auto handle = objSystem->LoadFromFile(fh);
-			logger->trace("Loaded dynamic object {} ({})", description.getDisplayName(handle) ,	objSystem->GetObject(handle)->id.ToString());
+			logger->trace("ReadDynamicMobiles: \t\tLoaded dynamic object {} ({})", handle ,	objSystem->GetObject(handle)->id.ToString());
 		} catch (TempleException &e) {
 			logger->error("Unable to load object: {}", e.what());
 			break;
@@ -1374,7 +1374,7 @@ void MapSystem::ReadDynamicMobiles(const std::string & saveDir)
 
 	tio_fclose(fh);
 
-	logger->info("Done reading dynamic mobiles.");
+	logger->info("ReadDynamicMobiles: Done reading dynamic mobiles.");
 
 }
 
