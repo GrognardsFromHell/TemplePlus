@@ -3357,6 +3357,8 @@ spell_new_slot_lvl_7 = 1612
 spell_new_slot_lvl_8 = 1613
 spell_new_slot_lvl_9 = 1614
 
+spell_dragon_disciple_cone_breath = 3231
+spell_dragon_disciple_line_breath = 3232
 
 stat_strength = 0
 stat_dexterity = 1

@@ -25,14 +25,14 @@ classEnum = stat_level_dragon_disciple
 
 
 class_feats = {
-1: ("Dragon Disciple Natural Armor",),
+1: ("Dragon Disciple Heritage", "Dragon Disciple Natural Armor",),
 2: ("Dragon Disciple Claws and Bite",),
 3: ("Dragon Disciple Breath Weapon",),
 5: ("Dragon Disciple Blindsense",),
 10: ("Dragon Disciple Dragon Apotheosis",)
 }
 
-bonus_feats = ["Dragon Disciple Heritage"]
+#bonus_feats = ["Dragon Disciple Heritage"]
 
 class_skills = (skill_alchemy, skill_concentration, skill_craft, skill_diplomacy, skill_escape_artist, skill_gather_information, skill_knowledge_all, skill_listen, skill_profession, skill_search, skill_spellcraft, skill_spot)
 
@@ -88,6 +88,12 @@ def KnowledgeArcanaCheck( obj ):
         return 0
     return 1
 
+def DragonRaceCheck(obj):
+    #Can't check if character is half-dragon; it does not exist in ToEE
+    if obj.is_category_type(mc_type_dragon):
+        return 1
+    return 0
+
 def ObjMeetsPrereqs(obj):
     if not KnowledgeArcanaCheck(obj):
         return 0
@@ -95,20 +101,22 @@ def ObjMeetsPrereqs(obj):
         return 0
     elif not SpeaksDraconic(obj):
         return 0
+    #elif DragonRaceCheck:
+    #    return 0
     return 1
 
 
 # Levelup
-def IsSelectingFeatsOnLevelup(obj):
-    newLvl = obj.stat_level_get( classEnum ) + 1
-    if newLvl == 1:
-        return 1
-    return 0
+#def IsSelectingFeatsOnLevelup(obj):
+#    newLvl = obj.stat_level_get( classEnum ) + 1
+#    if newLvl == 1:
+#        return 1
+#    return 0
 
-def LevelupGetBonusFeats(obj):
+#def LevelupGetBonusFeats(obj):
 #Lazy copy + paste from fighter; could be cleaned up as it is only one feat
-    bonFeatInfo = []
-    for ft in bonus_feats:
-        bonFeatInfo.append(char_editor.FeatInfo(ft))
-    char_editor.set_bonus_feats(bonFeatInfo)
-    return
+#    bonFeatInfo = []
+#    for ft in bonus_feats:
+#        bonFeatInfo.append(char_editor.FeatInfo(ft))
+#    char_editor.set_bonus_feats(bonFeatInfo)
+#    return

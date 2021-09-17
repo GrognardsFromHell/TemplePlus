@@ -1,6 +1,7 @@
 from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
+import tpactions
 import char_class_utils
 
 ###################################################
@@ -15,6 +16,25 @@ print "Registering " + GetConditionName()
 
 classEnum = stat_level_dragon_disciple
 classSpecModule = __import__('class023_dragon_disciple')
+
+selectHeritageId = 2301
+breathWeaponEnum = 2302
+
+#Dict to handle Dragon Disciple Heritage
+#Can easily be expanded by adding a new type of heritage to the dict
+#[Colour, ElementType, Breath Weapon Shape (1 = Cone, 2 = Line)]
+dictDragonHeritage = {
+1: ["Black", D20DT_ACID, 2],
+2: ["Blue", D20DT_ELECTRICITY, 2],
+3: ["Green", D20DT_ACID, 1],
+4: ["Red", D20DT_FIRE, 1],
+5: ["White", D20DT_COLD, 1],
+6: ["Brass", D20DT_FIRE, 2],
+7: ["Bronze", D20DT_ELECTRICITY, 2],
+8: ["Copper", D20DT_ACID, 2],
+9: ["Gold", D20DT_FIRE, 1],
+10: ["Silver", D20DT_COLD, 1]
+}
 ###################################################
 
 
@@ -121,6 +141,50 @@ spellCasterSpecObj.AddHook(ET_OnLevelupSystemEvent, EK_LVL_Spells_Finalize, OnLe
 
 ##### Dragon Disciple Class Features #####
 
+###Handle Heritage
+def selectHeritageRadial(attachee, args, evt_obj):
+    if not args.get_arg(0):
+        radialSelectHeritageParent = tpdp.RadialMenuEntryParent("Select Dragon Disciple Heritage")
+        radialSelectHeritageParentId = radialSelectHeritageParent.add_child_to_standard(attachee, tpdp.RadialMenuStandardNode.Class)
+        for key in dictDragonHeritage.keys():
+            dragonColour = dictDragonHeritage[key][0]
+            radialHeritageColourId = tpdp.RadialMenuEntryPythonAction("{} Dragon Heritage".format(dragonColour), D20A_PYTHON_ACTION, selectHeritageId, key, "TAG_CLASS_FEATURES_MARSHAL_MINOR_AURAS")
+            radialHeritageColourId.add_as_child(attachee, radialSelectHeritageParentId)
+    return 0
+
+def setHeritage(attachee, args, evt_obj):
+    chosenHeritage = evt_obj.d20a.data1
+    args.set_arg(0, chosenHeritage)
+    return 0
+
+def querySelectedHeritage(attachee, args, evt_obj):
+    evt_obj.return_val = args.get_arg(0)
+    return 0
+
+def queryHeritageElementType(attachee, args, evt_obj):
+    heritage = args.get_arg(0)
+    evt_obj.return_val = dictDragonHeritage[heritage][1]
+    return 0
+
+def queryHeritageBreathWeaponType(attachee, args, evt_obj):
+    heritage = args.get_arg(0)
+    evt_obj.return_val = dictDragonHeritage[heritage][2]
+    return 0
+
+def initialHeritageValue(attachee, args, evt_obj):
+    args.set_arg(0, 0)
+    return 0
+
+dragonHeritage = PythonModifier("Dragon Disciple Heritage", 3) #arg0 = heritage
+dragonHeritage.MapToFeat("Dragon Disciple Heritage")
+dragonHeritage.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, selectHeritageRadial, ())
+dragonHeritage.AddHook(ET_OnD20PythonActionPerform, selectHeritageId, setHeritage, ())
+dragonHeritage.AddHook(ET_OnD20PythonQuery, "PQ_Dragon_Disciple_Selected_Heritage", queryHeritageElementType, ())
+dragonHeritage.AddHook(ET_OnD20PythonQuery, "PQ_Dragon_Disciple_Element_Type", queryHeritageElementType, ())
+dragonHeritage.AddHook(ET_OnD20PythonQuery, "PQ_Dragon_Disciple_Breath_Weapon_Type", queryHeritageBreathWeaponType, ())
+dragonHeritage.AddHook(ET_OnConditionAdd, EK_NONE, initialHeritageValue, ())
+
+
 ### AC Bonus
 def NaturalArmorACBonus(attachee, args, evt_obj):
     classLevel = attachee.stat_level_get(classEnum)
@@ -133,7 +197,7 @@ def NaturalArmorACBonus(attachee, args, evt_obj):
     else:
         bonusValue = 4
     bonusType = 0 #ID 0 = Stacking; Wrong Type as Touch Attacks should nullify this bonus
-    evt_obj.bonus_list.add(bonusValue, bonusType, "~Dragon Disciple Natural Armor~[TAG_CLASS_FEATURES_DRAGON_DISCIPILES_NATURAL_ARMOR_INCREASE]")
+    evt_obj.bonus_list.add(bonusValue, bonusType, "~Dragon Disciple Natural Armor~[TAG_CLASS_FEATURES_DRAGON_DISCIPLES_NATURAL_ARMOR_INCREASE]")
     return 0
 
 naturalArmorInc = PythonModifier("Dragon Disciple Natural Armor", 0)
@@ -155,6 +219,45 @@ def OnGetAbilityScore(attachee, args, evt_obj):
 classSpecObj.AddHook(ET_OnAbilityScoreLevel, EK_STAT_STRENGTH, OnGetAbilityScore, ())
 
 ### Breath Weapon
+def breathWeaponRadial(attachee, args, evt_obj):
+    if args.get_arg(0):
+        return 0
+    #I display the heritage colour in the Breath Weapon Radial
+    #So the player gets a visual feedback, which colour he did choose
+    heritage = attachee.d20_query("PQ_Dragon_Disciple_Selected_Heritage")
+    dragonColour = dictDragonHeritage[heritage][0]
+    breathWeaponShape = attachee.d20_query("PQ_Dragon_Disciple_Breath_Weapon_Type")
+    spellId = spell_dragon_disciple_cone_breath if breathWeaponShape == 1 else spell_dragon_disciple_line_breath
+
+    breathWeaponId = tpdp.RadialMenuEntryPythonAction("Breath Weapon ({})".format(dragonColour), D20A_PYTHON_ACTION, breathWeaponEnum, 0, "TAG_INTERFACE_HELP")
+    spellData = tpdp.D20SpellData(spellId)
+    casterLevel = attachee.stat_level_get(classEnum)
+    spellData.set_spell_class(classEnum)
+    spellData.set_spell_level(casterLevel)
+    breathWeaponId.set_spell_data(spellData)
+    breathWeaponId.add_child_to_standard(attachee, tpdp.RadialMenuStandardNode.Class)
+    return 0
+
+def performBreathWeapon(attachee, args, evt_obj):
+    currentSequence = tpactions.get_cur_seq()
+    spellPacket = currentSequence.spell_packet
+    newSpellId = tpactions.get_new_spell_id()
+    spellPacket.caster_level = attachee.stat_level_get(classEnum)
+    tpactions.register_spell_cast(spellPacket, newSpellId)
+    tpactions.trigger_spell_effect(evt_obj.d20a.spell_id)
+    return 0
+
+
+def resetBreathWeapon(attachee, args, evt_obj):
+    args.set_arg(0, 0)
+    return 0
+
+dragonDiscipleBreathWeapon = PythonModifier("Dragon Disciple Breath Weapon", 3) #arg0 = used this day
+dragonDiscipleBreathWeapon.MapToFeat("Dragon Disciple Breath Weapon")
+dragonDiscipleBreathWeapon.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, breathWeaponRadial, ())
+#dragonDiscipleBreathWeapon.AddHook(ET_OnD20PythonActionPerform, breathWeaponEnum, performBreathWeapon, ())
+dragonDiscipleBreathWeapon.AddHook(ET_OnConditionAdd, EK_NONE, resetBreathWeapon, ())
+dragonDiscipleBreathWeapon.AddHook(ET_OnNewDay, EK_NEWDAY_REST, resetBreathWeapon, ())
 
 
 ### Blindsense
