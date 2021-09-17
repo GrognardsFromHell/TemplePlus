@@ -3908,7 +3908,7 @@ public:
 			evtNew.system = TimeEventType::AI;
 			evtNew.params[0].handle = obj;
 			evtNew.params[1].int32 = doFirstHeartbeat;
-			logger->debug("Generating AI TimeEvent for {}, first heartbeat: {}", description.getDisplayName(obj), doFirstHeartbeat);
+			logger->debug("Generating AI TimeEvent for {}, first heartbeat: {}", obj, doFirstHeartbeat);
 			if (doFirstHeartbeat)
 			{
 				int dummy = 1;
