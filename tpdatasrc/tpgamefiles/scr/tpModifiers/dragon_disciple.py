@@ -23,6 +23,8 @@ breathWeaponEnum = 2302
 #Dict to handle Dragon Disciple Heritage
 #Can easily be expanded by adding a new type of heritage to the dict
 #[Colour, ElementType, Breath Weapon Shape (1 = Cone, 2 = Line)]
+#If a new element type would be added e.g. sonic or negative,
+#this also would be needed to add in both spells and in the partsys
 dictDragonHeritage = {
 1: ["Black", D20DT_ACID, 2],
 2: ["Blue", D20DT_ELECTRICITY, 2],
@@ -154,6 +156,7 @@ def selectHeritageRadial(attachee, args, evt_obj):
 
 def setHeritage(attachee, args, evt_obj):
     chosenHeritage = evt_obj.d20a.data1
+    print "Selected Heritage: {}".format(chosenHeritage)
     args.set_arg(0, chosenHeritage)
     return 0
 
@@ -227,10 +230,10 @@ def breathWeaponRadial(attachee, args, evt_obj):
     heritage = attachee.d20_query("PQ_Dragon_Disciple_Selected_Heritage")
     dragonColour = dictDragonHeritage[heritage][0]
     breathWeaponShape = attachee.d20_query("PQ_Dragon_Disciple_Breath_Weapon_Type")
-    spellId = spell_dragon_disciple_cone_breath if breathWeaponShape == 1 else spell_dragon_disciple_line_breath
+    spellEnum = spell_dragon_disciple_cone_breath if breathWeaponShape == 1 else spell_dragon_disciple_line_breath
 
     breathWeaponId = tpdp.RadialMenuEntryPythonAction("Breath Weapon ({})".format(dragonColour), D20A_PYTHON_ACTION, breathWeaponEnum, 0, "TAG_INTERFACE_HELP")
-    spellData = tpdp.D20SpellData(spellId)
+    spellData = tpdp.D20SpellData(spellEnum)
     casterLevel = attachee.stat_level_get(classEnum)
     spellData.set_spell_class(classEnum)
     spellData.set_spell_level(casterLevel)
@@ -255,7 +258,7 @@ def resetBreathWeapon(attachee, args, evt_obj):
 dragonDiscipleBreathWeapon = PythonModifier("Dragon Disciple Breath Weapon", 3) #arg0 = used this day
 dragonDiscipleBreathWeapon.MapToFeat("Dragon Disciple Breath Weapon")
 dragonDiscipleBreathWeapon.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, breathWeaponRadial, ())
-#dragonDiscipleBreathWeapon.AddHook(ET_OnD20PythonActionPerform, breathWeaponEnum, performBreathWeapon, ())
+dragonDiscipleBreathWeapon.AddHook(ET_OnD20PythonActionPerform, breathWeaponEnum, performBreathWeapon, ())
 dragonDiscipleBreathWeapon.AddHook(ET_OnConditionAdd, EK_NONE, resetBreathWeapon, ())
 dragonDiscipleBreathWeapon.AddHook(ET_OnNewDay, EK_NEWDAY_REST, resetBreathWeapon, ())
 
