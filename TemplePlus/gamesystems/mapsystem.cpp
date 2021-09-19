@@ -175,6 +175,47 @@ void MapSystem::LoadModule() {
 		}
 	}
 
+	
+	if (config.debugObjects) {
+		// Search for duplicate mob files
+		std::map<std::string, int> objMapId;
+		for (auto& it: mMaps) {
+			auto &entry = it.second;
+			auto dataDir = fmt::format("maps\\{}", entry.name);
+			auto mobFiles = vfs->Search(dataDir + "\\*.mob");
+
+			for (auto& mobFile : mobFiles) {
+				auto found = objMapId.find(mobFile.filename);
+				if (found!= objMapId.end()) {
+					
+
+					auto file = tio_fopen( fmt::format("{}/{}", dataDir, mobFile.filename).c_str() , "rb");
+
+					uint32_t header;
+					if (tio_fread(&header, sizeof(header), 1, file) != 1) {
+						throw TempleException("ObjSystem::LoadFromFile: Couldn't read the object header.");
+					}
+
+					if (header != 0x77) {
+						throw TempleException("Expected object header 0x77, but got 0x{:x}", header);
+					}
+
+					ObjectId protoId;
+					if (tio_fread(&protoId, sizeof(protoId), 1, file) != 1) {
+						throw TempleException("Couldn't read the prototype id.");
+					}
+
+					logger->error("Duplicates MOB file found: {}/{} (was also on mapID = {}, now on {}). ProtoID: {}", dataDir, mobFile.filename, found->second, entry.id, protoId.GetPrototypeId());
+
+				}
+				else {
+					objMapId[mobFile.filename] = entry.id;
+				}
+			}
+
+		}
+		
+	}
 }
 
 void MapSystem::UnloadModule() {
@@ -939,6 +980,7 @@ int MapSystem::GetArea(int mapId) const
 	return 0;
 }
 
+/* 10072A90 */
 bool MapSystem::OpenMap(int mapId, bool preloadSectors, bool dontSaveCurrentMap)
 {
 	auto it = mMaps.find(mapId);
@@ -1253,7 +1295,12 @@ void MapSystem::ReadMapMobiles(const std::string &dataDir, const std::string &sa
 				filename, dataDir);
 		} else //if (config.debugMessageEnable)
 		{
-			logger->trace("ReadMapMobiles: \t\tLoaded MOB obj {} ({})", handle, objSystem->GetObject(handle)->id.ToString() );
+			auto obj = objSystem->GetObject(handle);
+			logger->trace("ReadMapMobiles: \t\tLoaded MOB obj {} ({})", handle, obj->id.ToString() );
+			auto flags = obj->GetFlags();
+			if (flags & OF_DYNAMIC) {
+				logger->error("ReadMapMobiles: \t\t\tMOB file flagged OF_DYNAMIC!!!");
+			}
 		}
 	}
 
@@ -1481,17 +1528,17 @@ void MapSystem::SaveMapMobiles() {
 		if (obj.HasFlag(OF_DESTROYED) || obj.HasFlag(OF_EXTINCT)) {
 			if (obj.HasFlag(OF_EXTINCT))
 			{
-				logger->trace("Writing extinct object {} as destroyed obj ({})", handle,	objSystem->GetObject(handle)->id.ToString());
+				logger->trace("SaveMapMobiles: \tWriting extinct object {} ({}) to mobile.des file.", handle,	objSystem->GetObject(handle)->id.ToString());
 			} else
 			{
-				logger->trace("Writing destroyed object {} as destroyed obj  ({})", handle,	objSystem->GetObject(handle)->id.ToString());
+				logger->trace("SaveMapMobiles: \tWriting destroyed object {} ({}) to mobile.des file.", handle,	objSystem->GetObject(handle)->id.ToString());
 			}
 			// Write the object id of the destroyed obj to mobile.des
 			vfs->Write(&obj.id, sizeof(obj.id), destrFh);
 			++destroyedObjs;
 		} else {
 			//logger->debug("Writing object {} to diff file ({})", description.getDisplayName(handle),	objSystem->GetObject(handle)->id.ToString());
-			// Write the object id followed by a diff record to mobile.mdy
+			// Write the object id followed by a diff record to mobile.md
 			diffOut->WriteObjectId(obj.id);
 
 			// TODO: Replace with proper VFS usage

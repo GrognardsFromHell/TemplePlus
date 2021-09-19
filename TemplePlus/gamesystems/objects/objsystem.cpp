@@ -12,6 +12,8 @@
 #include "objfields.h"
 #include "objfind.h"
 #include "arrayidxbitmaps.h"
+#include <gamesystems/objects/objevent.h>
+#include <config/config.h>
 
 ObjSystem* objSystem = nullptr;
 
@@ -374,6 +376,17 @@ objHndl ObjSystem::LoadFromFile(TioFile* file) {
 	
 	// Add it to the registry
 	auto id = obj->id;
+	if (config.debugObjects && !id.IsNull()) {
+		auto handle = mObjRegistry->GetHandleById(id);
+		
+		if (handle != objHndl::null) {
+			auto preobj = mObjRegistry->Get(handle);
+			auto flags = preobj->GetFlags();
+			if (!(flags & (OF_DESTROYED | OF_EXTINCT) )) {
+				logger->error("ObjSystem::LoadFromFile: Duplicate GUID detected! {} {} {}", id.ToString(), handle, (int)flags);
+			}
+		};
+	}
 	auto handle = mObjRegistry->Add(std::move(obj));
 	if (!id.IsNull()) {
 		mObjRegistry->AddToIndex(handle, id);
@@ -703,8 +716,7 @@ void ObjSystem::InitDynamic(GameObjectBody * obj, objHndl handle, locXY location
 	LocAndOffsets toLoc = fromLoc;
 	toLoc.location = location;
 
-	static auto objevent_notify_moved = temple::GetPointer<void(objHndl, LocAndOffsets, LocAndOffsets)>(0x10045290);
-	objevent_notify_moved(handle, fromLoc, toLoc);
+	objEvents.ListItemNew(handle, fromLoc, toLoc);
 
 }
 
