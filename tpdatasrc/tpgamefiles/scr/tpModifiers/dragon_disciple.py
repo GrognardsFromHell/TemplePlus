@@ -207,19 +207,65 @@ naturalArmorInc = PythonModifier("Dragon Disciple Natural Armor", 0)
 naturalArmorInc.MapToFeat("Dragon Disciple Natural Armor")
 naturalArmorInc.AddHook(ET_OnGetAC, EK_NONE, NaturalArmorACBonus, ())
 
-### Strength Bonus
-def OnGetAbilityScore(attachee, args, evt_obj):
+### Ability Bonus
+#def OnGetAbilityScore(attachee, args, evt_obj):
     #statType = args.get_param(0)
-    lvl = attachee.stat_level_get(classEnum)
-    statMod = args.get_param(1)
-    
-    newValue = statMod + evt_obj.bonus_list.get_sum()
-    if (newValue < 3): # ensure minimum stat of 3
-        statMod = 3-newValue
-    evt_obj.bonus_list.add(statMod, 0, 139)
+#    lvl = attachee.stat_level_get(classEnum)
+#    statMod = args.get_param(1)
+#    
+#    newValue = statMod + evt_obj.bonus_list.get_sum()
+#    if (newValue < 3): # ensure minimum stat of 3
+#        statMod = 3-newValue
+#    evt_obj.bonus_list.add(statMod, 0, 139)
+#    return 0
+
+#classSpecObj.AddHook(ET_OnAbilityScoreLevel, EK_STAT_STRENGTH, OnGetAbilityScore, ())
+
+
+def onGetAbilityScoreStr(attachee, args, evt_obj):
+    level = attachee.stat_level_get(classEnum)
+    if level < 2:
+        return 0
+    elif level < 4:
+        bonusValue = 2
+    elif level < 10:
+        bonusValue = 4
+    else:
+        bonusValue = 8
+    bonusType = 0 #ID 0 = Untyped(stacking)
+    evt_obj.bonus_list.add(bonusValue, bonusType, "~Dragon Disciple Ability Boost~[TAG_CLASS_FEATURES_DRAGON_DISCIPLES_ABILITY_BOOST]")
     return 0
 
-classSpecObj.AddHook(ET_OnAbilityScoreLevel, EK_STAT_STRENGTH, OnGetAbilityScore, ())
+def onGetAbilityScoreCon(attachee, args, evt_obj):
+    level = attachee.stat_level_get(classEnum)
+    if level >= 6:
+        bonusValue = 2
+        bonusType = 0 #ID = 0 Untyped(stacking)
+        evt_obj.bonus_list.add(bonusValue, bonusType, "~Dragon Disciple Ability Boost~[TAG_CLASS_FEATURES_DRAGON_DISCIPLES_ABILITY_BOOST]")
+    return 0
+
+def onGetAbilityScoreInt(attachee, args, evt_obj):
+    level = attachee.stat_level_get(classEnum)
+    if level >= 8:
+        bonusValue = 2
+        bonusType = 0 #ID = 0 Untyped(stacking)
+        evt_obj.bonus_list.add(bonusValue, bonusType, "~Dragon Disciple Ability Boost~[TAG_CLASS_FEATURES_DRAGON_DISCIPLES_ABILITY_BOOST]")
+    return 0
+
+def onGetAbilityScoreCha(attachee, args, evt_obj):
+    level = attachee.stat_level_get(classEnum)
+    if level >= 10:
+        bonusValue = 2
+        bonusType = 0 #ID = 0 Untyped(stacking)
+        evt_obj.bonus_list.add(bonusValue, bonusType, "~Dragon Disciple Ability Boost~[TAG_CLASS_FEATURES_DRAGON_DISCIPLES_ABILITY_BOOST]")
+    return 0
+
+classSpecObj.AddHook(ET_OnAbilityScoreLevel, EK_STAT_STRENGTH, onGetAbilityScoreStr, ())
+classSpecObj.AddHook(ET_OnAbilityScoreLevel, EK_STAT_CONSTITUTION, onGetAbilityScoreCon, ())
+classSpecObj.AddHook(ET_OnAbilityScoreLevel, EK_STAT_INTELLIGENCE, onGetAbilityScoreInt, ())
+classSpecObj.AddHook(ET_OnAbilityScoreLevel, EK_STAT_CHARISMA, onGetAbilityScoreCha, ())
+
+### Claws and Bite
 
 ### Breath Weapon
 def breathWeaponRadial(attachee, args, evt_obj):
@@ -264,9 +310,34 @@ dragonDiscipleBreathWeapon.AddHook(ET_OnNewDay, EK_NEWDAY_REST, resetBreathWeapo
 
 
 ### Blindsense
-
+#TBD
 
 #### Dragon Apotheosis
-# At 10th level, a dragon disciple takes on the half-dragon template. His breath weapon reaches full strength (as noted above), 
-# and he gains +4 to Strength and +2 to Charisma. His natural armor bonus increases to +4, and he acquires low-light vision, 
-#60-foot darkvision, immunity to sleep and paralysis effects, and immunity to the energy type used by his breath weapon.
+#Not implemented:
+#Half-dragon template
+#Low-light vision
+#60-foot darkvision
+
+def sleepParalyzeImmunity(attachee, args, evt_obj):
+    if evt_obj.is_modifier("sp-Sleep"):
+        evt_obj.return_val = 0
+        combatMesLine = 5059 #ID 5059: "Sleep Immunity"
+        historyMesLine = 31 #ID 31: {[ACTOR] is immune to ~sleep~[TAG_SPELLS_SLEEP].}
+        attachee.float_mesfile_line('mes\\combat.mes', combatMesLine, tf_red)
+        game.create_history_from_pattern(historyMesLine, attachee, OBJ_HANDLE_NULL)
+    elif evt_obj.is_modifier("Paralyzed"):
+        evt_obj.return_val = 0
+        attachee.float_text_line("Paralyze Immunity", tf_red)
+        game.create_history_freeform("{} is immune to ~paralyze~[TAG_PARALYZED] effects\n\n".format(attachee))
+    return 0
+
+def elementImmunity(attachee, args, evt_obj):
+    elementType = attachee.d20_query("PQ_Dragon_Disciple_Element_Type")
+    damageMesLine = 132 #ID 132 in damage.mes is Immunity
+    evt_obj.damage_packet.add_mod_factor(0.0, elementType, damageMesLine)
+    return 0
+
+dragonDiscipleApotheosis = PythonModifier("Dragon Disciple Dragon Apotheosis", 3)
+dragonDiscipleApotheosis.MapToFeat("Dragon Disciple Dragon Apotheosis")
+dragonDiscipleApotheosis.AddHook(ET_OnConditionAddPre, EK_NONE, sleepParalyzeImmunity, ())
+dragonDiscipleApotheosis.AddHook(ET_OnTakingDamage2, EK_NONE, elementImmunity, ())
