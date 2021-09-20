@@ -150,7 +150,7 @@ def selectHeritageRadial(attachee, args, evt_obj):
         radialSelectHeritageParentId = radialSelectHeritageParent.add_child_to_standard(attachee, tpdp.RadialMenuStandardNode.Class)
         for key in dictDragonHeritage.keys():
             dragonColour = dictDragonHeritage[key][0]
-            radialHeritageColourId = tpdp.RadialMenuEntryPythonAction("{} Dragon Heritage".format(dragonColour), D20A_PYTHON_ACTION, selectHeritageId, key, "TAG_CLASS_FEATURES_MARSHAL_MINOR_AURAS")
+            radialHeritageColourId = tpdp.RadialMenuEntryPythonAction("{} Dragon Heritage".format(dragonColour), D20A_PYTHON_ACTION, selectHeritageId, key, "TAG_CLASS_FEATURES_DRAGON_DISCIPLES_HERITAGE")
             radialHeritageColourId.add_as_child(attachee, radialSelectHeritageParentId)
     return 0
 
@@ -161,12 +161,14 @@ def setHeritage(attachee, args, evt_obj):
     return 0
 
 def querySelectedHeritage(attachee, args, evt_obj):
-    evt_obj.return_val = args.get_arg(0)
+    heritage = args.get_arg(0)
+    evt_obj.return_val = heritage
     return 0
 
 def queryHeritageElementType(attachee, args, evt_obj):
     heritage = args.get_arg(0)
-    evt_obj.return_val = dictDragonHeritage[heritage][1]
+    elementType = dictDragonHeritage[heritage][1]
+    evt_obj.return_val = elementType
     return 0
 
 def queryHeritageBreathWeaponType(attachee, args, evt_obj):
@@ -182,14 +184,14 @@ dragonHeritage = PythonModifier("Dragon Disciple Heritage", 3) #arg0 = heritage
 dragonHeritage.MapToFeat("Dragon Disciple Heritage")
 dragonHeritage.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, selectHeritageRadial, ())
 dragonHeritage.AddHook(ET_OnD20PythonActionPerform, selectHeritageId, setHeritage, ())
-dragonHeritage.AddHook(ET_OnD20PythonQuery, "PQ_Dragon_Disciple_Selected_Heritage", queryHeritageElementType, ())
+dragonHeritage.AddHook(ET_OnD20PythonQuery, "PQ_Dragon_Disciple_Selected_Heritage", querySelectedHeritage, ())
 dragonHeritage.AddHook(ET_OnD20PythonQuery, "PQ_Dragon_Disciple_Element_Type", queryHeritageElementType, ())
 dragonHeritage.AddHook(ET_OnD20PythonQuery, "PQ_Dragon_Disciple_Breath_Weapon_Type", queryHeritageBreathWeaponType, ())
 dragonHeritage.AddHook(ET_OnConditionAdd, EK_NONE, initialHeritageValue, ())
 
 
 ### AC Bonus
-def NaturalArmorACBonus(attachee, args, evt_obj):
+def naturalArmorACBonus(attachee, args, evt_obj):
     classLevel = attachee.stat_level_get(classEnum)
     if classLevel == 1:
         bonusValue = 1
@@ -205,7 +207,7 @@ def NaturalArmorACBonus(attachee, args, evt_obj):
 
 naturalArmorInc = PythonModifier("Dragon Disciple Natural Armor", 0)
 naturalArmorInc.MapToFeat("Dragon Disciple Natural Armor")
-naturalArmorInc.AddHook(ET_OnGetAC, EK_NONE, NaturalArmorACBonus, ())
+naturalArmorInc.AddHook(ET_OnGetAC, EK_NONE, naturalArmorACBonus, ())
 
 ### Ability Bonus
 #def OnGetAbilityScore(attachee, args, evt_obj):
@@ -278,7 +280,7 @@ def breathWeaponRadial(attachee, args, evt_obj):
     breathWeaponShape = attachee.d20_query("PQ_Dragon_Disciple_Breath_Weapon_Type")
     spellEnum = spell_dragon_disciple_cone_breath if breathWeaponShape == 1 else spell_dragon_disciple_line_breath
 
-    breathWeaponId = tpdp.RadialMenuEntryPythonAction("Breath Weapon ({})".format(dragonColour), D20A_PYTHON_ACTION, breathWeaponEnum, 0, "TAG_INTERFACE_HELP")
+    breathWeaponId = tpdp.RadialMenuEntryPythonAction("Breath Weapon ({})".format(dragonColour), D20A_PYTHON_ACTION, breathWeaponEnum, 0, "TAG_CLASS_FEATURES_DRAGON_DISCIPLES_BREATH_WEAPON")
     spellData = tpdp.D20SpellData(spellEnum)
     casterLevel = attachee.stat_level_get(classEnum)
     spellData.set_spell_class(classEnum)
@@ -328,7 +330,7 @@ def sleepParalyzeImmunity(attachee, args, evt_obj):
     elif evt_obj.is_modifier("Paralyzed"):
         evt_obj.return_val = 0
         attachee.float_text_line("Paralyze Immunity", tf_red)
-        game.create_history_freeform("{} is immune to ~paralyze~[TAG_PARALYZED] effects\n\n".format(attachee))
+        game.create_history_freeform("{} is immune to ~paralyze~[TAG_PARALYZED] effects\n\n".format(attachee.description))
     return 0
 
 def elementImmunity(attachee, args, evt_obj):
