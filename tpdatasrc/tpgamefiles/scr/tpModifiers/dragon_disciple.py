@@ -280,7 +280,7 @@ def breathWeaponRadial(attachee, args, evt_obj):
     breathWeaponShape = attachee.d20_query("PQ_Dragon_Disciple_Breath_Weapon_Type")
     spellEnum = spell_dragon_disciple_cone_breath if breathWeaponShape == 1 else spell_dragon_disciple_line_breath
 
-    breathWeaponId = tpdp.RadialMenuEntryPythonAction("Breath Weapon ({})".format(dragonColour), D20A_PYTHON_ACTION, breathWeaponEnum, 0, "TAG_CLASS_FEATURES_DRAGON_DISCIPLES_BREATH_WEAPON")
+    breathWeaponId = tpdp.RadialMenuEntryPythonAction("Breath Weapon ({})".format(dragonColour), D20A_PYTHON_ACTION, breathWeaponEnum, spellEnum, "TAG_CLASS_FEATURES_DRAGON_DISCIPLES_BREATH_WEAPON")
     spellData = tpdp.D20SpellData(spellEnum)
     casterLevel = attachee.stat_level_get(classEnum)
     spellData.set_spell_class(classEnum)
@@ -295,9 +295,9 @@ def performBreathWeapon(attachee, args, evt_obj):
     newSpellId = tpactions.get_new_spell_id()
     spellPacket.caster_level = attachee.stat_level_get(classEnum)
     tpactions.register_spell_cast(spellPacket, newSpellId)
-    tpactions.trigger_spell_effect(evt_obj.d20a.spell_id)
+    #tpactions.trigger_spell_effect(evt_obj.d20a.spell_id)
+    tpactions.trigger_spell_effect(newSpellId)
     return 0
-
 
 def resetBreathWeapon(attachee, args, evt_obj):
     args.set_arg(0, 0)

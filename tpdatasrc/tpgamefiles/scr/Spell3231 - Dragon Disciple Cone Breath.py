@@ -11,15 +11,18 @@ def OnSpellEffect(spell):
     targetsToRemove = []
     spell.duration = 0
     spell.dc = 10 + spell.caster_level + ((spell.caster.stat_level_get(stat_constitution)-10)/2)
+    print "Debug Dragon Disciple Cone Breath"
     print "Dragon Disciple Breath Weapon DC: {}".format(spell.dc)
+    print "Dragon Disciple Caster Level: {}".format(spell.caster_level)
 
     spellDamageDice = dice_new('1d8')
     if spell.caster_level < 7:
         spellDamageDice.number = 2
     elif spell.caster_level < 10:
-        spellDamageDice = 4
+        spellDamageDice.number = 4
     else:
-        spellDamageDice = 6
+        spellDamageDice.number = 6
+    print "spellDamageDice: {}".format(spellDamageDice)
     saveType = D20_Save_Reduction_Half
     damageType = spell.caster.d20_query("PQ_Dragon_Disciple_Element_Type")
     print "Dragon Disciple Breath Weapon Element: {}".format(damageType)
