@@ -196,35 +196,42 @@ static const char* GetWeaponTypeName(WeaponAnimType weaponAnimType) {
 	return sWeaponTypeNames[(int)weaponAnimType];
 }
 
-bool EncodedAnimId::IsConjuireAnimation() const
+bool EncodedAnimId::IsCastingAnimation() const
 {
 	if (IsSpecialAnim()) {
 		return false;
 	}
 
-	auto normalAnim = GetNormalAnimType();
+	auto spellAnimType = (gfx::SpellAnimType)(mId);
 
-	switch (normalAnim) {
-	case NormalAnimType::AbjurationConjuring:
-	case NormalAnimType::ConjurationConjuring:
-	case NormalAnimType::DivinationConjuring:
-	case NormalAnimType::EnchantmentConjuring:
-	case NormalAnimType::EvocationConjuring:
-	case NormalAnimType::IllusionConjuring:
-	case NormalAnimType::NecromancyConjuring:
-	case NormalAnimType::TransmutationConjuring:
-	case NormalAnimType::WandAbjurationConjuring:
-	case NormalAnimType::WandConjurationConjuring:
-	case NormalAnimType::WandDivinationConjuring:
-	case NormalAnimType::WandEnchantmentConjuring:
-	case NormalAnimType::WandEvocationConjuring:
-	case NormalAnimType::WandIllusionConjuring:
-	case NormalAnimType::WandNecromancyConjuring:
-	case NormalAnimType::WandTransmutationConjuring:
+	switch (spellAnimType) {
+	case SpellAnimType::AbjurationCasting:
+	case SpellAnimType::ConjurationCasting:
+	case SpellAnimType::DivinationCasting:
+	case SpellAnimType::EnchantmentCasting:
+	case SpellAnimType::EvocationCasting:
+	case SpellAnimType::IllusionCasting:
+	case SpellAnimType::NecromancyCasting:
+	case SpellAnimType::TransmutationCasting:
+	case SpellAnimType::WandAbjurationCasting:
+	case SpellAnimType::WandConjurationCasting:
+	case SpellAnimType::WandDivinationCasting:
+	case SpellAnimType::WandEnchantmentCasting:
+	case SpellAnimType::WandEvocationCasting:
+	case SpellAnimType::WandIllusionCasting:
+	case SpellAnimType::WandNecromancyCasting:
+	case SpellAnimType::WandTransmutationCasting:
 		return true;
 	default:
 		return false;
 	}
+}
+
+EncodedAnimId gfx::EncodedAnimId::ConjurationToCastAnimation()
+{
+	//Expects(IsCastingAnimation());
+
+	return EncodedAnimId( (int)(GetNormalAnimType()) - 1);
 }
 
 std::string gfx::EncodedAnimId::GetName() const {

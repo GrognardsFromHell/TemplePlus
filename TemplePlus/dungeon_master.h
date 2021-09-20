@@ -39,6 +39,7 @@ public:
 	void Render();
 	void RenderDmButton();
 	void RenderMaps();
+	void RenderDaynightXfer();
 	void RenderEditedObj();
 	void RenderVsParty();
 	void RenderFudgeRolls();

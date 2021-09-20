@@ -140,7 +140,9 @@ namespace TemplePlusConfig
 
         public static readonly DependencyProperty DumpFullMemoryProperty = DependencyProperty.Register(
           "DumpFullMemory", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
-        
+        public static readonly DependencyProperty DebugObjectsProperty = DependencyProperty.Register(
+          "DebugObjects", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+
 
         #endregion
 
@@ -451,6 +453,12 @@ namespace TemplePlusConfig
             set { SetValue(DumpFullMemoryProperty, value); }
         }
 
+        public bool DebugObjects
+        {
+            get { return (bool)GetValue(DebugObjectsProperty); }
+            set { SetValue(DebugObjectsProperty, value); }
+        }
+
         public bool NeedsCo8Defaults { get; internal set; }
 
 #endregion
@@ -490,6 +498,7 @@ namespace TemplePlusConfig
             InstallationPath = tpData["toeeDir"];
             ModuleName = tpData["defaultModule"];
             DumpFullMemory = TryReadBool("dumpFullMemory");
+            DebugObjects = TryReadBool("debugObjects");
             DisableAutomaticUpdates = tpData["autoUpdate"] != "true";
 
             if (tpData["hpOnLevelup"] != null)
@@ -713,6 +722,7 @@ namespace TemplePlusConfig
             tpData["toeeDir"] = InstallationPath;
             tpData["defaultModule"] = ModuleName;
             tpData["dumpFullMemory"] = DumpFullMemory? "true" : "false";
+            tpData["debugObjects"] = DebugObjects ? "true" : "false";
             tpData["autoUpdate"] = DisableAutomaticUpdates ? "false" : "true";
             switch (HpOnLevelUp)
             {

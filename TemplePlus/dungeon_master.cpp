@@ -54,6 +54,7 @@
 #include <path_node.h>
 #include <animgoals/animgoals_debugrenderer.h>
 #include <gamesystems\tilerender.h>
+#include <maps.h>
 
 DungeonMaster dmSys;
 
@@ -130,6 +131,11 @@ void DungeonMaster::Render() {
 	if (party.GetConsciousPartyLeader() && ImGui::TreeNodeEx("Maps", ImGuiTreeNodeFlags_CollapsingHeader)) {
 		RenderMaps();
 
+		ImGui::TreePop();
+	}
+
+	if (ImGui::TreeNodeEx("Day Night Xfer", ImGuiTreeNodeFlags_CollapsingHeader)) {
+		RenderDaynightXfer();
 		ImGui::TreePop();
 	}
 
@@ -285,6 +291,30 @@ void DungeonMaster::RenderMaps(){
 			ImGui::TreePop();
 		}
 		mapIdx++;
+	}
+}
+
+void DungeonMaster::RenderDaynightXfer()
+{
+	auto dnxList = temple::GetRef< DayNightXfer*>(0x10AB7548);
+	auto dnx = dnxList;
+	auto idx = 0;
+
+	static std::map<ObjectId, std::string> nameCache;
+
+	while (dnx) {
+		auto id = dnx->objId;
+		auto handle = objSystem->GetHandleById(id);
+		if (!handle) {
+
+		}
+		if (ImGui::TreeNode(fmt::format("{}: {} ({})", idx++, id.ToString(), handle).c_str())) {
+			ImGui::Text(fmt::format("Day: map {}, loc {}", dnx->dayMapId, dnx->loc).c_str());
+			ImGui::Text(fmt::format("Night: map {}, loc {}", dnx->nightMapId, dnx->nightLoc).c_str());
+			ImGui::Text(fmt::format("Current map: {}", dnx->currentMap).c_str());
+			ImGui::TreePop();
+		}
+		dnx = dnx->next;
 	}
 }
 

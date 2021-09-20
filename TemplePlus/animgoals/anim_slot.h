@@ -68,7 +68,7 @@ struct AnimSlot {
 	AnimParam param2; // Used as parameters for goal states
 	uint32_t stateFlagData;
 	uint32_t unknown[5];
-	uint64_t gametimeSth;
+	GameTime gametimeSth;
 	uint32_t currentPing;    // I.e. used in
 	uint32_t uniqueActionId; // ID assigned when triggered by a D20 action
 

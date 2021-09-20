@@ -192,6 +192,7 @@ public:
 
 	void Debug();
 	const AnimGoal* GetGoal(AnimGoalType goalType);
+	int GetSlotUsedCount() const;
 
 	void GoalDestinationRemove(objHndl);
 	void GoalDestinationAdd(objHndl handle, LocAndOffsets loc);
@@ -228,6 +229,7 @@ private:
 		the anim system to try and interrupt as many animations as possible.
 	*/
 	BOOL& mAllSlotsUsed = temple::GetRef<BOOL>(0x10AA4BB0);
+	uint32_t &mSlotsInUse = temple::GetRef<uint32_t>(0x10AA4BBC);
 
 	// Fixed size array of 512 slots
 	AnimSlotArray& mSlots = temple::GetRef<AnimSlotArray>(0x118CE520);

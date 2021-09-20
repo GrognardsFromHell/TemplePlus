@@ -175,6 +175,47 @@ void MapSystem::LoadModule() {
 		}
 	}
 
+	
+	if (config.debugObjects) {
+		// Search for duplicate mob files
+		std::map<std::string, int> objMapId;
+		for (auto& it: mMaps) {
+			auto &entry = it.second;
+			auto dataDir = fmt::format("maps\\{}", entry.name);
+			auto mobFiles = vfs->Search(dataDir + "\\*.mob");
+
+			for (auto& mobFile : mobFiles) {
+				auto found = objMapId.find(mobFile.filename);
+				if (found!= objMapId.end()) {
+					
+
+					auto file = tio_fopen( fmt::format("{}/{}", dataDir, mobFile.filename).c_str() , "rb");
+
+					uint32_t header;
+					if (tio_fread(&header, sizeof(header), 1, file) != 1) {
+						throw TempleException("ObjSystem::LoadFromFile: Couldn't read the object header.");
+					}
+
+					if (header != 0x77) {
+						throw TempleException("Expected object header 0x77, but got 0x{:x}", header);
+					}
+
+					ObjectId protoId;
+					if (tio_fread(&protoId, sizeof(protoId), 1, file) != 1) {
+						throw TempleException("Couldn't read the prototype id.");
+					}
+
+					logger->error("Duplicates MOB file found: {}/{} (was also on mapID = {}, now on {}). ProtoID: {}", dataDir, mobFile.filename, found->second, entry.id, protoId.GetPrototypeId());
+
+				}
+				else {
+					objMapId[mobFile.filename] = entry.id;
+				}
+			}
+
+		}
+		
+	}
 }
 
 void MapSystem::UnloadModule() {
@@ -939,6 +980,7 @@ int MapSystem::GetArea(int mapId) const
 	return 0;
 }
 
+/* 10072A90 */
 bool MapSystem::OpenMap(int mapId, bool preloadSectors, bool dontSaveCurrentMap)
 {
 	auto it = mMaps.find(mapId);
@@ -1243,7 +1285,7 @@ void MapSystem::ReadMapMobiles(const std::string &dataDir, const std::string &sa
 	// Read all mobiles that shipped with the game files
 	auto mobFiles = vfs->Search(dataDir + "\\*.mob");
 
-	logger->info("Loading {} map mobiles from {}", mobFiles.size(), dataDir);
+	logger->info("ReadMapMobiles: Loading {} map mobiles from {}", mobFiles.size(), dataDir);
 
 	for (auto &mobFile : mobFiles) {
 		auto filename = fmt::format("{}\\{}", dataDir, mobFile.filename);
@@ -1253,17 +1295,22 @@ void MapSystem::ReadMapMobiles(const std::string &dataDir, const std::string &sa
 				filename, dataDir);
 		} else //if (config.debugMessageEnable)
 		{
-			logger->trace("Loaded MOB obj {} ({})", handle, objSystem->GetObject(handle)->id.ToString() );
+			auto obj = objSystem->GetObject(handle);
+			logger->trace("ReadMapMobiles: \t\tLoaded MOB obj {} ({})", handle, obj->id.ToString() );
+			auto flags = obj->GetFlags();
+			if (flags & OF_DYNAMIC) {
+				logger->error("ReadMapMobiles: \t\t\tMOB file flagged OF_DYNAMIC!!!");
+			}
 		}
 	}
 
-	logger->info("Done loading map mobiles");
+	logger->info("ReadMapMobiles: \t\tDone loading map mobiles");
 
 	// Read all mobile differences that have accumulated for this map in the save dir
 	auto diffFilename = fmt::format("{}\\mobile.md", saveDir);
 
 	if (vfs->FileExists(diffFilename)) {
-		logger->info("Loading mobile diffs from {}", diffFilename);
+		logger->info("ReadMapMobiles: Loading mobile diffs from {}", diffFilename);
 
 		auto fh = tio_fopen(diffFilename.c_str(), "rb");
 		if (!fh) {
@@ -1304,17 +1351,17 @@ void MapSystem::ReadMapMobiles(const std::string &dataDir, const std::string &sa
 
 		tio_fclose(fh);
 
-		logger->info("Done loading map mobile diffs");
+		logger->info("ReadMapMobiles: \t\tDone loading map mobile diffs");
 
 	} else {
-		logger->info("Skipping mobile diffs, because {} is missing", diffFilename);
+		logger->info("ReadMapMobiles: \t\tSkipping mobile diffs, because {} is missing", diffFilename);
 	}
 
 	// Destroy all mobiles that had previously been destroyed	
 	auto desFilename = fmt::format("{}\\mobile.des", saveDir);
 
 	if (vfs->FileExists(desFilename)) {
-		logger->info("Loading destroyed mobile file from {}", desFilename);
+		logger->info("ReadMapMobiles: Loading destroyed mobile file from {}", desFilename);
 
 		auto desContent = vfs->ReadAsBinary(desFilename);
 		BinaryReader reader(desContent);
@@ -1327,14 +1374,14 @@ void MapSystem::ReadMapMobiles(const std::string &dataDir, const std::string &sa
 				auto obj = objSystem->GetObject(handle);
 				auto flags = obj->GetFlags();
 				
-				logger->debug("{} ({}) is destroyed.", handle, obj->id.ToString());
+				logger->debug("ReadMapMobiles: \t\t{} ({}) is destroyed.", handle, obj->id.ToString());
 				gameSystems->GetObj().Remove(handle);
 			}
 		}
 		
-		logger->info("Done loading destroyed map mobiles");
+		logger->info("ReadMapMobiles: Done loading destroyed map mobiles");
 	} else {
-		logger->info("Skipping destroyed mobile files, because {} is missing", desFilename);
+		logger->info("ReadMapMobiles: Skipping destroyed mobile files, because {} is missing", desFilename);
 	}
 	
 	ReadDynamicMobiles(saveDir);
@@ -1346,11 +1393,11 @@ void MapSystem::ReadDynamicMobiles(const std::string & saveDir)
 	auto filename = fmt::format("{}\\mobile.mdy", saveDir);
 
 	if (!vfs->FileExists(filename)) {
-		logger->info("Skipping dynamic mobiles because {} doesn't exist.", filename);
+		logger->info("ReadDynamicMobiles: Skipping dynamic mobiles because {} doesn't exist.", filename);
 		return;
 	}
 
-	logger->info("Loading dynamic mobiles from {}", filename);
+	logger->info("ReadDynamicMobiles: Loading dynamic mobiles from {}", filename);
 
 	auto fh = tio_fopen(filename.c_str(), "rb");
 	if (!fh) {
@@ -1360,7 +1407,7 @@ void MapSystem::ReadDynamicMobiles(const std::string & saveDir)
 	while (true) {
 		try {
 			auto handle = objSystem->LoadFromFile(fh);
-			logger->trace("Loaded dynamic object {} ({})", description.getDisplayName(handle) ,	objSystem->GetObject(handle)->id.ToString());
+			logger->trace("ReadDynamicMobiles: \t\tLoaded dynamic object {} ({})", handle ,	objSystem->GetObject(handle)->id.ToString());
 		} catch (TempleException &e) {
 			logger->error("Unable to load object: {}", e.what());
 			break;
@@ -1374,7 +1421,7 @@ void MapSystem::ReadDynamicMobiles(const std::string & saveDir)
 
 	tio_fclose(fh);
 
-	logger->info("Done reading dynamic mobiles.");
+	logger->info("ReadDynamicMobiles: Done reading dynamic mobiles.");
 
 }
 
@@ -1481,17 +1528,17 @@ void MapSystem::SaveMapMobiles() {
 		if (obj.HasFlag(OF_DESTROYED) || obj.HasFlag(OF_EXTINCT)) {
 			if (obj.HasFlag(OF_EXTINCT))
 			{
-				logger->trace("Writing extinct object {} as destroyed obj ({})", handle,	objSystem->GetObject(handle)->id.ToString());
+				logger->trace("SaveMapMobiles: \tWriting extinct object {} ({}) to mobile.des file.", handle,	objSystem->GetObject(handle)->id.ToString());
 			} else
 			{
-				logger->trace("Writing destroyed object {} as destroyed obj  ({})", handle,	objSystem->GetObject(handle)->id.ToString());
+				logger->trace("SaveMapMobiles: \tWriting destroyed object {} ({}) to mobile.des file.", handle,	objSystem->GetObject(handle)->id.ToString());
 			}
 			// Write the object id of the destroyed obj to mobile.des
 			vfs->Write(&obj.id, sizeof(obj.id), destrFh);
 			++destroyedObjs;
 		} else {
 			//logger->debug("Writing object {} to diff file ({})", description.getDisplayName(handle),	objSystem->GetObject(handle)->id.ToString());
-			// Write the object id followed by a diff record to mobile.mdy
+			// Write the object id followed by a diff record to mobile.md
 			diffOut->WriteObjectId(obj.id);
 
 			// TODO: Replace with proper VFS usage
