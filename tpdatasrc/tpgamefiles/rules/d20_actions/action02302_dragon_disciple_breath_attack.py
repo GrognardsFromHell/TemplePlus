@@ -20,7 +20,6 @@ def GetActionCostType():
 
 
 def AddToSequence(d20action, action_seq, tb_status):
-    print "Dragon Disciple Breath Weapon Add to Sequence"
     if d20action.performer.d20_query(Q_Prone):
         d20aGetup = d20action
         d20aGetup.action_type = tpdp.D20ActionType.StandUp

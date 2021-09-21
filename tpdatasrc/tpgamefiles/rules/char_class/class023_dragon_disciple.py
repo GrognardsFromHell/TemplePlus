@@ -32,8 +32,6 @@ class_feats = {
 10: ("Dragon Disciple Dragon Apotheosis",)
 }
 
-#bonus_feats = ["Dragon Disciple Heritage"]
-
 class_skills = (skill_alchemy, skill_concentration, skill_craft, skill_diplomacy, skill_escape_artist, skill_gather_information, skill_knowledge_all, skill_listen, skill_profession, skill_search, skill_spellcraft, skill_spot)
 
 def IsEnabled():
@@ -107,16 +105,39 @@ def ObjMeetsPrereqs(obj):
 
 
 # Levelup
-#def IsSelectingFeatsOnLevelup(obj):
-#    newLvl = obj.stat_level_get( classEnum ) + 1
-#    if newLvl == 1:
-#        return 1
-#    return 0
 
-#def LevelupGetBonusFeats(obj):
-#Lazy copy + paste from fighter; could be cleaned up as it is only one feat
-#    bonFeatInfo = []
-#    for ft in bonus_feats:
-#        bonFeatInfo.append(char_editor.FeatInfo(ft))
-#    char_editor.set_bonus_feats(bonFeatInfo)
-#    return
+def IsSelectingFeatsOnLevelup(obj):
+    return 0
+
+def LevelupGetBonusFeats(obj):
+    return
+
+def IsSelectingSpellsOnLevelup( obj , class_extended_1 = 0):
+    if class_extended_1 <= 0:
+        class_extended_1 = char_class_utils.GetHighestArcaneClass(obj)
+    if char_editor.is_selecting_spells(obj, class_extended_1):
+        return 1
+    return 0
+
+
+def LevelupCheckSpells(obj, class_extended_1 = 0):
+    if class_extended_1 <= 0:
+        class_extended_1 = char_class_utils.GetHighestArcaneClass(obj)
+    if not char_editor.spells_check_complete(obj, class_extended_1):
+        return 0
+    return 1
+
+def InitSpellSelection(obj , class_extended_1 = 0):
+    newLvl = obj.stat_level_get( classEnum ) + 1
+    levelsWithoutNewSpells = [3, 7, 10]
+    if not newLvl in levelsWithoutNewSpells:
+        if class_extended_1 <= 0:
+            class_extended_1 = char_class_utils.GetHighestArcaneClass(obj)
+        char_editor.init_spell_selection(obj, class_extended_1)
+    return 0
+
+def LevelupSpellsFinalize(obj , class_extended_1 = 0):
+    if class_extended_1 <= 0:
+        class_extended_1 = char_class_utils.GetHighestArcaneClass(obj)
+    char_editor.spells_finalize(obj, class_extended_1)
+    return 0

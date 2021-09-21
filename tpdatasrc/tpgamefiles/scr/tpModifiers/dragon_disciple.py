@@ -180,7 +180,7 @@ def initialHeritageValue(attachee, args, evt_obj):
     args.set_arg(0, 0)
     return 0
 
-dragonHeritage = PythonModifier("Dragon Disciple Heritage", 3) #arg0 = heritage
+dragonHeritage = PythonModifier("Dragon Disciple Heritage", 3) #heritage, empty, empty
 dragonHeritage.MapToFeat("Dragon Disciple Heritage")
 dragonHeritage.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, selectHeritageRadial, ())
 dragonHeritage.AddHook(ET_OnD20PythonActionPerform, selectHeritageId, setHeritage, ())
@@ -271,8 +271,8 @@ classSpecObj.AddHook(ET_OnAbilityScoreLevel, EK_STAT_CHARISMA, onGetAbilityScore
 
 ### Breath Weapon
 def breathWeaponRadial(attachee, args, evt_obj):
-    if args.get_arg(0):
-        return 0
+    chargesLeft = args.get_arg(0)
+    maxCharges = args.get_arg(1)
     #I display the heritage colour in the Breath Weapon Radial
     #So the player gets a visual feedback, which colour he did choose
     heritage = attachee.d20_query("PQ_Dragon_Disciple_Selected_Heritage")
@@ -280,7 +280,7 @@ def breathWeaponRadial(attachee, args, evt_obj):
     breathWeaponShape = attachee.d20_query("PQ_Dragon_Disciple_Breath_Weapon_Type")
     spellEnum = spell_dragon_disciple_cone_breath if breathWeaponShape == 1 else spell_dragon_disciple_line_breath
 
-    breathWeaponId = tpdp.RadialMenuEntryPythonAction("Breath Weapon ({})".format(dragonColour), D20A_PYTHON_ACTION, breathWeaponEnum, spellEnum, "TAG_CLASS_FEATURES_DRAGON_DISCIPLES_BREATH_WEAPON")
+    breathWeaponId = tpdp.RadialMenuEntryPythonAction("{} Breath Weapon {}/{}".format(dragonColour, chargesLeft, maxCharges), D20A_PYTHON_ACTION, breathWeaponEnum, spellEnum, "TAG_CLASS_FEATURES_DRAGON_DISCIPLES_BREATH_WEAPON")
     spellData = tpdp.D20SpellData(spellEnum)
     casterLevel = attachee.stat_level_get(classEnum)
     spellData.set_spell_class(classEnum)
@@ -289,23 +289,33 @@ def breathWeaponRadial(attachee, args, evt_obj):
     breathWeaponId.add_child_to_standard(attachee, tpdp.RadialMenuStandardNode.Class)
     return 0
 
+def chargesCheckBreathWeapon(attachee, args, evt_obj):
+    if args.get_arg(0) < 1:
+        evt_obj.return_val = AEC_OUT_OF_CHARGES
+        return 0
+
 def performBreathWeapon(attachee, args, evt_obj):
+    chargesLeft = args.get_arg(0)
     currentSequence = tpactions.get_cur_seq()
     spellPacket = currentSequence.spell_packet
     newSpellId = tpactions.get_new_spell_id()
     spellPacket.caster_level = attachee.stat_level_get(classEnum)
     tpactions.register_spell_cast(spellPacket, newSpellId)
-    #tpactions.trigger_spell_effect(evt_obj.d20a.spell_id)
     tpactions.trigger_spell_effect(newSpellId)
+    chargesLeft -= 1
+    args.set_arg(0, chargesLeft)
     return 0
 
 def resetBreathWeapon(attachee, args, evt_obj):
-    args.set_arg(0, 0)
+    maxCharges = 1
+    args.set_arg(0, maxCharges)
+    args.set_arg(1, maxCharges)
     return 0
 
-dragonDiscipleBreathWeapon = PythonModifier("Dragon Disciple Breath Weapon", 3) #arg0 = used this day
+dragonDiscipleBreathWeapon = PythonModifier("Dragon Disciple Breath Weapon", 3) #chargesLeft, maxCharges, empty
 dragonDiscipleBreathWeapon.MapToFeat("Dragon Disciple Breath Weapon")
 dragonDiscipleBreathWeapon.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, breathWeaponRadial, ())
+dragonDiscipleBreathWeapon.AddHook(ET_OnD20PythonActionCheck, breathWeaponEnum, chargesCheckBreathWeapon, ())
 dragonDiscipleBreathWeapon.AddHook(ET_OnD20PythonActionPerform, breathWeaponEnum, performBreathWeapon, ())
 dragonDiscipleBreathWeapon.AddHook(ET_OnConditionAdd, EK_NONE, resetBreathWeapon, ())
 dragonDiscipleBreathWeapon.AddHook(ET_OnNewDay, EK_NEWDAY_REST, resetBreathWeapon, ())
@@ -339,7 +349,7 @@ def elementImmunity(attachee, args, evt_obj):
     evt_obj.damage_packet.add_mod_factor(0.0, elementType, damageMesLine)
     return 0
 
-dragonDiscipleApotheosis = PythonModifier("Dragon Disciple Dragon Apotheosis", 3)
+dragonDiscipleApotheosis = PythonModifier("Dragon Disciple Dragon Apotheosis", 3) #empty, empty, empty
 dragonDiscipleApotheosis.MapToFeat("Dragon Disciple Dragon Apotheosis")
 dragonDiscipleApotheosis.AddHook(ET_OnConditionAddPre, EK_NONE, sleepParalyzeImmunity, ())
 dragonDiscipleApotheosis.AddHook(ET_OnTakingDamage2, EK_NONE, elementImmunity, ())
