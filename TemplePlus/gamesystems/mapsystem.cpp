@@ -1235,6 +1235,7 @@ void MapSystem::LoadMapInfo(const std::string & dataDir)
 
 }
 
+/* 0x100717E0 */
 void MapSystem::ReadMapMobiles(const std::string &dataDir, const std::string &saveDir)
 {
 	auto readObject = temple::GetPointer<BOOL(objHndl*, const char*)>(0x100DE690);
@@ -1242,7 +1243,7 @@ void MapSystem::ReadMapMobiles(const std::string &dataDir, const std::string &sa
 	// Read all mobiles that shipped with the game files
 	auto mobFiles = vfs->Search(dataDir + "\\*.mob");
 
-	logger->info("Loading {} map mobiles from {}", mobFiles.size(), dataDir);
+	logger->info("ReadMapMobiles: Loading {} map mobiles from {}", mobFiles.size(), dataDir);
 
 	for (auto &mobFile : mobFiles) {
 		auto filename = fmt::format("{}\\{}", dataDir, mobFile.filename);
@@ -1250,19 +1251,25 @@ void MapSystem::ReadMapMobiles(const std::string &dataDir, const std::string &sa
 		if (!readObject(&handle, filename.c_str())) {
 			logger->warn("Unable to load mobile object {} for level {}",
 				filename, dataDir);
-		} else if (config.debugMessageEnable)
+		} else //if (config.debugMessageEnable)
 		{
-			//logger->debug("Loaded MOB obj {} ({})", description.getDisplayName(handle), objSystem->GetObject(handle)->id.ToString() );
+			auto obj = objSystem->GetObject(handle);
+			logger->trace("ReadMapMobiles: \t\tLoaded MOB obj {} ({})", handle, obj->id.ToString() );
+			auto flags = obj->GetFlags();
+			if (flags & OF_DYNAMIC) {
+				logger->error("ReadMapMobiles: \t\t\tMOB file flagged OF_DYNAMIC!!! Unsetting.");
+				obj->SetFlag(OF_DYNAMIC, false);
+			}
 		}
 	}
 
-	logger->info("Done loading map mobiles");
+	logger->info("ReadMapMobiles: \t\tDone loading map mobiles");
 
 	// Read all mobile differences that have accumulated for this map in the save dir
 	auto diffFilename = fmt::format("{}\\mobile.md", saveDir);
 
 	if (vfs->FileExists(diffFilename)) {
-		logger->info("Loading mobile diffs from {}", diffFilename);
+		logger->info("ReadMapMobiles: Loading mobile diffs from {}", diffFilename);
 
 		auto fh = tio_fopen(diffFilename.c_str(), "rb");
 		if (!fh) {
@@ -1303,10 +1310,10 @@ void MapSystem::ReadMapMobiles(const std::string &dataDir, const std::string &sa
 
 		tio_fclose(fh);
 
-		logger->info("Done loading map mobile diffs");
+		logger->info("ReadMapMobiles: \t\tDone loading map mobile diffs");
 
 	} else {
-		logger->info("Skipping mobile diffs, because {} is missing", diffFilename);
+		logger->info("ReadMapMobiles: \t\tSkipping mobile diffs, because {} is missing", diffFilename);
 	}
 
 	// Destroy all mobiles that had previously been destroyed	
@@ -1321,6 +1328,7 @@ void MapSystem::ReadMapMobiles(const std::string &dataDir, const std::string &sa
 		while (!reader.AtEnd()) {
 			auto objId = reader.Read<ObjectId>();
 			auto handle = gameSystems->GetObj().GetHandleById(objId);
+			
 			if (handle) {
 				logger->debug("{} ({}) is destroyed.", description.getDisplayName(handle), objSystem->GetObject(handle)->id.ToString());
 				gameSystems->GetObj().Remove(handle);
