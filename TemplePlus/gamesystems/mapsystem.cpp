@@ -1300,7 +1300,8 @@ void MapSystem::ReadMapMobiles(const std::string &dataDir, const std::string &sa
 			logger->trace("ReadMapMobiles: \t\tLoaded MOB obj {} ({})", handle, obj->id.ToString() );
 			auto flags = obj->GetFlags();
 			if (flags & OF_DYNAMIC) {
-				logger->error("ReadMapMobiles: \t\t\tMOB file flagged OF_DYNAMIC!!!");
+				logger->error("ReadMapMobiles: \t\t\tMOB file flagged OF_DYNAMIC!!! Unsetting.");
+				obj->SetFlag(OF_DYNAMIC, false);
 			}
 		}
 	}
