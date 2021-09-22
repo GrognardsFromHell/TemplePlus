@@ -748,7 +748,7 @@ void LegacyCombatSystem::TurnProcessAi(objHndl obj)
 			logger->info("Combat for {} ending turn (unconscious)", description.getDisplayName(obj));
 			CombatAdvanceTurn(obj);
 		}
-		// TODO: bug? they probably meant to do an OR
+		// for AI controlled, this is handled inside AiProcess()
 
 		return;
 	}
