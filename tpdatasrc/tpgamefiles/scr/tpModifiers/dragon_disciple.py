@@ -69,78 +69,6 @@ classSpecObj.AddHook(ET_OnSaveThrowLevel, EK_SAVE_FORTITUDE, OnGetSaveThrowFort,
 classSpecObj.AddHook(ET_OnSaveThrowLevel, EK_SAVE_REFLEX, OnGetSaveThrowReflex, ())
 classSpecObj.AddHook(ET_OnSaveThrowLevel, EK_SAVE_WILL, OnGetSaveThrowWill, ())
 
-
-#region Spell casting
-
-# configure the spell casting condition to hold the highest Arcane classs
-def OnAddSpellCasting(attachee, args, evt_obj):
-    #arg0 holds the arcane class
-    if (args.get_arg(0) == 0):
-        args.set_arg(0, char_class_utils.GetHighestArcaneClass(attachee))
-    
-    return 0
-
-# Extend caster level for base casting class
-def OnGetBaseCasterLevel(attachee, args, evt_obj):
-    class_extended_1 = args.get_arg(0)
-    class_code = evt_obj.arg0
-    if (class_code != class_extended_1):
-        if (evt_obj.arg1 == 0): # arg1 != 0 means you're looking for this particular class's contribution
-            return 0
-    classLvl = attachee.stat_level_get(classEnum)
-    if classLvl > 1:
-        evt_obj.bonus_list.add(classLvl - 1, 0, 137)
-    return 0
-
-def OnSpellListExtensionGet(attachee, args, evt_obj):
-    class_extended_1 = args.get_arg(0)
-    class_code = evt_obj.arg0
-    if (class_code != class_extended_1):
-        if (evt_obj.arg1 == 0): # arg1 != 0 means you're looking for this particular class's contribution
-            return 0
-    classLvl = attachee.stat_level_get(classEnum)
-    if classLvl > 1:
-        evt_obj.bonus_list.add(classLvl - 1, 0, 137)
-    return 0
-
-def OnInitLevelupSpellSelection(attachee, args, evt_obj):
-    if (evt_obj.arg0 != classEnum):
-        return 0
-    classLvl = attachee.stat_level_get(classEnum)
-    if (classLvl == 0):
-        return 0
-    class_extended_1 = args.get_arg(0)
-    classSpecModule.InitSpellSelection(attachee, class_extended_1)
-    return 0
-
-def OnLevelupSpellsCheckComplete(attachee, args, evt_obj):
-    if (evt_obj.arg0 != classEnum):
-        return 0
-    class_extended_1 = args.get_arg(0)
-    if (not classSpecModule.LevelupCheckSpells(attachee, class_extended_1) ):
-        evt_obj.bonus_list.add(-1, 0, 137) # denotes incomplete spell selection
-    return 1
-    
-def OnLevelupSpellsFinalize(attachee, args, evt_obj):
-    if (evt_obj.arg0 != classEnum):
-        return 0
-    classLvl = attachee.stat_level_get(classEnum)
-    if (classLvl == 0):
-        return 0
-    class_extended_1 = args.get_arg(0)
-    classSpecModule.LevelupSpellsFinalize(attachee, class_extended_1)
-    return
-
-spellCasterSpecObj = PythonModifier(GetSpellCasterConditionName(), 8)
-spellCasterSpecObj.AddHook(ET_OnConditionAdd, EK_NONE, OnAddSpellCasting, ())
-spellCasterSpecObj.AddHook(ET_OnGetBaseCasterLevel, EK_NONE, OnGetBaseCasterLevel, ())
-spellCasterSpecObj.AddHook(ET_OnSpellListExtensionGet, EK_NONE, OnSpellListExtensionGet, ())
-spellCasterSpecObj.AddHook(ET_OnLevelupSystemEvent, EK_LVL_Spells_Activate, OnInitLevelupSpellSelection, ())
-spellCasterSpecObj.AddHook(ET_OnLevelupSystemEvent, EK_LVL_Spells_Check_Complete, OnLevelupSpellsCheckComplete, ())
-spellCasterSpecObj.AddHook(ET_OnLevelupSystemEvent, EK_LVL_Spells_Finalize, OnLevelupSpellsFinalize, ())
-
-#endregion
-
 ##### Dragon Disciple Class Features #####
 
 ###Handle Heritage
@@ -158,6 +86,9 @@ def setHeritage(attachee, args, evt_obj):
     chosenHeritage = evt_obj.d20a.data1
     print "Selected Heritage: {}".format(chosenHeritage)
     args.set_arg(0, chosenHeritage)
+    #Visual Feedback for selected Heritage
+    heritageColour = dictDragonHeritage[chosenHeritage][0]
+    attachee.float_text_line("{} Heritage chosen".format(heritageColour))
     return 0
 
 def querySelectedHeritage(attachee, args, evt_obj):
@@ -324,12 +255,22 @@ dragonDiscipleBreathWeapon.AddHook(ET_OnNewDay, EK_NEWDAY_REST, resetBreathWeapo
 ### Blindsense
 #TBD
 
+###Wings
+def addWings(attachee, args, evt_obj):
+    #meshId = 
+    #evt_obj.append(meshId)
+    return 0
+
+dragonDiscipleWings = PythonModifier("Dragon Disciple Dragon Wings", 3) #empty, empty, empty
+dragonDiscipleWings.MapToFeat("Dragon Disciple Dragon Wings")
+dragonDiscipleWings.AddHook(ET_OnAddMesh, EK_NONE, addWings, ())
+
+
 #### Dragon Apotheosis
 #Not implemented:
 #Half-dragon template
 #Low-light vision
 #60-foot darkvision
-
 def sleepParalyzeImmunity(attachee, args, evt_obj):
     if evt_obj.is_modifier("sp-Sleep"):
         evt_obj.return_val = 0
@@ -353,3 +294,75 @@ dragonDiscipleApotheosis = PythonModifier("Dragon Disciple Dragon Apotheosis", 3
 dragonDiscipleApotheosis.MapToFeat("Dragon Disciple Dragon Apotheosis")
 dragonDiscipleApotheosis.AddHook(ET_OnConditionAddPre, EK_NONE, sleepParalyzeImmunity, ())
 dragonDiscipleApotheosis.AddHook(ET_OnTakingDamage2, EK_NONE, elementImmunity, ())
+
+
+#region Spell casting
+
+# configure the spell casting condition to hold the highest Arcane classs
+def OnAddSpellCasting(attachee, args, evt_obj):
+    #arg0 holds the arcane class
+    if (args.get_arg(0) == 0):
+        args.set_arg(0, char_class_utils.GetHighestArcaneClass(attachee))
+    
+    return 0
+
+# Extend caster level for base casting class
+def OnGetBaseCasterLevel(attachee, args, evt_obj):
+    class_extended_1 = args.get_arg(0)
+    class_code = evt_obj.arg0
+    if (class_code != class_extended_1):
+        if (evt_obj.arg1 == 0): # arg1 != 0 means you're looking for this particular class's contribution
+            return 0
+    classLvl = attachee.stat_level_get(classEnum)
+    if classLvl > 1:
+        evt_obj.bonus_list.add(classLvl - 1, 0, 137)
+    return 0
+
+def OnSpellListExtensionGet(attachee, args, evt_obj):
+    class_extended_1 = args.get_arg(0)
+    class_code = evt_obj.arg0
+    if (class_code != class_extended_1):
+        if (evt_obj.arg1 == 0): # arg1 != 0 means you're looking for this particular class's contribution
+            return 0
+    classLvl = attachee.stat_level_get(classEnum)
+    if classLvl > 1:
+        evt_obj.bonus_list.add(classLvl - 1, 0, 137)
+    return 0
+
+def OnInitLevelupSpellSelection(attachee, args, evt_obj):
+    if (evt_obj.arg0 != classEnum):
+        return 0
+    classLvl = attachee.stat_level_get(classEnum)
+    if (classLvl == 0):
+        return 0
+    class_extended_1 = args.get_arg(0)
+    classSpecModule.InitSpellSelection(attachee, class_extended_1)
+    return 0
+
+def OnLevelupSpellsCheckComplete(attachee, args, evt_obj):
+    if (evt_obj.arg0 != classEnum):
+        return 0
+    class_extended_1 = args.get_arg(0)
+    if (not classSpecModule.LevelupCheckSpells(attachee, class_extended_1) ):
+        evt_obj.bonus_list.add(-1, 0, 137) # denotes incomplete spell selection
+    return 1
+    
+def OnLevelupSpellsFinalize(attachee, args, evt_obj):
+    if (evt_obj.arg0 != classEnum):
+        return 0
+    classLvl = attachee.stat_level_get(classEnum)
+    if (classLvl == 0):
+        return 0
+    class_extended_1 = args.get_arg(0)
+    classSpecModule.LevelupSpellsFinalize(attachee, class_extended_1)
+    return
+
+spellCasterSpecObj = PythonModifier(GetSpellCasterConditionName(), 8)
+spellCasterSpecObj.AddHook(ET_OnConditionAdd, EK_NONE, OnAddSpellCasting, ())
+spellCasterSpecObj.AddHook(ET_OnGetBaseCasterLevel, EK_NONE, OnGetBaseCasterLevel, ())
+spellCasterSpecObj.AddHook(ET_OnSpellListExtensionGet, EK_NONE, OnSpellListExtensionGet, ())
+spellCasterSpecObj.AddHook(ET_OnLevelupSystemEvent, EK_LVL_Spells_Activate, OnInitLevelupSpellSelection, ())
+spellCasterSpecObj.AddHook(ET_OnLevelupSystemEvent, EK_LVL_Spells_Check_Complete, OnLevelupSpellsCheckComplete, ())
+spellCasterSpecObj.AddHook(ET_OnLevelupSystemEvent, EK_LVL_Spells_Finalize, OnLevelupSpellsFinalize, ())
+
+#endregion

@@ -38,7 +38,6 @@ def OnSpellEffect(spell):
         saveDescriptor = D20STD_F_NONE
         particleEffect = "sp-Dragon Disciple Line Breath Fire"
 
-    spell.caster.turn_towards(spell.target_list[0].obj)
     game.particles(particleEffect, spell.caster)
 
     for spellTarget in spell.target_list:

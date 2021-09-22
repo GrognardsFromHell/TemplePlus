@@ -29,6 +29,7 @@ class_feats = {
 2: ("Dragon Disciple Claws and Bite",),
 3: ("Dragon Disciple Breath Weapon",),
 5: ("Dragon Disciple Blindsense",),
+9: ("Dragon Disciple Wings",),
 10: ("Dragon Disciple Dragon Apotheosis",)
 }
 
@@ -112,32 +113,3 @@ def IsSelectingFeatsOnLevelup(obj):
 def LevelupGetBonusFeats(obj):
     return
 
-def IsSelectingSpellsOnLevelup( obj , class_extended_1 = 0):
-    if class_extended_1 <= 0:
-        class_extended_1 = char_class_utils.GetHighestArcaneClass(obj)
-    if char_editor.is_selecting_spells(obj, class_extended_1):
-        return 1
-    return 0
-
-
-def LevelupCheckSpells(obj, class_extended_1 = 0):
-    if class_extended_1 <= 0:
-        class_extended_1 = char_class_utils.GetHighestArcaneClass(obj)
-    if not char_editor.spells_check_complete(obj, class_extended_1):
-        return 0
-    return 1
-
-def InitSpellSelection(obj , class_extended_1 = 0):
-    newLvl = obj.stat_level_get( classEnum ) + 1
-    levelsWithoutNewSpells = [3, 7, 10]
-    if not newLvl in levelsWithoutNewSpells:
-        if class_extended_1 <= 0:
-            class_extended_1 = char_class_utils.GetHighestArcaneClass(obj)
-        char_editor.init_spell_selection(obj, class_extended_1)
-    return 0
-
-def LevelupSpellsFinalize(obj , class_extended_1 = 0):
-    if class_extended_1 <= 0:
-        class_extended_1 = char_class_utils.GetHighestArcaneClass(obj)
-    char_editor.spells_finalize(obj, class_extended_1)
-    return 0
