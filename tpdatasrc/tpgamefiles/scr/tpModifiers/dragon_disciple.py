@@ -220,19 +220,30 @@ def breathWeaponRadial(attachee, args, evt_obj):
     breathWeaponId.add_child_to_standard(attachee, tpdp.RadialMenuStandardNode.Class)
     return 0
 
-def chargesCheckBreathWeapon(attachee, args, evt_obj):
+def checkBreathWeapon(attachee, args, evt_obj):
     if args.get_arg(0) < 1:
         evt_obj.return_val = AEC_OUT_OF_CHARGES
         return 0
 
 def performBreathWeapon(attachee, args, evt_obj):
-    chargesLeft = args.get_arg(0)
+    target = evt_obj.d20a.target
+    #attachee.turn_towards(target)
+    if attachee.anim_goal_push_attack(target, 0, 0 ,0):
+        new_anim_id = attachee.anim_goal_get_new_id()
+        evt_obj.d20a.flags |= D20CAF_NEED_ANIM_COMPLETED
+        evt_obj.d20a.anim_id = new_anim_id
+    return 0
+
+def frameBreathWeapon(attachee, args, evt_obj):
     currentSequence = tpactions.get_cur_seq()
     spellPacket = currentSequence.spell_packet
     newSpellId = tpactions.get_new_spell_id()
     spellPacket.caster_level = attachee.stat_level_get(classEnum)
     tpactions.register_spell_cast(spellPacket, newSpellId)
     tpactions.trigger_spell_effect(newSpellId)
+
+    #Reduce Breath Weapon Daily uses by 1
+    chargesLeft = args.get_arg(0)
     chargesLeft -= 1
     args.set_arg(0, chargesLeft)
     return 0
@@ -246,14 +257,15 @@ def resetBreathWeapon(attachee, args, evt_obj):
 dragonDiscipleBreathWeapon = PythonModifier("Dragon Disciple Breath Weapon", 3) #chargesLeft, maxCharges, empty
 dragonDiscipleBreathWeapon.MapToFeat("Dragon Disciple Breath Weapon")
 dragonDiscipleBreathWeapon.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, breathWeaponRadial, ())
-dragonDiscipleBreathWeapon.AddHook(ET_OnD20PythonActionCheck, breathWeaponEnum, chargesCheckBreathWeapon, ())
+dragonDiscipleBreathWeapon.AddHook(ET_OnD20PythonActionCheck, breathWeaponEnum, checkBreathWeapon, ())
 dragonDiscipleBreathWeapon.AddHook(ET_OnD20PythonActionPerform, breathWeaponEnum, performBreathWeapon, ())
+dragonDiscipleBreathWeapon.AddHook(ET_OnD20PythonActionPerform, breathWeaponEnum, frameBreathWeapon, ())
 dragonDiscipleBreathWeapon.AddHook(ET_OnConditionAdd, EK_NONE, resetBreathWeapon, ())
 dragonDiscipleBreathWeapon.AddHook(ET_OnNewDay, EK_NEWDAY_REST, resetBreathWeapon, ())
 
 
 ### Blindsense
-#TBD
+#dropped
 
 ###Wings
 def addWings(attachee, args, evt_obj):

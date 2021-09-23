@@ -28,7 +28,6 @@ class_feats = {
 1: ("Dragon Disciple Heritage", "Dragon Disciple Natural Armor",),
 2: ("Dragon Disciple Claws and Bite",),
 3: ("Dragon Disciple Breath Weapon",),
-5: ("Dragon Disciple Blindsense",),
 9: ("Dragon Disciple Wings",),
 10: ("Dragon Disciple Dragon Apotheosis",)
 }
