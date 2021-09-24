@@ -53,6 +53,7 @@
 #include <fmt/format.h>
 
 #include <pybind11/embed.h>
+#include <gamesystems/mapsystem.h>
 namespace py = pybind11;
 
 std::map<std::string, MesHandle> mesMap;
@@ -284,6 +285,11 @@ PyObject* PyGame_FadeAndTeleport(PyObject*, PyObject* args) {
 
 	if (!PyArg_ParseTuple(args, "iiiiii", &fadeArgs.timeToAdvance, &fadeArgs.soundId, &fadeArgs.movieId, &fadeArgs.destMap, &fadeArgs.destLoc.locx, &fadeArgs.destLoc.locy)) {
 		return 0;
+	}
+
+	// Temple+: added option to auto-set start location by map props when coords are both < 0
+	if ( (int)fadeArgs.destLoc.locx < 0 && (int)fadeArgs.destLoc.locy < 0) {
+		fadeArgs.destLoc = gameSystems->GetMap().GetStartPos(fadeArgs.destMap);
 	}
 
 	fadeArgs.field34 = 48;
@@ -908,6 +914,54 @@ PyObject* PyGame_ScrollTo(PyObject*, PyObject* args)
 	Py_RETURN_TRUE;
 }
 
+
+PyObject* PyGame_MouseMoveTo(PyObject*, PyObject* args)
+{
+	PyObject* locOrObj;
+
+	if (!PyArg_ParseTuple(args, "O:game.mouse_move_to", &locOrObj)) {
+		return 0;
+	}
+
+	locXY targetLoc;
+
+	if (PyObjHndl_Check(locOrObj)) {
+		auto objHandle = PyObjHndl_AsObjHndl(locOrObj);
+		targetLoc = objects.GetLocation(objHandle);
+	}
+	else if (PyLong_Check(locOrObj)) {
+		targetLoc = locXY::fromField(PyLong_AsUnsignedLongLong(locOrObj));
+	}
+	else {
+		PyErr_SetString(PyExc_TypeError, "mouse_move_to argument must be either a tile location (long) or an object handle.");
+		return nullptr;
+	}
+	logger->info("mouse_move_to: location {}, {}", targetLoc.locx, targetLoc.locy);
+	auto worldPos = targetLoc.ToInches3D();
+	auto uiPos = gameView->WorldToScreenUi(worldPos);
+	mouseFuncs.SetPos(uiPos.x, uiPos.y, 0);
+
+	Py_RETURN_TRUE;
+}
+
+
+PyObject* PyGame_MouseClick(PyObject*, PyObject* args)
+{
+	int clickType = 0;
+
+	if (!PyArg_ParseTuple(args, "|i:game.mouse_click", &clickType)) {
+		return nullptr;
+	}
+
+	if (clickType >= (int)MouseButton::LEFT && clickType <= (int)MouseButton::MIDDLE){
+		mouseFuncs.SetButtonState((MouseButton)clickType, true);
+		mouseFuncs.SetButtonState((MouseButton)clickType, false);
+	}
+	
+	Py_RETURN_TRUE;
+}
+
+
 PyObject* PyGame_LoadGame(PyObject*, PyObject* args) {
 	char *filename;
 	if (!PyArg_ParseTuple(args, "s:game.loadgame", &filename)) {
@@ -1407,6 +1461,8 @@ static PyMethodDef PyGameMethods[]{
 	{"is_outdoor", PyGame_IsOutdoor, METH_VARARGS, NULL},
 	{"is_spell_harmful", PyGame_IsSpellHarmful, METH_VARARGS, NULL },
 	{ "scroll_to", PyGame_ScrollTo, METH_VARARGS, NULL },
+	{"mouse_move_to", PyGame_MouseMoveTo, METH_VARARGS, NULL },
+	{"mouse_click", PyGame_MouseClick, METH_VARARGS, NULL },
 	{"shake", PyGame_Shake, METH_VARARGS, NULL},
 	{"moviequeue_add", PyGame_MoviequeueAdd, METH_VARARGS, NULL},
 	{"moviequeue_play", PyGame_MoviequeuePlay, METH_VARARGS, NULL},
