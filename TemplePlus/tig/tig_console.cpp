@@ -104,14 +104,16 @@ void Console::Render()
 		Console::CommandEditCallback, this))
 	{
 		std::string command = mCommandBuf;
-		command.resize(command.length()); // This discards trailing null-bytes
 		trim(command);
+		//command.resize(std::strlen(command.c_str())); // This discards trailing null-bytes
+		
 		Execute(command);
-
 		std::fill(mCommandBuf.begin(), mCommandBuf.end(), '\0'); // Clear command buffer
-
 		// Refocus the control
-		ImGui::SetKeyboardFocusHere(-1);
+		ImGui::SetKeyboardFocusHere(0);
+
+		// handle key-up event not registering (commonly because you set a breakpoint in debug mode and the key-up event occurred outside the app)
+		tig->GetDebugUI().HandleMessage(WM_KEYUP, VK_RETURN, 0); 
 	}
 	mIsInputActive = ImGui::IsItemActive();
 
