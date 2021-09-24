@@ -1,9 +1,9 @@
-{590}{Disrupting Weapon}
 {1000}{Moment of Prescience}
 {1001}{Touch of Fatigue}
 {1002}{Ray of Exhaustion}
 {1003}{Waves of Fatigue}
 {1004}{Waves of Exhaustion}
+{1300}{Disrupting Weapon}
 {3000}{Bardic Suggestion}
 {3003}{Fascinate}
 {3006}{Mass Suggestion}
@@ -11,8 +11,6 @@
 
 {5150} Energy Drain {[Necromancy] Ranged touch attack inflicts 2d4 negative levels.}
 {5151} Enervation {[Necromancy] Ranged touch attack inflicts 1d4 negative levels.}
-{5590} Disrupting Weapon {[Transmutation] Makes a melee weapon deadly to
-undead.}
 {5309} Mind Fog {[Enchantment] Subjects in fog get -10 to Wisdom and Will checks.}
 {5522}{[Evocation] Creates a 10' wide curtain of fire that deals an initial 2d4 fire damage and 2d6 +1/lvl to creatures passing through it.}
 {5186}{[Divination] This spell grants you a powerful sixth sense in relation to yourself or another.}
@@ -22,6 +20,7 @@ undead.}
 {6002}{[Necromancy] A black ray projects from your pointing finger. You must succeed on a ranged touch attack with the ray to strike a target.  The subject is immediately exhausted for the spell's duration.  A successful Fortitude save means the creature is only fatigued.  A character that is already fatigued instead becomes exhausted.  This spell has no effect on a creature that is already exhausted.  Unlike normal exhaustion or fatigue, the effect ends as soon as the spell's duration expires.}
 {6003}{[Necromancy] Waves of negative energy render all living creatures in the spell's area fatigued. This spell has no effect on a creature that is already fatigued.}
 {6004}{[Necromancy] Waves of negative energy cause all living creatures in the spell's area to become exhausted. This spell has no effect on a creature that is already exhausted. }
+{6300} Disrupting Weapon {[Transmutation] Makes a melee weapon deadly to undead.}
 {8000}Bardic Suggestion{Bardic Suggestion (INTERNAL)}
 
 {90000}{Captivated!}

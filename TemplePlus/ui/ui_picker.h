@@ -184,6 +184,7 @@ public:
 	uint32_t SetSingleTarget(objHndl objHndl, PickerArgs* pickerArgs);
 	void SetConeTargets(LocAndOffsets* locAndOffsets, PickerArgs* pickerArgs);
 	uint32_t GetListRange(LocAndOffsets* locAndOffsets, PickerArgs* pickerArgs);
+	static bool PickerLosBlocked(objHndl, const LocAndOffsets& loc);
 
 	// Wall mode
 	void WallStateReset() { mWallState = WallPicker_StartPoint; }

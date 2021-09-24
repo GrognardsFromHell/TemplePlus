@@ -223,8 +223,9 @@ void AasHooks::apply()
 	});
 
 	// AasIsConjureAnim
-	replaceFunction<int(gfx::EncodedAnimId)>(0x10263e20, [](gfx::EncodedAnimId animId) {
-		return animId.IsConjuireAnimation() ? 1 : 0;
+	replaceFunction<int(gfx::SpellAnimType)>(0x10263e20, [](gfx::SpellAnimType animId) {
+		gfx::EncodedAnimId sa(animId);
+		return sa.IsCastingAnimation() ? 1 : 0;
 	});
 
 	// aas_init

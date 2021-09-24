@@ -2295,6 +2295,7 @@ race_svirfneblin = 9
 race_forest_gnome = 10
 race_tallfellow = 11
 race_deep_halfling = 12
+race_bugbear = 8
 race_hill_giant = 10
 race_troll = 11
 
@@ -3305,7 +3306,7 @@ spell_axiomatic_storm = 1136
 spell_holy_storm = 1137
 spell_unholy_storm = 1138
 spell_summon_undead_iii = 1139
-spell_visage_of_the_deity_lesser_231 = 1140
+spell_visage_of_the_deity_lesser = 1140
 spell_lawful_sword = 1141
 spell_summon_undead_iv = 1142
 spell_castigate = 1143
@@ -3344,6 +3345,7 @@ spell_vertigo = 1307
 spell_whelm = 1308
 spell_mass_whelm = 1309
 spell_whelming_blast = 1310
+spell_greater_mirror_image = 1311
 
 spell_new_slot_lvl_0 = 1605
 spell_new_slot_lvl_1 = 1606
@@ -3655,6 +3657,7 @@ ET_OnSpellResistanceCheckBonus = 98
 ET_OnTargetSpellDCBonus = 99 #DC bonus based on the target of a spell
 ET_OnIgnoreDruidOathCheck = 100 #Should a druid oath be ignored
 ET_OnSpellCasterGeneral = 101
+ET_OnAddMesh = 102
 
 # Event Keys
 

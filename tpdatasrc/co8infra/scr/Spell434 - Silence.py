@@ -30,7 +30,7 @@ def	OnSpellEffect( spell ):
 			# saving throw successful
 			target_item.obj.float_mesfile_line( 'mes\\spell.mes', 30001 )
 
-			game.particles( 'Fizzle', target.obj )
+			game.particles( 'Fizzle', target_item.obj )
 			spell.target_list.remove_target( target_item.obj )
 		else:
 			# put sp-Silence condition on target

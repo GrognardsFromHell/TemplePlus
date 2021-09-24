@@ -468,7 +468,7 @@ Range:               Personal
 Target:             Weapon touched
 Duration:      1 round}
 
-{6118} Faith Healing {Heal 1d8 + level (max. 5) on target that worships same deity.
+{6118} Faith Healing {Heal 8 + level (max. 5) on target that worships same deity.
 
 School:          Conjuration(Healing)
 Casting:         1  std action [V,S]

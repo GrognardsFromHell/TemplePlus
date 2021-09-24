@@ -515,22 +515,15 @@ struct DispIoAttackDice : DispIO // type 20
 struct DispIoTypeImmunityTrigger : DispIO { // DispIoType 21
 	uint32_t interrupt;
 	uint32_t field_8;
-	uint32_t field_C;
+	uint32_t field_C; // might have been used to store dispType, judging by the Globe of Invulnerability callback (probably tested this vs. BeginRound)
 	uint32_t SDDKey1;
 	uint32_t val2;
 	uint32_t okToAdd; // or spellId???
 	CondNode* condNode;
+	enum_disp_type dispType;
+	D20DispatcherKey dispKey;
 
-	DispIoTypeImmunityTrigger() {
-		dispIOType = dispIOType21;
-		interrupt = 0;
-		field_8 = 0;
-		condNode = nullptr;
-		field_C = 0;
-		SDDKey1 = 0;
-		val2 = 0;
-
-	}
+	DispIoTypeImmunityTrigger();
 };
 
 struct DispIoImmunity : DispIO // type 23
@@ -619,6 +612,15 @@ struct EvtIgnoreDruidOathCheck : DispIO // type 40 (NEW!)
 	bool ignoreDruidOath = false;
 };
 
+struct EvtObjAddMesh : DispIO // type 41 (new)
+{
+	objHndl handle;
+	std::vector<int> addmeshes;
+	EvtObjAddMesh(objHndl handle);
+	std::vector<int> DispatchGetAddMeshes();
+	void Append(int addmeshId); // index into addmesh.mes
+};
+
 struct EvtObjActionCost: DispIO
 {
 	ActionCostPacket acpOrig; // original
@@ -688,7 +690,7 @@ int _DispatchAttackBonus(objHndl objHnd, objHndl victim, DispIoAttackBonus* disp
 uint32_t _Dispatch62(objHndl, DispIO*, uint32_t dispKey);
 uint32_t _Dispatch63(objHndl objHnd, DispIO* dispIO);
 
-void _DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, uint32_t dispKey, DispIO * dispIO);
+void _DispatcherProcessor(Dispatcher* dispatcher, enum_disp_type dispType, D20DispatcherKey dispKey, DispIO * dispIO);
 int32_t _DispatchDamage(objHndl objHnd, DispIoDamage* dispIo, enum_disp_type dispType, D20DispatcherKey key);
 int32_t _dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, BonusList* bonOut, objHndl objHnd2, int32_t flag);
 

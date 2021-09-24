@@ -5,6 +5,7 @@
 #include <config/config.h>
 #include <pathfinding.h>
 #include <description.h>
+#include <animgoals/anim.h>
 #include <graphics/device.h>
 #include <graphics/textures.h>
 
@@ -90,7 +91,8 @@ void DiagScreen::Render() {
 	lines.push_back(fmt::format("# Map Objects"));
 	lines.push_back(fmt::format("{} of {} rendered", mapObjRenderer.GetRenderedLastFrame(),
 		mapObjRenderer.GetTotalLastFrame()));
-
+	lines.push_back(fmt::format("AnimSlots used: {}", gameSystems->GetAnim().GetSlotUsedCount()));
+	
 	auto& clipping = mGameSystems.GetClipping();
 	lines.push_back(fmt::format("# Clipping Objects"));
 	lines.push_back(fmt::format("{} of {} rendered", clipping.GetRenderered(),

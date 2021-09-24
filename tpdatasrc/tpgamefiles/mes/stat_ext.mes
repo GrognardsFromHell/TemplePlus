@@ -176,6 +176,7 @@
 
 // Race Short Help Goes Between 12000-12999
 {12007} goblin {}
+{12008} Bugbear {Bugbears are massive humanoids distantly related to goblins and hobgoblins. +4 Strength, +2 Dexterity, +2 Constitution, -2 Charisma, +1 Level Adjustment, 3d8 monster HD.}
 {12010} Hill Giant {Reckless brutes of incredible strength but little wit. +14 Strength, -2 Dexterity, +8 Constitution, -4 Intelligence, -4 Charisma, +4 Level Adjustment, 12d8 monster HD.}
 {12011} Troll {Trolls have no fear of death: They launch themselves into combat without hesitation. +12 Strength, +4 Dexterity, +12 Constitution, -4 Intelligence, -2 Wisdom, -4 Charisma, +5 Level Adjustment, 6d8 monster HD.}
 {12035} Svirfneblin {Also called deep gnomes, svirfneblin are said to dwell in great cities deep underground.  Reclusive, suspicious, and resentful of intrusion into their cavern homes, the deep gnomes share little of the humor or openness of their surface cousins.  They possess the following traits:  -2 Strength, +2 Dexterity, +2 Wisdom, -4 Charisma.  Spell resistance equal to 11 + class levels.  +2 racial bonus on all saving throws.  Add +1 to the Difficulty Class for all saving throws against illusion spells cast by svirfneblin. This adjustment stacks with those from similar effects, such as the Spell Focus feat.  +1 racial bonus on attack rolls against kobolds and goblinoids.  +4 dodge bonus to Armor Class against all creatures.  Spell-Like Abilities: 1/day - blindness/deafness, blur. Caster level equals the svirfneblin's class levels. The save DC is Charisma-based and include a +4 racial modifier.  +2 racial bonus on Hide and Listen checks.  Their favored class is Rogue.  Level adjustment +3.}
@@ -208,7 +209,7 @@ Spells: Ability to cast an arcane spell of 3rd level+.
 }
 
 
-{13013}Archmage{--COMING SOON-- An advanced practitioner of the Art, who gains strange powers and the ability to alter spells in remarkable ways.
+{13013}Archmage{--NOT COMING SOON-- An advanced practitioner of the Art, who gains strange powers and the ability to alter spells in remarkable ways.
 
 Requirements: Ability to cast 7-th level arcane spells
 Skill ranks: Spellcraft 15
@@ -230,10 +231,10 @@ Feats: Cleave, Power Attack
 } // Special: Contact with an evil summoned outsider.
 
 
-{13016}Dragon Disciple{--NOT COMING SOON-- A descendant of dragonkind who uses their innate magical power as a catalyst to ignite their dragon blood.
+{13016}Dragon Disciple{A descendant of dragonkind who uses their innate magical power as a catalyst to ignite their dragon blood.
 
-Requirements
-Race: Any nondragon.
+Requirements:
+Level: 5
 Spellcasting: Ability to cast arcane spells without preparation.}
 
 
@@ -295,10 +296,11 @@ Feats: Spell Focus (conjuration).
 Spells: Able to cast lesser planar ally.}
 
 {13027}Favored Soul{Favored souls cast divine spells by means of an innate connection rather than through laborious training and prayer, so their divine connection is natural rather than learned.}
+
 {13031}Stormlord{Stormlords wield thunder and lightning like a warrior wields his sword. They serve their deity through random, spectacular acts of violence.
 
-Requirements: Alignment CE/CN/NE, Base Fort Save +4, able to cast 3rd-level divine spells.
-Feats: Great Fortitude, Weapon Focus (deity's weapon or javelin)}
+Requirements: CE/CN/NE, Fort Save +4, can cast 3rd-level divine spells.
+Feats: Great Fortitude, W. Focus - javelin or deity's weapon}
 // Not implemented:
 // Feat: Endurance (non in the game)
 // Patron: Talos

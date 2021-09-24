@@ -5,6 +5,7 @@
 
 #include "anim_slot.h"
 #include "gamesystems/gamesystems.h"
+#include "gamesystems/timeevents.h"
 #include "gamesystems/objects/objsystem.h"
 #include "python/python_integration_spells.h"
 #include "critter.h"
@@ -370,7 +371,8 @@ int GoalIsAnimatingConjuration(AnimSlot &slot) {
 	assert(aasHandle);
 
 	auto animId = aasHandle->GetAnimId();
-	return animId.IsConjuireAnimation() ? TRUE : FALSE;
+	gfx::EncodedAnimId spellAnimId(animId.GetSpellAnimType());
+	return spellAnimId.IsCastingAnimation() ? TRUE : FALSE;
 }
 
 // Originally @ 0x10010290
@@ -697,7 +699,39 @@ int GoalWasInterrupted(AnimSlot &slot) {
 // Originally @ 0x100105f0
 int GoalStartConjurationAnim(AnimSlot &slot) {
 	static auto org = temple::GetRef<std::remove_pointer<GoalCallback>::type>(0x100105f0);
-	return org(slot);
+
+	auto obj = slot.param1.obj;
+	if (!obj) {
+		logger->error("GoalStartConjurationAnim: Null object param.");
+		gameSystems->GetAnim().Debug();
+	}
+	auto aasHandle = objects.GetAnimHandle(obj);
+	auto aasId = aasHandle ? aasHandle->GetAnimId() : 0;
+	if (!aasId) {
+		logger->error("GoalStartConjurationAnim: Null AAS handle.");
+		gameSystems->GetAnim().Debug();
+	}
+
+	auto &aas = gameSystems->GetAAS();
+	//auto model = aas.BorrowByHandle(aasId);
+	//auto encodedId = model->GetAnimId();
+	auto encodedId = aasHandle->GetAnimId();
+	
+	gfx::EncodedAnimId encodedSpellAnimId(encodedId.GetSpellAnimType());
+	if (!encodedSpellAnimId.IsCastingAnimation()) {
+		logger->error("GoalStartConjurationAnim: Is not conjuration anim.");
+		gameSystems->GetAnim().Debug();
+	}
+	;
+	objects.SetAnimId(obj, encodedId.ConjurationToCastAnimation());
+	
+	slot.path.someDelay = 33;
+	slot.gametimeSth = gameSystems->GetTimeEvent().GetAnimTime();
+	slot.flags |= AnimSlotFlag::ASF_UNK5;
+	slot.flags &= ~(AnimSlotFlag::ASF_UNK3 | AnimSlotFlag::ASF_UNK4);
+
+	return 1;
+	//return org(slot);
 }
 
 // Originally @ 0x10010760

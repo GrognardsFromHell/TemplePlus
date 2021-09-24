@@ -411,6 +411,22 @@ bool WeaponSystem::IsRangedWeapon(WeaponTypes wpnType)
 	}
 }
 
+
+bool WeaponSystem::IsThrownOnlyWeapon(WeaponTypes wpnType)
+{
+	switch (wpnType) {
+	case wt_javelin:
+	case wt_dart:
+	case wt_shuriken:
+	case wt_net:
+	case wt_grenade:
+		return true;
+
+	default:
+		return false;
+	}
+}
+
 WeaponSystem::WeaponSystem(){
 	wpnProps[wt_javelin].damType = DamageType::Piercing;
 	wpnProps[wt_dagger].damType = DamageType::PiercingAndSlashing;

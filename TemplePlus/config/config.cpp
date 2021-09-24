@@ -135,6 +135,8 @@ static ConfigSetting configSettings[] = {
 	//CONF_DOUBLE(randomEncounterExperienceFactor),
 	CONF_BOOL(newFeatureTestMode),
 	CONF_BOOL(pathfindingDebugMode),
+	CONF_BOOL(debugObjects),
+
 	CONF_STRING(defaultModule),
 	CONF_INT(windowWidth),
 	CONF_INT(windowHeight),
@@ -168,6 +170,7 @@ static ConfigSetting configSettings[] = {
 	CONF_INT(msaaQuality),
 	CONF_BOOL(showNpcStats),
 	CONF_BOOL(showHitChances),
+	CONF_BOOL(dumpFullMemory),
 
 	CONF_BOOL(newClasses),
 	CONF_BOOL(newRaces),

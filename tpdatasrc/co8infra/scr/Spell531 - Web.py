@@ -74,8 +74,8 @@ def OnEndSpellCast( spell ):
 			if len(activeList) == 0:
 				Co8PersistentData.removeData(WEB_KEY)
 				break
-    
-                	Co8PersistentData.setData(WEB_KEY, activeList)
+
+				Co8PersistentData.setData(WEB_KEY, activeList)
 			break
 
 def OnAreaOfEffectHit( spell ):

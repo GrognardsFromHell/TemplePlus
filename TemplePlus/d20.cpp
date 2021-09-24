@@ -37,6 +37,7 @@
 #include "InfinityEngine.h"
 #include "rng.h"
 #include "ai.h"
+#include <config/config.h>
 
 
 static_assert(sizeof(D20SpellData) == (8U), "D20SpellData structure has the wrong size!"); //shut up compiler, this is ok
@@ -106,6 +107,7 @@ public:
 
 	static ActionErrorCode LocationCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat, LocAndOffsets* loc);
 	static ActionErrorCode LocationCheckPython(D20Actn* d20a, TurnBasedStatus* tbStat, LocAndOffsets* loc);
+	static ActionErrorCode LocationCheckStdAttack(D20Actn* d20a, TurnBasedStatus* tbStat, LocAndOffsets* loc);
 
 	// Perform 
 	static ActionErrorCode PerformAidAnotherWakeUp(D20Actn* d20a);
@@ -187,6 +189,7 @@ public:
 
 		replaceFunction<ActionErrorCode(__cdecl)(D20Actn*, ActnSeq*, TurnBasedStatus*)>(0x100958A0, d20Callbacks.AddToSeqSpellCast);
 		replaceFunction(0x1008CE30, _PerformStandardAttack);
+		replaceFunction(0x1008C910, D20ActionCallbacks::LocationCheckStdAttack);
 		
 		replaceFunction(0x100920B0, PerformActivateReadiedAction);
 
@@ -758,6 +761,11 @@ uint32_t LegacyD20System::d20QueryWithData(objHndl obj, D20DispatcherKey dispKey
 uint32_t LegacyD20System::d20QueryWithData(objHndl obj, D20DispatcherKey dispKey, D20SpellData* spellData, uint32_t arg2)
 {
 	return d20QueryWithData(obj, dispKey, reinterpret_cast<uint32_t>(spellData), arg2);
+}
+
+uint32_t LegacyD20System::d20QueryWithData(objHndl handle, D20DispatcherKey dispKey, D20Actn* d20a)
+{
+	return d20QueryWithData(handle, dispKey, reinterpret_cast<uint32_t>(d20a), 0);
 }
 
 uint32_t LegacyD20System::d20QueryHasSpellCond(objHndl obj, int spellCondId)
@@ -2276,6 +2284,7 @@ ActionErrorCode D20ActionCallbacks::ActionCheckStdAttack(D20Actn * d20a, TurnBas
 	return AEC_OK;
 }
 
+/* 0x1008EE60 */
 ActionErrorCode D20ActionCallbacks::ActionCheckStdRangedAttack(D20Actn * d20a, TurnBasedStatus * tbStat)
 {
 	//auto tgt = d20a->d20ATarget;
@@ -2284,9 +2293,140 @@ ActionErrorCode D20ActionCallbacks::ActionCheckStdRangedAttack(D20Actn * d20a, T
 	//	return AEC_TARGET_INVALID;
 	//}
 
-	auto orgCheck = temple::GetRef<ActionErrorCode(__cdecl)(D20Actn*, TurnBasedStatus*)>(0x1008EE60);
+	//auto orgCheck = temple::GetRef<ActionErrorCode(__cdecl)(D20Actn*, TurnBasedStatus*)>(0x1008EE60);
 
-	return orgCheck(d20a, tbStat);
+	//return orgCheck(d20a, tbStat);
+
+	const auto performer = d20a->d20APerformer;
+	const auto tgt = d20a->d20ATarget;
+	if (d20Sys.d20QueryWithData(performer, DK_QUE_IsActionInvalid_CheckAction, d20a)) {
+		return AEC_INVALID_ACTION;
+	}
+
+	auto equipSlot = (d20a->d20Caf & D20CAF_SECONDARY_WEAPON) ? EquipSlot::WeaponSecondary : EquipSlot::WeaponPrimary;
+	if (!combatSys.AmmoMatchesItemAtSlot(performer, equipSlot)) {
+		return AEC_OUT_OF_AMMO;
+	}
+
+	if (!d20a->d20ATarget) {
+		return AEC_TARGET_INVALID;
+	}
+	float range = 0.0f;
+	range = 100.0f; // todo!
+	
+	
+	auto tgtDist = locSys.DistanceToObj_NonNegative(performer, tgt);
+	
+	if (tgtDist > range)
+		return AEC_TARGET_TOO_FAR;
+	if (tgtDist < 0.0f)
+		return AEC_TARGET_TOO_CLOSE;
+
+	auto tgtLoc = objects.GetLocationFull(tgt);
+	auto loc = objects.GetLocationFull(performer);
+	auto raycastFlags = (RaycastFlags)(RaycastFlags::HasTargetObj | RaycastFlags::HasSourceObj | RaycastFlags::StopAfterFirstBlockerFound | RaycastFlags::ExcludeItemObjects);
+	{
+		auto hasLosBlockage = 0;
+		RaycastPacket rayPkt;
+		rayPkt.flags = raycastFlags;
+		rayPkt.origin = loc;
+		rayPkt.targetLoc = tgtLoc;
+		rayPkt.sourceObj = performer;
+		rayPkt.target = tgt;
+		rayPkt.Raycast();
+		for (auto i = 0; i < rayPkt.resultCount; ++i) {
+			auto resHandle = rayPkt.results[i].obj;
+			if (!resHandle) {
+				if (rayPkt.results[i].flags & RaycastResultFlags::BlockerSubtile) {
+					hasLosBlockage = true;
+				}
+				continue;
+			}
+			if (objects.IsCritter(resHandle)) {
+				if (critterSys.IsDeadNullDestroyed(resHandle)
+					|| critterSys.IsProne(resHandle)
+					|| critterSys.IsDeadOrUnconscious(resHandle))
+					continue;
+				d20a->d20Caf |= D20CAF_COVER;
+			}
+			else if (objects.IsPortal(resHandle)) {
+				if (!objects.IsPortalOpen(resHandle))
+					hasLosBlockage = true;
+				continue;
+			}
+			else {
+				d20a->d20Caf |= D20CAF_COVER;
+			}
+		}
+		if (!hasLosBlockage) {
+			if (rayPkt.flags & RaycastFlags::FoundCoverProvider) {
+				d20a->d20Caf |= D20CAF_COVER;
+			}
+			return AEC_OK;
+		}
+	}
+
+	// If we got here it means the center-to-center ray is blocked
+	// check various other points on the target bounding circle
+	// If any of those rays are not blocked, flag it as D20CAF_COVER but return AEC_OK
+	// Otherwise returns AEC_TARGET_BLOCKED
+	{
+		auto tgtRadiusInch = objects.GetRadius(tgt);
+		constexpr XMFLOAT2 offVecs[4] = {
+			{1.0f, 0.0f},
+			{M_SQRT1_2, M_SQRT1_2},
+			{-M_SQRT1_2, M_SQRT1_2},
+			{-1.0f, 0.0f},
+		};
+
+		auto locInch = loc.ToInches2D();
+		auto tgtLocInch = tgtLoc.ToInches2D();
+		auto deltaX = locInch.x - tgtLocInch.x, deltaY = locInch.y - tgtLocInch.y;
+		auto factor = tgtRadiusInch / sqrt(deltaY * deltaY + deltaX * deltaX);
+		auto radiusProjX = factor * deltaX, radiusProjY = factor * deltaY;
+		auto blockedDirectionsCount = 0;
+
+		for (auto i = 0; i < 4; ++i) {
+			auto hasLosBlockage = 0;
+			RaycastPacket rayPkt;
+			rayPkt.flags = raycastFlags;
+			rayPkt.origin = loc;
+			rayPkt.targetLoc = LocAndOffsets::FromInches(
+				tgtLocInch.x + radiusProjX * offVecs[i].x + radiusProjY * offVecs[i].y,
+				tgtLocInch.y - radiusProjX * offVecs[i].x + radiusProjY * offVecs[i].y);
+			rayPkt.sourceObj = performer;
+			rayPkt.target = tgt;
+			rayPkt.Raycast();
+			for (auto j = 0; j < rayPkt.resultCount; ++j) {
+
+				auto resHandle = rayPkt.results[j].obj;
+				if (!resHandle) {
+					if (rayPkt.results[j].flags & RaycastResultFlags::BlockerSubtile) {
+						hasLosBlockage = true;
+						break;
+					}
+				}
+				else if (objects.IsPortal(resHandle)) {
+					if (!objects.IsPortalOpen(resHandle)) {
+						hasLosBlockage = true;
+						break;
+					}
+				}
+			}
+
+			if (hasLosBlockage) {
+				blockedDirectionsCount++;
+			}
+
+		}
+		if (blockedDirectionsCount >= 4) {
+			return AEC_TARGET_BLOCKED;
+		}
+	}
+
+
+	d20a->d20Caf |= D20CAF_COVER;
+	return AEC_OK;
 }
 
 ActionErrorCode D20ActionCallbacks::PerformCharge(D20Actn* d20a){
@@ -2503,7 +2643,143 @@ ActionErrorCode D20ActionCallbacks::LocationCheckDisarmedWeaponRetrieve(D20Actn*
 
 ActionErrorCode D20ActionCallbacks::LocationCheckPython(D20Actn* d20a, TurnBasedStatus* tbStat, LocAndOffsets* loc){
 	return AEC_OK; // TODO
-};
+}
+
+/* 0x1008C910 */
+ActionErrorCode D20ActionCallbacks::LocationCheckStdAttack(D20Actn* d20a, TurnBasedStatus* tbStat, LocAndOffsets* loc)
+{
+	const auto performer = d20a->d20APerformer;
+	const auto tgt = d20a->d20ATarget;
+	if (d20Sys.d20QueryWithData(performer, DK_QUE_IsActionInvalid_CheckAction, d20a)) {
+		return AEC_INVALID_ACTION;
+	}
+	if (!d20a->d20ATarget) {
+		return AEC_TARGET_INVALID;
+	}
+	float range, minReach = 0.0f;
+	if (d20a->d20Caf & D20CAF_RANGED)
+		range = 100.0f;
+	else
+		range = critterSys.GetReach(performer, d20a->d20ActType, &minReach);
+
+	auto tgtLoc = objects.GetLocationFull(tgt);
+	auto tgtDist    = locSys.DistanceToLocFeet_NonNegative(tgt, loc);
+	auto perfRadius = locSys.InchesToFeet( objects.GetRadius(performer) );
+	tgtDist -= perfRadius;
+	
+	if (tgtDist > range)
+		return AEC_TARGET_TOO_FAR;
+	// Temple+: added donut range
+	auto minDist = (config.disableReachWeaponDonut || minReach <= 0.0f) ? -10.0 :  minReach; // todo check if this 10.0 magic number is consistent with other places
+	if (tgtDist < minDist)
+		return AEC_TARGET_TOO_CLOSE;
+
+	
+	auto raycastFlags = (RaycastFlags)(RaycastFlags::HasTargetObj | RaycastFlags::HasSourceObj | RaycastFlags::StopAfterFirstBlockerFound | RaycastFlags::ExcludeItemObjects);
+	{
+		auto hasLosBlockage = 0;
+		RaycastPacket rayPkt;
+		rayPkt.flags = raycastFlags;
+		rayPkt.origin = *loc;
+		rayPkt.targetLoc = tgtLoc;
+		rayPkt.sourceObj = performer;
+		rayPkt.target = tgt;
+		rayPkt.Raycast();
+		for (auto i = 0; i < rayPkt.resultCount; ++i) {
+			auto resHandle = rayPkt.results[i].obj;
+			if (!resHandle) {
+				if (rayPkt.results[i].flags & RaycastResultFlags::BlockerSubtile) {
+					hasLosBlockage = true;
+				}
+				continue;
+			}
+			if (objects.IsCritter(resHandle)) {
+				if (critterSys.IsDeadNullDestroyed(resHandle)
+					|| critterSys.IsProne(resHandle)
+					|| critterSys.IsDeadOrUnconscious(resHandle))
+					continue;
+				d20a->d20Caf |= D20CAF_COVER;
+			}
+			else if (objects.IsPortal(resHandle)) {
+				if (!objects.IsPortalOpen(resHandle))
+					hasLosBlockage = true;
+				continue;
+			}
+			else {
+				d20a->d20Caf |= D20CAF_COVER;
+			}
+		}
+		if (!hasLosBlockage) {
+			if (rayPkt.flags & RaycastFlags::FoundCoverProvider) {
+				d20a->d20Caf |= D20CAF_COVER;
+			}
+			return AEC_OK;
+		}
+	}
+	
+	// If we got here it means the center-to-center ray is blocked
+	// check various other points on the target bounding circle
+	// If any of those rays are not blocked, flag it as D20CAF_COVER but return AEC_OK
+	// Otherwise returns AEC_TARGET_BLOCKED
+	{
+		auto tgtRadiusInch = objects.GetRadius(tgt);
+		constexpr XMFLOAT2 offVecs[4] = {
+			{1.0f, 0.0f},
+			{M_SQRT1_2, M_SQRT1_2},
+			{-M_SQRT1_2, M_SQRT1_2},
+			{-1.0f, 0.0f},
+		};
+
+		auto locInch = loc->ToInches3D();
+		auto tgtLocInch = tgtLoc.ToInches3D();
+		auto deltaX = locInch.x - tgtLocInch.x, deltaY = locInch.z - tgtLocInch.z;
+		auto factor = tgtRadiusInch / sqrt(deltaY*deltaY + deltaX*deltaX);
+		auto radiusProjX = factor * deltaX, radiusProjY = factor * deltaY;
+		auto blockedDirectionsCount = 0;
+		
+		for (auto i = 0; i < 4; ++i) {
+			auto hasLosBlockage = 0;
+			RaycastPacket rayPkt;
+			rayPkt.flags = raycastFlags;
+			rayPkt.origin = *loc;
+			rayPkt.targetLoc = LocAndOffsets::FromInches(
+				tgtLocInch.x + radiusProjX * offVecs[i].x + radiusProjY * offVecs[i].y,
+				tgtLocInch.z - radiusProjX * offVecs[i].x + radiusProjY * offVecs[i].y);
+			rayPkt.sourceObj = performer;
+			rayPkt.target = tgt;
+			rayPkt.Raycast();
+			for (auto j = 0; j < rayPkt.resultCount; ++j) {
+
+				auto resHandle = rayPkt.results[j].obj;
+				if (!resHandle) {
+					if (rayPkt.results[j].flags & RaycastResultFlags::BlockerSubtile) {
+						hasLosBlockage = true;
+						break;
+					}
+				}
+				else if (objects.IsPortal(resHandle)) {
+					if (!objects.IsPortalOpen(resHandle)) {
+						hasLosBlockage = true;
+						break;
+					}
+				}
+			}
+
+			if (hasLosBlockage) {
+				blockedDirectionsCount++;
+			}
+			
+		}
+		if (blockedDirectionsCount >= 4) {
+			return AEC_TARGET_BLOCKED;
+		}
+	}
+	
+
+	d20a->d20Caf |= D20CAF_COVER;
+	return AEC_OK;
+}
+;
 
 ActionErrorCode D20ActionCallbacks::ActionCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat){
 	int dummy = 1;
@@ -2617,13 +2893,16 @@ ActionErrorCode D20ActionCallbacks::ActionCostCastSpell(D20Actn * d20a, TurnBase
 	MetaMagicData mmData;
 	d20a->d20SpellData.Extract(&spEnum, nullptr, &spellClass, &spLvl, &invIdx, &mmData);
 
+	//For spontaneous casters don't use any changes made by metamagic modify when checking for full round cost
+	auto oldMMData = mmData;
+
 	//Modify metamagic information for quicken if necessary
 	dispatch.DispatchMetaMagicModify(d20Sys.globD20Action->d20APerformer, mmData, spLvl, spEnum);
 
 	SpellEntry spEntry(spEnum);
 
 	// Metamagicked spontaneous casters always cost full round to cast
-	if (mmData && !spellSys.isDomainSpell(spellClass) 
+	if (oldMMData && !spellSys.isDomainSpell(spellClass)
 		&& d20ClassSys.IsNaturalCastingClass(spellSys.GetCastingClass(spellClass))){
 		acp->hourglassCost = 4;
 		return AEC_OK;
@@ -3280,6 +3559,7 @@ ActionErrorCode D20ActionCallbacks::AddToSeqSimple(D20Actn*d20a, ActnSeq* actSeq
 	return actSeqSys.AddToSeqSimple(d20a, actSeq, tbStat);
 }
 
+/* 0x100958A0 */
 ActionErrorCode D20ActionCallbacks::AddToSeqSpellCast(D20Actn * d20a, ActnSeq * seq, TurnBasedStatus * tbStat){
 
 	if (d20Sys.d20Query(d20a->d20APerformer, DK_QUE_Prone)){
@@ -3355,13 +3635,20 @@ ActionErrorCode D20ActionCallbacks::AddToStandardAttack(D20Actn * d20a, ActnSeq 
 		return AEC_OK;
 	}
 
-
-	auto reach = critterSys.GetReach(performer, d20a->d20ActType);
-	if (locSys.DistanceToObj(performer, tgt) > reach){
+	auto polearmDonutReach = config.disableReachWeaponDonut ? false : true;
+	float minReach = 0.0f;
+	auto reach = critterSys.GetReach(performer, d20a->d20ActType, &minReach);
+	auto distToTgt = max( 0.0f, locSys.DistanceToObj(performer, tgt) );
+	auto tooClose = polearmDonutReach && (minReach > 0.0f) && distToTgt < minReach;
+	if (distToTgt > reach || tooClose){
 		d20aCopy = *d20a;
 		d20aCopy.d20ActType = D20A_UNSPECIFIED_MOVE;
 		auto destLoc = objSystem->GetObject(tgt)->GetLocationFull();
-		actSeqSys.MoveSequenceParse(&d20aCopy, actSeq, tbStat, 0.0, reach, 1);
+		auto distToTgtMin = tooClose ?
+			max( 0.0f, minReach + locSys.InchesToFeet(INCH_PER_SUBTILE / 2)) 
+			: 0.0f;
+		actSeqSys.MoveSequenceParse(&d20aCopy, actSeq, tbStat, 
+			polearmDonutReach ? distToTgtMin : 0.0, reach, 1);
 	}
 
 	if (actSeqSys.TurnBasedStatusUpdate(&tbStatCopy, &d20aCopy) != AEC_OK){ // bug??

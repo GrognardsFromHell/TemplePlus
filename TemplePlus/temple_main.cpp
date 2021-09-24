@@ -3,8 +3,10 @@
 #include "temple_functions.h"
 #include "tig/tig_msg.h"
 #include "tig/tig_startup.h"
+#include "tig/tig_console.h"
 #include "tig/tig_mouse.h"
 #include "gamesystems/gamesystems.h"
+#include "gamesystems/mapsystem.h"
 #include "tig/tig_shader.h"
 #include "ui/ui.h"
 #include "ui/ui_mainmenu.h"
@@ -63,18 +65,11 @@ struct StartupRelevantFuncs : temple::AddressTable {
 	void (__cdecl *RunMainLoop)();
 	int (__cdecl *TempleMain)(HINSTANCE hInstance, HINSTANCE hInstancePrev, const char *commandLine, int showCmd);
 
-	/*
-		This is here just for the editor
-	*/
-	int(__cdecl *MapOpenInGame)(int mapId, int a3, int a4);
-
 	StartupRelevantFuncs() {
 		rebase(SetScreenshotKeyhandler, 0x101DCB30);		
 		rebase(RunBatchFile, 0x101DFF10);
 		rebase(RunMainLoop, 0x100010F0);		
 		rebase(TempleMain, 0x100013D0);
-		
-		rebase(MapOpenInGame, 0x10072A90);
 	}
 
 } startupRelevantFuncs;
@@ -176,13 +171,14 @@ int TempleMain(HINSTANCE hInstance, const string &commandLine) {
 	if (!config.editor) {
 		uiSystems.GetMM().Show(MainMenuPage::MainMenu);
 	} else {
-		startupRelevantFuncs.MapOpenInGame(5001, 0, 1);
+		gameSystems.GetMap().OpenMap(5001, 0, 1);
 	}
 	temple::GetRef<int>(0x10BD3A68) = 1; // Purpose unknown and unconfirmed, may be able to remove
 
 	// Run console commands from "startup.txt" (working dir)
 	logger->info("[Running Startup.txt]");
-	startupRelevantFuncs.RunBatchFile("Startup.txt");
+	auto &console = tig.GetConsole();
+	console.RunBatchFile("Startup.txt");
 	logger->info("[Beginning Game]");	
 
 	Updater updater;

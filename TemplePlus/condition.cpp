@@ -150,6 +150,8 @@ public:
 	static int EffectTooltipGeneral(DispatcherCallbackArgs args);
 	static int TooltipUnrepeated(DispatcherCallbackArgs); // SubDispDef data1 denotes combat.mes line
 
+	static int ImmunityTrigger(DispatcherCallbackArgs args);
+
 	// particle systems
 	static int EndParticlesFromArg(DispatcherCallbackArgs args);
 	static int PlayParticlesSavePartsysId(DispatcherCallbackArgs args);
@@ -295,6 +297,7 @@ public:
 	static int BardicMusicHeroicsSaveBonus(DispatcherCallbackArgs args);
 	static int BardicMusicHeroicsAC(DispatcherCallbackArgs args);
 	static int BardicMusicSuggestionFearQuery(DispatcherCallbackArgs args);
+	static int BardicMusicSuggestionCountersong(DispatcherCallbackArgs args);
 
 	static int PaladinDivineGrace(DispatcherCallbackArgs args);
 	static int SmiteEvilToHitBonus(DispatcherCallbackArgs args);
@@ -356,6 +359,8 @@ public:
 
 			return 0;
 		});
+
+		replaceFunction(0x100ed5a0, GenericCallbacks::ImmunityTrigger);
 
 		//dispTypeConditionAdd
 		static int(__cdecl* orgTempAbilityLoss2)(DispatcherCallbackArgs) = replaceFunction<int(__cdecl)(DispatcherCallbackArgs)>(0x100EA3B0, [](DispatcherCallbackArgs args) 
@@ -646,7 +651,7 @@ uint32_t _ConditionAddDispatchArgs(Dispatcher* dispatcher, CondNode** ppCondNode
 		dispIO14h.arg2 = args[1];
 	}
 
-	_DispatcherProcessor(dispatcher, dispTypeConditionAddPre, 0, (DispIO*)&dispIO14h);
+	dispatch.DispatcherProcessor(dispatcher, dispTypeConditionAddPre, 0, (DispIO*)&dispIO14h);
 
 	if (dispIO14h.outputFlag == 0) {
 		return 0;
@@ -945,6 +950,43 @@ int GenericCallbacks::TooltipUnrepeated(DispatcherCallbackArgs args)
 	{
 		strncpy(dispIo->strings[numstrings], mesLine, 0x100);
 		dispIo->numStrings++;
+	}
+	return 0;
+}
+
+// Probably the only callback in the game that has non-zero return value,
+// not that it means anything :P
+int GenericCallbacks::ImmunityTrigger(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIOType21ImmunityTrigger, DispIoTypeImmunityTrigger);
+	auto sddata1 = args.GetData1();
+	if (args.subDispNode->condNode != dispIo->condNode
+		|| args.dispKey != sddata1) {
+		return 0;
+	}
+
+
+
+	dispIo->interrupt = 1;
+	dispIo->SDDKey1 = sddata1;
+	switch (sddata1) {
+	case DK_IMMUNITY_SPELL:
+		dispIo->okToAdd = args.GetCondArg(0);
+		return DK_IMMUNITY_SPELL;
+	case DK_IMMUNITY_11:
+		return DK_IMMUNITY_11;
+	case DK_IMMUNITY_12:
+		return DK_IMMUNITY_12;
+	case DK_IMMUNITY_COURAGE:
+		return DK_IMMUNITY_COURAGE;
+	case DK_IMMUNITY_RACIAL:
+		return DK_IMMUNITY_RACIAL;
+	case DK_IMMUNITY_15:
+		return DK_IMMUNITY_15;
+	case DK_IMMUNITY_SPECIAL:
+		return DK_IMMUNITY_SPECIAL;
+	default:
+		break;
 	}
 	return 0;
 }
@@ -3063,14 +3105,13 @@ void ConditionSystem::RegisterNewConditions()
 
 	auto itemForceRemoveCallback = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x10104410);
 	auto immunityCheckHandler = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100ED650);
-	auto immunityTriggerCallback = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100ed5a0);
 	cond = &mCondNecklaceOfAdaptation; 
 
 	cond->condName = "Necklace of Adaptation";
 	cond->numArgs = 4;
 	DispatcherHookInit(cond, 0, dispTypeItemForceRemove, 0, itemForceRemoveCallback, 0, 0);
 	DispatcherHookInit(cond, 1, dispTypeSpellImmunityCheck,0, immunityCheckHandler, 4,0);
-	DispatcherHookInit(cond, 2, dispTypeImmunityTrigger, DK_IMMUNITY_SPECIAL, immunityTriggerCallback, 0x10, 0);
+	DispatcherHookInit(cond, 2, dispTypeImmunityTrigger, DK_IMMUNITY_SPECIAL, genericCallbacks.ImmunityTrigger, 0x10, 0);
 
 	{
 		static CondStructNew condAttrEnhBonus;
@@ -6367,12 +6408,14 @@ int ClassAbilityCallbacks::BardicMusicBeginRound(DispatcherCallbackArgs args){
 		return 0;
 
 	auto roundsLasted = args.GetCondArg(2);
+	auto endMusic = false;
 	if (dispIo->data1 <= 1){
 		args.SetCondArg(2, roundsLasted + 1);
 		auto tgt = args.GetCondArgObjHndl(3);
 		if (!gameSystems->GetObj().IsValidHandle(tgt)) {
 			tgt = objHndl::null;
 		}
+		auto rollResult = 0;
 		switch (bmType)
 		{
 		case BM_INSPIRE_GREATNESS:
@@ -6385,8 +6428,16 @@ int ClassAbilityCallbacks::BardicMusicBeginRound(DispatcherCallbackArgs args){
 			party.ApplyConditionAround(args.objHndCaller, 30, "Inspired_Courage", objHndl::null);
 			return 0;
 		case BM_COUNTER_SONG: 
-			party.ApplyConditionAround(args.objHndCaller, 30, "Countersong", objHndl::null);
-			return 0;
+			if (roundsLasted+1 >= 10) {
+				// countersong only lasts up to 10 rounds
+				endMusic = true;
+				BardicMusicPlaySound(bmType, args.objHndCaller, 1);  //End sound
+			}
+			else {
+				skillSys.SkillRoll(args.objHndCaller, SkillEnum::skill_perform, 0, &rollResult, 1);
+				party.ApplyConditionAroundWithArgs(args.objHndCaller, 30, "Countersong", {0, rollResult, 0});
+			}
+			break;
 		case BM_FASCINATE: 
 			if (tgt)
 				conds.AddTo(tgt, "Fascinate", {-1, 0});
@@ -6408,7 +6459,11 @@ int ClassAbilityCallbacks::BardicMusicBeginRound(DispatcherCallbackArgs args){
 		}
 
 	} 
-	else
+	else {
+		endMusic = true;
+	}
+
+	if (endMusic)
 	{
 		args.SetCondArg(2, 0);
 		args.SetCondArg(1, 0);
@@ -6529,7 +6584,7 @@ int ClassAbilityCallbacks::BardMusicCheck(DispatcherCallbackArgs args){
 		return 0;
 	}
 
-	if (args.GetCondArg(0) <= 0 || bmType == BM_SUGGESTION){
+	if (args.GetCondArg(0) <= 0 && bmType != BM_SUGGESTION){
 		dispIo->returnVal = AEC_OUT_OF_CHARGES;
 	}
 
@@ -6567,6 +6622,10 @@ int ClassAbilityCallbacks::BardMusicActionFrame(DispatcherCallbackArgs args){
 	}
 
 	auto partsysId = 0, rollResult =0, chaScore = 0, spellId = 0;
+	SpellPacketBody spellPktBody;
+	auto bardLvl = objects.StatLevelGet(args.objHndCaller, stat_level_bard);
+	bardLvl += d20Sys.D20QueryPython(args.objHndCaller, "Bardic Music Bonus Levels");
+
 	auto &curSeq = *actSeqSys.actSeqCur;
 	switch (bmType){
 	case BM_INSPIRE_COURAGE: 
@@ -6574,13 +6633,22 @@ int ClassAbilityCallbacks::BardMusicActionFrame(DispatcherCallbackArgs args){
 		partsysId = gameSystems->GetParticleSys().CreateAtObj("Bardic-Inspire Courage", args.objHndCaller);
 		break;
 	case BM_COUNTER_SONG: 
-		party.ApplyConditionAround(args.objHndCaller, 30.0, "Countersong", objHndl::null);
+		skillSys.SkillRoll(args.objHndCaller, SkillEnum::skill_perform, 0, &rollResult, 1);
+		party.ApplyConditionAroundWithArgs(args.objHndCaller, 30, "Countersong", {0, rollResult, 0});
 		partsysId = gameSystems->GetParticleSys().CreateAtObj("Bardic-Countersong", args.objHndCaller);
 		break;
 	case BM_FASCINATE: 
 		partsysId = gameSystems->GetParticleSys().CreateAtObj("Bardic-Fascinate", args.objHndCaller);
 		spellId = spellSys.GetNewSpellId();
 		spellSys.RegisterSpell(curSeq->spellPktBody, spellId);
+
+		if (spellSys.GetSpellPacketBody(spellId, &spellPktBody)) {
+			// reset appropriate caster level; automatic packet includes
+			// Practiced Spellcaster, allowing too many targets
+			spellPktBody.casterLevel = bardLvl;
+			spellSys.UpdateSpellPacket(spellPktBody);
+		}
+
 		pySpellIntegration.SpellTrigger(spellId, SpellEvent::SpellEffect);
 		// effect now handled via spell
 		//skillSys.SkillRoll(performer, SkillEnum::skill_perform, 20, &rollResult, 1);
@@ -6594,8 +6662,21 @@ int ClassAbilityCallbacks::BardMusicActionFrame(DispatcherCallbackArgs args){
 		break;
 	case BM_SUGGESTION: 
 		partsysId = gameSystems->GetParticleSys().CreateAtObj("Bardic-Suggestion", args.objHndCaller);
+
+		chaScore = objects.StatLevelGet(args.objHndCaller, stat_charisma);
+
 		spellId = spellSys.GetNewSpellId();
 		spellSys.RegisterSpell(curSeq->spellPktBody, spellId);
+
+		if (spellSys.GetSpellPacketBody(spellId, &spellPktBody)) {
+			// reset appropriate DC and caster level; automatic packet
+			// treats it as a level 0 bard spell, including Practiced
+			// Spellcaster
+			spellPktBody.dc = 10 + bardLvl/2 + (chaScore-10)/2;
+			spellPktBody.casterLevel = bardLvl;
+			spellSys.UpdateSpellPacket(spellPktBody);
+		}
+
 		pySpellIntegration.SpellTrigger(spellId, SpellEvent::SpellEffect);
 		break;
 	case BM_INSPIRE_GREATNESS: 
@@ -6838,6 +6919,30 @@ int ClassAbilityCallbacks::BardicMusicOnSequence(DispatcherCallbackArgs args)
 			}
 			BardicMusicPlaySound(bmType, args.objHndCaller, 1);  //End sound
 		}
+	}
+
+	return 0;
+}
+
+int ClassAbilityCallbacks::BardicMusicSuggestionCountersong(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIoTypeCondStruct, DispIoCondStruct);
+
+	auto countersongCond = conds.GetByName("Countersong");
+	if (!countersongCond || dispIo->condStruct != countersongCond)
+		return 0;
+
+	int spellId = args.GetCondArg(2);
+	SpellPacketBody spellPktBody;
+	if (!spellSys.GetSpellPacketBody(spellId, &spellPktBody))
+		return 0;
+
+	int countersongRoll = dispIo->arg2;
+
+	if (spellPktBody.dc <= countersongRoll) {
+		// Remove condition, OnBeginRound script should see this and end
+		// the spell.
+		conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
 	}
 
 	return 0;
@@ -7117,6 +7222,7 @@ void Conditions::AddConditionsToTable(){
 		bardSuggestion.AddHook(dispTypeConditionRemove, DK_NONE, genericCallbacks.EndParticlesFromArg, 1, 0);
 		bardSuggestion.AddHook(dispTypeD20Signal, DK_SIG_Killed, ConditionRemoveCallback);
 		bardSuggestion.AddHook(dispTypeD20Signal, DK_SIG_Teleport_Prepare, ConditionRemoveCallback);
+		bardSuggestion.AddHook(dispTypeConditionAddPre, DK_NONE, classAbilityCallbacks.BardicMusicSuggestionCountersong);
 	}
 
 	static CondStructNew bardInspireHeroics("Inspired Heroics", 4);
@@ -7237,6 +7343,11 @@ int RaceAbilityCallbacks::HalflingThrownWeaponAndSlingBonus(DispatcherCallbackAr
 		{
 			auto wpnType = (WeaponTypes)objSystem->GetObject(weapon)->GetInt32(obj_f_weapon_type);
 			if (wpnType == wt_sling){
+				dispIo->bonlist.AddBonus(1, 0, 139);
+			}
+
+			// So that thrown only weapons (like javalins) will display on the character sheet
+			if (weapons.IsThrownOnlyWeapon(wpnType)) {
 				dispIo->bonlist.AddBonus(1, 0, 139);
 			}
 		}

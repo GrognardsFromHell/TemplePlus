@@ -12,7 +12,8 @@ def OnSpellEffect(spell):
     spellTarget = spell.target_list[0].obj
     spellCasterDeity = spell.caster.get_deity()
     spellTargetDeity = spellTarget.get_deity()
-    spellDamageDice = dice_new('1d8')
+    spellDamageDice = dice_new('1d1')
+    spellDamageDice.number = 8
     spellDamageDice.bonus = min(spell.caster_level, 5) #capped at CL 5
 
     if spellCasterDeity == spellTargetDeity:

@@ -898,19 +898,25 @@ bool Damage::SavingThrow(objHndl handle, objHndl attacker, int dc, SavingThrowTy
 		}
 	}
 
+	if (diceResult == 20){
+		// if (finalSaveThrowMod + 20 < dc)
+			return true; // natural 20 - always succeeds
+	}
+
 	auto finalSaveThrowMod = dispatch.Dispatch44FinalSaveThrow(handle, saveType, &evtObj);
 	auto histId = histSys.RollHistoryAddType3SavingThrow(handle, dc, saveType, flags, dice.ToPacked(), diceResult, &evtObj.bonlist);
 	histSys.CreateRollHistoryString(histId);
 
-	if (diceResult == 1){
+	if (finalSaveThrowMod > saveThrowMod){
+		// This branch replaces saving throws with a skill check, and the
+		// latter do not fail or succeed automatically on any roll.
+		return finalSaveThrowMod + diceResult >= dc;
+	}
+	else if (diceResult == 1){
 		// if (finalSaveThrowMod + 1 >= dc)
 			return false; // natural 1 - always fails
 	}
-	else if (diceResult == 20){
-		// if (finalSaveThrowMod + 20 < dc)
-			return true; // natural 20 - always succeeds
-	}
-	return finalSaveThrowMod + diceResult >= dc;
+	return saveThrowMod + diceResult >= dc;
 
 	// return addresses.SavingThrow(handle, attacker, dc, saveType, flags);
 }

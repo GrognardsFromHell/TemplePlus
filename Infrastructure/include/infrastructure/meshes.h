@@ -187,6 +187,42 @@ namespace gfx {
 		OpenIdle
 	};
 
+	enum class SpellAnimType : int {
+		AbjurationCasting = 81,
+		AbjurationConjuring,
+		ConjurationCasting,
+		ConjurationConjuring,
+		DivinationCasting,
+		DivinationConjuring,
+		EnchantmentCasting,
+		EnchantmentConjuring,
+		EvocationCasting,
+		EvocationConjuring,
+		IllusionCasting,
+		IllusionConjuring,
+		NecromancyCasting,
+		NecromancyConjuring,
+		TransmutationCasting,
+		TransmutationConjuring,
+		
+		WandAbjurationCasting = 126,
+		WandAbjurationConjuring,
+		WandConjurationCasting,
+		WandConjurationConjuring,
+		WandDivinationCasting,
+		WandDivinationConjuring,
+		WandEnchantmentCasting,
+		WandEnchantmentConjuring,
+		WandEvocationCasting,
+		WandEvocationConjuring,
+		WandIllusionCasting,
+		WandIllusionConjuring,
+		WandNecromancyCasting,
+		WandNecromancyConjuring,
+		WandTransmutationCasting,
+		WandTransmutationConjuring,
+	};
+
 	/*
 	Represents an encoded animation id.
 	*/
@@ -214,11 +250,16 @@ namespace gfx {
 		explicit EncodedAnimId(NormalAnimType animType) : mId((int) animType) {
 		}
 
+		explicit EncodedAnimId(SpellAnimType animType) : mId((int)animType) {
+		}
+
 		operator int() const {
 			return mId;
 		}
 
-		bool IsConjuireAnimation() const;
+		bool IsCastingAnimation() const;
+
+		EncodedAnimId ConjurationToCastAnimation();
 
 		bool IsSpecialAnim() const {
 			return (mId & (sWeaponAnimFlag | sBardInstrumentAnimFlag)) != 0;
@@ -227,6 +268,11 @@ namespace gfx {
 		// Not for weapon/bard anims
 		NormalAnimType GetNormalAnimType() const {
 			return (NormalAnimType)mId;
+		}
+
+		SpellAnimType GetSpellAnimType() const {
+
+			return (SpellAnimType)( (mId & 0xFFFFFFF) + 64 );
 		}
 
 		bool IsWeaponAnim() const {

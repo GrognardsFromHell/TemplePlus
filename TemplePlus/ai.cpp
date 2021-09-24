@@ -135,6 +135,12 @@ AiSystem::AiSystem()
 	RegisterNewAiTactics();
 }
 
+AiTactic::AiTactic()
+{
+	memset(this, 0, sizeof(AiTactic));
+}
+
+
 AiStrategy* AiSystem::GetAiStrategy(uint32_t stratId){
 	// Check if "normal" strategy ID
 	if (stratId < AI_PREFAB_STRAT_MAX ){
@@ -1778,7 +1784,7 @@ BOOL AiSystem::ImprovePosition(AiTactic* aiTac){
 	auto initialActNum = curSeq->d20ActArrayNum;
 
 	d20Sys.GlobD20ActnInit();
-	d20Sys.GlobD20ActnSetTypeAndData1(D20A_UNSPECIFIED_MOVE, 0);
+	d20Sys.GlobD20ActnSetTypeAndData1(D20A_UNSPECIFIED_MOVE, /*required range: */ 30);
 	d20Sys.GlobD20ActnSetTarget(aiTac->target, 0);
 	auto addToSeqError = (ActionErrorCode)actSeqSys.ActionAddToSeq();
 
@@ -1796,7 +1802,8 @@ BOOL AiSystem::ImprovePosition(AiTactic* aiTac){
 			}
 		}
 
-		// in addition, truncate the path to the least amount necessary to achieve LOS
+		// removed this part - this is now accomplished by the PF system itself
+		if (false)
 		if (curNum > 0) {
 
 
@@ -1823,6 +1830,7 @@ BOOL AiSystem::ImprovePosition(AiTactic* aiTac){
 					truncationDistance = (upperBound + lowerBound) / 2;
 					pathfindingSys.TruncatePathToDistance(path, &newDest, truncationDistance);
 					hasLineOfAttack = combatSys.HasLineOfAttackFromPosition(newDest, tgt);
+				
 					if (hasLineOfAttack) {
 						upperBound = truncationDistance;
 					}
@@ -1830,6 +1838,19 @@ BOOL AiSystem::ImprovePosition(AiTactic* aiTac){
 						lowerBound = truncationDistance;
 					}
 				}
+				/*auto destClear = pathfindingSys.PathDestIsClear(performer, &newDest);
+				while (!destClear && upperBound > 2.0f) {
+					upperBound -= 2.0f;
+					pathfindingSys.TruncatePathToDistance(path, &newDest, upperBound);
+					destClear = pathfindingSys.PathDestIsClear(performer, &newDest);
+				}
+				
+				if (upperBound <= 0.0f) {
+					logger->info("ImprovePosition: Unspecified Move failed. ");
+					actSeqSys.ActionSequenceRevertPath(initialActNum);
+					return FALSE;
+				}*/
+				
 
 				auto truncPath = pathfindingSys.FetchAvailablePQRCacheSlot();
 				if (pathfindingSys.GetPartialPath(path, truncPath, 0, upperBound)) {
@@ -2891,6 +2912,7 @@ int AiSystem::Default(AiTactic* aiTac)
 		return TRUE;
 	} 
 	else{
+		actSeqSys.ActionSequenceRevertPath(initialActNum); // Temple+: fixed issue with Default tactic affecting next one to do not resetting it here
 		logger->info("AI Default SequenceCheck failed, error codes are AddToSeq: {}, Location Checs: {}", addToSeqError, performError);
 	}
 	if (!critterSys.IsWieldingRangedWeapon(aiTac->performer))
@@ -3691,6 +3713,7 @@ public:
 	static int AiFlank(AiTactic* aiTac);
 	static int AiRage(AiTactic* aiTac);
 	static int CastArea(AiTactic* aiTac);
+	static int CastFireball(AiTactic* aiTac);
 	static int CastSingle(AiTactic* aiTac);
 	
 
@@ -3742,6 +3765,8 @@ public:
 		replaceFunction(0x100E41E0, CastSingle);
 		replaceFunction(0x100E43F0, AiCastParty);
 		replaceFunction(0x100E4510, CastArea);
+		replaceFunction(0x100E5C50, CastFireball); // todo: I've added LOS check, but now the AI needs to know how to tweak it in case it's blocked but good targets are around the corner
+
 		replaceFunction(0x100E46C0, AiAttack);
 		replaceFunction(0x100E46D0, AiTargetThreatened);
 		replaceFunction<BOOL(__cdecl)(AiTactic*)>(0x100E37D0, [](AiTactic*aiTac)->BOOL {
@@ -3883,7 +3908,7 @@ public:
 			evtNew.system = TimeEventType::AI;
 			evtNew.params[0].handle = obj;
 			evtNew.params[1].int32 = doFirstHeartbeat;
-			logger->debug("Generating AI TimeEvent for {}, first heartbeat: {}", description.getDisplayName(obj), doFirstHeartbeat);
+			logger->debug("Generating AI TimeEvent for {}, first heartbeat: {}", obj, doFirstHeartbeat);
 			if (doFirstHeartbeat)
 			{
 				int dummy = 1;
@@ -4023,6 +4048,12 @@ int AiReplacements::CastArea(AiTactic* aiTac){
 	if (!spellSys.pickerArgsFromSpellEntry(&spEntry, &pickArgs, performer, aiTac->spellPktBody.casterLevel)){
 		return FALSE;
 	}
+
+	// Temple+: added LOS check (since otherwise it's only done by UI code)
+	if (uiPicker.PickerLosBlocked(performer, locAndOff)) {
+		return FALSE;
+	}
+
 	uiPicker.GetListRange(&locAndOff, &pickArgs);
 	spellSys.ConfigSpellTargetting(&pickArgs, &aiTac->spellPktBody);
 	pickArgs.FreeObjlist();
@@ -4033,6 +4064,66 @@ int AiReplacements::CastArea(AiTactic* aiTac){
 	actSeqSys.ActSeqCurSetSpellPacket(&aiTac->spellPktBody, 0);
 	d20Sys.GlobD20ActnSetSpellData(&aiTac->d20SpellData);
 	
+	d20Sys.GlobD20ActnSetTarget(objHndl::null, &locAndOff);
+	actSeqSys.ActionAddToSeq();
+	if (actSeqSys.ActionSequenceChecksWithPerformerLocation())
+	{
+		actSeqSys.ActionSequenceRevertPath(actNumOrg);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+/* 0x100E5C50 */
+int AiReplacements::CastFireball(AiTactic* aiTac)
+{
+	auto actNumOrg = actSeqSys.GetCurSeqD20ActionCount();
+	if (!aiTac->target)
+		return FALSE;
+	
+	auto performer = aiTac->performer;
+	auto enemies = combatSys.GetEnemiesCanMelee(performer);
+	auto castDefensively = 0;
+	if (enemies.size() > 0) {
+		castDefensively = 1;
+	}
+
+	d20Sys.d20SendSignal(performer, DK_SIG_SetCastDefensively, castDefensively, 0);
+
+	SpellEntry spEntry(aiTac->d20SpellData.spellEnumOrg);
+	if (!spEntry.spellEnum) {
+		return FALSE;
+	}
+
+	PickerArgs pickArgs;
+	LocAndOffsets locAndOff = LocAndOffsets::null;
+	if (aiTac->target) {
+		locAndOff = objects.GetLocationFull(aiTac->target);
+	}
+	if (!aiTac->ChooseFireballLocation(locAndOff)) {
+		return FALSE;
+	}
+
+
+	//uiPicker.PickerArgsInit(&pickArgs);
+	if (!spellSys.pickerArgsFromSpellEntry(&spEntry, &pickArgs, performer, aiTac->spellPktBody.casterLevel)) {
+		return FALSE;
+	}
+
+	// Temple+: added LOS check (since otherwise it's only done by UI code)
+	if (uiPicker.PickerLosBlocked(performer, locAndOff)) {
+		return FALSE;
+	}
+
+	uiPicker.GetListRange(&locAndOff, &pickArgs);
+	spellSys.ConfigSpellTargetting(&pickArgs, &aiTac->spellPktBody);
+	pickArgs.FreeObjlist();
+
+	d20Sys.GlobD20ActnInit();
+	d20Sys.GlobD20ActnSetTypeAndData1(D20A_CAST_SPELL, 0);
+	actSeqSys.ActSeqCurSetSpellPacket(&aiTac->spellPktBody, 0);
+	d20Sys.GlobD20ActnSetSpellData(&aiTac->d20SpellData);
+
 	d20Sys.GlobD20ActnSetTarget(objHndl::null, &locAndOff);
 	actSeqSys.ActionAddToSeq();
 	if (actSeqSys.ActionSequenceChecksWithPerformerLocation())
@@ -4744,4 +4835,105 @@ void AiPacket::FleeingStatusRefresh(){
 	if (!fleeingFrom || !objSystem->IsValidHandle(fleeingFrom)
 		|| critterSys.IsDeadNullDestroyed(fleeingFrom) || critterSys.IsDeadOrUnconscious(fleeingFrom))
 		this->aiFightStatus = aiSys.UpdateAiFlags(obj, AIFS_NONE, objHndl::null, nullptr);
+}
+
+/* 
+* 0x100E2D70
+* adjusts location if friendlies are found
+*/ 
+void FireballLocationAdj(objHndl caster, XMFLOAT2 pos, XMFLOAT2& posAdj, int flags) {
+	auto loc = LocAndOffsets::FromInches(pos);
+	
+	flags |= 2; // find a friendly
+	const float FB_RANGE = 240.0f; // presumed fireball range in inches
+	// bug: does not account for metamagicked fireball
+	// but then again it's for AI anyway...
+
+	float dist = FB_RANGE;
+	objHndl tgt = objHndl::null;
+	// first check for friends that are not fireball resistant (Q_AI_Fireball_OK)
+	auto getClosestFriend = combatSys.GetClosestEnemy(caster, &loc, &tgt, &dist, flags);
+	if (!getClosestFriend || dist >= FB_RANGE) {
+		// if not found, try to find ones that ARE fireball resistant
+		getClosestFriend = combatSys.GetClosestEnemy(caster, &loc, &tgt, &dist, flags & ~8);
+	}
+
+	// if none found or are too far from FB location
+	if (!getClosestFriend || dist >= FB_RANGE || !tgt)
+	{
+		posAdj = pos;
+		return;
+	}
+
+	// find the direction from friend to current fireball center
+	// vector add this to the tgt pos so that target is out of range
+	auto tgtPos = objects.GetLocationFull(tgt).ToInches2D();
+	auto posV = DirectX::XMLoadFloat2(&pos);
+	auto tgtPosV = DirectX::XMLoadFloat2(&tgtPos);
+	auto posDiff = DirectX::XMVectorSubtract( posV , tgtPosV);
+	posDiff = DirectX::XMVector2Normalize(posDiff);
+	posDiff = DirectX::XMVectorScale(posDiff, FB_RANGE + 60.0f);
+	posV = DirectX::XMVectorAdd(posDiff, tgtPosV); // new pos
+	DirectX::XMStoreFloat2(&posAdj, posV);
+	return;
+}
+
+float FireballScore(objHndl caster, XMFLOAT2 &pos, SpellPacketBody & pkt, int spellEnum) {
+	static auto getFireballScoreOrg = temple::GetRef<float(__cdecl)(objHndl, XMFLOAT2&, SpellPacketBody&, int)>(0x100E2FA0);
+	auto result = getFireballScoreOrg(caster, pos, pkt, spellEnum);
+	return result;
+}
+
+/* 0x100E56C0 */
+bool AiTactic::ChooseFireballLocation(LocAndOffsets& locOut)
+{
+	auto aiTac = this;
+	auto performer = aiTac->performer;
+
+
+	
+	float fireballScoreBest = 0.0f;
+	auto fireballPosBest = locOut.ToInches2D();
+	auto fbPos = fireballPosBest;
+	
+	auto updateFireballBest = [&]() {
+		// Temple+: added LOS check
+		if (uiPicker.PickerLosBlocked(performer, LocAndOffsets::FromInches(fbPos))) {
+			return;
+		}
+		auto fbScore = FireballScore(performer, fbPos, aiTac->spellPktBody, aiTac->spellPktBody.spellEnum);
+		if (fbScore > fireballScoreBest) {
+			fireballScoreBest = fbScore;
+			fireballPosBest = fbPos;
+		}
+	};
+
+	for (auto i = 0; i < combatSys.GetInitiativeListLength(); ++i) {
+		auto combatant = combatSys.GetInitiativeListMember(i);
+		if (!combatant || critterSys.IsFriendly(performer, combatant))
+			continue;
+		auto loc = objects.GetLocationFull(combatant);
+		auto pos = loc.ToInches2D();
+		fbPos = pos;
+		updateFireballBest();
+		FireballLocationAdj(performer, pos, fbPos, 8);
+		updateFireballBest();
+	}
+
+	auto getCenterOfMass = temple::GetRef<BOOL(__cdecl)(objHndl, XMFLOAT2&)>(0x100E2EC0);
+	if (getCenterOfMass(performer, fbPos)) {
+		updateFireballBest();
+	}
+
+	FireballLocationAdj(performer, fbPos, fbPos, 8);
+	updateFireballBest();
+
+
+	if (fireballScoreBest <= 0.0f) {
+		return false;
+	}
+
+	locOut = locOut.FromInches(fireballPosBest);
+
+	return true;
 }

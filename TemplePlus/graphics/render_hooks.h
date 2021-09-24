@@ -77,10 +77,16 @@ public:
 	static void SetDrawCircleZMode(int type);
 
 	static void DrawCircle3d(LocAndOffsets center, 
-		float unk, 
+		float negElevation,
 		XMCOLOR fillColor, 
 		XMCOLOR borderColor, 
 		float radius);
+
+	static void DrawDonut3d(LocAndOffsets center,
+		float negElevation,
+		XMCOLOR fillColor,
+		XMCOLOR borderColor,
+		float radiusOuter, float radiusInner);
 		
 private:
 

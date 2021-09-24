@@ -82,6 +82,14 @@ struct LegacyCombatSystem : temple::AddressTable {
 	bool DisarmCheck(objHndl attacker, objHndl defender, D20Actn* d20a);
 	bool SunderCheck(objHndl attacker, objHndl defender, D20Actn* d20a);
 	uint32_t UseItem(objHndl performer, objHndl item, objHndl target);
+	/*
+		flags:
+		0x1  - target is not friendly (for PC obj, this includes charmed targets)
+		0x2  - target is friendly
+		0x8  - filter Q_AI_Fireball_OK
+		0x10 - exclude self
+		0x20 - check OF_INVULNERABLE
+	*/
 	int GetClosestEnemy(objHndl obj, LocAndOffsets* locOut, objHndl * objOut, float* distOut, int flags);
 	int GetInitiativeListLength();
 	objHndl GetInitiativeListMember(int n);
