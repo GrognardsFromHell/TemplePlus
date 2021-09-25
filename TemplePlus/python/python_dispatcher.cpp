@@ -829,9 +829,24 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		{
 			return spellSys.GetSpellLevelBySpellClass(spEntry.spellEnum, spellClass);
 		})
+		.def_readwrite("spellRange", &SpellEntry::spellRange)
+		.def_readwrite("spellRangeType", &SpellEntry::spellRangeType)
+		.def("get_spell_range_exact", [](SpellEntry &spEntry, int casterLevel, objHndl &caster)->int
+		{
+			return spellSys.GetSpellRangeExact(spEntry.spellRangeType, casterLevel, caster);
+		})
 		;
 
-
+		py::enum_<SpellRangeType>(m, "SpellRangeType")
+			.value("SRT_Specified", SpellRangeType::SRT_Specified)
+			.value("SRT_Personal", SpellRangeType::SRT_Personal)
+			.value("SRT_Touch", SpellRangeType::SRT_Touch)
+			.value("SRT_Close", SpellRangeType::SRT_Close)
+			.value("SRT_Medium", SpellRangeType::SRT_Medium)
+			.value("SRT_Long", SpellRangeType::SRT_Long)
+			.value("SRT_Unlimited", SpellRangeType::SRT_Unlimited)
+			.value("SRT_Special_Inivibility_Purge", SpellRangeType::SRT_Special_Inivibility_Purge)
+			;
 
 		py::class_<SpellPacketBody>(m, "SpellPacket")
 			.def(py::init<objHndl, D20SpellData>(), py::arg("caster"), py::arg("spell_data"))
