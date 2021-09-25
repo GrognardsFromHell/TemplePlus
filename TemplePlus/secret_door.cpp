@@ -17,6 +17,8 @@
 #include "location.h"
 #include "animgoals\anim.h"
 #include <ui/ui_dialog.h>
+#include <config/config.h>
+#include <rng.h>
 
 constexpr int TAGGED_SCENERY_START = 1800;
 constexpr int TAGGED_SCENERY_END = 1979;
@@ -389,32 +391,43 @@ void SecretDoorSys::MarkTaggedScenerySeenAndPlayVoice(objHndl objSeen) {
 
 	auto talker = objHndl::null, pc = objHndl::null;
 	
+	std::vector<objHndl> withVoice;
+	std::vector<objHndl> withoutVoice;
+	for (auto& it : result) {
+		auto pc = party.GetFellowPc(it);
+		GetTaggedSceneryVoiceLine(it, pc, objSeen, text, soundId);
+		if (soundId != -1) {
+			withVoice.push_back(it);
+		}
+		else {
+			withoutVoice.push_back(it);
+		}
+	}
 
-	// Temple+: prioritize NPCs with sound byte first
-	std::sort(result.begin(), result.end(), [&](objHndl &a, objHndl& b) {
-		auto pc = party.GetFellowPc(a);
-		GetTaggedSceneryVoiceLine(a, pc, objSeen, text, soundId);
-		if (soundId != -1) {
-			return false;
-		}
-		GetTaggedSceneryVoiceLine(b, pc, objSeen, text, soundId);
-		if (soundId != -1) {
-			return true;
-		}
-		return false;
-	});
+	if (withVoice.size()) {
+		talker = withVoice[rngSys.GetInt(0, withVoice.size() - 1)];
+	}
+	else {
+		talker = withoutVoice[rngSys.GetInt(0, withoutVoice.size() - 1)];
+	}
 	
-	talker = result[result.size()-1];
 	pc = party.GetFellowPc(talker);
 	GetTaggedSceneryVoiceLine(talker, pc, objSeen, text, soundId);
-	/*if (critterSys.PlayCritterVoiceLine(talker, pc, text, soundId)) {
-		found = true;
-	}*/
-	// changed to text bubble
 	if (!text[0])
 		return;
 
-	uiDialog->ShowTextBubble(talker, objHndl::null, text, soundId);
+	//auto banterText = config.GetVanillaInt("party_banter_text");
+	auto banterVoice = temple::GetRef<BOOL>(0x1080ABA0) != 0;
+	//if (banterText || banterVoice && soundId == -1 ) 
+	if (banterVoice)
+	{
+		uiDialog->ShowTextBubble(talker, objHndl::null, text, soundId);
+	}
+	//else 
+	//{
+	//	critterSys.PlayCritterVoiceLine(talker, pc, text, soundId);
+	//}
+	
 	found = true;
 
 	// mark name seen

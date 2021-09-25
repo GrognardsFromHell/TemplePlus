@@ -1504,6 +1504,8 @@ PartySystem::PartySystem(const GameSystemConf &config) {
 void PartySystem::Reset() {
 	auto reset = temple::GetPointer<void()>(0x1002ac00);
 	reset();
+	// Temple+: fixes party_banter_text
+	temple::GetRef<BOOL>(0x1080AB9C) = config.GetVanillaInt("party_banter_text");
 }
 bool PartySystem::SaveGame(TioFile *file) {
 	auto save = temple::GetPointer<int(TioFile*)>(0x1002ac70);
