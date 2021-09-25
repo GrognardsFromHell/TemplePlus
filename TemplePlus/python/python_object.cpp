@@ -3280,7 +3280,7 @@ static PyObject* PyObjHandle_GetIdxObj(PyObject* obj, PyObject* args) {
 		return 0;
 	}
 	assert(subIdx >= 0);
-	auto result = objSystem->GetObject(self->handle)->GetObjHndl(field);
+	auto result = objSystem->GetObject(self->handle)->GetObjHndl(field, subIdx);
 	
 	return PyObjHndl_Create(result);
 }

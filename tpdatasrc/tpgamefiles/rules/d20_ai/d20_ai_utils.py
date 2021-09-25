@@ -126,7 +126,7 @@ def aiListFind(obj, tgt, list_type):
 		entry_type = obj.obj_get_idx_int(obj_f_npc_ai_list_type_idx, i)
 		if entry_type != list_type:
 			continue
-		list_obj = obj.obj_get_idx_int(obj_f_npc_ai_list_idx, i)
+		list_obj = obj.obj_get_idx_obj(obj_f_npc_ai_list_idx, i)
 		if list_obj == tgt:
 			return True
 
