@@ -9,6 +9,7 @@
 #include "legacy.h"
 #include "obj.h"
 #include "map/sector.h"
+#include "secret_door.h"
 
 namespace gfx {
 	class RenderingDevice;
@@ -546,15 +547,7 @@ public:
 	const std::string &GetName() const override;
 };
 
-class SecretdoorSystem : public GameSystem, public SaveGameAwareGameSystem, public ResetAwareGameSystem {
-public:
-	static constexpr auto Name = "Secretdoor";
-	SecretdoorSystem(const GameSystemConf &config);
-	void Reset() override;
-	bool SaveGame(TioFile *file) override;
-	bool LoadGame(GameSystemSaveFile* saveFile) override;
-	const std::string &GetName() const override;
-};
+
 
 class MapFoggingSystem : public GameSystem, public BufferResettingGameSystem, public ResetAwareGameSystem {
 public:

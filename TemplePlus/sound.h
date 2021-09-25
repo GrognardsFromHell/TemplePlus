@@ -34,6 +34,8 @@ public:
 	*/
 	int MssPlaySound(int soundId);
 
+	void MssFreeStream(int streamId);
+
 private:
 	void Init();
 	static std::map<int, std::string> mUserSounds;

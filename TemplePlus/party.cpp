@@ -63,6 +63,14 @@ public:
 		replaceFunction<objHndl()>(0x1002BE60, [](){
 			return party.GetConsciousPartyLeader();
 		});
+
+		// PartyBanterTextSet
+		replaceFunction<void(BOOL)>(0x1002B8F0, [](BOOL state) {
+			auto& mPartyBanterText = temple::GetRef<BOOL>(0x1080AB9C);
+			mPartyBanterText = state;
+			config.SetVanillaInt("party_banter_text", (int)state);
+		});
+
 	}
 } partyHacks;
 

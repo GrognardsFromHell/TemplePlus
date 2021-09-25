@@ -528,23 +528,24 @@ static PyObject* PyObjHandle_CastSpell(PyObject* obj, PyObject* args) {
 			- (uint64_t)pickArgs.flagsTarget & UiPickerFlagsTarget::Range
 		);
 
-		if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Single)) {
+		// vanilla: was buggy, had & instead of this
+		if ( pickArgs.IsBaseModeTarget(UiPickerType::Single)){ // static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Single)) {
 			objects.loc->getLocAndOff(targetObj, &loc);
 			uiPicker.SetSingleTarget(targetObj, &pickArgs);
-		} else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Multi)) {
+		} else if (pickArgs.IsBaseModeTarget(UiPickerType::Multi)) {// static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Multi)) {
 			objects.loc->getLocAndOff(targetObj, &loc);
 			uiPicker.SetSingleTarget(targetObj, &pickArgs);
-		} else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Cone)) {
-			objects.loc->getLocAndOff(targetObj, &loc);
+		} else if (pickArgs.IsBaseModeTarget(UiPickerType::Cone)) {//static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Cone)) {
+			loc = objects.GetLocationFull(targetObj);
 			uiPicker.SetConeTargets(&loc, &pickArgs);
 
-		} else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Area)) {
+		} else if (pickArgs.IsBaseModeTarget(UiPickerType::Area)) {//static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Area)) {
 			if (spellEntry.spellRangeType == SRT_Personal)
 				objects.loc->getLocAndOff(caster, &loc);
 			else
 				objects.loc->getLocAndOff(targetObj, &loc);
 			uiPicker.GetListRange(&loc, &pickArgs);
-		} else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Personal)) {
+		} else if (pickArgs.IsBaseModeTarget(UiPickerType::Personal)) {//static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Personal)) {
 			objects.loc->getLocAndOff(caster, &loc);
 			uiPicker.SetSingleTarget(caster, &pickArgs);
 		}
