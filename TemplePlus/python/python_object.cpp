@@ -4170,7 +4170,7 @@ static PyObject* PyObjHandle_IsBuckler(PyObject* obj, PyObject* args) {
 static PyObject* PyObjHandle_IsThrowingWeapon(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
-		return PyInt_FromLong(1);
+		return PyInt_FromLong(0);
 	}
 	if (objects.GetType(self->handle) != obj_t_weapon)
 	{
