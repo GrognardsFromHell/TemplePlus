@@ -77,7 +77,7 @@ def getLeaderForNPC(critter):
 
 	leader = critter
 	while leader != OBJ_HANDLE_NULL and leader.type != obj_t_pc:
-		leader = leader.leader_get
+		leader = leader.leader_get()
 
 	return leader
 
