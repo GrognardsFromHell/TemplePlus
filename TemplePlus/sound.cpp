@@ -74,6 +74,12 @@ int Sound::MssPlaySound(int soundId)
 	return addresses.MssSoundPlay(soundId);
 }
 
+void Sound::MssFreeStream(int streamId)
+{
+	static auto freeStream = temple::GetRef<void(__cdecl)(int)>(0x101E36D0);
+	freeStream(streamId);
+}
+
 void Sound::Init(){
 
 	// rules\spell_enums.mes extension
