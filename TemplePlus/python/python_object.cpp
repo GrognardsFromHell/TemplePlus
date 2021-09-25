@@ -3512,7 +3512,7 @@ static PyObject* PyObjHandle_HasFeat(PyObject* obj, PyObject* args) {
 
 	if (!objects.IsCritter(self->handle)) {
 		logger->warn("Python has_feat ({}) called with non critter object: {}", feats.GetFeatName(feat), objects.description.getDisplayName(self->handle));
-		return 0;
+		return PyInt_FromLong(0);
 	}
 
 	Stat levelRaised = (Stat)0;
@@ -4172,6 +4172,12 @@ static PyObject* PyObjHandle_IsThrowingWeapon(PyObject* obj, PyObject* args) {
 	if (!self->handle) {
 		return PyInt_FromLong(1);
 	}
+	if (objects.GetType(self->handle) != obj_t_weapon)
+	{
+		logger->warn("Python is_throwing_weapon called with non weapon object: {}", objects.description.getDisplayName(self->handle));
+		return PyInt_FromLong(0);
+	}
+
 	auto result = inventory.IsThrowingWeapon(self->handle);
 	return PyInt_FromLong(result);
 }
