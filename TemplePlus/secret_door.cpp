@@ -16,6 +16,42 @@
 #include "party.h"
 #include "location.h"
 #include "animgoals\anim.h"
+#include <ui/ui_dialog.h>
+
+constexpr int TAGGED_SCENERY_START = 1800;
+constexpr int TAGGED_SCENERY_END = 1979;
+constexpr int NAMES_SEEN_CAP = 100;
+
+//*****************************************************************************
+//* Secretdoor
+//*****************************************************************************
+
+SecretdoorSystem::SecretdoorSystem(const GameSystemConf& config) {
+	auto startup = temple::GetPointer<int(const GameSystemConf*)>(0x10046370);
+	if (!startup(&config)) {
+		throw TempleException("Unable to initialize game system Secretdoor");
+	}
+}
+void SecretdoorSystem::Reset() {
+	auto reset = temple::GetPointer<void()>(0x10046390);
+	reset();
+
+	// Temple+: adds reset to namesSeen; fixes SecretDoor bug at the root
+	memset(mNamesSeen, 0, sizeof(mNamesSeen[0]) * NAMES_SEEN_CAP);
+}
+bool SecretdoorSystem::SaveGame(TioFile* file) {
+	auto save = temple::GetPointer<int(TioFile*)>(0x100463b0);
+	return save(file) == 1;
+}
+bool SecretdoorSystem::LoadGame(GameSystemSaveFile* saveFile) {
+	auto load = temple::GetPointer<int(GameSystemSaveFile*)>(0x10046400);
+	return load(saveFile) == 1;
+}
+const std::string& SecretdoorSystem::GetName() const {
+	static std::string name("Secretdoor");
+	return name;
+}
+
 
 SecretDoorSys secretdoorSys;
 
@@ -62,6 +98,15 @@ public:
 		{
 			return secretdoorSys.SecretDoorRollAndReveal(secdoor, seeker, bonList);
 		});
+
+		replaceFunction<BOOL(objHndl)>(0x10046650, [](objHndl handle) {
+			return secretdoorSys.TaggedSceneryWasSeen(handle) ? TRUE:FALSE;
+			});
+
+		replaceFunction<void(__cdecl)(objHndl)>(0x100466B0, [](objHndl handle) {
+			return secretdoorSys.MarkTaggedScenerySeenAndPlayVoice(handle);
+			});
+			
 	}
 } secDoorReplacements;
 
@@ -290,6 +335,98 @@ int SecretDoorSys::SecretDoorGetDCAutoDetect(objHndl secdoor)
 		return 0;
 	auto secretdoor_dc = objects.getInt32(secdoor, obj_f_secretdoor_dc);
 	return (secretdoor_dc >> 7) & 0x7F;
+}
+
+/* 0x10046650 */
+bool SecretDoorSys::TaggedSceneryWasSeen(objHndl scenery)
+{
+	if (!scenery || !objSystem->IsValidHandle(scenery))
+		return false;
+
+	auto name = objects.getInt32(scenery, obj_f_name);
+	if (name < TAGGED_SCENERY_START || name > TAGGED_SCENERY_END) {
+		return false;
+	}
+	logger->trace("Tagged scenery {} seen, name ID {}.", scenery, name);
+	auto mNamesSeen = gameSystems->GetSecretdoor().mNamesSeen;
+	for (auto i = 0; i < NAMES_SEEN_CAP; ++i) {
+		if (!mNamesSeen[i]) // end of list
+			return false;
+
+		if (mNamesSeen[i] == name) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/* 0x100466B0 */
+void SecretDoorSys::MarkTaggedScenerySeenAndPlayVoice(objHndl objSeen) {
+	
+	ObjList olist;
+	olist.ListVicinity(objSeen, OLC_CRITTERS);
+	
+	
+	if (!olist.size()) {
+		return;
+	}
+	auto result = olist.GetListResult();
+	for (auto it = result.begin(); it != result.end(); ) {
+		auto critter = *it;
+		if (!party.IsInParty(critter) || critterSys.IsDeadOrUnconscious(critter)) {
+			result.erase(it);
+			continue;
+		}
+		++it;	
+	}
+	if (!result.size())
+		return;
+
+	auto found = false;
+
+	char text[1000]; int soundId = -1;
+	static auto GetTaggedSceneryVoiceLine = temple::GetRef<void(objHndl, objHndl, objHndl, char[], int&)>(0x100381D0);
+
+	auto talker = objHndl::null, pc = objHndl::null;
+	
+
+	// Temple+: prioritize NPCs with sound byte first
+	std::sort(result.begin(), result.end(), [&](objHndl &a, objHndl& b) {
+		auto pc = party.GetFellowPc(a);
+		GetTaggedSceneryVoiceLine(a, pc, objSeen, text, soundId);
+		if (soundId != -1) {
+			return false;
+		}
+		GetTaggedSceneryVoiceLine(b, pc, objSeen, text, soundId);
+		if (soundId != -1) {
+			return true;
+		}
+		return false;
+	});
+	
+	talker = result[result.size()-1];
+	pc = party.GetFellowPc(talker);
+	GetTaggedSceneryVoiceLine(talker, pc, objSeen, text, soundId);
+	/*if (critterSys.PlayCritterVoiceLine(talker, pc, text, soundId)) {
+		found = true;
+	}*/
+	// changed to text bubble
+	
+	uiDialog->ShowTextBubble(talker, objHndl::null, text, soundId);
+	found = true;
+
+	// mark name seen
+	if (found) {
+		auto name = objects.getInt32(objSeen, obj_f_name);
+		auto namesSeen = gameSystems->GetSecretdoor().mNamesSeen;
+		for (auto i = 0; i < NAMES_SEEN_CAP; ++i) {
+			if (!namesSeen[i]) {
+				namesSeen[i] = name;
+				return;
+			}
+		}
+	}
+	
 }
 
 SecretDoorSys::SecretDoorSys()
