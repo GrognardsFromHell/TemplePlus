@@ -240,6 +240,39 @@ def verifyItem(item, args):
 
     return item_loc == target_loc
 
+def itemTooltip(item, args, evt_obj):
+    spellId = args.get_arg(4)
+    duration = spellTime(args.get_arg(5))
+    if args.get_param(1) == 1 and casterIsConcentrating(spellId):
+        name = spellName(spellId)
+        duration = "Concentration + {}".format(duration)
+    elif args.get_param(0):
+        name = game.get_spell_mesline(args.get_param(0))
+    else:
+        name = spellName(spellId)
+    evt_obj.append("{} ({})".format(name, duration))
+    return 0
+
+def itemEffectTooltip(item, args, evt_obj):
+    spellId = args.get_arg(4)
+    duration = spellTime(args.get_arg(5))
+    if args.get_param(1) == 1 and casterIsConcentrating(spellId):
+        duration = "Concentration + {}".format(duration)
+        key = spellKey(spellId)
+    elif args.get_param(0):
+        name = game.get_spell_mesline(args.get_param(0)).upper().replace(" ", "_")
+        key = tpdp.hash(name)
+    else:
+        key = spellKey(spellId)
+    evt_obj.append(key, -2, " ({})".format(duration))
+    return 0
+
+#Only needed to display correct buff time in Tooltips
+def itemDurationTickdown(item, args, evt_obj):
+    args.set_arg(5, args.get_arg(5)-evt_obj.data1)
+    return 0
+
+
 ### Utilities for defining touch attacks with held charge ###
 
 # Keys off 'SPELL_NAME_CHARGE' so that a buff indicator for the holding
