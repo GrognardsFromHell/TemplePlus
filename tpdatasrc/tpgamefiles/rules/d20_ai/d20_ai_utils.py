@@ -85,8 +85,6 @@ def getLeaderForNPC(critter):
 	
 
 def getAiFightingStatus(critter):
-	aifs = AiFightingStatus()
-
 	crit_flags = critter.obj_get_int(obj_f_critter_flags)
 
 	if crit_flags & OCF_FLEEING:

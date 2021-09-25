@@ -81,7 +81,7 @@ def getFriendsCombatFocus(obj, friend, leader, aiSearchingTgt = False):
 	if obj.allegiance_strength(friend) == 0:
 		return OBJ_HANDLE_NULL
 
-	aifs = tpai.AiFightStatus(friend)
+	aifs = AiFightStatus(friend)
 	tgt = aifs.target
 	if tgt == OBJ_HANDLE_NULL:
 		return tgt
