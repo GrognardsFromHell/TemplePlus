@@ -411,7 +411,9 @@ void SecretDoorSys::MarkTaggedScenerySeenAndPlayVoice(objHndl objSeen) {
 		found = true;
 	}*/
 	// changed to text bubble
-	
+	if (!text[0])
+		return;
+
 	uiDialog->ShowTextBubble(talker, objHndl::null, text, soundId);
 	found = true;
 
