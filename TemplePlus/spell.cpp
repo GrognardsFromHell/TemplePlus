@@ -2983,6 +2983,7 @@ uint32_t LegacySpellSystem::GetSpellRangeExact(SpellRangeType spellRangeType, ui
 	case SpellRangeType::SRT_Personal:
 		return 5;
 	case SpellRangeType::SRT_Touch:
+		if (!caster) return 5;
 		return (int) critterSys.GetReach(caster, D20A_TOUCH_ATTACK);
 	case SpellRangeType::SRT_Close:
 		return (casterLevel / 2 + 5) * 5;
