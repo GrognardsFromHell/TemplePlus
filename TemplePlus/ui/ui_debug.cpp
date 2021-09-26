@@ -179,6 +179,13 @@ void UIRenderDebug()
 
 	}
 
+	if (ImGui::CollapsingHeader("Viewports")) {
+		ImGui::Text(fmt::format("Cur idx: {}", temple::GetRef<int>(0x10BD3B44)).c_str());
+		for (auto i = 0; i < 10; ++i) {
+			ImGui::Text(fmt::format("{}: {}", i, temple::GetRef<int[10]>(0x10BD3AF8)[i]).c_str());
+		}
+	}
+
 	if (ImGui::CollapsingHeader("Anim Goals Debugging")) {
 		static bool showGoalsChecked;
 		ImGui::Checkbox("Render Current Goals", &showGoalsChecked);
