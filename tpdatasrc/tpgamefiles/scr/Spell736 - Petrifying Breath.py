@@ -43,7 +43,7 @@ def OnSpellEffect( spell ):
 			obj.condition_add_with_args( 'sp-Command', spell.id, spell.duration, 4 )
 			game.particles( 'sp-Bestow Curse', obj )
 
-	spell.target_list.remove_list( remove_list )
+	spell.target_list.remove_list( target_list )
 	spell.spell_end( spell.id )
 #	efile.close()
 	

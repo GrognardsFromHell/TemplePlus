@@ -2,9 +2,25 @@
 #include "common.h"
 #include <temple/dll.h>
 #include "d20.h"
+#include "gamesystems/gamesystem.h"
 
-struct SecretDoorSys : temple::AddressTable
+class SecretdoorSystem : public GameSystem, public SaveGameAwareGameSystem, public ResetAwareGameSystem {
+	friend class SecretDoorSys;
+public:
+	static constexpr auto Name = "Secretdoor";
+	SecretdoorSystem(const GameSystemConf& config);
+	void Reset() override;
+	bool SaveGame(TioFile* file) override;
+	bool LoadGame(GameSystemSaveFile* saveFile) override;
+	const std::string& GetName() const override;
+
+private:
+	int* mNamesSeen = temple::GetRef<int[100]>(0x109DD880);
+};
+
+class SecretDoorSys : temple::AddressTable
 {
+public:
 	bool isSecretDoor(objHndl obj);
 	int getSecretDoorDC(objHndl obj);
 	uint32_t secretDoorIsRevealed(objHndl secDoor);
@@ -15,8 +31,10 @@ struct SecretDoorSys : temple::AddressTable
 	BOOL SecretDoorDetect(objHndl sd, objHndl seeker);
 	int SecretDoorGetDCAutoDetect(objHndl secdoor);
 
-	SecretDoorSys();
+	bool TaggedSceneryWasSeen(objHndl scenery);
+	void MarkTaggedScenerySeenAndPlayVoice(objHndl scenery);
 
+	SecretDoorSys();
 };
 
 

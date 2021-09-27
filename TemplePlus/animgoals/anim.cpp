@@ -563,6 +563,11 @@ const AnimGoal* AnimSystem::GetGoal(AnimGoalType goalType)
     return &animationGoals_->GetByType(goalType);
 }
 
+int AnimSystem::GetSlotUsedCount() const
+{
+    return (int)mSlotsInUse;
+}
+
 struct GoalDestination {
     objHndl handle;
     LocAndOffsets loc;
@@ -1661,7 +1666,7 @@ void AnimSystem::PopGoal(AnimSlot &slot, uint32_t popFlags,
 	*newGoal = &animationGoals_->GetByType((*newCurrentGoal)->goalType);
     *stopProcessing = false;
     if (prevGoal->goalType == ag_anim_fidget) {
-        int dummy = 1;
+        logger->trace("PushGoalInternal: prevented ag_anim_fidget from queueing AnimComplete");
       // FIX: prevents ag_anim_fidget from queueing an AnimComplete call (which
       // creates the phantom animId = 0 bullshit)
     } else if ((*newCurrentGoal)->goalType == ag_anim_idle &&

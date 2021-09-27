@@ -63,17 +63,18 @@ struct TemplePlusConfig
 	// This is some crazy editor stuff leftover from worlded
 	bool editor = false;
 
-	// debug msgs
+	// debug settings
 	int logLevel = 1; // debug; set to trace (0) for more
 	bool debugMessageEnable = true; // ToEE debug spam
 	bool featPrereqWarnings = false;
 	bool spellAlreadyKnownWarnings = false;
 	bool dumpFullMemory = false;
+	bool debugObjects = false; // enables debugging game objects
+	bool newFeatureTestMode = false; // not really used right now
 
 	// gameplay 
 	// double randomEncounterExperienceFactor = 0.7; // an additional factor; e.g. if the normal Experience Multiplier is 0.7 and this is 0.7, overall is 0.49 NOT YET IMPLEMENTED
 	bool dungeonMaster = false;
-	bool newFeatureTestMode = true;
 	bool NPCsLevelLikePCs = true;
 	bool showNpcStats = false;
 	bool showExactHPforNPCs = false; // draw exact HP for NPCs
