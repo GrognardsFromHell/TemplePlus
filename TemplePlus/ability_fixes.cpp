@@ -197,6 +197,22 @@ int AbilityConditionFixes::MonsterSplittingHpChange(DispatcherCallbackArgs args)
 	newMonObj->SetInt32(obj_f_hp_damage, (hpDam + hpMod) / 2);
 	newMonObj->SetInt32(obj_f_critter_flags, newMonObj->GetInt32(obj_f_critter_flags) | OCF_EXPERIENCE_AWARDED);
 
+	// inherit factions (e.g. moathouse respawn Blood Amniotes need this since the factions are defined at the MOB level)
+	{
+		auto factionArr = obj->GetInt32Array(obj_f_npc_faction);
+		int numFactions = factionArr.GetSize();
+
+		for (auto i = 0; i < numFactions; i++) {
+			auto newFac = factionArr[i];
+			if (!newFac)
+				continue;
+			if (!objects.factions.FactionHas(newMonster, newFac)) {
+				objects.factions.FactionAdd(newMonster, newFac);
+			}
+		}
+	}
+	
+
 	gameSystems->GetParticleSys().CreateAtObj("hit-Acid-medium", args.objHndCaller);
 	conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
 
