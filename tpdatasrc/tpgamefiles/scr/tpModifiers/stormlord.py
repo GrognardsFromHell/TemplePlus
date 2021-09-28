@@ -98,7 +98,6 @@ enhancedJavelins.AddHook(ET_OnDealingDamage, EK_NONE, featEnhancedJavelinsDamage
 
 ## Resistance to Electricity ##
 def featResistanceToElectricity(attachee, args, evt_obj):
-    print "Debug Stormlord: Electricity Resistance Hook"
     classLevel = attachee.stat_level_get(classEnum)
     if classLevel >= 9:
         return 0
