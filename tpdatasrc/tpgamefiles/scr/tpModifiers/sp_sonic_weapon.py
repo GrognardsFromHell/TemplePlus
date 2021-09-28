@@ -9,7 +9,11 @@ def sonicWeaponSpellAddWeaponCondition(attachee, args, evt_obj):
     spellId = args.get_arg(0)
     spellPacket = tpdp.SpellPacket(spellId)
     spellPacket.add_target(attachee, 0)
-    attachee.item_condition_add_with_args('Weapon Sonic', 0, 0, 0, 0, spellId, args.get_arg(1))
+    attachee.item_condition_add_with_args('Weapon Sonic', 0, 0, 0, 0, spellId)
+    return 0
+
+def sonicWeaponSpellDurationQuery(attachee, args, evt_obj):
+    evt_obj.return_val = args.get_arg(1)
     return 0
 
 def sonicWeaponSpellWeaponConditionRemove(attachee, args, evt_obj):
@@ -18,6 +22,7 @@ def sonicWeaponSpellWeaponConditionRemove(attachee, args, evt_obj):
 
 sonicWeaponSpell = PythonModifier("sp-Sonic Weapon", 3) # spell_id, duration, empty
 sonicWeaponSpell.AddHook(ET_OnConditionAdd, EK_NONE, sonicWeaponSpellAddWeaponCondition,())
+sonicWeaponSpell.AddHook(ET_OnD20PythonQuery, "PQ_Item_Buff_Duration", sonicWeaponSpellDurationQuery, ())
 sonicWeaponSpell.AddHook(ET_OnConditionRemove, EK_NONE, sonicWeaponSpellWeaponConditionRemove, ())
 sonicWeaponSpell.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, spell_utils.queryActiveSpell, ())
 sonicWeaponSpell.AddHook(ET_OnD20Signal, EK_S_Killed, spell_utils.spellKilled, ())
@@ -44,9 +49,8 @@ def weaponSonicGlowType(attachee, args, evt_obj):
             evt_obj.return_val = 7 #there is no sonic Weapon Glow in the game I think using holy for now
     return 0
 
-weaponSonic = PythonModifier("Weapon Sonic", 6) # empty, empty, inventoryLocation, empty, spell_id, duration
+weaponSonic = PythonModifier("Weapon Sonic", 5) # empty, empty, inventoryLocation, empty, spell_id
 weaponSonic.AddHook(ET_OnDealingDamage, EK_NONE, weaponSonicOnDealingDamage, ())
 weaponSonic.AddHook(ET_OnWeaponGlowType, EK_NONE, weaponSonicGlowType, ())
 weaponSonic.AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.itemTooltip, ())
 weaponSonic.AddHook(ET_OnGetEffectTooltip, EK_NONE, spell_utils.itemEffectTooltip, ())
-weaponSonic.AddHook(ET_OnBeginRound, EK_NONE, spell_utils.itemDurationTickdown, ())

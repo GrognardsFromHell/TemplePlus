@@ -240,36 +240,47 @@ def verifyItem(item, args):
 
     return item_loc == target_loc
 
-def itemTooltip(item, args, evt_obj):
+# getItemObj, itemTooltip and itemEffectTooltip are needed for
+# buff tooltip icon handling
+def getItemObj(attachee, args):
+    itemLocation = args.get_arg(2)
+    if itemLocation == 203: #mainhand
+        item = attachee.item_worn_at(item_wear_weapon_primary)
+        itemWornAt = "mainhand"
+    elif itemLocation == 204: #offhand
+        item = attachee.item_worn_at(item_wear_weapon_secondary)
+        itemWornAt = "offhand"
+    elif itemLocation == 205: #armor
+        item = attachee.item_worn_at(item_wear_armor)
+        itemWornAt = ""
+    elif itemLocation == 211: #shield
+        item = attachee.item_worn_at(item_wear_shield)
+        itemWornAt = ""
+    return item, itemWornAt
+
+def itemTooltip(attachee, args, evt_obj):
+    item, itemWornAt = getItemObj(attachee, args)
     spellId = args.get_arg(4)
-    duration = spellTime(args.get_arg(5))
-    if args.get_param(1) == 1 and casterIsConcentrating(spellId):
-        name = spellName(spellId)
-        duration = "Concentration + {}".format(duration)
-    elif args.get_param(0):
+    durationQuery = item.d20_query("PQ_Item_Buff_Duration")
+    duration = spellTime(durationQuery)
+    if args.get_param(0):
         name = game.get_spell_mesline(args.get_param(0))
     else:
         name = spellName(spellId)
-    evt_obj.append("{} ({})".format(name, duration))
+    evt_obj.append("{}({}) ({})".format(name, itemWornAt, duration))
     return 0
 
-def itemEffectTooltip(item, args, evt_obj):
+def itemEffectTooltip(attachee, args, evt_obj):
+    item, itemWornAt = getItemObj(attachee, args)
     spellId = args.get_arg(4)
-    duration = spellTime(args.get_arg(5))
-    if args.get_param(1) == 1 and casterIsConcentrating(spellId):
-        duration = "Concentration + {}".format(duration)
-        key = spellKey(spellId)
-    elif args.get_param(0):
+    durationQuery = item.d20_query("PQ_Item_Buff_Duration")
+    duration = spellTime(durationQuery)
+    if args.get_param(0):
         name = game.get_spell_mesline(args.get_param(0)).upper().replace(" ", "_")
         key = tpdp.hash(name)
     else:
         key = spellKey(spellId)
-    evt_obj.append(key, -2, " ({})".format(duration))
-    return 0
-
-#Only needed to display correct buff time in Tooltips
-def itemDurationTickdown(item, args, evt_obj):
-    args.set_arg(5, args.get_arg(5)-evt_obj.data1)
+    evt_obj.append(key, -2, "({}) ({})".format(itemWornAt, duration))
     return 0
 
 
