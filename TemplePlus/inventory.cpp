@@ -519,7 +519,7 @@ void InventorySystem::RemoveWielderCond(objHndl item, uint32_t condId){
 				itemObj->RemoveInt32(obj_f_item_pad_wielder_argument_array, j);
 			return;
 		}
-		argIdx += wCond->numArgs;
+		argIdx += conds.GetById(wCondId)->numArgs;
 	}
 
 }
