@@ -45,18 +45,6 @@ AiParamPacket * AiSystem::aiParams;
 const auto TestSizeOfAiTactic = sizeof(AiTactic); // should be 2832 (0xB10 )
 const auto TestSizeOfAiStrategy = sizeof(AiStrategy); // should be 808 (0x324)
 constexpr int AI_PREFAB_STRAT_MAX = 10000;
-struct AiSystemAddresses : temple::AddressTable
-{
-	int (__cdecl*UpdateAiFlags)(objHndl obj, int aiFightStatus, objHndl target, int * soundMap);
-	void(__cdecl*AiProcess)(objHndl obj);
-	AiSystemAddresses()
-	{
-		rebase(UpdateAiFlags, 0x1005DA00);
-		rebase(AiProcess, 0x1005EEC0);
-	}
-
-	
-}addresses;
 
 void AiParamPacket::GetForCritter(objHndl handle){
 	*this = aiSys.GetAiParams(handle);
@@ -784,6 +772,9 @@ objHndl AiSystem::FindSuitableTarget(objHndl handle){
 			tileDeltas[i] = tileDelta;
 			if (critterSys.IsDeadOrUnconscious(dude))
 				tileDeltas[i] += 1000;
+			if (!party.IsInParty(dude)) { // Temple+: added to prioritize party over other NPCs
+				tileDeltas[i] += 100;
+			}
 		}
 		for (auto i=1; i < numCritters; i++){
 			auto target = critterList[i];
@@ -1076,6 +1067,73 @@ void AiSystem::AlertAlly(objHndl handle, objHndl alertFrom, objHndl alertDispatc
 	}
 	 */
 	
+}
+
+void AiSystem::AlertAllies2(objHndl handle, objHndl alertFrom)
+{
+	ObjList objList;
+	const int ALLY_ALERTING_DISTANCE = 24;
+	// test cases:
+	// moathouse frogs - 12 is enough to pull them all in
+	objList.ListRangeTiles(handle, ALLY_ALERTING_DISTANCE, OLC_CRITTERS);
+	for (auto i = 0; i < objList.size(); i++) {
+		auto resHandle = objList[i];
+		if (!resHandle)
+			break;
+		if (resHandle == handle)
+			continue;
+
+
+		auto resObj = gameSystems->GetObj().GetObject(resHandle);
+		if (resObj->GetFlags() & (OF_OFF | OF_DESTROYED | OF_DONTDRAW))
+			continue;
+		if (critterSys.IsDeadOrUnconscious(resHandle)) {
+			continue;
+		}
+
+		if (party.IsInParty(resHandle))
+			continue;
+
+		if (tbSys.IsInInitiativeList(resHandle) || critterSys.IsCombatModeActive(resHandle))
+			continue;
+
+		auto objDesc = description.getDisplayName(resHandle);
+
+		if (!combatSys.HasLineOfAttack(resHandle, handle)) {
+
+
+			if (locSys.DistanceToObj(handle, resHandle) > 30) {
+				continue;
+			}
+			// check pathfinding short distances
+			auto pathFlags = PathQueryFlags::PQF_HAS_CRITTER | PQF_IGNORE_CRITTERS
+				| PathQueryFlags::PQF_800 | PathQueryFlags::PQF_TARGET_OBJ
+				| PathQueryFlags::PQF_ADJUST_RADIUS | PathQueryFlags::PQF_ADJ_RADIUS_REQUIRE_LOS
+				| PathQueryFlags::PQF_DONT_USE_PATHNODES | PathQueryFlags::PQF_A_STAR_TIME_CAPPED;
+
+			if (!config.alertAiThroughDoors) {
+				pathFlags |= PathQueryFlags::PQF_DOORS_ARE_BLOCKING;
+			}
+
+			if (!pathfindingSys.CanPathTo(handle, resHandle, (PathQueryFlags)pathFlags, 40)) {
+				//logger->debug("Failed to alert {} because of PF distance", resHandle);
+				continue;
+			}
+		}
+
+		if (aiSys.GetAllegianceStrength(resHandle, handle)) { // check that they have a faction in common
+			aiSys.ProvokeHostility(alertFrom, resHandle, 3, 0);
+			continue;
+		}
+
+		if (factions.HasNullFaction(resHandle) && factions.HasNullFaction(handle)) {
+			if (aiSys.WillKos(resHandle, alertFrom)) {
+				aiSys.ProvokeHostility(alertFrom, resHandle, 3, 0);
+			}
+		}
+
+	}
+
 }
 
 void AiSystem::FightOrFlight(objHndl obj, objHndl tgt)
@@ -1888,7 +1946,7 @@ int AiSystem::ChargeAttack(AiTactic* aiTac)
 	return 1;
 }
 
-
+/* 0x1005DA00 */
 int AiSystem::UpdateAiFlags(objHndl handle, AiFightStatus aiFightStatus, objHndl target, int* soundMap){
 	logger->debug("{} entering ai state: {}, target: {}", handle, (int)aiFightStatus, target);
 	auto obj = objSystem->GetObject(handle);
@@ -3069,6 +3127,7 @@ int AiSystem::AttackThreatened(AiTactic* aiTac)
 	return Default(aiTac);
 }
 
+/* 0x1005EEC0 */
 void AiSystem::AiProcess(objHndl obj){
 
 	// Check if Player Controlled (if so, skip)
@@ -4363,7 +4422,12 @@ void AiPacket::FightStatusUpdate(){
 				return;
 			}
 			ChooseRandomSpell_RegardInvulnerableStatus();
-			this->aiFightStatus = aiSys.UpdateAiFlags(obj, AIFS_FIGHTING, target, &this->soundMap);
+			// Temple+: added if condition
+			// Otherwise NPCs with faction issues triggered each other
+			if (combatSys.isCombatActive() || party.IsInParty(focus)) {
+				logger->trace("FightStatusUpdate: AIFS_NONE -> AIFS_FIGHTING, FindSuitableTarget -> {}", focus);
+				this->aiFightStatus = aiSys.UpdateAiFlags(obj, AIFS_FIGHTING, target, &this->soundMap);
+			}
 			break;
 		}
 		break;
