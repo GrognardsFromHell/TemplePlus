@@ -19,6 +19,7 @@ classSpecModule = __import__('class023_dragon_disciple')
 
 selectHeritageId = 2301
 breathWeaponEnum = 2302
+toggleFlyingId = 2303
 
 #Dict to handle Dragon Disciple Heritage
 #Can easily be expanded by adding a new type of heritage to the dict
@@ -223,7 +224,7 @@ def breathWeaponRadial(attachee, args, evt_obj):
 def checkBreathWeapon(attachee, args, evt_obj):
     if args.get_arg(0) < 1:
         evt_obj.return_val = AEC_OUT_OF_CHARGES
-        return 0
+    return 0
 
 def performBreathWeapon(attachee, args, evt_obj):
     target = evt_obj.d20a.target
@@ -259,7 +260,7 @@ dragonDiscipleBreathWeapon.MapToFeat("Dragon Disciple Breath Weapon")
 dragonDiscipleBreathWeapon.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, breathWeaponRadial, ())
 dragonDiscipleBreathWeapon.AddHook(ET_OnD20PythonActionCheck, breathWeaponEnum, checkBreathWeapon, ())
 dragonDiscipleBreathWeapon.AddHook(ET_OnD20PythonActionPerform, breathWeaponEnum, performBreathWeapon, ())
-dragonDiscipleBreathWeapon.AddHook(ET_OnD20PythonActionPerform, breathWeaponEnum, frameBreathWeapon, ())
+dragonDiscipleBreathWeapon.AddHook(ET_OnD20PythonActionFrame, breathWeaponEnum, frameBreathWeapon, ())
 dragonDiscipleBreathWeapon.AddHook(ET_OnConditionAdd, EK_NONE, resetBreathWeapon, ())
 dragonDiscipleBreathWeapon.AddHook(ET_OnNewDay, EK_NEWDAY_REST, resetBreathWeapon, ())
 
@@ -273,9 +274,51 @@ def addWings(attachee, args, evt_obj):
     #evt_obj.append(meshId)
     return 0
 
-dragonDiscipleWings = PythonModifier("Dragon Disciple Dragon Wings", 3) #empty, empty, empty
-dragonDiscipleWings.MapToFeat("Dragon Disciple Dragon Wings")
+def wingsRadial(attachee, args, evt_obj):
+    print "Debug Dragon Disciple wingsRadial Hook"
+    actionString = "Land" if args.get_arg(0) else "Fly"
+    radialWingsId = tpdp.RadialMenuEntryPythonAction("{}".format(actionString), D20A_PYTHON_ACTION, toggleFlyingId, 0, "TAG_CLASS_FEATURES_DRAGON_DISCIPLES_WINGS")
+    radialWingsId.add_as_child(attachee, tpdp.RadialMenuStandardNode.Class)
+    return 0
+
+def resetWings(attachee, args, evt_obj):
+    args.set_arg(0, 0)
+    return 0
+
+def checkWingsIndoors(attachee, args, evt_obj):
+    if not game.is_outdoor():
+        evt_obj.return_val = AEC_ACTION_INVALID
+    return 0
+
+def toggleWings(attachee, args, evt_obj):
+    isFlying = args.get_arg(0)
+    if isFlying:
+        args.set_arg(0, 0)
+        attachee.float_text_line("No longer Flying")
+    else:
+        args.set_arg(0, 1)
+        attachee.float_text_line("Flying")
+    return 0
+
+def queryIsFlying(attachee, args, evt_obj):
+    evt_obj.return_val = 1 if args.get_arg(0) else 0
+    return 0
+
+def tooltipFyling(attachee, args, evt_obj):
+    evt_obj.append("Flying!")
+    return 0
+
+dragonDiscipleWings = PythonModifier("Dragon Disciple Dragon Wings", 3) #isFlying, empty, empty
+dragonDiscipleWings.MapToFeat("Dragon Disciple Wings")
 dragonDiscipleWings.AddHook(ET_OnAddMesh, EK_NONE, addWings, ())
+dragonDiscipleWings.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, wingsRadial, ())
+dragonDiscipleWings.AddHook(ET_OnD20PythonActionCheck, toggleFlyingId, checkWingsIndoors, ())
+dragonDiscipleWings.AddHook(ET_OnD20PythonActionPerform, toggleFlyingId, toggleWings, ())
+dragonDiscipleWings.AddHook(ET_OnGetTooltip, EK_NONE, tooltipFyling, ())
+dragonDiscipleWings.AddHook(ET_OnConditionAdd, EK_NONE, resetWings, ())
+dragonDiscipleWings.AddHook(ET_OnNewDay, EK_NEWDAY_REST, resetWings, ())
+dragonDiscipleWings.AddHook(ET_OnD20Signal, EK_S_Teleport_Reconnect, resetWings, ())
+dragonDiscipleWings.AddHook(ET_OnD20PythonQuery, "PQ_IS_FLYING", queryIsFlying, ())
 
 
 #### Dragon Apotheosis
