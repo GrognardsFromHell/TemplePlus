@@ -27,6 +27,7 @@ public:
 	~LightningRenderer();
 
 	void Render();
+	void RenderChainLightning();
 private:
 	void Render(size_t vertexCount,
 		XMFLOAT4 *vertices,

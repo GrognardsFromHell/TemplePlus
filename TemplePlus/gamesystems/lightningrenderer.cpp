@@ -3,6 +3,10 @@
 #include "lightningrenderer.h"
 #include <util/fixes.h>
 #include <temple/dll.h>
+#include <tig/tig_timer.h>
+#include <sound.h>
+#include <gamesystems/gamesystems.h>
+#include <gamesystems/particlesystems.h>
 
 using namespace gfx;
 
@@ -22,6 +26,12 @@ public:
 		redirectCall(0x10089EBC, Render);
 
 		RedirectChainLightningTargets();
+
+		// Fix for chain lightning renderer with long segments - copy-pasted constant 0x120 (288) from lightning bolt was used instead of 0x258 (600)
+		writeHex(0x100887B6 + 2, "58 02"); // cmp     esi, 120h
+		writeHex(0x10088A80 + 2, "58 02"); // lea     ecx, [ebp+120h]
+		writeHex(0x10088F3A + 2, "58 02"); // cmp     esi, 120h
+		writeHex(0x100891FA + 2, "58 02"); // add     esi, 120h
 	}
 
 	static LightningRenderer* renderer;
@@ -35,7 +45,7 @@ public:
 		uint16_t *indices,
 		int shaderId);
 
-	ChainLightningTarget chainTargets[30];
+	ChainLightningTarget chainTargets[30]; // 0x10AB7E68
 
 } hooks;
 
@@ -75,7 +85,41 @@ void LightningRenderer::Render() {
 	gfx::PerfGroup perfGroup(mDevice, "Lightning PFX");
 
 	static auto render_pfx_lightning_related = temple::GetPointer<int()>(0x10087e60);
+
+	static auto &mCallLightningPfxState = temple::GetRef<int>(0x10B397B4);
+	
+	//RenderChainLightning();
+	
 	render_pfx_lightning_related();
+}
+
+void LightningRenderer::RenderChainLightning()
+{
+	auto& mChainLightningPfxState = temple::GetRef<int>(0x10B397B4);
+	auto& mChainLightningPfxStartTime = temple::GetRef<uint32_t>(0x10AB7E50);
+	auto& mChainLightningRefPt = temple::GetRef<XMFLOAT3>(0x10AB7E58);
+
+	if (mChainLightningPfxState == 1) {
+		mChainLightningPfxStartTime = TigGetSystemTime();
+		mChainLightningPfxState = 2;
+	}
+	else if (mChainLightningPfxState != 2) {
+		return;
+	}
+
+	auto etime = TigElapsedSystemTime(mChainLightningPfxStartTime);
+	auto &targets = hooks.chainTargets;
+	if (etime < 1792) {
+
+		auto& firstTgt = targets[0];
+		if (firstTgt.obj) {
+			sound.PlaySoundAtObj(7027, firstTgt.obj, 1);
+			gameSystems->GetParticleSys().CreateAtObj("sp-Chain Lightning-hit", firstTgt.obj);
+			firstTgt.obj = objHndl::null;
+		}
+
+
+	}
 }
 
 void LightningRenderer::Render(size_t vertexCount, XMFLOAT4* positions, XMFLOAT4* normals, XMCOLOR* diffuse, XMFLOAT2* uv, size_t primCount, uint16_t* indices) {
