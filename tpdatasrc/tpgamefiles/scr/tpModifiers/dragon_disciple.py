@@ -275,14 +275,13 @@ def addWings(attachee, args, evt_obj):
     return 0
 
 def wingsRadial(attachee, args, evt_obj):
-    print "Debug Dragon Disciple wingsRadial Hook"
-    actionString = "Land" if args.get_arg(0) else "Fly"
+    actionString = "Stop Flying" if attachee.d20_query("PQ_Is_Flying") else "Start Flying"
     radialWingsId = tpdp.RadialMenuEntryPythonAction("{}".format(actionString), D20A_PYTHON_ACTION, toggleFlyingId, 0, "TAG_CLASS_FEATURES_DRAGON_DISCIPLES_WINGS")
     radialWingsId.add_as_child(attachee, tpdp.RadialMenuStandardNode.Class)
     return 0
 
 def resetWings(attachee, args, evt_obj):
-    args.set_arg(0, 0)
+    attachee.d20_signal("PS_Flying_End")
     return 0
 
 def checkWingsIndoors(attachee, args, evt_obj):
@@ -291,34 +290,21 @@ def checkWingsIndoors(attachee, args, evt_obj):
     return 0
 
 def toggleWings(attachee, args, evt_obj):
-    isFlying = args.get_arg(0)
+    isFlying = attachee.d20_query("PQ_Is_Flying")
     if isFlying:
-        args.set_arg(0, 0)
-        attachee.float_text_line("No longer Flying")
+        attachee.d20_send_signal("PS_Flying_End")
     else:
-        args.set_arg(0, 1)
-        attachee.float_text_line("Flying")
+        attachee.condition_add_with_args("Flying Condition", 0, 0, 0)
     return 0
 
-def queryIsFlying(attachee, args, evt_obj):
-    evt_obj.return_val = 1 if args.get_arg(0) else 0
-    return 0
-
-def tooltipFyling(attachee, args, evt_obj):
-    evt_obj.append("Flying!")
-    return 0
-
-dragonDiscipleWings = PythonModifier("Dragon Disciple Dragon Wings", 3) #isFlying, empty, empty
+dragonDiscipleWings = PythonModifier("Dragon Disciple Dragon Wings", 3) #empty, empty, empty
 dragonDiscipleWings.MapToFeat("Dragon Disciple Wings")
 dragonDiscipleWings.AddHook(ET_OnAddMesh, EK_NONE, addWings, ())
 dragonDiscipleWings.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, wingsRadial, ())
 dragonDiscipleWings.AddHook(ET_OnD20PythonActionCheck, toggleFlyingId, checkWingsIndoors, ())
 dragonDiscipleWings.AddHook(ET_OnD20PythonActionPerform, toggleFlyingId, toggleWings, ())
-dragonDiscipleWings.AddHook(ET_OnGetTooltip, EK_NONE, tooltipFyling, ())
-dragonDiscipleWings.AddHook(ET_OnConditionAdd, EK_NONE, resetWings, ())
 dragonDiscipleWings.AddHook(ET_OnNewDay, EK_NEWDAY_REST, resetWings, ())
 dragonDiscipleWings.AddHook(ET_OnD20Signal, EK_S_Teleport_Reconnect, resetWings, ())
-dragonDiscipleWings.AddHook(ET_OnD20PythonQuery, "PQ_IS_FLYING", queryIsFlying, ())
 
 
 #### Dragon Apotheosis
