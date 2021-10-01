@@ -110,6 +110,8 @@ GameSystems::GameSystems(TigInitializer& tig) : mTig(tig) {
 	config.AddVanillaSetting("end_turn_time", "1");
 	config.AddVanillaSetting("end_turn_default", "1");
 	config.AddVanillaSetting("draw_hp", "0");
+	config.AddVanillaSetting("party_banter_voice", "1");
+	config.AddVanillaSetting("party_banter_text", "0");
 
 	// Some of these are also registered as value change callbacks and could be replaced by simply calling all 
 	// value change callbacks here, which makes sense anyway.

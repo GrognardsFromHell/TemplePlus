@@ -68,6 +68,7 @@ public:
 		return mCamera->GetPickRay(x, y);
 	}
 
+	// Note: not to be used with WorldToScreenUi. Use tilePos.ToInches3D() instead
 	XMFLOAT3 TileToWorld(locXY tilePos);
 
 	LocAndOffsets ScreenToTile(int screenX, int screenY);

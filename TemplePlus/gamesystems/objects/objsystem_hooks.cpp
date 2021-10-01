@@ -107,7 +107,12 @@ public:
 			if (!handle) {
 				return 0;
 			}
-			return GetObj(handle)->GetInt32(field);
+			auto obj = objSystem->GetObject(handle);
+			if (!obj) {
+				throw TempleException("obj_get_int32({}): Invalid Object handle {:x} caught", handle.handle, field);
+				return 0;
+			}
+			return obj->GetInt32(field);
 		});
 
 		// obj_get_float32
@@ -119,6 +124,11 @@ public:
 		replaceFunction<int64_t(objHndl, obj_f)>(0x1009e2e0, [](objHndl handle, obj_f field) ->int64_t{
 			if (!handle) {
 				return 0i64;
+			}
+			auto obj = objSystem->GetObject(handle);
+			if (!obj) {
+				throw TempleException("obj_get_int64({}): Invalid Object handle {:x} caught", handle.handle, field);
+				return 0;
 			}
 			return GetObj(handle)->GetInt64(field);
 		});

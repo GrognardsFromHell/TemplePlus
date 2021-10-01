@@ -2295,6 +2295,7 @@ race_svirfneblin = 9
 race_forest_gnome = 10
 race_tallfellow = 11
 race_deep_halfling = 12
+race_bugbear = 8
 race_hill_giant = 10
 race_troll = 11
 
