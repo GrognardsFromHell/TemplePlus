@@ -42,7 +42,7 @@ def HasEnoughTurnAttempts(attachee, args, Type):
 	Needed = 0
 	
 	Needed = GetTurnCost(args, Type)
-
+	
 	#Get the cost from other DMM effects in use for this spell (so the cost ends up correct)
 	DMMCost = attachee.d20_query("Divine Metamagic Cost")
 
@@ -76,74 +76,77 @@ def DMMRadial(attachee, args, evt_obj):
 
 def DMMMetamagicUpdate(attachee, args, evt_obj):
 	if not evt_obj.is_divine_spell():
-		return
+		args.set_arg(1, 0)
+		return 0
 	
 	#Check if the feat is turned on
 	if not args.get_arg(0):
+		args.set_arg(1, 0)
 		return 0
 	
-	#Does the character have enough turn attempts
+	prevCost = args.get_arg(1)
 	mmType = args.get_param(0)
-	EnoughTurnAttempts = HasEnoughTurnAttempts(attachee, args, mmType)
-	
-	if not EnoughTurnAttempts:
-		return 0
-	
-	#Get the metamagic info
-	metaMagicData = evt_obj.meta_magic
+	#Does the character have enough turn attempts
+	if prevCost == 0:
+		EnoughTurnAttempts = HasEnoughTurnAttempts(attachee, args, mmType)
+		
+		if not EnoughTurnAttempts:
+			return 0
 
 	#Apply the appropriate meta magic once only
 	if mmType == DMMEmpower:
-		if metaMagicData.get_empower_count() < 1:  #Only once
-			metaMagicData.set_empower_count(1)
+		if evt_obj.meta_magic.get_empower_count() < 1:  #Only once
+			evt_obj.meta_magic.set_empower_count(1)
 		else:
 			return #No effect, don't set the cost
 	elif mmType == DMMMaximize:
-		if metaMagicData.get_maximize_count() < 1:    #Only once
-			metaMagicData.set_maximize_count(1)
+		if evt_obj.meta_magic.get_maximize_count() < 1:    #Only once
+			evt_obj.meta_magic.set_maximize_count(1)
 		else:
 			return #No effect, don't set the cost
 	elif mmType == DMMHeighten:
-		HeightenCount =  args.get_arg(2)
-		#Heigten Count Needs to respect level also
-		currentHeighten = metaMagicData.get_heighten_count()
-		newHeighten = HeightenCount + currentHeighten
-		if newHeighten + metaMagicData.spell_level > 9:
+		heightenCount =  args.get_arg(2)
+		currentHeighten = evt_obj.meta_magic.get_heighten_count()
+		newHeighten = heightenCount + currentHeighten
+		
+		#Max spell level is always 9.  Allowing heightining above the character's highest slot.
+		if newHeighten + evt_obj.spell_level > 9:
 			return #Don't apply if the spell level would be set above 9
-		metaMagicData.set_heighten_count(newHeighten)
+		evt_obj.meta_magic.set_heighten_count(newHeighten)
 	elif mmType == DMMExtend:
-		if metaMagicData.get_extend_count() < 1:  #Only once
-			metaMagicData.set_extend_count(1)
+		if evt_obj.meta_magic.get_extend_count() < 1:  #Only once
+			evt_obj.meta_magic.set_extend_count(1)
 		else:
 			return #No effect, don't set the cost
 	elif mmType == DMMWiden:
-		if metaMagicData.get_widen_count() < 1:  #Only once
-			metaMagicData.set_widen_count(1)
+		if evt_obj.meta_magic.get_widen_count() < 1:  #Only once
+			evt_obj.meta_magic.set_widen_count(1)
 		else:
 			return #No effect, don't set the cost
 	elif mmType == DMMEnlarge:
-		if metaMagicData.get_enlarge_count() < 1:  #Only once
-			metaMagicData.set_enlarge_count(1)
+		if evt_obj.meta_magic.get_enlarge_count() < 1:  #Only once
+			evt_obj.meta_magic.set_enlarge_count(1)
 		else:
 			return #No effect, don't set the cost
 	elif mmType == DMMStill:
-		if not metaMagicData.get_still():  #Only once
-			metaMagicData.set_still(true)
+		if not evt_obj.meta_magic.get_still():  #Only once
+			evt_obj.meta_magic.set_still(true)
 		else:
 			return #No effect, don't set the cost
 	elif mmType == DMMSilent:
-		if not metaMagicData.get_silent():  #Only once
-			metaMagicData.set_silent(true)
+		if not evt_obj.meta_magic.get_silent():  #Only once
+			evt_obj.meta_magic.set_silent(true)
 		else:
 			return #No effect, don't set the cost
 	elif mmType == DMMQuicken:
-		if metaMagicData.get_quicken() < 1:  #Only once
-			metaMagicData.set_quicken(1)
+		if evt_obj.meta_magic.get_quicken() < 1:  #Only once
+			evt_obj.meta_magic.set_quicken(1)
 		else:
 			return #No effect, don't set the cost
 
-	cost = GetTurnCost(args, mmType)
-	args.set_arg(1, cost)
+	if prevCost == 0:
+		cost = GetTurnCost(args, mmType)
+		args.set_arg(1, cost)
 			
 	return 0
 	
@@ -167,7 +170,12 @@ def DMMAdd(attachee, args, evt_obj):
 	args.set_arg(1, 0)
 	args.set_arg(2, 1) #Min Heighten levels is 1
 	return 0
-
+	
+def DMMClearCost(attachee, args, evt_obj):
+	args.set_arg(1, 0)
+	return 0
+	
+#Used to create each DMM feat
 def DMMAddFeat(FeatName, Type):
 	modifier = PythonModifier(FeatName, 4) #Enable Flag, Cost, Heighten Value (Heighten MM ONly), Spare
 	modifier.MapToFeat(FeatName)
@@ -176,6 +184,8 @@ def DMMAddFeat(FeatName, Type):
 	modifier.AddHook(ET_OnD20PythonSignal, "Sudden Metamagic Deduct Charge", DMMDeduct, (Type,))
 	modifier.AddHook(ET_OnD20PythonQuery, "Divine Metamagic Cost", DMMCostQuery, (Type,))
 	modifier.AddHook(ET_OnConditionAdd, EK_NONE, DMMAdd, (Type,))
+	modifier.AddHook(ET_OnBeginRound, EK_NONE, DMMClearCost, ())
+	modifier.AddHook(ET_OnD20Signal, EK_S_Spell_Cast, DMMClearCost, ())
 	return modifier
 	
 dmmEmpowerModifier = DMMAddFeat("Divine Metamagic - Empower", DMMEmpower)
@@ -187,5 +197,3 @@ dmmQuickenModifier = DMMAddFeat("Divine Metamagic - Quicken", DMMQuicken)
 dmmWidenModifier = DMMAddFeat("Divine Metamagic - Widen", DMMWiden)
 dmmStillModifier = DMMAddFeat("Divine Metamagic - Still", DMMStill)
 dmmSilentModifier = DMMAddFeat("Divine Metamagic - Silent", DMMSilent)
-
-
