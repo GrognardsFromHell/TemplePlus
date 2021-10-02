@@ -170,6 +170,42 @@ public:
 				break;
 			}
 
+			objHndl parent;
+			CondStruct* icond = nullptr;
+
+			switch(spPkt.spellEnum){
+			case 205: // Greater Magic Weapon
+			case 292: // Magic Weapon
+				icond = conds.GetByName("Weapon Enhancement Bonus");
+				break;
+			case 261: // Keen Edge
+				icond = conds.getByName("Weapon Keen");
+				break;
+			case 291: // Magic Vestment
+				icond = conds.GetByName("Armor Enhancement Bonus");
+				break;
+			default:
+				break;
+			}
+
+			if (icond) {
+				auto condId = conds.hashmethods.GetCondStructHashkey(icond);
+				inventory.RemoveWielderCond(args.objHndCaller, condId, spellId);
+				d20Sys.d20SendSignal(args.objHndCaller, DK_SIG_Spell_End, spellId, 0);
+				spPkt.EndPartsysForTgtObj(args.objHndCaller);
+				parent = inventory.GetParent(args.objHndCaller);
+				if (parent && objSystem->IsValidHandle(parent)) {
+					d20StatusSys.initItemConditions(parent);
+				}
+				pySpellIntegration.SpellSoundPlay(&spPkt,SpellEvent::EndSpellCast);
+				if (!spPkt.RemoveObjFromTargetList(args.objHndCaller)) {
+					logger->error("Cannot END spell - could not remove target!");
+					return FALSE;
+				}
+				spellSys.SpellEnd(spellId, 0);
+				return 0;
+			}
+
 			// Calm Emotions
 			if (spPkt.spellEnum == 48){ 
 				if (!ShouldRemoveCalmEmotions(args.objHndCaller, evtObj, args))
