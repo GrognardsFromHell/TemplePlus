@@ -114,6 +114,10 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		feats.AddMetamagicFeat(static_cast<feat_enums>(feat));
 	});
 
+	m.def("register_cast_spell_equivalent_python_action", [](int action) {
+		actSeqSys.RegisterCastSpellEquivalentPythonAction(action);
+	});
+
 	m.def("get_metamagic_feats", []() {
 		std::vector<int> result;
 		auto mmFeats = feats.GetMetamagicFeats();

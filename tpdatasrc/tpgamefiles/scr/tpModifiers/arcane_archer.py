@@ -22,6 +22,7 @@ hailOfArrowsEnum = 2003
 deathArrowEnum = 2004
 ###################################################
 
+tpdp.register_cast_spell_equivalent_python_action(imbueArrowEnum)
 
 #### standard callbacks - BAB and Save values
 def OnGetToHitBonusBase(attachee, args, evt_obj):
