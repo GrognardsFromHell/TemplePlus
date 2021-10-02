@@ -1948,7 +1948,7 @@ int AiSystem::ChargeAttack(AiTactic* aiTac)
 
 /* 0x1005DA00 */
 int AiSystem::UpdateAiFlags(objHndl handle, AiFightStatus aiFightStatus, objHndl target, int* soundMap){
-	logger->debug("{} entering ai state: {}, target: {}", handle, (int)aiFightStatus, target);
+	//logger->trace("{} entering ai state: {}, target: {}", handle, (int)aiFightStatus, target);
 	auto obj = objSystem->GetObject(handle);
 	if (aiFightStatus == AIFS_NONE)
 	{
@@ -4425,7 +4425,7 @@ void AiPacket::FightStatusUpdate(){
 			// Temple+: added if condition
 			// Otherwise NPCs with faction issues triggered each other
 			if (combatSys.isCombatActive() || party.IsInParty(focus)) {
-				logger->trace("FightStatusUpdate: AIFS_NONE -> AIFS_FIGHTING, FindSuitableTarget -> {}", focus);
+				logger->debug("FightStatusUpdate: {} AIFS_NONE -> AIFS_FIGHTING, FindSuitableTarget -> {}", obj, focus);
 				this->aiFightStatus = aiSys.UpdateAiFlags(obj, AIFS_FIGHTING, target, &this->soundMap);
 			}
 			break;
@@ -4450,6 +4450,7 @@ void AiPacket::FightStatusUpdate(){
 		focus = PickRandomFromAiList();
 		this->target = focus;
 		if (!focus){
+			logger->debug("FightStatusUpdate: {} AIFS_FIGHTING -> AIFS_NONE (no combat focus)", obj);
 			this->aiFightStatus = aiSys.UpdateAiFlags(obj, AIFS_NONE, objHndl::null, &this->soundMap);
 			return;
 		}
