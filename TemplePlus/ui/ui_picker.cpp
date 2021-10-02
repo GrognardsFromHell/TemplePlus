@@ -66,6 +66,10 @@ class UiPickerHooks : TempleFix
 			return uiPicker.MultiPosChange(msg);
 		});
 
+		replaceFunction<BOOL(PickerArgs&, objHndl)>(0x100BA0F0, [](PickerArgs& args, objHndl handle)->BOOL {
+			return args.TargetValid(handle) ? TRUE:FALSE;
+		});
+
 		// Config Spell Targeting - added fix to allow AI to cast multiple projectiles with Magic Missile and the like on the selected target
 		static BOOL(__cdecl *orgConfigSpellTargeting)(PickerArgs&, SpellPacketBody&) = replaceFunction<BOOL(__cdecl)(PickerArgs &, SpellPacketBody &)>(0x100B9690, [](PickerArgs &args, SpellPacketBody &spPkt)	{
 			return (BOOL)spellSys.ConfigSpellTargetting(&args, &spPkt);
@@ -892,7 +896,8 @@ BOOL UiPicker::MultiPosChange(TigMsg * msg)
 		if (!pickedObj) return FALSE;
 		auto pickedObjLoc = pickedObj->GetLocation();
 		if (locSys.GetTileDeltaMaxBtwnLocs(casterLoc, pickedObjLoc) > pick.args.range){
-			(int&)pickStatus |= PickerStatusFlags::PSF_OutOfRange;
+			(int&)pickStatus |= PickerStatusFlags::PSF_OutOfRange | PickerStatusFlags::PSF_Invalid;
+			return FALSE;
 		}
 	}
 
@@ -1089,6 +1094,7 @@ bool PickerArgs::CheckTargetVsIncFlags(objHndl tgt)
 	return false;
 }
 
+/* 0x100BA0F0 */
 bool PickerArgs::TargetValid(objHndl tgt)
 {
 	auto tgtObj = objSystem->GetObject(tgt);
@@ -1128,7 +1134,9 @@ bool PickerArgs::TargetValid(objHndl tgt)
 	else if ((excFlags & UiPickerIncFlags::UIPI_Scroll) && tgtObj->type == obj_t_scroll)
 		return false;
 
-	if ( (flagsTarget & UiPickerFlagsTarget::Range) && IsBaseModeTarget(UiPickerType::Single)){
+	if ( (flagsTarget & UiPickerFlagsTarget::Range) && 
+		(IsBaseModeTarget(UiPickerType::Single) || IsBaseModeTarget(UiPickerType::Multi) )) // Temple+: also check Multi target for range
+	{
 		auto casterObj = objSystem->GetObject(caster);
 		if (!casterObj) return false;
 		auto casterLoc = casterObj->GetLocationFull();
