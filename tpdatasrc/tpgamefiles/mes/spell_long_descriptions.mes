@@ -2188,7 +2188,7 @@ Casting:         1  std action   [Necromancy, V,S]
 Range:               60 ft.
 Area:                   Cone-shaped burst
 Duration:      Instantaneous,    Save: No,    SR: Yes}
-{6300} Disrupting Weapon {Makes a weapon destroy undead on hit unless they make a will save.
+{6300} Disrupting Weapon {Makes a weapon destroy undead with fewer hit dice than the caster's level.
 
 Casting:         1  std action   [Transmutation, V,S]
 Range:               Touch
