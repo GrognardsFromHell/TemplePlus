@@ -176,7 +176,7 @@ public:
 				icond = conds.GetByName("Weapon Enhancement Bonus");
 				break;
 			case 261: // Keen Edge
-				icond = conds.getByName("Weapon Keen");
+				icond = conds.GetByName("Weapon Keen");
 				break;
 			case 291: // Magic Vestment
 				icond = conds.GetByName("Armor Enhancement Bonus");
