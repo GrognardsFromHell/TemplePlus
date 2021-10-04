@@ -1180,6 +1180,19 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("meta_magic", &EvtObjMetaMagic::mmData)
 		.def_readwrite("spell_enum", &EvtObjMetaMagic::spellEnum)
 		.def_readwrite("spell_level", &EvtObjMetaMagic::spellLevel)
+		.def_readwrite("spell_class", &EvtObjMetaMagic::spellClass)
+		.def("is_divine_spell", [](EvtObjMetaMagic mm)->bool {
+			if (spellSys.isDomainSpell(mm.spellClass)) {
+				return true;
+			}
+
+			auto castingClass = spellSys.GetCastingClass(mm.spellClass);
+			if (d20ClassSys.IsDivineCastingClass(castingClass)) {
+				return true;
+			}
+
+			return false;
+		}, "")
 		;
 
 	py::class_<EvtObjSpecialAttack, DispIO>(m, "EvtObjSpecialAttack", "Used for applying effects")
