@@ -720,7 +720,7 @@ static PyObject* PyObjHandle_SkillLevelGet(PyObject* obj, PyObject* args) {
 
 	if (config.dialogueUseBestSkillLevel && pythonObjIntegration.IsInDialogGuard()) {
 		auto maxSkillLevel = -1000;
-		for (auto i = 0; i < party.GroupPCsLen(); ++i) {
+		for (uint32_t i = 0; i < party.GroupPCsLen(); ++i) {
 			auto pc = party.GroupPCsGetMemberN(i);
 			if (critterSys.IsDeadNullDestroyed(pc) || critterSys.IsDeadOrUnconscious(pc) || !objSystem->IsValidHandle(pc))
 				continue;
@@ -868,6 +868,40 @@ static PyObject* PyObjHandle_GetMaxDexBonus(PyObject* obj, PyObject* args) {
 	}
 
 	auto res = GetMaxDexBonus(self->handle);
+
+	return PyInt_FromLong(res);
+}
+
+static PyObject* PyObjHandle_GetNumSpellsPerDay(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	Stat spellClass;
+	int spLvl;
+	if (!PyArg_ParseTuple(args, "ii:objhndl:get_num_spells_per_day", &spellClass, &spLvl)) {
+		return 0;
+	}
+
+	auto res = spellSys.GetNumSpellsPerDay(self->handle, spellSys.GetCastingClass(spellClass), spLvl);
+
+	return PyInt_FromLong(res);
+}
+
+static PyObject* PyObjHandle_GetNumSpellsUsed(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	Stat spellClass;
+	int spLvl;
+	if (!PyArg_ParseTuple(args, "ii:objhndl:get_num_spells_used", &spellClass, &spLvl)) {
+		return 0;
+	}
+
+	auto res = spellSys.NumSpellsInLevel(self->handle, obj_f_critter_spells_cast_idx, spellClass, spLvl);
 
 	return PyInt_FromLong(res);
 }
@@ -3147,7 +3181,7 @@ static PyObject* PyObjHandle_DelIdxInt(PyObject* pyobj, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "iii:objhndl.obj_del_idx_int", &field, &idx, &value)) {
 		return 0;
 	}
-	if (idx < obj->GetInt32Array(field).GetSize()) {
+	if (idx < static_cast<int>(obj->GetInt32Array(field).GetSize())) {
 		obj->RemoveInt32(field, idx);
 	}
 	
@@ -4332,6 +4366,8 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "get_initiative", PyObjHandle_GetInitiative, METH_VARARGS, NULL },
 	{ "get_item_wear_flags", PyObjHandle_GetItemWearFlags, METH_VARARGS, NULL },
 	{ "get_max_dex_bonus", PyObjHandle_GetMaxDexBonus, METH_VARARGS, NULL },
+	{ "get_num_spells_per_day", PyObjHandle_GetNumSpellsPerDay, METH_VARARGS, NULL },
+	{ "get_num_spells_used", PyObjHandle_GetNumSpellsUsed, METH_VARARGS, NULL },
     { "get_deity", PyObjHandle_GetDeity, METH_VARARGS, NULL },
 	{ "get_weapon_type", PyObjHandle_GetWeaponType, METH_VARARGS, NULL },
 	{ "get_wield_type", PyObjHandle_GetWieldType, METH_VARARGS, NULL },
