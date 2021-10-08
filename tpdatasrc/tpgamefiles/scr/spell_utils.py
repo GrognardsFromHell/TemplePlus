@@ -261,26 +261,28 @@ def getItemObj(attachee, args):
 def itemTooltip(attachee, args, evt_obj):
     item, itemWornAt = getItemObj(attachee, args)
     spellId = args.get_arg(4)
-    durationQuery = item.d20_query("PQ_Item_Buff_Duration")
-    duration = spellTime(durationQuery)
-    if args.get_param(0):
-        name = game.get_spell_mesline(args.get_param(0))
-    else:
-        name = spellName(spellId)
-    evt_obj.append("{}({}) ({})".format(name, itemWornAt, duration))
-    return 0
+    durationQuery = item.d20_query_with_data("PQ_Item_Buff_Duration", spellId, 0)
+    if durationQuery:
+        duration = spellTime(durationQuery)
+        if args.get_param(0):
+            name = game.get_spell_mesline(args.get_param(0))
+        else:
+            name = spellName(spellId)
+        evt_obj.append("{}({}) ({})".format(name, itemWornAt, duration))
+        return 0
 
 def itemEffectTooltip(attachee, args, evt_obj):
     item, itemWornAt = getItemObj(attachee, args)
     spellId = args.get_arg(4)
-    durationQuery = item.d20_query("PQ_Item_Buff_Duration")
-    duration = spellTime(durationQuery)
-    if args.get_param(0):
-        name = game.get_spell_mesline(args.get_param(0)).upper().replace(" ", "_")
-        key = tpdp.hash(name)
-    else:
-        key = spellKey(spellId)
-    evt_obj.append(key, -2, "({}) ({})".format(itemWornAt, duration))
+    durationQuery = item.d20_query_with_data("PQ_Item_Buff_Duration", spellId, 0)
+    if durationQuery:
+        duration = spellTime(durationQuery)
+        if args.get_param(0):
+            name = game.get_spell_mesline(args.get_param(0)).upper().replace(" ", "_")
+            key = tpdp.hash(name)
+        else:
+            key = spellKey(spellId)
+        evt_obj.append(key, -2, "({}) ({})".format(itemWornAt, duration))
     return 0
 
 

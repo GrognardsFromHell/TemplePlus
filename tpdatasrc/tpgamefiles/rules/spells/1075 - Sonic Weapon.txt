@@ -11,7 +11,7 @@ Spell Resistance: No
 Projectile: No
 flags_Target: Range
 inc_flags_Target: Self
-exc_flags_Target: Other
+inc_flags_Target: Other
 exc_flags_Target: Dead
 exc_flags_Target: Non-critter
 mode_Target: Single
