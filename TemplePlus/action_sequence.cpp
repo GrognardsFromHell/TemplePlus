@@ -259,14 +259,14 @@ ActionSequenceSystem::ActionSequenceSystem()
 	memcpy(turnBasedStatusTransitionMatrix, _transMatrix, sizeof(turnBasedStatusTransitionMatrix));
 }
 
-void ActionSequenceSystem::RegisterCastSpellEquivalentPythonAction(int action)
+void ActionSequenceSystem::RegisterBardSongStoppingPythonAction(int action)
 {
-	castSpellEquivalentPythonActions.insert(action);
+	bardSongStoppingPythonActions.insert(action);
 }
 
-bool ActionSequenceSystem::IsCastSpellEquivalentPythonAction(int action)
+bool ActionSequenceSystem::IsBardSongStoppingPythonAction(int action)
 {
-	return castSpellEquivalentPythonActions.count(action) != 0;
+	return bardSongStoppingPythonActions.count(action) != 0;
 }
 
 uint32_t ActionSequenceSystem::GetRemainingMaxMoveLength(D20Actn* d20a, TurnBasedStatus* tbStat, float* moveLen){

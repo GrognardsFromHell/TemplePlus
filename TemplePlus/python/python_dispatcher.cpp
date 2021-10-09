@@ -114,8 +114,8 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		feats.AddMetamagicFeat(static_cast<feat_enums>(feat));
 	});
 
-	m.def("register_cast_spell_equivalent_python_action", [](int action) {
-		actSeqSys.RegisterCastSpellEquivalentPythonAction(action);
+	m.def("register_bard_song_stopping_python_action", [](int action) {
+		actSeqSys.RegisterBardSongStoppingPythonAction(action);
 	});
 
 	m.def("get_metamagic_feats", []() {

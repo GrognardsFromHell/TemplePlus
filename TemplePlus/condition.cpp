@@ -6904,7 +6904,7 @@ int ClassAbilityCallbacks::BardicMusicOnSequence(DispatcherCallbackArgs args)
 						interruptMusic = true;
 					} else if (actSeq->d20ActArray[i].d20ActType == D20A_PYTHON_ACTION) {  // For spell casting equivalents, stop music
 						const auto pythonEnum = actSeq->d20ActArray[i].GetPythonActionEnum();
-						interruptMusic = actSeqSys.IsCastSpellEquivalentPythonAction(pythonEnum);
+						interruptMusic = actSeqSys.IsBardSongStoppingPythonAction(pythonEnum);
 					}
 				}
 			}
