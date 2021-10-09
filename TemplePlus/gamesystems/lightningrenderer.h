@@ -11,7 +11,8 @@
 struct ChainLightningTarget
 {
 	objHndl obj;
-	XMFLOAT4 vec;
+	XMFLOAT3 vec;
+	BOOL effectTriggered;
 };
 
 // const int testSizeofChainTgt = sizeof(ChainLightningTarget); // should be 24
@@ -36,6 +37,9 @@ private:
 		XMFLOAT2 *uv,
 		size_t primCount,
 		uint16_t *indices);
+
+	void RenderMainArc(XMFLOAT3 from, XMFLOAT3 to, int segments, XMFLOAT3 normal, float colorRamp);
+	void RenderForks(XMFLOAT3 from, XMFLOAT3 to, int segments, XMFLOAT3 normal, float colorRamp, int minLength, int maxLength);
 
 	gfx::MdfMaterialFactory &mMdfFactory;
 	gfx::RenderingDevice &mDevice;
