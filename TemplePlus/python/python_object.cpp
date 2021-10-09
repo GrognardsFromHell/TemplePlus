@@ -906,6 +906,24 @@ static PyObject* PyObjHandle_GetNumSpellsUsed(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(res);
 }
 
+static PyObject* PyObjHandle_SpontaneousSpellsRemaining(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	Stat spellClass;
+	int spLvl;
+	if (!PyArg_ParseTuple(args, "ii:objhndl:spontaneous_spells_remaining", &spellClass, &spLvl)) {
+		return 0;
+	}
+
+	const auto spellsPerDay = spellSys.GetNumSpellsPerDay(self->handle, spellSys.GetCastingClass(spellClass), spLvl);
+	const auto spellUsed = spellSys.NumSpellsInLevel(self->handle, obj_f_critter_spells_cast_idx, spellClass, spLvl);
+	const bool res = spellsPerDay > spellUsed;
+	return PyInt_FromLong(res?1:0);
+}
+
 // turns out you could already get this via .stat_base_get(stat_attack_bonus). Leaving it for backward compatibility...
 static PyObject* PyObjHandle_GetBaseAttackBonus(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
@@ -4508,6 +4526,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "spells_cast_reset", PyObjHandle_SpellsCastReset, METH_VARARGS, NULL },
 	{ "spells_memorized_forget", PyObjHandle_MemorizedForget, METH_VARARGS, NULL },
 	{ "spontaneous_spell_level_can_cast", PyObjHandle_SpontaneousSpellLevelCanCast, METH_VARARGS, NULL },
+	{ "spontaneous_spells_remaining", PyObjHandle_SpontaneousSpellsRemaining, METH_VARARGS, NULL },
 	{ "standpoint_get", PyObjHandle_StandpointGet, METH_VARARGS, NULL },
 	{ "standpoint_set", PyObjHandle_StandpointSet, METH_VARARGS, NULL },
 	{"stat_level_get", PyObjHandle_StatLevelGet, METH_VARARGS, NULL},

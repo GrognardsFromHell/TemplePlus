@@ -133,7 +133,7 @@ def ImbueArrowRadial(attachee, args, evt_obj):
 		spell_level_ids.append( spell_level_node.add_as_child(attachee, imb_arrow_id) )
 
 	for knSp in known_spells:
-		if knSp.is_naturally_cast() and ImbueOk(attachee, knSp) and HasSlotsRemaining(attachee, knSp):
+		if knSp.is_naturally_cast() and ImbueOk(attachee, knSp) and attachee.spontaneous_spells_remaining(knSp.spell_class, knSp.spell_level):
 			spell_node = tpdp.RadialMenuEntryPythonAction(knSp, D20A_PYTHON_ACTION, imbueArrowEnum,0)
 			spell_node.add_as_child(attachee, spell_level_ids[knSp.spell_level])
 
