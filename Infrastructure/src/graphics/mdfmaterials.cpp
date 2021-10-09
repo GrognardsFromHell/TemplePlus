@@ -299,19 +299,25 @@ namespace gfx {
 
 	
 
-	MdfRenderMaterialPtr MdfMaterialFactory::LoadMaterial(const std::string& name) {
+	MdfRenderMaterialPtr MdfMaterialFactory::LoadMaterial(const std::string& name, std::function<void(gfx::MdfMaterial&)> customizer) {
 
 		auto nameLower = tolower(name);
-
-		auto it = mNameRegistry.find(nameLower);
-		if (it != mNameRegistry.end()) {
-			return it->second;
+		if (!customizer) {  // Do not cache if a customizer is present
+			auto it = mNameRegistry.find(nameLower);
+			if (it != mNameRegistry.end()) {
+				return it->second;
+			}
 		}
+		
 
 		try {
 			auto mdfContent = vfs->ReadAsString(name);
 			gfx::MdfParser parser(name, mdfContent);
 			auto mdfMaterial(parser.Parse());
+
+			if (customizer) {
+				customizer(*mdfMaterial.get());
+			}
 
 			Expects(mNextFreeId < 0x80000000);
 			// Assign ID
@@ -322,7 +328,10 @@ namespace gfx {
 			auto result(std::make_shared<MdfRenderMaterial>(id, name, std::move(mdfMaterial), material));
 
 			mIdRegistry[id] = result;
-			mNameRegistry[nameLower] = result;
+			if (!customizer) {
+				mNameRegistry[nameLower] = result;
+			}
+			
 
 			return result;
 		} catch (std::exception& e) {
@@ -567,6 +576,7 @@ namespace gfx {
 		} else {
 			vsDefines["LIGHTING"] = "1";
 		}
+		vsDefines["PER_VERTEX_COLOR"] = spec.perVertexColor ? "1" : "0";
 
 		// Special case for highlight shaders until we're able to encode this
 		// in the material file itself

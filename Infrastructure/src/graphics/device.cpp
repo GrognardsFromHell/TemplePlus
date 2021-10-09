@@ -1351,12 +1351,13 @@ void RenderingDevice::TakeScaledScreenshot(const std::string &filename,
   }
 }
 
-BufferBinding RenderingDevice::CreateMdfBufferBinding() {
+BufferBinding RenderingDevice::CreateMdfBufferBinding(bool perVertexColor) {
 
   auto &vs = GetShaders().LoadVertexShader(
       "mdf_vs",
       {
-          {"TEXTURE_STAGES", "1"} // Necessary so the input struct gets the UVs
+          {"TEXTURE_STAGES", "1"}, // Necessary so the input struct gets the UVs
+		  {"PER_VERTEX_COLOR", perVertexColor ? "1":"0"} // Enable per-vertex 
       });
 
   return BufferBinding(vs);
