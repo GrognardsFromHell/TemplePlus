@@ -100,8 +100,8 @@ def DMMMetamagicUpdate(attachee, args, evt_obj):
 		else:
 			return #No effect, don't set the cost
 	elif mmType == DMMMaximize:
-		if evt_obj.meta_magic.get_maximize_count() < 1:    #Only once
-			evt_obj.meta_magic.set_maximize_count(1)
+		if not evt_obj.meta_magic.get_maximize():    #Only once
+			evt_obj.meta_magic.set_maximize(true)
 		else:
 			return #No effect, don't set the cost
 	elif mmType == DMMHeighten:
@@ -147,7 +147,7 @@ def DMMMetamagicUpdate(attachee, args, evt_obj):
 	if prevCost == 0:
 		cost = GetTurnCost(args, mmType)
 		args.set_arg(1, cost)
-			
+		
 	return 0
 	
 def DMMDeduct(attachee, args, evt_obj):
