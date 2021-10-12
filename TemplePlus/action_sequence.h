@@ -230,8 +230,10 @@ struct ActionSequenceSystem : temple::AddressTable
 	void FullAttackCostCalculate(D20Actn *d20a, TurnBasedStatus *tbStatus, int *baseAttackNumCode, int *bonusAttacks, int *numAttacks, int *attackModeCode);
 	int ActionCostProcess(TurnBasedStatus* tbStat, D20Actn* d20a);
 	uint32_t TurnBasedStatusUpdate(D20Actn* d20a, TurnBasedStatus* tbStat);
-		int TurnBasedStatusUpdate(TurnBasedStatus* tbStat, D20Actn* d20a);
+	int TurnBasedStatusUpdate(TurnBasedStatus* tbStat, D20Actn* d20a);
 
+	void RegisterBardSongStoppingPythonAction(int action);
+	bool IsBardSongStoppingPythonAction(int action);
 
 	ActionSequenceSystem();
 private:
@@ -251,6 +253,8 @@ private:
 	uint32_t (__cdecl *_actSeqSpellHarmful)(); // ActnSeq* @<ebx> 
 	uint32_t(__cdecl *_combatTriggerSthg)(); // ActnSeq* @<ebx> 
 	uint32_t(__cdecl * _moveSeqD20Sthg)(ActnSeq* actSeq, TurnBasedStatus *actnSthg, float a3, float reach, int a5); //, D20Actn * d20aIn @<eax>
+
+	std::unordered_set<int> bardSongStoppingPythonActions;
 };
 
 extern ActionSequenceSystem actSeqSys;
