@@ -1,6 +1,6 @@
 name: Divine Metamagic - Maximize
 flags: 4194560
-prereqs: 1575 1 1259 1
+prereqs: 1259 1
 description:  When you take this feat, choose a metamagic feat that applies to this feat. As a free action, you take energy from turning or rebuking undead to apply a metamagic feat to divine spells you know. You spend one turn or rebuke attempt, plus per level increase in the metamagic feat used.
 prereq descr: Turn undead, metamgic feat chosen
 parent: Divine Metamagic
