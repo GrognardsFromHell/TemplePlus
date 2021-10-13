@@ -319,6 +319,7 @@ public:
 	static int TurnUndeadHook(objHndl, Stat shouldBeClassCleric, DispIoD20ActionTurnBased* evtObj);
 	static int TurnUndeadCheck(DispatcherCallbackArgs args);
 	static int TurnUndeadPerform(DispatcherCallbackArgs args);
+	static int TurnUndeadRadial(DispatcherCallbackArgs args);
 	static int ManyShotAttack(DispatcherCallbackArgs args);
 	static int ManyShotMenu(int a1, objHndl objHnd);
 	static int ManyShotDamage(DispatcherCallbackArgs args);
@@ -562,6 +563,7 @@ public:
 		oldTurnUndeadPerform = replaceFunction(0x1004AEB0, TurnUndeadPerform);
 
 		replaceFunction<int(DispatcherCallbackArgs)>(0x1004ADE0, TurnUndeadCheck);
+		replaceFunction<int(DispatcherCallbackArgs)>(0x1004AD40, TurnUndeadRadial);
 
 
 
@@ -4217,6 +4219,26 @@ int ConditionFunctionReplacement::ManyShotDamage(DispatcherCallbackArgs args)
 			ammoCount = objects.getInt32(damagePacket->attackPacket.ammoItem, obj_f_ammo_quantity);
 			objects.setInt32(damagePacket->attackPacket.ammoItem, obj_f_ammo_quantity, ammoCount - 1);
 		}
+	}
+
+	return 0;
+}
+
+int ConditionFunctionReplacement::TurnUndeadRadial(DispatcherCallbackArgs args)
+{
+	if (d20Sys.d20Query(args.objHndCaller, DK_QUE_IsFallenPaladin) == 0)
+	{
+		const int turnType = args.GetCondArg(0);
+		const int currentCharges = args.GetCondArg(1);
+		const int chaScore = objects.StatLevelGet(args.objHndCaller, stat_charisma);
+		const int chaMod = (chaScore - 10) / 2;
+		const int maxCharges = 3 + chaMod + feats.HasFeatCount(args.objHndCaller, FEAT_EXTRA_TURNING) * 4;
+
+		RadialMenuEntryAction turnUndead(5028 + turnType, D20A_TURN_UNDEAD, turnType, "TAG_TURN");
+		turnUndead.maxArg = maxCharges;
+		turnUndead.minArg = currentCharges;
+		turnUndead.flags |= 0x6;
+		turnUndead.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Class);
 	}
 
 	return 0;
