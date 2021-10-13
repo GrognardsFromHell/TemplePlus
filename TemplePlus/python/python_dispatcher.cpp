@@ -438,22 +438,46 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 
 	#pragma region useful data types
 
-	#pragma region Location
+#pragma region Location
 		py::class_<locXY>(m, "LocXY")
-		.def_readwrite("x", &locXY::locx)
-		.def_readwrite("y", &locXY::locy)
-		;
+			.def(py::init())
+			.def(py::init<unsigned int, unsigned int>(), py::arg("x"), py::arg("y"))
+			.def("__repr__", [](locXY& src)->std::string {
+			return fmt::format("locXY({}, {})", src.locx, src.locy);
+		})
+			.def_readwrite("x", &locXY::locx)
+			.def_readwrite("y", &locXY::locy)
+			.def("loc_get", [](locXY& loc)->int64_t {
+			return loc.ToField();
+		})
+			.def("loc_set", [](locXY& loc, int64_t value) {
+			loc = locXY::fromField(value);
+		})
+			;
+
 		py::class_<LocAndOffsets>(m, "LocAndOffsets")
-		.def_readwrite("loc_xy", &LocAndOffsets::location)
-		.def_readwrite("off_x", &LocAndOffsets::off_x)
-		.def_readwrite("off_y", &LocAndOffsets::off_y)
-		.def("get_location", [](LocAndOffsets& loc)->int64_t{
+			.def(py::init())
+			.def("__init__", [](LocAndOffsets& self, int x, int y, float off_x, float off_y) {
+			self.location.locx = x;
+			self.location.locy = y;
+			self.off_x = off_x;
+			self.off_y = off_y;
+		})
+			.def("__init__", [](LocAndOffsets& self, float off_x, float off_y) {
+			self.off_x = off_x;
+			self.off_y = off_y;
+			locSys.RegularizeLoc(&self);
+		})
+			.def_readwrite("loc_xy", &LocAndOffsets::location)
+			.def_readwrite("off_x", &LocAndOffsets::off_x)
+			.def_readwrite("off_y", &LocAndOffsets::off_y)
+			.def("get_location", [](LocAndOffsets& loc)->int64_t {
 			return (int64_t)loc.location;
 		})
-		.def("distance_to", [](LocAndOffsets& src, LocAndOffsets& dest)-> float {
+			.def("distance_to", [](LocAndOffsets& src, LocAndOffsets& dest)-> float {
 			return locSys.Distance3d(src, dest) / INCH_PER_FEET;
 		})
-		.def("get_offset_loc", [](LocAndOffsets& src, float angleRad, float rangeFt)-> LocAndOffsets{
+			.def("get_offset_loc", [](LocAndOffsets& src, float angleRad, float rangeFt)-> LocAndOffsets {
 			auto absX = 0.0f, absY = 0.0f;
 			locSys.GetOverallOffset(src, &absX, &absY);
 			auto vectorAngleRad = 5 * M_PI / 4 - angleRad;
@@ -463,10 +487,25 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			locSys.RegularizeLoc(&result);
 			return result;
 		})
-		;
+			.def("__repr__", [](LocAndOffsets& src)->std::string {
+			return fmt::format("LocAndOffsets({}, {}, {}, {})", src.location.locx, src.location.locy, src.off_x, src.off_y);
+		})
+			.def("normalize", &LocAndOffsets::Normalize)
+			.def("get_overall_offset", [](LocAndOffsets& src)->std::tuple<float, float> {
+			auto absX = 0.0f, absY = 0.0f;
+			locSys.GetOverallOffset(src, &absX, &absY);
+			return std::tuple<float, float>(absX, absY);
+		})
+			.def("regularize", [](LocAndOffsets& src) {
+			locSys.RegularizeLoc(&src);
+		})
+			;
+
 		py::class_<LocFull>(m, "LocFull")
-		.def_readwrite("loc_and_offsets", &LocFull::location)
-		;
+			.def(py::init())
+			.def_readwrite("loc_and_offsets", &LocFull::location)
+			.def_readwrite("off_z", &LocFull::off_z)
+			;
 	#pragma endregion
 
 	#pragma region Bonuslist etc

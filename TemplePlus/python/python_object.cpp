@@ -906,6 +906,27 @@ static PyObject* PyObjHandle_GetNumSpellsUsed(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(res);
 }
 
+static PyObject* PyObjHandle_GetReaches(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	D20ActionType d20ActionType = D20ActionType::D20A_UNSPECIFIED_ATTACK;
+	if (!PyArg_ParseTuple(args, "|ii:objhndl:get_reaches", &d20ActionType)) {
+		return 0;
+	}
+
+	float minReachFt = 0.0f;
+	auto reachFt = critterSys.GetReach(self->handle, d20ActionType, &minReachFt);
+
+	auto result = PyTuple_New(2);
+	PyTuple_SET_ITEM(result, 0, PyFloat_FromDouble(reachFt));
+	PyTuple_SET_ITEM(result, 1, PyFloat_FromDouble(minReachFt));
+	return result;
+}
+
+
 static PyObject* PyObjHandle_SpontaneousSpellsRemaining(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -2778,6 +2799,36 @@ static PyObject* PyObjHandle_AnimGoalPushUseObject(PyObject* obj, PyObject* args
 	return PyInt_FromLong(1);
 }
 
+static PyObject* PyObjHandle_AnimGoalPushWalkToTile(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	LocAndOffsets newLoc = LocAndOffsets::null;
+	newLoc.off_x = 0;
+	newLoc.off_y = 0;
+
+	if (!PyArg_ParseTuple(args, "ii|ff:anim_goal_push_walk_to_tile", &newLoc.location.locx, &newLoc.location.locy, &newLoc.off_x, &newLoc.off_y))
+		return 0;
+	return PyInt_FromLong(gameSystems->GetAnim().PushWalkToTile(self->handle, newLoc));
+}
+
+static PyObject* PyObjHandle_AnimGoalPushRunToTile(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	LocAndOffsets newLoc = LocAndOffsets::null;
+	newLoc.off_x = 0;
+	newLoc.off_y = 0;
+
+	if (!PyArg_ParseTuple(args, "ii|ff:anim_goal_push_run_to_tile", &newLoc.location.locx, &newLoc.location.locy, &newLoc.off_x, &newLoc.off_y))
+		return 0;
+	return PyInt_FromLong(gameSystems->GetAnim().PushRunToTile(self->handle, newLoc, nullptr));
+}
+
 static PyObject* PyObjHandle_ContainerOpenUI(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -4304,6 +4355,8 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "anim_goal_push_dodge", PyObjHandle_AnimGoalPushDodge, METH_VARARGS, NULL },
 	{ "anim_goal_push_hit_by_weapon", PyObjHandle_AnimGoalPushHitByWeapon, METH_VARARGS, NULL },
 	{ "anim_goal_use_object", PyObjHandle_AnimGoalPushUseObject, METH_VARARGS, NULL },
+	{ "anim_goal_push_walk_to_tile", PyObjHandle_AnimGoalPushWalkToTile, METH_VARARGS, NULL },
+	{ "anim_goal_push_run_to_tile", PyObjHandle_AnimGoalPushRunToTile, METH_VARARGS, NULL },
 	{ "anim_goal_get_new_id", PyObjHandle_AnimGoalGetNewId, METH_VARARGS, NULL },
 	{ "apply_projectile_particles", PyObjHandle_ApplyProjectileParticles, METH_VARARGS, NULL },
 	{ "apply_projectile_hit_particles", PyObjHandle_ApplyProjectileHitParticles, METH_VARARGS, NULL },
@@ -4386,6 +4439,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "get_max_dex_bonus", PyObjHandle_GetMaxDexBonus, METH_VARARGS, NULL },
 	{ "get_num_spells_per_day", PyObjHandle_GetNumSpellsPerDay, METH_VARARGS, NULL },
 	{ "get_num_spells_used", PyObjHandle_GetNumSpellsUsed, METH_VARARGS, NULL },
+	{ "get_reaches", PyObjHandle_GetReaches, METH_VARARGS, NULL },
     { "get_deity", PyObjHandle_GetDeity, METH_VARARGS, NULL },
 	{ "get_weapon_type", PyObjHandle_GetWeaponType, METH_VARARGS, NULL },
 	{ "get_wield_type", PyObjHandle_GetWieldType, METH_VARARGS, NULL },
