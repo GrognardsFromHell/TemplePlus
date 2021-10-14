@@ -29,7 +29,7 @@ def tooltipFlying(attachee, args, evt_obj):
     evt_obj.append("Flying!")
     return 0
 
-def singalStopFlying(attachee, args, evt_obj):
+def signalStopFlying(attachee, args, evt_obj):
     args.condition_remove()
     return 0
 
@@ -38,4 +38,4 @@ flyingCondition.AddHook(ET_OnConditionAddPre, EK_NONE, preventConditions, ())
 flyingCondition.AddHook(ET_OnD20Query, EK_Q_AOOIncurs, preventAoO,())
 flyingCondition.AddHook(ET_OnGetTooltip, EK_NONE, tooltipFlying, ())
 flyingCondition.AddHook(ET_OnD20PythonQuery, "PQ_Is_Flying", queryIsFlying, ())
-flyingCondition.AddHook(ET_OnD20PythonSignal, "PS_Flying_End", singalStopFlying, ())
+flyingCondition.AddHook(ET_OnD20PythonSignal, "PS_Flying_End", signalStopFlying, ())

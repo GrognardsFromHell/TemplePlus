@@ -270,8 +270,8 @@ dragonDiscipleBreathWeapon.AddHook(ET_OnNewDay, EK_NEWDAY_REST, resetBreathWeapo
 
 ###Wings
 def addWings(attachee, args, evt_obj):
-    #meshId = 
-    #evt_obj.append(meshId)
+    meshId = 14201 #Darley Wings
+    evt_obj.append(meshId)
     return 0
 
 def wingsRadial(attachee, args, evt_obj):
