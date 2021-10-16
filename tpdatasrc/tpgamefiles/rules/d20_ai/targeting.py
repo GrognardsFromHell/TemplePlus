@@ -1,4 +1,5 @@
 from toee import *
+import tpdp
 import tpai
 from d20_ai_utils import *
 
@@ -14,6 +15,27 @@ def debug_print(*args):
 
 def missing_stub(msg):
 	print msg
+	return 0
+
+def cannot_hate(obj, tgt, leader):
+	OHN = OBJ_HANDLE_NULL
+	if obj == OHN:
+		return 0
+	spell_flags = obj.obj_get_int(obj_f_spell_flags)
+	if (spell_flags & 0x8000000) and obj.leader != OHN:
+		return 0
+	if tgt == OHN or not tgt.is_critter():
+		return 0
+	if leader != OHN and tgt.leader == leader:
+		return 4
+	if (obj.allegiance_shared(tgt)):
+		return 3
+	if obj.d20_query_has_condition("sp-Sanctuary Save Failed") == 0 or tgt.d20_query_has_condition("sp-Sanctuary") == 0:
+		return 0
+	tgt_sanctuary_handle = tgt.d20_query_get_obj(Q_Critter_Has_Condition, tpdp.hash("sp-Sanctuary"))
+	sanctuary_handle     = obj.d20_query_get_obj(Q_Critter_Has_Condition, tpdp.hash("sp-Sanctuary Save Failed"))
+	if sanctuary_handle == tgt_sanctuary_handle:
+		return 5
 	return 0
 
 # aiSearchingTgt is used to avoid infinite looping since
@@ -70,7 +92,7 @@ def consider_target(attacker, target, aiSearchingTgt=False):
 			if attacker.distance_to(target) > 15.0:
 				debug_print("consider tgt: too far from leader")
 				return 0
-
+	debug_print("consider_target: Return true")
 	return 1
 
 def getFriendsCombatFocus(obj, friend, leader, aiSearchingTgt = False):
@@ -88,7 +110,7 @@ def getFriendsCombatFocus(obj, friend, leader, aiSearchingTgt = False):
 	if not aifs.status in [AIFS_FIGHTING, AIFS_FLEEING, AIFS_SURRENDERED]:
 		return OBJ_HANDLE_NULL
 
-	if obj.cannot_hate(tgt, leader):
+	if cannot_hate(obj, tgt, leader):
 		return OBJ_HANDLE_NULL
 
 	if not consider_target(obj, tgt, aiSearchingTgt):
@@ -242,7 +264,7 @@ def will_kos(attacker, target, aiSearchingTgt):
 		return 0
 
 	leader = attacker.leader_get()
-	if attacker.cannot_hate(target, leader):
+	if cannot_hate(attacker, target, leader):
 		return 4
 
 	return 0
