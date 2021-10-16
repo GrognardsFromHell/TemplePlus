@@ -6902,6 +6902,9 @@ int ClassAbilityCallbacks::BardicMusicOnSequence(DispatcherCallbackArgs args)
 				for (int i = 0; i < actSeq->d20ActArrayNum; i++) {
 					if (actSeq->d20ActArray[i].d20ActType == D20A_CAST_SPELL) {
 						interruptMusic = true;
+					} else if (actSeq->d20ActArray[i].d20ActType == D20A_PYTHON_ACTION) {  // For spell casting equivalents, stop music
+						const auto pythonEnum = actSeq->d20ActArray[i].GetPythonActionEnum();
+						interruptMusic = actSeqSys.IsBardSongStoppingPythonAction(pythonEnum);
 					}
 				}
 			}
