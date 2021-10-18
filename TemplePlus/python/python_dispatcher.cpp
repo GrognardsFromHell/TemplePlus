@@ -464,8 +464,10 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			self.off_y = off_y;
 		})
 			.def("__init__", [](LocAndOffsets& self, float off_x, float off_y) {
-			self.off_x = off_x;
-			self.off_y = off_y;
+			self.location.locx = 0;
+			self.location.locy = 0;
+			self.off_x = off_x - PIXEL_PER_TILE_HALF;
+			self.off_y = off_y - PIXEL_PER_TILE_HALF;
 			locSys.RegularizeLoc(&self);
 		})
 			.def_readwrite("loc_xy", &LocAndOffsets::location)
