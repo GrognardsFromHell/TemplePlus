@@ -95,6 +95,10 @@ def ObjMeetsPrereqs( obj ):
 			if spell_entry.spell_school_enum == Abjuration:
 				can_cast_abjuration = true
 				break
+	
+	#Beguilers should qualify, they get Undetectable Alignment at first level which is not in the game
+	if obj.stat_level_get(stat_level_beguiler) > 0:
+		can_cast_abjuration = true
 			
 	if not can_cast_abjuration:
 		return 0
