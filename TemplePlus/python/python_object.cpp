@@ -1579,7 +1579,9 @@ static PyObject* PyObjHandle_ReputationHas(PyObject* obj, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "i:objhndl.reputation_has", &reputationId)) {
 		return 0;
 	}
-	return PyInt_FromLong(partyReputation.Has(reputationId));
+	auto has = partyReputation.Has(reputationId);
+	auto result = PyInt_FromLong(has);
+	return result;
 }
 
 static PyObject* PyObjHandle_ReputationAdd(PyObject* obj, PyObject* args) {
@@ -2621,7 +2623,7 @@ static PyObject* PyObjHandle_D20QueryGetObj(PyObject* obj, PyObject* args) {
 	}
 	auto dispatcherKey = (D20DispatcherKey)(DK_QUE_Helpless + queryKey);
 	objHndl handle;
-	handle = d20Sys.d20QueryReturnData(self->handle, dispatcherKey);
+	handle = d20Sys.d20QueryReturnData(self->handle, dispatcherKey, testData);
 	if (!handle) {
 		return PyObjHndl_CreateNull();
 	}

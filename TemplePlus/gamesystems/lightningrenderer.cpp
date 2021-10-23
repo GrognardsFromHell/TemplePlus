@@ -12,6 +12,56 @@
 using namespace gfx;
 
 constexpr int MAX_SEGMENTS = 600;
+// Minimum length of a fork in line-segments
+constexpr int MinForkSegments = 16;
+constexpr int ForkCount = 2;
+class LightningRendererImpl;
+std::unique_ptr<LightningRendererImpl> mLRImpl(nullptr);
+
+
+using JitterArray = float[600];
+class LightningRendererImpl {
+public:
+
+	LightningRendererImpl() {
+		CreateIndexBuffer();
+	}
+
+	void Render();
+	void RenderChainLightning();
+
+	void RenderMainArc(XMFLOAT3 from, XMFLOAT3 to, int segments, XMFLOAT3 normal, float colorRamp);
+	void RenderForks(XMFLOAT3 from, XMFLOAT3 to, int segments, XMFLOAT3 normal, float colorRamp, int minLength, int maxLength);
+
+	float GetOffsetAt(int i, int segments);
+	void CalculateLineJitter(int elapsedMs, int segments, float lengthPerSegment, float noiseY);
+
+	
+	const float ForkArcWidth = 8;
+	const float MaxJitterOffset = 80.f;
+
+protected:
+	JitterArray& mJitterArray = temple::GetRef<float[600]>(0x10B397C0);
+
+
+	XMFLOAT4 mPositions[MAX_SEGMENTS * 2];
+	XMCOLOR color[MAX_SEGMENTS * 2];
+	uint16_t mIndices[MAX_SEGMENTS * 6];
+
+	void CreateIndexBuffer() {
+		auto indexIdx = 0;
+		for (auto i = 0; i < 2 * MAX_SEGMENTS; i += 2) {
+			mIndices[indexIdx + 0] = i;
+			mIndices[indexIdx + 1] = i + 1;
+			mIndices[indexIdx + 2] = i + 3;
+			mIndices[indexIdx + 3] = i;
+			mIndices[indexIdx + 4] = i + 3;
+			mIndices[indexIdx + 5] = i + 2;
+			indexIdx += 6;
+		}
+	};
+
+};
 
 static class LightningRenderHooks : public TempleFix {
 public:
@@ -36,8 +86,6 @@ public:
 		writeHex(0x10088F3A + 2, "58 02"); // cmp     esi, 120h
 		writeHex(0x100891FA + 2, "58 02"); // add     esi, 120h
 
-		CreateIndexBuffer();
-		
 	}
 
 	static LightningRenderer* renderer;
@@ -52,20 +100,7 @@ public:
 		int shaderId);
 
 	ChainLightningTarget chainTargets[30]; // 0x10AB7E68
-	uint16_t mIndices[MAX_SEGMENTS * 6];
-
-	void CreateIndexBuffer() {
-		auto indexIdx = 0;
-		for (auto i = 0; i < 2 * MAX_SEGMENTS; i += 2) {
-			mIndices[indexIdx + 0] = i;
-			mIndices[indexIdx + 1] = i + 1;
-			mIndices[indexIdx + 2] = i + 3;
-			mIndices[indexIdx + 3] = i;
-			mIndices[indexIdx + 4] = i + 3;
-			mIndices[indexIdx + 5] = i + 2;
-			indexIdx += 6;
-		}
-	};
+	
 
 } lightningHooks;
 
@@ -96,25 +131,16 @@ LightningRenderer::LightningRenderer(MdfMaterialFactory& mdfFactory,
 		.AddElement(VertexElementType::Float2, VertexElementSemantic::TexCoord);
 
 	LightningRenderHooks::renderer = this;
+	mLRImpl = std::make_unique<LightningRendererImpl>();
 }
 
 LightningRenderer::~LightningRenderer() {
 	LightningRenderHooks::renderer = nullptr;
+
 }
 
 void LightningRenderer::Render() {
-	gfx::PerfGroup perfGroup(mDevice, "Lightning PFX");
-
-	static auto render_pfx_lightning_related = temple::GetPointer<int()>(0x10087e60);
-
-	static auto &mCallLightningPfxState = temple::GetRef<int>(0x10B397B4);
-	
-	auto& mChainLightningPfxState = temple::GetRef<int>(0x10AB7E54);
-	if (mChainLightningPfxState != 0) {
-		return RenderChainLightning();
-	}
-	
-	render_pfx_lightning_related();
+	mLRImpl.get()->Render();
 }
 
 double PerlinNoise2D(float x, float y, float persistence = 4, float lacunarity = 4, int octaves = 3) {
@@ -128,11 +154,8 @@ float GetJitterTimePeriod(int elapsedMs) {
 }
 
 // calculates mJitterArray 
-void CalculateLineJitter(int elapsedMs, int segments, float lengthPerSegment, float noiseY) {
-	auto& mJitterArray = temple::GetRef<float[600]>(0x10B397C0);
-
-	constexpr float MaxJitterOffset = 80.f;
-
+void LightningRendererImpl::CalculateLineJitter(int elapsedMs, int segments, float lengthPerSegment, float noiseY) {
+	
 	auto timePeriod = GetJitterTimePeriod(elapsedMs);
 	mJitterArray[0] = PerlinNoise2D(timePeriod, noiseY) * MaxJitterOffset;
 
@@ -146,7 +169,7 @@ void CalculateLineJitter(int elapsedMs, int segments, float lengthPerSegment, fl
 	mJitterArray[0] = 0.f;
 }
 
-void LightningRenderer::RenderChainLightning()
+void LightningRendererImpl::RenderChainLightning()
 {
 	/// Delay in milliseconds before an arc that is the result of chaining to another target is shown.
 	/// First arc is shown immediately.
@@ -154,9 +177,7 @@ void LightningRenderer::RenderChainLightning()
 	/// How long an arc should be visible in milliseconds.
 	const int Duration = 7 * ChainDelay;
 
-	// Minimum length of a fork in line-segments
-	const int MinForkSegments = 16;
-	const int ForkCount = 2;
+	
 
 	// The length of a single line segment
 	const float LineSegmentLength = 2.5f;
@@ -281,7 +302,7 @@ float GetMainArcDistanceFade(int i, int segments) {
 	return result;
 }
 
-void LightningRenderer::RenderMainArc(XMFLOAT3 from, XMFLOAT3 to, int segments, XMFLOAT3 normal, float timeFade)
+void LightningRendererImpl::RenderMainArc(XMFLOAT3 from, XMFLOAT3 to, int segments, XMFLOAT3 normal, float timeFade)
 {
 	constexpr float MainArcWidth = 24.f;
 
@@ -289,20 +310,16 @@ void LightningRenderer::RenderMainArc(XMFLOAT3 from, XMFLOAT3 to, int segments, 
 		normal.y * MainArcWidth / 2,
 		normal.z * MainArcWidth / 2);
 
-	static XMFLOAT4 pos[MAX_SEGMENTS*2];
-	static XMCOLOR color[MAX_SEGMENTS*2];
-	static uint16_t indices[MAX_SEGMENTS*6];
-
-	auto& mJitterArray = temple::GetRef<float[600]>(0x10B397C0);
+	
 
 	for (auto i = 0; i < segments; ++i) {
-		auto& leftVtx = pos[2*i];
-		auto& rightVtx = pos[2*i+1];
+		auto& leftVtx = mPositions[2*i];
+		auto& rightVtx = mPositions[2*i+1];
 		auto alpha = (uint8_t)(timeFade * GetMainArcDistanceFade(i, segments) * 255);
 		color[2 * i + 1] = color[2*i]   = XMCOLOR_ARGB(alpha, alpha, alpha, alpha);
 		
 
-		auto jitterOffset = mJitterArray[i] - (mJitterArray[segments - 1] - mJitterArray[0]) * i / (segments - 1);
+		auto jitterOffset = GetOffsetAt(i, segments);
 
 		auto xmpos = DirectX::XMVectorLerp(
 			DirectX::XMLoadFloat3(&from),
@@ -326,13 +343,89 @@ void LightningRenderer::RenderMainArc(XMFLOAT3 from, XMFLOAT3 to, int segments, 
 		rightVtx.z += jitterOffset * normal.z - extrudedVec.z;
 	}
 
-	
-
-	Render(segments * 2, pos, nullptr, color, nullptr, (segments-1 )* 2, lightningHooks.mIndices);
+	LightningRenderHooks::renderer->Render(segments * 2, mPositions, nullptr, color, nullptr, (segments-1 )* 2, mIndices);
 }
 
-void LightningRenderer::RenderForks(XMFLOAT3 from, XMFLOAT3 to, int segments, XMFLOAT3 normal, float colorRamp, int minLength, int maxLength)
+void LightningRendererImpl::RenderForks(XMFLOAT3 from, XMFLOAT3 to, int segments, XMFLOAT3 perpenNormal, float timeFade, int minLength, int maxLength)
 {
+	Expects(minLength < maxLength);
+
+	if (segments < minLength)
+		return;
+
+	for (auto i = 0; i < ForkCount; ++i) {
+		auto forkSegments = minLength + rand() % (maxLength - minLength);
+
+		// "Reuse" a different segment of the arc's jitter to make the offsets for the fork look different
+		auto segmentSection = segments - forkSegments;
+		if (segmentSection < 1) {
+			segmentSection = 1;
+		}
+			
+		auto jitterOverlayStart = rand() % segmentSection;
+		auto forkStartSegment = rand() % segmentSection;
+
+		//// The offset at the start of the fork should equal the main arc's offset so that the fork seems
+		//// to "split" from it at that point.
+		auto forkBaseOffset = GetOffsetAt(forkStartSegment + 1, segments);
+
+		//// Forks build backwards, interestingly
+		auto curForkSegment = forkStartSegment + forkSegments;
+
+		//// Forks have a width of 8
+		auto forkExtrudeVec = XMFLOAT3(
+			perpenNormal.x * ForkArcWidth / 2,
+			perpenNormal.y * ForkArcWidth / 2, 
+			perpenNormal.z * ForkArcWidth / 2);
+
+		for (auto j = 0; j < forkSegments; j++)
+		{
+			auto& leftVtx = mPositions[2 * j];
+			auto& rightVtx = mPositions[2 * j + 1];
+
+			auto xmpos = DirectX::XMVectorLerp(
+				DirectX::XMLoadFloat3(&from),
+				DirectX::XMLoadFloat3(&to),
+				curForkSegment / (float)(segments - 1)
+			);
+		
+			auto jitterOffset = forkBaseOffset;
+			// Amplify the jitter for the arc (but keep it 0 at the start)
+			jitterOffset += 2 * (mJitterArray[jitterOverlayStart + j] - mJitterArray[jitterOverlayStart + forkSegments - 1]);
+
+			XMFLOAT3 pos;
+			DirectX::XMStoreFloat3(&pos, xmpos);
+			leftVtx.x = pos.x;
+			leftVtx.y = pos.y;
+			leftVtx.z = pos.z;
+			rightVtx.x = pos.x;
+			rightVtx.y = pos.y;
+			rightVtx.z = pos.z;
+
+			leftVtx.x += jitterOffset * perpenNormal.x + forkExtrudeVec.x;
+			leftVtx.y += jitterOffset * perpenNormal.y + forkExtrudeVec.y;
+			leftVtx.z += jitterOffset * perpenNormal.z + forkExtrudeVec.z;
+			rightVtx.x += jitterOffset * perpenNormal.x - forkExtrudeVec.x;
+			rightVtx.y += jitterOffset * perpenNormal.y - forkExtrudeVec.y;
+			rightVtx.z += jitterOffset * perpenNormal.z - forkExtrudeVec.z;
+
+			auto distanceFade = j / (float)(forkSegments - 1);
+			distanceFade *= GetMainArcDistanceFade(curForkSegment, segments);
+
+			
+			auto forkAlpha = (uint8_t)(timeFade * distanceFade * 255);
+			auto forkColor = XMCOLOR_ARGB(forkAlpha, forkAlpha, forkAlpha, forkAlpha);
+			color[2 * j + 1] = color[2 * j] = forkColor;
+			--curForkSegment;
+		}
+		LightningRenderHooks::renderer->Render(forkSegments * 2, mPositions, nullptr, color, nullptr, (forkSegments - 1) * 2, mIndices);
+	}
+}
+
+float LightningRendererImpl::GetOffsetAt(int i, int segments)
+{
+	auto result = mJitterArray[i] - (mJitterArray[segments - 1] - mJitterArray[0]) * i / (segments - 1);
+	return result;
 }
 
 void LightningRenderHooks::RedirectChainLightningTargets()
@@ -379,4 +472,23 @@ int LightningRenderHooks::Render(int vertexCount, XMFLOAT4* vertices, XMFLOAT4* 
 		renderer->Render(vertexCount, vertices, normals, diffuse, uv, primCount, indices);
 	}
 	return 0;
+}
+
+
+
+
+void LightningRendererImpl::Render()
+{
+	gfx::PerfGroup perfGroup(LightningRenderHooks::renderer->mDevice, "Lightning PFX");
+
+	static auto render_pfx_lightning_related = temple::GetPointer<int()>(0x10087e60);
+
+	static auto& mCallLightningPfxState = temple::GetRef<int>(0x10B397B4);
+
+	auto& mChainLightningPfxState = temple::GetRef<int>(0x10AB7E54);
+	if (mChainLightningPfxState != 0) {
+		return RenderChainLightning();
+	}
+
+	render_pfx_lightning_related();
 }
