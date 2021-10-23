@@ -1795,7 +1795,7 @@ void UiCharHooks::ItemGetDescrAddon(objHndl obj, objHndl item, std::string& addS
 				int plat = 0, gold = 0, silver = 0, copper = 0;
 				inventory.MoneyToCoins(worth, &plat, &gold, &silver, &copper);
 				gold += plat * 10;
-				addStr = fmt::format((addStr.length() > 0) ? "{0}\nPrice: {1}" : "Price: {1}{2}{3}"
+				addStr = fmt::format((addStr.length() > 0) ? "{0}\nPrice: {1}" : "Base Price: {1}{2}{3}"
 					, addStr
 					, (gold || (!silver && !copper)) ? fmt::format("{0} gp ", gold) : ""
 					, (silver) ? fmt::format("{0} sp ", silver) : ""
@@ -1804,7 +1804,7 @@ void UiCharHooks::ItemGetDescrAddon(objHndl obj, objHndl item, std::string& addS
 			}
 		}
 		else {
-			addStr = fmt::format((addStr.length() > 0) ? "{0}\nPrice: Unidentified" : "Price: Unidentified", addStr);
+			addStr = fmt::format((addStr.length() > 0) ? "{0}\nBase Price: Unidentified" : "Base Price: Unidentified", addStr);
 		}
 	}
 }

@@ -27,6 +27,11 @@
 #include "gamesystems/d20/d20_help.h"
 #include <messages\messagequeue.h>
 #include "ui_dialog.h"
+#include "mod_support.h"
+#include "pybind11/pybind11.h"
+#include "python/python_integration_obj.h"
+
+namespace py = pybind11;
 
 //*****************************************************************************
 //* MainMenu-UI
@@ -136,8 +141,10 @@ const std::string &UiSaveGame::GetName() const {
 
 void UiSaveGame::Show(bool fromMainMenu)
 {
-	static auto ui_savegame_show = temple::GetPointer<void(int)>(0x10175980);
-	ui_savegame_show(fromMainMenu ? TRUE : FALSE);
+	if (CanSave(fromMainMenu)) {
+		static auto ui_savegame_show = temple::GetPointer<void(int)>(0x10175980);
+		ui_savegame_show(fromMainMenu ? TRUE : FALSE);
+	}
 }
 
 void UiSaveGame::Hide()
@@ -150,6 +157,23 @@ void UiSaveGame::Hide2()
 {
 	static auto ui_savegame_hide2 = temple::GetPointer<int()>(0x10175ae0);
 	ui_savegame_hide2();
+}
+
+BOOL UiSaveGame::CanSave(bool fromMainMenu)
+{
+	if (modSupport.IsZMOD()) {
+		py::object fromMainMenua = py::cast<BOOL>(fromMainMenu);
+		py::tuple args = py::make_tuple(fromMainMenua);
+
+		auto pyResult = pythonObjIntegration.ExecuteScript("game_save", "can_save", args.ptr()); // def can_save(from_main_menu) -> int
+		if (PyInt_Check(pyResult)) {
+			auto result = _PyInt_AsInt(pyResult);
+			Py_DECREF(pyResult);
+			return result;
+		}
+		Py_DECREF(pyResult);
+	}
+	return TRUE;
 }
 
 static class UiSaveGameHooks : public TempleFix {

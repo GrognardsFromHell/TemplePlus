@@ -333,6 +333,8 @@ public:
 		return GetCanvasSize().height;
 	}
 
+	uint32_t QuickSave();
+
 private:
 	UiManager(UiManager&) = delete;
 	UiManager& operator=(UiManager&) = delete;

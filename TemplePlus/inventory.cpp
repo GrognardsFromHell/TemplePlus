@@ -18,8 +18,30 @@
 #include "ui/ui_logbook.h"
 #include <config\config.h>
 #include <mod_support.h>
+#include "pybind11/pybind11.h"
+#include "python/python_integration_obj.h"
+#include "python/python_object.h"
+
+namespace py = pybind11;
 
 InventorySystem inventory;
+
+template <> class py::detail::type_caster<objHndl> {
+public:
+	bool load(handle src, bool) {
+		value = PyObjHndl_AsObjHndl(src.ptr());
+		success = true;
+		return true;
+	}
+
+	static handle cast(const objHndl& src, return_value_policy /* policy */, handle /* parent */) {
+		return PyObjHndl_Create(src);
+	}
+
+	PYBIND11_TYPE_CASTER(objHndl, _("objHndl"));
+protected:
+	bool success = false;
+};
 
 struct InventorySystemAddresses : temple::AddressTable
 {
@@ -1434,6 +1456,26 @@ int InventorySystem::GetAppraisedWorth(objHndl item, objHndl appraiser, objHndl 
 	double result = ((double)skillLevel * 0.029999999 + 0.40000001) * price;
 
 	if (modSupport.IsZMOD()) {
+		// game_inventory.get_appraised_worth
+		{
+			py::object pyitem = py::cast<objHndl>(item);
+			py::object pyappraiser = py::cast<objHndl>(appraiser);
+			py::object pyvendor = py::cast<objHndl>(vendor);
+			py::object pyskillLevel = py::cast<double>(skillLevel);
+			py::object pyprice = py::cast<double>(price);
+			py::object pyappraised_worth = py::cast<int>((int)result);
+
+			py::tuple args = py::make_tuple(pyitem, pyappraiser, pyvendor, pyskillLevel, pyprice, pyappraised_worth);
+			// def get_appraised_worth(item: PyObjHandle, appraiser: PyObjHandle, vendor: PyObjHandle, skill_level: float, price: float, appraised_worth: int) -> int
+			auto pyResult = pythonObjIntegration.ExecuteScript("game_inventory", "get_appraised_worth", args.ptr());
+			if (PyInt_Check(pyResult)) {
+				auto res = _PyInt_AsInt(pyResult);
+				Py_DECREF(pyResult);
+				return res;
+			}
+			Py_DECREF(pyResult);
+		}
+
 		if (IsTradeGoods(item)) {
 			return objects.getInt32(item, obj_f_item_worth);
 		}
@@ -1459,13 +1501,34 @@ int InventorySystem::GetAppraisedTransactionSum(objHndl item, objHndl parent, ob
 	if (skillLevel > 19) skillLevel = 19;
 
 	double price = (double)GetSellWorth(item, parent, appraiser, skillEnum);
-	if (!price)
-		return 0;
+	double result = ((1.6 - (double)skillLevel * 0.029999999)) * price;
 
 	if (modSupport.IsZMOD()){
+		// game_inventory.get_appraised_transaction_sum
+		{
+			py::object pyitem = py::cast<objHndl>(item);
+			py::object pyappraiser = py::cast<objHndl>(appraiser);
+			py::object pyparent = py::cast<objHndl>(parent);
+			py::object pyskillLevel = py::cast<double>(skillLevel);
+			py::object pyprice = py::cast<double>(price);
+			py::object pyappraised_worth = py::cast<int>((int)result);
+
+			py::tuple args = py::make_tuple(pyitem, pyparent, pyappraiser, pyskillLevel, pyprice, pyappraised_worth);
+			// def get_appraised_transaction_sum(item: PyObjHandle, parent: PyObjHandle, appraiser: PyObjHandle, skill_level: float, price: float, appraised_worth: int) -> int
+			auto pyResult = pythonObjIntegration.ExecuteScript("game_inventory", "get_appraised_transaction_sum", args.ptr());
+			if (PyInt_Check(pyResult)) {
+				auto res = _PyInt_AsInt(pyResult);
+				Py_DECREF(pyResult);
+				return res;
+			}
+			Py_DECREF(pyResult);
+		}
+
 		return (int)price;
 	}
-	double result = ((1.6 - (double)skillLevel * 0.029999999)) * price;
+
+	if (!price)
+		return 0;
 	return (int)result;
 }
 

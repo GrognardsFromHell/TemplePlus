@@ -51,6 +51,7 @@ public:
 	void Show(bool fromMainMenu);
 	void Hide();
 	void Hide2(); // Pops back to main menu sometimes (?)
+	BOOL CanSave(bool fromMainMenu);
 };
 
 class UiInGameSelect : public UiSystem {

@@ -466,6 +466,8 @@ public:
 	bool SaveGame(const std::string &filename, const std::string &displayName);
 
 	bool SaveGameIronman();
+
+	bool QuickSave();
 	
 	// Loads a game.
 	bool LoadGame(const std::string &filename);

@@ -279,6 +279,12 @@ bool GameSystems::SaveGameIronman()
 	return false;
 }
 
+bool GameSystems::QuickSave()
+{
+	auto qsave = temple::GetPointer<int()>(0x10004930);
+	return qsave();
+}
+
 static class GameLibSaveReplacement : TempleFix {
 public:
 	static BOOL SaveGame(const char *filename, const char *displayName) {

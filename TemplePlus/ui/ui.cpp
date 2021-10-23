@@ -11,8 +11,14 @@
 #include "gamesystems/gamesystems.h"
 #include "gamesystems/legacysystems.h"
 #include "gameview.h"
+#include "ui_systems.h"
+#include "ui_dialog.h"
+#include "mod_support.h"
+#include "pybind11/pybind11.h"
+#include "python/python_integration_obj.h"
 
 UiManager *uiManager;
+namespace py = pybind11;
 
 
 /**
@@ -150,6 +156,10 @@ public:
 
 		 });
 
+		 replaceFunction<uint32_t(__cdecl)()>(0x10143560, []()->uint32_t // int signed int UiManagerQuickSave()
+		 {
+			 return uiManager->QuickSave();
+		 });
 
 	}
 } uiReplacement;
@@ -983,6 +993,28 @@ bool UiManager::ProcessMessage(TigMsg &msg)
 gfx::Size UiManager::GetCanvasSize() const
 {
 	return { gameView->GetWidth(), gameView->GetHeight() };
+}
+
+uint32_t UiManager::QuickSave()
+{
+	uint32_t& mDoYouWantToQuitActive = temple::GetRef<uint32_t>(0x10BE8CF0);
+	if (!mDoYouWantToQuitActive && !uiSystems->GetDlg().IsActive()) {
+
+		if (modSupport.IsZMOD()) {
+			py::tuple args = py::make_tuple();
+			auto pyResult = pythonObjIntegration.ExecuteScript("game_save", "can_quick_save", args.ptr()); // def can_quick_save() -> int
+			if (PyInt_Check(pyResult)) {
+				auto result = _PyInt_AsInt(pyResult);
+				if (!result) {
+					return FALSE;
+				}
+			}
+			Py_DECREF(pyResult);
+		}
+
+		return gameSystems->QuickSave() ? TRUE : FALSE;
+	}
+	return FALSE;
 }
 
 bool UiManager::ProcessWidgetMessage(TigMsg & msg)
