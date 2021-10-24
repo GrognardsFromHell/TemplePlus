@@ -309,6 +309,7 @@ class RaceAbilityCallbacks
 {
 public:
 	static int __cdecl HalflingThrownWeaponAndSlingBonus(DispatcherCallbackArgs args);
+	static int GlobalMonsterToHit(DispatcherCallbackArgs args);
 } raceCallbacks;
 
 class ConditionFunctionReplacement : public TempleFix {
@@ -426,6 +427,7 @@ public:
 		replaceFunction(0x100ECFA0, ConditionOverrideBy);
 
 		replaceFunction(0x100EE050, GlobalGetArmorClass);
+		replaceFunction(0x100EE1B0, raceCallbacks.GlobalMonsterToHit);
 		replaceFunction(0x100EE280, GlobalToHitBonus);
 		replaceFunction(0x100EE760, GlobalOnDamage);
 		replaceFunction(0x100EEBF0, GenericCallbacks::GlobalHpChanged);
@@ -7357,6 +7359,22 @@ int RaceAbilityCallbacks::HalflingThrownWeaponAndSlingBonus(DispatcherCallbackAr
 		
 	}
 
+
+	return 0;
+}
+
+/* 0x100EE1B0 */
+int RaceAbilityCallbacks::GlobalMonsterToHit(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIOTypeAttackBonus, DispIoAttackBonus);
+	if (dispIo->attackPacket.dispKey >= ATTACK_CODE_NATURAL_ATTACK + 1) {
+		return 0;
+	}
+	
+	auto racialBab = critterSys.GetRacialAttackBonus(args.objHndCaller);
+	if (racialBab > 0) {
+		dispIo->bonlist.AddBonus(racialBab, 0, 118); // ~Base Attack~[TAG_MULTIPLE_ATTACKS]
+	}
 
 	return 0;
 }

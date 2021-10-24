@@ -5,6 +5,7 @@
 #include <memory>
 #include <temple/dll.h>
 #include "dispatcher.h"
+#include "dice.h"
 
 enum SkillEnum:uint32_t;
 
@@ -245,6 +246,7 @@ struct LegacyCritterSystem : temple::AddressTable
 	void SetWaypointsCount(objHndl critter, int count);
 	void SetWaypoint(objHndl critter, int index, const Waypoint& waypoint);
 
+	Dice GetRacialHitDice(objHndl critter);
 	void GenerateHp(objHndl critter); // sets the field obj_f_hp_pts according to class levels and NPC hit die using dice throws
 	int GetSubdualDamage(objHndl critter);
 	/*
@@ -397,6 +399,7 @@ struct LegacyCritterSystem : temple::AddressTable
 	int GetHpPercent(const objHndl& handle);
 	static int GetCritterNumNaturalAttacks(objHndl obj);
 	int GetCritterAttackType(objHndl obj, int attackIdx);
+	int GetRacialAttackBonus(objHndl);
 	int GetBaseAttackBonus(const objHndl& handle, Stat classBeingLeveld = Stat::stat_strength);
 	int GetArmorClass(objHndl obj, DispIoAttackBonus *dispIo = nullptr);
 #pragma endregion
