@@ -32,6 +32,7 @@ public:
 
 
 	int GetStatModifier(Race race, int stat); // e.g. +2 CON for Dwarves
+	int GetSavingThrowBonus(Race race, SavingThrowType saveType);
 	HairStyleRace GetHairStyle(Race race); // get racial hair style from among those available in ToEE
 	RaceBase GetBaseRace(Race race); // Gets base race enum from compound race ID
 	Subrace GetSubrace(Race race); // Gets subrace enum from compound race ID

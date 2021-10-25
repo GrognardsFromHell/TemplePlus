@@ -2003,6 +2003,45 @@ int LegacyCritterSystem::GetArmorClass(objHndl obj, DispIoAttackBonus* dispIo){
 	return dispatch.DispatchAttackBonus(obj, objHndl::null, dispIo, dispTypeGetAC, DK_NONE);
 }
 
+int LegacyCritterSystem::GetRacialSavingThrowBonus(objHndl handle, SavingThrowType saveType)
+{
+	if (!handle || !objSystem->IsValidHandle(handle))
+		return 0;
+
+	auto obj = objSystem->GetObject(handle);
+	
+	if (obj->IsNPC()) {
+		auto npcSaveBonus = 0;
+		auto validType = false;
+		switch (saveType) {
+		case SavingThrowType::Fortitude:
+			npcSaveBonus = obj->GetInt32(obj_f_npc_save_fortitude_bonus);
+			validType = true;
+			break;
+		case SavingThrowType::Reflex:
+			npcSaveBonus = obj->GetInt32(obj_f_npc_save_reflexes_bonus);
+			validType = true;
+			break;
+		case SavingThrowType::Will:
+			npcSaveBonus = obj->GetInt32(obj_f_npc_save_willpower_bonus);
+			validType = true;
+			break;
+		default:
+			break;
+		}
+		if (validType) {
+			return npcSaveBonus;
+		}
+		else {
+			logger->error("GetRacialSavingThrowBonus(): Bad save type parameter");
+		}
+	}
+	if (obj->IsPC()) {
+		d20RaceSys.GetSavingThrowBonus( critterSys.GetRace(handle, false) ,saveType);
+	}
+	return 0;
+}
+
 int LegacyCritterSystem::SkillBaseGet(objHndl handle, SkillEnum skill){
 	if (!handle)
 		return 0;

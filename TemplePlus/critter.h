@@ -402,6 +402,7 @@ struct LegacyCritterSystem : temple::AddressTable
 	int GetRacialAttackBonus(objHndl);
 	int GetBaseAttackBonus(const objHndl& handle, Stat classBeingLeveld = Stat::stat_strength);
 	int GetArmorClass(objHndl obj, DispIoAttackBonus *dispIo = nullptr);
+	int GetRacialSavingThrowBonus(objHndl handle, SavingThrowType saveType);
 #pragma endregion
 
 #pragma region Spellcasting

@@ -849,31 +849,10 @@ bool Damage::SavingThrow(objHndl handle, objHndl attacker, int dc, SavingThrowTy
 	evtObj.flags |= (1ull << (D20STD_F_FINAL_ROLL-1));
 	
 	// NPC special bonus from protos
-	if (obj->IsNPC()){
-		auto npcSaveBonus = 0;
-		auto validType = false;
-		switch(saveType){
-		case SavingThrowType::Fortitude:
-			npcSaveBonus = obj->GetInt32(obj_f_npc_save_fortitude_bonus);
-			validType = true;
-			break;
-		case SavingThrowType::Reflex:
-			npcSaveBonus = obj->GetInt32(obj_f_npc_save_reflexes_bonus);
-			validType = true;
-			break;
-		case SavingThrowType::Will:
-			npcSaveBonus = obj->GetInt32(obj_f_npc_save_willpower_bonus);
-			validType = true;
-			break;
-		default:
-			break;
-		}
-		if (validType){
-			evtObj.bonlist.AddBonus(npcSaveBonus, 0, 139);
-		}
-		else{
-			logger->error("SavingThrow(): Bad save type parameter");
-		}
+	auto racialBonus = critterSys.GetRacialSavingThrowBonus(handle, saveType);
+	
+	if (racialBonus != 0) {
+		evtObj.bonlist.AddBonus(racialBonus, 0, 139); // ~Racial~[TAG_RACIAL_CHARACTERISTICS] Bonus
 	}
 
 	dispatch.Dispatch13SavingThrow(handle, saveType, &evtObj);
