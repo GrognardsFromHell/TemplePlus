@@ -2037,7 +2037,7 @@ int LegacyCritterSystem::GetRacialSavingThrowBonus(objHndl handle, SavingThrowTy
 		}
 	}
 	if (obj->IsPC()) {
-		d20RaceSys.GetSavingThrowBonus( critterSys.GetRace(handle, false) ,saveType);
+		return d20RaceSys.GetSavingThrowBonus( critterSys.GetRace(handle, false) ,saveType);
 	}
 	return 0;
 }

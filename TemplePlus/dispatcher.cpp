@@ -48,9 +48,13 @@ public:
 		replaceFunction(0x1004DBA0, DispIOType21Init);
 		replaceFunction(0x1004D3A0, _Dispatch62);
 		replaceFunction(0x1004D440, _Dispatch63);
+
 		replaceFunction(0x1004DEC0, _DispatchAttackBonus);
 		replaceFunction(0x1004E040, _DispatchDamage);
 		replaceFunction(0x1004E790, _dispatchTurnBasedStatusInit); 
+		replaceFunction<int(__cdecl)(objHndl , SavingThrowType , DispIoSavingThrow*)>(0x1004E870, [](objHndl handle, SavingThrowType saveType, DispIoSavingThrow * evtObj) ->int{
+			return dispatch.Dispatch13SavingThrow(handle, saveType, evtObj);
+			});
 
 		replaceFunction(0x1004ED70, _dispatch1ESkillLevel); 
 

@@ -175,6 +175,7 @@ public:
 	static int __cdecl GlobalWieldedTwoHandedQuery(DispatcherCallbackArgs args);
 
 	static int __cdecl GlobalHpChanged(DispatcherCallbackArgs args);
+	static int __cdecl GlobalSavingThrowBase(DispatcherCallbackArgs args);
 
 
 	static int __cdecl HasCondition(DispatcherCallbackArgs args);
@@ -430,6 +431,7 @@ public:
 		replaceFunction(0x100EE050, GlobalGetArmorClass);
 		replaceFunction(0x100EE1B0, raceCallbacks.GlobalMonsterToHit);
 		replaceFunction(0x100EE280, GlobalToHitBonus);
+		replaceFunction(0x100EF2A0, genericCallbacks.GlobalSavingThrowBase);
 		replaceFunction(0x100EE760, GlobalOnDamage);
 		replaceFunction(0x100EEBF0, GenericCallbacks::GlobalHpChanged);
 
@@ -1460,6 +1462,48 @@ int GenericCallbacks::GlobalHpChanged(DispatcherCallbackArgs args){
 	else if (addDisabled) {
 		conds.AddTo(args.objHndCaller, "Disabled", {});
 		return 0;
+	}
+
+	return 0;
+}
+
+int __cdecl GenericCallbacks::GlobalSavingThrowBase(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIOTypeSavingThrow, DispIoSavingThrow);
+
+	Stat abilityStat = Stat::stat_constitution;
+	auto bonusMesline = 105;
+	SavingThrowType saveType = SavingThrowType::Fortitude;
+
+	switch (args.dispKey) {
+	case DK_SAVE_FORTITUDE:
+		abilityStat = Stat::stat_constitution;
+		bonusMesline = 105;
+		break;
+	case DK_SAVE_REFLEX:
+		abilityStat = Stat::stat_dexterity;
+		bonusMesline = 104;
+		saveType = SavingThrowType::Reflex;
+		break;
+	case DK_SAVE_WILL:
+		abilityStat = Stat::stat_wisdom;
+		bonusMesline = 107;
+		saveType = SavingThrowType::Will;
+		break;
+	default:
+		logger->error("GlobalSavingThrowBase: bad saving throw type parameter!");
+	}
+
+	auto abilityLevel = objects.StatLevelGet(args.objHndCaller, abilityStat);
+	auto abilityMod = objects.GetModFromStatLevel(abilityLevel);
+	dispIo->bonlist.AddBonus(abilityMod, 0, bonusMesline);
+
+
+	// Temple+: moved this here (rather than in the SavingThrow roll) so it shows up on char sheet
+	auto racialBonus = critterSys.GetRacialSavingThrowBonus(args.objHndCaller, saveType);
+	
+	if (racialBonus != 0) {
+		dispIo->bonlist.AddBonus(racialBonus, 0, 139); // ~Racial~[TAG_RACIAL_CHARACTERISTICS] Bonus
 	}
 
 	return 0;

@@ -848,12 +848,7 @@ bool Damage::SavingThrow(objHndl handle, objHndl attacker, int dc, SavingThrowTy
 	evtObj.flags = (int64_t)flags; // TODO: vanilla bug! flags input should be 64 bit (since some of the descriptor enums go beyond 32). Looks like they fixed it in the dispatcher but not this function.
 	evtObj.flags |= (1ull << (D20STD_F_FINAL_ROLL-1));
 	
-	// NPC special bonus from protos
-	auto racialBonus = critterSys.GetRacialSavingThrowBonus(handle, saveType);
-	
-	if (racialBonus != 0) {
-		evtObj.bonlist.AddBonus(racialBonus, 0, 139); // ~Racial~[TAG_RACIAL_CHARACTERISTICS] Bonus
-	}
+	// NPC special bonus from protos - moved to Global condition callback (was here in vanilla, so didn't show up on charsheet)
 
 	dispatch.Dispatch13SavingThrow(handle, saveType, &evtObj);
 	evtObj.obj = handle;
