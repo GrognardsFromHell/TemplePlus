@@ -984,7 +984,14 @@ int LegacySpellSystem::GetMaxSpellLevel(objHndl objHnd, Stat classCode, int char
 int LegacySpellSystem::GetNumSpellsPerDay(objHndl handle, Stat classCode, int spellLvl){
 	auto spellClass = spellSys.GetSpellClass(classCode);
 	auto effLvl = critterSys.GetSpellListLevelExtension(handle, classCode) + objects.StatLevelGet(handle, classCode);
-	return d20ClassSys.GetNumSpellsFromClass(handle, classCode, spellLvl, effLvl);
+	int result = d20ClassSys.GetNumSpellsFromClass(handle, classCode, spellLvl, effLvl);
+
+	auto modifier = dispatch.DispatchSpellsPerDay(handle, classCode, spellLvl, effLvl);
+
+	if (result > 0) {
+		return result + modifier;
+	}
+	return result;
 }
 
 int LegacySpellSystem::ParseSpellSpecString(SpellStoreData* spell, char* spellString)
