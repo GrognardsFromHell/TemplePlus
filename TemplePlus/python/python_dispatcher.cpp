@@ -1197,6 +1197,9 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 
 			return false;
 		}, "")
+		.def("get_spell_casting_class", [](EvtObjMetaMagic mm)->int {
+			return static_cast<int>(spellSys.GetCastingClass(mm.spellClass));
+		}, "")
 		;
 
 	py::class_<EvtObjSpecialAttack, DispIO>(m, "EvtObjSpecialAttack", "Used for applying effects")
