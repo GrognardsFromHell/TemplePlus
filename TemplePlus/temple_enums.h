@@ -1866,7 +1866,7 @@ enum enum_disp_type : uint32_t {
 	dispTypeProjectileCreated, // Used to create the particle effects for arrows and such
 	dispTypeProjectileDestroyed, // Used to stop the particle effects for arrows
 	dispType57, // Unused
-	dispType58SpellsPerDay, // Unused
+	dispType58SpellsPerDayMod, // In vanilla, was dispatched in 0x1004F510 but unused in practice
 	dispTypeGetAbilityLoss = 59,
 
 	dispTypeGetAttackDice,

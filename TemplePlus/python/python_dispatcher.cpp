@@ -1476,7 +1476,7 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 		pbEvtObj = py::cast(static_cast<EvtObjSpellCaster*>(args.dispIO));
 		break;
 
-	case dispType58SpellsPerDay:
+	case dispType58SpellsPerDayMod:
 		pbEvtObj = py::cast(static_cast<DispIoSpellsPerDay*>(args.dispIO));
 		break;
 

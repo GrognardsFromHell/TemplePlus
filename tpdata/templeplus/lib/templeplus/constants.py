@@ -3611,7 +3611,7 @@ ET_OnObjectEvent = 54 # Enter or leaving the area of effect of an object event
 ET_OnProjectileCreated = 55 # Used to create the particle effects for arrows and such
 ET_OnProjectileDestroyed = 56 # Used to stop the particle effects for arrows
 ET_On57 = 57 # Unused
-ET_On58 = 58 # Unused
+ET_OnGetSpellsPerDayMod = 58 # used in GetSpellsPerDay (was unused in vanilla, resurrected in Temple+)
 ET_OnGetAbilityLoss = 59
 
 ET_OnGetAttackDice = 60

@@ -801,7 +801,7 @@ int DispatcherSystem::DispatchSpellsPerDay(objHndl handle, Stat casterClass, int
 	evtObj.classCode = casterClass;
 	evtObj.spellLvl = spellLevel;
 	evtObj.casterEffLvl = effectiveLvl;
-	DispatcherProcessor(objDispatcher, dispType58SpellsPerDay, DK_NONE, &evtObj);
+	DispatcherProcessor(objDispatcher, dispType58SpellsPerDayMod, DK_NONE, &evtObj);
 	return evtObj.bonList->GetEffectiveBonusSum();
 }
 
