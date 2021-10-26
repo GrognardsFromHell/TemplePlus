@@ -1351,6 +1351,6 @@ def willing_and_capable( attachee ): # meant for NPCs, to see if they should be 
 def GetDelegatePc( attachee, distt = 20, requireLos = 0 ):
 	delegatePc = OBJ_HANDLE_NULL
 	for pc in game.party:
-		if (pc.type == obj_t_pc and pc.is_unconscious() == 0 and pc.d20_query(Q_Prone) == 0  and attachee.distance_to(pc) <= distt and (requireLos or attachee.can_see(pc))):
+		if (pc.type == obj_t_pc and pc.is_unconscious() == 0 and pc.d20_query(Q_Prone) == 0  and attachee.distance_to(pc) <= distt and (not requireLos or attachee.can_see(pc))):
 			delegatePc = pc
 	return delegatePc

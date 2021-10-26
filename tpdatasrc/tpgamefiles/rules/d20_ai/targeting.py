@@ -1,4 +1,5 @@
 from toee import *
+import tpdp
 import tpai
 from d20_ai_utils import *
 
@@ -16,6 +17,27 @@ def missing_stub(msg):
 	print msg
 	return 0
 
+def cannot_hate(obj, tgt, leader):
+	OHN = OBJ_HANDLE_NULL
+	if obj == OHN:
+		return 0
+	spell_flags = obj.obj_get_int(obj_f_spell_flags)
+	if (spell_flags & 0x8000000) and obj.leader != OHN:
+		return 0
+	if tgt == OHN or not tgt.is_critter():
+		return 0
+	if leader != OHN and tgt.leader == leader:
+		return 4
+	if (obj.allegiance_shared(tgt)):
+		return 3
+	if obj.d20_query_has_condition("sp-Sanctuary Save Failed") == 0 or tgt.d20_query_has_condition("sp-Sanctuary") == 0:
+		return 0
+	tgt_sanctuary_handle = tgt.d20_query_get_obj(Q_Critter_Has_Condition, tpdp.hash("sp-Sanctuary"))
+	sanctuary_handle     = obj.d20_query_get_obj(Q_Critter_Has_Condition, tpdp.hash("sp-Sanctuary Save Failed"))
+	if sanctuary_handle == tgt_sanctuary_handle:
+		return 5
+	return 0
+
 # aiSearchingTgt is used to avoid infinite looping since
 # consider_target calls will_kos which calls consider_target.
 # In the C(++), this is a global variable. Trying to avoid that.
@@ -25,16 +47,22 @@ def consider_target(attacker, target, aiSearchingTgt=False):
 	# 	debug_print("consider_target: " + str(attacker) + " considering " + str(target))
 	attacker_flags = target.obj_get_int(obj_f_critter_flags)
 	ignore_flags = OF_INVULNERABLE | OF_DONTDRAW | OF_OFF | OF_DESTROYED
-	target_flags = target.obj_get_int(obj_f_critter_flags)
+	target_flags = target.obj_get_int(obj_f_flags)
 
-	if target_flags & ignore_flags: return 0
+	if target_flags & ignore_flags: 
+		debug_print("consider_target:ignore_flags")
+		return 0
 
 	a_leader = attacker.leader_get()
 
 	if not target.is_critter():
-		if isBusted(target): return 0
+		if isBusted(target): 
+			debug_print("consider_target: is busted")
+			return 0
 	else:
-		if aiListFind(attacker, target, AI_LIST_ALLY): return 0
+		if aiListFind(attacker, target, AI_LIST_ALLY): 	
+			debug_print("consider_target:ai list ally")
+			return 0
 		if target == OBJ_HANDLE_NULL: return 0
 		if target.is_dead_or_destroyed(): return 0
 		if target.is_unconscious():
@@ -44,20 +72,27 @@ def consider_target(attacker, target, aiSearchingTgt=False):
 		if target == a_leader: return 0
 
 		t_leader = target.leader_get()
-		if t_leader != OBJ_HANDLE_NULL and t_leader == a_leader: return 0
+		if t_leader != OBJ_HANDLE_NULL and t_leader == a_leader:
+			debug_print("consider_target:same leader")
+			return 0
 
 		if isCharmedBy(target, attacker):
 			return targetIsPcPartyNotDead(target)
 
-		if target.is_friendly(attacker): return 0
+		if target.is_friendly(attacker): 
+			debug_print("consider tgt: is friendly: " + str(target) + "\n")
+			return 0
 
-		if target.distance_to(attacker) > 125.0: return 0
+		if target.distance_to(attacker) > 125.0: 
+			debug_print("consider_target:too far")
+			return 0
 
 	if a_leader != OBJ_HANDLE_NULL:
 		if a_leader.distance_to(target) > 20:
 			if attacker.distance_to(target) > 15.0:
+				debug_print("consider tgt: too far from leader")
 				return 0
-
+	debug_print("consider_target: Return true")
 	return 1
 
 def getFriendsCombatFocus(obj, friend, leader, aiSearchingTgt = False):
@@ -68,14 +103,14 @@ def getFriendsCombatFocus(obj, friend, leader, aiSearchingTgt = False):
 	if obj.allegiance_strength(friend) == 0:
 		return OBJ_HANDLE_NULL
 
-	aifs = tpai.AiFightStatus(friend)
+	aifs = AiFightStatus(friend)
 	tgt = aifs.target
 	if tgt == OBJ_HANDLE_NULL:
 		return tgt
 	if not aifs.status in [AIFS_FIGHTING, AIFS_FLEEING, AIFS_SURRENDERED]:
 		return OBJ_HANDLE_NULL
 
-	if obj.cannot_hate(tgt, leader):
+	if cannot_hate(obj, tgt, leader):
 		return OBJ_HANDLE_NULL
 
 	if not consider_target(obj, tgt, aiSearchingTgt):
@@ -229,7 +264,7 @@ def will_kos(attacker, target, aiSearchingTgt):
 		return 0
 
 	leader = attacker.leader_get()
-	if attacker.cannot_hate(target, leader):
+	if cannot_hate(attacker, target, leader):
 		return 4
 
 	return 0

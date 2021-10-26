@@ -143,6 +143,12 @@ GameObjectBody* ObjRegistry::Get(objHndl handle) {
 		return nullptr;
 	}
 
+	uint32_t id = (uint32_t)(handle.handle & 0xFFffFFff);
+	if (id > mNextId) { // indicates invalid handle!
+		logger->error("Invalid handle {:x} caught by id: {}, objregistry mNextId was {}", handle.handle, id, mNextId);
+		return nullptr;
+	}
+
 	return (GameObjectBody*)(handle.handle >> 32);
 
 	// This would be the traditional way and it does detect when handles

@@ -12,6 +12,10 @@
 #include <debugui.h>
 #include <messages\messagequeue.h>
 #include <tig\tig_keyboard.h>
+#include <gamesystems/gamesystems.h>
+#include <animgoals/anim.h>
+#include <animgoals/anim_slot.h>
+#include <gamesystems/objects/objsystem.h>
 
 static bool debugUiVisible = false;
 
@@ -156,6 +160,8 @@ static void DrawWidgetTreeNode(int widgetId) {
 
 }
 
+static void DrawAnimSlots();
+
 void UIRenderDebug()
 {
 	if (!debugUiVisible) {
@@ -173,6 +179,13 @@ void UIRenderDebug()
 
 	}
 
+	if (ImGui::CollapsingHeader("Viewports")) {
+		ImGui::Text(fmt::format("Cur idx: {}", temple::GetRef<int>(0x10BD3B44)).c_str());
+		for (auto i = 0; i < 10; ++i) {
+			ImGui::Text(fmt::format("{}: {}", i, temple::GetRef<int[10]>(0x10BD3AF8)[i]).c_str());
+		}
+	}
+
 	if (ImGui::CollapsingHeader("Anim Goals Debugging")) {
 		static bool showGoalsChecked;
 		ImGui::Checkbox("Render Current Goals", &showGoalsChecked);
@@ -181,6 +194,7 @@ void UIRenderDebug()
 		static bool showNamesChecked;
 		ImGui::Checkbox("Render Object Names", &showNamesChecked);
 		AnimGoalsDebugRenderer::EnableObjectNames(showNamesChecked);
+		DrawAnimSlots();
 	}
 
 	if (ImGui::CollapsingHeader("Rendering Debugging")) {
@@ -223,4 +237,21 @@ void UIRenderDebug()
 	}
 
 	ImGui::End();
+}
+
+void DrawAnimSlots()
+{
+	auto& anim = gameSystems->GetAnim();
+	for (auto i = 0; i < AnimSlotCount; ++i) {
+		AnimSlot &slot = anim.GetRunSlot(i);
+		if (!slot.flags) {
+			//if (!objSystem->IsValidHandle(slot.animObj))
+				continue;
+		}
+		if(ImGui::TreeNode(fmt::format("{}: {} {:x}", i, slot.animObj, slot.flags).c_str())) {
+			ImGui::Text(fmt::format("Current goal {}", slot.currentGoal).c_str());
+			ImGui::TreePop();
+		}
+	}
+	
 }

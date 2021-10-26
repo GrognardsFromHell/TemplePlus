@@ -22,6 +22,7 @@ hailOfArrowsEnum = 2003
 deathArrowEnum = 2004
 ###################################################
 
+tpdp.register_bard_song_stopping_python_action(imbueArrowEnum)
 
 #### standard callbacks - BAB and Save values
 def OnGetToHitBonusBase(attachee, args, evt_obj):
@@ -104,6 +105,13 @@ classSpecObj.AddHook(ET_OnToHitBonus2, EK_NONE, EnhanceArrowToHit, ())
 
 def ImbueOk(attachee, spData):
 	return (spData.is_area_spell() or spData.is_mode_target(MODE_TARGET_CONE)) and attachee.can_cast_spell(spData)
+	
+def HasSlotsRemaining(attachee, knSp):
+	classCode = knSp.spell_class
+	spellLevel = knSp.spell_level
+	max = attachee.get_num_spells_per_day(classCode, spellLevel)
+	used = attachee.get_num_spells_used(classCode, spellLevel)
+	return used < max
 
 def ImbueArrowRadial(attachee, args, evt_obj):
 
@@ -125,7 +133,7 @@ def ImbueArrowRadial(attachee, args, evt_obj):
 		spell_level_ids.append( spell_level_node.add_as_child(attachee, imb_arrow_id) )
 
 	for knSp in known_spells:
-		if knSp.is_naturally_cast() and ImbueOk(attachee, knSp):
+		if knSp.is_naturally_cast() and ImbueOk(attachee, knSp) and attachee.spontaneous_spells_remaining(knSp.spell_class, knSp.spell_level):
 			spell_node = tpdp.RadialMenuEntryPythonAction(knSp, D20A_PYTHON_ACTION, imbueArrowEnum,0)
 			spell_node.add_as_child(attachee, spell_level_ids[knSp.spell_level])
 

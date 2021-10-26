@@ -194,6 +194,7 @@ struct AiSystem : temple::AddressTable
 	
 	void AlertAllies(objHndl handle, objHndl alertFrom, int rangeIdx);
 		void AlertAlly(objHndl handle, objHndl alertFrom, objHndl alertDispatcher, int rangeIdx);
+	void AlertAllies2(objHndl handle, objHndl alertFrom);
 	/*
 	 updates AI flags based on a "Should flee" check
 	 originally 10057A70

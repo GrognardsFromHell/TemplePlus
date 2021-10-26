@@ -64,6 +64,7 @@ namespace gfx {
 		bool clamp = false;
 		bool outline = false; // Ignored during rendering
 		bool wireframe = false; // Ignored during rendering
+		bool perVertexColor = false; // per-vertex color info (only used for lightning, more or less)
 		std::vector<MdfGeneralMaterialSampler> samplers;
 	};
 	

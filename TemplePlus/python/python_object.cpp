@@ -528,23 +528,24 @@ static PyObject* PyObjHandle_CastSpell(PyObject* obj, PyObject* args) {
 			- (uint64_t)pickArgs.flagsTarget & UiPickerFlagsTarget::Range
 		);
 
-		if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Single)) {
+		// vanilla: was buggy, had & instead of this
+		if ( pickArgs.IsBaseModeTarget(UiPickerType::Single)){ // static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Single)) {
 			objects.loc->getLocAndOff(targetObj, &loc);
 			uiPicker.SetSingleTarget(targetObj, &pickArgs);
-		} else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Multi)) {
+		} else if (pickArgs.IsBaseModeTarget(UiPickerType::Multi)) {// static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Multi)) {
 			objects.loc->getLocAndOff(targetObj, &loc);
 			uiPicker.SetSingleTarget(targetObj, &pickArgs);
-		} else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Cone)) {
-			objects.loc->getLocAndOff(targetObj, &loc);
+		} else if (pickArgs.IsBaseModeTarget(UiPickerType::Cone)) {//static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Cone)) {
+			loc = objects.GetLocationFull(targetObj);
 			uiPicker.SetConeTargets(&loc, &pickArgs);
 
-		} else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Area)) {
+		} else if (pickArgs.IsBaseModeTarget(UiPickerType::Area)) {//static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Area)) {
 			if (spellEntry.spellRangeType == SRT_Personal)
 				objects.loc->getLocAndOff(caster, &loc);
 			else
 				objects.loc->getLocAndOff(targetObj, &loc);
 			uiPicker.GetListRange(&loc, &pickArgs);
-		} else if (static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Personal)) {
+		} else if (pickArgs.IsBaseModeTarget(UiPickerType::Personal)) {//static_cast<uint64_t>(pickArgs.modeTarget) & static_cast<uint64_t>(UiPickerType::Personal)) {
 			objects.loc->getLocAndOff(caster, &loc);
 			uiPicker.SetSingleTarget(caster, &pickArgs);
 		}
@@ -719,7 +720,7 @@ static PyObject* PyObjHandle_SkillLevelGet(PyObject* obj, PyObject* args) {
 
 	if (config.dialogueUseBestSkillLevel && pythonObjIntegration.IsInDialogGuard()) {
 		auto maxSkillLevel = -1000;
-		for (auto i = 0; i < party.GroupPCsLen(); ++i) {
+		for (uint32_t i = 0; i < party.GroupPCsLen(); ++i) {
 			auto pc = party.GroupPCsGetMemberN(i);
 			if (critterSys.IsDeadNullDestroyed(pc) || critterSys.IsDeadOrUnconscious(pc) || !objSystem->IsValidHandle(pc))
 				continue;
@@ -869,6 +870,58 @@ static PyObject* PyObjHandle_GetMaxDexBonus(PyObject* obj, PyObject* args) {
 	auto res = GetMaxDexBonus(self->handle);
 
 	return PyInt_FromLong(res);
+}
+
+static PyObject* PyObjHandle_GetNumSpellsPerDay(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	Stat spellClass;
+	int spLvl;
+	if (!PyArg_ParseTuple(args, "ii:objhndl:get_num_spells_per_day", &spellClass, &spLvl)) {
+		return 0;
+	}
+
+	auto res = spellSys.GetNumSpellsPerDay(self->handle, spellSys.GetCastingClass(spellClass), spLvl);
+
+	return PyInt_FromLong(res);
+}
+
+static PyObject* PyObjHandle_GetNumSpellsUsed(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	Stat spellClass;
+	int spLvl;
+	if (!PyArg_ParseTuple(args, "ii:objhndl:get_num_spells_used", &spellClass, &spLvl)) {
+		return 0;
+	}
+
+	auto res = spellSys.NumSpellsInLevel(self->handle, obj_f_critter_spells_cast_idx, spellClass, spLvl);
+
+	return PyInt_FromLong(res);
+}
+
+static PyObject* PyObjHandle_SpontaneousSpellsRemaining(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	Stat spellClass;
+	int spLvl;
+	if (!PyArg_ParseTuple(args, "ii:objhndl:spontaneous_spells_remaining", &spellClass, &spLvl)) {
+		return 0;
+	}
+
+	const auto spellsPerDay = spellSys.GetNumSpellsPerDay(self->handle, spellSys.GetCastingClass(spellClass), spLvl);
+	const auto spellUsed = spellSys.NumSpellsInLevel(self->handle, obj_f_critter_spells_cast_idx, spellClass, spLvl);
+	const bool res = spellsPerDay > spellUsed;
+	return PyInt_FromLong(res?1:0);
 }
 
 // turns out you could already get this via .stat_base_get(stat_attack_bonus). Leaving it for backward compatibility...
@@ -1505,7 +1558,9 @@ static PyObject* PyObjHandle_ReputationHas(PyObject* obj, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "i:objhndl.reputation_has", &reputationId)) {
 		return 0;
 	}
-	return PyInt_FromLong(partyReputation.Has(reputationId));
+	auto has = partyReputation.Has(reputationId);
+	auto result = PyInt_FromLong(has);
+	return result;
 }
 
 static PyObject* PyObjHandle_ReputationAdd(PyObject* obj, PyObject* args) {
@@ -2547,7 +2602,7 @@ static PyObject* PyObjHandle_D20QueryGetObj(PyObject* obj, PyObject* args) {
 	}
 	auto dispatcherKey = (D20DispatcherKey)(DK_QUE_Helpless + queryKey);
 	objHndl handle;
-	handle = d20Sys.d20QueryReturnData(self->handle, dispatcherKey);
+	handle = d20Sys.d20QueryReturnData(self->handle, dispatcherKey, testData);
 	if (!handle) {
 		return PyObjHndl_CreateNull();
 	}
@@ -3146,7 +3201,7 @@ static PyObject* PyObjHandle_DelIdxInt(PyObject* pyobj, PyObject* args) {
 	if (!PyArg_ParseTuple(args, "iii:objhndl.obj_del_idx_int", &field, &idx, &value)) {
 		return 0;
 	}
-	if (idx < obj->GetInt32Array(field).GetSize()) {
+	if (idx < static_cast<int>(obj->GetInt32Array(field).GetSize())) {
 		obj->RemoveInt32(field, idx);
 	}
 	
@@ -3279,7 +3334,7 @@ static PyObject* PyObjHandle_GetIdxObj(PyObject* obj, PyObject* args) {
 		return 0;
 	}
 	assert(subIdx >= 0);
-	auto result = objSystem->GetObject(self->handle)->GetObjHndl(field);
+	auto result = objSystem->GetObject(self->handle)->GetObjHndl(field, subIdx);
 	
 	return PyObjHndl_Create(result);
 }
@@ -3492,7 +3547,6 @@ static PyObject* PyObjHandle_HasFeat(PyObject* obj, PyObject* args) {
 		return PyInt_FromLong(0);
 	}
 
-
 	feat_enums feat;
 
 	if (PyTuple_GET_SIZE(args) < 1) {
@@ -3508,6 +3562,11 @@ static PyObject* PyObjHandle_HasFeat(PyObject* obj, PyObject* args) {
 
 	else if (!PyArg_ParseTuple(args, "i:objhndl.has_feat", &feat)) {
 		return 0;
+	}
+
+	if (!objects.IsCritter(self->handle)) {
+		logger->warn("Python has_feat ({}) called with non critter object: {}", feats.GetFeatName(feat), objects.description.getDisplayName(self->handle));
+		return PyInt_FromLong(0);
 	}
 
 	Stat levelRaised = (Stat)0;
@@ -4162,6 +4221,21 @@ static PyObject* PyObjHandle_IsBuckler(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(result);
 }
 
+static PyObject* PyObjHandle_IsThrowingWeapon(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	if (objects.GetType(self->handle) != obj_t_weapon)
+	{
+		logger->warn("Python is_throwing_weapon called with non weapon object: {}", objects.description.getDisplayName(self->handle));
+		return PyInt_FromLong(0);
+	}
+
+	auto result = inventory.IsThrowingWeapon(self->handle);
+	return PyInt_FromLong(result);
+}
+
 
 static PyObject * PyObjHandle_MakeWizard(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
@@ -4312,6 +4386,8 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "get_initiative", PyObjHandle_GetInitiative, METH_VARARGS, NULL },
 	{ "get_item_wear_flags", PyObjHandle_GetItemWearFlags, METH_VARARGS, NULL },
 	{ "get_max_dex_bonus", PyObjHandle_GetMaxDexBonus, METH_VARARGS, NULL },
+	{ "get_num_spells_per_day", PyObjHandle_GetNumSpellsPerDay, METH_VARARGS, NULL },
+	{ "get_num_spells_used", PyObjHandle_GetNumSpellsUsed, METH_VARARGS, NULL },
     { "get_deity", PyObjHandle_GetDeity, METH_VARARGS, NULL },
 	{ "get_weapon_type", PyObjHandle_GetWeaponType, METH_VARARGS, NULL },
 	{ "get_wield_type", PyObjHandle_GetWieldType, METH_VARARGS, NULL },
@@ -4345,8 +4421,8 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "is_friendly", PyObjHandle_IsFriendly, METH_VARARGS, NULL },
 	{ "is_spell_known", PyObjHandle_IsSpellKnown, METH_VARARGS, NULL },
 	{ "is_unconscious", PyObjHandle_IsUnconscious, METH_VARARGS, NULL },
+	{ "is_throwing_weapon", PyObjHandle_IsThrowingWeapon, METH_VARARGS, NULL },
 	{ "is_thrown_only_weapon", PyObjHandle_IsThrownOnlyWeapon, METH_VARARGS, NULL },
-
 	{ "item_condition_add_with_args", PyObjHandle_ItemConditionAdd, METH_VARARGS, NULL },
 	{ "item_condition_has", PyObjHandle_ItemConditionHas, METH_VARARGS, NULL },
 	{ "item_condition_remove", PyObjHandle_ItemConditionRemove, METH_VARARGS, NULL },
@@ -4452,6 +4528,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "spells_cast_reset", PyObjHandle_SpellsCastReset, METH_VARARGS, NULL },
 	{ "spells_memorized_forget", PyObjHandle_MemorizedForget, METH_VARARGS, NULL },
 	{ "spontaneous_spell_level_can_cast", PyObjHandle_SpontaneousSpellLevelCanCast, METH_VARARGS, NULL },
+	{ "spontaneous_spells_remaining", PyObjHandle_SpontaneousSpellsRemaining, METH_VARARGS, NULL },
 	{ "standpoint_get", PyObjHandle_StandpointGet, METH_VARARGS, NULL },
 	{ "standpoint_set", PyObjHandle_StandpointSet, METH_VARARGS, NULL },
 	{"stat_level_get", PyObjHandle_StatLevelGet, METH_VARARGS, NULL},

@@ -11,7 +11,8 @@
 struct ChainLightningTarget
 {
 	objHndl obj;
-	XMFLOAT4 vec;
+	XMFLOAT3 vec;
+	BOOL effectTriggered;
 };
 
 // const int testSizeofChainTgt = sizeof(ChainLightningTarget); // should be 24
@@ -21,6 +22,7 @@ struct ChainLightningTarget
  */
 class LightningRenderer {
 friend class LightningRenderHooks;
+friend class LightningRendererImpl;
 public:
 	LightningRenderer(gfx::MdfMaterialFactory &mdfFactory,
 		gfx::RenderingDevice &device);

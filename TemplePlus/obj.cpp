@@ -388,7 +388,8 @@ Objects::Objects()
 uint32_t Objects::abilityScoreLevelGet(objHndl objHnd, Stat stat, DispIO* dispIO)
 {
 	auto result = objects.dispatch.DispatchGetBonus(objHnd, (DispIoBonusList*)dispIO, dispTypeAbilityScoreLevel, (D20DispatcherKey)(stat + 1));
-	if (config.npcStatBoost > 0 && !party.IsInParty(objHnd)) {
+	if (config.npcStatBoost > 0 && objects.IsNPC(objHnd) && !party.IsInParty(objHnd) ) 
+	{
 		if (result >= 3 || stat != Stat::stat_intelligence) { // so it doesn't change behaviors such as animal intelligence
 			result += config.npcStatBoost;
 		}

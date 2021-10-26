@@ -84,12 +84,15 @@ def san_start_combat( attachee, triggerer ):
 			game.global_flags[823] = 1
 		if (obj_percent_hp(attachee) <= 50):
 			if (game.global_flags[377] == 0):
-				StopCombat(attachee, 0)
-				delegatePc = GetDelegatePc(attachee)
+				delegatePc = GetDelegatePc(attachee, 40)
+				if delegatePc == OBJ_HANDLE_NULL:
+					delegatePc = GetDelegatePc(attachee, 80)
 				print "Hedrack: Stopping combat. Delegate PC selected for dialog is " + str(delegatePc)
-				for pc in game.party:
-					attachee.ai_shitlist_remove( pc )
+					
 				if (delegatePc != OBJ_HANDLE_NULL):
+					StopCombat(attachee, 0)
+					for pc in game.party:
+						attachee.ai_shitlist_remove( pc )
 					delegatePc.turn_towards(attachee)
 					attachee.turn_towards(delegatePc)
 					delegatePc.begin_dialog( attachee, 190 )

@@ -186,7 +186,7 @@ void MapSystem::LoadModule() {
 
 			for (auto& mobFile : mobFiles) {
 				auto found = objMapId.find(mobFile.filename);
-				if (found!= objMapId.end()) {
+				if (found != objMapId.end()) {
 					
 
 					auto file = tio_fopen( fmt::format("{}/{}", dataDir, mobFile.filename).c_str() , "rb");
@@ -206,7 +206,8 @@ void MapSystem::LoadModule() {
 					}
 
 					logger->error("Duplicates MOB file found: {}/{} (was also on mapID = {}, now on {}). ProtoID: {}", dataDir, mobFile.filename, found->second, entry.id, protoId.GetPrototypeId());
-
+					
+					tio_fclose(file);
 				}
 				else {
 					objMapId[mobFile.filename] = entry.id;
@@ -1299,7 +1300,8 @@ void MapSystem::ReadMapMobiles(const std::string &dataDir, const std::string &sa
 			logger->trace("ReadMapMobiles: \t\tLoaded MOB obj {} ({})", handle, obj->id.ToString() );
 			auto flags = obj->GetFlags();
 			if (flags & OF_DYNAMIC) {
-				logger->error("ReadMapMobiles: \t\t\tMOB file flagged OF_DYNAMIC!!!");
+				logger->error("ReadMapMobiles: \t\t\tMOB file flagged OF_DYNAMIC!!! Unsetting.");
+				obj->SetFlag(OF_DYNAMIC, false);
 			}
 		}
 	}

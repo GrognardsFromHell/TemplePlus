@@ -34,7 +34,13 @@ public:
 			uiSystems->GetCamping().SetTimeUntilHealed();
 		});
 		
-
+		/*static BOOL(__cdecl*orgSetViewport)(int) = replaceFunction<BOOL(int)>(0x10115040, [](int viewport)->BOOL {
+				logger->trace("SetViewport: {}", viewport);
+				logger->trace("Viewport idx before: {}", temple::GetRef<int>(0x10BD3B44));
+				auto result = orgSetViewport(viewport);
+				logger->trace("Viewport idx after: {}", temple::GetRef<int>(0x10BD3B44));
+				return result;
+			});*/
 	}
 
 private:
