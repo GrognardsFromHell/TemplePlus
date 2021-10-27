@@ -1,0 +1,4 @@
+name: Battle Blessing
+flags: 12713984
+prereqs: 
+description: You can cast most of your paladin spells faster than normal, as per quicken spell, but automatically and with no effect on spell level. This feat has no effect on spells from other character classes.
