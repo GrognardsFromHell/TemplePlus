@@ -13,6 +13,7 @@ raceSpec.flags           = 2
 raceSpec.hit_dice        = dice_new("3d8")
 raceSpec.level_modifier  = 1                         # basic level modifier
 raceSpec.stat_modifiers  = [4, 2, 2, -2, 0, 0]   # str, dex, con, int, wis, cha
+raceSpec.saving_throw_modifiers = [1, 3, 1] # fort, ref, will
 raceSpec.natural_armor   = 3
 raceSpec.proto_id        = 13044
 raceSpec.help_topic      = "TAG_BUGBEAR"
