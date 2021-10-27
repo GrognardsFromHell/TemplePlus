@@ -3438,6 +3438,7 @@ stat_level_ruby_knight_vindicator = 80
 stat_level_shadow_sun_ninja = 81
 stat_level_fochlucan_lyrist = 82
 stat_level_marshal = 83
+stat_level_holy_scourge = 84
 
 
 

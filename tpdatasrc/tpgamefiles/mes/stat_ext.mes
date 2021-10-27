@@ -65,6 +65,7 @@
 
 //
 {82}{Fochlucan Lyrist}
+{84}{Holy Scourge}
 
 {300}{Psi Points} // max
 {301}{Psi Points} // cur
@@ -137,7 +138,7 @@
 {1080}{Rkvn}
 {1081}{Ssnj}
 {1082}{Foch}
-
+{1084}{HoSc}
 
 
 
@@ -322,6 +323,11 @@ Requirements: Alignment NG/TN/CN/NE.
 Bardic knowledge, Speak Druidic, Evasion.
 Spells: 1st-level arcane and divine spells.
 Decipher Script 7, Diplomacy 7, Gather Information 7, Perform 13, Sleight of Hand 7
+}
+{13077}Holy Scourge{The holy scourge is a multitalented soldier in the endless war against evil, an arcane caster who instills within his magic the power to cleanse the world of wickedness and depravity.
+
+Requirements: Alignment LG/NG/CG
+Able to cast three evocation spells, able to cast 3rd-level arcane spells.
 }
 
 // Cannot Pick Class Short Help Goes in the range of 20007+
