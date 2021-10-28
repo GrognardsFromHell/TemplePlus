@@ -1,7 +1,5 @@
 from templeplus.pymod import PythonModifier
 from toee import *
-import tpdp
-import math
 
 # Battle Blessing:  Complete Champion, p. 55
 
@@ -25,7 +23,6 @@ def BattleBlessingMetamagicUpdate(attachee, args, evt_obj):
 	return 0
 	
 #Setup the feat
-tpdp.register_metamagic_feat("Battle Blessing")
 BattleBlessingFeat = PythonModifier("Battle Blessing Feat", 2) #Spare, Spare
 BattleBlessingFeat.MapToFeat("Battle Blessing")
 BattleBlessingFeat.AddHook(ET_OnMetaMagicMod, EK_NONE, BattleBlessingMetamagicUpdate, ())
