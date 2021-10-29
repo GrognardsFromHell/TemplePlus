@@ -941,7 +941,8 @@ PyObject* PyGame_MouseMoveTo(PyObject*, PyObject* args)
 {
 	PyObject* locOrObj;
 
-	if (!PyArg_ParseTuple(args, "O:game.mouse_move_to", &locOrObj)) {
+	int isScreenspace = 0;
+	if (!PyArg_ParseTuple(args, "O|i:game.mouse_move_to", &locOrObj, &isScreenspace)) {
 		return 0;
 	}
 
@@ -958,10 +959,20 @@ PyObject* PyGame_MouseMoveTo(PyObject*, PyObject* args)
 		PyErr_SetString(PyExc_TypeError, "mouse_move_to argument must be either a tile location (long) or an object handle.");
 		return nullptr;
 	}
-	logger->info("mouse_move_to: location {}, {}", targetLoc.locx, targetLoc.locy);
-	auto worldPos = targetLoc.ToInches3D();
-	auto uiPos = gameView->WorldToScreenUi(worldPos);
-	mouseFuncs.SetPos(uiPos.x, uiPos.y, 0);
+	
+	int x = 0, y = 0;
+	if (isScreenspace) {
+		x = targetLoc.locx;
+		y = targetLoc.locy;
+	}
+	else {
+		logger->info("mouse_move_to: location {}, {}", targetLoc.locx, targetLoc.locy);
+		auto worldPos = targetLoc.ToInches3D();
+		auto uiPos = gameView->WorldToScreenUi(worldPos);
+		x = uiPos.x; y = uiPos.y;
+	}
+	
+	mouseFuncs.SetPos(x, y, 0);
 
 	Py_RETURN_TRUE;
 }
