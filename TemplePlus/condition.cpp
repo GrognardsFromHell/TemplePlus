@@ -175,6 +175,7 @@ public:
 	static int __cdecl GlobalWieldedTwoHandedQuery(DispatcherCallbackArgs args);
 
 	static int __cdecl GlobalHpChanged(DispatcherCallbackArgs args);
+	static int __cdecl GlobalSavingThrowBase(DispatcherCallbackArgs args);
 
 
 	static int __cdecl HasCondition(DispatcherCallbackArgs args);
@@ -309,6 +310,7 @@ class RaceAbilityCallbacks
 {
 public:
 	static int __cdecl HalflingThrownWeaponAndSlingBonus(DispatcherCallbackArgs args);
+	static int GlobalMonsterToHit(DispatcherCallbackArgs args);
 } raceCallbacks;
 
 class ConditionFunctionReplacement : public TempleFix {
@@ -319,6 +321,7 @@ public:
 	static int TurnUndeadHook(objHndl, Stat shouldBeClassCleric, DispIoD20ActionTurnBased* evtObj);
 	static int TurnUndeadCheck(DispatcherCallbackArgs args);
 	static int TurnUndeadPerform(DispatcherCallbackArgs args);
+	static int TurnUndeadRadial(DispatcherCallbackArgs args);
 	static int ManyShotAttack(DispatcherCallbackArgs args);
 	static int ManyShotMenu(int a1, objHndl objHnd);
 	static int ManyShotDamage(DispatcherCallbackArgs args);
@@ -426,7 +429,9 @@ public:
 		replaceFunction(0x100ECFA0, ConditionOverrideBy);
 
 		replaceFunction(0x100EE050, GlobalGetArmorClass);
+		replaceFunction(0x100EE1B0, raceCallbacks.GlobalMonsterToHit);
 		replaceFunction(0x100EE280, GlobalToHitBonus);
+		replaceFunction(0x100EF2A0, genericCallbacks.GlobalSavingThrowBase);
 		replaceFunction(0x100EE760, GlobalOnDamage);
 		replaceFunction(0x100EEBF0, GenericCallbacks::GlobalHpChanged);
 
@@ -562,6 +567,7 @@ public:
 		oldTurnUndeadPerform = replaceFunction(0x1004AEB0, TurnUndeadPerform);
 
 		replaceFunction<int(DispatcherCallbackArgs)>(0x1004ADE0, TurnUndeadCheck);
+		replaceFunction<int(DispatcherCallbackArgs)>(0x1004AD40, TurnUndeadRadial);
 
 
 
@@ -1456,6 +1462,48 @@ int GenericCallbacks::GlobalHpChanged(DispatcherCallbackArgs args){
 	else if (addDisabled) {
 		conds.AddTo(args.objHndCaller, "Disabled", {});
 		return 0;
+	}
+
+	return 0;
+}
+
+int __cdecl GenericCallbacks::GlobalSavingThrowBase(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIOTypeSavingThrow, DispIoSavingThrow);
+
+	Stat abilityStat = Stat::stat_constitution;
+	auto bonusMesline = 105;
+	SavingThrowType saveType = SavingThrowType::Fortitude;
+
+	switch (args.dispKey) {
+	case DK_SAVE_FORTITUDE:
+		abilityStat = Stat::stat_constitution;
+		bonusMesline = 105;
+		break;
+	case DK_SAVE_REFLEX:
+		abilityStat = Stat::stat_dexterity;
+		bonusMesline = 104;
+		saveType = SavingThrowType::Reflex;
+		break;
+	case DK_SAVE_WILL:
+		abilityStat = Stat::stat_wisdom;
+		bonusMesline = 107;
+		saveType = SavingThrowType::Will;
+		break;
+	default:
+		logger->error("GlobalSavingThrowBase: bad saving throw type parameter!");
+	}
+
+	auto abilityLevel = objects.StatLevelGet(args.objHndCaller, abilityStat);
+	auto abilityMod = objects.GetModFromStatLevel(abilityLevel);
+	dispIo->bonlist.AddBonus(abilityMod, 0, bonusMesline);
+
+
+	// Temple+: moved this here (rather than in the SavingThrow roll) so it shows up on char sheet
+	auto racialBonus = critterSys.GetRacialSavingThrowBonus(args.objHndCaller, saveType);
+	
+	if (racialBonus != 0) {
+		dispIo->bonlist.AddBonus(racialBonus, 0, 139); // ~Racial~[TAG_RACIAL_CHARACTERISTICS] Bonus
 	}
 
 	return 0;
@@ -4217,6 +4265,26 @@ int ConditionFunctionReplacement::ManyShotDamage(DispatcherCallbackArgs args)
 			ammoCount = objects.getInt32(damagePacket->attackPacket.ammoItem, obj_f_ammo_quantity);
 			objects.setInt32(damagePacket->attackPacket.ammoItem, obj_f_ammo_quantity, ammoCount - 1);
 		}
+	}
+
+	return 0;
+}
+
+int ConditionFunctionReplacement::TurnUndeadRadial(DispatcherCallbackArgs args)
+{
+	if (d20Sys.d20Query(args.objHndCaller, DK_QUE_IsFallenPaladin) == 0)
+	{
+		const int turnType = args.GetCondArg(0);
+		const int currentCharges = args.GetCondArg(1);
+		const int chaScore = objects.StatLevelGet(args.objHndCaller, stat_charisma);
+		const int chaMod = (chaScore - 10) / 2;
+		const int maxCharges = 3 + chaMod + feats.HasFeatCount(args.objHndCaller, FEAT_EXTRA_TURNING) * 4;
+
+		RadialMenuEntryAction turnUndead(5028 + turnType, D20A_TURN_UNDEAD, turnType, "TAG_TURN");
+		turnUndead.maxArg = maxCharges;
+		turnUndead.minArg = currentCharges;
+		turnUndead.flags |= 0x6;
+		turnUndead.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Class);
 	}
 
 	return 0;
@@ -7357,6 +7425,22 @@ int RaceAbilityCallbacks::HalflingThrownWeaponAndSlingBonus(DispatcherCallbackAr
 		
 	}
 
+
+	return 0;
+}
+
+/* 0x100EE1B0 */
+int RaceAbilityCallbacks::GlobalMonsterToHit(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIOTypeAttackBonus, DispIoAttackBonus);
+	if (dispIo->attackPacket.dispKey >= ATTACK_CODE_NATURAL_ATTACK + 1) {
+		return 0;
+	}
+	
+	auto racialBab = critterSys.GetRacialAttackBonus(args.objHndCaller);
+	if (racialBab > 0) {
+		dispIo->bonlist.AddBonus(racialBab, 0, 118); // ~Base Attack~[TAG_MULTIPLE_ATTACKS]
+	}
 
 	return 0;
 }

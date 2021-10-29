@@ -789,6 +789,20 @@ void LegacyCritterSystem::SetWaypoint(objHndl critter, int index, const Waypoint
 	}
 }
 
+Dice LegacyCritterSystem::GetRacialHitDice(objHndl critter)
+{
+	if (!critter || !objSystem->IsValidHandle(critter)) {
+		return Dice();
+	}
+	auto obj = objSystem->GetObject(critter);
+	if (obj->IsNPC()) {
+		return objects.GetHitDice(critter);
+	}
+	else {
+		return d20RaceSys.GetHitDice(critterSys.GetRace(critter, false));
+	}
+}
+
 void LegacyCritterSystem::GenerateHp(objHndl handle){
 	if (!handle){
 		return;
@@ -1751,6 +1765,48 @@ int LegacyCritterSystem::GetCritterAttackType(objHndl obj, int attackIdx)
 	return objects.getArrayFieldInt32(obj, obj_f_attack_types_idx, damageIdx);
 }
 
+int LegacyCritterSystem::GetRacialAttackBonus(objHndl critter)
+{
+	//if (obj->type != obj_t_npc){
+	//  return 0;
+	//}
+
+	auto racialHd = critterSys.GetRacialHitDice(critter).GetCount();
+	//auto racialHd  = obj->GetInt32(obj_f_npc_hitdice_idx, 0);
+	
+	auto moncat = critterSys.GetCategory(critter);
+	switch (moncat)
+	{
+	case mc_type_aberration:
+	case mc_type_animal:
+	case mc_type_beast:
+	case mc_type_construct:
+	case mc_type_elemental:
+	case mc_type_giant:
+	case mc_type_humanoid:
+	case mc_type_ooze:
+	case mc_type_plant:
+	case mc_type_shapechanger:
+	case mc_type_vermin:
+		return (3 * racialHd / 4);
+
+
+	case mc_type_dragon:
+	case mc_type_magical_beast:
+	case mc_type_monstrous_humanoid:
+	case mc_type_outsider:
+		return racialHd;
+
+	case mc_type_fey:
+	case mc_type_undead:
+		return racialHd / 2;
+
+	default: break;
+	}
+	
+	return 0;
+}
+
 int LegacyCritterSystem::GetBaseAttackBonus(const objHndl& handle, Stat classBeingLeveled){
 
 	
@@ -1763,40 +1819,9 @@ int LegacyCritterSystem::GetBaseAttackBonus(const objHndl& handle, Stat classBei
 	}
 
 	// get BAB from NPC HD
-	auto obj = gameSystems->GetObj().GetObject(handle);
-	if (obj->type == obj_t_npc){
-		auto npcHd = obj->GetInt32(obj_f_npc_hitdice_idx, 0);
-		auto moncat = critterSys.GetCategory(handle);
-		switch (moncat)
-		{
-		case mc_type_aberration: 
-		case mc_type_animal: 
-		case mc_type_beast: 
-		case mc_type_construct: 
-		case mc_type_elemental:
-		case mc_type_giant:
-		case mc_type_humanoid:
-		case mc_type_ooze:
-		case mc_type_plant:
-		case mc_type_shapechanger:
-		case mc_type_vermin:
-			return bab + (3 * npcHd / 4);
+	auto racialBab = GetRacialAttackBonus(handle);
 
-
-		case mc_type_dragon: 
-		case mc_type_magical_beast:
-		case mc_type_monstrous_humanoid:
-		case mc_type_outsider:
-			return bab + npcHd;
-
-		case mc_type_fey: 
-		case mc_type_undead:
-			return bab + npcHd / 2;
-
-		default: break;
-		}
-	}
-	return bab;
+	return bab + racialBab;
 }
 
 int LegacyCritterSystem::GetSpellLvlCanCast(const objHndl& handle, SpellSourceType spellSourceType, SpellReadyingType spellReadyingType){
@@ -1976,6 +2001,45 @@ bool LegacyCritterSystem::HashMatchingClassForSpell(objHndl handle, uint32_t spe
 
 int LegacyCritterSystem::GetArmorClass(objHndl obj, DispIoAttackBonus* dispIo){
 	return dispatch.DispatchAttackBonus(obj, objHndl::null, dispIo, dispTypeGetAC, DK_NONE);
+}
+
+int LegacyCritterSystem::GetRacialSavingThrowBonus(objHndl handle, SavingThrowType saveType)
+{
+	if (!handle || !objSystem->IsValidHandle(handle))
+		return 0;
+
+	auto obj = objSystem->GetObject(handle);
+	
+	if (obj->IsNPC()) {
+		auto npcSaveBonus = 0;
+		auto validType = false;
+		switch (saveType) {
+		case SavingThrowType::Fortitude:
+			npcSaveBonus = obj->GetInt32(obj_f_npc_save_fortitude_bonus);
+			validType = true;
+			break;
+		case SavingThrowType::Reflex:
+			npcSaveBonus = obj->GetInt32(obj_f_npc_save_reflexes_bonus);
+			validType = true;
+			break;
+		case SavingThrowType::Will:
+			npcSaveBonus = obj->GetInt32(obj_f_npc_save_willpower_bonus);
+			validType = true;
+			break;
+		default:
+			break;
+		}
+		if (validType) {
+			return npcSaveBonus;
+		}
+		else {
+			logger->error("GetRacialSavingThrowBonus(): Bad save type parameter");
+		}
+	}
+	if (obj->IsPC()) {
+		return d20RaceSys.GetSavingThrowBonus( critterSys.GetRace(handle, false) ,saveType);
+	}
+	return 0;
 }
 
 int LegacyCritterSystem::SkillBaseGet(objHndl handle, SkillEnum skill){

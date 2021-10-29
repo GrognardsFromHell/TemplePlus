@@ -22,13 +22,13 @@ struct ChainLightningTarget
  */
 class LightningRenderer {
 friend class LightningRenderHooks;
+friend class LightningRendererImpl;
 public:
 	LightningRenderer(gfx::MdfMaterialFactory &mdfFactory,
 		gfx::RenderingDevice &device);
 	~LightningRenderer();
 
 	void Render();
-	void RenderChainLightning();
 private:
 	void Render(size_t vertexCount,
 		XMFLOAT4 *vertices,
@@ -37,9 +37,6 @@ private:
 		XMFLOAT2 *uv,
 		size_t primCount,
 		uint16_t *indices);
-
-	void RenderMainArc(XMFLOAT3 from, XMFLOAT3 to, int segments, XMFLOAT3 normal, float colorRamp);
-	void RenderForks(XMFLOAT3 from, XMFLOAT3 to, int segments, XMFLOAT3 normal, float colorRamp, int minLength, int maxLength);
 
 	gfx::MdfMaterialFactory &mMdfFactory;
 	gfx::RenderingDevice &mDevice;
