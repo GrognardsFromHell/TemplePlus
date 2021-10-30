@@ -99,6 +99,10 @@ def ObjMeetsPrereqs( obj ):
 	#Beguilers should qualify, they get Undetectable Alignment at first level which is not in the game
 	if obj.stat_level_get(stat_level_beguiler) > 0:
 		can_cast_abjuration = true
+		
+	#Warmages should qualify at level 4, when they get Fire Trap which is not in the game
+	if obj.stat_level_get(stat_level_warmage) > 3:
+		can_cast_abjuration = true
 			
 	if not can_cast_abjuration:
 		return 0
