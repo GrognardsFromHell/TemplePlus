@@ -220,6 +220,8 @@ public:
     ~UiHelp();
     void Reset() override;
     const std::string &GetName() const override;
+
+	bool AlertIsActive();
 };
 
 class UiSkillMastery : public UiSystem {

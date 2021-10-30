@@ -12,6 +12,7 @@
 #include "action_sequence.h"
 #include "float_line.h"
 #include "ui/ui_picker.h"
+#include <turn_based.h>
 
 namespace py = pybind11;
 
@@ -136,6 +137,13 @@ PYBIND11_EMBEDDED_MODULE(tpactions, m) {
 		return **actSeqSys.actSeqCur;
 	});
 	
+	m.def("get_current_tb_actor", []()->objHndl {
+		auto actor = tbSys.turnBasedGetCurrentActor();
+		if (!actor || !objSystem->IsValidHandle(actor))
+			return objHndl::null;
+		return actor;
+		});
+
 	m.def("action_cost_from_spell_casting_time", [](int castingTimeType)->std::tuple<int, int> {
 		int hourglassCost = 0;
 		auto result = d20Sys.CombatActionCostFromSpellCastingTime(castingTimeType, hourglassCost);

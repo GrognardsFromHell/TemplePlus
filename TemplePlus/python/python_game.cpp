@@ -1416,6 +1416,12 @@ PyObject* PyGame_IsDaytime(PyObject*, PyObject* args) {
 	return PyInt_FromLong(gameSystems->GetTimeEvent().IsDaytime());
 }
 
+PyObject* PyGame_IsAlertPopupActive(PyObject*, PyObject* args) {
+	
+	return PyInt_FromLong(uiSystems->GetHelp().AlertIsActive());
+}
+
+
 static PyObject *PySpell_SpellGetPickerEndPoint(PyObject*, PyObject *args) {
 
 	auto wallEndPt = uiPicker.GetWallEndPoint();
@@ -1511,6 +1517,7 @@ static PyMethodDef PyGameMethods[]{
 	{"tutorial_show_topic", PyGame_TutorialShowTopic, METH_VARARGS, NULL},
 	{"combat_is_active", PyGame_CombatIsActive, METH_VARARGS, NULL},
 	{"written_ui_show", PyGame_WrittenUiShow, METH_VARARGS, NULL},
+	{"is_alert_popup_active", PyGame_IsAlertPopupActive, METH_VARARGS, NULL},
 	{"is_daytime", PyGame_IsDaytime, METH_VARARGS, NULL},
 
 	{"damage_type_match", PyGame_DamageTypeMatch, METH_VARARGS, NULL },
