@@ -1,0 +1,5 @@
+name: Marshal Adrenaline Boost
+flags: 8
+prereqs:
+description: Grant Temporary Hit Points to Allies
+prereq descr: Marshal 4

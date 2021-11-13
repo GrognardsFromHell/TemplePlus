@@ -1,0 +1,5 @@
+name: Major Aura Motivate Urgency
+flags: 8
+prereqs:
+description: Allies' base land speed is increased by a number of feet equal to 5 x the amount of bonus the aura provides. For example, the allies of a 10th-level marshal (+2 major aura) add 10 feet to their base land speed.
+prereq descr: Marshal 2

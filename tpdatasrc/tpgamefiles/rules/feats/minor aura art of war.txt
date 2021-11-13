@@ -1,0 +1,5 @@
+name: Minor Aura Art of War
+flags: 8
+prereqs:
+description: Bonus on disarm, trip, bull rush, and sunder attempts.
+prereq descr: Marshal 1

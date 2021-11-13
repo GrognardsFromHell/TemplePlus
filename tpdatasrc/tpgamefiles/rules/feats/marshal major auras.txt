@@ -1,0 +1,5 @@
+name: Marshal Major Auras
+flags: 8
+prereqs:
+description: Beginning at 2nd level, a marshal can project a major aura in addition to his minor aura. A major aura lets allies add +1 to certain rolls. This bonus improves by +1 at 7th, 14th, and 20th level.
+prereq descr: Marshal 1

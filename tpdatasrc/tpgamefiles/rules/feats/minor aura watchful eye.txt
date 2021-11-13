@@ -1,0 +1,5 @@
+name: Minor Aura Watchful Eye
+flags: 8
+prereqs:
+description: Bonus on Reflex saves.
+prereq descr: Marshal 1

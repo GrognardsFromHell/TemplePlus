@@ -1,0 +1,5 @@
+ID_string: MARSHAL_ADRENALINE_BOOST
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\spell heroism.tga
+help_topic: TAG_CLASS_FEATURES_MARSHAL_ADRENALINE_BOOST
+tooltip_base_text: Marshal Adrenaline Boost
