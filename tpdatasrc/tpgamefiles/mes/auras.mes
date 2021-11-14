@@ -31,6 +31,7 @@
 // Draconic Auras
 // PHB II: 23-29
 // Dragon Magic 30+
+
 {23}{Energy Shield}
 {24}{Power}
 {25}{Presence}
@@ -47,6 +48,7 @@
 
 // Aura Tags
 // Enums are +1000
+
 {1001}{TAG_AURA_ACCURATE_STRIKE}
 {1002}{TAG_AURA_ART_OF_WAR}
 {1003}{TAG_AURA_DEMAND_FORTITUDE}
@@ -76,3 +78,9 @@
 {1027}{TAG_AURA_SENSES}
 {1028}{TAG_AURA_TOUGHNESS}
 {1029}{TAG_AURA_VIGOR}
+{1030}{TAG_AURA_BREAK_SPELL_RESISTANCE} // Renamed from Power as a different Aura is already named Power
+{1031}{TAG_AURA_ENERGY}
+{1032}{TAG_AURA_INSIGHT}
+{1033}{TAG_AURA_RESOLVE}
+{1034}{TAG_AURA_STAMINA}
+{1035}{TAG_AURA_SWIFTNESS}

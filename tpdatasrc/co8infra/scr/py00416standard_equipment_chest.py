@@ -38,6 +38,9 @@ def give_default_starting_equipment(x = 0):
 			elif pc.stat_level_get(stat_level_fighter) > 0:
 				for aaa in [6013 ,6010 ,6011 ,6012 ,6059 ,4062 ,8014]:
 					create_item_in_inventory( aaa, pc )		
+			elif pc.stat_level_get(stat_level_marshal) > 0:
+				for aaa in [6013, 6010, 6011, 6012, 6059, 4062, 8014]:
+					create_item_in_inventory( aaa, pc )
 			elif pc.stat_level_get(stat_level_monk) > 0:
 				if pc.stat_level_get(stat_race) in [race_gnome, race_halfling]:
 					for aaa in [6205 ,6202 ,4060 ,8014]: # dagger (4060) instead of quarterstaff

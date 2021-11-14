@@ -35,6 +35,8 @@ def onConditionRemoveActions(attachee, args, evt_obj):
 marshalMajorAuraSpell = PythonModifier("sp-Marshal Major Aura", 5) #spell_id, activeAura, auraEventId, empty, empty
 marshalMajorAuraSpell.AddHook(ET_OnObjectEvent, EK_OnEnterAoE, onEnterMarshalMajorAura, ())
 marshalMajorAuraSpell.AddHook(ET_OnConditionRemove, EK_NONE, onConditionRemoveActions, ())
+marshalMajorAuraSpell.AddSpellTeleportPrepareStandard()
+marshalMajorAuraSpell.AddSpellTeleportReconnectStandard()
 marshalMajorAuraSpell.AddAoESpellEndStandardHook()
 
 ### All Major Aura descriptions can be found at: http://archive.wizards.com/default.asp?x=dnd/ex/20030906b ###

@@ -35,6 +35,8 @@ def onConditionRemoveActions(attachee, args, evt_obj):
 marshalMinorAuraSpell = PythonModifier("sp-Marshal Minor Aura", 5) #spell_id, activeAura, auraEventId, empty, empty
 marshalMinorAuraSpell.AddHook(ET_OnObjectEvent, EK_OnEnterAoE, onEnterMarshalMinorAura, ())
 marshalMinorAuraSpell.AddHook(ET_OnConditionRemove, EK_NONE, onConditionRemoveActions, ())
+marshalMinorAuraSpell.AddSpellTeleportPrepareStandard()
+marshalMinorAuraSpell.AddSpellTeleportReconnectStandard()
 marshalMinorAuraSpell.AddAoESpellEndStandardHook()
 
 ### All Minor Aura descriptions can be found at: http://archive.wizards.com/default.asp?x=dnd/ex/20030906b ###

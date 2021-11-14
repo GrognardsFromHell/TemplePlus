@@ -240,7 +240,7 @@ class AuraModifier(PythonModifier):
 
 
 ##### class auraRadialModifier #####
-##### used by Marshal Class for both Minor and Majro Aura #####
+##### used by Marshal Class for both Minor and Major Aura #####
 ##### and by the Draconic Aura Feats #####
 def getAuraSpellEnum(auraType):
     if auraType == aura_type_minor:
@@ -277,7 +277,12 @@ def radialAura(attachee, args, evt_obj):
     pythonDismissEnum = pythonEnum + 2
     auraSpellEnum = getAuraSpellEnum(auraType)
     radialAuraTop = tpdp.RadialMenuEntryParent(auraTypeString)
-    radialAuraTopId = radialAuraTop.add_child_to_standard(attachee, tpdp.RadialMenuStandardNode.Class)
+    if auraType == aura_type_draconic and attachee.stat_level_get(stat_level_dragon_shaman) < 1:
+        radialAuraTopId = radialAuraTop.add_child_to_standard(attachee, tpdp.RadialMenuStandardNode.Feats)
+    elif auraType == aura_type_double_draconic:
+        radialAuraTopId = radialAuraTop.add_child_to_standard(attachee, tpdp.RadialMenuStandardNode.Feats)
+    else:
+        radialAuraTopId = radialAuraTop.add_child_to_standard(attachee, tpdp.RadialMenuStandardNode.Class)
     #Add aura childs
     for auraEnum in learnedAuras:
         auraName = getAuraName(auraEnum)
@@ -294,7 +299,12 @@ def radialAura(attachee, args, evt_obj):
     if activeAura:
         activeAuraName = getAuraName(activeAura)
         dismissAuraId = tpdp.RadialMenuEntryPythonAction("Dismiss {}".format(activeAuraName), D20A_PYTHON_ACTION, pythonDismissEnum, activeAura, auraTag)
-        dismissAuraId.add_child_to_standard(attachee, tpdp.RadialMenuStandardNode.Class)
+        if auraType == aura_type_draconic and attachee.stat_level_get(stat_level_dragon_shaman) < 1:
+            dismissAuraId.add_child_to_standard(attachee, tpdp.RadialMenuStandardNode.Feats)
+        elif auraType == aura_type_double_draconic:
+            dismissAuraId.add_child_to_standard(attachee, tpdp.RadialMenuStandardNode.Feats)
+        else:
+            dismissAuraId.add_child_to_standard(attachee, tpdp.RadialMenuStandardNode.Class)
     return 0
 
 def activateAura(attachee, args, evt_obj):
@@ -352,9 +362,7 @@ def checkDeactivateMarshal(attachee, args, evt_obj):
     return 0
 
 def checkDeactivateDraconic(attachee, args, evt_obj):
-    #Deactivate Aura if specific conditions are added
-    #panicked & fascinated missing
-    #Basically all conditions that prohibit communication will end the auras
+    #Deactivate Aura if attachee is getting Unconscious
     if (evt_obj.is_modifier("Unconscious")
     or evt_obj.is_modifier("Dead")):
         if args.get_arg(3):
@@ -367,7 +375,7 @@ class AuraRadialModifier(PythonModifier):
     # AuraRadialModifier have 5 arguments:
     # 0: featEnum, 1: auraType, 2: spellId, 3: activeAuraEnum 4: empty
     # use MapToFeat("[Name]", feat_cond_arg2 = aura_type_minor/major/draconic)
-    # to set arg1 to the aura the modifier should handle
+    # to set arg2 to the aura the modifier should handle
     def __init__(self, name):
         PythonModifier.__init__(self, name, 5, True)
         self.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, radialAura, ())
