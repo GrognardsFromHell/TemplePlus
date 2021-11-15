@@ -5,39 +5,7 @@ import aura_utils
 
 print "Registering Marshal Minor Auras"
 
-def onEnterMarshalMinorAura(attachee, args, evt_obj):
-    print "onEnterMarshalMinorAura Hook"
-    auraEventId = args.get_arg(2)
-    if auraEventId != evt_obj.evt_id:
-        return 0
-    auraSpellId = args.get_arg(0)
-    auraSpellPacket = tpdp.SpellPacket(auraSpellId)
-    auraTarget = evt_obj.target
-    if auraTarget.is_friendly(attachee) and aura_utils.verifyTarget(auraTarget):
-        if auraSpellPacket.add_target(auraTarget, 0):
-            auraEnum = args.get_arg(1)
-            auraName = aura_utils.getAuraName(auraEnum)
-            auraTarget.condition_add_with_args("Marshal Minor Aura {}".format(auraName), auraSpellId, auraEnum, auraEventId, 0, 0)
-    return 0
-
-def onConditionRemoveActions(attachee, args, evt_obj):
-    spellId = args.get_arg(0)
-    spellPacket = tpdp.SpellPacket(spellId)
-    spellPacket.remove_target(attachee)
-    targetList = aura_utils.getTargetsInAura(spellPacket)
-    for target in targetList:
-        if target == OBJ_HANDLE_NULL:
-            break
-        target.d20_send_signal(S_Spell_End, spellId, 0)
-        spellPacket.remove_target(target)
-    return 0
-
-marshalMinorAuraSpell = PythonModifier("sp-Marshal Minor Aura", 5) #spell_id, activeAura, auraEventId, empty, empty
-marshalMinorAuraSpell.AddHook(ET_OnObjectEvent, EK_OnEnterAoE, onEnterMarshalMinorAura, ())
-marshalMinorAuraSpell.AddHook(ET_OnConditionRemove, EK_NONE, onConditionRemoveActions, ())
-marshalMinorAuraSpell.AddSpellTeleportPrepareStandard()
-marshalMinorAuraSpell.AddSpellTeleportReconnectStandard()
-marshalMinorAuraSpell.AddAoESpellEndStandardHook()
+marshalMinorAuraSpell = aura_utils.AuraAoeHandlingModifier("sp-Marshal Minor Aura")
 
 ### All Minor Aura descriptions can be found at: http://archive.wizards.com/default.asp?x=dnd/ex/20030906b ###
 ### All Auras have 5 args: auraSpellId, auraEnum, auraEventId, empty, empty (may get reduced to 4 in final version)

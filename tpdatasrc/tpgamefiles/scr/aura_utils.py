@@ -177,8 +177,6 @@ def onLeaveAura(attachee, args, evt_obj):
     auraEventId = args.get_arg(2)
     if auraEventId != evt_obj.evt_id:
         return 0
-    auraSpellPacket.remove_target(attachee)
-    #args.condition_remove()
     args.remove_spell_mod()
     return 0
 
@@ -186,8 +184,12 @@ def auraEndSignal(attachee, args, evt_obj):
     signalId = evt_obj.data1
     spellId = args.get_arg(0)
     if signalId == spellId:
-        #args.condition_remove()
         args.remove_spell_mod()
+    return 0
+
+def onAuraConditionRemove(attachee, args, evt_obj):
+    auraSpellPacket = tpdp.SpellPacket(args.get_arg(0))
+    auraSpellPacket.remove_target(attachee)
     return 0
 
 def auraTooltip(attachee, args, evt_obj):
@@ -223,10 +225,10 @@ class AuraModifier(PythonModifier):
     def __init__(self, name):
         PythonModifier.__init__(self, name, 5, True)
         self.AddHook(ET_OnObjectEvent, EK_OnLeaveAoE, onLeaveAura, ())
-        #self.AddHook(ET_OnD20PythonSignal, "PS_Aura_End", auraEndSignal, ())
         self.AddHook(ET_OnD20Signal, EK_S_Spell_End, auraEndSignal, ())
         self.AddHook(ET_OnGetTooltip, EK_NONE, auraTooltip, ())
         self.AddHook(ET_OnGetEffectTooltip, EK_NONE, auraEffectTooltip, ())
+        self.AddHook(ET_OnConditionRemove, EK_NONE, onAuraConditionRemove, ())
         self.AddSpellTeleportPrepareStandard()
         self.AddSpellTeleportReconnectStandard()
 
@@ -238,6 +240,47 @@ class AuraModifier(PythonModifier):
             eventKey = skill + 20
             self.AddHook(ET_OnGetSkillLevel, eventKey, auraAddBonusList, (auraType,))
 
+##### class AuraAoeHandlingModifier #####
+def onEnterAoeAura(attachee, args, evt_obj):
+    auraEventId = args.get_arg(2)
+    if auraEventId != evt_obj.evt_id:
+        return 0
+    auraType = args.get_arg(3)
+    auraTypeString = getAuraTypeString(auraType)
+    auraSpellId = args.get_arg(0)
+    auraSpellPacket = tpdp.SpellPacket(auraSpellId)
+    auraTarget = evt_obj.target
+    if auraTarget.is_friendly(attachee):
+        if auraType > aura_type_major or verifyTarget(auraTarget):
+            if auraSpellPacket.add_target(auraTarget, 0):
+                auraEnum = args.get_arg(1)
+                auraName = getAuraName(auraEnum)
+                auraTarget.condition_add_with_args("{} {}".format(auraTypeString, auraName), auraSpellId, auraEnum, auraEventId, 0, 0)
+    return 0
+
+def aoeHandlerSignalEnd(attachee, args, evt_obj):
+    spellId = args.get_arg(0)
+    signalId = evt_obj.data1
+    if spellId == signalId:
+        spellPacket = tpdp.SpellPacket(spellId)
+        targetList = getTargetsInAura(spellPacket)
+        for target in targetList:
+            if target == OBJ_HANDLE_NULL:
+                break
+            target.d20_send_signal(S_Spell_End, spellId, 0)
+        args.remove_spell()
+    return 0
+
+class AuraAoeHandlingModifier(PythonModifier):
+    # AuraModifier have 5 arguments:
+    # 0: spellId, 1: activeAura, 2: auraEventId, 3: auraType, 4: empty
+    def __init__(self, name):
+        PythonModifier.__init__(self, name, 5, True)
+        self.AddHook(ET_OnObjectEvent, EK_OnEnterAoE, onEnterAoeAura, ())
+        self.AddHook(ET_OnD20PythonSignal, "PS_Aura_End", aoeHandlerSignalEnd, ())
+        self.AddSpellTeleportPrepareStandard()
+        self.AddSpellTeleportReconnectStandard()
+        self.AddAoESpellEndStandardHook()
 
 ##### class auraRadialModifier #####
 ##### used by Marshal Class for both Minor and Major Aura #####
@@ -338,7 +381,8 @@ def queryActivatedAura(attachee, args, evt_obj):
 
 def dismissAura(attachee, args, evt_obj):
     if args.get_arg(3):
-        attachee.d20_send_signal(S_Spell_End, args.get_arg(2))
+        attachee.d20_send_signal("PS_Aura_End", args.get_arg(2), 0)
+        #attachee.d20_send_signal(S_Spell_End, args.get_arg(2))
         args.set_arg(2, 0)
         args.set_arg(3, 0)
     return 0
