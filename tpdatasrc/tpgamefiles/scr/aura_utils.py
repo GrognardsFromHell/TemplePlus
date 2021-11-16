@@ -147,7 +147,7 @@ def auraAddBonusList(attachee, args, evt_obj):
     elif auraType == aura_type_major:
         auraBonus = getMajorAuraBonus(auraSpellPacket.caster)
         auraBonusType = 21 #ID 21 = Circumstance Bonus
-    elif auraType == aura_type_draconic:
+    elif auraType == aura_type_draconic or auraType == aura_type_double_draconic:
         auraBonus = getDraconicAuraBonus(auraSpellPacket.caster)
         auraBonusType = 190 # new ID for Draconic Auras
     evt_obj.bonus_list.add(auraBonus, auraBonusType, "~{}: {}~[{}]".format(auraTypeString, auraName, auraTag))
@@ -354,7 +354,7 @@ def activateAura(attachee, args, evt_obj):
     # check if toggle needs to deactivate an already active Aura first
     oldSpellId = args.get_arg(2)
     if oldSpellId:
-        attachee.d20_send_signal(S_Spell_End,oldSpellId)
+        attachee.d20_send_signal("PS_Aura_End", oldSpellId)
         args.set_arg(2, 0)
         args.set_arg(3, 0)
     # activate new Aura
