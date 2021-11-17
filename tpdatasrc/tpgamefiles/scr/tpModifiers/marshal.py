@@ -85,7 +85,6 @@ def newMinorAuraAvailible(classLevel, numberAurasLearned):
     return True if dictKnownAuras[classLevel] > numberAurasLearned else False
 
 def radialLearnMinorAura(attachee, args, evt_obj):
-    print "radialLearnMinorAura Hook"
     classLevel = attachee.stat_level_get(classEnum)
     minorAuras = aura_utils.getMinorAuraList()
     learnedAuras = aura_utils.getLearnedAuras(attachee, aura_type_minor)
