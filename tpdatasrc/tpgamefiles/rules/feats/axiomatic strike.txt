@@ -1,0 +1,7 @@
+name: Axiomatic Strike
+flags: 4194304
+prereqs: 12 7
+description: You can turn your fist into an instrument of law.
+
+Against a chaotic opponent, you can make an unarmed attack that does an extra 2d6 points of damage. You must declare that you are using this feat before you make your attack roll (thus, a failed attack ruins the attempt). Each attempt counts as one of your uses of the Stunning Fist feat for the day. Creatures immune to stunning can be affected by this extra damage.
+prereq descr: Stunning Fist, Ki strike (lawful)

@@ -3,7 +3,7 @@
 {135}{Attacker is Ethereal}
 {136}{Vulnerable}
 
-// Spell Compendium (by Sagenlicht)
+// Spell Compendium
 {3000}{~Critical Strike~[TAG_SPELLS_CRITICAL_STRIKE]}
 {3001}{~Sonic Weapon~[TAG_SPELLS_SONIC_WEAPON]}
 {3002}{~War Cry~[TAG_SPELLS_WAR_CRY]}
@@ -13,3 +13,9 @@
 {3006}{~Undead Bane Weapon~[TAG_SPELLS_UNDEAD_BANE_WEAPON]}
 {3007}{~Lawful Sword~[TAG_SPELLS_LAWFUL_SWORD]}
 {3008}{~Weapon of Energy~[TAG_SPELLS_WEAPON_OF_ENERGY]}
+
+// Feat Damage effects
+{4000}{~Flying Kick~[TAG_FLYING_KICK]}
+{4001}{~Fists of Iron~[TAG_FISTS_OF_IRON]}
+{4002}{~Axiomatic Strike~[TAG_AXIOMATIC_STRIKE]}
+{4003}{~Fiery Fist~[TAG_FIERY_FIST]}
