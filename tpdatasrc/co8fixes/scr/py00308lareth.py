@@ -115,7 +115,7 @@ def san_spell_cast( attachee, triggerer, spell ):
 		max = attachee.stat_level_get( stat_hp_max )
 		new = max - cur
 		damage_dice = dice_new( '1d1' )
- 		damage_dice.number = new
+		damage_dice.number = new
 		attachee.destroy()
 		npc = game.obj_create( 14614, location_from_axis (490L, 483L))
 #		while (i < total):

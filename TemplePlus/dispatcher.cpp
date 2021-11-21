@@ -48,9 +48,13 @@ public:
 		replaceFunction(0x1004DBA0, DispIOType21Init);
 		replaceFunction(0x1004D3A0, _Dispatch62);
 		replaceFunction(0x1004D440, _Dispatch63);
+
 		replaceFunction(0x1004DEC0, _DispatchAttackBonus);
 		replaceFunction(0x1004E040, _DispatchDamage);
 		replaceFunction(0x1004E790, _dispatchTurnBasedStatusInit); 
+		replaceFunction<int(__cdecl)(objHndl , SavingThrowType , DispIoSavingThrow*)>(0x1004E870, [](objHndl handle, SavingThrowType saveType, DispIoSavingThrow * evtObj) ->int{
+			return dispatch.Dispatch13SavingThrow(handle, saveType, evtObj);
+			});
 
 		replaceFunction(0x1004ED70, _dispatch1ESkillLevel); 
 
@@ -697,7 +701,7 @@ void DispatcherSystem::DispatchConditionRemove(Dispatcher* dispatcher, CondNode*
 	cond->flags |= 1;
 }
 
-void DispatcherSystem::DispatchMetaMagicModify(objHndl obj, MetaMagicData& mmData, unsigned char spellLevel, uint16_t spellEnum)
+void DispatcherSystem::DispatchMetaMagicModify(objHndl obj, MetaMagicData& mmData, unsigned char spellLevel, uint16_t spellEnum, uint32_t spellClass)
 {
 	auto _dispatcher = objects.GetDispatcher(obj);
 	if (!dispatch.dispatcherValid(_dispatcher)) return;
@@ -705,6 +709,7 @@ void DispatcherSystem::DispatchMetaMagicModify(objHndl obj, MetaMagicData& mmDat
 	dispIo.mmData = mmData;
 	dispIo.spellEnum = spellEnum;
 	dispIo.spellLevel = spellLevel;
+	dispIo.spellClass = spellClass;
 	DispatcherProcessor(_dispatcher, dispTypeMetaMagicMod, 0, &dispIo);
 	mmData = dispIo.mmData;
 }
@@ -786,6 +791,22 @@ int DispatcherSystem::DispatchSpellListLevelExtension(objHndl handle, Stat caste
 	evtObj.arg0 = casterClass;
 	DispatcherProcessor(objDispatcher, dispTypeSpellListExtension, DK_NONE, &evtObj);
 	return evtObj.bonlist.GetEffectiveBonusSum();
+}
+
+int DispatcherSystem::DispatchSpellsPerDay(objHndl handle, Stat casterClass, int spellLevel, int effectiveLvl)
+{
+	auto objDispatcher = gameSystems->GetObj().GetObject(handle)->GetDispatcher();
+	if (!objDispatcher->IsValid())
+		return 0;
+
+	DispIoSpellsPerDay evtObj;
+	BonusList bonlist;
+	evtObj.bonList = &bonlist;
+	evtObj.classCode = casterClass;
+	evtObj.spellLvl = spellLevel;
+	evtObj.casterEffLvl = effectiveLvl;
+	DispatcherProcessor(objDispatcher, dispType58SpellsPerDayMod, DK_NONE, &evtObj);
+	return evtObj.bonList->GetEffectiveBonusSum();
 }
 
 int DispatcherSystem::DispatchGetBaseCasterLevel(objHndl handle, Stat casterClass){
@@ -1655,4 +1676,11 @@ EvtObjAddMesh::EvtObjAddMesh(objHndl handleIn)
 {
 	this->dispIOType = evtObjTypeAddMesh;
 	handle = handleIn;
+}
+
+DispIoSpellsPerDay::DispIoSpellsPerDay()
+{
+	dispIOType = dispIOType18;
+	unk = 3001;
+	unk2 = 0;
 }

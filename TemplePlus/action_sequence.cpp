@@ -259,6 +259,16 @@ ActionSequenceSystem::ActionSequenceSystem()
 	memcpy(turnBasedStatusTransitionMatrix, _transMatrix, sizeof(turnBasedStatusTransitionMatrix));
 }
 
+void ActionSequenceSystem::RegisterBardSongStoppingPythonAction(int action)
+{
+	bardSongStoppingPythonActions.insert(action);
+}
+
+bool ActionSequenceSystem::IsBardSongStoppingPythonAction(int action)
+{
+	return bardSongStoppingPythonActions.count(action) != 0;
+}
+
 uint32_t ActionSequenceSystem::GetRemainingMaxMoveLength(D20Actn* d20a, TurnBasedStatus* tbStat, float* moveLen){
 	auto surplusMoves = tbStat->surplusMoveDistance;
 	auto moveSpeed = dispatch.Dispatch29hGetMoveSpeed(d20a->d20APerformer);
@@ -473,7 +483,7 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 		MetaMagicData metaMagicData = metamagicValue;
 
 		//Modify metamagic data for enlarge and widen 
-		dispatch.DispatchMetaMagicModify(d20Sys.globD20Action->d20APerformer, metaMagicData, spellLevel, spellEnum);
+		dispatch.DispatchMetaMagicModify(d20Sys.globD20Action->d20APerformer, metaMagicData, spellLevel, spellEnum, spellClass);
 
 		auto curSeq = *actSeqSys.actSeqCur;
 		curSeq->spellPktBody.spellRange *= metaMagicData.metaMagicEnlargeSpellCount + 1;

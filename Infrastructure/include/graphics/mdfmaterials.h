@@ -98,7 +98,7 @@ namespace gfx {
 		MdfRenderMaterialPtr GetById(int id);
 		MdfRenderMaterialPtr GetByName(const std::string &name);
 
-		MdfRenderMaterialPtr LoadMaterial(const std::string& name);
+		MdfRenderMaterialPtr LoadMaterial(const std::string& name, std::function<void(gfx::MdfMaterial&)> customizer = nullptr);
 
 		// Retrieves a material replacement set from rules/materials.mes
 		using ReplacementSet = std::map<MaterialPlaceholderSlot, MdfRenderMaterialPtr>;

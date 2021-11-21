@@ -222,9 +222,8 @@ def AbjurantChampionArcaneBoostRadial(attachee, args, evt_obj):
 			spell_level_ids.append( spell_level_node.add_as_child(attachee, effectID) )
 
 		known_spells = attachee.spells_known
-
 		for knSp in known_spells:
-			if knSp.is_naturally_cast() and (knSp.spell_level > 0):
+			if knSp.is_naturally_cast() and (knSp.spell_level > 0) and attachee.spontaneous_spells_remaining(knSp.spell_class, knSp.spell_level):
 				spell_node = tpdp.RadialMenuEntryPythonAction(knSp, D20A_PYTHON_ACTION, arcaneBoostEnum, effectType)
 				spell_node.add_as_child(attachee, spell_level_ids[knSp.spell_level-1])
 

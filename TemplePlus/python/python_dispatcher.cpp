@@ -114,6 +114,10 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		feats.AddMetamagicFeat(static_cast<feat_enums>(feat));
 	});
 
+	m.def("register_bard_song_stopping_python_action", [](int action) {
+		actSeqSys.RegisterBardSongStoppingPythonAction(action);
+	});
+
 	m.def("get_metamagic_feats", []() {
 		std::vector<int> result;
 		auto mmFeats = feats.GetMetamagicFeats();
@@ -829,9 +833,24 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		{
 			return spellSys.GetSpellLevelBySpellClass(spEntry.spellEnum, spellClass);
 		})
+		.def_readwrite("spellRange", &SpellEntry::spellRange)
+		.def_readwrite("spellRangeType", &SpellEntry::spellRangeType)
+		.def("get_spell_range_exact", [](SpellEntry &spEntry, int casterLevel, objHndl &caster)->int
+		{
+			return spellSys.GetSpellRangeExact(spEntry.spellRangeType, casterLevel, caster);
+		})
 		;
 
-
+		py::enum_<SpellRangeType>(m, "SpellRangeType")
+			.value("SRT_Specified", SpellRangeType::SRT_Specified)
+			.value("SRT_Personal", SpellRangeType::SRT_Personal)
+			.value("SRT_Touch", SpellRangeType::SRT_Touch)
+			.value("SRT_Close", SpellRangeType::SRT_Close)
+			.value("SRT_Medium", SpellRangeType::SRT_Medium)
+			.value("SRT_Long", SpellRangeType::SRT_Long)
+			.value("SRT_Unlimited", SpellRangeType::SRT_Unlimited)
+			.value("SRT_Special_Inivibility_Purge", SpellRangeType::SRT_Special_Inivibility_Purge)
+			;
 
 		py::class_<SpellPacketBody>(m, "SpellPacket")
 			.def(py::init<objHndl, D20SpellData>(), py::arg("caster"), py::arg("spell_data"))
@@ -1154,6 +1173,13 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("spell_packet", &EvtObjSpellCaster::spellPkt)
 		;
 
+	py::class_<DispIoSpellsPerDay>(m, "EventObjSpellsPerDay", "Used for retrieving spells per day mods. Resurrected in Temple+!")
+		.def_readwrite("bonus_list", &DispIoSpellsPerDay::bonList)
+		.def_readwrite("caster_class", &DispIoSpellsPerDay::classCode)
+		.def_readwrite("spell_level", &DispIoSpellsPerDay::spellLvl)
+		.def_readwrite("base_caster_level", &DispIoSpellsPerDay::casterEffLvl)
+		;
+
 	py::class_<EvtObjActionCost, DispIO>(m, "EventObjActionCost", "Used for modifying action cost")
 		.def_readwrite("cost_orig", &EvtObjActionCost::acpOrig)
 		.def_readwrite("cost_new", &EvtObjActionCost::acpCur)
@@ -1165,6 +1191,22 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("meta_magic", &EvtObjMetaMagic::mmData)
 		.def_readwrite("spell_enum", &EvtObjMetaMagic::spellEnum)
 		.def_readwrite("spell_level", &EvtObjMetaMagic::spellLevel)
+		.def_readwrite("spell_class", &EvtObjMetaMagic::spellClass)
+		.def("is_divine_spell", [](EvtObjMetaMagic mm)->bool {
+			if (spellSys.isDomainSpell(mm.spellClass)) {
+				return true;
+			}
+
+			auto castingClass = spellSys.GetCastingClass(mm.spellClass);
+			if (d20ClassSys.IsDivineCastingClass(castingClass)) {
+				return true;
+			}
+
+			return false;
+		}, "")
+		.def("get_spell_casting_class", [](EvtObjMetaMagic mm)->int {
+			return static_cast<int>(spellSys.GetCastingClass(mm.spellClass));
+		}, "")
 		;
 
 	py::class_<EvtObjSpecialAttack, DispIO>(m, "EvtObjSpecialAttack", "Used for applying effects")
@@ -1435,6 +1477,10 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 	case dispTypeLevelupSystemEvent:
 	case dispTypeSpellCasterGeneral:
 		pbEvtObj = py::cast(static_cast<EvtObjSpellCaster*>(args.dispIO));
+		break;
+
+	case dispType58SpellsPerDayMod:
+		pbEvtObj = py::cast(static_cast<DispIoSpellsPerDay*>(args.dispIO));
 		break;
 
 	case dispTypeActionCostMod:

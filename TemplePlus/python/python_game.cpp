@@ -11,6 +11,7 @@
 #include "python_counters.h"
 #include "python_areas.h"
 #include "python_spell.h"
+#include "messages/messagequeue.h"
 #include "tig/tig_mouse.h"
 #include "maps.h"
 #include "../gameview.h"
@@ -53,6 +54,8 @@
 #include <fmt/format.h>
 
 #include <pybind11/embed.h>
+#include <gamesystems/mapsystem.h>
+#include <tig/tig_keyboard.h>
 namespace py = pybind11;
 
 std::map<std::string, MesHandle> mesMap;
@@ -284,6 +287,11 @@ PyObject* PyGame_FadeAndTeleport(PyObject*, PyObject* args) {
 
 	if (!PyArg_ParseTuple(args, "iiiiii", &fadeArgs.timeToAdvance, &fadeArgs.soundId, &fadeArgs.movieId, &fadeArgs.destMap, &fadeArgs.destLoc.locx, &fadeArgs.destLoc.locy)) {
 		return 0;
+	}
+
+	// Temple+: added option to auto-set start location by map props when coords are both < 0
+	if ( (int)fadeArgs.destLoc.locx < 0 && (int)fadeArgs.destLoc.locy < 0) {
+		fadeArgs.destLoc = gameSystems->GetMap().GetStartPos(fadeArgs.destMap);
 	}
 
 	fadeArgs.field34 = 48;
@@ -908,6 +916,85 @@ PyObject* PyGame_ScrollTo(PyObject*, PyObject* args)
 	Py_RETURN_TRUE;
 }
 
+PyObject* PyGame_Keypress(PyObject*, PyObject* args) {
+
+	int dik = 0;
+	if (!PyArg_ParseTuple(args, "i:game.keypress", &dik)) {
+		return nullptr;
+	}
+	logger->info("game.keypress: {}", dik);
+
+	TigMsg tigMsg;
+	tigMsg.createdMs = timeGetTime();
+	tigMsg.type = TigMsgType::KEYSTATECHANGE;
+	tigMsg.arg1 = dik;
+	tigMsg.arg2 = 0; // Means it has changed to unpressed
+	if (tigMsg.arg1 != 0) {
+		messageQueue->Enqueue(tigMsg);
+	}
+
+	Py_RETURN_TRUE;
+}
+
+
+PyObject* PyGame_MouseMoveTo(PyObject*, PyObject* args)
+{
+	PyObject* locOrObj;
+
+	int isScreenspace = 0;
+	if (!PyArg_ParseTuple(args, "O|i:game.mouse_move_to", &locOrObj, &isScreenspace)) {
+		return 0;
+	}
+
+	locXY targetLoc;
+
+	if (PyObjHndl_Check(locOrObj)) {
+		auto objHandle = PyObjHndl_AsObjHndl(locOrObj);
+		targetLoc = objects.GetLocation(objHandle);
+	}
+	else if (PyLong_Check(locOrObj)) {
+		targetLoc = locXY::fromField(PyLong_AsUnsignedLongLong(locOrObj));
+	}
+	else {
+		PyErr_SetString(PyExc_TypeError, "mouse_move_to argument must be either a tile location (long) or an object handle.");
+		return nullptr;
+	}
+	
+	int x = 0, y = 0;
+	if (isScreenspace) {
+		x = targetLoc.locx;
+		y = targetLoc.locy;
+	}
+	else {
+		logger->info("mouse_move_to: location {}, {}", targetLoc.locx, targetLoc.locy);
+		auto worldPos = targetLoc.ToInches3D();
+		auto uiPos = gameView->WorldToScreenUi(worldPos);
+		x = uiPos.x; y = uiPos.y;
+	}
+	
+	mouseFuncs.SetPos(x, y, 0);
+
+	Py_RETURN_TRUE;
+}
+
+
+PyObject* PyGame_MouseClick(PyObject*, PyObject* args)
+{
+	int clickType = 0;
+
+	if (!PyArg_ParseTuple(args, "|i:game.mouse_click", &clickType)) {
+		return nullptr;
+	}
+
+	if (clickType >= (int)MouseButton::LEFT && clickType <= (int)MouseButton::MIDDLE){
+		mouseFuncs.SetButtonState((MouseButton)clickType, true);
+		mouseFuncs.SetButtonState((MouseButton)clickType, false);
+	}
+	
+	Py_RETURN_TRUE;
+}
+
+
 PyObject* PyGame_LoadGame(PyObject*, PyObject* args) {
 	char *filename;
 	if (!PyArg_ParseTuple(args, "s:game.loadgame", &filename)) {
@@ -1329,6 +1416,12 @@ PyObject* PyGame_IsDaytime(PyObject*, PyObject* args) {
 	return PyInt_FromLong(gameSystems->GetTimeEvent().IsDaytime());
 }
 
+PyObject* PyGame_IsAlertPopupActive(PyObject*, PyObject* args) {
+	
+	return PyInt_FromLong(uiSystems->GetHelp().AlertIsActive());
+}
+
+
 static PyObject *PySpell_SpellGetPickerEndPoint(PyObject*, PyObject *args) {
 
 	auto wallEndPt = uiPicker.GetWallEndPoint();
@@ -1406,7 +1499,10 @@ static PyMethodDef PyGameMethods[]{
 	{"gametime_add", PyGame_GametimeAdd, METH_VARARGS, NULL},
 	{"is_outdoor", PyGame_IsOutdoor, METH_VARARGS, NULL},
 	{"is_spell_harmful", PyGame_IsSpellHarmful, METH_VARARGS, NULL },
+	{"keypress", PyGame_Keypress, METH_VARARGS, NULL},
 	{ "scroll_to", PyGame_ScrollTo, METH_VARARGS, NULL },
+	{"mouse_move_to", PyGame_MouseMoveTo, METH_VARARGS, NULL },
+	{"mouse_click", PyGame_MouseClick, METH_VARARGS, NULL },
 	{"shake", PyGame_Shake, METH_VARARGS, NULL},
 	{"moviequeue_add", PyGame_MoviequeueAdd, METH_VARARGS, NULL},
 	{"moviequeue_play", PyGame_MoviequeuePlay, METH_VARARGS, NULL},
@@ -1421,6 +1517,7 @@ static PyMethodDef PyGameMethods[]{
 	{"tutorial_show_topic", PyGame_TutorialShowTopic, METH_VARARGS, NULL},
 	{"combat_is_active", PyGame_CombatIsActive, METH_VARARGS, NULL},
 	{"written_ui_show", PyGame_WrittenUiShow, METH_VARARGS, NULL},
+	{"is_alert_popup_active", PyGame_IsAlertPopupActive, METH_VARARGS, NULL},
 	{"is_daytime", PyGame_IsDaytime, METH_VARARGS, NULL},
 
 	{"damage_type_match", PyGame_DamageTypeMatch, METH_VARARGS, NULL },

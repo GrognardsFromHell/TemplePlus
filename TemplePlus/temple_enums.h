@@ -1866,7 +1866,7 @@ enum enum_disp_type : uint32_t {
 	dispTypeProjectileCreated, // Used to create the particle effects for arrows and such
 	dispTypeProjectileDestroyed, // Used to stop the particle effects for arrows
 	dispType57, // Unused
-	dispType58, // Unused
+	dispType58SpellsPerDayMod, // In vanilla, was dispatched in 0x1004F510 but unused in practice
 	dispTypeGetAbilityLoss = 59,
 
 	dispTypeGetAttackDice,
@@ -2545,7 +2545,7 @@ enum WeaponTypes : uint32_t
 	wt_sickle,
 	wt_club,
 	wt_shortspear,
-	wt_heavy_mace,
+	wt_heavy_mace, // 10
 	wt_morningstar,
 	wt_quarterstaff,
 	wt_spear,
@@ -2555,17 +2555,17 @@ enum WeaponTypes : uint32_t
 	wt_heavy_crossbow,		// 17
 	wt_javelin,
 	wt_throwing_axe,
-	wt_light_hammer,
+	wt_light_hammer, // 20
 	wt_handaxe,
 	wt_light_lance,
 	wt_light_pick,
 	wt_sap,
-	wt_short_sword,
+	wt_short_sword, // 25
 	wt_battleaxe,
 	wt_light_flail,
 	wt_heavy_lance,
 	wt_longsword,
-	wt_heavy_pick,
+	wt_heavy_pick, // 30
 	wt_rapier,
 	wt_scimitar,
 	wt_trident,

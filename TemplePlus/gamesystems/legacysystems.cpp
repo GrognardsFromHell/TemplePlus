@@ -1504,6 +1504,8 @@ PartySystem::PartySystem(const GameSystemConf &config) {
 void PartySystem::Reset() {
 	auto reset = temple::GetPointer<void()>(0x1002ac00);
 	reset();
+	// Temple+: fixes party_banter_text
+	temple::GetRef<BOOL>(0x1080AB9C) = config.GetVanillaInt("party_banter_text");
 }
 bool PartySystem::SaveGame(TioFile *file) {
 	auto save = temple::GetPointer<int(TioFile*)>(0x1002ac70);
@@ -1697,32 +1699,6 @@ const std::string &D20RollsSystem::GetName() const {
 	return name;
 }
 
-//*****************************************************************************
-//* Secretdoor
-//*****************************************************************************
-
-SecretdoorSystem::SecretdoorSystem(const GameSystemConf &config) {
-	auto startup = temple::GetPointer<int(const GameSystemConf*)>(0x10046370);
-	if (!startup(&config)) {
-		throw TempleException("Unable to initialize game system Secretdoor");
-	}
-}
-void SecretdoorSystem::Reset() {
-	auto reset = temple::GetPointer<void()>(0x10046390);
-	reset();
-}
-bool SecretdoorSystem::SaveGame(TioFile *file) {
-	auto save = temple::GetPointer<int(TioFile*)>(0x100463b0);
-	return save(file) == 1;
-}
-bool SecretdoorSystem::LoadGame(GameSystemSaveFile* saveFile) {
-	auto load = temple::GetPointer<int(GameSystemSaveFile*)>(0x10046400);
-	return load(saveFile) == 1;
-}
-const std::string &SecretdoorSystem::GetName() const {
-	static std::string name("Secretdoor");
-	return name;
-}
 
 //*****************************************************************************
 //* MapFogging

@@ -204,6 +204,42 @@ public:
 
 	void apply() override {
 
+		// InsertToTargetList: fixes no check for max target count
+		// Could cause crashes when AoE spells had more than 32 targets
+		replaceFunction<BOOL(int, objHndl[MAX_SPELL_TARGETS], int&, objHndl)>(0x100755B0,
+			[](int idx, objHndl tgtList[MAX_SPELL_TARGETS], int& tgtCount, objHndl handle)->BOOL {
+				
+				// Temple+: added this fix
+				if (tgtCount >= MAX_SPELL_TARGETS) {
+					logger->error("InsertToTargetList: unable to add target {} - max capacity reached!", handle);
+					return FALSE;
+				}
+				for (auto i = idx; i < tgtCount; ++i) {
+					tgtList[i + 1] = tgtList[i];
+				}
+				tgtList[idx] = handle;
+				tgtCount++;
+			});
+		// InsertToPfxList: fixes no check for max target count
+		// May cause crashes when AoE spells had more than 32 targets
+		replaceFunction<BOOL(int, int[MAX_SPELL_TARGETS], int, int)>(0x10075510,
+			[](int idx, int pfxList[MAX_SPELL_TARGETS], int tgtCount, int pfxId)->BOOL {
+
+				// Temple+: added this fix
+				if (tgtCount >= MAX_SPELL_TARGETS) {
+					logger->error("InsertToPfxList: unable to add pfx ID {} - max capacity reached!", pfxId);
+					return FALSE;
+				}
+				if (idx >= tgtCount) {
+					pfxList[idx] = pfxId;
+					return TRUE;
+				}
+				memcpy(&pfxList[idx + 1], &pfxList[idx], sizeof(int) * (tgtCount - idx));
+				pfxList[idx] = pfxId;
+				return TRUE;
+			});
+
+
 		replaceFunction<BOOL(__cdecl)(objHndl)>(0x100C3810, _CheckSpellResistanceUsercallWrapper);
 		
 		replaceFunction<int(__cdecl(int, int))>(0x10076550, [](int spellEnum, int spellClass){
@@ -948,7 +984,14 @@ int LegacySpellSystem::GetMaxSpellLevel(objHndl objHnd, Stat classCode, int char
 int LegacySpellSystem::GetNumSpellsPerDay(objHndl handle, Stat classCode, int spellLvl){
 	auto spellClass = spellSys.GetSpellClass(classCode);
 	auto effLvl = critterSys.GetSpellListLevelExtension(handle, classCode) + objects.StatLevelGet(handle, classCode);
-	return d20ClassSys.GetNumSpellsFromClass(handle, classCode, spellLvl, effLvl);
+	int result = d20ClassSys.GetNumSpellsFromClass(handle, classCode, spellLvl, effLvl);
+
+	auto modifier = dispatch.DispatchSpellsPerDay(handle, classCode, spellLvl, effLvl);
+
+	if (result > 0) {
+		return result + modifier;
+	}
+	return result;
 }
 
 int LegacySpellSystem::ParseSpellSpecString(SpellStoreData* spell, char* spellString)
@@ -2983,6 +3026,7 @@ uint32_t LegacySpellSystem::GetSpellRangeExact(SpellRangeType spellRangeType, ui
 	case SpellRangeType::SRT_Personal:
 		return 5;
 	case SpellRangeType::SRT_Touch:
+		if (!caster) return 5;
 		return (int) critterSys.GetReach(caster, D20A_TOUCH_ATTACK);
 	case SpellRangeType::SRT_Close:
 		return (casterLevel / 2 + 5) * 5;

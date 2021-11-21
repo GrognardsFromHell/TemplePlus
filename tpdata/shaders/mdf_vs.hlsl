@@ -18,6 +18,9 @@ struct VS_IN {
 #if TEXTURE_STAGES > 0
 	float2 uv : TEXCOORD0;
 #endif
+#if PER_VERTEX_COLOR
+	float4 diffuse : COLOR0;
+#endif
 };
 
 struct VS_OUT {
@@ -69,6 +72,9 @@ VS_OUT main(VS_IN input)
 	float3 normal = normalize(input.normal.xyz);
 
 	float4 diffuse = matDiffuse;
+#if PER_VERTEX_COLOR
+	diffuse *= input.diffuse;
+#endif
 
 #if HIGHLIGHT
 	float alpha = abs((normal.x + normal.z) * 0.504798f

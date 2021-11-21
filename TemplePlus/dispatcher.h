@@ -24,6 +24,7 @@ struct DispIoD20ActionTurnBased; // 12
 struct DispIoMoveSpeed; //13
 struct DispIOBonusListAndSpellEntry; // 14
 struct DispIoObjEvent; // 17
+struct DispIoSpellsPerDay; // 18
 struct DispIoAbilityLoss; // 19
 struct DispIoAttackDice; // 20
 struct DispIoImmunity; //23
@@ -115,10 +116,11 @@ struct DispatcherSystem : temple::AddressTable
 	void DispatchSpellResistanceCasterLevelCheck(objHndl caster, objHndl target, BonusList *bonlist, SpellPacketBody*spellPkt);
 	void DispatchTargetSpellDCBonus(objHndl caster, objHndl target, BonusList *bonlist, SpellPacketBody*spellPkt);
 	bool DispatchIgnoreDruidOathCheck(objHndl character, objHndl item);
-	void DispatchMetaMagicModify(objHndl obj, MetaMagicData& mmData, unsigned char spellLevel, uint16_t spellEnum);
+	void DispatchMetaMagicModify(objHndl obj, MetaMagicData& mmData, unsigned char spellLevel, uint16_t spellEnum, uint32_t spellClass);
 	void DispatchSpecialAttack(objHndl obj, int attack, objHndl target);
 	double DispatchRangeBonus(objHndl obj, objHndl weaponUsed);
 	int DispatchSpellListLevelExtension(objHndl obj, Stat casterClass);
+	int DispatchSpellsPerDay(objHndl obj, Stat casterClass, int spellLevel, int effectiveLvl);
 	int DispatchGetBaseCasterLevel(objHndl obj, Stat casterClass);
 	int DispatchGetCasterLevelStage2(objHndl handle, Stat casterClass, int initialVal);
 
@@ -473,6 +475,21 @@ struct DispIoObjEvent : DispIO // type 17
 	}
 };
 
+struct DispIoSpellsPerDay : DispIO // type 18
+{
+	BonusList* bonList;
+	int unk;
+	int unk2;
+	
+	// extensions:
+	Stat classCode;
+	int spellLvl;
+	int casterEffLvl;
+
+	DispIoSpellsPerDay();
+};
+
+
 
 struct DispIoAbilityLoss: DispIO//  type 19
 {
@@ -576,6 +593,7 @@ struct EvtObjMetaMagic : DispIO // type 35 (NEW!)
 	MetaMagicData mmData;
 	int spellLevel;
 	uint32_t spellEnum;
+	uint32_t spellClass;
 };
 
 struct EvtObjSpecialAttack : DispIO // type 36 (NEW!)

@@ -107,12 +107,11 @@ def featResistanceToElectricity(attachee, args, evt_obj):
         resistanceBonus = 10
     else:
         resistanceBonus = 15
-    evt_obj.damage_packet.add_damage_resistance(resistanceBonus, D20DT_ELECTRICITY, 1010) #ID 1010 in damage.mes is Electricity
+    damageMesId = 124 #ID 124 in damage.mes is Resistance to Energy
+    evt_obj.damage_packet.add_damage_resistance(resistanceBonus, D20DT_ELECTRICITY, damageMesId)
     return 0
 
-electricityResistance = PythonModifier("Stormlord Resistance to Electricity Feat", 0)
-electricityResistance.MapToFeat("Stormlord Resistance to Electricity")
-electricityResistance.AddHook(ET_OnTakingDamage , EK_NONE, featResistanceToElectricity, ())
+classSpecObj.AddHook(ET_OnTakingDamage2, EK_NONE, featResistanceToElectricity, ())
 
 ## Shock Weapon ##
 # Vanilla adds Shocking Burst Particle Effect OnDamage2 but I don't think this is necessary

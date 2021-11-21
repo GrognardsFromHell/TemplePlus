@@ -748,7 +748,7 @@ void LegacyCombatSystem::TurnProcessAi(objHndl obj)
 			logger->info("Combat for {} ending turn (unconscious)", description.getDisplayName(obj));
 			CombatAdvanceTurn(obj);
 		}
-		// TODO: bug? they probably meant to do an OR
+		// for AI controlled, this is handled inside AiProcess()
 
 		return;
 	}
@@ -949,70 +949,7 @@ void LegacyCombatSystem::Subturn()
 			combatSys.AddToInitiativeWithinRect(actor);
 		// Temple+: added code to pull in allies
 		else if (!critterSys.IsFriendly(actor, partyLeader)){
-	
-			ObjList objList;
-			const int ALLY_ALERTING_DISTANCE = 24;
-			// test cases:
-			// moathouse frogs - 12 is enough to pull them all in
-			objList.ListRangeTiles(actor, ALLY_ALERTING_DISTANCE, OLC_CRITTERS);
-			for (auto i=0; i< objList.size(); i++){
-				auto resHandle = objList[i];
-				if (!resHandle)
-					break;
-				if (resHandle == actor)
-					continue;
-
-				
-				auto resObj = gameSystems->GetObj().GetObject(resHandle);
-				if (resObj->GetFlags() & (OF_OFF | OF_DESTROYED | OF_DONTDRAW))
-					continue;
-				if (critterSys.IsDeadOrUnconscious(resHandle)) {
-					continue;
-				}
-
-				if (party.IsInParty(resHandle))
-					continue;
-
-				if (tbSys.IsInInitiativeList(resHandle) || critterSys.IsCombatModeActive(resHandle))
-					continue;
-
-				auto objDesc = description.getDisplayName(resHandle);
-
-				if (!combatSys.HasLineOfAttack(resHandle, actor)){
-
-
-					if (locSys.DistanceToObj(actor, resHandle) > 30){
-						continue;
-					}
-					// check pathfinding short distances
-					auto pathFlags = PathQueryFlags::PQF_HAS_CRITTER | PQF_IGNORE_CRITTERS 
-						|PathQueryFlags::PQF_800 | PathQueryFlags::PQF_TARGET_OBJ
-						 | PathQueryFlags::PQF_ADJUST_RADIUS | PathQueryFlags::PQF_ADJ_RADIUS_REQUIRE_LOS
-						| PathQueryFlags::PQF_DONT_USE_PATHNODES | PathQueryFlags::PQF_A_STAR_TIME_CAPPED;
-
-					if (!config.alertAiThroughDoors){
-						pathFlags |= PathQueryFlags::PQF_DOORS_ARE_BLOCKING;
-					}
-
-					if (!pathfindingSys.CanPathTo(actor, resHandle, (PathQueryFlags)pathFlags, 40)){
-						//logger->debug("Failed to alert {} because of PF distance", resHandle);
-						continue;
-					}	
-				}
-				
-				if (aiSys.GetAllegianceStrength(resHandle, actor)){ // check that they have a faction in common
-					aiSys.ProvokeHostility(partyLeader, resHandle, 3, 0);
-					continue;
-				}
-
-				if (factions.HasNullFaction(resHandle) && factions.HasNullFaction(actor)){
-					if (aiSys.WillKos(resHandle, partyLeader)) {
-						aiSys.ProvokeHostility(partyLeader, resHandle, 3, 0);
-					}
-				}
-
-			}
-			 
+			aiSys.AlertAllies2(actor, partyLeader);
 		}
 	}
 

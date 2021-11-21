@@ -37,8 +37,7 @@ def OnSpellEffect(spell):
         game.particles('sp-Energy Vortex Cold', spell.caster)
     elif radialChoice in electricity:
         damageType = D20DT_ELECTRICITY
-        game.particles('sp-Chain Lightning', spell.target_loc)
-        game.pfx_chain_lightning(spell.caster, spell.num_of_targets, spell.target_list)
+        game.particles('sp-Energy Vortex Electricity', spell.caster)
     elif radialChoice in fire:
         damageType = D20DT_FIRE
         game.particles('sp-Energy Vortex Fire', spell.caster)

@@ -293,7 +293,7 @@ namespace gfx {
 
 		// Creates a buffer binding for a MDF material that
 		// is preinitialized with the correct shader
-		BufferBinding CreateMdfBufferBinding();
+		BufferBinding CreateMdfBufferBinding(bool perVertexColor = false);
 
 		Shaders& GetShaders() {
 			return mShaders;

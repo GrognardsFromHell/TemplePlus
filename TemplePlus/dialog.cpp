@@ -5,6 +5,11 @@
 #include <gamesystems/gamesystems.h>
 #include "gamesystems/timeevents.h"
 #include "infrastructure/vfs.h"
+#include <party.h>
+#include <rng.h>
+#include <critter.h>
+#include <sound.h>
+#include <gamesystems/objects/objsystem.h>
 DialogScripts dialogScripts;
 
 static struct DialogScriptsAddresses : temple::AddressTable {
@@ -30,6 +35,8 @@ class DialogHooks : public TempleFix
 {
 public:
 	
+	static void MapFirstSeenBanter(int mapId);
+	static void PlayVoice(objHndl handle, objHndl addressed, int soundId);
 	
 	void apply() override {
 
@@ -39,6 +46,11 @@ public:
 			//return orgLoadDialogFile(filename, dlgFileHandle);
 		});
 
+		// Fixes crash issue:
+		// ObjHndl buffer overlow when more than 3 NPCs (leading to junk data handle being used)
+		replaceFunction(0x10038470, MapFirstSeenBanter);
+
+		//replaceFunction(0x100354A0, PlayVoice);
 	}
 } dialogHooks;
 
@@ -441,4 +453,88 @@ bool DialogLineNew::IsPcLine() {
 
 bool DialogLineNew::IsNpcLine(){
 	return !IsPcLine();
+}
+
+void DialogHooks::MapFirstSeenBanter(int mapId)
+{
+	auto npcCount = party.GroupNPCFollowersLen();
+	char text[1000];
+	int soundId = -1;
+	static auto GetMapFirstSeenVoiceLine = temple::GetRef<void(__cdecl)(objHndl, objHndl, int, char [], int&)>(0x10037FD0);
+
+	// Temple+: now uses vector instead of fixes size[3] array
+	std::vector<objHndl> commentNpcs;
+	for (auto i = 0; i < npcCount; ++i) {
+		auto npc = party.GroupNPCFollowersGetMemberN(i);
+		auto fellowPc = party.GetFellowPc(npc);
+		GetMapFirstSeenVoiceLine(npc, fellowPc, mapId, text, soundId);
+		if (text[0]) {
+			commentNpcs.push_back(npc);
+		}
+	}
+
+	auto talker = objHndl::null;
+	if (commentNpcs.size()) {
+		auto idx = rngSys.GetInt(0, commentNpcs.size() - 1);
+		talker = commentNpcs[idx];
+	}
+	else {
+		auto idx = rngSys.GetInt(0, party.GroupPCsLen() - 1); // Temple+: was (0, N) instead of (0, N-1) in vanilla
+		talker = party.GroupPCsGetMemberN(idx);
+	}
+
+	if (talker) {
+		auto fellowPc = party.GetFellowPc(talker);
+		GetMapFirstSeenVoiceLine(talker, fellowPc, mapId, text, soundId);
+		logger->trace("Playing sound {} for talker {}, text {}", soundId, talker, text);
+		critterSys.PlayCritterVoiceLine(talker, fellowPc, text, soundId);
+	}
+
+	// Append to seen map list
+	static auto SeenMaplistAppend = temple::GetRef<void(__cdecl)(objHndl, int)>(0x10080390);
+	auto partySize = party.GroupListGetLen();
+	for (auto i = 0; i < partySize; ++i) {
+		auto partyMem = party.GroupListGetMemberN(i);
+		SeenMaplistAppend(partyMem, mapId);
+	}
+}
+
+void DialogHooks::PlayVoice(objHndl handle, objHndl addressed, int soundId)
+{
+	if (soundId == -1) {
+		return;
+	}
+	if (!objSystem->IsValidHandle(handle)) {
+		return;
+	}
+
+	auto mActiveSpeech = temple::GetRef<int>(0x108EC85C);
+	if (mActiveSpeech != -1) {
+		sound.MssFreeStream(mActiveSpeech);
+		mActiveSpeech = -1;
+	}
+
+
+	char filename[260] = { 0, };
+	if (critterSys.IsPC(handle)) {
+		auto voiceIdx = objects.getInt32(handle, obj_f_pc_voice_idx);
+		sprintf(filename, "sound\\speech\\pcvoice\\%.2d\\%d.mp3", voiceIdx, soundId);
+	}
+	else {
+		auto scriptId = (soundId >> 16) & 0x7FFF;
+		auto mfChar = objects.StatLevelGet(addressed, stat_gender) != 0 ? 'm' : 'f';
+		sprintf(filename, "sound\\speech\\%.5d\\v%d_%c.mp3", scriptId, (soundId & 0xFFFF) , mfChar);
+		if (mfChar == 'f' && !tio_fileexists(filename, 0))
+			sprintf(filename, "sound\\speech\\%.5d\\v%d_%c.mp3", scriptId, (unsigned __int16)soundId, 'm');
+	}
+
+	
+	logger->trace("Playing sound file: {}", filename);
+	static auto PlayVoiceFile = temple::GetRef<int(__cdecl)(const char*, int timeToFade)>(0x1003C5F0);
+	if (tio_fileexists(filename, nullptr)) {
+		mActiveSpeech = PlayVoiceFile(filename, 0);
+	}
+	else {
+		logger->trace("Sound file not found!");
+	}
 }
