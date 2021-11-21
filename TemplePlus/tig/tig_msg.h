@@ -95,7 +95,8 @@ enum class TigMsgWidgetEvent : uint32_t
 	MouseReleasedAtDifferentButton = 2,
 	Entered  = 3,
 	Exited = 4,
-	Scrolled = 5
+	Scrolled = 5,
+	RightClicked = 6 // added in Temple+
 };
 
 struct TigMsgWidget : TigMsgBase // type 1

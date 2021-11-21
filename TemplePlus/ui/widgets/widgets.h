@@ -263,6 +263,7 @@ protected:
 	uint32_t mLastClickTriggered = 0;
 
 	std::function<void(int x, int y)> mClickHandler;
+	std::function<void(int x, int y, int widId)> mDragReleaseHandler;
 };
 
 struct WidgetButtonStyle {

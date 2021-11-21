@@ -293,6 +293,11 @@ PYBIND11_EMBEDDED_MODULE(tpgui, m) {
 		.def("set_click_handler", [](WidgetButton &self, std::function<void()> funcy) {
 			self.SetClickHandler(funcy);
 			})
+		.def("set_repeat", [](WidgetButton& self, int intervalMs) {
+			auto isRepeatable = intervalMs > 0;
+			self.SetRepeat(isRepeatable);
+			self.SetRepeatInterval(intervalMs);
+		})
 		;
 
 

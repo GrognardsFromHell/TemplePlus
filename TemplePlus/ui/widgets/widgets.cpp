@@ -438,6 +438,16 @@ bool WidgetButtonBase::HandleMessage(const TigMsg & msg)
 			}
 			return true;
 		}
+		if (widgetMsg.widgetEventType == TigMsgWidgetEvent::MouseReleasedAtDifferentButton) {
+			if (mDragReleaseHandler && !mDisabled) {
+				auto widgetAtRelease = uiManager->GetWidgetAt(widgetMsg.x, widgetMsg.y);
+				auto contentArea = GetContentArea();
+				int x = widgetMsg.x - contentArea.x;
+				int y = widgetMsg.y - contentArea.y;
+				mDragReleaseHandler(x, y, widgetAtRelease);
+			}
+			return true;
+		}
 	}
 	return WidgetBase::HandleMessage(msg);
 }
