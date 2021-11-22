@@ -100,10 +100,17 @@ def LevelupGetBonusFeats(obj):
     newLvl = char_editor.stat_level_get( classEnum )
     bonus_feats = []
     if newLvl == 2:
-        bonus_feats = [feat_combat_reflexes, feat_deflect_arrows, "Fiery Fist"]
+        bonus_feats = [feat_combat_reflexes, feat_deflect_arrows]
+        #I know, atm a monk has to have stunning fist
+        #but maybe improved grapple will be added as a choice at first level
+        if char_editor.has_feat(feat_stunning_fist):
+            bonus_feats.append("Fiery Fist")
     if newLvl == 6:
         bonus_feats = [feat_improved_trip, feat_improved_disarm]
-    
+        #Fiery Ki Defense and Ki Blast also require to have Stunning Fist
+        if char_editor.has_feat(feat_stunning_fist):
+            bonus_feats.append("Fiery Ki Defense")
+            bonus_feats.append("Ki Blast")
     bonFeatInfo = []
     for feat in bonus_feats:
         featInfo = char_editor.FeatInfo(feat)

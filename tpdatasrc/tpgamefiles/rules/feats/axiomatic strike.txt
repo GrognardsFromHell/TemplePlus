@@ -1,5 +1,5 @@
 name: Axiomatic Strike
-flags: 4194304
+flags: 12582912
 prereqs: 12 7
 description: You can turn your fist into an instrument of law.
 
