@@ -227,22 +227,20 @@ def checkBreathWeapon(attachee, args, evt_obj):
     return 0
 
 def performBreathWeapon(attachee, args, evt_obj):
-    target = evt_obj.d20a.target
-    #attachee.turn_towards(target)
-    if attachee.anim_goal_push_attack(target, 0, 0 ,0):
-        new_anim_id = attachee.anim_goal_get_new_id()
-        evt_obj.d20a.flags |= D20CAF_NEED_ANIM_COMPLETED
-        evt_obj.d20a.anim_id = new_anim_id
-    return 0
-
-def frameBreathWeapon(attachee, args, evt_obj):
     currentSequence = tpactions.get_cur_seq()
     spellPacket = currentSequence.spell_packet
     newSpellId = tpactions.get_new_spell_id()
     spellPacket.caster_level = attachee.stat_level_get(classEnum)
     tpactions.register_spell_cast(spellPacket, newSpellId)
-    tpactions.trigger_spell_effect(newSpellId)
+    currentSequence.spell_packet.spell_id = newSpellId
 
+    if attachee.anim_goal_throw_spell_w_cast_anim(): # note: the animation goal has internal calls to trigger_spell_effect and the action frame
+        new_anim_id = attachee.anim_goal_get_new_id()
+        evt_obj.d20a.flags |= D20CAF_NEED_ANIM_COMPLETED
+        evt_obj.d20a.anim_id = new_anim_id
+    return 0
+
+def frameBreathWeapon(attachee, args, evt_obj):    
     #Reduce Breath Weapon Daily uses by 1
     chargesLeft = args.get_arg(0)
     chargesLeft -= 1

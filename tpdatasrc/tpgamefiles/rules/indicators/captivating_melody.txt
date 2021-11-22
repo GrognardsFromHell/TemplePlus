@@ -1,0 +1,5 @@
+ID_string: CAPTIVATING_MELODY
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Captivating Melody.tga
+help_topic: TAG_ROOT
+tooltip_base_text:Captivating Melody
