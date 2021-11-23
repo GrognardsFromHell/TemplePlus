@@ -3,6 +3,8 @@ from toee import *
 import tpdp
 import tpactions
 import char_class_utils
+import heritage_feat_utils
+import breath_weapon
 
 ###################################################
 
@@ -17,27 +19,9 @@ print "Registering " + GetConditionName()
 classEnum = stat_level_dragon_disciple
 classSpecModule = __import__('class023_dragon_disciple')
 
-selectHeritageId = 2301
 breathWeaponEnum = 2302
 toggleFlyingId = 2303
 
-#Dict to handle Dragon Disciple Heritage
-#Can easily be expanded by adding a new type of heritage to the dict
-#[Colour, ElementType, Breath Weapon Shape (1 = Cone, 2 = Line)]
-#If a new element type would be added e.g. sonic or negative,
-#this also would be needed to add in both spells and in the partsys
-dictDragonHeritage = {
-1: ["Black", D20DT_ACID, 2],
-2: ["Blue", D20DT_ELECTRICITY, 2],
-3: ["Green", D20DT_ACID, 1],
-4: ["Red", D20DT_FIRE, 1],
-5: ["White", D20DT_COLD, 1],
-6: ["Brass", D20DT_FIRE, 2],
-7: ["Bronze", D20DT_ELECTRICITY, 2],
-8: ["Copper", D20DT_ACID, 2],
-9: ["Gold", D20DT_FIRE, 1],
-10: ["Silver", D20DT_COLD, 1]
-}
 ###################################################
 
 
@@ -72,55 +56,7 @@ classSpecObj.AddHook(ET_OnSaveThrowLevel, EK_SAVE_WILL, OnGetSaveThrowWill, ())
 
 ##### Dragon Disciple Class Features #####
 
-###Handle Heritage
-def selectHeritageRadial(attachee, args, evt_obj):
-    if not args.get_arg(0):
-        radialSelectHeritageParent = tpdp.RadialMenuEntryParent("Select Dragon Disciple Heritage")
-        radialSelectHeritageParentId = radialSelectHeritageParent.add_child_to_standard(attachee, tpdp.RadialMenuStandardNode.Class)
-        for key in dictDragonHeritage.keys():
-            dragonColour = dictDragonHeritage[key][0]
-            radialHeritageColourId = tpdp.RadialMenuEntryPythonAction("{} Dragon Heritage".format(dragonColour), D20A_PYTHON_ACTION, selectHeritageId, key, "TAG_CLASS_FEATURES_DRAGON_DISCIPLES_HERITAGE")
-            radialHeritageColourId.add_as_child(attachee, radialSelectHeritageParentId)
-    return 0
-
-def setHeritage(attachee, args, evt_obj):
-    chosenHeritage = evt_obj.d20a.data1
-    print "Selected Heritage: {}".format(chosenHeritage)
-    args.set_arg(0, chosenHeritage)
-    #Visual Feedback for selected Heritage
-    heritageColour = dictDragonHeritage[chosenHeritage][0]
-    attachee.float_text_line("{} Heritage chosen".format(heritageColour))
-    return 0
-
-def querySelectedHeritage(attachee, args, evt_obj):
-    heritage = args.get_arg(0)
-    evt_obj.return_val = heritage
-    return 0
-
-def queryHeritageElementType(attachee, args, evt_obj):
-    heritage = args.get_arg(0)
-    elementType = dictDragonHeritage[heritage][1]
-    evt_obj.return_val = elementType
-    return 0
-
-def queryHeritageBreathWeaponType(attachee, args, evt_obj):
-    heritage = args.get_arg(0)
-    evt_obj.return_val = dictDragonHeritage[heritage][2]
-    return 0
-
-def initialHeritageValue(attachee, args, evt_obj):
-    args.set_arg(0, 0)
-    return 0
-
-dragonHeritage = PythonModifier("Dragon Disciple Heritage", 3) #heritage, empty, empty
-dragonHeritage.MapToFeat("Dragon Disciple Heritage")
-dragonHeritage.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, selectHeritageRadial, ())
-dragonHeritage.AddHook(ET_OnD20PythonActionPerform, selectHeritageId, setHeritage, ())
-dragonHeritage.AddHook(ET_OnD20PythonQuery, "PQ_Dragon_Disciple_Selected_Heritage", querySelectedHeritage, ())
-dragonHeritage.AddHook(ET_OnD20PythonQuery, "PQ_Dragon_Disciple_Element_Type", queryHeritageElementType, ())
-dragonHeritage.AddHook(ET_OnD20PythonQuery, "PQ_Dragon_Disciple_Breath_Weapon_Type", queryHeritageBreathWeaponType, ())
-dragonHeritage.AddHook(ET_OnConditionAdd, EK_NONE, initialHeritageValue, ())
-
+### Draconic Heritage is handle by the Draconic Heritage Feat now
 
 ### AC Bonus
 def naturalArmorACBonus(attachee, args, evt_obj):
@@ -140,21 +76,6 @@ def naturalArmorACBonus(attachee, args, evt_obj):
 naturalArmorInc = PythonModifier("Dragon Disciple Natural Armor", 0)
 naturalArmorInc.MapToFeat("Dragon Disciple Natural Armor")
 naturalArmorInc.AddHook(ET_OnGetAC, EK_NONE, naturalArmorACBonus, ())
-
-### Ability Bonus
-#def OnGetAbilityScore(attachee, args, evt_obj):
-    #statType = args.get_param(0)
-#    lvl = attachee.stat_level_get(classEnum)
-#    statMod = args.get_param(1)
-#    
-#    newValue = statMod + evt_obj.bonus_list.get_sum()
-#    if (newValue < 3): # ensure minimum stat of 3
-#        statMod = 3-newValue
-#    evt_obj.bonus_list.add(statMod, 0, 139)
-#    return 0
-
-#classSpecObj.AddHook(ET_OnAbilityScoreLevel, EK_STAT_STRENGTH, OnGetAbilityScore, ())
-
 
 def onGetAbilityScoreStr(attachee, args, evt_obj):
     level = attachee.stat_level_get(classEnum)
@@ -200,30 +121,35 @@ classSpecObj.AddHook(ET_OnAbilityScoreLevel, EK_STAT_INTELLIGENCE, onGetAbilityS
 classSpecObj.AddHook(ET_OnAbilityScoreLevel, EK_STAT_CHARISMA, onGetAbilityScoreCha, ())
 
 ### Claws and Bite
+# ToDo!
 
 ### Breath Weapon
 def breathWeaponRadial(attachee, args, evt_obj):
-    chargesLeft = args.get_arg(0)
-    maxCharges = args.get_arg(1)
-    #I display the heritage colour in the Breath Weapon Radial
-    #So the player gets a visual feedback, which colour he did choose
-    heritage = attachee.d20_query("PQ_Dragon_Disciple_Selected_Heritage")
-    dragonColour = dictDragonHeritage[heritage][0]
-    breathWeaponShape = attachee.d20_query("PQ_Dragon_Disciple_Breath_Weapon_Type")
-    spellEnum = spell_dragon_disciple_cone_breath if breathWeaponShape == 1 else spell_dragon_disciple_line_breath
-
-    breathWeaponId = tpdp.RadialMenuEntryPythonAction("{} Breath Weapon {}/{}".format(dragonColour, chargesLeft, maxCharges), D20A_PYTHON_ACTION, breathWeaponEnum, spellEnum, "TAG_CLASS_FEATURES_DRAGON_DISCIPLES_BREATH_WEAPON")
-    spellData = tpdp.D20SpellData(spellEnum)
-    casterLevel = attachee.stat_level_get(classEnum)
-    spellData.set_spell_class(classEnum)
-    spellData.set_spell_level(casterLevel)
-    breathWeaponId.set_spell_data(spellData)
+    breathWeaponCooldown = args.get_arg(2)
+    if breathWeaponCooldown > -1:
+        breathWeaponId = tpdp.RadialMenuEntryPythonAction("Breath Weapon Cooldown ({} round(s))".format(breathWeaponCooldown), D20A_PYTHON_ACTION, breathWeaponEnum, 0, "TAG_EXTRA_EXALATION")
+    else:
+        chargesLeft = args.get_arg(1)
+        maxCharges = breath_weapon.getMaxCharges(attachee)
+        print "chargesLeft: {}, maxCharges: {}".format(chargesLeft, maxCharges)
+        heritage = attachee.d20_query("PQ_Selected_Draconic_Heritage")
+        print "heritage: {}".format(heritage)
+        breathWeaponShape = heritage_feat_utils.getDraconicHeritageBreathShape(heritage)
+        print "breathWeaponShape: {}".format(breathWeaponShape)
+        spellEnum = 3231 if breathWeaponShape == dragon_breath_shape_cone else 3232
+        breathWeaponId = tpdp.RadialMenuEntryPythonAction("Breath Weapon ({}/{})".format(chargesLeft, maxCharges), D20A_PYTHON_ACTION, breathWeaponEnum, spellEnum, "TAG_CLASS_FEATURES_DRAGON_DISCIPLES_BREATH_WEAPON")
+        spellData = tpdp.D20SpellData(spellEnum)
+        spellData.set_spell_class(classEnum)
+        spellData.set_spell_level(9) #Setting this to 9 here so, it passes globes of invulnerability, as they should not protect against Breath Weapons
+        breathWeaponId.set_spell_data(spellData)
     breathWeaponId.add_child_to_standard(attachee, tpdp.RadialMenuStandardNode.Class)
     return 0
 
 def checkBreathWeapon(attachee, args, evt_obj):
-    if args.get_arg(0) < 1:
+    if args.get_arg(1) < 1:
         evt_obj.return_val = AEC_OUT_OF_CHARGES
+    elif args.get_arg(2) > -1:
+        evt_obj.return_val = AEC_INVALID_ACTION 
     return 0
 
 def performBreathWeapon(attachee, args, evt_obj):
@@ -240,27 +166,32 @@ def performBreathWeapon(attachee, args, evt_obj):
         evt_obj.d20a.anim_id = new_anim_id
     return 0
 
-def frameBreathWeapon(attachee, args, evt_obj):    
-    #Reduce Breath Weapon Daily uses by 1
-    chargesLeft = args.get_arg(0)
-    chargesLeft -= 1
-    args.set_arg(0, chargesLeft)
+def frameBreathWeapon(attachee, args, evt_obj):
+    genderString = "his" if attachee.stat_level_get(stat_gender) == 1 else "her"
+    game.create_history_freeform("{} uses {} ~Breath Weapon~[TAG_CLASS_FEATURES_DRAGON_DISCIPLES_BREATH_WEAPON]\n\n".format(attachee.description, genderString))
+#    currentSequence = tpactions.get_cur_seq()
+#    spellPacket = currentSequence.spell_packet
+#    newSpellId = tpactions.get_new_spell_id()
+#    print "spellPacket.caster_level: {}".format(spellPacket.caster_level)
+#    spellPacket.caster_level = attachee.stat_level_get(classEnum)
+    # Setting the dc here does not affect the spell when triggered down below :(
+#    spellPacket.dc = 10 + attachee.stat_level_get(classEnum) + ((attachee.stat_level_get(stat_constitution)-10)/2)
+#    print "Debug Spell DC Breath Weapon: {}".format(spellPacket.dc)
+#    tpactions.register_spell_cast(spellPacket, newSpellId)
+#    tpactions.trigger_spell_effect(newSpellId)
+    #Send Breath Weapon Used Signal
+    breathWeaponId = args.get_arg(0)
+    attachee.d20_send_signal("PS_Breath_Weapon_Used", breathWeaponId)
     return 0
 
-def resetBreathWeapon(attachee, args, evt_obj):
-    maxCharges = 1
-    args.set_arg(0, maxCharges)
-    args.set_arg(1, maxCharges)
-    return 0
-
-dragonDiscipleBreathWeapon = PythonModifier("Dragon Disciple Breath Weapon", 3) #chargesLeft, maxCharges, empty
+dragonDiscipleBreathWeapon = breath_weapon.BreathWeaponModifier("Dragon Disciple Breath Weapon")
 dragonDiscipleBreathWeapon.MapToFeat("Dragon Disciple Breath Weapon")
+dragonDiscipleBreathWeapon.breathWeaponSetArgs(classEnum, 1)
 dragonDiscipleBreathWeapon.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, breathWeaponRadial, ())
 dragonDiscipleBreathWeapon.AddHook(ET_OnD20PythonActionCheck, breathWeaponEnum, checkBreathWeapon, ())
 dragonDiscipleBreathWeapon.AddHook(ET_OnD20PythonActionPerform, breathWeaponEnum, performBreathWeapon, ())
 dragonDiscipleBreathWeapon.AddHook(ET_OnD20PythonActionFrame, breathWeaponEnum, frameBreathWeapon, ())
-dragonDiscipleBreathWeapon.AddHook(ET_OnConditionAdd, EK_NONE, resetBreathWeapon, ())
-dragonDiscipleBreathWeapon.AddHook(ET_OnNewDay, EK_NEWDAY_REST, resetBreathWeapon, ())
+
 
 
 ### Blindsense
@@ -324,7 +255,8 @@ def sleepParalyzeImmunity(attachee, args, evt_obj):
     return 0
 
 def elementImmunity(attachee, args, evt_obj):
-    elementType = attachee.d20_query("PQ_Dragon_Disciple_Element_Type")
+    heritage = attachee.d20_query("PQ_Selected_Draconic_Heritage")
+    elementType = heritage_feat_utils.getDraconicHeritageElement(heritage)
     damageMesLine = 132 #ID 132 in damage.mes is Immunity
     evt_obj.damage_packet.add_mod_factor(0.0, elementType, damageMesLine)
     return 0

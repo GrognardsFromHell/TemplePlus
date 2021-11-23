@@ -1,0 +1,6 @@
+name: Draconic Heritage Copper
+flags: 4194304
+prereqs:
+description: You have a greater connection with your draconic bloodline than others of your kind.
+prereq descr: Sorcercer Level 1
+parent: Draconic Heritage

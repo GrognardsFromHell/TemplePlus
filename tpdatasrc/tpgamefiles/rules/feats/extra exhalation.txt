@@ -1,0 +1,5 @@
+name: Extra Exhalation
+flags: 12582913
+prereqs: 
+description: You can use your Breath Weapon one more time per day than normal. Special: You can take this feat multiple times. Each time you take it, you can breath one additional time per day.
+prereq descr: Limited Breath Weapon use per day
