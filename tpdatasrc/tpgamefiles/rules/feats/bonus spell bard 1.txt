@@ -1,0 +1,6 @@
+name: Bonus Spell (Bard 1)
+flags: 9
+prereqs: 8 2
+description: Grants a Bard bonus Spell per Day for Spell Level 1
+prereq descr:
+parent: Bonus Spell

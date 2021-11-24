@@ -1,0 +1,6 @@
+name: Bonus Spell (Wizard 0)
+flags: 9
+prereqs: 17 1
+description: Grants a Wizard bonus Spell per Day for Spell Level 0
+prereq descr:
+parent: Bonus Spell

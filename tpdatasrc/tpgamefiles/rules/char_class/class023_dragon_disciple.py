@@ -117,9 +117,10 @@ def alreadyHasDraconicHeritage(obj):
 
 def IsSelectingFeatsOnLevelup(obj):
     newLvl = char_editor.stat_level_get(classEnum)
-    if not newLvl == 1:
-        return 0
-    if alreadyHasDraconicHeritage(obj):
+    if newLvl == 1:
+        if alreadyHasDraconicHeritage(obj):
+            return 0
+    elif newLvl not in [2, 4, 5, 6, 8, 9]:
         return 0
     return 1
 
@@ -128,6 +129,8 @@ def LevelupGetBonusFeats(obj):
     bonus_feats = []
     if newLvl == 1:
         bonus_feats.append("Draconic Heritage")
+    elif newLvl in [2, 4, 5, 6, 8, 9]:
+        bonus_feats.append("Bonus Spell")
 
     bonFeatInfo = []
     for ft in bonus_feats:
