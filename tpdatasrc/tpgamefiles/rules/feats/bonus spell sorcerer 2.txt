@@ -1,0 +1,6 @@
+name: Bonus Spell (Sorcerer 2)
+flags: 9
+prereqs: 16 4
+description: Grants a Sorcerer bonus Spell per Day for Spell Level 2
+prereq descr:
+parent: Bonus Spell

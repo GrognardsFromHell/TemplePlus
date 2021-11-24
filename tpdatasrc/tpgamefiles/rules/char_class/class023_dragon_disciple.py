@@ -1,6 +1,7 @@
 from toee import *
 import char_class_utils
 import char_editor
+from heritage_feat_utils import getDraconicHeritageColourString
 
 ###################################################
 
@@ -25,7 +26,7 @@ classEnum = stat_level_dragon_disciple
 
 
 class_feats = {
-1: ("Dragon Disciple Heritage", "Dragon Disciple Natural Armor",),
+1: ("Dragon Disciple Natural Armor",),
 2: ("Dragon Disciple Claws and Bite",),
 3: ("Dragon Disciple Breath Weapon",),
 9: ("Dragon Disciple Wings",),
@@ -105,10 +106,37 @@ def ObjMeetsPrereqs(obj):
 
 
 # Levelup
+def alreadyHasDraconicHeritage(obj):
+    hasDraconicHeritageFeat = False
+    for heritage in range(heritage_draconic_black, heritage_draconic_white + 1):
+        colourString = getDraconicHeritageColourString(heritage)
+        if char_editor.has_feat("Draconic Heritage {}".format(colourString)):
+            hasDraconicHeritageFeat = True
+            break
+    return True if hasDraconicHeritageFeat else False
 
 def IsSelectingFeatsOnLevelup(obj):
-    return 0
+    newLvl = char_editor.stat_level_get(classEnum)
+    if newLvl == 1:
+        if alreadyHasDraconicHeritage(obj):
+            return 0
+    elif newLvl not in [2, 4, 5, 6, 8, 9]:
+        return 0
+    return 1
 
 def LevelupGetBonusFeats(obj):
+    newLvl = char_editor.stat_level_get(classEnum)
+    bonus_feats = []
+    if newLvl == 1:
+        bonus_feats.append("Draconic Heritage")
+    elif newLvl in [2, 4, 5, 6, 8, 9]:
+        bonus_feats.append("Bonus Spell")
+
+    bonFeatInfo = []
+    for ft in bonus_feats:
+        featInfo = char_editor.FeatInfo(ft)
+        featInfo.feat_status_flags |= 4 # always pickable
+        bonFeatInfo.append(featInfo)
+    char_editor.set_bonus_feats(bonFeatInfo)
     return
 

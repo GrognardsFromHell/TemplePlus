@@ -1,4 +1,5 @@
 from toee import *
+from heritage_feat_utils import getDraconicHeritageElement
 
 def OnBeginSpellCast(spell):
     print "Dragon Disciple Line Breath OnBeginSpellCast"
@@ -10,7 +11,7 @@ def OnSpellEffect(spell):
 
     targetsToRemove = []
     spell.duration = 0
-    spell.dc = 10 + spell.caster_level + ((spell.caster.stat_level_get(stat_constitution)-10)/2)
+    spell.dc = 10 + spell.caster_level + ((spell.caster.stat_level_get(stat_constitution) - 10) / 2)
 
     spellDamageDice = dice_new('1d8')
     if spell.caster_level < 7:
@@ -20,23 +21,25 @@ def OnSpellEffect(spell):
     else:
         spellDamageDice.number = 6
     saveType = D20_Save_Reduction_Half
-    damageType = spell.caster.d20_query("PQ_Dragon_Disciple_Element_Type")
-    #If different Breath Weapon Types get added (e.g. Sonic) add them here
+
+    heritage = spell.caster.d20_query("PQ_Selected_Draconic_Heritage")
+    damageType = getDraconicHeritageElement(heritage)
     if damageType == D20DT_ACID:
         saveDescriptor = D20STD_F_SPELL_DESCRIPTOR_ACID
-        particleEffect = "sp-Dragon Disciple Line Breath Acid"
+        elementString = "Acid"
     elif damageType == D20DT_COLD:
         saveDescriptor = D20STD_F_SPELL_DESCRIPTOR_COLD
-        particleEffect = "sp-Dragon Disciple Line Breath Cold"
+        elementString = "Cold"
     elif damageType == D20DT_ELECTRICITY:
         saveDescriptor = D20STD_F_SPELL_DESCRIPTOR_ELECTRICITY
-        particleEffect = "sp-Dragon Disciple Line Breath Electricity"
+        elementString = "Electricity"
     elif damageType == D20DT_FIRE:
         saveDescriptor = D20STD_F_SPELL_DESCRIPTOR_FIRE
-        particleEffect = "sp-Dragon Disciple Line Breath Fire"
+        elementString = "Fire"
     else: #Fallback
         saveDescriptor = D20STD_F_NONE
-        particleEffect = "sp-Dragon Disciple Line Breath Fire"
+        elementString = "Fire"
+    particleEffect = "sp-Breath Weapon Line Medium {}".format(elementString)
 
     game.particles(particleEffect, spell.caster)
 

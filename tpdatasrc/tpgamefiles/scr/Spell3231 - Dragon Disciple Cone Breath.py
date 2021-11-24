@@ -1,4 +1,5 @@
 from toee import *
+from heritage_feat_utils import getDraconicHeritageElement
 
 def OnBeginSpellCast(spell):
     print "Dragon Disciple Cone Breath OnBeginSpellCast"
@@ -10,10 +11,7 @@ def OnSpellEffect(spell):
 
     targetsToRemove = []
     spell.duration = 0
-    spell.dc = 10 + spell.caster_level + ((spell.caster.stat_level_get(stat_constitution)-10)/2)
-    print "Debug Dragon Disciple Cone Breath"
-    print "Dragon Disciple Breath Weapon DC: {}".format(spell.dc)
-    print "Dragon Disciple Caster Level: {}".format(spell.caster_level)
+    spell.dc = 10 + spell.caster_level + ((spell.caster.stat_level_get(stat_constitution)- 10 ) / 2)
 
     spellDamageDice = dice_new('1d8')
     if spell.caster_level < 7:
@@ -22,27 +20,26 @@ def OnSpellEffect(spell):
         spellDamageDice.number = 4
     else:
         spellDamageDice.number = 6
-    print "spellDamageDice: {}".format(spellDamageDice)
     saveType = D20_Save_Reduction_Half
-    damageType = spell.caster.d20_query("PQ_Dragon_Disciple_Element_Type")
-    print "Dragon Disciple Breath Weapon Element: {}".format(damageType)
-    #If different Breath Weapon Types get added (e.g. Sonic) add them here
+    
+    heritage = spell.caster.d20_query("PQ_Selected_Draconic_Heritage")
+    damageType = getDraconicHeritageElement(heritage)
     if damageType == D20DT_ACID:
         saveDescriptor = D20STD_F_SPELL_DESCRIPTOR_ACID
-        particleEffect = "sp-Dragon Disciple Cone Breath Acid"
+        elementString = "Acid"
     elif damageType == D20DT_COLD:
         saveDescriptor = D20STD_F_SPELL_DESCRIPTOR_COLD
-        particleEffect = "sp-Dragon Disciple Cone Breath Cold"
+        elementString = "Cold"
     elif damageType == D20DT_ELECTRICITY:
         saveDescriptor = D20STD_F_SPELL_DESCRIPTOR_ELECTRICITY
-        particleEffect = "sp-Dragon Disciple Cone Breath Electricity"
+        elementString = "Electricity"
     elif damageType == D20DT_FIRE:
         saveDescriptor = D20STD_F_SPELL_DESCRIPTOR_FIRE
-        particleEffect = "sp-Dragon Disciple Cone Breath Fire"
+        elementString = "Fire"
     else: #Fallback
         saveDescriptor = D20STD_F_NONE
-        particleEffect = "sp-Dragon Disciple Cone Breath Fire"
-    print "Dragon Disciple Breath Weapon Descriptor: {}".format(saveDescriptor)
+        elementString = "Fire"
+    particleEffect = "sp-Breath Weapon Cone Medium {}".format(elementString)
 
     game.particles(particleEffect, spell.caster)
 

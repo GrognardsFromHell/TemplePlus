@@ -1,0 +1,6 @@
+name: Bonus Spell (Sorcerer 0)
+flags: 9
+prereqs: 16 1
+description: Grants a Sorcerer bonus Spell per Day for Spell Level 0
+prereq descr:
+parent: Bonus Spell

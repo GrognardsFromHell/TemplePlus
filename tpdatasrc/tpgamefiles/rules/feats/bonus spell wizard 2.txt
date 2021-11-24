@@ -1,0 +1,6 @@
+name: Bonus Spell (Wizard 2)
+flags: 9
+prereqs: 17 3
+description: Grants a Wizard bonus Spell per Day for Spell Level 2
+prereq descr:
+parent: Bonus Spell
