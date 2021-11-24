@@ -23,10 +23,6 @@ def AddToSequence(d20action, action_seq, tb_status):
     return AEC_OK
 
 def ProjectileHit(d20action, proj, obj2):
-    #game.create_history_from_id(d20action.roll_id_1)
-    #game.create_history_from_id(d20action.roll_id_2)
-    #game.create_history_from_id(d20action.roll_id_0)
-    #d20action.target.deal_attack_damage(d20action.performer, d20action.data1, d20action.flags, d20action.action_type)
     d20action.performer.apply_projectile_hit_particles(proj, d20action.flags)
     tpactions.trigger_spell_effect(d20action.spell_id)
     tpactions.trigger_spell_projectile(d20action.spell_id, proj)

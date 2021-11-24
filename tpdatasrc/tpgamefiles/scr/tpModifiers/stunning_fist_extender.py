@@ -7,11 +7,8 @@ print "Registering Stunning Fist Charge Handler"
 # Extending Stunning Fist, so new feats can interact with the Stunning Fist Charges
 
 def extraStunningFistCharges(attachee, args, evt_obj):
-    print "extraStunningFistCharges Hook"
     additionalStunningCharges = attachee.d20_query("PQ_Get_Extra_Stunning_Fist_Charges")
-    print "additionalStunningCharges: {}".format(additionalStunningCharges)
     args.set_arg(0, args.get_arg(0) + additionalStunningCharges)
-    print "total charges for today: {}".format(args.get_arg(0))
     return 0
 
 def deductStunningFistCharge(attachee, args, evt_obj):
