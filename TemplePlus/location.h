@@ -3,9 +3,6 @@
 #include "common.h"
 #include <temple/dll.h>
 
-const float PIXEL_PER_TILE = sqrt(800.0f);
-const float PIXEL_PER_TILE_HALF = PIXEL_PER_TILE / 2;
-
 const float tileToOffset = 12.0;
 #define LOCATION_OFFSET_TOL 0.001 // when comparing offsets, differences smaller than this will be considered as ignorable computational error
 

@@ -54,6 +54,9 @@ public:
 }locRep;
 locfunc LocReplacement::orgGetLocFromScreenLoc;
 
+const float PIXEL_PER_TILE = sqrt(800.0f);
+const float PIXEL_PER_TILE_HALF = PIXEL_PER_TILE / 2;
+
 float LocationSys::distBtwnLocAndOffs(LocAndOffsets loca, LocAndOffsets locb)
 {
 	float dx = 0;
