@@ -11,6 +11,7 @@
 #include "python_counters.h"
 #include "python_areas.h"
 #include "python_spell.h"
+#include "messages/messagequeue.h"
 #include "tig/tig_mouse.h"
 #include "maps.h"
 #include "../gameview.h"
@@ -54,6 +55,7 @@
 
 #include <pybind11/embed.h>
 #include <gamesystems/mapsystem.h>
+#include <tig/tig_keyboard.h>
 namespace py = pybind11;
 
 std::map<std::string, MesHandle> mesMap;
@@ -914,6 +916,26 @@ PyObject* PyGame_ScrollTo(PyObject*, PyObject* args)
 	Py_RETURN_TRUE;
 }
 
+PyObject* PyGame_Keypress(PyObject*, PyObject* args) {
+
+	int dik = 0;
+	if (!PyArg_ParseTuple(args, "i:game.keypress", &dik)) {
+		return nullptr;
+	}
+	logger->info("game.keypress: {}", dik);
+
+	TigMsg tigMsg;
+	tigMsg.createdMs = timeGetTime();
+	tigMsg.type = TigMsgType::KEYSTATECHANGE;
+	tigMsg.arg1 = dik;
+	tigMsg.arg2 = 0; // Means it has changed to unpressed
+	if (tigMsg.arg1 != 0) {
+		messageQueue->Enqueue(tigMsg);
+	}
+
+	Py_RETURN_TRUE;
+}
+
 
 PyObject* PyGame_MouseMoveTo(PyObject*, PyObject* args)
 {
@@ -1460,6 +1482,7 @@ static PyMethodDef PyGameMethods[]{
 	{"gametime_add", PyGame_GametimeAdd, METH_VARARGS, NULL},
 	{"is_outdoor", PyGame_IsOutdoor, METH_VARARGS, NULL},
 	{"is_spell_harmful", PyGame_IsSpellHarmful, METH_VARARGS, NULL },
+	{"keypress", PyGame_Keypress, METH_VARARGS, NULL},
 	{ "scroll_to", PyGame_ScrollTo, METH_VARARGS, NULL },
 	{"mouse_move_to", PyGame_MouseMoveTo, METH_VARARGS, NULL },
 	{"mouse_click", PyGame_MouseClick, METH_VARARGS, NULL },

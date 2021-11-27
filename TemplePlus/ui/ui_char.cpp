@@ -817,7 +817,7 @@ void UiCharHooks::SpellsShow(objHndl obj)
 			return nameCmp < 0;
 		});
 		
-		for (auto it: spellsKnownVector){
+		for (auto &it: spellsKnownVector){
 			charSpellPackets[i].spellsKnown.spells[charSpellPackets[i].spellsKnown.count++] = it;
 		}
 

@@ -18,6 +18,7 @@ class RaceSpec
 {
 public:
 	std::vector<int> statModifiers;
+	std::vector<int> saveModifiers; // modifiers for fort, ref, will
 	int effectiveLevel = 0; // modifier for Effective Character Level (determines XP requirement)
 	std::string helpTopic;  // helpsystem id ("TAG_xxx")
 	int flags;              // D20RaceSys::RaceDefinitionFlags 
@@ -51,6 +52,7 @@ public:
 
 	RaceSpec(){
 		statModifiers = { 0,0,0,0,0,0 };
+		saveModifiers = { 0,0,0 };
 		hitDice = Dice(0, 0, 0);
 		
 	}
@@ -146,6 +148,7 @@ PYBIND11_EMBEDDED_MODULE(race_defs, m) {
 		.def_readwrite("use_base_race_for_deity", &RaceSpec::useBaseRaceForDeity)
 		.def_readwrite("weight_female", &RaceSpec::weightFemale)
 		.def_readwrite("stat_modifiers", &RaceSpec::statModifiers)
+		.def_readwrite("saving_throw_modifiers", &RaceSpec::saveModifiers)
 		.def_readwrite("natural_armor", &RaceSpec::naturalArmor)
 		.def_readwrite("help_topic", &RaceSpec::helpTopic)
 		.def_readwrite("proto_id", &RaceSpec::protoId)
@@ -230,6 +233,23 @@ int D20RaceSys::GetStatModifier(Race race, int stat) {
 	if (stat <= stat_charisma)
 		return spec.statModifiers[stat];
 	return 0;
+}
+
+int D20RaceSys::GetSavingThrowBonus(Race race, SavingThrowType saveType)
+{
+	auto& spec = GetRaceSpec(race);
+	switch (saveType) {
+	case SavingThrowType::Fortitude:
+		return spec.saveModifiers[0];
+	case SavingThrowType::Reflex:
+		return spec.saveModifiers[1];
+	case SavingThrowType::Will:
+		return spec.saveModifiers[2];
+	default:
+		logger->error("D20RaceSys::GetSavingThrowBonus(): Bad save type parameter");
+		return 0;
+	}
+
 }
 
 HairStyleRace D20RaceSys::GetHairStyle(Race race){
@@ -498,6 +518,10 @@ void D20RaceSys::RegisterRace(const RaceSpec & spec, int raceEnum){
 	if (raceSpec.isBaseRace) {
 		baseRaceEnums.push_back(raceEnum);
 	}
+
+	if (raceSpec.saveModifiers.size() != 3) {
+		throw TempleException("Bad number of save_modifiers in race {} ({}); expected 3, got {}", raceEnum, spec.conditionName, raceSpec.saveModifiers.size());  // fort,ref,will
+	};
 
 
 	logger->info(fmt::format("Registered race {}", raceEnum).c_str());

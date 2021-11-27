@@ -848,33 +848,7 @@ bool Damage::SavingThrow(objHndl handle, objHndl attacker, int dc, SavingThrowTy
 	evtObj.flags = (int64_t)flags; // TODO: vanilla bug! flags input should be 64 bit (since some of the descriptor enums go beyond 32). Looks like they fixed it in the dispatcher but not this function.
 	evtObj.flags |= (1ull << (D20STD_F_FINAL_ROLL-1));
 	
-	// NPC special bonus from protos
-	if (obj->IsNPC()){
-		auto npcSaveBonus = 0;
-		auto validType = false;
-		switch(saveType){
-		case SavingThrowType::Fortitude:
-			npcSaveBonus = obj->GetInt32(obj_f_npc_save_fortitude_bonus);
-			validType = true;
-			break;
-		case SavingThrowType::Reflex:
-			npcSaveBonus = obj->GetInt32(obj_f_npc_save_reflexes_bonus);
-			validType = true;
-			break;
-		case SavingThrowType::Will:
-			npcSaveBonus = obj->GetInt32(obj_f_npc_save_willpower_bonus);
-			validType = true;
-			break;
-		default:
-			break;
-		}
-		if (validType){
-			evtObj.bonlist.AddBonus(npcSaveBonus, 0, 139);
-		}
-		else{
-			logger->error("SavingThrow(): Bad save type parameter");
-		}
-	}
+	// NPC special bonus from protos - moved to Global condition callback (was here in vanilla, so didn't show up on charsheet)
 
 	dispatch.Dispatch13SavingThrow(handle, saveType, &evtObj);
 	evtObj.obj = handle;

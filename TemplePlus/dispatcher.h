@@ -24,6 +24,7 @@ struct DispIoD20ActionTurnBased; // 12
 struct DispIoMoveSpeed; //13
 struct DispIOBonusListAndSpellEntry; // 14
 struct DispIoObjEvent; // 17
+struct DispIoSpellsPerDay; // 18
 struct DispIoAbilityLoss; // 19
 struct DispIoAttackDice; // 20
 struct DispIoImmunity; //23
@@ -119,6 +120,7 @@ struct DispatcherSystem : temple::AddressTable
 	void DispatchSpecialAttack(objHndl obj, int attack, objHndl target);
 	double DispatchRangeBonus(objHndl obj, objHndl weaponUsed);
 	int DispatchSpellListLevelExtension(objHndl obj, Stat casterClass);
+	int DispatchSpellsPerDay(objHndl obj, Stat casterClass, int spellLevel, int effectiveLvl);
 	int DispatchGetBaseCasterLevel(objHndl obj, Stat casterClass);
 	int DispatchGetCasterLevelStage2(objHndl handle, Stat casterClass, int initialVal);
 
@@ -472,6 +474,21 @@ struct DispIoObjEvent : DispIO // type 17
 		pad = 0;
 	}
 };
+
+struct DispIoSpellsPerDay : DispIO // type 18
+{
+	BonusList* bonList;
+	int unk;
+	int unk2;
+	
+	// extensions:
+	Stat classCode;
+	int spellLvl;
+	int casterEffLvl;
+
+	DispIoSpellsPerDay();
+};
+
 
 
 struct DispIoAbilityLoss: DispIO//  type 19

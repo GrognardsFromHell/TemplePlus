@@ -1210,6 +1210,13 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("spell_packet", &EvtObjSpellCaster::spellPkt)
 		;
 
+	py::class_<DispIoSpellsPerDay>(m, "EventObjSpellsPerDay", "Used for retrieving spells per day mods. Resurrected in Temple+!")
+		.def_readwrite("bonus_list", &DispIoSpellsPerDay::bonList)
+		.def_readwrite("caster_class", &DispIoSpellsPerDay::classCode)
+		.def_readwrite("spell_level", &DispIoSpellsPerDay::spellLvl)
+		.def_readwrite("base_caster_level", &DispIoSpellsPerDay::casterEffLvl)
+		;
+
 	py::class_<EvtObjActionCost, DispIO>(m, "EventObjActionCost", "Used for modifying action cost")
 		.def_readwrite("cost_orig", &EvtObjActionCost::acpOrig)
 		.def_readwrite("cost_new", &EvtObjActionCost::acpCur)
@@ -1233,6 +1240,9 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			}
 
 			return false;
+		}, "")
+		.def("get_spell_casting_class", [](EvtObjMetaMagic mm)->int {
+			return static_cast<int>(spellSys.GetCastingClass(mm.spellClass));
 		}, "")
 		;
 
@@ -1504,6 +1514,10 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 	case dispTypeLevelupSystemEvent:
 	case dispTypeSpellCasterGeneral:
 		pbEvtObj = py::cast(static_cast<EvtObjSpellCaster*>(args.dispIO));
+		break;
+
+	case dispType58SpellsPerDayMod:
+		pbEvtObj = py::cast(static_cast<DispIoSpellsPerDay*>(args.dispIO));
 		break;
 
 	case dispTypeActionCostMod:
