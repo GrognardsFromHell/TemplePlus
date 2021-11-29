@@ -26,6 +26,8 @@ def actionCheck(attachee, args, evt_obj):
     chargesLeft = attachee.d20_query("PQ_Get_Stunning_Fist_Charges")
     if chargesLeft < 1:
         evt_obj.return_val = AEC_OUT_OF_CHARGES
+    if not attachee.item_worn_at(item_wear_weapon_primary) == OBJ_HANDLE_NULL:
+        evt_obj.return_val = AEC_WRONG_WEAPON_TYPE
     return 0
 
 def actionPerform(attachee, args, evt_obj):
@@ -35,7 +37,10 @@ def actionPerform(attachee, args, evt_obj):
     particlesID = game.particles(particlesString, attachee)
     game.create_history_freeform("{} activates ~{}~[{}]\n\n".format(attachee.description, featName, featTag))
     conditionName = "{} Effect".format(featName)
-    attachee.condition_add_with_args(conditionName, particlesID, 0)
+    if attachee.condition_add_with_args(conditionName, particlesID, 0):
+        # Deduct Stunning Fist Charge
+        chargesToDeduct = 1
+        attachee.d20_send_signal("PS_Deduct_Stunning_Fist_Charge", chargesToDeduct)
     return 0
 
 axiomaticStrikeFeat = PythonModifier("{} Feat".format(getFeatName()), 2) #featEnum, empty
@@ -58,9 +63,6 @@ def addExtraDamage(attachee, args, evt_obj):
     return 0
 
 def removeSignal(attachee, args, evt_obj):
-    # Deduct Stunning Fist Charge
-    chargesToDeduct = 1
-    attachee.d20_send_signal("PS_Deduct_Stunning_Fist_Charge", chargesToDeduct)
     # Remove after use
     args.condition_remove()
     return 0

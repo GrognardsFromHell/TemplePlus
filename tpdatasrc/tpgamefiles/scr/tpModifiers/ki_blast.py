@@ -34,7 +34,7 @@ def createRadial(attachee, args, evt_obj):
 
 def actionCheck(attachee, args, evt_obj):
     chargesLeft = attachee.d20_query("PQ_Get_Stunning_Fist_Charges")
-    if chargesLeft < 1:
+    if chargesLeft < 2: #Ki Blast costs 2 charges
         evt_obj.return_val = AEC_OUT_OF_CHARGES
     return 0
 
@@ -62,7 +62,6 @@ def actionFrame(attachee, args, evt_obj):
     #Deduct Stunning Fist Charges
     chargesToDeduct = 2 #Note: Ki Blast really costs 2 charges :(
     attachee.d20_send_signal("PS_Deduct_Stunning_Fist_Charge", chargesToDeduct)
-
 
     currentSequence = tpactions.get_cur_seq()
     target = evt_obj.d20a.target

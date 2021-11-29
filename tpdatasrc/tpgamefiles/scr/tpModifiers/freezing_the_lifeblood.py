@@ -1,6 +1,7 @@
 from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
+from stunning_fist import checkStunImmunity
 
 # Freezing The Lifeblood: Complete Warrior, p. 99
 
@@ -58,8 +59,7 @@ def addExtraDamage(attachee, args, evt_obj):
                 evt_obj.damage_packet.add_mod_factor(modFactor, damageType, damageMesID)
         #Check if target gets stunned
         target = evt_obj.attack_packet.target
-        if target.is_category_type(mc_type_humanoid):
-            #Check if immune to stun missing
+        if target.is_category_type(mc_type_humanoid) and not checkStunImmunity(target):
             freezingDc = 10 + (attachee.stat_level_get(stat_level) / 2) + ((attachee.stat_level_get(stat_wisdom) - 10) / 2)
             if target.saving_throw(freezingDc, D20_Save_Fortitude, D20STD_F_NONE, attachee, D20A_NONE): #successful save
                 target.float_mesfile_line('mes\\spell.mes', 30001) #ID 30001: Saving throw successful!

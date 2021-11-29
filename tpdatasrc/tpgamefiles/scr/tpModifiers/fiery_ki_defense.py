@@ -35,10 +35,10 @@ def actionPerform(attachee, args, evt_obj):
     particlesID = game.particles(particlesString, attachee)
     game.create_history_freeform("{} activates ~{}~[{}]\n\n".format(attachee.description, featName, featTag))
     conditionName = "{} Effect".format(featName)
-    attachee.condition_add_with_args(conditionName, particlesID, 0)
-    # Deduct Stunning Fist Charge
-    chargesToDeduct = 1
-    attachee.d20_send_signal("PS_Deduct_Stunning_Fist_Charge", chargesToDeduct)
+    if attachee.condition_add_with_args(conditionName, particlesID, 0):
+        # Deduct Stunning Fist Charge
+        chargesToDeduct = 1
+        attachee.d20_send_signal("PS_Deduct_Stunning_Fist_Charge", chargesToDeduct)
     return 0
 
 fieryFistFeat = PythonModifier("{} Feat".format(getFeatName()), 2) #featEnum, empty
