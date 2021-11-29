@@ -76,7 +76,7 @@ def stunningFistPerform(attachee, args, evt_obj):
         attachee.d20_send_signal("PS_Deduct_Stunning_Fist_Charge", chargesToDeduct)
     return 0
 
-stunningFistExtend = PythonModifier("Stunning_Fist", 5, True) #override feat_stunning_fist
+stunningFistExtend = PythonModifier("Stunning_Fist", 2) #override feat_stunning_fist
 stunningFistExtend.MapToFeat(feat_stunning_fist)
 stunningFistExtend.AddHook(ET_OnConditionAdd, EK_NONE, setStunningFistCharges, ())
 stunningFistExtend.AddHook(ET_OnNewDay, EK_NEWDAY_REST, setStunningFistCharges, ())
