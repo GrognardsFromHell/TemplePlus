@@ -1,0 +1,5 @@
+name: Minor Aura Motivate Constitution
+flags: 8
+prereqs:
+description: Bonus on Constitution checks and Constitution-based skill checks.
+prereq descr: Marshal 1

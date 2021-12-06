@@ -3361,6 +3361,59 @@ spell_new_slot_lvl_9 = 1614
 spell_dragon_disciple_cone_breath = 3231
 spell_dragon_disciple_line_breath = 3232
 
+# Marshal Spells
+spell_marshal_minor_aura = 3831
+spell_marshal_major_aura = 3832
+spell_marshal_adrenaline_boost = 3833
+
+# Dragon Shaman Spells
+spell_draconic_aura = 3840
+spell_double_draconic_aura = 3841
+
+# Aura Types
+aura_type_minor = 1
+aura_type_major = 2
+aura_type_draconic = 3
+aura_type_double_draconic = 4
+
+#Aura Enums
+aura_accurate_strike = 1
+aura_art_of_war = 2
+aura_Demand_fortitude = 3
+aura_Determined_caster = 4
+aura_force_of_will = 5
+aura_master_of_opportunity = 6
+aura_master_of_tactics = 7
+aura_motivate_charisma = 8
+aura_motivate_constitution = 9
+aura_motivate_dexterity = 10
+aura_motivate_intelligence = 11
+aura_motivate_strength = 12
+aura_motivate_wisdom = 13
+aura_over_the_top = 14
+aura_watchful_eye = 15
+aura_hardy_soldiers = 16
+aura_motivate_ardor = 17
+aura_motivate_attack = 18
+aura_motivate_care = 19
+aura_motivate_urgency = 20
+aura_resilient_troops = 21
+aura_steady_hand = 22
+aura_energy_shield = 23
+aura_power = 24
+aura_presence = 25
+aura_resistance = 26
+aura_senses = 27
+aura_toughness = 28
+aura_vigor = 29
+aura_break_spell_resistance = 30
+aura_energy = 31
+aura_insight = 32
+aura_resolve = 33
+aura_stamina = 34
+aura_swiftness =35
+
+
 stat_strength = 0
 stat_dexterity = 1
 stat_constitution = 2

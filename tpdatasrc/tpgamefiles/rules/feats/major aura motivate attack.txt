@@ -1,0 +1,5 @@
+name: Major Aura Motivate Attack
+flags: 8
+prereqs:
+description: Bonus on melee attack rolls.
+prereq descr: Marshal 2

@@ -1,0 +1,5 @@
+name: Minor Aura Master of Opportunity
+flags: 8
+prereqs:
+description: Bonus to Armor Class against attacks of opportunity.
+prereq descr: Marshal 1

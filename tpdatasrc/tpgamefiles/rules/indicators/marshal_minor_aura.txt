@@ -1,0 +1,5 @@
+ID_string: MARSHAL_MINOR_AURA
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\spell aid.tga
+help_topic: TAG_CLASS_FEATURES_MARSHAL_MINOR_AURAS
+tooltip_base_text: Marshal Minor Aura

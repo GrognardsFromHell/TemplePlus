@@ -1,0 +1,5 @@
+name: Minor Aura Over the Top
+flags: 8
+prereqs:
+description: Bonus on damage rolls when charging.
+prereq descr: Marshal 1

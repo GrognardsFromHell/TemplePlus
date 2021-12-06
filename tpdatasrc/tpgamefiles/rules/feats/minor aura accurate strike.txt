@@ -1,0 +1,5 @@
+name: Minor Aura Accurate Strike
+flags: 8
+prereqs:
+description: Minor Aura Accurate Strike adds the Marshal's Charisma bonus (if any) to rolls made to confirm critical hits.
+prereq descr: Marshal 1

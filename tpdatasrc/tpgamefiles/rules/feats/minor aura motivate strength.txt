@@ -1,0 +1,5 @@
+name: Minor Aura Motivate Strength
+flags: 8
+prereqs:
+description: Bonus on Strength checks and Strength-based skill checks.
+prereq descr: Marshal 1
