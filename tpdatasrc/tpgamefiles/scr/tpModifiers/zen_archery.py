@@ -7,7 +7,7 @@ print "Registering Zen Archery"
 
 def applyWisToHit(attachee, args, evt_obj):
     flags = evt_obj.attack_packet.get_flags()
-    if flags & D20CAF_RANGED:
+    if flags & D20CAF_RANGED or flags & D20CAF_THROWN:
         dexScore = attachee.stat_level_get(stat_dexterity)
         wisScore = attachee.stat_level_get(stat_wisdom)
         dexMod = (dexScore - 10) / 2
@@ -16,7 +16,7 @@ def applyWisToHit(attachee, args, evt_obj):
         #Wisdom and Dexterity as bonus if wis > dex
         if wisMod > dexMod:
             bonus = wisMod - dexMod
-            bonusType = 0 #ID 0 = untyped (stacking)
+            bonusType = 180 #ID 180 = Dexterity replacing modififers for ranged attacks
             evt_obj.bonus_list.add(bonus, bonusType, "~Zen Archery~[TAG_ZEN_ARCHERY]")
     return 0
 
