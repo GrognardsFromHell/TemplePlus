@@ -1,0 +1,7 @@
+name: Flying Kick
+flags: 12582912
+prereqs: 0 13
+description: You literally leap into battle, dealing devastating damage.
+
+When fighting unarmed and using the charge action, you deal an extra 1d12 points of damage with your unarmed attack.
+prereq descr: Improved Unarmed Strike, Power Attack, STR 13
