@@ -146,7 +146,7 @@ def checkBreathWeapon(attachee, args, evt_obj):
     if args.get_arg(1) < 1:
         evt_obj.return_val = AEC_OUT_OF_CHARGES
     elif args.get_arg(2) > -1:
-        evt_obj.return_val = AEC_INVALID_ACTION 
+        evt_obj.return_val = AEC_ABILITY_ON_COOLDOWN 
     return 0
 
 def performBreathWeapon(attachee, args, evt_obj):

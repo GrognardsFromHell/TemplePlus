@@ -4308,12 +4308,15 @@ const char*actionErrorCodeStrings[] =
 	"AEC_NEED_A_STRAIGHT_LINE",
 	"AEC_NO_ACTIONS",
 	"AEC_NOT_IN_COMBAT",
-	"AEC_AREA_NOT_SAFE"
+	"AEC_AREA_NOT_SAFE",
+	"AEC_ABILITY_ON_COOLDOWN",
+	"AEC_ALREADY_USED_THIS_TURN",
+	"AEC_ALREADY_ACTIVE"
 };
 ostream & operator<<(ostream & str, ActionErrorCode aec)
 {
 	size_t i = (size_t)aec;
-	if (i <= AEC_AREA_NOT_SAFE) {
+	if (i <= AEC_ALREADY_ACTIVE) {
 		str << actionErrorCodeStrings[i];
 	}
 	else {
