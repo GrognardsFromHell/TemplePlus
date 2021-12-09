@@ -48,7 +48,10 @@ enum ActionErrorCode : uint32_t
 	AEC_NEED_A_STRAIGHT_LINE,
 	AEC_NO_ACTIONS,
 	AEC_NOT_IN_COMBAT,
-	AEC_AREA_NOT_SAFE
+	AEC_AREA_NOT_SAFE,
+	AEC_ABILITY_ON_COOLDOWN,
+	AEC_ALREADY_USED_THIS_TURN,
+	AEC_ALREADY_ACTIVE
 };
 
 // Allows for direct use of ActionErrorCode in format() strings
