@@ -1236,6 +1236,47 @@ static PyObject* PyObjHandle_ArcaneSpellLevelCanCast(PyObject* obj, PyObject* ar
 	return PyInt_FromLong(arcaneSpellLvlMax);
 }
 
+static PyObject* PyObjHandle_ArcaneSpontaniousSpellLevelCanCast(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	auto arcaneSpontaniousSpellLvlMax = 0;
+
+	critterSys.GetSpellLvlCanCast(self->handle, SpellSourceType::Arcane, SpellReadyingType::Any);
+
+	for (auto it : d20ClassSys.classEnums) {
+		auto classEnum = (Stat)it;
+		if (d20ClassSys.IsArcaneCastingClass(classEnum) && d20ClassSys.IsNaturalCastingClass(classEnum)) {
+			arcaneSpontaniousSpellLvlMax = max(arcaneSpontaniousSpellLvlMax, spellSys.GetMaxSpellLevel(self->handle, classEnum, 0));
+		}
+	}
+
+	return PyInt_FromLong(arcaneSpontaniousSpellLvlMax);
+}
+
+static PyObject* PyObjHandle_ArcaneVancianSpellLevelCanCast(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	auto arcaneVancianSpellLvlMax = 0;
+
+	critterSys.GetSpellLvlCanCast(self->handle, SpellSourceType::Arcane, SpellReadyingType::Any);
+
+	for (auto it : d20ClassSys.classEnums) {
+		auto classEnum = (Stat)it;
+		if (d20ClassSys.IsArcaneCastingClass(classEnum) && d20ClassSys.IsVancianCastingClass(classEnum)) {
+			arcaneVancianSpellLvlMax = max(arcaneVancianSpellLvlMax, spellSys.GetMaxSpellLevel(self->handle, classEnum, 0));
+		}
+	}
+
+	return PyInt_FromLong(arcaneVancianSpellLvlMax);
+}
+
+
 static PyObject* PyObjHandle_DivineSpellLevelCanCast(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -4347,6 +4388,8 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "apply_projectile_particles", PyObjHandle_ApplyProjectileParticles, METH_VARARGS, NULL },
 	{ "apply_projectile_hit_particles", PyObjHandle_ApplyProjectileHitParticles, METH_VARARGS, NULL },
 	{ "arcane_spell_level_can_cast", PyObjHandle_ArcaneSpellLevelCanCast, METH_VARARGS, NULL },
+	{ "arcane_spontaneous_spell_level_can_cast", PyObjHandle_ArcaneSpontaniousSpellLevelCanCast, METH_VARARGS, NULL },
+	{ "arcane_vancian_spell_level_can_cast", PyObjHandle_ArcaneVancianSpellLevelCanCast, METH_VARARGS, NULL },
 	{ "attack", PyObjHandle_Attack, METH_VARARGS, NULL },
 	{ "award_experience", PyObjHandle_AwardExperience, METH_VARARGS, NULL },
 
@@ -4851,6 +4894,56 @@ static PyObject* PyObjHandle_GetHighestArcaneClass(PyObject* obj, void*) {
 }
 
 
+static PyObject* PyObjHandle_GetHighestSpontaneousArcaneClass(PyObject* obj, void*) {
+	auto self = GetSelf(obj);
+	objHndl objHnd = self->handle;
+	if (!objHnd) {
+		return PyInt_FromLong(0);
+	}
+
+	auto highestClass = (Stat)0;
+	auto highestLvl = 0;
+
+	for (auto it : d20ClassSys.classEnumsWithSpellLists) {
+		auto classEnum = (Stat)it;
+		if (d20ClassSys.IsArcaneCastingClass(classEnum) && d20ClassSys.IsNaturalCastingClass(classEnum)) {
+			auto lvlThis = objects.StatLevelGet(objHnd, classEnum);
+			if (lvlThis > highestLvl) {
+				highestLvl = lvlThis;
+				highestClass = classEnum;
+			}
+		}
+	}
+
+	return PyInt_FromLong(highestClass);
+}
+
+
+static PyObject* PyObjHandle_GetHighestVancianArcaneClass(PyObject* obj, void*) {
+	auto self = GetSelf(obj);
+	objHndl objHnd = self->handle;
+	if (!objHnd) {
+		return PyInt_FromLong(0);
+	}
+
+	auto highestClass = (Stat)0;
+	auto highestLvl = 0;
+
+	for (auto it : d20ClassSys.classEnumsWithSpellLists) {
+		auto classEnum = (Stat)it;
+		if (d20ClassSys.IsArcaneCastingClass(classEnum) && d20ClassSys.IsVancianCastingClass(classEnum)) {
+			auto lvlThis = objects.StatLevelGet(objHnd, classEnum);
+			if (lvlThis > highestLvl) {
+				highestLvl = lvlThis;
+				highestClass = classEnum;
+			}
+		}
+	}
+
+	return PyInt_FromLong(highestClass);
+}
+
+
 static PyObject* PyObjHandle_GetHighestDivineClass(PyObject* obj, void*) {
 	auto self = GetSelf(obj);
 	objHndl objHnd = self->handle;
@@ -4986,6 +5079,8 @@ PyGetSetDef PyObjHandleGetSets[] = {
 	{ "area", PyObjHandle_GetArea, NULL, NULL, NULL },
 	{"char_classes", PyObjHandle_GetCharacterClasses, NULL, "a tuple containing the character classes array", NULL },
 	{ "highest_arcane_class", PyObjHandle_GetHighestArcaneClass, NULL, "Highest Arcane spell casting class", NULL },
+	{ "highest_vancian_arcane_class", PyObjHandle_GetHighestVancianArcaneClass, NULL, "Highest Vancian Arcane spell casting class", NULL },
+	{ "highest_spontaneous_arcane_class", PyObjHandle_GetHighestSpontaneousArcaneClass, NULL, "Highest Natural Arcane spell casting class", NULL },
 	{ "highest_divine_class", PyObjHandle_GetHighestDivineClass, NULL, "Highest Divine spell casting class", NULL },
     { "highest_arcane_caster_level", PyObjHandle_GetHighestArcaneCasterLevel, NULL, "Highest Arcane caster level", NULL },
     { "highest_divine_caster_level", PyObjHandle_GetHighestDivineCasterLevel, NULL, "Highest Divine caster level", NULL },

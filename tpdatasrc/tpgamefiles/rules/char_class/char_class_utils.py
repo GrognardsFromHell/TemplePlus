@@ -40,6 +40,13 @@ def GetHighestBaseClass( attachee ):
 
 def GetHighestArcaneClass( attachee ):
 	return attachee.highest_arcane_class
+	
+def GetHighestSpontaneousArcaneClass( attachee ):
+	return attachee.highest_vancian_spontaneous_class
+	
+def GetHighestVancianArcaneClass( attachee ):
+	return attachee.highest_vancian_arcane_class
+	
 
 def GetHighestDivineClass( attachee ):
 	return attachee.highest_divine_class
