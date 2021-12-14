@@ -2394,7 +2394,7 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 
 			// Fist of the Forest modifies monk unarmed damage
 			if (fifoLvl > 0 && monkLvl > 0){
-				monkLvl += 3
+				monkLvl += 3;
 			}
 
 			auto beltItem = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Lockpicks);
@@ -2513,11 +2513,11 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 			{
 				if (fifoLvl < 3 && attackDiceType < 8)
 				{
-					attackDiceType = 8
+					attackDiceType = 8;
 				}
 				else if (fifoLvl >= 3 && attackDiceType < 10)
 				{
-					attackDiceType = 10
+					attackDiceType = 10;
 				}
 			}
 
