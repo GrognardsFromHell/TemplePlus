@@ -2380,6 +2380,8 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 		else
 		{
 			int monkLvl = objects.StatLevelGet(args.objHndCaller, stat_level_monk);
+			// Fist of the Forest insert by Sagenlicht
+			int fifoLvl = objects.StatLevelGet(args.objHndCaller, stat_level_fist_of_the_forest);
 			
 			attackDamageType = DamageType::Subdual;
 			if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_IMPROVED_UNARMED_STRIKE) > 0) {
@@ -2389,6 +2391,11 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 			}
 			
 			damageMesLine = 113; // Unarmed
+
+			// Fist of the Forest modifies monk unarmed damage
+			if (fifoLvl > 0 && monkLvl > 0){
+				monkLvl += 3
+			}
 
 			auto beltItem = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Lockpicks);
 			if (beltItem){
@@ -2499,6 +2506,19 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 					attackDiceType = 10;
 				}
 
+			}
+
+			// Fist of the Forest Spaghetti code
+			if (fifoLvl > 0 && attackDiceCount == 1)
+			{
+				if (fifoLvl < 3 && attackDiceType < 8)
+				{
+					attackDiceType = 8
+				}
+				else if (fifoLvl >= 3 && attackDiceType < 10)
+				{
+					attackDiceType = 10
+				}
 			}
 
 			Dice diceUnarmed(attackDiceCount, attackDiceType, 0);

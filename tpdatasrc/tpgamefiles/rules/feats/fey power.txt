@@ -1,0 +1,5 @@
+name: Fey Power
+flags: 12582912
+prereqs:
+description: Your fey heritage augments the power of certain types of magic.
+prereq descr: Nonlawful alignment, Fey Heritage Feat

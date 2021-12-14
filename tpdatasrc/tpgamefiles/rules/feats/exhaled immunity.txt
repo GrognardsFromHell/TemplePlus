@@ -1,0 +1,5 @@
+name: Exhaled Immunity
+flags: 12582913
+prereqs: 
+description: You can use your breath weapon to grant a willing creature immunity to the energy type of your breath weapon.
+prereq descr: Breath Weapon

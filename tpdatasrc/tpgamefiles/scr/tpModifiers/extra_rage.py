@@ -1,19 +1,18 @@
-#Extra Rage:  Complete Warrior, p. 98
-
 from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
 
 print "Registering Extra Rage"
 
-def ExtraRageNewDay(attachee, args, evt_obj):
-	ExtraRageCount = attachee.has_feat("Extra Rage")
-	
-	#Extra Rage grands 2 additional uses or rage each time the feat is taken
-	args.set_arg(0, args.get_arg(0) + 2 * ExtraRageCount)
-	return 0
+#Extra Rage:  Complete Warrior, p. 98
 
-extendRageFeat = PythonModifier()
-extendRageFeat.ExtendExisting("Barbarian_Rage")
-extendRageFeat.MapToFeat(feat_barbarian_rage)
-extendRageFeat.AddHook(ET_OnNewDay, EK_NEWDAY_REST, ExtraRageNewDay, ())
+def addExtraCharges(attachee, args, evt_obj):
+    # Extra Rage adds 2 more charges to Barbarian Rage
+    # every time the feat is taken
+    featCount = attachee.has_feat("Extra Rage")
+    evt_obj.return_val += 2 * featCount
+    return 0
+
+extraRage = PythonModifier("Extra Rage Feat", 2) #featEnum, empty
+extraRage.MapToFeat("Extra Rage", feat_cond_arg2 = 0)
+extraRage.AddHook(ET_OnD20PythonQuery, "PQ_Get_Extra_Barbarian_Rage_Charges", addExtraCharges, ())

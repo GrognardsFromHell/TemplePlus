@@ -1,0 +1,5 @@
+ID_string: FERAL_TRANCE_EFFECT
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Barbarian Rage.tga
+help_topic: TAG_CLASS_FEATURES_FERAL_TRANCE
+tooltip_base_text: Feral Trance

@@ -1,0 +1,5 @@
+ID_string: SHAKEN
+effect_type: 1
+texture_file: art\interface\player_conditions\Ailments\Spell Fear.tga
+help_topic: TAG_SHAKEN
+tooltip_base_text: Shaken

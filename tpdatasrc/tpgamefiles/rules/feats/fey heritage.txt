@@ -1,0 +1,5 @@
+name: Fey Heritage
+flags: 12582912
+prereqs:
+description: You are descended from creatures native to the fey realms. You are naturally resistant to the most common effects produced by your ancestors.
+prereq descr: Nonlawful alignment, no other Heritage Feat.

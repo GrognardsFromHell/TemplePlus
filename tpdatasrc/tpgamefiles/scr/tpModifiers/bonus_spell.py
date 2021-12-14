@@ -35,34 +35,19 @@ class BonusSpellModifier(PythonModifier):
     def bonusSpellLevelSetArg(self, slotLevel):
         self.AddHook(ET_OnConditionAdd, EK_NONE, setSpellLevelArg, (slotLevel,))
 
-bonusSpellSorc0 = BonusSpellModifier("Bonus Spell Sorc 0")
-bonusSpellSorc0.MapToFeat("Bonus Spell (Sorcerer 0)", feat_cond_arg2 = stat_level_sorcerer)
-bonusSpellSorc0.bonusSpellLevelSetArg(0)
+for spellLevel in range(0, 10):
+    bonusSpellSorc = BonusSpellModifier("Bonus Spell Sorc {}".format(spellLevel))
+    bonusSpellSorc.MapToFeat("Bonus Spell (Sorcerer {})".format(spellLevel), feat_cond_arg2 = stat_level_sorcerer)
+    bonusSpellSorc.bonusSpellLevelSetArg(spellLevel)
 
-bonusSpellSorc1 = BonusSpellModifier("Bonus Spell Sorc 1")
-bonusSpellSorc1.MapToFeat("Bonus Spell (Sorcerer 1)", feat_cond_arg2 = stat_level_sorcerer)
-bonusSpellSorc1.bonusSpellLevelSetArg(1)
+for spellLevel in range(0, 10):
+    bonusSpellWiz = BonusSpellModifier("Bonus Spell Wiz {}".format(spellLevel))
+    bonusSpellWiz.MapToFeat("Bonus Spell (Wizard {})".format(spellLevel), feat_cond_arg2 = stat_level_wizard)
+    bonusSpellWiz.bonusSpellLevelSetArg(spellLevel)
 
-bonusSpellSorc2 = BonusSpellModifier("Bonus Spell Sorc 2")
-bonusSpellSorc2.MapToFeat("Bonus Spell (Sorcerer 2)", feat_cond_arg2 = stat_level_sorcerer)
-bonusSpellSorc2.bonusSpellLevelSetArg(2)
+for spellLevel in range(0, 10):
+    bonusSpellBard = BonusSpellModifier("Bonus Spell Bard {}".format(spellLevel))
+    bonusSpellBard.MapToFeat("Bonus Spell (Bard {})".format(spellLevel), feat_cond_arg2 = stat_level_bard)
+    bonusSpellBard.bonusSpellLevelSetArg(spellLevel)
 
-bonusSpellSorc3 = BonusSpellModifier("Bonus Spell Sorc 3")
-bonusSpellSorc3.MapToFeat("Bonus Spell (Sorcerer 3)", feat_cond_arg2 = stat_level_sorcerer)
-bonusSpellSorc3.bonusSpellLevelSetArg(3)
 
-bonusSpellWiz0 = BonusSpellModifier("Bonus Spell Wiz 0")
-bonusSpellWiz0.MapToFeat("Bonus Spell (Wizard 0)", feat_cond_arg2 = stat_level_wizard)
-bonusSpellWiz0.bonusSpellLevelSetArg(0)
-
-bonusSpellWiz0 = BonusSpellModifier("Bonus Spell Wiz 1")
-bonusSpellWiz0.MapToFeat("Bonus Spell (Wizard 1)", feat_cond_arg2 = stat_level_wizard)
-bonusSpellWiz0.bonusSpellLevelSetArg(1)
-
-bonusSpellWiz0 = BonusSpellModifier("Bonus Spell Wiz 2")
-bonusSpellWiz0.MapToFeat("Bonus Spell (Wizard 0)", feat_cond_arg2 = stat_level_wizard)
-bonusSpellWiz0.bonusSpellLevelSetArg(2)
-
-bonusSpellWiz0 = BonusSpellModifier("Bonus Spell Wiz 2")
-bonusSpellWiz0.MapToFeat("Bonus Spell (Wizard 2)", feat_cond_arg2 = stat_level_wizard)
-bonusSpellWiz0.bonusSpellLevelSetArg(2)

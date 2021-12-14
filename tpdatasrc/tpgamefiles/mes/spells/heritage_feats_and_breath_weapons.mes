@@ -1,0 +1,17 @@
+// Spell Enums for Draconic Breath Weapons
+// and Draconic + Marshal Auras
+
+{3231}{Dragon Disciple Cone Breath}
+{3232}{Dragon Disciple Line Breath}
+{3831}{Marshal Minor Aura}
+{3832}{Marshal Major Aura}
+{3833}{Marshal Adrenaline Boost}
+{3840}{Draconic Aura}
+{3841}{Dragon Shaman Cone Breath Small}
+{3842}{Dragon Shaman Cone Breath Medium}
+{3843}{Dragon Shaman Cone Breath Large}
+{3844}{Dragon Shaman Line Breath Small}
+{3845}{Dragon Shaman Line Breath Medium}
+{3846}{Dragon Shaman Line Breath Large}
+{3850}{Draconic Breath Cone}
+{3851}{Draconic Breath Line}

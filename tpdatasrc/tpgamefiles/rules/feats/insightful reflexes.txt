@@ -1,0 +1,5 @@
+name: Insightful Reflexes
+flags: 4194304
+prereqs:
+description: Your keen intellect allows you an uncanny knack for evading dangerous effects.
+prereq descr:

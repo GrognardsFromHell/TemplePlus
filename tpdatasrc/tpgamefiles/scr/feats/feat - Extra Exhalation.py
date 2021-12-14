@@ -4,7 +4,6 @@ import char_editor
 
 def CheckPrereq(attachee, classLevelled, abilityScoreRaised):
     #Check if character has a limited usage Breath Weapon
-    #At the moment only Dragon Diciple has one:
-    if not char_editor.has_feat("Dragon Disciple Breath Weapon"):
-        return 0
-    return 1
+    if attachee.d20_query("PQ_Has_Limited_Breath_Weapon"):
+        return 1
+    return 0

@@ -1,0 +1,5 @@
+ID_string: FIST_OF_THE_FOREST_PRIMAL_LIVING
+effect_type: 1
+texture_file: art\interface\player_conditions\Ailments\primal living.tga
+help_topic: TAG_CLASS_FEATURES_FIST_OF_THE_FOREST_PRIMAL_LIVING
+tooltip_base_text: Primal Living

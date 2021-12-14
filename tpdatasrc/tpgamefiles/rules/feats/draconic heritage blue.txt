@@ -1,6 +1,6 @@
 name: Draconic Heritage Blue
 flags: 4194304
-prereqs:
+prereqs: 16 1
 description: You have a greater connection with your draconic bloodline than others of your kind.
 prereq descr: Sorcercer Level 1
 parent: Draconic Heritage

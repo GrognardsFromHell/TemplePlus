@@ -1,0 +1,5 @@
+name: Draconic Toughness
+flags: 12582912
+prereqs: 16 1
+description: When you take this feat, you gain 2 hit points for each draconic feat you have, including this one. Whenever you take a new draconic feat, you gain 2 more hit points.
+prereq descr: Draconic Heritage, Sorcerer Level 1

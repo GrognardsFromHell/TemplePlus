@@ -25,9 +25,6 @@ def getMaxCharges(attachee):
     return chargesFromMonk + chargesNonMonk + chargesFromFeats
 
 def setStunningFistCharges(attachee, args, evt_obj):
-    #100F9820 still collects charges from classes
-    print "100F9820 still collects the charges from classes:"
-    print "arg.get_arg(0): {}".format(args.get_arg(0))
     maxCharges = getMaxCharges(attachee)
     args.set_arg(0, maxCharges)
     return 0

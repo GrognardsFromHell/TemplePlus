@@ -1,0 +1,5 @@
+name: Fey Skin
+flags: 12582912
+prereqs:
+description: Your fey heritage guards you against all weapons except those crafted from the dreaded cold iron.
+prereq descr: Nonlawful alignment, Fey Heritage Feat

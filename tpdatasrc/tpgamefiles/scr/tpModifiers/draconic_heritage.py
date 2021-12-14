@@ -42,26 +42,25 @@ def addClassSkill(attachee, args, evt_obj):
     return 0
 
 def addSavingThrowBonus(attachee, args, evt_obj):
-    if attachee.stat_level_get(stat_level_sorcerer) > 0:
-        heritage = args.get_arg(1)
-        heritageElement = heritage_feat_utils.getDraconicHeritageElement(heritage)
-        saveDescriptor = getSaveDescriptor(heritageElement)
-        flags = evt_obj.flags
-        #This is not working properly, because as soon as the spell uses reflex_save_and_damage 
-        #the Save Descriptor gets dropped :(
-        #I did not use reflex_save_and_damage for my damage spells in the spell compendium
-        #but instead the normal saving_throw_spell and then dealt damage afterwards with
-        #spell_damage_with_reduction/spell_damage which leads to the situation
-        #that the below save bonus works with the spell compendium spells
-        #but not with the core spells.
-        print "flags: {}".format(flags)
-        if (flags & (1 << (saveDescriptor-1))): 
-            bonusValue = heritage_feat_utils.countHeritageFeats(attachee, heritage)
-            bonusType = 0 # ID 0 = Untyped (stacking)
-            evt_obj.bonus_list.add(bonusValue ,bonusType ,"~Draconic Heritage~[TAG_DRACONIC_HERITAGE]")
-        #elif #Sleep and Paralyze missing
-        #there are no slepp or paralyze flags/descriptors atm, which means, you can do immunities to both types
-        #but no save bonus effects
+    heritage = args.get_arg(1)
+    heritageElement = heritage_feat_utils.getDraconicHeritageElement(heritage)
+    saveDescriptor = getSaveDescriptor(heritageElement)
+    flags = evt_obj.flags
+    #This is not working properly, because as soon as the spell uses reflex_save_and_damage 
+    #the Save Descriptor gets dropped :(
+    #I did not use reflex_save_and_damage for my damage spells in the spell compendium
+    #but instead the normal saving_throw_spell and then dealt damage afterwards with
+    #spell_damage_with_reduction/spell_damage which leads to the situation
+    #that the below save bonus works with the spell compendium spells
+    #but not with the core spells.
+    #print "flags: {}".format(flags)
+    if (flags & (1 << (saveDescriptor-1))): 
+        bonusValue = heritage_feat_utils.countHeritageFeats(attachee, heritage)
+        bonusType = 0 # ID 0 = Untyped (stacking)
+        evt_obj.bonus_list.add(bonusValue ,bonusType ,"~Draconic Heritage~[TAG_DRACONIC_HERITAGE]")
+    #elif #Sleep and Paralyze missing
+    #there are no slepp or paralyze flags/descriptors atm, which means, you can do immunities to both types
+    #but no save bonus effects
     return 0
 
 def querySelectedHeritage(attachee, args, evt_obj):

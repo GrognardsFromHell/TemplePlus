@@ -36,7 +36,7 @@ def getCelestialSorcererHeritageFeatList():
 
 # Draconic Feat List
 # Note: Draconic Aura and Double Aura are not part of the draconic feats!
-# Missing: Complete Arcane: Claw, Flight, Legacy(maybe a skip), Power, Presence
+# Missing: Complete Arcane: Claw, Flight, Legacy(maybe a skip)
 # Missing Dragon Magic: [Colour] Dragon Lineage (started), Draconic Knowledge (skip as there are no knowledge skills?), Draconic Senses
 # Missing Dragon Magic Multiclass options: Dragonfire Assault (Power Attack), Dragonfire Channeling (Turn/Rebuke),
 # Dragonfire Inspiration (Bardic Music), Dragonfire Strike (Sneak/Skirmish/Sudden Strike)

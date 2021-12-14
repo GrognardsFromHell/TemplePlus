@@ -1,0 +1,5 @@
+name: Fist of the Forest AC Bonus
+flags: 8
+prereqs:
+description:  While unarmored, you gain a bonus to your Armor Class equal to your Constitution bonus (if any).
+prereq descr: Fist of the Forest 1.

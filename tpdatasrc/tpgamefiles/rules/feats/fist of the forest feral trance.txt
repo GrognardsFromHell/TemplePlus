@@ -1,0 +1,9 @@
+name: Fist of the Forest Feral Trance
+flags: 8
+prereqs:
+description: Once per day, you can enter a feral battle trance. While you are in this state, the raw power of the beast flows through you. Your hands and feet become clawlike (destroying any shoes or gloves you are wearing), and your teeth lengthen and grow pointed. For the duration of the trance, you gain a +4 bonus to Dexterity and a +2 bonus on damage rolls with your unarmed strikes. You can also make one bite attack per round at your highest attack bonus whenever you attack as a full-round action.
+
+The damage for this attack is 1d6 + your Str modifier, regardless of your size. A feral trance lasts for a number of rounds equal to 3 + your Con modifier. While in a trance, you cannot perform certain actions, and afterward you are fatigued. These restrictions are the same as those for the barbarian’s rage class feature. If you have the ability to enter a rage, you can do so while in a feral trance, using your increased Constitution score to determine the duration of both effects.
+
+At 3rd level, you can use this ability twice per day.
+prereq descr: Fist of the Forest 1.

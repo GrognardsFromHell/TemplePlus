@@ -1,0 +1,5 @@
+ID_string: BARBARIAN_RAGE_EFFECT
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Barbarian Rage.tga
+help_topic: TAG_CLASS_FEATURES_BARBARIAN_RAGE
+tooltip_base_text: Barbarian Rage

@@ -1,0 +1,5 @@
+name: Steadfast Determination
+flags: 4194304
+prereqs:
+description: Your physical durability allows you to shrug off attacks that would cripple a lesser person. Rather than depend on agility or willpower, you use your raw toughness to survive.
+prereq descr: Endurance (omitted)

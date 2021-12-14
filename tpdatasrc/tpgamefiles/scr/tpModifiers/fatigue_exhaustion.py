@@ -108,8 +108,9 @@ def FatigueRemove(attachee, args, evt_obj):
 	return 0
 	
 def FatigueAddHeal(attachee, args, evt_obj):
-	val = evt_obj.is_modifier("sp-Heal")
-	if val:
+	if (evt_obj.is_modifier("sp-Heal")
+	or evt_obj.is_modifier("sp-Remove Exhaustion")
+	or evt_obj.is_modifier("sp-Remove Fatigue") and args.get_arg(2) == 0):
 		attachee.float_text_line("Fatigue Removed")
 		args.condition_remove()
 	return 0

@@ -1,0 +1,5 @@
+name: Draconic Skin
+flags: 12582912
+prereqs: 16 1
+description: Your skin takes on the sheen, luster, and hardness of your draconic parentage. Your natural armor increases by 1.
+prereq descr: Draconic Heritage, Sorcerer Level 1

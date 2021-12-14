@@ -1,0 +1,5 @@
+name: Fist of the Forest Untamed Strike
+flags: 8
+prereqs:
+description: On attaining 2nd level, you can channel the untamed power of nature when you attack. Your unarmed strikes are treated as magic weapons; see the monk’s ki strike class feature. If your unarmed strikes are already magical, they instead are treated lesser ghost touch weapons. They deal full damage against incorporeal creatures 50% of the time and half damage the rest of the time.
+prereq descr: Fist of the Forest 2.

@@ -1,0 +1,5 @@
+name: Draconic Armor
+flags: 12582912
+prereqs: 16 1
+description: You learn to block damage from successful attacks, lessening the blows with spell energy.
+prereq descr: Draconic Heritage, Sorcerer Level 1

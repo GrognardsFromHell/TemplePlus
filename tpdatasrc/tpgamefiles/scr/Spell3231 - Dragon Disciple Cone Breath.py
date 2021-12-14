@@ -45,10 +45,12 @@ def OnSpellEffect(spell):
 
     for spellTarget in spell.target_list:
         #Save for half damage:
-        if spellTarget.obj.reflex_save_and_damage(spell.caster, spell.dc, saveType, saveDescriptor, spellDamageDice, damageType, D20DAP_UNSPECIFIED, D20A_CAST_SPELL, spell.id): #success
+        if spellTarget.obj.saving_throw_spell(spell.dc, saveType, saveDescriptor, spell.caster, spell.id): #success
             spellTarget.obj.float_mesfile_line('mes\\spell.mes', 30001)
+            spellTarget.obj.spell_damage_with_reduction(spell.caster, damageType, spellDamageDice, D20DAP_UNSPECIFIED, DAMAGE_REDUCTION_HALF, D20A_CAST_SPELL, spell.id)
         else:
             spellTarget.obj.float_mesfile_line('mes\\spell.mes', 30002)
+            spellTarget.obj.spell_damage(spell.caster, damageType, spellDamageDice, D20DAP_UNSPECIFIED, D20A_CAST_SPELL, spell.id)
         targetsToRemove.append(spellTarget.obj)
 
     spell.target_list.remove_list(targetsToRemove)

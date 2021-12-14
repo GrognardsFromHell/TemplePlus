@@ -1,0 +1,5 @@
+name: Draconic Power
+flags: 12582912
+prereqs: 16 1
+description: You have greater power manipulating the energies of your heritage.
+prereq descr: Draconic Heritage, Sorcerer Level 1

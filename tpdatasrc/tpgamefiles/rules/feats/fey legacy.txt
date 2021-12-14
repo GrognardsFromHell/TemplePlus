@@ -1,0 +1,5 @@
+name: Fey Legacy
+flags: 12582912
+prereqs:
+description: The magical powers of your ancestors manifest in you.
+prereq descr: Nonlawful alignment, Fey Heritage Feat, Character Level 9

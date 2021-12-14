@@ -1,0 +1,5 @@
+name: Fist of the Forest Primal Living
+flags: 8
+prereqs:
+description: To maintain your bestial powers, you must live like a wild animal. You must sleep in natural environments, never inside buildings, unless forced by circumstances . Furthermore, you cannot purchase food—you must obtain it by hunting, gathering, begging, or stealing. In any month in which you buy food or voluntarily sleep indoors more than three times, all your fist of the forest class features cease to function until you have spent thirty consecutive days living like an animal once more, or until a fellow Guardian of the Green casts atonement on you.
+prereq descr: Fist of the Forest 1.

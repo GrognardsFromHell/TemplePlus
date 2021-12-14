@@ -1,0 +1,5 @@
+name: Force of Personality
+flags: 4194304
+prereqs: 5 13
+description: You have cultivated an unshakable belief in your self-worth. Your sense of self and purpose are so strong that they bolster your willpower.
+prereq descr: Charisma 13

@@ -1,0 +1,5 @@
+name: Fist of the Forest Scent
+flags: 8
+prereqs:
+description: Beginning at 3rd level, you gain the supernatural ability to detect approaching enemies, sniff out hidden foes, and track by sense of smell. This ability otherwise functions like the extraordinary ability of the same name.
+prereq descr: Fist of the Forest 3.

@@ -1,0 +1,5 @@
+name: Epic of the Lost King
+flags: 12582912
+prereqs:
+description: You can channel the power of your bardic music to reinvigorate your allies.
+prereq descr: Bardic Music

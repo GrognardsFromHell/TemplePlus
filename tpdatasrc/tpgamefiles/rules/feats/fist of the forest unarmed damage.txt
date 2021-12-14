@@ -1,0 +1,5 @@
+name: Fist of the Forest Unarmed Damage
+flags: 8
+prereqs:
+description: Your unarmed attacks deal more damage than usual. At 1st level, you deal 1d8 points of damage with each unarmed strike. When you attain 3rd level, this damage increases to 1d10 points. If your unarmed attack already deals this amount of damage, increase the base damage to the next step indicated on the monk class table.
+prereq descr: Fist of the Forest 1.

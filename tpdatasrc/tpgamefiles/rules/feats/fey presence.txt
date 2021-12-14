@@ -1,0 +1,5 @@
+name: Fey Presence
+flags: 12582912
+prereqs:
+description: You share your ancestors' knack for playing tricks on the minds of others.
+prereq descr: Nonlawful alignment, Fey Heritage Feat, Character Level 6

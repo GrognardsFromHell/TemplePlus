@@ -1,0 +1,5 @@
+name: Draconic Resistance
+flags: 12582912
+prereqs: 16 1
+description: Your bloodline hardens your body against the energy type of your progenitor.
+prereq descr: Draconic Heritage, Sorcerer Level 1

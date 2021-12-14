@@ -124,17 +124,23 @@ classSpecObj.AddHook(ET_OnAbilityScoreLevel, EK_STAT_CHARISMA, onGetAbilityScore
 # ToDo!
 
 ### Breath Weapon
+
+def getBreathWeaponTag():
+    return "TAG_CLASS_FEATURES_DRAGON_DISCIPLES_BREATH_WEAPON"
+
 def breathWeaponRadial(attachee, args, evt_obj):
+    print "breathWeaponRadial Hook"
     breathWeaponCooldown = args.get_arg(2)
     if breathWeaponCooldown > -1:
         breathWeaponId = tpdp.RadialMenuEntryPythonAction("Breath Weapon Cooldown ({} round(s))".format(breathWeaponCooldown), D20A_PYTHON_ACTION, breathWeaponEnum, 0, "TAG_EXTRA_EXALATION")
     else:
         chargesLeft = args.get_arg(1)
-        maxCharges = breath_weapon.getMaxCharges(attachee)
+        maxCharges = breath_weapon.getMaxCharges(attachee, args)
         heritage = attachee.d20_query("PQ_Selected_Draconic_Heritage")
         breathWeaponShape = heritage_feat_utils.getDraconicHeritageBreathShape(heritage)
         spellEnum = spell_dragon_diciple_cone_breath if breathWeaponShape == dragon_breath_shape_cone else spell_dragon_diciple_line_breath
-        breathWeaponId = tpdp.RadialMenuEntryPythonAction("Breath Weapon ({}/{})".format(chargesLeft, maxCharges), D20A_PYTHON_ACTION, breathWeaponEnum, spellEnum, "TAG_CLASS_FEATURES_DRAGON_DISCIPLES_BREATH_WEAPON")
+        breathWeaponTag = getBreathWeaponTag()
+        breathWeaponId = tpdp.RadialMenuEntryPythonAction("Breath Weapon ({}/{})".format(chargesLeft, maxCharges), D20A_PYTHON_ACTION, breathWeaponEnum, spellEnum, breathWeaponTag)
         spellData = tpdp.D20SpellData(spellEnum)
         spellData.set_spell_class(classEnum)
         spellData.set_spell_level(9) #Setting this to 9 here so, it passes globes of invulnerability, as they should not protect against Breath Weapons
@@ -164,8 +170,9 @@ def performBreathWeapon(attachee, args, evt_obj):
     return 0
 
 def frameBreathWeapon(attachee, args, evt_obj):
+    breathWeaponTag = getBreathWeaponTag()
     genderString = "his" if attachee.stat_level_get(stat_gender) == 1 else "her"
-    game.create_history_freeform("{} uses {} ~Breath Weapon~[TAG_CLASS_FEATURES_DRAGON_DISCIPLES_BREATH_WEAPON]\n\n".format(attachee.description, genderString))
+    game.create_history_freeform("{} uses {} ~Breath Weapon~[{}]\n\n".format(attachee.description, genderString, breathWeaponTag))
     #Send Breath Weapon Used Signal
     breathWeaponId = args.get_arg(0)
     attachee.d20_send_signal("PS_Breath_Weapon_Used", breathWeaponId)
@@ -173,7 +180,7 @@ def frameBreathWeapon(attachee, args, evt_obj):
 
 dragonDiscipleBreathWeapon = breath_weapon.BreathWeaponModifier("Dragon Disciple Breath Weapon")
 dragonDiscipleBreathWeapon.MapToFeat("Dragon Disciple Breath Weapon")
-dragonDiscipleBreathWeapon.breathWeaponSetArgs(classEnum, 1)
+dragonDiscipleBreathWeapon.breathWeaponSetArgs(classEnum, 1) #1 = baseCharges of the Breath Weapon
 dragonDiscipleBreathWeapon.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, breathWeaponRadial, ())
 dragonDiscipleBreathWeapon.AddHook(ET_OnD20PythonActionCheck, breathWeaponEnum, checkBreathWeapon, ())
 dragonDiscipleBreathWeapon.AddHook(ET_OnD20PythonActionPerform, breathWeaponEnum, performBreathWeapon, ())

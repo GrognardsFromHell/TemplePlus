@@ -1,0 +1,5 @@
+ID_string: DRACONIC_ARCANE_GRACE
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\spell heroism.tga
+help_topic: TAG_DRACONIC_ARCANE_GRACE
+tooltip_base_text: Draconic Arcane Grace

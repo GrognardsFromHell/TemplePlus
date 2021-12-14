@@ -1,0 +1,5 @@
+name: Fist of the Forest Fast Movement
+flags: 8
+prereqs:
+description:  Your base land speed is faster than the norm for your race. If you already have fast movement from another class, the bonuses to your speed stack.
+prereq descr: Fist of the Forest 1.

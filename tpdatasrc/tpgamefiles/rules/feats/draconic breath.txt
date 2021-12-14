@@ -1,0 +1,5 @@
+name: Draconic Breath
+flags: 12582912
+prereqs: 16 1
+description: You can change arcane spell energy into a breath weapon of your draconic heritage energy type.
+prereq descr: Draconic Heritage, Sorcerer Level 1

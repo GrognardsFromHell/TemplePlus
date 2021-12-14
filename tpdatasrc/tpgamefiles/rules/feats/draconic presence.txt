@@ -1,0 +1,5 @@
+name: Draconic Presence
+flags: 12582912
+prereqs: 16 1
+description: When you use your magic, your mere presence can terrify those around you.
+prereq descr: Draconic Heritage, Sorcerer Level 1

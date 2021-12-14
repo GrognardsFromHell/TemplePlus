@@ -1,0 +1,5 @@
+name: Draconic Arcane Grace
+flags: 12582912
+prereqs: 16 1
+description: You can convert some of your arcane spell energy into a saving throw bonus.
+prereq descr: Draconic Heritage, Sorcerer Level 1
