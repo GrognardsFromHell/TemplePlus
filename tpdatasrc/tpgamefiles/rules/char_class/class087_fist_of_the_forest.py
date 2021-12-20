@@ -71,6 +71,8 @@ def IsAlignmentCompatible( alignment):
 # Omitted: Must gain approval as a fist of the forest by the leaders of a band of Guardians of the Green.
 
 def ObjMeetsPrereqs(obj):
+    #Maximum number of levels for this PrC: 3
+    classLvl = char_editor.stat_level_get(classEnum)
     if char_editor.stat_level_get(stat_attack_bonus ) < 4:
         return 0
     #Handle Animal is not in the game
@@ -83,6 +85,8 @@ def ObjMeetsPrereqs(obj):
     elif not char_editor.has_feat(feat_improved_unarmed_strike):
         return 0
     elif not char_editor.has_feat(feat_power_attack):
+        return 0
+    elif classLvl >= 3:
         return 0
     return 1
 

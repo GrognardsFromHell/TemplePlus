@@ -81,6 +81,8 @@ def ObjMeetsPrereqs(obj):
     #Skills: Knowledge (religion) 2 ranks, Perform (any) 8 ranks.
     #Feats: Cleave, Power Attack.
     #Deity: Must worship Gruumsh before all other gods.
+    #Maximum number of levels for this PrC: 5
+    classLvl = char_editor.stat_level_get(classEnum)
     if char_editor.skill_ranks_get(skill_perform) < 8:
         return 0
     elif not char_editor.has_feat(feat_power_attack):
@@ -88,6 +90,8 @@ def ObjMeetsPrereqs(obj):
     elif not char_editor.has_feat(feat_cleave):
         return 0
     elif not obj.get_deity() == DEITY_GRUUMSH:
+        return 0
+    elif classLvl >= 5:
         return 0
     return 1
 

@@ -95,7 +95,15 @@ def hasDraconicHeritageFeat(obj):
         return 0
     return 1
 
-def ObjMeetsPrereqs( obj ):
+
+def aboveMaxLevelOfPrc(obj):
+    #Maximum number of levels for this PrC: 10
+    classLvl = obj.stat_level_get(classEnum)
+    if classLvl < 10:
+        return False
+    return True
+
+def ObjMeetsPrereqs(obj):
     if not KnowledgeArcanaCheck(obj):
         return 0
     elif not CanCastInnateArcane(obj):
@@ -103,6 +111,8 @@ def ObjMeetsPrereqs( obj ):
     elif not SpeaksDraconic(obj):
         return 0
     elif not hasDraconicHeritageFeat(obj):
+        return 0
+    elif aboveMaxLevelOfPrc(obj):
         return 0
     return 1
 
