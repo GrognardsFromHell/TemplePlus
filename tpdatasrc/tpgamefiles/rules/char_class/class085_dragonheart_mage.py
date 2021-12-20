@@ -110,7 +110,7 @@ def ObjMeetsPrereqs( obj ):
 
 def IsSelectingFeatsOnLevelup(obj):
     newLvl = char_editor.stat_level_get(classEnum)
-    bonusDraconicFeat = [2, 4, 6, 8]
+    bonusDraconicFeat = [2, 4, 8]
     if newLvl in bonusDraconicFeat:
         return 1
     return 0

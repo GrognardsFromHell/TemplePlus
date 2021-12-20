@@ -1,35 +1,32 @@
 from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
-import tpactions
-
-barbarianRageEnum = 701
 
 ### This replaces Barbarian_Rage and Barbarian_Raged so PrC's and different Rage Effects
 ### can interact with the Barbarian Rage Class Feature
 
-#signalId: 1 = Barbarian Rage, 2: Greater Rage, 3: Mighty Rage, 4: Active Rage
+#signalId: 1 = Barbarian Rage, 2: Active Rage, 3: Greater Rage, 4: Mighty Rage
 
 def getFeatName(signalId):
     if signalId == 1:
         combatMesId = 5045 #ID 5045: Barbarian Rage
         return game.get_mesline('mes\\combat.mes', combatMesId)
     elif signalId == 2:
-        return "Greater Rage"
-    elif signalId == 3:
-        return "Mighty Rage"
-    elif signalId == 4:
         combatMesId = 5045 #ID 5045: Barbarian Rage
         mesString = game.get_mesline('mes\\combat.mes', combatMesId)
         return "End {}".format(mesString)
+    elif signalId == 3:
+        return "Greater Rage"
+    elif signalId == 4:
+        return "Mighty Rage"
     return "Error! Wrong signalId"
 
 def getFeatTag(signalId):
-    if signalId == 1 or signalId == 4:
+    if signalId == 1 or signalId == 2:
         return "TAG_CLASS_FEATURES_BARBARIAN_RAGE"
-    elif signalId == 2:
-        return "TAG_CLASS_FEATURES_GREATER_RAGE"
     elif signalId == 3:
+        return "TAG_CLASS_FEATURES_GREATER_RAGE"
+    elif signalId == 4:
         return "TAG_CLASS_FEATURES_MIGHTY_RAGE" #help TBD!
     return "Error! Wrong signalId"
 
@@ -45,9 +42,7 @@ def setBarbarianRageCharges(attachee, args, evt_obj):
 
 #Just in case this is ever needed, I'll add the possibility now
 def deductBarbarianRageCharge(attachee, args, evt_obj):
-    chargesToDeduct = evt_obj.data1
-    if chargesToDeduct == 0:
-        chargesToDeduct = 1
+    chargesToDeduct = evt_obj.data1 or 1 #Just to be sure, if there was no data1 given in the d20_signal
     chargesLeft = args.get_arg(0)
     if chargesLeft:
         chargesLeft -= chargesToDeduct
@@ -61,40 +56,44 @@ def getBarbarianRageCharges(attachee, args, evt_obj):
 
 def getSignalId(attachee):
     if attachee.d20_query(Q_Barbarian_Raged):
-        return 4
-    elif attachee.has_feat(feat_mighty_rage):
-        return 3
-    elif attachee.has_feat(feat_greater_rage):
         return 2
+    elif attachee.has_feat(feat_mighty_rage):
+        return 4
+    elif attachee.has_feat(feat_greater_rage):
+        return 3
     return 1
 
 def barbarianRageRadial(attachee, args, evt_obj):
     signalId = getSignalId(attachee)
     featName = getFeatName(signalId)
     featTag = getFeatTag(signalId)
-    if attachee.d20_query(Q_Barbarian_Raged):
-        radialId = tpdp.RadialMenuEntryPythonAction("End {}".format(featName), D20A_PYTHON_ACTION, barbarianRageEnum, signalId, featTag)
-        radialId.add_child_to_standard(attachee, tpdp.RadialMenuStandardNode.Class)
-    else:
+    if signalId != 2:
         maxCharges = getMaxCharges(attachee)
         chargesLeft = args.get_arg(0)
-        radialId = tpdp.RadialMenuEntryPythonAction("{} {}/{}".format(featName, chargesLeft, maxCharges), D20A_PYTHON_ACTION, barbarianRageEnum, signalId, featTag)
+        radialId = tpdp.RadialMenuEntryAction("{} {}/{}".format(featName, chargesLeft, maxCharges), D20A_BARBARIAN_RAGE, signalId, featTag)
+        radialId.add_child_to_standard(attachee, tpdp.RadialMenuStandardNode.Class)
+    else:
+        radialId = tpdp.RadialMenuEntryAction(featName, D20A_BARBARIAN_RAGE, signalId, featTag)
         radialId.add_child_to_standard(attachee, tpdp.RadialMenuStandardNode.Class)
     return 0
 
 def barbarianRageCheck(attachee, args, evt_obj):
     signalId = evt_obj.d20a.data1
-    if not signalId == 4:
+    if signalId != 2:
         chargesLeft = attachee.d20_query("PQ_Get_Barbarian_Rage_Charges")
         if chargesLeft < 1:
             evt_obj.return_val = AEC_OUT_OF_CHARGES
+    elif signalId > 4:
+        evt_obj.return_val = AEC_INVALID_ACTION
     return 0
 
 def barbarianRagePerform(attachee, args, evt_obj):
     ### Anim_goal missing
     ### This should be moved to frame
     signalId = evt_obj.d20a.data1
-    if not signalId == 4:
+    if signalId != 2:
+        if signalId not in range(1,5):
+            signalId = 1
         featName = getFeatName(signalId)
         featTag = getFeatTag(signalId)
         #Rage duration is 3 + Constitution Modifier, but includes the new Con Modifier from rage
@@ -109,7 +108,7 @@ def barbarianRagePerform(attachee, args, evt_obj):
             # Deduct Barbarian Rage Charge
             chargesToDeduct = 1
             attachee.d20_send_signal("PS_Deduct_Barbarian_Rage_Charge", chargesToDeduct)
-    elif signalId == 4:
+    else:
         #duration = 10
         #attachee.condition_add_with_args("Barbarian_Fatigued", duration, 0)
         attachee.d20_send_signal("PS_End_Barbarian_Rage")
@@ -117,13 +116,13 @@ def barbarianRagePerform(attachee, args, evt_obj):
 
 barbarianRageFeat = PythonModifier("Barbarian_Rage", 2) #maxCharges, empty
 barbarianRageFeat.MapToFeat(feat_barbarian_rage, feat_cond_arg2 = 0)
-#barbarianRageFeat.AddHook(ET_OnConditionAdd, EK_NONE, setBarbarianRageCharges, ())
+barbarianRageFeat.AddHook(ET_OnConditionAdd, EK_NONE, setBarbarianRageCharges, ())
 barbarianRageFeat.AddHook(ET_OnNewDay, EK_NEWDAY_REST, setBarbarianRageCharges, ())
 barbarianRageFeat.AddHook(ET_OnD20PythonSignal, "PS_Deduct_Barbarian_Rage_Charge", deductBarbarianRageCharge, ())
 barbarianRageFeat.AddHook(ET_OnD20PythonQuery, "PQ_Get_Barbarian_Rage_Charges", getBarbarianRageCharges, ())
 barbarianRageFeat.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, barbarianRageRadial, ())
-barbarianRageFeat.AddHook(ET_OnD20PythonActionCheck, barbarianRageEnum, barbarianRageCheck, ())
-barbarianRageFeat.AddHook(ET_OnD20PythonActionPerform, barbarianRageEnum, barbarianRagePerform, ())
+barbarianRageFeat.AddHook(ET_OnD20ActionCheck, EK_D20A_BARBARIAN_RAGE, barbarianRageCheck, ())
+barbarianRageFeat.AddHook(ET_OnD20ActionPerform, EK_D20A_BARBARIAN_RAGE, barbarianRagePerform, ())
 
 
 ### class BarbarianRagedModifier
@@ -162,12 +161,6 @@ def removeOnUnconDead(attachee, args, evt_obj):
         args.condition_remove()
     return 0
 
-#def conditionInteractions(attachee, args, evt_obj):
-#    if (evt_obj.is_modifier("Unconscious")
-#    or evt_obj.is_modifier("Dead")):
-#        args.condition_remove()
-#    return 0
-
 def updateDuration(attachee, args, evt_obj):
     #Add Constitution Modifier to duration
     duration = args.get_arg(0)
@@ -191,8 +184,11 @@ def removeRageEffects(attachee, args, evt_obj):
     hasRageFatigueImmunity = attachee.d20_query("PQ_Rage_Fatigue_Immunity")
     if not hasRageFatigueImmunity:
         duration = 10
-        upgradable = 1
-        attachee.condition_add_with_args("FatigueExhaust", 0, duration, 0, upgradable, 0, 0)
+        if attachee.d20_query("Fatigued"):
+            attachee.d20_send_signal("Add Barbarian Fatigue", duration)
+        else:
+            upgradable = 1
+            attachee.condition_add_with_args("FatigueExhaust", duration, duration, 0, upgradable, 0, 0)
     return 0
 
 def barbRageAbilityBonus(attachee, args, evt_obj):
@@ -237,7 +233,7 @@ class BarbarianRagedModifier(PythonModifier):
         self.AddHook(ET_OnConditionAddPre, EK_NONE, removeOnUnconDead, ())
         self.AddHook(ET_OnConditionAdd, EK_NONE, updateDuration, ())
         self.AddHook(ET_OnD20Query, EK_Q_CannotCast, queryReturnTrue, ())
-        self.AddHook(ET_OnConditionRemove, EK_NONE, removeRageEffects, ())
+        self.AddHook(ET_OnConditionRemove2, EK_NONE, removeRageEffects, ())
         self.AddHook(ET_OnD20Signal, EK_S_Killed, removeRage, ())
         #HP_Changed Signal adds Fatigue if uncon/dead, but unsure if really needed
         #as this can be done by OnConditionAddPre as well????
