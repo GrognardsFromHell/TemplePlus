@@ -129,6 +129,7 @@ static ConfigSetting configSettings[] = {
 	CONF_BOOL(antialiasing),
 	CONF_BOOL(softShadows),
 	CONF_BOOL(noSound),
+	//CONF_BOOL(showFps),
 	CONF_BOOL(featPrereqWarnings),
 	CONF_BOOL(spellAlreadyKnownWarnings),
 	CONF_BOOL(NPCsLevelLikePCs),
