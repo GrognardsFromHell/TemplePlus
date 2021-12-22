@@ -240,6 +240,51 @@ def verifyItem(item, args):
 
     return item_loc == target_loc
 
+# getItemObj, itemTooltip and itemEffectTooltip are needed for
+# buff tooltip icon handling
+def getItemObj(attachee, args):
+    itemLocation = args.get_arg(2)
+    if itemLocation == 203: #mainhand
+        item = attachee.item_worn_at(item_wear_weapon_primary)
+        itemWornAt = "mainhand"
+    elif itemLocation == 204: #offhand
+        item = attachee.item_worn_at(item_wear_weapon_secondary)
+        itemWornAt = "offhand"
+    elif itemLocation == 205: #armor
+        item = attachee.item_worn_at(item_wear_armor)
+        itemWornAt = ""
+    elif itemLocation == 211: #shield
+        item = attachee.item_worn_at(item_wear_shield)
+        itemWornAt = ""
+    return item, itemWornAt
+
+def itemTooltip(attachee, args, evt_obj):
+    item, itemWornAt = getItemObj(attachee, args)
+    spellId = args.get_arg(4)
+    durationQuery = item.d20_query_with_data("PQ_Item_Buff_Duration", spellId, 0)
+    if durationQuery:
+        duration = spellTime(durationQuery)
+        if args.get_param(0):
+            name = game.get_spell_mesline(args.get_param(0))
+        else:
+            name = spellName(spellId)
+        evt_obj.append("{}({}) ({})".format(name, itemWornAt, duration))
+        return 0
+
+def itemEffectTooltip(attachee, args, evt_obj):
+    item, itemWornAt = getItemObj(attachee, args)
+    spellId = args.get_arg(4)
+    durationQuery = item.d20_query_with_data("PQ_Item_Buff_Duration", spellId, 0)
+    if durationQuery:
+        duration = spellTime(durationQuery)
+        if args.get_param(0):
+            name = game.get_spell_mesline(args.get_param(0)).upper().replace(" ", "_")
+            key = tpdp.hash(name)
+        else:
+            key = spellKey(spellId)
+        evt_obj.append(key, -2, "({}) ({})".format(itemWornAt, duration))
+    return 0
+
 ### Utilities for defining touch attacks with held charge ###
 
 # Keys off 'SPELL_NAME_CHARGE' so that a buff indicator for the holding

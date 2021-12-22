@@ -1,0 +1,5 @@
+ID_string: SONIC_WEAPON
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Spell Sonic Weapon.tga
+help_topic: TAG_SPELLS_SONIC_WEAPON
+tooltip_base_text: Sonic Weapon

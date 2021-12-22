@@ -1,0 +1,5 @@
+ID_string: WAR_CRY
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\spell heroism.tga
+help_topic: TAG_SPELLS_WAR_CRY
+tooltip_base_text: War Cry

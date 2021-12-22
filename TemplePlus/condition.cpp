@@ -7475,7 +7475,8 @@ void CondStructNew::AddAoESpellRemover() {
 uint32_t CondHashSystem::ConditionHashtableInit(ToEEHashtable<CondStruct>* hashtable)
 {
 	const int VANILLA_COND_CAP = 1000;
-	return HashtableInit(hashtable, VANILLA_COND_CAP /*2023*/);
+	const int INCREASED_COND_CAP = 2047;
+	return HashtableInit(hashtable, INCREASED_COND_CAP /*2023*/);
 }
 
 uint32_t CondHashSystem::CondStructAddToHashtable(CondStruct* condStruct, bool overriding)
