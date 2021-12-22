@@ -24,7 +24,7 @@ struct CondHashSystem : ToEEHashtableSystem < CondStruct >
 
 	uint32_t ConditionHashtableInit(ToEEHashtable<CondStruct> * hashtable)
 	{
-		return HashtableInit(hashtable, 1250);
+		return HashtableInit(hashtable, 1000);
 	}
 
 	uint32_t CondStructAddToHashtable(CondStruct * condStruct, bool overriding = false)

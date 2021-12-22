@@ -70,6 +70,7 @@
 {85}{Dragonheart Mage}
 {86}{Battle Howler of Gruumsh}
 {87}{Fist of the Forest}
+{89}{Unseen Seer}
 
 {300}{Psi Points} // max
 {301}{Psi Points} // cur
@@ -147,6 +148,7 @@
 {1085}{DrgHrt}
 {1086}{BtHwl}
 {1087}{FiFo}
+{1089}{UnSeer}
 
 
 
@@ -356,6 +358,13 @@ Requirements
 Base Attack Bonus: +4
 Skills: Handle Animal 4 (omitted), Survial 4
 Feats: Great Fortitude, Improved Unarmed Strike, Power Attack.
+}
+
+{13082}Unseen Seer{Subterfuge is her business in the same way that death is the assassin's business, and she uses her magic to help her gather other people's secrets while keeping her own.
+
+Requirements
+Skills: Hide 8, Search 8, Sense Motive 4, Spellcraft 4, Spot 8.
+Spellcasting: Ability to cast 1st-level arcane spells, including at least two divination spells.
 }
 
 // Cannot Pick Class Short Help Goes in the range of 20007+
