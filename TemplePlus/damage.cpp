@@ -21,6 +21,8 @@
 #include "pybind11/pybind11.h"
 #include "python/python_dice.h"
 
+const int DAMAGE_MES_UNKNOWN = 103;
+
 namespace py = pybind11;
 
 template <> class py::detail::type_caster<objHndl> {
@@ -962,16 +964,78 @@ bool Damage::SavingThrowSpell(objHndl obj, objHndl attacker, int dc, SavingThrow
 	// return addresses.SavingThrowSpell(obj, attacker, dc, type, flags, spellId);
 }
 
-bool Damage::ReflexSaveAndDamage(objHndl obj, objHndl attacker, int dc, int reduction, int flags, const Dice& dice, DamageType damageType, int attackPower, D20ActionType actionType, int spellId) {
-	SpellPacketBody spPkt(spellId);
-	BonusList bonlist;
 
+int GetTargetSpellDcBonus(objHndl attacker, objHndl obj, SpellPacketBody &spPkt) {
+	if (!spPkt.spellEnum) {
+		return 0;
+	}
 	// Gets a DC bonus based on the target of the spell
+	BonusList bonlist;
 	dispatch.DispatchTargetSpellDCBonus(attacker, obj, &bonlist, &spPkt);
-
 	int nDCBonus = bonlist.GetEffectiveBonusSum();
+	return nDCBonus;
+}
 
-	return addresses.ReflexSaveAndDamage(obj, attacker, dc, reduction, flags, dice.ToPacked(), damageType, attackPower, actionType, spellId);
+/* 0x100B9500 */
+// Note: this is also used in traps, where spellId = 0
+bool Damage::ReflexSaveAndDamage(objHndl obj, objHndl attacker, int dc, int reduction, int flags, const Dice& dice, DamageType damageType, int attackPower, D20ActionType actionType, int spellId) {
+	//return addresses.ReflexSaveAndDamage(obj, attacker, dc, reduction, flags, dice.ToPacked(), damageType, attackPower, actionType, spellId);	
+
+	auto isSpellSave = actionType == D20A_CAST_SPELL; // todo: might require generalization for new action types?
+
+	DispIoReflexThrow evtObj;
+	evtObj.reduction = (D20SavingThrowReduction)reduction;
+	evtObj.attackPower = (D20AttackPower)attackPower;
+	evtObj.damageMesLine = 105; // {105}{~Saving Throw~[TAG_SAVING_THROW_DESC]}
+	evtObj.attackType = (int)damageType;
+	evtObj.flags = (D20SavingThrowFlag)flags;
+	
+	if (isSpellSave) { // in vanilla, this always called SavingThrow, which would not apply the descriptor flags (and also the new DC bonus dispatch)
+		evtObj.throwResult = SavingThrowSpell(obj, attacker, dc, SavingThrowType::Reflex, flags, spellId);
+	}
+	else {
+		evtObj.throwResult = SavingThrow(obj, attacker, dc, SavingThrowType::Reflex, flags);
+	}
+	
+	auto caf = D20CAF_NONE;
+	if (evtObj.throwResult == 1) {
+		caf = D20CAF_SAVE_SUCCESSFUL;
+		if (reduction == D20SavingThrowReduction::D20_Save_Reduction_None) {
+			evtObj.effectiveReduction = 0;
+		}
+		else if (reduction == D20SavingThrowReduction::D20_Save_Reduction_Half) {
+			evtObj.effectiveReduction = 50;
+		}
+		else if (reduction == D20SavingThrowReduction::D20_Save_Reduction_Quarter) {
+			evtObj.effectiveReduction = 25;
+		}
+		else {
+			evtObj.effectiveReduction = 100;
+		}
+	}
+	
+	
+	dispatch.Dispatch49ReflexSaveReduction(obj, &evtObj);
+	if (evtObj.effectiveReduction == 100) {
+		if (isSpellSave) {
+			DealSpellDamage(obj, attacker, dice, (DamageType)evtObj.attackType, evtObj.attackPower,
+				100, DAMAGE_MES_UNKNOWN, D20A_CAST_SPELL, spellId, caf);
+		}
+		else {
+			DealDamage(obj, attacker, dice, (DamageType)evtObj.attackType, evtObj.attackPower,
+				100, DAMAGE_MES_UNKNOWN, actionType);
+		}
+	}
+	else if (isSpellSave) {
+		DealSpellDamage(obj, attacker, dice, (DamageType)evtObj.attackType, evtObj.attackPower,
+			evtObj.effectiveReduction, evtObj.damageMesLine, D20A_CAST_SPELL, spellId, caf);
+	}
+	else {
+		DealDamage(obj, attacker, dice, (DamageType)evtObj.attackType, evtObj.attackPower,
+			100, evtObj.damageMesLine, actionType);
+	}
+	
+	return evtObj.throwResult;
 }
 
 void Damage::DamagePacketInit(DamagePacket* dmgPkt)
