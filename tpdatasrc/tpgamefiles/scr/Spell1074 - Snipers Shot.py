@@ -11,7 +11,7 @@ def OnSpellEffect(spell):
     spell.duration = 0 #Snipers Shot is a Swift Action, works in the current round
     spellTarget = spell.target_list[0]
 
-    if spellTarget.obj.condition_add_with_args('sp-Snipers Shot', spell.id, spell.duration, 0)
+    if spellTarget.obj.condition_add_with_args('sp-Snipers Shot', spell.id, spell.duration, 0):
         spellTarget.partsys_id = game.particles('sp-True Strike', spellTarget.obj)
     else:
         spellTarget.obj.float_mesfile_line('mes\\spell.mes', 30000)
