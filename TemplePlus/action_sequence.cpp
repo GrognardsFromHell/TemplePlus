@@ -1716,7 +1716,7 @@ int ActionSequenceSystem::TrimPathToRemainingMoveLength(D20Actn* d20a, float rem
 uint32_t ActionSequenceSystem::ActionCostNull(D20Actn* d20Actn, TurnBasedStatus* turnBasedStatus, ActionCostPacket* actionCostPacket)
 {
 	actionCostPacket->hourglassCost = 0;
-	actionCostPacket->chargeAfterPicker = 0;
+	actionCostPacket->attackCost = 0;
 	actionCostPacket->moveDistCost = 0;
 	return 0;
 }
@@ -3371,7 +3371,7 @@ BOOL ActionSequenceSystem::SimulsAdvance()
 
 int ActionSequenceSystem::ActionCostFullAttack(D20Actn* d20, TurnBasedStatus* tbStat, ActionCostPacket* acp)
 {
-	acp->chargeAfterPicker = 0;
+	acp->attackCost = 0;
 	acp->moveDistCost = 0;
 	acp->hourglassCost = 4;
 	int flags = d20->d20Caf;
@@ -3512,13 +3512,13 @@ int ActionSequenceSystem::ActionCostProcess(TurnBasedStatus* tbStat, D20Actn* d2
 	if (tbStat->surplusMoveDistance >= actCost.moveDistCost)
 	{
 		tbStat->surplusMoveDistance -= actCost.moveDistCost;
-		if ( actCost.chargeAfterPicker <= 0 
-			|| actCost.chargeAfterPicker + tbStat->attackModeCode <= tbStat->baseAttackNumCode + tbStat->numBonusAttacks)
+		if ( actCost.attackCost <= 0 
+			|| actCost.attackCost + tbStat->attackModeCode <= tbStat->baseAttackNumCode + tbStat->numBonusAttacks)
 		{
-			if ((int) tbStat->numBonusAttacks < actCost.chargeAfterPicker)
-				tbStat->attackModeCode += actCost.chargeAfterPicker;
+			if (actCost.attackCost > (int) tbStat->numBonusAttacks )
+				tbStat->attackModeCode += actCost.attackCost;
 			else
-				tbStat->numBonusAttacks -= actCost.chargeAfterPicker;
+				tbStat->numBonusAttacks -= actCost.attackCost;
 			if (tbStat->attackModeCode == tbStat->baseAttackNumCode && !tbStat->numBonusAttacks)
 				tbStat->tbsFlags &= ~TBSF_FullAttack;  
 			result = AEC_OK;
