@@ -3782,12 +3782,13 @@ int ActionSequenceSystem::StdAttackTurnBasedStatusCheck(D20Actn* d20a, TurnBased
 		return AEC_TARGET_INVALID;
 	}
 
+	const int STD_ATK_HG_COST= 2;
 	if (hgState != -1)
-		hgState = turnBasedStatusTransitionMatrix[hgState][2];
+		hgState = turnBasedStatusTransitionMatrix[hgState][STD_ATK_HG_COST];
 	tbStat->hourglassState = hgState;
 
-	if (inventory.ItemWornAt(d20a->d20APerformer, 3) || dispatch.DispatchD20ActionCheck(d20a, tbStat, dispTypeGetCritterNaturalAttacksNum)  <= 0)
-		tbStat->attackModeCode = 0;
+	if (inventory.ItemWornAt(d20a->d20APerformer, EquipSlot::WeaponPrimary) || dispatch.DispatchD20ActionCheck(d20a, tbStat, dispTypeGetCritterNaturalAttacksNum) <= 0)
+		tbStat->attackModeCode = ATTACK_CODE_PRIMARY;
 	else
 		tbStat->attackModeCode = ATTACK_CODE_NATURAL_ATTACK;
 	tbStat->baseAttackNumCode = tbStat->attackModeCode + 1;
