@@ -1865,16 +1865,16 @@ int __cdecl GlobalToHitBonus(DispatcherCallbackArgs args)
 		 && !d20Sys.d20Query(args.objHndCaller, DK_QUE_Polymorphed) )
 	{
 		int attackIdx = dispIo->attackPacket.dispKey - (ATTACK_CODE_NATURAL_ATTACK + 1);
-		int bonValue = 0; // temporarily used as an index value for obj_f_attack_bonus_idx field
+		int atkBonIdx = 0;
 		for (int i = 0,  j=0; i < 4; i++)
 		{
 			j += objects.getArrayFieldInt32(args.objHndCaller, obj_f_critter_attacks_idx, i); // number of attacks
 			if (attackIdx < j){
-				bonValue = i;
+				atkBonIdx = i;
 				break;
 			}
 		}
-		bonValue = objects.getArrayFieldInt32(args.objHndCaller, obj_f_attack_bonus_idx, bonValue);
+		int bonValue = objects.getArrayFieldInt32(args.objHndCaller, obj_f_attack_bonus_idx, atkBonIdx);
 		bonusSys.bonusAddToBonusList(&dispIo->bonlist, bonValue, 1, 118); // base attack
 	}
 
