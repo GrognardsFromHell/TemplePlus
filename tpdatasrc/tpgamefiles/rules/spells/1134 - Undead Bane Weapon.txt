@@ -1,9 +1,8 @@
 School: Transmutation
-Descriptor: Sonic
-Level: Brd 2
-Level: Sor 2
-Level: Wiz 2
+Level: Clr 4
+Level: Pal 3
 Component: V
+Component: S
 Casting Time: 1 action
 Range: Touch
 Saving Throw: None
@@ -19,4 +18,3 @@ min_Target: 1
 max_Target: 1
 radius_Target: 0
 ai_type: ai_action_defensive
-choices: 3011 3012
