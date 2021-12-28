@@ -2,7 +2,8 @@ from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
 from utilities import *
-import spell_utils
+from spell_utils import SpellPythonModifier
+
 print "Registering sp-Inspirational Boost"
 
 def inspirationalBoostSpellBonus(attachee, args, evt_obj):
@@ -17,22 +18,13 @@ def inspirationalBoostSpellOnBeginRound(attachee, args, evt_obj):
     return 0
 
 def inspirationalBoostSpellCheckExpiry(attachee, args, evt_obj):
-    print "Expiry Hook"
     roundsToExpire = attachee.d20_query("Bardic Ability Duration Bonus")
     roundsToExpire += 5 #Bard songs linger 5 rounds after song ended
     args.set_arg(1, roundsToExpire)
     args.set_arg(2, 1)
     return 0
 
-inspirationalBoostSpell = PythonModifier("sp-Inspirational Boost", 5) # spell_id, duration, ,expiryFlag, empty, empty
+inspirationalBoostSpell = SpellPythonModifier("sp-Inspirational Boost", 5) #spell_id, duration, ,expiryFlag, empty, empty
 inspirationalBoostSpell.AddHook(ET_OnD20PythonQuery, "Inspirational Boost", inspirationalBoostSpellBonus, ())
 inspirationalBoostSpell.AddHook(ET_OnBeginRound, EK_NONE, inspirationalBoostSpellOnBeginRound, ())
 inspirationalBoostSpell.AddHook(ET_OnD20Signal, EK_S_Bardic_Music_Completed, inspirationalBoostSpellCheckExpiry, ())
-inspirationalBoostSpell.AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, ())
-inspirationalBoostSpell.AddHook(ET_OnGetEffectTooltip, EK_NONE, spell_utils.spellEffectTooltip, ())
-inspirationalBoostSpell.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, spell_utils.queryActiveSpell, ())
-inspirationalBoostSpell.AddHook(ET_OnD20Signal, EK_S_Killed, spell_utils.spellKilled, ())
-inspirationalBoostSpell.AddSpellDispelCheckStandard()
-inspirationalBoostSpell.AddSpellTeleportPrepareStandard()
-inspirationalBoostSpell.AddSpellTeleportReconnectStandard()
-inspirationalBoostSpell.AddSpellCountdownStandardHook()

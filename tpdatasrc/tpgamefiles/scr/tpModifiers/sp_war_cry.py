@@ -2,7 +2,8 @@ from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
 from utilities import *
-import spell_utils
+from spell_utils import SpellPythonModifier
+
 print "Registering sp-War Cry"
 
 def warCrySpellChargeAttackBonus(attachee, args, evt_obj):
@@ -14,28 +15,36 @@ def warCrySpellChargeAttackBonus(attachee, args, evt_obj):
 
 def warCrySpellChargeDamageBonus(attachee, args, evt_obj):
     target = evt_obj.attack_packet.target
-    spellPacket = tpdp.SpellPacket(args.get_arg(0))
+    spellId = args.get_arg(0)
+    spellPacket = tpdp.SpellPacket(spellId)
+    spellDc = args.get_arg(2)
     if evt_obj.attack_packet.get_flags() & D20CAF_CHARGE:
         bonusValue = 4 #War Cry is a +4 Morale Bonus to Damage Rolls while charging
         bonusType = 13 #ID 13 = Morale
         evt_obj.damage_packet.bonus_list.add(4, 13, "~Morale~[TAG_MODIFIER_MORALE] : ~War Cry~[TAG_SPELLS_WAR_CRY]")
-        #Saving throw to avoid panicked condition; racial immunity is checked in the condition itself
-        #game.create_history_freeform(attachee.description + " saves versus ~War Cry~[TAG_SPELLS_WAR_CRY] panicked effect\n\n")
-        #if target.saving_throw_spell(args.get_arg(2), D20_Save_Will, D20STD_F_NONE, spellPacket.caster, args.get_arg(0)): #success
-        #    target.float_text_line("Not Panicked")
-        #else:
-        #    target.condition_add('Panicked Condition', 1, spellPacket.spell_id)
+        #Saving throw to avoid panicked condition
+        if spellPacket.check_spell_resistance(target):
+            return 0
+        game.create_history_freeform(attachee.description + " saves versus ~War Cry~[TAG_SPELLS_WAR_CRY] panicked effect\n\n")
+        if target.saving_throw_spell(spellDc, D20_Save_Will, D20STD_F_NONE, spellPacket.caster, spellId):
+            target.float_mesfile_line("mes\\spell.mes", 30001)
+        else:
+            target.float_mesfile_line("mes\\spell.mes", 30002)
+            particlesId = game.particles("sp-Fear-Hit", target)
+            if spellPacket.add_target(target, particlesId):
+                #target.float_text_line("Panicked!", tf_red)
+                duration = 1
+                isFeared = 0
+                target.condition_add("sp-Fear", spellId, duration, isFeared)
+                dropFlag = 1
+                if target.item_worn_at(item_wear_weapon_primary) != OBJ_HANDLE_NULL:
+                    target.item_worn_unwield(item_wear_weapon_primary, dropFlag)
+                if target.item_worn_at(item_wear_weapon_secondary) != OBJ_HANDLE_NULL:
+                    target.item_worn_unwield(item_wear_weapon_secondary, dropFlag)
+                if target.item_worn_at(item_wear_shield) != OBJ_HANDLE_NULL:
+                    target.item_worn_unwield(item_wear_shield, dropFlag)
     return 0
 
-
-warCrySpell = PythonModifier("sp-War Cry", 4) # spell_id, duration, spellDc, empty
+warCrySpell = SpellPythonModifier("sp-War Cry", 4) #spellId, duration, spellDc, empty
 warCrySpell.AddHook(ET_OnToHitBonus2, EK_NONE, warCrySpellChargeAttackBonus,())
 warCrySpell.AddHook(ET_OnDealingDamage2, EK_NONE, warCrySpellChargeDamageBonus,())
-warCrySpell.AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.spellTooltip, ())
-warCrySpell.AddHook(ET_OnGetEffectTooltip, EK_NONE, spell_utils.spellEffectTooltip, ())
-warCrySpell.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, spell_utils.queryActiveSpell, ())
-warCrySpell.AddHook(ET_OnD20Signal, EK_S_Killed, spell_utils.spellKilled, ())
-warCrySpell.AddSpellDispelCheckStandard()
-warCrySpell.AddSpellTeleportPrepareStandard()
-warCrySpell.AddSpellTeleportReconnectStandard()
-warCrySpell.AddSpellCountdownStandardHook()

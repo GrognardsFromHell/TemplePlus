@@ -14,6 +14,9 @@
 {348}{Bardic Music - Inspire Heroics}
 {349}{Hiding in Combat}
 
+{375}{Creature Immune to ~Critical Strike~[TAG_SPELLS_CRITICAL_STRIKE]}
+{376}{No Precision Damage for ~Critical Strike~[TAG_SPELLS_CRITICAL_STRIKE]}
+
 // Fist of the Forest
 {400}{~Fist of the Forest Class Features~[TAG_FIST_OF_THE_FOREST] lost due to violating ~Primal Living~[TAG_CLASS_FEATURES_PRIMAL_LIVING]}
 {401}{~Fist of the Forest AC Bonus~[TAG_CLASS_FEATURES_FIST_OF_THE_FOREST_AC_BONUS] lost due to encumbrance}

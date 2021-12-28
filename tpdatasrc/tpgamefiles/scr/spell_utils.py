@@ -92,6 +92,14 @@ def queryActiveSpell(attachee, args, evt_obj):
         evt_obj.return_val = 1
     return 0
 
+def querySpellCondition(attachee, args, evt_obj):
+    queryConditionRef = evt_obj.data1
+    conditionName = args.get_cond_name()
+    spellConditionRef = tpdp.get_condition_ref(conditionName)
+    if queryConditionRef == spellConditionRef:
+        evt_obj.return_val = 1
+    return 0
+
 #[pytonModifier].AddHook(ET_OnD20Signal, EK_S_Killed, spell_utils.spellKilled, ())
 def spellKilled(attachee, args, evt_obj):
     args.remove_spell()
@@ -156,7 +164,6 @@ def countAfterConcentration(attachee, args, evt_obj):
 #Used to replace same condition to prevent duplicates
 def replaceCondition(attachee, args, evt_obj):
     conditionName = args.get_cond_name()
-    #if evt_obj.is_modifier("{}".format(conditionName)):
     if evt_obj.is_modifier(conditionName):
         args.remove_spell()
         args.remove_spell_mod()
@@ -466,3 +473,154 @@ class TouchModifier(PythonModifier):
 
     def AddTouchHook(self, hook):
         self.AddHook(ET_OnD20Signal, EK_S_TouchAttack, hook, ())
+
+######## Spell Python Modifier classes ########
+
+### Standard Spell Condition Modifier ###
+
+class SpellPythonModifier(PythonModifier):
+    #SpellPythonModifier have at least 3 arguments:
+    #spellId, duration, empty
+    def __init__(self, name, args = 3, preventDuplicate = False):
+        PythonModifier.__init__(self, name, args, preventDuplicate)
+        self.AddHook(ET_OnGetTooltip, EK_NONE, spellTooltip, ())
+        self.AddHook(ET_OnGetEffectTooltip, EK_NONE, spellEffectTooltip, ())
+        self.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, queryActiveSpell, ())
+        self.AddHook(ET_OnD20Signal, EK_S_Killed, spellKilled, ())
+        self.AddSpellDispelCheckStandard()
+        self.AddSpellCountdownStandardHook()
+        self.AddSpellTeleportPrepareStandard()
+        self.AddSpellTeleportReconnectStandard()
+    def AddSpellConcentration(self):
+        self.AddHook(ET_OnConditionAdd, EK_NONE, addConcentration, ())
+        self.AddHook(ET_OnD20Signal, EK_S_Concentration_Broken, checkRemoveSpell, ())
+    def AddSpellDismiss(self):
+        self.AddHook(ET_OnConditionAdd, EK_NONE, spell_utils.addDismiss, ())
+        self.AddHook(ET_OnD20Signal, EK_S_Dismiss_Spells, checkRemoveSpell, ())
+    def AddSpellNoDuplicate(self):
+        self.AddHook(ET_OnConditionAddPre, EK_NONE, replaceCondition, ())
+
+### Aoe Modifier Classes ###
+def addAoeObjToSpellRegistry(attachee, args, evt_obj):
+    spellPacket = tpdp.SpellPacket(args.get_arg(0))
+    conditionName = args.get_cond_name()
+    particlesId = game.particles(conditionName, attachee)
+    spellPacket.add_spell_object(attachee, particlesId)
+    spellPacket.update_registry()
+    return 0
+
+def aoeOnEnter(attachee, args, evt_obj):
+    print "aoeOnEnter Hook"
+    spellId = args.get_arg(0)
+    duration = args.get_arg(1)
+    spellDc = args.get_arg(2)
+    spellEventId = args.get_arg(3)
+    spellPacket = tpdp.SpellPacket(spellId)
+    spellTarget = evt_obj.target
+    print "spellTarget: {}".format(spellTarget)
+
+    if spellEventId != evt_obj.evt_id:
+        return 0
+    elif spellTarget == OBJ_HANDLE_NULL:
+        return 0
+    elif attachee == OBJ_HANDLE_NULL:
+        return 0
+    #elif spellTarget == attachee:
+    #    return 0
+    elif spellPacket.check_spell_resistance(spellTarget):
+        return 0
+
+    spellPacket.trigger_aoe_hit()
+
+    conditionName = args.get_cond_name()
+    particlesId = game.particles("{}-hit".format(conditionName), spellTarget)
+
+    if spellPacket.add_target(spellTarget, particlesId):
+        conditionEffectName = spellName(spellId)
+        spellTarget.condition_add_with_args(conditionEffectName, spellId, duration + 1, spellDc, spellEventId)
+        spellPacket.update_registry()
+    return 0
+
+def aoehandleRemoveActions(attachee, args, evt_obj):
+    spellId = args.get_arg(0)
+    spellPacket = tpdp.SpellPacket(spellId)
+    spellMesId = 20000 # ID 20000 = A spell has expired.
+    if spellPacket.spell_enum == 0:
+        return 0
+    spellTargetCount = 0
+    while spellTargetCount < spellPacket.target_count:
+        spellTarget = spellPacket.get_target(spellTargetCount)
+        spellTarget.d20_send_signal(S_Spell_End, spellId)
+        spellTarget.float_mesfile_line('mes\\spell.mes', spellMesId)
+        spellTargetCount += 1
+    return 0
+
+def aoeCombatEndSignal(attachee, args, evt_obj):
+    args.set_arg(1, -1)
+    return 0
+
+def aoeOnLeave(attachee, args, evt_obj):
+    spellId = args.get_arg(0)
+    spellPacket = tpdp.SpellPacket(spellId)
+    spellEventId = args.get_arg(3)
+
+    if spellEventId != evt_obj.evt_id:
+        return 0
+
+    spellPacket.end_target_particles(attachee)
+    spellPacket.remove_target(attachee)
+    args.remove_spell_mod()
+    return 0
+
+def aoeSpellEndSignal(attachee, args, evt_obj):
+    spellId = args.get_arg(0)
+    if spellId == evt_obj.data1:
+        spellPacket = tpdp.SpellPacket(spellId)
+        spellPacket.end_target_particles(attachee)
+        spellPacket.remove_target(attachee)
+        spellPacket.update_registry()
+        args.remove_spell_mod()
+    return 0
+
+def aoeEffectTickdown(attachee, args, evt_obj):
+    #This is only done, so the Tooltip can show the duration
+    #Actual spell end is handled by the AoeSpellHandlerModifier
+    duration = args.get_arg(1)
+    duration -= evt_obj.data1
+    args.set_arg(1, duration)
+    return 0
+
+class AoeSpellHandleModifier(PythonModifier):
+    #AoeSpellHandlerModifier have at least 5 arguments:
+    #spellId, duration, spellDc, spellEventId, empty
+    def __init__(self, name, args = 5, preventDuplicate = False):
+        PythonModifier.__init__(self, name, args, preventDuplicate)
+        self.AddHook(ET_OnConditionAdd, EK_NONE, addAoeObjToSpellRegistry, ())
+        self.AddHook(ET_OnObjectEvent, EK_OnEnterAoE, aoeOnEnter, ())
+        self.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, queryActiveSpell, ())
+        self.AddHook(ET_OnD20Signal, EK_S_Combat_End, aoeCombatEndSignal, ())
+        #self.AddHook(ET_OnConditionRemove, EK_NONE, aoehandleRemoveActions, ())
+        self.AddSpellDispelCheckStandard()
+        self.AddSpellTeleportPrepareStandard()
+        self.AddSpellTeleportReconnectStandard()
+        self.AddSpellCountdownStandardHook()
+        self.AddAoESpellEndStandardHook()
+
+class AoESpellEffectModifier(PythonModifier):
+    #AoESpellEffectPythonModifier have at least 5 arguments:
+    #spellId, duration, spellDc, spellEventId, empty
+    def __init__(self, name, args = 5, preventDuplicate = True):
+        PythonModifier.__init__(self, name, args, preventDuplicate)
+        #self.AddHook(ET_OnBeginRound, EK_NONE, aoeEffectTickdown, ())
+        self.AddHook(ET_OnObjectEvent, EK_OnLeaveAoE, aoeOnLeave, ())
+        self.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, queryActiveSpell, ())
+        self.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Condition, querySpellCondition, ())
+        self.AddHook(ET_OnGetTooltip, EK_NONE, spellTooltip, ())
+        self.AddHook(ET_OnGetEffectTooltip, EK_NONE, spellEffectTooltip, ())
+        #self.AddHook(ET_OnD20Signal, EK_S_Spell_End, aoeSpellEndSignal, ())
+        self.AddHook(ET_OnD20Signal, EK_S_Combat_End, aoeCombatEndSignal, ())
+        self.AddHook(ET_OnD20Signal, EK_S_Killed, spellKilled, ())
+        self.AddSpellCountdownStandardHook()
+        self.AddSpellDispellCheckHook()
+        self.AddSpellTeleportPrepareStandard()
+        self.AddSpellTeleportReconnectStandard()
