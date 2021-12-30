@@ -1,3 +1,29 @@
+// Vigor Fixes
+
+{5794} Vigor, Lesser {Target gets Fast Healing 1.
+
+School:          Conjuration[Healing]
+Casting:         1 action [V,S]
+Range:               Touch 
+Target:             One living creature
+Duration:      10 + 1 round/level,  Save: None,  SR: No}
+
+{5795} Vigor {Target gets Fast Healing 2.
+
+School:          Conjuration[Healing]
+Casting:         1 action [V,S]
+Range:               Touch 
+Target:             One living creature
+Duration:      10 + 1 round/level,  Save: None,  SR: No}
+
+{5796} Vigor, Greater {Target gets Fast Healing 4.
+
+School:          Conjuration[Healing]
+Casting:         1 action [V,S]
+Range:               Touch 
+Target:             One living creature
+Duration:      10 + 1 round/level,  Save: None,  SR: No}
+
 // Additional spells added by Sagenlicht
 
 {6050} Sound Lance {Projectile of intense sonic energy that deals 1d8/level (max 10d8) sonic damage.
@@ -855,3 +881,40 @@ Casting:         1 action [V,S]
 Range:               Touch 
 Target:             One living creature
 Duration:      1 round/level,  Save: Will negates,  SR: Yes}
+
+{6174} Energized Shield Lesser {TDB!
+School:          Enchantment[Mind-Affecting]
+Casting:         1 action [V,S]
+Range:               Touch 
+Target:             One living creature
+Duration:      1 round/level,  Save: Will negates,  SR: Yes}
+
+{6175} Energized Shield {TBD!
+School:          Enchantment[Mind-Affecting]
+Casting:         1 action [V,S]
+Range:               Touch 
+Target:             One living creature
+Duration:      1 round/level,  Save: Will negates,  SR: Yes}
+
+{6176} Draconic Might {TBD!
+School:          Enchantment[Mind-Affecting]
+Casting:         1 action [V,S]
+Range:               Touch 
+Target:             One living creature
+Duration:      1 round/level,  Save: Will negates,  SR: Yes}
+
+{6177} Vigor, Mass Lesser {Targets get Fast Healing 1.
+
+School:          Conjuration[Healing]
+Casting:         1 action [V,S]
+Range:               20 ft.
+Target:             One living creature/2 two levels
+Duration:      10 + 1 round/level(max 25),  Save: None,  SR: No}
+
+{6178} Vigor, Mass Improved {Targets get Fast Healing 3.
+
+School:          Conjuration[Healing]
+Casting:         1 action [V,S]
+Range:               20 ft.
+Target:             One living creature/2 two levels
+Duration:      10 + 1 round/level(max 40),  Save: None,  SR: No}
