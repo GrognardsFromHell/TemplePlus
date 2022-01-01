@@ -1384,3 +1384,58 @@
 {29466}{} // spell projectile in-flight
 {29467}{} // spell hit
 {29468}{} // spell struck
+
+// [1174] *[Energized Shield Lesser]
+{29480}{} // spell begin
+{29481}{} // spell end
+{29482}{} // spell effect
+{29483}{} // spell new round
+{29484}{} // spell projectile begin
+{29485}{} // spell projectile end
+{29486}{} // spell projectile in-flight
+{29487}{} // spell hit
+{29488}{} // spell struck
+
+// [1175] *[Energized Shield]
+{29500}{} // spell begin
+{29501}{} // spell end
+{29502}{} // spell effect
+{29503}{} // spell new round
+{29504}{} // spell projectile begin
+{29505}{} // spell projectile end
+{29506}{} // spell projectile in-flight
+{29507}{} // spell hit
+{29508}{} // spell struck
+
+// [1176] *[Draconic Might]
+{29520}{} // spell begin
+{29521}{} // spell end
+{29522}{} // spell effect
+{29523}{} // spell new round
+{29524}{} // spell projectile begin
+{29525}{} // spell projectile end
+{29526}{} // spell projectile in-flight
+{29527}{} // spell hit
+{29528}{} // spell struck
+
+// [1177] *[Vigor Mass Lesser]
+{29540}{} // spell begin
+{29541}{} // spell end
+{29542}{spells\sp_cure_light.WAV} // spell effect
+{29543}{} // spell new round
+{29544}{} // spell projectile begin
+{29545}{} // spell projectile end
+{29546}{} // spell projectile in-flight
+{29547}{} // spell hit
+{29548}{} // spell struck
+
+// [1178] *[Vigor Mass Improved]
+{29560}{} // spell begin
+{29561}{} // spell end
+{29562}{spells\sp_cure_moderate.WAV} // spell effect
+{29563}{} // spell new round
+{29564}{} // spell projectile begin
+{29565}{} // spell projectile end
+{29566}{} // spell projectile in-flight
+{29567}{} // spell hit
+{29568}{} // spell struck
