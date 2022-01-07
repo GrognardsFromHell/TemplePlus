@@ -545,6 +545,11 @@ const std::string &UiHelp::GetName() const {
     return name;
 }
 
+bool UiHelp::AlertIsActive()
+{
+	return temple::GetRef<BOOL>(0x10C4D1D8) != 0;
+}
+
 //*****************************************************************************
 //* SkillMastery-UI
 //*****************************************************************************

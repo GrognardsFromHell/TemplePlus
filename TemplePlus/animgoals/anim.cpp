@@ -716,7 +716,23 @@ bool AnimSystem::SaveGame(TioFile *file) {
 }
 bool AnimSystem::LoadGame(GameSystemSaveFile *saveFile) {
   auto load = temple::GetPointer<int(GameSystemSaveFile *)>(0x1001d250);
-  return load(saveFile) == 1;
+  auto result = load(saveFile) == 1;
+
+  auto count = 0;
+  logger->trace("Currently Existing Animations");
+  logger->trace("------------------------------------------------");
+  for (auto i = 0; i < ANIM_RUN_SLOT_CAP; i++) {
+      auto& slot = mSlots[i];
+      if (slot.flags) {
+          logger->trace("In slot {}", i);
+          count++;
+      }
+  }
+  logger->trace("------------------------------------------------");
+  logger->info("AnimSystem::LoadGame: {} slots used", count);
+
+
+  return result;
 }
 const std::string &AnimSystem::GetName() const {
   static std::string name("Anim");

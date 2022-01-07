@@ -1,0 +1,5 @@
+name: Captivating Melody
+flags: 12582912
+prereqs:  
+description: As a swift action, you attempt a Perform check (DC 15 + the level of the spell you intend to cast) to sacrifice one use of bardic music to increase the save DC of the next enchantment or illusion bard spell you cast in the same round by 2.
+prereq descr: Ability to cast arcane spells, Bardic music

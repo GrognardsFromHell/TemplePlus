@@ -2395,6 +2395,40 @@ static PyObject* PyObjHandle_PerformTouchAttack(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(action.d20Caf);
 }
 
+
+static PyObject* PyObjHandle_ActionPerform(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle || !objSystem->IsValidHandle(self->handle)) {
+		return nullptr;
+	}
+	auto performer = self->handle;
+	D20Actn action;
+	if (!PyArg_ParseTuple(args, "iO&|L:objhndl.action_perform", &action.d20ActType, &ConvertObjHndl, &action.d20ATarget, &action.destLoc.location)) {
+		return 0;
+	}
+	if (action.d20ActType == D20A_NONE) {
+		return nullptr;
+	}
+	if (!actSeqSys.TurnBasedStatusInit(performer)) {
+		PyErr_SetString(PyExc_RuntimeError, "action_perform: couldn't init turn based status");
+		return PyInt_FromLong(0);
+	}
+
+	auto hasLocation = action.destLoc.location.locx != 0 && action.destLoc.location.locy != 0;
+
+	d20Sys.GlobD20ActnInit();
+	d20Sys.GlobD20ActnSetTypeAndData1(action.d20ActType, 0);
+	d20Sys.GlobD20ActnSetTarget(action.d20ATarget, hasLocation ? &action.destLoc : nullptr);
+	auto result = actSeqSys.ActionAddToSeq();
+	if (result != AEC_OK) {
+		PyErr_SetString(PyExc_RuntimeError, "action_perform: ActionAddToSeq error");
+		return PyInt_FromLong(0);
+	}
+	actSeqSys.sequencePerform();
+	return PyInt_FromLong(1);
+}
+
+
 static PyObject* PyObjHandle_AddToInitiative(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -4338,6 +4372,9 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"__getstate__", PyObjHandle_getstate, METH_VARARGS, NULL},
 	{"__reduce__", PyObjHandle_reduce, METH_VARARGS, NULL},
 	{"__setstate__", PyObjHandle_setstate, METH_VARARGS, NULL},
+
+	{ "action_perform", PyObjHandle_ActionPerform, METH_VARARGS, NULL},
+
 	{ "add_to_initiative", PyObjHandle_AddToInitiative, METH_VARARGS, NULL },
 	{ "ai_flee_add", PyObjHandle_AiFleeAdd, METH_VARARGS, NULL },
 	{ "ai_follower_add", PyObjHandle_AiFollowerAdd, METH_VARARGS, NULL },
