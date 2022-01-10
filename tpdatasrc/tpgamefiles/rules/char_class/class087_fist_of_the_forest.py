@@ -73,7 +73,7 @@ def IsAlignmentCompatible( alignment):
 def ObjMeetsPrereqs(obj):
     #Maximum number of levels for this PrC: 3
     classLvl = char_editor.stat_level_get(classEnum)
-    if char_editor.stat_level_get(stat_attack_bonus ) < 4:
+    if char_editor.get_base_attack_bonus() < 4:
         return 0
     #Handle Animal is not in the game
     #elif char_editor.skill_ranks_get(skill_handle_animal) < 4:

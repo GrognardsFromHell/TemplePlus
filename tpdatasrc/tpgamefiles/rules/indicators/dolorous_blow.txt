@@ -1,0 +1,5 @@
+ID_string: DOLOROUS_BLOW
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\spell true strike.tga
+help_topic: TAG_SPELLS_DOLOROUS_BLOW
+tooltip_base_text: Dolorous Blow

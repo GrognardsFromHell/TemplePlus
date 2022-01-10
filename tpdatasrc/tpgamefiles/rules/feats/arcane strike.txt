@@ -1,0 +1,5 @@
+name: Arcane Strike
+flags: 12582912
+prereqs: 266 4
+description: You can channel arcane energy into your melee and ranged attacks.
+prereq descr: Ability to cast 3rd-level arcane spells, base attack bonus +4

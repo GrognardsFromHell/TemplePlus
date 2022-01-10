@@ -1,0 +1,5 @@
+name: Shield Specialization
+flags: 12582928
+prereqs:
+description: You are skilled in using a shield, allowing you to gain greater defensive benefits from it.
+prereq descr: Proficiency with shields.

@@ -1,0 +1,5 @@
+ID_string: IRONGUTS
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Spell Delay Poison.tga
+help_topic: TAG_SPELLS_IRONGUTS
+tooltip_base_text: Ironguts

@@ -9,12 +9,20 @@ def dolorousBlowSpellOnConditionAdd(attachee, args, evt_obj):
     attachee.item_condition_add_with_args('Weapon Dolorous Blow', 0, 0, 0, 0, args.get_arg(0))
     return 0
 
+def sonicWeaponSpellDurationQuery(attachee, args, evt_obj):
+    if args.get_arg(0) == evt_obj.data1:
+        evt_obj.return_val = args.get_arg(1)
+    else:
+        evt_obj.return_val = 0
+    return 0
+
 def dolorousBlowSpellWeaponConditionRemove(attachee, args, evt_obj):
     attachee.item_condition_remove('Weapon Dolorous Blow', args.get_arg(0))
     return 0
 
 dolorousBlowSpell = PythonModifier("sp-Dolorous Blow", 3) # spell_id, duration, empty
 dolorousBlowSpell.AddHook(ET_OnConditionAdd, EK_NONE, dolorousBlowSpellOnConditionAdd,())
+dolorousBlowSpell.AddHook(ET_OnD20PythonQuery, "PQ_Item_Buff_Duration", sonicWeaponSpellDurationQuery, ())
 dolorousBlowSpell.AddHook(ET_OnConditionRemove, EK_NONE, dolorousBlowSpellWeaponConditionRemove,())
 dolorousBlowSpell.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, spell_utils.queryActiveSpell, ())
 dolorousBlowSpell.AddHook(ET_OnD20Signal, EK_S_Killed, spell_utils.spellKilled, ())
@@ -49,3 +57,9 @@ weaponDolorousBlow = PythonModifier("Weapon Dolorous Blow", 5) # empty, empty, i
 weaponDolorousBlow.AddHook(ET_OnGetCriticalHitRange, EK_NONE, weaponDolorousBlowModifyThreatRange,())
 weaponDolorousBlow.AddHook(ET_OnD20PythonQuery, "Always Confirm Criticals", weaponDolorousBlowAutoConfirmCrit,())
 weaponDolorousBlow.AddHook(ET_OnWeaponGlowType, EK_NONE, weaponDolorousBlowGlowEffect, ())
+
+#### Weapon Sonic Tooltip Condition ####
+
+weaponDolorousBlowToolTip = PythonModifier("Weapon Sonic Tooltip", 5) # empty, empty, inventoryLocation, empty, spellId
+weaponDolorousBlowToolTip.AddHook(ET_OnGetTooltip, EK_NONE, spell_utils.itemTooltip, ())
+weaponDolorousBlowToolTip.AddHook(ET_OnGetEffectTooltip, EK_NONE, spell_utils.itemEffectTooltip, ())

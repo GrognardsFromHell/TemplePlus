@@ -1,0 +1,5 @@
+name: Improved Shield Bash
+flags: 12582928
+prereqs:
+description: When you perform a shield bash, you may still apply the shield’s shield bonus to your AC. Attention: Shield Bash currently TBD!
+prereq descr: Proficiency with shields.

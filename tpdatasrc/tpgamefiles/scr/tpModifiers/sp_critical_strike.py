@@ -11,21 +11,10 @@ def verifyCriticalStrikeConditions(attackPacket):
     weaponUsed = attackPacket.get_weapon_used()
     target = attackPacket.target
     attacker = attackPacket.attacker
-    #if target is blind, it should be sneakable, but both
-    #target.d20_query(Q_SneakAttack) and
-    #target.d20_query_with_object(Q_OpponentSneakAttack, attacker)
-    #return 0; added extra check for blind due to this
+
     if weaponUsed.obj_get_int(obj_f_type) != obj_t_weapon:
         return False
-    elif target.d20_query(Q_SneakAttack):
-        return True
-    elif target.d20_query_with_object(Q_OpponentSneakAttack, attacker):
-        return True
-    elif flags & D20CAF_FLANKED:
-        return True
-    elif target.d20_query(Q_Critter_Is_Blinded):
-        return True
-    elif attacker.d20_query(Q_Critter_Is_Invisible) and not target.d20_query(Q_Critter_Can_See_Invisible):
+    elif attacker.can_sneak_attack(target):
         return True
     return False
 
