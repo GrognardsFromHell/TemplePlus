@@ -13,7 +13,7 @@ def OnSpellEffect(spell):
     bonusDice = spell.caster_level/3
 
     if spellTarget.obj.condition_add_with_args("sp-Hunter's Eye", spell.id, spell.duration, bonusDice, 0):
-        spellTarget.partsys_id = game.particles('sp-True Strike', spellTarget.obj)
+        spellTarget.partsys_id = game.particles("sp-Hunter's Eye", spellTarget.obj)
     else:
         spellTarget.obj.float_mesfile_line('mes\\spell.mes', 30000)
         game.particles('Fizzle', spellTarget.obj)
