@@ -4,7 +4,7 @@ from spell_utils import SpellPythonModifier
 
 print "Registering sp-Hunter's Eye"
 
-def applyToHitBonus(attachee, args, evt_obj):
+def querySneakDice(attachee, args, evt_obj):
     bonusDice = args.get_arg(2)
     evt_obj.return_val += bonusDice
     return 0
