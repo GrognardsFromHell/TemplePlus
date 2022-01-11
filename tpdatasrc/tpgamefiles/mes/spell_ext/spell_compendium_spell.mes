@@ -131,6 +131,8 @@
 {1176}{Draconic Might}
 {1177}{Vigor, Mass Lesser}
 {1178}{Vigor, Mass Improved}
+{1179}{Sure Strike}
+{1180}{Hunter's Eye}
 
 // Spell Descriptions
 {5794}Vigor, Lesser {[Conjuration] Fast Healing 1 for 10 +1/level rounds, max 15.}
@@ -261,3 +263,5 @@
 {6176} Draconic Might {TBD}
 {6177} Vigor, Mass Lesser {Targets get Fast Healing 1 for 10 +1/level rounds, max 25.}
 {6178} Vigor, Mass Improved {Targets get Fast Healing 3 for 10 +1/level rounds, max 40.}
+{6179} Sure Strike {You gain a +1 insight bonus per three caster levels on your next attack roll.}
+{6180} Hunter's Eye {You deal an extra 1d6 points of sneak attack damage per three caster levels.}

@@ -918,3 +918,17 @@ Casting:         1 action [V,S]
 Range:               20 ft.
 Target:             One living creature/2 two levels
 Duration:      10 + 1 round/level(max 40),  Save: None,  SR: No}
+
+{6179} Sure Strike {You gain a +1 insight bonus per three caster levels on your next attack roll.
+School:          Divination
+Casting:         1  swift action [V]
+Range:               Personal
+Target:             Self
+Duration:      1 round}
+
+{6180} Hunter's Eye {You deal an extra 1d6 points of sneak attack damage per three caster levels.
+School:          Divination
+Casting:         1  swift action [V]
+Range:               Personal
+Target:             Self
+Duration:      1 round}

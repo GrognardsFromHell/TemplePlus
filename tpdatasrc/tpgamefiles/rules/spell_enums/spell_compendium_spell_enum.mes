@@ -130,6 +130,8 @@
 {1176}{Draconic Might}
 {1177}{Vigor, Mass Lesser}
 {1178}{Vigor, Mass Improved}
+{1179}{Sure Strike}
+{1180}{Hunter's Eye}
 
 {5794}{Vigor, Lesser}
 {5795}{Vigor}
@@ -259,6 +261,8 @@
 {6176}{Draconic Might}
 {6177}{Vigor, Mass Lesser}
 {6178}{Vigor, Mass Improved}
+{6179}{Sure Strike}
+{6180}{Hunter's Eye}
 
 {20794}{TAG_SPELLS_VIGOR,_LESSER}
 {20795}{TAG_SPELLS_VIGOR}
@@ -388,3 +392,5 @@
 {21176}{TAG_SPELLS_DRACONIC_MIGHT}
 {21177}{TAG_SPELLS_VIGOR,_MASS_LESSER}
 {21178}{TAG_SPELLS_VIGOR,_MASS_IMPROVED}
+{21179}{TAG_SPELLS_SURE_STRIKE}
+{21180}{TAG_SPELLS_HUNTER'S_EYE}
