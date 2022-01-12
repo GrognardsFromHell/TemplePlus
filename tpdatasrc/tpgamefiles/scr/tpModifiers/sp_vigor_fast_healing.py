@@ -6,21 +6,29 @@ from spell_utils import SpellPythonModifier
 print "Registering sp-Vigor Fast Healing"
 
 def healTick(attachee, args, evt_obj):
-    duration = args.get_arg
+    tickDownAmount = evt_obj.data1
+    healAmount = args.get_arg(2)
     spellId = args.get_arg(0)
     spellEnum = spellEnum = tpdp.SpellPacket(spellId).spell_enum
     spellName = game.get_spell_mesline(spellEnum)
     spellTag = "TAG_SPELLS_{}".format(spellName.upper().replace(" ", "_"))
-    healAmount = args.get_arg(2)
     ### workaround for heal ###
     #heal requires a dice
     healDice = dice_new('1d1')
-    healDice.bonus = healAmount -1
+    #If newDay is triggered, sum up all leftover ticks
+    if tickDownAmount > 1:
+        durationLeft = args.get_arg(1)
+        healDice.bonus = (healAmount * durationLeft) -1
+    else:
+        healDice.bonus = healAmount -1
     ### workaround end ###
     game.particles ('sp-Vigor', attachee)
-    attachee.heal(attachee, healDice, D20A_HEAL, 0)
-    attachee.healsubdual(attachee, healDice, D20A_HEAL, 0)
-    game.create_history_freeform("{} is healed for {} by ~{}~[{}]\n\n".format(attachee.description, healAmount, spellName, spellTag))
+    if attachee.obj_get_int(obj_f_critter_subdual_damage):
+        attachee.healsubdual(attachee, healDice, D20A_HEAL, 0)
+        game.create_history_freeform("{} is healed for {} by ~{}~[{}]\n\n".format(attachee.description, healAmount, spellName, spellTag))
+    elif attachee.obj_get_int(obj_f_hp_damage):
+        attachee.heal(attachee, healDice, D20A_HEAL, 0)
+        game.create_history_freeform("{} is healed for {} by ~{}~[{}]\n\n".format(attachee.description, healAmount, spellName, spellTag))
     return 0
 
 ### Workaround ###
