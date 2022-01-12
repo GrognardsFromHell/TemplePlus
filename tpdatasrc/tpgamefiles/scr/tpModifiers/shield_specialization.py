@@ -10,7 +10,7 @@ def getFeatName():
 print "Registering {}".format(getFeatName)
 
 def getFeatTag(featName):
-    return "TAG_{}".format(featName)
+    return "TAG_{}".format(featName.upper().replace(" ", "_"))
 
 #def getSubFeatList():
 #    return {0:"Buckler", 1:"Heavy", 2:"Light"}

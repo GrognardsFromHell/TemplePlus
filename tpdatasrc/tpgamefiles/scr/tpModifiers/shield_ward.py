@@ -10,7 +10,7 @@ def getFeatName():
 print "Registering {}".format(getFeatName)
 
 def getFeatTag(featName):
-    return "TAG_{}".format(featName)
+    return "TAG_{}".format(featName.upper().replace(" ", "_"))
 
 def getShieldBonus(wornShield):
     bonusValue = wornShield.item_d20_query(Q_Armor_Get_AC_Bonus)

@@ -10,7 +10,7 @@ def getFeatName():
 print "Registering {}".format(getFeatName)
 
 def getFeatTag(featName):
-    return "TAG_{}".format(featName)
+    return "TAG_{}".format(featName.upper().replace(" ", "_"))
 
 def radialEntry(attachee, args, evt_obj):
     featName = getFeatName()

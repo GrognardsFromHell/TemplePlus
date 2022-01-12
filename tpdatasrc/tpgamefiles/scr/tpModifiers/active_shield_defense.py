@@ -10,7 +10,7 @@ def getFeatName():
 print "Registering {}".format(getFeatName)
 
 def getFeatTag(featName):
-    return "TAG_{}".format(featName)
+    return "TAG_{}".format(featName.upper().replace(" ", "_"))
 
 def nullifyToHitPenalty(attachee, args, evt_obj):
     flags = evt_obj.attack_packet.get_flags()
