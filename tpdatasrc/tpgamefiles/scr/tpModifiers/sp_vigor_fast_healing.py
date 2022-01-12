@@ -56,5 +56,4 @@ def onConditionAddPreActions(attachee, args, evt_obj):
 
 vigorFastHealing = SpellPythonModifier("sp-Vigor Fast Healing", 4) # spellId, duration, healAmount, empty
 vigorFastHealing.AddHook(ET_OnBeginRound, EK_NONE, healTick,())
-vigorFastHealing.AddHook(ET_OnConditionRemove, EK_NONE, onRemoveHealTick, ())
 vigorFastHealing.AddHook(ET_OnConditionAddPre, EK_NONE, onConditionAddPreActions, ())
