@@ -1,13 +1,12 @@
 from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
-import tpactions
 
 # Arcane Strike: Complete Warrior, p. 96
 
 print "Registering Arcane Strike"
 
-arcaneStrikeEnum = 8411
+arcaneStrikeEnum = 8921 #Using an Enum from the Unseen Seer range
 
 def getFeatName():
     return "Arcane Strike"
@@ -51,24 +50,18 @@ def arcaneStrikePerform(attachee, args, evt_obj):
     featName = getFeatName()
     featTag = getFeatTag()
     spellPacket = tpdp.SpellPacket(attachee, evt_obj.d20a.spell_data)
-    #currentSequence = tpactions.get_cur_seq()
-    #spellPacket = currentSequence.spell_packet
     ### workaround ###
     # spellPacket.spell_enum isn't carried over
-    print "spellPacket: {}".format(spellPacket)
-    print "spellPacket.spell_enum: {}".format(spellPacket.spell_enum)
-    print "spellPacket.spell_known_slot_level: {}".format(spellPacket.spell_known_slot_level)
+    print "Debug spellPacket.spell_enum: {}".format(spellPacket.spell_enum)
+    # spellLevel is carried over
+    print "Debug spellPacket.spell_known_slot_level: {}".format(spellPacket.spell_known_slot_level)
     spellPacket.spell_enum = evt_obj.d20a.data1
     ### workaround end ###
 
-    #Debit spell that was given up for Draconic Arcane Grace
+    #Debit spell that was given up for Arcane Strike
     spellPacket.debit_spell()
 
-    #Add Effect Condition; Using a Condition instead of adding hooks for every
-    #ToHit and Damage steps of attachee
-    #Could als be done in one Modifier by using activation Flags for both hooks
-    #And reset the activation flag in OnBeginRound
-    #But I am unsure if it's really better to hook every onBeginRound
+    #Add Effect Condition
     particlesId = game.particles("ft-Arcane Strike", attachee)
     duration = 0 #will be removed at beginning of next round
     spellLevel = spellPacket.spell_known_slot_level
@@ -83,11 +76,12 @@ arcaneStrikeFeat.AddHook(ET_OnD20PythonActionPerform, arcaneStrikeEnum, arcaneSt
 def arcaneStrikeTickDown(attachee, args, evt_obj):
     duration = args.get_arg(0)
     duration -= evt_obj.data1
-    args.set_arg(0, duration)
-    if args.get_arg(0) < 0:
+    if duration < 0:
         particlesId = args.get_arg(2)
         game.particles_end(particlesId)
         args.condition_remove()
+    else:
+        args.set_arg(0, duration)
     return 0
 
 def arcaneStrikeToHitBonus(attachee, args, evt_obj):
@@ -108,7 +102,6 @@ def arcaneStrikeBonusDamage(attachee, args, evt_obj):
         damageType = D20DT_UNSPECIFIED #Damage Type will be determinated by original attack
         damageMesId = 4006 #ID 4006 NEW! added in damage_ext.mes
         evt_obj.damage_packet.add_dice(damageDice, damageType, damageMesId)
-        #On Hit particles ToDo!
     return 0
 
 def arcaneStrikeToolTip(attachee, args, evt_obj):
@@ -118,7 +111,8 @@ def arcaneStrikeToolTip(attachee, args, evt_obj):
 
 def arcaneStrikeEffectTooltip(attachee, args, evt_obj):
     featName = getFeatName()
-    featKey = featName.upper().replace(" ", "_")
+    featNameUpper = featName.upper().replace(" ", "_")
+    featKey =tpdp.hash(featNameUpper)
     spellLevel = args.get_arg(1)
     evt_obj.append(featKey, -2, " (Sacrificed Spell Level: {})".format(spellLevel))
     return 0

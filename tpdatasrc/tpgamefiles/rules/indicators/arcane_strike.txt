@@ -1,0 +1,5 @@
+ID_string: ARCANE_STRIKE
+effect_type: 0
+texture_file: art\interface\player_conditions\Buffs\Spell Wind Wall.tga
+help_topic: TAG_ARCANE_STRIKE
+tooltip_base_text: Arcane Strike
