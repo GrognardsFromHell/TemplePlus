@@ -25,25 +25,6 @@ def healTick(attachee, args, evt_obj):
         game.create_history_freeform("{} is healed for {} by ~{}~[{}]\n\n".format(attachee.description, healAmount, spellName, spellTag))
     return 0
 
-#Adding an onRemoveHealTick check for triggering a Rest/Passing Time
-#While a vigor effect is ticking; This will sum up leftover ticks in one heal
-#This will also trigger on a successful dispel I guess; ToDo for this edge case!
-def onRemoveHealTick(attachee, args, evt_obj):
-    durationLeft = args.get_arg(1)
-    if durationLeft > 0:
-        healAmount = args.get_arg(2)
-        ### workaround for heal ###
-        #heal requires a dice
-        healDice = dice_new('1d1')
-        healDice.bonus = (healAmount * durationLeft) - 1
-        ### workaround end ###
-        game.particles ('sp-Vigor', attachee)
-        if attachee.obj_get_int(obj_f_critter_subdual_damage):
-            attachee.healsubdual(attachee, healDice, D20A_HEAL, 0)
-        elif attachee.obj_get_int(obj_f_hp_damage):
-            attachee.heal(attachee, healDice, D20A_HEAL, 0)
-    return 0
-
 ### Workaround ###
 def getHealAmount(spellEnum):
     if spellEnum == spell_vigor_lesser or spell_vigor_mass_lesser:
@@ -67,7 +48,6 @@ def onConditionAddPreActions(attachee, args, evt_obj):
         ### Workaround End ###
         healAmount = args.get_arg(2)
         if newCondHealAmount >= healAmount:
-            args.set_arg(1, 0) #Needed to prevent healTick for overwriting
             args.remove_spell()
             args.remove_spell_mod()
         else:
@@ -76,5 +56,4 @@ def onConditionAddPreActions(attachee, args, evt_obj):
 
 vigorFastHealing = SpellPythonModifier("sp-Vigor Fast Healing", 4) # spellId, duration, healAmount, empty
 vigorFastHealing.AddHook(ET_OnBeginRound, EK_NONE, healTick,())
-vigorFastHealing.AddHook(ET_OnConditionRemove, EK_NONE, onRemoveHealTick, ())
 vigorFastHealing.AddHook(ET_OnConditionAddPre, EK_NONE, onConditionAddPreActions, ())
