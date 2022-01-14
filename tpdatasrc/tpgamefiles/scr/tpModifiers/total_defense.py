@@ -13,7 +13,10 @@ def FightingDefensivelyQuery(attachee, args, evt_obj):
 	
 # No making AOOs when using total defense
 def TotalDefenseAOOPossible(attachee, args, evt_obj):
-	evt_obj.return_val = 0
+	#If clause added by Sagenlicht to allow AoO's if character has
+	#the Active Shield Defense Feat
+	if not attachee.has_feat("Active Shield Defense"):
+		evt_obj.return_val = 0
 	return 0
 
 modExtender = PythonModifier()
