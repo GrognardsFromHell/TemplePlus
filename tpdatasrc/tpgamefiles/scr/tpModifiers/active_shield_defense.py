@@ -20,6 +20,8 @@ def nullifyToHitPenalty(attachee, args, evt_obj):
         return 0
     elif attachee.item_worn_at(item_wear_shield) == OBJ_HANDLE_NULL:
         return 0
+    elif attachee.d20_query("PQ_Total_Defense_Activated"):
+        return 0
     else:
         featName = getFeatName()
         featTag = getFeatTag(featName)
@@ -31,7 +33,7 @@ def nullifyToHitPenalty(attachee, args, evt_obj):
     return 0
 
 # Allowing AoO's while in Total Defense is directly handled in
-# total_defense.py (PythonModifier Extender)
+# total_defense.py (an already existing PythonModifier Extender)
 
 activeShieldDefenseFeat = PythonModifier(getFeatName(), 2) #featEnum, empty
 activeShieldDefenseFeat.MapToFeat(getFeatName(), feat_cond_arg2 = 0)
