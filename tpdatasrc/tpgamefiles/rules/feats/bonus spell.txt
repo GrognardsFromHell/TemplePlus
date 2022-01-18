@@ -1,5 +1,0 @@
-name: Bonus Spell
-flags: 9
-prereqs:
-description: Grants a Bonus Spell per Day
-prereq descr:

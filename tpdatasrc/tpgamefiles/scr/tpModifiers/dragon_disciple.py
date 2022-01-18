@@ -2,6 +2,7 @@ from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
 import tpactions
+import char_editor
 import char_class_utils
 import heritage_feat_utils
 import breath_weapon
@@ -57,6 +58,30 @@ classSpecObj.AddHook(ET_OnSaveThrowLevel, EK_SAVE_WILL, OnGetSaveThrowWill, ())
 ##### Dragon Disciple Class Features #####
 
 ### Draconic Heritage is handle by the Draconic Heritage Feat now
+
+### Bonus Spells per Day
+def setBonusSpellPerDaySlot(attachee, args, evt_obj):
+    highestArcaneClass = attachee.highest_arcane_class
+    highestArcaneCasterLevel = attachee.highest_arcane_caster_level
+    spellLevelToApplyBonus = char_editor.get_max_spell_level(attachee, highestArcaneClass, highestArcaneCasterLevel)
+    args.set_arg(1, highestArcaneClass)
+    args.set_arg(2, spellLevelToApplyBonus)
+    return 0
+
+def applyExtraSpell(attachee, args, evt_obj):
+    bonusSpellClass = args.get_arg(1)
+    spellLevel = args.get_arg(2)
+    if evt_obj.get_caster_class() == bonusSpellClass and evt_obj.spell_level == spellLevel:
+        bonusValue = 1
+        bonusType = 0 #ID 0 untyped (stacking)
+        evt_obj.bonus_list.add(bonusValue, bonusType, "Bonus Spell Slot")
+    return 0
+
+bonusSpellSlot = PythonModifier("Dragon Disciple Bonus Spell Slot", 4, False) #featEnum, bonusSpellClass, spellLevel, empty
+for bonusSpellCount in range(1, 8):
+    bonusSpellSlot.MapToFeat("Dragon Disciple Bonus Spell per Day ({})".format(bonusSpellCount))
+bonusSpellSlot.AddHook(ET_OnGetSpellsPerDayMod, EK_NONE, applyExtraSpell, ())
+bonusSpellSlot.AddHook(ET_OnConditionAdd, EK_NONE, setBonusSpellPerDaySlot, ())
 
 ### AC Bonus
 def naturalArmorACBonus(attachee, args, evt_obj):

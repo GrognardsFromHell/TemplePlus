@@ -1,6 +1,0 @@
-name: Bonus Spell (Bard 3)
-flags: 9
-prereqs: 8 7
-description: Grants a Bard bonus Spell per Day for Spell Level 3
-prereq descr:
-parent: Bonus Spell

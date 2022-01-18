@@ -1,6 +1,0 @@
-name: Bonus Spell (Sorcerer 3)
-flags: 9
-prereqs: 16 6
-description: Grants a Sorcerer bonus Spell per Day for Spell Level 3
-prereq descr:
-parent: Bonus Spell

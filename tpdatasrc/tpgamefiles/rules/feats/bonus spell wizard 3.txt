@@ -1,6 +1,0 @@
-name: Bonus Spell (Wizard 3)
-flags: 9
-prereqs: 17 5
-description: Grants a Wizard bonus Spell per Day for Spell Level 3
-prereq descr:
-parent: Bonus Spell
