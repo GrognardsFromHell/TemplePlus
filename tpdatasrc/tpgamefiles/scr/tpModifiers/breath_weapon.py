@@ -10,27 +10,24 @@ print "Registering Breath Weapon"
 
 def breathWeaponOnConditionAdd(attachee, args, evt_obj):
     breathWeaponId = args.get_param(0)
-    breathWeaponCharges = args.get_param(1)
+    baseCharges = args.get_param(1)
     cooldown = 0
     args.set_arg(0, breathWeaponId)
-    args.set_arg(1, breathWeaponCharges)
+    args.set_arg(1, baseCharges)
     args.set_arg(2, cooldown)
-    args.set_arg(3, 0)
+    args.set_arg(3, baseCharges)
     args.set_arg(4, 0)
     return 0
 
 # Handle Breath Weapon Charges
-def addExtraExhalationCharges(attachee):
-    extraBreathExhalation = attachee.has_feat("Extra Exhalation")
-    return extraBreathExhalation
-
-def getMaxCharges(attachee):
-    maxCharges = 1 + addExtraExhalationCharges(attachee)
-    return maxCharges
+def getMaxCharges (attachee, args):
+    baseCharges = args.get_arg(3)
+    extraCharges = attachee.d20_query("PQ_Extra_Breath_Charges")
+    return baseCharges + extraCharges
 
 def resetBreathWeaponUses(attachee, args, evt_obj):
     if not args.get_arg(1) == -1:
-        maxCharges = getMaxCharges(attachee)
+        maxCharges = getMaxCharges(attachee, args)
         args.set_arg(1, maxCharges)
     return 0
 
@@ -53,18 +50,23 @@ def signalBreathWeaponUsed(attachee, args, evt_obj):
     signalId = evt_obj.data1
     breathWeaponId = args.get_arg(0)
     if signalId == breathWeaponId:
-        breathWeaponCharges = args.get_arg(1)
-        if not breathWeaponCharges == 1:
+        charges = args.get_arg(1)
+        if not charges == 1:
             cooldown = getBreathWeaponCoolDown()
             args.set_arg(2, cooldown)
-        if not breathWeaponCharges == -1:
-            breathWeaponCharges -= 1
-            args.set_arg(1, breathWeaponCharges)
+        if not charges == -1:
+            charges -= 1
+            args.set_arg(1, charges)
+    return 0
+
+def queryLimitedBreathWeapon(attachee, args, evt_obj):
+    if args.get_arg(1) != -1:
+        evt_obj.return_val = 1
     return 0
 
 class BreathWeaponModifier(PythonModifier):
     # Breath Weapon modifiers have 5 arguments:
-    # 0: breathWeaponId, 1: charges, 2: Cooldown, 3: empty, 4: empty
+    # 0: breathWeaponId, 1: charges, 2: Cooldown, 3: baseCharges, 4: empty
     # Charges set to -1 indicates limitless breath weapon uses
     # A Breath Weapon usage always triggers a 1d4 long cooldown
     # before the Breath Weapon becomes availible again
@@ -73,8 +75,9 @@ class BreathWeaponModifier(PythonModifier):
         self.AddHook(ET_OnD20PythonSignal, "PS_Breath_Weapon_Used", signalBreathWeaponUsed, ())
         self.AddHook(ET_OnBeginRound, EK_NONE, reduceBreathWeaponCooldown, ())
         self.AddHook(ET_OnNewDay, EK_NEWDAY_REST, resetBreathWeaponUses, ())
+        self.AddHook(ET_OnD20PythonQuery, "PQ_Has_Limited_Breath_Weapon", queryLimitedBreathWeapon, ())
 
     # This hook needs to be added for every BreathWeaponModifier
-    def breathWeaponSetArgs(self, breathWeaponId, breathWeaponCharges):
-        self.AddHook(ET_OnConditionAdd, EK_NONE, breathWeaponOnConditionAdd, (breathWeaponId, breathWeaponCharges,))
+    def breathWeaponSetArgs(self, breathWeaponId, baseCharges):
+        self.AddHook(ET_OnConditionAdd, EK_NONE, breathWeaponOnConditionAdd, (breathWeaponId, baseCharges,))
 

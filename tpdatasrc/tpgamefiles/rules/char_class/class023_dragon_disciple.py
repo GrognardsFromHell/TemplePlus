@@ -26,10 +26,14 @@ classEnum = stat_level_dragon_disciple
 
 
 class_feats = {
-1: ("Dragon Disciple Natural Armor",),
-2: ("Dragon Disciple Claws and Bite",),
+1: ("Dragon Disciple Natural Armor", "Dragon Disciple Bonus Spell per Day (1)",),
+2: ("Dragon Disciple Claws and Bite", "Dragon Disciple Bonus Spell per Day (2)",),
 3: ("Dragon Disciple Breath Weapon",),
-9: ("Dragon Disciple Wings",),
+4: ("Dragon Disciple Bonus Spell per Day (3)",),
+5: ("Dragon Disciple Bonus Spell per Day (4)",),
+6: ("Dragon Disciple Bonus Spell per Day (5)",),
+8: ("Dragon Disciple Bonus Spell per Day (6)",),
+9: ("Dragon Disciple Wings", "Dragon Disciple Bonus Spell per Day (7)",),
 10: ("Dragon Disciple Dragon Apotheosis",)
 }
 
@@ -90,8 +94,8 @@ def KnowledgeArcanaCheck( obj ):
 def DragonRaceCheck(obj):
     #Can't check if character is half-dragon; it does not exist in ToEE
     if obj.is_category_type(mc_type_dragon):
-        return 1
-    return 0
+        return 0
+    return 1
 
 def ObjMeetsPrereqs(obj):
     if not KnowledgeArcanaCheck(obj):
@@ -117,21 +121,15 @@ def alreadyHasDraconicHeritage(obj):
 
 def IsSelectingFeatsOnLevelup(obj):
     newLvl = char_editor.stat_level_get(classEnum)
-    if newLvl == 1:
-        if alreadyHasDraconicHeritage(obj):
-            return 0
-    elif newLvl not in [2, 4, 5, 6, 8, 9]:
-        return 0
-    return 1
+    if newLvl == 1 and not alreadyHasDraconicHeritage(obj):
+        return 1
+    return 0
 
 def LevelupGetBonusFeats(obj):
     newLvl = char_editor.stat_level_get(classEnum)
     bonus_feats = []
     if newLvl == 1:
         bonus_feats.append("Draconic Heritage")
-    elif newLvl in [2, 4, 5, 6, 8, 9]:
-        bonus_feats.append("Bonus Spell")
-
     bonFeatInfo = []
     for ft in bonus_feats:
         featInfo = char_editor.FeatInfo(ft)
