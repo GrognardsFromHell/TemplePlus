@@ -2,7 +2,6 @@ from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
 import tpactions
-import char_editor
 import char_class_utils
 import heritage_feat_utils
 import breath_weapon
@@ -61,11 +60,10 @@ classSpecObj.AddHook(ET_OnSaveThrowLevel, EK_SAVE_WILL, OnGetSaveThrowWill, ())
 
 ### Bonus Spells per Day
 def setBonusSpellPerDaySlot(attachee, args, evt_obj):
-    highestArcaneClass = attachee.highest_arcane_class
-    highestArcaneCasterLevel = attachee.highest_arcane_caster_level
-    spellLevelToApplyBonus = char_editor.get_max_spell_level(attachee, highestArcaneClass, highestArcaneCasterLevel)
-    args.set_arg(1, highestArcaneClass)
-    args.set_arg(2, spellLevelToApplyBonus)
+    bonusSpellClass = attachee.highest_arcane_class
+    spellLevel = attachee.arcane_spell_level_can_cast()
+    args.set_arg(1, bonusSpellClass)
+    args.set_arg(2, spellLevel)
     return 0
 
 def applyExtraSpell(attachee, args, evt_obj):
