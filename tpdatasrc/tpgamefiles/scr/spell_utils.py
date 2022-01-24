@@ -17,6 +17,9 @@ def spellTag(spellId):
 def spellKey(spellId):
     return tpdp.hash(spellKeyName(spellId))
 
+def getSpellHelpTag(spellId):
+    return "~{}~[{}]".format(spellName(spellId), spellTag(spellId))
+
 def spellTime(duration):
     if duration == 1:
         return "1 round"
