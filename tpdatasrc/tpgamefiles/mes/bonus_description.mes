@@ -1,6 +1,34 @@
 // Bonus Descriptions
 // Added by Sagenlicht
+
+// Stacking bonus types (0, 8 and 21) can appear more than once
+// to avoid stacking from the same source
+// example: Focusing Chant grants a Circumstance Bonus (type 21 and stacking)
+// to avoid to stack with itself, it actually uses bonus type 159 internally
+// to stack with everything but itself. Still this bonus will be displayed
+// as Circumstance Bonus in the game to avoid confusion about its bonus type
+
 // WIP
 
+// Vanilla Bonus Types
+
+{0}{} // Untyped, STACKING
+{8}{~Dodge~[TAG_DODGE]} // STACKING
+{10}{~Natural Armor~[TAG_MODIFIER_NATURAL_ARMOR]} // This is not clean, as Bonus Type 9 also seems to be used for Natural Armor
+{11}{~Deflection~[TAG_DEFLECTION_BONUS]}
+{12}{~Enhancement~[TAG_ENHANCEMENT_BONUS]}
+{13}{~Morale~[TAG_MODIFIER_MORALE]}
+{14}{~Luck~[TAG_MODIFIER_LUCK]}
+{15}{~Resistance~[TAG_MODIFIER_RESISTANCE]} // There are some vanilla code problems with this type
+{17}{~Sacred~[TAG_MODIFIER_SACRED]} // I think this is the vanilla Sacred bonus type (only used by the Consecrate spell)
 {18}{~Insight~[TAG_MODIFIER_INSIGHT]}
 {19}{~Concealment~[TAG_CONCEALMENT]}
+{21}{~Circumstance~[TAG_MODIFIER_CIRCUMSTANCE]}
+
+// Bonus Type 20 is used for enlarge and reduce person spells (bonus for attributes)
+
+// Bonus Types added by Sagenlicht
+
+{151}{~Alchemical~[TAG_MODIFIER_ALCHEMICAL]}
+{154}{~Profane~[TAG_MODIFIER_PROFANE]}
+{159}{~Circumstance~[TAG_MODIFIER_CIRCUMSTANCE]} // Focusing Chant Spell, to avoid stacking with itself
