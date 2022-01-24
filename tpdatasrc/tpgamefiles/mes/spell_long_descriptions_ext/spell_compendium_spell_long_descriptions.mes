@@ -932,3 +932,10 @@ Casting:         1  swift action [V]
 Range:               Personal
 Target:             Self
 Duration:      1 round}
+
+{6181} Tactical Precision {If two affected allies flank the same creature, each gains a +2 insight bonus on melee attack rolls and deals an extra 1d6 points of damage against the flanked creature.
+School:          Divination[Mind-Affecting]
+Casting:         1 action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One creature/level
+Duration:      1 round/level,  Save: None,  SR: No}

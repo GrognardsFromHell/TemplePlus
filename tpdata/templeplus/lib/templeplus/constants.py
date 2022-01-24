@@ -3350,6 +3350,7 @@ spell_vigor_mass_lesser = 1177
 spell_vigor_mass_improved = 1178
 spell_sure_strike = 1179
 spell_hunters_eye = 1180
+spell_tactical_precision = 1181
 
 spell_inevitable_defeat = 1302
 spell_kelgores_fire_bolt = 1303
