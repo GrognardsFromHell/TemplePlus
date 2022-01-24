@@ -1,0 +1,41 @@
+// Class Breath Enums and Auras
+
+{3231}{Spell Like Dragon Cone Breath}
+{3232}{Spell Like Dragon Line Breath}
+{3242}{Dragon Lineage Black}
+{3243}{Dragon Lineage Blue}
+{3244}{Dragon Lineage Brass}
+{3245}{Dragon Lineage Bronze}
+{3246}{Dragon Lineage Copper}
+{3247}{Dragon Lineage Gold}
+{3248}{Dragon Lineage Green}
+{3249}{Dragon Lineage Red}
+{3250}{Dragon Lineage Silver}
+{3251}{Dragon Lineage White}
+{3831}{Marshal Minor Aura}
+{3832}{Marshal Major Aura}
+{3833}{Marshal Adrenaline Boost}
+{3840}{Draconic Aura}
+
+{8231}{Spell Like Dragon Cone Breath}
+{8232}{Spell Like Dragon Line Breath}
+{8242}{Dragon Lineage Black}
+{8243}{Dragon Lineage Blue}
+{8244}{Dragon Lineage Brass}
+{8245}{Dragon Lineage Bronze}
+{8246}{Dragon Lineage Copper}
+{8247}{Dragon Lineage Gold}
+{8248}{Dragon Lineage Green}
+{8249}{Dragon Lineage Red}
+{8250}{Dragon Lineage Silver}
+{8251}{Dragon Lineage White}
+{8831}{Marshal Minor Aura}
+{8832}{Marshal Major Aura}
+{8833}{Marshal Adrenaline Boost}
+{8840}{Draconic Aura}
+
+{23831}{TAG_MINOR_AURA}
+{23832}{TAG_MAJOR_AURA}
+{23833}{TAG_CLASS_FEATURES_MARSHAL_ADRENALINE_BOOST}
+{23840}{TAG_DRACONIC_AURAS}
+
