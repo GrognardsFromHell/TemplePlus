@@ -16,6 +16,7 @@
 
 {375}{Creature Immune to ~Critical Strike~[TAG_SPELLS_CRITICAL_STRIKE]}
 {376}{No Precision Damage for ~Critical Strike~[TAG_SPELLS_CRITICAL_STRIKE]}
+{377}{No Precision Damage for ~Tactical Precision~[TAG_SPELLS_TACTICAL_PRECISION]}
 
 // Fist of the Forest
 {400}{~Fist of the Forest Class Features~[TAG_FIST_OF_THE_FOREST] lost due to violating ~Primal Living~[TAG_CLASS_FEATURES_PRIMAL_LIVING]}

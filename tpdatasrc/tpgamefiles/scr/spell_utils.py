@@ -11,8 +11,14 @@ def spellName(spellId):
 def spellKeyName(spellId):
     return spellName(spellId).upper().replace(" ", "_")
 
+def spellTag(spellId):
+    return "TAG_SPELLS_{}".format(spellKeyName(spellId))
+
 def spellKey(spellId):
     return tpdp.hash(spellKeyName(spellId))
+
+def getSpellHelpTag(spellId):
+    return "~{}~[{}]".format(spellName(spellId), spellTag(spellId))
 
 def spellTime(duration):
     if duration == 1:
