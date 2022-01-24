@@ -132,6 +132,7 @@
 {1178}{Vigor, Mass Improved}
 {1179}{Sure Strike}
 {1180}{Hunter's Eye}
+{1181}{Tactical Precision}
 
 {5794}{Vigor, Lesser}
 {5795}{Vigor}
@@ -263,6 +264,7 @@
 {6178}{Vigor, Mass Improved}
 {6179}{Sure Strike}
 {6180}{Hunter's Eye}
+{6181}{Tactical Precision}
 
 {20794}{TAG_SPELLS_VIGOR,_LESSER}
 {20795}{TAG_SPELLS_VIGOR}
@@ -394,3 +396,4 @@
 {21178}{TAG_SPELLS_VIGOR,_MASS_IMPROVED}
 {21179}{TAG_SPELLS_SURE_STRIKE}
 {21180}{TAG_SPELLS_HUNTER'S_EYE}
+{21181}{TAG_SPELLS_TACTICAL_PRECISION}
