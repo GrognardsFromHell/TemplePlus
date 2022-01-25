@@ -12,7 +12,7 @@
 
 // Vanilla Bonus Types
 
-{0}{} // Untyped, STACKING
+{0}{Untyped} // Untyped, STACKING
 {8}{~Dodge~[TAG_DODGE]} // STACKING
 {10}{~Natural Armor~[TAG_MODIFIER_NATURAL_ARMOR]} // This is not clean, as Bonus Type 9 also seems to be used for Natural Armor
 {11}{~Deflection~[TAG_DEFLECTION_BONUS]}
@@ -23,9 +23,9 @@
 {17}{~Sacred~[TAG_MODIFIER_SACRED]} // I think this is the vanilla Sacred bonus type (only used by the Consecrate spell)
 {18}{~Insight~[TAG_MODIFIER_INSIGHT]}
 {19}{~Concealment~[TAG_CONCEALMENT]}
-{21}{~Circumstance~[TAG_MODIFIER_CIRCUMSTANCE]}
+{20}{~Size~[TAG_MODIFIER_SIZE]} // Bonus Type 20 is used for enlarge and reduce person spells
+{21}{~Circumstance~[TAG_MODIFIER_CIRCUMSTANCE]} //STACKING
 
-// Bonus Type 20 is used for enlarge and reduce person spells (bonus for attributes)
 
 // Bonus Types added by Sagenlicht
 
