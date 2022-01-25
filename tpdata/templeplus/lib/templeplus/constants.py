@@ -3493,6 +3493,7 @@ bonus_type_size = 20
 bonus_type_circumstance = 21
 bonus_type_alchemical = 151
 bonus_type_profane = 154
+bonus_type_undersong = 157
 bonus_type_focusing_chant = 159
 
 
