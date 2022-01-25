@@ -3477,6 +3477,25 @@ aura_resolve = 33
 aura_stamina = 34
 aura_swiftness =35
 
+#Bonus Types (aka modifiers)
+bonus_type_untyped = 0
+bonus_type_dodge = 8
+bonus_type_natural_armor = 10
+bonus_type_deflection = 11
+bonus_type_enhancement = 12
+bonus_type_morale = 13
+bonus_type_luck = 14
+bonus_type_resistance = 15
+bonus_type_sacred = 16
+bonus_type_insight = 18
+bonus_type_concealment = 19
+bonus_type_size = 20
+bonus_type_circumstance = 21
+bonus_type_alchemical = 151
+bonus_type_profane = 154
+bonus_type_focusing_chant = 159
+
+
 stat_strength = 0
 stat_dexterity = 1
 stat_constitution = 2
