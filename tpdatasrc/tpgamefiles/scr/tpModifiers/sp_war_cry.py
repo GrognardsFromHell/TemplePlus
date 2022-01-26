@@ -2,30 +2,35 @@ from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
 from utilities import *
-from spell_utils import SpellPythonModifier
+from spell_utils import SpellPythonModifier, getSpellHelpTag
 
 print "Registering sp-War Cry"
 
 def warCrySpellChargeAttackBonus(attachee, args, evt_obj):
     if evt_obj.attack_packet.get_flags() & D20CAF_CHARGE:
         bonusValue = 4 #War Cry is a +4 Morale Bonus to Attack Rolls while charging
-        bonusType = 13 #ID 13 = Morale
-        evt_obj.bonus_list.add(bonusValue, bonusType, "~Morale~[TAG_MODIFIER_MORALE] : ~War Cry~[TAG_SPELLS_WAR_CRY]")
+        bonusType = bonus_type_morale
+        bonusHelpTag = game.get_mesline("mes\\bonus_description.mes", bonusType)
+        spellId = args.get_arg(0)
+        spellHelpTag = getSpellHelpTag(spellId)
+        evt_obj.bonus_list.add(bonusValue, bonusType, "{} : {}".format(bonusHelpTag, spellHelpTag))
     return 0
 
 def warCrySpellChargeDamageBonus(attachee, args, evt_obj):
-    target = evt_obj.attack_packet.target
-    spellId = args.get_arg(0)
-    spellPacket = tpdp.SpellPacket(spellId)
-    spellDc = args.get_arg(2)
     if evt_obj.attack_packet.get_flags() & D20CAF_CHARGE:
         bonusValue = 4 #War Cry is a +4 Morale Bonus to Damage Rolls while charging
-        bonusType = 13 #ID 13 = Morale
-        evt_obj.damage_packet.bonus_list.add(4, 13, "~Morale~[TAG_MODIFIER_MORALE] : ~War Cry~[TAG_SPELLS_WAR_CRY]")
+        bonusType = bonus_type_morale
+        bonusHelpTag = game.get_mesline("mes\\bonus_description.mes", bonusType)
+        spellId = args.get_arg(0)
+        spellHelpTag = getSpellHelpTag(spellId)
+        evt_obj.damage_packet.bonus_list.add(bonusValue, bonusType, "{} : {}".format(bonusHelpTag, spellHelpTag))
         #Saving throw to avoid panicked condition
+        target = evt_obj.attack_packet.target
+        spellPacket = tpdp.SpellPacket(spellId)
+        spellDc = args.get_arg(2)
         if spellPacket.check_spell_resistance(target):
             return 0
-        game.create_history_freeform(attachee.description + " saves versus ~War Cry~[TAG_SPELLS_WAR_CRY] panicked effect\n\n")
+        game.create_history_freeform("{} saves versus ~War Cry~[TAG_SPELLS_WAR_CRY] panicked effect\n\n".format(target.description))
         if target.saving_throw_spell(spellDc, D20_Save_Will, D20STD_F_NONE, spellPacket.caster, spellId):
             target.float_mesfile_line("mes\\spell.mes", 30001)
         else:

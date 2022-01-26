@@ -2,7 +2,7 @@ from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
 from utilities import *
-from spell_utils import SpellPythonModifier
+from spell_utils import SpellPythonModifier, getSpellHelpTag
 
 print "Registering sp-Critical Strike"
 
@@ -23,16 +23,22 @@ def criticalStrikeSpellModifyThreatRange(attachee, args, evt_obj):
     attackPacket = evt_obj.attack_packet
     if verifyCriticalStrikeConditions(attackPacket):
         weaponKeenRange = attackPacket.get_weapon_used().obj_get_int(obj_f_weapon_crit_range)
-        bonusType = 12 #ID 12 = Enhancement
-        evt_obj.bonus_list.add(weaponKeenRange, bonusType, "~Insight~[TAG_MODIFIER_INSIGHT] : ~Critical Strike~[TAG_SPELLS_CRITICAL_STRIKE]")
+        bonusType = bonus_type_enhancement
+        bonusHelpTag = game.get_mesline("mes\\bonus_description.mes", bonusType)
+        spellId = args.get_arg(0)
+        spellHelpTag = getSpellHelpTag(spellId)
+        evt_obj.bonus_list.add(weaponKeenRange, bonusType, "{} : {}".format(bonusHelpTag, spellHelpTag))
     return 0
 
 def criticalStrikeSpellBonusToConfirmCrit(attachee, args, evt_obj):
     attackPacket = evt_obj.attack_packet
     if verifyCriticalStrikeConditions(attackPacket):
-        bonus = 4 #+4 to confirm crits
-        bonusType = 18 #ID 18 = Insight
-        evt_obj.bonus_list.add(bonus, bonusType,"~Insight~[TAG_MODIFIER_INSIGHT] : ~Critical Strike~[TAG_SPELLS_CRITICAL_STRIKE]")
+        bonusValue = 4 #+4 to confirm crits
+        bonusType = bonus_type_insight
+        bonusHelpTag = game.get_mesline("mes\\bonus_description.mes", bonusType)
+        spellId = args.get_arg(0)
+        spellHelpTag = getSpellHelpTag(spellId)
+        evt_obj.bonus_list.add(bonusValue, bonusType, "{} : {}".format(bonusHelpTag, spellHelpTag))
     return 0
 
 def criticalStrikeSpellBonusToDamage(attachee, args, evt_obj):

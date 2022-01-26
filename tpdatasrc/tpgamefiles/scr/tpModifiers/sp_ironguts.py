@@ -2,14 +2,17 @@ from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
 from utilities import *
-from spell_utils import SpellPythonModifier
+from spell_utils import SpellPythonModifier, getSpellHelpTag
 print "Registering sp-Ironguts"
 
 def bonusToPoisonSaves(attachee, args, evt_obj):
     if evt_obj.flags & (1 << (D20STD_F_POISON - 1)):
         bonusValue = 5 # Ironguts adds a +5 Alchemical Bonus to Fortitude Saves vs. poison
-        bonusType = 151 #ID 151 = Alchemical
-        evt_obj.bonus_list.add(bonusValue, bonusType,"~Alchemical~[TAG_MODIFIER_ALCHEMICAL] : ~Ironguts~[TAG_SPELLS_IRONGUTS]")
+        bonusType = bonus_type_alchemical
+        bonusHelpTag = game.get_mesline("mes\\bonus_description.mes", bonusType)
+        spellId = args.get_arg(0)
+        spellHelpTag = getSpellHelpTag(spellId)
+        evt_obj.bonus_list.add(bonusValue, bonusType, "{} : {}".format(bonusHelpTag, spellHelpTag))
     return 0
 
 def addNauseatedOnSpellEnd(attachee, args, evt_obj):

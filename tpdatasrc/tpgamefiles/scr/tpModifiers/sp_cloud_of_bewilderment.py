@@ -2,7 +2,7 @@ from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
 from utilities import *
-from spell_utils import AoeSpellHandleModifier, AoESpellEffectModifier
+from spell_utils import AoeSpellHandleModifier, AoESpellEffectModifier, getSpellHelpTag
 
 print "Registering sp-Cloud of Bewilderment"
 
@@ -26,9 +26,12 @@ def applyNauseatedCondition(attachee, args, evt_obj):
     return 0
 
 def addConcealment(attachee, args, evt_obj):
+    spellId = args.get_arg(0)
     bonusValue = 20 #Considered concealed while in Cloud of Bewilderment
-    bonusType = 19 #ID 13 = Concealment
-    evt_obj.bonus_list.add(bonusValue, bonusType, "Concealment: ~Cloud of Bewilderment~[TAG_SPELLS_CLOUD_OF_BEWILDERMENT]")
+    bonusType = bonus_type_concealment
+    bonusHelpTag = game.get_mesline("mes\\bonus_description.mes", bonusType)
+    spellHelpTag = getSpellHelpTag(spellId)
+    evt_obj.bonus_list.add(bonusValue, bonusType, "{} : {}".format(bonusHelpTag, spellHelpTag))
     return 0
 
 def setNauseatedDurationOnLeave(attachee, args, evt_obj):

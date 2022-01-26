@@ -8,11 +8,11 @@ print "Registering sp-Focusing Chant"
 
 def focusingChantSpellBonus(attachee, args, evt_obj):
     bonusValue = 1 #Focusing Chant adds a +1 Circumstance Bonus to Attack Rolls, Skill and Ability Checks
-    bonusType = 159 #New ID for Focusing Chant
+    bonusType = bonus_type_focusing_chant #New ID (159) for Focusing Chant to avoid stacking with itself
     bonusHelpTag = game.get_mesline("mes\\bonus_description.mes", bonusType)
     spellId = args.get_arg(0)
     spellHelpTag = getSpellHelpTag(spellId)
-    evt_obj.bonus_list.add(bonusValue, bonusType ,"{} : {}".format(bonusHelpTag, spellHelpTag))
+    evt_obj.bonus_list.add(bonusValue, bonusType, "{} : {}".format(bonusHelpTag, spellHelpTag))
     return 0
 
 focusingChantSpell = SpellPythonModifier("sp-Focusing Chant") # spellId, duration, empty
