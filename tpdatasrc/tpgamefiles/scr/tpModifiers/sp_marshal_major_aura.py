@@ -32,8 +32,8 @@ def auraBonusMotivateArdor(attachee, args, evt_obj):
     auraName = aura_utils.getAuraName(auraEnum)
     auraTag = aura_utils.getAuraTag(auraEnum)
     auraBonus = aura_utils.getMajorAuraBonus(auraSpellPacket.caster_level)
-    auraBonusType = 21 #ID 21 = Circumstance Bonus
-    evt_obj.damage_packet.bonus_list.add(auraBonus, auraBonusType, "~Circumstance~[TAG_MODIFIER_CIRCUMSTANCE] : ~{}~[{}]".format(auraName, auraTag))
+    auraBonusType = bonus_type_circumstance #Stacking!
+    evt_obj.damage_packet.bonus_list.add(auraBonus, auraBonusType, "Marshal Major Aura: ~{}~[{}]".format(auraName, auraTag))
     return 0
 
 majorAuraMotivateArdor = aura_utils.AuraModifier("Marshal Major Aura Motivate Ardor")
@@ -50,8 +50,8 @@ def auraBonusMotivateAttack(attachee, args, evt_obj):
         auraName = aura_utils.getAuraName(auraEnum)
         auraTag = aura_utils.getAuraTag(auraEnum)
         auraBonus = aura_utils.getMajorAuraBonus(auraSpellPacket.caster_level)
-        auraBonusType = 21 #ID 21 = Circumstance Bonus
-        evt_obj.bonus_list.add(auraBonus, auraBonusType, "~Circumstance~[TAG_MODIFIER_CIRCUMSTANCE] : ~{}~[{}]".format(auraName, auraTag))
+        auraBonusType = bonus_type_circumstance #Stacking!
+        evt_obj.bonus_list.add(auraBonus, auraBonusType, "Marshal Major Aura: ~{}~[{}]".format(auraName, auraTag))
     return 0
 
 majorAuraMotivateAttack = aura_utils.AuraModifier("Marshal Major Aura Motivate Attack")
@@ -71,9 +71,9 @@ def auraBonusMotivateUrgency(attachee, args, evt_obj):
     auraName = aura_utils.getAuraName(auraEnum)
     auraTag = aura_utils.getAuraTag(auraEnum)
     auraBonus = aura_utils.getMajorAuraBonus(auraSpellPacket.caster_level)
-    auraBonusType = 21 #ID 21 = Circumstance Bonus
+    auraBonusType = bonus_type_circumstance #Stacking!
     auraBonus *= 5
-    evt_obj.bonus_list.add(auraBonus, auraBonusType, "~Circumstance~[TAG_MODIFIER_CIRCUMSTANCE] : ~{}~[{}]".format(auraName, auraTag))
+    evt_obj.bonus_list.add(auraBonus, auraBonusType, "Marshal Major Aura: ~{}~[{}]".format(auraName, auraTag))
     return 0
 
 majorAuraMotivateUrgency = aura_utils.AuraModifier("Major Aura Motivate Urgency")
@@ -95,8 +95,8 @@ def auraBonusSteadyHand(attachee, args, evt_obj):
         auraName = aura_utils.getAuraName(auraEnum)
         auraTag = aura_utils.getAuraTag(auraEnum)
         auraBonus = aura_utils.getMajorAuraBonus(auraSpellPacket.caster_level)
-        auraBonusType = 21 #ID 21 = Circumstance Bonus
-        evt_obj.bonus_list.add(auraBonus, auraBonusType, "~Circumstance~[TAG_MODIFIER_CIRCUMSTANCE] : ~{}~[{}]".format(auraName, auraTag))
+        auraBonusType = bonus_type_circumstance #Stacking!
+        evt_obj.bonus_list.add(auraBonus, auraBonusType, "Marshal Major Aura: ~{}~[{}]".format(auraName, auraTag))
     return 0
 
 majorAuraSteadyHand = aura_utils.AuraModifier("Marshal Major Aura Steady Hand")

@@ -143,14 +143,14 @@ def auraAddBonusList(attachee, args, evt_obj):
     auraTypeString = getAuraTypeString(auraType)
     if auraType == aura_type_minor:
         auraBonus = getMinorAuraBonus(auraSpellPacket.caster)
-        auraBonusType = 21 #ID 21 = Circumstance Bonus
+        auraBonusType = bonus_type_circumstance #(stacking!)
     elif auraType == aura_type_major:
-        auraBonus = getMajorAuraBonus(auraSpellPacket.caster)
-        auraBonusType = 21 #ID 21 = Circumstance Bonus
+        auraBonus = getMajorAuraBonus(auraSpellPacket.caster_level)
+        auraBonusType = bonus_type_circumstance #(stacking!)
     elif auraType == aura_type_draconic or auraType == aura_type_double_draconic:
         auraBonus = getDraconicAuraBonus(auraSpellPacket.caster)
-        auraBonusType = 190 # new ID for Draconic Auras
-    evt_obj.bonus_list.add(auraBonus, auraBonusType, "~{}: {}~[{}]".format(auraTypeString, auraName, auraTag))
+        auraBonusType = bonus_type_draconic_aura # new ID for Draconic Auras; stacking with everything but itself
+    evt_obj.bonus_list.add(auraBonus, auraBonusType, "{}: ~{}~[{}]".format(auraTypeString, auraName, auraTag))
     return 0
 
 def getTargetsInAura(auraSpellPacket):
