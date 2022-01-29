@@ -3495,7 +3495,9 @@ bonus_type_alchemical = 151
 bonus_type_profane = 154
 bonus_type_undersong = 157
 bonus_type_focusing_chant = 159
-bonus_type_draconic_aura = 190
+bonus_type_marshal_aura_minor = 190
+bonus_type_marshal_aura_major = 191
+bonus_type_draconic_aura = 192
 
 
 stat_strength = 0
