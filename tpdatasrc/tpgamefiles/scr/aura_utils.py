@@ -238,8 +238,8 @@ class AuraModifier(PythonModifier):
         self.AddHook(ET_OnD20Signal, EK_S_Spell_End, auraEndSignal, ())
         self.AddHook(ET_OnGetTooltip, EK_NONE, auraTooltip, ())
         self.AddHook(ET_OnGetEffectTooltip, EK_NONE, auraEffectTooltip, ())
-        self.AddSpellTeleportPrepareStandard()
-        self.AddSpellTeleportReconnectStandard()
+        #self.AddSpellTeleportPrepareStandard()
+        #self.AddSpellTeleportReconnectStandard()
 
     def marshalAuraAddPreActions(self):
         self.AddHook(ET_OnConditionAddPre, EK_NONE, auraAddPreActions, ())
@@ -285,9 +285,8 @@ class AuraAoeHandlingModifier(PythonModifier):
         PythonModifier.__init__(self, name, 5, True)
         self.AddHook(ET_OnObjectEvent, EK_OnEnterAoE, onEnterAoeAura, ())
         self.AddHook(ET_OnD20PythonSignal, "PS_Aura_End", aoeHandlerSignalEnd, ())
-        #self.AddHook(ET_OnD20Signal, EK_S_Teleport_Prepare, aoeHandlerSignalEnd, ())
-        self.AddSpellTeleportPrepareStandard()
-        self.AddSpellTeleportReconnectStandard()
+        #self.AddSpellTeleportPrepareStandard()
+        #self.AddSpellTeleportReconnectStandard()
         self.AddAoESpellEndStandardHook()
 
 ##### class auraRadialModifier #####
@@ -434,6 +433,7 @@ class AuraRadialModifier(PythonModifier):
         self.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, radialAura, ())
         self.AddHook(ET_OnD20PythonQuery, "PQ_Activated_Aura", queryActivatedAura, ())
         self.AddHook(ET_OnNewDay, EK_NEWDAY_REST, dismissAura, ())
+        self.AddHook(ET_OnD20Signal, EK_S_Teleport_Prepare, dismissAura, ())
 
         # Add aura specific fuction to the Modifier
     def marshalMinorAuraActions(self):
