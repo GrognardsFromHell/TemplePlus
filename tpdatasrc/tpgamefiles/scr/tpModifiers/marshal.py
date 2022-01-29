@@ -200,9 +200,11 @@ def resetChargesToMax(attachee, args, evt_obj):
 
 def checkChargesAdrenalineBoost(attachee, args, evt_obj):
     chargesLeft = args.get_arg(1)
+    silencedCondRef = tpdp.get_condition_ref("sp-Silence Hit")
     if chargesLeft < 1:
         evt_obj.return_val = AEC_OUT_OF_CHARGES
-    #ToDo: can't boost while silcened
+    elif attachee.d20_query_with_data(Q_Critter_Has_Condition, conRef, 0):
+        evt_obj.return_val = AEC_INVALID_ACTION #replace with new aec_silenced
     return 0
 
 def activateAdrenalineBoost(attachee, args, evt_obj):
