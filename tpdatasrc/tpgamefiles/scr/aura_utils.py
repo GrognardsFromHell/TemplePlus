@@ -265,8 +265,6 @@ def aoeHandlerSignalEnd(attachee, args, evt_obj):
         spellPacket = tpdp.SpellPacket(spellId)
         targetList = getTargetsInAura(spellPacket)
         for target in targetList:
-            if target == OBJ_HANDLE_NULL:
-                break
             target.d20_send_signal(S_Spell_End, spellId, 0)
         args.remove_spell()
     return 0
@@ -362,6 +360,7 @@ def activateAura(attachee, args, evt_obj):
     currentSequence = tpactions.get_cur_seq()
     spellPacket = currentSequence.spell_packet
     newSpellId = tpactions.get_new_spell_id()
+    #spellPacket.caster_level += attachee.stat_level_get(stat_marshal)
     args.set_arg(2, newSpellId)
     args.set_arg(3, auraEnum)
     tpactions.register_spell_cast(spellPacket, newSpellId)
@@ -396,7 +395,7 @@ def checkDeactivateMarshal(attachee, args, evt_obj):
     or evt_obj.is_modifier("sp-Silence")
     or evt_obj.is_modifier("Held")
     or evt_obj.is_modifier("sp-Daze")
-    or evt_obj.is_modifier("Nauseated Condition")
+    or evt_obj.is_modifier("Nauseated")
     or evt_obj.is_modifier("Paralyzed")
     or evt_obj.is_modifier("Stunned")):
         if args.get_arg(3):
