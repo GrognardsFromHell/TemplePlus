@@ -4312,12 +4312,13 @@ const char*actionErrorCodeStrings[] =
 	"AEC_AREA_NOT_SAFE",
 	"AEC_ABILITY_ON_COOLDOWN",
 	"AEC_ALREADY_USED_THIS_TURN",
-	"AEC_ALREADY_ACTIVE"
+	"AEC_ALREADY_ACTIVE",
+	"AEC_SILENCED"
 };
 ostream & operator<<(ostream & str, ActionErrorCode aec)
 {
 	size_t i = (size_t)aec;
-	if (i <= AEC_ALREADY_ACTIVE) {
+	if (i <= AEC_SILENCED) {
 		str << actionErrorCodeStrings[i];
 	}
 	else {

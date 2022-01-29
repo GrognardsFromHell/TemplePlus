@@ -51,7 +51,8 @@ enum ActionErrorCode : uint32_t
 	AEC_AREA_NOT_SAFE,
 	AEC_ABILITY_ON_COOLDOWN,
 	AEC_ALREADY_USED_THIS_TURN,
-	AEC_ALREADY_ACTIVE
+	AEC_ALREADY_ACTIVE,
+	AEC_SILENCED
 };
 
 // Allows for direct use of ActionErrorCode in format() strings
