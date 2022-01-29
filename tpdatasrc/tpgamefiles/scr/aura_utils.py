@@ -143,13 +143,13 @@ def auraAddBonusList(attachee, args, evt_obj):
     auraTypeString = getAuraTypeString(auraType)
     if auraType == aura_type_minor:
         auraBonus = getMinorAuraBonus(auraSpellPacket.caster)
-        auraBonusType = bonus_type_circumstance #(stacking!)
+        auraBonusType = bonus_type_marshal_aura_minor #New ID (190) to handle stacking (is Circumstance Bonus)
     elif auraType == aura_type_major:
         auraBonus = getMajorAuraBonus(auraSpellPacket.caster_level)
-        auraBonusType = bonus_type_circumstance #(stacking!)
+        auraBonusType = bonus_type_marshal_aura_major #New ID (191) to handle stacking (is Circumstance Bonus)
     elif auraType == aura_type_draconic or auraType == aura_type_double_draconic:
         auraBonus = getDraconicAuraBonus(auraSpellPacket.caster)
-        auraBonusType = bonus_type_draconic_aura # new ID for Draconic Auras; stacking with everything but itself
+        auraBonusType = bonus_type_draconic_aura # new ID (192) for Draconic Auras; stacking with everything but itself
     evt_obj.bonus_list.add(auraBonus, auraBonusType, "{}: ~{}~[{}]".format(auraTypeString, auraName, auraTag))
     return 0
 
@@ -171,12 +171,20 @@ def verifyTarget(auraTarget):
         return False
     return True
 
+def removeAuraTarget(attachee, spellId):
+    auraSpellPacket = tpdp.SpellPacket(spellId)
+    auraSpellPacket.remove_target(attachee)
+    auraSpellPacket.update_registry()
+    return 0
+
 ##### class AuraModifier #####
 def onLeaveAura(attachee, args, evt_obj):
-    auraSpellPacket = tpdp.SpellPacket(args.get_arg(0))
+    spellId = args.get_arg(0)
+    auraSpellPacket = tpdp.SpellPacket(spellId)
     auraEventId = args.get_arg(2)
     if auraEventId != evt_obj.evt_id:
         return 0
+    removeAuraTarget(attachee, spellId)
     args.remove_spell_mod()
     return 0
 
@@ -184,12 +192,8 @@ def auraEndSignal(attachee, args, evt_obj):
     signalId = evt_obj.data1
     spellId = args.get_arg(0)
     if signalId == spellId:
+        removeAuraTarget(attachee, spellId)
         args.remove_spell_mod()
-    return 0
-
-def onAuraConditionRemove(attachee, args, evt_obj):
-    auraSpellPacket = tpdp.SpellPacket(args.get_arg(0))
-    auraSpellPacket.remove_target(attachee)
     return 0
 
 def auraTooltip(attachee, args, evt_obj):
@@ -216,19 +220,24 @@ def auraEffectTooltip(attachee, args, evt_obj):
     return 0
 
 def auraAddPreActions(attachee, args, evt_obj):
-    #ToDo: Add Deafen and inteligence drop remove
+    #Intelligence drop to 3 or less would also remove the aura
+    if (evt_obj.is_modifier("Unconscious")
+    or evt_obj.is_modifier("Dead")
+    or evt_obj.is_modifier("sp-Deafness")):
+        spellId = args.get_arg(0)
+        removeAuraTarget(attachee, spellId)
+        args.remove_spell_mod()
     return 0
 
 class AuraModifier(PythonModifier):
     # AuraModifier have 5 arguments:
     # 0: auraSpellId, 1: auraEnum, 2: auraEventId, 3 + 4: empty
     def __init__(self, name):
-        PythonModifier.__init__(self, name, 5, True)
+        PythonModifier.__init__(self, name, 5, False)
         self.AddHook(ET_OnObjectEvent, EK_OnLeaveAoE, onLeaveAura, ())
         self.AddHook(ET_OnD20Signal, EK_S_Spell_End, auraEndSignal, ())
         self.AddHook(ET_OnGetTooltip, EK_NONE, auraTooltip, ())
         self.AddHook(ET_OnGetEffectTooltip, EK_NONE, auraEffectTooltip, ())
-        self.AddHook(ET_OnConditionRemove, EK_NONE, onAuraConditionRemove, ())
         self.AddSpellTeleportPrepareStandard()
         self.AddSpellTeleportReconnectStandard()
 
@@ -245,12 +254,12 @@ def onEnterAoeAura(attachee, args, evt_obj):
     auraEventId = args.get_arg(2)
     if auraEventId != evt_obj.evt_id:
         return 0
-    auraType = args.get_arg(3)
-    auraTypeString = getAuraTypeString(auraType)
-    auraSpellId = args.get_arg(0)
-    auraSpellPacket = tpdp.SpellPacket(auraSpellId)
     auraTarget = evt_obj.target
     if auraTarget.is_friendly(attachee):
+        auraType = args.get_arg(3)
+        auraTypeString = getAuraTypeString(auraType)
+        auraSpellId = args.get_arg(0)
+        auraSpellPacket = tpdp.SpellPacket(auraSpellId)
         if auraType > aura_type_major or verifyTarget(auraTarget):
             if auraSpellPacket.add_target(auraTarget, 0):
                 auraEnum = args.get_arg(1)
@@ -265,8 +274,6 @@ def aoeHandlerSignalEnd(attachee, args, evt_obj):
         spellPacket = tpdp.SpellPacket(spellId)
         targetList = getTargetsInAura(spellPacket)
         for target in targetList:
-            if target == OBJ_HANDLE_NULL:
-                break
             target.d20_send_signal(S_Spell_End, spellId, 0)
         args.remove_spell()
     return 0
@@ -278,6 +285,7 @@ class AuraAoeHandlingModifier(PythonModifier):
         PythonModifier.__init__(self, name, 5, True)
         self.AddHook(ET_OnObjectEvent, EK_OnEnterAoE, onEnterAoeAura, ())
         self.AddHook(ET_OnD20PythonSignal, "PS_Aura_End", aoeHandlerSignalEnd, ())
+        #self.AddHook(ET_OnD20Signal, EK_S_Teleport_Prepare, aoeHandlerSignalEnd, ())
         self.AddSpellTeleportPrepareStandard()
         self.AddSpellTeleportReconnectStandard()
         self.AddAoESpellEndStandardHook()
@@ -362,6 +370,7 @@ def activateAura(attachee, args, evt_obj):
     currentSequence = tpactions.get_cur_seq()
     spellPacket = currentSequence.spell_packet
     newSpellId = tpactions.get_new_spell_id()
+    #spellPacket.caster_level += attachee.stat_level_get(stat_marshal)
     args.set_arg(2, newSpellId)
     args.set_arg(3, auraEnum)
     tpactions.register_spell_cast(spellPacket, newSpellId)
@@ -393,10 +402,10 @@ def checkDeactivateMarshal(attachee, args, evt_obj):
     #Basically all conditions that prohibit communication will end the auras
     if (evt_obj.is_modifier("Unconscious")
     or evt_obj.is_modifier("Dead")
-    or evt_obj.is_modifier("sp-Silence")
+    or evt_obj.is_modifier("sp-Silence Hit")
     or evt_obj.is_modifier("Held")
     or evt_obj.is_modifier("sp-Daze")
-    or evt_obj.is_modifier("Nauseated Condition")
+    or evt_obj.is_modifier("Nauseated")
     or evt_obj.is_modifier("Paralyzed")
     or evt_obj.is_modifier("Stunned")):
         if args.get_arg(3):
