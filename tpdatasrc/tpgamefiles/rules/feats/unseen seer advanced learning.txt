@@ -1,0 +1,5 @@
+name: Unseen Seer Advanced Learning
+flags: 8
+prereqs:
+description:  At 2nd, 5th, and 8th level, you can add a new spell to your spellbook or list of spells known, representing the result of personal study and experimentation. The spell must be a divination spell of a level no higher than that of the highest-level arcane spell you already know. The spell can be from any class's spell list (arcane or divine). Once a new spell is selected, it is forever added to your spell list and can be cast just like any other spell on your list.
+prereq descr: Unseen Seer 2

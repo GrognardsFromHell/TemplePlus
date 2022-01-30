@@ -117,6 +117,23 @@ def IsSelectingFeatsOnLevelup(obj):
 def LevelupGetBonusFeats(obj):
     return
 
+def getAdvancedLearningLevels():
+    return [2, 5, 8]
+
+def IsSelectingFeaturesOnLevelup(obj):
+    classLevel = char_editor.stat_level_get(classEnum)
+    if classLevel in getAdvancedLearningLevels():
+        return 1
+    return 0
+
+def LevelupFeaturesInit(obj , class_extended_1 = 0):
+    print "LevelupFeaturesInit HooK"
+    return 0
+
+def LevelupFeaturesFinalize(obj, class_extended_1 = 0):
+    print "LevelupFeaturesFinalize Hook"
+    return 0
+
 def IsSelectingSpellsOnLevelup(obj , class_extended_1 = 0):
     if class_extended_1 <= 0:
         class_extended_1 = char_class_utils.GetHighestArcaneClass(obj)
