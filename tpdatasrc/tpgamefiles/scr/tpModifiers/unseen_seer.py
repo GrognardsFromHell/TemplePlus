@@ -2,6 +2,8 @@ from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
 import char_class_utils
+import char_editor
+import functools
 
 ###################################################
 
@@ -18,6 +20,7 @@ classSpecModule = __import__('class089_unseen_seer')
 ###################################################
 
 ########## Python Action ID's ##########
+unseenSeerAdvLearnEnum = 8901
 ########################################
 
 
@@ -81,6 +84,98 @@ classSpecObj.AddHook(ET_OnD20PythonQuery, "PQ_Sudden_Strike_Additional_Dice", ad
 #than that of the highest-level arcane spell you already know. The spell can be from any class's spell list (arcane or divine).
 #Once a new spell is selected, it is forever added to your spell list and can be cast just like any other spell on your list.
 
+#Currently Class Features are not availible yet, so Advanced Learning will be handled via Radial Workaround
+#The Unseen Seer Advanced Learning differs from the implemented Advanced Learning in Temple+
+#As the Unseen Seer class can learn spells from any class. The limitation is, that it must be a divination spell
+
+def filterLearnableSpells(attachee, spell):
+    spellEntry = tpdp.SpellEntry(spell.spell_enum)
+    if not spellEntry.spell_school_enum == Divination:
+        return False
+    elif attachee.is_spell_known(spell.spell_enum):
+        return False
+    return True
+
+def getAdvancedLearningList(attachee, spellClass, highestArcaneClass, maxSpellLevel):
+    learnableSpellList = char_editor.get_learnable_spells(attachee, spellClass, maxSpellLevel)
+    learnableSpellList = filter(functools.partial(filterLearnableSpells, attachee), learnableSpellList)
+    for idx in range(0, len(learnableSpellList)):
+        learnableSpellList[idx].set_casting_class(highestArcaneClass)
+    return learnableSpellList
+
+def getSpellClassList():
+    return [stat_level_bard, stat_level_cleric, stat_level_druid, stat_level_paladin, stat_level_ranger, stat_level_wizard]
+
+def advLearningAvailible(classLevel, advLearnedSpells):
+    knownAdvLearnedSpells = {
+    1: 0,
+    2: 1,
+    3: 1,
+    4: 1,
+    5: 2,
+    6: 2,
+    7: 2,
+    8: 3,
+    9: 3,
+    10: 3
+    }
+    return True if knownAdvLearnedSpells[classLevel] > advLearnedSpells else False
+
+def radialAdvancedLearning(attachee, args, evt_obj):
+    advLearnedSpells = args.get_arg(1)
+    classLevel = attachee.stat_level_get(classEnum)
+    if not advLearningAvailible(classLevel, advLearnedSpells):
+        return 0
+    highestArcaneClass = attachee.highest_arcane_class
+    maxSpellLevel = attachee.arcane_spell_level_can_cast()
+    #Top Menu
+    radialLabel = "Advanced Learning"
+    radialTop = tpdp.RadialMenuEntryParent(radialLabel)
+    radialTopId = radialTop.add_child_to_standard(attachee, tpdp.RadialMenuStandardNode.Class)
+    #Build SubMenus
+    for spellClass in getSpellClassList():
+        #spellClass Top
+        radialLabelClass = game.get_mesline("mes\\stat.mes", spellClass)
+        radialSpellClass = tpdp.RadialMenuEntryParent(radialLabelClass)
+        radialSpellClassId = radialSpellClass.add_as_child(attachee, radialTopId)
+        #spellNodes
+        spellNodeId = []
+        for node in range(0, maxSpellLevel + 1):
+            spellNode = tpdp.RadialMenuEntryParent("{}".format(node))
+            spellNodeId.append(spellNode.add_as_child(attachee, radialSpellClassId))
+        #Add Divination Spells from class
+        classDivinationSpellList = getAdvancedLearningList(attachee, spellClass, highestArcaneClass, maxSpellLevel)
+        for spell in classDivinationSpellList:
+            spellEnum = spell.spell_enum
+            spellData = tpdp.D20SpellData(spellEnum)
+            spellData.set_spell_class(highestArcaneClass)
+            spellData.set_spell_level(spell.spell_level)
+            spellStore = spellData.get_spell_store()
+            spellName = game.get_spell_mesline(spellEnum)
+            spellHelpTag = "TAG_SPELLS_{}".format(spellName).upper().replace(" ", "_")
+            radialId = tpdp.RadialMenuEntryPythonAction(spellStore, D20A_PYTHON_ACTION, unseenSeerAdvLearnEnum, spell.spell_enum, spellHelpTag)
+            radialId.add_as_child(attachee, spellNodeId[spell.spell_level])
+    return 0
+
+def addAdvLearnedSpell(attachee, args, evt_obj):
+    spellPacket = tpdp.SpellPacket(attachee, evt_obj.d20a.spell_data)
+    spellEnum = evt_obj.d20a.data1 # spellPacket.spell_enum returns 0; seems like a bug
+    spellName = game.get_spell_mesline(spellEnum)
+    spellClassCode = spellPacket.spell_class
+    spellLevel = spellPacket.spell_known_slot_level
+    attachee.spell_known_add(spellEnum, spellClassCode, spellLevel)
+    attachee.float_text_line("{} learned".format(spellName))
+    advLearnedSpells = args.get_arg(1)
+    advLearnedSpells += 1
+    args.set_arg(1, advLearnedSpells)
+    return 0
+
+advancedLearningFeature = PythonModifier("Unseen Seer Advanced Learning", 3) #featEnum, advLearnedSpells, empty
+advancedLearningFeature.MapToFeat("Unseen Seer Advanced Learning", feat_cond_arg2 = 0)
+advancedLearningFeature.AddHook(ET_OnBuildRadialMenuEntry , EK_NONE, radialAdvancedLearning, ())
+advancedLearningFeature.AddHook(ET_OnD20PythonActionPerform, unseenSeerAdvLearnEnum, addAdvLearnedSpell, ())
+
+
 #ToDo
 
 ### Silent Spell
@@ -121,7 +216,7 @@ classSpecObj.AddHook(ET_OnGetCasterLevelMod, EK_NONE, getCasterLevelModification
 # configure the spell casting condition to hold the highest Arcane classs
 def OnAddSpellCasting(attachee, args, evt_obj):
     #arg0 holds the arcane class
-    if (args.get_arg(0) == 0):
+    if args.get_arg(0) == 0:
         args.set_arg(0, char_class_utils.GetHighestArcaneClass(attachee))
     return 0
 
@@ -129,33 +224,27 @@ def OnAddSpellCasting(attachee, args, evt_obj):
 def OnGetBaseCasterLevel(attachee, args, evt_obj):
     class_extended_1 = args.get_arg(0)
     class_code = evt_obj.arg0
-    if (class_code != class_extended_1):
-        if (evt_obj.arg1 == 0): # arg1 != 0 means you're looking for this particular class's contribution
+    if class_code != class_extended_1:
+        if evt_obj.arg1 == 0: # arg1 != 0 means you're looking for this particular class's contribution
             return 0
     classLevel = attachee.stat_level_get(classEnum)
-    if (classLevel == 0):
-        return 0
     evt_obj.bonus_list.add(classLevel, 0, 137)
     return 0
 
 def OnSpellListExtensionGet(attachee, args, evt_obj):
     class_extended_1 = args.get_arg(0)
     class_code = evt_obj.arg0
-    if (class_code != class_extended_1):
-        if (evt_obj.arg1 == 0): # arg1 != 0 means you're looking for this particular class's contribution
+    if class_code != class_extended_1:
+        if evt_obj.arg1 == 0: # arg1 != 0 means you're looking for this particular class's contribution
             return 0
     classLevel = attachee.stat_level_get(classEnum)
-    if (classLevel == 0):
-        return 0
     evt_obj.bonus_list.add(classLevel, 0, 137)
     return 0
 
 def OnInitLevelupSpellSelection(attachee, args, evt_obj):
-    if (evt_obj.arg0 != classEnum):
+    if evt_obj.arg0 != classEnum:
         return 0
-    classLevel = attachee.stat_level_get(classEnum)
-    if (classLevel == 0):
-        return 0
+    #classLevel = attachee.stat_level_get(classEnum)
     class_extended_1 = args.get_arg(0)
     classSpecModule.InitSpellSelection(attachee, class_extended_1)
     return 0
@@ -164,16 +253,14 @@ def OnLevelupSpellsCheckComplete(attachee, args, evt_obj):
     if (evt_obj.arg0 != classEnum):
         return 0
     class_extended_1 = args.get_arg(0)
-    if (not classSpecModule.LevelupCheckSpells(attachee, class_extended_1) ):
+    if not classSpecModule.LevelupCheckSpells(attachee, class_extended_1):
         evt_obj.bonus_list.add(-1, 0, 137) # denotes incomplete spell selection
     return 1
     
 def OnLevelupSpellsFinalize(attachee, args, evt_obj):
-    if (evt_obj.arg0 != classEnum):
+    if evt_obj.arg0 != classEnum:
         return 0
-    classLevel = attachee.stat_level_get(classEnum)
-    if (classLevel == 0):
-        return 0
+    #classLevel = attachee.stat_level_get(classEnum)
     class_extended_1 = args.get_arg(0)
     classSpecModule.LevelupSpellsFinalize(attachee, class_extended_1)
     return
