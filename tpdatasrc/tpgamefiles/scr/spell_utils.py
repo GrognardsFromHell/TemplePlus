@@ -232,6 +232,13 @@ def checkCategoryType(critter, *args):
             return True
     return False
 
+##### workaround getSpellClassCode #####
+def getSpellClassCode(classEnum):
+    dummySpellData = tpdp.D20SpellData()
+    dummySpellData.set_spell_class(classEnum)
+    return dummySpellData.spell_class
+##### workaround getSpellClassCode #####
+
 ### Item Condition functions
 
 # An item condition is a condition that should be applied to a
