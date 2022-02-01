@@ -43,9 +43,11 @@ def OnEndProjectile(spell, projectile, index_of_target):
             else:
                 spellTarget.obj.float_mesfile_line('mes\\spell.mes', 30002)
                 spell.duration = 1
-                entangleEvtId = 0 #as there is no real entangle spell, there is no evtId
-                if spellTarget.obj.condition_add_with_args("sp-Entangle On", spell.id, spell.duration, entangleEvtId):
-                    spellTarget.obj.partsys_id = game.particles("sp-Entangle", spellTarget.obj)
+                if spellTarget.obj.condition_add_with_args("sp-Daze", spell.id, spell.duration, 0):
+                    spellTarget.partsys_id = game.particles("sp-Daze", spellTarget.obj)
+                #entangleEvtId = 0 #as there is no real entangle spell, there is no evtId
+                #if spellTarget.obj.condition_add_with_args("sp-Entangle On", spell.id, spell.duration, entangleEvtId):
+                #    spellTarget.partsys_id = game.particles("sp-Entangle", spellTarget.obj)
     else:
         spellTarget.obj.float_mesfile_line('mes\\spell.mes', 30007)
         game.particles('Fizzle', spellTarget.obj)

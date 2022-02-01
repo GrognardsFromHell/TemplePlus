@@ -37,21 +37,21 @@ def OnEndProjectile(spell, projectile, index_of_target):
         if spellTarget.obj.saving_throw_spell(spell.dc, D20_Save_Fortitude, D20STD_F_SPELL_DESCRIPTOR_COLD, spell.caster, spell.id):
             spellTarget.obj.float_mesfile_line('mes\\spell.mes', 30001)
             game.particles('Fizzle', spellTarget.obj)
-            spell.target_list.remove_target(spellTarget.obj)
         else:
             spellTarget.obj.float_mesfile_line('mes\\spell.mes', 30002)
-            spell.duration = 1
+            duration = 1
+            #sp-Deafness is permanent currently, I'll add a helper condition to remove it after it should expire
+            #as there is no condition_remove in python
             if spellTarget.obj.condition_add_with_args("sp-Deafness", spell.id, spell.duration, 0):
-                spellTarget.obj.partsys_id = game.particles("sp-Blindness-Deafness", spellTarget.obj)
+                spellTarget.partsys_id = game.particles("sp-Blindness-Deafness", spellTarget.obj)
+                spellTarget.obj.condition_add_with_args("Remove Deafness Helper Condition", duration, 0)
     else:
         spellTarget.obj.float_mesfile_line('mes\\spell.mes', 30007)
         game.particles('Fizzle', spellTarget.obj)
-        spell.target_list.remove_target(spellTarget.obj)
 
+    spell.target_list.remove_target(spellTarget.obj)
     spell.spell_end(spell.id)
 
 def OnEndSpellCast(spell):
     print "Orb of Sound OnEndSpellCast"
-    spellTarget = spell.begin_round_obj
-    spellTarget.condition_add_with_args("sp-Remove Deafness", 0, 0, 0)
 

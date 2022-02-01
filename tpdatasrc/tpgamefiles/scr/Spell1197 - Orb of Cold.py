@@ -42,7 +42,7 @@ def OnEndProjectile(spell, projectile, index_of_target):
             spellTarget.obj.float_mesfile_line('mes\\spell.mes', 30002)
             spell.duration = 1
             if spellTarget.obj.condition_add_with_args("sp-Blindness", spell.id, spell.duration, 0):
-                spellTarget.obj.partsys_id = game.particles("sp-Blindness-Deafness", spellTarget.obj)
+                spellTarget.partsys_id = game.particles("sp-Blindness-Deafness", spellTarget.obj)
     else:
         spellTarget.obj.float_mesfile_line('mes\\spell.mes', 30007)
         game.particles('Fizzle', spellTarget.obj)
