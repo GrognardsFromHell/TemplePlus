@@ -56,16 +56,15 @@ spells_per_day = {
 #lvl 0  1  2  3  4  5  6  7  8  9
 }
 
-# There are non core spells that are not listed since they are not in constants.py.  If they are added to the game they should be added here.
 # Warmages are granted all the spells on their list as soon as they get atleast one spell per day of that level.  Additional spells are added
 # to this list with advanced learning.
 spell_list = {
 	0: (spell_acid_splash, spell_disrupt_undead, spell_light, spell_ray_of_frost),
-	1: (spell_burning_hands, spell_chill_touch, spell_magic_missile, spell_shocking_grasp, spell_true_strike),
-	2: (spell_continual_flame, spell_fire_trap, spell_flaming_sphere, spell_melfs_acid_arrow, spell_pyrotechnics, spell_shatter, spell_scorching_ray),
-	3: (spell_fire_shield, spell_fireball, spell_flame_arrow, spell_gust_of_wind, spell_ice_storm, spell_lightning_bolt, spell_poison, spell_sleet_storm, spell_stinking_cloud),
-	4: (spell_contagion, spell_evards_black_tentacles, spell_phantasmal_killer, spell_shout, spell_wall_of_fire),
-	5: (spell_cloudkill, spell_cone_of_cold, spell_flame_strike),
+	1: (spell_accuracy, spell_burning_hands, spell_hail_of_stone, spell_lesser_orb_of_acid, spell_lesser_orb_of_cold, spell_lesser_orb_of_electricity, spell_lesser_orb_of_fire, spell_lesser_orb_of_sound, spell_chill_touch, spell_magic_missile, spell_shocking_grasp, spell_true_strike),
+	2: (spell_blades_of_fire, spell_continual_flame, spell_fire_trap, spell_fireburst, spell_flaming_sphere, spell_ice_knife, spell_melfs_acid_arrow, spell_pyrotechnics, spell_shatter, spell_scorching_ray, spell_whirling_blade),
+	3: (spell_fire_shield, spell_fireball, spell_flame_arrow, spell_gust_of_wind, spell_ice_storm, spell_lightning_bolt, spell_poison, spell_ring_of_blades, spell_sleet_storm, spell_stinking_cloud),
+	4: (spell_blast_of_flame, spell_contagion, spell_evards_black_tentacles, spell_orb_of_acid, spell_orb_of_cold, spell_orb_of_electricity, spell_orb_of_fire, spell_orb_of_sound, spell_phantasmal_killer, spell_shout, spell_wall_of_fire),
+	5: (spell_cloudkill, spell_cone_of_cold, spell_flame_strike, spell_greater_fireburst),
 	6: (spell_blade_barrier, spell_chain_lightning, spell_circle_of_death, spell_disintegrate, spell_fire_seeds, spell_otilukes_freezing_sphere, spell_tensers_transformation),
 	7: (spell_delayed_blast_fireball, spell_earthquake, spell_finger_of_death, spell_fire_storm, spell_mordenkainens_sword, spell_prismatic_spray, spell_sunbeam, ),
 	8: (spell_horrid_wilting, spell_incendiary_cloud, spell_polar_ray, spell_prismatic_wall, spell_sunburst),
