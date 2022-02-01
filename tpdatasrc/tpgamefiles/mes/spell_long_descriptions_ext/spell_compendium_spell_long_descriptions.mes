@@ -1,3 +1,29 @@
+// Vigor Fixes
+
+{5794} Vigor, Lesser {Target gets Fast Healing 1.
+
+School:          Conjuration[Healing]
+Casting:         1 action [V,S]
+Range:               Touch 
+Target:             One living creature
+Duration:      10 + 1 round/level,  Save: None,  SR: No}
+
+{5795} Vigor {Target gets Fast Healing 2.
+
+School:          Conjuration[Healing]
+Casting:         1 action [V,S]
+Range:               Touch 
+Target:             One living creature
+Duration:      10 + 1 round/level,  Save: None,  SR: No}
+
+{5796} Vigor, Greater {Target gets Fast Healing 4.
+
+School:          Conjuration[Healing]
+Casting:         1 action [V,S]
+Range:               Touch 
+Target:             One living creature
+Duration:      10 + 1 round/level,  Save: None,  SR: No}
+
 // Additional spells added by Sagenlicht
 
 {6050} Sound Lance {Projectile of intense sonic energy that deals 1d8/level (max 10d8) sonic damage.
@@ -855,3 +881,131 @@ Casting:         1 action [V,S]
 Range:               Touch 
 Target:             One living creature
 Duration:      1 round/level,  Save: Will negates,  SR: Yes}
+
+{6174} Energized Shield Lesser {TDB!
+School:          Enchantment[Mind-Affecting]
+Casting:         1 action [V,S]
+Range:               Touch 
+Target:             One living creature
+Duration:      1 round/level,  Save: Will negates,  SR: Yes}
+
+{6175} Energized Shield {TBD!
+School:          Enchantment[Mind-Affecting]
+Casting:         1 action [V,S]
+Range:               Touch 
+Target:             One living creature
+Duration:      1 round/level,  Save: Will negates,  SR: Yes}
+
+{6176} Draconic Might {TBD!
+School:          Enchantment[Mind-Affecting]
+Casting:         1 action [V,S]
+Range:               Touch 
+Target:             One living creature
+Duration:      1 round/level,  Save: Will negates,  SR: Yes}
+
+{6177} Vigor, Mass Lesser {Targets get Fast Healing 1.
+
+School:          Conjuration[Healing]
+Casting:         1 action [V,S]
+Range:               20 ft.
+Target:             One living creature/2 two levels
+Duration:      10 + 1 round/level(max 25),  Save: None,  SR: No}
+
+{6178} Vigor, Mass Improved {Targets get Fast Healing 3.
+
+School:          Conjuration[Healing]
+Casting:         1 action [V,S]
+Range:               20 ft.
+Target:             One living creature/2 two levels
+Duration:      10 + 1 round/level(max 40),  Save: None,  SR: No}
+
+{6179} Sure Strike {You gain a +1 insight bonus per three caster levels on your next attack roll.
+School:          Divination
+Casting:         1  swift action [V]
+Range:               Personal
+Target:             Self
+Duration:      1 round}
+
+{6180} Hunter's Eye {You deal an extra 1d6 points of sneak attack damage per three caster levels.
+School:          Divination
+Casting:         1  swift action [V]
+Range:               Personal
+Target:             Self
+Duration:      1 round}
+
+{6181} Tactical Precision {If two affected allies flank the same creature, each gains a +2 insight bonus on melee attack rolls and deals an extra 1d6 points of damage against the flanked creature.
+School:          Divination[Mind-Affecting]
+Casting:         1 action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One creature/level
+Duration:      1 round/level,  Save: None,  SR: No}
+
+{6184} Lesser Orb of Acid {Ranged Touch Attack that deals 1d8/two levels (max 5d8) acid damage.
+School:          Conjuration(Creation)[Acid]
+Casting:         1 action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One creature
+Duration:      Instantaneous,  Save: None,  SR: No}
+
+{6185} Lesser Orb of Cold {Ranged Touch Attack that deals 1d8/two levels (max 5d8) cold damage.
+School:          Conjuration(Creation)[Cold]
+Casting:         1 action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One creature
+Duration:      Instantaneous,  Save: None,  SR: No}
+
+{6186} Lesser Orb of Electricity {Ranged Touch Attack that deals 1d8/two levels (max 5d8) electricity damage.
+School:          Conjuration(Creation)[Electricity]
+Casting:         1 action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One creature
+Duration:      Instantaneous,  Save: None,  SR: No}
+
+{6187} Lesser Orb of Fire {Ranged Touch Attack that deals 1d8/two levels (max 5d8) fire damage.
+School:          Conjuration(Creation)[Fire]
+Casting:         1 action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One creature
+Duration:      Instantaneous,  Save: None,  SR: No}
+
+{6188} Lesser Orb of Sound {Ranged Touch Attack that deals 1d8/two levels (max 5d8) sonic damage.
+School:          Conjuration(Creation)[Sonic]
+Casting:         1 action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One creature
+Duration:      Instantaneous,  Save: None,  SR: No}
+
+{6196} Orb of Acid {Ranged Touch Attack that deals 1d6/level (max 15d6) acid damage and in addition sickens for 1 round on a failed fortitude save.
+School:          Conjuration(Creation)[Acid]
+Casting:         1 action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One creature
+Duration:      Inst.,  Save: Fortitude partial,  SR: No}
+
+{6197} Orb of Cold {Ranged Touch Attack that deals 1d6/level (max 15d6) cold damage and in addition blinds for 1 round on a failed fortitude save.
+School:          Conjuration(Creation)[Cold]
+Casting:         1 action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One creature
+Duration:      Inst.,  Save: Fortitude partial,  SR: No}
+
+{6198} Orb of Electricity {Ranged Touch Attack that deals 1d6/level (max 15d6) electricity damage and in addition may entangle for 1 round on a failed fortitude save.
+School:          Conjuration(Creation)[Electricity]
+Casting:         1 action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One creature
+Duration:      Inst.,  Save: Fortitude partial,  SR: No}
+
+{6199} Orb of Fire {Ranged Touch Attack that deals 1d6/level (max 15d6) fire damage and in addition dazes for 1 round on a failed fortitude save.
+School:          Conjuration(Creation)[Fire]
+Casting:         1 action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One creature
+Duration:      Inst.,  Save: Fortitude partial,  SR: No}
+
+{6200} Orb of Sound {Ranged Touch Attack that deals 1d6/level (max 15d6) sonic damage and in addition deafens for 1 round on a failed fortitude save.
+School:          Conjuration(Creation)[Sonic]
+Casting:         1 action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One creature
+Duration:      Inst.,  Save: Fortitude partial,  SR: No}

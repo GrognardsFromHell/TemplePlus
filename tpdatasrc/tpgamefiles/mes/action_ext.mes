@@ -1,0 +1,6 @@
+// New error codes added by Sagenlicht
+
+{1027}{Ability on Cooldown}
+{1028}{Already used this turn}
+{1029}{Already active!}
+{1030}{Silenced!}

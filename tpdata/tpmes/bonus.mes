@@ -13,3 +13,18 @@
 {347}{~Seeking Weapon~[TAG_WEAPON_SEEKING]}
 {348}{Bardic Music - Inspire Heroics}
 {349}{Hiding in Combat}
+
+{375}{Creature Immune to ~Critical Strike~[TAG_SPELLS_CRITICAL_STRIKE]}
+{376}{No Precision Damage for ~Critical Strike~[TAG_SPELLS_CRITICAL_STRIKE]}
+{377}{No Precision Damage for ~Tactical Precision~[TAG_SPELLS_TACTICAL_PRECISION]}
+
+// Fist of the Forest
+{400}{~Fist of the Forest Class Features~[TAG_FIST_OF_THE_FOREST] lost due to violating ~Primal Living~[TAG_CLASS_FEATURES_PRIMAL_LIVING]}
+{401}{~Fist of the Forest AC Bonus~[TAG_CLASS_FEATURES_FIST_OF_THE_FOREST_AC_BONUS] lost due to encumbrance}
+{402}{~Fist of the Forest AC Bonus~[TAG_CLASS_FEATURES_FIST_OF_THE_FOREST_AC_BONUS] lost due to wearing a shield}
+{403}{~Fist of the Forest AC Bonus~[TAG_CLASS_FEATURES_FIST_OF_THE_FOREST_AC_BONUS] lost due to armor}
+{404}{~Fist of the Forest AC Bonus~[TAG_CLASS_FEATURES_FIST_OF_THE_FOREST_AC_BONUS] lost due to being helpless}
+{405}{~Fist of the Forest Fast Movement~[TAG_CLASS_FEATURES_FIST_OF_THE_FOREST_FAST_MOVEMENT] lost due to encumbrance}
+{406}{~Fist of the Forest Fast Movement~[TAG_CLASS_FEATURES_FIST_OF_THE_FOREST_FAST_MOVEMENT] lost due to armor}
+{407}{~Fist of the Forest Untamed Strike~[TAG_CLASS_FEATURES_FIST_OF_THE_FOREST_UNTAMED_STRIKE]: Attack treated as Magic}
+{408}{~Fist of the Forest Untamed Strike~[TAG_CLASS_FEATURES_FIST_OF_THE_FOREST_UNTAMED_STRIKE]: does not stack with ~Ki Strike~[TAG_CLASS_FEATURES_MONK_KI_STRIKE]}
