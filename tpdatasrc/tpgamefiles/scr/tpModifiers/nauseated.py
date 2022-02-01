@@ -17,7 +17,7 @@ def nauseatedConditionAddActions(attachee, args, evt_obj):
         args.condition_remove()
         return 0
     attachee.float_text_line("Nauseated", tf_red)
-    game.create_history_freeform(attachee.description + " is ~nauseated~[TAG_NAUSEATED]\n\n")
+    game.create_history_freeform("{} is ~nauseated~[TAG_NAUSEATED]\n\n".format(attachee.description))
     game.particles('sp-Poison', attachee)
     if attachee.d20_query(Q_Critter_Is_Concentrating) == 1: #Nauseated breaks concentration
         attachee.d20_send_signal(S_Remove_Concentration)
