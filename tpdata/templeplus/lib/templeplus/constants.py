@@ -3351,6 +3351,26 @@ spell_vigor_mass_improved = 1178
 spell_sure_strike = 1179
 spell_hunters_eye = 1180
 spell_tactical_precision = 1181
+spell_accuracy = 1182
+spell_hail_of_stone = 1183
+spell_lesser_orb_of_acid = 1184
+spell_lesser_orb_of_cold = 1185
+spell_lesser_orb_of_electricity = 1186
+spell_lesser_orb_of_fire = 1187
+spell_lesser_orb_of_sound = 1188
+spell_blades_of_fire = 1189
+spell_fireburst = 1190
+spell_greater_fireburst = 1191
+spell_ice_knife = 1192
+spell_whirling_blade = 1193
+spell_ring_of_blades = 1194
+spell_blast_of_flame = 1195
+spell_orb_of_acid = 1196
+spell_orb_of_cold = 1197
+spell_orb_of_electricity = 1198
+spell_orb_of_fire = 1199
+spell_orb_of_sound = 1200
+
 
 spell_inevitable_defeat = 1302
 spell_kelgores_fire_bolt = 1303
