@@ -13,8 +13,7 @@ def OnSpellEffect(spell):
     saveType = D20_Save_Reduction_Half
     saveDescriptor = D20STD_F_NONE
     spellDamageDice = dice_new('1d8')
-    spellDamageDice.number = 1
-    spellDamageDice.bonus = min(spell.caster_level, 5)
+    spellDamageDice.number = min(spell.caster_level, 5)
     damageType = D20DT_FIRE
 
     game.particles('sp-Fireburst', spell.caster)
