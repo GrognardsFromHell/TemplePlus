@@ -8,7 +8,7 @@ def GetActionName():
 
 
 def GetActionDefinitionFlags():
-    return D20ADF_MagicEffectTargeting | D20ADF_QueryForAoO | D20ADF_TriggersCombat
+    return D20ADF_MagicEffectTargeting | D20ADF_TriggersCombat
 
 
 def GetTargetingClassification():
