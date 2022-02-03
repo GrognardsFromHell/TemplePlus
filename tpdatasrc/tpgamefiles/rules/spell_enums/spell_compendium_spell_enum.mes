@@ -1,3 +1,6 @@
+// Core Spells
+{158}{Evard's Black Tentacles}
+
 // Vigor Spell Fixes
 {794}{Vigor, Lesser}
 {795}{Vigor}
@@ -153,6 +156,7 @@
 {1199}{Orb of Fire}
 {1200}{Orb of Sound}
 
+{5158}{Evard's Black Tentacles}
 {5794}{Vigor, Lesser}
 {5795}{Vigor}
 {5796}{Vigor, Greater}
@@ -304,6 +308,7 @@
 {6199}{Orb of Fire}
 {6200}{Orb of Sound}
 
+{20158}{TAG_SPELLS_EVARD'S_BLACK_TENTACLES}
 {20794}{TAG_SPELLS_VIGOR,_LESSER}
 {20795}{TAG_SPELLS_VIGOR}
 {20796}{TAG_SPELLS_VIGOR,_GREATER}

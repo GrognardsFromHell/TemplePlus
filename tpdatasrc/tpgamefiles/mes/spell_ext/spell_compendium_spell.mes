@@ -1,3 +1,6 @@
+// Base Spells
+{158}{Evard's Black Tentacles}
+
 // Vigor Spell Fixes
 {794}{Vigor, Lesser}
 {795}{Vigor}
@@ -155,9 +158,10 @@
 {1200}{Orb of Sound}
 
 // Spell Descriptions
-{5794}Vigor, Lesser {[Conjuration] Fast Healing 1 for 10 +1/level rounds, max 15.}
-{5795}Vigor {[Conjuration] Fast Healing 2 for 10 +1/level rounds, max 25.}
-{5796}Vigor, Greater {[Conjuration] Fast Healing 4 for 10 +1/level rounds, max 35.}
+{5158} Evard's Black Tentacles {[Conjuration][Creation] Create Tentacles that grapple in a 20ft. area.}
+{5794} Vigor, Lesser {[Conjuration] Fast Healing 1 for 10 +1/level rounds, max 15.}
+{5795} Vigor {[Conjuration] Fast Healing 2 for 10 +1/level rounds, max 25.}
+{5796} Vigor, Greater {[Conjuration] Fast Healing 4 for 10 +1/level rounds, max 35.}
 {6050} Sound Lance {[Evocation] Projectile of intense sonic energy that deals 1d8/level (max 10d8) sonic damage.}
 {6051} Critical Strike {[Divination] Against flanked or dexterity denied foes gain 1d6 damage, +4 to confirm critical hits and weapon is considered to be keen.}
 {6052} Camouflage {[Transmutation] For 10 min/level gain a +10 circumstance bonus to Hide.}
