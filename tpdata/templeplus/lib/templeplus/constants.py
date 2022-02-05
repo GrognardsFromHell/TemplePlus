@@ -3499,6 +3499,12 @@ aura_swiftness =35
 
 #Bonus Types (aka modifiers)
 bonus_type_untyped = 0
+bonus_type_stat_strength = 2
+bonus_type_stat_dexterity = 3
+bonus_type_stat_constitution = 4
+bonus_type_stat_intelligence = 5
+bonus_type_stat_wisdom = 6
+bonus_type_stat_charisma = 7
 bonus_type_dodge = 8
 bonus_type_natural_armor = 10
 bonus_type_deflection = 11
