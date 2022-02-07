@@ -11,8 +11,14 @@ def spellName(spellId):
 def spellKeyName(spellId):
     return spellName(spellId).upper().replace(" ", "_")
 
+def spellTag(spellId):
+    return "TAG_SPELLS_{}".format(spellKeyName(spellId))
+
 def spellKey(spellId):
     return tpdp.hash(spellKeyName(spellId))
+
+def getSpellHelpTag(spellId):
+    return "~{}~[{}]".format(spellName(spellId), spellTag(spellId))
 
 def spellTime(duration):
     if duration == 1:
@@ -225,6 +231,13 @@ def checkCategoryType(critter, *args):
         if critter.is_category_type(mcType):
             return True
     return False
+
+##### workaround getSpellClassCode #####
+def getSpellClassCode(classEnum):
+    dummySpellData = tpdp.D20SpellData()
+    dummySpellData.set_spell_class(classEnum)
+    return dummySpellData.spell_class
+##### workaround getSpellClassCode #####
 
 ### Item Condition functions
 
@@ -605,6 +618,14 @@ class AoeSpellHandleModifier(PythonModifier):
         self.AddSpellTeleportReconnectStandard()
         self.AddSpellCountdownStandardHook()
         self.AddAoESpellEndStandardHook()
+    def AddSpellConcentration(self):
+        self.AddHook(ET_OnConditionAdd, EK_NONE, addConcentration, ())
+        self.AddHook(ET_OnD20Signal, EK_S_Concentration_Broken, checkRemoveSpell, ())
+    def AddSpellDismiss(self):
+        self.AddHook(ET_OnConditionAdd, EK_NONE, spell_utils.addDismiss, ())
+        self.AddHook(ET_OnD20Signal, EK_S_Dismiss_Spells, checkRemoveSpell, ())
+    def AddSpellNoDuplicate(self):
+        self.AddHook(ET_OnConditionAddPre, EK_NONE, replaceCondition, ())
 
 class AoESpellEffectModifier(PythonModifier):
     #AoESpellEffectPythonModifier have at least 5 arguments:
