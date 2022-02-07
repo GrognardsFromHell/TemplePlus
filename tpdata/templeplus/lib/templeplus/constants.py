@@ -3395,6 +3395,7 @@ spell_new_slot_lvl_9 = 1614
 
 # Python Action Spells
 spell_epic_of_the_lost_king = 3080
+spell_grapple = 3110
 spell_ki_blast = 3120
 
 #Dragon Disciple Breath Weapons
