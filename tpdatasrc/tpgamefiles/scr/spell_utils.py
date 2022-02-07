@@ -618,6 +618,14 @@ class AoeSpellHandleModifier(PythonModifier):
         self.AddSpellTeleportReconnectStandard()
         self.AddSpellCountdownStandardHook()
         self.AddAoESpellEndStandardHook()
+    def AddSpellConcentration(self):
+        self.AddHook(ET_OnConditionAdd, EK_NONE, addConcentration, ())
+        self.AddHook(ET_OnD20Signal, EK_S_Concentration_Broken, checkRemoveSpell, ())
+    def AddSpellDismiss(self):
+        self.AddHook(ET_OnConditionAdd, EK_NONE, spell_utils.addDismiss, ())
+        self.AddHook(ET_OnD20Signal, EK_S_Dismiss_Spells, checkRemoveSpell, ())
+    def AddSpellNoDuplicate(self):
+        self.AddHook(ET_OnConditionAddPre, EK_NONE, replaceCondition, ())
 
 class AoESpellEffectModifier(PythonModifier):
     #AoESpellEffectPythonModifier have at least 5 arguments:
