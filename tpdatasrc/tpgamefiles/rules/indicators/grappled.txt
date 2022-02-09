@@ -1,0 +1,5 @@
+ID_string: GRAPPLED_CONDITION
+effect_type: 2
+texture_file: art\interface\player_conditions\conditions\Grappled.tga
+help_topic: TAG_GRAPPLED
+tooltip_base_text: Grappled
