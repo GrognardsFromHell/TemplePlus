@@ -12,7 +12,7 @@ def OnSpellEffect(spell):
     spell.duration = 0
     spellDamageDice = dice_new('1d4')
     spellDamageDice.number = min(spell.caster_level, 5)
-    damageType = D20DT_UNSPECIFIED #Damage is not specified in SC; should it be set to Blundgeoing or magic?
+    damageType = D20DT_BLUDGEONING
 
     game.particles('sp-Hail of Stone', spell.target_loc)
 
