@@ -198,7 +198,7 @@ Duration:      1 round}
 {6074} Sniper's Shot {No range limit to ranged sneak attacks.
 
 School:          Divination
-Casting:         1  swift action [V]
+Casting:         1  swift action [V, S]
 Range:               Personal
 Target:             Self
 Duration:      1 round}
