@@ -23,6 +23,7 @@ def OnEndProjectile(spell, projectile, index_of_target):
     spellDamageDice = dice_new('1d6')
     spellDamageDice.number = min(spell.caster_level, 15) #capped at cl 15 (15d6)
     damageType = D20DT_ELECTRICITY
+    spellDamageReduction = 100 #100 indicates full damage
 
     game.particles_end(projectile.obj_get_int(obj_f_projectile_part_sys_id))
 
@@ -30,9 +31,7 @@ def OnEndProjectile(spell, projectile, index_of_target):
 
     if attackResult & D20CAF_HIT:
         game.particles("sp-Lesser Orb of Electricity", spellTarget.obj)
-        if attackResult & D20CAF_CRITICAL:
-            spellDamageDice.number *= 2
-        spellTarget.obj.spell_damage(spell.caster, damageType, spellDamageDice, D20DAP_UNSPECIFIED, D20A_CAST_SPELL, spell.id)
+        spellTarget.obj.spell_damage_weaponlike(spell.caster, damageType, spellDamageDice, D20DAP_UNSPECIFIED, spellDamageReduction, D20A_CAST_SPELL, spell.id, attackResult, index_of_target)
         #Save for secondary effect if spellTarget wears a metal armor
         spellTargetWornArmor = spellTarget.obj.item_worn_at(item_wear_armor)
         if spellTargetWornArmor.obj_get_int(obj_f_material) == mat_metal:
