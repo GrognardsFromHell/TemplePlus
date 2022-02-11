@@ -1,0 +1,5 @@
+ID_string: EVARD'S_BLACK_TENTACLES
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Spell True Strike.tga
+help_topic: TAG_SPELLS_EVARD'S_BLACK_TENTACLES
+tooltip_base_text: Evard's Black Tentacles

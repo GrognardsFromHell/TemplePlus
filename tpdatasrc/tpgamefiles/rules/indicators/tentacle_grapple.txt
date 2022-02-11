@@ -1,0 +1,5 @@
+ID_string: TENTACLE_GRAPPLE
+effect_type: 2
+texture_file: art\interface\player_conditions\conditions\Grappled.tga
+help_topic: TAG_SPELLS_EVARD'S_BLACK_TENTACLES
+tooltip_base_text: Grappled by Black Tentacles!
