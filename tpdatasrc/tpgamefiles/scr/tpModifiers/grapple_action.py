@@ -8,31 +8,21 @@ from spell_utils import skillCheck
 grappleEnum = 1710 #D20A_GRAPPLE seems to crash the game, in addition there is no EK_D20A_GRAPPLE
 ########################################
 
-#spell.mes
-#{21000} {Grapple successful!}
-#{21001} {Grapple failed!}
-#{21002} {Grappled!}
-#{21003} {Escaped!}
-#{21004} {Grapple Ended!}
-#{21005} {Grappling!}
-
-
 ###### Grapple Check ######
 
-def getSpecialSizeBonus(obj):
+def getSpecialSizeBonus(size):
     #From the SRD:
     #The special size modifier for a grapple check is as follows:
     #Colossal +16, Gargantuan +12, Huge +8, Large +4, Medium +0, Small -4, Tiny -8, Diminutive -12, Fine -16.
     #Use this number in place of the normal size modifier you use when making an attack roll.
-    size = obj.get_size
     return (size - 5) * 4
 
-def getBonusList(obj):
+def getBonusList(obj, size):
     #Grapple Check is Base attack bonus + Strength modifier + special size modifier
     bonusList = tpdp.BonusList()
     baseAttackBonus = obj.get_base_attack_bonus()
     strengthBonus = (obj.stat_level_get(stat_strength) - 10) / 2
-    sizeBonus = getSpecialSizeBonus(obj)
+    sizeBonus = getSpecialSizeBonus(size)
     bonusList.add(baseAttackBonus, bonus_type_untyped, 137) #Class
     bonusList.add(strengthBonus, bonus_type_stat_strength, 103) #Strength Bonus
     bonusList.add(sizeBonus, bonus_type_size, 115) #Size Modifier
@@ -46,9 +36,16 @@ def getBonusList(obj):
     return bonusList
 
 def grappleRoll(performer, target, combatMesTitleId):
+    #Grapple automatically fails, if target is 2+ size categories larger
+    performerSize = performer.get_size
+    targetSize = target.get_size
+    if performerSize + 2 <= targetSize:
+        performer.float_text_line("Target to big", tf_red)
+        game.create_history_freeform("{} is to big to ~grapple~[TAG_GRAPPLE]\n\n".format(target.description))
+        return False
     #Create bonus lists for both grapplers
-    performerBonusList = getBonusList(performer)
-    targetBonusList = getBonusList(target)
+    performerBonusList = getBonusList(performer, performerSize)
+    targetBonusList = getBonusList(target, targetSize)
     #Perform Grapple Check
     grappleDice = dice_new("1d20")
     performerGrappleRoll = grappleDice.roll()
@@ -119,9 +116,6 @@ def performGrapple(attachee, args, evt_obj):
             attachee.float_mesfile_line("mes\\spell.mes", 21001, tf_red) #ID 21001 = Grapple failed!
     else:
         attachee.float_mesfile_line("mes\\combat.mes", 29) #ID 29 = Miss!
-
-def frameGrapple(attachee, args, evt_obj):
-    return 0
 
 grappleAction = PythonModifier("Grapple Action", 2) #empty, empty
 grappleAction.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, radialGrapple, ())
@@ -230,31 +224,31 @@ def endGrapple(attachee, args, evt_obj):
     args.condition_remove() #If I do not add this, condition does not get removed from caster
     return 0
 
-def tentacleTooltip(attachee, args, evt_obj):
+def grappledTooltip(attachee, args, evt_obj):
     evt_obj.append("Grappled")
     return 0
 
-def tentacleEffectTooltip(attachee, args, evt_obj):
+def grappledEffectTooltip(attachee, args, evt_obj):
     tooltipTag = "GRAPPLED_CONDITION"
     tooltipKey = tpdp.hash(tooltipTag)
     evt_obj.append(tooltipKey, -2, "")
     return 0
 
-blackTentaclesGrapple = PythonModifier("sp-Grappled", 3, False) #spellId, duration, empty
-blackTentaclesGrapple.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, radialBreakFree, ())
-blackTentaclesGrapple.AddHook(ET_OnD20Query, EK_Q_Is_BreakFree_Possible, answerQueryTrue, ())
-blackTentaclesGrapple.AddHook(ET_OnBeginRound, EK_NONE, beginRoundActions, ())
-blackTentaclesGrapple.AddHook(ET_OnGetMoveSpeedBase, EK_NONE, limitMovementSpeed, ())
-#blackTentaclesGrapple.AddHook(ET_OnGetMoveSpeed, EK_NONE, limitMovementSpeed, ())
-blackTentaclesGrapple.AddHook(ET_OnGetAC, EK_NONE, denyDexterityBonus, ())
-blackTentaclesGrapple.AddHook(ET_OnToHitBonus2, EK_NONE, applyToHitPenalty, ())
-blackTentaclesGrapple.AddHook(ET_OnD20Query, EK_Q_SneakAttack, sneakAttackPossible, ())
-blackTentaclesGrapple.AddHook(ET_OnD20Query, EK_Q_AOOPossible, answerQueryFalse, ())
-blackTentaclesGrapple.AddHook(ET_OnD20Query, EK_Q_SpellInterrupted, spellFailureCheck,())
-blackTentaclesGrapple.AddHook(ET_OnD20Query, EK_Q_Critter_Is_Grappling, answerQueryTrue, ())
-blackTentaclesGrapple.AddHook(ET_OnD20Signal, EK_S_BreakFree, onSignalBreakFree, ())
-blackTentaclesGrapple.AddHook(ET_OnD20Signal, EK_S_Spell_Grapple_Removed, endGrapple, ())
-blackTentaclesGrapple.AddHook(ET_OnD20Signal, EK_S_Combat_End, endGrapple, ())
-blackTentaclesGrapple.AddHook(ET_OnD20Signal, EK_S_Killed, endGrapple, ())
-blackTentaclesGrapple.AddHook(ET_OnGetTooltip, EK_NONE, tentacleTooltip, ())
-blackTentaclesGrapple.AddHook(ET_OnGetEffectTooltip, EK_NONE, tentacleEffectTooltip, ())
+grappledCondition = PythonModifier("sp-Grappled", 3, False) #spellId, duration, empty
+grappledCondition.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, radialBreakFree, ())
+grappledCondition.AddHook(ET_OnD20Query, EK_Q_Is_BreakFree_Possible, answerQueryTrue, ())
+grappledCondition.AddHook(ET_OnBeginRound, EK_NONE, beginRoundActions, ())
+grappledCondition.AddHook(ET_OnGetMoveSpeedBase, EK_NONE, limitMovementSpeed, ())
+#grappledCondition.AddHook(ET_OnGetMoveSpeed, EK_NONE, limitMovementSpeed, ())
+grappledCondition.AddHook(ET_OnGetAC, EK_NONE, denyDexterityBonus, ())
+grappledCondition.AddHook(ET_OnToHitBonus2, EK_NONE, applyToHitPenalty, ())
+grappledCondition.AddHook(ET_OnD20Query, EK_Q_SneakAttack, sneakAttackPossible, ())
+grappledCondition.AddHook(ET_OnD20Query, EK_Q_AOOPossible, answerQueryFalse, ())
+grappledCondition.AddHook(ET_OnD20Query, EK_Q_SpellInterrupted, spellFailureCheck,())
+grappledCondition.AddHook(ET_OnD20Query, EK_Q_Critter_Is_Grappling, answerQueryTrue, ())
+grappledCondition.AddHook(ET_OnD20Signal, EK_S_BreakFree, onSignalBreakFree, ())
+grappledCondition.AddHook(ET_OnD20Signal, EK_S_Spell_Grapple_Removed, endGrapple, ())
+grappledCondition.AddHook(ET_OnD20Signal, EK_S_Combat_End, endGrapple, ())
+grappledCondition.AddHook(ET_OnD20Signal, EK_S_Killed, endGrapple, ())
+grappledCondition.AddHook(ET_OnGetTooltip, EK_NONE, grappledTooltip, ())
+grappledCondition.AddHook(ET_OnGetEffectTooltip, EK_NONE, grappledEffectTooltip, ())
