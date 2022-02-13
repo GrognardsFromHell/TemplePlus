@@ -3523,6 +3523,7 @@ bonus_type_circumstance = 21
 bonus_type_alchemical = 151
 bonus_type_profane = 154
 bonus_type_undersong = 157
+bonus_type_camouflage = 158
 bonus_type_focusing_chant = 159
 bonus_type_storm_spell = 161
 bonus_type_curse_of_ill_fortune = 162

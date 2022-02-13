@@ -31,9 +31,10 @@
 
 {151} {~Alchemical~[TAG_MODIFIER_ALCHEMICAL]}
 {154} {~Profane~[TAG_MODIFIER_PROFANE]}
+{158} {~Circumstance~[TAG_MODIFIER_CIRCUMSTANCE]} // Camouflage Spell, to avoid stacking with itself
 {159} {~Circumstance~[TAG_MODIFIER_CIRCUMSTANCE]} // Focusing Chant Spell, to avoid stacking with itself
-{161} {bonus_type_storm_spell = 161
-{162} {Untyped} // bonus_type_curse_of_ill_fortune
+// {161} {bonus_type_storm_spell = 161
+// {162} {Untyped} // bonus_type_curse_of_ill_fortune
 // bonus_type_curse_of_impending_blades = 163
 // bonus_type_wave_of_grief = 164
 // bonus_type_distract = 165
