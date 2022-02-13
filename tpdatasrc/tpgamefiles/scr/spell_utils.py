@@ -491,6 +491,27 @@ class TouchModifier(PythonModifier):
 
 ### Standard Spell Condition Modifier ###
 
+def getBonusHelpTag(bonusType):
+    return game.get_mesline("mes\\bonus_description.mes", bonusType)
+
+def applySkillBonus(attachee, args, evt_obj):
+    bonusValue = args.get_param(0)
+    bonusType = args.get_param(1)
+    bonusHelpTag = getBonusHelpTag(bonusType)
+    spellId = args.get_arg(0)
+    spellHelpTag = getSpellHelpTag(spellId)
+    evt_obj.bonus_list.add(bonusValue, bonusType, "{} : {}".format(bonusHelpTag, spellHelpTag))
+    return 0
+
+def applyAbilityScoreBonus(attachee, args, evt_obj):
+    bonusValue = args.get_param(0)
+    bonusType = bonus_type_enhancement
+    bonusHelpTag = getBonusHelpTag(bonusType)
+    spellId = args.get_arg(0)
+    spellHelpTag = getSpellHelpTag(spellId)
+    evt_obj.bonus_list.add(bonusValue, bonusType, "{} : {}".format(bonusHelpTag, spellHelpTag))
+    return 0
+
 class SpellPythonModifier(PythonModifier):
     #SpellPythonModifier have at least 3 arguments:
     #spellId, duration, empty
@@ -512,6 +533,14 @@ class SpellPythonModifier(PythonModifier):
         self.AddHook(ET_OnD20Signal, EK_S_Dismiss_Spells, checkRemoveSpell, ())
     def AddSpellNoDuplicate(self):
         self.AddHook(ET_OnConditionAddPre, EK_NONE, replaceCondition, ())
+    def addSkillBonus(self, bonusValue, bonusType, *args):
+        for skill in args:
+            eventKey = skill + 20
+            self.AddHook(ET_OnGetSkillLevel, eventKey, applySkillBonus, (bonusValue, bonusType,))
+    def addAbilityBonus(self, bonusValue, *args):
+        for abilityScore in args:
+            eventKey = abilityScore + 1
+            self.AddHook(ET_OnAbilityScoreLevel, eventKey, applyAbilityScoreBonus,(bonusValue,))
 
 ### Aoe Modifier Classes ###
 def addAoeObjToSpellRegistry(attachee, args, evt_obj):
