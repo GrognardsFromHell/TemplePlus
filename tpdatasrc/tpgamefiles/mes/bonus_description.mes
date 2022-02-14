@@ -12,7 +12,7 @@
 
 // Vanilla Bonus Types
 
-{0} {Untyped} // Untyped, STACKING
+{0} {~Untyped~[TAG_MODIFIER_UNTYPED]} // Untyped, STACKING
 {8} {~Dodge~[TAG_DODGE]} // STACKING
 {10} {~Natural Armor~[TAG_MODIFIER_NATURAL_ARMOR]} // This is not clean, as Bonus Type 9 also seems to be used for Natural Armor
 {11} {~Deflection~[TAG_DEFLECTION_BONUS]}
@@ -31,10 +31,13 @@
 
 {151} {~Alchemical~[TAG_MODIFIER_ALCHEMICAL]}
 {154} {~Profane~[TAG_MODIFIER_PROFANE]}
-{158} {~Circumstance~[TAG_MODIFIER_CIRCUMSTANCE]} // Camouflage Spell, to avoid stacking with itself
-{159} {~Circumstance~[TAG_MODIFIER_CIRCUMSTANCE]} // Focusing Chant Spell, to avoid stacking with itself
-// {161} {bonus_type_storm_spell = 161
-// {162} {Untyped} // bonus_type_curse_of_ill_fortune
-// bonus_type_curse_of_impending_blades = 163
-// bonus_type_wave_of_grief = 164
-// bonus_type_distract = 165
+{155} {~Untyped~[TAG_MODIFIER_UNTYPED]} // bonus_type_sirines_grace
+{156} {~Untyped~[TAG_MODIFIER_UNTYPED]} // bonus_type_sticky_fingers
+{157} {~Untyped~[TAG_MODIFIER_UNTYPED]} // bonus_type_undersong
+{158} {~Circumstance~[TAG_MODIFIER_CIRCUMSTANCE]} // bonus_type_camouflage
+{159} {~Circumstance~[TAG_MODIFIER_CIRCUMSTANCE]} // bonus_type_focusing_chant
+{161} {~Untyped~[TAG_MODIFIER_UNTYPED]} // bonus_type_storm_spell
+{162} {~Untyped~[TAG_MODIFIER_UNTYPED]} // bonus_type_curse_of_ill_fortune
+{163} {~Untyped~[TAG_MODIFIER_UNTYPED]} // bonus_type_curse_of_impending_blades
+{164} {~Untyped~[TAG_MODIFIER_UNTYPED]} // bonus_type_wave_of_grief
+{165} {~Untyped~[TAG_MODIFIER_UNTYPED]} // bonus_type_distract

@@ -10,3 +10,4 @@ TAG_MODIFIER_RESISTANCE	TAG_MODIFIER			Resistance Bonus	A resistance bonus affec
 TAG_MODIFIER_SACRED	TAG_MODIFIER			Sacred Modifier	A sacred bonus (or penalty) stems from the power of good. Multiple sacred bonuses on the same character or object do not stack. Only the highest sacred bonus applies.
 TAG_MODIFIER_SIZE	TAG_MODIFIER			Size Modifier	A size bonus or penalty is derived from a creature's size category. Size modifiers of different kinds apply to ~Armor Class~[TAG_ARMOR_CLASS], ~attack rolls~[TAG_ATTACK_ROLL], ~Hide~[TAG_HIDE] checks, ~grapple~[TAG_GRAPPLE] checks, and various other checks.
 TAG_MODIFIER_PROFANE	TAG_MODIFIER			Profane Modifier	A profane bonus (or penalty) stems from the power of evil. Multiple profane bonuses on the same character or object do not stack. Only the highest profane bonus applies.
+TAG_MODIFIER_UNTYPED	TAG_MODIFIER			Untyped Modifier	An untyped bonus (or penalty) stacks with all other modifiers.
