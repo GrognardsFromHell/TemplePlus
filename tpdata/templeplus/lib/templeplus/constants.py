@@ -3500,6 +3500,9 @@ aura_resolve = 33
 aura_stamina = 34
 aura_swiftness =35
 
+#Bonus Value is passed by spell
+passed_by_spell = 0
+
 #Bonus Types (aka modifiers)
 bonus_type_untyped = 0
 bonus_type_stat_strength = 2
@@ -3522,6 +3525,8 @@ bonus_type_size = 20
 bonus_type_circumstance = 21
 bonus_type_alchemical = 151
 bonus_type_profane = 154
+bonus_type_sirines_grace = 155
+bonus_type_sticky_fingers = 156
 bonus_type_undersong = 157
 bonus_type_camouflage = 158
 bonus_type_focusing_chant = 159

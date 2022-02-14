@@ -11,7 +11,7 @@
 {3003}{Lawful}
 {3004}{Chaotic}
 
-; item target
+; weapon target
 {3010}{2}
 {3011}{Mainhand}
 {3012}{Offhand}
@@ -38,3 +38,9 @@
 {3042} {Cold}
 {3043} {Electricity}
 {3044} {Fire}
+
+; weapon and shield target
+{3050}{3}
+{3051}{Mainhand}
+{3052}{Offhand}
+{3053}{Shield}
