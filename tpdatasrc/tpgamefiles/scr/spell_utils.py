@@ -552,12 +552,13 @@ class SpellPythonModifier(PythonModifier):
     def AddSpellNoDuplicate(self):
         self.AddHook(ET_OnConditionAddPre, EK_NONE, replaceCondition, ())
     def AddSkillBonus(self, bonusValue, bonusType, *args):
-        for skill in args:
-            if skill != EK_NONE:
-                eventKey = skill + 20
-            else:
-                eventKey = EK_NONE
+        if not args:
+            eventKey = EK_NONE
             self.AddHook(ET_OnGetSkillLevel, eventKey, applyBonus, (bonusValue, bonusType,))
+        else:
+            for skill in args:
+                eventKey = skill + 20
+                self.AddHook(ET_OnGetSkillLevel, eventKey, applyBonus, (bonusValue, bonusType,))
     def AddAbilityBonus(self, bonusValue, bonusType, *args):
         for abilityScore in args:
             eventKey = abilityScore + 1
