@@ -555,6 +555,8 @@ class SpellPythonModifier(PythonModifier):
         for skill in args:
             if skill != EK_NONE:
                 eventKey = skill + 20
+            else:
+                eventKey = EK_NONE
             self.AddHook(ET_OnGetSkillLevel, eventKey, applyBonus, (bonusValue, bonusType,))
     def AddAbilityBonus(self, bonusValue, bonusType, *args):
         for abilityScore in args:
