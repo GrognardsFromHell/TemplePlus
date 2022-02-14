@@ -552,12 +552,10 @@ class SpellPythonModifier(PythonModifier):
     def AddSpellNoDuplicate(self):
         self.AddHook(ET_OnConditionAddPre, EK_NONE, replaceCondition, ())
     def AddSkillBonus(self, bonusValue, bonusType, *args):
-        if args == EK_NONE:
-            self.AddHook(ET_OnGetSkillLevel, EK_NONE, applyBonus, (bonusValue, bonusType,))
-        else:
-            for skill in args:
+        for skill in args:
+            if skill != EK_NONE:
                 eventKey = skill + 20
-                self.AddHook(ET_OnGetSkillLevel, eventKey, applyBonus, (bonusValue, bonusType,))
+            self.AddHook(ET_OnGetSkillLevel, eventKey, applyBonus, (bonusValue, bonusType,))
     def AddAbilityBonus(self, bonusValue, bonusType, *args):
         for abilityScore in args:
             eventKey = abilityScore + 1
@@ -568,8 +566,12 @@ class SpellPythonModifier(PythonModifier):
         self.AddHook(ET_OnSaveThrowLevel, eventKey, applySaveBonus, (bonusValue, bonusType, saveDescriptor,))
     def AddToHitBonus(self, bonusValue, bonusType, flagRequirement = 0):
         self.AddHook(ET_OnToHitBonus2, EK_NONE, applyAttackPacketBonus,(bonusValue, bonusType, flagRequirement,))
+    def AddAcBonus(self, bonusValue, bonusType):
+        self.AddHook(ET_OnGetAC, EK_NONE, applyBonus, (bonusValue, bonusType,))
     def AddAbilityCheckBonus(self, bonusValue, bonusType): #might get expanded
         self.AddHook(ET_OnGetAbilityCheckModifier, EK_NONE, applyBonus, (bonusValue, bonusType,))
+    def AddMovementBonus(self, bonusValue, bonusType):
+        self.AddHook(ET_OnGetMoveSpeedBase, EK_NONE, applyBonus, (bonusValue, bonusType,))
 
 ### Aoe Modifier Classes ###
 def addAoeObjToSpellRegistry(attachee, args, evt_obj):
