@@ -494,17 +494,10 @@ class TouchModifier(PythonModifier):
 def getBonusHelpTag(bonusType):
     return game.get_mesline("mes\\bonus_description.mes", bonusType)
 
-def applySkillBonus(attachee, args, evt_obj):
+def applyBonus(attachee, args, evt_obj):
     bonusValue = args.get_param(0)
-    bonusType = args.get_param(1)
-    bonusHelpTag = getBonusHelpTag(bonusType)
-    spellId = args.get_arg(0)
-    spellHelpTag = getSpellHelpTag(spellId)
-    evt_obj.bonus_list.add(bonusValue, bonusType, "{} : {}".format(bonusHelpTag, spellHelpTag))
-    return 0
-
-def applyAbilityScoreBonus(attachee, args, evt_obj):
-    bonusValue = args.get_param(0)
+    if not bonusValue:
+        bonusValue = args.get_arg(2)
     bonusType = args.get_param(1)
     bonusHelpTag = getBonusHelpTag(bonusType)
     spellId = args.get_arg(0)
@@ -519,9 +512,27 @@ def applyDamageReduction(attachee, args, evt_obj):
     evt_obj.damage_packet.add_physical_damage_res(drAmount, drBreakType, damageMesId)
     return 0
 
+def applySaveBonus(attachee, args, evt_obj):
+    saveDescriptor = args.get_param(2)
+    if saveDescriptor:
+        if not evt_obj.flags & (1 << (saveDescriptor - 1)):
+            return 0
+    applyBonus(attachee, args, evt_obj)
+    return 0
+
+def applyAttackPacketBonus(attachee, args, evt_obj):
+    flagRequirement = args.get_param(2)
+    if flagRequirement:
+        if not evt_obj.attack_packet.get_flags() & flagRequirement:
+            return 0
+    applyBonus(attachee, args, evt_obj)
+    return 0
+
 class SpellPythonModifier(PythonModifier):
     #SpellPythonModifier have at least 3 arguments:
     #spellId, duration, empty
+    #if a simple bonusValue is passed by the spell it is set to arg 3:
+    #spellId, duration, bonusValue, empty
     def __init__(self, name, args = 3, preventDuplicate = False):
         PythonModifier.__init__(self, name, args, preventDuplicate)
         self.AddHook(ET_OnGetTooltip, EK_NONE, spellTooltip, ())
@@ -541,15 +552,24 @@ class SpellPythonModifier(PythonModifier):
     def AddSpellNoDuplicate(self):
         self.AddHook(ET_OnConditionAddPre, EK_NONE, replaceCondition, ())
     def AddSkillBonus(self, bonusValue, bonusType, *args):
-        for skill in args:
-            eventKey = skill + 20
-            self.AddHook(ET_OnGetSkillLevel, eventKey, applySkillBonus, (bonusValue, bonusType,))
+        if args == EK_NONE:
+            self.AddHook(ET_OnGetSkillLevel, EK_NONE, applyBonus, (bonusValue, bonusType,))
+        else:
+            for skill in args:
+                eventKey = skill + 20
+                self.AddHook(ET_OnGetSkillLevel, eventKey, applyBonus, (bonusValue, bonusType,))
     def AddAbilityBonus(self, bonusValue, bonusType, *args):
         for abilityScore in args:
             eventKey = abilityScore + 1
-            self.AddHook(ET_OnAbilityScoreLevel, eventKey, applyAbilityScoreBonus,(bonusValue, bonusType,))
+            self.AddHook(ET_OnAbilityScoreLevel, eventKey, applyBonus,(bonusValue, bonusType,))
     def AddDamageReduction(self, drAmount, drBreakType):
         self.AddHook(ET_OnTakingDamage2, EK_NONE, applyDamageReduction,(drAmount, drBreakType,))
+    def AddSaveBonus(self, bonusValue, bonusType, eventKey = EK_NONE, saveDescriptor = D20STD_F_NONE):
+        self.AddHook(ET_OnSaveThrowLevel, eventKey, applySaveBonus, (bonusValue, bonusType, saveDescriptor,))
+    def AddToHitBonus(self, bonusValue, bonusType, flagRequirement = 0):
+        self.AddHook(ET_OnToHitBonus2, EK_NONE, applyAttackPacketBonus,(bonusValue, bonusType, flagRequirement,))
+    def AddAbilityCheckBonus(self, bonusValue, bonusType): #might get expanded
+        self.AddHook(ET_OnGetAbilityCheckModifier, EK_NONE, applyBonus, (bonusValue, bonusType,))
 
 ### Aoe Modifier Classes ###
 def addAoeObjToSpellRegistry(attachee, args, evt_obj):

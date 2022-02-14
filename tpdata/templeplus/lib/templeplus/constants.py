@@ -3500,6 +3500,9 @@ aura_resolve = 33
 aura_stamina = 34
 aura_swiftness =35
 
+#Bonus Value is passed by spell
+passed_by_spell = 0
+
 #Bonus Types (aka modifiers)
 bonus_type_untyped = 0
 bonus_type_stat_strength = 2
