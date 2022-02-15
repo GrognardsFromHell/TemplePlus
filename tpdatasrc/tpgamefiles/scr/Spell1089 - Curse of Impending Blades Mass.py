@@ -1,12 +1,12 @@
 from toee import *
 
 def OnBeginSpellCast(spell):
-    print "Curse of Impending Blades Mass OnBeginSpellCast"
+    print "Curse of Impending Blades, Mass OnBeginSpellCast"
     print "spell.target_list=", spell.target_list
     print "spell.caster=", spell.caster, " caster.level= ", spell.caster_level
 
 def OnSpellEffect(spell):
-    print "Curse of Impending Blades Mass OnSpellEffect"
+    print "Curse of Impending Blades, Mass OnSpellEffect"
     
     targetsToRemove = []
     spell.duration = 10 * spell.caster_level # 1 min/cl
@@ -31,7 +31,7 @@ def OnSpellEffect(spell):
 
     
 def OnBeginRound(spell):
-    print "Curse of Impending Blades Mass OnBeginRound"
+    print "Curse of Impending Blades, Mass OnBeginRound"
 
 def OnEndSpellCast(spell):
-    print "Curse of Impending Blades Mass OnEndSpellCast"
+    print "Curse of Impending Blades, Mass OnEndSpellCast"
