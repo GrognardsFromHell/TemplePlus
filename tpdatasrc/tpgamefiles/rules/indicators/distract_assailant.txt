@@ -1,0 +1,5 @@
+ID_string: DISTRACT_ASSAILANT
+effect_type: 1
+texture_file: art\interface\player_conditions\Ailments\Spell Doom.tga
+help_topic: TAG_SPELLS_DISTRACT_ASSAILANT
+tooltip_base_text: Distract Assailant

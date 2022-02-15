@@ -1,0 +1,5 @@
+ID_string: VEIL_OF_SHADOW
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Spell Meld Into Stone.tga
+help_topic: TAG_SPELLS_VEIL_OF_SHADOW
+tooltip_base_text: Veil of Shadow

@@ -1,0 +1,5 @@
+ID_string: WOUNDING_WHISPERS
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Spell Vampiric Touch.tga
+help_topic: TAG_SPELLS_WOUNDING_WHISPERS
+tooltip_base_text: Wounding Whispers
