@@ -1,0 +1,5 @@
+ID_string: CONVICTION,_MASS
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\spell heroism.tga
+help_topic: TAG_SPELLS_CONVICTION,_MASS
+tooltip_base_text: Conviction, Mass
