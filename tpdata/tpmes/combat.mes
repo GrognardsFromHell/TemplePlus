@@ -39,6 +39,9 @@
 {5123}{Hide Check}
 {5124}{Prefer One-Handed Wield}
 
+// New History Window entries
+{5500} {Grapple Check}
+
 {6017}{Set Caster Level}
 {6018}{Craft}
 {6019}{Set Caster Level (0 for min, 20 for max possible)}

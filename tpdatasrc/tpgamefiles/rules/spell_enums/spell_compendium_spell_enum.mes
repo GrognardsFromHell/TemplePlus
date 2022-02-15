@@ -1,3 +1,11 @@
+// Core Spells
+{158}{Evard's Black Tentacles}
+
+// Vigor Spell Fixes
+{794}{Vigor, Lesser}
+{795}{Vigor}
+{796}{Vigor, Greater}
+
 // Additional spells added by Sagenlicht
 
 {1050}{Sound Lance}
@@ -38,10 +46,10 @@
 {1086}{Fire Shuriken}
 {1087}{Phantom Foe}
 {1088}{Veil of Shadow}
-{1089}{Curse of Impending Blades Mass}
+{1089}{Curse of Imp. Blades, Mass}
 {1090}{Dissonant Chord}
 {1091}{Haunting Tune}
-{1092}{Loves Lament}
+{1092}{Love's Lament}
 {1093}{Ray of Dizziness}
 {1094}{Wounding Whispers}
 {1095}{Dirge of Discord}
@@ -120,7 +128,38 @@
 {1171}{Storm of Elemental Fury}
 {1172}{Acid Fog}
 {1173}{Touch of Madness}
+{1174}{Energized Shield, Lesser}
+{1175}{Energized Shield}
+{1176}{Draconic Might}
+{1177}{Vigor, Mass Lesser}
+{1178}{Vigor, Mass Improved}
+{1179}{Sure Strike}
+{1180}{Hunter's Eye}
+{1181}{Tactical Precision}
+{1182}{Accuracy}
+{1183}{Hail of Stone}
+{1184}{Lesser Orb of Acid}
+{1185}{Lesser Orb of Cold}
+{1186}{Lesser Orb of Electricity}
+{1187}{Lesser Orb of Fire}
+{1188}{Lesser Orb of Sound}
+{1189}{Blades of Fire}
+{1190}{Fireburst}
+{1191}{Greater Fireburst}
+{1192}{Ice Knife}
+{1193}{Whirling Blade}
+{1194}{Ring of Blades}
+{1195}{Blast of Flame}
+{1196}{Orb of Acid}
+{1197}{Orb of Cold}
+{1198}{Orb of Electricity}
+{1199}{Orb of Fire}
+{1200}{Orb of Sound}
 
+{5158}{Evard's Black Tentacles}
+{5794}{Vigor, Lesser}
+{5795}{Vigor}
+{5796}{Vigor, Greater}
 {6050}{Sound Lance}
 {6051}{Critical Strike}
 {6052}{Camouflage}
@@ -159,10 +198,10 @@
 {6086}{Fire Shuriken}
 {6087}{Phantom Foe}
 {6088}{Veil of Shadow}
-{6089}{Curse of Impending Blades Mass}
+{6089}{Curse of Imp. Blades, Mass}
 {6090}{Dissonant Chord}
 {6091}{Haunting Tune}
-{6092}{Loves Lament}
+{6092}{Love's Lament}
 {6093}{Ray of Dizziness}
 {6094}{Wounding Whispers}
 {6095}{Dirge of Discord}
@@ -170,17 +209,17 @@
 {6097}{Find the Gap}
 {6098}{Wraithstrike}
 {6099}{Resonating Bolt}
-{6100}{Resistance Greater}
+{6100}{Resistance, Greater}
 {6101}{Fugue}
-{6102}{Sirines Grace}
+{6102}{Sirine's Grace}
 {6103}{Dolorous Blow}
 {6105}{Cacophonic Burst}
 {6106}{Wail of Doom}
 {6107}{Heart Ripper}
 {6108}{Dirge}
-{6109}{Nixies Grace}
+{6109}{Nixie's Grace}
 {6110}{Ray of Light}
-{6111}{Resistance Superior}
+{6111}{Resistance, Superior}
 {6112}{Strategic Charge}
 {6113}{Blessed Aim}
 {6114}{Clear Mind}
@@ -226,7 +265,7 @@
 {6155}{Bless Weapon Swift}
 {6156}{Anarchic Storm}
 {6157}{Clutch of Orcus}
-{6158}{Conviction Mass}
+{6158}{Conviction, Mass}
 {6159}{Corona of Cold}
 {6161}{Demon Dirge}
 {6162}{Devil Blight}
@@ -241,7 +280,38 @@
 {6171}{Storm of Elemental Fury}
 {6172}{Acid Fog}
 {6173}{Touch of Madness}
+{6174}{Energized Shield, Lesser}
+{6175}{Energized Shield}
+{6176}{Draconic Might}
+{6177}{Vigor, Mass Lesser}
+{6178}{Vigor, Mass Improved}
+{6179}{Sure Strike}
+{6180}{Hunter's Eye}
+{6181}{Tactical Precision}
+{6182}{Accuracy}
+{6183}{Hail of Stone}
+{6184}{Lesser Orb of Acid}
+{6185}{Lesser Orb of Cold}
+{6186}{Lesser Orb of Electricity}
+{6187}{Lesser Orb of Fire}
+{6188}{Lesser Orb of Sound}
+{6189}{Blades of Fire}
+{6190}{Fireburst}
+{6191}{Greater Fireburst}
+{6192}{Ice Knife}
+{6193}{Whirling Blade}
+{6194}{Ring of Blades}
+{6195}{Blast of Flame}
+{6196}{Orb of Acid}
+{6197}{Orb of Cold}
+{6198}{Orb of Electricity}
+{6199}{Orb of Fire}
+{6200}{Orb of Sound}
 
+{20158}{TAG_SPELLS_EVARD'S_BLACK_TENTACLES}
+{20794}{TAG_SPELLS_VIGOR,_LESSER}
+{20795}{TAG_SPELLS_VIGOR}
+{20796}{TAG_SPELLS_VIGOR,_GREATER}
 {21050}{TAG_SPELLS_SOUND_LANCE}
 {21051}{TAG_SPELLS_CRITICAL_STRIKE}
 {21052}{TAG_SPELLS_CAMOUFLAGE}
@@ -280,10 +350,10 @@
 {21086}{TAG_SPELLS_FIRE_SHURIKEN}
 {21087}{TAG_SPELLS_PHANTOM_FOE}
 {21088}{TAG_SPELLS_VEIL_OF_SHADOW}
-{21089}{TAG_SPELLS_CURSE_OF_IMPENDING_BLADES_MASS}
+{21089}{TAG_SPELLS_CURSE_OF_IMP._BLADES,_MASS}
 {21090}{TAG_SPELLS_DISSONANT_CHORD}
 {21091}{TAG_SPELLS_HAUNTING_TUNE}
-{21092}{TAG_SPELLS_LOVES_LAMENT}
+{21092}{TAG_SPELLS_LOVE'S_LAMENT}
 {21093}{TAG_SPELLS_RAY_OF_DIZZINESS}
 {21094}{TAG_SPELLS_WOUNDING_WHISPERS}
 {21095}{TAG_SPELLS_DIRGE_OF_DISCORD}
@@ -291,17 +361,17 @@
 {21097}{TAG_SPELLS_FIND_THE_GAP}
 {21098}{TAG_SPELLS_WRAITHSTRIKE}
 {21099}{TAG_SPELLS_RESONATING_BOLT}
-{21100}{TAG_SPELLS_RESISTANCE}
+{21100}{TAG_SPELLS_RESISTANCE,_GREATER}
 {21101}{TAG_SPELLS_FUGUE}
-{21102}{TAG_SPELLS_SIRINES_GRACE}
+{21102}{TAG_SPELLS_SIRINE'S_GRACE}
 {21103}{TAG_SPELLS_DOLOROUS_BLOW}
 {21105}{TAG_SPELLS_CACOPHONIC_BURST}
 {21106}{TAG_SPELLS_WAIL_OF_DOOM}
 {21107}{TAG_SPELLS_HEART_RIPPER}
 {21108}{TAG_SPELLS_DIRGE}
-{21109}{TAG_SPELLS_NIXIES_GRACE}
+{21109}{TAG_SPELLS_NIXIE'S_GRACE}
 {21110}{TAG_SPELLS_RAY_OF_LIGHT}
-{21111}{TAG_SPELLS_RESISTANCE_SUPERIOR}
+{21111}{TAG_SPELLS_RESISTANCE,_SUPERIOR}
 {21112}{TAG_SPELLS_STRATEGIC_CHARGE}
 {21113}{TAG_SPELLS_BLESSED_AIM}
 {21114}{TAG_SPELLS_CLEAR_MIND}
@@ -347,7 +417,7 @@
 {21155}{TAG_SPELLS_BLESS_WEAPON_SWIFT}
 {21156}{TAG_SPELLS_ANARCHIC_STORM}
 {21157}{TAG_SPELLS_CLUTCH_OF_ORCUS}
-{21158}{TAG_SPELLS_CONVICTION_MASS}
+{21158}{TAG_SPELLS_CONVICTION,_MASS}
 {21159}{TAG_SPELLS_CORONA_OF_COLD}
 {21161}{TAG_SPELLS_DEMON_DIRGE}
 {21162}{TAG_SPELLS_DEVIL_BLIGHT}
@@ -362,3 +432,30 @@
 {21171}{TAG_SPELLS_STORM_OF_ELEMENTAL_FURY}
 {21172}{TAG_SPELLS_ACID_FOG}
 {21173}{TAG_SPELLS_TOUCH_OF_MADNESS}
+{21174}{TAG_SPELLS_ENERGIZED_SHIELD,_LESSER}
+{21175}{TAG_SPELLS_ENERGIZED_SHIELD}
+{21176}{TAG_SPELLS_DRACONIC_MIGHT}
+{21177}{TAG_SPELLS_VIGOR,_MASS_LESSER}
+{21178}{TAG_SPELLS_VIGOR,_MASS_IMPROVED}
+{21179}{TAG_SPELLS_SURE_STRIKE}
+{21180}{TAG_SPELLS_HUNTER'S_EYE}
+{21181}{TAG_SPELLS_TACTICAL_PRECISION}
+{21182}{TAG_SPELLS_ACCURACY}
+{21183}{TAG_SPELLS_HAIL_OF_STONE}
+{21184}{TAG_SPELLS_LESSER_ORB_OF_ACID}
+{21185}{TAG_SPELLS_LESSER_ORB_OF_COLD}
+{21186}{TAG_SPELLS_LESSER_ORB_OF_ELECTRICITY}
+{21187}{TAG_SPELLS_LESSER_ORB_OF_FIRE}
+{21188}{TAG_SPELLS_LESSER_ORB_OF_SOUND}
+{21189}{TAG_SPELLS_BLADES_OF_FIRE}
+{21190}{TAG_SPELLS_FIREBURST}
+{21191}{TAG_SPELLS_GREATER_FIREBURST}
+{21192}{TAG_SPELLS_ICE_KNIFE}
+{21193}{TAG_SPELLS_WHIRLING_BLADE}
+{21194}{TAG_SPELLS_RING_OF_BLADES}
+{21195}{TAG_SPELLS_BLAST_OF_FLAME}
+{21196}{TAG_SPELLS_ORB_OF_ACID}
+{21197}{TAG_SPELLS_ORB_OF_COLD}
+{21198}{TAG_SPELLS_ORB_OF_ELECTRICITY}
+{21199}{TAG_SPELLS_ORB_OF_FIRE}
+{21200}{TAG_SPELLS_ORB_OF_SOUND}

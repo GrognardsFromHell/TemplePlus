@@ -1,0 +1,8 @@
+// Dummy Spells for Python Actions
+
+{3900}{dummy_spell_cone_small}
+{3901}{dummy_spell_cone_medium}
+{3902}{dummy_spell_cone_large}
+{3903}{dummy_spell_line_small}
+{3904}{dummy_spell_line_medium}
+{3905}{dummy_spell_line_large}
