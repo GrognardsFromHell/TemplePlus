@@ -1,0 +1,5 @@
+ID_string: MASTER'S_TOUCH
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\spell masters touch.tga
+help_topic: TAG_SPELLS_MASTERS_TOUCH
+tooltip_base_text: Masters Touch

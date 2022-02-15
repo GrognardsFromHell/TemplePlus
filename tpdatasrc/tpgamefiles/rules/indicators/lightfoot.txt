@@ -1,0 +1,5 @@
+ID_string: LIGHTFOOT
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Spell Expeditious Retreat.tga
+help_topic: TAG_SPELLS_LIGHTFOOT
+tooltip_base_text: Lightfoot

@@ -1,0 +1,5 @@
+ID_string: BLADEWEAVE
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\spell heroism.tga
+help_topic: TAG_SPELLS_BLADEWEAVE
+tooltip_base_text: BLADEWEAVE
