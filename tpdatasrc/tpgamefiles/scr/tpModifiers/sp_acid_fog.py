@@ -54,7 +54,7 @@ def acidFogEffectMovementRestriction(attachee, args, evt_obj):
     return 0
 
 acidFogEffect = AoESpellEffectModifier("Acid Fog Effect") #spellId, duration, spellDc, eventId, empty
-acidFogEffect.AddHook(ET_OnBeginRound, EK_NONE, acidFogDealDamage, ())
+acidFogEffect.AddHook(ET_OnBeginRound, EK_NONE, acidFogEffectDealDamage, ())
 acidFogEffect.AddHook(ET_OnTurnBasedStatusInit, EK_NONE, acidFogEffectSuppressFiveFoot, ())
 acidFogEffect.AddHook(ET_OnGetDefenderConcealmentMissChance, EK_NONE, acidFogEffectConcealment, ())
 acidFogEffect.AddHook(ET_OnGetMoveSpeed, EK_NONE, acidFogEffectMovementRestriction, ())
