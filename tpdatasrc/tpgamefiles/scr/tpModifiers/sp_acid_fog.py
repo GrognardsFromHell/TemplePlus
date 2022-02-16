@@ -41,7 +41,7 @@ def acidFogEffectConcealment(attachee, args, evt_obj):
         bonusValue = 20
     bonusType = bonus_type_concealment
     bonusTag = game.get_mesline("mes\\bonus_description.mes", bonusType)
-    evt_obj.bonus_list.add(bonusValue, bonusType, "{} : ~Acid Fog~[TAG_SPELLS_ACID_FOG]".format(bonusTag)
+    evt_obj.bonus_list.add(bonusValue, bonusType, "{} : ~Acid Fog~[TAG_SPELLS_ACID_FOG]".format(bonusTag))
     return 0
 
 def acidFogEffectMovementRestriction(attachee, args, evt_obj):
