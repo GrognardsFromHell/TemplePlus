@@ -1,0 +1,5 @@
+ID_string: BOLTS_OF_BEDEVILMENT_CHARGE
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Holding Charge.tga
+help_topic: TAG_SPELLS_BOLTS_OF_BEDEVILMENT
+tooltip_base_text: Bolts of Bedevilment
