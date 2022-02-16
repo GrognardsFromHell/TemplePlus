@@ -1,4 +1,6 @@
 sp-Acid Fog	smoke emit			perm	600		Object YPR				Sprite	Same as Emitter	Polar	Cartesian	fire-sprite	120	Blend	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?30	0	0?360		0?240	5?40	0	0	0?360	0	0	0,16,0	0	255	144						100
+sp-Acid Fog-hit	New Emitter			15	10						Sprite		Polar		fire-sprite	30	Add	0				0	0	0	0	0	0	0	30	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360	0	#radius	20?40	0	0	0?360	0	0	0,255,0	0	255	144						5
+sp-Acid Fog-hit	hittin			perm	5						Sprite		Polar		fire-sprite	90	Blend	0				0	0	0	0	0	0	0	30	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360	0	#radius	20?40	0	0	0?360	0	0	0,60,0	0	255	144					
 sp-Appraising Touch	aura	10		perm	30		Node Pos	bip01 head			Sprite				flare-1	30	Add	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4?10	0	0	0	0	0	0,200,150,100,50,0	200?255	200?255	0?64						
 sp-Appraising Touch	startup			5	200		Node Pos	bip01 head			Sprite				flare-1	30	Add	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4,20	0	0	0	0	0	0,200,150,100,50,0	200?255	200?255	0?64						
 sp-Axiomatic Storm	ice ice baby		Model Verts	perm	80						Sprite	World	Polar		shard	10	Add	0		shard		0	0	0	0	0	0	0	600	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	-1600	0	-240?240	0	-240?240	5?25	0	0		0		0,255,255,255,255,255,255,255,0	211	211	211						20
