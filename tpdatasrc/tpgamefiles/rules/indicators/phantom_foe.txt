@@ -1,0 +1,5 @@
+ID_string: PHANTOM_FOE
+effect_type: 1
+texture_file: art\interface\player_conditions\ailments\Fascinated.tga
+help_topic: TAG_SPELLS_PHANTOM_FOE
+tooltip_base_text: Phantom Foe
