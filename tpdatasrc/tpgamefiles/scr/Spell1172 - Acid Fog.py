@@ -31,6 +31,9 @@ def OnSpellEffect(spell):
 def OnBeginRound(spell):
     print "Acid Fog OnBeginRound"
 
+def OnAreaOfEffectHit(spell):
+    print "Acid Fog OnAreaOfEffectHit"
+
 def OnEndSpellCast(spell):
     print "Acid Fog OnEndSpellCast"
 
