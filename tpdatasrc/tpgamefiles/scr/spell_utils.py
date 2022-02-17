@@ -583,7 +583,7 @@ class SpellPythonModifier(PythonModifier):
     def AddMovementBonus(self, bonusValue, bonusType):
         self.AddHook(ET_OnGetMoveSpeedBase, EK_NONE, applyBonus, (bonusValue, bonusType,))
     def AddTempHp(self, tempHpAmount):
-        self.AddHook(OnConditionAdd, EK_NONE, addTempHp, (tempHpAmount,))
+        self.AddHook(ET_OnConditionAdd, EK_NONE, addTempHp, (tempHpAmount,))
         self.AddHook(ET_OnD20Signal, EK_S_Temporary_Hit_Points_Removed, removeTempHp, ())
 
 ### Aoe Modifier Classes ###
