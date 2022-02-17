@@ -1,0 +1,5 @@
+ID_string: RIGHTEOUS_FURY
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Spell Bull Strength.tga
+help_topic: TAG_SPELLS_RIGHTEOUS_FURY
+tooltip_base_text: Righteous Fury

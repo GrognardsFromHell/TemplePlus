@@ -1,0 +1,5 @@
+ID_string: AID,_MASS
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\spell aid.tga
+help_topic: TAG_SPELLS_AID,_MASS
+tooltip_base_text: Aid, Mass
