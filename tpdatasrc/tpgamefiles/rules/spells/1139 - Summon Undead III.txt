@@ -1,0 +1,22 @@
+School: Conjuration
+Subschool: Summoning
+Descriptor: Evil
+Level: Clr 3
+Level: Sor 3
+Level: Wiz 3
+Component: V
+Component: S
+Casting Time: Full round
+Range: Close
+Saving Throw: None
+Spell Resistance: No
+Projectile: No
+flags_Target: Range
+exc_flags_Target: Dead
+exc_flags_Target: Non-critter
+exc_flags_Target: Other
+exc_flags_Target: Self
+mode_Target: Area
+radius_Target: 1
+ai_type: ai_action_summon
+proto choices: 14128 14602 14081 14092 14107
