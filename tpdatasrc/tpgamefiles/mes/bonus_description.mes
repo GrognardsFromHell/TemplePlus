@@ -20,7 +20,6 @@
 {13} {~Morale~[TAG_MODIFIER_MORALE]}
 {14} {~Luck~[TAG_MODIFIER_LUCK]}
 {15} {~Resistance~[TAG_MODIFIER_RESISTANCE]} // There are some vanilla code problems with this type
-{16} {~Sacred~[TAG_MODIFIER_SACRED]} // I am not 100% sure that bonus_type 16 in vanilla is actually sacred, but I am pretty sure. If not I would switch sacred to 152
 {17} {~Sacred~[TAG_MODIFIER_SACRED]} // I think this is the vanilla Sacred bonus type (only used by the Consecrate spell)
 {18} {~Insight~[TAG_MODIFIER_INSIGHT]}
 {19} {~Concealment~[TAG_CONCEALMENT]}
