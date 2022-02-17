@@ -494,6 +494,13 @@ Range:               Personal
 Target:             Weapon touched
 Duration:      1 round}
 
+{6117} Rhino's Rush {Deal double damage on a charge attack.
+School:          Transmutation
+Casting:         1  swift action [V,S]
+Range:               Personal
+Target:             You
+Duration:      1 round}
+
 {6118} Faith Healing {Heal 8 + level (max. 5) on target that worships same deity.
 
 School:          Conjuration(Healing)
