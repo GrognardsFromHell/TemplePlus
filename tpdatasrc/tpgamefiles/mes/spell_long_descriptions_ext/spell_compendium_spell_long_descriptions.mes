@@ -749,7 +749,7 @@ Range:               Touch
 Target:             Armor touched
 Duration:      1 min/level,  Save: None,  SR: No}
 
-{6153} Aid Mass {Like spell Aid, but on multiple targets and temp HP are 1d8 + level (max 15).
+{6153} Aid, Mass {Like spell Aid, but on multiple targets and temp HP are 1d8 + level (max 15).
 School:          Enchantment(Compulsion)[Mind-Aff.]
 Casting:         1 action [V,S]
 Range:               Close (25ft. + 5ft./2 lvls)
