@@ -109,7 +109,7 @@
 {1150}{Deific Vengeance}
 {1151}{Frost Breath}
 {1152}{Ghost Touch Armor}
-{1153}{Aid Mass}
+{1153}{Aid, Mass}
 {1154}{Align Weapon Mass}
 {1155}{Bless Weapon Swift}
 {1156}{Anarchic Storm}
@@ -262,7 +262,7 @@
 {6150}{Deific Vengeance}
 {6151}{Frost Breath}
 {6152}{Ghost Touch Armor}
-{6153}{Aid Mass}
+{6153}{Aid, Mass}
 {6154}{Align Weapon Mass}
 {6155}{Bless Weapon Swift}
 {6156}{Anarchic Storm}
@@ -415,7 +415,7 @@
 {21150}{TAG_SPELLS_DEIFIC_VENGEANCE}
 {21151}{TAG_SPELLS_FROST_BREATH}
 {21152}{TAG_SPELLS_GHOST_TOUCH_ARMOR}
-{21153}{TAG_SPELLS_AID_MASS}
+{21153}{TAG_SPELLS_AID,_MASS}
 {21154}{TAG_SPELLS_ALIGN_WEAPON_MASS}
 {21155}{TAG_SPELLS_BLESS_WEAPON_SWIFT}
 {21156}{TAG_SPELLS_ANARCHIC_STORM}
