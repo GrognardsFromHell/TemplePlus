@@ -528,6 +528,13 @@ def applyAttackPacketBonus(attachee, args, evt_obj):
     applyBonus(attachee, args, evt_obj)
     return 0
 
+def AddTempHp(attachee, args, evt_obj):
+    spellId = args.get_arg(0)
+    duration = args.get_arg(1)
+    tempHpAmount = args.get_param(0) if args.get_param(0) else args.get_arg(2)
+    attachee.condition_add_with_args("Temporary_Hit_Points", spellId, duration, tempHpAmount)
+    return 0
+
 class SpellPythonModifier(PythonModifier):
     #SpellPythonModifier have at least 3 arguments:
     #spellId, duration, empty
@@ -575,6 +582,9 @@ class SpellPythonModifier(PythonModifier):
         self.AddHook(ET_OnGetAbilityCheckModifier, EK_NONE, applyBonus, (bonusValue, bonusType,))
     def AddMovementBonus(self, bonusValue, bonusType):
         self.AddHook(ET_OnGetMoveSpeedBase, EK_NONE, applyBonus, (bonusValue, bonusType,))
+    def AddTempHp(self, tempHpAmount):
+        self.AddHook(OnConditionAdd, EK_NONE, addTempHp, (tempHpAmount,))
+        self.AddHook(ET_OnD20Signal, EK_S_Temporary_Hit_Points_Removed, removeTempHp, ())
 
 ### Aoe Modifier Classes ###
 def addAoeObjToSpellRegistry(attachee, args, evt_obj):
