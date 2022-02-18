@@ -239,6 +239,23 @@ def getSpellClassCode(classEnum):
     return dummySpellData.spell_class
 ##### workaround getSpellClassCode #####
 
+# Perform a normal attack instead of a touch attack
+def performAttack(attachee, target, spellId, isRanged = True):
+    actionType = tpdp.D20ActionType.StandardRangedAttack if isRanged else tpdp.D20ActionType.StandardAttack
+    attackAction = tpdp.D20Action(actionType)
+    attackAction.performer = attachee
+    attackAction.target = target
+    attackAction.spell_id = spellId
+    if isRanged:
+        attackAction.flags |= D20CAF_RANGED
+    attackAction.data1 = 1 #perform_touch_attack in python_object sets this to 1
+    attackAction.to_hit_processing()
+    game.create_history_from_id(attackAction.roll_id_1)
+    game.create_history_from_id(attackAction.roll_id_2)
+    game.create_history_from_id(attackAction.roll_id_0)
+    return attackAction.flags
+
+
 ### Item Condition functions
 
 # An item condition is a condition that should be applied to a
