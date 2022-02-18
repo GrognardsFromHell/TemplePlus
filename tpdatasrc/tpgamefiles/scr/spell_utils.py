@@ -240,10 +240,10 @@ def getSpellClassCode(classEnum):
 ##### workaround getSpellClassCode #####
 
 # Perform a normal attack instead of a touch attack
-def performAttack(attachee, target, spellId, isRanged = True):
+def performAttack(attacker, target, spellId, isRanged = True):
     actionType = tpdp.D20ActionType.StandardRangedAttack if isRanged else tpdp.D20ActionType.StandardAttack
     attackAction = tpdp.D20Action(actionType)
-    attackAction.performer = attachee
+    attackAction.performer = attacker
     attackAction.target = target
     attackAction.spell_id = spellId
     if isRanged:
