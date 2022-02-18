@@ -1681,3 +1681,14 @@
 {30006}{} // spell projectile in-flight
 {30007}{} // spell hit
 {30008}{} // spell struck
+
+// [1201] *[Icelance]
+{30020}{} // spell begin
+{30021}{} // spell end
+{30022}{} // spell effect
+{30023}{} // spell new round
+{30024}{spells\sp_snare_end.WAV} // spell projectile begin
+{30025}{spells\sp_snare_hit.WAV} // spell projectile end
+{30026}{} // spell projectile in-flight
+{30027}{} // spell hit
+{30028}{} // spell struck
