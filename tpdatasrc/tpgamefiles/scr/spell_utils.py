@@ -239,6 +239,23 @@ def getSpellClassCode(classEnum):
     return dummySpellData.spell_class
 ##### workaround getSpellClassCode #####
 
+# Perform a normal attack instead of a touch attack
+def performAttack(attacker, target, spellId, isRanged = True):
+    actionType = tpdp.D20ActionType.StandardRangedAttack if isRanged else tpdp.D20ActionType.StandardAttack
+    attackAction = tpdp.D20Action(actionType)
+    attackAction.performer = attacker
+    attackAction.target = target
+    attackAction.spell_id = spellId
+    if isRanged:
+        attackAction.flags |= D20CAF_RANGED
+    attackAction.data1 = 1 #perform_touch_attack in python_object sets this to 1
+    attackAction.to_hit_processing()
+    game.create_history_from_id(attackAction.roll_id_1)
+    game.create_history_from_id(attackAction.roll_id_2)
+    game.create_history_from_id(attackAction.roll_id_0)
+    return attackAction.flags
+
+
 ### Item Condition functions
 
 # An item condition is a condition that should be applied to a
@@ -572,7 +589,7 @@ class SpellPythonModifier(PythonModifier):
             self.AddHook(ET_OnAbilityScoreLevel, eventKey, applyBonus,(bonusValue, bonusType,))
     def AddDamageReduction(self, drAmount, drBreakType):
         self.AddHook(ET_OnTakingDamage2, EK_NONE, applyDamageReduction,(drAmount, drBreakType,))
-    def AddSaveBonus(self, bonusValue, bonusType, eventKey = EK_NONE, saveDescriptor = D20STD_F_NONE):
+    def AddSaveBonus(self, bonusValue, bonusType, saveDescriptor = D20STD_F_NONE, eventKey = EK_NONE):
         self.AddHook(ET_OnSaveThrowLevel, eventKey, applySaveBonus, (bonusValue, bonusType, saveDescriptor,))
     def AddToHitBonus(self, bonusValue, bonusType, flagRequirement = 0):
         self.AddHook(ET_OnToHitBonus2, EK_NONE, applyAttackPacketBonus,(bonusValue, bonusType, flagRequirement,))

@@ -157,6 +157,7 @@
 {1198}{Orb of Electricity}
 {1199}{Orb of Fire}
 {1200}{Orb of Sound}
+{1201}{Icelance}
 
 // Spell Descriptions
 {5158} Evard's Black Tentacles {[Conjuration][Creation] Create Tentacles that grapple in a 20ft. area.}
@@ -311,3 +312,4 @@
 {6198} Orb of Electricity {Ranged Touch Attack that deals 1d6/level (max 15d6) electricity damage and in addition may entangle for 1 round on a failed fortitude save.}
 {6199} Orb of Fire {Ranged Touch Attack that deals 1d6/level (max 15d6) fire damage and in addition dazes for 1 round on a failed fortitude save.}
 {6200} Orb of Sound {Ranged Touch Attack that deals 1d6/level (max 15d6) sonic damage and in addition deafens for 1 round on a failed fortitude save.}
+{6201} Icelance {[Transmutation][Creation] Ranged Attack that deals 3d6 Cold and 3d6 Piercing Damage to target. In addition, target is stunned for 1d4 rounds on a failed fortitude save.}
