@@ -572,7 +572,7 @@ class SpellPythonModifier(PythonModifier):
             self.AddHook(ET_OnAbilityScoreLevel, eventKey, applyBonus,(bonusValue, bonusType,))
     def AddDamageReduction(self, drAmount, drBreakType):
         self.AddHook(ET_OnTakingDamage2, EK_NONE, applyDamageReduction,(drAmount, drBreakType,))
-    def AddSaveBonus(self, bonusValue, bonusType, eventKey = EK_NONE, saveDescriptor = D20STD_F_NONE):
+    def AddSaveBonus(self, bonusValue, bonusType, saveDescriptor = D20STD_F_NONE, eventKey = EK_NONE):
         self.AddHook(ET_OnSaveThrowLevel, eventKey, applySaveBonus, (bonusValue, bonusType, saveDescriptor,))
     def AddToHitBonus(self, bonusValue, bonusType, flagRequirement = 0):
         self.AddHook(ET_OnToHitBonus2, EK_NONE, applyAttackPacketBonus,(bonusValue, bonusType, flagRequirement,))
