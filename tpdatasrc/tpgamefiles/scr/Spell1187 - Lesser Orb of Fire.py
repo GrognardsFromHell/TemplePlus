@@ -21,7 +21,7 @@ def OnEndProjectile(spell, projectile, index_of_target):
     spell.duration = 0
     spellTarget = spell.target_list[0]
     spellDamageDice = dice_new('1d8')
-    spellDamageDice.number = min((spell.caster_level/2), 5) #capped at cl 10 (5d8)
+    spellDamageDice.number = min((spell.caster_level + 1) / 2, 5) #capped at cl 9 (5d8)
     damageType = D20DT_FIRE
     spellDamageReduction = 100 #100 indicates full damage
 
