@@ -14,4 +14,4 @@ def addNauseatedOnSpellEnd(attachee, args, evt_obj):
 irongutsSpell = SpellPythonModifier("sp-Ironguts") # spellId, duration, empty
 irongutsSpell.AddHook(ET_OnConditionRemove, EK_NONE, addNauseatedOnSpellEnd, ())
 #Ironguts adds a +5 Alchemical Bonus to Fortitude Saves vs. poison
-irongutsSpell.AddSaveBonus(5, bonus_type_alchemical, EK_SAVE_FORTITUDE, D20STD_F_POISON)
+irongutsSpell.AddSaveBonus(5, bonus_type_alchemical, D20STD_F_POISON, EK_SAVE_FORTITUDE)
