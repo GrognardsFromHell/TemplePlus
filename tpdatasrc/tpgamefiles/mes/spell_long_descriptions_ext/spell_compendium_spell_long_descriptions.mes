@@ -1016,3 +1016,17 @@ Casting:         1 action [V,S]
 Range:               Close (25ft. + 5ft./2 lvls)
 Target:             One creature
 Duration:      Inst.,  Save: Fortitude partial,  SR: No}
+
+{6201} Icelance {Ranged Attack that deals 3d6 Cold and 3d6 Piercing Damage to target. In addition, target is stunned for 1d4 rounds on a failed fortitude save.
+School:          Conjuration(Creation)
+Casting:         1 action [V,S]
+Range:               Medium (100ft. + 10ft./level)
+Target:             One creature
+Duration:      Inst.,  Save: Fortitude partial,  SR: Yes}
+
+{6202} Revivify {Restores life to a recently deceased creature (died within 1 round).
+School:          Conjuration(Healing)
+Casting:         1 action [V,S,M]
+Range:               Touch
+Target:             Dead creature touched
+Duration:      Inst.,  Save: None,  SR: No}
