@@ -3372,6 +3372,7 @@ spell_orb_of_electricity = 1198
 spell_orb_of_fire = 1199
 spell_orb_of_sound = 1200
 spell_icelance = 1201
+spell_revivify = 1202
 
 
 spell_inevitable_defeat = 1302
