@@ -35,6 +35,7 @@ protected:
 	void write(uint32_t offset, const void *buffer, size_t size);
 	void read(uint32_t offset, void *buffer, size_t size);
 	void writeHex(uint32_t offset, const std::string &hexPattern);
+	void writeAddress(uint32_t offset, void* addr); // for replacing callbacks and arrays
 	void redirectCall(uint32_t offset, void* redirectTo);
 	void redirectJump(uint32_t offset, void* redirectTo);
 
