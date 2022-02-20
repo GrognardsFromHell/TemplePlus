@@ -40,6 +40,10 @@ PYBIND11_EMBEDDED_MODULE(logbook, m) {
 		uiLogbook.RecordHighestDamage(isWeaponDamage, damTot, attacker, tgt);
 		});
 
+	m.def("set_key_entry_need_to_notify", [](BOOL value)->void {
+		uiLogbook.KeyEntryNeedToNotifySet(value);
+		});
+
 	m.attr("is_weapon_damage") = temple::GetRef<BOOL>(0x10BCA8AC);
 	
 }

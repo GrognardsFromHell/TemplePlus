@@ -27,6 +27,7 @@ public:
 	void IncreaseMisses(objHndl handle);
 	void RecordHighestDamage(BOOL isWeaponDamage, int damageAmt, objHndl attacker, objHndl tgt);
 	void MarkKey(int keyId, const GameTime& gameTime);
+	void KeyEntryNeedToNotifySet(bool setValue);
 
 protected:
 	void IncreaseAmount(PartyLogbookPacket & pkt, objHndl handle, int amount);
