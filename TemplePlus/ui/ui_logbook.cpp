@@ -5,9 +5,22 @@
 #include <gamesystems/objects/objsystem.h>
 #include <gamesystems/objects/gameobject.h>
 #include <party.h>
+#include <tig/tig_msg.h>
+#include <tig/tig_keyboard.h>
+#include <ui/ui.h>
 
 
 UiLogbook uiLogbook;
+
+
+class UiLogbookHooks : public TempleFix
+{
+	static BOOL KeyEntryWndMsg(int, TigMsg*); // support pressing enter to confirm
+	void apply() override {
+		
+		writeAddress(0x10197245 + 7, &KeyEntryWndMsg);
+	}
+} uiLogbookHooks;
 
 void UiLogbook::IncreaseAmount(PartyLogbookPacket & pkt, objHndl handle, int amount){
 
@@ -63,4 +76,17 @@ BOOL PartyLogbookPacket::HasObj(objHndl handle){
 
 BOOL PartyLogbookPacket::AddObj(objHndl handle){
 	return temple::GetRef<BOOL(__cdecl)(PartyLogbookPacket *, objHndl)>(0x10198C40)(this, handle);
+}
+
+BOOL UiLogbookHooks::KeyEntryWndMsg(int id, TigMsg* msg)
+{
+	if (msg->type == TigMsgType::CHAR) {
+		auto charMsg = (TigCharMsg*)msg;
+
+		if (charMsg->charCode == VK_RETURN) {
+			uiManager->SetHidden(id, true);
+			return TRUE;
+		}
+	}
+	return TRUE;
 }
