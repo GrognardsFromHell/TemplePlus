@@ -1956,6 +1956,16 @@ static PyObject* PyObjHandle_IsFriendly(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(result);
 }
 
+static PyObject* PyObjHandle_IsPerforming(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle || !objSystem->IsValidHandle(self->handle))
+		return PyInt_FromLong(0);
+
+	auto result = actSeqSys.isPerforming(self->handle);
+	return PyInt_FromLong(result);
+}
+
+
 static PyObject* PyObjHandle_FadeTo(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle)
@@ -4456,6 +4466,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "is_favored_enemy", PyObjHandle_FavoredEnemy, METH_VARARGS, NULL },
 	{ "is_flanked_by", PyObjHandle_IsFlankedBy, METH_VARARGS, NULL },
 	{ "is_friendly", PyObjHandle_IsFriendly, METH_VARARGS, NULL },
+	{ "is_performing", PyObjHandle_IsPerforming, METH_VARARGS, NULL },
 	{ "is_spell_known", PyObjHandle_IsSpellKnown, METH_VARARGS, NULL },
 	{ "is_unconscious", PyObjHandle_IsUnconscious, METH_VARARGS, NULL },
 	{ "is_throwing_weapon", PyObjHandle_IsThrowingWeapon, METH_VARARGS, NULL },
