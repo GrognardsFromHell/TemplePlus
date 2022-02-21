@@ -1,6 +1,6 @@
 from toee import *
 import tpdp
-from spell_utils import AoeSpellHandleModifier, AoESpellEffectModifier, applyBonus
+from spell_utils import AoeSpellHandleModifier, AoESpellEffectModifier, applyBonus, applyDamagePacketBonus
 
 print "Registering sp-Acid Fog"
 
@@ -59,4 +59,4 @@ acidFogEffect.AddHook(ET_OnTurnBasedStatusInit, EK_NONE, acidFogEffectSuppressFi
 acidFogEffect.AddHook(ET_OnGetDefenderConcealmentMissChance, EK_NONE, acidFogEffectConcealment, ())
 acidFogEffect.AddHook(ET_OnGetMoveSpeed, EK_NONE, acidFogEffectMovementRestriction, ())
 acidFogEffect.AddHook(ET_OnToHitBonus2, EK_NONE, applyBonus, (-2, bonus_type_untyped,)) #maybe new bonus_type_cloud would be interesting to avoid stacking cloud effects
-acidFogEffect.AddHook(ET_OnDealingDamage, EK_NONE, applyBonus, (-2, bonus_type_untyped,))
+acidFogEffect.AddHook(ET_OnDealingDamage2, EK_NONE, applyDamagePacketBonus, (-2, bonus_type_untyped,))
