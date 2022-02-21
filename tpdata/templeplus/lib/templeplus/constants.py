@@ -3502,8 +3502,10 @@ aura_resolve = 33
 aura_stamina = 34
 aura_swiftness =35
 
-#Bonus Value is passed by spell
-passed_by_spell = 0
+#AoE Event Targets
+aoe_event_target_friendly = 1
+aoe_event_target_non_friendly = 2
+aoe_event_target_all = 3
 
 #Bonus Types (aka modifiers)
 bonus_type_untyped = 0
@@ -3541,6 +3543,8 @@ bonus_type_marshal_aura_minor = 190
 bonus_type_marshal_aura_major = 191
 bonus_type_draconic_aura = 192
 
+#Bonus Value is passed by spell
+passed_by_spell = 0
 
 stat_strength = 0
 stat_dexterity = 1

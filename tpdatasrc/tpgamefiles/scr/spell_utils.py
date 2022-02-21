@@ -522,6 +522,17 @@ def applyBonus(attachee, args, evt_obj):
     evt_obj.bonus_list.add(bonusValue, bonusType, "{} : {}".format(bonusHelpTag, spellHelpTag))
     return 0
 
+def applyDamagePacketBonus(attachee, args, evt_obj):
+    bonusValue = args.get_param(0)
+    if not bonusValue:
+        bonusValue = args.get_arg(2)
+    bonusType = args.get_param(1)
+    bonusHelpTag = getBonusHelpTag(bonusType)
+    spellId = args.get_arg(0)
+    spellHelpTag = getSpellHelpTag(spellId)
+    evt_obj.damage_packet.bonus_list.add(bonusValue, bonusType, "{} : {}".format(bonusHelpTag, spellHelpTag))
+    return 0
+
 def applyDamageReduction(attachee, args, evt_obj):
     drAmount = args.get_param(0)
     drBreakType = args.get_param(1)
@@ -612,36 +623,49 @@ def addAoeObjToSpellRegistry(attachee, args, evt_obj):
     spellPacket.update_registry()
     return 0
 
+def verifyAoeEventTarget(args, spellTarget, spellPacket):
+    affectedTargets = args.get_param(0)
+    spellCaster = spellPacket.caster
+
+    if spellTarget == OBJ_HANDLE_NULL:
+        return False
+    elif affectedTargets == aoe_event_target_friendly and not spellTarget.is_friendly(spellCaster):
+        return False
+    elif affectedTargets == aoe_event_target_non_friendly and spellTarget.is_friendly(spellCaster):
+        return False
+    #elif spellTarget == attachee:
+    #    return 0
+    elif spellPacket.check_spell_resistance(spellTarget):
+        return False
+
+    return True
+
+def verifyEventId(spellEventId, aoeEventId):
+    if spellEventId != aoeEventId:
+        return False
+    return True
+
 def aoeOnEnter(attachee, args, evt_obj):
     print "aoeOnEnter Hook"
+    spellTarget = evt_obj.target
     spellId = args.get_arg(0)
     duration = args.get_arg(1)
     spellDc = args.get_arg(2)
     spellEventId = args.get_arg(3)
     spellPacket = tpdp.SpellPacket(spellId)
-    spellTarget = evt_obj.target
-    print "spellTarget: {}".format(spellTarget)
+    aoeEventId = evt_obj.evt_id
 
-    if spellEventId != evt_obj.evt_id:
-        return 0
-    elif spellTarget == OBJ_HANDLE_NULL:
-        return 0
-    elif attachee == OBJ_HANDLE_NULL:
-        return 0
-    #elif spellTarget == attachee:
-    #    return 0
-    elif spellPacket.check_spell_resistance(spellTarget):
+    if not verifyEventId(spellEventId, aoeEventId):
         return 0
 
-    spellPacket.trigger_aoe_hit()
-
-    conditionName = args.get_cond_name()
-    particlesId = game.particles("{}-hit".format(conditionName), spellTarget)
-
-    if spellPacket.add_target(spellTarget, particlesId):
-        conditionEffectName = spellName(spellId)
-        spellTarget.condition_add_with_args(conditionEffectName, spellId, duration + 1, spellDc, spellEventId)
-        spellPacket.update_registry()
+    if verifyAoeEventTarget(args, spellTarget, spellPacket):
+        spellPacket.trigger_aoe_hit()
+        conditionName = args.get_cond_name()
+        particlesId = game.particles("{}-hit".format(conditionName), spellTarget)
+        if spellPacket.add_target(spellTarget, particlesId):
+            conditionEffectName = spellName(spellId)
+            spellTarget.condition_add_with_args(conditionEffectName, spellId, duration + 1, spellDc, spellEventId)
+            spellPacket.update_registry()
     return 0
 
 def aoeHandleEndSignal(attachee, args, evt_obj):
@@ -667,13 +691,12 @@ def aoeOnLeave(attachee, args, evt_obj):
     spellId = args.get_arg(0)
     spellPacket = tpdp.SpellPacket(spellId)
     spellEventId = args.get_arg(3)
+    aoeEventId = evt_obj.evt_id
 
-    if spellEventId != evt_obj.evt_id:
-        return 0
-
-    spellPacket.end_target_particles(attachee)
-    spellPacket.remove_target(attachee)
-    args.remove_spell_mod()
+    if verifyEventId(spellEventId, aoeEventId):
+        spellPacket.end_target_particles(attachee)
+        spellPacket.remove_target(attachee)
+        args.remove_spell_mod()
     return 0
 
 def aoeSpellEndSignal(attachee, args, evt_obj):
@@ -686,21 +709,14 @@ def aoeSpellEndSignal(attachee, args, evt_obj):
         args.remove_spell_mod()
     return 0
 
-def aoeEffectTickdown(attachee, args, evt_obj):
-    #This is only done, so the Tooltip can show the duration
-    #Actual spell end is handled by the AoeSpellHandlerModifier
-    duration = args.get_arg(1)
-    duration -= evt_obj.data1
-    args.set_arg(1, duration)
-    return 0
-
-class AoeSpellHandleModifier(PythonModifier):
-    #AoeSpellHandlerModifier have at least 5 arguments:
+class AoeObjHandleModifier(PythonModifier):
+    #AoeObjHandleModifier have at least 5 arguments:
     #spellId, duration, spellDc, spellEventId, empty
+    #Use this class only, if you have a special onEnterAoE Event
+    #Standard Cases use class below (AoeSpellHandleModifier)
     def __init__(self, name, args = 5, preventDuplicate = False):
         PythonModifier.__init__(self, name, args, preventDuplicate)
         self.AddHook(ET_OnConditionAdd, EK_NONE, addAoeObjToSpellRegistry, ())
-        self.AddHook(ET_OnObjectEvent, EK_OnEnterAoE, aoeOnEnter, ())
         self.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, queryActiveSpell, ())
         self.AddHook(ET_OnD20Signal, EK_S_Combat_End, aoeCombatEndSignal, ())
         self.AddSpellDispelCheckStandard()
@@ -717,12 +733,18 @@ class AoeSpellHandleModifier(PythonModifier):
     def AddSpellNoDuplicate(self):
         self.AddHook(ET_OnConditionAddPre, EK_NONE, replaceCondition, ())
 
+class AoeSpellHandleModifier(AoeObjHandleModifier):
+    #AoeSpellHandlerModifier have at least 5 arguments:
+    #spellId, duration, spellDc, spellEventId, empty
+    def __init__(self, name, affectedTargets = aoe_event_target_all, args = 5, preventDuplicate = False):
+        super(AoeSpellHandleModifier, self).__init__(name, args, preventDuplicate)
+        self.AddHook(ET_OnObjectEvent, EK_OnEnterAoE, aoeOnEnter, (affectedTargets,))
+
 class AoESpellEffectModifier(PythonModifier):
     #AoESpellEffectPythonModifier have at least 5 arguments:
     #spellId, duration, spellDc, spellEventId, empty
     def __init__(self, name, args = 5, preventDuplicate = True):
         PythonModifier.__init__(self, name, args, preventDuplicate)
-        #self.AddHook(ET_OnBeginRound, EK_NONE, aoeEffectTickdown, ())
         self.AddHook(ET_OnObjectEvent, EK_OnLeaveAoE, aoeOnLeave, ())
         self.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, queryActiveSpell, ())
         self.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Condition, querySpellCondition, ())
