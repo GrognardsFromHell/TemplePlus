@@ -1,6 +1,6 @@
 from toee import *
 import tpdp
-from spell_utils import AoeSpellHandleModifier, AoESpellEffectModifier, applyDamagePacketBonus
+from spell_utils import AoeSpellHandleModifier, AoeSpellEffectModifier, applyDamagePacketBonus
 
 print "Registering sp-Acid Fog"
 
@@ -53,7 +53,7 @@ def acidFogEffectMovementRestriction(attachee, args, evt_obj):
         evt_obj.bonus_list.set_overall_cap(2, capValue, capType, bonusMesId)
     return 0
 
-acidFogEffect = AoESpellEffectModifier("Acid Fog") #spellId, duration, spellDc, eventId, empty
+acidFogEffect = AoeSpellEffectModifier("Acid Fog") #spellId, duration, spellDc, eventId, empty
 acidFogEffect.AddHook(ET_OnBeginRound, EK_NONE, acidFogEffectDealDamage, ())
 acidFogEffect.AddHook(ET_OnTurnBasedStatusInit, EK_NONE, acidFogEffectSuppressFiveFoot, ())
 acidFogEffect.AddHook(ET_OnGetDefenderConcealmentMissChance, EK_NONE, acidFogEffectConcealment, ())
