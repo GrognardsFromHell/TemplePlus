@@ -544,6 +544,9 @@
     <ClCompile Include="python\python_gui.cpp">
       <Filter>python</Filter>
     </ClCompile>
+    <ClCompile Include="python\python_dialog.cpp">
+      <Filter>python</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -1025,6 +1028,9 @@
     </ClInclude>
     <ClInclude Include="tig\tig_timer.h">
       <Filter>tig</Filter>
+    </ClInclude>
+    <ClInclude Include="python\pybind_common.h">
+      <Filter>python</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

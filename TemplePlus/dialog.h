@@ -3,6 +3,7 @@
 #include "obj.h"
 #include "gametime.h"
 
+#define DIALOG_REPLIES_MAX (5)
 struct DialogLineNew;
 
 struct DialogMini
@@ -35,7 +36,7 @@ struct DialogState {
 	char pcLineText3[1000];
 	char pcLineText4[1000];
 	char pcLineText5[1000];
-	int pcLineSkillUse[5]; // 0 - none, 1 - bluff, 2 -diplo, 3 - intimidate, 4 - sense motive, 5 - gather info
+	int pcLineSkillUse[DIALOG_REPLIES_MAX]; // 0 - none, 1 - bluff, 2 -diplo, 3 - intimidate, 4 - sense motive, 5 - gather info
 	/*
 	   determined by the reply Op Code
 		0 - normal
@@ -55,10 +56,10 @@ struct DialogState {
 		 for barter lines : 3 (26 if NPC has to sell equipment first)
 		 for rumor lines  : 8
 	 */
-	int pcReplyOpcode[5]; 
-	int npcReplyIds[5]; // the ID of the NPC response to each PC line
-	int field_182C[5];     // I'm guessing this was the test field for each line, but no reason to replicate it here since these are already compiled from actually possible responses
-	char* effectFields[5]; // python commands to run for each line
+	int pcReplyOpcode[DIALOG_REPLIES_MAX];
+	int npcReplyIds[DIALOG_REPLIES_MAX]; // the ID of the NPC response to each PC line
+	int field_182C[DIALOG_REPLIES_MAX];     // I'm guessing this was the test field for each line, but no reason to replicate it here since these are already compiled from actually possible responses
+	char* effectFields[DIALOG_REPLIES_MAX]; // python commands to run for each line
 	int answerLineId;
 	int rngSeed;
 	int field_185C;

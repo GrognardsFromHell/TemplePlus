@@ -126,9 +126,9 @@ protected:
 	int & textMinY = temple::GetRef<int>(0x10BEC20C);
 
 	TigRect &mHeadBtnTgtRect = temple::GetRef<TigRect>(0x10BEC334);
-	TigRect mResponseRects[5]; //= temple::GetPointer<TigRect>(0x10BE9A38); //size 5 array
-	TigRect mResponseNumberRects[5]; // = temple::GetPointer<TigRect>(0x10BEA8C0); //size 5 array;
-	TigRect mSkillIconRects[5]; //= temple::GetPointer<TigRect>(0x10BE9F50); //size 5 array;
+	TigRect mResponseRects[DIALOG_REPLIES_MAX]; //= temple::GetPointer<TigRect>(0x10BE9A38); //size 5 array
+	TigRect mResponseNumberRects[DIALOG_REPLIES_MAX]; // = temple::GetPointer<TigRect>(0x10BEA8C0); //size 5 array;
+	TigRect mSkillIconRects[DIALOG_REPLIES_MAX]; //= temple::GetPointer<TigRect>(0x10BE9F50); //size 5 array;
 	int &mMusicVolume = temple::GetRef<int>(0x10BEA8A4);
 	
 
@@ -400,7 +400,7 @@ UiDialogImpl::UiDialogImpl(const UiSystemConf & conf)
 	mMusicVolume = temple::GetRef<int(__cdecl)()>(0x1003C9F0)();
 
 	MesFile::Content dlgUiMes = MesFile::ParseFile("mes\\dlg_ui.mes");
-	for (auto i=0; i < 5; ++i){
+	for (auto i=0; i < DIALOG_REPLIES_MAX; ++i){
 		if (dlgUiMes[i].find(i))
 			mResponseNumbers[i] = dlgUiMes[i].c_str();
 	}
@@ -612,7 +612,7 @@ BOOL UiDialogImpl::ResponseWidgetsInit(int w, int h)
 			return TRUE;
 		if (msg->type == TigMsgType::CHAR){
 			auto chr = msg->arg1 & 0xFF;
-			if (chr >= '1' && chr <= '5'){
+			if (chr >= '1' && chr <= '5'){ // DIALOG_REPLIES_MAX
 				int responseIdx = chr - '1';
 				if (responseIdx < dlgImpl->mSlot.state.pcLines){
 					//uiDialog->PcReplyLineExecute(dlgImpl->mSlot, idx);
@@ -626,7 +626,7 @@ BOOL UiDialogImpl::ResponseWidgetsInit(int w, int h)
 	}; 
 	mResponseWndId = uiManager->AddWindow(responseWnd);
 	
-	const int REPLY_COUNT = 5;
+	const int REPLY_COUNT = DIALOG_REPLIES_MAX;
 	const int REPLY_TEXT_W = 559;
 	const int REPLY_HEIGHT = 23;
 	for (auto i = 0; i < REPLY_COUNT; i++) {
@@ -639,8 +639,8 @@ BOOL UiDialogImpl::ResponseWidgetsInit(int w, int h)
 		mResponseTexts[i] = nullptr;
 		mReplyBtnIds[i] = responseWnd.AddChildButton("Dialog reply btn", 1, y, 594, REPLY_HEIGHT,
 			[](int id) {
-			auto idx = WidgetIdIndexOf(id, dlgImpl->mReplyBtnIds, 5);
-			if (idx <= -1 || idx >= /*REPLY_COUNT*/ 5) return;
+			auto idx = WidgetIdIndexOf(id, dlgImpl->mReplyBtnIds, DIALOG_REPLIES_MAX);
+			if (idx <= -1 || idx >= DIALOG_REPLIES_MAX) return;
 			if (!dlgImpl->mResponseTexts[idx]){
 				return;
 			}
@@ -714,8 +714,8 @@ BOOL UiDialogImpl::ResponseWidgetsInit(int w, int h)
 				return TRUE;
 			}
 
-			auto idx = WidgetIdIndexOf(id, dlgImpl->mReplyBtnIds, /*REPLY_COUNT*/5);
-			if (idx <= -1 || idx >= 5 /*REPLY_COUNT*/ || idx >= dlgImpl->mSlot.state.pcLines)
+			auto idx = WidgetIdIndexOf(id, dlgImpl->mReplyBtnIds, DIALOG_REPLIES_MAX);
+			if (idx <= -1 || idx >= DIALOG_REPLIES_MAX || idx >= dlgImpl->mSlot.state.pcLines)
 				return TRUE;
 
 			auto result = temple::GetRef<BOOL(__cdecl)(int, TigMsg*)>(0x1014D560)(id, msg);
@@ -737,7 +737,7 @@ BOOL UiDialogImpl::ResponseWidgetsInit(int w, int h)
 }
 
 void UiDialogImpl::ResponseWidgetsFree(){
-	for (auto i=0; i < 5; i++){
+	for (auto i=0; i < DIALOG_REPLIES_MAX; i++){
 		uiManager->RemoveChildWidget(mReplyBtnIds[i]);
 	}
 	uiManager->RemoveWindow(mResponseWndId);
