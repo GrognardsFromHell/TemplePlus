@@ -1568,7 +1568,7 @@ bool UiKeyManager::HandleKeyEvent(const InGameKeyEvent & msg)
 	case 38:
 		return temple::GetRef<int(__cdecl)()>(0x10143530)() != FALSE; // Quickload
 	case 39:
-		return temple::GetRef<int(__cdecl)()>(0x10143560)() != FALSE; // Quickload
+		return temple::GetRef<int(__cdecl)()>(0x10143560)() != FALSE; // Quicksave
 	case 40:
 		return temple::GetRef<int(__cdecl)()>(0x10143580)() != FALSE; // Screenshot
 	case 51:

@@ -56,6 +56,7 @@
 #include <pybind11/embed.h>
 #include <gamesystems/mapsystem.h>
 #include <tig/tig_keyboard.h>
+#include <infrastructure/keyboard.h>
 namespace py = pybind11;
 
 std::map<std::string, MesHandle> mesMap;
@@ -924,14 +925,27 @@ PyObject* PyGame_Keypress(PyObject*, PyObject* args) {
 	}
 	logger->info("game.keypress: {}", dik);
 
-	TigMsg tigMsg;
-	tigMsg.createdMs = timeGetTime();
-	tigMsg.type = TigMsgType::KEYSTATECHANGE;
-	tigMsg.arg1 = dik;
-	tigMsg.arg2 = 0; // Means it has changed to unpressed
-	if (tigMsg.arg1 != 0) {
-		messageQueue->Enqueue(tigMsg);
+	{
+		TigMsg tigMsg;
+		tigMsg.createdMs = timeGetTime();
+		tigMsg.type = TigMsgType::KEYSTATECHANGE;
+		tigMsg.arg1 = dik;
+		tigMsg.arg2 = 0; // Means it has changed to unpressed
+		if (tigMsg.arg1 != 0) {
+			messageQueue->Enqueue(tigMsg);
+		}
 	}
+	{
+		TigMsg tigMsg;
+		tigMsg.createdMs = timeGetTime();
+		tigMsg.type = TigMsgType::CHAR;
+		tigMsg.arg1 = infrastructure::gKeyboard.ToVirtualKey(dik);
+		tigMsg.arg2 = 0; // Means it has changed to unpressed
+		if (tigMsg.arg1 != 0) {
+			messageQueue->Enqueue(tigMsg);
+		}
+	}
+	
 
 	Py_RETURN_TRUE;
 }
