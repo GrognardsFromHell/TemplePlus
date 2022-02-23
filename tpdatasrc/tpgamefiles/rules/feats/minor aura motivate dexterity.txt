@@ -1,0 +1,5 @@
+name: Minor Aura Motivate Dexterity
+flags: 8
+prereqs:
+description: Bonus on Dexterity checks, Dexterity-based skill checks, and initiative checks.
+prereq descr: Marshal 1

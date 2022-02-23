@@ -1,0 +1,5 @@
+name: Minor Aura Motivate Charisma
+flags: 8
+prereqs:
+description: Bonus on Charisma checks and Charisma-based skill checks.
+prereq descr: Marshal 1

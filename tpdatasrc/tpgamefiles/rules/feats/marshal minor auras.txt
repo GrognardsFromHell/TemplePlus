@@ -1,0 +1,5 @@
+name: Marshal Minor Auras
+flags: 8
+prereqs:
+description: Marshal Minor Auras grant a bonus equal to the Charisma Modifier of the Marshal.
+prereq descr: Marshal 1

@@ -1,0 +1,5 @@
+name: Major Aura Hardy Soldiers
+flags: 8
+prereqs:
+description: The marshal's allies gain damage reduction equal to the amount of bonus the aura provides. For example, if the marshal is 10th level, everyone affected gains DR 2/-.
+prereq descr: Marshal 2

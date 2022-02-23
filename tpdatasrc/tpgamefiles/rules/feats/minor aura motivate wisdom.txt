@@ -1,0 +1,5 @@
+name: Minor Aura Motivate Wisdom
+flags: 8
+prereqs:
+description: Bonus on Wisdom checks and Wisdom-based skill checks.
+prereq descr: Marshal 1

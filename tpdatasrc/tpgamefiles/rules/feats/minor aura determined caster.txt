@@ -1,0 +1,5 @@
+name: Minor Aura Determined Caster
+flags: 8
+prereqs:
+description: Bonus on rolls to overcome spell resistance.
+prereq descr: Marshal 1

@@ -1,0 +1,5 @@
+name: Minor Aura Motivate Intelligence
+flags: 8
+prereqs:
+description: Bonus on Intelligence checks and Intelligence-based skill checks.
+prereq descr: Marshal 1

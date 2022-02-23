@@ -1,0 +1,5 @@
+name: Minor Aura Master of Tactics
+flags: 8
+prereqs:
+description: Lets allies add the Marshal's Charisma bonus damage rolls when flanking.
+prereq descr: Marshal 1

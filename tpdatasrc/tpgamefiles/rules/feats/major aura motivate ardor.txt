@@ -1,0 +1,5 @@
+name: Major Aura Motivate Ardor
+flags: 8
+prereqs:
+description: Bonus on damage rolls.
+prereq descr: Marshal 2

@@ -1,0 +1,5 @@
+name: Major Aura Resilient Troops
+flags: 8
+prereqs:
+description: Bonus on all saves.
+prereq descr: Marshal 2

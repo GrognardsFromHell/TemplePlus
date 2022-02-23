@@ -1,0 +1,5 @@
+ID_string: MARSHAL_MAJOR_AURA
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\spell heroism.tga
+help_topic: TAG_CLASS_FEATURES_MARSHAL_MAJOR_AURAS
+tooltip_base_text: Marshal Major Aura
