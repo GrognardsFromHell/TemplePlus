@@ -2400,7 +2400,7 @@ static PyObject* PyObjHandle_ActionPerform(PyObject* obj, PyObject* args) {
 	}
 	if (!actSeqSys.TurnBasedStatusInit(performer)) {
 		PyErr_SetString(PyExc_RuntimeError, "action_perform: couldn't init turn based status");
-		return PyInt_FromLong(0);
+		return 0; //return PyInt_FromLong(0);
 	}
 
 	auto hasLocation = action.destLoc.location.locx != 0 && action.destLoc.location.locy != 0;
@@ -2410,8 +2410,9 @@ static PyObject* PyObjHandle_ActionPerform(PyObject* obj, PyObject* args) {
 	d20Sys.GlobD20ActnSetTarget(action.d20ATarget, hasLocation ? &action.destLoc : nullptr);
 	auto result = actSeqSys.ActionAddToSeq();
 	if (result != AEC_OK) {
-		PyErr_SetString(PyExc_RuntimeError, "action_perform: ActionAddToSeq error");
-		return PyInt_FromLong(0);
+		//PyErr_SetString(PyExc_RuntimeError, "action_perform: ActionAddToSeq error");
+		PyErr_Format(PyExc_RuntimeError, "action_perform: ActionAddToSeq error %d (%s)", (int)result, actSeqSys.ActionErrorString(result));
+		return 0; //return PyInt_FromLong(0);
 	}
 	actSeqSys.sequencePerform();
 	return PyInt_FromLong(1);
@@ -3770,6 +3771,21 @@ static PyObject* PyObjHandle_AiStopAttacking(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+static PyObject* PyObjHandle_AiStrategyExecute(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	objHndl target = objHndl::null;
+	if (!PyArg_ParseTuple(args, "|O&:objhndl.ai_strategy_execute", &ConvertObjHndl, &target)) {
+		return 0;
+	}
+
+	auto result = aiSys.StrategyParse(self->handle, target);
+	return PyInt_FromLong(result);
+}
+
 static PyObject* PyObjHandle_AiStrategySetCustom(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -4343,7 +4359,9 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "ai_shitlist_remove", PyObjHandle_AiShitlistRemove, METH_VARARGS, NULL },
 	{ "ai_stop_attacking", PyObjHandle_AiStopAttacking, METH_VARARGS, NULL },
 
+	{ "ai_strategy_execute", PyObjHandle_AiStrategyExecute, METH_VARARGS, NULL },
 	{ "ai_strategy_set_custom", PyObjHandle_AiStrategySetCustom, METH_VARARGS, NULL },
+	
 
 	{ "allegiance_shared", PyObjHandle_AllegianceShared, METH_VARARGS, NULL },
 	{ "allegiance_strength", PyObjHandle_AllegianceStrength, METH_VARARGS, NULL },
