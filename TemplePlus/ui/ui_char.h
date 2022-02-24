@@ -7,13 +7,24 @@
 * For which purpose has the inventory screen been opened?
 */
 enum class UiCharDisplayType : uint32_t {
-	Hidden = 0,
+	Hidden = 0, // this is also the state when showing 'regular' inventory, however
 	Looting = 1,
 	Bartering = 2,
 	LevelUp = 3,
 	UsingMagicOnItem = 4,
 	PartyPool = 5,
 	Unk6 = 6
+};
+
+enum class UiCharPageType : uint32_t {
+	Inventory = 0,
+	InventoryBag1 = 1,
+	InventoryBag2 = 2,
+	InventoryBag3 = 3,
+	InventoryBag4 = 4,
+	Skills = 5,
+	Feats = 6,
+	Spells = 7,
 };
 
 struct UiSystemConf;
@@ -63,6 +74,10 @@ public:
 	// Was 0x101441B0
 	UiCharDisplayType GetDisplayType() const {
 		return mDisplayType;
+	}
+
+	UiCharPageType GetPageType() const {
+		return mPageType;
 	}
 
 	bool IsLevelingUp() const {
@@ -116,6 +131,7 @@ private:
 	BOOL &mInventoryObjState = temple::GetRef<BOOL>(0x10EF97C4);
 	objHndl &mCurrentCritter = temple::GetRef<objHndl>(0x10BE9940);
 	UiCharDisplayType &mDisplayType = temple::GetRef<UiCharDisplayType>(0x10BE994C);
+	UiCharPageType& mPageType = temple::GetRef<UiCharPageType>(0x10BE9948);
 	BOOL &mLooting = temple::GetRef<BOOL>(0x10BE6EE8);
 	objHndl &mTooltipItem = temple::GetRef<objHndl>(0x10BF07B8);
 

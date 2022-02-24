@@ -256,6 +256,12 @@ static PyObject* PyGame_CharUIDisplayType(PyObject* obj, void*) {
 	return PyInt_FromLong((uint32_t)result);
 }
 
+static PyObject* PyGame_CharUIPage(PyObject* obj, void*) {
+	auto result = uiSystems->GetChar().GetPageType();
+	return PyInt_FromLong((uint32_t)result);
+}
+
+
 
 static PyGetSetDef PyGameGettersSetters[] = {
 	{"party_alignment", PyGame_GetPartyAlignment, NULL, NULL },
@@ -279,6 +285,7 @@ static PyGetSetDef PyGameGettersSetters[] = {
 	{"encounter_queue", PyGame_GetEncounterQueue, NULL, NULL},
 	{"combat_turn", PyGame_GetCombatTurn, NULL, NULL},
 	{"char_ui_display_type", PyGame_CharUIDisplayType, NULL, NULL},
+	{"char_ui_page", PyGame_CharUIPage, NULL, NULL},
 	{NULL, NULL, NULL, NULL}
 };
 
@@ -968,6 +975,12 @@ PyObject* PyGame_MouseMoveTo(PyObject*, PyObject* args)
 	}
 	else if (PyLong_Check(locOrObj)) {
 		targetLoc = locXY::fromField(PyLong_AsUnsignedLongLong(locOrObj));
+	}
+	else if (PyTuple_Check(locOrObj)) {
+		if (!PyArg_ParseTuple(locOrObj, "ii:game.mouse_move_to", &targetLoc.locx, &targetLoc.locy)) {
+			PyErr_SetString(PyExc_TypeError, "mouse_move_to tuple arg must (x,y).");
+			return nullptr;
+		}
 	}
 	else {
 		PyErr_SetString(PyExc_TypeError, "mouse_move_to argument must be either a tile location (long) or an object handle.");

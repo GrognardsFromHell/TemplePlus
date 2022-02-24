@@ -121,7 +121,7 @@ struct UiCharAddresses : temple::AddressTable
 	char** uiCharSpellFontName;
 	int *uiCharSpellFontSize;
 
-	int * wndDisplayed; // 0 thru 4 - inventories (1-4 were meant for the various "bags"); 5 - Skills; 6 - Feats ; 7 - Spells
+	UiCharPageType* wndDisplayed; // UiCharPageType
 
 	UiCharAddresses()
 	{
