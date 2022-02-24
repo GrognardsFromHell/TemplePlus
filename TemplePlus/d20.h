@@ -6,6 +6,7 @@
 #include "d20_class.h"
 #include "spell.h"
 #include "d20_status.h"
+#include <fmt/format.h>
 
 #define ATTACK_CODE_PRIMARY 0
 #define ATTACK_CODE_OFFHAND 99 // originally 4
@@ -176,6 +177,7 @@ enum D20ADF : int {
 
 
 struct D20Actn{
+public:
 	D20ActionType d20ActType;
 	int data1; // generic piece of data
 	int d20Caf; // Based on D20_CAF flags
@@ -233,7 +235,7 @@ struct D20Actn{
 };
 
 const auto TestSizeOfD20Action = sizeof(D20Actn); // should be 88 (0x58)
-
+void format_arg(fmt::BasicFormatter<char>& f, const char*& format_str, const D20Actn& d20at);
 //struct ActionCostPacket
 //{
 //	int hourglassCost;

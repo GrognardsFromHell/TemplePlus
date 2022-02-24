@@ -96,6 +96,7 @@ enum D20ActionType : int32_t
 };
 
 std::ostream &operator <<(std::ostream &out, D20ActionType D20ActionType);
+void format_arg(fmt::BasicFormatter<char>& f, const char*& format_str, const D20ActionType &s); // doesn't work, fmt converts enums to int...
 
 enum class ActionCostType : int {
 	Null,

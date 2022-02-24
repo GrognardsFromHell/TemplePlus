@@ -2809,7 +2809,7 @@ void ActionSequenceSystem::ActionPerform()
 				curSeq->tbStatus = tbStatus;
 				*(uint32_t*)(&curSeq->tbStatus.tbsFlags) |= TBSF_HasActedThisRound;
 				InterruptCounterspell(d20a);
-				logger->debug("ActionPerform: \t Performing action for {}: {}",	d20a->d20APerformer,d20a->d20ActType);
+				logger->debug("ActionPerform: \t Performing action for {}: {}",	d20a->d20APerformer,*d20a);
 
 				/*if (config.newFeatureTestMode && d20a->path != nullptr)
 				{

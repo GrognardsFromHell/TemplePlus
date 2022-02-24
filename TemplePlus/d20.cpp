@@ -38,6 +38,9 @@
 #include "rng.h"
 #include "ai.h"
 #include <config/config.h>
+#include <fmt/format.h>
+#include <ostream>
+#include <string>
 
 
 static_assert(sizeof(D20SpellData) == (8U), "D20SpellData structure has the wrong size!"); //shut up compiler, this is ok
@@ -1665,6 +1668,25 @@ void _D20StatusInit(objHndl objHnd)
 void _D20StatusRefresh(objHndl objHnd)
 {
 	d20StatusSys.D20StatusRefresh(objHnd);
+}
+
+void format_arg(fmt::BasicFormatter<char>& f, const char*& format_str, const D20Actn & d20a)
+{
+	D20ActionType d20at = d20a.d20ActType;
+	if (d20at == D20ActionType::D20A_NONE)
+	{
+		f.writer().write("D20Actn(D20A_NONE = 0)");
+	}
+
+	size_t i = (size_t)d20at;
+	if (i <= D20A_PYTHON_ACTION) {
+		f.writer().write("D20Actn({} = ({}))", d20ActionNames[i],i);
+	}
+	else
+	{
+		f.writer().write("D20Actn({})", i);
+	}
+	return;
 }
 
 void _D20StatusInitFromInternalFields(objHndl objHnd, Dispatcher * dispatcher)

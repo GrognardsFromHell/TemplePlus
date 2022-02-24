@@ -21,3 +21,20 @@ std::ostream & operator<<(std::ostream & out, D20ActionType d20at){
 	return out;
 }
 
+void format_arg(fmt::BasicFormatter<char>& f, const char*& format_str, const D20ActionType & d20at)
+{
+	if (d20at == D20ActionType::D20A_NONE)
+	{
+		f.writer().write("D20A_NONE");
+	}
+
+	size_t i = (size_t)d20at;
+	if (i <= D20A_PYTHON_ACTION) {
+		f.writer().write( "{} ({})",d20ActionNames[i], i);
+	}
+	else
+	{
+		f.writer().write("Temple+ action {}", i);
+	}
+	return;
+}
