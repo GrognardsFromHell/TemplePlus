@@ -384,7 +384,7 @@ static PyObject* PyObjHandle_ItemTransferToByProto(PyObject* obj, PyObject* args
 	auto self = GetSelf(obj);
 	int protoId;
 	objHndl target;
-	if (!PyArg_ParseTuple(args, "O&i:objhndl.itemtransfertobyproto", &ConvertObjHndl, &target, &protoId)) {
+	if (!PyArg_ParseTuple(args, "O&i:objhndl.item_transfer_to_by_proto", &ConvertObjHndl, &target, &protoId)) {
 		return 0;
 	}
 
@@ -3784,11 +3784,15 @@ static PyObject* PyObjHandle_AiStrategySetCustom(PyObject* obj, PyObject* args) 
 		stringVector.push_back(s);
 	}
 
+	// optional "save" flag
 	int save = 1;
-	auto psave = PyTuple_GetItem(args, 1);
-	if (PyLong_Check(psave) || PyInt_Check(psave)) {
-		save = PyLong_AsLong(psave);
+	if (PyTuple_Size(args) >= 2) {
+		auto psave = PyTuple_GetItem(args, 1);
+		if (PyLong_Check(psave) || PyInt_Check(psave)) {
+			save = PyLong_AsLong(psave);
+		}
 	}
+	
 
 	aiSys.SetCustomStrategy( self->handle, stringVector, save);
 	Py_RETURN_NONE;
