@@ -2,7 +2,7 @@ from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
 from utilities import *
-from spell_utils import AoeSpellHandleModifier, AoESpellEffectModifier, getSpellHelpTag
+from spell_utils import AoeSpellHandleModifier, AoeSpellEffectModifier, getSpellHelpTag
 
 print "Registering sp-Cloud of Bewilderment"
 
@@ -44,7 +44,7 @@ def setNauseatedDurationOnLeave(attachee, args, evt_obj):
         attachee.d20_send_signal("PS_Nauseated_Update_Duration", duration, persistentFlag)
     return 0
 
-cloudOfBewildermentCondition = AoESpellEffectModifier("Cloud of Bewilderment") #spellId, duration, spellDc, eventId, empty
+cloudOfBewildermentCondition = AoeSpellEffectModifier("Cloud of Bewilderment") #spellId, duration, spellDc, eventId, empty
 cloudOfBewildermentCondition.AddHook(ET_OnConditionAdd, EK_NONE, applyNauseatedCondition, ())
 cloudOfBewildermentCondition.AddHook(ET_OnBeginRound, EK_NONE, applyNauseatedCondition, ())
 cloudOfBewildermentCondition.AddHook(ET_OnGetDefenderConcealmentMissChance, EK_NONE, addConcealment, ())
