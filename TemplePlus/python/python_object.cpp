@@ -2080,7 +2080,7 @@ static PyObject* PyObjHandle_FloatTextLine(PyObject* obj, PyObject* args) {
 	if (line && PyString_Check(line)) {
 		floatSys.floatMesLine(self->handle, 1, colorId, fmt::format("{}", PyString_AsString(line)).c_str());
 	}
-		
+
 	Py_RETURN_NONE;
 }
 
@@ -3690,6 +3690,24 @@ static PyObject * PyObjHandle_FeatAdd(PyObject* obj, PyObject * args){
 	return PyInt_FromLong(1);
 };
 
+static PyObject* PyObjHandle_SpellKnownAddToCharClass(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		Py_RETURN_NONE;
+	}
+	int spellIdx;
+	int charClass;
+	int slotLevel;
+	int isDomain = 0;
+	if (!PyArg_ParseTuple(args, "iii|i:objhndl.spell_known_add_to_char_class", &spellIdx, &charClass, &slotLevel, &isDomain)) {
+		return 0;
+	}
+
+	auto spellClass = spellSys.GetSpellClass(charClass);
+	spellSys.SpellKnownAdd(self->handle, spellIdx, spellClass, slotLevel, 1, 0);
+	Py_RETURN_NONE;
+}
+
 static PyObject* PyObjHandle_SpellKnownAdd(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -4599,6 +4617,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "soundmap_item", PyObjHandle_SoundmapItem, METH_VARARGS, NULL },
 	{ "sound_play_friendly_fire", PyObjHandle_SoundPlayFriendlyFire, METH_VARARGS, NULL},
 	{ "spell_known_add", PyObjHandle_SpellKnownAdd, METH_VARARGS, NULL },
+	{ "spell_known_add_to_char_class", PyObjHandle_SpellKnownAddToCharClass, METH_VARARGS, NULL },
 	{ "spell_memorized_add", PyObjHandle_SpellMemorizedAdd, METH_VARARGS, NULL },
 	{ "spell_damage", PyObjHandle_SpellDamage, METH_VARARGS, NULL },
 	{ "spell_damage_with_reduction", PyObjHandle_SpellDamageWithReduction, METH_VARARGS, NULL },

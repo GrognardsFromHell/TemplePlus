@@ -98,26 +98,31 @@ def IsSelectingFeatsOnLevelup( obj ):
 	return 0
 	
 def LevelupGetBonusFeats( obj ):
-	bonFeatInfo = tpdp.get_metamagic_feats()
+	bonFeatInfo = []
+	feat_list = tpdp.get_metamagic_feats()
+	for ft in feat_list:
+		bonFeatInfo.append(char_editor.FeatInfo(ft))
+	
 	char_editor.set_bonus_feats(bonFeatInfo)
 	return
 	
 #Check if which levels get increased.  Returns a flag for vacian and natural.
-def CheckUMIncreaseOnLevelup(umLevel, naturalCasterLevel, vacianCasterLevel):
+def CheckUMIncreaseOnLevelup(umLevel, vacianCasterLevel, naturalCasterLevel):
 	levelUpVacian = true
 	levelUpNatural = true
-	if level in [1,4,7]:
-		if naturalLvl2 < vacianLvl1:
+	if umLevel in [1,4,7]:
+		if naturalCasterLevel < vacianCasterLevel:
 			levelUpVacian = false
 		else:
 			levelUpNatural = false
 	return levelUpVacian, levelUpNatural
 	
 #Check if the class gets spells on this levelup.  Returns a flag for vacian and natural
-def ClassNeedsSpellsOnLevelup(obj, class_extended_1, class_extended_2):
+def ClassNeedsSpellsOnLevelup(obj, class_extended_1, class_extended_2, caster_bonus_1, caster_bonus_2):
 	newLvl = obj.stat_level_get( classEnum ) + 1
-	vacianLvl1, naturalLvl1= GetUMCasterLevels(obj, class_extended_1, class_extended_2)
-	return CheckUMLevelIncrease(newLvl, vacianLvl1, naturalLvl1)
+	vacianLvl = obj.stat_level_get( class_extended_1 ) + caster_bonus_1
+	naturalLvl = obj.stat_level_get( class_extended_2 ) + caster_bonus_2
+	return CheckUMIncreaseOnLevelup(newLvl, vacianLvl, naturalLvl)
 
 def IsSelectingSpellsOnLevelup( obj , class_extended_1 = 0, class_extended_2 = 0, caster_bonus_1 = 0, caster_bonus_2 = 0):
 	if class_extended_1 <= 0 or class_extended_2 <= 0:

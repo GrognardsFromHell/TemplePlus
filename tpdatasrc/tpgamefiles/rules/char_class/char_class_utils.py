@@ -42,7 +42,7 @@ def GetHighestArcaneClass( attachee ):
 	return attachee.highest_arcane_class
 	
 def GetHighestSpontaneousArcaneClass( attachee ):
-	return attachee.highest_vancian_spontaneous_class
+	return attachee.highest_spontaneous_arcane_class
 	
 def GetHighestVancianArcaneClass( attachee ):
 	return attachee.highest_vancian_arcane_class

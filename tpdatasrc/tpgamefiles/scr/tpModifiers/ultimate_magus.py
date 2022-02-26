@@ -21,10 +21,7 @@ classSpecModule = __import__('class088_ultimate_magus')
 expandedSpellKnowledgeEnum = 8800
 augmentedCastingEnum = 8801
 
-#Supported Meta magic feats supported by augmented casting
-ACFeats = {feat_quicken_spell : "Quicken", feat_heighten_spell : "Heighten", feat_empower_spell : "Empower", feat_maximize_spell : "Maximize", feat_widen_spell : "Widen", feat_enlarge_spell : "Enlarge", feat_extend_spell : "Extend", feat_silent_spell : "Silent", feat_still_spell : "Still"}
-
-#ACFeatNames = ["Quicken", "Heighten", "Empower", "Maximize", "Widen", "Enlarge", "Extend", "Slient", "Still"]
+ACFeats = [feat_quicken_spell, feat_heighten_spell, feat_empower_spell, feat_maximize_spell, feat_widen_spell, feat_enlarge_spell, feat_extend_spell, feat_silent_spell, feat_still_spell]
 
 #### standard callbacks - BAB and Save values
 def OnGetToHitBonusBase(attachee, args, evt_obj):
@@ -61,13 +58,15 @@ classSpecObj.AddHook(ET_OnSaveThrowLevel, EK_SAVE_WILL, OnGetSaveThrowWill, ())
 
 # configure the spell casting condition to hold the highest two Arcane Spontaneous/Vancian classes as chosen-to-be-extended classes
 def OnAddSpellCasting(attachee, args, evt_obj):
-	#arg0 holds the arcane class
-	if args.get_arg(0) == 0:
-		args.set_arg(0, char_class_utils.GetHighestSpontaneousArcaneClass(attachee))
 	
-	#arg1 holds the divine class
+	#arg0 holds the vancian class
+	if args.get_arg(0) == 0:
+		args.set_arg(0, char_class_utils.GetHighestVancianArcaneClass(attachee))
+		
+	#arg1 holds the spontaneous class
 	if args.get_arg(1) == 0:
-		args.set_arg(1, char_class_utils.GetHighestVancianArcaneClass(attachee))
+		args.set_arg(1, char_class_utils.GetHighestSpontaneousArcaneClass(attachee))
+	
 	return 0
 
 def OnGetBaseCasterLevel(attachee, args, evt_obj):
@@ -79,7 +78,7 @@ def OnGetBaseCasterLevel(attachee, args, evt_obj):
 	if class_code == class_extended_1:
 		bonus = args.get_arg(2)
 		evt_obj.bonus_list.add(classLvl, bonus, 137)
-	elif class_code == class_extended_1:
+	elif class_code == class_extended_2:
 		bonus = args.get_arg(3)
 		evt_obj.bonus_list.add(classLvl, bonus, 137)
 	else:
@@ -97,7 +96,7 @@ def OnSpellListExtensionGet(attachee, args, evt_obj):
 	if class_code == class_extended_1:
 		bonus = args.get_arg(2)
 		evt_obj.bonus_list.add(classLvl, bonus, 137)
-	elif class_code == class_extended_1:
+	elif class_code == class_extended_2:
 		bonus = args.get_arg(3)
 		evt_obj.bonus_list.add(classLvl, bonus, 137)
 	else:
@@ -107,18 +106,12 @@ def OnSpellListExtensionGet(attachee, args, evt_obj):
 	return 0
 
 def OnInitLevelupSpellSelection(attachee, args, evt_obj):
-	print "Ultimate Magus Spell Selection Init"
 	if evt_obj.arg0 != classEnum:
-		print str(evt_obj.arg0)
-		print str(classEnum)
 		return 0
-	print "Ultimate Magus Spell Selection Init: Confirmed classEnum"
 	class_extended_1 = args.get_arg(0)
 	class_extended_2 = args.get_arg(1)
 	caster_level_1 = args.get_arg(2)
 	caster_level_2 = args.get_arg(3)
-	print "Ultimate Magus Spell Selection: Class 1" + str(class_extended_1)
-	print "Ultimate Magus Spell Selection: Class 2" + str(class_extended_2)
 	classSpecModule.InitSpellSelection(attachee, class_extended_1, class_extended_2, caster_level_1, caster_level_2)
 	return 0
 
@@ -153,7 +146,7 @@ def GetUMSpontaneousClass(attachee, args, evt_obj):
 	evt_obj.return_val = args.get_arg(1)
 	return 0
 
-spellCasterSpecObj = PythonModifier(GetSpellCasterConditionName(), 8) #Class 1, Class2, Class 1 Bonus, Class 2 Bonus
+spellCasterSpecObj = PythonModifier(GetSpellCasterConditionName(), 8) #Vancian Class , Spontaneous Class, Vancian Bonus, Spontaneous Bonus
 spellCasterSpecObj.AddHook(ET_OnConditionAdd, EK_NONE, OnAddSpellCasting, ())
 spellCasterSpecObj.AddHook(ET_OnGetBaseCasterLevel, EK_NONE, OnGetBaseCasterLevel, ())
 spellCasterSpecObj.AddHook(ET_OnSpellListExtensionGet, EK_NONE, OnSpellListExtensionGet, ())
@@ -166,6 +159,7 @@ spellCasterSpecObj.AddHook(ET_OnD20PythonQuery, "UM Vacian Class", GetUMVacianCl
 # Arcane Spell Power
 def ArcaneSpellPowerUMBonus(attachee, args, evt_obj):
 	#Must be arcane spell
+	spell_packet = evt_obj.get_spell_packet()
 	if not spell_packet.is_arcane_spell():
 		return 0
 
@@ -180,9 +174,8 @@ def ArcaneSpellPowerUMBonus(attachee, args, evt_obj):
 	else:
 		bonusValue = 4
 	
-	if bonVal > 0:
-		print "Arcane Spell Power: Adding to caster level " + str(bonusValue)
-		evt_obj.return_val += bonVal
+	if bonusValue > 0:
+		evt_obj.return_val += bonusValue
 	
 	return 0
 
@@ -200,20 +193,19 @@ def OnAddExpandedSpellKnowledge(attachee, args, evt_obj):
 
 
 def ExpandedSpellKnowledgeRadial(attachee, args, evt_obj):
-	print "ExpandedSpellKnowledgeRadial"
 	umLevel = attachee.stat_level_get(stat_level_ultimate_magus)
 	halfUmLevel = int(umLevel/2)
 	
 	available = []
 	for i in range(1, halfUmLevel + 1):
-		arg = args.get_arg(i)
+		arg = args.get_arg(i-1)
 		if arg > 0:
 			available.append(i)
 	
 	
 	#Add menu item for each level
 	for level in available:
-		menuName = "Expanded Spell Knowledge " + str(i)
+		menuName = "Expanded Spell Knowledge " + str(level)
 		radialParent = tpdp.RadialMenuEntryParent(menuName)
 		expandedSpellKnowledgeID = radialParent.add_child_to_standard(attachee, tpdp.RadialMenuStandardNode.Class)
 			
@@ -221,32 +213,43 @@ def ExpandedSpellKnowledgeRadial(attachee, args, evt_obj):
 		spell_level_ids = []
 		
 		#0 to the max level
-		for p in range(0,level+1):
-			spell_level_node = tpdp.RadialMenuEntryParent(str(p))
+		for spellLevel in range(0,level+1):
+			spell_level_node = tpdp.RadialMenuEntryParent(str(spellLevel))
 			spell_level_ids.append( spell_level_node.add_as_child(attachee, expandedSpellKnowledgeID) )
 
 		#Filter out spells already known in the other class??  Get a list of enums then do an in check for enum.
+		spontaneousCastingClass = attachee.d20_query("UM Spontaneous Class")
 
 		known_spells = attachee.spells_known
+		
+		#Find all known spontaneous spells so we don't add them to the selectable spells
+		spontaneous_known = []
 		for knSp in known_spells:
-			memSp.spell_class
-			spell_node = tpdp.RadialMenuEntryPythonAction(knSp, D20A_PYTHON_ACTION, expandedSpellKnowledgeEnum, level)
-			spell_node.add_as_child(attachee, spell_level_ids[knSp.spell_level-1])
+			if knSp.caster_class == spontaneousCastingClass:
+				spontaneous_known.append(knSp.spell_enum)
+		
+		for knSp in known_spells:
+			if knSp.spell_level <= level:
+				if knSp.spell_enum not in spontaneous_known:
+					spell_node = tpdp.RadialMenuEntryPythonAction(knSp, D20A_PYTHON_ACTION, expandedSpellKnowledgeEnum, level)
+					spell_node.add_as_child(attachee, spell_level_ids[knSp.spell_level])
 	return 0
 
 def ExpandedSpellKnowledgeAddSpell(attachee, args, evt_obj):
 	spellEnum = evt_obj.d20a.spell_data.spell_enum
-	spellLevel = evt_obj.d20a.spell_data.spell_level
+	spellLevel = evt_obj.d20a.spell_data.get_spell_level()
+	spellName = evt_obj.d20a.spell_data.get_spell_name()
 	classCode = attachee.d20_query("UM Spontaneous Class")
-	argNum = evt_obj.d20a.data1
+	maxLevel = evt_obj.d20a.data1
+	argNum = maxLevel - 1
 	
 	#Add the new spell to the spontaneous class
-	attachee.spell_known_add(classCode, spellLevel, spellEnum)
+	attachee.spell_known_add_to_char_class(spellEnum, classCode, spellLevel) #I think there is class code confusion here... this is the class, not the code...
 	
 	#Use up the spell knowledge slot
 	args.set_arg(argNum, 0)
 	
-	attachee.float_text_line("Spell Knowledge Expanded")
+	attachee.float_text_line("Expanded Spell Knowledge " + str(maxLevel) + " Added:  " + spellName)
 	return 0
 
 umlExpandedSpellKnowledge = PythonModifier("Expanded Spell Knowledge", 6) #Level 1 Used, Level 2 Used, Level 3 Used, Level 4 Used, Level 5 Used, Spare
@@ -256,149 +259,181 @@ umlExpandedSpellKnowledge.AddHook(ET_OnD20PythonActionPerform, expandedSpellKnow
 umlExpandedSpellKnowledge.AddHook(ET_OnConditionAdd, EK_NONE, OnAddExpandedSpellKnowledge, ())
 
 def AugmentCastingNewDay(attachee, args, evt_obj):
-	print "AugmenteCastingNewDay"
 	uses = int(attachee.stat_level_get(classEnum) / 2) + 3
 	args.set_arg(0, uses)
 	return 0
 
-def AugmentCastingRadialMenuEntry(attachee, args, evt_obj):
-	print "AugmentCastingRadialMenuEntry"
-	umLevel = attachee.stat_level_get(stat_level_ultimate_magus)
-	halfUmLevel = int(umLevel/2)
+def AugmentCastingEffectCheck(attachee, args, evt_obj):
+	#Check for remaining uses
+	if args.get_arg(0) < 1:
+		evt_obj.return_val = AEC_OUT_OF_CHARGES
+		return 0
+	return 1
 
+def AugmentCastingRadialMenuEntry(attachee, args, evt_obj):
 	radialParent = tpdp.RadialMenuEntryParent("Augment Casting")
 	arcaneBoostID = radialParent.add_child_to_standard(attachee, tpdp.RadialMenuStandardNode.Class)
 
-	#Iterate over all effect types ()
-	for spellType in ["Spontaneous", "Vancian"]:
+	spontaneousCastingClass = attachee.d20_query("UM Spontaneous Class")
+	vacianCastingClass = attachee.d20_query("UM Vacian Class")
+
+	for classID in [spontaneousCastingClass, vacianCastingClass]:
 		#Add the effect to the arcane boost id menu
-		effectNode = tpdp.RadialMenuEntryParent(spellType)
-		spellTypeID = effectNode.add_as_child(attachee, effectNode)
+		className = tpdp.get_stat_short_name(classID)
 		
-		featList = list(ACFeats)
+		effectNode = tpdp.RadialMenuEntryParent(className)
+		spellTypeID = effectNode.add_as_child(attachee, arcaneBoostID)
 		
-		for feat in featList:
+		for feat in ACFeats:
 			if attachee.has_feat(feat):
-			
-				featName = ACFeats[feat]
+				featName = tpdp.get_stat_name(1000+feat)
 				featNode = tpdp.RadialMenuEntryParent(featName)
-				featNode.add_as_child(attachee, spellTypeID)
+				featNodeID = featNode.add_as_child(attachee, spellTypeID)
+				
+				#Figure out the minimum level needed for the spell
+				minLevel = 1 #default
+				if feat == feat_quicken_spell:
+					minLevel = 4
+				elif feat == feat_maximize_spell:
+					minLevel = 3
+				elif feat == feat_empower_spell:
+					minLevel = 2
+				
+				# create the spell level nodes
+				spell_level_ids = []
 			
 				#Add the name for the arcane boost effect type sub menu
-				for spellLevel in range(0,halfUmLevel+1):
-					spell_level_node = tpdp.RadialMenuEntryParent(str(p))
-					spell_level_ids.append( spell_level_node.add_as_child(attachee, spellLevel) )
+				for spellLevel in range(minLevel,10):
+					spell_level_node = tpdp.RadialMenuEntryParent(str(spellLevel))
+					spell_level_ids.append( spell_level_node.add_as_child(attachee, featNodeID) )
 
-				if spellType == "Spontaneous":
+				if classID == spontaneousCastingClass:
 					known_spells = attachee.spells_known
 					for knSp in known_spells:
-						if knSp.is_naturally_cast() and (knSp.spell_level > 0) and attachee.spontaneous_spells_remaining(knSp.spell_class, knSp.spell_level):
-							spell_node = tpdp.RadialMenuEntryPythonAction(knSp, D20A_PYTHON_ACTION, feat, spellLevel)
-							spell_node.add_as_child(attachee, spell_level_ids[knSp.spell_level-1])
+						if knSp.is_naturally_cast() and (knSp.spell_level >= minLevel) and attachee.spontaneous_spells_remaining(knSp.spell_class, knSp.spell_level):
+							spell_node = tpdp.RadialMenuEntryPythonAction(knSp, D20A_PYTHON_ACTION, augmentedCastingEnum, feat)
+							spell_node.add_as_child(attachee, spell_level_ids[knSp.spell_level-minLevel])
 				else:
 					mem_spells = attachee.spells_memorized
 					for memSp in mem_spells:
-						if (not memSp.is_used_up()) and (memSp.spell_level > 0):
-							spell_node = tpdp.RadialMenuEntryPythonAction(memSp, D20A_PYTHON_ACTION, feat, spellLevel)
-							spell_node.add_as_child(attachee, spell_level_ids[memSp.spell_level-1])
+						if (not memSp.is_used_up()) and (memSp.spell_level >= minLevel):
+							spell_node = tpdp.RadialMenuEntryPythonAction(memSp, D20A_PYTHON_ACTION, augmentedCastingEnum, feat)
+							spell_node.add_as_child(attachee, spell_level_ids[memSp.spell_level-minLevel])
 	return 0
 	
 def AugmentCastingD20PythonActionPerform(attachee, args, evt_obj):
-	print "AugmentCastingD20PythonActionPerform"
+	uses = args.get_arg(0)
+	if uses < 1:
+		return 0
+	uses = uses - 1
+	args.set_arg(0, uses)
 	
 	spell_packet = tpdp.SpellPacket(attachee, evt_obj.d20a.spell_data)
 	
 	#Count the spell as used up
 	spell_packet.debit_spell()
 	
-	spellCastingClass = spell_packet.spell_class
-	spontaneousCastingClass = attachee.d20_query("UM Spontaneous Class")
-	if spellCastingClass == classCodeSpontaneous:
-		oppositeCastingClass = attachee.d20_query("UM Vacian Class")
-	else :
-		oppositeCastingClass = spontaneousCastingClass
-	
-	type = evt_obj.d20a.data1
-	level = evt_obj.d20a.spell_data.spell_level
-	
-	attachee.condition_add_with_args("Augmented Casting Condition", level, oppositeCastingClass, type)
+	spellCastingClass = spell_packet.get_spell_casting_class()
+	feat = evt_obj.d20a.data1
+	level = spell_packet.spell_known_slot_level
+	attachee.condition_add_with_args("Augmented Casting Condition", feat, spellCastingClass, level)
+
 	return 0
 
 
 umAugmentedCasting = PythonModifier("Augmented Casting", 3) #Uses, Spare, Spare
 umAugmentedCasting.MapToFeat("Augmented Casting")
 umAugmentedCasting.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, AugmentCastingRadialMenuEntry, ())
+umAugmentedCasting.AddHook(ET_OnD20PythonActionCheck, augmentedCastingEnum, AugmentCastingEffectCheck, ())
 umAugmentedCasting.AddHook(ET_OnD20PythonActionPerform, augmentedCastingEnum, AugmentCastingD20PythonActionPerform, ())
 umAugmentedCasting.AddHook(ET_OnConditionAdd, EK_NONE, AugmentCastingNewDay, ())
 umAugmentedCasting.AddHook(ET_OnNewDay, EK_NEWDAY_REST, AugmentCastingNewDay, ())
 
-def AugmentCastingConditionNewDay(attachee, args, evt_obj):
-	args.condition_remove()
+def AugmentCastingConditionEffectTooltip(attachee, args, evt_obj):
+	evt_obj.append("Augment Casting") 
+	return 0
+
+def AugmentCastingConditionEffectTooltipEffect(attachee, args, evt_obj):
+	feat = args.get_arg(0)
+	classID = args.get_arg(1)
+	featString =  tpdp.get_stat_name(1000+feat)
+	if feat == feat_heighten_spell:
+		level = args.get_arg(2)
+		featString = featString + " " + str(level)
+	extraString = "(" + tpdp.get_stat_short_name(classID) + ") " + featString
+	evt_obj.append(tpdp.hash("AUGMENT_CASTING"), -2, extraString)
+	return 0
+
+def AugmentCastingConditionRemove(attachee, args, evt_obj):
+	args.condition_remove()  #Don't allow it to hold the condition for another day
 	return 0
 
 def AugmentCastingMetaMagicUpdate(attachee, args, evt_obj):
-	#Spell must be less thean the maximum level allowed
-	level = args.get_arg(0)
-	if level > evt_obj.spell_level:
+	#Check that it is arcane
+	if not evt_obj.is_arcane_spell():
 		return 0
 	
-	#Must be the right type of class
+	#Can't use the same class that the spell was deducted from
 	spellCastingClass = args.get_arg(1)
-	if spellCastingClass != evt_obj.spellCastingClass:
+	if spellCastingClass == evt_obj.get_spell_casting_class():
 		return 0
+		
+	feat = args.get_arg(0)
 
 	#Apply the appropriate meta magic once only
-	if type == feat_empower_spell:
+	if feat == feat_empower_spell:
 		if evt_obj.meta_magic.get_empower_count() < 1:  #Only once
 			evt_obj.meta_magic.set_empower_count(1)
 		else:
 			return #No effect, don't set the cost
-	elif type == feat_maximize_spell:
+	elif feat == feat_maximize_spell:
 		if not evt_obj.meta_magic.get_maximize():    #Only once
 			evt_obj.meta_magic.set_maximize(true)
 		else:
 			return #No effect, don't set the cost
-	elif type == feat_heighten_spell:
-		heightenCount =  9 - evt_obj.spell_level #Heighten to level 9 always
+	elif feat == feat_heighten_spell:
+		level = args.get_arg(2)
+		maxHeighten =  9 - evt_obj.spell_level #Heighten to level 9 always
+		heightenCount = min(level, maxHeighten)
 		if heightenCount > 0:
 			evt_obj.meta_magic.set_heighten_count(heightenCount)
-		
-	elif type == feat_extend_spell:
+	elif feat == feat_extend_spell:
 		if evt_obj.meta_magic.get_extend_count() < 1:  #Only once
 			evt_obj.meta_magic.set_extend_count(1)
 		else:
 			return #No effect, don't set the cost
-	elif type == feat_widen_spell:
+	elif feat == feat_widen_spell:
 		if evt_obj.meta_magic.get_widen_count() < 1:  #Only once
 			evt_obj.meta_magic.set_widen_count(1)
 		else:
 			return #No effect, don't set the cost
-	elif type == feat_enlarge_spell:
+	elif feat == feat_enlarge_spell:
 		if evt_obj.meta_magic.get_enlarge_count() < 1:  #Only once
 			evt_obj.meta_magic.set_enlarge_count(1)
 		else:
 			return #No effect, don't set the cost
-	elif type == feat_still_spell:
+	elif feat == feat_still_spell:
 		if not evt_obj.meta_magic.get_still():  #Only once
 			evt_obj.meta_magic.set_still(true)
 		else:
 			return #No effect, don't set the cost
-	elif type == feat_silent_spell:
+	elif feat == feat_silent_spell:
 		if not evt_obj.meta_magic.get_silent():  #Only once
 			evt_obj.meta_magic.set_silent(true)
 		else:
 			return #No effect, don't set the cost
-	elif type == feat_quicken_spell:
+	elif feat == feat_quicken_spell:
 		if evt_obj.meta_magic.get_quicken() < 1:  #Only once
 			evt_obj.meta_magic.set_quicken(1)
 		else:
 			return #No effect, don't set the cost
-			
-	args.condition_remove()
 		
 	return 0
 
-umAugmentedCastingCondition = PythonModifier("Augmented Casting Condition", 5) #Type, Level, Feat to Apply, Spare, Spare
-umAugmentedCastingCondition.AddHook(ET_OnNewDay, EK_NEWDAY_REST, AugmentCastingConditionNewDay, ())
+umAugmentedCastingCondition = PythonModifier("Augmented Casting Condition", 5) #Feat to Apply, Class that Sacrificed Spell, Spare, Spare, Spare
+umAugmentedCastingCondition.AddHook(ET_OnGetTooltip, EK_NONE, AugmentCastingConditionEffectTooltip, ())
+umAugmentedCastingCondition.AddHook(ET_OnGetEffectTooltip, EK_NONE, AugmentCastingConditionEffectTooltipEffect, ())
+umAugmentedCastingCondition.AddHook(ET_OnNewDay, EK_NEWDAY_REST, AugmentCastingConditionRemove, ())
 umAugmentedCastingCondition.AddHook(ET_OnMetaMagicMod, EK_NONE, AugmentCastingMetaMagicUpdate, ())
+umAugmentedCastingCondition.AddHook(ET_OnD20PythonSignal, "Sudden Metamagic Deduct Charge", AugmentCastingConditionRemove, ())
 

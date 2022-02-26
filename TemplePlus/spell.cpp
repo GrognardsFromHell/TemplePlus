@@ -577,6 +577,17 @@ bool SpellPacketBody::IsDivine(){
 	return false;
 }
 
+bool SpellPacketBody::IsArcane() {
+	if (spellSys.isDomainSpell(spellClass))
+		return false;
+	auto castingClass = spellSys.GetCastingClass(spellClass);
+
+	if (d20ClassSys.IsArcaneCastingClass(castingClass))
+		return true;
+
+	return false;
+}
+
 bool SpellPacketBody::IsItemSpell(){
 	return invIdx != INV_IDX_INVALID;
 }
