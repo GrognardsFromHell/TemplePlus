@@ -2547,7 +2547,7 @@ enum WeaponTypes : uint32_t
 	wt_sickle,
 	wt_club,
 	wt_shortspear,
-	wt_heavy_mace,
+	wt_heavy_mace, // 10
 	wt_morningstar,
 	wt_quarterstaff,
 	wt_spear,
@@ -2557,17 +2557,17 @@ enum WeaponTypes : uint32_t
 	wt_heavy_crossbow,		// 17
 	wt_javelin,
 	wt_throwing_axe,
-	wt_light_hammer,
+	wt_light_hammer, // 20
 	wt_handaxe,
 	wt_light_lance,
 	wt_light_pick,
 	wt_sap,
-	wt_short_sword,
+	wt_short_sword, // 25
 	wt_battleaxe,
 	wt_light_flail,
 	wt_heavy_lance,
 	wt_longsword,
-	wt_heavy_pick,
+	wt_heavy_pick, // 30
 	wt_rapier,
 	wt_scimitar,
 	wt_trident,

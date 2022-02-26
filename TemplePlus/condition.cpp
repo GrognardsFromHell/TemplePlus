@@ -2339,7 +2339,7 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 	DispIoDamage * dispIo = dispatch.DispIoCheckIoType4(args.dispIO);
 	objHndl weapon = combatSys.GetWeapon(&dispIo->attackPacket);
 	int polymorphedTo = d20Sys.d20Query(args.objHndCaller, DK_QUE_Polymorphed);
-	objHndl v34 = args.objHndCaller;
+	objHndl naturalAttackObj = args.objHndCaller;
 	DispIoAttackDice dispIoAttackDice;
 	int attackDice;
 	DamageType attackDamageType = DamageType::Bludgeoning;
@@ -2348,7 +2348,7 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 
 	if (polymorphedTo)
 	{
-		v34 = objects.GetProtoHandle(polymorphedTo);
+		naturalAttackObj = objects.GetProtoHandle(polymorphedTo);
 	}
 
 	if (weapon)
@@ -2366,10 +2366,10 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 		if (attackCode > ATTACK_CODE_NATURAL_ATTACK ) // natural attack
 		{
 			int attackIdx = attackCode - (ATTACK_CODE_NATURAL_ATTACK + 1);
-			int attackDiceUnarmed = critterSys.GetCritterDamageDice(v34, attackIdx);
+			int attackDiceUnarmed = critterSys.GetCritterDamageDice(naturalAttackObj, attackIdx);
 			
-			damageMesLine = critterSys.GetCritterAttackType(v34, attackIdx) + 114;
-			attackDamageType = critterSys.GetCritterAttackDamageType(v34, attackIdx);
+			damageMesLine = critterSys.GetCritterAttackType(naturalAttackObj, attackIdx) + 114;
+			attackDamageType = critterSys.GetCritterAttackDamageType(naturalAttackObj, attackIdx);
 			dispIoAttackDice.flags = dispIo->attackPacket.flags;
 			dispIoAttackDice.weapon = 0i64;
 			dispIoAttackDice.wielder = args.objHndCaller;
@@ -7234,7 +7234,7 @@ void Conditions::AddConditionsToTable(){
 	weaponVicious.AddHook(dispTypeDealingDamage2, DK_NONE, itemCallbacks.WeaponViciousBlowback);
 
 	static CondStructNew weaponWounding("Weapon Wounding", 3, false);
-	weaponWounding.AddHook(dispTypeDealingDamage2, DK_NONE, itemCallbacks.WeaponWounding);
+	weaponWounding.AddHook(dispTypeDealingDamage, DK_NONE, itemCallbacks.WeaponWounding);
 
 	static CondStructNew weaponMerciful("Weapon Merciful", 4, false);
 	weaponMerciful.AddHook(dispTypeDealingDamage, DK_NONE, itemCallbacks.WeaponMerciful);
