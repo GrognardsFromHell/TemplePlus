@@ -2,7 +2,7 @@ from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
 import tpactions
-from spell_utils import AoeSpellHandleModifier, AoESpellEffectModifier, getSpellHelpTag, skillCheck, querySpellCondition
+from spell_utils import AoeSpellHandleModifier, AoeSpellEffectModifier, getSpellHelpTag, skillCheck, querySpellCondition
 
 print "Registering sp-Evard's Black Tentacles"
 
@@ -184,7 +184,7 @@ def checkFreedomOfMovement(attachee, args, evt_obj):
         args.remove_spell_mod()
     return 0
 
-blackTentaclesEffect = AoESpellEffectModifier("Evard's Black Tentacles") #spellId, duration, spellDc, eventId, empty
+blackTentaclesEffect = AoeSpellEffectModifier("Evard's Black Tentacles") #spellId, duration, spellDc, eventId, empty
 blackTentaclesEffect.AddHook(ET_OnGetMoveSpeedBase, EK_NONE, halfMovementSpeed, ())
 blackTentaclesEffect.AddHook(ET_OnConditionAddPre, EK_NONE, checkFreedomOfMovement, ())
 
