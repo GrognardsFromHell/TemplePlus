@@ -1,0 +1,5 @@
+ID_string: UNHOLY_STORM
+effect_type: 1
+texture_file: art\interface\player_conditions\buffs\spell fog cloud.tga
+help_topic: TAG_SPELLS_UNHOLY_STORM
+tooltip_base_text: Unholy Storm

@@ -1,0 +1,5 @@
+ID_string: CLUTCH_OF_ORCUS
+effect_type: 1
+texture_file: art\interface\player_conditions\ailments\Spell Unholy Blight.tga
+help_topic: TAG_SPELLS_CLUTCH_OF_ORCUS
+tooltip_base_text: Clutch of Orcus

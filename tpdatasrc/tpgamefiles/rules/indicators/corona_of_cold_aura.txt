@@ -1,0 +1,5 @@
+ID_string: CORONA_OF_COLD_AURA
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\spell corona of cold aura.tga
+help_topic: TAG_SPELLS_CORONA_OF_COLD
+tooltip_base_text: Corona of Cold

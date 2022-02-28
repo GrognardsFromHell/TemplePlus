@@ -1,7 +1,5 @@
-from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
-from utilities import *
 from spell_utils import AoeSpellHandleModifier, AoeSpellEffectModifier, getSpellHelpTag
 
 print "Registering sp-Cloud of Bewilderment"

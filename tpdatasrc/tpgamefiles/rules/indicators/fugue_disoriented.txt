@@ -1,0 +1,5 @@
+ID_string: FUGUE_DISORIENTED
+effect_type: 1
+texture_file: art\interface\player_conditions\ailments\Spell Fugue Disoriented.tga
+help_topic: TAG_SPELLS_FUGUE
+tooltip_base_text: Fugue Disoriented
