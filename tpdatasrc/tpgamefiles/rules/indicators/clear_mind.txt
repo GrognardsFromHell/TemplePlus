@@ -1,0 +1,5 @@
+ID_string: CLEAR_MIND
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Spell Mind Blank.tga
+help_topic: TAG_SPELLS_CLEAR_MIND
+tooltip_base_text: Clear Mind

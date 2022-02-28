@@ -1,0 +1,5 @@
+ID_string: DRACONIC_MIGHT
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\spell bullstrength.tga
+help_topic: TAG_SPELLS_DRACONIC_MIGHT
+tooltip_base_text: Draconic Might

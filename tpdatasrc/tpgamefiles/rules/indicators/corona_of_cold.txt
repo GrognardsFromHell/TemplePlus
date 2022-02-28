@@ -1,0 +1,5 @@
+ID_string: CORONA_OF_COLD
+effect_type: 1
+texture_file: art\interface\player_conditions\ailments\spell sleet storm.tga
+help_topic: TAG_SPELLS_CORONA_OF_COLD
+tooltip_base_text: Corona of Cold

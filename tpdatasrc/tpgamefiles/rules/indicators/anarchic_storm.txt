@@ -1,0 +1,5 @@
+ID_string: ANARCHIC_STORM
+effect_type: 1
+texture_file: art\interface\player_conditions\ailments\spell fog cloud.tga
+help_topic: TAG_SPELLS_ANARCHIC_STORM
+tooltip_base_text: Anarchic Storm

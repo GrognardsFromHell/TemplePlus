@@ -1,0 +1,5 @@
+ID_string: AXIOMATIC_STORM
+effect_type: 1
+texture_file: art\interface\player_conditions\ailments\spell fog cloud.tga
+help_topic: TAG_SPELLS_AXIOMATIC_STORM
+tooltip_base_text: Axiomatic Storm
