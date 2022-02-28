@@ -3506,6 +3506,8 @@ aura_swiftness =35
 aoe_event_target_friendly = 1
 aoe_event_target_non_friendly = 2
 aoe_event_target_all = 3
+aoe_event_target_all_exclude_self = 4
+aoe_event_target_friendly_exlude_self = 5
 
 #Bonus Types (aka modifiers)
 bonus_type_untyped = 0
@@ -3539,6 +3541,7 @@ bonus_type_curse_of_ill_fortune = 162
 bonus_type_curse_of_impending_blades = 163
 bonus_type_wave_of_grief = 164
 bonus_type_distract = 165
+bonus_type_foundation_of_stone = 166
 bonus_type_marshal_aura_minor = 190
 bonus_type_marshal_aura_major = 191
 bonus_type_draconic_aura = 192
