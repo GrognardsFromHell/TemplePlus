@@ -3396,11 +3396,28 @@ spell_new_slot_lvl_7 = 1612
 spell_new_slot_lvl_8 = 1613
 spell_new_slot_lvl_9 = 1614
 
+# Warlock Invocations
+spell_frightful_blast = 2301
+spell_sickening_blast = 2302
+spell_eldritch_spear = 2303
+spell_hideous_blow = 2304
+spell_beguiling_influence = 2305
+spell_breath_of_the_night = 2306
+spell_dark_ones_own_luck = 2307
+spell_earthen_grasp = 2308
+spell_entropic_warding = 2309
+spell_leaps_and_bounds = 2310
+spell_miasmic_cloud = 2311
+spell_see_the_unseen = 2312
+spell_spiderwalk = 2313
+spell_summon_swarm = 2314
+
 # Python Action Spells
 spell_epic_of_the_lost_king = 3080
 spell_grapple = 3110
 spell_black_tentacle_grapple = 3111
 spell_ki_blast = 3120
+spell_eldritch_blast = 3330
 
 #Dragon Disciple Breath Weapons
 spell_dragon_diciple_cone_breath = 3231
@@ -3545,6 +3562,7 @@ bonus_type_foundation_of_stone = 166
 bonus_type_marshal_aura_minor = 190
 bonus_type_marshal_aura_major = 191
 bonus_type_draconic_aura = 192
+bonus_type_invocation = 193
 
 #Bonus Value is passed by spell
 passed_by_spell = 0
