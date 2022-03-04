@@ -1,0 +1,5 @@
+name: Draconic Heritage
+flags: 13107200
+prereqs:
+description: You have a greater connection with your draconic bloodline than others of your kind.
+prereq descr: Sorcercer Level 1; automatically granted to Dragon Disciple and Dragon Shaman

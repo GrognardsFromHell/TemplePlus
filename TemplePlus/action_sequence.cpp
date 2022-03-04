@@ -1716,7 +1716,7 @@ int ActionSequenceSystem::TrimPathToRemainingMoveLength(D20Actn* d20a, float rem
 uint32_t ActionSequenceSystem::ActionCostNull(D20Actn* d20Actn, TurnBasedStatus* turnBasedStatus, ActionCostPacket* actionCostPacket)
 {
 	actionCostPacket->hourglassCost = 0;
-	actionCostPacket->chargeAfterPicker = 0;
+	actionCostPacket->attackCost = 0;
 	actionCostPacket->moveDistCost = 0;
 	return 0;
 }
@@ -3371,7 +3371,7 @@ BOOL ActionSequenceSystem::SimulsAdvance()
 
 int ActionSequenceSystem::ActionCostFullAttack(D20Actn* d20, TurnBasedStatus* tbStat, ActionCostPacket* acp)
 {
-	acp->chargeAfterPicker = 0;
+	acp->attackCost = 0;
 	acp->moveDistCost = 0;
 	acp->hourglassCost = 4;
 	int flags = d20->d20Caf;
@@ -3512,13 +3512,13 @@ int ActionSequenceSystem::ActionCostProcess(TurnBasedStatus* tbStat, D20Actn* d2
 	if (tbStat->surplusMoveDistance >= actCost.moveDistCost)
 	{
 		tbStat->surplusMoveDistance -= actCost.moveDistCost;
-		if ( actCost.chargeAfterPicker <= 0 
-			|| actCost.chargeAfterPicker + tbStat->attackModeCode <= tbStat->baseAttackNumCode + tbStat->numBonusAttacks)
+		if ( actCost.attackCost <= 0 
+			|| actCost.attackCost + tbStat->attackModeCode <= tbStat->baseAttackNumCode + tbStat->numBonusAttacks)
 		{
-			if ((int) tbStat->numBonusAttacks < actCost.chargeAfterPicker)
-				tbStat->attackModeCode += actCost.chargeAfterPicker;
+			if (actCost.attackCost > (int) tbStat->numBonusAttacks )
+				tbStat->attackModeCode += actCost.attackCost;
 			else
-				tbStat->numBonusAttacks -= actCost.chargeAfterPicker;
+				tbStat->numBonusAttacks -= actCost.attackCost;
 			if (tbStat->attackModeCode == tbStat->baseAttackNumCode && !tbStat->numBonusAttacks)
 				tbStat->tbsFlags &= ~TBSF_FullAttack;  
 			result = AEC_OK;
@@ -3782,12 +3782,13 @@ int ActionSequenceSystem::StdAttackTurnBasedStatusCheck(D20Actn* d20a, TurnBased
 		return AEC_TARGET_INVALID;
 	}
 
+	const int STD_ATK_HG_COST= 2;
 	if (hgState != -1)
-		hgState = turnBasedStatusTransitionMatrix[hgState][2];
+		hgState = turnBasedStatusTransitionMatrix[hgState][STD_ATK_HG_COST];
 	tbStat->hourglassState = hgState;
 
-	if (inventory.ItemWornAt(d20a->d20APerformer, 3) || dispatch.DispatchD20ActionCheck(d20a, tbStat, dispTypeGetCritterNaturalAttacksNum)  <= 0)
-		tbStat->attackModeCode = 0;
+	if (inventory.ItemWornAt(d20a->d20APerformer, EquipSlot::WeaponPrimary) || dispatch.DispatchD20ActionCheck(d20a, tbStat, dispTypeGetCritterNaturalAttacksNum) <= 0)
+		tbStat->attackModeCode = ATTACK_CODE_PRIMARY;
 	else
 		tbStat->attackModeCode = ATTACK_CODE_NATURAL_ATTACK;
 	tbStat->baseAttackNumCode = tbStat->attackModeCode + 1;
@@ -4308,12 +4309,15 @@ const char*actionErrorCodeStrings[] =
 	"AEC_NEED_A_STRAIGHT_LINE",
 	"AEC_NO_ACTIONS",
 	"AEC_NOT_IN_COMBAT",
-	"AEC_AREA_NOT_SAFE"
+	"AEC_AREA_NOT_SAFE",
+	"AEC_ABILITY_ON_COOLDOWN",
+	"AEC_ALREADY_USED_THIS_TURN",
+	"AEC_ALREADY_ACTIVE"
 };
 ostream & operator<<(ostream & str, ActionErrorCode aec)
 {
 	size_t i = (size_t)aec;
-	if (i <= AEC_AREA_NOT_SAFE) {
+	if (i <= AEC_ALREADY_ACTIVE) {
 		str << actionErrorCodeStrings[i];
 	}
 	else {

@@ -338,6 +338,9 @@ public:
 	void apply() override {
 		logger->info("Replacing Condition-related Functions");
 
+		replaceFunction<void()>(0x100E19A0, []() {
+			conds.hashmethods.ConditionHashtableInit(conds.mCondStructHashtable);
+			});
 		//dispTypeConditionAddPre
 		static int(__cdecl* orgTempAbilityLoss)(DispatcherCallbackArgs) = replaceFunction<int(__cdecl)(DispatcherCallbackArgs)>(0x100EA1F0, [](DispatcherCallbackArgs args) {
 			Stat statDamaged = (Stat)args.GetCondArg(0);
@@ -1862,16 +1865,16 @@ int __cdecl GlobalToHitBonus(DispatcherCallbackArgs args)
 		 && !d20Sys.d20Query(args.objHndCaller, DK_QUE_Polymorphed) )
 	{
 		int attackIdx = dispIo->attackPacket.dispKey - (ATTACK_CODE_NATURAL_ATTACK + 1);
-		int bonValue = 0; // temporarily used as an index value for obj_f_attack_bonus_idx field
+		int atkBonIdx = 0;
 		for (int i = 0,  j=0; i < 4; i++)
 		{
 			j += objects.getArrayFieldInt32(args.objHndCaller, obj_f_critter_attacks_idx, i); // number of attacks
 			if (attackIdx < j){
-				bonValue = i;
+				atkBonIdx = i;
 				break;
 			}
 		}
-		bonValue = objects.getArrayFieldInt32(args.objHndCaller, obj_f_attack_bonus_idx, bonValue);
+		int bonValue = objects.getArrayFieldInt32(args.objHndCaller, obj_f_attack_bonus_idx, atkBonIdx);
 		bonusSys.bonusAddToBonusList(&dispIo->bonlist, bonValue, 1, 118); // base attack
 	}
 
@@ -7449,3 +7452,25 @@ void CondStructNew::AddAoESpellRemover() {
 	AddHook(dispTypeD20Signal, DK_SIG_Spell_End, spCallbacks.AoeSpellRemove);
 }
 
+uint32_t CondHashSystem::ConditionHashtableInit(ToEEHashtable<CondStruct>* hashtable)
+{
+	const int VANILLA_COND_CAP = 1000;
+	return HashtableInit(hashtable, VANILLA_COND_CAP /*2023*/);
+}
+
+uint32_t CondHashSystem::CondStructAddToHashtable(CondStruct* condStruct, bool overriding)
+{
+	
+	uint32_t key = StringHash(condStruct->condName);
+	CondStruct* condFound;
+	uint32_t result = HashtableSearch(condHashTable, key, &condFound);
+	if (result || overriding)
+	{
+		result = HashtableOverwriteItem(condHashTable, key, condStruct);
+	}
+	if (result == 3) { // over capacity
+		logger->error("Condition hashtable over capacity ({})! Trying to add {}", condHashTable->capacity, condStruct->condName);
+	}
+	return result;
+	
+}

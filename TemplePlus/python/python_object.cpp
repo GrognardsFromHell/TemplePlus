@@ -2797,6 +2797,24 @@ static PyObject* PyObjHandle_AnimGoalPushHitByWeapon(PyObject* obj, PyObject* ar
 	return PyInt_FromLong(gameSystems->GetAnim().PushGoalHitByWeapon( attacker, self->handle));
 }
 
+static PyObject* PyObjHandle_AnimGoalThrowSpellWithCastAnim(PyObject* obj, PyObject* args) {
+	
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	if (!PyArg_ParseTuple(args, ":objhndl.anim_goal_throw_spell_w_cast_anim")) {
+		return 0;
+	}
+	auto curSeq = *actSeqSys.actSeqCur;
+	if (!curSeq || curSeq->performer != self->handle) {
+		return PyInt_FromLong(0);
+	}
+	auto &pkt = curSeq->spellPktBody;
+	return PyInt_FromLong(gameSystems->GetAnim().PushSpellCast(pkt, objHndl::null));
+}
+
 static PyObject* PyObjHandle_AnimGoalPushUseObject(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -4342,6 +4360,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "anim_goal_push_attack", PyObjHandle_AnimGoalPushAttack, METH_VARARGS, NULL },
 	{ "anim_goal_push_dodge", PyObjHandle_AnimGoalPushDodge, METH_VARARGS, NULL },
 	{ "anim_goal_push_hit_by_weapon", PyObjHandle_AnimGoalPushHitByWeapon, METH_VARARGS, NULL },
+	{ "anim_goal_throw_spell_w_cast_anim", PyObjHandle_AnimGoalThrowSpellWithCastAnim, METH_VARARGS, NULL },
 	{ "anim_goal_use_object", PyObjHandle_AnimGoalPushUseObject, METH_VARARGS, NULL },
 	{ "anim_goal_get_new_id", PyObjHandle_AnimGoalGetNewId, METH_VARARGS, NULL },
 	{ "apply_projectile_particles", PyObjHandle_ApplyProjectileParticles, METH_VARARGS, NULL },

@@ -23,6 +23,7 @@ struct DispIoDispelCheck; // 11
 struct DispIoD20ActionTurnBased; // 12
 struct DispIoMoveSpeed; //13
 struct DispIOBonusListAndSpellEntry; // 14
+struct DispIoReflexThrow; // 15
 struct DispIoObjEvent; // 17
 struct DispIoSpellsPerDay; // 18
 struct DispIoAbilityLoss; // 19
@@ -72,7 +73,7 @@ struct DispatcherSystem : temple::AddressTable
 	int Dispatch13SavingThrow(objHndl handle, SavingThrowType saveType, DispIoSavingThrow* evtObj);
 	int Dispatch14SavingThrowMod(objHndl handle, SavingThrowType saveType, DispIoSavingThrow* evtObj);
 	int Dispatch44FinalSaveThrow(objHndl handle, SavingThrowType saveType, DispIoSavingThrow* evtObj);
-	
+	int Dispatch49ReflexSaveReduction(objHndl handle, DispIoReflexThrow* evtObj);
 
 #pragma region event object checkers
 
@@ -457,6 +458,7 @@ struct DispIoReflexThrow : DispIO { // DispIoType = 15
 	int attackType;
 	int throwResult;
 	D20SavingThrowFlag	flags;
+	DispIoReflexThrow();
 };
 
 struct DispIoObjEvent : DispIO // type 17

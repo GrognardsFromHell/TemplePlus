@@ -3358,6 +3358,105 @@ spell_new_slot_lvl_7 = 1612
 spell_new_slot_lvl_8 = 1613
 spell_new_slot_lvl_9 = 1614
 
+# Python Action Spells
+spell_epic_of_the_lost_king = 3080
+spell_ki_blast = 3120
+
+#Dragon Disciple Breath Weapons
+spell_dragon_diciple_cone_breath = 3231
+spell_dragon_diciple_line_breath = 3232
+
+# Dragon Lineage Spell Like Abilities
+spell_dragon_lineage_black = 3242
+spell_dragon_lineage_blue = 3243
+spell_dragon_lineage_brass = 3244
+spell_dragon_lineage_bronze = 3245
+spell_dragon_lineage_copper = 3246
+spell_dragon_lineage_gold = 3247
+spell_dragon_lineage_green = 3248
+spell_dragon_lineage_red = 3249
+spell_dragon_lineage_silver = 3250
+spell_dragon_lineage_white = 3251
+
+# Marshal Spells
+spell_marshal_minor_aura = 3831
+spell_marshal_major_aura = 3832
+spell_marshal_adrenaline_boost = 3833
+
+# Dragon Shaman Spells
+spell_draconic_aura = 3840
+spell_double_draconic_aura = 3841
+
+# Dummy Spells for Python Actions
+spell_dummy_spell_cone_small = 3900
+spell_dummy_spell_cone_medium = 3901
+spell_dummy_spell_cone_large = 3902
+spell_dummy_spell_line_small = 3903
+spell_dummy_spell_line_medium = 3904
+spell_dummy_spell_line_large = 3905
+
+# Dragon Breath Shapes
+dragon_breath_shape_cone = 1
+dragon_breath_shape_line = 2
+
+# Heritage Types
+heritage_draconic_black = 1
+heritage_draconic_blue = 2
+heritage_draconic_brass = 3
+heritage_draconic_bronze = 4
+heritage_draconic_copper = 5
+heritage_draconic_gold = 6
+heritage_draconic_green = 7
+heritage_draconic_red = 8
+heritage_draconic_silver = 9
+heritage_draconic_white = 10
+heritage_celestial_sorcerer = 11
+heritage_fey = 12
+heritage_fiendish = 13
+heritage_infernal_sorcerer = 14
+
+# Aura Types
+aura_type_minor = 1
+aura_type_major = 2
+aura_type_draconic = 3
+aura_type_double_draconic = 4
+
+#Aura Enums
+aura_accurate_strike = 1
+aura_art_of_war = 2
+aura_Demand_fortitude = 3
+aura_Determined_caster = 4
+aura_force_of_will = 5
+aura_master_of_opportunity = 6
+aura_master_of_tactics = 7
+aura_motivate_charisma = 8
+aura_motivate_constitution = 9
+aura_motivate_dexterity = 10
+aura_motivate_intelligence = 11
+aura_motivate_strength = 12
+aura_motivate_wisdom = 13
+aura_over_the_top = 14
+aura_watchful_eye = 15
+aura_hardy_soldiers = 16
+aura_motivate_ardor = 17
+aura_motivate_attack = 18
+aura_motivate_care = 19
+aura_motivate_urgency = 20
+aura_resilient_troops = 21
+aura_steady_hand = 22
+aura_energy_shield = 23
+aura_power = 24
+aura_presence = 25
+aura_resistance = 26
+aura_senses = 27
+aura_toughness = 28
+aura_vigor = 29
+aura_break_spell_resistance = 30
+aura_energy = 31
+aura_insight = 32
+aura_resolve = 33
+aura_stamina = 34
+aura_swiftness =35
 
 stat_strength = 0
 stat_dexterity = 1
@@ -3438,6 +3537,10 @@ stat_level_ruby_knight_vindicator = 80
 stat_level_shadow_sun_ninja = 81
 stat_level_fochlucan_lyrist = 82
 stat_level_marshal = 83
+stat_level_dragon_shaman = 84
+stat_level_dragonheart_mage = 85
+stat_level_battle_howler_of_gruumsh = 86
+stat_level_fist_of_the_forest = 87
 
 
 
@@ -4088,6 +4191,9 @@ AEC_NEED_A_STRAIGHT_LINE = 23
 AEC_NO_ACTIONS = 24
 AEC_NOT_IN_COMBAT = 25
 AEC_AREA_NOT_SAFE = 26
+AEC_ABILITY_ON_COOLDOWN = 27
+AEC_ALREADY_USED_THIS_TURN = 28
+AEC_ALREADY_ACTIVE = 29
 
 
 BM_INSPIRE_COURAGE = 1
