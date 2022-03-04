@@ -1,0 +1,17 @@
+//Warlock Invocation descriptions
+
+// Spell Names
+{2301}{Frightful Blast}
+{2302}{Sickening Blast}
+{2303}{Eldritch Spear}
+{2304}{Hideous Blow}
+{2305}{Beguiling Influence}
+{3330}{Eldritch Blast}
+
+// Spell Descriptions
+{7301} Frightful Blast {Transmutation Frightful Blast}
+{7302} Sickening Blast {Transmutation Sickening Blast}
+{7303} Eldritch Spear {Transmutation Eldritch Spear}
+{7304} Hideous Blow {Transmutation Hideous Blow}
+{7305} Beguiling Influence {Transmutation Beguiling Influence}
+{8330} Eldritch Blast {Invocation Basic Eldritch Blast, dealing 1d6/two levels (max 9d6) damage.}
