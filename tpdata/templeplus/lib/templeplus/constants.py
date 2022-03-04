@@ -411,6 +411,7 @@ ES_F_SLEEP_ENCOUNTER = 1
 
 OBJECT_SPELL_GENERIC = 12003
 OBJECT_SPELL_CLOUDKILL = 12003
+OBJECT_SPELL_BLACK_TENTACLES = 12999
 
 OBJFADE_C_NONE = 0
 OBJFADE_C_OBJ_DESTROY = 1
@@ -3200,6 +3201,9 @@ spell_mass_hold_monster = 585
 spell_polar_ray = 586
 spell_undeath_to_death = 587
 spell_mass_hold_person = 588
+spell_vigor_lesser = 794
+spell_vigor = 795
+spell_vigor_greater = 796
 spell_vacant = 802
 spell_label_level_0 = 803
 spell_label_level_1 = 804
@@ -3337,6 +3341,40 @@ spell_slashing_darkness = 1167
 spell_spikes = 1168
 spell_tremor = 1169
 spell_weapon_of_energy = 1170
+spell_storm_of_elemental_fury = 1171
+spell_acid_fog = 1172
+spell_touch_of_madness = 1173
+spell_energized_shield_lesser = 1174
+spell_energized_shield = 1175
+spell_draconic_might = 1176
+spell_vigor_mass_lesser = 1177
+spell_vigor_mass_improved = 1178
+spell_sure_strike = 1179
+spell_hunters_eye = 1180
+spell_tactical_precision = 1181
+spell_accuracy = 1182
+spell_hail_of_stone = 1183
+spell_lesser_orb_of_acid = 1184
+spell_lesser_orb_of_cold = 1185
+spell_lesser_orb_of_electricity = 1186
+spell_lesser_orb_of_fire = 1187
+spell_lesser_orb_of_sound = 1188
+spell_blades_of_fire = 1189
+spell_fireburst = 1190
+spell_greater_fireburst = 1191
+spell_ice_knife = 1192
+spell_whirling_blade = 1193
+spell_ring_of_blades = 1194
+spell_blast_of_flame = 1195
+spell_orb_of_acid = 1196
+spell_orb_of_cold = 1197
+spell_orb_of_electricity = 1198
+spell_orb_of_fire = 1199
+spell_orb_of_sound = 1200
+spell_icelance = 1201
+spell_revivify = 1202
+
+
 spell_inevitable_defeat = 1302
 spell_kelgores_fire_bolt = 1303
 spell_rouse = 1305
@@ -3358,9 +3396,28 @@ spell_new_slot_lvl_7 = 1612
 spell_new_slot_lvl_8 = 1613
 spell_new_slot_lvl_9 = 1614
 
+# Warlock Invocations
+spell_frightful_blast = 2301
+spell_sickening_blast = 2302
+spell_eldritch_spear = 2303
+spell_hideous_blow = 2304
+spell_beguiling_influence = 2305
+spell_breath_of_the_night = 2306
+spell_dark_ones_own_luck = 2307
+spell_earthen_grasp = 2308
+spell_entropic_warding = 2309
+spell_leaps_and_bounds = 2310
+spell_miasmic_cloud = 2311
+spell_see_the_unseen = 2312
+spell_spiderwalk = 2313
+spell_summon_swarm = 2314
+
 # Python Action Spells
 spell_epic_of_the_lost_king = 3080
+spell_grapple = 3110
+spell_black_tentacle_grapple = 3111
 spell_ki_blast = 3120
+spell_eldritch_blast = 3330
 
 #Dragon Disciple Breath Weapons
 spell_dragon_diciple_cone_breath = 3231
@@ -3386,6 +3443,10 @@ spell_marshal_adrenaline_boost = 3833
 # Dragon Shaman Spells
 spell_draconic_aura = 3840
 spell_double_draconic_aura = 3841
+
+# Draconic Feats Spells
+spell_draconic_breath_cone = 3850
+spell_draconic_breath_line = 3851
 
 # Dummy Spells for Python Actions
 spell_dummy_spell_cone_small = 3900
@@ -3457,6 +3518,54 @@ aura_insight = 32
 aura_resolve = 33
 aura_stamina = 34
 aura_swiftness =35
+
+#AoE Event Targets
+aoe_event_target_friendly = 1
+aoe_event_target_non_friendly = 2
+aoe_event_target_all = 3
+aoe_event_target_all_exclude_self = 4
+aoe_event_target_friendly_exlude_self = 5
+
+#Bonus Types (aka modifiers)
+bonus_type_untyped = 0
+bonus_type_stat_strength = 2
+bonus_type_stat_dexterity = 3
+bonus_type_stat_constitution = 4
+bonus_type_stat_intelligence = 5
+bonus_type_stat_wisdom = 6
+bonus_type_stat_charisma = 7
+bonus_type_dodge = 8
+bonus_type_natural_armor = 10
+bonus_type_deflection = 11
+bonus_type_enhancement = 12
+bonus_type_morale = 13
+bonus_type_luck = 14
+bonus_type_resistance = 15
+bonus_type_sacred = 17
+bonus_type_insight = 18
+bonus_type_concealment = 19
+bonus_type_size = 20
+bonus_type_circumstance = 21
+bonus_type_alchemical = 151
+bonus_type_profane = 154
+bonus_type_sirines_grace = 155
+bonus_type_sticky_fingers = 156
+bonus_type_undersong = 157
+bonus_type_camouflage = 158
+bonus_type_focusing_chant = 159
+bonus_type_storm_spell = 161
+bonus_type_curse_of_ill_fortune = 162
+bonus_type_curse_of_impending_blades = 163
+bonus_type_wave_of_grief = 164
+bonus_type_distract = 165
+bonus_type_foundation_of_stone = 166
+bonus_type_marshal_aura_minor = 190
+bonus_type_marshal_aura_major = 191
+bonus_type_draconic_aura = 192
+bonus_type_invocation = 193
+
+#Bonus Value is passed by spell
+passed_by_spell = 0
 
 stat_strength = 0
 stat_dexterity = 1
@@ -3541,6 +3650,7 @@ stat_level_dragon_shaman = 84
 stat_level_dragonheart_mage = 85
 stat_level_battle_howler_of_gruumsh = 86
 stat_level_fist_of_the_forest = 87
+stat_level_unseen_seer = 89
 
 
 
@@ -4194,6 +4304,7 @@ AEC_AREA_NOT_SAFE = 26
 AEC_ABILITY_ON_COOLDOWN = 27
 AEC_ALREADY_USED_THIS_TURN = 28
 AEC_ALREADY_ACTIVE = 29
+AEC_SILENCED = 30
 
 
 BM_INSPIRE_COURAGE = 1
