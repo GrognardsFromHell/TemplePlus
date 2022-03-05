@@ -3396,21 +3396,99 @@ spell_new_slot_lvl_7 = 1612
 spell_new_slot_lvl_8 = 1613
 spell_new_slot_lvl_9 = 1614
 
-# Warlock Invocations
+# Warlock Eldritch Essence Invocations
 spell_frightful_blast = 2301
 spell_sickening_blast = 2302
-spell_eldritch_spear = 2303
-spell_hideous_blow = 2304
-spell_beguiling_influence = 2305
-spell_breath_of_the_night = 2306
-spell_dark_ones_own_luck = 2307
-spell_earthen_grasp = 2308
-spell_entropic_warding = 2309
-spell_leaps_and_bounds = 2310
-spell_miasmic_cloud = 2311
-spell_see_the_unseen = 2312
-spell_spiderwalk = 2313
-spell_summon_swarm = 2314
+spell_beshadowed_blast = 2303
+spell_brimstone_blast = 2304
+spell_hellrime_blast = 2305
+spell_bewitching_blast = 2306
+spell_noxious_blast = 2307
+spell_repelling_blast = 2308
+spell_vitriolic_blast = 2309
+spell_hindering_blast = 2310
+spell_utterdark_blast = 2311
+spell_binding_blast = 2312
+spell_penetrating_blast = 2313
+#spell_baneful_blast
+#spell_hammer_blast
+#spell_deteriorating_blast
+
+#Warlock Blast Shape Invocations
+spell_eldritch_spear = 2320
+spell_hideous_blow = 2321
+spell_eldritch_chain = 2322
+spell_eldritch_cone = 2323
+spell_eldritch_doom = 2324
+spell_eldritch_line = 2325
+#spell_eldritch_glave
+
+#Warlock Least Invocations
+spell_beguiling_influence = 2330
+spell_breath_of_the_night = 2331
+spell_dark_ones_own_luck = 2332
+spell_entropic_warding = 2333
+spell_leaps_and_bounds = 2334
+spell_miasmic_cloud = 2335
+spell_see_the_unseen = 2336
+spell_spiderwalk = 2337
+#spell_earthen_grasp //should be a normal spell!!
+#spell_summon_swarm
+#spell_baleful_utterance
+#spell_darkness
+#spell_devil's_sight
+#spell_all_seeing_eyes
+#spell_call_of_the_beast
+#spell_otherwordly_whispers
+#spell_serpent's_tongue
+#spell_soulreaving_aura
+#spell_swimming_the_styx
+
+#Warlock Lesser Invocations
+spell_warlock_charm = 0
+spell_curse_of_despair = 0
+spell_fell_flight = 0
+spell_flee_the_scence = 0
+#spell_hungry_darkness
+#spell_stony_grasp //should be a normal spell !!
+spell_the_dead_walk = 0
+#spell_voidsense
+spell_voracious_dispelling = 0
+spell_walk_unseen = 0
+#spell_wall_of_gloom
+#spell_cold_comfort
+#spell_crawling_eye // no!!
+#spell_disembodied_hand // no!!
+#spell_mask_of_flesh // no!!
+#spell_relentless_dispelling
+#spell_witchwood_step
+#spell_dread_seizure
+#spell_ignore_the_pyre
+#spell_weighty_utterance // no
+
+#Warlock Greater Invocations
+spell_chilling_tentacles = 0
+spell_devour_magic = 0
+spell_enervating_shadow = 0
+spell_tenacious_plague = 0
+spell_wall_of_perilous_flame = 0
+#spell_warlocks_call // no!!
+#spell_caustic_mire
+#spell_hellspawned_grace
+#spell_nightmares_made_real
+#spell_painful_slumber_of_ages
+#spell_dragonward
+
+#Warlock Dark Invocations
+#spell_dark_discorporation
+#spell_dark_foresight
+#spell_path_of_shadow
+spell_retributive_invisibility = 0
+spell_word_of_changing = 0
+#spell_casters_lament
+#spell_steal_summoning
+#spell_impenetrable_barrier
+
 
 # Python Action Spells
 spell_epic_of_the_lost_king = 3080
