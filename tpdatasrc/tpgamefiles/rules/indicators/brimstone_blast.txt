@@ -1,0 +1,5 @@
+ID_string: BRIMSTONE_BLAST
+effect_type: 1
+texture_file: art\interface\player_conditions\ailments\Spell Heat Metal.tga
+help_topic: TAG_SPELLS_BRIMSTONE_BLAST
+tooltip_base_text: Brimstone Blast

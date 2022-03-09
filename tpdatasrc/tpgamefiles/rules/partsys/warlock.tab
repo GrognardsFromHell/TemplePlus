@@ -1,0 +1,6 @@
+sp-All Seeing Eyes	pupil			30	4		Node Pos	bip01 head			Sprite		Cartesian		eye-Pupil	60	Add	0				0	0	0	0	0	0	10	3	10	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	35	0	10,50	0	0	180	0	0	0,128,0	0,238	0,130	0,238						2
+sp-All Seeing Eyes	eyes	15		30	4		Node Pos	bip01 head			Sprite		Cartesian		eye-noPupil	60	Add	0				0	0	0	0	0	0	10	3	10	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	35	0	10,50	0	0	180	0	0	0,128,0	0,238	0,130	0,238						2
+sp-Soulreaving Aura	circle 2	0		30	500						Disc		Polar		bigcircle	60	Add	0				0	0	0	0	0	0	0	30	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360	0	0,120	0,30	0	0	0	0	0	0,8,16,0	255,64,64,64	255,0,0,0	255,255,255,255						
+sp-Soulreaving Aura	sparklies	0		5	1000						Disc		Polar		bigcircle	60	Add	0				0	0	0	0	0	0	0	30	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360	0	0,120	1	0	0	0	0	0	0,255,0	64,64,64,64	0,0,0,0	255,255,255,255						
+sp-Soulreaving Aura-HP	sparkles 1			240	20						Sprite		Polar	Cartesian	flare	60	Add	0				0	0	0	0	0	0	0	10	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	10?-10	0	0?360	0?60	#radius	0,10	0	0	0,720	0	0	0,255,0	64	0	255		-76	-108	69	25	
+sp-Soulreaving Aura-HP	bam			10	200						Sprite		Polar	Cartesian	flare	30	Add	0				0	0	0	0	0	0	0	10	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	10?-10	0	0?360	0?60	#radius	10,0	0	0	0,720	0	0	0,255,0	64	0	255		-76	-108	69	25	

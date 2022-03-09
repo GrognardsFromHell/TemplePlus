@@ -1,0 +1,4 @@
+name: Warlock Invocations
+flags: 8
+prereqs:
+description:  When the Warlock gains new levels, he can choose new Invocations from his Invocations List.

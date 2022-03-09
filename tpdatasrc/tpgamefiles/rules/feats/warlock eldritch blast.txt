@@ -1,0 +1,10 @@
+name: Warlock Eldritch Blast
+flags: 8
+prereqs:
+description:  The first ability a warlock learns is eldritch blast. A warlock attacks his foes with eldritch power, using baleful magical energy to deal damage and sometimes impart other debilitating effects.
+
+An eldritch blast is a ray with a range of 60 feet. It is a ranged touch attack that affects a single target, allowing no saving throw. An eldritch blast deals 1d6 points of damage at 1st level and increases in power as the warlock rises in level. An eldritch blast has a spell level equal to half of the warlock level (min 1, max 9 at 18th level). If you apply a blast shape or eldritch essence invocation to your eldritch blast, your eldritch blast uses the highest applicable spell level.
+
+An eldritch blast is subject to spell resistance, although the Spell Penetration feat and other effects that improve caster level checks to overcome spell resistance also apply to eldritch blast. An eldritch blast deals half damage to objects. Metamagic feats cannot improve a warlock's eldritch blast (because it is a spell-like ability, not a spell). However, the feat Ability Focus (eldritch blast) increases the DC for all saving throws (if any) associated with a warlock's eldritch blast by 2.
+
+A warlock can use eldritch blast at will.
