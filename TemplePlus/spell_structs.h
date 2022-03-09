@@ -233,7 +233,8 @@ enum SpellSchools : uint32_t
 	School_Evocation = 5,
 	School_Illusion = 6,
 	School_Necromancy = 7,
-	School_Transmutation = 8
+	School_Transmutation = 8,
+	School_Invocation = 9 // New, added by Sagenlicht for Warlock
 };
 
 
