@@ -31,6 +31,10 @@
 
 {151} {~Alchemical~[TAG_MODIFIER_ALCHEMICAL]}
 {154} {~Profane~[TAG_MODIFIER_PROFANE]}
+
+// Most bonus types are either circumstance or untyped bonuses
+// They do get a unique bonus type integer to avoid stacking with itself
+
 {155} {~Untyped~[TAG_MODIFIER_UNTYPED]} // bonus_type_sirines_grace
 {156} {~Untyped~[TAG_MODIFIER_UNTYPED]} // bonus_type_sticky_fingers
 {157} {~Untyped~[TAG_MODIFIER_UNTYPED]} // bonus_type_undersong
@@ -41,3 +45,6 @@
 {163} {~Untyped~[TAG_MODIFIER_UNTYPED]} // bonus_type_curse_of_impending_blades
 {164} {~Untyped~[TAG_MODIFIER_UNTYPED]} // bonus_type_wave_of_grief
 {165} {~Untyped~[TAG_MODIFIER_UNTYPED]} // bonus_type_distract
+{192} {~Untyped~[TAG_MODIFIER_UNTYPED]} // bonus_type_draconic_aura
+{193} {~Untyped~[TAG_MODIFIER_UNTYPED]} // bonus_type_invocation
+{200} {~Untyped~[TAG_MODIFIER_UNTYPED]} // bonus_type_hellrime_blast

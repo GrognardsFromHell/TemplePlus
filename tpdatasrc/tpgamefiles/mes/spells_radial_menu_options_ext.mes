@@ -44,3 +44,9 @@
 {3051}{Mainhand}
 {3052}{Offhand}
 {3053}{Shield}
+
+; save types
+{3060}{3}
+{3061}{Fortitude}
+{3062}{Reflex}
+{3063}{Will}
