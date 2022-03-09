@@ -1,0 +1,5 @@
+name: Warlock Detect Magic
+flags: 8
+prereqs:
+description:  Beginning at 2nd level, a warlock can use detect magic as the spell at will. His caster level equals his class level.
+prereq descr: Warlock Level 2.

@@ -1,6 +1,6 @@
-from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
+from spell_utils import getBonusHelpTag
 
 #This file contains common functions for feats
 
@@ -19,5 +19,17 @@ def getFeatName(args):
 def getFeatTag(featName):
     return "TAG_{}".format(featName.upper().replace(" ", "_"))
 
+def getFeatHelpTag(featName):
+    featTag = getFeatTag(featName)
+    return "~{}~[{}]".format(featName, featTag)
 
+def applyFeatBonus(attachee, args, evt_obj):
+    bonusValue = args.get_param(0)
+    if not bonusValue:
+        bonusValue = args.get_arg(2)
+    bonusType = args.get_param(1)
+    featName = getFeatName(args)
+    featHelpTag = getFeatHelpTag(featName)
+    evt_obj.bonus_list.add(bonusValue, bonusType, "{} : {}".format(bonusHelpTag, featHelpTag))
+    return 0
 

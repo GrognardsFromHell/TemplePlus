@@ -1,0 +1,5 @@
+ID_string: ALL_SEEING_EYES
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Spell Clairvoyance.tga
+help_topic: TAG_SPELLS_ALL_SEEING_EYES
+tooltip_base_text: All Seeing Eyes

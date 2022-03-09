@@ -1,0 +1,5 @@
+name: Warlock Spell Failure
+flags: 8
+prereqs:
+description: A warlock can use any of his invocations while wearing light armor without incurring the normal arcane spell failure chance. However, like arcane spellcasters, a warlock wearing medium or heavy armor or using a shield incurs a chance of arcane spell failure (all invocations, including eldritch blast, have a somatic component). A multiclass warlock still incurs the normal arcane spell failure chance for arcane spells received from levels in other classes.
+prereq descr: Warlock Level 1.
