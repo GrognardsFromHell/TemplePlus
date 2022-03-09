@@ -80,6 +80,7 @@ Evocation = 5
 Illusion = 6
 Necromancy = 7
 Transmutation = 8
+Invocation = 9 #Added to handle Warlock Invocations
 
 # Spell School Subschools 
 
@@ -3396,32 +3397,33 @@ spell_new_slot_lvl_7 = 1612
 spell_new_slot_lvl_8 = 1613
 spell_new_slot_lvl_9 = 1614
 
+#Warlock Blast Shape Invocations
+spell_eldritch_blast = 2300
+spell_eldritch_spear = 2301
+spell_hideous_blow = 2302
+spell_eldritch_chain = 2303
+spell_eldritch_cone = 2304
+spell_eldritch_doom = 2305
+spell_eldritch_line = 2306
+spell_eldritch_glave = 2307
+
 # Warlock Eldritch Essence Invocations
-spell_frightful_blast = 2301
-spell_sickening_blast = 2302
-spell_beshadowed_blast = 2303
-spell_brimstone_blast = 2304
-spell_hellrime_blast = 2305
-spell_bewitching_blast = 2306
-spell_noxious_blast = 2307
-spell_repelling_blast = 2308
-spell_vitriolic_blast = 2309
-spell_hindering_blast = 2310
-spell_utterdark_blast = 2311
-spell_binding_blast = 2312
-spell_penetrating_blast = 2313
+spell_frightful_blast = 2311
+spell_sickening_blast = 2312
+spell_beshadowed_blast = 2313
+spell_brimstone_blast = 2314
+spell_hellrime_blast = 2315
+spell_bewitching_blast = 2316
+spell_noxious_blast = 2317
+spell_repelling_blast = 2318
+spell_vitriolic_blast = 2319
+spell_hindering_blast = 2320
+spell_utterdark_blast = 2321
+spell_binding_blast = 2322
+spell_penetrating_blast = 2323
 #spell_baneful_blast
 #spell_hammer_blast
 #spell_deteriorating_blast
-
-#Warlock Blast Shape Invocations
-spell_eldritch_spear = 2320
-spell_hideous_blow = 2321
-spell_eldritch_chain = 2322
-spell_eldritch_cone = 2323
-spell_eldritch_doom = 2324
-spell_eldritch_line = 2325
-#spell_eldritch_glave
 
 #Warlock Least Invocations
 spell_beguiling_influence = 2330
@@ -3432,16 +3434,16 @@ spell_leaps_and_bounds = 2334
 spell_miasmic_cloud = 2335
 spell_see_the_unseen = 2336
 spell_spiderwalk = 2337
+spell_soulreaving_aura = 2338
+spell_all_seeing_eyes = 2239
 #spell_earthen_grasp //should be a normal spell!!
 #spell_summon_swarm
 #spell_baleful_utterance
 #spell_darkness
 #spell_devil's_sight
-#spell_all_seeing_eyes
 #spell_call_of_the_beast
 #spell_otherwordly_whispers
 #spell_serpent's_tongue
-#spell_soulreaving_aura
 #spell_swimming_the_styx
 
 #Warlock Lesser Invocations
@@ -3495,7 +3497,6 @@ spell_epic_of_the_lost_king = 3080
 spell_grapple = 3110
 spell_black_tentacle_grapple = 3111
 spell_ki_blast = 3120
-spell_eldritch_blast = 3330
 
 #Dragon Disciple Breath Weapons
 spell_dragon_diciple_cone_breath = 3231
@@ -3641,6 +3642,7 @@ bonus_type_marshal_aura_minor = 190
 bonus_type_marshal_aura_major = 191
 bonus_type_draconic_aura = 192
 bonus_type_invocation = 193
+bonus_type_hellrime_blast = 200
 
 #Bonus Value is passed by spell
 passed_by_spell = 0
