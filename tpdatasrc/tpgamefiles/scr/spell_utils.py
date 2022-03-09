@@ -232,6 +232,14 @@ def checkCategoryType(critter, *args):
             return True
     return False
 
+# Target is a living creature
+def isLivingCreature(critter):
+    if critter.is_category_type(mc_type_construct):
+        return False
+    elif critter.is_category_type(mc_type_undead):
+        return False
+    return True
+
 ##### workaround getSpellClassCode #####
 def getSpellClassCode(classEnum):
     dummySpellData = tpdp.D20SpellData()
@@ -277,11 +285,9 @@ def isMeleeWeapon(weapon):
 def getSpellTargets(spellPacket):
     targetCount = spellPacket.target_count
     targetList = []
-    idx = 0
     for idx in range(0, targetCount):
         target = spellPacket.get_target(idx)
         targetList.append(target)
-        idx += 1
     return targetList
 
 ### Item Condition functions
@@ -849,6 +855,16 @@ def aoeEffectTooltip(attachee, args, evt_obj):
     evt_obj.append(conditionKey, -2, " ({})".format(conditionDuration))
     return 0
 
+def applyFogConcealment(attachee, args, evt_obj):
+    attacker = evt_obj.attack_packet.attacker
+    bonusValue = 50 if attacker.distance_to(attachee) > 5.0 else 20
+    bonusType = bonus_type_concealment
+    bonusTag = game.get_mesline("mes\\bonus_description.mes", bonusType)
+    spellId = args.get_arg(0)
+    spellHelpTag = getSpellHelpTag(spellId)
+    evt_obj.bonus_list.add(bonusValue, bonusType, "{} : {}".format(bonusTag, spellHelpTag))
+    return 0
+
 class AoeSpellEffectModifier(SpellFunctions):
     #AoeSpellEffectModifier have at least 6 arguments:
     #spellId, duration, bonusValue, spellEventId, spellDc, empty
@@ -865,6 +881,8 @@ class AoeSpellEffectModifier(SpellFunctions):
         self.add_spell_countdown_standard()
         self.add_spell_teleport_prepare_standard()
         self.add_spell_teleport_reconnect_standard()
+    def AddFogConcealment(self):
+        self.add_hook(ET_OnGetDefenderConcealmentMissChance, EK_NONE, applyFogConcealment, ())
     def AddSpellConcentration(self):
         self.add_hook(ET_OnD20Signal, EK_S_Concentration_Broken, checkRemoveSpell, ())
     def AddSpellDismiss(self):
