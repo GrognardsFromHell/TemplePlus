@@ -12,7 +12,7 @@ def OnSpellEffect(spell):
     spellTarget = spell.target_list[0]
 
     if spellTarget.obj.condition_add_with_args("sp-Beguiling Influence", spell.id, spell.duration, 0):
-        spellTarget.partsys_id = game.particles('sp-Heroism', spellTarget.obj)
+        spellTarget.partsys_id = game.particles("sp-Beguiling Influence", spellTarget.obj)
     else:
         spellTarget.obj.float_mesfile_line("mes\\spell.mes", 30000)
         game.particles("Fizzle", spellTarget.obj)

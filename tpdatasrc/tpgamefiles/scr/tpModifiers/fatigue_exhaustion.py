@@ -108,8 +108,9 @@ def FatigueRemove(attachee, args, evt_obj):
 	return 0
 	
 def FatigueAddHeal(attachee, args, evt_obj):
-	val = evt_obj.is_modifier("sp-Heal")
-	if val:
+	if (evt_obj.is_modifier("sp-Heal")
+	or evt_obj.is_modifier("sp-Remove Exhaustion")
+	or evt_obj.is_modifier("sp-Remove Fatigue") and args.get_arg(2) == 0):
 		attachee.float_text_line("Fatigue Removed")
 		args.condition_remove()
 	return 0
@@ -196,7 +197,15 @@ def FatigueOnRemove(attachee, args, evt_obj):
 def FatigueOnRemove2(attachee, args, evt_obj):
 	game.particles("Barbarian Fatigue-END", attachee)
 	return 0
-	
+
+def updateFatigueDuration(attachee, args, evt_obj):
+	#Added, so its possible to change the duration of fatigue from perm to a duration
+	#Needed for cloud effects (perm as long as you are in the cloud effect,
+	#Expires x rounds after leaving the cloud effect)
+	newDuration = evt_obj.data1
+	args.set_arg(1, newDuration)
+	return 0
+
 Fatigue = PythonModifier("FatigueExhaust", 6) #Barbarian Fatigue Duration, Fatigue Duration, Exhaustion Duration, Upgradable, Particle System, Spare
 Fatigue.AddHook(ET_OnConditionAdd, EK_NONE, FatigueOnAdd, ())
 Fatigue.AddHook(ET_OnGetTooltip, EK_NONE, FatigueTooltip, ())
@@ -217,4 +226,4 @@ Fatigue.AddHook(ET_OnD20PythonQuery, "Exhausted", ExhaustedQuery, ())
 Fatigue.AddHook(ET_OnD20PythonSignal, "Add Barbarian Fatigue", AddBarbarianFatigueSignal, ())
 Fatigue.AddHook(ET_OnD20PythonSignal, "Add Fatigue", AddFatigueSignal, ())
 Fatigue.AddHook(ET_OnD20PythonSignal, "Add Exhaustion", AddExhaustionSignal, ())
-
+Fatigue.AddHook(ET_OnD20PythonSignal, "PS_Update_Fatigue_Duration", updateFatigueDuration, ()) #added by Sagenlicht
