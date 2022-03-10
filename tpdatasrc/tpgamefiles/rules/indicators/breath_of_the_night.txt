@@ -1,0 +1,5 @@
+ID_string: BREATH_OF_THE_NIGHT
+effect_type: 1
+texture_file: art\interface\player_conditions\ailments\Spell Breath of the Night.tga
+help_topic: TAG_SPELLS_BREATH_OF_THE_NIGHT
+tooltip_base_text: Breath of the Night

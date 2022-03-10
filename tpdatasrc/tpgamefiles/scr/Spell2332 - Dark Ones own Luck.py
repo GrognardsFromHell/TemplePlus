@@ -13,7 +13,7 @@ def OnSpellEffect(spell):
     bonusValue = (spellTarget.obj.stat_level_get(stat_charisma) - 10) / 2
     saveType = spell.spell_get_menu_arg(RADIAL_MENU_PARAM_MIN_SETTING)
 
-    if saveType == 1 or not in range(1, 4): #not in range is fallback
+    if saveType == 1 or saveType not in range(1, 4): #not in range is fallback
         saveTypeLabel = "Fortitude"
     elif saveType == 2:
         saveTypeLabel = "Reflex"
@@ -21,7 +21,7 @@ def OnSpellEffect(spell):
         saveTypeLabel = "Will"
 
     if spellTarget.obj.condition_add_with_args("sp-Dark One's Own Luck {}".format(saveTypeLabel), spell.id, spell.duration, bonusValue, 0):
-        spellTarget.partsys_id = game.particles("sp-Heroism", spellTarget.obj)
+        spellTarget.partsys_id = game.particles("Dark One's Own Luck", spellTarget.obj)
     else:
         spellTarget.obj.float_mesfile_line("mes\\spell.mes", 30000)
         game.particles("Fizzle", spellTarget.obj)

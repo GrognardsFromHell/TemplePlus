@@ -1,0 +1,74 @@
+// This file controls sounds for Warlock Invocations
+//
+// it uses sound IDs beginning with 27000 
+//
+// * Banks of 20 sounds per spells are used from 6000 to 19999
+//   the bank consists of the following fields:
+//
+//   00 - spell begin                (before cast anim)
+//   01 - spell end                  (end of spell)
+//   02 - spell effect               (after cast anim)
+//   03 - spell new round            (spells with duration)
+//   04 - spell projectile begin     (only projectile spells)
+//   05 - spell projectile end       (only projectile spells)
+//   06 - spell projectile in-flight (only projectile spells) ***not implemented yet
+//   07 - spell hit                  (sound to play when a spell "hits")
+//   08 - spell struck				 (sound to play if shield spell struck)
+//   09 - reserved, N/A
+//   10 - reserved, N/A
+//   11 - reserved, N/A
+//   12 - reserved, N/A
+//   13 - reserved, N/A
+//   14 - reserved, N/A
+//   15 - reserved, N/A
+//   16 - reserved, N/A
+//   17 - reserved, N/A
+//   18 - reserved, N/A
+//   19 - reserved, N/A
+
+// to figure out your BASE_NUMBER, use this formula:
+//     BASE_NUMBER = 6000 + (20 * spell_number)
+
+// [2300] *[Eldritch Blast]
+{52000}{} // spell begin
+{52001}{} // spell end
+{52002}{} // spell effect
+{52003}{} // spell new round
+{52004}{spells\sp_enervation_proj.WAV} // spell projectile begin
+{52005}{} // spell projectile end
+{52006}{} // spell projectile in-flight
+{52007}{spells\sp_enervation_hit.WAV} // spell hit; does not get triggered and projectile end gets always triggered...
+{52008}{} // spell struck
+
+// [2301] *[Eldritch Spear]
+{52020}{} // spell begin
+{52021}{} // spell end
+{52022}{} // spell effect
+{52023}{} // spell new round
+{52024}{spells\sp_enervation_proj.WAV} // spell projectile begin
+{52025}{} // spell projectile end
+{52026}{} // spell projectile in-flight
+{52027}{spells\sp_enervation_hit.WAV} // spell hit
+{52028}{} // spell struck
+
+// [2302] *[Hideous Blow]
+{52040}{} // spell begin
+{52041}{} // spell end
+{52042}{} // spell effect
+{52043}{} // spell new round
+{52044}{} // spell projectile begin
+{52045}{} // spell projectile end
+{52046}{} // spell projectile in-flight
+{52047}{} // spell hit
+{52048}{} // spell struck
+
+// [2303] *[Eldritch Chain]
+{52040}{} // spell begin
+{52041}{} // spell end
+{52042}{} // spell effect
+{52043}{} // spell new round
+{52044}{} // spell projectile begin
+{52045}{} // spell projectile end
+{52046}{} // spell projectile in-flight
+{52047}{} // spell hit
+{52048}{} // spell struck

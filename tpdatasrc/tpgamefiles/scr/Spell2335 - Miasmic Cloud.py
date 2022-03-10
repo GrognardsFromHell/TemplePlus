@@ -24,7 +24,7 @@ def OnSpellEffect(spell):
          targetsToRemove.append(spellTarget.obj)
     spell.target_list.remove_list(targetsToRemove)
 
-    cloudObject.condition_add_with_args("sp-Miasmic Cloud", spell.id, spell.duration, 0, cloudEventId, spellDc, 0)
+    cloudObject.condition_add_with_args("sp-Miasmic Cloud", spell.id, spell.duration, 0, cloudEventId, spell.dc, 0)
 
     spell.target_list.remove_list(targetsToRemove)
 

@@ -1,0 +1,5 @@
+ID_string: MIASMIC_CLOUD
+effect_type: 1
+texture_file: art\interface\player_conditions\ailments\Spell Miasmic Cloud.tga
+help_topic: TAG_SPELLS_MIASMIC_CLOUD
+tooltip_base_text: Miasmic Cloud

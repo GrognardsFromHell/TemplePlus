@@ -1,5 +1,5 @@
 ID_string: BEGUILING_INFLUENCE
 effect_type: 0
-texture_file: art\interface\player_conditions\buffs\spell heroism.tga
+texture_file: art\interface\player_conditions\buffs\Spell Beguiling Influence.tga
 help_topic: TAG_SPELLS_BEGUILING_INFLUENCE
 tooltip_base_text: Beguiling Influence

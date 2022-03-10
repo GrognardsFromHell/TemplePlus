@@ -1,5 +1,5 @@
 ID_string: DARK_ONE'S_OWN_LUCK
 effect_type: 0
-texture_file: art\interface\player_conditions\buffs\spell heroism.tga
+texture_file: art\interface\player_conditions\buffs\Spell Dark Ones Own Luck.tga
 help_topic: TAG_SPELLS_DARK_ONE'S_OWN_LUCK
 tooltip_base_text: Dark One's Own Luck
