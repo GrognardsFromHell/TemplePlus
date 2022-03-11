@@ -1,0 +1,5 @@
+ID_string: IGNORE_THE_PYRE
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Spell Resist Elements.tga
+help_topic: TAG_SPELLS_IGNORE_THE_PYRE
+tooltip_base_text: Ignore the Pyre

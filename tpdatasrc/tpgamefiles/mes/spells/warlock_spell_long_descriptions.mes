@@ -125,3 +125,31 @@ Casting:         1 action [S]
 Range:               Personal
 Target:             You
 Duration:      24h,  Save: None,  SR: No}
+
+{7341} Curse of Despair {Curse a touched opponent (as Bestow Curse)on a failed Will save. If target saves it still takes a –1 penalty on attack rolls for 1 minute.
+School:          [Invocation]
+Casting:         1 action [S]
+Range:               Touch
+Target:             One creature
+Duration:      perm. or 1 min,  Save: Will partial,  SR: Yes}
+
+{7343} Flee the Scence {You can use Dimension Door as a spell-like ability, although the range is limited to close (25 ft. + 5 ft./2 levels) range.
+School:          [Invocation]
+Casting:         1 action [S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             Empty location
+Duration:      Instantaneous,  Save: None,  SR: No}
+
+{7346} Walk Unseen {You can use Invisibility (self only).
+School:          [Invocation]
+Casting:         1 action [S]
+Range:               Personal
+Target:             You
+Duration:      24h,  Save: None,  SR: No}
+
+{7350} Ignore the Pyre {You gain resistance equal to your invocation caster level against the energy type of your choice.
+School:          [Invocation]
+Casting:         1 action [S]
+Range:               Personal
+Target:             You
+Duration:      24h,  Save: None,  SR: No}
