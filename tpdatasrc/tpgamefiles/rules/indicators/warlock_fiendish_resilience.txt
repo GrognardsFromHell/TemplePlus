@@ -1,0 +1,5 @@
+ID_string: WARLOCK_FIENDISH_RESILIENCE
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\spell aid.tga
+help_topic: TAG_CLASS_FEATURES_WARLOCK_FIENDISH_RESILIENCE
+tooltip_base_text: Warlock Fiendish Resilience

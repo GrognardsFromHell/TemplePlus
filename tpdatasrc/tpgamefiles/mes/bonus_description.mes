@@ -48,3 +48,5 @@
 {192} {~Untyped~[TAG_MODIFIER_UNTYPED]} // bonus_type_draconic_aura
 {193} {~Untyped~[TAG_MODIFIER_UNTYPED]} // bonus_type_invocation
 {200} {~Untyped~[TAG_MODIFIER_UNTYPED]} // bonus_type_hellrime_blast
+{200} {~Untyped~[TAG_MODIFIER_UNTYPED]} // bonus_type_hellrime_blast
+{200} {~Untyped~[TAG_MODIFIER_UNTYPED]} // bonus_type_curse_of_despair

@@ -84,8 +84,6 @@ def floatActivation(attachee, args, evt_obj):
     return 0
 
 def verifyEldritchBlastAction(spellEnum):
-    #currentSequence = tpactions.get_cur_seq()
-    #spellPacket = currentSequence.spell_packet
     if spellEnum in range(spell_eldritch_blast, spell_eldritch_glave + 1):
         return True
     return False
@@ -155,7 +153,6 @@ def performResetEldritchBlast(attachee, args, evt_obj):
 #And therefor apply to spell DC and spell Penetration
 #This is my idea on how to apply this as there is no hook ET_OnGetSpellLevelMod
 def applyEldritchBlastSpellLevel(attachee, args, evt_obj):
-    print "applyEldritchBlastSpellLevel Hook"
     spellEntry = evt_obj.spell_entry
     spellEnum = spellEntry.spell_enum
     if spellEnum in range(spell_eldritch_blast, spell_eldritch_glave + 1):
@@ -164,7 +161,6 @@ def applyEldritchBlastSpellLevel(attachee, args, evt_obj):
             spellClass = getSpellClassCode(classEnum)
             spellEntryEssence = tpdp.SpellEntry(activeEssenceEnum)
             spellLevel = spellEntryEssence.level_for_spell_class(spellClass) - 1 #Eldritch Blast itself is level 1 and is already applied
-            print "spellLevel: ", spellLevel
             if spellLevel > 0:
                 evt_obj.bonus_list.add(spellLevel, bonus_type_untyped, "Warlock Eldritch Blast spell level modification")
     return 0
@@ -204,8 +200,8 @@ def performDetectMagic(attachee, args, evt_obj):
         evt_obj.d20a.anim_id = new_anim_id
     return 0
 
-warlockDetectMagic = PythonModifier("Warlock Detect Magic", 2) #empty, empty
-warlockDetectMagic.MapToFeat("Warlock Detect Magic")
+warlockDetectMagic = PythonModifier("Warlock Detect Magic", 2) #featEnum, empty
+warlockDetectMagic.MapToFeat("Warlock Detect Magic", feat_cond_arg2 = 0)
 warlockDetectMagic.AddHook(ET_OnBuildRadialMenuEntry , EK_NONE, radialDetectMagic, ())
 warlockDetectMagic.AddHook(ET_OnD20PythonActionPerform, detectMagicEnum, performDetectMagic, ())
 
@@ -216,8 +212,8 @@ def addColdIronDr(attachee, args, evt_obj):
     evt_obj.damage_packet.add_physical_damage_res(drValue, D20DAP_COLD, 126) #ID 126 in damage.mes is DR; D20DAP_COLD = Cold Iron!!
     return 0
 
-warlockDamageReduction = PythonModifier("Warlock Damage Reduction", 2) #empty, empty
-warlockDamageReduction.MapToFeat("Warlock Damage Reduction")
+warlockDamageReduction = PythonModifier("Warlock Damage Reduction", 2) #featEnum, empty
+warlockDamageReduction.MapToFeat("Warlock Damage Reduction", feat_cond_arg2 = 0)
 warlockDamageReduction.AddHook(ET_OnTakingDamage2, EK_NONE, addColdIronDr, ())
 
 ## Deceive Item ##
@@ -225,7 +221,7 @@ warlockDamageReduction.AddHook(ET_OnTakingDamage2, EK_NONE, addColdIronDr, ())
 
 ## Fiendish Resilience ##
 def radialFiendishResilience(attachee, args, evt_obj):
-    chargesLeft = args.get_arg(0)
+    chargesLeft = args.get_arg(1)
     radialName = "Fiendish Resilience ({}/1)".format(chargesLeft)
     radialHelpTag = "TAG_CLASS_FEATURES_WARLOCK_FIENDISH_RESILIENCE"
     fiendishResilienceId = tpdp.RadialMenuEntryPythonAction(radialName, D20A_PYTHON_ACTION, fiendishResilienceEnum, 114, radialHelpTag)
@@ -233,7 +229,7 @@ def radialFiendishResilience(attachee, args, evt_obj):
     return 0
 
 def checkFiendishResilienceCharges(attachee, args, evt_obj):
-    chargesLeft = args.get_arg(0)
+    chargesLeft = args.get_arg(1)
     if chargesLeft < 1:
         evt_obj.return_val = AEC_OUT_OF_CHARGES
     return 0
@@ -246,22 +242,22 @@ def getFastHealingAmount(classLevel):
     return 5
 
 def activateFiendishResilience(attachee, args, evt_obj):
-    chargesLeft = args.get_arg(0)
+    chargesLeft = args.get_arg(1)
     duration = 20 #2 min
     attachee.float_text_line("Fiendish Resilience activated")
     classLevel = attachee.stat_level_get(classEnum)
     healingAmount = getFastHealingAmount(classLevel)
-    attachee.condition_add_with_args("Warlock Fiendish Resilience Effect", duration, healingAmount, 0, 0)
+    attachee.condition_add_with_args("Warlock Fiendish Resilience Effect", duration, healingAmount, 0)
     chargesLeft -= 1
-    args.set_arg(0, chargesLeft)
+    args.set_arg(1, chargesLeft)
     return 0
 
 def resetFiendishResilienceCharges(attachee, args, evt_obj):
-    args.set_arg(0, 1)
+    args.set_arg(1, 1)
     return 0
 
-warlockFiendishResilience = PythonModifier("Warlock Fiendish Resilience", 3) #chargesLeft, empty, empty
-warlockFiendishResilience.MapToFeat("Warlock Fiendish Resilience")
+warlockFiendishResilience = PythonModifier("Warlock Fiendish Resilience", 3) #featEnum, chargesLeft, empty
+warlockFiendishResilience.MapToFeat("Warlock Fiendish Resilience", feat_cond_arg2 = 1)
 warlockFiendishResilience.AddHook(ET_OnBuildRadialMenuEntry , EK_NONE, radialFiendishResilience, ())
 warlockFiendishResilience.AddHook(ET_OnD20PythonActionCheck, fiendishResilienceEnum, checkFiendishResilienceCharges, ())
 warlockFiendishResilience.AddHook(ET_OnD20PythonActionPerform, fiendishResilienceEnum, activateFiendishResilience, ())
@@ -310,7 +306,7 @@ def fiendishResilienceEffectTooltip(attachee, args, evt_obj):
     evt_obj.append(tpdp.hash("WARLOCK_FIENDISH_RESILIENCE"), -2, " {} ({} {})".format(fastHealingAmount, duration, durationLabel))
     return 0
 
-warlockFiendishResilienceEffect = PythonModifier("Warlock Fiendish Resilience Effect", 4) #duration, healAmount, empty, empty
+warlockFiendishResilienceEffect = PythonModifier("Warlock Fiendish Resilience Effect", 3) #duration, healAmount, empty
 warlockFiendishResilienceEffect.AddHook(ET_OnConditionAdd, EK_NONE, fiendishResilienceHealTick, ())
 warlockFiendishResilienceEffect.AddHook(ET_OnBeginRound, EK_NONE, fiendishResilienceHealTick, ())
 warlockFiendishResilienceEffect.AddHook(ET_OnConditionRemove, EK_NONE, fiendishResilienceOnConditionRemove, ())
@@ -325,24 +321,24 @@ def addEnergyResistance(attachee, args, evt_obj):
     evt_obj.damage_packet.add_damage_resistance(resistanceAmount, energyType, 124)
     return 0
 
-warlockEnergyResistanceAcid = PythonModifier('Warlock Acid Resistance Feat', 0)
-warlockEnergyResistanceAcid .MapToFeat('Warlock Energy Resistance - Acid')
+warlockEnergyResistanceAcid = PythonModifier("Warlock Acid Resistance Feat", 2) #featEnum, empty
+warlockEnergyResistanceAcid .MapToFeat("Warlock Energy Resistance - Acid", feat_cond_arg2 = 0)
 warlockEnergyResistanceAcid .AddHook(ET_OnTakingDamage, EK_NONE, addEnergyResistance, (D20DT_ACID,))
 
-warlockEnergyResistanceCold = PythonModifier('Warlock Cold Resistance Feat', 0)
-warlockEnergyResistanceCold.MapToFeat('Warlock Energy Resistance - Cold')
+warlockEnergyResistanceCold = PythonModifier("Warlock Cold Resistance Feat", 2) #featEnum, empty
+warlockEnergyResistanceCold.MapToFeat("Warlock Energy Resistance - Cold", feat_cond_arg2 = 0)
 warlockEnergyResistanceCold.AddHook(ET_OnTakingDamage, EK_NONE, addEnergyResistance, (D20DT_COLD,))
 
-warlockEnergyResistanceElectricity = PythonModifier('Warlock Electricity Resistance Feat', 0)
-warlockEnergyResistanceElectricity.MapToFeat('Warlock Energy Resistance - Electricity')
+warlockEnergyResistanceElectricity = PythonModifier("Warlock Electricity Resistance Feat", 2) #featEnum, empty
+warlockEnergyResistanceElectricity.MapToFeat("Warlock Energy Resistance - Electricity", feat_cond_arg2 = 0)
 warlockEnergyResistanceElectricity.AddHook(ET_OnTakingDamage, EK_NONE, addEnergyResistance, (D20DT_ELECTRICITY,))
 
-warlockEnergyResistanceFire = PythonModifier('Warlock Fire Resistance Feat', 0)
-warlockEnergyResistanceFire.MapToFeat('Warlock Energy Resistance - Fire')
+warlockEnergyResistanceFire = PythonModifier("Warlock Fire Resistance Feat", 2) #featEnum, empty
+warlockEnergyResistanceFire.MapToFeat("Warlock Energy Resistance - Fire", feat_cond_arg2 = 0)
 warlockEnergyResistanceFire.AddHook(ET_OnTakingDamage, EK_NONE, addEnergyResistance, (D20DT_FIRE,))
 
-warlockEnergyResistanceSonic = PythonModifier('Warlock Sonic Resistance Feat', 0)
-warlockEnergyResistanceSonic.MapToFeat('Warlock Energy Resistance - Sonic')
+warlockEnergyResistanceSonic = PythonModifier("Warlock Sonic Resistance Feat", 2) #featEnum, empty
+warlockEnergyResistanceSonic.MapToFeat("Warlock Energy Resistance - Sonic", feat_cond_arg2 = 0)
 warlockEnergyResistanceSonic.AddHook(ET_OnTakingDamage, EK_NONE, addEnergyResistance, (D20DT_SONIC,))
 
 ## Imbue Item ##
@@ -371,8 +367,8 @@ def WarlockSpellFailure(attachee, args, evt_obj):
     evt_obj.return_val += item.obj_get_int(obj_f_armor_arcane_spell_failure)
     return 0
 
-warlockSpellFailure = PythonModifier("Warlock Spell Failure", 0)
-warlockSpellFailure.MapToFeat("Warlock Spell Failure")
+warlockSpellFailure = PythonModifier("Warlock Spell Failure", 2) #featEnum, empty
+warlockSpellFailure.MapToFeat("Warlock Spell Failure", feat_cond_arg2 = 0)
 warlockSpellFailure.AddHook(ET_OnD20Query, EK_Q_Get_Arcane_Spell_Failure, WarlockSpellFailure, ())
 
 ### Spell casting

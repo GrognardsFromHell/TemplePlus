@@ -3447,25 +3447,25 @@ spell_all_seeing_eyes = 2239
 #spell_swimming_the_styx
 
 #Warlock Lesser Invocations
-spell_warlock_charm = 0
-spell_curse_of_despair = 0
-spell_fell_flight = 0
-spell_flee_the_scence = 0
+spell_warlock_charm = 2340
+spell_curse_of_despair = 2341
+spell_fell_flight = 2342
+spell_flee_the_scence = 2343
+spell_the_dead_walk = 2344
+spell_voracious_dispelling = 2345
+spell_walk_unseen = 2346
+spell_cold_comfort = 2347
+spell_witchwood_step = 2348
+spell_dread_seizure = 2349
+spell_ignore_the_pyre = 2350
 #spell_hungry_darkness
 #spell_stony_grasp //should be a normal spell !!
-spell_the_dead_walk = 0
 #spell_voidsense
-spell_voracious_dispelling = 0
-spell_walk_unseen = 0
 #spell_wall_of_gloom
-#spell_cold_comfort
+#spell_relentless_dispelling
 #spell_crawling_eye // no!!
 #spell_disembodied_hand // no!!
 #spell_mask_of_flesh // no!!
-#spell_relentless_dispelling
-#spell_witchwood_step
-#spell_dread_seizure
-#spell_ignore_the_pyre
 #spell_weighty_utterance // no
 
 #Warlock Greater Invocations
@@ -3643,6 +3643,7 @@ bonus_type_marshal_aura_major = 191
 bonus_type_draconic_aura = 192
 bonus_type_invocation = 193
 bonus_type_hellrime_blast = 200
+bonus_type_curse_of_despair = 201
 
 #Bonus Value is passed by spell
 passed_by_spell = 0
