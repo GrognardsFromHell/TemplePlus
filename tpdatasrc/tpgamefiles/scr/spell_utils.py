@@ -576,7 +576,11 @@ def applyDamageReduction(attachee, args, evt_obj):
 
 def applyDamageResistance(attachee, args, evt_obj):
     resistanceAmount = args.get_param(0)
+    if not resistanceAmount:
+        resistanceAmount = args.get_arg(2)
     resistanceType = args.get_param(1)
+    if not resistanceType:
+        resistanceType = args.get_arg(3)
     damageMesId = 124 # ID124 = ~Damage Resistance~[TAG_SPECIAL_ABILITIES_RESISTANCE_TO_ENERGY]
     evt_obj.damage_packet.add_damage_resistance(bonusValue, resistanceType, damageMesId)
     return 0
