@@ -10,7 +10,7 @@ def OnSpellEffect(spell):
 
     spell.duration = 14400 #1 day
     spellTarget = spell.target_list[0]
-    bonusValue = (spellTarget.obj.stat_level_get(stat_charisma) - 10) / 2
+    bonusValue = min((spell.caster.stat_level_get(stat_charisma) - 10) / 2, spell.caster_level)
     saveType = spell.spell_get_menu_arg(RADIAL_MENU_PARAM_MIN_SETTING)
 
     if saveType == 1 or saveType not in range(1, 4): #not in range is fallback

@@ -41,6 +41,17 @@
 {2337}{Spiderwalk} // not implemented
 {2338}{Soulreaving Aura}
 {2339}{All Seeing Eyes}
+{2340}{Warlock Charm}
+{2341}{Curse of Despair}
+{2342}{Fell Flight}
+{2343}{Flee the Scence}
+{2344}{The Dead Walk}
+{2345}{Voracious Dispelling}
+{2346}{Walk Unseen}
+{2347}{Cold Comfort}
+{2348}{Witchwood Step}
+{2349}{Dread Seizure}
+{2350}{Ignore the Pyre}
 
 // Spell Descriptions
 {7300} Eldritch Blast {[Eldritch Blast] Ranged touch attack that deals 1d6/two levels (max 9d6) damage. Update!!!}
@@ -77,3 +88,14 @@
 {7337} Spiderwalk {[Invocation] TBD!} // not implemented
 {7338} Soulreaving Aura {[Invocation] Deal 1 damage to all creatures at 0 HP or below. If a creatures dies gain temporary Hit Points.}
 {7339} All Seeing Eyes {[Invocation] +6 to Search and Spot skills for 24 hours.}
+{7340} Warlock Charm {[Invocation] TBD!} // not implemented
+{7341} Curse of Despair {[Invocation] TBD!}
+{7342} Fell Flight {[Invocation] TBD!} // not implemented
+{7343} Flee the Scence {[Invocation] TBD!}
+{7344} The Dead Walk {[Invocation] TBD!} // not implemented
+{7345} Voracious Dispelling {[Invocation] TBD!} // not implemented
+{7346} Walk Unseen {[Invocation] TBD!}
+{7347} Cold Comfort {[Invocation] TBD!}  // not implemented
+{7348} Witchwood Step {[Invocation] TBD!}  // not implemented
+{7349} Dread Seizure {[Invocation] TBD!}  // not implemented
+{7350} Ignore the Pyre {[Invocation] TBD!}  // not implemented
