@@ -7,9 +7,9 @@
 {2301}{Eldritch Spear}
 {2302}{Hideous Blow} // not implemented
 {2303}{Eldritch Chain}
-{2304}{Eldritch Cone} // not implemented
-{2305}{Eldritch Doom} // not implemented
-{2306}{Eldritch Line} // not implemented
+{2305}{Eldritch Cone}
+{2305}{Eldritch Line}
+{2306}{Eldritch Doom} // not implemented
 {2307}{Eldritch Glave} // not implemented
 
 // Eldritch Essence Invocations
@@ -41,7 +41,7 @@
 {2337}{Spiderwalk} // not implemented
 {2338}{Soulreaving Aura}
 {2339}{All Seeing Eyes}
-{2340}{Warlock Charm}
+{2340}{Charm}
 {2341}{Curse of Despair}
 {2342}{Fell Flight}
 {2343}{Flee the Scence}
@@ -58,9 +58,9 @@
 {7301} Eldritch Spear {Transmutation Eldritch Spear}
 {7302} Hideous Blow {Transmutation Hideous Blow}
 {7303} Eldritch Chain {[Blast Shape] TBD!}
-{7304} Eldritch Cone {[Blast Shape] TBD!} // not implemented
-{7305} Eldritch Doom {[Blast Shape] TBD!} // not implemented
-{7306} Eldritch Line {[Blast Shape] TBD!} // not implemented
+{7304} Eldritch Cone {[Blast Shape] TBD!}
+{7305} Eldritch Line {[Blast Shape] TBD!}
+{7306} Eldritch Doom {[Blast Shape] TBD!} // not implemented
 {7307} Eldritch Glave {[Blast Shape] TBD!} // not implemented
 {7311} Frightful Blast {[Eldritch Essence] TBD!}
 {7312} Sickening Blast {[Eldritch Essence] TBD!}
@@ -88,7 +88,7 @@
 {7337} Spiderwalk {[Invocation] TBD!} // not implemented
 {7338} Soulreaving Aura {[Invocation] Deal 1 damage to all creatures at 0 HP or below. If a creatures dies gain temporary Hit Points.}
 {7339} All Seeing Eyes {[Invocation] +6 to Search and Spot skills for 24 hours.}
-{7340} Warlock Charm {[Invocation] TBD!} // not implemented
+{7340} Charm {[Invocation] TBD!} // not implemented
 {7341} Curse of Despair {[Invocation] TBD!}
 {7342} Fell Flight {[Invocation] TBD!} // not implemented
 {7343} Flee the Scence {[Invocation] TBD!}
