@@ -63,26 +63,26 @@ spell_list = {
 bonus_feats =["Warlock Energy Resistance"]
 
 spells_per_day = {
-1:  (-1, 88, 88),
-2:  (-1, 88, 88),
-3:  (-1, 88, 88),
-4:  (-1, 88, 88),
-5:  (-1, 88, 88),
-6:  (-1, 88, 88, 88, 88),
-7:  (-1, 88, 88, 88, 88),
-8:  (-1, 88, 88, 88, 88),
-9:  (-1, 88, 88, 88, 88),
-10: (-1, 88, 88, 88, 88),
-11: (-1, 88, 88, 88, 88, 88, 88),
-12: (-1, 88, 88, 88, 88, 88, 88),
-13: (-1, 88, 88, 88, 88, 88, 88),
-14: (-1, 88, 88, 88, 88, 88, 88),
-15: (-1, 88, 88, 88, 88, 88, 88),
-16: (-1, 88, 88, 88, 88, 88, 88, 88, 88, 88),
-17: (-1, 88, 88, 88, 88, 88, 88, 88, 88, 88),
-18: (-1, 88, 88, 88, 88, 88, 88, 88, 88, 88),
-19: (-1, 88, 88, 88, 88, 88, 88, 88, 88, 88),
-20: (-1, 88, 88, 88, 88, 88, 88, 88, 88, 88)
+1:  (-1, 969, 969),
+2:  (-1, 969, 969),
+3:  (-1, 969, 969),
+4:  (-1, 969, 969),
+5:  (-1, 969, 969),
+6:  (-1, 969, 969, 969, 969),
+7:  (-1, 969, 969, 969, 969),
+8:  (-1, 969, 969, 969, 969),
+9:  (-1, 969, 969, 969, 969),
+10: (-1, 969, 969, 969, 969),
+11: (-1, 969, 969, 969, 969, 969, 969),
+12: (-1, 969, 969, 969, 969, 969, 969),
+13: (-1, 969, 969, 969, 969, 969, 969),
+14: (-1, 969, 969, 969, 969, 969, 969),
+15: (-1, 969, 969, 969, 969, 969, 969),
+16: (-1, 969, 969, 969, 969, 969, 969, 969, 969, 969),
+17: (-1, 969, 969, 969, 969, 969, 969, 969, 969, 969),
+18: (-1, 969, 969, 969, 969, 969, 969, 969, 969, 969),
+19: (-1, 969, 969, 969, 969, 969, 969, 969, 969, 969),
+20: (-1, 969, 969, 969, 969, 969, 969, 969, 969, 969)
 #lvl  0  1  2  3  4  5  6  7  8  9
 }
 
@@ -115,7 +115,7 @@ def GetSpellList():
     return spell_list
 
 def GetSpellSourceType():
-    return spell_source_type_arcane #spell_source_type_ability ??
+    return spell_source_type_arcane
 
 def GetSpellReadyingType():
     return spell_readying_innate
@@ -183,6 +183,31 @@ def getMaxSpellLevel(newLevel):
         return 6 #Greater Invocations
     return 9 #Dark Invocations
 
+def addEldritchBlast():
+    eldritchBlastEnum = []
+    eldritchBlast = char_editor.KnownSpellInfo(spell_eldritch_blast, 3, classEnum)
+    eldritchBlastEnum.append(eldritchBlast)
+    char_editor.append_spell_enums(eldritchBlastEnum)
+    return 0
+
+def replaceInvocation(obj, maxReplaceableSpellLvl):
+    #Limiting this for strict level up atm, this was also done in FvS, I assume this has reasons :)
+    if char_editor.get_class_code() == classEnum:
+        knownSpells = char_editor.get_known_class_spells(obj, classEnum)
+        for label in range(1, maxReplaceableSpellLvl + 1):
+            knownSpells.append(char_editor.KnownSpellInfo(spell_label_level_0 + label, 0, classEnum))
+        for idx in range(0, len(knownSpells)):
+            spellEnum = knownSpells[idx].spell_enum
+            if spell_vacant <= spellEnum <= spell_label_level_9:
+                continue
+            if spell_new_slot_lvl_0 <= spellEnum <= spell_new_slot_lvl_9:
+                continue
+            if char_editor.get_spell_level(spellEnum, classEnum) <= maxReplaceableSpellLvl:
+                knownSpells[idx].spell_status = 1
+        knownSpells.sort()
+        char_editor.append_spell_enums(knownSpells)
+    return 0
+
 def InitSpellSelection(obj, classLvlNew = -1, classLvlIncrement = 1):
     newLevel = char_editor.stat_level_get(classEnum)
     maxSpellLvl = getMaxSpellLevel(newLevel)
@@ -198,15 +223,17 @@ def InitSpellSelection(obj, classLvlNew = -1, classLvlIncrement = 1):
     #I'll add it here and not in finalize to avoid that Eldritch Blast
     #Is accidently taken, as it is an automatically known spell.
     if newLevel == 1:
-        ebEnum = []
-        eldritchBlast = char_editor.KnownSpellInfo(spell_eldritch_blast, 3, classEnum)
-        ebEnum.append(eldritchBlast)
-        char_editor.append_spell_enums(ebEnum)
+        addEldritchBlast()
     #Add Spell slot
     vacantSlotEnum = []
     vacant_slot = char_editor.KnownSpellInfo(spell_vacant, 3, classEnum) # sets it to spell level -1
     vacantSlotEnum.append(vacant_slot)
     char_editor.append_spell_enums(vacantSlotEnum)
+    #Handling Invocation Replacements
+    #Replace a known Invocation when you learn a new type of Invocation(Lesser, Greater, Dark)
+    if newLevel in [6, 11, 16]:
+        maxReplaceableSpellLvl = maxSpellLvl - 2
+        replaceInvocation(obj, maxReplaceableSpellLvl)
     return 0
 
 def LevelupCheckSpells(obj):

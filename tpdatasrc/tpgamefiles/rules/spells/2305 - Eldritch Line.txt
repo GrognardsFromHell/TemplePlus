@@ -1,0 +1,16 @@
+School: Evocation
+Component: S
+Casting Time: 1 action
+Range: Specified 60
+Saving Throw: Reflex
+Spell Resistance: Yes
+Projectile: No
+flags_Target: Range
+flags_Target: Radius
+inc_flags_Target: Other
+exc_flags_Target: Non-critter
+exc_flags_Target: Self
+exc_flags_Target: Dead
+mode_Target: Ray
+radius_Target: 5
+ai_type: ai_action_offensive

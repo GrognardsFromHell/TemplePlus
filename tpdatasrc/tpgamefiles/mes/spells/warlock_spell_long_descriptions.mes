@@ -8,32 +8,46 @@ Target:             One creature or object
 Duration:      Instantaneous,    Save: Fort half,    SR: Yes}
 
 {7300} Eldritch Blast {Ranged touch attack that deals 1d6/two levels (max 9d6) damage. Can be modified by Eldritch Essence Invocations.
-School:          [Invocation]
+School:          [Invocation](Blast Shape)
 Casting:         1 action [S]
 Range:               60ft.
 Target:             One creature
 Duration:      Instantaneous,  Save: None,  SR: Yes}
 
 {7301} Eldritch Spear {Ranged touch attack that deals 1d6/two levels (max 9d6) damage. Can be modified by Eldritch Essence Invocations.
-School:          [Invocation]
+School:          [Invocation](Blast Shape)
 Casting:         1 action [S]
 Range:               250ft.
 Target:             One creature
 Duration:      Instantaneous,  Save: None,  SR: Yes}
 
 {7302} Hideous Blow {TBD!
-School:          [Invocation]
+School:          [Invocation](Blast Shape)
 Casting:         1 action [S]
 Range:               Touch
 Target:             One creature
 Duration:      Instantaneous,  Save: None,  SR: Yes}
 
 {7303} Eldritch Chain {Eldritch Blast that deals full damage to the primary target and half damage to secondary targets. A missed ranged attack breaks the chain.
-School:          [Invocation]
+School:          [Invocation](Blast Shape)
 Casting:         1 action [S]
 Range:               60ft.
 Target:             One primary + one secondary/5 levels
 Duration:      Instantaneous,  Save: None,  SR: Yes}
+
+{7304} Eldritch Cone {Changes Eldritch Blast to a 30-ft. cone. No longer a touch attack and allows a Reflex save for half damage.
+School:          [Invocation](Blast Shape)
+Casting:         1 action [S]
+Range:               30ft.
+Area:             Cone-shaped burst
+Duration:      Instantaneous,  Save: Reflex half,  SR: Yes}
+
+{7305} Eldritch Line {Changes Eldritch Blast to a 60-ft. line. No longer a touch attack and allows a Reflex save for half damage.
+School:          [Invocation](Blast Shape)
+Casting:         1 action [S]
+Range:               60ft.
+Area:             60-foot line
+Duration:      Instantaneous,  Save: Reflex half,  SR: Yes}
 
 {7311} Frightful Blast {In addition to the normal Eldritch Blast damage targets are shaken for 1 min. on a failed Will save.
 School:          [Invocation](Eldritch Essence)
@@ -126,7 +140,7 @@ Range:               Personal
 Target:             You
 Duration:      24h,  Save: None,  SR: No}
 
-{7341} Curse of Despair {Curse a touched opponent (as Bestow Curse)on a failed Will save. If target saves it still takes a –1 penalty on attack rolls for 1 minute.
+{7341} Curse of Despair {Curse a touched opponent (as Bestow Curse)on a failed Will save. If target saves it still takes a -1 penalty on attack rolls for 1 minute.
 School:          [Invocation]
 Casting:         1 action [S]
 Range:               Touch
