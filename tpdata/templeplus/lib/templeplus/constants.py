@@ -3403,8 +3403,8 @@ spell_eldritch_spear = 2301
 spell_hideous_blow = 2302
 spell_eldritch_chain = 2303
 spell_eldritch_cone = 2304
-spell_eldritch_doom = 2305
-spell_eldritch_line = 2306
+spell_eldritch_line = 2305
+spell_eldritch_doom = 2306
 spell_eldritch_glave = 2307
 
 # Warlock Eldritch Essence Invocations
@@ -3425,7 +3425,7 @@ spell_penetrating_blast = 2323
 #spell_hammer_blast
 #spell_deteriorating_blast
 
-#Warlock Least Invocations
+#Warlock Invocations
 spell_beguiling_influence = 2330
 spell_breath_of_the_night = 2331
 spell_dark_ones_own_luck = 2332
@@ -3436,17 +3436,6 @@ spell_see_the_unseen = 2336
 spell_spiderwalk = 2337
 spell_soulreaving_aura = 2338
 spell_all_seeing_eyes = 2239
-#spell_earthen_grasp //should be a normal spell!!
-#spell_summon_swarm
-#spell_baleful_utterance
-#spell_darkness
-#spell_devil's_sight
-#spell_call_of_the_beast
-#spell_otherwordly_whispers
-#spell_serpent's_tongue
-#spell_swimming_the_styx
-
-#Warlock Lesser Invocations
 spell_warlock_charm = 2340
 spell_curse_of_despair = 2341
 spell_fell_flight = 2342
@@ -3458,6 +3447,19 @@ spell_cold_comfort = 2347
 spell_witchwood_step = 2348
 spell_dread_seizure = 2349
 spell_ignore_the_pyre = 2350
+
+#Missing Warlock Least Invocations
+#spell_earthen_grasp //should be a normal spell!!
+#spell_summon_swarm
+#spell_baleful_utterance
+#spell_darkness
+#spell_devil's_sight
+#spell_call_of_the_beast
+#spell_otherwordly_whispers
+#spell_serpent's_tongue
+#spell_swimming_the_styx
+
+#Missing Warlock Lesser Invocations
 #spell_hungry_darkness
 #spell_stony_grasp //should be a normal spell !!
 #spell_voidsense
