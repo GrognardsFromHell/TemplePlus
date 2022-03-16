@@ -1,0 +1,6 @@
+name: Warlock Energy Resistance - Electricity
+flags: 256
+prereqs:
+description: At 10th level and higher, a warlock has resistance 5 against any two of the following energy types: acid, cold, electricity, fire, and sonic. Once the types are chosen, this energy resistance cannot be changed. At 20th level, a warlock gains resistance 10 against the two selected types of energy.
+prereq descr: Warlock Level 10
+parent: Warlock Energy Resistance

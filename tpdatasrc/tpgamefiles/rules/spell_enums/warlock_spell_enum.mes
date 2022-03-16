@@ -17,10 +17,10 @@
 {2314}{Brimstone Blast}
 {2315}{Hellrime Blast}
 {2316}{Bewitching Blast} // not implemented
-{2317}{Noxious Blast} // not implemented
+{2317}{Noxious Blast}
 {2318}{Repelling Blast} // not implemented
 {2319}{Vitriolic Blast} // not implemented
-{2320}{Hindering Blast} // not implemented
+{2320}{Hindering Blast}
 {2321}{Utterdark Blast} // not implemented
 {2322}{Binding Blast} // not implemented
 {2323}{Penetrating Blast} // not implemented
@@ -41,14 +41,14 @@
 {2339}{All Seeing Eyes}
 {2340}{Charm}
 {2341}{Curse of Despair}
-{2342}{Fell Flight}
+{2342}{Fell Flight} // not implemented
 {2343}{Flee the Scence}
-{2344}{The Dead Walk}
-{2345}{Voracious Dispelling}
+{2344}{The Dead Walk} // not implemented
+{2345}{Voracious Dispelling} // not implemented
 {2346}{Walk Unseen}
-{2347}{Cold Comfort}
-{2348}{Witchwood Step}
-{2349}{Dread Seizure}
+{2347}{Cold Comfort} // not implemented
+{2348}{Witchwood Step} // not implemented
+{2349}{Dread Seizure} // not implemented
 {2350}{Ignore the Pyre}
 
 {7300}{Eldritch Blast}
@@ -65,10 +65,10 @@
 {7314}{Brimstone Blast}
 {7315}{Hellrime Blast}
 {7316}{Bewitching Blast} // not implemented
-{7317}{Noxious Blast} // not implemented
+{7317}{Noxious Blast}
 {7318}{Repelling Blast} // not implemented
 {7319}{Vitriolic Blast} // not implemented
-{7320}{Hindering Blast} // not implemented
+{7320}{Hindering Blast}
 {7321}{Utterdark Blast} // not implemented
 {7322}{Binding Blast} // not implemented
 {7323}{Penetrating Blast} // not implemented
@@ -87,14 +87,14 @@
 {7339}{All Seeing Eyes}
 {7340}{Charm}
 {7341}{Curse of Despair}
-{7342}{Fell Flight}
+{7342}{Fell Flight} // not implemented
 {7343}{Flee the Scence}
-{7344}{The Dead Walk}
-{7345}{Voracious Dispelling}
+{7344}{The Dead Walk} // not implemented
+{7345}{Voracious Dispelling} // not implemented
 {7346}{Walk Unseen}
-{7347}{Cold Comfort}
-{7348}{Witchwood Step}
-{7349}{Dread Seizure}
+{7347}{Cold Comfort} // not implemented
+{7348}{Witchwood Step} // not implemented
+{7349}{Dread Seizure} // not implemented
 {7350}{Ignore the Pyre}
 
 {22300}{TAG_SPELLS_ELDRITCH_BLAST}
@@ -111,10 +111,10 @@
 {22314}{TAG_SPELLS_BRIMSTONE_BLAST}
 {22315}{TAG_SPELLS_HELLRIME_BLAST}
 {22316}{TAG_SPELLS_BEWITCHING_BLAST} // not implemented
-{22317}{TAG_SPELLS_NOXIOUS_BLAST} // not implemented
+{22317}{TAG_SPELLS_NOXIOUS_BLAST}
 {22318}{TAG_SPELLS_REPELLING_BLAST} // not implemented
 {22319}{TAG_SPELLS_VITRIOLIC_BLAST} // not implemented
-{22320}{TAG_SPELLS_HINDERING_BLAST} // not implemented
+{22320}{TAG_SPELLS_HINDERING_BLAST}
 {22321}{TAG_SPELLS_UTTERDARK_BLAST} // not implemented
 {22322}{TAG_SPELLS_BINDING_BLAST} // not implemented
 {22323}{TAG_SPELLS_PENETRATING_BLAST} // not implemented
@@ -133,12 +133,12 @@
 {22339}{TAG_SPELLS_ALL_SEEING_EYES}
 {22340}{TAG_SPELLS_WARLOCK_CHARM}
 {22341}{TAG_SPELLS_CURSE_OF_DESPAIR}
-{22342}{TAG_SPELLS_FELL_FLIGHT}
+{22342}{TAG_SPELLS_FELL_FLIGHT} // not implemented
 {22343}{TAG_SPELLS_FLEE_THE_SCENCE}
-{22344}{TAG_SPELLS_THE_DEAD_WALK}
-{22345}{TAG_SPELLS_VORACIOUS_DISPELLING}
+{22344}{TAG_SPELLS_THE_DEAD_WALK} // not implemented
+{22345}{TAG_SPELLS_VORACIOUS_DISPELLING} // not implemented
 {22346}{TAG_SPELLS_WALK_UNSEEN}
-{22347}{TAG_SPELLS_COLD_COMFORT}
-{22348}{TAG_SPELLS_WITCHWOOD_STEP}
-{22349}{TAG_SPELLS_DREAD_SEIZURE}
+{22347}{TAG_SPELLS_COLD_COMFORT} // not implemented
+{22348}{TAG_SPELLS_WITCHWOOD_STEP} // not implemented
+{22349}{TAG_SPELLS_DREAD_SEIZURE} // not implemented
 {22350}{TAG_SPELLS_IGNORE_THE_PYRE}

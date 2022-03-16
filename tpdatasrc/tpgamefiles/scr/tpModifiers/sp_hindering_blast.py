@@ -4,7 +4,7 @@ import tpactions
 from warlock import EldritchBlastEssenceModifier, verifyEldritchBlastAction
 from spell_utils import SpellPythonModifier
 
-print "Registering sp-Hellrime Blast"
+print "Registering sp-Hindering Blast"
 
 def secondaryEffect(attachee, args, evt_obj):
     currentSequence = tpactions.get_cur_seq()
@@ -13,22 +13,17 @@ def secondaryEffect(attachee, args, evt_obj):
     if verifyEldritchBlastAction(spellPacket.spell_enum):
         spellDc = spellPacket.dc
         saveType = D20_Save_Reflex
-        saveDescriptor = D20STD_F_SPELL_DESCRIPTOR_COLD
+        saveDescriptor = D20STD_F_NONE
         spellTarget = evt_obj.attack_packet.target
         if spellTarget.saving_throw_spell(spellDc, saveType, saveDescriptor, spellPacket.caster, spellId): #success
             spellTarget.float_mesfile_line("mes\\spell.mes", 30001)
             game.particles("Fizzle", spellTarget)
         else:
             spellTarget.float_mesfile_line("mes\\spell.mes", 30002)
-            duration = 100 #10 mins
-            spellTarget.condition_add_with_args("Hellrime Blast Effect", spellId, duration, 0)
+            duration = 1
+            spellTarget.condition_add_with_args("sp-Slow", spellId, duration, 1) #spell slow sets last arg to 1, need to verify why
+            game.particles("sp-Slow", spellTarget)
     return 0
 
-hellrimeBlast = EldritchBlastEssenceModifier("Hellrime Blast") #spellEnum, empty
-hellrimeBlast.ModifyDamageType(D20DT_COLD)
-hellrimeBlast.AddQuerySecondaryTrue()
-
-### Secondary Burn Effect ###
-
-hellrimeEffect = SpellPythonModifier("Hellrime Blast Effect") #spellId, duration, empty
-hellrimeEffect.AddAbilityBonus(-4, bonus_type_hellrime_blast, stat_dexterity)
+hinderingBlast = EldritchBlastEssenceModifier("Hindering Blast") #spellEnum, empty
+hinderingBlast.AddQuerySecondaryTrue()

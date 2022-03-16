@@ -63,26 +63,26 @@ spell_list = {
 bonus_feats =["Warlock Energy Resistance"]
 
 spells_per_day = {
-1:  (-1, 969, 969),
-2:  (-1, 969, 969),
-3:  (-1, 969, 969),
-4:  (-1, 969, 969),
-5:  (-1, 969, 969),
-6:  (-1, 969, 969, 969, 969),
-7:  (-1, 969, 969, 969, 969),
-8:  (-1, 969, 969, 969, 969),
-9:  (-1, 969, 969, 969, 969),
-10: (-1, 969, 969, 969, 969),
-11: (-1, 969, 969, 969, 969, 969, 969),
-12: (-1, 969, 969, 969, 969, 969, 969),
-13: (-1, 969, 969, 969, 969, 969, 969),
-14: (-1, 969, 969, 969, 969, 969, 969),
-15: (-1, 969, 969, 969, 969, 969, 969),
-16: (-1, 969, 969, 969, 969, 969, 969, 969, 969, 969),
-17: (-1, 969, 969, 969, 969, 969, 969, 969, 969, 969),
-18: (-1, 969, 969, 969, 969, 969, 969, 969, 969, 969),
-19: (-1, 969, 969, 969, 969, 969, 969, 969, 969, 969),
-20: (-1, 969, 969, 969, 969, 969, 969, 969, 969, 969)
+1:  (-1, 89, 89),
+2:  (-1, 89, 89),
+3:  (-1, 89, 89),
+4:  (-1, 89, 89),
+5:  (-1, 89, 89),
+6:  (-1, 89, 89, 89, 89),
+7:  (-1, 89, 89, 89, 89),
+8:  (-1, 89, 89, 89, 89),
+9:  (-1, 89, 89, 89, 89),
+10: (-1, 89, 89, 89, 89),
+11: (-1, 89, 89, 89, 89, 89, 89),
+12: (-1, 89, 89, 89, 89, 89, 89),
+13: (-1, 89, 89, 89, 89, 89, 89),
+14: (-1, 89, 89, 89, 89, 89, 89),
+15: (-1, 89, 89, 89, 89, 89, 89),
+16: (-1, 89, 89, 89, 89, 89, 89, 89, 89, 89),
+17: (-1, 89, 89, 89, 89, 89, 89, 89, 89, 89),
+18: (-1, 89, 89, 89, 89, 89, 89, 89, 89, 89),
+19: (-1, 89, 89, 89, 89, 89, 89, 89, 89, 89),
+20: (-1, 89, 89, 89, 89, 89, 89, 89, 89, 89)
 #lvl  0  1  2  3  4  5  6  7  8  9
 }
 
@@ -158,6 +158,14 @@ def IsSelectingFeatsOnLevelup(obj):
     newLevel = obj.stat_level_get(classEnum) + 1
     if newLevel == 10:
         return 1
+    ###### Workaround for second Energy Resistance Feat ######
+    #Warlock would gain 2 energy resistances at level 10
+    #But I can only grant one bonus feat
+    #This should be handled as class feature
+    #Using this Workaround around until I can use class features
+    elif newLevel == 11:
+        return 1
+    ##### Workaround end ####ä
     return 0
 
 def LevelupGetBonusFeats(obj):
@@ -192,6 +200,10 @@ def addEldritchBlast():
 
 def replaceInvocation(obj, maxReplaceableSpellLvl):
     #Limiting this for strict level up atm, this was also done in FvS, I assume this has reasons :)
+    #At the moment this is limited to replace only Invocations of the same spell level
+    #But you should be able to replace any lower level invocation with a new one
+    #Example: At level 11 I should be able to swap a least for a lesser invocation
+    #This function would also be needed for the ToB Maneuvers.
     if char_editor.get_class_code() == classEnum:
         knownSpells = char_editor.get_known_class_spells(obj, classEnum)
         for label in range(1, maxReplaceableSpellLvl + 1):

@@ -12,7 +12,7 @@ def OnSpellEffect(spell):
     spellTarget = spell.target_list[0]
     spellEnum = spell_frightful_blast
 
-    spellTarget.obj.condition_add_with_args("sp-Frightful Blast", spellEnum, 0)
+    spellTarget.obj.condition_add_with_args("Frightful Blast", spellEnum, 0)
 
     spell.target_list.remove_target(spellTarget.obj)
     spell.spell_end(spell.id)
