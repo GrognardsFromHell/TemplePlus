@@ -71,7 +71,7 @@ def removeParticles(attachee, args, evt_obj):
         game.particles_end(particlesId)
     return 0
 
-SickenedCondition = PythonModifier(getConditionName(), 3, False) #duration, particlesId, empty
+SickenedCondition = PythonModifier("Sickened", 3, False) #duration, particlesId, empty
 SickenedCondition.AddHook(ET_OnConditionAddPre, EK_NONE, checkConditionalRemoval, ())
 SickenedCondition.AddHook(ET_OnConditionAdd, EK_NONE, checkImmunity, ())
 SickenedCondition.AddHook(ET_OnBeginRound, EK_NONE, durationTickdown, ())
