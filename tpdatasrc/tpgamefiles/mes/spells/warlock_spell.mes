@@ -7,7 +7,7 @@
 {2301}{Eldritch Spear}
 {2302}{Hideous Blow} // not implemented
 {2303}{Eldritch Chain}
-{2305}{Eldritch Cone}
+{2304}{Eldritch Cone}
 {2305}{Eldritch Line}
 {2306}{Eldritch Doom} // not implemented
 {2307}{Eldritch Glave} // not implemented
@@ -19,10 +19,10 @@
 {2314}{Brimstone Blast}
 {2315}{Hellrime Blast}
 {2316}{Bewitching Blast} // not implemented
-{2317}{Noxious Blast} // not implemented
+{2317}{Noxious Blast}
 {2318}{Repelling Blast} // not implemented
 {2319}{Vitriolic Blast} // not implemented
-{2320}{Hindering Blast} // not implemented
+{2320}{Hindering Blast}
 {2321}{Utterdark Blast} // not implemented
 {2322}{Binding Blast} // not implemented
 {2323}{Penetrating Blast} // not implemented
@@ -43,14 +43,14 @@
 {2339}{All Seeing Eyes}
 {2340}{Charm}
 {2341}{Curse of Despair}
-{2342}{Fell Flight}
+{2342}{Fell Flight} // not implemented
 {2343}{Flee the Scence}
-{2344}{The Dead Walk}
-{2345}{Voracious Dispelling}
+{2344}{The Dead Walk} // not implemented
+{2345}{Voracious Dispelling} // not implemented
 {2346}{Walk Unseen}
-{2347}{Cold Comfort}
-{2348}{Witchwood Step}
-{2349}{Dread Seizure}
+{2347}{Cold Comfort} // not implemented
+{2348}{Witchwood Step} // not implemented
+{2349}{Dread Seizure} // not implemented
 {2350}{Ignore the Pyre}
 
 // Spell Descriptions
@@ -68,10 +68,10 @@
 {7314} Brimstone Blast {[Eldritch Essence] TBD!}
 {7315} Hellrime Blast {[Eldritch Essence] TBD!}
 {7316} Bewitching Blast {[Eldritch Essence] TBD!} // not implemented
-{7317} Noxious Blast {[Eldritch Essence] TBD!} // not implemented
+{7317} Noxious Blast {[Eldritch Essence] TBD!}
 {7318} Repelling Blast {[Eldritch Essence] TBD!} // not implemented
 {7319} Vitriolic Blast {[Eldritch Essence] TBD!} // not implemented
-{7320} Hindering Blast {[Eldritch Essence] TBD!} // not implemented
+{7320} Hindering Blast {[Eldritch Essence] TBD!}
 {7321} Utterdark Blast {[Eldritch Essence] TBD!} // not implemented
 {7322} Binding Blast {[Eldritch Essence] TBD!} // not implemented
 {7323} Penetrating Blast {[Eldritch Essence] TBD!} // not implemented

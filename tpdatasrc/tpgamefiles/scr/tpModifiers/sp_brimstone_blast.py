@@ -28,7 +28,7 @@ def secondaryEffect(attachee, args, evt_obj):
             spellTarget.condition_add_with_args("Brimstone Burn", spellId, duration, 0)
     return 0
 
-brimstoneBlast = EldritchBlastEssenceModifier("sp-Brimstone Blast") #spellEnum, empty
+brimstoneBlast = EldritchBlastEssenceModifier("Brimstone Blast") #spellEnum, empty
 brimstoneBlast.ModifyDamageType(D20DT_FIRE)
 brimstoneBlast.AddQuerySecondaryTrue()
 

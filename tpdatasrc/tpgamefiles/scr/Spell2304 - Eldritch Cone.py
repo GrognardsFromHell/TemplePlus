@@ -20,13 +20,13 @@ def OnSpellEffect(spell):
         damageType = D20DT_MAGIC
     saveDescriptor = D20STD_F_NONE
 
-    #game.particles("sp-Ray of Enfeeblement", spell.target_loc)
+    game.particles("sp-Eldritch Cone", spell.caster)
 
     for spellTarget in spell.target_list:
         if spellTarget.obj.reflex_save_and_damage(spell.caster, spell.dc, saveType, saveDescriptor, spellDamageDice, damageType, D20DAP_UNSPECIFIED, D20A_CAST_SPELL, spell.id):
-            spellTarget.obj.float_mesfile_line('mes\\spell.mes', 30001)
+            spellTarget.obj.float_mesfile_line("mes\\spell.mes", 30001)
         else:
-            spellTarget.obj.float_mesfile_line('mes\\spell.mes', 30002)
+            spellTarget.obj.float_mesfile_line("mes\\spell.mes", 30002)
         if not spellTarget.obj.d20_query("PQ_Eldritch_Blast_Has_Secondary_Effect"):
             targetsToRemove.append(spellTarget.obj)
     if targetsToRemove:

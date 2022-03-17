@@ -61,18 +61,18 @@ def queryStance(attachee, args, evt_obj):
     evt_obj.return_val = stanceEnum
     return 0
 
-def updateEssenceStance(attachee, args, evt_obj):
-    if (evt_obj.is_modifier("sp-Eldritch Essence")
-    or evt_obj.is_modifier("sp-Frightful Blast")
-    or evt_obj.is_modifier("sp-Sickening Blast")
-    or evt_obj.is_modifier("sp-Beshadowed Blast")
-    or evt_obj.is_modifier("sp-Brimstone Blast")
-    or evt_obj.is_modifier("sp-Hellrime Blast")):
-        args.condition_remove()
-    return 0
-
 def getStanceName(spellEnum):
     return game.get_spell_mesline(spellEnum)
+
+def updateEssenceStance(attachee, args, evt_obj):
+    for spellEnum in range(spell_frightful_blast, spell_penetrating_blast + 1):
+        modifierName = getStanceName(spellEnum)
+        if evt_obj.is_modifier(modifierName):
+            args.condition_remove()
+            break
+    if evt_obj.is_modifier("Eldritch Essence"):
+        args.condition_remove()
+    return 0
 
 def floatActivation(attachee, args, evt_obj):
     spellEnum = args.get_arg(0)
@@ -92,7 +92,7 @@ def addToolTip(attachee, args, evt_obj):
     spellEnum = args.get_arg(0)
     if spellEnum != spell_eldritch_blast:
         stanceName = getStanceName(spellEnum)
-        evt_obj.append("Stance: {}".format(stanceName))
+        evt_obj.append("{} active".format(stanceName))
     return 0
 
 def queryDamageType(attachee, args, evt_obj):
@@ -122,7 +122,7 @@ class EldritchBlastEssenceModifier(EldritchBlastAddHook):
     def AddQuerySecondaryTrue(self):
         self.add_hook(ET_OnD20PythonQuery, "PQ_Eldritch_Blast_Has_Secondary_Effect", queryReturnTrue, ())
 
-eldritchEssenceCond = EldritchBlastEssenceModifier("sp-Eldritch Essence") #spellEnum, empty
+eldritchEssenceCond = EldritchBlastEssenceModifier("Eldritch Essence") #spellEnum, empty
 
 def getActiveEldritchEssence(attachee):
     essenceEnum = attachee.d20_query("PQ_Eldritch_Esssence_Stance")
@@ -144,7 +144,7 @@ def radialResestEldritchBlast(attachee, args, evt_obj):
     return 0
 
 def performResetEldritchBlast(attachee, args, evt_obj):
-    attachee.condition_add_with_args("sp-Eldritch Essence", spell_eldritch_blast, 0)
+    attachee.condition_add_with_args("Eldritch Essence", spell_eldritch_blast, 0)
     return 0
 
 #Spell Level of Eldritch Blast is dynamically:
@@ -159,14 +159,12 @@ def applyEldritchBlastSpellLevel(attachee, args, evt_obj):
         activeEssenceEnum = getActiveEldritchEssence(attachee)
         if activeEssenceEnum != spell_eldritch_blast:
             spellClass = getSpellClassCode(classEnum)
-            spellEntryEssence = tpdp.SpellEntry(activeEssenceEnum)
-            spellLevel = spellEntryEssence.level_for_spell_class(spellClass) - 1 #Eldritch Blast itself is level 1 and is already applied
+            spellEntry = tpdp.SpellEntry(activeEssenceEnum)
+            spellLevel = spellEntry.level_for_spell_class(spellClass) - 1 #Eldritch Blast itself is level 1 and is already applied
             if spellLevel > 0:
                 evt_obj.bonus_list.add(spellLevel, bonus_type_untyped, "Warlock Eldritch Blast spell level modification")
     return 0
 
-#eldritchBlastHandling = PythonModifier("Eldritch Blast Handling", 1) #empty
-#eldritchBlastHandling.MapToFeat("Warlock Eldritch Blast")
 classSpecObj.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, radialResestEldritchBlast, ())
 classSpecObj.AddHook(ET_OnD20PythonActionPerform, resetEldritchBlastEnum, performResetEldritchBlast, ())
 classSpecObj.AddHook(ET_OnGetSpellDcMod, EK_NONE, applyEldritchBlastSpellLevel, ())

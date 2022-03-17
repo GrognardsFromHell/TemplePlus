@@ -15,7 +15,7 @@ def OnBeginRound(spell):
 
 def OnBeginProjectile(spell, projectile, index_of_target):
     print "Eldritch Blast OnBeginProjectile"
-    projectile.obj_set_int(obj_f_projectile_part_sys_id, game.particles("sp-Ray of Enfeeblement", projectile))
+    projectile.obj_set_int(obj_f_projectile_part_sys_id, game.particles("sp-Eldritch Blast-proj", projectile))
 
 def OnEndProjectile(spell, projectile, index_of_target):
     print "Eldritch Blast OnEndProjectile"
@@ -34,7 +34,7 @@ def OnEndProjectile(spell, projectile, index_of_target):
     attackResult = spell.caster.perform_touch_attack(spellTarget.obj)
     
     if attackResult & D20CAF_HIT:
-        game.particles("sp-Ray of Enfeeblement-END", spellTarget.obj)
+        game.particles("sp-Eldritch Blast-hit", spellTarget.obj)
         spellTarget.obj.spell_damage_weaponlike(spell.caster, damageType, spellDamageDice, D20DAP_UNSPECIFIED, spellDamageReduction, D20A_CAST_SPELL, spell.id, attackResult, index_of_target)
         if not spellTarget.obj.d20_query("PQ_Eldritch_Blast_Has_Secondary_Effect"):
             spell.target_list.remove_target(spellTarget.obj)
