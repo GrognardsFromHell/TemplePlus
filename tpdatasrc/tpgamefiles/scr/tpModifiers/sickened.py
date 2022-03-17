@@ -1,44 +1,41 @@
 from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
+from spell_utils import isLivingCreature
 
-def getConditionName():
-    return "Sickened"
-
-print "Registering {}".format(getConditionName())
-
-def getConditionTag(conditionName):
-    return "TAG_{}".format(conditionName.upper().replace(" ", "_"))
+print "Registering Sickened"
 
 def checkConditionalRemoval(attachee, args, evt_obj):
-    if (evt_obj.is_modifier("sp-Remove Sickened")
+    if (evt_obj.is_modifier("sp-Heal")
+    or evt_obj.is_modifier("sp-Remove Sickened")
     or evt_obj.is_modifier("Sickened")):
         args.condition_remove()
     return 0
 
 def checkImmunity(attachee, args, evt_obj):
-    if attachee.is_category_type(mc_type_undead) or attachee.is_category_type(mc_type_construct):
-        attachee.float_text_line("Unaffected due to Racial Immunity")
+    if isLivingCreature(attachee):
+        spellMesId = 20026 #ID 20026 = Sickened!
+        attachee.float_mesfile_line("mes\\spell.mes", spellMesId, tf_red)
+        game.create_history_freeform("{} is ~sickened~[TAG_SICKENED]\n\n".format(attachee.description))
+        particlesId = game.particles("sp-Disease-Filth Fever", attachee)
+        args.set_arg(1, particlesId)
+    else:
+        spellMesId = 32000 #ID 32000 = Target is immune!
+        attachee.float_mesfile_line("mes\\spell.mes", spellMesId)
         args.condition_remove()
-        return 0
-    attachee.float_text_line("Sickened", tf_red)
-    game.create_history_freeform("{} is ~sickened~[TAG_SICKENED]\n\n".format(attachee.description))
-    particlesId = game.particles("sp-Disease-Filth Fever", attachee)
-    args.set_arg(1, particlesId)
     return 0
 
 def durationTickdown(attachee, args, evt_obj):
     duration = args.get_arg(0)
     duration -= evt_obj.data1
+    args.set_arg(0, duration)
     if args.get_arg(0) < 0:
         args.condition_remove()
-    else:
-        args.set_arg(0, duration)
     return 0
 
 def sickenedPenalty(attachee, args, evt_obj):
-    conditionName = getConditionName()
-    conditionTag = getConditionTag(conditionName)
+    conditionName = args.get_cond_name()
+    conditionTag = "TAG_{}".format(conditionName.upper().replace(" ", "_"))
     bonus = -2 #Sickened is a -2 penalty to attack rolls, saving throws, skill checks, and ability checks.
     bonusType = bonus_type_untyped # Stacking!
     evt_obj.bonus_list.add(bonus, bonusType, "~{}~[{}]".format(conditionName, conditionTag))
@@ -48,24 +45,24 @@ def queryIsSickened(attachee, args, evt_obj):
     evt_obj.return_val = 1
     return 0
 
-def getDurationString(duration):
-    if duration != 1:
-        return "rounds"
-    return "round"
+def getDurationLabel(duration):
+    if duration == 1:
+        return "1 round"
+    return "{} rounds".format(duration)
 
 def sickenedTooltip(attachee, args, evt_obj):
-    conditionName = getConditionName()
+    conditionName = args.get_cond_name()
     duration = args.get_arg(0)
-    durationString = getDurationString(duration)
-    evt_obj.append("{} ({} {})".format(conditionName, duration, durationString))
+    durationLabel = getDurationLabel(duration)
+    evt_obj.append("{} ({})".format(conditionName, durationLabel))
     return 0
 
 def sickenedEffectTooltip(attachee, args, evt_obj):
-    conditionName = getConditionName()
+    conditionName = args.get_cond_name()
     conditionKey = conditionName.upper().replace(" ", "_")
     duration = args.get_arg(0)
-    durationString = getDurationString(duration)
-    evt_obj.append(tpdp.hash(conditionKey), -2, " ({} {})".format(duration, durationString))
+    durationLabel = getDurationLabel(duration)
+    evt_obj.append(tpdp.hash(conditionKey), -2, " ({})".format(durationLabel))
     return 0
 
 def removeParticles(attachee, args, evt_obj):

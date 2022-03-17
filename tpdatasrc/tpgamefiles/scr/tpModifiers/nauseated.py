@@ -1,6 +1,7 @@
 from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
+from spell_utils import isLivingCreature
 
 print "Registering Nauseated"
 
@@ -11,16 +12,18 @@ def nauseatedConditionAddPreActions(attachee, args, evt_obj):
     return 0
 
 def nauseatedConditionAddActions(attachee, args, evt_obj):
-    #check if immune to nauseated
-    if attachee.is_category_type(mc_type_undead) or attachee.is_category_type(mc_type_construct):
-        attachee.float_text_line("Unaffected due to Racial Immunity")
+    #Only living creatures are affected by nausea
+    if isLivingCreature(attachee):
+        attachee.float_text_line("Nauseated", tf_red)
+        game.create_history_freeform("{} is ~nauseated~[TAG_NAUSEATED]\n\n".format(attachee.description))
+        particlesId = game.particles("sp-Disease-Filth Fever", attachee) #sp-Poison
+        args.set_arg(2, particlesId)
+        if attachee.d20_query(Q_Critter_Is_Concentrating) == 1: #Nauseated breaks concentration
+            attachee.d20_send_signal(S_Remove_Concentration)
+    else:
+        spellMesId = 32000 #ID 32000 = Target is immune!
+        attachee.float_mesfile_line("mes\\spell.mes", spellMesId)
         args.condition_remove()
-        return 0
-    attachee.float_text_line("Nauseated", tf_red)
-    game.create_history_freeform("{} is ~nauseated~[TAG_NAUSEATED]\n\n".format(attachee.description))
-    game.particles('sp-Poison', attachee)
-    if attachee.d20_query(Q_Critter_Is_Concentrating) == 1: #Nauseated breaks concentration
-        attachee.d20_send_signal(S_Remove_Concentration)
     return 0
 
 def nauseatedTickdown(attachee, args, evt_obj):
@@ -33,12 +36,14 @@ def nauseatedTickdown(attachee, args, evt_obj):
             args.condition_remove()
     return 0
 
+#Nauseated condition limits to a single Move Action only
 def setTurnBasedStatusInit(attachee, args, evt_obj):
     if evt_obj.tb_status.hourglass_state > 1:
-        evt_obj.tb_status.hourglass_state = 1 # Nauseated condition limits to a single Move Action only
+        evt_obj.tb_status.hourglass_state = 1
     return 0
 
-def queryAnswerFalse(attachee, args, evt_obj): #Can't AoO under Nauseated condition
+#Can't AoO under Nauseated condition
+def queryAnswerFalse(attachee, args, evt_obj):
     evt_obj.return_val = 0
     return 0
 
@@ -62,41 +67,37 @@ def signalUpdateDuration(attachee, args, evt_obj):
     return 0
 
 def nauseatedRemoveCondition(attachee, args, evt_obj):
-    if attachee.stat_level_get(stat_hp_current) > -10:
+    if isLivingCreature(attachee) and attachee.stat_level_get(stat_hp_current) > -10:
         attachee.float_text_line("No longer nauseated")
         game.create_history_freeform("{} is no longer ~nauseated~[TAG_NAUSEATED]\n\n".format(attachee.description))
+    particlesId = args.get_arg(2)
+    if particlesId:
+        game.particles_end(particlesId)
     return 0
 
-def getDurationString(duration):
+def getDurationLabel(duration):
     if duration == 1:
-        return "round"
-    return "rounds"
+        return "1 round"
+    return "{} rounds".format(duration)
 
 def nauseatedTooltip(attachee, args, evt_obj):
+    duration = args.get_arg(0)
     persistentFlag = args.get_arg(1)
     conditionName = args.get_cond_name()
-    if persistentFlag:
-        evt_obj.append(conditionName)
-    else:
-        duration = args.get_arg(0)
-        durationString = getDurationString(duration)
-        evt_obj.append("{} ({} {})".format(conditionName, duration, durationString))
+    durationLabel = "persistent" if persistentFlag else getDurationLabel(duration)
+    evt_obj.append("{} ({})".format(conditionName, durationLabel))
     return 0
 
 def nauseatedEffectTooltip(attachee, args, evt_obj):
+    duration = args.get_arg(0)
     persistentFlag = args.get_arg(1)
     conditionName = args.get_cond_name()
-    conditionNameKey = conditionName.upper().replace(" ", "_")
-    if persistentFlag:
-        duration = "persistent"
-        durationString = ""
-    else:
-        duration = args.get_arg(0)
-        durationString = getDurationString(duration)
-    evt_obj.append(tpdp.hash(conditionNameKey), -2, " ({} {})".format(duration, durationString))
+    conditionKey = conditionName.upper().replace(" ", "_")
+    durationLabel = "persistent" if persistentFlag else getDurationLabel(duration)
+    evt_obj.append(tpdp.hash(conditionKey), -2, " ({})".format(durationLabel))
     return 0
 
-nauseatedCondition = PythonModifier("Nauseated", 3) #duration, persistentFlag, empty
+nauseatedCondition = PythonModifier("Nauseated", 4) #duration, persistentFlag, particlesId, empty
 nauseatedCondition.AddHook(ET_OnConditionAddPre, EK_NONE, nauseatedConditionAddPreActions, ())
 nauseatedCondition.AddHook(ET_OnConditionAdd, EK_NONE, nauseatedConditionAddActions, ())
 nauseatedCondition.AddHook(ET_OnTurnBasedStatusInit, EK_NONE, setTurnBasedStatusInit, ())
