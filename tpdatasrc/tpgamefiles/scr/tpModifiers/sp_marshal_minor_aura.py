@@ -54,6 +54,7 @@ marshalMinorAuraMasterOfOpportunity.marshalAuraAddPreActions()
 
 ### Marshal Minor Aura Master of Tactics ###
 def auraBonusMasterOfTactics(attachee, args, evt_obj):
+    print "auraBonusMasterOfTactics Hook"
     if evt_obj.attack_packet.get_flags() & D20CAF_FLANKED:
         auraSpellId = args.get_arg(0)
         auraSpellPacket = tpdp.SpellPacket(auraSpellId)
@@ -110,7 +111,7 @@ marshalMinorAuraMotivateWisdom.addSkillBonus(aura_type_minor, skill_heal, skill_
 marshalMinorAuraMotivateWisdom.marshalAuraAddPreActions()
 
 ### Marshal Minor Aura Over the Top ###
-def auraBonusMasterOfTactics(attachee, args, evt_obj):
+def auraBonusOverTheTop(attachee, args, evt_obj):
     if evt_obj.attack_packet.get_flags() & D20CAF_CHARGE:
         auraSpellId = args.get_arg(0)
         auraSpellPacket = tpdp.SpellPacket(auraSpellId)
@@ -123,7 +124,7 @@ def auraBonusMasterOfTactics(attachee, args, evt_obj):
     return 0
 
 marshalMinorAuraOverTheTop = aura_utils.AuraModifier("Marshal Minor Aura Over the Top")
-marshalMinorAuraOverTheTop.AddHook(ET_OnDealingDamage2, EK_NONE, auraBonusMasterOfTactics, ())
+marshalMinorAuraOverTheTop.AddHook(ET_OnDealingDamage2, EK_NONE, auraBonusOverTheTop, ())
 marshalMinorAuraOverTheTop.marshalAuraAddPreActions()
 
 ### Marshal Minor Aura Watchful Eye ###
