@@ -66,10 +66,10 @@ def getDraconicAuras():
     return draconic_auras
 
 def getAuraName(auraEnum):
-    return game.get_mesline('mes\\auras.mes', auraEnum)
+    return game.get_mesline("mes\\auras.mes", auraEnum)
 
 def getAuraTag(auraEnum):
-    return game.get_mesline('mes\\auras.mes', (auraEnum + 1000))
+    return game.get_mesline("mes\\auras.mes", (auraEnum + 1000))
 
 def getLearnedAuras(attachee, auraType):
     learnedAuras = []
@@ -156,11 +156,9 @@ def auraAddBonusList(attachee, args, evt_obj):
 def getTargetsInAura(auraSpellPacket):
     targetCount = auraSpellPacket.target_count
     targetList = []
-    counter = 0
     for counter in range(0, targetCount):
         target = auraSpellPacket.get_target(counter)
         targetList.append(target)
-        counter += 1
     return targetList
 
 # Marshal Targets are not automatically affected and need to be checked
