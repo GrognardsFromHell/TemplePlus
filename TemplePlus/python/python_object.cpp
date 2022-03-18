@@ -1463,41 +1463,6 @@ static PyObject* PyObjHandle_ItemConditionRemove(PyObject* obj, PyObject* args) 
 	return PyInt_FromLong(1);
 }
 
-static PyObject* PyObjHandle_ItemConditionRemove(PyObject* obj, PyObject* args) {
-	auto self = GetSelf(obj);
-	if (!self->handle || !objSystem->IsValidHandle(self->handle)) {
-		return PyInt_FromLong(0);
-	}
-
-	CondStruct* cond;
-	auto spellId = -1;
-	
-	{
-		char* condName = nullptr;
-		if (!PyArg_ParseTuple(args, "s|i:objhndl.item_condition_remove", &condName, &spellId)) {
-			return PyInt_FromLong(0);
-		}
-		cond = conds.GetByName(condName);
-		if (!cond) {
-			PyErr_Format(PyExc_ValueError, "Unknown condition name: %s", condName);
-			return PyInt_FromLong(0);
-		}
-	}
-	
-
-	auto condId = conds.hashmethods.GetCondStructHashkey(cond);
-	inventory.RemoveWielderCond(self->handle, condId, spellId);
-
-	auto parent = inventory.GetParent(self->handle);
-	if (parent && objSystem->IsValidHandle(parent)) {
-		d20StatusSys.initItemConditions(parent);
-	}
-
-	return PyInt_FromLong(1);
-}
-
-
-
 
 
 
