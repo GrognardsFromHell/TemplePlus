@@ -16,6 +16,7 @@
 #include "../gamesystems/clipping/clipping.h"
 #include <tig/tig_mouse.h>
 #include "location.h"
+#include <action_sequence.h>
 
 using namespace gfx;
 
