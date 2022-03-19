@@ -58,29 +58,35 @@ classSpecObj.AddHook(ET_OnSaveThrowLevel, EK_SAVE_WILL, OnGetSaveThrowWill, ())
 
 # configure the spell casting condition to hold the highest two Arcane Spontaneous/Vancian classes as chosen-to-be-extended classes
 def OnAddSpellCasting(attachee, args, evt_obj):
-	
-	#arg0 holds the vancian class
+
+	#arg0 holds the vancian class, arg1 holds the spontaneous class
 	if args.get_arg(0) == 0:
-		args.set_arg(0, char_class_utils.GetHighestVancianArcaneClass(attachee))
+		vancianClass = char_class_utils.GetHighestVancianArcaneClass(attachee)
+		spontaneousClass = char_class_utils.GetHighestSpontaneousArcaneClass(attachee)
+		vacianLvl = attachee.stat_level_get( vancianClass )
+		spontaneousLvl = attachee.stat_level_get( spontaneousClass )
+
+		levelUpVacian, levelupSpontaneous = classSpecModule.CheckUMIncreaseOnLevelup(1, vacianLvl, spontaneousLvl)
 		
-	#arg1 holds the spontaneous class
-	if args.get_arg(1) == 0:
-		args.set_arg(1, char_class_utils.GetHighestSpontaneousArcaneClass(attachee))
+		args.set_arg(0, vancianClass)
+		args.set_arg(1, spontaneousClass)
+		args.set_arg(2, levelUpVacian)
+		args.set_arg(3, levelupSpontaneous)
 	
 	return 0
 
 def OnGetBaseCasterLevel(attachee, args, evt_obj):
-	class_extended_1 = args.get_arg(0)
-	class_extended_2 = args.get_arg(1)
+	class_extended_vancian = args.get_arg(0)
+	class_extended_spontaneous = args.get_arg(1)
 	classLvl = attachee.stat_level_get(classEnum)
 	class_code = evt_obj.arg0
 	
-	if class_code == class_extended_1:
+	if class_code == class_extended_vancian:
 		bonus = args.get_arg(2)
-		evt_obj.bonus_list.add(classLvl, bonus, 137)
-	elif class_code == class_extended_2:
+		evt_obj.bonus_list.add(bonus, 0, 137)
+	elif class_code == class_extended_spontaneous:
 		bonus = args.get_arg(3)
-		evt_obj.bonus_list.add(classLvl, bonus, 137)
+		evt_obj.bonus_list.add(bonus, 0, 137)
 	else:
 		if evt_obj.arg1 != 0:# are you specifically looking for the Ultimate Magus caster level?
 			bonus = attachee.stat_level_get(classEnum)
@@ -88,15 +94,15 @@ def OnGetBaseCasterLevel(attachee, args, evt_obj):
 	return 0
 
 def OnSpellListExtensionGet(attachee, args, evt_obj):
-	class_extended_1 = args.get_arg(0)
-	class_extended_2 = args.get_arg(1)
+	class_extended_vancian = args.get_arg(0)
+	class_extended_spontaneous = args.get_arg(1)
 	classLvl = attachee.stat_level_get(classEnum)
 	class_code = evt_obj.arg0
 	
-	if class_code == class_extended_1:
+	if class_code == class_extended_vancian:
 		bonus = args.get_arg(2)
 		evt_obj.bonus_list.add(classLvl, bonus, 137)
-	elif class_code == class_extended_2:
+	elif class_code == class_extended_spontaneous:
 		bonus = args.get_arg(3)
 		evt_obj.bonus_list.add(classLvl, bonus, 137)
 	else:
@@ -108,34 +114,34 @@ def OnSpellListExtensionGet(attachee, args, evt_obj):
 def OnInitLevelupSpellSelection(attachee, args, evt_obj):
 	if evt_obj.arg0 != classEnum:
 		return 0
-	class_extended_1 = args.get_arg(0)
-	class_extended_2 = args.get_arg(1)
-	caster_level_1 = args.get_arg(2)
-	caster_level_2 = args.get_arg(3)
-	classSpecModule.InitSpellSelection(attachee, class_extended_1, class_extended_2, caster_level_1, caster_level_2)
+	class_extended_vancian = args.get_arg(0)
+	class_extended_spontaneous = args.get_arg(1)
+	caster_level_vancian = args.get_arg(2)
+	caster_level_spontaneous = args.get_arg(3)
+	classSpecModule.InitSpellSelection(attachee, class_extended_vancian, class_extended_spontaneous, caster_level_vancian, caster_level_spontaneous)
 	return 0
 
 def OnLevelupSpellsCheckComplete(attachee, args, evt_obj):
 	if evt_obj.arg0 != classEnum:
 		return 0
-	class_extended_1 = args.get_arg(0)
-	class_extended_2 = args.get_arg(1)
-	caster_level_1 = args.get_arg(2)
-	caster_level_2 = args.get_arg(3)
-	if not classSpecModule.LevelupCheckSpells(attachee, class_extended_1, class_extended_2, caster_level_1, caster_level_2):
+	class_extended_vancian = args.get_arg(0)
+	class_extended_spontaneous = args.get_arg(1)
+	caster_level_vancian = args.get_arg(2)
+	caster_level_spontaneous = args.get_arg(3)
+	if not classSpecModule.LevelupCheckSpells(attachee, class_extended_vancian, class_extended_spontaneous, caster_level_vancian, caster_level_spontaneous):
 		evt_obj.bonus_list.add(-1, 0, 137) # denotes incomplete spell selection
 	return 1
 
 def OnLevelupSpellsFinalize(attachee, args, evt_obj):
 	if evt_obj.arg0 != classEnum:
 		return 0
-	class_extended_1 = args.get_arg(0)
-	class_extended_2 = args.get_arg(1)
-	caster_level_1 = args.get_arg(2)
-	caster_level_2 = args.get_arg(3)
-	levelUpVacian, levelUpNatural = classSpecModule.LevelupSpellsFinalize(attachee, class_extended_1, class_extended_2, caster_level_1, caster_level_2)
+	class_extended_vancian = args.get_arg(0)
+	class_extended_spontaneous = args.get_arg(1)
+	caster_level_vancian = args.get_arg(2)
+	caster_level_spontaneous = args.get_arg(3)
+	levelUpVacian, levelUpSpontaneous = classSpecModule.LevelupSpellsFinalize(attachee, class_extended_vancian, class_extended_spontaneous, caster_level_vancian, caster_level_spontaneous)
 	args.set_arg(2, levelUpVacian)
-	args.set_arg(3, levelUpNatural)
+	args.set_arg(3, levelUpSpontaneous)
 	return 0
 	
 def GetUMVacianClass(attachee, args, evt_obj):
@@ -191,7 +197,6 @@ def OnAddExpandedSpellKnowledge(attachee, args, evt_obj):
 	args.set_arg(4,1)
 	return 0
 
-
 def ExpandedSpellKnowledgeRadial(attachee, args, evt_obj):
 	umLevel = attachee.stat_level_get(stat_level_ultimate_magus)
 	halfUmLevel = int(umLevel/2)
@@ -201,7 +206,6 @@ def ExpandedSpellKnowledgeRadial(attachee, args, evt_obj):
 		arg = args.get_arg(i-1)
 		if arg > 0:
 			available.append(i)
-	
 	
 	#Add menu item for each level
 	for level in available:
@@ -217,7 +221,6 @@ def ExpandedSpellKnowledgeRadial(attachee, args, evt_obj):
 			spell_level_node = tpdp.RadialMenuEntryParent(str(spellLevel))
 			spell_level_ids.append( spell_level_node.add_as_child(attachee, expandedSpellKnowledgeID) )
 
-		#Filter out spells already known in the other class??  Get a list of enums then do an in check for enum.
 		spontaneousCastingClass = attachee.d20_query("UM Spontaneous Class")
 
 		known_spells = attachee.spells_known
@@ -365,7 +368,7 @@ def AugmentCastingConditionEffectTooltipEffect(attachee, args, evt_obj):
 	return 0
 
 def AugmentCastingConditionRemove(attachee, args, evt_obj):
-	args.condition_remove()  #Don't allow it to hold the condition for another day
+	args.condition_remove()
 	return 0
 
 def AugmentCastingMetaMagicUpdate(attachee, args, evt_obj):
@@ -433,7 +436,7 @@ def AugmentCastingMetaMagicUpdate(attachee, args, evt_obj):
 umAugmentedCastingCondition = PythonModifier("Augmented Casting Condition", 5) #Feat to Apply, Class that Sacrificed Spell, Spare, Spare, Spare
 umAugmentedCastingCondition.AddHook(ET_OnGetTooltip, EK_NONE, AugmentCastingConditionEffectTooltip, ())
 umAugmentedCastingCondition.AddHook(ET_OnGetEffectTooltip, EK_NONE, AugmentCastingConditionEffectTooltipEffect, ())
-umAugmentedCastingCondition.AddHook(ET_OnNewDay, EK_NEWDAY_REST, AugmentCastingConditionRemove, ())
+umAugmentedCastingCondition.AddHook(ET_OnNewDay, EK_NEWDAY_REST, AugmentCastingConditionRemove, ())  #Condition won't go past a day
 umAugmentedCastingCondition.AddHook(ET_OnMetaMagicMod, EK_NONE, AugmentCastingMetaMagicUpdate, ())
 umAugmentedCastingCondition.AddHook(ET_OnD20PythonSignal, "Sudden Metamagic Deduct Charge", AugmentCastingConditionRemove, ())
 

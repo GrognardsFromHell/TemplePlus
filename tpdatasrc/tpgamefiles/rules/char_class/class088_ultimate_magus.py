@@ -31,8 +31,6 @@ class_feats = {
 
 class_skills = (skill_alchemy, skill_concentration, skill_craft, skill_decipher_script, skill_knowledge_arcana, skill_knowledge_religion, skill_knowledge_nature, skill_knowledge_all, skill_profession, skill_spellcraft, skill_use_magic_device)
 
-
-
 def IsEnabled():
 	return 1
 
@@ -87,8 +85,6 @@ def ObjMeetsPrereqs( obj ):
 	return 1
 
 
-
-
 # Levelup
 
 def IsSelectingFeatsOnLevelup( obj ):
@@ -106,71 +102,71 @@ def LevelupGetBonusFeats( obj ):
 	char_editor.set_bonus_feats(bonFeatInfo)
 	return
 	
-#Check if which levels get increased.  Returns a flag for vacian and natural.
-def CheckUMIncreaseOnLevelup(umLevel, vacianCasterLevel, naturalCasterLevel):
+#Check if which levels get increased.  Returns a flag for vacian and spontaneous.
+def CheckUMIncreaseOnLevelup(umLevel, vacianCasterLevel, spontaneousCasterLevel):
 	levelUpVacian = true
-	levelUpNatural = true
+	levelUpSpontaneous = true
 	if umLevel in [1,4,7]:
-		if naturalCasterLevel < vacianCasterLevel:
+		if spontaneousCasterLevel < vacianCasterLevel:
 			levelUpVacian = false
 		else:
-			levelUpNatural = false
-	return levelUpVacian, levelUpNatural
+			levelUpSpontaneous = false
+	return levelUpVacian, levelUpSpontaneous
 	
-#Check if the class gets spells on this levelup.  Returns a flag for vacian and natural
-def ClassNeedsSpellsOnLevelup(obj, class_extended_1, class_extended_2, caster_bonus_1, caster_bonus_2):
+#Check if the class gets spells on this levelup.  Returns a flag for vacian and spontaneous
+def ClassNeedsSpellsOnLevelup(obj, class_extended_vancian, class_extended_spontaneous, caster_bonus_vancian, caster_bonus_spontaneous):
 	newLvl = obj.stat_level_get( classEnum ) + 1
-	vacianLvl = obj.stat_level_get( class_extended_1 ) + caster_bonus_1
-	naturalLvl = obj.stat_level_get( class_extended_2 ) + caster_bonus_2
-	return CheckUMIncreaseOnLevelup(newLvl, vacianLvl, naturalLvl)
+	vacianLvl = obj.stat_level_get( class_extended_vancian ) + caster_bonus_vancian
+	spontaneousLvl = obj.stat_level_get( class_extended_spontaneous ) + caster_bonus_spontaneous
+	return CheckUMIncreaseOnLevelup(newLvl, vacianLvl, spontaneousLvl)
 
-def IsSelectingSpellsOnLevelup( obj , class_extended_1 = 0, class_extended_2 = 0, caster_bonus_1 = 0, caster_bonus_2 = 0):
-	if class_extended_1 <= 0 or class_extended_2 <= 0:
-		class_extended_1 = char_class_utils.GetHighestVancianArcaneClass(obj)
-		class_extended_2 = char_class_utils.GetHighestSpontaneousArcaneClass(obj)
-	levelUpVacian, levelUpNatural = ClassNeedsSpellsOnLevelup(obj, class_extended_1, class_extended_2, caster_bonus_1, caster_bonus_2)
+def IsSelectingSpellsOnLevelup( obj , class_extended_vancian = 0, class_extended_spontaneous = 0, caster_bonus_vancian = 0, caster_bonus_spontaneous = 0):
+	if class_extended_vancian <= 0 or class_extended_spontaneous <= 0:
+		class_extended_vancian = char_class_utils.GetHighestVancianArcaneClass(obj)
+		class_extended_spontaneous = char_class_utils.GetHighestSpontaneousArcaneClass(obj)
+	levelUpVacian, levelUpSpontaneous = ClassNeedsSpellsOnLevelup(obj, class_extended_vancian, class_extended_spontaneous, caster_bonus_vancian, caster_bonus_spontaneous)
 	if levelUpVacian:
-		if char_editor.is_selecting_spells(obj, class_extended_1):
+		if char_editor.is_selecting_spells(obj, class_extended_vancian):
 			return 1
-	if levelUpNatural:
-		if char_editor.is_selecting_spells(obj, class_extended_2):
+	if levelUpSpontaneous:
+		if char_editor.is_selecting_spells(obj, class_extended_spontaneous):
 			return 1
 	return 0
 
-def LevelupCheckSpells( obj , class_extended_1 = 0, class_extended_2 = 0, caster_bonus_1 = 0, caster_bonus_2 = 0):
-	if class_extended_1 <= 0 or class_extended_2 <= 0:
-		class_extended_1 = char_class_utils.GetHighestVancianArcaneClass(obj)
-		class_extended_2 = char_class_utils.GetHighestSpontaneousArcaneClass(obj)
-	levelUpVacian, levelUpNatural = ClassNeedsSpellsOnLevelup(obj, class_extended_1, class_extended_2, caster_bonus_1, caster_bonus_2)
+def LevelupCheckSpells( obj , class_extended_vancian = 0, class_extended_spontaneous = 0, caster_bonus_vancian = 0, caster_bonus_spontaneous = 0):
+	if class_extended_vancian <= 0 or class_extended_spontaneous <= 0:
+		class_extended_vancian = char_class_utils.GetHighestVancianArcaneClass(obj)
+		class_extended_spontaneous = char_class_utils.GetHighestSpontaneousArcaneClass(obj)
+	levelUpVacian, levelUpSpontaneous = ClassNeedsSpellsOnLevelup(obj, class_extended_vancian, class_extended_spontaneous, caster_bonus_vancian, caster_bonus_spontaneous)
 	if levelUpVacian:
-		if not char_editor.spells_check_complete(obj, class_extended_1):
+		if not char_editor.spells_check_complete(obj, class_extended_vancian):
 			return 0
-	if levelUpNatural:
-		if not char_editor.spells_check_complete(obj, class_extended_2):
+	if levelUpSpontaneous:
+		if not char_editor.spells_check_complete(obj, class_extended_spontaneous):
 			return 0
 	return 1
 
-def InitSpellSelection( obj , class_extended_1 = 0, class_extended_2 = 0, caster_bonus_1 = 0, caster_bonus_2 = 0):
-	if class_extended_1 <= 0 or class_extended_2 <= 0:
-		class_extended_1 = char_class_utils.GetHighestVancianArcaneClass(obj)
-		class_extended_2 = char_class_utils.GetHighestSpontaneousArcaneClass(obj)
-	levelUpVacian, levelUpNatural = ClassNeedsSpellsOnLevelup(obj, class_extended_1, class_extended_2, caster_bonus_1, caster_bonus_2)
+def InitSpellSelection( obj , class_extended_vancian = 0, class_extended_spontaneous = 0, caster_bonus_vancian = 0, caster_bonus_spontaneous = 0):
+	if class_extended_vancian <= 0 or class_extended_spontaneous <= 0:
+		class_extended_vancian = char_class_utils.GetHighestVancianArcaneClass(obj)
+		class_extended_spontaneous = char_class_utils.GetHighestSpontaneousArcaneClass(obj)
+	levelUpVacian, levelUpSpontaneous = ClassNeedsSpellsOnLevelup(obj, class_extended_vancian, class_extended_spontaneous, caster_bonus_vancian, caster_bonus_spontaneous)
 	if levelUpVacian:
-		char_editor.init_spell_selection(obj, class_extended_1)
-	if levelUpNatural:
-		char_editor.init_spell_selection(obj, class_extended_2)
+		char_editor.init_spell_selection(obj, class_extended_vancian)
+	if levelUpSpontaneous:
+		char_editor.init_spell_selection(obj, class_extended_spontaneous)
 	return 0
 	
-def LevelupSpellsFinalize( obj , class_extended_1 = 0, class_extended_2 = 0, caster_bonus_1 = 0, caster_bonus_2 = 0):
-	if class_extended_1 <= 0 or class_extended_2 <= 0:
-		class_extended_1 = char_class_utils.GetHighestVancianArcaneClass(obj)
-		class_extended_2 = char_class_utils.GetHighestSpontaneousArcaneClass(obj)
-	levelUpVacian, levelUpNatural = ClassNeedsSpellsOnLevelup(obj, class_extended_1, class_extended_2, caster_bonus_1, caster_bonus_2)
+def LevelupSpellsFinalize( obj , class_extended_vancian = 0, class_extended_spontaneous = 0, caster_bonus_vancian = 0, caster_bonus_spontaneous = 0):
+	if class_extended_vancian <= 0 or class_extended_spontaneous <= 0:
+		class_extended_vancian = char_class_utils.GetHighestVancianArcaneClass(obj)
+		class_extended_spontaneous = char_class_utils.GetHighestSpontaneousArcaneClass(obj)
+	levelUpVacian, levelUpSpontaneous = ClassNeedsSpellsOnLevelup(obj, class_extended_vancian, class_extended_spontaneous, caster_bonus_vancian, caster_bonus_spontaneous)
 	if levelUpVacian:
-		caster_bonus_1 = caster_bonus_1 + 1
-		char_editor.spells_finalize(obj, class_extended_1)
-	if levelUpNatural:
-		caster_bonus_2 = caster_bonus_2 + 1
-		char_editor.spells_finalize(obj, class_extended_2)
-	return caster_bonus_1, caster_bonus_2
+		caster_bonus_vancian = caster_bonus_vancian + 1
+		char_editor.spells_finalize(obj, class_extended_vancian)
+	if levelUpSpontaneous:
+		caster_bonus_spontaneous = caster_bonus_spontaneous + 1
+		char_editor.spells_finalize(obj, class_extended_spontaneous)
+	return caster_bonus_vancian, caster_bonus_spontaneous
 	
