@@ -105,6 +105,14 @@ Range:               Personal
 Target:             You
 Duration:      24h,  Save: None,  SR: No}
 
+{7333} Entropic Warding {20% chance to deflect incoming range attacks.
+
+School:          [Invocation]
+Casting:         1 action [S]
+Range:               Personal
+Target:             You
+Duration:      1 min/level,  Save: None,  SR: No}
+
 {7334} Leaps and Bounds {You gain a +6 bonus on Balance, Jump, and Tumble checks.
 School:          [Invocation]
 Casting:         1 action [S]
