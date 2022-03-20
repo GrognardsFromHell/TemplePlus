@@ -10,8 +10,9 @@ def addSavingThrowBonus(attachee, args, evt_obj):
     flags = evt_obj.flags
     if (flags & (1 << (D20STD_F_SPELL_SCHOOL_ENCHANTMENT-1))): 
         bonusValue = 3
-        bonusType = 0 # ID 0 = Untyped (stacking)
-        evt_obj.bonus_list.add(bonusValue ,bonusType ,"~Fey Heritage~[TAG_FEY_HERITAGE]")
+        bonusType = bonus_type_untyped #Stacking!
+        bonusLabel = "~Fey Heritage~[TAG_FEY_HERITAGE]"
+        evt_obj.bonus_list.add(bonusValue, bonusType, bonusLabel)
     return 0
 
 def querySelectedHeritage(attachee, args, evt_obj):
