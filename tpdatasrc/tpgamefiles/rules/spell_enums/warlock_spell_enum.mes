@@ -32,7 +32,7 @@
 {2330}{Beguiling Influence}
 {2331}{Breath of the Night}
 {2332}{Dark One's Own Luck}
-{2333}{Entropic Warding} // not implemented
+{2333}{Entropic Warding}
 {2334}{Leaps and Bounds}
 {2335}{Miasmic Cloud}
 {2336}{See the Unseen}
@@ -78,7 +78,7 @@
 {7330}{Beguiling Influence}
 {7331}{Breath of the Night}
 {7332}{Dark One's Own Luck}
-{7333}{Entropic Warding} // not implemented
+{7333}{Entropic Warding}
 {7334}{Leaps and Bounds}
 {7335}{Miasmic Cloud}
 {7336}{See the Unseen}
@@ -124,7 +124,7 @@
 {22330}{TAG_SPELLS_BEGUILING_INFLUENCE}
 {22331}{TAG_SPELLS_BREATH_OF_THE_NIGHT}
 {22332}{TAG_SPELLS_DARK_ONE'S_OWN_LUCK}
-{22333}{TAG_SPELLS_ENTROPIC_WARDING} // not implemented
+{22333}{TAG_SPELLS_ENTROPIC_WARDING}
 {22334}{TAG_SPELLS_LEAPS_AND_BOUNDS}
 {22335}{TAG_SPELLS_MIASMIC_CLOUD}
 {22336}{TAG_SPELLS_SEE_THE_UNSEEN}
