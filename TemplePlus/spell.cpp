@@ -2332,8 +2332,8 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 				{ "Invocation", SpellSchools::School_Transmutation},
 			};
 			auto value = 0;
-			if (findInMapping(schoolStrings, textBuf + 12, value)) {
-				spEntry.savingThrowType = value;
+			if (findInMapping(schoolStrings, textBuf + 6, value)) {
+				spEntry.spellSchoolEnum = value;
 			}
 		}
 		else if (!_strnicmp(textBuf, "choices", 7)){
