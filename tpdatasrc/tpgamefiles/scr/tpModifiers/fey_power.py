@@ -1,15 +1,13 @@
 from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
+from warlock import isInvocation
 
 # Fey Power: Complete Mage, p. 43
 
 print "Registering Fey Power"
 
 # Fey Power also increases Warlock Invocation spell level and DC by 1; using isInvocation as Workaround for now
-
-def isInvocation(spellEnum):
-    return True if spellEnum in range(spell_eldritch_blast, 2400) else False #2400 needs to be replaced with the last Invocation enum once done
 
 def addBonusDc(attachee, args, evt_obj):
     spellEntry = evt_obj.spell_entry
