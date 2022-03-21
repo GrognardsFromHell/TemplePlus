@@ -1,6 +1,6 @@
+from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
-from feat_utils import FeatPythonModifier
 from warlock import isInvocation
 
 print "Registering Spell Focus (Invocation)"
@@ -14,5 +14,6 @@ def dcBonus(attachee, args, evt_obj):
         evt_obj.bonus_list.add(bonusValue, bonusType, bonusLabel)
     return 0
 
-sfInvocationFeat = FeatPythonModifier("Spell Focus (Invocation)") #featEnum, empty
+sfInvocationFeat = PythonModifier("Spell Focus (Invocation)", 2) #featEnum, empty
+sfInvocationFeat.MapToFeat("Spell Focus (Invocation)")
 sfInvocationFeat.AddHook(ET_OnGetSpellDcMod, EK_NONE, dcBonus, ())
