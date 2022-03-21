@@ -52,9 +52,7 @@ classSpecObj.AddHook(ET_OnSaveThrowLevel, EK_SAVE_FORTITUDE, OnGetSaveThrowFort,
 classSpecObj.AddHook(ET_OnSaveThrowLevel, EK_SAVE_REFLEX, OnGetSaveThrowReflex, ())
 classSpecObj.AddHook(ET_OnSaveThrowLevel, EK_SAVE_WILL, OnGetSaveThrowWill, ())
 
-#### Warlock Feats ####
-
-## Eldritch Blast
+#### Warlock Eldritch Essence Stance Class and Handling ####
 
 def queryStance(attachee, args, evt_obj):
     stanceEnum = args.get_arg(0)
@@ -82,11 +80,6 @@ def floatActivation(attachee, args, evt_obj):
     else:
         attachee.float_text_line("Eldritch Essence resetted", tf_light_blue)
     return 0
-
-def verifyEldritchBlastAction(spellEnum):
-    if spellEnum in range(spell_eldritch_blast, spell_eldritch_glave + 1):
-        return True
-    return False
 
 def addToolTip(attachee, args, evt_obj):
     spellEnum = args.get_arg(0)
@@ -123,6 +116,20 @@ class EldritchBlastEssenceModifier(EldritchBlastAddHook):
         self.add_hook(ET_OnD20PythonQuery, "PQ_Eldritch_Blast_Has_Secondary_Effect", queryReturnTrue, ())
 
 eldritchEssenceCond = EldritchBlastEssenceModifier("Eldritch Essence") #spellEnum, empty
+
+#### Warlock Callbacks for other functions #####
+
+def verifyEldritchBlastAction(spellEnum):
+    if spellEnum in range(spell_eldritch_blast, spell_eldritch_glave + 1):
+        return True
+    return False
+
+def isInvocation(spellEnum):
+    return True if spellEnum in range(spell_eldritch_blast, 2400) else False #2400 needs to be replaced with the last Invocation enum once done
+
+#### Warlock Class Feats ####
+
+## Eldritch Blast
 
 def getActiveEldritchEssence(attachee):
     essenceEnum = attachee.d20_query("PQ_Eldritch_Esssence_Stance")
