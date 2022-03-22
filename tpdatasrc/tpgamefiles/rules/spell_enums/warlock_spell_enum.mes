@@ -42,7 +42,7 @@
 {2340}{Charm}
 {2341}{Curse of Despair}
 {2342}{Fell Flight} // not implemented
-{2343}{Flee the Scence}
+{2343}{Flee the Scene}
 {2344}{The Dead Walk} // not implemented
 {2345}{Voracious Dispelling} // not implemented
 {2346}{Walk Unseen}
@@ -88,7 +88,7 @@
 {7340}{Charm}
 {7341}{Curse of Despair}
 {7342}{Fell Flight} // not implemented
-{7343}{Flee the Scence}
+{7343}{Flee the Scene}
 {7344}{The Dead Walk} // not implemented
 {7345}{Voracious Dispelling} // not implemented
 {7346}{Walk Unseen}
@@ -134,7 +134,7 @@
 {22340}{TAG_SPELLS_WARLOCK_CHARM}
 {22341}{TAG_SPELLS_CURSE_OF_DESPAIR}
 {22342}{TAG_SPELLS_FELL_FLIGHT} // not implemented
-{22343}{TAG_SPELLS_FLEE_THE_SCENCE}
+{22343}{TAG_SPELLS_FLEE_THE_SCENE}
 {22344}{TAG_SPELLS_THE_DEAD_WALK} // not implemented
 {22345}{TAG_SPELLS_VORACIOUS_DISPELLING} // not implemented
 {22346}{TAG_SPELLS_WALK_UNSEEN}
