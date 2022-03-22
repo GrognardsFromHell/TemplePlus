@@ -290,6 +290,19 @@ def getSpellTargets(spellPacket):
         targetList.append(target)
     return targetList
 
+# Map damageType to Descriptor constant
+# Resist Elements and Endure Elements queries use the
+# Descriptor const for their query in data1
+def getElementEnum(damageType):
+    mappingDict = {
+    D20DT_ACID: ACID,
+    D20DT_COLD: COLD,
+    D20DT_ELECTRICITY: ELECTRICITY,
+    D20DT_FIRE: FIRE,
+    D20DT_SONIC: SONIC
+    }
+    return mappingDict.get(damageType)
+
 ### Item Condition functions
 
 # An item condition is a condition that should be applied to a
@@ -712,7 +725,6 @@ def verifyAoeEventTarget(args, spellTarget, spellPacket):
         return False
     elif spellPacket.check_spell_resistance(spellTarget):
         return False
-
     return True
 
 def verifyEventId(spellEventId, aoeEventId):
@@ -721,9 +733,7 @@ def verifyEventId(spellEventId, aoeEventId):
     return True
 
 def aoeOnEnter(attachee, args, evt_obj):
-    print "aoeOnEnter Hook"
     spellTarget = evt_obj.target
-    print "spellTarget: ", spellTarget
     spellId = args.get_arg(0)
     duration = args.get_arg(1)
     bonusValue = args.get_arg(2)
@@ -900,8 +910,11 @@ class AoeSpellEffectModifier(SpellFunctions):
 def setAuraObjToSpellRegistry(attachee, args, evt_obj):
     spellId = args.get_arg(0)
     spellPacket = tpdp.SpellPacket(spellId)
-    conditionName = args.get_param(0) if args.get_param(0) else args.get_cond_name()
-    particlesId = game.particles(conditionName, attachee)
+    if args.get_arg(6):
+        particlesId = args.get_arg(6)
+    else:
+        conditionName =  args.get_cond_name()
+        particlesId = game.particles(conditionName, attachee)
     idx = 0
     spellPacket.set_spell_object(idx, attachee, particlesId)
     spellPacket.update_registry()
@@ -926,11 +939,14 @@ class AuraSpellHandleModifier(SpellDismissConcentrationFunctions):
     #AuraSpellHandleModifier have at least 6 arguments:
     #spellId, duration, bonusValue, spellEventId, spellDc, empty
     #
+    #particlesId are expected as arg6 for the target particles
+    #and for the aoe effect as arg7
+    #
     #Class for AoE spells that are "aura" spells (spells centered on caster and move with the caster)
     #
-    def __init__(self, name, affectedTargets = aoe_event_target_friendly, particlesId = 0, args = 6, preventDuplicate = True):
+    def __init__(self, name, affectedTargets = aoe_event_target_friendly, args = 6, preventDuplicate = False):
         super(SpellDismissConcentrationFunctions, self).__init__(name, args, preventDuplicate)
-        self.add_hook(ET_OnConditionAdd, EK_NONE, setAuraObjToSpellRegistry, (particlesId,))
+        self.add_hook(ET_OnConditionAdd, EK_NONE, setAuraObjToSpellRegistry, ())
         self.add_hook(ET_OnGetTooltip, EK_NONE, auraTooltip, ())
         self.add_hook(ET_OnGetEffectTooltip, EK_NONE, auraEffectTooltip, ())
         self.add_hook(ET_OnObjectEvent, EK_OnEnterAoE, aoeOnEnter, (affectedTargets,))
