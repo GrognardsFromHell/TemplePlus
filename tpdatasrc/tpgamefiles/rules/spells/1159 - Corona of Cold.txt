@@ -1,7 +1,7 @@
 School: Evocation
 Descriptor: Cold
 Level: Clr 3
-Level:  Drd 3
+Level: Drd 3
 Component: V
 Component: S
 Casting Time: 1 action
