@@ -3089,6 +3089,21 @@ static PyObject* PyObjHandle_IsActiveCombatant(PyObject* obj, PyObject* args) {
 }
 
 
+static PyObject* PyObjHandle_IsArcaneSpellClass(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	int stat;
+	if (!PyArg_ParseTuple(args, "i:objhndl.is_arcane_spell_class", &stat)) {
+		return 0;
+	}
+
+	auto result = d20ClassSys.IsArcaneCastingClass(static_cast<Stat>(stat));
+	return PyInt_FromLong(result?1:0);
+}
+
 static PyObject* PyObjHandle_IsCategoryType(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -4509,6 +4524,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "identify_all", PyObjHandle_IdentifyAll, METH_VARARGS, NULL },
 	{ "inventory_item", PyObjHandle_InventoryItem, METH_VARARGS, NULL },
 	{ "is_active_combatant", PyObjHandle_IsActiveCombatant, METH_VARARGS, NULL },
+	{ "is_arcane_spell_class", PyObjHandle_IsArcaneSpellClass, METH_VARARGS, NULL },
 	{ "is_buckler", PyObjHandle_IsBuckler, METH_VARARGS, NULL },
 	{ "is_category_type", PyObjHandle_IsCategoryType, METH_VARARGS, NULL },
 	{ "is_category_subtype", PyObjHandle_IsCategorySubtype, METH_VARARGS, NULL },

@@ -165,8 +165,7 @@ spellCasterSpecObj.AddHook(ET_OnD20PythonQuery, "UM Vacian Class", GetUMVacianCl
 # Arcane Spell Power
 def ArcaneSpellPowerUMBonus(attachee, args, evt_obj):
 	#Must be arcane spell
-	spell_packet = evt_obj.get_spell_packet()
-	if not spell_packet.is_arcane_spell():
+	if not attachee.is_arcane_spell_class(evt_obj.arg0):
 		return 0
 
 	umLevel = attachee.stat_level_get(stat_level_ultimate_magus)
@@ -181,13 +180,13 @@ def ArcaneSpellPowerUMBonus(attachee, args, evt_obj):
 		bonusValue = 4
 	
 	if bonusValue > 0:
-		evt_obj.return_val += bonusValue
+		evt_obj.bonus_list.add(bonusValue, 0, "Arcane Spell Power")
 	
 	return 0
 
 umSpellPower = PythonModifier("Arcane Spell Power", 2) #Spare, Spare
 umSpellPower.MapToFeat("Arcane Spell Power")
-umSpellPower.AddHook(ET_OnGetCasterLevelMod, EK_NONE, ArcaneSpellPowerUMBonus, ())
+umSpellPower.AddHook(ET_OnSpellCasterGeneral, EK_SPELL_Base_Caster_Level_2, ArcaneSpellPowerUMBonus, ())
 
 def OnAddExpandedSpellKnowledge(attachee, args, evt_obj):
 	args.set_arg(0,1)
