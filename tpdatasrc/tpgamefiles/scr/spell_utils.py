@@ -910,11 +910,8 @@ class AoeSpellEffectModifier(SpellFunctions):
 def setAuraObjToSpellRegistry(attachee, args, evt_obj):
     spellId = args.get_arg(0)
     spellPacket = tpdp.SpellPacket(spellId)
-    if args.get_arg(6):
-        particlesId = args.get_arg(6)
-    else:
-        conditionName =  args.get_cond_name()
-        particlesId = game.particles(conditionName, attachee)
+    conditionName =  args.get_cond_name()
+    particlesId = game.particles(conditionName, attachee)
     idx = 0
     spellPacket.set_spell_object(idx, attachee, particlesId)
     spellPacket.update_registry()
