@@ -124,8 +124,59 @@ def verifyEldritchBlastAction(spellEnum):
         return True
     return False
 
+#Used by Fey Power, SF + GSF Invocation and Invocation Radial
 def isInvocation(spellEnum):
     return True if spellEnum in range(spell_eldritch_blast, 2400) else False #2400 needs to be replaced with the last Invocation enum once done
+
+#### Invocation Radial Menu ####
+
+def getInvocationLabel(invocationType):
+    mappingDict = {
+    1: "Least",
+    3: "Lesser",
+    5: "Greater",
+    7: "Dark"
+    }
+    return mappingDict.get(invocationType)
+
+def radialInvocations(attachee, args, evt_obj):
+    knownSpells = attachee.spells_known
+    radialSpellNodeId = []
+    #Radial Tops
+    #Label should be label = game.get_mesline("mes/stat.mes", classEnum + 1000)
+    #But for testing purpose as long as the normal spell entries are not removed
+    #I seperate it by hooking it to a different parent
+    label = "Invocations"
+    radialTop = tpdp.RadialMenuEntryParent(label)
+    radialTopId = radialTop.add_child_to_standard(attachee, tpdp.RadialMenuStandardNode.Spells)
+    radialTopBlast = tpdp.RadialMenuEntryParent("Eldritch Blast")
+    radialTopBlastId = radialTopBlast.add_child_to_standard(attachee, tpdp.RadialMenuStandardNode.Class)
+    #Create Spell Level Nodes
+    for invocationType in range(1, 8, 2):
+        label = getInvocationLabel(invocationType)
+        radialSpellNode = tpdp.RadialMenuEntryParent(label)
+        radialSpellNodeId.append(radialSpellNode.add_as_child(attachee, radialTopId))
+    #Add Radial Childs
+    for spell in knownSpells:
+        spellEnum = spell.spell_enum
+        spellLevel = spell.spell_level
+        if not isInvocation(spellEnum):
+            continue
+        radialSpellId = tpdp.RadialMenuEntryAction(spell)
+        if spellEnum in range(spell_eldritch_blast, spell_eldritch_glave + 1):
+            radialSpellId.add_as_child(attachee, radialTopBlastId)
+        else:
+            if spellLevel < 3:
+                radialSpellId.add_as_child(attachee, radialSpellNodeId[0])
+            elif spellLevel < 5:
+                radialSpellId.add_as_child(attachee, radialSpellNodeId[1])
+            elif spellLevel < 7:
+                radialSpellId.add_as_child(attachee, radialSpellNodeId[2])
+            else:
+                radialSpellId.add_as_child(attachee, radialSpellNodeId[3])
+    return 0
+
+classSpecObj.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, radialInvocations, ())
 
 #### Warlock Class Feats ####
 
