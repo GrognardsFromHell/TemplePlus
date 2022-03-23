@@ -156,7 +156,7 @@ def radialInvocations(attachee, args, evt_obj):
         label = getInvocationLabel(invocationType)
         radialSpellNode = tpdp.RadialMenuEntryParent(label)
         radialSpellNodeId.append(radialSpellNode.add_as_child(attachee, radialTopId))
-    #Add Radial Childs
+    #Add Invocations Radial Childs
     for spell in knownSpells:
         spellEnum = spell.spell_enum
         spellLevel = spell.spell_level
