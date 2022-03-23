@@ -143,10 +143,8 @@ def radialInvocations(attachee, args, evt_obj):
     knownSpells = attachee.spells_known
     radialSpellNodeId = []
     #Radial Tops
-    #Label should be label = game.get_mesline("mes/stat.mes", classEnum + 1000)
-    #But for testing purpose as long as the normal spell entries are not removed
-    #I seperate it by hooking it to a different parent
-    label = "Invocations"
+    #label = "Invocations"
+    label = game.get_mesline("mes/stat.mes", classEnum + 1000)
     radialTop = tpdp.RadialMenuEntryParent(label)
     radialTopId = radialTop.add_child_to_standard(attachee, tpdp.RadialMenuStandardNode.Spells)
     radialTopBlast = tpdp.RadialMenuEntryParent("Eldritch Blast")
