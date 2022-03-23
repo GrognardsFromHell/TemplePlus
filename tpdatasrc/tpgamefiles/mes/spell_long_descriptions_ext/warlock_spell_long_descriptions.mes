@@ -1,0 +1,177 @@
+// Warlock Invocation Long Descriptions
+
+{6050} Sound Lance {Projectile of intense sonic energy that deals 1d8/level (max 10d8) sonic damage.
+
+Casting:         1  std action  [Evocation,V,S]
+Range:               Medium (100ft. +10 ft./level)
+Target:             One creature or object
+Duration:      Instantaneous,    Save: Fort half,    SR: Yes}
+
+{7300} Eldritch Blast {Ranged touch attack that deals 1d6/two levels (max 9d6) damage. Can be modified by Eldritch Essence Invocations.
+School:          [Invocation](Blast Shape)
+Casting:         1 action [S]
+Range:               60ft.
+Target:             One creature
+Duration:      Instantaneous,  Save: None,  SR: Yes}
+
+{7301} Eldritch Spear {Ranged touch attack that deals 1d6/two levels (max 9d6) damage. Can be modified by Eldritch Essence Invocations.
+School:          [Invocation](Blast Shape)
+Casting:         1 action [S]
+Range:               250ft.
+Target:             One creature
+Duration:      Instantaneous,  Save: None,  SR: Yes}
+
+{7302} Hideous Blow {TBD!
+School:          [Invocation](Blast Shape)
+Casting:         1 action [S]
+Range:               Touch
+Target:             One creature
+Duration:      Instantaneous,  Save: None,  SR: Yes}
+
+{7303} Eldritch Chain {Eldritch Blast that deals full damage to the primary target and half damage to secondary targets. A missed ranged attack breaks the chain.
+School:          [Invocation](Blast Shape)
+Casting:         1 action [S]
+Range:               60ft.
+Target:             One primary + one secondary/5 levels
+Duration:      Instantaneous,  Save: None,  SR: Yes}
+
+{7304} Eldritch Cone {Changes Eldritch Blast to a 30-ft. cone. No longer a touch attack and allows a Reflex save for half damage.
+School:          [Invocation](Blast Shape)
+Casting:         1 action [S]
+Range:               30ft.
+Area:             Cone-shaped burst
+Duration:      Instantaneous,  Save: Reflex half,  SR: Yes}
+
+{7305} Eldritch Line {Changes Eldritch Blast to a 60-ft. line. No longer a touch attack and allows a Reflex save for half damage.
+School:          [Invocation](Blast Shape)
+Casting:         1 action [S]
+Range:               60ft.
+Area:             60-foot line
+Duration:      Instantaneous,  Save: Reflex half,  SR: Yes}
+
+{7311} Frightful Blast {In addition to the normal Eldritch Blast damage targets are shaken for 1 min. on a failed Will save.
+School:          [Invocation](Eldritch Essence)
+Casting:         Free Action [S]
+Range:               Personal
+Effect:             Modifies your Eldritch Blast
+Duration:      Essence Stance}
+
+{7312} Sickening Blast {In addition to the normal Eldritch Blast damage, living creatures are sickened for 1 min. on a failed Fortitude save.
+School:          [Invocation](Eldritch Essence)
+Casting:         Free Action [S]
+Range:               Personal
+Effect:             Modifies your Eldritch Blast
+Duration:      Essence Stance}
+
+{7313} Beshadowed Blast {In addition to the normal Eldritch Blast damage, living creatures are blinded for 1 round on a failed Fortitude save.
+School:          [Invocation](Eldritch Essence)
+Casting:         Free Action [S]
+Range:               Personal
+Effect:             Modifies your Eldritch Blast
+Duration:      Essence Stance}
+
+{7314} Brimstone Blast {Changes Eldritch Blast damage to fire, targets catch fire on a failed reflex save for 1 round/5 levels that deals 2d6 fire damage each round.
+School:          [Invocation](Eldritch Essence)
+Casting:         Free Action [S]
+Range:               Personal
+Effect:             Modifies your Eldritch Blast
+Duration:      Essence Stance}
+
+{7315} Hellrime Blast {Changes Eldritch Blast damage to cold damage, Targets get a -4 dexterity penalty for 10 min on a failed Fortitude save.
+School:          [Invocation](Eldritch Essence)
+Casting:         Free Action [S]
+Range:               Personal
+Effect:             Modifies your Eldritch Blast
+Duration:      Essence Stance}
+
+{7330} Beguiling Influence {You gain a +6 bonus on Bluff, Diplomacy, and Intimidate checks.
+School:          [Invocation]
+Casting:         1 action [S]
+Range:               Personal
+Target:             You
+Duration:      24h,  Save: None,  SR: No}
+
+{7331} Breath of the Night {Creates a fog like the spell fog cloud. Creatures inside the fog have concealment.
+School:          [Invocation]
+Casting:         1 action [S]
+Range:               You
+Area:             Fog spreads in 20-foot radius
+Duration:      1 min.,  Save: None,  SR: No}
+
+{7332} Dark One's Own Luck {You gain a luck bonus equal to your Charisma bonus to one save type (Fortitude, Reflex or Will).
+School:          [Invocation]
+Casting:         1 action [S]
+Range:               Personal
+Target:             You
+Duration:      24h,  Save: None,  SR: No}
+
+{7333} Entropic Warding {20% chance to deflect incoming range attacks.
+
+School:          [Invocation]
+Casting:         1 action [S]
+Range:               Personal
+Target:             You
+Duration:      1 min/level,  Save: None,  SR: No}
+
+{7334} Leaps and Bounds {You gain a +6 bonus on Balance, Jump, and Tumble checks.
+School:          [Invocation]
+Casting:         1 action [S]
+Range:               Personal
+Target:             You
+Duration:      24h,  Save: None,  SR: No}
+
+{7335} Miasmic Cloud {Creates a fog that provides concealment. Creatures that enter the fog (except you) become fatigued on a failed Fort save.
+School:          [Invocation]
+Casting:         1 action [S]
+Range:               You
+Area:             Fog spreads in 10-foot radius
+Duration:      1 min.,  Save: Fortitude,  SR: Yes}
+
+{7336} See the Unseen {You can see invisible creatures and objects (as see invisibility).
+School:          [Invocation]
+Casting:         1 action [S]
+Range:               Personal
+Target:             You
+Duration:      24h,  Save: None,  SR: No}
+
+{7338} Soulreaving Aura {Deal 1 damage to all creatures at 0 HP or below. If a creatures dies gain Temporary Hit Points.
+School:          [Invocation]
+Casting:         Swift Action [S]
+Range:               10 ft.
+Area:             10-ft.-radius emanation, centered on you
+Duration:      Instantaneous.,  Save: None,  SR: Yes}
+
+{7339} All Seeing Eyes {You gain a +6 bonus on Search and Spot checks.
+School:          [Invocation]
+Casting:         1 action [S]
+Range:               Personal
+Target:             You
+Duration:      24h,  Save: None,  SR: No}
+
+{7341} Curse of Despair {Curse a touched opponent (as Bestow Curse)on a failed Will save. If target saves it still takes a -1 penalty on attack rolls for 1 minute.
+School:          [Invocation]
+Casting:         1 action [S]
+Range:               Touch
+Target:             One creature
+Duration:      perm. or 1 min,  Save: Will partial,  SR: Yes}
+
+{7343} Flee the Scence {You can use Dimension Door as a spell-like ability, although the range is limited to close (25 ft. + 5 ft./2 levels) range.
+School:          [Invocation]
+Casting:         1 action [S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             Empty location
+Duration:      Instantaneous,  Save: None,  SR: No}
+
+{7346} Walk Unseen {You can use Invisibility (self only).
+School:          [Invocation]
+Casting:         1 action [S]
+Range:               Personal
+Target:             You
+Duration:      24h,  Save: None,  SR: No}
+
+{7350} Ignore the Pyre {You gain resistance equal to your invocation caster level against the energy type of your choice.
+School:          [Invocation]
+Casting:         1 action [S]
+Range:               Personal
+Target:             You
+Duration:      24h,  Save: None,  SR: No}
