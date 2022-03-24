@@ -1,4 +1,4 @@
-name: Greater Spell Focus (Invocation)
+name: Greater Spell Focus Invocation
 flags: 12582912
 prereqs:
 description: Add +1 to the Difficulty Class for all saving throws against Invocation spells.
