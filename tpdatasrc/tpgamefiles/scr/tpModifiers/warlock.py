@@ -120,9 +120,7 @@ eldritchEssenceCond = EldritchBlastEssenceModifier("Eldritch Essence") #spellEnu
 #### Warlock Callbacks for other functions #####
 
 def verifyEldritchBlastAction(spellEnum):
-    if spellEnum in range(spell_eldritch_blast, spell_eldritch_glaive + 1):
-        return True
-    return False
+    return True if spellEnum in range(spell_eldritch_blast, spell_eldritch_glaive + 1) else False
 
 #Used by Fey Power, SF + GSF Invocation and Invocation Radial
 def isInvocation(spellEnum):
