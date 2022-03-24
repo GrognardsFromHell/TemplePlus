@@ -10,7 +10,7 @@
 {2304}{Eldritch Cone}
 {2305}{Eldritch Line}
 {2306}{Eldritch Doom} // not implemented
-{2307}{Eldritch Glave} // not implemented
+{2307}{Eldritch Glaive} // not implemented
 
 // Eldritch Essence Invocations
 {2311}{Frightful Blast}
@@ -48,7 +48,7 @@
 {2344}{The Dead Walk} // not implemented
 {2345}{Voracious Dispelling} // not implemented
 {2346}{Walk Unseen}
-{2347}{Cold Comfort} // not implemented
+{2347}{Cold Comfort}
 {2348}{Witchwood Step} // not implemented
 {2349}{Dread Seizure} // not implemented
 {2350}{Ignore the Pyre}
@@ -61,7 +61,7 @@
 {7304} Eldritch Cone {[Blast Shape] TBD!}
 {7305} Eldritch Line {[Blast Shape] TBD!}
 {7306} Eldritch Doom {[Blast Shape] TBD!} // not implemented
-{7307} Eldritch Glave {[Blast Shape] TBD!} // not implemented
+{7307} Eldritch Glaive {[Blast Shape] TBD!} // not implemented
 {7311} Frightful Blast {[Eldritch Essence] TBD!}
 {7312} Sickening Blast {[Eldritch Essence] TBD!}
 {7313} Beshadowed Blast {[Eldritch Essence] TBD!}
@@ -95,7 +95,7 @@
 {7344} The Dead Walk {[Invocation] TBD!} // not implemented
 {7345} Voracious Dispelling {[Invocation] TBD!} // not implemented
 {7346} Walk Unseen {[Invocation] TBD!}
-{7347} Cold Comfort {[Invocation] TBD!}  // not implemented
+{7347} Cold Comfort {[Invocation] TBD!}
 {7348} Witchwood Step {[Invocation] TBD!}  // not implemented
 {7349} Dread Seizure {[Invocation] TBD!}  // not implemented
 {7350} Ignore the Pyre {[Invocation] TBD!}
