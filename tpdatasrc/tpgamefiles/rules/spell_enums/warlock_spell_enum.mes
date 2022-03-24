@@ -8,7 +8,7 @@
 {2304}{Eldritch Cone}
 {2305}{Eldritch Line}
 {2306}{Eldritch Doom} // not implemented
-{2307}{Eldritch Glave} // not implemented
+{2307}{Eldritch Glaive} // not implemented
 
 // Eldritch Essence Invocations
 {2311}{Frightful Blast}
@@ -46,7 +46,7 @@
 {2344}{The Dead Walk} // not implemented
 {2345}{Voracious Dispelling} // not implemented
 {2346}{Walk Unseen}
-{2347}{Cold Comfort} // not implemented
+{2347}{Cold Comfort}
 {2348}{Witchwood Step} // not implemented
 {2349}{Dread Seizure} // not implemented
 {2350}{Ignore the Pyre}
@@ -58,7 +58,7 @@
 {7304}{Eldritch Cone}
 {7305}{Eldritch Line}
 {7306}{Eldritch Doom} // not implemented
-{7307}{Eldritch Glave} // not implemented
+{7307}{Eldritch Glaive} // not implemented
 {7311}{Frightful Blast}
 {7312}{Sickening Blast}
 {7313}{Beshadowed Blast}
@@ -92,7 +92,7 @@
 {7344}{The Dead Walk} // not implemented
 {7345}{Voracious Dispelling} // not implemented
 {7346}{Walk Unseen}
-{7347}{Cold Comfort} // not implemented
+{7347}{Cold Comfort}
 {7348}{Witchwood Step} // not implemented
 {7349}{Dread Seizure} // not implemented
 {7350}{Ignore the Pyre}
@@ -104,7 +104,7 @@
 {22304}{TAG_SPELLS_ELDRITCH_CONE}
 {22305}{TAG_SPELLS_ELDRITCH_LINE}
 {22306}{TAG_SPELLS_ELDRITCH_DOOM} // not implemented
-{22307}{TAG_SPELLS_ELDRITCH_GLAVE} // not implemented
+{22307}{TAG_SPELLS_ELDRITCH_Glaive} // not implemented
 {22311}{TAG_SPELLS_FRIGHTFUL_BLAST}
 {22312}{TAG_SPELLS_SICKENING_BLAST}
 {22313}{TAG_SPELLS_BESHADOWED_BLAST}
@@ -138,7 +138,7 @@
 {22344}{TAG_SPELLS_THE_DEAD_WALK} // not implemented
 {22345}{TAG_SPELLS_VORACIOUS_DISPELLING} // not implemented
 {22346}{TAG_SPELLS_WALK_UNSEEN}
-{22347}{TAG_SPELLS_COLD_COMFORT} // not implemented
+{22347}{TAG_SPELLS_COLD_COMFORT}
 {22348}{TAG_SPELLS_WITCHWOOD_STEP} // not implemented
 {22349}{TAG_SPELLS_DREAD_SEIZURE} // not implemented
 {22350}{TAG_SPELLS_IGNORE_THE_PYRE}

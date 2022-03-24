@@ -120,7 +120,7 @@ eldritchEssenceCond = EldritchBlastEssenceModifier("Eldritch Essence") #spellEnu
 #### Warlock Callbacks for other functions #####
 
 def verifyEldritchBlastAction(spellEnum):
-    if spellEnum in range(spell_eldritch_blast, spell_eldritch_glave + 1):
+    if spellEnum in range(spell_eldritch_blast, spell_eldritch_glaive + 1):
         return True
     return False
 
@@ -161,7 +161,7 @@ def radialInvocations(attachee, args, evt_obj):
         if not isInvocation(spellEnum):
             continue
         radialSpellId = tpdp.RadialMenuEntryAction(spell)
-        if spellEnum in range(spell_eldritch_blast, spell_eldritch_glave + 1):
+        if spellEnum in range(spell_eldritch_blast, spell_eldritch_glaive + 1):
             radialSpellId.add_as_child(attachee, radialTopBlastId)
         else:
             if spellLevel < 3:
@@ -211,7 +211,7 @@ def performResetEldritchBlast(attachee, args, evt_obj):
 def applyEldritchBlastSpellLevel(attachee, args, evt_obj):
     spellEntry = evt_obj.spell_entry
     spellEnum = spellEntry.spell_enum
-    if spellEnum in range(spell_eldritch_blast, spell_eldritch_glave + 1):
+    if spellEnum in range(spell_eldritch_blast, spell_eldritch_glaive + 1):
         activeEssenceEnum = getActiveEldritchEssence(attachee)
         if activeEssenceEnum != spell_eldritch_blast:
             spellClass = getSpellClassCode(classEnum)

@@ -3405,7 +3405,7 @@ spell_eldritch_chain = 2303
 spell_eldritch_cone = 2304
 spell_eldritch_line = 2305
 spell_eldritch_doom = 2306
-spell_eldritch_glave = 2307
+spell_eldritch_glaive = 2307
 
 # Warlock Eldritch Essence Invocations
 spell_frightful_blast = 2311
