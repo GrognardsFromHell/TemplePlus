@@ -7,7 +7,7 @@
 {2303}{Eldritch Chain}
 {2304}{Eldritch Cone}
 {2305}{Eldritch Line}
-{2306}{Eldritch Doom} // not implemented
+{2306}{Eldritch Doom}
 {2307}{Eldritch Glaive} // not implemented
 
 // Eldritch Essence Invocations
@@ -57,7 +57,7 @@
 {7303}{Eldritch Chain}
 {7304}{Eldritch Cone}
 {7305}{Eldritch Line}
-{7306}{Eldritch Doom} // not implemented
+{7306}{Eldritch Doom}
 {7307}{Eldritch Glaive} // not implemented
 {7311}{Frightful Blast}
 {7312}{Sickening Blast}
@@ -103,7 +103,7 @@
 {22303}{TAG_SPELLS_ELDRITCH_CHAIN}
 {22304}{TAG_SPELLS_ELDRITCH_CONE}
 {22305}{TAG_SPELLS_ELDRITCH_LINE}
-{22306}{TAG_SPELLS_ELDRITCH_DOOM} // not implemented
+{22306}{TAG_SPELLS_ELDRITCH_DOOM}
 {22307}{TAG_SPELLS_ELDRITCH_GLAIVE} // not implemented
 {22311}{TAG_SPELLS_FRIGHTFUL_BLAST}
 {22312}{TAG_SPELLS_SICKENING_BLAST}

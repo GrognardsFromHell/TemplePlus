@@ -49,6 +49,13 @@ Range:               60ft.
 Area:             60-foot line
 Duration:      Instantaneous,  Save: Reflex half,  SR: Yes}
 
+{7306} Eldritch Doom {Deal Eldritch Blast damage to any number of targets designated by you within 20ft.
+School:          [Invocation](Blast Shape)
+Casting:         1 action [S]
+Range:               20ft.
+Targets:             Any number of targets
+Duration:      Instantaneous,  Save: Reflex half,  SR: Yes}
+
 {7311} Frightful Blast {In addition to the normal Eldritch Blast damage targets are shaken for 1 min. on a failed Will save.
 School:          [Invocation](Eldritch Essence)
 Casting:         Free Action [S]
