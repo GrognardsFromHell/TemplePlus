@@ -101,10 +101,10 @@ def OnSpellListExtensionGet(attachee, args, evt_obj):
 	
 	if class_code == class_extended_vancian:
 		bonus = args.get_arg(2)
-		evt_obj.bonus_list.add(classLvl, bonus, 137)
+		evt_obj.bonus_list.add(bonus, 0, 137)
 	elif class_code == class_extended_spontaneous:
 		bonus = args.get_arg(3)
-		evt_obj.bonus_list.add(classLvl, bonus, 137)
+		evt_obj.bonus_list.add(bonus, 0, 137)
 	else:
 		if evt_obj.arg1 != 0:# are you specifically looking for the Ultimate Magus caster level?
 			bonus = attachee.stat_level_get(classEnum)
