@@ -318,7 +318,7 @@ def AugmentCastingRadialMenuEntry(attachee, args, evt_obj):
 				else:
 					mem_spells = attachee.spells_memorized
 					for memSp in mem_spells:
-						if (not memSp.is_used_up()) and (memSp.spell_level >= minLevel):
+						if (not memSp.is_used_up()) and (not memSp.is_naturally_cast()) and (memSp.spell_level >= minLevel):
 							spell_node = tpdp.RadialMenuEntryPythonAction(memSp, D20A_PYTHON_ACTION, augmentedCastingEnum, feat)
 							spell_node.add_as_child(attachee, spell_level_ids[memSp.spell_level-minLevel])
 	return 0
