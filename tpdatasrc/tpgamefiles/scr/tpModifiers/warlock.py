@@ -210,13 +210,14 @@ def applyEldritchBlastSpellLevel(attachee, args, evt_obj):
     spellEntry = evt_obj.spell_entry
     spellEnum = spellEntry.spell_enum
     if spellEnum in range(spell_eldritch_blast, spell_eldritch_glaive + 1):
+        spellClass = getSpellClassCode(classEnum)
+        shapeSpellLevel = spellEntry.level_for_spell_class(spellClass)
         activeEssenceEnum = getActiveEldritchEssence(attachee)
-        if activeEssenceEnum != spell_eldritch_blast:
-            spellClass = getSpellClassCode(classEnum)
-            spellEntry = tpdp.SpellEntry(activeEssenceEnum)
-            spellLevel = spellEntry.level_for_spell_class(spellClass) - 1 #Eldritch Blast itself is level 1 and is already applied
-            if spellLevel > 0:
-                evt_obj.bonus_list.add(spellLevel, bonus_type_untyped, "Warlock Eldritch Blast spell level modification")
+        spellEntry = tpdp.SpellEntry(activeEssenceEnum)
+        spellLevel = spellEntry.level_for_spell_class(spellClass)
+        spellLevel -= shapeSpellLevel
+        if spellLevel > 0:
+            evt_obj.bonus_list.add(spellLevel, bonus_type_untyped, "Warlock Eldritch Blast spell level modification")
     return 0
 
 classSpecObj.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, radialResestEldritchBlast, ())
