@@ -142,7 +142,7 @@ def radialInvocations(attachee, args, evt_obj):
     radialSpellNodeId = []
     #Radial Tops
     #label = "Invocations"
-    label = game.get_mesline("mes/stat.mes", classEnum + 1000)
+    label = game.get_mesline("mes/stat.mes", classEnum + 1000) #classEnum + 1000 returns class abbreviation
     radialTop = tpdp.RadialMenuEntryParent(label)
     radialTopId = radialTop.add_child_to_standard(attachee, tpdp.RadialMenuStandardNode.Spells)
     radialTopBlast = tpdp.RadialMenuEntryParent("Eldritch Blast")

@@ -1,20 +1,13 @@
 // Warlock Invocation Long Descriptions
 
-{6050} Sound Lance {Projectile of intense sonic energy that deals 1d8/level (max 10d8) sonic damage.
-
-Casting:         1  std action  [Evocation,V,S]
-Range:               Medium (100ft. +10 ft./level)
-Target:             One creature or object
-Duration:      Instantaneous,    Save: Fort half,    SR: Yes}
-
-{7300} Eldritch Blast {Ranged touch attack that deals 1d6/two levels (max 9d6) damage. Can be modified by Eldritch Essence Invocations.
+{7300} Eldritch Blast {Ranged touch attack that deals 1d6 damage. Damage increases with Warlock levels. Can be modified by Eldritch Essence Invocations.
 School:          [Invocation](Blast Shape)
 Casting:         1 action [S]
 Range:               60ft.
 Target:             One creature
 Duration:      Instantaneous,  Save: None,  SR: Yes}
 
-{7301} Eldritch Spear {Ranged touch attack that deals 1d6/two levels (max 9d6) damage. Can be modified by Eldritch Essence Invocations.
+{7301} Eldritch Spear {Increases the range of Eldritch Blast.
 School:          [Invocation](Blast Shape)
 Casting:         1 action [S]
 Range:               250ft.
@@ -28,28 +21,28 @@ Range:               Touch
 Target:             One creature
 Duration:      Instantaneous,  Save: None,  SR: Yes}
 
-{7303} Eldritch Chain {Eldritch Blast that deals full damage to the primary target and half damage to secondary targets. A missed ranged attack breaks the chain.
+{7303} Eldritch Chain {Changes Eldritch Blast to a chain. Full damage to the primary target, half damage to secondary targets. A missed ranged attack breaks the chain.
 School:          [Invocation](Blast Shape)
 Casting:         1 action [S]
 Range:               60ft.
 Target:             One primary + one secondary/5 levels
 Duration:      Instantaneous,  Save: None,  SR: Yes}
 
-{7304} Eldritch Cone {Changes Eldritch Blast to a 30-ft. cone. No longer a touch attack and allows a Reflex save for half damage.
+{7304} Eldritch Cone {Changes Eldritch Blast to a 30-ft. cone. No longer a touch attack and allows a Reflex save.
 School:          [Invocation](Blast Shape)
 Casting:         1 action [S]
 Range:               30ft.
 Area:             Cone-shaped burst
 Duration:      Instantaneous,  Save: Reflex half,  SR: Yes}
 
-{7305} Eldritch Line {Changes Eldritch Blast to a 60-ft. line. No longer a touch attack and allows a Reflex save for half damage.
+{7305} Eldritch Line {Changes Eldritch Blast to a 60-ft. line. No longer a touch attack and allows a Reflex save.
 School:          [Invocation](Blast Shape)
 Casting:         1 action [S]
 Range:               60ft.
 Area:             60-foot line
 Duration:      Instantaneous,  Save: Reflex half,  SR: Yes}
 
-{7306} Eldritch Doom {Deal Eldritch Blast damage to any number of targets designated by you within 20ft.
+{7306} Eldritch Doom {Deal Eldritch Blast damage to any number of targets within 20ft. Reflex save for half damage.
 School:          [Invocation](Blast Shape)
 Casting:         1 action [S]
 Range:               20ft.
