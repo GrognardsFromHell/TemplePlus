@@ -23,7 +23,7 @@ def OnEndProjectile(spell, projectile, index_of_target):
     spell.duration = 0
     spellTarget = spell.target_list[index_of_target]
     spellDamageDice = dice_new("1d6")
-    spellDamageDice.number = int((spell.caster_level + 1) / 2) #capped at cl 20 (9d6)
+    spellDamageDice.number = min(int(min((spell.caster_level + 1) / 2, 6)) + int(max((spell.caster_level - 11) / 3, 0)), 9) #capped at 9d6 at cl 20
     damageType = spell.caster.d20_query("PQ_Eldritch_Blast_Damage_Type")
     if not damageType:
         damageType = D20DT_MAGIC

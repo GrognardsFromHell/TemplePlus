@@ -54,13 +54,13 @@
 {2350}{Ignore the Pyre}
 
 // Spell Descriptions
-{7300} Eldritch Blast {[Eldritch Blast] Ranged touch attack that deals 1d6/two levels (max 9d6) damage. Update!!!}
-{7301} Eldritch Spear {Transmutation Eldritch Spear}
-{7302} Hideous Blow {Transmutation Hideous Blow}
-{7303} Eldritch Chain {[Blast Shape] TBD!}
-{7304} Eldritch Cone {[Blast Shape] TBD!}
-{7305} Eldritch Line {[Blast Shape] TBD!}
-{7306} Eldritch Doom {[Blast Shape] Deal Eldritch Blast damage to any number of targets designated by you within 20ft. Reflex save for half damage.}
+{7300} Eldritch Blast {[Eldritch Blast] Ranged touch attack that deals 1d6 damage. Damage increases with Warlock levels. Can be modified by Eldritch Essence Invocations.}
+{7301} Eldritch Spear {Invocation](Blast Shape) Increases the range of Eldritch Blast.}
+{7302} Hideous Blow {Invocation](Blast Shape) TBD!} // not implemented
+{7303} Eldritch Chain {Invocation](Blast Shape) Changes Eldritch Blast to a chain. Full damage to the primary target, half damage to secondary targets. A missed ranged attack breaks the chain.}
+{7304} Eldritch Cone {Invocation](Blast Shape) Changes Eldritch Blast to a 30-ft. cone. No longer a touch attack and allows a Reflex save for half damage.}
+{7305} Eldritch Line {Invocation](Blast Shape) Changes Eldritch Blast to a 60-ft. line. No longer a touch attack and allows a Reflex save for half damage.}
+{7306} Eldritch Doom {Invocation](Blast Shape) Deal Eldritch Blast damage to any number of targets designated by you within 20ft. Reflex save for half damage.}
 {7307} Eldritch Glaive {[Blast Shape] TBD!} // not implemented
 {7311} Frightful Blast {[Eldritch Essence] TBD!}
 {7312} Sickening Blast {[Eldritch Essence] TBD!}
