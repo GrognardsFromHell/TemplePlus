@@ -72,13 +72,22 @@ def updateEssenceStance(attachee, args, evt_obj):
         args.condition_remove()
     return 0
 
-def floatActivation(attachee, args, evt_obj):
+def addParticles(attachee, args, evt_obj):
     spellEnum = args.get_arg(0)
     if spellEnum != spell_eldritch_blast:
         stanceName = getStanceName(spellEnum)
+        particlesLabel = "sp-{}-held".format(stanceName)
+        particlesId = game.particles(particlesLabel, attachee)
+        args.set_arg(1, particlesId)
         attachee.float_text_line("{} activated".format(stanceName), tf_light_blue)
     else:
         attachee.float_text_line("Eldritch Essence resetted", tf_light_blue)
+    return 0
+
+def removeParticles(attachee, args, evt_obj):
+    particlesId = args.get_arg(1)
+    if particlesId:
+        game.particles_end(particlesId)
     return 0
 
 def addToolTip(attachee, args, evt_obj):
@@ -103,12 +112,13 @@ class EldritchBlastAddHook(tpdp.ModifierSpec):
 
 class EldritchBlastEssenceModifier(EldritchBlastAddHook):
     #This class is used for all Eldritch Blast Essence Modifiers
-    #It has at least two args: spellEnum, empty
-    def __init__(self, name, args = 2, preventDuplicate = False):
+    #It has at least two args: spellEnum, particlesId, empty
+    def __init__(self, name, args = 3, preventDuplicate = False):
         super(EldritchBlastAddHook, self).__init__(name, args, preventDuplicate)
         self.add_hook(ET_OnConditionAddPre, EK_NONE, updateEssenceStance, ())
+        self.add_hook(ET_OnConditionAdd, EK_NONE, addParticles, ())
+        self.add_hook(ET_OnConditionRemove, EK_NONE, removeParticles, ())
         self.add_hook(ET_OnD20PythonQuery, "PQ_Eldritch_Esssence_Stance", queryStance, ())
-        self.add_hook(ET_OnConditionAdd, EK_NONE, floatActivation, ())
         self.add_hook(ET_OnGetTooltip, EK_NONE, addToolTip, ())
     def ModifyDamageType(self, damageType):
         self.add_hook(ET_OnD20PythonQuery, "PQ_Eldritch_Blast_Damage_Type", queryDamageType, (damageType,))

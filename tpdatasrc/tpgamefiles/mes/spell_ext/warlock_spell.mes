@@ -18,14 +18,14 @@
 {2313}{Beshadowed Blast}
 {2314}{Brimstone Blast}
 {2315}{Hellrime Blast}
-{2316}{Bewitching Blast} // not implemented
+{2316}{Bewitching Blast}
 {2317}{Noxious Blast}
 {2318}{Repelling Blast} // not implemented
-{2319}{Vitriolic Blast} // not implemented
+{2319}{Vitriolic Blast}
 {2320}{Hindering Blast}
 {2321}{Utterdark Blast} // not implemented
-{2322}{Binding Blast} // not implemented
-{2323}{Penetrating Blast} // not implemented
+{2322}{Binding Blast}
+{2323}{Penetrating Blast}
 {2324}{Baneful Blast} // not implemented
 {2325}{Hammer Blast} // not implemented
 {2326}{Deteriorating Blast} // not implemented
@@ -56,28 +56,28 @@
 // Spell Descriptions
 {7300} Eldritch Blast {[Eldritch Blast] Ranged touch attack that deals 1d6 damage. Damage increases with Warlock levels. Can be modified by Eldritch Essence Invocations.}
 {7301} Eldritch Spear {Invocation](Blast Shape) Increases the range of Eldritch Blast.}
-{7302} Hideous Blow {Invocation](Blast Shape) TBD!} // not implemented
-{7303} Eldritch Chain {Invocation](Blast Shape) Changes Eldritch Blast to a chain. Full damage to the primary target, half damage to secondary targets. A missed ranged attack breaks the chain.}
-{7304} Eldritch Cone {Invocation](Blast Shape) Changes Eldritch Blast to a 30-ft. cone. No longer a touch attack and allows a Reflex save for half damage.}
-{7305} Eldritch Line {Invocation](Blast Shape) Changes Eldritch Blast to a 60-ft. line. No longer a touch attack and allows a Reflex save for half damage.}
-{7306} Eldritch Doom {Invocation](Blast Shape) Deal Eldritch Blast damage to any number of targets designated by you within 20ft. Reflex save for half damage.}
-{7307} Eldritch Glaive {[Blast Shape] TBD!} // not implemented
-{7311} Frightful Blast {[Eldritch Essence] TBD!}
-{7312} Sickening Blast {[Eldritch Essence] TBD!}
-{7313} Beshadowed Blast {[Eldritch Essence] TBD!}
-{7314} Brimstone Blast {[Eldritch Essence] TBD!}
-{7315} Hellrime Blast {[Eldritch Essence] TBD!}
-{7316} Bewitching Blast {[Eldritch Essence] TBD!} // not implemented
-{7317} Noxious Blast {[Eldritch Essence] TBD!}
-{7318} Repelling Blast {[Eldritch Essence] TBD!} // not implemented
-{7319} Vitriolic Blast {[Eldritch Essence] TBD!} // not implemented
-{7320} Hindering Blast {[Eldritch Essence] TBD!}
-{7321} Utterdark Blast {[Eldritch Essence] TBD!} // not implemented
-{7322} Binding Blast {[Eldritch Essence] TBD!} // not implemented
-{7323} Penetrating Blast {[Eldritch Essence] TBD!} // not implemented
-{7324} Baneful Blast {[Eldritch Essence] TBD!} // not implemented
-{7325} Hammer Blast {[Eldritch Essence] TBD!} // not implemented
-{7326} Deteriorating Blast {[Eldritch Essence] TBD!} // not implemented
+{7302} Hideous Blow {[Invocation](Blast Shape) TBD!} // not implemented
+{7303} Eldritch Chain {[Invocation](Blast Shape) Changes Eldritch Blast to a chain. Full damage to the primary target, half damage to secondary targets. A missed ranged attack breaks the chain.}
+{7304} Eldritch Cone {[Invocation](Blast Shape) Changes Eldritch Blast to a 30-ft. cone. No longer a touch attack and allows a Reflex save for half damage.}
+{7305} Eldritch Line {[Invocation](Blast Shape) Changes Eldritch Blast to a 60-ft. line. No longer a touch attack and allows a Reflex save for half damage.}
+{7306} Eldritch Doom {[Invocation](Blast Shape) Deal Eldritch Blast damage to any number of targets designated by you within 20ft. Reflex save for half damage.}
+{7307} Eldritch Glaive {Invocation](Blast Shape) TBD!} // not implemented
+{7311} Frightful Blast {Invocation](Eldritch Essence) In addition to the normal Eldritch Blast damage targets are shaken for 1 minute on a failed Will save. Mind-Affecting.}
+{7312} Sickening Blast {Invocation](Eldritch Essence) In addition to the normal Eldritch Blast damage living creatures are sickened for 1 minute on a failed Fortitude save.}
+{7313} Beshadowed Blast {Invocation](Eldritch Essence) In addition to the normal Eldritch Blast damage, living creatures are blinded for 1 round on a failed Fortitude save.}
+{7314} Brimstone Blast {Invocation](Eldritch Essence) Changes Eldritch Blast damage to fire, targets catch fire on a failed Reflex save for 1 round/5 levels that deals 2d6 fire damage each round.}
+{7315} Hellrime Blast {Invocation](Eldritch Essence) Changes Eldritch Blast damage to cold damage, targets get a -4 dexterity penalty for 10 minutes on a failed Fortitude save.}
+{7316} Bewitching Blast {Invocation](Eldritch Essence) In addition to the normal Eldritch Blast damage targets are confused on a failed Will save for 1 round. Mind-Affecting.}
+{7317} Noxious Blast {Invocation](Eldritch Essence) In addition to the normal Eldritch Blast damage living creatures must make a Fortitude save or be nauseated for 1 minute.}
+{7318} Repelling Blast {Invocation](Eldritch Essence) TBD!} // not implemented
+{7319} Vitriolic Blast {Invocation](Eldritch Essence) Changes Eldritch Blast damage to acid and deals 2d6 acid damage each round for 1 round/5 levels.}
+{7320} Hindering Blast {Invocation](Eldritch Essence) In addition to the normal Eldritch Blast damage living creatures must succeed on a Will save or be slowed for 1 round.}
+{7321} Utterdark Blast {Invocation](Eldritch Essence) TBD!} // not implemented
+{7322} Binding Blast {Invocation](Eldritch Essence) In addition to the normal Eldritch Blast damage targets must succeed on a Will save or be stunned for 1 round. Mind-Affecting.}
+{7323} Penetrating Blast {Invocation](Eldritch Essence) Eldritch Blasts gains a +4 bonus on spell penetration checks. Targets must succeed on a Will save or have its spell resistance lowered by 5 for 1 minute.}
+{7324} Baneful Blast {Invocation](Eldritch Essence] TBD!) // not implemented
+{7325} Hammer Blast {Invocation](Eldritch Essence] TBD!) // not implemented
+{7326} Deteriorating Blast {Invocation](Eldritch Essence) TBD!} // not implemented
 {7330} Beguiling Influence {[Invocation] TBD!}
 {7331} Breath of the Night {[Invocation] TBD!}
 {7332} Dark One's Own Luck {[Invocation] Add your charisma bonus to one save type (Fortitude, Reflex or Will) for 24 hours.}
