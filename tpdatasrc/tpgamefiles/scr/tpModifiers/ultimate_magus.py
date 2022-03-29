@@ -54,7 +54,7 @@ classSpecObj.AddHook(ET_OnSaveThrowLevel, EK_SAVE_WILL, OnGetSaveThrowWill, ())
 
 ##### Spell casting
 
-# Ultimate Magus raises the caster level for its two base classes specified in Modifier args 0 & 1
+# Ultimate Magus raises the caster level for its two base classes specified in Modifier args 0 & 1, the bonus for each is in args 2 & 3
 
 # configure the spell casting condition to hold the highest two Arcane Spontaneous/Vancian classes as chosen-to-be-extended classes
 def OnAddSpellCasting(attachee, args, evt_obj):
@@ -246,7 +246,7 @@ def ExpandedSpellKnowledgeAddSpell(attachee, args, evt_obj):
 	argNum = maxLevel - 1
 	
 	#Add the new spell to the spontaneous class
-	attachee.spell_known_add_to_char_class(spellEnum, classCode, spellLevel) #I think there is class code confusion here... this is the class, not the code...
+	attachee.spell_known_add_to_char_class(spellEnum, classCode, spellLevel)
 	
 	#Use up the spell knowledge slot
 	args.set_arg(argNum, 0)
