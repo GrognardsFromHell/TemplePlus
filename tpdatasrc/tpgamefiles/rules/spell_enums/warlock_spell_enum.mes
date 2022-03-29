@@ -16,14 +16,14 @@
 {2313}{Beshadowed Blast}
 {2314}{Brimstone Blast}
 {2315}{Hellrime Blast}
-{2316}{Bewitching Blast} // not implemented
+{2316}{Bewitching Blast}
 {2317}{Noxious Blast}
 {2318}{Repelling Blast} // not implemented
-{2319}{Vitriolic Blast} // not implemented
+{2319}{Vitriolic Blast}
 {2320}{Hindering Blast}
 {2321}{Utterdark Blast} // not implemented
-{2322}{Binding Blast} // not implemented
-{2323}{Penetrating Blast} // not implemented
+{2322}{Binding Blast}
+{2323}{Penetrating Blast}
 {2324}{Baneful Blast} // not implemented
 {2325}{Hammer Blast} // not implemented
 {2326}{Deteriorating Blast} // not implemented
@@ -64,14 +64,14 @@
 {7313}{Beshadowed Blast}
 {7314}{Brimstone Blast}
 {7315}{Hellrime Blast}
-{7316}{Bewitching Blast} // not implemented
+{7316}{Bewitching Blast}
 {7317}{Noxious Blast}
 {7318}{Repelling Blast} // not implemented
-{7319}{Vitriolic Blast} // not implemented
+{7319}{Vitriolic Blast}
 {7320}{Hindering Blast}
 {7321}{Utterdark Blast} // not implemented
-{7322}{Binding Blast} // not implemented
-{7323}{Penetrating Blast} // not implemented
+{7322}{Binding Blast}
+{7323}{Penetrating Blast}
 {7324}{Baneful Blast} // not implemented
 {7325}{Hammer Blast} // not implemented
 {7326}{Deteriorating Blast} // not implemented
@@ -110,7 +110,7 @@
 {22313}{TAG_SPELLS_BESHADOWED_BLAST}
 {22314}{TAG_SPELLS_BRIMSTONE_BLAST}
 {22315}{TAG_SPELLS_HELLRIME_BLAST}
-{22316}{TAG_SPELLS_BEWITCHING_BLAST} // not implemented
+{22316}{TAG_SPELLS_BEWITCHING_BLAST}
 {22317}{TAG_SPELLS_NOXIOUS_BLAST}
 {22318}{TAG_SPELLS_REPELLING_BLAST} // not implemented
 {22319}{TAG_SPELLS_VITRIOLIC_BLAST} // not implemented

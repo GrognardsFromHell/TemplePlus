@@ -49,7 +49,7 @@ Range:               20ft.
 Targets:             Any number of targets
 Duration:      Instantaneous,  Save: Reflex half,  SR: Yes}
 
-{7311} Frightful Blast {In addition to the normal Eldritch Blast damage targets are shaken for 1 min. on a failed Will save.
+{7311} Frightful Blast {In addition to the normal Eldritch Blast damage targets are shaken for 1 min. on a failed Will save. Mind-Affecting.
 School:          [Invocation](Eldritch Essence)
 Casting:         Free Action [S]
 Range:               Personal
@@ -70,14 +70,56 @@ Range:               Personal
 Effect:             Modifies your Eldritch Blast
 Duration:      Essence Stance}
 
-{7314} Brimstone Blast {Changes Eldritch Blast damage to fire, targets catch fire on a failed reflex save for 1 round/5 levels that deals 2d6 fire damage each round.
+{7314} Brimstone Blast {Changes Eldritch Blast damage to fire and targets catch fire on a failed Reflex save for 1 round/5 levels that deals 2d6 fire damage each round.
 School:          [Invocation](Eldritch Essence)
 Casting:         Free Action [S]
 Range:               Personal
 Effect:             Modifies your Eldritch Blast
 Duration:      Essence Stance}
 
-{7315} Hellrime Blast {Changes Eldritch Blast damage to cold damage, Targets get a -4 dexterity penalty for 10 min on a failed Fortitude save.
+{7315} Hellrime Blast {Changes Eldritch Blast damage to cold damage, targets get a -4 dexterity penalty for 10 minutes on a failed Fortitude save.
+School:          [Invocation](Eldritch Essence)
+Casting:         Free Action [S]
+Range:               Personal
+Effect:             Modifies your Eldritch Blast
+Duration:      Essence Stance}
+
+{7316} Bewitching Blast {In addition to the normal Eldritch Blast damage targets are confused on a failed Will save for 1 round. Mind-Affecting.
+School:          [Invocation](Eldritch Essence)
+Casting:         Free Action [S]
+Range:               Personal
+Effect:             Modifies your Eldritch Blast
+Duration:      Essence Stance}
+
+{7317} Noxious Blast {In addition to the normal Eldritch Blast damage living creatures must make a Fortitude save or be nauseated for 1 minute.
+School:          [Invocation](Eldritch Essence)
+Casting:         Free Action [S]
+Range:               Personal
+Effect:             Modifies your Eldritch Blast
+Duration:      Essence Stance}
+
+{7319} Vitriolic Blast {Changes Eldritch Blast damage to acid and deals 2d6 acid damage each round for 1 round/5 levels.
+School:          [Invocation](Eldritch Essence)
+Casting:         Free Action [S]
+Range:               Personal
+Effect:             Modifies your Eldritch Blast
+Duration:      Essence Stance}
+
+{7320} Hindering Blast {In addition to the normal Eldritch Blast damage living creatures must succeed on a Will save or be slowed for 1 round.
+School:          [Invocation](Eldritch Essence)
+Casting:         Free Action [S]
+Range:               Personal
+Effect:             Modifies your Eldritch Blast
+Duration:      Essence Stance}
+
+{7322} Binding Blast {In addition to the normal Eldritch Blast damage targets must succeed on a Will save or be stunned for 1 round. Mind-Affecting.
+School:          [Invocation](Eldritch Essence)
+Casting:         Free Action [S]
+Range:               Personal
+Effect:             Modifies your Eldritch Blast
+Duration:      Essence Stance}
+
+{7323} Penetrating Blast {Eldritch Blasts gains a +4 bonus on spell penetration checks. Targets must succeed on a Will save or have its spell resistance lowered by 5 for 1 minute.
 School:          [Invocation](Eldritch Essence)
 Casting:         Free Action [S]
 Range:               Personal
