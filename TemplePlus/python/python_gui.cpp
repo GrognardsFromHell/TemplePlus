@@ -138,9 +138,63 @@ WidgetButton* GetButton(const std::string& id) {
 	return (WidgetButton*)(wid);
 }
 
+WidgetContainer* GetAdvWidgetContainer(LgcyWidgetId id) {
+	auto wid = uiManager->GetAdvancedWidget(id);
+	if (!wid || !wid->IsContainer()) return nullptr;
+
+	return (WidgetContainer*)(wid);
+}
+WidgetButton* GetAdvWidgetButton(LgcyWidgetId id) {
+	auto wid = uiManager->GetAdvancedWidget(id);
+	if (!wid || !wid->IsButton()) return nullptr;
+
+	return (WidgetButton*)(wid);
+}
+
+
 PYBIND11_EMBEDDED_MODULE(tpgui, m) {
 
 	m.doc() = "Temple+ GUI, used for custom user UIs.";
+
+	m.def("_get_widget_id_at", [](int x, int y) {
+		auto id = uiManager->GetWidgetAt(x, y);
+		});
+	m.def("_get_active_windows", []()->std::vector<LgcyWidgetId> {
+		return uiManager->GetActiveWindows();
+		}, py::return_value_policy::copy);
+	m.def("_get_legacy_widget", [](LgcyWidgetId id)->LgcyWidget* {
+		auto wid = uiManager->GetWidget(id);
+		auto adv = uiManager->GetAdvancedWidget(id);
+		if (adv)
+			return nullptr;
+		return wid;
+		}, py::return_value_policy::reference);
+	m.def("_get_legacy_window", [](LgcyWidgetId id)->LgcyWidget* {
+		auto wid = uiManager->GetWidget(id);
+		auto adv = uiManager->GetAdvancedWidget(id);
+		if (adv != nullptr || !wid->IsWindow())
+			return nullptr;
+		return wid;
+		}, py::return_value_policy::reference);
+	m.def("_get_legacy_button", [](LgcyWidgetId id)->LgcyWidget* {
+		auto wid = uiManager->GetWidget(id);
+		auto adv = uiManager->GetAdvancedWidget(id);
+		if (adv != nullptr || !wid->IsButton())
+			return nullptr;
+		return wid;
+		}, py::return_value_policy::reference);
+
+
+
+
+	m.def("_get_adv_widget_container", &GetAdvWidgetContainer /*[](LgcyWidgetId id)->bool {
+		auto wid = GetAdvWidget("sheeit");
+		return wid!=nullptr;
+		}*/, py::return_value_policy::reference);
+	m.def("_get_adv_widget_button", &GetAdvWidgetButton /*[](LgcyWidgetId id)->bool {
+		auto wid = GetAdvWidget("sheeit");
+		return wid!=nullptr;
+		}*/, py::return_value_policy::reference);
 
 	m.def("_add_root_container", [](const std::string& id, int w, int h)->WidgetContainer* {
 		auto wid = uiPython->AddRootWidget(id);
@@ -202,8 +256,11 @@ PYBIND11_EMBEDDED_MODULE(tpgui, m) {
 
 	m.def("_get_button", &GetButton, py::return_value_policy::reference);
 
+#pragma region classes
 	py::class_<WidgetBase>(m, "Widget")
 		.def_property_readonly("id", &WidgetBase::GetWidgetId)
+		.def_property_readonly("name", &WidgetBase::GetId)
+		.def_property_readonly("source_uri", &WidgetBase::GetSourceURI)
 		.def_property("width", &WidgetBase::GetWidth, &WidgetBase::SetWidth)
 		.def_property("height", &WidgetBase::GetHeight, &WidgetBase::SetHeight)
 		.def_property("x", &WidgetBase::GetX, &WidgetBase::SetX)
@@ -270,6 +327,20 @@ PYBIND11_EMBEDDED_MODULE(tpgui, m) {
 				me.AddContent(std::unique_ptr<WidgetContent>(content));
 			})*/
 		//.def_property_readonly("children", []() ->std::vector<int> {}&WidgetContainer::GetChildren) // eastl bah
+		.def_property_readonly("children_ids", [](WidgetContainer & self){
+				std::vector<std::string> result;
+				for (auto& child : self.GetChildren()) {
+					result.push_back(child->GetId());
+				}
+				return result;
+			})
+		.def_property_readonly("children_legacy_ids", [](WidgetContainer& self) {
+				std::vector<int> result;
+				for (auto& child : self.GetChildren()) {
+					result.push_back(child->GetWidgetId());
+				}
+				return result;
+			})
 		;
 	py::class_<WidgetButtonStyle>(m, "ButtonStyle")
 		.def_readwrite("image_normal", &WidgetButtonStyle::normalImagePath)
@@ -295,5 +366,52 @@ PYBIND11_EMBEDDED_MODULE(tpgui, m) {
 			})
 		;
 
+#pragma endregion
+	
+#pragma region Legacy Widgets
+	py::class_<LgcyWidget>(m, "LgcyWidget")
+		.def_property_readonly("is_window", &LgcyWidget::IsWindow)
+		.def_property_readonly("is_button", &LgcyWidget::IsButton)
+		.def_property_readonly("is_scrollbar", &LgcyWidget::IsScrollBar)
+		.def_property_readonly("is_hidden", &LgcyWidget::IsHidden)
+		// .def_readonly("name", &LgcyWidget::name) // fails for empty strings apparently - some Unicode error with byte 0x90 at pos 0
+		.def_property_readonly("name", [](LgcyWidget &self) ->py::bytes{
+			return self.name;
+			})
+		.def_readonly("id", &LgcyWidget::widgetId)
+		.def_readonly("parent_id", &LgcyWidget::parentId)
+		.def_readonly("width", &LgcyWidget::width)
+		.def_readonly("height", &LgcyWidget::height)
+		.def_readonly("x", &LgcyWidget::x)
+		.def_readonly("y", &LgcyWidget::y)
+		// duck typing window:
+		.def_property_readonly("children_count", [](LgcyWidget &self)->int {
+			if (!self.IsWindow())
+				return 0;
+			return ((LgcyWindow&)self).childrenCount;
+			})
+		.def_property_readonly("children", [](LgcyWidget& self)->std::vector<int> {
+				if (!self.IsWindow())
+					return std::vector<int>();
+				std::vector<int> result;
+				auto &wnd = (LgcyWindow&)self;
+				auto count = wnd.childrenCount;
+				for (auto i = 0; i < count; ++i) {
+					auto it = wnd.children[i];
+					if (it == 0)
+						break;
+					result.push_back(it);
+				}
+				return result;
+			})
+		;
 
+	py::class_<LgcyWindow, LgcyWidget>(m, "LgcyWindow")
+		.def_readonly("children", &LgcyWindow::children)
+		.def_readonly("children_count", &LgcyWindow::childrenCount)
+		;
+	py::class_<LgcyButton, LgcyWidget>(m, "LgcyButton")
+		.def_readonly("button_state", &LgcyButton::buttonState)
+		;
+#pragma endregion Legacy Widgets
 }
