@@ -1,8 +1,7 @@
 from toee import *
 import tpdp
 import tpactions
-from warlock import EldritchBlastEssenceModifier, verifyEldritchBlastAction
-from spell_utils import SpellPythonModifier
+from warlock import EldritchBlastEssenceModifier, verifyEldritchBlastAction, EldritchBlastSecondaryEffect
 
 print "Registering sp-Brimstone Blast"
 
@@ -25,10 +24,11 @@ def secondaryEffect(attachee, args, evt_obj):
         else:
             spellTarget.float_mesfile_line("mes\\spell.mes", 30002)
             duration = int(spellPacket.caster_level / 5)
-            spellTarget.condition_add_with_args("Brimstone Burn", spellId, duration, 0)
+            stanceEnum = args.get_arg(0)
+            spellTarget.condition_add_with_args("Brimstone Burn", spellId, duration, stanceEnum, 0)
     return 0
 
-brimstoneBlast = EldritchBlastEssenceModifier("Brimstone Blast") #spellEnum, empty
+brimstoneBlast = EldritchBlastEssenceModifier("Brimstone Blast") #spellEnum, particlesId, empty
 brimstoneBlast.ModifyDamageType(D20DT_FIRE)
 brimstoneBlast.AddQuerySecondaryTrue()
 
@@ -41,7 +41,7 @@ def burnDamage(attachee, args, evt_obj):
     spellDamageDice.number = 2
     attachee.float_text_line("Burning")
     game.create_history_freeform("{} takes ~Brimstone Blast~[TAG_SPELLS_BRIMSTONE_BLAST] burn damage".format(attachee.description))
-    spellTarget.obj.spell_damage(spellPacket.caster, D20DT_FIRE, spellDamageDice, D20DAP_UNSPECIFIED, D20A_CAST_SPELL, spellId)
+    attachee.spell_damage(spellPacket.caster, D20DT_FIRE, spellDamageDice, D20DAP_UNSPECIFIED, D20A_CAST_SPELL, spellId)
     return 0
 
 def radialExtinguishFlames(attachee, args, evt_obj):
@@ -57,7 +57,7 @@ def performExtinguishFlames(attachee, args, evt_obj):
     args.remove_spell()
     return 0
 
-brimstoneEffect = SpellPythonModifier("Brimstone Blast Effect") #spellId, duration, empty
+brimstoneEffect = EldritchBlastSecondaryEffect("Brimstone Blast Effect") #spellId, duration, secondaryEffectEnum, empty
 brimstoneEffect.AddHook(ET_OnBeginRound, EK_NONE, burnDamage, ())
 brimstoneEffect.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, radialExtinguishFlames, ())
 brimstoneEffect.AddHook(ET_OnD20PythonActionPerform, brimstoneBlastEnum, performExtinguishFlames, ())

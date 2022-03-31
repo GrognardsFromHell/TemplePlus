@@ -1,0 +1,5 @@
+ID_string: VITRIOLIC_BLAST
+effect_type: 1
+texture_file: art\interface\player_conditions\ailments\Spell Melfs Acid Arrow.tga
+help_topic: TAG_SPELLS_VITRIOLIC_BLAST
+tooltip_base_text: Vitriolic Blast

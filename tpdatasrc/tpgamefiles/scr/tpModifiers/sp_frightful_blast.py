@@ -23,5 +23,5 @@ def secondaryEffect(attachee, args, evt_obj):
             spellTarget.condition_add_with_args("Shaken", duration, 0, 0)
     return 0
 
-frightfulBlast = EldritchBlastEssenceModifier("Frightful Blast") #spellEnum, empty
+frightfulBlast = EldritchBlastEssenceModifier("Frightful Blast") #spellEnum, particlesId, empty
 frightfulBlast.AddHook(ET_OnDealingDamage2, EK_NONE, secondaryEffect, ())
