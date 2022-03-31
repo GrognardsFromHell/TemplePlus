@@ -169,7 +169,8 @@ def verifyEldritchBlastAction(spellEnum):
 
 #Used by Fey Power, SF + GSF Invocation and Invocation Radial
 def isInvocation(spellEnum):
-    return True if spellEnum in range(spell_eldritch_blast, 2400) else False #2400 needs to be replaced with the last Invocation enum once done
+    #Change range end if new invocations are added
+    return True if spellEnum in range(spell_eldritch_blast, spell_word_of_changing + 1) else False
 
 #### Invocation Radial Menu ####
 
@@ -385,23 +386,18 @@ def fiendishResilienceOnConditionRemove(attachee, args, evt_obj):
     attachee.float_text_line("Fiendish Resilience end")
     return 0
 
-def getDurationLabel(duration):
-    if duration != 1:
-        return "rounds"
-    return "round"
-
 def fiendishResilienceTooltip(attachee, args, evt_obj):
     duration = args.get_arg(0)
-    durationLabel = getDurationLabel(duration)
+    durationLabel = spellTime(duration)
     fastHealingAmount = args.get_arg(1)
-    evt_obj.append("Fast Healing {} ({} {})".format(fastHealingAmount, duration, durationLabel))
+    evt_obj.append("Fast Healing {} ({})".format(fastHealingAmount, durationLabel))
     return 0
 
 def fiendishResilienceEffectTooltip(attachee, args, evt_obj):
     duration = args.get_arg(0)
-    durationLabel = getDurationLabel(duration)
+    durationLabel = spellTime(duration)
     fastHealingAmount = args.get_arg(1)
-    evt_obj.append(tpdp.hash("WARLOCK_FIENDISH_RESILIENCE"), -2, " {} ({} {})".format(fastHealingAmount, duration, durationLabel))
+    evt_obj.append(tpdp.hash("WARLOCK_FIENDISH_RESILIENCE"), -2, "{} ({})".format(fastHealingAmount, durationLabel))
     return 0
 
 warlockFiendishResilienceEffect = PythonModifier("Warlock Fiendish Resilience Effect", 3) #duration, healAmount, empty
