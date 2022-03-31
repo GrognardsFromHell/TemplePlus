@@ -1,4 +1,4 @@
-School: Evocation
+School: Necromancy
 Component: S
 Casting Time: Swift Action
 Range: Personal

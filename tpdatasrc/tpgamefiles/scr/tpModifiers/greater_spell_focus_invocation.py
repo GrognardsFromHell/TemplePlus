@@ -15,5 +15,5 @@ def dcBonus(attachee, args, evt_obj):
     return 0
 
 gsfInvocationFeat = PythonModifier("Greater Spell Focus (Invocation)", 2) #featEnum, empty
-gsfInvocationFeat.MapToFeat("Greater Spell Focus Invocation")
+gsfInvocationFeat.MapToFeat("Greater Spell Focus (Invocation)")
 gsfInvocationFeat.AddHook(ET_OnGetSpellDcMod, EK_NONE, dcBonus, ())

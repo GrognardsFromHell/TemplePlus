@@ -1,4 +1,4 @@
-School: Evocation
+School: Conjuration
 Descriptor: Teleportation
 Component: S
 Casting Time: Full Round

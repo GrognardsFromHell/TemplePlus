@@ -566,6 +566,16 @@ bool SpellPacketBody::IsVancian(){
 	return false;
 }
 
+bool SpellPacketBody::IsAtWill() {
+	if (spellSys.isDomainSpell(spellClass))
+		return false;
+
+	if (d20ClassSys.IsAtWillCastingClass(spellSys.GetCastingClass(spellClass)))
+		return true;
+
+	return false;
+}
+
 bool SpellPacketBody::IsDivine(){
 	if (spellSys.isDomainSpell(spellClass))
 		return true;
@@ -649,11 +659,14 @@ void SpellPacketBody::Debit(){
 		
 	} 
 
-	// add to casted list (so it shows up as used in the Spellbook / gets counted up for spells per day)
-	SpellStoreData sd(spellEnum, spellKnownSlotLevel, spellClass, metaMagicData);
-	sd.spellStoreState.spellStoreType = SpellStoreType::spellStoreCast;
-	casterObj->SetSpell(obj_f_critter_spells_cast_idx, casterObj->GetSpellArray(obj_f_critter_spells_cast_idx).GetSize(), sd);
+	// skip adding spells to casted spells for AtWill casting classes
+	if (!IsAtWill()) {
 
+		// add to casted list (so it shows up as used in the Spellbook / gets counted up for spells per day)
+		SpellStoreData sd(spellEnum, spellKnownSlotLevel, spellClass, metaMagicData);
+		sd.spellStoreState.spellStoreType = SpellStoreType::spellStoreCast;
+		casterObj->SetSpell(obj_f_critter_spells_cast_idx, casterObj->GetSpellArray(obj_f_critter_spells_cast_idx).GetSize(), sd);
+	}
 }
 
 void SpellPacketBody::MemorizedUseUp(SpellStoreData &spellData){
@@ -1269,6 +1282,8 @@ uint32_t LegacySpellSystem::getWizSchool(objHndl objHnd)
 }
 
 bool LegacySpellSystem::IsForbiddenSchool(objHndl handle, int spSchool){
+	if (School_None == spSchool) //Added in T+ for Invocations
+		return false;
 	auto schoolData = gameSystems->GetObj().GetObject(handle)->GetInt32(obj_f_critter_school_specialization);
 	auto forbSch1 = (schoolData & (0xFF00) ) >> 8;
 	auto forbSch2 = (schoolData & (0xFF0000) ) >> 16;

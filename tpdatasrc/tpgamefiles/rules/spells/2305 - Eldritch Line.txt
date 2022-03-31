@@ -1,4 +1,4 @@
-School: Evocation
+School: None
 Component: S
 Casting Time: 1 action
 Range: Specified 60

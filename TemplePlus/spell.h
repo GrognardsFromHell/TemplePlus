@@ -92,6 +92,7 @@ struct SpellPacketBody{
 	const char* GetName(); // get the spell name
 
 	bool IsVancian();
+	bool IsAtWill();
 	bool IsDivine();
 	bool IsItemSpell();
 	bool IsPermanent() const;

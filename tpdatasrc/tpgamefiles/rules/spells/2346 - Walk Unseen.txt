@@ -1,4 +1,4 @@
-School: Evocation
+School: Illusion
 Component: S
 Casting Time: 1 action
 Range: Personal
