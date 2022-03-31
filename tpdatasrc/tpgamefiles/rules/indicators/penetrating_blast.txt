@@ -1,0 +1,5 @@
+ID_string: PENETRATING_BLAST
+effect_type: 1
+texture_file: art\interface\player_conditions\ailments\Spell Deep Slumber.tga
+help_topic: TAG_SPELLS_PENETRATING_BLAST
+tooltip_base_text: Penetrating Blast

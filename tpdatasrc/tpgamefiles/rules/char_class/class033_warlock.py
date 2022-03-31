@@ -58,8 +58,6 @@ spell_list = {
     #9: ()
     }
 
-#spell_earthen_grasp
-
 bonus_feats =["Warlock Energy Resistance"]
 
 spells_per_day = {

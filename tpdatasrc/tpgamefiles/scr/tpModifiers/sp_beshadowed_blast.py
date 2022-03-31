@@ -23,6 +23,6 @@ def secondaryEffect(attachee, args, evt_obj):
             spellTarget.condition_add_with_args("sp-Blindness", spellId, duration, 0)
     return 0
 
-beshadowedBlast = EldritchBlastEssenceModifier("Beshadowed Blast") #spellEnum, empty
+beshadowedBlast = EldritchBlastEssenceModifier("Beshadowed Blast") #spellEnum, particlesId, empty
 beshadowedBlast.AddHook(ET_OnDealingDamage2, EK_NONE, secondaryEffect, ())
 beshadowedBlast.AddQuerySecondaryTrue()

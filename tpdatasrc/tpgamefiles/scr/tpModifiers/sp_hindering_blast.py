@@ -2,7 +2,6 @@ from toee import *
 import tpdp
 import tpactions
 from warlock import EldritchBlastEssenceModifier, verifyEldritchBlastAction
-from spell_utils import SpellPythonModifier
 
 print "Registering sp-Hindering Blast"
 
@@ -25,5 +24,6 @@ def secondaryEffect(attachee, args, evt_obj):
             game.particles("sp-Slow", spellTarget)
     return 0
 
-hinderingBlast = EldritchBlastEssenceModifier("Hindering Blast") #spellEnum, empty
+hinderingBlast = EldritchBlastEssenceModifier("Hindering Blast") #spellEnum, particlesId, empty
+hinderingBlast.AddHook(ET_OnDealingDamage2, EK_NONE, secondaryEffect, ())
 hinderingBlast.AddQuerySecondaryTrue()

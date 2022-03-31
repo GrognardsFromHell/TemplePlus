@@ -3,7 +3,7 @@ from toee import *
 import tpdp
 import char_class_utils
 import tpactions
-from spell_utils import getSpellClassCode
+from spell_utils import getSpellClassCode, queryActiveSpell, spellKilled, replaceCondition, spellTime
 
 ###################################################
 
@@ -52,6 +52,9 @@ classSpecObj.AddHook(ET_OnSaveThrowLevel, EK_SAVE_FORTITUDE, OnGetSaveThrowFort,
 classSpecObj.AddHook(ET_OnSaveThrowLevel, EK_SAVE_REFLEX, OnGetSaveThrowReflex, ())
 classSpecObj.AddHook(ET_OnSaveThrowLevel, EK_SAVE_WILL, OnGetSaveThrowWill, ())
 
+def getSpellName(spellEnum):
+    return game.get_spell_mesline(spellEnum)
+
 #### Warlock Eldritch Essence Stance Class and Handling ####
 
 def queryStance(attachee, args, evt_obj):
@@ -59,12 +62,9 @@ def queryStance(attachee, args, evt_obj):
     evt_obj.return_val = stanceEnum
     return 0
 
-def getStanceName(spellEnum):
-    return game.get_spell_mesline(spellEnum)
-
 def updateEssenceStance(attachee, args, evt_obj):
     for spellEnum in range(spell_frightful_blast, spell_penetrating_blast + 1):
-        modifierName = getStanceName(spellEnum)
+        modifierName = getSpellName(spellEnum)
         if evt_obj.is_modifier(modifierName):
             args.condition_remove()
             break
@@ -75,7 +75,7 @@ def updateEssenceStance(attachee, args, evt_obj):
 def addParticles(attachee, args, evt_obj):
     spellEnum = args.get_arg(0)
     if spellEnum != spell_eldritch_blast:
-        stanceName = getStanceName(spellEnum)
+        stanceName = getSpellName(spellEnum)
         particlesLabel = "sp-{}-held".format(stanceName)
         particlesId = game.particles(particlesLabel, attachee)
         args.set_arg(1, particlesId)
@@ -93,7 +93,7 @@ def removeParticles(attachee, args, evt_obj):
 def addToolTip(attachee, args, evt_obj):
     spellEnum = args.get_arg(0)
     if spellEnum != spell_eldritch_blast:
-        stanceName = getStanceName(spellEnum)
+        stanceName = getSpellName(spellEnum)
         evt_obj.append("{} active".format(stanceName))
     return 0
 
@@ -106,15 +106,15 @@ def queryReturnTrue(attachee, args, evt_obj):
     evt_obj.return_val = 1
     return 0
 
-class EldritchBlastAddHook(tpdp.ModifierSpec):
+class PythonModifierAddHook(tpdp.ModifierSpec):
     def AddHook(self, eventType, eventKey, callbackFcn, argsTuple):
         self.add_hook(eventType, eventKey, callbackFcn, argsTuple)
 
-class EldritchBlastEssenceModifier(EldritchBlastAddHook):
+class EldritchBlastEssenceModifier(PythonModifierAddHook):
     #This class is used for all Eldritch Blast Essence Modifiers
     #It has at least two args: spellEnum, particlesId, empty
     def __init__(self, name, args = 3, preventDuplicate = False):
-        super(EldritchBlastAddHook, self).__init__(name, args, preventDuplicate)
+        super(PythonModifierAddHook, self).__init__(name, args, preventDuplicate)
         self.add_hook(ET_OnConditionAddPre, EK_NONE, updateEssenceStance, ())
         self.add_hook(ET_OnConditionAdd, EK_NONE, addParticles, ())
         self.add_hook(ET_OnConditionRemove, EK_NONE, removeParticles, ())
@@ -126,6 +126,41 @@ class EldritchBlastEssenceModifier(EldritchBlastAddHook):
         self.add_hook(ET_OnD20PythonQuery, "PQ_Eldritch_Blast_Has_Secondary_Effect", queryReturnTrue, ())
 
 eldritchEssenceCond = EldritchBlastEssenceModifier("Eldritch Essence") #spellEnum, empty
+
+#### Warlock Eldritch Blast Secondary Effect Class ####
+
+def ebSecTooltip(attachee, args, evt_obj):
+    duration = args.get_arg(1)
+    durationLabel = spellTime(duration)
+    spellEnum = args.get_arg(2)
+    secondaryEffectName = getSpellName(spellEnum)
+    evt_obj.append("{} ({})".format(secondaryEffectName, durationLabel))
+    return 0
+
+def ebSecEffectTooltip(attachee, args, evt_obj):
+    duration = args.get_arg(1)
+    durationLabel = spellTime(duration)
+    spellEnum = args.get_arg(2)
+    secondaryEffectName = getSpellName(spellEnum)
+    effectKey = secondaryEffectName.upper().replace(" ", "_")
+    evt_obj.append(tpdp.hash(effectKey), -2, " ({})".format(durationLabel))
+    return 0
+
+class EldritchBlastSecondaryEffect(PythonModifierAddHook):
+    #This class is used for all Eldritch Blast Secondary Effects
+    #It has at least 4 args: spellId, duration, secondaryEffectEnum, empty
+    def __init__(self, name, args = 4, preventDuplicate = False):
+        super(PythonModifierAddHook, self).__init__(name, args, preventDuplicate)
+        self.add_hook(ET_OnGetTooltip, EK_NONE, ebSecTooltip, ())
+        self.add_hook(ET_OnGetEffectTooltip, EK_NONE, ebSecEffectTooltip, ())
+        self.add_spell_dispel_check_standard()
+        self.add_spell_countdown_standard()
+        self.add_spell_teleport_prepare_standard()
+        self.add_spell_teleport_reconnect_standard()
+        self.add_hook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, queryActiveSpell, ())
+        self.add_hook(ET_OnD20Signal, EK_S_Killed, spellKilled, ())
+    def AddSpellNoDuplicate(self):
+        self.add_hook(ET_OnConditionAddPre, EK_NONE, replaceCondition, ())
 
 #### Warlock Callbacks for other functions #####
 

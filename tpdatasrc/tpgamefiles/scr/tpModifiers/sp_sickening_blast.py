@@ -25,5 +25,5 @@ def secondaryEffect(attachee, args, evt_obj):
                 spellTarget.condition_add_with_args("Sickened", duration, 0, 0)
     return 0
 
-sickeningBlast = EldritchBlastEssenceModifier("Sickening Blast") #spellEnum, empty
+sickeningBlast = EldritchBlastEssenceModifier("Sickening Blast") #spellEnum, particlesId, empty
 sickeningBlast.AddHook(ET_OnDealingDamage2, EK_NONE, secondaryEffect, ())
