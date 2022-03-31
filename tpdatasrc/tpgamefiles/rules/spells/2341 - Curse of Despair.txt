@@ -1,4 +1,4 @@
-School: Evocation
+School: Necromancy
 Component: S
 Casting Time: 1 action
 Range: Touch

@@ -80,7 +80,6 @@ Evocation = 5
 Illusion = 6
 Necromancy = 7
 Transmutation = 8
-Invocation = 9 #Added to handle Warlock Invocations
 
 # Spell School Subschools 
 
@@ -3803,6 +3802,8 @@ spell_source_type_psionic = 3
 
 spell_readying_vancian = 0
 spell_readying_innate = 1
+spell_readying_any = 2
+spell_readying_at_will = 3
 
 # Textfloater colors
 tf_white = 0

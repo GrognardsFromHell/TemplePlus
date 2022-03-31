@@ -1,4 +1,4 @@
-School: Evocation
+School: None
 Component: S
 Casting Time: Free Action
 Range: Personal

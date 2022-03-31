@@ -1,4 +1,4 @@
-School: Evocation
+School: Enchantment
 Descriptor: Mind-Affecting
 Component: S
 Casting Time: 1 action
