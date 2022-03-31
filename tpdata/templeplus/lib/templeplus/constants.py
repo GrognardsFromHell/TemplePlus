@@ -3400,12 +3400,12 @@ spell_new_slot_lvl_9 = 1614
 #Warlock Blast Shape Invocations
 spell_eldritch_blast = 2300
 spell_eldritch_spear = 2301
-spell_hideous_blow = 2302
+spell_hideous_blow = 2302 #not implemented
 spell_eldritch_chain = 2303
 spell_eldritch_cone = 2304
 spell_eldritch_line = 2305
 spell_eldritch_doom = 2306
-spell_eldritch_glaive = 2307
+spell_eldritch_glaive = 2307 #not implemented
 
 # Warlock Eldritch Essence Invocations
 spell_frightful_blast = 2311
@@ -3421,9 +3421,7 @@ spell_hindering_blast = 2320
 spell_utterdark_blast = 2321
 spell_binding_blast = 2322
 spell_penetrating_blast = 2323
-#spell_baneful_blast
-#spell_hammer_blast
-#spell_deteriorating_blast
+spell_deteriorating_blast = 2324
 
 #Warlock Invocations
 spell_beguiling_influence = 2330
@@ -3433,66 +3431,35 @@ spell_entropic_warding = 2333
 spell_leaps_and_bounds = 2334
 spell_miasmic_cloud = 2335
 spell_see_the_unseen = 2336
-spell_spiderwalk = 2337
+spell_spiderwalk = 2337 # not implemented
 spell_soulreaving_aura = 2338
 spell_all_seeing_eyes = 2239
 spell_warlock_charm = 2340
 spell_curse_of_despair = 2341
-spell_fell_flight = 2342
+spell_fell_flight = 2342 # not implemented
 spell_flee_the_scene = 2343
-spell_the_dead_walk = 2344
-spell_voracious_dispelling = 2345
-spell_walk_unseen = 2346
+spell_the_dead_walk = 2344 # not implemented
+spell_voracious_dispelling = 2345 # not implemented
+spell_walk_unseen = 2346 # not implemented
 spell_cold_comfort = 2347
-spell_witchwood_step = 2348
-spell_dread_seizure = 2349
+spell_witchwood_step = 2348 # not implemented
+spell_dread_seizure = 2349 # not implemented
 spell_ignore_the_pyre = 2350
-
-#Missing Warlock Least Invocations
-#spell_earthen_grasp //should be a normal spell!!
-#spell_summon_swarm
-#spell_baleful_utterance
-#spell_darkness
-#spell_devil's_sight
-#spell_call_of_the_beast
-#spell_otherwordly_whispers
-#spell_serpent's_tongue
-#spell_swimming_the_styx
-
-#Missing Warlock Lesser Invocations
-#spell_hungry_darkness
-#spell_stony_grasp //should be a normal spell !!
-#spell_voidsense
-#spell_wall_of_gloom
-#spell_relentless_dispelling
-#spell_crawling_eye // no!!
-#spell_disembodied_hand // no!!
-#spell_mask_of_flesh // no!!
-#spell_weighty_utterance // no
-
-#Warlock Greater Invocations
-spell_chilling_tentacles = 0
-spell_devour_magic = 0
-spell_enervating_shadow = 0
-spell_tenacious_plague = 0
-spell_wall_of_perilous_flame = 0
-#spell_warlocks_call // no!!
-#spell_caustic_mire
-#spell_hellspawned_grace
-#spell_nightmares_made_real
-#spell_painful_slumber_of_ages
-#spell_dragonward
-
-#Warlock Dark Invocations
-#spell_dark_discorporation
-#spell_dark_foresight
-#spell_path_of_shadow
-spell_retributive_invisibility = 0
-spell_word_of_changing = 0
-#spell_casters_lament
-#spell_steal_summoning
-#spell_impenetrable_barrier
-
+spell_otherwordly_whispers = 2351 # not implemented
+spell_serpents_tongue = 2352 # not implemented
+spell_voidsense = 2353 # not implemented
+spell_relentless_dispelling = 2354 # not implemented
+spell_chilling_tentacles = 2355 # not implemented
+spell_devour_magic = 2356 # not implemented
+spell_enervating_shadow = 2357 # not implemented
+spell_tenacious_plague = 2358 # not implemented
+spell_wall_of_perilous_flame = 2359 # not implemented
+spell_caustic_mire = 2360 # not implemented
+spell_hellspawned_grace = 2361 # not implemented
+spell_nightmares_made_real = 2362 # not implemented
+spell_painful_slumber_of_ages = 2363 # not implemented
+spell_retributive_invisibility = 2364 # not implemented
+spell_word_of_changing = 2365 # not implemented
 
 # Python Action Spells
 spell_epic_of_the_lost_king = 3080
