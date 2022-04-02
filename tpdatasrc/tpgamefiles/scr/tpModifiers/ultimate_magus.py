@@ -380,6 +380,12 @@ def AugmentCastingMetaMagicUpdate(attachee, args, evt_obj):
 	if spellCastingClass == evt_obj.get_spell_casting_class():
 		return 0
 		
+	#Feat cannot be used on a spell higher than half the ultimate magus level
+	umLevel = attachee.stat_level_get(stat_level_ultimate_magus)
+	halfUmLevel = int(umLevel/2)
+	if evt_obj.spell_level > halfUmLevel:
+		return 0
+		
 	feat = args.get_arg(0)
 
 	#Apply the appropriate meta magic once only
