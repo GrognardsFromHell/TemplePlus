@@ -771,7 +771,6 @@ def aoeHandleEndSignal(attachee, args, evt_obj):
     return 0
 
 def aoeCombatEndSignal(attachee, args, evt_obj):
-    print "received aoeCombatEndSignal"
     args.set_arg(1, -1)
     return 0
 
