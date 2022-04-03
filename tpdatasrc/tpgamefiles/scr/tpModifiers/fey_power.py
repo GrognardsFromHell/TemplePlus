@@ -7,7 +7,7 @@ from warlock import isInvocation
 
 print "Registering Fey Power"
 
-# Fey Power also increases Warlock Invocation spell level and DC by 1; using isInvocation as Workaround for now
+# Fey Power also increases Warlock Invocation caster level and DC by 1; using isInvocation as Workaround for now
 
 def addBonusDc(attachee, args, evt_obj):
     spellEntry = evt_obj.spell_entry
