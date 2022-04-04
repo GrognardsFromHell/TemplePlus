@@ -181,7 +181,7 @@ School:          [Invocation]
 Casting:         Swift Action [S]
 Range:               10 ft.
 Area:             10-ft.-radius emanation, centered on you
-Duration:      Instantaneous.,  Save: None,  SR: Yes}
+Duration:      Instantaneous,  Save: None,  SR: Yes}
 
 {7339} All Seeing Eyes {You gain a +6 bonus on Search and Spot checks.
 School:          [Invocation]
@@ -217,3 +217,10 @@ Casting:         1 action [S]
 Range:               Personal
 Target:             You
 Duration:      24h,  Save: None,  SR: No}
+
+{7357} Enervating Shadow {Gain total concealment if not in daylight. Adjacent living creatures get -4 Strength on a failed save.
+School:          [Invocation]
+Casting:         Swift Action [S]
+Range:               5 ft.
+Area:             5-ft.-radius emanation, centered on you
+Duration:      5 rounds,  Save: Fortitude negates,  SR: Yes}

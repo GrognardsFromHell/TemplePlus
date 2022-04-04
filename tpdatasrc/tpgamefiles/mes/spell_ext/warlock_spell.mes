@@ -52,6 +52,7 @@
 {2348}{Witchwood Step} // not implemented
 {2349}{Dread Seizure} // not implemented
 {2350}{Ignore the Pyre}
+{2357}{Enervating Shadow}
 
 // Spell Descriptions
 {7300} Eldritch Blast {[Eldritch Blast] Ranged touch attack that deals 1d6 damage. Damage increases with Warlock levels. Can be modified by Eldritch Essence Invocations.}
@@ -99,3 +100,4 @@
 {7348} Witchwood Step {[Invocation] TBD!}  // not implemented
 {7349} Dread Seizure {[Invocation] TBD!}  // not implemented
 {7350} Ignore the Pyre {[Invocation] TBD!}
+{7357} Enervating Shadow {[Invocation] Gain total concealment if not in daylight. Adjacent living creatures get -4 Strength on a failed Fortitude save.}
