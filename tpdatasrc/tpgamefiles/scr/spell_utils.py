@@ -988,9 +988,6 @@ class AuraSpellHandleModifier(SpellDismissConcentrationFunctions):
     #AuraSpellHandleModifier have at least 6 arguments:
     #spellId, duration, bonusValue, spellEventId, spellDc, empty
     #
-    #particlesId are expected as arg6 for the target particles
-    #and for the aoe effect as arg7
-    #
     #Class for AoE spells that are "aura" spells (spells centered on caster and move with the caster)
     #
     def __init__(self, name, affectedTargets = aoe_event_target_friendly, args = 6, preventDuplicate = False):
@@ -1009,6 +1006,9 @@ class AuraSpellHandleModifier(SpellDismissConcentrationFunctions):
         self.add_hook(eventType, eventKey, callbackFcn, argsTuple)
     def AddSpellNoDuplicate(self):
         self.add_hook(ET_OnConditionAddPre, EK_NONE, replaceCondition, ())
+    def AddDispelledByLight(self, neededLevel):
+        self.add_hook(ET_OnConditionAddPre, EK_NONE, dispelledByLight, (neededLevel,))
+        self.add_hook(ET_OnBeginRound, EK_NONE, checkDaylight, ())
 
 class AuraSpellEffectModifier(SpellFunctions):
     #AuraSpellEffectModifier have at least 6 arguments:
