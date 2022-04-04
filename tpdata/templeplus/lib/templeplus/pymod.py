@@ -56,3 +56,9 @@ class PythonModifier(tpdp.ModifierSpec):
 	def AddSpellDispelCheckStandard(self):
 		self.add_spell_dispel_check_standard()
 
+class BasicPyMod(tpdp.ModifierSpec):
+	def AddHook(self, eventType, eventKey, callbackFcn, argsTuple):
+		self.add_hook(eventType, eventKey, callbackFcn, argsTuple)
+	def ExtendExisting(self, condName):
+		self.extend_existing(condName)
+

@@ -303,6 +303,11 @@ def getElementEnum(damageType):
     }
     return mappingDict.get(damageType)
 
+def isDaylight():
+    if game.is_outdoor() and game.is_daytime():
+        return True
+    return False
+
 ### Item Condition functions
 
 # An item condition is a condition that should be applied to a
@@ -621,6 +626,47 @@ def applyTempHp(attachee, args, evt_obj):
     attachee.condition_add_with_args("Temporary_Hit_Points", spellId, duration, tempHpAmount)
     return 0
 
+def getNeededSpellLevel(args):
+    #Valid param values:
+    #0: Any light spell level is suffice to dispel
+    #-1: Light spell level needs to be at least spell level of darkness
+    #1-9: Light spell level needs to be at least given spell level
+    neededLevel = args.get_param(0)
+    if neededLevel:
+        if neededLevel == -1:
+            spellId = args.get_arg(0)
+            spellPacket = tpdp.SpellPacket(spellId)
+            return spellPacket.spell_known_slot_level
+        elif neededLevel in range(1, 10):
+            return neededLevel
+        else:
+            return 0 #Fallback if somehow a wrong spell level is given
+    return 0
+
+def dispelledByLight(attachee, args, evt_obj):
+    if evt_obj.is_modifier("sp-Dispel Darkness"):
+        neededLevel = getNeededSpellLevel(args)
+        dispelSpellId = evt_obj.arg1
+        dispelName = spellName(dispelSpellId)
+        dispelSpellPacket = tpdp.SpellPacket(dispelSpellId)
+        dispelLevel = dispelSpellPacket.spell_known_slot_level
+        if dispelLevel >= neededLevel:
+            effectSpellId = args.get_arg(0)
+            effectName = spellName(effectSpellId)
+            attachee.float_text_line("{} dispelled by {}".format(effectName, dispelName))
+            args.remove_spell_mod()
+            args.remove_spell()
+    return 0
+
+def checkDaylight(attachee, args, evt_obj):
+    if isDaylight():
+        spellId = args.get_arg(0)
+        name = spellName(spellId)
+        attachee.float_text_line("{} dispelled by daylight".format(name))
+        args.remove_spell_mod()
+        args.remove_spell()
+    return 0
+
 class SpellFunctions(tpdp.ModifierSpec):
     def AddHook(self, eventType, eventKey, callbackFcn, argsTuple):
         self.add_hook(eventType, eventKey, callbackFcn, argsTuple)
@@ -655,6 +701,9 @@ class SpellFunctions(tpdp.ModifierSpec):
     def AddTempHp(self, tempHpAmount):
         self.add_hook(ET_OnConditionAdd, EK_NONE, applyTempHp, (tempHpAmount,))
         self.add_hook(ET_OnD20Signal, EK_S_Temporary_Hit_Points_Removed, removeTempHp, ())
+    def AddDispelledByLight(self, neededLevel):
+        self.add_hook(ET_OnConditionAddPre, EK_NONE, dispelledByLight, (neededLevel,))
+        self.add_hook(ET_OnBeginRound, EK_NONE, checkDaylight, ())
 
 class SpellDismissConcentrationFunctions(tpdp.ModifierSpec):
     def AddSpellConcentration(self):
@@ -722,6 +771,10 @@ def verifyAoeEventTarget(args, spellTarget, spellPacket):
     elif affectedTargets == aoe_event_target_all_exclude_self and spellTarget == spellPacket.caster:
         return False
     elif affectedTargets == aoe_event_target_friendly_exlude_self and spellTarget == spellPacket.caster:
+        return False
+    elif affectedTargets == aoe_event_target_living_creatures and not isLivingCreature(spellTarget):
+        return False
+    elif affectedTargets == aoe_event_target_living_creatures_exclude_self and spellTarget == spellPacket.caster:
         return False
     elif spellPacket.check_spell_resistance(spellTarget):
         return False
