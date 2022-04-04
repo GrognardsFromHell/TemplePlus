@@ -51,7 +51,7 @@ spell_list = {
     3: (spell_brimstone_blast, spell_cold_comfort, spell_fell_flight, spell_walk_unseen, spell_witchwood_step,),
     4: (spell_beshadowed_blast, spell_curse_of_despair, spell_dread_seizure, spell_eldritch_chain, spell_flee_the_scene, spell_hellrime_blast,
     spell_ignore_the_pyre, spell_the_dead_walk, spell_voracious_dispelling, spell_warlock_charm,),
-    5: (spell_bewitching_blast, spell_eldritch_cone, spell_eldritch_line, spell_hindering_blast,),
+    5: (spell_bewitching_blast, spell_eldritch_cone, spell_eldritch_line, spell_enervating_shadow, spell_hindering_blast,),
     6: (spell_noxious_blast, spell_penetrating_blast, spell_repelling_blast, spell_vitriolic_blast,),
     7: (spell_binding_blast,),
     8: (spell_eldritch_doom, spell_utterdark_blast,)
