@@ -1,0 +1,5 @@
+ID_string: ENERVATING_SHADOW_AURA
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Spell Meld Into Stone.tga
+help_topic: TAG_SPELLS_ENERVATING_SHADOW
+tooltip_base_text: Enervating Shadow Aura

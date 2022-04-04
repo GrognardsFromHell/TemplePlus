@@ -50,6 +50,7 @@
 {2348}{Witchwood Step} // not implemented
 {2349}{Dread Seizure} // not implemented
 {2350}{Ignore the Pyre}
+{2357}{Enervating Shadow}
 
 {7300}{Eldritch Blast}
 {7301}{Eldritch Spear}
@@ -96,6 +97,7 @@
 {7348}{Witchwood Step} // not implemented
 {7349}{Dread Seizure} // not implemented
 {7350}{Ignore the Pyre}
+{7357}{Enervating Shadow}
 
 {22300}{TAG_SPELLS_ELDRITCH_BLAST}
 {22301}{TAG_SPELLS_ELDRITCH_SPEAR}
@@ -142,3 +144,4 @@
 {22348}{TAG_SPELLS_WITCHWOOD_STEP} // not implemented
 {22349}{TAG_SPELLS_DREAD_SEIZURE} // not implemented
 {22350}{TAG_SPELLS_IGNORE_THE_PYRE}
+{22357}{TAG_SPELLS_ENERVATING_SHADOW}
