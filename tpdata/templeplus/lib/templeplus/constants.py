@@ -3439,7 +3439,7 @@ spell_fell_flight = 2342 # not implemented
 spell_flee_the_scene = 2343
 spell_the_dead_walk = 2344 # not implemented
 spell_voracious_dispelling = 2345 # not implemented
-spell_walk_unseen = 2346 # not implemented
+spell_walk_unseen = 2346
 spell_cold_comfort = 2347
 spell_witchwood_step = 2348 # not implemented
 spell_dread_seizure = 2349 # not implemented
@@ -3572,6 +3572,8 @@ aoe_event_target_non_friendly = 2
 aoe_event_target_all = 3
 aoe_event_target_all_exclude_self = 4
 aoe_event_target_friendly_exlude_self = 5
+aoe_event_target_living_creatures = 6
+aoe_event_target_living_creatures_exclude_self = 7
 
 #Bonus Types (aka modifiers)
 bonus_type_untyped = 0
