@@ -11,13 +11,6 @@ enervatingShadowSpell.AddSpellDismiss()
 enervatingShadowSpell.AddSpellNoDuplicate()
 enervatingShadowSpell.AddDispelledByLight(-1,)
 
-def tooltip(attachee,args, evt_obj):
-    duration = args.get_arg(1)
-    durationLabel = spellTime(duration)
-    conditionName = args.get_cond_name()
-    evt_obj.append(conditionName, durationLabel)
-    return 0
-
 ### Start Enervating Shadow Effect ###
 
 def saveAgainstEffect(attachee, args, evt_obj):
@@ -41,10 +34,7 @@ def saveAgainstEffect(attachee, args, evt_obj):
 def applyStrengthPenalty(attachee, args, evt_obj):
     failedSave = args.get_arg(2)
     if failedSave:
-        bonusValue = -4
-        bonusType = bonus_type_untyped
-        bonusLabel = args.get_cond_name()
-        evt_obj.bonus_list.add(bonusValue, bonusType, bonusLabel)
+        applyBonus(attachee, args, evt_obj)
     return 0
 
 def applyImmunity(attachee, args, evt_obj):
@@ -52,34 +42,41 @@ def applyImmunity(attachee, args, evt_obj):
     particlesId = args.get_arg(5)
     if failedSave:
         duration = 14400 # 1 day
-        attachee.condition_add_with_args("Enervating Shadow Immunity", 0, duration)
+        attachee.condition_add_with_args("Enervating Shadow Immunity", duration, 0)
     if particlesId:
         game.particles_end(particlesId)
     return 0
 
 enervatingShadowEffect = AuraSpellEffectModifier("Enervating Shadow", 7) #spellId, duration, failedSaveFlag, spellEventId, spellDc, particlesId, empty
 enervatingShadowEffect.AddHook(ET_OnBeginRound, EK_NONE, saveAgainstEffect, ())
-enervatingShadowEffect.AddHook(ET_OnAbilityScoreLevel, EK_STAT_STRENGTH, applyStrengthPenalty, ())
-enervatingShadowEffect.AddHook(ET_OnGetTooltip, EK_NONE, tooltip, ())
+enervatingShadowEffect.AddHook(ET_OnAbilityScoreLevel, EK_STAT_STRENGTH, applyStrengthPenalty, (-4, bonus_type_untyped,))
 enervatingShadowEffect.AddHook(ET_OnConditionRemove, EK_NONE, applyImmunity, ())
 enervatingShadowEffect.AddSpellDismiss()
+enervatingShadowEffect.AddDispelledByLight(-1,)
 
 ### Enervating Shadow Immunity ###
 
+def tooltip(attachee,args, evt_obj):
+    duration = args.get_arg(0)
+    durationLabel = spellTime(duration)
+    conditionName = args.get_cond_name()
+    evt_obj.append("{} ({})".format(conditionName, durationLabel))
+    return 0
+
 def envShadowImmunity(attachee, args, evt_obj):
-    if evt_obj.is_modifier("Envervating Shadow"):
+    if evt_obj.is_modifier("Enervating Shadow"):
         evt_obj.return_val = 0
     return 0
 
 def tickdown(attachee, args, evt_obj):
-    duration = args.get_arg(1)
+    duration = args.get_arg(0)
     duration -= evt_obj.data1
-    args.set_arg(1, duration)
+    args.set_arg(0, duration)
     if duration < 0:
         args.condition_remove()
     return 0
 
-enervatingShadowImmunity = PythonModifier("Enervating Shadow Immunity", 2) #empty, duration
+enervatingShadowImmunity = PythonModifier("Enervating Shadow Immunity", 2) #duration, empty
 enervatingShadowImmunity.AddHook(ET_OnConditionAddPre, EK_NONE, envShadowImmunity, ())
 enervatingShadowImmunity.AddHook(ET_OnBeginRound, EK_NONE, tickdown, ())
 enervatingShadowImmunity.AddHook(ET_OnGetTooltip, EK_NONE, tooltip, ())
