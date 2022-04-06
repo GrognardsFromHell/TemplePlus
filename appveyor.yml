@@ -9,6 +9,7 @@ install:
 
 before_build:
   - nuget restore
+  - call tpdatasrc\PackFiles.bat
 
 build_script:
   - call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars32.bat"
