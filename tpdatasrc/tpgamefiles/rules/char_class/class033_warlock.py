@@ -46,7 +46,7 @@ skill_profession, skill_sense_motive, skill_spellcraft, skill_use_magic_device) 
 
 spell_list = {
     1: (spell_eldritch_blast, spell_hideous_blow, spell_breath_of_the_night, spell_miasmic_cloud,),
-    2: (spell_all_seeing_eyes, spell_beguiling_influence, spell_dark_ones_own_luck, spell_eldritch_spear, spell_frightful_blast,
+    2: (spell_all_seeing_eyes, spell_beguiling_influence, spell_dark_ones_own_luck, spell_darkness, spell_eldritch_spear, spell_frightful_blast,
     spell_entropic_warding, spell_leaps_and_bounds, spell_see_the_unseen, spell_sickening_blast, spell_soulreaving_aura, spell_spiderwalk,),
     3: (spell_brimstone_blast, spell_cold_comfort, spell_fell_flight, spell_walk_unseen, spell_witchwood_step,),
     4: (spell_beshadowed_blast, spell_curse_of_despair, spell_dread_seizure, spell_eldritch_chain, spell_flee_the_scene, spell_hellrime_blast,

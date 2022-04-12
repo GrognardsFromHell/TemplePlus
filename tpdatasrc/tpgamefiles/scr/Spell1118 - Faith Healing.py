@@ -30,7 +30,7 @@ def OnSpellEffect(spell):
         spellTarget.float_text_line("Not same faith", tf_red)
         game.particles('Fizzle', spellTarget)
 
-    spell.target_list.remove_target(spellTarget)
+    spell.target_list.remove_target(spellTarget.obj)
     spell.spell_end(spell.id)
 
 def OnBeginRound(spell):

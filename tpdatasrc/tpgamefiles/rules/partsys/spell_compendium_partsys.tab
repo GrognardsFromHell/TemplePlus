@@ -34,6 +34,8 @@ sp-Corona of Cold	New Emitter			0	1		Object YPR				Disc	Same as Emitter	Polar		f
 sp-Corona of Cold	New Emitter			0	1		Object YPR				Disc	Same as Emitter	Polar		flare-1	5	Add	0				0	0	0	0	0	0	0	40	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	100,0	0	0	0,-1000	0	0	255	255	255	255						
 sp-Corona of Cold-Hit	New Emitter			15	45		Object Pos				Sprite		Polar		flare-1	120	Add	0				0	0	0	0	0	0	0	40	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360	0?360	#radius	5,0	0	0	0?360	0	0	255,0	32	64	128						
 sp-Corona of Cold-Hit	New Emitter			15	30		Object Pos				Sprite	World	Polar	Cartesian	flare-1	8	Add	0				0	0	0	0	0	0	0	40	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	10?-10	10?-10	10?-10	0?360	0?360	#radius	8,0	0	0	0?360	0	0	255	255,0	255,0	255						
+sp-Darkness-hit	blurry			perm	60		Bones				Sprite				fire1	30	Blend	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4?12	0	0	0	0	0	0,64,128,64,0	0?128	0?128	0?128						
+sp-Daylight-hit	blurry			perm	60		Bones				Sprite				fire1	30	Add	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4?12	0	0	0	0	0	0,128,255,128,0	255	255	255						
 sp-Daze2	perma daze			120	30		Bones				Sprite		Polar		flare-1	30	Add	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360	0?100	#radius	1?10	0	0	0?360	0	0	0,255,0	255,128	255,128	255,255						
 sp-Daze2	Daze hit			15	300		Bones				Sprite		Polar		flare-1	15	Add	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360	0?100	#radius	1?30	0	0	0?360	0	0	0,255,0	255,128	255,128	255,255						
 sp-Deific Vengeance	imploding star	0		10	5						Disc				flare-1	30	Add	0				0	0	0	0	0	0	0	40	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	100,0	0	0	0?360	0	0	255	255,255	255,255	255,0						4

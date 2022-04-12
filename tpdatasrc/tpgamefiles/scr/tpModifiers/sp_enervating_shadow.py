@@ -9,7 +9,7 @@ enervatingShadowSpell = AuraSpellHandleModifier("sp-Enervating Shadow", aoe_even
 enervatingShadowSpell.AddHook(ET_OnGetDefenderConcealmentMissChance, EK_NONE, applyBonus, (50, bonus_type_concealment,))
 enervatingShadowSpell.AddSpellDismiss()
 enervatingShadowSpell.AddSpellNoDuplicate()
-enervatingShadowSpell.AddDispelledByLight(-1,)
+enervatingShadowSpell.AddDispelledByLight()
 
 ### Start Enervating Shadow Effect ###
 
@@ -52,7 +52,7 @@ enervatingShadowEffect.AddHook(ET_OnBeginRound, EK_NONE, saveAgainstEffect, ())
 enervatingShadowEffect.AddHook(ET_OnAbilityScoreLevel, EK_STAT_STRENGTH, applyStrengthPenalty, (-4, bonus_type_untyped,))
 enervatingShadowEffect.AddHook(ET_OnConditionRemove, EK_NONE, applyImmunity, ())
 enervatingShadowEffect.AddSpellDismiss()
-enervatingShadowEffect.AddDispelledByLight(-1,)
+enervatingShadowEffect.AddDispelledByLight()
 
 ### Enervating Shadow Immunity ###
 

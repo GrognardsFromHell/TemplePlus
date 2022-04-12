@@ -86,7 +86,7 @@ def ObjMeetsPrereqs(obj):
     elif not char_editor.has_feat(feat_power_attack):
         return 0
     #Maximum number of levels for this PrC: 3
-    elif classLvl >= 3:
+    elif classLvl > 3:
         return 0
     return 1
 
