@@ -251,14 +251,24 @@ bool PythonClassSpecIntegration::IsAlignmentCompatible(const objHndl & handle, i
 
 	auto obj = gameSystems->GetObj().GetObject(handle);
 
-	
-	auto objAlignment = obj->GetInt32(obj_f_critter_alignment);
-	auto args = Py_BuildValue("(i)", objAlignment);
+	auto objAlignment = (Alignment)obj->GetInt32(obj_f_critter_alignment);
+
+	auto result = IsAlignmentCompatible(objAlignment, classEnum);
+
+	return result;
+}
+
+bool PythonClassSpecIntegration::IsAlignmentCompatible(const Alignment alignment, int classEnum)
+{
+	auto classSpecEntry = mScripts.find(classEnum);
+	if (classSpecEntry == mScripts.end())
+		return false;
+
+	auto args = Py_BuildValue("(i)", alignment);
 	auto result = RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::IsAlignmentCompatible, args) != 0;
 	Py_DECREF(args);
-	
-	return result;
 
+	return result;
 }
 
 bool PythonClassSpecIntegration::ReqsMet(const objHndl & handle, int classEnum){
