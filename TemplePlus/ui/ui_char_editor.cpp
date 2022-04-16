@@ -3487,6 +3487,8 @@ bool Chargen::SpellIsForbidden(int spEnum, int spellClass){
 		SpellEntry spEntry(spEnum);
 		auto spSchool = spEntry.spellSchoolEnum;
 
+		if (spSchool == School_None) //Added for Invocations
+			return false;
 		if (spSchool == selPkt.forbiddenSchool1
 			|| spSchool == selPkt.forbiddenSchool2)
 			return true;
