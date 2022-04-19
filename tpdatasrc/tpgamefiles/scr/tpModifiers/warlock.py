@@ -202,7 +202,9 @@ def radialInvocations(attachee, args, evt_obj):
     for spell in knownSpells:
         spellEnum = spell.spell_enum
         spellLevel = spell.spell_level
-        if not isInvocation(spellEnum):
+        warlockSpellClassCode = getSpellClassCode(classEnum)
+        if spell.spell_class != warlockSpellClassCode:
+        #if not isInvocation(spellEnum):
             continue
         radialSpellId = tpdp.RadialMenuEntryAction(spell)
         if spellEnum in range(spell_eldritch_blast, spell_eldritch_glaive + 1):

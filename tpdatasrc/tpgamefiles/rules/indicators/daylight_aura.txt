@@ -1,5 +1,5 @@
 ID_string: DAYLIGHT_AURA
-effect_type: 1
-texture_file: art\interface\player_conditions\Ailments\Spell Daylight.tga
+effect_type: 0
+texture_file: art\interface\player_conditions\Buffs\Spell Daylight Aura.tga
 help_topic: TAG_SPELLS_DAYLIGHT
 tooltip_base_text: Daylight

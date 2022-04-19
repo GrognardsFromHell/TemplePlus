@@ -365,7 +365,7 @@ void RadialMenus::BuildStandardRadialMenu(objHndl handle){
 	RadialMenuEntry spellEntryAction;
 	for (auto i=0u; i<numMem; i++){
 		auto spData = obj->GetSpell(obj_f_critter_spells_memorized_idx, i);
-		if (2299 < spData.spellEnum && spData.spellEnum < 2401) { // SKIP for Invocations; added by Sagenlicht
+		if (d20ClassSys.IsAtWillCastingClass(spellSys.GetCastingClass(spData.classCode))) { // SKIP for AtWillCastingClass; added by Sagenlicht
 			continue;
 		}
 		if (spellSys.isDomainSpell(spData.classCode) 
@@ -377,7 +377,7 @@ void RadialMenus::BuildStandardRadialMenu(objHndl handle){
 	// Spells Known
 	for (auto i = 0u; i<numKnown; i++) {
 		auto spData = obj->GetSpell(obj_f_critter_spells_known_idx, i);
-		if (2299 < spData.spellEnum && spData.spellEnum < 2401) { // SKIP for Invocations; added by Sagenlicht
+		if (d20ClassSys.IsAtWillCastingClass(spellSys.GetCastingClass(spData.classCode))) { // SKIP for AtWillCastingClass; added by Sagenlicht
 			continue;
 		}
 		if (!spellSys.isDomainSpell(spData.classCode)

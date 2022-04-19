@@ -2955,8 +2955,26 @@ void UiCharEditor::SpellsEntryBtnRender(int widId)
 	if (spEnum == SPELL_ENUM_VACANT){
 		// don't draw text (will only draw the frame)
 	}
-	else if (spellSys.IsLabel(spEnum)) {
-		if (spLvl >= 0 && spLvl < NUM_SPELL_LEVELS){
+	else if (spellSys.IsLabel(spEnum)) { // Sagenlicht: Added labels for Warlock Invocations
+		if (selPkt.classCode == stat_level_warlock) {
+			if (spLvl <= 2) {
+				text.append(fmt::format("Least Invocations ({})", spLvl));
+				UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellLevelLabelStyle);
+			}
+			else if (spLvl <= 4) {
+				text.append(fmt::format("Lesser Invocations ({})", spLvl));
+				UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellLevelLabelStyle);
+			}
+			else if (spLvl <= 6) {
+				text.append(fmt::format("Greater Invocations ({})", spLvl));
+				UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellLevelLabelStyle);
+			}
+			else {
+				text.append(fmt::format("Dark Invocations ({})", spLvl));
+				UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellLevelLabelStyle);
+			}
+		}
+		else if (spLvl >= 0 && spLvl < NUM_SPELL_LEVELS){
 			text.append(fmt::format("{}", chargen.spellLevelLabels[spLvl]));
 			UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellLevelLabelStyle);
 		}
@@ -3120,8 +3138,27 @@ void UiCharEditor::SpellsAvailableEntryBtnRender(int widId){
 	if (spellSys.IsLabel(spEnum)){
 		rect.x += 2;
 		auto spLvl = avSpInfo[spellIdx].spellLevel;
-		if (spLvl >= 0 && spLvl < NUM_SPELL_LEVELS)
-		{
+		// Added by Sagenlicht for Warlock spell labels
+		auto& selPkt = GetCharEditorSelPacket();
+		if (selPkt.classCode == stat_level_warlock) {
+			if (spLvl <= 2) {
+				text.append(fmt::format("Least Invocations ({})", spLvl));
+				UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellLevelLabelStyle);
+			}
+			else if (spLvl <= 4) {
+				text.append(fmt::format("Lesser Invocations ({})", spLvl));
+				UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellLevelLabelStyle);
+			}
+			else if (spLvl <= 6) {
+				text.append(fmt::format("Greater Invocations ({})", spLvl));
+				UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellLevelLabelStyle);
+			}
+			else {
+				text.append(fmt::format("Dark Invocations ({})", spLvl));
+				UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellLevelLabelStyle);
+			}	
+		}
+		else if (spLvl >= 0 && spLvl < NUM_SPELL_LEVELS){
 			text.append(fmt::format("{}", chargen.spellLevelLabels[spLvl]));
 			UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellLevelLabelStyle);
 		}

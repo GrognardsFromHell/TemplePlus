@@ -664,8 +664,8 @@ def dispelledByLight(attachee, args, evt_obj):
             spellId = args.get_arg(0)
             effectName = spellName(spellId)
             attachee.float_text_line("{} dispelled by {}".format(effectName, dispelName))
-            args.remove_spell_mod()
             args.remove_spell()
+            args.remove_spell_mod()
     return 0
 
 def dispelledByDarkness(attachee, args, evt_obj):
@@ -679,8 +679,8 @@ def dispelledByDarkness(attachee, args, evt_obj):
             effectSpellId = args.get_arg(0)
             effectName = spellName(effectSpellId)
             attachee.float_text_line("{} dispelled by {}".format(effectName, dispelName))
-            args.remove_spell_mod()
             args.remove_spell()
+            args.remove_spell_mod()
     return 0
 
 def dispelLight(attachee, args, evt_obj):

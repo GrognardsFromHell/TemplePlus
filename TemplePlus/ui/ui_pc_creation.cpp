@@ -2420,7 +2420,7 @@ void UiPcCreation::SpellsEntryBtnRender(int widId)
 	if (spEnum == SPELL_ENUM_VACANT) {
 		// don't draw text (will only draw the frame)
 	}
-	else if (spellSys.IsLabel(spEnum)) {
+	else if (spellSys.IsLabel(spEnum)) { // Invocation Labeling here
 		if (spLvl >= 0 && spLvl < NUM_SPELL_LEVELS) {
 			text.append(fmt::format("{}", chargen.spellLevelLabels[spLvl]));
 			UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellLevelLabelStyle);
@@ -2581,7 +2581,7 @@ void UiPcCreation::SpellsAvailableEntryBtnRender(int widId)
 	std::string text;
 	TigRect rect(btn->x - spellsWnd.x, btn->y - spellsWnd.y, btn->width, btn->height);
 	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
-	if (spellSys.IsLabel(spEnum)) {
+	if (spellSys.IsLabel(spEnum)) { // Invocation label here
 		rect.x += 2;
 		auto spLvl = avSpInfo[spellIdx].spellLevel;
 		if (spLvl >= 0 && spLvl < NUM_SPELL_LEVELS)

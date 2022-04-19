@@ -1,5 +1,5 @@
 ID_string: DARKNESS_AURA
-effect_type: 1
-texture_file: art\interface\player_conditions\Ailments\Spell Darkness.tga
+effect_type: 0
+texture_file: art\interface\player_conditions\Buffs\Spell Darkness Aura.tga
 help_topic: TAG_SPELLS_DARKNESS
 tooltip_base_text: Darkness Aura

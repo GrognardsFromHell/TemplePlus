@@ -333,9 +333,19 @@ Range:               Touch
 Target:            Flask of water touched
 Duration:      Instantaneous}
 {5095}{Dancing Lights}
-{5096} Darkness {[Evocation] 20-ft. radius of supernatural shadow.}
+{5096} Darkness {20-ft. radius of supernatural shadow.
+
+Casting:         1  std action   [Evocation, V,S]
+Range:               Touch
+Area:            20-ft. radius around touched creature
+Duration:      10 min/level,    Save: None,    SR: No}
 {5097}{Darkvision}
-{5098} Daylight {[Evocation] 60-ft. radius of bright light.}
+{5098} Daylight {60-ft. radius of bright light.
+
+Casting:         1  std action   [Evocation, V,S]
+Range:               Touch
+Area:            60-ft. radius around touched creature
+Duration:      10 min/level,    Save: None,    SR: No}
 {5099} Daze {Humanoid creature with 4 or fewer Hit  Dice takes no actions for 1  round.
 
 Casting:         1  std action   [Enchantment, V,S,M]
@@ -354,7 +364,12 @@ Range:               Touch
 Target:            Living creature touched
 Duration:      1  min/level }
 {5102}{Deathwatch}
-{5103}{Deeper Darkness}
+{5103} Deeper Darkness {As Darkness, but in a 60 ft. radius with a longer duration.
+
+Casting:         1  std action   [Evocation, V,S]
+Range:               Touch
+Area:            60-ft. radius around touched creature
+Duration:      1 day/level,    Save: None,    SR: No}
 {5104} Delay Poison {Subject becomes temporarily immune to poison.  New and preexisting poisons will  still  affect the subject after the spell  expires.
 Casting:         1  std action   [Conjuration, V,S]
 Range:               Touch

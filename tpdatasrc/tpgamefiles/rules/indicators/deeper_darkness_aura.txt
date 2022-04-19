@@ -1,0 +1,5 @@
+ID_string: DEEPER_DARKNESS_AURA
+effect_type: 0
+texture_file: art\interface\player_conditions\Buffs\Spell Darkness Aura.tga
+help_topic: TAG_SPELLS_DEEPER_DARKNESS
+tooltip_base_text: Deeper Darkness Aura
