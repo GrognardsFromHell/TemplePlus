@@ -1,0 +1,5 @@
+ID_string: RADIANCE_AURA
+effect_type: 0
+texture_file: art\interface\player_conditions\Buffs\Spell Daylight Aura.tga
+help_topic: TAG_SPELLS_RADIANCE
+tooltip_base_text: Radiance Aura

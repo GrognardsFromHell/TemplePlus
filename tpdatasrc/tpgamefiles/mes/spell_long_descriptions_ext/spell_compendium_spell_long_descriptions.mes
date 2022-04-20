@@ -1030,3 +1030,10 @@ Casting:         1 action [V,S,M]
 Range:               Touch
 Target:             Dead creature touched
 Duration:      Inst.,  Save: None,  SR: No}
+
+{6203} Radiance {Like Daylight spell, in addition undead are dazzled while in aura and 1d6 rounds afterwards.
+School:          Evocation[Good][Light]
+Casting:         1 action [V,S,M]
+Range:               Personal
+Area:             60-ft.-radius emanation centered on you
+Duration:      1 round/level(D),  Save: None,  SR: No}

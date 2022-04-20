@@ -3394,6 +3394,7 @@ spell_orb_of_fire = 1199
 spell_orb_of_sound = 1200
 spell_icelance = 1201
 spell_revivify = 1202
+spell_radiance = 1203
 
 
 spell_inevitable_defeat = 1302
@@ -3629,6 +3630,7 @@ bonus_type_curse_of_impending_blades = 163
 bonus_type_wave_of_grief = 164
 bonus_type_distract = 165
 bonus_type_foundation_of_stone = 166
+bonus_type_dazzled = 167
 bonus_type_marshal_aura_minor = 190
 bonus_type_marshal_aura_major = 191
 bonus_type_draconic_aura = 192

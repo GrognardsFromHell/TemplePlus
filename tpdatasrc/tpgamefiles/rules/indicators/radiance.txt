@@ -1,0 +1,5 @@
+ID_string: RADIANCE
+effect_type: 1
+texture_file: art\interface\player_conditions\Ailments\Spell Daylight.tga
+help_topic: TAG_SPELLS_RADIANCE
+tooltip_base_text: Radiance

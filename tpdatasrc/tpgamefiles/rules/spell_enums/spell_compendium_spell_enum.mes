@@ -158,6 +158,7 @@
 {1200}{Orb of Sound}
 {1201}{Icelance}
 {1202}{Revivify}
+{1203}{Radiance}
 
 {5158}{Evard's Black Tentacles}
 {5794}{Vigor, Lesser}
@@ -313,6 +314,7 @@
 {6200}{Orb of Sound}
 {6201}{Icelance}
 {6202}{Revivify}
+{6203}{Radiance}
 
 {20158}{TAG_SPELLS_EVARD'S_BLACK_TENTACLES}
 {20794}{TAG_SPELLS_VIGOR,_LESSER}
@@ -468,3 +470,4 @@
 {21200}{TAG_SPELLS_ORB_OF_SOUND}
 {21201}{TAG_SPELLS_ICELANCE}
 {21202}{TAG_SPELLS_REVIVIFY}
+{21203}{TAG_SPELLS_RADIANCE}

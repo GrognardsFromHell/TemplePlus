@@ -38,6 +38,7 @@ sp-Darkness-hit	blurry			perm	60		Bones				Sprite				fire1	30	Blend	0				0	0	0	0
 sp-Daylight-hit	blurry			perm	60		Bones				Sprite				fire1	30	Add	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4?12	0	0	0	0	0	0,128,255,128,0	255	255	255						
 sp-Daze2	perma daze			120	30		Bones				Sprite		Polar		flare-1	30	Add	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360	0?100	#radius	1?10	0	0	0?360	0	0	0,255,0	255,128	255,128	255,255						
 sp-Daze2	Daze hit			15	300		Bones				Sprite		Polar		flare-1	15	Add	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360	0?100	#radius	1?30	0	0	0?360	0	0	0,255,0	255,128	255,128	255,255						
+sp-Dazzled	blurry			perm	60		Node Pos	bip01 Head			Sprite				fire1	30	Add	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4?12	0	0	0	0	0	0,128,255,128,0	255	255	255						
 sp-Deeper Darkness-hit	blurry			perm	60		Bones				Sprite				fire1	30	Blend	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4?12	0	0	0	0	0	0,64,128,64,0	0?128	0?128	0?128						
 sp-Deific Vengeance	imploding star	0		10	5						Disc				flare-1	30	Add	0				0	0	0	0	0	0	0	40	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	100,0	0	0	0?360	0	0	255	255,255	255,255	255,0						4
 sp-Deific Vengeance	lights			25	20		Object Pos				Disc		Polar	Polar	flare-1	30	Add	0				0	0	0	0	0	0	0	40	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	-30	0?360	0?360	#radius	10,0	0	0	0	0	0	0,255,0	255,255	255,255	255,0						20
@@ -126,6 +127,10 @@ sp-Shock and Awe	shockwave			40	150		Object YPR				Sprite	Same as Emitter	Polar	
 sp-Veil of Shadow	veil			perm	150		Object Pos				Disc		Polar		fire-sprite	60	Add	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360		0?30	1?4	0	0	0?360	0	0	128,0	0	0	0						30
 sp-Veil of Shadow	veil2			perm	100		Object Pos				Sprite		Polar		fire-sprite	60	Blend	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0		0?20		0?360		0?30	2,15	0	0	0	0	0	0,150,100,50,0	87?156	0?28	127?255						30
 sp-Veil of Shadow	startup			5	1200		Object Pos				Disc		Polar		flare-big	60	Add	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360		0?30	3?20	0	0	0?360	0	0	0,128,0	87	0	127						100
+sp-Radiance	darkness comes			perm	5		Object Pos				Disc	World			flare-2	30	Add	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	240,0	0	0	0?360	0	0	0,128	255	255	255						1
+sp-Radiance	darkness baby 2			perm	5		Object Pos				Disc	World			flare-3	30	Add	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0,720	0	0	0?360	0	0	0,64,0	255	255	255						1
+sp-Radiance	darkness baby			perm	5		Object Pos				Disc	World			flare-2	30	Add	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	240,0	0	0	0?360	0	0	0,64,0	255	255	255						1
+sp-Radiance-hit	blurry			perm	60		Bones				Sprite				fire1	30	Add	0				0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4?12	0	0	0	0	0	0,128,255,128,0	255	255	255						
 sp-Serene Visage	colorful squirl			60	30		Node Pos	bip01 head			Sprite		Polar		fire-sprite	30	Add	0				0	0	0	0	0	0	0	30	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0		0	-30,30	0	0,360	0	-20?20	10	0	0	0?360	0	0	0,64,0	0?255	0?255	0?255						
 sp-Serene Visage	colorful squirl2			60	15		Node Pos	bip01 head			Sprite		Polar		flare	30	Add	0				0	0	0	0	0	0	0	30	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	-30,30	0	0,360	0	-20?20	5	0	0	0?360	0	0	0,255,0	255	255	255						
 sp-Serene Visage	hit			10	15		Node Pos	bip01 head			Sprite		Polar		flare	30	Add	0				0	0	0	0	0	0	0	30	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	-30,30	0	0,360	10	-20?20	0	0	0	0?360	0	0	0,255,128,0	255	255	255						

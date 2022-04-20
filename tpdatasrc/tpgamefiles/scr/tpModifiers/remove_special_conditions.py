@@ -11,8 +11,8 @@ from spell_utils import getSpellEntry
 def removeSelfHook(attachee, args, evt_obj):
     #particlesString = args.get_cond_name()
     #game.particles(particlesString, attachee)
-    args.remove_spell_mod()
     args.remove_spell()
+    args.remove_spell_mod()
     return 0
 
 class RemoveConditionModifier(PythonModifier):
@@ -27,7 +27,9 @@ class RemoveConditionModifier(PythonModifier):
             self.AddHook(ET_OnConditionAdd, EK_NONE, removeSelfHook, ())
     def AddDispelCheck(self):
         self.AddSpellDispelCheckStandard()
-       
+
+
+removeDazzled = RemoveConditionModifier("sp-Remove Dazzled")
 
 removeExhaustion = RemoveConditionModifier("sp-Remove Exhaustion")
 
@@ -41,13 +43,14 @@ removeSickened = RemoveConditionModifier("sp-Remove Sickened")
 
 
 def blockDarknessEffects(attachee, args, evt_obj):
-    if (evt_obj.is_modifier("sp-Assasssins's Darkness")
-    or evt_obj.is_modifier("sp-Bleakness")
+    if (evt_obj.is_modifier("sp-Assasssins's Darkness") # TDB!
+    or evt_obj.is_modifier("sp-Bleakness") # TBD!
     or evt_obj.is_modifier("sp-Darkness")
     or evt_obj.is_modifier("Darkness")
     or evt_obj.is_modifier("sp-Deeper Darkness")
+    or evt_obj.is_modifier("Deeper Darkness")
     or evt_obj.is_modifier("sp-Enervating Shadow")
-    or evt_obj.is_modifier("sp-Ravenous Darkness")
+    or evt_obj.is_modifier("sp-Ravenous Darkness") # TBD!
     or evt_obj.is_modifier("sp-Veil of Shadow")):
         newEffSpellId = evt_obj.arg1
         newEffSpellPacket = tpdp.SpellPacket(newEffSpellId)
@@ -64,10 +67,12 @@ removeDarkness.AddHook(ET_OnConditionAddPre, EK_NONE, blockDarknessEffects, ())
 
 
 def blockLightEffects(attachee, args, evt_obj):
-    if (evt_obj.is_modifier("sp-Blistering Radiance")
+    if (evt_obj.is_modifier("sp-Blistering Radiance") # TBD!
     or evt_obj.is_modifier("sp-Daylight")
+    or evt_obj.is_modifier("Daylight")
     or evt_obj.is_modifier("sp-Radiance")
-    or evt_obj.is_modifier("sp-Rejuvenating Light")):
+    or evt_obj.is_modifier("Radiance")
+    or evt_obj.is_modifier("sp-Rejuvenating Light")): # TBD!
         newEffSpellId = evt_obj.arg1
         newEffSpellPacket = tpdp.SpellPacket(newEffSpellId)
         newEffSpellLevel = newEffSpellPacket.spell_known_slot_level

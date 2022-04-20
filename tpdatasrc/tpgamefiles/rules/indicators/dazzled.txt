@@ -1,0 +1,5 @@
+ID_string: DAZZLED
+effect_type: 1
+texture_file: art\interface\player_conditions\Ailments\Spell Daylight.tga
+help_topic: TAG_DAZZLED
+tooltip_base_text: Dazzled

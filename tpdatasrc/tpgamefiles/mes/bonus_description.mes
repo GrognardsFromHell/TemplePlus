@@ -45,6 +45,7 @@
 {163} {~Untyped~[TAG_MODIFIER_UNTYPED]} // bonus_type_curse_of_impending_blades
 {164} {~Untyped~[TAG_MODIFIER_UNTYPED]} // bonus_type_wave_of_grief
 {165} {~Untyped~[TAG_MODIFIER_UNTYPED]} // bonus_type_distract
+{167} {~Untyped~[TAG_MODIFIER_UNTYPED]} // bonus_type_dazzled
 {192} {~Untyped~[TAG_MODIFIER_UNTYPED]} // bonus_type_draconic_aura
 {193} {~Untyped~[TAG_MODIFIER_UNTYPED]} // bonus_type_invocation
 {200} {~Untyped~[TAG_MODIFIER_UNTYPED]} // bonus_type_hellrime_blast
