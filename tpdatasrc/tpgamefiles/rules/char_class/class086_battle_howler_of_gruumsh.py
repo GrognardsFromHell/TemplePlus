@@ -91,7 +91,7 @@ def ObjMeetsPrereqs(obj):
         return 0
     elif not obj.get_deity() == DEITY_GRUUMSH:
         return 0
-    elif classLvl >= 5:
+    elif classLvl > 5:
         return 0
     return 1
 
