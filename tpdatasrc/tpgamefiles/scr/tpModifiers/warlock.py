@@ -1,4 +1,4 @@
-from templeplus.pymod import PythonModifier
+from templeplus.pymod import PythonModifier, BasicPyMod
 from toee import *
 import tpdp
 import char_class_utils
@@ -106,15 +106,11 @@ def queryReturnTrue(attachee, args, evt_obj):
     evt_obj.return_val = 1
     return 0
 
-class PythonModifierAddHook(tpdp.ModifierSpec):
-    def AddHook(self, eventType, eventKey, callbackFcn, argsTuple):
-        self.add_hook(eventType, eventKey, callbackFcn, argsTuple)
-
-class EldritchBlastEssenceModifier(PythonModifierAddHook):
+class EldritchBlastEssenceModifier(BasicPyMod):
     #This class is used for all Eldritch Blast Essence Modifiers
     #It has at least two args: spellEnum, particlesId, empty
     def __init__(self, name, args = 3, preventDuplicate = False):
-        super(PythonModifierAddHook, self).__init__(name, args, preventDuplicate)
+        super(BasicPyMod, self).__init__(name, args, preventDuplicate)
         self.add_hook(ET_OnConditionAddPre, EK_NONE, updateEssenceStance, ())
         self.add_hook(ET_OnConditionAdd, EK_NONE, addParticles, ())
         self.add_hook(ET_OnConditionRemove, EK_NONE, removeParticles, ())
@@ -146,11 +142,11 @@ def ebSecEffectTooltip(attachee, args, evt_obj):
     evt_obj.append(tpdp.hash(effectKey), -2, " ({})".format(durationLabel))
     return 0
 
-class EldritchBlastSecondaryEffect(PythonModifierAddHook):
+class EldritchBlastSecondaryEffect(BasicPyMod):
     #This class is used for all Eldritch Blast Secondary Effects
     #It has at least 4 args: spellId, duration, secondaryEffectEnum, empty
     def __init__(self, name, args = 4, preventDuplicate = False):
-        super(PythonModifierAddHook, self).__init__(name, args, preventDuplicate)
+        super(BasicPyMod, self).__init__(name, args, preventDuplicate)
         self.add_hook(ET_OnGetTooltip, EK_NONE, ebSecTooltip, ())
         self.add_hook(ET_OnGetEffectTooltip, EK_NONE, ebSecEffectTooltip, ())
         self.add_spell_dispel_check_standard()
@@ -252,7 +248,7 @@ def performResetEldritchBlast(attachee, args, evt_obj):
 #Spell Level of Eldritch Blast is dynamically:
 #Basic Eldritch Blast = 1, but if any shape or essence modifications are
 #Applied to the Blast, the highest spell level of those will set the spell level
-#And therefor apply to spell DC and spell Penetration
+#And therefor apply to spell DC
 #This is my idea on how to apply this as there is no hook ET_OnGetSpellLevelMod
 def applyEldritchBlastSpellLevel(attachee, args, evt_obj):
     spellEntry = evt_obj.spell_entry
@@ -271,7 +267,6 @@ def applyEldritchBlastSpellLevel(attachee, args, evt_obj):
 classSpecObj.AddHook(ET_OnBuildRadialMenuEntry, EK_NONE, radialResestEldritchBlast, ())
 classSpecObj.AddHook(ET_OnD20PythonActionPerform, resetEldritchBlastEnum, performResetEldritchBlast, ())
 classSpecObj.AddHook(ET_OnGetSpellDcMod, EK_NONE, applyEldritchBlastSpellLevel, ())
-classSpecObj.AddHook(ET_OnGetSpellResistanceMod, EK_NONE, applyEldritchBlastSpellLevel, ())
  
 ## Detect Magic SLA ##
 def radialDetectMagic(attachee, args, evt_obj):

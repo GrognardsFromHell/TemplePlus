@@ -3472,14 +3472,14 @@ spell_voidsense = 2353 # not implemented
 spell_relentless_dispelling = 2354 # not implemented
 spell_chilling_tentacles = 2355 # not implemented
 spell_devour_magic = 2356 # not implemented
-spell_enervating_shadow = 2357 # not implemented
+spell_enervating_shadow = 2357
 spell_tenacious_plague = 2358 # not implemented
 spell_wall_of_perilous_flame = 2359 # not implemented
 spell_caustic_mire = 2360 # not implemented
 spell_hellspawned_grace = 2361 # not implemented
 spell_nightmares_made_real = 2362 # not implemented
 spell_painful_slumber_of_ages = 2363 # not implemented
-spell_retributive_invisibility = 2364 # not implemented
+spell_retributive_invisibility = 2364
 spell_word_of_changing = 2365 # not implemented
 
 # Python Action Spells

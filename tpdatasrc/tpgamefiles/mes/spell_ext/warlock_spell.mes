@@ -53,6 +53,15 @@
 {2349}{Dread Seizure} // not implemented
 {2350}{Ignore the Pyre}
 {2357}{Enervating Shadow}
+{2358}{Tenacious Plague} // not implemented
+{2359}{Wall of Perilous Flame} // not implemented
+{2360}{Caustic Mire} // not implemented
+{2361}{Hellspawned Grace} // not implemented
+{2362}{Nightmares Made Real} // not implemented
+{2363}{Painful Slumber of Ages} // not implemented
+{2364}{Retributive Invisibility}
+{2365}{Word of Changing} // not implemented
+
 
 // Spell Descriptions
 {7300} Eldritch Blast {[Eldritch Blast] Ranged touch attack that deals 1d6 damage. Damage increases with Warlock levels. Can be modified by Eldritch Essence Invocations.}
@@ -101,3 +110,11 @@
 {7349} Dread Seizure {[Invocation] TBD!}  // not implemented
 {7350} Ignore the Pyre {[Invocation] TBD!}
 {7357} Enervating Shadow {[Invocation] Gain total concealment if not in daylight. Adjacent living creatures get -4 Strength on a failed Fortitude save.}
+{7358} Tenacious Plague} // not implemented
+{7359} Wall of Perilous Flame {TBD!} // not implemented
+{7360} Caustic Mire {TBD!} // not implemented
+{7361} Hellspawned Grace {TBD!} // not implemented
+{7362} Nightmares Made Real {TBD!} // not implemented
+{7363} Painful Slumber of Ages {TBD!} // not implemented
+{7364} Retributive Invisibility {As Invisibility, Greater and if dispelled shock wave in 20 ft. radius that deals 4d6 sonic damage and stun for 1 round on a failed fort save.}
+{7365} Word of Changing {TBD!} // not implemented

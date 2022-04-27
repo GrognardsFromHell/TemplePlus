@@ -2240,6 +2240,7 @@ int __cdecl DispelCheck(DispatcherCallbackArgs args)
 					floatText += spellSys.GetSpellMesline(spellToDispel.spellEnum);
 					floatText += ']';
 					floatSys.FloatSpellLine(spellToDispel.caster, 20002, FloatLineColor::White, nullptr, floatText.c_str());
+					d20Sys.D20SignalPython(args.objHndCaller, "PS_Spell_Dispelled", spellToDispel.spellId, 0); // Added by Sagenlicht to give dispel feedback
 					args.RemoveSpell();
 					args.RemoveSpellMod();
 				}

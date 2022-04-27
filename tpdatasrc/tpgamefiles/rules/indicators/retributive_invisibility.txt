@@ -1,0 +1,5 @@
+ID_string: RETRIBUTIVE_INVISIBILITY
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Spell Improved Invisibility.tga
+help_topic: TAG_SPELLS_RETRIBUTIVE_INVISIBILITY
+tooltip_base_text: Retributive Invisibility

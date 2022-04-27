@@ -43,6 +43,7 @@ skill_profession, skill_sense_motive, skill_spellcraft, skill_use_magic_device) 
 # spell_hindering_blast (4)
 # spell_walk_unseen (2); no save anyways
 # spell_cold_comfort (2); no save anyways
+# spell_retributive_invisibility (6), save increase by 1
 
 spell_list = {
     1: (spell_eldritch_blast, spell_hideous_blow, spell_breath_of_the_night, spell_miasmic_cloud,),
@@ -53,7 +54,7 @@ spell_list = {
     spell_ignore_the_pyre, spell_the_dead_walk, spell_voracious_dispelling, spell_warlock_charm,),
     5: (spell_bewitching_blast, spell_eldritch_cone, spell_eldritch_line, spell_enervating_shadow, spell_hindering_blast,),
     6: (spell_noxious_blast, spell_penetrating_blast, spell_repelling_blast, spell_vitriolic_blast,),
-    7: (spell_binding_blast,),
+    7: (spell_binding_blast, spell_retributive_invisibility,),
     8: (spell_eldritch_doom, spell_utterdark_blast,)
     #9: ()
     }
@@ -175,8 +176,7 @@ def LevelupGetBonusFeats(obj):
 
 def IsSelectingSpellsOnLevelup(obj):
     newLevel = obj.stat_level_get(classEnum) + 1
-    newInvocation = [1, 2, 4, 6, 8, 10, 11, 13, 15, 16, 18, 20]
-    if newLevel in newInvocation:
+    if newLevel in (1, 2, 4, 6, 8, 10, 11, 13, 15, 16, 18, 20):
         return 1
     return 0
 
@@ -241,7 +241,7 @@ def InitSpellSelection(obj, classLvlNew = -1, classLvlIncrement = 1):
     char_editor.append_spell_enums(vacantSlotEnum)
     #Handling Invocation Replacements
     #Replace a known Invocation when you learn a new type of Invocation(Lesser, Greater, Dark)
-    if newLevel in [6, 11, 16]:
+    if newLevel in (6, 11, 16):
         maxReplaceableSpellLvl = maxSpellLvl - 2
         replaceInvocation(obj, maxReplaceableSpellLvl)
     return 0

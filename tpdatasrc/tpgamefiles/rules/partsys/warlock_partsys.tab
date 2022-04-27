@@ -80,6 +80,7 @@ sp-Leaps and Bounds	Blessings from 			15	60						Sprite		Polar		sliver	20	Add	0	
 sp-Miasmic Cloud				perm	5						Sprite		Polar		fire-sprite	200	Blend	0				0	0	0	0	0	0	0	30	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360	0	0,120	30?60	0	0	0?360	0	0	0,40,0	148	0	211						5
 sp-Miasmic Cloud-hit	hittin			perm	5						Sprite		Polar		fire-sprite	90	Blend	0				0	0	0	0	0	0	0	30	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360	0	#radius	20?40	0	0	0?360	0	0	0,60,0	148	0	211						5
 sp-Miasmic Cloud-hit	New Emitter			15	10						Sprite		Polar		fire-sprite	30	Add	0				0	0	0	0	0	0	0	30	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360	0	#radius	20?40	0	0	0?360	0	0	0,255,0	148	0	211						5
+sp-Retributive Invisibility-dispel	circles	0		30	5						Disc		Polar		Ring	60	Add	0				0	0	0	0	0	0	0	30	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0,240	0	0	0	0	0	0,64,128,0	128	128	128						1
 sp-Soulreaving Aura	circle 2	0		30	500						Disc		Polar		bigcircle	60	Add	0				0	0	0	0	0	0	0	30	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360	0	0,120	0,30	0	0	0	0	0	0,8,16,0	255,64,64,64	255,0,0,0	255,255,255,255						
 sp-Soulreaving Aura	sparklies	0		5	1000						Disc		Polar		bigcircle	60	Add	0				0	0	0	0	0	0	0	30	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0?360	0	0,120	1	0	0	0	0	0	0,255,0	64,64,64,64	0,0,0,0	255,255,255,255						
 sp-Soulreaving Aura-HP	sparkles 1			240	20						Sprite		Polar	Cartesian	flare	60	Add	0				0	0	0	0	0	0	0	10	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	10?-10	0	0?360	0?60	#radius	0,10	0	0	0,720	0	0	0,255,0	64	0	255		-76	-108	69	25	

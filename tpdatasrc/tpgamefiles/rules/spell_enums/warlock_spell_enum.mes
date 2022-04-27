@@ -51,6 +51,14 @@
 {2349}{Dread Seizure} // not implemented
 {2350}{Ignore the Pyre}
 {2357}{Enervating Shadow}
+{2358}{Tenacious Plague} // not implemented
+{2359}{Wall of Perilous Flame} // not implemented
+{2360}{Caustic Mire} // not implemented
+{2361}{Hellspawned Grace} // not implemented
+{2362}{Nightmares Made Real} // not implemented
+{2363}{Painful Slumber of Ages} // not implemented
+{2364}{Retributive Invisibility}
+{2365}{Word of Changing} // not implemented
 
 {7300}{Eldritch Blast}
 {7301}{Eldritch Spear}
@@ -98,6 +106,15 @@
 {7349}{Dread Seizure} // not implemented
 {7350}{Ignore the Pyre}
 {7357}{Enervating Shadow}
+{7358}{Tenacious Plague} // not implemented
+{7359}{Wall of Perilous Flame} // not implemented
+{7360}{Caustic Mire} // not implemented
+{7361}{Hellspawned Grace} // not implemented
+{7362}{Nightmares Made Real} // not implemented
+{7363}{Painful Slumber of Ages} // not implemented
+{7364}{Retributive Invisibility}
+{7365}{Word of Changing} // not implemented
+
 
 {22300}{TAG_SPELLS_ELDRITCH_BLAST}
 {22301}{TAG_SPELLS_ELDRITCH_SPEAR}
@@ -145,3 +162,12 @@
 {22349}{TAG_SPELLS_DREAD_SEIZURE} // not implemented
 {22350}{TAG_SPELLS_IGNORE_THE_PYRE}
 {22357}{TAG_SPELLS_ENERVATING_SHADOW}
+{22358}{TENACIOUS_PLAGUE} // not implemented
+{22359}{TAG_SPELLS_WALL_OF_PERILOUS_FLAME} // not implemented
+{22360}{TAG_SPELLS_CAUSTIC_MIRE} // not implemented
+{22361}{TAG_SPELLS_HELLSPAWNED_GRACE} // not implemented
+{22362}{TAG_SPELLS_NIGHTMARES_MADE_REAL} // not implemented
+{22363}{TAG_SPELLS_PAINFUL_SLUMBER_OF_AGES} // not implemented
+{22364}{TAG_SPELLS_RETRIBUTIVE_INVISIBILITY}
+{22365}{TAG_SPELLS_WORD_OF_CHANGING} // not implemented
+

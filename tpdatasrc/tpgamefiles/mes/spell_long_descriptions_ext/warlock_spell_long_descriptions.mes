@@ -224,3 +224,10 @@ Casting:         Swift Action [S]
 Range:               5 ft.
 Area:             5-ft.-radius emanation, centered on you
 Duration:      5 rounds,  Save: Fortitude negates,  SR: Yes}
+
+{7364} Retributive Invisibility {As Invisibility, Greater and if dispelled shock wave in 20 ft. radius that deals 4d6 sonic damage and stuns for 1 round on a failed save.
+School:          [Invocation]
+Casting:         1 action [S]
+Range:               Personal
+Area:             Personal
+Duration:      1 round/level,  Save: None,  SR: No}
