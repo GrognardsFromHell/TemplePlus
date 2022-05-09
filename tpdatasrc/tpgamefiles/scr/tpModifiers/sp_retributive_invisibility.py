@@ -26,7 +26,6 @@ def signalDispelled(attachee, args, evt_obj):
     spellId = args.get_arg(0)
     if signalId == spellId:
         game.particles("sp-Retributive Invisibility-dispel", attachee)
-        print("I was dispelled!")
         spellId = args.get_arg(0)
         spellPacket = tpdp.SpellPacket(spellId)
         spellDc = spellPacket.dc

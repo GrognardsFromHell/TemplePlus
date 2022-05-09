@@ -1710,3 +1710,11 @@ DispIoReflexThrow::DispIoReflexThrow()
 	throwResult = 0;
 	flags = D20SavingThrowFlag::D20STF_NONE;
 }
+
+DispIoDispelCheck::DispIoDispelCheck()
+{
+this->dispIOType = enum_dispIO_type::dispIOTypeDispelCheck;
+this->spellId = 0;
+this->returnVal = 0;
+this->flags = 0;
+}

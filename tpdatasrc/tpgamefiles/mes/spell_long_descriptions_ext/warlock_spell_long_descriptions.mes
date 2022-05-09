@@ -204,6 +204,13 @@ Range:               Close (25ft. + 5ft./2 lvls)
 Target:             Empty location
 Duration:      Instantaneous,  Save: None,  SR: No}
 
+{7345} Voracious Dispelling {As Dispel Magic, in addition any creature takes 1 point of damage per level of the dispelled spell effect (no save).
+School:          [Invocation]
+Casting:         1 action [S]
+Range:               Medium (100ft. +10 ft./level)
+Area:             20 ft.-radius burst or single target
+Duration:      Instantaneous,  Save: No,  SR: None}
+
 {7346} Walk Unseen {You can use Invisibility (self only).
 School:          [Invocation]
 Casting:         1 action [S]
@@ -217,6 +224,20 @@ Casting:         1 action [S]
 Range:               Personal
 Target:             You
 Duration:      24h,  Save: None,  SR: No}
+
+{7354} Relentless Dispelling {As targeted Dispel Magic. In addition the target of the effect is subjected to another Dispel Magic in the next turn.
+School:          [Invocation]
+Casting:         1 action [S]
+Range:               Medium (100ft. +10 ft./level)
+Target:             One creature or object
+Duration:      1 round,  Save: None,  SR: No}
+
+{7356} Devour Magic {Targeted Greater Dispel Magic, gain 5 temp HP for for each spell level dispelled by Devour Magic for 1 min.
+School:          [Invocation]
+Casting:         1 action [S]
+Range:               Medium (100ft. +10 ft./level)
+Target:             One creature or object
+Duration:      1 round,  Save: None,  SR: No}
 
 {7357} Enervating Shadow {Gain total concealment if not in daylight. Adjacent living creatures get -4 Strength on a failed save.
 School:          [Invocation]

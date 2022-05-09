@@ -2955,7 +2955,7 @@ void UiCharEditor::SpellsEntryBtnRender(int widId)
 	if (spEnum == SPELL_ENUM_VACANT){
 		// don't draw text (will only draw the frame)
 	}
-	else if (spellSys.IsLabel(spEnum)) { // Sagenlicht: Added labels for Warlock Invocations
+	else if (spellSys.IsLabel(spEnum)) { // Added labels for Warlock Invocations
 		if (selPkt.classCode == stat_level_warlock) {
 			if (spLvl <= 2) {
 				text.append(fmt::format("Least Invocations ({})", spLvl));
@@ -3138,7 +3138,7 @@ void UiCharEditor::SpellsAvailableEntryBtnRender(int widId){
 	if (spellSys.IsLabel(spEnum)){
 		rect.x += 2;
 		auto spLvl = avSpInfo[spellIdx].spellLevel;
-		// Added by Sagenlicht for Warlock spell labels
+		// Added labels for Warlock Invocations
 		auto& selPkt = GetCharEditorSelPacket();
 		if (selPkt.classCode == stat_level_warlock) {
 			if (spLvl <= 2) {

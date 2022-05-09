@@ -400,11 +400,17 @@ struct DispIoDispelCheck : DispIO // type 11
 		DispelFire = 0x400,
 		DispelWater = 0x800,
 		DispelElement = DispelAir | DispelEarth | DispelFire | DispelWater,
+		DispelVoraciousSingle = 0x1000, // NEW (Warlock Invocation)
+		DispelVoraciousArea = 0x2000, // NEW (Warlock Invocation)
+		DispelRelentless = 0x4000, // NEW (Warlock Invocation)
+		DispelDevour = 0x8000, // NEW (Warlock Invocation)
 	};
 
 	uint32_t spellId; // of the Dispel Spell (Break Enchantment, Dispel Magic etc.)
 	uint32_t flags;  // Dispel Type flag
 	uint32_t returnVal;
+
+	DispIoDispelCheck();
 };
 
 struct DispIoD20ActionTurnBased : DispIO { // dispIoType = 12; matches dispTypes 36-38 , 52

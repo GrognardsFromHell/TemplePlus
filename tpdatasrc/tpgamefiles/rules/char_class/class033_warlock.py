@@ -26,6 +26,7 @@ class_feats = {
 1: (feat_armor_proficiency_light, feat_simple_weapon_proficiency, "Warlock Eldritch Blast", "Warlock Spell Failure", "Warlock Invocations",),
 2: ("Warlock Detect Magic",),
 3: ("Warlock Damage Reduction",),
+4: ("Warlock Deceive Item",),
 8: ("Warlock Fiendish Resilience",),
 }
 
@@ -51,9 +52,9 @@ spell_list = {
     spell_entropic_warding, spell_leaps_and_bounds, spell_see_the_unseen, spell_sickening_blast, spell_soulreaving_aura, spell_spiderwalk,),
     3: (spell_brimstone_blast, spell_cold_comfort, spell_fell_flight, spell_walk_unseen, spell_witchwood_step,),
     4: (spell_beshadowed_blast, spell_curse_of_despair, spell_dread_seizure, spell_eldritch_chain, spell_flee_the_scene, spell_hellrime_blast,
-    spell_ignore_the_pyre, spell_the_dead_walk, spell_voracious_dispelling, spell_warlock_charm,),
+    spell_ignore_the_pyre, spell_relentless_dispelling, spell_the_dead_walk, spell_voracious_dispelling, spell_warlock_charm,),
     5: (spell_bewitching_blast, spell_eldritch_cone, spell_eldritch_line, spell_enervating_shadow, spell_hindering_blast,),
-    6: (spell_noxious_blast, spell_penetrating_blast, spell_repelling_blast, spell_vitriolic_blast,),
+    6: (spell_devour_magic, spell_noxious_blast, spell_penetrating_blast, spell_repelling_blast, spell_vitriolic_blast,),
     7: (spell_binding_blast, spell_retributive_invisibility,),
     8: (spell_eldritch_doom, spell_utterdark_blast,)
     #9: ()

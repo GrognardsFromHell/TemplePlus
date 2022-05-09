@@ -2134,6 +2134,12 @@ int __cdecl DispelCheck(DispatcherCallbackArgs args)
 			const bool dispelAlignment = ((dispIo->flags & DispIoDispelCheck::DispelAlignment) && dispIo->returnVal > 0);
 			const bool dispelElement = ((dispIo->flags & DispIoDispelCheck::DispelElement) && dispIo->returnVal > 0);
 
+			// Warlock Invocations
+			const bool dispelVoraciousSingle = (dispIo->flags & DispIoDispelCheck::DispelVoraciousSingle);
+			const bool dispelVoraciousArea = (dispIo->flags & DispIoDispelCheck::DispelVoraciousArea) && (dispIo->returnVal > 0);
+			const bool dispelRelentless = (dispIo->flags & DispIoDispelCheck::DispelRelentless);
+			const bool dispelDevour = (dispIo->flags & DispIoDispelCheck::DispelDevour);
+
 			bool bValidSchool = true;
 
 			//Enforce correct spell schools for break enchantment (note:  curses are handled elsewhere)
@@ -2144,7 +2150,8 @@ int __cdecl DispelCheck(DispatcherCallbackArgs args)
 				}
 			}
 
-			if (dispelMagicArea || (breakEnchantment && bValidSchool) || dispelMagicSingle || dispelAlignment || dispelElement) {
+			if (dispelMagicArea || (breakEnchantment && bValidSchool) || dispelMagicSingle || dispelAlignment || dispelElement
+				|| dispelVoraciousSingle || dispelVoraciousArea || dispelRelentless || dispelDevour) {
 				bool removeEffect = false;
 
 				// Handle dispel alignment (it should not have a caster check)
@@ -2220,6 +2227,12 @@ int __cdecl DispelCheck(DispatcherCallbackArgs args)
 					else if (dispellingSpell.spellEnum == 202) {  //Greater Dispel Magic (+20 limit)
 						casterLevel = std::min(casterLevel, 20);
 					}
+					else if (dispelVoraciousArea || dispelVoraciousSingle || dispelRelentless) {  // Warlock Dispelling (+10 limit)
+						casterLevel = std::min(casterLevel, 10);
+					}
+					else if (dispelDevour) {  // Warlock Devour Magic (+20 limit)
+						casterLevel = std::min(casterLevel, 20);
+					}
 
 					BonusList casterLvlBonlist;
 					casterLvlBonlist.AddBonus(casterLevel, 0, 203);
@@ -2227,25 +2240,40 @@ int __cdecl DispelCheck(DispatcherCallbackArgs args)
 					auto mesLine = spellSys.GetSpellMesline(dispellingSpell.spellEnum);
 					const bool dispellSuccess = (spellSys.DispelRoll(dispellingSpell.caster, &casterLvlBonlist, 0,
 						spellToDispel.casterLevel + 11, const_cast<char*>(mesLine), nullptr) >= 0);
-					const bool sameCaster = (args.objHndCaller == dispellingSpell.caster);
-					removeEffect = dispellSuccess || sameCaster;
+					const bool sameCaster = (spellToDispel.caster == dispellingSpell.caster); // Changed to spellToDispel.caster; Vanilla Bug
+					if (dispelDevour) { // Devour Magic can't consume own spells
+						if (!sameCaster) {
+							removeEffect = dispellSuccess;
+						}
+					}
+					else {
+						removeEffect = dispellSuccess || sameCaster;
+					}
 				}
 				if (removeEffect) {
 					
-					if (dispelMagicArea || dispelAlignment || dispelElement) {
+					if (dispelMagicArea || dispelAlignment || dispelElement || dispelVoraciousArea) {
 						dispIo->returnVal--;  //Mark one spell removed charge
 					}
 
-					std::string floatText = " [";
-					floatText += spellSys.GetSpellMesline(spellToDispel.spellEnum);
-					floatText += ']';
-					floatSys.FloatSpellLine(spellToDispel.caster, 20002, FloatLineColor::White, nullptr, floatText.c_str());
-					d20Sys.D20SignalPython(args.objHndCaller, "PS_Spell_Dispelled", spellToDispel.spellId, 0); // Added by Sagenlicht to give dispel feedback
+					std::string dispelledSpellName = spellSys.GetSpellMesline(spellToDispel.spellEnum);
+					//std::string floatText = " [";
+					//floatText += spellSys.GetSpellMesline(spellToDispel.spellEnum);
+					//floatText += ']';
+					std::string floatText = fmt::format(" [{}]", dispelledSpellName);
+					// Changed float message handle from spellToDispel.caster to args.objHndCaller
+					floatSys.FloatSpellLine(args.objHndCaller, 20002, FloatLineColor::White, nullptr, floatText.c_str());
+					// Added History Window Feedback
+					std::string historyText = fmt::format("{} was dispelled on {}\n\n", dispelledSpellName, objects.description.getDisplayName(args.objHndCaller));
+					histSys.CreateFromFreeText(historyText.c_str());
+					// Python signal added to give dispel feedback in the game
+					d20Sys.D20SignalPython(args.objHndCaller, "PS_Spell_Dispelled", spellToDispel.spellId, dispellingSpell.spellId);
 					args.RemoveSpell();
 					args.RemoveSpellMod();
 				}
 				else {
-					floatSys.FloatSpellLine(spellToDispel.caster, 20003, FloatLineColor::White);
+					// Changed float message handle from spellToDispel.caster to args.objHndCaller
+					floatSys.FloatSpellLine(args.objHndCaller, 20003, FloatLineColor::White);
 					spellSys.PlayFizzle(args.objHndCaller);
 				}
 			}

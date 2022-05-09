@@ -1,0 +1,5 @@
+ID_string: RELENTLESS_DISPELLING
+effect_type: 1
+texture_file: art\interface\player_conditions\ailments\Spell Relentless Dispelling.tga
+help_topic: TAG_SPELLS_RELENTLESS_DISPELLING
+tooltip_base_text: Relentless Dispelling

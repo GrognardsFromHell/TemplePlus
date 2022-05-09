@@ -1,0 +1,5 @@
+name: Warlock Deceive Item
+flags: 8
+prereqs:
+description: At 4th level and higher, a warlock has the ability to more easily commandeer magic items made for the use of other characters. When making a Use Magic Device check, a warlock can take 10 even if distracted or threatened.
+prereq descr: Warlock Level 4.

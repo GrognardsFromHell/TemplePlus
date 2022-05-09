@@ -52,6 +52,12 @@
 {2348}{Witchwood Step} // not implemented
 {2349}{Dread Seizure} // not implemented
 {2350}{Ignore the Pyre}
+{2351}{Otherwordly Whispers} // not implemented
+{2352}{Serpents Tongue} // not implemented
+{2353}{Voidsense} // not implemented
+{2354}{Relentless Dispelling}
+{2355}{Chilling Tentacles} // not implemented
+{2356}{Devour Magic}
 {2357}{Enervating Shadow}
 {2358}{Tenacious Plague} // not implemented
 {2359}{Wall of Perilous Flame} // not implemented
@@ -103,18 +109,24 @@
 {7342} Fell Flight {[Invocation] TBD!} // not implemented
 {7343} Flee the Scene {[Invocation] TBD!}
 {7344} The Dead Walk {[Invocation] TBD!} // not implemented
-{7345} Voracious Dispelling {[Invocation] TBD!} // not implemented
+{7345} Voracious Dispelling {[Invocation] As Dispel Magic, in addition any creature takes 1 point of damage per level of the dispelled spell effect (no save).}
 {7346} Walk Unseen {[Invocation] TBD!}
 {7347} Cold Comfort {[Invocation] TBD!}
 {7348} Witchwood Step {[Invocation] TBD!}  // not implemented
 {7349} Dread Seizure {[Invocation] TBD!}  // not implemented
 {7350} Ignore the Pyre {[Invocation] TBD!}
+{7351} Otherwordly Whispers {[Invocation] TBD!} // not implemented
+{7352} Serpents Tongue {[Invocation] TBD!} // not implemented
+{7353} Voidsense {[Invocation] TBD!} // not implemented
+{7354} Relentless Dispelling {[Invocation] As targeted Dispel Magic. In addition a second targeted Dispel Magic will trigger on the target at the beginning of the next round.}
+{7355} Chilling Tentacles {[Invocation] TBD!} // not implemented
+{7356} Devour Magic {[Invocation] Targeted Greater Dispel Magic, gain 5 temp HP for for each spell level dispelled by Devour Magic for 1 min.}
 {7357} Enervating Shadow {[Invocation] Gain total concealment if not in daylight. Adjacent living creatures get -4 Strength on a failed Fortitude save.}
-{7358} Tenacious Plague} // not implemented
-{7359} Wall of Perilous Flame {TBD!} // not implemented
-{7360} Caustic Mire {TBD!} // not implemented
-{7361} Hellspawned Grace {TBD!} // not implemented
-{7362} Nightmares Made Real {TBD!} // not implemented
-{7363} Painful Slumber of Ages {TBD!} // not implemented
-{7364} Retributive Invisibility {As Invisibility, Greater and if dispelled shock wave in 20 ft. radius that deals 4d6 sonic damage and stun for 1 round on a failed fort save.}
-{7365} Word of Changing {TBD!} // not implemented
+{7358} Tenacious Plague {[Invocation] TBD!} // not implemented
+{7359} Wall of Perilous Flame {[Invocation] TBD!} // not implemented
+{7360} Caustic Mire {[Invocation] TBD!} // not implemented
+{7361} Hellspawned Grace {[Invocation] TBD!} // not implemented
+{7362} Nightmares Made Real {[Invocation] TBD!} // not implemented
+{7363} Painful Slumber of Ages {[Invocation] TBD!} // not implemented
+{7364} Retributive Invisibility {[Invocation] As Invisibility, Greater and if dispelled shock wave in 20 ft. radius that deals 4d6 sonic damage and stun for 1 round on a failed fort save.}
+{7365} Word of Changing {[Invocation] TBD!} // not implemented

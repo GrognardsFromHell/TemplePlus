@@ -313,7 +313,24 @@ warlockDamageReduction.MapToFeat("Warlock Damage Reduction", feat_cond_arg2 = 0)
 warlockDamageReduction.AddHook(ET_OnTakingDamage2, EK_NONE, addColdIronDr, ())
 
 ## Deceive Item ##
-# TBD!
+def radialDeceiveItem(attachee, args, evt_obj):
+    radialName = "Activate Deceive Item"
+    radialHelpTag = "TAG_CLASS_FEATURES_WARLOCK_DECEIVE_ITEM"
+    radialId = tpdp.RadialMenuEntryToggle(radialName, radialHelpTag)
+    radialId.link_to_args(args, 1)
+    radialId.add_child_to_standard(attachee, tpdp.RadialMenuStandardNode.Class)
+    return 0
+
+def queryDeceiveItem(attachee, args, evt_obj):
+    activationFlag = args.get_arg(1)
+    if activationFlag:
+        evt_obj.return_val = 1
+    return 0
+
+warlockDeceiveItem = PythonModifier("Warlock Deceive Item", 3) #featEnum, activationFlag, empty
+warlockDeceiveItem.MapToFeat("Warlock Deceive Item", feat_cond_arg2 = 1)
+warlockDeceiveItem.AddHook(ET_OnBuildRadialMenuEntry , EK_NONE, radialDeceiveItem, ())
+warlockDeceiveItem.AddHook(ET_OnD20PythonQuery, "PQ_Warlock_Deceive_Item", queryDeceiveItem, ())
 
 ## Fiendish Resilience ##
 def radialFiendishResilience(attachee, args, evt_obj):

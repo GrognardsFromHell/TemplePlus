@@ -3460,7 +3460,7 @@ spell_curse_of_despair = 2341
 spell_fell_flight = 2342 # not implemented
 spell_flee_the_scene = 2343
 spell_the_dead_walk = 2344 # not implemented
-spell_voracious_dispelling = 2345 # not implemented
+spell_voracious_dispelling = 2345
 spell_walk_unseen = 2346
 spell_cold_comfort = 2347
 spell_witchwood_step = 2348 # not implemented
@@ -3469,9 +3469,9 @@ spell_ignore_the_pyre = 2350
 spell_otherwordly_whispers = 2351 # not implemented
 spell_serpents_tongue = 2352 # not implemented
 spell_voidsense = 2353 # not implemented
-spell_relentless_dispelling = 2354 # not implemented
+spell_relentless_dispelling = 2354
 spell_chilling_tentacles = 2355 # not implemented
-spell_devour_magic = 2356 # not implemented
+spell_devour_magic = 2356
 spell_enervating_shadow = 2357
 spell_tenacious_plague = 2358 # not implemented
 spell_wall_of_perilous_flame = 2359 # not implemented
@@ -3640,6 +3640,24 @@ bonus_type_curse_of_despair = 201
 
 #Bonus Value is passed by spell
 passed_by_spell = 0
+
+# Dispel Magic Flags
+dispel_magic_single = 0x1  # Dispel Magic single target
+dispel_evil = 0x2
+dispel_chaos = 0x4
+dispel_good = 0x8
+dispel_law = 0x10
+dispel_slipery_mind = 0x20
+dispel_break_enchantment = 0x40
+dispel_magic_area = 0x80  # Dispel Magic AoE
+dispel_air = 0x100
+dispel_earth = 0x200
+dispel_fire = 0x400
+dispel_water = 0x800
+dispel_voracious_single = 0x1000  # Invocation Voracious Dispelling Single Target
+dispel_voracious_area = 0x2000  # Invocation Voracious Dispelling AoE
+dispel_relentless = 0x4000 # Invocation Relentless Dispelling
+dispel_devour = 0x8000  # Invocation Devour Magiv
 
 stat_strength = 0
 stat_dexterity = 1

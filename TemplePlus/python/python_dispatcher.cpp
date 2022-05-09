@@ -1098,9 +1098,19 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		;
 
 	py::class_<DispIoDispelCheck, DispIO>(m, "EventObjDispelCheck", "Dispel Check Event")
+		.def(py::init())
 		.def_readwrite("return_val", &DispIoDispelCheck::returnVal)
 		.def_readwrite("flags", &DispIoDispelCheck::flags)
-		.def_readwrite("spell_id", &DispIoDispelCheck::spellId);
+		.def_readwrite("spell_id", &DispIoDispelCheck::spellId)
+		.def("dispatch", [](DispIoDispelCheck& evtObj, objHndl handle) {
+			auto obj = objSystem->GetObject(handle);
+			if (!obj) return;
+			auto dispatcher = obj->GetDispatcher();
+			if (!dispatch.dispatcherValid(dispatcher)) return;
+			dispatch.DispatcherProcessor(dispatcher, dispTypeDispelCheck, 0, &evtObj);
+			return;
+			})
+		;
 
 	py::class_<DispIoD20ActionTurnBased, DispIO>(m, "EventObjD20Action", "Used for D20 Action Checks/Performance events and obtaining number of attacks (base/bonus/natural)")
 		.def_readwrite("return_val", &DispIoD20ActionTurnBased::returnVal)

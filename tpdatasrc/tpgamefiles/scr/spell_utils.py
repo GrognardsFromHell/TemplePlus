@@ -263,6 +263,43 @@ def performAttack(attacker, target, spellId, isRanged = True):
     game.create_history_from_id(attackAction.roll_id_0)
     return attackAction.flags
 
+# Dispatch dispel magic effect
+def getDispelFlag(spellEnum):
+    mappingDict = {
+        spell_dispel_magic: dispel_magic_single,
+        spell_greater_dispelling: dispel_magic_single,
+        spell_dispel_evil: dispel_evil,
+        spell_dispel_chaos: dispel_chaos,
+        spell_dispel_good: dispel_good,
+        spell_dispel_law: dispel_law,
+        spell_break_enchantment: dispel_break_enchantment,
+        spell_dispel_air: dispel_air,
+        spell_dispel_earth: dispel_earth,
+        spell_dispel_fire: dispel_fire,
+        spell_dispel_water: dispel_water,
+        spell_voracious_dispelling: dispel_voracious_single,
+        spell_relentless_dispelling: dispel_relentless,
+        spell_devour_magic: dispel_devour,
+    }
+    return mappingDict.get(spellEnum)
+
+def performDispelCheck(target, spellId, isAoe):
+    returnVal = 1 if isAoe else 0
+    spellPacket = tpdp.SpellPacket(spellId)
+    spellEnum = spellPacket.spell_enum
+    dispelFlag = getDispelFlag(spellEnum)
+    if isAoe:
+        if dispelFlag & dispel_magic_single:
+            dispelFlag = dispel_magic_area
+        elif dispelFlag & dispel_voracious_single:
+            dispelFlag = dispel_voracious_area
+    dispelCheck = tpdp.EventObjDispelCheck()
+    dispelCheck.return_val = returnVal
+    dispelCheck.flags = dispelFlag
+    dispelCheck.spell_id = spellId
+    dispelCheck.dispatch(target)
+    return 0
+
 # Add/Change weapon alignment
 def modifyWeaponAlignment(attackPower, new_d20dap):
     if attackPower & D20DAP_HOLY:
@@ -724,7 +761,7 @@ class SpellFunctions(BasicPyMod):
         self.add_hook(ET_OnGetAbilityCheckModifier, EK_NONE, applyBonus, (bonusValue, bonusType,))
     def AddMovementBonus(self, bonusValue, bonusType):
         self.add_hook(ET_OnGetMoveSpeedBase, EK_NONE, applyBonus, (bonusValue, bonusType,))
-    def AddTempHp(self, tempHpAmount):
+    def AddTempHp(self, tempHpAmount = 0):
         self.add_hook(ET_OnConditionAdd, EK_NONE, applyTempHp, (tempHpAmount,))
         self.add_hook(ET_OnD20Signal, EK_S_Temporary_Hit_Points_Removed, removeTempHp, ())
     def AddLightInteraction(self, spellLevelInteraction = -1):
@@ -746,6 +783,16 @@ class SpellFunctions(BasicPyMod):
         self.add_hook(ET_OnD20Signal, EK_S_Dismiss_Spells, checkRemoveSpell, ())
 
 class SpellBasicPyMod(SpellFunctions):
+    # SpellBasicPyMod have at least 3 arguments:
+    # spellId, duration, empty
+    # 
+    # Use this class for spells, that either
+    # a) do not have a standard spell countdown
+    # b) can't be dispelled normally (like curses)
+    # c) do not use tooltips
+    #
+    # Standard spell class is below (SpellPythonModifer)
+    #
     def __init__(self, name, args = 3, preventDuplicate = False):
         super(SpellFunctions, self).__init__(name, args, preventDuplicate)
         self.add_spell_teleport_prepare_standard()

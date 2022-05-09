@@ -1,0 +1,5 @@
+ID_string: DEVOUR_MAGIC
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\spell devour magic.tga
+help_topic: TAG_SPELLS_DEVOUR_MAGIC
+tooltip_base_text: Devour Magic

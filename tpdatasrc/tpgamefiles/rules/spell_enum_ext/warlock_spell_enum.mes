@@ -44,12 +44,18 @@
 {2342}{Fell Flight} // not implemented
 {2343}{Flee the Scene}
 {2344}{The Dead Walk} // not implemented
-{2345}{Voracious Dispelling} // not implemented
+{2345}{Voracious Dispelling}
 {2346}{Walk Unseen}
 {2347}{Cold Comfort}
 {2348}{Witchwood Step} // not implemented
 {2349}{Dread Seizure} // not implemented
 {2350}{Ignore the Pyre}
+{2351}{Otherwordly Whispers} // not implemented
+{2352}{Serpents Tongue} // not implemented
+{2353}{Voidsense} // not implemented
+{2354}{Relentless Dispelling}
+{2355}{Chilling Tentacles} // not implemented
+{2356}{Devour Magic}
 {2357}{Enervating Shadow}
 {2358}{Tenacious Plague} // not implemented
 {2359}{Wall of Perilous Flame} // not implemented
@@ -99,12 +105,18 @@
 {7342}{Fell Flight} // not implemented
 {7343}{Flee the Scene}
 {7344}{The Dead Walk} // not implemented
-{7345}{Voracious Dispelling} // not implemented
+{7345}{Voracious Dispelling}
 {7346}{Walk Unseen}
 {7347}{Cold Comfort}
 {7348}{Witchwood Step} // not implemented
 {7349}{Dread Seizure} // not implemented
 {7350}{Ignore the Pyre}
+{7351}{Otherwordly Whispers} // not implemented
+{7352}{Serpents Tongue} // not implemented
+{7353}{Voidsense} // not implemented
+{7354}{Relentless Dispelling}
+{7355}{Chilling Tentacles} // not implemented
+{7356}{Devour Magic}
 {7357}{Enervating Shadow}
 {7358}{Tenacious Plague} // not implemented
 {7359}{Wall of Perilous Flame} // not implemented
@@ -155,12 +167,18 @@
 {22342}{TAG_SPELLS_FELL_FLIGHT} // not implemented
 {22343}{TAG_SPELLS_FLEE_THE_SCENE}
 {22344}{TAG_SPELLS_THE_DEAD_WALK} // not implemented
-{22345}{TAG_SPELLS_VORACIOUS_DISPELLING} // not implemented
+{22345}{TAG_SPELLS_VORACIOUS_DISPELLING}
 {22346}{TAG_SPELLS_WALK_UNSEEN}
 {22347}{TAG_SPELLS_COLD_COMFORT}
 {22348}{TAG_SPELLS_WITCHWOOD_STEP} // not implemented
 {22349}{TAG_SPELLS_DREAD_SEIZURE} // not implemented
 {22350}{TAG_SPELLS_IGNORE_THE_PYRE}
+{22351}{TAG_SPELLS_OTHERWORDLY_WHISPERS} // not implemented
+{22352}{TAG_SPELLS_SERPENTS_TONGUE} // not implemented
+{22353}{TAG_SPELLS_VOIDSENSE} // not implemented
+{22354}{TAG_SPELLS_RELENTLESS_DISPELLING}
+{22355}{TAG_SPELLS_CHILLING_TENTACLES} // not implemented
+{22356}{TAG_SPELLS_DEVOUR_MAGIC}
 {22357}{TAG_SPELLS_ENERVATING_SHADOW}
 {22358}{TENACIOUS_PLAGUE} // not implemented
 {22359}{TAG_SPELLS_WALL_OF_PERILOUS_FLAME} // not implemented

@@ -1087,8 +1087,27 @@ void UiCharHooks::SpellbookSpellsRender(int widId, TigMsg& tigMsg)
 	style.tracking = 2;
 
 	if (!spData.spellEnum) { // spell label
-
-		if ((int)spData.spellLevel > -1) {
+		if (spellSys.GetCastingClass(uiCharSpellNav.spellClassCode) == stat_level_warlock) {
+			style.textColor = &spellLabelColor;
+			std::string text;
+			if (spData.spellLevel <= 2) {
+				text = fmt::format("Least Invocations ({})", spData.spellLevel);
+			}
+			else if (spData.spellLevel <= 4) {
+				text = fmt::format("Lesser Invocations ({})", spData.spellLevel);
+			}
+			else if (spData.spellLevel <= 6) {
+				text = fmt::format("Greater Invocations ({})", spData.spellLevel);
+			}
+			else {
+				text = fmt::format("Dark Invocations ({})", spData.spellLevel);
+			}
+			auto rect = TigRect(-8, 0, wnd->width, wnd->height);
+			UiRenderer::DrawTextInWidget(widId, text, rect, style);
+			UiRenderer::PopFont();
+			return;
+		}
+		else if ((int)spData.spellLevel > -1) {
 			style.textColor = &spellLabelColor;
 			MesLine mesLine;
 			mesFuncs.ReadLineDirect(uiCharImpl->uiCharSpellsUiText, 3, &mesLine);
