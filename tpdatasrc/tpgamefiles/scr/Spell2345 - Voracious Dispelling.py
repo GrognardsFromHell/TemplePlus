@@ -1,4 +1,5 @@
 from toee import *
+import tpdp
 
 def OnBeginSpellCast(spell):
     print("Voracious Dispelling OnBeginSpellCast")
@@ -7,10 +8,13 @@ def OnBeginSpellCast(spell):
 
 def OnSpellEffect(spell):
     print("Voracious Dispelling OnSpellEffect")
+    
+    targetsToRemove = []
     spell.duration = 0
+
     # Check target mode
     if spell.is_object_selected() == 1:
-        print("Single Target dispel")
+        print("Single target dispel")
         isAoe = False
         spellTarget = spell.target_list[0]
         if spellTarget.obj.type == obj_t_pc or spellTarget.obj.type == obj_t_npc:
@@ -23,11 +27,13 @@ def OnSpellEffect(spell):
             else:
                 spellTarget.obj.float_mesfile_line("mes\\spell.mes", 30000)
                 game.particles("Fizzle", spellTarget.obj)
-        spellTarget.target_list.remove_target(spellTarget.obj)
+        # Remove all targets in target_list to end spell properly
+        for spellTarget in spell.target_list:
+            targetsToRemove.append(spellTarget.obj)
+
     else:
         print("AoE Dispel")
         isAoe = True
-        targetsToRemove = []
         game.particles("sp-Dispel Magic - Area", spell.target_loc)
         for spellTarget in spell.target_list:
             if spellTarget.obj.type == obj_t_pc or spellTarget.obj.type == obj_t_npc:
@@ -39,8 +45,9 @@ def OnSpellEffect(spell):
                     spellTarget.obj.float_mesfile_line("mes\\spell.mes", 30000)
                     game.particles("Fizzle", spellTarget.obj)
             targetsToRemove.append(spellTarget.obj)
-        if targetsToRemove:
-            spell.target_list.remove_list(targetsToRemove)
+
+    if targetsToRemove:
+        spell.target_list.remove_list(targetsToRemove)
     spell.spell_end(spell.id)
 
 def OnBeginRound(spell):
