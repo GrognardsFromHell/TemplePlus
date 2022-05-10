@@ -41,6 +41,11 @@ struct LegacySkillSystem : temple::AddressTable {
 	*/
 	BOOL SkillCheckDefaultDC(SkillEnum skillEnum, objHndl performer, int flag);
 
+	/*
+		Added by Sagenlicht, for taking 10 on a skill check
+	*/
+	BOOL TakeTen(objHndl performer, SkillEnum skillEnum, int dc, int flags);
+
 	const char* GetSkillName(SkillEnum skillEnum);
 	const char *GetSkillHelpTopic(SkillEnum skillEnum);
 

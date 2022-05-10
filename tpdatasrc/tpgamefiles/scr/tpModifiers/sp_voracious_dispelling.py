@@ -20,8 +20,8 @@ def dealDamage(attachee, args, evt_obj):
         spellCaster = spellPacket.caster
         dispelledSpellPacket = tpdp.SpellPacket(dispelledSpellId)
         spellLevel = dispelledSpellPacket.spell_known_slot_level
-        spellDamageDice = dice_new("1d1")
-        spellDamageDice.bonus = spellLevel - 1
+        spellDamageDice = dice_new("0d0")
+        spellDamageDice.bonus = spellLevel
         damageType = D20DT_MAGIC
         attachee.spell_damage(spellCaster, damageType, spellDamageDice, D20DAP_UNSPECIFIED, D20A_CAST_SPELL, spellId)
     return 0

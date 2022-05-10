@@ -10,7 +10,7 @@ from spell_utils import getSpellClassCode, queryActiveSpell, spellKilled, replac
 def GetConditionName():
     return "Warlock"
     
-print "Registering " + GetConditionName()
+print("Registering " + GetConditionName())
 
 classEnum = stat_level_warlock
 classSpecModule = __import__('class033_warlock')
@@ -324,13 +324,15 @@ def radialDeceiveItem(attachee, args, evt_obj):
 def queryDeceiveItem(attachee, args, evt_obj):
     activationFlag = args.get_arg(1)
     if activationFlag:
-        evt_obj.return_val = 1
+        usedSkill = evt_obj.data1
+        if evt_obj.data1 == skill_use_magic_device:
+            evt_obj.return_val = 1
     return 0
 
 warlockDeceiveItem = PythonModifier("Warlock Deceive Item", 3) #featEnum, activationFlag, empty
 warlockDeceiveItem.MapToFeat("Warlock Deceive Item", feat_cond_arg2 = 1)
 warlockDeceiveItem.AddHook(ET_OnBuildRadialMenuEntry , EK_NONE, radialDeceiveItem, ())
-warlockDeceiveItem.AddHook(ET_OnD20PythonQuery, "PQ_Warlock_Deceive_Item", queryDeceiveItem, ())
+warlockDeceiveItem.AddHook(ET_OnD20PythonQuery, "PQ_Take_Ten", queryDeceiveItem, ())
 
 ## Fiendish Resilience ##
 def radialFiendishResilience(attachee, args, evt_obj):
@@ -380,11 +382,9 @@ def fiendishResilienceHealTick(attachee, args, evt_obj):
     healAmount = args.get_arg(1)
     duration = args.get_arg(0)
 
-    ### workaround for heal ###
-    #heal requires a dice
-    healDice = dice_new("1d1")
-    healDice.bonus = healAmount -1
-    ### workaround end ###
+    # heal requires a dice
+    healDice = dice_new("0d0")
+    healDice.bonus = healAmount
     game.particles ("sp-Cure Minor Wounds", attachee)
     attachee.heal(attachee, healDice, D20A_HEAL, 0)
     attachee.healsubdual(attachee, healDice, D20A_HEAL, 0)

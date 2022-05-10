@@ -3025,7 +3025,8 @@ uint32_t LegacySpellSystem::pickerArgsFromSpellEntry(SpellEntry* spEntry, Picker
 
 	if (spEntry->IsBaseModeTarget(UiPickerType::Area)
 		&& (spEntry->spellEnum == 133 // Dispel Magic
-		||  spEntry->spellEnum == 434) ){ // Silence
+		||  spEntry->spellEnum == 434 // Silence
+		||  spEntry->spellEnum == 2345) ){ // NEW Warlock Invocation Voracious Dispelling
 		(*(uint64_t*)&args->modeTarget ) |= (uint64_t)UiPickerType::AreaOrObj;
 	}
 

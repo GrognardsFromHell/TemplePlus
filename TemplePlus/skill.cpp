@@ -2,6 +2,7 @@
 #include "common.h"
 #include "skill.h"
 #include "bonus.h"
+#include "history.h"
 #include "util/fixes.h"
 #include "float_line.h"
 #include "d20.h"
@@ -40,7 +41,14 @@ BOOL SkillFunctionReplacement::SkillRoll(objHndl performer, SkillEnum skillEnum,
 		skillEnum = static_cast<SkillEnum>(swapSkill - 1);
 	}
 
-	return skillFunctionReplacement.oldSkillRoll(performer, skillEnum, dc, resultDeltaFromDc, flags);
+	if (!d20Sys.D20QueryPython(performer, "PQ_Take_Ten", skillEnum)) {
+		return skillFunctionReplacement.oldSkillRoll(performer, skillEnum, dc, resultDeltaFromDc, flags);
+	}
+	else { // Added by Sagenlicht; Taking 10 function for skills
+		LegacySkillSystem skillCheck;
+		return skillCheck.TakeTen(performer, skillEnum, dc, flags);
+	}
+	
 }
 
 bool LegacySkillSystem::IsEnabled(SkillEnum skillEnum) const{
@@ -74,6 +82,25 @@ BOOL LegacySkillSystem::SkillCheckDefaultDC(SkillEnum skillEnum, objHndl perform
 	auto skillResult = dispatch.dispatch1ESkillLevel(performer, skillEnum, &bonList, objHndl::null, flag);
 	auto roll = Dice(1, 20, 0).Roll();
 	return roll + skillResult >= 10;
+}
+
+BOOL LegacySkillSystem::TakeTen(objHndl performer, SkillEnum skillEnum, int dc, int flags)
+{
+	if (skillPropsTable[skillEnum].stat == Stat::stat_intelligence && d20Sys.d20Query(performer, D20DispatcherKey::DK_QUE_CannotUseIntSkill))
+		return FALSE;
+	if (skillPropsTable[skillEnum].stat == Stat::stat_charisma && d20Sys.d20Query(performer, D20DispatcherKey::DK_QUE_CannotUseChaSkill))
+		return FALSE;
+	if (!skillPropsTable[skillEnum].unskilledUseAllow && critterSys.SkillBaseGet(performer, skillEnum) <= 0)
+		return FALSE;
+
+	BonusList bonList;
+	auto skillBonus = dispatch.dispatch1ESkillLevel(performer, skillEnum, &bonList, objHndl::null, flags);
+	Dice dice(0, 0, 10);
+	auto skillRoll = dice.Roll();
+	// RollHistoryAddType2SkillRoll is bugged, I have to switch skillEnum and dc in params to get correct result in history window
+	int rollHistId = histSys.RollHistoryAddType2SkillRoll(performer, dice.ToPacked(), skillRoll, skillEnum, dc, &bonList);
+	histSys.CreateRollHistoryString(rollHistId);
+	return skillRoll + skillBonus >= dc;
 }
 
 const char* LegacySkillSystem::GetSkillName(SkillEnum skillEnum)
