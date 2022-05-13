@@ -49,6 +49,7 @@
 #include "ui/ui_legacysystems.h"
 #include "ui/ui_worldmap.h"
 #include "ui/ui_char.h"
+#include "ui/ui_mainmenu.h"
 #include "infrastructure/elfhash.h"
 #include "ui/ui_alert.h"
 #include <fmt/format.h>
@@ -1157,6 +1158,11 @@ PyObject* PyGame_GametimeAdd(PyObject*, PyObject* args) {
 	return PyString_FromString(formattedTime.c_str());
 }
 
+
+PyObject* PyGame_IsIngame(PyObject*, PyObject* args) {
+	return PyInt_FromLong(uiSystems->GetMM().IsIngame());
+}
+
 PyObject* PyGame_IsOutdoor(PyObject*, PyObject* args) {
 	return PyInt_FromLong(maps.IsCurrentMapOutdoor());
 }
@@ -1524,6 +1530,7 @@ static PyMethodDef PyGameMethods[]{
 	{"pfx_chain_lightning", PyGame_PfxChainLightning, METH_VARARGS, NULL},
 	{"pfx_lightning_bolt", PyGame_PfxLightningBolt, METH_VARARGS, NULL},
 	{"gametime_add", PyGame_GametimeAdd, METH_VARARGS, NULL},
+	{"is_ingame", PyGame_IsIngame, METH_VARARGS, "Is in active game (i.e. not in main menu screen)"},
 	{"is_outdoor", PyGame_IsOutdoor, METH_VARARGS, NULL},
 	{"is_spell_harmful", PyGame_IsSpellHarmful, METH_VARARGS, NULL },
 	{"keypress", PyGame_Keypress, METH_VARARGS, NULL},

@@ -264,6 +264,18 @@ bool UiMM::IsVisible() const
 	return false;
 }
 
+bool UiMM::IsIngame() const
+{
+	if (IsVisible()) {
+		if (mCurrentPage == MainMenuPage::MainMenu 
+			|| mCurrentPage == MainMenuPage::Difficulty
+			|| mCurrentPage == MainMenuPage::Options) {
+			return false;
+		}
+	}
+	return true;
+}
+
 void UiMM::Show(MainMenuPage page)
 {
 	static auto ui_mm_show_page = temple::GetPointer<void(int page)>(0x10116500);
