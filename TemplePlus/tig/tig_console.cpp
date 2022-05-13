@@ -440,7 +440,8 @@ void Console::RenderCheatsMenu()
 			static char debugAddrText[10] = { 0, };
 			static int debugAddr;
 			static int debugValue = 0;
-			if (ImGui::Button("Debug Memory Value")){
+			static int debugValueText;
+			if (ImGui::Button("Get Memory Value")){
 				if (debugAddr >= 0x10000000 && debugAddr <= 0x20000000){
 					debugValue = temple::GetRef<int>(debugAddr);
 				}
@@ -450,9 +451,18 @@ void Console::RenderCheatsMenu()
 			}
 
 			if (debugAddr >= 0x10000000 && debugAddr <= 0x20000000){
-				ImGui::Text(fmt::format("{}", debugValue).c_str());
+				//ImGui::Text(fmt::format("{}", debugValue).c_str());
+				ImGui::InputInt("##debugMemoryVal", &debugValue, 1);
+				ImGui::SameLine();
+				if (ImGui::Button("Set Value")) {
+					if (debugAddr >= 0x10000000 && debugAddr <= 0x20000000) {
+						temple::GetRef<int>(debugAddr) = debugValue;
+					}
+				}
 			}
-			
+			else {
+				ImGui::Text("Invalid address!");
+			}
 			
 
 			ImGui::EndMenu();
