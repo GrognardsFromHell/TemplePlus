@@ -180,6 +180,13 @@ static PyObject* PyGame_GetTime(PyObject*, void*) {
 	return PyTimeStamp_Create();
 }
 
+
+static PyObject* PyGame_GetTimePlayed(PyObject*, void*) {
+	auto result = PyTimeStamp_Create(gameSystems->GetTimeEvent().GetRealTime());
+	return result;
+}
+
+
 static PyObject* PyGame_GetLeader(PyObject*, void*) {
 	return PyObjHndl_Create(pyGameAddresses.PartyGetLeader());
 }
@@ -276,6 +283,7 @@ static PyGetSetDef PyGameGettersSetters[] = {
 	{"leader", PyGame_GetLeader, NULL, NULL},
 	{"elader", PyGame_GetLeader, NULL, NULL }, // commonly made typo so might as well support it :D
 	{"time", PyGame_GetTime, NULL, NULL},
+	{"time_played", PyGame_GetTimePlayed, NULL, NULL},
 	{"global_vars", PyGame_GetGlobalVars, NULL, NULL},
 	{"ggv", PyGame_GetGlobalVars, NULL, NULL },
 	{"global_flags", PyGame_GetGlobalFlags, NULL, NULL},
@@ -1160,7 +1168,7 @@ PyObject* PyGame_GametimeAdd(PyObject*, PyObject* args) {
 
 
 PyObject* PyGame_IsIngame(PyObject*, PyObject* args) {
-	return PyInt_FromLong(uiSystems->GetMM().IsIngame());
+	return PyInt_FromLong(gameSystems->IsIngame());
 }
 
 PyObject* PyGame_IsOutdoor(PyObject*, PyObject* args) {
