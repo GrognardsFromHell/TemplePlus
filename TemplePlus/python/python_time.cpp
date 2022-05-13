@@ -6,6 +6,7 @@
 #include <gamesystems/gamesystems.h>
 
 static PyTypeObject *GetPyTimeStampType();
+bool PyTimeStampObject_Check(PyObject* obj);
 
 static struct PyTimeStampAddresses : temple::AddressTable {
 
@@ -60,6 +61,13 @@ struct PyTimeStampObject {
 	GameTime time;
 };
 
+
+static PyTimeStampObject* GetSelf(PyObject* obj) {
+	assert(PyTimeStampObject_Check(obj));
+	auto self = (PyTimeStampObject*)obj;
+	return self;
+}
+
 // Generalized function that returns a transformed integer of the time stamps time
 #define PYTIMESTAMP_GET_TRANSFORMED(NAME, FUNC) PyObject* PyTimeStamp_ ## NAME(PyObject *, PyObject *args) { \
 	PyTimeStampObject *ts; \
@@ -100,9 +108,21 @@ static PyObject *PyTimeStamp_GetInGameDays(PyObject*, PyObject*) {
 	return PyInt_FromLong(pyTimeStampAddresses.GameInDays());
 }
 
+static PyObject* PyTimeStamp_GetDeltaMs(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	
+	PyTimeStampObject* ts;
+	if (!PyArg_ParseTuple(args, "O!", GetPyTimeStampType(), &ts))
+		return nullptr;
+	
+	auto diffTime = self->time - ts->time;
+
+	return PyInt_FromLong(diffTime.ToMs());
+}
+
 static PyMethodDef PyTimeStampMethods[] {
 	{ "time_elapsed", PyTimeStamp_GetElapsed, METH_VARARGS, "GameTime_Elapsed (the gameplay time that's frozen while in combat) - this time stamp" },
-	{ "time_in_game_in_seconds", PyTimeStamp_GetInGameSeconds, METH_VARARGS, "GameTime__Elapsed in seconds" },
+	{ "time_in_game_in_seconds", PyTimeStamp_GetInGameSeconds, METH_VARARGS, "GameTime_Elapsed in seconds" },
 	{ "time_in_game_in_days", PyTimeStamp_GetInGameDays, METH_VARARGS, "Likewise but in days" },
 	{ "time_game_in_seconds_elapsed", PyTimeStamp_GetSecondsFloat, METH_VARARGS, "Timestamp in seconds (is offset by starting day of year)" },
 	{ "time_game_in_seconds", PyTimeStamp_GetSeconds, METH_VARARGS, "Timestamp in seconds - integer (is offset by starting day of year)" },
@@ -113,6 +133,7 @@ static PyMethodDef PyTimeStampMethods[] {
 	{ "time_game_in_months", PyTimeStamp_GetMonth, METH_VARARGS, NULL },
 	{ "time_game_in_days", PyTimeStamp_GetDays, METH_VARARGS, NULL },
 	{ "time_game_in_years", PyTimeStamp_GetYear, METH_VARARGS, NULL },
+	{ "delta_ms", PyTimeStamp_GetDeltaMs, METH_VARARGS, "Delta time, in msec"},
 	{ NULL, NULL, NULL, NULL }
 };
 
@@ -160,6 +181,10 @@ static PyTypeObject PyTimeStampType = {
 
 static PyTypeObject *GetPyTimeStampType() {
 	return &PyTimeStampType;
+}
+
+bool PyTimeStampObject_Check(PyObject* obj) {
+	return obj->ob_type == &PyTimeStampType;
 }
 
 PyObject* PyTimeStamp_Create() {
