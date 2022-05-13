@@ -164,6 +164,7 @@ public:
 
 	GameTime GetTime();
 	GameTime GetAnimTime();
+	GameTime GetRealTime();
 
 	bool IsDaytime();
 

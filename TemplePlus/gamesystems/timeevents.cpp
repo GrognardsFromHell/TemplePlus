@@ -62,11 +62,11 @@ static BOOL ExpireAnimEvent(const TimeEvent* event)
 	return gameSystems->GetAnim().ProcessAnimEvent(event);
 	//return TRUE;
 }
-
+const unsigned int RETURN_1_FADDR = 0x101f5850;
 static BOOL ExpireBkgAnim(const TimeEvent* event) {
-	static auto callback = temple::GetPointer<LegacyExpireFunc>(0x101f5850);
+	static auto callback = temple::GetPointer<LegacyExpireFunc>(RETURN_1_FADDR);
 
-	if (temple::GetRef<int>(0x10AA83D4))
+	if (temple::GetRef<int>(0x10AA83D4)) // timeeventSysInited
 	{
 		static auto actualGameCallback = temple::GetPointer<LegacyExpireFunc>(0x10173830);
 		return actualGameCallback(event);
@@ -91,7 +91,7 @@ static BOOL ExpirePythonScript(const TimeEvent* event) {
 }
 
 static BOOL ExpirePoison(const TimeEvent* event) {
-	static auto callback = temple::GetPointer<LegacyExpireFunc>(0x101f5850);
+	static auto callback = temple::GetPointer<LegacyExpireFunc>(RETURN_1_FADDR);
 	return callback(event);
 }
 
@@ -106,7 +106,7 @@ static BOOL ExpireSubdualHealing(const TimeEvent* event) {
 }
 
 static BOOL ExpireAging(const TimeEvent* event) {
-	static auto callback = temple::GetPointer<LegacyExpireFunc>(0x101f5850);
+	static auto callback = temple::GetPointer<LegacyExpireFunc>(RETURN_1_FADDR);
 	return callback(event);
 }
 
@@ -121,17 +121,17 @@ static BOOL ExpireAIDelay(const TimeEvent* event) {
 }
 
 static BOOL ExpireCombat(const TimeEvent* event) {
-	static auto callback = temple::GetPointer<LegacyExpireFunc>(0x101f5850);
+	static auto callback = temple::GetPointer<LegacyExpireFunc>(RETURN_1_FADDR);
 	return callback(event);
 }
 
 static BOOL ExpireTBCombat(const TimeEvent* event) {
-	static auto callback = temple::GetPointer<LegacyExpireFunc>(0x101f5850);
+	static auto callback = temple::GetPointer<LegacyExpireFunc>(RETURN_1_FADDR);
 	return callback(event);
 }
 
 static BOOL ExpireAmbientLighting(const TimeEvent* event) {
-	static auto callback = temple::GetPointer<LegacyExpireFunc>(0x101f5850);
+	static auto callback = temple::GetPointer<LegacyExpireFunc>(RETURN_1_FADDR);
 
 	if (temple::GetRef<int>(0x10AA83D4)){
 		static auto actualGameCallback = temple::GetPointer<LegacyExpireFunc>(0x101739C0);
@@ -142,17 +142,17 @@ static BOOL ExpireAmbientLighting(const TimeEvent* event) {
 }
 
 static BOOL ExpireWorldMap(const TimeEvent* event) {
-	static auto callback = temple::GetPointer<LegacyExpireFunc>(0x101f5850);
+	static auto callback = temple::GetPointer<LegacyExpireFunc>(RETURN_1_FADDR);
 	return callback(event);
 }
 
 static BOOL ExpireSleeping(const TimeEvent* event) {
-	static auto callback = temple::GetPointer<LegacyExpireFunc>(0x101f5850);
+	static auto callback = temple::GetPointer<LegacyExpireFunc>(RETURN_1_FADDR);
 	return callback(event);
 }
 
 static BOOL ExpireClock(const TimeEvent* event) {
-	static auto callback = temple::GetPointer<LegacyExpireFunc>(0x101f5850);
+	static auto callback = temple::GetPointer<LegacyExpireFunc>(RETURN_1_FADDR);
 	return callback(event);
 }
 
@@ -162,7 +162,7 @@ static BOOL ExpireNPCWaitHere(const TimeEvent* event) {
 }
 
 static BOOL ExpireMainMenu(const TimeEvent* event) {
-	static auto callback = temple::GetPointer<LegacyExpireFunc>(0x101f5850);
+	static auto callback = temple::GetPointer<LegacyExpireFunc>(RETURN_1_FADDR);
 
 	if (temple::GetRef<int>(0x10AA83D4)) {
 		static auto actualGameCallback = temple::GetPointer<LegacyExpireFunc>(0x101119B0);
@@ -193,7 +193,7 @@ static BOOL ExpireDecayDeadBodies(const TimeEvent* event) {
 }
 
 static BOOL ExpireItemDecay(const TimeEvent* event) {
-	static auto callback = temple::GetPointer<LegacyExpireFunc>(0x101f5850);
+	static auto callback = temple::GetPointer<LegacyExpireFunc>(RETURN_1_FADDR);
 	return callback(event);
 }
 
@@ -208,7 +208,7 @@ static BOOL ExpireFade(const TimeEvent* event) {
 }
 
 static BOOL ExpireGFadeControl(const TimeEvent* event) {
-	static auto callback = temple::GetPointer<LegacyExpireFunc>(0x101f5850);
+	static auto callback = temple::GetPointer<LegacyExpireFunc>(RETURN_1_FADDR);
 	return callback(event);
 }
 
@@ -218,7 +218,7 @@ static BOOL ExpireTeleported(const TimeEvent* event) {
 }
 
 static BOOL ExpireSceneryRespawn(const TimeEvent* event) {
-	static auto callback = temple::GetPointer<LegacyExpireFunc>(0x101f5850);
+	static auto callback = temple::GetPointer<LegacyExpireFunc>(RETURN_1_FADDR);
 	return callback(event);
 }
 
@@ -1211,6 +1211,11 @@ GameTime TimeEventSystem::GetAnimTime()
 {
 	static auto GameTime_GetAnim = temple::GetPointer<uint64_t()>(0x1005FC60);
 	return GameTime_GetAnim();
+}
+
+GameTime TimeEventSystem::GetRealTime()
+{
+	return temple::GetRef<GameTime>(0x10AA83B8);
 }
 
 bool TimeEventSystem::IsDaytime() {
