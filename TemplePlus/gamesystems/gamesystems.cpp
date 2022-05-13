@@ -42,6 +42,7 @@
 #include "ui/ui_systems.h"
 #include <aas/aas_model_factory.h>
 #include <poison.h>
+#include "autoplayer.h"
 
 using namespace gfx;
 
@@ -619,192 +620,206 @@ void GameSystems::ResizeScreen(int w, int h) {
 void GameSystems::InitializeSystems(LoadingScreen& loadingScreen) {
 
 	loadingScreen.SetMessage("Loading...");
+	const float ProgressMax = 81.0f; // vanilla: 79.0f
 
 	// Loading Screen ID: 2
-	loadingScreen.SetProgress(1 / 79.0f);
+	loadingScreen.SetProgress(1 / ProgressMax);
 	mVagrant = InitializeSystem<VagrantSystem>(loadingScreen, mConfig);
 	// Loading Screen ID: 2
-	loadingScreen.SetProgress(2 / 79.0f);
+	loadingScreen.SetProgress(2 / ProgressMax);
 	mDescription = InitializeSystem<DescriptionSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(3 / 79.0f);
+	loadingScreen.SetProgress(3 / ProgressMax);
 	mItemEffect = InitializeSystem<ItemEffectSystem>(loadingScreen, mConfig);
 	// Loading Screen ID: 3
-	loadingScreen.SetProgress(4 / 79.0f);
+	loadingScreen.SetProgress(4 / ProgressMax);
 	mTeleport = InitializeSystem<TeleportSystem>(loadingScreen, mConfig);
 	// Loading Screen ID: 4
-	loadingScreen.SetProgress(5 / 79.0f);
+	loadingScreen.SetProgress(5 / ProgressMax);
 	mSector = InitializeSystem<SectorSystem>(loadingScreen, mConfig);
 	// Loading Screen ID: 5
-	loadingScreen.SetProgress(6 / 79.0f);
+	loadingScreen.SetProgress(6 / ProgressMax);
 	mRandom = InitializeSystem<RandomSystem>(loadingScreen, mConfig);
 	// Loading Screen ID: 6
-	loadingScreen.SetProgress(7 / 79.0f);
+	loadingScreen.SetProgress(7 / ProgressMax);
 	mCritter = InitializeSystem<CritterSystem>(loadingScreen, mConfig);
 	// Loading Screen ID: 7
-	loadingScreen.SetProgress(8 / 79.0f);
+	loadingScreen.SetProgress(8 / ProgressMax);
 	mScriptName = InitializeSystem<ScriptNameSystem>(loadingScreen, mConfig);
 	// Loading Screen ID: 8
-	loadingScreen.SetProgress(9 / 79.0f);
+	loadingScreen.SetProgress(9 / ProgressMax);
 	mPortrait = InitializeSystem<PortraitSystem>(loadingScreen, mConfig);
 	// Loading Screen ID: 9
-	loadingScreen.SetProgress(10 / 79.0f);
+	loadingScreen.SetProgress(10 / ProgressMax);
 	mSkill = InitializeSystem<SkillSystem>(loadingScreen, mConfig);
 	// Loading Screen ID: 10
-	loadingScreen.SetProgress(11 / 79.0f);
+	loadingScreen.SetProgress(11 / ProgressMax);
 	mFeat = InitializeSystem<FeatSystem>(loadingScreen, mConfig);
 	// Loading Screen ID: 11
-	loadingScreen.SetProgress(12 / 79.0f);
+	loadingScreen.SetProgress(12 / ProgressMax);
 	mSpell = InitializeSystem<SpellSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(13 / 79.0f);
+	loadingScreen.SetProgress(13 / ProgressMax);
 	mStat = InitializeSystem<StatSystem>(loadingScreen, mConfig);
 	// Loading Screen ID: 12
-	loadingScreen.SetProgress(14 / 79.0f);
+	loadingScreen.SetProgress(14 / ProgressMax);
 	mScript = InitializeSystem<ScriptSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(15 / 79.0f);
+	loadingScreen.SetProgress(15 / ProgressMax);
 	mLevel = InitializeSystem<LevelSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(16 / 79.0f);
+	loadingScreen.SetProgress(16 / ProgressMax);
 	mD20 = InitializeSystem<D20System>(loadingScreen, mConfig);
 	// Loading Screen ID: 1
-	loadingScreen.SetProgress(17 / 79.0f);
+	loadingScreen.SetProgress(17 / ProgressMax);
 	mMap = InitializeSystem<MapSystem>(loadingScreen, mTig, mConfig, *mD20, *mParty);
 
 	/* START Former Map Subsystems */
-	loadingScreen.SetProgress(18 / 79.0f);
+	loadingScreen.SetProgress(18 / ProgressMax);
 	mScroll = InitializeSystem<ScrollSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(19 / 79.0f);
+	loadingScreen.SetProgress(19 / ProgressMax);
 	mLocation = InitializeSystem<LocationSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(20 / 79.0f);
+	loadingScreen.SetProgress(20 / ProgressMax);
 	mLight = InitializeSystem<LightSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(21 / 79.0f);
+	loadingScreen.SetProgress(21 / ProgressMax);
 	mTile = InitializeSystem<TileSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(22 / 79.0f);
+	loadingScreen.SetProgress(22 / ProgressMax);
 	mOName = InitializeSystem<ONameSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(23 / 79.0f);
+	loadingScreen.SetProgress(23 / ProgressMax);
 	mObjectNode = InitializeSystem<ObjectNodeSystem>(loadingScreen);
-	loadingScreen.SetProgress(24 / 79.0f);
+	loadingScreen.SetProgress(24 / ProgressMax);
 	mObj = InitializeSystem<ObjSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(25 / 79.0f);
+	loadingScreen.SetProgress(25 / ProgressMax);
 	mProto = InitializeSystem<ProtoSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(26 / 79.0f);
+	loadingScreen.SetProgress(26 / ProgressMax);
 	mObject = InitializeSystem<ObjectSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(27 / 79.0f);
+	loadingScreen.SetProgress(27 / ProgressMax);
 	mMapSector = InitializeSystem<MapSectorSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(28 / 79.0f);
+	loadingScreen.SetProgress(28 / ProgressMax);
 	mSectorVB = InitializeSystem<SectorVBSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(29 / 79.0f);
+	loadingScreen.SetProgress(29 / ProgressMax);
 	mTextBubble = InitializeSystem<TextBubbleSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(30 / 79.0f);
+	loadingScreen.SetProgress(30 / ProgressMax);
 	mTextFloater = InitializeSystem<TextFloaterSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(31 / 79.0f);
+	loadingScreen.SetProgress(31 / ProgressMax);
 	mJumpPoint = InitializeSystem<JumpPointSystem>(loadingScreen);
-	loadingScreen.SetProgress(32 / 79.0f);
+	loadingScreen.SetProgress(32 / ProgressMax);
 	mClipping = InitializeSystem<ClippingSystem>(loadingScreen, mTig.GetRenderingDevice(), *mTig.GetGameView().GetCamera());
 	mTerrain = InitializeSystem<TerrainSystem>(loadingScreen, mTig.GetRenderingDevice(),
 		mTig.GetShapeRenderer2d());
-	loadingScreen.SetProgress(33 / 79.0f);
+	loadingScreen.SetProgress(33 / ProgressMax);
 	mHeight = InitializeSystem<HeightSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(34 / 79.0f);
+	loadingScreen.SetProgress(34 / ProgressMax);
 	mGMesh = InitializeSystem<GMeshSystem>(loadingScreen, *mAAS);
-	loadingScreen.SetProgress(35 / 79.0f);
+	loadingScreen.SetProgress(35 / ProgressMax);
 	mPathNode = InitializeSystem<PathNodeSystem>(loadingScreen, mConfig);
 	/* END Former Map Subsystems */
 
-	loadingScreen.SetProgress(36 / 79.0f);
+	loadingScreen.SetProgress(36 / ProgressMax);
 	mLightScheme = InitializeSystem<LightSchemeSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(37 / 79.0f);
+	loadingScreen.SetProgress(37 / ProgressMax);
 	mPlayer = InitializeSystem<PlayerSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(38 / 79.0f);
+	loadingScreen.SetProgress(38 / ProgressMax);
 	mArea = InitializeSystem<AreaSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(39 / 79.0f);
+	loadingScreen.SetProgress(39 / ProgressMax);
 	mDialog = InitializeSystem<DialogSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(40 / 79.0f);
+	loadingScreen.SetProgress(40 / ProgressMax);
 	mSoundMap = InitializeSystem<SoundMapSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(41 / 79.0f);
+	loadingScreen.SetProgress(41 / ProgressMax);
 	mSoundGame = InitializeSystem<SoundGameSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(42 / 79.0f);
+	loadingScreen.SetProgress(42 / ProgressMax);
 	mItem = InitializeSystem<ItemSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(43 / 79.0f);
+	loadingScreen.SetProgress(43 / ProgressMax);
 	mCombat = InitializeSystem<CombatSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(44 / 79.0f);
+	loadingScreen.SetProgress(44 / ProgressMax);
 	mTimeEvent = InitializeSystem<TimeEventSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(45 / 79.0f);
+	loadingScreen.SetProgress(45 / ProgressMax);
 	mRumor = InitializeSystem<RumorSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(46 / 79.0f);
+	loadingScreen.SetProgress(46 / ProgressMax);
 	mQuest = InitializeSystem<QuestSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(47 / 79.0f);
+	loadingScreen.SetProgress(47 / ProgressMax);
 	mAI = InitializeSystem<AISystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(48 / 79.0f);
+	loadingScreen.SetProgress(48 / ProgressMax);
 	mAnim = InitializeSystem<AnimSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(49 / 79.0f);
+	loadingScreen.SetProgress(49 / ProgressMax);
 	mAnimPrivate = InitializeSystem<AnimPrivateSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(50 / 79.0f);
+	loadingScreen.SetProgress(50 / ProgressMax);
 	mReputation = InitializeSystem<ReputationSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(51 / 79.0f);
+	loadingScreen.SetProgress(51 / ProgressMax);
 	mReaction = InitializeSystem<ReactionSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(52 / 79.0f);
+	loadingScreen.SetProgress(52 / ProgressMax);
 	mTileScript = InitializeSystem<TileScriptSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(53 / 79.0f);
+	loadingScreen.SetProgress(53 / ProgressMax);
 	mSectorScript = InitializeSystem<SectorScriptSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(54 / 79.0f);
+	loadingScreen.SetProgress(54 / ProgressMax);
 
 	// NOTE: This system is only used in worlded (rendering related)
 	mWP = InitializeSystem<WPSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(55 / 79.0f);
+	loadingScreen.SetProgress(55 / ProgressMax);
 
 	mInvenSource = InitializeSystem<InvenSourceSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(56 / 79.0f);
+	loadingScreen.SetProgress(56 / ProgressMax);
 	mTownMap = InitializeSystem<TownMapSystem>(loadingScreen);
-	loadingScreen.SetProgress(57 / 79.0f);
+	loadingScreen.SetProgress(57 / ProgressMax);
 	mGMovie = InitializeSystem<GMovieSystem>(loadingScreen);
-	loadingScreen.SetProgress(58 / 79.0f);
+	loadingScreen.SetProgress(58 / ProgressMax);
 	mBrightness = InitializeSystem<BrightnessSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(59 / 79.0f);
+	loadingScreen.SetProgress(59 / ProgressMax);
 	mGFade = InitializeSystem<GFadeSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(60 / 79.0f);
+	loadingScreen.SetProgress(60 / ProgressMax);
 	mAntiTeleport = InitializeSystem<AntiTeleportSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(61 / 79.0f);
+	loadingScreen.SetProgress(61 / ProgressMax);
 	mTrap = InitializeSystem<TrapSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(62 / 79.0f);
+	loadingScreen.SetProgress(62 / ProgressMax);
 	mMonsterGen = InitializeSystem<MonsterGenSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(63 / 79.0f);
+	loadingScreen.SetProgress(63 / ProgressMax);
 	mParty = InitializeSystem<PartySystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(64 / 79.0f);
+	loadingScreen.SetProgress(64 / ProgressMax);
 	mD20LoadSave = InitializeSystem<D20LoadSaveSystem>(loadingScreen);
-	loadingScreen.SetProgress(65 / 79.0f);
+	loadingScreen.SetProgress(65 / ProgressMax);
 	mGameInit = InitializeSystem<GameInitSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(66 / 79.0f);
+	loadingScreen.SetProgress(66 / ProgressMax);
 	// NOTE: The "ground" system has been superseded by the terrain system
-	loadingScreen.SetProgress(67 / 79.0f);
+	loadingScreen.SetProgress(67 / ProgressMax);
 	mObjFade = InitializeSystem<ObjFadeSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(68 / 79.0f);
+	loadingScreen.SetProgress(68 / ProgressMax);
 	mDeity = InitializeSystem<DeitySystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(69 / 79.0f);
+	loadingScreen.SetProgress(69 / ProgressMax);
 	mUiArtManager = InitializeSystem<UiArtManagerSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(70 / 79.0f);
+	loadingScreen.SetProgress(70 / ProgressMax);
 	mParticleSys = InitializeSystem<ParticleSysSystem>(loadingScreen, *gameView->GetCamera());
-	loadingScreen.SetProgress(71 / 79.0f);
+	loadingScreen.SetProgress(71 / ProgressMax);
 	mCheats = InitializeSystem<CheatsSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(72 / 79.0f);
+	loadingScreen.SetProgress(72 / ProgressMax);
 	mD20Rolls = InitializeSystem<D20RollsSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(73 / 79.0f);
+	loadingScreen.SetProgress(73 / ProgressMax);
 	mSecretdoor = InitializeSystem<SecretdoorSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(74 / 79.0f);
+	loadingScreen.SetProgress(74 / ProgressMax);
 	mMapFogging = InitializeSystem<MapFoggingSystem>(loadingScreen, tig->GetRenderingDevice());
-	loadingScreen.SetProgress(75 / 79.0f);
+	loadingScreen.SetProgress(75 / ProgressMax);
 	mRandomEncounter = InitializeSystem<RandomEncounterSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(76 / 79.0f);
+	loadingScreen.SetProgress(76 / ProgressMax);
 	mObjectEvent = InitializeSystem<ObjectEventSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(77 / 79.0f);
+	loadingScreen.SetProgress(77 / ProgressMax);
 	mFormation = InitializeSystem<FormationSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(78 / 79.0f);
+	loadingScreen.SetProgress(78 / ProgressMax);
 	mItemHighlight = InitializeSystem<ItemHighlightSystem>(loadingScreen, mConfig);
-	loadingScreen.SetProgress(79 / 79.0f);
+	loadingScreen.SetProgress(79 / ProgressMax);
 	mPathX = InitializeSystem<PathXSystem>(loadingScreen, mConfig);
+	loadingScreen.SetProgress(80 / ProgressMax);
 	mPoison = InitializeSystem<PoisonSystem>(loadingScreen);
+	loadingScreen.SetProgress(81 / ProgressMax);
+	mAutoplayer = InitializeSystem<AutoplayerSystem>(loadingScreen);
 }
 
 void GameSystems::EndGame() {
 	return gameSystemInitTable.EndGame();
+}
+
+bool GameSystems::IsIngame() const
+{
+	if (IsResetting()) {
+		return false;
+	}
+	auto curMap  = GetMap().GetCurrentMapId();
+	auto shopMap = GetMap().GetMapIdByType(MapType::ShoppingMap);
+	return curMap == shopMap;
 }
 
 void GameSystems::DestroyPlayerObject() {

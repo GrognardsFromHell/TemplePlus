@@ -56,6 +56,7 @@
     <ClCompile Include="frozen_obj_ref.cpp" />
     <ClCompile Include="frozen_obj_ref_hooks.cpp" />
     <ClCompile Include="gamesystems\aas_hooks.cpp" />
+    <ClCompile Include="gamesystems\autoplayer.cpp" />
     <ClCompile Include="gamesystems\clipping\clippingmesh.cpp" />
     <ClCompile Include="gamesystems\clipping\clipping_hooks.cpp" />
     <ClCompile Include="gamesystems\clipping\clipping.cpp" />
@@ -133,7 +134,9 @@
     <ClCompile Include="protos.cpp" />
     <ClCompile Include="python\python_bonus.cpp" />
     <ClCompile Include="python\python_dialog.cpp" />
-    <ClCompile Include="python\python_gui.cpp" />
+    <ClCompile Include="python\python_gui.cpp">
+      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Disabled</Optimization>
+    </ClCompile>
     <ClCompile Include="python\python_integration_class_spec.cpp" />
     <ClCompile Include="python\python_damage.cpp" />
     <ClCompile Include="python\python_dispatcher.cpp" />
@@ -333,6 +336,7 @@
     <ClInclude Include="fonts\fonts_mapping.h" />
     <ClInclude Include="frozen_obj_ref.h" />
     <ClInclude Include="gamesystems\aas_hooks.h" />
+    <ClInclude Include="gamesystems\autoplayer.h" />
     <ClInclude Include="gamesystems\clipping\clippingmesh.h" />
     <ClInclude Include="gamesystems\clipping\clipping.h" />
     <ClInclude Include="gamesystems\d20\d20stats.h" />
