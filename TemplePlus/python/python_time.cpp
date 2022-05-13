@@ -101,14 +101,14 @@ static PyObject *PyTimeStamp_GetInGameDays(PyObject*, PyObject*) {
 }
 
 static PyMethodDef PyTimeStampMethods[] {
-	{ "time_elapsed", PyTimeStamp_GetElapsed, METH_VARARGS, NULL },
-	{ "time_in_game_in_seconds", PyTimeStamp_GetInGameSeconds, METH_VARARGS, NULL },
-	{ "time_in_game_in_days", PyTimeStamp_GetInGameDays, METH_VARARGS, NULL },
-	{ "time_game_in_seconds_elapsed", PyTimeStamp_GetSecondsFloat, METH_VARARGS, NULL },
-	{ "time_game_in_seconds", PyTimeStamp_GetSeconds, METH_VARARGS, NULL },
+	{ "time_elapsed", PyTimeStamp_GetElapsed, METH_VARARGS, "GameTime_Elapsed (the gameplay time that's frozen while in combat) - this time stamp" },
+	{ "time_in_game_in_seconds", PyTimeStamp_GetInGameSeconds, METH_VARARGS, "GameTime__Elapsed in seconds" },
+	{ "time_in_game_in_days", PyTimeStamp_GetInGameDays, METH_VARARGS, "Likewise but in days" },
+	{ "time_game_in_seconds_elapsed", PyTimeStamp_GetSecondsFloat, METH_VARARGS, "Timestamp in seconds (is offset by starting day of year)" },
+	{ "time_game_in_seconds", PyTimeStamp_GetSeconds, METH_VARARGS, "Timestamp in seconds - integer (is offset by starting day of year)" },
 	{ "time_game_in_seconds_float", NULL, METH_VARARGS, NULL },
-	{ "time_game_in_hours", PyTimeStamp_GetHours, METH_VARARGS, NULL },
-	{ "time_game_in_hours2", PyTimeStamp_GetHours2, METH_VARARGS, NULL },
+	{ "time_game_in_hours", PyTimeStamp_GetHours, METH_VARARGS, "Timestamp in hours - integer (it is hour of day actually)" },
+	{ "time_game_in_hours2", PyTimeStamp_GetHours2, METH_VARARGS, "Timestamp in hours - integer (inc. hours from start of year i.e. + 24*day of year)" },
 	{ "time_game_in_minutes", PyTimeStamp_GetMinutes, METH_VARARGS, NULL },
 	{ "time_game_in_months", PyTimeStamp_GetMonth, METH_VARARGS, NULL },
 	{ "time_game_in_days", PyTimeStamp_GetDays, METH_VARARGS, NULL },
