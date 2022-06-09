@@ -16,6 +16,7 @@
 #include "d20_race.h"
 #include "ui_render.h"
 #include "gamesystems/objects/objsystem.h"
+#include <python/python_integration_class_spec.h>
 
 int PcCreationFeatUiPrereqCheckUsercallWrapper();
 int HookedUsercallFeatMultiselectSub_101822A0();
@@ -140,6 +141,10 @@ public:
 		replaceFunction<void(__cdecl)(CharEditorSelectionPacket&, objHndl&)>(0x10188110, [](CharEditorSelectionPacket& selPkt, objHndl& handle) {uiPcCreation.ClassFinalize(selPkt, handle); });
 		// replaceFunction<void(__cdecl)()>(0x101B0620, []() {uiPcCreation.ClassCheckComplete(); }); // same function as ui_char_editor, already replaced
 		replaceFunction<void(__cdecl)()>(0x10188260, []() {uiPcCreation.ClassBtnEntered(); });
+
+		// Alignment
+		replaceFunction<BOOL(__cdecl)(int, Alignment)>(0x10188170, [](int classEnum, Alignment alignment) ->BOOL {
+			return pythonClassIntegration.IsAlignmentCompatible(alignment, classEnum); });
 
 		// Skill
 
