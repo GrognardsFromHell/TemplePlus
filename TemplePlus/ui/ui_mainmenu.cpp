@@ -118,6 +118,9 @@ UiMM::UiMM(const UiSystemConf &config) {
 				Hide();
 			}
 		}
+		if (mCurrentPage == MainMenuPage::MainMenu) {
+			return false; // so it doesn't block F10 diag window
+		}
 		return true;
 	});
 
