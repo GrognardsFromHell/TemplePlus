@@ -7,6 +7,7 @@
 
 static PyTypeObject *GetPyTimeStampType();
 bool PyTimeStampObject_Check(PyObject* obj);
+static int PyTimeStamp_Cmp(PyObject* objA, PyObject* objB);
 
 static struct PyTimeStampAddresses : temple::AddressTable {
 
@@ -120,6 +121,23 @@ static PyObject* PyTimeStamp_GetDeltaMs(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(diffTime.ToMs());
 }
 
+static PyObject* PyTimeStamp_AddMs(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+
+	int addMs = 0;
+	if (!PyArg_ParseTuple(args, "i", &addMs)) {
+		return nullptr;
+	}
+	if (addMs < 0)
+		addMs = 0;
+
+	self->time += GameTime(0,addMs);
+
+	Py_RETURN_NONE;
+}
+
+
+
 static PyMethodDef PyTimeStampMethods[] {
 	{ "time_elapsed", PyTimeStamp_GetElapsed, METH_VARARGS, "GameTime_Elapsed (the gameplay time that's frozen while in combat) - this time stamp" },
 	{ "time_in_game_in_seconds", PyTimeStamp_GetInGameSeconds, METH_VARARGS, "GameTime_Elapsed in seconds" },
@@ -134,8 +152,17 @@ static PyMethodDef PyTimeStampMethods[] {
 	{ "time_game_in_days", PyTimeStamp_GetDays, METH_VARARGS, NULL },
 	{ "time_game_in_years", PyTimeStamp_GetYear, METH_VARARGS, NULL },
 	{ "delta_ms", PyTimeStamp_GetDeltaMs, METH_VARARGS, "Delta time, in msec"},
+	{ "add_ms", PyTimeStamp_AddMs, METH_VARARGS, "Add X ms to timestamp"},
 	{ NULL, NULL, NULL, NULL }
 };
+
+
+
+static PyObject* PyTimeStamp_Repr(PyObject* obj) {
+	auto self = GetSelf(obj);
+	auto displayName = format("Timestamp ({} days, {} ms)", self->time.timeInDays, self->time.timeInMs);
+	return PyString_FromString(displayName.c_str());
+}
 
 static PyTypeObject PyTimeStampType = {
 	PyObject_HEAD_INIT(NULL)
@@ -147,8 +174,8 @@ static PyTypeObject PyTimeStampType = {
 	0,                         /*tp_print*/
 	0,                         /*tp_getattr*/
 	0,                         /*tp_setattr*/
-	0,                         /*tp_compare*/
-	0,                         /*tp_repr*/
+	PyTimeStamp_Cmp,           /*tp_compare*/
+	PyTimeStamp_Repr,          /*tp_repr*/
 	0,                         /*tp_as_number*/
 	0,                         /*tp_as_sequence*/
 	0,                         /*tp_as_mapping*/
@@ -178,6 +205,34 @@ static PyTypeObject PyTimeStampType = {
 	0,                         /* tp_alloc */
 	0,						   /* tp_new */
 };
+
+static int PyTimeStamp_Cmp(PyObject* objA, PyObject* objB) {
+	GameTime handleA(0,0);
+	GameTime handleB(0,0);
+	if (objA->ob_type == &PyTimeStampType) {
+		handleA = ((PyTimeStampObject*)objA)->time;
+	}
+	if (objB->ob_type == &PyTimeStampType) {
+		handleB = ((PyTimeStampObject*)objB)->time;
+	}
+
+	if (handleA.timeInDays < handleB.timeInDays) {
+		return -1;
+	}
+	else if (handleA.timeInDays > handleB.timeInDays) {
+		return 1;
+	}
+
+	// timeInDays is equal
+	if (handleA.timeInMs < handleB.timeInMs) {
+		return -1;
+	}
+	else if (handleA.timeInMs > handleB.timeInMs) {
+		return 1;
+	}
+
+	return 0;
+}
 
 static PyTypeObject *GetPyTimeStampType() {
 	return &PyTimeStampType;
