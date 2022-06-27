@@ -265,6 +265,12 @@ PYBIND11_EMBEDDED_MODULE(tpgui, m) {
 		.def_property("height", &WidgetBase::GetHeight, &WidgetBase::SetHeight)
 		.def_property("x", &WidgetBase::GetX, &WidgetBase::SetX)
 		.def_property("y", &WidgetBase::GetY, &WidgetBase::SetY)
+		.def("abs_x", [](WidgetBase& self)->int {
+			return self.GetContentArea().x + self.GetX();
+			})
+		.def("abs_y", [](WidgetBase& self)->int {
+				return self.GetContentArea().y + self.GetY();
+			})
 		.def_property("pos", &WidgetBase::GetPos, &WidgetBase::SetPos)
 		.def_property("parent", &WidgetBase::GetParent, &WidgetBase::SetParent, py::return_value_policy::reference)
 		.def_property("visible", &WidgetBase::IsVisible, &WidgetBase::SetVisible)
