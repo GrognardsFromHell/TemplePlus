@@ -7,6 +7,7 @@
 #include <ui/widgets/widgets.h>
 #include <tig/tig_startup.h>
 #include <graphics/device.h>
+#include <gameview.h>
 
 namespace py = pybind11;
 //
@@ -255,6 +256,13 @@ PYBIND11_EMBEDDED_MODULE(tpgui, m) {
 	m.def("_get_container", &GetContainer , py::return_value_policy::reference);
 
 	m.def("_get_button", &GetButton, py::return_value_policy::reference);
+
+	m.def("map_from_scene", [](int x, int y) {
+		auto result = tig->GetGameView().MapFromScene(x, y);
+		std::vector res = { result.x,result.y };
+		return res;
+		}
+	);
 
 #pragma region classes
 	py::class_<WidgetBase>(m, "Widget")
