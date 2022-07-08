@@ -547,6 +547,7 @@
     <ClCompile Include="python\python_dialog.cpp">
       <Filter>python</Filter>
     </ClCompile>
+    <ClCompile Include="gamesystems\autoplayer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
@@ -1032,6 +1033,7 @@
     <ClInclude Include="python\pybind_common.h">
       <Filter>python</Filter>
     </ClInclude>
+    <ClInclude Include="gamesystems\autoplayer.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Mods and Fixes">

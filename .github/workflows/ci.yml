@@ -19,7 +19,7 @@ jobs:
         nuget restore
     - name: Build
       run: |
-        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars32.bat"
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars32.bat"
         msbuild TemplePlus.sln /p:Configuration=Release /p:Platform=Win32 /p:MSBuildDefines="_TP_VERSION=%BUILD_NUMBER%;_TP_COMMIT=%COMMIT_ID%;TP_RELEASE_BUILD" /verbosity:minimal
       # Need to use cmd because of the vcvars32 batch file
       shell: cmd
