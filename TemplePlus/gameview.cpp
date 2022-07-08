@@ -27,7 +27,7 @@ GameView::GameView(MainWindow &mainWindow, gfx::RenderingDevice &device, int wid
 		{
 			if (config.windowed)
 			{
-				if ((x > -7 && x < mWidth + 7 && x > -7 && y < mHeight + 7))
+				if ((x > -7 && x < mWidth + 7 && y > -7 && y < mHeight + 7))
 				{
 					if (x < 0)
 						x = 0;
