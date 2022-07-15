@@ -79,6 +79,7 @@ namespace py = pybind11;
 //NAMESPACE_END(PYBIND11_NAMESPACE)
 #include "ui/ui_python.h"
 #include <ui/ui_systems.h>
+#include <python/python_object.h>
 
 
 UiPython * uiPython = nullptr;
@@ -170,19 +171,19 @@ PYBIND11_EMBEDDED_MODULE(tpgui, m) {
 			return nullptr;
 		return wid;
 		}, py::return_value_policy::reference);
-	m.def("_get_legacy_window", [](LgcyWidgetId id)->LgcyWidget* {
+	m.def("_get_legacy_window", [](LgcyWidgetId id)->LgcyWindow* {
 		auto wid = uiManager->GetWidget(id);
 		auto adv = uiManager->GetAdvancedWidget(id);
 		if (adv != nullptr || !wid->IsWindow())
 			return nullptr;
-		return wid;
+		return (LgcyWindow*)wid;
 		}, py::return_value_policy::reference);
-	m.def("_get_legacy_button", [](LgcyWidgetId id)->LgcyWidget* {
+	m.def("_get_legacy_button", [](LgcyWidgetId id)->LgcyButton* {
 		auto wid = uiManager->GetWidget(id);
 		auto adv = uiManager->GetAdvancedWidget(id);
 		if (adv != nullptr || !wid->IsButton())
 			return nullptr;
-		return wid;
+		return (LgcyButton*)wid;
 		}, py::return_value_policy::reference);
 
 
@@ -257,12 +258,40 @@ PYBIND11_EMBEDDED_MODULE(tpgui, m) {
 
 	m.def("_get_button", &GetButton, py::return_value_policy::reference);
 
+	// maps from scene coordinates to screen coordinates
+	// note: this is not exactly the same as window coordinates, needs ClientToScreen conversion (done in python)
 	m.def("map_from_scene", [](int x, int y) {
 		auto result = tig->GetGameView().MapFromScene(x, y);
 		std::vector res = { result.x,result.y };
 		return res;
 		}
 	);
+	m.def("map_to_scene", [](int x, int y) {
+		auto result = tig->GetGameView().MapToScene(x, y);
+		std::vector res = { result.x,result.y };
+		return res;
+		});
+
+	m.def("world_to_screen", [](py::object obj) {
+
+		LocAndOffsets loc = LocAndOffsets::null;
+		auto pyObj = obj.ptr();
+		if (PyLong_Check(pyObj)) {
+			loc.location = locXY::fromField(PyLong_AsUnsignedLongLong(pyObj));
+		}
+		else if (PyObjHndl_Check(pyObj)) {
+			auto objHandle = PyObjHndl_AsObjHndl(pyObj);
+			loc = objects.GetLocationFull(objHandle);
+		}
+		else if (py::isinstance<LocAndOffsets>(obj)) {
+			loc = obj.cast<LocAndOffsets>();
+		}
+
+		auto worldPos = loc.ToInches3D();
+		auto uiPos = gameView->WorldToScreenUi(worldPos);
+		int x = uiPos.x, y = uiPos.y;
+		return std::vector<int>({ x,y });
+		});
 
 #pragma region classes
 	py::class_<WidgetBase>(m, "Widget")
@@ -274,10 +303,10 @@ PYBIND11_EMBEDDED_MODULE(tpgui, m) {
 		.def_property("x", &WidgetBase::GetX, &WidgetBase::SetX)
 		.def_property("y", &WidgetBase::GetY, &WidgetBase::SetY)
 		.def("abs_x", [](WidgetBase& self)->int {
-			return self.GetContentArea().x + self.GetX();
+			return self.GetContentArea().x;
 			})
 		.def("abs_y", [](WidgetBase& self)->int {
-				return self.GetContentArea().y + self.GetY();
+				return self.GetContentArea().y;
 			})
 		.def_property("pos", &WidgetBase::GetPos, &WidgetBase::SetPos)
 		.def_property("parent", &WidgetBase::GetParent, &WidgetBase::SetParent, py::return_value_policy::reference)

@@ -911,8 +911,8 @@ PyObject* PyGame_SaveGame(PyObject*, PyObject* args) {
 PyObject* PyGame_ScrollTo(PyObject*, PyObject* args)
 {
 	PyObject *locOrObj;
-
-	if (!PyArg_ParseTuple(args, "O:game.scroll_to",  &locOrObj)) {
+	int smooth = 1;
+	if (!PyArg_ParseTuple(args, "O|i:game.scroll_to",  &locOrObj, &smooth)) {
 		return 0;
 	}
 
@@ -928,8 +928,13 @@ PyObject* PyGame_ScrollTo(PyObject*, PyObject* args)
 		return nullptr;
 	}
 
-	gameSystems->GetLocation().CenterOnSmooth(targetLoc.locx, targetLoc.locy);
-
+	if (smooth) {
+		gameSystems->GetLocation().CenterOnSmooth(targetLoc.locx, targetLoc.locy);
+	}
+	else {
+		gameSystems->GetLocation().CenterOn(targetLoc.locx, targetLoc.locy);
+	}
+	
 	Py_RETURN_TRUE;
 }
 
