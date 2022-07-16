@@ -66,7 +66,7 @@
 
                         <CheckBox VerticalAlignment="Center" Content="Metamagic Stacking" IsChecked="{Binding MetamagicStacking}" Margin="0,5,35,5" ToolTip="Allows stacking of Meta Magic effects such as Widen, Enlarge and Extend Spell."/>
                         <CheckBox x:Name="LaxRulesCheckbox" VerticalAlignment="Center" Content="Lax Rules" IsChecked="{Binding LaxRules}" Margin="0,5,35,5" ToolTip="Relax some restrictions such as craft MAA spell requirements, alignment restrictions for Prestige Classes." Initialized="CheckBox_Initialized" Unchecked="CheckBox_Unchecked" Checked="CheckBox_Checked"/>
-                        <CheckBox VerticalAlignment="Center" Content="Stricter Rules Enforcement" IsChecked="{Binding StricterRulesEnforcement}" Margin="0,5,25,5" ToolTip="Change grease size to 5 foot radius."/>
+                        <CheckBox VerticalAlignment="Center" Content="Stricter Rules Enforcement" IsChecked="{Binding StricterRulesEnforcement}" Margin="0,5,25,5" ToolTip="Change grease size to 5 foot radius and enforce tower shield attack penalty."/>
                     </StackPanel>
                     <GridSplitter x:Name="gridSplitter_Copy" HorizontalAlignment="Left" Height="360" Margin="241,10,0,0" VerticalAlignment="Top" Width="3"/>
                     <StackPanel HorizontalAlignment="Left" Height="231" VerticalAlignment="Top" Width="206" Margin="255,10,0,0" x:Name="LaxRulesPanel">
