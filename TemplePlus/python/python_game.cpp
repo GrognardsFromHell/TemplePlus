@@ -185,7 +185,10 @@ static PyObject* PyGame_GetTimePlayed(PyObject*, void*) {
 	auto result = PyTimeStamp_Create(gameSystems->GetTimeEvent().GetRealTime());
 	return result;
 }
-
+static PyObject* PyGame_GetTimeSession(PyObject*, void*) {
+	auto result = PyTimeStamp_Create(gameSystems->GetTimeEvent().GetRealTime());
+	return result;
+}
 
 static PyObject* PyGame_GetLeader(PyObject*, void*) {
 	return PyObjHndl_Create(pyGameAddresses.PartyGetLeader());
@@ -282,8 +285,11 @@ static PyGetSetDef PyGameGettersSetters[] = {
 	{"maps_visited", PyGame_GetMapsVisited, NULL, NULL},
 	{"leader", PyGame_GetLeader, NULL, NULL},
 	{"elader", PyGame_GetLeader, NULL, NULL }, // commonly made typo so might as well support it :D
+
 	{"time", PyGame_GetTime, NULL, NULL},
 	{"time_played", PyGame_GetTimePlayed, NULL, NULL},
+	{"time_session", PyGame_GetTimeSession, NULL, NULL},
+
 	{"global_vars", PyGame_GetGlobalVars, NULL, NULL},
 	{"ggv", PyGame_GetGlobalVars, NULL, NULL },
 	{"global_flags", PyGame_GetGlobalFlags, NULL, NULL},

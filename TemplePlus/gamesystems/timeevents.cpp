@@ -1039,6 +1039,7 @@ void TimeEventSystem::AdvanceTime(uint32_t newTimeMs) {
 	// advance the time played
 
 	timePlayed.timeInMs += timeDeltaMs;
+	mSessionTime += GameTime(0, timeDeltaMs);
 
 	if (timePlayed.timeInMs > 86400000) {
 		timePlayed.timeInDays += timePlayed.timeInMs / 86400000;
@@ -1216,6 +1217,11 @@ GameTime TimeEventSystem::GetAnimTime()
 GameTime TimeEventSystem::GetRealTime()
 {
 	return temple::GetRef<GameTime>(0x10AA83B8);
+}
+
+GameTime TimeEventSystem::GetTimeSession()
+{
+	return mSessionTime;
 }
 
 bool TimeEventSystem::IsDaytime() {
