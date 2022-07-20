@@ -18,6 +18,7 @@ PYBIND11_EMBEDDED_MODULE(gamedialog, m) {
 		}, py::return_value_policy::reference);
 
 	py::class_<DialogState>(m, "DialogState")
+		.def_readonly("script_id", &DialogState::dialogScriptId)
 		.def_readonly("action_type", &DialogState::actionType)
 		.def_readonly("line_number", &DialogState::lineNumber)
 		.def_readonly("reply_count", &DialogState::pcLines)
