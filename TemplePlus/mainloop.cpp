@@ -71,11 +71,6 @@ static struct MainLoop : temple::AddressTable {
 	*/
 	bool* gameBuffersCreated;
 
-	/*
-		Submits a Tig message to the ingame message handler (world view basically)
-	*/
-	void (__cdecl *InGameHandleMessage)(TigMsg& msg);
-
 	MainLoop() {
 		rebase(sub_1002A580, 0x1002A580);
 		rebase(QueueFidgetAnimEvent, 0x100146C0);
@@ -90,7 +85,6 @@ static struct MainLoop : temple::AddressTable {
 
 		rebase(gameBuffersCreated, 0x102AB208);
 
-		rebase(InGameHandleMessage, 0x10114EF0);
 
 		rebase(RenderUi, 0x101F8D10);
 	}
@@ -214,7 +208,7 @@ void GameLoop::Run() {
 			// so i removed the out of place re-rendering of the game frame
 
 			if (!uiSystems->GetMM().IsVisible()) {
-				mainLoop.InGameHandleMessage(msg);
+				uiSystems->GetInGame().ProcessMessage(msg);
 			}
 
 			auto unk = mainLoop.sub_10113CD0();
