@@ -252,3 +252,9 @@ _Pvt_Extensions
 
 /tpdata/.idea
 /.idea
+
+#Generated Temple+ data files
+co8fixes.dat
+co8infra.dat
+kotbfixes.dat
+tpgamefiles.dat
