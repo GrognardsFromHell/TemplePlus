@@ -321,8 +321,6 @@ int GlobalOnDamage(DispatcherCallbackArgs args);
 int DispelCheck(DispatcherCallbackArgs args);
 int DispelAlignmentTouchAttackSignalHandler(DispatcherCallbackArgs args);
 
-int CombatReflexesAooReset(DispatcherCallbackArgs args);
-
 int GreaterTwoWeaponFighting(DispatcherCallbackArgs args);
 int GreaterTWFRanger(DispatcherCallbackArgs args);
 int TwoWeaponFightingBonus(DispatcherCallbackArgs args);

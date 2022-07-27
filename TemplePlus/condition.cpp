@@ -438,8 +438,6 @@ public:
 		replaceFunction(0x100DB690, DispelCheck);
 		replaceFunction(0x100DCF10, DispelAlignmentTouchAttackSignalHandler);
 
-		replaceFunction(0x100F8AF0, CombatReflexesAooReset);
-		
 		// fixes for lack of uniqueAnimID registration
 		replaceFunction(0x100FA060, LayOnHandsPerform);
 		replaceFunction(0x100FB150, RemoveDiseasePerform);
@@ -2098,24 +2096,6 @@ int __cdecl DispelAlignmentTouchAttackSignalHandler(DispatcherCallbackArgs args)
 	}
 
 	return result;
-}
-
-int __cdecl CombatReflexesAooReset(DispatcherCallbackArgs args)
-{
-	int numAoosRem = 1;
-
-	//Fixes atari bug 571 where only dex bonus AOOs could be taken for combat reflexes instead of dex bonus + 1
-	if (feats.HasFeatCount(args.objHndCaller, FEAT_COMBAT_REFLEXES) > 0) {
-		const auto dexScore = objects.StatLevelGet(args.objHndCaller, Stat::stat_dexterity);
-		auto extraAoos = objects.GetModFromStatLevel(dexScore);
-		extraAoos = std::max(extraAoos, 0);
-		numAoosRem += extraAoos;
-	}
-
-	args.SetCondArg(0, numAoosRem);
-	args.SetCondArg(1, 0);
-	args.SetCondArg(2, 0);
-	return 0;
 }
 
 int __cdecl DispelCheck(DispatcherCallbackArgs args)
