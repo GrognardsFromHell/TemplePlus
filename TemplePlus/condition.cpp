@@ -437,7 +437,7 @@ public:
 
 		replaceFunction(0x100DB690, DispelCheck);
 		replaceFunction(0x100DCF10, DispelAlignmentTouchAttackSignalHandler);
-		
+
 		// fixes for lack of uniqueAnimID registration
 		replaceFunction(0x100FA060, LayOnHandsPerform);
 		replaceFunction(0x100FB150, RemoveDiseasePerform);
@@ -7008,7 +7008,7 @@ int ClassAbilityCallbacks::BardicMusicSuggestionCountersong(DispatcherCallbackAr
 	if (!spellSys.GetSpellPacketBody(spellId, &spellPktBody))
 		return 0;
 
-	int countersongRoll = dispIo->arg2;
+	uint32_t countersongRoll = dispIo->arg2;
 
 	if (spellPktBody.dc <= countersongRoll) {
 		// Remove condition, OnBeginRound script should see this and end
