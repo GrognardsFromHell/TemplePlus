@@ -456,6 +456,14 @@ PYBIND11_EMBEDDED_MODULE(tpgui, m) {
 		.def_readonly("children", &LgcyWindow::children)
 		.def_readonly("children_count", &LgcyWindow::childrenCount)
 		;
+	py::enum_<LgcyButtonState>(m, "LgcyButtonState")
+		.value("Disabled", LgcyButtonState::Disabled)
+		.value("Normal", LgcyButtonState::Normal)
+		.value("Hovered", LgcyButtonState::Hovered)
+		.value("Down", LgcyButtonState::Down)
+		.value("Released", LgcyButtonState::Released)
+		.export_values()
+		;
 	py::class_<LgcyButton, LgcyWidget>(m, "LgcyButton")
 		.def_readonly("button_state", &LgcyButton::buttonState)
 		;
