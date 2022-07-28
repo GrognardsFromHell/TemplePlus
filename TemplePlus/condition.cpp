@@ -455,11 +455,12 @@ public:
 		replaceFunction(0x100F88C0, TwoWeaponFightingBonus);
 		replaceFunction(0x100F8940, TwoWeaponFightingBonusRanger);
 		replaceFunction(0x100FEBA0, BarbarianDamageResistance);
-
+		
 		//Subdual and lethal damage checkboxes
 		replaceFunction(0x100F8DA0, NonlethalDamageRadial);
 		replaceFunction(0x100F8ED0, NonlethalDamageSetSubdual);
 		replaceFunction(0x100F8F70, DealNormalDamageCallback);
+		replaceFunction(0x100F9040, DealNormalDamageAttackPenalty);
 		
 
 		
@@ -3749,6 +3750,35 @@ int DealNormalDamageCallback(DispatcherCallbackArgs args)
 		radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Options);
 	}
 
+	return 0;
+}
+
+int DealNormalDamageAttackPenalty(DispatcherCallbackArgs args)
+{
+	const int enabled = conds.CondNodeGetArg(args.subDispNode->condNode, 0);
+	if (enabled == 1)
+	{
+		auto dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
+		const auto weaponUsed = dispIo->attackPacket.GetWeaponUsed();
+
+		//No penalty if using a weapon
+		if (weaponUsed)
+			return 0;
+
+		//No penalty if a touch attack.  This was a vanilla bug that enabled the penalty for spells.
+		if ((dispIo->attackPacket.flags & D20CAF_TOUCH_ATTACK))
+			return 0;
+
+		// Monks don't have the penalty
+		if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_SIMPLE_WEAPON_PROFICIENCY_MONK) != 0)
+			return 0;
+
+		// Improved unarmed strike takes away the penalty
+		if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_IMPROVED_UNARMED_STRIKE) != 0)
+			return 0;
+		
+		dispIo->bonlist.AddBonus(-4, 0, 157);
+	}
 	return 0;
 }
 
