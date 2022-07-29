@@ -13,7 +13,8 @@
 #include "gameview.h"
 
 UiManager *uiManager;
-
+std::map<LgcyWidgetId, std::string> mTextLedger;
+LgcyWidgetId mTextLedgerCurId = -1;
 
 /**
  * Handles button click triggering.
@@ -126,7 +127,7 @@ public:
 			 if (*text == 0)
 				 return 1;
 
-			
+			 uiManager->RenderedTextTabulate(widgetId, text);
 
 			 TigRect extents(rect.x + wid->x, rect.y + wid->y, rect.width, rect.height);
 			 if (rect.x < 0 || rect.x > 10000 || rect.width > 10000 || rect.width < 0)
@@ -639,6 +640,8 @@ void UiManager::RemoveChildWidget(LgcyWidgetId id)
 
 void UiManager::Render()
 {
+	mTextLedger.clear();
+
 	// Make a copy here since some vanilla logic will show/hide windows in their render callbacks
 	auto activeWindows(mActiveWindows);
 
@@ -659,6 +662,7 @@ void UiManager::Render()
 		// Render the widget itself
 		auto renderFunc = window->render;
 		if (renderFunc) {
+			mTextLedgerCurId = windowId;
 			renderFunc(windowId);
 		}
 
@@ -667,10 +671,33 @@ void UiManager::Render()
 			auto childId = window->children[i];
 			auto child = GetWidget(childId);
 			if (!child->IsHidden() && child->render) {
+				mTextLedgerCurId = childId;
 				child->render(childId);
 			}
 		}
 	}
+}
+
+void UiManager::RenderedTextTabulate(LgcyWidgetId id, const char* text)
+{
+	
+	mTextLedger[mTextLedgerCurId] = text;
+	if (id != mTextLedgerCurId) { // many such cases!
+		if (mTextLedger.find(id) == mTextLedger.end()) {
+			mTextLedger[id] = fmt::format("[WID={}]", mTextLedgerCurId) + text;
+		}
+		else {
+			mTextLedger[id] += fmt::format("\n[WID={}]", mTextLedgerCurId) + text;
+		}
+	}
+}
+
+const char* UiManager::GetRenderedText(LgcyWidgetId id)
+{
+	auto it = mTextLedger.find(id);
+	if (it== mTextLedger.end())
+		return nullptr;
+	return it->second.c_str();
 }
 
 LgcyWindow * UiManager::GetWindowAt(int x, int y)

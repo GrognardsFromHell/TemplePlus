@@ -450,6 +450,12 @@ PYBIND11_EMBEDDED_MODULE(tpgui, m) {
 				}
 				return result;
 			})
+		.def_property_readonly("rendered_text", [](LgcyWidget& self)->py::bytes{
+				auto txt = uiManager->GetRenderedText(self.widgetId);
+				if (!txt)
+					return "";
+				return txt;
+			})
 		;
 
 	py::class_<LgcyWindow, LgcyWidget>(m, "LgcyWindow")
