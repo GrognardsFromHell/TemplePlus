@@ -676,11 +676,17 @@ void UiManager::Render()
 			}
 		}
 	}
+	mTextLedgerCurId = -1;
 }
 
 void UiManager::RenderedTextTabulate(LgcyWidgetId id, const char* text)
 {
-	
+	if (id == -1 && mTextLedgerCurId != -1){
+		if (mTextLedger.find(mTextLedgerCurId) == mTextLedger.end()) {
+			mTextLedger[mTextLedgerCurId] = fmt::format("[WID={}]", mTextLedgerCurId) + text;
+		}
+		return;
+	}
 	mTextLedger[mTextLedgerCurId] = text;
 	if (id != mTextLedgerCurId) { // many such cases!
 		if (mTextLedger.find(id) == mTextLedger.end()) {

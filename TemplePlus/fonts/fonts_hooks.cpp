@@ -7,6 +7,7 @@
 #include "tig/tig_startup.h"
 #include "graphics/device.h"
 #include "graphics/textengine.h"
+#include <ui/ui.h>
 
 static struct FontRenderAddresses : temple::AddressTable {
 
@@ -51,7 +52,7 @@ int FontRenderFix::FontDraw(const char* text, TigRect* extents, TigTextStyle* st
 	}
 
 	layouter.LayoutAndDraw(span( text, strlen(text) ), font, *extents, *style);
-
+	uiManager->RenderedTextTabulate(-1, text);
 	return 0;
 }
 
