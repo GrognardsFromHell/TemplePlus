@@ -93,6 +93,7 @@ struct SpellPacketBody{
 
 	bool IsVancian();
 	bool IsDivine();
+	bool IsArcane();
 	bool IsItemSpell();
 	bool IsPermanent() const;
 

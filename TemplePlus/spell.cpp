@@ -578,6 +578,17 @@ bool SpellPacketBody::IsDivine(){
 	return false;
 }
 
+bool SpellPacketBody::IsArcane() {
+	if (spellSys.isDomainSpell(spellClass))
+		return false;
+	auto castingClass = spellSys.GetCastingClass(spellClass);
+
+	if (d20ClassSys.IsArcaneCastingClass(castingClass))
+		return true;
+
+	return false;
+}
+
 bool SpellPacketBody::IsItemSpell(){
 	return invIdx != INV_IDX_INVALID;
 }
@@ -2318,7 +2329,26 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 		int fieldType, value, value2;
 		auto parseOk = true;
 
-		if (!_strnicmp(textBuf, "choices", 7)){
+		if (!_strnicmp(textBuf, "school", 6)) {
+			static std::map<string, int> schoolStrings = {
+				{ "None", 0 }, // lol bug; fixed inside SavingThrowSpell (to avoid changing all the spell rules...)
+				{ "Abjuration", SpellSchools::School_Abjuration },
+				{ "Conjuration", SpellSchools::School_Conjuration},
+				{ "Divination", SpellSchools::School_Divination},
+				{ "Enchantment", SpellSchools::School_Enchantment},
+				{ "Evocation", SpellSchools::School_Evocation},
+				{ "Illusion", SpellSchools::School_Illusion},
+				{ "Necromancy", SpellSchools::School_Necromancy},
+				{ "Transmutation", SpellSchools::School_Transmutation},
+				// Added in Temple+ for Warlocks
+				{ "Invocation", SpellSchools::School_Transmutation},
+			};
+			auto value = 0;
+			if (findInMapping(schoolStrings, textBuf + 6, value)) {
+				spEntry.spellSchoolEnum = value;
+			}
+		}
+		else if (!_strnicmp(textBuf, "choices", 7)){
 			
 			for (auto ch = textBuf; *ch; ch++)
 			{

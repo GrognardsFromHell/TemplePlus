@@ -1,0 +1,5 @@
+name: Augmented Casting
+flags: 8
+prereqs:
+description:  Starting at 3rd level, you can choose to sacrifice a spell or spell slot from one of your classes to apply the effect of a metamagic feat that you know to a spell cast using another arcane class.  The level of the spell can't exceed 1/2 your ultimate magus level.
+prereq descr: Ultimate Magus Level 3.
