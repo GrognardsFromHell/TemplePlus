@@ -1686,6 +1686,10 @@ void format_arg(fmt::BasicFormatter<char>& f, const char*& format_str, const D20
 	{
 		f.writer().write("D20Actn({})", i);
 	}
+
+	if (d20a.d20ATarget) {
+		f.writer().write( "target: {} location: {}", d20a.d20ATarget, d20a.destLoc);
+	}
 	return;
 }
 
