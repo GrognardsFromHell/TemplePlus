@@ -164,8 +164,8 @@ PYBIND11_EMBEDDED_MODULE(tpgui, m) {
 		}
 
 		auto wnd = std::make_unique<WidgetContainer>(w, h);
-		uiPython->AddWidget(wnd.get());
 		wnd->SetId(id);
+		uiPython->AddWidget(wnd.get());
 		auto result = wnd.get();
 
 		parent->Add(std::move(wnd));
@@ -212,7 +212,9 @@ PYBIND11_EMBEDDED_MODULE(tpgui, m) {
 		.def_property("parent", &WidgetBase::GetParent, &WidgetBase::SetParent, py::return_value_policy::reference)
 		.def_property("visible", &WidgetBase::IsVisible, &WidgetBase::SetVisible)
 		.def("show", &WidgetBase::Show)
-		.def("hide", &WidgetBase::Hide)
+		.def("hide", [](WidgetBase& self) {
+				self.Hide();
+			})
 		.def("bring_to_front", &WidgetBase::BringToFront)
 		;
 	py::class_<WidgetContent>(m, "WidgetContent")
@@ -292,6 +294,7 @@ PYBIND11_EMBEDDED_MODULE(tpgui, m) {
 		.def("set_text", &WidgetButton::SetText)
 		.def("set_click_handler", [](WidgetButton &self, std::function<void()> funcy) {
 			self.SetClickHandler(funcy);
+			self.SetMouseMsgHandler([](const TigMouseMsg&) {return true; /* just so that it eats the message */ });
 			})
 		;
 
