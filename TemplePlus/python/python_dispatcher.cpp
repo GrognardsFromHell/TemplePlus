@@ -839,6 +839,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		{
 			return spellSys.GetSpellRangeExact(spEntry.spellRangeType, casterLevel, caster);
 		})
+		.def_readonly("ai_spell_type", &SpellEntry::aiTypeBitmask) // see AiSpellType
 		;
 
 		py::enum_<SpellRangeType>(m, "SpellRangeType")
