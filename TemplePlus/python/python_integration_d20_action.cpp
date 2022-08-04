@@ -38,6 +38,10 @@ PythonD20ActionIntegration pythonD20ActionIntegration;
 PYBIND11_EMBEDDED_MODULE(tpactions, m) {
 	m.doc() = "Temple+ D20 Actions module, used for handling of D20 actions & action sequencing.";
 
+	m.def("cur_seq_reset", [](objHndl handle) {
+		actSeqSys.curSeqReset(handle);
+		}, "Resets current sequence (action num, path queries etc) and assigns it to obj");
+
 	py::class_<ActnSeq>(m, "ActionSequence", R"(Describes a D20 action sequence.)")
 		.def_readwrite("cur_idx", &ActnSeq::d20aCurIdx)
 		.def_readwrite("performer", &ActnSeq::performer)
