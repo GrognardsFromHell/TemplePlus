@@ -186,7 +186,7 @@ static PyObject* PyGame_GetTimePlayed(PyObject*, void*) {
 	return result;
 }
 static PyObject* PyGame_GetTimeSession(PyObject*, void*) {
-	auto result = PyTimeStamp_Create(gameSystems->GetTimeEvent().GetRealTime());
+	auto result = PyTimeStamp_Create(gameSystems->GetTimeEvent().GetTimeSession());
 	return result;
 }
 
