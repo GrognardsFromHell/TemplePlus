@@ -1140,7 +1140,7 @@ void MapSystem::OpenMap(const MapListEntry *mapEntry)
 	auto dataDir = fmt::format("maps\\{}", mapEntry->name);
 	auto saveDir = fmt::format("Save\\Current\\maps\\{}", mapEntry->name);
 
-	logger->info("Loading Map: {}", dataDir);
+	logger->info("Loading Map [{}]: {}", mapEntry->id, dataDir);
 
 	// Close opened map 
 	CloseMap();
@@ -1227,7 +1227,7 @@ void MapSystem::OpenMap(const MapListEntry *mapEntry)
 	mMapOpen = true;
 	mMapClosed = false;
 
-	logger->info("Finished loading the map");
+	logger->info("Finished loading the map [{}]", mapEntry->id);
 }
 
 void MapSystem::LoadMapInfo(const std::string & dataDir)
