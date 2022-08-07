@@ -75,6 +75,13 @@ static ActiveSpellMap activeSpells;
 ******************************************************************************/
 #pragma region PySpell
 
+void PySpell_Reset() {
+	for (auto it = activeSpells.begin(); it != activeSpells.end();) {
+		logger->error("Undisposed PySpell caught: ID={} enum={}. Removing from Python ActiveSpellsMap activeSpells.", it->second->spellId, it->second->spellEnum);
+		it = activeSpells.erase(it);
+	}
+}
+
 static PyObject* PySpell_Repr(PyObject* obj) {
 	auto self = (PySpell*)obj;
 	return PyString_FromFormat("Spell(%d)", self->spellEnum);

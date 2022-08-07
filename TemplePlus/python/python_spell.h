@@ -5,6 +5,7 @@
 struct PySpell;
 struct PySpellStore;
 struct SpellPacketBody;
+void PySpell_Reset();
 BOOL ConvertTargetArray(PyObject *obj, PySpell **pySpellOut);
 
 PyObject *PySpell_Create(int spellId);
