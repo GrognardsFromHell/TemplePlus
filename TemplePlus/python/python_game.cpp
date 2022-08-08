@@ -1041,6 +1041,22 @@ PyObject* PyGame_MouseClick(PyObject*, PyObject* args)
 	Py_RETURN_TRUE;
 }
 
+PyObject* PyGame_MouseSetState(PyObject*, PyObject* args)
+{
+	int clickType = 0;
+	int pressed = 0;
+
+	if (!PyArg_ParseTuple(args, "ii:game.mouse_set_button_state", &clickType, &pressed)) {
+		return nullptr;
+	}
+
+	if (clickType >= (int)MouseButton::LEFT && clickType <= (int)MouseButton::MIDDLE) {
+		mouseFuncs.SetButtonState((MouseButton)clickType, pressed != 0);
+	}
+
+	Py_RETURN_TRUE;
+}
+
 
 PyObject* PyGame_LoadGame(PyObject*, PyObject* args) {
 	char *filename;
@@ -1556,6 +1572,7 @@ static PyMethodDef PyGameMethods[]{
 	{ "scroll_to", PyGame_ScrollTo, METH_VARARGS, NULL },
 	{"mouse_move_to", PyGame_MouseMoveTo, METH_VARARGS, NULL },
 	{"mouse_click", PyGame_MouseClick, METH_VARARGS, NULL },
+	{"mouse_set_button_state", PyGame_MouseSetState, METH_VARARGS, "args: (button_type: int, pressed: int), left = 0, right = 1, middle = 2"},
 	{"shake", PyGame_Shake, METH_VARARGS, NULL},
 	{"moviequeue_add", PyGame_MoviequeueAdd, METH_VARARGS, NULL},
 	{"moviequeue_play", PyGame_MoviequeuePlay, METH_VARARGS, NULL},
