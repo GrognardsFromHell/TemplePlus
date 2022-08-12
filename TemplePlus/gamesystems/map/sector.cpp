@@ -733,9 +733,9 @@ int SectorHooks::HookedBuildClampedTileList(int64_t startLoc, int64_t endLoc, in
 	auto nextLoc = (startLoc / increment + 1)*increment;
 	auto locsOutIterator = locsOut+1;
 
-	if (endLoc > startLoc + 5*increment){
-		logger->warn("Large endLoc detected! ({}). Truncating.", endLoc);
-		endLoc = startLoc + 4 * increment;
+	if (endLoc > startLoc + 4*increment){ // fixes buffer overflow issue due to output buffer size being 5. This caps it to: { startLoc, [startLoc/64]+64, [startLoc/64]+128, [startLoc/64]+192, endLoc }
+		logger->error("Large endLoc detected! ({}). Truncating.", endLoc);
+		endLoc = startLoc + 3 * increment;
 	}
 
 	while (nextLoc < endLoc){
@@ -745,5 +745,7 @@ int SectorHooks::HookedBuildClampedTileList(int64_t startLoc, int64_t endLoc, in
 	}
 	*locsOutIterator = endLoc;
 	auto diff = (int)locsOutIterator - (int)locsOut + 8;
-	return  diff / 8;
+	auto tileListSize = diff / 8;
+	Expects(tileListSize <= 5);
+	return tileListSize;
 }
