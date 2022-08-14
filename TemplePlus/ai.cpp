@@ -4936,6 +4936,9 @@ void FireballLocationAdj(objHndl caster, XMFLOAT2 pos, XMFLOAT2& posAdj, int fla
 	// find the direction from friend to current fireball center
 	// vector add this to the tgt pos so that target is out of range
 	auto tgtPos = objects.GetLocationFull(tgt).ToInches2D();
+	if (tgtPos.x == 0 && tgtPos.y == 0) {
+		logger->error("FireballLocationAdj: how did this get to be 0?");
+	}
 	auto posV = DirectX::XMLoadFloat2(&pos);
 	auto tgtPosV = DirectX::XMLoadFloat2(&tgtPos);
 	auto posDiff = DirectX::XMVectorSubtract( posV , tgtPosV);
