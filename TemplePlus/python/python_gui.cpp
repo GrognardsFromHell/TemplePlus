@@ -8,6 +8,7 @@
 #include <tig/tig_startup.h>
 #include <graphics/device.h>
 #include <gameview.h>
+#include "mainwindow.h"
 
 namespace py = pybind11;
 //
@@ -158,6 +159,9 @@ PYBIND11_EMBEDDED_MODULE(tpgui, m) {
 
 	m.doc() = "Temple+ GUI, used for custom user UIs.";
 
+	m.def("game_is_focused", []()->bool {
+		return GetFocus() == tig->GetMainWindow().GetHwnd();
+		});
 	m.def("_get_widget_id_at", [](int x, int y) {
 		auto id = uiManager->GetWidgetAt(x, y);
 		});
