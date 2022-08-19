@@ -827,8 +827,10 @@ void UiCharEditor::BtnStatesUpdate(int systemId){
 
 }
 
+/* 0x101B0B70 */
 BOOL UiCharEditor::ClassWidgetsInit(){
 	static LgcyWindow classWnd(259,117, 405, 271);
+	snprintf(classWnd.name , sizeof(classWnd.name), "char_editor_class_ui.c 193" );
 	classWnd.flags = 1;
 	classWnd.render = [](int widId) { uiCharEditor.StateTitleRender(widId); };
 	classWndId = uiManager->AddWindow(classWnd);
@@ -938,6 +940,7 @@ BOOL UiCharEditor::ClassCheckComplete(){
 	return (BOOL)(selPkt.classCode != 0);
 }
 
+/* 0x101B0DE0 */
 BOOL UiCharEditor::ClassSystemInit(GameSystemConf &conf){
 	if (textureFuncs.RegisterTexture("art\\interface\\pc_creation\\buttonbox.tga", &buttonBox))
 		return 0;
