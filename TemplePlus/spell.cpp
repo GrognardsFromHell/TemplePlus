@@ -219,6 +219,7 @@ public:
 				}
 				tgtList[idx] = handle;
 				tgtCount++;
+				return 1;
 			});
 		// InsertToPfxList: fixes no check for max target count
 		// May cause crashes when AoE spells had more than 32 targets
