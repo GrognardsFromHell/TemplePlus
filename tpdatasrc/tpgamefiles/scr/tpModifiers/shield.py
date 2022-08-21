@@ -22,7 +22,8 @@ def towerShieldToHit(attachee, args, evt_obj):
 	if tpdp.config_get_bool("stricterRulesEnforcement"):
 		shield = attachee.item_worn_at(item_wear_shield)
 		if shield != OBJ_HANDLE_NULL:
-			max_dex_bonus = shield.get_max_dex_bonus()
+			max_dex_bonus = shield.obj_get_int(obj_f_armor_max_dex_bonus)
+			
 			# Tower shield check.  Tower shields should have 2 (or slightly more for special materials).
 			# Other shields should have a large value (100).
 			if max_dex_bonus < 5:
