@@ -802,6 +802,7 @@ BOOL LegacyCombatSystem::StartCombat(objHndl combatInitiator, int setToFirstInit
 
 	if (AllPcsUnconscious())
 		return FALSE;
+	logger->debug("StartCombat: entering combat mode; initiated by {}", combatInitiator);
 
 	*combatAddresses.combatRoundCount = 0;
 	if (!gameSystems->GetAnim().InterruptAllForTbCombat()){
