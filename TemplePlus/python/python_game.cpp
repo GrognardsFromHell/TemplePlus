@@ -1041,6 +1041,29 @@ PyObject* PyGame_MouseClick(PyObject*, PyObject* args)
 	Py_RETURN_TRUE;
 }
 
+PyObject* PyGame_MouseScroll(PyObject*, PyObject* args)
+{
+	int wheelDelta = 0;
+	if (!PyArg_ParseTuple(args, "i:game.mouse_scroll", &wheelDelta)) {
+		return nullptr;
+	}
+	if (!wheelDelta)
+		Py_RETURN_NONE;
+	auto mousePos = mouseFuncs.GetPos();
+
+	TigMsgMouse tigMsg;
+	tigMsg.createdMs = timeGetTime();
+	tigMsg.type = TigMsgType::MOUSE;
+	tigMsg.x = mousePos.x;
+	tigMsg.y = mousePos.y;
+	tigMsg.buttonStateFlags |= MouseStateFlags::MSF_SCROLLWHEEL_CHANGE;
+	tigMsg.arg3 = wheelDelta;
+
+	messageQueue->Enqueue(tigMsg);
+	
+	Py_RETURN_NONE;
+}
+
 PyObject* PyGame_MouseSetState(PyObject*, PyObject* args)
 {
 	int clickType = 0;
@@ -1573,6 +1596,7 @@ static PyMethodDef PyGameMethods[]{
 	{"mouse_move_to", PyGame_MouseMoveTo, METH_VARARGS, NULL },
 	{"mouse_click", PyGame_MouseClick, METH_VARARGS, NULL },
 	{"mouse_set_button_state", PyGame_MouseSetState, METH_VARARGS, "args: (button_type: int, pressed: int), left = 0, right = 1, middle = 2"},
+	{"mouse_scroll", PyGame_MouseScroll, METH_VARARGS},
 	{"shake", PyGame_Shake, METH_VARARGS, NULL},
 	{"moviequeue_add", PyGame_MoviequeueAdd, METH_VARARGS, NULL},
 	{"moviequeue_play", PyGame_MoviequeuePlay, METH_VARARGS, NULL},
