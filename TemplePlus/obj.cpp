@@ -661,8 +661,7 @@ SecretDoorFlag Objects::GetSecretDoorFlags(objHndl handle) {
 
 void Objects::Destroy(objHndl ObjHnd) {
 	static set<objHndl> destroyed;
-	std::string name = this->GetDisplayName(ObjHnd, ObjHnd);
-	logger->info("Destroying {}", name);
+	logger->info("Destroying {}", ObjHnd);
 	if (destroyed.find(ObjHnd) != destroyed.end()) {
 		logger->error("Double destroying object {}", ObjHnd);
 	}
