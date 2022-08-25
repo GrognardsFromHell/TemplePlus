@@ -661,7 +661,11 @@ SecretDoorFlag Objects::GetSecretDoorFlags(objHndl handle) {
 
 void Objects::Destroy(objHndl ObjHnd) {
 	static set<objHndl> destroyed;
+	
 	logger->info("Destroying {}", ObjHnd);
+	if (pythonObjIntegration.IsInObjInvocation()) {
+		logger->info("\t (caused by script ID {}, event {}, obj {})", pythonObjIntegration.GetCounterScriptId(), pythonObjIntegration.GetEventName(pythonObjIntegration.GetCounterEvent()), pythonObjIntegration.GetCounterObj());
+	}
 	if (destroyed.find(ObjHnd) != destroyed.end()) {
 		logger->error("Double destroying object {}", ObjHnd);
 	}

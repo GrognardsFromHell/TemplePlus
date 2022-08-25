@@ -451,5 +451,8 @@ static const char* scriptEventFunctions[] = {
 };
 
 const char* PythonObjIntegration::GetFunctionName(EventId evt) {
-	return scriptEventFunctions[evt];
+	if (evt < 43 && evt >= 0)
+		return scriptEventFunctions[evt];
+	else
+		return "INVALID EVENT";
 }

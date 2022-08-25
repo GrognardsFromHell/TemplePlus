@@ -33,6 +33,31 @@ struct RaycastAddresses: temple::AddressTable
 	}
 } addresses;
 
+class RaycastHooks : public TempleFix {
+	void apply() override {
+		static int (__cdecl *orgRaycast)(RaycastPacket&) = replaceFunction<int(RaycastPacket&)>(0x100BACE0, [](RaycastPacket &rcp)->int {
+			auto sourceObj = objHndl::null;
+			auto tgtObj = objHndl::null;
+
+			auto flags = rcp.flags;
+			if (flags & RaycastFlags::HasSourceObj) {
+				sourceObj = rcp.sourceObj;
+			}
+			if (flags & RaycastFlags::HasTargetObj) {
+				tgtObj = rcp.target;
+			}
+			if (!(flags & RaycastFlags::HasRadius)) {
+				rcp.radius = 0.1f;
+			}
+			if (rcp.origin.location.locx <= 20 || rcp.origin.location.locy <= 20) {
+				logger->info("Weird raycast origin: {},{} for obj: {} tgt obj: {}", rcp.origin.location.locx, rcp.origin.location.locy, rcp.sourceObj, rcp.target);
+			}
+			auto result = orgRaycast(rcp);
+			return result;
+			});
+	}
+} raycastHooks;
+
 int RaycastPacket::Raycast()
 {
 	return addresses.Raycast(this);
