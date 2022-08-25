@@ -734,7 +734,7 @@ int SectorHooks::HookedBuildClampedTileList(int64_t startLoc, int64_t endLoc, in
 	auto locsOutIterator = locsOut+1;
 	int startLocInt = (int)(startLoc & 0xFFFFffff), endLocInt = (int)(endLoc & 0xFFFFffff);
 
-	if (endLoc > startLoc + 4*increment){ // fixes buffer overflow issue due to output buffer size being 5. This caps it to: { startLoc, [startLoc/64]+64, [startLoc/64]+128, [startLoc/64]+192, endLoc }
+	if (endLoc > startLoc + 3*increment){ // fixes buffer overflow issue due to output buffer size being 5. This caps it to: { startLoc, [startLoc/64]+64, [startLoc/64]+128, endLoc }
 		logger->error("Large endLoc detected! (start: {} ({}) end: {} ({})). Truncating.",startLoc,startLocInt, endLoc, endLocInt);
 		endLoc = startLoc + 3 * increment;
 		logger->info("new endLoc: {}", endLoc);
@@ -742,7 +742,7 @@ int SectorHooks::HookedBuildClampedTileList(int64_t startLoc, int64_t endLoc, in
 
 	int count = 0;
 	while (nextLoc < endLoc){
-		if (++count >= 5) {
+		if (++count >= 4) {
 			logger->error("HookedBuildClampedTileList: too much! Halting at {}.", nextLoc);
 			break;
 		}
