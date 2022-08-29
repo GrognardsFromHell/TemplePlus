@@ -153,6 +153,12 @@ WidgetButton* GetAdvWidgetButton(LgcyWidgetId id) {
 
 	return (WidgetButton*)(wid);
 }
+WidgetScrollBar* GetAdvWidgetScrollbar(LgcyWidgetId id) {
+	auto wid = uiManager->GetAdvancedWidget(id);
+	if (!wid || !wid->IsScrollBar()) return nullptr;
+
+	return (WidgetScrollBar*)(wid);
+}
 
 
 PYBIND11_EMBEDDED_MODULE(tpgui, m) {
@@ -189,6 +195,13 @@ PYBIND11_EMBEDDED_MODULE(tpgui, m) {
 			return nullptr;
 		return (LgcyButton*)wid;
 		}, py::return_value_policy::reference);
+	m.def("_get_legacy_scrollbar", [](LgcyWidgetId id)->LgcyScrollBar* {
+		auto wid = uiManager->GetWidget(id);
+		auto adv = uiManager->GetAdvancedWidget(id);
+		if (adv != nullptr || !wid->IsScrollBar())
+			return nullptr;
+		return (LgcyScrollBar*)wid;
+		}, py::return_value_policy::reference);
 
 
 
@@ -201,6 +214,7 @@ PYBIND11_EMBEDDED_MODULE(tpgui, m) {
 		auto wid = GetAdvWidget("sheeit");
 		return wid!=nullptr;
 		}*/, py::return_value_policy::reference);
+	m.def("_get_adv_widget_scrollbar", &GetAdvWidgetScrollbar, py::return_value_policy::reference);
 
 	m.def("_add_root_container", [](const std::string& id, int w, int h)->WidgetContainer* {
 		auto wid = uiPython->AddRootWidget(id);
@@ -415,6 +429,10 @@ PYBIND11_EMBEDDED_MODULE(tpgui, m) {
 			self.SetMouseMsgHandler([](const TigMouseMsg&) {return true; /* just so that it eats the message */ });
 			})
 		;
+	py::class_<WidgetScrollBar, WidgetContainer>(m, "ScrollBar")
+		.def_property("scrollbar_value", &WidgetScrollBar::GetValue, &WidgetScrollBar::SetValue)
+		.def_property_readonly("scrollbar_max", &WidgetScrollBar::GetMax)
+		;
 
 #pragma endregion
 	
@@ -459,6 +477,21 @@ PYBIND11_EMBEDDED_MODULE(tpgui, m) {
 				if (!txt)
 					return "";
 				return txt;
+			})
+		// duck typing scrollbars:
+		.def_property_readonly("scrollbar_value", 
+			/* get */ [](LgcyWidget& self)->int {
+				if (!self.IsScrollBar())
+					return -1;
+				auto& scrollbar = (LgcyScrollBar&)self;
+				return scrollbar.GetY();
+			})
+		.def_property_readonly("scrollbar_max",
+			/* get */ [](LgcyWidget& self)->int {
+				if (!self.IsScrollBar())
+					return -1;
+				auto& scrollbar = (LgcyScrollBar&)self;
+				return scrollbar.yMax;
 			})
 		;
 
