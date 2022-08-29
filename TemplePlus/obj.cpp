@@ -1061,6 +1061,12 @@ void Objects::UpdateRadius(objHndl handle, gfx::AnimatedModel &model) {
 	if (radius > 0) {
 		SetRadius(handle, radius);
 		SetFlag(handle, OF_RADIUS_SET);
+		if (radius > 2000) {
+			logger->info("Huge Radius calculated {} for object {}", radius, handle);
+		}
+	}
+	else {
+		logger->info("Radius {} for object {}", radius, handle);
 	}
 }
 
