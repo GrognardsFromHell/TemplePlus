@@ -510,5 +510,7 @@ PYBIND11_EMBEDDED_MODULE(tpgui, m) {
 	py::class_<LgcyButton, LgcyWidget>(m, "LgcyButton")
 		.def_readonly("button_state", &LgcyButton::buttonState)
 		;
+	py::class_<LgcyScrollBar, LgcyWidget>(m, "LgcyScrollBar")
+		;
 #pragma endregion Legacy Widgets
 }
