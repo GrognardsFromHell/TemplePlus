@@ -478,6 +478,10 @@ PYBIND11_EMBEDDED_MODULE(tpgui, m) {
 					return "";
 				return txt;
 			})
+		.def_property_readonly("render_status", [](LgcyWidget& self)->int {
+				auto val = uiManager->GetRenderingStatus(self.widgetId);
+				return val;
+			})
 		// duck typing scrollbars:
 		.def_property_readonly("scrollbar_value", 
 			/* get */ [](LgcyWidget& self)->int {

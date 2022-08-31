@@ -13,8 +13,9 @@
 #include "gameview.h"
 
 UiManager *uiManager;
+LgcyWidgetId mLedgerCurId = -1;
 std::map<LgcyWidgetId, std::string> mTextLedger;
-LgcyWidgetId mTextLedgerCurId = -1;
+std::map<LgcyWidgetId, int> mRenderLedger; // whether it draws something (other than text) on screen
 
 /**
  * Handles button click triggering.
@@ -641,6 +642,7 @@ void UiManager::RemoveChildWidget(LgcyWidgetId id)
 void UiManager::Render()
 {
 	mTextLedger.clear();
+	mRenderLedger.clear();
 
 	// Make a copy here since some vanilla logic will show/hide windows in their render callbacks
 	auto activeWindows(mActiveWindows);
@@ -662,7 +664,7 @@ void UiManager::Render()
 		// Render the widget itself
 		auto renderFunc = window->render;
 		if (renderFunc) {
-			mTextLedgerCurId = windowId;
+			mLedgerCurId = windowId;
 			renderFunc(windowId);
 		}
 
@@ -671,29 +673,29 @@ void UiManager::Render()
 			auto childId = window->children[i];
 			auto child = GetWidget(childId);
 			if (!child->IsHidden() && child->render) {
-				mTextLedgerCurId = childId;
+				mLedgerCurId = childId;
 				child->render(childId);
 			}
 		}
 	}
-	mTextLedgerCurId = -1;
+	mLedgerCurId = -1;
 }
 
 void UiManager::RenderedTextTabulate(LgcyWidgetId id, const char* text)
 {
-	if (id == -1 && mTextLedgerCurId != -1){
-		if (mTextLedger.find(mTextLedgerCurId) == mTextLedger.end()) {
-			mTextLedger[mTextLedgerCurId] = fmt::format("[WID={}]", mTextLedgerCurId) + text;
+	if (id == -1 && mLedgerCurId != -1){
+		if (mTextLedger.find(mLedgerCurId) == mTextLedger.end()) {
+			mTextLedger[mLedgerCurId] = fmt::format("[WID={}]", mLedgerCurId) + text;
 		}
 		return;
 	}
-	mTextLedger[mTextLedgerCurId] = text;
-	if (id != mTextLedgerCurId) { // many such cases!
+	mTextLedger[mLedgerCurId] = text;
+	if (id != mLedgerCurId) { // many such cases!
 		if (mTextLedger.find(id) == mTextLedger.end()) {
-			mTextLedger[id] = fmt::format("[WID={}]", mTextLedgerCurId) + text;
+			mTextLedger[id] = fmt::format("[WID={}]", mLedgerCurId) + text;
 		}
 		else {
-			mTextLedger[id] += fmt::format("\n[WID={}]", mTextLedgerCurId) + text;
+			mTextLedger[id] += fmt::format("\n[WID={}]", mLedgerCurId) + text;
 		}
 	}
 }
@@ -704,6 +706,33 @@ const char* UiManager::GetRenderedText(LgcyWidgetId id)
 	if (it== mTextLedger.end())
 		return nullptr;
 	return it->second.c_str();
+}
+
+void UiManager::RenderingTabulate(LgcyWidgetId id, int val)
+{
+	if (id == -1 && mLedgerCurId != -1) {
+		if (mRenderLedger.find(mLedgerCurId) == mRenderLedger.end()) {
+			mRenderLedger[mLedgerCurId] |= val;
+		}
+		return;
+	}
+	mRenderLedger[mLedgerCurId] = val;
+	if (id != mLedgerCurId) { // many such cases!
+		if (mRenderLedger.find(id) == mRenderLedger.end()) {
+			mRenderLedger[id] = val;
+		}
+		else {
+			mRenderLedger[id] |= val;
+		}
+	}
+}
+
+int UiManager::GetRenderingStatus(LgcyWidgetId id)
+{
+	auto it = mRenderLedger.find(id);
+	if (it == mRenderLedger.end())
+		return 0;
+	return it->second;
 }
 
 LgcyWindow * UiManager::GetWindowAt(int x, int y)

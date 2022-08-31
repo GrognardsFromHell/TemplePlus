@@ -286,6 +286,8 @@ public:
 	void Render();
 	void RenderedTextTabulate(LgcyWidgetId id, const char* text); // to keep track of what text was actually rendered in a widget (used for UI automation)
 	const char* GetRenderedText(LgcyWidgetId id);
+	void RenderingTabulate(LgcyWidgetId id, int val);
+	int GetRenderingStatus(LgcyWidgetId id);
 
 	LgcyWindow* GetWindowAt(int x, int y);
 
