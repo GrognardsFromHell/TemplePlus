@@ -231,11 +231,12 @@ Feats: Cleave, Power Attack
 } // Special: Contact with an evil summoned outsider.
 
 
-{13016}Dragon Disciple{A descendant of dragonkind who uses their innate magical power as a catalyst to ignite their dragon blood.
+{13016}Dragon Disciple{-- COMING SOON --}
+A descendant of dragonkind who uses their innate magical power as a catalyst to ignite their dragon blood.
 
 Requirements:
 Level: 5
-Spellcasting: Ability to cast arcane spells without preparation.}
+Spellcasting: Ability to cast arcane spells without preparation.
 
 
 {13017}Duelist{A nimble, intelligent fighter trained in making precise attacks with light weapons, such as the rapier. Also known as a swashbuckler.
