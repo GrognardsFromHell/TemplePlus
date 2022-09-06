@@ -1,0 +1,5 @@
+name: Arcane Spell Power
+flags: 8
+prereqs:
+description:  At 1st level, your caster level for all arcane spells increases by 1. It increases again at 4th level, 7th level, and 10th level (to a maximum of +4).
+prereq descr: Ultimate Magus Level 1.
