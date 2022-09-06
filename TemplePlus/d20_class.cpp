@@ -592,11 +592,14 @@ void D20ClassSystem::GetClassSpecs(){
 
 }
 
+/* 0x100F4BC0 */
 int D20ClassSystem::ClericMaxSpellLvl(uint32_t clericLvl) const
 {
 	int result = clericLvl % 2 + clericLvl / 2;
 	if (result < 0)
 		result = 0;
+	if (result > NUM_SPELL_LEVELS-1) // Temple+: fixes crash when cleric level > 20 in spell memo screen
+		return NUM_SPELL_LEVELS - 1;
 	return result;
 }
 
@@ -605,7 +608,7 @@ int D20ClassSystem::NumDomainSpellsKnownFromClass(objHndl dude, Stat classCode)
 	if (classCode != stat_level_cleric)
 		return 0;
 	auto clericLvl = critterSys.GetSpellListLevelForClass(dude, stat_level_cleric);
-	return ClericMaxSpellLvl(clericLvl) * 2;
+	return min( (NUM_SPELL_LEVELS-1)*2, ClericMaxSpellLvl(clericLvl) * 2);
 }
 
 int D20ClassSystem::GetNumSpellsFromClass(objHndl obj, Stat classEnum, int spellLvl, uint32_t classLvl, bool getFromStatMod)

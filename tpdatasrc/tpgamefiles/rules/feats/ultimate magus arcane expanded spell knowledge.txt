@@ -1,0 +1,5 @@
+name: Expanded Spell Knowledge
+flags: 8
+prereqs:
+description:  At level 2, 4, 6, 8 and 10 select one arcane spell (half your ultimate Magus class level or less) from your spellbook to add to the list of a spontaneous casting class.  Use the radial menu to select the spell.
+prereq descr: Ultimate Magus Level 2.

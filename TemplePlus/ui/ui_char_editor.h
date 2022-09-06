@@ -94,7 +94,7 @@ public:
 
 	// utilities
 	bool SpellIsAlreadyKnown(int spEnum, int spellClass);
-	bool SpellIsForbidden(int spEnum);
+	bool SpellIsForbidden(int spEnum, int spellClass);
 
 
 	void BonusFeatsClear();

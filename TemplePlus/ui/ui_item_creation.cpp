@@ -858,10 +858,20 @@ bool UiItemCreation::ItemWielderCondsContainEffect(int effIdx, objHndl item)
 			if (condArrayIt  == condId)	{
 
 				if (itemObj->type == obj_t_armor){
-					// ensure that shield bonuses don't get applied to normal armors (e.g. so Armor Spell Resistance doesn't appear twice)
-					auto armorFlags = itemObj->GetInt32(obj_f_armor_flags);
-					if ((itEnh.flags & IESF_SHIELD) && inventory.GetArmorType(armorFlags) != ARMOR_TYPE_SHIELD )
-						return false;
+					const bool isArmorEnch = itEnh.flags & IESF_ARMOR;
+					const bool isShieldEnch = itEnh.flags & IESF_SHIELD;
+
+					// Ensure that shield bonuses don't get applied to normal armors and normal armor bonuses don't get applied to shields (e.g. so Armor Spell Resistance doesn't appear twice)
+					if (isArmorEnch || isShieldEnch) {
+						const auto armorFlags = itemObj->GetInt32(obj_f_armor_flags);
+						const bool itemIsShield = inventory.GetArmorType(armorFlags) == ARMOR_TYPE_SHIELD;
+						if (!itemIsShield && isShieldEnch) {
+							return false;
+						}
+						else if (itemIsShield && isArmorEnch) {
+							return false;
+						}
+					}
 				}
 				
 
@@ -2517,18 +2527,18 @@ void UiItemCreation::MaaInitCraftedItem(objHndl itemHandle){
 	craftedItemName.append(ItemCreationGetItemName(itemHandle));
 	craftedItemNamePos = craftedItemName.size();
 
-	for (auto it: itemEnhSpecs)	{
-		if (ItemWielderCondsContainEffect(it.first,itemHandle))	{
-			
-			if (it.second.flags & ItemEnhancementSpecFlags::IESF_ENH_BONUS){
+	for (auto it : itemEnhSpecs) {
+		if (ItemWielderCondsContainEffect(it.first, itemHandle)) {
+
+			if (it.second.flags & ItemEnhancementSpecFlags::IESF_ENH_BONUS) {
 				craftedItemExistingEffectiveBonus += it.second.effectiveBonus;
 				craftedItemExtraGold += itemExtraGold[it.first];
 				appliedBonusIndices.push_back(it.first);
 				/*if (!ItemWielderCondsContainEffect(it.second.upgradesTo, itemHandle)) {
-					
+
 				}*/
 			}
-			else if (!ItemWielderCondsContainEffect(it.second.upgradesTo, itemHandle)){
+			else if (!ItemWielderCondsContainEffect(it.second.upgradesTo, itemHandle)) {
 				craftedItemExistingEffectiveBonus += it.second.effectiveBonus;
 				craftedItemExtraGold += itemExtraGold[it.first];
 				appliedBonusIndices.push_back(it.first);

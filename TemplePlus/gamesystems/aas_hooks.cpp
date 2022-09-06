@@ -257,22 +257,22 @@ void AasHooks::apply()
 }
 
 void AasDebugHooks::apply() {
-	static int (__cdecl* orgCreateFromId)(int, int, int, AasAnimParams*, AasHandle*) = 
+	static int(__cdecl * orgCreateFromId)(int, int, int, AasAnimParams*, AasHandle*) =
 		replaceFunction<int(__cdecl)(int, int, int, AasAnimParams*, AasHandle*)>(0x102641B0, [](int skmId, int skaId, int idleAnimId, AasAnimParams* animState, AasHandle* handleOut)->int {
 		auto result = orgCreateFromId(skmId, skaId, idleAnimId, animState, handleOut);
-		
-		auto model = gameSystems->GetAAS().BorrowByHandle(*handleOut); //.aasSystem_->GetAnimatedModel(handle); // ;
-		auto &submeshes = model->GetSubmeshes();
-		
+
+		auto model = gameSystems->GetAAS().BorrowByHandle(*handleOut);
+		auto& submeshes = model->GetSubmeshes();
+
 		gfx::AnimatedModelParams animParams;
 		memset(&animParams, 0, sizeof(animParams));
 		animParams.scale = 1.0f;
 
-		model->Advance(1.0f, 0.0f, 0.0f, animParams);
+		model->Advance(1.0f, 0.0f, 0.0f, animParams); // this fixes bad radius/height errors by forcing an update inside 0x102682a0 (itself called by GetSubmesh) 
 
 		auto maxRadiusSquared = -10000.0f;
 		for (uint32_t i = 0; i < submeshes.size(); i++) {
-			auto submesh = model->GetSubmesh(animParams, i);
+			auto submesh = model->GetSubmesh(animParams, i); // GetSubmesh calls 0x102682a0 which checks for changes in deltaTime (or other related animParams). Only when there's a change will it actually update the position values (according to the animation)
 			auto positions = submesh->GetPositions();
 
 			for (auto j = 0; j < submesh->GetVertexCount(); j++) {
@@ -286,6 +286,8 @@ void AasDebugHooks::apply() {
 				}
 			}
 		}
+		
+		// in case it still fails - some debug...
 		if (maxRadiusSquared <= 0 || maxRadiusSquared > 4000000.0f) {
 			logger->error("Bad radius calculated: {} for skmId {}", maxRadiusSquared, skmId);
 			for (uint32_t i = 0; i < submeshes.size(); i++) {
@@ -305,5 +307,5 @@ void AasDebugHooks::apply() {
 			}
 		}
 		return result;
-	});
+			});
 }

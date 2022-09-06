@@ -1256,6 +1256,11 @@ static PyObject* PySpellStore_GetClass(PyObject* obj, void*) {
 	return PyInt_FromLong(self->spellData.classCode);
 }
 
+static PyObject* PySpellStore_GetCasterClass(PyObject* obj, void*) {
+	auto self = (PySpellStore*)obj;
+	return PyInt_FromLong(spellSys.GetCastingClass(self->spellData.classCode));
+}
+
 static int PySpellStore_SetClass(PyObject *obj, PyObject *value, void*) {
 	auto self = (PySpellStore*)obj;
 	if (!PyInt_Check(value)) {
@@ -1275,6 +1280,7 @@ static PyGetSetDef PySpellStoreGetSet[] = {
 	{ "spell_enum", PySpellStore_GetEnum, PySpellStore_SetEnum, NULL },
 	{ "spell_level", PySpellStore_GetLevel, PySpellStore_SetLevel, NULL },
 	{ "spell_class", PySpellStore_GetClass, PySpellStore_SetClass, NULL },
+	{ "caster_class", PySpellStore_GetCasterClass, NULL, NULL },
 	{ "spell_name", PySpellStore_GetName, NULL, NULL },
 	{ NULL, NULL, NULL, NULL }
 };

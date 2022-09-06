@@ -2842,7 +2842,7 @@ BOOL UiCharEditor::SpellsWndMsg(int widId, TigMsg * msg){
 				if (spellSys.IsLabel(spEnum))
 					break;
 
-				if (chargen.SpellIsAlreadyKnown(spEnum, spClass) || chargen.SpellIsForbidden(spEnum))
+				if (chargen.SpellIsAlreadyKnown(spEnum, spClass) || chargen.SpellIsForbidden(spEnum, spClass))
 					break;
 
 				auto curSpellLvl = -1;
@@ -3004,7 +3004,7 @@ BOOL UiCharEditor::SpellsAvailableEntryBtnMsg(int widId, TigMsg * msg)
 
 		switch (msgW->widgetEventType){
 			case TigMsgWidgetEvent::Clicked: // button down - initiate drag
-				if (!chargen.SpellIsAlreadyKnown(spEnum, spClass ) && !chargen.SpellIsForbidden(spEnum)){
+				if (!chargen.SpellIsAlreadyKnown(spEnum, spClass ) && !chargen.SpellIsForbidden(spEnum, spClass)){
 					auto origX = msgW->x - btn->x, origY = msgW->y - btn->y;
 					auto spellCallback = [origX, origY, spEnum](int x, int y){
 						std::string text(spellSys.GetSpellMesline(spEnum));
@@ -3025,7 +3025,7 @@ BOOL UiCharEditor::SpellsAvailableEntryBtnMsg(int widId, TigMsg * msg)
 			case TigMsgWidgetEvent::MouseReleasedAtDifferentButton: 
 				mouseFuncs.SetCursorDrawCallback(nullptr, 0);
 				if (chargen.SpellIsAlreadyKnown(spEnum, spClass)
-					|| chargen.SpellIsForbidden(spEnum))
+					|| chargen.SpellIsForbidden(spEnum, spClass))
 					return 1;
 
 
@@ -3136,7 +3136,7 @@ void UiCharEditor::SpellsAvailableEntryBtnRender(int widId){
 		rect.x += 12;
 		//rect.width -= 11;
 		if (chargen.SpellIsAlreadyKnown(spEnum, avSpInfo[spellIdx].spellClass)
-			|| chargen.SpellIsForbidden(spEnum))
+			|| chargen.SpellIsForbidden(spEnum, avSpInfo[spellIdx].spellClass))
 			UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellsAvailBtnStyle);
 		else
 			UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellsTextStyle);
@@ -3483,17 +3483,19 @@ bool Chargen::SpellIsAlreadyKnown(int spEnum, int spellClass){
 	return false;
 }
 
-bool Chargen::SpellIsForbidden(int spEnum){
-	auto &selPkt = GetCharEditorSelPacket();
-	auto handle = GetEditedChar();
-	SpellEntry spEntry(spEnum);
-	auto spSchool = spEntry.spellSchoolEnum;
+bool Chargen::SpellIsForbidden(int spEnum, int spellClass){
+	if (spellSys.GetCastingClass(spellClass) == stat_level_wizard) {  // Only for wizards
+		auto& selPkt = GetCharEditorSelPacket();
+		auto handle = GetEditedChar();
+		SpellEntry spEntry(spEnum);
+		auto spSchool = spEntry.spellSchoolEnum;
 
-	if (spSchool == selPkt.forbiddenSchool1
-		|| spSchool == selPkt.forbiddenSchool2)
-		return true;
-	if (spellSys.IsForbiddenSchool(handle, spSchool))
-		return true;
+		if (spSchool == selPkt.forbiddenSchool1
+			|| spSchool == selPkt.forbiddenSchool2)
+			return true;
+		if (spellSys.IsForbiddenSchool(handle, spSchool))
+			return true;
+	}
 	return false;
 }
 
