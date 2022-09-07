@@ -268,7 +268,7 @@ void AasDebugHooks::apply() {
 		memset(&animParams, 0, sizeof(animParams));
 		animParams.scale = 1.0f;
 
-		model->Advance(1.0f, 0.0f, 0.0f, animParams); // this fixes bad radius/height errors by forcing an update inside 0x102682a0 (itself called by GetSubmesh) 
+		model->Advance(0.0f, 0.0f, 0.1f, animParams); // this fixes bad radius/height errors by forcing an update inside 0x102682a0 (itself called by GetSubmesh) 
 
 		auto maxRadiusSquared = -10000.0f;
 		for (uint32_t i = 0; i < submeshes.size(); i++) {
