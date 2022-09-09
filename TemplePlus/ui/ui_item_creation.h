@@ -93,7 +93,7 @@ public:
 	
 	void ItemCreationWndRender(int widId);
 		void ItemCreationEntryRender(int widId);
-		void ItemCreationCraftingCostTexts(int widId, objHndl objHndItem);
+		void ItemCreationCraftingCostTexts(int widId, objHndl objHndItem, int spellEnum);
 		BOOL ItemCreationEntryMsg(int widId, TigMsg* msg);
 		void ItemCreationCreateBtnRender(int widId) const;
 		void ItemCreationCancelBtnRender(int widId) const;
@@ -156,21 +156,22 @@ public:
 
 	int MaaCpCost(int appliedEffectIdx);
 	int MaaXpCost(int effIdx); // calculates XP cost for crafting effects in MAA
-	bool CreateItemResourceCheck(objHndl crafter, objHndl item);
+	bool CreateItemResourceCheck(objHndl crafter, objHndl item, int spellEnum = 0);
+	bool ScribeScrollCheck(objHndl crafter, int spellEnum);
 	const char* GetItemCreationMesLine(int lineId);
 	char const* ItemCreationGetItemName(objHndl itemHandle) const;
 	objHndl MaaGetItemHandle();
 
-	void CreateItemDebitXPGP(objHndl crafter, objHndl item);
+	void CreateItemDebitXPGP(objHndl crafter, objHndl item, int spellEnum = 0);
 	bool CraftedWandSpellGet(objHndl item, SpellStoreData& spellData, int * spellLevelBase = nullptr);
 	int CraftedWandSpellLevel(objHndl item);
 	int CraftedWandCasterLevel(objHndl item);
 	uint32_t ItemWorthAdjustedForCasterLevel(objHndl objHndItem, uint32_t casterLevelNew);
 	uint32_t CraftedWandWorth(objHndl item, int casterLevelNew);
-	bool ScribedScrollSpellGet(objHndl item, SpellStoreData& spellData, int * spellLevelBase = nullptr);
-	int ScribedScrollSpellLevel(objHndl item);
-	int ScribedScrollCasterLevel(objHndl item);
-	uint32_t ScribedScrollWorth(objHndl item, int casterLevelNew);
+	bool ScribedScrollSpellGet(int spellEnum, SpellStoreData& spellData, int * spellLevelBase = nullptr);
+	int ScribedScrollSpellLevel(int spellEnum);
+	int ScribedScrollCasterLevel(int spellEnum);
+	uint32_t ScribedScrollWorth(int spellEnum, int casterLevelNew);
 	int GetMaxSpellLevelFromCasterLevel(int cl);
 
 	bool IsWeaponBonus(int effIdx);
@@ -211,9 +212,12 @@ protected:
 	bool ItemCreationRulesParseReqText(objHndl crafter, const char* reqTxt);
 	std::string PrintPrereqToken(const char* str);
 
+	int GetScrollInventoryIconId(int spellEnum);
+
 	int mItemCreationType = 9;
 	objHndl mItemCreationCrafter;
 	int mCraftingItemIdx = -1;
+	int mScribedScrollSpell = 0;
 
 
 	int craftingWidgetId; // denotes which item creation widget is currently active
@@ -270,7 +274,7 @@ protected:
 	
 	
 	int& maaSelectedEffIdx = mMaaSelectedEffIdx; // currently selected craftable effect
-	bool* itemCreationResourceCheckResults = nullptr;
+	bool* itemCreationResourceCheckResults = nullptr; // 0x10BEE330
 	
 	std::vector<objHndl> mMaaCraftableItemList; // handles to enchantable inventory items
 	std::vector<int> appliedBonusIndices;
@@ -280,8 +284,10 @@ protected:
 	int craftedItemExtraGold;  // stores the crafted item existing (pre-crafting) extra gold cost
 	int& craftingItemIdx = mCraftingItemIdx; //temple::GetRef<int>(0x10BEE398);
 
-	uint32_t numItemsCrafting[8]; // for each Item Creation type
-	objHndl* craftedItemHandles[8]; // proto handles for new items, and item to modifyt for MAA
+	uint32_t numItemsCrafting[8]; // for each Item Creation type (0x11E76C7C)
+	objHndl* craftedItemHandles[8]; // proto handles for new items, and item to modify for MAA (0x11E76C7C)
+	std::vector<int> scribeScrollSpells; // New: special casing for automated scroll scribing
+
 	int& itemCreationType = mItemCreationType;
 	objHndl& itemCreationCrafter = mItemCreationCrafter;//temple::GetRef<objHndl>(0x10BECEE0);
 	std::string craftedItemName;
