@@ -839,8 +839,8 @@ BOOL UiCharEditor::ClassWidgetsInit(){
 
 	for (auto it: d20ClassSys.vanillaClassEnums){
 		// class buttons
-		LgcyButton classBtn("Class btn", classWndId, 71 + coloff, 47 + rowoff, 130, 20);
-		coloff = 139 - coloff;
+		LgcyButton classBtn("Class btn", classWndId, 71 + coloff, 47 + rowoff, 138, 20);
+		coloff = 147 - coloff;
 		if (!coloff)
 			rowoff += 29;
 		if (rowoff == 5 * 29) // the bottom button
