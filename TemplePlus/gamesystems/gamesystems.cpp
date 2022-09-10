@@ -422,6 +422,9 @@ void GameSystems::InitAnimationSystem() {
 		);
 	} else {
 		mAAS = std::make_unique<temple::AasAnimatedModelFactory>(config);
+		AasDebugHooks hooks;
+		hooks.apply();
+		MH_EnableHook(nullptr);
 	}
 
 }

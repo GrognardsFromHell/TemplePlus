@@ -35,6 +35,7 @@
 #include "config/config.h"
 #include <mod_support.h>
 #include "gamesystems/gamesystems.h"
+#include "gamesystems/d20/d20stats.h"
 
 namespace py = pybind11;
 
@@ -125,6 +126,14 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 			result.push_back(static_cast<int>(feat));
 		}
 		return result;
+	});
+
+	m.def("get_stat_name", [](int stat)->py::bytes {
+		return py::bytes(d20Stats.GetStatName((Stat)stat));
+	});
+
+	m.def("get_stat_short_name", [](int stat)->py::bytes {
+		return py::bytes(d20Stats.GetStatShortName((Stat)stat));
 	});
 
 	m.def("config_set_string", [](std::string& configItem, std::string& value) {
@@ -619,6 +628,15 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.def_readwrite("inven_idx", &D20SpellData::itemSpellData)
 		.def("get_spell_store", [](D20SpellData&spData)->SpellStoreData {	return spData.ToSpellStore();	})
 		.def("set_spell_class", [](D20SpellData& spData, int spClass) { spData.spellClassCode= spellSys.GetSpellClass(spClass);	})
+		.def("get_spell_name", [](D20SpellData& spData)->py::bytes {
+			auto spellName = spellSys.GetSpellName(spData.spellEnumOrg); 
+				if (spellName == nullptr) {
+					return py::bytes("");
+				}
+				else {
+					return py::bytes(spellName);
+				}
+			})
 		.def("get_metamagic_data", [](D20SpellData& spData)->MetaMagicData {return spData.metaMagicData; })
 		;
 	#pragma endregion
@@ -895,6 +913,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 				}
 			})
 			.def("is_divine_spell", &SpellPacketBody::IsDivine)
+			.def("is_arcane_spell", &SpellPacketBody::IsArcane)
 			.def("debit_spell", &SpellPacketBody::Debit)
 			.def("update_registry", [](SpellPacketBody &pkt){
 				spellSys.UpdateSpellPacket(pkt);
@@ -1217,6 +1236,18 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 
 			return false;
 		}, "")
+		.def("is_arcane_spell", [](EvtObjMetaMagic mm)->bool {
+			if (spellSys.isDomainSpell(mm.spellClass)) {
+				return false;
+			}
+
+			auto castingClass = spellSys.GetCastingClass(mm.spellClass);
+			if (d20ClassSys.IsArcaneCastingClass(castingClass)) {
+				return true;
+			}
+
+			return false;
+			}, "")
 		.def("get_spell_casting_class", [](EvtObjMetaMagic mm)->int {
 			return static_cast<int>(spellSys.GetCastingClass(mm.spellClass));
 		}, "")
