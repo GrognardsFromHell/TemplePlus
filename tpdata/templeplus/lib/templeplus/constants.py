@@ -3541,6 +3541,7 @@ stat_level_dragon_shaman = 84
 stat_level_dragonheart_mage = 85
 stat_level_battle_howler_of_gruumsh = 86
 stat_level_fist_of_the_forest = 87
+stat_level_ultimate_magus = 88
 
 
 

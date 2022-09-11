@@ -29,14 +29,19 @@ public:
 
 	static int CombatExpertiseAcBonus(DispatcherCallbackArgs args);
 	static int TacticalAbusePrevention(DispatcherCallbackArgs args); // Combat Expertise / Fight Defensively
+
+	static int __cdecl CombatReflexesAooReset(DispatcherCallbackArgs args);
 	
 	static int SpellFocusDcMod(DispatcherCallbackArgs args);
 
 	static int PurityOfBodyPreventDisease(DispatcherCallbackArgs args); // Fixes Monk's Purity of Body; currently it prevents Magical Disease (Contagion) rather than normal disease (as by Monster Melee Disease e.g. dire rats)
 
+
 	void apply() override {
 
 		//replaceFunction(0x100FC050, SpellFocusDcMod);
+
+		replaceFunction(0x100F8AF0, CombatReflexesAooReset);
 
 		replaceFunction(0x100F7ED0, TacticalAbusePrevention);
 		replaceFunction(0x100F7E70, CombatExpertiseAcBonus);
@@ -154,7 +159,6 @@ public:
 		
 			return 0;
 		});
-
 
 		// fix for negative str mod still accounting in the bon list
 		static int(*orgWeaponFinesseToHitBonus)(DispatcherCallbackArgs) =
@@ -345,6 +349,24 @@ int AbilityConditionFixes::CombatExpertiseAcBonus(DispatcherCallbackArgs args){
 	GET_DISPIO(dispIOTypeAttackBonus, DispIoAttackBonus);
 	dispIo->bonlist.AddBonusFromFeat(expertiseAmt, 8, 114, FEAT_COMBAT_EXPERTISE);
 
+	return 0;
+}
+
+int __cdecl  AbilityConditionFixes::CombatReflexesAooReset(DispatcherCallbackArgs args)
+{
+	int numAoosRem = 1;
+
+	//Fixes atari bug 571 where only dex bonus AOOs could be taken for combat reflexes instead of dex bonus + 1
+	if (feats.HasFeatCount(args.objHndCaller, FEAT_COMBAT_REFLEXES) > 0) {
+		const auto dexScore = objects.StatLevelGet(args.objHndCaller, Stat::stat_dexterity);
+		auto extraAoos = objects.GetModFromStatLevel(dexScore);
+		extraAoos = std::max(extraAoos, 0);
+		numAoosRem += extraAoos;
+	}
+
+	args.SetCondArg(0, numAoosRem);
+	args.SetCondArg(1, 0);
+	args.SetCondArg(2, 0);
 	return 0;
 }
 

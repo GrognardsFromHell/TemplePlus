@@ -2281,7 +2281,7 @@ BOOL UiPcCreation::SpellsWndMsg(int widId, TigMsg * msg)
 				if (spellSys.IsLabel(spEnum))
 					break;
 
-				if (chargen.SpellIsAlreadyKnown(spEnum, spClass) || chargen.SpellIsForbidden(spEnum))
+				if (chargen.SpellIsAlreadyKnown(spEnum, spClass) || chargen.SpellIsForbidden(spEnum, spClass))
 					break;
 
 				auto curSpellLvl = -1;
@@ -2466,7 +2466,7 @@ BOOL UiPcCreation::SpellsAvailableEntryBtnMsg(int widId, TigMsg * msg)
 
 		switch (msgW->widgetEventType) {
 		case TigMsgWidgetEvent::Clicked: // button down - initiate drag
-			if (!chargen.SpellIsAlreadyKnown(spEnum, spClass) && !chargen.SpellIsForbidden(spEnum)) {
+			if (!chargen.SpellIsAlreadyKnown(spEnum, spClass) && !chargen.SpellIsForbidden(spEnum, spClass)) {
 				auto origX = msgW->x - btn->x, origY = msgW->y - btn->y;
 				auto spellCallback = [origX, origY, spEnum](int x, int y) {
 					std::string text(spellSys.GetSpellMesline(spEnum));
@@ -2487,7 +2487,7 @@ BOOL UiPcCreation::SpellsAvailableEntryBtnMsg(int widId, TigMsg * msg)
 		case TigMsgWidgetEvent::MouseReleasedAtDifferentButton:
 			mouseFuncs.SetCursorDrawCallback(nullptr, 0);
 			if (chargen.SpellIsAlreadyKnown(spEnum, spClass)
-				|| chargen.SpellIsForbidden(spEnum))
+				|| chargen.SpellIsForbidden(spEnum, spClass))
 				return 1;
 
 
@@ -2597,7 +2597,7 @@ void UiPcCreation::SpellsAvailableEntryBtnRender(int widId)
 		rect.x += 12;
 		//rect.width -= 11;
 		if (chargen.SpellIsAlreadyKnown(spEnum, avSpInfo[spellIdx].spellClass)
-			|| chargen.SpellIsForbidden(spEnum))
+			|| chargen.SpellIsForbidden(spEnum, avSpInfo[spellIdx].spellClass))
 			UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellsAvailBtnStyle);
 		else
 			UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellsTextStyle);

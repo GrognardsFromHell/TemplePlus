@@ -384,7 +384,10 @@ void UiInGame::DoKeyboardScrolling(){
 	if (console.IsOpen() && console.InputIsActive()){
 		return;
 	}
-	
+	// don't scroll if game is out of focus (e.g. debugging...)
+	if (tig->GetMainWindow().GetHwnd() != GetFocus()) {
+		return;
+	}
 	static auto doKeyboardScrolling = temple::GetPointer<void()>(0x10113fb0);
 	doKeyboardScrolling();
 

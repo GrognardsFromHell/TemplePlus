@@ -254,7 +254,7 @@ def will_kos(attacker, target, aiSearchingTgt):
 
 			return 0
 
-	if target.type == obj_t_npc:
+	if target.type != obj_t_npc:
 		return 0
 
 	taifs = AiFightStatus(target)
