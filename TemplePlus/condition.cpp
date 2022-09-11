@@ -437,7 +437,7 @@ public:
 
 		replaceFunction(0x100DB690, DispelCheck);
 		replaceFunction(0x100DCF10, DispelAlignmentTouchAttackSignalHandler);
-		
+
 		// fixes for lack of uniqueAnimID registration
 		replaceFunction(0x100FA060, LayOnHandsPerform);
 		replaceFunction(0x100FB150, RemoveDiseasePerform);
@@ -455,11 +455,12 @@ public:
 		replaceFunction(0x100F88C0, TwoWeaponFightingBonus);
 		replaceFunction(0x100F8940, TwoWeaponFightingBonusRanger);
 		replaceFunction(0x100FEBA0, BarbarianDamageResistance);
-
+		
 		//Subdual and lethal damage checkboxes
 		replaceFunction(0x100F8DA0, NonlethalDamageRadial);
 		replaceFunction(0x100F8ED0, NonlethalDamageSetSubdual);
 		replaceFunction(0x100F8F70, DealNormalDamageCallback);
+		replaceFunction(0x100F9040, DealNormalDamageAttackPenalty);
 		
 
 		
@@ -3752,6 +3753,35 @@ int DealNormalDamageCallback(DispatcherCallbackArgs args)
 	return 0;
 }
 
+int DealNormalDamageAttackPenalty(DispatcherCallbackArgs args)
+{
+	const int enabled = conds.CondNodeGetArg(args.subDispNode->condNode, 0);
+	if (enabled == 1)
+	{
+		auto dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
+		const auto weaponUsed = dispIo->attackPacket.GetWeaponUsed();
+
+		//No penalty if using a weapon
+		if (weaponUsed)
+			return 0;
+
+		//No penalty if a touch attack.  This was a vanilla bug that enabled the penalty for spells.
+		if ((dispIo->attackPacket.flags & D20CAF_TOUCH_ATTACK))
+			return 0;
+
+		// Monks don't have the penalty
+		if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_SIMPLE_WEAPON_PROFICIENCY_MONK) != 0)
+			return 0;
+
+		// Improved unarmed strike takes away the penalty
+		if (feats.HasFeatCountByClass(args.objHndCaller, FEAT_IMPROVED_UNARMED_STRIKE) != 0)
+			return 0;
+		
+		dispIo->bonlist.AddBonus(-4, 0, 157);
+	}
+	return 0;
+}
+
 int BarbarianDamageResistance(DispatcherCallbackArgs args)
 {
 	DamagePacket *damagePacket; 
@@ -7008,7 +7038,7 @@ int ClassAbilityCallbacks::BardicMusicSuggestionCountersong(DispatcherCallbackAr
 	if (!spellSys.GetSpellPacketBody(spellId, &spellPktBody))
 		return 0;
 
-	int countersongRoll = dispIo->arg2;
+	uint32_t countersongRoll = dispIo->arg2;
 
 	if (spellPktBody.dc <= countersongRoll) {
 		// Remove condition, OnBeginRound script should see this and end

@@ -299,6 +299,8 @@ def ghouls_harpies_join_in( attachee ):
 				npc.move( location_from_axis( x_ghoul + x_ghoul_add[ghoul_counter] , y_ghoul + y_ghoul_add[ghoul_counter]), 0, 0)
 				ghoul_counter += 1
 				npc.attack(game.leader)
+				if ghoul_counter >= len(y_ghoul_add):
+					break
 
 def spawn_grate_object():					
 	if get_f('harpy_grate') == 0:
