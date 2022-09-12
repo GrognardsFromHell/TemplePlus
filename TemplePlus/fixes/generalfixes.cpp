@@ -23,14 +23,19 @@
 
 struct TigTextStyle;
 
-// fixes size_colossal (was misspelled as size_clossal)
-class SizeColossalFix : public TempleFix {
+
+class HexFixes : public TempleFix {
 public:
 
 	void apply() override {
+
+		// fixes size_colossal (was misspelled as size_clossal)
 		writeHex(0x10278078, "73 69 7A 65 5F 63 6F 6C 6F 73 73 61 6C");
+
+		// fixes Orb of Golden Death infinite Earth Elementals
+		writeHex(0x101034D9, "C1 E0 10"); // was 08, a wrong shift (looks like a typo error, all the others are shifted by 0x10: radMenuEntry.d20ActionData1 = (invIdxFromCondArg2 << 16) | [spellIdx]
 	}
-} sizeColossalFix;
+} hexFixes;
 
 // Makes Kukri Proficiency Martial
 class KukriFix : public TempleFix {
