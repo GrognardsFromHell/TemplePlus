@@ -411,6 +411,7 @@ objHndl InventorySystem::FindMatchingStackableItem(objHndl receiver, objHndl ite
 			auto itemSpell = itemObj->GetSpell(obj_f_item_spell_idx, 0);
 			auto invenItemSpell = invenItemObj->GetSpell(obj_f_item_spell_idx, 0);
 			if (itemSpell.spellLevel != invenItemSpell.spellLevel
+				|| itemSpell.spellEnum != invenItemSpell.spellEnum // Temple+: added this for automated scribed scrolls (who all use the same proto)
 				|| (itemObj->type == obj_t_scroll 
 					&& spellSys.IsArcaneSpellClass(itemSpell.classCode) 
 					!= spellSys.IsArcaneSpellClass(invenItemSpell.classCode) ))
