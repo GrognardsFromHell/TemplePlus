@@ -214,7 +214,16 @@ public:
 		// UiPartyCreationGetPartyPool
 		static void(*orgGetPartyPool)(int) = replaceFunction<void(int)>(0x10165E60, GetPartyPool);
 		// static int(*orgPartyPoolLoader)() = replaceFunction<int()>(0x10165790, PartyPoolLoader);
-
+		static void(__cdecl* orgPartyPoolExit)() = replaceFunction<void()>(0x10165A50, []() { // fixed crash due to not removing from GroupList when exiting party pool (e.g. to change the party alignment)
+			int& uiPartyCreationIngame = temple::GetRef<int>(0x10BF24E0);
+			
+			if (!uiPartyCreationIngame) {
+				// moved this part to the beginning, since UiCharHide(0) will refresh the radial menus based on discarded party members, potentially overflowing it
+				static auto uiPartyPoolRemoveAllPcPortraits = temple::GetRef<void()>(0x1011B6F0); 
+				uiPartyPoolRemoveAllPcPortraits();
+			}
+			return orgPartyPoolExit();
+			});
 
 		if (temple::Dll::GetInstance().HasCo8Hooks()) {
 			writeNoops(0x1011D521); // disabling EXP draw call
