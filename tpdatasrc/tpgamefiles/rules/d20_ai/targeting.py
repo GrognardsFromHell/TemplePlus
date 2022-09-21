@@ -172,6 +172,8 @@ def find_suitable_target(attacker, aiSearchingTgt):
 		dist = attacker.location_full.distance_to(dude.location_full)
 		if dude.is_unconscious():
 			dist += 1000.0
+		if not (dude in game.party): # added so that party members are prioritized over non-party NPCs (e.g. bystanders or whatever)
+			dist += 100.0
 		pairs.append((dude,dist))
 
 	pairs.sort(key = lambda p: p[1])
