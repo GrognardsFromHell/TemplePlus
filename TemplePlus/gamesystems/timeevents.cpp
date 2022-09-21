@@ -1068,7 +1068,7 @@ void TimeEventSystem::AdvanceTime(uint32_t newTimeMs) {
 
 		}
 	}
-
+	combatSys.forceEndedCombatNow = false; // reset this
 
 	if (!timeAdvanceBlockerCount || uiSystems->GetDlg().IsActive()) {
 
