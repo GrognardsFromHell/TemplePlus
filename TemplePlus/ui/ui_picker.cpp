@@ -215,6 +215,7 @@ int &UiPicker::GetActivePickerIdx(){
 	return temple::GetRef<int>(0x102F920C);
 }
 
+/* 0x100BA480 */
 uint32_t UiPicker::SetSingleTarget(objHndl objHnd, PickerArgs* pickerArgs)
 {
 	return addresses.sub_100BA480(objHnd, pickerArgs);
