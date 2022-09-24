@@ -612,7 +612,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_SCL_SECURE_NO_WARNINGS;WIN32;_DEBUG;_WINDOWS;$(MSBuildDefines);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>GSL_THROW_ON_CONTRACT_VIOLATION;_SCL_SECURE_NO_WARNINGS;WIN32;_DEBUG;_WINDOWS;$(MSBuildDefines);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.;$(SolutionDir)dependencies\include;$(SolutionDir)MinHook\include;$(SolutionDir)Infrastructure\include;$(SolutionDir)D3D8Adapter\include</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
@@ -647,7 +647,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>GSL_THROW_ON_CONTRACT_VIOLATION;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.;$(SolutionDir)dependencies\include;$(SolutionDir)MinHook\include;$(SolutionDir)Infrastructure\include;$(SolutionDir)D3D8Adapter\include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
@@ -677,7 +677,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>_SCL_SECURE_NO_WARNINGS;WIN32;NDEBUG;_WINDOWS;$(MSBuildDefines);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>GSL_THROW_ON_CONTRACT_VIOLATION;_SCL_SECURE_NO_WARNINGS;WIN32;NDEBUG;_WINDOWS;$(MSBuildDefines);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.;$(SolutionDir)dependencies\include;$(SolutionDir)MinHook\include;$(SolutionDir)Infrastructure\include;$(SolutionDir)D3D8Adapter\include</AdditionalIncludeDirectories>
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <ForcedIncludeFiles>

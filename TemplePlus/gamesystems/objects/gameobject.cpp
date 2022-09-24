@@ -743,7 +743,7 @@ void GameObjectBody::UnfreezeIds()
 					auto& objId = objectIdArray[idx];
 					auto handle = objSystem->GetHandleById(objId);
 					if (!handle) {
-						logger->error("Null inventory item! idx = {}, GUID = {}", idx, objId.ToString());
+						logger->error("UnfreezeIds:    Null inventory item! idx = {}, GUID = {}", idx, objId.ToString());
 					}
 				});
 			};
