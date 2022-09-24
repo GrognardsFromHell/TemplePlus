@@ -338,11 +338,11 @@ objHndl InventorySystem::GetItemAtInvIdx(objHndl handle, uint32_t nIdx){
 	for (auto i=0; i < numItems; i++){
 		auto item = obj->GetObjHndl(invenField, i);
 		if (!item) {
-			logger->debug("obj {} name {} contains null object", handle, obj->GetInt32(obj_f_name));
+			logger->debug("GetItemAtInvIdx: obj {} name {} contains null object", handle, obj->GetInt32(obj_f_name));
 		}
 		else if (!objects.IsEquipment(item)){
 			auto itemName = objects.getInt32(item, obj_f_name);
-			logger->debug("obj {} name {} contains object {} name {}", handle, obj->GetInt32(obj_f_name), item, itemName);
+			logger->debug("GetItemAtInvIdx: obj {} name {} contains non-equipment object {} name {}", handle, obj->GetInt32(obj_f_name), item, itemName);
 		}
 		if (inventory.GetInventoryLocation(item) == nIdx) {
 			result = item;
