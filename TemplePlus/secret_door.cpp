@@ -376,7 +376,7 @@ void SecretDoorSys::MarkTaggedScenerySeenAndPlayVoice(objHndl objSeen) {
 	for (auto it = result.begin(); it != result.end(); ) {
 		auto critter = *it;
 		if (!party.IsInParty(critter) || critterSys.IsDeadOrUnconscious(critter)) {
-			result.erase(it);
+			it = result.erase(it);
 			continue;
 		}
 		++it;	
