@@ -867,7 +867,7 @@ uint32_t LegacySpellSystem::spellRegistryCopy(uint32_t spellEnum, SpellEntry* sp
 	return spellEntryRegistry.copy(spellEnum, spellEntry);
 }
 
-void LegacySpellSystem::DoForSpellEntries(void(*cb)(SpellEntry & spellEntry)){
+void LegacySpellSystem::DoForSpellEntries( const std::function<void (SpellEntry & )> &cb){
 	for (auto it : spellEntryRegistry) {
 		cb(*it.data);
 	}
@@ -882,10 +882,8 @@ int LegacySpellSystem::CopyLearnableSpells(objHndl& handle, int spellClass, std:
 
 	for (auto it : spellEntryRegistry) {
 		auto spEntry = it.data;
-		// new spells from supplemental materials are generally added above enum 802 in Temple+
-		if (spEntry->spellEnum > SPELL_ENUM_MAX_VANILLA) {
-			if (!config.nonCoreMaterials)
-				continue;
+		if (IsNonCore(spEntry->spellEnum) && !config.nonCoreMaterials) {
+			continue;
 		}
 		if (GetSpellLevelBySpellClass(spEntry->spellEnum, spellClass) >= 0)	{
 			entries.push_back(*spEntry);
@@ -1414,7 +1412,7 @@ void LegacySpellSystem::SpellPacketSetCasterLevel(SpellPacketBody* spellPkt) con
 		} 
 
 		// item spell
-		else if (spellPkt->invIdx != 255 && (spellPkt->spellEnum < NORMAL_SPELL_RANGE || spellPkt->spellEnum > SPELL_LIKE_ABILITY_RANGE)){
+		else if (spellPkt->invIdx != 255 && !IsMonsterSpell(spellPkt->spellEnum)){
 			spellPkt->casterLevel = 0;
 			logger->info("Critter {} is casting item spell {} at base caster_level {}.", casterName, spellName, 0);
 		}
@@ -1436,7 +1434,7 @@ void LegacySpellSystem::SpellPacketSetCasterLevel(SpellPacketBody* spellPkt) con
 	} 
 	else{ // domain spell
 		if (spellPkt->spellClass == Domain_Special){ // domain special (usually used for monsters)
-			if (spellPkt->invIdx != 255 && (spellPkt->spellEnum < NORMAL_SPELL_RANGE || spellPkt->spellEnum > SPELL_LIKE_ABILITY_RANGE)) {
+			if (spellPkt->invIdx != 255 && !IsMonsterSpell(spellPkt->spellEnum)) {
 				spellPkt->casterLevel = 0;
 				logger->info("Critter {} is casting item spell {} at base caster_level {}.", casterName, spellName, 0);
 			}
@@ -2902,6 +2900,12 @@ int LegacySpellSystem::GetSpellSchool(int spellEnum){
 	return spEntry.spellSchoolEnum;
 }
 
+bool LegacySpellSystem::IsMonsterSpell(int spellEnum)
+{
+	return spellEnum >= NORMAL_SPELL_RANGE
+		&& spellEnum <= SPELL_LIKE_ABILITY_RANGE;
+}
+
 bool LegacySpellSystem::IsSpellLike(int spellEnum){
 	return (spellEnum >= NORMAL_SPELL_RANGE
 		&& spellEnum <= SPELL_LIKE_ABILITY_RANGE) || spellEnum >= CLASS_SPELL_LIKE_ABILITY_START;
@@ -2920,6 +2924,12 @@ bool LegacySpellSystem::IsNewSlotDesignator(int spellEnum)
 		&& spellEnum < SPELL_ENUM_NEW_SLOT_START + NUM_SPELL_LEVELS)
 		return true;
 	return false;
+}
+
+// Non-Core spells will be added in the expanded range
+bool LegacySpellSystem::IsNonCore(int spellEnum)
+{
+	return (spellEnum > SPELL_ENUM_MAX_VANILLA);
 }
 
 int LegacySpellSystem::GetSpellLevelBySpellClass(int spellEnum, int spellClass, objHndl handle){

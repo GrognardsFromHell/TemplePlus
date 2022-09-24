@@ -226,9 +226,10 @@ static PyObject* PyObjHandle_BeginDialog(PyObject* obj, PyObject* args) {
 		uiPicker.CancelPicker();
 		
 		// Temple+: added this, otherwise the combat continues briefly and goes on to the next combatant who can start an action
-		// the dialog event callback does this anyway, but 1ms later
+		// the dialog event callback (0x1014CED0) does this anyway, but 1ms later
 		auto leader = party.GetConsciousPartyLeader();
 		if (leader) {
+			combatSys.forceEndedCombatNow = true;
 			combatSys.CritterExitCombatMode(leader);
 		}
 		
