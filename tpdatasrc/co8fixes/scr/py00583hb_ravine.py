@@ -5,8 +5,8 @@ from combat_standard_routines import *
 
 
 def san_dying( attachee, triggerer ):
-	if should_modify_CR( attachee ):
-		modify_CR( attachee, get_av_level() )
+	# if should_modify_CR( attachee ): # no longer necessary in Temple+
+		# modify_CR( attachee, get_av_level() )
 	return RUN_DEFAULT
 
 
@@ -21,7 +21,7 @@ def san_enter_combat( attachee, triggerer ):
 
 
 def san_start_combat( attachee, triggerer ):
-	webbed = break_free( attachee, 3)
+	# webbed = break_free( attachee, 3) # no longer necessaryin Temple+
 ############################################
 #  ready vs approach guys with explosives  #
 ############################################
