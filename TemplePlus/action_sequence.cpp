@@ -3009,11 +3009,12 @@ void ActionSequenceSystem::PerformOnProjectileComplete(objHndl projectile, objHn
 	if (!curSeq || curSeq->performer != thrower || (curSeq->seqOccupied & SEQF_PERFORMING) == 0) {
 		succeeded = false;
 		logger->debug("\t\t thrower is not current sequence performer, trying to switch...");
+		succeeded = SequenceSwitch(thrower) != 0;
 	}
-	succeeded = SequenceSwitch(thrower) != 0;
+	
 
 	if (!succeeded) {
-		logger->debug("\t\t failed");
+		logger->debug("\t\t SequenceSwitch failed");
 		return;
 	}
 
