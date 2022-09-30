@@ -77,7 +77,7 @@ def san_heartbeat( attachee, triggerer ):
 					game.global_vars[747] = 0
 		elif (attachee.name == 8076):
 		# hedrack ally mage 2
-			if (attachee.distance_to(game.party[0]) <= 100 or attachee.distance_to(game.party[1]) <= 100 or attachee.distance_to(game.party[2]) <= 100 or attachee.distance_to(game.party[3]) <= 100 or attachee.distance_to(game.party[4]) <= 100 or attachee.distance_to(game.party[5]) <= 100 or attachee.distance_to(game.party[6]) <= 100 or attachee.distance_to(game.party[7]) <= 100):
+			if any([attachee.distance_to(pc) <= 100 for pc in game.party]):
 				game.global_vars[748] = game.global_vars[748] + 1
 				if (attachee.leader_get() == OBJ_HANDLE_NULL):
 					if (game.global_vars[748] == 4):
