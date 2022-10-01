@@ -29,6 +29,13 @@ PYBIND11_EMBEDDED_MODULE(gamedialog, m) {
 
 			return std::string(self.effectFields[idx]);
 			})
+		.def("get_reply_opcode", [](DialogState& self, int idx) {
+				if (!VerifyReplyIdx(self, idx)) {
+					return -1;
+				}
+				return self.pcReplyOpcode[idx];
+			})
+		
 		.def("get_reply_skill", [](DialogState& self, int idx)->int {
 				if (!VerifyReplyIdx(self, idx)) return -1;
 				switch (self.pcLineSkillUse[idx]) {
