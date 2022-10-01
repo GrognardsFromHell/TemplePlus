@@ -230,7 +230,7 @@ bool PickObjectOnScreen(int x, int y, objHndl * pickedHandle, GameRaycastFlags f
 			}
 		}
 
-		auto name = objects.GetDisplayName(handle, handle);
+		//auto name = objects.GetDisplayName(handle, handle);
 
 		if (hitTest3d) {
 			
