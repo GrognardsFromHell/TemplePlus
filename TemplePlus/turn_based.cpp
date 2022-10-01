@@ -24,7 +24,7 @@ class TurnBasedReplacements : public TempleFix
 public: 
 	static void PortraitDragChangeInitiative(objHndl obj, int newInitiativeListIdx)
 	{
-		logger->debug("Changing {}'s combat initiative slot to {}", description.getDisplayName(obj), newInitiativeListIdx);
+		logger->debug("Changing {}'s combat initiative slot to {}", obj, newInitiativeListIdx);
 		orgPortraitDragChangeInitiative(obj, newInitiativeListIdx);
 	};
 	static void (__cdecl*orgPortraitDragChangeInitiative)(objHndl obj, int idx);
@@ -298,6 +298,9 @@ void TurnBasedSys::TbCombatEnd(bool isResetting){
 	
 
 	groupInitiativeList->Reset();
+	*turnBasedCurrentActor = objHndl::null; // Temple+: added this reset so no invalid handles are retained after combat
+
+
 	auto gameTime = gameSystems->GetTimeEvent().GetTime();
 	auto &combatAbsoluteEndTimeInSeconds = temple::GetRef<int>(0x11E61538);
 	combatAbsoluteEndTimeInSeconds = temple::GetRef<int(__cdecl)(GameTime&)>(0x1005FD50)(gameTime);
@@ -313,7 +316,7 @@ void TurnBasedSys::TbCombatEnd(bool isResetting){
 void _turnBasedSetCurrentActor(objHndl objHnd)
 {
 	if (objHnd)
-		logger->debug("Turn Based Actor changed to {}({})", description.getDisplayName(objHnd), objHnd);
+		logger->debug("Turn Based Actor changed to {}", objHnd);
 	tbSys.turnBasedSetCurrentActor(objHnd);
 }
 
