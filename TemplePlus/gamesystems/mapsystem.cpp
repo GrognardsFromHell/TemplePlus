@@ -1564,7 +1564,7 @@ void MapSystem::MapLoadPostprocess()
 			TimeEvent e;
 			e.system = TimeEventType::Teleported;
 			e.params[0].handle = handle;
-			gameSystems->GetTimeEvent().ScheduleNow(e);
+			gameSystems->GetTimeEvent().ScheduleNow(e); // calls 0x10025050 which does some sector light updates mainly
 			obj.SetFlag(OF_TELEPORTED, false);
 			return;
 		}
