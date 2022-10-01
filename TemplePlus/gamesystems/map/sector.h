@@ -361,6 +361,7 @@ struct SectorTime // used as a timestap for sector locking
 // Sector Function Replacements
 class LegacySectorSystem : TempleFix
 {
+	friend class SectorHooks;
 public:
 	/*
 	builds a list of TileListEntry's for every sector contained in the  TileRect (including partially contained sectors)
@@ -414,6 +415,10 @@ public:
 		orgSectorCacheFind = replaceFunction(0x10081FA0, SectorCacheFind);
 	//	replaceFunction(0x10082700, SectorLock);
 	};
+
+	bool IsSuspiciousTileList() const;
+protected:
+	bool mSuspiciousTileList = false;
 };
 
 extern LegacySectorSystem sectorSys;

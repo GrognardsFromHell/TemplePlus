@@ -49,8 +49,9 @@ class RaycastHooks : public TempleFix {
 			if (!(flags & RaycastFlags::HasRadius)) {
 				rcp.radius = 0.1f;
 			}
-			if (rcp.origin.location.locx <= 20 || rcp.origin.location.locy <= 20) {
-				logger->info("Weird raycast origin: {},{} for obj: {} tgt obj: {}", rcp.origin.location.locx, rcp.origin.location.locy, rcp.sourceObj, rcp.target);
+			
+			if (sectorSys.IsSuspiciousTileList()) {
+				logger->info("Suspicious tile list encountered - raycast details: origin loc = {}, sourceObj = {}, tgtLoc = {}, tgtObj = {}, radius = {}", rcp.origin, sourceObj, rcp.targetLoc, tgtObj, rcp.radius);
 			}
 			auto result = orgRaycast(rcp);
 			return result;

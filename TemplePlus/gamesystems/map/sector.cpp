@@ -612,6 +612,11 @@ bool LegacySectorSystem::SetTileFlags(LocAndOffsets loc, TileFlags flags)
 	return true;
 }
 
+bool LegacySectorSystem::IsSuspiciousTileList() const
+{
+	return mSuspiciousTileList;
+}
+
 static int64_t MakeSectorLoc(int x, int y) {
 	return ((int64_t)(y & 0x3FFFFFF) << 26) | (x & 0x3FFFFFF);
 }
@@ -733,11 +738,13 @@ int SectorHooks::HookedBuildClampedTileList(int64_t startLoc, int64_t endLoc, in
 	int64_t nextLoc = (startLoc / increment + 1)*increment;
 	auto locsOutIterator = locsOut+1;
 	int startLocInt = (int)(startLoc & 0xFFFFffff), endLocInt = (int)(endLoc & 0xFFFFffff);
-
+	
+	sectorSys.mSuspiciousTileList = false;
 	if (endLoc > startLoc + 3*increment){ // fixes buffer overflow issue due to output buffer size being 5. This caps it to: { startLoc, [startLoc/64]+64, [startLoc/64]+128, endLoc }
 		logger->error("Large endLoc detected! (start: {} ({}) end: {} ({})). Truncating.",startLoc,startLocInt, endLoc, endLocInt);
 		endLoc = startLoc + 3 * increment;
 		logger->info("new endLoc: {}", endLoc);
+		sectorSys.mSuspiciousTileList = true;
 	}
 
 	int count = 0;
