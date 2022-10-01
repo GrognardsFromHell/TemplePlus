@@ -68,7 +68,7 @@ struct ProximityList
 					{
 						/*
 						if (config.pathfindingDebugMode)
-							logger->info("Pathfinding bump into critter: {} at location {}", description.getDisplayName(proxListObjs[i].obj), proxListObjs[i].loc);
+							logger->info("Pathfinding bump into critter: {} at location {}", proxListObjs[i].obj, proxListObjs[i].loc);
 							*/
 						return true;
 				}
@@ -1554,7 +1554,7 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 		if (pq->critter)
 		{
 			pdbgMover = pq->critter;
-			logger->info("Starting path attempt for {}", description.getDisplayName(pdbgMover));
+			logger->info("Starting path attempt for {}", pdbgMover);
 		}
 		pdbgFrom = pq->from;
 		if ((pq->flags & PQF_TARGET_OBJ) && pq->targetObj )
@@ -1651,7 +1651,7 @@ int Pathfinding::FindPath(PathQuery* pq, PathQueryResult* pqr)
 		if (config.pathfindingDebugMode || !combatSys.isCombatActive())
 		{
 			if (pq->critter)
-				logger->info("{} pathed successfully to {}", description.getDisplayName(pq->critter), pqr->to);
+				logger->info("{} pathed successfully to {}", pq->critter, pqr->to);
 		}
 		
 		pqr->flags |= PF_COMPLETE;

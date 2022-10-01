@@ -2556,7 +2556,7 @@ int __cdecl TurnBasedStatusInitNoActions(DispatcherCallbackArgs args){
 		if (tbStat){
 			tbStat->hourglassState = 0;
 			dispIo->tbStatus->tbsFlags |= TurnBasedStatusFlags::TBSF_Movement;
-			logger->debug("Zeroed actions for {}", description.getDisplayName(args.objHndCaller));
+			logger->debug("Zeroed actions for {}", args.objHndCaller);
 		}
 	}
 	return 0;
@@ -2806,7 +2806,7 @@ bool ConditionSystem::AddTo(objHndl handle, const CondStruct* cond, const vector
 	auto dispatcher = objects.GetDispatcher(handle);
 
 	if (!dispatch.dispatcherValid(dispatcher)) {
-		logger->info("Dispatcher invalid for {}", objects.description.getDisplayName(handle));
+		logger->info("Dispatcher invalid for {}", handle);
 		return false;
 	}
 

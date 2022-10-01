@@ -525,7 +525,7 @@ bool SpellPacketBody::AddTarget(objHndl tgt, int partsysId, int replaceExisting)
 			return 0;
 		} 
 		
-		logger->debug("SpellPacketAddTarget: Object {} already in list!", description.getDisplayName(tgt));
+		logger->debug("SpellPacketAddTarget: Object {} already in list!", tgt);
 		return 0;	
 	}
 
@@ -540,7 +540,7 @@ bool SpellPacketBody::AddTarget(objHndl tgt, int partsysId, int replaceExisting)
 		return false;
 	}
 
-	logger->debug("SpellPacketAddTarget: Unable to add obj {} to target list!", description.getDisplayName(tgt));
+	logger->debug("SpellPacketAddTarget: Unable to add obj {} to target list!", tgt);
 	return false;
 }
 
@@ -1397,7 +1397,6 @@ void LegacySpellSystem::SpellPacketSetCasterLevel(SpellPacketBody* spellPkt) con
 	auto caster = spellPkt->caster;
 	auto spellEnum = spellPkt->spellEnum;
 	auto spellName = spellSys.GetSpellName(spellEnum);
-	auto casterName = description.getDisplayName(caster);
 	
 	auto casterObj = gameSystems->GetObj().GetObject(caster);
 
@@ -1408,13 +1407,13 @@ void LegacySpellSystem::SpellPacketSetCasterLevel(SpellPacketBody* spellPkt) con
 		if (casterClass){
 			auto casterLvl = critterSys.GetCasterLevelForClass(caster, casterClass);
 			spellPkt->casterLevel = casterLvl;
-			logger->info("Critter {} is casting spell {} at base caster_level {}.", casterName, spellName , casterLvl);
+			logger->info("Critter {} is casting spell {} at base caster_level {}.", caster, spellName , casterLvl);
 		} 
 
 		// item spell
 		else if (spellPkt->invIdx != 255 && !IsMonsterSpell(spellPkt->spellEnum)){
 			spellPkt->casterLevel = 0;
-			logger->info("Critter {} is casting item spell {} at base caster_level {}.", casterName, spellName, 0);
+			logger->info("Critter {} is casting item spell {} at base caster_level {}.", caster, spellName, 0);
 		}
 
 		// monster
@@ -1426,7 +1425,7 @@ void LegacySpellSystem::SpellPacketSetCasterLevel(SpellPacketBody* spellPkt) con
 			{
 				spellPkt->casterLevel = casterObj->GetInt32Array(obj_f_critter_level_idx).GetSize();
 			}
-			logger->info("Monster {} is casting spell {} at base caster_level {}.", casterName, spellName, spellPkt->casterLevel);
+			logger->info("Monster {} is casting spell {} at base caster_level {}.", caster, spellName, spellPkt->casterLevel);
 		} else
 		{
 			spellPkt->casterLevel = 0;
@@ -1436,17 +1435,17 @@ void LegacySpellSystem::SpellPacketSetCasterLevel(SpellPacketBody* spellPkt) con
 		if (spellPkt->spellClass == Domain_Special){ // domain special (usually used for monsters)
 			if (spellPkt->invIdx != 255 && !IsMonsterSpell(spellPkt->spellEnum)) {
 				spellPkt->casterLevel = 0;
-				logger->info("Critter {} is casting item spell {} at base caster_level {}.", casterName, spellName, 0);
+				logger->info("Critter {} is casting item spell {} at base caster_level {}.", caster, spellName, 0);
 			}
 
 			else {
 				spellPkt->casterLevel = objects.GetHitDiceNum(caster);
-				logger->info("Monster {} is casting spell {} at base caster_level {}.", casterName, spellName, spellPkt->casterLevel);
+				logger->info("Monster {} is casting spell {} at base caster_level {}.", caster, spellName, spellPkt->casterLevel);
 			}
 		}
 		else if (objects.StatLevelGet(caster, stat_level_cleric) > 0) {
 			spellPkt->casterLevel = critterSys.GetCasterLevelForClass(caster, stat_level_cleric);
-			logger->info("Critter {} is casting Domain spell {} at base caster_level {}.", casterName, spellName, spellPkt->casterLevel);
+			logger->info("Critter {} is casting Domain spell {} at base caster_level {}.", caster, spellName, spellPkt->casterLevel);
 		}
 		
 	}
@@ -3372,7 +3371,7 @@ int LegacySpellSystem::CheckSpellResistance(SpellPacketBody* spellPkt, objHndl h
 		char *outcomeText1, *outcomeText2;
 		if (dispelSpellResistanceResult < 0)	{ // fixed bug - was <= instead of <
 			auto spellName = GetSpellName(spellPkt->spellEnum);
-			logger->info("CheckSpellResistance: Spell {} cast by {} resisted by target {}.", spellName, description.getDisplayName(spellPkt->caster), description.getDisplayName(handle));
+			logger->info("CheckSpellResistance: Spell {} cast by {} resisted by target {}.", spellName, spellPkt->caster, handle);
 			floatSys.FloatSpellLine(handle, 30008, FloatLineColor::White);
 			PlayFizzle(handle);
 			outcomeText1 = combatSys.GetCombatMesLine(119); // Spell ~fails~[ROLL_

@@ -152,7 +152,7 @@ public:
 			auto invenNum = objects.getInt32(obj, invenNumField);
 			auto invenNumActualSize= objSystem->GetObject(obj)->GetObjectIdArray(invenField).GetSize();
 			if (invenNum != invenNumActualSize)	{
-				logger->debug("Inventory array size for {} ({}) does not equal associated num field on PoopItems. Arraysize: {}, numfield: {}", description.getDisplayName(obj), objSystem->GetObject(obj)->id.ToString(), invenNumActualSize, invenNum);
+				logger->debug("Inventory array size for {} ({}) does not equal associated num field on PoopItems. Arraysize: {}, numfield: {}", obj, objSystem->GetObject(obj)->id.ToString(), invenNumActualSize, invenNum);
 				
 			}
 
@@ -519,7 +519,7 @@ void InventorySystem::RemoveWielderCond(objHndl item, uint32_t condId, int spell
 		return;
 	auto wCond = conds.GetById(condId);
 	if (!wCond) {
-		logger->error("InventorySystem::RemoveWielderCond: Invalid condition! Item {}", description.getDisplayName(item));
+		logger->error("InventorySystem::RemoveWielderCond: Invalid condition! Item {}", item);
 		return;
 	}
 	if (spellId >= 0 && wCond->numArgs < 5) {
@@ -2128,10 +2128,8 @@ bool InventorySystem::DoNpcLooting(objHndl opener, objHndl container){
 		LooterInfo(objHndl npc) :handle(npc) {
 			lootingType = objects.getInt32(npc, obj_f_npc_pad_i_3);
 			shareType = (NpcLootingType)(lootingType & 0xF);
-			itemWorthTotal
- = 100 * ((lootingType >> 8) & 0xFFFF00);
-			lastItemWorth
- = 1600 * (lootingType & 0xFFF0);
+			itemWorthTotal = 100 * ((lootingType >> 8) & 0xFFFF00);
+			lastItemWorth = 1600 * (lootingType & 0xFFF0);
 			auto partySize = party.GroupNPCFollowersLen() + party.GroupPCsLen(); // in vanilla this was GroupListLen, which is wrong because it includes AI followers such as animal companions
 			switch (shareType) {
 			case NpcLootingType::NLT_Normal:
