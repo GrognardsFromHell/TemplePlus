@@ -100,7 +100,7 @@ public:
 		auto actor = tbSys.turnBasedGetCurrentActor();
 		if (actor )
 			if (objSystem->IsValidHandle(actor))
-				logger->debug("Greybar Reset! Current actor: {} ({})", description.getDisplayName(actor), actor);
+				logger->debug("Greybar Reset! Current actor: {}", actor);
 			else
 			{
 				logger->debug("Greybar Reset! Current actor is invalid handle.");
@@ -739,13 +739,13 @@ void LegacyCombatSystem::TurnProcessAi(objHndl obj)
 	auto actor = tbSys.turnBasedGetCurrentActor();
 	if (obj != actor && obj != actSeqSys.getNextSimulsPerformer())
 	{
-		logger->warn("Not AI processing {} (wrong turn...)", description.getDisplayName(obj));
+		logger->warn("Not AI processing {} (wrong turn...)", obj);
 		return;
 	}
 
 	if (objects.IsPlayerControlled(obj)){
 		if (critterSys.IsDeadOrUnconscious(obj)){
-			logger->info("Combat for {} ending turn (unconscious)", description.getDisplayName(obj));
+			logger->info("Combat for {} ending turn (unconscious)", obj);
 			CombatAdvanceTurn(obj);
 		}
 		// for AI controlled, this is handled inside AiProcess()
@@ -770,20 +770,20 @@ void LegacyCombatSystem::TurnProcessAi(objHndl obj)
 			scriptSys.SetGlobalFlag(7, 0);
 		}
 		if (!aiProcessPc(obj)){
-			logger->info("Combat for {} ending turn (ai fail).", description.getDisplayName(obj));
+			logger->info("Combat for {} ending turn (ai fail).", obj);
 		}
 		// TODO: possibly bugged if there's no "Advance Turn"?
 		return;
 	}
 
 	if (!pythonObjIntegration.ExecuteObjectScript(obj, obj, ObjScriptEvent::Heartbeat))	{
-		logger->info("Combat for {} ending turn (script).", description.getDisplayName(obj));
+		logger->info("Combat for {} ending turn (script).", obj);
 		CombatAdvanceTurn(obj);
 		return;
 	}
 
 	if (gameSystems->GetObj().GetObject(obj)->GetFlags() & OF_OFF) {
-		logger->info("Combat for {} ending turn (OF_OFF).", description.getDisplayName(obj));
+		logger->info("Combat for {} ending turn (OF_OFF).", obj);
 		CombatAdvanceTurn(obj);
 		return;
 	}
@@ -1076,7 +1076,7 @@ void LegacyCombatSystem::CombatAdvanceTurn(objHndl obj)
 		return;
 	tbSys.InitiativeListSort();
 	if ( tbSys.turnBasedGetCurrentActor() != obj && !(actSeqSys.isSimultPerformer(obj) || actSeqSys.IsSimulsCompleted()))	{
-		logger->warn("Combat Advance Turn: Not {}'s turn...", description.getDisplayName(obj));
+		logger->warn("Combat Advance Turn: Not {}'s turn...", obj);
 		return;
 	}
 	if ( actSeqSys.IsLastSimulsPerformer(obj)){

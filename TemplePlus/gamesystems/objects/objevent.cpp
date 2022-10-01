@@ -161,7 +161,7 @@ BOOL ObjEventSystem::ObjEventLoadGame(GameSystemSaveFile* saveFile) const
 	objEvtSerial = _serial;
 	for (auto it : *objEvents.objEvtTable) {
 		auto nodeData = it.data;
-		logger->debug("ObjectEventLoad: {} ({}) for handler id {}", description.getDisplayName(nodeData->aoeObj), gameSystems->GetObj().GetIdByHandle(nodeData->aoeObj).ToString(),nodeData->onLeaveFuncIdx);
+		logger->debug("ObjectEventLoad: {} ({}) for handler id {}", nodeData->aoeObj, gameSystems->GetObj().GetIdByHandle(nodeData->aoeObj).ToString(),nodeData->onLeaveFuncIdx);
 	}
 	return TRUE;
 }

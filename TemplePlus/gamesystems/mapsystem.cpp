@@ -1617,7 +1617,7 @@ void MapSystem::SaveMapMobiles() {
 			// If a dynamic object has been destroyed, it wont be recreated on mapload
 			// anyway (since there is no mob file for it)
 			if (obj.HasFlag(OF_DESTROYED) || obj.HasFlag(OF_EXTINCT)) {
-				//logger->debug("Skipping dynamic object {} for writing destroyed objs ({})", description.getDisplayName(handle),		objSystem->GetObject(handle)->id.ToString());
+				//logger->debug("Skipping dynamic object {} for writing destroyed objs ({})", handle, objSystem->GetObject(handle)->id.ToString());
 				return;
 			}
 			// TODO: Replace with proper VFS usage
@@ -1627,7 +1627,7 @@ void MapSystem::SaveMapMobiles() {
 		}
 
 		if (!obj.hasDifs) {
-			//logger->debug("Skipping object with diffs {} for writing destroyed objs ({})", description.getDisplayName(handle),	objSystem->GetObject(handle)->id.ToString());
+			//logger->debug("Skipping object with diffs {} for writing destroyed objs ({})", handle, objSystem->GetObject(handle)->id.ToString());
 			return; // Object is unchanged
 		}
 
