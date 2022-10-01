@@ -140,12 +140,12 @@ void DiagScreen::Render() {
 		lines.push_back(fmt::format("uiIntgameWaypointMode: {}", temple::GetRef<int>(0x10C04114)));
 		
 		
-		objHndl asshole;
+		objHndl uiIntgameTargetObjFromPortraits;
 		
-		asshole = temple::GetRef<objHndl>(0x10C04120);
-		if (asshole)
+		uiIntgameTargetObjFromPortraits = temple::GetRef<objHndl>(0x10C04120);
+		if (uiIntgameTargetObjFromPortraits)
 		{
-			lines.push_back(fmt::format("uiIntgameTargetObjFromPortraits: {}", description.getDisplayName(asshole)));
+			lines.push_back(fmt::format("uiIntgameTargetObjFromPortraits: {}", uiIntgameTargetObjFromPortraits));
 		}
 		
 			
@@ -155,9 +155,9 @@ void DiagScreen::Render() {
 
 		lines.push_back(fmt::format("State: {}", pathfindingSys.pdbgGotPath));
 		if (pathfindingSys.pdbgMover)
-			lines.push_back(fmt::format("Mover Obj: {}", description.getDisplayName( pathfindingSys.pdbgMover)));
+			lines.push_back(fmt::format("Mover Obj: {}", pathfindingSys.pdbgMover));
 		if (pathfindingSys.pdbgTargetObj)
-			lines.push_back(fmt::format("Target Obj: {}", description.getDisplayName(pathfindingSys.pdbgTargetObj)));
+			lines.push_back(fmt::format("Target Obj: {}", pathfindingSys.pdbgTargetObj));
 		lines.push_back(fmt::format("From: {}", pathfindingSys.pdbgFrom));
 		lines.push_back(fmt::format("To: {}", pathfindingSys.pdbgTo));
 		if (pathfindingSys.pdbgUsingNodes && !pathfindingSys.pdbgAbortedSansNodes)
