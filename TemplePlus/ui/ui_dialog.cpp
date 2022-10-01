@@ -162,6 +162,19 @@ class UiDialogHooks : public TempleFix
 			}
 			UiDialogBegin();
 		});
+
+		static void(__cdecl * orgDialogChoiceParse)(DialogState*, int) =
+			replaceFunction<void(__cdecl)(DialogState*, int)>(0x10038A50, [](DialogState *state, int responseIdx) 
+				{
+					if (!state) {
+						return;
+					}
+					if (responseIdx >= 0 && responseIdx < DIALOG_REPLIES_MAX) {
+						logger->info("DialogChoiceParse: NPC text \"{}\" ", state->npcLineText );
+						logger->info("DialogChoiceParse: Dialog response chosen: {} response ID: {}", responseIdx, state->npcReplyIds[responseIdx]);
+					}
+					return orgDialogChoiceParse(state, responseIdx);
+				});
 	}
 } uiDialogHooks;
 
