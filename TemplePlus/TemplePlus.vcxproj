@@ -76,6 +76,7 @@
     <ClCompile Include="gamesystems\mapsystem.cpp" />
     <ClCompile Include="gamesystems\mapsystem_hooks.cpp" />
     <ClCompile Include="gamesystems\map\gmesh.cpp" />
+    <ClCompile Include="gamesystems\map\text_floater.cpp" />
     <ClCompile Include="gamesystems\objects\arrayidxbitmaps.cpp" />
     <ClCompile Include="gamesystems\objects\arrayidxbitmaps_hooks.cpp" />
     <ClCompile Include="gamesystems\objects\gameobject.cpp" />
