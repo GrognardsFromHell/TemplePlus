@@ -509,40 +509,6 @@ const std::string &TextBubbleSystem::GetName() const {
 	return name;
 }
 
-//*****************************************************************************
-//* TextFloater
-//*****************************************************************************
-
-TextFloaterSystem::TextFloaterSystem(const GameSystemConf &config) {
-	auto startup = temple::GetPointer<int(const GameSystemConf*)>(0x100a2040);
-	if (!startup(&config)) {
-		throw TempleException("Unable to initialize game system TextFloater");
-	}
-}
-TextFloaterSystem::~TextFloaterSystem() {
-	auto shutdown = temple::GetPointer<void()>(0x100a2980);
-	shutdown();
-}
-void TextFloaterSystem::ResetBuffers(const RebuildBufferInfo& rebuildInfo) {
-	auto resetBuffers = temple::GetPointer<void(const RebuildBufferInfo*)>(0x100a1df0);
-	resetBuffers(&rebuildInfo);
-}
-void TextFloaterSystem::Reset() {
-	auto reset = temple::GetPointer<void()>(0x100a2970);
-	reset();
-}
-void TextFloaterSystem::AdvanceTime(uint32_t time) {
-	auto advanceTime = temple::GetPointer<void(uint32_t)>(0x100a2480);
-	advanceTime(time);
-}
-void TextFloaterSystem::CloseMap() {
-	auto mapClose = temple::GetPointer<void()>(0x100a2970);
-	mapClose();
-}
-const std::string &TextFloaterSystem::GetName() const {
-	static std::string name("TextFloater");
-	return name;
-}
 
 //*****************************************************************************
 //* JumpPoint

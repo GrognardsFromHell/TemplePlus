@@ -548,6 +548,9 @@
       <Filter>python</Filter>
     </ClCompile>
     <ClCompile Include="gamesystems\autoplayer.cpp" />
+    <ClCompile Include="gamesystems\map\text_floater.cpp">
+      <Filter>Map System</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="movies.h" />
