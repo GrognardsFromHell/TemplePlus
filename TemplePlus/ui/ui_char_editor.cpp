@@ -1162,6 +1162,8 @@ void UiCharEditor::SpellsFree(){
 
 BOOL UiCharEditor::FeatsWidgetsInit(int w, int h) {
 	featsMainWnd = LgcyWindow(259, 117, 405, 271);
+	sprintf_s(featsMainWnd.name, sizeof(featsMainWnd.name), "Char Editor Feats Wnd");
+	
 	featsMainWnd.flags = 1;
 	featsMainWnd.render = [](int widId) {uiCharEditor.FeatsWndRender(widId); };
 	featsMainWnd.handleMessage = [](int widId, TigMsg*msg) { return uiCharEditor.FeatsWndMsg(widId, msg); };
