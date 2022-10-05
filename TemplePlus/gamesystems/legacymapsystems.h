@@ -154,6 +154,7 @@ public:
 
 class TextFloaterSystem : public GameSystem, public BufferResettingGameSystem, public ResetAwareGameSystem, public TimeAwareGameSystem, public MapCloseAwareGameSystem {
 public:
+	friend class FloatLineHooks;
 	static constexpr auto Name = "TextFloater";
 	TextFloaterSystem(const GameSystemConf &config);
 	~TextFloaterSystem();
@@ -162,6 +163,9 @@ public:
 	void ResetBuffers(const RebuildBufferInfo& rebuildInfo) override;
 	void CloseMap() override;
 	const std::string &GetName() const override;
+private:
+	class TextFloaterImpl;
+	std::unique_ptr<TextFloaterImpl> mImpl;
 };
 
 class JumpPointSystem : public GameSystem, public ModuleAwareGameSystem, public ResetAwareGameSystem {
