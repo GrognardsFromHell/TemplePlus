@@ -36,6 +36,8 @@ struct Objects : temple::AddressTable {
 	uint32_t getInt32(objHndl obj, obj_f field);
 	uint64_t getInt64(objHndl obj, obj_f field);
 	objHndl getObjHnd(objHndl obj, obj_f field);
+	void SetFieldString(objHndl obj, obj_f field, char* value);
+	const char* getString(objHndl obj, obj_f field);
 	void SetFieldObjHnd(objHndl obj, obj_f field, objHndl value);
 	void setInt32(objHndl obj, obj_f field, uint32_t dataIn);
 	int32_t getArrayFieldInt32(objHndl obj, obj_f field, uint32_t index);
