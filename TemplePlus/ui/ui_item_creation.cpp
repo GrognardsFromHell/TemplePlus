@@ -962,9 +962,12 @@ void UiItemCreation::CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, o
 		auto baseDescr = description.GetDescriptionString(obj->GetInt32(obj_f_description) );
 		auto spellName = spellSys.GetSpellName(mScribedScrollSpell);
 		int SPELL_ENUM_AID = 1;
-		auto aidSpellName = spellSys.GetSpellName(SPELL_ENUM_AID);
-		auto pos = std::strstr(baseDescr, aidSpellName);
-		auto endPos = pos + std::strlen(aidSpellName);
+		auto aidSpellName = std::string(spellSys.GetSpellName(SPELL_ENUM_AID));
+		auto pos = std::strstr(baseDescr, aidSpellName.c_str());
+		if (!pos) {
+			pos = std::strstr(baseDescr, tolower(aidSpellName).c_str());
+		}
+		auto endPos = pos + aidSpellName.size();
 		char newName[1024] = {0,};
 		auto idx = 0;
 		for (idx = 0; baseDescr + idx < pos; ++idx) {
