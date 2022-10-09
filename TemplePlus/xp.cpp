@@ -189,6 +189,8 @@ XPAward::XPAward(){
 		}
 	}
 
+	//hotix #662
+	table[4 - 1][5 + 2] = 1600; // not 1800
 	memcpy(XPAwardTable, table, sizeof(table));
 };
 

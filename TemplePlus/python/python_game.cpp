@@ -441,6 +441,20 @@ PyObject* PyGame_FindNpcNear(PyObject*, PyObject* args) {
 		{
 			npcName = PyInt_AsLong(arg1);
 		}
+
+		if (PyTuple_GET_SIZE(args) >= 2) {
+			auto arg2 = PyTuple_GET_ITEM(args, 1);
+			if (PyInt_Check(arg2)) {
+				multiple = PyInt_AsLong(arg2);
+			}
+
+			if (PyTuple_GET_SIZE(args) >= 3) {
+				auto arg3 = PyTuple_GET_ITEM(args, 2);
+				if (PyInt_Check(arg3)) {
+					flags = PyInt_AsLong(arg3);
+				}
+			}
+		}
 	} 
 
 	LocAndOffsets loc;
@@ -470,18 +484,23 @@ PyObject* PyGame_FindNpcNear(PyObject*, PyObject* args) {
 				handlesFound[numFound++] = dude;
 			}
 		}
+		else {
+			handlesFound[numFound++] = dude;
+		}
 		
 	}
 	if (!numFound)
 		return PyInt_FromLong(0);
-	auto result = PyTuple_New(numFound);
-	for (int i = 0; i < numFound; i++)
-	{
-		PyTuple_SetItem(result, i, PyObjHndl_Create(handlesFound[i]));
-	}
 
-	if (multiple)
+	if (multiple) {
+		auto result = PyTuple_New(numFound);
+		for (int i = 0; i < numFound; i++)
+		{
+			PyTuple_SetItem(result, i, PyObjHndl_Create(handlesFound[i]));
+		}
+
 		return result;
+	}
 	return PyObjHndl_Create(handlesFound[0]);
 }
 
