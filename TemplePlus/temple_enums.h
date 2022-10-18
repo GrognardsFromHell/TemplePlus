@@ -2036,7 +2036,13 @@ enum Stat : uint32_t {
 	stat_level_shadow_sun_ninja = 81,
 	stat_level_fochlucan_lyrist = 82,
 	stat_level_marshal = 83,
+	stat_level_dragon_shaman = 84,
+	stat_level_dragonheart_mage = 85,
+	stat_level_battle_howler_of_gruumsh = 86,
+	stat_level_fist_of_the_forest = 87,
 	stat_level_ultimate_magus = 88,
+	stat_level_unseen_seer = 89,
+	
 
 
 	stat_hp_max = 0xE4,
@@ -2422,7 +2428,8 @@ enum Deities : uint32_t
 	DEITY_PROCAN = 24,
 	DEITY_NOREBO = 25,
 	DEITY_PYREMIUS = 26,
-	DEITY_RALISHAZ = 27
+	DEITY_RALISHAZ = 27,
+	DEITY_PHAULKON = 28
 };
 
 #pragma endregion
