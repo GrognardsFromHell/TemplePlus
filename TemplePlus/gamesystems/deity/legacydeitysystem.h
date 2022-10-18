@@ -4,6 +4,7 @@
 
 #define DEITY_COUNT_VANILLA 28 // includes non-selectable ones like Ralishaz and Zuggtmoy
 #define DEITY_COUNT_SELECTABLE_VANILLA 20 // the number of deities selectable in vanilla ToEE
+#define DEITY_COUNT_NEW 29 //added deities, add amount of new to vanilla number
 enum SkillEnum : uint32_t;
 
 struct LegacyDeitySpec{
@@ -26,6 +27,7 @@ struct DeitySpec:LegacyDeitySpec {
 
 	DeitySpec();
 	DeitySpec(LegacyDeitySpec&);
+	DeitySpec(Alignment, Domain *, Race *, Stat *, int);
 };
 
 

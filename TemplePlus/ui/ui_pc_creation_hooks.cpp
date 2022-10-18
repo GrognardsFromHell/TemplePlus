@@ -142,6 +142,18 @@ public:
 		// replaceFunction<void(__cdecl)()>(0x101B0620, []() {uiPcCreation.ClassCheckComplete(); }); // same function as ui_char_editor, already replaced
 		replaceFunction<void(__cdecl)()>(0x10188260, []() {uiPcCreation.ClassBtnEntered(); });
 
+		// Deity
+		replaceFunction<void(__cdecl)()>(0x10187340, []() {uiPcCreation.DeitySetPermissibles(); });//new hooks after this line
+		replaceFunction<void(__cdecl)(UiSystemConf&)>(0x10187690, [](UiSystemConf& conf) {uiPcCreation.DeitySystemInit(conf); });
+		replaceFunction<void(__cdecl)()>(0x101873A0, []() {uiPcCreation.DeityWidgetsFree(); });
+		replaceFunction<void(__cdecl)()>(0x10187340, []() {uiPcCreation.DeityActivate(); });
+		replaceFunction<void(__cdecl)(UiResizeArgs&)>(0x101877D0, [](UiResizeArgs& args) {uiPcCreation.DeityWidgetsResize(args); });
+		replaceFunction<void(__cdecl)()>(0x10187090, []() {uiPcCreation.DeityShow(); });
+		replaceFunction<void(__cdecl)()>(0x10187070, []() {uiPcCreation.DeityHide(); });
+		replaceFunction<void(__cdecl)(CharEditorSelectionPacket&, objHndl&)>(0x101870C0, [](CharEditorSelectionPacket& selPkt, objHndl& handle) {uiPcCreation.DeityFinalize(selPkt, handle); });
+		replaceFunction<void(__cdecl)()>(0x101870B0, []() {uiPcCreation.DeityCheckComplete(); });
+		replaceFunction<void(__cdecl)()>(0x101870F0, []() {uiPcCreation.DeityBtnEntered(); });
+
 		// Alignment
 		replaceFunction<BOOL(__cdecl)(int, Alignment)>(0x10188170, [](int classEnum, Alignment alignment) ->BOOL {
 			return pythonClassIntegration.IsAlignmentCompatible(alignment, classEnum); });
@@ -191,8 +203,6 @@ public:
 		replaceFunction<void(__cdecl)(CharEditorSelectionPacket&, objHndl&)>(0x1017F0A0, [](CharEditorSelectionPacket& selPkt, objHndl& handle) {uiPcCreation.SpellsFinalize(); });
 		replaceFunction<BOOL(__cdecl)()>(0x1017EB80, []() {return uiPcCreation.SpellsCheckComplete(); });
 
-		// Deity
-		replaceFunction<void(__cdecl)()>(0x10187340, []() {uiPcCreation.DeitySetPermissibles(); });
 
 		// lax rules option for unbounded increase of stats & party member alignment
 		replaceFunction(0x1018B940, StatsIncreaseBtnMsg);
@@ -214,16 +224,7 @@ public:
 		// UiPartyCreationGetPartyPool
 		static void(*orgGetPartyPool)(int) = replaceFunction<void(int)>(0x10165E60, GetPartyPool);
 		// static int(*orgPartyPoolLoader)() = replaceFunction<int()>(0x10165790, PartyPoolLoader);
-		static void(__cdecl* orgPartyPoolExit)() = replaceFunction<void()>(0x10165A50, []() { // fixed crash due to not removing from GroupList when exiting party pool (e.g. to change the party alignment)
-			int& uiPartyCreationIngame = temple::GetRef<int>(0x10BF24E0);
-			
-			if (!uiPartyCreationIngame) {
-				// moved this part to the beginning, since UiCharHide(0) will refresh the radial menus based on discarded party members, potentially overflowing it
-				static auto uiPartyPoolRemoveAllPcPortraits = temple::GetRef<void()>(0x1011B6F0); 
-				uiPartyPoolRemoveAllPcPortraits();
-			}
-			return orgPartyPoolExit();
-			});
+
 
 		if (temple::Dll::GetInstance().HasCo8Hooks()) {
 			writeNoops(0x1011D521); // disabling EXP draw call

@@ -8,7 +8,7 @@
 #include "d20_race.h"
 
 LegacyDeitySystem deitySys;
-
+bool finishInit = false;
 
 class DeityHooks : TempleFix
 {
@@ -25,6 +25,9 @@ bool LegacyDeitySystem::CanPickDeity(objHndl handle, int deityId){
 	if (!handle)
 		return false;
 
+	if (deityId == 0) {
+		return true;
+	}
 	auto &deitySpec = GetLegacyDeitySpec(deityId);
 	if (!deitySpec.isSelectable)
 		return false;
@@ -147,7 +150,16 @@ DeitySpec & LegacyDeitySystem::GetDeitySpec(int id){
 }
 
 LegacyDeitySpec & LegacyDeitySystem::GetLegacyDeitySpec(int deityId){
-	return temple::GetRef<LegacyDeitySpec[28]>(0x102726F8)[deityId];
+	/*if (deityId > DEITY_COUNT_VANILLA-1){
+		return mDeitySpecs[deityId];
+	}
+	return temple::GetRef<LegacyDeitySpec[28]>(0x102726F8)[deityId];*/
+	if (finishInit == false) {
+		return temple::GetRef<LegacyDeitySpec[28]>(0x102726F8)[deityId];
+	}
+	else {
+		return mDeitySpecs[deityId];
+	}
 }
 
 void LegacyDeitySystem::Init(){
@@ -160,8 +172,23 @@ void LegacyDeitySystem::Init(){
 		
 		mDeitySpecs[i] = s;
 	}
+	for (auto i=DEITY_COUNT_VANILLA; i < DEITY_COUNT_NEW; i++)	{ //todo actual files for new deities instead of hardcoded
+		auto deityEnum = (Deities)i;
+		
+		Alignment a = ALIGNMENT_CHAOTIC_GOOD;
+		Domain d[] = {Domain_Air, Domain_Animal, Domain_Chaos, Domain_Good, Domain_War};
+		Race r[] = {race_human}; //temp no special races
+		Stat c[] = {stat_level_barbarian, stat_level_cleric, stat_level_fighter, stat_level_paladin, stat_level_ranger};
+		int sel = 1;
+		
+		DeitySpec s(a, d, r, c, sel);
+		s.id = i;
+		s.favoredWeapon = GetHardcodedFavoredWeapon(deityEnum);
+		
+		mDeitySpecs[i] = s;
+	}
 
-
+	finishInit = true;
 }
 
 WeaponTypes LegacyDeitySystem::GetHardcodedFavoredWeapon(Deities deityEnum){
@@ -233,6 +260,8 @@ WeaponTypes LegacyDeitySystem::GetHardcodedFavoredWeapon(Deities deityEnum){
 	
 	case DEITY_RALISHAZ:return wt_heavy_mace;
 	
+	case DEITY_PHAULKON:return wt_longbow;
+	
 	default: return wt_quarterstaff;
 	}
 }
@@ -277,4 +306,18 @@ DeitySpec::DeitySpec(LegacyDeitySpec & legacySpec){
 	memcpy(this->classes, legacySpec.classes, sizeof(this->classes));
 	memcpy(this->races, legacySpec.races, sizeof(this->races));
 	this->isSelectable = legacySpec.isSelectable;
+}
+
+DeitySpec::DeitySpec(Alignment a, Domain *d, Race *r, Stat *c, int s){
+	this->alignment = a;
+	for (int i=0; i < 7; i++){
+		this->domains[i] = d[i];
+	}
+	for (int i=0; i < 12; i++){
+		this->classes[i] = c[i];
+	}
+	for (int i=0; i < 7; i++){
+		this->races[i] = r[i];
+	}
+	this->isSelectable = s;
 }

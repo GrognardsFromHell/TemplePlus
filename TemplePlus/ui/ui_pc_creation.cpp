@@ -40,11 +40,14 @@
 #include "widgets/widget_styles.h"
 #include "temple/meshes.h"
 #include "animgoals/anim.h"
+#include <iostream>;
+#include <fstream>;
 
 
 const Race RACE_INVALID = (Race)0xFFFFFFFF;
 const int GENDER_INVALID = 2;
 
+//std::ofstream myfile("D:\\Users\\iceme\\Desktop\\testingoutput.txt", ios_base::app);
 
 struct PartyCreationPc
 {
@@ -680,6 +683,400 @@ Stat UiPcCreation::GetClassCodeFromWidgetAndPage(int idx, int page) {
 	if (idx2 >= classBtnMapping.size())
 		return (Stat)-1;
 	return (Stat)classBtnMapping[idx2];
+}
+
+#pragma endregion
+
+//added stuff
+#pragma region Deity
+
+BOOL UiPcCreation::DeitySystemInit(UiSystemConf& conf) {
+	if (textureFuncs.RegisterTexture("art\\interface\\pc_creation\\buttonbox.tga", &buttonBox))
+		return 0;
+
+	for (int i = 0; i < DEITY_COUNT_NEW; i++) {
+		deityBtnMapping.push_back(i);
+	}
+	deityNames[0] = "None";
+	deityNames[1] = "Boccob";
+	deityNames[2] = "Corellon Larethian";
+	deityNames[3] = "Ehlonna";
+	deityNames[4] = "Erythnul";
+	deityNames[5] = "Fharlanghn";
+	deityNames[6] = "Garl Glittergold";
+	deityNames[7] = "Gruumsh";
+	deityNames[8] = "Heironeous";
+	deityNames[9] = "Hextor";
+	deityNames[10] = "Kord";
+	deityNames[11] = "Moradin";
+	deityNames[12] = "Nerull";
+	deityNames[13] = "Obad Hai";
+	deityNames[14] = "Olidammara";
+	deityNames[15] = "Pelor";
+	deityNames[16] = "St. Cuthbert";
+	deityNames[17] = "Vecna";
+	deityNames[18] = "Wee Jas";
+	deityNames[19] = "Yondalla";
+	deityNames[20] = "Old Faith";
+	deityNames[21] = "Zuggtmoy";
+	deityNames[22] = "Iuz";
+	deityNames[23] = "Lolth";
+	deityNames[24] = "Procan";
+	deityNames[25] = "Norebo";
+	deityNames[26] = "Pyremius";
+	deityNames[27] = "Ralishaz";
+	deityNames[28] = "Phaulkon";
+
+	dPageCount = deityBtnMapping.size() / 11;
+	if (dPageCount * 11u /*20u*/ < deityBtnMapping.size())
+		dPageCount++;
+
+	return DeityWidgetsInit();
+}
+
+BOOL UiPcCreation::DeityWidgetsInit() {
+	static LgcyWindow deityWnd(219, 50, 431, 250); 
+	deityWnd.x = GetPcCreationWnd().x + 219;
+	deityWnd.y = GetPcCreationWnd().y + 50;
+	deityWnd.flags = 1;
+	deityWnd.render = [](int widId) { uiPcCreation.StateTitleRender(widId); };
+	deityWndId = uiManager->AddWindow(deityWnd);
+
+	int coloff = 0, rowoff = 0;
+
+	for (auto it : deityBtnMapping) { 
+		// deity buttons
+		LgcyButton deityBtn("Deity btn", deityWndId, 81 + coloff, 42 + rowoff, 130, 20);
+		coloff = 139 - coloff;
+		if (!coloff)
+			rowoff += 29;
+		if (rowoff == 5 * 29) // the bottom button
+			coloff = 69;
+
+		deityBtnRects.push_back(TigRect(deityBtn.x, deityBtn.y, deityBtn.width, deityBtn.height));
+		deityBtn.x += deityWnd.x; deityBtn.y += deityWnd.y;
+		deityBtn.render = [](int id) {uiPcCreation.DeityBtnRender(id); };
+		deityBtn.handleMessage = [](int id, TigMsg* msg) { return uiPcCreation.DeityBtnMsg(id, msg); };
+		deityBtn.SetDefaultSounds();
+		deityBtnIds.push_back(uiManager->AddButton(deityBtn, deityWndId));
+
+		//rects
+		deityBtnFrameRects.push_back(TigRect(deityBtn.x - 5, deityBtn.y - 5, deityBtn.width + 10, deityBtn.height + 10));
+
+
+		UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+		auto deityMeasure = UiRenderer::MeasureTextSize(deityNames[it].c_str(), bigBtnTextStyle);
+		TigRect rect(deityBtn.x + (110 - deityMeasure.width) / 2 - deityWnd.x,
+			deityBtn.y + (20 - deityMeasure.height) / 2 - deityWnd.y,
+			deityMeasure.width, deityMeasure.height);
+		deityTextRects.push_back(rect);
+		UiRenderer::PopFont();
+	}
+
+	const int nextBtnXoffset = 329;
+	const int nextBtnYoffset = 205;
+	const int prevBtnXoffset = 38;
+	deityNextBtnTextRect = deityNextBtnRect = TigRect(deityWnd.x + nextBtnXoffset, deityWnd.y + nextBtnYoffset, 55, 20);
+	deityPrevBtnTextRect = deityPrevBtnRect = TigRect(deityWnd.x + prevBtnXoffset, deityWnd.y + nextBtnYoffset, 55, 20);
+	deityNextBtnFrameRect = TigRect(deityWnd.x + nextBtnXoffset - 3, deityWnd.y + nextBtnYoffset - 5, 55 + 6, 20 + 10);
+	deityPrevBtnFrameRect = TigRect(deityWnd.x + prevBtnXoffset - 3, deityWnd.y + nextBtnYoffset - 5, 55 + 6, 20 + 10);
+	deityNextBtnTextRect.x -= deityWnd.x; deityNextBtnTextRect.y -= deityWnd.y;
+	deityPrevBtnTextRect.x -= deityWnd.x; deityPrevBtnTextRect.y -= deityWnd.y;
+
+	LgcyButton nextBtn("Deity Next Button", deityWndId, deityWnd.x + nextBtnXoffset, deityWnd.y + nextBtnYoffset - 4, 55, 20);
+	//nextBtn.handleMessage = [](int widId, TigMsg* msg)->BOOL {
+	//	if (uiPcCreation.deityWndPage < uiPcCreation.dPageCount)
+	//		uiPcCreation.deityWndPage++;
+	//	uiPcCreation.DeitySetPermissibles();
+	//	return 1; }; //handel message being set twice?
+	nextBtn.render = [](int id) { uiPcCreation.DeityNextBtnRender(id); };
+	nextBtn.handleMessage = [](int widId, TigMsg* msg)->BOOL {	return uiPcCreation.DeityNextBtnMsg(widId, msg); };
+	nextBtn.SetDefaultSounds();
+	deityNextBtn = uiManager->AddButton(nextBtn, deityWndId);
+
+	LgcyButton prevBtn("Deity Prev. Button", deityWndId, deityWnd.x + prevBtnXoffset, deityWnd.y + nextBtnYoffset - 4, 55, 20);
+	prevBtn.render = [](int id) { uiPcCreation.DeityPrevBtnRender(id); };
+	prevBtn.handleMessage = [](int widId, TigMsg* msg)->BOOL {	return uiPcCreation.DeityPrevBtnMsg(widId, msg); };
+	prevBtn.SetDefaultSounds();
+	deityPrevBtn = uiManager->AddButton(prevBtn, deityWndId);
+
+	return TRUE;
+
+}
+
+void UiPcCreation::DeityWidgetsFree() {
+	for (auto it : deityBtnIds) {
+		uiManager->RemoveChildWidget(it);
+	}
+	deityBtnIds.clear();
+	uiManager->RemoveChildWidget(deityNextBtn);
+	uiManager->RemoveChildWidget(deityPrevBtn);
+	uiManager->RemoveWidget(deityWndId);
+}
+
+BOOL UiPcCreation::DeityShow() {
+	uiManager->SetHidden(deityWndId, false);
+	uiManager->BringToFront(deityWndId);
+	return 1;
+}
+
+BOOL UiPcCreation::DeityHide() {
+	uiManager->SetHidden(deityWndId, true);
+	return 0;
+}
+
+BOOL UiPcCreation::DeityWidgetsResize(UiResizeArgs& args) {
+	for (auto it : deityBtnIds) {
+		uiManager->RemoveChildWidget(it);
+	}
+	deityBtnIds.clear();
+	uiManager->RemoveChildWidget(deityNextBtn);
+	uiManager->RemoveChildWidget(deityPrevBtn);
+	uiManager->RemoveWidget(deityWndId);
+	deityBtnFrameRects.clear();
+	deityBtnRects.clear();
+	deityTextRects.clear();
+	return DeityWidgetsInit();
+}
+
+BOOL UiPcCreation::DeityCheckComplete() {
+	auto& selPkt = GetCharEditorSelPacket();
+	return (BOOL)(selPkt.deityId != 20);//DEITY_BTN_COUNT + 1);
+}
+
+void UiPcCreation::DeityBtnEntered() { //NOTE: unsure what to do
+	auto& selPkt = GetCharEditorSelPacket();
+
+	if (selPkt.deityId == 20)
+	{
+		ButtonEnteredHandler(ElfHash::Hash("TAG_CHARGEN_DEITY"));
+	}
+	else
+	{
+		//v0 = ElfHash((&off_102FDA68)[4 * charEdSelPkt.deityId]); //is tag_religion 4*deityid, hardcoded names maybe?
+		ButtonEnteredHandler(ElfHash::Hash("TAG_CHARGEN_DEITY"));
+	}
+}
+
+void UiPcCreation::DeityActivate() {//dumped code never uses this?
+	chargen.SetIsNewChar(true);
+	DeitySetPermissibles();
+}
+
+int UiPcCreation::DeityFinalize(CharEditorSelectionPacket& selPkt, objHndl& handle) {
+	auto obj = objSystem->GetObject(handle);
+	obj->SetInt32(obj_f_critter_deity, selPkt.deityId);
+	return selPkt.deityId; //unsure what int to return, original finalize return type was int
+}
+
+void UiPcCreation::DeityBtnRender(int widId) {
+	auto idx = WidgetIdIndexOf(widId, &deityBtnIds[0], deityBtnIds.size());
+	if (idx == -1)
+		return;
+	
+	auto page = GetDeityWndPage();
+	auto deityId = GetDeityIdFromWidgetAndPage(idx, page);
+	if (deityId == (Stat)-1)
+		return;
+	
+	static TigRect srcRect(1, 1, 120, 30);
+	UiRenderer::DrawTexture(buttonBox, deityBtnFrameRects[idx], srcRect);
+
+	auto btnState = uiManager->GetButtonState(widId);
+	if (btnState != LgcyButtonState::Disabled && btnState != LgcyButtonState::Down)
+	{
+		auto& selPkt = GetCharEditorSelPacket();
+		if (selPkt.deityId == deityId)
+			btnState = LgcyButtonState::Released;
+		else
+			btnState = btnState == LgcyButtonState::Hovered ? LgcyButtonState::Hovered : LgcyButtonState::Normal;
+	}
+
+	auto texId = temple::GetRef<int[15]>(0x11E74140)[(int)btnState];
+	static TigRect srcRect2(1, 1, 110, 20);
+	auto& rect = deityBtnRects[idx];
+	UiRenderer::DrawTextureInWidget(deityWndId, texId, rect, srcRect2);
+
+	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+	auto textt = deityNames[deityId].c_str();
+	
+	auto textMeas = UiRenderer::MeasureTextSize(textt, bigBtnTextStyle);
+	TigRect deityTextRect(rect.x + (rect.width - textMeas.width) / 2,
+		rect.y + (rect.height - textMeas.height) / 2,
+		textMeas.width, textMeas.height);
+	UiRenderer::DrawTextInWidget(deityWndId, textt, deityTextRect, bigBtnTextStyle);
+	UiRenderer::PopFont();
+}
+
+BOOL UiPcCreation::DeityBtnMsg(int widId, TigMsg* msg) {//note: no original funtion exists to hook to, unsure what to do/if needed
+	
+	if (msg->type != TigMsgType::WIDGET)
+		return 0;
+
+	auto idx = WidgetIdIndexOf(widId, &deityBtnIds[0], deityBtnIds.size());
+	if (idx == -1)
+		return 0;
+
+	auto _msg = (TigMsgWidget*)msg;
+	auto deityId = GetDeityIdFromWidgetAndPage(idx, GetDeityWndPage());
+	if (deityId == (Stat)-1)
+		return 0;
+
+	auto handle = GetEditedChar();
+	auto obj = objSystem->GetObject(handle);
+
+	if (_msg->widgetEventType == TigMsgWidgetEvent::MouseReleased) {
+
+		//if (helpSys.IsClickForHelpActive()) {
+		//	helpSys.PresentWikiHelp(HELP_IDX_CLASSES + deityId - stat_level_barbarian, D20HelpType::Classes); //note: no help for deity exists?
+		//	return TRUE;
+		//}
+		GetCharEditorSelPacket().deityId = deityId;
+		//obj->ClearArray(obj_f_critter_deity);
+		//obj->SetInt32(obj_f_critter_level_idx, 0, deityId);
+		obj->SetInt32(obj_f_critter_deity, deityId);
+		d20StatusSys.D20StatusRefresh(handle);
+
+		//ToggleClassRelatedStages(); //note, deity specifix things?
+		ResetNextStages(CG_Stage_Deity);
+		ChargenSystem::UpdateDescriptionBox();
+		return TRUE;
+	}
+
+	if (_msg->widgetEventType == TigMsgWidgetEvent::Exited) {
+		DeityBtnEntered();
+		return TRUE;
+	}
+
+	if (_msg->widgetEventType == TigMsgWidgetEvent::Entered) {
+		/*
+		auto isValid = true;
+		if (!IsCastingStatSufficient(deityId)) {
+			isValid = false;
+		}
+
+		if (!IsAlignmentOk(deityId))
+			isValid = false;
+
+		if (!isValid) {
+			temple::GetRef<void(__cdecl)(Stat)>(0x1011B990)(deityId); // sets text in the scrollbox for why you can't pick the class 
+			return TRUE;
+		}
+
+
+		ClassScrollboxTextSet(deityId); // ChargenClassScrollboxTextSet  (class short description)*/
+		return TRUE;
+	}
+
+
+	return 0;
+}
+
+BOOL UiPcCreation::DeityNextBtnMsg(int widId, TigMsg* msg) {
+
+	if (!config.nonCoreMaterials)
+		return FALSE;
+
+	if (msg->type != TigMsgType::WIDGET)
+		return FALSE;
+
+	auto _msg = (TigMsgWidget*)msg;
+
+	if (_msg->widgetEventType == TigMsgWidgetEvent::Clicked) {
+		if (deityWndPage < dPageCount - 1)
+			deityWndPage++;
+		DeitySetPermissibles();
+		return TRUE;
+	}
+	return FALSE;
+}
+
+BOOL UiPcCreation::DeityPrevBtnMsg(int widId, TigMsg* msg)
+{
+	
+	if (!config.nonCoreMaterials)
+		return FALSE;
+
+	if (msg->type != TigMsgType::WIDGET)
+		return 0;
+
+	auto _msg = (TigMsgWidget*)msg;
+
+	if (_msg->widgetEventType == TigMsgWidgetEvent::Clicked) {
+		if (deityWndPage > 0)
+			deityWndPage--;
+		DeitySetPermissibles();
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+void UiPcCreation::DeityNextBtnRender(int widId) {
+	if (!config.nonCoreMaterials)
+		return;
+
+	static TigRect srcRect(1, 1, 120, 30);
+	UiRenderer::DrawTexture(buttonBox, deityNextBtnFrameRect, srcRect);
+
+	auto btnState = uiManager->GetButtonState(widId);
+	if (btnState != LgcyButtonState::Disabled && btnState != LgcyButtonState::Down) {
+		btnState = btnState == LgcyButtonState::Hovered ? LgcyButtonState::Hovered : LgcyButtonState::Normal;
+	}
+
+	auto texId = temple::GetRef<int[15]>(0x11E74140)[(int)btnState];
+	static TigRect srcRect2(1, 1, 110, 20);
+	UiRenderer::DrawTexture(texId, deityNextBtnRect, srcRect2);
+
+	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+	auto textt = fmt::format("NEXT");
+	auto textMeas = UiRenderer::MeasureTextSize(textt, bigBtnTextStyle);
+	TigRect textRect(deityNextBtnTextRect.x + (deityNextBtnTextRect.width - textMeas.width) / 2,
+		deityNextBtnTextRect.y + (deityNextBtnTextRect.height - textMeas.height) / 2,
+		textMeas.width, textMeas.height);
+	UiRenderer::DrawTextInWidget(deityWndId, textt, textRect, bigBtnTextStyle);
+	UiRenderer::PopFont();
+
+}
+
+void UiPcCreation::DeityPrevBtnRender(int widId) {
+	if (!config.nonCoreMaterials)
+		return;
+
+	static TigRect srcRect(1, 1, 120, 30);
+	UiRenderer::DrawTexture(buttonBox, deityPrevBtnFrameRect, srcRect);
+
+	auto btnState = uiManager->GetButtonState(widId);
+	if (btnState != LgcyButtonState::Disabled && btnState != LgcyButtonState::Down) {
+		btnState = btnState == LgcyButtonState::Hovered ? LgcyButtonState::Hovered : LgcyButtonState::Normal;
+	}
+
+	auto texId = temple::GetRef<int[15]>(0x11E74140)[(int)btnState];
+	static TigRect srcRect2(1, 1, 110, 20);
+	UiRenderer::DrawTexture(texId, deityPrevBtnRect, srcRect2);
+
+	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
+	auto textt = fmt::format("PREV");
+	auto textMeas = UiRenderer::MeasureTextSize(textt, bigBtnTextStyle);
+	TigRect textRect(deityPrevBtnTextRect.x + (deityPrevBtnTextRect.width - textMeas.width) / 2,
+		deityPrevBtnTextRect.y + (deityPrevBtnTextRect.height - textMeas.height) / 2,
+		textMeas.width, textMeas.height);
+	UiRenderer::DrawTextInWidget(deityWndId, textt, textRect, bigBtnTextStyle);
+	UiRenderer::PopFont();
+}
+
+int UiPcCreation::GetDeityWndPage() {
+	return deityWndPage;
+}
+
+Stat UiPcCreation::GetDeityIdFromWidgetAndPage(int idx, int page) {
+	if (page == 0)
+		return (Stat)(0 + idx);
+
+	auto idx2 = idx + page * 11u;//20u;
+	if (idx2 >= deityBtnMapping.size())
+		return (Stat)-1;
+	return (Stat)deityBtnMapping[idx2];
 }
 
 #pragma endregion
@@ -2420,8 +2817,26 @@ void UiPcCreation::SpellsEntryBtnRender(int widId)
 	if (spEnum == SPELL_ENUM_VACANT) {
 		// don't draw text (will only draw the frame)
 	}
-	else if (spellSys.IsLabel(spEnum)) {
-		if (spLvl >= 0 && spLvl < NUM_SPELL_LEVELS) {
+	else if (spellSys.IsLabel(spEnum)) { // Invocation Labeling here
+		if (knSpInfo[spellIdx].spellClass == spellSys.GetSpellClass(stat_level_warlock)) {
+			if (spLvl <= 2) {
+				text.append(fmt::format("Least Invocations ({})", spLvl));
+				UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellLevelLabelStyle);
+			}
+			else if (spLvl <= 4) {
+				text.append(fmt::format("Lesser Invocations ({})", spLvl));
+				UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellLevelLabelStyle);
+			}
+			else if (spLvl <= 6) {
+				text.append(fmt::format("Greater Invocations ({})", spLvl));
+				UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellLevelLabelStyle);
+			}
+			else {
+				text.append(fmt::format("Dark Invocations ({})", spLvl));
+				UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellLevelLabelStyle);
+			}
+		}
+		else if (spLvl >= 0 && spLvl < NUM_SPELL_LEVELS) {
 			text.append(fmt::format("{}", chargen.spellLevelLabels[spLvl]));
 			UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellLevelLabelStyle);
 		}
@@ -2581,10 +2996,28 @@ void UiPcCreation::SpellsAvailableEntryBtnRender(int widId)
 	std::string text;
 	TigRect rect(btn->x - spellsWnd.x, btn->y - spellsWnd.y, btn->width, btn->height);
 	UiRenderer::PushFont(PredefinedFont::PRIORY_12);
-	if (spellSys.IsLabel(spEnum)) {
+	if (spellSys.IsLabel(spEnum)) { // Invocation label here
 		rect.x += 2;
 		auto spLvl = avSpInfo[spellIdx].spellLevel;
-		if (spLvl >= 0 && spLvl < NUM_SPELL_LEVELS)
+		if (avSpInfo[spellIdx].spellClass == spellSys.GetSpellClass(stat_level_warlock)) {
+			if (spLvl <= 2) {
+				text.append(fmt::format("Least Invocations ({})", spLvl));
+				UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellLevelLabelStyle);
+			}
+			else if (spLvl <= 4) {
+				text.append(fmt::format("Lesser Invocations ({})", spLvl));
+				UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellLevelLabelStyle);
+			}
+			else if (spLvl <= 6) {
+				text.append(fmt::format("Greater Invocations ({})", spLvl));
+				UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellLevelLabelStyle);
+			}
+			else {
+				text.append(fmt::format("Dark Invocations ({})", spLvl));
+				UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellLevelLabelStyle);
+			}
+		}
+		else if (spLvl >= 0 && spLvl < NUM_SPELL_LEVELS)
 		{
 			text.append(fmt::format("{}", chargen.spellLevelLabels[spLvl]));
 			UiRenderer::DrawTextInWidget(spellsWndId, text, rect, spellLevelLabelStyle);
@@ -3209,12 +3642,41 @@ void UiPcCreation::ClassSetPermissibles(){
 
 
 void UiPcCreation::DeitySetPermissibles(){
-	for (auto i = 0; i < DEITY_BTN_COUNT; i++){
-		if (deitySys.CanPickDeity(GetEditedChar(), i)){
-			uiManager->SetButtonState(GetDeityBtnId(i), LgcyButtonState::Normal);
-		} else
-			uiManager->SetButtonState(GetDeityBtnId(i), LgcyButtonState::Disabled);	
+	
+	auto page = GetDeityWndPage();
+	auto idx = 0;
+	for (auto it : deityBtnIds){
+		auto deityId = GetDeityIdFromWidgetAndPage(idx++, page);
+		if (deitySys.CanPickDeity(GetEditedChar(), deityId)){
+			uiManager->SetButtonState(it, LgcyButtonState::Normal);
+		}
+		else {
+			uiManager->SetButtonState(it, LgcyButtonState::Disabled);
+		}
 	}
+	
+	if (page > 0) {
+		uiManager->SetButtonState(deityPrevBtn, LgcyButtonState::Normal);
+	}
+	else {
+		uiManager->SetButtonState(deityPrevBtn, LgcyButtonState::Disabled);
+	}
+	
+	if (page < dPageCount - 1) {
+		uiManager->SetButtonState(deityNextBtn, LgcyButtonState::Normal);
+	}
+	else {
+		uiManager->SetButtonState(deityNextBtn, LgcyButtonState::Disabled);
+	}
+
+
+	/*for (auto i = 0; i < DEITY_BTN_COUNT; i++) { //note this was original code
+		if (deitySys.CanPickDeity(GetEditedChar(), i)) {
+			uiManager->SetButtonState(GetDeityBtnId(i), LgcyButtonState::Normal);
+		}
+		else
+			uiManager->SetButtonState(GetDeityBtnId(i), LgcyButtonState::Disabled);
+	}*/
 }
 
 bool UiPcCreation::IsCastingStatSufficient(Stat classEnum){
@@ -3572,7 +4034,7 @@ void ChargenSystem::UpdateDescriptionBox() {
 		desc.append(" ");
 	}
 	// Deity
-	if (selPkt.deityId != DEITY_COUNT_SELECTABLE_VANILLA){
+	if (selPkt.deityId != DEITY_COUNT_NEW){
 		desc.append("@1");
 		desc.append(temple::GetRef<const char*>(0x10BDA76C)); // "Worships"
 		desc.append("@0");

@@ -168,6 +168,18 @@ public:
 	void ClassActivate();
 	void ClassFinalize(CharEditorSelectionPacket & selPkt, objHndl & handle);
 
+	//Deity --added stuff--------------------------------------------
+	BOOL DeitySystemInit(UiSystemConf& conf);
+	BOOL DeityWidgetsInit();
+	void DeityWidgetsFree();
+	BOOL DeityShow();
+	BOOL DeityHide();
+	BOOL DeityWidgetsResize(UiResizeArgs& args);
+	BOOL DeityCheckComplete();
+	void DeityBtnEntered();
+	void DeityActivate();
+	int DeityFinalize(CharEditorSelectionPacket& selPkt, objHndl& handle);
+	
 	// Feats
 	BOOL FeatsSystemInit(UiSystemConf & conf);
 	BOOL FeatsWidgetsInit(int w, int h);
@@ -236,6 +248,14 @@ public:
 	void ClassNextBtnRender(int widId);
 	void ClassPrevBtnRender(int widId);
 
+	// deity
+	void DeityBtnRender(int widId);
+	BOOL DeityBtnMsg(int widId, TigMsg* msg);
+	BOOL DeityNextBtnMsg(int widId, TigMsg* msg);
+	BOOL DeityPrevBtnMsg(int widId, TigMsg* msg);
+	void DeityNextBtnRender(int widId);
+	void DeityPrevBtnRender(int widId);
+
 	// Feats
 	BOOL FeatsWndMsg(int widId, TigMsg* msg);
 	void FeatsWndRender(int widId);
@@ -277,6 +297,11 @@ public:
 	eastl::vector<int> classBtnMapping; // used as an index of choosable character classes
 	int GetClassWndPage();
 	Stat GetClassCodeFromWidgetAndPage(int idx, int page);
+
+	eastl::vector<int> deityBtnMapping; //added stuff
+	int deityWndPage = 0;
+	int GetDeityWndPage();
+	Stat GetDeityIdFromWidgetAndPage(int idx, int page);
 
 #pragma region logic 
 	// class
@@ -323,6 +348,10 @@ public:
 	int classNextBtn = 0, classPrevBtn = 0;
 	eastl::vector<int> classBtnIds;
 
+	int deityWndId = 0;
+	int deityNextBtn = 0, deityPrevBtn = 0;
+	eastl::vector<int> deityBtnIds;
+
 	// geometry
 	TigRect classNextBtnRect, classNextBtnFrameRect, classNextBtnTextRect,
 		classPrevBtnRect, classPrevBtnFrameRect, classPrevBtnTextRect;
@@ -332,6 +361,8 @@ public:
 	TigRect featMultiOkRect, featMultiOkTextRect, featMultiCancelRect, featMultiCancelTextRect, featMultiTitleRect;
 	TigRect featsAvailTitleRect, featsTitleRect, featsExistingTitleRect, featsClassBonusRect;
 	TigRect featsSelectedBorderRect, featsSelected2BorderRect, featsClassBonusBorderRect, feat0TextRect, feat1TextRect, feat2TextRect;
+	TigRect deityNextBtnRect, deityNextBtnFrameRect, deityNextBtnTextRect,
+		deityPrevBtnRect, deityPrevBtnFrameRect, deityPrevBtnTextRect;
 
 	int featsMainWndId = 0, featsMultiSelectWndId = 0;
 	int featsScrollbarId = 0, featsExistingScrollbarId = 0, featsMultiSelectScrollbarId = 0;
@@ -350,7 +381,7 @@ public:
 	std::string featsTitleString;
 	std::string featsClassBonusTitleString;
 
-	const int DEITY_BTN_COUNT = 20;
+	const int DEITY_BTN_COUNT = 29;//20;
 
 	int spellsWndId = 0;
 	LgcyWindow spellsWnd;
@@ -371,6 +402,11 @@ public:
 	eastl::vector<TigRect> classBtnFrameRects;
 	eastl::vector<TigRect> classBtnRects;
 	eastl::vector<TigRect> classTextRects;
+
+	eastl::vector<TigRect> deityBtnFrameRects;
+	eastl::vector<TigRect> deityBtnRects;
+	eastl::vector<TigRect> deityTextRects;
+	eastl::hash_map<int, eastl::string> deityNames;
 
 	eastl::vector<TigRect> featsMultiBtnRects;
 	eastl::vector<TigRect> featsBtnRects, featsExistingBtnRects;
@@ -440,6 +476,7 @@ public:
 private:
 
 	int mPageCount = 0;
+	int dPageCount = 0;
 
 	bool mFeatsActivated = false;
 	bool mIsSelectingBonusFeat = false;
