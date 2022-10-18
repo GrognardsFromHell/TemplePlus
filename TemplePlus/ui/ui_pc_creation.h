@@ -301,7 +301,7 @@ public:
 	eastl::vector<int> deityBtnMapping; //added stuff
 	int deityWndPage = 0;
 	int GetDeityWndPage();
-	Stat GetDeityIdFromWidgetAndPage(int idx, int page);
+	Deities GetDeityIdFromWidgetAndPage(int idx, int page);
 
 #pragma region logic 
 	// class
@@ -401,11 +401,9 @@ public:
 	eastl::hash_map<int, eastl::string> classNamesUppercase;
 	eastl::vector<TigRect> classBtnFrameRects;
 	eastl::vector<TigRect> classBtnRects;
-	eastl::vector<TigRect> classTextRects;
 
 	eastl::vector<TigRect> deityBtnFrameRects;
 	eastl::vector<TigRect> deityBtnRects;
-	eastl::vector<TigRect> deityTextRects;
 	eastl::hash_map<int, eastl::string> deityNames;
 
 	eastl::vector<TigRect> featsMultiBtnRects;

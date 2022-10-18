@@ -213,7 +213,6 @@ public:
 	eastl::hash_map<int, eastl::string> classNamesUppercase;
 	eastl::vector<TigRect> classBtnFrameRects;
 	eastl::vector<TigRect> classBtnRects;
-	eastl::vector<TigRect> classTextRects;
 	eastl::vector<TigRect> featsMultiBtnRects;
 	eastl::vector<TigRect> featsBtnRects, featsExistingBtnRects;
 	eastl::hash_map<int, std::string> featsMasterFeatStrings;
@@ -855,15 +854,6 @@ BOOL UiCharEditor::ClassWidgetsInit(){
 
 		//rects
 		classBtnFrameRects.push_back(TigRect(classBtn.x-5, classBtn.y-5, classBtn.width+10, classBtn.height+10));
-		
-
-		UiRenderer::PushFont(PredefinedFont::PRIORY_12);
-		auto classMeasure = UiRenderer::MeasureTextSize(classNamesUppercase[it].c_str(), classBtnTextStyle);
-		TigRect rect(classBtn.x + (110 - classMeasure.width) / 2 - classWnd.x,
-			classBtn.y + (20 - classMeasure.height) / 2 - classWnd.y,
-			classMeasure.width, classMeasure.height);
-		classTextRects.push_back(rect);
-		UiRenderer::PopFont();
 	}
 
 	classNextBtnTextRect = classNextBtnRect = TigRect(classWnd.x + 293, classWnd.y + 234, 55, 20);
@@ -931,7 +921,6 @@ BOOL UiCharEditor::ClassWidgetsResize(UiResizeArgs & args){
 	uiManager->RemoveWidget(classWndId);
 	classBtnFrameRects.clear();
 	classBtnRects.clear();
-	classTextRects.clear();
 	return ClassWidgetsInit();
 }
 

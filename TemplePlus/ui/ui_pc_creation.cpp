@@ -46,6 +46,7 @@
 
 const Race RACE_INVALID = (Race)0xFFFFFFFF;
 const int GENDER_INVALID = 2;
+constexpr int DEITY_BUTTON_COUNT = 11;
 
 //std::ofstream myfile("D:\\Users\\iceme\\Desktop\\testingoutput.txt", ios_base::app);
 
@@ -355,14 +356,7 @@ BOOL UiPcCreation::ClassWidgetsInit(){
 		//rects
 		classBtnFrameRects.push_back(TigRect(classBtn.x - 5, classBtn.y - 5, classBtn.width + 10, classBtn.height + 10));
 
-
-		UiRenderer::PushFont(PredefinedFont::PRIORY_12);
-		auto classMeasure = UiRenderer::MeasureTextSize(classNamesUppercase[it].c_str(), bigBtnTextStyle);
-		TigRect rect(classBtn.x + (110 - classMeasure.width) / 2 - classWnd.x,
-			classBtn.y + (20 - classMeasure.height) / 2 - classWnd.y,
-			classMeasure.width, classMeasure.height);
-		classTextRects.push_back(rect);
-		UiRenderer::PopFont();
+		// removed text rect precalc, since text can change dynamically now
 	}
 
 	const int nextBtnXoffset = 329;
@@ -427,7 +421,6 @@ BOOL UiPcCreation::ClassWidgetsResize(UiResizeArgs & args){
 	uiManager->RemoveWidget(classWndId);
 	classBtnFrameRects.clear();
 	classBtnRects.clear();
-	classTextRects.clear();
 	return ClassWidgetsInit();
 }
 
@@ -679,7 +672,7 @@ Stat UiPcCreation::GetClassCodeFromWidgetAndPage(int idx, int page) {
 	if (page == 0)
 		return (Stat)(stat_level_barbarian + idx);
 
-	auto idx2 = idx + page * 11u;
+	auto idx2 = idx + page * DEITY_BUTTON_COUNT;
 	if (idx2 >= classBtnMapping.size())
 		return (Stat)-1;
 	return (Stat)classBtnMapping[idx2];
@@ -727,8 +720,8 @@ BOOL UiPcCreation::DeitySystemInit(UiSystemConf& conf) {
 	deityNames[27] = "Ralishaz";
 	deityNames[28] = "Phaulkon";
 
-	dPageCount = deityBtnMapping.size() / 11;
-	if (dPageCount * 11u /*20u*/ < deityBtnMapping.size())
+	dPageCount = deityBtnMapping.size() / DEITY_BUTTON_COUNT;
+	if (dPageCount * DEITY_BUTTON_COUNT /*20u*/ < deityBtnMapping.size())
 		dPageCount++;
 
 	return DeityWidgetsInit();
@@ -744,13 +737,13 @@ BOOL UiPcCreation::DeityWidgetsInit() {
 
 	int coloff = 0, rowoff = 0;
 
-	for (auto it : deityBtnMapping) { 
+	for (auto it = 0; it < DEITY_BUTTON_COUNT; ++it) {
 		// deity buttons
 		LgcyButton deityBtn("Deity btn", deityWndId, 81 + coloff, 42 + rowoff, 130, 20);
 		coloff = 139 - coloff;
 		if (!coloff)
 			rowoff += 29;
-		if (rowoff == 5 * 29) // the bottom button
+		if ( (DEITY_BUTTON_COUNT % 2 == 1) && rowoff == (DEITY_BUTTON_COUNT/2) * 29) // the bottom button
 			coloff = 69;
 
 		deityBtnRects.push_back(TigRect(deityBtn.x, deityBtn.y, deityBtn.width, deityBtn.height));
@@ -762,15 +755,6 @@ BOOL UiPcCreation::DeityWidgetsInit() {
 
 		//rects
 		deityBtnFrameRects.push_back(TigRect(deityBtn.x - 5, deityBtn.y - 5, deityBtn.width + 10, deityBtn.height + 10));
-
-
-		UiRenderer::PushFont(PredefinedFont::PRIORY_12);
-		auto deityMeasure = UiRenderer::MeasureTextSize(deityNames[it].c_str(), bigBtnTextStyle);
-		TigRect rect(deityBtn.x + (110 - deityMeasure.width) / 2 - deityWnd.x,
-			deityBtn.y + (20 - deityMeasure.height) / 2 - deityWnd.y,
-			deityMeasure.width, deityMeasure.height);
-		deityTextRects.push_back(rect);
-		UiRenderer::PopFont();
 	}
 
 	const int nextBtnXoffset = 329;
@@ -835,7 +819,6 @@ BOOL UiPcCreation::DeityWidgetsResize(UiResizeArgs& args) {
 	uiManager->RemoveWidget(deityWndId);
 	deityBtnFrameRects.clear();
 	deityBtnRects.clear();
-	deityTextRects.clear();
 	return DeityWidgetsInit();
 }
 
@@ -876,7 +859,7 @@ void UiPcCreation::DeityBtnRender(int widId) {
 	
 	auto page = GetDeityWndPage();
 	auto deityId = GetDeityIdFromWidgetAndPage(idx, page);
-	if (deityId == (Stat)-1)
+	if (deityId == (Deities)-1)
 		return;
 	
 	static TigRect srcRect(1, 1, 120, 30);
@@ -1069,14 +1052,14 @@ int UiPcCreation::GetDeityWndPage() {
 	return deityWndPage;
 }
 
-Stat UiPcCreation::GetDeityIdFromWidgetAndPage(int idx, int page) {
+Deities UiPcCreation::GetDeityIdFromWidgetAndPage(int idx, int page) {
 	if (page == 0)
-		return (Stat)(0 + idx);
+		return (Deities)(0 + idx);
 
 	auto idx2 = idx + page * 11u;//20u;
 	if (idx2 >= deityBtnMapping.size())
-		return (Stat)-1;
-	return (Stat)deityBtnMapping[idx2];
+		return (Deities)-1;
+	return (Deities)deityBtnMapping[idx2];
 }
 
 #pragma endregion
