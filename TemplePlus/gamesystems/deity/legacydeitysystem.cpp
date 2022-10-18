@@ -169,7 +169,7 @@ void LegacyDeitySystem::Init(){
 		DeitySpec s(GetLegacyDeitySpec(i));
 		s.id = i;
 		s.favoredWeapon = GetHardcodedFavoredWeapon(deityEnum);
-		
+		s.isSelectable = 1;
 		mDeitySpecs[i] = s;
 	}
 	for (auto i=DEITY_COUNT_VANILLA; i < DEITY_COUNT_NEW; i++)	{ //todo actual files for new deities instead of hardcoded
