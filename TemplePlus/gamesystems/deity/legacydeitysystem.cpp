@@ -321,3 +321,7 @@ DeitySpec::DeitySpec(Alignment a, Domain *d, Race *r, Stat *c, int s){
 	}
 	this->isSelectable = s;
 }
+
+Alignment LegacyDeitySystem::GetDeityAlignment(int deityId) {
+	return GetDeitySpec(deityId).alignment;
+}
