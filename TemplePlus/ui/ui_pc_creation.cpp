@@ -849,6 +849,36 @@ void UiPcCreation::DeityActivate() {//dumped code never uses this?
 int UiPcCreation::DeityFinalize(CharEditorSelectionPacket& selPkt, objHndl& handle) {
 	auto obj = objSystem->GetObject(handle);
 	obj->SetInt32(obj_f_critter_deity, selPkt.deityId);
+	auto align = selPkt.alignment;
+	auto deityAlign = deitySys.GetDeityAlignment(selPkt.deityId);
+	switch (align) {
+		case ALIGNMENT_CHAOTIC_GOOD:
+		case ALIGNMENT_GOOD:
+		case ALIGNMENT_LAWFUL_GOOD:
+			obj->SetInt32(obj_f_critter_alignment_choice, 1);
+			selPkt.alignmentChoice = 1;
+			break;
+		case ALIGNMENT_CHAOTIC_EVIL:
+		case ALIGNMENT_EVIL:
+		case ALIGNMENT_LAWFUL_EVIL:
+			obj->SetInt32(obj_f_critter_alignment_choice, 2);
+			selPkt.alignmentChoice = 2;
+			break;
+	}
+	switch (deityAlign) {
+		case ALIGNMENT_CHAOTIC_GOOD:
+		case ALIGNMENT_GOOD:
+		case ALIGNMENT_LAWFUL_GOOD:
+			obj->SetInt32(obj_f_critter_alignment_choice, 1);
+			selPkt.alignmentChoice = 1;
+			break;
+		case ALIGNMENT_CHAOTIC_EVIL:
+		case ALIGNMENT_EVIL:
+		case ALIGNMENT_LAWFUL_EVIL:
+			obj->SetInt32(obj_f_critter_alignment_choice, 2);
+			selPkt.alignmentChoice = 2;
+			break;
+	}
 	return selPkt.deityId; //unsure what int to return, original finalize return type was int
 }
 
@@ -920,7 +950,7 @@ BOOL UiPcCreation::DeityBtnMsg(int widId, TigMsg* msg) {//note: no original funt
 		obj->SetInt32(obj_f_critter_deity, deityId);
 		d20StatusSys.D20StatusRefresh(handle);
 
-		//ToggleClassRelatedStages(); //note, deity specifix things?
+		ToggleClassRelatedStages(); //note, deity specifix things?
 		ResetNextStages(CG_Stage_Deity);
 		ChargenSystem::UpdateDescriptionBox();
 		return TRUE;

@@ -40,6 +40,7 @@ public:
 	bool IsDomainSkill(objHndl handle, SkillEnum skill);
 	bool IsDomainSkill(SkillEnum skill, Domain dom);
 	const char* GetName(int deityId);
+	Alignment GetDeityAlignment(int deityId);
 
 protected:
 	DeitySpec &GetDeitySpec(int id);
