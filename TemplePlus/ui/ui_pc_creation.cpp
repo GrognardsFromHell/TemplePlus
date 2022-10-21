@@ -48,7 +48,6 @@ const Race RACE_INVALID = (Race)0xFFFFFFFF;
 const int GENDER_INVALID = 2;
 constexpr int DEITY_BUTTON_COUNT = 11;
 
-std::ofstream myfile("D:\\Users\\iceme\\Desktop\\testingoutput.txt", ios_base::app);
 
 struct PartyCreationPc
 {
