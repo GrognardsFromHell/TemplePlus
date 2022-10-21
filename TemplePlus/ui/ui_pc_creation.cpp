@@ -48,7 +48,6 @@ const Race RACE_INVALID = (Race)0xFFFFFFFF;
 const int GENDER_INVALID = 2;
 constexpr int DEITY_BUTTON_COUNT = 11;
 
-//std::ofstream myfile("D:\\Users\\iceme\\Desktop\\testingoutput.txt", ios_base::app);
 
 struct PartyCreationPc
 {
@@ -1448,6 +1447,267 @@ BOOL UiPcCreation::FeatsCheckComplete()
 
 void UiPcCreation::FeatsFinalize(CharEditorSelectionPacket& selPkt, objHndl & handle){
 
+	//Add feat for war domain
+	if (selPkt.classCode == stat_level_cleric) {
+		if (selPkt.domain1 == Domain_War || selPkt.domain2 == Domain_War) {
+			auto favProf = FEAT_NONE;
+			auto favFocus = FEAT_NONE;
+			auto favWep = deitySys.GetDeityFavoredWeapon(selPkt.deityId);
+			switch (favWep) {
+			//case wt_gauntlet:
+			//case wt_unarmed_strike_medium_sized_being:
+			//case wt_unarmed_strike_small_being:
+			case wt_dagger:
+				favFocus = FEAT_WEAPON_FOCUS_DAGGER;
+				break;
+			case wt_punching_dagger:
+				favFocus = FEAT_WEAPON_FOCUS_DAGGER;
+				break;
+			//case wt_spiked_gauntlet:
+			case wt_light_mace:
+				favFocus = FEAT_WEAPON_FOCUS_LIGHT_MACE;
+				break;
+			case wt_sickle:
+				favFocus = FEAT_WEAPON_FOCUS_SICKLE;
+				break;
+			case wt_club:
+				favFocus = FEAT_WEAPON_FOCUS_CLUB;
+				break;
+			case wt_shortspear:
+				favFocus = FEAT_WEAPON_FOCUS_SHORTSPEAR;
+				break;
+			case wt_heavy_mace: // 10
+				favFocus = FEAT_WEAPON_FOCUS_HEAVY_MACE;
+				break;
+			case wt_morningstar:
+				favFocus = FEAT_WEAPON_FOCUS_MORNINGSTAR;
+				break;
+			case wt_quarterstaff:
+				favFocus = FEAT_WEAPON_FOCUS_QUARTERSTAFF;
+				break;
+			//case wt_spear:
+			//	favFocus = FEAT_WEAPON_FOCUS_SPEAR;
+			//	break;
+			case wt_light_crossbow:		// 14
+				favFocus = FEAT_WEAPON_FOCUS_LIGHT_CROSSBOW;
+				break;
+			case wt_dart:
+				favFocus = FEAT_WEAPON_FOCUS_DART;
+				break;
+			case wt_sling:
+				favFocus = FEAT_WEAPON_FOCUS_SLING;
+				break;
+			case wt_heavy_crossbow:		// 17
+				favFocus = FEAT_WEAPON_FOCUS_HEAVY_CROSSBOW;
+				break;
+			case wt_javelin:
+				favFocus = FEAT_WEAPON_FOCUS_JAVELIN;
+				break;
+			case wt_throwing_axe:
+				favProf = FEAT_MARTIAL_WEAPON_PROFICIENCY_THROWING_AXE;
+				favFocus = FEAT_WEAPON_FOCUS_THROWING_AXE;
+				break;
+			case wt_light_hammer: // 20
+				favProf = FEAT_MARTIAL_WEAPON_PROFICIENCY_LIGHT_HAMMER;
+				favFocus = FEAT_WEAPON_FOCUS_LIGHT_HAMMER;
+				break;
+			case wt_light_lance:
+				favProf = FEAT_MARTIAL_WEAPON_PROFICIENCY_LIGHT_LANCE;
+				favFocus = FEAT_WEAPON_FOCUS_LIGHT_LANCE;
+				break;
+			case wt_light_pick:
+				favProf = FEAT_MARTIAL_WEAPON_PROFICIENCY_LIGHT_PICK;
+				favFocus = FEAT_WEAPON_FOCUS_LIGHT_PICK;
+				break;
+			case wt_sap:
+				favProf = FEAT_MARTIAL_WEAPON_PROFICIENCY_SAP;
+				favFocus = FEAT_WEAPON_FOCUS_SAP;
+				break;
+			case wt_short_sword: // 25
+				favProf = FEAT_MARTIAL_WEAPON_PROFICIENCY_SHORT_SWORD;
+				favFocus = FEAT_WEAPON_FOCUS_SHORT_SWORD;
+				break;
+			case wt_battleaxe:
+				favProf = FEAT_MARTIAL_WEAPON_PROFICIENCY_BATTLEAXE;
+				favFocus = FEAT_WEAPON_FOCUS_BATTLEAXE;
+				break;
+			case wt_light_flail:
+				favProf = FEAT_MARTIAL_WEAPON_PROFICIENCY_LIGHT_FLAIL;
+				favFocus = FEAT_WEAPON_FOCUS_LIGHT_FLAIL;
+				break;
+			case wt_heavy_lance:
+				favProf = FEAT_MARTIAL_WEAPON_PROFICIENCY_HEAVY_LANCE;
+				favFocus = FEAT_WEAPON_FOCUS_HEAVY_LANCE;
+				break;
+			case wt_longsword:
+				favProf = FEAT_MARTIAL_WEAPON_PROFICIENCY_LONGSWORD;
+				favFocus = FEAT_WEAPON_FOCUS_LONGSWORD;
+				break;
+			case wt_heavy_pick: // 30
+				favProf = FEAT_MARTIAL_WEAPON_PROFICIENCY_HEAVY_PICK;
+				favFocus = FEAT_WEAPON_FOCUS_HEAVY_PICK;
+				break;
+			case wt_rapier:
+				favProf = FEAT_MARTIAL_WEAPON_PROFICIENCY_RAPIER;
+				favFocus = FEAT_WEAPON_FOCUS_RAPIER;
+				break;
+			case wt_scimitar:
+				favProf = FEAT_MARTIAL_WEAPON_PROFICIENCY_SCIMITAR;
+				favFocus = FEAT_WEAPON_FOCUS_SCIMITAR;
+				break;
+			case wt_trident:
+				favProf = FEAT_MARTIAL_WEAPON_PROFICIENCY_TRIDENT;
+				favFocus = FEAT_WEAPON_FOCUS_TRIDENT;
+				break;
+			case wt_warhammer:
+				favProf = FEAT_MARTIAL_WEAPON_PROFICIENCY_WARHAMMER;
+				favFocus = FEAT_WEAPON_FOCUS_WARHAMMER;
+				break;
+			case wt_falchion:
+				favProf = FEAT_MARTIAL_WEAPON_PROFICIENCY_FALCHION;
+				favFocus = FEAT_WEAPON_FOCUS_FALCHION;
+				break;
+			case wt_heavy_flail:
+				favProf = FEAT_MARTIAL_WEAPON_PROFICIENCY_HEAVY_FLAIL;
+				favFocus = FEAT_WEAPON_FOCUS_HEAVY_FLAIL;
+				break;
+			case wt_glaive:
+				favProf = FEAT_MARTIAL_WEAPON_PROFICIENCY_GLAIVE;
+				favFocus = FEAT_WEAPON_FOCUS_GLAIVE;
+				break;
+			case wt_greataxe:
+				favProf = FEAT_MARTIAL_WEAPON_PROFICIENCY_GREATAXE;
+				favFocus = FEAT_WEAPON_FOCUS_GREATAXE;
+				break;
+			case wt_greatclub:
+				favProf = FEAT_MARTIAL_WEAPON_PROFICIENCY_GREATCLUB;
+				favFocus = FEAT_WEAPON_FOCUS_GREATCLUB;
+				break;
+			case wt_greatsword:
+				favProf = FEAT_MARTIAL_WEAPON_PROFICIENCY_GREATSWORD;
+				favFocus = FEAT_WEAPON_FOCUS_GREATSWORD;
+				break;
+			case wt_guisarme:
+				favProf = FEAT_MARTIAL_WEAPON_PROFICIENCY_GUISARME;
+				favFocus = FEAT_WEAPON_FOCUS_GUISARME;
+				break;
+			case wt_halberd:
+				favProf = FEAT_MARTIAL_WEAPON_PROFICIENCY_HALBERD;
+				favFocus = FEAT_WEAPON_FOCUS_HALBERD;
+				break;
+			case wt_longspear:  //43
+				favProf = FEAT_MARTIAL_WEAPON_PROFICIENCY_LONGSPEAR;
+				favFocus = FEAT_WEAPON_FOCUS_LONGSPEAR;
+				break;
+			case wt_ranseur:
+				favProf = FEAT_MARTIAL_WEAPON_PROFICIENCY_RANSEUR;
+				favFocus = FEAT_WEAPON_FOCUS_RANSEUR;
+				break;
+			case wt_scythe:
+				favProf = FEAT_MARTIAL_WEAPON_PROFICIENCY_SCYTHE;
+				favFocus = FEAT_WEAPON_FOCUS_SCYTHE;
+				break;
+			case wt_shortbow:
+				favProf = FEAT_MARTIAL_WEAPON_PROFICIENCY_SHORTBOW;
+				favFocus = FEAT_WEAPON_FOCUS_SHORTBOW;
+				break;
+			case wt_composite_shortbow:
+				favProf = FEAT_MARTIAL_WEAPON_PROFICIENCY_COMPOSITE_SHORTBOW;
+				favFocus = FEAT_WEAPON_FOCUS_COMPOSITE_SHORTBOW;
+				break;
+			case wt_longbow:
+				favProf = FEAT_MARTIAL_WEAPON_PROFICIENCY_LONGBOW;
+				favFocus = FEAT_WEAPON_FOCUS_LONGBOW;
+				break;
+			case wt_composite_longbow:
+				favProf = FEAT_MARTIAL_WEAPON_PROFICIENCY_COMPOSITE_LONGBOW;
+				favFocus = FEAT_WEAPON_FOCUS_COMPOSITE_LONGBOW;
+				break;
+			case wt_halfling_kama: // 50
+				favProf = FEAT_EXOTIC_WEAPON_PROFICIENCY_HALFLING_KAMA;
+				favFocus = FEAT_WEAPON_FOCUS_HALFLING_KAMA;
+				break;
+			case wt_kukri:
+				favProf = FEAT_EXOTIC_WEAPON_PROFICIENCY_KUKRI;
+				favFocus = FEAT_WEAPON_FOCUS_KUKRI;
+				break;
+			case wt_halfling_nunchaku: //52
+				favProf = FEAT_EXOTIC_WEAPON_PROFICIENCY_HALFLING_NUNCHAKU;
+				favFocus = FEAT_WEAPON_FOCUS_HALFLING_NUNCHAKU;
+				break;
+			case wt_halfling_siangham: //53
+				favProf = FEAT_EXOTIC_WEAPON_PROFICIENCY_HALFLING_SIANGHAM;
+				favFocus = FEAT_WEAPON_FOCUS_HALFLING_SIANGHAM;
+				break;
+			case wt_kama: //54
+				favProf = FEAT_EXOTIC_WEAPON_PROFICIENCY_KAMA;
+				favFocus = FEAT_WEAPON_FOCUS_KAMA;
+				break;
+			case wt_nunchaku: // 55
+				favProf = FEAT_EXOTIC_WEAPON_PROFICIENCY_NUNCHAKU;
+				favFocus = FEAT_WEAPON_FOCUS_NUNCHAKU;
+				break;
+			case wt_siangham: // 56
+				favProf = FEAT_EXOTIC_WEAPON_PROFICIENCY_SIANGHAM;
+				favFocus = FEAT_WEAPON_FOCUS_SIANGHAM;
+				break;
+			case wt_bastard_sword:
+				favProf = FEAT_EXOTIC_WEAPON_PROFICIENCY_BASTARD_SWORD;
+				favFocus = FEAT_WEAPON_FOCUS_BASTARD_SWORD;
+				break;
+			//case wt_dwarven_waraxe:          // racial weapons - 58 and on
+			//case wt_gnome_hooked_hammer:
+			//case wt_orc_double_axe:
+			//case wt_spike_chain:
+			//case wt_dire_flail:
+			//case wt_two_bladed_sword:
+			//case wt_dwarven_urgrosh:
+			//case wt_hand_crossbow:			// 65
+			//case wt_shuriken:
+			//case wt_whip:
+			//case wt_repeating_crossbow:
+			//case wt_net:
+			//case wt_grapple:
+			//case wt_ray:
+			//case wt_grenade:   // 72
+			//case wt_mindblade:
+			}
+			if (favProf != FEAT_NONE) {
+				if (selPkt.feat0 == FEAT_NONE) {
+					selPkt.feat0 = favProf;
+					selPkt.feat1 = favFocus;
+				}
+				else if (selPkt.feat1 == FEAT_NONE) {
+					selPkt.feat1 = favProf;
+					selPkt.feat2 = favFocus;
+				}
+				else if (selPkt.feat2 == FEAT_NONE) {
+					selPkt.feat2 = favProf;
+					selPkt.feat3 = favFocus;
+				}
+				else if (selPkt.feat3 == FEAT_NONE) {
+					selPkt.feat3 = favProf;
+					selPkt.feat4 = favFocus;
+				}
+			}
+			else {
+				if (selPkt.feat0 == FEAT_NONE) {
+					selPkt.feat0 = favFocus;
+				}
+				else if (selPkt.feat1 == FEAT_NONE) {
+					selPkt.feat1 = favFocus;
+				}
+				else if (selPkt.feat2 == FEAT_NONE) {
+					selPkt.feat2 = favFocus;
+				}
+				else if (selPkt.feat3 == FEAT_NONE) {
+					selPkt.feat3 = favFocus;
+				}
+			}
+			
+		}
+	}
+
 	feats.FeatAdd(handle, selPkt.feat0);
 	d20StatusSys.D20StatusRefresh(handle);
 	if (selPkt.feat1 != FEAT_NONE){
@@ -1456,6 +1716,14 @@ void UiPcCreation::FeatsFinalize(CharEditorSelectionPacket& selPkt, objHndl & ha
 	}
 	if (selPkt.feat2 != FEAT_NONE) {
 		feats.FeatAdd(handle, selPkt.feat2);
+		d20StatusSys.D20StatusRefresh(handle);
+	}
+	if (selPkt.feat3 != FEAT_NONE) {
+		feats.FeatAdd(handle, selPkt.feat3);
+		d20StatusSys.D20StatusRefresh(handle);
+	}
+	if (selPkt.feat4 != FEAT_NONE) {
+		feats.FeatAdd(handle, selPkt.feat4);
 		d20StatusSys.D20StatusRefresh(handle);
 	}
 
@@ -1470,7 +1738,8 @@ void UiPcCreation::FeatsReset(CharEditorSelectionPacket& selPkt)
 	selPkt.feat1 = FEAT_NONE;
 	if (selPkt.classCode != stat_level_ranger || objects.StatLevelGet(GetEditedChar(), stat_level_ranger) != 1)
 		selPkt.feat2 = FEAT_NONE;
-
+	selPkt.feat3 = FEAT_NONE; //added in case war domain of new deities needs a 4th/5th feat slot
+	selPkt.feat4 = FEAT_NONE;
 	mExistingFeats.clear();
 	mSelectableFeats.clear();
 	mMultiSelectFeats.clear();
