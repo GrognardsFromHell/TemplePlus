@@ -623,7 +623,7 @@ bool ObjSystem::ValidateInventory(const GameObjectBody * container, obj_f idxFie
 	for (size_t i = 0; i < actualCount; ++i) {
 		auto itemId = container->GetObjectId(idxField, i);
 		
-		auto positional = fmt::format("Entry {} in {}@{} of {} ({})",
+		auto positional = fmt::format("ValidateInventory: \t Entry {} in {}@{} of {} ({})",
 			itemId.ToString(), objectFields.GetFieldName(idxField), i, container->id.ToString(), containerHandle);
 
 		if (itemId.IsNull()) {
@@ -655,7 +655,7 @@ bool ObjSystem::ValidateInventory(const GameObjectBody * container, obj_f idxFie
 
 		// Only items are allowed in containers
 		if (!itemObj->IsItem()) {
-			logger->error("{} is not an item.");
+			logger->error("{} is not an item.", positional);
 			return false;
 		}
 	}

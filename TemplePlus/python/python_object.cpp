@@ -226,9 +226,10 @@ static PyObject* PyObjHandle_BeginDialog(PyObject* obj, PyObject* args) {
 		uiPicker.CancelPicker();
 		
 		// Temple+: added this, otherwise the combat continues briefly and goes on to the next combatant who can start an action
-		// the dialog event callback does this anyway, but 1ms later
+		// the dialog event callback (0x1014CED0) does this anyway, but 1ms later
 		auto leader = party.GetConsciousPartyLeader();
 		if (leader) {
+			combatSys.forceEndedCombatNow = true;
 			combatSys.CritterExitCombatMode(leader);
 		}
 		
@@ -384,7 +385,7 @@ static PyObject* PyObjHandle_ItemTransferToByProto(PyObject* obj, PyObject* args
 	auto self = GetSelf(obj);
 	int protoId;
 	objHndl target;
-	if (!PyArg_ParseTuple(args, "O&i:objhndl.itemtransfertobyproto", &ConvertObjHndl, &target, &protoId)) {
+	if (!PyArg_ParseTuple(args, "O&i:objhndl.item_transfer_to_by_proto", &ConvertObjHndl, &target, &protoId)) {
 		return 0;
 	}
 
@@ -3330,6 +3331,33 @@ static PyObject* PyObjHandle_SetObj(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(1);
 }
 
+static PyObject* PyObjHandle_SetString(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	obj_f field;
+	char* value = nullptr;
+	if (!PyArg_ParseTuple(args, "is:objhndl.obj_set_string", &field, &value)) {
+		return PyInt_FromLong(0);
+	}
+	objects.SetFieldString(self->handle, field, value);
+	return PyInt_FromLong(1);
+}
+
+static PyObject* PyObjHandle_GetString(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	obj_f field;
+	if (!PyArg_ParseTuple(args, "i:objhndl.obj_get_string", &field)) {
+		return PyInt_FromLong(0);
+	}
+	auto result = objects.getString(self->handle, field);
+	return PyString_FromString(result);
+}
+
 static PyObject* PyObjHandle_GetInt(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -3655,7 +3683,7 @@ static PyObject* PyObjHandle_HasFeat(PyObject* obj, PyObject* args) {
 	}
 
 	if (!objects.IsCritter(self->handle)) {
-		logger->warn("Python has_feat ({}) called with non critter object: {}", feats.GetFeatName(feat), objects.description.getDisplayName(self->handle));
+		logger->warn("Python has_feat ({}) called with non critter object: {}", feats.GetFeatName(feat), self->handle);
 		return PyInt_FromLong(0);
 	}
 
@@ -3858,11 +3886,15 @@ static PyObject* PyObjHandle_AiStrategySetCustom(PyObject* obj, PyObject* args) 
 		stringVector.push_back(s);
 	}
 
+	// optional "save" flag
 	int save = 1;
-	auto psave = PyTuple_GetItem(args, 1);
-	if (PyLong_Check(psave) || PyInt_Check(psave)) {
-		save = PyLong_AsLong(psave);
+	if (PyTuple_Size(args) >= 2) {
+		auto psave = PyTuple_GetItem(args, 1);
+		if (PyLong_Check(psave) || PyInt_Check(psave)) {
+			save = PyLong_AsLong(psave);
+		}
 	}
+	
 
 	aiSys.SetCustomStrategy( self->handle, stringVector, save);
 	Py_RETURN_NONE;
@@ -4336,7 +4368,7 @@ static PyObject* PyObjHandle_IsThrowingWeapon(PyObject* obj, PyObject* args) {
 	}
 	if (objects.GetType(self->handle) != obj_t_weapon)
 	{
-		logger->warn("Python is_throwing_weapon called with non weapon object: {}", objects.description.getDisplayName(self->handle));
+		logger->warn("Python is_throwing_weapon called with non weapon object: {}", self->handle);
 		return PyInt_FromLong(0);
 	}
 
@@ -4580,6 +4612,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "obj_get_idx_int64_size", PyObjHandle_GetIdxInt64Size, METH_VARARGS, NULL },
 	{ "obj_get_int64", PyObjHandle_GetInt64, METH_VARARGS, "Gets 64 bit field" },
 	{ "obj_get_obj", PyObjHandle_GetObj, METH_VARARGS, "Gets Object field" },
+	{ "obj_get_string", PyObjHandle_GetString, METH_VARARGS, NULL },
 	{ "obj_get_idx_obj", PyObjHandle_GetIdxObj, METH_VARARGS, "Gets Object Array field" },
 	{ "obj_get_idx_obj_size", PyObjHandle_GetIdxObjSize, METH_VARARGS, "Gets Object Array field" },
 	{ "obj_get_spell", PyObjHandle_GetSpell, METH_VARARGS, NULL },
@@ -4587,6 +4620,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "obj_set_int", PyObjHandle_SetInt, METH_VARARGS, NULL },
 	{ "obj_set_float", PyObjHandle_SetFloat, METH_VARARGS, NULL },
 	{ "obj_set_obj", PyObjHandle_SetObj, METH_VARARGS, NULL },
+	{ "obj_set_string", PyObjHandle_SetString, METH_VARARGS, NULL },
 	{ "obj_set_idx_int", PyObjHandle_SetIdxInt, METH_VARARGS, NULL },
 	{ "obj_set_int64", PyObjHandle_SetInt64, METH_VARARGS, NULL },
 	{ "obj_set_idx_int64", PyObjHandle_SetIdxInt64, METH_VARARGS, NULL },

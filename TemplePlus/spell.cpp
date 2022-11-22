@@ -525,7 +525,7 @@ bool SpellPacketBody::AddTarget(objHndl tgt, int partsysId, int replaceExisting)
 			return 0;
 		} 
 		
-		logger->debug("SpellPacketAddTarget: Object {} already in list!", description.getDisplayName(tgt));
+		logger->debug("SpellPacketAddTarget: Object {} already in list!", tgt);
 		return 0;	
 	}
 
@@ -540,7 +540,7 @@ bool SpellPacketBody::AddTarget(objHndl tgt, int partsysId, int replaceExisting)
 		return false;
 	}
 
-	logger->debug("SpellPacketAddTarget: Unable to add obj {} to target list!", description.getDisplayName(tgt));
+	logger->debug("SpellPacketAddTarget: Unable to add obj {} to target list!", tgt);
 	return false;
 }
 
@@ -867,7 +867,7 @@ uint32_t LegacySpellSystem::spellRegistryCopy(uint32_t spellEnum, SpellEntry* sp
 	return spellEntryRegistry.copy(spellEnum, spellEntry);
 }
 
-void LegacySpellSystem::DoForSpellEntries(void(*cb)(SpellEntry & spellEntry)){
+void LegacySpellSystem::DoForSpellEntries( const std::function<void (SpellEntry & )> &cb){
 	for (auto it : spellEntryRegistry) {
 		cb(*it.data);
 	}
@@ -882,10 +882,8 @@ int LegacySpellSystem::CopyLearnableSpells(objHndl& handle, int spellClass, std:
 
 	for (auto it : spellEntryRegistry) {
 		auto spEntry = it.data;
-		// new spells from supplemental materials are generally added above enum 802 in Temple+
-		if (spEntry->spellEnum > SPELL_ENUM_MAX_VANILLA) {
-			if (!config.nonCoreMaterials)
-				continue;
+		if (IsNonCore(spEntry->spellEnum) && !config.nonCoreMaterials) {
+			continue;
 		}
 		if (GetSpellLevelBySpellClass(spEntry->spellEnum, spellClass) >= 0)	{
 			entries.push_back(*spEntry);
@@ -1399,7 +1397,6 @@ void LegacySpellSystem::SpellPacketSetCasterLevel(SpellPacketBody* spellPkt) con
 	auto caster = spellPkt->caster;
 	auto spellEnum = spellPkt->spellEnum;
 	auto spellName = spellSys.GetSpellName(spellEnum);
-	auto casterName = description.getDisplayName(caster);
 	
 	auto casterObj = gameSystems->GetObj().GetObject(caster);
 
@@ -1410,13 +1407,13 @@ void LegacySpellSystem::SpellPacketSetCasterLevel(SpellPacketBody* spellPkt) con
 		if (casterClass){
 			auto casterLvl = critterSys.GetCasterLevelForClass(caster, casterClass);
 			spellPkt->casterLevel = casterLvl;
-			logger->info("Critter {} is casting spell {} at base caster_level {}.", casterName, spellName , casterLvl);
+			logger->info("Critter {} is casting spell {} at base caster_level {}.", caster, spellName , casterLvl);
 		} 
 
 		// item spell
-		else if (spellPkt->invIdx != 255 && (spellPkt->spellEnum < NORMAL_SPELL_RANGE || spellPkt->spellEnum > SPELL_LIKE_ABILITY_RANGE)){
+		else if (spellPkt->invIdx != 255 && !IsMonsterSpell(spellPkt->spellEnum)){
 			spellPkt->casterLevel = 0;
-			logger->info("Critter {} is casting item spell {} at base caster_level {}.", casterName, spellName, 0);
+			logger->info("Critter {} is casting item spell {} at base caster_level {}.", caster, spellName, 0);
 		}
 
 		// monster
@@ -1428,7 +1425,7 @@ void LegacySpellSystem::SpellPacketSetCasterLevel(SpellPacketBody* spellPkt) con
 			{
 				spellPkt->casterLevel = casterObj->GetInt32Array(obj_f_critter_level_idx).GetSize();
 			}
-			logger->info("Monster {} is casting spell {} at base caster_level {}.", casterName, spellName, spellPkt->casterLevel);
+			logger->info("Monster {} is casting spell {} at base caster_level {}.", caster, spellName, spellPkt->casterLevel);
 		} else
 		{
 			spellPkt->casterLevel = 0;
@@ -1436,19 +1433,19 @@ void LegacySpellSystem::SpellPacketSetCasterLevel(SpellPacketBody* spellPkt) con
 	} 
 	else{ // domain spell
 		if (spellPkt->spellClass == Domain_Special){ // domain special (usually used for monsters)
-			if (spellPkt->invIdx != 255 && (spellPkt->spellEnum < NORMAL_SPELL_RANGE || spellPkt->spellEnum > SPELL_LIKE_ABILITY_RANGE)) {
+			if (spellPkt->invIdx != 255 && !IsMonsterSpell(spellPkt->spellEnum)) {
 				spellPkt->casterLevel = 0;
-				logger->info("Critter {} is casting item spell {} at base caster_level {}.", casterName, spellName, 0);
+				logger->info("Critter {} is casting item spell {} at base caster_level {}.", caster, spellName, 0);
 			}
 
 			else {
 				spellPkt->casterLevel = objects.GetHitDiceNum(caster);
-				logger->info("Monster {} is casting spell {} at base caster_level {}.", casterName, spellName, spellPkt->casterLevel);
+				logger->info("Monster {} is casting spell {} at base caster_level {}.", caster, spellName, spellPkt->casterLevel);
 			}
 		}
 		else if (objects.StatLevelGet(caster, stat_level_cleric) > 0) {
 			spellPkt->casterLevel = critterSys.GetCasterLevelForClass(caster, stat_level_cleric);
-			logger->info("Critter {} is casting Domain spell {} at base caster_level {}.", casterName, spellName, spellPkt->casterLevel);
+			logger->info("Critter {} is casting Domain spell {} at base caster_level {}.", caster, spellName, spellPkt->casterLevel);
 		}
 		
 	}
@@ -1659,7 +1656,14 @@ void LegacySpellSystem::JammedSpellEnd(int spellId)
 	}
 	
 	
-	SpellEnd(spellId, 1);
+	//SpellEnd(spellId, 1); 
+	/* 
+	  Do not use SpellEnd - it could be referencing invalid handles and cause crashes (e.g. playing a sound on the caster, which could be invalid). 
+	  All it does in practice is invoke spell trigger for spell_end event(which is usually not very important... some Co8 scripts maybe) 
+	  and then calls SpellMarkInactive... so we'll do just that instead.
+	*/
+	SpellMarkInactive(spellId); 
+	
 }
 
 SpellMapTransferInfo LegacySpellSystem::SaveSpellForTeleport(const SpellPacket& data)
@@ -1885,17 +1889,17 @@ bool LegacySpellSystem::GetSpellPacketFromTransferInfo(unsigned& spellId, SpellP
 	auto spellName = GetSpellName(spellPkt.spellPktBody.spellEnum);
 
 	auto handle = objSystem->GetHandleById(mtInfo.casterObjId);
+	spellPkt.spellPktBody.caster = handle;
 	if (handle) {
 		if (!mtInfo.casterPartsys.empty()) {
 			spellPkt.spellPktBody.casterPartsysId = gameSystems->GetParticleSys().CreateAtObj(mtInfo.casterPartsys, handle);
 		} else {
 			logger->debug("GetSpellPacketFromTransferInfo: Tried to play partsys hash 0 for spell {} id", spellName, spellId);
 		}
-		spellPkt.spellPktBody.caster = handle;
 	} else
 	{
-		logger->info("Null caster detected in SpellTransferInfo, aborting. (perhaps from an NPC?)");
-		return false;
+		logger->info("GetSpellPacketFromTransferInfo: Spell ID {} - Null caster detected in SpellTransferInfo.", spellId);
+		//return false; // we should still update it - nulled handles and all, so it is pruned later on (this caused issue #606)
 	}
 	
 
@@ -2895,6 +2899,12 @@ int LegacySpellSystem::GetSpellSchool(int spellEnum){
 	return spEntry.spellSchoolEnum;
 }
 
+bool LegacySpellSystem::IsMonsterSpell(int spellEnum)
+{
+	return spellEnum >= NORMAL_SPELL_RANGE
+		&& spellEnum <= SPELL_LIKE_ABILITY_RANGE;
+}
+
 bool LegacySpellSystem::IsSpellLike(int spellEnum){
 	return (spellEnum >= NORMAL_SPELL_RANGE
 		&& spellEnum <= SPELL_LIKE_ABILITY_RANGE) || spellEnum >= CLASS_SPELL_LIKE_ABILITY_START;
@@ -2913,6 +2923,12 @@ bool LegacySpellSystem::IsNewSlotDesignator(int spellEnum)
 		&& spellEnum < SPELL_ENUM_NEW_SLOT_START + NUM_SPELL_LEVELS)
 		return true;
 	return false;
+}
+
+// Non-Core spells will be added in the expanded range
+bool LegacySpellSystem::IsNonCore(int spellEnum)
+{
+	return (spellEnum > SPELL_ENUM_MAX_VANILLA);
 }
 
 int LegacySpellSystem::GetSpellLevelBySpellClass(int spellEnum, int spellClass, objHndl handle){
@@ -3355,7 +3371,7 @@ int LegacySpellSystem::CheckSpellResistance(SpellPacketBody* spellPkt, objHndl h
 		char *outcomeText1, *outcomeText2;
 		if (dispelSpellResistanceResult < 0)	{ // fixed bug - was <= instead of <
 			auto spellName = GetSpellName(spellPkt->spellEnum);
-			logger->info("CheckSpellResistance: Spell {} cast by {} resisted by target {}.", spellName, description.getDisplayName(spellPkt->caster), description.getDisplayName(handle));
+			logger->info("CheckSpellResistance: Spell {} cast by {} resisted by target {}.", spellName, spellPkt->caster, handle);
 			floatSys.FloatSpellLine(handle, 30008, FloatLineColor::White);
 			PlayFizzle(handle);
 			outcomeText1 = combatSys.GetCombatMesLine(119); // Spell ~fails~[ROLL_
@@ -3428,14 +3444,21 @@ int LegacySpellSystem::SpellEnd(int spellId, int endDespiteTargetList) const
 	pySpellIntegration.SpellTrigger(spellId, SpellEvent::EndSpellCast);
 	pySpellIntegration.RemoveSpell(spellId); // bah :P
 
-	// python stuff could update it so we refresh
-	spellsCastRegistry.copy(spellId, &pkt);
-	pkt.isActive = 0;
-	spellsCastRegistry.put(spellId, pkt);
+	// note: python stuff could update it so we refresh
+	SpellMarkInactive(spellId);
 	return 1;
 }
 
-
+void LegacySpellSystem::SpellMarkInactive(int spellId) const
+{
+	SpellPacket pkt;
+	if (!spellsCastRegistry.copy(spellId, &pkt)) {
+		logger->debug("SpellMarkInactive: \t Couldn't find spell in registry. Spell id {}", spellId);
+		return;
+	}
+	pkt.isActive = 0;
+	spellsCastRegistry.put(spellId, pkt);
+}
 #pragma endregion
 
 

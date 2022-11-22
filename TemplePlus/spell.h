@@ -170,7 +170,7 @@ struct LegacySpellSystem : temple::AddressTable
 
 	uint32_t spellRegistryCopy(uint32_t spellEnum, SpellEntry* spellEntry);
 
-	void DoForSpellEntries( void(__cdecl*cb)(SpellEntry & spellEntry));
+	void DoForSpellEntries( const std::function<void(SpellEntry &)> &cb);
 
 	int CopyLearnableSpells(objHndl & handle, int spellClass, std::vector<SpellEntry> & entries);
 	uint32_t ConfigSpellTargetting(PickerArgs* pickerArgs, SpellPacketBody* spellPacketBody);
@@ -224,10 +224,11 @@ struct LegacySpellSystem : temple::AddressTable
 	 These are not interruptible via Ready vs. Spell, and 
 	 do not automatically show up in the console as [ACTOR] casts [SPELL]!
 	*/
+	static bool IsMonsterSpell(int spellEnum);
 	static bool IsSpellLike(int spellEnum); 
 	static bool IsLabel(int spellEnum); // check if it is a hardcoded "label" enum (used in the GUI etc)
 	static bool IsNewSlotDesignator(int spellEnum); // check if it is a  hardcoded "new slot" designator (used for sorting)  enums 1605-1614
-
+	static bool IsNonCore(int spellEnum);
 
 	int GetSpellLevelBySpellClass(int spellEnum, int spellClass, objHndl handle = objHndl::null); // returns -1 if not available for spell class
 	bool SpellHasMultiSelection(int spellEnum);
@@ -265,6 +266,7 @@ struct LegacySpellSystem : temple::AddressTable
 	void SpellBeginRound(objHndl); // plays the OnBeginRound python script
 	objHndl mSpellBeginRoundObj = objHndl::null; // supplemental info for the OnBeginRound invocation to identify whose round is beginning...
 	int SpellEnd(int spellId, int endDespiteTargetList) const; // endDespiteTargetList will end the spell even if the target list isn't empty
+	void SpellMarkInactive(int spellId) const;
 	
 	void (__cdecl *SpellRemove)(int);
 	

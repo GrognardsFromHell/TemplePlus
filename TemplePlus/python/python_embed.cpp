@@ -27,6 +27,7 @@
 
 #include <pybind11/embed.h>
 #include "python_integration_race.h"
+#include <python/python_spell.h>
 
 namespace py = pybind11;
 
@@ -116,6 +117,7 @@ static BOOL __cdecl PythonLoadGame(GameSystemSaveFile *file) {
 
 static void __cdecl PythonReset() {
 	PyGame_Reset();
+	PySpell_Reset();
 }
 
 static void __cdecl PythonExit() {

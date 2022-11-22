@@ -20,6 +20,9 @@
 #include "float_line.h"
 #include "action_sequence.h"
 #include "ai.h"
+#include <party.h>
+#include <ui/ui_systems.h>
+#include <ui/ui_legacysystems.h>
 
 
 void PyPerformTouchAttack_PatchedCallToHitProcessing(D20Actn * pd20A, D20Actn d20A, uint32_t savedesi, uint32_t retaddr, PyObject * pyObjCaller, PyObject * pyTupleArgs);
@@ -76,7 +79,12 @@ public:
 
 	static int SpellResistance_SpellResistanceMod(DispatcherCallbackArgs args);
 
+	static int SuggestionOnAdd(DispatcherCallbackArgs args);
+
 	void apply() override {
+
+		// Fix for when summoned Balor from skull casts suggestion
+		replaceFunction(0x100D01D0, SuggestionOnAdd);
 
 		// Magic Circle Taking Damage - didn't check that attacker is not null
 		replaceFunction(0x100C8D60, MagicCirclePreventDamage);
@@ -1465,6 +1473,34 @@ int SpellConditionFixes::SpellResistance_SpellResistanceMod(DispatcherCallbackAr
 	GET_DISPIO(dispIoTypeBonusListAndSpellEntry, DispIOBonusListAndSpellEntry);
 	auto bonusAmt = args.GetCondArg(2);
 	dispIo->bonList->AddBonus(bonusAmt, 36, 203);
+	return 0;
+}
+
+int SpellConditionFixes::SuggestionOnAdd(DispatcherCallbackArgs args)
+{
+	auto spellId = args.GetCondArg(0);
+	auto duration = args.GetCondArg(1);
+	auto arg2 = args.GetCondArg(2); // is 0...
+
+	if (!conds.AddTo(args.objHndCaller, "Charmed", { spellId, duration, arg2 })) {
+		logger->error("d20_mods_spells.c / _begin_spell_suggestion(): unable to add condition");
+	}
+	floatSys.FloatSpellLine(args.objHndCaller, 20018, FloatLineColor::Red); // Charmed!
+	auto partyLeader = party.GetConsciousPartyLeader();
+	SpellPacketBody pkt(spellId);
+	if (party.IsInParty(pkt.caster)) {
+		if (party.ObjIsAIFollower(pkt.caster)) {
+			critterSys.AddFollower(args.objHndCaller, /*partyLeader*/ pkt.caster, 1, 1);
+		}
+		else {
+			critterSys.AddFollower(args.objHndCaller, pkt.caster, 1, 0);
+			uiSystems->GetParty().Update();
+		}
+	} 
+	else {
+		critterSys.AddFollower(args.objHndCaller, pkt.caster, 1, 1);
+	}
+	args.SetCondArg(2, 1);
 	return 0;
 }
 

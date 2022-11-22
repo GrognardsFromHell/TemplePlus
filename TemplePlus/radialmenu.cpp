@@ -392,9 +392,29 @@ bool RadialMenus::IsShiftPressed(){
 	return shiftPressed != 0;
 }
 
+/* 0x100F0EE0 */
 void RadialMenus::AssignMenu(objHndl handle)
 {
-	temple::GetRef<void(__cdecl)(objHndl)>(0x100F0EE0)(handle);
+	auto radMenu = (RadialMenu*)GetForObj(handle);
+	if (radMenu) {
+		for (auto i = 0u; i < radMenu->nodeCount; ++i) {
+			auto &node = radMenu->nodes[i];
+			if (node.entry.flags & (int)RadialMenuEntryFlags::HasText) {
+				logger->debug("AssignMenu: \t Freeing {}", i);
+				free(node.entry.text);
+			}
+		}
+	}
+	else {
+		auto &radMenuCount = *addresses.radialMenuCount;
+		const int RAD_MENU_CAPACITY = 10;
+		Expects(radMenuCount < RAD_MENU_CAPACITY); // bug in vanilla - no checks here
+		radMenu = &(addresses.radialMenus[radMenuCount]);
+		radMenuCount++;
+		radMenu->obj = handle;
+	}
+	radMenu->nodeCount = 0;
+	AddParentChildNode(handle, /*root node*/ temple::GetPointer<RadialMenuEntry>(0x115B2000), -1);
 }
 
 void RadialMenus::SetStandardNode(objHndl handle, int stdNode, int specialParent){

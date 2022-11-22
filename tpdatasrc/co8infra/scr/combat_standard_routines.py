@@ -1,8 +1,10 @@
 from toee import *
 from utilities import *
 from py00439script_daemon import record_time_stamp, get_v, set_v, get_f, set_f, npc_set, npc_unset, npc_get, tsc, tpsts, within_rect_by_corners
+# from Livonya import break_free
 
-
+def break_free(critter, range):
+	return 0
 
 def ProtectTheInnocent( attachee, triggerer):
 	return # Fuck this script
