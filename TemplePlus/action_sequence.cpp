@@ -376,6 +376,7 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 			*seqPickerD20ActnType = d20Sys.globD20Action->d20ActType;  // seqPickerD20ActnType
 			*seqPickerD20ActnData1 = d20Sys.globD20Action->data1;
 			*seqPickerTargetingType = D20TC_ItemInteraction;
+			pythonDispatcherKey = d20Sys.globD20Action->GetPythonActionEnum();  //Save off since the action will be reset
 			return;
 		}
 		addresses.actSeqPicker->flagsTarget = UiPickerFlagsTarget::None;
@@ -398,6 +399,7 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 			*seqPickerD20ActnType = d20Sys.globD20Action->d20ActType; //seqPickerD20ActnType
 			*seqPickerD20ActnData1 = d20Sys.globD20Action->data1;
 			*seqPickerTargetingType = D20TC_SingleIncSelf;
+			pythonDispatcherKey = d20Sys.globD20Action->GetPythonActionEnum();  //Save off since the action will be reset
 			return;
 		}
 		addresses.actSeqPicker->flagsTarget = UiPickerFlagsTarget::None;
@@ -424,6 +426,7 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 			*seqPickerD20ActnType = d20Sys.globD20Action->d20ActType;
 			*seqPickerD20ActnData1 = d20Sys.globD20Action->data1;
 			*seqPickerTargetingType = D20TC_SingleExcSelf;
+			pythonDispatcherKey = d20Sys.globD20Action->GetPythonActionEnum();  //Save off since the action will be reset
 			return;
 		}
 		addresses.actSeqPicker->flagsTarget = UiPickerFlagsTarget::None;
@@ -646,6 +649,10 @@ void ActionSequenceSystem::ActionTypeAutomatedSelection(objHndl handle)
 		|| *seqPickerTargetingType != D20TC_Invalid)
 	{
 		setGlobD20Action(*seqPickerD20ActnType, *seqPickerD20ActnData1);
+		if (d20Sys.globD20Action->d20ActType == D20A_PYTHON_ACTION) {
+			d20Sys.globD20Action->SetPythonActionEnum(pythonDispatcherKey);
+			pythonDispatcherKey = DK_NONE;
+		}
 		return;
 	}
 
@@ -833,7 +840,7 @@ int ActionSequenceSystem::ActionAddToSeq()
 		
 	}
 	if (d20ActnType == D20A_PYTHON_ACTION){
-		d20Sys.globD20ActionKey = (D20DispatcherKey) d20Sys.globD20Action->GetPythonActionEnum();
+		d20Sys.globD20ActionKey = d20Sys.globD20Action->GetPythonActionEnum();
 	}
 	auto actnCheckFunc = d20Sys.d20Defs[d20ActnType].actionCheckFunc;
 	if (actnCheckFunc)
