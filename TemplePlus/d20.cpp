@@ -525,6 +525,10 @@ void LegacyD20System::NewD20ActionsInit()
 
 	d20Type = D20A_DISMISS_SPELLS;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformDismissSpell;
+	// Dismissing a spell is supposed to take a standard action
+	if (config.stricterRulesEnforcement) {
+		d20Defs[d20Type].actionCost = d20Callbacks.ActionCostStandardAction;
+	}
 
 	d20Type = D20A_USE_POTION;
 	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqSpellCast;
