@@ -592,7 +592,9 @@ static PyObject* PySpell_GetTargetList(PyObject* obj, void*) {
 static PyObject* PySpell_GetSpellRadius(PyObject* obj, void*) {
 	auto self = (PySpell*)obj;
 	auto spellEntry = spellEntryRegistry.get(self->spellEnum);
-	return PyInt_FromLong(spellEntry->radiusTarget);
+	auto baseRadius = spellEntry->radiusTarget;
+	auto scale = 1 + self->metaMagic.metaMagicWidenSpellCount;
+	return PyInt_FromLong(baseRadius * scale);
 }
 
 static PyObject* PySpell_GetSpell(PyObject* obj, void*) {
