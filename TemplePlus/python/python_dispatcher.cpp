@@ -749,7 +749,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.value("Alchemy", Alchemy)
 		.value("Movement", Movement)
 		.value("Offense", Offense)
-		.value("Tacitical", Tactical)
+		.value("Tactical", Tactical)
 		.value("Options", Options)
 		.value("Potions", Potions)
 		.value("Wands", Wands)
