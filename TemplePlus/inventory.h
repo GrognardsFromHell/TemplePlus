@@ -196,6 +196,7 @@ struct InventorySystem : temple::AddressTable
 		   (so it will actually use the base critter size to determine wield type)
 	*/
 	int GetWieldType(objHndl wielder, objHndl item, bool regardEnlargement = false) const;
+	bool IsWieldedTwoHanded(objHndl item, objHndl wielder);
 	int GetWeaponAnimId(objHndl item, objHndl wielder);
 	static obj_f GetInventoryListField(objHndl objHnd);
 	static obj_f GetInventoryNumField(objHndl objHnd);

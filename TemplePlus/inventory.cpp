@@ -1598,15 +1598,92 @@ int InventorySystem::GetWieldType(objHndl wielder, objHndl item, bool regardEnla
 	return 2 * (wielderSize <= 5) + 1;	
 }
 
+bool InventorySystem::IsWieldedTwoHanded(objHndl weapon, objHndl wielder){
+	if (!weapon) return false;
+
+	auto weapObj = gameSystems->GetObj().GetObject(weapon);
+	auto weapType = (WeaponTypes)weapObj->GetInt32(obj_f_weapon_type);
+
+	// special case - rapiers are always wielded one handed
+	if (weapType == wt_rapier){
+		return false;
+	}
+
+	auto offhandWeapon = ItemWornAt(args.objHndCaller, EquipSlot::WeaponSecondary);
+	auto shield = ItemWornAt(args.objHndCaller, EquipSlot::Shield);
+  // are you holding the weapon with your buckler hand?
+	bool shieldAllowsTwoHandedWield = (shield != objHndl::null) && IsBuckler(shield);
+	if (shieldAllowsTwoHandedWield){
+		if (d20Sys.d20Query(args.objHndCaller, DK_QUE_Is_Preferring_One_Handed_Wield))
+			shieldAllowsTwoHandedWield = false;
+	}
+	bool hasInterferingOffhand = false;
+	if (offhandWeapon != objHndl::null){
+		hasInterferingOffhand = true;
+	}
+	if (shield != objHndl::null){
+		hasInterferingOffhand = !shieldAllowsTwoHandedWield;
+	}
+	auto wieldType = GetWieldType(args.objHndCaller, weapon, true);
+	// the wield type if the weapon is not enlarged along with the critter
+	auto wieldTypeMod = GetWieldType(args.objHndCaller, weaponUsed, false);
+
+	bool isTwohandedWieldable = !hasInterferingOffhand;
+
+	switch (wieldType)
+	{
+	case 0: // light weapon
+		switch (wieldTypeMod)
+		{
+		case 0:
+			isTwohandedWieldable = false;
+			break;
+		case 1: // benefitting from enlargement of weapon
+		case 2:
+		default:
+			break;
+		}
+	case 1: // single handed wield if weapon is unaffected
+		switch (wieldTypeMod)
+		{
+		case 0: // only in reduce person; going to assume the "beneficial" case that the reduction was made voluntarily and hence you let the weapon stay larger
+		case 1:
+		case 2:
+		default:
+			break;
+		}
+	case 2: // two handed wield if weapon is unaffected
+		switch (wieldTypeMod)
+		{
+		case 0:
+		case 1: // only in reduce person
+			break;
+		case 2:
+			if (hasInterferingOffhand) // shouldn't really be possible to hold two Two Handed Weapons... maybe if player is cheating
+			{
+				logger->warn("Illegally wielding weapon along withoffhand!");
+			}
+		default:
+			break;
+		}
+	case 3:
+		break;
+	case 4:
+	default:
+		break;
+	}
+
+	return isTwohandedWieldable;
+}
+
 int InventorySystem::GetWeaponAnimId(objHndl item, objHndl wielder){
-	auto wieldType = GetWieldType(wielder, item, false); // TODO overhaul this...
-	if (wieldType == 2){
+	auto wieldType = GetWieldType(wielder, item, false);
+	if (wieldType > 2) return 0;
+	if (IsWieldedTwoHanded(item, wielder)) {
 		return temple::GetRef<int[74]>(0x102BE668)[objects.getInt32(item, obj_f_weapon_type)]; // two handed anims
+	} else {
+		return temple::GetRef<int[74]>(0x102BE540)[objects.getInt32(item, obj_f_weapon_type)]; // single handed anims
 	}
-	if (wieldType != 1 && wieldType != 0){
-		return 0;
-	}
-	return temple::GetRef<int[74]>(0x102BE540)[objects.getInt32(item, obj_f_weapon_type)]; // single handed anims
 }
 
 obj_f InventorySystem::GetInventoryListField(objHndl objHnd)
