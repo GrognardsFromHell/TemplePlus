@@ -1609,12 +1609,12 @@ bool InventorySystem::IsWieldedTwoHanded(objHndl weapon, objHndl wielder){
 		return false;
 	}
 
-	auto offhandWeapon = ItemWornAt(args.objHndCaller, EquipSlot::WeaponSecondary);
-	auto shield = ItemWornAt(args.objHndCaller, EquipSlot::Shield);
+	auto offhandWeapon = ItemWornAt(wielder, EquipSlot::WeaponSecondary);
+	auto shield = ItemWornAt(wielder, EquipSlot::Shield);
   // are you holding the weapon with your buckler hand?
 	bool shieldAllowsTwoHandedWield = (shield != objHndl::null) && IsBuckler(shield);
 	if (shieldAllowsTwoHandedWield){
-		if (d20Sys.d20Query(args.objHndCaller, DK_QUE_Is_Preferring_One_Handed_Wield))
+		if (d20Sys.d20Query(wielder, DK_QUE_Is_Preferring_One_Handed_Wield))
 			shieldAllowsTwoHandedWield = false;
 	}
 	bool hasInterferingOffhand = false;
@@ -1624,9 +1624,9 @@ bool InventorySystem::IsWieldedTwoHanded(objHndl weapon, objHndl wielder){
 	if (shield != objHndl::null){
 		hasInterferingOffhand = !shieldAllowsTwoHandedWield;
 	}
-	auto wieldType = GetWieldType(args.objHndCaller, weapon, true);
+	auto wieldType = GetWieldType(wielder, weapon, true);
 	// the wield type if the weapon is not enlarged along with the critter
-	auto wieldTypeMod = GetWieldType(args.objHndCaller, weaponUsed, false);
+	auto wieldTypeMod = GetWieldType(wielder, weapon, false);
 
 	bool isTwohandedWieldable = !hasInterferingOffhand;
 
