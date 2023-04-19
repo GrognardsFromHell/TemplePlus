@@ -324,6 +324,11 @@ struct LegacyCritterSystem : temple::AddressTable
 	std::string GetHairStyleModel(HairStyle style);
 	
 	/**
+	 * Calculates the animation id for a creature, weapon and offhand.
+	 */
+	gfx::EncodedAnimId GetWeaponAnim(objHndl wielder, objHndl wpn, objHndl scnd, gfx::WeaponAnim anim);
+
+	/**
 	 * Gets the concrete animation id for a weapon based animation using
 	 * the currently equipped weapon of a critter.
 	 */
