@@ -2798,6 +2798,18 @@ static PyObject* PyObjHandle_AnimGoalInterrupt(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+static PyObject* PyObjHandle_AnimGoalPush(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	int animId;
+	if (!PyArg_ParseTuple(args, "i:objhndl.anim_goal_push", &animId)) {
+		return 0;
+	}
+	return PyInt_FromLong(gameSystems->GetAnim().PushAnimate(self->handle, animId));
+}
+
 static PyObject* PyObjHandle_AnimGoalPushAttack(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -4445,6 +4457,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "allegiance_strength", PyObjHandle_AllegianceStrength, METH_VARARGS, NULL },
 	{ "anim_callback", PyObjHandle_AnimCallback, METH_VARARGS, NULL },
 	{ "anim_goal_interrupt", PyObjHandle_AnimGoalInterrupt, METH_VARARGS, NULL },
+	{ "anim_goal_push", PyObjHandle_AnimGoalPush, METH_VARARGS, NULL },
 	{ "anim_goal_push_attack", PyObjHandle_AnimGoalPushAttack, METH_VARARGS, NULL },
 	{ "anim_goal_push_dodge", PyObjHandle_AnimGoalPushDodge, METH_VARARGS, NULL },
 	{ "anim_goal_push_hit_by_weapon", PyObjHandle_AnimGoalPushHitByWeapon, METH_VARARGS, NULL },
