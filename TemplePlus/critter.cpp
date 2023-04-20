@@ -1074,7 +1074,7 @@ gfx::EncodedAnimId LegacyCritterSystem::GetWeaponAnim(objHndl wielder, objHndl w
 
 	if (pAnimId == sAnimId) {
 		auto iuas = feats.HasFeatCountByClass(wielder, FEAT_IMPROVED_UNARMED_STRIKE);
-		if (0 == pAnimId && iuas) {
+		if (gfx::WeaponAnimType::Unarmed == pAnimId && iuas) {
 			pAnimId = gfx::WeaponAnimType::Monk;
 			sAnimId = gfx::WeaponAnimType::Monk;
 		}
