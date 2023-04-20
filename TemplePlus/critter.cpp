@@ -176,7 +176,7 @@ private:
 			});
 
 		replaceFunction<int(__cdecl)(objHndl,objHndl,objHndl,int)>(0x10020B60, [](objHndl wielder, objHndl prim, objHndl scnd, int animId) {
-			return (int)critterSys.GetWeaponAnim(wielder, prim, scnd, (WeaponAnim)animId);
+			return (int)critterSys.GetWeaponAnim(wielder, prim, scnd, (gfx::WeaponAnim)animId);
 			});
 	}
 
