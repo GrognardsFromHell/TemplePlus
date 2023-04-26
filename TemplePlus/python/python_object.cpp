@@ -1370,14 +1370,20 @@ static PyObject* PyObjHandle_TurnTowards(PyObject* obj, PyObject* args) {
 	}
 	
 	objHndl target;
-	if (!PyArg_ParseTuple(args, "O&:objhndl.turn_towards", &ConvertObjHndl, &target)) {
+	LocAndOffsets tLoc;
+	float relativeAngle = 0.0;
+
+	if (PyArg_ParseTuple(args, "O&:objhndl.turn_towards", &ConvertObjHndl, &target)) {
+		if (!target) {
+			logger->warn("Python turn_towards called with OBJ_HANDLE_NULL target");
+			Py_RETURN_NONE;
+		}
+		relativeAngle = objects.GetRotationTowards(self->handle, target);
+	} else if (PyArg_ParseTuple(args, "L|ff:objhndl.turn_towards", &tLoc.location, &tLoc.off_x, &tLoc.off_y) {
+		relativeAngle = objects.GetRotationTowardsLoc(self->handle, tLoc);
+	} else {
 		return 0;
 	}
-	if (!target){
-		logger->warn("Python turn_towards called with OBJ_HANDLE_NULL target");
-		Py_RETURN_NONE;
-	}
-	auto relativeAngle = objects.GetRotationTowards(self->handle, target);
 	if (!objSystem->GetObject(self->handle)->IsCritter()){
 		objects.SetRotation(self->handle, relativeAngle);
 		Py_RETURN_NONE;
