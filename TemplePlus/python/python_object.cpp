@@ -1370,20 +1370,35 @@ static PyObject* PyObjHandle_TurnTowards(PyObject* obj, PyObject* args) {
 	}
 	
 	objHndl target;
-	LocAndOffsets tLoc;
-	float relativeAngle = 0.0;
-
-	if (PyArg_ParseTuple(args, "O&:objhndl.turn_towards", &ConvertObjHndl, &target)) {
-		if (!target) {
-			logger->warn("Python turn_towards called with OBJ_HANDLE_NULL target");
-			Py_RETURN_NONE;
-		}
-		relativeAngle = objects.GetRotationTowards(self->handle, target);
-	} else if (PyArg_ParseTuple(args, "L|ff:objhndl.turn_towards", &tLoc.location, &tLoc.off_x, &tLoc.off_y)) {
-		relativeAngle = objects.GetRotationTowardsLoc(self->handle, tLoc);
-	} else {
+	if (!PyArg_ParseTuple(args, "O&:objhndl.turn_towards", &ConvertObjHndl, &target)) {
 		return 0;
 	}
+	if (!target){
+		logger->warn("Python turn_towards called with OBJ_HANDLE_NULL target");
+		Py_RETURN_NONE;
+	}
+	auto relativeAngle = objects.GetRotationTowards(self->handle, target);
+	if (!objSystem->GetObject(self->handle)->IsCritter()){
+		objects.SetRotation(self->handle, relativeAngle);
+		Py_RETURN_NONE;
+	}
+	gameSystems->GetAnim().PushRotate(self->handle, relativeAngle);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_TurnTowardsLoc(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		logger->warn("Python turn_towards_loc called with OBJ_HANDLE_NULL object");
+		Py_RETURN_NONE;
+	}
+
+	LocAndOffsets tLoc;
+	if (!PyArg_ParseTuple(args, "L|ff:objhndl.turn_towards_loc", &tLoc.location, &tLoc.off_x, &tLoc.off_y)) {
+		return 0;
+	}
+
+	auto relativeAngle = objects.GetRotationTowardsLoc(self->handle, tLoc);
 	if (!objSystem->GetObject(self->handle)->IsCritter()){
 		objects.SetRotation(self->handle, relativeAngle);
 		Py_RETURN_NONE;
@@ -4713,6 +4728,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"steal_from", PyObjHandle_StealFrom, METH_VARARGS, NULL },
 
 	{"turn_towards", PyObjHandle_TurnTowards, METH_VARARGS, NULL},
+	{"turn_towards_loc", PyObjHandle_TurnTowardsLoc, METH_VARARGS, NULL},
 	{"trip_check", PyObjHandle_TripCheck, METH_VARARGS, NULL },
 
 	{ "unconceal", PyObjHandle_Unconceal, METH_VARARGS, NULL },
