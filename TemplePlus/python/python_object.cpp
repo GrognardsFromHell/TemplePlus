@@ -1379,7 +1379,7 @@ static PyObject* PyObjHandle_TurnTowards(PyObject* obj, PyObject* args) {
 			Py_RETURN_NONE;
 		}
 		relativeAngle = objects.GetRotationTowards(self->handle, target);
-	} else if (PyArg_ParseTuple(args, "L|ff:objhndl.turn_towards", &tLoc.location, &tLoc.off_x, &tLoc.off_y) {
+	} else if (PyArg_ParseTuple(args, "L|ff:objhndl.turn_towards", &tLoc.location, &tLoc.off_x, &tLoc.off_y)) {
 		relativeAngle = objects.GetRotationTowardsLoc(self->handle, tLoc);
 	} else {
 		return 0;
