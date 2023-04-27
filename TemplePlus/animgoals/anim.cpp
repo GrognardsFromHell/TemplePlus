@@ -409,6 +409,25 @@ bool AnimSystem::PushWalkToTile(objHndl handle, LocAndOffsets loc){
     return false;
 }
 
+bool AnimSystem::PushKnockback(objHndl handle, LocAndOffsets loc) {
+	if (!handle || critterSys.IsDeadOrUnconscious(handle))
+		return false;
+
+	if (!critterSys.IsPC(handle)) {
+		auto getDlgTarget = temple::GetRef<objHndl(__cdecl)(objHndl)>(0x10053CA0);
+		if (getDlgTarget(handle) != objHndl::null)
+			return false;
+	}
+
+	AnimSlotGoalStackEntry goalData(handle, ag_knockback);
+	goalData.targetTile.location = loc;
+	if (!Interrupt(handle, AnimGoalPriority::AGP_3, false))
+		return true;
+
+	goalData.Push(&animIdGlobal);
+	return true;
+}
+
 void AnimSystem::SetRunningState(bool state){
     AnimSlotId *runId = addresses.animIdGlobal;
     AnimSlot *runInfo;
