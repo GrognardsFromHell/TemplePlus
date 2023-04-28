@@ -419,12 +419,12 @@ bool AnimSystem::PushKnockback(objHndl handle, LocAndOffsets loc) {
 			return false;
 	}
 
-	AnimSlotGoalStackEntry goalData(handle, ag_knockback);
+	AnimSlotGoalStackEntry goalData(handle, ag_attempt_move_straight_knockback);
 	goalData.targetTile.location = loc;
 	if (!Interrupt(handle, AnimGoalPriority::AGP_5, false))
 		return true;
 
-	//goalData.Push(&animIdGlobal);
+	goalData.Push(&animIdGlobal);
 	return true;
 }
 
