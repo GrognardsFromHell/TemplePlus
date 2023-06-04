@@ -420,11 +420,14 @@ bool AnimSystem::PushKnockback(objHndl handle, LocAndOffsets loc) {
 	}
 
 	AnimSlotGoalStackEntry goalData(handle, ag_attempt_move_straight_knockback);
+	AnimSlot *knockSlot;
 	goalData.targetTile.location = loc;
 	if (!Interrupt(handle, AnimGoalPriority::AGP_5, false))
 		return true;
 
 	goalData.Push(&animIdGlobal);
+	GetSlot(animIdGlobal, &knockSlot);
+	knockSlot->path.flags &= ~PF_COMPLETE;
 	return true;
 }
 
