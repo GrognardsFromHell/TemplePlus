@@ -426,7 +426,7 @@ bool AnimSystem::PushKnockback(objHndl handle, LocAndOffsets loc) {
 		return true;
 
 	goalData.Push(&animIdGlobal);
-	GetSlot(animIdGlobal, &knockSlot);
+	GetSlot(addresses.animIdGlobal, &knockSlot);
 	knockSlot->path.flags &= ~PF_COMPLETE;
 	return true;
 }
