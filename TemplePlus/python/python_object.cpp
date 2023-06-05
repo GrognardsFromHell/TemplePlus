@@ -2880,20 +2880,6 @@ static PyObject* PyObjHandle_AnimGoalPushHitByWeapon(PyObject* obj, PyObject* ar
 	return PyInt_FromLong(gameSystems->GetAnim().PushGoalHitByWeapon( attacker, self->handle));
 }
 
-static PyObject* PyObjHandle_KnockbackTo(PyObject* obj, PyObject* args) {
-	auto self = GetSelf(obj);
-	if (!self->handle) {
-		return PyInt_FromLong(0);
-	}
-
-	LocAndOffsets loc;
-	if (!PyArg_ParseTuple(args, "L|ff:objhndl.knockback_to", &loc.location, &loc.off_x, &loc.off_y)) {
-		return 0;
-	}
-
-	return PyInt_FromLong(gameSystems->GetAnim().PushKnockback(self->handle, loc));
-}
-
 static PyObject* PyObjHandle_AnimGoalPushUseObject(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -4643,7 +4629,6 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "item_wield", PyObjHandle_Wield, METH_VARARGS, NULL },
 	{ "item_wield_best_all", PyObjHandle_WieldBestAll, METH_VARARGS, NULL },
 
-	{ "knockback_to", PyObjHandle_KnockbackTo, METH_VARARGS, NULL },
 
 	{ "leader_get", PyObjHandle_LeaderGet, METH_VARARGS, NULL },
 
