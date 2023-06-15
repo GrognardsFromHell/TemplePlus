@@ -193,7 +193,7 @@ public:
 		});
 
 		replaceFunction<int(__cdecl)(objHndl, objHndl)>(0x10066730, [](objHndl item, objHndl wielder){
-			return inventory.GetWeaponAnimId(item, wielder);
+			return (int)inventory.GetWeaponAnimId(item, wielder);
 		});
 
 		replaceFunction<int(__cdecl)(objHndl, objHndl, objHndl, SkillEnum)>(0x10069970, [](objHndl item, objHndl appraiser, objHndl vendor, SkillEnum skillEnum) {
@@ -1683,7 +1683,7 @@ gfx::WeaponAnimType InventorySystem::GetWeaponAnimId(objHndl item, objHndl wield
 	auto wieldType = GetWieldType(wielder, item, false);
 	WeaponTypes wtype = (WeaponTypes)objects.getInt32(item, obj_f_weapon_type);
 
-	if (wieldType > 2) return 0;
+	if (wieldType > 2) return gfx::WeaponAnimType::Unarmed;
 	if (IsWieldedTwoHanded(item, wielder)) {
 		switch (wtype)
 		{
