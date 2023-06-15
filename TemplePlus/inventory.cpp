@@ -12,6 +12,7 @@
 #include "party.h"
 #include "rng.h"
 #include "gamesystems/legacysystems.h"
+#include <infrastructure/meshes.h>
 #include "ai.h"
 #include "animgoals/anim.h"
 #include "gamesystems/objects/objevent.h"
@@ -1678,7 +1679,7 @@ bool InventorySystem::IsWieldedTwoHanded(objHndl weapon, objHndl wielder){
 
 
 
-int InventorySystem::GetWeaponAnimId(objHndl item, objHndl wielder){
+gfx::WeaponAnimType InventorySystem::GetWeaponAnimId(objHndl item, objHndl wielder){
 	auto wieldType = GetWieldType(wielder, item, false);
 	WeaponTypes wtype = (WeaponTypes)objects.getInt32(item, obj_f_weapon_type);
 
@@ -1690,10 +1691,10 @@ int InventorySystem::GetWeaponAnimId(objHndl item, objHndl wielder){
 		case WeaponTypes::wt_dagger:
 		case WeaponTypes::wt_short_sword:
 		case WeaponTypes::wt_rapier:
-			return (int)gfx::WeaponAnimType::Spear;
+			return gfx::WeaponAnimType::Spear;
 		default:
 			// original two handed anim array
-			return temple::GetRef<int[74]>(0x102BE668)[wtype];
+			return (gfx::WeaponAnimType)temple::GetRef<int[74]>(0x102BE668)[wtype];
 		}
 	} else {
 		switch (wtype)
@@ -1701,10 +1702,10 @@ int InventorySystem::GetWeaponAnimId(objHndl item, objHndl wielder){
 		// piercing weapons
 		case WeaponTypes::wt_short_sword:
 		case WeaponTypes::wt_rapier:
-			return (int)gfx::WeaponAnimType::Dagger;
+			return gfx::WeaponAnimType::Dagger;
 		default:
 			// original single handed anim array
-			return temple::GetRef<int[74]>(0x102BE540)[wtype];
+			return (gfx::WeaponAnimType)temple::GetRef<int[74]>(0x102BE540)[wtype];
 		}
 	}
 }
