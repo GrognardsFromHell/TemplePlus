@@ -1680,7 +1680,7 @@ bool InventorySystem::IsWieldedTwoHanded(objHndl weapon, objHndl wielder){
 
 int InventorySystem::GetWeaponAnimId(objHndl item, objHndl wielder){
 	auto wieldType = GetWieldType(wielder, item, false);
-	WeaponTypes wtype = objects.getInt32(item, obj_f_weapon_type);
+	WeaponTypes wtype = (WeaponTypes)objects.getInt32(item, obj_f_weapon_type);
 
 	if (wieldType > 2) return 0;
 	if (IsWieldedTwoHanded(item, wielder)) {
@@ -1690,7 +1690,7 @@ int InventorySystem::GetWeaponAnimId(objHndl item, objHndl wielder){
 		case WeaponTypes::wt_dagger:
 		case WeaponTypes::wt_short_sword:
 		case WeaponTypes::wt_rapier:
-			return gfx::Spear;
+			return (int)gfx::WeaponAnimType::Spear;
 		default:
 			// original two handed anim array
 			return temple::GetRef<int[74]>(0x102BE668)[wtype];
@@ -1701,7 +1701,7 @@ int InventorySystem::GetWeaponAnimId(objHndl item, objHndl wielder){
 		// piercing weapons
 		case WeaponTypes::wt_short_sword:
 		case WeaponTypes::wt_rapier:
-			return gfx::Dagger;
+			return (int)gfx::WeaponAnimType::Dagger;
 		default:
 			// original single handed anim array
 			return temple::GetRef<int[74]>(0x102BE540)[wtype];
