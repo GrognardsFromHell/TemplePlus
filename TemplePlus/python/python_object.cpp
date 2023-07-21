@@ -862,6 +862,23 @@ static PyObject*PyObjHandle_GetItemWearFlags(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(res);
 }
 
+static PyObject* PyObjHandle_GetLevelForSpellSelection(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	Stat classCode;
+	if (!PyArg_ParseTuple(args, "i:objhndl:get_level_for_spell_selection", &classCode)) {
+		return 0;
+	}
+
+	//This is the level for selecting spells on levelup.  It does not include practiced spell caster.
+	auto res = dispatch.DispatchGetBaseCasterLevel(self->handle, classCode);
+
+	return PyInt_FromLong(res);
+}
+
 static PyObject* PyObjHandle_GetMaxDexBonus(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -4341,13 +4358,14 @@ static PyObject* PyObjHandle_IsSpellKnown(PyObject* obj, PyObject* args) {
 		return PyInt_FromLong(1);
 	}
 
+	int spellClass = -1;
 	int spellEnum;
 
-	if (!PyArg_ParseTuple(args, "i", &spellEnum)) {
-		return nullptr;
+	if (!PyArg_ParseTuple(args, "i|i", &spellEnum, &spellClass)) {
+		return PyInt_FromLong(false);
 	}
 
-	auto result = spellSys.IsSpellKnown(self->handle, spellEnum);
+	auto result = spellSys.IsSpellKnown(self->handle, spellEnum, spellClass);
 	return PyInt_FromLong(result);
 }
 
@@ -4530,6 +4548,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "get_character_base_classes", PyObjHandle_GetCharacterBaseClassesSet, METH_VARARGS, "Get tuple with base classes enums" },
 	{ "get_initiative", PyObjHandle_GetInitiative, METH_VARARGS, NULL },
 	{ "get_item_wear_flags", PyObjHandle_GetItemWearFlags, METH_VARARGS, NULL },
+	{ "get_level_for_spell_selection", PyObjHandle_GetLevelForSpellSelection, METH_VARARGS, NULL },
 	{ "get_max_dex_bonus", PyObjHandle_GetMaxDexBonus, METH_VARARGS, NULL },
 	{ "get_num_spells_per_day", PyObjHandle_GetNumSpellsPerDay, METH_VARARGS, NULL },
 	{ "get_num_spells_used", PyObjHandle_GetNumSpellsUsed, METH_VARARGS, NULL },

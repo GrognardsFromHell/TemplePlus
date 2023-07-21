@@ -1,0 +1,5 @@
+name: Divination Spell Power
+flags: 8
+prereqs:
+description:  At 3rd level, you gain a +1 (+2 6th, +3 9th) bonus to your caster level for arcane divination spells and the same penalty otherwise.
+prereq descr: Ultimate Magus Level 2.
