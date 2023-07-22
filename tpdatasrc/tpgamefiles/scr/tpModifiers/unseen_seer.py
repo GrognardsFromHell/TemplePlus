@@ -146,7 +146,7 @@ def UnseenSeerDamageBonusSneakScout(attachee, args, evt_obj):
 	if unseenSeerLvl <= 0:
 		return 0
 	
-	#Only apply to rogue if there are rogue levels also.  This is arbitrary I could allow the use to select later.
+	#Only apply to rogue if there are rogue levels also.  This is arbitrary I could allow the user to select later.
 	rogueLevel = attachee.stat_level_get(stat_level_rogue)
 	if rogueLevel > 0:
 		return 0
@@ -162,7 +162,6 @@ unseenSeerDamageBonusCondition.AddHook(ET_OnD20PythonQuery, "Skirmish Additional
 
 
 def OnAddAdvancedLearning(attachee, args, evt_obj):
-	#Add the first cater level as a condition
 	extendedClass = attachee.d20_query("Unseen Seer Extended Class")
 	effectiveLevel = attachee.get_level_for_spell_selection(extendedClass)
 	
@@ -178,7 +177,7 @@ def AdvancedLearningRadial(attachee, args, evt_obj):
 	unseenSeerLevel = attachee.stat_level_get(stat_level_unseen_seer)
 	extendedClass = attachee.d20_query("Unseen Seer Extended Class")
 	
-	#Add menu item for each level
+	#Add top level menu item for each advanced learning option
 	for i in range(0, 3):
 		maxLevel = args.get_arg(i)
 		if maxLevel > 0:
@@ -211,12 +210,12 @@ def AdvancedLearningAddSpell(attachee, args, evt_obj):
 	spellName = evt_obj.d20a.spell_data.get_spell_name()
 	classCode = attachee.d20_query("Unseen Seer Extended Class")
 	
-	#Add the new spell to the spontaneous class
+	#Add the new spell to the unseen seer class
 	attachee.spell_known_add_to_char_class(spellEnum, classCode, spellLevel)
 	
 	argNum = evt_obj.d20a.data1
 	
-	#Use up the spell knowledge slot
+	#Disable the advanced learning slot
 	args.set_arg(argNum, 0)
 	
 	attachee.float_text_line("Advanced Learning " + str(argNum+1) + " Added spell: " + spellName)
@@ -229,7 +228,7 @@ def AddAdvancedLearningSpell(attachee, args, evt_obj):
 	unseenSeerLevel = attachee.stat_level_get(classEnum) + 1
 	effectiveLevel = attachee.get_level_for_spell_selection(extendedClass) + 1
 
-	spellLevel = game.get_max_spell_level(extendedClass, effectiveLevel) #Should this moved into char editor or game?
+	spellLevel = game.get_max_spell_level(extendedClass, effectiveLevel)
 	
 	if unseenSeerLevel == 5:
 		args.set_arg(1,spellLevel)
@@ -245,7 +244,7 @@ unseenSeerAdvancedLearningCondition.AddHook(ET_OnD20PythonActionPerform, unseenS
 unseenSeerAdvancedLearningCondition.AddHook(ET_OnConditionAdd, EK_NONE, OnAddAdvancedLearning, ())
 unseenSeerAdvancedLearningCondition.AddHook(ET_OnD20PythonSignal, "Add Advanced Learning Spell", AddAdvancedLearningSpell, ())
 
-# Arcane Spell Power
+# Divination Spell Power
 def DivinationSpellPowerBonus(attachee, args, evt_obj):
 	#Must be arcane spell
 	spellPkt = evt_obj.get_spell_packet()
