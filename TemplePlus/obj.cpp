@@ -68,6 +68,15 @@ objHndl Objects::getObjHnd(objHndl obj, obj_f field) {
 	return objSystem->GetObject(obj)->GetObjHndl(field);
 	}
 
+
+void Objects::SetFieldString(objHndl obj, obj_f field, char* value) {
+	objSystem->GetObject(obj)->SetString(field, value);
+}
+
+const char* Objects::getString(objHndl obj, obj_f field) {
+	return objSystem->GetObject(obj)->GetString(field);
+}
+
 void Objects::setInt32(objHndl obj, obj_f field, uint32_t value) {
 	objSystem->GetObject(obj)->SetInt32(field, value);
 }

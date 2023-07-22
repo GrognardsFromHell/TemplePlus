@@ -62,6 +62,7 @@ enum class RadialMenuEntryType : uint32_t {
 
 enum class RadialMenuEntryFlags : int
 {
+	HasText = 0x1, // might refer to dynamic text specifically
 	HasMinArg = 0x2,
 	HasMaxArg = 0x4
 };

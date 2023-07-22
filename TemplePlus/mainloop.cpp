@@ -203,6 +203,10 @@ void GameLoop::Run() {
 				&& msg.arg2 == 1) {
 				mDiagScreen->Toggle();
 				UIShowDebug();
+				if (uiSystems->GetMM().IsVisible())
+				{
+					tig->GetConsole().Show();
+				}
 			}
 			
 

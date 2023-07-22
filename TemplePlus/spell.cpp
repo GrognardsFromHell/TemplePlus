@@ -1905,17 +1905,17 @@ bool LegacySpellSystem::GetSpellPacketFromTransferInfo(unsigned& spellId, SpellP
 	auto spellName = GetSpellName(spellPkt.spellPktBody.spellEnum);
 
 	auto handle = objSystem->GetHandleById(mtInfo.casterObjId);
+	spellPkt.spellPktBody.caster = handle;
 	if (handle) {
 		if (!mtInfo.casterPartsys.empty()) {
 			spellPkt.spellPktBody.casterPartsysId = gameSystems->GetParticleSys().CreateAtObj(mtInfo.casterPartsys, handle);
 		} else {
 			logger->debug("GetSpellPacketFromTransferInfo: Tried to play partsys hash 0 for spell {} id", spellName, spellId);
 		}
-		spellPkt.spellPktBody.caster = handle;
 	} else
 	{
-		logger->info("Null caster detected in SpellTransferInfo, aborting. (perhaps from an NPC?)");
-		return false;
+		logger->info("GetSpellPacketFromTransferInfo: Spell ID {} - Null caster detected in SpellTransferInfo.", spellId);
+		//return false; // we should still update it - nulled handles and all, so it is pruned later on (this caused issue #606)
 	}
 	
 

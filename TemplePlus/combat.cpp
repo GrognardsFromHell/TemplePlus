@@ -802,6 +802,13 @@ BOOL LegacyCombatSystem::StartCombat(objHndl combatInitiator, int setToFirstInit
 
 	if (AllPcsUnconscious())
 		return FALSE;
+	
+	if (forceEndedCombatNow) { // temple+: added this vs. combat start/end loops
+		logger->debug("StartCombat: averted due to forceEndedCombatNow = true");
+		return FALSE;
+	}
+		
+
 	logger->debug("StartCombat: entering combat mode; initiated by {}", combatInitiator);
 
 	*combatAddresses.combatRoundCount = 0;
