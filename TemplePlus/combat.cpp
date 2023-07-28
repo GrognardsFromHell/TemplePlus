@@ -127,6 +127,7 @@ public:
 	void apply() override{
 		
 		replaceFunction(0x100628D0, _isCombatActive);
+		replaceFunction(0x100B82E0, _GetCleveVictim);
 
 		// TurnProcessAi
 		replaceFunction<void(__cdecl)(objHndl)>(0x100635E0, [](objHndl obj){
@@ -1978,6 +1979,29 @@ int LegacyCombatSystem::GetCombatRoundCount()
 uint32_t _isCombatActive()
 {
 	return *combatSys.combatModeActive;
+}
+
+uint64_t _GetCleveVictim(objHndl objHnd)
+{
+	float minReach = 0.0f;
+	const auto reach = critterSys.GetReach(objHnd, D20A_STANDARD_ATTACK, &minReach); 
+	const auto polearmDonutReach = config.disableReachWeaponDonut ? false : true; //Cleve now respects the donut
+	const auto listSize = combatSys.GetInitiativeListLength();
+	for (int i = 0; i < listSize; i++) {
+		auto potentialVictim = combatSys.GetInitiativeListMember(i);
+		if (!combatSys.AffiliationSame(objHnd, potentialVictim)) {
+			if (!critterSys.IsDeadOrUnconscious(potentialVictim) && !actSeqSys.IsObjCurrentActorRegardSimuls(potentialVictim)) {
+				const auto distToTgt = max(0.0f, locSys.DistanceToObj(objHnd, potentialVictim));
+				const bool tooClose = polearmDonutReach && (minReach > 0.0f) && distToTgt < minReach;
+				const bool tooFar = (distToTgt > reach);
+				if (!tooClose && !tooFar) {
+					return potentialVictim.handle;
+				}
+			}
+		}
+	}
+
+	return 0;
 }
 
 uint32_t _IsCloseToParty(objHndl objHnd)
