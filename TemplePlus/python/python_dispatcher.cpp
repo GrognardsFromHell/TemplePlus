@@ -713,6 +713,8 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.value("StandardAttack", D20ActionType::D20A_STANDARD_ATTACK)
 		.value("FullAttack", D20ActionType::D20A_FULL_ATTACK)
 		.value("StandardRangedAttack", D20ActionType::D20A_STANDARD_RANGED_ATTACK)
+		.value("UnspecifiedAttack", D20ActionType::D20A_UNSPECIFIED_ATTACK)
+		.value("TouchAttack", D20ActionType::D20A_TOUCH_ATTACK)
 		.value("StandUp", D20ActionType::D20A_STAND_UP)
 		.value("TurnUndead", D20ActionType::D20A_TURN_UNDEAD)
 		.value("ClassAbility", D20ActionType::D20A_CLASS_ABILITY_SA)
