@@ -256,6 +256,7 @@ private:
 	uint32_t(__cdecl * _moveSeqD20Sthg)(ActnSeq* actSeq, TurnBasedStatus *actnSthg, float a3, float reach, int a5); //, D20Actn * d20aIn @<eax>
 
 	std::unordered_set<int> bardSongStoppingPythonActions;
+	D20DispatcherKey pythonDispatcherKey = DK_NONE;
 };
 
 extern ActionSequenceSystem actSeqSys;
