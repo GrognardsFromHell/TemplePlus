@@ -161,6 +161,10 @@ def SkirmishReset(attachee, args, evt_obj):
 	#Zero out the total distance moved from the start position
 	args.set_arg(0, 0)
 	return 0
+	
+def SkirmishAdd(attachee, args, evt_obj):
+	args.set_arg(0, 0)  #Zero out the total distance moved from the start position
+	return 0
 
 def SkirmishAcBonus(attachee, args, evt_obj):
 	# not active, do nothing
@@ -234,6 +238,7 @@ scoutSkirmish.MapToFeat("Skirmish")
 scoutSkirmish.AddHook(ET_OnDealingDamage, EK_NONE, SkirmishDamageBonus, ())
 scoutSkirmish.AddHook(ET_OnGetAC, EK_NONE, SkirmishAcBonus, ())
 scoutSkirmish.AddHook(ET_OnBeginRound, EK_NONE, SkirmishReset, ())
+scoutSkirmish.AddHook(ET_OnConditionAdd, EK_NONE, SkirmishAdd, ())
 scoutSkirmish.AddHook(ET_OnD20Signal, EK_S_Combat_Critter_Moved, ScoutMovedDistance, ())
 scoutSkirmish.AddHook(ET_OnGetTooltip, EK_NONE, SkirmishTooltip, ())
 scoutSkirmish.AddHook(ET_OnGetEffectTooltip, EK_NONE, SkirmishEffectTooltip, ())

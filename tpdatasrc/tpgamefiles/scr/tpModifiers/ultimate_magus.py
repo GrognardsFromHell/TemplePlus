@@ -224,14 +224,15 @@ def ExpandedSpellKnowledgeRadial(attachee, args, evt_obj):
 
 		known_spells = attachee.spells_known
 		
-		#Find all known spontaneous spells so we don't add them to the selectable spells
+		#Find all known spontaneous spells arcane so we don't add them to the selectable spells
 		spontaneous_known = []
 		for knSp in known_spells:
-			if knSp.caster_class == spontaneousCastingClass:
+			if (knSp.caster_class == spontaneousCastingClass) and (knSp.caster_class > 0) and attachee.is_arcane_spell_class(knSp.caster_class):
 				spontaneous_known.append(knSp.spell_enum)
 		
+		#Add each arcane spell under the level that is not alreay in the spontaneous spell list
 		for knSp in known_spells:
-			if knSp.spell_level <= level:
+			if knSp.spell_level <= level and (knSp.caster_class > 0) and attachee.is_arcane_spell_class(knSp.caster_class):
 				if knSp.spell_enum not in spontaneous_known:
 					spell_node = tpdp.RadialMenuEntryPythonAction(knSp, D20A_PYTHON_ACTION, expandedSpellKnowledgeEnum, level)
 					spell_node.add_as_child(attachee, spell_level_ids[knSp.spell_level])
