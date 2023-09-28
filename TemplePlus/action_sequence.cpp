@@ -38,6 +38,8 @@ static struct ActnSeqAddresses : temple::AddressTable {
 	int(__cdecl*ActionSequenceChecksWithPerformerLocation)();
 	void(__cdecl* ActionSequenceRevertPath)(int d20ActnNum);
 	void(__cdecl*Counterspell_sthg)(ReadiedActionPacket* readiedAction);
+	BOOL(__cdecl* IsObjCurrentActorRegardSimuls)(objHndl obj);
+	
 	PickerArgs * actSeqPicker;
 	D20Actn * actSeqPickerAction;
 	ReadiedActionPacket * readiedActionCache;
@@ -78,6 +80,8 @@ static struct ActnSeqAddresses : temple::AddressTable {
 		rebase(actSeqTargetsIdx, 0x118CD2A0);
 		rebase(actSeqTargets, 0x118CD2A8);
 		rebase(actSeqSpellLoc, 0x118CD3A8);
+
+		rebase(IsObjCurrentActorRegardSimuls, 0x100921F0);
 	}
 
 	
@@ -3309,6 +3313,11 @@ uint32_t ActionSequenceSystem::isSomeoneAlreadyActingSimult(objHndl objHnd)
 		}
 	}
 	return 0;
+}
+
+BOOL ActionSequenceSystem::IsObjCurrentActorRegardSimuls(objHndl objHnd)
+{
+	return addresses.IsObjCurrentActorRegardSimuls(objHnd);
 }
 
 BOOL ActionSequenceSystem::IsSimulsCompleted()

@@ -218,6 +218,7 @@ struct ActionSequenceSystem : temple::AddressTable
 	uint32_t simulsOk(ActnSeq* actSeq);
 	uint32_t simulsAbort(objHndl);
 	uint32_t isSomeoneAlreadyActingSimult(objHndl objHnd);
+	BOOL IsObjCurrentActorRegardSimuls(objHndl objHnd);
 	BOOL IsSimulsCompleted();
 	BOOL IsLastSimultPopped(objHndl obj); // last one that was popped, that is
 	BOOL IsLastSimulsPerformer(objHndl obj);
