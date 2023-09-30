@@ -1700,9 +1700,12 @@ gfx::WeaponAnimType InventorySystem::GetWeaponAnimId(objHndl item, objHndl wield
 		switch (wtype)
 		{
 		// piercing weapons
-		case WeaponTypes::wt_short_sword:
-		case WeaponTypes::wt_rapier:
+		case WeaponTypes::wt_short_sword: // was sword
+		case WeaponTypes::wt_rapier: // was sword
 			return gfx::WeaponAnimType::Dagger;
+		// slashing weapons
+		case WeaponTypes::wt_kukri: // was dagger
+			return gfx::WeaponAnimType::Sword;
 		default:
 			// original single handed anim array
 			return (gfx::WeaponAnimType)temple::GetRef<int[74]>(0x102BE540)[wtype];
