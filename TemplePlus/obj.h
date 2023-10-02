@@ -186,6 +186,11 @@ struct Objects : temple::AddressTable {
 	    it increases ** clock wise **, and 0 is when the facing is towards the top of the screen.
 	*/
 	float GetRotationTowards(objHndl from, objHndl to);
+
+	/*
+	  As above, but toward an arbitrary location rather than an object.
+	*/
+	float GetRotationTowardsLoc(objHndl from, LocAndOffsets & locTo);
 	
 	/*
 		Fades an object to a certain opacity, in time step tickTimeMs and opacity quantum tickQuantum

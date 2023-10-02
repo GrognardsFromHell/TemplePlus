@@ -1386,6 +1386,27 @@ static PyObject* PyObjHandle_TurnTowards(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+static PyObject* PyObjHandle_TurnTowardsLoc(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		logger->warn("Python turn_towards_loc called with OBJ_HANDLE_NULL object");
+		Py_RETURN_NONE;
+	}
+
+	LocAndOffsets tLoc;
+	if (!PyArg_ParseTuple(args, "L|ff:objhndl.turn_towards_loc", &tLoc.location, &tLoc.off_x, &tLoc.off_y)) {
+		return 0;
+	}
+
+	auto relativeAngle = objects.GetRotationTowardsLoc(self->handle, tLoc);
+	if (!objSystem->GetObject(self->handle)->IsCritter()){
+		objects.SetRotation(self->handle, relativeAngle);
+		Py_RETURN_NONE;
+	}
+	gameSystems->GetAnim().PushRotate(self->handle, relativeAngle);
+	Py_RETURN_NONE;
+}
+
 static PyObject* PyObjHandle_TripCheck(PyObject* obj, PyObject* args){
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -2796,6 +2817,26 @@ static PyObject* PyObjHandle_AnimGoalInterrupt(PyObject* obj, PyObject* args) {
 	}
 	gameSystems->GetAnim().Interrupt(self->handle, priority, false);
 	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_AnimGoalPush(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	int animId;
+	if (!PyArg_ParseTuple(args, "i:objhndl.anim_goal_push", &animId)) {
+		return 0;
+	}
+
+	// Guard against bad animIds, since they crash the game pretty hard
+	if (animId <= 0) return PyInt_FromLong(-1);
+	if (46 <= animId && animId <= 63) return PyInt_FromLong(-1);
+	if (99 <= animId && animId <= 102) return PyInt_FromLong(-1);
+	if (120 <= animId && animId <= 123) return PyInt_FromLong(-1);
+	if (142 <= animId) return PyInt_FromLong(-1);
+
+	return PyInt_FromLong(gameSystems->GetAnim().PushAnimate(self->handle, animId));
 }
 
 static PyObject* PyObjHandle_AnimGoalPushAttack(PyObject* obj, PyObject* args) {
@@ -4445,6 +4486,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "allegiance_strength", PyObjHandle_AllegianceStrength, METH_VARARGS, NULL },
 	{ "anim_callback", PyObjHandle_AnimCallback, METH_VARARGS, NULL },
 	{ "anim_goal_interrupt", PyObjHandle_AnimGoalInterrupt, METH_VARARGS, NULL },
+	{ "anim_goal_push", PyObjHandle_AnimGoalPush, METH_VARARGS, NULL },
 	{ "anim_goal_push_attack", PyObjHandle_AnimGoalPushAttack, METH_VARARGS, NULL },
 	{ "anim_goal_push_dodge", PyObjHandle_AnimGoalPushDodge, METH_VARARGS, NULL },
 	{ "anim_goal_push_hit_by_weapon", PyObjHandle_AnimGoalPushHitByWeapon, METH_VARARGS, NULL },
@@ -4686,6 +4728,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"steal_from", PyObjHandle_StealFrom, METH_VARARGS, NULL },
 
 	{"turn_towards", PyObjHandle_TurnTowards, METH_VARARGS, NULL},
+	{"turn_towards_loc", PyObjHandle_TurnTowardsLoc, METH_VARARGS, NULL},
 	{"trip_check", PyObjHandle_TripCheck, METH_VARARGS, NULL },
 
 	{ "unconceal", PyObjHandle_Unconceal, METH_VARARGS, NULL },
