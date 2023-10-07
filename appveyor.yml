@@ -1,6 +1,6 @@
 # version format
 version: 0.1.0-pre+{build}
-image: Visual Studio 2019
+image: Visual Studio 2022
 
 install:
   - appveyor DownloadFile https://github.com/GrognardsFromHell/Dependencies/releases/download/v1.12/dependencies.7z
