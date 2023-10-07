@@ -883,6 +883,24 @@ void LegacyD20System::D20SignalPython(const objHndl & handle, int queryKey, int 
 	return;
 }
 
+void LegacyD20System::D20SignalPython(objHndl objHnd, const std::string& queryKey, D20Actn* arg1, int32_t arg2)
+{
+	if (!objHnd) {
+		logger->warn("D20SignalPython called with null handle! Key was {} arg1 was d20Action, arg2 {}", queryKey, arg2);
+		return;
+	}
+
+	Dispatcher* dispatcher = objects.GetDispatcher(objHnd);
+	if (!dispatch.dispatcherValid(dispatcher)) { return; }
+
+	DispIoD20Query dispIo;
+	dispIo.dispIOType = dispIoTypeSendSignal;
+	dispIo.return_val = 0;
+	dispIo.data1 = (int)arg1;
+	dispIo.data2 = arg2;
+	dispatcher->Process(enum_disp_type::dispTypePythonSignal, static_cast<D20DispatcherKey>(ElfHash::Hash(queryKey)), &dispIo);
+}
+
 #pragma endregion
 
 void LegacyD20System::D20ActnInit(objHndl objHnd, D20Actn* d20a)
@@ -3081,6 +3099,8 @@ BOOL D20ActionCallbacks::ActionFrameTouchAttack(D20Actn* d20a){
 		curSeq->tbStatus.tbsFlags &= ~TBSF_TouchAttack;
 		d20a->d20Caf &= ~D20CAF_FREE_ACTION;
 	}
+
+	d20Sys.D20SignalPython(d20a->d20ATarget, "Touch Attack Victim", d20a);
 
 	return FALSE;
 }

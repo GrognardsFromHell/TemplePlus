@@ -4441,6 +4441,48 @@ static PyObject * PyObjHandle_MakeWizard(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(1);
 };
 
+static PyObject* PyObjHandle_MakeAOO(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	objHndl targetObj;
+	if (!PyArg_ParseTuple(args, "O&:objhndl.make_aoo_if_possible", &ConvertObjHndl, &targetObj)) {
+		return 0;
+	}
+
+	if (!targetObj) {
+		return PyInt_FromLong(0);
+	}
+
+	//Check if we are too close to stop the process early when too close
+	auto polearmDonutReach = config.disableReachWeaponDonut ? false : true;
+	float minReach = 0.0f;
+	(void)critterSys.GetReach(self->handle, D20A_UNSPECIFIED_ATTACK, &minReach);
+	auto distToTgt = max(0.0f, locSys.DistanceToObj(self->handle, targetObj));
+	auto tooClose = polearmDonutReach && (minReach > 0.0f) && distToTgt < minReach;
+	if (tooClose) {
+		return PyInt_FromLong(0);
+	}
+
+	if (!combatSys.CanMeleeTarget(self->handle, targetObj))
+		return PyInt_FromLong(0);
+	if (self->handle == targetObj)
+		return PyInt_FromLong(0);
+	if (critterSys.IsFriendly(self->handle, targetObj))
+		return PyInt_FromLong(0);
+	if (!d20Sys.d20QueryWithData(self->handle, DK_QUE_AOOPossible, targetObj))
+		return PyInt_FromLong(0);
+	if (!d20Sys.d20QueryWithData(self->handle, DK_QUE_AOOWillTake, targetObj))
+		return PyInt_FromLong(0);
+
+	actSeqSys.DoAoo(self->handle, targetObj);
+	actSeqSys.sequencePerform();
+	
+	return PyInt_FromLong(1);
+}
+
 static PyObject * PyObjHandle_MakeClass(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	int level;
@@ -4633,6 +4675,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "leader_get", PyObjHandle_LeaderGet, METH_VARARGS, NULL },
 
 	{ "make_wiz", PyObjHandle_MakeWizard, METH_VARARGS, "Makes you a wizard of level N" },
+	{ "make_aoo_if_possible", PyObjHandle_MakeAOO, METH_VARARGS, "Perform an AOO against opponent" },
 	{ "make_class", PyObjHandle_MakeClass, METH_VARARGS, "Makes you a CLASS N of level M" },
 	{ "money_get", PyObjHandle_MoneyGet, METH_VARARGS, NULL},
 	{ "money_adj", PyObjHandle_MoneyAdj, METH_VARARGS, NULL},
