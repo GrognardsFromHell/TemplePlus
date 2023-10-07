@@ -30,18 +30,13 @@
 #include <EASTL/allocator.h>
 #include <EASTL/type_traits.h>
 
-#ifdef _MSC_VER
-	#pragma warning(push, 0)
-	#include <new>
-	#pragma warning(pop)
-#else
-	#include <new>
-#endif
 
-#if defined(_MSC_VER)
-	#pragma warning(push)
-	#pragma warning(disable: 4275) // non dll-interface class used as base for DLL-interface classkey 'identifier'
-#endif
+EA_DISABLE_ALL_VC_WARNINGS();
+#include <new>
+EA_RESTORE_ALL_VC_WARNINGS();
+
+// 4275 - non dll-interface class used as base for DLL-interface classkey 'identifier'
+EA_DISABLE_VC_WARNING(4275);
 
 
 namespace eastl
@@ -317,7 +312,7 @@ namespace eastl
 				{
 					pLink = mpNext;
 					
-					mpNext = reinterpret_cast<Link*>(reinterpret_cast<char8_t*>(mpNext) + mnNodeSize);
+					mpNext = reinterpret_cast<Link*>(reinterpret_cast<char*>(mpNext) + mnNodeSize);
 
 					#if EASTL_FIXED_SIZE_TRACKING_ENABLED
 						if(++mnCurrentSize > mnPeakSize)
@@ -472,7 +467,7 @@ namespace eastl
 				if(mpNext != mpCapacity)
 				{
 					p      = pLink = mpNext;
-					mpNext = reinterpret_cast<Link*>(reinterpret_cast<char8_t*>(mpNext) + mnNodeSize);
+					mpNext = reinterpret_cast<Link*>(reinterpret_cast<char*>(mpNext) + mnNodeSize);
 				}
 				else
 					p = mOverflowAllocator.allocate(mnNodeSize);
@@ -506,10 +501,14 @@ namespace eastl
 				if (mpNext != mpCapacity)
 				{
 					p = pLink = mpNext;
-					mpNext = reinterpret_cast<Link*>(reinterpret_cast<char8_t*>(mpNext)+mnNodeSize);
+					mpNext = reinterpret_cast<Link*>(reinterpret_cast<char*>(mpNext)+mnNodeSize);
 				}
 				else
+				{
 					p = allocate_memory(mOverflowAllocator, mnNodeSize, alignment, alignmentOffset);
+					EASTL_ASSERT_MSG(p != nullptr, "the behaviour of eastl::allocators that return nullptr is not defined.");
+				}
+
 			}
 
 			#if EASTL_FIXED_SIZE_TRACKING_ENABLED
@@ -1020,11 +1019,16 @@ namespace eastl
 		{
 			// We expect that the caller uses kAllocFlagBuckets when it wants us to allocate buckets instead of nodes.
 			EASTL_CT_ASSERT(kAllocFlagBuckets == 0x00400000); // Currently we expect this to be so, because the hashtable has a copy of this enum.
+
 			if((flags & kAllocFlagBuckets) == 0) // If we are allocating nodes and (probably) not buckets...
 			{
-				EASTL_ASSERT(n == kNodeSize);  (void)n; // Make unused var warning go away.
+				EASTL_ASSERT(n == kNodeSize); EA_UNUSED(n); 
 				return mPool.allocate();
 			}
+
+			// If bucket size no longer fits within local buffer...
+			if ((flags & kAllocFlagBuckets) == kAllocFlagBuckets && (n > kBucketsSize))
+				return get_overflow_allocator().allocate(n);
 
 			EASTL_ASSERT(n <= kBucketsSize);
 			return mpBucketBuffer;
@@ -1036,11 +1040,14 @@ namespace eastl
 			// We expect that the caller uses kAllocFlagBuckets when it wants us to allocate buckets instead of nodes.
 			if ((flags & kAllocFlagBuckets) == 0) // If we are allocating nodes and (probably) not buckets...
 			{
-				EASTL_ASSERT(n == kNodeSize); (void)n; // Make unused var warning go away.
+				EASTL_ASSERT(n == kNodeSize); EA_UNUSED(n);
 				return mPool.allocate(alignment, offset);
 			}
 
-			// To consider: allow for bucket allocations to overflow.
+			// If bucket size no longer fits within local buffer...
+			if ((flags & kAllocFlagBuckets) == kAllocFlagBuckets && (n > kBucketsSize))
+				return get_overflow_allocator().allocate(n, alignment, offset);
+
 			EASTL_ASSERT(n <= kBucketsSize);
 			return mpBucketBuffer;
 		}
@@ -1197,6 +1204,7 @@ namespace eastl
 				return mPool.allocate();
 			}
 
+			// Don't allow hashtable buckets to overflow in this case.
 			EASTL_ASSERT(n <= kBucketsSize);
 			return mpBucketBuffer;
 		}
@@ -1211,7 +1219,7 @@ namespace eastl
 				return mPool.allocate(alignment, offset);
 			}
 
-			// To consider: allow for bucket allocations to overflow.
+			// Don't allow hashtable buckets to overflow in this case.
 			EASTL_ASSERT(n <= kBucketsSize);
 			return mpBucketBuffer;
 		}
@@ -1344,7 +1352,7 @@ namespace eastl
 		//    mOverflowAllocator.set_name(pName);
 		//}
 
-		fixed_vector_allocator(void* pNodeBuffer)
+		fixed_vector_allocator(void* pNodeBuffer = nullptr)
 			: mpPoolBegin(pNodeBuffer)
 		{
 		}
@@ -1354,12 +1362,10 @@ namespace eastl
 		{
 		}
 
-		// Disabled because the default is sufficient.
-		//fixed_vector_allocator(const fixed_vector_allocator& x)
-		//{
-		//    mpPoolBegin        = x.mpPoolBegin;
-		//    mOverflowAllocator = x.mOverflowAllocator;
-		//}
+		fixed_vector_allocator(const fixed_vector_allocator& x)
+			: mOverflowAllocator(x.mOverflowAllocator), mpPoolBegin(x.mpPoolBegin)
+		{
+		}
 
 		fixed_vector_allocator& operator=(const fixed_vector_allocator& x)
 		{
@@ -1445,6 +1451,10 @@ namespace eastl
 		//{
 		//}
 
+		fixed_vector_allocator()
+		{
+		}
+
 		fixed_vector_allocator(void* /*pNodeBuffer*/)
 		{
 		}
@@ -1469,12 +1479,14 @@ namespace eastl
 		void* allocate(size_t /*n*/, int /*flags*/ = 0)
 		{
 			EASTL_ASSERT(false); // A fixed_vector should not reallocate, else the user has exhausted its space.
+			EASTL_CRASH();		 // We choose to crash here since the owning vector can't handle an allocator returning null. Better to crash earlier.
 			return NULL;
 		}
 
 		void* allocate(size_t /*n*/, size_t /*alignment*/, size_t /*offset*/, int /*flags*/ = 0)
 		{
-			EASTL_ASSERT(false);
+			EASTL_ASSERT(false); // A fixed_vector should not reallocate, else the user has exhausted its space.
+			EASTL_CRASH();		 // We choose to crash here since the owning vector can't handle an allocator returning null. Better to crash earlier.
 			return NULL;
 		}
 
@@ -1573,9 +1585,9 @@ namespace eastl
 	public:
 		static void swap(Container& a, Container& b)
 		{
-			const Container temp(a); // Can't use global swap because that could
-			a = b;                   // itself call this swap function in return.
-			b = temp;
+			Container temp(EASTL_MOVE(a)); // Can't use global swap because that could
+			a = EASTL_MOVE(b);             // itself call this swap function in return.
+			b = EASTL_MOVE(temp);
 		}
 	};
 
@@ -1591,9 +1603,9 @@ namespace eastl
 
 			if(pMemory)
 			{
-				Container* const pTemp = ::new(pMemory) Container(a);
-				a = b;
-				b = *pTemp;
+				Container* pTemp = ::new(pMemory) Container(EASTL_MOVE(a));
+				a = EASTL_MOVE(b);
+				b = EASTL_MOVE(*pTemp);
 
 				pTemp->~Container();
 				allocator.deallocate(pMemory, sizeof(a));
@@ -1613,10 +1625,7 @@ namespace eastl
 } // namespace eastl
 
 
-#if defined(_MSC_VER)
-	#pragma warning(pop)
-#endif
+EA_RESTORE_VC_WARNING();
 
 
 #endif // Header include guard
-
