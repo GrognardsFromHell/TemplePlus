@@ -121,11 +121,13 @@ jobs:
       shell: powershell
       env:
         TEMPLEPLUS_VERSION: ${{ needs.build.outputs.version }}
-    - name: Upload Artifacts
+    - name: Upload Update-Site
       uses: actions/upload-artifact@v3
       with:
         name: UpdateSite
         path: releases-packages/
+    - name: Upload Setup
+      uses: actions/upload-artifact@v3
       with:
         name: FullSetup
         path: TemplePlusSetup.exe
