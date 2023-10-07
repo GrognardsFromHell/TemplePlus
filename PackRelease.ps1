@@ -30,8 +30,8 @@ copy -Recurse tpdata dist\tpdata
 copy -Recurse dependencies\python-lib dist\tpdata\python-lib
 copy "C:\Program Files (x86)\Windows Kits\10\Redist\D3D\x86\d3dcompiler_47.dll" dist
 
-if (Test-Path env:\APPVEYOR_BUILD_VERSION) {
-    $distZipFile = "TemplePlus-$($env:APPVEYOR_BUILD_VERSION).zip"
+if (Test-Path env:\TEMPLEPLUS_VERSION) {
+    $distZipFile = "TemplePlus-$($env:TEMPLEPLUS_VERSION).zip"
 } else {
     $distZipFile = "TemplePlus.zip"
 }
@@ -46,8 +46,8 @@ $srcDir = Join-Path (pwd) "dist"
 [io.compression.zipfile]::CreateFromDirectory($srcDir, $distZipFile)
 
 # Create the nuget package (with the right version number)
-if (Test-Path env:\APPVEYOR_BUILD_VERSION) {
-    nuget.exe pack -Version $env:APPVEYOR_BUILD_VERSION TemplePlus.nuspec
+if (Test-Path env:\TEMPLEPLUS_VERSION) {
+    nuget.exe pack -Version $env:TEMPLEPLUS_VERSION TemplePlus.nuspec
 } else {
     nuget.exe pack TemplePlus.nuspec
 }

@@ -1,28 +1,58 @@
 
 name: CI
-on: [push]
+on:
+  - push # standard push on main or other branches
+  - workflow_dispatch # run manually via Github UI
+  - create # i.e. tags
 
 jobs:
   build:
     name: Build Windows
     runs-on: windows-latest
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
     steps:
-    - uses: actions/checkout@v1
-    - uses: nuget/setup-nuget@v1
-    - name: Download and Extract Dependencies
+    - id: get_version
+      name: Determine Version Number
       run: |
-        curl -L -o dependencies.7z https://github.com/GrognardsFromHell/Dependencies/releases/download/v1.12/dependencies.7z
-        7z x dependencies.7z
-    - name: Install NuGet packages
-      run: |
-        nuget install Squirrel.Windows -OutputDirectory Squirrel -Verbosity Detailed
-        nuget restore
-    - name: Build
-      run: |
-        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars32.bat"
-        msbuild TemplePlus.sln /p:Configuration=Release /p:Platform=Win32 /p:MSBuildDefines="_TP_VERSION=%BUILD_NUMBER%;_TP_COMMIT=%COMMIT_ID%;TP_RELEASE_BUILD" /verbosity:minimal
-      # Need to use cmd because of the vcvars32 batch file
-      shell: cmd
-      env:
-        BUILD_NUMBER: ${GITHUB_RUN_NUMBER}
-        COMMIT_ID: ${GITHUB_SHA::8}
+        "Building Ref: $($env:GITHUB_REF)"
+
+        if ($env:GITHUB_REF -notmatch "^refs/tags/v(\d+\.\d+(?:\.\d+)*(?:|-.*))$") {
+          "Tag name doesnt match release pattern. Building Snapshot Build."
+          $version = "0.2.$($env:GITHUB_RUN_NUMBER)"
+        } else {
+          "Building Release Build"
+          $version = $Matches[1]
+        }
+
+        "Version Number: $version"
+
+        # Make it available to the Github Workflow
+        Add-Content -Path $env:GITHUB_OUTPUT -Value "version=$version"
+      shell: powershell
+    #- uses: actions/checkout@v4
+    #- uses: nuget/setup-nuget@v1
+    #- name: Download and Extract Dependencies
+    #  run: |
+    #    curl -L -o dependencies.7z https://github.com/GrognardsFromHell/Dependencies/releases/download/v1.12/dependencies.7z
+    #    7z x dependencies.7z
+    #- name: Install NuGet packages
+    #  run: |
+    #    nuget install Squirrel.Windows -OutputDirectory Squirrel -Verbosity Detailed
+    #    nuget restore
+    #- name: Build
+    #  run: |
+    #    call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars32.bat"
+    #    msbuild TemplePlus.sln /p:Configuration=Release /p:Platform=Win32 /p:MSBuildDefines="_TP_VERSION=%BUILD_NUMBER%;_TP_COMMIT=%COMMIT_ID%;TP_RELEASE_BUILD" /verbosity:minimal
+    #  # Need to use cmd because of the vcvars32 batch file
+    #  shell: cmd
+    #  env:
+    #    COMMIT_ID: ${GITHUB_SHA::8}
+    #- name: Pack Release
+    #  run: .\PackRelease.ps1
+    #  shell: powershell
+    #- name: Upload Artifacts
+    #  uses: actions/upload-artifact@v3
+    #  with:
+    #    name: dist
+    #    path: TemplePlus*.zip
