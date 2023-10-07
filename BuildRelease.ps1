@@ -27,9 +27,6 @@ if (!$releasePackage -Or -Not(Test-Path $releasePackage)) {
 # Download last release to make delta packages!
 Invoke-WebRequest https://templeplus.org/update-feeds/stable/RELEASES -OutFile $releasesDir\RELEASES
 
-Add-Type -Path .\squirrel\DeltaCompressionDotNet.*\lib\net45\*.dll
-Add-Type -Path .\squirrel\Splat.*\lib\net45\*.dll
-Add-Type -Path .\squirrel\Mono.Cecil.*\lib\net45\*.dll
 Add-Type -LiteralPath $squirrelDll
 
 # Using squirrel code here to parse the RELEASES file and get the previous release
@@ -39,12 +36,19 @@ $releases = [Squirrel.ReleaseEntry]::ParseReleaseFile($releasesContent)
 $rp = New-Object "Squirrel.ReleasePackage" $releasePackage
 $prevRelease = [Squirrel.ReleaseEntry]::GetPreviousRelease($releases, $rp, $releasesDir)
 
-if ($prevRelease) {
-    $tagName = "v$($prevRelease.Version.ToString())"
-    $filenameOnly = [IO.Path]::GetFileName($prevRelease.InputPackageFile)
-    $downloadUrl = "https://github.com/GrognardsFromHell/TemplePlus/releases/download/$tagName/$filenameOnly"
-    Invoke-WebRequest $downloadUrl -OutFile $prevRelease.InputPackageFile
+if (!$prevRelease) {
+    "No previous release found. Picking last full release."
+    $prevRelease = $releases | Sort-Object Version -Descending | Where-Object { -not $_.IsDelta } | Select-Object -First 1
+    $targetPath = Join-Path $releasesDir $prevRelease.Filename
+    $prevRelease = [Squirrel.ReleasePackage]::new($targetPath, $true)
 }
+
+"Last Full Release: $($prevRelease.Version.ToString())"
+
+$tagName = "v$($prevRelease.Version.ToString())"
+$filenameOnly = [IO.Path]::GetFileName($prevRelease.InputPackageFile)
+$downloadUrl = "https://github.com/GrognardsFromHell/TemplePlus/releases/download/$tagName/$filenameOnly"
+Invoke-WebRequest $downloadUrl -OutFile $prevRelease.InputPackageFile
 
 # The tag name is actually part of the download URL on github
 $baseUrl = "--baseUrl=https://github.com/GrognardsFromHell/TemplePlus/releases/download/v$($env:TEMPLEPLUS_VERSION)/"

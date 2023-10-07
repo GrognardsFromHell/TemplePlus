@@ -65,14 +65,15 @@ jobs:
         TEMPLEPLUS_VERSION: ${{ steps.get_version.outputs.version }}
     - name: Pack Symbols
       shell: cmd
+      # Package the symbol files, dump_syms needs the dev tools to be on the PATH
       run: |
-        # Package the symbol files
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars32.bat"
         dependencies\bin\dump_syms.exe Release\TemplePlus.pdb > TemplePlus.sym
         7z a TemplePlusSymbols-${{ steps.get_version.outputs.version }}.zip TemplePlus.sym Release\TemplePlus.pdb
     - name: Pack Tools
       shell: cmd
-      run: |
-        # Release Full with tools and all binaries
+      # Release Full with tools and all binaries
+      run: |        
         rd /s /q dist || cd .
         mkdir dist
         copy Release\*.exe dist
@@ -126,8 +127,6 @@ jobs:
         aws-region: eu-west-1
     - name: Upload Symbols to S3
       run: python -u deploy_symbols_s3.py TemplePlus.sym
-      env:
-        AWS_REGION: eu-west-1
 
   package-release:
     name: Package Release
