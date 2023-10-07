@@ -1,14 +1,4 @@
 ﻿
-if ($env:APPVEYOR_REPO_TAG -ne "true") {
-    "No tagged build is running, skipping release building"
-    Exit
-}
-
-if (-Not(Test-Path .\Squirrel\squirrel.windows.*)) {
-    "Installing Squirrel"
-    nuget.exe install Squirrel.Windows -OutputDirectory Squirrel
-}
-
 ## download the last release locally so we can build a delta against it
 ## Deltas are only ever built against the last previous release, never against more
 $squirrel = Get-ChildItem .\Squirrel\squirrel.windows.*\tools\Squirrel.com
@@ -16,7 +6,7 @@ $squirrelDll = Get-ChildItem .\Squirrel\squirrel.windows.*\lib\net45\Squirrel.dl
 
 if (-Not(Test-Path -PathType Leaf $squirrel)) {
     Write-Error "Squirrel executable is not present"
-    Exit
+    Exit 1
 }
 
 $releasesDir = "releases-packages"
@@ -27,15 +17,15 @@ if (Test-Path $releasesDir) {
 mkdir -Force $releasesDir
 
 # Get the latest nuget package
-if (Test-Path env:\APPVEYOR_BUILD_VERSION) {
-    $releasePackage = Join-Path (pwd) "TemplePlus.$($env:APPVEYOR_BUILD_VERSION).nupkg"
+if (Test-Path env:\TEMPLEPLUS_VERSION) {
+    $releasePackage = Join-Path (pwd) "TemplePlus.$($env:TEMPLEPLUS_VERSION).nupkg"
 } else {
     $releasePackage = Get-ChildItem .\TemplePlus.*.nupkg | Sort-Object CreationTime -Descending | Select-Object -First 1
 }
 
 if (!$releasePackage -Or -Not(Test-Path $releasePackage)) {
     Write-Error "NuGet package for release doesnt seem to be built. Make sure to run PackRelease.ps1 first"
-    Exit
+    Exit 1
 }
 
 # Download last release to make delta packages!

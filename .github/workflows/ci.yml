@@ -7,10 +7,11 @@ on:
 
 jobs:
   build:
-    name: Build Windows
+    name: Build TemplePlus
     runs-on: windows-latest
     outputs:
       version: ${{ steps.get_version.outputs.version }}
+      release: ${{ steps.get_version.outputs.release }}
     steps:
     - id: get_version
       name: Determine Version Number
@@ -20,18 +21,26 @@ jobs:
         if ($env:GITHUB_REF -notmatch "^refs/tags/v(\d+\.\d+(?:\.\d+)*(?:|-.*))$") {
           "Tag name doesnt match release pattern. Building Snapshot Build."
           $version = "0.2.$($env:GITHUB_RUN_NUMBER)"
+          $release = "false"
         } else {
           "Building Release Build"
           $version = $Matches[1]
+          $release = "true"
         }
 
         "Version Number: $version"
+        "Release Build: $release"
 
         # Make it available to the Github Workflow
         Add-Content -Path $env:GITHUB_OUTPUT -Value "version=$version"
+        Add-Content -Path $env:GITHUB_OUTPUT -Value "release=$release"
       shell: powershell
     - uses: actions/checkout@v4
     - uses: nuget/setup-nuget@v1
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.9
     - name: Download and Extract Dependencies
       run: |
         curl -L -o dependencies.7z https://github.com/GrognardsFromHell/Dependencies/releases/download/v1.12/dependencies.7z
@@ -54,8 +63,69 @@ jobs:
       shell: powershell
       env:
         TEMPLEPLUS_VERSION: ${{ steps.get_version.outputs.version }}
+    - name: Pack Symbols
+      run: |
+        # Package the symbol files
+        dependencies\bin\dump_syms.exe Release\TemplePlus.pdb > TemplePlus.sym
+        python -u deploy_symbols_s3.py TemplePlus.sym
+        7z a TemplePlusSymbols-${{ steps.get_version.outputs.version }}.zip TemplePlus.sym Release\TemplePlus.pdb
+    - name: Pack Tools
+      run: |
+        # Release Full with tools and all binaries
+        rd /s /q dist || cd .
+        mkdir dist
+        copy Release\*.exe dist
+        del dist\TemplePlus.exe
+        del dist\*Tests.exe
+        del dist\*.vshost.exe
+        copy Release\*.dll dist
+        copy dependencies\bin\*.dll dist
+        7z a TemplePlusTools-${{ steps.get_version.outputs.version }}.zip dist\*
     - name: Upload Artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: dist
+        name: TemplePlus
         path: TemplePlus*.zip
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: TemplePlusSymbols
+        path: TemplePlusSymbols*.zip
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: TemplePlusTools
+        path: TemplePlusTools*.zip
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: TemplePlusNuget
+        path: TemplePlus*.nupkg
+
+  package-release:
+    name: Package Release
+    runs-on: windows-latest
+    needs: build
+    steps:
+    - uses: actions/download-artifact@v3
+      with:
+        name: TemplePlusNuget
+    - name: Display structure of downloaded files
+      run: ls -R
+    - uses: actions/checkout@v4
+    - uses: nuget/setup-nuget@v1
+    - name: Install Squirrel
+      run: nuget install Squirrel.Windows -OutputDirectory Squirrel -Verbosity Detailed
+    - name: Package Release
+      run: .\BuildRelease.ps1
+      shell: powershell
+      env:
+        TEMPLEPLUS_VERSION: ${{ needs.build.outputs.version }}
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: UpdateSite
+        path: releases-packages/
+      with:
+        name: FullSetup
+        path: TemplePlusSetup.exe
