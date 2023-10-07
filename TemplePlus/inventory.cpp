@@ -338,11 +338,11 @@ objHndl InventorySystem::GetItemAtInvIdx(objHndl handle, uint32_t nIdx){
 	for (auto i=0; i < numItems; i++){
 		auto item = obj->GetObjHndl(invenField, i);
 		if (!item) {
-			logger->debug("obj {} name {} contains null object", handle, obj->GetInt32(obj_f_name));
+			logger->debug("GetItemAtInvIdx: obj {} name {} contains null object", handle, obj->GetInt32(obj_f_name));
 		}
 		else if (!objects.IsEquipment(item)){
 			auto itemName = objects.getInt32(item, obj_f_name);
-			logger->debug("obj {} name {} contains object {} name {}", handle, obj->GetInt32(obj_f_name), item, itemName);
+			logger->debug("GetItemAtInvIdx: obj {} name {} contains non-equipment object {} name {}", handle, obj->GetInt32(obj_f_name), item, itemName);
 		}
 		if (inventory.GetInventoryLocation(item) == nIdx) {
 			result = item;
@@ -411,6 +411,7 @@ objHndl InventorySystem::FindMatchingStackableItem(objHndl receiver, objHndl ite
 			auto itemSpell = itemObj->GetSpell(obj_f_item_spell_idx, 0);
 			auto invenItemSpell = invenItemObj->GetSpell(obj_f_item_spell_idx, 0);
 			if (itemSpell.spellLevel != invenItemSpell.spellLevel
+				|| itemSpell.spellEnum != invenItemSpell.spellEnum // Temple+: added this for automated scribed scrolls (who all use the same proto)
 				|| (itemObj->type == obj_t_scroll 
 					&& spellSys.IsArcaneSpellClass(itemSpell.classCode) 
 					!= spellSys.IsArcaneSpellClass(invenItemSpell.classCode) ))
@@ -421,6 +422,12 @@ objHndl InventorySystem::FindMatchingStackableItem(objHndl receiver, objHndl ite
 	}
 	
 	return objHndl::null;
+}
+
+/* 0x10066B00 */
+objHndl InventorySystem::SplitObjectFromStack(objHndl handle, locXY& tgtLoc)
+{
+	return temple::GetRef<objHndl(__cdecl)(objHndl, locXY&)>(0x10066B00)(handle, tgtLoc);
 }
 
 void InventorySystem::WieldBest(objHndl handle, int invSlot, objHndl target){
@@ -1404,6 +1411,7 @@ ItemErrorCode InventorySystem::TransferToEquippedSlot(objHndl parent, objHndl re
 	return IEC_Cannot_Transfer;
 }
 
+/* 0x1006BB50 */
 void InventorySystem::ItemPlaceInIdx(objHndl item, int idx)
 {
 	auto parent = GetParent(item);

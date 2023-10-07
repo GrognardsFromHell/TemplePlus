@@ -35,37 +35,31 @@ namespace eastl
 	template <> struct is_void<void volatile>       : public true_type{};
 	template <> struct is_void<void const volatile> : public true_type{};
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool is_void_v = is_void<T>::value;
+	#endif
+
 
 
 	///////////////////////////////////////////////////////////////////////
 	// has_void_arg
 	//
 	// utility which identifies if any of the given template arguments is void.
+	//
+	// TODO(rparolin):  refactor with fold expressions when C++17 compilers are widely available.
 	///////////////////////////////////////////////////////////////////////
 
-	#if defined(EA_COMPILER_NO_VARIADIC_TEMPLATES)
+	template <typename ...Args> 
+	struct has_void_arg;
 
-		template <typename A0, typename A1 = int, typename A2 = int, typename A3 = int, typename A4 = int, typename A5 = int> 
-		struct has_void_arg
-			{ static const bool value = eastl::is_void<A0>::value ||    // If we add more arguments then change this 
-										eastl::is_void<A1>::value ||    // to be a recursive template.
-										eastl::is_void<A2>::value ||
-										eastl::is_void<A3>::value ||
-										eastl::is_void<A4>::value ||
-										eastl::is_void<A5>::value;
-			};
-	#else
-		template <typename ...Args> 
-		struct has_void_arg;
+	template <> 
+	struct has_void_arg<> 
+		: public eastl::false_type {};
 
-		template <> 
-		struct has_void_arg<> 
-			: public eastl::false_type {};
-
-		template <typename A0, typename ...Args>
-		struct has_void_arg<A0, Args...>
-			{ static const bool value = (eastl::is_void<A0>::value || eastl::has_void_arg<Args...>::value); };
-	#endif
+	template <typename A0, typename ...Args>
+	struct has_void_arg<A0, Args...>
+		{ static const bool value = (eastl::is_void<A0>::value || eastl::has_void_arg<Args...>::value); };
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -89,6 +83,11 @@ namespace eastl
 
 		template <typename T> 
 		struct is_null_pointer : public eastl::is_same<typename eastl::remove_cv<T>::type, std::nullptr_t> {};
+	#endif
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool is_null_pointer_v = is_null_pointer<T>::value;
 	#endif
 
 
@@ -115,7 +114,7 @@ namespace eastl
 
 	#define EASTL_TYPE_TRAIT_is_integral_CONFORMANCE 1    // is_integral is conforming.
 
-	template <typename T> struct is_integral_helper : public false_type{};
+	template <typename T> struct is_integral_helper           : public false_type{};
 
 	template <> struct is_integral_helper<unsigned char>      : public true_type{};
 	template <> struct is_integral_helper<unsigned short>     : public true_type{};
@@ -131,8 +130,22 @@ namespace eastl
 
 	template <> struct is_integral_helper<bool>               : public true_type{};
 	template <> struct is_integral_helper<char>               : public true_type{};
+
+	#if defined(EA_CHAR8_UNIQUE) && EA_CHAR8_UNIQUE
+		template <> struct is_integral_helper<char8_t>        : public true_type{};
+	#endif
+	#if defined(EA_CHAR16_NATIVE) && EA_CHAR16_NATIVE
+		template <> struct is_integral_helper<char16_t>       : public true_type{};
+	#endif
+	#if defined(EA_CHAR32_NATIVE) && EA_CHAR32_NATIVE
+		template <> struct is_integral_helper<char32_t>       : public true_type{};
+	#endif
 	#ifndef EA_WCHAR_T_NON_NATIVE // If wchar_t is a native type instead of simply a define to an existing type which is already handled above...
 		template <> struct is_integral_helper<wchar_t>        : public true_type{};
+	#endif
+	#if EASTL_GCC_STYLE_INT128_SUPPORTED
+		template <> struct is_integral_helper<__int128_t>     : public true_type{};
+		template <> struct is_integral_helper<__uint128_t>    : public true_type{};
 	#endif
 
 	template <typename T>
@@ -146,6 +159,10 @@ namespace eastl
 		template <> struct is_integral<const volatile T> : public true_type{};    \
 	}
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool is_integral_v = is_integral<T>::value;
+	#endif
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -160,7 +177,7 @@ namespace eastl
 
 	#define EASTL_TYPE_TRAIT_is_floating_point_CONFORMANCE 1    // is_floating_point is conforming.
 
-	template <typename T> struct is_floating_point_helper : public false_type{};
+	template <typename T> struct is_floating_point_helper    : public false_type{};
 
 	template <> struct is_floating_point_helper<float>       : public true_type{};
 	template <> struct is_floating_point_helper<double>      : public true_type{};
@@ -177,6 +194,11 @@ namespace eastl
 		template <> struct is_floating_point<const volatile T> : public true_type{};    \
 	}
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template <class T>
+		EA_CONSTEXPR bool is_floating_point_v = is_floating_point<T>::value;
+	#endif
+
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -190,11 +212,14 @@ namespace eastl
 
 	#define EASTL_TYPE_TRAIT_is_arithmetic_CONFORMANCE 1    // is_arithmetic is conforming.
 
-	template <typename T> 
-	struct is_arithmetic : public integral_constant<bool,
-		is_integral<T>::value || is_floating_point<T>::value
-	>{};
+	template <typename T>
+	struct is_arithmetic 
+		: public integral_constant<bool, is_integral<T>::value || is_floating_point<T>::value> {};
 
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template<typename T>
+		EA_CONSTEXPR bool is_arithmetic_v = is_arithmetic<T>::value;
+	#endif
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -209,10 +234,89 @@ namespace eastl
 
 	#define EASTL_TYPE_TRAIT_is_fundamental_CONFORMANCE 1    // is_fundamental is conforming.
 
-	template <typename T> 
-	struct is_fundamental : public integral_constant<bool,
-		is_void<T>::value || is_integral<T>::value || is_floating_point<T>::value || is_null_pointer<T>::value
-	>{};
+	template <typename T>
+	struct is_fundamental
+		: public bool_constant<is_void_v<T> || is_integral_v<T> || is_floating_point_v<T> || is_null_pointer_v<T>> {};
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template<typename T>
+		EA_CONSTEXPR bool is_fundamental_v = is_fundamental<T>::value;
+	#endif
+
+
+	///////////////////////////////////////////////////////////////////////
+	// is_hat_type
+	//
+	// is_hat_type<T>::value == true if and only if:
+	//    underlying type is a C++/CX '^' type such as: Foo^
+	//	  meaning the type is heap allocated and ref-counted
+	///////////////////////////////////////////////////////////////////////
+
+	template <typename T> struct is_hat_type_helper : public false_type {};
+
+	#if (EABASE_VERSION_N > 20607 && defined(EA_COMPILER_WINRTCX_ENABLED)) || defined(__cplusplus_winrt)
+		template <typename T> struct is_hat_type_helper<T^> : public true_type{};
+	#endif 
+
+	template <typename T>
+	struct is_hat_type : public eastl::is_hat_type_helper<T> {};
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template<typename T>
+		EA_CONSTEXPR bool is_hat_type_v = is_hat_type<T>::value;
+	#endif
+
+		
+
+	///////////////////////////////////////////////////////////////////////
+	// is_enum
+	//
+	// is_enum<T>::value == true if and only if T is an enumeration type.
+	//
+	///////////////////////////////////////////////////////////////////////
+
+	#if EASTL_COMPILER_INTRINSIC_TYPE_TRAITS_AVAILABLE && (defined(_MSC_VER) || defined(EA_COMPILER_GNUC) || (defined(__clang__) && EA_COMPILER_HAS_FEATURE(is_enum)))
+		#define EASTL_TYPE_TRAIT_is_enum_CONFORMANCE 1     // is_enum is conforming. 
+
+		template <typename T> 
+		struct is_enum : public integral_constant<bool, __is_enum(T)>{};
+	#else
+		#define EASTL_TYPE_TRAIT_is_enum_CONFORMANCE 1    // is_enum is conforming.
+
+		struct int_convertible{ int_convertible(int); };
+
+		template <bool is_arithmetic_or_reference>
+		struct is_enum_helper { template <typename T> struct nest : public is_convertible<T, int_convertible>{}; };
+
+		template <>
+		struct is_enum_helper<true> { template <typename T> struct nest : public false_type {}; };
+
+		template <typename T>
+		struct is_enum_helper2
+		{
+			typedef type_or<is_arithmetic<T>::value, is_reference<T>::value, is_class<T>::value> selector;
+			typedef is_enum_helper<selector::value> helper_t;
+			typedef typename add_reference<T>::type ref_t;
+			typedef typename helper_t::template nest<ref_t> result;
+		};
+
+		template <typename T> 
+		struct is_enum : public integral_constant<bool, is_enum_helper2<T>::result::value>{};
+
+		template <> struct is_enum<void> : public false_type {};
+		template <> struct is_enum<void const> : public false_type {};
+		template <> struct is_enum<void volatile> : public false_type {};
+		template <> struct is_enum<void const volatile> : public false_type {};
+	#endif
+
+	#if EASTL_VARIABLE_TEMPLATES_ENABLED
+		template<typename T>
+		EA_CONSTEXPR bool is_enum_v = is_enum<T>::value;
+	#endif
+
+	#define EASTL_DECLARE_ENUM(T) namespace eastl{ template <> struct is_enum<T> : public true_type{}; template <> struct is_enum<const T> : public true_type{}; }
+
+
 
 
 } // namespace eastl

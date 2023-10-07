@@ -9,7 +9,7 @@ debug_enabled = False
 def debug_print(*args):
     if debug_enabled:
         for arg in args:
-            print arg,
+            print "\n", arg,
     return
 
 def handle_sanctuary(to_hit_eo, d20a):
@@ -258,6 +258,7 @@ def to_hit_processing(d20a):
         debug_print("Missed")
         roll_id = tpdp.create_history_attack_roll(performer, target, toHitRoll, to_hit_eo.bonus_list, target_ac_eo.bonus_list, to_hit_eo.attack_packet.get_flags()  )
         d20a.roll_id_0 = roll_id
+        logbook.inc_misses(performer)
         return
 
     #We have a hit sir!
@@ -288,8 +289,8 @@ def to_hit_processing(d20a):
     crit_hit_roll = -1
     if isCritical:
         debug_print("Confirm critical:")
-        to_hit_bon_final += to_hit_eo.dispatch(performer, OBJ_HANDLE_NULL, ET_OnConfirmCriticalBonus, EK_NONE)
-        critConfirmed, crit_hit_roll = toHitResult(to_hit_bon_final, tgt_ac_final)
+        to_hit_bon_confirm_crit = to_hit_eo.dispatch(performer, OBJ_HANDLE_NULL, ET_OnConfirmCriticalBonus, EK_NONE)
+        critConfirmed, crit_hit_roll = toHitResult(to_hit_bon_confirm_crit, tgt_ac_final)
 
         #Check for special confirm conditions
         if not critConfirmed:

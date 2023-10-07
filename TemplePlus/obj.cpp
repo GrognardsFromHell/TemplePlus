@@ -68,6 +68,15 @@ objHndl Objects::getObjHnd(objHndl obj, obj_f field) {
 	return objSystem->GetObject(obj)->GetObjHndl(field);
 	}
 
+
+void Objects::SetFieldString(objHndl obj, obj_f field, char* value) {
+	objSystem->GetObject(obj)->SetString(field, value);
+}
+
+const char* Objects::getString(objHndl obj, obj_f field) {
+	return objSystem->GetObject(obj)->GetString(field);
+}
+
 void Objects::setInt32(objHndl obj, obj_f field, uint32_t value) {
 	objSystem->GetObject(obj)->SetInt32(field, value);
 }
@@ -661,8 +670,7 @@ SecretDoorFlag Objects::GetSecretDoorFlags(objHndl handle) {
 
 void Objects::Destroy(objHndl ObjHnd) {
 	static set<objHndl> destroyed;
-	std::string name = this->GetDisplayName(ObjHnd, ObjHnd);
-	logger->info("Destroying {}", name);
+	logger->info("Destroying {}", ObjHnd);
 	if (destroyed.find(ObjHnd) != destroyed.end()) {
 		logger->error("Double destroying object {}", ObjHnd);
 	}

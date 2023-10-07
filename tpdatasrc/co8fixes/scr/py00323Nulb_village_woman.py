@@ -76,28 +76,7 @@ def stop_watch( attachee, triggerer ):
 def all_dead():
 	if (game.global_vars[958] == 6):
 		game.global_vars[958] = 7
-		pc1 = game.party[0]
-		pc1.critter_kill_by_effect()
-		game.particles( "sp-Poison", pc1 )
-		pc2 = game.party[1]
-		pc2.critter_kill_by_effect()
-		game.particles( "sp-Poison", pc2 )
-		pc3 = game.party[2]
-		pc3.critter_kill_by_effect()
-		game.particles( "sp-Poison", pc3 )
-		pc4 = game.party[3]
-		pc4.critter_kill_by_effect()
-		game.particles( "sp-Poison", pc4 )
-		pc5 = game.party[4]
-		pc5.critter_kill_by_effect()
-		game.particles( "sp-Poison", pc5 )
-		pc6 = game.party[5]
-		pc6.critter_kill_by_effect()
-		game.particles( "sp-Poison", pc6 )
-		pc7 = game.party[6]
-		pc7.critter_kill_by_effect()
-		game.particles( "sp-Poison", pc7 )
-		pc8 = game.party[7]
-		pc8.critter_kill_by_effect()
-		game.particles( "sp-Poison", pc8 )
+		for pc in game.party:
+			pc.critter_kill_by_effect()
+			game.particles( "sp-Poison", pc )
 	return 1

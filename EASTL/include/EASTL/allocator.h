@@ -12,11 +12,6 @@
 #include <stddef.h>
 
 
-#ifdef _MSC_VER
-	#pragma warning(push)
-	#pragma warning(disable: 4189) // local variable is initialized but not referenced
-#endif
-
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
 #endif
@@ -76,8 +71,9 @@ namespace eastl
 	};
 
 	bool operator==(const allocator& a, const allocator& b);
+#if !defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
 	bool operator!=(const allocator& a, const allocator& b);
-
+#endif
 
 
 	/// dummy_allocator
@@ -102,8 +98,9 @@ namespace eastl
 	};
 
 	inline bool operator==(const dummy_allocator&, const dummy_allocator&) { return true;  }
+#if !defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
 	inline bool operator!=(const dummy_allocator&, const dummy_allocator&) { return false; }
-
+#endif
 
 
 	/// Defines a static default allocator which is constant across all types.
@@ -167,14 +164,9 @@ namespace eastl
 
 #ifndef EASTL_USER_DEFINED_ALLOCATOR // If the user hasn't declared that he has defined a different allocator implementation elsewhere...
 
-	#ifdef _MSC_VER
-		#pragma warning(push, 0)
-		#pragma warning(disable: 4265 4365 4836 4548)
-		#include <new>
-		#pragma warning(pop)
-	#else
-		#include <new>
-	#endif
+	EA_DISABLE_ALL_VC_WARNINGS()
+	#include <new>
+	EA_RESTORE_ALL_VC_WARNINGS()
 
 	#if !EASTL_DLL // If building a regular library and not building EASTL as a DLL...
 		// It is expected that the application define the following
@@ -309,12 +301,12 @@ namespace eastl
 			return true; // All allocators are considered equal, as they merely use global new/delete.
 		}
 
-
+#if !defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
 		inline bool operator!=(const allocator&, const allocator&)
 		{
 			return false; // All allocators are considered equal, as they merely use global new/delete.
 		}
-
+#endif
 
 	} // namespace eastl
 
@@ -376,16 +368,14 @@ namespace eastl
 		{
 			result = EASTLAllocAligned(a, n, alignment, alignmentOffset);
 			// Ensure the result is correctly aligned.  An assertion here may indicate a bug in the allocator.
-			EASTL_ASSERT((reinterpret_cast<size_t>(result)& ~(alignment - 1)) == reinterpret_cast<size_t>(result));
+			auto resultMinusOffset = (char*)result - alignmentOffset;
+			EA_UNUSED(resultMinusOffset);
+			EASTL_ASSERT((reinterpret_cast<size_t>(resultMinusOffset)& ~(alignment - 1)) == reinterpret_cast<size_t>(resultMinusOffset));
 		}
 		return result;
 	}
 
 }
-
-#ifdef _MSC_VER
-	#pragma warning(pop)
-#endif
 
 
 #endif // Header include guard

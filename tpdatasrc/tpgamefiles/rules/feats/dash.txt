@@ -1,0 +1,5 @@
+name: Dash
+flags: 0
+prereqs: 
+description: If you are wearing light armor or no armor and are carrying a light load, your speed is 5 feet faster.
+prereq descr: 

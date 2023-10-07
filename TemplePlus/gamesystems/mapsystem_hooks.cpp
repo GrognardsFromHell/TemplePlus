@@ -158,6 +158,16 @@ static class MapSystemHooks : public TempleFix {
 				logger->info("orgCheckFogForCritter encountered null handle!!");
 		});
 
+		// Hooked call to IsPortalOpen inside FogPerformCheckForCritter to account for OF_SEE_THROUGH
+		redirectToLambda<BOOL(objHndl)>(0x10032A23, [](objHndl handle)->BOOL {
+			if (!handle)
+				return TRUE;
+			auto flags = objects.GetFlags(handle);
+			if (flags & OF_SEE_THROUGH) {
+				return TRUE;
+			}
+			return objects.IsPortalOpen(handle) ? TRUE : FALSE;
+			});
 	}
 	
 } hooks;

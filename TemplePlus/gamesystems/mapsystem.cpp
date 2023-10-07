@@ -33,6 +33,8 @@
 #include "clipping/clipping.h"
 #include "graphics/mapterrain.h"
 #include "objects/objevent.h"
+#include "python/python_debug.h"
+#include "gamesystems/objects/objsystem.h"
 
 struct MapListEntry {
 	int id;
@@ -215,8 +217,103 @@ void MapSystem::LoadModule() {
 			}
 
 		}
-		
+
 	}
+
+	RegisterDebugFunction("check_mobs", 
+		[&]() {
+			std::unordered_map<std::string, int> mobObjMapId;
+			std::unordered_map<std::string, int> dynObjMapId;
+			auto DEBUG_GUID_STR = "G_2524B3E6_4991_4A73_A73E_E2338AF4BA3C"; // guid to look for...
+			ObjectId debugGuid;
+			objHndl debugGuidHandle = objHndl::null;
+			auto readObject = temple::GetPointer<BOOL(objHndl*, const char*)>(0x100DE690);
+
+			// first, read all MOB files to find the "originals" (where applicable)
+			for (auto& it : mMaps) {
+				auto& entry = it.second;
+				auto mapId = entry.id;
+				auto dataDir = fmt::format("maps\\{}", entry.name);
+
+				// Iterate all MOB files
+				auto mobFiles = vfs->Search(dataDir + "\\*.mob");
+				for (auto& mobFile : mobFiles) {
+					auto file = tio_fopen(fmt::format("{}/{}", dataDir, mobFile.filename).c_str(), "rb");
+
+					uint32_t header;
+					if (tio_fread(&header, sizeof(header), 1, file) != 1) {
+						throw TempleException("ObjSystem::LoadFromFile: Couldn't read the object header.");
+					}
+
+					if (header != 0x77) {
+						throw TempleException("Expected object header 0x77, but got 0x{:x}", header);
+					}
+
+					ObjectId protoId;
+					if (tio_fread(&protoId, sizeof(protoId), 1, file) != 1) {
+						throw TempleException("Couldn't read the prototype id.");
+					}
+					if (!protoId.IsPrototype()) {
+						throw TempleException("Expected a prototype id, but got type {} instead.", (int)protoId.subtype);
+					}
+					ObjectId objId;
+					if (tio_fread(&objId, sizeof(objId), 1, file) != 1) {
+						throw TempleException("Couldn't read the object id.");
+			}
+					tio_fclose(file);
+
+					// check that the object GUID matches the filename
+					auto objIdString = objId.ToString();
+					if (nullptr == std::strstr(mobFile.filename.c_str(), objIdString.c_str())) {
+						logger->error("Mismatch between MOB filename and GUID content! Filename: {} GUID: {}", mobFile.filename, objId);
+					}
+
+					// check for dupes
+					auto found = mobObjMapId.find(objIdString);
+					if (found != mobObjMapId.end()) {
+						logger->error("Duplicates MOB file found: {}/{} (was also on mapID = {}, now on {}). ProtoID: {}", dataDir, mobFile.filename, found->second, entry.id, protoId.GetPrototypeId());
+					}
+					else {
+						mobObjMapId[objIdString] = entry.id;
+					}
+
+					if (nullptr != std::strstr(objIdString.c_str(), DEBUG_GUID_STR)) {
+						debugGuid = objId;
+					}
+				}
+
+			}
+
+
+			const int MAX_MAP_ID = 5135;
+			
+
+			for (auto& it : mMaps) {
+
+				auto& entry = it.second;
+				auto mapId = entry.id;
+				auto saveDir = fmt::format("Save\\Current\\maps\\{}", entry.name);
+				auto dataDir = fmt::format("maps\\{}", entry.name);
+
+				
+
+				if (mapId >= MAX_MAP_ID) {
+					continue;
+		}
+		
+				OpenMap(mapId, false, true);
+
+				// debug:
+				"G_2524B3E6_4991_4A73_A73E_E2338AF4BA3C";
+				auto debugHandle = objSystem->GetHandleById(debugGuid);
+				if (debugHandle) {
+					debugGuidHandle = debugHandle;
+				}
+				logger->debug("*** Finished processing map {}; Debug Handle: {}; debugGuidHandle valid: {}", mapId, debugHandle, debugGuidHandle && objSystem->IsValidHandle(debugGuidHandle));
+	}
+
+			
+		});
 }
 
 void MapSystem::UnloadModule() {
@@ -1296,6 +1393,7 @@ void MapSystem::ReadMapMobiles(const std::string &dataDir, const std::string &sa
 				filename, dataDir);
 		} else //if (config.debugMessageEnable)
 		{
+			// Temple+: added check for OF_DYNAMIC (fixes "Jerkstop" issue)
 			auto obj = objSystem->GetObject(handle);
 			logger->trace("ReadMapMobiles: \t\tLoaded MOB obj {} ({})", handle, obj->id.ToString() );
 			auto flags = obj->GetFlags();
@@ -1455,6 +1553,12 @@ void MapSystem::MapLoadPostprocess()
 		if (!obj.IsStatic()) {
 			obj.UnfreezeIds();
 		}
+
+		// Temple+: added safeguard against nulled inventory items
+		if (obj.IsCritter()) {
+			obj.PruneNullInventoryItems();
+		}
+		
 
 		if (obj.HasFlag(OF_TELEPORTED)) {
 			TimeEvent e;

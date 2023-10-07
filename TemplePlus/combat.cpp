@@ -802,6 +802,14 @@ BOOL LegacyCombatSystem::StartCombat(objHndl combatInitiator, int setToFirstInit
 
 	if (AllPcsUnconscious())
 		return FALSE;
+	
+	if (forceEndedCombatNow) { // temple+: added this vs. combat start/end loops
+		logger->debug("StartCombat: averted due to forceEndedCombatNow = true");
+		return FALSE;
+	}
+		
+
+	logger->debug("StartCombat: entering combat mode; initiated by {}", combatInitiator);
 
 	*combatAddresses.combatRoundCount = 0;
 	if (!gameSystems->GetAnim().InterruptAllForTbCombat()){
@@ -1429,7 +1437,7 @@ bool LegacyCombatSystem::SunderCheck(objHndl attacker, objHndl defender, D20Actn
 
 uint32_t LegacyCombatSystem::UseItem(objHndl performer, objHndl item, objHndl target)
 {
-	logger->info("Use Item:: {} on {}...", description.getDisplayName(item), description.getDisplayName(target), description.getDisplayName(performer));
+	logger->info("Use Item:: {} on {}...", item, target, performer);
 	if (!item || !target) return AEC_INVALID_ACTION;
 	if (objects.GetFlags(item) & (OF_OFF | OF_DESTROYED))
 		return AEC_OUT_OF_CHARGES;
@@ -1437,13 +1445,13 @@ uint32_t LegacyCombatSystem::UseItem(objHndl performer, objHndl item, objHndl ta
 	auto itemObj = objSystem->GetObject(item);
 	if (!itemObj->GetSpellArray(obj_f_item_spell_idx).GetSize())
 	{
-		logger->warn("Use Item:: no spells in {}!", description.getDisplayName(item));
+		logger->warn("Use Item:: no spells in {}!", item);
 		return AEC_CANNOT_CAST_OUT_OF_AVAILABLE_SPELLS;
 	}
 	auto spData = itemObj->GetSpell(obj_f_item_spell_idx, 0);
 	if (!spData.spellEnum)
 	{
-		logger->warn("Use Item:: incorrect spell in {}!", description.getDisplayName(item));
+		logger->warn("Use Item:: incorrect spell in {}!", item);
 		return AEC_CANNOT_CAST_OUT_OF_AVAILABLE_SPELLS;
 	}
 
@@ -1488,7 +1496,7 @@ uint32_t LegacyCombatSystem::UseItem(objHndl performer, objHndl item, objHndl ta
 			return result;
 		}
 	}
-	logger->info("Use Item:: REVERT (due to {}) {} on {}...", result, description.getDisplayName(item), description.getDisplayName(target), description.getDisplayName(performer));
+	logger->info("Use Item:: REVERT (due to {}) {} on {}...", result, item, target, performer);
 	actSeqSys.ActionSequenceRevertPath(initialActNum);
 	actSeqSys.ActSeqSpellReset();
 

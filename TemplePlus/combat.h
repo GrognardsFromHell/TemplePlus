@@ -61,6 +61,7 @@ struct LegacyCombatSystem : temple::AddressTable {
 	
 
 	uint32_t* combatModeActive;
+	bool forceEndedCombatNow; // to prevent loops where combat is entered and exited at the same time event
 	bool isCombatActive();
 	bool IsAutoAttack();
 	bool AllCombatantsFarFromParty();

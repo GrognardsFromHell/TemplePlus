@@ -124,10 +124,8 @@ namespace eastl
 		explicit vector_multiset(const allocator_type& allocator);
 		explicit vector_multiset(const key_compare& comp, const allocator_type& allocator = EASTL_VECTOR_MULTISET_DEFAULT_ALLOCATOR);
 		vector_multiset(const this_type& x);
-		#if EASTL_MOVE_SEMANTICS_ENABLED
 		vector_multiset(this_type&& x);
 		vector_multiset(this_type&& x, const allocator_type& allocator);
-		#endif
 		vector_multiset(std::initializer_list<value_type> ilist, const key_compare& compare = key_compare(), const allocator_type& allocator = EASTL_VECTOR_MULTISET_DEFAULT_ALLOCATOR);
 
 		template <typename InputIterator>
@@ -138,9 +136,7 @@ namespace eastl
 
 		this_type& operator=(const this_type& x);
 		this_type& operator=(std::initializer_list<value_type> ilist);
-		#if EASTL_MOVE_SEMANTICS_ENABLED
 		this_type& operator=(this_type&& x);
-		#endif
 
 		void swap(this_type& x);
 
@@ -175,44 +171,28 @@ namespace eastl
 		//     bool      empty() const;
 		//     void      clear();
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED
-			template <class... Args>
-			iterator emplace(Args&&... args);
+		template <class... Args>
+		iterator emplace(Args&&... args);
 
-			template <class... Args> 
-			iterator emplace_hint(const_iterator position, Args&&... args);
-		#else
-			#if EASTL_MOVE_SEMANTICS_ENABLED
-				iterator emplace(value_type&& value);
-				iterator emplace_hint(const_iterator position, value_type&& value);
-			#endif
-
-			iterator emplace(const value_type& value);
-			iterator emplace_hint(const_iterator position, const value_type& value);
-		#endif
+		template <class... Args> 
+		iterator emplace_hint(const_iterator position, Args&&... args);
 
 		iterator insert(const value_type& value);   // The signature of this function was change in EASTL v2.05.00 from (the mistaken) pair<iterator, bool> to (the correct) iterator.
-		#if EASTL_MOVE_SEMANTICS_ENABLED
+		iterator insert(const_iterator position, const value_type& value);
+		iterator insert(const_iterator position, value_type&& value);
+		void     insert(std::initializer_list<value_type> ilist);
+
 		template <typename P>
 		iterator insert(P&& otherValue);
-		#endif
-
-		iterator insert(const_iterator position, const value_type& value);
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-		iterator insert(const_iterator position, value_type&& value);
-		#endif
-
-		void insert(std::initializer_list<value_type> ilist);
 
 		template <typename InputIterator>
 		void insert(InputIterator first, InputIterator last);
 
-		iterator  erase(const_iterator position);
-		iterator  erase(const_iterator first, const_iterator last);
-		size_type erase(const key_type& k);
-
-		reverse_iterator  erase(const_reverse_iterator position);
-		reverse_iterator  erase(const_reverse_iterator first, const_reverse_iterator last);
+		iterator         erase(const_iterator position);
+		iterator         erase(const_iterator first, const_iterator last);
+		size_type        erase(const key_type& k);
+		reverse_iterator erase(const_reverse_iterator position);
+		reverse_iterator erase(const_reverse_iterator first, const_reverse_iterator last);
 
 		iterator       find(const key_type& k);
 		const_iterator find(const key_type& k) const;
@@ -223,7 +203,7 @@ namespace eastl
 		template <typename U, typename BinaryPredicate>
 		const_iterator find_as(const U& u, BinaryPredicate predicate) const;
 
-		size_type count(const key_type& k);
+		size_type count(const key_type& k) const;
 
 		iterator       lower_bound(const key_type& k);
 		const_iterator lower_bound(const key_type& k) const;
@@ -250,10 +230,27 @@ namespace eastl
 		}
 		eastl::pair<const_iterator, const_iterator> equal_range_small(const key_type& k) const;
 
-		// Functions which are disallowed due to being unsafe. We are looking for a way to disable these at compile-time. Declaring but not defining them doesn't work due to explicit template instantiations.
-		//void      push_back(const value_type& value);
-		//reference push_back();
-		//void*     push_back_uninitialized();
+		// Functions which are disallowed due to being unsafe. 
+		void      push_back(const value_type& value) = delete;
+		reference push_back()                        = delete;
+		void*     push_back_uninitialized()          = delete;
+		template <class... Args>
+		reference emplace_back(Args&&...)            = delete;
+
+		// NOTE(rparolin): It is undefined behaviour if user code fails to ensure the container
+		// invariants are respected by performing an explicit call to 'sort' before any other
+		// operations on the container are performed that do not clear the elements.
+		//
+		// 'push_back_unsorted' and 'emplace_back_unsorted' do not satisfy container invariants
+		// for being sorted. We provide these overloads explicitly labelled as '_unsorted' as an
+		// optimization opportunity when batch inserting elements so users can defer the cost of
+		// sorting the container once when all elements are contained. This was done to clarify
+		// the intent of code by leaving a trace that a manual call to sort is required.
+		// 
+		template <typename... Args> decltype(auto) push_back_unsorted(Args&&... args)    
+			{ return base_type::push_back(eastl::forward<Args>(args)...); }
+		template <typename... Args> decltype(auto) emplace_back_unsorted(Args&&... args) 
+			{ return base_type::emplace_back(eastl::forward<Args>(args)...); }
 
 	}; // vector_multiset
 
@@ -315,21 +312,19 @@ namespace eastl
 	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename K, typename C, typename A, typename RAC>
-		inline vector_multiset<K, C, A, RAC>::vector_multiset(this_type&& x)
-			: base_type(eastl::move(x)), mCompare(x.mCompare)
-		{
-			// Empty. Note: x is left with empty contents but its original mValueCompare instead of the default one. 
-		}
+	template <typename K, typename C, typename A, typename RAC>
+	inline vector_multiset<K, C, A, RAC>::vector_multiset(this_type&& x)
+		: base_type(eastl::move(x)), mCompare(x.mCompare)
+	{
+		// Empty. Note: x is left with empty contents but its original mValueCompare instead of the default one. 
+	}
 
-		template <typename K, typename C, typename A, typename RAC>
-		inline vector_multiset<K, C, A, RAC>::vector_multiset(this_type&& x, const allocator_type& allocator)
-			: base_type(eastl::move(x), allocator), mCompare(x.mCompare)
-		{
-			// Empty. Note: x is left with empty contents but its original mValueCompare instead of the default one. 
-		}
-	#endif
+	template <typename K, typename C, typename A, typename RAC>
+	inline vector_multiset<K, C, A, RAC>::vector_multiset(this_type&& x, const allocator_type& allocator)
+		: base_type(eastl::move(x), allocator), mCompare(x.mCompare)
+	{
+		// Empty. Note: x is left with empty contents but its original mValueCompare instead of the default one. 
+	}
 
 
 	template <typename K, typename C, typename A, typename RAC>
@@ -350,16 +345,14 @@ namespace eastl
 	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename K, typename C, typename A, typename RAC>
-		inline vector_multiset<K, C, A, RAC>&
-		vector_multiset<K, C, A, RAC>::operator=(this_type&& x)
-		{
-			base_type::operator=(eastl::move(x));
-			eastl::swap(mCompare, x.mCompare);
-			return *this;
-		}
-	#endif
+	template <typename K, typename C, typename A, typename RAC>
+	inline vector_multiset<K, C, A, RAC>&
+	vector_multiset<K, C, A, RAC>::operator=(this_type&& x)
+	{
+		base_type::operator=(eastl::move(x));
+		eastl::swap(mCompare, x.mCompare);
+		return *this;
+	}
 
 
 	template <typename K, typename C, typename A, typename RAC>
@@ -412,85 +405,51 @@ namespace eastl
 	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED
-		template <typename K, typename C, typename A, typename RAC>
-		template <class... Args>
-		typename vector_multiset<K, C, A, RAC>::iterator
-		vector_multiset<K, C, A, RAC>::emplace(Args&&... args)
-		{
-			#if EASTL_USE_FORWARD_WORKAROUND
-				auto value = value_type(eastl::forward<Args>(args)...);  // Workaround for compiler bug in VS2013 which results in a compiler internal crash while compiling this code.
-			#else
-				value_type  value(eastl::forward<Args>(args)...);
-			#endif
-			return insert(eastl::move(value));
-		}
-
-		template <typename K, typename C, typename A, typename RAC>
-		template <class... Args> 
-		typename vector_multiset<K, C, A, RAC>::iterator
-		vector_multiset<K, C, A, RAC>::emplace_hint(const_iterator position, Args&&... args)
-		{
-			#if EASTL_USE_FORWARD_WORKAROUND
-				auto value = value_type(eastl::forward<Args>(args)...);  // Workaround for compiler bug in VS2013 which results in a compiler internal crash while compiling this code.
-			#else
-				value_type  value(eastl::forward<Args>(args)...);
-			#endif
-			return insert(position, eastl::move(value));
-		}
-	#else
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			template <typename K, typename C, typename A, typename RAC>
-			typename vector_multiset<K, C, A, RAC>::iterator
-			vector_multiset<K, C, A, RAC>::emplace(value_type&& value)
-			{
-				return insert(eastl::move(value));
-			}
-
-			template <typename K, typename C, typename A, typename RAC>
-			typename vector_multiset<K, C, A, RAC>::iterator
-			vector_multiset<K, C, A, RAC>::emplace_hint(const_iterator position, value_type&& value)
-			{
-				return insert(position, eastl::move(value));
-			}
+	template <typename K, typename C, typename A, typename RAC>
+	template <class... Args>
+	typename vector_multiset<K, C, A, RAC>::iterator
+	vector_multiset<K, C, A, RAC>::emplace(Args&&... args)
+	{
+		#if EASTL_USE_FORWARD_WORKAROUND
+			auto value = value_type(eastl::forward<Args>(args)...);  // Workaround for compiler bug in VS2013 which results in a compiler internal crash while compiling this code.
+		#else
+			value_type  value(eastl::forward<Args>(args)...);
 		#endif
+		return insert(eastl::move(value));
+	}
 
-		template <typename K, typename C, typename A, typename RAC>
-		typename vector_multiset<K, C, A, RAC>::iterator
-		vector_multiset<K, C, A, RAC>::emplace(const value_type& value)
-		{
-			return insert(value);
-		}
-
-		template <typename K, typename C, typename A, typename RAC>
-		typename vector_multiset<K, C, A, RAC>::iterator
-		vector_multiset<K, C, A, RAC>::emplace_hint(const_iterator position, const value_type& value)
-		{
-			return insert(position, value);
-		}
-	#endif
+	template <typename K, typename C, typename A, typename RAC>
+	template <class... Args> 
+	typename vector_multiset<K, C, A, RAC>::iterator
+	vector_multiset<K, C, A, RAC>::emplace_hint(const_iterator position, Args&&... args)
+	{
+		#if EASTL_USE_FORWARD_WORKAROUND
+			auto value = value_type(eastl::forward<Args>(args)...);  // Workaround for compiler bug in VS2013 which results in a compiler internal crash while compiling this code.
+		#else
+			value_type  value(eastl::forward<Args>(args)...);
+		#endif
+		return insert(position, eastl::move(value));
+	}
 
 
 	template <typename K, typename C, typename A, typename RAC>
 	inline typename vector_multiset<K, C, A, RAC>::iterator
 	vector_multiset<K, C, A, RAC>::insert(const value_type& value)
 	{
-		const iterator itLB(lower_bound(value));
-		return base_type::insert(itLB, value);
+		const iterator itUB(upper_bound(value));
+		return base_type::insert(itUB, value);
 	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename K, typename C, typename A, typename RAC>
-		template <typename P>
-		typename vector_multiset<K, C, A, RAC>::iterator
-		vector_multiset<K, C, A, RAC>::insert(P&& otherValue)
-		{
-			value_type value(eastl::forward<P>(otherValue));
-			const iterator itLB(lower_bound(value));
-			return base_type::insert(itLB, eastl::move(value));
-		}
-	#endif
+	template <typename K, typename C, typename A, typename RAC>
+	template <typename P>
+	typename vector_multiset<K, C, A, RAC>::iterator
+	vector_multiset<K, C, A, RAC>::insert(P&& otherValue)
+	{
+		value_type value(eastl::forward<P>(otherValue));
+		const iterator itUB(upper_bound(value));
+		return base_type::insert(itUB, eastl::move(value));
+	}
 
 
 	template <typename K, typename C, typename A, typename RAC>
@@ -520,21 +479,19 @@ namespace eastl
 	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename K, typename C, typename A, typename RAC>
-		typename vector_multiset<K, C, A, RAC>::iterator
-		vector_multiset<K, C, A, RAC>::insert(const_iterator position, value_type&& value)
+	template <typename K, typename C, typename A, typename RAC>
+	typename vector_multiset<K, C, A, RAC>::iterator
+	vector_multiset<K, C, A, RAC>::insert(const_iterator position, value_type&& value)
+	{
+		if((position == end()) || !mCompare(*position, value))  // If value is <= the element at position...
 		{
-			if((position == end()) || !mCompare(*position, value))  // If value is <= the element at position...
-			{
-				if((position == begin()) || !mCompare(value, *(position - 1))) // If value is >= the element before position...
-					return base_type::insert(position, eastl::move(value));
-			}
-
-			// In this case we have an incorrect position. We fall back to the regular insert function.
-			return insert(eastl::move(value));
+			if((position == begin()) || !mCompare(value, *(position - 1))) // If value is >= the element before position...
+				return base_type::insert(position, eastl::move(value));
 		}
-	#endif
+
+		// In this case we have an incorrect position. We fall back to the regular insert function.
+		return insert(eastl::move(value));
+	}
 
 
 	template <typename K, typename C, typename A, typename RAC>
@@ -550,7 +507,7 @@ namespace eastl
 		//              like this container, use the property that they are 
 		//              known to be sorted and speed up the inserts here.
 		for(; first != last; ++first)                               
-			base_type::insert(lower_bound(*first), *first);
+			base_type::insert(upper_bound(*first), *first);
 	}
 
 
@@ -606,30 +563,27 @@ namespace eastl
 	vector_multiset<K, C, A, RAC>::find(const key_type& k)
 	{
 		const eastl::pair<iterator, iterator> pairIts(equal_range(k));
-
-		if(pairIts.first != pairIts.second)
-			return pairIts.first;
-		return end();
+		return (pairIts.first != pairIts.second) ? pairIts.first : end();
 	}
 
 
 	template <typename K, typename C, typename A, typename RAC>
 	template <typename U, typename BinaryPredicate>
 	inline typename vector_multiset<K, C, A, RAC>::iterator
-	vector_multiset<K, C, A, RAC>::find_as(const U& u, BinaryPredicate /*predicate*/)
+	vector_multiset<K, C, A, RAC>::find_as(const U& u, BinaryPredicate predicate)
 	{
-		// To do: Implement this.
-		return find(u);
+		const eastl::pair<iterator, iterator> pairIts(eastl::equal_range(begin(), end(), u, predicate));
+		return (pairIts.first != pairIts.second) ? pairIts.first : end();
 	}
 
 
 	template <typename K, typename C, typename A, typename RAC>
 	template <typename U, typename BinaryPredicate>
 	inline typename vector_multiset<K, C, A, RAC>::const_iterator
-	vector_multiset<K, C, A, RAC>::find_as(const U& u, BinaryPredicate /*predicate*/) const
+	vector_multiset<K, C, A, RAC>::find_as(const U& u, BinaryPredicate predicate) const
 	{
-		// To do: Implement this.
-		return find(u);
+		const eastl::pair<const_iterator, const_iterator> pairIts(eastl::equal_range(begin(), end(), u, predicate));
+		return (pairIts.first != pairIts.second) ? pairIts.first : end();
 	}
 
 
@@ -638,16 +592,13 @@ namespace eastl
 	vector_multiset<K, C, A, RAC>::find(const key_type& k) const
 	{
 		const eastl::pair<const_iterator, const_iterator> pairIts(equal_range(k));
-
-		if(pairIts.first != pairIts.second)
-			return pairIts.first;
-		return end();
+		return (pairIts.first != pairIts.second) ? pairIts.first : end();
 	}
 
 
 	template <typename K, typename C, typename A, typename RAC>
 	inline typename vector_multiset<K, C, A, RAC>::size_type
-	vector_multiset<K, C, A, RAC>::count(const key_type& k)
+	vector_multiset<K, C, A, RAC>::count(const key_type& k) const
 	{
 		const eastl::pair<const_iterator, const_iterator> pairIts(equal_range(k));
 		return (size_type)eastl::distance(pairIts.first, pairIts.second);
@@ -742,7 +693,7 @@ namespace eastl
 	inline bool operator==(const vector_multiset<Key, Compare, Allocator, RandomAccessContainer>& a, 
 						   const vector_multiset<Key, Compare, Allocator, RandomAccessContainer>& b) 
 	{
-		return (a.size() == b.size()) && equal(b.begin(), b.end(), a.begin());
+		return (a.size() == b.size()) && eastl::equal(b.begin(), b.end(), a.begin());
 	}
 
 
@@ -750,7 +701,7 @@ namespace eastl
 	inline bool operator<(const vector_multiset<Key, Compare, Allocator, RandomAccessContainer>& a,
 						  const vector_multiset<Key, Compare, Allocator, RandomAccessContainer>& b)
 	{
-		return lexicographical_compare(a.begin(), a.end(), b.begin(), b.end(), a.value_comp());
+		return eastl::lexicographical_compare(a.begin(), a.end(), b.begin(), b.end(), a.value_comp());
 	}
 
 

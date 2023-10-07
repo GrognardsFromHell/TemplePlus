@@ -86,19 +86,14 @@ namespace eastl
 		{
 		}
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			template <class Allocator>
-			stack(this_type&& x, const Allocator& allocator, typename eastl::enable_if<eastl::uses_allocator<container_type, Allocator>::value>::type* = NULL)
-			  : c(eastl::move(x.c), allocator)
-			{
-			}
-		#endif
+		template <class Allocator>
+		stack(this_type&& x, const Allocator& allocator, typename eastl::enable_if<eastl::uses_allocator<container_type, Allocator>::value>::type* = NULL)
+		  : c(eastl::move(x.c), allocator)
+		{
+		}
 
 		explicit stack(const container_type& x);
-
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			explicit stack(container_type&& x);
-		#endif
+		explicit stack(container_type&& x);
 
 		// Additional C++11 support to consider:
 		//
@@ -117,21 +112,10 @@ namespace eastl
 		const_reference top() const;
 
 		void push(const value_type& value);
+		void push(value_type&& x);
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			void push(value_type&& x);
-		#endif
-
-		#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED
-			template <class... Args>
-			void emplace_back(Args&&... args);
-		#else
-			#if EASTL_MOVE_SEMANTICS_ENABLED
-				void emplace_back(value_type&& x);
-			#endif
-
-			void emplace_back(const value_type& x);
-		#endif
+		template <class... Args> void emplace_back(Args&&... args); // backwards compatibility
+		template <class... Args> decltype(auto) emplace(Args&&... args);
 
 		void pop();
 
@@ -168,14 +152,12 @@ namespace eastl
 	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename T, typename Container>
-		inline stack<T, Container>::stack(Container&& x)
-			: c(eastl::move(x))
-		{
-			// Empty
-		}
-	#endif
+	template <typename T, typename Container>
+	inline stack<T, Container>::stack(Container&& x)
+		: c(eastl::move(x))
+	{
+		// Empty
+	}
 
 
 	template <typename T, typename Container>
@@ -186,9 +168,8 @@ namespace eastl
 		// c.insert(ilist.begin(), ilist.end());
 
 		// Possibly slower solution but doesn't require an insert function.
-		for(typename std::initializer_list<value_type>::iterator it = ilist.begin(); it != ilist.end(); ++it)
+		for(const auto& value : ilist)
 		{
-			const value_type& value = *it;
 			c.push_back(value);
 		}
 	}
@@ -231,38 +212,27 @@ namespace eastl
 	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename T, typename Container>
-		inline void stack<T, Container>::push(value_type&& x) 
-		{
-			c.push_back(eastl::move(x));
-		}
-	#endif
+	template <typename T, typename Container>
+	inline void stack<T, Container>::push(value_type&& x) 
+	{
+		c.push_back(eastl::move(x));
+	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED
-		template <typename T, typename Container>
-		template <class... Args> 
-		inline void stack<T, Container>::emplace_back(Args&&... args)
-		{
-			c.emplace_back(eastl::forward<Args>(args)...);
-		}
-	#else
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			template <typename T, typename Container>
-			inline void stack<T, Container>::emplace_back(value_type&& x)
-			{
-				c.emplace_back(eastl::move(x));
-			}
-		#endif
+	template <typename T, typename Container>
+	template <class... Args>
+	inline void stack<T, Container>::emplace_back(Args&&... args)
+	{
+		emplace(eastl::forward<Args>(args)...);
+	}
 
 
-		template <typename T, typename Container>
-		inline void stack<T, Container>::emplace_back(const value_type& x)
-		{
-			c.emplace_back(x);
-		}
-	#endif
+	template <typename T, typename Container>
+	template <class... Args>
+	inline decltype(auto) stack<T, Container>::emplace(Args&&... args)
+	{
+		return c.emplace_back(eastl::forward<Args>(args)...);
+	}
 
 
 	template <typename T, typename Container>
@@ -314,6 +284,13 @@ namespace eastl
 		return (a.c == b.c);
 	}
 
+#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+	template <typename T, typename Container> requires std::three_way_comparable<Container>
+	inline synth_three_way_result<T> operator<=>(const stack<T, Container>& a, const stack<T, Container>& b)
+	{
+		return a.c <=> b.c;
+	}
+#endif
 
 	template <typename T, typename Container>
 	inline bool operator!=(const stack<T, Container>& a, const stack<T, Container>& b)
@@ -348,7 +325,6 @@ namespace eastl
 	{
 		return !(a.c < b.c);
 	}
-
 
 	template <typename T, typename Container>
 	inline void swap(stack<T, Container>& a, stack<T, Container>& b) EA_NOEXCEPT_IF((eastl::is_nothrow_swappable<typename stack<T, Container>::container_type>::value))
