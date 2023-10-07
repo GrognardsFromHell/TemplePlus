@@ -64,12 +64,13 @@ jobs:
       env:
         TEMPLEPLUS_VERSION: ${{ steps.get_version.outputs.version }}
     - name: Pack Symbols
+      shell: cmd
       run: |
         # Package the symbol files
         dependencies\bin\dump_syms.exe Release\TemplePlus.pdb > TemplePlus.sym
-        python -u deploy_symbols_s3.py TemplePlus.sym
         7z a TemplePlusSymbols-${{ steps.get_version.outputs.version }}.zip TemplePlus.sym Release\TemplePlus.pdb
     - name: Pack Tools
+      shell: cmd
       run: |
         # Release Full with tools and all binaries
         rd /s /q dist || cd .
@@ -81,26 +82,42 @@ jobs:
         copy Release\*.dll dist
         copy dependencies\bin\*.dll dist
         7z a TemplePlusTools-${{ steps.get_version.outputs.version }}.zip dist\*
-    - name: Upload Artifacts
+    - name: Upload ZIP-Distribution
       uses: actions/upload-artifact@v3
       with:
         name: TemplePlus
         path: TemplePlus*.zip
-    - name: Upload Artifacts
+    - name: Upload PDB
       uses: actions/upload-artifact@v3
       with:
         name: TemplePlusSymbols
         path: TemplePlusSymbols*.zip
-    - name: Upload Artifacts
+    - name: Upload Tools
       uses: actions/upload-artifact@v3
       with:
         name: TemplePlusTools
         path: TemplePlusTools*.zip
-    - name: Upload Artifacts
+    - name: Upload Nuget Package
       uses: actions/upload-artifact@v3
       with:
         name: TemplePlusNuget
         path: TemplePlus*.nupkg
+
+  upload-release-symbols:
+    name: Upload Release Symbols
+    runs-on: ubuntu-latest
+    needs: build
+    if: needs.build.outputs.release == "true"
+    steps:
+    - uses: actions/download-artifact@v3
+      with:
+        name: TemplePlusSymbols
+    - name: Display structure of downloaded files
+      run: ls -R
+    - name: Uncompress Symbol Files
+      run: unzip TemplePlusSymbols*.zip
+    - name: Upload Symbols to S3
+      run: python deploy_symbols_s3.zip
 
   package-release:
     name: Package Release
