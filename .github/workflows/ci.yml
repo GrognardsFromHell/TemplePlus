@@ -86,17 +86,17 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: TemplePlus
-        path: TemplePlus*.zip
+        path: TemplePlus-*.zip
     - name: Upload PDB
       uses: actions/upload-artifact@v3
       with:
         name: TemplePlusSymbols
-        path: TemplePlusSymbols*.zip
+        path: TemplePlusSymbols-*.zip
     - name: Upload Tools
       uses: actions/upload-artifact@v3
       with:
         name: TemplePlusTools
-        path: TemplePlusTools*.zip
+        path: TemplePlusTools-*.zip
     - name: Upload Nuget Package
       uses: actions/upload-artifact@v3
       with:

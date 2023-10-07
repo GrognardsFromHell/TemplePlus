@@ -17,11 +17,7 @@ if (Test-Path $releasesDir) {
 mkdir -Force $releasesDir
 
 # Get the latest nuget package
-if (Test-Path env:\TEMPLEPLUS_VERSION) {
-    $releasePackage = Join-Path (pwd) "TemplePlus.$($env:TEMPLEPLUS_VERSION).nupkg"
-} else {
-    $releasePackage = Get-ChildItem .\TemplePlus.*.nupkg | Sort-Object CreationTime -Descending | Select-Object -First 1
-}
+$releasePackage = Join-Path (pwd) "TemplePlus.$($env:TEMPLEPLUS_VERSION).nupkg"
 
 if (!$releasePackage -Or -Not(Test-Path $releasePackage)) {
     Write-Error "NuGet package for release doesnt seem to be built. Make sure to run PackRelease.ps1 first"
@@ -51,11 +47,8 @@ if ($prevRelease) {
 }
 
 # The tag name is actually part of the download URL on github
-$baseUrl=""
-if (Test-Path env:\APPVEYOR_REPO_TAG_NAME) {
-    $baseUrl = "--baseUrl=https://github.com/GrognardsFromHell/TemplePlus/releases/download/$($env:APPVEYOR_REPO_TAG_NAME)/"
-    "Using BaseURL: $baseUrl"
-}
+$baseUrl = "--baseUrl=https://github.com/GrognardsFromHell/TemplePlus/releases/download/v$($env:TEMPLEPLUS_VERSION)/"
+"Using BaseURL: $baseUrl"
 
 &$squirrel --releasify=$releasePackage --loadingGif=Configurator\Installing.gif --icon=TemplePlus\toee_gog_icon.ico --setupIcon=TemplePlus\toee_gog_icon.ico --releaseDir=$releasesDir $baseUrl --no-msi
 
