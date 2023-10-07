@@ -30,29 +30,32 @@ jobs:
         # Make it available to the Github Workflow
         Add-Content -Path $env:GITHUB_OUTPUT -Value "version=$version"
       shell: powershell
-    #- uses: actions/checkout@v4
-    #- uses: nuget/setup-nuget@v1
-    #- name: Download and Extract Dependencies
-    #  run: |
-    #    curl -L -o dependencies.7z https://github.com/GrognardsFromHell/Dependencies/releases/download/v1.12/dependencies.7z
-    #    7z x dependencies.7z
-    #- name: Install NuGet packages
-    #  run: |
-    #    nuget install Squirrel.Windows -OutputDirectory Squirrel -Verbosity Detailed
-    #    nuget restore
-    #- name: Build
-    #  run: |
-    #    call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars32.bat"
-    #    msbuild TemplePlus.sln /p:Configuration=Release /p:Platform=Win32 /p:MSBuildDefines="_TP_VERSION=%BUILD_NUMBER%;_TP_COMMIT=%COMMIT_ID%;TP_RELEASE_BUILD" /verbosity:minimal
-    #  # Need to use cmd because of the vcvars32 batch file
-    #  shell: cmd
-    #  env:
-    #    COMMIT_ID: ${GITHUB_SHA::8}
-    #- name: Pack Release
-    #  run: .\PackRelease.ps1
-    #  shell: powershell
-    #- name: Upload Artifacts
-    #  uses: actions/upload-artifact@v3
-    #  with:
-    #    name: dist
-    #    path: TemplePlus*.zip
+    - uses: actions/checkout@v4
+    - uses: nuget/setup-nuget@v1
+    - name: Download and Extract Dependencies
+      run: |
+        curl -L -o dependencies.7z https://github.com/GrognardsFromHell/Dependencies/releases/download/v1.12/dependencies.7z
+        7z x dependencies.7z
+    - name: Install NuGet packages
+      run: |
+        nuget install Squirrel.Windows -OutputDirectory Squirrel -Verbosity Detailed
+        nuget restore
+    - name: Build
+      run: |
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars32.bat"
+        msbuild TemplePlus.sln /p:Configuration=Release /p:Platform=Win32 /p:MSBuildDefines="_TP_VERSION=%TEMPLEPLUS_VERSION%;_TP_COMMIT=%COMMIT_ID%;TP_RELEASE_BUILD" /verbosity:minimal
+      # Need to use cmd because of the vcvars32 batch file
+      shell: cmd
+      env:
+        TEMPLEPLUS_VERSION: ${{ steps.get_version.outputs.version }}
+        COMMIT_ID: ${GITHUB_SHA::8}
+    - name: Pack Release
+      run: .\PackRelease.ps1
+      shell: powershell
+      env:
+        TEMPLEPLUS_VERSION: ${{ steps.get_version.outputs.version }}
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: dist
+        path: TemplePlus*.zip
