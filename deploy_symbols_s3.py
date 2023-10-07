@@ -38,6 +38,6 @@ print("Uploading symbols to ", target_path)
 with open("TemplePlus.sym.xz", "wb") as fh:
     fh.write(compressed_symbols)
 
-subprocess.run(["aws", "s3", "cp", "TemplePlus.sym.xz", "s3://templeplus-symbols/" + target_path], check=True, shell=True)
+subprocess.run(["aws", "s3", "cp", "TemplePlus.sym.xz", "s3://templeplus-symbols/" + target_path], check=True)
 
 print("Uploaded symbols to S3.")
