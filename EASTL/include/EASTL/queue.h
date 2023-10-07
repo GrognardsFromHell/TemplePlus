@@ -90,19 +90,14 @@ namespace eastl
 		{
 		}
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			template <class Allocator>
-			queue(this_type&& x, const Allocator& allocator, typename eastl::enable_if<eastl::uses_allocator<container_type, Allocator>::value>::type* = NULL)
-			  : c(eastl::move(x.c), allocator)
-			{
-			}
-		#endif
+		template <class Allocator>
+		queue(this_type&& x, const Allocator& allocator, typename eastl::enable_if<eastl::uses_allocator<container_type, Allocator>::value>::type* = NULL)
+		  : c(eastl::move(x.c), allocator)
+		{
+		}
 
 		explicit queue(const container_type& x);
-
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			explicit queue(container_type&& x);
-		#endif
+		explicit queue(container_type&& x);
 
 		// Additional C++11 support to consider:
 		//
@@ -124,21 +119,13 @@ namespace eastl
 		const_reference back() const;
 
 		void push(const value_type& value);
+		void push(value_type&& x);
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			void push(value_type&& x);
-		#endif
+		template <class... Args>
+		EA_DEPRECATED void emplace_back(Args&&... args); // backwards compatibility
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED
-			template <class... Args>
-			void emplace_back(Args&&... args);
-		#else
-			#if EASTL_MOVE_SEMANTICS_ENABLED
-				void emplace_back(value_type&& x);
-			#endif
-
-			void emplace_back(const value_type& x);
-		#endif
+		template <class... Args>
+		decltype(auto) emplace(Args&&... args);
 
 		void pop();
 
@@ -174,14 +161,12 @@ namespace eastl
 	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename T, typename Container>
-		inline queue<T, Container>::queue(Container&& x)
-			: c(eastl::move(x))
-		{
-			// Empty
-		}
-	#endif
+	template <typename T, typename Container>
+	inline queue<T, Container>::queue(Container&& x)
+		: c(eastl::move(x))
+	{
+		// Empty
+	}
 
 
 	template <typename T, typename Container>
@@ -254,37 +239,26 @@ namespace eastl
 	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename T, typename Container>
-		inline void queue<T, Container>::push(value_type&& x) 
-		{
-			c.push_back(eastl::move(x));
-		}
-	#endif
+	template <typename T, typename Container>
+	inline void queue<T, Container>::push(value_type&& x) 
+	{
+		c.push_back(eastl::move(x));
+	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED
-		template <typename T, typename Container>
-		template <class... Args> 
-		inline void queue<T, Container>::emplace_back(Args&&... args)
-		{
-			c.emplace_back(eastl::forward<Args>(args)...);
-		}
-	#else
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			template <typename T, typename Container>
-			inline void queue<T, Container>::emplace_back(value_type&& x)
-			{
-				c.emplace_back(eastl::move(x));
-			}
-		#endif
+	template <typename T, typename Container>
+	template <class... Args> 
+	inline void queue<T, Container>::emplace_back(Args&&... args)
+	{
+		emplace(eastl::forward<Args>(args)...);
+	}
 
-		template <typename T, typename Container>
-		inline void queue<T, Container>::emplace_back(const value_type& x)
-		{
-			c.emplace_back(x);
-		}
-	#endif
+	template <typename T, typename Container>
+	template <class... Args> 
+	inline decltype(auto) queue<T, Container>::emplace(Args&&... args)
+	{
+		return c.emplace_back(eastl::forward<Args>(args)...);
+	}
 
 
 	template <typename T, typename Container>
@@ -334,6 +308,14 @@ namespace eastl
 	{
 		return (a.c == b.c);
 	}
+#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+	template <typename T, typename Container> requires std::three_way_comparable<Container>
+	
+	inline synth_three_way_result<T> operator<=>(const queue<T, Container>& a, const queue<T, Container>& b)
+	{
+		return a.c <=> b.c;
+	}
+#endif
 
 	template <typename T, typename Container>
 	inline bool operator!=(const queue<T, Container>& a, const queue<T, Container>& b)
@@ -364,7 +346,6 @@ namespace eastl
 	{
 		return !(a.c < b.c);
 	}
-
 
 	template <typename T, typename Container>
 	inline void swap(queue<T, Container>& a, queue<T, Container>& b) EA_NOEXCEPT_IF((eastl::is_nothrow_swappable<typename queue<T, Container>::container_type>::value)) // EDG has a bug and won't let us use Container in this noexcept statement

@@ -8,6 +8,7 @@
  *    
  *    EA_COMPILER_IS_ANSIC
  *    EA_COMPILER_IS_C99
+ *    EA_COMPILER_IS_C11
  *    EA_COMPILER_HAS_C99_TYPES
  *    EA_COMPILER_IS_CPLUSPLUS
  *    EA_COMPILER_MANAGED_CPP
@@ -52,6 +53,7 @@
  *    EA_SEALED
  *    EA_ABSTRACT
  *    EA_CONSTEXPR / EA_CONSTEXPR_OR_CONST
+ *    EA_CONSTEXPR_IF 
  *    EA_EXTERN_TEMPLATE
  *    EA_NOEXCEPT
  *    EA_NORETURN
@@ -67,6 +69,12 @@
  *    EA_DISABLE_GHS_WARNING   / EA_RESTORE_GHS_WARNING
  *    EA_DISABLE_EDG_WARNING   / EA_RESTORE_EDG_WARNING
  *    EA_DISABLE_CW_WARNING    / EA_RESTORE_CW_WARNING
+ *
+ *    EA_DISABLE_DEFAULT_CTOR
+ *    EA_DISABLE_COPY_CTOR
+ *    EA_DISABLE_MOVE_CTOR
+ *    EA_DISABLE_ASSIGNMENT_OPERATOR
+ *    EA_DISABLE_MOVE_OPERATOR
  *
  *  Todo:
  *    Find a way to reliably detect wchar_t size at preprocessor time and 
@@ -106,6 +114,15 @@
 		//
 		#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
 			#define EA_COMPILER_IS_C99 1
+		#endif
+
+ 		// Is the compiler a C11 compiler?
+ 		// From ISO/IEC 9899:2011:
+		//   Page 176, 6.10.8.1 (Predefined macro names) :
+ 		//   __STDC_VERSION__ The integer constant 201112L. (178)
+		//
+		#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
+			#define EA_COMPILER_IS_C11 1
 		#endif
 	#endif
 
@@ -179,6 +196,14 @@
 	#ifndef EA_STRINGIFY
 		#define EA_STRINGIFY(x)     EA_STRINGIFYIMPL(x)
 		#define EA_STRINGIFYIMPL(x) #x
+	#endif
+
+
+	// ------------------------------------------------------------------------
+	// EA_IDENTITY
+	//
+	#ifndef EA_IDENTITY
+		#define EA_IDENTITY(x) x
 	#endif
 
 
@@ -328,7 +353,7 @@
 	// using postfix alignment attributes. Prefix works for alignment, but does not align
 	// the size like postfix does.  Prefix also fails on templates.  So gcc style post fix
 	// is still used, but the user will need to use EA_POSTFIX_ALIGN before the constructor parameters.
-	#if   defined(__GNUC__) && (__GNUC__ < 3)
+	#if defined(__GNUC__) && (__GNUC__ < 3)
 		#define EA_ALIGN_OF(type) ((size_t)__alignof__(type))
 		#define EA_ALIGN(n)
 		#define EA_PREFIX_ALIGN(n)
@@ -435,7 +460,7 @@
 	//       { ... }
 	//
 	#ifndef EA_LIKELY
-		#if (defined(__GNUC__) && (__GNUC__ >= 3))
+		#if (defined(__GNUC__) && (__GNUC__ >= 3)) || defined(__clang__)
 			#if defined(__cplusplus)
 				#define EA_LIKELY(x)   __builtin_expect(!!(x), true)
 				#define EA_UNLIKELY(x) __builtin_expect(!!(x), false) 
@@ -457,8 +482,10 @@
 	// Defines if the GCC attribute init_priority is supported by the compiler.
 	//
 	#if !defined(EA_INIT_PRIORITY_AVAILABLE)
-		#if   defined(__GNUC__) && !defined(__EDG__) // EDG typically #defines __GNUC__ but doesn't implement init_priority.
+		#if defined(__GNUC__) && !defined(__EDG__) // EDG typically #defines __GNUC__ but doesn't implement init_priority.
 			#define EA_INIT_PRIORITY_AVAILABLE 1 
+		#elif defined(__clang__)
+			#define EA_INIT_PRIORITY_AVAILABLE 1  // Clang implements init_priority
 		#endif
 	#endif
 
@@ -612,6 +639,39 @@
 
 
 	// ------------------------------------------------------------------------
+	// EA_ENABLE_VC_WARNING_AS_ERROR / EA_DISABLE_VC_WARNING_AS_ERROR
+	//
+	// Disable and re-enable treating a warning as error within code.
+	// This is simply a wrapper for VC++ #pragma warning(error: nnnn) for the
+	// purpose of making code easier to read due to avoiding nested compiler ifdefs
+	// directly in code.
+	//
+	// Example usage:
+	//     EA_ENABLE_VC_WARNING_AS_ERROR(4996)
+	//     <code>
+	//     EA_DISABLE_VC_WARNING_AS_ERROR()
+	//
+	#ifndef EA_ENABLE_VC_WARNING_AS_ERROR
+		#if defined(_MSC_VER)
+			#define EA_ENABLE_VC_WARNING_AS_ERROR(w) \
+					__pragma(warning(push)) \
+					__pragma(warning(error:w))
+		#else
+			#define EA_ENABLE_VC_WARNING_AS_ERROR(w)
+		#endif
+	#endif
+
+	#ifndef EA_DISABLE_VC_WARNING_AS_ERROR
+		#if defined(_MSC_VER)
+			#define EA_DISABLE_VC_WARNING_AS_ERROR() \
+				__pragma(warning(pop))
+		#else
+			#define EA_DISABLE_VC_WARNING_AS_ERROR()
+		#endif
+	#endif
+
+
+	// ------------------------------------------------------------------------
 	// EA_DISABLE_GCC_WARNING / EA_RESTORE_GCC_WARNING
 	//
 	// Example usage:
@@ -662,6 +722,46 @@
 
 
 	// ------------------------------------------------------------------------
+	// EA_ENABLE_GCC_WARNING_AS_ERROR / EA_DISABLE_GCC_WARNING_AS_ERROR
+	//
+	// Example usage:
+	//     // Only one warning can be treated as an error per statement, due to how GCC works.
+	//     EA_ENABLE_GCC_WARNING_AS_ERROR(-Wuninitialized)
+	//     EA_ENABLE_GCC_WARNING_AS_ERROR(-Wunused)
+	//     <code>
+	//     EA_DISABLE_GCC_WARNING_AS_ERROR()
+	//     EA_DISABLE_GCC_WARNING_AS_ERROR()
+	//
+	#ifndef EA_ENABLE_GCC_WARNING_AS_ERROR
+		#if defined(EA_COMPILER_GNUC)
+			#define EAGCCWERRORHELP0(x) #x
+			#define EAGCCWERRORHELP1(x) EAGCCWERRORHELP0(GCC diagnostic error x)
+			#define EAGCCWERRORHELP2(x) EAGCCWERRORHELP1(#x)
+		#endif
+
+		#if defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION >= 4006) // Can't test directly for __GNUC__ because some compilers lie.
+			#define EA_ENABLE_GCC_WARNING_AS_ERROR(w)   \
+				_Pragma("GCC diagnostic push")  \
+				_Pragma(EAGCCWERRORHELP2(w))
+		#elif defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION >= 4004)
+			#define EA_DISABLE_GCC_WARNING(w)   \
+				_Pragma(EAGCCWERRORHELP2(w))
+		#else
+			#define EA_DISABLE_GCC_WARNING(w)
+		#endif
+	#endif
+
+	#ifndef EA_DISABLE_GCC_WARNING_AS_ERROR
+		#if defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION >= 4006)
+			#define EA_DISABLE_GCC_WARNING_AS_ERROR()    \
+				_Pragma("GCC diagnostic pop")
+		#else
+			#define EA_DISABLE_GCC_WARNING_AS_ERROR()
+		#endif
+	#endif
+
+
+	// ------------------------------------------------------------------------
 	// EA_DISABLE_CLANG_WARNING / EA_RESTORE_CLANG_WARNING
 	//
 	// Example usage:
@@ -673,13 +773,14 @@
 	//     EA_RESTORE_CLANG_WARNING()
 	//
 	#ifndef EA_DISABLE_CLANG_WARNING
-		#if defined(EA_COMPILER_CLANG)
+		#if defined(EA_COMPILER_CLANG) || defined(EA_COMPILER_CLANG_CL)
 			#define EACLANGWHELP0(x) #x
 			#define EACLANGWHELP1(x) EACLANGWHELP0(clang diagnostic ignored x)
 			#define EACLANGWHELP2(x) EACLANGWHELP1(#x)
 
 			#define EA_DISABLE_CLANG_WARNING(w)   \
 				_Pragma("clang diagnostic push")  \
+				_Pragma(EACLANGWHELP2(-Wunknown-warning-option))\
 				_Pragma(EACLANGWHELP2(w))
 		#else
 			#define EA_DISABLE_CLANG_WARNING(w)
@@ -687,7 +788,7 @@
 	#endif
 
 	#ifndef EA_RESTORE_CLANG_WARNING
-		#if defined(EA_COMPILER_CLANG)
+		#if defined(EA_COMPILER_CLANG) || defined(EA_COMPILER_CLANG_CL)
 			#define EA_RESTORE_CLANG_WARNING()    \
 				_Pragma("clang diagnostic pop")
 		#else
@@ -701,6 +802,41 @@
 	//
 	// The situation for clang is the same as for GCC. See above.
 	// ------------------------------------------------------------------------
+
+
+	// ------------------------------------------------------------------------
+	// EA_ENABLE_CLANG_WARNING_AS_ERROR / EA_DISABLE_CLANG_WARNING_AS_ERROR
+	//
+	// Example usage:
+	//     // Only one warning can be treated as an error per statement, due to how clang works.
+	//     EA_ENABLE_CLANG_WARNING_AS_ERROR(-Wuninitialized)
+	//     EA_ENABLE_CLANG_WARNING_AS_ERROR(-Wunused)
+	//     <code>
+	//     EA_DISABLE_CLANG_WARNING_AS_ERROR()
+	//     EA_DISABLE_CLANG_WARNING_AS_ERROR()
+	//
+	#ifndef EA_ENABLE_CLANG_WARNING_AS_ERROR
+		#if defined(EA_COMPILER_CLANG) || defined(EA_COMPILER_CLANG_CL)
+			#define EACLANGWERRORHELP0(x) #x
+			#define EACLANGWERRORHELP1(x) EACLANGWERRORHELP0(clang diagnostic error x)
+			#define EACLANGWERRORHELP2(x) EACLANGWERRORHELP1(#x)
+
+			#define EA_ENABLE_CLANG_WARNING_AS_ERROR(w)   \
+				_Pragma("clang diagnostic push")  \
+				_Pragma(EACLANGWERRORHELP2(w))
+		#else
+			#define EA_DISABLE_CLANG_WARNING(w)
+		#endif
+	#endif
+
+	#ifndef EA_DISABLE_CLANG_WARNING_AS_ERROR
+		#if defined(EA_COMPILER_CLANG) || defined(EA_COMPILER_CLANG_CL)
+			#define EA_DISABLE_CLANG_WARNING_AS_ERROR()    \
+				_Pragma("clang diagnostic pop")
+		#else
+			#define EA_DISABLE_CLANG_WARNING_AS_ERROR()
+		#endif
+	#endif
 
 
 	// ------------------------------------------------------------------------
@@ -1000,6 +1136,35 @@
 	#endif
 
 
+	// ------------------------------------------------------------------------
+	// EA_CURRENT_FUNCTION
+	//
+	// Provides a consistent way to get the current function name as a macro
+	// like the __FILE__ and __LINE__ macros work. The C99 standard specifies
+	// that __func__ be provided by the compiler, but most compilers don't yet
+	// follow that convention. However, many compilers have an alternative.
+	//
+	// We also define EA_CURRENT_FUNCTION_SUPPORTED for when it is not possible
+	// to have EA_CURRENT_FUNCTION work as expected.
+	//
+	// Defined inside a function because otherwise the macro might not be 
+	// defined and code below might not compile. This happens with some 
+	// compilers.
+	//
+	#ifndef EA_CURRENT_FUNCTION
+		#if defined __GNUC__ || (defined __ICC && __ICC >= 600)
+			#define EA_CURRENT_FUNCTION __PRETTY_FUNCTION__
+		#elif defined(__FUNCSIG__)
+			#define EA_CURRENT_FUNCTION __FUNCSIG__
+		#elif (defined __INTEL_COMPILER && __INTEL_COMPILER >= 600) || (defined __IBMCPP__ && __IBMCPP__ >= 500) || (defined CS_UNDEFINED_STRING && CS_UNDEFINED_STRING >= 0x4200)
+			#define EA_CURRENT_FUNCTION __FUNCTION__
+		#elif defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901
+			#define EA_CURRENT_FUNCTION __func__
+		#else
+			#define EA_CURRENT_FUNCTION "(unknown function)"
+		#endif
+	#endif
+
 
 	// ------------------------------------------------------------------------
 	// wchar_t
@@ -1022,7 +1187,7 @@
 					#define EA_WCHAR_T_NON_NATIVE 1
 				#endif
 			#endif
-		#elif defined(EA_COMPILER_MSVC) || defined(EA_COMPILER_BORLAND)
+		#elif defined(EA_COMPILER_MSVC) || defined(EA_COMPILER_BORLAND) || (defined(EA_COMPILER_CLANG) && defined(EA_PLATFORM_WINDOWS))
 			#ifndef _NATIVE_WCHAR_T_DEFINED
 				#define EA_WCHAR_T_NON_NATIVE 1
 			#endif
@@ -1130,15 +1295,20 @@
 	// EA_DEPRECATED            // Used as a prefix.
 	// EA_PREFIX_DEPRECATED     // You should need this only for unusual compilers.
 	// EA_POSTFIX_DEPRECATED    // You should need this only for unusual compilers.
+	// EA_DEPRECATED_MESSAGE    // Used as a prefix and provides a deprecation message.
 	// 
 	// Example usage:
 	//    EA_DEPRECATED void Function();
+	//    EA_DEPRECATED_MESSAGE("Use 1.0v API instead") void Function();
 	//
 	// or for maximum portability:
 	//    EA_PREFIX_DEPRECATED void Function() EA_POSTFIX_DEPRECATED;
 	//
+
 	#ifndef EA_DEPRECATED
-		#if defined(EA_COMPILER_MSVC) && (EA_COMPILER_VERSION > 1300) // If VC7 (VS2003) or later...
+		#if defined(EA_COMPILER_CPP14_ENABLED)
+			#define EA_DEPRECATED [[deprecated]]
+		#elif defined(EA_COMPILER_MSVC) && (EA_COMPILER_VERSION > 1300) // If VC7 (VS2003) or later...
 			#define EA_DEPRECATED __declspec(deprecated)
 		#elif defined(EA_COMPILER_MSVC)
 			#define EA_DEPRECATED 
@@ -1148,7 +1318,10 @@
 	#endif
 
 	#ifndef EA_PREFIX_DEPRECATED
-		#if defined(EA_COMPILER_MSVC) && (EA_COMPILER_VERSION > 1300) // If VC7 (VS2003) or later...
+		#if defined(EA_COMPILER_CPP14_ENABLED)
+			#define EA_PREFIX_DEPRECATED [[deprecated]]
+			#define EA_POSTFIX_DEPRECATED
+		#elif defined(EA_COMPILER_MSVC) && (EA_COMPILER_VERSION > 1300) // If VC7 (VS2003) or later...
 			#define EA_PREFIX_DEPRECATED __declspec(deprecated)
 			#define EA_POSTFIX_DEPRECATED
 		#elif defined(EA_COMPILER_MSVC)
@@ -1157,6 +1330,15 @@
 		#else
 			#define EA_PREFIX_DEPRECATED
 			#define EA_POSTFIX_DEPRECATED __attribute__((deprecated))
+		#endif
+	#endif
+
+	#ifndef EA_DEPRECATED_MESSAGE
+		#if defined(EA_COMPILER_CPP14_ENABLED)
+			#define EA_DEPRECATED_MESSAGE(msg) [[deprecated(#msg)]]
+		#else
+			// Compiler does not support depreaction messages, explicitly drop the msg but still mark the function as deprecated
+			#define EA_DEPRECATED_MESSAGE(msg) EA_DEPRECATED
 		#endif
 	#endif
 
@@ -1343,7 +1525,7 @@
 			#else
 				#define EA_SSE 0
 			#endif
-		#elif (defined(EA_SSE3) && EA_SSE3) || defined CS_UNDEFINED_STRING
+		#elif (defined(EA_SSE3) && EA_SSE3) || defined EA_PLATFORM_XBOXONE
 			#define EA_SSE 3
 		#elif defined(EA_SSE2) && EA_SSE2
 			#define EA_SSE 2
@@ -1358,7 +1540,6 @@
 			#define EA_SSE 0
 		#endif
 	#endif
-
 
 	// ------------------------------------------------------------------------
 	// We define separate defines for SSE support beyond SSE1.  These defines
@@ -1383,47 +1564,154 @@
 		#endif
 	#endif
 	#ifndef EA_SSSE3
-		#if defined __SSSE3__ || defined CS_UNDEFINED_STRING
+		#if defined __SSSE3__ || defined EA_PLATFORM_XBOXONE
 			#define EA_SSSE3 1
 		#else
 			#define EA_SSSE3 0
 		#endif
 	#endif
 	#ifndef EA_SSE4_1
-		#if defined __SSE4_1__ || defined CS_UNDEFINED_STRING
+		#if defined __SSE4_1__ || defined EA_PLATFORM_XBOXONE
 			#define EA_SSE4_1 1
 		#else
 			#define EA_SSE4_1 0
 		#endif
 	#endif
 	#ifndef EA_SSE4_2
-		#if defined __SSE4_2__ || defined CS_UNDEFINED_STRING
+		#if defined __SSE4_2__ || defined EA_PLATFORM_XBOXONE
 			#define EA_SSE4_2 1
 		#else
 			#define EA_SSE4_2 0
 		#endif
 	#endif
 	#ifndef EA_SSE4A
-		#if defined __SSE4A__ || defined CS_UNDEFINED_STRING
+		#if defined __SSE4A__ || defined EA_PLATFORM_XBOXONE
 			#define EA_SSE4A 1
 		#else
 			#define EA_SSE4A 0
 		#endif
 	#endif
+
+	// ------------------------------------------------------------------------
+	// EA_AVX
+	// EA_AVX may be used to determine if Advanced Vector Extensions are available for the target architecture
+	//
+	// EA_AVX defines the level of AVX support:
+	//  0 indicates no AVX support
+	//  1 indicates AVX1 is supported
+	//  2 indicates AVX2 is supported
 	#ifndef EA_AVX
-		#if defined __AVX__ || defined CS_UNDEFINED_STRING
+		#if defined __AVX2__
+			#define EA_AVX 2
+		#elif defined __AVX__ || defined EA_PLATFORM_XBOXONE
 			#define EA_AVX 1
 		#else
 			#define EA_AVX 0
 		#endif
 	#endif
+	#ifndef EA_AVX2
+		#if EA_AVX >= 2
+			#define EA_AVX2 1
+		#else
+			#define EA_AVX2 0
+		#endif
+	#endif
+
 	// EA_FP16C may be used to determine the existence of float <-> half conversion operations on an x86 CPU.
 	// (For example to determine if _mm_cvtph_ps or _mm_cvtps_ph could be used.)
 	#ifndef EA_FP16C
-		#if defined __F16C__ || defined CS_UNDEFINED_STRING
+		#if defined __F16C__ || defined EA_PLATFORM_XBOXONE
 			#define EA_FP16C 1
 		#else
 			#define EA_FP16C 0
+		#endif
+	#endif
+
+	// EA_FP128 may be used to determine if __float128 is a supported type for use. This type is enabled by a GCC extension (_GLIBCXX_USE_FLOAT128)
+	// but has support by some implementations of clang (__FLOAT128__)
+	// PS4 does not support __float128 as of SDK 5.500 https://ps4.siedev.net/resources/documents/SDK/5.500/CPU_Compiler_ABI-Overview/0003.html
+	#ifndef EA_FP128
+		#if (defined __FLOAT128__ || defined _GLIBCXX_USE_FLOAT128) && !defined(EA_PLATFORM_PS4)
+			#define EA_FP128 1
+		#else
+			#define EA_FP128 0
+		#endif
+	#endif
+
+	// ------------------------------------------------------------------------
+	// EA_ABM
+	// EA_ABM may be used to determine if Advanced Bit Manipulation sets are available for the target architecture (POPCNT, LZCNT)
+	// 
+	#ifndef EA_ABM
+		#if defined(__ABM__) || defined(EA_PLATFORM_XBOXONE) || defined(EA_PLATFORM_PS4)
+			#define EA_ABM 1
+		#else
+			#define EA_ABM 0
+		#endif
+	#endif
+
+	// ------------------------------------------------------------------------
+	// EA_NEON
+	// EA_NEON may be used to determine if NEON is supported.
+	#ifndef EA_NEON
+		#if defined(__ARM_NEON__) || defined(__ARM_NEON)
+			#define EA_NEON 1
+		#else
+			#define EA_NEON 0
+		#endif
+	#endif
+
+	// ------------------------------------------------------------------------
+	// EA_BMI
+	// EA_BMI may be used to determine if Bit Manipulation Instruction sets are available for the target architecture
+	//
+	// EA_BMI defines the level of BMI support:
+	//  0 indicates no BMI support
+	//  1 indicates BMI1 is supported
+	//  2 indicates BMI2 is supported
+	#ifndef EA_BMI
+		#if defined(__BMI2__)
+			#define EA_BMI 2
+		#elif defined(__BMI__) || defined(EA_PLATFORM_XBOXONE)
+			#define EA_BMI 1
+		#else
+			#define EA_BMI 0
+		#endif
+	#endif
+	#ifndef EA_BMI2
+		#if EA_BMI >= 2
+			#define EA_BMI2 1
+		#else
+			#define EA_BMI2 0
+		#endif
+	#endif
+
+	// ------------------------------------------------------------------------
+	// EA_FMA3
+	// EA_FMA3 may be used to determine if Fused Multiply Add operations are available for the target architecture
+	// __FMA__ is defined only by GCC, Clang, and ICC; MSVC only defines __AVX__ and __AVX2__
+	// FMA3 was introduced alongside AVX2 on Intel Haswell
+	// All AMD processors support FMA3 if AVX2 is also supported
+	//
+	// EA_FMA3 defines the level of FMA3 support:
+	//  0 indicates no FMA3 support
+	//  1 indicates FMA3 is supported
+	#ifndef EA_FMA3
+		#if defined(__FMA__) || EA_AVX2 >= 1
+			#define EA_FMA3 1
+		#else
+			#define EA_FMA3 0
+		#endif
+	#endif
+
+	// ------------------------------------------------------------------------
+	// EA_TBM
+	// EA_TBM may be used to determine if Trailing Bit Manipulation instructions are available for the target architecture
+	#ifndef EA_TBM
+		#if defined(__TBM__)
+			#define EA_TBM 1
+		#else
+			#define EA_TBM 0
 		#endif
 	#endif
 
@@ -1612,11 +1900,11 @@
 	//     EA_CONSTEXPR_OR_CONST double gValue = std::sin(kTwoPi);
 	// 
 	#if !defined(EA_CONSTEXPR)
-	#if defined(EA_COMPILER_NO_CONSTEXPR)
-		#define EA_CONSTEXPR
-	#else
-		#define EA_CONSTEXPR constexpr
-	#endif
+		#if defined(EA_COMPILER_NO_CONSTEXPR)
+			#define EA_CONSTEXPR
+		#else
+			#define EA_CONSTEXPR constexpr
+		#endif
 	#endif
 
 	#if !defined(EA_CONSTEXPR_OR_CONST)
@@ -1626,6 +1914,27 @@
 			#define EA_CONSTEXPR_OR_CONST constexpr
 		#endif
 	#endif
+
+	// ------------------------------------------------------------------------
+	// EA_CONSTEXPR_IF
+	// 
+	// Portable wrapper for C++17's 'constexpr if' support.
+	//
+	// https://en.cppreference.com/w/cpp/language/if
+	// 
+	// Example usage:
+	// 
+	// EA_CONSTEXPR_IF(eastl::is_copy_constructible_v<T>) 
+	// 	{ ... }
+	// 
+	#if !defined(EA_CONSTEXPR_IF)
+		#if defined(EA_COMPILER_NO_CONSTEXPR_IF)
+			#define EA_CONSTEXPR_IF(predicate) if ((predicate))
+		#else
+			#define EA_CONSTEXPR_IF(predicate) if constexpr ((predicate))
+		#endif
+	#endif
+
 
 
 	// ------------------------------------------------------------------------
@@ -1724,6 +2033,152 @@
 		#endif
 	#endif
 
+	
+	// ------------------------------------------------------------------------
+	// EA_FALLTHROUGH
+	// 
+	// [[fallthrough] is a C++17 standard attribute that appears in switch
+	// statements to indicate that the fallthrough from the previous case in the
+	// switch statement is intentially and not a bug.
+	// 
+	// http://en.cppreference.com/w/cpp/language/attributes
+	//
+	// Example usage:
+	// 		void f(int n)
+	// 		{
+	// 			switch(n)
+	// 			{
+	// 				case 1:
+	// 				DoCase1();
+	// 				// Compiler may generate a warning for fallthrough behaviour
+	// 		 
+	// 				case 2: 
+	// 				DoCase2();
+	//
+	// 				EA_FALLTHROUGH;
+	// 				case 3:
+	// 				DoCase3();
+	// 			}
+	// 		}
+	//
+	#if !defined(EA_FALLTHROUGH)
+		#if defined(EA_COMPILER_NO_FALLTHROUGH)
+			#define EA_FALLTHROUGH
+		#else
+			#define EA_FALLTHROUGH [[fallthrough]]
+		#endif
+	#endif
+
+
+
+	// ------------------------------------------------------------------------
+	// EA_NODISCARD
+	// 
+	// [[nodiscard]] is a C++17 standard attribute that can be applied to a
+	// function declaration, enum, or class declaration.  If a any of the list
+	// previously are returned from a function (without the user explicitly
+	// casting to void) the addition of the [[nodiscard]] attribute encourages
+	// the compiler to generate a warning about the user discarding the return
+	// value. This is a useful practice to encourage client code to check API
+	// error codes. 
+	//
+	// http://en.cppreference.com/w/cpp/language/attributes
+	//
+	// Example usage:
+	// 
+	//     EA_NODISCARD int baz() { return 42; }
+	//     
+	//     void foo()
+	//     {
+	//         baz(); // warning: ignoring return value of function declared with 'nodiscard' attribute 
+	//     }
+	//
+	#if !defined(EA_NODISCARD)
+		#if defined(EA_COMPILER_NO_NODISCARD)
+			#define EA_NODISCARD
+		#else
+			#define EA_NODISCARD [[nodiscard]]
+		#endif
+	#endif
+
+
+	// ------------------------------------------------------------------------
+	// EA_MAYBE_UNUSED
+	// 
+	// [[maybe_unused]] is a C++17 standard attribute that suppresses warnings
+	// on unused entities that are declared as maybe_unused.
+	//
+	// http://en.cppreference.com/w/cpp/language/attributes
+	//
+	// Example usage:
+	//    void foo(EA_MAYBE_UNUSED int i)
+	//    {
+	//        assert(i == 42);  // warning suppressed when asserts disabled.
+	//    }
+	//
+	#if !defined(EA_MAYBE_UNUSED)
+		#if defined(EA_COMPILER_NO_MAYBE_UNUSED)
+			#define EA_MAYBE_UNUSED
+		#else
+			#define EA_MAYBE_UNUSED [[maybe_unused]]
+		#endif
+	#endif
+
+	
+	// ------------------------------------------------------------------------
+	// EA_NO_UBSAN
+	// 
+	// The LLVM/Clang undefined behaviour sanitizer will not analyse a function tagged with the following attribute.
+	//
+	// https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html#disabling-instrumentation-with-attribute-no-sanitize-undefined
+	//
+	// Example usage:
+	//     EA_NO_UBSAN int SomeFunction() { ... }
+	//
+	#ifndef EA_NO_UBSAN
+		#if defined(EA_COMPILER_CLANG)
+			#define EA_NO_UBSAN __attribute__((no_sanitize("undefined")))
+		#else
+			#define EA_NO_UBSAN
+		#endif
+	#endif
+	
+
+	// ------------------------------------------------------------------------
+	// EA_NO_ASAN
+	// 
+	// The LLVM/Clang address sanitizer will not analyse a function tagged with the following attribute.
+	//
+	// https://clang.llvm.org/docs/AddressSanitizer.html#disabling-instrumentation-with-attribute-no-sanitize-address
+	//
+	// Example usage:
+	//     EA_NO_ASAN int SomeFunction() { ... }
+	//
+	#ifndef EA_NO_ASAN
+		#if defined(EA_COMPILER_CLANG)
+			#define EA_NO_ASAN __attribute__((no_sanitize("address")))
+		#else
+			#define EA_NO_ASAN
+		#endif
+	#endif
+
+
+	// ------------------------------------------------------------------------
+	// EA_ASAN_ENABLED
+	//
+	// Defined as 0 or 1. It's value depends on the compile environment.
+	// Specifies whether the code is being built with Clang's Address Sanitizer.
+	//
+	#if defined(__has_feature)
+		#if __has_feature(address_sanitizer)
+			#define EA_ASAN_ENABLED 1
+		#else
+			#define EA_ASAN_ENABLED 0
+		#endif
+	#else
+		#define EA_ASAN_ENABLED 0
+	#endif
+
 
 	// ------------------------------------------------------------------------
 	// EA_NON_COPYABLE
@@ -1796,6 +2251,85 @@
 		#define EA_FUNCTION_DELETE = delete
 	#endif
 
+	// ------------------------------------------------------------------------
+	// EA_DISABLE_DEFAULT_CTOR
+	//
+	// Disables the compiler generated default constructor. This macro is
+	// provided to improve portability and clarify intent of code.
+	//
+	// Example usage:
+	//
+	//  class Example
+	//  {
+	//  private:
+	//      EA_DISABLE_DEFAULT_CTOR(Example);
+	//  };
+	//
+	#define EA_DISABLE_DEFAULT_CTOR(ClassName) ClassName() EA_FUNCTION_DELETE
+
+	// ------------------------------------------------------------------------
+	// EA_DISABLE_COPY_CTOR
+	//
+	// Disables the compiler generated copy constructor. This macro is
+	// provided to improve portability and clarify intent of code.
+	//
+	// Example usage:
+	//
+	//  class Example
+	//  {
+	//  private:
+	//      EA_DISABLE_COPY_CTOR(Example);
+	//  };
+	//
+	#define EA_DISABLE_COPY_CTOR(ClassName) ClassName(const ClassName &) EA_FUNCTION_DELETE
+
+	// ------------------------------------------------------------------------
+	// EA_DISABLE_MOVE_CTOR
+	//
+	// Disables the compiler generated move constructor. This macro is
+	// provided to improve portability and clarify intent of code.
+	//
+	// Example usage:
+	//
+	//  class Example
+	//  {
+	//  private:
+	//      EA_DISABLE_MOVE_CTOR(Example);
+	//  };
+	//
+	#define EA_DISABLE_MOVE_CTOR(ClassName) ClassName(ClassName&&) EA_FUNCTION_DELETE
+
+	// ------------------------------------------------------------------------
+	// EA_DISABLE_ASSIGNMENT_OPERATOR
+	//
+	// Disables the compiler generated assignment operator. This macro is
+	// provided to improve portability and clarify intent of code.
+	//
+	// Example usage:
+	//
+	//  class Example
+	//  {
+	//  private:
+	//      EA_DISABLE_ASSIGNMENT_OPERATOR(Example);
+	//  };
+	//
+	#define EA_DISABLE_ASSIGNMENT_OPERATOR(ClassName) ClassName & operator=(const ClassName &) EA_FUNCTION_DELETE
+
+	// ------------------------------------------------------------------------
+	// EA_DISABLE_MOVE_OPERATOR
+	//
+	// Disables the compiler generated move operator. This macro is
+	// provided to improve portability and clarify intent of code.
+	//
+	// Example usage:
+	//
+	//  class Example
+	//  {
+	//  private:
+	//      EA_DISABLE_MOVE_OPERATOR(Example);
+	//  };
+	//
+	#define EA_DISABLE_MOVE_OPERATOR(ClassName) ClassName & operator=(ClassName&&) EA_FUNCTION_DELETE
 
 	// ------------------------------------------------------------------------
 	// EANonCopyable
@@ -1867,7 +2401,7 @@
 			#define EA_OPTIMIZE_OFF()            \
 				_Pragma("GCC push_options")      \
 				_Pragma("GCC optimize 0")
-        #elif defined(EA_COMPILER_CLANG) &&  !defined(EA_PLATFORM_ANDROID) // android clang 305 compiler crashes when this pragma is used
+        #elif defined(EA_COMPILER_CLANG) && (!defined(EA_PLATFORM_ANDROID) || (EA_COMPILER_VERSION >= 380))
             #define EA_OPTIMIZE_OFF() \
 				EA_DISABLE_CLANG_WARNING(-Wunknown-pragmas) \
 				_Pragma("clang optimize off") \
@@ -1882,7 +2416,7 @@
 			#define EA_OPTIMIZE_ON() __pragma(optimize("", on))
 		#elif defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION > 4004) && (defined(__i386__) || defined(__x86_64__)) // GCC 4.4+ - Seems to work only on x86/Linux so far. However, GCC 4.4 itself appears broken and screws up parameter passing conventions.
 			#define EA_OPTIMIZE_ON() _Pragma("GCC pop_options")
-        #elif defined(EA_COMPILER_CLANG) && !defined(EA_PLATFORM_ANDROID) // android clang 305 compiler crashes when this pragma is used
+        #elif defined(EA_COMPILER_CLANG) && (!defined(EA_PLATFORM_ANDROID) || (EA_COMPILER_VERSION >= 380))
             #define EA_OPTIMIZE_ON() \
 				EA_DISABLE_CLANG_WARNING(-Wunknown-pragmas) \
 				_Pragma("clang optimize on") \

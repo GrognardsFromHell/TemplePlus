@@ -16,7 +16,7 @@
 #define EASTL_CHRONO_H
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
-	#pragma once 
+	#pragma once
 #endif
 
 #include <EASTL/internal/config.h>
@@ -27,30 +27,38 @@
 
 // TODO:  move to platform specific cpp or header file
 #if  defined EA_PLATFORM_MICROSOFT
-	#pragma warning(push, 0)
-	#ifndef WIN32_LEAN_AND_MEAN
-	#define WIN32_LEAN_AND_MEAN
-	#endif
 	EA_DISABLE_ALL_VC_WARNINGS()
+
+	#ifndef WIN32_LEAN_AND_MEAN
+		#define WIN32_LEAN_AND_MEAN
+	#endif
+
+	#undef NOMINMAX
 	#define NOMINMAX
+
 	#include <Windows.h>
-	// #ifdef min
-	//     #undef min
-	// #endif
-	// #ifdef max
-	//     #undef max
-	// #endif
+
+	#ifdef min
+		#undef min
+	#endif
+	#ifdef max
+		#undef max
+	#endif
+
 	EA_RESTORE_ALL_VC_WARNINGS()
-	#pragma warning(pop)
 #endif
 
-#ifdef EA_PLATFORM_MICROSOFT
-	#include <thr/xtimec.h>
+#if defined(EA_PLATFORM_MICROSOFT) && !defined(EA_PLATFORM_MINGW)
+	// Nothing to do
 #elif defined(EA_PLATFORM_APPLE)
 	#include <mach/mach_time.h>
-#elif defined(EA_PLATFORM_POSIX) // Posix means Linux, Unix, and Macintosh OSX, among others (including Linux-based mobile platforms).
+#elif defined(EA_PLATFORM_POSIX) || defined(EA_PLATFORM_MINGW) || defined(EA_PLATFORM_ANDROID)
+	// Posix means Linux, Unix, and Macintosh OSX, among others (including Linux-based mobile platforms).
+	#if defined(EA_PLATFORM_MINGW)
+		#include <pthread_time.h>
+	#endif
+	#include <time.h>
 	#if (defined(CLOCK_REALTIME) || defined(CLOCK_MONOTONIC))
-		#include <time.h>
 		#include <errno.h>
 	#else
 		#include <sys/time.h>
@@ -93,7 +101,7 @@ namespace chrono
 	namespace Internal
 	{
 		///////////////////////////////////////////////////////////////////////////////
-		// IsRatio 
+		// IsRatio
 		///////////////////////////////////////////////////////////////////////////////
 		template <typename> struct IsRatio                                           : eastl::false_type {};
 		template <intmax_t N, intmax_t D> struct IsRatio<ratio<N, D>>                : eastl::true_type {};
@@ -103,7 +111,7 @@ namespace chrono
 
 
 		///////////////////////////////////////////////////////////////////////////////
-		// IsDuration 
+		// IsDuration
 		///////////////////////////////////////////////////////////////////////////////
 		template<typename> struct IsDuration                                                            : eastl::false_type{};
 		template<typename Rep, typename Period> struct IsDuration<duration<Rep, Period>>                : eastl::true_type{};
@@ -113,7 +121,7 @@ namespace chrono
 
 
 		///////////////////////////////////////////////////////////////////////////////
-		// RatioGCD 
+		// RatioGCD
 		///////////////////////////////////////////////////////////////////////////////
 		template <class Period1, class Period2>
 		struct RatioGCD
@@ -186,10 +194,10 @@ namespace chrono
 
 
 	///////////////////////////////////////////////////////////////////////////////
-	// duration_cast 
+	// duration_cast
 	///////////////////////////////////////////////////////////////////////////////
 	template <typename ToDuration, typename Rep, typename Period>
-	inline typename eastl::enable_if<Internal::IsDuration<ToDuration>::value, ToDuration>::type 
+	inline typename eastl::enable_if<Internal::IsDuration<ToDuration>::value, ToDuration>::type
 	duration_cast(const duration<Rep, Period>& d)
 	{
 		typedef typename duration<Rep, Period>::this_type FromDuration;
@@ -198,27 +206,27 @@ namespace chrono
 
 
 	///////////////////////////////////////////////////////////////////////////////
-	// duration 
+	// duration
 	///////////////////////////////////////////////////////////////////////////////
 	template <class Rep, class Period>
 	class duration
 	{
-		Rep mRep;	
+		Rep mRep;
 
 	public:
 		typedef Rep rep;
 		typedef Period period;
 		typedef duration<Rep, Period> this_type;
 
-    #if defined(EA_COMPILER_NO_DEFAULTED_FUNCTIONS) || defined(CS_UNDEFINED_STRING)
-		EA_CONSTEXPR duration() 
+    #if defined(EA_COMPILER_NO_DEFAULTED_FUNCTIONS)
+		EA_CONSTEXPR duration()
 			: mRep() {}
 
 		duration(const duration& other)
 			: mRep(Rep(other.mRep)) {}
 
 		duration& operator=(const duration& other)
-			{ mRep = other.mRep; }
+			{ mRep = other.mRep; return *this; }
 	#else
 		EA_CONSTEXPR duration() = default;
 		duration(const duration&) = default;
@@ -227,7 +235,7 @@ namespace chrono
 
 
 		///////////////////////////////////////////////////////////////////////////////
-		// conversion constructors 
+		// conversion constructors
 		///////////////////////////////////////////////////////////////////////////////
 		template <class Rep2>
 		inline EA_CONSTEXPR explicit duration(
@@ -247,12 +255,12 @@ namespace chrono
 		    : mRep(duration_cast<duration>(d2).count()) {}
 
 		///////////////////////////////////////////////////////////////////////////////
-		// returns the count of ticks 
+		// returns the count of ticks
 		///////////////////////////////////////////////////////////////////////////////
 		EA_CONSTEXPR Rep count() const { return mRep; }
 
 		///////////////////////////////////////////////////////////////////////////////
-		// static accessors of special duration values 
+		// static accessors of special duration values
 		///////////////////////////////////////////////////////////////////////////////
 		EA_CONSTEXPR inline static duration zero() { return duration(duration_values<Rep>::zero()); }
 		EA_CONSTEXPR inline static duration min()  { return duration(duration_values<Rep>::min()); }
@@ -303,7 +311,7 @@ namespace chrono
 	duration<typename eastl::common_type<Rep1, Rep2>::type, Period1> EASTL_FORCE_INLINE
 	operator*(const duration<Rep1, Period1>& lhs, const Rep2& rhs)
 	{
-		typedef typename duration<eastl::common_type<Rep1, Rep2>, Period1>::type common_duration_t;
+		typedef duration<typename eastl::common_type<Rep1, Rep2>::type, Period1> common_duration_t;
 		return common_duration_t(common_duration_t(lhs).count() * rhs);
 	}
 
@@ -410,7 +418,7 @@ namespace chrono
 	///////////////////////////////////////////////////////////////////////////////
 	// 20.12.6, time_point
 	///////////////////////////////////////////////////////////////////////////////
-	template <typename Clock, typename Duration = typename Clock::duration> 
+	template <typename Clock, typename Duration = typename Clock::duration>
 	class time_point
 	{
 		Duration mDuration;
@@ -432,7 +440,7 @@ namespace chrono
 
 		EA_CONSTEXPR Duration time_since_epoch() const { return mDuration; }
 
-		time_point& operator+=(const Duration& d) { mDuration += d; return *this; } 
+		time_point& operator+=(const Duration& d) { mDuration += d; return *this; }
 		time_point& operator-=(const Duration& d) { mDuration -= d; return *this; }
 
 		static EA_CONSTEXPR time_point min() { return time_point(Duration::min()); }
@@ -534,40 +542,71 @@ namespace chrono
 
 	namespace Internal
 	{
-		#if defined EA_PLATFORM_MICROSOFT
-			#define EASTL_NS_PER_TICK _XTIME_NSECS_PER_TICK
+		#if defined(EA_PLATFORM_MICROSOFT) && !defined(EA_PLATFORM_MINGW)
+			#define EASTL_NS_PER_TICK 1
+		#elif defined EA_PLATFORM_SONY
+			#define EASTL_NS_PER_TICK 1
 		#elif defined EA_PLATFORM_POSIX
 			#define EASTL_NS_PER_TICK _XTIME_NSECS_PER_TICK
 		#else
-			#define EASTL_NS_PER_TICK 100 
+			#define EASTL_NS_PER_TICK 100
 		#endif
 
-		#if defined(EA_PLATFORM_POSIX) 
+		#if defined(EA_PLATFORM_POSIX)
 			typedef chrono::nanoseconds::period SystemClock_Period;
 			typedef chrono::nanoseconds::period SteadyClock_Period;
 		#else
-			typedef eastl::ratio_multiply<eastl::ratio<EASTL_NS_PER_TICK, 1>, nano>::type SystemClock_Period; 
-			typedef eastl::ratio_multiply<eastl::ratio<EASTL_NS_PER_TICK, 1>, nano>::type SteadyClock_Period; 
+			typedef eastl::ratio_multiply<eastl::ratio<EASTL_NS_PER_TICK, 1>, nano>::type SystemClock_Period;
+			typedef eastl::ratio_multiply<eastl::ratio<EASTL_NS_PER_TICK, 1>, nano>::type SteadyClock_Period;
 		#endif
 
 
 		///////////////////////////////////////////////////////////////////////////////
-		// Internal::GetTicks 
+		// Internal::GetTicks
 		///////////////////////////////////////////////////////////////////////////////
-		uint64_t GetTicks()
+		inline uint64_t GetTicks()
 		{
 		#if defined EA_PLATFORM_MICROSOFT
-			uint64_t t;
-			QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER*>(&t));  // TODO:  migrate to rdtsc?
-			return t;
+			auto queryFrequency = []
+			{
+				LARGE_INTEGER frequency;
+				QueryPerformanceFrequency(&frequency);
+				return double(1000000000.0L / (long double)frequency.QuadPart);  // nanoseconds per tick
+			};
+
+			auto queryCounter = []
+			{
+				LARGE_INTEGER counter;
+				QueryPerformanceCounter(&counter);
+				return counter.QuadPart;
+			};
+
+			EA_DISABLE_VC_WARNING(4640)  // warning C4640: construction of local static object is not thread-safe (VS2013)
+			static auto frequency = queryFrequency(); // cache cpu frequency on first call
+			EA_RESTORE_VC_WARNING()
+			return uint64_t(frequency * (double)queryCounter());
+		#elif defined EA_PLATFORM_SONY
+			static_assert(false, "Implementing GetTicks() requires first party support");
+			return 0;
 		#elif defined(EA_PLATFORM_APPLE)
-		   return mach_absolute_time();
+			auto queryTimeInfo = []
+			{
+				mach_timebase_info_data_t info;
+				mach_timebase_info(&info);
+				return info;
+			};
+
+			static auto timeInfo = queryTimeInfo();
+			uint64_t t = mach_absolute_time();
+			t *= timeInfo.numer;
+			t /= timeInfo.denom;
+			return t;
 		#elif defined(EA_PLATFORM_POSIX) // Posix means Linux, Unix, and Macintosh OSX, among others (including Linux-based mobile platforms).
 			#if (defined(CLOCK_REALTIME) || defined(CLOCK_MONOTONIC))
 				timespec ts;
 				int result = clock_gettime(CLOCK_MONOTONIC, &ts);
 
-				if (result == EINVAL)
+				if (result == -1 && errno == EINVAL)
 					result = clock_gettime(CLOCK_REALTIME, &ts);
 
 				const uint64_t nNanoseconds = (uint64_t)ts.tv_nsec + ((uint64_t)ts.tv_sec * UINT64_C(1000000000));
@@ -586,7 +625,7 @@ namespace chrono
 
 
 	///////////////////////////////////////////////////////////////////////////////
-	// system_clock 
+	// system_clock
 	///////////////////////////////////////////////////////////////////////////////
 	class system_clock
 	{
@@ -600,15 +639,15 @@ namespace chrono
 		EA_CONSTEXPR_OR_CONST static bool is_steady = false;
 
 		// returns a time point representing the current point in time.
-		static time_point now() EA_NOEXCEPT 
-		{ 
-			return time_point(duration(Internal::GetTicks())); 
+		static time_point now() EA_NOEXCEPT
+		{
+			return time_point(duration(Internal::GetTicks()));
 		}
 	};
 
 
 	///////////////////////////////////////////////////////////////////////////////
-	// steady_clock 
+	// steady_clock
 	///////////////////////////////////////////////////////////////////////////////
 	class steady_clock
 	{
@@ -622,24 +661,24 @@ namespace chrono
 		EA_CONSTEXPR_OR_CONST static bool is_steady = true;
 
 		// returns a time point representing the current point in time.
-		static time_point now() EA_NOEXCEPT 
-		{ 
-			return time_point(duration(Internal::GetTicks())); 
+		static time_point now() EA_NOEXCEPT
+		{
+			return time_point(duration(Internal::GetTicks()));
 		}
 	};
 
 
 	///////////////////////////////////////////////////////////////////////////////
-	// high_resolution_clock 
+	// high_resolution_clock
 	///////////////////////////////////////////////////////////////////////////////
 	typedef system_clock high_resolution_clock;
 
 
-} // namespace chrono 
+} // namespace chrono
 
 
 	///////////////////////////////////////////////////////////////////////////////
-	// duration common_type specialization 
+	// duration common_type specialization
 	///////////////////////////////////////////////////////////////////////////////
 	template <typename Rep1, typename Period1, typename Rep2, typename Period2>
 	struct common_type<chrono::duration<Rep1, Period1>, chrono::duration<Rep2, Period2>>
@@ -649,8 +688,8 @@ namespace chrono
     };
 
 
-    ///////////////////////////////////////////////////////////////////////////////
-	// time_point common_type specialization 
+	///////////////////////////////////////////////////////////////////////////////
+	// time_point common_type specialization
 	///////////////////////////////////////////////////////////////////////////////
 	template <typename Clock, typename Duration1, typename Duration2>
 	struct common_type<chrono::time_point<Clock, Duration1>, chrono::time_point<Clock, Duration2>>
@@ -659,45 +698,52 @@ namespace chrono
 	};
 
 
-    ///////////////////////////////////////////////////////////////////////////////
-	// chrono_literals  
 	///////////////////////////////////////////////////////////////////////////////
-#if EASTL_USER_LITERALS_ENABLED && EASTL_INLINE_NAMESPACES_ENABLED
-	EA_DISABLE_VC_WARNING(4455) // disable warning C4455: literal suffix identifiers that do not start with an underscore are reserved
-    inline namespace literals
-    {
-	    inline namespace chrono_literals
-	    {
-			///////////////////////////////////////////////////////////////////////////////
-			// integer chrono literals
-			///////////////////////////////////////////////////////////////////////////////
-		    EA_CONSTEXPR chrono::hours operator"" h(unsigned long long h) { return chrono::hours(h); }
-		    EA_CONSTEXPR chrono::minutes operator"" min(unsigned long long m) { return chrono::minutes(m); }
-		    EA_CONSTEXPR chrono::seconds operator"" s(unsigned long long s) { return chrono::seconds(s); }
-		    EA_CONSTEXPR chrono::milliseconds operator"" ms(unsigned long long ms) { return chrono::milliseconds(ms); }
-		    EA_CONSTEXPR chrono::microseconds operator"" us(unsigned long long us) { return chrono::microseconds(us); }
-		    EA_CONSTEXPR chrono::nanoseconds operator"" ns(unsigned long long ns) { return chrono::nanoseconds(ns); }
+	// chrono_literals
+	///////////////////////////////////////////////////////////////////////////////
+	#if EASTL_USER_LITERALS_ENABLED && EASTL_INLINE_NAMESPACES_ENABLED
+		// Disabling the Clang/GCC/MSVC warning about using user
+		// defined literals without a leading '_' as they are reserved
+		// for standard libary usage.
+		EA_DISABLE_VC_WARNING(4455)
+		EA_DISABLE_CLANG_WARNING(-Wuser-defined-literals)
+		EA_DISABLE_GCC_WARNING(-Wliteral-suffix)
+		inline namespace literals
+		{
+			inline namespace chrono_literals
+			{
+				///////////////////////////////////////////////////////////////////////////////
+				// integer chrono literals
+				///////////////////////////////////////////////////////////////////////////////
+				EA_CONSTEXPR chrono::hours operator"" h(unsigned long long h) { return chrono::hours(h); }
+				EA_CONSTEXPR chrono::minutes operator"" min(unsigned long long m) { return chrono::minutes(m); }
+				EA_CONSTEXPR chrono::seconds operator"" s(unsigned long long s) { return chrono::seconds(s); }
+				EA_CONSTEXPR chrono::milliseconds operator"" ms(unsigned long long ms) { return chrono::milliseconds(ms); }
+				EA_CONSTEXPR chrono::microseconds operator"" us(unsigned long long us) { return chrono::microseconds(us); }
+				EA_CONSTEXPR chrono::nanoseconds operator"" ns(unsigned long long ns) { return chrono::nanoseconds(ns); }
 
-			///////////////////////////////////////////////////////////////////////////////
-			// float chrono literals
-			///////////////////////////////////////////////////////////////////////////////
-		    EA_CONSTEXPR chrono::duration<long double, ratio<3600, 1>> operator"" h(long double h)
-				{ return chrono::duration<long double, ratio<3600, 1>>(h); }
-		    EA_CONSTEXPR chrono::duration<long double, ratio<60, 1>> operator"" min(long double m)
-				{ return chrono::duration<long double, ratio<60, 1>>(m); }
-		    EA_CONSTEXPR chrono::duration<long double> operator"" s(long double s)
-				{ return chrono::duration<long double>(s); }
-		    EA_CONSTEXPR chrono::duration<float, milli> operator"" ms(long double ms)
-				{ return chrono::duration<long double, milli>(ms); }
-		    EA_CONSTEXPR chrono::duration<float, micro> operator"" us(long double us)
-				{ return chrono::duration<long double, micro>(us); }
-		    EA_CONSTEXPR chrono::duration<float, nano> operator"" ns(long double ns)
-				{ return chrono::duration<long double, nano>(ns); }
+				///////////////////////////////////////////////////////////////////////////////
+				// float chrono literals
+				///////////////////////////////////////////////////////////////////////////////
+				EA_CONSTEXPR chrono::duration<long double, ratio<3600, 1>> operator"" h(long double h)
+					{ return chrono::duration<long double, ratio<3600, 1>>(h); }
+				EA_CONSTEXPR chrono::duration<long double, ratio<60, 1>> operator"" min(long double m)
+					{ return chrono::duration<long double, ratio<60, 1>>(m); }
+				EA_CONSTEXPR chrono::duration<long double> operator"" s(long double s)
+					{ return chrono::duration<long double>(s); }
+				EA_CONSTEXPR chrono::duration<float, milli> operator"" ms(long double ms)
+					{ return chrono::duration<long double, milli>(ms); }
+				EA_CONSTEXPR chrono::duration<float, micro> operator"" us(long double us)
+					{ return chrono::duration<long double, micro>(us); }
+				EA_CONSTEXPR chrono::duration<float, nano> operator"" ns(long double ns)
+					{ return chrono::duration<long double, nano>(ns); }
 
-	    } // namespace chrono_literals
-    }// namespace literals
-	EA_RESTORE_VC_WARNING() // warning: 4455
-#endif
+			} // namespace chrono_literals
+		}// namespace literals
+		EA_RESTORE_GCC_WARNING()	// -Wliteral-suffix
+		EA_RESTORE_CLANG_WARNING()	// -Wuser-defined-literals
+		EA_RESTORE_VC_WARNING()		// warning: 4455
+	#endif
 
 } // namespace eastl
 
@@ -705,9 +751,9 @@ namespace chrono
 #if EASTL_USER_LITERALS_ENABLED && EASTL_INLINE_NAMESPACES_ENABLED
 namespace chrono
 {
-	using namespace literals::chrono_literals;
+	using namespace eastl::literals::chrono_literals;
 } // namespace chrono
 #endif
 
 
-#endif 
+#endif

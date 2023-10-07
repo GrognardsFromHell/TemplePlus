@@ -32,6 +32,20 @@
 
 namespace eastl
 {
+	/// EASTL_RING_BUFFER_DEFAULT_NAME
+	///
+	/// Defines a default container name in the absence of a user-provided name.
+	///
+	#ifndef EASTL_RING_BUFFER_DEFAULT_NAME
+		#define EASTL_RING_BUFFER_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " ring_buffer" // Unless the user overrides something, this is "EASTL ring_buffer".
+	#endif
+
+	/// EASTL_RING_BUFFER_DEFAULT_ALLOCATOR
+	///
+	#ifndef EASTL_RING_BUFFER_DEFAULT_ALLOCATOR
+		#define EASTL_RING_BUFFER_DEFAULT_ALLOCATOR allocator_type(EASTL_RING_BUFFER_DEFAULT_NAME)
+	#endif
+
 
 	/// ring_buffer_iterator
 	///
@@ -215,54 +229,51 @@ namespace eastl
 		size_type          mSize;
 
 	public:
-		// There currently isn't a ring_buffer constructor that specifies and initial size, unlike other containers.
+		// There currently isn't a ring_buffer constructor that specifies an initial size, unlike other containers.
 		explicit ring_buffer(size_type cap = 0);                                // Construct with an initial capacity (but size of 0).
 		explicit ring_buffer(size_type cap, const allocator_type& allocator); 
 		explicit ring_buffer(const Container& x);
 		explicit ring_buffer(const allocator_type& allocator);
 		ring_buffer(const this_type& x);
-		#if EASTL_MOVE_SEMANTICS_ENABLED
 		ring_buffer(this_type&& x);
 		ring_buffer(this_type&& x, const allocator_type& allocator);
-		#endif
-		ring_buffer(std::initializer_list<value_type> ilist, const allocator_type& allocator = allocator_type()); // This function sets the capacity to be equal to the size of the initializer list.
+		ring_buffer(std::initializer_list<value_type> ilist, const allocator_type& allocator = EASTL_RING_BUFFER_DEFAULT_ALLOCATOR); // This function sets the capacity to be equal to the size of the initializer list.
 
 		// No destructor necessary. Default will do.
 
 		this_type& operator=(const this_type& x);
 		this_type& operator=(std::initializer_list<value_type> ilist);
-		#if EASTL_MOVE_SEMANTICS_ENABLED
 		this_type& operator=(this_type&& x);
-		#endif
 
 		template <typename InputIterator>
 		void assign(InputIterator first, InputIterator last);
 
 		void swap(this_type& x);
 
-		iterator       begin() EA_NOEXCEPT;
-		const_iterator begin() const EA_NOEXCEPT;
-		const_iterator cbegin() const EA_NOEXCEPT;
+		iterator               begin()          EA_NOEXCEPT;
+		const_iterator         begin()    const EA_NOEXCEPT;
+		const_iterator         cbegin()   const EA_NOEXCEPT;
 
-		iterator       end() EA_NOEXCEPT;
-		const_iterator end() const EA_NOEXCEPT;
-		const_iterator cend() const EA_NOEXCEPT;
+		iterator               end()            EA_NOEXCEPT;
+		const_iterator         end()      const EA_NOEXCEPT;
+		const_iterator         cend()     const EA_NOEXCEPT;
 
-		reverse_iterator       rbegin() EA_NOEXCEPT;
-		const_reverse_iterator rbegin() const EA_NOEXCEPT;
-		const_reverse_iterator crbegin() const EA_NOEXCEPT;
+		reverse_iterator       rbegin()         EA_NOEXCEPT;
+		const_reverse_iterator rbegin()   const EA_NOEXCEPT;
+		const_reverse_iterator crbegin()  const EA_NOEXCEPT;
 
-		reverse_iterator       rend() EA_NOEXCEPT;
-		const_reverse_iterator rend() const EA_NOEXCEPT;
-		const_reverse_iterator crend() const EA_NOEXCEPT;
+		reverse_iterator       rend()           EA_NOEXCEPT;
+		const_reverse_iterator rend()     const EA_NOEXCEPT;
+		const_reverse_iterator crend()    const EA_NOEXCEPT;
 
-		bool        empty() const EA_NOEXCEPT;
-		bool        full() const EA_NOEXCEPT;
-		size_type   size() const EA_NOEXCEPT;
-		void        resize(size_type n);
-		size_type   capacity() const EA_NOEXCEPT;
-		void        set_capacity(size_type n);    // Sets the capacity to the given value, including values less than the current capacity. Adjusts the size downward if n < size, by throwing out the oldest elements in the buffer.
-		void        reserve(size_type n);         // Reserve a given capacity. Doesn't decrease the capacity; it only increases it (for compatibility with other containers' behavior).
+		bool                   empty()    const EA_NOEXCEPT;
+		bool                   full()     const EA_NOEXCEPT;
+		size_type              size()     const EA_NOEXCEPT;
+		size_type              capacity() const EA_NOEXCEPT;
+
+		void                   resize(size_type n);
+		void                   set_capacity(size_type n); // Sets the capacity to the given value, including values less than the current capacity. Adjusts the size downward if n < size, by throwing out the oldest elements in the buffer.
+		void                   reserve(size_type n);      // Reserve a given capacity. Doesn't decrease the capacity; it only increases it (for compatibility with other containers' behavior).
 
 		reference       front();
 		const_reference front() const;
@@ -270,15 +281,14 @@ namespace eastl
 		reference       back();              
 		const_reference back() const;
 
-		void      push_back(const value_type& value);
-		reference push_back();
+		void            push_back(const value_type& value);
+		reference       push_back();
 
-		void pop_back();
+		void            push_front(const value_type& value);
+		reference       push_front();
 
-		void      push_front(const value_type& value);
-		reference push_front();
-
-		void pop_front();
+		void            pop_back();
+		void            pop_front();
 
 		reference       operator[](size_type n);
 		const_reference operator[](size_type n) const;
@@ -288,7 +298,6 @@ namespace eastl
 		// size_type read(iterator** pPosition1, iterator** pPosition2, size_type& nCount1, size_type& nCount2);
 
 		/* To do:
-		#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED
 			template <class... Args>
 			void emplace_front(Args&&... args);
 
@@ -297,20 +306,6 @@ namespace eastl
 
 			template <class... Args>
 			iterator emplace(const_iterator position, Args&&... args);
-		#else
-			#if EASTL_MOVE_SEMANTICS_ENABLED
-				void push_front(value_type&& value);
-				void push_back(value_type&& value);
-
-				void emplace_front(value_type&& value);
-				void emplace_back(value_type&& value);
-				iterator emplace(const_iterator position, value_type&& value);
-			#endif
-
-			void emplace_front(const value_type& value);
-			void emplace_back(const value_type& value);
-			iterator emplace(const_iterator position, const value_type& value);
-		#endif
 		*/
 
 		iterator insert(const_iterator position, const value_type& value);
@@ -320,9 +315,8 @@ namespace eastl
 		template <typename InputIterator>
 		void insert(const_iterator position, InputIterator first, InputIterator last);
 
-		iterator erase(const_iterator position);
-		iterator erase(const_iterator first, const_iterator last);
-
+		iterator         erase(const_iterator position);
+		iterator         erase(const_iterator first, const_iterator last);
 		reverse_iterator erase(const_reverse_iterator position);
 		reverse_iterator erase(const_reverse_iterator first, const_reverse_iterator last);
 
@@ -655,34 +649,32 @@ namespace eastl
 		eastl::advance(mEnd,   eastl::distance(const_cast<this_type&>(x).c.begin(), x.mEnd));
 	}
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename T, typename Container, typename Allocator>
-		ring_buffer<T, Container, Allocator>::ring_buffer(this_type&& x)
-		: c() // Default construction with default allocator for the container.
-		{
-			c.resize(1); // Possibly we could construct 'c' with size, but c may not have such a ctor, though we rely on it having a resize function.
-			mBegin = c.begin();
-			mEnd   = mBegin;
-			mSize  = 0;
+	template <typename T, typename Container, typename Allocator>
+	ring_buffer<T, Container, Allocator>::ring_buffer(this_type&& x)
+	: c() // Default construction with default allocator for the container.
+	{
+		c.resize(1); // Possibly we could construct 'c' with size, but c may not have such a ctor, though we rely on it having a resize function.
+		mBegin = c.begin();
+		mEnd   = mBegin;
+		mSize  = 0;
 
+		swap(x); // We are leaving x in an unusual state by swapping default-initialized members with it, as it won't be usable and can be only destructible.
+	}
+
+	template <typename T, typename Container, typename Allocator>
+	ring_buffer<T, Container, Allocator>::ring_buffer(this_type&& x, const allocator_type& allocator)
+		: c(allocator)
+	{
+		c.resize(1); // Possibly we could construct 'c' with size, but c may not have such a ctor, though we rely on it having a resize function.
+		mBegin = c.begin();
+		mEnd   = mBegin;
+		mSize  = 0;
+
+		if(c.get_allocator() == x.c.get_allocator())
 			swap(x); // We are leaving x in an unusual state by swapping default-initialized members with it, as it won't be usable and can be only destructible.
-		}
-
-		template <typename T, typename Container, typename Allocator>
-		ring_buffer<T, Container, Allocator>::ring_buffer(this_type&& x, const allocator_type& allocator)
-			: c(allocator)
-		{
-			c.resize(1); // Possibly we could construct 'c' with size, but c may not have such a ctor, though we rely on it having a resize function.
-			mBegin = c.begin();
-			mEnd   = mBegin;
-			mSize  = 0;
-
-			if(c.get_allocator() == x.c.get_allocator())
-				swap(x); // We are leaving x in an unusual state by swapping default-initialized members with it, as it won't be usable and can be only destructible.
-			else
-				operator=(x);
-		}
-	#endif
+		else
+			operator=(x);
+	}
 
 
 	template <typename T, typename Container, typename Allocator>
@@ -718,15 +710,13 @@ namespace eastl
 	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename T, typename Container, typename Allocator>
-		typename ring_buffer<T, Container, Allocator>::this_type&
-		ring_buffer<T, Container, Allocator>::operator=(this_type&& x)
-		{
-			swap(x);
-			return *this;
-		}
-	#endif
+	template <typename T, typename Container, typename Allocator>
+	typename ring_buffer<T, Container, Allocator>::this_type&
+	ring_buffer<T, Container, Allocator>::operator=(this_type&& x)
+	{
+		swap(x);
+		return *this;
+	}
 
 
 	template <typename T, typename Container, typename Allocator>
@@ -950,49 +940,83 @@ namespace eastl
 	}
 	*/
 
-	template<typename Container, bool UseHeapTemporary>
-	class ContainerTemporary
+
+	namespace Internal 
 	{
-	public:
-		Container* get_container();
-	};
+		///////////////////////////////////////////////////////////////
+		// has_overflow_allocator
+		//
+		// returns true_type when the specified container type is an 
+		// eastl::fixed_*  container and therefore has an overflow 
+		// allocator type.
+		//
+		template <typename T, typename = void>
+		struct has_overflow_allocator : false_type {};
+
+		template <typename T>
+		struct has_overflow_allocator<T, void_t<decltype(declval<T>().get_overflow_allocator())>> : true_type {};
 
 
-	template<typename Container>
-	struct ContainerTemporary<Container, false>
+		///////////////////////////////////////////////////////////////
+		// GetFixedContainerCtorAllocator
+		//
+		// eastl::fixed_* containers are only constructible via their 
+		// overflow allocator type. This helper select the appropriate 
+		// allocator from the specified container.
+		//
+		template <typename Container, bool UseOverflowAllocator = has_overflow_allocator<Container>()()>
+		struct GetFixedContainerCtorAllocator
+		{
+			auto& operator()(Container& c) { return c.get_overflow_allocator(); }
+		};
+
+		template <typename Container>
+		struct GetFixedContainerCtorAllocator<Container, false>
+		{
+			auto& operator()(Container& c) { return c.get_allocator(); }
+		};
+	} // namespace Internal
+
+
+	///////////////////////////////////////////////////////////////
+	// ContainerTemporary
+	// 
+	// Helper type which prevents utilizing excessive stack space 
+	// when creating temporaries when swapping/copying the underlying 
+	// ring_buffer container type. 
+	//
+	template <typename Container, bool UseHeapTemporary = (sizeof(Container) >= EASTL_MAX_STACK_USAGE)>
+	struct ContainerTemporary
 	{
 		Container mContainer;
 
-	public:
-		Container& get()
+		ContainerTemporary(Container& parentContainer)
+		    : mContainer(Internal::GetFixedContainerCtorAllocator<Container>{}(parentContainer))
 		{
-			return mContainer;
 		}
+
+		Container& get() { return mContainer; }
 	};
 
-
-	template<typename Container>
+	template <typename Container>
 	struct ContainerTemporary<Container, true>
 	{
-		EASTLAllocatorType mAllocator;
+		typename Container::allocator_type* mAllocator;
 		Container* mContainer;
 
-	public:
-		ContainerTemporary()
-			: mAllocator(*EASTLAllocatorDefault(), EASTL_TEMP_DEFAULT_NAME)
-			, mContainer(new(mAllocator.allocate(sizeof(Container))) Container)
-		{}
+		ContainerTemporary(Container& parentContainer)
+		    : mAllocator(&parentContainer.get_allocator())
+		    , mContainer(new (mAllocator->allocate(sizeof(Container))) Container)
+		{
+		}
 
 		~ContainerTemporary()
 		{
 			mContainer->~Container();
-			mAllocator.deallocate(mContainer, sizeof(Container));
+			mAllocator->deallocate(mContainer, sizeof(Container));
 		}
 
-		Container& get()
-		{
-			return *mContainer;
-		}
+		Container& get() { return *mContainer; }
 	};
 
 
@@ -1023,7 +1047,7 @@ namespace eastl
 			// To do: This code needs to be amended to deal with possible exceptions 
 			// that could occur during the resize call below.
 
-			ContainerTemporary<Container, sizeof(Container) >= EASTL_MAX_STACK_USAGE> cTemp;
+			ContainerTemporary<Container> cTemp(c);
 			cTemp.get().resize(n + 1);
 			eastl::copy(begin(), end(), cTemp.get().begin());
 			eastl::swap(c, cTemp.get());
@@ -1068,7 +1092,7 @@ namespace eastl
 
 		if(n != capacity)    // If we need to change capacity...
 		{
-			ContainerTemporary<Container, sizeof(Container) >= EASTL_MAX_STACK_USAGE> cTemp;
+			ContainerTemporary<Container> cTemp(c);
 			cTemp.get().resize(n + 1);
 
 			iterator itCopyBegin = begin();
@@ -1097,7 +1121,7 @@ namespace eastl
 
 		if(n > (c.size() - 1))    // If we need to grow in capacity... // (c.size() - 1) == capacity(); we are attempting to reduce function calls.
 		{
-			ContainerTemporary<Container, sizeof(Container) >= EASTL_MAX_STACK_USAGE> cTemp;
+			ContainerTemporary<Container> cTemp(c);
 			cTemp.get().resize(n + 1);
 			eastl::copy(begin(), end(), cTemp.get().begin());
 			eastl::swap(c, cTemp.get());
