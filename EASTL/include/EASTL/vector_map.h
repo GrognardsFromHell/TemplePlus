@@ -158,10 +158,8 @@ namespace eastl
 		explicit vector_map(const allocator_type& allocator);
 		explicit vector_map(const key_compare& comp, const allocator_type& allocator = EASTL_VECTOR_MAP_DEFAULT_ALLOCATOR);
 		vector_map(const this_type& x);
-		#if EASTL_MOVE_SEMANTICS_ENABLED
 		vector_map(this_type&& x);
 		vector_map(this_type&& x, const allocator_type& allocator);
-		#endif
 		vector_map(std::initializer_list<value_type> ilist, const key_compare& compare = key_compare(), const allocator_type& allocator = EASTL_VECTOR_MAP_DEFAULT_ALLOCATOR);
 
 		template <typename InputIterator>
@@ -172,9 +170,7 @@ namespace eastl
 
 		this_type& operator=(const this_type& x);
 		this_type& operator=(std::initializer_list<value_type> ilist);
-		#if EASTL_MOVE_SEMANTICS_ENABLED
 		this_type& operator=(this_type&& x);
-		#endif
 
 		void swap(this_type& x);
 
@@ -209,42 +205,28 @@ namespace eastl
 		//     bool      empty() const;
 		//     void      clear();
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED
-			template <class... Args>
-			eastl::pair<iterator, bool> emplace(Args&&... args);
+		template <class... Args>
+		eastl::pair<iterator, bool> emplace(Args&&... args);
 
-			template <class... Args> 
-			iterator emplace_hint(const_iterator position, Args&&... args);
-		#else
-			#if EASTL_MOVE_SEMANTICS_ENABLED
-				eastl::pair<iterator, bool> emplace(value_type&& value);
-				iterator emplace_hint(const_iterator position, value_type&& value);
-			#endif
+		template <class... Args> 
+		iterator emplace_hint(const_iterator position, Args&&... args);
 
-			eastl::pair<iterator, bool> emplace(const value_type& value);
-			iterator emplace_hint(const_iterator position, const value_type& value);
-		#endif
+		template <typename P, typename = eastl::enable_if_t<eastl::is_constructible_v<value_type, P&&>>>
+		pair<iterator, bool> insert(P&& otherValue);
 
 		eastl::pair<iterator, bool> insert(const value_type& value);
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename P>
-		pair<iterator, bool> insert(P&& otherValue);
-		#endif
-
-		iterator insert(const_iterator position, const value_type& value);
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-		iterator insert(const_iterator position, value_type&& value);
-		#endif
-
-		void insert(std::initializer_list<value_type> ilist);
+		pair<iterator, bool>        insert(const key_type& otherValue);
+		pair<iterator, bool>        insert(key_type&& otherValue);
+		iterator                    insert(const_iterator position, const value_type& value);
+		iterator                    insert(const_iterator position, value_type&& value);
+		void                        insert(std::initializer_list<value_type> ilist);
 
 		template <typename InputIterator>
 		void insert(InputIterator first, InputIterator last);
 
-		iterator  erase(const_iterator position);
-		iterator  erase(const_iterator first, const_iterator last);
-		size_type erase(const key_type& k);
-
+		iterator         erase(const_iterator position);
+		iterator         erase(const_iterator first, const_iterator last);
+		size_type        erase(const key_type& k);
 		reverse_iterator erase(const_reverse_iterator position);
 		reverse_iterator erase(const_reverse_iterator first, const_reverse_iterator last);
 
@@ -257,7 +239,7 @@ namespace eastl
 		template <typename U, typename BinaryPredicate>
 		const_iterator find_as(const U& u, BinaryPredicate predicate) const;
 
-		size_type count(const key_type& k);
+		size_type count(const key_type& k) const;
 
 		iterator       lower_bound(const key_type& k);
 		const_iterator lower_bound(const key_type& k) const;
@@ -268,6 +250,12 @@ namespace eastl
 		eastl::pair<iterator, iterator>             equal_range(const key_type& k);
 		eastl::pair<const_iterator, const_iterator> equal_range(const key_type& k) const;
 
+		template <typename U, typename BinaryPredicate> 
+		eastl::pair<iterator, iterator>             equal_range(const U& u, BinaryPredicate predicate);
+
+		template <typename U, typename BinaryPredicate> 
+		eastl::pair<const_iterator, const_iterator> equal_range(const U& u, BinaryPredicate) const;
+
 		// Note: vector_map operator[] returns a reference to the mapped_type, same as map does.
 		// But there's an important difference: This reference can be invalidated by -any- changes  
 		// to the vector_map that cause it to change capacity. This is unlike map, with which 
@@ -277,11 +265,29 @@ namespace eastl
 		// the vMap[100] doesn't already exist in the vector_map:
 		//     vMap[100] = vMap[0]
 		mapped_type& operator[](const key_type& k);
+		mapped_type& operator[](key_type&& k);
 
-		// Functions which are disallowed due to being unsafe. We are looking for a way to disable these at compile-time. Declaring but not defining them doesn't work due to explicit template instantiations.
-		//void      push_back(const value_type& value);
-		//reference push_back();
-		//void*     push_back_uninitialized();
+		// Functions which are disallowed due to being unsafe. 
+		void      push_back(const value_type& value) = delete;
+		reference push_back()                        = delete;
+		void*     push_back_uninitialized()          = delete;
+		template <class... Args>
+		reference emplace_back(Args&&...)            = delete;
+
+		// NOTE(rparolin): It is undefined behaviour if user code fails to ensure the container
+		// invariants are respected by performing an explicit call to 'sort' before any other
+		// operations on the container are performed that do not clear the elements.
+		//
+		// 'push_back_unsorted' and 'emplace_back_unsorted' do not satisfy container invariants
+		// for being sorted. We provide these overloads explicitly labelled as '_unsorted' as an
+		// optimization opportunity when batch inserting elements so users can defer the cost of
+		// sorting the container once when all elements are contained. This was done to clarify
+		// the intent of code by leaving a trace that a manual call to sort is required.
+		// 
+		template <typename... Args> decltype(auto) push_back_unsorted(Args&&... args)    
+			{ return base_type::push_back(eastl::forward<Args>(args)...); }
+		template <typename... Args> decltype(auto) emplace_back_unsorted(Args&&... args) 
+			{ return base_type::emplace_back(eastl::forward<Args>(args)...); }
 
 	}; // vector_map
 
@@ -325,22 +331,20 @@ namespace eastl
 	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename K, typename T, typename C, typename A, typename RAC>
-		inline vector_map<K, T, C, A, RAC>::vector_map(this_type&& x)
-			: base_type(eastl::move(x)), mValueCompare(x.mValueCompare)
-		{
-			// Empty. Note: x is left with empty contents but its original mValueCompare instead of the default one. 
-		}
+	template <typename K, typename T, typename C, typename A, typename RAC>
+	inline vector_map<K, T, C, A, RAC>::vector_map(this_type&& x)
+		: base_type(eastl::move(x)), mValueCompare(x.mValueCompare)
+	{
+		// Empty. Note: x is left with empty contents but its original mValueCompare instead of the default one. 
+	}
 
 
-		template <typename K, typename T, typename C, typename A, typename RAC>
-		inline vector_map<K, T, C, A, RAC>::vector_map(this_type&& x, const allocator_type& allocator)
-			: base_type(eastl::move(x), allocator), mValueCompare(x.mValueCompare)
-		{
-			// Empty. Note: x is left with empty contents but its original mValueCompare instead of the default one. 
-		}
-	#endif
+	template <typename K, typename T, typename C, typename A, typename RAC>
+	inline vector_map<K, T, C, A, RAC>::vector_map(this_type&& x, const allocator_type& allocator)
+		: base_type(eastl::move(x), allocator), mValueCompare(x.mValueCompare)
+	{
+		// Empty. Note: x is left with empty contents but its original mValueCompare instead of the default one. 
+	}
 
 
 	template <typename K, typename T, typename C, typename A, typename RAC>
@@ -379,16 +383,14 @@ namespace eastl
 	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename K, typename T, typename C, typename A, typename RAC>
-		inline vector_map<K, T, C, A, RAC>&
-		vector_map<K, T, C, A, RAC>::operator=(this_type&& x)
-		{
-			base_type::operator=(eastl::move(x));
-			eastl::swap(mValueCompare, x.mValueCompare);
-			return *this;
-		}
-	#endif
+	template <typename K, typename T, typename C, typename A, typename RAC>
+	inline vector_map<K, T, C, A, RAC>&
+	vector_map<K, T, C, A, RAC>::operator=(this_type&& x)
+	{
+		base_type::operator=(eastl::move(x));
+		eastl::swap(mValueCompare, x.mValueCompare);
+		return *this;
+	}
 
 
 	template <typename K, typename T, typename C, typename A, typename RAC>
@@ -441,64 +443,33 @@ namespace eastl
 	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED
-		template <typename K, typename T, typename C, typename A, typename RAC>
-		template <class... Args>
-		inline eastl::pair<typename vector_map<K, T, C, A, RAC>::iterator, bool>
-		vector_map<K, T, C, A, RAC>::emplace(Args&&... args)
-		{
-			#if EASTL_USE_FORWARD_WORKAROUND
-				auto value = value_type(eastl::forward<Args>(args)...);  // Workaround for compiler bug in VS2013 which results in a compiler internal crash while compiling this code.
-			#else
-				value_type  value(eastl::forward<Args>(args)...);
-			#endif
-			return insert(eastl::move(value));
-		}
+	template <typename K, typename T, typename C, typename A, typename RAC>
+	template <class... Args>
+	inline eastl::pair<typename vector_map<K, T, C, A, RAC>::iterator, bool>
+	vector_map<K, T, C, A, RAC>::emplace(Args&&... args)
+	{
+		#if EASTL_USE_FORWARD_WORKAROUND
+			auto value = value_type(eastl::forward<Args>(args)...);  // Workaround for compiler bug in VS2013 which results in a compiler internal crash while compiling this code.
+		#else
+			value_type  value(eastl::forward<Args>(args)...);
+		#endif
+		return insert(eastl::move(value));
+	}
 
-		template <typename K, typename T, typename C, typename A, typename RAC>
-		template <class... Args>
-		inline typename vector_map<K, T, C, A, RAC>::iterator 
-		vector_map<K, T, C, A, RAC>::emplace_hint(const_iterator position, Args&&... args)
-		{
-			#if EASTL_USE_FORWARD_WORKAROUND
-				auto value = value_type(eastl::forward<Args>(args)...);  // Workaround for compiler bug in VS2013 which results in a compiler internal crash while compiling this code.
-			#else
-				value_type  value(eastl::forward<Args>(args)...);
-			#endif
 
-			return insert(position, eastl::move(value));
-		}
-	#else
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename K, typename T, typename C, typename A, typename RAC>
-			inline eastl::pair<typename vector_map<K, T, C, A, RAC>::iterator, bool>
-			vector_map<K, T, C, A, RAC>::emplace(value_type&& value)
-			{
-				return insert(eastl::move(value));
-			}
-
-			template <typename K, typename T, typename C, typename A, typename RAC>
-			inline typename vector_map<K, T, C, A, RAC>::iterator 
-			vector_map<K, T, C, A, RAC>::emplace_hint(const_iterator position, value_type&& value)
-			{
-				return insert(position, eastl::move(value));
-			}
+	template <typename K, typename T, typename C, typename A, typename RAC>
+	template <class... Args>
+	inline typename vector_map<K, T, C, A, RAC>::iterator 
+	vector_map<K, T, C, A, RAC>::emplace_hint(const_iterator position, Args&&... args)
+	{
+		#if EASTL_USE_FORWARD_WORKAROUND
+			auto value = value_type(eastl::forward<Args>(args)...);  // Workaround for compiler bug in VS2013 which results in a compiler internal crash while compiling this code.
+		#else
+			value_type  value(eastl::forward<Args>(args)...);
 		#endif
 
-		template <typename K, typename T, typename C, typename A, typename RAC>
-		inline eastl::pair<typename vector_map<K, T, C, A, RAC>::iterator, bool>
-		vector_map<K, T, C, A, RAC>::emplace(const value_type& value)
-		{
-			return insert(value);
-		}
-
-		template <typename K, typename T, typename C, typename A, typename RAC>
-		inline typename vector_map<K, T, C, A, RAC>::iterator 
-		vector_map<K, T, C, A, RAC>::emplace_hint(const_iterator position, const value_type& value)
-		{
-			return insert(position, value);
-		}
-	#endif
+		return insert(position, eastl::move(value));
+	}
 
 
 	template <typename K, typename T, typename C, typename A, typename RAC>
@@ -509,24 +480,51 @@ namespace eastl
 
 		if((itLB != end()) && !mValueCompare(value, *itLB))
 			return eastl::pair<iterator, bool>(itLB, false);
+
 		return eastl::pair<iterator, bool>(base_type::insert(itLB, value), true);
 	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename K, typename T, typename C, typename A, typename RAC>
-		template <typename P>
-		inline eastl::pair<typename vector_map<K, T, C, A, RAC>::iterator, bool>
-		vector_map<K, T, C, A, RAC>::insert(P&& otherValue)
-		{
-			value_type value(eastl::forward<P>(otherValue));
-			const iterator itLB(lower_bound(value.first));
+	template <typename K, typename T, typename C, typename A, typename RAC>
+	template <typename P, typename>
+	inline eastl::pair<typename vector_map<K, T, C, A, RAC>::iterator, bool>
+	vector_map<K, T, C, A, RAC>::insert(P&& otherValue)
+	{
+		value_type value(eastl::forward<P>(otherValue));
+		const iterator itLB(lower_bound(value.first));
 
-			if((itLB != end()) && !mValueCompare(value, *itLB))
-				return eastl::pair<iterator, bool>(itLB, false);
-			return eastl::pair<iterator, bool>(base_type::insert(itLB, eastl::move(value)), true);
-		}
-	#endif
+		if((itLB != end()) && !mValueCompare(value, *itLB))
+			return eastl::pair<iterator, bool>(itLB, false);
+
+		return eastl::pair<iterator, bool>(base_type::insert(itLB, eastl::move(value)), true);
+	}
+
+
+	template <typename K, typename T, typename C, typename A, typename RAC>
+	inline eastl::pair<typename vector_map<K, T, C, A, RAC>::iterator, bool>
+	vector_map<K, T, C, A, RAC>::insert(const key_type& otherValue)
+	{
+		value_type value(eastl::pair_first_construct, otherValue);
+		const iterator itLB(lower_bound(value.first));
+
+		if((itLB != end()) && !mValueCompare(value, *itLB))
+			return eastl::pair<iterator, bool>(itLB, false);
+
+		return eastl::pair<iterator, bool>(base_type::insert(itLB, eastl::move(value)), true);
+	}
+
+	template <typename K, typename T, typename C, typename A, typename RAC>
+	inline eastl::pair<typename vector_map<K, T, C, A, RAC>::iterator, bool>
+	vector_map<K, T, C, A, RAC>::insert(key_type&& otherValue)
+	{
+		value_type value(eastl::pair_first_construct, eastl::move(otherValue));
+		const iterator itLB(lower_bound(value.first));
+
+		if((itLB != end()) && !mValueCompare(value, *itLB))
+			return eastl::pair<iterator, bool>(itLB, false);
+
+		return eastl::pair<iterator, bool>(base_type::insert(itLB, eastl::move(value)), true);
+	}
 
 
 	template <typename K, typename T, typename C, typename A, typename RAC>
@@ -554,22 +552,20 @@ namespace eastl
 	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename K, typename T, typename C, typename A, typename RAC>
-		typename vector_map<K, T, C, A, RAC>::iterator
-		vector_map<K, T, C, A, RAC>::insert(const_iterator position, value_type&& value)
+	template <typename K, typename T, typename C, typename A, typename RAC>
+	typename vector_map<K, T, C, A, RAC>::iterator
+	vector_map<K, T, C, A, RAC>::insert(const_iterator position, value_type&& value)
+	{
+		if((position == end()) || mValueCompare(value, *position))  // If the element at position is greater than value...
 		{
-			if((position == end()) || mValueCompare(value, *position))  // If the element at position is greater than value...
-			{
-				if((position == begin()) || mValueCompare(*(position - 1), value)) // If the element before position is less than value...
-					return base_type::insert(position, eastl::move(value));
-			}
-
-			const eastl::pair<typename vector_map<K, T, C, A, RAC>::iterator, bool> result = insert(eastl::move(value));
-
-			return result.first;
+			if((position == begin()) || mValueCompare(*(position - 1), value)) // If the element before position is less than value...
+				return base_type::insert(position, eastl::move(value));
 		}
-	#endif
+
+		const eastl::pair<typename vector_map<K, T, C, A, RAC>::iterator, bool> result = insert(eastl::move(value));
+
+		return result.first;
+	}
 
 
 	template <typename K, typename T, typename C, typename A, typename RAC>
@@ -650,10 +646,7 @@ namespace eastl
 	vector_map<K, T, C, A, RAC>::find(const key_type& k)
 	{
 		const eastl::pair<iterator, iterator> pairIts(equal_range(k));
-
-		if(pairIts.first != pairIts.second)
-			return pairIts.first;
-		return end();
+		return (pairIts.first != pairIts.second) ? pairIts.first : end();
 	}
 
 
@@ -662,36 +655,33 @@ namespace eastl
 	vector_map<K, T, C, A, RAC>::find(const key_type& k) const
 	{
 		const eastl::pair<const_iterator, const_iterator> pairIts(equal_range(k));
-
-		if(pairIts.first != pairIts.second)
-			return pairIts.first;
-		return end();
+		return (pairIts.first != pairIts.second) ? pairIts.first : end();
 	}
 
 
 	template <typename K, typename T, typename C, typename A, typename RAC>
 	template <typename U, typename BinaryPredicate>
 	inline typename vector_map<K, T, C, A, RAC>::iterator
-	vector_map<K, T, C, A, RAC>::find_as(const U& u, BinaryPredicate /*predicate*/)
+	vector_map<K, T, C, A, RAC>::find_as(const U& u, BinaryPredicate predicate)
 	{
-		// To do: Implement this.
-		return find(u);
+		const eastl::pair<iterator, iterator> pairIts(equal_range(u, predicate));
+		return (pairIts.first != pairIts.second) ? pairIts.first : end();
 	}
 
 
 	template <typename K, typename T, typename C, typename A, typename RAC>
 	template <typename U, typename BinaryPredicate>
 	inline typename vector_map<K, T, C, A, RAC>::const_iterator
-	vector_map<K, T, C, A, RAC>::find_as(const U& u, BinaryPredicate /*predicate*/) const
+	vector_map<K, T, C, A, RAC>::find_as(const U& u, BinaryPredicate predicate) const
 	{
-		// To do: Implement this.
-		return find(u);
+		const eastl::pair<const_iterator, const_iterator> pairIts(equal_range(u, predicate));
+		return (pairIts.first != pairIts.second) ? pairIts.first : end();
 	}
 
 
 	template <typename K, typename T, typename C, typename A, typename RAC>
 	inline typename vector_map<K, T, C, A, RAC>::size_type
-	vector_map<K, T, C, A, RAC>::count(const key_type& k)
+	vector_map<K, T, C, A, RAC>::count(const key_type& k) const
 	{
 		const const_iterator it(find(k));
 		return (it != end()) ? (size_type)1 : (size_type)0;
@@ -765,6 +755,48 @@ namespace eastl
 		return eastl::pair<const_iterator, const_iterator>(itLower, ++itUpper);
 	}
 
+	template <typename K, typename T, typename C, typename A, typename RAC>
+	template <typename U, typename BinaryPredicate> 
+	inline eastl::pair<typename vector_map<K, T, C, A, RAC>::iterator, typename vector_map<K, T, C, A, RAC>::iterator>
+	vector_map<K, T, C, A, RAC>::equal_range(const U& u, BinaryPredicate predicate)
+	{
+		// The resulting range will either be empty or have one element,
+		// so instead of doing two tree searches (one for lower_bound and 
+		// one for upper_bound), we do just lower_bound and see if the 
+		// result is a range of size zero or one.
+		map_value_compare<U, value_type, BinaryPredicate> predicate_cmp(predicate);
+
+		const iterator itLower(eastl::lower_bound(begin(), end(), u, predicate_cmp));
+
+		if((itLower == end()) || predicate_cmp(u, *itLower)) // If at the end or if (k is < itLower)...
+			return eastl::pair<iterator, iterator>(itLower, itLower);
+
+		iterator itUpper(itLower);
+		return eastl::pair<iterator, iterator>(itLower, ++itUpper);
+	}
+
+
+	template <typename K, typename T, typename C, typename A, typename RAC>
+	template <typename U, typename BinaryPredicate> 
+	inline eastl::pair<typename vector_map<K, T, C, A, RAC>::const_iterator, typename vector_map<K, T, C, A, RAC>::const_iterator>
+	vector_map<K, T, C, A, RAC>::equal_range(const U& u, BinaryPredicate predicate) const
+	{
+		// The resulting range will either be empty or have one element,
+		// so instead of doing two tree searches (one for lower_bound and 
+		// one for upper_bound), we do just lower_bound and see if the 
+		// result is a range of size zero or one.
+		map_value_compare<U, value_type, BinaryPredicate> predicate_cmp(predicate);
+
+		const const_iterator itLower(eastl::lower_bound(begin(), end(), u, predicate_cmp));
+
+		if((itLower == end()) || predicate_cmp(u, *itLower)) // If at the end or if (k is < itLower)...
+			return eastl::pair<const_iterator, const_iterator>(itLower, itLower);
+
+		const_iterator itUpper(itLower);
+		return eastl::pair<const_iterator, const_iterator>(itLower, ++itUpper);
+	}
+
+
 
 	template <typename K, typename T, typename C, typename A, typename RAC>
 	inline typename vector_map<K, T, C, A, RAC>::mapped_type&
@@ -778,6 +810,18 @@ namespace eastl
 	}
 
 
+	template <typename K, typename T, typename C, typename A, typename RAC>
+	inline typename vector_map<K, T, C, A, RAC>::mapped_type&
+	vector_map<K, T, C, A, RAC>::operator[](key_type&& k)
+	{
+		iterator itLB(lower_bound(k));
+
+		if((itLB == end()) || key_comp()(k, (*itLB).first))
+			itLB = insert(itLB, value_type(eastl::move(k), mapped_type()));
+		return (*itLB).second;
+	}
+
+
 
 	///////////////////////////////////////////////////////////////////////////
 	// global operators
@@ -787,7 +831,7 @@ namespace eastl
 	inline bool operator==(const vector_map<Key, T, Compare, Allocator, RandomAccessContainer>& a, 
 						   const vector_map<Key, T, Compare, Allocator, RandomAccessContainer>& b) 
 	{
-		return (a.size() == b.size()) && equal(b.begin(), b.end(), a.begin()); 
+		return (a.size() == b.size()) && eastl::equal(b.begin(), b.end(), a.begin()); 
 	}
 
 
@@ -795,7 +839,7 @@ namespace eastl
 	inline bool operator<(const vector_map<Key, T, Compare, Allocator, RandomAccessContainer>& a,
 						  const vector_map<Key, T, Compare, Allocator, RandomAccessContainer>& b)
 	{
-		return lexicographical_compare(a.begin(), a.end(), b.begin(), b.end(), a.value_comp());
+		return eastl::lexicographical_compare(a.begin(), a.end(), b.begin(), b.end(), a.value_comp());
 	}
 
 
