@@ -398,6 +398,28 @@ int SpellEntry::SpellLevelForSpellClass(int spellClass)
 	return -1;
 }
 
+int SpellEntry::GetLowestSpellLevel(uint32_t spellEnumIn)
+{
+	int level = 100;
+	const auto spExtFind = spellSys.mSpellEntryExt.find(spellEnum);
+	if (spExtFind != spellSys.mSpellEntryExt.end()) {
+		for (auto it : spExtFind->second.levelSpecs) {
+			if (it.slotLevel < level) {
+				level = it.slotLevel;
+			}
+		}
+	}
+
+	for (auto i = 0u; i < this->spellLvlsNum; i++) {
+		const auto& spec = this->spellLvls[i];
+		if (spec.slotLevel < level) {
+			level = spec.slotLevel;
+		}
+	}
+
+	return (level < 100) ? level : -1;
+}
+
 SpellPacketBody::SpellPacketBody()
 {
 	spellSys.spellPacketBodyReset(this);
@@ -1007,6 +1029,16 @@ int LegacySpellSystem::GetNumSpellsPerDay(objHndl handle, Stat classCode, int sp
 int LegacySpellSystem::ParseSpellSpecString(SpellStoreData* spell, char* spellString)
 {
 	return addresses.ParseSpellSpecString(spell, spellString);
+}
+
+std::vector<int> LegacySpellSystem::GetValidSpellEnums()
+{
+	std::vector<int> res;
+	for (auto it : spellEntryRegistry) {
+		res.push_back(it.data->spellEnum);
+	}
+
+	return res;
 }
 
 const char* LegacySpellSystem::GetSpellMesline(uint32_t lineNumber) const{
