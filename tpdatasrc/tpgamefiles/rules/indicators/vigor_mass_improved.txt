@@ -1,0 +1,5 @@
+ID_string: VIGOR,_MASS_IMPROVED
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\spell vigor.tga
+help_topic: TAG_SPELLS_VIGOR,_MASS_IMPROVED
+tooltip_base_text: Vigor, Mass Improved

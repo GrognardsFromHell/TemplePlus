@@ -1,0 +1,5 @@
+ID_string: VIGOR,_GREATER
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\spell vigor.tga
+help_topic: TAG_SPELLS_VIGOR,_GREATER
+tooltip_base_text: Vigor, Greater
