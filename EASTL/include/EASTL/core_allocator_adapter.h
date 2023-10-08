@@ -161,11 +161,14 @@ namespace EA
 			~CoreDeleterAdapter() EA_NOEXCEPT {}
 
 			template <typename T>
-			void operator()(T* p) { mpCoreAllocator->Free(p); }
+			void operator()(T* p)
+			{
+				p->~T();
+				mpCoreAllocator->Free(p);
+			}
 
 			CoreDeleterAdapter(const CoreDeleterAdapter& in) { mpCoreAllocator = in.mpCoreAllocator; }
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
 			CoreDeleterAdapter(CoreDeleterAdapter&& in)
 			{
 				mpCoreAllocator = in.mpCoreAllocator;
@@ -184,8 +187,6 @@ namespace EA
 				in.mpCoreAllocator = nullptr;
 				return *this;
 			}
-		#endif
-
 		};
 
 
@@ -255,10 +256,13 @@ namespace EA
 		template<class AllocatorType>
 		inline CoreAllocatorAdapter<AllocatorType>& CoreAllocatorAdapter<AllocatorType>::operator=(const CoreAllocatorAdapter& x)
 		{
-			// In order to be consistent with EASTL's allocator implementation, 
-			// we don't copy the name from the source object.
 			mpCoreAllocator = x.mpCoreAllocator;
 			mnFlags         = x.mnFlags;
+
+			#if EASTL_NAME_ENABLED
+				mpName = x.mpName;
+			#endif
+				
 			return *this;
 		}
 

@@ -110,6 +110,10 @@ def ObjMeetsPrereqs( obj ):
 	#Check for martial weapon proficiency
 	if obj.has_feat(feat_martial_weapon_proficiency_all):
 		return 1
+	
+	#Elves are proficient with some martial weapons
+	if char_editor.has_feat(feat_simple_weapon_proficiency_elf):
+		return 1
 			
 	has_martial_feat = false
 	for i in range (feat_martial_weapon_proficiency_throwing_axe , feat_martial_weapon_proficiency_composite_longbow):

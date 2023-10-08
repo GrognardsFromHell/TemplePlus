@@ -184,7 +184,7 @@ uint32_t AiSystem::StrategyParse(objHndl objHnd, objHndl target)
 	AiStrategy * aiStrat = GetAiStrategy(critterStratIdx);
 	
 	if (!actSeq->TurnBasedStatusInit(objHnd)) return 0;
-
+	logger->debug("AiStrategy: \t Executing start \"{}\" ({})", aiStrat->name, critterStratIdx);
 	actSeq->curSeqReset(objHnd);
 	d20->GlobD20ActnInit();
 	spell->spellPacketBodyReset(&aiTac.spellPktBody);
@@ -1107,6 +1107,9 @@ void AiSystem::AlertAllies(objHndl handle, objHndl alertFrom, int rangeIdx){
 
 void AiSystem::AlertAlly(objHndl handle, objHndl alertFrom, objHndl alertDispatcher, int rangeIdx){
 	if (handle == alertDispatcher || handle == alertFrom)
+		return;
+	auto resObj = gameSystems->GetObj().GetObject(handle);
+	if (resObj->GetFlags() & (OF_OFF | OF_DESTROYED | OF_DONTDRAW))
 		return;
 
 	if (aiSys.GetAllegianceStrength(handle, alertDispatcher)){

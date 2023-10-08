@@ -16,6 +16,7 @@
 #include "d20_race.h"
 #include "ui_render.h"
 #include "gamesystems/objects/objsystem.h"
+#include <python/python_integration_class_spec.h>
 
 int PcCreationFeatUiPrereqCheckUsercallWrapper();
 int HookedUsercallFeatMultiselectSub_101822A0();
@@ -141,6 +142,10 @@ public:
 		// replaceFunction<void(__cdecl)()>(0x101B0620, []() {uiPcCreation.ClassCheckComplete(); }); // same function as ui_char_editor, already replaced
 		replaceFunction<void(__cdecl)()>(0x10188260, []() {uiPcCreation.ClassBtnEntered(); });
 
+		// Alignment
+		replaceFunction<BOOL(__cdecl)(int, Alignment)>(0x10188170, [](int classEnum, Alignment alignment) ->BOOL {
+			return pythonClassIntegration.IsAlignmentCompatible(alignment, classEnum); });
+
 		// Skill
 
 		// Hook for SkillIncreaseBtnMsg to raise 4 times when ctrl/alt is pressed
@@ -209,7 +214,16 @@ public:
 		// UiPartyCreationGetPartyPool
 		static void(*orgGetPartyPool)(int) = replaceFunction<void(int)>(0x10165E60, GetPartyPool);
 		// static int(*orgPartyPoolLoader)() = replaceFunction<int()>(0x10165790, PartyPoolLoader);
-
+		static void(__cdecl* orgPartyPoolExit)() = replaceFunction<void()>(0x10165A50, []() { // fixed crash due to not removing from GroupList when exiting party pool (e.g. to change the party alignment)
+			int& uiPartyCreationIngame = temple::GetRef<int>(0x10BF24E0);
+			
+			if (!uiPartyCreationIngame) {
+				// moved this part to the beginning, since UiCharHide(0) will refresh the radial menus based on discarded party members, potentially overflowing it
+				static auto uiPartyPoolRemoveAllPcPortraits = temple::GetRef<void()>(0x1011B6F0); 
+				uiPartyPoolRemoveAllPcPortraits();
+			}
+			return orgPartyPoolExit();
+			});
 
 		if (temple::Dll::GetInstance().HasCo8Hooks()) {
 			writeNoops(0x1011D521); // disabling EXP draw call

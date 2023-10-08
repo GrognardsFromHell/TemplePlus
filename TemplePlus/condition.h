@@ -346,6 +346,7 @@ uint32_t BarbarianAddFatigue(objHndl critter, CondStruct* cond);
 int NonlethalDamageRadial(DispatcherCallbackArgs args);
 int DealNormalDamageCallback(DispatcherCallbackArgs args);
 int NonlethalDamageSetSubdual(DispatcherCallbackArgs args);
+int DealNormalDamageAttackPenalty(DispatcherCallbackArgs args);
 
 int DisarmedOnAdd(DispatcherCallbackArgs args);
 int DisarmedRetrieveQuery(DispatcherCallbackArgs args);

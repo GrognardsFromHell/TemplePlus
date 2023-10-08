@@ -248,8 +248,8 @@ uint32_t LegacyCritterSystem::HasMet(objHndl critter, objHndl otherCritter) {
 	return addresses.HasMet(critter, otherCritter);
 }
 
-uint32_t LegacyCritterSystem::AddFollower(objHndl npc, objHndl pc, int unkFlag, bool asAiFollower) {
-	return addresses.AddFollower(npc, pc, unkFlag, asAiFollower);
+uint32_t LegacyCritterSystem::AddFollower(objHndl npc, objHndl pc, int forcedFollower, bool asAiFollower) {
+	return addresses.AddFollower(npc, pc, forcedFollower, asAiFollower);
 }
 
 bool LegacyCritterSystem::FollowerAtMax(){

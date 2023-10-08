@@ -27,29 +27,18 @@ namespace eastl
 		// Example usage:
 		//     typedef typename unique_pointer_type<int, SomeDeleter>::type pointer
 		//
-		#if defined(EA_COMPILER_NO_DECLTYPE)
-			// To consider: find a way to achieve this with compilers that don't 
-			// support decltype? It's not likely to be needed by many or any users.
-			template <typename T, typename Deleter>
-			class unique_pointer_type
-			{
-			public:
-				typedef T* type;
-			};
-		#else
-			template <typename T, typename Deleter>
-			class unique_pointer_type
-			{
-				template <typename U>
-				static typename U::pointer test(typename U::pointer*);
+		template <typename T, typename Deleter>
+		class unique_pointer_type
+		{
+			template <typename U>
+			static typename U::pointer test(typename U::pointer*);
 
-				template <typename U>
-				static T* test(...);
+			template <typename U>
+			static T* test(...);
 
-			public:
-				typedef decltype(test<typename eastl::remove_reference<Deleter>::type>(0)) type;
-			};
-		#endif
+		public:
+			typedef decltype(test<typename eastl::remove_reference<Deleter>::type>(0)) type;
+		};
 
 
 		///////////////////////////////////////////////////////////////////////
@@ -72,8 +61,8 @@ namespace eastl
 
 		#define EASTL_TYPE_TRAIT_is_array_cv_convertible_CONFORMANCE 1
 
-		template <typename P1, typename P2, bool = eastl::is_same<typename eastl::remove_cv<typename pointer_traits<P1>::element_type>::type,
-																  typename eastl::remove_cv<typename pointer_traits<P2>::element_type>::type>::value>
+		template <typename P1, typename P2, bool = eastl::is_same_v<eastl::remove_cv_t<typename pointer_traits<P1>::element_type>,
+																    eastl::remove_cv_t<typename pointer_traits<P2>::element_type>>>
 		struct is_array_cv_convertible_impl 
 			: public eastl::is_convertible<P1, P2> {};  // Return true if P1 is convertible to P2.
 
@@ -81,7 +70,7 @@ namespace eastl
 		struct is_array_cv_convertible_impl<P1, P2, false> 
 			: public eastl::false_type {};              // P1's underlying type is not the same as P2's, so it can't be converted, even if P2 refers to a subclass of P1. Parent == Child, but Parent[] != Child[]
 
-		template <typename P1, typename P2, bool = eastl::is_scalar<P1>::value && !eastl::is_pointer<P1>::value>
+		template <typename P1, typename P2, bool = eastl::is_scalar_v<P1> && !eastl::is_pointer_v<P1>>
 		struct is_array_cv_convertible
 			: public is_array_cv_convertible_impl<P1, P2> {};
 
@@ -163,9 +152,7 @@ namespace eastl
 	template <typename T>
 	struct default_delete
 	{
-		#if defined(EA_COMPILER_NO_DEFAULTED_FUNCTIONS)
-			EA_CONSTEXPR default_delete() EA_NOEXCEPT {}
-		#elif defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION <= 4006) // GCC prior to 4.7 has a bug with noexcept here.
+		#if defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION <= 4006) // GCC prior to 4.7 has a bug with noexcept here.
 			EA_CONSTEXPR default_delete() = default;
 		#else
 			EA_CONSTEXPR default_delete() EA_NOEXCEPT = default;
@@ -175,16 +162,17 @@ namespace eastl
 		default_delete(const default_delete<U>&, typename eastl::enable_if<is_convertible<U*, T*>::value>::type* = 0) EA_NOEXCEPT {}
 
 		void operator()(T* p) const EA_NOEXCEPT
-			{ delete p; }
+		{
+			static_assert(eastl::internal::is_complete_type_v<T>, "Attempting to call the destructor of an incomplete type");
+			delete p;
+		}
 	};
 
 
 	template <typename T>
 	struct default_delete<T[]> // Specialization for arrays.
 	{
-		#if defined(EA_COMPILER_NO_DEFAULTED_FUNCTIONS)
-			EA_CONSTEXPR default_delete() EA_NOEXCEPT {}
-		#elif defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION <= 4006) // GCC prior to 4.7 has a bug with noexcept here.
+		#if defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION <= 4006) // GCC prior to 4.7 has a bug with noexcept here.
 			EA_CONSTEXPR default_delete() = default;
 		#else
 			EA_CONSTEXPR default_delete() EA_NOEXCEPT = default;
