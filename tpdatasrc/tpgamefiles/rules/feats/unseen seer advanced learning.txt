@@ -1,0 +1,5 @@
+name: Unseen Seer Advanced Learning
+flags: 8
+prereqs:
+description: At level 2, 5 and 8 add a new spell from any class's spell list.  Select the spell after levelup through the radial menu.
+prereq descr: Unseen Seer 2.

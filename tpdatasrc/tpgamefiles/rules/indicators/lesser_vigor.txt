@@ -1,0 +1,5 @@
+ID_string: LESSER_VIGOR
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\spell vigor.tga
+help_topic: TAG_SPELLS_LESSER_VIGOR
+tooltip_base_text: Lesser Vigor

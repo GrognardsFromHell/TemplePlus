@@ -1,3 +1,8 @@
+// Vigor Spell Fixes
+{794}{Vigor, Lesser}
+{795}{Vigor}
+{796}{Vigor, Greater}
+
 //Additional spells added by Sagenlicht
 
 // Spell Names
@@ -121,8 +126,16 @@
 {1171}{Storm of Elemental Fury}
 {1172}{Acid Fog}
 {1173}{Touch of Madness}
+{1174}{Energized Shield, Lesser}
+{1175}{Energized Shield}
+{1176}{Draconic Might}
+{1177}{Vigor, Mass Lesser}
+{1178}{Vigor, Mass Improved}
 
 // Spell Descriptions
+{5794}Vigor, Lesser {[Conjuration] Fast Healing 1 for 10 +1/level rounds, max 15.}
+{5795}Vigor {[Conjuration] Fast Healing 2 for 10 +1/level rounds, max 25.}
+{5796}Vigor, Greater {[Conjuration] Fast Healing 4 for 10 +1/level rounds, max 35.}
 {6050} Sound Lance {[Evocation] Projectile of intense sonic energy that deals 1d8/level (max 10d8) sonic damage.}
 {6051} Critical Strike {[Divination] Against flanked or dexterity denied foes gain 1d6 damage, +4 to confirm critical hits and weapon is considered to be keen.}
 {6052} Camouflage {[Transmutation] For 10 min/level gain a +10 circumstance bonus to Hide.}
@@ -243,3 +256,8 @@
 {6171} Storm of Elemental Fury {[Conjuration](Summoning) TBD}
 {6172} Acid Fog {[Conjuration](Creation)[Acid] While inside Acid Fog, targets are concealed, can only move 5 feet, are immune to ranged attacks and take 2d6 acid damage every turn.}
 {6173} Touch of Madness {[Enchantment][Mind-Affecting] Target must make a Will Saving Throw after a successful touch attack or be dazed for 1 round/level.}
+{6174} Energized Shield, Lesser {TBD}
+{6175} Energized Shield {TBD}
+{6176} Draconic Might {TBD}
+{6177} Vigor, Mass Lesser {Targets get Fast Healing 1 for 10 +1/level rounds, max 25.}
+{6178} Vigor, Mass Improved {Targets get Fast Healing 3 for 10 +1/level rounds, max 40.}

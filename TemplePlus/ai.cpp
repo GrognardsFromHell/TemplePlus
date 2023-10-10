@@ -207,7 +207,7 @@ uint32_t AiSystem::StrategyParse(objHndl objHnd, objHndl target)
 		// check if disarmed, if so, try to pick up weapon
 		if (d20Sys.d20Query(aiTac.performer, DK_QUE_Disarmed))
 		{
-			logger->info("AiStrategy: \t {} attempting to pickup weapon...", description.getDisplayName(objHnd));
+			logger->info("AiStrategy: \t {} attempting to pickup weapon...", objHnd);
 			if (PickUpWeapon(&aiTac))
 			{
 				actSeq->sequencePerform();
@@ -249,7 +249,7 @@ uint32_t AiSystem::StrategyParse(objHndl objHnd, objHndl target)
 	aiTac.tacIdx = -1;
 	logger->info("AiStrategy: \t {} attempting default...", objHnd);
 	if (aiTac.target)
-		logger->info("Target: {}", description.getDisplayName(aiTac.target));
+		logger->info("Target: {}", aiTac.target);
 	assert(aiTac.aiTac != nullptr);
 	if (Default(&aiTac))
 	{
@@ -275,7 +275,7 @@ uint32_t AiSystem::StrategyParse(objHndl objHnd, objHndl target)
 	// if that doesn't work either, try to Break Free (NPC might be held back by Web / Entangle)
 	if (d20Sys.d20Query(aiTac.performer, DK_QUE_Is_BreakFree_Possible))
 	{
-		logger->info("AiStrategy: \t {} attempting to break free...", description.getDisplayName(objHnd));
+		logger->info("AiStrategy: \t {} attempting to break free...", objHnd);
 		if (BreakFree(&aiTac)){
 			actSeq->sequencePerform();
 			return TRUE;
@@ -345,7 +345,7 @@ uint32_t AiSystem::AiStrategDefaultCast(objHndl objHnd, objHndl target, D20Spell
 	// if nothing else, try to breakfree
 	if (d20Sys.d20Query(aiTac.performer, DK_QUE_Is_BreakFree_Possible))
 	{
-		logger->info("AiStrategy: \t {} attempting to break free...", description.getDisplayName(objHnd));
+		logger->info("AiStrategy: \t {} attempting to break free...", objHnd);
 		if (BreakFree(&aiTac))
 		{
 			actSeq->sequencePerform();
@@ -1171,8 +1171,6 @@ void AiSystem::AlertAllies2(objHndl handle, objHndl alertFrom)
 		if (tbSys.IsInInitiativeList(resHandle) || critterSys.IsCombatModeActive(resHandle))
 			continue;
 
-		auto objDesc = description.getDisplayName(resHandle);
-
 		if (!combatSys.HasLineOfAttack(resHandle, handle)) {
 
 
@@ -1325,7 +1323,7 @@ int AiSystem::TargetClosest(AiTactic* aiTac)
 	}
 	*/
 
-	logger->debug("{} targeting closest...", objects.description.getDisplayName(performer));
+	logger->debug("{} targeting closest...", performer);
 
 	// ObjList objlist;
 	// objlist.ListVicinity(performerLoc.location, OLC_CRITTERS);
@@ -1352,7 +1350,7 @@ int AiSystem::TargetClosest(AiTactic* aiTac)
 			&& !ignoreTarget)
 		{
 			auto distToCombatant = locSys.DistanceToObj(performer, combatant);
-			//logger->debug("Checking line of attack for target: {}", description.getDisplayName(combatant));
+			//logger->debug("Checking line of attack for target: {}", combatant);
 			bool hasLineOfAttack = combatSys.HasLineOfAttack(performer, combatant);
 			if (d20Sys.d20Query(combatant, DK_QUE_Critter_Is_Invisible)
 				&& !d20Sys.d20Query(performer, DK_QUE_Critter_Can_See_Invisible))
@@ -1384,7 +1382,7 @@ int AiSystem::TargetClosest(AiTactic* aiTac)
 		}
 
 	}
-	logger->info("{} targeted.", objects.description.getDisplayName(aiTac->target, aiTac->performer));
+	logger->info("{} targeted.", aiTac->target);
 
 	return 0;
 }
@@ -1452,7 +1450,7 @@ int AiSystem::TargetThreatened(AiTactic* aiTac)
 
 	locSys.getLocAndOff(aiTac->performer, &performerLoc);
 
-	logger->info("{} targeting threatened...", objects.description.getDisplayName(aiTac->performer));
+	logger->info("{} targeting threatened...", aiTac->performer);
 
 	ObjList objlist;
 	objlist.ListVicinity(performerLoc.location, OLC_CRITTERS);
@@ -1494,7 +1492,7 @@ int AiSystem::TargetThreatened(AiTactic* aiTac)
 		if ( (curSeq->tbStatus.tbsFlags & (TBSF_Movement | TBSF_Movement2)) == (TBSF_Movement | TBSF_Movement2)){
 			if (ignoredTarget){
 				aiTac->target = ignoredTarget;
-				logger->info("{} targeted because there was no other legit target and am out of moves.", objects.description.getDisplayName(aiTac->target, aiTac->performer));
+				logger->info("{} targeted because there was no other legit target and am out of moves.", aiTac->target);
 				return FALSE;
 			}
 		}
@@ -1505,7 +1503,7 @@ int AiSystem::TargetThreatened(AiTactic* aiTac)
 	} 
 	else
 	{
-		logger->info("{} targeted.", objects.description.getDisplayName(aiTac->target, aiTac->performer));
+		logger->info("{} targeted.", aiTac->target);
 	}
 	
 
@@ -2800,7 +2798,7 @@ unsigned AiSystem::WakeFriend(AiTactic* aiTac)
 		bool isThreatened = false;
 		for (int i = 0; i < enemyCount; i++)
 		{
-			//logger->debug("Enemy under test: {}", description.getDisplayName(enemies[i]));
+			//logger->debug("Enemy under test: {}", enemies[i]);
 			if (combatSys.CanMeleeTarget(enemies[i], performer))
 			{
 				isThreatened = true;
@@ -2883,7 +2881,7 @@ int AiSystem::AiTargetObj(AiTactic* aiTac)
 	if (!handle || !objSystem->IsValidHandle(handle)) 
 		return FALSE;
 
-	logger->info("AiTargetObj: \t {} set target from {} to {}", description.getDisplayName(aiTac->performer), description.getDisplayName(aiTac->target), description.getDisplayName(handle));
+	logger->info("AiTargetObj: \t {} set target from {} to {}", aiTac->performer, aiTac->target, handle);
 	aiTac->target = handle;
 	return FALSE;
 }
@@ -2897,7 +2895,7 @@ int AiSystem::AiTotalDefence(AiTactic* aiTac)
 	d20Sys.GlobD20ActnSetTarget(objHndl::null, 0);
 	actSeqSys.ActionAddToSeq();
 	auto result = actSeqSys.ActionSequenceChecksWithPerformerLocation();
-	logger->info("AiTotalDefence: \t {} attempting total defence => {}", description.getDisplayName(aiTac->performer), result);
+	logger->info("AiTotalDefence: \t {} attempting total defence => {}", aiTac->performer, result);
 	if (result != AEC_OK) {
 		actSeqSys.ActionSequenceRevertPath(initialActNum);
 		return FALSE;
@@ -2939,7 +2937,7 @@ int AiSystem::AiD20Action(AiTactic* aiTac)
 	d20Sys.GlobD20ActnSetTarget(aiTac->target, 0);
 	actSeqSys.ActionAddToSeq();
 	auto result = actSeqSys.ActionSequenceChecksWithPerformerLocation();
-	logger->info("AiD20Action: \t {} attempting {} on {} => {}", description.getDisplayName(aiTac->performer), d20type, description.getDisplayName(aiTac->target), result);
+	logger->info("AiD20Action: \t {} attempting {} on {} => {}", aiTac->performer, d20type, aiTac->target, result);
 	if (result != AEC_OK) {
 		actSeqSys.ActionSequenceRevertPath(initialActNum);
 		return FALSE;
@@ -3549,7 +3547,7 @@ int AiSystem::ChooseRandomSpellFromList(AiPacket* aiPkt, AiSpellList* aiSpells){
 			return 1;
 		} 
 		else{
-			logger->debug("AiCheckSpells(): object {} ({}) cannot cast spell {}", description.getDisplayName( aiPkt->obj), objSystem->GetObject(aiPkt->obj)->id.ToString(),  spellEnum);
+			logger->debug("AiCheckSpells(): object {} ({}) cannot cast spell {}", aiPkt->obj, objSystem->GetObject(aiPkt->obj)->id.ToString(),  spellEnum);
 		}
 
 	}
@@ -3997,7 +3995,7 @@ public:
 			/*if (triggerer && san == san_enter_combat) {
 				auto tgtObj = gameSystems->GetObj().GetObject(triggerer);
 				if (tgtObj->type == obj_t_pc) {
-					logger->debug("ScriptExecute: For {}, triggerer {}", description.getDisplayName(attachee), description.getDisplayName(triggerer));
+					logger->debug("ScriptExecute: For {}, triggerer {}", attachee, triggerer);
 					auto scri = gameSystems->GetObj().GetObject(attachee)->GetScriptArray(obj_f_scripts_idx)[san_enter_combat];
 					if (scri.scriptId)
 					{

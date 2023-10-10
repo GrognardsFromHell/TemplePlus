@@ -213,6 +213,7 @@ static BOOL ExpireGFadeControl(const TimeEvent* event) {
 }
 
 static BOOL ExpireTeleported(const TimeEvent* event) {
+	// calls 0x10025050 which does some sector lighting updates mainly
 	static auto callback = temple::GetPointer<LegacyExpireFunc>(0x10025250);
 	return callback(event);
 }

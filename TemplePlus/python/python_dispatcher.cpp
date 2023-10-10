@@ -713,6 +713,8 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.value("StandardAttack", D20ActionType::D20A_STANDARD_ATTACK)
 		.value("FullAttack", D20ActionType::D20A_FULL_ATTACK)
 		.value("StandardRangedAttack", D20ActionType::D20A_STANDARD_RANGED_ATTACK)
+		.value("UnspecifiedAttack", D20ActionType::D20A_UNSPECIFIED_ATTACK)
+		.value("TouchAttack", D20ActionType::D20A_TOUCH_ATTACK)
 		.value("StandUp", D20ActionType::D20A_STAND_UP)
 		.value("TurnUndead", D20ActionType::D20A_TURN_UNDEAD)
 		.value("ClassAbility", D20ActionType::D20A_CLASS_ABILITY_SA)
@@ -851,7 +853,10 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		{
 			return spellSys.GetSpellLevelBySpellClass(spEntry.spellEnum, spellClass);
 		})
-		.def_readwrite("spellRange", &SpellEntry::spellRange)
+		.def("get_lowest_spell_level", [](SpellEntry& spEntry)->int
+		{
+			return spEntry.GetLowestSpellLevel(spEntry.spellEnum);
+		})
 		.def_readwrite("spellRangeType", &SpellEntry::spellRangeType)
 		.def("get_spell_range_exact", [](SpellEntry &spEntry, int casterLevel, objHndl &caster)->int
 		{

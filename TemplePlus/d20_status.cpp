@@ -130,9 +130,9 @@ void D20StatusSystem::D20StatusInit(objHndl objHnd)
 		initFeats(objHnd);
 
 	}
-	else
+	else 
 	{
-		logger->info("Attempted D20Status Init for non-critter {}", description.getDisplayName(objHnd));
+		logger->info("Attempted D20Status Init for non-critter {}", objHnd);
 		debugLol++;
 		if (debugLol % 1000 == 1)
 		{
@@ -190,7 +190,7 @@ void D20StatusSystem::D20StatusInit(objHndl objHnd)
 void D20StatusSystem::D20StatusRefresh(objHndl objHnd)
 {
 	Dispatcher *dispatcher; 
-	logger->info("Refreshing D20 Status for {}", description.getDisplayName(objHnd));
+	logger->info("Refreshing D20 Status for {}", objHnd);
 	dispatcher = objects.GetDispatcher(objHnd);
 	if (dispatch.dispatcherValid(dispatcher)){
 		dispatch.PackDispatcherIntoObjFields(objHnd, dispatcher);
@@ -399,12 +399,12 @@ void D20StatusSystem::D20StatusInitFromInternalFields(objHndl objHnd, Dispatcher
 		if (condId){
 			if (!condStruct || reinterpret_cast<uint32_t>(condStruct->condName) == 0xccCCccCC)	{
 			troubledIdx = i;
-			logger->debug("Missing condStruct for {}, permanent mod idx: {}/{}, arg idx {}; attempting to recover", description.getDisplayName(objHnd), i, numPermMods, j);
+			logger->debug("Missing condStruct for {}, permanent mod idx: {}/{}, arg idx {}; attempting to recover", objHnd, i, numPermMods, j);
 			break;
 			}
 		} 
 		else	{
-			logger->debug("Found a null condition on the permanent mods??? Critter: {}", description.getDisplayName(objHnd));
+			logger->debug("Found a null condition on the permanent mods??? Critter: {}", objHnd);
 			continue;
 		}
 
@@ -437,7 +437,7 @@ void D20StatusSystem::D20StatusInitFromInternalFields(objHndl objHnd, Dispatcher
 
 			if (!condStruct || reinterpret_cast<uint32_t>(condStruct->condName) == 0xccCCccCC)
 			{
-				logger->debug("Missing ANOTHER condStruct for {}, permanent mod idx: {}/{}; shit", description.getDisplayName(objHnd), i, numPermMods);
+				logger->debug("Missing ANOTHER condStruct for {}, permanent mod idx: {}/{}; shit", objHnd, i, numPermMods);
 				break;
 			}
 
@@ -462,7 +462,7 @@ void D20StatusSystem::D20StatusInitFromInternalFields(objHndl objHnd, Dispatcher
 			if (!condStruct || reinterpret_cast<uint32_t>(condStruct->condName) == 0xccCCccCC)
 			{
 				troubledIdx = i;
-				logger->debug("Missing ANOTHER condStruct for {}, permanent mod idx: {}/{}, arg idx {}; Too bad", description.getDisplayName(objHnd), i, numPermMods, j);
+				logger->debug("Missing ANOTHER condStruct for {}, permanent mod idx: {}/{}, arg idx {}; Too bad", objHnd, i, numPermMods, j);
 				break;
 			}
 

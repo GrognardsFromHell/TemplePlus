@@ -70,7 +70,7 @@ bool FrozenObjRef::Load(objHndl * handleOut, FrozenObjRef * ref, void * fh)
 
 		*handleOut = objSystem->GetHandleById(objId);
 		if (!*handleOut) {
-			logger->warn("Couldn't find object with id {} @ {} on map {}", objId, location, mapId);
+			logger->warn("FrozenObjRef::Load: Couldn't find object with guid {} @ {} on map {}", objId.ToString(), location, mapId);
 		}
 
 		if (ref) {

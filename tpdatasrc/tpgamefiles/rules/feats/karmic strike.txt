@@ -1,0 +1,5 @@
+name: Karmic Strike
+flags: 4194304
+prereqs: 1 13 3 13 1024 1 1013 1
+description: On you action you choose to take a -4 penalty to your Armor Class in exchange for each opponent hitting you provoking an attack of opportunity.
+prereq descr: Combat Expertise, Dodge, Intelligence 13, Dexterity 13
