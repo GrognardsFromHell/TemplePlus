@@ -1,0 +1,10 @@
+name: Freezing The Lifeblood
+flags: 12582928
+prereqs: 4 17 266 10
+description: You can paralyze a humanoid opponent with an unarmed attack.
+
+Declare that you are using this feat before you make your attack roll (thus, a missed attack roll ruins the attempt). Against a humanoid opponent, you can make an unarmed attack that deals no damage but has a chance of paralyzing your target. If your attack is successful, your target must attempt a Fortitude saving throw (DC 10 + 1/2 your character level + your Wis modifier). If the target fails this saving throw, it is paralyzed for 1d4+1 rounds. Each attempt to paralyze an opponent counts as one of your uses of the Stunning Fist feat for the day. Creatures immune to stunning cannot be paralyzed in this manner.
+prereq descr: Improved Unarmed Strike, Stunning Fist, Wis 17, base attack bonus +10
+
+Special
+A fighter may select Freezing the Lifeblood as one of his fighter bonus feats.
