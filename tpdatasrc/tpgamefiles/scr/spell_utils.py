@@ -11,8 +11,14 @@ def spellName(spellId):
 def spellKeyName(spellId):
     return spellName(spellId).upper().replace(" ", "_")
 
+def spellTag(spellId):
+    return "TAG_SPELLS_{}".format(spellKeyName(spellId))
+
 def spellKey(spellId):
     return tpdp.hash(spellKeyName(spellId))
+
+def getSpellHelpTag(spellId):
+    return "~{}~[{}]".format(spellName(spellId), spellTag(spellId))
 
 def spellTime(duration):
     if duration == 1:
@@ -225,6 +231,30 @@ def checkCategoryType(critter, *args):
         if critter.is_category_type(mcType):
             return True
     return False
+
+##### workaround getSpellClassCode #####
+def getSpellClassCode(classEnum):
+    dummySpellData = tpdp.D20SpellData()
+    dummySpellData.set_spell_class(classEnum)
+    return dummySpellData.spell_class
+##### workaround getSpellClassCode #####
+
+# Perform a normal attack instead of a touch attack
+def performAttack(attacker, target, spellId, isRanged = True):
+    actionType = tpdp.D20ActionType.StandardRangedAttack if isRanged else tpdp.D20ActionType.StandardAttack
+    attackAction = tpdp.D20Action(actionType)
+    attackAction.performer = attacker
+    attackAction.target = target
+    attackAction.spell_id = spellId
+    if isRanged:
+        attackAction.flags |= D20CAF_RANGED
+    attackAction.data1 = 1 #perform_touch_attack in python_object sets this to 1
+    attackAction.to_hit_processing()
+    game.create_history_from_id(attackAction.roll_id_1)
+    game.create_history_from_id(attackAction.roll_id_2)
+    game.create_history_from_id(attackAction.roll_id_0)
+    return attackAction.flags
+
 
 ### Item Condition functions
 
@@ -478,9 +508,66 @@ class TouchModifier(PythonModifier):
 
 ### Standard Spell Condition Modifier ###
 
+def getBonusHelpTag(bonusType):
+    return game.get_mesline("mes\\bonus_description.mes", bonusType)
+
+def applyBonus(attachee, args, evt_obj):
+    bonusValue = args.get_param(0)
+    if not bonusValue:
+        bonusValue = args.get_arg(2)
+    bonusType = args.get_param(1)
+    bonusHelpTag = getBonusHelpTag(bonusType)
+    spellId = args.get_arg(0)
+    spellHelpTag = getSpellHelpTag(spellId)
+    evt_obj.bonus_list.add(bonusValue, bonusType, "{} : {}".format(bonusHelpTag, spellHelpTag))
+    return 0
+
+def applyDamagePacketBonus(attachee, args, evt_obj):
+    bonusValue = args.get_param(0)
+    if not bonusValue:
+        bonusValue = args.get_arg(2)
+    bonusType = args.get_param(1)
+    bonusHelpTag = getBonusHelpTag(bonusType)
+    spellId = args.get_arg(0)
+    spellHelpTag = getSpellHelpTag(spellId)
+    evt_obj.damage_packet.bonus_list.add(bonusValue, bonusType, "{} : {}".format(bonusHelpTag, spellHelpTag))
+    return 0
+
+def applyDamageReduction(attachee, args, evt_obj):
+    drAmount = args.get_param(0)
+    drBreakType = args.get_param(1)
+    damageMesId = 126 #ID 126 = ~Damage Reduction~[TAG_SPECIAL_ABILITIES_DAMAGE_REDUCTION]
+    evt_obj.damage_packet.add_physical_damage_res(drAmount, drBreakType, damageMesId)
+    return 0
+
+def applySaveBonus(attachee, args, evt_obj):
+    saveDescriptor = args.get_param(2)
+    if saveDescriptor:
+        if not evt_obj.flags & (1 << (saveDescriptor - 1)):
+            return 0
+    applyBonus(attachee, args, evt_obj)
+    return 0
+
+def applyAttackPacketBonus(attachee, args, evt_obj):
+    flagRequirement = args.get_param(2)
+    if flagRequirement:
+        if not evt_obj.attack_packet.get_flags() & flagRequirement:
+            return 0
+    applyBonus(attachee, args, evt_obj)
+    return 0
+
+def applyTempHp(attachee, args, evt_obj):
+    spellId = args.get_arg(0)
+    duration = args.get_arg(1)
+    tempHpAmount = args.get_param(0) if args.get_param(0) else args.get_arg(2)
+    attachee.condition_add_with_args("Temporary_Hit_Points", spellId, duration, tempHpAmount)
+    return 0
+
 class SpellPythonModifier(PythonModifier):
     #SpellPythonModifier have at least 3 arguments:
     #spellId, duration, empty
+    #if a simple bonusValue is passed by the spell it is set to arg 3:
+    #spellId, duration, bonusValue, empty
     def __init__(self, name, args = 3, preventDuplicate = False):
         PythonModifier.__init__(self, name, args, preventDuplicate)
         self.AddHook(ET_OnGetTooltip, EK_NONE, spellTooltip, ())
@@ -495,10 +582,37 @@ class SpellPythonModifier(PythonModifier):
         self.AddHook(ET_OnConditionAdd, EK_NONE, addConcentration, ())
         self.AddHook(ET_OnD20Signal, EK_S_Concentration_Broken, checkRemoveSpell, ())
     def AddSpellDismiss(self):
-        self.AddHook(ET_OnConditionAdd, EK_NONE, spell_utils.addDismiss, ())
+        self.AddHook(ET_OnConditionAdd, EK_NONE, addDismiss, ())
         self.AddHook(ET_OnD20Signal, EK_S_Dismiss_Spells, checkRemoveSpell, ())
     def AddSpellNoDuplicate(self):
         self.AddHook(ET_OnConditionAddPre, EK_NONE, replaceCondition, ())
+    def AddSkillBonus(self, bonusValue, bonusType, *args):
+        if not args:
+            eventKey = EK_NONE
+            self.AddHook(ET_OnGetSkillLevel, eventKey, applyBonus, (bonusValue, bonusType,))
+        else:
+            for skill in args:
+                eventKey = skill + 20
+                self.AddHook(ET_OnGetSkillLevel, eventKey, applyBonus, (bonusValue, bonusType,))
+    def AddAbilityBonus(self, bonusValue, bonusType, *args):
+        for abilityScore in args:
+            eventKey = abilityScore + 1
+            self.AddHook(ET_OnAbilityScoreLevel, eventKey, applyBonus,(bonusValue, bonusType,))
+    def AddDamageReduction(self, drAmount, drBreakType):
+        self.AddHook(ET_OnTakingDamage2, EK_NONE, applyDamageReduction,(drAmount, drBreakType,))
+    def AddSaveBonus(self, bonusValue, bonusType, saveDescriptor = D20STD_F_NONE, eventKey = EK_NONE):
+        self.AddHook(ET_OnSaveThrowLevel, eventKey, applySaveBonus, (bonusValue, bonusType, saveDescriptor,))
+    def AddToHitBonus(self, bonusValue, bonusType, flagRequirement = 0):
+        self.AddHook(ET_OnToHitBonus2, EK_NONE, applyAttackPacketBonus,(bonusValue, bonusType, flagRequirement,))
+    def AddAcBonus(self, bonusValue, bonusType):
+        self.AddHook(ET_OnGetAC, EK_NONE, applyBonus, (bonusValue, bonusType,))
+    def AddAbilityCheckBonus(self, bonusValue, bonusType): #might get expanded
+        self.AddHook(ET_OnGetAbilityCheckModifier, EK_NONE, applyBonus, (bonusValue, bonusType,))
+    def AddMovementBonus(self, bonusValue, bonusType):
+        self.AddHook(ET_OnGetMoveSpeedBase, EK_NONE, applyBonus, (bonusValue, bonusType,))
+    def AddTempHp(self, tempHpAmount):
+        self.AddHook(ET_OnConditionAdd, EK_NONE, applyTempHp, (tempHpAmount,))
+        self.AddHook(ET_OnD20Signal, EK_S_Temporary_Hit_Points_Removed, removeTempHp, ())
 
 ### Aoe Modifier Classes ###
 def addAoeObjToSpellRegistry(attachee, args, evt_obj):
@@ -509,50 +623,64 @@ def addAoeObjToSpellRegistry(attachee, args, evt_obj):
     spellPacket.update_registry()
     return 0
 
+def verifyAoeEventTarget(args, spellTarget, spellPacket):
+    affectedTargets = args.get_param(0)
+    spellCaster = spellPacket.caster
+
+    if spellTarget == OBJ_HANDLE_NULL:
+        return False
+    elif affectedTargets == aoe_event_target_friendly and not spellTarget.is_friendly(spellCaster):
+        return False
+    elif affectedTargets == aoe_event_target_non_friendly and spellTarget.is_friendly(spellCaster):
+        return False
+    #elif spellTarget == attachee:
+    #    return 0
+    elif spellPacket.check_spell_resistance(spellTarget):
+        return False
+
+    return True
+
+def verifyEventId(spellEventId, aoeEventId):
+    if spellEventId != aoeEventId:
+        return False
+    return True
+
 def aoeOnEnter(attachee, args, evt_obj):
     print "aoeOnEnter Hook"
+    spellTarget = evt_obj.target
     spellId = args.get_arg(0)
     duration = args.get_arg(1)
     spellDc = args.get_arg(2)
     spellEventId = args.get_arg(3)
     spellPacket = tpdp.SpellPacket(spellId)
-    spellTarget = evt_obj.target
-    print "spellTarget: {}".format(spellTarget)
+    aoeEventId = evt_obj.evt_id
 
-    if spellEventId != evt_obj.evt_id:
-        return 0
-    elif spellTarget == OBJ_HANDLE_NULL:
-        return 0
-    elif attachee == OBJ_HANDLE_NULL:
-        return 0
-    #elif spellTarget == attachee:
-    #    return 0
-    elif spellPacket.check_spell_resistance(spellTarget):
+    if not verifyEventId(spellEventId, aoeEventId):
         return 0
 
-    spellPacket.trigger_aoe_hit()
-
-    conditionName = args.get_cond_name()
-    particlesId = game.particles("{}-hit".format(conditionName), spellTarget)
-
-    if spellPacket.add_target(spellTarget, particlesId):
-        conditionEffectName = spellName(spellId)
-        spellTarget.condition_add_with_args(conditionEffectName, spellId, duration + 1, spellDc, spellEventId)
-        spellPacket.update_registry()
+    if verifyAoeEventTarget(args, spellTarget, spellPacket):
+        spellPacket.trigger_aoe_hit()
+        conditionName = args.get_cond_name()
+        particlesId = game.particles("{}-hit".format(conditionName), spellTarget)
+        if spellPacket.add_target(spellTarget, particlesId):
+            conditionEffectName = spellName(spellId)
+            spellTarget.condition_add_with_args(conditionEffectName, spellId, duration + 1, spellDc, spellEventId)
+            spellPacket.update_registry()
     return 0
 
-def aoehandleRemoveActions(attachee, args, evt_obj):
+def aoeHandleEndSignal(attachee, args, evt_obj):
     spellId = args.get_arg(0)
-    spellPacket = tpdp.SpellPacket(spellId)
-    spellMesId = 20000 # ID 20000 = A spell has expired.
-    if spellPacket.spell_enum == 0:
-        return 0
-    spellTargetCount = 0
-    while spellTargetCount < spellPacket.target_count:
-        spellTarget = spellPacket.get_target(spellTargetCount)
-        spellTarget.d20_send_signal(S_Spell_End, spellId)
-        spellTarget.float_mesfile_line('mes\\spell.mes', spellMesId)
-        spellTargetCount += 1
+    if evt_obj.data1 == spellId:
+        spellPacket = tpdp.SpellPacket(spellId)
+        #spellMesId = 20000 # ID 20000 = A spell has expired.
+        if spellPacket.spell_enum == 0:
+            return 0
+        spellTargetCount = 0
+        while spellTargetCount < spellPacket.target_count:
+            spellTarget = spellPacket.get_target(spellTargetCount)
+            spellTarget.d20_send_signal(S_Spell_End, spellId)
+            #spellTarget.float_mesfile_line('mes\\spell.mes', spellMesId)
+            spellTargetCount += 1
     return 0
 
 def aoeCombatEndSignal(attachee, args, evt_obj):
@@ -563,13 +691,12 @@ def aoeOnLeave(attachee, args, evt_obj):
     spellId = args.get_arg(0)
     spellPacket = tpdp.SpellPacket(spellId)
     spellEventId = args.get_arg(3)
+    aoeEventId = evt_obj.evt_id
 
-    if spellEventId != evt_obj.evt_id:
-        return 0
-
-    spellPacket.end_target_particles(attachee)
-    spellPacket.remove_target(attachee)
-    args.remove_spell_mod()
+    if verifyEventId(spellEventId, aoeEventId):
+        spellPacket.end_target_particles(attachee)
+        spellPacket.remove_target(attachee)
+        args.remove_spell_mod()
     return 0
 
 def aoeSpellEndSignal(attachee, args, evt_obj):
@@ -582,42 +709,48 @@ def aoeSpellEndSignal(attachee, args, evt_obj):
         args.remove_spell_mod()
     return 0
 
-def aoeEffectTickdown(attachee, args, evt_obj):
-    #This is only done, so the Tooltip can show the duration
-    #Actual spell end is handled by the AoeSpellHandlerModifier
-    duration = args.get_arg(1)
-    duration -= evt_obj.data1
-    args.set_arg(1, duration)
-    return 0
-
-class AoeSpellHandleModifier(PythonModifier):
-    #AoeSpellHandlerModifier have at least 5 arguments:
+class AoeObjHandleModifier(PythonModifier):
+    #AoeObjHandleModifier have at least 5 arguments:
     #spellId, duration, spellDc, spellEventId, empty
+    #Use this class only, if you have a special onEnterAoE Event
+    #Standard Cases use class below (AoeSpellHandleModifier)
     def __init__(self, name, args = 5, preventDuplicate = False):
         PythonModifier.__init__(self, name, args, preventDuplicate)
         self.AddHook(ET_OnConditionAdd, EK_NONE, addAoeObjToSpellRegistry, ())
-        self.AddHook(ET_OnObjectEvent, EK_OnEnterAoE, aoeOnEnter, ())
         self.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, queryActiveSpell, ())
         self.AddHook(ET_OnD20Signal, EK_S_Combat_End, aoeCombatEndSignal, ())
-        #self.AddHook(ET_OnConditionRemove, EK_NONE, aoehandleRemoveActions, ())
         self.AddSpellDispelCheckStandard()
         self.AddSpellTeleportPrepareStandard()
         self.AddSpellTeleportReconnectStandard()
         self.AddSpellCountdownStandardHook()
         self.AddAoESpellEndStandardHook()
+    def AddSpellConcentration(self):
+        self.AddHook(ET_OnConditionAdd, EK_NONE, addConcentration, ())
+        self.AddHook(ET_OnD20Signal, EK_S_Concentration_Broken, aoeHandleEndSignal, ())
+    def AddSpellDismiss(self):
+        self.AddHook(ET_OnConditionAdd, EK_NONE, addDismiss, ())
+        self.AddHook(ET_OnD20Signal, EK_S_Dismiss_Spells, aoeHandleEndSignal, ())
+    def AddSpellNoDuplicate(self):
+        self.AddHook(ET_OnConditionAddPre, EK_NONE, replaceCondition, ())
+
+class AoeSpellHandleModifier(AoeObjHandleModifier):
+    #AoeSpellHandlerModifier have at least 5 arguments:
+    #spellId, duration, spellDc, spellEventId, empty
+    def __init__(self, name, affectedTargets = aoe_event_target_all, args = 5, preventDuplicate = False):
+        super(AoeSpellHandleModifier, self).__init__(name, args, preventDuplicate)
+        self.AddHook(ET_OnObjectEvent, EK_OnEnterAoE, aoeOnEnter, (affectedTargets,))
 
 class AoESpellEffectModifier(PythonModifier):
     #AoESpellEffectPythonModifier have at least 5 arguments:
     #spellId, duration, spellDc, spellEventId, empty
     def __init__(self, name, args = 5, preventDuplicate = True):
         PythonModifier.__init__(self, name, args, preventDuplicate)
-        #self.AddHook(ET_OnBeginRound, EK_NONE, aoeEffectTickdown, ())
         self.AddHook(ET_OnObjectEvent, EK_OnLeaveAoE, aoeOnLeave, ())
         self.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, queryActiveSpell, ())
         self.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Condition, querySpellCondition, ())
         self.AddHook(ET_OnGetTooltip, EK_NONE, spellTooltip, ())
         self.AddHook(ET_OnGetEffectTooltip, EK_NONE, spellEffectTooltip, ())
-        #self.AddHook(ET_OnD20Signal, EK_S_Spell_End, aoeSpellEndSignal, ())
+        self.AddHook(ET_OnD20Signal, EK_S_Spell_End, aoeSpellEndSignal, ())
         self.AddHook(ET_OnD20Signal, EK_S_Combat_End, aoeCombatEndSignal, ())
         self.AddHook(ET_OnD20Signal, EK_S_Killed, spellKilled, ())
         self.AddSpellCountdownStandardHook()
