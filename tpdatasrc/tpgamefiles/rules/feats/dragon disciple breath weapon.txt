@@ -1,0 +1,22 @@
+name: Dragon Disciple Breath Weapon
+flags: 8
+prereqs:
+description: At 3rd level, a dragon disciple gains a minor breath weapon. The type and shape depend on the dragon variety whose heritage he enjoys (see below). Regardless of the ancestor, the breath weapon deals 2d8 points of damage of the appropriate energy type.
+
+At 7th level, the damage increases to 4d8, and when a disciple attains dragon apotheosis at 10th level it reaches its full power at 6d8. Regardless of its strength, the breath weapon can be used only once per day. Use all the rules for dragon breath weapons except as specified here.
+
+The DC of the breath weapon is 10 + class level + Con modifier.
+
+Black	Line of acid
+Blue	Line of lightning
+Green	Cone of corrosive gas (acid)
+Red	Cone of fire
+White	Cone of cold
+Brass	Line of fire
+Bronze	Line of lightning
+Copper	Line of acid
+Gold	Cone of fire
+Silver	Cone of cold
+
+A line-shaped breath weapon is 5 feet high, 5 feet wide, and 60 feet long. A cone-shaped breath weapon is 30 feet long.
+prereq descr: Dragon Disciple level 3.
