@@ -349,6 +349,20 @@ int DispatcherSystem::Dispatch44FinalSaveThrow(objHndl handle, SavingThrowType s
 	return DispatchSavingThrow(handle, evtObj, dispTypeCountersongSaveThrow, (D20DispatcherKey)((int)saveType + D20DispatcherKey::DK_SAVE_FORTITUDE));
 }
 
+int DispatcherSystem::Dispatch49ReflexSaveReduction(objHndl handle, DispIoReflexThrow* evtObj)
+{
+	auto obj = objSystem->GetObject(handle);
+	if (!obj)
+		return 0;
+
+	auto dispatcher = obj->GetDispatcher();
+	if (!dispatcherValid(dispatcher))
+		return 0;
+
+	dispatcher->Process(dispTypeReflexThrow, D20DispatcherKey::DK_NONE, evtObj);
+	return evtObj->effectiveReduction;
+}
+
 
 DispIoCondStruct* DispatcherSystem::DispIoCheckIoType1(DispIoCondStruct* dispIo)
 {
@@ -911,7 +925,7 @@ int32_t DispatcherSystem::DispatchDamage(objHndl objHnd, DispIoDamage* dispIoDam
 		dispIo = &dispIoLocal;
 	}
 	logger->info("Dispatching damage event for {} - type {}, key {}, victim {}", 
-		description.getDisplayName(objHnd), dispType, key, description.getDisplayName( dispIoDamage->attackPacket.victim) );
+		objHnd, dispType, key, dispIoDamage->attackPacket.victim );
 	dispatch.DispatcherProcessor(dispatcher, dispType, key, dispIo);
 	return 1;
 }
@@ -1683,4 +1697,16 @@ DispIoSpellsPerDay::DispIoSpellsPerDay()
 	dispIOType = dispIOType18;
 	unk = 3001;
 	unk2 = 0;
+}
+
+DispIoReflexThrow::DispIoReflexThrow()
+{
+	dispIOType = dispIOTypeReflexThrow;
+	effectiveReduction = 100;
+	reduction = D20SavingThrowReduction::D20_Save_Reduction_None; // 0
+	damageMesLine = 103; // Unknown
+	attackPower = D20AttackPower::D20DAP_UNSPECIFIED; // 1
+	attackType = (int)DamageType::Unspecified; // -1
+	throwResult = 0;
+	flags = D20SavingThrowFlag::D20STF_NONE;
 }

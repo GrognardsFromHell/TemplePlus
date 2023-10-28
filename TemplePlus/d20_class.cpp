@@ -136,12 +136,12 @@ bool D20ClassSystem::IsCompatibleWithAlignment(Stat classEnum, Alignment al){
 	return temple::GetRef<BOOL(__cdecl)(Stat, Alignment)>(0x10188170)(classEnum, al);
 }
 
-bool D20ClassSystem::IsNaturalCastingClass(Stat classEnum, objHndl handle){
+bool D20ClassSystem::IsNaturalCastingClass(Stat classEnum, objHndl handle) {
 	auto classSpec = classSpecs.find(classEnum);
 	if (classSpec == classSpecs.end())
 		return false;
-	
-	return classSpec->second.spellMemorizationType == SpellReadyingType::Innate;	
+
+	return classSpec->second.spellMemorizationType == SpellReadyingType::Innate || classSpec->second.spellMemorizationType == SpellReadyingType::AtWill;
 }
 
 bool D20ClassSystem::IsNaturalCastingClass(uint32_t classEnum){
@@ -155,6 +155,15 @@ bool D20ClassSystem::IsVancianCastingClass(Stat classEnum, objHndl handle )
 		return false;
 
 	return classSpec->second.spellMemorizationType == SpellReadyingType::Vancian;
+}
+
+bool D20ClassSystem::IsAtWillCastingClass(Stat classEnum)
+{
+	auto classSpec = classSpecs.find(classEnum);
+	if (classSpec == classSpecs.end())
+		return false;
+
+	return classSpec->second.spellMemorizationType == SpellReadyingType::AtWill;
 }
 
 bool D20ClassSystem::IsCastingClass(Stat classEnum, bool includeExtenders){

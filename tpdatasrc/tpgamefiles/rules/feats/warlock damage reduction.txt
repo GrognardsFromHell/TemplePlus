@@ -1,0 +1,5 @@
+name: Warlock Damage Reduction
+flags: 8
+prereqs:
+description: Fortified by the supernatural power flowing in his body, a warlock becomes resistant to physical attacks at 3rd level and above, gaining damage reduction 1/cold iron. At 7th level and every four levels thereafter, a warlock's damage reduction improves by 1 to a max DR5/Cold Iron at level 19.
+prereq descr: Warlock Level 3.

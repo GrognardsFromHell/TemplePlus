@@ -1,0 +1,4 @@
+name: Spell Focus (Invocation)
+flags: 4194304
+prereqs: 33 1
+description: Add +1 to the Difficulty Class for all saving throws against Invocation spells.

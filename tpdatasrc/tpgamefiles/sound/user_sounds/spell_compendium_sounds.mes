@@ -758,7 +758,7 @@
 {28327}{} // spell hit
 {28328}{} // spell struck
 
-// [1117] *[]
+// [1117] *[Rhino's Rush]
 {28340}{} // spell begin
 {28341}{} // spell end
 {28342}{} // spell effect
@@ -1384,3 +1384,311 @@
 {29466}{} // spell projectile in-flight
 {29467}{} // spell hit
 {29468}{} // spell struck
+
+// [1174] *[Energized Shield Lesser]
+{29480}{} // spell begin
+{29481}{} // spell end
+{29482}{} // spell effect
+{29483}{} // spell new round
+{29484}{} // spell projectile begin
+{29485}{} // spell projectile end
+{29486}{} // spell projectile in-flight
+{29487}{} // spell hit
+{29488}{} // spell struck
+
+// [1175] *[Energized Shield]
+{29500}{} // spell begin
+{29501}{} // spell end
+{29502}{} // spell effect
+{29503}{} // spell new round
+{29504}{} // spell projectile begin
+{29505}{} // spell projectile end
+{29506}{} // spell projectile in-flight
+{29507}{} // spell hit
+{29508}{} // spell struck
+
+// [1176] *[Draconic Might]
+{29520}{} // spell begin
+{29521}{} // spell end
+{29522}{} // spell effect
+{29523}{} // spell new round
+{29524}{} // spell projectile begin
+{29525}{} // spell projectile end
+{29526}{} // spell projectile in-flight
+{29527}{} // spell hit
+{29528}{} // spell struck
+
+// [1177] *[Vigor Mass Lesser]
+{29540}{} // spell begin
+{29541}{} // spell end
+{29542}{spells\sp_cure_light.WAV} // spell effect
+{29543}{} // spell new round
+{29544}{} // spell projectile begin
+{29545}{} // spell projectile end
+{29546}{} // spell projectile in-flight
+{29547}{} // spell hit
+{29548}{} // spell struck
+
+// [1178] *[Vigor Mass Improved]
+{29560}{} // spell begin
+{29561}{} // spell end
+{29562}{spells\sp_cure_moderate.WAV} // spell effect
+{29563}{} // spell new round
+{29564}{} // spell projectile begin
+{29565}{} // spell projectile end
+{29566}{} // spell projectile in-flight
+{29567}{} // spell hit
+{29568}{} // spell struck
+
+// [1179] *[Sure Strike]
+{29580}{} // spell begin
+{29581}{} // spell end
+{29582}{} // spell effect
+{29583}{} // spell new round
+{29584}{} // spell projectile begin
+{29585}{} // spell projectile end
+{29586}{} // spell projectile in-flight
+{29587}{} // spell hit
+{29588}{} // spell struck
+
+// [1180] *[Hunter's Eye]
+{29600}{} // spell begin
+{29601}{} // spell end
+{29602}{} // spell effect
+{29603}{} // spell new round
+{29604}{} // spell projectile begin
+{29605}{} // spell projectile end
+{29606}{} // spell projectile in-flight
+{29607}{} // spell hit
+{29608}{} // spell struck
+
+// [1181] *[Tactical Precision]
+{29620}{} // spell begin
+{29621}{} // spell end
+{29622}{} // spell effect
+{29623}{} // spell new round
+{29624}{} // spell projectile begin
+{29625}{} // spell projectile end
+{29626}{} // spell projectile in-flight
+{29627}{} // spell hit
+{29628}{} // spell struck
+
+// [1182] *[Accuracy]
+{29640}{} // spell begin
+{29641}{} // spell end
+{29642}{} // spell effect
+{29643}{} // spell new round
+{29644}{} // spell projectile begin
+{29645}{} // spell projectile end
+{29646}{} // spell projectile in-flight
+{29647}{} // spell hit
+{29648}{} // spell struck
+
+// [1183] *[Hail of Stone]
+{29660}{} // spell begin
+{29661}{} // spell end
+{29662}{} // spell effect
+{29663}{} // spell new round
+{29664}{} // spell projectile begin
+{29665}{} // spell projectile end
+{29666}{} // spell projectile in-flight
+{29667}{} // spell hit
+{29668}{} // spell struck
+
+// [1184] *[Lesser Orb of Acid]
+{29680}{} // spell begin
+{29681}{} // spell end
+{29682}{} // spell effect
+{29683}{} // spell new round
+{29684}{} // spell projectile begin
+{29685}{} // spell projectile end
+{29686}{} // spell projectile in-flight
+{29687}{} // spell hit
+{29688}{} // spell struck
+
+// [1185] *[Lesser Orb of Cold]
+{29700}{} // spell begin
+{29701}{} // spell end
+{29702}{} // spell effect
+{29703}{} // spell new round
+{29704}{} // spell projectile begin
+{29705}{} // spell projectile end
+{29706}{} // spell projectile in-flight
+{29707}{} // spell hit
+{29708}{} // spell struck
+
+// [1186] *[Lesser Orb of Electricity]
+{29720}{} // spell begin
+{29721}{} // spell end
+{29722}{} // spell effect
+{29723}{} // spell new round
+{29724}{} // spell projectile begin
+{29725}{} // spell projectile end
+{29726}{} // spell projectile in-flight
+{29727}{} // spell hit
+{29728}{} // spell struck
+
+// [1187] *[Lesser Orb of Fire]
+{29740}{} // spell begin
+{29741}{} // spell end
+{29742}{} // spell effect
+{29743}{} // spell new round
+{29744}{} // spell projectile begin
+{29745}{} // spell projectile end
+{29746}{} // spell projectile in-flight
+{29747}{} // spell hit
+{29748}{} // spell struck
+
+// [1188] *[Lesser Orb of Sound]
+{29760}{} // spell begin
+{29761}{} // spell end
+{29762}{} // spell effect
+{29763}{} // spell new round
+{29764}{} // spell projectile begin
+{29765}{} // spell projectile end
+{29766}{} // spell projectile in-flight
+{29767}{} // spell hit
+{29768}{} // spell struck
+
+// [1189] *[Blades of Fire]
+{29780}{} // spell begin
+{29781}{} // spell end
+{29782}{} // spell effect
+{29783}{} // spell new round
+{29784}{} // spell projectile begin
+{29785}{} // spell projectile end
+{29786}{} // spell projectile in-flight
+{29787}{} // spell hit
+{29788}{} // spell struck
+
+// [1190] *[Fireburst]
+{29800}{} // spell begin
+{29801}{} // spell end
+{29802}{} // spell effect
+{29803}{} // spell new round
+{29804}{} // spell projectile begin
+{29805}{} // spell projectile end
+{29806}{} // spell projectile in-flight
+{29807}{} // spell hit
+{29808}{} // spell struck
+
+// [1191] *[Greater Fireburst]
+{29820}{} // spell begin
+{29821}{} // spell end
+{29822}{} // spell effect
+{29823}{} // spell new round
+{29824}{} // spell projectile begin
+{29825}{} // spell projectile end
+{29826}{} // spell projectile in-flight
+{29827}{} // spell hit
+{29828}{} // spell struck
+
+// [1192] *[Ice Knife]
+{29840}{} // spell begin
+{29841}{} // spell end
+{29842}{} // spell effect
+{29843}{} // spell new round
+{29844}{} // spell projectile begin
+{29845}{} // spell projectile end
+{29846}{} // spell projectile in-flight
+{29847}{} // spell hit
+{29848}{} // spell struck
+
+// [1193] *[Whirling Blade]
+{29860}{} // spell begin
+{29861}{} // spell end
+{29862}{} // spell effect
+{29863}{} // spell new round
+{29864}{} // spell projectile begin
+{29865}{} // spell projectile end
+{29866}{} // spell projectile in-flight
+{29867}{} // spell hit
+{29868}{} // spell struck
+
+// [1194] *[Ring of Blades]
+{29880}{} // spell begin
+{29881}{} // spell end
+{29882}{} // spell effect
+{29883}{} // spell new round
+{29884}{} // spell projectile begin
+{29885}{} // spell projectile end
+{29886}{} // spell projectile in-flight
+{29887}{} // spell hit
+{29888}{} // spell struck
+
+// [1195] *[Blast of Flame]
+{29900}{} // spell begin
+{29901}{} // spell end
+{29902}{} // spell effect
+{29903}{} // spell new round
+{29904}{} // spell projectile begin
+{29905}{} // spell projectile end
+{29906}{} // spell projectile in-flight
+{29907}{} // spell hit
+{29908}{} // spell struck
+
+// [1196] *[Orb of Acid]
+{29920}{} // spell begin
+{29921}{} // spell end
+{29922}{} // spell effect
+{29923}{} // spell new round
+{29924}{} // spell projectile begin
+{29925}{} // spell projectile end
+{29926}{} // spell projectile in-flight
+{29927}{} // spell hit
+{29928}{} // spell struck
+
+// [1197] *[Orb of Cold]
+{29940}{} // spell begin
+{29941}{} // spell end
+{29942}{} // spell effect
+{29943}{} // spell new round
+{29944}{} // spell projectile begin
+{29945}{} // spell projectile end
+{29946}{} // spell projectile in-flight
+{29947}{} // spell hit
+{29948}{} // spell struck
+
+// [1198] *[Orb of Electricity]
+{29960}{} // spell begin
+{29961}{} // spell end
+{29962}{} // spell effect
+{29963}{} // spell new round
+{29964}{} // spell projectile begin
+{29965}{} // spell projectile end
+{29966}{} // spell projectile in-flight
+{29967}{} // spell hit
+{29968}{} // spell struck
+
+// [1199] *[Orb of Fire]
+{29980}{} // spell begin
+{29981}{} // spell end
+{29982}{} // spell effect
+{29983}{} // spell new round
+{29984}{} // spell projectile begin
+{29985}{} // spell projectile end
+{29986}{} // spell projectile in-flight
+{29987}{} // spell hit
+{29988}{} // spell struck
+
+// [1200] *[Orb of Sound]
+{30000}{} // spell begin
+{30001}{} // spell end
+{30002}{} // spell effect
+{30003}{} // spell new round
+{30004}{} // spell projectile begin
+{30005}{} // spell projectile end
+{30006}{} // spell projectile in-flight
+{30007}{} // spell hit
+{30008}{} // spell struck
+
+// [1201] *[Icelance]
+{30020}{} // spell begin
+{30021}{} // spell end
+{30022}{} // spell effect
+{30023}{} // spell new round
+{30024}{spells\sp_snare_end.WAV} // spell projectile begin
+{30025}{spells\sp_snare_hit.WAV} // spell projectile end
+{30026}{} // spell projectile in-flight
+{30027}{} // spell hit
+{30028}{} // spell struck

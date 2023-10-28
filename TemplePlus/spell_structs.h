@@ -116,7 +116,9 @@ enum class SpellSourceType : int {
 enum class SpellReadyingType : int {
 	Vancian = 0, // memorization slots
 	Innate, // bards / sorcerers etc.
-	Any
+	Any,
+	AtWill
+
 };
 
 enum class SpellListType : int {
@@ -297,6 +299,7 @@ struct SpellEntry {
 	explicit SpellEntry(uint32_t spellEnum);
 	bool IsBaseModeTarget(UiPickerType type);
 	int SpellLevelForSpellClass(int spellClass); // returns -1 if none
+	int GetLowestSpellLevel(uint32_t spellEnumIn);  ///Gets lowest level the spell is for any class
 };
 
 struct ProjectileEntry {

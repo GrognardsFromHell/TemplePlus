@@ -1,0 +1,5 @@
+ID_string: LEAPS_AND_BOUNDS
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Spell Leaps and Bounds.tga
+help_topic: TAG_SPELLS_LEAPS_AND_BOUNDS
+tooltip_base_text: Leaps and Bounds

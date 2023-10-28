@@ -408,7 +408,7 @@ def HailOfArrowsRadial(attachee, args, evt_obj):
 
 def HailOfArrowsReset(attachee, args, evt_obj):
 	args.set_arg(0, 0)
-
+	return 0
 
 hailOfArrowsFeat = PythonModifier("Hail of Arrows Feat", 3) # arg0 - used this day
 hailOfArrowsFeat.MapToFeat("Hail of Arrows")

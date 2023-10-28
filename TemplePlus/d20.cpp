@@ -883,6 +883,24 @@ void LegacyD20System::D20SignalPython(const objHndl & handle, int queryKey, int 
 	return;
 }
 
+void LegacyD20System::D20SignalPython(objHndl objHnd, const std::string& queryKey, D20Actn* arg1, int32_t arg2)
+{
+	if (!objHnd) {
+		logger->warn("D20SignalPython called with null handle! Key was {} arg1 was d20Action, arg2 {}", queryKey, arg2);
+		return;
+	}
+
+	Dispatcher* dispatcher = objects.GetDispatcher(objHnd);
+	if (!dispatch.dispatcherValid(dispatcher)) { return; }
+
+	DispIoD20Query dispIo;
+	dispIo.dispIOType = dispIoTypeSendSignal;
+	dispIo.return_val = 0;
+	dispIo.data1 = (int)arg1;
+	dispIo.data2 = arg2;
+	dispatcher->Process(enum_disp_type::dispTypePythonSignal, static_cast<D20DispatcherKey>(ElfHash::Hash(queryKey)), &dispIo);
+}
+
 #pragma endregion
 
 void LegacyD20System::D20ActnInit(objHndl objHnd, D20Actn* d20a)
@@ -2966,7 +2984,7 @@ ActionErrorCode D20ActionCallbacks::ActionCheckTripAttack(D20Actn* d20a, TurnBas
 
 ActionErrorCode D20ActionCallbacks::ActionCostCastSpell(D20Actn * d20a, TurnBasedStatus * tbStat, ActionCostPacket * acp){
 	acp->hourglassCost = 0;
-	acp->chargeAfterPicker = 0;
+	acp->attackCost = 0;
 	acp->moveDistCost = 0.0f;
 	auto flags = d20a->d20Caf;
 	if ( (flags & D20CAF_FREE_ACTION) || !combatSys.isCombatActive()){
@@ -3030,7 +3048,7 @@ ActionErrorCode D20ActionCallbacks::ActionCostCastSpell(D20Actn * d20a, TurnBase
 }
 
 ActionErrorCode D20ActionCallbacks::ActionCostFullRound(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp){
-	acp->chargeAfterPicker = 0;
+	acp->attackCost = 0;
 	acp->moveDistCost = 0;
 	acp->hourglassCost = 4;
 	if ( (d20a->d20Caf & D20CAF_FREE_ACTION) || !combatSys.isCombatActive())
@@ -3081,6 +3099,8 @@ BOOL D20ActionCallbacks::ActionFrameTouchAttack(D20Actn* d20a){
 		curSeq->tbStatus.tbsFlags &= ~TBSF_TouchAttack;
 		d20a->d20Caf &= ~D20CAF_FREE_ACTION;
 	}
+
+	d20Sys.D20SignalPython(d20a->d20ATarget, "Touch Attack Victim", d20a);
 
 	return FALSE;
 }
@@ -3856,7 +3876,7 @@ ActionErrorCode D20ActionCallbacks::TurnBasedStatusCheckPython(D20Actn* d20a, Tu
 }
 
 ActionErrorCode D20ActionCallbacks::ActionCostFullAttack(D20Actn * d20a, TurnBasedStatus * tbStat, ActionCostPacket * acp){
-	acp->chargeAfterPicker = 0;
+	acp->attackCost = 0;
 	acp->moveDistCost = 0;
 	acp->hourglassCost = 4;
 	//int flags = d20a->d20Caf;
@@ -3873,7 +3893,7 @@ ActionErrorCode D20ActionCallbacks::ActionCostFullAttack(D20Actn * d20a, TurnBas
 }
 
 ActionErrorCode D20ActionCallbacks::ActionCostPartialCharge(D20Actn * d20a, TurnBasedStatus * tbStat, ActionCostPacket * acp){
-	acp->chargeAfterPicker = 0;
+	acp->attackCost = 0;
 	acp->moveDistCost = 0;
 	acp->hourglassCost = 3;
 	if ((d20a->d20Caf & D20CAF_FREE_ACTION) || !combatSys.isCombatActive())
@@ -3887,6 +3907,10 @@ ActionErrorCode D20ActionCallbacks::ActionCostPython(D20Actn* d20a, TurnBasedSta
 	return (ActionErrorCode) d20Sys.GetPyActionCost(d20a, tbStat, acp);
 }
 
+/*
+0x100910F0
+Used in: Standard attack, Standard Ranged attack, Trip Attack, Touch Attack, Throw Weapon, Throw Grenade
+*/
 ActionErrorCode D20ActionCallbacks::ActionCostStandardAttack(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp){
 
 	if ( d20Sys.d20Query(d20a->d20APerformer, DK_QUE_HoldingCharge)
@@ -3897,12 +3921,12 @@ ActionErrorCode D20ActionCallbacks::ActionCostStandardAttack(D20Actn* d20a, Turn
 	}
 
 	acp->hourglassCost = 0;
-	acp->chargeAfterPicker = 0;
+	acp->attackCost = 0;
 	acp->moveDistCost = 0;
 
 	if (!(d20a->d20Caf & D20CAF_FREE_ACTION) && combatSys.isCombatActive())
 	{
-		acp->chargeAfterPicker = 1;
+		acp->attackCost = 1;
 
 		auto retainSurplusMoveDist = false;
 		
@@ -3925,7 +3949,7 @@ ActionErrorCode D20ActionCallbacks::ActionCostStandardAttack(D20Actn* d20a, Turn
 ActionErrorCode D20ActionCallbacks::ActionCostMoveAction(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp)
 {
 	acp->hourglassCost = 0;
-	acp->chargeAfterPicker = 0;
+	acp->attackCost = 0;
 	acp->moveDistCost = 0;
 	if (!(d20->d20Caf & D20CAF_FREE_ACTION) && combatSys.isCombatActive())
 	{
@@ -3941,7 +3965,7 @@ ActionErrorCode D20ActionCallbacks::ActionCostMoveAction(D20Actn *d20, TurnBased
 
 ActionErrorCode D20ActionCallbacks::ActionCostNull(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp){
 	acp->hourglassCost = 0;
-	acp->chargeAfterPicker = 0;
+	acp->attackCost = 0;
 	acp->moveDistCost = 0;
 	return AEC_OK;
 }
@@ -3953,7 +3977,7 @@ ActionErrorCode D20ActionCallbacks::ActionCostSwift(D20Actn* d20a, TurnBasedStat
 	}
 	
 	acp->hourglassCost = 0;	
-	acp->chargeAfterPicker = 0;
+	acp->attackCost = 0;
 	acp->moveDistCost = 0;
 	tbStat->tbsFlags |= TBSF_SwiftActionPerformed;
 	return AEC_OK;
@@ -3961,13 +3985,13 @@ ActionErrorCode D20ActionCallbacks::ActionCostSwift(D20Actn* d20a, TurnBasedStat
 
 ActionErrorCode D20ActionCallbacks::ActionCostStandardAction(D20Actn*, TurnBasedStatus*, ActionCostPacket*acp){
 	acp->hourglassCost = 2;
-	acp->chargeAfterPicker = 0;
+	acp->attackCost = 0;
 	acp->moveDistCost = 0;
 	return AEC_OK;
 };
 
 ActionErrorCode D20ActionCallbacks::ActionCostWhirlwindAttack(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket*acp) {
-	acp->chargeAfterPicker = 0;
+	acp->attackCost = 0;
 	acp->moveDistCost = 0;
 	acp->hourglassCost = 4;
 	if ( ( d20a->d20Caf & D20CAF_FREE_ACTION) || !combatSys.isCombatActive()){

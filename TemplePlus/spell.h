@@ -92,6 +92,7 @@ struct SpellPacketBody{
 	const char* GetName(); // get the spell name
 
 	bool IsVancian();
+	bool IsAtWill();
 	bool IsDivine();
 	bool IsArcane();
 	bool IsItemSpell();
@@ -177,6 +178,7 @@ struct LegacySpellSystem : temple::AddressTable
 	int GetMaxSpellLevel(objHndl objHnd, Stat classCode, int characterLvl = 0); // if characterLvl is 0 it will fetch the actual level; it also takes into account spell list extension by PrC's and such
 	int GetNumSpellsPerDay(objHndl handle, Stat classCode, int spellLvl); // including from spell list extension
 	int ParseSpellSpecString(SpellStoreData* spell, char* spellString);
+	std::vector<int> GetValidSpellEnums();
 
 	const char* GetSpellMesline(uint32_t line) const;
 	const char* GetDomainName(int domain) const;

@@ -5,7 +5,7 @@
 PythonFeatIntegration pyFeatIntegration;
 
 PythonFeatIntegration::PythonFeatIntegration()
-	: PythonIntegration("scr\\feats\\feat*.py", "(feat[ \-]{0,}([\\w\\-' ]{1,}))\\.py", true) {
+	: PythonIntegration("scr\\feats\\feat*.py", "(feat[ \-]{0,}([\\w\\-'\\(\\) ]{1,}))\\.py", true) {
 }
 
 bool PythonFeatIntegration::CheckPrereq(int featId, objHndl handle, Stat classCodeBeingLevelledUp, Stat abilityScoreBeingIncreased)

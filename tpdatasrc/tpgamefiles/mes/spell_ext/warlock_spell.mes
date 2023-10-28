@@ -1,0 +1,103 @@
+//Warlock Invocation descriptions
+
+// Spell Names
+
+// Eldritch Blast Shape Invocations
+{2300}{Eldritch Blast}
+{2301}{Eldritch Spear}
+{2302}{Hideous Blow} // not implemented
+{2303}{Eldritch Chain}
+{2304}{Eldritch Cone}
+{2305}{Eldritch Line}
+{2306}{Eldritch Doom}
+{2307}{Eldritch Glaive} // not implemented
+
+// Eldritch Essence Invocations
+{2311}{Frightful Blast}
+{2312}{Sickening Blast}
+{2313}{Beshadowed Blast}
+{2314}{Brimstone Blast}
+{2315}{Hellrime Blast}
+{2316}{Bewitching Blast}
+{2317}{Noxious Blast}
+{2318}{Repelling Blast} // not implemented
+{2319}{Vitriolic Blast}
+{2320}{Hindering Blast}
+{2321}{Utterdark Blast} // not implemented
+{2322}{Binding Blast}
+{2323}{Penetrating Blast}
+{2324}{Baneful Blast} // not implemented
+{2325}{Hammer Blast} // not implemented
+{2326}{Deteriorating Blast} // not implemented
+
+// Invocations
+{2330}{Beguiling Influence}
+{2331}{Breath of the Night}
+{2332}{Dark One's Own Luck}
+{2333}{Entropic Warding}
+{2334}{Leaps and Bounds}
+{2335}{Miasmic Cloud}
+{2336}{See the Unseen}
+{2337}{Spiderwalk} // not implemented
+{2338}{Soulreaving Aura}
+{2339}{All Seeing Eyes}
+{2340}{Charm}
+{2341}{Curse of Despair}
+{2342}{Fell Flight} // not implemented
+{2343}{Flee the Scene}
+{2344}{The Dead Walk} // not implemented
+{2345}{Voracious Dispelling} // not implemented
+{2346}{Walk Unseen}
+{2347}{Cold Comfort}
+{2348}{Witchwood Step} // not implemented
+{2349}{Dread Seizure} // not implemented
+{2350}{Ignore the Pyre}
+{2357}{Enervating Shadow}
+
+// Spell Descriptions
+{7300} Eldritch Blast {[Eldritch Blast] Ranged touch attack that deals 1d6 damage. Damage increases with Warlock levels. Can be modified by Eldritch Essence Invocations.}
+{7301} Eldritch Spear {Invocation](Blast Shape) Increases the range of Eldritch Blast.}
+{7302} Hideous Blow {[Invocation](Blast Shape) TBD!} // not implemented
+{7303} Eldritch Chain {[Invocation](Blast Shape) Changes Eldritch Blast to a chain. Full damage to the primary target, half damage to secondary targets. A missed ranged attack breaks the chain.}
+{7304} Eldritch Cone {[Invocation](Blast Shape) Changes Eldritch Blast to a 30-ft. cone. No longer a touch attack and allows a Reflex save for half damage.}
+{7305} Eldritch Line {[Invocation](Blast Shape) Changes Eldritch Blast to a 60-ft. line. No longer a touch attack and allows a Reflex save for half damage.}
+{7306} Eldritch Doom {[Invocation](Blast Shape) Deal Eldritch Blast damage to any number of targets designated by you within 20ft. Reflex save for half damage.}
+{7307} Eldritch Glaive {Invocation](Blast Shape) TBD!} // not implemented
+{7311} Frightful Blast {Invocation](Eldritch Essence) In addition to the normal Eldritch Blast damage targets are shaken for 1 minute on a failed Will save. Mind-Affecting.}
+{7312} Sickening Blast {Invocation](Eldritch Essence) In addition to the normal Eldritch Blast damage living creatures are sickened for 1 minute on a failed Fortitude save.}
+{7313} Beshadowed Blast {Invocation](Eldritch Essence) In addition to the normal Eldritch Blast damage, living creatures are blinded for 1 round on a failed Fortitude save.}
+{7314} Brimstone Blast {Invocation](Eldritch Essence) Changes Eldritch Blast damage to fire, targets catch fire on a failed Reflex save for 1 round/5 levels that deals 2d6 fire damage each round.}
+{7315} Hellrime Blast {Invocation](Eldritch Essence) Changes Eldritch Blast damage to cold damage, targets get a -4 dexterity penalty for 10 minutes on a failed Fortitude save.}
+{7316} Bewitching Blast {Invocation](Eldritch Essence) In addition to the normal Eldritch Blast damage targets are confused on a failed Will save for 1 round. Mind-Affecting.}
+{7317} Noxious Blast {Invocation](Eldritch Essence) In addition to the normal Eldritch Blast damage living creatures must make a Fortitude save or be nauseated for 1 minute.}
+{7318} Repelling Blast {Invocation](Eldritch Essence) TBD!} // not implemented
+{7319} Vitriolic Blast {Invocation](Eldritch Essence) Changes Eldritch Blast damage to acid and deals 2d6 acid damage each round for 1 round/5 levels.}
+{7320} Hindering Blast {Invocation](Eldritch Essence) In addition to the normal Eldritch Blast damage living creatures must succeed on a Will save or be slowed for 1 round.}
+{7321} Utterdark Blast {Invocation](Eldritch Essence) TBD!} // not implemented
+{7322} Binding Blast {Invocation](Eldritch Essence) In addition to the normal Eldritch Blast damage targets must succeed on a Will save or be stunned for 1 round. Mind-Affecting.}
+{7323} Penetrating Blast {Invocation](Eldritch Essence) Eldritch Blasts gains a +4 bonus on spell penetration checks. Targets must succeed on a Will save or have its spell resistance lowered by 5 for 1 minute.}
+{7324} Baneful Blast {Invocation](Eldritch Essence] TBD!) // not implemented
+{7325} Hammer Blast {Invocation](Eldritch Essence] TBD!) // not implemented
+{7326} Deteriorating Blast {Invocation](Eldritch Essence) TBD!} // not implemented
+{7330} Beguiling Influence {[Invocation] TBD!}
+{7331} Breath of the Night {[Invocation] TBD!}
+{7332} Dark One's Own Luck {[Invocation] Add your charisma bonus to one save type (Fortitude, Reflex or Will) for 24 hours.}
+{7333} Entropic Warding {[Invocation] TBD!}
+{7334} Leaps and Bounds {[Invocation] TBD!}
+{7335} Miasmic Cloud {[Invocation] TBD!}
+{7336} See the Unseen {[Invocation] TBD!}
+{7337} Spiderwalk {[Invocation] TBD!} // not implemented
+{7338} Soulreaving Aura {[Invocation] Deal 1 damage to all creatures at 0 HP or below. If a creatures dies gain temporary Hit Points.}
+{7339} All Seeing Eyes {[Invocation] +6 to Search and Spot skills for 24 hours.}
+{7340} Charm {[Invocation] TBD!} // not implemented
+{7341} Curse of Despair {[Invocation] TBD!}
+{7342} Fell Flight {[Invocation] TBD!} // not implemented
+{7343} Flee the Scene {[Invocation] TBD!}
+{7344} The Dead Walk {[Invocation] TBD!} // not implemented
+{7345} Voracious Dispelling {[Invocation] TBD!} // not implemented
+{7346} Walk Unseen {[Invocation] TBD!}
+{7347} Cold Comfort {[Invocation] TBD!}
+{7348} Witchwood Step {[Invocation] TBD!}  // not implemented
+{7349} Dread Seizure {[Invocation] TBD!}  // not implemented
+{7350} Ignore the Pyre {[Invocation] TBD!}
+{7357} Enervating Shadow {[Invocation] Gain total concealment if not in daylight. Adjacent living creatures get -4 Strength on a failed Fortitude save.}

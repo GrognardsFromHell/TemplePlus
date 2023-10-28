@@ -1,0 +1,5 @@
+name: Dragon Disciple Bonus Spell per Day (5)
+flags: 8
+prereqs:
+description: Dragon Disciples gain bonus spells as they gain levels in this prestige class, as if from having a high ability score. The bonus spell is granted to the highest Arcane Casting Class and is applied to the highest spell level.
+prereq descr: Dragon Disciple level 6.

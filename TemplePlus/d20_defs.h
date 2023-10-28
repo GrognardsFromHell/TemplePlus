@@ -109,10 +109,10 @@ enum class ActionCostType : int {
 struct ActionCostPacket
 {
 	int hourglassCost;
-	int chargeAfterPicker; // flag I think; is only set at stuff that requires using the picker it seems
+	int attackCost; // how many attacks does this consume when doing Full Attack? (0 if not relevant; haven't seen a value > 1)
 	float moveDistCost;
 	
-	ActionCostPacket() { hourglassCost = 0; chargeAfterPicker = 0; moveDistCost = 0.0f; }
+	ActionCostPacket() { hourglassCost = 0; attackCost = 0; moveDistCost = 0.0f; }
 };
 //const auto TestSizeOfActionCostPacket = sizeof(ActionCostPacket); // should be 12 (0xC)
 

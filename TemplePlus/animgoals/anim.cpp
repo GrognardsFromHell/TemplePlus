@@ -993,7 +993,7 @@ BOOL AnimSystem::ProcessAnimEvent(const TimeEvent *evt) {
                 // oldGoal = goal;
                 while (goal->priority < AnimGoalPriority::AGP_7) {
                   PopGoal(slot, ASTF_POP_GOAL, &goal, &currentGoal, &stopProcessing);
-                //  logger->debug("ProcessAnimEvent: Popped goal for {}.", description.getDisplayName(slot.animObj));
+                //  logger->debug("ProcessAnimEvent: Popped goal for {}.", slot.animObj);
                   currentGoal = &slot.goals[slot.currentGoal];
 				  goal = &animationGoals_->GetByType(currentGoal->goalType);
                   // oldGoal = goal;
@@ -1046,7 +1046,7 @@ BOOL AnimSystem::ProcessAnimEvent(const TimeEvent *evt) {
       auto result = RescheduleEvent(delay, slot, evt);
       ProcessActionCallbacks();
       if (slot.pCurrentGoal->goalType != ag_anim_idle)  {
-        //  logger->debug("ProcessAnimEvent: rescheduled for {}, goal {}", description.getDisplayName(slot.animObj), animGoalTypeNames[slot.pCurrentGoal->goalType]);
+        //  logger->debug("ProcessAnimEvent: rescheduled for {}, goal {}", slot.animObj, animGoalTypeNames[slot.pCurrentGoal->goalType]);
       } else
       {
           int da = 1;
@@ -1641,7 +1641,7 @@ void AnimSystem::PopGoal(AnimSlot &slot, uint32_t popFlags,
                          const AnimGoal **newGoal,
                          AnimSlotGoalStackEntry **newCurrentGoal,
                          bool *stopProcessing) {
-    //logger->debug("Pop goal for {} with popFlags {:x}  (slot flags: {:x}, state {:x})", description.getDisplayName(slot.animObj), popFlags, static_cast<uint32_t>(slot.flags), slot.currentState);
+    //logger->debug("Pop goal for {} with popFlags {:x}  (slot flags: {:x}, state {:x})", slot.animObj, popFlags, static_cast<uint32_t>(slot.flags), slot.currentState);
   if (!slot.currentGoal && !(popFlags & ASTF_PUSH_GOAL)) {
     slot.flags |= AnimSlotFlag::ASF_STOP_PROCESSING;
   }
@@ -1649,7 +1649,7 @@ void AnimSystem::PopGoal(AnimSlot &slot, uint32_t popFlags,
   if ((*newGoal)->state_special.callback) {
     if (!(popFlags & 0x70000000) || !(popFlags & 0x4000000)) {
       if (PrepareSlotForGoalState(slot, &(*newGoal)->state_special)) {
-        //  logger->debug("Pop goal for {}: doing state special callback.", description.getDisplayName(slot.animObj));
+        //  logger->debug("Pop goal for {}: doing state special callback.", slot.animObj);
         (*newGoal)->state_special.callback(slot);
       }
     }
@@ -1673,7 +1673,7 @@ void AnimSystem::PopGoal(AnimSlot &slot, uint32_t popFlags,
   if (slot.IsStackEmpty()) {
     if (!(popFlags & ASTF_PUSH_GOAL)) {
       slot.flags |= AnimSlotFlag::ASF_STOP_PROCESSING;
-    //  logger->debug("Pop goal for {}: stopping processing (last goal was {}).", description.getDisplayName(slot.animObj), animGoalTypeNames[slot.pCurrentGoal->goalType]);
+    //  logger->debug("Pop goal for {}: stopping processing (last goal was {}).", slot.animObj, animGoalTypeNames[slot.pCurrentGoal->goalType]);
     }
   } else {
     auto prevGoal = &slot.goals[slot.currentGoal];

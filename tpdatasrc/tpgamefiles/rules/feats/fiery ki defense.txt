@@ -1,0 +1,10 @@
+name: Fiery Ki Defense
+flags: 12582992
+prereqs: 1 13 4 13 266 8
+description: You channel your ki energy into a cloak of flame that injures all who attempt to strike you.
+
+As a swift action, you can expend one of your uses of the Stunning Fist feat to cloak yourself in flame. Any creature that strikes you with a melee attack takes 1d6 points of fire damage. This benefit lasts until the start of your next turn.
+prereq descr: Fiery Fist, Improved Unarmed Strike, Stunning Fist, DEX 13, WIS 13, base attack bonus +8
+
+Special
+A fighter can select Fiery Ki Defense as one of his fighter bonus feats. A monk with the Stunning Fist feat can select Fiery Ki Defense as her bonus feat at 6th level, as long as she also possesses the Fiery Fist feat (other prerequisites can be ignored).

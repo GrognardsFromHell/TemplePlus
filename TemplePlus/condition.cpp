@@ -338,6 +338,9 @@ public:
 	void apply() override {
 		logger->info("Replacing Condition-related Functions");
 
+		replaceFunction<void()>(0x100E19A0, []() {
+			conds.hashmethods.ConditionHashtableInit(conds.mCondStructHashtable);
+			});
 		//dispTypeConditionAddPre
 		static int(__cdecl* orgTempAbilityLoss)(DispatcherCallbackArgs) = replaceFunction<int(__cdecl)(DispatcherCallbackArgs)>(0x100EA1F0, [](DispatcherCallbackArgs args) {
 			Stat statDamaged = (Stat)args.GetCondArg(0);
@@ -1328,76 +1331,7 @@ int GenericCallbacks::GlobalWieldedTwoHandedQuery(DispatcherCallbackArgs args)
 	if (!weaponUsed)
 		return 0;
 
-	auto weapType = (WeaponTypes)gameSystems->GetObj().GetObject(weaponUsed)->GetInt32(obj_f_weapon_type);
-
-	// special case - rapiers are always wielded one handed
-	if (weapType == wt_rapier){
-		dispIo->return_val = 0;
-		return 0;
-	}
-
-
-
-	auto offhandWeapon = inventory.ItemWornAt(args.objHndCaller, EquipSlot::WeaponSecondary);
-	auto shield = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Shield);
-	auto isShieldAlloingTwoHandedWield = (shield != objHndl::null) && inventory.IsBuckler(shield); // are you holding the weapon with your buckler hand?
-	if (isShieldAlloingTwoHandedWield){
-		if (d20Sys.d20Query(args.objHndCaller, DK_QUE_Is_Preferring_One_Handed_Wield))
-			isShieldAlloingTwoHandedWield = false;
-	}
-	auto hasInterferingOffhand = (offhandWeapon != objHndl::null 
-								  || (shield != objHndl::null && !isShieldAlloingTwoHandedWield)) ? true : false;
-
-	auto wieldType = inventory.GetWieldType(args.objHndCaller, weaponUsed, true);
-	auto wieldTypeWeaponModified = inventory.GetWieldType(args.objHndCaller, weaponUsed, false); // the wield type if the weapon is not enlarged along with the critter
-	
-
-	bool isTwohandedWieldable = !hasInterferingOffhand;
-
-	switch (wieldType)
-	{
-	case 0: // light weapon
-		switch (wieldTypeWeaponModified)
-		{
-		case 0:
-			isTwohandedWieldable = false;
-			break;
-		case 1: // benefitting from enlargement of weapon
-		case 2:
-		default:
-			break;
-		}
-	case 1: // single handed wield if weapon is unaffected
-		switch (wieldTypeWeaponModified)
-		{
-		case 0: // only in reduce person; going to assume the "beneficial" case that the reduction was made voluntarily and hence you let the weapon stay larger
-		case 1:
-		case 2:
-		default:
-			break;
-		}
-	case 2: // two handed wield if weapon is unaffected
-		switch (wieldTypeWeaponModified)
-		{
-		case 0:
-		case 1: // only in reduce person
-			break;
-		case 2:
-			if (hasInterferingOffhand) // shouldn't really be possible to hold two Two Handed Weapons... maybe if player is cheating
-			{
-				logger->warn("Illegally wielding weapon along withoffhand!");
-			}
-		default:
-			break;
-		}
-	case 3:
-		break;
-	case 4:
-	default:
-		break;
-	}
-
-	dispIo->return_val = isTwohandedWieldable;
+	dispIo->return_val = inventory.IsWieldedTwoHanded(weaponUsed, args.objHndCaller);
 
 	return 0;
 }
@@ -1863,16 +1797,16 @@ int __cdecl GlobalToHitBonus(DispatcherCallbackArgs args)
 		 && !d20Sys.d20Query(args.objHndCaller, DK_QUE_Polymorphed) )
 	{
 		int attackIdx = dispIo->attackPacket.dispKey - (ATTACK_CODE_NATURAL_ATTACK + 1);
-		int bonValue = 0; // temporarily used as an index value for obj_f_attack_bonus_idx field
+		int atkBonIdx = 0;
 		for (int i = 0,  j=0; i < 4; i++)
 		{
 			j += objects.getArrayFieldInt32(args.objHndCaller, obj_f_critter_attacks_idx, i); // number of attacks
 			if (attackIdx < j){
-				bonValue = i;
+				atkBonIdx = i;
 				break;
 			}
 		}
-		bonValue = objects.getArrayFieldInt32(args.objHndCaller, obj_f_attack_bonus_idx, bonValue);
+		int bonValue = objects.getArrayFieldInt32(args.objHndCaller, obj_f_attack_bonus_idx, atkBonIdx);
 		bonusSys.bonusAddToBonusList(&dispIo->bonlist, bonValue, 1, 118); // base attack
 	}
 
@@ -2556,7 +2490,7 @@ int __cdecl TurnBasedStatusInitNoActions(DispatcherCallbackArgs args){
 		if (tbStat){
 			tbStat->hourglassState = 0;
 			dispIo->tbStatus->tbsFlags |= TurnBasedStatusFlags::TBSF_Movement;
-			logger->debug("Zeroed actions for {}", description.getDisplayName(args.objHndCaller));
+			logger->debug("Zeroed actions for {}", args.objHndCaller);
 		}
 	}
 	return 0;
@@ -2806,7 +2740,7 @@ bool ConditionSystem::AddTo(objHndl handle, const CondStruct* cond, const vector
 	auto dispatcher = objects.GetDispatcher(handle);
 
 	if (!dispatch.dispatcherValid(dispatcher)) {
-		logger->info("Dispatcher invalid for {}", objects.description.getDisplayName(handle));
+		logger->info("Dispatcher invalid for {}", handle);
 		return false;
 	}
 
@@ -7479,3 +7413,25 @@ void CondStructNew::AddAoESpellRemover() {
 	AddHook(dispTypeD20Signal, DK_SIG_Spell_End, spCallbacks.AoeSpellRemove);
 }
 
+uint32_t CondHashSystem::ConditionHashtableInit(ToEEHashtable<CondStruct>* hashtable)
+{
+	const int VANILLA_COND_CAP = 1000;
+	return HashtableInit(hashtable, VANILLA_COND_CAP /*2023*/);
+}
+
+uint32_t CondHashSystem::CondStructAddToHashtable(CondStruct* condStruct, bool overriding)
+{
+	
+	uint32_t key = StringHash(condStruct->condName);
+	CondStruct* condFound;
+	uint32_t result = HashtableSearch(condHashTable, key, &condFound);
+	if (result || overriding)
+	{
+		result = HashtableOverwriteItem(condHashTable, key, condStruct);
+	}
+	if (result == 3) { // over capacity
+		logger->error("Condition hashtable over capacity ({})! Trying to add {}", condHashTable->capacity, condStruct->condName);
+	}
+	return result;
+	
+}

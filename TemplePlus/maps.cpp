@@ -179,6 +179,23 @@ public:
 			});
 
 
+		static BOOL(__cdecl * orgTeleportPrepareObj)(objHndl, locXY) 
+			= replaceFunction<BOOL(objHndl, locXY)>(0x100856D0,
+			[](objHndl handle, locXY loc)->BOOL {
+				auto result = orgTeleportPrepareObj(handle, loc);
+				logger->debug("TeleportPrepareObj: prepared obj {}, result = {}", handle, result);
+				return result;
+			});
+		
+		static BOOL(__cdecl * orgMoveObjToMap)(objHndl, int, LocAndOffsets) 
+			= replaceFunction<BOOL(objHndl, int, LocAndOffsets)>(0x10025F70,
+			[](objHndl handle, int mapId, LocAndOffsets loc)->BOOL {
+					auto result = orgMoveObjToMap(handle, mapId, loc);
+					logger->debug("MoveObjToMap: obj {} , tgtMap = {}, result = {}", handle, mapId, result);
+					return result;
+			});
+		
+
 		replaceFunction<void(__cdecl)(locXY)>(0x10005BC0, [](locXY locXy){
 			gameSystems->GetLocation().CenterOnSmooth(locXy.locx, locXy.locy);
 		});

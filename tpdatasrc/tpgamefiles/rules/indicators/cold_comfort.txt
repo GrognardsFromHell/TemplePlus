@@ -1,0 +1,5 @@
+ID_string: COLD_COMFORT
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Spell Endure Elements.tga
+help_topic: TAG_SPELLS_COLD_COMFORT
+tooltip_base_text: Cold Comfort

@@ -398,6 +398,28 @@ int SpellEntry::SpellLevelForSpellClass(int spellClass)
 	return -1;
 }
 
+int SpellEntry::GetLowestSpellLevel(uint32_t spellEnumIn)
+{
+	int level = 100;
+	const auto spExtFind = spellSys.mSpellEntryExt.find(spellEnum);
+	if (spExtFind != spellSys.mSpellEntryExt.end()) {
+		for (auto it : spExtFind->second.levelSpecs) {
+			if (it.slotLevel < level) {
+				level = it.slotLevel;
+			}
+		}
+	}
+
+	for (auto i = 0u; i < this->spellLvlsNum; i++) {
+		const auto& spec = this->spellLvls[i];
+		if (spec.slotLevel < level) {
+			level = spec.slotLevel;
+		}
+	}
+
+	return (level < 100) ? level : -1;
+}
+
 SpellPacketBody::SpellPacketBody()
 {
 	spellSys.spellPacketBodyReset(this);
@@ -525,7 +547,7 @@ bool SpellPacketBody::AddTarget(objHndl tgt, int partsysId, int replaceExisting)
 			return 0;
 		} 
 		
-		logger->debug("SpellPacketAddTarget: Object {} already in list!", description.getDisplayName(tgt));
+		logger->debug("SpellPacketAddTarget: Object {} already in list!", tgt);
 		return 0;	
 	}
 
@@ -540,7 +562,7 @@ bool SpellPacketBody::AddTarget(objHndl tgt, int partsysId, int replaceExisting)
 		return false;
 	}
 
-	logger->debug("SpellPacketAddTarget: Unable to add obj {} to target list!", description.getDisplayName(tgt));
+	logger->debug("SpellPacketAddTarget: Unable to add obj {} to target list!", tgt);
 	return false;
 }
 
@@ -562,6 +584,16 @@ bool SpellPacketBody::IsVancian(){
 		return true;
 	
 	if (d20ClassSys.IsVancianCastingClass(spellSys.GetCastingClass(spellClass)))
+		return true;
+
+	return false;
+}
+
+bool SpellPacketBody::IsAtWill() {
+	if (spellSys.isDomainSpell(spellClass))
+		return false;
+
+	if (d20ClassSys.IsAtWillCastingClass(spellSys.GetCastingClass(spellClass)))
 		return true;
 
 	return false;
@@ -661,11 +693,14 @@ void SpellPacketBody::Debit(){
 		
 	} 
 
-	// add to casted list (so it shows up as used in the Spellbook / gets counted up for spells per day)
-	SpellStoreData sd(spellEnum, spellKnownSlotLevel, spellClass, metaMagicData);
-	sd.spellStoreState.spellStoreType = SpellStoreType::spellStoreCast;
-	casterObj->SetSpell(obj_f_critter_spells_cast_idx, casterObj->GetSpellArray(obj_f_critter_spells_cast_idx).GetSize(), sd);
+	// skip adding spells to casted spells for AtWill casting classes
+	if (!IsAtWill()) {
 
+		// add to casted list (so it shows up as used in the Spellbook / gets counted up for spells per day)
+		SpellStoreData sd(spellEnum, spellKnownSlotLevel, spellClass, metaMagicData);
+		sd.spellStoreState.spellStoreType = SpellStoreType::spellStoreCast;
+		casterObj->SetSpell(obj_f_critter_spells_cast_idx, casterObj->GetSpellArray(obj_f_critter_spells_cast_idx).GetSize(), sd);
+	}
 }
 
 void SpellPacketBody::MemorizedUseUp(SpellStoreData &spellData){
@@ -1009,6 +1044,16 @@ int LegacySpellSystem::ParseSpellSpecString(SpellStoreData* spell, char* spellSt
 	return addresses.ParseSpellSpecString(spell, spellString);
 }
 
+std::vector<int> LegacySpellSystem::GetValidSpellEnums()
+{
+	std::vector<int> res;
+	for (auto it : spellEntryRegistry) {
+		res.push_back(it.data->spellEnum);
+	}
+
+	return res;
+}
+
 const char* LegacySpellSystem::GetSpellMesline(uint32_t lineNumber) const{
 
 	MesLine mesLine(lineNumber);
@@ -1279,6 +1324,8 @@ uint32_t LegacySpellSystem::getWizSchool(objHndl objHnd)
 }
 
 bool LegacySpellSystem::IsForbiddenSchool(objHndl handle, int spSchool){
+	if (School_None == spSchool) //Added in T+ for Invocations
+		return false;
 	auto schoolData = gameSystems->GetObj().GetObject(handle)->GetInt32(obj_f_critter_school_specialization);
 	auto forbSch1 = (schoolData & (0xFF00) ) >> 8;
 	auto forbSch2 = (schoolData & (0xFF0000) ) >> 16;
@@ -1397,7 +1444,6 @@ void LegacySpellSystem::SpellPacketSetCasterLevel(SpellPacketBody* spellPkt) con
 	auto caster = spellPkt->caster;
 	auto spellEnum = spellPkt->spellEnum;
 	auto spellName = spellSys.GetSpellName(spellEnum);
-	auto casterName = description.getDisplayName(caster);
 	
 	auto casterObj = gameSystems->GetObj().GetObject(caster);
 
@@ -1408,13 +1454,13 @@ void LegacySpellSystem::SpellPacketSetCasterLevel(SpellPacketBody* spellPkt) con
 		if (casterClass){
 			auto casterLvl = critterSys.GetCasterLevelForClass(caster, casterClass);
 			spellPkt->casterLevel = casterLvl;
-			logger->info("Critter {} is casting spell {} at base caster_level {}.", casterName, spellName , casterLvl);
+			logger->info("Critter {} is casting spell {} at base caster_level {}.", caster, spellName , casterLvl);
 		} 
 
 		// item spell
 		else if (spellPkt->invIdx != 255 && !IsMonsterSpell(spellPkt->spellEnum)){
 			spellPkt->casterLevel = 0;
-			logger->info("Critter {} is casting item spell {} at base caster_level {}.", casterName, spellName, 0);
+			logger->info("Critter {} is casting item spell {} at base caster_level {}.", caster, spellName, 0);
 		}
 
 		// monster
@@ -1426,7 +1472,7 @@ void LegacySpellSystem::SpellPacketSetCasterLevel(SpellPacketBody* spellPkt) con
 			{
 				spellPkt->casterLevel = casterObj->GetInt32Array(obj_f_critter_level_idx).GetSize();
 			}
-			logger->info("Monster {} is casting spell {} at base caster_level {}.", casterName, spellName, spellPkt->casterLevel);
+			logger->info("Monster {} is casting spell {} at base caster_level {}.", caster, spellName, spellPkt->casterLevel);
 		} else
 		{
 			spellPkt->casterLevel = 0;
@@ -1436,17 +1482,17 @@ void LegacySpellSystem::SpellPacketSetCasterLevel(SpellPacketBody* spellPkt) con
 		if (spellPkt->spellClass == Domain_Special){ // domain special (usually used for monsters)
 			if (spellPkt->invIdx != 255 && !IsMonsterSpell(spellPkt->spellEnum)) {
 				spellPkt->casterLevel = 0;
-				logger->info("Critter {} is casting item spell {} at base caster_level {}.", casterName, spellName, 0);
+				logger->info("Critter {} is casting item spell {} at base caster_level {}.", caster, spellName, 0);
 			}
 
 			else {
 				spellPkt->casterLevel = objects.GetHitDiceNum(caster);
-				logger->info("Monster {} is casting spell {} at base caster_level {}.", casterName, spellName, spellPkt->casterLevel);
+				logger->info("Monster {} is casting spell {} at base caster_level {}.", caster, spellName, spellPkt->casterLevel);
 			}
 		}
 		else if (objects.StatLevelGet(caster, stat_level_cleric) > 0) {
 			spellPkt->casterLevel = critterSys.GetCasterLevelForClass(caster, stat_level_cleric);
-			logger->info("Critter {} is casting Domain spell {} at base caster_level {}.", casterName, spellName, spellPkt->casterLevel);
+			logger->info("Critter {} is casting Domain spell {} at base caster_level {}.", caster, spellName, spellPkt->casterLevel);
 		}
 		
 	}
@@ -3372,7 +3418,7 @@ int LegacySpellSystem::CheckSpellResistance(SpellPacketBody* spellPkt, objHndl h
 		char *outcomeText1, *outcomeText2;
 		if (dispelSpellResistanceResult < 0)	{ // fixed bug - was <= instead of <
 			auto spellName = GetSpellName(spellPkt->spellEnum);
-			logger->info("CheckSpellResistance: Spell {} cast by {} resisted by target {}.", spellName, description.getDisplayName(spellPkt->caster), description.getDisplayName(handle));
+			logger->info("CheckSpellResistance: Spell {} cast by {} resisted by target {}.", spellName, spellPkt->caster, handle);
 			floatSys.FloatSpellLine(handle, 30008, FloatLineColor::White);
 			PlayFizzle(handle);
 			outcomeText1 = combatSys.GetCombatMesLine(119); // Spell ~fails~[ROLL_

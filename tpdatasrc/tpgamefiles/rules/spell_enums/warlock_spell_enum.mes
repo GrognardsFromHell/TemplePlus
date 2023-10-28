@@ -1,0 +1,147 @@
+// Warlock Invocation enums
+
+// Eldritch Blast Shape Invocations
+{2300}{Eldritch Blast}
+{2301}{Eldritch Spear}
+{2302}{Hideous Blow} // not implemented
+{2303}{Eldritch Chain}
+{2304}{Eldritch Cone}
+{2305}{Eldritch Line}
+{2306}{Eldritch Doom}
+{2307}{Eldritch Glaive} // not implemented
+
+// Eldritch Essence Invocations
+{2311}{Frightful Blast}
+{2312}{Sickening Blast}
+{2313}{Beshadowed Blast}
+{2314}{Brimstone Blast}
+{2315}{Hellrime Blast}
+{2316}{Bewitching Blast}
+{2317}{Noxious Blast}
+{2318}{Repelling Blast} // not implemented
+{2319}{Vitriolic Blast}
+{2320}{Hindering Blast}
+{2321}{Utterdark Blast} // not implemented
+{2322}{Binding Blast}
+{2323}{Penetrating Blast}
+{2324}{Baneful Blast} // not implemented
+{2325}{Hammer Blast} // not implemented
+{2326}{Deteriorating Blast} // not implemented
+
+// Warlock Invocations
+{2330}{Beguiling Influence}
+{2331}{Breath of the Night}
+{2332}{Dark One's Own Luck}
+{2333}{Entropic Warding}
+{2334}{Leaps and Bounds}
+{2335}{Miasmic Cloud}
+{2336}{See the Unseen}
+{2337}{Spiderwalk} // not implemented
+{2338}{Soulreaving Aura}
+{2339}{All Seeing Eyes}
+{2340}{Charm}
+{2341}{Curse of Despair}
+{2342}{Fell Flight} // not implemented
+{2343}{Flee the Scene}
+{2344}{The Dead Walk} // not implemented
+{2345}{Voracious Dispelling} // not implemented
+{2346}{Walk Unseen}
+{2347}{Cold Comfort}
+{2348}{Witchwood Step} // not implemented
+{2349}{Dread Seizure} // not implemented
+{2350}{Ignore the Pyre}
+{2357}{Enervating Shadow}
+
+{7300}{Eldritch Blast}
+{7301}{Eldritch Spear}
+{7302}{Hideous Blow} // not implemented
+{7303}{Eldritch Chain}
+{7304}{Eldritch Cone}
+{7305}{Eldritch Line}
+{7306}{Eldritch Doom}
+{7307}{Eldritch Glaive} // not implemented
+{7311}{Frightful Blast}
+{7312}{Sickening Blast}
+{7313}{Beshadowed Blast}
+{7314}{Brimstone Blast}
+{7315}{Hellrime Blast}
+{7316}{Bewitching Blast}
+{7317}{Noxious Blast}
+{7318}{Repelling Blast} // not implemented
+{7319}{Vitriolic Blast}
+{7320}{Hindering Blast}
+{7321}{Utterdark Blast} // not implemented
+{7322}{Binding Blast}
+{7323}{Penetrating Blast}
+{7324}{Baneful Blast} // not implemented
+{7325}{Hammer Blast} // not implemented
+{7326}{Deteriorating Blast} // not implemented
+{7330}{Beguiling Influence}
+{7331}{Breath of the Night}
+{7332}{Dark One's Own Luck}
+{7333}{Entropic Warding}
+{7334}{Leaps and Bounds}
+{7335}{Miasmic Cloud}
+{7336}{See the Unseen}
+{7337}{Spiderwalk} // not implemented
+{7338}{Soulreaving Aura}
+{7339}{All Seeing Eyes}
+{7340}{Charm}
+{7341}{Curse of Despair}
+{7342}{Fell Flight} // not implemented
+{7343}{Flee the Scene}
+{7344}{The Dead Walk} // not implemented
+{7345}{Voracious Dispelling} // not implemented
+{7346}{Walk Unseen}
+{7347}{Cold Comfort}
+{7348}{Witchwood Step} // not implemented
+{7349}{Dread Seizure} // not implemented
+{7350}{Ignore the Pyre}
+{7357}{Enervating Shadow}
+
+{22300}{TAG_SPELLS_ELDRITCH_BLAST}
+{22301}{TAG_SPELLS_ELDRITCH_SPEAR}
+{22302}{TAG_SPELLS_HIDEOUS_BLOW} // not implemented
+{22303}{TAG_SPELLS_ELDRITCH_CHAIN}
+{22304}{TAG_SPELLS_ELDRITCH_CONE}
+{22305}{TAG_SPELLS_ELDRITCH_LINE}
+{22306}{TAG_SPELLS_ELDRITCH_DOOM}
+{22307}{TAG_SPELLS_ELDRITCH_GLAIVE} // not implemented
+{22311}{TAG_SPELLS_FRIGHTFUL_BLAST}
+{22312}{TAG_SPELLS_SICKENING_BLAST}
+{22313}{TAG_SPELLS_BESHADOWED_BLAST}
+{22314}{TAG_SPELLS_BRIMSTONE_BLAST}
+{22315}{TAG_SPELLS_HELLRIME_BLAST}
+{22316}{TAG_SPELLS_BEWITCHING_BLAST}
+{22317}{TAG_SPELLS_NOXIOUS_BLAST}
+{22318}{TAG_SPELLS_REPELLING_BLAST} // not implemented
+{22319}{TAG_SPELLS_VITRIOLIC_BLAST} // not implemented
+{22320}{TAG_SPELLS_HINDERING_BLAST}
+{22321}{TAG_SPELLS_UTTERDARK_BLAST} // not implemented
+{22322}{TAG_SPELLS_BINDING_BLAST} // not implemented
+{22323}{TAG_SPELLS_PENETRATING_BLAST} // not implemented
+{22324}{TAG_SPELLS_BANEFUL_BLAST} // not implemented
+{22325}{TAG_SPELLS_HAMMER_BLAST} // not implemented
+{22326}{TAG_SPELLS_DETERIORATING_BLAST} // not implemented
+{22330}{TAG_SPELLS_BEGUILING_INFLUENCE}
+{22331}{TAG_SPELLS_BREATH_OF_THE_NIGHT}
+{22332}{TAG_SPELLS_DARK_ONE'S_OWN_LUCK}
+{22333}{TAG_SPELLS_ENTROPIC_WARDING}
+{22334}{TAG_SPELLS_LEAPS_AND_BOUNDS}
+{22335}{TAG_SPELLS_MIASMIC_CLOUD}
+{22336}{TAG_SPELLS_SEE_THE_UNSEEN}
+{22337}{TAG_SPELLS_SPIDERWALK} // not implemented
+{22338}{TAG_SPELLS_SOULREAVING_AURA}
+{22339}{TAG_SPELLS_ALL_SEEING_EYES}
+{22340}{TAG_SPELLS_WARLOCK_CHARM}
+{22341}{TAG_SPELLS_CURSE_OF_DESPAIR}
+{22342}{TAG_SPELLS_FELL_FLIGHT} // not implemented
+{22343}{TAG_SPELLS_FLEE_THE_SCENE}
+{22344}{TAG_SPELLS_THE_DEAD_WALK} // not implemented
+{22345}{TAG_SPELLS_VORACIOUS_DISPELLING} // not implemented
+{22346}{TAG_SPELLS_WALK_UNSEEN}
+{22347}{TAG_SPELLS_COLD_COMFORT}
+{22348}{TAG_SPELLS_WITCHWOOD_STEP} // not implemented
+{22349}{TAG_SPELLS_DREAD_SEIZURE} // not implemented
+{22350}{TAG_SPELLS_IGNORE_THE_PYRE}
+{22357}{TAG_SPELLS_ENERVATING_SHADOW}

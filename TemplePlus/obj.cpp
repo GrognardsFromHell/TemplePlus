@@ -612,8 +612,11 @@ locXY Objects::TargetRandomTileNear(objHndl handle, int distance) {
 }
 
 float Objects::GetRotationTowards(objHndl from, objHndl to) {
+	return GetRotationTowardsLoc(from, GetLocationFull(to));
+}
+
+float Objects::GetRotationTowardsLoc(objHndl from, LocAndOffsets & locTo) {
 	auto locFrom = GetLocationFull(from);
-	auto locTo = GetLocationFull(to);
 
 	auto rot = 5*M_PI/4 - AngleBetweenPoints(locFrom, locTo);
 	if (rot < 0)

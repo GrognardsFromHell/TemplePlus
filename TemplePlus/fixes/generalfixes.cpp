@@ -203,11 +203,11 @@ uint32_t __cdecl HookedFragarachAnswering(DispatcherCallbackArgs args) {
 	auto curActor = tbSys.turnBasedGetCurrentActor();
 	auto attachee = args.objHndCaller;
 	auto tgtObj = *(objHndl*)(dispIO + 2);
-	//hooked_print_debug_message("Prevented Scather AoO bug! TB Actor is %s , Attachee is %s,  target is %s", description.getDisplayName(curActor), description.getDisplayName(attachee), description.getDisplayName(tgtObj));
+	
 	if (!tgtObj || !objects.IsCritter(tgtObj) || curActor == attachee)
 	{
 		logger->info("Prevented Scather AoO bug! TB Actor is {}, Attachee is {},  target is {}", 
-			description.getDisplayName(curActor), description.getDisplayName(attachee), description.getDisplayName(tgtObj) );
+			curActor, attachee, tgtObj );
 		// got a crash report once from the getDisplayName here when triggered by a trap apparently, so disabling it
 		return 0;
 	}
@@ -392,8 +392,7 @@ int __cdecl BardicInspireCourageFix::BardicInspiredCourageInitArgs(DispatcherCal
 	}
 	else
 	{
-		logger->info("Bardic Inspired Courage dispatched from non-critter! Mon seigneur {}", 
-			description.getDisplayName(args.objHndCaller));
+		logger->info("Bardic Inspired Courage dispatched from non-critter! Mon seigneur {}", args.objHndCaller);
 	}
 	//conds.CondNodeSetArg(args.subDispNode->condNode, 3, courageBonus); 
 	// The Spell Slinger fix changed the number of args from 3 to 4
