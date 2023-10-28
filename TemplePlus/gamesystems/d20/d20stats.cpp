@@ -508,6 +508,9 @@ StatType D20StatsSystem::GetType(Stat stat) {
 	case stat_level_ruby_knight_vindicator:
 	case stat_level_shadow_sun_ninja:
 	case stat_level_fochlucan_lyrist:
+	case stat_level_marshal:
+	case stat_level_ultimate_magus:
+	case stat_level_unseen_seer:
 
 		return StatType::Level;
 

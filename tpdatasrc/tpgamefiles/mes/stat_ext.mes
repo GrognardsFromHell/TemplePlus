@@ -65,12 +65,13 @@
 
 //
 {82}{Fochlucan Lyrist}
+{88}{Ultimate Magus}
+{89}{Unseen Seer}
 {83}{Marshal}
 {84}{Dragon Shaman}
 {85}{Dragonheart Mage}
 {86}{Battle Howler of Gruumsh}
 {87}{Fist of the Forest}
-{89}{Unseen Seer}
 
 {300}{Psi Points} // max
 {301}{Psi Points} // cur
@@ -148,8 +149,8 @@
 {1085}{DrgHrt}
 {1086}{BtHwl}
 {1087}{FiFo}
-{1089}{UnSeer}
-
+{1088}{UlMa}
+{1089}{Unse}
 
 
 
@@ -243,11 +244,12 @@ Feats: Cleave, Power Attack
 } // Special: Contact with an evil summoned outsider.
 
 
-{13016}Dragon Disciple{A descendant of dragonkind who uses their innate magical power as a catalyst to ignite their dragon blood.
+{13016}Dragon Disciple{-- COMING SOON --}
+A descendant of dragonkind who uses their innate magical power as a catalyst to ignite their dragon blood.
 
 Requirements:
 Level: 5
-Spellcasting: Ability to cast arcane spells without preparation.}
+Spellcasting: Ability to cast arcane spells without preparation.
 
 
 {13017}Duelist{A nimble, intelligent fighter trained in making precise attacks with light weapons, such as the rapier. Also known as a swashbuckler.
@@ -369,6 +371,19 @@ Feats: Great Fortitude, Improved Unarmed Strike, Power Attack.
 Requirements
 Skills: Hide 8, Search 8, Sense Motive 4, Spellcraft 4, Spot 8.
 Spellcasting: Ability to cast 1st-level arcane spells, including at least two divination spells.
+}
+
+{13081}Ultimate Magus{Few individuals have as thorough an understanding and mastery of arcane magic as the ultimate magus.
+
+Spellcraft 8 
+Feats: Any metamagic feat.
+Spellcasting: Spontaneously cast 1st-level arcane spells, prepare and cast 2nd-level arcane spells from a spellbook.
+}
+
+{13082}Unseen Seer{Mysterious and elusive, the unseen seer trades in secrets. Subterfuge is his business and he uses his magic to help his gather other people's secrets while keeping his own.
+
+Spellcasting: Ability to cast 1st-level arcane spells, must know two divination spells.
+Skill ranks:  Hide 8, Search 8, Sense Motive 4, Spellcraft 4, Spot 8
 }
 
 // Cannot Pick Class Short Help Goes in the range of 20007+

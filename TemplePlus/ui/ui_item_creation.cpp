@@ -259,6 +259,8 @@ UiItemCreation::UiItemCreation(const UiSystemConf &config) {
 	memset(craftedItemHandles, 0, sizeof(craftedItemHandles));
 	craftedItemNamePos = 0;
 	craftingWidgetId = -1;
+	scribeScrollSpells.clear();
+	mScribedScrollSpell = 0;
 
 	LoadMaaSpecs();
 
@@ -408,7 +410,7 @@ int UiItemCreation::CraftedWandCasterLevel(objHndl item)
 	return casterLvl;
 }
 
-bool UiItemCreation::CreateItemResourceCheck(objHndl crafter, objHndl objHndItem){
+bool UiItemCreation::CreateItemResourceCheck(objHndl crafter, objHndl objHndItem, int spellEnum){
 	bool canCraft = 1;
 	bool xpCheck = 0;
 	auto insuffXp = itemCreationAddresses.craftInsufficientXP;
@@ -416,10 +418,10 @@ bool UiItemCreation::CreateItemResourceCheck(objHndl crafter, objHndl objHndItem
 	auto insuffSkill = itemCreationAddresses.craftSkillReqNotMet;
 	auto insuffPrereqs = itemCreationAddresses.insuffPrereqs;
 	auto surplusXP = d20LevelSys.GetSurplusXp(crafter);
-	uint32_t craftingCostCP;
+	uint32_t craftingCostCP = 0;
 	auto partyMoney = party.GetMoney();
 
-	auto itemObj = objSystem->GetObject(objHndItem);
+	
 
 	*insuffXp = 0;
 	*insuffCp = 0;
@@ -427,28 +429,31 @@ bool UiItemCreation::CreateItemResourceCheck(objHndl crafter, objHndl objHndItem
 	*insuffPrereqs = 0;
 
 	// Check GP Section
-	int itemWorth = itemObj->GetInt32(obj_f_item_worth);
-
-	// Scrolls
+	int itemWorth = 0;
 	if (itemCreationType == ItemCreationType::ScribeScroll){
-		itemWorth = ScribedScrollWorth(objHndItem, ScribedScrollCasterLevel(objHndItem));
+		itemWorth = ScribedScrollWorth(spellEnum, ScribedScrollCasterLevel(spellEnum));
 		craftingCostCP = itemWorth / 2;
 	}
-	// MAA
-	else if (itemCreationType == ItemCreationType::CraftMagicArmsAndArmor){
-		craftingCostCP = MaaCpCost( CRAFT_EFFECT_INVALID );
-	}
-	// Wands & Potions
-	else if (itemCreationType == ItemCreationType::CraftWand){
-		itemWorth = CraftedWandWorth(objHndItem, CraftedWandCasterLevel(objHndItem)); //ItemWorthAdjustedForCasterLevel(objHndItem, CraftedWandCasterLevel(objHndItem));
-		craftingCostCP = itemWorth / 2;
-	}
-	// Potions
 	else {
-		// current method for crafting stuff:
-		craftingCostCP =  itemWorth / 2;	
-	};
+		auto itemObj = objSystem->GetObject(objHndItem);
+		itemWorth = itemObj->GetInt32(obj_f_item_worth);
 
+		// MAA
+		if (itemCreationType == ItemCreationType::CraftMagicArmsAndArmor) {
+			craftingCostCP = MaaCpCost(CRAFT_EFFECT_INVALID);
+		}
+		// Wands
+		else if (itemCreationType == ItemCreationType::CraftWand) {
+			itemWorth = CraftedWandWorth(objHndItem, CraftedWandCasterLevel(objHndItem)); //ItemWorthAdjustedForCasterLevel(objHndItem, CraftedWandCasterLevel(objHndItem));
+			craftingCostCP = itemWorth / 2;
+		}
+		// Potions etc
+		else {
+			// current method for crafting stuff:
+			craftingCostCP = itemWorth / 2;
+		};
+	}
+	
 	if ( ( (uint32_t)partyMoney ) < craftingCostCP){
 		*insuffCp = 1;
 		canCraft = 0;
@@ -458,63 +463,31 @@ bool UiItemCreation::CreateItemResourceCheck(objHndl crafter, objHndl objHndItem
 	// Check XP & prerequisites section
 
 	// Scrolls, Wands and Potions:
-	if ( itemCreationType != CraftMagicArmsAndArmor){
+	if (itemCreationType == ItemCreationType::ScribeScroll) {
+		if (!ScribeScrollCheck(crafter, spellEnum)) {
+			*insuffPrereqs = 1;
+			canCraft = 0;
+		}
+		
+		// check XP
+		int itemXPCost = itemWorth / 2500;
+		xpCheck = surplusXP >= itemXPCost;
+	}
+	else if (itemCreationType == CraftMagicArmsAndArmor) {
+		int magicArmsAndArmorXPCost = MaaXpCost(CRAFT_EFFECT_INVALID);
+		xpCheck = surplusXP >= magicArmsAndArmorXPCost;
+	}
+	else {
 		// check requirements from rules\\item_creation.mes
 		if (!ItemCreationParseMesfileEntry(crafter, objHndItem)){
 			*insuffPrereqs = 1;
 			canCraft = 0;
 		}
 
-		// scrolls - ensure caster can also actually cast the spell
-		else if (itemCreationType == ItemCreationType::ScribeScroll )	{
-
-			auto spData = itemObj->GetSpell(obj_f_item_spell_idx, 0); // scrolls should only have a single spell...
-			auto spEnum = spData.spellEnum;
-
-			std::vector<int> spellClasses, spellLevels;
-
-			auto isLevelOk = false;
-
-			if (!spellSys.SpellKnownQueryGetData(crafter, spEnum, spellClasses, spellLevels))
-				*insuffPrereqs = 1;
-
-			for (auto i=0u; i < spellLevels.size(); i++){
-				auto maxSpellLvl = -1;
-				auto spClass = spellClasses[i];
-				if (spellSys.isDomainSpell(spClass))
-				{
-					maxSpellLvl = spellSys.GetMaxSpellLevel(crafter, stat_level_cleric);
-
-				} else
-				{
-					maxSpellLvl = spellSys.GetMaxSpellLevel(crafter, spellSys.GetCastingClass(spClass));
-				}
-
-				
-				if (maxSpellLvl >= spellLevels[i])
-				{
-					isLevelOk = true;
-					break;
-				}		
-			}
-
-			if (!isLevelOk){
-				*insuffPrereqs = 1;
-				canCraft = 0;
-			}
-
-		}
-
 		// check XP
-		
 		int itemXPCost = itemWorth / 2500;
 		xpCheck = surplusXP >= itemXPCost;
 	} 
-	// MAA
-	else {
-		int magicArmsAndArmorXPCost = MaaXpCost(CRAFT_EFFECT_INVALID);
-		xpCheck = surplusXP >= magicArmsAndArmorXPCost;
-	}
 		
 	if (xpCheck){
 		return canCraft;
@@ -524,6 +497,30 @@ bool UiItemCreation::CreateItemResourceCheck(objHndl crafter, objHndl objHndItem
 		return 0;
 	};
 
+}
+
+bool UiItemCreation::ScribeScrollCheck(objHndl crafter, int spEnum)
+{
+	std::vector<int> spellClasses, spellLevels;
+	if (!spellSys.SpellKnownQueryGetData(crafter, spEnum, spellClasses, spellLevels))
+		return false;
+
+	for (auto i = 0u; i < spellLevels.size(); i++) {
+		auto maxSpellLvl = -1;
+		auto spClass = spellClasses[i];
+		if (spellSys.isDomainSpell(spClass)) {
+			maxSpellLvl = spellSys.GetMaxSpellLevel(crafter, stat_level_cleric);
+		}
+		else {
+			maxSpellLvl = spellSys.GetMaxSpellLevel(crafter, spellSys.GetCastingClass(spClass));
+		}
+
+
+		if (maxSpellLvl >= spellLevels[i]) {
+			return true;
+		}
+	}
+	return false;
 }
 
 const char* UiItemCreation::GetItemCreationMesLine(int lineId){
@@ -858,10 +855,20 @@ bool UiItemCreation::ItemWielderCondsContainEffect(int effIdx, objHndl item)
 			if (condArrayIt  == condId)	{
 
 				if (itemObj->type == obj_t_armor){
-					// ensure that shield bonuses don't get applied to normal armors (e.g. so Armor Spell Resistance doesn't appear twice)
-					auto armorFlags = itemObj->GetInt32(obj_f_armor_flags);
-					if ((itEnh.flags & IESF_SHIELD) && inventory.GetArmorType(armorFlags) != ARMOR_TYPE_SHIELD )
-						return false;
+					const bool isArmorEnch = itEnh.flags & IESF_ARMOR;
+					const bool isShieldEnch = itEnh.flags & IESF_SHIELD;
+
+					// Ensure that shield bonuses don't get applied to normal armors and normal armor bonuses don't get applied to shields (e.g. so Armor Spell Resistance doesn't appear twice)
+					if (isArmorEnch || isShieldEnch) {
+						const auto armorFlags = itemObj->GetInt32(obj_f_armor_flags);
+						const bool itemIsShield = inventory.GetArmorType(armorFlags) == ARMOR_TYPE_SHIELD;
+						if (!itemIsShield && isShieldEnch) {
+							return false;
+						}
+						else if (itemIsShield && isArmorEnch) {
+							return false;
+						}
+					}
 				}
 				
 
@@ -943,15 +950,38 @@ void UiItemCreation::CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, o
 		return;
 
 	}
+	
 	if (itemCreationType == ScribeScroll){
 		auto scrollSpell = obj->GetSpell(obj_f_item_spell_idx, 0);
-		ScribedScrollSpellGet(objHndItem, scrollSpell);
+		ScribedScrollSpellGet(mScribedScrollSpell, scrollSpell);
 		obj->SetSpell(obj_f_item_spell_idx, 0, scrollSpell);
+		auto invAid = GetScrollInventoryIconId(mScribedScrollSpell);
+		obj->SetInt32(obj_f_item_inv_aid, invAid);
 
-		/*int casterLevelFinal = scrollSpell.spellLevel * 2 - 1;
-		if (casterLevelFinal < 1)
-			casterLevelFinal = 1;*/
 
+		auto baseDescr = description.GetDescriptionString(obj->GetInt32(obj_f_description) );
+		auto spellName = spellSys.GetSpellName(mScribedScrollSpell);
+		int SPELL_ENUM_AID = 1;
+		auto aidSpellName = std::string(spellSys.GetSpellName(SPELL_ENUM_AID));
+		auto pos = std::strstr(baseDescr, aidSpellName.c_str());
+		if (!pos) {
+			pos = std::strstr(baseDescr, tolower(aidSpellName).c_str());
+		}
+		auto endPos = pos + aidSpellName.size();
+		char newName[1024] = {0,};
+		auto idx = 0;
+		for (idx = 0; baseDescr + idx < pos; ++idx) {
+			newName[idx] = baseDescr[idx];
+		}
+		for (auto i=0; i < strlen(spellName); ++i) {
+			newName[idx+i] = spellName[i];
+		}
+
+		for (auto i = 0; endPos + i < baseDescr + strlen(baseDescr); ++i) {
+			newName[idx + strlen(spellName) + i] = endPos[i];
+		}
+		auto newNameId = description.CustomNameNew(newName);
+		obj->SetInt32(obj_f_description, newNameId);
 		return;
 	};
 
@@ -1003,7 +1033,7 @@ void UiItemCreation::CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, o
 };
 
 
-void UiItemCreation::CreateItemDebitXPGP(objHndl crafter, objHndl objHndItem){
+void UiItemCreation::CreateItemDebitXPGP(objHndl crafter, objHndl objHndItem, int spellEnum){
 	uint32_t crafterXP = objects.getInt32(crafter, obj_f_critter_experience);
 	uint32_t craftingCostCP = 0;
 	uint32_t craftingCostXP = 0;
@@ -1018,7 +1048,7 @@ void UiItemCreation::CreateItemDebitXPGP(objHndl crafter, objHndl objHndItem){
 		if (itemCreationType == ItemCreationType::CraftWand)
 			itemWorth = CraftedWandWorth(objHndItem, CraftedWandCasterLevel(objHndItem));
 		else if (itemCreationType == ItemCreationType::ScribeScroll){
-			itemWorth = ScribedScrollWorth(objHndItem, ScribedScrollCasterLevel(objHndItem));
+			itemWorth = ScribedScrollWorth(spellEnum, ScribedScrollCasterLevel(spellEnum));
 		}
 		else
 			itemWorth = objects.getInt32(objHndItem, obj_f_item_worth);
@@ -1111,7 +1141,7 @@ bool UiItemCreation::CraftedWandSpellGet(objHndl item, SpellStoreData & spellDat
 }
 
 
-void UiItemCreation::ItemCreationCraftingCostTexts(int widgetId, objHndl objHndItem){
+void UiItemCreation::ItemCreationCraftingCostTexts(int widgetId, objHndl objHndItem, int spellEnum){
 	// prolog
 	int32_t * insuffXp;
 	int32_t * insuffCp;
@@ -1122,18 +1152,22 @@ void UiItemCreation::ItemCreationCraftingCostTexts(int widgetId, objHndl objHndI
 	TigRect rect(212 + 108 * mUseCo8Ui, 157, 159, 10);
 	char * prereqString;
 
-	int casterLevelNew = -1; // h4x!
-	auto obj = objSystem->GetObject(objHndItem);
-	auto itemWorth = obj->GetInt32(obj_f_item_worth);
+	int casterLevelNew = -1;
+	auto itemWorth = 0;
 
-	if (itemCreationType == CraftWand){
+	if (itemCreationType == ScribeScroll) {
+		casterLevelNew = ScribedScrollCasterLevel(spellEnum);
+		itemWorth = ScribedScrollWorth(spellEnum, casterLevelNew);
+	}
+	else if (itemCreationType == CraftWand){
 		casterLevelNew = CraftedWandCasterLevel(objHndItem);
 		itemWorth = CraftedWandWorth(objHndItem, casterLevelNew);
 	}
-	else if (itemCreationType == ScribeScroll){
-		casterLevelNew = ScribedScrollCasterLevel(objHndItem);
-		itemWorth = ScribedScrollWorth(objHndItem, casterLevelNew);
+	else {
+		auto obj = objSystem->GetObject(objHndItem);
+		itemWorth = obj->GetInt32(obj_f_item_worth);
 	}
+	
 	
 
 	insuffXp = itemCreationAddresses.craftInsufficientXP;
@@ -1195,10 +1229,57 @@ void UiItemCreation::ItemCreationCraftingCostTexts(int widgetId, objHndl objHndI
 	rect.y = 200;
 	rect.width = 150;
 	rect.height = 105;
-	prereqString = temple::GetRef<char*(__cdecl)(objHndl, objHndl)>(0x101525B0)(itemCreationCrafter, objHndItem);
-	if (prereqString){
-		UiRenderer::DrawTextInWidget(widgetId, prereqString, rect, *itemCreationAddresses.itemCreationTextStyle);
+	if (GetItemCreationType() == ItemCreationType::ScribeScroll) {
+		std::string tmp;
+		
+		auto prereqStr = PrintPrereqToken("S");
+		auto prereqMet = spellSys.IsSpellKnown(itemCreationCrafter, spellEnum);
+
+		auto minCasterLevel = 0;
+		auto clPrereqMet = false;
+		if (prereqMet) {
+			SpellStoreData spellData;
+			ScribedScrollSpellGet(spellEnum, spellData);
+			
+			auto castingClass = !spellSys.isDomainSpell(spellData.classCode) ? spellSys.GetCastingClass(spellData.classCode) : stat_level_cleric;
+			minCasterLevel = d20ClassSys.GetMinCasterLevelForSpellLevel(castingClass, spellData.spellLevel);
+			clPrereqMet = critterSys.GetCasterLevelForClass(itemCreationCrafter, castingClass) >= minCasterLevel;
+			
+		}
+		
+		auto clPrereqStr = PrintPrereqToken( fmt::format("C{}", minCasterLevel).c_str() );
+		
+		
+		static auto prereqFieldLabel = temple::GetRef<char*>(0x10BED98C);
+		if (*itemCreationAddresses.craftInsufficientXP
+			|| *itemCreationAddresses.craftInsufficientFunds
+			|| *itemCreationAddresses.craftSkillReqNotMet
+			|| *itemCreationAddresses.insuffPrereqs) {
+			
+			//_snprintf(tmp, 2000, "@0%s @%d%s", prereqFieldLabel, prereqMet ? 1 : 2, prereqStr);
+			tmp.append(fmt::format("@0{} @{:d}{}\n", prereqFieldLabel, prereqMet ? 1 : 2, prereqStr));
+			if (prereqMet) {
+				tmp.append(fmt::format("@0{} @{:d}{}\n", prereqFieldLabel, clPrereqMet ? 1 : 2, clPrereqStr));
+			}
+		}
+		else {
+			//_snprintf(tmp, 2000, "@0%s @3%s", prereqFieldLabel, prereqStr);
+			tmp.append(fmt::format("@0{} @3{}\n", prereqFieldLabel, prereqStr));
+			if (prereqMet) {
+				tmp.append(fmt::format("@0{} @3{}\n", prereqFieldLabel, clPrereqStr));
+			}
+		}
+		if (tmp.size()) {
+			UiRenderer::DrawTextInWidget(widgetId, tmp, rect, *itemCreationAddresses.itemCreationTextStyle);
+		}
 	}
+	else {
+		prereqString = temple::GetRef<char* (__cdecl)(objHndl, objHndl)>(0x101525B0)(itemCreationCrafter, objHndItem);
+		if (prereqString) {
+			UiRenderer::DrawTextInWidget(widgetId, prereqString, rect, *itemCreationAddresses.itemCreationTextStyle);
+		}
+	}
+	
 	
 	if (!*insuffPrereq &&
 		(itemCreationType == ItemCreationType::CraftWand || itemCreationType == ItemCreationType::ScribeScroll))
@@ -1242,7 +1323,11 @@ BOOL UiItemCreation::ItemCreationEntryMsg(int widId, TigMsg* msg){
 
 	craftingItemIdx = itemIdx;
 	auto itemHandle = craftedItemHandles[itemCreationType][itemIdx];
-	if (CreateItemResourceCheck(itemCreationCrafter, itemHandle)) {
+	mScribedScrollSpell = 0;
+	if (itemCreationType == ItemCreationType::ScribeScroll) {
+		mScribedScrollSpell = scribeScrollSpells[itemIdx];
+	}
+	if (CreateItemResourceCheck(itemCreationCrafter, itemHandle, mScribedScrollSpell)) {
 		uiManager->SetButtonState(mItemCreationCreateBtnId, LgcyButtonState::Normal);
 	}
 	else {
@@ -1566,15 +1651,11 @@ uint32_t UiItemCreation::CraftedWandWorth(objHndl item, int casterLevelNew){
 
 }
 
-bool UiItemCreation::ScribedScrollSpellGet(objHndl item, SpellStoreData & spellDataOut, int * spellLevelBaseOut){
-	if (!item)
-		return false;
-	auto obj = objSystem->GetObject(item);
-	if (!obj->GetSpellArray(obj_f_item_spell_idx).GetSize())
-		return false;
-
+bool UiItemCreation::ScribedScrollSpellGet(int spellEnum, SpellStoreData & spellDataOut, int * spellLevelBaseOut){
+	
 	// get spell
-	auto spellData = obj->GetSpell(obj_f_item_spell_idx, 0);
+	SpellStoreData spellData;
+	spellData.spellEnum = spellEnum;
 
 	// default values (shouldn't really be used...)
 	int spellLevelBasic = 999;
@@ -1645,15 +1726,15 @@ bool UiItemCreation::ScribedScrollSpellGet(objHndl item, SpellStoreData & spellD
 	return true;
 }
 
-int UiItemCreation::ScribedScrollSpellLevel(objHndl item)
+int UiItemCreation::ScribedScrollSpellLevel(int spellEnum)
 {
 	SpellStoreData scrollSpell;
-	if (!ScribedScrollSpellGet(item, scrollSpell))
+	if (!ScribedScrollSpellGet(spellEnum, scrollSpell))
 		scrollSpell.spellLevel = -1;
 	return scrollSpell.spellLevel;
 }
 
-int UiItemCreation::ScribedScrollCasterLevel(objHndl item)
+int UiItemCreation::ScribedScrollCasterLevel(int spellEnum)
 {
 	// int result = ScribedScrollSpellLevel(item);
 	/*if (result <= 1)
@@ -1662,7 +1743,7 @@ int UiItemCreation::ScribedScrollCasterLevel(objHndl item)
 	*/
 
 	SpellStoreData scrollSpell;
-	if (!ScribedScrollSpellGet(item, scrollSpell))
+	if (!ScribedScrollSpellGet(spellEnum, scrollSpell))
 		scrollSpell.spellLevel = -1;
 	if (scrollSpell.spellLevel <= 1)
 		return 1;
@@ -1681,21 +1762,18 @@ int UiItemCreation::ScribedScrollCasterLevel(objHndl item)
 	return casterLvl;
 }
 
-uint32_t UiItemCreation::ScribedScrollWorth(objHndl item, int casterLevelNew)
+uint32_t UiItemCreation::ScribedScrollWorth(int spellEnum, int casterLevelNew)
 {
 	auto baseWorth = 25;
-	auto obj = objSystem->GetObject(item);
-
-	// which spell?
-	auto spellData = obj->GetSpell(obj_f_item_spell_idx, 0);
-	// Calculate cost
 	
-	SpellEntry spEntry(spellData.spellEnum);
+	// Calculate cost
+	SpellEntry spEntry(spellEnum);
 	int materialCost = spEntry.costGp;
 
 	// retrieve Spell Known data (e.g. for Bards) and caster level (as modified by user selection)
-	int spellLevelBase = spellData.spellLevel; // default value
-	ScribedScrollSpellGet(item, spellData, &spellLevelBase);
+	int spellLevelBase = 0; // default value
+	SpellStoreData spellData;
+	ScribedScrollSpellGet(spellEnum, spellData, &spellLevelBase);
 	auto casterLevelBase = max(1,spellLevelBase * 2 - 1);
 	auto casterClass = (Stat)spellSys.GetCastingClass(spellData.classCode);
 	auto minCasterLevel = (int)d20ClassSys.GetMinCasterLevelForSpellLevel(casterClass, spellLevelBase);
@@ -1812,7 +1890,7 @@ UiItemCreation::UiItemCreation(){
 	memset(craftedItemHandles, 0, sizeof(craftedItemHandles));
 	craftedItemNamePos = 0;
 	craftingWidgetId = -1;
-
+	mScribedScrollSpell = 0;
 }
 
 int UiItemCreation::GetItemCreationType(){
@@ -1988,8 +2066,14 @@ std::string UiItemCreation::PrintPrereqToken(const char * reqTxt)
 		result = fmt::format("{}", d20Stats.GetRaceName(d20RaceSys.GetRaceEnum(reqTxt + 1)) );
 		break;
 	case 'S':
+	{
+		if (itemCreationType == ItemCreationType::ScribeScroll) {
+			result = spellSys.GetSpellName(mScribedScrollSpell);
+			return result;
+		}
 		result = fmt::format("{}", spellSys.GetSpellName(spellSys.GetSpellEnum(reqTxt + 1)));
 		break;
+	}
 	case 'O':
 		{
 			StringTokenizer tok(reqTxt + 1);
@@ -2013,6 +2097,35 @@ std::string UiItemCreation::PrintPrereqToken(const char * reqTxt)
 		break;
 	}
 	return result;
+}
+
+int UiItemCreation::GetScrollInventoryIconId(int spellEnum)
+{
+	SpellEntry entry(mScribedScrollSpell);
+	if (!entry.spellEnum) {
+		return 0;
+	}
+	
+	switch ((SpellSchools)entry.spellSchoolEnum) {
+	case SpellSchools::School_Abjuration:
+		return 384;
+	case SpellSchools::School_Conjuration:
+		return 379;
+	case SpellSchools::School_Divination:
+		return 386;
+	case SpellSchools::School_Enchantment:
+		return 383;
+	case SpellSchools::School_Evocation:
+		return 154;
+	case SpellSchools::School_Illusion:
+		return 381;
+	case SpellSchools::School_Necromancy:
+		return 380;
+	case SpellSchools::School_Transmutation:
+		return 382;
+	default:
+		return 154;
+	}
 }
 
 
@@ -2186,18 +2299,27 @@ void UiItemCreation::ItemCreationWndRender(int widId){
 	// draw info pertaining to selected item
 	if (craftingItemIdx >= 0 && (uint32_t) craftingItemIdx < numItemsCrafting[itemCreationType])
 	{
-		auto itemHandle = craftedItemHandles[itemCreationType][craftingItemIdx];
-
+		objHndl itemHandle = craftedItemHandles[itemCreationType][craftingItemIdx];
+		const char* itemName = nullptr;
+		auto invAid = 0;
+		if (itemCreationType == ItemCreationType::ScribeScroll) {
+			itemName = spellSys.GetSpellName(mScribedScrollSpell);
+			invAid = GetScrollInventoryIconId(mScribedScrollSpell);
+		}
+		else {
+			itemName = ItemCreationGetItemName(itemHandle);
+			invAid = gameSystems->GetObj().GetObject(itemHandle)->GetInt32(obj_f_item_inv_aid);
+		}
+		
 		// draw icon
-		auto invAid = (UiGenericAsset)gameSystems->GetObj().GetObject(itemHandle)->GetInt32(obj_f_item_inv_aid);
 		int textureId;
-		uiAssets->GetAsset(UiAssetType::Inventory, invAid, textureId);
+		uiAssets->GetAsset(UiAssetType::Inventory, (UiGenericAsset)invAid, textureId);
 		rect = TigRect(temple::GetRef<TigRect>(0x102FAEC4));
 		rect.x += 108 * mUseCo8Ui;
 		UiRenderer::DrawTexture(textureId, rect);
 
 
-		auto itemName = ItemCreationGetItemName(itemHandle);
+		
 		measText = UiRenderer::MeasureTextSize(itemName, temple::GetRef<TigTextStyle>(0x10BED938));
 		if (measText.width > 161) {
 			measText.width = 161;
@@ -2205,7 +2327,7 @@ void UiItemCreation::ItemCreationWndRender(int widId){
 		rect = TigRect((161 - measText.width )/2 + 208 + 108 * mUseCo8Ui, 132, 161, 24);
 		UiRenderer::DrawTextInWidget(widId, itemName, rect, temple::GetRef<TigTextStyle>(0x10BEDFE8));
 		
-		ItemCreationCraftingCostTexts(widId, itemHandle);
+		ItemCreationCraftingCostTexts(widId, itemHandle, mScribedScrollSpell);
 	}
 	
 
@@ -2233,21 +2355,30 @@ void UiItemCreation::ItemCreationEntryRender(int widId){
 		UiRenderer::PushFont(PredefinedFont::ARIAL_10);
 
 
-	auto itemHandle = craftedItemHandles[itemCreationType][itemIdx];
-	auto itemName = ItemCreationGetItemName(itemHandle);
+	// special case for scrolls
+	const char* text = nullptr;
+	if (itemCreationType == ItemCreationType::ScribeScroll) {
+		auto spellEnum = scribeScrollSpells[itemIdx];
+		text = spellSys.GetSpellName(spellEnum);
+	}
+	else {
+		auto itemHandle = craftedItemHandles[itemCreationType][itemIdx];
+		text = ItemCreationGetItemName(itemHandle);
+	}
+
 	TigRect rect(32, 12 * widIdx + 55, 155 + mUseCo8Ui * 108, 12);
 	auto checkRes = itemCreationResourceCheckResults[itemIdx];
 	if (itemIdx == craftingItemIdx)	{
 		if (checkRes)
-			UiRenderer::DrawTextInWidget(mItemCreationWndId, itemName, rect, temple::GetRef<TigTextStyle>(0x10BEDFE8));
+			UiRenderer::DrawTextInWidget(mItemCreationWndId, text, rect, temple::GetRef<TigTextStyle>(0x10BEDFE8));
 		else
-			UiRenderer::DrawTextInWidget(mItemCreationWndId, itemName, rect, temple::GetRef<TigTextStyle>(0x10BECE90));
+			UiRenderer::DrawTextInWidget(mItemCreationWndId, text, rect, temple::GetRef<TigTextStyle>(0x10BECE90));
 	} 
 	else {
 		if (checkRes)
-			UiRenderer::DrawTextInWidget(mItemCreationWndId, itemName, rect, temple::GetRef<TigTextStyle>(0x10BED938));
+			UiRenderer::DrawTextInWidget(mItemCreationWndId, text, rect, temple::GetRef<TigTextStyle>(0x10BED938));
 		else
-			UiRenderer::DrawTextInWidget(mItemCreationWndId, itemName, rect, temple::GetRef<TigTextStyle>(0x10BED6D8));
+			UiRenderer::DrawTextInWidget(mItemCreationWndId, text, rect, temple::GetRef<TigTextStyle>(0x10BED6D8));
 	}
 
 	UiRenderer::PopFont();
@@ -2482,23 +2613,38 @@ void UiItemCreation::MaaEnhBonusUpRender(int widId){
 void UiItemCreation::ButtonStateInit(int wndId){
 	uiManager->SetHidden(wndId, false);
 	*mItemCreationWnd = *uiManager->GetWindow(wndId);
-	itemCreationResourceCheckResults = new bool[numItemsCrafting[itemCreationType]];
-	for (int i = 0; i < (int)numItemsCrafting[itemCreationType];i++)
-	{
-		auto itemHandle = craftedItemHandles[itemCreationType][i];
-		if (itemHandle)	{
-			itemCreationResourceCheckResults[i] = CreateItemResourceCheck(itemCreationCrafter, itemHandle);
+
+	auto itemCount = numItemsCrafting[itemCreationType];
+
+	itemCreationResourceCheckResults = new bool[itemCount];
+	if (itemCreationType == ItemCreationType::ScribeScroll) {
+		for (int i = 0u; i < itemCount; ++i) {
+			auto spellEnum = scribeScrollSpells[i];
+			itemCreationResourceCheckResults[i] = CreateItemResourceCheck(itemCreationCrafter, objHndl::null, spellEnum);
 		}
 	}
-
-	if (craftingItemIdx >= 0 && craftingItemIdx < (int)numItemsCrafting[itemCreationType]){
-		if (CreateItemResourceCheck(itemCreationCrafter, craftedItemHandles[itemCreationType][craftingItemIdx]))
+	else {
+		for (int i = 0u; i < itemCount; i++)
+		{
+			auto itemHandle = craftedItemHandles[itemCreationType][i];
+			if (itemHandle) {
+				itemCreationResourceCheckResults[i] = CreateItemResourceCheck(itemCreationCrafter, itemHandle);
+			}
+		}
+	}
+	
+	mScribedScrollSpell = 0;
+	if (craftingItemIdx >= 0 && craftingItemIdx < itemCount){
+		if (itemCreationType == ItemCreationType::ScribeScroll) {
+			mScribedScrollSpell = scribeScrollSpells[craftingItemIdx];
+		}
+		if (CreateItemResourceCheck(itemCreationCrafter, craftedItemHandles[itemCreationType][craftingItemIdx], mScribedScrollSpell))
 			uiManager->SetButtonState(mItemCreationCreateBtnId, LgcyButtonState::Normal);
 		else
 			uiManager->SetButtonState(mItemCreationCreateBtnId, LgcyButtonState::Disabled);
 	}
 
-	uiManager->ScrollbarSetYmax(mItemCreationScrollbarId, numItemsCrafting[itemCreationType] - NUM_DISPLAYED_CRAFTABLE_ITEMS_MAX  < 0 ? 0 : numItemsCrafting[itemCreationType] - NUM_DISPLAYED_CRAFTABLE_ITEMS_MAX);
+	uiManager->ScrollbarSetYmax(mItemCreationScrollbarId, itemCount - NUM_DISPLAYED_CRAFTABLE_ITEMS_MAX  < 0 ? 0 : itemCount - NUM_DISPLAYED_CRAFTABLE_ITEMS_MAX);
 	uiManager->ScrollbarSetY(mItemCreationScrollbarId, 0);
 	mItemCreationScrollbarY = 0;
 	uiManager->BringToFront(wndId);
@@ -2517,18 +2663,18 @@ void UiItemCreation::MaaInitCraftedItem(objHndl itemHandle){
 	craftedItemName.append(ItemCreationGetItemName(itemHandle));
 	craftedItemNamePos = craftedItemName.size();
 
-	for (auto it: itemEnhSpecs)	{
-		if (ItemWielderCondsContainEffect(it.first,itemHandle))	{
-			
-			if (it.second.flags & ItemEnhancementSpecFlags::IESF_ENH_BONUS){
+	for (auto it : itemEnhSpecs) {
+		if (ItemWielderCondsContainEffect(it.first, itemHandle)) {
+
+			if (it.second.flags & ItemEnhancementSpecFlags::IESF_ENH_BONUS) {
 				craftedItemExistingEffectiveBonus += it.second.effectiveBonus;
 				craftedItemExtraGold += itemExtraGold[it.first];
 				appliedBonusIndices.push_back(it.first);
 				/*if (!ItemWielderCondsContainEffect(it.second.upgradesTo, itemHandle)) {
-					
+
 				}*/
 			}
-			else if (!ItemWielderCondsContainEffect(it.second.upgradesTo, itemHandle)){
+			else if (!ItemWielderCondsContainEffect(it.second.upgradesTo, itemHandle)) {
 				craftedItemExistingEffectiveBonus += it.second.effectiveBonus;
 				craftedItemExtraGold += itemExtraGold[it.first];
 				appliedBonusIndices.push_back(it.first);
@@ -2651,9 +2797,9 @@ BOOL UiItemCreation::CreateBtnMsg(int widId, TigMsg* msg)
 				itemHandle = craftedItemHandles[itemCreationType][craftingItemIdx];
 			}
 				
-			if ( CreateItemResourceCheck(itemCreationCrafter, itemHandle) )
+			if ( CreateItemResourceCheck(itemCreationCrafter, itemHandle, mScribedScrollSpell) )
 			{
-				CreateItemDebitXPGP(itemCreationCrafter, itemHandle);
+				CreateItemDebitXPGP(itemCreationCrafter, itemHandle, mScribedScrollSpell);
 				CreateItemFinalize(itemCreationCrafter, itemHandle);
 			}
 		}
@@ -2839,28 +2985,32 @@ void UiItemCreation::CreateItemFinalize(objHndl crafter, objHndl item){
 		//infrastructure::gKeyboard.Update();
 		// if ALT is pressed, keep the window open for more crafting!
 
-		//auto& itemCreationResourceCheckResults = temple::GetRef<char*>(0x10BEE330);
 		if (altPressed) {
 
 			// refresh the resource checks
-			auto numItemsCrafting = temple::GetRef<int[8]>(0x11E76C7C); // array containing number of protos
-			static auto craftingHandles = temple::GetRef<objHndl*[8]>(0x11E76C3C); // proto handles
-
-			for (int i = 0; i < numItemsCrafting[itemCreationType]; i++) {
-				auto protoHandle = craftingHandles[itemCreationType][i];
-				if (protoHandle)
-					itemCreationResourceCheckResults[i] = CreateItemResourceCheck(crafter, protoHandle);
+			if (itemCreationType == ItemCreationType::ScribeScroll) {
+				for (int i = 0; i < numItemsCrafting[itemCreationType]; i++) {
+					auto protoHandle = craftedItemHandles[itemCreationType][i];
+					auto spellEnum = scribeScrollSpells[i];
+					if (protoHandle) {
+						itemCreationResourceCheckResults[i] = CreateItemResourceCheck(crafter, protoHandle, spellEnum);
+					}
+				}
 			}
-
-			auto icItemIdx = temple::GetRef<int>(0x10BEE398);
-			if (icItemIdx >= 0 && icItemIdx < numItemsCrafting[itemCreationType]) {
+			else {
+				for (int i = 0; i < numItemsCrafting[itemCreationType]; i++) {
+					auto protoHandle = craftedItemHandles[itemCreationType][i];
+					if (protoHandle)
+						itemCreationResourceCheckResults[i] = CreateItemResourceCheck(crafter, protoHandle);
+				}
+			}
+			
+			if (craftingItemIdx >= 0 && craftingItemIdx < numItemsCrafting[itemCreationType]) {
 				auto createBtnId = mItemCreationCreateBtnId; //temple::GetRef<int>(0x10BED8B0);
-				if (CreateItemResourceCheck(crafter, item))
-				{
+				if (CreateItemResourceCheck(crafter, item, mScribedScrollSpell)) {
 					uiManager->SetButtonState(createBtnId, LgcyButtonState::Normal);
 				}
-				else
-				{
+				else {
 					uiManager->SetButtonState(createBtnId, LgcyButtonState::Disabled);
 				}
 			}
@@ -3815,43 +3965,109 @@ bool UiItemCreation::InitItemCreationRules(){
 	for (auto i = (int)ItemCreationType::IC_Alchemy; i < ItemCreationType::Inactive; i++){
 		if (i == ItemCreationType::CraftMagicArmsAndArmor){
 			mMaaCraftableItemList.clear();
+			continue;
 		}
-		else
-		{
-			MesLine line(i);
-			mesFuncs.GetLine_Safe(icrules, &line);
-			numItemsCrafting[i] = 0;
-			{
-				StringTokenizer craftableTok(line.value);
-				while (craftableTok.next()) {
-					if (craftableTok.token().type == StringTokenType::Number)
-						++numItemsCrafting[i];
-				}
-			}
-			craftedItemHandles[i] = new objHndl[numItemsCrafting[i]+1];
-			memset(craftedItemHandles[i], 0, sizeof(objHndl) *(numItemsCrafting[i] + 1));
-			if (numItemsCrafting[i] > 0){
-				int j = 0;
-				StringTokenizer craftableTok(line.value);
-				while (craftableTok.next()) {
-					if (craftableTok.token().type == StringTokenType::Number){
-						auto protoHandle = gameSystems->GetObj().GetProtoHandle(craftableTok.token().numberInt);
-						if (protoHandle)
-							craftedItemHandles[i][j++] = protoHandle;
-					}
-						
-				}
-				numItemsCrafting[i] = j; // in case there are invalid protos
-				std::sort(craftedItemHandles[i], &craftedItemHandles[i][numItemsCrafting[i]],
-					[this](objHndl first, objHndl second){
-					auto firstName = ItemCreationGetItemName(first);
-					auto secondName = ItemCreationGetItemName(second);
-					auto comRes = _stricmp(firstName, secondName);
-					return comRes < 0;
-				});
-			}
-			
+		if (i == ItemCreationType::ScribeScroll) { // special handling now
+			continue;
+		}
 
+		MesLine line(i);
+		mesFuncs.GetLine_Safe(icrules, &line);
+		numItemsCrafting[i] = 0;
+		{
+			StringTokenizer craftableTok(line.value);
+			while (craftableTok.next()) {
+				if (craftableTok.token().type == StringTokenType::Number)
+					++numItemsCrafting[i];
+			}
+		}
+		craftedItemHandles[i] = new objHndl[numItemsCrafting[i]+1];
+		memset(craftedItemHandles[i], 0, sizeof(objHndl) *(numItemsCrafting[i] + 1));
+		if (numItemsCrafting[i] > 0){
+			int j = 0;
+			StringTokenizer craftableTok(line.value);
+			while (craftableTok.next()) {
+				if (craftableTok.token().type == StringTokenType::Number){
+					auto protoHandle = gameSystems->GetObj().GetProtoHandle(craftableTok.token().numberInt);
+					if (protoHandle)
+						craftedItemHandles[i][j++] = protoHandle;
+				}
+						
+			}
+			numItemsCrafting[i] = j; // in case there are invalid protos
+			std::sort(craftedItemHandles[i], &craftedItemHandles[i][numItemsCrafting[i]],
+				[this](objHndl first, objHndl second){
+				auto firstName = ItemCreationGetItemName(first);
+				auto secondName = ItemCreationGetItemName(second);
+				auto comRes = _stricmp(firstName, secondName);
+				return comRes < 0;
+			});
+		}
+		
+	}
+
+	// Automated scribe scroll entries:
+	{
+		int i = (int)ItemCreationType::ScribeScroll;
+		numItemsCrafting[i] = 0;
+		spellSys.DoForSpellEntries( [&](SpellEntry& entry)->void {
+			auto spellEnum = entry.spellEnum;
+			if (spellSys.IsNonCore(spellEnum) && !config.nonCoreMaterials) {
+				return;
+			}
+			if (spellSys.IsMonsterSpell(spellEnum) || spellSys.IsSpellLike(spellEnum)) {
+				return;
+			}
+			// Todo: warlock...
+			if (spellEnum >= 2300 && spellEnum <= 2400) {
+				return;
+			}
+			if (!entry.spellLvlsNum) { // some non-spells in the 700 range are like that
+				return;
+			}
+			if (spellEnum >= 700 && spellEnum <= 802) { // special case some snowflakes grrr
+				// 733 Scorching Ray, 740 Ray of Clumsiness, 775 Resonance, 794, 795, 796, 797, 798, 799 - vigor spells, scintillating sphere, etc
+				switch (spellEnum) {
+				case 733:
+				case 740:
+				case 775:
+				case 794:
+				case 795:
+				case 796:
+				case 797:
+				case 798:
+				case 799:
+					break;
+				default:
+					return;
+				}
+			}
+			scribeScrollSpells.push_back(spellEnum);
+			numItemsCrafting[i]++;
+		});
+		std::sort(scribeScrollSpells.begin(), scribeScrollSpells.end(),
+			[this](int first, int second) {
+				auto firstName = spellSys.GetSpellName(first);
+				auto secondName = spellSys.GetSpellName(second);
+				auto comRes = _stricmp(firstName, secondName);
+				return comRes < 0;
+			});
+		craftedItemHandles[i] = new objHndl[numItemsCrafting[i] + 1];
+		memset(craftedItemHandles[i], 0, sizeof(objHndl) * (numItemsCrafting[i] + 1));
+
+		// Use Aid scroll as prototype
+		auto SCROLL_OF_AID_PROTO = 9002, SPELL_AID_ENUM = 1;
+		auto scrollProtoHandle = gameSystems->GetObj().GetProtoHandle(SCROLL_OF_AID_PROTO);
+		if (!scrollProtoHandle) {
+			throw TempleException("InitItemCreationRules: Cannot Find aid scroll proto!");
+		}
+		auto &spell = objSystem->GetObject(scrollProtoHandle)->GetSpell(obj_f_item_spell_idx, 0);
+		if (spell.spellEnum != SPELL_AID_ENUM) {
+			throw TempleException("InitItemCreationRules: Unexpected scroll proto - expected aid spell scroll!");
+		}
+		// just fill it with the same handle
+		for (auto j = 0u; j < numItemsCrafting[i]; ++j) {
+			craftedItemHandles[i][j] = scrollProtoHandle;
 		}
 		
 	}

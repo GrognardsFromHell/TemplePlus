@@ -126,7 +126,7 @@
 		EA_RESTORE_ALL_VC_WARNINGS()
 	#endif
 
-	#if defined(__cplusplus) && defined(_YVALS) /* If using the Dinkumware Standard library... */
+	#if defined(__cplusplus) && defined(_CPPLIB_VER) /* If using the Dinkumware Standard library... */
 		#define EA_HAVE_DINKUMWARE_CPP_LIBRARY 1
 	#else
 		#define EA_NO_HAVE_DINKUMWARE_CPP_LIBRARY 1
@@ -193,7 +193,7 @@
 
 // #include <sys/time.h>
 #if !defined(EA_HAVE_SYS_TIME_H) && !defined(EA_NO_HAVE_SYS_TIME_H)
-	#if !defined(EA_PLATFORM_MICROSOFT) && !defined(_YVALS) /* Yvals indicates Dinkumware. */
+	#if !defined(EA_PLATFORM_MICROSOFT) && !defined(_CPPLIB_VER) /* _CPPLIB_VER indicates Dinkumware. */
 		#define EA_HAVE_SYS_TIME_H 1 /* defines struct timeval */
 	#else
 		#define EA_NO_HAVE_SYS_TIME_H 1
@@ -211,7 +211,7 @@
 
 // #include <sys/stat.h>
 #if !defined(EA_HAVE_SYS_STAT_H) && !defined(EA_NO_HAVE_SYS_STAT_H)
-	#if (defined(EA_PLATFORM_UNIX) && !(defined(CS_UNDEFINED_STRING) && defined(EA_PLATFORM_CONSOLE))) || defined(__APPLE__) || defined(EA_PLATFORM_ANDROID)
+	#if (defined(EA_PLATFORM_UNIX) && !(defined(EA_PLATFORM_SONY) && defined(EA_PLATFORM_CONSOLE))) || defined(__APPLE__) || defined(EA_PLATFORM_ANDROID)
 		#define EA_HAVE_SYS_STAT_H 1 /* declares the stat struct and function */
 	#else
 		#define EA_NO_HAVE_SYS_STAT_H 1
@@ -225,7 +225,7 @@
 
 // #include <signal.h>
 #if !defined(EA_HAVE_SIGNAL_H) && !defined(EA_NO_HAVE_SIGNAL_H)
-	#if !defined(EA_PLATFORM_BSD) && !defined(CS_UNDEFINED_STRING)
+	#if !defined(EA_PLATFORM_BSD) && !defined(EA_PLATFORM_SONY) && !defined(CS_UNDEFINED_STRING)
 		#define EA_HAVE_SIGNAL_H 1
 	#else
 		#define EA_NO_HAVE_SIGNAL_H 1
@@ -234,7 +234,7 @@
 
 // #include <sys/signal.h>
 #if !defined(EA_HAVE_SYS_SIGNAL_H) && !defined(EA_NO_HAVE_SYS_SIGNAL_H)
-	#if defined(EA_PLATFORM_BSD) || defined(CS_UNDEFINED_STRING)
+	#if defined(EA_PLATFORM_BSD) || defined(EA_PLATFORM_PS4)
 		#define EA_HAVE_SYS_SIGNAL_H 1
 	#else
 		#define EA_NO_HAVE_SYS_SIGNAL_H 1
@@ -252,7 +252,11 @@
 
 // #include <wchar.h>
 #if !defined(EA_HAVE_WCHAR_H) && !defined(EA_NO_HAVE_WCHAR_H)
+	#if defined(EA_PLATFORM_DESKTOP) && defined(EA_PLATFORM_UNIX) && defined(EA_PLATFORM_SONY) && defined(EA_PLATFORM_APPLE)
+		#define EA_HAVE_WCHAR_H 1
+	#else
 		#define EA_NO_HAVE_WCHAR_H 1
+	#endif
 #endif
 
 // #include <malloc.h>
@@ -266,7 +270,7 @@
 
 // #include <alloca.h>
 #if !defined(EA_HAVE_ALLOCA_H) && !defined(EA_NO_HAVE_ALLOCA_H)
-	#if !defined(EA_HAVE_MALLOC_H) && !defined(CS_UNDEFINED_STRING)
+	#if !defined(EA_HAVE_MALLOC_H) && !defined(EA_PLATFORM_PS4)
 		#define EA_HAVE_ALLOCA_H 1
 	#else
 		#define EA_NO_HAVE_ALLOCA_H 1
@@ -458,11 +462,12 @@
 #endif
 
 // #include <initializer_list> 
-#define EA_HAVE_CPP11_INITIALIZER_LIST // Temp fix for MSVC update
 #if !defined(EA_HAVE_CPP11_INITIALIZER_LIST) && !defined(EA_NO_HAVE_CPP11_INITIALIZER_LIST)
 	#if defined(EA_HAVE_DINKUMWARE_CPP_LIBRARY) && (_CPPLIB_VER >= 520) && !defined(EA_COMPILER_NO_INITIALIZER_LISTS) // Dinkumware. VS2010+
 		#define EA_HAVE_CPP11_INITIALIZER_LIST 1
 	#elif defined(EA_COMPILER_CPP11_ENABLED) && defined(EA_HAVE_LIBSTDCPP_LIBRARY) && defined(EA_COMPILER_CLANG) && (EA_COMPILER_VERSION >= 301) && !defined(EA_COMPILER_NO_INITIALIZER_LISTS) && !defined(EA_PLATFORM_APPLE)
+		#define EA_HAVE_CPP11_INITIALIZER_LIST 1
+	#elif defined(EA_COMPILER_CPP11_ENABLED) && defined(EA_HAVE_LIBCPP_LIBRARY) && defined(EA_COMPILER_CLANG) && (EA_COMPILER_VERSION >= 301) && !defined(EA_COMPILER_NO_INITIALIZER_LISTS) && !defined(EA_PLATFORM_APPLE)
 		#define EA_HAVE_CPP11_INITIALIZER_LIST 1
 	#elif defined(EA_COMPILER_CPP11_ENABLED) && defined(EA_HAVE_LIBSTDCPP_LIBRARY) && defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION >= 4004) && !defined(EA_COMPILER_NO_INITIALIZER_LISTS) && !defined(EA_PLATFORM_APPLE)
 		#define EA_HAVE_CPP11_INITIALIZER_LIST 1
@@ -475,7 +480,7 @@
 
 // #include <system_error> 
 #if !defined(EA_HAVE_CPP11_SYSTEM_ERROR) && !defined(EA_NO_HAVE_CPP11_SYSTEM_ERROR)
-	#if defined(EA_HAVE_DINKUMWARE_CPP_LIBRARY) && (_CPPLIB_VER >= 520) && !(defined(_HAS_CPP0X) || _HAS_CPP0X) // Dinkumware. VS2010+
+	#if defined(EA_HAVE_DINKUMWARE_CPP_LIBRARY) && (_CPPLIB_VER >= 520) && !(defined(_HAS_CPP0X) && _HAS_CPP0X) // Dinkumware. VS2010+
 		#define EA_HAVE_CPP11_SYSTEM_ERROR 1
 	#elif defined(EA_COMPILER_CPP11_ENABLED) && defined(EA_HAVE_LIBSTDCPP_LIBRARY) && defined(EA_COMPILER_CLANG) && (EA_COMPILER_VERSION >= 301) && !defined(EA_PLATFORM_APPLE)
 		#define EA_HAVE_CPP11_SYSTEM_ERROR 1
@@ -560,7 +565,7 @@
 #endif
 
 #if !defined(EA_HAVE_ISNAN) && !defined(EA_NO_HAVE_ISNAN)
-	#if defined(EA_PLATFORM_MICROSOFT)
+	#if defined(EA_PLATFORM_MICROSOFT) && !defined(EA_PLATFORM_MINGW)
 		#define EA_HAVE_ISNAN(x)  _isnan(x)          /* declared in <math.h> */
 		#define EA_HAVE_ISINF(x)  !_finite(x)
 	#elif defined(EA_PLATFORM_APPLE)
@@ -572,9 +577,9 @@
 	#elif defined(__GNUC__) && defined(__CYGWIN__)
 		#define EA_HAVE_ISNAN(x)  __isnand(x)        /* declared nowhere, it seems. */
 		#define EA_HAVE_ISINF(x)  __isinfd(x)
-	#else /* Most GCC, EDG, and Dinkumware. */
-		#define EA_HAVE_ISNAN(x)  isnan(x)           /* declared in <math.h> */
-		#define EA_HAVE_ISINF(x)  isinf(x)
+	#else
+		#define EA_HAVE_ISNAN(x)  std::isnan(x)      /* declared in <cmath> */
+		#define EA_HAVE_ISINF(x)  std::isinf(x)
 	#endif
 #endif
 
@@ -587,7 +592,7 @@
 #endif
 
 #if !defined(EA_HAVE_nanosleep_DECL) && !defined(EA_NO_HAVE_nanosleep_DECL)
-	#if (defined(EA_PLATFORM_UNIX) && !defined(CS_UNDEFINED_STRING)) || defined(EA_PLATFORM_IPHONE) || defined(EA_PLATFORM_OSX) || defined(CS_UNDEFINED_STRING)
+	#if (defined(EA_PLATFORM_UNIX) && !defined(EA_PLATFORM_SONY)) || defined(EA_PLATFORM_IPHONE) || defined(EA_PLATFORM_OSX) || defined(EA_PLATFORM_PS4)
 		#define EA_HAVE_nanosleep_DECL 1
 	#else
 		#define EA_NO_HAVE_nanosleep_DECL 1
@@ -680,7 +685,7 @@
 
 // <arpa/inet.h> inet_ntop()
 #if !defined(EA_HAVE_inet_ntop_IMPL) && !defined(EA_NO_HAVE_inet_ntop_IMPL)
-	#if (defined(EA_PLATFORM_UNIX) || defined(EA_PLATFORM_POSIX)) && !defined(CS_UNDEFINED_STRING) 
+	#if (defined(EA_PLATFORM_UNIX) || defined(EA_PLATFORM_POSIX)) && !defined(EA_PLATFORM_SONY) && !defined(CS_UNDEFINED_STRING) 
 		#define EA_HAVE_inet_ntop_IMPL 1  /* This doesn't identify if the platform SDK has some alternative function that does the same thing; */
 		#define EA_HAVE_inet_pton_IMPL 1  /* it identifies strictly the <arpa/inet.h> inet_ntop and inet_pton functions. For example, Microsoft has InetNtop in <Ws2tcpip.h> */
 	#else
@@ -691,7 +696,7 @@
 
 // <time.h> clock_gettime()
 #if !defined(EA_HAVE_clock_gettime_IMPL) && !defined(EA_NO_HAVE_clock_gettime_IMPL)
-	#if defined(EA_PLATFORM_LINUX) || defined(__CYGWIN__) || (defined(_POSIX_TIMERS) && (_POSIX_TIMERS > 0)) || (defined(EA_PLATFORM_POSIX) && defined(_YVALS) /*Dinkumware*/)
+	#if defined(EA_PLATFORM_LINUX) || defined(__CYGWIN__) || (defined(_POSIX_TIMERS) && (_POSIX_TIMERS > 0)) || (defined(EA_PLATFORM_POSIX) && defined(_CPPLIB_VER) /*Dinkumware*/)
 		#define EA_HAVE_clock_gettime_IMPL 1 /* You need to link the 'rt' library to get this */
 	#else
 		#define EA_NO_HAVE_clock_gettime_IMPL 1
@@ -775,7 +780,7 @@
 
 // <iterator>: std::begin, std::end, std::prev, std::next, std::move_iterator.
 #if !defined(EA_HAVE_CPP11_ITERATOR_IMPL) && !defined(EA_NO_HAVE_CPP11_ITERATOR_IMPL)
-	#if defined(EA_HAVE_DINKUMWARE_CPP_LIBRARY) && (_CPPLIB_VER >= 520) && !(defined(_HAS_CPP0X) || _HAS_CPP0X) // Dinkumware. VS2010+
+	#if defined(EA_HAVE_DINKUMWARE_CPP_LIBRARY) && (_CPPLIB_VER >= 520) && !(defined(_HAS_CPP0X) && _HAS_CPP0X) // Dinkumware. VS2010+
 		#define EA_HAVE_CPP11_ITERATOR_IMPL 1
 	#elif defined(EA_COMPILER_CPP11_ENABLED) && defined(EA_HAVE_LIBSTDCPP_LIBRARY) && defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION >= 4006)
 		#define EA_HAVE_CPP11_ITERATOR_IMPL 1
@@ -788,7 +793,7 @@
 
 // <memory>: std::weak_ptr, std::shared_ptr, std::unique_ptr, std::bad_weak_ptr, std::owner_less
 #if !defined(EA_HAVE_CPP11_SMART_POINTER_IMPL) && !defined(EA_NO_HAVE_CPP11_SMART_POINTER_IMPL)
-	#if defined(EA_HAVE_DINKUMWARE_CPP_LIBRARY) && (_CPPLIB_VER >= 520) && !(defined(_HAS_CPP0X) || _HAS_CPP0X) // Dinkumware. VS2010+
+	#if defined(EA_HAVE_DINKUMWARE_CPP_LIBRARY) && (_CPPLIB_VER >= 520) && !(defined(_HAS_CPP0X) && _HAS_CPP0X) // Dinkumware. VS2010+
 		#define EA_HAVE_CPP11_SMART_POINTER_IMPL 1
 	#elif defined(EA_COMPILER_CPP11_ENABLED) && defined(EA_HAVE_LIBSTDCPP_LIBRARY) && defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION >= 4004)
 		#define EA_HAVE_CPP11_SMART_POINTER_IMPL 1
@@ -801,7 +806,7 @@
 
 // <functional>: std::function, std::mem_fn, std::bad_function_call, std::is_bind_expression, std::is_placeholder, std::reference_wrapper, std::hash, std::bind, std::ref, std::cref.
 #if !defined(EA_HAVE_CPP11_FUNCTIONAL_IMPL) && !defined(EA_NO_HAVE_CPP11_FUNCTIONAL_IMPL)
-	#if defined(EA_HAVE_DINKUMWARE_CPP_LIBRARY) && (_CPPLIB_VER >= 520) && !(defined(_HAS_CPP0X) || _HAS_CPP0X) // Dinkumware. VS2010+
+	#if defined(EA_HAVE_DINKUMWARE_CPP_LIBRARY) && (_CPPLIB_VER >= 520) && !(defined(_HAS_CPP0X) && _HAS_CPP0X) // Dinkumware. VS2010+
 		#define EA_HAVE_CPP11_FUNCTIONAL_IMPL 1
 	#elif defined(EA_COMPILER_CPP11_ENABLED) && defined(EA_HAVE_LIBSTDCPP_LIBRARY) && defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION >= 4004)
 		#define EA_HAVE_CPP11_FUNCTIONAL_IMPL 1
@@ -814,7 +819,7 @@
 
 // <exception> std::current_exception, std::rethrow_exception, std::exception_ptr, std::make_exception_ptr
 #if !defined(EA_HAVE_CPP11_EXCEPTION_IMPL) && !defined(EA_NO_HAVE_CPP11_EXCEPTION_IMPL)
-	#if defined(EA_HAVE_DINKUMWARE_CPP_LIBRARY) && (_CPPLIB_VER >= 520) && !(defined(_HAS_CPP0X) || _HAS_CPP0X) // Dinkumware. VS2010+
+	#if defined(EA_HAVE_DINKUMWARE_CPP_LIBRARY) && (_CPPLIB_VER >= 520) && !(defined(_HAS_CPP0X) && _HAS_CPP0X) // Dinkumware. VS2010+
 		#define EA_HAVE_CPP11_EXCEPTION_IMPL 1
 	#elif defined(EA_COMPILER_CPP11_ENABLED) && defined(EA_HAVE_LIBSTDCPP_LIBRARY) && defined(EA_COMPILER_GNUC) && (EA_COMPILER_VERSION >= 4004)
 		#define EA_HAVE_CPP11_EXCEPTION_IMPL 1

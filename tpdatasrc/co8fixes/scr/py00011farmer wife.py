@@ -71,5 +71,5 @@ def run_off( attachee, triggerer ):
 #		attachee.ai_shitlist_remove( pc )
 #		attachee.reaction_set( pc, 50 )
 	attachee.runoff(attachee.location-3)
-	Timed_Destroy(obj, 5000)
+	Timed_Destroy(attachee, 5000)
 	return RUN_DEFAULT

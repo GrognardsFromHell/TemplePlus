@@ -16,6 +16,10 @@ enum EquipSlot : uint32_t;
 #define INVENTORY_IDX_HOTBAR_START 2000 // seems to be Arcanum leftover (appears in some IF conditions but associated callbacks are stubs)
 #define INVENTORY_IDX_HOTBAR_END 2009 // last index for hotbar items
 
+namespace gfx {
+	enum class WeaponAnimType;
+}
+
 enum ItemErrorCode: uint32_t
 {
 	IEC_OK = 0,
@@ -78,6 +82,7 @@ struct InventorySystem : temple::AddressTable
 	objHndl(__cdecl *GetSubstituteInventory)  (objHndl);
 	objHndl GetItemAtInvIdx(objHndl, uint32_t nIdx); // returns the item at obj_f_critter_inventory subIdx nIdx  (or obj_f_container_inventory for containers); Note the difference to ItemWornAt! (this is a more low level function)
 	objHndl FindMatchingStackableItem(objHndl objHndReceiver, objHndl objHndItem);
+	objHndl SplitObjectFromStack(objHndl handle, locXY& tgtLoc);
 	void WieldBest(objHndl handle, int invSlot, objHndl target);
 	
 
@@ -195,7 +200,8 @@ struct InventorySystem : temple::AddressTable
 		   (so it will actually use the base critter size to determine wield type)
 	*/
 	int GetWieldType(objHndl wielder, objHndl item, bool regardEnlargement = false) const;
-	int GetWeaponAnimId(objHndl item, objHndl wielder);
+	bool IsWieldedTwoHanded(objHndl item, objHndl wielder);
+	gfx::WeaponAnimType GetWeaponAnimId(objHndl item, objHndl wielder);
 	static obj_f GetInventoryListField(objHndl objHnd);
 	static obj_f GetInventoryNumField(objHndl objHnd);
 	/*

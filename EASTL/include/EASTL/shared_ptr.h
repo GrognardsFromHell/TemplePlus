@@ -48,6 +48,7 @@
 #include <EASTL/unique_ptr.h>
 #include <EASTL/functional.h>
 #include <EASTL/allocator.h>
+#include <EASTL/atomic.h>
 #if EASTL_RTTI_ENABLED
 	#include <typeinfo>
 #endif
@@ -55,21 +56,13 @@
 	#include <exception>
 #endif
 
-#ifdef _MSC_VER
-	#pragma warning(push, 0)
-	#include <new>
-	#include <stddef.h>
-	#pragma warning(pop)
-#else
-	#include <new>
-	#include <stddef.h>
-#endif
+EA_DISABLE_ALL_VC_WARNINGS()
+#include <new>
+#include <stddef.h>
+EA_RESTORE_ALL_VC_WARNINGS()
 
-#ifdef _MSC_VER
-	#pragma warning(push)
-	#pragma warning(disable: 4530)  // C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
-	#pragma warning(disable: 4571)  // catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are no longer caught.
-#endif
+EA_DISABLE_VC_WARNING(4530); // C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
+EA_DISABLE_VC_WARNING(4571); // catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are no longer caught.
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
@@ -125,8 +118,8 @@ namespace eastl
 	/// This is a small utility class used by shared_ptr and weak_ptr.
 	struct ref_count_sp
 	{
-		int32_t mRefCount;            /// Reference count on the contained pointer. Starts as 1 by default.
-		int32_t mWeakRefCount;        /// Reference count on contained pointer plus this ref_count_sp object itself. Starts as 1 by default.
+		atomic<int32_t> mRefCount;            /// Reference count on the contained pointer. Starts as 1 by default.
+		atomic<int32_t> mWeakRefCount;        /// Reference count on contained pointer plus this ref_count_sp object itself. Starts as 1 by default.
 
 	public:
 		ref_count_sp(int32_t refCount = 1, int32_t weakRefCount = 1) EA_NOEXCEPT;
@@ -150,58 +143,59 @@ namespace eastl
 	};
 
 
-	inline ref_count_sp::ref_count_sp(int refCount, int weakRefCount) EA_NOEXCEPT
+	inline ref_count_sp::ref_count_sp(int32_t refCount, int32_t weakRefCount) EA_NOEXCEPT
 		: mRefCount(refCount), mWeakRefCount(weakRefCount) {}
 
 	inline int32_t ref_count_sp::use_count() const EA_NOEXCEPT
 	{
-		return mRefCount;   // To figure out: is this right?
+		return mRefCount.load(memory_order_relaxed);   // To figure out: is this right?
 	}
 
 	inline void ref_count_sp::addref() EA_NOEXCEPT
 	{
-		Internal::atomic_increment(&mRefCount);
-		Internal::atomic_increment(&mWeakRefCount);
+		mRefCount.fetch_add(1, memory_order_relaxed);
+		mWeakRefCount.fetch_add(1, memory_order_relaxed);
 	}
 
 	inline void ref_count_sp::release()
 	{
-		EASTL_ASSERT((mRefCount > 0) && (mWeakRefCount > 0));
-		if(Internal::atomic_decrement(&mRefCount) > 0)
-			Internal::atomic_decrement(&mWeakRefCount);
-		else
+		EASTL_ASSERT((mRefCount.load(memory_order_relaxed) > 0));
+		if(mRefCount.fetch_sub(1, memory_order_release) == 1)
 		{
+			atomic_thread_fence(memory_order_acquire);
 			free_value();
-
-			if(Internal::atomic_decrement(&mWeakRefCount) == 0)
-				free_ref_count_sp();
 		}
+
+		weak_release();
 	}
 
 	inline void ref_count_sp::weak_addref() EA_NOEXCEPT
 	{
-		Internal::atomic_increment(&mWeakRefCount);
+		mWeakRefCount.fetch_add(1, memory_order_relaxed);
 	}
 
 	inline void ref_count_sp::weak_release()
 	{
-		EASTL_ASSERT(mWeakRefCount > 0);
-		if(Internal::atomic_decrement(&mWeakRefCount) == 0)
+		EASTL_ASSERT(mWeakRefCount.load(memory_order_relaxed) > 0);
+		if(mWeakRefCount.fetch_sub(1, memory_order_release) == 1)
+		{
+			atomic_thread_fence(memory_order_acquire);
 			free_ref_count_sp();
+		}
 	}
 
 	inline ref_count_sp* ref_count_sp::lock() EA_NOEXCEPT
 	{
-		for(int32_t refCountTemp = mRefCount; refCountTemp != 0; refCountTemp = mRefCount)
+		for(int32_t refCountTemp = mRefCount.load(memory_order_relaxed); refCountTemp != 0; )
 		{
-			if(Internal::atomic_compare_and_swap(&mRefCount, refCountTemp + 1, refCountTemp))
+			if(mRefCount.compare_exchange_weak(refCountTemp, refCountTemp + 1, memory_order_relaxed))
 			{
-				Internal::atomic_increment(&mWeakRefCount);
+				mWeakRefCount.fetch_add(1, memory_order_relaxed);
 				return this;
 			}
 		}
 
-		return NULL;
+		return nullptr;
 	}
 
 
@@ -229,7 +223,7 @@ namespace eastl
 		void free_value() EA_NOEXCEPT
 		{
 			mDeleter(mValue);
-			mValue = NULL;
+			mValue = nullptr;
 		}
 
 		void free_ref_count_sp() EA_NOEXCEPT
@@ -242,7 +236,7 @@ namespace eastl
 		#if EASTL_RTTI_ENABLED
 			void* get_deleter(const std::type_info& type) const EA_NOEXCEPT
 			{
-				return (type == typeid(deleter_type)) ? (void*)&mDeleter : NULL;
+				return (type == typeid(deleter_type)) ? (void*)&mDeleter : nullptr;
 			}
 		#else
 			void* get_deleter() const EA_NOEXCEPT
@@ -271,78 +265,12 @@ namespace eastl
 
 		value_type* GetValue() { return static_cast<value_type*>(static_cast<void*>(&mMemory)); }
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED
-			template <typename... Args>
-			ref_count_sp_t_inst(allocator_type allocator, Args&&... args)
-				: ref_count_sp(), mAllocator(eastl::move(allocator))
-			{
-				new (&mMemory) value_type(eastl::forward<Args>(args)...);
-			}
-		#else
-			ref_count_sp_t_inst(allocator_type allocator)
-				: ref_count_sp(), mAllocator(eastl::move(allocator))
-			{
-				new (&mMemory) value_type(); // For consistency with the variadic version, we use value_type() instead of value_type alone.
-			}
-
-			#if EASTL_MOVE_SEMANTICS_ENABLED
-				template <typename A1>
-				ref_count_sp_t_inst(allocator_type allocator, A1&& a1)
-					: ref_count_sp(), mAllocator(eastl::move(allocator))
-				{
-					new (&mMemory) value_type(eastl::forward<A1>(a1));
-				}
-
-				template <typename A1, typename A2>
-				ref_count_sp_t_inst(allocator_type allocator, A1&& a1, A2&& a2)
-					: ref_count_sp(), mAllocator(eastl::move(allocator))
-				{
-					new (&mMemory) value_type(eastl::forward<A1>(a1), eastl::forward<A2>(a2));
-				}
-
-				template <typename A1, typename A2, typename A3>
-				ref_count_sp_t_inst(allocator_type allocator, A1&& a1, A2&& a2, A3&& a3)
-					: ref_count_sp(), mAllocator(eastl::move(allocator))
-				{
-					new (&mMemory) value_type(eastl::forward<A1>(a1), eastl::forward<A2>(a2), eastl::forward<A3>(a3));
-				}
-
-				template <typename A1, typename A2, typename A3, typename A4>
-				ref_count_sp_t_inst(allocator_type allocator, A1&& a1, A2&& a2, A3&& a3, A4&& a4)
-					: ref_count_sp(), mAllocator(eastl::move(allocator))
-				{
-					new (&mMemory) value_type(eastl::forward<A1>(a1), eastl::forward<A2>(a2), eastl::forward<A3>(a3), eastl::forward<A4>(a4));
-				}
-			#endif
-
-			template <typename A1>
-			ref_count_sp_t_inst(allocator_type allocator, const A1& a1)
-				: ref_count_sp(), mAllocator(allocator)
-			{
-				new (&mMemory) value_type(a1);
-			}
-
-			template <typename A1, typename A2>
-			ref_count_sp_t_inst(allocator_type allocator, const A1& a1, const A2& a2)
-				: ref_count_sp(), mAllocator(allocator)
-			{
-				new (&mMemory) value_type(a1, a2);
-			}
-
-			template <typename A1, typename A2, typename A3>
-			ref_count_sp_t_inst(allocator_type allocator, const A1& a1, const A2& a2, const A3& a3)
-				: ref_count_sp(), mAllocator(allocator)
-			{
-				new (&mMemory) value_type(a1, a2, a3);
-			}
-
-			template <typename A1, typename A2, typename A3, typename A4>
-			ref_count_sp_t_inst(allocator_type allocator, const A1& a1, const A2& a2, const A3& a3, const A4& a4)
-				: ref_count_sp(), mAllocator(allocator)
-			{
-				new (&mMemory) value_type(a1, a2, a3, a4);
-			}
-		#endif
+		template <typename... Args>
+		ref_count_sp_t_inst(allocator_type allocator, Args&&... args)
+			: ref_count_sp(), mAllocator(eastl::move(allocator))
+		{
+			new (&mMemory) value_type(eastl::forward<Args>(args)...);
+		}
 
 		void free_value() EA_NOEXCEPT
 		{
@@ -359,12 +287,12 @@ namespace eastl
 		#if EASTL_RTTI_ENABLED
 			void* get_deleter(const std::type_info&) const EA_NOEXCEPT
 			{
-				return NULL; // Default base implementation.
+				return nullptr; // Default base implementation.
 			}
 		#else
 			void* get_deleter() const EA_NOEXCEPT
 			{
-				return NULL;
+				return nullptr;
 			}
 		#endif
 	};
@@ -378,15 +306,18 @@ namespace eastl
 	/// this function, as the shared_ptr constructor will do it for them.
 	///
 	template <typename T, typename U>
-	void do_enable_shared_from_this(const ref_count_sp* pRefCount, const enable_shared_from_this<T>* pEnableSharedFromThis, const U* pValue)
+	void do_enable_shared_from_this(const ref_count_sp* pRefCount,
+	                                const enable_shared_from_this<T>* pEnableSharedFromThis,
+	                                const U* pValue)
 	{
-		if(pEnableSharedFromThis)
+		if (pEnableSharedFromThis)
 			pEnableSharedFromThis->mWeakPtr.assign(const_cast<U*>(pValue), const_cast<ref_count_sp*>(pRefCount));
 	}
 
-	inline void do_enable_shared_from_this(const ref_count_sp*, ...)
-		{ } // Empty specialization. This no-op version is called by shared_ptr when shared_ptr's T type is anything but an enabled_shared_from_this class.
-
+	inline void do_enable_shared_from_this(const ref_count_sp*, ...) {} // Empty specialization. This no-op version is
+	                                                                    // called by shared_ptr when shared_ptr's T type
+	                                                                    // is anything but an enabled_shared_from_this
+	                                                                    // class.
 
 
 	/// shared_ptr_traits
@@ -438,6 +369,7 @@ namespace eastl
 		typedef typename shared_ptr_traits<T>::reference_type    reference_type;   // This defines what a reference to a T is. It's always simply T&, except for the case where T is void, whereby the reference is also just void.
 		typedef EASTLAllocatorType                               default_allocator_type;
 		typedef default_delete<T>                                default_deleter_type;
+		typedef weak_ptr<T>                                      weak_type;
 
 	protected:
 		element_type*  mpValue;
@@ -447,8 +379,8 @@ namespace eastl
 		/// Initializes and "empty" shared_ptr.
 		/// Postcondition: use_count() == zero and get() == 0
 		shared_ptr() EA_NOEXCEPT
-			: mpValue(NULL),
-			  mpRefCount(NULL)
+			: mpValue(nullptr),
+			  mpRefCount(nullptr)
 		{
 			// Intentionally leaving mpRefCount as NULL. Can't allocate here due to noexcept.
 		}
@@ -462,18 +394,24 @@ namespace eastl
 		/// Exception safety: If an exception is thrown, delete p is called.
 		/// Postcondition in the event of no exception: use_count() == 1 && get() == p
 		template <typename U>
-		explicit shared_ptr(U* pValue, typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value>::type* = 0)
-			: mpValue(NULL),
-			  mpRefCount(NULL) // alloc_internal will set this.
+		explicit shared_ptr(U* pValue,
+		                    typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value>::type* = 0)
+		    : mpValue(nullptr), mpRefCount(nullptr) // alloc_internal will set this.
 		{
-			// We explicitly use default_delete<U>. You can use the other version of this constructor to provide a custom version.
-			alloc_internal(pValue, default_allocator_type(), default_delete<U>()); // Problem: We want to be able to use default_deleter_type() instead of default_delete<U>, but if default_deleter_type's type is void or otherwise mismatched then this will fail to compile. What we really want to be able to do is "rebind" default_allocator_type to U instead of its original type.
+			// We explicitly use default_delete<U>. You can use the other version of this constructor to provide a
+			// custom version.
+			alloc_internal(pValue, default_allocator_type(),
+			               default_delete<U>()); // Problem: We want to be able to use default_deleter_type() instead of
+			                                     // default_delete<U>, but if default_deleter_type's type is void or
+			                                     // otherwise mismatched then this will fail to compile. What we really
+			                                     // want to be able to do is "rebind" default_allocator_type to U
+			                                     // instead of its original type.
 		}
 
 
 		shared_ptr(std::nullptr_t) EA_NOEXCEPT
-			: mpValue(NULL),
-			  mpRefCount(NULL)
+			: mpValue(nullptr),
+			  mpRefCount(nullptr)
 		{
 			// Intentionally leaving mpRefCount as NULL. Can't allocate here due to noexcept.
 		}
@@ -489,21 +427,20 @@ namespace eastl
 		/// is rethrown.
 		/// Postcondition: use_count() == 1 && get() == p
 		template <typename U, typename Deleter>
-		shared_ptr(U* pValue, Deleter deleter, typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value>::type* = 0)
-			: mpValue(NULL),
-			  mpRefCount(NULL)
+		shared_ptr(U* pValue,
+		           Deleter deleter,
+		           typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value>::type* = 0)
+		    : mpValue(nullptr), mpRefCount(nullptr)
 		{
 			alloc_internal(pValue, default_allocator_type(), eastl::move(deleter));
 		}
 
 		template <typename Deleter>
 		shared_ptr(std::nullptr_t, Deleter deleter)
-			: mpValue(NULL),
-			  mpRefCount(NULL) // alloc_internal will set this.
+		    : mpValue(nullptr), mpRefCount(nullptr) // alloc_internal will set this.
 		{
-			alloc_internal(NULL, default_allocator_type(), eastl::move(deleter));
+			alloc_internal(nullptr, default_allocator_type(), eastl::move(deleter));
 		}
-
 
 
 		/// Takes ownership of the pointer and sets the reference count
@@ -516,19 +453,21 @@ namespace eastl
 		/// is rethrown.
 		/// Postcondition: use_count() == 1 && get() == p
 		template <typename U, typename Deleter, typename Allocator>
-		explicit shared_ptr(U* pValue, Deleter deleter, const Allocator& allocator, typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value>::type* = 0)
-			: mpValue(NULL),
-			  mpRefCount(NULL) // alloc_internal will set this.
+		explicit shared_ptr(U* pValue,
+		                    Deleter deleter,
+		                    const Allocator& allocator,
+		                    typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value>::type* = 0)
+		    : mpValue(nullptr), mpRefCount(nullptr) // alloc_internal will set this.
 		{
 			alloc_internal(pValue, eastl::move(allocator), eastl::move(deleter));
 		}
 
 		template <typename Deleter, typename Allocator>
 		shared_ptr(std::nullptr_t, Deleter deleter, Allocator allocator)
-			: mpValue(NULL),
-			  mpRefCount(NULL) // alloc_internal will set this.
+			: mpValue(nullptr),
+			  mpRefCount(nullptr) // alloc_internal will set this.
 		{
-			alloc_internal(NULL, eastl::move(allocator), eastl::move(deleter));
+			alloc_internal(nullptr, eastl::move(allocator), eastl::move(deleter));
 		}
 
 
@@ -552,11 +491,12 @@ namespace eastl
 		/// This function increments the shared reference count on the pointer.
 		/// To accomplish this in a thread-safe way requires use of shared_ptr atomic_store.
 		template <typename U>
-		shared_ptr(const shared_ptr<U>& sharedPtr, typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value>::type* = 0) EA_NOEXCEPT
-			: mpValue(sharedPtr.mpValue),
-			  mpRefCount(sharedPtr.mpRefCount)
+		shared_ptr(const shared_ptr<U>& sharedPtr,
+		           typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value>::type* = 0) EA_NOEXCEPT
+		    : mpValue(sharedPtr.mpValue),
+		      mpRefCount(sharedPtr.mpRefCount)
 		{
-			if(mpRefCount)
+			if (mpRefCount)
 				mpRefCount->addref();
 		}
 
@@ -587,35 +527,31 @@ namespace eastl
 		}
 
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			shared_ptr(shared_ptr&& sharedPtr) EA_NOEXCEPT
-				: mpValue(sharedPtr.mpValue),
-				  mpRefCount(sharedPtr.mpRefCount)
-			{
-				sharedPtr.mpValue = NULL;
-				sharedPtr.mpRefCount = NULL;
-			}
+		shared_ptr(shared_ptr&& sharedPtr) EA_NOEXCEPT
+			: mpValue(sharedPtr.mpValue),
+			  mpRefCount(sharedPtr.mpRefCount)
+		{
+			sharedPtr.mpValue = nullptr;
+			sharedPtr.mpRefCount = nullptr;
+		}
 
 
-			template <typename U>
-			shared_ptr(shared_ptr<U>&& sharedPtr, typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value>::type* = 0) EA_NOEXCEPT
-				: mpValue(sharedPtr.mpValue),
-				  mpRefCount(sharedPtr.mpRefCount)
-			{
-				sharedPtr.mpValue = NULL;
-				sharedPtr.mpRefCount = NULL;
-			}
-		#endif
+		template <typename U>
+		shared_ptr(shared_ptr<U>&& sharedPtr,
+		           typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value>::type* = 0) EA_NOEXCEPT
+		    : mpValue(sharedPtr.mpValue),
+		      mpRefCount(sharedPtr.mpRefCount)
+		{
+			sharedPtr.mpValue = nullptr;
+			sharedPtr.mpRefCount = nullptr;
+		}
 
 		// unique_ptr constructor
 		template <typename U, typename Deleter>
-		#if EASTL_MOVE_SEMANTICS_ENABLED                                             // We don't (yet) support shared_ptr for arrays. We don't (yet) support Deleters that are lvalue references. To do so we need to remove_reference on Deleter type.
-			shared_ptr(unique_ptr<U, Deleter>&& uniquePtr, typename eastl::enable_if<!eastl::is_array<U>::value && !is_lvalue_reference<Deleter>::value && eastl::is_convertible<U*, element_type*>::value>::type* = 0)
-		#else
-			shared_ptr(unique_ptr<U, Deleter>   uniquePtr, typename eastl::enable_if<!eastl::is_array<U>::value && !is_lvalue_reference<Deleter>::value && eastl::is_convertible<U*, element_type*>::value>::type* = 0)
-		#endif
-			: mpValue(NULL),
-			  mpRefCount(NULL)
+		shared_ptr(unique_ptr<U, Deleter>&& uniquePtr,
+		           typename eastl::enable_if<!eastl::is_array<U>::value && !is_lvalue_reference<Deleter>::value &&
+		                                     eastl::is_convertible<U*, element_type*>::value>::type* = 0)
+		    : mpValue(nullptr), mpRefCount(nullptr)
 		{
 			alloc_internal(uniquePtr.release(), default_allocator_type(), uniquePtr.get_deleter());
 		}
@@ -623,62 +559,36 @@ namespace eastl
 		// unique_ptr constructor
 		// The following is not in the C++11 Standard.
 		template <typename U, typename Deleter, typename Allocator>
-		#if EASTL_MOVE_SEMANTICS_ENABLED                                                                  // We don't (yet) support shared_ptr for arrays. We don't (yet) support Deleters that are lvalue references. To do so we need to remove_reference on Deleter type.
-			shared_ptr(unique_ptr<U, Deleter>&& uniquePtr, const Allocator& allocator, typename eastl::enable_if<!eastl::is_array<U>::value && !is_lvalue_reference<Deleter>::value && eastl::is_convertible<U*, element_type*>::value>::type* = 0)
-		#else
-			shared_ptr(unique_ptr<U, Deleter>   uniquePtr, const Allocator& allocator, typename eastl::enable_if<!eastl::is_array<U>::value && !is_lvalue_reference<Deleter>::value && eastl::is_convertible<U*, element_type*>::value>::type* = 0)
-		#endif
-			: mpValue(NULL),
-			  mpRefCount(NULL)
+		shared_ptr(unique_ptr<U, Deleter>&& uniquePtr,
+		           const Allocator& allocator,
+		           typename eastl::enable_if<!eastl::is_array<U>::value && !is_lvalue_reference<Deleter>::value &&
+		                                     eastl::is_convertible<U*, element_type*>::value>::type* = 0)
+		    : mpValue(nullptr), mpRefCount(nullptr)
 		{
 			alloc_internal(uniquePtr.release(), allocator, uniquePtr.get_deleter());
 		}
-
-
-		// To consider: Enable this support for auto_ptr, though it's deprecated by the C++11 Standard.
-		// template <typename U>
-		// #if EASTL_MOVE_SEMANTICS_ENABLED
-		//     shared_ptr(auto_ptr<U>&& autoPtr, typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value>::type* = 0)
-		// #else
-		//     shared_ptr(auto_ptr<U>   autoPtr, typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value>::type* = 0)
-		// #endif
-		//     : mpValue(NULL),
-		//       mpRefCount(NULL)
-		// {
-		//     alloc_internal(autoPtr.release(), default_allocator_type(), eastl::default_delete<U>()); // Use of default_delete here assumes that default_delete matches global operator delete.
-		// }
-		//
-		// template <typename U, typename Allocator>
-		// #if EASTL_MOVE_SEMANTICS_ENABLED
-		//     shared_ptr(auto_ptr<U>&& autoPtr, const Allocator& allocator, typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value>::type* = 0)
-		// #else
-		//     shared_ptr(auto_ptr<U>   autoPtr, const Allocator& allocator, typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value>::type* = 0)
-		// #endif
-		//     : mpValue(NULL),
-		//       mpRefCount(NULL)
-		// {
-		//     alloc_internal(autoPtr.release(), allocator, eastl::default_delete<U>()); // Use of default_delete here assumes that default_delete matches global operator delete.
-		// }
-
 
 
 		/// shared_ptr(weak_ptr)
 		/// Shares ownership of a pointer with an instance of weak_ptr.
 		/// This function increments the shared reference count on the pointer.
 		template <typename U>
-		explicit shared_ptr(const weak_ptr<U>& weakPtr, typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value>::type* = 0)
-			: mpValue(weakPtr.mpValue),
-			  mpRefCount(weakPtr.mpRefCount ? weakPtr.mpRefCount->lock() : weakPtr.mpRefCount) // mpRefCount->lock() addref's the return value for us.
+		explicit shared_ptr(const weak_ptr<U>& weakPtr,
+		                    typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value>::type* = 0)
+		    : mpValue(weakPtr.mpValue)
+		    , mpRefCount(weakPtr.mpRefCount ?
+		                     weakPtr.mpRefCount->lock() :
+		                     weakPtr.mpRefCount) // mpRefCount->lock() addref's the return value for us.
 		{
-			if(!mpRefCount)
+			if (!mpRefCount)
 			{
-				mpValue = NULL; // Question: Is it right for us to NULL this or not?
+				mpValue = nullptr; // Question: Is it right for us to NULL this or not?
 
-				#if EASTL_EXCEPTIONS_ENABLED
-					throw eastl::bad_weak_ptr();
-				#else
-					EASTL_FAIL_MSG("eastl::shared_ptr -- bad_weak_ptr");
-				#endif
+			#if EASTL_EXCEPTIONS_ENABLED
+				throw eastl::bad_weak_ptr();
+			#else
+				EASTL_FAIL_MSG("eastl::shared_ptr -- bad_weak_ptr");
+			#endif
 			}
 		}
 
@@ -689,13 +599,16 @@ namespace eastl
 		/// the shared reference count is deleted.
 		~shared_ptr()
 		{
-			if(mpRefCount)
+			if (mpRefCount)
+			{
 				mpRefCount->release();
-			// else if mpValue is non-NULL then we just lose it because it wasn't actually shared (can happen with shared_ptr(const shared_ptr<U>& sharedPtr, element_type* pValue) constructor).
+			}
+			// else if mpValue is non-NULL then we just lose it because it wasn't actually shared (can happen with
+			// shared_ptr(const shared_ptr<U>& sharedPtr, element_type* pValue) constructor).
 
 			#if EASTL_DEBUG
-				mpValue = NULL;
-				mpRefCount = NULL;
+				mpValue = nullptr;
+				mpRefCount = nullptr;
 			#endif
 		}
 
@@ -750,65 +663,46 @@ namespace eastl
 		}
 
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			/// operator=
-			/// Assignment to self type.
-			/// If we want a shared_ptr operator= that is templated on shared_ptr<U>,
-			/// then we need to make it in addition to this function, as otherwise 
-			/// the compiler will generate this function and things will go wrong.
-			this_type& operator=(shared_ptr&& sharedPtr) EA_NOEXCEPT
-			{
-				if(&sharedPtr != this)
-					this_type(eastl::move(sharedPtr)).swap(*this);
+		/// operator=
+		/// Assignment to self type.
+		/// If we want a shared_ptr operator= that is templated on shared_ptr<U>,
+		/// then we need to make it in addition to this function, as otherwise 
+		/// the compiler will generate this function and things will go wrong.
+		this_type& operator=(shared_ptr&& sharedPtr) EA_NOEXCEPT
+		{
+			if(&sharedPtr != this)
+				this_type(eastl::move(sharedPtr)).swap(*this);
 
-				return *this;
-			}
-
-
-			/// operator=
-			/// Moves another shared_ptr to this object. Note that this object
-			/// may already own a shared pointer with another different pointer
-			/// (but still of the same type) before this call. In that case,
-			/// this function releases the old pointer, decrementing its reference
-			/// count and deleting it if zero, takes shared ownership of the new 
-			/// pointer and increments its reference count.
-			template <typename U>
-			typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value, this_type&>::type
-			operator=(shared_ptr<U>&& sharedPtr) EA_NOEXCEPT
-			{
-				if(!equivalent_ownership(sharedPtr))
-					shared_ptr(eastl::move(sharedPtr)).swap(*this);
-				return *this;
-			}
+			return *this;
+		}
 
 
-			// unique_ptr operator=
-			template <typename U, typename Deleter>
-			typename eastl::enable_if<!eastl::is_array<U>::value && eastl::is_convertible<U*, element_type*>::value, this_type&>::type
-			#if EASTL_MOVE_SEMANTICS_ENABLED
-				operator=(unique_ptr<U, Deleter>&& uniquePtr)
-			#else
-				operator=(unique_ptr<U, Deleter>   uniquePtr)
-			#endif
-			{
-				// Note that this will use the default EASTL allocator
-				this_type(eastl::move(uniquePtr)).swap(*this);
-			}
+		/// operator=
+		/// Moves another shared_ptr to this object. Note that this object
+		/// may already own a shared pointer with another different pointer
+		/// (but still of the same type) before this call. In that case,
+		/// this function releases the old pointer, decrementing its reference
+		/// count and deleting it if zero, takes shared ownership of the new 
+		/// pointer and increments its reference count.
+		template <typename U>
+		typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value, this_type&>::type
+		operator=(shared_ptr<U>&& sharedPtr) EA_NOEXCEPT
+		{
+			if(!equivalent_ownership(sharedPtr))
+				shared_ptr(eastl::move(sharedPtr)).swap(*this);
+			return *this;
+		}
 
 
-			// To consider: Enable this support for auto_ptr, though it's deprecated by the C++11 Standard.
-			// template <typename U>
-			// inline typename eastl::enable_if<!eastl::is_array<U>::value && eastl::is_convertible<U*, element_type*>::value, this_type&>::type
-			// #if EASTL_MOVE_SEMANTICS_ENABLED
-			//     operator=(auto_ptr<U>&& autoPtr)
-			// #else
-			//     operator=(auto_ptr<U>   autoPtr)
-			// #endif
-			// {
-			//     shared_ptr(eastl::move(autoPtr)).swap(*this);
-			//     return *this;
-			// }
-		#endif
+		// unique_ptr operator=
+		template <typename U, typename Deleter>
+		typename eastl::enable_if<!eastl::is_array<U>::value && eastl::is_convertible<U*, element_type*>::value, this_type&>::type
+		operator=(unique_ptr<U, Deleter>&& uniquePtr)
+		{
+			// Note that this will use the default EASTL allocator
+			this_type(eastl::move(uniquePtr)).swap(*this);
+			return *this;
+		}
 
 
 		/// reset
@@ -853,7 +747,8 @@ namespace eastl
 
 		/// swap
 		/// Exchanges the owned pointer between two shared_ptr objects.
-		/// This function is not intrinsically thread-safe. You must use atomic_exchange(shared_ptr<T>*, shared_ptr<T>) or manually coordinate the swap.
+		/// This function is not intrinsically thread-safe. You must use atomic_exchange(shared_ptr<T>*, shared_ptr<T>)
+		/// or manually coordinate the swap.
 		void swap(this_type& sharedPtr) EA_NOEXCEPT
 		{
 			element_type* const pValue = sharedPtr.mpValue;
@@ -888,6 +783,21 @@ namespace eastl
 			return mpValue;
 		}
 
+		/// operator[]
+		/// Index into the array pointed to by the owned pointer.
+		/// The behaviour is undefined if the owned pointer is nullptr, if the user specified index is negative, or if
+		/// the index is outside the referred array bounds.
+		///
+		/// When T is not an array type, it is unspecified whether this function is declared. If the function is declared,
+		/// it is unspecified what its return type is, except that the declaration (although not necessarily the
+		/// definition) of the function is guaranteed to be legal.
+		//
+		// TODO(rparolin): This is disabled because eastl::shared_ptr needs array support.
+		// element_type& operator[](ptrdiff_t idx)
+		// {
+		//     return get()[idx];
+		// }
+
 		/// get
 		/// Returns the owned pointer. Note that this class does 
 		/// not provide an operator T() function. This is because such
@@ -906,14 +816,14 @@ namespace eastl
 		/// Returns: the number of shared_ptr objects, *this included, that share ownership with *this, or 0 when *this is empty.
 		int use_count() const EA_NOEXCEPT
 		{
-			return mpRefCount ? mpRefCount->mRefCount : 0;
+			return mpRefCount ? mpRefCount->use_count() : 0;
 		}
 
 		/// unique
 		/// Returns: use_count() == 1.
 		bool unique() const EA_NOEXCEPT
 		{
-			return (mpRefCount && (mpRefCount->mRefCount == 1));
+			return (mpRefCount && (mpRefCount->use_count() == 1));
 		}
 
 
@@ -936,14 +846,14 @@ namespace eastl
 		Deleter* get_deleter() const EA_NOEXCEPT
 		{
 			#if EASTL_RTTI_ENABLED
-				return mpRefCount ? static_cast<Deleter*>(mpRefCount->get_deleter(typeid(typename remove_cv<Deleter>::type))) : NULL;
+				return mpRefCount ? static_cast<Deleter*>(mpRefCount->get_deleter(typeid(typename remove_cv<Deleter>::type))) : nullptr;
 			#else
 				// This is probably unsafe but without typeid there is no way to ensure that the
 				// stored deleter is actually of the templated Deleter type.
-				return NULL;
+				return nullptr;
 
 				// Alternatively:
-				// return mpRefCount ? static_cast<Deleter*>(mpRefCount->get_deleter()) : NULL;
+				// return mpRefCount ? static_cast<Deleter*>(mpRefCount->get_deleter()) : nullptr;
 			#endif
 		}
 
@@ -956,12 +866,12 @@ namespace eastl
 			{
 				if(mpValue)
 					return &this_type::get;
-				return NULL;
+				return nullptr;
 			}
 
 			bool operator!() const EA_NOEXCEPT
 			{
-				return (mpValue == NULL);
+				return (mpValue == nullptr);
 			}
 		#else
 			/// Explicit operator bool
@@ -972,7 +882,7 @@ namespace eastl
 			///        ++*ptr;
 			explicit operator bool() const EA_NOEXCEPT
 			{
-				return (mpValue != NULL);
+				return (mpValue != nullptr);
 			}
 		#endif
 
@@ -994,9 +904,9 @@ namespace eastl
 		// Handles the allocating of mpRefCount, while assigning mpValue.
 		// The provided pValue may be NULL, as with constructing with a deleter and allocator but NULL pointer.
 		template <typename U, typename Allocator, typename Deleter>
-		void alloc_internal(U* pValue, Allocator allocator, Deleter deleter)
+		void alloc_internal(U pValue, Allocator allocator, Deleter deleter)
 		{
-			typedef ref_count_sp_t<U*, Allocator, Deleter> ref_count_type;
+			typedef ref_count_sp_t<U, Allocator, Deleter> ref_count_type;
 
 			#if EASTL_EXCEPTIONS_ENABLED
 				try
@@ -1066,6 +976,13 @@ namespace eastl
 		return (a.get() == b.get());
 	}
 
+#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+	template <typename T, typename U>
+	std::strong_ordering operator<=>(const shared_ptr<T>& a, const shared_ptr<U>& b) EA_NOEXCEPT
+	{
+		return a.get() <=> b.get();
+	}
+#else
 	template <typename T, typename U> 
 	inline bool operator!=(const shared_ptr<T>& a, const shared_ptr<U>& b) EA_NOEXCEPT
 	{
@@ -1102,6 +1019,7 @@ namespace eastl
 	{
 		return !(a < b);
 	}
+#endif
 
 	template <typename T>
 	inline bool operator==(const shared_ptr<T>& a, std::nullptr_t) EA_NOEXCEPT
@@ -1109,6 +1027,13 @@ namespace eastl
 		return !a;
 	}
 
+	#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+	template <typename T>
+	inline std::strong_ordering operator<=>(const shared_ptr<T>& a, std::nullptr_t) EA_NOEXCEPT
+	{
+		return a.get() <=> nullptr;
+	}
+	#else
 	template <typename T>
 	inline bool operator==(std::nullptr_t, const shared_ptr<T>& b) EA_NOEXCEPT
 	{
@@ -1174,7 +1099,7 @@ namespace eastl
 	{
 		return !(nullptr < b);
 	}
-
+#endif
 
 
 
@@ -1282,211 +1207,26 @@ namespace eastl
 		do_enable_shared_from_this(pRefCount, pValue, pValue);
 	}
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED
-		template <typename T, typename Allocator, typename... Args>
-		shared_ptr<T> allocate_shared(const Allocator& allocator, Args&&... args)
+	template <typename T, typename Allocator, typename... Args>
+	shared_ptr<T> allocate_shared(const Allocator& allocator, Args&&... args)
+	{
+		typedef ref_count_sp_t_inst<T, Allocator> ref_count_type;
+		shared_ptr<T> ret;
+		void* const pMemory = EASTLAlloc(const_cast<Allocator&>(allocator), sizeof(ref_count_type));
+		if(pMemory)
 		{
-			typedef ref_count_sp_t_inst<T, Allocator> ref_count_type;
-			shared_ptr<T> ret;
-			void* const pMemory = EASTLAlloc(const_cast<Allocator&>(allocator), sizeof(ref_count_type));
-			if(pMemory)
-			{
-				ref_count_type* pRefCount = ::new(pMemory) ref_count_type(allocator, eastl::forward<Args>(args)...);
-				allocate_shared_helper(ret, pRefCount, pRefCount->GetValue());
-			}
-			return ret;
+			ref_count_type* pRefCount = ::new(pMemory) ref_count_type(allocator, eastl::forward<Args>(args)...);
+			allocate_shared_helper(ret, pRefCount, pRefCount->GetValue());
 		}
+		return ret;
+	}
 
-		template <typename T, typename... Args>
-		shared_ptr<T> make_shared(Args&&... args)
-		{
-			// allocate with the default allocator.
-			return allocate_shared<T>(EASTL_SHARED_PTR_DEFAULT_ALLOCATOR, eastl::forward<Args>(args)...);
-		}
-	#else
-		template <typename T, typename Allocator>
-		shared_ptr<T> allocate_shared(const Allocator& allocator)
-		{
-			typedef ref_count_sp_t_inst<T, Allocator> ref_count_type;
-			shared_ptr<T> ret;
-			void* const pMemory = EASTLAlloc(const_cast<Allocator&>(allocator), sizeof(ref_count_type));
-			if(pMemory)
-			{
-				ref_count_type* pRefCount = ::new(pMemory) ref_count_type(allocator);
-				allocate_shared_helper(ret, pRefCount, pRefCount->GetValue());
-			}
-			return ret;
-		}
-
-		template <typename T>
-		shared_ptr<T> make_shared()
-		{
-			return allocate_shared<T>(EASTL_SHARED_PTR_DEFAULT_ALLOCATOR);
-		}
-
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			template <typename T, typename Allocator, typename A1>
-			shared_ptr<T> allocate_shared(const Allocator& allocator, A1&& a1)
-			{
-				typedef ref_count_sp_t_inst<T, Allocator> ref_count_type;
-				shared_ptr<T> ret;
-				void* const pMemory = EASTLAlloc(const_cast<Allocator&>(allocator), sizeof(ref_count_type));
-				if(pMemory)
-				{
-					ref_count_type* pRefCount = ::new(pMemory) ref_count_type(allocator, eastl::forward<A1>(a1));
-					allocate_shared_helper(ret, pRefCount, pRefCount->GetValue());
-				}
-				return ret;
-			}
-
-			template <typename T, typename Allocator, typename A1, typename A2>
-			shared_ptr<T> allocate_shared(const Allocator& allocator, A1&& a1, A2&& a2)
-			{
-				typedef ref_count_sp_t_inst<T, Allocator> ref_count_type;
-				shared_ptr<T> ret;
-				void* const pMemory = EASTLAlloc(const_cast<Allocator&>(allocator), sizeof(ref_count_type));
-				if(pMemory)
-				{
-					ref_count_type* pRefCount = ::new(pMemory) ref_count_type(allocator, eastl::forward<A1>(a1), eastl::forward<A2>(a2));
-					allocate_shared_helper(ret, pRefCount, pRefCount->GetValue());
-				}
-				return ret;
-			}
-
-			template <typename T, typename Allocator, typename A1, typename A2, typename A3>
-			shared_ptr<T> allocate_shared(const Allocator& allocator, A1&& a1, A2&& a2, A3&& a3)
-			{
-				typedef ref_count_sp_t_inst<T, Allocator> ref_count_type;
-				shared_ptr<T> ret;
-				void* const pMemory = EASTLAlloc(const_cast<Allocator&>(allocator), sizeof(ref_count_type));
-				if(pMemory)
-				{
-					ref_count_type* pRefCount = ::new(pMemory) ref_count_type(allocator, eastl::forward<A1>(a1), eastl::forward<A2>(a2), eastl::forward<A3>(a3));
-					allocate_shared_helper(ret, pRefCount, pRefCount->GetValue());
-				}
-				return ret;
-			}
-
-			template <typename T, typename Allocator, typename A1, typename A2, typename A3, typename A4>
-			shared_ptr<T> allocate_shared(const Allocator& allocator, A1&& a1, A2&& a2, A3&& a3, A4&& a4)
-			{
-				typedef ref_count_sp_t_inst<T, Allocator> ref_count_type;
-				shared_ptr<T> ret;
-				void* const pMemory = EASTLAlloc(const_cast<Allocator&>(allocator), sizeof(ref_count_type));
-				if(pMemory)
-				{
-					ref_count_type* pRefCount = ::new(pMemory) ref_count_type(allocator, eastl::forward<A1>(a1), eastl::forward<A2>(a2), eastl::forward<A3>(a3), eastl::forward<A4>(a4));
-					allocate_shared_helper(ret, pRefCount, pRefCount->GetValue());
-				}
-				return ret;
-			}
-
-			template <typename T, typename A1>
-			shared_ptr<T> make_shared(A1&& a1)
-			{
-				return allocate_shared<T>(EASTL_SHARED_PTR_DEFAULT_ALLOCATOR, eastl::forward<A1>(a1));
-			}
-
-			template <typename T, typename A1, typename A2>
-			shared_ptr<T> make_shared(A1&& a1, A2&& a2)
-			{
-				return allocate_shared<T>(EASTL_SHARED_PTR_DEFAULT_ALLOCATOR, eastl::forward<A1>(a1), eastl::forward<A2>(a2));
-			}
-
-			template <typename T, typename A1, typename A2, typename A3>
-			shared_ptr<T> make_shared(A1&& a1, A2&& a2, A3&& a3)
-			{
-				return allocate_shared<T>(EASTL_SHARED_PTR_DEFAULT_ALLOCATOR, eastl::forward<A1>(a1), eastl::forward<A2>(a2), eastl::forward<A3>(a3));
-			}
-
-			template <typename T, typename A1, typename A2, typename A3, typename A4>
-			shared_ptr<T> make_shared(A1&& a1, A2&& a2, A3&& a3, A4&& a4)
-			{
-				return allocate_shared<T>(EASTL_SHARED_PTR_DEFAULT_ALLOCATOR, eastl::forward<A1>(a1), eastl::forward<A2>(a2), eastl::forward<A3>(a3), eastl::forward<A4>(a4));
-			}
-		#endif // EASTL_MOVE_SEMANTICS_ENABLED
-
-		template <typename T, typename Allocator, typename A1>
-		shared_ptr<T> allocate_shared(const Allocator& allocator, const A1& a1)
-		{
-			typedef ref_count_sp_t_inst<T, Allocator> ref_count_type;
-			shared_ptr<T> ret;
-			void* const pMemory = EASTLAlloc(const_cast<Allocator&>(allocator), sizeof(ref_count_type));
-			if(pMemory)
-			{
-				ref_count_type* pRefCount = ::new(pMemory) ref_count_type(allocator, a1);
-				allocate_shared_helper(ret, pRefCount, pRefCount->GetValue());
-			}
-			return ret;
-		}
-
-		template <typename T, typename Allocator, typename A1, typename A2>
-		shared_ptr<T> allocate_shared(const Allocator& allocator, const A1& a1, const A2& a2)
-		{
-			typedef ref_count_sp_t_inst<T, Allocator> ref_count_type;
-			shared_ptr<T> ret;
-			void* const pMemory = EASTLAlloc(const_cast<Allocator&>(allocator), sizeof(ref_count_type));
-			if(pMemory)
-			{
-				ref_count_type* pRefCount = ::new(pMemory) ref_count_type(allocator, a1, a2);
-				allocate_shared_helper(ret, pRefCount, pRefCount->GetValue());
-			}
-			return ret;
-		}
-
-		template <typename T, typename Allocator, typename A1, typename A2, typename A3>
-		shared_ptr<T> allocate_shared(const Allocator& allocator, const A1& a1, const A2& a2, const A3& a3)
-		{
-			typedef ref_count_sp_t_inst<T, Allocator> ref_count_type;
-			shared_ptr<T> ret;
-			void* const pMemory = EASTLAlloc(const_cast<Allocator&>(allocator), sizeof(ref_count_type));
-			if(pMemory)
-			{
-				ref_count_type* pRefCount = ::new(pMemory) ref_count_type(allocator, a1, a2, a3);
-				allocate_shared_helper(ret, pRefCount, pRefCount->GetValue());
-			}
-			return ret;
-		}
-
-		template <typename T, typename Allocator, typename A1, typename A2, typename A3, typename A4>
-		shared_ptr<T> allocate_shared(const Allocator& allocator, const A1& a1, const A2& a2, const A3& a3, const A4& a4)
-		{
-			typedef ref_count_sp_t_inst<T, Allocator> ref_count_type;
-			shared_ptr<T> ret;
-			void* const pMemory = EASTLAlloc(const_cast<Allocator&>(allocator), sizeof(ref_count_type));
-			if(pMemory)
-			{
-				ref_count_type* pRefCount = ::new(pMemory) ref_count_type(allocator, a1, a2, a3, a4);
-				allocate_shared_helper(ret, pRefCount, pRefCount->GetValue());
-			}
-			return ret;
-		}
-
-		template <typename T, typename A1>
-		shared_ptr<T> make_shared(const A1& a1)
-		{
-			return allocate_shared<T>(EASTL_SHARED_PTR_DEFAULT_ALLOCATOR, a1);
-		}
-
-		template <typename T, typename A1, typename A2>
-		shared_ptr<T> make_shared(const A1& a1, const A2& a2)
-		{
-			return allocate_shared<T>(EASTL_SHARED_PTR_DEFAULT_ALLOCATOR, a1, a2);
-		}
-
-		template <typename T, typename A1, typename A2, typename A3>
-		shared_ptr<T> make_shared(const A1& a1, const A2& a2, const A3& a3)
-		{
-			return allocate_shared<T>(EASTL_SHARED_PTR_DEFAULT_ALLOCATOR, a1, a2, a3);
-		}
-
-		template <typename T, typename A1, typename A2, typename A3, typename A4>
-		shared_ptr<T> make_shared(const A1& a1, const A2& a2, const A3& a3, const A4& a4)
-		{
-			return allocate_shared<T>(EASTL_SHARED_PTR_DEFAULT_ALLOCATOR, a1, a2, a3, a4);
-		}
-
-	#endif
+	template <typename T, typename... Args>
+	shared_ptr<T> make_shared(Args&&... args)
+	{
+		// allocate with the default allocator.
+		return eastl::allocate_shared<T>(EASTL_SHARED_PTR_DEFAULT_ALLOCATOR, eastl::forward<Args>(args)...);
+	}
 
 
 
@@ -1560,7 +1300,7 @@ namespace eastl
 	template <typename T>
 	inline shared_ptr<T> atomic_exchange_explicit(shared_ptr<T>* pSharedPtrA, shared_ptr<T> sharedPtrB, ... /*std::memory_order memoryOrder*/)
 	{
-		atomic_exchange(pSharedPtrA, sharedPtrB);
+		return atomic_exchange(pSharedPtrA, sharedPtrB);
 	}
 
 	// Compares the shared pointers pointed-to by p and expected. If they are equivalent (share ownership of the 
@@ -1647,8 +1387,8 @@ namespace eastl
 	public:
 		/// weak_ptr
 		weak_ptr() EA_NOEXCEPT
-			: mpValue(NULL),
-			  mpRefCount(NULL)
+			: mpValue(nullptr),
+			  mpRefCount(nullptr)
 		{
 		}
 
@@ -1664,17 +1404,15 @@ namespace eastl
 		}
 
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			/// weak_ptr
-			/// Move construction with self type.
-			weak_ptr(this_type&& weakPtr) EA_NOEXCEPT
-				: mpValue(weakPtr.mpValue),
-				  mpRefCount(weakPtr.mpRefCount)
-			{
-				weakPtr.mpValue = NULL;
-				weakPtr.mpRefCount = NULL;
-			}
-		#endif
+		/// weak_ptr
+		/// Move construction with self type.
+		weak_ptr(this_type&& weakPtr) EA_NOEXCEPT
+			: mpValue(weakPtr.mpValue),
+			  mpRefCount(weakPtr.mpRefCount)
+		{
+			weakPtr.mpValue = nullptr;
+			weakPtr.mpRefCount = nullptr;
+		}
 
 
 		/// weak_ptr
@@ -1689,28 +1427,28 @@ namespace eastl
 		}
 
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			/// weak_ptr
-			/// Move constructs a weak_ptr from another weak_ptr.
-			template <typename U>
-			weak_ptr(weak_ptr<U>&& weakPtr, typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value>::type* = 0) EA_NOEXCEPT
-				: mpValue(weakPtr.mpValue),
-					mpRefCount(weakPtr.mpRefCount)
-			{
-				weakPtr.mpValue = NULL;
-				weakPtr.mpRefCount = NULL;
-			}
-		#endif
+		/// weak_ptr
+		/// Move constructs a weak_ptr from another weak_ptr.
+		template <typename U>
+		weak_ptr(weak_ptr<U>&& weakPtr,
+		         typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value>::type* = 0) EA_NOEXCEPT
+		    : mpValue(weakPtr.mpValue),
+		      mpRefCount(weakPtr.mpRefCount)
+		{
+			weakPtr.mpValue = nullptr;
+			weakPtr.mpRefCount = nullptr;
+		}
 
 
 		/// weak_ptr
 		/// Constructs a weak_ptr from a shared_ptr.
 		template <typename U>
-		weak_ptr(const shared_ptr<U>& sharedPtr, typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value>::type* = 0) EA_NOEXCEPT
-			: mpValue(sharedPtr.mpValue),
-			  mpRefCount(sharedPtr.mpRefCount)
+		weak_ptr(const shared_ptr<U>& sharedPtr,
+		         typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value>::type* = 0) EA_NOEXCEPT
+		    : mpValue(sharedPtr.mpValue),
+		      mpRefCount(sharedPtr.mpRefCount)
 		{
-			if(mpRefCount)
+			if (mpRefCount)
 				mpRefCount->weak_addref();
 		}
 
@@ -1732,13 +1470,11 @@ namespace eastl
 		}
 
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			this_type& operator=(this_type&& weakPtr) EA_NOEXCEPT
-			{
-				weak_ptr(eastl::move(weakPtr)).swap(*this);
-				return *this;
-			}
-		#endif
+		this_type& operator=(this_type&& weakPtr) EA_NOEXCEPT
+		{
+			weak_ptr(eastl::move(weakPtr)).swap(*this);
+			return *this;
+		}
 
 
 		/// operator=(weak_ptr)
@@ -1751,15 +1487,13 @@ namespace eastl
 		}
 
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			template <typename U>
-			typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value, this_type&>::type
-			operator=(weak_ptr<U>&& weakPtr) EA_NOEXCEPT
-			{
-				weak_ptr(eastl::move(weakPtr)).swap(*this);
-				return *this;
-			}
-		#endif
+		template <typename U>
+		typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value, this_type&>::type
+		operator=(weak_ptr<U>&& weakPtr) EA_NOEXCEPT
+		{
+			weak_ptr(eastl::move(weakPtr)).swap(*this);
+			return *this;
+		}
 
 
 		/// operator=(shared_ptr)
@@ -1795,13 +1529,13 @@ namespace eastl
 		// Returns: 0 if *this is empty ; otherwise, the number of shared_ptr instances that share ownership with *this.
 		int use_count() const EA_NOEXCEPT
 		{
-			return mpRefCount ? mpRefCount->mRefCount : 0;
+			return mpRefCount ? mpRefCount->use_count() : 0;
 		}
 
 		// Returns: use_count() == 0
 		bool expired() const EA_NOEXCEPT
 		{
-			return (!mpRefCount || (mpRefCount->mRefCount == 0));
+			return (!mpRefCount || (mpRefCount->use_count() == 0));
 		}
 
 		void reset()
@@ -1809,8 +1543,8 @@ namespace eastl
 			if(mpRefCount)
 				mpRefCount->weak_release();
 
-			mpValue    = NULL;
-			mpRefCount = NULL;
+			mpValue    = nullptr;
+			mpRefCount = nullptr;
 		}
 
 		void swap(this_type& weakPtr)
@@ -1830,7 +1564,8 @@ namespace eastl
 		/// Assignment via another weak_ptr. 
 		///
 		template <typename U>
-		void assign(const weak_ptr<U>& weakPtr, typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value>::type* = 0) EA_NOEXCEPT
+		void assign(const weak_ptr<U>& weakPtr,
+		            typename eastl::enable_if<eastl::is_convertible<U*, element_type*>::value>::type* = 0) EA_NOEXCEPT
 		{
 			if(mpRefCount != weakPtr.mpRefCount) // This check encompasses assignment to self.
 			{
@@ -1971,9 +1706,8 @@ namespace eastl
 } // namespace eastl
 
 
-#ifdef _MSC_VER
-	#pragma warning(pop)
-#endif
+EA_RESTORE_VC_WARNING();
+EA_RESTORE_VC_WARNING();
 
 
 // We have to either #include enable_shared.h here or we need to move the enable_shared source code to here.
@@ -1981,7 +1715,3 @@ namespace eastl
 
 
 #endif // Header include guard
-
-
-
-

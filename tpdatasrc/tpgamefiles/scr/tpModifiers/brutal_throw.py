@@ -28,7 +28,9 @@ def BrutalThrowAttackBonus(attachee, args, evt_obj):
 	bonus = int(strMod - dexMod) 
 	
 	if bonus > 0:
-		evt_obj.bonus_list.add_from_feat(bonus, 0, 114, "Brutal Throw")
+		#Bonus changed from 0 to 180 by Sagenlicht to avoid stacking
+		#with other dex replacing ranged modifiers like Zen Archery
+		evt_obj.bonus_list.add_from_feat(bonus, 180, 114, "Brutal Throw")
 	
 	return 0
 

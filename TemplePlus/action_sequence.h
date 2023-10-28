@@ -221,6 +221,7 @@ struct ActionSequenceSystem : temple::AddressTable
 	uint32_t simulsOk(ActnSeq* actSeq);
 	uint32_t simulsAbort(objHndl);
 	uint32_t isSomeoneAlreadyActingSimult(objHndl objHnd);
+	BOOL IsObjCurrentActorRegardSimuls(objHndl objHnd);
 	BOOL IsSimulsCompleted();
 	BOOL IsLastSimultPopped(objHndl obj); // last one that was popped, that is
 	BOOL IsLastSimulsPerformer(objHndl obj);
@@ -258,6 +259,7 @@ private:
 	uint32_t(__cdecl * _moveSeqD20Sthg)(ActnSeq* actSeq, TurnBasedStatus *actnSthg, float a3, float reach, int a5); //, D20Actn * d20aIn @<eax>
 
 	std::unordered_set<int> bardSongStoppingPythonActions;
+	D20DispatcherKey pythonDispatcherKey = DK_NONE;
 };
 
 extern ActionSequenceSystem actSeqSys;

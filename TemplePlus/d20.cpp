@@ -139,6 +139,7 @@ public:
 	static BOOL ActionFrameDisarm(D20Actn* d20a);
 	static BOOL ActionFramePython(D20Actn* d20a);
 	static BOOL ActionFrameQuiveringPalm(D20Actn* d20a);
+	static BOOL ActionFrameRangedAttack(D20Actn* d20a);
 	static BOOL ActionFrameSpell(D20Actn* d20a);
 	static BOOL ActionFrameStandardAttack(D20Actn* d20a);
 	static BOOL ActionFrameSunder(D20Actn* d20a);
@@ -190,6 +191,7 @@ public:
 		replaceFunction<ActionErrorCode(__cdecl)(D20Actn*, ActnSeq*, TurnBasedStatus*)>(0x100958A0, d20Callbacks.AddToSeqSpellCast);
 		replaceFunction(0x1008CE30, _PerformStandardAttack);
 		replaceFunction(0x1008C910, D20ActionCallbacks::LocationCheckStdAttack);
+		replaceFunction(0x1008EB90, D20ActionCallbacks::ActionFrameRangedAttack);
 		
 		replaceFunction(0x100920B0, PerformActivateReadiedAction);
 
@@ -879,6 +881,24 @@ void LegacyD20System::D20SignalPython(const objHndl & handle, int queryKey, int 
 	dispIo.data2 = arg2;
 	dispatcher->Process(enum_disp_type::dispTypePythonSignal, static_cast<D20DispatcherKey>(queryKey), &dispIo);
 	return;
+}
+
+void LegacyD20System::D20SignalPython(objHndl objHnd, const std::string& queryKey, D20Actn* arg1, int32_t arg2)
+{
+	if (!objHnd) {
+		logger->warn("D20SignalPython called with null handle! Key was {} arg1 was d20Action, arg2 {}", queryKey, arg2);
+		return;
+	}
+
+	Dispatcher* dispatcher = objects.GetDispatcher(objHnd);
+	if (!dispatch.dispatcherValid(dispatcher)) { return; }
+
+	DispIoD20Query dispIo;
+	dispIo.dispIOType = dispIoTypeSendSignal;
+	dispIo.return_val = 0;
+	dispIo.data1 = (int)arg1;
+	dispIo.data2 = arg2;
+	dispatcher->Process(enum_disp_type::dispTypePythonSignal, static_cast<D20DispatcherKey>(ElfHash::Hash(queryKey)), &dispIo);
 }
 
 #pragma endregion
@@ -2003,6 +2023,81 @@ BOOL D20ActionCallbacks::ActionFrameQuiveringPalm(D20Actn* d20a){
 	return FALSE;
 }
 
+/* 0x1008EB90 */
+BOOL D20ActionCallbacks::ActionFrameRangedAttack(D20Actn* d20a)
+{
+	auto wpn = objHndl::null;
+	
+	auto itemSlot = INVENTORY_WORN_IDX_START + EquipSlot::WeaponPrimary;
+	
+	auto projectileTgt = d20a->d20ATarget;
+	auto thrownItem = objHndl::null;
+	auto tgt = objSystem->GetObject(d20a->d20ATarget);
+	auto locAndOffOut = tgt->GetLocationFull();
+	auto performerObj = objSystem->GetObject(d20a->d20APerformer);
+	auto performerLoc = performerObj->GetLocationFull();
+	
+	if (!(d20a->d20Caf & D20CAF_HIT))
+	{
+		locAndOffOut.off_x = (double)rngSys.GetInt(-30, 30);
+		locAndOffOut.off_y = (double)rngSys.GetInt(-30, 30);
+		projectileTgt = objHndl::null;
+		locSys.RegularizeLoc(&locAndOffOut);
+	}
+	
+	if (d20a->d20Caf & D20CAF_TOUCH_ATTACK)                          // D20CAF_TOUCH_ATTACK
+	{
+		wpn = objHndl::null;
+	}
+	else
+	{
+		wpn =  d20Sys.GetAttackWeapon(d20a->d20APerformer, d20a->data1, (D20CAF)d20a->d20Caf);
+		if (d20a->d20Caf & D20CAF_SECONDARY_WEAPON)
+			itemSlot = INVENTORY_WORN_IDX_START + EquipSlot::WeaponSecondary;
+	}
+	auto ammoType = WeaponAmmoType::wat_arrow; // default (0)
+	if (wpn != objHndl::null) { // vanilla didn't check this...
+		ammoType = (WeaponAmmoType)objects.getInt32(wpn, obj_f_weapon_ammo_type);
+	}
+	auto projectileProtoNum = weapons.GetAmmoProtoId(ammoType);
+	auto tgtLoc = locAndOffOut;
+	
+	auto projectileHndl = combatSys.CreateProjectileAndThrow(
+			performerLoc.location, 	projectileProtoNum,	tgtLoc, 0,	0,	d20a->d20APerformer, 		projectileTgt);
+	if (projectileHndl) // vanilla lacked handle check - could return null when performer.location and tgtLoc.location were same tile! (could happen especially due to the randomization & renormalization above)
+	{ 
+		objSystem->GetObject(projectileHndl)->SetFloat(obj_f_offset_z, 60.0f);
+	}
+
+	if (d20a->d20Caf & D20CAF_THROWN && wpn != objHndl::null) {
+		thrownItem = inventory.SplitObjectFromStack(wpn, performerLoc.location);
+	}
+	
+	if (d20a->ProjectileAppend(projectileHndl, thrownItem))
+	{
+		static auto Dispatch55ProjectileCreated = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl, D20CAF)>(0x1004F330);
+		Dispatch55ProjectileCreated(d20a->d20APerformer, projectileHndl, (D20CAF) d20a->d20Caf);
+		d20a->d20Caf |= D20CAF_NEED_PROJECTILE_HIT;
+	}
+
+	if (d20a->d20Caf & D20CAF_THROWN && wpn != objHndl::null)
+	{
+		if (thrownItem == wpn){
+			inventory.ItemDrop(wpn);
+		}
+		
+		objects.SetFlag(thrownItem, OF_OFF);
+		if (ammoType == wat_shuriken || feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_QUICK_DRAW))
+		{
+			auto v10 = inventory.FindMatchingStackableItem(d20a->d20APerformer, wpn);
+			if (v10 && v10 != inventory.GetItemAtInvIdx(d20a->d20APerformer, INVENTORY_WORN_IDX_START + EquipSlot::WeaponSecondary)) { // this might cause a bug if you throw from the secondary weapon slot...
+				inventory.ItemPlaceInIdx(v10, itemSlot);
+			}
+		}
+	}
+	return 1;
+}
+
 /* 0x1008DEA0 */
 BOOL D20ActionCallbacks::ActionFrameSpell(D20Actn * d20a) {
 
@@ -2069,16 +2164,21 @@ BOOL D20ActionCallbacks::ActionFrameSpell(D20Actn * d20a) {
 		for (auto i = 0; i < pkt.targetCount; ++i) {
 			auto tgtHandle = pkt.targetListHandles[i];
 			auto projHandle = combatSys.CreateProjectileAndThrow(origin, projectileProto, destLoc, offx, offy, d20a->d20APerformer, tgtHandle);
+			// todo: very handling of null projHandle (added some checks in Temple+, might not be enough)
 			auto projectile = objSystem->GetObject(projHandle);
-			projectile->SetFloat(obj_f_offset_z, 60.0f);
-			projectile->SetInt32(obj_f_projectile_flags_combat, 0);
+			if (projectile != nullptr) {
+				projectile->SetFloat(obj_f_offset_z, 60.0f);
+				projectile->SetInt32(obj_f_projectile_flags_combat, 0);
+			}
 			pkt.projectiles[i] = projHandle;
 
 			auto tgtObj = objSystem->GetObject(tgtHandle);
 			if (!tgtObj) continue;
 			if (!tgtObj->IsCritter()) {
 				pySpellIntegration.SpellTriggerProjectile(d20a->spellId, SpellEvent::BeginProjectile, projHandle, i);
-				projectile->SetFlag(OF_DONTDRAW, true);
+				if (projectile) {
+					projectile->SetFlag(OF_DONTDRAW, true);
+				}
 				if (d20a->ProjectileAppend(projHandle, objHndl::null)) {
 					d20a->d20Caf |= D20CAF_NEED_PROJECTILE_HIT;
 				}
@@ -2090,7 +2190,9 @@ BOOL D20ActionCallbacks::ActionFrameSpell(D20Actn * d20a) {
 					continue;
 				}
 				pySpellIntegration.SpellTriggerProjectile(d20a->spellId, SpellEvent::BeginProjectile, projHandle, i);
-				projectile->SetFlag(OF_DONTDRAW, true);
+				if (projectile) {
+					projectile->SetFlag(OF_DONTDRAW, true);
+				}
 				if (d20a->ProjectileAppend(projHandle, objHndl::null)) {
 					d20a->d20Caf |= D20CAF_NEED_PROJECTILE_HIT;
 				}
@@ -2108,7 +2210,7 @@ BOOL D20ActionCallbacks::ActionFrameSpell(D20Actn * d20a) {
 			|| (pkt.animFlags & SpellAnimationFlag::SAF_PROJECTILE_STHG)) ? d20a->d20ATarget : objHndl::null;
 		auto projHandle = combatSys.CreateProjectileAndThrow(origin, projectileProto, destLoc, offx, offy, d20a->d20APerformer, projectileTgt);
 		if (!projHandle)
-			return FALSE;
+			return FALSE; // todo: does this cause any issues?
 		auto projectile = objSystem->GetObject(projHandle);
 		if (!projectile) return FALSE;
 		projectile->SetFloat(obj_f_offset_z, 60.0f);
@@ -2997,6 +3099,8 @@ BOOL D20ActionCallbacks::ActionFrameTouchAttack(D20Actn* d20a){
 		curSeq->tbStatus.tbsFlags &= ~TBSF_TouchAttack;
 		d20a->d20Caf &= ~D20CAF_FREE_ACTION;
 	}
+
+	d20Sys.D20SignalPython(d20a->d20ATarget, "Touch Attack Victim", d20a);
 
 	return FALSE;
 }

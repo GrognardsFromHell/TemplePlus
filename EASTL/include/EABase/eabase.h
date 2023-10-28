@@ -25,12 +25,16 @@
 // Always include version.h for backwards compatibility.
 #include <EABase/version.h>
 
+// Define common SI unit macros
+#include <EABase/eaunits.h>
+
+
 // ------------------------------------------------------------------------
 // The C++ standard defines size_t as a built-in type. Some compilers are
 // not standards-compliant in this respect, so we need an additional include.
 // The case is similar with wchar_t under C++.
 
-#if defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_MSVC) || defined(EA_WCHAR_T_NON_NATIVE) || defined(CS_UNDEFINED_STRING)
+#if defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_MSVC) || defined(EA_WCHAR_T_NON_NATIVE) || defined(EA_PLATFORM_PS4)
 	#if defined(EA_COMPILER_MSVC)
 		#pragma warning(push, 0)
 		#pragma warning(disable: 4265 4365 4836 4574)
@@ -48,16 +52,13 @@
 	#include <stddef.h>
 #endif
 
-
 // ------------------------------------------------------------------------
-// Ensure this header file is only processed once (with certain compilers)
-// GCC doesn't need such a pragma because it has special recognition for 
-// include guards (such as that above) and effectively implements the same
-// thing without having to resort to non-portable pragmas. It is possible
-// that the decision to use pragma once here is ill-advised, perhaps because
-// some compilers masquerade as MSVC but don't implement all features.
-#if defined(EA_PRAGMA_ONCE_SUPPORTED)
-	#pragma once
+// Include assert.h on C11 supported compilers so we may allow static_assert usage
+// http://en.cppreference.com/w/c/error/static_assert
+// C11 standard(ISO / IEC 9899:2011) :
+// 7.2/3 Diagnostics <assert.h>(p : 186)
+#if !defined(__cplusplus) && defined(__STDC_VERSION__)  && __STDC_VERSION__ >= 201100L
+	#include <assert.h>
 #endif
 
 
@@ -114,8 +115,8 @@
 	   #define __STDC_FORMAT_MACROS
 	#endif
 	// The GCC PSP compiler defines standard int types (e.g. uint32_t) but not PRId8, etc.
-	// MSVC doesn't include an inttypes.h header.
-	#if !defined(EA_COMPILER_MSVC)
+	// MSVC added support for inttypes.h header in VS2013.
+	#if !defined(EA_COMPILER_MSVC) || (defined(EA_COMPILER_MSVC) && EA_COMPILER_VERSION >= 1800)
 		#include <inttypes.h> // PRId8, SCNd8, etc.
 	#endif
 	#if defined(_MSC_VER)
@@ -203,7 +204,7 @@
 
 	// According to the C98/99 standard, FLT_EVAL_METHOD defines control the 
 	// width used for floating point _t types.
-	#if   defined(_MSC_VER) && _MSC_VER >= 1800
+	#if defined(_MSC_VER) && _MSC_VER >= 1800
 		// MSVC's math.h provides float_t, double_t under this condition.
 	#elif defined(FLT_EVAL_METHOD)
 		#if (FLT_EVAL_METHOD == 0)
@@ -218,7 +219,7 @@
 		#endif
 	#endif
 	
-   #if   defined(EA_COMPILER_MSVC) || defined(EA_COMPILER_BORLAND)
+   #if   defined(EA_COMPILER_MSVC) 
 	   typedef signed __int64      int64_t;
 	   typedef unsigned __int64    uint64_t;
 
@@ -247,58 +248,33 @@
 #ifndef INT8_C_DEFINED // If the user hasn't already defined these...
 	#define INT8_C_DEFINED
 
-	// VC++ 7.0 and earlier don't handle the LL suffix.
-	#if defined(EA_COMPILER_MSVC) || defined(EA_COMPILER_BORLAND)
-		#ifndef INT8_C
-			#define   INT8_C(x)    int8_t(x)  // x##i8 doesn't work satisfactorilly because -128i8 generates an out of range warning.
-		#endif
-		#ifndef UINT8_C
-			#define  UINT8_C(x)   uint8_t(x)
-		#endif
-		#ifndef INT16_C
-			#define  INT16_C(x)   int16_t(x)  // x##i16 doesn't work satisfactorilly because -32768i8 generates an out of range warning.
-		#endif
-		#ifndef UINT16_C
-			#define UINT16_C(x)  uint16_t(x)
-		#endif
-		#ifndef INT32_C
-			#define  INT32_C(x)  x##i32
-		#endif
-		#ifndef UINT32_C
-			#define UINT32_C(x)  x##ui32
-		#endif
-		#ifndef INT64_C
-			#define  INT64_C(x)  x##i64
-		#endif
-		#ifndef UINT64_C
-			#define UINT64_C(x)  x##ui64
-		#endif
-	#else
-		#ifndef INT8_C
-			#define   INT8_C(x)    int8_t(x)   // For the majority of compilers and platforms, long is 32 bits and long long is 64 bits.
-		#endif
-		#ifndef UINT8_C
-			#define  UINT8_C(x)   uint8_t(x)
-		#endif
-		#ifndef INT16_C
-			#define  INT16_C(x)   int16_t(x)
-		#endif
-		#ifndef UINT16_C
-			#define UINT16_C(x)  uint16_t(x)     // Possibly we should make this be uint16_t(x##u). Let's see how compilers react before changing this.
-		#endif
-				#ifndef INT32_C
-				   #define  INT32_C(x)  x##L
-				#endif
-				#ifndef UINT32_C
-				   #define UINT32_C(x)  x##UL
-				#endif
-		#ifndef INT64_C
-			#define  INT64_C(x)  x##LL         // The way to deal with this is to compare ULONG_MAX to 0xffffffff and if not equal, then remove the L.
-		#endif
-		#ifndef UINT64_C
-			#define UINT64_C(x)  x##ULL        // We need to follow a similar approach for LL.
-		#endif
+	#ifndef INT8_C
+		#define   INT8_C(x)    int8_t(x)   // For the majority of compilers and platforms, long is 32 bits and long long is 64 bits.
 	#endif
+	#ifndef UINT8_C
+		#define  UINT8_C(x)   uint8_t(x)
+	#endif
+	#ifndef INT16_C
+		#define  INT16_C(x)   int16_t(x)
+	#endif
+	#ifndef UINT16_C
+		#define UINT16_C(x)  uint16_t(x)     // Possibly we should make this be uint16_t(x##u). Let's see how compilers react before changing this.
+	#endif
+	#ifndef INT32_C
+	   #define  INT32_C(x)  x##L
+	#endif
+	#ifndef UINT32_C
+	   #define UINT32_C(x)  x##UL
+	#endif
+	#ifndef INT64_C
+		#define  INT64_C(x)  x##LL         // The way to deal with this is to compare ULONG_MAX to 0xffffffff and if not equal, then remove the L.
+	#endif
+	#ifndef UINT64_C
+		#define UINT64_C(x)  x##ULL        // We need to follow a similar approach for LL.
+	#endif
+   #ifndef UINTMAX_C
+	   #define UINTMAX_C(x) UINT64_C(x)
+   #endif
 #endif
 
 // ------------------------------------------------------------------------
@@ -319,6 +295,16 @@
 	#ifndef INT64_MAX
 		#define INT64_MAX               INT64_C(9223372036854775807)
 	#endif
+	#ifndef INTMAX_MAX
+	   #define INTMAX_MAX               INT64_MAX
+	#endif
+	#ifndef INTPTR_MAX
+		#if EA_PLATFORM_PTR_SIZE == 4
+			#define INTPTR_MAX          INT32_MAX
+	   	#else
+			#define INTPTR_MAX          INT64_MAX
+		#endif
+	#endif
 
 	// The value must be either -2^(n-1) or 1-2(n-1).
 	#ifndef INT8_MIN
@@ -332,6 +318,16 @@
 	#endif
 	#ifndef INT64_MIN
 		#define INT64_MIN               (-INT64_MAX - 1)  // -9223372036854775808
+	#endif
+	#ifndef INTMAX_MIN
+	   #define INTMAX_MIN               INT64_MIN
+	#endif
+	#ifndef INTPTR_MIN
+		#if EA_PLATFORM_PTR_SIZE == 4
+			#define INTPTR_MIN          INT32_MIN
+	   	#else
+			#define INTPTR_MIN          INT64_MIN
+		#endif
 	#endif
 
 	// The value must be 2^n-1
@@ -347,6 +343,16 @@
 	#ifndef UINT64_MAX
 		#define UINT64_MAX              UINT64_C(0xffffffffffffffff) // 18446744073709551615 
 	#endif
+	#ifndef UINTMAX_MAX
+	   #define UINTMAX_MAX              UINT64_MAX
+	#endif
+	#ifndef UINTPTR_MAX
+		#if EA_PLATFORM_PTR_SIZE == 4
+			#define UINTPTR_MAX          UINT32_MAX
+	   	#else
+			#define UINTPTR_MAX          UINT64_MAX
+		#endif
+	#endif
 #endif
 
 #ifndef FLT_EVAL_METHOD
@@ -355,7 +361,7 @@
 	typedef double              double_t;
 #endif
 
-#if defined(EA_COMPILER_HAS_INTTYPES) && !defined(EA_COMPILER_MSVC)
+#if defined(EA_COMPILER_HAS_INTTYPES) && (!defined(EA_COMPILER_MSVC) || (defined(EA_COMPILER_MSVC) && EA_COMPILER_VERSION >= 1800))
 	#define EA_COMPILER_HAS_C99_FORMAT_MACROS 
 #endif
 
@@ -428,14 +434,7 @@
 	#define PRIx64        EA_PRI_64_LENGTH_SPECIFIER "x"
 	#define PRIX64        EA_PRI_64_LENGTH_SPECIFIER "X"
 
-	#if defined(EA_COMPILER_MSVC) && (EA_COMPILER_VERSION >= 1900)
-		#define PRIdPTR       "Id"
-		#define PRIiPTR       "Ii"
-		#define PRIoPTR       "Io"
-		#define PRIuPTR       "Iu"
-		#define PRIxPTR       "Ix"
-		#define PRIXPTR       "IX"
-	#elif (EA_PLATFORM_PTR_SIZE == 4)
+	#if (EA_PLATFORM_PTR_SIZE == 4)
 		#define PRIdPTR       PRId32 // Usage of pointer values will generate warnings with 
 		#define PRIiPTR       PRIi32 // some compilers because they are defined in terms of 
 		#define PRIoPTR       PRIo32 // integers. However, you can't simply use "p" because
@@ -579,10 +578,15 @@
 	// As of this writing, all non-GCC compilers significant to us implement 
 	// uintptr_t the same as size_t. However, this isn't guaranteed to be 
 	// so for all compilers, as size_t may be based on int, long, or long long.
-	#if defined(_MSC_VER) && (EA_PLATFORM_PTR_SIZE == 8)
-		typedef __int64 ssize_t;
-	#else
-		typedef int ssize_t;
+	#if !defined(_SSIZE_T_) && !defined(_SSIZE_T_DEFINED) && !defined(HAVE_SSIZE_T)
+		#define _SSIZE_T_
+		#define _SSIZE_T_DEFINED
+
+		#if defined(_MSC_VER) && (EA_PLATFORM_PTR_SIZE == 8)
+			typedef __int64 ssize_t;
+		#else
+			typedef long ssize_t;
+		#endif
 	#endif
 #else
 	#include <sys/types.h>
@@ -622,6 +626,7 @@
 //             set to be the same thing as wchar_t in order to allow the 
 //             user to use char32_t with standard wchar_t functions.
 //
+// EA_CHAR8_UNIQUE
 // EA_CHAR16_NATIVE
 // EA_CHAR32_NATIVE
 // EA_WCHAR_UNIQUE
@@ -644,6 +649,9 @@
 // the C++11 unicode character types often overloads must be provided to 
 // support existing code that passes a wide char string to a function that 
 // takes a unicode string.
+//
+// The EA_CHAR8_UNIQUE symbol is defined to 1 if char8_t is distinct type 
+// from char in the type system, and defined to 0 if otherwise.
 
 #if !defined(EA_CHAR16_NATIVE)
 	// To do: Change this to be based on EA_COMPILER_NO_NEW_CHARACTER_TYPES.
@@ -699,6 +707,24 @@
 #endif
 
 
+// EA_CHAR8_UNIQUE
+//
+// Check for char8_t support in the cpp type system. Moving forward from c++20,
+// the char8_t type allows users to overload function for character encoding.   
+//
+// EA_CHAR8_UNIQUE is 1 when the type is a unique in the type system and 
+// can there be used as a valid overload. EA_CHAR8_UNIQUE is 0 otherwise.
+//
+// http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0482r6.html
+//
+#ifdef __cpp_char8_t
+	#define CHAR8_T_DEFINED
+	#define EA_CHAR8_UNIQUE 1
+#else
+	#define EA_CHAR8_UNIQUE 0
+#endif
+
+
 #ifndef CHAR8_T_DEFINED // If the user hasn't already defined these...
 	#define CHAR8_T_DEFINED
 	#if defined(EA_PLATFORM_APPLE)
@@ -730,7 +756,11 @@
 		#endif
 	#else
 		typedef uint16_t char16_t;
-		typedef wchar_t  char32_t;
+		#if defined(__cplusplus)
+			typedef wchar_t  char32_t;
+		#else
+			typedef uint32_t char32_t;
+		#endif
 	#endif
 #endif
 
@@ -785,7 +815,11 @@
 //     const char32_t  c   = EA_CHAR32('\x3001');
 //
 #ifndef EA_CHAR8
-	 #define EA_CHAR8(s) s
+	#if EA_CHAR8_UNIQUE
+		#define EA_CHAR8(s) u8 ## s
+	#else
+		#define EA_CHAR8(s) s
+	#endif
 #endif
 
 #ifndef EA_WCHAR
@@ -887,13 +921,21 @@
 //
 #if defined(_MSC_VER) && (_MSC_VER >= 1600) && defined(__cplusplus)
 	// static_assert is defined by the compiler for both C and C++.
-#elif defined(__clang__) && defined(__cplusplus) 
+#elif !defined(__cplusplus) && defined(EA_PLATFORM_ANDROID) 
+	// AndroidNDK does not support static_assert despite claiming it's a C11 compiler
+	#define NEED_CUSTOM_STATIC_ASSERT
+#elif defined(__clang__) && defined(__cplusplus)
+	// We need to separate these checks on a new line, as the pre-processor on other compilers will fail on the _has_feature macros
 	#if !(__has_feature(cxx_static_assert) || __has_extension(cxx_static_assert))
 		#define NEED_CUSTOM_STATIC_ASSERT
 	#endif
 #elif defined(__GNUC__) && (defined(__GXX_EXPERIMENTAL_CXX0X__) || (defined(__cplusplus) && (__cplusplus >= 201103L)))
 	// static_assert is defined by the compiler.
 #elif defined(__EDG_VERSION__) && (__EDG_VERSION__ >= 401) && defined(EA_COMPILER_CPP11_ENABLED)
+	// static_assert is defined by the compiler.
+#elif !defined(__cplusplus) && defined(__GLIBC__) && defined(__USE_ISOC11)
+	// static_assert is defined by the compiler.
+#elif !defined(__cplusplus) && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201100L
 	// static_assert is defined by the compiler.
 #else
 	#define NEED_CUSTOM_STATIC_ASSERT
@@ -923,19 +965,19 @@
 // ------------------------------------------------------------------------
 // EA_IS_ENABLED
 //
-// EA_IS_ENABLED is intended to be used for detecting if compile time features
-// are enabled or disabled.  It has a small advantage over using a standard
-// #if or #ifdef test, because it will generate a compilation error if the
-// define being tested has not been set.  This prevents an undefined macro
-// from being evaluated as disabled by default.
+// EA_IS_ENABLED is intended to be used for detecting if compile time features are enabled or disabled.
 //
-// To use the macro, the calling code should create a define for the feature
-// to enable or disable.  This feature define must be set to either EA_ENABLED
-// or EA_DISABLED.  (Do not try to set the feature define directly to some other
+// It has some advantages over using a standard #if or #ifdef tests:
+//	1) Fails to compile when passes numeric macro values. Valid options are strictly enabled or disabled.
+//	2) Fails to compile when passed undefined macro values rather than disabling by default
+//	3) Fails to compile when the passed macro is defined to but empty
+//
+// To use the macro, the calling code should create a define for the feature to enable or disable.  This feature define
+// must be set to either EA_ENABLED or EA_DISABLED.  (Do not try to set the feature define directly to some other
 // value.)
 //
-// Note: These macros are analogous to the Frostbite macro FB_USING used in combination
-// with FB_OFF / FB_ON.
+// Note: These macros are analogous to the Frostbite macro FB_USING used in combination with FB_OFF / FB_ON and are
+// designed to be compatible to support gradual migration.
 //
 // Example usage:
 //
@@ -949,9 +991,18 @@
 //          // USER_PROVIDED_FEATURE_DEFINE is disabled
 //      #endif
 //
-#define EA_ENABLED              1-
-#define EA_DISABLED             0-
-#define EA_IS_ENABLED(x)        ( (x 0) == 1 )
+#define EA_ENABLED              111-
+#define EA_DISABLED             333-
+// NOTE: Numeric values for x will produce a parse error while empty values produce a divide by zero, and the test is a bool for proper negation behavior
+#define EA_IS_ENABLED(x) (333 == 333 * 111 / ((x 0) * (((x 0) == 333 ? 1 : 0) + ((x 0) == 111 ? 1 : 0))))
+
+
+
+// Define int128_t / uint128_t types.
+// NOTE(rparolin):  include file at the end because we want all the signed integral types defined.
+#ifdef __cplusplus
+	#include <EABase/int128.h>
+#endif
 
 #endif // Header include guard
 

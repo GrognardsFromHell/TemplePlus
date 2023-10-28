@@ -226,9 +226,10 @@ static PyObject* PyObjHandle_BeginDialog(PyObject* obj, PyObject* args) {
 		uiPicker.CancelPicker();
 		
 		// Temple+: added this, otherwise the combat continues briefly and goes on to the next combatant who can start an action
-		// the dialog event callback does this anyway, but 1ms later
+		// the dialog event callback (0x1014CED0) does this anyway, but 1ms later
 		auto leader = party.GetConsciousPartyLeader();
 		if (leader) {
+			combatSys.forceEndedCombatNow = true;
 			combatSys.CritterExitCombatMode(leader);
 		}
 		
@@ -384,7 +385,7 @@ static PyObject* PyObjHandle_ItemTransferToByProto(PyObject* obj, PyObject* args
 	auto self = GetSelf(obj);
 	int protoId;
 	objHndl target;
-	if (!PyArg_ParseTuple(args, "O&i:objhndl.itemtransfertobyproto", &ConvertObjHndl, &target, &protoId)) {
+	if (!PyArg_ParseTuple(args, "O&i:objhndl.item_transfer_to_by_proto", &ConvertObjHndl, &target, &protoId)) {
 		return 0;
 	}
 
@@ -861,6 +862,23 @@ static PyObject*PyObjHandle_GetItemWearFlags(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(res);
 }
 
+static PyObject* PyObjHandle_GetLevelForSpellSelection(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	Stat classCode;
+	if (!PyArg_ParseTuple(args, "i:objhndl:get_level_for_spell_selection", &classCode)) {
+		return 0;
+	}
+
+	//This is the level for selecting spells on levelup.  It does not include practiced spell caster.
+	auto res = dispatch.DispatchGetBaseCasterLevel(self->handle, classCode);
+
+	return PyInt_FromLong(res);
+}
+
 static PyObject* PyObjHandle_GetMaxDexBonus(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -1236,6 +1254,47 @@ static PyObject* PyObjHandle_ArcaneSpellLevelCanCast(PyObject* obj, PyObject* ar
 	return PyInt_FromLong(arcaneSpellLvlMax);
 }
 
+static PyObject* PyObjHandle_ArcaneSpontaniousSpellLevelCanCast(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	auto arcaneSpontaniousSpellLvlMax = 0;
+
+	critterSys.GetSpellLvlCanCast(self->handle, SpellSourceType::Arcane, SpellReadyingType::Any);
+
+	for (auto it : d20ClassSys.classEnums) {
+		auto classEnum = (Stat)it;
+		if (d20ClassSys.IsArcaneCastingClass(classEnum) && d20ClassSys.IsNaturalCastingClass(classEnum)) {
+			arcaneSpontaniousSpellLvlMax = max(arcaneSpontaniousSpellLvlMax, spellSys.GetMaxSpellLevel(self->handle, classEnum, 0));
+		}
+	}
+
+	return PyInt_FromLong(arcaneSpontaniousSpellLvlMax);
+}
+
+static PyObject* PyObjHandle_ArcaneVancianSpellLevelCanCast(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	auto arcaneVancianSpellLvlMax = 0;
+
+	critterSys.GetSpellLvlCanCast(self->handle, SpellSourceType::Arcane, SpellReadyingType::Any);
+
+	for (auto it : d20ClassSys.classEnums) {
+		auto classEnum = (Stat)it;
+		if (d20ClassSys.IsArcaneCastingClass(classEnum) && d20ClassSys.IsVancianCastingClass(classEnum)) {
+			arcaneVancianSpellLvlMax = max(arcaneVancianSpellLvlMax, spellSys.GetMaxSpellLevel(self->handle, classEnum, 0));
+		}
+	}
+
+	return PyInt_FromLong(arcaneVancianSpellLvlMax);
+}
+
+
 static PyObject* PyObjHandle_DivineSpellLevelCanCast(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -1336,6 +1395,27 @@ static PyObject* PyObjHandle_TurnTowards(PyObject* obj, PyObject* args) {
 		Py_RETURN_NONE;
 	}
 	auto relativeAngle = objects.GetRotationTowards(self->handle, target);
+	if (!objSystem->GetObject(self->handle)->IsCritter()){
+		objects.SetRotation(self->handle, relativeAngle);
+		Py_RETURN_NONE;
+	}
+	gameSystems->GetAnim().PushRotate(self->handle, relativeAngle);
+	Py_RETURN_NONE;
+}
+
+static PyObject* PyObjHandle_TurnTowardsLoc(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		logger->warn("Python turn_towards_loc called with OBJ_HANDLE_NULL object");
+		Py_RETURN_NONE;
+	}
+
+	LocAndOffsets tLoc;
+	if (!PyArg_ParseTuple(args, "L|ff:objhndl.turn_towards_loc", &tLoc.location, &tLoc.off_x, &tLoc.off_y)) {
+		return 0;
+	}
+
+	auto relativeAngle = objects.GetRotationTowardsLoc(self->handle, tLoc);
 	if (!objSystem->GetObject(self->handle)->IsCritter()){
 		objects.SetRotation(self->handle, relativeAngle);
 		Py_RETURN_NONE;
@@ -2039,7 +2119,7 @@ static PyObject* PyObjHandle_FloatTextLine(PyObject* obj, PyObject* args) {
 	if (line && PyString_Check(line)) {
 		floatSys.floatMesLine(self->handle, 1, colorId, fmt::format("{}", PyString_AsString(line)).c_str());
 	}
-		
+
 	Py_RETURN_NONE;
 }
 
@@ -2756,6 +2836,26 @@ static PyObject* PyObjHandle_AnimGoalInterrupt(PyObject* obj, PyObject* args) {
 	Py_RETURN_NONE;
 }
 
+static PyObject* PyObjHandle_AnimGoalPush(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	int animId;
+	if (!PyArg_ParseTuple(args, "i:objhndl.anim_goal_push", &animId)) {
+		return 0;
+	}
+
+	// Guard against bad animIds, since they crash the game pretty hard
+	if (animId <= 0) return PyInt_FromLong(-1);
+	if (46 <= animId && animId <= 63) return PyInt_FromLong(-1);
+	if (99 <= animId && animId <= 102) return PyInt_FromLong(-1);
+	if (120 <= animId && animId <= 123) return PyInt_FromLong(-1);
+	if (142 <= animId) return PyInt_FromLong(-1);
+
+	return PyInt_FromLong(gameSystems->GetAnim().PushAnimate(self->handle, animId));
+}
+
 static PyObject* PyObjHandle_AnimGoalPushAttack(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -3066,6 +3166,21 @@ static PyObject* PyObjHandle_IsActiveCombatant(PyObject* obj, PyObject* args) {
 }
 
 
+static PyObject* PyObjHandle_IsArcaneSpellClass(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	int stat;
+	if (!PyArg_ParseTuple(args, "i:objhndl.is_arcane_spell_class", &stat)) {
+		return 0;
+	}
+
+	auto result = d20ClassSys.IsArcaneCastingClass(static_cast<Stat>(stat));
+	return PyInt_FromLong(result?1:0);
+}
+
 static PyObject* PyObjHandle_IsCategoryType(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -3290,6 +3405,33 @@ static PyObject* PyObjHandle_SetObj(PyObject* obj, PyObject* args) {
 	}
 	objects.SetFieldObjHnd(self->handle, field, value);
 	return PyInt_FromLong(1);
+}
+
+static PyObject* PyObjHandle_SetString(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	obj_f field;
+	char* value = nullptr;
+	if (!PyArg_ParseTuple(args, "is:objhndl.obj_set_string", &field, &value)) {
+		return PyInt_FromLong(0);
+	}
+	objects.SetFieldString(self->handle, field, value);
+	return PyInt_FromLong(1);
+}
+
+static PyObject* PyObjHandle_GetString(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	obj_f field;
+	if (!PyArg_ParseTuple(args, "i:objhndl.obj_get_string", &field)) {
+		return PyInt_FromLong(0);
+	}
+	auto result = objects.getString(self->handle, field);
+	return PyString_FromString(result);
 }
 
 static PyObject* PyObjHandle_GetInt(PyObject* obj, PyObject* args) {
@@ -3617,7 +3759,7 @@ static PyObject* PyObjHandle_HasFeat(PyObject* obj, PyObject* args) {
 	}
 
 	if (!objects.IsCritter(self->handle)) {
-		logger->warn("Python has_feat ({}) called with non critter object: {}", feats.GetFeatName(feat), objects.description.getDisplayName(self->handle));
+		logger->warn("Python has_feat ({}) called with non critter object: {}", feats.GetFeatName(feat), self->handle);
 		return PyInt_FromLong(0);
 	}
 
@@ -3666,6 +3808,24 @@ static PyObject * PyObjHandle_FeatAdd(PyObject* obj, PyObject * args){
 
 	return PyInt_FromLong(1);
 };
+
+static PyObject* PyObjHandle_SpellKnownAddToCharClass(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		Py_RETURN_NONE;
+	}
+	int spellIdx;
+	int charClass;
+	int slotLevel;
+	int isDomain = 0;
+	if (!PyArg_ParseTuple(args, "iii|i:objhndl.spell_known_add_to_char_class", &spellIdx, &charClass, &slotLevel, &isDomain)) {
+		return 0;
+	}
+
+	auto spellClass = spellSys.GetSpellClass(charClass);
+	spellSys.SpellKnownAdd(self->handle, spellIdx, spellClass, slotLevel, 1, 0);
+	Py_RETURN_NONE;
+}
 
 static PyObject* PyObjHandle_SpellKnownAdd(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
@@ -3802,11 +3962,15 @@ static PyObject* PyObjHandle_AiStrategySetCustom(PyObject* obj, PyObject* args) 
 		stringVector.push_back(s);
 	}
 
+	// optional "save" flag
 	int save = 1;
-	auto psave = PyTuple_GetItem(args, 1);
-	if (PyLong_Check(psave) || PyInt_Check(psave)) {
-		save = PyLong_AsLong(psave);
+	if (PyTuple_Size(args) >= 2) {
+		auto psave = PyTuple_GetItem(args, 1);
+		if (PyLong_Check(psave) || PyInt_Check(psave)) {
+			save = PyLong_AsLong(psave);
+		}
 	}
+	
 
 	aiSys.SetCustomStrategy( self->handle, stringVector, save);
 	Py_RETURN_NONE;
@@ -4253,13 +4417,14 @@ static PyObject* PyObjHandle_IsSpellKnown(PyObject* obj, PyObject* args) {
 		return PyInt_FromLong(1);
 	}
 
+	int spellClass = -1;
 	int spellEnum;
 
-	if (!PyArg_ParseTuple(args, "i", &spellEnum)) {
-		return nullptr;
+	if (!PyArg_ParseTuple(args, "i|i", &spellEnum, &spellClass)) {
+		return PyInt_FromLong(false);
 	}
 
-	auto result = spellSys.IsSpellKnown(self->handle, spellEnum);
+	auto result = spellSys.IsSpellKnown(self->handle, spellEnum, spellClass);
 	return PyInt_FromLong(result);
 }
 
@@ -4280,7 +4445,7 @@ static PyObject* PyObjHandle_IsThrowingWeapon(PyObject* obj, PyObject* args) {
 	}
 	if (objects.GetType(self->handle) != obj_t_weapon)
 	{
-		logger->warn("Python is_throwing_weapon called with non weapon object: {}", objects.description.getDisplayName(self->handle));
+		logger->warn("Python is_throwing_weapon called with non weapon object: {}", self->handle);
 		return PyInt_FromLong(0);
 	}
 
@@ -4311,6 +4476,48 @@ static PyObject * PyObjHandle_MakeWizard(PyObject* obj, PyObject* args) {
 
 	return PyInt_FromLong(1);
 };
+
+static PyObject* PyObjHandle_MakeAOO(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+
+	objHndl targetObj;
+	if (!PyArg_ParseTuple(args, "O&:objhndl.make_aoo_if_possible", &ConvertObjHndl, &targetObj)) {
+		return 0;
+	}
+
+	if (!targetObj) {
+		return PyInt_FromLong(0);
+	}
+
+	//Check if we are too close to stop the process early when too close
+	auto polearmDonutReach = config.disableReachWeaponDonut ? false : true;
+	float minReach = 0.0f;
+	(void)critterSys.GetReach(self->handle, D20A_UNSPECIFIED_ATTACK, &minReach);
+	auto distToTgt = max(0.0f, locSys.DistanceToObj(self->handle, targetObj));
+	auto tooClose = polearmDonutReach && (minReach > 0.0f) && distToTgt < minReach;
+	if (tooClose) {
+		return PyInt_FromLong(0);
+	}
+
+	if (!combatSys.CanMeleeTarget(self->handle, targetObj))
+		return PyInt_FromLong(0);
+	if (self->handle == targetObj)
+		return PyInt_FromLong(0);
+	if (critterSys.IsFriendly(self->handle, targetObj))
+		return PyInt_FromLong(0);
+	if (!d20Sys.d20QueryWithData(self->handle, DK_QUE_AOOPossible, targetObj))
+		return PyInt_FromLong(0);
+	if (!d20Sys.d20QueryWithData(self->handle, DK_QUE_AOOWillTake, targetObj))
+		return PyInt_FromLong(0);
+
+	actSeqSys.DoAoo(self->handle, targetObj);
+	actSeqSys.sequencePerform();
+	
+	return PyInt_FromLong(1);
+}
 
 static PyObject * PyObjHandle_MakeClass(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
@@ -4357,6 +4564,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "allegiance_strength", PyObjHandle_AllegianceStrength, METH_VARARGS, NULL },
 	{ "anim_callback", PyObjHandle_AnimCallback, METH_VARARGS, NULL },
 	{ "anim_goal_interrupt", PyObjHandle_AnimGoalInterrupt, METH_VARARGS, NULL },
+	{ "anim_goal_push", PyObjHandle_AnimGoalPush, METH_VARARGS, NULL },
 	{ "anim_goal_push_attack", PyObjHandle_AnimGoalPushAttack, METH_VARARGS, NULL },
 	{ "anim_goal_push_dodge", PyObjHandle_AnimGoalPushDodge, METH_VARARGS, NULL },
 	{ "anim_goal_push_hit_by_weapon", PyObjHandle_AnimGoalPushHitByWeapon, METH_VARARGS, NULL },
@@ -4366,6 +4574,8 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "apply_projectile_particles", PyObjHandle_ApplyProjectileParticles, METH_VARARGS, NULL },
 	{ "apply_projectile_hit_particles", PyObjHandle_ApplyProjectileHitParticles, METH_VARARGS, NULL },
 	{ "arcane_spell_level_can_cast", PyObjHandle_ArcaneSpellLevelCanCast, METH_VARARGS, NULL },
+	{ "arcane_spontaneous_spell_level_can_cast", PyObjHandle_ArcaneSpontaniousSpellLevelCanCast, METH_VARARGS, NULL },
+	{ "arcane_vancian_spell_level_can_cast", PyObjHandle_ArcaneVancianSpellLevelCanCast, METH_VARARGS, NULL },
 	{ "attack", PyObjHandle_Attack, METH_VARARGS, NULL },
 	{ "award_experience", PyObjHandle_AwardExperience, METH_VARARGS, NULL },
 
@@ -4441,6 +4651,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "get_character_base_classes", PyObjHandle_GetCharacterBaseClassesSet, METH_VARARGS, "Get tuple with base classes enums" },
 	{ "get_initiative", PyObjHandle_GetInitiative, METH_VARARGS, NULL },
 	{ "get_item_wear_flags", PyObjHandle_GetItemWearFlags, METH_VARARGS, NULL },
+	{ "get_level_for_spell_selection", PyObjHandle_GetLevelForSpellSelection, METH_VARARGS, NULL },
 	{ "get_max_dex_bonus", PyObjHandle_GetMaxDexBonus, METH_VARARGS, NULL },
 	{ "get_num_spells_per_day", PyObjHandle_GetNumSpellsPerDay, METH_VARARGS, NULL },
 	{ "get_num_spells_used", PyObjHandle_GetNumSpellsUsed, METH_VARARGS, NULL },
@@ -4467,6 +4678,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "identify_all", PyObjHandle_IdentifyAll, METH_VARARGS, NULL },
 	{ "inventory_item", PyObjHandle_InventoryItem, METH_VARARGS, NULL },
 	{ "is_active_combatant", PyObjHandle_IsActiveCombatant, METH_VARARGS, NULL },
+	{ "is_arcane_spell_class", PyObjHandle_IsArcaneSpellClass, METH_VARARGS, NULL },
 	{ "is_buckler", PyObjHandle_IsBuckler, METH_VARARGS, NULL },
 	{ "is_category_type", PyObjHandle_IsCategoryType, METH_VARARGS, NULL },
 	{ "is_category_subtype", PyObjHandle_IsCategorySubtype, METH_VARARGS, NULL },
@@ -4501,6 +4713,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "leader_get", PyObjHandle_LeaderGet, METH_VARARGS, NULL },
 
 	{ "make_wiz", PyObjHandle_MakeWizard, METH_VARARGS, "Makes you a wizard of level N" },
+	{ "make_aoo_if_possible", PyObjHandle_MakeAOO, METH_VARARGS, "Perform an AOO against opponent" },
 	{ "make_class", PyObjHandle_MakeClass, METH_VARARGS, "Makes you a CLASS N of level M" },
 	{ "money_get", PyObjHandle_MoneyGet, METH_VARARGS, NULL},
 	{ "money_adj", PyObjHandle_MoneyAdj, METH_VARARGS, NULL},
@@ -4522,6 +4735,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "obj_get_idx_int64_size", PyObjHandle_GetIdxInt64Size, METH_VARARGS, NULL },
 	{ "obj_get_int64", PyObjHandle_GetInt64, METH_VARARGS, "Gets 64 bit field" },
 	{ "obj_get_obj", PyObjHandle_GetObj, METH_VARARGS, "Gets Object field" },
+	{ "obj_get_string", PyObjHandle_GetString, METH_VARARGS, NULL },
 	{ "obj_get_idx_obj", PyObjHandle_GetIdxObj, METH_VARARGS, "Gets Object Array field" },
 	{ "obj_get_idx_obj_size", PyObjHandle_GetIdxObjSize, METH_VARARGS, "Gets Object Array field" },
 	{ "obj_get_spell", PyObjHandle_GetSpell, METH_VARARGS, NULL },
@@ -4529,6 +4743,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "obj_set_int", PyObjHandle_SetInt, METH_VARARGS, NULL },
 	{ "obj_set_float", PyObjHandle_SetFloat, METH_VARARGS, NULL },
 	{ "obj_set_obj", PyObjHandle_SetObj, METH_VARARGS, NULL },
+	{ "obj_set_string", PyObjHandle_SetString, METH_VARARGS, NULL },
 	{ "obj_set_idx_int", PyObjHandle_SetIdxInt, METH_VARARGS, NULL },
 	{ "obj_set_int64", PyObjHandle_SetInt64, METH_VARARGS, NULL },
 	{ "obj_set_idx_int64", PyObjHandle_SetIdxInt64, METH_VARARGS, NULL },
@@ -4575,6 +4790,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "soundmap_item", PyObjHandle_SoundmapItem, METH_VARARGS, NULL },
 	{ "sound_play_friendly_fire", PyObjHandle_SoundPlayFriendlyFire, METH_VARARGS, NULL},
 	{ "spell_known_add", PyObjHandle_SpellKnownAdd, METH_VARARGS, NULL },
+	{ "spell_known_add_to_char_class", PyObjHandle_SpellKnownAddToCharClass, METH_VARARGS, NULL },
 	{ "spell_memorized_add", PyObjHandle_SpellMemorizedAdd, METH_VARARGS, NULL },
 	{ "spell_damage", PyObjHandle_SpellDamage, METH_VARARGS, NULL },
 	{ "spell_damage_with_reduction", PyObjHandle_SpellDamageWithReduction, METH_VARARGS, NULL },
@@ -4593,6 +4809,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{"steal_from", PyObjHandle_StealFrom, METH_VARARGS, NULL },
 
 	{"turn_towards", PyObjHandle_TurnTowards, METH_VARARGS, NULL},
+	{"turn_towards_loc", PyObjHandle_TurnTowardsLoc, METH_VARARGS, NULL},
 	{"trip_check", PyObjHandle_TripCheck, METH_VARARGS, NULL },
 
 	{ "unconceal", PyObjHandle_Unconceal, METH_VARARGS, NULL },
@@ -4870,6 +5087,56 @@ static PyObject* PyObjHandle_GetHighestArcaneClass(PyObject* obj, void*) {
 }
 
 
+static PyObject* PyObjHandle_GetHighestSpontaneousArcaneClass(PyObject* obj, void*) {
+	auto self = GetSelf(obj);
+	objHndl objHnd = self->handle;
+	if (!objHnd) {
+		return PyInt_FromLong(0);
+	}
+
+	auto highestClass = (Stat)0;
+	auto highestLvl = 0;
+
+	for (auto it : d20ClassSys.classEnumsWithSpellLists) {
+		auto classEnum = (Stat)it;
+		if (d20ClassSys.IsArcaneCastingClass(classEnum) && d20ClassSys.IsNaturalCastingClass(classEnum)) {
+			auto lvlThis = objects.StatLevelGet(objHnd, classEnum);
+			if (lvlThis > highestLvl) {
+				highestLvl = lvlThis;
+				highestClass = classEnum;
+			}
+		}
+	}
+
+	return PyInt_FromLong(highestClass);
+}
+
+
+static PyObject* PyObjHandle_GetHighestVancianArcaneClass(PyObject* obj, void*) {
+	auto self = GetSelf(obj);
+	objHndl objHnd = self->handle;
+	if (!objHnd) {
+		return PyInt_FromLong(0);
+	}
+
+	auto highestClass = (Stat)0;
+	auto highestLvl = 0;
+
+	for (auto it : d20ClassSys.classEnumsWithSpellLists) {
+		auto classEnum = (Stat)it;
+		if (d20ClassSys.IsArcaneCastingClass(classEnum) && d20ClassSys.IsVancianCastingClass(classEnum)) {
+			auto lvlThis = objects.StatLevelGet(objHnd, classEnum);
+			if (lvlThis > highestLvl) {
+				highestLvl = lvlThis;
+				highestClass = classEnum;
+			}
+		}
+	}
+
+	return PyInt_FromLong(highestClass);
+}
+
+
 static PyObject* PyObjHandle_GetHighestDivineClass(PyObject* obj, void*) {
 	auto self = GetSelf(obj);
 	objHndl objHnd = self->handle;
@@ -5005,6 +5272,8 @@ PyGetSetDef PyObjHandleGetSets[] = {
 	{ "area", PyObjHandle_GetArea, NULL, NULL, NULL },
 	{"char_classes", PyObjHandle_GetCharacterClasses, NULL, "a tuple containing the character classes array", NULL },
 	{ "highest_arcane_class", PyObjHandle_GetHighestArcaneClass, NULL, "Highest Arcane spell casting class", NULL },
+	{ "highest_vancian_arcane_class", PyObjHandle_GetHighestVancianArcaneClass, NULL, "Highest Vancian Arcane spell casting class", NULL },
+	{ "highest_spontaneous_arcane_class", PyObjHandle_GetHighestSpontaneousArcaneClass, NULL, "Highest Natural Arcane spell casting class", NULL },
 	{ "highest_divine_class", PyObjHandle_GetHighestDivineClass, NULL, "Highest Divine spell casting class", NULL },
     { "highest_arcane_caster_level", PyObjHandle_GetHighestArcaneCasterLevel, NULL, "Highest Arcane caster level", NULL },
     { "highest_divine_caster_level", PyObjHandle_GetHighestDivineCasterLevel, NULL, "Highest Divine caster level", NULL },

@@ -1,0 +1,7 @@
+name: Fists of Iron
+flags: 12582912
+prereqs: 266 2
+description: You have learned the secrets of imbuing your unarmed attacks with extra force.
+
+Declare that you are using this feat before you make your attack roll (thus, a missed attack roll ruins the attempt). You deal an extra 1d6 points of damage when you make a successful unarmed attack. Each attempt counts as one of your uses of the Stunning Fist feat for the day.
+prereq descr: Improved Unarmed Strike, Stunning Fist, base attack bonus +2,

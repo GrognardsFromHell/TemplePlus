@@ -38,6 +38,8 @@ static struct ActnSeqAddresses : temple::AddressTable {
 	int(__cdecl*ActionSequenceChecksWithPerformerLocation)();
 	void(__cdecl* ActionSequenceRevertPath)(int d20ActnNum);
 	void(__cdecl*Counterspell_sthg)(ReadiedActionPacket* readiedAction);
+	BOOL(__cdecl* IsObjCurrentActorRegardSimuls)(objHndl obj);
+	
 	PickerArgs * actSeqPicker;
 	D20Actn * actSeqPickerAction;
 	ReadiedActionPacket * readiedActionCache;
@@ -78,6 +80,8 @@ static struct ActnSeqAddresses : temple::AddressTable {
 		rebase(actSeqTargetsIdx, 0x118CD2A0);
 		rebase(actSeqTargets, 0x118CD2A8);
 		rebase(actSeqSpellLoc, 0x118CD3A8);
+
+		rebase(IsObjCurrentActorRegardSimuls, 0x100921F0);
 	}
 
 	
@@ -376,6 +380,7 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 			*seqPickerD20ActnType = d20Sys.globD20Action->d20ActType;  // seqPickerD20ActnType
 			*seqPickerD20ActnData1 = d20Sys.globD20Action->data1;
 			*seqPickerTargetingType = D20TC_ItemInteraction;
+			pythonDispatcherKey = d20Sys.globD20Action->GetPythonActionEnum();  //Save off since the action will be reset
 			return;
 		}
 		addresses.actSeqPicker->flagsTarget = UiPickerFlagsTarget::None;
@@ -398,6 +403,7 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 			*seqPickerD20ActnType = d20Sys.globD20Action->d20ActType; //seqPickerD20ActnType
 			*seqPickerD20ActnData1 = d20Sys.globD20Action->data1;
 			*seqPickerTargetingType = D20TC_SingleIncSelf;
+			pythonDispatcherKey = d20Sys.globD20Action->GetPythonActionEnum();  //Save off since the action will be reset
 			return;
 		}
 		addresses.actSeqPicker->flagsTarget = UiPickerFlagsTarget::None;
@@ -424,6 +430,7 @@ void ActionSequenceSystem::ActSeqGetPicker(){
 			*seqPickerD20ActnType = d20Sys.globD20Action->d20ActType;
 			*seqPickerD20ActnData1 = d20Sys.globD20Action->data1;
 			*seqPickerTargetingType = D20TC_SingleExcSelf;
+			pythonDispatcherKey = d20Sys.globD20Action->GetPythonActionEnum();  //Save off since the action will be reset
 			return;
 		}
 		addresses.actSeqPicker->flagsTarget = UiPickerFlagsTarget::None;
@@ -646,6 +653,10 @@ void ActionSequenceSystem::ActionTypeAutomatedSelection(objHndl handle)
 		|| *seqPickerTargetingType != D20TC_Invalid)
 	{
 		setGlobD20Action(*seqPickerD20ActnType, *seqPickerD20ActnData1);
+		if (d20Sys.globD20Action->d20ActType == D20A_PYTHON_ACTION) {
+			d20Sys.globD20Action->SetPythonActionEnum(pythonDispatcherKey);
+			pythonDispatcherKey = DK_NONE;
+		}
 		return;
 	}
 
@@ -833,7 +844,7 @@ int ActionSequenceSystem::ActionAddToSeq()
 		
 	}
 	if (d20ActnType == D20A_PYTHON_ACTION){
-		d20Sys.globD20ActionKey = (D20DispatcherKey) d20Sys.globD20Action->GetPythonActionEnum();
+		d20Sys.globD20ActionKey = d20Sys.globD20Action->GetPythonActionEnum();
 	}
 	auto actnCheckFunc = d20Sys.d20Defs[d20ActnType].actionCheckFunc;
 	if (actnCheckFunc)
@@ -3009,11 +3020,12 @@ void ActionSequenceSystem::PerformOnProjectileComplete(objHndl projectile, objHn
 	if (!curSeq || curSeq->performer != thrower || (curSeq->seqOccupied & SEQF_PERFORMING) == 0) {
 		succeeded = false;
 		logger->debug("\t\t thrower is not current sequence performer, trying to switch...");
+		succeeded = SequenceSwitch(thrower) != 0;
 	}
-	succeeded = SequenceSwitch(thrower) != 0;
+	
 
 	if (!succeeded) {
-		logger->debug("\t\t failed");
+		logger->debug("\t\t SequenceSwitch failed");
 		return;
 	}
 
@@ -3308,6 +3320,11 @@ uint32_t ActionSequenceSystem::isSomeoneAlreadyActingSimult(objHndl objHnd)
 		}
 	}
 	return 0;
+}
+
+BOOL ActionSequenceSystem::IsObjCurrentActorRegardSimuls(objHndl objHnd)
+{
+	return addresses.IsObjCurrentActorRegardSimuls(objHnd);
 }
 
 BOOL ActionSequenceSystem::IsSimulsCompleted()

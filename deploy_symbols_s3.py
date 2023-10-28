@@ -6,10 +6,6 @@ import time
 import os
 import subprocess
 
-if "APPVEYOR_REPO_TAG" not in os.environ or os.environ["APPVEYOR_REPO_TAG"] != "true":
-    print("Not uploading symbols since build is not tagged")
-    sys.exit()
-
 symbol_filename = sys.argv[1]
 
 with open(symbol_filename, "rt") as fh:
@@ -42,6 +38,6 @@ print("Uploading symbols to ", target_path)
 with open("TemplePlus.sym.xz", "wb") as fh:
     fh.write(compressed_symbols)
 
-subprocess.run(["aws", "s3", "cp", "TemplePlus.sym.xz", "s3://templeplus-symbols/" + target_path], check=True, shell=True)
+subprocess.run(["aws", "s3", "cp", "TemplePlus.sym.xz", "s3://templeplus-symbols/" + target_path], check=True)
 
 print("Uploaded symbols to S3.")

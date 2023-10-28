@@ -1,5 +1,5 @@
 name: Sudden Still
 flags: 4325376
 prereqs: 
-description: nce per day, you can apply the effect of the Still Spell feat to any spell you cast without increasing the level of the spell or specially preparing it ahead of time. You can still use Still Spell normally if you have it.
+description: Once per day, you can apply the effect of the Still Spell feat to any spell you cast without increasing the level of the spell or specially preparing it ahead of time. You can still use Still Spell normally if you have it.
 prereq descr:  

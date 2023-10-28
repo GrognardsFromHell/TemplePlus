@@ -235,7 +235,9 @@ enum SpellSchools : uint32_t
 	School_Evocation = 5,
 	School_Illusion = 6,
 	School_Necromancy = 7,
-	School_Transmutation = 8
+	School_Transmutation = 8,
+	// Added in Temple+
+	School_Invocation = 9
 };
 
 
@@ -297,6 +299,7 @@ struct SpellEntry {
 	explicit SpellEntry(uint32_t spellEnum);
 	bool IsBaseModeTarget(UiPickerType type);
 	int SpellLevelForSpellClass(int spellClass); // returns -1 if none
+	int GetLowestSpellLevel(uint32_t spellEnumIn);  ///Gets lowest level the spell is for any class
 };
 
 struct ProjectileEntry {

@@ -101,26 +101,26 @@ namespace eastl
 		using base_type::find;
 		using base_type::lower_bound;
 		using base_type::upper_bound;
-		using base_type::mCompare;
+
+	protected:
+		using base_type::compare;
+		using base_type::get_compare;
 
 	public:
 		set(const allocator_type& allocator = EASTL_SET_DEFAULT_ALLOCATOR);
 		set(const Compare& compare, const allocator_type& allocator = EASTL_SET_DEFAULT_ALLOCATOR);
 		set(const this_type& x);
-		#if EASTL_MOVE_SEMANTICS_ENABLED
 		set(this_type&& x);
 		set(this_type&& x, const allocator_type& allocator);
-		#endif
 		set(std::initializer_list<value_type> ilist, const Compare& compare = Compare(), const allocator_type& allocator = EASTL_SET_DEFAULT_ALLOCATOR);
 
 		template <typename Iterator>
 		set(Iterator itBegin, Iterator itEnd); // allocator arg removed because VC7.1 fails on the default arg. To do: Make a second version of this function without a default arg.
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED // The (this_type&& x) ctor above has the side effect of forcing us to make operator= visible in this subclass.
-			this_type& operator=(const this_type& x) { return (this_type&)base_type::operator=(x); }
-			this_type& operator=(std::initializer_list<value_type> ilist) { return (this_type&)base_type::operator=(ilist); }
-			this_type& operator=(this_type&& x) { return (this_type&)base_type::operator=(eastl::move(x)); }
-		#endif
+		// The (this_type&& x) ctor above has the side effect of forcing us to make operator= visible in this subclass.
+		this_type& operator=(const this_type& x) { return (this_type&)base_type::operator=(x); }
+		this_type& operator=(std::initializer_list<value_type> ilist) { return (this_type&)base_type::operator=(ilist); }
+		this_type& operator=(this_type&& x) { return (this_type&)base_type::operator=(eastl::move(x)); }
 
 	public:
 		value_compare value_comp() const;
@@ -184,26 +184,26 @@ namespace eastl
 		using base_type::find;
 		using base_type::lower_bound;
 		using base_type::upper_bound;
-		using base_type::mCompare;
+
+	protected:
+		using base_type::compare;
+		using base_type::get_compare;
 
 	public:
 		multiset(const allocator_type& allocator = EASTL_MULTISET_DEFAULT_ALLOCATOR);
 		multiset(const Compare& compare, const allocator_type& allocator = EASTL_MULTISET_DEFAULT_ALLOCATOR);
 		multiset(const this_type& x);
-		#if EASTL_MOVE_SEMANTICS_ENABLED
 		multiset(this_type&& x);
 		multiset(this_type&& x, const allocator_type& allocator);
-		#endif
 		multiset(std::initializer_list<value_type> ilist, const Compare& compare = Compare(), const allocator_type& allocator = EASTL_MULTISET_DEFAULT_ALLOCATOR);
 
 		template <typename Iterator>
 		multiset(Iterator itBegin, Iterator itEnd); // allocator arg removed because VC7.1 fails on the default arg. To do: Make a second version of this function without a default arg.
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED // The (this_type&& x) ctor above has the side effect of forcing us to make operator= visible in this subclass.
-			this_type& operator=(const this_type& x) { return (this_type&)base_type::operator=(x); }
-			this_type& operator=(std::initializer_list<value_type> ilist) { return (this_type&)base_type::operator=(ilist); }
-			this_type& operator=(this_type&& x) { return (this_type&)base_type::operator=(eastl::move(x)); }
-		#endif
+		// The (this_type&& x) ctor above has the side effect of forcing us to make operator= visible in this subclass.
+		this_type& operator=(const this_type& x) { return (this_type&)base_type::operator=(x); }
+		this_type& operator=(std::initializer_list<value_type> ilist) { return (this_type&)base_type::operator=(ilist); }
+		this_type& operator=(this_type&& x) { return (this_type&)base_type::operator=(eastl::move(x)); }
 
 	public:
 		value_compare value_comp() const;
@@ -257,19 +257,17 @@ namespace eastl
 	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename Key, typename Compare, typename Allocator>
-		inline set<Key, Compare, Allocator>::set(this_type&& x)
-			: base_type(eastl::move(x))
-		{
-		}
+	template <typename Key, typename Compare, typename Allocator>
+	inline set<Key, Compare, Allocator>::set(this_type&& x)
+		: base_type(eastl::move(x))
+	{
+	}
 
-		template <typename Key, typename Compare, typename Allocator>
-		inline set<Key, Compare, Allocator>::set(this_type&& x, const allocator_type& allocator)
-			: base_type(eastl::move(x), allocator)
-		{
-		}
-	#endif
+	template <typename Key, typename Compare, typename Allocator>
+	inline set<Key, Compare, Allocator>::set(this_type&& x, const allocator_type& allocator)
+		: base_type(eastl::move(x), allocator)
+	{
+	}
 
 
 	template <typename Key, typename Compare, typename Allocator>
@@ -291,7 +289,7 @@ namespace eastl
 	inline typename set<Key, Compare, Allocator>::value_compare
 	set<Key, Compare, Allocator>::value_comp() const
 	{
-		return mCompare;
+		return get_compare();
 	}
 
 
@@ -373,7 +371,7 @@ namespace eastl
 		// result is a range of size zero or one.
 		const iterator itLower(lower_bound(k));
 
-		if((itLower == end()) || mCompare(k, *itLower)) // If at the end or if (k is < itLower)...
+		if((itLower == end()) || compare(k, *itLower)) // If at the end or if (k is < itLower)...
 			return eastl::pair<iterator, iterator>(itLower, itLower);
 
 		iterator itUpper(itLower);
@@ -389,7 +387,7 @@ namespace eastl
 		// See equal_range above for comments.
 		const const_iterator itLower(lower_bound(k));
 
-		if((itLower == end()) || mCompare(k, *itLower)) // If at the end or if (k is < itLower)...
+		if((itLower == end()) || compare(k, *itLower)) // If at the end or if (k is < itLower)...
 			return eastl::pair<const_iterator, const_iterator>(itLower, itLower);
 
 		const_iterator itUpper(itLower);
@@ -397,7 +395,36 @@ namespace eastl
 	}
 
 
+	///////////////////////////////////////////////////////////////////////
+	// erase_if 
+	//
+	// https://en.cppreference.com/w/cpp/container/set/erase_if
+	///////////////////////////////////////////////////////////////////////
+	template <class Key, class Compare, class Allocator, class Predicate>
+	typename set<Key, Compare, Allocator>::size_type erase_if(set<Key, Compare, Allocator>& c, Predicate predicate)
+	{
+		auto oldSize = c.size();
+		for (auto i = c.begin(), last = c.end(); i != last;)
+		{
+			if (predicate(*i))
+			{
+				i = c.erase(i);
+			}
+			else
+			{
+				++i;
+			}
+		}
+		return oldSize - c.size();
+	}
 
+#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+	template <class Key, class Compare, class Allocator>
+	synth_three_way_result<Key> operator<=>(const set<Key, Compare, Allocator>& a, const set<Key, Compare, Allocator>& b)
+	{
+	    return eastl::lexicographical_compare_three_way(a.begin(), a.end(), b.begin(), b.end(), synth_three_way{});
+	}
+#endif
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -425,19 +452,17 @@ namespace eastl
 	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename Key, typename Compare, typename Allocator>
-		inline multiset<Key, Compare, Allocator>::multiset(this_type&& x)
-			: base_type(eastl::move(x))
-		{
-		}
+	template <typename Key, typename Compare, typename Allocator>
+	inline multiset<Key, Compare, Allocator>::multiset(this_type&& x)
+		: base_type(eastl::move(x))
+	{
+	}
 
-		template <typename Key, typename Compare, typename Allocator>
-		inline multiset<Key, Compare, Allocator>::multiset(this_type&& x, const allocator_type& allocator)
-			: base_type(eastl::move(x), allocator)
-		{
-		}
-	#endif
+	template <typename Key, typename Compare, typename Allocator>
+	inline multiset<Key, Compare, Allocator>::multiset(this_type&& x, const allocator_type& allocator)
+		: base_type(eastl::move(x), allocator)
+	{
+	}
 
 
 	template <typename Key, typename Compare, typename Allocator>
@@ -459,7 +484,7 @@ namespace eastl
 	inline typename multiset<Key, Compare, Allocator>::value_compare
 	multiset<Key, Compare, Allocator>::value_comp() const
 	{
-		return mCompare;
+		return get_compare();
 	}
 
 
@@ -566,7 +591,7 @@ namespace eastl
 		const iterator itLower(lower_bound(k));
 		iterator       itUpper(itLower);
 
-		while((itUpper != end()) && !mCompare(k, itUpper.mpNode->mValue))
+		while((itUpper != end()) && !compare(k, itUpper.mpNode->mValue))
 			++itUpper;
 
 		return eastl::pair<iterator, iterator>(itLower, itUpper);
@@ -583,12 +608,44 @@ namespace eastl
 		const const_iterator itLower(lower_bound(k));
 		const_iterator       itUpper(itLower);
 
-		while((itUpper != end()) && !mCompare(k, *itUpper))
+		while((itUpper != end()) && !compare(k, *itUpper))
 			++itUpper;
 
 		return eastl::pair<const_iterator, const_iterator>(itLower, itUpper);
 	}
 
+
+	///////////////////////////////////////////////////////////////////////
+	// erase_if
+	//
+	// https://en.cppreference.com/w/cpp/container/multiset/erase_if
+	///////////////////////////////////////////////////////////////////////
+	template <class Key, class Compare, class Allocator, class Predicate>
+	typename multiset<Key, Compare, Allocator>::size_type erase_if(multiset<Key, Compare, Allocator>& c, Predicate predicate)
+	{
+		auto oldSize = c.size();
+		// Erases all elements that satisfy the predicate pred from the container.
+		for (auto i = c.begin(), last = c.end(); i != last;)
+		{
+			if (predicate(*i))
+			{
+				i = c.erase(i);
+			}
+			else
+			{
+				++i;
+			}
+		}
+		return oldSize - c.size();
+	}
+
+#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
+	template <class Key, class Compare, class Allocator>
+	synth_three_way_result<Key> operator<=>(const multiset<Key, Compare, Allocator>& a, const multiset<Key, Compare, Allocator>& b)
+	{
+	    return eastl::lexicographical_compare_three_way(a.begin(), a.end(), b.begin(), b.end(), synth_three_way{});
+	}
+#endif
 
 
 } // namespace eastl
