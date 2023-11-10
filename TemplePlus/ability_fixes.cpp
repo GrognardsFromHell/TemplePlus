@@ -31,6 +31,8 @@ public:
 	static int TacticalAbusePrevention(DispatcherCallbackArgs args); // Combat Expertise / Fight Defensively
 
 	static int __cdecl CombatReflexesAooReset(DispatcherCallbackArgs args);
+	static int __cdecl AOOWillTake(DispatcherCallbackArgs args);
+	static int __cdecl AOOPerformed(DispatcherCallbackArgs args);
 	
 	static int SpellFocusDcMod(DispatcherCallbackArgs args);
 
@@ -42,6 +44,8 @@ public:
 		//replaceFunction(0x100FC050, SpellFocusDcMod);
 
 		replaceFunction(0x100F8AF0, CombatReflexesAooReset);
+		replaceFunction(0x100F8A10, AOOWillTake);
+		replaceFunction(0x100F8A70, AOOPerformed);
 
 		replaceFunction(0x100F7ED0, TacticalAbusePrevention);
 		replaceFunction(0x100F7E70, CombatExpertiseAcBonus);
@@ -367,6 +371,40 @@ int __cdecl  AbilityConditionFixes::CombatReflexesAooReset(DispatcherCallbackArg
 	args.SetCondArg(0, numAoosRem);
 	args.SetCondArg(1, 0);
 	args.SetCondArg(2, 0);
+	return 0;
+}
+
+int __cdecl  AbilityConditionFixes::AOOWillTake(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
+
+	const auto numAoosRem = args.GetCondArg(0);
+	if (numAoosRem > 0) {
+		const bool allowMultipleAOOs = d20Sys.D20QueryPython(args.objHndCaller, "Allow Multiple AOOs") > 0;
+		if (!allowMultipleAOOs) {
+			if (args.GetCondArg(1) != dispIo->data1 || args.GetCondArg(2) != dispIo->data2) {
+				dispIo->return_val = 1;
+			}
+		}
+		else {
+			dispIo->return_val = 1;
+		}
+	}
+	return 0;
+}
+
+int __cdecl  AbilityConditionFixes::AOOPerformed(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType6(args.dispIO);
+	const auto numAoosRem = args.GetCondArg(0);
+	args.SetCondArg(0, numAoosRem - 1);
+
+	const bool allowMultipleAOOs = d20Sys.D20QueryPython(args.objHndCaller, "Allow Multiple AOOs") > 0;
+	if (!allowMultipleAOOs) {
+		args.SetCondArg(1, dispIo->data1);
+		args.SetCondArg(2, dispIo->data2);
+	}
+
 	return 0;
 }
 

@@ -2,6 +2,7 @@ from templeplus.pymod import PythonModifier
 from toee import *
 import tpdp
 import tpactions
+import math
 
 # Ki Blast: Player Handbook II, p. 80
 
@@ -50,8 +51,6 @@ def actionPerform(attachee, args, evt_obj):
     evt_obj.d20a.spell_id = newSpellId
     currentSequence.spell_action.spell_id = newSpellId
 
-    #attachee.attack(target)
-
     if attachee.anim_goal_push_attack(target, game.random_range(0,2), 0 ,0):
         new_anim_id = attachee.anim_goal_get_new_id()
         evt_obj.d20a.flags |= D20CAF_NEED_ANIM_COMPLETED
@@ -71,12 +70,24 @@ def actionFrame(attachee, args, evt_obj):
         projectileHandle = evt_obj.d20a.create_projectile_and_throw(projectileProto, target)
         projectileHandle.obj_set_float(obj_f_offset_z, 60.0)
         projectileHandle.obj_set_int(obj_f_projectile_part_sys_id, game.particles('ft-Ki Blast-proj', projectileHandle))
+        game.sound(6900, 1) #Burning hands begin sound
         currentSequence.spell_packet.spell_id = evt_obj.d20a.spell_id
         currentSequence.spell_packet.set_projectile(0, projectileHandle)
         ammoItem = OBJ_HANDLE_NULL
         if evt_obj.d20a.projectile_append(projectileHandle, ammoItem):
             attachee.apply_projectile_particles(projectileHandle, evt_obj.d20a.flags)
             evt_obj.d20a.flags |= D20CAF_NEED_PROJECTILE_HIT
+
+    # Perform attack and damage now
+    return_val = attachee.perform_touch_attack( target )
+    if return_val & D20CAF_HIT:
+        game.particles( "ft-Ki Blast-Hit", target )
+    damage_dice = dice_new("1d6")
+    damage_dice.number = 3
+    wisScore = attachee.stat_level_get(stat_wisdom)
+    damage_dice.bonus = math.floor((wisScore - 10)/2)
+    target.spell_damage_weaponlike( attachee, D20DT_FORCE, damage_dice, D20DAP_UNSPECIFIED, 100, D20A_CAST_SPELL, currentSequence.spell_packet.spell_id , return_val, 0) #index of target??
+        
     return 0
 
 kiBlastFeat = PythonModifier("{} Feat".format(getFeatName()), 2) #featEnum, empty
