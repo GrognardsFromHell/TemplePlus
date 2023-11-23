@@ -3221,6 +3221,7 @@ spell_touch_of_fatigue = 1001
 spell_ray_of_exhaustion = 1002
 spell_waves_of_fatigue = 1003
 spell_waves_of_exhaustion = 1004
+spell_fire_shield_mass = 1005
 # Reserved for Sagenlicht 1050-1199
 spell_sound_lance = 1050
 spell_critical_strike = 1051
