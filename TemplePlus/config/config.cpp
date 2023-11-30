@@ -201,7 +201,8 @@ static ConfigSetting configSettings[] = {
 	CONF_BOOL(upscaleLinearFiltering),
 	CONF_BOOL(disableChooseRandomSpell_RegardInvulnerableStatus),
 	CONF_BOOL(wildShapeUsableItems),
-	CONF_INT(npcStatBoost)
+	CONF_INT(npcStatBoost),
+	CONF_BOOL(disableReachWeaponDonut)
 };
 
 void TemplePlusConfig::Load() {
