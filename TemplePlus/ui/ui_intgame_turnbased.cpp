@@ -33,6 +33,7 @@
 #include "gamesystems/objects/objsystem.h"
 #include "raycast.h"
 #include "hotkeys.h"
+#include "config/config.h"
 
 UiIntgameTurnbased uiIntgameTb;
 
@@ -931,7 +932,7 @@ void UiIntegameTurnbasedRepl::UiDrawAoOThreatRanges()
 
 		auto circleLoc = objects.GetLocationFull(combatant);
 		auto &renderer = tig->GetShapeRenderer3d();
-		if (minReachFt > 0.0f) {
+		if (minReachFt > 0.0f && !config.disableReachWeaponDonut) {
 			auto radiusInner = minReachFt* INCH_PER_FEET + radiusInch;
 			RenderHooks::DrawDonut3d(circleLoc, 1.0, 0x40808000, 0xFF808000, circleRadius, radiusInner);
 		}
