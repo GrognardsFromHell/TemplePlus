@@ -1,4 +1,4 @@
-School: Evocation
+School: Necromancy
 Descriptor: 
 Level: Sor 7
 Level: Wiz 7
