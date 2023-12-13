@@ -109,9 +109,13 @@ def HasArmoredArcaneCasterFeature():
 def HasAdvancedLearning():
 	return 1
 	
-def GetAdvancedLearningClass():
-	return stat_level_wizard
-	
+def GetAdvancedLearningSpellLevel(spellEnum):
+	spEntry = tpdp.SpellEntry(spellEnum)
+	spellLevel = spEntry.level_for_spell_class(tpdp.class_enum_to_casting_class(stat_level_wizard))
+	if spEntry.spell_school_enum != Evocation:
+		spellLevel = spellLevel + 1
+	return spellLevel
+		
 def GetSpellList():
 	return spell_list
 
@@ -148,8 +152,9 @@ def ObjMeetsPrereqs( obj ):
 
 def GetDeityClass():
 	return stat_level_sorcerer
-	
-def IsAdvancedLearningSpell(obj, spell):
+
+#Now also supports electic learning from the players handbook 2 p. 67 
+def IsAdvancedLearningSpell(obj, max_level, spell):
 	spEntry = tpdp.SpellEntry(spell.spell_enum)
 	
 	#Don't add spells that are already known to the list
@@ -161,20 +166,24 @@ def IsAdvancedLearningSpell(obj, spell):
 		if spell.spell_enum in spell_list_level:
 			return False
 		
-	#Next, get rid of everything that is not evocation
-	if spEntry.spell_school_enum == Evocation:
-		return True
+	#For the max level, it must be evocation, all spells lower then that are electic learning spells
+	if (spell.spell_level > max_level) or (spell.spell_level == max_level and spEntry.spell_school_enum != Evocation):
+		return False
 	
-	return False
+	return True
 
 def GetAdvancedLearningList(obj, maxSpellLevel):
 	#Add wizard spells and remove all that are not evocation
 	
 	spAdvancedLearningList = char_editor.get_learnable_spells(obj, stat_level_wizard, maxSpellLevel)
-	spAdvancedLearningList = filter(functools.partial(IsAdvancedLearningSpell, obj), spAdvancedLearningList)
-		
+	spAdvancedLearningList = filter(functools.partial(IsAdvancedLearningSpell, obj, maxSpellLevel), spAdvancedLearningList)
+	
+	#Fix the class enum and the level for non evocation spells
 	for idx in range(0, len(spAdvancedLearningList)):
 		spAdvancedLearningList[idx].set_casting_class(classEnum)
+		spEntry = tpdp.SpellEntry(spAdvancedLearningList[idx].spell_enum)
+		if spEntry.spell_school_enum != Evocation:
+			spAdvancedLearningList[idx].spell_level = spAdvancedLearningList[idx].spell_level + 1
 	
 	return spAdvancedLearningList
 	
@@ -205,7 +214,7 @@ def InitSpellSelection(obj, classLvlNew = -1, classLvlIncrement = 1):
 	spAvail = GetAdvancedLearningList(obj, maxSpellLvl)
 	
 	# Add the spell level labels
-	for p in range(1,maxSpellLvl+1):
+	for p in range(0,maxSpellLvl+1):
 		spAvail.append(char_editor.KnownSpellInfo(spell_label_level_0 + p, 0, classEnum))
 	spAvail.sort()
 
@@ -235,7 +244,7 @@ def LevelupSpellsFinalize( obj, classLvlNew = -1 ):
 	char_editor.spell_known_add(class_spells) # internally takes care of duplicates and the labels/vacant slots	
 	
 	#Add Anything from advanced learning
-	spEnums = char_editor.get_spell_enums()
+	spEnums = char_editor.get_spell_enums() #The correct level is lost here...
 	char_editor.spell_known_add(spEnums) # internally takes care of duplicates and the labels/vacant slots	
 	return 0
 	
