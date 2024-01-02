@@ -1,0 +1,7 @@
+name: Zen Archery
+flags: 4194304
+prereqs: 4 13 266 1
+description: Your intuition guides your hand when you use a ranged weapon.
+
+You can use your Wisdom modifier instead of your Dexterity modifier when making a ranged attack roll.
+prereq descr: WIS 13, base attack bonus +1

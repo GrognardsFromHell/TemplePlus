@@ -1,0 +1,5 @@
+name: Extra Edge
+flags: 12713984
+prereqs: 
+description: You gain a +1 bonus on your warmage edge, plus an additional +1 bonus per four warmage levels.
+prereq descr: Warmage level 4 or greater.

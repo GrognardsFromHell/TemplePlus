@@ -61,7 +61,7 @@ int GoalAttackEndTurnIfUnreachable(AnimSlot& slot)
 	{
 		if (combatSys.isCombatActive())
 		{
-			logger->debug("Anim sys for {} ending turn...", description.getDisplayName(slot.param1.obj));
+			logger->debug("Anim sys for {} ending turn...", slot.param1.obj);
 			combatSys.CombatAdvanceTurn(slot.param1.obj);
 		}
 	}
@@ -150,7 +150,7 @@ int GoalIsRotatedTowardNextPathNode(AnimSlot & slot) {
 int GoalIsSlotFlag10NotSet(AnimSlot& slot)
 { //10012C70
   /*if (slot.pCurrentGoal && slot.pCurrentGoal->goalType != ag_anim_idle) {
-  logger->debug("GSF82 for {}, current goal {} ({}). Flags: {:x}, currentState: {:x}", description.getDisplayName(slot.animObj), animGoalTypeNames[slot.pCurrentGoal->goalType], slot.currentGoal, slot.flags, slot.currentState);
+  logger->debug("GSF82 for {}, current goal {} ({}). Flags: {:x}, currentState: {:x}", slot.animObj, animGoalTypeNames[slot.pCurrentGoal->goalType], slot.currentGoal, slot.flags, slot.currentState);
   if(slot.pCurrentGoal->goalType == ag_hit_by_weapon)
   {
   int u = 1;
@@ -213,7 +213,7 @@ int GoalIsCurrentPathValid(AnimSlot & slot)
 
 // Originally @ 0x100185e0
 int GoalUnconcealAnimate(AnimSlot &slot) {
-	//logger->debug("GSF 106 for {}, goal {}, flags {:x}, currentState {:x}", description.getDisplayName(slot.animObj), animGoalTypeNames[slot.pCurrentGoal->goalType], (uint32_t)slot.flags, (uint32_t)slot.currentState);
+	//logger->debug("GSF 106 for {}, goal {}, flags {:x}, currentState {:x}", slot.animObj, animGoalTypeNames[slot.pCurrentGoal->goalType], (uint32_t)slot.flags, (uint32_t)slot.currentState);
 	auto obj = slot.param1.obj;
 	assert(slot.param1.obj);
 
@@ -350,7 +350,7 @@ int GoalPickpocketPerform(AnimSlot & slot)
 
 // Originally @ 0x10012c80
 int GoalSlotFlagSet8If4AndNotSetYet(AnimSlot &slot) {
-	//logger->debug("GSF83 for {}, current goal {} ({})", description.getDisplayName(slot.animObj), animGoalTypeNames[slot.pCurrentGoal->goalType], slot.currentGoal);
+	//logger->debug("GSF83 for {}, current goal {} ({})", slot.animObj, animGoalTypeNames[slot.pCurrentGoal->goalType], slot.currentGoal);
 	auto flags = slot.flags;
 	if (flags & AnimSlotFlag::ASF_UNK3 && !(flags & AnimSlotFlag::ASF_UNK4)) {
 		slot.flags = flags | AnimSlotFlag::ASF_UNK4;

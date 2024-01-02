@@ -1,0 +1,5 @@
+name: Unseen Seer Damage Bonus
+flags: 8
+prereqs:
+description: The damage dealt by an unseen seer's sneak attack or skirmish (sneak attack only if the character has both) increases by +1d6 at 1st level, 4th level, 7th level, and 10th level.
+prereq descr: Unseen Seer 1.

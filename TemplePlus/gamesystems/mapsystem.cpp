@@ -1564,7 +1564,7 @@ void MapSystem::MapLoadPostprocess()
 			TimeEvent e;
 			e.system = TimeEventType::Teleported;
 			e.params[0].handle = handle;
-			gameSystems->GetTimeEvent().ScheduleNow(e);
+			gameSystems->GetTimeEvent().ScheduleNow(e); // calls 0x10025050 which does some sector light updates mainly
 			obj.SetFlag(OF_TELEPORTED, false);
 			return;
 		}
@@ -1617,7 +1617,7 @@ void MapSystem::SaveMapMobiles() {
 			// If a dynamic object has been destroyed, it wont be recreated on mapload
 			// anyway (since there is no mob file for it)
 			if (obj.HasFlag(OF_DESTROYED) || obj.HasFlag(OF_EXTINCT)) {
-				//logger->debug("Skipping dynamic object {} for writing destroyed objs ({})", description.getDisplayName(handle),		objSystem->GetObject(handle)->id.ToString());
+				//logger->debug("Skipping dynamic object {} for writing destroyed objs ({})", handle, objSystem->GetObject(handle)->id.ToString());
 				return;
 			}
 			// TODO: Replace with proper VFS usage
@@ -1627,7 +1627,7 @@ void MapSystem::SaveMapMobiles() {
 		}
 
 		if (!obj.hasDifs) {
-			//logger->debug("Skipping object with diffs {} for writing destroyed objs ({})", description.getDisplayName(handle),	objSystem->GetObject(handle)->id.ToString());
+			//logger->debug("Skipping object with diffs {} for writing destroyed objs ({})", handle, objSystem->GetObject(handle)->id.ToString());
 			return; // Object is unchanged
 		}
 

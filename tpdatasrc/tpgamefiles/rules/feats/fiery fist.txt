@@ -1,0 +1,10 @@
+name: Fiery Fist
+flags: 12582992
+prereqs: 1 13 4 13 266 8
+description: By channeling your Ki energy, you sheathe your limbs in magical fire. Your unarmed strikes deal extra fire damage.
+
+As a swift action, you can expend one of your uses of the Stunning Fist feat to surround your fists and feet in flame. For the rest of your turn, you gain an extra 1d6 points of firedamage on your unarmed strikes. When you select this feat, you gain an additional daily use of Stunning Fist.
+prereq descr: Improved Unarmed Strike, Stunning Fist, DEX 13, WIS 13, base attack bonus +8
+
+Special
+A fighter can select Fiery Fist as one of his fighter bonus feats. A monk with the Stunning Fist feat can select Fiery Fist as her bonus feat at 2nd level, even if she does not meet the other prerequisites.

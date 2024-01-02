@@ -123,12 +123,14 @@ def WarmageEdgeOnSpellDamage(attachee, args, evt_obj):
 	int = attachee.stat_level_get(stat_intelligence)
 	intMod = (int - 10)/2
 	
+	edgeBonus = intMod + attachee.d20_query("Warmage Edge Bonus")
+	
 	#Increase warmage edge damage on a critical hit
 	if evt_obj.damage_packet.critical_multiplier > 1:
-		intMod = intMod * 2
+		edgeBonus = edgeBonus * 2
 	
-	if intMod > 0:
-		evt_obj.damage_packet.bonus_list.add_from_feat(intMod, 0, 137, "Warmage Edge")
+	if edgeBonus > 0:
+		evt_obj.damage_packet.bonus_list.add_from_feat(edgeBonus, 0, 137, "Warmage Edge")
 		
 	args.set_arg(0, spellID)
 	target.condition_add_with_args("Warmage Edge Damage", spellID)

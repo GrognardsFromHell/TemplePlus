@@ -66,8 +66,6 @@ static struct CritterAddresses : temple::AddressTable {
 	void(__cdecl *TakeMoney)(objHndl critter, int platinum, int gold, int silver, int copper);
 	void(__cdecl *GiveMoney)(objHndl critter, int platinum, int gold, int silver, int copper);
 
-	int (*GetWeaponAnim)(objHndl critter, objHndl primaryWeapon, objHndl secondary, gfx::WeaponAnim animId);
-
 	void(__cdecl*GetCritterVoiceLine)(objHndl obj, objHndl fellow, char* str, int* soundId);
 	int (__cdecl*PlayCritterVoiceLine)(objHndl obj, objHndl fellow, char* str, int soundId);
 
@@ -97,7 +95,6 @@ static struct CritterAddresses : temple::AddressTable {
 
 		rebase(GiveMoney, 0x1007F960);
 		rebase(TakeMoney, 0x1007FA40);
-		rebase(GetWeaponAnim, 0x10020B60);
 		rebase(CritterHpChanged, 0x100B8AA0);
 		rebase(GetCritterMap, 0x10080790);
 	}
@@ -178,6 +175,9 @@ private:
 			return critterSys.GetSize(handle);
 			});
 
+		replaceFunction<int(__cdecl)(objHndl,objHndl,objHndl,int)>(0x10020B60, [](objHndl wielder, objHndl prim, objHndl scnd, int animId) {
+			return (int)critterSys.GetWeaponAnim(wielder, prim, scnd, (gfx::WeaponAnim)animId);
+			});
 	}
 
 private:
@@ -1046,6 +1046,43 @@ std::string LegacyCritterSystem::GetHairStyleModel(HairStyle style)
 	return GetHairStyleFile(style, "skm");
 }
 
+gfx::EncodedAnimId LegacyCritterSystem::GetWeaponAnim(objHndl wielder, objHndl wpn, objHndl scnd, gfx::WeaponAnim animId)
+{
+	gfx::WeaponAnimType pAnimId = gfx::WeaponAnimType::Unarmed;
+	gfx::WeaponAnimType sAnimId = gfx::WeaponAnimType::Unarmed;
+
+	if (wpn) {
+		auto primaryType = objects.GetType(wpn);
+		if (ObjectType::obj_t_weapon == primaryType) {
+			pAnimId = (gfx::WeaponAnimType)inventory.GetWeaponAnimId(wpn, wielder);
+		} else if (ObjectType::obj_t_armor == primaryType) {
+			pAnimId = gfx::WeaponAnimType::Shield;
+		}
+		if (inventory.IsWieldedTwoHanded(wpn, wielder)) {
+			sAnimId = pAnimId;
+		}
+	}
+
+	if (scnd) {
+		auto secondaryType = objects.GetType(scnd);
+		if (ObjectType::obj_t_weapon == secondaryType) {
+			sAnimId = (gfx::WeaponAnimType)inventory.GetWeaponAnimId(scnd, wielder);
+		} else if (ObjectType::obj_t_armor == secondaryType) {
+			sAnimId = gfx::WeaponAnimType::Shield;
+		}
+	}
+
+	auto isMonk = feats.HasFeatCountByClass(wielder, FEAT_IMPROVED_UNARMED_STRIKE);
+	if (gfx::WeaponAnimType::Unarmed == pAnimId && isMonk) {
+		pAnimId = gfx::WeaponAnimType::Monk;
+	}
+	if (gfx::WeaponAnimType::Unarmed == sAnimId && isMonk) {
+		sAnimId = gfx::WeaponAnimType::Monk;
+	}
+
+	return gfx::EncodedAnimId(animId, pAnimId, sAnimId);
+}
+
 gfx::EncodedAnimId LegacyCritterSystem::GetAnimId(objHndl critter, gfx::WeaponAnim anim)
 {
 	auto weaponPrim = GetWornItem(critter, EquipSlot::WeaponPrimary);
@@ -1054,8 +1091,7 @@ gfx::EncodedAnimId LegacyCritterSystem::GetAnimId(objHndl critter, gfx::WeaponAn
 		weaponSec = GetWornItem(critter, EquipSlot::Shield);
 	}
 
-	int rawAnimId = addresses.GetWeaponAnim(critter, weaponPrim, weaponSec, anim);
-	return gfx::EncodedAnimId(rawAnimId);
+	return GetWeaponAnim(critter, weaponPrim, weaponSec, anim);
 }
 
 int LegacyCritterSystem::GetModelRaceOffset(objHndl obj, bool useBaseRace)

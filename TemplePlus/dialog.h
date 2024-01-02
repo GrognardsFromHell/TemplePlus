@@ -3,6 +3,7 @@
 #include "obj.h"
 #include "gametime.h"
 
+#define DIALOG_REPLIES_MAX (5)
 struct DialogLineNew;
 
 struct DialogMini
