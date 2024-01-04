@@ -338,6 +338,9 @@ public:
 	void apply() override {
 		logger->info("Replacing Condition-related Functions");
 
+		replaceFunction<void()>(0x100E19A0, []() {
+			conds.hashmethods.ConditionHashtableInit(conds.mCondStructHashtable);
+			});
 		//dispTypeConditionAddPre
 		static int(__cdecl* orgTempAbilityLoss)(DispatcherCallbackArgs) = replaceFunction<int(__cdecl)(DispatcherCallbackArgs)>(0x100EA1F0, [](DispatcherCallbackArgs args) {
 			Stat statDamaged = (Stat)args.GetCondArg(0);
@@ -7410,3 +7413,24 @@ void CondStructNew::AddAoESpellRemover() {
 	AddHook(dispTypeD20Signal, DK_SIG_Spell_End, spCallbacks.AoeSpellRemove);
 }
 
+uint32_t CondHashSystem::ConditionHashtableInit(ToEEHashtable<CondStruct>* hashtable)
+{
+	const int INCREASED_COND_CAP = 2047;  //Was 1000 in the original game
+	return HashtableInit(hashtable, INCREASED_COND_CAP);
+}
+
+uint32_t CondHashSystem::CondStructAddToHashtable(CondStruct* condStruct, bool overriding)
+{
+	uint32_t key = StringHash(condStruct->condName);
+	CondStruct* condFound;
+	uint32_t result = HashtableSearch(condHashTable, key, &condFound);
+	if (result || overriding)
+	{
+		result = HashtableOverwriteItem(condHashTable, key, condStruct);
+	}
+	if (result == 3) { // over capacity
+		logger->error("Condition hashtable over capacity ({})! Trying to add {}", condHashTable->capacity, condStruct->condName);
+	}
+	return result;
+	
+}

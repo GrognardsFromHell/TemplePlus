@@ -8,11 +8,13 @@ struct ToEEHashtable : temple::TempleAlloc
 {
 	uint32_t numItems;
 	uint32_t capacity;
-	uint32_t powerOfTwo;
-	uint32_t * keyArray;
+	uint32_t powerOfTwo; // 2*capacity, rounded up to power of 2
+	uint32_t * keyArray; // capacity: powerOfTwo
 	T** dataArray;
-	uint32_t * idxArray;
+	uint32_t * idxArray; // capacity: capacity
 	uint32_t pad;
+
+	uint32_t Init(uint32_t capacity);
 };
 
 template <typename T>
@@ -22,7 +24,8 @@ struct ToEEHashtableSystem : temple::AddressTable
 	{
 		hashtableOut->capacity = capacity;
 		uint32_t powerOfTwo = 1;
-		for (hashtableOut->numItems = 0; powerOfTwo < 2 * capacity; powerOfTwo *= 2);
+		hashtableOut->numItems = 0;
+		for (; powerOfTwo < 2 * capacity; powerOfTwo *= 2);
 
 		hashtableOut->powerOfTwo = powerOfTwo;
 		hashtableOut->dataArray = _dataArrayNew(powerOfTwo);
@@ -152,3 +155,9 @@ private:
 
 	uint32_t(__cdecl* ELFhash)(char * stringIn);
 };
+
+template<typename T>
+inline uint32_t ToEEHashtable<T>::Init(uint32_t capacity)
+{
+	return uint32_t();
+}
