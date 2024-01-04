@@ -918,3 +918,9 @@ Casting:         1 action [V,S]
 Range:               20 ft.
 Target:             One living creature/2 two levels
 Duration:      10 + 1 round/level(max 40),  Save: None,  SR: No}
+
+{6005} Fire Shield, Mass {Creatures striking you take your choice of fire or cold damage equal  to 1d6 +1  per level,  max +15.  You gain protection against the opposite type.
+Casting:         1  std action   [Evocation, V,S,M/DF]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:            allied creatures,  no more than 30' apart
+Duration:      1  round/level (D)}

@@ -1439,3 +1439,14 @@
 {29566}{} // spell projectile in-flight
 {29567}{} // spell hit
 {29568}{} // spell struck
+
+// [1005] *[Fire Shield, Mass]
+{26100}{} // spell begin
+{26101}{spells\sp_fire_shield_end.WAV} // spell end
+{26102}{spells\sp_fire_shield_warm.wav} // spell effect
+{26103}{} // spell new round
+{26104}{} // spell projectile begin
+{26105}{} // spell projectile end
+{26106}{} // spell projectile in-flight
+{26107}{} // spell hit
+{26108}{} // spell struck
