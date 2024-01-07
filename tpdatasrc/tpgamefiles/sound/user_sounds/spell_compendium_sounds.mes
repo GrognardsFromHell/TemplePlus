@@ -1454,7 +1454,7 @@
 // [1182] *[Accuracy]
 {29640}{} // spell begin
 {29641}{} // spell end
-{29642}{} // spell effect
+{29642}{spells\sp_true_strike.wav} // spell effect
 {29643}{} // spell new round
 {29644}{} // spell projectile begin
 {29645}{} // spell projectile end
@@ -1465,7 +1465,7 @@
 // [1183] *[Hail of Stone]
 {29660}{} // spell begin
 {29661}{} // spell end
-{29662}{} // spell effect
+{29662}{spells\sp_quench.wav} // spell effect
 {29663}{} // spell new round
 {29664}{} // spell projectile begin
 {29665}{} // spell projectile end
@@ -1476,7 +1476,7 @@
 // [1184] *[Lesser Orb of Acid]
 {29680}{} // spell begin
 {29681}{} // spell end
-{29682}{} // spell effect
+{29682}{spells\sp_acid_splash.WAV} // spell effect
 {29683}{} // spell new round
 {29684}{} // spell projectile begin
 {29685}{} // spell projectile end
@@ -1487,7 +1487,7 @@
 // [1185] *[Lesser Orb of Cold]
 {29700}{} // spell begin
 {29701}{} // spell end
-{29702}{} // spell effect
+{29702}{spells\sp_ray_of_frost.wav} // spell effect
 {29703}{} // spell new round
 {29704}{} // spell projectile begin
 {29705}{} // spell projectile end
@@ -1498,7 +1498,7 @@
 // [1186] *[Lesser Orb of Electricity]
 {29720}{} // spell begin
 {29721}{} // spell end
-{29722}{} // spell effect
+{29722}{spells\sp_shocking_grasp.wav} // spell effect
 {29723}{} // spell new round
 {29724}{} // spell projectile begin
 {29725}{} // spell projectile end
@@ -1509,7 +1509,7 @@
 // [1187] *[Lesser Orb of Fire]
 {29740}{} // spell begin
 {29741}{} // spell end
-{29742}{} // spell effect
+{29742}{spells\sp_Produce_flame.wav} // spell effect
 {29743}{} // spell new round
 {29744}{} // spell projectile begin
 {29745}{} // spell projectile end
@@ -1520,7 +1520,7 @@
 // [1188] *[Lesser Orb of Sound]
 {29760}{} // spell begin
 {29761}{} // spell end
-{29762}{} // spell effect
+{29762}{spells\sp_shout.wav} // spell effect
 {29763}{} // spell new round
 {29764}{} // spell projectile begin
 {29765}{} // spell projectile end
@@ -1530,8 +1530,8 @@
 
 // [1189] *[Blades of Fire]
 {29780}{} // spell begin
-{29781}{} // spell end
-{29782}{} // spell effect
+{29781}{spells\sp_flame_blade_end.WAV} // spell end
+{29782}{spells\sp_flame_blade.wav} // spell effect
 {29783}{} // spell new round
 {29784}{} // spell projectile begin
 {29785}{} // spell projectile end
@@ -1542,7 +1542,7 @@
 // [1190] *[Fireburst]
 {29800}{} // spell begin
 {29801}{} // spell end
-{29802}{} // spell effect
+{29802}{spells\sp_burningHands.wav} // spell effect
 {29803}{} // spell new round
 {29804}{} // spell projectile begin
 {29805}{} // spell projectile end
