@@ -47,7 +47,7 @@
 {1086}{Fire Shuriken}
 {1087}{Phantom Foe}
 {1088}{Veil of Shadow}
-{1089}{Curse of Imp. Blades Mass}
+{1089}{Curse of Imp. Blades, Mass}
 {1090}{Dissonant Chord}
 {1091}{Haunting Tune}
 {1092}{Love's Lament}
@@ -134,6 +134,22 @@
 {1176}{Draconic Might}
 {1177}{Vigor, Mass Lesser}
 {1178}{Vigor, Mass Improved}
+{1182}{Accuracy}
+{1183}{Hail of Stone}
+{1184}{Lesser Orb of Acid}
+{1185}{Lesser Orb of Cold}
+{1186}{Lesser Orb of Electricity}
+{1187}{Lesser Orb of Fire}
+{1188}{Lesser Orb of Sound}
+{1189}{Blades of Fire}
+{1190}{Fireburst}
+{1191}{Greater Fireburst}
+{1195}{Blast of Flame}
+{1196}{Orb of Acid}
+{1197}{Orb of Cold}
+{1198}{Orb of Electricity}
+{1199}{Orb of Fire}
+{1200}{Orb of Sound}
 
 // Spell Descriptions
 {5794}Vigor, Lesser {[Conjuration] Fast Healing 1 for 10 +1/level rounds, max 15.}
@@ -266,3 +282,20 @@
 {6176} Draconic Might {TBD}
 {6177} Vigor, Mass Lesser {Targets get Fast Healing 1 for 10 +1/level rounds, max 25.}
 {6178} Vigor, Mass Improved {Targets get Fast Healing 3 for 10 +1/level rounds, max 40.}
+{6182} Accuracy {The range increment for the affected weapon or weapons is doubled.}
+{6183} Hail of Stone {You create a rain of stones that deals 1d4 points of damage per caster level (maximum 5d4) to creatures and objects within the area.}
+{6184} Lesser Orb of Acid {Ranged Touch Attack that deals 1d8/two levels (max 5d8) acid damage.}
+{6185} Lesser Orb of Cold {Ranged Touch Attack that deals 1d8/two levels (max 5d8) cold damage.}
+{6186} Lesser Orb of Electricity {Ranged Touch Attack that deals 1d8/two levels (max 5d8) electricity damage.}
+{6187} Lesser Orb of Fire {Ranged Touch Attack that deals 1d8/two levels (max 5d8) fire damage.}
+{6188} Lesser Orb of Sound {Ranged Touch Attack that deals 1d8/two levels (max 5d8) sonic damage.}
+{6189} Blades of Fire {Your melee weapons each deal an extra 1d8 points of fire damage.}
+{6190} Fireburst {Fire deals 1d8 points of fire damage per caster level (maximum 5d8) to anyone within 5 feet of you.}
+{6191} Greater Fireburst {Fire deals 1d8 points of fire damage per caster level (maximum 15d8) to anyone within 10 feet of you.}
+{6195} Blast of Flame {A 60 foot cone shaped burst deals 1d6 points of fire damage per caster level (maximum 10d6).}
+{6196} Orb of Acid {Ranged Touch Attack that deals 1d6/level (max 15d6) acid damage and in addition sickens for 1 round on a failed fortitude save.}
+{6197} Orb of Cold {Ranged Touch Attack that deals 1d6/level (max 15d6) cold damage and in addition blinds for 1 round on a failed fortitude save.}
+{6198} Orb of Electricity {Ranged Touch Attack that deals 1d6/level (max 15d6) electricity damage and in addition may entangle for 1 round on a failed fortitude save.}
+{6199} Orb of Fire {Ranged Touch Attack that deals 1d6/level (max 15d6) fire damage and in addition dazes for 1 round on a failed fortitude save.}
+{6200} Orb of Sound {Ranged Touch Attack that deals 1d6/level (max 15d6) sonic damage and in addition deafens for 1 round on a failed fortitude save.}
+

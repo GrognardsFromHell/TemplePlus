@@ -1,0 +1,17 @@
+School: Conjuration
+Subschool: Creation
+Descriptor: Earth
+Casting Time: 1 action
+Range: Medium
+Saving Throw: None
+Spell Resistance: No
+Projectile: No
+flags_Target: Range
+flags_Target: Radius
+inc_flags_Target: Other
+inc_flags_Target: Non-critter
+exc_flags_Target: Self
+exc_flags_Target: Dead
+mode_Target: Area
+radius_Target: 5
+ai_type: ai_action_defensive
