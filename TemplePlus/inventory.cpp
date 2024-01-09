@@ -1683,7 +1683,8 @@ gfx::WeaponAnimType InventorySystem::GetWeaponAnimId(objHndl item, objHndl wield
 	auto wieldType = GetWieldType(wielder, item, false);
 	WeaponTypes wtype = (WeaponTypes)objects.getInt32(item, obj_f_weapon_type);
 
-	if (wieldType > 2) return gfx::WeaponAnimType::Unarmed;
+	if (wieldType == 4) return gfx::WeaponAnimType::Unarmed;
+	// if (wieldType > 2) return gfx::WeaponAnimType::Unarmed;
 	if (IsWieldedTwoHanded(item, wielder)) {
 		switch (wtype)
 		{
