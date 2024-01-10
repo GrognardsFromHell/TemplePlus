@@ -1058,7 +1058,7 @@ gfx::EncodedAnimId LegacyCritterSystem::GetWeaponAnim(objHndl wielder, objHndl w
 		auto primaryType = objects.GetType(wpn);
 		mainTwoHand = inventory.IsWieldedTwoHanded(wpn, wielder, special);
 		if (ObjectType::obj_t_weapon == primaryType) {
-			pAnimId = (gfx::WeaponAnimType)inventory.GetWeaponAnimId(wpn, wielder);
+			pAnimId = (gfx::WeaponAnimType)inventory.GetWeaponAnimId(wpn, wielder, special);
 		} else if (ObjectType::obj_t_armor == primaryType) {
 			pAnimId = gfx::WeaponAnimType::Shield;
 		}
@@ -1070,7 +1070,7 @@ gfx::EncodedAnimId LegacyCritterSystem::GetWeaponAnim(objHndl wielder, objHndl w
 	if (scnd && !mainTwoHand) {
 		auto secondaryType = objects.GetType(scnd);
 		if (ObjectType::obj_t_weapon == secondaryType) {
-			sAnimId = (gfx::WeaponAnimType)inventory.GetWeaponAnimId(scnd, wielder);
+			sAnimId = (gfx::WeaponAnimType)inventory.GetWeaponAnimId(scnd, wielder, special);
 		} else if (ObjectType::obj_t_armor == secondaryType) {
 			sAnimId = gfx::WeaponAnimType::Shield;
 		}
