@@ -1518,6 +1518,11 @@ int32_t InventorySystem::GetCoinWorth(int32_t coinType){
 	return 0u;
 }
 
+// 0: light weapon
+// 1: 1-handed weapon
+// 2: 2-handed weapon
+// 3: bastard/dwarf waraxe 2-handed
+// 4: null weapon
 int InventorySystem::GetWieldType(objHndl wielder, objHndl item, bool regardEnlargement) const
 {
 	if (!regardEnlargement)
