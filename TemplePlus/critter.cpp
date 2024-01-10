@@ -1052,10 +1052,11 @@ gfx::EncodedAnimId LegacyCritterSystem::GetWeaponAnim(objHndl wielder, objHndl w
 	gfx::WeaponAnimType sAnimId = gfx::WeaponAnimType::Unarmed;
 
 	bool mainTwoHand = false;
+	bool special = WeaponAnim::Special1 <= animId && animId <= WeaponAnim::Special3;
 
 	if (wpn) {
 		auto primaryType = objects.GetType(wpn);
-		mainTwoHand = inventory.IsWieldedTwoHanded(wpn, wielder);
+		mainTwoHand = inventory.IsWieldedTwoHanded(wpn, wielder, special);
 		if (ObjectType::obj_t_weapon == primaryType) {
 			pAnimId = (gfx::WeaponAnimType)inventory.GetWeaponAnimId(wpn, wielder);
 		} else if (ObjectType::obj_t_armor == primaryType) {

@@ -1604,7 +1604,7 @@ int InventorySystem::GetWieldType(objHndl wielder, objHndl item, bool regardEnla
 	return 2 * (wielderSize <= 5) + 1;	
 }
 
-bool InventorySystem::IsWieldedTwoHanded(objHndl weapon, objHndl wielder){
+bool InventorySystem::IsWieldedTwoHanded(objHndl weapon, objHndl wielder, bool special){
 	if (!weapon) return false;
 
 	auto weapObj = gameSystems->GetObj().GetObject(weapon);
@@ -1634,7 +1634,7 @@ bool InventorySystem::IsWieldedTwoHanded(objHndl weapon, objHndl wielder){
 	// the wield type if the weapon is not enlarged along with the critter
 	auto wieldTypeMod = GetWieldType(wielder, weapon, false);
 
-	bool isTwohandedWieldable = !hasInterferingOffhand;
+	bool isTwohandedWieldable = !hasInterferingOffhand && !special;
 
 	switch (wieldType)
 	{
@@ -1684,13 +1684,12 @@ bool InventorySystem::IsWieldedTwoHanded(objHndl weapon, objHndl wielder){
 
 
 
-gfx::WeaponAnimType InventorySystem::GetWeaponAnimId(objHndl item, objHndl wielder){
+gfx::WeaponAnimType InventorySystem::GetWeaponAnimId(objHndl item, objHndl wielder, bool special){
 	auto wieldType = GetWieldType(wielder, item, false);
 	WeaponTypes wtype = (WeaponTypes)objects.getInt32(item, obj_f_weapon_type);
 
 	if (wieldType == 4) return gfx::WeaponAnimType::Unarmed;
-	// if (wieldType > 2) return gfx::WeaponAnimType::Unarmed;
-	if (IsWieldedTwoHanded(item, wielder)) {
+	if (IsWieldedTwoHanded(item, wielder, special)) {
 		switch (wtype)
 		{
 		// piercing weapons
