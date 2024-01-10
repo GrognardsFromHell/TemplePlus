@@ -924,3 +924,10 @@ Casting:         1  std action   [Evocation, V,S,M/DF]
 Range:               Close (25ft. + 5ft./2 lvls)
 Target:            allied creatures,  no more than 30' apart
 Duration:      1  round/level (D)}
+
+{6006} Prismatic Ray {Ray blinds creatures with 6 Hit Dice or less Hit Dice and produces a random effect on a successful ranged touch attack.
+Casting:         1  std action   [Evocation, V,S]
+Range:               Medium (100ft. +10 ft./level)
+Area:                   Ray
+Duration:      Inst.,    Save: Yes,    SR: Yes}
+

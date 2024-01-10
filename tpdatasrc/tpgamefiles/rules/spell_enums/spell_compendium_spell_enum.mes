@@ -5,6 +5,7 @@
 
 // Added by doug but in the compendium
 {1005}{Fire Shield, Mass}
+{1006}{Prismatic Ray}
 
 // Additional spells added by Sagenlicht
 
@@ -138,6 +139,7 @@
 {5795}{Vigor}
 {5796}{Vigor, Greater}
 {6005}{Fire Shield, Mass}
+{6006}{Prismatic Ray}
 {6050}{Sound Lance}
 {6051}{Critical Strike}
 {6052}{Camouflage}
@@ -269,6 +271,7 @@
 {20796}{TAG_SPELLS_VIGOR,_GREATER}
 
 {21005}{TAG_SPELLS_FIRE_SHIELD_MASS}
+{21006}{TAG_SPELLS_PRISMATIC_RAY}
 
 {21050}{TAG_SPELLS_SOUND_LANCE}
 {21051}{TAG_SPELLS_CRITICAL_STRIKE}
