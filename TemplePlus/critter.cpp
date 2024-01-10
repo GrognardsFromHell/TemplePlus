@@ -1052,7 +1052,7 @@ gfx::EncodedAnimId LegacyCritterSystem::GetWeaponAnim(objHndl wielder, objHndl w
 	gfx::WeaponAnimType sAnimId = gfx::WeaponAnimType::Unarmed;
 
 	bool mainTwoHand = false;
-	bool special = WeaponAnim::Special1 <= animId && animId <= WeaponAnim::Special3;
+	bool special = gfx::WeaponAnim::Special1 <= animId && animId <= gfx::WeaponAnim::Special3;
 
 	if (wpn) {
 		auto primaryType = objects.GetType(wpn);
