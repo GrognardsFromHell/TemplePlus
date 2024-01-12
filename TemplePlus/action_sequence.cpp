@@ -3431,6 +3431,16 @@ void ActionSequenceSystem::FullAttackCostCalculate(D20Actn* d20a, TurnBasedStatu
 		int weapFlags = objects.getInt32(mainWeapon, obj_f_weapon_flags);
 		if (weapFlags & OWF_RANGED_WEAPON)
 			d20a->d20Caf |= D20CAF_RANGED;
+		else
+			switch (objects.GetWeaponType(mainWeapon))
+			{
+			case wt_quarterstaff:
+				_attackTypeCodeHigh = ATTACK_CODE_OFFHAND + 1;
+				_attackTypeCodeLow = ATTACK_CODE_OFFHAND;
+				usingOffhand = 1;
+			default:
+				break;
+			}
 	}
 
 	// if unarmed check natural attacks (for monsters)
