@@ -3370,17 +3370,19 @@ int __cdecl GreaterTwoWeaponFighting(DispatcherCallbackArgs args)
 				if (!(weapFlags & (4<<8)) && objects.getInt32(offhand, obj_f_type) != obj_t_armor)
 					++dispIo->returnVal;
 			}
+			else
+			{
+				switch(objects.GetWeaponType(mainWeapon))
+				{
+				case wt_quarterstaff:
+					++dispIo->returnVal;
+				default:
+					break;
+				}
+			}
 		}
 	}
-	// double weapons
-	else if (mainWeapon)
-	{
-		switch(objects.GetWeaponType(mainWeapon))
-		{
-		case wt_quarterstaff:
-			++dispIo->returnVal;
-		}
-	}
+
 	return 0;
 
 }
