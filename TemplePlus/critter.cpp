@@ -2096,10 +2096,10 @@ FightingStyle LegacyCritterSystem::GetFightingStyle(objHndl handle)
 			// TODO: query for a toggle; default 2-weapon
 			style = FightingStyle::TwoWeapon;
 		} else if (shield) {
-			if (inventory.IsBuckler(shield) && inventory.IsWieldedTwoHanded(weapr)) {
+			if (inventory.IsBuckler(shield) && inventory.IsWieldedTwoHanded(weapr, handle)) {
 				style = FightingStyle::TwoHanded;
 				if (wflags & OWF_RANGED_WEAPON)
-					style |= FightingStyle :: Ranged;
+					style |= FightingStyle::Ranged;
 			} else {
 				// TODO: query for a toggle; default 1-handed
 				// experimenting with shield bash
