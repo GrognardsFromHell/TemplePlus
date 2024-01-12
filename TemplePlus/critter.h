@@ -92,6 +92,7 @@ enum WaypointFlag : uint32_t {
 };
 
 enum FightingStyle : uint32_t {
+	Unknown = 0,
 	OneHanded = 1,
 	TwoHanded = 2,
 	TwoWeapon = 3,

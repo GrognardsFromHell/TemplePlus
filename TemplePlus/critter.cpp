@@ -2081,13 +2081,11 @@ int LegacyCritterSystem::GetRacialSavingThrowBonus(objHndl handle, SavingThrowTy
 FightingStyle LegacyCritterSystem::GetFightingStyle(objHndl handle)
 {
 	if (!handle || !objSystem->IsValidHandle(handle))
-		return 0;
+		return FightingStyle::Unknown;
 
-	auto critter = objSystem->GetObject(handle);
-
-	auto weapr = inventory.ItemWornAt(critter, EquipSlot::WeaponPrimary);
-	auto weapl = inventory.ItemWornAt(critter, EquipSlot::WeaponSecondary);
-	auto shield = inventory.ItemWornAt(critter, EquipSlot::Shield);
+	auto weapr = inventory.ItemWornAt(handle, EquipSlot::WeaponPrimary);
+	auto weapl = inventory.ItemWornAt(handle, EquipSlot::WeaponSecondary);
+	auto shield = inventory.ItemWornAt(handle, EquipSlot::Shield);
 
 	FightingStyle style = FightingStyle::OneHanded;
 
