@@ -2078,6 +2078,68 @@ int LegacyCritterSystem::GetRacialSavingThrowBonus(objHndl handle, SavingThrowTy
 	return 0;
 }
 
+FightingStyle LegacyCritterSystem::GetFightingStyle(objHndl handle)
+{
+	if (!handle || !objSystem->IsValidHandle(handle))
+		return 0;
+
+	auto critter = objSystem->GetObject(handle);
+
+	auto weapr = inventory.ItemWornAt(critter, EquipSlot::WeaponPrimary);
+	auto weapl = inventory.ItemWornAt(critter, EquipSlot::WeaponSecondary);
+	auto shield = inventory.ItemWornAt(critter, EquipSlot::Shield);
+
+	FightingStyle style = FightingStyle::OneHanded;
+
+	if (weapr) {
+		int wflags = objects.getInt32(weapr, obj_f_weapon_flags);
+
+		if (weapl) {
+			// TODO: query for a toggle; default 2-weapon
+			style = FightingStyle::TwoWeapon;
+		} else if (shield) {
+			if (inventory.IsBuckler(shield) && inventory.IsWieldedTwoHanded(weapr)) {
+				style = FightingStyle::TwoHanded;
+				if (wflags & OWF_RANGED_WEAPON)
+					style |= FightingStyle :: Ranged;
+			} else {
+				// TODO: query for a toggle; default 1-handed
+				// experimenting with shield bash
+				if (wflags & OWF_RANGED_WEAPON)
+					style = FightingStyle::OneHanded | FightingStyle::Ranged;
+				else
+					style = FightingStyle::TwoWeapon;
+			}
+		} else {
+			// double weapons
+			// TODO: query for a toggle; default not-2-weapon
+			switch (objects.GetWeaponType(weapr))
+			{
+			case wt_quarterstaff:
+			case wt_gnome_hooked_hammer:
+			case wt_orc_double_axe:
+			case wt_dire_flail:
+	    case wt_two_bladed_sword:
+			case wt_dwarven_urgrosh:
+				style = FightingStyle::TwoWeapon;
+				break;
+
+			default:
+				if (inventory.IsWieldedTwoHanded(weapr))
+					style = FightingStyle::TwoHanded;
+				else
+					style = FightingStyle::OneHanded;
+
+				if (wflags & OWF_RANGED_WEAPON) style |= FightingStyle::Ranged;
+
+				break;
+			}
+		}
+	}
+
+	return style;
+}
+
 int LegacyCritterSystem::SkillBaseGet(objHndl handle, SkillEnum skill){
 	if (!handle)
 		return 0;

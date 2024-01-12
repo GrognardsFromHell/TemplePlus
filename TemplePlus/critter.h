@@ -91,6 +91,13 @@ enum WaypointFlag : uint32_t {
 	Animate = 4
 };
 
+enum FightingStyle : uint32_t {
+	OneHanded = 1,
+	TwoHanded = 2,
+	TwoWeapon = 3,
+	Ranged = 0x10
+};
+
 #pragma pack(push, 1)
 struct Waypoint {
 	uint32_t flags = 0;
@@ -408,6 +415,7 @@ struct LegacyCritterSystem : temple::AddressTable
 	int GetBaseAttackBonus(const objHndl& handle, Stat classBeingLeveld = Stat::stat_strength);
 	int GetArmorClass(objHndl obj, DispIoAttackBonus *dispIo = nullptr);
 	int GetRacialSavingThrowBonus(objHndl handle, SavingThrowType saveType);
+	FightingStyle GetFightingStyle(objHndl hndl);
 #pragma endregion
 
 #pragma region Spellcasting
