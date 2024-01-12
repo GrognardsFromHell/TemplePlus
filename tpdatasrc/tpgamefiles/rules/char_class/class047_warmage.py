@@ -273,7 +273,7 @@ def LevelupGetBonusFeats( obj ):
 	#The only option will be the normal feat if the chracter does not have it
 	if not char_editor.has_feat(feat):
 		featInfo = char_editor.FeatInfo(feat)
-		featInfo.feat_status_flags |= 4 # always pickable
+		featInfo.feat_status_flags |= FEAT_INFO_DISREGARD_PREREQS # always pickable
 		bonFeatInfo.append(featInfo)
 	else:
 		#Any metamagic feat can be selected if the character does not have the normal feat

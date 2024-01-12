@@ -114,7 +114,7 @@ def LevelupGetBonusFeats(obj):
     bonFeatInfo = []
     for feat in bonus_feats:
         featInfo = char_editor.FeatInfo(feat)
-        featInfo.feat_status_flags |= 4 # always pickable
+        featInfo.feat_status_flags |= FEAT_INFO_DISREGARD_PREREQS # always pickable
         bonFeatInfo.append(featInfo)
     char_editor.set_bonus_feats(bonFeatInfo)
     return

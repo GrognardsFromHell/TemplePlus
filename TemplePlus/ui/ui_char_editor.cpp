@@ -156,6 +156,7 @@ public:
 	bool FeatCanPick(feat_enums feat);
 	bool IsSelectingRangerSpec();
 	bool IsClassBonusFeat(feat_enums feat);
+	bool CanDropToNormalSlot(feat_enums feat);
 
 	void FeatsSanitize();
 	void FeatsMultiSelectActivate(feat_enums feat);
@@ -2068,7 +2069,7 @@ BOOL UiCharEditor::FeatsEntryBtnMsg(int widId, TigMsg * msg){
 			mouseFuncs.SetCursorDrawCallback(nullptr, 0);
 			
 			// check if inserted into the normal slot
-			if (featsSelectedBorderRect.ContainsPoint(msgW->x, msgW->y) && IsSelectingNormalFeat()){
+			if (featsSelectedBorderRect.ContainsPoint(msgW->x, msgW->y) && IsSelectingNormalFeat() && CanDropToNormalSlot(feat)){
 				selPkt.feat0 = feat;
 				if (feats.IsFeatMultiSelectMaster(feat))
 					FeatsMultiSelectActivate(feat);
@@ -2685,6 +2686,10 @@ bool UiCharEditor::IsSelectingRangerSpec()
 
 bool UiCharEditor::IsClassBonusFeat(feat_enums feat){
 	return chargen.IsClassBonusFeat(feat);
+}
+
+bool UiCharEditor::CanDropToNormalSlot(feat_enums feat) {
+	return !chargen.IsBonusOnlyFeat(feat);
 }
 
 bool Chargen::IsClassBonusFeat(feat_enums feat) {
@@ -3513,6 +3518,16 @@ bool Chargen::IsBonusFeatDisregardingPrereqs(feat_enums feat){
 	for (auto it : mBonusFeats) {
 		if (it.featEnum == feat)
 			return (it.flag & FeatInfoFlag::DisregardPrereqs) != 0;
+	}
+
+	return false;
+}
+
+bool Chargen::IsBonusOnlyFeat(feat_enums feat)
+{
+	for (auto it : mBonusFeats) {
+		if (it.featEnum == feat)
+			return (it.flag & FeatInfoFlag::BonusOnly) != 0;
 	}
 
 	return false;
