@@ -3372,6 +3372,15 @@ int __cdecl GreaterTwoWeaponFighting(DispatcherCallbackArgs args)
 			}
 		}
 	}
+	// double weapons
+	else if (mainWeapon)
+	{
+		switch(objects.GetWeaponType(mainWeapon))
+		{
+		case wt_quarterstaff:
+			++dispIo->returnVal;
+		}
+	}
 	return 0;
 
 }
