@@ -1531,7 +1531,7 @@
 // [1189] *[Blades of Fire]
 {29780}{} // spell begin
 {29781}{spells\sp_flame_blade_end.WAV} // spell end
-{29782}{spells\sp_flame_blade.wav} // spell effect
+{29782}{} // spell effect
 {29783}{} // spell new round
 {29784}{} // spell projectile begin
 {29785}{} // spell projectile end
