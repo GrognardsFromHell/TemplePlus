@@ -2107,22 +2107,22 @@ FightingStyle LegacyCritterSystem::GetFightingStyle(objHndl handle)
 			// TODO: query for a toggle; default 2-weapon
 			style = FightingStyle::TwoWeapon;
 		} else if (shield) {
-			if (inventory.IsBuckler(shield)) {
+			if (d20Sys.d20Query(handle, DK_QUE_Can_Shield_Bash)) {
+				// TODO: query for a toggle; default 1-handed
+				// experimenting with shield bash
+				if (wflags & OWF_RANGED_WEAPON)
+					if (twoHand)
+						style = FightingStyle::TwoHandedRanged;
+					else
+						style = FightingStyle::OneHandedRanged;
+				else
+					style = FightingStyle::TwoWeapon;
+			} else {
 				if (twoHand) style = FightingStyle::TwoHanded;
 				else style = FightingStyle::OneHanded;
 
 				if (wflags & OWF_RANGED_WEAPON)
 					style = style | FightingStyle::Ranged;
-			} else {
-				// TODO: query for a toggle; default 1-handed
-				// experimenting with shield bash
-				if (wflags & OWF_RANGED_WEAPON)
-					if (twoHand)
-						style = FightingStyle::TwoHanded | FightingStyle::Ranged;
-					else
-						style = FightingStyle::OneHanded | FightingStyle::Ranged;
-				else
-					style = FightingStyle::TwoWeapon;
 			}
 		} else {
 			// double weapons

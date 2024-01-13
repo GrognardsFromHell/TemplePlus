@@ -192,6 +192,12 @@ public:
 	static int __cdecl PreferOneHandedWieldRadialMenu(DispatcherCallbackArgs args);
 	static int __cdecl PreferOneHandedWieldQuery(DispatcherCallbackArgs args);
 
+	static int __cdecl D20QueryTwoWeapon(DispatcherCallbackArgs args);
+	static int __cdecl D20QueryLeftPrimary(DispatcherCallbackArgs args);
+
+	static int __cdecl TwoWeaponRadialMenu(DispatcherCallbackArgs args);
+	static int __cdecl LeftPrimaryRadialMenu(DispatcherCallbackArgs args);
+
 } genericCallbacks;
 
 
@@ -1703,6 +1709,48 @@ int GenericCallbacks::PreferOneHandedWieldQuery(DispatcherCallbackArgs args)
 	return 0;
 }
 
+// TODO: make sticky when attacking
+int GenericCallbacks::TwoWeaponQuery(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIOTypeQuery, DisIoD20Query);
+	auto isCurrentlyOn = args.GetCondArg(0);
+
+	dispIo->return_val = isCurrentlyOn;
+	return 0
+}
+
+// TODO: make sticky when attacking
+int GenericCallbacks::LeftPrimaryQuery(DispatcherCallbackArgs args);
+{
+	GET_DISPIO(dispIOTypeQuery, DisIoD20Query);
+	auto isCurrentlyOn = args.GetCondArg(1);
+
+	dispIo->return_val = isCurrentlyOn;
+	return 0
+}
+
+int GenericCallbacks::TwoWeaponRadialMenu(DispatcherCallbackArgs args);
+{
+	auto shield = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Shield);
+	if (!inventory.IsBuckler(shield))
+		return 0;
+
+	RadialMenuEntryToggle radEntry(5124, args.GetCondArgPtr(0), "TAG_RADIAL_MENU_TWO_WEAPON_FIGHTING");
+	radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Options);
+	return 0;
+}
+
+int GenericCallbacks::LeftPrimaryRadialMenu(DispatcherCallbackArgs args);
+{
+	auto shield = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Shield);
+	if (!inventory.IsBuckler(shield))
+		return 0;
+
+	RadialMenuEntryToggle radEntry(5124, args.GetCondArgPtr(1), "TAG_RADIAL_MENU_LEFT_PRIMARY");
+	radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Options);
+	return 0;
+}
+
 int GenericCallbacks::EffectTooltipDuration(DispatcherCallbackArgs args)
 {
 	auto dispIo = dispatch.DispIoCheckIoType24(args.dispIO);
@@ -1745,6 +1793,19 @@ int DisarmedRetrieveQuery(DispatcherCallbackArgs args)
 	*(objHndl*)&dispIo->data1 = weapon;
 	return 0;
 };
+
+int ShieldBashWeaponDice(DispatcherCallbackArgs args)
+{
+	DispIoAttackDice * dispIo = dispatch.DispIoCheckIoType20(args.dispIO);
+
+	auto shield = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Shield);
+
+	// if the weapon is the shield, set dice to stored packed dice
+	if (dispIo->weapon == shield)
+		dispIo->dicePacked = conds.CondNodeGetArg(args.subDispNode->condNode, 1);
+
+	return 0;
+}
 
 int __cdecl CondNodeSetArgFromSubDispDef(DispatcherCallbackArgs args)
 {
@@ -3103,6 +3164,16 @@ void ConditionSystem::RegisterNewConditions()
 	static CondStructNew preferOneHanded("Prefer One Handed Wield", 1);
 	preferOneHanded.AddHook(dispTypeD20Query, DK_QUE_Is_Preferring_One_Handed_Wield, genericCallbacks.PreferOneHandedWieldQuery);
 	preferOneHanded.AddHook(dispTypeRadialMenuEntry, DK_NONE, genericCallbacks.PreferOneHandedWieldRadialMenu);
+
+	static CondStructNew twoWeaponToggles("Two Weapon Toggles", 4);
+	twoWeaponToggles.AddHook(dispTypeD20Query, DK_QUE_Is_Two_Weapon_Fighting, genericCallbacks.TwoWeaponQuery);
+	twoWeaponToggles.AddHook(dispTypeD20Query, DK_QUE_Left_Is_Primary, genericCallbacks.LeftPrimaryQuery);
+	twoWeaponToggles.AddHook(dispTypeRadialMenuEntry, DK_NONE, genericCallbacks.TwoWeaponRadialMenu);
+	twoWeaponToggles.AddHook(dispTypeRadialMenuEntry, DK_NONE, genericCallbacks.LeftPrimaryRadialMenu);
+
+	static CondStructNew shieldBash("Shield Bash", 2);
+	shieldBash.AddHook(dispTypeD20Query, DK_QUE_Can_Shield_Bash, QueryRetrun1GetArgs);
+	shieldBash.AddHook(dispTypeGetAttackDice, DK_NONE, ShieldBashWeaponDice);
 
 	{
 		//mCondCraftWandLevelSet = 
