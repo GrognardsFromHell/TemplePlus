@@ -96,6 +96,7 @@ enum class FightingStyle : uint32_t {
 	OneHanded = 1,
 	TwoHanded = 2,
 	TwoWeapon = 3,
+	Mask = 0xf,
 	Ranged = 0x10,
 	OneHandedRanged = 0x11,
 	TwoHandedRanged = 0x12,
@@ -103,6 +104,7 @@ enum class FightingStyle : uint32_t {
 };
 
 FightingStyle operator|(FightingStyle l, FightingStyle r);
+FightingStyle operator&(FightingStyle l, FightingStyle r);
 
 #pragma pack(push, 1)
 struct Waypoint {

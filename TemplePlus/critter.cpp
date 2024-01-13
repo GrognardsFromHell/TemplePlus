@@ -2083,6 +2083,11 @@ FightingStyle operator|(FightingStyle l, FightingsTyle r)
 	return (FightingStyle)((uint32_t)l | (uint32_t)r);
 }
 
+FightingStyle operator&(FightingStyle l, FightingsTyle r)
+{
+	return (FightingStyle)((uint32_t)l & (uint32_t)r);
+}
+
 FightingStyle LegacyCritterSystem::GetFightingStyle(objHndl handle)
 {
 	if (!handle || !objSystem->IsValidHandle(handle))

@@ -3416,7 +3416,7 @@ void ActionSequenceSystem::FullAttackCostCalculate(D20Actn* d20a, TurnBasedStatu
 
 	auto style = critterSys.GetFightingStyle(performer);
 
-	if ((style & 0xf) == FightingStyle::TwoWeapon) {
+	if ((style & FightingStyle::Mask) == FightingStyle::TwoWeapon) {
 		_attackTypeCodeHigh = ATTACK_CODE_OFFHAND + 1; // originally 5
 		_attackTypeCodeLow = ATTACK_CODE_OFFHAND; // originally 4
 		usingOffhand = 1;
