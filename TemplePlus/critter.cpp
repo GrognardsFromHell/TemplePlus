@@ -2152,7 +2152,7 @@ FightingStyle LegacyCritterSystem::GetFightingStyle(objHndl handle)
 
 bool OffhandIsLight(objHndl critter)
 {
-	if (!handle || !objSystem->IsValidHandle(handle))
+	if (!critter || !objSystem->IsValidHandle(critter))
 		return false;
 
 	// auto weapr = inventory.ItemWornAt(critter, EquipSlot::WeaponPrimary);
