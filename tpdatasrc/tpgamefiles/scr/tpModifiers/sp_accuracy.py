@@ -9,5 +9,5 @@ def doubleIncrement(attachee, args, evt_obj):
     evt_obj.range_bonus += weaponUsed.obj_get_int(obj_f_weapon_range)
     return 0
 
-accuracySpell = SpellPythonModifier("sp-Accuracy") # spellId, duration, empty
+accuracySpell = SpellPythonModifier("sp-Accuracy", 3, True) # spellId, duration, empty
 accuracySpell.AddHook(ET_OnRangeIncrementBonus, EK_NONE, doubleIncrement,())
