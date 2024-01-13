@@ -424,6 +424,7 @@ struct LegacyCritterSystem : temple::AddressTable
 	int GetArmorClass(objHndl obj, DispIoAttackBonus *dispIo = nullptr);
 	int GetRacialSavingThrowBonus(objHndl handle, SavingThrowType saveType);
 	FightingStyle GetFightingStyle(objHndl hndl);
+	bool OffhandIsLight(objHndl hndl);
 #pragma endregion
 
 #pragma region Spellcasting

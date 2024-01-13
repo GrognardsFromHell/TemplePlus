@@ -1845,11 +1845,9 @@ int __cdecl GlobalToHitBonus(DispatcherCallbackArgs args)
 			else
 				bonusSys.bonusAddToBonusList(&dispIo->bonlist, -6, 27, 122); // penalty for dualwield on primary attack
 
-			auto offhand = inventory.ItemWornAt(args.objHndCaller, 4);
-			if (offhand)
+			if (critterSys.OffhandIsLight(args.objHndCaller))
 			{
-				if (inventory.GetWieldType(dispIo->attackPacket.attacker, offhand) == 0)
-					bonusSys.bonusAddToBonusList(&dispIo->bonlist, 2, 0, 167); // Light Off-hand Weapon
+				bonusSys.bonusAddToBonusList(&dispIo->bonlist, 2, 0, 167); // Light Off-hand Weapon
 			}
 		}
 	}

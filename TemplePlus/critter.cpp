@@ -2150,6 +2150,32 @@ FightingStyle LegacyCritterSystem::GetFightingStyle(objHndl handle)
 	return style;
 }
 
+bool OffhandIsLight(objHndl critter)
+{
+	if (!handle || !objSystem->IsValidHandle(handle))
+		return false;
+
+	// auto weapr = inventory.ItemWornAt(critter, EquipSlot::WeaponPrimary);
+	auto weapl = inventory.ItemWornAt(critter, EquipSlot::WeaponSecondary);
+	auto shield = inventory.ItemWornAt(critter, EquipSlot::Shield);
+
+	// TODO: adjust logic for favoring left hand
+	if (weapl) {
+		// TODO: audit enlargement argument
+		if (inventory.GetWieldType(critter, weapl) > 0)
+			return false;
+	} else if (shield) {
+		if (inventory.GetWieldType(critter, shield) > 0)
+			return false;
+	}
+
+	// Note: falling through due to null weapl and shield handles double
+	// weapons and (hypothetically) using an unarmed strike as an off
+	// hand. Double/two handed weapons only occupy the primary inventory
+	// slot, despite the in-game appearance.
+	return true;
+}
+
 int LegacyCritterSystem::SkillBaseGet(objHndl handle, SkillEnum skill){
 	if (!handle)
 		return 0;
