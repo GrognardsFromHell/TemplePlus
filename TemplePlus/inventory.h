@@ -179,6 +179,7 @@ struct InventorySystem : temple::AddressTable
 	static bool IsIdentified(objHndl itemHandle);
 	void ItemSpellChargeConsume(const objHndl& item, int chargesUsedUp = 1);
 	static bool IsBuckler(objHndl shield);
+	static bool IsDoubleWeapon(objHndl weapon);
 	void(__cdecl*_ForceRemove)(objHndl, objHndl);
 	void ItemRemove(objHndl item); // pretty much same as ForceRemove, but also send a d20 signal for inventory update, and checks for parent first
 	BOOL ItemGetAdvanced(objHndl item, objHndl parent, int slotIdx, int flags);

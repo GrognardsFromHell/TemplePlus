@@ -1960,6 +1960,25 @@ bool InventorySystem::IsBuckler(objHndl shield)
 	return (gameSystems->GetObj().GetObject(shield)->GetInt32(obj_f_item_wear_flags) & OIF_WEAR::OIF_WEAR_BUCKLER) ? true: false;
 }
 
+bool InventorySystem::IsDoubleWeapon(objHndl weapon)
+{
+	if (!weapon) return false;
+
+	switch (objects.GetWeaponType(weapon))
+	{
+	case wt_quarterstaff:
+	case wt_gnome_hooked_hammer:
+	case wt_orc_double_axe:
+	case wt_dire_flail:
+	case wt_two_bladed_sword:
+	case wt_dwarven_urgrosh:
+		return true;
+
+	default:
+		return false;
+	}
+}
+
 void InventorySystem::ItemRemove(objHndl item)
 {
 	auto parent = GetParent(item);

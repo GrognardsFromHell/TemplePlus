@@ -2122,18 +2122,9 @@ FightingStyle LegacyCritterSystem::GetFightingStyle(objHndl handle)
 		} else {
 			// double weapons
 			// TODO: query for a toggle; default not-2-weapon
-			switch (objects.GetWeaponType(weapr))
-			{
-			case wt_quarterstaff:
-			case wt_gnome_hooked_hammer:
-			case wt_orc_double_axe:
-			case wt_dire_flail:
-	    case wt_two_bladed_sword:
-			case wt_dwarven_urgrosh:
+			if (inventory.IsDoubleWeapon(weapr)) {
 				style = FightingStyle::TwoWeapon;
-				break;
-
-			default:
+			} else {
 				if (twoHand)
 					style = FightingStyle::TwoHanded;
 				else
@@ -2141,8 +2132,6 @@ FightingStyle LegacyCritterSystem::GetFightingStyle(objHndl handle)
 
 				if (wflags & OWF_RANGED_WEAPON)
 					style = style | FightingStyle::Ranged;
-
-				break;
 			}
 		}
 	}
