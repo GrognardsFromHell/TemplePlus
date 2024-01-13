@@ -91,13 +91,18 @@ enum WaypointFlag : uint32_t {
 	Animate = 4
 };
 
-enum FightingStyle : uint32_t {
+enum class FightingStyle : uint32_t {
 	Unknown = 0,
 	OneHanded = 1,
 	TwoHanded = 2,
 	TwoWeapon = 3,
-	Ranged = 0x10
+	Ranged = 0x10,
+	OneHandedRanged = 0x11,
+	TwoHandedRanged = 0x12,
+	TwoWeaponRanged = 0x13
 };
+
+FightingStyle operator|(FightingStyle l, FightingStyle r);
 
 #pragma pack(push, 1)
 struct Waypoint {

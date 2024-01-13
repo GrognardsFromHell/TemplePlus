@@ -2078,6 +2078,11 @@ int LegacyCritterSystem::GetRacialSavingThrowBonus(objHndl handle, SavingThrowTy
 	return 0;
 }
 
+FightingStyle operator|(FightingStyle l, FightingsTyle r)
+{
+	return (FightingStyle)((uint32_t)l | (uint32_t)r);
+}
+
 FightingStyle LegacyCritterSystem::GetFightingStyle(objHndl handle)
 {
 	if (!handle || !objSystem->IsValidHandle(handle))
@@ -2099,7 +2104,7 @@ FightingStyle LegacyCritterSystem::GetFightingStyle(objHndl handle)
 			if (inventory.IsBuckler(shield) && inventory.IsWieldedTwoHanded(weapr, handle)) {
 				style = FightingStyle::TwoHanded;
 				if (wflags & OWF_RANGED_WEAPON)
-					style |= FightingStyle::Ranged;
+					style = style | FightingStyle::Ranged;
 			} else {
 				// TODO: query for a toggle; default 1-handed
 				// experimenting with shield bash
