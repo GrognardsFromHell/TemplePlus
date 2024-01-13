@@ -526,7 +526,7 @@ DispIoObjEvent* DispatcherSystem::DispIoCheckIoType17(DispIO* dispIo)
 
 DispIoAttackDice* DispatcherSystem::DispIoCheckIoType20(DispIO* dispIo)
 {
-	if (dispIo->dispIOType != dispIoType20)
+	if (dispIo->dispIOType != dispIOType20)
 		return nullptr;
 	return static_cast<DispIoAttackDice*>(dispIo);
 }

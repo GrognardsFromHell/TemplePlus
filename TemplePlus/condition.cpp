@@ -192,8 +192,8 @@ public:
 	static int __cdecl PreferOneHandedWieldRadialMenu(DispatcherCallbackArgs args);
 	static int __cdecl PreferOneHandedWieldQuery(DispatcherCallbackArgs args);
 
-	static int __cdecl D20QueryTwoWeapon(DispatcherCallbackArgs args);
-	static int __cdecl D20QueryLeftPrimary(DispatcherCallbackArgs args);
+	static int __cdecl TwoWeaponQuery(DispatcherCallbackArgs args);
+	static int __cdecl LeftPrimaryQuery(DispatcherCallbackArgs args);
 
 	static int __cdecl TwoWeaponRadialMenu(DispatcherCallbackArgs args);
 	static int __cdecl LeftPrimaryRadialMenu(DispatcherCallbackArgs args);
@@ -1712,21 +1712,21 @@ int GenericCallbacks::PreferOneHandedWieldQuery(DispatcherCallbackArgs args)
 // TODO: make sticky when attacking
 int GenericCallbacks::TwoWeaponQuery(DispatcherCallbackArgs args)
 {
-	GET_DISPIO(dispIOTypeQuery, DisIoD20Query);
+	GET_DISPIO(dispIOTypeQuery, DispIoD20Query);
 	auto isCurrentlyOn = args.GetCondArg(0);
 
 	dispIo->return_val = isCurrentlyOn;
-	return 0
+	return 0;
 }
 
 // TODO: make sticky when attacking
 int GenericCallbacks::LeftPrimaryQuery(DispatcherCallbackArgs args);
 {
-	GET_DISPIO(dispIOTypeQuery, DisIoD20Query);
+	GET_DISPIO(dispIOTypeQuery, DispIoD20Query);
 	auto isCurrentlyOn = args.GetCondArg(1);
 
 	dispIo->return_val = isCurrentlyOn;
-	return 0
+	return 0;
 }
 
 int GenericCallbacks::TwoWeaponRadialMenu(DispatcherCallbackArgs args);
