@@ -2150,7 +2150,7 @@ FightingStyle LegacyCritterSystem::GetFightingStyle(objHndl handle)
 	return style;
 }
 
-bool OffhandIsLight(objHndl critter)
+bool LegacyCritterSystem::OffhandIsLight(objHndl critter)
 {
 	if (!critter || !objSystem->IsValidHandle(critter))
 		return false;
