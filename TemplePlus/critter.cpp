@@ -2078,12 +2078,12 @@ int LegacyCritterSystem::GetRacialSavingThrowBonus(objHndl handle, SavingThrowTy
 	return 0;
 }
 
-FightingStyle operator|(FightingStyle l, FightingsTyle r)
+FightingStyle operator|(FightingStyle l, FightingStyle r)
 {
 	return (FightingStyle)((uint32_t)l | (uint32_t)r);
 }
 
-FightingStyle operator&(FightingStyle l, FightingsTyle r)
+FightingStyle operator&(FightingStyle l, FightingStyle r)
 {
 	return (FightingStyle)((uint32_t)l & (uint32_t)r);
 }
@@ -2101,12 +2101,13 @@ FightingStyle LegacyCritterSystem::GetFightingStyle(objHndl handle)
 
 	if (weapr) {
 		int wflags = objects.getInt32(weapr, obj_f_weapon_flags);
+		bool twoHand = inventory.IsWieldedTwoHanded(weapr, handle);
 
 		if (weapl) {
 			// TODO: query for a toggle; default 2-weapon
 			style = FightingStyle::TwoWeapon;
 		} else if (shield) {
-			if (inventory.IsBuckler(shield) && inventory.IsWieldedTwoHanded(weapr, handle)) {
+			if (inventory.IsBuckler(shield) && twoHand) {
 				style = FightingStyle::TwoHanded;
 				if (wflags & OWF_RANGED_WEAPON)
 					style = style | FightingStyle::Ranged;
@@ -2133,12 +2134,13 @@ FightingStyle LegacyCritterSystem::GetFightingStyle(objHndl handle)
 				break;
 
 			default:
-				if (inventory.IsWieldedTwoHanded(weapr))
+				if (twoHand)
 					style = FightingStyle::TwoHanded;
 				else
 					style = FightingStyle::OneHanded;
 
-				if (wflags & OWF_RANGED_WEAPON) style |= FightingStyle::Ranged;
+				if (wflags & OWF_RANGED_WEAPON)
+					style = style | FightingStyle::Ranged;
 
 				break;
 			}
