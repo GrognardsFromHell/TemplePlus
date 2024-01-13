@@ -18,7 +18,7 @@ def OnSpellEffect(spell):
 
     if game.is_melee_weapon(weaponTypeMainhand) and mainhandWeapon != OBJ_HANDLE_NULL:
         mainhandWeapon.d20_status_init()
-        if not mainhandWeapon.condition_add_with_args('sp-Blades of Fire', spell.id, spell.duration, 0):
+        if not mainhandWeapon.condition_add_with_args('sp-Blades of Fire', spell.id, 1, 0): #Icon does not display at 0
             spellTarget.obj.float_mesfile_line('mes\\spell.mes', 30000)
             game.particles('Fizzle', spellTarget.obj)
     else:
@@ -27,7 +27,7 @@ def OnSpellEffect(spell):
 
     if game.is_melee_weapon(weaponTypeOffhand) and offhandWeapon != OBJ_HANDLE_NULL:
         offhandWeapon.d20_status_init()
-        if not offhandWeapon.condition_add_with_args('sp-Blades of Fire', spell.id, spell.duration, 0):
+        if not offhandWeapon.condition_add_with_args('sp-Blades of Fire', spell.id, 1, 0):   #Icon does not display at 0
             spellTarget.obj.float_mesfile_line('mes\\spell.mes', 30000)
             game.particles('Fizzle', spellTarget.obj)
     elif offhandWeapon != OBJ_HANDLE_NULL:
