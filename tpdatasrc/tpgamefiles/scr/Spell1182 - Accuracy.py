@@ -12,7 +12,7 @@ def OnSpellEffect(spell):
     spellTarget = spell.target_list[0]
 
     if spellTarget.obj.condition_add_with_args('sp-Accuracy', spell.id, spell.duration):
-        spellTarget.partsys_id = game.particles('sp-Sure Strike', spell.caster)
+        spellTarget.partsys_id = game.particles('sp-Accuracy', spell.caster)
     else:
         spellTarget.obj.float_mesfile_line('mes\\spell.mes', 30000)
         game.particles('Fizzle', spellTarget.obj)
