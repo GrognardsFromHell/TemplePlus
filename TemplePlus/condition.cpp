@@ -1720,7 +1720,7 @@ int GenericCallbacks::TwoWeaponQuery(DispatcherCallbackArgs args)
 }
 
 // TODO: make sticky when attacking
-int GenericCallbacks::LeftPrimaryQuery(DispatcherCallbackArgs args);
+int GenericCallbacks::LeftPrimaryQuery(DispatcherCallbackArgs args)
 {
 	GET_DISPIO(dispIOTypeQuery, DispIoD20Query);
 	auto isCurrentlyOn = args.GetCondArg(1);
@@ -1729,7 +1729,7 @@ int GenericCallbacks::LeftPrimaryQuery(DispatcherCallbackArgs args);
 	return 0;
 }
 
-int GenericCallbacks::TwoWeaponRadialMenu(DispatcherCallbackArgs args);
+int GenericCallbacks::TwoWeaponRadialMenu(DispatcherCallbackArgs args)
 {
 	auto shield = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Shield);
 	if (!inventory.IsBuckler(shield))
@@ -1740,7 +1740,7 @@ int GenericCallbacks::TwoWeaponRadialMenu(DispatcherCallbackArgs args);
 	return 0;
 }
 
-int GenericCallbacks::LeftPrimaryRadialMenu(DispatcherCallbackArgs args);
+int GenericCallbacks::LeftPrimaryRadialMenu(DispatcherCallbackArgs args)
 {
 	auto shield = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Shield);
 	if (!inventory.IsBuckler(shield))
