@@ -3422,7 +3422,7 @@ void ActionSequenceSystem::FullAttackCostCalculate(D20Actn* d20a, TurnBasedStatu
 		usingOffhand = 1;
 	}
 
-	if (style & FightingStyle::Ranged) {
+	if ((style & FightingStyle::Ranged) == FightingStyle::Ranged) {
 		d20a->d20Caf |= D20CAF_RANGED;
 	}
 
