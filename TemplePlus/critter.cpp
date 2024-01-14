@@ -2114,7 +2114,7 @@ FightingStyle LegacyCritterSystem::GetFightingStyle(objHndl handle)
 	if (weapr) {
 		int wflags = objects.getInt32(weapr, obj_f_weapon_flags);
 		bool twoHand = inventory.IsWieldedTwoHanded(weapr, handle);
-		bool twfEnabled = d20Sys.d20Query(DK_QUE_Is_Two_Weapon_Fighting);
+		bool twfEnabled = d20Sys.d20Query(handle, DK_QUE_Is_Two_Weapon_Fighting);
 
 		if (weapl) {
 			if (twfEnabled)

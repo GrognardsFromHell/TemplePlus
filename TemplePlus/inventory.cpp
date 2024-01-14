@@ -1701,7 +1701,7 @@ gfx::WeaponAnimType InventorySystem::GetWeaponAnimId(objHndl item, objHndl wield
 			return gfx::WeaponAnimType::Spear;
 		case WeaponType::wt_orc_double_axe:
 		case WeaponType::wt_quarterstaff:
-			if (d20Sys.d20Query(DK_QUE_Is_Two_Weapon_Fighting))
+			if (d20Sys.d20Query(wielder, DK_QUE_Is_Two_Weapon_Fighting))
 				return gfx::WeaponAnimType::Staff;
 			else
 				return gfx::WeaponAnimType::Greataxe;
