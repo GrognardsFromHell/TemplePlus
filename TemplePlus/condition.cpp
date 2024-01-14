@@ -1732,22 +1732,20 @@ int GenericCallbacks::LeftPrimaryQuery(DispatcherCallbackArgs args)
 
 int GenericCallbacks::TwoWeaponRadialMenu(DispatcherCallbackArgs args)
 {
-	auto shield = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Shield);
-	if (!inventory.IsBuckler(shield))
+	if (!critterSys.CanTwoWeaponFight(args.objHndCaller))
 		return 0;
 
-	RadialMenuEntryToggle radEntry(5124, args.GetCondArgPtr(0), "TAG_RADIAL_MENU_TWO_WEAPON_FIGHTING");
+	RadialMenuEntryToggle radEntry(5125, args.GetCondArgPtr(0), "TAG_RADIAL_MENU_TWO_WEAPON_FIGHTING");
 	radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Options);
 	return 0;
 }
 
 int GenericCallbacks::LeftPrimaryRadialMenu(DispatcherCallbackArgs args)
 {
-	auto shield = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Shield);
-	if (!inventory.IsBuckler(shield))
+	if (!critterSys.CanTwoWeaponFight(args.objHndCaller))
 		return 0;
 
-	RadialMenuEntryToggle radEntry(5124, args.GetCondArgPtr(1), "TAG_RADIAL_MENU_LEFT_PRIMARY");
+	RadialMenuEntryToggle radEntry(5126, args.GetCondArgPtr(1), "TAG_RADIAL_MENU_LEFT_PRIMARY");
 	radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Options);
 	return 0;
 }

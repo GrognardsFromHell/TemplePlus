@@ -2088,6 +2088,18 @@ FightingStyle operator&(FightingStyle l, FightingStyle r)
 	return (FightingStyle)((uint32_t)l & (uint32_t)r);
 }
 
+bool LegacyCritterSystem::CanTwoWeaponFight(objHndl critter)
+{
+	auto weapr = inventory.ItemWornAt(critter, EquipSlot::WeaponPrimary);
+	auto weapl = inventory.ItemWornAt(critter, EquipSlot::WeaponSecondary);
+
+	bool result = !!weapr;
+	result |= d20Sys.d20Query(critter, DK_QUE_Can_Shield_Bash);
+	result |= inventory.IsDoubleWeapon(weapl);
+
+	return result;
+}
+
 FightingStyle LegacyCritterSystem::GetFightingStyle(objHndl handle)
 {
 	if (!handle || !objSystem->IsValidHandle(handle))
