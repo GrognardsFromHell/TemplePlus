@@ -1247,9 +1247,14 @@ objHndl LegacyD20System::GetAttackWeapon(objHndl obj, int attackCode, D20CAF fla
 		return objHndl::null;
 	}
 
+	auto weapr = inventory.ItemWornAt(obj, EquipSlot::WeaponPrimary);
 	auto weapl = inventory.ItemWornAt(obj, EquipSlot::WeaponSecondary);
-	if (!weapl)
+
+	if (!weapl && d20Sys.d20Query(DK_QUE_Can_Shield_Bash))
 		weapl = inventory.ItemWornAt(obj, EquipSlot::Shield);
+
+	if (!weapl && inventory.IsDoubleWeapon(weapr))
+		weapl = weapr;
 
 	if (flags & D20CAF_SECONDARY_WEAPON) return weapl;
 
@@ -1258,7 +1263,7 @@ objHndl LegacyD20System::GetAttackWeapon(objHndl obj, int attackCode, D20CAF fla
 	if (attackCode > ATTACK_CODE_NATURAL_ATTACK)
 		return objHndl::null;
 
-	return inventory.ItemWornAt(obj, EquipSlot::WeaponPrimary);
+	return weapr;
 }
 
 ActionErrorCode D20ActionCallbacks::PerformStandardAttack(D20Actn* d20a)
