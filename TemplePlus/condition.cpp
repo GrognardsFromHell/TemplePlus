@@ -1807,6 +1807,18 @@ int ShieldBashWeaponDice(DispatcherCallbackArgs args)
 	return 0;
 }
 
+int ShieldBashCritMultiplier(DispatcherCallbackArgs args)
+{
+	DispIoAttackBonus * dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
+
+	auto shield = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Shield);
+
+	if (dispIo->attackPacket.weaponUsed == shield)
+		dispIo->bonusList->AddBonus(2, 0, 110);
+
+	return 0;
+}
+
 int __cdecl CondNodeSetArgFromSubDispDef(DispatcherCallbackArgs args)
 {
 	// sets arg[data1] from data2  
@@ -3174,6 +3186,7 @@ void ConditionSystem::RegisterNewConditions()
 	static CondStructNew shieldBash("Shield Bash", 2);
 	shieldBash.AddHook(dispTypeD20Query, DK_QUE_Can_Shield_Bash, QueryRetrun1GetArgs);
 	shieldBash.AddHook(dispTypeGetAttackDice, DK_NONE, ShieldBashWeaponDice);
+	shieldBash.AddHook(dispTypeGetCriticalHitExtraDice, DK_NONE, ShieldBashCritMultiplier);
 
 	{
 		//mCondCraftWandLevelSet = 
