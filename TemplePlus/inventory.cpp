@@ -1532,8 +1532,15 @@ int InventorySystem::GetWieldType(objHndl wielder, objHndl item, bool regardEnla
 	if (itemType == obj_t_armor){
 		auto armorFlags = itemObj->GetInt32(obj_f_armor_flags);
 		auto armorType = inventory.GetArmorType(armorFlags);
-		if (armorType == ArmorType::ARMOR_TYPE_SHIELD || armorType == ArmorType::ARMOR_TYPE_NONE)
-			return  ( itemObj->GetInt32(obj_f_item_wear_flags) & OIF_WEAR::OIF_WEAR_BUCKLER ) != OIF_WEAR::OIF_WEAR_BUCKLER;
+		if (armorType == ArmorType::ARMOR_TYPE_SHIELD) {
+			if (d20Sys.d20Query(wielder, DK_QUE_Can_Shield_Bash)) {
+				return d20Sys.d20QueryReturnData(wielder, DK_QUE_Can_Shield_Bash, 0, 0);
+			}
+			if (IsBuckler(item)) return 0;
+			return 3;
+		}
+		if (armorType == ArmorType::ARMOR_TYPE_NONE)
+			return !IsBuckler(item);
 	}
 
 	
