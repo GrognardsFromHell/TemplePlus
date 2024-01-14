@@ -1247,11 +1247,13 @@ objHndl LegacyD20System::GetAttackWeapon(objHndl obj, int attackCode, D20CAF fla
 		return objHndl::null;
 	}
 
-	if (flags & D20CAF_SECONDARY_WEAPON)
-		return inventory.ItemWornAt(obj, EquipSlot::WeaponSecondary);
+	auto weapl = inventory.ItemWornAt(obj, EquipSlot::WeaponSecondary);
+	if (!weapl)
+		weapl = inventory.ItemWornAt(obj, EquipSlot::Shield);
 
-	if (UsingSecondaryWeapon(obj, attackCode))
-		return inventory.ItemWornAt(obj, EquipSlot::WeaponSecondary);
+	if (flags & D20CAF_SECONDARY_WEAPON) return weapl;
+
+	if (UsingSecondaryWeapon(obj, attackCode)) return weapl;
 
 	if (attackCode > ATTACK_CODE_NATURAL_ATTACK)
 		return objHndl::null;
