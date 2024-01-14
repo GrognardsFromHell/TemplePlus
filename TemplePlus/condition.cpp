@@ -468,7 +468,8 @@ public:
 		replaceFunction(0x100F8F70, DealNormalDamageCallback);
 		replaceFunction(0x100F9040, DealNormalDamageAttackPenalty);
 		
-
+		// ImprovedTWF extra attack; logic is identical to greater twf
+		replaceFunction(0x100FD1C0, GreaterTwoWeaponFighting);
 		
 		replaceFunction(0x10101150, ItemSkillBonusCallback);
 
@@ -3438,32 +3439,9 @@ int __cdecl AoODisableQueryAoOPossible(DispatcherCallbackArgs args)
 
 int __cdecl GreaterTwoWeaponFighting(DispatcherCallbackArgs args)
 {
-	DispIoD20ActionTurnBased *dispIo = dispatch.DispIoCheckIoType12((DispIoD20ActionTurnBased*)args.dispIO);
-	objHndl mainWeapon = inventory.ItemWornAt(args.objHndCaller, 3);
-	objHndl offhand = inventory.ItemWornAt(args.objHndCaller, 4);
-	
-	if (mainWeapon != offhand)
-	{
-		if (mainWeapon)
-		{
-			if (offhand)
-			{
-				int weapFlags = objects.getInt32(mainWeapon, obj_f_weapon_flags);
-				if (!(weapFlags & (4<<8)) && objects.getInt32(offhand, obj_f_type) != obj_t_armor)
-					++dispIo->returnVal;
-			}
-			else
-			{
-				switch(objects.GetWeaponType(mainWeapon))
-				{
-				case wt_quarterstaff:
-					++dispIo->returnVal;
-				default:
-					break;
-				}
-			}
-		}
-	}
+	auto style = critterSys.GetFightingStyle(args.objHndCaller);
+	if (style & FightingStyle::TwoWeapon == FightingStyle::TwoWeapon)
+		++dispIo->returnVal;
 
 	return 0;
 
