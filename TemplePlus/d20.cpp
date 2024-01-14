@@ -1250,7 +1250,7 @@ objHndl LegacyD20System::GetAttackWeapon(objHndl obj, int attackCode, D20CAF fla
 	auto weapr = inventory.ItemWornAt(obj, EquipSlot::WeaponPrimary);
 	auto weapl = inventory.ItemWornAt(obj, EquipSlot::WeaponSecondary);
 
-	if (!weapl && d20Sys.d20Query(DK_QUE_Can_Shield_Bash))
+	if (!weapl && d20Sys.d20Query(obj, DK_QUE_Can_Shield_Bash))
 		weapl = inventory.ItemWornAt(obj, EquipSlot::Shield);
 
 	if (!weapl && inventory.IsDoubleWeapon(weapr))
