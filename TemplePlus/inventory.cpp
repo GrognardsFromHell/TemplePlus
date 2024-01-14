@@ -1534,7 +1534,7 @@ int InventorySystem::GetWieldType(objHndl wielder, objHndl item, bool regardEnla
 		auto armorType = inventory.GetArmorType(armorFlags);
 		if (armorType == ArmorType::ARMOR_TYPE_SHIELD) {
 			if (d20Sys.d20Query(wielder, DK_QUE_Can_Shield_Bash)) {
-				return d20Sys.d20QueryReturnData(wielder, DK_QUE_Can_Shield_Bash) & 0xffffffff;
+				return d20Sys.d20QueryReturnData(wielder, DK_QUE_Can_Shield_Bash) & 0xff;
 			}
 			if (IsBuckler(item)) return 0;
 			return 3;
