@@ -2159,7 +2159,7 @@ bool LegacyCritterSystem::OffhandIsLight(objHndl critter)
 		if (inventory.GetWieldType(critter, weapl) > 0)
 			return false;
 	} else if (shield) {
-		if (inventory.GetWieldType(critter, shield) > 0)
+		if (inventory.GetWieldType(critter, shield, true) > 0)
 			return false;
 	}
 
