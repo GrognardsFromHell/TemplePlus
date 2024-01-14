@@ -3439,10 +3439,12 @@ int __cdecl AoODisableQueryAoOPossible(DispatcherCallbackArgs args)
 
 int __cdecl GreaterTwoWeaponFighting(DispatcherCallbackArgs args)
 {
+	DispIoD20ActionTurnBased *dispIo = dispatch.DispIoCheckIoType12(args.dispIO);
+
 	switch (critterSys.GetFightingStyle(args.objHndCaller))
 	{
 	case FightingStyle::TwoWeapon:
-	case FightingSTyle::TwoWeaponRanged:
+	case FightingStyle::TwoWeaponRanged:
 		++dispIo->returnVal;
 	default:
 		break;
