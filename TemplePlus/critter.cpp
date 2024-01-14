@@ -2093,9 +2093,9 @@ bool LegacyCritterSystem::CanTwoWeaponFight(objHndl critter)
 	auto weapr = inventory.ItemWornAt(critter, EquipSlot::WeaponPrimary);
 	auto weapl = inventory.ItemWornAt(critter, EquipSlot::WeaponSecondary);
 
-	bool result = !!weapr;
+	bool result = !!weapl;
 	result |= d20Sys.d20Query(critter, DK_QUE_Can_Shield_Bash);
-	result |= inventory.IsDoubleWeapon(weapl);
+	result |= inventory.IsDoubleWeapon(weapr);
 
 	return result;
 }
@@ -2114,21 +2114,25 @@ FightingStyle LegacyCritterSystem::GetFightingStyle(objHndl handle)
 	if (weapr) {
 		int wflags = objects.getInt32(weapr, obj_f_weapon_flags);
 		bool twoHand = inventory.IsWieldedTwoHanded(weapr, handle);
+		bool twfEnabled = d20Sys.d20Query(DK_QUE_Is_Two_Weapon_Fighting);
 
 		if (weapl) {
-			// TODO: query for a toggle; default 2-weapon
-			style = FightingStyle::TwoWeapon;
+			if (twfEnabled)
+				style = FightingStyle::TwoWeapon;
+			else
+				style = FightingStyle::OneHanded;
 		} else if (shield) {
 			if (d20Sys.d20Query(handle, DK_QUE_Can_Shield_Bash)) {
-				// TODO: query for a toggle; default 1-handed
-				// experimenting with shield bash
 				if (wflags & OWF_RANGED_WEAPON)
 					if (twoHand)
 						style = FightingStyle::TwoHandedRanged;
 					else
 						style = FightingStyle::OneHandedRanged;
 				else
-					style = FightingStyle::TwoWeapon;
+					if (twfEnabled)
+						style = FightingStyle::TwoWeapon;
+					else
+						style = FightingStyle::OneHanded;
 			} else {
 				if (twoHand) style = FightingStyle::TwoHanded;
 				else style = FightingStyle::OneHanded;
@@ -2137,19 +2141,16 @@ FightingStyle LegacyCritterSystem::GetFightingStyle(objHndl handle)
 					style = style | FightingStyle::Ranged;
 			}
 		} else {
-			// double weapons
-			// TODO: query for a toggle; default not-2-weapon
-			if (inventory.IsDoubleWeapon(weapr)) {
+			if (inventory.IsDoubleWeapon(weapr) && twfEnabled) {
 				style = FightingStyle::TwoWeapon;
+			} else if (twoHand) {
+				style = FightingStyle::TwoHanded;
 			} else {
-				if (twoHand)
-					style = FightingStyle::TwoHanded;
-				else
-					style = FightingStyle::OneHanded;
-
-				if (wflags & OWF_RANGED_WEAPON)
-					style = style | FightingStyle::Ranged;
+				style = FightingStyle::OneHanded;
 			}
+
+			if (wflags & OWF_RANGED_WEAPON)
+				style = style | FightingStyle::Ranged;
 		}
 	}
 
