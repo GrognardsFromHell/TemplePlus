@@ -2100,59 +2100,102 @@ bool LegacyCritterSystem::CanTwoWeaponFight(objHndl critter)
 	return result;
 }
 
-FightingStyle LegacyCritterSystem::GetFightingStyle(objHndl handle)
+objHndl LegacyCritterSystem::GetRightWield(objHndl critter)
 {
-	if (!handle || !objSystem->IsValidHandle(handle))
+	return inventory.ItemWornAt(critter, EquipSlot::WeaponPrimary);
+}
+
+objHndl LegacyCritterSystem::GetLeftWield(objHndl critter)
+{
+	auto weapl = inventory.ItemWornAt(critter, EquipSlot::WeaponSecondary);
+
+	if (!weapl && d20Sys.d20Query(critter, DK_QUE_Can_Shield_Bash)) {
+		weapl = inventory.ItemWornAt(critter, EquipSlot::Shield);
+	} else {
+		auto weapr = inventory.ItemWornAt(critter, EquipSlot::WeaponPrimary);
+		if (inventory.IsDoubleWeapon(weapr))
+			weapl = weapr;
+	}
+
+	return weapl;
+}
+
+objHndl LegacyCritterSystem::GetPrimaryWield(objHndl critter)
+{
+	auto weapr = GetRightWield(critter);
+	auto weapl = GetLeftWield(critter);
+
+	if (weapl && d20Sys.d20Query(critter, DK_QUE_Left_Is_Primary))
+		return weapl;
+	else
+		return weapr;
+}
+
+objHndl LegacyCritterSystem::GetSecondaryWield(objHndl critter)
+{
+	auto weapr = GetRightWield(critter);
+	auto weapl = GetLeftWield(critter);
+
+	if (weapl && d20Sys.d20Query(critter, DK_QUE_Left_Is_Primary))
+		return weapr;
+	else
+		return weapl;
+}
+
+FightingStyle LegacyCritterSystem::GetFightingStyle(objHndl critter)
+{
+	if (!critter || !objSystem->IsValidHandle(critter))
 		return FightingStyle::Unknown;
 
-	auto weapr = inventory.ItemWornAt(handle, EquipSlot::WeaponPrimary);
-	auto weapl = inventory.ItemWornAt(handle, EquipSlot::WeaponSecondary);
-	auto shield = inventory.ItemWornAt(handle, EquipSlot::Shield);
+	auto weapp = GetPrimaryWield(critter);
+	auto weaps = GetSecondaryWield(critter);
+	bool twfEnabled = false;
+
+	// query behavior: 0 - no toggle, 1 - toggle off, 2 - toggle on
+	switch (d20Sys.d20Query(critter, DK_QUE_Is_Two_Weapon_Fighting))
+	{
+	case 0:
+		// if the toggle is missing we need to preserve the old behavior:
+		// twf is enabled if you are wielding two different _weapons_.
+		if (!weapp || !weaps) break;
+		if (weapp == weaps) break;
+
+		twfEnabled = objects.GetType(weaps) == obj_t_weapon;
+		break;
+	case 2:
+		twfEnabled = true;
+		break;
+	default:
+		break;
+	}
 
 	FightingStyle style = FightingStyle::OneHanded;
 
-	if (weapr) {
-		int wflags = objects.getInt32(weapr, obj_f_weapon_flags);
-		bool twoHand = inventory.IsWieldedTwoHanded(weapr, handle);
-		bool twfEnabled = d20Sys.d20Query(handle, DK_QUE_Is_Two_Weapon_Fighting);
-
-		if (weapl) {
-			if (twfEnabled)
+	if (weapp) {
+		auto rangep = OWF_RANGED_WEAPON & objects.getInt32(weapp, obj_f_weapon_flags);
+		if (weaps && twfEnabled) {
+			// Note: I'm not sure there's actually any way to dual wield
+			// with a ranged weapon. I don't think throwing daggers count,
+			// and they might be the only candidate that doesn't occupy both
+			// hands.
+			auto ranges = OWF_RANGED_WEAPON & objects.getInt32(weaps, obj_f_weapon_flags);
+			if (rangep == ranges) {
 				style = FightingStyle::TwoWeapon;
-			else
-				style = FightingStyle::OneHanded;
-		} else if (shield) {
-			if (d20Sys.d20Query(handle, DK_QUE_Can_Shield_Bash)) {
-				if (wflags & OWF_RANGED_WEAPON)
-					if (twoHand)
-						style = FightingStyle::TwoHandedRanged;
-					else
-						style = FightingStyle::OneHandedRanged;
-				else
-					if (twfEnabled)
-						style = FightingStyle::TwoWeapon;
-					else
-						style = FightingStyle::OneHanded;
 			} else {
-				if (twoHand) style = FightingStyle::TwoHanded;
-				else style = FightingStyle::OneHanded;
-
-				if (wflags & OWF_RANGED_WEAPON)
-					style = style | FightingStyle::Ranged;
+				style = FightingStyle::OneHanded;
 			}
+		} else if (inventory.IsWieldedTwoHanded(weapp)) {
+			style = FightingStyle::TwoHanded;
 		} else {
-			if (inventory.IsDoubleWeapon(weapr) && twfEnabled) {
-				style = FightingStyle::TwoWeapon;
-			} else if (twoHand) {
-				style = FightingStyle::TwoHanded;
-			} else {
-				style = FightingStyle::OneHanded;
-			}
-
-			if (wflags & OWF_RANGED_WEAPON)
-				style = style | FightingStyle::Ranged;
+			style = FightingStyle::OneHanded;
 		}
+
+		// Ranged status follows primary weapon; either the secondary
+		// matches, or the above logic will forbid two weapon fighting.
+		if (rangep)
+			style = style | FightingStyle::Ranged;
 	}
+	// if no primary weapon, we're in one handed unarmed mode
 
 	return style;
 }
@@ -2162,24 +2205,17 @@ bool LegacyCritterSystem::OffhandIsLight(objHndl critter)
 	if (!critter || !objSystem->IsValidHandle(critter))
 		return false;
 
-	// auto weapr = inventory.ItemWornAt(critter, EquipSlot::WeaponPrimary);
-	auto weapl = inventory.ItemWornAt(critter, EquipSlot::WeaponSecondary);
-	auto shield = inventory.ItemWornAt(critter, EquipSlot::Shield);
+	auto weapp = GetPrimaryWield(critter);
+	auto weaps = GetSecondaryWield(critter);
 
-	// TODO: adjust logic for favoring left hand
-	if (weapl) {
-		// TODO: audit enlargement argument
-		if (inventory.GetWieldType(critter, weapl) > 0)
-			return false;
-	} else if (shield) {
-		if (inventory.GetWieldType(critter, shield, true) > 0)
-			return false;
+	if (weaps && weapp != weaps) {
+		// if we're actually wielding two weapons, return whether the
+		// secondary is light
+		return inventory.GetWieldType(critter, weaps, true) > 0;
 	}
 
-	// Note: falling through due to null weapl and shield handles double
-	// weapons and (hypothetically) using an unarmed strike as an off
-	// hand. Double/two handed weapons only occupy the primary inventory
-	// slot, despite the in-game appearance.
+	// Otherwise, we're wielding a double weapon, or the offhand is
+	// null, either of which count as light.
 	return true;
 }
 

@@ -852,6 +852,15 @@ Q_Can_Perform_Disarm = 116
 Q_Craft_Wand_Spell_Level = 117
 Q_Is_Ethereal = 118
 Q_Empty_Body_Num_Rounds = 119
+Q_Quivering_Palm_Can_Perform = 120
+Q_Trip_AOO = 121
+Q_Get_Arcane_Spell_Failure = 122
+Q_Is_Preferring_One_Handed_Wield = 123
+Q_Scribe_Scroll_Level = 124
+Q_Critter_Is_Immune_Paralysis = 125
+Q_Is_Two_Weapon_Fighting = 126
+Q_Left_Is_Primary = 127
+Q_Can_Shield_Bash = 128
 
 RADIAL_MENU_PARAM_MIN_SETTING = 1
 RADIAL_MENU_PARAM_MAX_SETTING = 2

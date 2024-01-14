@@ -1716,7 +1716,9 @@ int GenericCallbacks::TwoWeaponQuery(DispatcherCallbackArgs args)
 	GET_DISPIO(dispIOTypeQuery, DispIoD20Query);
 	auto isCurrentlyOn = args.GetCondArg(0);
 
-	dispIo->return_val = isCurrentlyOn;
+	// offset by 1 so that we can tell if the critter has the condition
+	// at all, and default to the old behavior if not.
+	dispIo->return_val = isCurrentlyOn+1;
 	return 0;
 }
 
