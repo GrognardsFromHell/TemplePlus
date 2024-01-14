@@ -3439,9 +3439,14 @@ int __cdecl AoODisableQueryAoOPossible(DispatcherCallbackArgs args)
 
 int __cdecl GreaterTwoWeaponFighting(DispatcherCallbackArgs args)
 {
-	auto style = critterSys.GetFightingStyle(args.objHndCaller);
-	if (style & FightingStyle::TwoWeapon == FightingStyle::TwoWeapon)
+	switch (critterSys.GetFightingStyle(args.objHndCaller))
+	{
+	case FightingStyle::TwoWeapon:
+	case FightingSTyle::TwoWeaponRanged:
 		++dispIo->returnVal;
+	default:
+		break;
+	}
 
 	return 0;
 
