@@ -1814,7 +1814,7 @@ int ShieldBashCritMultiplier(DispatcherCallbackArgs args)
 	auto shield = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Shield);
 
 	if (dispIo->attackPacket.weaponUsed == shield)
-		dispIo->bonusList->AddBonus(2, 0, 110);
+		dispIo->bonList->AddBonus(2, 0, 110);
 
 	return 0;
 }
