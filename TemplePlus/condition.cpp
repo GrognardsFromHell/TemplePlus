@@ -5757,7 +5757,7 @@ int __cdecl ItemCallbacks::BucklerAcPenalty(DispatcherCallbackArgs args)
 
 int __cdecl ItemCallbacks::ShieldAcPenalty(DispatcherCallbackArgs args)
 {
-	DispIoAttackBonus dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
+	DispIoAttackBonus * dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
 	objHndl attacker = dispIo->attackPacket.attacker;
 
 	if (!attacker) return 0;
