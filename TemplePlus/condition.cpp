@@ -5787,7 +5787,7 @@ int __cdecl ItemCallbacks::ShieldAcBonus(DispatcherCallbackArgs args)
 	if (args.GetCondArg(1)) { // bonus disabled due to shield bash
 		dispIo->bonlist.ZeroBonusSetMeslineNum(351);
 	} else {
-		auto name = description.GetDisplayName(source);
+		auto name = description.getDisplayName(source);
 		auto bonus = args.GetCondArg(0);
 		// touch attacks bypass shields
 		if (!(dispIo->attackPacket.flags & D20CAF_TOUCH_ATTACK))
