@@ -1520,9 +1520,6 @@ int32_t InventorySystem::GetCoinWorth(int32_t coinType){
 
 int InventorySystem::GetWieldType(objHndl wielder, objHndl item, bool regardEnlargement) const
 {
-	if (!regardEnlargement)
-		return _GetWieldType(wielder, item);
-
 	if (!item)
 		return 4;
 
