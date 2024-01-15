@@ -5757,18 +5757,19 @@ int __cdecl ItemCallbacks::BucklerAcPenalty(DispatcherCallbackArgs args)
 
 int __cdecl ItemCallbacks::ShieldAcPenalty(DispatcherCallbackArgs args)
 {
-	if (feats.HasFeatCount(args.objHndCaller, FEAT_IMPROVED_SHIELD_BASH))
-		return 0;
+	DispIoAttackBonus dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
+	objHndl attacker = dispIo->attackPacket.attacker;
 
-	auto attacker = dispIo->attackPacket.attacker;
 	if (!attacker) return 0;
+
+	if (feats.HasFeatCount(attacker, FEAT_IMPROVED_SHIELD_BASH))
+		return 0;
 
 	auto invIdx = args.GetCondArg(2);
 	// just in case we're getting a Shield Bonus from something besides equipment
 	if (invIdx == 0) return 0;
 
-	auto dispIo = dispatch.dispIoCheckIoType5(args.dispIO);
-	auto source = inventory.GetItemAtInvIdx(attacker, invIdx);
+	objHndl source = inventory.GetItemAtInvIdx(attacker, invIdx);
 
 	if (dispIo->attackPacket.GetWeaponUsed() == source)
 		// shield bashing, disable AC bonus
@@ -5779,7 +5780,7 @@ int __cdecl ItemCallbacks::ShieldAcPenalty(DispatcherCallbackArgs args)
 
 int __cdecl ItemCallbacks::ShieldAcBonus(DispatcherCallbackArgs args)
 {
-	auto dispIo = dispatch.dispIoCheckIoType5(args.dispIO);
+	auto dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
 	auto invIdx = args.GetCondArg(2);
 	auto source = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
 
