@@ -426,7 +426,7 @@ struct LegacyCritterSystem : temple::AddressTable
 	objHndl GetRightWield(objHndl hndl);
 	objHndl GetLeftWield(objHndl hndl);
 	objHndl GetPrimaryWield(objHndl hndl);
-	objHndl GetSecondWield(objHndl hndl);
+	objHndl GetSecondaryWield(objHndl hndl);
 	bool CanTwoWeaponFight(objHndl hndl);
 	FightingStyle GetFightingStyle(objHndl hndl);
 	bool OffhandIsLight(objHndl hndl);

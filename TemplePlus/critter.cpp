@@ -2184,7 +2184,7 @@ FightingStyle LegacyCritterSystem::GetFightingStyle(objHndl critter)
 			} else {
 				style = FightingStyle::OneHanded;
 			}
-		} else if (inventory.IsWieldedTwoHanded(weapp)) {
+		} else if (inventory.IsWieldedTwoHanded(weapp, critter)) {
 			style = FightingStyle::TwoHanded;
 		} else {
 			style = FightingStyle::OneHanded;
