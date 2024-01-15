@@ -1276,13 +1276,16 @@ ActionErrorCode D20ActionCallbacks::PerformStandardAttack(D20Actn* d20a)
 	if (d20Sys.UsingSecondaryWeapon(d20a))
 	{
 		d20a->d20Caf |= D20CAF_SECONDARY_WEAPON; 
-		useSecondaryAnim = !d20Sys.d20Query(d20a->d20APerformer, DK_QUE_Left_Is_Primary);
+		useSecondaryAnim = 1;
 	}
 	else if (d20a->data1 >= ATTACK_CODE_NATURAL_ATTACK + 1)
 	{
 		useSecondaryAnim = rngSys.GetInt(0, 1);
 		hitAnimIdx = (d20a->data1 - (ATTACK_CODE_NATURAL_ATTACK + 1)) % 3;
 	}
+
+	if (d20Sys.d20Query(d20a->d20APerformer, DK_QUE_Left_Is_Primary))
+		useSecondaryAnim = !useSecondaryAnim;
 
 	combatSys.ToHitProcessing(*d20a);
 
