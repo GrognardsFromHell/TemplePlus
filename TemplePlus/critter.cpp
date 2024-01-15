@@ -2211,7 +2211,7 @@ bool LegacyCritterSystem::OffhandIsLight(objHndl critter)
 	if (weaps && weapp != weaps) {
 		// if we're actually wielding two weapons, return whether the
 		// secondary is light
-		return inventory.GetWieldType(critter, weaps, true) > 0;
+		return inventory.GetWieldType(critter, weaps, true) == 0;
 	}
 
 	// Otherwise, we're wielding a double weapon, or the offhand is
