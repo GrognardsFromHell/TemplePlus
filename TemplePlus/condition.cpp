@@ -215,6 +215,8 @@ public:
 	static int __cdecl ArmorBonusAcBonusCapValue(DispatcherCallbackArgs args);
 	static int __cdecl BucklerToHitPenalty(DispatcherCallbackArgs args);
 	static int __cdecl BucklerAcPenalty(DispatcherCallbackArgs args);
+	static int __cdecl ShieldAcPenalty(DispatcherCallbackArgs args);
+	static int __cdecl ShieldAcBonus(DispatcherCallbackArgs args);
 	static int __cdecl WeaponMerciful(DispatcherCallbackArgs);
 	static int __cdecl WeaponSeekingAttackerConcealmentMissChance(DispatcherCallbackArgs args);
 	static int __cdecl WeaponSpeed(DispatcherCallbackArgs args);
@@ -508,6 +510,9 @@ public:
 
 		// buckler AC penalty
 		replaceFunction<int(DispatcherCallbackArgs)>(0x10104E40, itemCallbacks.BucklerAcPenalty);
+
+		// shield AC bonus; add shield bash behavior
+		replaceFunction<int(DispatcherCallbackArgs)>(0x10100370, itemCallbacks.ShieldAcBonus);
 
 		// Armor AC Bonus Cap - disregard cap >= 100 (so as to not clog the buffer)
 		replaceFunction<int(DispatcherCallbackArgs)>(0x10100720, itemCallbacks.ArmorBonusAcBonusCapValue);
@@ -3171,6 +3176,11 @@ void ConditionSystem::RegisterNewConditions()
 		condAttrEnhBonus.AddHook(enum_disp_type::dispTypeStatBaseGet, D20DispatcherKey::DK_NONE, itemCallbacks.AttributeBaseBonus);
 	}
 
+	{
+		static CondStructNew condShieldBonus;
+		condShieldBonus.ExtendExisting("Shield Bonus");
+		condShieldBonus.AddHook(dispTypeBucklerAcPenalty, DK_NONE, itemCallbacks.ShieldAcPenalty);
+	}
 #pragma endregion
 
 
@@ -5743,6 +5753,45 @@ int __cdecl ItemCallbacks::BucklerAcPenalty(DispatcherCallbackArgs args)
 	}
 
 	return 0;
+}
+
+int __cdecl ItemCallbacks::ShieldAcPenalty(DispatcherCallbackArgs args)
+{
+	if (feats.HasFeatCount(args.objHndCaller, FEAT_IMPROVED_SHIELD_BASH))
+		return 0;
+
+	auto attacker = dispIo->attackPacket.attacker;
+	if (!attacker) return 0;
+
+	auto invIdx = args.GetCondArg(2);
+	// just in case we're getting a Shield Bonus from something besides equipment
+	if (invIdx == 0) return 0;
+
+	auto dispIo = dispatch.dispIoCheckIoType5(args.dispIO);
+	auto source = inventory.GetItemAtInvIdx(attacker, invIdx);
+
+	if (dispIo->attackPacket.GetWeaponUsed() == source)
+		// shield bashing, disable AC bonus
+		args.SetCondArg(1, 1);
+
+	return 0;
+}
+
+int __cdecl ItemCallbacks::ShieldAcBonus(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.dispIoCheckIoType5(args.dispIO);
+	auto invIdx = args.GetCondArg(2);
+	auto source = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
+
+	if (args.GetCondArg(1)) { // bonus disabled due to shield bash
+		dispIo->bonlist.ZeroBonusSetMeslineNum(351);
+	} else {
+		auto name = description.GetDisplayName(source);
+		auto bonus = args.GetCondArg(0);
+		// touch attacks bypass shields
+		if (!(dispIo->attackPacket.flags & D20CAF_TOUCH_ATTACK))
+			dispIo->bonlist.AddBonusWithDesc(bonus, 29, 125, name);
+	}
 }
 
 
