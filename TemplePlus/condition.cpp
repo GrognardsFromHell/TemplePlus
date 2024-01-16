@@ -1682,14 +1682,10 @@ int TwoWeaponQuery(DispatcherCallbackArgs args)
 {
 	GET_DISPIO(dispIOTypeQuery, DispIoD20Query);
 	auto isCurrentlyOn = args.GetCondArg(0);
-	auto sticky = args.GetCondArg(2);
 
 	// offset by 1 so that we can tell if the critter has the condition
 	// at all, and default to the old behavior if not.
-	if (0 <= sticky)
-		dispIo->return_val = sticky+1;
-	else
-		dispIo->return_val = isCurrentlyOn+1;
+	dispIo->return_val = isCurrentlyOn+1;
 
 	return 0;
 }
@@ -1698,12 +1694,8 @@ int LeftPrimaryQuery(DispatcherCallbackArgs args)
 {
 	GET_DISPIO(dispIOTypeQuery, DispIoD20Query);
 	auto isCurrentlyOn = args.GetCondArg(1);
-	auto sticky = args.GetCondArg(3);
 
-	if (0 <= sticky)
-		dispIo->return_val = sticky;
-	else
-		dispIo->return_val = isCurrentlyOn;
+	dispIo->return_val = isCurrentlyOn;
 
 	return 0;
 }
@@ -1712,6 +1704,9 @@ int TwoWeaponRadialMenu(DispatcherCallbackArgs args)
 {
 	if (!critterSys.CanTwoWeaponFight(args.objHndCaller))
 		return 0;
+
+	// hide radial if an attack has already been made
+	if (args.GetCondArg(2)) return 0;
 
 	RadialMenuEntryToggle radEntry(5125, args.GetCondArgPtr(0), "TAG_RADIAL_MENU_TWO_WEAPON_FIGHTING");
 	radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Options);
@@ -1723,24 +1718,11 @@ int LeftPrimaryRadialMenu(DispatcherCallbackArgs args)
 	if (!critterSys.CanTwoWeaponFight(args.objHndCaller))
 		return 0;
 
+	// hide radial if an attack has already been made
+	if (args.GetCondArg(2)) return 0;
+
 	RadialMenuEntryToggle radEntry(5126, args.GetCondArgPtr(1), "TAG_RADIAL_MENU_LEFT_PRIMARY");
 	radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Options);
-	return 0;
-}
-
-int TWToggleReset(DispatcherCallbackArgs args)
-{
-	args.SetCondArg(2, -1);
-	args.SetCondArg(3, -1);
-
-	return 0;
-}
-
-int TWToggleStick(DispatcherCallbackArgs args)
-{
-	args.SetCondArg(2, args.GetCondArg(0));
-	args.SetCondArg(3, args.GetCondArg(1));
-
 	return 0;
 }
 
@@ -3158,8 +3140,8 @@ void ConditionSystem::RegisterNewConditions()
 	twoWeapToggles.AddHook(dispTypeD20Query, DK_QUE_Left_Is_Primary, LeftPrimaryQuery);
 	twoWeapToggles.AddHook(dispTypeRadialMenuEntry, DK_NONE, TwoWeaponRadialMenu);
 	twoWeapToggles.AddHook(dispTypeRadialMenuEntry, DK_NONE, LeftPrimaryRadialMenu);
-	twoWeapToggles.AddHook(dispTypeBeginRound, DK_NONE, TWToggleReset);
-	twoWeapToggles.AddHook(dispTypeD20Signal, DK_SIG_Attack_Made, TWToggleStick);
+	twoWeapToggles.AddHook(dispTypeBeginRound, DK_NONE, CondNodeSetArgFromSubDispDef, 2, 0);
+	twoWeapToggles.AddHook(dispTypeD20Signal, DK_SIG_Attack_Made, CondNodeSetArgFromSubDispDef, 2, 1);
 
 	static CondStructNew shieldBash("Shield Bash", 3);
 	shieldBash.AddHook(dispTypeD20Query, DK_QUE_Can_Shield_Bash, QueryRetrun1GetArgs);
