@@ -5793,6 +5793,8 @@ int __cdecl ItemCallbacks::ShieldAcBonus(DispatcherCallbackArgs args)
 		if (!(dispIo->attackPacket.flags & D20CAF_TOUCH_ATTACK))
 			dispIo->bonlist.AddBonusWithDesc(bonus, 29, 125, name);
 	}
+
+	return 0;
 }
 
 
