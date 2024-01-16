@@ -1833,7 +1833,7 @@ int ShieldBashProficiencyPenalty(DispatcherCallbackArgs args)
 	auto invIdx = args.GetCondArg(2);
 	auto shield = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
 
-	if (dispIo->weapon != shield) return 0;
+	if (dispIo->attackPacket.weaponUsed != shield) return 0;
 	// Future option: create an individual proficiency.
 	// Probably a waste of time, since no one would take it.
 	if (feats.HasFeatCount(args.objHndCaller, FEAT_MARTIAL_WEAPON_PROFICIENCY_ALL))
