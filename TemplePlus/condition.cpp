@@ -1168,12 +1168,10 @@ int GenericCallbacks::PowerAttackDamageBonus(DispatcherCallbackArgs args)
 
 	switch (critterSys.GetFightingStyle(args.objHndCaller))
 	{
-	case FightingStyle::OneHanded:
-		dispIo->damage.bonuses.AddBonusFromFeat(powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
-		return 0;
 	case FightingStyle::TwoHanded:
 		dispIo->damage.bonuses.AddBonusFromFeat(2*powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
 		return 0;
+	case FightingStyle::OneHanded:
 	case FightingStyle::TwoWeapon:
 		break;
 	default:
@@ -1181,7 +1179,7 @@ int GenericCallbacks::PowerAttackDamageBonus(DispatcherCallbackArgs args)
 		return 0;
 	}
 
-	// two weapon cases
+	// one handed/two weapon cases
 	switch (wieldType)
 	{
 	// light
@@ -1190,10 +1188,11 @@ int GenericCallbacks::PowerAttackDamageBonus(DispatcherCallbackArgs args)
 		return 0;
 	// 1-handed
 	case 1:
+	// unarmed
 	case 4:
 		dispIo->damage.bonuses.AddBonusFromFeat(powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
 		return 0;
-	// must be double weapon
+	// must be double weapon; should be impossible for OneHanded to be 2 or 3
 	default:
 		if (dispIo->attackPacket.flags & D20CAF_SECONDARY_WEAPON)
 			dispIo->damage.bonuses.ZeroBonusSetMeslineNum(305);
