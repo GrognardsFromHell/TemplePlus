@@ -1827,6 +1827,21 @@ int ShieldBashCritMultiplier(DispatcherCallbackArgs args)
 	return 0;
 }
 
+int ShieldBashProficiencyPenalty(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
+	auto invIdx = args.GetCondArg(2);
+	auto shield = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
+
+	if (dispIo->weapon != shield) return 0;
+	// Future option: create an individual proficiency.
+	// Probably a waste of time, since no one would take it.
+	if (feats.HasFeatCount(args.objHndCaller, FEAT_MARTIAL_WEAPON_PROFICIENCY_ALL))
+		return 0;
+
+	dispIo->bonlist.AddBonus(-4, 37, 138);
+}
+
 int __cdecl CondNodeSetArgFromSubDispDef(DispatcherCallbackArgs args)
 {
 	// sets arg[data1] from data2  
@@ -3202,6 +3217,7 @@ void ConditionSystem::RegisterNewConditions()
 	shieldBash.AddHook(dispTypeD20Query, DK_QUE_Can_Shield_Bash, QueryRetrun1GetArgs);
 	shieldBash.AddHook(dispTypeGetAttackDice, DK_NONE, ShieldBashWeaponDice);
 	shieldBash.AddHook(dispTypeGetCriticalHitExtraDice, DK_NONE, ShieldBashCritMultiplier);
+	shieldBash.AddHook(dispTypeToHitBonus2, DK_NONE, ShieldBashProficiencyPenalty);
 
 	{
 		//mCondCraftWandLevelSet = 
