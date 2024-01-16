@@ -192,12 +192,6 @@ public:
 	static int __cdecl PreferOneHandedWieldRadialMenu(DispatcherCallbackArgs args);
 	static int __cdecl PreferOneHandedWieldQuery(DispatcherCallbackArgs args);
 
-	static int __cdecl TwoWeaponQuery(DispatcherCallbackArgs args);
-	static int __cdecl LeftPrimaryQuery(DispatcherCallbackArgs args);
-
-	static int __cdecl TwoWeaponRadialMenu(DispatcherCallbackArgs args);
-	static int __cdecl LeftPrimaryRadialMenu(DispatcherCallbackArgs args);
-
 } genericCallbacks;
 
 
@@ -1641,48 +1635,6 @@ int GenericCallbacks::PreferOneHandedWieldQuery(DispatcherCallbackArgs args)
 	return 0;
 }
 
-// TODO: make sticky when attacking
-int GenericCallbacks::TwoWeaponQuery(DispatcherCallbackArgs args)
-{
-	GET_DISPIO(dispIOTypeQuery, DispIoD20Query);
-	auto isCurrentlyOn = args.GetCondArg(0);
-
-	// offset by 1 so that we can tell if the critter has the condition
-	// at all, and default to the old behavior if not.
-	dispIo->return_val = isCurrentlyOn+1;
-	return 0;
-}
-
-// TODO: make sticky when attacking
-int GenericCallbacks::LeftPrimaryQuery(DispatcherCallbackArgs args)
-{
-	GET_DISPIO(dispIOTypeQuery, DispIoD20Query);
-	auto isCurrentlyOn = args.GetCondArg(1);
-
-	dispIo->return_val = isCurrentlyOn;
-	return 0;
-}
-
-int GenericCallbacks::TwoWeaponRadialMenu(DispatcherCallbackArgs args)
-{
-	if (!critterSys.CanTwoWeaponFight(args.objHndCaller))
-		return 0;
-
-	RadialMenuEntryToggle radEntry(5125, args.GetCondArgPtr(0), "TAG_RADIAL_MENU_TWO_WEAPON_FIGHTING");
-	radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Options);
-	return 0;
-}
-
-int GenericCallbacks::LeftPrimaryRadialMenu(DispatcherCallbackArgs args)
-{
-	if (!critterSys.CanTwoWeaponFight(args.objHndCaller))
-		return 0;
-
-	RadialMenuEntryToggle radEntry(5126, args.GetCondArgPtr(1), "TAG_RADIAL_MENU_LEFT_PRIMARY");
-	radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Options);
-	return 0;
-}
-
 int GenericCallbacks::EffectTooltipDuration(DispatcherCallbackArgs args)
 {
 	auto dispIo = dispatch.DispIoCheckIoType24(args.dispIO);
@@ -1725,6 +1677,72 @@ int DisarmedRetrieveQuery(DispatcherCallbackArgs args)
 	*(objHndl*)&dispIo->data1 = weapon;
 	return 0;
 };
+
+int TwoWeaponQuery(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIOTypeQuery, DispIoD20Query);
+	auto isCurrentlyOn = args.GetCondArg(0);
+	auto sticky = args.GetCondArg(2);
+
+	// offset by 1 so that we can tell if the critter has the condition
+	// at all, and default to the old behavior if not.
+	if (0 <= sticky)
+		dispIo->return_val = sticky+1;
+	else
+		dispIo->return_val = isCurrentlyOn+1;
+
+	return 0;
+}
+
+int LeftPrimaryQuery(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIOTypeQuery, DispIoD20Query);
+	auto isCurrentlyOn = args.GetCondArg(1);
+	auto sticky = args.GetCondArg(3);
+
+	if (0 <= sticky)
+		dispIo->return_val = sticky;
+	else
+		dispIo->return_val = isCurrentlyOn;
+
+	return 0;
+}
+
+int TwoWeaponRadialMenu(DispatcherCallbackArgs args)
+{
+	if (!critterSys.CanTwoWeaponFight(args.objHndCaller))
+		return 0;
+
+	RadialMenuEntryToggle radEntry(5125, args.GetCondArgPtr(0), "TAG_RADIAL_MENU_TWO_WEAPON_FIGHTING");
+	radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Options);
+	return 0;
+}
+
+int LeftPrimaryRadialMenu(DispatcherCallbackArgs args)
+{
+	if (!critterSys.CanTwoWeaponFight(args.objHndCaller))
+		return 0;
+
+	RadialMenuEntryToggle radEntry(5126, args.GetCondArgPtr(1), "TAG_RADIAL_MENU_LEFT_PRIMARY");
+	radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Options);
+	return 0;
+}
+
+int TWToggleReset(DispatcherCallbackArgs args)
+{
+	args.SetCondArg(2, -1);
+	args.SetCondArg(3, -1);
+
+	return 0;
+}
+
+int TWToggleStick(DispatcherCallbackArgs args)
+{
+	args.SetCondArg(2, args.GetCondArg(0));
+	args.SetCondArg(3, args.GetCondArg(1));
+
+	return 0;
+}
 
 int ShieldBashWeaponDice(DispatcherCallbackArgs args)
 {
@@ -3135,11 +3153,13 @@ void ConditionSystem::RegisterNewConditions()
 	preferOneHanded.AddHook(dispTypeD20Query, DK_QUE_Is_Preferring_One_Handed_Wield, genericCallbacks.PreferOneHandedWieldQuery);
 	preferOneHanded.AddHook(dispTypeRadialMenuEntry, DK_NONE, genericCallbacks.PreferOneHandedWieldRadialMenu);
 
-	static CondStructNew twoWeaponToggles("Two Weapon Toggles", 4);
-	twoWeaponToggles.AddHook(dispTypeD20Query, DK_QUE_Is_Two_Weapon_Fighting, genericCallbacks.TwoWeaponQuery);
-	twoWeaponToggles.AddHook(dispTypeD20Query, DK_QUE_Left_Is_Primary, genericCallbacks.LeftPrimaryQuery);
-	twoWeaponToggles.AddHook(dispTypeRadialMenuEntry, DK_NONE, genericCallbacks.TwoWeaponRadialMenu);
-	twoWeaponToggles.AddHook(dispTypeRadialMenuEntry, DK_NONE, genericCallbacks.LeftPrimaryRadialMenu);
+	static CondStructNew twoWeapToggles("Two Weapon Toggles", 6);
+	twoWeapToggles.AddHook(dispTypeD20Query, DK_QUE_Is_Two_Weapon_Fighting, TwoWeaponQuery);
+	twoWeapToggles.AddHook(dispTypeD20Query, DK_QUE_Left_Is_Primary, LeftPrimaryQuery);
+	twoWeapToggles.AddHook(dispTypeRadialMenuEntry, DK_NONE, TwoWeaponRadialMenu);
+	twoWeapToggles.AddHook(dispTypeRadialMenuEntry, DK_NONE, LeftPrimaryRadialMenu);
+	twoWeapToggles.AddHook(dispTypeBeginRound, DK_NONE, TWToggleReset);
+	twoWeapToggles.AddHook(dispTypeD20Signal, DK_SIG_Attack_Made, TWToggleStick);
 
 	static CondStructNew shieldBash("Shield Bash", 3);
 	shieldBash.AddHook(dispTypeD20Query, DK_QUE_Can_Shield_Bash, QueryRetrun1GetArgs);
