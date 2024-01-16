@@ -1195,7 +1195,7 @@ int GenericCallbacks::PowerAttackDamageBonus(DispatcherCallbackArgs args)
 		return 0;
 	// must be double weapon
 	default:
-		if (dispIO->attackPacket.flags & D20CAF_SECONDARY_WEAPON)
+		if (dispIo->attackPacket.flags & D20CAF_SECONDARY_WEAPON)
 			dispIo->damage.bonuses.ZeroBonusSetMeslineNum(305);
 		else
 			dispIo->damage.bonuses.AddBonusFromFeat(powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
