@@ -1804,7 +1804,8 @@ int ShieldBashWeaponDice(DispatcherCallbackArgs args)
 {
 	DispIoAttackDice * dispIo = dispatch.DispIoCheckIoType20(args.dispIO);
 
-	auto shield = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Shield);
+	auto invIdx = args.GetCondArg(2);
+	auto shield = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
 
 	// if the weapon is the shield, set dice to stored packed dice
 	if (dispIo->weapon == shield)
@@ -1817,7 +1818,8 @@ int ShieldBashCritMultiplier(DispatcherCallbackArgs args)
 {
 	DispIoAttackBonus * dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
 
-	auto shield = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Shield);
+	auto invIdx = args.GetCondArg(2);
+	auto shield = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
 
 	if (dispIo->attackPacket.weaponUsed == shield)
 		dispIo->bonlist.AddBonus(2, 0, 110);
@@ -3180,6 +3182,8 @@ void ConditionSystem::RegisterNewConditions()
 		static CondStructNew condShieldBonus;
 		condShieldBonus.ExtendExisting("Shield Bonus");
 		condShieldBonus.AddHook(dispTypeBucklerAcPenalty, DK_NONE, itemCallbacks.ShieldAcPenalty);
+		// reset shield bash penalty on begin round
+		condShieldBonus.AddHook(dispTypeBeginRound, DK_NONE, CondNodeSetArgFromSubDispDef, 1, 0);
 	}
 #pragma endregion
 
@@ -3194,7 +3198,7 @@ void ConditionSystem::RegisterNewConditions()
 	twoWeaponToggles.AddHook(dispTypeRadialMenuEntry, DK_NONE, genericCallbacks.TwoWeaponRadialMenu);
 	twoWeaponToggles.AddHook(dispTypeRadialMenuEntry, DK_NONE, genericCallbacks.LeftPrimaryRadialMenu);
 
-	static CondStructNew shieldBash("Shield Bash", 2);
+	static CondStructNew shieldBash("Shield Bash", 3);
 	shieldBash.AddHook(dispTypeD20Query, DK_QUE_Can_Shield_Bash, QueryRetrun1GetArgs);
 	shieldBash.AddHook(dispTypeGetAttackDice, DK_NONE, ShieldBashWeaponDice);
 	shieldBash.AddHook(dispTypeGetCriticalHitExtraDice, DK_NONE, ShieldBashCritMultiplier);
@@ -5766,9 +5770,6 @@ int __cdecl ItemCallbacks::ShieldAcPenalty(DispatcherCallbackArgs args)
 		return 0;
 
 	auto invIdx = args.GetCondArg(2);
-	// just in case we're getting a Shield Bonus from something besides equipment
-	if (invIdx == 0) return 0;
-
 	objHndl source = inventory.GetItemAtInvIdx(attacker, invIdx);
 
 	if (dispIo->attackPacket.GetWeaponUsed() == source)
@@ -5781,18 +5782,22 @@ int __cdecl ItemCallbacks::ShieldAcPenalty(DispatcherCallbackArgs args)
 int __cdecl ItemCallbacks::ShieldAcBonus(DispatcherCallbackArgs args)
 {
 	auto dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
-	auto invIdx = args.GetCondArg(2);
-	auto source = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
+
+	// touch attacks bypass shields; test first to avoid bonus list spam
+	if (dispIo->attackPacket.flags & D20CAF_TOUCH_ATTACK)
+		return 0;
 
 	if (args.GetCondArg(1)) { // bonus disabled due to shield bash
 		dispIo->bonlist.ZeroBonusSetMeslineNum(351);
-	} else {
-		auto name = description.getDisplayName(source);
-		auto bonus = args.GetCondArg(0);
-		// touch attacks bypass shields
-		if (!(dispIo->attackPacket.flags & D20CAF_TOUCH_ATTACK))
-			dispIo->bonlist.AddBonusWithDesc(bonus, 29, 125, name);
+		return 0;
 	}
+
+	auto invIdx = args.GetCondArg(2);
+	auto source = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
+	auto name = description.getDisplayName(source);
+	auto bonus = args.GetCondArg(0);
+
+	dispIo->bonlist.AddBonusWithDesc(bonus, 29, 125, name);
 
 	return 0;
 }
