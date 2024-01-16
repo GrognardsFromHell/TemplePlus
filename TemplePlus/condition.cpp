@@ -1831,15 +1831,19 @@ int ShieldBashProficiencyPenalty(DispatcherCallbackArgs args)
 {
 	auto dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
 	auto invIdx = args.GetCondArg(2);
-	auto shield = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
+	auto attacker = dispIo->attackPacket.attacker;
+	auto shield = inventory.GetItemAtInvIdx(attacker, invIdx);
 
 	if (dispIo->attackPacket.weaponUsed != shield) return 0;
 	// Future option: create an individual proficiency.
 	// Probably a waste of time, since no one would take it.
-	if (feats.HasFeatCount(args.objHndCaller, FEAT_MARTIAL_WEAPON_PROFICIENCY_ALL))
+	if (feats.HasFeatCount(attacker, FEAT_MARTIAL_WEAPON_PROFICIENCY_ALL)) {
 		return 0;
+	}
 
 	dispIo->bonlist.AddBonus(-4, 37, 138);
+
+	return 0;
 }
 
 int __cdecl CondNodeSetArgFromSubDispDef(DispatcherCallbackArgs args)
