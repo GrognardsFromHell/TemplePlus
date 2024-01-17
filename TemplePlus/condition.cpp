@@ -5754,7 +5754,7 @@ int __cdecl ItemCallbacks::ShieldAcBonus(DispatcherCallbackArgs args)
 	auto invIdx = args.GetCondArg(2);
 	auto source = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
 	auto name = description.getDisplayName(source);
-	auto packedbonus = dispatch.DispatchItemQuery(source, DK_QUE_Armor_Get_AC_Bonus);
+	auto packedBonus = dispatch.DispatchItemQuery(source, DK_QUE_Armor_Get_AC_Bonus);
 	auto base = packedBonus & 0xff;
 	auto enh = (packedBonus & 0xff00) >> 8;
 
