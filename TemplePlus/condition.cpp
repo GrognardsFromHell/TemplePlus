@@ -508,6 +508,9 @@ public:
 		// shield AC bonus; add shield bash behavior
 		replaceFunction<int(DispatcherCallbackArgs)>(0x10100370, itemCallbacks.ShieldAcBonus);
 
+		// shield enhancement AC bonus; replaced with a no-op to fix a stacking bug
+		replaceFunction<int(DispatcherCallbackArgs)>(0x101003f0, itemCallbacks.ShieldEnhAcBonus);
+
 		// Armor AC Bonus Cap - disregard cap >= 100 (so as to not clog the buffer)
 		replaceFunction<int(DispatcherCallbackArgs)>(0x10100720, itemCallbacks.ArmorBonusAcBonusCapValue);
 
@@ -3127,6 +3130,12 @@ void ConditionSystem::RegisterNewConditions()
 		condShieldBonus.AddHook(dispTypeBucklerAcPenalty, DK_NONE, itemCallbacks.ShieldAcPenalty);
 		// reset shield bash penalty on begin round
 		condShieldBonus.AddHook(dispTypeBeginRound, DK_NONE, CondNodeSetArgFromSubDispDef, 1, 0);
+
+		// replace Q_Armor_Get_AC_Bonus callbacks to fix stacking behavior
+		condShieldBonus.subDispDefs[0].dispCallback = itemCallbacks.ShieldAcQuery;
+		static CondStructNew condShieldEnhBonus;
+		condShieldEnhBonus.ExtendExisting("Shield Enhancement Bonus");
+		condShieldEnhBonus.subDispDefs[0].dispCallback = itemCallbacks.ShieldEnhAcQuery;
 	}
 #pragma endregion
 
@@ -5728,6 +5737,7 @@ int __cdecl ItemCallbacks::ShieldAcPenalty(DispatcherCallbackArgs args)
 int __cdecl ItemCallbacks::ShieldAcBonus(DispatcherCallbackArgs args)
 {
 	auto dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
+	if (!dispIo) return 0;
 
 	// touch attacks bypass shields; test first to avoid bonus list spam
 	if (dispIo->attackPacket.flags & D20CAF_TOUCH_ATTACK)
@@ -5741,13 +5751,50 @@ int __cdecl ItemCallbacks::ShieldAcBonus(DispatcherCallbackArgs args)
 	auto invIdx = args.GetCondArg(2);
 	auto source = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
 	auto name = description.getDisplayName(source);
-	auto bonus = args.GetCondArg(0);
+	auto packedbonus = dispatch.DispatchItemQuery(source, DK_QUE_Amor_Get_AC_Bonus);
+	auto base = packedBonus & 0xff;
+	auto enh = (packedBonus & 0xff00) >> 8;
 
-	dispIo->bonlist.AddBonusWithDesc(bonus, 29, 125, name);
+	dispIo->bonlist.AddBonusWithDesc(base + enh, 29, 125, name);
 
 	return 0;
 }
 
+// Replace with no-op to avoid invalid stacking
+int __cdecl ItemCallbacks::ShieldEnhAcBonus(DispatcherCallbackArgs args)
+{
+	return 0;
+}
+
+int __cdecl ItemCallbacks::ShieldAcQuery(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
+	if (!dispIo) return 0;
+
+	auto base = dispIo->return_val & 0xff;
+	auto rest = dispIo->return_val & 0xffffff00;
+
+	base = std::max(base, args.GetCondArg(0));
+
+	dispIo->return_val = rest | base;
+
+	return 0;
+}
+
+int __cdecl ItemCallbacks::ShieldEnhAcQuery(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
+	if (!dispIo) return 0;
+
+	auto enh = dispIo->return_val & 0xff00;
+	auto rest = dispIo->return_val & 0xffff00ff;
+
+	enh = std::max(enh, args.GetCondArg(0) << 8);
+
+	dispIo->return_val = rest | enh;
+
+	return 0;
+}
 
 int ItemCallbacks::WeaponMerciful(DispatcherCallbackArgs args){
 	GET_DISPIO(dispIOTypeDamage, DispIoDamage);
