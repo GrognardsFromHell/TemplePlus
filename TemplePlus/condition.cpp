@@ -211,6 +211,9 @@ public:
 	static int __cdecl BucklerAcPenalty(DispatcherCallbackArgs args);
 	static int __cdecl ShieldAcPenalty(DispatcherCallbackArgs args);
 	static int __cdecl ShieldAcBonus(DispatcherCallbackArgs args);
+	static int __cdecl ShieldAcQuery(DispatcherCallbackArgs args);
+	static int __cdecl ShieldEnhAcQuery(DispatcherCallbackArgs args);
+	static int __cdecl ShieldEnhAcBonus(DispatcherCallbackArgs args);
 	static int __cdecl WeaponMerciful(DispatcherCallbackArgs);
 	static int __cdecl WeaponSeekingAttackerConcealmentMissChance(DispatcherCallbackArgs args);
 	static int __cdecl WeaponSpeed(DispatcherCallbackArgs args);
@@ -5751,7 +5754,7 @@ int __cdecl ItemCallbacks::ShieldAcBonus(DispatcherCallbackArgs args)
 	auto invIdx = args.GetCondArg(2);
 	auto source = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
 	auto name = description.getDisplayName(source);
-	auto packedbonus = dispatch.DispatchItemQuery(source, DK_QUE_Amor_Get_AC_Bonus);
+	auto packedbonus = dispatch.DispatchItemQuery(source, DK_QUE_Armor_Get_AC_Bonus);
 	auto base = packedBonus & 0xff;
 	auto enh = (packedBonus & 0xff00) >> 8;
 
@@ -5768,7 +5771,7 @@ int __cdecl ItemCallbacks::ShieldEnhAcBonus(DispatcherCallbackArgs args)
 
 int __cdecl ItemCallbacks::ShieldAcQuery(DispatcherCallbackArgs args)
 {
-	auto dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
+	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
 	if (!dispIo) return 0;
 
 	auto base = dispIo->return_val & 0xff;
@@ -5783,7 +5786,7 @@ int __cdecl ItemCallbacks::ShieldAcQuery(DispatcherCallbackArgs args)
 
 int __cdecl ItemCallbacks::ShieldEnhAcQuery(DispatcherCallbackArgs args)
 {
-	auto dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
+	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
 	if (!dispIo) return 0;
 
 	auto enh = dispIo->return_val & 0xff00;
