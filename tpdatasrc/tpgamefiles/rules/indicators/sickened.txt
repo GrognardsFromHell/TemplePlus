@@ -1,0 +1,5 @@
+ID_string: SICKENED
+effect_type: 1
+texture_file: art\interface\player_conditions\ailments\sickened.tga
+help_topic: TAG_SICKENED
+tooltip_base_text: Sickened
