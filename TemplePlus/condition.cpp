@@ -145,6 +145,7 @@ public:
 	static int QuerySetReturnVal1(DispatcherCallbackArgs args);
 	static int QuerySetReturnVal0(DispatcherCallbackArgs);
 	static int ActionInvalidQueryTrue(DispatcherCallbackArgs);
+	static int NoOp(DispatcherCallbackArgs);
 
 	static int EffectTooltipDuration(DispatcherCallbackArgs args); // SubDispDef data1 denotes the effect type idx, data2 denotes combat.mes line; appends duration
 	static int EffectTooltipGeneral(DispatcherCallbackArgs args);
@@ -211,9 +212,8 @@ public:
 	static int __cdecl BucklerAcPenalty(DispatcherCallbackArgs args);
 	static int __cdecl ShieldAcPenalty(DispatcherCallbackArgs args);
 	static int __cdecl ShieldAcBonus(DispatcherCallbackArgs args);
-	static int __cdecl ShieldAcQuery(DispatcherCallbackArgs args);
-	static int __cdecl ShieldEnhAcQuery(DispatcherCallbackArgs args);
-	static int __cdecl ShieldEnhAcBonus(DispatcherCallbackArgs args);
+	static int __cdecl BaseAcQuery(DispatcherCallbackArgs args);
+	static int __cdecl EnhAcQuery(DispatcherCallbackArgs args);
 	static int __cdecl WeaponMerciful(DispatcherCallbackArgs);
 	static int __cdecl WeaponSeekingAttackerConcealmentMissChance(DispatcherCallbackArgs args);
 	static int __cdecl WeaponSpeed(DispatcherCallbackArgs args);
@@ -508,11 +508,11 @@ public:
 		// buckler AC penalty
 		replaceFunction<int(DispatcherCallbackArgs)>(0x10104E40, itemCallbacks.BucklerAcPenalty);
 
-		// shield AC bonus; add shield bash behavior
+		// shield AC bonus; add shield bash behavior; fix stacking
 		replaceFunction<int(DispatcherCallbackArgs)>(0x10100370, itemCallbacks.ShieldAcBonus);
 
-		// shield enhancement AC bonus; replaced with a no-op to fix a stacking bug
-		replaceFunction<int(DispatcherCallbackArgs)>(0x101003f0, itemCallbacks.ShieldEnhAcBonus);
+		// armor AC bonus; fix stacking
+		replaceFunction<int(DispatcherCallbackArgs)>(0x101001D0, itemCallbacks.ArmorAcBonus);
 
 		// Armor AC Bonus Cap - disregard cap >= 100 (so as to not clog the buffer)
 		replaceFunction<int(DispatcherCallbackArgs)>(0x10100720, itemCallbacks.ArmorBonusAcBonusCapValue);
@@ -1065,6 +1065,10 @@ int GenericCallbacks::QuerySetReturnVal0(DispatcherCallbackArgs args)
 int GenericCallbacks::ActionInvalidQueryTrue(DispatcherCallbackArgs args){
 	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
 	dispIo->return_val = 1;
+	return 0;
+}
+
+int GenericCallbacks::NoOp(DispatcherCallbackArgs args) {
 	return 0;
 }
 
@@ -3135,10 +3139,21 @@ void ConditionSystem::RegisterNewConditions()
 		condShieldBonus.AddHook(dispTypeBeginRound, DK_NONE, CondNodeSetArgFromSubDispDef, 1, 0);
 
 		// replace Q_Armor_Get_AC_Bonus callbacks to fix stacking behavior
-		condShieldBonus.subDispDefs[0].dispCallback = itemCallbacks.ShieldAcQuery;
+		condShieldBonus.subDispDefs[0].dispCallback = itemCallbacks.BaseAcQuery;
 		static CondStructNew condShieldEnhBonus;
 		condShieldEnhBonus.ExtendExisting("Shield Enhancement Bonus");
-		condShieldEnhBonus.subDispDefs[0].dispCallback = itemCallbacks.ShieldEnhAcQuery;
+		condShieldEnhBonus.subDispDefs[0].dispCallback = itemCallbacks.EnhAcQuery;
+		// replace OnGetAC handler for new calculation methodology
+		condShieldEnhBonus.subDispDefs[1].dispCallback = genericCallbacks.NoOp;
+
+		// as above, but for armor
+		static CondStructNew condArmorBonus;
+		condArmorBonus.ExtendExisting("Armor Bonus");
+		condArmorBonus.subDispDefs[0].dispCallback = itemCallbacks.BaseAcQuery;
+		static CondStructNew condArmorEnhBonus;
+		condArmorEnhBonus.ExtendExisting("Armor Enhancement Bonus");
+		condArmorEnhBonus.subDispDefs[0].dispCallback = itemCallbacks.EnhAcQuery;
+		condArmorEnhBonus.subDispDefs[1].dispCallback = genericCallbacks.NoOp;
 	}
 #pragma endregion
 
@@ -5763,13 +5778,28 @@ int __cdecl ItemCallbacks::ShieldAcBonus(DispatcherCallbackArgs args)
 	return 0;
 }
 
-// Replace with no-op to avoid invalid stacking
-int __cdecl ItemCallbacks::ShieldEnhAcBonus(DispatcherCallbackArgs args)
+int __cdecl ItemCallbacks::ArmorAcBonus(DispatcherCallbackArgs args)
 {
+	auto dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
+	if (!dispIo) return 0;
+
+	// touch attacks bypass armor; test first to avoid bonus list spam
+	if (dispIo->attackPacket.flags & D20CAF_TOUCH_ATTACK)
+		return 0;
+
+	auto invIdx = args.GetCondArg(2);
+	auto source = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
+	auto name = description.getDisplayName(source);
+	auto packedBonus = dispatch.DispatchItemQuery(source, DK_QUE_Armor_Get_AC_Bonus);
+	auto base = packedBonus & 0xff;
+	auto enh = (packedBonus & 0xff00) >> 8;
+
+	dispIo->bonlist.AddBonusWithDesc(base + enh, 28, 124, name);
+
 	return 0;
 }
 
-int __cdecl ItemCallbacks::ShieldAcQuery(DispatcherCallbackArgs args)
+int __cdecl ItemCallbacks::BaseAcQuery(DispatcherCallbackArgs args)
 {
 	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
 	if (!dispIo) return 0;
@@ -5784,7 +5814,7 @@ int __cdecl ItemCallbacks::ShieldAcQuery(DispatcherCallbackArgs args)
 	return 0;
 }
 
-int __cdecl ItemCallbacks::ShieldEnhAcQuery(DispatcherCallbackArgs args)
+int __cdecl ItemCallbacks::EnhAcQuery(DispatcherCallbackArgs args)
 {
 	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
 	if (!dispIo) return 0;
