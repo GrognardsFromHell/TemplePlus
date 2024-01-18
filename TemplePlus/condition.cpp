@@ -207,6 +207,7 @@ public:
 
 	static int __cdecl ArmorCheckPenalty(objHndl armor);
 	static int __cdecl MaxDexBonus(objHndl armor);
+	static int __cdecl ArmorAcBonus(DispatcherCallbackArgs args);
 	static int __cdecl ArmorBonusAcBonusCapValue(DispatcherCallbackArgs args);
 	static int __cdecl BucklerToHitPenalty(DispatcherCallbackArgs args);
 	static int __cdecl BucklerAcPenalty(DispatcherCallbackArgs args);
