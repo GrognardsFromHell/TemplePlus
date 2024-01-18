@@ -1724,6 +1724,30 @@ int TwoWeaponRadialMenu(DispatcherCallbackArgs args)
 	return 0;
 }
 
+int DefaultSetTWF(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType6(args.dispIO);
+	if (!dispIo) return 0;
+
+	objHndl uitem = objHndl::FromUpperAndLower(dispIo->data2, dispIo->data1);
+	if (!uitem) return 0;
+
+	logger->trace("DefaultSetTWF uitem: {}", objHndl);
+
+	objHndl right = inventory.ItemWornAt(args.objHndCaller, EquipSlot::WeaponPrimary);
+	objHndl left = inventory.ItemWornAt(args.objHndCaller, EquipSlot::WeaponSecondary);
+	objHndl shield = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Shield);
+
+	if (uitem == left) { // off hand equipped, default two TWF on
+		args.SetCondArg(0, 1);
+	} else if (uitem == shield) { // shield equipped, default to TWF off
+		args.SetCondArg(0, 0);
+		args.SetCondArg(1, 0);
+	}
+
+	return 0;
+}
+
 int LeftPrimaryRadialMenu(DispatcherCallbackArgs args)
 {
 	if (!critterSys.CanTwoWeaponFight(args.objHndCaller))
@@ -3170,6 +3194,7 @@ void ConditionSystem::RegisterNewConditions()
 	twoWeapToggles.AddHook(dispTypeRadialMenuEntry, DK_NONE, LeftPrimaryRadialMenu);
 	twoWeapToggles.AddHook(dispTypeBeginRound, DK_NONE, CondNodeSetArgFromSubDispDef, 2, 0);
 	twoWeapToggles.AddHook(dispTypeD20Signal, DK_SIG_Attack_Made, CondNodeSetArgFromSubDispDef, 2, 1);
+	twoWeapToggles.AddHook(dispTypeD20Signal, DK_SIG_Inventory_Update, DefaultSetTWF);
 
 	static CondStructNew shieldBash("Shield Bash", 3);
 	shieldBash.AddHook(dispTypeD20Query, DK_QUE_Can_Shield_Bash, QueryRetrun1GetArgs);
