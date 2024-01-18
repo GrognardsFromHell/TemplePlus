@@ -1732,7 +1732,7 @@ int DefaultSetTWF(DispatcherCallbackArgs args)
 	objHndl uitem = objHndl::FromUpperAndLower(dispIo->data2, dispIo->data1);
 	if (!uitem) return 0;
 
-	logger->trace("DefaultSetTWF uitem: {}", uitem);
+	logger->info("DefaultSetTWF uitem: {}", uitem);
 
 	objHndl right = inventory.ItemWornAt(args.objHndCaller, EquipSlot::WeaponPrimary);
 	objHndl left = inventory.ItemWornAt(args.objHndCaller, EquipSlot::WeaponSecondary);
