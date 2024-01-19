@@ -1732,8 +1732,6 @@ int DefaultSetTWF(DispatcherCallbackArgs args)
 	objHndl uitem = objHndl::FromUpperAndLower(dispIo->data2, dispIo->data1);
 	if (!uitem) return 0;
 
-	logger->info("DefaultSetTWF uitem: {}", uitem);
-
 	objHndl right = inventory.ItemWornAt(args.objHndCaller, EquipSlot::WeaponPrimary);
 	objHndl left = inventory.ItemWornAt(args.objHndCaller, EquipSlot::WeaponSecondary);
 	objHndl shield = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Shield);
@@ -1743,6 +1741,11 @@ int DefaultSetTWF(DispatcherCallbackArgs args)
 	} else if (uitem == shield) { // shield equipped, default to TWF off
 		args.SetCondArg(0, 0);
 		args.SetCondArg(1, 0);
+	} else if (uitem == right) { // right hand equipped
+		if (!left) {
+			args.SetCondArg(0, 0);
+			args.SetCondArg(1, 0);
+		}
 	}
 
 	return 0;
