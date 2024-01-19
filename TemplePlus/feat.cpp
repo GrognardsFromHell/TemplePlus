@@ -1680,7 +1680,7 @@ uint32_t _WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featA
 
 		if (config.stricterRulesEnforcement) {
 			// orcs treat this as a martial weapon
-			if (critterSys.GetSubcategoryFlags(critter) & mc_subtype_orc) {
+			if (critterSys.GetSubcategoryFlags(objHnd) & mc_subtype_orc) {
 				return martial;
 			}
 		} else if (critterSys.GetRace(objHnd) == race_halforc) {
