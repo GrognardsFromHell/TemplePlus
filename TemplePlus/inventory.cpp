@@ -1590,7 +1590,14 @@ int InventorySystem::GetWieldType(objHndl wielder, objHndl item, bool regardEnla
 		return wieldType;
 	}
 
-	if (feats.HasFeatCountByClass(wielder, FEAT_EXOTIC_WEAPON_PROFICIENCY_DWARVEN_WARAXE) || objects.StatLevelGet(wielder, stat_race) == race_dwarf)
+	auto hasExotic = feats.HasFeatCountByClass(wielder, FEAT_EXOTIC_WEAPON_PROFICIENCY_DWARVEN_WARAXE);
+	auto isDwarf = objects.StatLevelGet(wielder, stat_race) == race_dwarf;
+	// TODO: make a specific martial feat that no one will ever take?
+	auto hasMartial = feats.HasFeatCountByClass(wielder, FEAT_MARTIAL_WEAPON_PROFICIENCY_ALL);
+	// only require martial proficiency if strict enforcement is on
+	hasMartial |= !config.stricterRulesEnforcement;
+
+	if (hasExotic || (isDwarf && hasMartial))
 	{
 		return wieldType;
 	} 
