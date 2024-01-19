@@ -243,7 +243,7 @@ struct InventorySystem : temple::AddressTable
 		rebase(GetSubstituteInventory, 0x1007F5B0);
 		//rebase(GetItemAtInvIdx, 0x100651B0);
 		rebase(_ItemWornAt,      0x10065010);
-		rebase(_GetWieldType,    0x10066580);
+		//rebase(_GetWieldType,    0x10066580);
 		//rebase(FindMatchingStackableItem, 0x10067DF0);
 
 
@@ -270,7 +270,7 @@ private:
 	int(__cdecl*_ItemRemove)(objHndl item);
 	int(__cdecl*_ItemDrop)(objHndl item);
 	objHndl(__cdecl *_ItemWornAt)(objHndl, EquipSlot nItemSlot);
-	int(__cdecl *_GetWieldType)(objHndl wielder, objHndl item);
+	//int(__cdecl *_GetWieldType)(objHndl wielder, objHndl item);
 
 	int InvIdxForSlot(EquipSlot slot); // converts EquipSlot to inventory index
 	int InvIdxForSlot(int slot); // converts EquipSlot to inventory index

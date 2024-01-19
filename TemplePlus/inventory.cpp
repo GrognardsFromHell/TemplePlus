@@ -203,6 +203,11 @@ public:
 		replaceFunction<int(__cdecl)(objHndl, objHndl, objHndl, int)>(0x100698E0, [](objHndl item, objHndl parent, objHndl appraiser, int skillIdx) {
 			return inventory.GetAppraisedTransactionSum(item, parent, appraiser, (SkillEnum)skillIdx);
 		});
+
+		// GetWieldType
+		replaceFunction<int(__cdecl)(objHndl, objHndl)>(0x10066580, [](objHndl wielder, objHndl item) {
+			return inventory.GetWieldType(wielder, item, false);
+		});
 	};
 
 	
