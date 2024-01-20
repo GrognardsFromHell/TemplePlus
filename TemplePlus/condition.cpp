@@ -2514,11 +2514,9 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 				strMod /= 2;
 			}
 				
-		} else if (d20Sys.d20QueryWithData(args.objHndCaller, DK_QUE_WieldedTwoHanded, (int)dispIo, 0) 
-			&& strMod > 0 
-			&&  inventory.GetWieldType(args.objHndCaller, weapon, true) )
+		} else if (critter.GetFightingStyle(args.objHndCaller) == FightingStyle::TwoHanded)
 		{
-			strMod += strMod / 2;
+			strMod += std::max(0, strMod) / 2;
 		}
 		if (attackCode > ATTACK_CODE_NATURAL_ATTACK && strMod > 0 && critterSys.GetDamageIdx(args.objHndCaller, attackCode - (ATTACK_CODE_NATURAL_ATTACK + 1)) > 0)
 		{
