@@ -2514,7 +2514,7 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 				strMod /= 2;
 			}
 				
-		} else if (critter.GetFightingStyle(args.objHndCaller) == FightingStyle::TwoHanded)
+		} else if (critterSys.GetFightingStyle(args.objHndCaller) == FightingStyle::TwoHanded)
 		{
 			strMod += std::max(0, strMod) / 2;
 		}
