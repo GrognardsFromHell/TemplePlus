@@ -1709,11 +1709,17 @@ gfx::WeaponAnimType InventorySystem::GetWeaponAnimId(objHndl item, objHndl wield
 		case WeaponTypes::wt_rapier:
 			return gfx::WeaponAnimType::Spear;
 		case WeaponTypes::wt_orc_double_axe:
-		case WeaponTypes::wt_quarterstaff:
+		case WeaponTypes::wt_dwarven_urgrosh:
 			if (d20Sys.d20Query(wielder, DK_QUE_Is_Two_Weapon_Fighting) > 1)
 				return gfx::WeaponAnimType::Staff;
 			else
 				return gfx::WeaponAnimType::Greataxe;
+		case WeaponTypes::wt_quarterstaff:
+		case WeaponTypes::wt_gnome_hooked_hammer:
+			if (d20Sys.d20Query(wielder, DK_QUE_Is_Two_Weapon_Fighting) > 1)
+				return gfx::WeaponAnimType::Staff;
+			else
+				return gfx::WeaponAnimType::Greathammer;
 		default:
 			// original two handed anim array
 			return (gfx::WeaponAnimType)temple::GetRef<int[74]>(0x102BE668)[wtype];
