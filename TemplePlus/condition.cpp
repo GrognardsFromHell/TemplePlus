@@ -211,6 +211,7 @@ public:
 	static int __cdecl ArmorBonusAcBonusCapValue(DispatcherCallbackArgs args);
 	static int __cdecl BucklerToHitPenalty(DispatcherCallbackArgs args);
 	static int __cdecl BucklerAcPenalty(DispatcherCallbackArgs args);
+	static int __cdecl BucklerAcBonus(DispatcherCallbackArgs args);
 	static int __cdecl ShieldAcPenalty(DispatcherCallbackArgs args);
 	static int __cdecl ShieldAcBonus(DispatcherCallbackArgs args);
 	static int __cdecl BaseAcQuery(DispatcherCallbackArgs args);
@@ -511,6 +512,9 @@ public:
 
 		// shield AC bonus; add shield bash behavior; fix stacking
 		replaceFunction<int(DispatcherCallbackArgs)>(0x10100370, itemCallbacks.ShieldAcBonus);
+
+		// buckler AC bonus; fix stacking
+		replaceFunction<int(DispatcherCallbackArgs)>(0x10104EE0, itemCallbacks.BucklerAcBonus);
 
 		// armor AC bonus; fix stacking
 		replaceFunction<int(DispatcherCallbackArgs)>(0x101001D0, itemCallbacks.ArmorAcBonus);
@@ -5775,6 +5779,32 @@ int __cdecl ItemCallbacks::ShieldAcPenalty(DispatcherCallbackArgs args)
 	if (dispIo->attackPacket.GetWeaponUsed() == source)
 		// shield bashing, disable AC bonus
 		args.SetCondArg(1, 1);
+
+	return 0;
+}
+
+int __cdecl ItemCallbacks::BucklerAcBonus(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
+	if (!dispIo) return 0;
+
+	// touch attacks bypass shields; test first to avoid bonus list spam
+	if (dispIo->attackPacket.flags & D20CAF_TOUCH_ATTACK)
+		return 0;
+
+	if (args.GetCondArg(1)) { // bonus disabled due to second hand attack
+		dispIo->bonlist.ZeroBonusSetMeslineNum(326);
+		return 0;
+	}
+
+	auto invIdx = args.GetCondArg(2);
+	auto source = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
+	auto name = description.getDisplayName(source);
+	auto packedBonus = dispatch.DispatchItemQuery(source, DK_QUE_Armor_Get_AC_Bonus);
+	auto base = packedBonus & 0xff;
+	auto enh = (packedBonus & 0xff00) >> 8;
+
+	dispIo->bonlist.AddBonusWithDesc(base + enh, 29, 125, name);
 
 	return 0;
 }
