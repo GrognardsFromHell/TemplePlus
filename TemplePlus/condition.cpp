@@ -3188,7 +3188,7 @@ void ConditionSystem::RegisterNewConditions()
 	preferOneHanded.AddHook(dispTypeD20Query, DK_QUE_Is_Preferring_One_Handed_Wield, genericCallbacks.PreferOneHandedWieldQuery);
 	preferOneHanded.AddHook(dispTypeRadialMenuEntry, DK_NONE, genericCallbacks.PreferOneHandedWieldRadialMenu);
 
-	static CondStructNew twoWeapToggles("Two Weapon Toggles", 6);
+	static CondStructNew twoWeapToggles("Two Weapon Toggles", 6, true);
 	twoWeapToggles.AddHook(dispTypeD20Query, DK_QUE_Is_Two_Weapon_Fighting, TwoWeaponQuery);
 	twoWeapToggles.AddHook(dispTypeD20Query, DK_QUE_Left_Is_Primary, LeftPrimaryQuery);
 	twoWeapToggles.AddHook(dispTypeRadialMenuEntry, DK_NONE, TwoWeaponRadialMenu);
