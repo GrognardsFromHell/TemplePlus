@@ -780,6 +780,8 @@ bool ObjectFields::IterateTypeFields(ObjectType type, std::function<bool(obj_f)>
 	case obj_t_armor:
 		if (!IterateFieldRange(obj_f_item_begin, obj_f_item_end, callback))
 			return false;
+		if (!IterateFieldRange(obj_f_weapon_begin, obj_f_weapon_end, callback))
+			return false;
 		return IterateFieldRange(obj_f_armor_begin, obj_f_armor_end, callback);
 	case obj_t_money:
 		if (!IterateFieldRange(obj_f_item_begin, obj_f_item_end, callback))
