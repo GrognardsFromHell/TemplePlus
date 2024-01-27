@@ -348,7 +348,7 @@ int ProtosHooks::ParseMonsterSubcategory(int colIdx, objHndl handle, char * cont
 }
 
 static int armorWeaponStage = 0;
-static int armorWeaponDamageType = DamageType::Bludgeoning;
+static int armorWeaponDamageType = (int)DamageType::Bludgeoning;
 static int armorWeaponDice = 0;
 static int armorWeaponCritRange = 20;
 static int armorWeaponCritMult = 2;
@@ -375,7 +375,7 @@ void ArmorWeaponFinalize(GameObjectBody* obj) {
 	armorWeaponDice = 0;
 	armorWeaponCritRange = 20;
 	armorWeaponCritMult = 2;
-	armorWeaponDamageType = DamageType::Bludgeoning;
+	armorWeaponDamageType = (int)DamageType::Bludgeoning;
 }
 
 int ProtosHooks::ParseType(int colIdx, objHndl handle, char * content, obj_f field, int arrayLen, char ** strings){
