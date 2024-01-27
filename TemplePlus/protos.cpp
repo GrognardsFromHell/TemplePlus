@@ -29,7 +29,7 @@ public:
 
 	static int SetCritterAttacks(objHndl handle);
 
-	static int __cdecl (*DamageTypeFromString)(char* str);
+	static int (__cdecl *DamageTypeFromString)(char* str);
 
 	void apply() override
 	{
@@ -348,7 +348,7 @@ int ProtosHooks::ParseMonsterSubcategory(int colIdx, objHndl handle, char * cont
 }
 
 static int armorWeaponStage = 0;
-static int armorWeaponDamageType = Bludgeoning;
+static int armorWeaponDamageType = DamageType::Bludgeoning;
 static int armorWeaponDice = 0;
 static int armorWeaponCritRange = 20;
 static int armorWeaponCritMult = 2;
@@ -375,7 +375,7 @@ void ArmorWeaponFinalize(GameObjectBody* obj) {
 	armorWeaponDice = 0;
 	armorWeaponCritRange = 20;
 	armorWeaponCritMult = 2;
-	armorWeaponDamageType = Bludgeoning;
+	armorWeaponDamageType = DamageType::Bludgeoning;
 }
 
 int ProtosHooks::ParseType(int colIdx, objHndl handle, char * content, obj_f field, int arrayLen, char ** strings){
@@ -536,9 +536,9 @@ int ProtosHooks::ParseDice(int colIdx, objHndl handle, char* content, obj_f fiel
 
 	auto obj = objSystem->GetObject(handle);
 	if (obj->type != obj_t_armor || obj_f_weapon_damage_dice != field) {
-		obj->SetInt32(field, dice.toPacked());
+		obj->SetInt32(field, dice.ToPacked());
 	} else {
-		armorWeaponDice = dice.toPacked();
+		armorWeaponDice = dice.ToPacked();
 		if (++armorWeaponStage >= 5) ArmorWeaponFinalize(obj);
 	}
 
