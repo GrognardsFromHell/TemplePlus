@@ -1768,29 +1768,46 @@ int LeftPrimaryRadialMenu(DispatcherCallbackArgs args)
 	return 0;
 }
 
-int ShieldBashWeaponDice(DispatcherCallbackArgs args)
+// Functions for armor that can be used as a weapon via a condition
+int ArmorWeaponDice(DispatcherCallbackArgs args)
 {
 	DispIoAttackDice * dispIo = dispatch.DispIoCheckIoType20(args.dispIO);
 
 	auto invIdx = args.GetCondArg(2);
-	auto shield = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
+	auto armor = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
 
-	// if the weapon is the shield, set dice to stored packed dice
-	if (dispIo->weapon == shield)
+	if (dispIo->weapon == armor)
 		dispIo->dicePacked = conds.CondNodeGetArg(args.subDispNode->condNode, 1);
 
 	return 0;
 }
 
-int ShieldBashCritMultiplier(DispatcherCallbackArgs args)
+int ArmorCritRange(DispatcherCallbackArgs args)
 {
 	DispIoAttackBonus * dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
 
 	auto invIdx = args.GetCondArg(2);
-	auto shield = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
+	auto armor = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
 
-	if (dispIo->attackPacket.weaponUsed == shield)
-		dispIo->bonlist.AddBonus(2, 0, 110);
+	if (dispIo->attackPacket.weaponUsed == armor) {
+		auto mult = conds.CondNodeGetArg(args.subDispNode->condNode, 3);
+		dispIo->bonlist.AddBonus(mult, 0, 110);
+	}
+
+	return 0;
+}
+
+int ArmorCritMultiplier(DispatcherCallbackArgs args)
+{
+	DispIoAttackBonus * dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
+
+	auto invIdx = args.GetCondArg(2);
+	auto armor = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
+
+	if (dispIo->attackPacket.weaponUsed == armor) {
+		auto mult = conds.CondNodeGetArg(args.subDispNode->condNode, 4);
+		dispIo->bonlist.AddBonus(mult, 0, 110);
+	}
 
 	return 0;
 }
@@ -3201,10 +3218,12 @@ void ConditionSystem::RegisterNewConditions()
 	twoWeapToggles.AddHook(dispTypeD20Signal, DK_SIG_Attack_Made, CondNodeSetArgFromSubDispDef, 2, 1);
 	twoWeapToggles.AddHook(dispTypeD20Signal, DK_SIG_Inventory_Update, DefaultSetTWF);
 
-	static CondStructNew shieldBash("Shield Bash", 3);
-	shieldBash.AddHook(dispTypeD20Query, DK_QUE_Can_Shield_Bash, QueryRetrun1GetArgs);
-	shieldBash.AddHook(dispTypeGetAttackDice, DK_NONE, ShieldBashWeaponDice);
-	shieldBash.AddHook(dispTypeGetCriticalHitExtraDice, DK_NONE, ShieldBashCritMultiplier);
+	// damage type, damage, inventory index, crit range, crit mult
+	static CondStructNew shieldBash("Shield Bash", 5);
+	shieldBash.AddHook(dispTypeD20Query, DK_QUE_Can_Shield_Bash, QuerySetReturnVal1);
+	shieldBash.AddHook(dispTypeGetAttackDice, DK_NONE, ArmorWeaponDice);
+	shieldBash.AddHook(dispTypeGetCriticalHitExtraDice, DK_NONE, ArmorCritMultiplier);
+	shieldBash.AddHook(dispTypeGetCriticalHitRange, DK_NONE, ArmorCritRange);
 	shieldBash.AddHook(dispTypeToHitBonus2, DK_NONE, ShieldBashProficiencyPenalty);
 
 	{

@@ -22,8 +22,16 @@ public:
 	static int ParseType(int colIdx, objHndl handle, char* content, obj_f field, int arrayLen, char** strings);
 	static int ParseRace(int colIdx, objHndl handle, char* content, obj_f field, int arrayLen, char** strings);
 	static int ParseSpell(int colIdx, objHndl handle, char* content, obj_f field);
+
+	static int ParseWeaponDamageType(int colIdx, objHndl handle, char* content, obj_f field);
+	static int ParseWeaponCritRange(int colIdx, objHndl handle, char* content, obj_f field);
+	static int ParseDice(int colIdx, objHndl handle, char* content, obj_f field);
+
 	static int SetCritterAttacks(objHndl handle);
-	void apply() override 
+
+	static int __cdecl (*DamageTypeFromString)(char* str);
+
+	void apply() override
 	{
 
 		// protos.tab line parser; replaced for supporting extensions
@@ -50,6 +58,7 @@ public:
 
 		});
 
+		DamageTypeFromString = temple::GetRef<int(__cdecl)(char*)>(0x100E0AF0);
 
 		// Fix for protos condition parser
 		replaceFunction<int(__cdecl)(int, objHndl, char*, int, int, int, int)>(0x10039E80, ParseCondition);
@@ -63,6 +72,11 @@ public:
 		replaceFunction<int(__cdecl)(int, objHndl, char*, obj_f, int, char**)>(0x10039B40, ParseRace);
 
 		replaceFunction<int(__cdecl)(int, objHndl, char*, obj_f)>(0x1003A8C0, ParseSpell);
+
+		// Hook into weapon parsing for e.g. shield bash stats
+		replaceFunction(0x100397D0, ParseWeaponDamageType);
+		replaceFunction(0x10039CE0, ParseWeaponCritRange);
+		replaceFunction(0x10039B80, ParseDice);
 
 		//SetCritterAttacks
 		replaceFunction<int(__cdecl)(objHndl)>(0x1003AAC0, SetCritterAttacks);
@@ -178,8 +192,7 @@ int ProtosHooks::ParseCondition(int colIdx, objHndl handle, char * content, int 
 			return 1;
 		}
 
-		auto damTypeFromString = temple::GetRef<int(__cdecl)(char*)>(0x100E0AF0);
-		protoParseParam1 = damTypeFromString(content);
+		protoParseParam1 = DamageTypeFromString(content);
 		if (protoParseParam1 != -1)
 		{
 			return 1;
@@ -240,8 +253,7 @@ int ProtosHooks::ParseCondition(int colIdx, objHndl handle, char * content, int 
 		}
 
 		if (!stage2Ok){
-			auto damTypeFromString = temple::GetRef<int(__cdecl)(char*)>(0x100E0AF0);
-			protoParseParam2 = damTypeFromString(content);
+			protoParseParam2 = DamageTypeFromString(content);
 			if (protoParseParam2 != -1)
 			{
 				stage2Ok = true;
@@ -335,6 +347,37 @@ int ProtosHooks::ParseMonsterSubcategory(int colIdx, objHndl handle, char * cont
 	return 1;
 }
 
+static int armorWeaponStage = 0;
+static int armorWeaponDamageType = Bludgeoning;
+static int armorWeaponDice = 0;
+static int armorWeaponCritRange = 20;
+static int armorWeaponCritMult = 2;
+
+// armor weapon condition initialization and reset parsing
+void ArmorWeaponFinalize(GameObjectBody* obj) {
+	// shield bash is the only one right now
+	auto condId = ElfHash::Hash("Shield Bash");
+
+	auto condField = obj_f_item_pad_wielder_condition_array;
+	auto condArgField = obj_f_item_pad_wielder_argument_array;
+	auto condArray = obj->GetInt32Array(condField);
+	auto condArgArray = obj->GetInt32Array(condArgField);
+
+	obj->SetInt32(condField, condArray.GetSize(), condId);
+
+	obj->SetInt32(condArgField, condArgArray.GetSize(), armorWeaponDamageType);
+	obj->SetInt32(condArgField, condArgArray.GetSize(), armorWeaponDice);
+	obj->SetInt32(condArgField, condArgArray.GetSize(), 0);
+	obj->SetInt32(condArgField, condArgArray.GetSize(), armorWeaponCritRange);
+	obj->SetInt32(condArgField, condArgArray.GetSize(), armorWeaponCritMult);
+
+	armorWeaponStage = 0;
+	armorWeaponDice = 0;
+	armorWeaponCritRange = 20;
+	armorWeaponCritMult = 2;
+	armorWeaponDamageType = Bludgeoning;
+}
+
 int ProtosHooks::ParseType(int colIdx, objHndl handle, char * content, obj_f field, int arrayLen, char ** strings){
 
 	auto foundType = false;
@@ -354,25 +397,35 @@ int ProtosHooks::ParseType(int colIdx, objHndl handle, char * content, obj_f fie
 		}
 	}
 
+	auto obj = objSystem->GetObject(handle);
+
 	if (field == obj_f_weapon_type){
 		if (!foundType && !_strcmpi(content, "wt_mindblade")){
 			val = wt_mindblade;
 			foundType = true;
-			objSystem->GetObject(handle)->SetInt32(field, val);
-			
+			obj->SetInt32(field, val);
 		}
 
 		auto weapType = (WeaponTypes)val;
 		auto damType = weapons.wpnProps[weapType].damType;
 		
 		if (damType == DamageType::Unspecified){
-			weapons.wpnProps[weapType].damType = (DamageType)objSystem->GetObject(handle)->GetInt32(obj_f_weapon_attacktype);
+			weapons.wpnProps[weapType].damType = (DamageType)obj->GetInt32(obj_f_weapon_attacktype);
 		}
 		//else if (damType != (DamageType)objSystem->GetObject(handle)->GetInt32(obj_f_weapon_attacktype)){ // for debug
 		//	auto d = description.getDisplayName(handle);
 		//	auto strangeWeaponDamType = (DamageType)objSystem->GetObject(handle)->GetInt32(obj_f_weapon_attacktype);
 		//	auto dummy = 1;
 		//}
+	}
+
+	// Might be another place to hook this, but I'm unsure
+	if (obj_t_armor == obj->type) {
+		if (obj_f_weapon_crit_hit_chart == field) {
+			armorWeaponCritMult = atol(content);
+			foundType = true;
+			if (++armorWeaponStage >= 5) ArmorWeaponFinalize(obj);
+		}
 	}
 	
 	return foundType ? TRUE : FALSE;
@@ -430,6 +483,64 @@ int ProtosHooks::ParseSpell(int colIdx, objHndl handle, char* content, obj_f fie
 			return 1;
 	}
 	spellSys.SpellMemorizedAdd(handle, spEnum, spClass, spLvl, SpellStoreType::spellStoreMemorized, 0);
+
+	return 1;
+}
+
+int ProtosHooks::ParseWeaponDamageType(int colIdx, objHndl handle, char* content, obj_f field) {
+	if (!content || !*content) return 1;
+
+	auto dmgType = DamageTypeFromString(content);
+	if (-1 == dmgType && _strcmpi(content, "D20DT_UNSPECIFIED")) {
+		dmgType = atol(content);
+	}
+
+	auto obj = objSystem->GetObject(handle);
+	if (obj->type != obj_t_armor || field != obj_f_weapon_attacktype) {
+		// original behavior
+		obj->SetInt32(field, dmgType);
+		return 1;
+	} else {
+		armorWeaponDamageType = dmgType;
+		if (++armorWeaponStage >= 5) ArmorWeaponFinalize(obj);
+	}
+
+	return 1;
+}
+
+int ProtosHooks::ParseWeaponCritRange(int colIdx, objHndl handle, char* content, obj_f field) {
+	if (!content || !*content) return 1;
+
+	// Crit ranges in the proto are given as the lowest crit roll,
+	// but they are stored as how many sides of the die are critical hits.
+	auto range = 21 - atol(content);
+
+	auto obj = objSystem->GetObject(handle);
+	if (obj->type != obj_t_armor || obj_f_weapon_crit_range != field) {
+		obj->SetInt32(field, range);
+	} else {
+		armorWeaponCritRange = range;
+		if (++armorWeaponStage >= 5) ArmorWeaponFinalize(obj);
+	}
+
+	return 1;
+}
+
+int ProtosHooks::ParseDice(int colIdx, objHndl handle, char* content, obj_f field) {
+	if (!content || !*content) return 1;
+
+	int diceCount, diceType, diceBonus;
+	if (!Dice::Parse(content, diceCount, diceType, diceBonus)) return 0;
+
+	Dice dice(diceCount, diceType, diceBonus);
+
+	auto obj = objSystem->GetObject(handle);
+	if (obj->type != obj_t_armor || obj_f_weapon_damage_dice != field) {
+		obj->SetInt32(field, dice.toPacked());
+	} else {
+		armorWeaponDice = dice.toPacked();
+		if (++armorWeaponStage >= 5) ArmorWeaponFinalize(obj);
+	}
 
 	return 1;
 }
