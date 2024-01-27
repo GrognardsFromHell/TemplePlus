@@ -925,6 +925,20 @@ Range:               Close (25ft. + 5ft./2 lvls)
 Target:            allied creatures,  no more than 30' apart
 Duration:      1  round/level (D)}
 
+{6182} Accuracy {For the duration of the spell, the range increment for the affected weapon or weapons is doubled.
+School:          Transmutation
+Casting:         1 action [V,S]
+Range:               Touch
+Target:             One thrown weapon/level touched or one projectile weapon touched.
+Duration:      Instantaneous,  Save: None,  SR: No}
+
+{6183} Hail of Stones {You create a rain of stones that deals 1d4 points of damage per caster level (maximum 5d4).
+School:          Conjuration(Creation)[Earth]
+Casting:         1 action [V,S]
+Range:               Medium (100ft. + 10ft./lvl)
+Target:             Cylinder (5-ft. radius)
+Duration:      Instantaneous,  Save: None,  SR: No}
+
 {6184} Lesser Orb of Acid {Ranged Touch Attack that deals 1d8/two levels (max 5d8) acid damage.
 School:          Conjuration(Creation)[Acid]
 Casting:         1 action [V,S]
@@ -959,6 +973,34 @@ Casting:         1 action [V,S]
 Range:               Close (25ft. + 5ft./2 lvls)
 Target:             One creature
 Duration:      Instantaneous,  Save: None,  SR: No}
+
+{6189} Blades of Fire {Your melee weapons each deal an extra 1d8 points of fire damage stacking with other energy damage.
+School:          Conjuration (Creation)[Fire]
+Casting:         1 swift action [V]
+Range:               Touch
+Target:             Up to two melee weapons
+Duration:      1 round,  Save: None,  SR: No}
+
+{6190} Fireburst {An explosion of flame deals 1d8 (max 5d6) fire damage per level to anyone within 5 feet of you.
+School:          Evocation[Fire]
+Casting:         1 action [V,S]
+Range:               5 ft.
+Target:             Creatures 5 ft. from you
+Duration:      Inst.,  Save: Reflex partial,  SR: Yes}
+
+{6191} Greater Fireburst {An explosion of flame deals 1d8 (max 15d6) fire damage per level to anyone within 10 feet of you.
+School:          Evocation[Fire]
+Casting:         1 action [V,S]
+Range:               10 ft.
+Target:             Creatures 10 ft. from you
+Duration:      Inst.,  Save: Reflex partial,  SR: Yes}
+
+{6195} Blast of Flame {Flames fill a cone shaped area, dealing 1d6 points of fire damage per caster level (maximum 10d6).
+School:          Conjuration (Creation)[Fire]
+Casting:         1 action [V,S]
+Range:               60 ft.
+Target:             Cone-shaped burst
+Duration:      Inst.,  Save: Reflex partial,  SR: No}
 
 {6196} Orb of Acid {Ranged Touch Attack that deals 1d6/level (max 15d6) acid damage and in addition sickens for 1 round on a failed fortitude save.
 School:          Conjuration(Creation)[Acid]
