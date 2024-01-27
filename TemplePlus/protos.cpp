@@ -29,7 +29,7 @@ public:
 
 	static int SetCritterAttacks(objHndl handle);
 
-	static int (__cdecl *DamageTypeFromString)(char* str);
+	static int DamageTypeFromString(char* str);
 
 	void apply() override
 	{
@@ -57,8 +57,6 @@ public:
 			return 0;
 
 		});
-
-		DamageTypeFromString = temple::GetRef<int(__cdecl)(char*)>(0x100E0AF0);
 
 		// Fix for protos condition parser
 		replaceFunction<int(__cdecl)(int, objHndl, char*, int, int, int, int)>(0x10039E80, ParseCondition);
@@ -581,4 +579,9 @@ int ProtosHooks::SetCritterAttacks(objHndl handle)
 		}
 	}
 	return 0;
+}
+
+int ProtosHooks::DamageTypeFromString(char* str) {
+	static auto original = temple::GetRef<int(__cdecl)(char*)>(0x100E0AF0);
+	return original(str);
 }
