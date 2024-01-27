@@ -42,6 +42,7 @@ def OnEndProjectile(spell, projectile, index_of_target):
             #sp-Deafness is permanent currently, I'll add a helper condition to remove it after it should expire
             #as there is no condition_remove in python
             if spellTarget.obj.condition_add_with_args("sp-Deafness", spell.id, spell.duration, 0):
+                spell.caster.d20_send_signal("Remove Dismiss Condition", spell.id)
                 spellTarget.partsys_id = game.particles("sp-Blindness-Deafness", spellTarget.obj)
                 spellTarget.obj.condition_add_with_args("Remove Deafness Helper Condition", duration, 0)
     else:

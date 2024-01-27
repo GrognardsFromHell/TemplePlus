@@ -41,6 +41,7 @@ def OnEndProjectile(spell, projectile, index_of_target):
             spellTarget.obj.float_mesfile_line('mes\\spell.mes', 30002)
             spell.duration = 1
             if spellTarget.obj.condition_add_with_args("sp-Blindness", spell.id, spell.duration, 0):
+                spell.caster.d20_send_signal("Remove Dismiss Condition", spell.id)
                 spellTarget.partsys_id = game.particles("sp-Blindness-Deafness", spellTarget.obj)
     else:
         spellTarget.obj.float_mesfile_line('mes\\spell.mes', 30007)
