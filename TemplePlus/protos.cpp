@@ -14,7 +14,7 @@
 #include "d20_race.h"
 
 class ProtosHooks : public TempleFix{
-public: 
+public:
 
 	// static int StdParamParserFunc(int colIdx, objHndl handle, char* content, obj_f fieldId, int arrayLen, char** stringArray, int fieldSubIdx); // for future reference
 	static int ParseCondition(int colIdx, objHndl handle, char* content, int condIdx, int stage, int unused, int unused2);
@@ -141,7 +141,7 @@ int ProtosHooks::ParseCondition(int colIdx, objHndl handle, char * content, int 
 		}
 		else
 		{
-			isParsingCond = 0; 
+			isParsingCond = 0;
 		}
 		return 1;	
 	}
@@ -210,7 +210,7 @@ int ProtosHooks::ParseCondition(int colIdx, objHndl handle, char * content, int 
 			
 			protoParseParam1 = ElfHash::Hash(txtBuf);
 			return 1;
-		} 
+		}
 		else
 		{
 			protoParseParam1 = atol(content);
@@ -340,42 +340,40 @@ int ProtosHooks::ParseType(int colIdx, objHndl handle, char * content, obj_f fie
 	auto foundType = false;
 	auto val = 0;
 
-	if (content && *content){
-		if (arrayLen <= 0)
-			return 0;
+	if (!content || !*content) return FALSE;
 
-		for (auto i=0; i< arrayLen; i++){
-			if ( strings[i] && !_strcmpi(content, strings[i])){
-				
-				val = i;
-				objSystem->GetObject(handle)->SetInt32(field, val);
-				foundType = true; 
-				break;
-			}
-		}
+	if (arrayLen <= 0) return 0;
 
-		if (field == obj_f_weapon_type){
-			if (!foundType && !_strcmpi(content, "wt_mindblade")){
-				val = wt_mindblade;
-				foundType = true;
-				objSystem->GetObject(handle)->SetInt32(field, val);
-				
-			}
-
-			auto weapType = (WeaponTypes)val;
-			auto damType = weapons.wpnProps[weapType].damType;
+	for (auto i=0; i< arrayLen; i++){
+		if ( strings[i] && !_strcmpi(content, strings[i])){
 			
-			if (damType == DamageType::Unspecified){
-				weapons.wpnProps[weapType].damType = (DamageType)objSystem->GetObject(handle)->GetInt32(obj_f_weapon_attacktype);
-			} 
-			//else if (damType != (DamageType)objSystem->GetObject(handle)->GetInt32(obj_f_weapon_attacktype)){ // for debug
-			//	auto d = description.getDisplayName(handle);
-			//	auto strangeWeaponDamType = (DamageType)objSystem->GetObject(handle)->GetInt32(obj_f_weapon_attacktype);
-			//	auto dummy = 1;
-			//}
+			val = i;
+			objSystem->GetObject(handle)->SetInt32(field, val);
+			foundType = true;
+			break;
 		}
 	}
 
+	if (field == obj_f_weapon_type){
+		if (!foundType && !_strcmpi(content, "wt_mindblade")){
+			val = wt_mindblade;
+			foundType = true;
+			objSystem->GetObject(handle)->SetInt32(field, val);
+			
+		}
+
+		auto weapType = (WeaponTypes)val;
+		auto damType = weapons.wpnProps[weapType].damType;
+		
+		if (damType == DamageType::Unspecified){
+			weapons.wpnProps[weapType].damType = (DamageType)objSystem->GetObject(handle)->GetInt32(obj_f_weapon_attacktype);
+		}
+		//else if (damType != (DamageType)objSystem->GetObject(handle)->GetInt32(obj_f_weapon_attacktype)){ // for debug
+		//	auto d = description.getDisplayName(handle);
+		//	auto strangeWeaponDamType = (DamageType)objSystem->GetObject(handle)->GetInt32(obj_f_weapon_attacktype);
+		//	auto dummy = 1;
+		//}
+	}
 	
 	return foundType ? TRUE : FALSE;
 }
@@ -468,7 +466,7 @@ int ProtosHooks::SetCritterAttacks(objHndl handle)
 			auto dexMod = objects.GetModFromStatLevel(obj->GetInt32(obj_f_critter_abilities_idx, 1));
 			auto attackBonusOld = obj->GetInt32(obj_f_attack_bonus_idx, 3);
 			
-			obj->SetInt32(obj_f_attack_bonus_idx, 3, attackBonusOld - dexMod - sizeMod); 
+			obj->SetInt32(obj_f_attack_bonus_idx, 3, attackBonusOld - dexMod - sizeMod);
 		}
 	}
 	return 0;
