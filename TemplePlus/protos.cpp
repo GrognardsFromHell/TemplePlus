@@ -75,6 +75,7 @@ public:
 		replaceFunction(0x100397D0, ParseWeaponDamageType);
 		replaceFunction(0x10039CE0, ParseWeaponCritRange);
 		replaceFunction(0x10039B80, ParseDice);
+		replaceFunction(0x10039380, GenericNumber);
 
 		//SetCritterAttacks
 		replaceFunction<int(__cdecl)(objHndl)>(0x1003AAC0, SetCritterAttacks);
@@ -432,6 +433,20 @@ int ProtosHooks::ParseType(int colIdx, objHndl handle, char * content, obj_f fie
 	}
 	
 	return foundType ? TRUE : FALSE;
+}
+
+int ProtosHooks::GenericNumber(int colIdx, objHndl handle, char *content, obj_f field) {
+	if (obj_f_weapon_crit_hit_chart == field) {
+		logger->info("GenericNumber crit_hit_chart");
+	}
+
+	if (!content || !*content) return 1;
+
+	auto obj = objSystem->GetObject(handle);
+	int value = atol(content);
+	obj->SetInt32(field, value);
+
+	return 1
 }
 
 int ProtosHooks::ParseRace(int colIdx, objHndl handle, char * content, obj_f field, int arrayLen, char ** strings)
