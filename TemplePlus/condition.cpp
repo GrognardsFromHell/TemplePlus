@@ -1776,8 +1776,10 @@ int ArmorWeaponDice(DispatcherCallbackArgs args)
 	auto invIdx = args.GetCondArg(2);
 	auto armor = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
 
-	if (dispIo->weapon == armor)
+	if (dispIo->weapon == armor) {
 		dispIo->dicePacked = conds.CondNodeGetArg(args.subDispNode->condNode, 1);
+		dispIo->attackDamageType = conds.CondNodeGetArg(args.subDispNode->condNode, 0);
+	}
 
 	return 0;
 }
@@ -3220,7 +3222,7 @@ void ConditionSystem::RegisterNewConditions()
 
 	// damage type, damage, inventory index, crit range, crit mult
 	static CondStructNew shieldBash("Shield Bash", 5);
-	shieldBash.AddHook(dispTypeD20Query, DK_QUE_Can_Shield_Bash, genericCallbacks.QueryRetrun1GetArgs);
+	shieldBash.AddHook(dispTypeD20Query, DK_QUE_Can_Shield_Bash, genericCallbacks.QuerySetReturnVal1);
 	shieldBash.AddHook(dispTypeGetAttackDice, DK_NONE, ArmorWeaponDice);
 	shieldBash.AddHook(dispTypeGetCriticalHitExtraDice, DK_NONE, ArmorCritMultiplier);
 	shieldBash.AddHook(dispTypeGetCriticalHitRange, DK_NONE, ArmorCritRange);
