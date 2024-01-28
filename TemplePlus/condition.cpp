@@ -1778,7 +1778,7 @@ int ArmorWeaponDice(DispatcherCallbackArgs args)
 
 	if (dispIo->weapon == armor) {
 		dispIo->dicePacked = conds.CondNodeGetArg(args.subDispNode->condNode, 1);
-		dispIo->attackDamageType = conds.CondNodeGetArg(args.subDispNode->condNode, 0);
+		dispIo->attackDamageType = (DamageType)conds.CondNodeGetArg(args.subDispNode->condNode, 0);
 	}
 
 	return 0;
