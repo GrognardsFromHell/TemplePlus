@@ -26,6 +26,7 @@ public:
 	static int ParseWeaponDamageType(int colIdx, objHndl handle, char* content, obj_f field);
 	static int ParseWeaponCritRange(int colIdx, objHndl handle, char* content, obj_f field);
 	static int ParseDice(int colIdx, objHndl handle, char* content, obj_f field);
+	static int GenericNumber(int colIdx, objHndl handle, char* content, obj_f field);
 
 	static int SetCritterAttacks(objHndl handle);
 
@@ -446,7 +447,7 @@ int ProtosHooks::GenericNumber(int colIdx, objHndl handle, char *content, obj_f 
 	int value = atol(content);
 	obj->SetInt32(field, value);
 
-	return 1
+	return 1;
 }
 
 int ProtosHooks::ParseRace(int colIdx, objHndl handle, char * content, obj_f field, int arrayLen, char ** strings)
