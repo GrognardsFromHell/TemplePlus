@@ -1535,17 +1535,18 @@ int InventorySystem::GetWieldType(objHndl wielder, objHndl item, bool regardEnla
 		auto armorFlags = itemObj->GetInt32(obj_f_armor_flags);
 		auto armorType = inventory.GetArmorType(armorFlags);
 		if (armorType == ArmorType::ARMOR_TYPE_SHIELD) {
-			if (d20Sys.d20Query(wielder, DK_QUE_Can_Shield_Bash)) {
-				return d20Sys.d20QueryReturnData(wielder, DK_QUE_Can_Shield_Bash) & 0xff;
+			// if we can shield bash, fall through to use size based 
+			if (!d20Sys.d20Query(wielder, DK_QUE_Can_Shield_Bash)) {
+				if (IsBuckler(item)) return 0;
+				return 3;
 			}
-			if (IsBuckler(item)) return 0;
-			return 3;
-		}
-		if (armorType == ArmorType::ARMOR_TYPE_NONE)
+		} else if (armorType == ArmorType::ARMOR_TYPE_NONE) {
+			// uncertain what this case is, but it was in the original
 			return !IsBuckler(item);
+		}
 	}
 
-	
+
 	auto wielderSize = critterSys.GetSize(wielder);
 	auto wielderSizeBase = regardEnlargement ? gameSystems->GetObj().GetObject(wielder)->GetInt32(obj_f_size) : wielderSize;
 	auto itemSize = itemObj->GetInt32(obj_f_size);
@@ -1564,7 +1565,7 @@ int InventorySystem::GetWieldType(objHndl wielder, objHndl item, bool regardEnla
 	{
 		wieldType = 2;
 	} 
-	else if (itemSize == wielderSize + 1 )
+	else if (itemSize == wielderSize + 1)
 	{
 		wieldType = 2;
 	}
