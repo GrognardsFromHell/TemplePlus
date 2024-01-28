@@ -514,7 +514,7 @@ int ProtosHooks::ParseWeaponDamageType(int colIdx, objHndl handle, char* content
 
 	auto dmgType = DamageTypeFromD20String(content);
 	if (-1 == dmgType && _strcmpi(content, "D20DT_UNSPECIFIED")) {
-		logger->info("Doing atol")
+		logger->info("Doing atol");
 		dmgType = atol(content);
 	}
 
@@ -635,7 +635,7 @@ int ProtosHooks::DamageTypeFromString(char* str) {
 }
 
 int ProtosHooks::DamageTypeFromD20String(char* str) {
-	static std::unordered_map<string, int> damageTypeEnumTable({
+	static std::unordered_map<string, DamageType> damageTypeEnumTable({
 		{"d20dt_unspecified", DamageType::Unspecified},
 		{"d20dt_bludgeoning", DamageType::Bludgeoning},
 		{"d20dt_piercing", DamageType::Piercing},
@@ -660,7 +660,7 @@ int ProtosHooks::DamageTypeFromD20String(char* str) {
 
 	auto findDT = damageTypeEnumTable.find(tolower(content));
 	if (findDT != damageTypeEnumTable.end()){
-		return findDT->second;
+		return (int)findDT->second;
 	}
 
 	// default to unspecified
