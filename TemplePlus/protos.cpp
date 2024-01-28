@@ -634,7 +634,7 @@ int ProtosHooks::DamageTypeFromString(char* str) {
 	return original(str);
 }
 
-int ProtosHooks::DamageTypeFromD20String(char* str) {
+int ProtosHooks::DamageTypeFromD20String(char* content) {
 	static std::unordered_map<string, DamageType> damageTypeEnumTable({
 		{"d20dt_unspecified", DamageType::Unspecified},
 		{"d20dt_bludgeoning", DamageType::Bludgeoning},
