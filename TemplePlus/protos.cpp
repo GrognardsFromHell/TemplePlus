@@ -421,31 +421,27 @@ int ProtosHooks::ParseType(int colIdx, objHndl handle, char * content, obj_f fie
 		//	auto dummy = 1;
 		//}
 	}
-
-	// Might be another place to hook this, but I'm unsure
-	if (obj_t_armor == obj->type) {
-		if (obj_f_weapon_crit_hit_chart == field) {
-			armorWeaponCritMult = atol(content);
-			logger->info("ParseType shield crit mult {}", armorWeaponCritMult);
-			logger->info("ParseType stage {}", armorWeaponStage);
-			foundType = true;
-			if (++armorWeaponStage >= 4) ArmorWeaponFinalize(obj);
-		}
-	}
 	
 	return foundType ? TRUE : FALSE;
 }
 
 int ProtosHooks::GenericNumber(int colIdx, objHndl handle, char *content, obj_f field) {
-	if (obj_f_weapon_crit_hit_chart == field) {
-		logger->info("GenericNumber crit_hit_chart");
+	auto obj = objSystem->GetObject(handle);
+
+	bool armorWeapon = obj_t_armor == obj->type && obj_f_weapon_crit_hit_chart == field;
+
+	if (content && *content) {
+		if (armorWeapon) { // override critical hit multiplier for armor
+			armorWeaponCritMult = atol(content);
+			logger->info("ParseType shield crit mult {}", armorWeaponCritMult);
+			logger->info("ParseType stage {}", armorWeaponStage);
+		} else {
+			obj->SetInt32(field, atol(content));
+		}
 	}
 
-	if (!content || !*content) return 1;
-
-	auto obj = objSystem->GetObject(handle);
-	int value = atol(content);
-	obj->SetInt32(field, value);
+	if (armorWeapon && ++armorWeaponStage >= 4)
+		ArmorWeaponFinalize(obj);
 
 	return 1;
 }
@@ -507,67 +503,81 @@ int ProtosHooks::ParseSpell(int colIdx, objHndl handle, char* content, obj_f fie
 }
 
 int ProtosHooks::ParseWeaponDamageType(int colIdx, objHndl handle, char* content, obj_f field) {
-	if (!content || !*content) return 1;
+	auto obj = objSystem->GetObject(handle);
+	bool armorWeapon = obj->type == obj_t_armor && field == obj_f_weapon_attacktype;
 
 	auto dmgType = DamageTypeFromString(content);
 	if (-1 == dmgType && _strcmpi(content, "D20DT_UNSPECIFIED")) {
 		dmgType = atol(content);
 	}
 
-	auto obj = objSystem->GetObject(handle);
-	if (obj->type != obj_t_armor || field != obj_f_weapon_attacktype) {
-		// original behavior
-		obj->SetInt32(field, dmgType);
-		return 1;
-	} else {
-		armorWeaponDamageType = dmgType;
-		logger->info("ParseWeaponDamageType {}", armorWeaponDamageType);
-		logger->info("ParseWeaponDamageType stage {}", armorWeaponStage);
-		if (++armorWeaponStage >= 4) ArmorWeaponFinalize(obj);
+	if (content && *content) {
+		if (armorWeapon) {
+			armorWeaponDamageType = dmgType;
+			logger->info("ParseWeaponDamageType {}", armorWeaponDamageType);
+			logger->info("ParseWeaponDamageType stage {}", armorWeaponStage);
+		} else {
+			// original behavior
+			obj->SetInt32(field, dmgType);
+		}
 	}
+
+	if (armorWeapon && ++armorWeaponStage >= 4)
+		ArmorWeaponFinalize(obj);
 
 	return 1;
 }
 
 int ProtosHooks::ParseWeaponCritRange(int colIdx, objHndl handle, char* content, obj_f field) {
-	if (!content || !*content) return 1;
-
-	// Crit ranges in the proto are given as the lowest crit roll,
-	// but they are stored as how many sides of the die are critical hits.
-	auto range = 21 - atol(content);
-
 	auto obj = objSystem->GetObject(handle);
-	if (obj->type != obj_t_armor || obj_f_weapon_crit_range != field) {
-		obj->SetInt32(field, range);
-	} else {
-		armorWeaponCritRange = range;
-		logger->info("ParseWeaponCritRange {}", armorWeaponCritRange);
-		logger->info("ParseWeaponCritRange stage {}", armorWeaponStage);
-		if (++armorWeaponStage >= 4) ArmorWeaponFinalize(obj);
+	bool armorWeapon = obj->type == obj_t_armor && obj_f_weapon_crit_range == field;
+
+	if (content && *content) {
+		// Crit ranges in the proto are given as the lowest crit roll,
+		// but they are stored as how many sides of the die are critical hits.
+		auto range = 21 - atol(content);
+
+		if (armorWeapon) {
+			armorWeaponCritRange = range;
+			logger->info("ParseWeaponCritRange {}", armorWeaponCritRange);
+			logger->info("ParseWeaponCritRange stage {}", armorWeaponStage);
+		} else {
+			obj->SetInt32(field, range);
+		}
 	}
+
+	if (armorWeapon && ++armorWeaponStage >= 4)
+		ArmorWeaponFinalize(obj);
 
 	return 1;
 }
 
 int ProtosHooks::ParseDice(int colIdx, objHndl handle, char* content, obj_f field) {
-	if (!content || !*content) return 1;
-
-	int diceCount, diceType, diceBonus;
-	if (!Dice::Parse(content, diceCount, diceType, diceBonus)) return 0;
-
-	Dice dice(diceCount, diceType, diceBonus);
-
 	auto obj = objSystem->GetObject(handle);
-	if (obj->type != obj_t_armor || obj_f_weapon_damage_dice != field) {
-		obj->SetInt32(field, dice.ToPacked());
-	} else {
-		armorWeaponDice = dice.ToPacked();
-		logger->info("ParseWeaponDice {}", armorWeaponDice);
-		logger->info("ParseWeaponDice stage {}", armorWeaponStage);
-		if (++armorWeaponStage >= 4) ArmorWeaponFinalize(obj);
+	bool armorWeapon = obj->type == obj_t_armor && obj_f_weapon_damage_dice == field;
+	result = 1;
+
+	if (content && *content) {
+		int diceCount, diceType, diceBonus;
+		if (!Dice::Parse(content, diceCount, diceType, diceBonus)) {
+			result = 0;
+		} else {
+			Dice dice(diceCount, diceType, diceBonus);
+
+			if (armorWeapon) {
+				armorWeaponDice = dice.ToPacked();
+				logger->info("ParseWeaponDice {}", armorWeaponDice);
+				logger->info("ParseWeaponDice stage {}", armorWeaponStage);
+			} else {
+				obj->SetInt32(field, dice.ToPacked());
+			}
+		}
 	}
 
-	return 1;
+	if (armorWeapon && ++armorWeaponStage >= 4)
+		ArmorWeaponFinalize(obj);
+
+	return result;
 }
 
 int ProtosHooks::SetCritterAttacks(objHndl handle)
