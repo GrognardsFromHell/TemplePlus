@@ -555,7 +555,7 @@ int ProtosHooks::ParseWeaponCritRange(int colIdx, objHndl handle, char* content,
 int ProtosHooks::ParseDice(int colIdx, objHndl handle, char* content, obj_f field) {
 	auto obj = objSystem->GetObject(handle);
 	bool armorWeapon = obj->type == obj_t_armor && obj_f_weapon_damage_dice == field;
-	result = 1;
+	int result = 1;
 
 	if (content && *content) {
 		int diceCount, diceType, diceBonus;
