@@ -31,6 +31,7 @@ public:
 	static int SetCritterAttacks(objHndl handle);
 
 	static int DamageTypeFromString(char* str);
+	static int DamageTypeFromD20String(char* str);
 
 	void apply() override
 	{
@@ -356,11 +357,8 @@ static int armorWeaponCritMult = 2;
 
 // armor weapon condition initialization and reset parsing
 void ArmorWeaponFinalize(GameObjectBody* obj) {
-	// shield bash is the only one right now
-	auto armorFlags = obj->GetInt32(obj_f_armor_flags);
-	auto armorType = inventory.GetArmorType(armorFlags);
-
-	if (armorWeaponStats && armorType == ArmorType::ARMOR_TYPE_SHIELD) {
+	if (armorWeaponStats) {
+		// shield bash is the only one right now
 		auto condId = ElfHash::Hash("Shield Bash");
 
 		auto condField = obj_f_item_pad_wielder_condition_array;
@@ -514,8 +512,9 @@ int ProtosHooks::ParseWeaponDamageType(int colIdx, objHndl handle, char* content
 	auto obj = objSystem->GetObject(handle);
 	bool armorWeapon = obj->type == obj_t_armor && field == obj_f_weapon_attacktype;
 
-	auto dmgType = DamageTypeFromString(content);
+	auto dmgType = DamageTypeFromD20String(content);
 	if (-1 == dmgType && _strcmpi(content, "D20DT_UNSPECIFIED")) {
+		logger->info("Doing atol")
 		dmgType = atol(content);
 	}
 
@@ -524,7 +523,7 @@ int ProtosHooks::ParseWeaponDamageType(int colIdx, objHndl handle, char* content
 			armorWeaponStats = true;
 			armorWeaponDamageType = dmgType;
 			logger->info("ParseWeaponDamageType {}", content);
-			logger->info("ParseWeaponDamageType {}", armorWeaponDamageType);
+			logger->info("ParseWeaponDamageType {}", dmgType);
 			logger->info("ParseWeaponDamageType stage {}", armorWeaponStage);
 		} else {
 			// original behavior
@@ -633,4 +632,37 @@ int ProtosHooks::SetCritterAttacks(objHndl handle)
 int ProtosHooks::DamageTypeFromString(char* str) {
 	static auto original = temple::GetRef<int(__cdecl)(char*)>(0x100E0AF0);
 	return original(str);
+}
+
+int ProtosHooks::DamageTypeFromD20String(char* str) {
+	static std::unordered_map<string, int> damageTypeEnumTable({
+		{"d20dt_unspecified", DamageType::Unspecified},
+		{"d20dt_bludgeoning", DamageType::Bludgeoning},
+		{"d20dt_piercing", DamageType::Piercing},
+		{"d20dt_slashing", DamageType::Slashing},
+		{"d20dt_bludgeoning_and_piercing", DamageType::BludgeoningAndPiercing},
+		{"d20dt_piercing_and_slashing", DamageType::PiercingAndSlashing},
+		{"d20dt_slashing_and_bludgeoning", DamageType::SlashingAndBludgeoning},
+		{"d20dt_slashing_and_bludgeoning_and_piercing", DamageType::SlashingAndBludgeoningAndPiercing},
+		{"d20dt_acid", DamageType::Acid},
+		{"d20dt_cold", DamageType::Cold},
+		{"d20dt_electricity", DamageType::Electricity},
+		{"d20dt_fire", DamageType::Fire},
+		{"d20dt_sonic", DamageType::Sonic},
+		{"d20dt_negative_energy", DamageType::NegativeEnergy},
+		{"d20dt_subdual", DamageType::Subdual},
+		{"d20dt_poison", DamageType::Poison},
+		{"d20dt_positive_energy", DamageType::PositiveEnergy},
+		{"d20dt_force", DamageType::Force},
+		{"d20dt_blood_loss", DamageType::BloodLoss},
+		{"d20dt_magic", DamageType::Magic}
+	});
+
+	auto findDT = damageTypeEnumTable.find(tolower(content));
+	if (findDT != damageTypeEnumTable.end()){
+		return findDT->second;
+	}
+
+	// default to unspecified
+	return -1;
 }
