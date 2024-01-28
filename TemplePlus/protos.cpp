@@ -347,6 +347,7 @@ int ProtosHooks::ParseMonsterSubcategory(int colIdx, objHndl handle, char * cont
 	return 1;
 }
 
+static bool armorWeaponStats = false;
 static int armorWeaponStage = 0;
 static int armorWeaponDamageType = (int)DamageType::Bludgeoning;
 static int armorWeaponDice = 0;
@@ -356,21 +357,27 @@ static int armorWeaponCritMult = 2;
 // armor weapon condition initialization and reset parsing
 void ArmorWeaponFinalize(GameObjectBody* obj) {
 	// shield bash is the only one right now
-	auto condId = ElfHash::Hash("Shield Bash");
+	auto armorFlags = itemObj->GetInt32(obj_f_armor_flags);
+	auto armorType = inventory.GetArmorType(armorFlags);
 
-	auto condField = obj_f_item_pad_wielder_condition_array;
-	auto condArgField = obj_f_item_pad_wielder_argument_array;
-	auto condArray = obj->GetInt32Array(condField);
-	auto condArgArray = obj->GetInt32Array(condArgField);
+	if (armorWeaponStats && armorType == ArmorType::ARMOR_TYPE_SHIELD) {
+		auto condId = ElfHash::Hash("Shield Bash");
 
-	obj->SetInt32(condField, condArray.GetSize(), condId);
+		auto condField = obj_f_item_pad_wielder_condition_array;
+		auto condArgField = obj_f_item_pad_wielder_argument_array;
+		auto condArray = obj->GetInt32Array(condField);
+		auto condArgArray = obj->GetInt32Array(condArgField);
 
-	obj->SetInt32(condArgField, condArgArray.GetSize(), armorWeaponDamageType);
-	obj->SetInt32(condArgField, condArgArray.GetSize(), armorWeaponDice);
-	obj->SetInt32(condArgField, condArgArray.GetSize(), 0);
-	obj->SetInt32(condArgField, condArgArray.GetSize(), armorWeaponCritRange);
-	obj->SetInt32(condArgField, condArgArray.GetSize(), armorWeaponCritMult);
+		obj->SetInt32(condField, condArray.GetSize(), condId);
 
+		obj->SetInt32(condArgField, condArgArray.GetSize(), armorWeaponDamageType);
+		obj->SetInt32(condArgField, condArgArray.GetSize(), armorWeaponDice);
+		obj->SetInt32(condArgField, condArgArray.GetSize(), 0);
+		obj->SetInt32(condArgField, condArgArray.GetSize(), armorWeaponCritRange);
+		obj->SetInt32(condArgField, condArgArray.GetSize(), armorWeaponCritMult);
+	}
+
+	armorWeaponStats = false;
 	armorWeaponStage = 0;
 	armorWeaponDice = 0;
 	armorWeaponCritRange = 20;
@@ -432,6 +439,7 @@ int ProtosHooks::GenericNumber(int colIdx, objHndl handle, char *content, obj_f 
 
 	if (content && *content) {
 		if (armorWeapon) { // override critical hit multiplier for armor
+			armorWeaponStats = true;
 			armorWeaponCritMult = atol(content);
 			logger->info("ParseType shield crit mult {}", armorWeaponCritMult);
 			logger->info("ParseType stage {}", armorWeaponStage);
@@ -513,7 +521,9 @@ int ProtosHooks::ParseWeaponDamageType(int colIdx, objHndl handle, char* content
 
 	if (content && *content) {
 		if (armorWeapon) {
+			armorWeaponStats = true;
 			armorWeaponDamageType = dmgType;
+			logger->info("ParseWeaponDamageType {}", content);
 			logger->info("ParseWeaponDamageType {}", armorWeaponDamageType);
 			logger->info("ParseWeaponDamageType stage {}", armorWeaponStage);
 		} else {
@@ -538,6 +548,7 @@ int ProtosHooks::ParseWeaponCritRange(int colIdx, objHndl handle, char* content,
 		auto range = 21 - atol(content);
 
 		if (armorWeapon) {
+			armorWeaponStats = true;
 			armorWeaponCritRange = range;
 			logger->info("ParseWeaponCritRange {}", armorWeaponCritRange);
 			logger->info("ParseWeaponCritRange stage {}", armorWeaponStage);
@@ -565,6 +576,7 @@ int ProtosHooks::ParseDice(int colIdx, objHndl handle, char* content, obj_f fiel
 			Dice dice(diceCount, diceType, diceBonus);
 
 			if (armorWeapon) {
+				armorWeaponStats = true;
 				armorWeaponDice = dice.ToPacked();
 				logger->info("ParseWeaponDice {}", armorWeaponDice);
 				logger->info("ParseWeaponDice stage {}", armorWeaponStage);
