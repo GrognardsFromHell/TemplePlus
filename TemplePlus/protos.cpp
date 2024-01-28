@@ -357,7 +357,7 @@ static int armorWeaponCritMult = 2;
 // armor weapon condition initialization and reset parsing
 void ArmorWeaponFinalize(GameObjectBody* obj) {
 	// shield bash is the only one right now
-	auto armorFlags = itemObj->GetInt32(obj_f_armor_flags);
+	auto armorFlags = obj->GetInt32(obj_f_armor_flags);
 	auto armorType = inventory.GetArmorType(armorFlags);
 
 	if (armorWeaponStats && armorType == ArmorType::ARMOR_TYPE_SHIELD) {
