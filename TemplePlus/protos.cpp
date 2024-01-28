@@ -421,8 +421,8 @@ int ProtosHooks::ParseType(int colIdx, objHndl handle, char * content, obj_f fie
 	if (obj_t_armor == obj->type) {
 		if (obj_f_weapon_crit_hit_chart == field) {
 			armorWeaponCritMult = atol(content);
-			logger->trace("ParseType shield crit mult {}", armorWeaponCritMult);
-			logger->trace("ParseType stage {}", armorWeaponStage);
+			logger->info("ParseType shield crit mult {}", armorWeaponCritMult);
+			logger->info("ParseType stage {}", armorWeaponStage);
 			foundType = true;
 			if (++armorWeaponStage >= 4) ArmorWeaponFinalize(obj);
 		}
@@ -502,8 +502,8 @@ int ProtosHooks::ParseWeaponDamageType(int colIdx, objHndl handle, char* content
 		return 1;
 	} else {
 		armorWeaponDamageType = dmgType;
-		logger->trace("ParseWeaponDamageType {}", armorWeaponDamageType);
-		logger->trace("ParseWeaponDamageType stage {}", armorWeaponStage);
+		logger->info("ParseWeaponDamageType {}", armorWeaponDamageType);
+		logger->info("ParseWeaponDamageType stage {}", armorWeaponStage);
 		if (++armorWeaponStage >= 4) ArmorWeaponFinalize(obj);
 	}
 
@@ -522,8 +522,8 @@ int ProtosHooks::ParseWeaponCritRange(int colIdx, objHndl handle, char* content,
 		obj->SetInt32(field, range);
 	} else {
 		armorWeaponCritRange = range;
-		logger->trace("ParseWeaponCritRange {}", armorWeaponCritRange);
-		logger->trace("ParseWeaponCritRange stage {}", armorWeaponStage);
+		logger->info("ParseWeaponCritRange {}", armorWeaponCritRange);
+		logger->info("ParseWeaponCritRange stage {}", armorWeaponStage);
 		if (++armorWeaponStage >= 4) ArmorWeaponFinalize(obj);
 	}
 
@@ -543,8 +543,8 @@ int ProtosHooks::ParseDice(int colIdx, objHndl handle, char* content, obj_f fiel
 		obj->SetInt32(field, dice.ToPacked());
 	} else {
 		armorWeaponDice = dice.ToPacked();
-		logger->trace("ParseWeaponDice {}", armorWeaponDice);
-		logger->trace("ParseWeaponDice stage {}", armorWeaponStage);
+		logger->info("ParseWeaponDice {}", armorWeaponDice);
+		logger->info("ParseWeaponDice stage {}", armorWeaponStage);
 		if (++armorWeaponStage >= 4) ArmorWeaponFinalize(obj);
 	}
 
