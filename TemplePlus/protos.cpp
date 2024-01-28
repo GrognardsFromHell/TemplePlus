@@ -378,6 +378,9 @@ void ArmorWeaponFinalize(GameObjectBody* obj) {
 
 int ProtosHooks::ParseType(int colIdx, objHndl handle, char * content, obj_f field, int arrayLen, char ** strings){
 
+	if (obj_f_weapon_crit_hit_chart == field)
+		logger->info("ParseType obj_f_weapon_crit_hit_chart");
+
 	auto foundType = false;
 	auto val = 0;
 
