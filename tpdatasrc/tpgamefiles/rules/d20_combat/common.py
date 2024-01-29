@@ -23,7 +23,7 @@ def getLeftWeapon(attacker):
 # either of two weapons held to be designated as primary
 def getPrimaryWeapon(attacker):
     weapl = getLeftWeapon(attacker)
-    print weapl
+
     # if we're preferring left weapon, and we have something equipped
     # there, use it.
     if attacker.d20_query(127):
@@ -37,9 +37,7 @@ def getPrimaryWeapon(attacker):
 # of two weapons held to be designated as primary
 def getSecondaryWeapon(attacker):
     weapr = attacker.item_worn_at(item_wear_weapon_primary)
-    print weapr
     weapl = getLeftWeapon(attacker)
-    print weapl
 
     # if preferring left weapon, and there actually is a left weapon,
     # then right hand is secondary.
