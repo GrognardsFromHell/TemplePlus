@@ -1740,6 +1740,9 @@ gfx::WeaponAnimType InventorySystem::GetWeaponAnimId(objHndl item, objHndl wield
 		{
 		// piercing weapons
 		case WeaponTypes::wt_short_sword: // was sword
+			// cutlass is a slashing shortsword
+			if (weap->GetInt32(obj_f_weapon_attacktype) == (int32_t)DamageType::Slashing)
+				return gfx::WeaponAnimType::Sword;
 		case WeaponTypes::wt_rapier: // was sword
 			return gfx::WeaponAnimType::Dagger;
 		// slashing weapons
