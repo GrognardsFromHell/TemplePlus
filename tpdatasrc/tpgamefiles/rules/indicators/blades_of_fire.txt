@@ -1,0 +1,5 @@
+ID_string: BLADES_OF_FIRE
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Blades of Fire.tga
+help_topic: TAG_SPELLS_BLADES_OF_FIRE
+tooltip_base_text: Blades of Fire
