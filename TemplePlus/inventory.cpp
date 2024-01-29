@@ -1523,6 +1523,11 @@ int32_t InventorySystem::GetCoinWorth(int32_t coinType){
 	return 0u;
 }
 
+// 0: light weapon
+// 1: 1-handed weapon
+// 2: 2-handed weapon
+// 3: bastard sword/dwarf waraxe too big to wield
+// 4: null weapon
 int InventorySystem::GetWieldType(objHndl wielder, objHndl item, bool regardEnlargement) const
 {
 	if (!item)
@@ -1616,7 +1621,7 @@ int InventorySystem::GetWieldType(objHndl wielder, objHndl item, bool regardEnla
 	return 2 * (wielderSize <= 5) + 1;	
 }
 
-bool InventorySystem::IsWieldedTwoHanded(objHndl weapon, objHndl wielder){
+bool InventorySystem::IsWieldedTwoHanded(objHndl weapon, objHndl wielder, bool special){
 	if (!weapon) return false;
 
 	auto weapObj = gameSystems->GetObj().GetObject(weapon);
@@ -1646,7 +1651,7 @@ bool InventorySystem::IsWieldedTwoHanded(objHndl weapon, objHndl wielder){
 	// the wield type if the weapon is not enlarged along with the critter
 	auto wieldTypeMod = GetWieldType(wielder, weapon, false);
 
-	bool isTwohandedWieldable = !hasInterferingOffhand;
+	bool isTwohandedWieldable = !hasInterferingOffhand && !special;
 
 	switch (wieldType)
 	{
@@ -1696,13 +1701,13 @@ bool InventorySystem::IsWieldedTwoHanded(objHndl weapon, objHndl wielder){
 
 
 
-gfx::WeaponAnimType InventorySystem::GetWeaponAnimId(objHndl item, objHndl wielder){
+gfx::WeaponAnimType InventorySystem::GetWeaponAnimId(objHndl item, objHndl wielder, bool special){
 	auto weap = objSystem->GetObject(item);
 	auto wieldType = GetWieldType(wielder, item, false);
 	WeaponTypes wtype = (WeaponTypes)weap->GetInt32(obj_f_weapon_type);
 
-	if (wieldType > 2) return gfx::WeaponAnimType::Unarmed;
-	if (IsWieldedTwoHanded(item, wielder)) {
+	if (wieldType == 4) return gfx::WeaponAnimType::Unarmed;
+	if (IsWieldedTwoHanded(item, wielder, special)) {
 		switch (wtype)
 		{
 		case WeaponTypes::wt_short_sword:
