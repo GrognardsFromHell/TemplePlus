@@ -1707,7 +1707,7 @@ gfx::WeaponAnimType InventorySystem::GetWeaponAnimId(objHndl item, objHndl wield
 		{
 		case WeaponTypes::wt_short_sword:
 			// cutlass is a slashing shortsword
-			if (weap->GetInt32(obj_f_weapon_attacktype) == DamageType::Slashing)
+			if (weap->GetInt32(obj_f_weapon_attacktype) == (int32_t)DamageType::Slashing)
 				return gfx::WeaponAnimType::Greatsword;
 			else
 				return gfx::WeaponAnimType::Spear;
