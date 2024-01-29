@@ -1697,16 +1697,22 @@ bool InventorySystem::IsWieldedTwoHanded(objHndl weapon, objHndl wielder){
 
 
 gfx::WeaponAnimType InventorySystem::GetWeaponAnimId(objHndl item, objHndl wielder){
+	auto weap = objSystem->GetObject(item);
 	auto wieldType = GetWieldType(wielder, item, false);
-	WeaponTypes wtype = (WeaponTypes)objects.getInt32(item, obj_f_weapon_type);
+	WeaponTypes wtype = (WeaponTypes)weap.GetInt32(obj_f_weapon_type);
 
 	if (wieldType > 2) return gfx::WeaponAnimType::Unarmed;
 	if (IsWieldedTwoHanded(item, wielder)) {
 		switch (wtype)
 		{
+		case WeaponTypes::wt_short_sword:
+			// cutlass is a slashing shortsword
+			if (weap.GetInt32(obj_f_weapon_attacktype) == D20DT_SLASHING)
+				return gfx::WeaponAnimType::Greatsword;
+			else
+				return gfx::WeaponAnimType::Spear;
 		// piercing weapons
 		case WeaponTypes::wt_dagger:
-		case WeaponTypes::wt_short_sword:
 		case WeaponTypes::wt_rapier:
 			return gfx::WeaponAnimType::Spear;
 		case WeaponTypes::wt_orc_double_axe:
