@@ -104,9 +104,10 @@ int PythonIntegration::RunScript(ScriptId scriptId, EventId evt, PyObject* args)
 	}
 
 	auto result = -1;
-	if (PyInt_Check(resultObj)) {
+	if (PyInt_Check(resultObj) || PyLong_Check(resultObj)) {
 		result = PyInt_AsLong(resultObj);
 	}
+
 	Py_DECREF(resultObj);
 
 	return result;

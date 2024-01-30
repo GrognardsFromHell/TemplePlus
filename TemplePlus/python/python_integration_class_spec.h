@@ -52,7 +52,7 @@ enum class ClassSpecFunc : int {
 	IsSelectingSpellsOnLevelup,
 	LevelupInitSpellSelection,
 	LevelupSpellsFinalize,
-	GetAdvancedLearningClass,
+	GetAdvancedLearningSpellLevel,
 	HasAdvancedLearning,
 	HasArmoredArcaneCasterFeature,
 };
@@ -78,7 +78,7 @@ public:
 	SpellListType GetSpellListType(int classEnum);
 	SpellReadyingType GetSpellReadyingType(int classEnum);
 	SpellSourceType GetSpellSourceType(int classEnum);
-	int GetAdvancedLearningClass(int classEnum);
+	int GetAdvancedLearningSpellLevel(int classEnum, int spellEnum);
 	bool HasAdvancedLearning(int classEnum);
 	std::map<int, int> GetSpellList(int classEnum); // returns a mapping of spellEnum -> spell level for this class, to be used by the spell system
 	std::map<int, std::vector<int>> GetSpellsPerDay(int classEnum);

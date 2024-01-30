@@ -108,13 +108,13 @@ def LevelupGetBonusFeats(obj):
     if newLvl == 6:
         bonus_feats = [feat_improved_trip, feat_improved_disarm]
         #Fiery Ki Defense and Ki Blast also require to have Stunning Fist
-        if char_editor.has_feat(feat_stunning_fist):
+        if char_editor.has_feat(feat_stunning_fist) and char_editor.has_feat("Fiery Fist"):
             bonus_feats.append("Fiery Ki Defense")
             bonus_feats.append("Ki Blast")
     bonFeatInfo = []
     for feat in bonus_feats:
         featInfo = char_editor.FeatInfo(feat)
-        featInfo.feat_status_flags |= 4 # always pickable
+        featInfo.feat_status_flags |= FEAT_INFO_DISREGARD_PREREQS # always pickable
         bonFeatInfo.append(featInfo)
     char_editor.set_bonus_feats(bonFeatInfo)
     return

@@ -30,7 +30,8 @@ struct KnownSpellInfo {
 enum FeatInfoFlag
 {
 	NoFeatInfoFlag = 0, 
-	DisregardPrereqs = 4 
+	DisregardPrereqs = 4,
+	BonusOnly = 8
 };
 
 
@@ -103,6 +104,7 @@ public:
 	int GetNewLvl(Stat classCode = stat_level);
 	bool IsClassBonusFeat(feat_enums feat);
 	bool IsBonusFeatDisregardingPrereqs(feat_enums feat);
+	bool IsBonusOnlyFeat(feat_enums feat);
 
 	eastl::vector<string> levelLabels;
 	eastl::vector<string> spellLevelLabels;

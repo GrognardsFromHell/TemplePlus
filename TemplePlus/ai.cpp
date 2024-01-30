@@ -1422,6 +1422,8 @@ BOOL AiSystem::TargetFriendHurt(AiTactic * aiTac)
 	auto performer = aiTac->performer;
 	auto lowest = 70;
 	auto N = combatSys.GetInitiativeListLength();
+	aiTac->target = 0;
+
 	for (auto i = 0; i < N; i++) {
 		auto combatant = combatSys.GetInitiativeListMember(i);
 		if (!combatant || !critterSys.IsFriendly(performer, combatant))
