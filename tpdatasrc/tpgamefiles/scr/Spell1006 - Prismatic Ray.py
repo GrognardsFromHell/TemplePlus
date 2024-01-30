@@ -36,7 +36,6 @@ def OnEndProjectile( spell, projectile, index_of_target ):
                 
         spell.duration = 1000
         add_prismatic_effect(spell, spellTarget.obj)
-        #Select a random effect similar to prismatic spray
     else:
         spellTarget.obj.float_mesfile_line('mes\\spell.mes', 30007)
         game.particles('Fizzle', spellTarget.obj)
@@ -47,14 +46,12 @@ def OnEndProjectile( spell, projectile, index_of_target ):
 def OnEndSpellCast( spell ):
     print "Prismatic Ray OnEndSpellCast"
     
+#Select a random effect similar to prismatic spray
 def add_prismatic_effect(spell, t):
-    print "Adding prismatic effect"
-    
     effect = game.random_range(1,6)
     
     if effect == 1:
-    
-        print "Fire Damage"
+        print "Prismatic Spray Effect - Fire Damage"
     
         #20 fire damage
         dam = dice_new('1d1')
@@ -76,8 +73,7 @@ def add_prismatic_effect(spell, t):
                 t.float_mesfile_line( 'mes\\spell.mes', 30002 )
         
     elif effect == 2:
-    
-        print "Acid Damage"
+        print "Prismatic Spray Effect - Acid Damage"
     
         #40 acid damage
         dam = dice_new('1d1')
@@ -89,8 +85,7 @@ def add_prismatic_effect(spell, t):
             # saving throw unsuccessful
             t.float_mesfile_line( 'mes\\spell.mes', 30002 )
     elif effect == 3:
-    
-        print "Electricity Damage"
+        print "Prismatic Spray Effect - Electricity Damage"
     
         #80 Electricity damage
         dam = dice_new('1d1')
@@ -102,8 +97,7 @@ def add_prismatic_effect(spell, t):
             # saving throw unsuccessful
             t.float_mesfile_line( 'mes\\spell.mes', 30002 )
     elif effect == 4:
-    
-        print "Poisioned"
+        print "Prismatic Spray Effect - Poisioned"
     
         #poisoned no save = die save = 1-10 con damage
         if t.is_category_type(mc_type_ooze) == 0 and t.is_category_type(mc_type_plant) == 0 and t.is_category_type(mc_type_undead) == 0 and t.is_category_type(mc_type_construct) == 0:
@@ -126,10 +120,9 @@ def add_prismatic_effect(spell, t):
                 
         
     elif effect == 5:
-        #turned to stone
+        print "Prismatic Spray Effect - Turned to Stone"
         
-        print "Turned to Stone"
-        
+		#turned to stone (effect is a long lasting hold like prismatic spray)
         if t.saving_throw( spell.dc, D20_Save_Fortitude, D20STD_F_NONE, spell.caster, D20A_CAST_SPELL ):
             # saving throw successful
             t.float_mesfile_line( 'mes\\spell.mes', 30001 )
@@ -143,12 +136,11 @@ def add_prismatic_effect(spell, t):
             
 
     elif effect == 6:
-        #insane
-        
-        print "Insane"
+        print "Prismatic Spray Effect - Insane"
         
         dc = spell.dc
         
+		#insane
         if not t.saving_throw_spell( dc, D20_Save_Will, D20STD_F_NONE, spell.caster, spell.id ):
             t.float_mesfile_line( 'mes\\spell.mes', 30002 )
             t.condition_add_with_args( 'sp-Confusion', spell.id, spell.duration, 1 )
