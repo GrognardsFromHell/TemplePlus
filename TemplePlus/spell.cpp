@@ -2464,7 +2464,7 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 				// scooped by "area".
 				auto lookup = modeTgtStrings.find(text);
 				if (lookup != modeTgtStrings.end()) {
-					spEntry.modeTargetSemiBitmask |= (uint64_t)lookup.second;
+					spEntry.modeTargetSemiBitmask |= (uint64_t)lookup->second;
 					found = true;
 					break;
 				}
