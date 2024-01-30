@@ -81,6 +81,8 @@ public:
 
 	static int SuggestionOnAdd(DispatcherCallbackArgs args);
 
+	static int SilenceObjectEvent(DispatcherCallbackArgs args);
+
 	void apply() override {
 
 		// Fix for when summoned Balor from skull casts suggestion
