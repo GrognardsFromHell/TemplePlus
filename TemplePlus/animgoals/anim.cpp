@@ -457,7 +457,7 @@ int AnimSystem::PushAnimate(objHndl obj, int anim) {
   return addresses.PushAnimate(obj, anim);
 }
 
-void AnimSystem::SetGoalDataForSpellPacket(SpellPacketBody & pkt, AnimSlotGoalStackEntry & goalData, bool wand)
+void AnimSystem::SetGoalDataForSpellPacket(SpellPacketBody & pkt, AnimSlotGoalStackEntry & goalData, bool wand, bool conjure)
 {
     auto caster = pkt.caster;
     auto casterObj = objSystem->GetObject(caster);
@@ -484,10 +484,10 @@ void AnimSystem::SetGoalDataForSpellPacket(SpellPacketBody & pkt, AnimSlotGoalSt
     }
 
     if (wand){
-        goalData.animIdPrevious.number = GetWandAnimId(ent.spellSchoolEnum);
+        goalData.animIdPrevious.number = GetWandAnimId(ent.spellSchoolEnum, conjure);
     }
     else{
-        goalData.animIdPrevious.number = GetCastingAnimId(ent.spellSchoolEnum);
+        goalData.animIdPrevious.number = GetCastingAnimId(ent.spellSchoolEnum, conjure);
     }
 }
 
@@ -498,7 +498,7 @@ BOOL AnimSystem::PushSpellCast(SpellPacketBody & spellPkt, objHndl item)
     if (!goalData.InitWithInterrupt(spellPkt.caster, ag_throw_spell_w_cast_anim))
         return FALSE;
 
-    SetGoalDataForSpellPacket(spellPkt, goalData, inventory.UsesWandAnim(item));
+    SetGoalDataForSpellPacket(spellPkt, goalData, inventory.UsesWandAnim(item), false);
 
     return goalData.Push(nullptr);
 }
@@ -509,18 +509,21 @@ BOOL AnimSystem::PushSpellDismiss(SpellPacketBody & pkt)
     if (!goalData.InitWithInterrupt(pkt.caster, ag_throw_spell_w_cast_anim))
         return FALSE;
 
-    SetGoalDataForSpellPacket(pkt, goalData, true);
+    SetGoalDataForSpellPacket(pkt, goalData, true, true);
 
     return goalData.Push(nullptr);
 }
 
-int AnimSystem::GetWandAnimId(int school) {
-    return temple::GetRef<int(__cdecl)(int)>(0x100757C0)(school);
+int AnimSystem::GetWandAnimId(int school, bool conjure) {
+    auto inc = conjure ? 1 : 0;
+    return temple::GetRef<int(__cdecl)(int)>(0x100757C0)(school) + inc;
 }
 
-int AnimSystem::GetCastingAnimId(int school) {
-    return temple::GetRef<int(__cdecl)(int)>(0x100757B0)(school);
+int AnimSystem::GetCastingAnimId(int school, bool conjure) {
+    auto inc = conjure ? 1 : 0;
+    return temple::GetRef<int(__cdecl)(int)>(0x100757B0)(school) + inc;
 }
+
 
 BOOL AnimSystem::PushSpellInterrupt(const objHndl& caster, objHndl item, AnimGoalType animGoalType, int spellSchool){
     AnimSlotGoalStackEntry goalData;
