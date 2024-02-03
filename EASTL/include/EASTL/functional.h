@@ -8,9 +8,10 @@
 
 #include <EABase/eabase.h>
 #include <EASTL/internal/config.h>
-#include <EASTL/internal/allocator_traits_fwd_decls.h>
+#include <EASTL/internal/move_help.h>
 #include <EASTL/type_traits.h>
 #include <EASTL/internal/functional_base.h>
+#include <EASTL/internal/mem_fn.h>
 
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
@@ -25,53 +26,130 @@ namespace eastl
 	// Primary C++ functions
 	///////////////////////////////////////////////////////////////////////
 
-	template <typename T>
+	template <typename T = void>
 	struct plus : public binary_function<T, T, T>
 	{
 		EA_CPP14_CONSTEXPR T operator()(const T& a, const T& b) const
 			{ return a + b; }
 	};
 
-	template <typename T>
+	// http://en.cppreference.com/w/cpp/utility/functional/plus_void
+	template <>
+	struct plus<void> 
+	{
+		typedef int is_transparent;
+		template<typename A, typename B>
+		EA_CPP14_CONSTEXPR auto operator()(A&& a, B&& b) const
+			-> decltype(eastl::forward<A>(a) + eastl::forward<B>(b))
+			{ return eastl::forward<A>(a) + eastl::forward<B>(b); }
+	};
+
+	template <typename T = void>
 	struct minus : public binary_function<T, T, T>
 	{
 		EA_CPP14_CONSTEXPR T operator()(const T& a, const T& b) const
 			{ return a - b; }
 	};
 
-	template <typename T>
+	// http://en.cppreference.com/w/cpp/utility/functional/minus_void
+	template <>
+	struct minus<void> 
+	{
+		typedef int is_transparent;
+		template<typename A, typename B>
+		EA_CPP14_CONSTEXPR auto operator()(A&& a, B&& b) const
+			-> decltype(eastl::forward<A>(a) - eastl::forward<B>(b))
+			{ return eastl::forward<A>(a) - eastl::forward<B>(b); }
+	};
+
+	template <typename T = void>
 	struct multiplies : public binary_function<T, T, T>
 	{
 		EA_CPP14_CONSTEXPR T operator()(const T& a, const T& b) const
 			{ return a * b; }
 	};
 
-	template <typename T>
-	struct divides : public binary_function<T, T, T>
+	// http://en.cppreference.com/w/cpp/utility/functional/multiplies_void
+	template <>
+	struct multiplies<void> 
 	{
+		typedef int is_transparent;
+		template<typename A, typename B>
+		EA_CPP14_CONSTEXPR auto operator()(A&& a, B&& b) const
+			-> decltype(eastl::forward<A>(a) * eastl::forward<B>(b))
+			{ return eastl::forward<A>(a) * eastl::forward<B>(b); }
+	};
+
+    template <typename T = void>
+    struct divides : public binary_function<T, T, T>
+    {
 		EA_CPP14_CONSTEXPR T operator()(const T& a, const T& b) const
 			{ return a / b; }
 	};
 
-	template <typename T>
-	struct modulus : public binary_function<T, T, T>
+	// http://en.cppreference.com/w/cpp/utility/functional/divides_void
+	template <>
+	struct divides<void> 
 	{
+		typedef int is_transparent;
+		template<typename A, typename B>
+		EA_CPP14_CONSTEXPR auto operator()(A&& a, B&& b) const
+			-> decltype(eastl::forward<A>(a) / eastl::forward<B>(b))
+			{ return eastl::forward<A>(a) / eastl::forward<B>(b); }
+	};
+
+    template <typename T = void>
+    struct modulus : public binary_function<T, T, T>
+    {
 		EA_CPP14_CONSTEXPR T operator()(const T& a, const T& b) const
 			{ return a % b; }
 	};
 
-	template <typename T>
-	struct negate : public unary_function<T, T>
+	// http://en.cppreference.com/w/cpp/utility/functional/modulus_void
+	template <>
+	struct modulus<void> 
 	{
+		typedef int is_transparent;
+		template<typename A, typename B>
+		EA_CPP14_CONSTEXPR auto operator()(A&& a, B&& b) const
+			-> decltype(eastl::forward<A>(a) % eastl::forward<B>(b))
+			{ return eastl::forward<A>(a) % eastl::forward<B>(b); }
+	};
+
+    template <typename T = void>
+    struct negate : public unary_function<T, T>
+    {
 		EA_CPP14_CONSTEXPR T operator()(const T& a) const
 			{ return -a; }
 	};
 
-	template <typename T>
+	// http://en.cppreference.com/w/cpp/utility/functional/negate_void
+	template <>
+	struct negate<void> 
+	{
+		typedef int is_transparent;
+		template<typename T>
+		EA_CPP14_CONSTEXPR auto operator()(T&& t) const
+			-> decltype(-eastl::forward<T>(t))
+			{ return -eastl::forward<T>(t); }
+	};
+
+	template <typename T = void>
 	struct equal_to : public binary_function<T, T, bool>
 	{
 		EA_CPP14_CONSTEXPR bool operator()(const T& a, const T& b) const
 			{ return a == b; }
+	};
+
+	// http://en.cppreference.com/w/cpp/utility/functional/equal_to_void
+	template <>
+	struct equal_to<void> 
+	{
+		typedef int is_transparent;
+		template<typename A, typename B>
+		EA_CPP14_CONSTEXPR auto operator()(A&& a, B&& b) const
+			-> decltype(eastl::forward<A>(a) == eastl::forward<B>(b))
+			{ return eastl::forward<A>(a) == eastl::forward<B>(b); }
 	};
 
 	template <typename T, typename Compare>
@@ -80,11 +158,22 @@ namespace eastl
 		return compare(a, b) == compare(b, a);
 	}
 
-	template <typename T>
-	struct not_equal_to : public binary_function<T, T, bool>
-	{
+    template <typename T = void>
+    struct not_equal_to : public binary_function<T, T, bool>
+    {
 		EA_CPP14_CONSTEXPR bool operator()(const T& a, const T& b) const
 			{ return a != b; }
+	};
+
+	// http://en.cppreference.com/w/cpp/utility/functional/not_equal_to_void
+	template <>
+	struct not_equal_to<void> 
+	{
+		typedef int is_transparent;
+		template<typename A, typename B>
+		EA_CPP14_CONSTEXPR auto operator()(A&& a, B&& b) const
+			-> decltype(eastl::forward<A>(a) != eastl::forward<B>(b))
+			{ return eastl::forward<A>(a) != eastl::forward<B>(b); }
 	};
 
 	template <typename T, typename Compare>
@@ -125,11 +214,21 @@ namespace eastl
 		}
 	};
 
-	template <typename T>
+	template <typename T = void>
 	struct greater : public binary_function<T, T, bool>
 	{
 		EA_CPP14_CONSTEXPR bool operator()(const T& a, const T& b) const
 			{ return a > b; }
+	};
+
+	// http://en.cppreference.com/w/cpp/utility/functional/greater_void
+	template <>
+	struct greater<void>
+	{
+		template<typename A, typename B>
+		EA_CPP14_CONSTEXPR auto operator()(A&& a, B&& b) const
+			-> decltype(eastl::forward<A>(a) > eastl::forward<B>(b))
+			{ return eastl::forward<A>(a) > eastl::forward<B>(b); }
 	};
 
 	template <typename T, typename Compare>
@@ -187,11 +286,21 @@ namespace eastl
 		}
 	};
 
-	template <typename T>
-	struct greater_equal : public binary_function<T, T, bool>
-	{
+    template <typename T = void>
+    struct greater_equal : public binary_function<T, T, bool>
+    {
 		EA_CPP14_CONSTEXPR bool operator()(const T& a, const T& b) const
 			{ return a >= b; }
+	};
+
+	// http://en.cppreference.com/w/cpp/utility/functional/greater_equal_void
+	template <>
+	struct greater_equal<void>
+	{
+		template<typename A, typename B>
+		EA_CPP14_CONSTEXPR auto operator()(A&& a, B&& b) const
+			-> decltype(eastl::forward<A>(a) >= eastl::forward<B>(b))
+			{ return eastl::forward<A>(a) >= eastl::forward<B>(b); }
 	};
 
 	template <typename T, typename Compare>
@@ -200,11 +309,21 @@ namespace eastl
 		return !compare(a, b) || !compare(b, a); // If (a >= b), then !(b >= a)
 	}
 
-	template <typename T>
+	template <typename T = void>
 	struct less_equal : public binary_function<T, T, bool>
 	{
 		EA_CPP14_CONSTEXPR bool operator()(const T& a, const T& b) const
 			{ return a <= b; }
+	};
+
+	// http://en.cppreference.com/w/cpp/utility/functional/less_equal_void
+	template <>
+	struct less_equal<void>
+	{
+		template<typename A, typename B>
+		EA_CPP14_CONSTEXPR auto operator()(A&& a, B&& b) const
+			-> decltype(eastl::forward<A>(a) <= eastl::forward<B>(b))
+			{ return eastl::forward<A>(a) <= eastl::forward<B>(b); }
 	};
 
 	template <typename T, typename Compare>
@@ -213,25 +332,55 @@ namespace eastl
 		return !compare(a, b) || !compare(b, a); // If (a <= b), then !(b <= a)
 	}
 
-	template <typename T>
+	template <typename T = void>
 	struct logical_and : public binary_function<T, T, bool>
 	{
 		EA_CPP14_CONSTEXPR bool operator()(const T& a, const T& b) const
 			{ return a && b; }
 	};
-
-	template <typename T>
-	struct logical_or : public binary_function<T, T, bool>
+	
+	// http://en.cppreference.com/w/cpp/utility/functional/logical_and_void
+	template <>
+	struct logical_and<void>
 	{
+		template<typename A, typename B>
+		EA_CPP14_CONSTEXPR auto operator()(A&& a, B&& b) const
+			-> decltype(eastl::forward<A>(a) && eastl::forward<B>(b))
+			{ return eastl::forward<A>(a) && eastl::forward<B>(b); }
+	};
+
+    template <typename T = void>
+    struct logical_or : public binary_function<T, T, bool>
+    {
 		EA_CPP14_CONSTEXPR bool operator()(const T& a, const T& b) const
 			{ return a || b; }
 	};
 
-	template <typename T>
-	struct logical_not : public unary_function<T, bool>
+	// http://en.cppreference.com/w/cpp/utility/functional/logical_or_void
+	template <>
+	struct logical_or<void>
 	{
+		template<typename A, typename B>
+		EA_CPP14_CONSTEXPR auto operator()(A&& a, B&& b) const
+			-> decltype(eastl::forward<A>(a) || eastl::forward<B>(b))
+			{ return eastl::forward<A>(a) || eastl::forward<B>(b); }
+	};
+
+    template <typename T = void>
+    struct logical_not : public unary_function<T, bool>
+    {
 		EA_CPP14_CONSTEXPR bool operator()(const T& a) const
 			{ return !a; }
+	};
+
+	// http://en.cppreference.com/w/cpp/utility/functional/logical_not_void
+	template <>
+	struct logical_not<void>
+	{
+		template<typename T>
+		EA_CPP14_CONSTEXPR auto operator()(T&& t) const
+			-> decltype(!eastl::forward<T>(t))
+			{ return !eastl::forward<T>(t); }
 	};
 
 
@@ -240,33 +389,27 @@ namespace eastl
 	// Dual type functions
 	///////////////////////////////////////////////////////////////////////
 
+
 	template <typename T, typename U>
 	struct equal_to_2 : public binary_function<T, U, bool>
 	{
 		EA_CPP14_CONSTEXPR bool operator()(const T& a, const U& b) const
 			{ return a == b; }
-		EA_CPP14_CONSTEXPR bool operator()(const U& b, const T& a) const   // If you are getting a 'operator() already defined' error related to on this line while compiling a 
-			{ return b == a; }                                             // hashtable class (e.g. hash_map), it's likely that you are using hashtable::find_as when you should
-	};                                                                     // be using hashtable::find instead. The problem is that (const T, U) collide. To do: make this work.
 
-	template <typename T>
-	struct equal_to_2<T, T> : public equal_to<T>
-	{
+		template <typename T_ = T, typename U_ = U, typename = eastl::enable_if_t<!eastl::is_same_v<eastl::remove_const_t<T_>, eastl::remove_const_t<U_>>>>
+		EA_CPP14_CONSTEXPR bool operator()(const U& b, const T& a) const
+			{ return b == a; }
 	};
-
 
 	template <typename T, typename U>
 	struct not_equal_to_2 : public binary_function<T, U, bool>
 	{
 		EA_CPP14_CONSTEXPR bool operator()(const T& a, const U& b) const
 			{ return a != b; }
+
+		template <typename T_ = T, typename U_ = U, typename = eastl::enable_if_t<!eastl::is_same_v<eastl::remove_const_t<T_>, eastl::remove_const_t<U_>>>>
 		EA_CPP14_CONSTEXPR bool operator()(const U& b, const T& a) const
 			{ return b != a; }
-	};
-
-	template <typename T>
-	struct not_equal_to_2<T, T> : public not_equal_to<T>
-	{
 	};
 
 
@@ -275,16 +418,11 @@ namespace eastl
 	{
 		EA_CPP14_CONSTEXPR bool operator()(const T& a, const U& b) const
 			{ return a < b; }
+
+		template <typename T_ = T, typename U_ = U, typename = eastl::enable_if_t<!eastl::is_same_v<eastl::remove_const_t<T_>, eastl::remove_const_t<U_>>>>
 		EA_CPP14_CONSTEXPR bool operator()(const U& b, const T& a) const
 			{ return b < a; }
 	};
-
-	template <typename T>
-	struct less_2<T, T> : public less<T>
-	{
-	};
-
-
 
 
 	/// unary_negate
@@ -796,13 +934,85 @@ namespace eastl
 	}
 
 
+	// not_fn_ret
+	// not_fn_ret is a implementation specified return type of eastl::not_fn.
+	// The type name is not specified but it does have mandated functions that conforming implementations must support.
+	//
+	// http://en.cppreference.com/w/cpp/utility/functional/not_fn
+	//
+	template <typename F>
+	struct not_fn_ret
+	{
+		explicit not_fn_ret(F&& f) : mDecayF(eastl::forward<F>(f)) {}
+		not_fn_ret(not_fn_ret&& f) = default;
+		not_fn_ret(const not_fn_ret& f) = default;
+
+		// overloads for lvalues
+		template <class... Args>
+		auto operator()(Args&&... args) &
+		    -> decltype(!eastl::declval<eastl::invoke_result_t<eastl::decay_t<F>&, Args...>>())
+		{ return !eastl::invoke(mDecayF, eastl::forward<Args>(args)...); }
+
+		template <class... Args>
+		auto operator()(Args&&... args) const &
+		    -> decltype(!eastl::declval<eastl::invoke_result_t<eastl::decay_t<F> const&, Args...>>())
+		{ return !eastl::invoke(mDecayF, eastl::forward<Args>(args)...); }
+
+		// overloads for rvalues
+		template <class... Args>
+		auto operator()(Args&&... args) &&
+		    -> decltype(!eastl::declval<eastl::invoke_result_t<eastl::decay_t<F>, Args...>>())
+		{ return !eastl::invoke(eastl::move(mDecayF), eastl::forward<Args>(args)...); }
+
+		template <class... Args>
+		auto operator()(Args&&... args) const &&
+		    -> decltype(!eastl::declval<eastl::invoke_result_t<eastl::decay_t<F> const, Args...>>())
+		{ return !eastl::invoke(eastl::move(mDecayF), eastl::forward<Args>(args)...); }
+
+		eastl::decay_t<F> mDecayF;
+	};
+
+	/// not_fn
+	///
+	/// Creates an implementation specified functor that returns the complement of the callable object it was passed.
+	/// not_fn is intended to replace the C++03-era negators eastl::not1 and eastl::not2.
+	///
+	/// http://en.cppreference.com/w/cpp/utility/functional/not_fn
+	///
+	/// Example usage:
+	///
+	///		auto nf = eastl::not_fn([]{ return false; });
+	///     assert(nf());  // return true
+	///
+	template <class F>
+	inline not_fn_ret<F> not_fn(F&& f)
+	{
+		return not_fn_ret<F>(eastl::forward<F>(f));
+	}
 
 
 	///////////////////////////////////////////////////////////////////////
 	// hash
 	///////////////////////////////////////////////////////////////////////
+	namespace Internal
+	{
+		// utility to disable the generic template specialization that is
+		// used for enum types only.
+		template <typename T, bool Enabled>
+		struct EnableHashIf {};
+
+		template <typename T>
+		struct EnableHashIf<T, true>
+		{
+			size_t operator()(T p) const { return size_t(p); }
+		};
+	} // namespace Internal
+
 
 	template <typename T> struct hash;
+
+	template <typename T>
+	struct hash : Internal::EnableHashIf<T, is_enum_v<T>> {};
 
 	template <typename T> struct hash<T*> // Note that we use the pointer as-is and don't divide by sizeof(T*). This is because the table is of a prime size and this division doesn't benefit distribution.
 		{ size_t operator()(T* p) const { return size_t(uintptr_t(p)); } };
@@ -819,14 +1029,19 @@ namespace eastl
 	template <> struct hash<unsigned char>
 		{ size_t operator()(unsigned char val) const { return static_cast<size_t>(val); } };
 
+	#if defined(EA_CHAR8_UNIQUE) && EA_CHAR8_UNIQUE
+		template <> struct hash<char8_t>
+			{ size_t operator()(char8_t val) const { return static_cast<size_t>(val); } };
+	#endif
+
 	#if defined(EA_CHAR16_NATIVE) && EA_CHAR16_NATIVE
 		template <> struct hash<char16_t>
-		{ size_t operator()(char16_t val) const { return static_cast<size_t>(val); } };
+			{ size_t operator()(char16_t val) const { return static_cast<size_t>(val); } };
 	#endif
 
 	#if defined(EA_CHAR32_NATIVE) && EA_CHAR32_NATIVE
 		template <> struct hash<char32_t>
-		{ size_t operator()(char32_t val) const { return static_cast<size_t>(val); } };
+			{ size_t operator()(char32_t val) const { return static_cast<size_t>(val); } };
 	#endif
 
 	// If wchar_t is a native type instead of simply a define to an existing type...
@@ -868,6 +1083,11 @@ namespace eastl
 	template <> struct hash<long double>
 		{ size_t operator()(long double val) const { return static_cast<size_t>(val); } };
 
+	#if defined(EA_HAVE_INT128) && EA_HAVE_INT128
+	template <> struct hash<uint128_t>
+		{ size_t operator()(uint128_t val) const { return static_cast<size_t>(val); } };
+	#endif
+
 
 	///////////////////////////////////////////////////////////////////////////
 	// string hashes
@@ -881,6 +1101,29 @@ namespace eastl
 	//      special hash customized for such strings that's better than what we provide.
 	///////////////////////////////////////////////////////////////////////////
 
+	template <> struct hash<char*>
+	{
+		size_t operator()(const char* p) const
+		{
+			uint32_t c, result = 2166136261U;   // FNV1 hash. Perhaps the best string hash. Intentionally uint32_t instead of size_t, so the behavior is the same regardless of size.
+			while((c = (uint8_t)*p++) != 0)     // Using '!=' disables compiler warnings.
+				result = (result * 16777619) ^ c;
+			return (size_t)result;
+		}
+	};
+
+	template <> struct hash<const char*>
+	{
+		size_t operator()(const char* p) const
+		{
+			uint32_t c, result = 2166136261U;   // Intentionally uint32_t instead of size_t, so the behavior is the same regardless of size.
+			while((c = (uint8_t)*p++) != 0)     // cast to unsigned 8 bit.
+				result = (result * 16777619) ^ c;
+			return (size_t)result;
+		}
+	};
+
+#if EA_CHAR8_UNIQUE
 	template <> struct hash<char8_t*>
 	{
 		size_t operator()(const char8_t* p) const
@@ -902,6 +1145,8 @@ namespace eastl
 			return (size_t)result;
 		}
 	};
+#endif
+
 
 	template <> struct hash<char16_t*>
 	{
@@ -947,6 +1192,30 @@ namespace eastl
 		}
 	};
 
+#if defined(EA_WCHAR_UNIQUE) && EA_WCHAR_UNIQUE
+	template<> struct hash<wchar_t*>
+	{
+		size_t operator()(const wchar_t* p) const
+		{
+			uint32_t c, result = 2166136261U;    // Intentionally uint32_t instead of size_t, so the behavior is the same regardless of size.
+			while ((c = (uint32_t)*p++) != 0)    // cast to unsigned 32 bit.
+				result = (result * 16777619) ^ c;
+			return (size_t)result;
+		}
+	};
+
+	template<> struct hash<const wchar_t*>
+	{
+		size_t operator()(const wchar_t* p) const
+		{
+			uint32_t c, result = 2166136261U;    // Intentionally uint32_t instead of size_t, so the behavior is the same regardless of size.
+			while ((c = (uint32_t)*p++) != 0)    // cast to unsigned 32 bit.
+				result = (result * 16777619) ^ c;
+			return (size_t)result;
+		}
+	};
+#endif
+
 	/// string_hash
 	///
 	/// Defines a generic string hash for an arbitrary EASTL basic_string container.
@@ -974,12 +1243,7 @@ namespace eastl
 
 } // namespace eastl
 
-#if EASTL_FUNCTION_ENABLED
-	EA_DISABLE_VC_WARNING(4510 4512 4610)  // disable warning: function_manager not generating default constructor and default assignment operators.
-	#include <EASTL/internal/function.h>
-	EA_RESTORE_VC_WARNING()
-#endif
-
+#include <EASTL/internal/function.h>
 
 #endif // Header include guard
 

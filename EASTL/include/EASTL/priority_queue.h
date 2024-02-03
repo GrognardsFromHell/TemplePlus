@@ -29,12 +29,9 @@
 #include <EASTL/initializer_list.h>
 #include <stddef.h>
 
-
-#ifdef _MSC_VER
-	#pragma warning(push)
-	#pragma warning(disable: 4530)  // C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
-	#pragma warning(disable: 4571)  // catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are no longer caught.
-#endif
+// 4530 - C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
+// 4571 - catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are no longer caught.
+EA_DISABLE_VC_WARNING(4530 4571);
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
@@ -132,23 +129,17 @@ namespace eastl
 			eastl::make_heap(c.begin(), c.end(), comp);
 		}
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			template <class Allocator>
-			priority_queue(this_type&& x, const Allocator& allocator, typename eastl::enable_if<eastl::uses_allocator<container_type, Allocator>::value>::type* = NULL)
-				: c(eastl::move(x.c), allocator), comp(x.comp)
-			{
-				eastl::make_heap(c.begin(), c.end(), comp);
-			}
-		#endif
+		template <class Allocator>
+		priority_queue(this_type&& x, const Allocator& allocator, typename eastl::enable_if<eastl::uses_allocator<container_type, Allocator>::value>::type* = NULL)
+			: c(eastl::move(x.c), allocator), comp(x.comp)
+		{
+			eastl::make_heap(c.begin(), c.end(), comp);
+		}
 
 		explicit priority_queue(const compare_type& compare);
+		explicit priority_queue(const compare_type& compare, container_type&& x);
 
 		priority_queue(const compare_type& compare, const container_type& x);
-
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			explicit priority_queue(const compare_type& compare, container_type&& x);
-		#endif
-
 		priority_queue(std::initializer_list<value_type> ilist, const compare_type& compare = compare_type()); // C++11 doesn't specify that std::priority_queue has initializer list support.
 
 		template <typename InputIterator>
@@ -160,10 +151,8 @@ namespace eastl
 		template <typename InputIterator>
 		priority_queue(InputIterator first, InputIterator last, const compare_type& compare, const container_type& x);
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			template <class InputIterator>
-			priority_queue(InputIterator first, InputIterator last, const compare_type& compare, container_type&& x);
-		#endif
+		template <class InputIterator>
+		priority_queue(InputIterator first, InputIterator last, const compare_type& compare, container_type&& x);
 
 		// Additional C++11 support to consider:
 		//
@@ -183,20 +172,10 @@ namespace eastl
 
 		void push(const value_type& value);
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			void push(value_type&& x);
-		#endif
+		void push(value_type&& x);
 
-		#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED
-			template <class... Args>
-			void emplace(Args&&... args);
-		#else
-			#if EASTL_MOVE_SEMANTICS_ENABLED
-				void emplace(value_type&& x);
-			#endif
-
-			void emplace(const value_type& x);
-		#endif
+		template <class... Args>
+		void emplace(Args&&... args);
 
 		void pop();
 
@@ -246,14 +225,12 @@ namespace eastl
 	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename T, typename Container, typename Compare>
-		inline priority_queue<T, Container, Compare>::priority_queue(const compare_type& compare, container_type&& x)
-		  : c(eastl::move(x)), comp(compare)
-		{
-			eastl::make_heap(c.begin(), c.end(), comp);
-		}
-	#endif
+	template <typename T, typename Container, typename Compare>
+	inline priority_queue<T, Container, Compare>::priority_queue(const compare_type& compare, container_type&& x)
+	  : c(eastl::move(x)), comp(compare)
+	{
+		eastl::make_heap(c.begin(), c.end(), comp);
+	}
 
 
 	template <typename T, typename Container, typename Compare>
@@ -294,16 +271,14 @@ namespace eastl
 	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename T, typename Container, typename Compare>
-		template <typename InputIterator>
-		inline priority_queue<T, Container, Compare>::priority_queue(InputIterator first, InputIterator last, const compare_type& compare, container_type&& x)
-			: c(eastl::move(x)), comp(compare)
-		{
-			c.insert(c.end(), first, last);
-			eastl::make_heap(c.begin(), c.end(), comp);
-		}
-	#endif
+	template <typename T, typename Container, typename Compare>
+	template <typename InputIterator>
+	inline priority_queue<T, Container, Compare>::priority_queue(InputIterator first, InputIterator last, const compare_type& compare, container_type&& x)
+		: c(eastl::move(x)), comp(compare)
+	{
+		c.insert(c.end(), first, last);
+		eastl::make_heap(c.begin(), c.end(), comp);
+	}
 
 
 	template <typename T, typename Container, typename Compare>
@@ -350,51 +325,33 @@ namespace eastl
 	}
 
 
-	#if EASTL_MOVE_SEMANTICS_ENABLED
-		template <typename T, typename Container, typename Compare>
-		inline void priority_queue<T, Container, Compare>::push(value_type&& value)
-		{
-			#if EASTL_EXCEPTIONS_ENABLED
-				try
-				{
-					c.push_back(eastl::move(value));
-					eastl::push_heap(c.begin(), c.end(), comp);
-				}
-				catch(...)
-				{
-					c.clear();
-					throw;
-				}
-			#else
+	template <typename T, typename Container, typename Compare>
+	inline void priority_queue<T, Container, Compare>::push(value_type&& value)
+	{
+		#if EASTL_EXCEPTIONS_ENABLED
+			try
+			{
 				c.push_back(eastl::move(value));
 				eastl::push_heap(c.begin(), c.end(), comp);
-			#endif
-		}
-	#endif
-
-
-	#if EASTL_MOVE_SEMANTICS_ENABLED && EASTL_VARIADIC_TEMPLATES_ENABLED
-		template <typename T, typename Container, typename Compare>
-		template <class... Args>
-		inline void priority_queue<T, Container, Compare>::emplace(Args&&... args)
-		{
-			push(value_type(eastl::forward<Args>(args)...)); // The C++11 Standard 23.6.4/1 states that c.emplace is used, but also declares that c doesn't need to have an emplace function.
-		}
-	#else
-		#if EASTL_MOVE_SEMANTICS_ENABLED
-			template <typename T, typename Container, typename Compare>
-			inline void priority_queue<T, Container, Compare>::emplace(value_type&& value)
-			{
-				push(eastl::move(value)); // The C++11 Standard 23.6.4/1 states that c.emplace is used, but also declares that c doesn't need to have an emplace function.
 			}
+			catch(...)
+			{
+				c.clear();
+				throw;
+			}
+		#else
+			c.push_back(eastl::move(value));
+			eastl::push_heap(c.begin(), c.end(), comp);
 		#endif
+	}
 
-		template <typename T, typename Container, typename Compare>
-		inline void priority_queue<T, Container, Compare>::emplace(const value_type& value)
-		{
-			push(value); // The C++11 Standard 23.6.4/1 states that c.emplace is used, but also declares that c doesn't need to have an emplace function.
-		}
-	#endif
+
+	template <typename T, typename Container, typename Compare>
+	template <class... Args>
+	inline void priority_queue<T, Container, Compare>::emplace(Args&&... args)
+	{
+		push(value_type(eastl::forward<Args>(args)...)); // The C++11 Standard 23.6.4/1 states that c.emplace is used, but also declares that c doesn't need to have an emplace function.
+	}
 
 
 	template <typename T, typename Container, typename Compare>
@@ -528,22 +485,7 @@ namespace eastl
 } // namespace eastl
 
 
-#ifdef _MSC_VER
-	#pragma warning(pop)
-#endif
+EA_RESTORE_VC_WARNING();
 
 
 #endif // Header include guard
-
-
-
-
-
-
-
-
-
-
-
-
-

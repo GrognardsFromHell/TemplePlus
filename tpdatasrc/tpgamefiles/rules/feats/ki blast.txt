@@ -1,0 +1,10 @@
+name: Ki Blast
+flags: 12582992
+prereqs: 1 13 4 13 266 8
+description: You focus your ki into a ball of energy that you can hurl at an opponent.
+
+You can expend two daily uses of your Stunning Fist feat as a move action to create an orb of raw ki energy. You can then throw the seething orb as a standard action with a range of 60 feet. This ranged touch attack deals damage equal to 3d6 points + your Wis modifier. The ki orb is a force effect. If you fail to throw the orb before the end of your turn, it dissipates harmlessly. When you take this feat, you gain an additional daily use of Stunning Fist.
+prereq descr: Fiery Fist, Improved Unarmed Strike, Stunning Fist, DEX 13, WIS 13, base attack bonus +8
+
+Special
+A fighter can select Ki Blast as one of his fighter bonus feats. A monk with the Stunning Fist feat can select Ki Blast as her bonus feat at 8th level, as long as she possesses the Fiery Fist feat and a base attack bonus of +6 (other prerequisites can be ignored).

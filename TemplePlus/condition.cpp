@@ -1328,76 +1328,7 @@ int GenericCallbacks::GlobalWieldedTwoHandedQuery(DispatcherCallbackArgs args)
 	if (!weaponUsed)
 		return 0;
 
-	auto weapType = (WeaponTypes)gameSystems->GetObj().GetObject(weaponUsed)->GetInt32(obj_f_weapon_type);
-
-	// special case - rapiers are always wielded one handed
-	if (weapType == wt_rapier){
-		dispIo->return_val = 0;
-		return 0;
-	}
-
-
-
-	auto offhandWeapon = inventory.ItemWornAt(args.objHndCaller, EquipSlot::WeaponSecondary);
-	auto shield = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Shield);
-	auto isShieldAlloingTwoHandedWield = (shield != objHndl::null) && inventory.IsBuckler(shield); // are you holding the weapon with your buckler hand?
-	if (isShieldAlloingTwoHandedWield){
-		if (d20Sys.d20Query(args.objHndCaller, DK_QUE_Is_Preferring_One_Handed_Wield))
-			isShieldAlloingTwoHandedWield = false;
-	}
-	auto hasInterferingOffhand = (offhandWeapon != objHndl::null 
-								  || (shield != objHndl::null && !isShieldAlloingTwoHandedWield)) ? true : false;
-
-	auto wieldType = inventory.GetWieldType(args.objHndCaller, weaponUsed, true);
-	auto wieldTypeWeaponModified = inventory.GetWieldType(args.objHndCaller, weaponUsed, false); // the wield type if the weapon is not enlarged along with the critter
-	
-
-	bool isTwohandedWieldable = !hasInterferingOffhand;
-
-	switch (wieldType)
-	{
-	case 0: // light weapon
-		switch (wieldTypeWeaponModified)
-		{
-		case 0:
-			isTwohandedWieldable = false;
-			break;
-		case 1: // benefitting from enlargement of weapon
-		case 2:
-		default:
-			break;
-		}
-	case 1: // single handed wield if weapon is unaffected
-		switch (wieldTypeWeaponModified)
-		{
-		case 0: // only in reduce person; going to assume the "beneficial" case that the reduction was made voluntarily and hence you let the weapon stay larger
-		case 1:
-		case 2:
-		default:
-			break;
-		}
-	case 2: // two handed wield if weapon is unaffected
-		switch (wieldTypeWeaponModified)
-		{
-		case 0:
-		case 1: // only in reduce person
-			break;
-		case 2:
-			if (hasInterferingOffhand) // shouldn't really be possible to hold two Two Handed Weapons... maybe if player is cheating
-			{
-				logger->warn("Illegally wielding weapon along withoffhand!");
-			}
-		default:
-			break;
-		}
-	case 3:
-		break;
-	case 4:
-	default:
-		break;
-	}
-
-	dispIo->return_val = isTwohandedWieldable;
+	dispIo->return_val = inventory.IsWieldedTwoHanded(weaponUsed, args.objHndCaller);
 
 	return 0;
 }
@@ -2556,7 +2487,7 @@ int __cdecl TurnBasedStatusInitNoActions(DispatcherCallbackArgs args){
 		if (tbStat){
 			tbStat->hourglassState = 0;
 			dispIo->tbStatus->tbsFlags |= TurnBasedStatusFlags::TBSF_Movement;
-			logger->debug("Zeroed actions for {}", description.getDisplayName(args.objHndCaller));
+			logger->debug("Zeroed actions for {}", args.objHndCaller);
 		}
 	}
 	return 0;
@@ -2806,7 +2737,7 @@ bool ConditionSystem::AddTo(objHndl handle, const CondStruct* cond, const vector
 	auto dispatcher = objects.GetDispatcher(handle);
 
 	if (!dispatch.dispatcherValid(dispatcher)) {
-		logger->info("Dispatcher invalid for {}", objects.description.getDisplayName(handle));
+		logger->info("Dispatcher invalid for {}", handle);
 		return false;
 	}
 

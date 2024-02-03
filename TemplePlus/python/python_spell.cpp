@@ -1260,6 +1260,11 @@ static PyObject* PySpellStore_GetClass(PyObject* obj, void*) {
 
 static PyObject* PySpellStore_GetCasterClass(PyObject* obj, void*) {
 	auto self = (PySpellStore*)obj;
+
+	if (spellSys.isDomainSpell(self->spellData.classCode)) {
+		return PyInt_FromLong(0);
+	}
+
 	return PyInt_FromLong(spellSys.GetCastingClass(self->spellData.classCode));
 }
 

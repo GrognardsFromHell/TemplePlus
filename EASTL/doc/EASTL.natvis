@@ -10,14 +10,30 @@
 
      You don't need to restart Visual Studio to use it, you just need to restart the debug 
      session. You can have multiple .natvis files and they will all be used.
+
+	 VS2017 natvis documentation:
+	https://docs.microsoft.com/en-us/visualstudio/debugger/create-custom-views-of-native-objects
 -->
 
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
 
-<Type Name="eastl::shared_ptr&lt;*&gt;">
-	<DisplayString>{mpValue}</DisplayString>
+<Type Name="eastl::unique_ptr&lt;*&gt;">
+	<DisplayString Condition="mPair.mFirst != nullptr">({(void*)mPair.mFirst} = {*mPair.mFirst})</DisplayString>
+	<DisplayString Condition="mPair.mFirst == nullptr">({nullptr})</DisplayString>
 	<Expand>
-		<ExpandedItem>mpValue</ExpandedItem>
+		<Item Name="[pointer]">(void*)mPair.mFirst</Item>
+		<Item Name="[value]">*mPair.mFirst</Item>
+	</Expand>
+</Type>
+
+<Type Name="eastl::shared_ptr&lt;*&gt;">
+	<DisplayString Condition="mpValue != nullptr">({(void*)mpValue} = {*mpValue})</DisplayString>
+	<DisplayString Condition="mpValue == nullptr">({nullptr})</DisplayString>
+	<Expand>
+		<Item Name="[pointer]">(void*)mpValue</Item>
+		<Item Name="[value]">*mpValue</Item>
+		<Item Name="[reference count]">mpRefCount->mRefCount</Item>
+		<Item Name="[weak reference count]">mpRefCount->mWeakRefCount</Item>
 	</Expand>
 </Type>
 
@@ -46,21 +62,36 @@
     </Expand>
 </Type>
 
-<Type Name="eastl::basic_string&lt;char,*&gt;">
-	<DisplayString>{mpBegin,s}</DisplayString>
+<Type Name="eastl::basic_string&lt;*&gt;">
+	<DisplayString Condition="!!(mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize &amp; kSSOMask)">"{mPair.mFirst.heap.mpBegin,sb}"</DisplayString>
+	<DisplayString Condition="!(mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize &amp; kSSOMask)">"{mPair.mFirst.sso.mData,sb}"</DisplayString>
 	<Expand>
-		<Item Name="length">mpEnd-mpBegin</Item>
-		<Item Name="capacity">mpCapacity-mpBegin</Item>
-		<Item Name="value">mpBegin,sb</Item>
+		<Item Name="[length]"   Condition="!!(mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize &amp; kSSOMask)">mPair.mFirst.heap.mnSize</Item>
+		<Item Name="[capacity]" Condition="!!(mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize &amp; kSSOMask)">(mPair.mFirst.heap.mnCapacity &amp; ~kHeapMask)</Item>
+		<Item Name="[value]"    Condition="!!(mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize &amp; kSSOMask)">mPair.mFirst.heap.mpBegin,sb</Item>
+
+		<Item Name="[length]"   Condition="!(mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize &amp; kSSOMask)">(SSOLayout::SSO_CAPACITY - mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize)</Item>
+		<Item Name="[capacity]" Condition="!(mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize &amp; kSSOMask)">SSOLayout::SSO_CAPACITY</Item>
+		<Item Name="[value]"    Condition="!(mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize &amp; kSSOMask)">mPair.mFirst.sso.mData,sb</Item>
+
+		<Item Name="[uses heap]">!!(mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize &amp; kSSOMask)</Item>
 	</Expand>
 </Type>
 
+  
 <Type Name="eastl::basic_string&lt;wchar_t,*&gt;">
-	<DisplayString>{mpBegin,su}</DisplayString>
+	<DisplayString Condition="!!(mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize &amp; kSSOMask)">{mPair.mFirst.heap.mpBegin,su}</DisplayString>
+	<DisplayString Condition="!(mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize &amp; kSSOMask)">{mPair.mFirst.sso.mData,su}</DisplayString>
 	<Expand>
-		<Item Name="length">mpEnd-mpBegin</Item>
-		<Item Name="capacity">mpCapacity-mpBegin</Item>
-		<Item Name="value">mpBegin,sub</Item>
+		<Item Name="[length]"   Condition="!!(mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize &amp; kSSOMask)">mPair.mFirst.heap.mnSize</Item>
+		<Item Name="[capacity]" Condition="!!(mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize &amp; kSSOMask)">(mPair.mFirst.heap.mnCapacity &amp; ~kHeapMask)</Item>
+		<Item Name="[value]"    Condition="!!(mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize &amp; kSSOMask)">mPair.mFirst.heap.mpBegin,su</Item>
+
+		<Item Name="[length]"   Condition="!(mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize &amp; kSSOMask)">(SSOLayout::SSO_CAPACITY - mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize)</Item>
+		<Item Name="[capacity]" Condition="!(mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize &amp; kSSOMask)">SSOLayout::SSO_CAPACITY</Item>
+		<Item Name="[value]"    Condition="!(mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize &amp; kSSOMask)">mPair.mFirst.sso.mData,su</Item>
+
+		<Item Name="[uses heap]">!!(mPair.mFirst.sso.mRemainingSizeField.mnRemainingSize &amp; kSSOMask)</Item>
 	</Expand>
 </Type>
 
@@ -70,6 +101,24 @@
         <Item Name="first">first</Item>
         <Item Name="second">second</Item>
     </Expand>
+</Type>
+
+<Type Name="eastl::span&lt;*&gt;">
+	<DisplayString Condition="mnSize == 0">[{mnSize}] {{}}</DisplayString>
+	<DisplayString Condition="mnSize == 1">[{mnSize}] {{ {*mpData} }}</DisplayString>
+	<DisplayString Condition="mnSize == 2">[{mnSize}] {{ {*mpData}, {*(mpData+1)} }}</DisplayString>
+	<DisplayString Condition="mnSize == 3">[{mnSize}] {{ {*mpData}, {*(mpData+1)}, {*(mpData+2)} }}</DisplayString>
+	<DisplayString Condition="mnSize == 4">[{mnSize}] {{ {*mpData}, {*(mpData+1)}, {*(mpData+2)}, {*(mpData+3)} }}</DisplayString>
+	<DisplayString Condition="mnSize == 5">[{mnSize}] {{ {*mpData}, {*(mpData+1)}, {*(mpData+2)}, {*(mpData+3)}, {*(mpData+4)} }}</DisplayString>
+	<DisplayString Condition="mnSize == 6">[{mnSize}] {{ {*mpData}, {*(mpData+1)}, {*(mpData+2)}, {*(mpData+3)}, {*(mpData+4)}, {*(mpData+5)} }}</DisplayString>
+	<DisplayString Condition="mnSize &gt; 6">[{mnSize}] {{ {*mpData}, {*(mpData+1)}, {*(mpData+2)}, {*(mpData+3)}, {*(mpData+4)}, {*(mpData+5)}, ... }}</DisplayString>
+	<Expand>
+		<Item Name="[size]">mnSize</Item>
+		<ArrayItems>
+			<Size>mnSize</Size>
+			<ValuePointer>mpData</ValuePointer>
+		</ArrayItems>
+	</Expand>
 </Type>
 
 <Type Name="eastl::VectorBase&lt;*&gt;">
@@ -83,7 +132,7 @@
 	<DisplayString Condition="mpEnd - mpBegin &gt; 6">[{mpEnd - mpBegin}] {{ {*mpBegin}, {*(mpBegin+1)}, {*(mpBegin+2)}, {*(mpBegin+3)}, {*(mpBegin+4)}, {*(mpBegin+5)}, ... }}</DisplayString>
     <Expand>
         <Item Name="[size]">mpEnd - mpBegin</Item>
-        <Item Name="[capacity]">mpCapacity - mpBegin</Item>
+        <Item Name="[capacity]">mCapacityAllocator.mFirst - mpBegin</Item>
         <ArrayItems>
             <Size>mpEnd - mpBegin</Size>
             <ValuePointer>mpBegin</ValuePointer>
@@ -137,24 +186,24 @@
 </Type>
 
 <Type Name="eastl::ListBase&lt;*&gt;">
-	<DisplayString Condition="mNode.mpNext == &amp;mNode">
+	<DisplayString Condition="mNodeAllocator.mFirst.mpNext == &amp;mNodeAllocator.mFirst">
 		[0] {{}}
 	</DisplayString>
-    <DisplayString Condition="mNode.mpNext != &amp;mNode &amp;&amp; mNode.mpNext-&gt;mpNext == &amp;mNode">
-		[1] {{ {((eastl::ListNode&lt;$T1&gt;*)mNode.mpNext)-&gt;mValue} }}
+    <DisplayString Condition="mNodeAllocator.mFirst.mpNext != &amp;mNodeAllocator.mFirst &amp;&amp; mNodeAllocator.mFirst.mpNext-&gt;mpNext == &amp;mNodeAllocator.mFirst">
+		[1] {{ {((eastl::ListNode&lt;$T1&gt;*)mNodeAllocator.mFirst.mpNext)-&gt;mValue} }}
 	</DisplayString>
-	<DisplayString Condition="mNode.mpNext != &amp;mNode &amp;&amp; mNode.mpNext-&gt;mpNext != &amp;mNode &amp;&amp; mNode.mpNext-&gt;mpNext-&gt;mpNext == &amp;mNode">
+	<DisplayString Condition="mNodeAllocator.mFirst.mpNext != &amp;mNodeAllocator.mFirst &amp;&amp; mNodeAllocator.mFirst.mpNext-&gt;mpNext != &amp;mNodeAllocator.mFirst &amp;&amp; mNodeAllocator.mFirst.mpNext-&gt;mpNext-&gt;mpNext == &amp;mNodeAllocator.mFirst">
 		[2] 
 		{{ 
-			{((eastl::ListNode&lt;$T1&gt;*)mNode.mpNext)-&gt;mValue}, 
-			{((eastl::ListNode&lt;$T1&gt;*)mNode.mpNext-&gt;mpNext)-&gt;mValue} 
+			{((eastl::ListNode&lt;$T1&gt;*)mNodeAllocator.mFirst.mpNext)-&gt;mValue}, 
+			{((eastl::ListNode&lt;$T1&gt;*)mNodeAllocator.mFirst.mpNext-&gt;mpNext)-&gt;mValue} 
 		}}
 	</DisplayString>
-	<DisplayString Condition="mNode.mpNext != &amp;mNode &amp;&amp; mNode.mpNext-&gt;mpNext != &amp;mNode &amp;&amp; mNode.mpNext-&gt;mpNext-&gt;mpNext != &amp;mNode">
+	<DisplayString Condition="mNodeAllocator.mFirst.mpNext != &amp;mNodeAllocator.mFirst &amp;&amp; mNodeAllocator.mFirst.mpNext-&gt;mpNext != &amp;mNodeAllocator.mFirst &amp;&amp; mNodeAllocator.mFirst.mpNext-&gt;mpNext-&gt;mpNext != &amp;mNodeAllocator.mFirst">
 		[?] 
 		{{ 
-			{((eastl::ListNode&lt;$T1&gt;*)mNode.mpNext)-&gt;mValue}, 
-			{((eastl::ListNode&lt;$T1&gt;*)mNode.mpNext-&gt;mpNext)-&gt;mValue}, 
+			{((eastl::ListNode&lt;$T1&gt;*)mNodeAllocator.mFirst.mpNext)-&gt;mValue}, 
+			{((eastl::ListNode&lt;$T1&gt;*)mNodeAllocator.mFirst.mpNext-&gt;mpNext)-&gt;mValue}, 
 			...
 		}}
 	</DisplayString>
@@ -163,7 +212,7 @@
 		  <DisplayString>Content of lists will repeat indefinitely. Keep that in mind!</DisplayString> 
 		</Synthetic>  
         <LinkedListItems>
-            <HeadPointer>mNode.mpNext</HeadPointer>
+            <HeadPointer>mNodeAllocator.mFirst.mpNext</HeadPointer>
             <NextPointer>mpNext</NextPointer>
             <ValueNode>((eastl::ListNode&lt;$T1&gt;*)this)-&gt;mValue</ValueNode>
         </LinkedListItems>
@@ -314,13 +363,13 @@
 	<DisplayString Condition="mnSize == 1">
 		[1] 
 		{{ 
-			{((eastl::rbtree_node&lt;$T1&gt;*)mAnchor.mpNodeLeft)-&gt;mValue} 
+			{((eastl::rbtree_node&lt;$T2&gt;*)mAnchor.mpNodeLeft)-&gt;mValue} 
 		}}
 	</DisplayString>
 	<DisplayString Condition="mnSize &gt; 1">
 		[{mnSize}] 
 		{{ 
-			{((eastl::rbtree_node&lt;$T1&gt;*)mAnchor.mpNodeLeft)-&gt;mValue}, 
+			{((eastl::rbtree_node&lt;$T2&gt;*)mAnchor.mpNodeLeft)-&gt;mValue}, 
 			...
 		}}
 	</DisplayString>
@@ -343,7 +392,7 @@
 		<Synthetic Name="NOTE!">
 		  <DisplayString>It is possible to expand parents that do not exist.</DisplayString> 
 		</Synthetic>
-		<Item Name="Parent">*(eastl::rbtree_node&lt;$T1&gt;*)(mpNodeParent.value &amp; (~uintptr_t(1)))</Item>
+		<Item Name="Parent">*(eastl::rbtree_node&lt;$T1&gt;*)mpNodeParent</Item>
 		<Item Name="Left">*(eastl::rbtree_node&lt;$T1&gt;*)mpNodeLeft</Item>
 		<Item Name="Right">*(eastl::rbtree_node&lt;$T1&gt;*)mpNodeRight</Item>
 	</Expand>
@@ -358,14 +407,29 @@
 
 
 <Type Name="eastl::hashtable&lt;*&gt;">
-    <DisplayString Condition="mnElementCount == 0">[{mnElementCount}] {{}}</DisplayString>
-	<DisplayString Condition="mnElementCount != 0">[{mnElementCount}] {{ ... }}</DisplayString>
-	<Expand>
-		<ArrayItems>
-            <Size>mnBucketCount</Size>
-            <ValuePointer>mpBucketArray</ValuePointer>
-        </ArrayItems>
-	</Expand>
+  <DisplayString Condition="mnElementCount == 0">[{mnElementCount}] {{}}</DisplayString>
+  <DisplayString Condition="mnElementCount != 0">[{mnElementCount}] {{ ... }}</DisplayString>
+  <Expand>
+    <ArrayItems IncludeView="detailed">
+      <Size>mnBucketCount</Size>
+      <ValuePointer>mpBucketArray</ValuePointer>
+    </ArrayItems>
+    <CustomListItems ExcludeView="detailed">
+      <Variable Name="bucketIndex" InitialValue="0"/>
+      <Variable Name="entry" InitialValue ="mpBucketArray[bucketIndex]"/>
+      <Loop>
+        <Item Condition="entry != nullptr">entry->mValue</Item>
+        <If Condition="entry != nullptr">
+          <Exec>entry = entry->mpNext</Exec>
+        </If>
+        <If Condition="entry == nullptr">
+          <Exec>bucketIndex++</Exec>
+          <Break Condition="bucketIndex == mnBucketCount"/>
+          <Exec>entry = mpBucketArray[bucketIndex]</Exec>
+        </If>
+      </Loop>
+    </CustomListItems>
+  </Expand>
 </Type>
 
 <Type Name="eastl::hash_node&lt;*&gt;">
@@ -386,6 +450,281 @@
 	<Expand>
 		<ExpandedItem>mpNode-&gt;mValue</ExpandedItem>
 	</Expand>
+</Type>
+
+<Type Name="eastl::reverse_iterator&lt;*&gt;">
+	<DisplayString>{*(mIterator-1)}</DisplayString>
+	<Expand>
+		<ExpandedItem>mIterator-1</ExpandedItem>
+	</Expand>
+</Type>
+
+<Type Name="eastl::bitset&lt;*&gt;">
+  <DisplayString>{{count = {kSize}}}</DisplayString>
+  <Expand>
+    <Item Name="[count]">kSize</Item>
+    <CustomListItems>
+      <Variable Name="iWord" InitialValue="0" />
+      <Variable Name="iBitInWord" InitialValue="0" />
+      <Variable Name="bBitValue" InitialValue="false" />
+
+      <Size>kSize</Size>
+
+      <Loop>
+        <Exec>bBitValue = ((mWord[iWord] >> iBitInWord) % 2) != 0 ? true : false</Exec>
+        <Item>bBitValue</Item>
+        <Exec>iBitInWord++</Exec>
+        <If Condition="iBitInWord == kBitsPerWord">
+          <Exec>iWord++</Exec>
+          <Exec>iBitInWord = 0</Exec>
+        </If>
+      </Loop>
+    </CustomListItems>
+  </Expand>
+</Type>
+
+<Type Name="eastl::ring_buffer&lt;*,*,*&gt;">
+  <DisplayString>{c}</DisplayString>
+  <Expand>
+    <ExpandedItem>c</ExpandedItem>
+  </Expand>
+</Type>
+
+<Type Name="eastl::basic_string_view&lt;*&gt;">
+	<DisplayString>{mpBegin,[mnCount]}</DisplayString>
+	<StringView>mpBegin,[mnCount]</StringView>
+</Type>
+
+<Type Name="eastl::compressed_pair_imp&lt;*&gt;">
+	<DisplayString Condition="($T3) == 0" Optional="true">({mFirst}, {mSecond})</DisplayString>
+	<DisplayString Condition="($T3) == 1" Optional="true">({mSecond})</DisplayString>
+	<DisplayString Condition="($T3) == 2" Optional="true">({mFirst})</DisplayString>
+	<DisplayString Condition="($T3) == 3" Optional="true">(empty)</DisplayString>
+	<DisplayString Condition="($T3) == 4" Optional="true">(empty)</DisplayString>
+	<DisplayString Condition="($T3) == 5" Optional="true">({mFirst}, {mSecond})</DisplayString>
+</Type>
+
+<Type Name="eastl::optional&lt;*&gt;">
+	<Intrinsic Name="value" Expression="*($T1*)&amp;val"/>
+	<DisplayString Condition="!engaged">nullopt</DisplayString>
+	<DisplayString Condition="engaged">{value()}</DisplayString>
+	<Expand>
+		<Item Condition="engaged" Name="value">value()</Item>
+	</Expand>
+</Type>
+
+<Type Name="eastl::ratio&lt;*&gt;">
+	<DisplayString>{$T1} to {$T2}}</DisplayString>
+</Type>
+
+
+<Type Name="eastl::chrono::duration&lt;*,eastl::ratio&lt;1,1000000000&gt; &gt;">
+	<DisplayString>{mRep} nanoseconds</DisplayString>
+</Type>
+
+<Type Name="eastl::chrono::duration&lt;*,eastl::ratio&lt;1,1000000&gt; &gt;">
+	<DisplayString>{mRep} microseconds</DisplayString>
+</Type>
+
+<Type Name="eastl::chrono::duration&lt;*,eastl::ratio&lt;1,1000&gt; &gt;">
+	<DisplayString>{mRep} milliseconds</DisplayString>
+</Type>
+
+<Type Name="eastl::chrono::duration&lt;*,eastl::ratio&lt;1,1&gt; &gt;">
+	<DisplayString>{mRep} seconds</DisplayString>
+</Type>
+
+<Type Name="eastl::chrono::duration&lt;*,eastl::ratio&lt;60,1&gt; &gt;">
+	<DisplayString>{mRep} minutes</DisplayString>
+</Type>
+
+<Type Name="eastl::chrono::duration&lt;*,eastl::ratio&lt;3600,1&gt; &gt;">
+	<DisplayString>{mRep} hours</DisplayString>
+</Type>
+
+<Type Name="eastl::chrono::duration&lt;*,eastl::ratio&lt;*,*&gt; &gt;">
+	<DisplayString>{mRep} duration with ratio = [{$T2} : {$T3}] </DisplayString>
+</Type>
+
+
+
+<Type Name="eastl::function&lt;*&gt;">
+	<DisplayString Condition="mInvokeFuncPtr == nullptr">empty</DisplayString>
+	<DisplayString>{mInvokeFuncPtr}</DisplayString>
+</Type>
+
+
+<Type Name="eastl::reference_wrapper&lt;*&gt;">
+	<DisplayString>{*val}</DisplayString>
+</Type>
+
+<!--
+	This implementation isn't ideal because it can't switch between showing inline value vs values stored in a heap allocation.
+	We are hitting the limit of natvis scripting that we can't workaround unless we change the implementation of eastl::any.
+-->
+<Type Name="eastl::any">
+	<DisplayString Condition="m_handler == nullptr">empty</DisplayString>
+	<DisplayString Condition="m_handler != nullptr">{m_storage.external_storage}</DisplayString>
+</Type>
+
+
+
+<Type Name="eastl::atomic_flag">
+	<DisplayString>{mFlag.mAtomic}</DisplayString>
+</Type>
+
+<Type Name="eastl::variant&lt;*&gt;">
+	<Intrinsic Name="index" Expression="(int)mIndex"/>
+	<DisplayString Condition="index() == size_t(-1)">[valueless_by_exception]</DisplayString>
+	<DisplayString Condition="index() ==  0" Optional="true">{{ index=0, value={($T1*)mStorage.mBuffer.mCharData}}</DisplayString>
+	<DisplayString Condition="index() ==  1" Optional="true">{{ index=1, value={($T2*)mStorage.mBuffer.mCharData}}</DisplayString>
+	<DisplayString Condition="index() ==  2" Optional="true">{{ index=2, value={($T3*)mStorage.mBuffer.mCharData}}</DisplayString>
+	<DisplayString Condition="index() ==  3" Optional="true">{{ index=3, value={($T4*)mStorage.mBuffer.mCharData}}</DisplayString>
+	<DisplayString Condition="index() ==  4" Optional="true">{{ index=4, value={($T5*)mStorage.mBuffer.mCharData}}</DisplayString>
+	<DisplayString Condition="index() ==  5" Optional="true">{{ index=5, value={($T6*)mStorage.mBuffer.mCharData}}</DisplayString>
+	<DisplayString Condition="index() ==  6" Optional="true">{{ index=6, value={($T7*)mStorage.mBuffer.mCharData}}</DisplayString>
+	<DisplayString Condition="index() ==  7" Optional="true">{{ index=7, value={($T8*)mStorage.mBuffer.mCharData}}</DisplayString>
+	<DisplayString Condition="index() ==  8" Optional="true">{{ index=8, value={($T9*)mStorage.mBuffer.mCharData}}</DisplayString>
+	<DisplayString Condition="index() ==  9" Optional="true">{{ index=9, value={($T10*)mStorage.mBuffer.mCharData}}</DisplayString>
+	<DisplayString Condition="index() ==  10" Optional="true">{{ index=10, value={($T11*)mStorage.mBuffer.mCharData}}</DisplayString>
+	<DisplayString Condition="index() ==  11" Optional="true">{{ index=11, value={($T12*)mStorage.mBuffer.mCharData}}</DisplayString>
+	<DisplayString Condition="index() ==  12" Optional="true">{{ index=12, value={($T13*)mStorage.mBuffer.mCharData}}</DisplayString>
+	<DisplayString Condition="index() ==  13" Optional="true">{{ index=13, value={($T14*)mStorage.mBuffer.mCharData}}</DisplayString>
+	<DisplayString Condition="index() ==  14" Optional="true">{{ index=14, value={($T15*)mStorage.mBuffer.mCharData}}</DisplayString>
+	<DisplayString Condition="index() ==  15" Optional="true">{{ index=15, value={($T16*)mStorage.mBuffer.mCharData}}</DisplayString>
+	<DisplayString Condition="index() ==  16" Optional="true">{{ index=16, value={($T17*)mStorage.mBuffer.mCharData}}</DisplayString>
+	<DisplayString Condition="index() ==  17" Optional="true">{{ index=17, value={($T18*)mStorage.mBuffer.mCharData}}</DisplayString>
+	<DisplayString Condition="index() ==  18" Optional="true">{{ index=18, value={($T19*)mStorage.mBuffer.mCharData}}</DisplayString>
+	<DisplayString Condition="index() ==  19" Optional="true">{{ index=19, value={($T20*)mStorage.mBuffer.mCharData}}</DisplayString>
+	<DisplayString Condition="index() ==  20" Optional="true">{{ index=20, value={($T21*)mStorage.mBuffer.mCharData}}</DisplayString>
+	<DisplayString Condition="index() ==  21" Optional="true">{{ index=21, value={($T22*)mStorage.mBuffer.mCharData}}</DisplayString>
+	<DisplayString Condition="index() ==  22" Optional="true">{{ index=22, value={($T23*)mStorage.mBuffer.mCharData}}</DisplayString>
+	<DisplayString Condition="index() ==  23" Optional="true">{{ index=23, value={($T24*)mStorage.mBuffer.mCharData}}</DisplayString>
+	<DisplayString Condition="index() ==  24" Optional="true">{{ index=24, value={($T25*)mStorage.mBuffer.mCharData}}</DisplayString>
+	<DisplayString Condition="index() ==  25" Optional="true">{{ index=25, value={($T26*)mStorage.mBuffer.mCharData}}</DisplayString>
+	<DisplayString Condition="index() ==  26" Optional="true">{{ index=26, value={($T27*)mStorage.mBuffer.mCharData}}</DisplayString>
+	<DisplayString Condition="index() ==  27" Optional="true">{{ index=27, value={($T28*)mStorage.mBuffer.mCharData}}</DisplayString>
+	<DisplayString Condition="index() ==  28" Optional="true">{{ index=28, value={($T29*)mStorage.mBuffer.mCharData}}</DisplayString>
+	<DisplayString Condition="index() ==  29" Optional="true">{{ index=29, value={($T30*)mStorage.mBuffer.mCharData}}</DisplayString>
+	<DisplayString Condition="index() ==  30" Optional="true">{{ index=30, value={($T31*)mStorage.mBuffer.mCharData}}</DisplayString>
+	<Expand>
+		<Item Name="index">index()</Item>
+		<Item Name="[value]" Condition="index() ==  0" Optional="true">($T1*)mStorage.mBuffer.mCharData</Item>
+		<Item Name="[value]" Condition="index() ==  1" Optional="true">($T2*)mStorage.mBuffer.mCharData</Item>
+		<Item Name="[value]" Condition="index() ==  2" Optional="true">($T3*)mStorage.mBuffer.mCharData</Item>
+		<Item Name="[value]" Condition="index() ==  3" Optional="true">($T4*)mStorage.mBuffer.mCharData</Item>
+		<Item Name="[value]" Condition="index() ==  4" Optional="true">($T5*)mStorage.mBuffer.mCharData</Item>
+		<Item Name="[value]" Condition="index() ==  5" Optional="true">($T6*)mStorage.mBuffer.mCharData</Item>
+		<Item Name="[value]" Condition="index() ==  6" Optional="true">($T7*)mStorage.mBuffer.mCharData</Item>
+		<Item Name="[value]" Condition="index() ==  7" Optional="true">($T8*)mStorage.mBuffer.mCharData</Item>
+		<Item Name="[value]" Condition="index() ==  8" Optional="true">($T9*)mStorage.mBuffer.mCharData</Item>
+		<Item Name="[value]" Condition="index() ==  9" Optional="true">($T10*)mStorage.mBuffer.mCharData</Item>
+		<Item Name="[value]" Condition="index() == 10" Optional="true">($T11*)mStorage.mBuffer.mCharData</Item>
+		<Item Name="[value]" Condition="index() == 11" Optional="true">($T12*)mStorage.mBuffer.mCharData</Item>
+		<Item Name="[value]" Condition="index() == 12" Optional="true">($T13*)mStorage.mBuffer.mCharData</Item>
+		<Item Name="[value]" Condition="index() == 13" Optional="true">($T14*)mStorage.mBuffer.mCharData</Item>
+		<Item Name="[value]" Condition="index() == 14" Optional="true">($T15*)mStorage.mBuffer.mCharData</Item>
+		<Item Name="[value]" Condition="index() == 15" Optional="true">($T16*)mStorage.mBuffer.mCharData</Item>
+		<Item Name="[value]" Condition="index() == 16" Optional="true">($T17*)mStorage.mBuffer.mCharData</Item>
+		<Item Name="[value]" Condition="index() == 17" Optional="true">($T18*)mStorage.mBuffer.mCharData</Item>
+		<Item Name="[value]" Condition="index() == 18" Optional="true">($T19*)mStorage.mBuffer.mCharData</Item>
+		<Item Name="[value]" Condition="index() == 19" Optional="true">($T20*)mStorage.mBuffer.mCharData</Item>
+		<Item Name="[value]" Condition="index() == 20" Optional="true">($T21*)mStorage.mBuffer.mCharData</Item>
+		<Item Name="[value]" Condition="index() == 21" Optional="true">($T22*)mStorage.mBuffer.mCharData</Item>
+		<Item Name="[value]" Condition="index() == 22" Optional="true">($T23*)mStorage.mBuffer.mCharData</Item>
+		<Item Name="[value]" Condition="index() == 23" Optional="true">($T24*)mStorage.mBuffer.mCharData</Item>
+		<Item Name="[value]" Condition="index() == 24" Optional="true">($T25*)mStorage.mBuffer.mCharData</Item>
+		<Item Name="[value]" Condition="index() == 25" Optional="true">($T26*)mStorage.mBuffer.mCharData</Item>
+		<Item Name="[value]" Condition="index() == 26" Optional="true">($T27*)mStorage.mBuffer.mCharData</Item>
+		<Item Name="[value]" Condition="index() == 27" Optional="true">($T28*)mStorage.mBuffer.mCharData</Item>
+		<Item Name="[value]" Condition="index() == 28" Optional="true">($T29*)mStorage.mBuffer.mCharData</Item>
+		<Item Name="[value]" Condition="index() == 29" Optional="true">($T30*)mStorage.mBuffer.mCharData</Item>
+		<Item Name="[value]" Condition="index() == 30" Optional="true">($T31*)mStorage.mBuffer.mCharData</Item>
+	</Expand>
+</Type>
+
+
+<Type Name="eastl::tuple&lt;&gt;">
+  <DisplayString IncludeView="noparens"></DisplayString>
+  <DisplayString ExcludeView="noparens">({*this,view(noparens)})</DisplayString>
+  <Expand/>
+</Type>
+
+<Type Name="eastl::tuple&lt;*&gt;">
+  <DisplayString IncludeView="noparens">{(*((eastl::Internal::TupleLeaf&lt;0,$T1,0&gt;*)&amp;mImpl)).mValue}</DisplayString>
+  <DisplayString ExcludeView="noparens">({*this,view(noparens)})</DisplayString>
+  <Expand>
+    <Item Name="[0]">(*((eastl::Internal::TupleLeaf&lt;0,$T1,0&gt;*)&amp;mImpl)).mValue</Item>
+  </Expand>
+</Type>
+
+<Type Name="eastl::tuple&lt;*,*&gt;">
+  <DisplayString IncludeView="noparens">{(*((eastl::Internal::TupleLeaf&lt;0,$T1,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;1,$T2,0&gt;*)&amp;mImpl)).mValue}</DisplayString>
+  <DisplayString ExcludeView="noparens">({*this,view(noparens)})</DisplayString>
+  <Expand>
+    <Item Name="[0]">(*((eastl::Internal::TupleLeaf&lt;0,$T1,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[1]">(*((eastl::Internal::TupleLeaf&lt;1,$T2,0&gt;*)&amp;mImpl)).mValue</Item>
+  </Expand>
+</Type>
+
+<Type Name="eastl::tuple&lt;*,*,*&gt;">
+  <DisplayString IncludeView="noparens">{(*((eastl::Internal::TupleLeaf&lt;0,$T1,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;1,$T2,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;2,$T3,0&gt;*)&amp;mImpl)).mValue}</DisplayString>
+  <DisplayString ExcludeView="noparens">({*this,view(noparens)})</DisplayString>
+  <Expand>
+    <Item Name="[0]">(*((eastl::Internal::TupleLeaf&lt;0,$T1,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[1]">(*((eastl::Internal::TupleLeaf&lt;1,$T2,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[2]">(*((eastl::Internal::TupleLeaf&lt;2,$T3,0&gt;*)&amp;mImpl)).mValue</Item>
+  </Expand>
+</Type>
+
+<Type Name="eastl::tuple&lt;*,*,*,*&gt;">
+  <DisplayString IncludeView="noparens">{(*((eastl::Internal::TupleLeaf&lt;0,$T1,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;1,$T2,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;2,$T3,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;3,$T4,0&gt;*)&amp;mImpl)).mValue}</DisplayString>
+  <DisplayString ExcludeView="noparens">({*this,view(noparens)})</DisplayString>
+  <Expand>
+    <Item Name="[0]">(*((eastl::Internal::TupleLeaf&lt;0,$T1,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[1]">(*((eastl::Internal::TupleLeaf&lt;1,$T2,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[2]">(*((eastl::Internal::TupleLeaf&lt;2,$T3,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[3]">(*((eastl::Internal::TupleLeaf&lt;3,$T4,0&gt;*)&amp;mImpl)).mValue</Item>
+  </Expand>
+</Type>
+
+<Type Name="eastl::tuple&lt;*,*,*,*,*&gt;">
+  <DisplayString IncludeView="noparens">{(*((eastl::Internal::TupleLeaf&lt;0,$T1,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;1,$T2,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;2,$T3,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;3,$T4,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;4,$T5,0&gt;*)&amp;mImpl)).mValue}</DisplayString>
+  <DisplayString ExcludeView="noparens">({*this,view(noparens)})</DisplayString>
+  <Expand>
+    <Item Name="[0]">(*((eastl::Internal::TupleLeaf&lt;0,$T1,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[1]">(*((eastl::Internal::TupleLeaf&lt;1,$T2,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[2]">(*((eastl::Internal::TupleLeaf&lt;2,$T3,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[3]">(*((eastl::Internal::TupleLeaf&lt;3,$T4,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[4]">(*((eastl::Internal::TupleLeaf&lt;4,$T5,0&gt;*)&amp;mImpl)).mValue</Item>
+  </Expand>
+</Type>
+
+<Type Name="eastl::tuple&lt;*,*,*,*,*,*&gt;">
+  <DisplayString IncludeView="noparens">{(*((eastl::Internal::TupleLeaf&lt;0,$T1,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;1,$T2,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;2,$T3,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;3,$T4,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;4,$T5,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;5,$T6,0&gt;*)&amp;mImpl)).mValue}</DisplayString>
+  <DisplayString ExcludeView="noparens">({*this,view(noparens)})</DisplayString>
+  <Expand>
+    <Item Name="[0]">(*((eastl::Internal::TupleLeaf&lt;0,$T1,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[1]">(*((eastl::Internal::TupleLeaf&lt;1,$T2,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[2]">(*((eastl::Internal::TupleLeaf&lt;2,$T3,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[3]">(*((eastl::Internal::TupleLeaf&lt;3,$T4,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[4]">(*((eastl::Internal::TupleLeaf&lt;4,$T5,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[5]">(*((eastl::Internal::TupleLeaf&lt;5,$T6,0&gt;*)&amp;mImpl)).mValue</Item>
+  </Expand>
+</Type>
+
+<Type Name="eastl::tuple&lt;*,*,*,*,*,*,*&gt;">
+  <DisplayString IncludeView="noparens">{(*((eastl::Internal::TupleLeaf&lt;0,$T1,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;1,$T2,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;2,$T3,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;3,$T4,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;4,$T5,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;5,$T6,0&gt;*)&amp;mImpl)).mValue}, {(*((eastl::Internal::TupleLeaf&lt;6,$T7,0&gt;*)&amp;mImpl)).mValue}</DisplayString>
+  <DisplayString ExcludeView="noparens">({*this,view(noparens)})</DisplayString>
+  <Expand>
+    <Item Name="[0]">(*((eastl::Internal::TupleLeaf&lt;0,$T1,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[1]">(*((eastl::Internal::TupleLeaf&lt;1,$T2,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[2]">(*((eastl::Internal::TupleLeaf&lt;2,$T3,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[3]">(*((eastl::Internal::TupleLeaf&lt;3,$T4,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[4]">(*((eastl::Internal::TupleLeaf&lt;4,$T5,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[5]">(*((eastl::Internal::TupleLeaf&lt;5,$T6,0&gt;*)&amp;mImpl)).mValue</Item>
+    <Item Name="[6]">(*((eastl::Internal::TupleLeaf&lt;6,$T7,0&gt;*)&amp;mImpl)).mValue</Item>
+  </Expand>
 </Type>
 
 

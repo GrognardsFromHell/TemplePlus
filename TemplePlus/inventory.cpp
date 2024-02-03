@@ -12,6 +12,7 @@
 #include "party.h"
 #include "rng.h"
 #include "gamesystems/legacysystems.h"
+#include <infrastructure/meshes.h>
 #include "ai.h"
 #include "animgoals/anim.h"
 #include "gamesystems/objects/objevent.h"
@@ -152,7 +153,7 @@ public:
 			auto invenNum = objects.getInt32(obj, invenNumField);
 			auto invenNumActualSize= objSystem->GetObject(obj)->GetObjectIdArray(invenField).GetSize();
 			if (invenNum != invenNumActualSize)	{
-				logger->debug("Inventory array size for {} ({}) does not equal associated num field on PoopItems. Arraysize: {}, numfield: {}", description.getDisplayName(obj), objSystem->GetObject(obj)->id.ToString(), invenNumActualSize, invenNum);
+				logger->debug("Inventory array size for {} ({}) does not equal associated num field on PoopItems. Arraysize: {}, numfield: {}", obj, objSystem->GetObject(obj)->id.ToString(), invenNumActualSize, invenNum);
 				
 			}
 
@@ -192,7 +193,7 @@ public:
 		});
 
 		replaceFunction<int(__cdecl)(objHndl, objHndl)>(0x10066730, [](objHndl item, objHndl wielder){
-			return inventory.GetWeaponAnimId(item, wielder);
+			return (int)inventory.GetWeaponAnimId(item, wielder);
 		});
 
 		replaceFunction<int(__cdecl)(objHndl, objHndl, objHndl, SkillEnum)>(0x10069970, [](objHndl item, objHndl appraiser, objHndl vendor, SkillEnum skillEnum) {
@@ -519,7 +520,7 @@ void InventorySystem::RemoveWielderCond(objHndl item, uint32_t condId, int spell
 		return;
 	auto wCond = conds.GetById(condId);
 	if (!wCond) {
-		logger->error("InventorySystem::RemoveWielderCond: Invalid condition! Item {}", description.getDisplayName(item));
+		logger->error("InventorySystem::RemoveWielderCond: Invalid condition! Item {}", item);
 		return;
 	}
 	if (spellId >= 0 && wCond->numArgs < 5) {
@@ -1517,6 +1518,11 @@ int32_t InventorySystem::GetCoinWorth(int32_t coinType){
 	return 0u;
 }
 
+// 0: light weapon
+// 1: 1-handed weapon
+// 2: 2-handed weapon
+// 3: bastard sword/dwarf waraxe too big to wield
+// 4: null weapon
 int InventorySystem::GetWieldType(objHndl wielder, objHndl item, bool regardEnlargement) const
 {
 	if (!regardEnlargement)
@@ -1598,15 +1604,118 @@ int InventorySystem::GetWieldType(objHndl wielder, objHndl item, bool regardEnla
 	return 2 * (wielderSize <= 5) + 1;	
 }
 
-int InventorySystem::GetWeaponAnimId(objHndl item, objHndl wielder){
-	auto wieldType = GetWieldType(wielder, item, false); // TODO overhaul this...
-	if (wieldType == 2){
-		return temple::GetRef<int[74]>(0x102BE668)[objects.getInt32(item, obj_f_weapon_type)]; // two handed anims
+bool InventorySystem::IsWieldedTwoHanded(objHndl weapon, objHndl wielder, bool special){
+	if (!weapon) return false;
+
+	auto weapObj = gameSystems->GetObj().GetObject(weapon);
+	auto weapType = (WeaponTypes)weapObj->GetInt32(obj_f_weapon_type);
+
+	// special case - rapiers are always wielded one handed
+	if (weapType == wt_rapier){
+		return false;
 	}
-	if (wieldType != 1 && wieldType != 0){
-		return 0;
+
+	auto offhandWeapon = ItemWornAt(wielder, EquipSlot::WeaponSecondary);
+	auto shield = ItemWornAt(wielder, EquipSlot::Shield);
+  // are you holding the weapon with your buckler hand?
+	bool shieldAllowsTwoHandedWield = (shield != objHndl::null) && IsBuckler(shield);
+	if (shieldAllowsTwoHandedWield){
+		if (d20Sys.d20Query(wielder, DK_QUE_Is_Preferring_One_Handed_Wield))
+			shieldAllowsTwoHandedWield = false;
 	}
-	return temple::GetRef<int[74]>(0x102BE540)[objects.getInt32(item, obj_f_weapon_type)]; // single handed anims
+	bool hasInterferingOffhand = false;
+	if (offhandWeapon != objHndl::null){
+		hasInterferingOffhand = true;
+	}
+	if (shield != objHndl::null){
+		hasInterferingOffhand = !shieldAllowsTwoHandedWield;
+	}
+	auto wieldType = GetWieldType(wielder, weapon, true);
+	// the wield type if the weapon is not enlarged along with the critter
+	auto wieldTypeMod = GetWieldType(wielder, weapon, false);
+
+	bool isTwohandedWieldable = !hasInterferingOffhand && !special;
+
+	switch (wieldType)
+	{
+	case 0: // light weapon
+		switch (wieldTypeMod)
+		{
+		case 0:
+			isTwohandedWieldable = false;
+			break;
+		case 1: // benefitting from enlargement of weapon
+		case 2:
+		default:
+			break;
+		}
+	case 1: // single handed wield if weapon is unaffected
+		switch (wieldTypeMod)
+		{
+		case 0: // only in reduce person; going to assume the "beneficial" case that the reduction was made voluntarily and hence you let the weapon stay larger
+		case 1:
+		case 2:
+		default:
+			break;
+		}
+	case 2: // two handed wield if weapon is unaffected
+		switch (wieldTypeMod)
+		{
+		case 0:
+		case 1: // only in reduce person
+			break;
+		case 2:
+			if (hasInterferingOffhand) // shouldn't really be possible to hold two Two Handed Weapons... maybe if player is cheating
+			{
+				logger->warn("Illegally wielding weapon along withoffhand!");
+			}
+		default:
+			break;
+		}
+	case 3:
+		break;
+	case 4:
+	default:
+		break;
+	}
+
+	return isTwohandedWieldable;
+}
+
+
+
+gfx::WeaponAnimType InventorySystem::GetWeaponAnimId(objHndl item, objHndl wielder, bool special){
+	auto wieldType = GetWieldType(wielder, item, false);
+	WeaponTypes wtype = (WeaponTypes)objects.getInt32(item, obj_f_weapon_type);
+
+	if (wieldType == 4) return gfx::WeaponAnimType::Unarmed;
+	if (IsWieldedTwoHanded(item, wielder, special)) {
+		switch (wtype)
+		{
+		// piercing weapons
+		case WeaponTypes::wt_dagger:
+		case WeaponTypes::wt_short_sword:
+		case WeaponTypes::wt_rapier:
+			return gfx::WeaponAnimType::Spear;
+		default:
+			// original two handed anim array
+			return (gfx::WeaponAnimType)temple::GetRef<int[74]>(0x102BE668)[wtype];
+		}
+	} else {
+		switch (wtype)
+		{
+		// piercing weapons
+		case WeaponTypes::wt_short_sword: // was sword
+		case WeaponTypes::wt_rapier: // was sword
+			return gfx::WeaponAnimType::Dagger;
+		// slashing weapons
+		case WeaponTypes::wt_kukri: // was dagger
+			return gfx::WeaponAnimType::Sword;
+		default:
+			// original single handed anim array
+			return (gfx::WeaponAnimType)temple::GetRef<int[74]>(0x102BE540)[wtype];
+		}
+	}
 }
 
 obj_f InventorySystem::GetInventoryListField(objHndl objHnd)
@@ -2128,10 +2237,8 @@ bool InventorySystem::DoNpcLooting(objHndl opener, objHndl container){
 		LooterInfo(objHndl npc) :handle(npc) {
 			lootingType = objects.getInt32(npc, obj_f_npc_pad_i_3);
 			shareType = (NpcLootingType)(lootingType & 0xF);
-			itemWorthTotal
- = 100 * ((lootingType >> 8) & 0xFFFF00);
-			lastItemWorth
- = 1600 * (lootingType & 0xFFF0);
+			itemWorthTotal = 100 * ((lootingType >> 8) & 0xFFFF00);
+			lastItemWorth = 1600 * (lootingType & 0xFFF0);
 			auto partySize = party.GroupNPCFollowersLen() + party.GroupPCsLen(); // in vanilla this was GroupListLen, which is wrong because it includes AI followers such as animal companions
 			switch (shareType) {
 			case NpcLootingType::NLT_Normal:

@@ -149,3 +149,4 @@ extern LegacyCombatSystem combatSys;
 uint32_t _isCombatActive();
 uint32_t _IsCloseToParty(objHndl objHnd);
 char * _GetCombatMesLine(int line);
+uint64_t __cdecl _GetCleveVictim(objHndl objHnd);

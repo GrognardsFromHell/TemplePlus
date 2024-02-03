@@ -911,7 +911,7 @@ int32_t DispatcherSystem::DispatchDamage(objHndl objHnd, DispIoDamage* dispIoDam
 		dispIo = &dispIoLocal;
 	}
 	logger->info("Dispatching damage event for {} - type {}, key {}, victim {}", 
-		description.getDisplayName(objHnd), dispType, key, description.getDisplayName( dispIoDamage->attackPacket.victim) );
+		objHnd, dispType, key, dispIoDamage->attackPacket.victim );
 	dispatch.DispatcherProcessor(dispatcher, dispType, key, dispIo);
 	return 1;
 }

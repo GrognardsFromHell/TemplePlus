@@ -32,14 +32,20 @@
 		#include <stdlib.h> // memalign, posix_memalign. 
 		#define EASTL_ALIGNED_MALLOC_AVAILABLE 1
 
-		#if defined(__clang__)
-			#if __has_include(<malloc/malloc.h>) 
+		#if EA_HAS_INCLUDE_AVAILABLE
+			#if EA_HAS_INCLUDE(<malloc/malloc.h>)
 				#include <malloc/malloc.h>
-			#elif __has_include(<malloc.h>) 
+			#elif EA_HAS_INCLUDE(<malloc.h>)
 				#include <malloc.h>
 			#endif
 		#elif defined(EA_PLATFORM_BSD)
 			#include <malloc/malloc.h>
+		#elif defined(__clang__)
+			#if __has_include(<malloc/malloc.h>)
+				#include <malloc/malloc.h>
+			#elif __has_include(<malloc.h>)
+				#include <malloc.h>
+			#endif
 		#else
 			#include <malloc.h>
 		#endif
@@ -88,10 +94,10 @@ namespace eastl
 		void* allocate(size_t n, size_t alignment, size_t alignmentOffset, int /*flags*/ = 0)
 		{ 
 			#if EASTL_ALIGNED_MALLOC_AVAILABLE
-				if((alignmentOffset % alignment) != 0) // We check for (offset % alignmnent == 0) instead of (offset == 0) because any block which is aligned on e.g. 64 also is aligned at an offset of 64 by definition. 
+				if((alignmentOffset % alignment) == 0) // We check for (offset % alignmnent == 0) instead of (offset == 0) because any block which is aligned on e.g. 64 also is aligned at an offset of 64 by definition. 
 					return memalign(alignment, n); // memalign is more consistently available than posix_memalign.
 			#else
-				if((alignment <= EASTL_SYSTEM_ALLOCATOR_MIN_ALIGNMENT) && ((alignmentOffset % alignment) != 0))
+				if((alignment <= EASTL_SYSTEM_ALLOCATOR_MIN_ALIGNMENT) && ((alignmentOffset % alignment) == 0))
 					return malloc(n);
 			#endif
 			return NULL;

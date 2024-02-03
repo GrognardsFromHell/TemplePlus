@@ -179,6 +179,7 @@ static ConfigSetting configSettings[] = {
 	CONF_BOOL(forgottenRealmsRaces),
 	CONF_BOOL(laxRules),
 	CONF_BOOL(stricterRulesEnforcement),
+	CONF_BOOL(disableReachWeaponDonut),
 	CONF_BOOL(disableAlignmentRestrictions),
 	CONF_BOOL(disableCraftingSpellReqs),
 	CONF_BOOL(disableMulticlassXpPenalty),
@@ -201,7 +202,8 @@ static ConfigSetting configSettings[] = {
 	CONF_BOOL(upscaleLinearFiltering),
 	CONF_BOOL(disableChooseRandomSpell_RegardInvulnerableStatus),
 	CONF_BOOL(wildShapeUsableItems),
-	CONF_INT(npcStatBoost)
+	CONF_INT(npcStatBoost),
+	CONF_BOOL(disableReachWeaponDonut)
 };
 
 void TemplePlusConfig::Load() {

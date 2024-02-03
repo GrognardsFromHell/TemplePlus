@@ -2037,6 +2037,7 @@ enum Stat : uint32_t {
 	stat_level_fochlucan_lyrist = 82,
 	stat_level_marshal = 83,
 	stat_level_ultimate_magus = 88,
+	stat_level_unseen_seer = 89,
 
 
 	stat_hp_max = 0xE4,

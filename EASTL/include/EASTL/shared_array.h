@@ -62,15 +62,12 @@
 #include <EASTL/internal/smart_ptr.h>   // Defines smart_array_deleter
 
 
-#ifdef _MSC_VER
-	#pragma warning(push, 0)
+EA_DISABLE_ALL_VC_WARNINGS();
+
 	#include <new>
 	#include <stddef.h>
-	#pragma warning(pop)
-#else
-	#include <new>
-	#include <stddef.h>
-#endif
+
+EA_RESTORE_ALL_VC_WARNINGS();
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
@@ -133,7 +130,7 @@ namespace eastl
 		/// If an exception occurs during the allocation of the shared 
 		/// reference count, the owned pointer is deleted and the exception
 		/// is rethrown. A null pointer is given a reference count of 1.
-		explicit shared_array(T* pArray = NULL, const allocator& allocator = EASTL_SHARED_ARRAY_DEFAULT_ALLOCATOR)
+		explicit shared_array(T* pArray = NULL, const allocator_type& allocator = EASTL_SHARED_ARRAY_DEFAULT_ALLOCATOR)
 			: mpArray(pArray),
 			  mpRefCount(NULL),
 			  mAllocator(allocator)

@@ -1647,7 +1647,7 @@ int UiCharHooks::InventorySlotMsg(int widId, TigMsg* msg)
 
 					objHndl vendor = GetVendor();
 
-					logger->debug("Quickselling item {} to {} ({})", description.getDisplayName(item), description.getDisplayName(vendor),description.getDisplayName(critterLooted));
+					logger->debug("Quickselling item {} to {} ({})", item, vendor, critterLooted);
 					
 					objHndl appraiser = party.PartyMemberWithHighestSkill(SkillEnum::skill_appraise);
 					

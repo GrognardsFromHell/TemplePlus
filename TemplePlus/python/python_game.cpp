@@ -51,6 +51,7 @@
 #include "ui/ui_char.h"
 #include "infrastructure/elfhash.h"
 #include "ui/ui_alert.h"
+#include "d20_class.h"
 #include <fmt/format.h>
 
 #include <pybind11/embed.h>
@@ -1454,6 +1455,28 @@ PyObject* PyGame_AlertShow(PyObject*, PyObject* args) {
 	return PyInt_FromLong(result);
 }
 
+PyObject* PyGame_GetMaxSpellLevel(PyObject*, PyObject* args) {
+	int classEnum;
+	int classLevel;
+
+	if (!PyArg_ParseTuple(args, "ii:game.get_max_spell_level", &classEnum, &classLevel)) {
+		return 0;
+	}
+
+	auto result = d20ClassSys.GetMaxSpellLevel(static_cast<Stat>(classEnum), classLevel);
+	return PyInt_FromLong(result);
+}
+
+PyObject* PyGame_GetValidSpellEnums(PyObject*, PyObject* args) {
+	auto enums = spellSys.GetValidSpellEnums();
+
+	auto result = PyTuple_New(enums.size());
+	for (size_t i = 0; i < enums.size(); i++) {
+		PyTuple_SET_ITEM(result, i, PyInt_FromLong(enums[i]));
+	}
+	return result;
+}
+
 static PyMethodDef PyGameMethods[]{
 	{ "get_wall_endpt", PySpell_SpellGetPickerEndPoint, METH_VARARGS, NULL },
 	{ "create_history_freeform", PyGame_CreateHistoryFreeform, METH_VARARGS, NULL },
@@ -1535,6 +1558,9 @@ static PyMethodDef PyGameMethods[]{
 	{"make_custom_name", PyGame_MakeCustomName,METH_VARARGS, NULL},
 	{"get_obj_by_id", PyGame_GetObjById, METH_VARARGS, NULL},
 	{"alert_show", PyGame_AlertShow, METH_VARARGS, NULL},
+	{"get_max_spell_level", PyGame_GetMaxSpellLevel, METH_VARARGS, NULL},
+	{"get_valid_spell_enums", PyGame_GetValidSpellEnums, METH_VARARGS, NULL},
+
 	// This is some unfinished UI for which the graphics are missing
 	// {"charmap", PyGame_Charmap, METH_VARARGS, NULL},
 	{NULL, NULL, NULL, NULL}

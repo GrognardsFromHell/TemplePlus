@@ -39,7 +39,7 @@
 #endif
 
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && !defined(EA_COMPILER_CLANG_CL)
 	// VC++ has a long-standing bug: it fails to allow the definition of static const member variables
 	// outside the declaration within the class. The C++ Standard actually requires that they be defined
 	// and some other compilers fail to link if they aren't. So we simply don't define the members for VC++.
@@ -196,6 +196,32 @@
 		EA_CONSTEXPR_OR_CONST float_denorm_style    numeric_limits<wchar_t>::has_denorm;
 		EA_CONSTEXPR_OR_CONST bool                  numeric_limits<wchar_t>::has_denorm_loss;
 		EA_CONSTEXPR_OR_CONST bool                  numeric_limits<wchar_t>::is_iec559;
+
+		// char8_t
+		#if defined(EA_CHAR8_UNIQUE) && EA_CHAR8_UNIQUE // If char8_t is a true unique type (as called for by the C++20 Standard)
+			EA_CONSTEXPR_OR_CONST bool                  numeric_limits<char8_t>::is_specialized;
+			EA_CONSTEXPR_OR_CONST int                   numeric_limits<char8_t>::digits;
+			EA_CONSTEXPR_OR_CONST int                   numeric_limits<char8_t>::digits10;
+			EA_CONSTEXPR_OR_CONST bool                  numeric_limits<char8_t>::is_signed;
+			EA_CONSTEXPR_OR_CONST bool                  numeric_limits<char8_t>::is_integer;
+			EA_CONSTEXPR_OR_CONST bool                  numeric_limits<char8_t>::is_exact;
+			EA_CONSTEXPR_OR_CONST int                   numeric_limits<char8_t>::radix;
+			EA_CONSTEXPR_OR_CONST int                   numeric_limits<char8_t>::min_exponent;
+			EA_CONSTEXPR_OR_CONST int                   numeric_limits<char8_t>::min_exponent10;
+			EA_CONSTEXPR_OR_CONST int                   numeric_limits<char8_t>::max_exponent;
+			EA_CONSTEXPR_OR_CONST int                   numeric_limits<char8_t>::max_exponent10;
+			EA_CONSTEXPR_OR_CONST bool                  numeric_limits<char8_t>::is_bounded;
+			EA_CONSTEXPR_OR_CONST bool                  numeric_limits<char8_t>::is_modulo;
+			EA_CONSTEXPR_OR_CONST bool                  numeric_limits<char8_t>::traps;
+			EA_CONSTEXPR_OR_CONST bool                  numeric_limits<char8_t>::tinyness_before;
+			EA_CONSTEXPR_OR_CONST float_round_style     numeric_limits<char8_t>::round_style;
+			EA_CONSTEXPR_OR_CONST bool                  numeric_limits<char8_t>::has_infinity;
+			EA_CONSTEXPR_OR_CONST bool                  numeric_limits<char8_t>::has_quiet_NaN;
+			EA_CONSTEXPR_OR_CONST bool                  numeric_limits<char8_t>::has_signaling_NaN;
+			EA_CONSTEXPR_OR_CONST float_denorm_style    numeric_limits<char8_t>::has_denorm;
+			EA_CONSTEXPR_OR_CONST bool                  numeric_limits<char8_t>::has_denorm_loss;
+			EA_CONSTEXPR_OR_CONST bool                  numeric_limits<char8_t>::is_iec559;
+		#endif
 
 		// char16_t
 		#if EA_CHAR16_NATIVE // If char16_t is a true unique type (as called for by the C++11 Standard)...
@@ -442,7 +468,7 @@
 		EA_CONSTEXPR_OR_CONST bool                  numeric_limits<long long>::is_iec559;
 
 		// __uint128_t
-		#if (EA_COMPILER_INTMAX_SIZE >= 16) && (defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG)) // If __int128_t/__uint128_t is supported...
+		#if (EA_COMPILER_INTMAX_SIZE >= 16) && (defined(EA_COMPILER_GNUC) || defined(__clang__)) // If __int128_t/__uint128_t is supported...
 			EA_CONSTEXPR_OR_CONST bool                  numeric_limits<__uint128_t>::is_specialized;
 			EA_CONSTEXPR_OR_CONST int                   numeric_limits<__uint128_t>::digits;
 			EA_CONSTEXPR_OR_CONST int                   numeric_limits<__uint128_t>::digits10;
@@ -468,7 +494,7 @@
 		#endif
 
 		// __int128_t
-		#if (EA_COMPILER_INTMAX_SIZE >= 16) && (defined(EA_COMPILER_GNUC) || defined(EA_COMPILER_CLANG)) // If __int128_t/__uint128_t is supported...
+		#if (EA_COMPILER_INTMAX_SIZE >= 16) && (defined(EA_COMPILER_GNUC) || defined(__clang__)) // If __int128_t/__uint128_t is supported...
 			EA_CONSTEXPR_OR_CONST bool                  numeric_limits<__int128_t>::is_specialized;
 			EA_CONSTEXPR_OR_CONST int                   numeric_limits<__int128_t>::digits;
 			EA_CONSTEXPR_OR_CONST int                   numeric_limits<__int128_t>::digits10;
