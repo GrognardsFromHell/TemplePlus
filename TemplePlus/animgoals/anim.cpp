@@ -463,10 +463,10 @@ void SetGoalDataForSpellPacket(SpellPacketBody & pkt, AnimSlotGoalStackEntry & g
     auto casterObj = objSystem->GetObject(caster);
     SpellEntry ent(pkt.spellEnum);
 
-    goalData.skillData.number = spellPkt.spellId;
+    goalData.skillData.number = pkt.spellId;
 
     // if self-targeted spell
-    if (ent.IsBaseModeTarget(UIPickerType::Single) && pkt.targetCount == 0) {
+    if (ent.IsBaseModeTarget(UiPickerType::Single) && pkt.targetCount == 0) {
         goalData.target.obj = caster;
         if (pkt.aoeCenter.location.location == 0)
             goalData.targetTile.location = casterObj->GetLocationFull();
@@ -484,10 +484,10 @@ void SetGoalDataForSpellPacket(SpellPacketBody & pkt, AnimSlotGoalStackEntry & g
     }
 
     if (wand){
-        goalData.animIdPrevious.number = GetWandAnimId(spEntry.spellSchoolEnum);
+        goalData.animIdPrevious.number = GetWandAnimId(ent.spellSchoolEnum);
     }
     else{
-        goalData.animIdPrevious.number = GetCastingAnimId(spEntry.spellSchoolEnum);
+        goalData.animIdPrevious.number = GetCastingAnimId(ent.spellSchoolEnum);
     }
 }
 
@@ -515,11 +515,11 @@ BOOL AnimSystem::PushSpellDismiss(SpellPacketBody & pkt)
 }
 
 int AnimSystem::GetWandAnimId(int school) {
-    return temple::GetRef<int(__cdecl)(int)>(0x100757C0)(spellSchool);
+    return temple::GetRef<int(__cdecl)(int)>(0x100757C0)(school);
 }
 
 int AnimSystem::GetCastingAnimId(int school) {
-    return temple::GetRef<int(__cdecl)(int)>(0x100757B0)(spellSchool);
+    return temple::GetRef<int(__cdecl)(int)>(0x100757B0)(school);
 }
 
 BOOL AnimSystem::PushSpellInterrupt(const objHndl& caster, objHndl item, AnimGoalType animGoalType, int spellSchool){

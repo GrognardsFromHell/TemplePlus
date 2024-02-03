@@ -188,6 +188,8 @@ public:
 	 pushes an animation for dismissing an active spell
 	 */
 	BOOL PushSpellDismiss(SpellPacketBody &spellPkt);
+	int GetWandAnimId(int school);
+	int GetCastingAnimId(int school);
 
 	/*
 	used by the general out-of-combat mouse LMB click handler
