@@ -2907,7 +2907,7 @@ ActionErrorCode D20ActionCallbacks::PerformDismissSpell(D20Actn * d20a){
 		return AEC_OK;
 	}
 
-	if (gameSystems->GetAnim().PushSpellDismiss(pkt)) {
+	if (gameSystems->GetAnim().PushSpellDismiss(spPkt)) {
 		d20a->animID = gameSystems->GetAnim().GetActionAnimId(d20a->d20APerformer);
 		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
 	}
