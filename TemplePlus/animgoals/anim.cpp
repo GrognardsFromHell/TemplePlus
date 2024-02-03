@@ -457,51 +457,69 @@ int AnimSystem::PushAnimate(objHndl obj, int anim) {
   return addresses.PushAnimate(obj, anim);
 }
 
+void SetGoalDataForSpellPacket(SpellPacketBody & pkt, AnimSlotGoalStackEntry & goalData, bool wand)
+{
+    auto caster = pkt.caster;
+    auto casterObj = objSystem->GetObject(caster);
+    SpellEntry ent(pkt.spellEnum);
+
+    goalData.skillData.number = spellPkt.spellId;
+
+    // if self-targeted spell
+    if (ent.IsBaseModeTarget(UIPickerType::Single) && pkt.targetCount == 0) {
+        goalData.target.obj = caster;
+        if (pkt.aoeCenter.location.location == 0)
+            goalData.targetTile.location = casterObj->GetLocationFull();
+        else
+            goalData.targetTile.location = pkt.aoeCenter.location;
+
+    } else {
+        auto tgt = pkt.targetListHandles[0];
+        goalData.target.obj = tgt;
+        if (tgt && pkt.aoeCenter.location.location == 0) {
+            goalData.targetTile.location = objSystem->GetObject(tgt)->GetLocationFull();
+        } else {
+            goalData.targetTile.location = pkt.aoeCenter.location;
+        }
+    }
+
+    if (wand){
+        goalData.animIdPrevious.number = GetWandAnimId(spEntry.spellSchoolEnum);
+    }
+    else{
+        goalData.animIdPrevious.number = GetCastingAnimId(spEntry.spellSchoolEnum);
+    }
+}
+
 BOOL AnimSystem::PushSpellCast(SpellPacketBody & spellPkt, objHndl item)
 {
-
     // note: the original included the spell ID generation & registration, this is separated here.
-    auto caster = spellPkt.caster;
-    auto casterObj = objSystem->GetObject(caster);
     AnimSlotGoalStackEntry goalData;
     if (!goalData.InitWithInterrupt(caster, ag_throw_spell_w_cast_anim))
         return FALSE;
 
-    goalData.skillData.number = spellPkt.spellId;
-
-    SpellEntry spEntry(spellPkt.spellEnum);
-
-    // if self-targeted spell
-    if (spEntry.IsBaseModeTarget(UiPickerType::Single) && spellPkt.targetCount == 0 ){
-        goalData.target.obj = spellPkt.caster;
-        
-        if (spellPkt.aoeCenter.location.location == 0){
-            goalData.targetTile.location = casterObj->GetLocationFull();
-        } 
-        else{
-            goalData.targetTile.location = spellPkt.aoeCenter.location;
-        }
-    } 
-
-    else{
-        auto tgt = spellPkt.targetListHandles[0];
-        goalData.target.obj = tgt;
-        if (tgt && spellPkt.aoeCenter.location.location == 0 ){
-            goalData.targetTile.location = objSystem->GetObject(tgt)->GetLocationFull();
-        }
-        else {
-            goalData.targetTile.location = spellPkt.aoeCenter.location;
-        }
-    }
-
-    if (inventory.UsesWandAnim(item)){
-        goalData.animIdPrevious.number = temple::GetRef<int(__cdecl)(int)>(0x100757C0)(spEntry.spellSchoolEnum); // GetAnimIdWand	
-    }
-    else{
-        goalData.animIdPrevious.number = temple::GetRef<int(__cdecl)(int)>(0x100757B0)(spEntry.spellSchoolEnum); // GetSpellSchoolAnimId
-    }
+    SetGoalDataForSpellPacket(spellPkt, goalData, inventory.UsesWandAnim(item));
 
     return goalData.Push(nullptr);
+}
+
+BOOL AnimSystem::PushSpellDismiss(SpellPacketBody & pkt)
+{
+    AnimSlotGoalStackEntry goalData;
+    if (!goalData.InitWithInterrupt(caster, ag_throw_spell_w_cast_anim_2ndary))
+        return FALSE;
+
+    SetGoalDataForSpellPacket(pkt, goalData, true);
+
+    return goalData.Push(nullptr);
+}
+
+int AnimSystem::GetWandAnimId(int school) {
+    return temple::GetRef<int(__cdecl)(int)>(0x100757C0)(spellSchool);
+}
+
+int AnimSystem::GetCastingAnimId(int school) {
+    return temple::GetRef<int(__cdecl)(int)>(0x100757B0)(spellSchool);
 }
 
 BOOL AnimSystem::PushSpellInterrupt(const objHndl& caster, objHndl item, AnimGoalType animGoalType, int spellSchool){
@@ -510,9 +528,9 @@ BOOL AnimSystem::PushSpellInterrupt(const objHndl& caster, objHndl item, AnimGoa
     goalData.target.obj = (*actSeqSys.actSeqCur)->spellPktBody.caster;
     goalData.skillData.number = 0;
     if (inventory.UsesWandAnim(item))
-        goalData.animIdPrevious.number = temple::GetRef<int(__cdecl)(int)>(0x100757C0)(spellSchool); // GetAnimIdWand	
+        goalData.animIdPrevious.number = GetWandAnimId(spellSchool);
     else
-        goalData.animIdPrevious.number = temple::GetRef<int(__cdecl)(int)>(0x100757B0)(spellSchool); // GetSpellSchoolAnimId
+        goalData.animIdPrevious.number = GetCastingAnimId(spellSchool);
     
     return goalData.Push(nullptr);
 }

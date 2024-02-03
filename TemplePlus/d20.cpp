@@ -2896,12 +2896,23 @@ ActionErrorCode D20ActionCallbacks::PerformDisarmedWeaponRetrieve(D20Actn* d20a)
 	d20Sys.d20SendSignal(d20a->d20APerformer, DK_SIG_Disarmed_Weapon_Retrieve, (int)d20a, 0);
 	return AEC_OK;
 }
+
 ActionErrorCode D20ActionCallbacks::PerformDismissSpell(D20Actn * d20a){
 	auto spellId = d20a->data1;
-	d20Sys.d20SendSignal(d20a->d20APerformer, DK_SIG_Dismiss_Spells, spellId, 0);
 	SpellPacketBody spPkt(spellId);
-	if (!spPkt.spellEnum)
+
+	// in case of bad spell
+	if (!spPkt.spellEnum) {
+		d20Sys.d20SendSignal(d20a->d20APerformer, DK_SIG_Dismiss_Spells, spellId, 0);
 		return AEC_OK;
+	}
+
+	if (gameSystems->GetAnim().PushSpellDismiss(pkt)) {
+		d20a->animID = gameSystems->GetAnim().GetActionAnimId(d20a->d20APerformer);
+		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
+	}
+
+	d20Sys.d20SendSignal(d20a->d20APerformer, DK_SIG_Dismiss_Spells, spellId, 0);
 
 	if (spPkt.caster)
 		d20Sys.d20SendSignal(spPkt.caster, DK_SIG_Dismiss_Spells, spellId, 0);
