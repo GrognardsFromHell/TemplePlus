@@ -515,13 +515,13 @@ BOOL AnimSystem::PushSpellDismiss(SpellPacketBody & pkt)
 }
 
 int AnimSystem::GetWandAnimId(int school, bool conjure) {
-    auto inc = conjure ? 1 : 0;
-    return temple::GetRef<int(__cdecl)(int)>(0x100757C0)(school) + inc;
+    auto dec = conjure ? 1 : 0;
+    return temple::GetRef<int(__cdecl)(int)>(0x100757C0)(school) - dec;
 }
 
 int AnimSystem::GetCastingAnimId(int school, bool conjure) {
-    auto inc = conjure ? 1 : 0;
-    return temple::GetRef<int(__cdecl)(int)>(0x100757B0)(school) + inc;
+    auto dec = conjure ? 1 : 0;
+    return temple::GetRef<int(__cdecl)(int)>(0x100757B0)(school) - dec;
 }
 
 
