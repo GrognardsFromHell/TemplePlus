@@ -190,6 +190,7 @@ public:
 	BOOL PushSpellDismiss(SpellPacketBody &spellPkt);
 	int GetWandAnimId(int school);
 	int GetCastingAnimId(int school);
+	void SetGoalDataForSpellPacket(SpellPacketBody &pkt, AnimSlotGoalStackEntry &goalData, bool wand);
 
 	/*
 	used by the general out-of-combat mouse LMB click handler

@@ -457,7 +457,7 @@ int AnimSystem::PushAnimate(objHndl obj, int anim) {
   return addresses.PushAnimate(obj, anim);
 }
 
-void SetGoalDataForSpellPacket(SpellPacketBody & pkt, AnimSlotGoalStackEntry & goalData, bool wand)
+void AnimSystem::SetGoalDataForSpellPacket(SpellPacketBody & pkt, AnimSlotGoalStackEntry & goalData, bool wand)
 {
     auto caster = pkt.caster;
     auto casterObj = objSystem->GetObject(caster);
@@ -495,7 +495,7 @@ BOOL AnimSystem::PushSpellCast(SpellPacketBody & spellPkt, objHndl item)
 {
     // note: the original included the spell ID generation & registration, this is separated here.
     AnimSlotGoalStackEntry goalData;
-    if (!goalData.InitWithInterrupt(caster, ag_throw_spell_w_cast_anim))
+    if (!goalData.InitWithInterrupt(spellPkt.caster, ag_throw_spell_w_cast_anim))
         return FALSE;
 
     SetGoalDataForSpellPacket(spellPkt, goalData, inventory.UsesWandAnim(item));
@@ -506,7 +506,7 @@ BOOL AnimSystem::PushSpellCast(SpellPacketBody & spellPkt, objHndl item)
 BOOL AnimSystem::PushSpellDismiss(SpellPacketBody & pkt)
 {
     AnimSlotGoalStackEntry goalData;
-    if (!goalData.InitWithInterrupt(caster, ag_throw_spell_w_cast_anim_2ndary))
+    if (!goalData.InitWithInterrupt(pkt.caster, ag_throw_spell_w_cast_anim_2ndary))
         return FALSE;
 
     SetGoalDataForSpellPacket(pkt, goalData, true);
