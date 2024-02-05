@@ -2736,7 +2736,7 @@ enum SpellFlags : uint32_t
 	SF_2000 = 0x2000,
 	SF_4000 = 0x4000,
 	SF_8000 = 0x8000,
-	SF_10000 = 0x10000, // Used in goalstatefunc_124
+	SF_10000 = 0x10000, // Used in goalstatefunc_124, might be 'held' or similar
 	SF_20000 = 0x20000,
 	SF_40000 = 0x40000,
 	SF_80000 = 0x80000,
