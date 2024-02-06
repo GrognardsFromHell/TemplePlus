@@ -1247,16 +1247,23 @@ objHndl LegacyD20System::GetAttackWeapon(objHndl obj, int attackCode, D20CAF fla
 		return objHndl::null;
 	}
 
-	if (flags & D20CAF_SECONDARY_WEAPON)
-		return inventory.ItemWornAt(obj, EquipSlot::WeaponSecondary);
+	auto weapr = inventory.ItemWornAt(obj, EquipSlot::WeaponPrimary);
+	auto weapl = inventory.ItemWornAt(obj, EquipSlot::WeaponSecondary);
 
-	if (UsingSecondaryWeapon(obj, attackCode))
-		return inventory.ItemWornAt(obj, EquipSlot::WeaponSecondary);
+	if (!weapl && d20Sys.d20Query(obj, DK_QUE_Can_Shield_Bash))
+		weapl = inventory.ItemWornAt(obj, EquipSlot::Shield);
+
+	if (!weapl && inventory.IsDoubleWeapon(weapr))
+		weapl = weapr;
+
+	if (flags & D20CAF_SECONDARY_WEAPON) return weapl;
+
+	if (UsingSecondaryWeapon(obj, attackCode)) return weapl;
 
 	if (attackCode > ATTACK_CODE_NATURAL_ATTACK)
 		return objHndl::null;
 
-	return inventory.ItemWornAt(obj, EquipSlot::WeaponPrimary);
+	return weapr;
 }
 
 ActionErrorCode D20ActionCallbacks::PerformStandardAttack(D20Actn* d20a)
@@ -1276,6 +1283,9 @@ ActionErrorCode D20ActionCallbacks::PerformStandardAttack(D20Actn* d20a)
 		useSecondaryAnim = rngSys.GetInt(0, 1);
 		hitAnimIdx = (d20a->data1 - (ATTACK_CODE_NATURAL_ATTACK + 1)) % 3;
 	}
+
+	if (d20Sys.d20Query(d20a->d20APerformer, DK_QUE_Left_Is_Primary))
+		useSecondaryAnim = !useSecondaryAnim;
 
 	combatSys.ToHitProcessing(*d20a);
 

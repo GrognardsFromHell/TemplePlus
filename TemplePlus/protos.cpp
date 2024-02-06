@@ -14,7 +14,7 @@
 #include "d20_race.h"
 
 class ProtosHooks : public TempleFix{
-public: 
+public:
 
 	// static int StdParamParserFunc(int colIdx, objHndl handle, char* content, obj_f fieldId, int arrayLen, char** stringArray, int fieldSubIdx); // for future reference
 	static int ParseCondition(int colIdx, objHndl handle, char* content, int condIdx, int stage, int unused, int unused2);
@@ -22,8 +22,18 @@ public:
 	static int ParseType(int colIdx, objHndl handle, char* content, obj_f field, int arrayLen, char** strings);
 	static int ParseRace(int colIdx, objHndl handle, char* content, obj_f field, int arrayLen, char** strings);
 	static int ParseSpell(int colIdx, objHndl handle, char* content, obj_f field);
+
+	static int ParseWeaponDamageType(int colIdx, objHndl handle, char* content, obj_f field);
+	static int ParseWeaponCritRange(int colIdx, objHndl handle, char* content, obj_f field);
+	static int ParseDice(int colIdx, objHndl handle, char* content, obj_f field);
+	static int GenericNumber(int colIdx, objHndl handle, char* content, obj_f field);
+
 	static int SetCritterAttacks(objHndl handle);
-	void apply() override 
+
+	static int DamageTypeFromString(char* str);
+	static int DamageTypeFromD20String(char* str);
+
+	void apply() override
 	{
 
 		// protos.tab line parser; replaced for supporting extensions
@@ -50,7 +60,6 @@ public:
 
 		});
 
-
 		// Fix for protos condition parser
 		replaceFunction<int(__cdecl)(int, objHndl, char*, int, int, int, int)>(0x10039E80, ParseCondition);
 
@@ -63,6 +72,12 @@ public:
 		replaceFunction<int(__cdecl)(int, objHndl, char*, obj_f, int, char**)>(0x10039B40, ParseRace);
 
 		replaceFunction<int(__cdecl)(int, objHndl, char*, obj_f)>(0x1003A8C0, ParseSpell);
+
+		// Hook into weapon parsing for e.g. shield bash stats
+		replaceFunction(0x100397D0, ParseWeaponDamageType);
+		replaceFunction(0x10039CE0, ParseWeaponCritRange);
+		replaceFunction(0x10039B80, ParseDice);
+		replaceFunction(0x10039380, GenericNumber);
 
 		//SetCritterAttacks
 		replaceFunction<int(__cdecl)(objHndl)>(0x1003AAC0, SetCritterAttacks);
@@ -141,7 +156,7 @@ int ProtosHooks::ParseCondition(int colIdx, objHndl handle, char * content, int 
 		}
 		else
 		{
-			isParsingCond = 0; 
+			isParsingCond = 0;
 		}
 		return 1;	
 	}
@@ -178,8 +193,7 @@ int ProtosHooks::ParseCondition(int colIdx, objHndl handle, char * content, int 
 			return 1;
 		}
 
-		auto damTypeFromString = temple::GetRef<int(__cdecl)(char*)>(0x100E0AF0);
-		protoParseParam1 = damTypeFromString(content);
+		protoParseParam1 = DamageTypeFromString(content);
 		if (protoParseParam1 != -1)
 		{
 			return 1;
@@ -210,7 +224,7 @@ int ProtosHooks::ParseCondition(int colIdx, objHndl handle, char * content, int 
 			
 			protoParseParam1 = ElfHash::Hash(txtBuf);
 			return 1;
-		} 
+		}
 		else
 		{
 			protoParseParam1 = atol(content);
@@ -240,8 +254,7 @@ int ProtosHooks::ParseCondition(int colIdx, objHndl handle, char * content, int 
 		}
 
 		if (!stage2Ok){
-			auto damTypeFromString = temple::GetRef<int(__cdecl)(char*)>(0x100E0AF0);
-			protoParseParam2 = damTypeFromString(content);
+			protoParseParam2 = DamageTypeFromString(content);
 			if (protoParseParam2 != -1)
 			{
 				stage2Ok = true;
@@ -335,49 +348,107 @@ int ProtosHooks::ParseMonsterSubcategory(int colIdx, objHndl handle, char * cont
 	return 1;
 }
 
+static bool armorWeaponStats = false;
+static int armorWeaponStage = 0;
+static int armorWeaponDamageType = (int)DamageType::Bludgeoning;
+static int armorWeaponDice = 0;
+static int armorWeaponCritRange = 20;
+static int armorWeaponCritMult = 2;
+
+// armor weapon condition initialization and reset parsing
+void ArmorWeaponFinalize(GameObjectBody* obj) {
+	if (armorWeaponStats) {
+		// shield bash is the only one right now
+		auto condId = ElfHash::Hash("Shield Bash");
+
+		auto condField = obj_f_item_pad_wielder_condition_array;
+		auto condArgField = obj_f_item_pad_wielder_argument_array;
+		auto condArray = obj->GetInt32Array(condField);
+		auto condArgArray = obj->GetInt32Array(condArgField);
+
+		obj->SetInt32(condField, condArray.GetSize(), condId);
+
+		obj->SetInt32(condArgField, condArgArray.GetSize(), armorWeaponDamageType);
+		obj->SetInt32(condArgField, condArgArray.GetSize(), armorWeaponDice);
+		obj->SetInt32(condArgField, condArgArray.GetSize(), 0);
+		obj->SetInt32(condArgField, condArgArray.GetSize(), armorWeaponCritRange);
+		obj->SetInt32(condArgField, condArgArray.GetSize(), armorWeaponCritMult);
+	}
+
+	armorWeaponStats = false;
+	armorWeaponStage = 0;
+	armorWeaponDice = 0;
+	armorWeaponCritRange = 20;
+	armorWeaponCritMult = 2;
+	armorWeaponDamageType = (int)DamageType::Bludgeoning;
+}
+
 int ProtosHooks::ParseType(int colIdx, objHndl handle, char * content, obj_f field, int arrayLen, char ** strings){
 
 	auto foundType = false;
 	auto val = 0;
 
-	if (content && *content){
-		if (arrayLen <= 0)
-			return 0;
+	if (!content || !*content) return FALSE;
 
-		for (auto i=0; i< arrayLen; i++){
-			if ( strings[i] && !_strcmpi(content, strings[i])){
-				
-				val = i;
-				objSystem->GetObject(handle)->SetInt32(field, val);
-				foundType = true; 
-				break;
-			}
-		}
+	if (arrayLen <= 0) return 0;
 
-		if (field == obj_f_weapon_type){
-			if (!foundType && !_strcmpi(content, "wt_mindblade")){
-				val = wt_mindblade;
-				foundType = true;
-				objSystem->GetObject(handle)->SetInt32(field, val);
-				
-			}
-
-			auto weapType = (WeaponTypes)val;
-			auto damType = weapons.wpnProps[weapType].damType;
+	for (auto i=0; i< arrayLen; i++){
+		if ( strings[i] && !_strcmpi(content, strings[i])){
 			
-			if (damType == DamageType::Unspecified){
-				weapons.wpnProps[weapType].damType = (DamageType)objSystem->GetObject(handle)->GetInt32(obj_f_weapon_attacktype);
-			} 
-			//else if (damType != (DamageType)objSystem->GetObject(handle)->GetInt32(obj_f_weapon_attacktype)){ // for debug
-			//	auto d = description.getDisplayName(handle);
-			//	auto strangeWeaponDamType = (DamageType)objSystem->GetObject(handle)->GetInt32(obj_f_weapon_attacktype);
-			//	auto dummy = 1;
-			//}
+			val = i;
+			objSystem->GetObject(handle)->SetInt32(field, val);
+			foundType = true;
+			break;
 		}
 	}
 
+	auto obj = objSystem->GetObject(handle);
+
+	if (field == obj_f_weapon_type){
+		if (!foundType && !_strcmpi(content, "shield")) {
+			armorWeaponStats = true;
+			return TRUE;
+		}
+
+		if (!foundType && !_strcmpi(content, "wt_mindblade")){
+			val = wt_mindblade;
+			foundType = true;
+			obj->SetInt32(field, val);
+		}
+
+		auto weapType = (WeaponTypes)val;
+		auto damType = weapons.wpnProps[weapType].damType;
+		
+		if (damType == DamageType::Unspecified){
+			weapons.wpnProps[weapType].damType = (DamageType)obj->GetInt32(obj_f_weapon_attacktype);
+		}
+		//else if (damType != (DamageType)objSystem->GetObject(handle)->GetInt32(obj_f_weapon_attacktype)){ // for debug
+		//	auto d = description.getDisplayName(handle);
+		//	auto strangeWeaponDamType = (DamageType)objSystem->GetObject(handle)->GetInt32(obj_f_weapon_attacktype);
+		//	auto dummy = 1;
+		//}
+	}
 	
 	return foundType ? TRUE : FALSE;
+}
+
+int ProtosHooks::GenericNumber(int colIdx, objHndl handle, char *content, obj_f field) {
+	auto obj = objSystem->GetObject(handle);
+
+	bool armorWeapon = obj_t_armor == obj->type && obj_f_weapon_crit_hit_chart == field;
+
+	if (content && *content) {
+		if (armorWeapon) { // override critical hit multiplier for armor
+			armorWeaponCritMult = atol(content);
+		} else {
+			obj->SetInt32(field, atol(content));
+		}
+	}
+
+	if (armorWeapon && ++armorWeaponStage >= 4)
+		ArmorWeaponFinalize(obj);
+
+	return 1;
 }
 
 int ProtosHooks::ParseRace(int colIdx, objHndl handle, char * content, obj_f field, int arrayLen, char ** strings)
@@ -436,6 +507,78 @@ int ProtosHooks::ParseSpell(int colIdx, objHndl handle, char* content, obj_f fie
 	return 1;
 }
 
+int ProtosHooks::ParseWeaponDamageType(int colIdx, objHndl handle, char* content, obj_f field) {
+	auto obj = objSystem->GetObject(handle);
+	bool armorWeapon = obj->type == obj_t_armor && field == obj_f_weapon_attacktype;
+
+	auto dmgType = DamageTypeFromD20String(content);
+	if (-1 == dmgType && _strcmpi(content, "D20DT_UNSPECIFIED")) {
+		dmgType = atol(content);
+	}
+
+	if (content && *content) {
+		if (armorWeapon) {
+			armorWeaponDamageType = dmgType;
+		} else {
+			// original behavior
+			obj->SetInt32(field, dmgType);
+		}
+	}
+
+	if (armorWeapon && ++armorWeaponStage >= 4)
+		ArmorWeaponFinalize(obj);
+
+	return 1;
+}
+
+int ProtosHooks::ParseWeaponCritRange(int colIdx, objHndl handle, char* content, obj_f field) {
+	auto obj = objSystem->GetObject(handle);
+	bool armorWeapon = obj->type == obj_t_armor && obj_f_weapon_crit_range == field;
+
+	if (content && *content) {
+		// Crit ranges in the proto are given as the lowest crit roll,
+		// but they are stored as how many sides of the die are critical hits.
+		auto range = 21 - atol(content);
+
+		if (armorWeapon) {
+			armorWeaponCritRange = range;
+		} else {
+			obj->SetInt32(field, range);
+		}
+	}
+
+	if (armorWeapon && ++armorWeaponStage >= 4)
+		ArmorWeaponFinalize(obj);
+
+	return 1;
+}
+
+int ProtosHooks::ParseDice(int colIdx, objHndl handle, char* content, obj_f field) {
+	auto obj = objSystem->GetObject(handle);
+	bool armorWeapon = obj->type == obj_t_armor && obj_f_weapon_damage_dice == field;
+	int result = 1;
+
+	if (content && *content) {
+		int diceCount, diceType, diceBonus;
+		if (!Dice::Parse(content, diceCount, diceType, diceBonus)) {
+			result = 0;
+		} else {
+			Dice dice(diceCount, diceType, diceBonus);
+
+			if (armorWeapon) {
+				armorWeaponDice = dice.ToPacked();
+			} else {
+				obj->SetInt32(field, dice.ToPacked());
+			}
+		}
+	}
+
+	if (armorWeapon && ++armorWeaponStage >= 4)
+		ArmorWeaponFinalize(obj);
+
+	return result;
+}
+
 int ProtosHooks::SetCritterAttacks(objHndl handle)
 {
 	auto obj = objSystem->GetObject(handle);
@@ -468,8 +611,46 @@ int ProtosHooks::SetCritterAttacks(objHndl handle)
 			auto dexMod = objects.GetModFromStatLevel(obj->GetInt32(obj_f_critter_abilities_idx, 1));
 			auto attackBonusOld = obj->GetInt32(obj_f_attack_bonus_idx, 3);
 			
-			obj->SetInt32(obj_f_attack_bonus_idx, 3, attackBonusOld - dexMod - sizeMod); 
+			obj->SetInt32(obj_f_attack_bonus_idx, 3, attackBonusOld - dexMod - sizeMod);
 		}
 	}
 	return 0;
+}
+
+int ProtosHooks::DamageTypeFromString(char* str) {
+	static auto original = temple::GetRef<int(__cdecl)(char*)>(0x100E0AF0);
+	return original(str);
+}
+
+int ProtosHooks::DamageTypeFromD20String(char* content) {
+	static std::unordered_map<string, DamageType> damageTypeEnumTable({
+		{"d20dt_unspecified", DamageType::Unspecified},
+		{"d20dt_bludgeoning", DamageType::Bludgeoning},
+		{"d20dt_piercing", DamageType::Piercing},
+		{"d20dt_slashing", DamageType::Slashing},
+		{"d20dt_bludgeoning_and_piercing", DamageType::BludgeoningAndPiercing},
+		{"d20dt_piercing_and_slashing", DamageType::PiercingAndSlashing},
+		{"d20dt_slashing_and_bludgeoning", DamageType::SlashingAndBludgeoning},
+		{"d20dt_slashing_and_bludgeoning_and_piercing", DamageType::SlashingAndBludgeoningAndPiercing},
+		{"d20dt_acid", DamageType::Acid},
+		{"d20dt_cold", DamageType::Cold},
+		{"d20dt_electricity", DamageType::Electricity},
+		{"d20dt_fire", DamageType::Fire},
+		{"d20dt_sonic", DamageType::Sonic},
+		{"d20dt_negative_energy", DamageType::NegativeEnergy},
+		{"d20dt_subdual", DamageType::Subdual},
+		{"d20dt_poison", DamageType::Poison},
+		{"d20dt_positive_energy", DamageType::PositiveEnergy},
+		{"d20dt_force", DamageType::Force},
+		{"d20dt_blood_loss", DamageType::BloodLoss},
+		{"d20dt_magic", DamageType::Magic}
+	});
+
+	auto findDT = damageTypeEnumTable.find(tolower(content));
+	if (findDT != damageTypeEnumTable.end()){
+		return (int)findDT->second;
+	}
+
+	// default to unspecified
+	return -1;
 }

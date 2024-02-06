@@ -2282,7 +2282,8 @@ void UiCharHooks::apply(){
 			auto desc = fmt::format("{}\n\n{}: {}", objects.GetDisplayName(item, observer),
 				uiAssets->GetTooltipString(100) /* Weight*/, itemObj->GetInt32(obj_f_item_weight));
 
-			auto acBonus  = dispatch.DispatchItemQuery(item, DK_QUE_Armor_Get_AC_Bonus);
+			auto packedAcBonus = dispatch.DispatchItemQuery(item, DK_QUE_Armor_Get_AC_Bonus);
+			auto acBonus  = ((packedAcBonus & 0xff00) >> 8) + (packedAcBonus & 0xff);
 			auto dexBonus = dispatch.DispatchItemQuery(item, DK_QUE_Armor_Get_Max_DEX_Bonus);
 			auto maxSpeed = dispatch.DispatchItemQuery(item, DK_QUE_Armor_Get_Max_Speed);
 			auto dexBonusString = dexBonus == 100 ? fmt::format(" - ") : fmt::format("{:+d}", dexBonus);

@@ -3414,23 +3414,16 @@ void ActionSequenceSystem::FullAttackCostCalculate(D20Actn* d20a, TurnBasedStatu
 	auto mainWeapon = inventory.ItemWornAt(performer, EquipSlot::WeaponPrimary);
 	auto offhand = inventory.ItemWornAt(performer, EquipSlot::WeaponSecondary);
 
-	if (offhand){
-		if (mainWeapon){
-			if (objects.GetType(offhand) != obj_t_armor) {
-				_attackTypeCodeHigh = ATTACK_CODE_OFFHAND + 1; // originally 5
-				_attackTypeCodeLow = ATTACK_CODE_OFFHAND; // originally 4
-				usingOffhand = 1;
-			}
-		} 
-		else {
-			mainWeapon = offhand;
-		}
+	auto style = critterSys.GetFightingStyle(performer);
 
+	if ((style & FightingStyle::Mask) == FightingStyle::TwoWeapon) {
+		_attackTypeCodeHigh = ATTACK_CODE_OFFHAND + 1; // originally 5
+		_attackTypeCodeLow = ATTACK_CODE_OFFHAND; // originally 4
+		usingOffhand = 1;
 	}
-	if (mainWeapon){
-		int weapFlags = objects.getInt32(mainWeapon, obj_f_weapon_flags);
-		if (weapFlags & OWF_RANGED_WEAPON)
-			d20a->d20Caf |= D20CAF_RANGED;
+
+	if ((style & FightingStyle::Ranged) == FightingStyle::Ranged) {
+		d20a->d20Caf |= D20CAF_RANGED;
 	}
 
 	// if unarmed check natural attacks (for monsters)
