@@ -735,7 +735,7 @@ void D20ClassSystem::LevelupInitSpellSelection(objHndl handle, Stat classEnum, i
 
 int D20ClassHooks::HookedLvl1SkillPts(int intStatLvl){
 
-	auto result = (intStatLvl - 10) / 2;
+	auto result = (intStatLvl - 10) >> 1;
 	auto &selPkt = chargen.GetCharEditorSelPacket();
 	auto classLevelled = selPkt.classCode;
 	result += d20ClassSys.GetSkillPts(classLevelled);
