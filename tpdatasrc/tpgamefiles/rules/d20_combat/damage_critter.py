@@ -1,6 +1,7 @@
 import tpdp
 import roll_history
 import logbook
+from common import *
 
 debug_enabled = True
 
@@ -29,20 +30,6 @@ def floatFriendlyFire(attacker, tgt):
     # else:
     #     debug_print("Debug: Friendly Fire NOT triggered", "Debug attacker.allegiance_shared(tgt): {}".format(attacker.allegiance_shared(tgt)), "Debug tgt in game.party: {}".format(tgt in game.party), "Debug attacker in game.party: {}".format(attacker in game.party))
     return
-
-def getUsedWeapon(flags, attacker):
-    unarmed = OBJ_HANDLE_NULL
-    #if flags & D20CAF_TOUCH_ATTACK:
-    #    return unarmed # this fucks up thrown grenades
-    if flags & D20CAF_SECONDARY_WEAPON:
-        offhandItem = attacker.item_worn_at(item_wear_weapon_secondary)
-        if offhandItem != OBJ_HANDLE_NULL and offhandItem.type == obj_t_weapon:
-            return offhandItem
-    else:
-        mainhandItem = attacker.item_worn_at(item_wear_weapon_primary)
-        if mainhandItem != OBJ_HANDLE_NULL and mainhandItem.type == obj_t_weapon:
-            return mainhandItem
-    return unarmed
 
 def playSoundEffect(weaponUsed, attacker, tgt, sound_event):
     sound_id = attacker.soundmap_item(weaponUsed, tgt, sound_event)
