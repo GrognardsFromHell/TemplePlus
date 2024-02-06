@@ -925,6 +925,27 @@ Range:               Close (25ft. + 5ft./2 lvls)
 Target:            allied creatures,  no more than 30' apart
 Duration:      1  round/level (D)}
 
+{6179} Sure Strike {You gain a +1 insight bonus per three caster levels on your next attack roll.
+School:          Divination
+Casting:         1  swift action [V]
+Range:               Personal
+Target:             Self
+Duration:      1 round}
+
+{6180} Hunter's Eye {You deal an extra 1d6 points of sneak attack damage per three caster levels.
+School:          Divination
+Casting:         1  swift action [V]
+Range:               Personal
+Target:             Self
+Duration:      1 round}
+
+{6181} Tactical Precision {If two affected allies flank the same creature, each gains a +2 insight bonus on melee attack rolls and deals an extra 1d6 points of damage against the flanked creature.
+School:          Divination[Mind-Affecting]
+Casting:         1 action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One creature/level
+Duration:      1 round/level,  Save: None,  SR: No}
+
 {6182} Accuracy {For the duration of the spell, the range increment for the affected weapon or weapons is doubled.
 School:          Transmutation
 Casting:         1 action [V,S]

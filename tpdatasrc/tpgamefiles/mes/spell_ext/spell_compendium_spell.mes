@@ -134,6 +134,9 @@
 {1176}{Draconic Might}
 {1177}{Vigor, Mass Lesser}
 {1178}{Vigor, Mass Improved}
+{1179}{Sure Strike}
+{1180}{Hunter's Eye}
+{1181}{Tactical Precision}
 {1182}{Accuracy}
 {1183}{Hail of Stone}
 {1184}{Lesser Orb of Acid}
@@ -282,8 +285,11 @@
 {6176} Draconic Might {TBD}
 {6177} Vigor, Mass Lesser {Targets get Fast Healing 1 for 10 +1/level rounds, max 25.}
 {6178} Vigor, Mass Improved {Targets get Fast Healing 3 for 10 +1/level rounds, max 40.}
+{6179} Sure Strike {You gain a +1 insight bonus per three caster levels on your next attack roll.}
+{6180} Hunter's Eye {You deal an extra 1d6 points of sneak attack damage per three caster levels.}
 {6182} Accuracy {The range increment for the affected weapon or weapons is doubled.}
 {6183} Hail of Stone {You create a rain of stones that deals 1d4 points of damage per caster level (maximum 5d4) to creatures and objects within the area.}
+{6181} Tactical Precision {If two affected allies flank the same creature, each gains a +2 insight bonus on melee attack rolls and deals an extra 1d6 points of damage against the flanked creature.}
 {6184} Lesser Orb of Acid {Ranged Touch Attack that deals 1d8/two levels (max 5d8) acid damage.}
 {6185} Lesser Orb of Cold {Ranged Touch Attack that deals 1d8/two levels (max 5d8) cold damage.}
 {6186} Lesser Orb of Electricity {Ranged Touch Attack that deals 1d8/two levels (max 5d8) electricity damage.}

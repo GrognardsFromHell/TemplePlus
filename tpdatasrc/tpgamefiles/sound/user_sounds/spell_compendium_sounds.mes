@@ -1440,6 +1440,39 @@
 {29567}{} // spell hit
 {29568}{} // spell struck
 
+// [1179] *[Sure Strike]
+{29580}{} // spell begin
+{29581}{} // spell end
+{29582}{spells\sp_shillelagh.WAV} // spell effect
+{29583}{} // spell new round
+{29584}{} // spell projectile begin
+{29585}{} // spell projectile end
+{29586}{} // spell projectile in-flight
+{29587}{} // spell hit
+{29588}{} // spell struck
+
+// [1180] *[Hunter's Eye]
+{29600}{} // spell begin
+{29601}{} // spell end
+{29602}{spells\sp_see_invisibilty_end.WAV} // spell effect
+{29603}{} // spell new round
+{29604}{} // spell projectile begin
+{29605}{} // spell projectile end
+{29606}{} // spell projectile in-flight
+{29607}{} // spell hit
+{29608}{} // spell struck
+
+// [1181] *[Tactical Precision]
+{29620}{} // spell begin
+{29621}{spells\sp_guidance_end.WAV} // spell end
+{29622}{spells\sp_guidance.WAV} // spell effect
+{29623}{} // spell new round
+{29624}{} // spell projectile begin
+{29625}{} // spell projectile end
+{29626}{} // spell projectile in-flight
+{29627}{} // spell hit
+{29628}{} // spell struck
+
 // [1005] *[Fire Shield, Mass]
 {26100}{} // spell begin
 {26101}{spells\sp_fire_shield_end.WAV} // spell end
