@@ -2140,7 +2140,7 @@ int32_t ActionSequenceSystem::DoAoosByAdjcentEnemies(objHndl obj)
 
 int32_t ActionSequenceSystem::ProvokeAooFrom(objHndl provoker, objHndl enemy)
 {
-	if (object.GetFlags(provokee) & OF_INVULNERABLE) // see above
+	if (objects.GetFlags(enemy) & OF_INVULNERABLE) // see above
 		return 0;
 
 	if (!combatSys.CanMeleeTarget(enemy, provoker)) return 0;
