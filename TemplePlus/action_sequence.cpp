@@ -2810,13 +2810,23 @@ void ActionSequenceSystem::ActionPerform()
 		} 
 
 		else{
+			bool preempted = false;
+			switch (d20->D20ActionTriggersAoO(d20a, &tbStatus))
+			{
+			case 0:
+				break;
+			case 2:
+			case 1:
+			default:
+				preempted = DoAoosByAdjcentEnemies(d20a->d20APerformer);
+				break;
+			}
 
-			if ( d20->D20ActionTriggersAoO(d20a, &tbStatus) && DoAoosByAdjcentEnemies(d20a->d20APerformer))	{
+			if (preempted) {
 				logger->debug("ActionPerform: \t Sequence Preempted {}", d20a->d20APerformer);
 				--*(curIdx);
 				sequencePerform();
-			} 
-			else{
+			} else {
 				curSeq->tbStatus = tbStatus;
 				*(uint32_t*)(&curSeq->tbStatus.tbsFlags) |= TBSF_HasActedThisRound;
 				InterruptCounterspell(d20a);
