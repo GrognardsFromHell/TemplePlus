@@ -1090,7 +1090,10 @@ int32_t LegacyD20System::D20ActionTriggersAoO(D20Actn* d20a, TurnBasedStatus* tb
 		&& d20QueryWithData(d20a->d20APerformer, DK_QUE_ActionTriggersAOO, (int)d20a, 0))
 	{
 		if (d20a->d20ActType == D20A_DISARM)
-			return feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_DISARM) == 0;
+			if (!feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_DISARM))
+				return 2;
+			else
+				return 0;
 		return 1;
 	}
 		
@@ -1104,21 +1107,27 @@ int32_t LegacyD20System::D20ActionTriggersAoO(D20Actn* d20a, TurnBasedStatus* tb
 			return FALSE;
 		if (feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_UNARMED_STRIKE))
 			return FALSE;
-		return feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_TRIP) == 0;
+		if (feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_TRIP))
+			return FALSE;
+		return 2;
 	}
-		
 
-
-	if (d20a->d20ActType == D20A_SUNDER)
-		return feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_SUNDER) == 0;
-
+	if (d20a->d20ActType == D20A_SUNDER) {
+		if (feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_SUNDER))
+			return FALSE;
+		else
+			return 2;
+	}
 
 	if (d20a->d20Caf & D20CAF_TOUCH_ATTACK
 		|| d20Sys.GetAttackWeapon(d20a->d20APerformer, d20a->data1, (D20CAF)d20a->d20Caf) 
 		|| dispatch.DispatchD20ActionCheck(d20a, tbStat, dispTypeGetCritterNaturalAttacksNum))
 		return 0;
 
-	return feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_UNARMED_STRIKE) == 0;
+	if (feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_UNARMED_STRIKE))
+		return 0;
+	else
+		return 2;
 
 	/*
 	__asm{
