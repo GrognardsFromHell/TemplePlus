@@ -180,6 +180,7 @@ struct ActionSequenceSystem : temple::AddressTable
 	uint32_t seqCheckFuncs(TurnBasedStatus *tbStatus);
 	void DoAoo(objHndl, objHndl);
 	int32_t DoAoosByAdjcentEnemies(objHndl);
+	int32_t ProvokeAooFrom(objHndl provoker, objHndl enemy);
 	
 	bool SpellTargetsFilterInvalid(D20Actn &d20a);
 	void HandleInterruptSequence();
