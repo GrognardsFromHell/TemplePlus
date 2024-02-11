@@ -75,7 +75,7 @@ public:
 	// Action Checks
 	static ActionErrorCode ActionCheckAidAnotherWakeUp(D20Actn* d20a, TurnBasedStatus* tbStat);
 	static ActionErrorCode ActionCheckCastSpell(D20Actn* d20a, TurnBasedStatus* tbStat);
-	static ActionErrorCode ActionCheckCopyScroll(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode ActionCheckCopyScroll(D20Actn* d20a);
 	static ActionErrorCode ActionCheckDisarm(D20Actn* d20a, TurnBasedStatus* tbStat);
 	static ActionErrorCode ActionCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat);
 	static ActionErrorCode ActionCheckDivineMight(D20Actn* d20a, TurnBasedStatus* tbStat);
@@ -523,7 +523,6 @@ void LegacyD20System::NewD20ActionsInit()
 
 	d20Type = D20A_COPY_SCROLL;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformCopyScroll;
-	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckCopyScroll;
 
 	d20Type = D20A_DISMISS_SPELLS;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformDismissSpell;
@@ -3649,25 +3648,23 @@ ActionErrorCode D20ActionCallbacks::ActionCheckCastSpell(D20Actn* d20a, TurnBase
 }
 
 // enhanced version of 0x10091B80
-ActionErrorCode D20ActionCallbacks::ActionCheckCopyScroll(D20Actn* d20a, TurnBasedStatus* tbStat) {
-	if (combat.isCombatActive()) return AEC_OUT_OF_COMBAT_ONLY;
+ActionErrorCode D20ActionCallbacks::ActionCheckCopyScroll(D20Actn* d20a) {
+	if (combatSys.isCombatActive()) return AEC_OUT_OF_COMBAT_ONLY;
 
+	auto performer = d20a->d20APerformer;
 	int spEnum = 0;
-	d20a->d20SpellData.Extract(&spEnum, nullptr, nullptr, &spLevel, nullptr, nullptr);
+	d20a->d20SpellData.Extract(&spEnum, nullptr, nullptr, nullptr, nullptr, nullptr);
 
-	if (config.stricterRulesEnforcement && party.IsInParty(d20a->d20APerformer)) {
-		auto spLvl = spellSys.GetSpellLevelBySpellClass(spEnum, spellSys.GetSpellClass(stat_level_wizard));
+	if (config.stricterRulesEnforcement && party.IsInParty(performer)) {
+		int spClass = spellSys.GetSpellClass(stat_level_wizard);
+		auto spLvl = spellSys.GetSpellLevelBySpellClass(spEnum, spClass);
 		auto gpCost = spLvl == 0 ? 100 : 100 * spLvl;
 		auto money = party.GetMoney();
 		if (money >= 0 && money < gpCost*100)
 			return AEC_CANNOT_CAST_NOT_ENOUGH_GP;
 	}
 
-	auto failed = d20Sys.D20QueryWithData(
-			d20a->d20APerformer,
-			DK_QUE_FAILED_COPY_SCROLL,
-			spEnum,
-			0);
+	auto failed = d20Sys.d20QueryWithData(performer, DK_QUE_Failed_Copy_Scroll, spEnum, 0);
 
 	if (failed) return AEC_INVALID_ACTION;
 	else return AEC_OK;
