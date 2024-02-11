@@ -6043,7 +6043,7 @@ int ClassAbilityCallbacks::CouragedAuraSavingThrow(DispatcherCallbackArgs args)
 }
 
 int ClassAbilityCallbacks::FailedCopyScroll(DispatcherCallbackArgs args) {
-	auto dispIo = DispIoCheckIoType7(args.dispIO);
+	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
 
 	auto failedScRanks = args.GetCondArg(1);
 	auto curScRanks = critterSys.SkillBaseGet(args.objHndCaller, SkillEnum::skill_spellcraft);
