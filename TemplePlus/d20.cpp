@@ -2576,12 +2576,17 @@ ActionErrorCode D20ActionCallbacks::PerformCharge(D20Actn* d20a){
 ActionErrorCode D20ActionCallbacks::PerformCopyScroll(D20Actn * d20a){
 	auto performer = d20a->d20APerformer;
 
-	auto check = ActionCheckCopyScroll(d20a);
-	if (check == AEC_INVALID_ACTION){
+	switch (ActionCheckCopyScroll(d20a))
+	{
+	case AEC_OK:
+		break;
+	case AEC_INVALID_ACTION:
 		skillSys.FloatError(performer, 17);
 		return AEC_OK;
-	} 
-	else if (check!= AEC_OK){
+	case AEC_CANNOT_CAST_NOT_ENOUGH_GP:
+		skillSys.FloatError(performer, 3);
+		return AEC_OK;
+	default:
 		return AEC_OK;
 	}
 
