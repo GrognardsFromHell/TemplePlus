@@ -3136,6 +3136,17 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 1, dispTypeRadialMenuEntry, 0, AidAnotherRadialMenu, 0, 0);
 	// 
 	
+	{
+		static CondStructNew condHeld;
+		condHeld.ExtendExisting("Held");
+		condHeld.AddHook(dispTypeStatLevelGet, DK_STAT_STRENGTH, HelplessCapStatBonus);
+		condHeld.AddHook(dispTypeStatLevelGet, DK_STAT_DEXTERITY, HelplessCapStatBonus);
+
+		static CondStructNew condSleeping;
+		condSleeping.ExtendExisting("Sleeping");
+		condSleeping.AddHook(dispTypeStatLevelGet, DK_STAT_DEXTERITY, HelplessCapStatBonus);
+	}
+
 	/*
 	char mCondIndomitableWillName[100];
 	CondStructNew *mCondIndomitableWill;
@@ -3533,6 +3544,19 @@ int TacticalOptionAbusePrevention(DispatcherCallbackArgs args)
 { // signifies that an attack has been made using that tactical option (so user doesn't toggle it off and shrug off the penalties)
 	return temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100F7ED0)(args); // replaced in ability_fixes.cpp
 }
+
+// Port of 0x100E7F80. Was used in Unconscious but missing in similar
+// conditions. Helpless critters should have 0 effective dexterity, and
+// paralyzed creatures should have 0 effective strength.
+int HelplessCapStatBonus(DispatcherCallbackArgs args)
+{
+	DispIoBonusList *dispIo = dispatch.DispIoCheckIoType2(args.dispIO);
+
+	dispIo->bonlist.AddCap(0, 0, 109);
+
+	return 0;
+}
+
 
 #pragma region Barbarian Stuff
 
