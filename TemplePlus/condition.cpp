@@ -1857,7 +1857,8 @@ int __cdecl GlobalToHitBonus(DispatcherCallbackArgs args)
 	// helplessness bonus
 	if (dispIo->attackPacket.victim
 		&& d20Sys.d20Query(dispIo->attackPacket.victim, DK_QUE_Helpless)
-		&& !d20Sys.d20Query(dispIo->attackPacket.victim, DK_QUE_Critter_Is_Stunned))
+		&& !d20Sys.d20Query(dispIo->attackPacket.victim, DK_QUE_Critter_Is_Stunned)
+		&& !(dispIo->attackPacket.flags & D20CAF_RANGED))
 		bonusSys.bonusAddToBonusList(&dispIo->bonlist, 4, 30, 136);
 	
 	// flanking bonus
