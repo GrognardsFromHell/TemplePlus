@@ -75,6 +75,7 @@ public:
 	// Action Checks
 	static ActionErrorCode ActionCheckAidAnotherWakeUp(D20Actn* d20a, TurnBasedStatus* tbStat);
 	static ActionErrorCode ActionCheckCastSpell(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode ActionCheckCopyScroll(D20Actn* d20a, TurnBasedStatus* tbStat);
 	static ActionErrorCode ActionCheckDisarm(D20Actn* d20a, TurnBasedStatus* tbStat);
 	static ActionErrorCode ActionCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat);
 	static ActionErrorCode ActionCheckDivineMight(D20Actn* d20a, TurnBasedStatus* tbStat);
@@ -522,6 +523,7 @@ void LegacyD20System::NewD20ActionsInit()
 
 	d20Type = D20A_COPY_SCROLL;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformCopyScroll;
+	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckCopyScroll;
 
 	d20Type = D20A_DISMISS_SPELLS;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformDismissSpell;
@@ -2575,7 +2577,7 @@ ActionErrorCode D20ActionCallbacks::PerformCharge(D20Actn* d20a){
 ActionErrorCode D20ActionCallbacks::PerformCopyScroll(D20Actn * d20a){
 	auto performer = d20a->d20APerformer;
 
-	auto check = temple::GetRef<ActionErrorCode(__cdecl)(D20Actn*)>(0x10091B80)(d20a);
+	auto check = ActionCheckCopyScroll(d20a);
 	if (check == AEC_INVALID_ACTION){
 		skillSys.FloatError(performer, 17);
 		return AEC_OK;
@@ -2602,6 +2604,12 @@ ActionErrorCode D20ActionCallbacks::PerformCopyScroll(D20Actn * d20a){
 		conds.AddTo(performer, "Failed_Copy_Scroll", {spEnum, spellcraftLvl});
 		skillSys.FloatError(performer, 16);
 		return AEC_OK;
+	}
+
+	if (config.stricterRulesEnforcement) {
+		if (party.IsInParty(performer)){
+			party.DebitMoney(0, spLvl == 0 ? 100 : 100*spLvl, 0, 0);
+		}
 	}
 
 	spellSys.SpellKnownAdd(performer, spEnum, spellSys.GetSpellClass(stat_level_wizard), spLvl, 1, 0);
@@ -3638,6 +3646,31 @@ ActionErrorCode D20ActionCallbacks::ActionCheckCastSpell(D20Actn* d20a, TurnBase
 	}
 
 	return d20Sys.TargetCheck(d20a) != 0 ? AEC_OK : AEC_TARGET_INVALID;
+}
+
+// enhanced version of 0x10091B80
+ActionErrorCode D20ActionCallbacks::ActionCheckCopyScroll(D20Actn* d20a, TurnBasedStatus* tbStat) {
+	if (combat.isCombatActive()) return AEC_OUT_OF_COMBAT_ONLY;
+
+	int spEnum = 0;
+	d20a->d20SpellData.Extract(&spEnum, nullptr, nullptr, &spLevel, nullptr, nullptr);
+
+	if (config.stricterRulesEnforcement && party.IsInParty(d20a->d20APerformer)) {
+		auto spLvl = spellSys.GetSpellLevelBySpellClass(spEnum, spellSys.GetSpellClass(stat_level_wizard));
+		auto gpCost = spLvl == 0 ? 100 : 100 * spLvl;
+		auto money = party.GetMoney();
+		if (money >= 0 && money < gpCost*100)
+			return AEC_CANNOT_CAST_NOT_ENOUGH_GP;
+	}
+
+	auto failed = d20Sys.D20QueryWithData(
+			d20a->d20APerformer,
+			DK_QUE_FAILED_COPY_SCROLL,
+			spEnum,
+			0);
+
+	if (failed) return AEC_INVALID_ACTION;
+	else return AEC_OK;
 }
 
 
