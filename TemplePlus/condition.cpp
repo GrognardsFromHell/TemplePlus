@@ -3139,12 +3139,12 @@ void ConditionSystem::RegisterNewConditions()
 	{
 		static CondStructNew condHeld;
 		condHeld.ExtendExisting("Held");
-		condHeld.AddHook(dispTypeStatLevelGet, DK_STAT_STRENGTH, HelplessCapStatBonus);
-		condHeld.AddHook(dispTypeStatLevelGet, DK_STAT_DEXTERITY, HelplessCapStatBonus);
+		condHeld.AddHook(dispTypeAbilityScoreLevel, DK_STAT_STRENGTH, HelplessCapStatBonus);
+		condHeld.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HelplessCapStatBonus);
 
 		static CondStructNew condSleeping;
 		condSleeping.ExtendExisting("Sleeping");
-		condSleeping.AddHook(dispTypeStatLevelGet, DK_STAT_DEXTERITY, HelplessCapStatBonus);
+		condSleeping.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HelplessCapStatBonus);
 	}
 
 	/*
