@@ -254,6 +254,7 @@ public:
 	// Aura Of Courage
 	static int __cdecl CouragedAuraSavingThrow(DispatcherCallbackArgs args);
 
+	static int FailedCopyScroll(DispatcherCallbackArgs args);
 
 	static int FeatBrewPotionRadialMenu(DispatcherCallbackArgs args);
 	static int FeatScribeScrollRadialMenu(DispatcherCallbackArgs args);
@@ -547,6 +548,9 @@ public:
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100F9A10, classAbilityCallbacks.SneakAttackDamage);
 		SubDispDefNew sdd(dispTypeDealingDamageWeaponlikeSpell, 0, classAbilityCallbacks.SneakAttackDamage, 0u,0u); // Weapon-like spell damage hook
 		write(0x102ED2A8, &sdd, sizeof(SubDispDefNew));
+
+		// Wizard
+		replaceFunction<int(DispatcherCallbackArgs)>(0x10102AE0, classAbilityCallbacks.FailedCopyScroll);
 
 		// D20Mods countdown handler
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100EC9B0, genericCallbacks.D20ModCountdownHandler);
@@ -6034,6 +6038,24 @@ int ClassAbilityCallbacks::CouragedAuraSavingThrow(DispatcherCallbackArgs args)
 		}
 	}
 	
+
+	return 0;
+}
+
+int ClassAbilityCallbacks::FailedCopyScroll(DispatcherCallbackArgs args) {
+	auto dispIo = DispIoCheckIoType7(args.dispIO);
+
+	auto failedScRanks = args.GetCondArg(1);
+	auto curScRanks = critterSys.SkillBaseGet(args.objHndCaller, SkillEnum::skill_spellcraft);
+	auto failedSpellEnum = args.GetCondArg(0);
+
+	// if we've gained spellcraft ranks, get rid of the condition
+	if (curScRanks > failedScRanks) {
+		conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
+	// if the scroll being copied matches, set return value
+	} else if (failedSpellEnum == dispIo->data1) {
+		dispIo->return_val = 1;
+	}
 
 	return 0;
 }
