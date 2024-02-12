@@ -140,6 +140,7 @@ public:
 	static BOOL ActionFrameAidAnotherWakeUp(D20Actn* d20a);
 	static BOOL ActionFrameAoo(D20Actn* d20a);
 	static BOOL ActionFrameCharge(D20Actn* d20a);
+	static BOOL ActionFrameCoupDeGrace(D20Actn* d20a);
 	static BOOL ActionFrameDisarm(D20Actn* d20a);
 	static BOOL ActionFramePython(D20Actn* d20a);
 	static BOOL ActionFrameQuiveringPalm(D20Actn* d20a);
@@ -499,6 +500,9 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Type = D20A_CHARGE;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformCharge;
 	d20Defs[d20Type].actionFrameFunc = d20Callbacks.ActionFrameCharge;
+
+	d20Type = D20A_COUP_DE_GRACE;
+	d20Defs[d20Type].actionFrameFunc = d20Callbacks.ActionFrameCoupDeGrace;
 
 	d20Type = D20A_DEATH_TOUCH;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformTouchAttack;
@@ -2650,6 +2654,31 @@ ActionErrorCode D20ActionCallbacks::PerformDisarm(D20Actn* d20a){
 BOOL D20ActionCallbacks::ActionFrameCharge(D20Actn* d20a){
 	ActionFrameStandardAttack(d20a);
 	return FALSE;
+}
+
+// version of 0x10090C80 that actually performs a fortitude save
+// TODO: only allow regenerators to be killed by lethal damage?
+BOOL D20ActionCallbacks::ActionFrameCoupDeGrace(D20Actn* d20a) {
+	auto performer = d20a->d20APerformer;
+	auto target = d20a->d20ATarget;
+	auto caf = static_cast<D20CAF>(d20a->d20Caf);
+	auto dmg = damage.DealAttackDamage(performer, target, d20a->data1, caf, d20a->d20ActType);
+
+	if (dmg <= 0 || critterSys.IsDeadNullDestroyed(target))
+		return 0;
+
+	auto dc = 10 + dmg;
+
+	if (damage.SavingThrow(target, performer, dc, SavingThrowType::Fortitude, D20STF_NONE))
+		return 0;
+
+	auto leader = party.GetConsciousPartyLeader();
+	auto desc = description.getDisplayName(target);
+	auto msg = fmt::format("{} {}\n", desc, combatSys.GetCombatMesLine(0xAE)).c_str();
+	histSys.CreateFromFreeText(msg);
+	critterSys.Kill(target, performer);
+
+	return 0;
 }
 
 BOOL D20ActionCallbacks::ActionFrameDisarm(D20Actn* d20a){
