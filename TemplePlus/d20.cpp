@@ -75,7 +75,7 @@ public:
 	// Action Checks
 	static ActionErrorCode ActionCheckAidAnotherWakeUp(D20Actn* d20a, TurnBasedStatus* tbStat);
 	static ActionErrorCode ActionCheckCastSpell(D20Actn* d20a, TurnBasedStatus* tbStat);
-	static ActionErrorCode ActionCheckCopyScroll(D20Actn* d20a);
+	static ActionErrorCode ActionCheckCopyScroll(D20Actn* d20a, TurnBasedStatus* tbStat);
 	static ActionErrorCode ActionCheckDisarm(D20Actn* d20a, TurnBasedStatus* tbStat);
 	static ActionErrorCode ActionCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat);
 	static ActionErrorCode ActionCheckDivineMight(D20Actn* d20a, TurnBasedStatus* tbStat);
@@ -89,6 +89,9 @@ public:
 	static ActionErrorCode ActionCheckSunder(D20Actn* d20a, TurnBasedStatus* tbStat);
 	static ActionErrorCode ActionCheckTripAttack(D20Actn* d20a, TurnBasedStatus* tbStat);
 
+	// Was part of an action check, but seems to be called directly from the
+	// Perform function.
+	static ActionErrorCode CanCopyScroll(D20Actn* d20a);
 
 	// Target Check
 	//static ActionErrorCode TargetCheckStandardAttack(D20Actn* d20a, TurnBasedStatus* tbStat);
@@ -522,6 +525,7 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformUseItem;
 
 	d20Type = D20A_COPY_SCROLL;
+	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckCopyScroll;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformCopyScroll;
 
 	d20Type = D20A_DISMISS_SPELLS;
@@ -2576,7 +2580,7 @@ ActionErrorCode D20ActionCallbacks::PerformCharge(D20Actn* d20a){
 ActionErrorCode D20ActionCallbacks::PerformCopyScroll(D20Actn * d20a){
 	auto performer = d20a->d20APerformer;
 
-	switch (ActionCheckCopyScroll(d20a))
+	switch (CanCopyScroll(d20a))
 	{
 	case AEC_OK:
 		break;
@@ -3652,10 +3656,19 @@ ActionErrorCode D20ActionCallbacks::ActionCheckCastSpell(D20Actn* d20a, TurnBase
 	return d20Sys.TargetCheck(d20a) != 0 ? AEC_OK : AEC_TARGET_INVALID;
 }
 
-// enhanced version of 0x10091B80
-ActionErrorCode D20ActionCallbacks::ActionCheckCopyScroll(D20Actn* d20a) {
-	if (combatSys.isCombatActive()) return AEC_OUT_OF_COMBAT_ONLY;
+// Broke up and enhanced 0x10091B80 for better floats.
+// Action check only checks for whether you have 'time' to copy the scroll.
+ActionErrorCode D20ActionCallbacks::ActionCheckCopyScroll(D20Actn* d20a, TurnBasedStatus* tbStat)
+{
+	if (combatSys.isCombatActive())
+		return AEC_OUT_OF_COMBAT_ONLY;
+	else
+		return AEC_OKAY;
+}
 
+// Checks whether you have the resources, and haven't already failed to copy the
+// scroll with the given spellcraft ranks.
+ActionErrorCode D20ActionCallbacks::CanCopyScroll(D20Actn* d20a) {
 	auto performer = d20a->d20APerformer;
 	int spEnum = 0;
 	d20a->d20SpellData.Extract(&spEnum, nullptr, nullptr, nullptr, nullptr, nullptr);
