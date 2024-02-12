@@ -3663,7 +3663,7 @@ ActionErrorCode D20ActionCallbacks::ActionCheckCopyScroll(D20Actn* d20a, TurnBas
 	if (combatSys.isCombatActive())
 		return AEC_OUT_OF_COMBAT_ONLY;
 	else
-		return AEC_OKAY;
+		return AEC_OK;
 }
 
 // Checks whether you have the resources, and haven't already failed to copy the
