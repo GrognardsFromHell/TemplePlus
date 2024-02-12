@@ -3903,7 +3903,11 @@ int RendOnDamage(DispatcherCallbackArgs args)
 	auto previousTarget = args.GetCondArgObjHndl(2);
 	if (hasDeliveredDamage && attackDescr == previousAttackDescr && previousTarget == dispIo->attackPacket.victim)
 	{
-		Dice dice(2, 6, 9);
+		int strScore = objects.StatLevelGet(args.objHndCaller, stat_strength);
+		int bonus = objects.GetModFromStatLevel(strScore);
+		if (bonus > 0) bonus += bonus/2;
+
+		Dice dice(2, 6, bonus);
 		dispIo->damage.AddDamageDice(dice.ToPacked(), DamageType::PiercingAndSlashing, 133);
 		//damage.AddDamageDice(&dispIo->damage, dice.ToPacked(), DamageType::PiercingAndSlashing, 133);
 		floatSys.FloatCombatLine(args.objHndCaller, 203);
