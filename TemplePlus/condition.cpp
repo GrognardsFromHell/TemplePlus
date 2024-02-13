@@ -3140,9 +3140,10 @@ void ConditionSystem::RegisterNewConditions()
 		static CondStructNew condHeld;
 		condHeld.ExtendExisting("Held");
 		condHeld.subDispDefs[11].dispCallback = [](DispatcherCallbackArgs args) {
+			static auto orig = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100EDF10);
 			// disable effect tooltip if freedom of movement
 			if (!d20Sys.d20Query(args.objHndCaller, DK_QUE_Critter_Has_Freedom_of_Movement))
-				return temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100EDF10)(args);
+				return orig(args);
 			return 0;
 		};
 		condHeld.AddHook(dispTypeAbilityScoreLevel, DK_STAT_STRENGTH, HeldCapStatBonus);
