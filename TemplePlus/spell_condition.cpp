@@ -320,7 +320,7 @@ public:
 
 		// Don't bother trying to 'break free' of Hold X while freedom of movement
 		// is active; it wastes your turn if you succeed.
-		static auto origHoldBreakFree =
+		static int (*origHoldBreakFree)(DispatcherCallbackArgs) =
 			replaceFunction<int(__cdecl)(DispatcherCallbackArgs)>(0x100C3FE0,
 					[](DispatcherCallbackArgs args) {
 						if (!d20Sys.d20Query(args.objHndCaller, DK_QUE_Critter_Has_Freedom_of_Movement))
