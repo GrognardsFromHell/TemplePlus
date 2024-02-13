@@ -3139,8 +3139,8 @@ void ConditionSystem::RegisterNewConditions()
 	{
 		static CondStructNew condHeld;
 		condHeld.ExtendExisting("Held");
-		condHeld.AddHook(dispTypeAbilityScoreLevel, DK_STAT_STRENGTH, HelplessCapStatBonus);
-		condHeld.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HelplessCapStatBonus);
+		condHeld.AddHook(dispTypeAbilityScoreLevel, DK_STAT_STRENGTH, HeldCapStatBonus);
+		condHeld.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HeldCapStatBonus);
 
 		static CondStructNew condSleeping;
 		condSleeping.ExtendExisting("Sleeping");
@@ -3553,6 +3553,18 @@ int HelplessCapStatBonus(DispatcherCallbackArgs args)
 	DispIoBonusList *dispIo = dispatch.DispIoCheckIoType2(args.dispIO);
 
 	dispIo->bonlist.AddCap(0, 0, 109);
+
+	return 0;
+}
+
+// As above, but check for freedom of movement, since it doesn't remove the held
+// condition.
+int HeldCapStatBonus(DispatcherCallbackArgs args)
+{
+	DispIoBonusList *dispIo = dispatch.DispIoCheckIoType2(args.dispIO);
+
+	if (!d20Sys.d20Query(args.objHndCaller, DK_QUE_Critter_Has_Freedom_of_Movement))
+		dispIo->bonlist.AddCap(0, 0, 109);
 
 	return 0;
 }
