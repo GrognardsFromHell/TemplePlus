@@ -7372,6 +7372,10 @@ void Conditions::AddConditionsToTable(){
 		static CondStructNew condColorSprayStun;
 		condColorSprayStun.ExtendExisting("sp-Color Spray Stun");
 		condColorSprayStun.AddHook(dispTypeD20Query, DK_QUE_SneakAttack, genericCallbacks.QuerySetReturnVal1);
+
+		static CondStructNew condColorSprayBlind;
+		condColorSprayBlind.ExtendExisting("sp-Color Spray Blind");
+		condColorSprayBlind.AddHook(dispTypeTurnBasedStatusInit, DK_NONE, TurnBasedStatusInitNoActions);
 	}
 
 	// New Conditions!
