@@ -7368,6 +7368,12 @@ void Conditions::AddConditionsToTable(){
 		}
 	}
 
+	{
+		static CondStructNew condColorSprayStun;
+		condColorSprayStun.ExtendExisting("sp-Color Spray Stun");
+		condColorSprayStun.AddHook(dispTypeD20Query, DK_QUE_SneakAttack, genericCallbacks.QuerySetReturnVal1);
+	}
+
 	// New Conditions!
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mConditionDisableAoO);
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondGreaterTwoWeaponFighting);
