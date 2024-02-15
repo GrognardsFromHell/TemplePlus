@@ -1647,7 +1647,7 @@ int GenericCallbacks::FastHealingOnBeginRound(DispatcherCallbackArgs args)
 
 	auto heal = args.GetCondArg(0) * rounds;
 	damage.FastHeal(critter, heal);
-	histSys.CreateRollHistoryLineFromMesfile(57, critter, 0);
+	histSys.CreateRollHistoryLineFromMesfile(57, critter, objHndl::null);
 
 	return 0;
 }
