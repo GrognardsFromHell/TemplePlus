@@ -828,7 +828,7 @@ void Damage::FastHeal(objHndl critter, int amount) {
 		critterSys.SetSubdualDamage(critter, subdual - sHeal);
 
 		auto text = fmt::format("{} {}", sHeal, combatSys.GetCombatMesLine(33));
-		floatSys.floatMesLine(critter, 2, FloatLineColor::LightBlue, text);
+		floatSys.floatMesLine(critter, 2, FloatLineColor::LightBlue, text.c_str());
 
 		amount -= sHeal;
 	}
@@ -837,9 +837,9 @@ void Damage::FastHeal(objHndl critter, int amount) {
 		auto heal = std::min(amount, lethal);
 		critterSys.SetHpDamage(critter, lethal - heal);
 
-		auto text = fmt::format("{} {}", sHeal, combatSys.GetCombatMesLine(32));
-		floatSys.floatMesLine(critter, 2, FloatLineColor::LightBlue, text);
-		d20Sys.d20SendSignal(critter, DK_SIG_HP_Changed, heal, 0)
+		auto text = fmt::format("{} {}", heal, combatSys.GetCombatMesLine(32));
+		floatSys.floatMesLine(critter, 2, FloatLineColor::LightBlue, text.c_str());
+		d20Sys.d20SendSignal(critter, DK_SIG_HP_Changed, heal, 0);
 	}
 }
 
