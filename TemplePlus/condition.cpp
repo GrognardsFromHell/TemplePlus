@@ -261,6 +261,7 @@ public:
 	// Aura Of Courage
 	static int __cdecl CouragedAuraSavingThrow(DispatcherCallbackArgs args);
 
+	static int FailedCopyScroll(DispatcherCallbackArgs args);
 
 	static int FeatBrewPotionRadialMenu(DispatcherCallbackArgs args);
 	static int FeatScribeScrollRadialMenu(DispatcherCallbackArgs args);
@@ -567,6 +568,9 @@ public:
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100F9A10, classAbilityCallbacks.SneakAttackDamage);
 		SubDispDefNew sdd(dispTypeDealingDamageWeaponlikeSpell, 0, classAbilityCallbacks.SneakAttackDamage, 0u,0u); // Weapon-like spell damage hook
 		write(0x102ED2A8, &sdd, sizeof(SubDispDefNew));
+
+		// Wizard
+		replaceFunction<int(DispatcherCallbackArgs)>(0x10102AE0, classAbilityCallbacks.FailedCopyScroll);
 
 		// D20Mods countdown handler
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100EC9B0, genericCallbacks.D20ModCountdownHandler);
@@ -1153,7 +1157,8 @@ int GenericCallbacks::TripAooQuery(DispatcherCallbackArgs args)
 int GenericCallbacks::ImprovedTripBonus(DispatcherCallbackArgs args)
 {
 	auto dispIo = dispatch.DispIoCheckIoType10(args.dispIO);
-	if (dispIo->flags & 1){
+	// 2 seems to be defender
+	if (dispIo->flags & 1 && !(dispIo->flags & 2)) {
 		dispIo->bonOut->AddBonusWithDesc(4, 0, 114, feats.GetFeatName(FEAT_IMPROVED_TRIP));
 	}
 	return 0;
@@ -1943,7 +1948,8 @@ int __cdecl GlobalToHitBonus(DispatcherCallbackArgs args)
 	// helplessness bonus
 	if (dispIo->attackPacket.victim
 		&& d20Sys.d20Query(dispIo->attackPacket.victim, DK_QUE_Helpless)
-		&& !d20Sys.d20Query(dispIo->attackPacket.victim, DK_QUE_Critter_Is_Stunned))
+		&& !d20Sys.d20Query(dispIo->attackPacket.victim, DK_QUE_Critter_Is_Stunned)
+		&& !(dispIo->attackPacket.flags & D20CAF_RANGED))
 		bonusSys.bonusAddToBonusList(&dispIo->bonlist, 4, 30, 136);
 	
 	// flanking bonus
@@ -3256,6 +3262,24 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 1, dispTypeRadialMenuEntry, 0, AidAnotherRadialMenu, 0, 0);
 	// 
 	
+	{
+		static CondStructNew condHeld;
+		condHeld.ExtendExisting("Held");
+		condHeld.subDispDefs[11].dispCallback = [](DispatcherCallbackArgs args) {
+			static auto orig = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100EDF10);
+			// disable effect tooltip if freedom of movement
+			if (!d20Sys.d20Query(args.objHndCaller, DK_QUE_Critter_Has_Freedom_of_Movement))
+				return orig(args);
+			return 0;
+		};
+		condHeld.AddHook(dispTypeAbilityScoreLevel, DK_STAT_STRENGTH, HeldCapStatBonus);
+		condHeld.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HeldCapStatBonus);
+
+		static CondStructNew condSleeping;
+		condSleeping.ExtendExisting("Sleeping");
+		condSleeping.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HelplessCapStatBonus);
+	}
+
 	/*
 	char mCondIndomitableWillName[100];
 	CondStructNew *mCondIndomitableWill;
@@ -3649,6 +3673,31 @@ int TacticalOptionAbusePrevention(DispatcherCallbackArgs args)
 	return temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100F7ED0)(args); // replaced in ability_fixes.cpp
 }
 
+// Port of 0x100E7F80. Was used in Unconscious but missing in similar
+// conditions. Helpless critters should have 0 effective dexterity, and
+// paralyzed creatures should have 0 effective strength.
+int HelplessCapStatBonus(DispatcherCallbackArgs args)
+{
+	DispIoBonusList *dispIo = dispatch.DispIoCheckIoType2(args.dispIO);
+
+	dispIo->bonlist.AddCap(0, 0, 109);
+
+	return 0;
+}
+
+// As above, but check for freedom of movement, since it doesn't remove the held
+// condition.
+int HeldCapStatBonus(DispatcherCallbackArgs args)
+{
+	DispIoBonusList *dispIo = dispatch.DispIoCheckIoType2(args.dispIO);
+
+	if (!d20Sys.d20Query(args.objHndCaller, DK_QUE_Critter_Has_Freedom_of_Movement))
+		dispIo->bonlist.AddCap(0, 0, 109);
+
+	return 0;
+}
+
+
 #pragma region Barbarian Stuff
 
 int __cdecl CombatExpertiseRadialMenu(DispatcherCallbackArgs args)
@@ -3994,7 +4043,11 @@ int RendOnDamage(DispatcherCallbackArgs args)
 	auto previousTarget = args.GetCondArgObjHndl(2);
 	if (hasDeliveredDamage && attackDescr == previousAttackDescr && previousTarget == dispIo->attackPacket.victim)
 	{
-		Dice dice(2, 6, 9);
+		int strScore = objects.StatLevelGet(args.objHndCaller, stat_strength);
+		int bonus = objects.GetModFromStatLevel(strScore);
+		if (bonus > 0) bonus += bonus/2;
+
+		Dice dice(2, 6, bonus);
 		dispIo->damage.AddDamageDice(dice.ToPacked(), DamageType::PiercingAndSlashing, 133);
 		//damage.AddDamageDice(&dispIo->damage, dice.ToPacked(), DamageType::PiercingAndSlashing, 133);
 		floatSys.FloatCombatLine(args.objHndCaller, 203);
@@ -6279,6 +6332,24 @@ int ClassAbilityCallbacks::CouragedAuraSavingThrow(DispatcherCallbackArgs args)
 	return 0;
 }
 
+int ClassAbilityCallbacks::FailedCopyScroll(DispatcherCallbackArgs args) {
+	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
+
+	auto failedScRanks = args.GetCondArg(1);
+	auto curScRanks = critterSys.SkillBaseGet(args.objHndCaller, SkillEnum::skill_spellcraft);
+	auto failedSpellEnum = args.GetCondArg(0);
+
+	// if we've gained spellcraft ranks, get rid of the condition
+	if (curScRanks > failedScRanks) {
+		conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
+	// if the scroll being copied matches, set return value
+	} else if (failedSpellEnum == dispIo->data1) {
+		dispIo->return_val = 1;
+	}
+
+	return 0;
+}
+
 int ClassAbilityCallbacks::FeatBrewPotionRadialMenu(DispatcherCallbackArgs args){
 	return ItemCreationBuildRadialMenuEntry(args, BrewPotion, "TAG_BREW_POTION", 5066);
 }
@@ -7537,6 +7608,16 @@ void Conditions::AddConditionsToTable(){
 			neutPoisonCondExtend.AddHook(dispTypeEffectTooltip, DK_NONE, spCallbacks.SpellEffectTooltipDuration, 19, 0); // Delay Poison indicator icon
 			neutPoisonCondExtend.AddHook(dispTypeD20Query, DK_QUE_Critter_Is_Immune_Poison, genericCallbacks.QuerySetReturnVal1);
 		}
+	}
+
+	{
+		static CondStructNew condColorSprayStun;
+		condColorSprayStun.ExtendExisting("sp-Color Spray Stun");
+		condColorSprayStun.AddHook(dispTypeD20Query, DK_QUE_SneakAttack, genericCallbacks.QuerySetReturnVal1);
+
+		static CondStructNew condColorSprayBlind;
+		condColorSprayBlind.ExtendExisting("sp-Color Spray Blind");
+		condColorSprayBlind.AddHook(dispTypeTurnBasedStatusInit, DK_NONE, TurnBasedStatusInitNoActions);
 	}
 
 	// New Conditions!

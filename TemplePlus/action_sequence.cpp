@@ -2138,6 +2138,20 @@ int32_t ActionSequenceSystem::DoAoosByAdjcentEnemies(objHndl obj)
 	// return _AOOSthg2_100981C0(obj);
 }
 
+int32_t ActionSequenceSystem::ProvokeAooFrom(objHndl provoker, objHndl enemy)
+{
+	if (objects.GetFlags(enemy) & OF_INVULNERABLE) // see above
+		return 0;
+
+	if (!combatSys.CanMeleeTarget(enemy, provoker)) return 0;
+	if (critterSys.IsFriendly(provoker, enemy)) return 0;
+	if (!d20Sys.d20QueryWithData(enemy, DK_QUE_AOOPossible, provoker)) return 0;
+	if (!d20Sys.d20QueryWithData(enemy, DK_QUE_AOOWillTake, provoker)) return 0;
+
+	DoAoo(enemy, provoker);
+	return 1;
+}
+
 bool ActionSequenceSystem::SpellTargetsFilterInvalid(D20Actn& d20a){
 	
 	auto valid = true;
@@ -2810,13 +2824,25 @@ void ActionSequenceSystem::ActionPerform()
 		} 
 
 		else{
+			bool preempted = false;
+			switch (d20->D20ActionTriggersAoO(d20a, &tbStatus))
+			{
+			case 0:
+				break;
+			case 2:
+				preempted = ProvokeAooFrom(d20a->d20APerformer, d20a->d20ATarget);
+				break;
+			case 1:
+			default:
+				preempted = DoAoosByAdjcentEnemies(d20a->d20APerformer);
+				break;
+			}
 
-			if ( d20->D20ActionTriggersAoO(d20a, &tbStatus) && DoAoosByAdjcentEnemies(d20a->d20APerformer))	{
+			if (preempted) {
 				logger->debug("ActionPerform: \t Sequence Preempted {}", d20a->d20APerformer);
 				--*(curIdx);
 				sequencePerform();
-			} 
-			else{
+			} else {
 				curSeq->tbStatus = tbStatus;
 				*(uint32_t*)(&curSeq->tbStatus.tbsFlags) |= TBSF_HasActedThisRound;
 				InterruptCounterspell(d20a);

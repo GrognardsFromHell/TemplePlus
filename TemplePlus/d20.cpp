@@ -75,6 +75,7 @@ public:
 	// Action Checks
 	static ActionErrorCode ActionCheckAidAnotherWakeUp(D20Actn* d20a, TurnBasedStatus* tbStat);
 	static ActionErrorCode ActionCheckCastSpell(D20Actn* d20a, TurnBasedStatus* tbStat);
+	static ActionErrorCode ActionCheckCopyScroll(D20Actn* d20a, TurnBasedStatus* tbStat);
 	static ActionErrorCode ActionCheckDisarm(D20Actn* d20a, TurnBasedStatus* tbStat);
 	static ActionErrorCode ActionCheckDisarmedWeaponRetrieve(D20Actn* d20a, TurnBasedStatus* tbStat);
 	static ActionErrorCode ActionCheckDivineMight(D20Actn* d20a, TurnBasedStatus* tbStat);
@@ -88,6 +89,9 @@ public:
 	static ActionErrorCode ActionCheckSunder(D20Actn* d20a, TurnBasedStatus* tbStat);
 	static ActionErrorCode ActionCheckTripAttack(D20Actn* d20a, TurnBasedStatus* tbStat);
 
+	// Was part of an action check, but seems to be called directly from the
+	// Perform function.
+	static ActionErrorCode CanCopyScroll(D20Actn* d20a);
 
 	// Target Check
 	//static ActionErrorCode TargetCheckStandardAttack(D20Actn* d20a, TurnBasedStatus* tbStat);
@@ -136,6 +140,7 @@ public:
 	static BOOL ActionFrameAidAnotherWakeUp(D20Actn* d20a);
 	static BOOL ActionFrameAoo(D20Actn* d20a);
 	static BOOL ActionFrameCharge(D20Actn* d20a);
+	static BOOL ActionFrameCoupDeGrace(D20Actn* d20a);
 	static BOOL ActionFrameDisarm(D20Actn* d20a);
 	static BOOL ActionFramePython(D20Actn* d20a);
 	static BOOL ActionFrameQuiveringPalm(D20Actn* d20a);
@@ -496,6 +501,9 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformCharge;
 	d20Defs[d20Type].actionFrameFunc = d20Callbacks.ActionFrameCharge;
 
+	d20Type = D20A_COUP_DE_GRACE;
+	d20Defs[d20Type].actionFrameFunc = d20Callbacks.ActionFrameCoupDeGrace;
+
 	d20Type = D20A_DEATH_TOUCH;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformTouchAttack;
 
@@ -521,10 +529,15 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformUseItem;
 
 	d20Type = D20A_COPY_SCROLL;
+	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckCopyScroll;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformCopyScroll;
 
 	d20Type = D20A_DISMISS_SPELLS;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformDismissSpell;
+	// Dismissing a spell is supposed to take a standard action
+	if (config.stricterRulesEnforcement) {
+		d20Defs[d20Type].actionCost = d20Callbacks.ActionCostStandardAction;
+	}
 
 	d20Type = D20A_USE_POTION;
 	d20Defs[d20Type].addToSeqFunc = d20Callbacks.AddToSeqSpellCast;
@@ -1086,7 +1099,10 @@ int32_t LegacyD20System::D20ActionTriggersAoO(D20Actn* d20a, TurnBasedStatus* tb
 		&& d20QueryWithData(d20a->d20APerformer, DK_QUE_ActionTriggersAOO, (int)d20a, 0))
 	{
 		if (d20a->d20ActType == D20A_DISARM)
-			return feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_DISARM) == 0;
+			if (!feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_DISARM))
+				return 2;
+			else
+				return 0;
 		return 1;
 	}
 		
@@ -1100,21 +1116,27 @@ int32_t LegacyD20System::D20ActionTriggersAoO(D20Actn* d20a, TurnBasedStatus* tb
 			return FALSE;
 		if (feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_UNARMED_STRIKE))
 			return FALSE;
-		return feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_TRIP) == 0;
+		if (feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_TRIP))
+			return FALSE;
+		return 2;
 	}
-		
 
-
-	if (d20a->d20ActType == D20A_SUNDER)
-		return feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_SUNDER) == 0;
-
+	if (d20a->d20ActType == D20A_SUNDER) {
+		if (feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_SUNDER))
+			return FALSE;
+		else
+			return 2;
+	}
 
 	if (d20a->d20Caf & D20CAF_TOUCH_ATTACK
 		|| d20Sys.GetAttackWeapon(d20a->d20APerformer, d20a->data1, (D20CAF)d20a->d20Caf) 
 		|| dispatch.DispatchD20ActionCheck(d20a, tbStat, dispTypeGetCritterNaturalAttacksNum))
 		return 0;
 
-	return feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_UNARMED_STRIKE) == 0;
+	if (feats.HasFeatCountByClass(d20a->d20APerformer, FEAT_IMPROVED_UNARMED_STRIKE))
+		return 0;
+	else
+		return 2;
 
 	/*
 	__asm{
@@ -2572,12 +2594,17 @@ ActionErrorCode D20ActionCallbacks::PerformCharge(D20Actn* d20a){
 ActionErrorCode D20ActionCallbacks::PerformCopyScroll(D20Actn * d20a){
 	auto performer = d20a->d20APerformer;
 
-	auto check = temple::GetRef<ActionErrorCode(__cdecl)(D20Actn*)>(0x10091B80)(d20a);
-	if (check == AEC_INVALID_ACTION){
+	switch (CanCopyScroll(d20a))
+	{
+	case AEC_OK:
+		break;
+	case AEC_INVALID_ACTION:
 		skillSys.FloatError(performer, 17);
 		return AEC_OK;
-	} 
-	else if (check!= AEC_OK){
+	case AEC_CANNOT_CAST_NOT_ENOUGH_GP:
+		skillSys.FloatError(performer, 3);
+		return AEC_OK;
+	default:
 		return AEC_OK;
 	}
 
@@ -2599,6 +2626,12 @@ ActionErrorCode D20ActionCallbacks::PerformCopyScroll(D20Actn * d20a){
 		conds.AddTo(performer, "Failed_Copy_Scroll", {spEnum, spellcraftLvl});
 		skillSys.FloatError(performer, 16);
 		return AEC_OK;
+	}
+
+	if (config.stricterRulesEnforcement) {
+		if (party.IsInParty(performer)){
+			party.DebitMoney(0, spLvl == 0 ? 100 : 100*spLvl, 0, 0);
+		}
 	}
 
 	spellSys.SpellKnownAdd(performer, spEnum, spellSys.GetSpellClass(stat_level_wizard), spLvl, 1, 0);
@@ -2631,6 +2664,31 @@ ActionErrorCode D20ActionCallbacks::PerformDisarm(D20Actn* d20a){
 BOOL D20ActionCallbacks::ActionFrameCharge(D20Actn* d20a){
 	ActionFrameStandardAttack(d20a);
 	return FALSE;
+}
+
+// version of 0x10090C80 that actually performs a fortitude save
+// TODO: only allow regenerators to be killed by lethal damage?
+BOOL D20ActionCallbacks::ActionFrameCoupDeGrace(D20Actn* d20a) {
+	auto performer = d20a->d20APerformer;
+	auto target = d20a->d20ATarget;
+	auto caf = static_cast<D20CAF>(d20a->d20Caf);
+	auto dmg = damage.DealAttackDamage(performer, target, d20a->data1, caf, d20a->d20ActType);
+
+	if (dmg <= 0 || critterSys.IsDeadNullDestroyed(target))
+		return 0;
+
+	auto dc = 10 + dmg;
+
+	if (damage.SavingThrow(target, performer, dc, SavingThrowType::Fortitude, D20STF_NONE))
+		return 0;
+
+	auto leader = party.GetConsciousPartyLeader();
+	auto desc = description.getDisplayName(target);
+	auto msg = fmt::format("{} {}\n", desc, combatSys.GetCombatMesLine(0xAE)).c_str();
+	histSys.CreateFromFreeText(msg);
+	critterSys.Kill(target, performer);
+
+	return 0;
 }
 
 BOOL D20ActionCallbacks::ActionFrameDisarm(D20Actn* d20a){
@@ -2902,12 +2960,23 @@ ActionErrorCode D20ActionCallbacks::PerformDisarmedWeaponRetrieve(D20Actn* d20a)
 	d20Sys.d20SendSignal(d20a->d20APerformer, DK_SIG_Disarmed_Weapon_Retrieve, (int)d20a, 0);
 	return AEC_OK;
 }
+
 ActionErrorCode D20ActionCallbacks::PerformDismissSpell(D20Actn * d20a){
 	auto spellId = d20a->data1;
-	d20Sys.d20SendSignal(d20a->d20APerformer, DK_SIG_Dismiss_Spells, spellId, 0);
 	SpellPacketBody spPkt(spellId);
-	if (!spPkt.spellEnum)
+
+	// in case of bad spell
+	if (!spPkt.spellEnum) {
+		d20Sys.d20SendSignal(d20a->d20APerformer, DK_SIG_Dismiss_Spells, spellId, 0);
 		return AEC_OK;
+	}
+
+	if (gameSystems->GetAnim().PushSpellDismiss(spPkt)) {
+		d20a->animID = gameSystems->GetAnim().GetActionAnimId(d20a->d20APerformer);
+		d20a->d20Caf |= D20CAF_NEED_ANIM_COMPLETED;
+	}
+
+	d20Sys.d20SendSignal(d20a->d20APerformer, DK_SIG_Dismiss_Spells, spellId, 0);
 
 	if (spPkt.caster)
 		d20Sys.d20SendSignal(spPkt.caster, DK_SIG_Dismiss_Spells, spellId, 0);
@@ -3624,6 +3693,38 @@ ActionErrorCode D20ActionCallbacks::ActionCheckCastSpell(D20Actn* d20a, TurnBase
 	}
 
 	return d20Sys.TargetCheck(d20a) != 0 ? AEC_OK : AEC_TARGET_INVALID;
+}
+
+// Broke up and enhanced 0x10091B80 for better floats.
+// Action check only checks for whether you have 'time' to copy the scroll.
+ActionErrorCode D20ActionCallbacks::ActionCheckCopyScroll(D20Actn* d20a, TurnBasedStatus* tbStat)
+{
+	if (combatSys.isCombatActive())
+		return AEC_OUT_OF_COMBAT_ONLY;
+	else
+		return AEC_OK;
+}
+
+// Checks whether you have the resources, and haven't already failed to copy the
+// scroll with the given spellcraft ranks.
+ActionErrorCode D20ActionCallbacks::CanCopyScroll(D20Actn* d20a) {
+	auto performer = d20a->d20APerformer;
+	int spEnum = 0;
+	d20a->d20SpellData.Extract(&spEnum, nullptr, nullptr, nullptr, nullptr, nullptr);
+
+	if (config.stricterRulesEnforcement && party.IsInParty(performer)) {
+		int spClass = spellSys.GetSpellClass(stat_level_wizard);
+		auto spLvl = spellSys.GetSpellLevelBySpellClass(spEnum, spClass);
+		auto gpCost = spLvl == 0 ? 100 : 100 * spLvl;
+		auto money = party.GetMoney();
+		if (money >= 0 && money < gpCost*100)
+			return AEC_CANNOT_CAST_NOT_ENOUGH_GP;
+	}
+
+	auto failed = d20Sys.d20QueryWithData(performer, DK_QUE_Failed_Copy_Scroll, spEnum, 0);
+
+	if (failed) return AEC_INVALID_ACTION;
+	else return AEC_OK;
 }
 
 
