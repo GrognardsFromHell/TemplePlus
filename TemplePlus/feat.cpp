@@ -1104,6 +1104,7 @@ char* LegacyFeatSystem::GetFeatDescription(feat_enums feat)
 	MesLine mesLine(5000 + feat); 
 
 	if (feat >= FEAT_NONE
+		|| feat == FEAT_IMPROVED_SHIELD_BASH
 		|| feat == FEAT_IMPROVED_DISARM
 		|| feat ==  FEAT_GREATER_WEAPON_SPECIALIZATION
 		|| feat == FEAT_IMPROVED_SUNDER
@@ -1126,7 +1127,9 @@ char* LegacyFeatSystem::GetFeatPrereqDescription(feat_enums feat)
 	MesLine mesLineFeatDesc(10000 + feat); 
 	MesLine mesLineNone(9998);
 	MesHandle * mesHnd = feats.featMes;
+
 	if (feat >= FEAT_NONE
+		|| feat == FEAT_IMPROVED_SHIELD_BASH
 		|| feat == FEAT_IMPROVED_DISARM
 		|| feat == FEAT_GREATER_WEAPON_SPECIALIZATION
 		|| feat == FEAT_IMPROVED_SUNDER
