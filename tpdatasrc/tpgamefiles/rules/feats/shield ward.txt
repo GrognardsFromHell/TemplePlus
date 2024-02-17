@@ -1,0 +1,5 @@
+name: Shield Ward
+flags: 12582928
+prereqs:
+description: You use your shield like a wall of steel and wood. When an opponent attempts to draw in close to you, your shield forces him away or ruins his attacks.
+prereq descr:  Proficiency with shields, Shield Specialization.
