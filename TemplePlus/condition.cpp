@@ -1928,14 +1928,28 @@ int __cdecl GlobalToHitBonus(DispatcherCallbackArgs args)
 		}
 		if (dualWielding)
 		{
-			if (d20Sys.UsingSecondaryWeapon(args.objHndCaller, attackCode))
-				bonusSys.bonusAddToBonusList(&dispIo->bonlist, -10, 26, 121); // penalty for dualwield on offhand attack
-			else
-				bonusSys.bonusAddToBonusList(&dispIo->bonlist, -6, 27, 122); // penalty for dualwield on primary attack
 
-			if (critterSys.OffhandIsLight(args.objHndCaller))
-			{
-				bonusSys.bonusAddToBonusList(&dispIo->bonlist, 2, 0, 167); // Light Off-hand Weapon
+			//See if python is going to handle the penalty
+			const bool overridePenalty = d20Sys.D20QueryPython(args.objHndCaller, "Override Two Weapon Penalty", dualWielding ? 1 :0);
+			if (overridePenalty) {
+				auto penalty = d20Sys.D20QueryPython(args.objHndCaller, "Get Two Weapon Penalty", dualWielding ? 1 : 0);
+				if (d20Sys.UsingSecondaryWeapon(args.objHndCaller, attackCode)) {
+					bonusSys.bonusAddToBonusList(&dispIo->bonlist, penalty, 26, 121);
+				}
+				else {
+					bonusSys.bonusAddToBonusList(&dispIo->bonlist, penalty, 27, 122);
+				}
+			}
+			else {
+				if (d20Sys.UsingSecondaryWeapon(args.objHndCaller, attackCode))
+					bonusSys.bonusAddToBonusList(&dispIo->bonlist, -10, 26, 121); // penalty for dualwield on offhand attack
+				else
+					bonusSys.bonusAddToBonusList(&dispIo->bonlist, -6, 27, 122); // penalty for dualwield on primary attack
+
+				if (critterSys.OffhandIsLight(args.objHndCaller))
+				{
+					bonusSys.bonusAddToBonusList(&dispIo->bonlist, 2, 0, 167); // Light Off-hand Weapon
+				}
 			}
 		}
 	}
@@ -3507,22 +3521,25 @@ int __cdecl GreaterTWFRanger(DispatcherCallbackArgs args)
 
 int __cdecl TwoWeaponFightingBonus(DispatcherCallbackArgs args)
 {
-	DispIoAttackBonus *dispIo = dispatch.DispIoCheckIoType5((DispIoAttackBonus*)args.dispIO);
-	char *featName;
+	DispIoAttackBonus* dispIo = dispatch.DispIoCheckIoType5((DispIoAttackBonus*)args.dispIO);
 
-	feat_enums feat = (feat_enums)conds.CondNodeGetArg(args.subDispNode->condNode, 0);
-	int attackCode = dispIo->attackPacket.dispKey;
-	int dualWielding = 0;
-	int attackNumber = 1;
-	if (d20Sys.UsingSecondaryWeapon(args.objHndCaller, attackCode))
-	{
-		featName = feats.GetFeatName(feat);
-		bonusSys.bonusAddToBonusListWithDescr(&dispIo->bonlist, 6, 0, 114, featName);
-	}
-		else if ( d20Sys.ExtractAttackNumber(args.objHndCaller, attackCode, &attackNumber, &dualWielding), dualWielding != 0)
-	{
-		featName = feats.GetFeatName(feat);
-		bonusSys.bonusAddToBonusListWithDescr(&dispIo->bonlist, 2, 0, 114, featName);
+	//Disable when using agile shield fighter for examle
+	if (d20Sys.D20QueryPython(args.objHndCaller, "Disable Two Weapon Fighting Bonus") == 0) {
+		char* featName;
+		feat_enums feat = (feat_enums)conds.CondNodeGetArg(args.subDispNode->condNode, 0);
+		int attackCode = dispIo->attackPacket.dispKey;
+		int dualWielding = 0;
+		int attackNumber = 1;
+		if (d20Sys.UsingSecondaryWeapon(args.objHndCaller, attackCode))
+		{
+			featName = feats.GetFeatName(feat);
+			bonusSys.bonusAddToBonusListWithDescr(&dispIo->bonlist, 6, 0, 114, featName);
+		}
+		else if (d20Sys.ExtractAttackNumber(args.objHndCaller, attackCode, &attackNumber, &dualWielding), dualWielding != 0)
+		{
+			featName = feats.GetFeatName(feat);
+			bonusSys.bonusAddToBonusListWithDescr(&dispIo->bonlist, 2, 0, 114, featName);
+		}
 	}
 	return 0;
 }
