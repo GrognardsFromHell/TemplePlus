@@ -819,6 +819,8 @@ void Damage::DamageCritterPython(objHndl attacker, objHndl tgt, DispIoDamage& ev
 void Damage::FastHeal(objHndl critter, int amount) {
 	if (!critter || amount <= 0) return;
 
+	int totHeal = 0;
+
 	auto subdual = critterSys.GetSubdualDamage(critter);
 	// TODO: check for unhealable damage. Could be environmental for
 	// subdual, and cursed/infernal wounds for lethal, if either is
@@ -831,7 +833,9 @@ void Damage::FastHeal(objHndl critter, int amount) {
 		floatSys.floatMesLine(critter, 2, FloatLineColor::LightBlue, text.c_str());
 
 		amount -= sHeal;
+		totHeal += sHeal;
 	}
+
 	auto lethal = critterSys.GetHpDamage(critter);
 	if (amount > 0 && lethal > 0) {
 		auto heal = std::min(amount, lethal);
@@ -839,8 +843,12 @@ void Damage::FastHeal(objHndl critter, int amount) {
 
 		auto text = fmt::format("{} {}", heal, combatSys.GetCombatMesLine(32));
 		floatSys.floatMesLine(critter, 2, FloatLineColor::LightBlue, text.c_str());
-		d20Sys.d20SendSignal(critter, DK_SIG_HP_Changed, heal, 0);
+
+		totHeal += heal;
 	}
+
+	if (totHeal > 0)
+		d20Sys.d20SendSignal(critter, DK_SIG_HP_Changed, totHeal, 0);
 }
 
 void Damage::Heal(objHndl target, objHndl healer, const Dice& dice, D20ActionType actionType) {
