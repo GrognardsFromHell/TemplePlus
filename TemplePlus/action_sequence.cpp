@@ -3397,7 +3397,7 @@ int ActionSequenceSystem::ActionCostFullAttack(D20Actn* d20, TurnBasedStatus* tb
 	int flags = d20->d20Caf;
 	if (d20->d20Caf & D20CAF_FREE_ACTION || !combat->isCombatActive() )  
 		acp->hourglassCost = 0;
-	if (tbStat->attackModeCode >= tbStat->baseAttackNumCode && tbStat->hourglassState >= 4 && !tbStat->numBonusAttacks)
+	if (tbStat->attackModeCode >= tbStat->baseAttackNumCode && tbStat->hourglassState >= 2 && !tbStat->numBonusAttacks)
 	{
 		FullAttackCostCalculate(d20, tbStat, (int*)&tbStat->baseAttackNumCode, (int*) &tbStat->numBonusAttacks,
 			(int*)&tbStat->numAttacks,(int*) &tbStat->attackModeCode);

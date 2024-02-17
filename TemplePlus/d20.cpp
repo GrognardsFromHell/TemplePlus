@@ -3895,7 +3895,7 @@ ActionErrorCode D20ActionCallbacks::ActionCostFullAttack(D20Actn * d20a, TurnBas
 	//int flags = d20a->d20Caf;
 	if ( (d20a->d20Caf & D20CAF_FREE_ACTION ) || !combatSys.isCombatActive())
 		acp->hourglassCost = 0;
-	if (tbStat->attackModeCode >= tbStat->baseAttackNumCode && tbStat->hourglassState >= 4 && !tbStat->numBonusAttacks){
+	if (tbStat->attackModeCode >= tbStat->baseAttackNumCode && tbStat->hourglassState >= 2 && !tbStat->numBonusAttacks){
 		actSeqSys.FullAttackCostCalculate(d20a, tbStat, (int*)&tbStat->baseAttackNumCode, (int*)&tbStat->numBonusAttacks,
 			(int*)&tbStat->numAttacks, (int*)&tbStat->attackModeCode);
 		tbStat->surplusMoveDistance = 0;
