@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "python_integration_feat.h"
 #include "python_object.h"
+#include <infrastructure/elfhash.h>
 
 PythonFeatIntegration pyFeatIntegration;
 
@@ -10,6 +11,11 @@ PythonFeatIntegration::PythonFeatIntegration()
 
 bool PythonFeatIntegration::CheckPrereq(int featId, objHndl handle, Stat classCodeBeingLevelledUp, Stat abilityScoreBeingIncreased)
 {
+	if (featId < NUM_FEATS) {
+		auto featName = feats.GetFeatName(static_cast<feat_enums>(featId));
+		featId = ElfHash::Hash(featName);
+	}
+
 	auto featEntry = mScripts.find(featId);
 	if (featEntry == mScripts.end())
 		return false;
