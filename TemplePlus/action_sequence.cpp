@@ -3392,7 +3392,7 @@ int ActionSequenceSystem::ActionCostFullAttack(D20Actn* d20, TurnBasedStatus* tb
 	acp->moveDistCost = 0;
 
 	auto cheap = d20Sys.D20QueryPython(d20->d20APerformer, "Full Attack As Standard");
-	acp->hourglassCost = cheap ? 2 : 4;
+	acp->hourglassCost = cheap == 1 ? 2 : 4;
 
 	int flags = d20->d20Caf;
 	if (d20->d20Caf & D20CAF_FREE_ACTION || !combat->isCombatActive() )  

@@ -3888,7 +3888,10 @@ ActionErrorCode D20ActionCallbacks::TurnBasedStatusCheckPython(D20Actn* d20a, Tu
 ActionErrorCode D20ActionCallbacks::ActionCostFullAttack(D20Actn * d20a, TurnBasedStatus * tbStat, ActionCostPacket * acp){
 	acp->chargeAfterPicker = 0;
 	acp->moveDistCost = 0;
-	acp->hourglassCost = 4;
+
+	auto cheap = d20Sys.D20QueryPython(d20a->d20APerformer, "Full Attack As Standard");
+	acp->hourglassCost = cheap == 1 ? 2 : 4;
+
 	//int flags = d20a->d20Caf;
 	if ( (d20a->d20Caf & D20CAF_FREE_ACTION ) || !combatSys.isCombatActive())
 		acp->hourglassCost = 0;
