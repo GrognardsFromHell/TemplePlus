@@ -3967,12 +3967,15 @@ ActionErrorCode D20ActionCallbacks::ActionCostCharge(D20Actn *d20a, TurnBasedSta
 
 	if (notFree && inCombat) {
 		if (d20Sys.D20QueryPython(d20a->d20APerformer, "Full Attack On Charge")) {
+			acp->chargeAfterPicker = 1;
+
 			actSeqSys.FullAttackCostCalculate(
 					d20a, tbStat,
 					(int*)&tbStat->baseAttackNumCode,
 					(int*)&tbStat->numBonusAttacks,
 					(int*)&tbStat->numAttacks,
 					(int*)&tbStat->attackModeCode);
+
 			tbStat->tbsFlags |= TBSF_FullAttack;
 		} else {
 			tbStat->numAttacks = 0;
