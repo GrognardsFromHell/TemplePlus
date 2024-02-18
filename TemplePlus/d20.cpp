@@ -3985,7 +3985,7 @@ ActionErrorCode D20ActionCallbacks::ActionCostCharge(D20Actn *d20a, TurnBasedSta
 
 		auto timeLeft = tbStat->hourglassState;
 
-		acp->hourglassCost = timeLeft > 2 ? timeleft : 4;
+		acp->hourglassCost = timeLeft > 2 ? timeLeft : 4;
 	}
 	return AEC_OK;
 }
