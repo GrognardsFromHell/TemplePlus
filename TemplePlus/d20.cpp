@@ -3981,9 +3981,11 @@ ActionErrorCode D20ActionCallbacks::ActionCostCharge(D20Actn *d20a, TurnBasedSta
 			tbStat->numBonusAttacks = 0;
 		}
 
-		tbStat->tbsFlags |= TBSF_Moved;
+		tbStat->tbsFlags |= TBSF_Movement;
 
-		acp->hourglassCost = tbStat->hourglassState > 1 : tbStat->hourglassState : 4;
+		auto timeLeft = tbStat->hourglassState;
+
+		acp->hourglassCost = timeLeft > 2 ? timeleft : 4;
 	}
 	return AEC_OK;
 }
