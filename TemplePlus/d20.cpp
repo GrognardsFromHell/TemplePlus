@@ -94,6 +94,7 @@ public:
 
 	// Action Cost
 	static ActionErrorCode ActionCostCastSpell(D20Actn* d20a, TurnBasedStatus *tbStat, ActionCostPacket *acp);
+	static ActionErrorCode ActionCostCharge(D20Actn *d20a, TurnBasedStatus *tbStat, ActionCostPacket *acp);
 	static ActionErrorCode ActionCostFullRound(D20Actn* d20a, TurnBasedStatus *tbStat, ActionCostPacket *acp);
 	static ActionErrorCode ActionCostFullAttack(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
 	static ActionErrorCode ActionCostPartialCharge(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
@@ -495,6 +496,7 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Type = D20A_CHARGE;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformCharge;
 	d20Defs[d20Type].actionFrameFunc = d20Callbacks.ActionFrameCharge;
+	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostCharge;
 
 	d20Type = D20A_DEATH_TOUCH;
 	d20Defs[d20Type].performFunc = d20Callbacks.PerformTouchAttack;
@@ -3954,6 +3956,37 @@ ActionErrorCode D20ActionCallbacks::ActionCostStandardAttack(D20Actn* d20a, Turn
 	return AEC_OK;
 }
 
+ActionErrorCode D20ActionCallbacks::ActionCostCharge(D20Actn *d20a, TurnBasedStatus *tbStat, ActionCostPacket *acp)
+{
+	acp->hourglassCost = 0;
+	acp->chargeAfterPicker = 0;
+	acp->moveDistCost = 0;
+
+	auto inCombat = combatSys.isCombatActive();
+	bool notFree = !(d20a->d20Caf & D20CAF_FREE_ACTION);
+
+	if (notFree && inCombat) {
+		if (d20Sys.D20QueryPython(d20a->d20APerformer, "Full Attack On Charge")) {
+			actSeqSys.FullAttackCostCalculate(
+					d20a, tbStat,
+					(int*)&tbStat->baseAttackNumCode,
+					(int*)&tbStat->numBonusAttacks,
+					(int*)&tbStat->numAttacks,
+					(int*)&tbStat->attackModeCode);
+			tbStat->tbsFlags |= TBSF_FullAttack;
+		} else {
+			tbStat->numAttacks = 0;
+			tbStat->baseAttackNumCode = 0;
+			tbStat->attackModeCode = 0;
+			tbStat->numBonusAttacks = 0;
+		}
+
+		tbStat->tbsFlags |= TBSF_Moved;
+
+		acp->hourglassCost = tbStat->hourglassState > 1 : tbStat->hourglassState : 4;
+	}
+	return AEC_OK;
+}
 
 ActionErrorCode D20ActionCallbacks::ActionCostMoveAction(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp)
 {
