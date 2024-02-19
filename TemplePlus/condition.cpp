@@ -1824,9 +1824,11 @@ int ArmorCritMultiplier(DispatcherCallbackArgs args)
 
 int ShieldBashProficiencyPenalty(DispatcherCallbackArgs args)
 {
+	auto attacker = dispIo->attackPacket.attacker;
+	if (!attacker) return 0;
+
 	auto dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
 	auto invIdx = args.GetCondArg(2);
-	auto attacker = dispIo->attackPacket.attacker;
 	auto shield = inventory.GetItemAtInvIdx(attacker, invIdx);
 
 	if (dispIo->attackPacket.weaponUsed != shield) return 0;
