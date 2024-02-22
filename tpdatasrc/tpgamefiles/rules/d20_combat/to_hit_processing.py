@@ -73,6 +73,7 @@ def mirror_image_attack_roll(d20a):
 
     #Performer to Hit Bonus
     to_hit = tpdp.EventObjAttack()
+    to_hit.attack_packet.attacker = performer
     to_hit.dispatch(performer, OBJ_HANDLE_NULL, ET_OnToHitBonus2, EK_NONE)
 
     to_hit_dice = dice_new("1d20")
