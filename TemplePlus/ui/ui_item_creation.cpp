@@ -60,6 +60,7 @@ const std::unordered_map<std::string, uint32_t> ItemEnhSpecFlagDict = {
 	{"iesf_shield",IESF_SHIELD },
 	{"iesf_ranged",IESF_RANGED },
 	{"iesf_two_handed", IESF_TWO_HANDED },
+	{"iesf_no_tower_shield", IESF_NO_TOWER_SHIELD },
 
 	{"iesf_melee",IESF_MELEE },
 	{"iesf_thrown",IESF_THROWN },
@@ -648,6 +649,12 @@ bool UiItemCreation::MaaEffectIsApplicable(int effIdx){
 
 					if (!(itEnh.flags & IESF_SHIELD))
 						return false;
+					if ((itEnh.flags & IESF_NO_TOWER_SHIELD)) {
+						const auto spellFailure = itemObj->GetInt32(obj_f_armor_arcane_spell_failure);
+						if (spellFailure > 15) { //Towershields have high arcane failure
+							return false;
+						}
+					}
 				} 
 				else{
 					if (!(itEnh.flags & IESF_ARMOR))

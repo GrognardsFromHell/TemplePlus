@@ -37,7 +37,8 @@ enum ItemEnhancementSpecFlags{
 	IESF_INCREMENTAL = 0x400, // indicates that there are multiple progressive versions of this that supercede each other
 	IESF_NONCORE = 0x800, // enhancement based on non-core rules material (e.g. splatbook/fanmade), enabled only when non-core materials config is set 
 	IESF_LIGHT_ONLY = 0x1000, // only for light armor 
-	IESF_TWO_HANDED = 0x2000 // two handed weapon only
+	IESF_TWO_HANDED = 0x2000, // two handed weapon only
+	IESF_NO_TOWER_SHIELD = 0x4000 // can't be tower shield
 };
 
 struct ItemEnhancementSpec {
