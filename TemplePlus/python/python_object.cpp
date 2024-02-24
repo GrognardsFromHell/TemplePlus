@@ -1840,6 +1840,15 @@ static PyObject* PyObjHandle_ConditionsGet(PyObject* obj, PyObject* args) {
 		}
 	}
 
+	// default to all conditions by being distinct from 0 and 1
+	uint32_t active = 0xff;
+	if (PyTuple_GET_SIZE(args) > 1) {
+		PyObject* arg = PyTuple_GET_ITEM(args, 1);
+		if (PyInt_Check(arg) || PyLong_Check(arg)) {
+			active = PyInt_AsLong(arg);
+		}
+	}
+
 	CondNode* node = dispatcher->conditions;
 	if (kind == 1) {
 		node = dispatcher->permanentMods;
@@ -1852,6 +1861,14 @@ static PyObject* PyObjHandle_ConditionsGet(PyObject* obj, PyObject* args) {
 
 	auto list = PyList_New(0);
 	while (node) {
+		// if active == 1 and inactive flag is set, skip
+		// if active == 0 and inactive flag isn't set, skip
+		// if active is anything else, don't skip
+		if ((node->flags & 1) == active) {
+			node = node->nextCondNode;
+			continue;
+		}
+
 		auto cname = PyString_FromString(node->condStruct->condName);
 		auto tuple = PyTuple_New(2);
 		PyTuple_SET_ITEM(tuple, 0, cname);
@@ -4420,6 +4437,15 @@ static PyObject* PyObjHandle_IsBuckler(PyObject* obj, PyObject* args) {
 	return PyInt_FromLong(result);
 }
 
+static PyObject* PyObjHandle_IsDoubleWeapon(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		return PyInt_FromLong(0);
+	}
+	auto result = inventory.IsDoubleWeapon(self->handle);
+	return PyInt_FromLong(result);
+}
+
 static PyObject* PyObjHandle_IsThrowingWeapon(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
 	if (!self->handle) {
@@ -4661,6 +4687,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "is_active_combatant", PyObjHandle_IsActiveCombatant, METH_VARARGS, NULL },
 	{ "is_arcane_spell_class", PyObjHandle_IsArcaneSpellClass, METH_VARARGS, NULL },
 	{ "is_buckler", PyObjHandle_IsBuckler, METH_VARARGS, NULL },
+	{ "is_double_weapon", PyObjHandle_IsDoubleWeapon, METH_VARARGS, NULL },
 	{ "is_category_type", PyObjHandle_IsCategoryType, METH_VARARGS, NULL },
 	{ "is_category_subtype", PyObjHandle_IsCategorySubtype, METH_VARARGS, NULL },
 	{ "is_critter", PyObjHandle_IsCritter, METH_VARARGS, NULL},

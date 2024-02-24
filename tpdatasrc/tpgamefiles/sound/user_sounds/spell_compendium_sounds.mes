@@ -1660,3 +1660,14 @@
 {30007}{} // spell hit
 {30008}{} // spell struck
 
+
+// [1006] *[Prismatic Ray]
+{26120}{} // spell begin
+{26121}{spells\sp_ray_enfeeblement_end.wav} // spell end
+{26122}{spells\sp_ray_enfeeblement.wav} // spell effect
+{26123}{} // spell new round
+{26124}{} // spell projectile begin
+{26125}{} // spell projectile end
+{26126}{} // spell projectile in-flight
+{26127}{spells\sp_ray_enfeeblement_hit.wav} // spell hit
+{26128}{} // spell struck

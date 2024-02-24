@@ -320,6 +320,9 @@ int RecklessOffenseAcPenalty(DispatcherCallbackArgs args);
 int RecklessOffenseToHitBonus(DispatcherCallbackArgs args);
 int TacticalOptionAbusePrevention(DispatcherCallbackArgs args);
 
+int HeldCapStatBonus(DispatcherCallbackArgs args);
+int HelplessCapStatBonus(DispatcherCallbackArgs args);
+
 int CombatExpertiseRadialMenu(DispatcherCallbackArgs args);
 int CombatExpertiseSet(DispatcherCallbackArgs args);
 

@@ -145,6 +145,7 @@ public:
 	static int QuerySetReturnVal1(DispatcherCallbackArgs args);
 	static int QuerySetReturnVal0(DispatcherCallbackArgs);
 	static int ActionInvalidQueryTrue(DispatcherCallbackArgs);
+	static int NoOp(DispatcherCallbackArgs);
 
 	static int EffectTooltipDuration(DispatcherCallbackArgs args); // SubDispDef data1 denotes the effect type idx, data2 denotes combat.mes line; appends duration
 	static int EffectTooltipGeneral(DispatcherCallbackArgs args);
@@ -206,9 +207,15 @@ public:
 
 	static int __cdecl ArmorCheckPenalty(objHndl armor);
 	static int __cdecl MaxDexBonus(objHndl armor);
+	static int __cdecl ArmorAcBonus(DispatcherCallbackArgs args);
 	static int __cdecl ArmorBonusAcBonusCapValue(DispatcherCallbackArgs args);
 	static int __cdecl BucklerToHitPenalty(DispatcherCallbackArgs args);
 	static int __cdecl BucklerAcPenalty(DispatcherCallbackArgs args);
+	static int __cdecl BucklerAcBonus(DispatcherCallbackArgs args);
+	static int __cdecl ShieldAcPenalty(DispatcherCallbackArgs args);
+	static int __cdecl ShieldAcBonus(DispatcherCallbackArgs args);
+	static int __cdecl BaseAcQuery(DispatcherCallbackArgs args);
+	static int __cdecl EnhAcQuery(DispatcherCallbackArgs args);
 	static int __cdecl WeaponMerciful(DispatcherCallbackArgs);
 	static int __cdecl WeaponSeekingAttackerConcealmentMissChance(DispatcherCallbackArgs args);
 	static int __cdecl WeaponSpeed(DispatcherCallbackArgs args);
@@ -254,6 +261,7 @@ public:
 	// Aura Of Courage
 	static int __cdecl CouragedAuraSavingThrow(DispatcherCallbackArgs args);
 
+	static int FailedCopyScroll(DispatcherCallbackArgs args);
 
 	static int FeatBrewPotionRadialMenu(DispatcherCallbackArgs args);
 	static int FeatScribeScrollRadialMenu(DispatcherCallbackArgs args);
@@ -465,7 +473,8 @@ public:
 		replaceFunction(0x100F8F70, DealNormalDamageCallback);
 		replaceFunction(0x100F9040, DealNormalDamageAttackPenalty);
 		
-
+		// ImprovedTWF extra attack; logic is identical to greater twf
+		replaceFunction(0x100FD1C0, GreaterTwoWeaponFighting);
 		
 		replaceFunction(0x10101150, ItemSkillBonusCallback);
 
@@ -504,6 +513,15 @@ public:
 
 		// buckler AC penalty
 		replaceFunction<int(DispatcherCallbackArgs)>(0x10104E40, itemCallbacks.BucklerAcPenalty);
+
+		// shield AC bonus; add shield bash behavior; fix stacking
+		replaceFunction<int(DispatcherCallbackArgs)>(0x10100370, itemCallbacks.ShieldAcBonus);
+
+		// buckler AC bonus; fix stacking
+		replaceFunction<int(DispatcherCallbackArgs)>(0x10104EE0, itemCallbacks.BucklerAcBonus);
+
+		// armor AC bonus; fix stacking
+		replaceFunction<int(DispatcherCallbackArgs)>(0x101001D0, itemCallbacks.ArmorAcBonus);
 
 		// Armor AC Bonus Cap - disregard cap >= 100 (so as to not clog the buffer)
 		replaceFunction<int(DispatcherCallbackArgs)>(0x10100720, itemCallbacks.ArmorBonusAcBonusCapValue);
@@ -550,6 +568,9 @@ public:
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100F9A10, classAbilityCallbacks.SneakAttackDamage);
 		SubDispDefNew sdd(dispTypeDealingDamageWeaponlikeSpell, 0, classAbilityCallbacks.SneakAttackDamage, 0u,0u); // Weapon-like spell damage hook
 		write(0x102ED2A8, &sdd, sizeof(SubDispDefNew));
+
+		// Wizard
+		replaceFunction<int(DispatcherCallbackArgs)>(0x10102AE0, classAbilityCallbacks.FailedCopyScroll);
 
 		// D20Mods countdown handler
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100EC9B0, genericCallbacks.D20ModCountdownHandler);
@@ -1059,6 +1080,10 @@ int GenericCallbacks::ActionInvalidQueryTrue(DispatcherCallbackArgs args){
 	return 0;
 }
 
+int GenericCallbacks::NoOp(DispatcherCallbackArgs args) {
+	return 0;
+}
+
 int GenericCallbacks::AddEtherealDamageImmunity(DispatcherCallbackArgs args){
 	auto dispIo = dispatch.DispIoCheckIoType4(args.dispIO);
 	dispIo->damage.AddEtherealImmunity();
@@ -1132,7 +1157,8 @@ int GenericCallbacks::TripAooQuery(DispatcherCallbackArgs args)
 int GenericCallbacks::ImprovedTripBonus(DispatcherCallbackArgs args)
 {
 	auto dispIo = dispatch.DispIoCheckIoType10(args.dispIO);
-	if (dispIo->flags & 1){
+	// 2 seems to be defender
+	if (dispIo->flags & 1 && !(dispIo->flags & 2)) {
 		dispIo->bonOut->AddBonusWithDesc(4, 0, 114, feats.GetFeatName(FEAT_IMPROVED_TRIP));
 	}
 	return 0;
@@ -1156,116 +1182,42 @@ int GenericCallbacks::PowerAttackDamageBonus(DispatcherCallbackArgs args)
 	// get wield type
 	auto weaponUsed = dispIo->attackPacket.GetWeaponUsed();
 	auto wieldType = inventory.GetWieldType(args.objHndCaller, weaponUsed, true);
-	auto wieldTypeWeaponModified = inventory.GetWieldType(args.objHndCaller, weaponUsed, false); // the wield type if the weapon is not enlarged along with the critter
-	auto modifiedByEnlarge = wieldType != wieldTypeWeaponModified;
 
-	// check offhand
-	auto offhandWeapon = inventory.ItemWornAt(args.objHndCaller, EquipSlot::WeaponSecondary);
-	auto shield = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Shield);
-	auto regardOffhand = (offhandWeapon || shield && !inventory.IsBuckler(shield)) ?true:false; // is there an offhand item (weapon/non-buckler shield)
-
-	// case 1
-	switch (wieldType)
+	switch (critterSys.GetFightingStyle(args.objHndCaller))
 	{
-	case 0: // light weapon
-		switch (wieldTypeWeaponModified)
-		{
-		case 0:
-			dispIo->damage.bonuses.ZeroBonusSetMeslineNum(305);
-			return 0;
-		case 1: // benefitting from enlargement of weapon
-			if (regardOffhand)
-				dispIo->damage.bonuses.AddBonusFromFeat(powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
-			else
-				dispIo->damage.bonuses.AddBonusFromFeat(2 * powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
-			return 0;
-		case 2:
-			if (regardOffhand)
-				dispIo->damage.bonuses.AddBonusFromFeat(powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
-			else
-				dispIo->damage.bonuses.AddBonusFromFeat(2 * powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
-			return 0;
-		default:
-			dispIo->damage.bonuses.AddBonusFromFeat(powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
-			return 0;
-		}
-	case 1: // single handed wield if weapon is unaffected
-		switch (wieldTypeWeaponModified)
-		{
-		case 0: // only in reduce person; going to assume the "beneficial" case that the reduction was made voluntarily and hence you let the weapon stay larger
-		case 1: 
-			if (regardOffhand)
-				dispIo->damage.bonuses.AddBonusFromFeat(powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
-			else
-				dispIo->damage.bonuses.AddBonusFromFeat(2 * powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
-			return 0;
-		case 2:
-			if (regardOffhand)
-				dispIo->damage.bonuses.AddBonusFromFeat(powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
-			else
-				dispIo->damage.bonuses.AddBonusFromFeat(2 * powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
-			return 0;
-		default:
-			dispIo->damage.bonuses.AddBonusFromFeat(powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
-			return 0;
-		}
-	case 2: // two handed wield if weapon is unaffected
-		switch (wieldTypeWeaponModified)
-		{
-		case 0: 
-		case 1: // only in reduce person; going to assume the "beneficial" case that the reduction was made voluntarily and hence you let the weapon stay larger
-			if (regardOffhand) // has offhand item, so assume the weapon stayed the old size
-				dispIo->damage.bonuses.AddBonusFromFeat(powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
-			else
-				dispIo->damage.bonuses.AddBonusFromFeat(2 * powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
-			return 0;
-		case 2:
-			if (regardOffhand) // shouldn't really be possible... maybe if player is cheating
-			{
-				dispIo->damage.bonuses.AddBonusFromFeat(powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
-				logger->warn("Illegally wielding weapon along withoffhand!");
-			}
-			else
-				dispIo->damage.bonuses.AddBonusFromFeat(2 * powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
-			return 0;
-		default:
-			dispIo->damage.bonuses.AddBonusFromFeat(powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
-			return 0;
-		}
-	case 3:
-		dispIo->damage.bonuses.AddBonusFromFeat(powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
+	case FightingStyle::TwoHanded:
+		dispIo->damage.bonuses.AddBonusFromFeat(2*powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
 		return 0;
-	case 4:
+	case FightingStyle::OneHanded:
+	case FightingStyle::TwoWeapon:
+		break;
 	default:
-		dispIo->damage.bonuses.AddBonusFromFeat(powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
+		// shouldn't actually get here, ranged has been taken care of
 		return 0;
 	}
 
+	// one handed/two weapon cases
+	switch (wieldType)
+	{
+	// light
+	case 0:
+		dispIo->damage.bonuses.ZeroBonusSetMeslineNum(305);
+		return 0;
+	// 1-handed
+	case 1:
+	// unarmed
+	case 4:
+		dispIo->damage.bonuses.AddBonusFromFeat(powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
+		return 0;
+	// must be double weapon; should be impossible for OneHanded to be 2 or 3
+	default:
+		if (dispIo->attackPacket.flags & D20CAF_SECONDARY_WEAPON)
+			dispIo->damage.bonuses.ZeroBonusSetMeslineNum(305);
+		else
+			dispIo->damage.bonuses.AddBonusFromFeat(powerAttackAmt, 0, 114, FEAT_POWER_ATTACK);
+	}
 
-	//if (modifiedByEnlarge){
-	//	// if using an offhand and also wielding two handed
-	//	if (regardOffhand && wieldTypeWeaponModified == 2)
-	//		wieldType = wieldTypeWeaponModified;
-	//	else if (!wieldType && wieldTypeWeaponModified)
-	//		wieldType = wieldTypeWeaponModified;
-	//}
-
-	//if(!wieldType && !wieldTypeWeaponModified){
-	//	dispIo->damage.bonuses.ZeroBonusSetMeslineNum(305);
-	//	return 0;
-	//}
-
-	//auto bonAmt = 2*powerAttackAmt;
-	//if (wieldType == 4)
-	//	bonAmt = powerAttackAmt;
-	//else if (wieldType != 2){
-	//	if (  regardOffhand) 
-	//		bonAmt = powerAttackAmt;
-	//}
-	//
-	//dispIo->damage.bonuses.AddBonusFromFeat(bonAmt, 0, 114, FEAT_POWER_ATTACK);
-	//
-	//return 0;
+	return 0;
 }
 
 int GenericCallbacks::PowerAttackToHitPenalty(DispatcherCallbackArgs args)
@@ -1749,6 +1701,146 @@ int DisarmedRetrieveQuery(DispatcherCallbackArgs args)
 	return 0;
 };
 
+int TwoWeaponQuery(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIOTypeQuery, DispIoD20Query);
+	auto isCurrentlyOn = args.GetCondArg(0);
+
+	// offset by 1 so that we can tell if the critter has the condition
+	// at all, and default to the old behavior if not.
+	dispIo->return_val = isCurrentlyOn+1;
+
+	return 0;
+}
+
+int LeftPrimaryQuery(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIOTypeQuery, DispIoD20Query);
+	auto isCurrentlyOn = args.GetCondArg(1);
+
+	dispIo->return_val = isCurrentlyOn;
+
+	return 0;
+}
+
+int TwoWeaponRadialMenu(DispatcherCallbackArgs args)
+{
+	if (!critterSys.CanTwoWeaponFight(args.objHndCaller))
+		return 0;
+
+	// hide radial if an attack has already been made
+	if (args.GetCondArg(2)) return 0;
+
+	RadialMenuEntryToggle radEntry(5125, args.GetCondArgPtr(0), "TAG_RADIAL_MENU_TWO_WEAPON_FIGHTING");
+	radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Options);
+	return 0;
+}
+
+int DefaultSetTWF(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType6(args.dispIO);
+	if (!dispIo) return 0;
+
+	objHndl uitem = objHndl::FromUpperAndLower(dispIo->data2, dispIo->data1);
+	if (!uitem) return 0;
+
+	objHndl right = inventory.ItemWornAt(args.objHndCaller, EquipSlot::WeaponPrimary);
+	objHndl left = inventory.ItemWornAt(args.objHndCaller, EquipSlot::WeaponSecondary);
+	objHndl shield = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Shield);
+
+	if (uitem == left) { // off hand equipped, default two TWF on
+		args.SetCondArg(0, 1);
+	} else if (uitem == shield) { // shield equipped, default to TWF off
+		args.SetCondArg(0, 0);
+		args.SetCondArg(1, 0);
+	} else if (uitem == right) { // right hand equipped
+		if (!left) {
+			args.SetCondArg(0, 0);
+			args.SetCondArg(1, 0);
+		}
+	}
+
+	return 0;
+}
+
+int LeftPrimaryRadialMenu(DispatcherCallbackArgs args)
+{
+	if (!critterSys.CanTwoWeaponFight(args.objHndCaller))
+		return 0;
+
+	// hide radial if an attack has already been made
+	if (args.GetCondArg(2)) return 0;
+
+	RadialMenuEntryToggle radEntry(5126, args.GetCondArgPtr(1), "TAG_RADIAL_MENU_LEFT_PRIMARY");
+	radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Options);
+	return 0;
+}
+
+// Functions for armor that can be used as a weapon via a condition
+int ArmorWeaponDice(DispatcherCallbackArgs args)
+{
+	DispIoAttackDice * dispIo = dispatch.DispIoCheckIoType20(args.dispIO);
+
+	auto invIdx = args.GetCondArg(2);
+	auto armor = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
+
+	if (dispIo->weapon == armor) {
+		dispIo->dicePacked = conds.CondNodeGetArg(args.subDispNode->condNode, 1);
+		dispIo->attackDamageType = (DamageType)conds.CondNodeGetArg(args.subDispNode->condNode, 0);
+	}
+
+	return 0;
+}
+
+int ArmorCritRange(DispatcherCallbackArgs args)
+{
+	DispIoAttackBonus * dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
+
+	auto invIdx = args.GetCondArg(2);
+	auto armor = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
+
+	if (dispIo->attackPacket.weaponUsed == armor) {
+		auto mult = conds.CondNodeGetArg(args.subDispNode->condNode, 3);
+		dispIo->bonlist.AddBonus(mult, 0, 110);
+	}
+
+	return 0;
+}
+
+int ArmorCritMultiplier(DispatcherCallbackArgs args)
+{
+	DispIoAttackBonus * dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
+
+	auto invIdx = args.GetCondArg(2);
+	auto armor = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
+
+	if (dispIo->attackPacket.weaponUsed == armor) {
+		auto mult = conds.CondNodeGetArg(args.subDispNode->condNode, 4);
+		dispIo->bonlist.AddBonus(mult, 0, 110);
+	}
+
+	return 0;
+}
+
+int ShieldBashProficiencyPenalty(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
+	auto attacker = dispIo->attackPacket.attacker;
+	if (!attacker) return 0;
+
+	auto invIdx = args.GetCondArg(2);
+	auto shield = inventory.GetItemAtInvIdx(attacker, invIdx);
+
+	if (dispIo->attackPacket.weaponUsed != shield) return 0;
+
+	// Future option: create an individual proficiency.
+	// Probably a waste of time, since no one would take it.
+	if (!feats.HasFeatCountByClass(attacker, FEAT_MARTIAL_WEAPON_PROFICIENCY_ALL))
+		dispIo->bonlist.AddBonus(-4, 37, 138);
+
+	return 0;
+}
+
 int __cdecl CondNodeSetArgFromSubDispDef(DispatcherCallbackArgs args)
 {
 	// sets arg[data1] from data2  
@@ -1843,16 +1935,28 @@ int __cdecl GlobalToHitBonus(DispatcherCallbackArgs args)
 		}
 		if (dualWielding)
 		{
-			if (d20Sys.UsingSecondaryWeapon(args.objHndCaller, attackCode))
-				bonusSys.bonusAddToBonusList(&dispIo->bonlist, -10, 26, 121); // penalty for dualwield on offhand attack
-			else
-				bonusSys.bonusAddToBonusList(&dispIo->bonlist, -6, 27, 122); // penalty for dualwield on primary attack
 
-			auto offhand = inventory.ItemWornAt(args.objHndCaller, 4);
-			if (offhand)
-			{
-				if (inventory.GetWieldType(dispIo->attackPacket.attacker, offhand) == 0)
+			//See if python is going to handle the penalty
+			const bool overridePenalty = d20Sys.D20QueryPython(args.objHndCaller, "Override Two Weapon Penalty", dualWielding ? 1 :0);
+			if (overridePenalty) {
+				auto penalty = d20Sys.D20QueryPython(args.objHndCaller, "Get Two Weapon Penalty", dualWielding ? 1 : 0);
+				if (d20Sys.UsingSecondaryWeapon(args.objHndCaller, attackCode)) {
+					bonusSys.bonusAddToBonusList(&dispIo->bonlist, penalty, 26, 121);
+				}
+				else {
+					bonusSys.bonusAddToBonusList(&dispIo->bonlist, penalty, 27, 122);
+				}
+			}
+			else {
+				if (d20Sys.UsingSecondaryWeapon(args.objHndCaller, attackCode))
+					bonusSys.bonusAddToBonusList(&dispIo->bonlist, -10, 26, 121); // penalty for dualwield on offhand attack
+				else
+					bonusSys.bonusAddToBonusList(&dispIo->bonlist, -6, 27, 122); // penalty for dualwield on primary attack
+
+				if (critterSys.OffhandIsLight(args.objHndCaller))
+				{
 					bonusSys.bonusAddToBonusList(&dispIo->bonlist, 2, 0, 167); // Light Off-hand Weapon
+				}
 			}
 		}
 	}
@@ -1860,7 +1964,8 @@ int __cdecl GlobalToHitBonus(DispatcherCallbackArgs args)
 	// helplessness bonus
 	if (dispIo->attackPacket.victim
 		&& d20Sys.d20Query(dispIo->attackPacket.victim, DK_QUE_Helpless)
-		&& !d20Sys.d20Query(dispIo->attackPacket.victim, DK_QUE_Critter_Is_Stunned))
+		&& !d20Sys.d20Query(dispIo->attackPacket.victim, DK_QUE_Critter_Is_Stunned)
+		&& !(dispIo->attackPacket.flags & D20CAF_RANGED))
 		bonusSys.bonusAddToBonusList(&dispIo->bonlist, 4, 30, 136);
 	
 	// flanking bonus
@@ -2457,11 +2562,9 @@ int __cdecl GlobalOnDamage(DispatcherCallbackArgs args)
 				strMod /= 2;
 			}
 				
-		} else if (d20Sys.d20QueryWithData(args.objHndCaller, DK_QUE_WieldedTwoHanded, (int)dispIo, 0) 
-			&& strMod > 0 
-			&&  inventory.GetWieldType(args.objHndCaller, weapon, true) )
+		} else if (critterSys.GetFightingStyle(args.objHndCaller) == FightingStyle::TwoHanded)
 		{
-			strMod += strMod / 2;
+			strMod += std::max(0, strMod) / 2;
 		}
 		if (attackCode > ATTACK_CODE_NATURAL_ATTACK && strMod > 0 && critterSys.GetDamageIdx(args.objHndCaller, attackCode - (ATTACK_CODE_NATURAL_ATTACK + 1)) > 0)
 		{
@@ -3102,12 +3205,53 @@ void ConditionSystem::RegisterNewConditions()
 		condAttrEnhBonus.AddHook(enum_disp_type::dispTypeStatBaseGet, D20DispatcherKey::DK_NONE, itemCallbacks.AttributeBaseBonus);
 	}
 
+	{
+		static CondStructNew condShieldBonus;
+		condShieldBonus.ExtendExisting("Shield Bonus");
+		condShieldBonus.AddHook(dispTypeBucklerAcPenalty, DK_NONE, itemCallbacks.ShieldAcPenalty);
+		// reset shield bash penalty on begin round
+		condShieldBonus.AddHook(dispTypeBeginRound, DK_NONE, CondNodeSetArgFromSubDispDef, 1, 0);
+
+		// replace Q_Armor_Get_AC_Bonus callbacks to fix stacking behavior
+		condShieldBonus.subDispDefs[0].dispCallback = itemCallbacks.BaseAcQuery;
+		static CondStructNew condShieldEnhBonus;
+		condShieldEnhBonus.ExtendExisting("Shield Enhancement Bonus");
+		condShieldEnhBonus.subDispDefs[0].dispCallback = itemCallbacks.EnhAcQuery;
+		// replace OnGetAC handler for new calculation methodology
+		condShieldEnhBonus.subDispDefs[1].dispCallback = genericCallbacks.NoOp;
+
+		// as above, but for armor
+		static CondStructNew condArmorBonus;
+		condArmorBonus.ExtendExisting("Armor Bonus");
+		condArmorBonus.subDispDefs[0].dispCallback = itemCallbacks.BaseAcQuery;
+		static CondStructNew condArmorEnhBonus;
+		condArmorEnhBonus.ExtendExisting("Armor Enhancement Bonus");
+		condArmorEnhBonus.subDispDefs[0].dispCallback = itemCallbacks.EnhAcQuery;
+		condArmorEnhBonus.subDispDefs[1].dispCallback = genericCallbacks.NoOp;
+	}
 #pragma endregion
 
 
 	static CondStructNew preferOneHanded("Prefer One Handed Wield", 1);
 	preferOneHanded.AddHook(dispTypeD20Query, DK_QUE_Is_Preferring_One_Handed_Wield, genericCallbacks.PreferOneHandedWieldQuery);
 	preferOneHanded.AddHook(dispTypeRadialMenuEntry, DK_NONE, genericCallbacks.PreferOneHandedWieldRadialMenu);
+
+	static CondStructNew twoWeapToggles("Two Weapon Toggles", 6, true);
+	twoWeapToggles.AddHook(dispTypeD20Query, DK_QUE_Is_Two_Weapon_Fighting, TwoWeaponQuery);
+	twoWeapToggles.AddHook(dispTypeD20Query, DK_QUE_Left_Is_Primary, LeftPrimaryQuery);
+	twoWeapToggles.AddHook(dispTypeRadialMenuEntry, DK_NONE, TwoWeaponRadialMenu);
+	twoWeapToggles.AddHook(dispTypeRadialMenuEntry, DK_NONE, LeftPrimaryRadialMenu);
+	twoWeapToggles.AddHook(dispTypeBeginRound, DK_NONE, CondNodeSetArgFromSubDispDef, 2, 0);
+	twoWeapToggles.AddHook(dispTypeD20Signal, DK_SIG_Attack_Made, CondNodeSetArgFromSubDispDef, 2, 1);
+	twoWeapToggles.AddHook(dispTypeD20Signal, DK_SIG_Inventory_Update, DefaultSetTWF);
+
+	// damage type, damage, inventory index, crit range, crit mult
+	static CondStructNew shieldBash("Shield Bash", 5);
+	shieldBash.AddHook(dispTypeD20Query, DK_QUE_Can_Shield_Bash, genericCallbacks.QuerySetReturnVal1);
+	shieldBash.AddHook(dispTypeGetAttackDice, DK_NONE, ArmorWeaponDice);
+	shieldBash.AddHook(dispTypeGetCriticalHitExtraDice, DK_NONE, ArmorCritMultiplier);
+	shieldBash.AddHook(dispTypeGetCriticalHitRange, DK_NONE, ArmorCritRange);
+	shieldBash.AddHook(dispTypeToHitBonus2, DK_NONE, ShieldBashProficiencyPenalty);
 
 	{
 		//mCondCraftWandLevelSet = 
@@ -3134,6 +3278,24 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 1, dispTypeRadialMenuEntry, 0, AidAnotherRadialMenu, 0, 0);
 	// 
 	
+	{
+		static CondStructNew condHeld;
+		condHeld.ExtendExisting("Held");
+		condHeld.subDispDefs[11].dispCallback = [](DispatcherCallbackArgs args) {
+			static auto orig = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100EDF10);
+			// disable effect tooltip if freedom of movement
+			if (!d20Sys.d20Query(args.objHndCaller, DK_QUE_Critter_Has_Freedom_of_Movement))
+				return orig(args);
+			return 0;
+		};
+		condHeld.AddHook(dispTypeAbilityScoreLevel, DK_STAT_STRENGTH, HeldCapStatBonus);
+		condHeld.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HeldCapStatBonus);
+
+		static CondStructNew condSleeping;
+		condSleeping.ExtendExisting("Sleeping");
+		condSleeping.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HelplessCapStatBonus);
+	}
+
 	/*
 	char mCondIndomitableWillName[100];
 	CondStructNew *mCondIndomitableWill;
@@ -3359,22 +3521,17 @@ int __cdecl AoODisableQueryAoOPossible(DispatcherCallbackArgs args)
 
 int __cdecl GreaterTwoWeaponFighting(DispatcherCallbackArgs args)
 {
-	DispIoD20ActionTurnBased *dispIo = dispatch.DispIoCheckIoType12((DispIoD20ActionTurnBased*)args.dispIO);
-	objHndl mainWeapon = inventory.ItemWornAt(args.objHndCaller, 3);
-	objHndl offhand = inventory.ItemWornAt(args.objHndCaller, 4);
-	
-	if (mainWeapon != offhand)
+	DispIoD20ActionTurnBased *dispIo = dispatch.DispIoCheckIoType12(args.dispIO);
+
+	switch (critterSys.GetFightingStyle(args.objHndCaller))
 	{
-		if (mainWeapon)
-		{
-			if (offhand)
-			{
-				int weapFlags = objects.getInt32(mainWeapon, obj_f_weapon_flags);
-				if (!(weapFlags & (4<<8)) && objects.getInt32(offhand, obj_f_type) != obj_t_armor)
-					++dispIo->returnVal;
-			}
-		}
+	case FightingStyle::TwoWeapon:
+	case FightingStyle::TwoWeaponRanged:
+		++dispIo->returnVal;
+	default:
+		break;
 	}
+
 	return 0;
 
 }
@@ -3390,22 +3547,25 @@ int __cdecl GreaterTWFRanger(DispatcherCallbackArgs args)
 
 int __cdecl TwoWeaponFightingBonus(DispatcherCallbackArgs args)
 {
-	DispIoAttackBonus *dispIo = dispatch.DispIoCheckIoType5((DispIoAttackBonus*)args.dispIO);
-	char *featName;
+	DispIoAttackBonus* dispIo = dispatch.DispIoCheckIoType5((DispIoAttackBonus*)args.dispIO);
 
-	feat_enums feat = (feat_enums)conds.CondNodeGetArg(args.subDispNode->condNode, 0);
-	int attackCode = dispIo->attackPacket.dispKey;
-	int dualWielding = 0;
-	int attackNumber = 1;
-	if (d20Sys.UsingSecondaryWeapon(args.objHndCaller, attackCode))
-	{
-		featName = feats.GetFeatName(feat);
-		bonusSys.bonusAddToBonusListWithDescr(&dispIo->bonlist, 6, 0, 114, featName);
-	}
-		else if ( d20Sys.ExtractAttackNumber(args.objHndCaller, attackCode, &attackNumber, &dualWielding), dualWielding != 0)
-	{
-		featName = feats.GetFeatName(feat);
-		bonusSys.bonusAddToBonusListWithDescr(&dispIo->bonlist, 2, 0, 114, featName);
+	//Disable when using agile shield fighter for examle
+	if (d20Sys.D20QueryPython(args.objHndCaller, "Disable Two Weapon Fighting Bonus") == 0) {
+		char* featName;
+		feat_enums feat = (feat_enums)conds.CondNodeGetArg(args.subDispNode->condNode, 0);
+		int attackCode = dispIo->attackPacket.dispKey;
+		int dualWielding = 0;
+		int attackNumber = 1;
+		if (d20Sys.UsingSecondaryWeapon(args.objHndCaller, attackCode))
+		{
+			featName = feats.GetFeatName(feat);
+			bonusSys.bonusAddToBonusListWithDescr(&dispIo->bonlist, 6, 0, 114, featName);
+		}
+		else if (d20Sys.ExtractAttackNumber(args.objHndCaller, attackCode, &attackNumber, &dualWielding), dualWielding != 0)
+		{
+			featName = feats.GetFeatName(feat);
+			bonusSys.bonusAddToBonusListWithDescr(&dispIo->bonlist, 2, 0, 114, featName);
+		}
 	}
 	return 0;
 }
@@ -3531,6 +3691,31 @@ int TacticalOptionAbusePrevention(DispatcherCallbackArgs args)
 { // signifies that an attack has been made using that tactical option (so user doesn't toggle it off and shrug off the penalties)
 	return temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100F7ED0)(args); // replaced in ability_fixes.cpp
 }
+
+// Port of 0x100E7F80. Was used in Unconscious but missing in similar
+// conditions. Helpless critters should have 0 effective dexterity, and
+// paralyzed creatures should have 0 effective strength.
+int HelplessCapStatBonus(DispatcherCallbackArgs args)
+{
+	DispIoBonusList *dispIo = dispatch.DispIoCheckIoType2(args.dispIO);
+
+	dispIo->bonlist.AddCap(0, 0, 109);
+
+	return 0;
+}
+
+// As above, but check for freedom of movement, since it doesn't remove the held
+// condition.
+int HeldCapStatBonus(DispatcherCallbackArgs args)
+{
+	DispIoBonusList *dispIo = dispatch.DispIoCheckIoType2(args.dispIO);
+
+	if (!d20Sys.d20Query(args.objHndCaller, DK_QUE_Critter_Has_Freedom_of_Movement))
+		dispIo->bonlist.AddCap(0, 0, 109);
+
+	return 0;
+}
+
 
 #pragma region Barbarian Stuff
 
@@ -3877,7 +4062,11 @@ int RendOnDamage(DispatcherCallbackArgs args)
 	auto previousTarget = args.GetCondArgObjHndl(2);
 	if (hasDeliveredDamage && attackDescr == previousAttackDescr && previousTarget == dispIo->attackPacket.victim)
 	{
-		Dice dice(2, 6, 9);
+		int strScore = objects.StatLevelGet(args.objHndCaller, stat_strength);
+		int bonus = objects.GetModFromStatLevel(strScore);
+		if (bonus > 0) bonus += bonus/2;
+
+		Dice dice(2, 6, bonus);
 		dispIo->damage.AddDamageDice(dice.ToPacked(), DamageType::PiercingAndSlashing, 133);
 		//damage.AddDamageDice(&dispIo->damage, dice.ToPacked(), DamageType::PiercingAndSlashing, 133);
 		floatSys.FloatCombatLine(args.objHndCaller, 203);
@@ -5670,6 +5859,128 @@ int __cdecl ItemCallbacks::BucklerAcPenalty(DispatcherCallbackArgs args)
 	return 0;
 }
 
+int __cdecl ItemCallbacks::ShieldAcPenalty(DispatcherCallbackArgs args)
+{
+	DispIoAttackBonus * dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
+	objHndl attacker = dispIo->attackPacket.attacker;
+
+	if (!attacker) return 0;
+
+	if (feats.HasFeatCount(attacker, FEAT_IMPROVED_SHIELD_BASH))
+		return 0;
+
+	auto invIdx = args.GetCondArg(2);
+	objHndl source = inventory.GetItemAtInvIdx(attacker, invIdx);
+
+	if (dispIo->attackPacket.GetWeaponUsed() == source)
+		// shield bashing, disable AC bonus
+		args.SetCondArg(1, 1);
+
+	return 0;
+}
+
+int __cdecl ItemCallbacks::BucklerAcBonus(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
+	if (!dispIo) return 0;
+
+	// touch attacks bypass shields; test first to avoid bonus list spam
+	if (dispIo->attackPacket.flags & D20CAF_TOUCH_ATTACK)
+		return 0;
+
+	if (args.GetCondArg(1)) { // bonus disabled due to second hand attack
+		dispIo->bonlist.ZeroBonusSetMeslineNum(326);
+		return 0;
+	}
+
+	auto invIdx = args.GetCondArg(2);
+	auto source = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
+	auto name = description.getDisplayName(source);
+	auto packedBonus = dispatch.DispatchItemQuery(source, DK_QUE_Armor_Get_AC_Bonus);
+	auto base = packedBonus & 0xff;
+	auto enh = (packedBonus & 0xff00) >> 8;
+
+	dispIo->bonlist.AddBonusWithDesc(base + enh, 29, 125, name);
+
+	return 0;
+}
+
+int __cdecl ItemCallbacks::ShieldAcBonus(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
+	if (!dispIo) return 0;
+
+	// touch attacks bypass shields; test first to avoid bonus list spam
+	if (dispIo->attackPacket.flags & D20CAF_TOUCH_ATTACK)
+		return 0;
+
+	if (args.GetCondArg(1)) { // bonus disabled due to shield bash
+		dispIo->bonlist.ZeroBonusSetMeslineNum(351);
+		return 0;
+	}
+
+	auto invIdx = args.GetCondArg(2);
+	auto source = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
+	auto name = description.getDisplayName(source);
+	auto packedBonus = dispatch.DispatchItemQuery(source, DK_QUE_Armor_Get_AC_Bonus);
+	auto base = packedBonus & 0xff;
+	auto enh = (packedBonus & 0xff00) >> 8;
+
+	dispIo->bonlist.AddBonusWithDesc(base + enh, 29, 125, name);
+
+	return 0;
+}
+
+int __cdecl ItemCallbacks::ArmorAcBonus(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
+	if (!dispIo) return 0;
+
+	// touch attacks bypass armor; test first to avoid bonus list spam
+	if (dispIo->attackPacket.flags & D20CAF_TOUCH_ATTACK)
+		return 0;
+
+	auto invIdx = args.GetCondArg(2);
+	auto source = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
+	auto name = description.getDisplayName(source);
+	auto packedBonus = dispatch.DispatchItemQuery(source, DK_QUE_Armor_Get_AC_Bonus);
+	auto base = packedBonus & 0xff;
+	auto enh = (packedBonus & 0xff00) >> 8;
+
+	dispIo->bonlist.AddBonusWithDesc(base + enh, 28, 124, name);
+
+	return 0;
+}
+
+int __cdecl ItemCallbacks::BaseAcQuery(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
+	if (!dispIo) return 0;
+
+	auto base = dispIo->return_val & 0xff;
+	auto rest = dispIo->return_val & 0xffffff00;
+
+	base = std::max(base, args.GetCondArg(0));
+
+	dispIo->return_val = rest | base;
+
+	return 0;
+}
+
+int __cdecl ItemCallbacks::EnhAcQuery(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
+	if (!dispIo) return 0;
+
+	auto enh = dispIo->return_val & 0xff00;
+	auto rest = dispIo->return_val & 0xffff00ff;
+
+	enh = std::max(enh, args.GetCondArg(0) << 8);
+
+	dispIo->return_val = rest | enh;
+
+	return 0;
+}
 
 int ItemCallbacks::WeaponMerciful(DispatcherCallbackArgs args){
 	GET_DISPIO(dispIOTypeDamage, DispIoDamage);
@@ -6036,6 +6347,24 @@ int ClassAbilityCallbacks::CouragedAuraSavingThrow(DispatcherCallbackArgs args)
 		}
 	}
 	
+
+	return 0;
+}
+
+int ClassAbilityCallbacks::FailedCopyScroll(DispatcherCallbackArgs args) {
+	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
+
+	auto failedScRanks = args.GetCondArg(1);
+	auto curScRanks = critterSys.SkillBaseGet(args.objHndCaller, SkillEnum::skill_spellcraft);
+	auto failedSpellEnum = args.GetCondArg(0);
+
+	// if we've gained spellcraft ranks, get rid of the condition
+	if (curScRanks > failedScRanks) {
+		conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
+	// if the scroll being copied matches, set return value
+	} else if (failedSpellEnum == dispIo->data1) {
+		dispIo->return_val = 1;
+	}
 
 	return 0;
 }
@@ -7298,6 +7627,16 @@ void Conditions::AddConditionsToTable(){
 			neutPoisonCondExtend.AddHook(dispTypeEffectTooltip, DK_NONE, spCallbacks.SpellEffectTooltipDuration, 19, 0); // Delay Poison indicator icon
 			neutPoisonCondExtend.AddHook(dispTypeD20Query, DK_QUE_Critter_Is_Immune_Poison, genericCallbacks.QuerySetReturnVal1);
 		}
+	}
+
+	{
+		static CondStructNew condColorSprayStun;
+		condColorSprayStun.ExtendExisting("sp-Color Spray Stun");
+		condColorSprayStun.AddHook(dispTypeD20Query, DK_QUE_SneakAttack, genericCallbacks.QuerySetReturnVal1);
+
+		static CondStructNew condColorSprayBlind;
+		condColorSprayBlind.ExtendExisting("sp-Color Spray Blind");
+		condColorSprayBlind.AddHook(dispTypeTurnBasedStatusInit, DK_NONE, TurnBasedStatusInitNoActions);
 	}
 
 	// New Conditions!

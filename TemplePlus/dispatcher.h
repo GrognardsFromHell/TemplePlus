@@ -101,6 +101,7 @@ struct DispatcherSystem : temple::AddressTable
 	DispIoMoveSpeed * DispIOCheckIoType13(DispIoMoveSpeed* dispIo);
 	DispIoMoveSpeed * DispIOCheckIoType13(DispIO* dispIo);
 	static DispIoObjEvent* DispIoCheckIoType17(DispIO* dispIo);
+	DispIoAttackDice* DispIoCheckIoType20(DispIO* dispIo);
 	DispIoImmunity* DispIoCheckIoType23(DispIoImmunity* dispIo);
 	DispIoImmunity* DispIoCheckIoType23(DispIO* dispIo);
 	DispIoEffectTooltip* DispIoCheckIoType24(DispIoEffectTooltip* dispIo);
