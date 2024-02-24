@@ -197,7 +197,8 @@ def AdvancedLearningRadial(attachee, args, evt_obj):
 				spEntry = tpdp.SpellEntry(spell)
 				minLevel = spEntry.get_lowest_spell_level()
 				if minLevel <= maxLevel and spEntry.spell_school_enum == Divination:
-					if not attachee.is_spell_known(spell, extendedClass):
+					#Using | 0x80 changes from a stat to a class code
+					if not attachee.is_spell_known(spell, extendedClass | 0x80):
 						spStore = PySpellStore(spell, extendedClass, minLevel)
 						spell_node = tpdp.RadialMenuEntryPythonAction(spStore, D20A_PYTHON_ACTION, unseenSeerAdvancedLearningEnum, i)
 						spell_node.add_as_child(attachee, spell_level_ids[spStore.spell_level])
