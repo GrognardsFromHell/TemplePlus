@@ -134,6 +134,9 @@
 {1176}{Draconic Might}
 {1177}{Vigor, Mass Lesser}
 {1178}{Vigor, Mass Improved}
+{1179}{Sure Strike}
+{1180}{Hunter's Eye}
+{1181}{Tactical Precision}
 {1182}{Accuracy}
 {1183}{Hail of Stone}
 {1184}{Lesser Orb of Acid}
@@ -284,6 +287,9 @@
 {6176}{Draconic Might}
 {6177}{Vigor, Mass Lesser}
 {6178}{Vigor, Mass Improved}
+{6179}{Sure Strike}
+{6180}{Hunter's Eye}
+{6181}{Tactical Precision}
 {6182}{Accuracy}
 {6183}{Hail of Stone}
 {6184}{Lesser Orb of Acid}
@@ -436,6 +442,9 @@
 {21176}{TAG_SPELLS_DRACONIC_MIGHT}
 {21177}{TAG_SPELLS_VIGOR,_MASS_LESSER}
 {21178}{TAG_SPELLS_VIGOR,_MASS_IMPROVED}
+{21179}{TAG_SPELLS_SURE_STRIKE}
+{21180}{TAG_SPELLS_HUNTER'S_EYE}
+{21181}{TAG_SPELLS_TACTICAL_PRECISION}
 {21182}{TAG_SPELLS_ACCURACY}
 {21183}{TAG_SPELLS_HAIL_OF_STONE}
 {21184}{TAG_SPELLS_LESSER_ORB_OF_ACID}

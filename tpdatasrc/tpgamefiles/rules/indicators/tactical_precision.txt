@@ -1,0 +1,5 @@
+ID_string: TACTICAL_PRECISION
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Tactical Precision.tga
+help_topic: TAG_SPELLS_TACTICAL_PRECISION
+tooltip_base_text: Tactical Precision

@@ -1,0 +1,5 @@
+ID_string: HUNTER'S_EYE
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Hunter's Eye.tga
+help_topic: TAG_SPELLS_HUNTER'S_EYE
+tooltip_base_text: Hunter's Eye
