@@ -1,0 +1,5 @@
+name: Active Shield Defense
+flags: 12582928
+prereqs:
+description: Your expert use of your shield allows you to strike at vulnerable foes even when you forgo your own attacks in favor of defense.
+prereq descr:  Proficiency with shields, Shield Specialization.
