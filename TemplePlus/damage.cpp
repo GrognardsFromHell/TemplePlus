@@ -159,7 +159,7 @@ class DamageHooks: TempleFix
 			return damage.DealAttackDamage(attacker, tgt, d20Data, flags, actionType);
 		});
 
-		replaceFunction<bool(__cdecl)(objHnd, objHndl, int, int, int)>(0x100B4F20, [](objHndl tgt, objHndl atk, int dc, int saveType, int flags) {
+		replaceFunction<bool(__cdecl)(objHndl, objHndl, int, int, int)>(0x100B4F20, [](objHndl tgt, objHndl atk, int dc, int saveType, int flags) {
 			return damage.SavingThrow(tgt, atk, dc, saveType, flags);
 		});
 	}
