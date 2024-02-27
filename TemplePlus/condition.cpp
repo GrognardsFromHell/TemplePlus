@@ -1787,6 +1787,28 @@ int ArmorWeaponDice(DispatcherCallbackArgs args)
 	if (dispIo->weapon == armor) {
 		dispIo->dicePacked = conds.CondNodeGetArg(args.subDispNode->condNode, 1);
 		dispIo->attackDamageType = (DamageType)conds.CondNodeGetArg(args.subDispNode->condNode, 0);
+		//Bashing Bumps by 2 categories
+		if (d20Sys.D20QueryPython(args.objHndCaller, "Has Bashing") > 0) {
+			const auto dice = Dice::FromPacked(dispIo->dicePacked);
+			const auto largerDice = dice.IncreaseWeaponSize(2);
+			dispIo->dicePacked = largerDice.ToPacked();
+		}
+	}
+
+	return 0;
+}
+
+int ArmorDealingDamage(DispatcherCallbackArgs args)
+{
+	DispIoDamage* dispIo = dispatch.DispIoCheckIoType4(args.dispIO);
+
+	auto invIdx = args.GetCondArg(2);
+	auto armor = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
+
+	if (dispIo->attackPacket.weaponUsed == armor) {
+		if (d20Sys.D20QueryPython(args.objHndCaller, "Has Bashing") > 0) {
+			dispIo->damage.attackPowerType |= D20DAP_MAGIC; //The shield acts as a +1 weapon when used to bash.
+		}
 	}
 
 	return 0;
@@ -3249,6 +3271,7 @@ void ConditionSystem::RegisterNewConditions()
 	static CondStructNew shieldBash("Shield Bash", 5);
 	shieldBash.AddHook(dispTypeD20Query, DK_QUE_Can_Shield_Bash, genericCallbacks.QuerySetReturnVal1);
 	shieldBash.AddHook(dispTypeGetAttackDice, DK_NONE, ArmorWeaponDice);
+	shieldBash.AddHook(dispTypeDealingDamage, DK_NONE, ArmorDealingDamage);
 	shieldBash.AddHook(dispTypeGetCriticalHitExtraDice, DK_NONE, ArmorCritMultiplier);
 	shieldBash.AddHook(dispTypeGetCriticalHitRange, DK_NONE, ArmorCritRange);
 	shieldBash.AddHook(dispTypeToHitBonus2, DK_NONE, ShieldBashProficiencyPenalty);
