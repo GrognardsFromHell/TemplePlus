@@ -3416,11 +3416,14 @@ int ActionSequenceSystem::ActionCostFullAttack(D20Actn* d20, TurnBasedStatus* tb
 {
 	acp->chargeAfterPicker = 0;
 	acp->moveDistCost = 0;
-	acp->hourglassCost = 4;
+
+	auto cheap = d20Sys.D20QueryPython(d20->d20APerformer, "Full Attack As Standard");
+	acp->hourglassCost = cheap == 1 ? 2 : 4;
+
 	int flags = d20->d20Caf;
 	if (d20->d20Caf & D20CAF_FREE_ACTION || !combat->isCombatActive() )  
 		acp->hourglassCost = 0;
-	if (tbStat->attackModeCode >= tbStat->baseAttackNumCode && tbStat->hourglassState >= 4 && !tbStat->numBonusAttacks)
+	if (tbStat->attackModeCode >= tbStat->baseAttackNumCode && tbStat->hourglassState >= 2 && !tbStat->numBonusAttacks)
 	{
 		FullAttackCostCalculate(d20, tbStat, (int*)&tbStat->baseAttackNumCode, (int*) &tbStat->numBonusAttacks,
 			(int*)&tbStat->numAttacks,(int*) &tbStat->attackModeCode);

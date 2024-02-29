@@ -365,6 +365,10 @@ int __cdecl  AbilityConditionFixes::CombatReflexesAooReset(DispatcherCallbackArg
 		const auto dexScore = objects.StatLevelGet(args.objHndCaller, Stat::stat_dexterity);
 		auto extraAoos = objects.GetModFromStatLevel(dexScore);
 		extraAoos = std::max(extraAoos, 0);
+
+		// Enable hydra combat reflexes special case.
+		auto heads = d20Sys.D20QueryPython(args.objHndCaller, "Hydra Heads");
+		if (heads > 0) extraAoos = heads;
 		numAoosRem += extraAoos;
 	}
 

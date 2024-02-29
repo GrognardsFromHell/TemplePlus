@@ -187,6 +187,7 @@ public:
 	static int __cdecl D20ModCountdownHandler(DispatcherCallbackArgs args);
 	static int __cdecl D20ModCountdownEndHandler(DispatcherCallbackArgs args);
 
+	static int __cdecl FastHealingOnBeginRound(DispatcherCallbackArgs args);
 
 	static int __cdecl MonsterRegenerationOnDamage(DispatcherCallbackArgs args);
 
@@ -582,6 +583,7 @@ public:
 		spCallbacks.oldD20ModsSpellsSpellBonus = replaceFunction(0x100C4440, spCallbacks.D20ModsSpellsSpellBonus);
 
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100F72E0, genericCallbacks.MonsterRegenerationOnDamage);
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100F7AA0, genericCallbacks.FastHealingOnBeginRound);
 
 		replaceFunction(0x100FCF50, ManyShotAttack);
 		replaceFunction(0x100FCEB0, ManyShotMenu);
@@ -1635,6 +1637,26 @@ int GenericCallbacks::MonsterRegenerationOnDamage(DispatcherCallbackArgs args){
 	}
 	if (replacedDice)
 		dispIo->damage.bonuses.ZeroBonusSetMeslineNum(322);
+	return 0;
+}
+
+int GenericCallbacks::FastHealingOnBeginRound(DispatcherCallbackArgs args)
+{
+	auto *dispIo = dispatch.DispIoCheckIoType6(args.dispIO);
+	auto critter = args.objHndCaller;
+
+	if (critterSys.IsDeadNullDestroyed(critter)) return 0;
+	if (critterSys.GetHpDamage(critter) <= 0 && critterSys.GetSubdualDamage(critter) <= 0)
+		return 0;
+
+	auto rounds = dispIo->data1;
+
+	if (rounds <= 0) return 0;
+
+	auto heal = args.GetCondArg(0) * rounds;
+	damage.FastHeal(critter, heal);
+	histSys.CreateRollHistoryLineFromMesfile(57, critter, objHndl::null);
+
 	return 0;
 }
 
