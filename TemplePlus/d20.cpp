@@ -2680,8 +2680,9 @@ BOOL D20ActionCallbacks::ActionFrameCoupDeGrace(D20Actn* d20a) {
 		return 0;
 
 	auto dc = 10 + dmg;
+	bool strict = config.stricterRulesEnforcement;
 
-	if (damage.SavingThrow(target, performer, dc, SavingThrowType::Fortitude, D20STF_NONE))
+	if (strict && damage.SavingThrow(target, performer, dc, SavingThrowType::Fortitude, D20STF_NONE))
 		return 0;
 
 	auto leader = party.GetConsciousPartyLeader();
