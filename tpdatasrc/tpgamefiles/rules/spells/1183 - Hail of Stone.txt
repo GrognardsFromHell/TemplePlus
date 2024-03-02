@@ -1,6 +1,10 @@
 School: Conjuration
 Subschool: Creation
 Descriptor: Earth
+Level: Sor 1
+Level: Wiz 1
+Component: V
+Component: S
 Casting Time: 1 action
 Range: Medium
 Saving Throw: None
