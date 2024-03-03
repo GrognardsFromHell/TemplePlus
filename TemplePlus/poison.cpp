@@ -140,6 +140,11 @@ int PoisonFixes::PoisonedOnAdd(DispatcherCallbackArgs args) {
 		return 0; // do nothing
 	}
 
+	if (d20Sys.d20QueryWithData(args.objHndCaller, DK_QUE_Critter_Has_Condition, conds.GetByName("sp-Delay Poison"), 0)) {
+		floatSys.FloatSpellLine(args.objHndCaller, 20033, FloatLineColor::White); // Effects delayed due to Delay Poison!
+		return 0;
+	}
+
 	auto dc = pspec->dc;
 	if (dc <= 0) {
 		dc = args.GetCondArg(2);
@@ -149,11 +154,6 @@ int PoisonFixes::PoisonedOnAdd(DispatcherCallbackArgs args) {
 	floatSys.FloatCombatLine(args.objHndCaller, 55); // Poisoned!
 	if (damage.SavingThrow(args.objHndCaller, objHndl::null, dc, SavingThrowType::Fortitude, D20STF_POISON))
 	{
-		return 0;
-	}
-
-	if (d20Sys.d20QueryWithData(args.objHndCaller, DK_QUE_Critter_Has_Condition, conds.GetByName("sp-Delay Poison"), 0)) {
-		floatSys.FloatSpellLine(args.objHndCaller, 20033, FloatLineColor::White); // Effects delayed due to Delay Poison!
 		return 0;
 	}
 
