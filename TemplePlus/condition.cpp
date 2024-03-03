@@ -3198,6 +3198,7 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 12, dispTypeD20Signal, DK_SIG_Combat_End, spCallbacks.HezrouStenchCureNausea,0,0 );
 	DispatcherHookInit(cond, 13, dispTypeD20Query, DK_QUE_Critter_Has_Condition, spCallbacks.HasCondition, (uint32_t)cond, 0);
 	DispatcherHookInit(cond, 14, dispTypeConditionAddPre, DK_NONE, ConditionOverrideBy, (uint32_t)conds.GetByName("sp-Neutralize Poison"), 0); // make neutralie poison remove existing stench effect
+	DispatcherHookInit(cond, 15, dispTypeConditionAddPre, DK_NONE, ConditionOverrideBy, (uint32_t)conds.GetByName("sp-Delay Poison"), 0); // also delay poison
 #pragma endregion
 
 #pragma region Items
@@ -4844,6 +4845,10 @@ int SpellCallbacks::HezrouStenchObjEvent(DispatcherCallbackArgs args){
 				if (critterSys.IsCategorySubtype(dispIo->tgt, MonsterSubcategoryFlag::mc_subtype_demon))
 					return 0;
 				if (critterSys.IsCategoryType(dispIo->tgt, MonsterCategory::mc_type_elemental))
+					return 0;
+
+				auto delay = conds.GetByName("sp-Delay Poison");
+				if (d20Sys.d20QueryWithData(dispIo->tgt, DK_QUE_Critter_Has_Condition, delay, 0))
 					return 0;
 
 
