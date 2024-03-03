@@ -37,6 +37,7 @@
 #include "gamesystems/d20/d20stats.h"
 #include "d20_race.h"
 #include "ai.h"
+#include "poison.h"
 
 #define CB int(__cdecl)(DispatcherCallbackArgs)
 using DispCB = int(__cdecl )(DispatcherCallbackArgs);
@@ -953,6 +954,44 @@ int DivineMightEffectTooltipCallback(DispatcherCallbackArgs args)
 	callback( *((int*)dispIo + 1), args.subDispNode->subDispDef->data1, (int)shit);
 	return 0;
 };
+
+int DelayedPoisonBeginRound(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType6(args.dispIO);
+	auto delay = conds.GetByName("sp-Delay Poison");
+	auto dk = DK_QUE_Critter_Has_Condition;
+	auto target = args.objHndCaller;
+
+	if (d20Sys.d20QueryWithData(target, DK_QUE_Critter_Has_Condition, delay, 0)) {
+		return 0;
+	}
+
+	auto ptype = args.GetCondArg(0);
+
+	switch (args.GetCondArg(1))
+	{
+	// primary poison
+	case 0:
+		conds.AddTo(target, "Poisoned", { ptype, 0, args.GetCondArg(2) });
+		args.RemoveCondition();
+	case 1:
+		ApplyPoisonSecondary(args);
+	}
+
+	return 0;
+}
+
+int DelayedPoisonEffectTip(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType24(args.dispIO);
+	auto ptype = args.GetCondArg(0);
+	auto line = combatSys.GetCombatMesLine(300 + ptype);
+	auto text = fmt::format("(Delayed): {}", line);
+
+	// Poisoned {}
+	dispIo->Append(130, -1, text.c_str());
+	return 0;
+}
 
 /*
 gets a tooltip string from combat.mes
@@ -3269,6 +3308,24 @@ void ConditionSystem::RegisterNewConditions()
 	
 	
 	*/
+
+	{
+		// 0 - poison id
+		// 1 - primary or secondary
+		// 2 - optional dc
+		//
+		// allow duplicates
+		static CondStructNew delayedPoison("Delayed Poison", 3, false);
+		auto neutral = conds.GetByName("sp-Neutralize Poison");
+		auto heal = conds.GetByName("sp-Heal");
+
+		delayedPoison.AddHook(dispTypeConditionAddPre, DK_NONE, ConditionOverrideBy, neutral, 0);
+		delayedPoison.AddHook(dispTypeConditionAddPre, DK_NONE, ConditionOverrideBy, heal, 0);
+		delayedPoison.AddHook(dispTypeBeginRound, DK_NONE, DelayedPoisonBeginRound);
+		delayedPoison.AddHook(dispTypeD20Query, DK_QUE_Critter_Is_Poisoned, genericCallbacks.QuerySetReturnVal1);
+		delayedPoison.AddHook(dispTypeTooltip, DK_NONE, genericCallbacks.TooltipUnrepeated, 55, 0);
+		delayedPoison.AddHook(dispTypeEffectTooltip, DK_NONE, DelayedPoisonEffectTip);
+	}
 
 	conditions.AddConditionsToTable();
 
