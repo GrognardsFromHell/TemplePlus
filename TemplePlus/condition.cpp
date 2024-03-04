@@ -38,6 +38,7 @@
 #include "d20_race.h"
 #include "ai.h"
 #include "poison.h"
+#include "config/config.h"
 
 #define CB int(__cdecl)(DispatcherCallbackArgs)
 using DispCB = int(__cdecl )(DispatcherCallbackArgs);
@@ -72,6 +73,7 @@ CondStructNew ConditionSystem::mCondHezrouStench;
 CondStructNew ConditionSystem::mCondHezrouStenchHit;
 
 int ConditionPreventWithArg(DispatcherCallbackArgs args);
+int ConditionPreventNonStrict(DispatcherCallbackArgs args);
 int ConditionOverrideBy(DispatcherCallbackArgs args);
 
 
@@ -119,6 +121,10 @@ public:
 	static int __cdecl HezrouStenchToHit2(DispatcherCallbackArgs args);
 	static int __cdecl HezrouStenchEffectTooltip(DispatcherCallbackArgs args);
 	static int __cdecl HezrouStenchCureNausea(DispatcherCallbackArgs args);
+
+	static int __cdecl VrockSporesCountdown(DispatcherCallbackArgs args);
+	static int __cdecl VrockSporesEffectTip(DispatcherCallbackArgs args);
+
 	static int __cdecl RemoveSpell(DispatcherCallbackArgs args);
 	static int __cdecl HasCondition(DispatcherCallbackArgs args);
 	static int __cdecl HasSpellEffectActive(DispatcherCallbackArgs args);
@@ -853,6 +859,15 @@ int ConditionPreventWithArg(DispatcherCallbackArgs args)
 	
 	if (dispIo->condStruct == refCond && dispIo->arg1 == arg1)
 		dispIo->outputFlag = 0;
+
+	return 0;
+}
+
+// for when one condition preventing another isn't strictly by the rules
+int ConditionPreventNonStrict(DispatcherCallbackArgs args)
+{
+	if (!config.stricterRulesEnforcement)
+		return ConditionPreventWithArg(args);
 
 	return 0;
 }
@@ -3199,6 +3214,15 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 13, dispTypeD20Query, DK_QUE_Critter_Has_Condition, spCallbacks.HasCondition, (uint32_t)cond, 0);
 	DispatcherHookInit(cond, 14, dispTypeConditionAddPre, DK_NONE, ConditionOverrideBy, (uint32_t)conds.GetByName("sp-Neutralize Poison"), 0); // make neutralie poison remove existing stench effect
 	DispatcherHookInit(cond, 15, dispTypeConditionAddPre, DK_NONE, ConditionOverrideBy, (uint32_t)conds.GetByName("sp-Delay Poison"), 0); // also delay poison
+
+	{
+		static CondStructNew vrockSpores;
+		vrockSpores.ExtendExisting("sp-Vrock Spores");
+		vrockSpores.subDispDefs[5].dispCallback = spCallbacks.VrockSporesCountdown; // begin round
+		vrockSpores.subDispDefs[6].dispCallback = genericCallbacks.NoOp; // TBS init
+		vrockSpores.subDispDefs[10].dispCallback = spCallbacks.VrockSporesEffectTip;
+		vrockSpores.AddHook(dispTypeConditionRemove, DK_NONE, genericCallbacks.EndParticlesFromArg, 2, 0);
+	}
 #pragma endregion
 
 #pragma region Items
@@ -5046,6 +5070,61 @@ int SpellCallbacks::HezrouStenchCureNausea(DispatcherCallbackArgs args)
 	else if (args.GetCondArg(4) == 0)
 		combatSys.FloatCombatLine(args.objHndCaller, 207, FloatLineColor::White);
 	args.SetCondArg(4, 2);
+	return 0;
+}
+
+int SpellCallbacks::VrockSporesCountdown(DispatcherCallbackArgs args)
+{
+	auto target = args.objHndCaller;
+	auto delay = conds.GetByName("sp-Delay Poison");
+	auto hasDelay = d20Sys.d20QueryWithData(target, DK_QUE_Critter_Has_Condition, delay, 0);
+	auto strict = config.stricterRulesEnforcement;
+
+	auto istr = fmt::format("VrockSporesCountdown hasDelay: {}", hasDelay);
+	logger->info(istr);
+
+	// delay poison is only postponing the countdown
+	if (strict && hasDelay) return 0;
+
+	auto dispIo = dispatch.DispIoCheckIoType6(args.dispIO);
+
+	// do countdown
+	int duration = args.GetCondArg(1);
+	int ticks = dispIo->data1;
+	int newDuration = duration - ticks;
+	args.SetCondArg(1, newDuration);
+
+	auto avoid = hasDelay;
+	if (!strict) {
+		// strict rules don't say anything about poison immunity preventing the
+		// damage.
+		avoid = avoid || d20Sys.d20Query(target, DK_QUE_Critter_Is_Immune_Poison);
+	}
+
+	if (!avoid) {
+		auto dice = Dice(std::min(duration, ticks), 4);
+		auto dmgTy = DamageType::Poison;
+		auto dmgDesc = 127;
+
+		floatSys.FloatSpellLine(target, 0x5015, FloatLineColor::Red);
+
+		damage.DealDamage(target, objHndl::null, dice, dmgTy, 1, 100, dmgDesc, D20A_CAST_SPELL);
+	} else {
+		spellSys.PlayFizzle(target);
+		floatSys.FloatSpellLine(target, 0x7d00, FloatLineColor::White);
+	}
+
+	if (newDuration < 0){
+		args.RemoveCondition();
+	}
+	return 0;
+}
+
+int SpellCallbacks::VrockSporesEffectTip(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType24(args.dispIO);
+
+	dispIo->Append(args.GetData1(), -1, "");
 	return 0;
 }
 
@@ -7596,6 +7675,14 @@ void Conditions::AddConditionsToTable(){
 			neutPoisonCondExtend.AddHook(dispTypeEffectTooltip, DK_NONE, spCallbacks.SpellEffectTooltipDuration, 19, 0); // Delay Poison indicator icon
 			neutPoisonCondExtend.AddHook(dispTypeD20Query, DK_QUE_Critter_Is_Immune_Poison, genericCallbacks.QuerySetReturnVal1);
 		}
+	}
+
+	{
+		static CondStructNew delayPoison;
+		delayPoison.ExtendExisting("sp-Delay Poison");
+		// vrock spore prevention only on non-strict rules
+		delayPoison.subDispDefs[0].dispCallback = ConditionPreventNonStrict;
+		delayPoison.subDispDefs[2].dispCallback = genericCallbacks.HasCondition;
 	}
 
 	// New Conditions!
