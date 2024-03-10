@@ -4775,7 +4775,7 @@ int SpellCallbacks::EnlargeSizeCategory(DispatcherCallbackArgs args)
 
 int SpellCallbacks::ReduceSizeCategory(DispatcherCallbackArgs args)
 {
-	auto dispIo = dispatch.DispatchIoCheckIoType7(args.dispIO);
+	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
 	int alreadyDecreased = dispIo->data2;
 
 	if (dispIo->return_val > 1 && !alreadyDecreased) {
