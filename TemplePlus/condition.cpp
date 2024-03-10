@@ -4628,11 +4628,12 @@ int SpellCallbacks::EnlargePersonWeaponDice(DispatcherCallbackArgs args)
 	args.dispIO->AssertType(dispIOType20);
 	auto dispIo = static_cast<DispIoAttackDice*>(args.dispIO);
 
-	if (!dispIo->weapon || dispIo->bonlist->GetHighestBonus() > 0)
+	if (!dispIo->weapon || (dispIo->bonlist && dispIo->bonlist->GetHighestBonus() > 0))
 		return 0;
 
-	// Add a bonus to indicate that we've applied the increase
-	dispIo->bonlist->AddBonus(1, 0, 0);
+	if (dispIo->bonlist)
+		// Add a bonus to indicate that we've applied the increase
+		dispIo->bonlist->AddBonus(1, 0, 0);
 
 	auto dice = Dice::FromPacked(dispIo->dicePacked);
 	auto diceCount = dice.GetCount();
