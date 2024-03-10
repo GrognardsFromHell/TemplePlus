@@ -958,19 +958,14 @@ int DispatcherSystem::Dispatch60GetAttackDice(objHndl obj, DispIoAttackDice* dis
 	{
 		int weaponDice = objects.getInt32(dispIo->weapon, obj_f_weapon_damage_dice);
 		dispIo->dicePacked = weaponDice;
-		dispIo->attackDamageType = (DamageType)objects.getInt32(dispIo->weapon, obj_f_weapon_attacktype);
+		auto dmgTy = static_cast<DamageType>(objects.getInt32(dispIo->weapon, obj_f_weapon_attacktype));
+		dispIo->attackDamageType = dmgTy;
 	}
 	DispatcherProcessor(dispatcher, dispTypeGetAttackDice, 0, dispIo);
-	int overallBonus = bonusSys.getOverallBonus(dispIo->bonlist);
-	Dice diceNew ;
-	diceNew = diceNew.FromPacked(dispIo->dicePacked);
-	int bonus = diceNew.GetModifier() + overallBonus;
-	int diceType = diceNew.GetSides();
-	int diceNum = diceNew.GetCount();
-	Dice diceNew2(diceNum, diceType, bonus);
-	return diceNew.ToPacked();
-
-
+	int sizeMod = bonusSys.getOverallBonus(dispIo->bonlist);
+	Dice base = Dice::FromPacked(dispIo->dicePacked);
+	Dice mod = damage.ModifyDamageDiceForSize(base, sizeMod);
+	return mod.ToPacked();
 }
 
 int DispatcherSystem::Dispatch61GetLevel(objHndl handle, Stat stat, BonusList* bonlist, objHndl someObj)
