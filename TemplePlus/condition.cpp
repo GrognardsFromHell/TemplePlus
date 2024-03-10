@@ -4628,18 +4628,8 @@ int SpellCallbacks::EnlargePersonWeaponDice(DispatcherCallbackArgs args)
 	args.dispIO->AssertType(dispIOType20);
 	auto dispIo = static_cast<DispIoAttackDice*>(args.dispIO);
 
-	if (!dispIo->weapon || (dispIo->bonlist && dispIo->bonlist->GetHighestBonus() > 0))
+	if (!dispIo->weapon)
 		return 0;
-
-	if (dispIo->bonlist)
-		// Add a bonus to indicate that we've applied the increase
-		dispIo->bonlist->AddBonus(1, 0, 0);
-
-	auto dice = Dice::FromPacked(dispIo->dicePacked);
-	auto diceCount = dice.GetCount();
-	auto diceSide = dice.GetSides();
-	auto diceMod = dice.GetModifier();
-
 
 	// get wield type
 	auto weaponUsed = dispIo->weapon;
@@ -4710,55 +4700,8 @@ int SpellCallbacks::EnlargePersonWeaponDice(DispatcherCallbackArgs args)
 	{
 		return 0;
 	}
-		
 
-	switch (dice.GetSides())
-	{
-	case 2:
-		diceSide = 3;
-		break;
-	case 3:
-		diceSide = 4;
-		break;
-	case 4:
-		diceSide = 6;
-		break;
-	case 6:
-		if (diceCount == 1)
-			diceSide = 8;
-		else if (diceCount <= 3)
-			diceCount++;
-		else
-			diceCount += 2;
-		break;
-	case 8:
-		if (diceCount == 1){
-			diceCount = 2;
-			diceSide = 6;
-		}
-		else if (diceCount <= 3)
-		{
-			diceCount++;
-		} 
-		else if (diceCount<=6 )	{
-			diceCount += 2;
-		}
-		else
-			diceCount += 4;
-		break;
-	case 10:
-		diceCount *= 2;
-		diceSide = 8;
-		break;
-	case 12:
-		diceCount = 3;
-		diceSide = 6;
-		break;
-	default:
-		break;
-	}
-
-	dispIo->dicePacked = Dice(diceCount, diceSide, diceMod).ToPacked();
+	dispIo->bonlist->AddBonus(1, 20, 0);
 
 	return 0;
 }
