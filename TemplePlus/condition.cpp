@@ -4628,6 +4628,7 @@ int SpellCallbacks::EnlargePersonWeaponDice(DispatcherCallbackArgs args)
 	args.dispIO->AssertType(dispIOType20);
 	auto dispIo = static_cast<DispIoAttackDice*>(args.dispIO);
 
+	logger->info("EnlargePersonWeaponDice fieldC: {}", dispIo->fieldC);
 
 	if (!dispIo->weapon)
 		return 0;
