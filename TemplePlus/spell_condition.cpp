@@ -425,7 +425,28 @@ public:
 			return 0;
 			});
 
-		
+		// Animal Growth stat modifiers
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100C60E0, [](DispatcherCallbackArgs args)->int {
+				auto dispIo = dispatch.DispIoCheckIoType2(args.dispIO);
+				Stat statDispatched = static_cast<Stat>(args.dispKey - 1);
+				Stat statTarget = static_cast<Stat>(args.GetData1());
+				int amount = args.GetData2();
+
+				if (statDispatched != statTarget) return 0;
+
+				switch(statTarget)
+				{
+				case stat_strength:
+				case stat_constitution:
+					dispIo->bonlist.AddBonus(amount, 20, 274);
+					break;
+				case stat_dexterity:
+					dispIo->bonlist.AddBonus(-amount, 20, 274);
+				default:
+					break;
+				}
+				return 0;
+		});
 
 		// Righteous Might Stat Bonus
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100CA440, [](DispatcherCallbackArgs args)->int {
