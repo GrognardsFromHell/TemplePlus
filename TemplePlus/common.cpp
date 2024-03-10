@@ -108,6 +108,38 @@ int BonusList::GetHighestBonus() const
 	return result;
 }
 
+int BonusList::GetLargestPenalty() const
+{
+	int result = 0;
+
+	for (size_t i = 0; i < bonCount; ++i) {
+		auto& bonus = bonusEntries[i];
+
+		auto value = bonus.bonValue;
+
+		if (value >= 0) continue;
+
+		size_t capIdx;
+		if (IsPenaltyCapped(i, &capIdx)) {
+			auto capValue = bonCaps[capIdx].capValue;
+
+			if (value < capValue) {
+				value = capValue;
+			}
+		}
+
+		if (!IsBonusSuppressed(i, nullptr) && result > value) {
+			result = value;
+		}
+	}
+
+	if (bonFlags & 2 && result < overallCapLow.bonValue) {
+		result = overallCapLow.bonValue;
+	}
+
+	return result;
+}
+
 bool BonusList::IsBonusSuppressed(size_t bonusIdx, size_t* suppressedByIdx) const {
 	Expects(bonusIdx < bonCount);
 
