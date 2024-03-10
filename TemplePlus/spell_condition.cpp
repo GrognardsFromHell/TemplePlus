@@ -433,10 +433,10 @@ public:
 			auto statDispatched = (Stat)(args.dispKey - 1);
 			if (statDispatched == args.GetData1()) {
 				if (statDispatched == stat_strength) {
-					dispIo->bonlist.AddBonus(4, 35, args.GetData2());
+					dispIo->bonlist.AddBonus(4, 20, args.GetData2());
 				}
 				if (statDispatched == stat_constitution) {
-					dispIo->bonlist.AddBonus(2, 35, args.GetData2());
+					dispIo->bonlist.AddBonus(2, 20, args.GetData2());
 				}
 			}
 			return 0;
