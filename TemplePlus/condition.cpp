@@ -105,6 +105,8 @@ public:
 
 
 	static int __cdecl EnlargePersonWeaponDice(DispatcherCallbackArgs args);
+	static int __cdecl EnlargeSizeCategory(DispatcherCallbackArgs args);
+	static int __cdecl ReduceSizeCategory(DispatcherCallbackArgs args);
 
 	static int __cdecl HezrouStenchObjEvent(DispatcherCallbackArgs args);
 	static int __cdecl HezrouStenchCountdown(DispatcherCallbackArgs args);
@@ -489,6 +491,10 @@ public:
 			
 		// Enlarge Person weapon damage dice modification
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100CA2B0, spCallbacks.EnlargePersonWeaponDice);
+
+		// Enlarge/Reduce size category replacements to avoid stacking
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100C6140, spCallbacks.EnlargeSizeCategory);
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100C97F0, spCallbacks.ReduceSizeCategory);
 
 		// power attack damage bonus and To Hit penalty
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100F8540, genericCallbacks.PowerAttackDamageBonus);
@@ -4750,6 +4756,32 @@ int SpellCallbacks::EnlargePersonWeaponDice(DispatcherCallbackArgs args)
 	}
 
 	dispIo->dicePacked = Dice(diceCount, diceSide, diceMod).ToPacked();
+
+	return 0;
+}
+
+int SpellCallbacks::EnlargeSizeCategory(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
+	int alreadyIncreased = dispIo->data1;
+
+	if (dispIo->return_val < 10 && !alreadyIncreased) {
+		dispIo->return_val++;
+		dispIo->data1 = 1;
+	}
+
+	return 0;
+}
+
+int SpellCallbacks::ReduceSizeCategory(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispatchIoCheckIoType7(args.dispIO);
+	int alreadyDecreased = dispIo->data2;
+
+	if (dispIo->return_val > 1 && !alreadyDecreased) {
+		dispIo->return_val--;
+		dispIo->data2 = 1;
+	}
 
 	return 0;
 }
