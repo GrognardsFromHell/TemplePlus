@@ -111,7 +111,7 @@ struct DispatcherSystem : temple::AddressTable
 	int DispatchDispelCheck(objHndl handle, int spellId, int flags, int returnValue);
 	int DispatchAttackBonus(objHndl objHnd, objHndl victim, DispIoAttackBonus* dispIo, enum_disp_type dispType, int key);
 	int DispatchToHitBonusBase(objHndl objHndCaller, DispIoAttackBonus* dispIo);
-	int DispatchGetSizeCategory(objHndl objHndCaller);
+	int DispatchGetSizeCategory(objHndl objHndCaller, bool base = false);
 	void DispatchConditionRemove(Dispatcher* dispatcher, CondNode* cond);
 	unsigned int Dispatch35CasterLevelModify(objHndl obj, SpellPacketBody* spellPkt);
 	void DispatchSpellResistanceCasterLevelCheck(objHndl caster, objHndl target, BonusList *bonlist, SpellPacketBody*spellPkt);

@@ -648,7 +648,7 @@ int DispatcherSystem::DispatchToHitBonusBase(objHndl objHndCaller, DispIoAttackB
 	return DispatchAttackBonus(objHndCaller, objHndl::null, dispIo, dispTypeToHitBonusBase, key);
 }
 
-int DispatcherSystem::DispatchGetSizeCategory(objHndl handle)
+int DispatcherSystem::DispatchGetSizeCategory(objHndl handle, bool base)
 {
 	auto obj = objSystem->GetObject(handle);
 	if (!obj) return 0;
@@ -658,8 +658,16 @@ int DispatcherSystem::DispatchGetSizeCategory(objHndl handle)
 
 	DispIoD20Query dispIo;
 	dispIo.return_val = obj->GetInt32(obj_f_size);
+
+	// Most size modifying spells (e.g. Enlarge Person) set these to 1 to avoid
+	// stacking, so initializing to 1 will get a 'base' value. data1 tracks
+	// enlargement, data2 tracks reduction.
+	if (base) {
+		dispIo.data1 = 1;
+		dispIo.data2 = 1;
+	}
 	
-	if (objects.IsCritter(handle) ) {
+	if (objects.IsCritter(handle)) {
 		auto polymorphHandle = critterSys.GetPolymorphedHandle(handle);
 		if (polymorphHandle) {
 			auto polyObj = objSystem->GetObject(polymorphHandle);

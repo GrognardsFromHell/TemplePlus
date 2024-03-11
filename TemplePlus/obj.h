@@ -127,7 +127,8 @@ struct Objects : temple::AddressTable {
 
 	Dice GetHitDice(objHndl handle); // This only makes sense for NPCs
 	int GetHitDiceNum(objHndl handle, bool getBase = true); // getBase = true is vanilla behavior; otherwise this does a dispatch taking into account negative levels
-	int GetSize(objHndl handle);
+
+	int GetSize(objHndl handle, bool getBase = false);
 	
 	// Get NPC reaction towards another critter
 	int GetReaction(objHndl of, objHndl towards) {

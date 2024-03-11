@@ -576,8 +576,8 @@ int Objects::GetHitDiceNum(objHndl handle, bool getBase) {
 	return result;
 }
 
-int Objects::GetSize(objHndl handle) {
-	return dispatch.DispatchGetSizeCategory(handle);
+int Objects::GetSize(objHndl handle, bool getBase) {
+	return dispatch.DispatchGetSizeCategory(handle, getBase);
 }
 
 objHndl Objects::Create(objHndl proto, locXY tile) {
