@@ -421,6 +421,7 @@ struct LegacyCritterSystem : temple::AddressTable
 	int GetCritterAttackType(objHndl obj, int attackIdx);
 	int GetRacialAttackBonus(objHndl);
 	int GetBaseAttackBonus(const objHndl& handle, Stat classBeingLeveld = Stat::stat_strength);
+	int GetAttackBonus(const objHndl& handle, D20CAF flags = D20CAF_NONE);
 	int GetArmorClass(objHndl obj, DispIoAttackBonus *dispIo = nullptr);
 	int GetRacialSavingThrowBonus(objHndl handle, SavingThrowType saveType);
 	objHndl GetRightWield(objHndl hndl);

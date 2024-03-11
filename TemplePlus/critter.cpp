@@ -1864,6 +1864,12 @@ int LegacyCritterSystem::GetBaseAttackBonus(const objHndl& handle, Stat classBei
 	return bab + racialBab;
 }
 
+int LegacyCritterSystem::GetAttackBonus(const objHndl& handle, D20CAF flags) {
+	DispIoAttackBonus dispIo;
+	dispIo.attackPacket.flags = flags;
+	return dispatcher.DispatchAttackBonus(handle, objHndl::null, dispIo, 0);
+}
+
 int LegacyCritterSystem::GetSpellLvlCanCast(const objHndl& handle, SpellSourceType spellSourceType, SpellReadyingType spellReadyingType){
 	
 	return 0;

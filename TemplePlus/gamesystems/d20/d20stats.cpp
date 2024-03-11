@@ -49,7 +49,11 @@ class D20StatsHooks : public TempleFix{
 		static int (__cdecl*orgStatBaseGetType3)(objHndl, Stat) = replaceFunction<int(objHndl, Stat)>(0x10074B30, [](objHndl handle, Stat stat){
 			if (!handle)
 				return 0;
-			return d20Stats.GetType3StatBase(handle, stat);
+			return d20Stats.GetPhysicalStatBase(handle, stat);
+		});
+
+		orgGetLevelBase = replaceFunction(0x10074CF0, [](objHndl handle, Stat stat) {
+				return GetBaseValue(handle, stat);
 		});
 
 		// StatLevelGetBase
@@ -65,8 +69,8 @@ class D20StatsHooks : public TempleFix{
 			if (statType == StatType::Feat)
 				return feats.HasFeatCountByClass(handle, (feat_enums)(stat - 1000));
 			
-			if (statType == StatType::Combat) {
-				return d20Stats.GetType3StatBase(handle, stat);
+			if (statType == StatType::Physical) {
+				return d20Stats.GetPhysicalStatBase(handle, stat);
 			}
 
 			if (statType == StatType::Psi)
@@ -82,8 +86,8 @@ class D20StatsHooks : public TempleFix{
 				return d20Stats.GetValue(handle, stat);
 			if (statType == StatType::SpellCasting)
 				return d20Stats.GetValue(handle, stat);
-			if (statType == StatType::Combat && (stat == stat_race ||stat == stat_subrace)){
-				return d20Stats.GetType3StatBase(handle, stat);
+			if (statType == StatType::Physical && (stat == stat_race ||stat == stat_subrace)){
+				return d20Stats.GetPhysicalStatLevel(handle, stat);
 			}
 			if (statType == StatType::Psi)
 				return d20Stats.GetPsiStat(handle, stat);
@@ -206,9 +210,9 @@ int D20StatsSystem::GetValue(const objHndl & handle, Stat stat, int statArg) con
 		return GetSpellCastingStat(handle, stat, statArg);
 	case StatType::Psi:
 		return GetPsiStat(handle, stat, statArg);
+	case StatType::Physical:
+		return GetPhysicalStatLevel(handle, stat);
 	case StatType::HitPoints:
-		// todo!
-	case StatType::Combat:
 		// todo!
 	case StatType::AbilityMods:
 		// todo
@@ -226,6 +230,18 @@ int D20StatsSystem::GetValue(const objHndl & handle, Stat stat, int statArg) con
 			//temple::GetRef<int(__cdecl)(objHndl, Stat)>(0x10074800)(handle, stat);
 	}
 	return 0;
+}
+
+int D20StatsSystem::GetBaseValue(const objHndl & handle, Stat stat, int statArg) const
+{
+	switch (GetType(stat)) {
+	case StatType::Abilities:
+		return objects.StatLevelGetBaseWithModifiers(handle, stat, nullptr);
+	case StatType::Physical:
+		return GetPhysicalStatBase(handle, stat);
+	default:
+		return orgGetLevelBase(handle, stat);
+	}
 }
 
 int D20StatsSystem::GetLevelStat(const objHndl &handle, Stat stat) const
@@ -297,27 +313,35 @@ int D20StatsSystem::GetPsiStatBase(const objHndl & handle, Stat stat, int statAr
 	return 0;
 }
 
-int D20StatsSystem::GetType3StatBase(const objHndl & handle, Stat stat) const
+int D20StatsSystem::GetPhysicalStatBase(const objHndl & handle, Stat stat) const
 {
 	switch(stat){
+	case stat_ac:
+		return critterSys.GetArmorClass(handle);
+	case stat_damage_bonus:
+		return GetBaseValue(handle, stat_str_mod);
+	case stat_domain_1:
+		return static_cast<int>(objects.getInt32(handle, obj_f_critter_domain_1));
+	case stat_domain_2:
+		return = static_cast<int>(objects.getInt32(obj, obj_f_critter_domain_2));
 	case stat_weight:
-		return (int)(objects.getInt32(handle, obj_f_critter_weight));
+		return static_cast<int>(objects.getInt32(handle, obj_f_critter_weight));
 	case stat_height:
-		return (int)(objects.getInt32(handle, obj_f_critter_height));
+		return static_cast<int>(objects.getInt32(handle, obj_f_critter_height));
 	case stat_deity:
-		return (int)(objects.getInt32(handle, obj_f_critter_deity));
+		return static_cast<int>(objects.getInt32(handle, obj_f_critter_deity));
 	case stat_race:
-		return (int)(objects.getInt32(handle, obj_f_critter_race) & 0x1F);
+		return static_cast<int>(objects.getInt32(handle, obj_f_critter_race) & 0x1F);
 	case stat_subrace:
-		return (int)(objects.getInt32(handle, obj_f_critter_race) >> 5); // vanilla didn't bitshift
+		return static_cast<int>(objects.getInt32(handle, obj_f_critter_race) >> 5); // vanilla didn't bitshift
 	case stat_gender:
-		return (int)(objects.getInt32(handle, obj_f_critter_gender));
+		return static_cast<int>(objects.getInt32(handle, obj_f_critter_gender));
 	case stat_size:
 		return objects.GetSize(handle, true);
 	case stat_alignment:
-		return (int)(objects.getInt32(handle, obj_f_critter_alignment));
+		return static_cast<int>(objects.getInt32(handle, obj_f_critter_alignment));
 	case stat_experience:
-		return (int)(objects.getInt32(handle, obj_f_critter_experience));
+		return static_cast<int>(objects.getInt32(handle, obj_f_critter_experience));
 	case stat_attack_bonus:
 		return critterSys.GetBaseAttackBonus(handle);
 	case stat_melee_attack_bonus:
@@ -330,6 +354,25 @@ int D20StatsSystem::GetType3StatBase(const objHndl & handle, Stat stat) const
 	}
 	
 	return 0;
+}
+
+int D20StatsSystem::GetPhysicalStatLevel(const objHndl & handle, Stat stat) const
+{
+	switch(stat) {
+	case stat_size:
+		return objects.GetSize(handle);
+	case stat_attack_bonus:
+	case stat_melee_attack_bonus:
+		return critterSys.GetAttackBonus(handle);
+	case stat_ranged_attack_bonus:
+		return critterSys.GetAttackBonus(handle, D20CAF_RANGED);
+	case stat_ac:
+		return critterSys.GetArmorClass(handle);
+	case stat_damage_bonus:
+		return GetValue(stat_str_mod);
+	default:
+		GetPhysicalStatBase(handle, stat);
+	}
 }
 
 bool D20StatsSystem::AlignmentsUnopposed(Alignment a, Alignment b, bool strictCheck){
@@ -548,7 +591,7 @@ StatType D20StatsSystem::GetType(Stat stat) {
 	case stat_subrace:
 	case stat_melee_attack_bonus:
 	case stat_ranged_attack_bonus:
-		return StatType::Combat;
+		return StatType::Physical;
 
 	case stat_movement_speed:
 	case stat_run_speed:
