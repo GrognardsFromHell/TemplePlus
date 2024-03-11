@@ -2,4 +2,4 @@ name: Agile Shield Fighter
 flags: 12582928
 prereqs:
 description: When making a shield bash and armed strike attack as part of a full attack action, you take a -2 penalty on each attack. These penalties replace the normal ones you incur for fighting with two weapons.
-prereq descr: Improved Shield Bash, Shield Specialization and Shield Specialization.
+prereq descr: Shield Proficiency, Improved Shield Bash and Shield Specialization.
