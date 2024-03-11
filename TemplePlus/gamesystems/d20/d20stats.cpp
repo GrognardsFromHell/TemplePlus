@@ -13,7 +13,8 @@
 D20StatsSystem d20Stats;
 
 class D20StatsHooks : public TempleFix{
-	
+	int(__cdecl*orgGetLevelBase)(objHndl, Stat);
+
 	void apply() override {
 		
 		replaceFunction<BOOL(Alignment, Alignment)>(0x1004A8F0, [](Alignment a, Alignment b)->BOOL{
@@ -52,32 +53,10 @@ class D20StatsHooks : public TempleFix{
 			return d20Stats.GetPhysicalStatBase(handle, stat);
 		});
 
-		orgGetLevelBase = replaceFunction(0x10074CF0, [](objHndl handle, Stat stat) {
-				return GetBaseValue(handle, stat);
-		});
-
-		// StatLevelGetBase
-		static int(__cdecl*orgGetLevelBase)(objHndl, Stat) = replaceFunction<int(objHndl, Stat)>(0x10074CF0, [](objHndl handle, Stat stat)->int {
-			auto statType = d20Stats.GetType(stat);
-
-			if (statType == StatType::Abilities){
-				return objSystem->GetObject(handle)->GetInt32(obj_f_critter_abilities_idx, stat);
-			}
-			if (statType == StatType::Level)
-				return d20Stats.GetValue(handle, stat);
-
-			if (statType == StatType::Feat)
-				return feats.HasFeatCountByClass(handle, (feat_enums)(stat - 1000));
-			
-			if (statType == StatType::Physical) {
-				return d20Stats.GetPhysicalStatBase(handle, stat);
-			}
-
-			if (statType == StatType::Psi)
-				return d20Stats.GetPsiStatBase(handle, stat);
-
-			return orgGetLevelBase(handle, stat);
-		});
+		orgGetLevelBase =
+			replaceFunction<int(objHndl, Stat)>(0x10074CF0, [](objHndl handle, Stat stat) {
+				return d20Stats.GetBaseValue(handle, stat);
+			});
 
 		// StatLevelGet
 		static int(__cdecl*orgGetLevel)(objHndl, Stat)  = replaceFunction<int(objHndl, Stat)>(0x10074800, [](objHndl handle, Stat stat)->int {
@@ -240,7 +219,7 @@ int D20StatsSystem::GetBaseValue(const objHndl & handle, Stat stat, int statArg)
 	case StatType::Physical:
 		return GetPhysicalStatBase(handle, stat);
 	default:
-		return orgGetLevelBase(handle, stat);
+		return d20StatsHooks.orgGetLevelBase(handle, stat);
 	}
 }
 
@@ -323,7 +302,7 @@ int D20StatsSystem::GetPhysicalStatBase(const objHndl & handle, Stat stat) const
 	case stat_domain_1:
 		return static_cast<int>(objects.getInt32(handle, obj_f_critter_domain_1));
 	case stat_domain_2:
-		return = static_cast<int>(objects.getInt32(obj, obj_f_critter_domain_2));
+		return static_cast<int>(objects.getInt32(obj, obj_f_critter_domain_2));
 	case stat_weight:
 		return static_cast<int>(objects.getInt32(handle, obj_f_critter_weight));
 	case stat_height:
@@ -369,7 +348,7 @@ int D20StatsSystem::GetPhysicalStatLevel(const objHndl & handle, Stat stat) cons
 	case stat_ac:
 		return critterSys.GetArmorClass(handle);
 	case stat_damage_bonus:
-		return GetValue(stat_str_mod);
+		return GetValue(handle, stat_str_mod);
 	default:
 		GetPhysicalStatBase(handle, stat);
 	}

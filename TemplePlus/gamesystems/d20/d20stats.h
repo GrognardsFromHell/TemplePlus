@@ -66,8 +66,6 @@ private:
 	MesHandle statMesExt = 0;
 	MesHandle statEnum =0;
 	
-	int (__cdecl*orgGetLevelBase)(objHnd, Stat);
-
 	const char* statMesStrings[_stat_count] = {nullptr,};
 	const char* statEnumStrings[_stat_count] = { nullptr, };
 	const char* statRulesStrings[_stat_count] = { nullptr, };
