@@ -13,6 +13,7 @@
 D20StatsSystem d20Stats;
 
 class D20StatsHooks : public TempleFix{
+	friend class D20StatsSystem;
 	int(__cdecl*orgGetLevelBase)(objHndl, Stat);
 
 	void apply() override {
@@ -302,7 +303,7 @@ int D20StatsSystem::GetPhysicalStatBase(const objHndl & handle, Stat stat) const
 	case stat_domain_1:
 		return static_cast<int>(objects.getInt32(handle, obj_f_critter_domain_1));
 	case stat_domain_2:
-		return static_cast<int>(objects.getInt32(obj, obj_f_critter_domain_2));
+		return static_cast<int>(objects.getInt32(handle, obj_f_critter_domain_2));
 	case stat_weight:
 		return static_cast<int>(objects.getInt32(handle, obj_f_critter_weight));
 	case stat_height:
