@@ -52,7 +52,7 @@ class D20StatsHooks : public TempleFix{
 			return d20Stats.GetPhysicalStatBase(handle, stat);
 		});
 
-		auto orgGetLevelBase =
+		static auto orgGetLevelBase =
 			replaceFunction<int(objHndl, Stat)>(0x10074CF0, [](objHndl handle, Stat stat) {
 				switch (d20Stats.GetType(stat))
 				{
