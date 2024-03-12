@@ -13,8 +13,6 @@
 D20StatsSystem d20Stats;
 
 class D20StatsHooks : public TempleFix{
-	friend class D20StatsSystem;
-	int(__cdecl*orgGetLevelBase)(objHndl, Stat);
 
 	void apply() override {
 		
@@ -48,15 +46,29 @@ class D20StatsHooks : public TempleFix{
 			return d20Stats.GetLevelStat(handle, stat);
 		});
 
-		static int (__cdecl*orgStatBaseGetType3)(objHndl, Stat) = replaceFunction<int(objHndl, Stat)>(0x10074B30, [](objHndl handle, Stat stat){
+		replaceFunction<int(objHndl, Stat)>(0x10074B30, [](objHndl handle, Stat stat){
 			if (!handle)
 				return 0;
 			return d20Stats.GetPhysicalStatBase(handle, stat);
 		});
 
-		orgGetLevelBase =
+		auto orgGetLevelBase =
 			replaceFunction<int(objHndl, Stat)>(0x10074CF0, [](objHndl handle, Stat stat) {
-				return d20Stats.GetBaseValue(handle, stat);
+				switch (d20Stats.GetType(stat))
+				{
+				case StatType::Abilities:
+					return objSystem->GetObject(handle)->GetInt32(obj_f_critter_abilities_idx, stat);
+				case StatType::Level:
+					return d20Stats.GetValue(handle, stat);
+				case StatType::Feat:
+					return feats.HasFeatCountByClass(handle, static_cast<feat_enums>(stat - 1000));
+				case StatType::Physical:
+					return d20Stats.GetPhysicalStatBase(handle, stat);
+				case StatType::Psi:
+					return d20Stats.GetPsiStatBase(handle, stat);
+				default:
+					return orgGetLevelBase(handle, stat);
+				}
 			});
 
 		// StatLevelGet
@@ -220,7 +232,7 @@ int D20StatsSystem::GetBaseValue(const objHndl & handle, Stat stat, int statArg)
 	case StatType::Physical:
 		return GetPhysicalStatBase(handle, stat);
 	default:
-		return d20StatsHooks.orgGetLevelBase(handle, stat);
+		return objects.StatLevelGetBase(handle, stat);
 	}
 }
 
