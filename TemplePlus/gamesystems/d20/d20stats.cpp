@@ -74,19 +74,19 @@ class D20StatsHooks : public TempleFix{
 
 		// StatLevelGet
 		static int(__cdecl*orgGetLevel)(objHndl, Stat)  = replaceFunction<int(objHndl, Stat)>(0x10074800, [](objHndl handle, Stat stat)->int {
-			auto statType = d20Stats.GetType(stat);
-			if (statType == StatType::Level)
+			switch (d20Stats.GetType(stat))
+			{
+			case StatType::Level:
 				return d20Stats.GetValue(handle, stat);
-			if (statType == StatType::SpellCasting)
+			case StatType::SpellCasting:
 				return d20Stats.GetValue(handle, stat);
-			if (statType == StatType::Physical && (stat == stat_race ||stat == stat_subrace)){
+			case StatType::Physical:
 				return d20Stats.GetPhysicalStatLevel(handle, stat);
-			}
-			if (statType == StatType::Psi)
+			case StatType::Psi:
 				return d20Stats.GetPsiStat(handle, stat);
-			
-
-			return orgGetLevel(handle, stat);
+			default:
+				return orgGetLevel(handle, stat);
+			}
 		});
 
 		replaceFunction<const char*(Stat)>(0x10074980, [](Stat stat)->const char*{
