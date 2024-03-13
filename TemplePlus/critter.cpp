@@ -1625,24 +1625,46 @@ uint32_t LegacyCritterSystem::IsSubtypeWater(objHndl objHnd)
 	return IsCategorySubtype(objHnd, mc_subtype_water);
 }
 
-/* 0x100B52D0 */
-float LegacyCritterSystem::GetReach(objHndl obj, D20ActionType actType, /*added in Temple+:*/ float* minReach ) {
+float LegacyCritterSystem::GetNaturalReach(objHndl obj)
+{
+	objHndl critter = obj;
 
-	float naturalReach = (float)objects.getInt32(obj, obj_f_critter_reach);
-	
 	// Temple+: fixed wildshape reach
 	auto protoId = d20Sys.d20Query(obj, DK_QUE_Polymorphed);
 	if (protoId) {
-		auto protoHandle = gameSystems->GetObj().GetProtoHandle(protoId);
-		if (protoHandle) {
-			naturalReach = (float)gameSystems->GetObj().GetObject(protoHandle)->GetInt32(obj_f_critter_reach);
+		auto polyHandle = gameSystems->GetObj().GetProtoHandle(protoId);
+		if (polyHandle) critter = polyHandle;
+	}
+
+	float reach = static_cast<float>(objects.getInt32(critter, obj_f_critter_reach));
+	int baseSize = objects.GetSize(obj, true);
+	int curSize = objects.GetSize(obj, false);
+
+	if (baseSize > curSize) {
+		// for each size up from baseSize or medium, ...
+		for(int i = std::max(5, baseSize); i < curSize; i++) {
+			if(reach < 20.0) reach += 5.0;
+			else reach += 10.0;
+		}
+	} else {
+		// for each size down, ...
+		for(int i = baseSize; i > curSize; i--) {
+			if(reach >= 30.0) reach -= 10.0;
+			else reach -= 5.0;
 		}
 	}
 
-	if (naturalReach < 0.01) {
-		naturalReach = 5.0;
-	}
+	// small creatures don't lose all reach
+	if (reach < 0.01 && curSize >= 4)
+		reach = 5.0;
 
+	return reach;
+}
+
+/* 0x100B52D0 */
+float LegacyCritterSystem::GetReach(objHndl obj, D20ActionType actType, /*added in Temple+:*/ float* minReach ) {
+
+	float naturalReach = GetNaturalReach(obj);
 
 	float weaponReach = 0.0f;
 	float weaponMinReach = 0.0f;
