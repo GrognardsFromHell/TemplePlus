@@ -1640,7 +1640,7 @@ float ReachForSize(int adjustedSize)
 {
 	// so that tiny creatures still threaten the 'square' they occupy.
 	if (adjustedSize <= 3) return 2.5;
-	else if (adjustedSize <= 5) return 5.0;
+	else if (adjustedSize <= 5) return 7.5;
 	else if (adjustedSize == 6) return 10.0;
 	else if (adjustedSize == 7) return 15.0;
 	// in case you somehow have a collossal creature with bonus reach
