@@ -1625,6 +1625,41 @@ uint32_t LegacyCritterSystem::IsSubtypeWater(objHndl objHnd)
 	return IsCategorySubtype(objHnd, mc_subtype_water);
 }
 
+// Standard reach for 'tall' creatures.
+//
+// Note: this is reach beyond the actual 'occupied' space, which is
+// probably underestimated by ToEE.
+int StdReachForSize(int size)
+{
+	if (size < 4) return 0;
+	if (size < 9) return 5 * std::max(1, size - 4);
+	return 20 + 10*(size - 8);
+}
+
+float ReachForSize(int adjustedSize)
+{
+	// so that tiny creatures still threaten the 'square' they occupy.
+	if (adjustedSize <= 3) return 2.5;
+	else if (adjustedSize <= 5) return 5.0;
+	else if (adjustedSize == 6) return 10.0;
+	else if (adjustedSize == 7) return 15.0;
+	// in case you somehow have a collossal creature with bonus reach
+	else return 20.0 + 10.0*(adjustedSize-8);
+}
+
+// Tries to infer an adjustment to the creature's size that makes the
+// standard reach match their actual reach.
+int DetermineReachOffset(int baseReach, int baseSize)
+{
+	auto exReach = StdReachForSize(baseSize);
+	auto guess = (baseReach - exReach) / 5;
+	auto diff = baseReach - StdReachForSize(baseSize + guess);
+
+	if (diff >= 5) return guess+1;
+	else if (diff <= -5) return guess-1;
+	else return guess;
+}
+
 float LegacyCritterSystem::GetNaturalReach(objHndl obj)
 {
 	objHndl critter = obj;
@@ -1636,29 +1671,19 @@ float LegacyCritterSystem::GetNaturalReach(objHndl obj)
 		if (polyHandle) critter = polyHandle;
 	}
 
-	float reach = static_cast<float>(objects.getInt32(critter, obj_f_critter_reach));
-	int baseSize = objects.GetSize(obj, true);
+	int ireach = objects.getInt32(critter, obj_f_critter_reach);
 	int curSize = objects.GetSize(obj, false);
 
-	if (baseSize > curSize) {
-		// for each size up from baseSize or medium, ...
-		for(int i = std::max(5, baseSize); i < curSize; i++) {
-			if(reach < 20.0) reach += 5.0;
-			else reach += 10.0;
-		}
-	} else {
-		// for each size down, ...
-		for(int i = baseSize; i > curSize; i--) {
-			if(reach >= 30.0) reach -= 10.0;
-			else reach -= 5.0;
-		}
-	}
+	if (0 == ireach) return ReachForSize(curSize);
 
-	// small creatures don't lose all reach
-	if (reach < 0.01 && curSize >= 4)
-		reach = 5.0;
+	int baseSize = objects.GetSize(obj, true);
+	float reach = static_cast<float>(ireach);
 
-	return reach;
+	if (baseSize == curSize) return reach;
+
+	int extraOff = DetermineReachOffset(ireach, baseSize);
+
+	return ReachForSize(curSize + extraOff);
 }
 
 /* 0x100B52D0 */
