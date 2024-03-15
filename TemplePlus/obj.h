@@ -129,6 +129,10 @@ struct Objects : temple::AddressTable {
 	int GetHitDiceNum(objHndl handle, bool getBase = true); // getBase = true is vanilla behavior; otherwise this does a dispatch taking into account negative levels
 
 	int GetSize(objHndl handle, bool getBase = false);
+
+	// Gets the number of steps by which size-changing magic has modified the
+	// object. Positive is increase, negative is decrease.
+	int GetSizeOffset(objHndl handle);
 	
 	// Get NPC reaction towards another critter
 	int GetReaction(objHndl of, objHndl towards) {

@@ -412,6 +412,7 @@ float Objects::GetRadius(objHndl handle)
 	auto radiusSet = obj->GetFlags() & OF_RADIUS_SET;
 	objHndl protoHandle;
 	float protoRadius;
+	int sizeOff = GetSizeOffset(handle);
 	if (radiusSet){
 		auto radius = obj->GetFloat(obj_f_radius);
 
@@ -426,7 +427,12 @@ float Objects::GetRadius(objHndl handle)
 					obj->SetFloat(obj_f_radius, protoRadius);
 				}
 			}
-			
+			if(sizeOff >= 0)
+				for(int i = 0; i < sizeOff; i++)
+					radius *= 2.0;
+			else
+				for(int i = 0; i > sizeOff; i--)
+					radius /= 2.0;
 		}
 		if (radius < 2000.0 && radius > 0)
 		{
@@ -578,6 +584,12 @@ int Objects::GetHitDiceNum(objHndl handle, bool getBase) {
 
 int Objects::GetSize(objHndl handle, bool getBase) {
 	return dispatch.DispatchGetSizeCategory(handle, getBase);
+}
+
+int Objects::GetSizeOffset(objHndl handle) {
+	auto base = GetSize(handle, true);
+	auto curr = GetSize(handle, false);
+	return curr - base;
 }
 
 objHndl Objects::Create(objHndl proto, locXY tile) {
