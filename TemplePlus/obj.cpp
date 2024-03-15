@@ -346,7 +346,7 @@ Objects::Objects()
 
 	rebase(_SetFlag,	0x10020F50);
 	rebase(_ClearFlag,	0x10021020);
-	rebase(_GetRadius,	0x10021C40);
+	// rebase(_GetRadius,	0x10021C40);
 
 	rebase(_Destroy,	0x100257A0);
 	rebase(_Move,		0x10025950);
@@ -1118,6 +1118,10 @@ public:
 			if (anim) {
 				objects.UpdateRenderHeight(objId, *anim);
 			}
+		});
+
+		replaceFunction<float(objHndl)>(0x10021C40, [](objHndl obj) {
+				return objects.GetRadius(obj);
 		});
 
 		// obj_update_radius
