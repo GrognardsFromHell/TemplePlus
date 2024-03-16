@@ -355,18 +355,20 @@ int D20StatsSystem::GetPhysicalStatLevel(const objHndl & handle, Stat stat) cons
 	auto baseSize = objects.GetSize(handle, true);
 	auto sizeDiff = curSize - baseSize;
 
+	int base = 0;
+
 	// TODO: polymorph
 	switch(stat) {
 	case stat_size:
 		return curSize;
 	case stat_height:
-		auto base = static_cast<int>(objects.getInt32(handle, obj_f_critter_height));
+		base = static_cast<int>(objects.getInt32(handle, obj_f_critter_height));
 		// height roughly doubles for every size category
 		if (sizeDiff > 0) return base << sizeDiff;
 		if (sizeDiff < 0) return base >> (-sizeDiff);
 		return base;
 	case stat_weight:
-		auto base = static_cast<int>(objects.getInt32(handle, obj_f_critter_weight));
+		base = static_cast<int>(objects.getInt32(handle, obj_f_critter_weight));
 		if (sizeDiff > 0) return base << (3*sizeDiff);
 		if (sizeDiff < 0) return base >> (3*sizeDiff);
 		return base;
