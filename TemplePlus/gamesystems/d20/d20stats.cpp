@@ -351,9 +351,25 @@ int D20StatsSystem::GetPhysicalStatBase(const objHndl & handle, Stat stat) const
 
 int D20StatsSystem::GetPhysicalStatLevel(const objHndl & handle, Stat stat) const
 {
+	auto curSize = objects.GetSize(handle, false);
+	auto baseSize = objects.GetSize(handle, true);
+	auto sizeDiff = curSize - baseSize;
+
+	// TODO: polymorph
 	switch(stat) {
 	case stat_size:
-		return objects.GetSize(handle);
+		return curSize;
+	case stat_height:
+		auto base = static_case<int>(objects.getInt32(handle, obj_f_critter_height));
+		// height roughly doubles for every size category
+		if (sizeDiff > 0) return base << sizeDiff;
+		if (sizeDiff < 0) return base >> (-sizeDiff);
+		return base;
+	case stat_weight:
+		auto base = static_cast<int>(objects.getInt32(handle, obj_f_critter_weight));
+		if (sizeDiff > 0) return base << (3*sizeDiff);
+		if (sizeDiff < 0) return base >> (3*sizeDiff);
+		return base;
 	case stat_attack_bonus:
 	case stat_melee_attack_bonus:
 		return critterSys.GetAttackBonus(handle);
