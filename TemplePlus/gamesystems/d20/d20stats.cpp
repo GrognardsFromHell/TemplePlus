@@ -360,7 +360,7 @@ int D20StatsSystem::GetPhysicalStatLevel(const objHndl & handle, Stat stat) cons
 	case stat_size:
 		return curSize;
 	case stat_height:
-		auto base = static_case<int>(objects.getInt32(handle, obj_f_critter_height));
+		auto base = static_cast<int>(objects.getInt32(handle, obj_f_critter_height));
 		// height roughly doubles for every size category
 		if (sizeDiff > 0) return base << sizeDiff;
 		if (sizeDiff < 0) return base >> (-sizeDiff);
