@@ -406,33 +406,61 @@ uint32_t Objects::abilityScoreLevelGet(objHndl objHnd, Stat stat, DispIO* dispIO
 	return result;
 }
 
+float AdjustRadiusSize(float baseRadius, int baseSize, int curSize)
+{
+	if (baseSize == curSize) return baseRadius;
+
+	float radius = baseRadius;
+
+	// TODO: audit this w/r/t common radii for actual creature sizes.
+	//
+	// Note that the ToEE settings are on the small side. Standard medium is 25,
+	// and that is multiplied by 0.75 to get the radius in inches (I believe). So
+	// most mediums occupy just over a 3ft. diameter circle of actual space.
+	if(curSize >= baseSize)
+		for(int i = baseSize; i < curSize; i++)
+			if (i == 4) radius += 5.0; // small -> medium
+			else if (i == 3) radius = 20.0; // tiny -> small
+			else if (5 <= i && i <= 7) radius += 25.0; // add typical medium radius
+			else if (i > 7) radius += 50.0; // double medium radius for >=colossal
+			// else leave radius alone for tiny and below
+	else
+		for(int i = baseSize; i > curSize; i--)
+			if (i == 4) radius = 10.0; // small -> tiny
+			else if (i == 5) radius -= 5.0; // medium -> small
+			else if (i <= 8) radius -= 25.0; // < colossal
+			else if (i > 8) radius -= 50.0; // >= colossal
+			// else leave radius alone
+
+	return radius;
+}
+
 float Objects::GetRadius(objHndl handle)
 {
 	auto obj = gameSystems->GetObj().GetObject(handle);
 	auto radiusSet = obj->GetFlags() & OF_RADIUS_SET;
 	objHndl protoHandle;
 	float protoRadius;
-	int sizeOff = GetSizeOffset(handle);
+
+	int baseSize = GetSize(handle, true);
+	int curSize = GetSize(handle, false);
+
 	if (radiusSet){
 		auto radius = obj->GetFloat(obj_f_radius);
 
 		if ( radius < 2000.0 && radius > 0){
-			 protoHandle = obj->GetObjHndl(obj_f_prototype_handle);
+			protoHandle = obj->GetObjHndl(obj_f_prototype_handle);
 			if (protoHandle){
 				auto protoObj = gameSystems->GetObj().GetObject(protoHandle);
-				protoRadius = protoObj->GetFloat( obj_f_radius);
+				protoRadius = protoObj->GetFloat(obj_f_radius);
 				if (protoRadius > 0.0)
 				{
 					radius = protoRadius;
 					obj->SetFloat(obj_f_radius, protoRadius);
 				}
 			}
-			if(sizeOff >= 0)
-				for(int i = 0; i < sizeOff; i++)
-					radius *= 2.0;
-			else
-				for(int i = 0; i > sizeOff; i--)
-					radius /= 2.0;
+
+			radius = AdjustRadiusSize(radius, baseSize, curSize);
 		}
 		if (radius < 2000.0 && radius > 0)
 		{
