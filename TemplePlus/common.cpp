@@ -75,7 +75,7 @@ int BonusList::GetBaseScaled(float factor) const
 	int exponent = 0;
 
 	for (size_t i = 0; i < bonCount; ++i) {
-		auto& bonus = bonusEntires[i];
+		auto& bonus = bonusEntries[i];
 		auto  value = bonus.bonValue;
 
 		if (IsBonusSuppressed(i, nullptr)) continue;
