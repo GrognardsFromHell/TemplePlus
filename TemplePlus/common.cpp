@@ -69,6 +69,50 @@ int BonusList::GetEffectiveBonusSum() const {
 	return result;
 }
 
+int BonusList::GetBaseScaled(float factor)
+{
+	int initial = 0;
+	int exponent = 0;
+
+	for (size_t i = 0; i < bonCount; ++i) {
+		auto& bonus = bonusEntires[i];
+		auto  value = bonus.bonValue;
+
+		size_t capIdx;
+		if (IsBonusCapped(i, &capIdx)) {
+			auto capValue = bonCaps[capIdx].capValue;
+
+			if (value > 0 && value > capValue) {
+				value = capValue;
+			} else if (value < 0 && value < capValue) {
+				value = capValue;
+			}
+		}
+		if (!IsBonusSuppressed(i, nullptr)) {
+			if (1 == bonus.bonType) {
+				initial = value;
+			} else {
+				exponent += value;
+			}
+		}
+	}
+
+	if (exponent == 0) return initial;
+
+	float scaled = static_cast<float>(initial);
+	if (exponent < 0) {
+		for (int i = 0; i > exponent; i--) {
+			scaled /= factor;
+		}
+	} else {
+		for (int i = 0; i < exponent; i++) {
+			scaled *= factor;
+		}
+	}
+
+	return static_cast<int>(scaled);
+}
+
 /* 0x100E6680 */
 int BonusList::GetHighestBonus() const
 {

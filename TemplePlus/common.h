@@ -147,6 +147,13 @@ struct BonusList
 	int GetLargestPenalty() const;
 
 	/**
+	 * Gets the base value (bonus type 1) scaled by the factor, using the other
+	 * bonus types as exponents. The other bonuses are summed in the normal
+	 * fashion before using them as the exponent to the factor.
+	 */
+	int GetBaseScaled(float factor) const;
+
+	/**
 	 * Returns true if the given bonus is suppressed by another bonus (i.e. of the same type and
 	 * the bonus type does not stack). If true is returned, the idx of the supressing bonus is returned
 	 * in suppressedByIdx.
