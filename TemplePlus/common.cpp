@@ -69,7 +69,7 @@ int BonusList::GetEffectiveBonusSum() const {
 	return result;
 }
 
-int BonusList::GetBaseScaled(float factor)
+int BonusList::GetBaseScaled(float factor) const
 {
 	int initial = 0;
 	int exponent = 0;
@@ -77,6 +77,8 @@ int BonusList::GetBaseScaled(float factor)
 	for (size_t i = 0; i < bonCount; ++i) {
 		auto& bonus = bonusEntires[i];
 		auto  value = bonus.bonValue;
+
+		if (IsBonusSuppressed(i, nullptr)) continue;
 
 		size_t capIdx;
 		if (IsBonusCapped(i, &capIdx)) {
@@ -88,12 +90,11 @@ int BonusList::GetBaseScaled(float factor)
 				value = capValue;
 			}
 		}
-		if (!IsBonusSuppressed(i, nullptr)) {
-			if (1 == bonus.bonType) {
-				initial = value;
-			} else {
-				exponent += value;
-			}
+
+		if (1 == bonus.bonType) {
+			initial = value;
+		} else {
+			exponent += value;
 		}
 	}
 
