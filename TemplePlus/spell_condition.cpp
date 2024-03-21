@@ -242,6 +242,23 @@ public:
 				if (ShouldRemoveInvisibility(args.objHndCaller, evtObj, args) && spPkt.targetCount && spPkt.targetListHandles[0])
 					d20Sys.d20SendSignal(spPkt.targetListHandles[0], DK_SIG_Spell_End, spellId, 0);
 			}
+
+			// Enlarge/Reduce fixes
+			switch (spPkt.spellEnum) {
+			case 7: // Animal Growth
+			case 152: // Enlarge Person
+			case 552: // Reduce Animal
+			case 386: // Reduce Person
+			case 404: // Righteous Might
+				d20Sys.d20SendSignal(args.objHndCaller, DK_SIG_Spell_End, spellId, 0);
+				spPkt.EndPartsysForTgtObj(args.objHndCaller);
+				spPkt.RemoveObjFromTargetList(args.objHndCaller);
+				pySpellIntegration.SpellSoundPlay(&spPkt, SpellEvent::EndSpellCast);
+				spellSys.SpellEnd(spellId, 0);
+				args.RemoveSpellMod();
+				critterSys.UpdateModelEquipment(args.objHndCaller);
+				return 0;
+			}
 			
 			SpellEntry spEntry(spPkt.spellEnum);
 			if (spEntry.IsBaseModeTarget(UiPickerType::Wall)){

@@ -194,6 +194,7 @@ public:
 
 	static int __cdecl PreferOneHandedWieldRadialMenu(DispatcherCallbackArgs args);
 	static int __cdecl PreferOneHandedWieldQuery(DispatcherCallbackArgs args);
+	static int __cdecl UpdateModelEquipment(DispatcherCallbackArgs args);
 
 } genericCallbacks;
 
@@ -495,6 +496,10 @@ public:
 		// Enlarge/Reduce size category replacements to avoid stacking
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100C6140, spCallbacks.EnlargeSizeCategory);
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100C97F0, spCallbacks.ReduceSizeCategory);
+
+		// Enlarge/Reduce/Animal Growth/Righteous Might model scaling
+		reaplceFunction<int(DispatcherCallbackArgs)>(0x100CF2C0, genericCallbacks.UpdateModelEquipment);
+		reaplceFunction<int(DispatcherCallbackArgs)>(0x100CD430, genericCallbacks.UpdateModelEquipment);
 
 		// power attack damage bonus and To Hit penalty
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100F8540, genericCallbacks.PowerAttackDamageBonus);
@@ -1653,6 +1658,12 @@ int GenericCallbacks::PreferOneHandedWieldQuery(DispatcherCallbackArgs args)
 	auto isCurrentlyOn = args.GetCondArg(0);
 
 	dispIo->return_val = isCurrentlyOn;
+	return 0;
+}
+
+int GenericCallbacks::UpdateModelEquipment(DispatcherCallbackArgs args)
+{
+	critterSys.UpdateModelEquipment(args.objHndCaller);
 	return 0;
 }
 
