@@ -4765,7 +4765,7 @@ int SpellCallbacks::EnlargeExponent(DispatcherCallbackArgs args)
 	auto dispIo = dispatch.DispIoCheckIoType13(args.dispIO);
 	if (!dispIo) return 0;
 
-	dispIo->bonlist.AddBonus(1, 20, 0);
+	dispIo->bonlist->AddBonus(1, 20, 0);
 
 	return 0;
 }
@@ -4775,7 +4775,7 @@ int SpellCallbacks::ReduceExponent(DispatcherCallbackArgs args)
 	auto dispIo = dispatch.DispIoCheckIoType13(args.dispIO);
 	if (!dispIo) return 0;
 
-	dispIo->bonlist.AddBonus(-1, 20, 0);
+	dispIo->bonlist->AddBonus(-1, 20, 0);
 
 	return 0;
 }
