@@ -98,8 +98,8 @@ struct DispatcherSystem : temple::AddressTable
 	DispIoDispelCheck* DispIOCheckIoType11(DispIoDispelCheck* dispIo);
 	static DispIoD20ActionTurnBased* DispIoCheckIoType12(DispIoD20ActionTurnBased* dispIo);
 	DispIoD20ActionTurnBased* DispIoCheckIoType12(DispIO* dispIo);
-	DispIoMoveSpeed * DispIOCheckIoType13(DispIoMoveSpeed* dispIo);
-	DispIoMoveSpeed * DispIOCheckIoType13(DispIO* dispIo);
+	DispIoMoveSpeed * DispIoCheckIoType13(DispIoMoveSpeed* dispIo);
+	DispIoMoveSpeed * DispIoCheckIoType13(DispIO* dispIo);
 	static DispIoObjEvent* DispIoCheckIoType17(DispIO* dispIo);
 	DispIoAttackDice* DispIoCheckIoType20(DispIO* dispIo);
 	DispIoImmunity* DispIoCheckIoType23(DispIoImmunity* dispIo);

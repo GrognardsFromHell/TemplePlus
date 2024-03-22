@@ -474,15 +474,15 @@ DispIoD20ActionTurnBased* DispatcherSystem::DispIoCheckIoType12(DispIO* dispIo)
 	return DispIoCheckIoType12((DispIoD20ActionTurnBased*)dispIo);
 }
 
-DispIoMoveSpeed * DispatcherSystem::DispIOCheckIoType13(DispIoMoveSpeed* dispIo)
+DispIoMoveSpeed * DispatcherSystem::DispIoCheckIoType13(DispIoMoveSpeed* dispIo)
 {
 	if (dispIo->dispIOType != dispIOTypeMoveSpeed) return nullptr;
 	return dispIo;
 }
 
-DispIoMoveSpeed* DispatcherSystem::DispIOCheckIoType13(DispIO* dispIo)
+DispIoMoveSpeed* DispatcherSystem::DispIoCheckIoType13(DispIO* dispIo)
 {
-	return DispIOCheckIoType13((DispIoMoveSpeed*)dispIo);
+	return DispIoCheckIoType13((DispIoMoveSpeed*)dispIo);
 }
 
 void DispatcherSystem::Dispatch48BeginRound(objHndl obj, int numRounds) const

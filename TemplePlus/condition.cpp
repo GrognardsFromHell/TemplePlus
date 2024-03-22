@@ -72,6 +72,7 @@ CondStructNew ConditionSystem::mCondHezrouStenchHit;
 
 int ConditionPreventWithArg(DispatcherCallbackArgs args);
 int ConditionOverrideBy(DispatcherCallbackArgs args);
+int SpellOverrideBy(DispatcherCallbackArgs args);
 
 
 struct ConditionSystemAddresses : temple::AddressTable
@@ -874,7 +875,7 @@ bool ConditionMatchesData1(DispatcherCallbackArgs args) {
 	DispIoCondStruct *dispIo = dispatch.DispIoCheckIoType1((DispIoCondStruct *)args.dispIO);
 	if (!dispIo) return false;
 
-	auto refCond = static_cast<CondStruct *>(args.subDispNode->subDispDef->data1);
+	auto refCond = (CondStruct *)(args.subDispNode->subDispDef->data1);
 	if (dispIo->condStruct == refCond) return true;
 
 	if (!refCond) return false;
@@ -896,7 +897,7 @@ int SpellOverrideBy(DispatcherCallbackArgs args)
 {
 	if (ConditionMatchesData1(args)) {
 		auto argsCopy = args;
-		argsCopy.RemoveSpell()
+		argsCopy.RemoveSpell();
 	}
 	ConditionOverrideBy(args);
 
