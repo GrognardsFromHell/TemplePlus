@@ -532,13 +532,14 @@ int Objects::GetScalePercent(objHndl handle){
 		DispIoMoveSpeed dispIo;
 		BonusList bonlist;
 		dispIo.bonlist = &bonlist;
+		dispIo.factor = 1.8;
 		bonlist.AddBonus(modelScale, 1, 102); // initial value
 
 		auto dispatcher = gameSystems->GetObj().GetObject(handle)->GetDispatcher();
 		if (dispatcher->IsValid()){
 			dispatcher->Process(dispTypeGetModelScale, DK_NONE, &dispIo);
 		}
-		modelScale = bonlist.GetEffectiveBonusSum();
+		modelScale = bonlist.GetBaseScaled(dispIo.factor);
 	}
 
 	return modelScale;

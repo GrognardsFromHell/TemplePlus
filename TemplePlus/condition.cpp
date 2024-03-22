@@ -106,7 +106,9 @@ public:
 
 	static int __cdecl EnlargePersonWeaponDice(DispatcherCallbackArgs args);
 	static int __cdecl EnlargeSizeCategory(DispatcherCallbackArgs args);
+	static int __cdecl EnlargeExponent(DispatcherCallbackArgs args);
 	static int __cdecl ReduceSizeCategory(DispatcherCallbackArgs args);
+	static int __cdecl ReduceExponent(DispatcherCallbackArgs args);
 
 	static int __cdecl HezrouStenchObjEvent(DispatcherCallbackArgs args);
 	static int __cdecl HezrouStenchCountdown(DispatcherCallbackArgs args);
@@ -437,6 +439,7 @@ public:
 		replaceFunction(0x100ECF30, ConditionPrevent);
 		replaceFunction(0x100ECF60, ConditionPreventWithArg);
 		replaceFunction(0x100ECFA0, ConditionOverrideBy);
+		replaceFunction(0x100DC0A0, SpellOverrideBy);
 
 		replaceFunction(0x100EE050, GlobalGetArmorClass);
 		replaceFunction(0x100EE1B0, raceCallbacks.GlobalMonsterToHit);
@@ -867,24 +870,35 @@ int ConditionPreventWithArg(DispatcherCallbackArgs args)
 	return 0;
 }
 
-int ConditionOverrideBy(DispatcherCallbackArgs args){
+bool ConditionMatchesData1(DispatcherCallbackArgs args) {
 	DispIoCondStruct *dispIo = dispatch.DispIoCheckIoType1((DispIoCondStruct *)args.dispIO);
-	if (!dispIo)
-		return 0;
-	
-	auto refCond = (CondStruct *)args.subDispNode->subDispDef->data1;
-	if (dispIo->condStruct == refCond ) {
+	if (!dispIo) return false;
+
+	auto refCond = static_cast<CondStruct *>(args.subDispNode->subDispDef->data1);
+	if (dispIo->condStruct == refCond) return true;
+
+	if (!refCond) return false;
+
+	refCond = conds.GetByName(refCond->condName); // re-retrieve it via the NAME
+	return dispIo->condStruct == refCond;
+}
+
+int ConditionOverrideBy(DispatcherCallbackArgs args)
+{
+	if (ConditionMatchesData1(args)) {
 		args.RemoveCondition();
-		return 0;
 	}
 
-	if (!refCond)
-		return 0;
-	refCond = conds.GetByName(refCond->condName); // re-retrieve it via the NAME
-	if (dispIo->condStruct == refCond) {
-		args.RemoveCondition();
-		return 0;
+	return 0;
+}
+
+int SpellOverrideBy(DispatcherCallbackArgs args)
+{
+	if (ConditionMatchesData1(args)) {
+		auto argsCopy = args;
+		argsCopy.RemoveSpell()
 	}
+	ConditionOverrideBy(args);
 
 	return 0;
 }
@@ -3270,6 +3284,21 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 1, dispTypeRadialMenuEntry, 0, AidAnotherRadialMenu, 0, 0);
 	// 
 	
+#pragma region Spells
+	{
+		// Enlarge/reduce effect dynamic model scale
+		static CondStructNew animalGrowth;
+		animalGrowth.ExtendExisting("sp-Animal Growth");
+		animalGrowth.AddHook(dispTypeGetModelScale, DK_NONE, spCallbacks.EnlargeExponent);
+		static CondStructNew enlargePerson;
+		enlargePerson.ExtendExisting("sp-Enlarge");
+		enlargePerson.AddHook(dispTypeGetModelScale, DK_NONE, spCallbacks.EnlargeExponent);
+		static CondStructNew reducePerson;
+		reducePerson.ExtendExisting("sp-Reduce");
+		reducePerson.AddHook(dispTypeGetModelScale, DK_NONE, spCallbacks.ReduceExponent);
+	}
+#pragma endregion
+
 	/*
 	char mCondIndomitableWillName[100];
 	CondStructNew *mCondIndomitableWill;
@@ -4726,6 +4755,26 @@ int SpellCallbacks::EnlargeSizeCategory(DispatcherCallbackArgs args)
 		dispIo->return_val++;
 		dispIo->data1 = 1;
 	}
+
+	return 0;
+}
+
+int SpellCallbacks::EnlargeExponent(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType13(args.dispIO);
+	if (!dispIo) return 0;
+
+	dispIo->bonlist.AddBonus(1, 20, 0);
+
+	return 0;
+}
+
+int SpellCallbacks::ReduceExponent(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType13(args.dispIO);
+	if (!dispIo) return 0;
+
+	dispIo->bonlist.AddBonus(-1, 20, 0);
 
 	return 0;
 }
