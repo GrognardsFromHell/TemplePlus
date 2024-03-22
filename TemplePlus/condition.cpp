@@ -3297,6 +3297,9 @@ void ConditionSystem::RegisterNewConditions()
 		static CondStructNew reducePerson;
 		reducePerson.ExtendExisting("sp-Reduce");
 		reducePerson.AddHook(dispTypeGetModelScale, DK_NONE, spCallbacks.ReduceExponent);
+		static CondStructNew righteousMight;
+		righteousMight.ExtendExisting("sp-Righteous Might");
+		righteousMight.AddHook(dispTypeGetModelScale, DK_NONE, spCallbacks.EnlargeExponent);
 	}
 #pragma endregion
 
