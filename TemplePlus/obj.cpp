@@ -408,6 +408,7 @@ uint32_t Objects::abilityScoreLevelGet(objHndl objHnd, Stat stat, DispIO* dispIO
 
 float AdjustRadiusSize(float baseRadius, int baseSize, int curSize)
 {
+	logger->info("AdjustRadiusSize: {} {}", baseSize, curSize);
 	if (baseSize == curSize) return baseRadius;
 
 	float radius = baseRadius;
