@@ -1126,9 +1126,10 @@ uint32_t ActionSequenceSystem::MoveSequenceParse(D20Actn* d20aIn, ActnSeq* actSe
 			| PathQueryFlags::PQF_TARGET_OBJ | PathQueryFlags::PQF_ADJUST_RADIUS | PathQueryFlags::PQF_ADJ_RADIUS_REQUIRE_LOS);
 		
 		if (reach < 0.1){ reach = 3.0; }
+		float tolRadius = reach * INCH_PER_FEET - fourPointSevenPlusEight;
 		actSeq->targetObj = d20a->d20ATarget;
 		pathQ.distanceToTargetMin = distToTgtMin * INCH_PER_FEET;
-		pathQ.tolRadius = std::max(0.0, reach * INCH_PER_FEET - fourPointSevenPlusEight);
+		pathQ.tolRadius = tolRadius < 0.0 ? 0.0 : tolRadius;
 	} else
 	{
 		pathQ.to = d20aIn->destLoc;
