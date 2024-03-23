@@ -418,7 +418,7 @@ float AdjustRadiusSize(float baseRadius, int baseSize, int curSize)
 	// Note that the ToEE settings are on the small side. Standard medium is 25,
 	// and that is multiplied by 0.75 to get the radius in inches (I believe). So
 	// most mediums occupy just over a 3ft. diameter circle of actual space.
-	if(curSize >= baseSize)
+	if (curSize >= baseSize)
 		for(int i = baseSize; i < curSize; i++)
 			if (i == 4) radius += 5.0; // small -> medium
 			else if (i == 3) radius = 20.0; // tiny -> small
@@ -426,8 +426,8 @@ float AdjustRadiusSize(float baseRadius, int baseSize, int curSize)
 			else if (i > 7) radius += 50.0; // double medium radius for >=colossal
 			// else leave radius alone for tiny and below
 	else
-		for(int i = baseSize; i > curSize; i--)
-			if (i == 4) radius = 10.0; // small -> tiny
+		for (int i = baseSize; i > curSize; i--)
+			if (i <= 4) radius = 10.0; // small -> tiny
 			else if (i == 5) radius -= 5.0; // medium -> small
 			else if (i <= 8) radius -= 25.0; // < colossal
 			else if (i > 8) radius -= 50.0; // >= colossal

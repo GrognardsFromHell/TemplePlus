@@ -665,6 +665,9 @@ int DispatcherSystem::DispatchGetSizeCategory(objHndl handle, bool base)
 	if (base) {
 		dispIo.data1 = 1;
 		dispIo.data2 = 1;
+	} else {
+		dispIo.data1 = 0;
+		dispIo.data2 = 0;
 	}
 	
 	if (objects.IsCritter(handle)) {
