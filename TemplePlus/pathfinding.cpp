@@ -1033,6 +1033,7 @@ int Pathfinding::FindPathStraightLine(Path* pqr, PathQuery* pq)
 		return 0;
 		
 	auto adjustFactor = (distFromTo - (pq->tolRadius - 2.0f)) / distFromTo;
+	logger->info("FindPathStraightLine distFromTo = {}, adjustFactor = {}", distFromTo, adjustFactor);
 	auto adjToLoc = pqr->from;
 	adjToLoc.off_x += deltaX * adjustFactor;
 	adjToLoc.off_y += deltaY * adjustFactor;
