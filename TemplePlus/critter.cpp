@@ -1709,11 +1709,12 @@ float LegacyCritterSystem::GetReach(objHndl obj, D20ActionType actType, /*added 
 			
 		}
 	}
-	auto maxReach = weaponReach + naturalReach - 2.0f;
+	auto radius = locSys.InchesToFeet(objects.GetRadius(obj));
+	auto maxReach = weaponReach + naturalReach - radius;
 	
 	// Temple+: added polearm minimum reach
 	if (minReach) {
-		*minReach = max(0.0f, weaponMinReach - 2.0f);
+		*minReach = max(0.0f, weaponMinReach - radius);
 	}
 	return maxReach;
 }
