@@ -1710,14 +1710,14 @@ float LegacyCritterSystem::GetReach(objHndl obj, D20ActionType actType, /*added 
 		}
 	}
 
-	auto offset = 1.5;
+	float offset = 1.5f;
 
 	auto size = objects.GetSize(obj);
 
 	if (size <= 5) {
 		offset = locSys.InchesToFeet(objects.GetRadius(obj));
 	} else if (size > 6) {
-		offset = 0.0;
+		offset = 0.0f;
 	}
 
 	auto maxReach = weaponReach + naturalReach - offset;
