@@ -427,7 +427,7 @@ float AdjustRadiusSize(float baseRadius, int baseSize, int curSize)
 		}
 	} else {
 		for (int i = baseSize; i > curSize; i--) {
-			if (i == 4) radius = 10.0; // small -> tiny
+			if (i == 4) radius = 12.0; // small -> tiny
 			else if (i == 5) radius -= 5.0; // medium -> small
 			else if (i <= 8) radius -= 25.0; // < colossal
 			else if (i > 8) radius -= 50.0; // >= colossal
