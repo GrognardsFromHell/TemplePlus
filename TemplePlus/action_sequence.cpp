@@ -1062,8 +1062,8 @@ void ActionSequenceSystem::ProcessPathForAoOs(objHndl obj, PathQueryResult* pqr,
 			}
 		}
 
-		// advanced the truncatedLoc by 3 feet along the path
-		truncateLengthFeet = truncateLengthFeet + 3.0f;
+		// advanced the truncatedLoc by 4 feet along the path
+		truncateLengthFeet = truncateLengthFeet + 4.0f;
 		aooDistFeet = truncateLengthFeet;
 
 		if (truncateLengthFeet < pathLength - 2.0f)
