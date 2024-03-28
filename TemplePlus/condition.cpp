@@ -909,7 +909,7 @@ int SpellOverrideBy(DispatcherCallbackArgs args)
 int SpellDispelledBy(DispatcherCallbackArgs args)
 {
 	if (ConditionMatchesData1(args)) {
-		DispIoCondStruct *dispIo = dispatch.DispIoCheckIoType1(args.dispIO);
+		auto dispIo = dispatch.DispIoCheckIoType1(args.dispIO);
 		dispIo->outputFlag = 0;
 
 		// uncertain why the copying, but the original seems to do it.
