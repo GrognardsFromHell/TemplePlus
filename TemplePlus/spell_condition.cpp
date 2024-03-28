@@ -245,11 +245,13 @@ public:
 
 			// Enlarge/Reduce fixes
 			switch (spPkt.spellEnum) {
-			case 7: // Animal Growth
 			case 152: // Enlarge Person
 			case 552: // Reduce Animal
 			case 386: // Reduce Person
 			case 404: // Righteous Might
+				// signal that there's nothing to dismiss anymore
+				d20Sys.d20SendSignal(spPkt.caster, DK_SIG_Spell_End, spellId, 0);
+			case 7: // Animal Growth
 				d20Sys.d20SendSignal(args.objHndCaller, DK_SIG_Spell_End, spellId, 0);
 				spPkt.EndPartsysForTgtObj(args.objHndCaller);
 				spPkt.RemoveObjFromTargetList(args.objHndCaller);
