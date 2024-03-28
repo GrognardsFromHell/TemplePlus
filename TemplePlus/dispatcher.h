@@ -77,6 +77,7 @@ struct DispatcherSystem : temple::AddressTable
 #pragma region event object checkers
 
 	DispIoCondStruct* DispIoCheckIoType1(DispIoCondStruct* dispIo); // used for ConditionAdd (3); 1,2 and 4 dispatch will null eventObjs
+	DispIoCondStruct* DispIoCheckIoType1(DispIO* dispIo);
 	DispIoBonusList* DispIoCheckIoType2(DispIoBonusList* dispIoBonusList); // used for stat level (10), stat base (66) and Cur/Max HP
 	DispIoBonusList* DispIoCheckIoType2(DispIO* dispIoBonusList); // used for stat level (10), stat base (66) and Cur/Max HP
 	DispIoSavingThrow* DispIoCheckIoType3(DispIoSavingThrow* dispIoBonusList);  

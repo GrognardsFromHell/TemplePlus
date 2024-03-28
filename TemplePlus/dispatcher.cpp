@@ -356,6 +356,11 @@ DispIoCondStruct* DispatcherSystem::DispIoCheckIoType1(DispIoCondStruct* dispIo)
 	return dispIo;
 }
 
+DispIoCondStruct* DispatcherSystem::DispIoCheckIoType1(DispIO* dispIo)
+{
+	return DispIoCheckIoType1((DispIoCondStruct*)dispIo);
+}
+
 DispIoBonusList* DispatcherSystem::DispIoCheckIoType2(DispIoBonusList* dispIo)
 {
 	if (dispIo->dispIOType != dispIOTypeBonusList) return nullptr;
