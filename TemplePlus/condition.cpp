@@ -73,6 +73,7 @@ CondStructNew ConditionSystem::mCondHezrouStenchHit;
 int ConditionPreventWithArg(DispatcherCallbackArgs args);
 int ConditionOverrideBy(DispatcherCallbackArgs args);
 int SpellOverrideBy(DispatcherCallbackArgs args);
+int SpellDispelledBy(DispatcherCallbackArgs args);
 
 
 struct ConditionSystemAddresses : temple::AddressTable
@@ -441,6 +442,7 @@ public:
 		replaceFunction(0x100ECF60, ConditionPreventWithArg);
 		replaceFunction(0x100ECFA0, ConditionOverrideBy);
 		replaceFunction(0x100DC0A0, SpellOverrideBy);
+		replaceFunction(0x100DBA20, SpellDispelledBy);
 
 		replaceFunction(0x100EE050, GlobalGetArmorClass);
 		replaceFunction(0x100EE1B0, raceCallbacks.GlobalMonsterToHit);
@@ -900,6 +902,22 @@ int SpellOverrideBy(DispatcherCallbackArgs args)
 		argsCopy.RemoveSpell();
 	}
 	ConditionOverrideBy(args);
+
+	return 0;
+}
+
+int SpellDispelledBy(DispatcherCallbackArgs args)
+{
+	if (ConditionMatchesData1(args)) {
+		DispIoCondStruct *dispIo = dispatch.DispIoCheckIoType1(args.dispIO);
+		dispIo->outputFlag = 0;
+
+		// uncertain why the copying, but the original seems to do it.
+		auto argsCopy1 = args;
+		argsCopy1.RemoveSpell();
+		auto argsCopy2 = args;
+		argsCopy2.RemoveSpellMod();
+	}
 
 	return 0;
 }
