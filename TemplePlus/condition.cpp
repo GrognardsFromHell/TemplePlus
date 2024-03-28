@@ -72,6 +72,7 @@ CondStructNew ConditionSystem::mCondHezrouStenchHit;
 
 int ConditionPreventWithArg(DispatcherCallbackArgs args);
 int ConditionOverrideBy(DispatcherCallbackArgs args);
+int QueryHasCondition(DispatcherCallbackArgs args);
 int SpellOverrideBy(DispatcherCallbackArgs args);
 int SpellDispelledBy(DispatcherCallbackArgs args);
 
@@ -441,6 +442,7 @@ public:
 		replaceFunction(0x100ECF30, ConditionPrevent);
 		replaceFunction(0x100ECF60, ConditionPreventWithArg);
 		replaceFunction(0x100ECFA0, ConditionOverrideBy);
+		replaceFunction(0x100C43D0, QueryHasCondition);
 		replaceFunction(0x100DC0A0, SpellOverrideBy);
 		replaceFunction(0x100DBA20, SpellDispelledBy);
 
@@ -890,6 +892,32 @@ int ConditionOverrideBy(DispatcherCallbackArgs args)
 {
 	if (ConditionMatchesData1(args)) {
 		args.RemoveCondition();
+	}
+
+	return 0;
+}
+
+int QueryHasCondition(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
+	auto report = (CondStruct*)args.subDispNode->subDispDef->data1;
+
+	// data2 seems to be an 'already found' check that was written improperly in
+	// the original. The original was checking data2, but assigning 0 when found.
+	if (!report || dispIo->data2) return 0;
+
+	auto target = (CondStruct*)dispIo->data1;
+
+	bool match = target == report;
+	if (!match) {
+		report = conds.GetByName(report->condName);
+		match = target == report;
+	}
+
+	if (match) {
+		dispIo->return_val = 1;
+		dispIo->data1 = args.GetCondArg(0);
+		dispIo->data2 = 1;
 	}
 
 	return 0;
