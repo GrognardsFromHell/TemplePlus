@@ -246,7 +246,7 @@ public:
 			// Enlarge/Reduce fixes
 			switch (spPkt.spellEnum) {
 			case 152: // Enlarge Person
-			case 552: // Reduce Animal
+			case 551: // Reduce Animal
 			case 386: // Reduce Person
 			case 404: // Righteous Might
 				// signal that there's nothing to dismiss anymore
