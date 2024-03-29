@@ -3343,7 +3343,7 @@ void ConditionSystem::RegisterNewConditions()
 		static CondStructNew reducePerson;
 		reducePerson.ExtendExisting("sp-Reduce");
 		reducePerson.AddHook(dispTypeGetModelScale, DK_NONE, spCallbacks.ReduceExponent);
-		static CondSTructNew reduceAnimal;
+		static CondStructNew reduceAnimal;
 		reduceAnimal.ExtendExisting("sp-Reduce Animal");
 		reduceAnimal.AddHook(dispTypeGetModelScale, DK_NONE, spCallbacks.ReduceExponent);
 		static CondStructNew righteousMight;
