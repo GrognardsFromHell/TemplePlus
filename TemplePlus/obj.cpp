@@ -433,6 +433,8 @@ float AdjustRadiusSize(float baseRadius, int baseSize, int curSize)
 			else if (i > 8) radius -= 50.0; // >= colossal
 			// else leave radius alone
 		}
+		// sanity check due to seemingly very low radii in protos
+		if (curSize > 3 && radius < 18.0) radius = baseRadius;
 	}
 
 	return radius;
