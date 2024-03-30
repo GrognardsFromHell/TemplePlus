@@ -4811,7 +4811,7 @@ int SpellCallbacks::ReduceWeaponDice(DispatcherCallbackArgs args)
 
 	if (!dispIo->weapon || condId == 245) {
 		// unarmed or natural attack
-		dispIo.bonlist->AddBonus(-1, 20, 0);
+		dispIo->bonlist->AddBonus(-1, 20, 0);
 	}
 	return 0;
 }
