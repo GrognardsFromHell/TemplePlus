@@ -20,31 +20,19 @@ def OnSpellEffect( spell ):
         spell.duration = 1 * spell.caster_level
         target_item = spell.target_list[0]
 
-        #size mod
-##        print "Size:" + str(target_item.obj.obj_get_int(obj_f_size))
-##        print "Reach:" + str(target_item.obj.obj_get_int(obj_f_critter_reach))
-        size.incSizeCategory(target_item.obj)
-        
-        #save target_list
-        activeList = Co8PersistentData.getData(RM_KEY)
-        if isNone(activeList): activeList = []
-        activeList.append([spell.id, derefHandle(target_item.obj)])
-        Co8PersistentData.setData(RM_KEY, activeList)
-        
-##        print "new Size:" + str(target_item.obj.obj_get_int(obj_f_size))
-##        print "new Reach:" + str(target_item.obj.obj_get_int(obj_f_critter_reach))
-
-
         target_item.obj.condition_add_with_args( 'sp-Righteous Might', spell.id, spell.duration, 0 )
         target_item.partsys_id = game.particles( 'sp-Righteous Might', target_item.obj )
 
 
 def OnBeginRound( spell ):
         print "Righteous Might OnBeginRound"
-
+        UndoCo8(spell)
 
 def OnEndSpellCast( spell ):
         print "Righteous Might OnEndSpellCast"
+        UndoCo8(spell)
+
+def UndoCo8(spell):
         ##print "spell.target_list=", spell.target_list
         ##print "spell.id=", spell.id
 
@@ -52,7 +40,6 @@ def OnEndSpellCast( spell ):
 
         activeList = Co8PersistentData.getData(RM_KEY)
         if isNone(activeList):
-                print "ERROR! Active RM spell without activeList!"
                 return
 
         for entry in activeList:

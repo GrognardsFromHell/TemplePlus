@@ -84,7 +84,7 @@ public:
 } dwarfEncumbranceFix;
 
 int DwarfEncumbranceFix::EncumberedMoveSpeedCallback(DispatcherCallbackArgs args){
-	auto dispIo = dispatch.DispIOCheckIoType13(args.dispIO);
+	auto dispIo = dispatch.DispIoCheckIoType13(args.dispIO);
 	if ( dispIo->bonlist->bonFlags  == 3) //  in case the cap has already been set (e.g. by web/entangle) - recreating the spellslinger fix
 		return 0;
 	if (args.subDispNode->subDispDef->data2 == 324) // overburdened

@@ -10,108 +10,72 @@ ENLARGE_KEY = "Sp152_Enlarge_Activelist"
 
 def OnBeginSpellCast( spell ):
 	print "Enlarge OnBeginSpellCast\n"
-	#print "\nspell.target_list=" , str(spell.target_list) , "\n"
-	#print "\nspell.caster=" + str( spell.caster) + " caster.level= ", spell.caster_level , "\n"
-	#print "\nspell.id=", spell.id , "\n"
 	game.particles( "sp-transmutation-conjure", spell.caster )
 
 
-def OnSpellEffect( spell ):
+def OnSpellEffect(spell):
 	print "Enlarge OnSpellEffect\n"
-##	print "spell.id=", spell.id
-##	print "spell.target_list=", spell.target_list
 	spell.duration = 10 * spell.caster_level
-	target_item = spell.target_list[0]
 
-	# HTN - 3.5, enlarge PERSON only
-	if ( target_item.obj.is_category_type( mc_type_humanoid ) == 1 ):
-		if target_item.obj.is_friendly( spell.caster ):
-			return_val = target_item.obj.condition_add_with_args( 'sp-Enlarge', spell.id, spell.duration, 0 )
-#			print "condition_add_with_args return_val: " + str(return_val) + "\n"
-			if return_val == 1:
-				#size mod
-#				print "Size:" + str(target_item.obj.obj_get_int(obj_f_size))
-#				print "Reach:" + str(target_item.obj.obj_get_int(obj_f_critter_reach))
-				size.incSizeCategory(target_item.obj)
-#				print "performed size Increase\n"
-				#save target_list
-				activeList = Co8PersistentData.getData(ENLARGE_KEY)
-				if isNone(activeList): activeList = []
-				activeList.append([spell.id, derefHandle(target_item.obj)])
-				Co8PersistentData.setData(ENLARGE_KEY, activeList)
-				
-#				print "new Size:" + str(target_item.obj.obj_get_int(obj_f_size))
-#				print "new Reach:" + str(target_item.obj.obj_get_int(obj_f_critter_reach))
+	to_remove = []
 
+	for target_item in spell.target_list:
+		target = target_item.obj
 
-				target_item.partsys_id = game.particles( 'sp-Enlarge', target_item.obj )
+		# enlarger PERSON only
+		if target.is_category_type(mc_type_humanoid) != 1:
+			to_remove.append(target)
+			target.float_mesfile_line('mes\\spell.mes', 30000)
+			target.float_mesfile_line('mes\\spell.mes', 31004)
+
+			game.particles('Fizzle', target)
+			continue
+
+		# testing for reduce because I don't think you can fort save against
+		# the dispel
+		if not (target.d20_query_has_spell_condition(sp_Reduce) or target.is_friendly(spell.caster)):
+			fort = D20_Save_Fortitude
+			if target.saving_throw_spell(spell.dc, fort, D20STD_F_NONE, spell.caster, spell.id):
+				target.float_mesfile_line('mes\\spell.mes', 30001)
+
+				game.particles('Fizzle', target)
+				to_remove.append(target)
+				continue
 			else:
-				# sp-Enlarge not applied, probably dispelled sp-Reduce
-				spell.target_list.remove_target(target_item.obj)
-		else:
-			if not target_item.obj.saving_throw_spell( spell.dc, D20_Save_Fortitude, D20STD_F_NONE, spell.caster, spell.id ):
-
 				# saving throw unsuccesful
-				target_item.obj.float_mesfile_line( 'mes\\spell.mes', 30002 )
+				target.float_mesfile_line('mes\\spell.mes', 30002)
 
-				return_val = target_item.obj.condition_add_with_args( 'sp-Enlarge', spell.id, spell.duration, 0 )
-				#enemies seem to work fine?
-	##								print "Size:" + str(target_item.obj.obj_get_int(obj_f_size))
-	##								print "Reach:" + str(target_item.obj.obj_get_int(obj_f_critter_reach))
-	##								size.incSizeCategory(target_item.obj)
-	##								print "new Size:" + str(target_item.obj.obj_get_int(obj_f_size))
-	##								print "new Reach:" + str(target_item.obj.obj_get_int(obj_f_critter_reach))
-				if return_val == 1:
-					target_item.partsys_id = game.particles( 'sp-Enlarge', target_item.obj )
-				else:
-					# sp-Enlarge not applied, probably dispelled sp-Reduce
-					spell.target_list.remove_target(target_item.obj)
-			else:
-				# saving throw successful
-				target_item.obj.float_mesfile_line( 'mes\\spell.mes', 30001 )
+		return_val = target.condition_add_with_args('sp-Enlarge', spell.id, spell.duration, 0)
+		if return_val == 1:
+			target_item.partsys_id = game.particles('sp-Enlarge', target)
+		else:
+			# sp-Enlarge not applied, probably dispelled sp-Reduce
+			to_remove.append(target)
 
-				game.particles( 'Fizzle', target_item.obj )
-				spell.target_list.remove_target( target_item.obj )
-	else: # not a humanoid
-		target_item.obj.float_mesfile_line( 'mes\\spell.mes', 30000 )
-		target_item.obj.float_mesfile_line( 'mes\\spell.mes', 31004 )
+	spell.target_list.remove_list(to_remove)
+	spell.spell_end(spell.id)
 
-		game.particles( 'Fizzle', target_item.obj )
-		spell.target_list.remove_target( target_item.obj )
-
-	print "spell.target_list=", spell.target_list
-	spell.spell_end( spell.id )
-
-
-def OnBeginRound( spell ):
+def OnBeginRound(spell):
 	print "Enlarge OnBeginRound"
+	UndoCo8(spell)
 	return
 
 
-def OnEndSpellCast( spell ):
+def OnEndSpellCast(spell):
 	#strangely enough the target_list gets zeroed before entering this, not after
 	print "Enlarge OnEndSpellCast"
-##	print "spell.target_list=", spell.target_list
-##	print "spell.id=", spell.id
-
-	#size mod
+	UndoCo8(spell)
    
+def UndoCo8(spell):
 	activeList = Co8PersistentData.getData(ENLARGE_KEY)
-	if isNone(activeList):
-		print "ERROR! Active Enlarge spell without activeList!"
-		return
+	if isNone(activeList): return
 
 	for entry in activeList:
 		spellID, target = entry
 		targetObj = refHandle(target)
 		if spellID == spell.id:
-##			print "Size:" + str(targetObj.obj_get_int(obj_f_size))
-##			print "Reach:" + str(targetObj.obj_get_int(obj_f_critter_reach))
 			weap_too_big(targetObj)
 			size.resetSizeCategory(targetObj)
-##			print "resetting reach on", targetObj
-##			print "new Size:" + str(targetObj.obj_get_int(obj_f_size))
-##			print "new Reach:" + str(targetObj.obj_get_int(obj_f_critter_reach))
 			activeList.remove(entry)
 			#no more active spells
 			if len(activeList) == 0:
@@ -120,6 +84,4 @@ def OnEndSpellCast( spell ):
 			#save new activeList
 			Co8PersistentData.setData(ENLARGE_KEY, activeList)
 			break
-   
-	else: print "ERROR! Active Enlarge spell without entry in activeList!"
 

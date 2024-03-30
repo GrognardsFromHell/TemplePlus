@@ -144,6 +144,14 @@ struct BonusList
 
 	int GetEffectiveBonusSum() const;
 	int GetHighestBonus() const; // including cap effects and such; used for Blindness miss chance calculation
+	int GetLargestPenalty() const;
+
+	/**
+	 * Gets the base value (bonus type 1) scaled by the factor, using the other
+	 * bonus types as exponents. The other bonuses are summed in the normal
+	 * fashion before using them as the exponent to the factor.
+	 */
+	int GetBaseScaled(float factor) const;
 
 	/**
 	 * Returns true if the given bonus is suppressed by another bonus (i.e. of the same type and
