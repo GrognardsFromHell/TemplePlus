@@ -112,6 +112,7 @@ public:
 	static int __cdecl EnlargeExponent(DispatcherCallbackArgs args);
 	static int __cdecl ReduceSizeCategory(DispatcherCallbackArgs args);
 	static int __cdecl ReduceExponent(DispatcherCallbackArgs args);
+	static int __cdecl ReduceWeaponDice(DispatcherCallbackArgs args);
 
 	static int __cdecl HezrouStenchObjEvent(DispatcherCallbackArgs args);
 	static int __cdecl HezrouStenchCountdown(DispatcherCallbackArgs args);
@@ -500,6 +501,8 @@ public:
 			
 		// Enlarge Person weapon damage dice modification
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100CA2B0, spCallbacks.EnlargePersonWeaponDice);
+		// Reduce Person/Animal weapon dice; use new scheme
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100C9810, spCallbacks.ReduceWeaponDice);
 
 		// Enlarge/Reduce size category replacements to avoid stacking
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100C6140, spCallbacks.EnlargeSizeCategory);
@@ -4796,6 +4799,20 @@ int SpellCallbacks::EnlargePersonWeaponDice(DispatcherCallbackArgs args)
 
 	dispIo->bonlist->AddBonus(1, 20, 0);
 
+	return 0;
+}
+
+int SpellCallbacks::ReduceWeaponDice(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType20(args.dispIO);
+	if (!dispIo) return 0;
+
+	auto condId = args.subDispNode->subDispDef->data2;
+
+	if (!dispIo.weapon || condId == 245) {
+		// unarmed or natural attack
+		dispIo.bonlist->AddBonus(-1, 20, 0);
+	}
 	return 0;
 }
 
