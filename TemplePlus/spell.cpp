@@ -3220,6 +3220,8 @@ BOOL LegacySpellSystem::IsSpellHarmful(int spellEnum, const objHndl& caster, con
 		if (spEntry.aiTypeBitmask & (1 << ai_action_offensive))
 			return TRUE;
 		return FALSE;
+	} else if (551 == spellEnum) { // Reduce Animal
+		return FALSE;
 	}
 
 	return temple::GetRef<BOOL(__cdecl)(int, objHndl, objHndl)>(0x100769F0)(spellEnum, caster, tgt);
