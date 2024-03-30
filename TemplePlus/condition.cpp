@@ -4809,7 +4809,7 @@ int SpellCallbacks::ReduceWeaponDice(DispatcherCallbackArgs args)
 
 	auto condId = args.subDispNode->subDispDef->data2;
 
-	if (!dispIo.weapon || condId == 245) {
+	if (!dispIo->weapon || condId == 245) {
 		// unarmed or natural attack
 		dispIo.bonlist->AddBonus(-1, 20, 0);
 	}
