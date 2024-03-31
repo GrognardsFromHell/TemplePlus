@@ -78,7 +78,7 @@ int PyDice_Init(PyObject *obj, PyObject *args, PyObject *kwds) {
 	} else {
 		self->bonus = 0; // Initialize since it's optional
 		// Form: PyDice(1, 2[, 3]) for 1d2+3 etc.
-		if (!PyArg_ParseTuple(args, "ii|:PyDice", &self->number, &self->size, &self->bonus)) {
+		if (!PyArg_ParseTuple(args, "ii|i:PyDice", &self->number, &self->size, &self->bonus)) {
 			return -1;
 		}
 	}
