@@ -18,6 +18,8 @@ def StaggeringStrikeFeatOnDamage(attachee, args, evt_obj):
 	if tgt == OBJ_HANDLE_NULL:
 		return 0
 	
+	args.set_arg(0, 0)
+	
 	damage = evt_obj.damage_packet.final_damage
 	
 	game.create_history_freeform(tgt.description + " staggering strike...\n\n")
@@ -29,8 +31,13 @@ def StaggeringStrikeFeatOnDamage(attachee, args, evt_obj):
 		attachee.float_text_line("Staggering strike!")
 		game.create_history_freeform("target Staggered!\n\n")
 		tgt.condition_add("Staggering Strike Effect", 1)
-	
+		
 	return 0 
+	
+def StaggeringStrikeBeginRound(attachee, args, evt_obj):
+	# Reset the already used this round flag
+	args.set_arg(0, 0)
+	return 0
 
 def StaggeringStrikeEffectBeginRound(attachee, args, evt_obj):
 	duration = args.get_arg(0)
@@ -84,6 +91,8 @@ StaggeringStrikeFeat = PythonModifier("Staggering Strike Feat", 2) #Apply Effect
 StaggeringStrikeFeat.MapToFeat("Staggering Strike")
 StaggeringStrikeFeat.AddHook(ET_OnD20PythonSignal, "Sneak Attack Damage Applied", StaggeringStrikeFeatOnSneakAttack, ())
 StaggeringStrikeFeat.AddHook(ET_OnDealingDamage2, EK_NONE, StaggeringStrikeFeatOnDamage, ())
+StaggeringStrikeFeat.AddHook(ET_OnBeginRound, EK_NONE, StaggeringStrikeBeginRound, ())
+StaggeringStrikeFeat.AddHook(ET_OnConditionAdd, EK_NONE, StaggeringStrikeBeginRound, ())
 
 #Setup the effect
 StaggeringStrikeEffect = PythonModifier("Staggering Strike Effect", 2) #Rounds, Extra
