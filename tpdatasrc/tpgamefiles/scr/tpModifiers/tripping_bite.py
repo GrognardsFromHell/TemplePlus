@@ -7,7 +7,7 @@ print "Registering Tripping Bite"
 def OnDamage2(attachee, args, evt_obj):
 	#Check that it is an attack and not a spell to avoid spells like flame strike making trip attempts in wildshape!
 	action_type = evt_obj.attack_packet.action_type
-	if action_type != D20A_UNSPECIFIED_ATTACK and action_type != D20A_FULL_ATTACK and action_type != D20A_STANDARD_ATTACK and action_type != D20A_TOUCH_ATTACK:
+	if action_type != D20A_FULL_ATTACK and action_type != D20A_STANDARD_ATTACK:
 		return
 	
 	target = evt_obj.attack_packet.target
