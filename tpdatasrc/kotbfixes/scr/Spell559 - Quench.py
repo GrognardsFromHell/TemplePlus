@@ -22,7 +22,7 @@ def	OnSpellEffect( spell ):
 	if (target_item.obj.is_category_type( mc_type_elemental )) and (target_item.obj.is_category_subtype( mc_subtype_fire )):
 
 		# no save, full damage
-		target_item.obj.spell_damage( spell.caster, D20DT_MAGIC, damage_dice, D20DAP_NORMAL, D20A_CAST_SPELL, spell.id )
+		target_item.obj.spell_damage( spell.caster, D20DT_MAGIC, damage_dice, D20DAP_UNSPECIFIED, D20A_CAST_SPELL, spell.id )
 		spell.target_list.remove_target( target_item.obj )
 
 	else:
