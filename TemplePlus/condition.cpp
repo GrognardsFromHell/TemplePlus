@@ -3618,30 +3618,33 @@ int __cdecl TwoWeaponFightingBonus(DispatcherCallbackArgs args)
 int TwoWeaponFightingBonusRanger(DispatcherCallbackArgs args)
 {
 	DispIoAttackBonus * dispIo = dispatch.DispIoCheckIoType5((DispIoAttackBonus*)args.dispIO);
-	if ( !critterSys.IsWearingLightOrNoArmor(args.objHndCaller))
-	{
-		bonusSys.zeroBonusSetMeslineNum(&dispIo->bonlist, 166);
-		return 0;
-	}
-	
-	
-	feat_enums feat = FEAT_TWO_WEAPON_FIGHTING;
-	char * featName;
-	int attackCode = dispIo->attackPacket.dispKey;
-	int dualWielding = 0;
-	int attackNumber = 1;
-	if (d20Sys.UsingSecondaryWeapon(args.objHndCaller, attackCode))
-	{
-		featName = feats.GetFeatName(feat);
-		bonusSys.bonusAddToBonusListWithDescr(&dispIo->bonlist, 6, 0, 114, featName);
-	}
-	else if (d20Sys.ExtractAttackNumber(args.objHndCaller, attackCode, &attackNumber, &dualWielding), dualWielding != 0)
-	{
-		featName = feats.GetFeatName(feat);
-		bonusSys.bonusAddToBonusListWithDescr(&dispIo->bonlist, 2, 0, 114, featName);
+
+	//Disable when using agile shield fighter for examle
+	if (d20Sys.D20QueryPython(args.objHndCaller, "Disable Two Weapon Fighting Bonus") == 0) {
+		if (!critterSys.IsWearingLightOrNoArmor(args.objHndCaller))
+		{
+			bonusSys.zeroBonusSetMeslineNum(&dispIo->bonlist, 166);
+			return 0;
+		}
+
+
+		feat_enums feat = FEAT_TWO_WEAPON_FIGHTING;
+		char* featName;
+		int attackCode = dispIo->attackPacket.dispKey;
+		int dualWielding = 0;
+		int attackNumber = 1;
+		if (d20Sys.UsingSecondaryWeapon(args.objHndCaller, attackCode))
+		{
+			featName = feats.GetFeatName(feat);
+			bonusSys.bonusAddToBonusListWithDescr(&dispIo->bonlist, 6, 0, 114, featName);
+		}
+		else if (d20Sys.ExtractAttackNumber(args.objHndCaller, attackCode, &attackNumber, &dualWielding), dualWielding != 0)
+		{
+			featName = feats.GetFeatName(feat);
+			bonusSys.bonusAddToBonusListWithDescr(&dispIo->bonlist, 2, 0, 114, featName);
+		}
 	}
 	return 0;
-
 }
 
 
