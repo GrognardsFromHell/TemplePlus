@@ -7,6 +7,7 @@ friend class TigInitializer;
 public:
 	bool IsCo8NCEdition() const;
 	bool IsKotB() const;
+	bool IsPalCove() const;
 	bool IsIWD() const;
 	bool IsCo8() const;
 	bool IsZMOD() const;
@@ -22,6 +23,7 @@ private:
 	bool mIsIWD = false;
 	bool mIsCo8 = false;
 	bool mIsZMOD = false;
+	bool mIsPalCove = false;
 	bool mInited = false;
 	std::vector<std::string> mOverridesLoaded;
 };
