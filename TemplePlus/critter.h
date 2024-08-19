@@ -289,6 +289,7 @@ struct LegacyCritterSystem : temple::AddressTable
 		Third argument seems unused.
 	*/
 	uint32_t Resurrect(objHndl critter, ResurrectType type, int unk);
+	bool ShouldResurrect(objHndl critter, ResurrectType type);
 
 	/*
 		Dominates a critter.
@@ -329,6 +330,7 @@ struct LegacyCritterSystem : temple::AddressTable
 	int SkillLevel(objHndl critter, SkillEnum skill);
 
 	Race GetRace(objHndl critter, bool getBaseRace = true);
+	Subrace GetSubrace(objHndl critter);
 
 	Gender GetGender(objHndl critter);
 
