@@ -279,6 +279,10 @@ void TigInitializer::LoadDataFiles() {
 			else if (modSupport.IsPalCove()) {
 				// placeholder
 				logger->info("Paladin's Cove module Detected.");
+				result = tio_path_add(fmt::format("{}\\palcov.dat", tpDataPath).c_str());
+				if (result != 0) {
+					logger->error("Unable to add archive tpdata\\palcov.dat");
+				}
 			}
 			else {
 				logger->info("Registering Co8 file fixes tpdata\\co8fixes.dat");
