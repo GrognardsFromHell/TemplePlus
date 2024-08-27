@@ -6937,6 +6937,33 @@ inv_source_text="""
 100,COINS BY VALUE,3,60,0
 100,goblin leg bone,0,0,1
 
+#Extended base classes added by temple+ below
+
+# Favored Soul starting equipment (50,7,12,25,2,1,1 = 98 gp)   start money = 125 gp
+1534
+100,POTION CURE
+100,(SCALE MAIL,LARGE WOODEN SHIELD,heavy mace,LIGHT CROSSBOW,BOOTS,GLOVES)
+
+# Scout starting equipment (25,10,30,1,1,30 = 97 gp)   start money = 125 gp
+1546
+100,POTION CURE
+100,(studded leather armor,shortsword,shortbow,quiver of arrows,green cloak,black leather boots,thieves tools)
+
+# Warmage starting equipment (10,3,5,25,1 = 44 gp)   start money = 100 gp
+1547
+100,POTION CURE
+100,(LEATHER ARMOR,SMALL SHIELD,light mace,LIGHT CROSSBOW,BOOTS)
+
+# Beguiler starting equipment (10,10,25,2,1,1,30 = 79 gp)   start money = 150 gp
+1548
+100,POTION CURE
+100,(LEATHER ARMOR,shortsword,LIGHT CROSSBOW,BOOTS,black leather gloves,thieves tools)
+
+# Swashbuckler starting equipment (25,20,30,1,1,1 = 78gp)   start money = 150 gp
+1549
+100,POTION CURE
+100,(studded leather armor,rapier,shortbow,quiver of arrows,red bandana,black leather boots)
+
 #------------------------------------------------------------------------------
 # general guidelines, 2/1/24
 # most will be -----> "20, CGI, x, 3, 1   100, gold ,1, x, 0"
