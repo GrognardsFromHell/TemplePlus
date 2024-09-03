@@ -114,7 +114,7 @@ jobs:
       contents: read  # This is required for actions/checkout
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4.1.7
       with:
         name: TemplePlusSymbols
     - name: Uncompress Symbol Files
@@ -134,7 +134,7 @@ jobs:
     needs: build
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4.1.7
       with:
         name: TemplePlusNuget
     - uses: nuget/setup-nuget@v1
@@ -161,7 +161,7 @@ jobs:
         - package-release
     if: ${{ needs.build.outputs.release == 'true' }}
     steps:
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4.1.7
       with:
         path: artifacts
     - name: Display structure of downloaded files
