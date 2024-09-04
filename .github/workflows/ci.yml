@@ -84,22 +84,22 @@ jobs:
         copy dependencies\bin\*.dll dist
         7z a TemplePlusTools-${{ steps.get_version.outputs.version }}.zip dist\*
     - name: Upload ZIP-Distribution
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: TemplePlus
         path: TemplePlus-*.zip
     - name: Upload PDB
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: TemplePlusSymbols
         path: TemplePlusSymbols-*.zip
     - name: Upload Tools
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: TemplePlusTools
         path: TemplePlusTools-*.zip
     - name: Upload Nuget Package
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: TemplePlusNuget
         path: TemplePlus*.nupkg
@@ -134,7 +134,7 @@ jobs:
     needs: build
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: TemplePlusNuget
     - uses: nuget/setup-nuget@v1
@@ -146,7 +146,7 @@ jobs:
       env:
         TEMPLEPLUS_VERSION: ${{ needs.build.outputs.version }}
     - name: Upload Update-Site
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: UpdateSite
         path: releases-packages/
@@ -161,7 +161,7 @@ jobs:
         - package-release
     if: ${{ needs.build.outputs.release == 'true' }}
     steps:
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         path: artifacts
     - name: Display structure of downloaded files
