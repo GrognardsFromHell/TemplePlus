@@ -14,6 +14,7 @@ def	OnSpellEffect( spell ):
 	spell.duration = 0
 	target_item = spell.target_list[0]
 
+	#For aasumars and tieflings temporarily remove the outsider tag so raise dead will work
 	prevType = 0
 	if target_item.obj.is_category_type( mc_type_outsider ) and target_item.obj.is_category_subtype(mc_subtype_human):
 		subrace = target_item.obj.stat_base_get(stat_subrace)
@@ -72,6 +73,7 @@ def	OnSpellEffect( spell ):
 	
 	spell.spell_end( spell.id, 1 )
 
+	#Restore the outsider tag if necessary
 	if prevType != 0:
 		target_item = spell.target_list[0]
 		target_item.obj.obj_set_int64(obj_f_critter_monster_category, prevType)
