@@ -85,7 +85,7 @@ def GetSpellsKnownAddedCount( spells_known, spellListLvl, spellLvl):
 				prevNumKnown = q[spellLvl]
 			else:
 				prevNumKnown = 0
-		elif (p > highestEntry and p < spellListLvl):
+		if (p > highestEntry and p < spellListLvl):
 			highestEntry = p
 	# print "newNumKnown is " + str(newNumKnown) + "prevNumKnown is: " + str(prevNumKnown)
 	if (newNumKnown == -999):
