@@ -67,7 +67,7 @@ jobs:
       shell: cmd
       # Package the symbol files, dump_syms needs the dev tools to be on the PATH
       run: |
-        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars32.bat"
+        set PATH=%PATH%;C:\Program Files\Microsoft Visual Studio\2022\Enterprise\DIA SDK\bin
         dependencies\bin\dump_syms.exe Release\TemplePlus.pdb > TemplePlus.sym
         7z a TemplePlusSymbols-${{ steps.get_version.outputs.version }}.zip TemplePlus.sym Release\TemplePlus.pdb
     - name: Pack Tools
