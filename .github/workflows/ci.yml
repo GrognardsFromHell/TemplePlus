@@ -43,7 +43,7 @@ jobs:
         python-version: 3.9
     - name: Download and Extract Dependencies
       run: |
-        curl -L -o dependencies.7z https://github.com/GrognardsFromHell/Dependencies/releases/download/v1.17/dependencies.7z
+        curl -L -o dependencies.7z https://github.com/GrognardsFromHell/Dependencies/releases/download/v1.18/dependencies.7z
         7z x dependencies.7z
     - name: Install NuGet packages
       run: |
