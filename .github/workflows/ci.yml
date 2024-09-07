@@ -114,7 +114,7 @@ jobs:
       contents: read  # This is required for actions/checkout
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: TemplePlusSymbols
     - name: Uncompress Symbol Files
