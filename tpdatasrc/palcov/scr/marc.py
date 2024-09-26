@@ -1296,7 +1296,7 @@ def give_starting_equipment():
 				if pc_class < 18: #Modified by Temple+
 					create_inv(pc, 993 + pc_class) #Modified by Temple+
 				else: #Modified by Temple+
-					create_inv(pc, 1500 + pc_class) #Modified by Temple+ (Extended Base Classes)
+					create_inv(pc, 10000 + pc_class) #Modified by Temple+ (Extended Base Classes)
 				game.particles("sp-Aid-END",pc)
 				break
 
@@ -1475,7 +1475,7 @@ def beneath():
 			if game.quests[61].state >= qs_completed:  # glyphs for riss
 				return 1
 		if game_leader().reputation_has(25) == 1:  # Archaic society member
-		   if game.quests[120].state >= qs_completed:  # glyphs for mancy
+			if game.quests[120].state >= qs_completed:  # glyphs for mancy
 				return 1
 	return 0
 
