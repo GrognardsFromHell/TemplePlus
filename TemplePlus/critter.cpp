@@ -924,6 +924,10 @@ bool LegacyCritterSystem::ShouldResurrect(objHndl critter, ResurrectType type) {
 	if (!IsDeadNullDestroyed(critter)) return false;
 
 	auto category = GetCategory(critter);
+	auto protoid = objSystem->GetProtoId(critter);
+	auto deathEffect = conds.GetByName("Killed By Death Effect");
+	auto hd = objects.GetHitDiceNum(critter, true);
+	auto con = objects.StatLevelGetBase(critter, stat_constitution);
 
 	// Note: cases here intentionally fall through to avoid duplicating tests.
 	switch (type)
@@ -932,12 +936,9 @@ bool LegacyCritterSystem::ShouldResurrect(objHndl critter, ResurrectType type) {
 		return true; // gods do what they want
 	case ResurrectType::RaiseDead:
 		// creatures killed by death effects can't be raised
-		auto deathEffect = conds.GetByName("Killed By Death Effect");
-		if (d20Sys.d20QueryWithData(critter, Q_Critter_Has_Condition, deathEffect, 0) == 1)
+		if (d20Sys.d20QueryWithData(critter, DK_QUE_Critter_Has_Condition, deathEffect, 0) == 1)
 			return false;
 	case ResurrectType::Resurrect:
-		auto hd = objects.GetHitDiceNum(critter, true);
-		auto con = objects.StatLevelGetBase(critter, stat_constitution);
 		// resurrect/raise costs 1 hit dice or 2 constitution; can't do it
 		// if you can't pay.
 		if (hd < 1 || hd == 1 && con < 3) return false;
@@ -953,7 +954,6 @@ bool LegacyCritterSystem::ShouldResurrect(objHndl critter, ResurrectType type) {
 			// Darley check; original game lets her be revived, since she's an
 			// aludemon. TODO: check for some flag to make sure it's ToEE? Or
 			// maybe add the ability to mark her as a tiefling in the proto?
-			auto protoid = objSystem->GetProtoId(critter);
 			if (protoid == 14421 || protoid == 14268) break;
 		case mc_type_elemental:
 			return false;
@@ -985,7 +985,7 @@ uint32_t LegacyCritterSystem::Resurrect(objHndl critter, ResurrectType type, int
 		// resurrection. But there are also no spell entries for the other two
 		// spells as far as I can see.
 		addresses.ResurrectApplyPenalties(critter);
-	d20Sys.d20SendSignal(critter, S_Resurrection, 0, 0);
+	d20Sys.d20SendSignal(critter, DK_SIG_Resurrection, 0, 0);
 	return 0;
 }
 
