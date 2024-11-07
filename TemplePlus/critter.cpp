@@ -179,7 +179,7 @@ private:
 			return (int)critterSys.GetWeaponAnim(wielder, prim, scnd, (gfx::WeaponAnim)animId);
 			});
 
-		replaceFunction<int(__cdecl)(objHndl,ResurrectType,int)>(0x100809C0, [](objHndl critter, ResurrectType type, int unk) {
+		replaceFunction<uint32_t(__cdecl)(objHndl,ResurrectType,int)>(0x100809C0, [](objHndl critter, ResurrectType type, int unk) {
 			return critterSys.Resurrect(critter, type, unk);
 		});
 	}
@@ -919,29 +919,25 @@ void LegacyCritterSystem::SetConcealedWithFollowers(objHndl obj, int newState){
 }
 
 bool LegacyCritterSystem::ShouldResurrect(objHndl critter, ResurrectType type) {
-	// Note: this is the original logic. It seems strange because it's a
-	// conjunction, but I've just copied it for now.
-	bool nondead = !(objects.GetFlags(critter) & OF_DESTROYED);
-	nondead &= critter;
-	nondead &= objects.GetHpCur(critter) > -10;
+	// I think this is the intended check in the original. Seems like null should
+	// still short circuit, though. TBD.
+	if (!IsDeadNullDestroyed(critter)) return false;
 
-	if (nondead) return false;
-
-	auto category = objects.GetCategory(critter);
+	auto category = GetCategory(critter);
 
 	// Note: cases here intentionally fall through to avoid duplicating tests.
 	switch (type)
 	{
-	case CuthbertResurrect:
+	case ResurrectType::CuthbertResurrect:
 		return true; // gods do what they want
-	case RaiseDead:
+	case ResurrectType::RaiseDead:
 		// creatures killed by death effects can't be raised
 		auto deathEffect = conds.GetByName("Killed By Death Effect");
 		if (d20Sys.d20QueryWithData(critter, Q_Critter_Has_Condition, deathEffect, 0) == 1)
 			return false;
-	case Resurrect:
-		auto hd = object.GetHitDiceNum(critter, true);
-		auto con = object.StatLevelGetBase(critter, stat_constitution);
+	case ResurrectType::Resurrect:
+		auto hd = objects.GetHitDiceNum(critter, true);
+		auto con = objects.StatLevelGetBase(critter, stat_constitution);
 		// resurrect/raise costs 1 hit dice or 2 constitution; can't do it
 		// if you can't pay.
 		if (hd < 1 || hd == 1 && con < 3) return false;
@@ -957,14 +953,14 @@ bool LegacyCritterSystem::ShouldResurrect(objHndl critter, ResurrectType type) {
 			// Darley check; original game lets her be revived, since she's an
 			// aludemon. TODO: check for some flag to make sure it's ToEE? Or
 			// maybe add the ability to mark her as a tiefling in the proto?
-			auto protoid = objects.GetProtoId(critter);
+			auto protoid = objSystem->GetProtoId(critter);
 			if (protoid == 14421 || protoid == 14268) break;
 		case mc_type_elemental:
 			return false;
 		default:
 			break;
 		}
-	case ResurrectTrue:
+	case ResurrectType::ResurrectTrue:
 		// Even true resurrection doesn't work on constructs or undead.
 		// In principle you can true resurrect an undead creature to the
 		// _original_ creature, but we'd need to know what that is.
