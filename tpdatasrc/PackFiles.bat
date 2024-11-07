@@ -14,3 +14,6 @@ move /Y co8infra.dat %basedir%..\tpdata\
 
 %basedir%..\dependencies\bin\datpack.exe kotbfixes.dat %basedir%kotbfixes
 move /Y kotbfixes.dat %basedir%..\tpdata\
+
+%basedir%..\dependencies\bin\datpack.exe palcov.dat %basedir%palcov
+move /Y palcov.dat %basedir%..\tpdata\
