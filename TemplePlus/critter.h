@@ -290,6 +290,7 @@ struct LegacyCritterSystem : temple::AddressTable
 	*/
 	uint32_t Resurrect(objHndl critter, ResurrectType type, int unk);
 	bool ShouldResurrect(objHndl critter, ResurrectType type);
+	void ResurrectApplyPenalties(objHndl critter, ResurrectType type);
 
 	/*
 		Dominates a critter.

@@ -57,8 +57,6 @@ static struct CritterAddresses : temple::AddressTable {
 	void (__cdecl *BalorDeath)(objHndl critter);
 	void (__cdecl *SetConcealed)(objHndl critter, int concealed);
 
-	int (__cdecl * ResurrectApplyPenalties)(objHndl critter);
-
 	uint32_t(__cdecl *IsDeadOrUnconscious)(objHndl critter);
 
 	objHndl (__cdecl *GiveItem)(objHndl critter, int protoId);
@@ -89,7 +87,6 @@ static struct CritterAddresses : temple::AddressTable {
 		rebase(SetSubdualDamage, 0x1001DB10);
 		rebase(BalorDeath, 0x100F66F0);
 		rebase(SetConcealed, 0x10080670);
-		rebase(ResurrectApplyPenalties, 0x1007FD30);
 		rebase(IsDeadOrUnconscious, 0x100803E0);
 		rebase(GiveItem, 0x1006CC30);
 
@@ -993,9 +990,53 @@ uint32_t LegacyCritterSystem::Resurrect(objHndl critter, ResurrectType type, int
 		// resurrection. But there are also no spell entries for the other two
 		// spells as far as I can see.
 		logger->info("Decided to resurrect");
-		addresses.ResurrectApplyPenalties(critter);
+		ResurrectApplyPenalties(critter, type);
 	d20Sys.d20SendSignal(critter, DK_SIG_Resurrection, 0, 0);
 	return result;
+}
+
+void LegacyCritterSystem::ResurrectApplyPenalties(objHndl critter, ResurrectType type) {
+	auto hd = objects.GetHitDiceNum(critter, true);
+	bool damaged = false;
+	int con = 0;
+	CondStruct *negLevel;
+	vector<int> negArgs({0, 0, 0});
+
+	// Note: intentional fallthrough for common logic.
+	switch (type)
+	{
+	case ResurrectType::RaiseDead:
+		// Raise dead leaves the target with 1 hp/hit die
+		damaged = true;
+	case ResurrectType::Resurrect:
+		// Raise and Resurrect reduce level/hit dice by 1 or reduce constitution.
+		//
+		// The level loss wasn't in the original game, so test for strict rules.
+		if (hd > 1 && config.stricterRulesEnforcement) {
+			negLevel = conds.GetByName("Perm Negative Level");
+			conds.AddTo(critter, negLevel, negArgs);
+		} else {
+			// The resurrection check should have already ensured this doesn't go
+			// negative.
+			con = objects.StatLevelGetBase(critter, stat_constitution);
+			objects.StatLevelSetBase(critter, stat_constitution, con-2);
+		}
+	case ResurrectType::CuthbertResurrect:
+	case ResurrectType::ResurrectTrue:
+		// No negative consequences
+	}
+
+	// reset damage
+	if (damaged) {
+		auto maxHp = objects.StatLevelGet(handle, Stat::stat_hp_max);
+		// hit dice might have been reduced
+		hd = objects.GetHitDiceNum(critter, true);
+		SetHPDamage(critter, maxHp - hd);
+	} else {
+		SetHPDamage(critter, 0);
+	}
+	floatSys.FloatSpellLine(critter, 20037, FloatLineColor::White);
+	gameSystems->GetAnim().PushAnimate(critter, 67);
 }
 
 uint32_t LegacyCritterSystem::Dominate(objHndl critter, objHndl caster) {
