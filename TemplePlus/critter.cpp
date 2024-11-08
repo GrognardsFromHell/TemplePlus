@@ -179,9 +179,9 @@ private:
 			return (int)critterSys.GetWeaponAnim(wielder, prim, scnd, (gfx::WeaponAnim)animId);
 			});
 
-		replaceFunction<uint32_t(__cdecl)(objHndl,ResurrectType,int)>(0x100809C0, [](objHndl critter, ResurrectType type, int unk) {
+		replaceFunction<void(__cdecl)(objHndl,ResurrectType)>(0x100809C0, [](objHndl critter, ResurrectType type) {
 			logger->info("Calling replaced resurrect function.");
-			return critterSys.Resurrect(critter, type, unk);
+			critterSys.Resurrect(critter, type, 0);
 		});
 	}
 
