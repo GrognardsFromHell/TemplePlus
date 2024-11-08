@@ -180,6 +180,7 @@ private:
 			});
 
 		replaceFunction<uint32_t(__cdecl)(objHndl,ResurrectType,int)>(0x100809C0, [](objHndl critter, ResurrectType type, int unk) {
+			logger->info("Calling replaced resurrect function.");
 			return critterSys.Resurrect(critter, type, unk);
 		});
 	}
