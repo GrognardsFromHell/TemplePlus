@@ -14,6 +14,7 @@
 #include "tig/tig_startup.h"
 #include "util/fixes.h"
 #include "gamesystems/particlesystems.h"
+#include "animgoals/anim.h"
 #include <graphics/mdfmaterials.h>
 #include <infrastructure/meshes.h>
 #include <infrastructure/vfs.h>
@@ -1024,16 +1025,17 @@ void LegacyCritterSystem::ResurrectApplyPenalties(objHndl critter, ResurrectType
 	case ResurrectType::CuthbertResurrect:
 	case ResurrectType::ResurrectTrue:
 		// No negative consequences
+		break;
 	}
 
 	// reset damage
 	if (damaged) {
-		auto maxHp = objects.StatLevelGet(handle, Stat::stat_hp_max);
+		auto maxHp = objects.StatLevelGet(critter, Stat::stat_hp_max);
 		// hit dice might have been reduced
 		hd = objects.GetHitDiceNum(critter, true);
-		SetHPDamage(critter, maxHp - hd);
+		SetHpDamage(critter, maxHp - hd);
 	} else {
-		SetHPDamage(critter, 0);
+		SetHpDamage(critter, 0);
 	}
 	floatSys.FloatSpellLine(critter, 20037, FloatLineColor::White);
 	gameSystems->GetAnim().PushAnimate(critter, 67);
