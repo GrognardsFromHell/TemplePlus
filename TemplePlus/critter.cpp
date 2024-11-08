@@ -943,6 +943,7 @@ bool LegacyCritterSystem::ShouldResurrect(objHndl critter, ResurrectType type) {
 		// if you can't pay.
 		if (hd < 1 || hd == 1 && con < 3) return false;
 
+		logger->info("ShouldResurrect category: {}", category);
 		switch (category)
 		{
 		case mc_type_outsider:
@@ -982,6 +983,7 @@ bool LegacyCritterSystem::ShouldResurrect(objHndl critter, ResurrectType type) {
 }
 
 uint32_t LegacyCritterSystem::Resurrect(objHndl critter, ResurrectType type, int unk) {
+	logger->info("Resurrect called. Type: {}", type);
 	if (ShouldResurrect(critter, type))
 		// TODO: this only seems to implement Raise Dead and St. Cuthbert
 		// resurrection. But there are also no spell entries for the other two
