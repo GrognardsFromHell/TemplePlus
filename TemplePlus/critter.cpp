@@ -960,6 +960,7 @@ bool LegacyCritterSystem::ShouldResurrect(objHndl critter, ResurrectType type) {
 			// maybe add the ability to mark her as a tiefling in the proto?
 			if (protoid == 14421 || protoid == 14268) break;
 		case mc_type_elemental:
+			logger->info("ShouldResurrect elemental");
 			return false;
 		default:
 			break;
@@ -984,14 +985,17 @@ bool LegacyCritterSystem::ShouldResurrect(objHndl critter, ResurrectType type) {
 }
 
 uint32_t LegacyCritterSystem::Resurrect(objHndl critter, ResurrectType type, int unk) {
+	uint32_t result = 0;
 	logger->info("Resurrect called. Type: {}", (uint32_t)type);
 	if (ShouldResurrect(critter, type))
+		result = 1;
 		// TODO: this only seems to implement Raise Dead and St. Cuthbert
 		// resurrection. But there are also no spell entries for the other two
 		// spells as far as I can see.
+		logger->info("Decided to resurrect");
 		addresses.ResurrectApplyPenalties(critter);
 	d20Sys.d20SendSignal(critter, DK_SIG_Resurrection, 0, 0);
-	return 0;
+	return result;
 }
 
 uint32_t LegacyCritterSystem::Dominate(objHndl critter, objHndl caster) {
