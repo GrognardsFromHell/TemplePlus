@@ -946,6 +946,8 @@ bool LegacyCritterSystem::ShouldResurrect(objHndl critter, ResurrectType type) {
 		switch (category)
 		{
 		case mc_type_outsider:
+			logger->debug("outsider race: {}", GetRace(critter));
+			logger->debug("outsider subrace: {}", GetSubrace(critter));
 			if (GetRace(critter) == race_human) {
 				auto subrace = GetSubrace(critter);
 				if (subrace == subrace_aasumar || subrace == subrace_tiefling) break;
