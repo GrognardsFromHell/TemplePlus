@@ -47,12 +47,12 @@ void Console::Render()
 	size.y = max(300.0f, size.y*0.4f);
 	ImGui::SetNextWindowSize(size);
 	ImGui::SetNextWindowPos(consPos);
-	ImGui::SetWindowFontScale(3.0f);
 	if (!ImGui::Begin("Console", &mOpen, consoleWidgeFlags)){
 		ImGui::End();
 		return;
 	}
 
+	ImGui::SetWindowFontScale(3.0f);
 	RenderCheatsMenu();
 	
 	ImGui::BeginChild("ScrollingRegion", ImVec2(0, -ImGui::GetItemsLineHeightWithSpacing()), false, ImGuiWindowFlags_HorizontalScrollbar);
