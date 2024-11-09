@@ -177,8 +177,8 @@ private:
 			return (int)critterSys.GetWeaponAnim(wielder, prim, scnd, (gfx::WeaponAnim)animId);
 			});
 
-		replaceFunction<uint32_t(__cdecl)(objHndl,ResurrectType,int)>(0x100809C0, [](objHndl critter, ResurrectType type, int unk) {
-			return critterSys.Resurrect(critter, type, unk);
+		replaceFunction<uint32_t(__cdecl)(objHndl,ResurrectType,int)>(0x100809C0, [](objHndl critter, ResurrectType type, int clvl) {
+			return critterSys.Resurrect(critter, type, clvl);
 		});
 	}
 
@@ -977,7 +977,7 @@ bool LegacyCritterSystem::ShouldResurrect(objHndl critter, ResurrectType type) {
 	}
 }
 
-uint32_t LegacyCritterSystem::Resurrect(objHndl critter, ResurrectType type, int unk) {
+uint32_t LegacyCritterSystem::Resurrect(objHndl critter, ResurrectType type, int casterLvl) {
 	uint32_t result = 0;
 	logger->info("Resurrect unknown: {}", unk);
 	if (ShouldResurrect(critter, type))
