@@ -979,7 +979,6 @@ bool LegacyCritterSystem::ShouldResurrect(objHndl critter, ResurrectType type) {
 
 uint32_t LegacyCritterSystem::Resurrect(objHndl critter, ResurrectType type, int casterLvl) {
 	uint32_t result = 0;
-	logger->info("Resurrect unknown: {}", unk);
 	if (ShouldResurrect(critter, type))
 		result = 1;
 		ResurrectApplyPenalties(critter, type);
