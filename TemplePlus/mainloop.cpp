@@ -504,6 +504,7 @@ public:
 			// We have to manually trigger a new frame for the debug UI here since 
 			// this can be called from virtually anywhere
 			ImGui::NewFrame();
+			ImGui::GetIO().FontGlobalScale = 3.0f;
 
 			return 0;
 		});
