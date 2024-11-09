@@ -52,6 +52,7 @@ void Console::Render()
 		return;
 	}
 
+	ImGui::SetWindowFontScale(3.0f);
 	RenderCheatsMenu();
 	
 	ImGui::BeginChild("ScrollingRegion", ImVec2(0, -ImGui::GetItemsLineHeightWithSpacing()), false, ImGuiWindowFlags_HorizontalScrollbar);
