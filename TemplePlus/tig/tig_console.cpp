@@ -51,11 +51,12 @@ void Console::Render()
 		ImGui::End();
 		return;
 	}
+	ImGui::SetWindowFontScale(config.dmGuiScale);
 
-	ImGui::SetWindowFontScale(3.0f);
 	RenderCheatsMenu();
 	
 	ImGui::BeginChild("ScrollingRegion", ImVec2(0, -ImGui::GetItemsLineHeightWithSpacing()), false, ImGuiWindowFlags_HorizontalScrollbar);
+	ImGui::SetWindowFontScale(config.dmGuiScale);
 	if (ImGui::BeginPopupContextWindow())
 	{
 		if (ImGui::Selectable("Clear")) Clear();
