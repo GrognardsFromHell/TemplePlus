@@ -394,6 +394,7 @@ void Console::RenderCheatsMenu()
 			}
 
 			if (ImGui::BeginMenu("Speedup")){
+				ImGui::SetWindowFontScale(config.dmGuiScale);
 				auto speedupCb = [](int speedupVal) {
 					auto N_party = party.GroupListGetLen();
 					auto speedRun = 1.0f;
