@@ -944,15 +944,9 @@ bool LegacyCritterSystem::ShouldResurrect(objHndl critter, ResurrectType type) {
 		switch (category)
 		{
 		case mc_type_outsider:
-			if (GetRace(critter) == race_human) {
-				auto subrace = GetSubrace(critter);
-				if (subrace == subrace_aasumar || subrace == subrace_tiefling) break;
-			}
+			// Native outsiders can be raised/resurrected. Others can't.
+			if (IsCategorySubtype(critter, mc_subtype_native)) break;
 
-			// Darley check; original game lets her be revived, since she's an
-			// aludemon. TODO: check for some flag to make sure it's ToEE? Or
-			// maybe add the ability to mark her as a tiefling in the proto?
-			if (protoid == 14421 || protoid == 14268) break;
 		case mc_type_elemental:
 			return false;
 		default:

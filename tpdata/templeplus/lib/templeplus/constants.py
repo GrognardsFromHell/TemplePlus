@@ -1825,6 +1825,7 @@ mc_subtype_orc = 0x1000000
 mc_subtype_reptilian = 0x2000000
 mc_subtype_slaadi = 0x4000000
 mc_subtype_water = 0x8000000
+mc_subtype_native = 0x10000000
 
 mc_type_aberration = 0
 mc_type_animal = 1
