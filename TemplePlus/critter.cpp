@@ -947,6 +947,7 @@ bool LegacyCritterSystem::ShouldResurrect(objHndl critter, ResurrectType type) {
 			// Native outsiders can be raised/resurrected. Others can't.
 			if (IsCategorySubtype(critter, mc_subtype_native)) break;
 
+			logger->info("Decided _not_ to resurrect");
 		case mc_type_elemental:
 			return false;
 		default:
