@@ -924,7 +924,7 @@ bool LegacyCritterSystem::ShouldResurrect(objHndl critter, ResurrectType type) {
 	auto category = GetCategory(critter);
 	auto protoid = objSystem->GetProtoId(critter);
 	auto deathEffect = conds.GetByName("Killed By Death Effect");
-	auto hd = objects.GetHitDiceNum(critter, true);
+	auto hd = objects.GetHitDiceNum(critter, false);
 	auto con = objects.StatLevelGetBase(critter, stat_constitution);
 
 	// Note: cases here intentionally fall through to avoid duplicating tests.
@@ -982,7 +982,7 @@ uint32_t LegacyCritterSystem::Resurrect(objHndl critter, ResurrectType type, int
 }
 
 void LegacyCritterSystem::ResurrectApplyPenalties(objHndl critter, ResurrectType type) {
-	auto hd = objects.GetHitDiceNum(critter, true);
+	auto hd = objects.GetHitDiceNum(critter, false);
 	bool damaged = false;
 	int con = 0;
 	CondStruct *negLevel;
@@ -1017,7 +1017,7 @@ void LegacyCritterSystem::ResurrectApplyPenalties(objHndl critter, ResurrectType
 	if (damaged) {
 		auto maxHp = objects.StatLevelGet(critter, Stat::stat_hp_max);
 		// hit dice might have been reduced
-		hd = objects.GetHitDiceNum(critter, true);
+		hd = objects.GetHitDiceNum(critter, false);
 		SetHpDamage(critter, maxHp - hd);
 	} else {
 		SetHpDamage(critter, 0);
