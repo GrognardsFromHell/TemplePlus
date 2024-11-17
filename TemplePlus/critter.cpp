@@ -947,7 +947,6 @@ bool LegacyCritterSystem::ShouldResurrect(objHndl critter, ResurrectType type) {
 			// Native outsiders can be raised/resurrected. Others can't.
 			if (IsCategorySubtype(critter, mc_subtype_native)) break;
 
-			logger->info("Decided _not_ to resurrect");
 		case mc_type_elemental:
 			return false;
 		default:
@@ -974,9 +973,10 @@ bool LegacyCritterSystem::ShouldResurrect(objHndl critter, ResurrectType type) {
 
 uint32_t LegacyCritterSystem::Resurrect(objHndl critter, ResurrectType type, int casterLvl) {
 	uint32_t result = 0;
-	if (ShouldResurrect(critter, type))
+	if (ShouldResurrect(critter, type)) {
 		result = 1;
 		ResurrectApplyPenalties(critter, type);
+	}
 	d20Sys.d20SendSignal(critter, DK_SIG_Resurrection, 0, 0);
 	return result;
 }
