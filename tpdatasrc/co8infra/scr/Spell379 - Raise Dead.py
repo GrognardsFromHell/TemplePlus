@@ -14,14 +14,6 @@ def	OnSpellEffect( spell ):
 	spell.duration = 0
 	target_item = spell.target_list[0]
 
-	#For aasumars and tieflings temporarily remove the outsider tag so raise dead will work
-	prevType = 0
-	if target_item.obj.is_category_type( mc_type_outsider ) and target_item.obj.is_category_subtype(mc_subtype_human):
-		subrace = target_item.obj.stat_base_get(stat_subrace)
-		if (subrace == human_subrace_aasumar or subrace == human_subrace_tiefling):
-			prevType = target_item.obj.obj_get_int64(obj_f_critter_monster_category)
-			target_item.obj.obj_set_int64(obj_f_critter_monster_category, mc_type_humanoid)
-
 	target_item.obj.condition_add_with_args( 'sp-Raise Dead', spell.id, spell.duration, 0 )
 	#target_item.partsys_id = game.particles( 'sp-Raise Dead', target_item.obj )
 	
@@ -72,11 +64,6 @@ def	OnSpellEffect( spell ):
 	target_item.obj.object_script_execute( target_item.obj, 18 )
 	
 	spell.spell_end( spell.id, 1 )
-
-	#Restore the outsider tag if necessary
-	if prevType != 0:
-		target_item = spell.target_list[0]
-		target_item.obj.obj_set_int64(obj_f_critter_monster_category, prevType)
 
 def OnBeginRound( spell ):
 	spell.spell_end( spell.id, 1 )
