@@ -1004,7 +1004,8 @@ void LegacyCritterSystem::ResurrectApplyPenalties(objHndl critter, ResurrectType
 				conds.AddTo(critter, negLevel, negArgs);
 			} else {
 				// The original game just took away XP.
-				auto newXp = d20LevelSys.GetPenaltyXPForDrainedLevel(hd);
+				auto effLv = GetEffectiveLevel(critter);
+				auto newXp = d20LevelSys.GetPenaltyXPForDrainedLevel(effLv-1);
 				objects.setInt32(critter, obj_f_critter_experience, newXp);
 			}
 		} else {
