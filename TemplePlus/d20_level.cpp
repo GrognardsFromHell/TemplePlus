@@ -122,8 +122,8 @@ uint32_t D20LevelSystem::GetXpRequireForLevel(uint32_t level)
 
 uint32_t D20LevelSystem::GetPenaltyXPForDrainedLevel(uint32_t level)
 {
-	auto xp0 = GetXPRequireForLevel(level);
-	auto xp1 = GetXPRequireForLevel(level+1);
+	auto xp0 = GetXpRequireForLevel(level);
+	auto xp1 = GetXpRequireForLevel(level+1);
 
 	return (xp0 >=0 && xp1 > 0 && xp1 > xp0 ) ? (xp0 + xp1) / 2 : 0;
 }
