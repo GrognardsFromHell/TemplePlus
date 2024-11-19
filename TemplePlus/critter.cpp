@@ -33,6 +33,7 @@
 #include "rng.h"
 #include "weapon.h"
 #include "d20_race.h"
+#include "d20_level.h"
 #include "location.h"
 
 
@@ -996,11 +997,16 @@ void LegacyCritterSystem::ResurrectApplyPenalties(objHndl critter, ResurrectType
 		damaged = true;
 	case ResurrectType::Resurrect:
 		// Raise and Resurrect reduce level/hit dice by 1 or reduce constitution.
-		//
-		// The level loss wasn't in the original game, so test for strict rules.
-		if (hd > 1 && config.stricterRulesEnforcement) {
-			negLevel = conds.GetByName("Perm Negative Level");
-			conds.AddTo(critter, negLevel, negArgs);
+		if (hd > 1) {
+			// The level loss wasn't in the original game, so test for strict rules.
+			if (config.stricterRulesEnforcement) {
+				negLevel = conds.GetByName("Perm Negative Level");
+				conds.AddTo(critter, negLevel, negArgs);
+			} else {
+				// The original game just took away XP.
+				auto newXp = d20LevelSys.GetPenaltyXPForDrainedLevel(hd);
+				objects.setInt32(critter, obj_f_critter_experience, newXp);
+			}
 		} else {
 			// The resurrection check should have already ensured this doesn't go
 			// negative.
