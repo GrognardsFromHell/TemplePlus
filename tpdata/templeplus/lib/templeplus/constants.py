@@ -2318,6 +2318,7 @@ san_exit_combat = 14
 san_start_combat = 15
 san_end_combat = 16
 san_buy_object = 17
+san_resurrect = 18
 san_heartbeat = 19
 san_insert_item = 21
 san_will_kos = 22
