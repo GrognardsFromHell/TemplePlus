@@ -4369,11 +4369,11 @@ static PyObject* PyObjHandle_Resurrect(PyObject* obj, PyObject* args) {
 		PyInt_FromLong(0);
 	}
 	ResurrectType type;
-	int unk = 0;
-	if (!PyArg_ParseTuple(args, "i|i:objhndl.resurrect", &type, &unk)) {
+	int caster_level = 0;
+	if (!PyArg_ParseTuple(args, "i|i:objhndl.resurrect", &type, &caster_level)) {
 		return 0;
 	}
-	auto result = critterSys.Resurrect(self->handle, type, unk);
+	auto result = critterSys.Resurrect(self->handle, type, caster_level);
 	return PyInt_FromLong(result);
 }
 
