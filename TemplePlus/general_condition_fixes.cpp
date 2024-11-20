@@ -203,7 +203,8 @@ int GeneralConditionFixes::PermanentNegativeLevelOnAdd(DispatcherCallbackArgs ar
 		critterSys.Kill(args.objHndCaller);
 	}
 	else {
-		auto newXp = d20LevelSys.GetPenaltyXPForDrainedLevel(hd);
+		auto effLv = critterSys.GetEffectiveLevel(args.objHndCaller);
+		auto newXp = d20LevelSys.GetPenaltyXPForDrainedLevel(effLv);
 
 		// set negative XP
 		objects.setInt32(args.objHndCaller, obj_f_critter_experience, newXp);
