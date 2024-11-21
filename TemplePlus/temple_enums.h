@@ -2715,6 +2715,19 @@ enum class AttackPowerType : int
 	Cold
 };
 
+// flags for distinguishing different sorts of level drain.
+enum class LevelDrainType : uint32_t
+{
+	NegativeLevel = 1, // a.k.a. Temp Negative Level
+	DrainedLevel = 2,  // a.k.a. Perm Negative Level
+	LostLevel = 4,     // resurrection level loss
+
+	NoDrainedLevel = 0,
+	NegativeOrDrainedLevel = 3,
+	NegativeOrLostLevel = 5,
+	DrainedOrLostLevel = 6,
+	AllDrainedLevel = 7
+};
 
 enum class SavingThrowType : uint32_t {
 	Fortitude = 0,

@@ -973,7 +973,7 @@ int DispatcherSystem::Dispatch60GetAttackDice(objHndl obj, DispIoAttackDice* dis
 
 }
 
-int DispatcherSystem::Dispatch61GetLevel(objHndl handle, Stat stat, BonusList* bonlist, objHndl someObj)
+int DispatcherSystem::Dispatch61GetLevel(objHndl handle, Stat stat, BonusList* bonlist, objHndl someObj, LevelDrainType omit)
 {
 	auto obj = objSystem->GetObject(handle);
 	if (!obj)
@@ -983,6 +983,7 @@ int DispatcherSystem::Dispatch61GetLevel(objHndl handle, Stat stat, BonusList* b
 		return 0;
 	DispIoObjBonus evtObj;
 	evtObj.obj = someObj;
+	evtObj.flags = static_cast<uint32_t>(omit);
 	if (bonlist) {
 		evtObj.bonOut = bonlist;
 	}
