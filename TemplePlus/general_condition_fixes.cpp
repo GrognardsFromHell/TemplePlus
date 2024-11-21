@@ -73,21 +73,22 @@ public:
 		replaceFunction(0x100F8320, ImprovedCriticalGetCritThreatRange); // fixes stacking with Keen Edge spell / Keen enchantment
 		
 		// Allow filtering out certain types of negative levels from the GetLevel query.
-		static auto negLvl = replaceFunction<int(DispatcherCallbackArgs)>(0x100EF8B0, [](DispatcherCallbackArgs args) {
+		static int (*origNegLvl)(DispatcherCallbackArgs) = replaceFunction<int(DispatcherCallbackArgs)>(0x100EF8B0, [](DispatcherCallbackArgs args)->int {
 			GET_DISPIO(dispIOTypeObjBonus, DispIoObjBonus);
-			auto tempDrain = conds.GetByName("Temp Negative Level");
-			auto permDrain = conds.GetByName("Perm Negative Level");
+			auto condName = args.subDispNode->condNode->condStruct->condName;
+
+			auto omit = static_cast<LevelDrainType>(dispIo->flags);
 
 			// flags indicate whether we should _skip_ a particular condition, so that the
 			// existing default of 0 includes all adjustments.
-			if (args.subDispNode->condNode == tempDrain) {
-				if (dispIo->flags & LevelDrainType::NegativeLevel) return 0;
+			if (!_stricmp(condName, "Temp Negative Level")) {
+				if (omit & LevelDrainType::NegativeLevel) return 0;
 			}
-			if (args.subDispNode->condNode == permDrain) {
-				if (dispIo->flags & LevelDrainType::DrainedLevel) return 0;
+			if (!_stricmp(condName, "Perm Negative Level")) {
+				if (omit & LevelDrainType::DrainedLevel) return 0;
 			}
 
-			return negLvl(args);
+			return origNegLvl(args);
 			});
 
 		// Amulet of Natural Armor - bonus type changed to 10 so it doesn't stack with other enhancement bonuses (Barkskin, Righteous Might)
