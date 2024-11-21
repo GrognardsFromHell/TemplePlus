@@ -79,8 +79,7 @@ public:
 
 			auto omit = static_cast<LevelDrainType>(dispIo->flags);
 
-			using LevelDrainType::NegativeLevel;
-			using LevelDrainType::DrainedLevel;
+			using namespace LevelDrainType;
 
 			// flags indicate whether we should _skip_ a particular condition, so that the
 			// existing default of 0 includes all adjustments.
