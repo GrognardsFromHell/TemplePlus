@@ -79,13 +79,16 @@ public:
 
 			auto omit = static_cast<LevelDrainType>(dispIo->flags);
 
+			using LevelDrainType::NegativeLevel;
+			using LevelDrainType::DrainedLevel;
+
 			// flags indicate whether we should _skip_ a particular condition, so that the
 			// existing default of 0 includes all adjustments.
 			if (!_stricmp(condName, "Temp Negative Level")) {
-				if (omit & LevelDrainType::NegativeLevel) return 0;
+				if ((omit & NegativeLevel) == NegativeLevel) return 0;
 			}
 			if (!_stricmp(condName, "Perm Negative Level")) {
-				if (omit & LevelDrainType::DrainedLevel) return 0;
+				if ((omit & DrainedLevel) == DrainedLevel) return 0;
 			}
 
 			return origNegLvl(args);
