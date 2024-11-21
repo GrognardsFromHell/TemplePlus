@@ -74,7 +74,7 @@ public:
 		
 		// Allow filtering out certain types of negative levels from the GetLevel query.
 		static int (*origNegLvl)(DispatcherCallbackArgs) = replaceFunction<int(DispatcherCallbackArgs)>(0x100EF8B0, [](DispatcherCallbackArgs args)->int {
-			GET_DISPIO(dispIOTypeObjBonus, DispIoObjBonus);
+			GET_DISPIO(dispIoTypeObjBonus, DispIoObjBonus);
 			auto condName = args.subDispNode->condNode->condStruct->condName;
 
 			auto omit = static_cast<LevelDrainType>(dispIo->flags);
