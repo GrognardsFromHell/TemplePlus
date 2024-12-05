@@ -1004,7 +1004,7 @@ void LegacyCritterSystem::ResurrectApplyPenalties(objHndl critter, ResurrectType
 				conds.AddTo(critter, negLevel, negArgs);
 			} else {
 				// The original game just took away XP.
-				auto effLv = GetEffectiveLevel(critter);
+				auto effLv = GetEffectiveDrainedLevel(critter);
 				auto newXp = d20LevelSys.GetPenaltyXPForDrainedLevel(effLv-1);
 				objects.setInt32(critter, obj_f_critter_experience, newXp);
 			}
@@ -1916,6 +1916,25 @@ int LegacyCritterSystem::GetEffectiveLevel(objHndl & objHnd)
 	}
 	lvl += lvlAdj + racialHdCount;
 	return lvl;
+}
+
+int LegacyCritterSystem::GetEffectiveDrainedLevel(objHndl & critter, LevelDrainType incl)
+{
+	if (!objHnd) return 0;
+
+	LevelDrainType omit = ~incl;
+	auto lvl = dispatch.Dispatch61GetLevel(critter, stat_level, nullptr, objHndl::null, omit);
+	auto lvlAdj = d20RaceSys.GetLevelAdjustment(critter);
+	auto racialHdCount = 0;
+	auto ocritter = objSystem->GetObject(critter);
+
+	if (ocritter->IsPC()) {
+		Dice racialHd = d20RaceSys.GetHitDice(critterSys.GetRace(critter, false));
+		racialHdCount = racialHd.GetCount();
+	} else {
+		racialHdCount = ocritter->GetInt32(obj_f_npc_hitdice_idx, 0);
+	}
+	return lvl + lvlAdj + racialHdCount;
 }
 
 int LegacyCritterSystem::GetCritterAttackType(objHndl obj, int attackIdx)

@@ -2731,6 +2731,7 @@ enum class LevelDrainType : uint32_t
 
 LevelDrainType operator&(LevelDrainType l, LevelDrainType r);
 LevelDrainType operator|(LevelDrainType l, LevelDrainType r);
+LevelDrainType operator~(LevelDrainType l);
 
 enum class SavingThrowType : uint32_t {
 	Fortitude = 0,

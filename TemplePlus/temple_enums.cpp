@@ -476,3 +476,9 @@ LevelDrainType operator|(LevelDrainType l, LevelDrainType r) {
 
 	return static_cast<LevelDrainType>(il | ir);
 }
+
+LevelDrainType operator~(LevelDrainType l) {
+	auto i = static_cast<uint32_t>(l);
+
+	return static_cast<LevelDrainType>((~i) & 7);
+}
