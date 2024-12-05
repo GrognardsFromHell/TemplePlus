@@ -212,7 +212,7 @@ int GeneralConditionFixes::PermanentNegativeLevelOnAdd(DispatcherCallbackArgs ar
 {
 	auto highestLvl = 0;
 	auto highestClass = 0;
-
+	auto effLv = critterSys.GetEffectiveDrainedLevel(args.objHndCaller);
 	
 	critterSys.CritterHpChanged(args.objHndCaller, objHndl::null, -5);
 
@@ -224,7 +224,6 @@ int GeneralConditionFixes::PermanentNegativeLevelOnAdd(DispatcherCallbackArgs ar
 		critterSys.Kill(args.objHndCaller);
 	}
 	else {
-		auto effLv = critterSys.GetEffectiveDrainedLevel(args.objHndCaller);
 		auto newXp = d20LevelSys.GetPenaltyXPForDrainedLevel(effLv);
 
 		// set negative XP
@@ -234,7 +233,7 @@ int GeneralConditionFixes::PermanentNegativeLevelOnAdd(DispatcherCallbackArgs ar
 	histSys.CreateRollHistoryLineFromMesfile(22, args.objHndCaller, objHndl::null); // [ACTOR] ~loses a level permanently~[TAG_LEVEL_LOSS]!
 	combatSys.FloatCombatLine(args.objHndCaller, 126); //"Permanant Level Loss"
 
-	args.SetCondArg(1, hd+1);
+	args.SetCondArg(1, effLv+1);
 	
 	return 0;
 }
