@@ -1920,7 +1920,7 @@ int LegacyCritterSystem::GetEffectiveLevel(objHndl & objHnd)
 
 int LegacyCritterSystem::GetEffectiveDrainedLevel(objHndl & critter, LevelDrainType incl)
 {
-	if (!objHnd) return 0;
+	if (!critter) return 0;
 
 	LevelDrainType omit = ~incl;
 	auto lvl = dispatch.Dispatch61GetLevel(critter, stat_level, nullptr, objHndl::null, omit);
