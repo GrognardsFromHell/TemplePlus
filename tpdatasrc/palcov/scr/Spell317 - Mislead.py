@@ -1,6 +1,9 @@
 from toee import *
 from casters import staff_has, staff_stats
 
+mislead_spell_list = {}
+
+
 def OnBeginSpellCast( spell ):
 	print "Mislead OnBeginSpellCast"
 	print "spell.target_list=", spell.target_list
@@ -28,12 +31,28 @@ def	OnSpellEffect( spell ):
 #	spell.id = spell.id + 1
 
 	target_item.obj.condition_add_with_args( 'sp-Improved Invisibility', spell.id, spell.duration, 0 )
-	target.partsys_id = game.particles( 'sp-Improved Invisibility', target.obj )
+	target_item.partsys_id = game.particles( 'sp-Improved Invisibility', target_item.obj )
 
-#	spell.spell_end( spell.id )
+	# spell.spell_end( spell.id, 1 )# do not end the spell, else the effect countdown is interrupted
 
 def OnBeginRound( spell ):
-	print "Mislead OnBeginRound"
+	# Crappy workaround to end the spell (otherwise it never ends...)
+	# Note: OnBeginRound gets called num_of_images times each round, because sp-Mirror Image duplicates the target num_of_images times (to store the particle FX)
+	# Thus we check the game time to prevent decrementing the duration multiple times
+	cur_time = game.time.time_game_in_seconds(game.time)
+	if spell.id in mislead_spell_list:
+		entry = mislead_spell_list[spell.id]
+		entry_time = entry[1]
+		if cur_time > entry_time:
+			entry[1] = cur_time
+			entry[0] -= 1
+			#mislead_spell_list[spell.id] = entry
+			print "Mislead OnBeginRound, duration: " + str(entry[0]) + ", ID: " + str(spell.id)
+			if entry[0] <= 0:
+				spell.spell_end(spell.id, 1)
+	else:
+		print "Mislead OnBeginRound, duration: " + str(spell.duration) + ", ID: " + str(spell.id)
+		mislead_spell_list[spell.id] = [spell.duration - 1, cur_time ]
 
 def OnEndSpellCast( spell ):
 	print "Mislead OnEndSpellCast"

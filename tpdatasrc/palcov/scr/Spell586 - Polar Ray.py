@@ -34,33 +34,19 @@ def OnEndProjectile( spell, projectile, index_of_target ):
 	game.particles_end( projectile.obj_get_int( obj_f_projectile_part_sys_id ) )
 	target_item = spell.target_list[0]
 
-	# Weapon Focus Ray, fix added by Shiningted
-	if spell.caster.has_feat(feat_weapon_focus_ray):
-		dex = spell.caster.stat_base_get(stat_dexterity)
-		dex_temp = dex + 2 + spell.caster.has_feat(feat_greater_weapon_focus_ray)*2
-		spell.caster.stat_base_set (stat_dexterity, dex_temp)
-
 	return_val = spell.caster.perform_touch_attack( target_item.obj )
+	if return_val & D20CAF_HIT:
 
-	# hit
-	if return_val == 1:
 		game.particles( 'sp-Ray of Frost-Hit', target_item.obj )
-		target_item.obj.spell_damage( spell.caster, D20DT_COLD, damage_dice, D20DAP_UNSPECIFIED, D20A_CAST_SPELL, spell.id )
 
-	# critical hit
-	elif return_val == 2:
-		game.particles( 'sp-Ray of Frost-Hit', target_item.obj )
-		damage_dice.num = damage_dice.num * 2
-		target_item.obj.spell_damage( spell.caster, D20DT_COLD, damage_dice, D20DAP_UNSPECIFIED, D20A_CAST_SPELL, spell.id )
-
-	# missed
+		# hit
+		target_item.obj.spell_damage_weaponlike( spell.caster, D20DT_COLD, damage_dice, D20DAP_UNSPECIFIED, 100, D20A_CAST_SPELL, spell.id, return_val, index_of_target )
 	else:
-		target_item.obj.float_mesfile_line( 'mes\\spell.mes', 30007 )
-		game.particles( 'Fizzle', target_item.obj )
 
-	# Restore dexterity
-	if spell.caster.has_feat(feat_weapon_focus_ray):
-		spell.caster.stat_base_set(stat_dexterity, dex)
+		# missed
+		target_item.obj.float_mesfile_line( 'mes\\spell.mes', 30007 )
+
+		game.particles( 'Fizzle', target_item.obj )
 
 	spell.target_list.remove_target( target_item.obj )
 	spell.spell_end( spell.id )

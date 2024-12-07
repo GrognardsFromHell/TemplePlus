@@ -27,7 +27,8 @@ def	OnSpellEffect( spell ):
 			# saving throw unsuccessful
 			target_item.obj.float_mesfile_line( 'mes\\spell.mes', 30002 )
 
-			target_item.obj.condition_add_with_args( 'Fascinate', spell.id, spell.duration, 0 )
+			#target_item.obj.condition_add_with_args( 'Fascinate', spell.id, spell.duration, 0 )
+			target_item.obj.condition_add_with_args( 'Captivating Song', spell.id, spell.duration, 0,0,0,0,0,0 )
 			# target_item.partsys_id = game.particles( 'sp-Fear-Hit', target_item.obj )
 
 		else:
@@ -37,7 +38,7 @@ def	OnSpellEffect( spell ):
 
 
 	#spell.target_list.remove_list( remove_list )
-	#spell.spell_end( spell.id )
+	spell.spell_end( spell.id )
 
 def OnBeginRound( spell ):
 	print "Song OnBeginRound"

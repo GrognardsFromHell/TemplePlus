@@ -16,7 +16,7 @@ def	OnSpellEffect( spell ):
 		spell.duration = 3
 		
 	# spawn one spell_object object
-	spell_obj = game.obj_create( OBJECT_SPELL_GENERIC, spell.target_loc )
+		spell_obj = game.obj_create( OBJECT_SPELL_GENERIC, spell.target_loc, spell.target_loc_off_x, spell.target_loc_off_y )
 
 	# add to d20initiative
 	caster_init_value = spell.caster.get_initiative()

@@ -22,7 +22,7 @@ def OnSpellEffect( spell ):
 				target_item.obj.damage( game.leader , D20DT_UNSPECIFIED, dice_new( "1d1" ) )
 
 	# spawn one Cloudkill scenery object
-	cloudkill_obj = game.obj_create( OBJECT_SPELL_GENERIC, spell.target_loc )
+	cloudkill_obj = game.obj_create( OBJECT_SPELL_GENERIC, spell.target_loc, spell.target_loc_off_x, spell.target_loc_off_y )
 
 	# add to d20initiative
 	caster_init_value = spell.caster.get_initiative()

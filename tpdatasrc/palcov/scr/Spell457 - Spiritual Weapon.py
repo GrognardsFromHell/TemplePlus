@@ -1,4 +1,5 @@
 from toee import *
+from utilities import *
 
 def OnBeginSpellCast( spell ):
 	print "Spiritual Weapon OnBeginSpellCast"
@@ -142,6 +143,11 @@ def	OnSpellEffect( spell ):
 	monster_obj = game.obj_create( monster_proto_id, spell.target_loc )
 	monster_obj.obj_set_int( obj_f_critter_portrait, weapon_portrait )
 
+	hit_points = 6 * spell.caster_level
+	hit_points = 25 + hit_points
+	monster_obj.stat_base_set(stat_hp_max, hit_points)
+
+
 	# equip the tempman with the appropriate weapon
 	weapon_obj = game.obj_create( weapon_proto, monster_obj.location )
 	monster_obj.item_get( weapon_obj )
@@ -150,24 +156,47 @@ def	OnSpellEffect( spell ):
 
 	# add monster to follower list for spell_caster
 	spell.caster.ai_follower_add( monster_obj )
-
+	print "added as follower"
+	
 	# add monster_obj to d20initiative, and set initiative to spell_caster's
 	caster_init_value = spell.caster.get_initiative()
+	print "got the caster's initiative"
 	monster_obj.add_to_initiative()
-	monster_obj.set_initiative( caster_init_value )
+	print "added to initiative"
+	
+	if not (spell.caster in game.party[0].group_list()):
+		highest = -999
+		initt = -999
+		for dude in game.party:
+			if dude.get_initiative() > highest and critter_is_unconscious(dude) == 0:
+				highest = dude.get_initiative()
+			if dude.get_initiative() > initt and dude.get_initiative() < caster_init_value and critter_is_unconscious(dude) == 0:
+				initt = max(dude.get_initiative() - 1, 1)
+		if initt == -999:
+			initt = max( highest , 1)
+	else:
+		initt = caster_init_value
+	monster_obj.set_initiative( initt ) # changed by S.A. - in case you have the same faction as the summoned weapon, it needs to see you fighting other members of its faction otherwise it won't act
+	#monster_obj.set_initiative( caster_init_value ) # removed by S.A. - in case you have the same faction as the summoned weapon, it needs to see you fighting other members of its faction otherwise it won't act and lose a turn
 	game.update_combat_ui()
+	print "update cmbat ui"
 
 	# monster should disappear when duration is over, apply "TIMED_DISAPPEAR" condition
 	monster_obj.condition_add_with_args( 'sp-Summoned', spell.id, spell.duration, 0 )
 	monster_obj.condition_add_with_args( 'sp-Spiritual Weapon', spell.id, spell.duration, weapon_proto )
 
+	print "condition have been added to Spiritual Weapon"
+	
 	# add monster to target list
 	spell.num_of_targets = 1
 	spell.target_list[0].obj = monster_obj
 	spell.target_list[0].partsys_id = game.particles( 'sp-spell resistance', spell.target_list[0].obj )
-
+	print "particles"
+	
 	spell.spell_end( spell.id )
 
+	print "spell ended, end of OnSpellEffect script"
+		
 def OnBeginRound( spell ):
 	print "Spiritual Weapon OnBeginRound"
 

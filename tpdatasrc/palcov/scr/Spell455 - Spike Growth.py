@@ -16,13 +16,13 @@ def	OnSpellEffect( spell ):
 	if game.leader.map in outdoor_map_list:
 
 		# spawn one spell_object object
-		spell_obj = game.obj_create( OBJECT_SPELL_GENERIC, spell.target_loc )
-
+		spell_obj = game.obj_create( OBJECT_SPELL_GENERIC, spell.target_loc, spell.target_loc_off_x, spell.target_loc_off_y )
+	
 		# add to d20initiative
 		caster_init_value = spell.caster.get_initiative()
 		spell_obj.d20_status_init()
 		spell_obj.set_initiative( caster_init_value )
-
+	
 		# put sp-Spike Growth condition on obj
 		spell_obj_partsys_id = game.particles( 'sp-Spike Growth', spell_obj )
 		spell_obj.condition_add_with_args( 'sp-Spike Growth', spell.id, spell.duration, 0, spell_obj_partsys_id )

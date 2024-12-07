@@ -26,43 +26,30 @@ def OnEndProjectile( spell, projectile, index_of_target ):
 	game.particles_end( projectile.obj_get_int( obj_f_projectile_part_sys_id ) )
 	target = spell.target_list[0]
 
-	# Weapon Focus Ray, fix added by Shiningted
-	if spell.caster.has_feat(feat_weapon_focus_ray):
-		dex = spell.caster.stat_base_get(stat_dexterity)
-		dex_temp = dex + 2 + spell.caster.has_feat(feat_greater_weapon_focus_ray)*2
-		spell.caster.stat_base_set (stat_dexterity, dex_temp)
-
 	if target.obj.is_category_type( mc_type_undead ):
 	
 		# perform ranged touch attack
 		attack_successful = spell.caster.perform_touch_attack( target.obj )
+		if attack_successful & D20CAF_HIT:
 
-		# hit
-		if attack_successful == 1:
 			damage_dice = dice_new( '1d6' )
-			target.obj.spell_damage( spell.caster, D20DT_POSITIVE_ENERGY, damage_dice, D20DAP_UNSPECIFIED, D20A_CAST_SPELL, spell.id )
-			target.partsys_id = game.particles( 'sp-Disrupt Undead-hit', target.obj )
-
-		#critical hit
-		elif attack_successful == 2:
-			damage_dice = dice_new( '2d6' )
-			target.obj.spell_damage( spell.caster, D20DT_POSITIVE_ENERGY, damage_dice, D20DAP_UNSPECIFIED, D20A_CAST_SPELL, spell.id )
-			target.partsys_id = game.particles( 'sp-Disrupt Undead-hit', target.obj )
 	
-		# missed
+			# hit
+			target.obj.spell_damage_weaponlike( spell.caster, D20DT_POSITIVE_ENERGY, damage_dice, D20DAP_UNSPECIFIED, 100, D20A_CAST_SPELL, spell.id, attack_successful, index_of_target )
+			target.partsys_id = game.particles( 'sp-Disrupt Undead-hit', target.obj )
 		else:
+	
+			# missed
 			target.obj.float_mesfile_line( 'mes\\spell.mes', 30007 )
+	
 			game.particles( 'Fizzle', target.obj )
 
 	else:
 
 		# not undead!
 		target.obj.float_mesfile_line( 'mes\\spell.mes', 31008 )
-		game.particles( 'Fizzle', target.obj )
 
-	# Restore dexterity
-	if spell.caster.has_feat(feat_weapon_focus_ray):
-		spell.caster.stat_base_set(stat_dexterity, dex)
+		game.particles( 'Fizzle', target.obj )
 
 	spell.target_list.remove_target( target.obj )
 	spell.spell_end( spell.id )

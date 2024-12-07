@@ -21,14 +21,21 @@ def	OnSpellEffect( spell ):
 	spell.duration = 600 * spell.caster_level
 	target_item = spell.target_list[0]
 	target_item_obj = target_item.obj
+	
+	if game.global_vars[451] & 2**2 != 0:
+		if game.combat_is_active():
+			spell.dc = spell.dc - 5 # to reflect a bonus to the saving throw for casting charm in combat
+	
+	if (not spell.caster in game.party) and (target_item.obj.type != obj_t_pc) and (target_item.obj in game.party):
+		# NPC enemy is trying to charm an NPC from your party - this is bad because it effectively kills the NPC (is dismissed from party and becomes hostile, thus becoming unrecruitable unless you use dominate person/monster)
+		target_item_obj = party_closest( spell.caster, conscious_only= 1, mode_select= 0, exclude_warded= 0, exclude_charmed = 1) # select nearest conscious PC instead, who isn't already charmed
+		if target_item_obj == OBJ_HANDLE_NULL:
+			target_item_obj = target_item.obj
 
-	if game.combat_is_active():
-		spell.dc = spell.dc - 5 # to reflect a bonus to the saving throw for casting charm in combat
+	if not target_item_obj.is_friendly( spell.caster ):
+		if target_item_obj.is_category_type( mc_type_humanoid ):
 
-	if not target_item_obj.is_friendly( spell.caster ) and target_item_obj.name not in charm_exclusions:
-		if (target_item_obj.is_category_type( mc_type_humanoid )) and (target_item_obj.get_size < STAT_SIZE_LARGE):
-
-			if not target_item_obj.saving_throw_spell( spell.dc, D20_Save_Will, D20STD_F_NONE, spell.caster, spell.id, spell.id ):
+			if not target_item_obj.saving_throw_spell( spell.dc, D20_Save_Will, D20STD_F_NONE, spell.caster, spell.id ):
 				# saving throw unsuccessful
 				target_item_obj.float_mesfile_line( 'mes\\spell.mes', 30002 )
 

@@ -19,12 +19,16 @@ def	OnSpellEffect( spell ):
 	for target_item in spell.target_list:
 		return_val2 = target_item.obj.condition_add_with_args( 'sp-Neutralize Poison', spell.id, spell.duration, 1 )
 		if return_val2 == 1:
-			target_item.partsys_id = game.particles( 'sp-Neutralize Poison', target_item.obj )
+			game.particles( 'sp-Neutralize Poison', target_item.obj )
 
 	for target_item in spell.target_list:
-		return_val3 = target_item.obj.condition_add_with_args( 'sp-Remove Disease', spell.id, 0, 1 )
-		if return_val3 == 1:
-			target_item.partsys_id = game.particles( 'sp-Remove Disease', target_item.obj )
+		#return_val3 = target_item.obj.condition_add_with_args( 'sp-Remove Disease', spell.id, 0, 1 )
+		#if return_val3 == 1:
+		#	game.particles( 'sp-Remove Disease', target_item.obj )
+		# Removed this since it removes the target object, as the Remove Disease spell is instantaneous
+		# Instead, using S_Remove_Disease
+		# Not perfect since it doesn't cure Vrock Spores...
+		target_item.obj.d20_send_signal(S_Remove_Disease)
 
 	for target_item in spell.target_list:
 		return_val4 = target_item.obj.condition_add_with_args( 'sp-Remove Fear', spell.id, spell.duration, 0 )

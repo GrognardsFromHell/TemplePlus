@@ -29,21 +29,12 @@ def OnEndProjectile( spell, projectile, index_of_target ):
 	target_item = spell.target_list[0]
 
 	return_val = spell.caster.perform_touch_attack( target_item.obj )
-	if return_val == 1:
+	if return_val & D20CAF_HIT:
 
 		game.particles( 'sp-Acid Splash-Hit', target_item.obj )
 
 		# hit
-		target_item.obj.spell_damage( spell.caster, D20DT_ACID, damage_dice, D20DAP_UNSPECIFIED, D20A_CAST_SPELL, spell.id )
-
-	elif return_val == 2:
-
-		game.particles( 'sp-Acid Splash-Hit', target_item.obj )
-
-		# critical hit
-		damage_dice.num = 2
-		target_item.obj.spell_damage( spell.caster, D20DT_ACID, damage_dice, D20DAP_UNSPECIFIED, D20A_CAST_SPELL, spell.id )
-
+		target_item.obj.spell_damage_weaponlike( spell.caster, D20DT_ACID, damage_dice, D20DAP_UNSPECIFIED, 100, D20A_CAST_SPELL, spell.id, return_val, index_of_target )
 	else:
 
 		# missed

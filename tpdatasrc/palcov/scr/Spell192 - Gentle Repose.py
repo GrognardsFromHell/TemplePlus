@@ -13,7 +13,7 @@ def OnSpellEffect( spell ):
 
 	if not target.obj.is_friendly( spell.caster ):
 
-		if not target.obj.saving_throw_spell( spell.dc, D20_Save_Will, D20STD_F_NONE, spell.caster, spell.id, spell.id ):
+		if not target.obj.saving_throw_spell( spell.dc, D20_Save_Will, D20STD_F_NONE, spell.caster, spell.id):
 			# saving throw unsuccessful
 			target.obj.float_mesfile_line( 'mes\\spell.mes', 30002 )
 			game.particles( 'sp-Inflict Light Wounds', target.obj )

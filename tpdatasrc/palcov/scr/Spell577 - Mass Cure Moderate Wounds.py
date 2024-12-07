@@ -40,7 +40,7 @@ def OnSpellEffect ( spell ):
 					target.spell_damage( spell.caster, D20DT_POSITIVE_ENERGY, dice, D20DAP_UNSPECIFIED, D20A_CAST_SPELL, spell.id )
 			else:
 				# heal target
-				target.heal( spell.caster, dice, D20A_CAST_SPELL, spell.id )
+				target.spell_heal( spell.caster, dice, D20A_CAST_SPELL, spell.id )
 				target.healsubdual( spell.caster, dice, D20A_CAST_SPELL, spell.id )
 
 		else:
@@ -64,13 +64,13 @@ def OnSpellEffect ( spell ):
 					#target.float_mesfile_line( 'mes\\spell.mes', 30001 )
 
 					# saving throw succesful, heal target, 1/2 heal
-					target.heal( spell.caster, dice, D20A_CAST_SPELL, spell.id )
+					target.spell_heal( spell.caster, dice, D20A_CAST_SPELL, spell.id )
 					target.healsubdual( spell.caster, dice, D20A_CAST_SPELL, spell.id )
 				else:
 					#target.float_mesfile_line( 'mes\\spell.mes', 30002 )
 
 					# saving throw unsuccesful, heal target, full heal
-					target.heal( spell.caster, dice, D20A_CAST_SPELL, spell.id )
+					target.spell_heal( spell.caster, dice, D20A_CAST_SPELL, spell.id )
 					target.healsubdual( spell.caster, dice, D20A_CAST_SPELL, spell.id )
 
 		game.particles( 'sp-Cure Moderate Wounds', target )

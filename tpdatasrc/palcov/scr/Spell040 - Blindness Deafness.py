@@ -5,6 +5,7 @@ def OnBeginSpellCast( spell ):
 	print "spell.target_list=", spell.target_list
 	print "spell.caster=", spell.caster, " caster.level= ", spell.caster_level
 	game.particles( "sp-necromancy-conjure", spell.caster )
+	return 1
 
 def OnSpellEffect( spell ):
 	print "Blindness/Deafness OnSpellEffect"

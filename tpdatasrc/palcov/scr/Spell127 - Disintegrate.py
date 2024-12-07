@@ -1,5 +1,7 @@
 from toee import *
 from casters import staff_has, staff_stats
+from Co8 import *
+from utilities import *
 
 def OnBeginSpellCast( spell ):
 	print "Disintegrate OnBeginSpellCast"
@@ -37,16 +39,10 @@ def OnEndProjectile( spell, projectile, index_of_target ):
 	target_item = spell.target_list[0]
 	game.particles_end( projectile.obj_get_int( obj_f_projectile_part_sys_id ) )
 
-	# Weapon Focus Ray, fix added by Shiningted
-	if spell.caster.has_feat(feat_weapon_focus_ray):
-		dex = spell.caster.stat_base_get(stat_dexterity)
-		dex_temp = dex + 2 + spell.caster.has_feat(feat_greater_weapon_focus_ray)*2
-		spell.caster.stat_base_set (stat_dexterity, dex_temp)
-
 	return_val = spell.caster.perform_touch_attack( target_item.obj )
 
 	# hit
-	if return_val == 1 or return_val == 2:
+	if return_val & D20CAF_HIT:
 
 		game.particles( 'sp-Disintegrate-Hit', target_item.obj )
 
@@ -73,8 +69,8 @@ def OnEndProjectile( spell, projectile, index_of_target ):
 
 			if target_item.obj.saving_throw_spell( spell.dc, D20_Save_Fortitude, D20STD_F_NONE, spell.caster, spell.id ):
 				damage_dice.num = 5
-				if return_val == 2 and is_immune_to_crit == 0:
-					damage_dice.num = 10
+			#elif return_val == 2:
+			#	damage_dice.num = damage_dice.num * 2 # handled internally now
 				target_item.obj.float_mesfile_line( 'mes\\spell.mes', 30001 )
 
 			target_item.obj.spell_damage( spell.caster, D20DT_FORCE, damage_dice, D20DAP_UNSPECIFIED, D20A_CAST_SPELL, spell.id )			
@@ -97,10 +93,6 @@ def OnEndProjectile( spell, projectile, index_of_target ):
 
 	if changed_con == 1:
 		target_item.obj.stat_base_set(stat_constitution, -1)
-
-	# Restore dexterity
-	if spell.caster.has_feat(feat_weapon_focus_ray):
-		spell.caster.stat_base_set(stat_dexterity, dex)
 
 	spell.target_list.remove_target( target_item.obj )
 	spell.spell_end( spell.id )

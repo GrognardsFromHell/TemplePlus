@@ -36,14 +36,16 @@ def OnSpellEffect ( spell ):
 		target.obj.float_mesfile_line( 'mes\\spell.mes', 30001 )
 
 		# saving throw succesful, damage target
-		target.obj.spell_damage( spell.caster, D20DT_UNSPECIFIED, damage_dice, D20DAP_UNSPECIFIED, D20A_CAST_SPELL, spell.id )
+		target.obj.spell_damage( spell.caster, D20DT_NEGATIVE_ENERGY, damage_dice, D20DAP_UNSPECIFIED, D20A_CAST_SPELL, spell.id )
 	else:
 		target.obj.float_mesfile_line( 'mes\\spell.mes', 30002 )
 
 		# saving throw unsuccesful, kill target
-		# So you'll get awarded XP for the kill
-		if not target.obj in game.leader.group_list():
-			target.obj.damage( game.leader , D20DT_UNSPECIFIED, dice_new( "1d1" ) )
+
+		# set attribute for proper XP award
+		if target.obj.type == obj_t_npc:
+			target.obj.obj_set_obj(obj_f_last_hit_by, spell.caster)
+
 		target.obj.critter_kill_by_effect()
 
 	spell.target_list.remove_target( target.obj )

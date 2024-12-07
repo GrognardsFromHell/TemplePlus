@@ -50,7 +50,7 @@ def OnSpellEffect( spell ):
 			if (target_item.obj.type == obj_t_npc):
 
 				# check target is EXTRAPLANAR
-				if target_item.obj.d20_query_has_spell_condition( sp_Summoned ) or target_item.obj.is_category_type( mc_type_outsider ):
+				if target_item.obj.d20_query_has_spell_condition( sp_Summoned ) or target_item.obj.is_category_type( mc_type_outsider ) or target_item.obj.is_category_subtype(mc_subtype_extraplanar):
 
 					# subtract the target's hit dice from the amount allowed
 					hitDiceAmount = hitDiceAmount - targetHitDice

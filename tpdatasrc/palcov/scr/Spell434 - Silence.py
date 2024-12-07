@@ -1,4 +1,5 @@
 from toee import *
+from utilities import *
 
 def OnBeginSpellCast( spell ):
 	print "Silence OnBeginSpellCast"
@@ -8,6 +9,14 @@ def OnBeginSpellCast( spell ):
 
 def	OnSpellEffect( spell ):
 	print "Silence OnSpellEffect"
+
+	npc = spell.caster			##  added so NPC's can use wand/potion/scroll
+	if npc.type != obj_t_pc and npc.leader_get() == OBJ_HANDLE_NULL and spell.caster_level <= 0:
+		spell.caster_level = 8
+
+	if npc.name == 14425 and game.global_vars[711] == 1:
+		spell.caster_level = 6
+		spell.dc = 17
 
 	spell.duration = 10 * spell.caster_level
 
@@ -21,7 +30,7 @@ def	OnSpellEffect( spell ):
 			# saving throw successful
 			target_item.obj.float_mesfile_line( 'mes\\spell.mes', 30001 )
 
-			game.particles( 'Fizzle', target.obj )
+			game.particles( 'Fizzle', target_item.obj )
 			spell.target_list.remove_target( target_item.obj )
 		else:
 			# put sp-Silence condition on target

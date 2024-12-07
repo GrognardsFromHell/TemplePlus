@@ -27,7 +27,7 @@ def	OnSpellEffect( spell ):
 				if not target_item.obj.is_category_type( mc_type_animal ):
 					if target_item.obj.get_size < STAT_SIZE_LARGE:
 
-						if not target_item.obj.saving_throw_spell( spell.dc, D20_Save_Will, D20STD_F_NONE, spell.caster, spell.id, spell.id ):
+						if not target_item.obj.saving_throw_spell( spell.dc, D20_Save_Will, D20STD_F_NONE, spell.caster, spell.id ):
 							# saving throw unsuccessful
 							target_item.obj.float_mesfile_line( 'mes\\spell.mes', 30002 )
 

@@ -23,31 +23,45 @@ def OnSpellEffect( spell ):
 	if spell.caster.name == 14987:  # greater basilisk
 		spell.dc = 21
 
-	targets = list (game.obj_list_cone (spell.caster, OLC_CRITTERS, 60, -60, 120))
-	for t in list(targets):
-		if t.is_friendly(spell.caster) or t.d20_query_has_spell_condition(sp_Command):
-			targets.remove(t)
-	n = game.random_range (0, len(targets)-1)
-	target = targets[n]
+	target = spell.target_list[0]
+
+	num = 0
+	num2 = 0
+	target_list = list(game.obj_list_cone( spell.caster, OLC_CRITTERS, 60, -30, 60 ))
+#	print >> efile, "spell range= ", range, "\n"
+	target_list.remove(spell.caster)
+#	print >> efile, "target list: ", target_list, "\n"
+	for obj in target_list:
+		if not obj.is_friendly(spell.caster):
+			num = num + 1
+		else:
+			target_list.remove(obj)
+	num = game.random_range(1,num)
+	for obj in target_list:
+		num2 = num2 + 1
+		if num == num2:
+			target.obj = obj
+
+#	print >> efile, "target.obj: ", target.obj, "\n"
+		
 
 	if spell.caster.d20_query(Q_Critter_Is_Blinded):
 		spell.caster.float_mesfile_line( 'mes\\spell.mes', 20019 )
-		
+	elif target.obj.saving_throw( spell.dc, D20_Save_Fortitude, D20STD_F_NONE, spell.caster, D20A_CAST_SPELL ):
+		game.particles( 'sp-Shout', spell.caster )
+		target.obj.float_mesfile_line( 'mes\\spell.mes', 30001 )
+		game.particles( 'Fizzle', target.obj )
+		spell.target_list.remove_target( target.obj )	
 	else:
 		game.particles( 'sp-Shout', spell.caster )
-		spell.caster.turn_towards(target)  # sometimes does not work
-
-		if target.saving_throw( spell.dc, D20_Save_Fortitude, D20STD_F_NONE, spell.caster, D20A_CAST_SPELL ):
-			target.float_mesfile_line( 'mes\\spell.mes', 30001 )
-			game.particles( 'Fizzle', target )
-
-		else:
-			target.float_mesfile_line( 'mes\\spell.mes', 30002 )
-			target.float_mesfile_line( 'mes\\spell.mes', 20047 )
-			target.condition_add_with_args( 'sp-Command', spell.id, spell.duration, 4 )
-			game.particles( "sp-Bestow Curse", target )
+		target.obj.float_mesfile_line( 'mes\\spell.mes', 30002 )
+		# HTN - apply condition HALT (Petrifyed)
+		target.obj.condition_add_with_args( 'sp-Command', spell.id, spell.duration, 4 )
+		game.particles( "sp-Bestow Curse", target.obj )
 
 	spell.spell_end( spell.id )
+#	efile.close()
+
 
 def OnBeginRound( spell ):
 	print "Petrifying Gaze OnBeginRound"

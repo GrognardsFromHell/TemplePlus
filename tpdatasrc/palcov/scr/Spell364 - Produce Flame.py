@@ -47,13 +47,13 @@ def OnEndProjectile( spell, projectile, index_of_target ):
 		game.sound(7581,1)
 		game.particles( 'swirled gas', targg364 )
 	else:
-		return_val = spell.caster.perform_touch_attack( targg364 )
-		if return_val >= 1:
+		#return_val = spell.caster.perform_touch_attack( targg364 )
+		#if return_val >= 1:
 			#damage_dice = dice_new( '4d6' )
 			#game.particles( 'sp-Produce Flame-Hit', targg364 )
 			#target.obj.spell_damage( spell.caster, D20DT_FIRE, damage_dice, D20DAP_UNSPECIFIED, D20A_CAST_SPELL, spell.id )
-			spell.caster.d20_send_signal_ex( S_TouchAttack, spell.target_list[ index_of_target ].obj )
-		else:
+		spell.caster.d20_send_signal_ex( S_TouchAttack, spell.target_list[ index_of_target ].obj )
+		##else:
 			# missed
 			targg364.float_mesfile_line( 'mes\\spell.mes', 30007 )
 			game.particles( 'Fizzle', targg364 )

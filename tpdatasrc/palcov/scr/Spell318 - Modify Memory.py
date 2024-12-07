@@ -56,7 +56,7 @@ def OnSpellEffect( spell ):
 		if not (new_targ.is_category_type( mc_type_undead ) or new_targ.is_category_type( mc_type_ooze ) or new_targ.is_category_type( mc_type_aberration ) or new_targ.is_category_type( mc_type_outsider ) or new_targ.is_category_type( mc_type_construct )):
 
 			if new_targ.is_friendly( spell.caster ):
-				if not new_targ.saving_throw_spell( spell.dc, D20_Save_Will, D20STD_F_NONE, spell.caster, spell.id, spell.id ):
+				if not new_targ.saving_throw_spell( spell.dc, D20_Save_Will, D20STD_F_NONE, spell.caster, spell.id ):
 
 					new_targ.reaction_adj( game.party[0], 40 )
 					new_targ.npc_flag_unset(ONF_KOS)
@@ -83,7 +83,7 @@ def OnSpellEffect( spell ):
 					# game.particles( "sp-summon monster I", game.party[0] )
 
 			else:
-				if not new_targ.saving_throw_spell( spell.dc, D20_Save_Will, D20STD_F_NONE, spell.caster, spell.id, spell.id ):
+				if not new_targ.saving_throw_spell( spell.dc, D20_Save_Will, D20STD_F_NONE, spell.caster, spell.id ):
 
 					new_targ.reaction_adj( game.party[0], 40 )
 					new_targ.npc_flag_unset(ONF_KOS)

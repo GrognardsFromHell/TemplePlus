@@ -1,5 +1,5 @@
 from toee import *
-from utilities import *
+import tpdp
 
 def OnBeginSpellCast( spell ):
 	print "Magic Missile OnBeginSpellCast"
@@ -7,101 +7,106 @@ def OnBeginSpellCast( spell ):
 	print "spell.caster=", spell.caster, " caster.level= ", spell.caster_level
 	game.particles( "sp-evocation-conjure", spell.caster )
 
+	#spell.num_of_projectiles = spell.num_of_projectiles + 1
+	#spell.target_list.push_target(spell.caster)     # didn't work :(
+	# generally the sequence is: OnBeginSpellCast, OnBeginProjectile, OnSpellEffect,OnEndProjectile (OnBeginRound isn't called)
+
 def OnSpellEffect( spell ):
 	print "Magic Missile OnSpellEffect"
+
+	# only enable mirror image behavior in strict rules
+	if not tpdp.config_get_bool('stricterRulesEnforcement'): return
+
+	# Calculate which missiles hit mirror images instead of the actual target.
+	#
+	# This needs to be calculated ahead of time if we want to simulate picking
+	# targets _before_ we know which is the real one, for situations where there
+	# are more missiles than (real and fake) targets.
+	offsets = []
+	seen = []
+	hits = [0,0,0,0,0]
+	hi = -1
+	for target_item in spell.target_list:
+		target = target_item.obj
+		hi += 1
+
+		# handles can't be hashed, so we need to do something like this
+		if target in seen:
+			ix = seen.index(target)
+			# if the same spell target occurs more than once, assume we're targeting
+			# as many distinct copies if possible
+			off, copies = offsets[ix]
+			offsets[ix] = (off+1, copies)
+
+			if off % copies > 0: hits[hi] = 1
+		else:
+			mirrors = target.d20_query(Q_Critter_Has_Mirror_Image)
+			# no mirrors, always hit
+			if mirrors <= 0: continue
+
+			copies = mirrors+1
+			off = dice_new(1, copies, -1).roll()
+
+			# save the _next_ offset
+			offsets.append((off+1, copies))
+			seen.append(target)
+
+			if off > 0: hits[hi] = 1
+
+	h1, h2, h3, h4, h5 = hits
+	spell.caster.condition_add_with_args('Magic Missile Mirror', spell.id, h1, h2, h3, h4, h5)
 
 def OnBeginRound( spell ):
 	print "Magic Missile OnBeginRound"
 
+
 def OnBeginProjectile( spell, projectile, index_of_target ):
 	print "Magic Missile OnBeginProjectile"
+
 	projectile.obj_set_int( obj_f_projectile_part_sys_id, game.particles( 'sp-magic missle-proj', projectile ) )
+	
 
 def OnEndProjectile( spell, projectile, index_of_target ):
 	print "Magic Missile OnEndProjectile"
 
 	game.particles_end( projectile.obj_get_int( obj_f_projectile_part_sys_id ) )
 
-	target = spell.target_list[ index_of_target ]
+	target_item = spell.target_list[ index_of_target ]
+	target = target_item.obj
 
-	damage_dice = dice_new( '1d4' )
-	damage_dice.bonus = 1
+	hit_mirror = spell.caster.d20_query_with_data('Missile Mirror Hit', spell.id, index_of_target + 1)
 
-	# Brooch of Shielding
-	brooch = OBJ_HANDLE_NULL
-	neck = target.obj.item_worn_at(1)
-	if neck != OBJ_HANDLE_NULL and neck.name == 12652:
-		brooch = neck
-		extra = 0
+	if hit_mirror > 0:
+		if target.d20_query(Q_Critter_Has_Mirror_Image) > 0:
+			mirror_id = target.d20_query_get_data(Q_Critter_Has_Mirror_Image, 0)
+			target.d20_send_signal(S_Spell_Mirror_Image_Struck, mirror_id, 0)
+			target.float_mesfile_line('mes\\combat.mes', 109)
+			game.create_history_from_pattern(10, spell.caster, target)
+	else: # normal damage
+		damage_dice = dice_new(1,4,1)
+		is_enemy = not spell.caster in game.party[0].group_list()
+		target_charmed = target.d20_query(Q_Critter_Is_Charmed)
+		if is_enemy and target_charmed:
+			# NPC enemy is trying to cast on a charmed target - this is mostly meant for the Cult of the Siren encounter
+			target = party_closest( spell.caster, conscious_only= 1, mode_select= 1, exclude_warded= 1, exclude_charmed = 1) # select nearest conscious PC instead, who isn't already charmed
+			if target == OBJ_HANDLE_NULL:
+				target = target_item.obj
 
-	# first missile
-	if brooch == OBJ_HANDLE_NULL:
-		target.obj.condition_add_with_args( 'sp-Magic Missile', spell.id, spell.duration, damage_dice.roll() )
-		target.partsys_id = game.particles( 'sp-magic missle-hit', target.obj )
+		# always hits
+		target.condition_add_with_args('sp-Magic Missile', spell.id, spell.duration, damage_dice.roll())
+		target_item.partsys_id = game.particles('sp-magic missle-hit', target)
 
-	npc = spell.caster
-
-	## The following section scripts extra damage dice for NPC casters
-	## This is necessary because they can't shoot more than one bolt of Magic Missile (hardcoded engine limitation)
-	## The workaround is to apply extra damage for that single bolt, custom tailored for each NPC caster
-
-	if not spell.caster in game.party:
-
-		# 1 extra missile - gnome wiz, hannah, lula, corona, goblin wiz, bug witch, wiz 3, wiz 4, researcher, 14874(monkey witch)
-		if npc.name in [14073, 14515,14538,14560,14710,14711,14718,14719,14754,14874]:
-			extra = 1
-
-		# 2 extra missiles, 14503(brollo), 16604(jorrla), 14655(wexton), 14686(asher), 14785(vend councilor), wiz 5
-		elif npc.name in [14503,14604,14655,14686,14785,14741]:
-			extra = 2
-
-		# 3 extra missiles, 14540(drowsila), 14670(tivanya), 14688(tiamara), 14690(burks), 14927(avoral), 14932(night hag), wiz 7
-		elif npc.name in [14540,14670,14688,14690,14927,14932,14792]:
-			extra = 3
-
-		# 4 extra missiles, 14179(drow noble), 14268, 8300 (darley), 14333(vincent), 14499(drow witch),
-		# 14537(thormund), 14557(zahara), 14652(liossa), 14586(sleepy), 14622(gil),
-		# 14684(mancy), 14715(bug witch), 14766(evoker), 14767(illusionist),
-		# 14893(orc warlock), 14968(lich), 14793(wiz 9), 14980(test wiz)
-		elif npc.name in [14179,14268,8300,14333,14499,8121,8122,8123,14537,14557,14652,14586,14622,14684,14715,14766,14767,14893,14968,14793,14980]:
-			extra = 4
-
-		if brooch == OBJ_HANDLE_NULL:
-			for x in range(0,extra):
-				target.obj.condition_add_with_args( 'sp-Magic Missile', spell.id, spell.duration, damage_dice.roll() )
-				target.partsys_id = game.particles( 'sp-magic missle-hit', target.obj )
-
-	# Brooch of Shielding
-	if brooch:
-		target.obj.float_mesfile_line( 'mes\\spell.mes', 30019 )
-		target.obj.float_mesfile_line( 'mes\\description.mes', 12652 )
-
-		brooch_hp = brooch.obj_get_int(obj_f_secretdoor_dc)
-		if brooch_hp == 0:  # first use, set to 101 hit points
-			brooch_hp = 101
-
-		# Estimate potential spell damage, assume 3.5 damage per missile
-		brooch_hp -= int(3.5 * (1 + extra))
-
-		# Subtract hit points from the brooch
-		if brooch_hp > 0:
-			brooch.obj_set_int(obj_f_secretdoor_dc,brooch_hp)
-			float_num(target.obj,brooch_hp,2)
-			target.partsys_id = game.particles( 'sp-shield-end', target.obj )
-			game.sound(14522,1)
-
-		# Brooch has no hit points left, destroy it
-		else:
-			brooch.destroy()
-			target.obj.float_mesfile_line( 'mes\\combat.mes', 187 )
-			target.partsys_id = game.particles( 'sp-spiritual weapon-end', target.obj )
-			target.partsys_id = game.particles( 'sp-unholy water', target.obj )
-			game.sound(15001,1)
+	# special scripting for NPCs no longer necessary - NPCs will launch multiple projectiles now
 
 	#spell.target_list.remove_target_by_index( index_of_target )
-	spell.num_of_projectiles = spell.num_of_projectiles - 1
+	spell.num_of_projectiles -= 1
 
-	if ( spell.num_of_projectiles == 0 ):
+	if spell.num_of_projectiles == 0:
+##		loc = target.location
+##		target.destroy()
+##		mxcr = game.obj_create( 12021, loc )
+##		game.global_vars[30] = game.global_vars[30] + 1
+		spell.caster.d20_send_signal(S_Spell_End, spell.id)
 		spell.spell_end( spell.id, 1 )
 
 def OnEndSpellCast( spell ):

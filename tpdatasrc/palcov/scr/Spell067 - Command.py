@@ -32,7 +32,7 @@ def	OnSpellEffect( spell ):
 				#if ( target_item.obj.get_size < STAT_SIZE_LARGE or target_item.obj.is_category_type(mc_type_humanoid) ):
 				if 1:  # let creatures of STAT_SIZE_LARGE be affected too, marc
 
-					if not target_item.obj.saving_throw_spell( spell.dc, D20_Save_Will, D20STD_F_NONE, spell.caster, spell.id, spell.id ):
+					if not target_item.obj.saving_throw_spell( spell.dc, D20_Save_Will, D20STD_F_NONE, spell.caster, spell.id):
 						# saving throw unsuccessful
 						target_item.obj.float_mesfile_line( 'mes\\spell.mes', 30002 )
 						if npc.type != obj_t_pc and npc.leader_get() == OBJ_HANDLE_NULL:

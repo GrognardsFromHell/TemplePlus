@@ -9,12 +9,25 @@ def OnBeginSpellCast( spell ):
 def	OnSpellEffect( spell ):
 	print "Resonance OnSpellEffect"
 	target_item = spell.target_list[0]
-	if (spell.caster.stat_level_get(stat_level_wizard) >= 1 or spell.caster.stat_level_get(stat_level_bard) >= 1 or spell.caster.stat_level_get(stat_level_sorcerer) >= 1) and not (spell.caster.stat_level_get(stat_level_cleric) >= 1 or spell.caster.stat_level_get(stat_level_paladin) >= 1 or spell.caster.stat_level_get(stat_level_ranger) >= 1 or spell.caster.stat_level_get(stat_level_druid) >= 1):
-		spell.caster.spells_pending_to_memorized()
-		game.particles( 'sp-Read Magic', spell.caster )
+	caster = spell.caster
+	
+	isValid = 0
+	if caster.stat_level_get(stat_level_wizard) >= 1:
+		caster.spells_pending_to_memorized(stat_level_wizard)
+		isValid = 1
+	if caster.stat_level_get(stat_level_bard) >= 1:
+		caster.spells_cast_reset(stat_level_bard)
+		isValid = 1
+	if caster.stat_level_get(stat_level_sorcerer) >= 1:
+		caster.spells_cast_reset(stat_level_sorcerer)
+		isValid = 1
+	
+	if isValid:
+		print "doing spells pending to memorized for spell caster"
+		game.particles( 'sp-Read Magic', caster )
 	else:
-		game.particles( 'Fizzle', spell.caster )
-
+		game.particles( 'Fizzle', caster )
+	spell.target_list.remove_target( target_item.obj )
 	spell.spell_end( spell.id )
 
 def OnBeginRound( spell ):
