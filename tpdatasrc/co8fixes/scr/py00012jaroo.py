@@ -191,10 +191,14 @@ def kill_picked( obj, jaroo ):
 	tempp = game.global_vars[23]
 	damage_dice = dice_new( '100d20' )
 	obj.damage( OBJ_HANDLE_NULL, 0, damage_dice )
-	jaroo.anim_goal_push(94)
+
+	# simulate reincarnate casting
+	jaroo.anim_goal_push(94) # conjuration casting
 	game.particles('sp-Raise Dead', obj)
-	game.sound_local_obj(17342, obj)
+	game.sound_local_obj(17342, obj) # reincarnate sound
 	obj.resurrect(CRITTER_R_CUTHBERT_RESURRECT, 0)
+	obj.object_script_execute(obj, san_resurrect)
+
 	if tempp <= 1:
 		game.timevent_add( de_butcherize, (tempp), 500, 1 )
 	return RUN_DEFAULT
