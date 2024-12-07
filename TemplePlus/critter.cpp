@@ -1029,7 +1029,6 @@ void LegacyCritterSystem::ResurrectApplyPenalties(objHndl critter, ResurrectType
 	} else {
 		SetHpDamage(critter, 0);
 	}
-	floatSys.FloatSpellLine(critter, 20037, FloatLineColor::White);
 	gameSystems->GetAnim().PushAnimate(critter, 67);
 }
 
