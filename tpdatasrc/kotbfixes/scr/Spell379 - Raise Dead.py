@@ -17,9 +17,6 @@ def	OnSpellEffect( spell ):
 	target_item.obj.condition_add_with_args( 'sp-Raise Dead', spell.id, spell.duration, 0 )
 	#target_item.partsys_id = game.particles( 'sp-Raise Dead', target_item.obj )
 	
-	# let the game know the target has been resurrected, for e.g. plot purposes
-	target_item.obj.object_script_execute( target_item.obj, san_resurrect )
-	
 	spell.spell_end( spell.id, 1 )
 
 def OnBeginRound( spell ):

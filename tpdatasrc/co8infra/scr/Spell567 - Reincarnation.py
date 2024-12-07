@@ -18,8 +18,6 @@ def	OnSpellEffect( spell ):
 	#target_item.partsys_id = game.particles( 'sp-Raise Dead', target_item.obj )
 
 #	target_item.obj.stat_base_set(stat_race, (race_gnome))
-
-	target_item.obj.object_script_execute( target_item.obj, san_resurrect )
 	
 	End_Spell(spell)
 	

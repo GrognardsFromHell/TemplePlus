@@ -197,7 +197,6 @@ def kill_picked( obj, jaroo ):
 	game.particles('sp-Raise Dead', obj)
 	game.sound_local_obj(17342, obj) # reincarnate sound
 	obj.resurrect(CRITTER_R_CUTHBERT_RESURRECT, 0)
-	obj.object_script_execute(obj, san_resurrect)
 
 	if tempp <= 1:
 		game.timevent_add( de_butcherize, (tempp), 500, 1 )

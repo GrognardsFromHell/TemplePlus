@@ -1030,6 +1030,9 @@ void LegacyCritterSystem::ResurrectApplyPenalties(objHndl critter, ResurrectType
 		SetHpDamage(critter, 0);
 	}
 	gameSystems->GetAnim().PushAnimate(critter, 67);
+
+	// Let the game know the critter has been resurrected, for e.g. plot purposes
+	pythonObjIntegration.ExecuteObjectScript(critter, critter, ObjScriptEvent::Resurrect);
 }
 
 uint32_t LegacyCritterSystem::Dominate(objHndl critter, objHndl caster) {
