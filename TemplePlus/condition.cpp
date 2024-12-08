@@ -1663,8 +1663,10 @@ int GenericCallbacks::FastHealingOnBeginRound(DispatcherCallbackArgs args)
 int GenericCallbacks::PreferOneHandedWieldRadialMenu(DispatcherCallbackArgs args)
 {
 	auto shield = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Shield);
-	if (!inventory.IsBuckler(shield))
-		return 0;
+	if (shield) {
+		if (!inventory.IsBuckler(shield))
+			return 0;
+	}
 
 	RadialMenuEntryToggle radEntry(5124, args.GetCondArgPtr(0), "TAG_RADIAL_MENU_PREFER_ONE_HANDED_WIELD");
 	radEntry.AddChildToStandard(args.objHndCaller, RadialMenuStandardNode::Options);
