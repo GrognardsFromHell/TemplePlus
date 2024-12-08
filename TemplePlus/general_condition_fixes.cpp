@@ -90,7 +90,7 @@ public:
 
 			// flags indicate whether we should _skip_ a particular condition, so that the
 			// existing default of 0 includes all adjustments.
-			if (omit & mask == mask) return 0;
+			if ((omit & mask) == mask) return 0;
 
 			return origNegLvl(args);
 			});
