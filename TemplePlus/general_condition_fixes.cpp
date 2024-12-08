@@ -78,17 +78,19 @@ public:
 			auto condName = args.subDispNode->condNode->condStruct->condName;
 
 			auto omit = static_cast<LevelDrainType>(dispIo->flags);
-			auto omitTemp = omit & LevelDrainType::NegativeLevel;
-			auto omitPerm = omit & LevelDrainType::DrainedLevel;
+
+			auto mask = LevelDrainType::NegativeLevel;
+
+			// Temp Negative Level and the various aligned equipment penalties count
+			// as `NegativeLevel`. The only built-in condition that is not of this
+			// type is Perm Negative Level.
+			if (!_stricmp(condName, "Perm Negative Level")) {
+				mask = LevelDrainType::DrainedLevel;
+			}
 
 			// flags indicate whether we should _skip_ a particular condition, so that the
 			// existing default of 0 includes all adjustments.
-			if (!_stricmp(condName, "Temp Negative Level")) {
-				if (omitTemp == LevelDrainType::NegativeLevel) return 0;
-			}
-			if (!_stricmp(condName, "Perm Negative Level")) {
-				if (omitPerm == LevelDrainType::DrainedLevel) return 0;
-			}
+			if (omit & mask == mask) return 0;
 
 			return origNegLvl(args);
 			});
