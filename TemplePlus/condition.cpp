@@ -1663,6 +1663,9 @@ int GenericCallbacks::FastHealingOnBeginRound(DispatcherCallbackArgs args)
 int GenericCallbacks::PreferOneHandedWieldRadialMenu(DispatcherCallbackArgs args)
 {
 	auto shield = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Shield);
+
+	//There is no reason to perfer attacking one handed unless the character is using a buckler.
+	//If they don't have a buckler, don't display the menu.
 	if (!inventory.IsBuckler(shield))
 		return 0;
 
