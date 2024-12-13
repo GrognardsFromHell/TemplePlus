@@ -2272,8 +2272,29 @@ void LegacySpellSystem::SpellMemorizedAdd(objHndl handle, int spellEnum, int spe
 	obj->SetSpell(obj_f_critter_spells_memorized_idx, size, spData);
 }
 
-void LegacySpellSystem::ForgetMemorized(objHndl handle) {
-	objSystem->GetObject(handle)->ClearArray(obj_f_critter_spells_memorized_idx);
+void LegacySpellSystem::ForgetMemorized(objHndl handle, bool pending, int percent) {
+	auto roll = percent < 100;
+
+	if (!pending && !roll) {
+		objSystem->GetObject(handle)->ClearArray(obj_f_critter_spells_memorized_idx);
+	}
+
+	auto obj = objSystem->GetObject(handle);
+	auto spells = obj->GetSpellArray(obj_f_critter_spells_memorized_idx);
+
+	// count down to avoid indexing shenanigans
+	for (size_t i = spells.GetSize(); i > 0; i--) {
+		// if we roll above the percentage, don't remove
+		if (roll && percent < Dice::Roll(1, 100)) continue;
+
+		if (pending) {
+			auto spData = obj->GetSpell(obj_f_critter_spells_memorized_idx, i-1);
+			spData.spellStoreState.usedUp |= 1;
+			obj->SetSpell(obj_f_critter_spells_memorized_idx, i-1, spData);
+		} else {
+			obj->RemoveSpell(obj_f_critter_spells_memorized_idx, i-1);
+		}
+	}
 }
 
 BOOL LegacySpellSystem::SpellEntriesInit(const char * spellRulesFolder){
