@@ -303,7 +303,8 @@ struct LegacySpellSystem : temple::AddressTable
 
 	// pending: move spells to pending vs. deleting from array
 	// percent: chance to lose spell
-	void ForgetMemorized(objHndl handle, bool pending = false, float percent = 100);
+	void ForgetMemorized(objHndl handle, bool pending = false, int percent = 100);
+
 	LegacySpellSystem()
 	{
 		rebase(spellCastIdxTable, 0x10AAF218);

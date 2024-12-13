@@ -4362,7 +4362,7 @@ static PyObject* PyObjHandle_MemorizedForget(PyObject* obj, PyObject* args) {
 	bool pending = false;
 	int percent = 100;
 	if (!PyArg_ParseTuple(args, "|ii:objhndl.spells_memorized_forget", &pending, &percent)) {
-		return Py_RETURN_NONE;
+		Py_RETURN_NONE;
 	}
 	spellSys.ForgetMemorized(self->handle, pending, percent);
 	Py_RETURN_NONE;
