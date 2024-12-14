@@ -993,6 +993,15 @@ void LegacyCritterSystem::ResurrectApplyPenalties(objHndl critter, ResurrectType
 	switch (type)
 	{
 	case ResurrectType::RaiseDead:
+		// Raise Dead causes a 50% chance of losing each prepared spell.
+		//
+		// Note: this will also affect Reincarnate, because it just applies
+		// the same condition. The books don't indicate that it behaves this
+		// way, so possibly revisit this later (with a new enum value perhaps).
+		if (config.stricterRulesEnforcement) {
+			spellSys.ForgetMemorized(critter, true, 50);
+		}
+
 		// Raise dead leaves the target with 1 hp/hit die
 		damaged = true;
 	case ResurrectType::Resurrect:
