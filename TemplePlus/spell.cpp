@@ -2297,14 +2297,19 @@ void LegacySpellSystem::ForgetMemorized(objHndl handle, bool pending, int percen
 	}
 }
 
-// Uses up a spontaneous spell slot of the given level for the given class.
-void LegacySpellSystem::UseUpSpontaneous(objHndl handle, Stat classCode, int spellLvl) {
-	auto obj = objSystem->GetObject(handle);
-
+void LegacySpellSystem::RemainingSpellsOfLevel(objHndl handle, Stat classCode, int spellLvl) {
 	auto perDay = GetNumSpellsPerDay(handle, classCode, spellLvl);
 	auto usedUp = NumSpellsInLevel(handle, obj_f_critter_spells_cast_idx, classCode, spellLvl);
 
-	if (perDay <= usedUp) return;
+	return perDay - usedUp;
+}
+
+// Uses up a spontaneous spell slot of the given level for the given class.
+void LegacySpellSystem::UseUpSpontaneousSlot(objHndl handle, Stat classCode, int spellLvl) {
+	auto obj = objSystem->GetObject(handle);
+
+	if (RemainingSpellsOfLevel(handle, classCode, spellLvl) <= 0)
+		return;
 
 	// Placeholder needs a spell enum. Chose Resistance since it's on most lists.
 	// Probably doesn't matter much.
@@ -2313,6 +2318,32 @@ void LegacySpellSystem::UseUpSpontaneous(objHndl handle, Stat classCode, int spe
 
 	auto maxIx = obj->GetSpellArray(obj_f_critter_spells_cast_idx).GetSize();
 	obj->SetSpell(obj_f_critter_spells_cast_idx, maxIx, sd);
+}
+
+// Uses up spontaneous slots with a given percentage
+void LegacySpellSystem::DeductSpontaneous(objHndl handle, Stat classCode, int percent) {
+	// All classes
+	if (classCode == -1) {
+		for (auto classEnum : d20ClassSys.classEnumsWithSpellLists) {
+			if (d20ClassSys.IsNaturalCastingClass(classEnum)) {
+				if (objects.StatLevelGet(objHnd, classEnum) > 0) {
+					DeductSpontaneous(handle, classEnum, percent);
+				}
+			}
+		}
+		return;
+	}
+
+	// Main logic
+	auto roll = percent < 100;
+
+	auto maxSpLvl = GetMaxSpellLevel(handle, classCode);
+	for (int spLvl = 0; spLvl <= maxSpLvl; spLvl++) {
+		for (int j = RemainingSpellsOfLevel(handle, classCode, spLvl); j > 0; j--) {
+			if (roll && percent < Dice::Roll(1, 100)) continue;
+			UseUpSpontaneousSlot(handle, classCode, spLvl);
+		}
+	}
 }
 
 BOOL LegacySpellSystem::SpellEntriesInit(const char * spellRulesFolder){
