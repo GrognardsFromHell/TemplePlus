@@ -2344,7 +2344,7 @@ void LegacySpellSystem::DeductSpontaneous(objHndl handle, Stat classEnum, int pe
 	for (int spLvl = 0; spLvl <= maxSpLvl; spLvl++) {
 		for (int j = RemainingSpellsOfLevel(handle, classEnum, spLvl); j > 0; j--) {
 			if (roll && percent < Dice::Roll(1, 100)) continue;
-			UseUpSpontaneousSlot(handle, classCode, spLvl);
+			UseUpSpontaneousSlot(handle, classEnum, spLvl);
 		}
 	}
 }
