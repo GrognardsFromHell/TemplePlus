@@ -1000,6 +1000,7 @@ void LegacyCritterSystem::ResurrectApplyPenalties(objHndl critter, ResurrectType
 		// way, so possibly revisit this later (with a new enum value perhaps).
 		if (config.stricterRulesEnforcement) {
 			spellSys.ForgetMemorized(critter, true, 50);
+			spellSys.DeductSpontaneous(critter, static_cast<Stat>(-1), 50);
 		}
 
 		// Raise dead leaves the target with 1 hp/hit die
