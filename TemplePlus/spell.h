@@ -305,7 +305,7 @@ struct LegacySpellSystem : temple::AddressTable
 	// percent: chance to lose spell
 	void ForgetMemorized(objHndl handle, bool pending = false, int percent = 100);
 
-	void RemainingSpellsOfLevel(objHndl handle, Stat classEnum, int spellLvl);
+	int RemainingSpellsOfLevel(objHndl handle, Stat classEnum, int spellLvl);
 	void UseUpSpontaneousSlot(objHndl handle, Stat classEnum, int spellLvl);
 
 	// analogue of ForgetMemorized for spontaneous spells
