@@ -942,6 +942,19 @@ static PyObject* PyObjHandle_SpontaneousSpellsRemaining(PyObject* obj, PyObject*
 	return PyInt_FromLong(res?1:0);
 }
 
+static PyObject* PyObjectHandle_SpontaneousSpellsRemove(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		Py_RETURN_NONE;
+	}
+	int percent = 100;
+	if (!PyArg_ParseTuple(args, "|i:objhndl.spontaneous_spells_remove", &percent)) {
+		Py_RETURN_NONE;
+	}
+	spellSys.DeductSpontaneous(self->handle, -1, percent);
+	Py_RETURN_NONE;
+}
+
 // turns out you could already get this via .stat_base_get(stat_attack_bonus). Leaving it for backward compatibility...
 static PyObject* PyObjHandle_GetBaseAttackBonus(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
@@ -4814,6 +4827,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "spells_memorized_forget", PyObjHandle_MemorizedForget, METH_VARARGS, NULL },
 	{ "spontaneous_spell_level_can_cast", PyObjHandle_SpontaneousSpellLevelCanCast, METH_VARARGS, NULL },
 	{ "spontaneous_spells_remaining", PyObjHandle_SpontaneousSpellsRemaining, METH_VARARGS, NULL },
+	{ "spontaneous_spells_remove", PyObjectHandle_SpontaneousSpellsRemove, METH_VARARGS, NULL },
 	{ "standpoint_get", PyObjHandle_StandpointGet, METH_VARARGS, NULL },
 	{ "standpoint_set", PyObjHandle_StandpointSet, METH_VARARGS, NULL },
 	{"stat_level_get", PyObjHandle_StatLevelGet, METH_VARARGS, NULL},
