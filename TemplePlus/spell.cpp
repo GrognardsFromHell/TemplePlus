@@ -2297,7 +2297,7 @@ void LegacySpellSystem::ForgetMemorized(objHndl handle, bool pending, int percen
 	}
 }
 
-void LegacySpellSystem::RemainingSpellsOfLevel(objHndl handle, Stat classCode, int spellLvl) {
+int LegacySpellSystem::RemainingSpellsOfLevel(objHndl handle, Stat classCode, int spellLvl) {
 	auto perDay = GetNumSpellsPerDay(handle, classCode, spellLvl);
 	auto usedUp = NumSpellsInLevel(handle, obj_f_critter_spells_cast_idx, classCode, spellLvl);
 
@@ -2326,7 +2326,7 @@ void LegacySpellSystem::DeductSpontaneous(objHndl handle, Stat classCode, int pe
 	if (classCode == -1) {
 		for (auto classEnum : d20ClassSys.classEnumsWithSpellLists) {
 			if (d20ClassSys.IsNaturalCastingClass(classEnum)) {
-				if (objects.StatLevelGet(objHnd, classEnum) > 0) {
+				if (objects.StatLevelGet(handle, classEnum) > 0) {
 					DeductSpontaneous(handle, classEnum, percent);
 				}
 			}

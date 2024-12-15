@@ -309,7 +309,7 @@ struct LegacySpellSystem : temple::AddressTable
 	void UseUpSpontaneousSlot(objHndl handle, Stat classEnum, int spellLvl);
 
 	// analogue of ForgetMemorized for spontaneous spells
-	void DeductSpontaneous(objHandle handle, Stat classEnum, int percent = 100);
+	void DeductSpontaneous(objHndl handle, Stat classEnum, int percent = 100);
 
 	LegacySpellSystem()
 	{
