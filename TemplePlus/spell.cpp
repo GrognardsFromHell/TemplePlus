@@ -2302,9 +2302,9 @@ void LegacySpellSystem::UseUpSpontaneous(objHndl handle, Stat classCode, int spe
 	auto obj = objSystem->GetObject(handle);
 
 	auto perDay = GetNumSpellsPerDay(handle, classCode, spellLvl);
-	auto alreadyCast = NumSpellsInLevel(handle, obj_f_critter_spells_cast, classCode, spellLevel);
+	auto usedUp = NumSpellsInLevel(handle, obj_f_critter_spells_cast_idx, classCode, spellLvl);
 
-	if (perDay <= alreadyCast) return;
+	if (perDay <= usedUp) return;
 
 	// Placeholder needs a spell enum. Chose Resistance since it's on most lists.
 	// Probably doesn't matter much.
