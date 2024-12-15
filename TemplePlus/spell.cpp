@@ -2305,11 +2305,14 @@ int LegacySpellSystem::RemainingSpellsOfLevel(objHndl handle, Stat classCode, in
 }
 
 // Uses up a spontaneous spell slot of the given level for the given class.
-void LegacySpellSystem::UseUpSpontaneousSlot(objHndl handle, Stat classCode, int spellLvl) {
+void LegacySpellSystem::UseUpSpontaneousSlot(objHndl handle, Stat classEnum, int spellLvl) {
 	auto obj = objSystem->GetObject(handle);
 
-	if (RemainingSpellsOfLevel(handle, classCode, spellLvl) <= 0)
+	if (RemainingSpellsOfLevel(handle, classEnum, spellLvl) <= 0)
 		return;
+
+	// needs to have the extra bit set for some reason
+	int classCode = 0x80 | static_cast<int>(classEnum);
 
 	// Placeholder needs a spell enum. Chose Resistance since it's on most lists.
 	// Probably doesn't matter much.
@@ -2321,9 +2324,9 @@ void LegacySpellSystem::UseUpSpontaneousSlot(objHndl handle, Stat classCode, int
 }
 
 // Uses up spontaneous slots with a given percentage
-void LegacySpellSystem::DeductSpontaneous(objHndl handle, Stat classCode, int percent) {
+void LegacySpellSystem::DeductSpontaneous(objHndl handle, Stat classEnum, int percent) {
 	// All classes
-	if (classCode == -1) {
+	if (classEnum == -1) {
 		for (auto classEnum : d20ClassSys.classEnumsWithSpellLists) {
 			if (d20ClassSys.IsNaturalCastingClass(classEnum)) {
 				if (objects.StatLevelGet(handle, classEnum) > 0) {
@@ -2337,9 +2340,9 @@ void LegacySpellSystem::DeductSpontaneous(objHndl handle, Stat classCode, int pe
 	// Main logic
 	auto roll = percent < 100;
 
-	auto maxSpLvl = GetMaxSpellLevel(handle, classCode);
+	auto maxSpLvl = GetMaxSpellLevel(handle, classEnum);
 	for (int spLvl = 0; spLvl <= maxSpLvl; spLvl++) {
-		for (int j = RemainingSpellsOfLevel(handle, classCode, spLvl); j > 0; j--) {
+		for (int j = RemainingSpellsOfLevel(handle, classEnum, spLvl); j > 0; j--) {
 			if (roll && percent < Dice::Roll(1, 100)) continue;
 			UseUpSpontaneousSlot(handle, classCode, spLvl);
 		}
