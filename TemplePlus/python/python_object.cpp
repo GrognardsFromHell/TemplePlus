@@ -951,7 +951,7 @@ static PyObject* PyObjectHandle_SpontaneousSpellsRemove(PyObject* obj, PyObject*
 	if (!PyArg_ParseTuple(args, "|i:objhndl.spontaneous_spells_remove", &percent)) {
 		Py_RETURN_NONE;
 	}
-	spellSys.DeductSpontaneous(self->handle, -1, percent);
+	spellSys.DeductSpontaneous(self->handle, static_cast<Stat>(-1), percent);
 	Py_RETURN_NONE;
 }
 
