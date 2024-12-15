@@ -2297,6 +2297,24 @@ void LegacySpellSystem::ForgetMemorized(objHndl handle, bool pending, int percen
 	}
 }
 
+// Uses up a spontaneous spell slot of the given level for the given class.
+void LegacySpellSystem::UseUpSpontaneous(objHndl handle, Stat classCode, int spellLvl) {
+	auto obj = objSystem->GetObject(handle);
+
+	auto perDay = GetNumSpellsPerDay(handle, classCode, spellLvl);
+	auto alreadyCast = NumSpellsInLevel(handle, obj_f_critter_spells_cast, classCode, spellLevel);
+
+	if (perDay <= alreadyCast) return;
+
+	// Placeholder needs a spell enum. Chose Resistance since it's on most lists.
+	// Probably doesn't matter much.
+	SpellStoreData sd(399, spellLvl, classCode, 0);
+	sd.spellStoreState.spellStoreType = SpellStoreType::spellStoreCast;
+
+	auto maxIx = obj->GetSpellArray(obj_f_critter_spells_cast_idx).GetSize();
+	obj->SetSpell(obj_f_critter_spells_cast_idx, maxIx, sd);
+}
+
 BOOL LegacySpellSystem::SpellEntriesInit(const char * spellRulesFolder){
 	char filepat[260] = { 0, };
 	char spellFileName[260] = { 0, };

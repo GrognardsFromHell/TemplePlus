@@ -305,6 +305,8 @@ struct LegacySpellSystem : temple::AddressTable
 	// percent: chance to lose spell
 	void ForgetMemorized(objHndl handle, bool pending = false, int percent = 100);
 
+	void UseUpSpontaneous(objHndl handle, Stat classEnum, int level);
+
 	LegacySpellSystem()
 	{
 		rebase(spellCastIdxTable, 0x10AAF218);
