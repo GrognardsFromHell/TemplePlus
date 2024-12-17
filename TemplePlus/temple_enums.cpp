@@ -462,3 +462,23 @@ const char* GetObjectTypeName(ObjectType type) {
 const char* GetObjectFieldName(obj_f field) {
 	return ObjFieldNames[field];
 }
+
+LevelDrainType operator&(LevelDrainType l, LevelDrainType r) {
+	auto il = static_cast<uint32_t>(l);
+	auto ir = static_cast<uint32_t>(r);
+
+	return static_cast<LevelDrainType>(il & ir);
+}
+
+LevelDrainType operator|(LevelDrainType l, LevelDrainType r) {
+	auto il = static_cast<uint32_t>(l);
+	auto ir = static_cast<uint32_t>(r);
+
+	return static_cast<LevelDrainType>(il | ir);
+}
+
+LevelDrainType operator~(LevelDrainType l) {
+	auto i = static_cast<uint32_t>(l);
+
+	return static_cast<LevelDrainType>((~i) & 7);
+}

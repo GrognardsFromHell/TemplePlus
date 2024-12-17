@@ -289,6 +289,8 @@ struct LegacyCritterSystem : temple::AddressTable
 		Third argument seems unused.
 	*/
 	uint32_t Resurrect(objHndl critter, ResurrectType type, int unk);
+	bool ShouldResurrect(objHndl critter, ResurrectType type);
+	void ResurrectApplyPenalties(objHndl critter, ResurrectType type);
 
 	/*
 		Dominates a critter.
@@ -324,11 +326,16 @@ struct LegacyCritterSystem : temple::AddressTable
 	int GetSize(objHndl handle);
 
 	int GetEffectiveLevel(objHndl& objHnd); // Get Effective Character Level (used for determining XP gain / requirements)
+
+	// Get Effective Character Level, including level drain effects.
+	// Default excludes temporary negative levels.
+	int GetEffectiveDrainedLevel(objHndl& critter, LevelDrainType incl = LevelDrainType::DrainedOrLostLevel);
 	int GetLevel(objHndl critter);
 
 	int SkillLevel(objHndl critter, SkillEnum skill);
 
 	Race GetRace(objHndl critter, bool getBaseRace = true);
+	Subrace GetSubrace(objHndl critter);
 
 	Gender GetGender(objHndl critter);
 
