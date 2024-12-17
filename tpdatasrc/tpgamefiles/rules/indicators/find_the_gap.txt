@@ -1,0 +1,5 @@
+ID_string: FIND_THE_GAP
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Spell True Strike.tga
+help_topic: TAG_SPELLS_FIND_THE_GAP
+tooltip_base_text: Find the Gap
