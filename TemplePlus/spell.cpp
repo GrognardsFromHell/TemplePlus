@@ -2459,6 +2459,17 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 				auto found = false;
 				std::string text(ch);
 				text = tolower(text);
+
+				// look for an exact match first; allows "area or obj" to not get
+				// scooped by "area".
+				auto lookup = modeTgtStrings.find(text);
+				if (lookup != modeTgtStrings.end()) {
+					spEntry.modeTargetSemiBitmask |= (uint64_t)lookup->second;
+					found = true;
+					break;
+				}
+
+				// check for matching prefix
 				for (auto it: modeTgtStrings){
 					if (!_strnicmp(it.first.c_str(), ch, strlen(it.first.c_str()))){
 						spEntry.modeTargetSemiBitmask |= (uint64_t)it.second;
