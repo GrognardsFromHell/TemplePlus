@@ -235,7 +235,8 @@ enum SpellSchools : uint32_t
 	School_Necromancy = 7,
 	School_Transmutation = 8,
 	// Added in Temple+
-	School_Invocation = 9
+	School_Invocation = 9,
+	School_Universal = 10
 };
 
 

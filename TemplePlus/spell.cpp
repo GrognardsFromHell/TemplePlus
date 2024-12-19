@@ -2378,6 +2378,7 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 				{ "Transmutation", SpellSchools::School_Transmutation},
 				// Added in Temple+ for Warlocks
 				{ "Invocation", SpellSchools::School_Transmutation},
+				{ "Universal", SpellSchools::School_Universal},
 			};
 			auto value = 0;
 			if (findInMapping(schoolStrings, textBuf + 6, value)) {
