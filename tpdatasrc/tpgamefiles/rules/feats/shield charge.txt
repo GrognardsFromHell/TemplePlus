@@ -1,0 +1,5 @@
+name: Shield Charge
+flags: 12582928
+prereqs: 266 3 1216 1
+description: If you hit an opponent with your shield as part of a charge action, in addition to dealing damage normally, you may make a trip attack without provoking an attack of opportunity. If you lose, the defender does not get to try to trip you in return.
+prereq descr: Proficiency with shields, Improved Shield Bash, Base Attack Bonus +3

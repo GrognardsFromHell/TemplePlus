@@ -140,7 +140,7 @@ struct DispatcherSystem : temple::AddressTable
 	void DispatchSpellDamage(objHndl obj, DamagePacket* damage, objHndl target, SpellPacketBody *spellPkt);
 	int DispatchD20ActionCheck(D20Actn* d20Actn, TurnBasedStatus* turnBasedStatus, enum_disp_type dispType);
 	int Dispatch60GetAttackDice(objHndl obj, DispIoAttackDice * dispIo);
-	int Dispatch61GetLevel(objHndl obj, Stat stat, BonusList* bonlist = nullptr, objHndl someObj = objHndl::null); // get level after accounting for level drain effects
+	int Dispatch61GetLevel(objHndl obj, Stat stat, BonusList* bonlist = nullptr, objHndl someObj = objHndl::null, LevelDrainType omit = LevelDrainType::NoDrainedLevel); // get level after accounting for level drain effects
 
 	int DispatchGetBonus(objHndl critter, DispIoBonusList* bonusListOut, enum_disp_type dispType, D20DispatcherKey key);
 

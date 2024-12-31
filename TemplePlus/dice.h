@@ -23,6 +23,11 @@ public:
 	*/
 	static int Roll(int count, int sides, int modifier = 0);
 
+	/*
+		Returns the dice for a larger sized weapon.
+	*/
+	Dice IncreaseWeaponSize(int numIncreases = 1) const;
+
 	int Roll();
 
 	/*

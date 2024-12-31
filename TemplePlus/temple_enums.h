@@ -2168,7 +2168,8 @@ enum MonsterSubcategoryFlag: uint32_t
 	mc_subtype_orc = 0x1000000,
 	mc_subtype_reptilian = 0x2000000,
 	mc_subtype_slaadi = 0x4000000,
-	mc_subtype_water = 0x8000000
+	mc_subtype_water = 0x8000000,
+	mc_subtype_native = 0x10000000
 };
 
 enum CritterFlag
@@ -2714,6 +2715,23 @@ enum class AttackPowerType : int
 	Cold
 };
 
+// flags for distinguishing different sorts of level drain.
+enum class LevelDrainType : uint32_t
+{
+	NegativeLevel = 1, // a.k.a. Temp Negative Level
+	DrainedLevel = 2,  // a.k.a. Perm Negative Level
+	LostLevel = 4,     // resurrection level loss
+
+	NoDrainedLevel = 0,
+	NegativeOrDrainedLevel = 3,
+	NegativeOrLostLevel = 5,
+	DrainedOrLostLevel = 6,
+	AllDrainedLevel = 7
+};
+
+LevelDrainType operator&(LevelDrainType l, LevelDrainType r);
+LevelDrainType operator|(LevelDrainType l, LevelDrainType r);
+LevelDrainType operator~(LevelDrainType l);
 
 enum class SavingThrowType : uint32_t {
 	Fortitude = 0,
@@ -2739,7 +2757,7 @@ enum SpellFlags : uint32_t
 	SF_2000 = 0x2000,
 	SF_4000 = 0x4000,
 	SF_8000 = 0x8000,
-	SF_10000 = 0x10000, // Used in goalstatefunc_124
+	SF_10000 = 0x10000, // Used in goalstatefunc_124, might be 'held' or similar
 	SF_20000 = 0x20000,
 	SF_40000 = 0x40000,
 	SF_80000 = 0x80000,

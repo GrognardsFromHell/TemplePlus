@@ -300,7 +300,17 @@ struct LegacySpellSystem : temple::AddressTable
 	int (__cdecl *SpellKnownAdd)(objHndl ObjHnd, int nSpellIdx, int nSpellClassCode, int nSpellCasterLevel, int nSpellStoreData, int nMetamagicData);
 	void SpellKnownRemove(objHndl handle, SpellStoreData& spData);
 	void SpellMemorizedAdd(objHndl ObjHnd, int spellEnum, int spellClass, int spellLvl, int nSpellStoreData, int nMetamagicData);
-	void ForgetMemorized(objHndl handle);
+
+	// pending: move spells to pending vs. deleting from array
+	// percent: chance to lose spell
+	void ForgetMemorized(objHndl handle, bool pending = false, int percent = 100);
+
+	int RemainingSpellsOfLevel(objHndl handle, Stat classEnum, int spellLvl);
+	void UseUpSpontaneousSlot(objHndl handle, Stat classEnum, int spellLvl);
+
+	// analogue of ForgetMemorized for spontaneous spells
+	void DeductSpontaneous(objHndl handle, Stat classEnum, int percent = 100);
+
 	LegacySpellSystem()
 	{
 		rebase(spellCastIdxTable, 0x10AAF218);

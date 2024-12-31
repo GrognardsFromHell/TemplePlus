@@ -942,6 +942,19 @@ static PyObject* PyObjHandle_SpontaneousSpellsRemaining(PyObject* obj, PyObject*
 	return PyInt_FromLong(res?1:0);
 }
 
+static PyObject* PyObjectHandle_SpontaneousSpellsRemove(PyObject* obj, PyObject* args) {
+	auto self = GetSelf(obj);
+	if (!self->handle) {
+		Py_RETURN_NONE;
+	}
+	int percent = 100;
+	if (!PyArg_ParseTuple(args, "|i:objhndl.spontaneous_spells_remove", &percent)) {
+		Py_RETURN_NONE;
+	}
+	spellSys.DeductSpontaneous(self->handle, static_cast<Stat>(-1), percent);
+	Py_RETURN_NONE;
+}
+
 // turns out you could already get this via .stat_base_get(stat_attack_bonus). Leaving it for backward compatibility...
 static PyObject* PyObjHandle_GetBaseAttackBonus(PyObject* obj, PyObject* args) {
 	auto self = GetSelf(obj);
@@ -1840,6 +1853,15 @@ static PyObject* PyObjHandle_ConditionsGet(PyObject* obj, PyObject* args) {
 		}
 	}
 
+	// default to all conditions by being distinct from 0 and 1
+	uint32_t active = 0xff;
+	if (PyTuple_GET_SIZE(args) > 1) {
+		PyObject* arg = PyTuple_GET_ITEM(args, 1);
+		if (PyInt_Check(arg) || PyLong_Check(arg)) {
+			active = PyInt_AsLong(arg);
+		}
+	}
+
 	CondNode* node = dispatcher->conditions;
 	if (kind == 1) {
 		node = dispatcher->permanentMods;
@@ -1852,6 +1874,14 @@ static PyObject* PyObjHandle_ConditionsGet(PyObject* obj, PyObject* args) {
 
 	auto list = PyList_New(0);
 	while (node) {
+		// if active == 1 and inactive flag is set, skip
+		// if active == 0 and inactive flag isn't set, skip
+		// if active is anything else, don't skip
+		if ((node->flags & 1) == active) {
+			node = node->nextCondNode;
+			continue;
+		}
+
 		auto cname = PyString_FromString(node->condStruct->condName);
 		auto tuple = PyTuple_New(2);
 		PyTuple_SET_ITEM(tuple, 0, cname);
@@ -4342,7 +4372,12 @@ static PyObject* PyObjHandle_MemorizedForget(PyObject* obj, PyObject* args) {
 	if (!self->handle) {
 		Py_RETURN_NONE;
 	}
-	spellSys.ForgetMemorized(self->handle);
+	bool pending = false;
+	int percent = 100;
+	if (!PyArg_ParseTuple(args, "|ii:objhndl.spells_memorized_forget", &pending, &percent)) {
+		Py_RETURN_NONE;
+	}
+	spellSys.ForgetMemorized(self->handle, pending, percent);
 	Py_RETURN_NONE;
 }
 
@@ -4352,11 +4387,11 @@ static PyObject* PyObjHandle_Resurrect(PyObject* obj, PyObject* args) {
 		PyInt_FromLong(0);
 	}
 	ResurrectType type;
-	int unk = 0;
-	if (!PyArg_ParseTuple(args, "i|i:objhndl.resurrect", &type, &unk)) {
+	int caster_level = 0;
+	if (!PyArg_ParseTuple(args, "i|i:objhndl.resurrect", &type, &caster_level)) {
 		return 0;
 	}
-	auto result = critterSys.Resurrect(self->handle, type, unk);
+	auto result = critterSys.Resurrect(self->handle, type, caster_level);
 	return PyInt_FromLong(result);
 }
 
@@ -4792,6 +4827,7 @@ static PyMethodDef PyObjHandleMethods[] = {
 	{ "spells_memorized_forget", PyObjHandle_MemorizedForget, METH_VARARGS, NULL },
 	{ "spontaneous_spell_level_can_cast", PyObjHandle_SpontaneousSpellLevelCanCast, METH_VARARGS, NULL },
 	{ "spontaneous_spells_remaining", PyObjHandle_SpontaneousSpellsRemaining, METH_VARARGS, NULL },
+	{ "spontaneous_spells_remove", PyObjectHandle_SpontaneousSpellsRemove, METH_VARARGS, NULL },
 	{ "standpoint_get", PyObjHandle_StandpointGet, METH_VARARGS, NULL },
 	{ "standpoint_set", PyObjHandle_StandpointSet, METH_VARARGS, NULL },
 	{"stat_level_get", PyObjHandle_StatLevelGet, METH_VARARGS, NULL},

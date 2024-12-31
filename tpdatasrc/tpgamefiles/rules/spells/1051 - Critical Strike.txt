@@ -1,0 +1,20 @@
+School: Divination
+Level: Brd 1
+Level: Sor 1
+Level: Wiz 1
+Component: V
+Casting Time: Swift Action
+Range: Personal
+Saving Throw: None
+Spell Resistance: No
+Projectile: No
+flags_Target: Range
+inc_flags_Target: Self
+exc_flags_Target: Other
+exc_flags_Target: Dead
+exc_flags_Target: Non-critter
+mode_Target: Personal
+min_Target: 1
+max_Target: 1
+radius_Target: 0
+ai_type: ai_action_defensive

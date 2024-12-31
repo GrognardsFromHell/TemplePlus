@@ -72,6 +72,29 @@ public:
 		replaceFunction(0x100FFD20, WeaponKeenCritHitRange); // fixes Weapon Keen stacking (Keen Edge spell / Keen enchantment)
 		replaceFunction(0x100F8320, ImprovedCriticalGetCritThreatRange); // fixes stacking with Keen Edge spell / Keen enchantment
 		
+		// Allow filtering out certain types of negative levels from the GetLevel query.
+		static int (*origNegLvl)(DispatcherCallbackArgs) = replaceFunction<int(DispatcherCallbackArgs)>(0x100EF8B0, [](DispatcherCallbackArgs args)->int {
+			GET_DISPIO(dispIoTypeObjBonus, DispIoObjBonus);
+			auto condName = args.subDispNode->condNode->condStruct->condName;
+
+			auto omit = static_cast<LevelDrainType>(dispIo->flags);
+
+			auto mask = LevelDrainType::NegativeLevel;
+
+			// Temp Negative Level and the various aligned equipment penalties count
+			// as `NegativeLevel`. The only built-in condition that is not of this
+			// type is Perm Negative Level.
+			if (!_stricmp(condName, "Perm Negative Level")) {
+				mask = LevelDrainType::DrainedLevel;
+			}
+
+			// flags indicate whether we should _skip_ a particular condition, so that the
+			// existing default of 0 includes all adjustments.
+			if ((omit & mask) == mask) return 0;
+
+			return origNegLvl(args);
+			});
+
 		// Amulet of Natural Armor - bonus type changed to 10 so it doesn't stack with other enhancement bonuses (Barkskin, Righteous Might)
 		replaceFunction<int(DispatcherCallbackArgs)>(0x10104AB0, [](DispatcherCallbackArgs args)->int {
 			GET_DISPIO(dispIOTypeAttackBonus, DispIoAttackBonus);
@@ -191,7 +214,7 @@ int GeneralConditionFixes::PermanentNegativeLevelOnAdd(DispatcherCallbackArgs ar
 {
 	auto highestLvl = 0;
 	auto highestClass = 0;
-
+	auto effLv = critterSys.GetEffectiveDrainedLevel(args.objHndCaller);
 	
 	critterSys.CritterHpChanged(args.objHndCaller, objHndl::null, -5);
 
@@ -203,9 +226,7 @@ int GeneralConditionFixes::PermanentNegativeLevelOnAdd(DispatcherCallbackArgs ar
 		critterSys.Kill(args.objHndCaller);
 	}
 	else {
-		auto xp0 = d20LevelSys.GetXpRequireForLevel(hd);
-		auto xp1 = d20LevelSys.GetXpRequireForLevel(hd+1);
-		auto newXp = (xp0 >=0 && xp1 > 0 && xp1 > xp0 ) ? (xp0 + xp1) / 2 : 0;
+		auto newXp = d20LevelSys.GetPenaltyXPForDrainedLevel(effLv);
 
 		// set negative XP
 		objects.setInt32(args.objHndCaller, obj_f_critter_experience, newXp);
@@ -214,7 +235,7 @@ int GeneralConditionFixes::PermanentNegativeLevelOnAdd(DispatcherCallbackArgs ar
 	histSys.CreateRollHistoryLineFromMesfile(22, args.objHndCaller, objHndl::null); // [ACTOR] ~loses a level permanently~[TAG_LEVEL_LOSS]!
 	combatSys.FloatCombatLine(args.objHndCaller, 126); //"Permanant Level Loss"
 
-	args.SetCondArg(1, hd+1);
+	args.SetCondArg(1, effLv+1);
 	
 	return 0;
 }

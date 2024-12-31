@@ -184,14 +184,22 @@ SpellSourceType PythonClassSpecIntegration::GetSpellSourceType(int classEnum)
 	return static_cast<SpellSourceType>(GetInt(classEnum, ClassSpecFunc::GetSpellSourceType, (int)SpellSourceType::Ability));
 }
 
-int PythonClassSpecIntegration::GetAdvancedLearningClass(int classEnum)
+int PythonClassSpecIntegration::GetAdvancedLearningSpellLevel(int classEnum, int spellEnum)
 {
-	return static_cast<enum Stat>(GetInt(classEnum, ClassSpecFunc::GetAdvancedLearningClass, classEnum));
+	auto result = std::map<int, int>();
+	auto classSpecEntry = mScripts.find(classEnum);
+	if (classSpecEntry == mScripts.end())
+		return -1;
+
+	auto args = Py_BuildValue("(i)", spellEnum);
+	auto spellLevel = RunScript(classSpecEntry->second.id, (EventId)ClassSpecFunc::GetAdvancedLearningSpellLevel, args);
+	Py_DECREF(args);
+	return spellLevel;
 }
 
 bool PythonClassSpecIntegration::HasAdvancedLearning(int classEnum)
 {
-	return (GetInt(classEnum, ClassSpecFunc::GetAdvancedLearningClass, 0) != 0);
+	return (GetInt(classEnum, ClassSpecFunc::HasAdvancedLearning) != 0);
 }
 
 std::map<int, int> PythonClassSpecIntegration::GetSpellList(int classEnum)
@@ -457,7 +465,7 @@ static std::map<ClassSpecFunc, std::string> classSpecFunctions = {
 
 	{ ClassSpecFunc::GetSpellListType,"GetSpellListType" },
 	{ ClassSpecFunc::GetSpellReadyingType,"GetSpellReadyingType" },
-	{ ClassSpecFunc::GetAdvancedLearningClass,"GetAdvancedLearningClass" },
+	{ ClassSpecFunc::GetAdvancedLearningSpellLevel,"GetAdvancedLearningSpellLevel" },
 	{ ClassSpecFunc::HasAdvancedLearning,"HasAdvancedLearning" },
 	{ ClassSpecFunc::HasArmoredArcaneCasterFeature, "HasArmoredArcaneCasterFeature" },
 	{ ClassSpecFunc::GetSpellSourceType,"GetSpellSourceType" },

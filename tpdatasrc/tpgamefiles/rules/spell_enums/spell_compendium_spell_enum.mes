@@ -3,6 +3,10 @@
 {795}{Vigor}
 {796}{Vigor, Greater}
 
+// Added by doug but in the compendium
+{1005}{Fire Shield, Mass}
+{1006}{Prismatic Ray}
+
 // Additional spells added by Sagenlicht
 
 {1050}{Sound Lance}
@@ -43,10 +47,10 @@
 {1086}{Fire Shuriken}
 {1087}{Phantom Foe}
 {1088}{Veil of Shadow}
-{1089}{Curse of Impending Blades Mass}
+{1089}{Curse of Imp. Blades, Mass}
 {1090}{Dissonant Chord}
 {1091}{Haunting Tune}
-{1092}{Loves Lament}
+{1092}{Love's Lament}
 {1093}{Ray of Dizziness}
 {1094}{Wounding Whispers}
 {1095}{Dirge of Discord}
@@ -105,7 +109,7 @@
 {1150}{Deific Vengeance}
 {1151}{Frost Breath}
 {1152}{Ghost Touch Armor}
-{1153}{Aid Mass}
+{1153}{Aid, Mass}
 {1154}{Align Weapon Mass}
 {1155}{Bless Weapon Swift}
 {1156}{Anarchic Storm}
@@ -130,10 +134,34 @@
 {1176}{Draconic Might}
 {1177}{Vigor, Mass Lesser}
 {1178}{Vigor, Mass Improved}
+{1179}{Sure Strike}
+{1180}{Hunter's Eye}
+{1181}{Tactical Precision}
+{1182}{Accuracy}
+{1183}{Hail of Stone}
+{1184}{Lesser Orb of Acid}
+{1185}{Lesser Orb of Cold}
+{1186}{Lesser Orb of Electricity}
+{1187}{Lesser Orb of Fire}
+{1188}{Lesser Orb of Sound}
+{1189}{Blades of Fire}
+{1190}{Fireburst}
+{1191}{Greater Fireburst}
+{1192}{Ice Knife}
+{1193}{Whirling Blade}
+{1194}{Ring of Blades}
+{1195}{Blast of Flame}
+{1196}{Orb of Acid}
+{1197}{Orb of Cold}
+{1198}{Orb of Electricity}
+{1199}{Orb of Fire}
+{1200}{Orb of Sound}
 
 {5794}{Vigor, Lesser}
 {5795}{Vigor}
 {5796}{Vigor, Greater}
+{6005}{Fire Shield, Mass}
+{6006}{Prismatic Ray}
 {6050}{Sound Lance}
 {6051}{Critical Strike}
 {6052}{Camouflage}
@@ -259,10 +287,36 @@
 {6176}{Draconic Might}
 {6177}{Vigor, Mass Lesser}
 {6178}{Vigor, Mass Improved}
+{6179}{Sure Strike}
+{6180}{Hunter's Eye}
+{6181}{Tactical Precision}
+{6182}{Accuracy}
+{6183}{Hail of Stone}
+{6184}{Lesser Orb of Acid}
+{6185}{Lesser Orb of Cold}
+{6186}{Lesser Orb of Electricity}
+{6187}{Lesser Orb of Fire}
+{6188}{Lesser Orb of Sound}
+{6189}{Blades of Fire}
+{6190}{Fireburst}
+{6191}{Greater Fireburst}
+{6192}{Ice Knife}
+{6193}{Whirling Blade}
+{6194}{Ring of Blades}
+{6195}{Blast of Flame}
+{6196}{Orb of Acid}
+{6197}{Orb of Cold}
+{6198}{Orb of Electricity}
+{6199}{Orb of Fire}
+{6200}{Orb of Sound}
 
 {20794}{TAG_SPELLS_VIGOR,_LESSER}
 {20795}{TAG_SPELLS_VIGOR}
 {20796}{TAG_SPELLS_VIGOR,_GREATER}
+
+{21005}{TAG_SPELLS_FIRE_SHIELD_MASS}
+{21006}{TAG_SPELLS_PRISMATIC_RAY}
+
 {21050}{TAG_SPELLS_SOUND_LANCE}
 {21051}{TAG_SPELLS_CRITICAL_STRIKE}
 {21052}{TAG_SPELLS_CAMOUFLAGE}
@@ -388,3 +442,25 @@
 {21176}{TAG_SPELLS_DRACONIC_MIGHT}
 {21177}{TAG_SPELLS_VIGOR,_MASS_LESSER}
 {21178}{TAG_SPELLS_VIGOR,_MASS_IMPROVED}
+{21179}{TAG_SPELLS_SURE_STRIKE}
+{21180}{TAG_SPELLS_HUNTER'S_EYE}
+{21181}{TAG_SPELLS_TACTICAL_PRECISION}
+{21182}{TAG_SPELLS_ACCURACY}
+{21183}{TAG_SPELLS_HAIL_OF_STONE}
+{21184}{TAG_SPELLS_LESSER_ORB_OF_ACID}
+{21185}{TAG_SPELLS_LESSER_ORB_OF_COLD}
+{21186}{TAG_SPELLS_LESSER_ORB_OF_ELECTRICITY}
+{21187}{TAG_SPELLS_LESSER_ORB_OF_FIRE}
+{21188}{TAG_SPELLS_LESSER_ORB_OF_SOUND}
+{21189}{TAG_SPELLS_BLADES_OF_FIRE}
+{21190}{TAG_SPELLS_FIREBURST}
+{21191}{TAG_SPELLS_GREATER_FIREBURST}
+{21192}{TAG_SPELLS_ICE_KNIFE}
+{21193}{TAG_SPELLS_WHIRLING_BLADE}
+{21194}{TAG_SPELLS_RING_OF_BLADES}
+{21195}{TAG_SPELLS_BLAST_OF_FLAME}
+{21196}{TAG_SPELLS_ORB_OF_ACID}
+{21197}{TAG_SPELLS_ORB_OF_COLD}
+{21198}{TAG_SPELLS_ORB_OF_ELECTRICITY}
+{21199}{TAG_SPELLS_ORB_OF_FIRE}
+{21200}{TAG_SPELLS_ORB_OF_SOUND}

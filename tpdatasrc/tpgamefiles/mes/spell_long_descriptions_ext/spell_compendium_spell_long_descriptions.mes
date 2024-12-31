@@ -198,7 +198,7 @@ Duration:      1 round}
 {6074} Sniper's Shot {No range limit to ranged sneak attacks.
 
 School:          Divination
-Casting:         1  swift action [V]
+Casting:         1  swift action [V, S]
 Range:               Personal
 Target:             Self
 Duration:      1 round}
@@ -742,7 +742,7 @@ Range:               Touch
 Target:             Armor touched
 Duration:      1 min/level,  Save: None,  SR: No}
 
-{6153} Aid Mass {Like spell Aid, but on multiple targets and temp HP are 1d8 + level (max 15).
+{6153} Aid, Mass {Like spell Aid, but on multiple targets and temp HP are 1d8 + level (max 15).
 School:          Enchantment(Compulsion)[Mind-Aff.]
 Casting:         1 action [V,S]
 Range:               Close (25ft. + 5ft./2 lvls)
@@ -918,3 +918,149 @@ Casting:         1 action [V,S]
 Range:               20 ft.
 Target:             One living creature/2 two levels
 Duration:      10 + 1 round/level(max 40),  Save: None,  SR: No}
+
+{6005} Fire Shield, Mass {Creatures striking you take your choice of fire or cold damage equal  to 1d6 +1  per level,  max +15.  You gain protection against the opposite type.
+Casting:         1  std action   [Evocation, V,S,M/DF]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:            allied creatures,  no more than 30' apart
+Duration:      1  round/level (D)}
+
+{6006} Prismatic Ray {Ray blinds creatures with 6 Hit Dice or less Hit Dice and produces a random effect on a successful ranged touch attack.
+Casting:         1  std action   [Evocation, V,S]
+Range:               Medium (100ft. +10 ft./level)
+Area:                   Ray
+Duration:      Inst.,    Save: Yes,    SR: Yes}
+
+{6179} Sure Strike {You gain a +1 insight bonus per three caster levels on your next attack roll.
+School:          Divination
+Casting:         1  swift action [V]
+Range:               Personal
+Target:             Self
+Duration:      1 round}
+
+{6180} Hunter's Eye {You deal an extra 1d6 points of sneak attack damage per three caster levels.
+School:          Divination
+Casting:         1  swift action [V]
+Range:               Personal
+Target:             Self
+Duration:      1 round}
+
+{6181} Tactical Precision {If two affected allies flank the same creature, each gains a +2 insight bonus on melee attack rolls and deals an extra 1d6 points of damage against the flanked creature.
+School:          Divination[Mind-Affecting]
+Casting:         1 action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One creature/level
+Duration:      1 round/level,  Save: None,  SR: No}
+
+{6182} Accuracy {For the duration of the spell, the range increment for the affected weapon or weapons is doubled.
+School:          Transmutation
+Casting:         1 action [V,S]
+Range:               Touch
+Target:             One thrown weapon/level touched or one projectile weapon touched.
+Duration:      Instantaneous,  Save: None,  SR: No}
+
+{6183} Hail of Stones {You create a rain of stones that deals 1d4 points of damage per caster level (maximum 5d4).
+School:          Conjuration(Creation)[Earth]
+Casting:         1 action [V,S]
+Range:               Medium (100ft. + 10ft./lvl)
+Target:             Cylinder (5-ft. radius)
+Duration:      Instantaneous,  Save: None,  SR: No}
+
+{6184} Lesser Orb of Acid {Ranged Touch Attack that deals 1d8/two levels (max 5d8) acid damage.
+School:          Conjuration(Creation)[Acid]
+Casting:         1 action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One creature
+Duration:      Instantaneous,  Save: None,  SR: No}
+
+{6185} Lesser Orb of Cold {Ranged Touch Attack that deals 1d8/two levels (max 5d8) cold damage.
+School:          Conjuration(Creation)[Cold]
+Casting:         1 action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One creature
+Duration:      Instantaneous,  Save: None,  SR: No}
+
+{6186} Lesser Orb of Electricity {Ranged Touch Attack that deals 1d8/two levels (max 5d8) electricity damage.
+School:          Conjuration(Creation)[Electricity]
+Casting:         1 action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One creature
+Duration:      Instantaneous,  Save: None,  SR: No}
+
+{6187} Lesser Orb of Fire {Ranged Touch Attack that deals 1d8/two levels (max 5d8) fire damage.
+School:          Conjuration(Creation)[Fire]
+Casting:         1 action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One creature
+Duration:      Instantaneous,  Save: None,  SR: No}
+
+{6188} Lesser Orb of Sound {Ranged Touch Attack that deals 1d8/two levels (max 5d8) sonic damage.
+School:          Conjuration(Creation)[Sonic]
+Casting:         1 action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One creature
+Duration:      Instantaneous,  Save: None,  SR: No}
+
+{6189} Blades of Fire {Your melee weapons each deal an extra 1d8 points of fire damage stacking with other energy damage.
+School:          Conjuration (Creation)[Fire]
+Casting:         1 swift action [V]
+Range:               Touch
+Target:             Up to two melee weapons
+Duration:      1 round,  Save: None,  SR: No}
+
+{6190} Fireburst {An explosion of flame deals 1d8 (max 5d6) fire damage per level to anyone within 5 feet of you.
+School:          Evocation[Fire]
+Casting:         1 action [V,S]
+Range:               5 ft.
+Target:             Creatures 5 ft. from you
+Duration:      Inst.,  Save: Reflex partial,  SR: Yes}
+
+{6191} Greater Fireburst {An explosion of flame deals 1d8 (max 15d6) fire damage per level to anyone within 10 feet of you.
+School:          Evocation[Fire]
+Casting:         1 action [V,S]
+Range:               10 ft.
+Target:             Creatures 10 ft. from you
+Duration:      Inst.,  Save: Reflex partial,  SR: Yes}
+
+{6195} Blast of Flame {Flames fill a cone shaped area, dealing 1d6 points of fire damage per caster level (maximum 10d6).
+School:          Conjuration (Creation)[Fire]
+Casting:         1 action [V,S]
+Range:               60 ft.
+Target:             Cone-shaped burst
+Duration:      Inst.,  Save: Reflex partial,  SR: No}
+
+{6196} Orb of Acid {Ranged Touch Attack that deals 1d6/level (max 15d6) acid damage and in addition sickens for 1 round on a failed fortitude save.
+School:          Conjuration(Creation)[Acid]
+Casting:         1 action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One creature
+Duration:      Inst.,  Save: Fortitude partial,  SR: No}
+
+{6197} Orb of Cold {Ranged Touch Attack that deals 1d6/level (max 15d6) cold damage and in addition blinds for 1 round on a failed fortitude save.
+School:          Conjuration(Creation)[Cold]
+Casting:         1 action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One creature
+Duration:      Inst.,  Save: Fortitude partial,  SR: No}
+
+{6198} Orb of Electricity {Ranged Touch Attack that deals 1d6/level (max 15d6) electricity damage and in addition may entangle for 1 round on a failed fortitude save.
+School:          Conjuration(Creation)[Electricity]
+Casting:         1 action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One creature
+Duration:      Inst.,  Save: Fortitude partial,  SR: No}
+
+{6199} Orb of Fire {Ranged Touch Attack that deals 1d6/level (max 15d6) fire damage and in addition dazes for 1 round on a failed fortitude save.
+School:          Conjuration(Creation)[Fire]
+Casting:         1 action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One creature
+Duration:      Inst.,  Save: Fortitude partial,  SR: No}
+
+{6200} Orb of Sound {Ranged Touch Attack that deals 1d6/level (max 15d6) sonic damage and in addition deafens for 1 round on a failed fortitude save.
+School:          Conjuration(Creation)[Sonic]
+Casting:         1 action [V,S]
+Range:               Close (25ft. + 5ft./2 lvls)
+Target:             One creature
+Duration:      Inst.,  Save: Fortitude partial,  SR: No}
+

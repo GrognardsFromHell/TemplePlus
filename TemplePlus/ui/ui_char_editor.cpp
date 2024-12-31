@@ -370,20 +370,14 @@ PYBIND11_EMBEDDED_MODULE(char_editor, mm) {
 			if (firstSpellLvl == -1) {
 				auto castingClass = spellSys.GetCastingClass(self.spellClass);
 				if (pythonClassIntegration.HasAdvancedLearning(castingClass)) {
-					int nAdvancedLearningStat = pythonClassIntegration.GetAdvancedLearningClass(castingClass);
-					if (nAdvancedLearningStat != self.spellClass) {
-						firstSpellLvl = spellSys.GetSpellLevelBySpellClass(first, spellSys.GetSpellClass(nAdvancedLearningStat));
-					}
+					firstSpellLvl = pythonClassIntegration.GetAdvancedLearningSpellLevel(castingClass, first);
 				}
 			}
 
 			if (secondSpellLvl == -1) {
 				auto castingClass = spellSys.GetCastingClass(other.spellClass);
 				if (pythonClassIntegration.HasAdvancedLearning(castingClass)) {
-					int nAdvancedLearningStat = pythonClassIntegration.GetAdvancedLearningClass(castingClass);
-					if (nAdvancedLearningStat != other.spellClass) {
-						secondSpellLvl = spellSys.GetSpellLevelBySpellClass(second, spellSys.GetSpellClass(nAdvancedLearningStat));
-					}
+					secondSpellLvl = pythonClassIntegration.GetAdvancedLearningSpellLevel(castingClass, second);
 				}
 			}
 
@@ -722,10 +716,7 @@ PYBIND11_EMBEDDED_MODULE(char_editor, mm) {
 				if (spData.spellLevel == -1) {
 					int castingClass = spellSys.GetCastingClass(it.spellClass);
 					if (pythonClassIntegration.HasAdvancedLearning(castingClass)) {
-						int nAdvancedLearningStat = pythonClassIntegration.GetAdvancedLearningClass(castingClass);
-						if (nAdvancedLearningStat != castingClass) {
-							spData.spellLevel = spellSys.GetSpellLevelBySpellClass(spEnum, spellSys.GetSpellClass(nAdvancedLearningStat));
-						}
+						spData.spellLevel = pythonClassIntegration.GetAdvancedLearningSpellLevel(castingClass, spData.spellEnum);
 					}
 				}
 			}

@@ -73,8 +73,6 @@ static struct DamageAddresses : temple::AddressTable {
 	int (__cdecl*HealSubdual)(objHndl target, int amount);
 
 	int (__cdecl*DoSpellDamage)(objHndl victim, objHndl attacker, uint32_t dmgDice, DamageType type, int attackPowerType, int reduction, int damageDescMesKey, int actionType, int spellId, int flags);
-
-	bool (__cdecl *SavingThrow)(objHndl obj, objHndl attacker, int dc, SavingThrowType type, int flags);
 	
 	bool (__cdecl *SavingThrowSpell)(objHndl obj, objHndl attacker, int dc, SavingThrowType type, int flags, int spellId);
 
@@ -110,7 +108,6 @@ static struct DamageAddresses : temple::AddressTable {
 		rebase(HealSpell, 0x100B81D0);
 		rebase(DoSpellDamage, 0x100B7F80);
 		rebase(HealSubdual, 0x100B9030);
-		rebase(SavingThrow, 0x100B4F20);
 		rebase(SavingThrowSpell, 0x100B83C0);
 		rebase(ReflexSaveAndDamage, 0x100B9500);
 
@@ -160,6 +157,10 @@ class DamageHooks: TempleFix
 
 		replaceFunction<int(__cdecl)(objHndl, objHndl, int, D20CAF, D20ActionType)>(0x100B7950, [](objHndl attacker, objHndl tgt, int d20Data, D20CAF flags, D20ActionType actionType) {
 			return damage.DealAttackDamage(attacker, tgt, d20Data, flags, actionType);
+		});
+
+		replaceFunction<bool(__cdecl)(objHndl, objHndl, int, int, int)>(0x100B4F20, [](objHndl tgt, objHndl atk, int dc, int saveType, int flags) {
+			return damage.SavingThrow(tgt, atk, dc, static_cast<SavingThrowType>(saveType), flags);
 		});
 	}
 } damageHooks;
@@ -813,6 +814,44 @@ void Damage::DamageCritterPython(objHndl attacker, objHndl tgt, DispIoDamage& ev
 	Py_DECREF(result);
 }
 
+// The logic for Fast Healing. This is a fixed amount of healing that
+// happens at a regular interval. The amount applies to subdual first,
+// then to lethal damage.
+void Damage::FastHeal(objHndl critter, int amount) {
+	if (!critter || amount <= 0) return;
+
+	int totHeal = 0;
+
+	auto subdual = critterSys.GetSubdualDamage(critter);
+	// TODO: check for unhealable damage. Could be environmental for
+	// subdual, and cursed/infernal wounds for lethal, if either is
+	// implemented.
+	if (subdual > 0) {
+		auto sHeal = std::min(amount, subdual);
+		critterSys.SetSubdualDamage(critter, subdual - sHeal);
+
+		auto text = fmt::format("{} {}", sHeal, combatSys.GetCombatMesLine(33));
+		floatSys.floatMesLine(critter, 2, FloatLineColor::LightBlue, text.c_str());
+
+		amount -= sHeal;
+		totHeal += sHeal;
+	}
+
+	auto lethal = critterSys.GetHpDamage(critter);
+	if (amount > 0 && lethal > 0) {
+		auto heal = std::min(amount, lethal);
+		critterSys.SetHpDamage(critter, lethal - heal);
+
+		auto text = fmt::format("{} {}", heal, combatSys.GetCombatMesLine(32));
+		floatSys.floatMesLine(critter, 2, FloatLineColor::LightBlue, text.c_str());
+
+		totHeal += heal;
+	}
+
+	if (totHeal > 0)
+		d20Sys.d20SendSignal(critter, DK_SIG_HP_Changed, totHeal, 0);
+}
+
 void Damage::Heal(objHndl target, objHndl healer, const Dice& dice, D20ActionType actionType) {
 	int healingBonus = 0;
 	if (healer){
@@ -891,8 +930,6 @@ bool Damage::SavingThrow(objHndl handle, objHndl attacker, int dc, SavingThrowTy
 			return false; // natural 1 - always fails
 	}
 	return saveThrowMod + diceResult >= dc;
-
-	// return addresses.SavingThrow(handle, attacker, dc, saveType, flags);
 }
 
 bool Damage::SavingThrowSpell(objHndl obj, objHndl attacker, int dc, SavingThrowType type, int flags, int spellId) {

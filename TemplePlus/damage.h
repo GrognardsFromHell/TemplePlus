@@ -117,6 +117,8 @@ public:
 	void DamageCritter(objHndl attacker, objHndl tgt, DispIoDamage & evtObjDam);
 
 
+	void FastHeal(objHndl critter, int amount);
+
 	void Heal(objHndl target, objHndl healer, const Dice &dice, D20ActionType actionType);
 	
 	void HealSpell(objHndl target, objHndl healer, const Dice &dice, D20ActionType actionType, int spellId);
