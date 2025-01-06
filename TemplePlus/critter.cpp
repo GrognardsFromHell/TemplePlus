@@ -1756,24 +1756,71 @@ uint32_t LegacyCritterSystem::IsSubtypeWater(objHndl objHnd)
 	return IsCategorySubtype(objHnd, mc_subtype_water);
 }
 
-/* 0x100B52D0 */
-float LegacyCritterSystem::GetReach(objHndl obj, D20ActionType actType, /*added in Temple+:*/ float* minReach ) {
+// Standard reach for 'tall' creatures.
+//
+// Note: this is reach beyond the actual 'occupied' space, which is
+// probably underestimated by ToEE.
+int StdReachForSize(int size)
+{
+	if (size < 4) return 0;
+	if (size < 9) return 5 * std::max(1, size - 4);
+	return 20 + 10*(size - 8);
+}
 
-	float naturalReach = (float)objects.getInt32(obj, obj_f_critter_reach);
-	
+float ReachForSize(int adjustedSize)
+{
+	// so that tiny creatures still threaten the 'square' they occupy.
+	if (adjustedSize <= 3) return 2.5;
+	else if (adjustedSize <= 5) return 5.0;
+	else if (adjustedSize == 6) return 10.0;
+	else if (adjustedSize == 7) return 15.0;
+	// in case you somehow have a collossal creature with bonus reach
+	else return 20.0 + 10.0*(adjustedSize-8);
+}
+
+// Tries to infer an adjustment to the creature's size that makes the
+// standard reach match their actual reach.
+int DetermineReachOffset(int baseReach, int baseSize)
+{
+	auto exReach = StdReachForSize(baseSize);
+	auto guess = (baseReach - exReach) / 5;
+	auto diff = baseReach - StdReachForSize(baseSize + guess);
+
+	if (diff >= 5) return guess+1;
+	else if (diff <= -5) return guess-1;
+	else return guess;
+}
+
+float LegacyCritterSystem::GetNaturalReach(objHndl obj)
+{
+	objHndl critter = obj;
+
 	// Temple+: fixed wildshape reach
 	auto protoId = d20Sys.d20Query(obj, DK_QUE_Polymorphed);
 	if (protoId) {
-		auto protoHandle = gameSystems->GetObj().GetProtoHandle(protoId);
-		if (protoHandle) {
-			naturalReach = (float)gameSystems->GetObj().GetObject(protoHandle)->GetInt32(obj_f_critter_reach);
-		}
+		auto polyHandle = gameSystems->GetObj().GetProtoHandle(protoId);
+		if (polyHandle) critter = polyHandle;
 	}
 
-	if (naturalReach < 0.01) {
-		naturalReach = 5.0;
-	}
+	int ireach = objects.getInt32(critter, obj_f_critter_reach);
+	int curSize = objects.GetSize(obj, false);
 
+	if (0 == ireach) return ReachForSize(curSize);
+
+	int baseSize = objects.GetSize(obj, true);
+	float reach = static_cast<float>(ireach);
+
+	if (baseSize == curSize) return reach;
+
+	int extraOff = DetermineReachOffset(ireach, baseSize);
+
+	return ReachForSize(curSize + extraOff);
+}
+
+/* 0x100B52D0 */
+float LegacyCritterSystem::GetReach(objHndl obj, D20ActionType actType, /*added in Temple+:*/ float* minReach ) {
+
+	float naturalReach = GetNaturalReach(obj);
 
 	float weaponReach = 0.0f;
 	float weaponMinReach = 0.0f;
@@ -1793,11 +1840,15 @@ float LegacyCritterSystem::GetReach(objHndl obj, D20ActionType actType, /*added 
 			
 		}
 	}
-	auto maxReach = weaponReach + naturalReach - 2.0f;
+
+	float radius = locSys.InchesToFeet(objects.GetRadius(obj));
+	float offset = std::min(2.0f, radius);
+
+	auto maxReach = weaponReach + naturalReach - offset;
 	
 	// Temple+: added polearm minimum reach
 	if (minReach) {
-		*minReach = max(0.0f, weaponMinReach - 2.0f);
+		*minReach = max(0.0f, weaponMinReach - offset);
 	}
 	return maxReach;
 }
@@ -2012,6 +2063,12 @@ int LegacyCritterSystem::GetBaseAttackBonus(const objHndl& handle, Stat classBei
 	auto racialBab = GetRacialAttackBonus(handle);
 
 	return bab + racialBab;
+}
+
+int LegacyCritterSystem::GetAttackBonus(const objHndl& handle, D20CAF flags) {
+	DispIoAttackBonus dispIo;
+	dispIo.attackPacket.flags = flags;
+	return dispatch.DispatchAttackBonus(handle, objHndl::null, &dispIo, dispTypeToHitBonus2, 0);
 }
 
 int LegacyCritterSystem::GetSpellLvlCanCast(const objHndl& handle, SpellSourceType spellSourceType, SpellReadyingType spellReadyingType){
