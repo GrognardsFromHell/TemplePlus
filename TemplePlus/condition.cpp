@@ -2688,6 +2688,7 @@ void _FeatConditionsRegister()
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionAutoendTurn);
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionTurnUndead);
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionGreaterTurning);
+	conds.hashmethods.CondStructAddToHashtable(conds.ConditionMonsterOoze);
 	
 	// Add the destruction domain to the condition table so it can be accessed in python
 	CondStruct * pDestructionDomain = *(conds.ConditionArrayDomains + 3 * Domain_Destruction);
