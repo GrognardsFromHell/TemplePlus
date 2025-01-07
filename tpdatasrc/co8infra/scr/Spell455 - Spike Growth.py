@@ -16,12 +16,7 @@ def	OnSpellEffect( spell ):
 	#In areas of bare earth, roots and rootlets act in the same way. Typically, spike growth can be cast in any outdoor setting except open water, ice, heavy snow, sandy desert, or bare stone.
 	outdoor_map_list = [5001, 5002, 5009, 5042, 5043, 5051, 5062, 5068, 5069, 5070, 5071, 5072, 5073, 5074, 5075, 5076, 5077, 5078, 5091, 5093, 5094, 5095, 5096, 5097, 5099, 5100, 5108, 5110, 5111, 5112, 5113, 5119, 5120, 5121, 5132, 5142, 5189]
 
-	print "Spike Growth!!"
-	print tpdp.config_get_bool("StricterRulesEnforcement")
-	print (game.leader.map in outdoor_map_list)
-	print (game.global_vars[451] & 2**0 == 0)
-
-	if not tpdp.config_get_bool("StricterRulesEnforcement") or (game.leader.map in outdoor_map_list):
+	if (tpdp.config_get_bool("StricterRulesEnforcement") and tpdp.is_temple_module()) or (game.leader.map in outdoor_map_list):
 
 		# spawn one spell_object object
 		spell_obj = game.obj_create( OBJECT_SPELL_GENERIC, spell.target_loc, spell.target_loc_off_x, spell.target_loc_off_y )
