@@ -3,6 +3,7 @@ import _include
 from co8Util import size
 from co8Util.PersistentData import *
 from co8Util.ObjHandling import *
+import tpdp
 
 ENTANGLE_KEY = "Sp153_Entangle_Activelist"
 
@@ -18,7 +19,7 @@ def OnSpellEffect( spell ):
 	spell.duration = 10 * spell.caster_level
 	outdoor_map_list = [5001, 5002, 5009, 5042, 5043, 5051, 5062, 5068, 5069, 5070, 5071, 5072, 5073, 5074, 5075, 5076, 5077, 5078, 5091, 5093, 5094, 5095, 5096, 5097, 5099, 5100, 5108, 5110, 5111, 5112, 5113, 5119, 5120, 5121, 5132, 5142, 5189]
 
-	if (game.leader.map in outdoor_map_list) or (game.global_vars[451] & 2**0 == 0):
+	if (tpdp.config_get_bool("StricterRulesEnforcement") and tpdp.is_temple_module()) or (game.leader.map in outdoor_map_list):
 
 		# spawn one Entangle scenery object
 		entangle_obj = game.obj_create( OBJECT_SPELL_GENERIC, spell.target_loc, spell.target_loc_off_x, spell.target_loc_off_y )
