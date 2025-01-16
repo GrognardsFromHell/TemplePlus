@@ -989,6 +989,8 @@ void UiItemCreation::CraftScrollWandPotionSetItemSpellData(objHndl objHndItem, o
 		}
 		auto newNameId = description.CustomNameNew(newName);
 		obj->SetInt32(obj_f_description, newNameId);
+
+		//Fix name id for fireball and gust of wind otherwise Pishella won't accept them for the golden orb of death
 		if (mScribedScrollSpell == 171) {
 			obj->SetInt32(obj_f_name, 4003);
 		}
