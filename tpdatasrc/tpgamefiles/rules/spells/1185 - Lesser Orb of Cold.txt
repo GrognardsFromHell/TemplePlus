@@ -1,0 +1,22 @@
+School: Conjuration
+Subschool: Creation
+Descriptor: Cold
+Level: Sor 1
+Level: Wiz 1
+Component: V
+Component: S
+Casting Time: 1 action
+Range: Close
+Saving Throw: None
+Spell Resistance: No
+Projectile: Yes
+flags_Target: Range
+inc_flags_Target: Other
+exc_flags_Target: Dead
+exc_flags_Target: Non-critter
+exc_flags_Target: Self
+mode_Target: Single
+min_Target: 1
+max_Target: 1
+radius_Target: 0
+ai_type: ai_action_offensive

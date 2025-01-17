@@ -758,7 +758,7 @@
 {28327}{} // spell hit
 {28328}{} // spell struck
 
-// [1117] *[]
+// [1117] *[Rhino's Rush]
 {28340}{} // spell begin
 {28341}{} // spell end
 {28342}{} // spell effect
@@ -1439,3 +1439,235 @@
 {29566}{} // spell projectile in-flight
 {29567}{} // spell hit
 {29568}{} // spell struck
+
+// [1179] *[Sure Strike]
+{29580}{} // spell begin
+{29581}{} // spell end
+{29582}{spells\sp_shillelagh.WAV} // spell effect
+{29583}{} // spell new round
+{29584}{} // spell projectile begin
+{29585}{} // spell projectile end
+{29586}{} // spell projectile in-flight
+{29587}{} // spell hit
+{29588}{} // spell struck
+
+// [1180] *[Hunter's Eye]
+{29600}{} // spell begin
+{29601}{} // spell end
+{29602}{spells\sp_see_invisibilty_end.WAV} // spell effect
+{29603}{} // spell new round
+{29604}{} // spell projectile begin
+{29605}{} // spell projectile end
+{29606}{} // spell projectile in-flight
+{29607}{} // spell hit
+{29608}{} // spell struck
+
+// [1181] *[Tactical Precision]
+{29620}{} // spell begin
+{29621}{spells\sp_guidance_end.WAV} // spell end
+{29622}{spells\sp_guidance.WAV} // spell effect
+{29623}{} // spell new round
+{29624}{} // spell projectile begin
+{29625}{} // spell projectile end
+{29626}{} // spell projectile in-flight
+{29627}{} // spell hit
+{29628}{} // spell struck
+
+// [1005] *[Fire Shield, Mass]
+{26100}{} // spell begin
+{26101}{spells\sp_fire_shield_end.WAV} // spell end
+{26102}{spells\sp_fire_shield_warm.wav} // spell effect
+{26103}{} // spell new round
+{26104}{} // spell projectile begin
+{26105}{} // spell projectile end
+{26106}{} // spell projectile in-flight
+{26107}{} // spell hit
+{26108}{} // spell struck
+
+// [1182] *[Accuracy]
+{29640}{} // spell begin
+{29641}{} // spell end
+{29642}{spells\sp_true_strike.wav} // spell effect
+{29643}{} // spell new round
+{29644}{} // spell projectile begin
+{29645}{} // spell projectile end
+{29646}{} // spell projectile in-flight
+{29647}{} // spell hit
+{29648}{} // spell struck
+
+// [1183] *[Hail of Stone]
+{29660}{} // spell begin
+{29661}{} // spell end
+{29662}{spells\sp_quench.wav} // spell effect
+{29663}{} // spell new round
+{29664}{} // spell projectile begin
+{29665}{} // spell projectile end
+{29666}{} // spell projectile in-flight
+{29667}{} // spell hit
+{29668}{} // spell struck
+
+// [1184] *[Lesser Orb of Acid]
+{29680}{} // spell begin
+{29681}{} // spell end
+{29682}{spells\sp_acid_splash.WAV} // spell effect
+{29683}{} // spell new round
+{29684}{} // spell projectile begin
+{29685}{} // spell projectile end
+{29686}{} // spell projectile in-flight
+{29687}{} // spell hit
+{29688}{} // spell struck
+
+// [1185] *[Lesser Orb of Cold]
+{29700}{} // spell begin
+{29701}{} // spell end
+{29702}{spells\sp_ray_of_frost.wav} // spell effect
+{29703}{} // spell new round
+{29704}{} // spell projectile begin
+{29705}{} // spell projectile end
+{29706}{} // spell projectile in-flight
+{29707}{} // spell hit
+{29708}{} // spell struck
+
+// [1186] *[Lesser Orb of Electricity]
+{29720}{} // spell begin
+{29721}{} // spell end
+{29722}{spells\sp_shocking_grasp.wav} // spell effect
+{29723}{} // spell new round
+{29724}{} // spell projectile begin
+{29725}{} // spell projectile end
+{29726}{} // spell projectile in-flight
+{29727}{} // spell hit
+{29728}{} // spell struck
+
+// [1187] *[Lesser Orb of Fire]
+{29740}{} // spell begin
+{29741}{} // spell end
+{29742}{spells\sp_Produce_flame.wav} // spell effect
+{29743}{} // spell new round
+{29744}{} // spell projectile begin
+{29745}{} // spell projectile end
+{29746}{} // spell projectile in-flight
+{29747}{} // spell hit
+{29748}{} // spell struck
+
+// [1188] *[Lesser Orb of Sound]
+{29760}{} // spell begin
+{29761}{} // spell end
+{29762}{spells\sp_shout.wav} // spell effect
+{29763}{} // spell new round
+{29764}{} // spell projectile begin
+{29765}{} // spell projectile end
+{29766}{} // spell projectile in-flight
+{29767}{} // spell hit
+{29768}{} // spell struck
+
+// [1189] *[Blades of Fire]
+{29780}{} // spell begin
+{29781}{spells\sp_flame_blade_end.WAV} // spell end
+{29782}{} // spell effect
+{29783}{} // spell new round
+{29784}{} // spell projectile begin
+{29785}{} // spell projectile end
+{29786}{} // spell projectile in-flight
+{29787}{} // spell hit
+{29788}{} // spell struck
+
+// [1190] *[Fireburst]
+{29800}{} // spell begin
+{29801}{} // spell end
+{29802}{spells\sp_burningHands.wav} // spell effect
+{29803}{} // spell new round
+{29804}{} // spell projectile begin
+{29805}{} // spell projectile end
+{29806}{} // spell projectile in-flight
+{29807}{} // spell hit
+{29808}{} // spell struck
+
+// [1191] *[Greater Fireburst]
+{29820}{} // spell begin
+{29821}{} // spell end
+{29822}{spells\sp_burningHands.wav} // spell effect
+{29823}{} // spell new round
+{29824}{} // spell projectile begin
+{29825}{} // spell projectile end
+{29826}{} // spell projectile in-flight
+{29827}{} // spell hit
+{29828}{} // spell struck
+
+// [1195] *[Blast of Flame]
+{29900}{} // spell begin
+{29901}{} // spell end
+{29902}{spells\sp_burningHands.wav} // spell effect
+{29903}{} // spell new round
+{29904}{} // spell projectile begin
+{29905}{} // spell projectile end
+{29906}{} // spell projectile in-flight
+{29907}{} // spell hit
+{29908}{} // spell struck
+
+// [1196] *[Orb of Acid]
+{29920}{} // spell begin
+{29921}{} // spell end
+{29922}{spells\sp_acid_splash.WAV} // spell effect
+{29923}{} // spell new round
+{29924}{} // spell projectile begin
+{29925}{} // spell projectile end
+{29926}{} // spell projectile in-flight
+{29927}{} // spell hit
+{29928}{} // spell struck
+
+// [1197] *[Orb of Cold]
+{29940}{} // spell begin
+{29941}{} // spell end
+{29942}{spells\sp_ray_of_frost.wav} // spell effect
+{29943}{} // spell new round
+{29944}{} // spell projectile begin
+{29945}{} // spell projectile end
+{29946}{} // spell projectile in-flight
+{29947}{} // spell hit
+{29948}{} // spell struck
+
+// [1198] *[Orb of Electricity]
+{29960}{} // spell begin
+{29961}{} // spell end
+{29962}{spells\sp_shocking_grasp.wav} // spell effect
+{29963}{} // spell new round
+{29964}{} // spell projectile begin
+{29965}{} // spell projectile end
+{29966}{} // spell projectile in-flight
+{29967}{} // spell hit
+{29968}{} // spell struck
+
+// [1199] *[Orb of Fire]
+{29980}{} // spell begin
+{29981}{} // spell end
+{29982}{spells\sp_Produce_flame.wav} // spell effect
+{29983}{} // spell new round
+{29984}{} // spell projectile begin
+{29985}{} // spell projectile end
+{29986}{} // spell projectile in-flight
+{29987}{} // spell hit
+{29988}{} // spell struck
+
+// [1200] *[Orb of Sound]
+{30000}{} // spell begin
+{30001}{} // spell end
+{30002}{spells\sp_shout.wav} // spell effect
+{30003}{} // spell new round
+{30004}{} // spell projectile begin
+{30005}{} // spell projectile end
+{30006}{} // spell projectile in-flight
+{30007}{} // spell hit
+{30008}{} // spell struck
+
+
+// [1006] *[Prismatic Ray]
+{26120}{} // spell begin
+{26121}{spells\sp_ray_enfeeblement_end.wav} // spell end
+{26122}{spells\sp_ray_enfeeblement.wav} // spell effect
+{26123}{} // spell new round
+{26124}{} // spell projectile begin
+{26125}{} // spell projectile end
+{26126}{} // spell projectile in-flight
+{26127}{spells\sp_ray_enfeeblement_hit.wav} // spell hit
+{26128}{} // spell struck

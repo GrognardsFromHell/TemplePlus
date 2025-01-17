@@ -524,6 +524,13 @@ DispIoObjEvent* DispatcherSystem::DispIoCheckIoType17(DispIO* dispIo)
 	return static_cast<DispIoObjEvent*>(dispIo);
 }
 
+DispIoAttackDice* DispatcherSystem::DispIoCheckIoType20(DispIO* dispIo)
+{
+	if (dispIo->dispIOType != dispIOType20)
+		return nullptr;
+	return static_cast<DispIoAttackDice*>(dispIo);
+}
+
 DispIoImmunity* DispatcherSystem::DispIoCheckIoType23(DispIoImmunity* dispIo)
 {
 	if (dispIo->dispIOType != dispIOTypeImmunityHandler) return nullptr;
@@ -1228,7 +1235,7 @@ int32_t _dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, BonusList* bonOut
 
 void DispIoEffectTooltip::Append(int effectTypeId, int spellEnum, const char* text) const
 {
-	BuffDebuffSub * bdbSub;
+	BuffDebuffSub * bdbSub = nullptr;
 	auto findSpec = uiParty.IndicatorSpecGet(effectTypeId);
 	switch (findSpec.type)
 	{
@@ -1250,14 +1257,20 @@ void DispIoEffectTooltip::Append(int effectTypeId, int spellEnum, const char* te
 	}
 
 	//copy the text
-	bdbSub->effectTypeId = effectTypeId;
-	bdbSub->spellEnum = spellEnum;
-	if (text){
-		bdbSub->text = new char[strlen(text) + 1];
-		strcpy( const_cast<char*>(bdbSub->text), text);
-	} else
-	{
-		bdbSub->text = nullptr;
+	if (bdbSub != nullptr) {
+		bdbSub->effectTypeId = effectTypeId;
+		bdbSub->spellEnum = spellEnum;
+		if (text) {
+			bdbSub->text = new char[strlen(text) + 1];
+			strcpy(const_cast<char*>(bdbSub->text), text);
+		}
+		else
+		{
+			bdbSub->text = nullptr;
+		}
+	}
+	else {
+		logger->error("Unknown tooltip effect {}", effectTypeId);
 	}
 }
 

@@ -1741,6 +1741,9 @@ enum D20DispatcherKey : uint32_t {
 	DK_QUE_Is_Preferring_One_Handed_Wield = 0x14A, // e.g. a character with a Buckler can opt to wield a sword one handed so as to not take the -1 to hit penalty
 	DK_QUE_Scribe_Scroll_Spell_Level = 0x14B,
 	DK_QUE_Critter_Is_Immune_Paralysis = 0x14C,
+	DK_QUE_Is_Two_Weapon_Fighting = 0x14D,
+	DK_QUE_Left_Is_Primary = 0x14E,
+	DK_QUE_Can_Shield_Bash = 0x14F,
 
 	DK_LVL_Stats_Activate = 100,
 	DK_LVL_Stats_Check_Complete = 101,
@@ -2736,7 +2739,7 @@ enum SpellFlags : uint32_t
 	SF_2000 = 0x2000,
 	SF_4000 = 0x4000,
 	SF_8000 = 0x8000,
-	SF_10000 = 0x10000, // Used in goalstatefunc_124
+	SF_10000 = 0x10000, // Used in goalstatefunc_124, might be 'held' or similar
 	SF_20000 = 0x20000,
 	SF_40000 = 0x40000,
 	SF_80000 = 0x80000,

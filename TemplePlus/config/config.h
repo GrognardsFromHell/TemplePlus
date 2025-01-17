@@ -54,6 +54,7 @@ struct TemplePlusConfig
 	bool debugClipping = false;
 	bool drawObjCylinders = false;
 	bool newAnimSystem = false;
+	float dmGuiScale = 1.0f;
 
 	bool autoUpdate = true;
 	std::string autoUpdateFeed = "https://templeplus.org/update-feeds/stable/";

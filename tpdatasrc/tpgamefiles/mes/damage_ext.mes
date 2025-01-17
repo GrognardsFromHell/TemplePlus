@@ -13,6 +13,8 @@
 {3006}{~Undead Bane Weapon~[TAG_SPELLS_UNDEAD_BANE_WEAPON]}
 {3007}{~Lawful Sword~[TAG_SPELLS_LAWFUL_SWORD]}
 {3008}{~Weapon of Energy~[TAG_SPELLS_WEAPON_OF_ENERGY]}
+{3009}{~Tactical Precision~[TAG_SPELLS_TACTICAL_PRECISION]}
+{3010}{~Blades of Fire~[TAG_SPELLS_BLADES_OF_FIRE]}
 
 // Feat Damage effects
 {4000}{~Flying Kick~[TAG_FLYING_KICK]}

@@ -94,6 +94,9 @@ static bool __cdecl PythonInit(GameSystemConf *conf) {
 	console = new PyConsole;
 	tig->GetConsole().SetCommandInterpreter(std::bind(&PyConsole::Exec, console, std::placeholders::_1));
 
+	//Always bring in the toee module for convenience
+	console->Exec("import toee");
+
 	// don't forget PyTempleImporter_Install (when adding new python integrations, for example...)
 	pythonObjIntegration.LoadScripts();
 	pySpellIntegration.LoadScripts();

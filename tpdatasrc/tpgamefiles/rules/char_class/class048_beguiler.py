@@ -110,8 +110,10 @@ def HasArmoredArcaneCasterFeature():
 def HasAdvancedLearning():
 	return 1
 	
-def GetAdvancedLearningClass():
-	return stat_level_wizard
+def GetAdvancedLearningSpellLevel(spellEnum):
+	spEntry = tpdp.SpellEntry(spellEnum)
+	spellLevel = spEntry.level_for_spell_class(tpdp.class_enum_to_casting_class(stat_level_wizard))
+	return spellLevel
 	
 def GetSpellList():
 	return spell_list
@@ -202,7 +204,7 @@ def InitSpellSelection(obj, classLvlNew = -1, classLvlIncrement = 1):
 	spAvail = GetAdvancedLearningList(obj, maxSpellLvl)
 	
 	# Add the spell level labels
-	for p in range(1,maxSpellLvl+1):
+	for p in range(0,maxSpellLvl+1):
 		spAvail.append(char_editor.KnownSpellInfo(spell_label_level_0 + p, 0, classEnum))
 	spAvail.sort()
 

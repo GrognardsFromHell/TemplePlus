@@ -106,8 +106,12 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 
 	m.doc() = "Temple+ Dispatcher module, used for creating modifier extensions.";
 
-	m.def("hash", [](std::string &text){
+	m.def("hash", [](std::string& text) {
 		return ElfHash::Hash(text);
+	});
+
+	m.def("class_enum_to_casting_class", [](int class_enum) {
+		return spellSys.GetSpellClass(class_enum);
 	});
 
 	m.def("register_metamagic_feat", [](std::string &text) {
@@ -751,7 +755,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		.value("Alchemy", Alchemy)
 		.value("Movement", Movement)
 		.value("Offense", Offense)
-		.value("Tacitical", Tactical)
+		.value("Tactical", Tactical)
 		.value("Options", Options)
 		.value("Potions", Potions)
 		.value("Wands", Wands)
@@ -851,7 +855,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		})
 		.def("level_for_spell_class", [](SpellEntry &spEntry, int spellClass)->int
 		{
-			return spellSys.GetSpellLevelBySpellClass(spEntry.spellEnum, spellClass);
+			return spellSys.GetSpellLevelBySpellClass(spEntry.spellEnum, spellClass); 
 		})
 		.def("get_lowest_spell_level", [](SpellEntry& spEntry)->int
 		{

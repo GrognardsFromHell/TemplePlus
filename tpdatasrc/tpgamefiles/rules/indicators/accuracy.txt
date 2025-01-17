@@ -1,0 +1,5 @@
+ID_string: ACCURACY
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Accuracy.tga
+help_topic: TAG_SPELLS_ACCURACY
+tooltip_base_text: Accuracy

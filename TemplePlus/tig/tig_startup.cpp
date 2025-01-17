@@ -269,12 +269,20 @@ void TigInitializer::LoadDataFiles() {
 			logger->info("Registering Co8 infrastructure fixes tpdata\\co8infra.dat");
 			result = tio_path_add(fmt::format("{}\\co8infra.dat", tpDataPath).c_str());
 			if (result != 0) {
-				logger->error("Unable to add archive tpdata\\co8fixes.dat");
+				logger->error("Unable to add archive tpdata\\co8infra.dat");
 			}
 
 			if (modSupport.IsIWD()) {
 				// placeholder
 				logger->info("Icewind Dale module detected.");
+			}
+			else if (modSupport.IsPalCove()) {
+				// placeholder
+				logger->info("Paladin's Cove module Detected.");
+				result = tio_path_add(fmt::format("{}\\palcov.dat", tpDataPath).c_str());
+				if (result != 0) {
+					logger->error("Unable to add archive tpdata\\palcov.dat");
+				}
 			}
 			else {
 				logger->info("Registering Co8 file fixes tpdata\\co8fixes.dat");

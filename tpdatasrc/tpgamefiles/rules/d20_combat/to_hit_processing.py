@@ -3,6 +3,7 @@ from toee import *
 import tpdp
 import logbook
 import roll_history
+from common import *
 
 debug_enabled = False
 
@@ -72,6 +73,7 @@ def mirror_image_attack_roll(d20a):
 
     #Performer to Hit Bonus
     to_hit = tpdp.EventObjAttack()
+    to_hit.attack_packet.attacker = performer
     to_hit.dispatch(performer, OBJ_HANDLE_NULL, ET_OnToHitBonus2, EK_NONE)
 
     to_hit_dice = dice_new("1d20")
@@ -191,31 +193,20 @@ def to_hit_processing(d20a):
             roll_id = roll_history.add_percent_chance_roll(performer, target, concealmentMissChance, 61, miss_chance_roll, 194, 193)
             d20a.roll_id_2 = roll_id
 
+
+    flags = d20a.flags
+
     #ToHitBonus Actions
     debug_print("To Hit")
     to_hit_eo = tpdp.EventObjAttack()
-    to_hit_eo.attack_packet.set_flags(d20a.flags)
+    to_hit_eo.attack_packet.set_flags(flags)
     to_hit_eo.attack_packet.target = target
     to_hit_eo.attack_packet.action_type = d20a.action_type #dispIoToHitBon.attackPacket.d20ActnType = d20a.action_type
     to_hit_eo.attack_packet.attacker = performer
     to_hit_eo.attack_packet.event_key = d20Data #dispIoToHitBon.attackPacket.dispKey = d20Data
-    unarmed = OBJ_HANDLE_NULL
-    if to_hit_eo.attack_packet.get_flags() & D20CAF_TOUCH_ATTACK:
-        to_hit_eo.attack_packet.set_weapon_used(unarmed)
-    elif to_hit_eo.attack_packet.get_flags() & D20CAF_SECONDARY_WEAPON:
-        offhandItem = performer.item_worn_at(item_wear_weapon_secondary)
-        if offhandItem == OBJ_HANDLE_NULL or offhandItem.type != obj_t_weapon:
-            to_hit_eo.attack_packet.set_weapon_used(unarmed)
-        else:
-            to_hit_eo.attack_packet.set_weapon_used(offhandItem)
-    else:
-        mainhandItem = performer.item_worn_at(item_wear_weapon_primary)
-        if mainhandItem == OBJ_HANDLE_NULL or mainhandItem.type != obj_t_weapon:
-            to_hit_eo.attack_packet.set_weapon_used(unarmed)
-        else:
-            to_hit_eo.attack_packet.set_weapon_used(mainhandItem)
+    to_hit_eo.attack_packet.set_weapon_used(getUsedWeapon(flags, performer))
+
     to_hit_eo.attack_packet.ammo_item = performer.get_ammo_used()
-    flags = to_hit_eo.attack_packet.get_flags()
     flags |= D20CAF_FINAL_ATTACK_ROLL
     to_hit_eo.attack_packet.set_flags(flags)
     to_hit_eo.dispatch(performer, OBJ_HANDLE_NULL, ET_OnGetBucklerAcPenalty , EK_NONE)

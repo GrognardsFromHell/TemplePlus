@@ -55,18 +55,28 @@ void ModSupport::DetectCo8ActiveModule(){
 		if (shit.find(L"New Content") != shit.npos) {
 			mIsCo8NC = true;
 			mIsIWD = false;
+			mIsPalCove = false;
 		}
 		if (shit.find(L"Keep on the Borderlands") != shit.npos)
 		{
 			mIsIWD = false;
 			mIsKotB = true;
 			mIsCo8NC = false;
+			mIsPalCove = false;
 		}
 		if (shit.find(L"Icewind Dale") != shit.npos)
 		{
 			mIsIWD = true;
 			mIsKotB = false;
 			mIsCo8NC = false;
+			mIsPalCove = false;
+		}
+		if (shit.find(L"Paladin") != shit.npos)
+		{
+			mIsIWD = false;
+			mIsKotB = false;
+			mIsCo8NC = false;
+			mIsPalCove = true;
 		}
 	}
 } 
@@ -91,6 +101,13 @@ bool ModSupport::IsKotB() const
 	if (!mInited)
 		throw TempleException("ModSupport uninited");
 	return mIsKotB;
+}
+
+bool ModSupport::IsPalCove() const
+{
+	if (!mInited)
+		throw TempleException("ModSupport uninited");
+	return mIsPalCove;
 }
 
 bool ModSupport::IsIWD() const
