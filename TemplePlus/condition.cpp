@@ -5152,6 +5152,7 @@ int SpellCallbacks::HasSpellEffectActive(DispatcherCallbackArgs args){
 	return 0;
 }
 
+// Was 0x100D5B60
 int SpellCallbacks::SilenceObjectEvent(DispatcherCallbackArgs args)
 {
 	auto dispIo = dispatch.DispIoCheckIoType17(args.dispIO);
