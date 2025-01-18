@@ -7754,6 +7754,8 @@ void Conditions::AddConditionsToTable(){
 		silence.subDispDefs[6].dispCallback = spCallbacks.SilenceObjectEvent;
 		silence.subDispDefs[6].dispKey = DK_OnEnterAoE;
 
+		silence.AddHook(dispTypeD20Signal, DK_SIG_Dismiss_Spells, spCallbacks.SpellDismissSignalHandler, 1, 0);
+
 		static CondStructNew silenceHit;
 		silenceHit.ExtendExisting("sp-Silence Hit");
 		silenceHit.subDispDefs[6].dispCallback = spCallbacks.SilenceObjectEvent;
