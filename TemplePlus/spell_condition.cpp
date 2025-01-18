@@ -1530,6 +1530,7 @@ int SpellConditionFixes::SilenceBegin(DispatcherCallbackArgs args)
 
 	float radius = ent.radiusTarget * (1+wide) * 12.0;
 
+	pkt.aoeObj = center;
 	auto evtId = objEvents.EventAppend(center, 32, 33, OLC_CRITTERS, radius, 0.0, XM_2PI);
 	args.SetCondArg(2, evtId);
 
