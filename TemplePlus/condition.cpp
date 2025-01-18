@@ -5208,7 +5208,6 @@ int SpellCallbacks::SilenceObjectEvent(DispatcherCallbackArgs args)
 			logger->error("sp-Silence hit trigger: cannot remove target");
 			break;
 		}
-		d20Sys.d20SendSignal(dispIo->tgt, DK_SIG_Spell_End, spellId, 0);
 		args.RemoveSpellMod();
 		break;
 	default:
