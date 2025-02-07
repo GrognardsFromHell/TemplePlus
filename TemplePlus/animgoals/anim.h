@@ -182,8 +182,15 @@ public:
 	pushes spell animation, including wand animation if relevant
 	*/
 	BOOL PushSpellCast(SpellPacketBody &spellPkt, objHndl item);
-
 	BOOL PushSpellInterrupt(const objHndl& caster, objHndl item, AnimGoalType animGoalType, int spellSchool);
+
+	/*
+	 pushes an animation for dismissing an active spell
+	 */
+	BOOL PushSpellDismiss(SpellPacketBody &spellPkt);
+	int GetWandAnimId(int school, bool conjure = false);
+	int GetCastingAnimId(int school, bool conjure = false);
+	void SetGoalDataForSpellPacket(SpellPacketBody &pkt, AnimSlotGoalStackEntry &goalData, bool wand, bool conjure=false);
 
 	/*
 	used by the general out-of-combat mouse LMB click handler

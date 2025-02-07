@@ -61,11 +61,11 @@ spells_per_day = {
 # to this list with advanced learning.
 spell_list = {
 	0: (spell_acid_splash, spell_disrupt_undead, spell_light, spell_ray_of_frost),
-	1: (spell_burning_hands, spell_chill_touch, spell_magic_missile, spell_shocking_grasp, spell_true_strike),
-	2: (spell_continual_flame, spell_fire_trap, spell_flaming_sphere, spell_melfs_acid_arrow, spell_pyrotechnics, spell_shatter, spell_scorching_ray),
-	3: (spell_fire_shield, spell_fireball, spell_flame_arrow, spell_gust_of_wind, spell_ice_storm, spell_lightning_bolt, spell_poison, spell_sleet_storm, spell_stinking_cloud),
-	4: (spell_contagion, spell_evards_black_tentacles, spell_phantasmal_killer, spell_shout, spell_wall_of_fire),
-	5: (spell_cloudkill, spell_cone_of_cold, spell_flame_strike),
+	1: (spell_accuracy, spell_burning_hands, spell_hail_of_stone, spell_lesser_orb_of_acid, spell_lesser_orb_of_cold, spell_lesser_orb_of_electricity, spell_lesser_orb_of_fire, spell_lesser_orb_of_sound, spell_chill_touch, spell_magic_missile, spell_shocking_grasp, spell_true_strike),
+	2: (spell_blades_of_fire, spell_continual_flame, spell_fire_trap, spell_fireburst, spell_flaming_sphere, spell_ice_knife, spell_melfs_acid_arrow, spell_pyrotechnics, spell_shatter, spell_scorching_ray, spell_whirling_blade),
+	3: (spell_fire_shield, spell_fireball, spell_flame_arrow, spell_gust_of_wind, spell_ice_storm, spell_lightning_bolt, spell_poison, spell_ring_of_blades, spell_sleet_storm, spell_stinking_cloud),
+	4: (spell_blast_of_flame, spell_contagion, spell_evards_black_tentacles, spell_orb_of_acid, spell_orb_of_cold, spell_orb_of_electricity, spell_orb_of_fire, spell_orb_of_sound, spell_phantasmal_killer, spell_shout, spell_wall_of_fire),
+	5: (spell_cloudkill, spell_cone_of_cold, spell_flame_strike, spell_fire_shield_mass, spell_greater_fireburst, spell_prismatic_ray),
 	6: (spell_blade_barrier, spell_chain_lightning, spell_circle_of_death, spell_disintegrate, spell_fire_seeds, spell_otilukes_freezing_sphere, spell_tensers_transformation),
 	7: (spell_delayed_blast_fireball, spell_earthquake, spell_finger_of_death, spell_fire_storm, spell_mordenkainens_sword, spell_prismatic_spray, spell_sunbeam, ),
 	8: (spell_horrid_wilting, spell_incendiary_cloud, spell_polar_ray, spell_prismatic_wall, spell_sunburst),
@@ -109,9 +109,13 @@ def HasArmoredArcaneCasterFeature():
 def HasAdvancedLearning():
 	return 1
 	
-def GetAdvancedLearningClass():
-	return stat_level_wizard
-	
+def GetAdvancedLearningSpellLevel(spellEnum):
+	spEntry = tpdp.SpellEntry(spellEnum)
+	spellLevel = spEntry.level_for_spell_class(tpdp.class_enum_to_casting_class(stat_level_wizard))
+	if spEntry.spell_school_enum != Evocation:
+		spellLevel = spellLevel + 1
+	return spellLevel
+		
 def GetSpellList():
 	return spell_list
 
@@ -148,8 +152,9 @@ def ObjMeetsPrereqs( obj ):
 
 def GetDeityClass():
 	return stat_level_sorcerer
-	
-def IsAdvancedLearningSpell(obj, spell):
+
+#Now also supports electic learning from the players handbook 2 p. 67 
+def IsAdvancedLearningSpell(obj, max_level, spell):
 	spEntry = tpdp.SpellEntry(spell.spell_enum)
 	
 	#Don't add spells that are already known to the list
@@ -161,20 +166,24 @@ def IsAdvancedLearningSpell(obj, spell):
 		if spell.spell_enum in spell_list_level:
 			return False
 		
-	#Next, get rid of everything that is not evocation
-	if spEntry.spell_school_enum == Evocation:
-		return True
+	#For the max level, it must be evocation, all spells lower then that are electic learning spells
+	if (spell.spell_level > max_level) or (spell.spell_level == max_level and spEntry.spell_school_enum != Evocation):
+		return False
 	
-	return False
+	return True
 
 def GetAdvancedLearningList(obj, maxSpellLevel):
 	#Add wizard spells and remove all that are not evocation
 	
 	spAdvancedLearningList = char_editor.get_learnable_spells(obj, stat_level_wizard, maxSpellLevel)
-	spAdvancedLearningList = filter(functools.partial(IsAdvancedLearningSpell, obj), spAdvancedLearningList)
-		
+	spAdvancedLearningList = filter(functools.partial(IsAdvancedLearningSpell, obj, maxSpellLevel), spAdvancedLearningList)
+	
+	#Fix the class enum and the level for non evocation spells
 	for idx in range(0, len(spAdvancedLearningList)):
 		spAdvancedLearningList[idx].set_casting_class(classEnum)
+		spEntry = tpdp.SpellEntry(spAdvancedLearningList[idx].spell_enum)
+		if spEntry.spell_school_enum != Evocation:
+			spAdvancedLearningList[idx].spell_level = spAdvancedLearningList[idx].spell_level + 1
 	
 	return spAdvancedLearningList
 	
@@ -205,7 +214,7 @@ def InitSpellSelection(obj, classLvlNew = -1, classLvlIncrement = 1):
 	spAvail = GetAdvancedLearningList(obj, maxSpellLvl)
 	
 	# Add the spell level labels
-	for p in range(1,maxSpellLvl+1):
+	for p in range(0,maxSpellLvl+1):
 		spAvail.append(char_editor.KnownSpellInfo(spell_label_level_0 + p, 0, classEnum))
 	spAvail.sort()
 
@@ -235,7 +244,7 @@ def LevelupSpellsFinalize( obj, classLvlNew = -1 ):
 	char_editor.spell_known_add(class_spells) # internally takes care of duplicates and the labels/vacant slots	
 	
 	#Add Anything from advanced learning
-	spEnums = char_editor.get_spell_enums()
+	spEnums = char_editor.get_spell_enums() #The correct level is lost here...
 	char_editor.spell_known_add(spEnums) # internally takes care of duplicates and the labels/vacant slots	
 	return 0
 	

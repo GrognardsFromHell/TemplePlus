@@ -1,0 +1,5 @@
+ID_string: SURE_STRIKE
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Sure Strike.tga
+help_topic: TAG_SPELLS_SURE_STRIKE
+tooltip_base_text: Sure Strike

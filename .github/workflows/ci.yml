@@ -43,7 +43,7 @@ jobs:
         python-version: 3.9
     - name: Download and Extract Dependencies
       run: |
-        curl -L -o dependencies.7z https://github.com/GrognardsFromHell/Dependencies/releases/download/v1.16/dependencies.7z
+        curl -L -o dependencies.7z https://github.com/GrognardsFromHell/Dependencies/releases/download/v1.19/dependencies.7z
         7z x dependencies.7z
     - name: Install NuGet packages
       run: |
@@ -67,7 +67,7 @@ jobs:
       shell: cmd
       # Package the symbol files, dump_syms needs the dev tools to be on the PATH
       run: |
-        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars32.bat"
+        set PATH=%PATH%;C:\Program Files\Microsoft Visual Studio\2022\Enterprise\DIA SDK\bin
         dependencies\bin\dump_syms.exe Release\TemplePlus.pdb > TemplePlus.sym
         7z a TemplePlusSymbols-${{ steps.get_version.outputs.version }}.zip TemplePlus.sym Release\TemplePlus.pdb
     - name: Pack Tools
@@ -84,22 +84,22 @@ jobs:
         copy dependencies\bin\*.dll dist
         7z a TemplePlusTools-${{ steps.get_version.outputs.version }}.zip dist\*
     - name: Upload ZIP-Distribution
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: TemplePlus
         path: TemplePlus-*.zip
     - name: Upload PDB
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: TemplePlusSymbols
         path: TemplePlusSymbols-*.zip
     - name: Upload Tools
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: TemplePlusTools
         path: TemplePlusTools-*.zip
     - name: Upload Nuget Package
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: TemplePlusNuget
         path: TemplePlus*.nupkg
@@ -114,7 +114,7 @@ jobs:
       contents: read  # This is required for actions/checkout
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: TemplePlusSymbols
     - name: Uncompress Symbol Files
@@ -134,7 +134,7 @@ jobs:
     needs: build
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: TemplePlusNuget
     - uses: nuget/setup-nuget@v1
@@ -146,7 +146,7 @@ jobs:
       env:
         TEMPLEPLUS_VERSION: ${{ needs.build.outputs.version }}
     - name: Upload Update-Site
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: UpdateSite
         path: releases-packages/
@@ -161,7 +161,7 @@ jobs:
         - package-release
     if: ${{ needs.build.outputs.release == 'true' }}
     steps:
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         path: artifacts
     - name: Display structure of downloaded files

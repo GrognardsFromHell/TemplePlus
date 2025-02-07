@@ -120,6 +120,7 @@ void DungeonMaster::Render() {
 	}
 	auto wndPos = ImGui::GetWindowPos();
 	auto wndWidth = ImGui::GetWindowWidth();
+	ImGui::SetWindowFontScale(config.dmGuiScale);
 	dmPortraitRect.x = (int)(wndPos.x + wndWidth / 2 - dmPortraitRect.width / 2); dmPortraitRect.y = (int)(wndPos.y - dmPortraitRect.height);
 
 	auto blyat = gameView->MapToScene(dmPortraitRect.x, dmPortraitRect.y);//gameView->MapFromScene(config.renderWidth - dmPortraitRect.x     , config.renderHeight - -dmPortraitRect.y);

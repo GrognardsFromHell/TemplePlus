@@ -244,11 +244,6 @@ _Pvt_Extensions
 /TemplePlus.VC.db
 /dependencies.7z
 
-#.dat files that are now generated
-#/tpdata/co8fixes.dat
-#/tpdata/co8infra.dat
-#/tpdata/kotbfixes.dat
-#/tpdata/tpgamefiles.dat
 
 /tpdata/.idea
 /.idea
@@ -258,3 +253,5 @@ co8fixes.dat
 co8infra.dat
 kotbfixes.dat
 tpgamefiles.dat
+palcov.dat
+

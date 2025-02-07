@@ -194,6 +194,7 @@ public:
 	static int __cdecl D20ModCountdownHandler(DispatcherCallbackArgs args);
 	static int __cdecl D20ModCountdownEndHandler(DispatcherCallbackArgs args);
 
+	static int __cdecl FastHealingOnBeginRound(DispatcherCallbackArgs args);
 
 	static int __cdecl MonsterRegenerationOnDamage(DispatcherCallbackArgs args);
 
@@ -268,6 +269,7 @@ public:
 	// Aura Of Courage
 	static int __cdecl CouragedAuraSavingThrow(DispatcherCallbackArgs args);
 
+	static int FailedCopyScroll(DispatcherCallbackArgs args);
 
 	static int FeatBrewPotionRadialMenu(DispatcherCallbackArgs args);
 	static int FeatScribeScrollRadialMenu(DispatcherCallbackArgs args);
@@ -352,6 +354,9 @@ public:
 	void apply() override {
 		logger->info("Replacing Condition-related Functions");
 
+		replaceFunction<void()>(0x100E19A0, []() {
+			conds.hashmethods.ConditionHashtableInit(conds.mCondStructHashtable);
+			});
 		//dispTypeConditionAddPre
 		static int(__cdecl* orgTempAbilityLoss)(DispatcherCallbackArgs) = replaceFunction<int(__cdecl)(DispatcherCallbackArgs)>(0x100EA1F0, [](DispatcherCallbackArgs args) {
 			Stat statDamaged = (Stat)args.GetCondArg(0);
@@ -572,6 +577,9 @@ public:
 		SubDispDefNew sdd(dispTypeDealingDamageWeaponlikeSpell, 0, classAbilityCallbacks.SneakAttackDamage, 0u,0u); // Weapon-like spell damage hook
 		write(0x102ED2A8, &sdd, sizeof(SubDispDefNew));
 
+		// Wizard
+		replaceFunction<int(DispatcherCallbackArgs)>(0x10102AE0, classAbilityCallbacks.FailedCopyScroll);
+
 		// D20Mods countdown handler
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100EC9B0, genericCallbacks.D20ModCountdownHandler);
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100E98B0, genericCallbacks.D20ModCountdownEndHandler);
@@ -582,6 +590,7 @@ public:
 		spCallbacks.oldD20ModsSpellsSpellBonus = replaceFunction(0x100C4440, spCallbacks.D20ModsSpellsSpellBonus);
 
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100F72E0, genericCallbacks.MonsterRegenerationOnDamage);
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100F7AA0, genericCallbacks.FastHealingOnBeginRound);
 
 		replaceFunction(0x100FCF50, ManyShotAttack);
 		replaceFunction(0x100FCEB0, ManyShotMenu);
@@ -1204,7 +1213,8 @@ int GenericCallbacks::TripAooQuery(DispatcherCallbackArgs args)
 int GenericCallbacks::ImprovedTripBonus(DispatcherCallbackArgs args)
 {
 	auto dispIo = dispatch.DispIoCheckIoType10(args.dispIO);
-	if (dispIo->flags & 1){
+	// 2 seems to be defender
+	if (dispIo->flags & 1 && !(dispIo->flags & 2)) {
 		dispIo->bonOut->AddBonusWithDesc(4, 0, 114, feats.GetFeatName(FEAT_IMPROVED_TRIP));
 	}
 	return 0;
@@ -1684,6 +1694,26 @@ int GenericCallbacks::MonsterRegenerationOnDamage(DispatcherCallbackArgs args){
 	return 0;
 }
 
+int GenericCallbacks::FastHealingOnBeginRound(DispatcherCallbackArgs args)
+{
+	auto *dispIo = dispatch.DispIoCheckIoType6(args.dispIO);
+	auto critter = args.objHndCaller;
+
+	if (critterSys.IsDeadNullDestroyed(critter)) return 0;
+	if (critterSys.GetHpDamage(critter) <= 0 && critterSys.GetSubdualDamage(critter) <= 0)
+		return 0;
+
+	auto rounds = dispIo->data1;
+
+	if (rounds <= 0) return 0;
+
+	auto heal = args.GetCondArg(0) * rounds;
+	damage.FastHeal(critter, heal);
+	histSys.CreateRollHistoryLineFromMesfile(57, critter, objHndl::null);
+
+	return 0;
+}
+
 int GenericCallbacks::PreferOneHandedWieldRadialMenu(DispatcherCallbackArgs args)
 {
 	auto shield = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Shield);
@@ -1833,6 +1863,28 @@ int ArmorWeaponDice(DispatcherCallbackArgs args)
 	if (dispIo->weapon == armor) {
 		dispIo->dicePacked = conds.CondNodeGetArg(args.subDispNode->condNode, 1);
 		dispIo->attackDamageType = (DamageType)conds.CondNodeGetArg(args.subDispNode->condNode, 0);
+		//Bashing Bumps by 2 categories
+		if (d20Sys.D20QueryPython(args.objHndCaller, "Has Bashing") > 0) {
+			const auto dice = Dice::FromPacked(dispIo->dicePacked);
+			const auto largerDice = dice.IncreaseWeaponSize(2);
+			dispIo->dicePacked = largerDice.ToPacked();
+		}
+	}
+
+	return 0;
+}
+
+int ArmorDealingDamage(DispatcherCallbackArgs args)
+{
+	DispIoDamage* dispIo = dispatch.DispIoCheckIoType4(args.dispIO);
+
+	auto invIdx = args.GetCondArg(2);
+	auto armor = inventory.GetItemAtInvIdx(args.objHndCaller, invIdx);
+
+	if (dispIo->attackPacket.weaponUsed == armor) {
+		if (d20Sys.D20QueryPython(args.objHndCaller, "Has Bashing") > 0) {
+			dispIo->damage.attackPowerType |= D20DAP_MAGIC; //The shield acts as a +1 weapon when used to bash.
+		}
 	}
 
 	return 0;
@@ -1871,8 +1923,10 @@ int ArmorCritMultiplier(DispatcherCallbackArgs args)
 int ShieldBashProficiencyPenalty(DispatcherCallbackArgs args)
 {
 	auto dispIo = dispatch.DispIoCheckIoType5(args.dispIO);
-	auto invIdx = args.GetCondArg(2);
 	auto attacker = dispIo->attackPacket.attacker;
+	if (!attacker) return 0;
+
+	auto invIdx = args.GetCondArg(2);
 	auto shield = inventory.GetItemAtInvIdx(attacker, invIdx);
 
 	if (dispIo->attackPacket.weaponUsed != shield) return 0;
@@ -1979,14 +2033,28 @@ int __cdecl GlobalToHitBonus(DispatcherCallbackArgs args)
 		}
 		if (dualWielding)
 		{
-			if (d20Sys.UsingSecondaryWeapon(args.objHndCaller, attackCode))
-				bonusSys.bonusAddToBonusList(&dispIo->bonlist, -10, 26, 121); // penalty for dualwield on offhand attack
-			else
-				bonusSys.bonusAddToBonusList(&dispIo->bonlist, -6, 27, 122); // penalty for dualwield on primary attack
 
-			if (critterSys.OffhandIsLight(args.objHndCaller))
-			{
-				bonusSys.bonusAddToBonusList(&dispIo->bonlist, 2, 0, 167); // Light Off-hand Weapon
+			//See if python is going to handle the penalty
+			const bool overridePenalty = d20Sys.D20QueryPython(args.objHndCaller, "Override Two Weapon Penalty", dualWielding ? 1 :0);
+			if (overridePenalty) {
+				auto penalty = d20Sys.D20QueryPython(args.objHndCaller, "Get Two Weapon Penalty", dualWielding ? 1 : 0);
+				if (d20Sys.UsingSecondaryWeapon(args.objHndCaller, attackCode)) {
+					bonusSys.bonusAddToBonusList(&dispIo->bonlist, penalty, 26, 121);
+				}
+				else {
+					bonusSys.bonusAddToBonusList(&dispIo->bonlist, penalty, 27, 122);
+				}
+			}
+			else {
+				if (d20Sys.UsingSecondaryWeapon(args.objHndCaller, attackCode))
+					bonusSys.bonusAddToBonusList(&dispIo->bonlist, -10, 26, 121); // penalty for dualwield on offhand attack
+				else
+					bonusSys.bonusAddToBonusList(&dispIo->bonlist, -6, 27, 122); // penalty for dualwield on primary attack
+
+				if (critterSys.OffhandIsLight(args.objHndCaller))
+				{
+					bonusSys.bonusAddToBonusList(&dispIo->bonlist, 2, 0, 167); // Light Off-hand Weapon
+				}
 			}
 		}
 	}
@@ -1994,7 +2062,8 @@ int __cdecl GlobalToHitBonus(DispatcherCallbackArgs args)
 	// helplessness bonus
 	if (dispIo->attackPacket.victim
 		&& d20Sys.d20Query(dispIo->attackPacket.victim, DK_QUE_Helpless)
-		&& !d20Sys.d20Query(dispIo->attackPacket.victim, DK_QUE_Critter_Is_Stunned))
+		&& !d20Sys.d20Query(dispIo->attackPacket.victim, DK_QUE_Critter_Is_Stunned)
+		&& !(dispIo->attackPacket.flags & D20CAF_RANGED))
 		bonusSys.bonusAddToBonusList(&dispIo->bonlist, 4, 30, 136);
 	
 	// flanking bonus
@@ -3288,6 +3357,7 @@ void ConditionSystem::RegisterNewConditions()
 	static CondStructNew shieldBash("Shield Bash", 5);
 	shieldBash.AddHook(dispTypeD20Query, DK_QUE_Can_Shield_Bash, genericCallbacks.QuerySetReturnVal1);
 	shieldBash.AddHook(dispTypeGetAttackDice, DK_NONE, ArmorWeaponDice);
+	shieldBash.AddHook(dispTypeDealingDamage, DK_NONE, ArmorDealingDamage);
 	shieldBash.AddHook(dispTypeGetCriticalHitExtraDice, DK_NONE, ArmorCritMultiplier);
 	shieldBash.AddHook(dispTypeGetCriticalHitRange, DK_NONE, ArmorCritRange);
 	shieldBash.AddHook(dispTypeToHitBonus2, DK_NONE, ShieldBashProficiencyPenalty);
@@ -3317,6 +3387,24 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 1, dispTypeRadialMenuEntry, 0, AidAnotherRadialMenu, 0, 0);
 	// 
 	
+	{
+		static CondStructNew condHeld;
+		condHeld.ExtendExisting("Held");
+		condHeld.subDispDefs[11].dispCallback = [](DispatcherCallbackArgs args) {
+			static auto orig = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100EDF10);
+			// disable effect tooltip if freedom of movement
+			if (!d20Sys.d20Query(args.objHndCaller, DK_QUE_Critter_Has_Freedom_of_Movement))
+				return orig(args);
+			return 0;
+		};
+		condHeld.AddHook(dispTypeAbilityScoreLevel, DK_STAT_STRENGTH, HeldCapStatBonus);
+		condHeld.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HeldCapStatBonus);
+
+		static CondStructNew condSleeping;
+		condSleeping.ExtendExisting("Sleeping");
+		condSleeping.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HelplessCapStatBonus);
+	}
+
 	/*
 	char mCondIndomitableWillName[100];
 	CondStructNew *mCondIndomitableWill;
@@ -3586,22 +3674,25 @@ int __cdecl GreaterTWFRanger(DispatcherCallbackArgs args)
 
 int __cdecl TwoWeaponFightingBonus(DispatcherCallbackArgs args)
 {
-	DispIoAttackBonus *dispIo = dispatch.DispIoCheckIoType5((DispIoAttackBonus*)args.dispIO);
-	char *featName;
+	DispIoAttackBonus* dispIo = dispatch.DispIoCheckIoType5((DispIoAttackBonus*)args.dispIO);
 
-	feat_enums feat = (feat_enums)conds.CondNodeGetArg(args.subDispNode->condNode, 0);
-	int attackCode = dispIo->attackPacket.dispKey;
-	int dualWielding = 0;
-	int attackNumber = 1;
-	if (d20Sys.UsingSecondaryWeapon(args.objHndCaller, attackCode))
-	{
-		featName = feats.GetFeatName(feat);
-		bonusSys.bonusAddToBonusListWithDescr(&dispIo->bonlist, 6, 0, 114, featName);
-	}
-		else if ( d20Sys.ExtractAttackNumber(args.objHndCaller, attackCode, &attackNumber, &dualWielding), dualWielding != 0)
-	{
-		featName = feats.GetFeatName(feat);
-		bonusSys.bonusAddToBonusListWithDescr(&dispIo->bonlist, 2, 0, 114, featName);
+	//Disable when using agile shield fighter for examle
+	if (d20Sys.D20QueryPython(args.objHndCaller, "Disable Two Weapon Fighting Bonus") == 0) {
+		char* featName;
+		feat_enums feat = (feat_enums)conds.CondNodeGetArg(args.subDispNode->condNode, 0);
+		int attackCode = dispIo->attackPacket.dispKey;
+		int dualWielding = 0;
+		int attackNumber = 1;
+		if (d20Sys.UsingSecondaryWeapon(args.objHndCaller, attackCode))
+		{
+			featName = feats.GetFeatName(feat);
+			bonusSys.bonusAddToBonusListWithDescr(&dispIo->bonlist, 6, 0, 114, featName);
+		}
+		else if (d20Sys.ExtractAttackNumber(args.objHndCaller, attackCode, &attackNumber, &dualWielding), dualWielding != 0)
+		{
+			featName = feats.GetFeatName(feat);
+			bonusSys.bonusAddToBonusListWithDescr(&dispIo->bonlist, 2, 0, 114, featName);
+		}
 	}
 	return 0;
 }
@@ -3609,30 +3700,33 @@ int __cdecl TwoWeaponFightingBonus(DispatcherCallbackArgs args)
 int TwoWeaponFightingBonusRanger(DispatcherCallbackArgs args)
 {
 	DispIoAttackBonus * dispIo = dispatch.DispIoCheckIoType5((DispIoAttackBonus*)args.dispIO);
-	if ( !critterSys.IsWearingLightOrNoArmor(args.objHndCaller))
-	{
-		bonusSys.zeroBonusSetMeslineNum(&dispIo->bonlist, 166);
-		return 0;
-	}
-	
-	
-	feat_enums feat = FEAT_TWO_WEAPON_FIGHTING;
-	char * featName;
-	int attackCode = dispIo->attackPacket.dispKey;
-	int dualWielding = 0;
-	int attackNumber = 1;
-	if (d20Sys.UsingSecondaryWeapon(args.objHndCaller, attackCode))
-	{
-		featName = feats.GetFeatName(feat);
-		bonusSys.bonusAddToBonusListWithDescr(&dispIo->bonlist, 6, 0, 114, featName);
-	}
-	else if (d20Sys.ExtractAttackNumber(args.objHndCaller, attackCode, &attackNumber, &dualWielding), dualWielding != 0)
-	{
-		featName = feats.GetFeatName(feat);
-		bonusSys.bonusAddToBonusListWithDescr(&dispIo->bonlist, 2, 0, 114, featName);
+
+	//Disable when using agile shield fighter for examle
+	if (d20Sys.D20QueryPython(args.objHndCaller, "Disable Two Weapon Fighting Bonus") == 0) {
+		if (!critterSys.IsWearingLightOrNoArmor(args.objHndCaller))
+		{
+			bonusSys.zeroBonusSetMeslineNum(&dispIo->bonlist, 166);
+			return 0;
+		}
+
+
+		feat_enums feat = FEAT_TWO_WEAPON_FIGHTING;
+		char* featName;
+		int attackCode = dispIo->attackPacket.dispKey;
+		int dualWielding = 0;
+		int attackNumber = 1;
+		if (d20Sys.UsingSecondaryWeapon(args.objHndCaller, attackCode))
+		{
+			featName = feats.GetFeatName(feat);
+			bonusSys.bonusAddToBonusListWithDescr(&dispIo->bonlist, 6, 0, 114, featName);
+		}
+		else if (d20Sys.ExtractAttackNumber(args.objHndCaller, attackCode, &attackNumber, &dualWielding), dualWielding != 0)
+		{
+			featName = feats.GetFeatName(feat);
+			bonusSys.bonusAddToBonusListWithDescr(&dispIo->bonlist, 2, 0, 114, featName);
+		}
 	}
 	return 0;
-
 }
 
 
@@ -3727,6 +3821,31 @@ int TacticalOptionAbusePrevention(DispatcherCallbackArgs args)
 { // signifies that an attack has been made using that tactical option (so user doesn't toggle it off and shrug off the penalties)
 	return temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100F7ED0)(args); // replaced in ability_fixes.cpp
 }
+
+// Port of 0x100E7F80. Was used in Unconscious but missing in similar
+// conditions. Helpless critters should have 0 effective dexterity, and
+// paralyzed creatures should have 0 effective strength.
+int HelplessCapStatBonus(DispatcherCallbackArgs args)
+{
+	DispIoBonusList *dispIo = dispatch.DispIoCheckIoType2(args.dispIO);
+
+	dispIo->bonlist.AddCap(0, 0, 109);
+
+	return 0;
+}
+
+// As above, but check for freedom of movement, since it doesn't remove the held
+// condition.
+int HeldCapStatBonus(DispatcherCallbackArgs args)
+{
+	DispIoBonusList *dispIo = dispatch.DispIoCheckIoType2(args.dispIO);
+
+	if (!d20Sys.d20Query(args.objHndCaller, DK_QUE_Critter_Has_Freedom_of_Movement))
+		dispIo->bonlist.AddCap(0, 0, 109);
+
+	return 0;
+}
+
 
 #pragma region Barbarian Stuff
 
@@ -4073,7 +4192,11 @@ int RendOnDamage(DispatcherCallbackArgs args)
 	auto previousTarget = args.GetCondArgObjHndl(2);
 	if (hasDeliveredDamage && attackDescr == previousAttackDescr && previousTarget == dispIo->attackPacket.victim)
 	{
-		Dice dice(2, 6, 9);
+		int strScore = objects.StatLevelGet(args.objHndCaller, stat_strength);
+		int bonus = objects.GetModFromStatLevel(strScore);
+		if (bonus > 0) bonus += bonus/2;
+
+		Dice dice(2, 6, bonus);
 		dispIo->damage.AddDamageDice(dice.ToPacked(), DamageType::PiercingAndSlashing, 133);
 		//damage.AddDamageDice(&dispIo->damage, dice.ToPacked(), DamageType::PiercingAndSlashing, 133);
 		floatSys.FloatCombatLine(args.objHndCaller, 203);
@@ -6417,6 +6540,24 @@ int ClassAbilityCallbacks::CouragedAuraSavingThrow(DispatcherCallbackArgs args)
 	return 0;
 }
 
+int ClassAbilityCallbacks::FailedCopyScroll(DispatcherCallbackArgs args) {
+	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
+
+	auto failedScRanks = args.GetCondArg(1);
+	auto curScRanks = critterSys.SkillBaseGet(args.objHndCaller, SkillEnum::skill_spellcraft);
+	auto failedSpellEnum = args.GetCondArg(0);
+
+	// if we've gained spellcraft ranks, get rid of the condition
+	if (curScRanks > failedScRanks) {
+		conds.ConditionRemove(args.objHndCaller, args.subDispNode->condNode);
+	// if the scroll being copied matches, set return value
+	} else if (failedSpellEnum == dispIo->data1) {
+		dispIo->return_val = 1;
+	}
+
+	return 0;
+}
+
 int ClassAbilityCallbacks::FeatBrewPotionRadialMenu(DispatcherCallbackArgs args){
 	return ItemCreationBuildRadialMenuEntry(args, BrewPotion, "TAG_BREW_POTION", 5066);
 }
@@ -7685,6 +7826,16 @@ void Conditions::AddConditionsToTable(){
 		delayPoison.subDispDefs[2].dispCallback = genericCallbacks.HasCondition;
 	}
 
+	{
+		static CondStructNew condColorSprayStun;
+		condColorSprayStun.ExtendExisting("sp-Color Spray Stun");
+		condColorSprayStun.AddHook(dispTypeD20Query, DK_QUE_SneakAttack, genericCallbacks.QuerySetReturnVal1);
+
+		static CondStructNew condColorSprayBlind;
+		condColorSprayBlind.ExtendExisting("sp-Color Spray Blind");
+		condColorSprayBlind.AddHook(dispTypeTurnBasedStatusInit, DK_NONE, TurnBasedStatusInitNoActions);
+	}
+
 	// New Conditions!
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mConditionDisableAoO);
 	conds.hashmethods.CondStructAddToHashtable((CondStruct*)conds.mCondGreaterTwoWeaponFighting);
@@ -7798,3 +7949,24 @@ void CondStructNew::AddAoESpellRemover() {
 	AddHook(dispTypeD20Signal, DK_SIG_Spell_End, spCallbacks.AoeSpellRemove);
 }
 
+uint32_t CondHashSystem::ConditionHashtableInit(ToEEHashtable<CondStruct>* hashtable)
+{
+	const int INCREASED_COND_CAP = 2047;  //Was 1000 in the original game
+	return HashtableInit(hashtable, INCREASED_COND_CAP);
+}
+
+uint32_t CondHashSystem::CondStructAddToHashtable(CondStruct* condStruct, bool overriding)
+{
+	uint32_t key = StringHash(condStruct->condName);
+	CondStruct* condFound;
+	uint32_t result = HashtableSearch(condHashTable, key, &condFound);
+	if (result || overriding)
+	{
+		result = HashtableOverwriteItem(condHashTable, key, condStruct);
+	}
+	if (result == 3) { // over capacity
+		logger->error("Condition hashtable over capacity ({})! Trying to add {}", condHashTable->capacity, condStruct->condName);
+	}
+	return result;
+	
+}

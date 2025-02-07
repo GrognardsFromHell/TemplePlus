@@ -1,3 +1,4 @@
+{216}{Improved Shield Bash}
 {340}{Improved Sunder}
 {649}{None}
 {650}{Exotic Weapon Proficiency}
@@ -105,6 +106,7 @@
 {5064} Greater Two Weapon Fighting {You get a third attack with your off-hand weapon, albeit at a -10 penalty.}
 {5137} Greater Weapon Specialization{You gain another +2 bonus on all damage rolls you make using the selected weapon, on top of the one from Weapon Specialization.}
 {5211} Improved Disarm{You do not provoke an attack of opportunity when you attempt to disarm an opponent, nor does the opponent have a chance to disarm you. You also gain a +4 bonus on the opposed attack roll you make to disarm your opponent.}
+{5216} Improved Shield Bash {When you perform a shield bash, you may still apply the shield's shield bonus to your AC.}
 {5340} Improved Sunder{When you strike at an object held by an opponent, you do not provoke an attack of opportunity. You also gain a +4 bonus on the attack roll.}
 {5658} Diamond Body {You are immune to all poisons.}
 {5659} Abundant Step {You can slip magically between spaces, as if using the spell dimension door, once per day. To use this ability you must be wearing a Monk's Belt.}
@@ -203,6 +205,7 @@
 {10064}Greater Two Weapon Fighting {Dex 19, Improved Two-Weapon Fighting, Two-Weapon Fighting, base attack bonus +11.}
 {10137} Greater Weapon Specialization {Weapon Specialization + Greater Weapon Focus w/ selected weapon, fighter level 12th}
 {10211} Improved Disarm {Int 13, Combat Expertise.}
+{10216} Improved Shield Bash {Shield Proficiency.}
 {10339} Stunning Fist {Dex 13, Wis 13, Improved Unarmed Strike, base attack bonus +8.}
 {10340} Improved Sunder {Str 13, Power Attack.}
 {10658} Diamond Body {}

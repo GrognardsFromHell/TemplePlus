@@ -41,6 +41,64 @@ bool Dice::Parse(const char* diceStr, int& count, int& sides, int& modifier) {
 	return false;
 }
 
+Dice Dice::IncreaseWeaponSize(int numIncreases) const
+{
+	auto diceCount = mCount;
+	auto diceSide = mSides;
+	auto diceMod = mModifier;
+
+	for (int i = 0; i < numIncreases; ++i) {
+		switch (diceSide)
+		{
+		case 2:
+			diceSide = 3;
+			break;
+		case 3:
+			diceSide = 4;
+			break;
+		case 4:
+			diceSide = 6;
+			break;
+		case 6:
+			if (diceCount == 1)
+				diceSide = 8;
+			else if (diceCount <= 3)
+				diceCount++;
+			else
+				diceCount += 2;
+			break;
+		case 8:
+			if (diceCount == 1) {
+				diceCount = 2;
+				diceSide = 6;
+			}
+			else if (diceCount <= 3)
+			{
+				diceCount++;
+			}
+			else if (diceCount <= 6) {
+				diceCount += 2;
+			}
+			else
+				diceCount += 4;
+			break;
+		case 10:
+			diceCount *= 2;
+			diceSide = 8;
+			break;
+		case 12:
+			diceCount = 3;
+			diceSide = 6;
+			break;
+		default:
+			break;
+		}
+	}
+
+	return Dice(diceCount, diceSide, diceMod);
+}
+
+
 int RandomIntRange(int from, int to) {
 	return addresses.RandomIntRange(from, to);
 }

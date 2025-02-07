@@ -1,4 +1,4 @@
-from templeplus.pymod import PythonModifier
+from templeplus.pymod import PythonModifier, BasicPyMod
 from toee import *
 import tpdp
 from utilities import *
@@ -232,6 +232,14 @@ def checkCategoryType(critter, *args):
             return True
     return False
 
+# Target is a living creature
+def isLivingCreature(critter):
+    if critter.is_category_type(mc_type_construct):
+        return False
+    elif critter.is_category_type(mc_type_undead):
+        return False
+    return True
+
 ##### workaround getSpellClassCode #####
 def getSpellClassCode(classEnum):
     dummySpellData = tpdp.D20SpellData()
@@ -255,6 +263,100 @@ def performAttack(attacker, target, spellId, isRanged = True):
     game.create_history_from_id(attackAction.roll_id_0)
     return attackAction.flags
 
+# Dispatch dispel magic effect
+def getDispelFlag(spellEnum):
+    mappingDict = {
+        spell_dispel_magic: dispel_magic_single,
+        spell_greater_dispelling: dispel_magic_single,
+        spell_dispel_evil: dispel_evil,
+        spell_dispel_chaos: dispel_chaos,
+        spell_dispel_good: dispel_good,
+        spell_dispel_law: dispel_law,
+        spell_break_enchantment: dispel_break_enchantment,
+        spell_dispel_air: dispel_air,
+        spell_dispel_earth: dispel_earth,
+        spell_dispel_fire: dispel_fire,
+        spell_dispel_water: dispel_water,
+        spell_voracious_dispelling: dispel_voracious_single,
+        spell_relentless_dispelling: dispel_relentless,
+        spell_devour_magic: dispel_devour,
+    }
+    return mappingDict.get(spellEnum)
+
+def performDispelCheck(target, spellId, isAoe):
+    returnVal = 1 if isAoe else 0
+    spellPacket = tpdp.SpellPacket(spellId)
+    spellEnum = spellPacket.spell_enum
+    dispelFlag = getDispelFlag(spellEnum)
+    if isAoe:
+        if dispelFlag & dispel_magic_single:
+            dispelFlag = dispel_magic_area
+        elif dispelFlag & dispel_voracious_single:
+            dispelFlag = dispel_voracious_area
+    dispelCheck = tpdp.EventObjDispelCheck()
+    dispelCheck.return_val = returnVal
+    dispelCheck.flags = dispelFlag
+    dispelCheck.spell_id = spellId
+    dispelCheck.dispatch(target)
+    return 0
+
+# Add/Change weapon alignment
+def modifyWeaponAlignment(attackPower, new_d20dap):
+    if attackPower & D20DAP_HOLY:
+        attackPower -= D20DAP_HOLY
+    if attackPower & D20DAP_UNHOLY:
+        attackPower -= D20DAP_UNHOLY
+    if attackPower & D20DAP_CHAOS:
+        attackPower -= D20DAP_CHAOS
+    if attackPower & D20DAP_LAW:
+        attackPower -= D20DAP_LAW
+    attackPower & new_d20dap
+    return 0
+
+# Check if weapon is a melee weapon
+def isMeleeWeapon(weapon):
+    weaponType = weapon.obj_get_int(obj_f_weapon_type)
+    return game.is_melee_weapon(weaponType)
+
+# Get list of spell targets
+def getSpellTargets(spellPacket):
+    targetCount = spellPacket.target_count
+    targetList = []
+    for idx in range(0, targetCount):
+        target = spellPacket.get_target(idx)
+        targetList.append(target)
+    return targetList
+
+# Map damageType to Descriptor constant
+# Resist Elements and Endure Elements queries use the
+# Descriptor const for their query in data1
+def getElementEnum(damageType):
+    mappingDict = {
+    D20DT_ACID: ACID,
+    D20DT_COLD: COLD,
+    D20DT_ELECTRICITY: ELECTRICITY,
+    D20DT_FIRE: FIRE,
+    D20DT_SONIC: SONIC
+    }
+    return mappingDict.get(damageType)
+
+def isDaylight():
+    if game.is_outdoor() and game.is_daytime():
+        return True
+    return False
+
+def dispelledByDaylight(attachee, args, evt_obj):
+    if isDaylight() and not attachee.d20_query_has_condition("sp-Dispel Light"):
+        spellId = args.get_arg(0)
+        name = spellName(spellId)
+        attachee.float_text_line("{} dispelled by daylight".format(name))
+        args.remove_spell_mod()
+        args.remove_spell()
+    return 0
+
+def getSpellEntry(spellId):
+    spellPacket = tpdp.SpellPacket(spellId)
+    return tpdp.SpellEntry(spellPacket.spell_enum)
 
 ### Item Condition functions
 
@@ -540,6 +642,17 @@ def applyDamageReduction(attachee, args, evt_obj):
     evt_obj.damage_packet.add_physical_damage_res(drAmount, drBreakType, damageMesId)
     return 0
 
+def applyDamageResistance(attachee, args, evt_obj):
+    resistanceAmount = args.get_param(0)
+    if not resistanceAmount:
+        resistanceAmount = args.get_arg(2)
+    resistanceType = args.get_param(1)
+    if not resistanceType:
+        resistanceType = args.get_arg(3)
+    damageMesId = 124 # ID124 = ~Damage Resistance~[TAG_SPECIAL_ABILITIES_RESISTANCE_TO_ENERGY]
+    evt_obj.damage_packet.add_damage_resistance(bonusValue, resistanceType, damageMesId)
+    return 0
+
 def applySaveBonus(attachee, args, evt_obj):
     saveDescriptor = args.get_param(2)
     if saveDescriptor:
@@ -563,60 +676,160 @@ def applyTempHp(attachee, args, evt_obj):
     attachee.condition_add_with_args("Temporary_Hit_Points", spellId, duration, tempHpAmount)
     return 0
 
-class SpellPythonModifier(PythonModifier):
+def getNeededSpellLevel(args):
+    #Valid param values:
+    #0: Any light/darkness spell level is suffice to dispel
+    #-1: Light/Darkness spell level needs to be at least spell level of darkness/light
+    #1-9: Light/Darkness spell level needs to be at least given spell level
+    neededLevel = args.get_param(0)
+    if neededLevel == -1:
+        spellId = args.get_arg(0)
+        spellPacket = tpdp.SpellPacket(spellId)
+        return spellPacket.spell_known_slot_level
+    elif neededLevel in range(0, 10):
+        return neededLevel
+    return 0  #Fallback if somehow a wrong spell level is given
+
+def dispelledByLight(attachee, args, evt_obj):
+    if evt_obj.is_modifier("sp-Dispel Darkness"):
+        neededLevel = getNeededSpellLevel(args)
+        dispelSpellId = evt_obj.arg1
+        dispelName = spellName(dispelSpellId)
+        dispelSpellPacket = tpdp.SpellPacket(dispelSpellId)
+        dispelLevel = dispelSpellPacket.spell_known_slot_level
+        if dispelLevel >= neededLevel:
+            spellId = args.get_arg(0)
+            effectName = spellName(spellId)
+            attachee.float_text_line("{} dispelled by {}".format(effectName, dispelName))
+            args.remove_spell()
+            args.remove_spell_mod()
+    return 0
+
+def dispelledByDarkness(attachee, args, evt_obj):
+    if evt_obj.is_modifier("sp-Dispel Light"):
+        neededLevel = getNeededSpellLevel(args)
+        dispelSpellId = evt_obj.arg1
+        dispelName = spellName(dispelSpellId)
+        dispelSpellPacket = tpdp.SpellPacket(dispelSpellId)
+        dispelLevel = dispelSpellPacket.spell_known_slot_level
+        if dispelLevel >= neededLevel:
+            effectSpellId = args.get_arg(0)
+            effectName = spellName(effectSpellId)
+            attachee.float_text_line("{} dispelled by {}".format(effectName, dispelName))
+            args.remove_spell()
+            args.remove_spell_mod()
+    return 0
+
+def dispelLight(attachee, args, evt_obj):
+    spellId = args.get_arg(0)
+    duration = args.get_arg(1)
+    attachee.condition_add_with_args("sp-Dispel Light", spellId, duration, 0)
+    return 0
+
+def dispelDarkness(attachee, args, evt_obj):
+    spellId = args.get_arg(0)
+    duration = args.get_arg(1)
+    attachee.condition_add_with_args("sp-Dispel Darkness", spellId, duration, 0)
+    return 0
+
+class SpellFunctions(BasicPyMod):
+    def AddSpellNoDuplicate(self):
+        self.add_hook(ET_OnConditionAddPre, EK_NONE, replaceCondition, ())
+    def AddSkillBonus(self, bonusValue, bonusType, *args):
+        if not args:
+            eventKey = EK_NONE
+            self.add_hook(ET_OnGetSkillLevel, eventKey, applyBonus, (bonusValue, bonusType,))
+        else:
+            for skill in args:
+                eventKey = skill + 20
+                self.add_hook(ET_OnGetSkillLevel, eventKey, applyBonus, (bonusValue, bonusType,))
+    def AddAbilityBonus(self, bonusValue, bonusType, *args):
+        for abilityScore in args:
+            eventKey = abilityScore + 1
+            self.add_hook(ET_OnAbilityScoreLevel, eventKey, applyBonus,(bonusValue, bonusType,))
+    def AddDamageReduction(self, drAmount, drBreakType):
+        self.add_hook(ET_OnTakingDamage2, EK_NONE, applyDamageReduction,(drAmount, drBreakType,))
+    def AddDamageResistance(self, resistanceAmount, resistanceType):
+        self.add_hook(ET_OnTakingDamage2, EK_NONE, applyDamageResistance, (resistanceAmount, resistanceType,))
+    def AddSaveBonus(self, bonusValue, bonusType, saveDescriptor = D20STD_F_NONE, eventKey = EK_NONE):
+        self.add_hook(ET_OnSaveThrowLevel, eventKey, applySaveBonus, (bonusValue, bonusType, saveDescriptor,))
+    def AddToHitBonus(self, bonusValue, bonusType, flagRequirement = 0):
+        self.add_hook(ET_OnToHitBonus2, EK_NONE, applyAttackPacketBonus,(bonusValue, bonusType, flagRequirement,))
+    def AddAcBonus(self, bonusValue, bonusType):
+        self.add_hook(ET_OnGetAC, EK_NONE, applyBonus, (bonusValue, bonusType,))
+    def AddAbilityCheckBonus(self, bonusValue, bonusType): #might get expanded
+        self.add_hook(ET_OnGetAbilityCheckModifier, EK_NONE, applyBonus, (bonusValue, bonusType,))
+    def AddMovementBonus(self, bonusValue, bonusType):
+        self.add_hook(ET_OnGetMoveSpeedBase, EK_NONE, applyBonus, (bonusValue, bonusType,))
+    def AddTempHp(self, tempHpAmount = 0):
+        self.add_hook(ET_OnConditionAdd, EK_NONE, applyTempHp, (tempHpAmount,))
+        self.add_hook(ET_OnD20Signal, EK_S_Temporary_Hit_Points_Removed, removeTempHp, ())
+    def AddLightInteraction(self, spellLevelInteraction = -1):
+        self.add_hook(ET_OnConditionAddPre, EK_NONE, dispelledByLight, (spellLevelInteraction,))
+        self.add_hook(ET_OnConditionAdd, EK_NONE, dispelLight, ())
+        self.add_hook(ET_OnD20Query, EK_Q_Critter_Has_Condition, querySpellCondition, ())
+    def AddDarknessInteraction(self, spellLevelInteraction = -1):
+        self.add_hook(ET_OnConditionAddPre, EK_NONE, dispelledByDarkness, (spellLevelInteraction,))
+        self.add_hook(ET_OnConditionAdd, EK_NONE, dispelDarkness, ())
+        self.add_hook(ET_OnD20Query, EK_Q_Critter_Has_Condition, querySpellCondition, ())
+    def AddDispelledByLight(self, spellLevelInteraction = -1):
+        self.add_hook(ET_OnBeginRound, EK_NONE, dispelledByDaylight, ())
+        self.add_hook(ET_OnConditionAddPre, EK_NONE, dispelledByLight, (spellLevelInteraction,))
+    def AddSpellConcentration(self):
+        self.add_hook(ET_OnConditionAdd, EK_NONE, addConcentration, ())
+        self.add_hook(ET_OnD20Signal, EK_S_Concentration_Broken, checkRemoveSpell, ())
+    def AddSpellDismiss(self):
+        self.add_hook(ET_OnConditionAdd, EK_NONE, addDismiss, ())
+        self.add_hook(ET_OnD20Signal, EK_S_Dismiss_Spells, checkRemoveSpell, ())
+
+class SpellBasicPyMod(SpellFunctions):
+    # SpellBasicPyMod have at least 3 arguments:
+    # spellId, duration, empty
+    # 
+    # Use this class for spells, that either
+    # a) do not have a standard spell countdown
+    # b) can't be dispelled normally (like curses)
+    # c) do not use tooltips
+    #
+    # Standard spell class is below (SpellPythonModifer)
+    #
+    def __init__(self, name, args = 3, preventDuplicate = False):
+        super(SpellFunctions, self).__init__(name, args, preventDuplicate)
+        self.add_spell_teleport_prepare_standard()
+        self.add_spell_teleport_reconnect_standard()
+        self.add_hook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, queryActiveSpell, ())
+        self.add_hook(ET_OnD20Signal, EK_S_Killed, spellKilled, ())
+    def AddSpellTooltips(self):
+        self.add_hook(ET_OnGetTooltip, EK_NONE, spellTooltip, ())
+        self.add_hook(ET_OnGetEffectTooltip, EK_NONE, spellEffectTooltip, ())
+    def AddSpellDispelCheck(self):
+        self.add_spell_dispel_check_standard()
+    def AddSpellCountdown(self):
+        self.add_spell_countdown_standard()
+
+class SpellPythonModifier(SpellFunctions):
     #SpellPythonModifier have at least 3 arguments:
     #spellId, duration, empty
     #if a simple bonusValue is passed by the spell it is set to arg 3:
     #spellId, duration, bonusValue, empty
+    #
+    #This is the standard spell condition class
+    #
     def __init__(self, name, args = 3, preventDuplicate = False):
-        PythonModifier.__init__(self, name, args, preventDuplicate)
-        self.AddHook(ET_OnGetTooltip, EK_NONE, spellTooltip, ())
-        self.AddHook(ET_OnGetEffectTooltip, EK_NONE, spellEffectTooltip, ())
-        self.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, queryActiveSpell, ())
-        self.AddHook(ET_OnD20Signal, EK_S_Killed, spellKilled, ())
-        self.AddSpellDispelCheckStandard()
-        self.AddSpellCountdownStandardHook()
-        self.AddSpellTeleportPrepareStandard()
-        self.AddSpellTeleportReconnectStandard()
-    def AddSpellConcentration(self):
-        self.AddHook(ET_OnConditionAdd, EK_NONE, addConcentration, ())
-        self.AddHook(ET_OnD20Signal, EK_S_Concentration_Broken, checkRemoveSpell, ())
-    def AddSpellDismiss(self):
-        self.AddHook(ET_OnConditionAdd, EK_NONE, addDismiss, ())
-        self.AddHook(ET_OnD20Signal, EK_S_Dismiss_Spells, checkRemoveSpell, ())
-    def AddSpellNoDuplicate(self):
-        self.AddHook(ET_OnConditionAddPre, EK_NONE, replaceCondition, ())
-    def AddSkillBonus(self, bonusValue, bonusType, *args):
-        if not args:
-            eventKey = EK_NONE
-            self.AddHook(ET_OnGetSkillLevel, eventKey, applyBonus, (bonusValue, bonusType,))
-        else:
-            for skill in args:
-                eventKey = skill + 20
-                self.AddHook(ET_OnGetSkillLevel, eventKey, applyBonus, (bonusValue, bonusType,))
-    def AddAbilityBonus(self, bonusValue, bonusType, *args):
-        for abilityScore in args:
-            eventKey = abilityScore + 1
-            self.AddHook(ET_OnAbilityScoreLevel, eventKey, applyBonus,(bonusValue, bonusType,))
-    def AddDamageReduction(self, drAmount, drBreakType):
-        self.AddHook(ET_OnTakingDamage2, EK_NONE, applyDamageReduction,(drAmount, drBreakType,))
-    def AddSaveBonus(self, bonusValue, bonusType, saveDescriptor = D20STD_F_NONE, eventKey = EK_NONE):
-        self.AddHook(ET_OnSaveThrowLevel, eventKey, applySaveBonus, (bonusValue, bonusType, saveDescriptor,))
-    def AddToHitBonus(self, bonusValue, bonusType, flagRequirement = 0):
-        self.AddHook(ET_OnToHitBonus2, EK_NONE, applyAttackPacketBonus,(bonusValue, bonusType, flagRequirement,))
-    def AddAcBonus(self, bonusValue, bonusType):
-        self.AddHook(ET_OnGetAC, EK_NONE, applyBonus, (bonusValue, bonusType,))
-    def AddAbilityCheckBonus(self, bonusValue, bonusType): #might get expanded
-        self.AddHook(ET_OnGetAbilityCheckModifier, EK_NONE, applyBonus, (bonusValue, bonusType,))
-    def AddMovementBonus(self, bonusValue, bonusType):
-        self.AddHook(ET_OnGetMoveSpeedBase, EK_NONE, applyBonus, (bonusValue, bonusType,))
-    def AddTempHp(self, tempHpAmount):
-        self.AddHook(ET_OnConditionAdd, EK_NONE, applyTempHp, (tempHpAmount,))
-        self.AddHook(ET_OnD20Signal, EK_S_Temporary_Hit_Points_Removed, removeTempHp, ())
+        super(SpellFunctions, self).__init__(name, args, preventDuplicate)
+        self.add_hook(ET_OnGetTooltip, EK_NONE, spellTooltip, ())
+        self.add_hook(ET_OnGetEffectTooltip, EK_NONE, spellEffectTooltip, ())
+        self.add_spell_dispel_check_standard()
+        self.add_spell_countdown_standard()
+        self.add_spell_teleport_prepare_standard()
+        self.add_spell_teleport_reconnect_standard()
+        self.add_hook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, queryActiveSpell, ())
+        self.add_hook(ET_OnD20Signal, EK_S_Killed, spellKilled, ())
 
 ### Aoe Modifier Classes ###
 def addAoeObjToSpellRegistry(attachee, args, evt_obj):
-    spellPacket = tpdp.SpellPacket(args.get_arg(0))
+    spellId = args.get_arg(0)
+    spellPacket = tpdp.SpellPacket(spellId)
     conditionName = args.get_cond_name()
     particlesId = game.particles(conditionName, attachee)
     spellPacket.add_spell_object(attachee, particlesId)
@@ -633,11 +846,18 @@ def verifyAoeEventTarget(args, spellTarget, spellPacket):
         return False
     elif affectedTargets == aoe_event_target_non_friendly and spellTarget.is_friendly(spellCaster):
         return False
-    #elif spellTarget == attachee:
-    #    return 0
+    elif affectedTargets == aoe_event_target_non_friendly and spellTarget == spellPacket.caster:
+        return False
+    elif affectedTargets == aoe_event_target_all_exclude_self and spellTarget == spellPacket.caster:
+        return False
+    elif affectedTargets == aoe_event_target_friendly_exlude_self and spellTarget == spellPacket.caster:
+        return False
+    elif affectedTargets == aoe_event_target_living_creatures and not isLivingCreature(spellTarget):
+        return False
+    elif affectedTargets == aoe_event_target_living_creatures_exclude_self and spellTarget == spellPacket.caster:
+        return False
     elif spellPacket.check_spell_resistance(spellTarget):
         return False
-
     return True
 
 def verifyEventId(spellEventId, aoeEventId):
@@ -646,12 +866,12 @@ def verifyEventId(spellEventId, aoeEventId):
     return True
 
 def aoeOnEnter(attachee, args, evt_obj):
-    print "aoeOnEnter Hook"
     spellTarget = evt_obj.target
     spellId = args.get_arg(0)
     duration = args.get_arg(1)
-    spellDc = args.get_arg(2)
+    bonusValue = args.get_arg(2)
     spellEventId = args.get_arg(3)
+    spellDc = args.get_arg(4)
     spellPacket = tpdp.SpellPacket(spellId)
     aoeEventId = evt_obj.evt_id
 
@@ -664,23 +884,21 @@ def aoeOnEnter(attachee, args, evt_obj):
         particlesId = game.particles("{}-hit".format(conditionName), spellTarget)
         if spellPacket.add_target(spellTarget, particlesId):
             conditionEffectName = spellName(spellId)
-            spellTarget.condition_add_with_args(conditionEffectName, spellId, duration + 1, spellDc, spellEventId)
+            spellTarget.condition_add_with_args(conditionEffectName, spellId, duration + 1, bonusValue, spellEventId, spellDc, 0)
             spellPacket.update_registry()
     return 0
 
 def aoeHandleEndSignal(attachee, args, evt_obj):
     spellId = args.get_arg(0)
-    if evt_obj.data1 == spellId:
+    signalId = evt_obj.data1
+    if  spellId == signalId:
         spellPacket = tpdp.SpellPacket(spellId)
         #spellMesId = 20000 # ID 20000 = A spell has expired.
-        if spellPacket.spell_enum == 0:
-            return 0
-        spellTargetCount = 0
-        while spellTargetCount < spellPacket.target_count:
-            spellTarget = spellPacket.get_target(spellTargetCount)
+        if spellPacket.spell_enum != 0:
+            for idx in range(0, spellPacket.target_count):
+                spellTarget = spellPacket.get_target(idx)
             spellTarget.d20_send_signal(S_Spell_End, spellId)
-            #spellTarget.float_mesfile_line('mes\\spell.mes', spellMesId)
-            spellTargetCount += 1
+                #spellTarget.float_mesfile_line("mes\\spell.mes", spellMesId)
     return 0
 
 def aoeCombatEndSignal(attachee, args, evt_obj):
@@ -709,51 +927,153 @@ def aoeSpellEndSignal(attachee, args, evt_obj):
         args.remove_spell_mod()
     return 0
 
-class AoeObjHandleModifier(PythonModifier):
-    #AoeObjHandleModifier have at least 5 arguments:
-    #spellId, duration, spellDc, spellEventId, empty
+class AoeObjHandleModifier(SpellFunctions):
+    #AoeObjHandleModifier have at least 6 arguments:
+    #spellId, duration, bonusValue, spellEventId, spellDc, empty
+    #
     #Use this class only, if you have a special onEnterAoE Event
     #Standard Cases use class below (AoeSpellHandleModifier)
-    def __init__(self, name, args = 5, preventDuplicate = False):
-        PythonModifier.__init__(self, name, args, preventDuplicate)
-        self.AddHook(ET_OnConditionAdd, EK_NONE, addAoeObjToSpellRegistry, ())
-        self.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, queryActiveSpell, ())
-        self.AddHook(ET_OnD20Signal, EK_S_Combat_End, aoeCombatEndSignal, ())
-        self.AddSpellDispelCheckStandard()
-        self.AddSpellTeleportPrepareStandard()
-        self.AddSpellTeleportReconnectStandard()
-        self.AddSpellCountdownStandardHook()
-        self.AddAoESpellEndStandardHook()
+    #
+    def __init__(self, name, args = 6, preventDuplicate = False):
+        super(SpellFunctions, self).__init__(name, args, preventDuplicate)
+        self.add_hook(ET_OnD20Signal, EK_S_Combat_End, aoeCombatEndSignal, ())
+        self.add_hook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, queryActiveSpell, ())
+        self.add_hook(ET_OnConditionAdd, EK_NONE, addAoeObjToSpellRegistry, ())
+        self.add_spell_teleport_prepare_standard()
+        self.add_spell_teleport_reconnect_standard()
+        self.add_aoe_spell_ender()
+        self.add_spell_dispel_check_standard()
+        self.add_spell_countdown_standard()
+
+class AoeSpellHandleModifier(SpellFunctions):
+    #AoeSpellHandleModifier have at least 6 arguments:
+    #spellId, duration, bonusValue, spellEventId, spellDc, empty
+    #
+    #Standard Class for AoE Handle Spells
+    #
+    def __init__(self, name, affectedTargets = aoe_event_target_all, args = 6, preventDuplicate = False):
+        super(SpellFunctions, self).__init__(name, args, preventDuplicate)
+        self.add_hook(ET_OnConditionAdd, EK_NONE, addAoeObjToSpellRegistry, ())
+        self.add_hook(ET_OnObjectEvent, EK_OnEnterAoE, aoeOnEnter, (affectedTargets,))
+        self.add_hook(ET_OnD20Signal, EK_S_Combat_End, aoeCombatEndSignal, ())
+        self.add_hook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, queryActiveSpell, ())
+        self.add_spell_teleport_prepare_standard()
+        self.add_spell_teleport_reconnect_standard()
+        self.add_aoe_spell_ender()
+        self.add_spell_dispel_check_standard()
+        self.add_spell_countdown_standard()
+
+def aoeTooltip(attachee, args, evt_obj):
+    conditionName = args.get_cond_name()
+    conditionDuration = spellTime(args.get_arg(1))
+    evt_obj.append("{} ({})".format(conditionName, conditionDuration))
+    return 0
+
+def aoeEffectTooltip(attachee, args, evt_obj):
+    conditionName = args.get_cond_name().upper().replace(" ", "_")
+    conditionDuration = spellTime(args.get_arg(1))
+    conditionKey = tpdp.hash(conditionName)
+    evt_obj.append(conditionKey, -2, " ({})".format(conditionDuration))
+    return 0
+
+def applyFogConcealment(attachee, args, evt_obj):
+    attacker = evt_obj.attack_packet.attacker
+    bonusValue = 50 if attacker.distance_to(attachee) > 5.0 else 20
+    bonusType = bonus_type_concealment
+    bonusTag = game.get_mesline("mes\\bonus_description.mes", bonusType)
+    spellId = args.get_arg(0)
+    spellHelpTag = getSpellHelpTag(spellId)
+    evt_obj.bonus_list.add(bonusValue, bonusType, "{} : {}".format(bonusTag, spellHelpTag))
+    return 0
+
+class AoeSpellEffectModifier(SpellFunctions):
+    #AoeSpellEffectModifier have at least 6 arguments:
+    #spellId, duration, bonusValue, spellEventId, spellDc, empty
+    def __init__(self, name, args = 6, preventDuplicate = True):
+        super(SpellFunctions, self).__init__(name, args, preventDuplicate)
+        self.add_hook(ET_OnObjectEvent, EK_OnLeaveAoE, aoeOnLeave, ())
+        self.add_hook(ET_OnGetTooltip, EK_NONE, aoeTooltip, ())
+        self.add_hook(ET_OnGetEffectTooltip, EK_NONE, aoeEffectTooltip, ())
+        self.add_hook(ET_OnD20Query, EK_Q_Critter_Has_Condition, querySpellCondition, ())
+        self.add_hook(ET_OnD20Signal, EK_S_Spell_End, aoeSpellEndSignal, ())
+        self.add_hook(ET_OnD20Signal, EK_S_Combat_End, aoeCombatEndSignal, ())
+        self.add_hook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, queryActiveSpell, ())
+        self.add_hook(ET_OnD20Signal, EK_S_Killed, spellKilled, ())
+        self.add_spell_countdown_standard()
+        self.add_spell_teleport_prepare_standard()
+        self.add_spell_teleport_reconnect_standard()
+    def AddFogConcealment(self):
+        self.add_hook(ET_OnGetDefenderConcealmentMissChance, EK_NONE, applyFogConcealment, ())
     def AddSpellConcentration(self):
-        self.AddHook(ET_OnConditionAdd, EK_NONE, addConcentration, ())
-        self.AddHook(ET_OnD20Signal, EK_S_Concentration_Broken, aoeHandleEndSignal, ())
+        self.add_hook(ET_OnD20Signal, EK_S_Concentration_Broken, checkRemoveSpell, ())
     def AddSpellDismiss(self):
-        self.AddHook(ET_OnConditionAdd, EK_NONE, addDismiss, ())
-        self.AddHook(ET_OnD20Signal, EK_S_Dismiss_Spells, aoeHandleEndSignal, ())
-    def AddSpellNoDuplicate(self):
-        self.AddHook(ET_OnConditionAddPre, EK_NONE, replaceCondition, ())
+        self.add_hook(ET_OnD20Signal, EK_S_Dismiss_Spells, checkRemoveSpell, ())
 
-class AoeSpellHandleModifier(AoeObjHandleModifier):
-    #AoeSpellHandlerModifier have at least 5 arguments:
-    #spellId, duration, spellDc, spellEventId, empty
-    def __init__(self, name, affectedTargets = aoe_event_target_all, args = 5, preventDuplicate = False):
-        super(AoeSpellHandleModifier, self).__init__(name, args, preventDuplicate)
-        self.AddHook(ET_OnObjectEvent, EK_OnEnterAoE, aoeOnEnter, (affectedTargets,))
 
-class AoESpellEffectModifier(PythonModifier):
-    #AoESpellEffectPythonModifier have at least 5 arguments:
-    #spellId, duration, spellDc, spellEventId, empty
-    def __init__(self, name, args = 5, preventDuplicate = True):
-        PythonModifier.__init__(self, name, args, preventDuplicate)
-        self.AddHook(ET_OnObjectEvent, EK_OnLeaveAoE, aoeOnLeave, ())
-        self.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, queryActiveSpell, ())
-        self.AddHook(ET_OnD20Query, EK_Q_Critter_Has_Condition, querySpellCondition, ())
-        self.AddHook(ET_OnGetTooltip, EK_NONE, spellTooltip, ())
-        self.AddHook(ET_OnGetEffectTooltip, EK_NONE, spellEffectTooltip, ())
-        self.AddHook(ET_OnD20Signal, EK_S_Spell_End, aoeSpellEndSignal, ())
-        self.AddHook(ET_OnD20Signal, EK_S_Combat_End, aoeCombatEndSignal, ())
-        self.AddHook(ET_OnD20Signal, EK_S_Killed, spellKilled, ())
-        self.AddSpellCountdownStandardHook()
-        self.AddSpellDispellCheckHook()
-        self.AddSpellTeleportPrepareStandard()
-        self.AddSpellTeleportReconnectStandard()
+##### Begin Aura Classes ######
+### Aura Class Spells are spells that are centered ###
+### On the caster and travel with the caster ###
+
+def setAuraObjToSpellRegistry(attachee, args, evt_obj):
+    spellId = args.get_arg(0)
+    spellPacket = tpdp.SpellPacket(spellId)
+    conditionName =  args.get_cond_name()
+    particlesId = game.particles(conditionName, attachee)
+    idx = 0
+    spellPacket.set_spell_object(idx, attachee, particlesId)
+    spellPacket.update_registry()
+    return 0
+
+def auraTooltip(attachee, args, evt_obj):
+    spellId = args.get_arg(0)
+    conditionName = spellName(spellId)
+    conditionDuration = spellTime(args.get_arg(1))
+    evt_obj.append("{} Aura ({})".format(conditionName, conditionDuration))
+    return 0
+
+def auraEffectTooltip(attachee, args, evt_obj):
+    spellId = args.get_arg(0)
+    conditionName = "{}_AURA".format(spellKeyName(spellId))
+    conditionDuration = spellTime(args.get_arg(1))
+    conditionKey = tpdp.hash(conditionName)
+    evt_obj.append(conditionKey, -2, " ({})".format(conditionDuration))
+    return 0
+
+class AuraSpellHandleModifier(SpellFunctions):
+    #AuraSpellHandleModifier have at least 6 arguments:
+    #spellId, duration, bonusValue, spellEventId, spellDc, empty
+    #
+    #Class for AoE spells that are "aura" spells (spells centered on caster and move with the caster)
+    #
+    def __init__(self, name, affectedTargets = aoe_event_target_friendly, args = 6, preventDuplicate = False):
+        super(SpellFunctions, self).__init__(name, args, preventDuplicate)
+        self.add_hook(ET_OnConditionAdd, EK_NONE, setAuraObjToSpellRegistry, ())
+        self.add_hook(ET_OnGetTooltip, EK_NONE, auraTooltip, ())
+        self.add_hook(ET_OnGetEffectTooltip, EK_NONE, auraEffectTooltip, ())
+        self.add_hook(ET_OnObjectEvent, EK_OnEnterAoE, aoeOnEnter, (affectedTargets,))
+        self.add_hook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, queryActiveSpell, ())
+        self.add_spell_teleport_prepare_standard()
+        self.add_spell_teleport_reconnect_standard()
+        self.add_aoe_spell_ender()
+        self.add_spell_dispel_check_standard()
+        self.add_spell_countdown_standard()
+
+class AuraSpellEffectModifier(SpellFunctions):
+    #AuraSpellEffectModifier have at least 6 arguments:
+    #spellId, duration, bonusValue, spellEventId, spellDc, empty
+    def __init__(self, name, args = 6, preventDuplicate = True):
+        super(SpellFunctions, self).__init__(name, args, preventDuplicate)
+        self.add_hook(ET_OnObjectEvent, EK_OnLeaveAoE, aoeOnLeave, ())
+        self.add_hook(ET_OnGetTooltip, EK_NONE, aoeTooltip, ())
+        self.add_hook(ET_OnGetEffectTooltip, EK_NONE, aoeEffectTooltip, ())
+        self.add_hook(ET_OnD20Query, EK_Q_Critter_Has_Condition, querySpellCondition, ())
+        self.add_hook(ET_OnD20Signal, EK_S_Spell_End, aoeSpellEndSignal, ())
+        self.add_hook(ET_OnD20Query, EK_Q_Critter_Has_Spell_Active, queryActiveSpell, ())
+        self.add_hook(ET_OnD20Signal, EK_S_Killed, spellKilled, ())
+        self.add_spell_countdown_standard()
+        self.add_spell_teleport_prepare_standard()
+        self.add_spell_teleport_reconnect_standard()
+    def AddSpellConcentration(self):
+        self.add_hook(ET_OnD20Signal, EK_S_Concentration_Broken, checkRemoveSpell, ())
+    def AddSpellDismiss(self):
+        self.add_hook(ET_OnD20Signal, EK_S_Dismiss_Spells, checkRemoveSpell, ())

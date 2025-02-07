@@ -22,22 +22,9 @@ struct CondHashSystem : ToEEHashtableSystem < CondStruct >
 		temple::Dll::RegisterAddressPtr((void**)&condHashTable);
 	}
 
-	uint32_t ConditionHashtableInit(ToEEHashtable<CondStruct> * hashtable)
-	{
-		return HashtableInit(hashtable, 1000);
-	}
+	uint32_t ConditionHashtableInit(ToEEHashtable<CondStruct>* hashtable);
 
-	uint32_t CondStructAddToHashtable(CondStruct * condStruct, bool overriding = false)
-	{
-		uint32_t key = StringHash(condStruct->condName);
-		CondStruct * condFound;
-		uint32_t result = HashtableSearch(condHashTable, key, &condFound);
-		if (result || overriding)
-		{
-			result = HashtableOverwriteItem(condHashTable, key, condStruct);
-		}
-		return result;
-	}
+	uint32_t CondStructAddToHashtable(CondStruct* condStruct, bool overriding = false);
 
 	int GetCondStructHashkey(CondStruct* condStruct)
 	{
@@ -332,6 +319,9 @@ int RecklessOffenseRadialMenuInit(DispatcherCallbackArgs args);
 int RecklessOffenseAcPenalty(DispatcherCallbackArgs args);
 int RecklessOffenseToHitBonus(DispatcherCallbackArgs args);
 int TacticalOptionAbusePrevention(DispatcherCallbackArgs args);
+
+int HeldCapStatBonus(DispatcherCallbackArgs args);
+int HelplessCapStatBonus(DispatcherCallbackArgs args);
 
 int CombatExpertiseRadialMenu(DispatcherCallbackArgs args);
 int CombatExpertiseSet(DispatcherCallbackArgs args);
