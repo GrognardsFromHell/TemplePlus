@@ -125,6 +125,9 @@ namespace TemplePlusConfig
         public static readonly DependencyProperty StricterRulesEnforcementProperty = DependencyProperty.Register(
           "StricterRulesEnforcement", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
 
+        public static readonly DependencyProperty PreferPoisonSpecFileProperty = DependencyProperty.Register(
+          "PreferPoisonSpecFile", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
+
         public static readonly DependencyProperty DisableAlignmentRestrictionsProperty = DependencyProperty.Register(
           "DisableAlignmentRestrictions", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
         public static readonly DependencyProperty DisableCraftingSpellReqsProperty = DependencyProperty.Register(
@@ -415,6 +418,13 @@ namespace TemplePlusConfig
             get { return (bool)GetValue(StricterRulesEnforcementProperty); }
             set { SetValue(StricterRulesEnforcementProperty, value); }
         }
+
+        public bool PreferPoisonSpecFile
+        {
+            get { return (bool)GetValue(PreferPoisonSpecFileProperty); }
+            set { SetValue(PreferPoisonSpecFileProperty, value); }
+        }
+
         public bool DisableAlignmentRestrictions
         {
             get { return (bool)GetValue(DisableAlignmentRestrictionsProperty); }
@@ -695,6 +705,7 @@ namespace TemplePlusConfig
             
             LaxRules = TryReadBool("laxRules");
             StricterRulesEnforcement = TryReadBool("stricterRulesEnforcement");
+            PreferPoisonSpecFile = TryReadBool("preferPoisonSpecFile");
             
             DisableAlignmentRestrictions = TryReadBool("disableAlignmentRestrictions");
             
@@ -774,6 +785,7 @@ namespace TemplePlusConfig
             }
             tpData["laxRules"] = LaxRules ? "true" : "false";
             tpData["stricterRulesEnforcement"] = StricterRulesEnforcement ? "true" : "false";
+            tpData["preferPoisonSpecFile"] = PreferPoisonSpecFile ? "true" : "false";
 
             tpData["disableAlignmentRestrictions"] = DisableAlignmentRestrictions ? "true" : "false";
             tpData["disableCraftingSpellReqs"] = DisableCraftingSpellReqs ? "true" : "false";

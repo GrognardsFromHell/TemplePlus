@@ -225,9 +225,12 @@ const PoisonSpec * PoisonFixes::GetPoisonSpec(int poisonId)
 
 PoisonSystem::PoisonSystem()
 {
-	AssignVanillaSpecs();
+	// json will not override already loaded specs
+	if (!config.preferPoisonSpecFile) {
+		AssignVanillaSpecs();
+	}
 	//SaveSpecsFile("d:\\temp\\vpoisons.json");
-	LoadSpecsFile("data/rules/poisons.json");
+	LoadSpecsFile("rules/poisons.json");
 }
 
 const std::string & PoisonSystem::GetName() const
