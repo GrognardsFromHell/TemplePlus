@@ -5853,24 +5853,46 @@ int __cdecl ItemCallbacks::ArmorBonusAcBonusCapValue(DispatcherCallbackArgs args
 	return 0;
 }
 
+// This is a reworked version of the armor check penalty
+// dispatch. The original would find an object's parent and use
+// its dispatcher to run against the conditions. However, that
+// only makes sense if the armor is worn. If it is worn, then the
+// item conditions will have been added to the creature's, and
+// the dispatch will work. But, if it is not worn, none of the
+// item conditions will be regarded.
+//
+// This has been reworked to be more thorough using the new
+// DispatchForWearable. Since the dispatch type is an ObjBonus,
+// the armor will always be in the event object. If the armor is
+// worn, we can _just_ dispatch against the critter, because it
+// will have the item conditions. If not, we dispatch against the
+// parent object (if not null and a critter) _and_ do an item
+// dispatch, to ensure we incorporate all the relevant
+// conditions.
+//
+// I kept it this (complicated) way just in case someone wants to
+// add a feat, or similar, that modifies armor check penalties.
+// Since we still dispatch against the critter in relevant
+// scenarios, the critter's conditions can influence the penalty.
 int __cdecl ItemCallbacks::ArmorCheckPenalty(objHndl armor)
 {
-	auto res = itemCallbacks.oldArmorCheckPenalty(armor);
-	
-	//Query for armor check penalty adjustment
-	if (armor) {
-		auto parent = inventory.GetParent(armor);
-		if (parent) {
-			auto obj = objSystem->GetObject(parent);
-			if ((obj != nullptr) && (obj->IsPC() || obj->IsNPC())) {
-				auto adjustment = d20Sys.D20QueryPython(parent, "Armor Check Penalty Adjustment", armor);
-				res += adjustment;  //The adjustment is a positive value, the penalty is a negative value
-				res = std::min(res, 0);
-			}
-		}
-	}
+	if (!armor) return 0;
 
-	return res;
+	DispIoObjBonus dispIo;
+	dispIo.obj = armor;
+
+	// Initialize bonus list
+	auto base = objects.getInt32(armor, obj_f_armor_armor_check_penalty);
+
+	// mesline is "Initial Value"
+	dispIo.bonlist.AddBonus(base, 1, 102);
+
+	// cap at 0 on the high end
+	dispIo.bonlist.SetOverallCap(1, 0, 0, 102);
+
+	dispatch.DispatchForWearable(armor, dispTypeArmorCheckPenalty, DK_NONE, &dispIo);
+
+	return dispIo.bonlist.GetEffectiveBonusSum();
 }
 
 int __cdecl ItemCallbacks::BucklerAcPenalty(DispatcherCallbackArgs args)
