@@ -194,6 +194,7 @@ public:
 	static int __cdecl PreferOneHandedWieldRadialMenu(DispatcherCallbackArgs args);
 	static int __cdecl PreferOneHandedWieldQuery(DispatcherCallbackArgs args);
 
+	static int __cdecl EncumbranceCapAC(DispatcherCallbackArgs args);
 } genericCallbacks;
 
 
@@ -1680,6 +1681,29 @@ int GenericCallbacks::PreferOneHandedWieldQuery(DispatcherCallbackArgs args)
 	auto isCurrentlyOn = args.GetCondArg(0);
 
 	dispIo->return_val = isCurrentlyOn;
+	return 0;
+}
+
+// Sets a cap to dex AC bonus for encumbrance. The cap value it taken from
+// data1, and a description from data2. If the cap is 0, it also caps dodge AC,
+// because being overburdened denies your dex AC bonus altogether.
+int GenericCallbacks::EncumbranceCapAC(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIOTypeAttackBonus, DispIoAttackBonus);
+
+	auto cap = args.GetData1();
+	auto descline = args.GetData2();
+
+	if (cap >= 100) { // indicates no cap; avoid clutter just in case
+		return 0;
+	}
+
+	// 3 is dexterity bonus
+	dispIo->bonlist.AddCap(3, cap, descline);
+	if (cap == 0) {
+		// 8 is dodge bonus
+		dispIo->bonlist.AddCap(8, cap, descline);
+	}
 	return 0;
 }
 
@@ -3344,6 +3368,31 @@ void ConditionSystem::RegisterNewConditions()
 		condSleeping.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HelplessCapStatBonus);
 	}
 
+	{
+		// Switch encumbrance conditions from responding to (armor) max dex dispatch
+		// to directly capping dex AC. Also, fix the actual cap numbers (they were
+		// all 3, which is the medium value).
+
+		static CondStructNew encumberedMed;
+		encumberedMed.ExtendExisting("Encumbered Medium");
+		encumberedMed.subDispDefs[3].dispType = dispTypeGetAC;
+		encumberedMed.subDispDefs[3].dispCallback = genericCallbacks.EncumbranceCapAC;
+
+		static CondStructNew encumberedHeavy;
+		encumberedHeavy.ExtendExisting("Encumbered Heavy");
+		encumberedHeavy.subDispDefs[3].dispType = dispTypeGetAC;
+		encumberedHeavy.subDispDefs[3].dispCallback = genericCallbacks.EncumbranceCapAC;
+		encumberedHeavy.subDispDefs[3].data1.usVal = 1;
+
+		static CondStructNew encumberedOver;
+		encumberedOver.ExtendExisting("Encumbered Overburdened");
+		encumberedOver.subDispDefs[3].dispType = dispTypeGetAC;
+		encumberedOver.subDispDefs[3].dispCallback = genericCallbacks.EncumbranceCapAC;
+		encumberedOver.subDispDefs[3].data1.usVal = 0;
+		// Also, overburdened counts as being denied your dex AC, so you can be
+		// sneak attacked.
+		encumberedOver.AddHook(dispTypeD20Query, DK_QUE_SneakAttack, genericCallbacks.QuerySetReturnVal1);
+	}
 	/*
 	char mCondIndomitableWillName[100];
 	CondStructNew *mCondIndomitableWill;
