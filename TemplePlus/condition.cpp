@@ -533,6 +533,9 @@ public:
 		// Armor Check Penalty
 		itemCallbacks.oldArmorCheckPenalty = replaceFunction<int(objHndl armor)>(0x1004F0D0, itemCallbacks.ArmorCheckPenalty);
 
+		// Masterwork armor check offset bonuses, no longer necessary
+		replaceFunction(0x10100470, genericCallbacks.NoOp);
+		replaceFunction(0x10100500, genericCallbacks.NoOp);
 
 		// Druid wild shape
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FBDB0, classAbilityCallbacks.DruidWildShapeReset);
