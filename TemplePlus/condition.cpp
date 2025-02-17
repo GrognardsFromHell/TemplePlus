@@ -5822,23 +5822,36 @@ int ItemCallbacks::BucklerToHitPenalty(DispatcherCallbackArgs args)
 	return 0;
 }
 
+// This is a reworked version of the max dex bonus dispatch. The
+// original version would dispatch on the parent creature of the
+// armor, but this only makes sense if the item is worn, so that
+// the item conditions have been incorporated into the
+// creature's.
+//
+// The rewritten version uses a more complicated setup that
+// dispatches against a combination of the creature and the item.
+// If the item is worn, just the creature is sufficient, while
+// the item dispatch fixes the answer for non-worn items or items
+// without a parent creature.
+//
+// This allows for e.g. the creature's feats to adjust the bonus
+// if desired.
 int __cdecl ItemCallbacks::MaxDexBonus(objHndl armor)
 {
-	auto res = itemCallbacks.oldMaxDexBonus(armor);
-	
-	//Query for max dex bonus adjustment
-	if (armor) {
-		auto parent = inventory.GetParent(armor);
-		if (parent) {
-			auto obj = objSystem->GetObject(parent);
-			if ((obj != nullptr) && (obj->IsPC() || obj->IsNPC())) {
-				auto adjustment = d20Sys.D20QueryPython(parent, "Max Dex Bonus Adjustment", armor);
-				res += adjustment;
-			}
-		}
-	}
-    
-	return res;
+	if (!armor) return 0;
+
+	DispIoObjBonus dispIo;
+	dispIo.obj = armor;
+
+	// Initialize bonus list
+	auto base = objects.getInt32(armor, obj_f_armor_max_dex_bonus);
+
+	// mesline is "Initial Value"
+	dispIo.bonlist.AddBonus(base, 1, 102);
+
+	dispatch.DispatchForWearable(armor, dispTypeMaxDexAcBonus, DK_NONE, &dispIo);
+
+	return dispIo.bonlist.GetEffectiveBonusSum();
 }
 
 int __cdecl ItemCallbacks::ArmorBonusAcBonusCapValue(DispatcherCallbackArgs args)
