@@ -440,7 +440,7 @@ float AdjustRadiusSize(float baseRadius, int baseSize, int curSize)
 	return radius;
 }
 
-float Objects::GetRadius(objHndl handle)
+float Objects::GetRadius(objHndl handle, bool base)
 {
 	auto obj = gameSystems->GetObj().GetObject(handle);
 	auto radiusSet = obj->GetFlags() & OF_RADIUS_SET;
@@ -465,7 +465,9 @@ float Objects::GetRadius(objHndl handle)
 				}
 			}
 
-			radius = AdjustRadiusSize(radius, baseSize, curSize);
+			if (!base) {
+				radius = AdjustRadiusSize(radius, baseSize, curSize);
+			}
 		}
 		if (radius < 2000.0 && radius > 0)
 		{
