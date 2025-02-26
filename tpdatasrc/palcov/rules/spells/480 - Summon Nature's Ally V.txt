@@ -1,0 +1,19 @@
+School: Conjuration
+Subschool: Summoning
+Level: Drd 5
+Component: V
+Component: S
+Casting Time: Full Round
+Range: Close
+Saving Throw: None
+Spell Resistance: No
+Projectile: No
+flags_Target: Range
+exc_flags_Target: Self
+exc_flags_Target: Other
+exc_flags_Target: Dead
+exc_flags_Target: Non-critter
+mode_Target: Area
+radius_Target: 1
+ai_type: ai_action_summon
+proto choices: 14054 14292 14296 14298 14302 14389 14925 14937
