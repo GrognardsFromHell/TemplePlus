@@ -211,6 +211,7 @@ public:
 	static int __cdecl MaxDexBonus(objHndl armor);
 	static int __cdecl ArmorAcBonus(DispatcherCallbackArgs args);
 	static int __cdecl ArmorBonusAcBonusCapValue(DispatcherCallbackArgs args);
+	static int __cdecl ArmorCheckNonproficiencyPenalty(DispatcherCallbackArgs args);
 	static int __cdecl BucklerToHitPenalty(DispatcherCallbackArgs args);
 	static int __cdecl BucklerAcPenalty(DispatcherCallbackArgs args);
 	static int __cdecl BucklerAcBonus(DispatcherCallbackArgs args);
@@ -3282,6 +3283,8 @@ void ConditionSystem::RegisterNewConditions()
 		condShieldBonus.AddHook(dispTypeBucklerAcPenalty, DK_NONE, itemCallbacks.ShieldAcPenalty);
 		// reset shield bash penalty on begin round
 		condShieldBonus.AddHook(dispTypeBeginRound, DK_NONE, CondNodeSetArgFromSubDispDef, 1, 0);
+		// armor check nonproficiency; was survival for some reason
+		condShieldBonus.subDispDefs[13].dispKey = DK_SKILL_USE_ROPE;
 
 		// replace Q_Armor_Get_AC_Bonus callbacks to fix stacking behavior
 		condShieldBonus.subDispDefs[0].dispCallback = itemCallbacks.BaseAcQuery;
@@ -3295,6 +3298,11 @@ void ConditionSystem::RegisterNewConditions()
 		static CondStructNew condArmorBonus;
 		condArmorBonus.ExtendExisting("Armor Bonus");
 		condArmorBonus.subDispDefs[0].dispCallback = itemCallbacks.BaseAcQuery;
+		// armor check nonproficiency; was survival for some reason
+		condArmorBonus.subDispDefs[15].dispKey = DK_SKILL_USE_ROPE;
+		condArmorBonus.AddHook(dispTypeAbilityCheckModifier, DK_STAT_STRENGTH, itemCallbacks.ArmorCheckNonproficiencyPenalty);
+		condArmorBonus.AddHook(dispTypeAbilityCheckModifier, DK_STAT_DEXTERITY, itemCallbacks.ArmorCheckNonproficiencyPenalty);
+
 		static CondStructNew condArmorEnhBonus;
 		condArmorEnhBonus.ExtendExisting("Armor Enhancement Bonus");
 		condArmorEnhBonus.subDispDefs[0].dispCallback = itemCallbacks.EnhAcQuery;
@@ -5916,6 +5924,28 @@ int __cdecl ItemCallbacks::ArmorBonusAcBonusCapValue(DispatcherCallbackArgs args
 	}
 	dispIo->bonlist.AddCapWithDescr(3, maxDexBon, 112, itemName);
 	return 0;
+}
+
+// Applies armor check penalty when the wearer is not proficient with the armor.
+//
+// Used for raw ability checks and any str/dex skills that do not already incur
+// armor check penalties.
+int __cdecl ItemCallbacks::ArmorCheckNonproficiencyPenalty(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIoTypeObjBonus, DispIoObjBonus);
+	auto invIdx = args.GetCondArg(2);
+	auto critter = args.objHndCaller;
+	auto armor = inventory.GetItemAtInvIdx(critter, invIdx);
+
+	if (armor && !inventory.IsProficientWithArmor(critter, armor)) {
+		auto name = description._getDisplayName(armor, critter);
+		auto penalty = ArmorCheckPenalty(armor);
+
+		dispIo->bonOut->AddBonusWithDesc(penalty, 0, 112, name);
+	}
+
+	return 0;
+
 }
 
 // This is a reworked version of the armor check penalty
