@@ -61,6 +61,7 @@ struct DispatcherSystem : temple::AddressTable
 	
 	int DispatchForCritter(objHndl handle, DispIoBonusList*, enum_disp_type dispType, D20DispatcherKey dispKey);
 	void DispatchForItem(objHndl item, enum_disp_type dispType, D20DispatcherKey key, DispIO* dispIo);
+	void DispatchForWearable(objHndl item, enum_disp_type dispType, D20DispatcherKey key, DispIO* dispIo);
 	int Dispatch10AbilityScoreLevelGet(objHndl handle, Stat stat, DispIoBonusList * dispIo); // use objects.abilityScoreLevelGet instead (to include NPC stat boost mod)
 	int32_t dispatch1ESkillLevel(objHndl objHnd, SkillEnum skill, BonusList * bonOut, objHndl objHnd2, int32_t flag);
 	float Dispatch29hGetMoveSpeed(objHndl objHnd, DispIoMoveSpeed * dispIo = nullptr);
