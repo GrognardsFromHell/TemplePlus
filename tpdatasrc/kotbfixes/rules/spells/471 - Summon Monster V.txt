@@ -20,3 +20,4 @@ mode_Target: Area
 radius_Target: 1
 ai_type: ai_action_summon
 proto choices: 14541 14395 14380 14381 14382 14383 14567 14521 14564
+source: PHB
