@@ -420,6 +420,19 @@ int SpellEntry::GetLowestSpellLevel(uint32_t spellEnumIn)
 	return (level < 100) ? level : -1;
 }
 
+PnPSource SpellEntry::GetSource()
+{
+	const auto spSrcFind = spellSys.mSpellSources.find(spellEnum);
+	if (spSrcFind != spellSys.mSpellSources.end()) {
+		return spSrcFind->second;
+	}
+
+	// some default logic in case the info hasn't been specified
+	if (spellEnum <= 568) return PnPSource::PHB;
+	else if (spellEnum <= SPELL_ENUM_MAX_VANILLA) return PnPSource::ToEE;
+	else return PnPSource::Homebrew;
+}
+
 SpellPacketBody::SpellPacketBody()
 {
 	spellSys.spellPacketBodyReset(this);
@@ -2549,6 +2562,22 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 				spEntry.aiTypeBitmask |= (1 << value);
 			}
 		}
+		else if (!_strnicmp(textBuf, "source", 6)) {
+			static std::map<string, int> sourceStrings = {
+				{ "PHB"             , static_cast<int>(PnPSource::PHB) },
+				{ "ToEE"            , static_cast<int>(PnPSource::ToEE) },
+				{ "Spell Compendium", static_cast<int>(PnPSource::SpellCompendium) },
+				{ "PHB2"            , static_cast<int>(PnPSource::PHB2) },
+				{ "Homebrew"        , static_cast<int>(PnPSource::Homebrew) },
+			};
+			auto value = 0;
+			if (findInMapping(sourceStrings, textBuf + 6, value)) {
+				mSpellSources[spEntry.spellEnum] = static_cast<PnPSource>(value);
+			} else {
+				auto msg = "SpellEntryFileParse: spell {}: unrecognized source {}";
+				logger->warn(msg, spEntry.spellEnum, textBuf + 6);
+			}
+		}
 		else  {
 			parseOk = false;
 			if (spellEntryLineParser(textBuf, fieldType, value, value2)) {
@@ -2972,6 +3001,11 @@ bool LegacySpellSystem::IsNewSlotDesignator(int spellEnum)
 // Non-Core spells will be added in the expanded range
 bool LegacySpellSystem::IsNonCore(int spellEnum)
 {
+	auto spSource = mSpellSources.find(spellEnum);
+	if (spSource != mSpellSources.end()) {
+		return static_cast<uint32_t>(spSource->second) > 255;
+	}
+
 	return (spellEnum > SPELL_ENUM_MAX_VANILLA);
 }
 
