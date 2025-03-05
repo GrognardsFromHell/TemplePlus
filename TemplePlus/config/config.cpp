@@ -54,6 +54,34 @@ public:
 		return ConfigSetting(option, setterAdapter, getterAdapter, description);
 	}
 
+	static ConfigSetting StringSet(const char *option, char sep, Setter<const unordered_set<string>&> setter, Getter<unordered_set<string>> getter, const char *description = nullptr) {
+
+		auto getAdapter = [=] {
+			string result;
+			for (auto &str : getter()) {
+				if (!result.empty()) {
+					result += sep;
+				}
+				result += str;
+			}
+			return result;
+		};
+
+		auto setAdapter = [=](string x) {
+			unordered_set<string> result;
+			stringstream ss(x);
+			string token;
+			while (getline(ss, token, sep)) {
+				if (!token.empty()) {
+					result.insert(token);
+				}
+			}
+			setter(result);
+		};
+
+		return ConfigSetting(option, setAdapter, getAdapter, description);
+	}
+
 	static ConfigSetting Bool(const char *option, Setter<bool> setter, Getter<bool> getter, const char *description = nullptr) {
 		auto getterAdapter = [=] {
 			return getter() ? "true" : "false";
@@ -119,6 +147,7 @@ private:
 #define CONF_INT(FIELDNAME) ConfigSetting::Int(#FIELDNAME, [] (int val) { config.FIELDNAME = val; }, [] { return config.FIELDNAME; })
 #define CONF_BOOL(FIELDNAME) ConfigSetting::Bool(#FIELDNAME, [] (bool val) { config.FIELDNAME = val; }, [] { return config.FIELDNAME; })
 #define CONF_DOUBLE(FIELDNAME) ConfigSetting::Double(#FIELDNAME, [] (double val) { config.FIELDNAME = val; }, [] { return config.FIELDNAME; })
+#define CONF_STRING_SET(FIELDNAME, SEP) ConfigSetting::StringSet(#FIELDNAME, SEP, [](const std::unordered_set<string> &val) { config.FIELDNAME = val; }, [] { return config.FIELDNAME; })
 
 static ConfigSetting configSettings[] = {
 	CONF_BOOL(skipIntro),
@@ -189,6 +218,7 @@ static ConfigSetting configSettings[] = {
 
 	CONF_BOOL(showTargetingCirclesInFogOfWar),
 	CONF_BOOL(nonCoreMaterials),
+	CONF_STRING_SET(nonCoreSources, ';'),
 	CONF_BOOL(tolerantNpcs),
 	CONF_STRING(fogOfWar),
 	CONF_DOUBLE(speedupFactor),

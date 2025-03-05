@@ -119,6 +119,10 @@ namespace TemplePlusConfig
         public static readonly DependencyProperty ForgottenRealmsRacesProperty = DependencyProperty.Register(
           "ForgottenRealmsRacesRaces", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
 
+        public static readonly DependencyProperty NonCoreSourcesProperty =
+          DependencyProperty.Register(
+              "NonCoreSources", typeof(List<string>), typeof(IniViewModel), new PropertyMetadata(new List<string>()));
+
         public static readonly DependencyProperty LaxRulesProperty = DependencyProperty.Register(
           "LaxRules", typeof(bool), typeof(IniViewModel), new PropertyMetadata(default(bool)));
 
@@ -388,6 +392,12 @@ namespace TemplePlusConfig
             set { SetValue(NonCoreProperty, value); }
         }
 
+        public List<string> NonCoreSources
+        {
+            get { return (List<string>)GetValue(NonCoreSourcesProperty); }
+            set { SetValue(NonCoreSourcesProperty, value); }
+        }
+
         public bool NewRaces
         {
             get { return (bool)GetValue(NewRacesProperty); }
@@ -493,6 +503,14 @@ namespace TemplePlusConfig
                 bool val = false;
                 bool.TryParse(tpData[name], out val);
                 return val;
+            };
+
+            Func<string, List<string>> ReadStringList = (name) =>
+            {
+              List<string> val = new List<string>();
+              val.AddRange(tpData[name].Split(';'));
+              val.RemoveAll(str => str == "");
+              return val;
             };
 
             InstallationPath = tpData["toeeDir"];
@@ -684,6 +702,8 @@ namespace TemplePlusConfig
             NewClasses = TryReadBool("newClasses");
             
             NonCore = TryReadBool("nonCoreMaterials");
+
+            NonCoreSources = ReadStringList("nonCoreSources");
             
             NewRaces = TryReadBool("newRaces");
             
@@ -830,6 +850,7 @@ namespace TemplePlusConfig
             tpData["monstrousRaces"] = MonstrousRaces? "true" : "false";
             tpData["forgottenRealmsRaces"] = ForgottenRealmsRaces ? "true" : "false";
             tpData["nonCoreMaterials"] = NonCore ? "true" : "false";
+            tpData["nonCoreSources"] = String.Join(";", NonCoreSources);
             tpData["tolerantNpcs"] = TolerantTownsfolk? "true" : "false";
             tpData["dialogueUseBestSkillLevel"] = PartySkillChecks ? "true" : "false";
             tpData["showExactHPforNPCs"] = TransparentNpcStats? "true" : "false";

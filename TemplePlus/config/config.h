@@ -1,6 +1,9 @@
 ﻿
 #pragma once
 
+#include <unordered_map>
+#include <unordered_set>
+
 enum class RngType {
 	MERSENNE_TWISTER,
 	ARCANUM
@@ -107,6 +110,7 @@ struct TemplePlusConfig
 	bool monstrousRaces = false; // monstrous races. unbalanced as hell ><
 	bool forgottenRealmsRaces = false;  //Races from the forgotten realms campaign setting (Gold Dwarf, Genasi, ...)
 	bool nonCoreMaterials = false; // splatbooks, fan suggestions etc
+	std::unordered_set<std::string> nonCoreSources;
 	bool tolerantNpcs = false; // NPCs tolerate monster party members
 	std::string fogOfWar = "Normal";
 	bool disableFogOfWar = false; // Previously: -nofog
