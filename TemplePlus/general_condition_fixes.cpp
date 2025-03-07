@@ -27,6 +27,7 @@ public:
 	static int WeaponKeenCritHitRange(DispatcherCallbackArgs args);
 	static int ImprovedCriticalGetCritThreatRange(DispatcherCallbackArgs args);
 	
+	static int RacialAbilityAdjustment(DispatcherCallbackArgs args);
 
 	void apply() override {
 
@@ -71,6 +72,9 @@ public:
 		replaceFunction(0x100EB6A0, PermanentNegativeLevelOnAdd); // fixes NPCs with no class levels instantly dying due to temp negative level
 		replaceFunction(0x100FFD20, WeaponKeenCritHitRange); // fixes Weapon Keen stacking (Keen Edge spell / Keen enchantment)
 		replaceFunction(0x100F8320, ImprovedCriticalGetCritThreatRange); // fixes stacking with Keen Edge spell / Keen enchantment
+
+
+		replaceFunction(0x100FD850, RacialAbilityAdjustment);
 		
 		// Amulet of Natural Armor - bonus type changed to 10 so it doesn't stack with other enhancement bonuses (Barkskin, Righteous Might)
 		replaceFunction<int(DispatcherCallbackArgs)>(0x10104AB0, [](DispatcherCallbackArgs args)->int {
@@ -274,3 +278,42 @@ int GeneralConditionFixes::ImprovedCriticalGetCritThreatRange(DispatcherCallback
 	return 0;
 }
 
+int GeneralConditionFixes::RacialAbilityAdjustment(DispatcherCallbackArgs args)
+{
+	auto key = args.dispKey;
+	bool polymorphed = d20Sys.d20Query(args.objHndCaller, DK_QUE_Polymorphed);
+	bool physical = DK_STAT_STRENGTH <= key && key <= DK_STAT_CONSTITUTION;
+	bool invalid = key < DK_STAT_STRENGTH || DK_STAT_CHARISMA < key;
+
+	// polymorph overrides this adjustment
+	if (polymorphed && physical || invalid) return 0;
+
+	GET_DISPIO(dispIOTypeBonusList, DispIoBonusList);
+
+	auto critter = objSystem->GetObject(args.objHndCaller);
+	int amount = args.GetData1();
+
+	// get the base value
+	//
+	// note: testing the base int32 makes this insensitive to order of applied
+	// conditions, so it no longer matters if the racial condition is earlier than
+	// any other penalties.
+	int base = critter->GetInt32(obj_f_critter_abilities_idx, key-1);
+
+	// racial penalties cannot take someone below 3 int, since that is the minimum
+	// necessary for speech and such.
+	if (base + amount < 3 && amount < 0 && key == DK_STAT_INTELLIGENCE) {
+		// if the base is below 3 for some reason, don't give a bonus
+		amount = std::min(0, 3 - base);
+	}
+
+	if (amount > 0) {
+		dispIo->bonlist.AddBonus(amount, 0, 139);
+	} else if (amount < 0) {
+		// a negative isn't really a bonus, is it?
+		std::string desc = "Racial Penalty";
+		dispIo->bonlist.AddBonus(amount, 0, desc);
+	}
+
+	return 0;
+}
