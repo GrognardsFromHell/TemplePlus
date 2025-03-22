@@ -308,6 +308,11 @@ int D20StatsSystem::GetPsiStatBase(const objHndl & handle, Stat stat, int statAr
 
 int D20StatsSystem::GetPhysicalStatBase(const objHndl & handle, Stat stat) const
 {
+	if (!handle) {
+		logger->debug("GetPhysicalStatBase called with null handle for stat {}", stat);
+		return 0;
+	}
+
 	switch(stat){
 	case stat_ac:
 		return critterSys.GetArmorClass(handle);
@@ -356,6 +361,11 @@ int D20StatsSystem::GetPhysicalStatLevel(const objHndl & handle, Stat stat) cons
 	auto sizeDiff = curSize - baseSize;
 
 	int base = 0;
+
+	if (!handle) {
+		logger->debug("GetPhysicalStatLevel called with null handle for stat {}", stat);
+		return 0;
+	}
 
 	// TODO: polymorph
 	switch(stat) {
