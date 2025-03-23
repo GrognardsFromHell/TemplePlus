@@ -390,7 +390,7 @@ int D20StatsSystem::GetPhysicalStatLevel(const objHndl & handle, Stat stat) cons
 	case stat_damage_bonus:
 		return GetValue(handle, stat_str_mod);
 	default:
-		GetPhysicalStatBase(handle, stat);
+		return GetPhysicalStatBase(handle, stat);
 	}
 }
 
