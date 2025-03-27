@@ -7,6 +7,9 @@
 
 // Doesn't matter currently since everyone gets the same farmer garb
 
+// Note 2: offsets for new base classes are shifted by 1 because the tutorial
+// is hard coded to #11.
+
 // Medium size races 
 
 // barbarian 
