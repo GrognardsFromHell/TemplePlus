@@ -42,20 +42,23 @@
 // wizard 
 {10}{6142} 
 
-// favored soul
-{11}{6142}
+// tutorial
+{11}{6047 6032 6011 6012}
 
-// scout
+// favored soul
 {12}{6142}
 
-// warmage
+// scout
 {13}{6142}
 
-// beguiler
+// warmage
 {14}{6142}
 
-// swashbuckler
+// beguiler
 {15}{6142}
+
+// swashbuckler
+{16}{6142}
 
 // Small size races (halflings and gnomes) 
 
@@ -93,16 +96,16 @@
 {110}{6142} 
 
 // favored soul
-{111}{6142}
-
-// scout
 {112}{6142}
 
-// warmage
+// scout
 {113}{6142}
 
-// beguiler
+// warmage
 {114}{6142}
 
-// swashbuckler
+// beguiler
 {115}{6142}
+
+// swashbuckler
+{116}{6142}

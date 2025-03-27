@@ -86,6 +86,9 @@ static void PcStart(objHndl pc) {
 	// couldn't find class
 	if (classIndex > d20ClassSys.baseClassEnums.size()) return;
 
+	// offset by 1 for tutorial inventory
+	if (classIndex >= VANILLA_NUM_CLASSES) classIndex++;
+
 	try {
 		auto content(MesFile::ParseFile("rules\\start_equipment.mes"));
 		
