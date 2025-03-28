@@ -216,6 +216,7 @@ public:
 
 	// stats
 	int GetRolledStatIdx(int x, int y, int *xyOut = nullptr); // gets the index of the Rolled Stats button according to the mouse position. Returns -1 if none.
+	int GetAssignedStatIdx(int x, int y, int *xyOut = nullptr); // gets the index of the Assigned Stats button according to the mouse position. Returns -1 if none.
 	BOOL StatsWndMsg(int widId, TigMsg *msg);
 
 	// Race
@@ -438,6 +439,7 @@ public:
 	}
 
 private:
+	int GetStatIdx(const int x0, const int xMax, int x, int y, int *xyOut);
 
 	int mPageCount = 0;
 

@@ -2625,8 +2625,8 @@ void UiPcCreation::StateTitleRender(int widId){
 	UiRenderer::PopFont();
 }
 
-int UiPcCreation::GetRolledStatIdx(int x, int y, int * xyOut){
-
+int UiPcCreation::GetStatIdx(const int x0, const int xMax, int x, int y, int * xyOut)
+{
 	auto &statsWnd = GetStatsWnd();
 
 	auto relX = x - statsWnd.x;
@@ -2634,7 +2634,6 @@ int UiPcCreation::GetRolledStatIdx(int x, int y, int * xyOut){
 
 	auto idx = 0;
 	const int y0 = 71;
-	const int x0 = 203, xMax = 241;
 	const int yBtnSize = 31;
 
 	if (relX < x0 || relX > xMax)
@@ -2663,6 +2662,16 @@ int UiPcCreation::GetRolledStatIdx(int x, int y, int * xyOut){
 	return idx;
 }
 
+int UiPcCreation::GetRolledStatIdx(int x, int y, int * xyOut)
+{
+	return GetStatIdx(203, 241, x, y, xyOut);
+}
+
+int UiPcCreation::GetAssignedStatIdx(int x, int y, int * xyOut)
+{
+	return GetStatIdx(87, 125, x, y, xyOut);
+}
+
 BOOL UiPcCreation::StatsWndMsg(int widId, TigMsg * msg){
 	// returning FALSE indicates it should pass the handling on to the original handler
 
@@ -2670,7 +2679,14 @@ BOOL UiPcCreation::StatsWndMsg(int widId, TigMsg * msg){
 		return FALSE;
 
 	auto msgMouse = (TigMsgMouse*)msg;
-	if (msgMouse->buttonStateFlags & MouseStateFlags::MSF_RMB_RELEASED){
+	auto mouseFlags = msgMouse->buttonStateFlags;
+
+	auto interceptMask =
+		MouseStateFlags::MSF_LMB_DOWN |
+		MouseStateFlags::MSF_LMB_CLICK |
+		MouseStateFlags::MSF_LMB_RELEASED;
+
+	if (mouseFlags & MouseStateFlags::MSF_RMB_RELEASED){
 		auto rolledStatIdx = GetRolledStatIdx(msgMouse->x, msgMouse->y);
 		if (rolledStatIdx == -1)
 			return FALSE;
@@ -2687,8 +2703,23 @@ BOOL UiPcCreation::StatsWndMsg(int widId, TigMsg * msg){
 				return TRUE;
 			}
 		}
-	}
+	} else if (mouseFlags & interceptMask) {
+		auto &selPkt = chargen.GetCharEditorSelPacket();
+		auto rolledStatIdx = GetRolledStatIdx(msgMouse->x, msgMouse->y);
 		
+		// if there's a mouse event in the rolled stats area during point buy
+		if (rolledStatIdx != -1 && selPkt.isPointbuy) {
+			if (mouseFlags & MouseStateFlags::MSF_LMB_RELEASED) {
+				// might need to terminate drag, but not cause stat swapping
+				// tweak the x value to be outside the rolled stats area
+				msgMouse->x = 0;
+				return FALSE;
+			} else {
+				// otherwise just avoid initiating a drag by dropping the message
+				return TRUE;
+			}
+		}
+	}
 
 	return FALSE;
 }
