@@ -356,6 +356,12 @@ int WeaponSystem::GetBaseHardness(WeaponTypes weapon)
 	}
 }
 
+// Note: this does not completely match the original version.
+// It actually determines whether the weapon uses the ammo. The original
+// reports whether the weapon can be used to make a ranged attack while
+// the ammo is equipped. For the latter, thrown weapons always report
+// success. However, this is the wrong behavior for determining whether
+// the ammo's enhancement bonus should apply to attacks with the weapon.
 bool WeaponSystem::AmmoMatchesWeapon(objHndl weapon, objHndl ammoItem)
 {
 	if (objects.GetType(weapon) != obj_t_weapon)
