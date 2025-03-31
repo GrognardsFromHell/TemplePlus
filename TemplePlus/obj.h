@@ -87,7 +87,7 @@ struct Objects : temple::AddressTable {
 	int GetNameId(objHndl handle) {
 		return _GetInternalFieldInt32(handle, obj_f_name);
 	}
-	float GetRadius(objHndl handle);
+	float GetRadius(objHndl handle, bool base = false);
 	void SetRadius(objHndl handle, float radius) {
 		_SetInternalFieldFloat(handle, obj_f_radius, radius);
 	}
@@ -127,7 +127,12 @@ struct Objects : temple::AddressTable {
 
 	Dice GetHitDice(objHndl handle); // This only makes sense for NPCs
 	int GetHitDiceNum(objHndl handle, bool getBase = true); // getBase = true is vanilla behavior; otherwise this does a dispatch taking into account negative levels
-	int GetSize(objHndl handle);
+
+	int GetSize(objHndl handle, bool getBase = false);
+
+	// Gets the number of steps by which size-changing magic has modified the
+	// object. Positive is increase, negative is decrease.
+	int GetSizeOffset(objHndl handle);
 	
 	// Get NPC reaction towards another critter
 	int GetReaction(objHndl of, objHndl towards) {

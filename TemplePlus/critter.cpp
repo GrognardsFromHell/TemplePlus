@@ -14,6 +14,7 @@
 #include "tig/tig_startup.h"
 #include "util/fixes.h"
 #include "gamesystems/particlesystems.h"
+#include "animgoals/anim.h"
 #include <graphics/mdfmaterials.h>
 #include <infrastructure/meshes.h>
 #include <infrastructure/vfs.h>
@@ -32,6 +33,7 @@
 #include "rng.h"
 #include "weapon.h"
 #include "d20_race.h"
+#include "d20_level.h"
 #include "location.h"
 
 
@@ -56,8 +58,6 @@ static struct CritterAddresses : temple::AddressTable {
 
 	void (__cdecl *BalorDeath)(objHndl critter);
 	void (__cdecl *SetConcealed)(objHndl critter, int concealed);
-
-	uint32_t(__cdecl *Resurrect)(objHndl critter, ResurrectType type, int unk);
 
 	uint32_t(__cdecl *IsDeadOrUnconscious)(objHndl critter);
 
@@ -89,7 +89,6 @@ static struct CritterAddresses : temple::AddressTable {
 		rebase(SetSubdualDamage, 0x1001DB10);
 		rebase(BalorDeath, 0x100F66F0);
 		rebase(SetConcealed, 0x10080670);
-		rebase(Resurrect, 0x100809C0);
 		rebase(IsDeadOrUnconscious, 0x100803E0);
 		rebase(GiveItem, 0x1006CC30);
 
@@ -178,6 +177,10 @@ private:
 		replaceFunction<int(__cdecl)(objHndl,objHndl,objHndl,int)>(0x10020B60, [](objHndl wielder, objHndl prim, objHndl scnd, int animId) {
 			return (int)critterSys.GetWeaponAnim(wielder, prim, scnd, (gfx::WeaponAnim)animId);
 			});
+
+		replaceFunction<uint32_t(__cdecl)(objHndl,ResurrectType,int)>(0x100809C0, [](objHndl critter, ResurrectType type, int clvl) {
+			return critterSys.Resurrect(critter, type, clvl);
+		});
 	}
 
 private:
@@ -914,8 +917,132 @@ void LegacyCritterSystem::SetConcealedWithFollowers(objHndl obj, int newState){
 	}
 }
 
-uint32_t LegacyCritterSystem::Resurrect(objHndl critter, ResurrectType type, int unk) {
-	return addresses.Resurrect(critter, type, unk);
+bool LegacyCritterSystem::ShouldResurrect(objHndl critter, ResurrectType type) {
+	// I think this is the intended check in the original. Seems like null should
+	// still short circuit, though. TBD.
+	if (!IsDeadNullDestroyed(critter)) return false;
+
+	auto category = GetCategory(critter);
+	auto protoid = objSystem->GetProtoId(critter);
+	auto deathEffect = conds.GetByName("Killed By Death Effect");
+	auto hd = objects.GetHitDiceNum(critter, false);
+	auto con = objects.StatLevelGetBase(critter, stat_constitution);
+
+	// Note: cases here intentionally fall through to avoid duplicating tests.
+	switch (type)
+	{
+	case ResurrectType::CuthbertResurrect:
+		return true; // gods do what they want
+	case ResurrectType::RaiseDead:
+		// creatures killed by death effects can't be raised
+		if (d20Sys.d20QueryWithData(critter, DK_QUE_Critter_Has_Condition, deathEffect, 0) == 1)
+			return false;
+	case ResurrectType::Resurrect:
+		// resurrect/raise costs 1 hit dice or 2 constitution; can't do it
+		// if you can't pay.
+		if (hd < 1 || hd == 1 && con < 3) return false;
+
+		switch (category)
+		{
+		case mc_type_outsider:
+			// Native outsiders can be raised/resurrected. Others can't.
+			if (IsCategorySubtype(critter, mc_subtype_native)) break;
+
+		case mc_type_elemental:
+			return false;
+		default:
+			break;
+		}
+	case ResurrectType::ResurrectTrue:
+		// Even true resurrection doesn't work on constructs or undead.
+		// In principle you can true resurrect an undead creature to the
+		// _original_ creature, but we'd need to know what that is.
+		switch (category)
+		{
+		case mc_type_construct:
+		case mc_type_undead:
+			return false;
+		}
+
+		// all checks passed
+		return true;
+
+	default:
+		return false;
+	}
+}
+
+uint32_t LegacyCritterSystem::Resurrect(objHndl critter, ResurrectType type, int casterLvl) {
+	uint32_t result = 0;
+	if (ShouldResurrect(critter, type)) {
+		result = 1;
+		ResurrectApplyPenalties(critter, type);
+	}
+	d20Sys.d20SendSignal(critter, DK_SIG_Resurrection, 0, 0);
+	return result;
+}
+
+void LegacyCritterSystem::ResurrectApplyPenalties(objHndl critter, ResurrectType type) {
+	auto hd = objects.GetHitDiceNum(critter, false);
+	bool damaged = false;
+	int con = 0;
+	CondStruct *negLevel;
+	vector<int> negArgs({0, 0, 0});
+
+	// Note: intentional fallthrough for common logic.
+	switch (type)
+	{
+	case ResurrectType::RaiseDead:
+		// Raise Dead causes a 50% chance of losing each prepared spell.
+		//
+		// Note: this will also affect Reincarnate, because it just applies
+		// the same condition. The books don't indicate that it behaves this
+		// way, so possibly revisit this later (with a new enum value perhaps).
+		if (config.stricterRulesEnforcement) {
+			spellSys.ForgetMemorized(critter, true, 50);
+			spellSys.DeductSpontaneous(critter, static_cast<Stat>(-1), 50);
+		}
+
+		// Raise dead leaves the target with 1 hp/hit die
+		damaged = true;
+	case ResurrectType::Resurrect:
+		// Raise and Resurrect reduce level/hit dice by 1 or reduce constitution.
+		if (hd > 1) {
+			// The level loss wasn't in the original game, so test for strict rules.
+			if (config.stricterRulesEnforcement) {
+				negLevel = conds.GetByName("Perm Negative Level");
+				conds.AddTo(critter, negLevel, negArgs);
+			} else {
+				// The original game just took away XP.
+				auto effLv = GetEffectiveDrainedLevel(critter);
+				auto newXp = d20LevelSys.GetPenaltyXPForDrainedLevel(effLv-1);
+				objects.setInt32(critter, obj_f_critter_experience, newXp);
+			}
+		} else {
+			// The resurrection check should have already ensured this doesn't go
+			// negative.
+			con = objects.StatLevelGetBase(critter, stat_constitution);
+			objects.StatLevelSetBase(critter, stat_constitution, con-2);
+		}
+	case ResurrectType::CuthbertResurrect:
+	case ResurrectType::ResurrectTrue:
+		// No negative consequences
+		break;
+	}
+
+	// reset damage
+	if (damaged) {
+		auto maxHp = objects.StatLevelGet(critter, Stat::stat_hp_max);
+		// hit dice might have been reduced
+		hd = objects.GetHitDiceNum(critter, false);
+		SetHpDamage(critter, maxHp - hd);
+	} else {
+		SetHpDamage(critter, 0);
+	}
+	gameSystems->GetAnim().PushAnimate(critter, 67);
+
+	// Let the game know the critter has been resurrected, for e.g. plot purposes
+	pythonObjIntegration.ExecuteObjectScript(critter, critter, ObjScriptEvent::Resurrect);
 }
 
 uint32_t LegacyCritterSystem::Dominate(objHndl critter, objHndl caster) {
@@ -1019,6 +1146,10 @@ Race LegacyCritterSystem::GetRace(objHndl critter, bool getBaseRace) {
 		race += objects.StatLevelGet(critter, stat_subrace) << 5;
 	}
 	return (Race)race;
+}
+
+Subrace LegacyCritterSystem::GetSubrace(objHndl critter) {
+	return (Subrace)objects.StatLevelGet(critter, stat_subrace);
 }
 
 Gender LegacyCritterSystem::GetGender(objHndl critter) {
@@ -1625,24 +1756,71 @@ uint32_t LegacyCritterSystem::IsSubtypeWater(objHndl objHnd)
 	return IsCategorySubtype(objHnd, mc_subtype_water);
 }
 
-/* 0x100B52D0 */
-float LegacyCritterSystem::GetReach(objHndl obj, D20ActionType actType, /*added in Temple+:*/ float* minReach ) {
+// Standard reach for 'tall' creatures.
+//
+// Note: this is reach beyond the actual 'occupied' space, which is
+// probably underestimated by ToEE.
+int StdReachForSize(int size)
+{
+	if (size < 4) return 0;
+	if (size < 9) return 5 * std::max(1, size - 4);
+	return 20 + 10*(size - 8);
+}
 
-	float naturalReach = (float)objects.getInt32(obj, obj_f_critter_reach);
-	
+float ReachForSize(int adjustedSize)
+{
+	// so that tiny creatures still threaten the 'square' they occupy.
+	if (adjustedSize <= 3) return 2.5;
+	else if (adjustedSize <= 5) return 5.0;
+	else if (adjustedSize == 6) return 10.0;
+	else if (adjustedSize == 7) return 15.0;
+	// in case you somehow have a collossal creature with bonus reach
+	else return 20.0 + 10.0*(adjustedSize-8);
+}
+
+// Tries to infer an adjustment to the creature's size that makes the
+// standard reach match their actual reach.
+int DetermineReachOffset(int baseReach, int baseSize)
+{
+	auto exReach = StdReachForSize(baseSize);
+	auto guess = (baseReach - exReach) / 5;
+	auto diff = baseReach - StdReachForSize(baseSize + guess);
+
+	if (diff >= 5) return guess+1;
+	else if (diff <= -5) return guess-1;
+	else return guess;
+}
+
+float LegacyCritterSystem::GetNaturalReach(objHndl obj)
+{
+	objHndl critter = obj;
+
 	// Temple+: fixed wildshape reach
 	auto protoId = d20Sys.d20Query(obj, DK_QUE_Polymorphed);
 	if (protoId) {
-		auto protoHandle = gameSystems->GetObj().GetProtoHandle(protoId);
-		if (protoHandle) {
-			naturalReach = (float)gameSystems->GetObj().GetObject(protoHandle)->GetInt32(obj_f_critter_reach);
-		}
+		auto polyHandle = gameSystems->GetObj().GetProtoHandle(protoId);
+		if (polyHandle) critter = polyHandle;
 	}
 
-	if (naturalReach < 0.01) {
-		naturalReach = 5.0;
-	}
+	int ireach = objects.getInt32(critter, obj_f_critter_reach);
+	int curSize = objects.GetSize(obj, false);
 
+	if (0 == ireach) return ReachForSize(curSize);
+
+	int baseSize = objects.GetSize(obj, true);
+	float reach = static_cast<float>(ireach);
+
+	if (baseSize == curSize) return reach;
+
+	int extraOff = DetermineReachOffset(ireach, baseSize);
+
+	return ReachForSize(curSize + extraOff);
+}
+
+/* 0x100B52D0 */
+float LegacyCritterSystem::GetReach(objHndl obj, D20ActionType actType, /*added in Temple+:*/ float* minReach ) {
+
+	float naturalReach = GetNaturalReach(obj);
 
 	float weaponReach = 0.0f;
 	float weaponMinReach = 0.0f;
@@ -1662,11 +1840,15 @@ float LegacyCritterSystem::GetReach(objHndl obj, D20ActionType actType, /*added 
 			
 		}
 	}
-	auto maxReach = weaponReach + naturalReach - 2.0f;
+
+	float radius = locSys.InchesToFeet(objects.GetRadius(obj));
+	float offset = std::min(2.0f, radius);
+
+	auto maxReach = weaponReach + naturalReach - offset;
 	
 	// Temple+: added polearm minimum reach
 	if (minReach) {
-		*minReach = max(0.0f, weaponMinReach - 2.0f);
+		*minReach = max(0.0f, weaponMinReach - offset);
 	}
 	return maxReach;
 }
@@ -1799,6 +1981,25 @@ int LegacyCritterSystem::GetEffectiveLevel(objHndl & objHnd)
 	return lvl;
 }
 
+int LegacyCritterSystem::GetEffectiveDrainedLevel(objHndl & critter, LevelDrainType incl)
+{
+	if (!critter) return 0;
+
+	LevelDrainType omit = ~incl;
+	auto lvl = dispatch.Dispatch61GetLevel(critter, stat_level, nullptr, objHndl::null, omit);
+	auto lvlAdj = d20RaceSys.GetLevelAdjustment(critter);
+	auto racialHdCount = 0;
+	auto ocritter = objSystem->GetObject(critter);
+
+	if (ocritter->IsPC()) {
+		Dice racialHd = d20RaceSys.GetHitDice(critterSys.GetRace(critter, false));
+		racialHdCount = racialHd.GetCount();
+	} else {
+		racialHdCount = ocritter->GetInt32(obj_f_npc_hitdice_idx, 0);
+	}
+	return lvl + lvlAdj + racialHdCount;
+}
+
 int LegacyCritterSystem::GetCritterAttackType(objHndl obj, int attackIdx)
 {
 	int damageIdx = GetDamageIdx(obj, attackIdx);
@@ -1862,6 +2063,12 @@ int LegacyCritterSystem::GetBaseAttackBonus(const objHndl& handle, Stat classBei
 	auto racialBab = GetRacialAttackBonus(handle);
 
 	return bab + racialBab;
+}
+
+int LegacyCritterSystem::GetAttackBonus(const objHndl& handle, D20CAF flags) {
+	DispIoAttackBonus dispIo;
+	dispIo.attackPacket.flags = flags;
+	return dispatch.DispatchAttackBonus(handle, objHndl::null, &dispIo, dispTypeToHitBonus2, 0);
 }
 
 int LegacyCritterSystem::GetSpellLvlCanCast(const objHndl& handle, SpellSourceType spellSourceType, SpellReadyingType spellReadyingType){

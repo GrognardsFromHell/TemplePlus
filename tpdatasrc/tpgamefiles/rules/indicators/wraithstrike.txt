@@ -1,0 +1,5 @@
+ID_string: WRAITHSTRIKE
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Spell True Strike.tga
+help_topic: TAG_SPELLS_WRAITHSTRIKE
+tooltip_base_text: Wraithstrike

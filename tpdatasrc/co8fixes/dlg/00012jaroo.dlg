@@ -624,7 +624,7 @@
 {1049}{Bye.}{}{-7}{}{0}{}
 
 
-{1562}{I will do this free of cost.}{I will do this free of cost.}{}{}{}{ game.global_vars[753] = picker_obj.stat_level_get(stat_experience); kill_picked(picker_obj, npc) }
+{1562}{I will do this free of cost.}{I will do this free of cost.}{}{}{}{ kill_picked(picker_obj, npc) }
 {1563}{Okay, great.}{}{8}{}{1575}{}
 {1564}{Dat gud.}{}{-7}{}{1575}{}
 

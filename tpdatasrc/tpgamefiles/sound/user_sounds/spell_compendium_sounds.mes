@@ -310,7 +310,7 @@
 // [1076] *[Bonefiddle]
 {27520}{} // spell begin
 {27521}{} // spell end
-{27522}{} // spell effect
+{27522}{spells\sp_darkness.WAV} // spell effect
 {27523}{} // spell new round
 {27524}{} // spell projectile begin
 {27525}{} // spell projectile end

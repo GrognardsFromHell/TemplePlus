@@ -73,6 +73,9 @@ CondStructNew ConditionSystem::mCondHezrouStenchHit;
 
 int ConditionPreventWithArg(DispatcherCallbackArgs args);
 int ConditionOverrideBy(DispatcherCallbackArgs args);
+int QueryHasCondition(DispatcherCallbackArgs args);
+int SpellOverrideBy(DispatcherCallbackArgs args);
+int SpellDispelledBy(DispatcherCallbackArgs args);
 
 
 struct ConditionSystemAddresses : temple::AddressTable
@@ -106,6 +109,11 @@ public:
 
 
 	static int __cdecl EnlargePersonWeaponDice(DispatcherCallbackArgs args);
+	static int __cdecl EnlargeSizeCategory(DispatcherCallbackArgs args);
+	static int __cdecl EnlargeExponent(DispatcherCallbackArgs args);
+	static int __cdecl ReduceSizeCategory(DispatcherCallbackArgs args);
+	static int __cdecl ReduceExponent(DispatcherCallbackArgs args);
+	static int __cdecl ReduceWeaponDice(DispatcherCallbackArgs args);
 
 	static int __cdecl HezrouStenchObjEvent(DispatcherCallbackArgs args);
 	static int __cdecl HezrouStenchCountdown(DispatcherCallbackArgs args);
@@ -196,6 +204,7 @@ public:
 
 	static int __cdecl PreferOneHandedWieldRadialMenu(DispatcherCallbackArgs args);
 	static int __cdecl PreferOneHandedWieldQuery(DispatcherCallbackArgs args);
+	static int __cdecl UpdateModelEquipment(DispatcherCallbackArgs args);
 
 } genericCallbacks;
 
@@ -442,6 +451,9 @@ public:
 		replaceFunction(0x100ECF30, ConditionPrevent);
 		replaceFunction(0x100ECF60, ConditionPreventWithArg);
 		replaceFunction(0x100ECFA0, ConditionOverrideBy);
+		replaceFunction(0x100C43D0, QueryHasCondition);
+		replaceFunction(0x100DC0A0, SpellOverrideBy);
+		replaceFunction(0x100DBA20, SpellDispelledBy);
 
 		replaceFunction(0x100EE050, GlobalGetArmorClass);
 		replaceFunction(0x100EE1B0, raceCallbacks.GlobalMonsterToHit);
@@ -497,6 +509,16 @@ public:
 			
 		// Enlarge Person weapon damage dice modification
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100CA2B0, spCallbacks.EnlargePersonWeaponDice);
+		// Reduce Person/Animal weapon dice; use new scheme
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100C9810, spCallbacks.ReduceWeaponDice);
+
+		// Enlarge/Reduce size category replacements to avoid stacking
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100C6140, spCallbacks.EnlargeSizeCategory);
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100C97F0, spCallbacks.ReduceSizeCategory);
+
+		// Enlarge/Reduce/Animal Growth/Righteous Might model scaling
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100CF2C0, genericCallbacks.UpdateModelEquipment);
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100CD430, genericCallbacks.UpdateModelEquipment);
 
 		// power attack damage bonus and To Hit penalty
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100F8540, genericCallbacks.PowerAttackDamageBonus);
@@ -868,23 +890,76 @@ int ConditionPreventWithArg(DispatcherCallbackArgs args)
 	return 0;
 }
 
-int ConditionOverrideBy(DispatcherCallbackArgs args){
+bool ConditionMatchesData1(DispatcherCallbackArgs args) {
 	DispIoCondStruct *dispIo = dispatch.DispIoCheckIoType1((DispIoCondStruct *)args.dispIO);
-	if (!dispIo)
-		return 0;
-	
-	auto refCond = (CondStruct *)args.subDispNode->subDispDef->data1;
-	if (dispIo->condStruct == refCond ) {
+	if (!dispIo) return false;
+
+	auto refCond = (CondStruct *)(args.subDispNode->subDispDef->data1);
+	if (dispIo->condStruct == refCond) return true;
+
+	if (!refCond) return false;
+
+	refCond = conds.GetByName(refCond->condName); // re-retrieve it via the NAME
+	return dispIo->condStruct == refCond;
+}
+
+int ConditionOverrideBy(DispatcherCallbackArgs args)
+{
+	if (ConditionMatchesData1(args)) {
 		args.RemoveCondition();
-		return 0;
 	}
 
-	if (!refCond)
-		return 0;
-	refCond = conds.GetByName(refCond->condName); // re-retrieve it via the NAME
-	if (dispIo->condStruct == refCond) {
-		args.RemoveCondition();
-		return 0;
+	return 0;
+}
+
+int QueryHasCondition(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
+	auto report = (CondStruct*)args.subDispNode->subDispDef->data1;
+
+	// data2 seems to be an 'already found' check that was written improperly in
+	// the original. The original was checking data2, but assigning 0 when found.
+	if (!report || dispIo->data2) return 0;
+
+	auto target = (CondStruct*)dispIo->data1;
+
+	bool match = target == report;
+	if (!match) {
+		report = conds.GetByName(report->condName);
+		match = target == report;
+	}
+
+	if (match) {
+		dispIo->return_val = 1;
+		dispIo->data1 = args.GetCondArg(0);
+		dispIo->data2 = 1;
+	}
+
+	return 0;
+}
+
+int SpellOverrideBy(DispatcherCallbackArgs args)
+{
+	if (ConditionMatchesData1(args)) {
+		auto argsCopy = args;
+		argsCopy.RemoveSpell();
+	}
+	ConditionOverrideBy(args);
+
+	return 0;
+}
+
+int SpellDispelledBy(DispatcherCallbackArgs args)
+{
+	if (ConditionMatchesData1(args)) {
+		auto dispIo = dispatch.DispIoCheckIoType1(args.dispIO);
+		dispIo->outputFlag = 0;
+
+		// uncertain why the copying, but the original seems to do it.
+		auto argsCopy1 = args;
+		argsCopy1.RemoveSpell();
+		auto argsCopy2 = args;
+		argsCopy2.RemoveSpellMod();
 	}
 
 	return 0;
@@ -1666,6 +1741,9 @@ int GenericCallbacks::FastHealingOnBeginRound(DispatcherCallbackArgs args)
 int GenericCallbacks::PreferOneHandedWieldRadialMenu(DispatcherCallbackArgs args)
 {
 	auto shield = inventory.ItemWornAt(args.objHndCaller, EquipSlot::Shield);
+
+	//There is no reason to perfer attacking one handed unless the character is using a buckler.
+	//If they don't have a buckler, don't display the menu.
 	if (!inventory.IsBuckler(shield))
 		return 0;
 
@@ -1680,6 +1758,12 @@ int GenericCallbacks::PreferOneHandedWieldQuery(DispatcherCallbackArgs args)
 	auto isCurrentlyOn = args.GetCondArg(0);
 
 	dispIo->return_val = isCurrentlyOn;
+	return 0;
+}
+
+int GenericCallbacks::UpdateModelEquipment(DispatcherCallbackArgs args)
+{
+	critterSys.UpdateModelEquipment(args.objHndCaller);
 	return 0;
 }
 
@@ -2691,6 +2775,7 @@ void _FeatConditionsRegister()
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionAutoendTurn);
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionTurnUndead);
 	conds.hashmethods.CondStructAddToHashtable(conds.ConditionGreaterTurning);
+	conds.hashmethods.CondStructAddToHashtable(conds.ConditionMonsterOoze);
 	
 	// Add the destruction domain to the condition table so it can be accessed in python
 	CondStruct * pDestructionDomain = *(conds.ConditionArrayDomains + 3 * Domain_Destruction);
@@ -3343,6 +3428,27 @@ void ConditionSystem::RegisterNewConditions()
 		condSleeping.ExtendExisting("Sleeping");
 		condSleeping.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HelplessCapStatBonus);
 	}
+
+#pragma region Spells
+	{
+		// Enlarge/reduce effect dynamic model scale
+		static CondStructNew animalGrowth;
+		animalGrowth.ExtendExisting("sp-Animal Growth");
+		animalGrowth.AddHook(dispTypeGetModelScale, DK_NONE, spCallbacks.EnlargeExponent);
+		static CondStructNew enlargePerson;
+		enlargePerson.ExtendExisting("sp-Enlarge");
+		enlargePerson.AddHook(dispTypeGetModelScale, DK_NONE, spCallbacks.EnlargeExponent);
+		static CondStructNew reducePerson;
+		reducePerson.ExtendExisting("sp-Reduce");
+		reducePerson.AddHook(dispTypeGetModelScale, DK_NONE, spCallbacks.ReduceExponent);
+		static CondStructNew reduceAnimal;
+		reduceAnimal.ExtendExisting("sp-Reduce Animal");
+		reduceAnimal.AddHook(dispTypeGetModelScale, DK_NONE, spCallbacks.ReduceExponent);
+		static CondStructNew righteousMight;
+		righteousMight.ExtendExisting("sp-Righteous Might");
+		righteousMight.AddHook(dispTypeGetModelScale, DK_NONE, spCallbacks.EnlargeExponent);
+	}
+#pragma endregion
 
 	/*
 	char mCondIndomitableWillName[100];
@@ -4748,15 +4854,8 @@ int SpellCallbacks::EnlargePersonWeaponDice(DispatcherCallbackArgs args)
 	args.dispIO->AssertType(dispIOType20);
 	auto dispIo = static_cast<DispIoAttackDice*>(args.dispIO);
 
-
 	if (!dispIo->weapon)
 		return 0;
-
-	auto dice = Dice::FromPacked(dispIo->dicePacked);
-	auto diceCount = dice.GetCount();
-	auto diceSide = dice.GetSides();
-	auto diceMod = dice.GetModifier();
-
 
 	// get wield type
 	auto weaponUsed = dispIo->weapon;
@@ -4827,55 +4926,68 @@ int SpellCallbacks::EnlargePersonWeaponDice(DispatcherCallbackArgs args)
 	{
 		return 0;
 	}
-		
 
-	switch (dice.GetSides())
-	{
-	case 2:
-		diceSide = 3;
-		break;
-	case 3:
-		diceSide = 4;
-		break;
-	case 4:
-		diceSide = 6;
-		break;
-	case 6:
-		if (diceCount == 1)
-			diceSide = 8;
-		else if (diceCount <= 3)
-			diceCount++;
-		else
-			diceCount += 2;
-		break;
-	case 8:
-		if (diceCount == 1){
-			diceCount = 2;
-			diceSide = 6;
-		}
-		else if (diceCount <= 3)
-		{
-			diceCount++;
-		} 
-		else if (diceCount<=6 )	{
-			diceCount += 2;
-		}
-		else
-			diceCount += 4;
-		break;
-	case 10:
-		diceCount *= 2;
-		diceSide = 8;
-		break;
-	case 12:
-		diceCount = 3;
-		diceSide = 6;
-		break;
-	default:
-		break;
+	dispIo->bonlist->AddBonus(1, 20, 0);
+
+	return 0;
+}
+
+int SpellCallbacks::ReduceWeaponDice(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType20(args.dispIO);
+	if (!dispIo) return 0;
+
+	auto condId = args.subDispNode->subDispDef->data2;
+
+	if (!dispIo->weapon || condId == 245) {
+		// unarmed or natural attack
+		dispIo->bonlist->AddBonus(-1, 20, 0);
+	}
+	return 0;
+}
+
+int SpellCallbacks::EnlargeSizeCategory(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
+	int alreadyIncreased = dispIo->data1;
+
+	if (dispIo->return_val < 10 && !alreadyIncreased) {
+		dispIo->return_val++;
+		dispIo->data1 = 1;
 	}
 
-	dispIo->dicePacked = Dice(diceCount, diceSide, diceMod).ToPacked();
+	return 0;
+}
+
+int SpellCallbacks::EnlargeExponent(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType13(args.dispIO);
+	if (!dispIo) return 0;
+
+	dispIo->bonlist->AddBonus(1, 20, 0);
+
+	return 0;
+}
+
+int SpellCallbacks::ReduceExponent(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType13(args.dispIO);
+	if (!dispIo) return 0;
+
+	dispIo->bonlist->AddBonus(-1, 20, 0);
+
+	return 0;
+}
+
+int SpellCallbacks::ReduceSizeCategory(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
+	int alreadyDecreased = dispIo->data2;
+
+	if (dispIo->return_val > 1 && !alreadyDecreased) {
+		dispIo->return_val--;
+		dispIo->data2 = 1;
+	}
 
 	return 0;
 }

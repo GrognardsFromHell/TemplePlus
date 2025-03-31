@@ -1200,7 +1200,7 @@ int Pathfinding::FindPathShortDistanceAdjRadius(PathQuery* pq, Path* pqr)
 	int newIdx, shiftedXidx, shiftedYidx, deltaIdxX, distanceMetric, refererIdx, heuristic, idxPrevChain, idxNextChain;
 	int minHeuristic = 0x7FFFffff;
 
-	float requisiteClearance = objects.GetRadius(pq->critter);
+	float requisiteClearance = objects.GetRadius(pq->critter, true);
 	float diagonalClearance = requisiteClearance * 0.7f; // diagonals need to be more restrictive to avoid jaggy paths
 	float requisiteClearanceCritters = requisiteClearance * 0.7f;
 	if (requisiteClearance > 12)
@@ -2191,7 +2191,7 @@ int Pathfinding::FindPathShortDistanceSansTarget(PathQuery* pq, Path* pqr)
 
 	float requisiteClearance = 1.0f;
 	if (pq->critter)
-		requisiteClearance = objects.GetRadius(pq->critter);
+		requisiteClearance = objects.GetRadius(pq->critter, true);
 	float diagonalClearance = requisiteClearance * 0.7f;
 	float requisiteClearanceCritters = requisiteClearance * 0.7f;
 	if (requisiteClearance > 12)

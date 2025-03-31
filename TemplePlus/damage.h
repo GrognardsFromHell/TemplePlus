@@ -143,6 +143,9 @@ public:
 	int AddDamageDice(DamagePacket *dmgPkt, int dicePacked, DamageType damType, unsigned int damageMesLine);
 	int AddDamageDiceWithDescr(DamagePacket *dmgPkt, int dicePacked, DamageType damType, unsigned int damageMesLine, char* descr);
 	BOOL DamageTypeMatch(DamageType reduction, DamageType attackType);
+
+	Dice ModifyDamageDiceForSize(Dice &base, int steps);
+
 	Damage();
 private:
 	void Init();

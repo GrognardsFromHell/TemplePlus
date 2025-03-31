@@ -1,0 +1,5 @@
+ID_string: CRITICAL_STRIKE
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Spell True Strike.tga
+help_topic: TAG_SPELLS_CRITICAL_STRIKE
+tooltip_base_text: Critical Strike

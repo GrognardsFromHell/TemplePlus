@@ -346,7 +346,7 @@ Objects::Objects()
 
 	rebase(_SetFlag,	0x10020F50);
 	rebase(_ClearFlag,	0x10021020);
-	rebase(_GetRadius,	0x10021C40);
+	// rebase(_GetRadius,	0x10021C40);
 
 	rebase(_Destroy,	0x100257A0);
 	rebase(_Move,		0x10025950);
@@ -406,27 +406,68 @@ uint32_t Objects::abilityScoreLevelGet(objHndl objHnd, Stat stat, DispIO* dispIO
 	return result;
 }
 
-float Objects::GetRadius(objHndl handle)
+float AdjustRadiusSize(float baseRadius, int baseSize, int curSize)
+{
+	if (baseSize == curSize) return baseRadius;
+
+	float radius = baseRadius;
+
+	// TODO: audit this w/r/t common radii for actual creature sizes.
+	//
+	// Note that the ToEE settings are on the small side. Standard medium is 25,
+	// and that is multiplied by 0.75 to get the radius in inches (I believe). So
+	// most mediums occupy just over a 3ft. diameter circle of actual space.
+	if (curSize >= baseSize) {
+		for(int i = baseSize; i < curSize; i++) {
+			if (i == 4) radius += 5.0; // small -> medium
+			else if (i == 3) radius = 20.0; // tiny -> small
+			else if (5 <= i && i <= 7) radius += 25.0; // add typical medium radius
+			else if (i > 7) radius += 50.0; // double medium radius for >=colossal
+			// else leave radius alone for tiny and below
+		}
+	} else {
+		for (int i = baseSize; i > curSize; i--) {
+			if (i == 4) radius = 12.0; // small -> tiny
+			else if (i == 5) radius -= 5.0; // medium -> small
+			else if (i <= 8) radius -= 25.0; // < colossal
+			else if (i > 8) radius -= 50.0; // >= colossal
+			// else leave radius alone
+		}
+		// sanity check due to seemingly very low radii in protos
+		if (curSize > 3 && radius < 18.0) radius = baseRadius;
+	}
+
+	return radius;
+}
+
+float Objects::GetRadius(objHndl handle, bool base)
 {
 	auto obj = gameSystems->GetObj().GetObject(handle);
 	auto radiusSet = obj->GetFlags() & OF_RADIUS_SET;
 	objHndl protoHandle;
 	float protoRadius;
+
+	int baseSize = GetSize(handle, true);
+	int curSize = GetSize(handle, false);
+
 	if (radiusSet){
 		auto radius = obj->GetFloat(obj_f_radius);
 
 		if ( radius < 2000.0 && radius > 0){
-			 protoHandle = obj->GetObjHndl(obj_f_prototype_handle);
+			protoHandle = obj->GetObjHndl(obj_f_prototype_handle);
 			if (protoHandle){
 				auto protoObj = gameSystems->GetObj().GetObject(protoHandle);
-				protoRadius = protoObj->GetFloat( obj_f_radius);
+				protoRadius = protoObj->GetFloat(obj_f_radius);
 				if (protoRadius > 0.0)
 				{
 					radius = protoRadius;
 					obj->SetFloat(obj_f_radius, protoRadius);
 				}
 			}
-			
+
+			if (!base) {
+				radius = AdjustRadiusSize(radius, baseSize, curSize);
+			}
 		}
 		if (radius < 2000.0 && radius > 0)
 		{
@@ -498,13 +539,14 @@ int Objects::GetScalePercent(objHndl handle){
 		DispIoMoveSpeed dispIo;
 		BonusList bonlist;
 		dispIo.bonlist = &bonlist;
+		dispIo.factor = 1.8;
 		bonlist.AddBonus(modelScale, 1, 102); // initial value
 
 		auto dispatcher = gameSystems->GetObj().GetObject(handle)->GetDispatcher();
 		if (dispatcher->IsValid()){
 			dispatcher->Process(dispTypeGetModelScale, DK_NONE, &dispIo);
 		}
-		modelScale = bonlist.GetEffectiveBonusSum();
+		modelScale = bonlist.GetBaseScaled(dispIo.factor);
 	}
 
 	return modelScale;
@@ -576,8 +618,14 @@ int Objects::GetHitDiceNum(objHndl handle, bool getBase) {
 	return result;
 }
 
-int Objects::GetSize(objHndl handle) {
-	return dispatch.DispatchGetSizeCategory(handle);
+int Objects::GetSize(objHndl handle, bool getBase) {
+	return dispatch.DispatchGetSizeCategory(handle, getBase);
+}
+
+int Objects::GetSizeOffset(objHndl handle) {
+	auto base = GetSize(handle, true);
+	auto curr = GetSize(handle, false);
+	return curr - base;
 }
 
 objHndl Objects::Create(objHndl proto, locXY tile) {
@@ -1106,6 +1154,10 @@ public:
 			if (anim) {
 				objects.UpdateRenderHeight(objId, *anim);
 			}
+		});
+
+		replaceFunction<float(objHndl)>(0x10021C40, [](objHndl obj) {
+				return objects.GetRadius(obj);
 		});
 
 		// obj_update_radius
