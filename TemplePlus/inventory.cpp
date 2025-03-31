@@ -699,6 +699,13 @@ ArmorType InventorySystem::GetArmorType(int armorFlags)
 	return (ArmorType) (armorFlags & (ARMOR_TYPE_LIGHT | ARMOR_TYPE_MEDIUM | ARMOR_TYPE_HEAVY) );
 }
 
+ArmorType InventorySystem::GetArmorType(objHndl armor)
+{
+	if (!armor) return ARMOR_TYPE_NONE;
+
+	return GetArmorType(objects.getInt32(armor, obj_f_armor_flags));
+}
+
 BOOL InventorySystem::GetQuantityField(const objHndl item, obj_f* qtyField){
 	return temple::GetRef<BOOL(objHndl, obj_f*)>(0x100641B0)(item, qtyField);
 }

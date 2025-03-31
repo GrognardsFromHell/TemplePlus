@@ -2284,7 +2284,7 @@ void UiCharHooks::apply(){
 
 			auto packedAcBonus = dispatch.DispatchItemQuery(item, DK_QUE_Armor_Get_AC_Bonus);
 			auto acBonus  = ((packedAcBonus & 0xff00) >> 8) + (packedAcBonus & 0xff);
-			auto dexBonus = dispatch.DispatchItemQuery(item, DK_QUE_Armor_Get_Max_DEX_Bonus);
+			auto dexBonus = GetMaxDexBonus(item);
 			auto maxSpeed = dispatch.DispatchItemQuery(item, DK_QUE_Armor_Get_Max_Speed);
 			auto dexBonusString = dexBonus == 100 ? fmt::format(" - ") : fmt::format("{:+d}", dexBonus);
 			auto maxSpeedString = maxSpeed == 100 ? fmt::format(" - ") : fmt::format("{}", maxSpeed);

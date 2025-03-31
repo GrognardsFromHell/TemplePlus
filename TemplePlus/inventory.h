@@ -120,6 +120,7 @@ struct InventorySystem : temple::AddressTable
 	bool UsesWandAnim(const objHndl item);
 	static bool IsTripWeapon(objHndl weapon);
 	ArmorType GetArmorType(int armorFlags);
+	ArmorType GetArmorType(objHndl armor);
 	
 	// handling for items with quantities
 	BOOL GetQuantityField(const objHndl item, obj_f * qtyField); // gets the relevant quantity field for the item ; returns 0 if irrelevant

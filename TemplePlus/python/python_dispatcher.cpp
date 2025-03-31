@@ -1452,6 +1452,7 @@ int PyModHookWrapper(DispatcherCallbackArgs args){
 	case dispTypeAbilityCheckModifier:
 	case dispTypeGetAttackerConcealmentMissChance:
 	case dispTypeGetLevel:
+	case dispTypeArmorCheckPenalty:
 	case dispTypeMaxDexAcBonus:
 		pbEvtObj = py::cast(static_cast<DispIoObjBonus*>(args.dispIO));
 		break;
