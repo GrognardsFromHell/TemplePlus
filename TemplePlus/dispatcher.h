@@ -78,6 +78,7 @@ struct DispatcherSystem : temple::AddressTable
 #pragma region event object checkers
 
 	DispIoCondStruct* DispIoCheckIoType1(DispIoCondStruct* dispIo); // used for ConditionAdd (3); 1,2 and 4 dispatch will null eventObjs
+	DispIoCondStruct* DispIoCheckIoType1(DispIO* dispIo);
 	DispIoBonusList* DispIoCheckIoType2(DispIoBonusList* dispIoBonusList); // used for stat level (10), stat base (66) and Cur/Max HP
 	DispIoBonusList* DispIoCheckIoType2(DispIO* dispIoBonusList); // used for stat level (10), stat base (66) and Cur/Max HP
 	DispIoSavingThrow* DispIoCheckIoType3(DispIoSavingThrow* dispIoBonusList);  
@@ -99,8 +100,8 @@ struct DispatcherSystem : temple::AddressTable
 	DispIoDispelCheck* DispIOCheckIoType11(DispIoDispelCheck* dispIo);
 	static DispIoD20ActionTurnBased* DispIoCheckIoType12(DispIoD20ActionTurnBased* dispIo);
 	DispIoD20ActionTurnBased* DispIoCheckIoType12(DispIO* dispIo);
-	DispIoMoveSpeed * DispIOCheckIoType13(DispIoMoveSpeed* dispIo);
-	DispIoMoveSpeed * DispIOCheckIoType13(DispIO* dispIo);
+	DispIoMoveSpeed * DispIoCheckIoType13(DispIoMoveSpeed* dispIo);
+	DispIoMoveSpeed * DispIoCheckIoType13(DispIO* dispIo);
 	static DispIoObjEvent* DispIoCheckIoType17(DispIO* dispIo);
 	DispIoAttackDice* DispIoCheckIoType20(DispIO* dispIo);
 	DispIoImmunity* DispIoCheckIoType23(DispIoImmunity* dispIo);
@@ -112,7 +113,7 @@ struct DispatcherSystem : temple::AddressTable
 	int DispatchDispelCheck(objHndl handle, int spellId, int flags, int returnValue);
 	int DispatchAttackBonus(objHndl objHnd, objHndl victim, DispIoAttackBonus* dispIo, enum_disp_type dispType, int key);
 	int DispatchToHitBonusBase(objHndl objHndCaller, DispIoAttackBonus* dispIo);
-	int DispatchGetSizeCategory(objHndl objHndCaller);
+	int DispatchGetSizeCategory(objHndl objHndCaller, bool base = false);
 	void DispatchConditionRemove(Dispatcher* dispatcher, CondNode* cond);
 	unsigned int Dispatch35CasterLevelModify(objHndl obj, SpellPacketBody* spellPkt);
 	void DispatchSpellResistanceCasterLevelCheck(objHndl caster, objHndl target, BonusList *bonlist, SpellPacketBody*spellPkt);
@@ -140,7 +141,7 @@ struct DispatcherSystem : temple::AddressTable
 	void DispatchSpellDamage(objHndl obj, DamagePacket* damage, objHndl target, SpellPacketBody *spellPkt);
 	int DispatchD20ActionCheck(D20Actn* d20Actn, TurnBasedStatus* turnBasedStatus, enum_disp_type dispType);
 	int Dispatch60GetAttackDice(objHndl obj, DispIoAttackDice * dispIo);
-	int Dispatch61GetLevel(objHndl obj, Stat stat, BonusList* bonlist = nullptr, objHndl someObj = objHndl::null); // get level after accounting for level drain effects
+	int Dispatch61GetLevel(objHndl obj, Stat stat, BonusList* bonlist = nullptr, objHndl someObj = objHndl::null, LevelDrainType omit = LevelDrainType::NoDrainedLevel); // get level after accounting for level drain effects
 
 	int DispatchGetBonus(objHndl critter, DispIoBonusList* bonusListOut, enum_disp_type dispType, D20DispatcherKey key);
 

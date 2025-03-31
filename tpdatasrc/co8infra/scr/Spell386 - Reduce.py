@@ -11,8 +11,9 @@ def	OnSpellEffect( spell ):
 
 	spell.duration = 10 * spell.caster_level
 	target_item = spell.target_list[0]
+	target = target_item.obj
 
-	if target_item.obj.is_friendly( spell.caster ):
+	if target.is_friendly( spell.caster ) or target.d20_query_has_spell_condition(sp_Enlarge):
 		if target_item.obj.is_category_type( mc_type_humanoid ):
 			return_val = target_item.obj.condition_add_with_args( 'sp-Reduce', spell.id, spell.duration, 0 )
 			if return_val == 1:

@@ -1,8 +1,6 @@
 from toee import *
 from utilities import *
 from marc import *
-from dungeon_areas import * #Added by temple+
-from dungeon_encs import * #Added by temple+
 
 ###############################################################################
 # Populates the given dungeon level with creatures and treasure.
@@ -344,7 +342,7 @@ def get_spot (area_size, enc_size, organization, duty, spot_tracker):
 # See comments in dungeon_areas.txt for more detailed information.
 #-----------------------------------------------------------------------------
 def read_areas(level):
-	f = get_dungeon_areas_lines() #Modified by temple+
+	f = file('data/scr/dungeon_areas.txt','r') #Modified by temple+
 	lines = []
 	for line in f.readlines():
 		line = line.split('#')[0].strip()
@@ -468,7 +466,7 @@ def read_areas(level):
 # See comments in dungeon_encs.txt for more detailed information.
 #-----------------------------------------------------------------------------
 def read_encs (level, el_max, el_min):
-	f = get_dungeon_encs_lines() #Modified by temple+
+	f = file('data/scr/dungeon_encs.txt','r') #Modified by temple+
 	lines = []
 	for line in f.readlines():
 		line = line.split('#')[0].strip()

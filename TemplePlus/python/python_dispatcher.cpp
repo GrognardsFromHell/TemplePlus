@@ -140,6 +140,10 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 		return py::bytes(d20Stats.GetStatShortName((Stat)stat));
 	});
 
+	m.def("is_temple_module", []() {
+		return !modSupport.IsZMOD() && !modSupport.IsKotB() && !modSupport.IsPalCove() && !modSupport.IsIWD();
+	});
+
 	m.def("config_set_string", [](std::string& configItem, std::string& value) {
 		auto configItemLower(tolower(configItem));
 		if (configItemLower == "hpfornpchd") {
