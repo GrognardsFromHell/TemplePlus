@@ -1,0 +1,5 @@
+ID_string: FELL_THE_GREATEST_FOE
+effect_type: 0
+texture_file: art\interface\player_conditions\buffs\Spell True Strike.tga
+help_topic: TAG_SPELLS_FELL_THE_GREATEST_FOE
+tooltip_base_text: Fell the Greatest Foe

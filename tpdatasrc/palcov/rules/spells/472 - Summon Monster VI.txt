@@ -1,0 +1,22 @@
+School: Conjuration
+Subschool: Summoning
+Level: Brd 6
+Level: Clr 6
+Level: Sor 6
+Level: Wiz 6
+Component: V
+Component: S
+Casting Time: Full Round
+Range: Close
+Saving Throw: None
+Spell Resistance: No
+Projectile: No
+flags_Target: Range
+exc_flags_Target: Self
+exc_flags_Target: Other
+exc_flags_Target: Dead
+exc_flags_Target: Non-critter
+mode_Target: Area
+radius_Target: 1
+ai_type: ai_action_summon
+proto choices: 14292 14296 14298 14302 14912 14915 14923 14924 14925 14926 14814

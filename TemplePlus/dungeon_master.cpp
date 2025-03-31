@@ -113,14 +113,14 @@ void DungeonMaster::Render() {
 		//ImGui::SetWindowCollapsed(true);
 		mFlist.clear();
 	}
-		
+
 	isMinimized = ImGui::GetWindowCollapsed();
 	if (isMinimized && IsActionActive()) {
 		DeactivateAction();
 	}
 	auto wndPos = ImGui::GetWindowPos();
 	auto wndWidth = ImGui::GetWindowWidth();
-	ImGui::SetWindowFontScale(config.dmGuiScale);
+	ImGui::GetIO().FontGlobalScale = config.dmGuiScale;
 	dmPortraitRect.x = (int)(wndPos.x + wndWidth / 2 - dmPortraitRect.width / 2); dmPortraitRect.y = (int)(wndPos.y - dmPortraitRect.height);
 
 	auto blyat = gameView->MapToScene(dmPortraitRect.x, dmPortraitRect.y);//gameView->MapFromScene(config.renderWidth - dmPortraitRect.x     , config.renderHeight - -dmPortraitRect.y);

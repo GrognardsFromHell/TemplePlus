@@ -2272,8 +2272,81 @@ void LegacySpellSystem::SpellMemorizedAdd(objHndl handle, int spellEnum, int spe
 	obj->SetSpell(obj_f_critter_spells_memorized_idx, size, spData);
 }
 
-void LegacySpellSystem::ForgetMemorized(objHndl handle) {
-	objSystem->GetObject(handle)->ClearArray(obj_f_critter_spells_memorized_idx);
+void LegacySpellSystem::ForgetMemorized(objHndl handle, bool pending, int percent) {
+	auto roll = percent < 100;
+
+	if (!pending && !roll) {
+		objSystem->GetObject(handle)->ClearArray(obj_f_critter_spells_memorized_idx);
+	}
+
+	auto obj = objSystem->GetObject(handle);
+	auto spells = obj->GetSpellArray(obj_f_critter_spells_memorized_idx);
+
+	// count down to avoid indexing shenanigans
+	for (size_t i = spells.GetSize(); i > 0; i--) {
+		// if we roll above the percentage, don't remove
+		if (roll && percent < Dice::Roll(1, 100)) continue;
+
+		if (pending) {
+			auto spData = obj->GetSpell(obj_f_critter_spells_memorized_idx, i-1);
+			spData.spellStoreState.usedUp |= 1;
+			obj->SetSpell(obj_f_critter_spells_memorized_idx, i-1, spData);
+		} else {
+			obj->RemoveSpell(obj_f_critter_spells_memorized_idx, i-1);
+		}
+	}
+}
+
+int LegacySpellSystem::RemainingSpellsOfLevel(objHndl handle, Stat classCode, int spellLvl) {
+	auto perDay = GetNumSpellsPerDay(handle, classCode, spellLvl);
+	auto usedUp = NumSpellsInLevel(handle, obj_f_critter_spells_cast_idx, classCode, spellLvl);
+
+	return perDay - usedUp;
+}
+
+// Uses up a spontaneous spell slot of the given level for the given class.
+void LegacySpellSystem::UseUpSpontaneousSlot(objHndl handle, Stat classEnum, int spellLvl) {
+	auto obj = objSystem->GetObject(handle);
+
+	if (RemainingSpellsOfLevel(handle, classEnum, spellLvl) <= 0)
+		return;
+
+	// needs to have the extra bit set for some reason
+	int classCode = 0x80 | static_cast<int>(classEnum);
+
+	// Placeholder needs a spell enum. Chose Resistance since it's on most lists.
+	// Probably doesn't matter much.
+	SpellStoreData sd(399, spellLvl, classCode, 0);
+	sd.spellStoreState.spellStoreType = SpellStoreType::spellStoreCast;
+
+	auto maxIx = obj->GetSpellArray(obj_f_critter_spells_cast_idx).GetSize();
+	obj->SetSpell(obj_f_critter_spells_cast_idx, maxIx, sd);
+}
+
+// Uses up spontaneous slots with a given percentage
+void LegacySpellSystem::DeductSpontaneous(objHndl handle, Stat classEnum, int percent) {
+	// All classes
+	if (classEnum == -1) {
+		for (auto classEnum : d20ClassSys.classEnumsWithSpellLists) {
+			if (d20ClassSys.IsNaturalCastingClass(classEnum)) {
+				if (objects.StatLevelGet(handle, classEnum) > 0) {
+					DeductSpontaneous(handle, classEnum, percent);
+				}
+			}
+		}
+		return;
+	}
+
+	// Main logic
+	auto roll = percent < 100;
+
+	auto maxSpLvl = GetMaxSpellLevel(handle, classEnum);
+	for (int spLvl = 0; spLvl <= maxSpLvl; spLvl++) {
+		for (int j = RemainingSpellsOfLevel(handle, classEnum, spLvl); j > 0; j--) {
+			if (roll && percent < Dice::Roll(1, 100)) continue;
+			UseUpSpontaneousSlot(handle, classEnum, spLvl);
+		}
+	}
 }
 
 BOOL LegacySpellSystem::SpellEntriesInit(const char * spellRulesFolder){
@@ -3219,6 +3292,8 @@ BOOL LegacySpellSystem::IsSpellHarmful(int spellEnum, const objHndl& caster, con
 		}
 		if (spEntry.aiTypeBitmask & (1 << ai_action_offensive))
 			return TRUE;
+		return FALSE;
+	} else if (551 == spellEnum) { // Reduce Animal
 		return FALSE;
 	}
 

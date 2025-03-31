@@ -387,10 +387,35 @@ bool DlgParser::GetSingleLine(DialogLineNew& line, int& fileLine){
 bool DlgParser::GetBracketContent(int &fileLine){
 	string brBuf;
 	const int MAX_TEXT_SIZE = 1000;
-	
-	getline(ss, brBuf, '{');
-	if (ss.eof()) { // no new brackets found
-		return false;
+
+	bool validLineFound = false;
+	while (!validLineFound) {
+		getline(ss, brBuf, '{');
+		if (ss.eof()) { // no new brackets found
+			return false;
+		}
+		validLineFound = true;
+
+		//Check for a commented out line so it can be ignored
+		auto eolnLocation = brBuf.rfind('\n');
+		if (eolnLocation == std::string::npos) {
+			eolnLocation = 0;
+		}
+		auto commentCharLocation = brBuf.find('/', eolnLocation);
+		if (commentCharLocation != std::string::npos) {
+			if (brBuf[commentCharLocation + 1] == '/') {
+
+				//Fix the line count, stip the rest of the line and keep looking for more
+				validLineFound = false;
+				for (auto nl = strchr(brBuf.c_str(), '\n'); nl; fileLine++) {
+					nl = strchr(nl + 1, '\n');
+				}
+				getline(ss, brBuf, '\n');
+				if (ss.eof()) {  // no new brackets found
+					return false;
+				}
+			}
+		}
 	}
 
 	// count how many newlines

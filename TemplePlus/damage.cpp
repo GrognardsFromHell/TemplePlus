@@ -1127,6 +1127,75 @@ BOOL Damage::DamageTypeMatch(DamageType reduction, DamageType attackType){
 	return FALSE;
 }
 
+Dice Damage::ModifyDamageDiceForSize(Dice &base, int steps) {
+	if (steps == 0) return base;
+
+	int sides = base.GetSides();
+	int count = base.GetCount();
+	int mod = base.GetModifier();
+
+	bool inc = steps > 0;
+
+	for (int i = inc ? steps : -steps; i > 0; i--) {
+		if (inc) {
+			// weapon size increasing
+			switch (sides)
+			{
+			case 1: sides = 2; continue;
+			case 2: sides = 3; continue;
+			case 3: sides = 4; continue;
+			case 4: sides = 6; continue;
+			case 6:
+				if (count == 1) sides = 8;
+				else if (count <= 3) count++;
+				else count += 2;
+				continue;
+			case 8:
+				if (count == 1) { count = 2; sides = 6; }
+				else if (count <= 3) count++;
+				else if (count <= 6) count += 2;
+				else count += 4;
+				continue;
+			case 10: count *= 2; sides = 8; continue;
+			case 12:
+				sides = 6;
+				if (count == 1) count = 3;
+				else count = (count+1)*2;
+				continue;
+			default: break;
+			}
+		} else {
+			// weapon size decreasing
+			switch (sides)
+			{
+			case 2: sides = 1; continue;
+			case 3: sides = 2; continue;
+			case 10: sides = 8; continue;
+			case 12: sides = 10; continue;
+			case 4:
+				if (count == 1) sides = 3;
+				else { count--; sides = 6; }
+				continue;
+			case 6:
+				if (count == 1) sides = 4;
+				else if (count == 2) { count = 1; sides = 10; }
+				else if (count <= 4) count--;
+				else count -= 2;
+				continue;
+			case 8:
+				if (count <= 2) sides = 6;
+				else if (count <= 4) count--;
+				else if (count <= 8) count -= 2;
+				else count -= 4;
+				continue;
+			default: break;
+			}
+		}
+	}
+
+	return Dice(count, sides, mod);
+}
+
 Damage::Damage(){
 	damageMes = 0;
 	// damageMes = addresses.damageMes;
