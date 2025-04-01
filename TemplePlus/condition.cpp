@@ -235,6 +235,7 @@ public:
 	static int __cdecl WeaponThundering(DispatcherCallbackArgs args);
 	static int __cdecl ArmorShadowSilentMovesSkillBonus(DispatcherCallbackArgs args);
 
+	static int __cdecl WeaponToHitBonus(DispatcherCallbackArgs args);
 	static int __cdecl WeaponDamageBonus(DispatcherCallbackArgs args);
 
 	int (*oldMaxDexBonus)(objHndl armor) = nullptr;
@@ -562,7 +563,8 @@ public:
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FBC60, classAbilityCallbacks.DruidWildShapeCheck);
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FBCE0, classAbilityCallbacks.DruidWildShapePerform);
 
-		// Fixes Weapon Damage Bonus for ammo items
+		// Fixes Weapon To Hit/Damage Bonus for ammo items
+		replaceFunction(0x100FFDF0, itemCallbacks.WeaponToHitBonus);
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FFE90, itemCallbacks.WeaponDamageBonus);
 
 		// Allow silent moves and shadow armor to have multipe levels
@@ -6306,6 +6308,33 @@ int ItemCallbacks::WeaponThundering(DispatcherCallbackArgs args){
 		}
 
 	}
+	return 0;
+}
+
+int ItemCallbacks::WeaponToHitBonus(DispatcherCallbackArgs args) {
+	GET_DISPIO(dispIOTypeAttackBonus, DispIoAttackBonus);
+
+	auto attacker = dispIo->attackPacket.attacker;
+	if (!attacker) return 0;
+
+	auto invIdx = args.GetCondArg(2);
+
+	auto item = inventory.GetItemAtInvIdx(attacker, invIdx);
+	if (!item) return 0;
+
+	auto weapUsed = dispIo->attackPacket.GetWeaponUsed();
+	if (!weapUsed) return 0;
+
+	auto ammo = dispIo->attackPacket.ammoItem;
+
+	if ( item == weapUsed
+		|| item == ammo && weapons.AmmoMatchesWeapon(weapUsed, item))
+	{
+		auto amount = args.GetCondArg(0);
+		auto itemName = description.getDisplayName(item);
+		dispIo->bonlist.AddBonusWithDesc(amount, 12, 147, itemName);
+	}
+
 	return 0;
 }
 
