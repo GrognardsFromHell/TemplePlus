@@ -2138,7 +2138,12 @@ Duration:      Inst.,    Save: None,    SR: Yes}
 {5737}{Death Gaze (INTERNAL)}
 {5738}{Petrifying Gaze (INTERNAL)}
 {5739}{Frozen Breath (INTERNAL)}
-{5740}Ray of Clumsiness {[Transmutation] as Ray of Enfeeblement but dexterity decreased}
+{5740} Ray of Clumsiness {Ranged touch attack gives a Dexterity penalty of 1d6 +1 per two caster levels, max 1d6+5.
+
+Casting:         1  std action   [Transmutation, V,S]
+Range:               Close,  25  feet  + 5/2 levels  
+Effect:              Ray,  ranged touch attack
+Duration:      1  min/level ,    Save: None,    SR: Yes}
 {5741}Ice Breath Weapon{}
 {5742}{Summon Giant Constrictor Snake}
 {5743}{Abundant Step}
