@@ -15,6 +15,7 @@
 {5522}{[Evocation] Creates a 10' wide curtain of fire that deals an initial 2d4 fire damage and 2d6 +1/lvl to creatures passing through it.}
 {5186}{[Divination] This spell grants you a powerful sixth sense in relation to yourself or another.}
 {5308}{[Abjuration] The subject is protected from all devices and spells that detect, influence, or read emotions or thoughts.}
+{5740}{[Transmutation] Ray inflicts dexterity penalty of 1d6 + 1/2 levels.}
 {6000}{[Divination] This spell grants you an insight bonus equal to your caster level (maximum +25) on any single attack roll, opposed ability or skill check, saving throw or as an AC bonus against one attack.}
 {6001}{[Necromancy] You channel negative energy through your touch, fatiguing the target. You must succeed on a touch attack to strike a target.  The subject is immediately fatigued for the spell's duration.  This spell has no effect on a creature that is already fatigued. Unlike with normal fatigue, the effect ends as soon as the spell's duration expires.}
 {6002}{[Necromancy] A black ray projects from your pointing finger. You must succeed on a ranged touch attack with the ray to strike a target.  The subject is immediately exhausted for the spell's duration.  A successful Fortitude save means the creature is only fatigued.  A character that is already fatigued instead becomes exhausted.  This spell has no effect on a creature that is already exhausted.  Unlike normal exhaustion or fatigue, the effect ends as soon as the spell's duration expires.}
