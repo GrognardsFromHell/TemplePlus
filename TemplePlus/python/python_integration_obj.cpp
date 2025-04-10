@@ -74,15 +74,20 @@ static void PcStart(objHndl pc) {
 	inventory.Clear(pc, FALSE);
 	
 	// This checks that the PC has at least one level in any of the classes
-	auto stat = d20ClassSys.vanillaClassEnums[0];
-	auto classIndex = 0;
-	while (classIndex <= VANILLA_NUM_CLASSES) {
-		stat = d20ClassSys.vanillaClassEnums[classIndex];
+	int classIndex = 0;
+	for (auto classEnum : d20ClassSys.baseClassEnums) {
+		auto stat = static_cast<Stat>(classEnum);
+
 		if (objects.StatLevelGet(pc, stat) > 0) break;
+
 		classIndex++;
-		if (classIndex >= VANILLA_NUM_CLASSES)
-			return;
 	}
+
+	// couldn't find class
+	if (classIndex > d20ClassSys.baseClassEnums.size()) return;
+
+	// offset by 1 for tutorial inventory
+	if (classIndex >= VANILLA_NUM_CLASSES) classIndex++;
 
 	try {
 		auto content(MesFile::ParseFile("rules\\start_equipment.mes"));

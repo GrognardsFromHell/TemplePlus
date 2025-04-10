@@ -1,6 +1,15 @@
 // This file defines starting equipment for each class. Each line is a list 
 // of items specified by their prototype number 
 
+// Note: Not all base classes are enabled currently. These indices (first
+// number) are position in the list of all base classes sorted by class enum.
+// When more base classes are enabled it might shift some positions.
+
+// Doesn't matter currently since everyone gets the same farmer garb
+
+// Note 2: offsets for new base classes are shifted by 1 because the tutorial
+// is hard coded to #11.
+
 // Medium size races 
 
 // barbarian 
@@ -36,8 +45,23 @@
 // wizard 
 {10}{6142} 
 
-// tutorial 
+// tutorial
 {11}{6047 6032 6011 6012}
+
+// favored soul
+{12}{6142}
+
+// scout
+{13}{6142}
+
+// warmage
+{14}{6142}
+
+// beguiler
+{15}{6142}
+
+// swashbuckler
+{16}{6142}
 
 // Small size races (halflings and gnomes) 
 
@@ -73,3 +97,18 @@
 
 // wizard 
 {110}{6142} 
+
+// favored soul
+{112}{6142}
+
+// scout
+{113}{6142}
+
+// warmage
+{114}{6142}
+
+// beguiler
+{115}{6142}
+
+// swashbuckler
+{116}{6142}
