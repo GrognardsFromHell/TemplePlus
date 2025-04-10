@@ -1127,6 +1127,20 @@ bool LegacyCritterSystem::CanSense(objHndl critter, objHndl tgt)
 	return critterReplacements.CanSense(critter, tgt);
 }
 
+bool LegacyCritterSystem::CanSenseForSneakAttack(objHndl critter, objHndl tgt)
+{
+	auto uncanny = feats.HasFeatCountByClass(critter, FEAT_UNCANNY_DODGE);
+	auto blindfight = feats.HasFeatCountByClass(critter, FEAT_BLIND_FIGHT);
+
+	// for checking melee range
+	auto reach = critterSys.GetNaturalReach(critter);
+	auto dist = locSys.DistanceToObj(critter,tgt);
+
+	if (uncanny || (blindfight && dist <= reach)) return true;
+
+	return CanSense(critter, tgt);
+}
+
 int LegacyCritterSystem::GetSize(objHndl handle)
 {
 	return dispatch.DispatchGetSizeCategory(handle);

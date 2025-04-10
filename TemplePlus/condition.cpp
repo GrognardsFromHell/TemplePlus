@@ -1786,6 +1786,19 @@ int QuerySetReturnVal0(DispatcherCallbackArgs args)
 	return 0;
 };
 
+// Sets return_val to 1 if caller lacks feat in data1
+int QuerySet1IfLacksFeat(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
+	auto featId = static_cast<feat_enums>(args.GetData1());
+
+	if (!feats.HasFeatCountByClass(args.objHndCaller, featId)) {
+		dispIo->return_val = 1;
+	}
+
+	return 0;
+}
+
 int QueryRetrun1GetArgs(DispatcherCallbackArgs args)
 {
 	DispIoD20Query * dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
@@ -3216,6 +3229,20 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 4, dispTypeD20Query, DK_QUE_Can_Perform_Disarm, DisarmCanPerform, 0, 0);
 	//DispatcherHookInit(cond, 5, dispTypeD20Query, DK_QUE_ActionTriggersAOO, QuerySetReturnVal1, 0, 0);
 
+	// Uncanny Dodge
+	{
+		static CondStructNew uncannyDodge;
+		uncannyDodge.ExtendExisting("Uncanny Dodge");
+		// this condition has erroneous 3.0 bonus callbacks that have been turned
+		// into Trap Sense in 3.5
+		uncannyDodge.subDispDefs[1].dispCallback = genericCallbacks.NoOp;
+		uncannyDodge.subDispDefs[2].dispCallback = genericCallbacks.NoOp;
+
+		static CondStructNew flatfooted;
+		flatfooted.ExtendExisting("Flatfooted");
+		flatfooted.subDispDefs[5].dispCallback = QuerySet1IfLacksFeat;
+		flatfooted.subDispDefs[5].data1.usVal = FEAT_UNCANNY_DODGE;
+	}
 #pragma endregion
 	// Disarmed
 	cond = &mCondDisarmed; 	condName = (char*)mCondDisarmedName;
@@ -7537,7 +7564,7 @@ int ClassAbilityCallbacks::SneakAttackDamage(DispatcherCallbackArgs args) {
 	bool sneakAttackCondition = atkPkt.flags & D20CAF_FLANKED
 		|| d20Sys.d20Query(tgt, DK_QUE_SneakAttack)
 		|| d20Sys.d20QueryWithData(atkPkt.attacker, DK_QUE_OpponentSneakAttack, (uint32_t)dispIo, 0)
-		|| !critterSys.CanSense(tgt, atkPkt.attacker);
+		|| !critterSys.CanSenseForSneakAttack(tgt, atkPkt.attacker);
 
 	// From the SRD:  The rogue must be able to see the target well enough to pick out a vital 
 	// spot and must be able to reach such a spot. A rogue cannot sneak attack while striking a 
