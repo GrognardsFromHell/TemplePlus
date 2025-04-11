@@ -16,6 +16,28 @@ struct VanillaSetting {
 	ConfigChangedCallback callback;
 };
 
+// Recognized sources for spells etc.
+//
+// Not a flag type, but making the codes sparse makes it easier to
+// classify them when filtering.
+//
+// Convention:
+//   0-255 core
+//   256-511 offical non-core
+//   512+ unofficial
+enum class PnPSource : uint32_t
+{
+	PHB = 0,
+	ToEE = 1,
+	SpellCompendium = 0x100,
+	PHB2 = 0x101,
+	Homebrew = 0x200
+};
+
+
+// Calculates a source for a spell based on its numbering, as a default.
+PnPSource DefaultSpellSource(int spellEnum);
+
 struct TemplePlusConfig
 {
 	bool showFps = false; // Previously -fps
@@ -110,7 +132,7 @@ struct TemplePlusConfig
 	bool monstrousRaces = false; // monstrous races. unbalanced as hell ><
 	bool forgottenRealmsRaces = false;  //Races from the forgotten realms campaign setting (Gold Dwarf, Genasi, ...)
 	bool nonCoreMaterials = false; // splatbooks, fan suggestions etc
-	std::unordered_set<std::string> nonCoreSources;
+	std::unordered_set<PnPSource> nonCoreSources;
 	bool tolerantNpcs = false; // NPCs tolerate monster party members
 	std::string fogOfWar = "Normal";
 	bool disableFogOfWar = false; // Previously: -nofog

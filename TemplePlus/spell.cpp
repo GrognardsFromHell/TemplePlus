@@ -427,10 +427,7 @@ PnPSource SpellEntry::GetSource()
 		return spSrcFind->second;
 	}
 
-	// some default logic in case the info hasn't been specified
-	if (spellEnum <= 568) return PnPSource::PHB;
-	else if (spellEnum <= SPELL_ENUM_MAX_VANILLA) return PnPSource::ToEE;
-	else return PnPSource::Homebrew;
+	return DefaultSpellSource(spellEnum);
 }
 
 SpellPacketBody::SpellPacketBody()
@@ -2556,9 +2553,7 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 				{ "homebrew"        , PnPSource::Homebrew },
 			};
 
-			auto value = PnPSource::PHB;
-			if (spEntry.spellEnum > SPELL_ENUM_MAX_VANILLA)
-				value = PnPSource::Homebrew;
+			auto value = DefaultSpellSource(spEntry.spellEnum);
 
 			if (FindInMapping(spEntry.spellEnum, sourceStrings, textBuf + 6, value)) {
 				mSpellSources[spEntry.spellEnum] = value;

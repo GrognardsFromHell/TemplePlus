@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common.h"
+#include "config/config.h"
 
 struct D20Actn;
 const uint32_t SPELL_ENUM_MAX_VANILLA = 802;

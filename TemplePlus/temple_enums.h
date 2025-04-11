@@ -2753,20 +2753,3 @@ enum SpellFlags : uint32_t
 	SF_SPELL_FLEE = 0x8000000,
 };
 
-// Recognized sources for spells etc.
-//
-// Not a flag type, but making the codes sparse makes it easier to
-// classify them when filtering.
-//
-// Convention:
-//   0-255 core
-//   256-511 offical non-core
-//   512+ unofficial
-enum class PnPSource : uint32_t
-{
-	PHB = 0,
-	ToEE = 1,
-	SpellCompendium = 0x100,
-	PHB2 = 0x101,
-	Homebrew = 0x200
-};
