@@ -1,7 +1,6 @@
 # import os
 from description import *
-from inv_source import * #Added by temple+
-from inv_tables import * #Added by temple+
+from add_inventory_text import * #Added by temple+
 
 #--------------------------------------------------------------
 # Reads inv_source.txt into the dictionary inv_source{}
@@ -25,10 +24,13 @@ def read_inv_source():
 		# file_in = file('inv_source.txt','r')
 	# else:
 		# file_in = file('scr/inv_source.txt','r')
+	
+	#Modified by temple+
+	file_in = file('data/scr/inv_source.txt','r') 
+	lines = file_in.readlines()
+	lines = add_inventory_text(lines)
 
-	file_in = get_inv_source_lines() #Modified by temple+
-
-	for line in file_in.readlines():
+	for line in lines:
 
 		line = line.strip()		# remove whitespace at start and end
 		if not line:			# empty lines indicate current invensource is complete
@@ -132,7 +134,7 @@ def read_inv_tables():
 	# else:
 		# file_in = file('scr/inv_tables.txt','r')
 
-	file_in = get_inv_tables_lines() #Modified by temple+
+	file_in = file('data/scr/inv_tables.txt','r') #Modified by temple+
 
 	for line in file_in.readlines():
 

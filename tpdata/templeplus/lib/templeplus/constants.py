@@ -1825,6 +1825,7 @@ mc_subtype_orc = 0x1000000
 mc_subtype_reptilian = 0x2000000
 mc_subtype_slaadi = 0x4000000
 mc_subtype_water = 0x8000000
+mc_subtype_native = 0x10000000
 
 mc_type_aberration = 0
 mc_type_animal = 1
@@ -2317,6 +2318,7 @@ san_exit_combat = 14
 san_start_combat = 15
 san_end_combat = 16
 san_buy_object = 17
+san_resurrect = 18
 san_heartbeat = 19
 san_insert_item = 21
 san_will_kos = 22

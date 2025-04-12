@@ -60,7 +60,7 @@ void D20StatusSystem::initRace(objHndl objHnd)
 
 	if (critterSys.IsOoze(objHnd))
 	{
-		_ConditionAddToAttribs_NumArgs0(dispatcher, conds.ConditionMonsterOoze);
+		_ConditionAddToAttribs_NumArgs0(dispatcher, conds.GetByName("Monster Ooze"));
 	}
 	
 }

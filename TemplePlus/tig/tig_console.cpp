@@ -35,6 +35,8 @@ void Console::Render()
 
 	constexpr auto consoleWidgeFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar;
 
+	ImGui::GetIO().FontGlobalScale = config.dmGuiScale;
+
 	auto size = ImGui::GetIO().DisplaySize;
 	ImVec2 consPos(0, 0);
 	if (gameView) {
@@ -51,12 +53,10 @@ void Console::Render()
 		ImGui::End();
 		return;
 	}
-	ImGui::SetWindowFontScale(config.dmGuiScale);
 
 	RenderCheatsMenu();
 	
 	ImGui::BeginChild("ScrollingRegion", ImVec2(0, -ImGui::GetItemsLineHeightWithSpacing()), false, ImGuiWindowFlags_HorizontalScrollbar);
-	ImGui::SetWindowFontScale(config.dmGuiScale);
 	if (ImGui::BeginPopupContextWindow())
 	{
 		if (ImGui::Selectable("Clear")) Clear();
@@ -253,7 +253,6 @@ void Console::RenderCheatsMenu()
 	{
 		if (ImGui::BeginMenu("Cheats"))
 		{
-			ImGui::SetWindowFontScale(config.dmGuiScale);
 			if (ImGui::MenuItem("Level Up")) {
 				for (auto i = 0u; i < party.GroupListGetLen(); i++) {
 					auto handle = party.GroupListGetMemberN(i);
@@ -394,7 +393,6 @@ void Console::RenderCheatsMenu()
 			}
 
 			if (ImGui::BeginMenu("Speedup")){
-				ImGui::SetWindowFontScale(config.dmGuiScale);
 				auto speedupCb = [](int speedupVal) {
 					auto N_party = party.GroupListGetLen();
 					auto speedRun = 1.0f;
@@ -437,7 +435,6 @@ void Console::RenderCheatsMenu()
 			ImGui::EndMenu();
 		}
 		if (ImGui::BeginMenu("Debug")) {
-			ImGui::SetWindowFontScale(config.dmGuiScale);
 			if (ImGui::MenuItem("Debug Console")) {
 				UIShowDebug();
 			}
@@ -463,7 +460,6 @@ void Console::RenderCheatsMenu()
 			ImGui::EndMenu();
 		}
 		if (ImGui::BeginMenu("Edit")){
-			ImGui::SetWindowFontScale(config.dmGuiScale);
 
 			static char dialogHandleInput[256] = { 0, };
 			static std::string dialogFilename;

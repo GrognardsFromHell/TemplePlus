@@ -12,7 +12,7 @@ enum class StatType {
 	Abilities = 0,
 	Level = 1,
 	HitPoints = 2,
-	Combat = 3,
+	Physical = 3,
 	Money = 4,
 	AbilityMods = 5,
 	Speed = 6,
@@ -44,12 +44,14 @@ public:
 	const char* GetCannotPickClassHelp(Stat stat) const;
 
 	int GetValue(const objHndl &handle, Stat stat, int statArg = -1) const;
+	int GetBaseValue(const objHndl &handle, Stat stat, int statArg = -1) const;
 	int GetLevelStat(const objHndl &handle, Stat stat) const;
 	int GetSpellCastingStat(const objHndl &handle, Stat stat, int statArg) const;
 	int GetBaseAttackBonus(const objHndl &handle, Stat classLeveled) const;
 	int GetPsiStat(const objHndl &handle, Stat stat, int statArg = -1) const;
 	int GetPsiStatBase(const objHndl &handle, Stat stat, int statArg = -1) const;
-	int GetType3StatBase(const objHndl &handle, Stat stat) const;
+	int GetPhysicalStatBase(const objHndl &handle, Stat stat) const;
+	int GetPhysicalStatLevel(const objHndl &handle, Stat stat) const;
 	bool AlignmentsUnopposed(Alignment a, Alignment b, bool strictCheck = false);
 	
 
@@ -64,7 +66,6 @@ private:
 	MesHandle statMesExt = 0;
 	MesHandle statEnum =0;
 	
-
 	const char* statMesStrings[_stat_count] = {nullptr,};
 	const char* statEnumStrings[_stat_count] = { nullptr, };
 	const char* statRulesStrings[_stat_count] = { nullptr, };

@@ -26,15 +26,12 @@
 
 
 void PyPerformTouchAttack_PatchedCallToHitProcessing(D20Actn * pd20A, D20Actn d20A, uint32_t savedesi, uint32_t retaddr, PyObject * pyObjCaller, PyObject * pyTupleArgs);
-void enlargeSpellRestoreModelScaleHook(objHndl objHnd);
-void enlargeSpellIncreaseModelScaleHook(objHndl objHnd);
 
 // Spell Condition Fixes (for buggy spell effects)
 class SpellConditionFixes : public TempleFix {
 public:
 #define SPFIX(fname) static int fname ## (DispatcherCallbackArgs args);
 	void VampiricTouchFix();
-	void enlargePersonModelScaleFix(); // fixes ambiguous float point calculations that resulted in cumulative roundoff errors
 	static void SpellDamageWeaponlikeHook(objHndl tgt, objHndl caster, int dicePacked, DamageType damType, int attackPower, D20ActionType actionType, int spellId, D20CAF flags ); // allows for sneak attack damage on chill touch
 
 	static int ImmunityCheckHandler(DispatcherCallbackArgs args);
@@ -245,6 +242,25 @@ public:
 				if (ShouldRemoveInvisibility(args.objHndCaller, evtObj, args) && spPkt.targetCount && spPkt.targetListHandles[0])
 					d20Sys.d20SendSignal(spPkt.targetListHandles[0], DK_SIG_Spell_End, spellId, 0);
 			}
+
+			// Enlarge/Reduce fixes
+			switch (spPkt.spellEnum) {
+			case 152: // Enlarge Person
+			case 551: // Reduce Animal
+			case 386: // Reduce Person
+			case 404: // Righteous Might
+				// signal that there's nothing to dismiss anymore
+				d20Sys.d20SendSignal(spPkt.caster, DK_SIG_Spell_End, spellId, 0);
+			case 7: // Animal Growth
+				d20Sys.d20SendSignal(args.objHndCaller, DK_SIG_Spell_End, spellId, 0);
+				spPkt.EndPartsysForTgtObj(args.objHndCaller);
+				spPkt.RemoveObjFromTargetList(args.objHndCaller);
+				pySpellIntegration.SpellSoundPlay(&spPkt, SpellEvent::EndSpellCast);
+				spellSys.SpellEnd(spellId, 0);
+				args.RemoveSpellMod();
+				critterSys.UpdateModelEquipment(args.objHndCaller);
+				return 0;
+			}
 			
 			SpellEntry spEntry(spPkt.spellEnum);
 			if (spEntry.IsBaseModeTarget(UiPickerType::Wall)){
@@ -297,7 +313,6 @@ public:
 		replaceFunction(0x100CE940, MelfsAcidArrowDamage);
 
 		VampiricTouchFix();
-		enlargePersonModelScaleFix();
 
 		// Replaces sp-WebOn movement speed hook
 		replaceFunction(0x100CB700, WebOnMoveSpeed);
@@ -435,7 +450,28 @@ public:
 			return 0;
 			});
 
-		
+		// Animal Growth stat modifiers
+		replaceFunction<int(DispatcherCallbackArgs)>(0x100C60E0, [](DispatcherCallbackArgs args)->int {
+				auto dispIo = dispatch.DispIoCheckIoType2(args.dispIO);
+				Stat statDispatched = static_cast<Stat>(args.dispKey - 1);
+				Stat statTarget = static_cast<Stat>(args.GetData1());
+				int amount = args.GetData2();
+
+				if (statDispatched != statTarget) return 0;
+
+				switch(statTarget)
+				{
+				case stat_strength:
+				case stat_constitution:
+					dispIo->bonlist.AddBonus(amount, 20, 274);
+					break;
+				case stat_dexterity:
+					dispIo->bonlist.AddBonus(-amount, 20, 274);
+				default:
+					break;
+				}
+				return 0;
+		});
 
 		// Righteous Might Stat Bonus
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100CA440, [](DispatcherCallbackArgs args)->int {
@@ -443,10 +479,10 @@ public:
 			auto statDispatched = (Stat)(args.dispKey - 1);
 			if (statDispatched == args.GetData1()) {
 				if (statDispatched == stat_strength) {
-					dispIo->bonlist.AddBonus(4, 35, args.GetData2());
+					dispIo->bonlist.AddBonus(4, 20, args.GetData2());
 				}
 				if (statDispatched == stat_constitution) {
-					dispIo->bonlist.AddBonus(2, 35, args.GetData2());
+					dispIo->bonlist.AddBonus(2, 20, args.GetData2());
 				}
 			}
 			return 0;
@@ -504,14 +540,6 @@ void SpellConditionFixes::VampiricTouchFix()
 	//Perform Touch Attack mod:
 	//redirectCall(0x100B2CC9, PyPerformTouchAttack_PatchedCallToHitProcessing); // done directly in python_object.cpp now
 	return;
-}
-
-void SpellConditionFixes::enlargePersonModelScaleFix()
-{
-	redirectCall(0x100CD45C, enlargeSpellIncreaseModelScaleHook);
-	redirectCall(0x100D84DE, enlargeSpellRestoreModelScaleHook); // sp152 enlarge 
-	redirectCall(0x100D9C22, enlargeSpellRestoreModelScaleHook); // sp404 righteous might
-
 }
 
 void SpellConditionFixes::SpellDamageWeaponlikeHook(objHndl tgt, objHndl caster, int dicePacked, DamageType damType, int attackPower, D20ActionType actionType, int spellId, D20CAF flags){
@@ -790,25 +818,6 @@ void PyPerformTouchAttack_PatchedCallToHitProcessing( D20Actn * pd20A, D20Actn d
 	return;
 	
 }
-
-void __cdecl enlargeSpellRestoreModelScaleHook(objHndl objHnd)
-{
-	// patches for spellRemove function (disgusting hardcoded shit! bah!)
-	uint32_t modelScale = objects.getInt32(objHnd, obj_f_model_scale);
-	modelScale *= 5;
-	modelScale /= 9;
-	objects.setInt32(objHnd, obj_f_model_scale, modelScale);
-}
-
-void enlargeSpellIncreaseModelScaleHook(objHndl objHnd)
-{
-	uint32_t modelScale = objects.getInt32(objHnd, obj_f_model_scale);
-	modelScale *= 9;
-	modelScale /= 5;
-	objects.setInt32(objHnd, obj_f_model_scale, modelScale);
-}
-
-
 
 int SpellConditionFixes::StinkingCloudObjEvent(DispatcherCallbackArgs args)
 {

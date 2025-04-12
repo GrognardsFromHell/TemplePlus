@@ -69,6 +69,51 @@ int BonusList::GetEffectiveBonusSum() const {
 	return result;
 }
 
+int BonusList::GetBaseScaled(float factor) const
+{
+	int initial = 0;
+	int exponent = 0;
+
+	for (size_t i = 0; i < bonCount; ++i) {
+		auto& bonus = bonusEntries[i];
+		auto  value = bonus.bonValue;
+
+		if (IsBonusSuppressed(i, nullptr)) continue;
+
+		size_t capIdx;
+		if (IsBonusCapped(i, &capIdx)) {
+			auto capValue = bonCaps[capIdx].capValue;
+
+			if (value > 0 && value > capValue) {
+				value = capValue;
+			} else if (value < 0 && value < capValue) {
+				value = capValue;
+			}
+		}
+
+		if (1 == bonus.bonType) {
+			initial = value;
+		} else {
+			exponent += value;
+		}
+	}
+
+	if (exponent == 0) return initial;
+
+	float scaled = static_cast<float>(initial);
+	if (exponent < 0) {
+		for (int i = 0; i > exponent; i--) {
+			scaled /= factor;
+		}
+	} else {
+		for (int i = 0; i < exponent; i++) {
+			scaled *= factor;
+		}
+	}
+
+	return static_cast<int>(scaled);
+}
+
 /* 0x100E6680 */
 int BonusList::GetHighestBonus() const
 {
@@ -101,6 +146,38 @@ int BonusList::GetHighestBonus() const
 	if (bonFlags & 1 && result > overallCapHigh.bonValue) {
 		result = overallCapHigh.bonValue;
 	}
+	if (bonFlags & 2 && result < overallCapLow.bonValue) {
+		result = overallCapLow.bonValue;
+	}
+
+	return result;
+}
+
+int BonusList::GetLargestPenalty() const
+{
+	int result = 0;
+
+	for (size_t i = 0; i < bonCount; ++i) {
+		auto& bonus = bonusEntries[i];
+
+		auto value = bonus.bonValue;
+
+		if (value >= 0) continue;
+
+		size_t capIdx;
+		if (IsPenaltyCapped(i, &capIdx)) {
+			auto capValue = bonCaps[capIdx].capValue;
+
+			if (value < capValue) {
+				value = capValue;
+			}
+		}
+
+		if (!IsBonusSuppressed(i, nullptr) && result > value) {
+			result = value;
+		}
+	}
+
 	if (bonFlags & 2 && result < overallCapLow.bonValue) {
 		result = overallCapLow.bonValue;
 	}

@@ -299,6 +299,8 @@ def AugmentCastingRadialMenuEntry(attachee, args, evt_obj):
 					minLevel = 4
 				elif feat == feat_maximize_spell:
 					minLevel = 3
+				elif feat == feat_widen_spell:
+					minLevel = 3
 				elif feat == feat_empower_spell:
 					minLevel = 2
 				

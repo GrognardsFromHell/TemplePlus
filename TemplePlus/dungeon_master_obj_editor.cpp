@@ -9,6 +9,7 @@
 #include "python/python_integration_obj.h"
 #include "python/python_header.h"
 
+#include "config/config.h"
 #include "dungeon_master.h"
 
 
@@ -119,6 +120,8 @@ void DungeonMaster::RenderEditedObj() {
 	auto obj = objSystem->GetObject(mEditedObj);
 	if (!obj)
 		return;
+
+	ImGui::GetIO().FontGlobalScale = config.dmGuiScale;
 
 	ImGui::Text(fmt::format("Name: {} , Proto: {}", critEditor.name, objSystem->GetProtoId(mEditedObj)).c_str());
 

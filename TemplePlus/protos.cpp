@@ -331,6 +331,12 @@ int ProtosHooks::ParseMonsterSubcategory(int colIdx, objHndl handle, char * cont
 			continue;
 		}
 
+		// native subtype won't be in the array
+		if (!_strcmpi(tokItem.text, "mc_subtype_native")) {
+			subcatFlags |= MonsterSubcategoryFlag::mc_subtype_native;
+			continue;
+		}
+
 		for (auto i=0; i < arrayLen; i++){
 			if (!_strcmpi(strings[i], tokItem.text)){
 				auto flagTmp = 1 << i;

@@ -1575,8 +1575,6 @@ int _IsWeaponSpecializationFeat(feat_enums feat)
 
 uint32_t _WeaponFeatCheck(objHndl objHnd, feat_enums * featArray, uint32_t featArrayLen, Stat classBeingLeveled, WeaponTypes wpnType)
 {
-	if (templeFuncs.sub_100664B0(objHnd, wpnType) == 3){ return 0; } // 3 means weapon size is more than wielder size+1
-
 	if (weapons.IsSimple(wpnType))
 	{
 		if (feats.HasFeatCountByClass(objHnd, FEAT_SIMPLE_WEAPON_PROFICIENCY, classBeingLeveled, 0))

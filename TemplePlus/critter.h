@@ -289,6 +289,8 @@ struct LegacyCritterSystem : temple::AddressTable
 		Third argument seems unused.
 	*/
 	uint32_t Resurrect(objHndl critter, ResurrectType type, int unk);
+	bool ShouldResurrect(objHndl critter, ResurrectType type);
+	void ResurrectApplyPenalties(objHndl critter, ResurrectType type);
 
 	/*
 		Dominates a critter.
@@ -320,15 +322,24 @@ struct LegacyCritterSystem : temple::AddressTable
 	*/
 	bool CanSense(objHndl critter, objHndl tgt); 
 
+	// Checks if critter can sense target well enough to avoid sneak attacks.
+	// Uncanny dodge and blind-fight allow you to retain your dexterity bonus vs.
+	// opponents you can't see (in melee for the latter).
+	bool CanSenseForSneakAttack(objHndl critter, objHndl tgt);
 
 	int GetSize(objHndl handle);
 
 	int GetEffectiveLevel(objHndl& objHnd); // Get Effective Character Level (used for determining XP gain / requirements)
+
+	// Get Effective Character Level, including level drain effects.
+	// Default excludes temporary negative levels.
+	int GetEffectiveDrainedLevel(objHndl& critter, LevelDrainType incl = LevelDrainType::DrainedOrLostLevel);
 	int GetLevel(objHndl critter);
 
 	int SkillLevel(objHndl critter, SkillEnum skill);
 
 	Race GetRace(objHndl critter, bool getBaseRace = true);
+	Subrace GetSubrace(objHndl critter);
 
 	Gender GetGender(objHndl critter);
 
@@ -408,6 +419,7 @@ struct LegacyCritterSystem : temple::AddressTable
 #pragma endregion
 
 #pragma region Combat
+	float GetNaturalReach(objHndl obj);
 	float GetReach(objHndl objHndl, D20ActionType actType, float* minReach = nullptr); // reach in feet
 	int GetBonusFromSizeCategory(int sizeCategory);
 	int GetDamageIdx(objHndl obj, int attackIdx);
@@ -421,6 +433,7 @@ struct LegacyCritterSystem : temple::AddressTable
 	int GetCritterAttackType(objHndl obj, int attackIdx);
 	int GetRacialAttackBonus(objHndl);
 	int GetBaseAttackBonus(const objHndl& handle, Stat classBeingLeveld = Stat::stat_strength);
+	int GetAttackBonus(const objHndl& handle, D20CAF flags = D20CAF_NONE);
 	int GetArmorClass(objHndl obj, DispIoAttackBonus *dispIo = nullptr);
 	int GetRacialSavingThrowBonus(objHndl handle, SavingThrowType saveType);
 	objHndl GetRightWield(objHndl hndl);
