@@ -53,10 +53,10 @@
                     <StackPanel HorizontalAlignment="Left" Height="231" VerticalAlignment="Top" Width="206" Margin="255,10,0,0" x:Name="NonCorePanel">
                         <Label VerticalAlignment="Center" Content="Non Core Sources" Margin="0,0,10,0" />
                         <ListBox x:Name="NonCoreSources" SelectionMode="Multiple" >
-                            <ListBoxItem Selected="NonCoreSource_Selected" Unselected="NonCoreSource_Deselected" Initialized="NonCoreSource_Initialized" Name="SpellCompendium">Spell Compendium</ListBoxItem>
-                            <ListBoxItem Selected="NonCoreSource_Selected" Unselected="NonCoreSource_Deselected" Initialized="NonCoreSource_Initialized" Name="PHB2">Player's Handbook II</ListBoxItem>
-                            <ListBoxItem Selected="NonCoreSource_Selected" Unselected="NonCoreSource_Deselected" Initialized="NonCoreSource_Initialized" Name="Homebrew">Homebrew</ListBoxItem>
-                            <ListBoxItem Selected="NonCoreSource_Selected" Unselected="NonCoreSource_Deselected" Initialized="NonCoreSource_Initialized" Name="Co8">Circle of Eight</ListBoxItem>
+                            <ListBoxItem Selected="NonCoreSource_Selected" Unselected="NonCoreSource_Deselected" Initialized="NonCoreSource_Initialized" Name="spellcompendium">Spell Compendium</ListBoxItem>
+                            <ListBoxItem Selected="NonCoreSource_Selected" Unselected="NonCoreSource_Deselected" Initialized="NonCoreSource_Initialized" Name="phb2">Player's Handbook II</ListBoxItem>
+                            <ListBoxItem Selected="NonCoreSource_Selected" Unselected="NonCoreSource_Deselected" Initialized="NonCoreSource_Initialized" Name="homebrew">Homebrew</ListBoxItem>
+                            <ListBoxItem Selected="NonCoreSource_Selected" Unselected="NonCoreSource_Deselected" Initialized="NonCoreSource_Initialized" Name="co8">Circle of Eight</ListBoxItem>
                         </ListBox>
                     </StackPanel>
                 </Canvas>

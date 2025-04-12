@@ -508,8 +508,10 @@ namespace TemplePlusConfig
             Func<string, List<string>> ReadStringList = (name) =>
             {
               List<string> val = new List<string>();
-              val.AddRange(tpData[name].Split(';'));
-              val.RemoveAll(str => str == "");
+							foreach (var item in tpData[name].Split(';')) {
+								if (item == "") continue;
+								val.Add(item.ToLower());
+							}
               return val;
             };
 

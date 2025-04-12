@@ -178,7 +178,7 @@ private:
 static std::map<string, PnPSource> nameToSource = {
 	{ "phb", PnPSource::PHB },
 	{ "toee", PnPSource::ToEE },
-	{ "spell compendium", PnPSource::SpellCompendium },
+	{ "spellcompendium", PnPSource::SpellCompendium },
 	{ "phb2", PnPSource::PHB2 },
 	{ "homebrew", PnPSource::Homebrew },
 	{ "co8", PnPSource::Co8 }
@@ -187,7 +187,7 @@ static std::map<string, PnPSource> nameToSource = {
 static std::map<PnPSource, string> sourceToName = {
 	{ PnPSource::PHB, "phb" },
 	{ PnPSource::ToEE, "toee" },
-	{ PnPSource::SpellCompendium, "spell compendium" },
+	{ PnPSource::SpellCompendium, "spellcompendium" },
 	{ PnPSource::PHB2, "phb2" },
 	{ PnPSource::Homebrew, "homebrew" },
 	{ PnPSource::Co8, "co8" }
