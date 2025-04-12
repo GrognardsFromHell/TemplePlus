@@ -20,3 +20,4 @@ mode_Target: Cone
 radius_Target: 30
 degrees_Target: 90
 ai_type: ai_action_offensive
+source: PHB

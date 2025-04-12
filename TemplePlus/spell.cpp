@@ -420,6 +420,28 @@ int SpellEntry::GetLowestSpellLevel(uint32_t spellEnumIn)
 	return (level < 100) ? level : -1;
 }
 
+PnPSource SpellEntry::GetSource()
+{
+	const auto spSrcFind = spellSys.mSpellSources.find(spellEnum);
+	if (spSrcFind != spellSys.mSpellSources.end()) {
+		return spSrcFind->second;
+	}
+
+	return DefaultSpellSource(spellEnum);
+}
+
+bool SpellEntry::IsSourceEnabled()
+{
+	// if it's a core spell, it's enabled
+	if (!spellSys.IsNonCore(spellEnum)) return true;
+
+	// if non-core materials are overall disabled, then it's not
+	if (!config.nonCoreMaterials) return false;
+
+	// otherwise check explicit source info
+	return config.nonCoreSources.count(GetSource()) > 0;
+}
+
 SpellPacketBody::SpellPacketBody()
 {
 	spellSys.spellPacketBodyReset(this);
@@ -904,9 +926,9 @@ int LegacySpellSystem::CopyLearnableSpells(objHndl& handle, int spellClass, std:
 
 	for (auto it : spellEntryRegistry) {
 		auto spEntry = it.data;
-		if (IsNonCore(spEntry->spellEnum) && !config.nonCoreMaterials) {
-			continue;
-		}
+
+		if (!spEntry->IsSourceEnabled()) continue;
+
 		if (GetSpellLevelBySpellClass(spEntry->spellEnum, spellClass) >= 0)	{
 			entries.push_back(*spEntry);
 		}
@@ -2402,36 +2424,47 @@ BOOL LegacySpellSystem::SpellEntriesInit(const char * spellRulesFolder){
 	return TRUE;
 }
 
+// Factored out logic. Tries to look up a lowercased string key in the map, and
+// otherwise searches for a prefix match.
+template <typename T>
+bool FindInMapping(int spellEnum, const std::map<string, T> & options, const char *txt, T & valueOut)
+{
+	for (auto ch = txt; *ch; ch++) {
+		if (*ch == ':' || *ch == ' ')
+			continue;
+
+		std::string text(ch);
+		text = rtrim(tolower(text));
+
+		auto lookup = options.find(text);
+		if (lookup != options.end()) {
+			valueOut = lookup->second;
+			return true;
+		}
+
+		for (auto it : options) {
+			auto len = strlen(it.first.c_str());
+			if (!_strnicmp(it.first.c_str(), ch, len)) {
+				valueOut = it.second;
+				return true;
+			}
+		}
+
+		if (ch[0]) {
+			logger->warn("SpellEntryFileParse: type not found: {}, spell {}", ch, spellEnum);
+		} else {
+			logger->warn("SpellEntryFileParse: blank entry", ch);
+		}
+		return false;
+	}
+
+	return false;
+}
+
 bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 {
 	char textBuf[1000] = { 0, };
 	static auto spellEntryLineParser = temple::GetRef<BOOL(__cdecl)(char *, int &, int &, int&)>(0x1007A890);
-	
-	static std::function findInMapping = [&](const std::map<string, int> & options, const char* txt, int& valueOut)->bool {
-		for (auto ch = txt; *ch; ch++) {
-			if (*ch == ':' || *ch == ' ')
-				continue;
-
-			auto found = false;
-			std::string text(ch);
-			text = tolower(text);
-			for (auto it : options) {
-				if (!_strnicmp(it.first.c_str(), ch, strlen(it.first.c_str()))) {
-					valueOut = it.second;
-					return true;
-				}
-			}
-
-			if (ch[0]) {
-				logger->warn("SpellEntryFileParse: type not found: {}, spell {}", ch, spEntry.spellEnum);
-			}
-			else {
-				logger->warn("Spell Array: blank text", ch);
-			}
-			return false;
-		}
-		return false;
-	};
 	
 	while (tio_fgets(textBuf, 1000, tf))
 	{
@@ -2440,20 +2473,21 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 
 		if (!_strnicmp(textBuf, "school", 6)) {
 			static std::map<string, int> schoolStrings = {
-				{ "None", 0 }, // lol bug; fixed inside SavingThrowSpell (to avoid changing all the spell rules...)
-				{ "Abjuration", SpellSchools::School_Abjuration },
-				{ "Conjuration", SpellSchools::School_Conjuration},
-				{ "Divination", SpellSchools::School_Divination},
-				{ "Enchantment", SpellSchools::School_Enchantment},
-				{ "Evocation", SpellSchools::School_Evocation},
-				{ "Illusion", SpellSchools::School_Illusion},
-				{ "Necromancy", SpellSchools::School_Necromancy},
-				{ "Transmutation", SpellSchools::School_Transmutation},
+				{ "none", 0 }, // lol bug; fixed inside SavingThrowSpell (to avoid changing all the spell rules...)
+				{ "abjuration", SpellSchools::School_Abjuration },
+				{ "conjuration", SpellSchools::School_Conjuration},
+				{ "divination", SpellSchools::School_Divination},
+				{ "enchantment", SpellSchools::School_Enchantment},
+				{ "evocation", SpellSchools::School_Evocation},
+				{ "illusion", SpellSchools::School_Illusion},
+				{ "necromancy", SpellSchools::School_Necromancy},
+				{ "transmutation", SpellSchools::School_Transmutation},
 				// Added in Temple+ for Warlocks
-				{ "Invocation", SpellSchools::School_Transmutation},
+				{ "invocation", SpellSchools::School_Transmutation},
+				{ "universal", SpellSchools::School_Universal},
 			};
 			auto value = 0;
-			if (findInMapping(schoolStrings, textBuf + 6, value)) {
+			if (FindInMapping(spEntry.spellEnum, schoolStrings, textBuf + 6, value)) {
 				spEntry.spellSchoolEnum = value;
 			}
 		}
@@ -2524,27 +2558,12 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 				{ "loc is clear", UiPickerType::LocIsClear }
 			};
 			
-			 
-			for (auto ch = textBuf + 11; *ch; ch++) {
-				if (*ch == ':' || *ch == ' ')
-					continue;
-				
-				auto found = false;
-				std::string text(ch);
-				text = tolower(text);
-				for (auto it: modeTgtStrings){
-					if (!_strnicmp(it.first.c_str(), ch, strlen(it.first.c_str()))){
-						spEntry.modeTargetSemiBitmask |= (uint64_t)it.second;
-						found = true;
-						break;
-					}
-				}
-				if (!found) {
-					logger->warn("Spell Array: Mode_Target type not found: {}", ch);
-				}
-				break;
+			UiPickerType value = UiPickerType::None;
+			if (FindInMapping(spEntry.spellEnum, modeTgtStrings, textBuf + 11, value)) {
+				spEntry.modeTargetSemiBitmask |= static_cast<uint64_t>(value);
+			} else {
+				logger->warn("Spell Array: Mode_Target type not found: {}", textBuf + 12);
 			}
-
 		}
 
 		else if (!_strnicmp(textBuf, "Saving Throw", 12)) {
@@ -2557,7 +2576,7 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 				{ "no", 0},   // added support for "No"; suffers same bug as above
 			};
 			auto value = 0;
-			if (findInMapping(saveThrowStrings, textBuf + 12, value)) {
+			if (FindInMapping(spEntry.spellEnum, saveThrowStrings, textBuf + 12, value)) {
 				spEntry.savingThrowType = value;
 			}
 			
@@ -2580,15 +2599,15 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 		}
 		else if (!_strnicmp(textBuf, "Casting Time", 12)) {
 			static std::map<string, int> castingTimeStrings = {
-				{ "Swift Action", 4 }, // ??
-				{ "Free Action", 4 }, 
-				{ "Safe", 3 },
-				{ "Out of Combat", 2 },
-				{ "Full Round", 1 },
+				{ "swift action", 4 }, // ??
+				{ "free action", 4 }, 
+				{ "safe", 3 },
+				{ "out of combat", 2 },
+				{ "full round", 1 },
 				{ "1 action", 0},
 			};
 			auto value = 0;
-			if (findInMapping(castingTimeStrings, textBuf + 12, value)) {
+			if (FindInMapping(spEntry.spellEnum, castingTimeStrings, textBuf + 12, value)) {
 				spEntry.castingTimeType = value;
 			}
 		}
@@ -2606,8 +2625,26 @@ bool LegacySpellSystem::SpellEntryFileParse(SpellEntry & spEntry, TioFile * tf)
 					{ "ai_action_resurrect"  , 8 },
 			};
 			auto value = 0;
-			if (findInMapping(aiTypeStrings, textBuf + 7, value)) {
+			if (FindInMapping(spEntry.spellEnum, aiTypeStrings, textBuf + 7, value)) {
 				spEntry.aiTypeBitmask |= (1 << value);
+			}
+		}
+		else if (!_strnicmp(textBuf, "source", 6)) {
+			static std::map<string, PnPSource> sourceStrings = {
+				{ "phb"             , PnPSource::PHB },
+				{ "toee"            , PnPSource::ToEE },
+				{ "spell compendium", PnPSource::SpellCompendium },
+				{ "phb2"            , PnPSource::PHB2 },
+				{ "homebrew"        , PnPSource::Homebrew },
+			};
+
+			auto value = DefaultSpellSource(spEntry.spellEnum);
+
+			if (FindInMapping(spEntry.spellEnum, sourceStrings, textBuf + 6, value)) {
+				mSpellSources[spEntry.spellEnum] = value;
+			} else {
+				auto msg = "SpellEntryFileParse: spell {}: unrecognized source {}";
+				logger->warn(msg, spEntry.spellEnum, textBuf + 6);
 			}
 		}
 		else  {
@@ -3033,7 +3070,19 @@ bool LegacySpellSystem::IsNewSlotDesignator(int spellEnum)
 // Non-Core spells will be added in the expanded range
 bool LegacySpellSystem::IsNonCore(int spellEnum)
 {
+	auto spSource = mSpellSources.find(spellEnum);
+	if (spSource != mSpellSources.end()) {
+		return static_cast<uint32_t>(spSource->second) > 255;
+	}
+
 	return (spellEnum > SPELL_ENUM_MAX_VANILLA);
+}
+
+bool LegacySpellSystem::IsSpellSourceEnabled(int spellEnum)
+{
+	SpellEntry spell(spellEnum);
+	
+	return spell.IsSourceEnabled();
 }
 
 int LegacySpellSystem::GetSpellLevelBySpellClass(int spellEnum, int spellClass, objHndl handle){

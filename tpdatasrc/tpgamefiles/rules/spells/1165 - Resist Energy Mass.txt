@@ -24,3 +24,4 @@ max_Target: 0
 radius_Target: 0
 ai_type: ai_action_defensive
 choices: 0121 0122 0123 0124 0125
+source: Spell Compendium

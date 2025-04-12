@@ -22,3 +22,4 @@ mode_Target: Cone
 radius_Target: 60
 degrees_Target: 90
 ai_type: ai_action_offensive
+source: Spell Compendium

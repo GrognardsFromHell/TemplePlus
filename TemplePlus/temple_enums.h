@@ -2770,3 +2770,4 @@ enum SpellFlags : uint32_t
 	SF_4000000 = 0x4000000,
 	SF_SPELL_FLEE = 0x8000000,
 };
+

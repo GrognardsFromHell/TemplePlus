@@ -22,3 +22,4 @@ min_Target: 1
 max_Target: -1010
 radius_Target: 0
 ai_type: ai_action_heal_light
+source: Spell Compendium
