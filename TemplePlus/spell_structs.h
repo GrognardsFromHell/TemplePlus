@@ -301,6 +301,7 @@ struct SpellEntry {
 	int SpellLevelForSpellClass(int spellClass); // returns -1 if none
 	int GetLowestSpellLevel(uint32_t spellEnumIn);  ///Gets lowest level the spell is for any class
 	PnPSource GetSource();
+	bool IsSourceEnabled();
 };
 
 struct ProjectileEntry {

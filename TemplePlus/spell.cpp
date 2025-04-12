@@ -430,6 +430,18 @@ PnPSource SpellEntry::GetSource()
 	return DefaultSpellSource(spellEnum);
 }
 
+bool SpellEntry::IsSourceEnabled()
+{
+	// if it's a core spell, it's enabled
+	if (!spellSys.IsNonCore(spellEnum)) return true;
+
+	// if non-core materials are overall disabled, then it's not
+	if (!config.nonCoreMaterials) return false;
+
+	// otherwise check explicit source info
+	return config.nonCoreSources.count(GetSource()) > 0;
+}
+
 SpellPacketBody::SpellPacketBody()
 {
 	spellSys.spellPacketBodyReset(this);
@@ -914,9 +926,9 @@ int LegacySpellSystem::CopyLearnableSpells(objHndl& handle, int spellClass, std:
 
 	for (auto it : spellEntryRegistry) {
 		auto spEntry = it.data;
-		if (IsNonCore(spEntry->spellEnum) && !config.nonCoreMaterials) {
-			continue;
-		}
+
+		if (!spEntry->IsSourceEnabled()) continue;
+
 		if (GetSpellLevelBySpellClass(spEntry->spellEnum, spellClass) >= 0)	{
 			entries.push_back(*spEntry);
 		}
@@ -2991,6 +3003,13 @@ bool LegacySpellSystem::IsNonCore(int spellEnum)
 	}
 
 	return (spellEnum > SPELL_ENUM_MAX_VANILLA);
+}
+
+bool LegacySpellSystem::IsSpellSourceEnabled(int spellEnum)
+{
+	SpellEntry spell(spellEnum);
+	
+	return spell.IsSourceEnabled();
 }
 
 int LegacySpellSystem::GetSpellLevelBySpellClass(int spellEnum, int spellClass, objHndl handle){
