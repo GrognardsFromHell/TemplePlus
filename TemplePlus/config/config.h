@@ -31,7 +31,8 @@ enum class PnPSource : uint32_t
 	ToEE = 1,
 	SpellCompendium = 0x100,
 	PHB2 = 0x101,
-	Homebrew = 0x200
+	Homebrew = 0x200,
+	Co8 = 0x201
 };
 
 

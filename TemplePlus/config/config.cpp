@@ -180,7 +180,8 @@ static std::map<string, PnPSource> nameToSource = {
 	{ "toee", PnPSource::ToEE },
 	{ "spell compendium", PnPSource::SpellCompendium },
 	{ "phb2", PnPSource::PHB2 },
-	{ "homebrew", PnPSource::Homebrew }
+	{ "homebrew", PnPSource::Homebrew },
+	{ "co8", PnPSource::Co8 }
 };
 
 static std::map<PnPSource, string> sourceToName = {
@@ -188,7 +189,8 @@ static std::map<PnPSource, string> sourceToName = {
 	{ PnPSource::ToEE, "toee" },
 	{ PnPSource::SpellCompendium, "spell compendium" },
 	{ PnPSource::PHB2, "phb2" },
-	{ PnPSource::Homebrew, "homebrew" }
+	{ PnPSource::Homebrew, "homebrew" },
+	{ PnPSource::Co8, "co8" }
 };
 
 #define CONF_STRING(FIELDNAME) ConfigSetting::String(#FIELDNAME, [] (string val) { config.FIELDNAME = val; }, [] { return config.FIELDNAME; })
