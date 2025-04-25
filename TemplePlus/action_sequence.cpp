@@ -106,6 +106,7 @@ public:
 	static int SeqRenderAooMovement(D20Actn*, UiIntgameTurnbasedFlags);
 	static int SeqRenderFuncMove(D20Actn* d20a, UiIntgameTurnbasedFlags flags);
 	static int SeqRenderAttack(D20Actn* d20a, UiIntgameTurnbasedFlags flags);
+	static int ActionCostReload(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp); 
 
 	static int ChooseTargetCallback(void* a)
 	{
@@ -180,6 +181,8 @@ public:
 		{
 			return actSeqSys.ReadyVsApproachOrWithdrawalCount();
 		});
+
+		replaceFunction(0x100903B0, ActionCostReload);
 	}
 } actSeqReplacements;
 
@@ -230,8 +233,6 @@ ActionSequenceSystem::ActionSequenceSystem()
 	//rebase(TrimPathToRemainingMoveLength, 0x1008B9A0);
 
 	rebase(_CrossBowSthgReload_1008E8A0, 0x1008E8A0);
-
-	rebase(ActionCostReload, 0x100903B0);
 
 	rebase(_TurnBasedStatusUpdate, 0x10093950);
 	rebase(_combatTriggerSthg, 0x10093890);
@@ -1729,6 +1730,11 @@ uint32_t ActionSequenceSystem::ActionCostNull(D20Actn* d20Actn, TurnBasedStatus*
 	actionCostPacket->chargeAfterPicker = 0;
 	actionCostPacket->moveDistCost = 0;
 	return 0;
+}
+
+int ActionSequenceSystem::ActionCostReload(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp)
+{
+	return ActnSeqReplacements::ActionCostReload(d20, tbStat, acp);
 }
 
 void ActionSequenceSystem::ProcessSequenceForAoOs(ActnSeq* actSeq, D20Actn* d20a)
@@ -4050,6 +4056,45 @@ int ActnSeqReplacements::SeqRenderAttack(D20Actn* d20a, UiIntgameTurnbasedFlags 
 
 	
 	showHitChanceTooltip(d20a, flags);
+	return 0;
+}
+
+int ActnSeqReplacements::ActionCostReload(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp)
+{
+	// free action by default
+	acp->hourglassCost = 0;
+
+	if (d20->d20Caf & D20CAF_NEED_ANIM_COMPLETED) return 0;
+	if (!combatSys.isCombatActive()) return 0;
+
+	auto weapon = inventory.ItemWornAt(d20->d20APerformer, EquipSlot::WeaponPrimary);
+	if (!weapon) return 0;
+
+	// TODO: rapid reload is actually a per-weapon feat per the SRD
+	bool rapid = feats.HasFeatCountByClass(d20->d20APerformer, FEAT_RAPID_RELOAD);
+
+	// costs for reloading heavy/repeating crossbows based on strict rules status
+	int fastCost = config.stricterRulesEnforcement ? 1 : 0; // move or free
+	int slowCost = config.stricterRulesEnforcement ? 4 : 1; // full round or move
+
+	switch (objects.GetWeaponType(weapon))
+	{
+	case wt_light_crossbow:
+	case wt_hand_crossbow:
+		if (rapid) break; // free action
+	case wt_sling: // has no rapid reload
+		acp->hourglassCost = 1; // move action
+		break;
+	case wt_heavy_crossbow:
+		acp->hourglassCost = fastCost;
+		if (rapid) break;
+	case wt_repeating_crossbow: // has no rapid reload
+		acp->hourglassCost = slowCost;
+		break;
+	default:
+		// free action
+		break;
+	}
 	return 0;
 }
 
