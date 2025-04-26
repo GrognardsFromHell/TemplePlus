@@ -154,6 +154,7 @@ public:
 
 
 	// Projectile Hit
+	static BOOL ProjectileHitStandard(D20Actn* d20a, objHndl projectile, objHndl obj2);
 	static BOOL ProjectileHitSpell(D20Actn* d20a, objHndl projectile, objHndl obj2);
 	static BOOL ProjectileHitPython(D20Actn* d20a, objHndl projectile, objHndl obj2);
 
@@ -243,6 +244,7 @@ static struct LegacyD20SystemAddresses : temple::AddressTable {
 	uint32_t(__cdecl*AddToSeqStdAttack)(D20Actn*, ActnSeq*, TurnBasedStatus*);
 	uint32_t(__cdecl*ActionCheckStdAttack)(D20Actn*, TurnBasedStatus*);
 	int(__cdecl*TargetWithinReachOfLoc)(objHndl obj, objHndl target, LocAndOffsets* loc);
+	int(__cdecl*ProjectileFunc_RangedAttack)(D20Actn*, objHndl, objHndl);
 	int * actSeqTargetsIdx;
 	objHndl * actSeqTargets; // size 32
 
@@ -258,6 +260,7 @@ static struct LegacyD20SystemAddresses : temple::AddressTable {
 		rebase(TargetWithinReachOfLoc, 0x100B86C0);
 		rebase(actSeqTargetsIdx, 0x118CD2A0);
 		rebase(actSeqTargets, 0x118CD2A8);
+		rebase(ProjectileFunc_RangedAttack, 0x100982E0);
 	}
 } addresses;
 
@@ -465,6 +468,8 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Defs[d20Type].turnBasedStatusCheck = d20Callbacks.StdAttackTurnBasedStatusCheck;
 	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostStandardAttack;
 	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckStdRangedAttack;
+	d20Defs[d20Type].projectileHitFunc = d20Callbacks.ProjectileHitStandard;
+	d20Defs[d20Type].actionFrameFunc = d20Callbacks.ActionFrameRangedAttack;
 	//d20Defs[d20Type].actionCost = d20Callbacks.TargetCheckStandardAttack;
 
 	d20Type = D20A_FULL_ATTACK;
@@ -3236,6 +3241,11 @@ BOOL D20ActionCallbacks::ActionFrameTripAttack(D20Actn* d20a){
 	}
 
 	return FALSE;
+}
+
+BOOL D20ActionCallbacks::ProjectileHitStandard(D20Actn *d20a, objHndl projectile, objHndl thrown)
+{
+	return addresses.ProjectileFunc_RangedAttack(d20a, projectile, thrown);
 }
 
 BOOL D20ActionCallbacks::ProjectileHitSpell(D20Actn * d20a, objHndl projectile, objHndl obj2){
