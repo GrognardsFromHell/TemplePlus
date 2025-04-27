@@ -114,7 +114,7 @@ struct InventorySystem : temple::AddressTable
 	objHndl FindItemByProtoId(objHndl container, int protoId, bool skipWorn = false);
 
 	
-	int IsNormalCrossbow(objHndl weapon);
+	bool IsLoadableWeapon(objHndl weapon, bool strict = false);
 	int IsThrowingWeapon(objHndl weapon);
 	bool IsGrenade(objHndl weapon);
 	bool UsesWandAnim(const objHndl item);

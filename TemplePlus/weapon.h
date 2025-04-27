@@ -39,6 +39,7 @@ struct WeaponSystem : temple::AddressTable
 	bool IsRangedWeapon(WeaponTypes wpnType);
 	bool IsThrownOnlyWeapon(WeaponTypes wpnType);
 	bool IsMeleeWeapon(WeaponTypes wpnType);
+	bool IsUnloaded(objHndl weapon);
 
 	std::map<WeaponTypes, WeaponTypeProperties> wpnProps;
 	WeaponSystem();

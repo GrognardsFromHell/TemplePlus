@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "common.h"
+#include "config/config.h"
 #include "weapon.h"
 #include "obj.h"
 
@@ -403,6 +404,28 @@ bool WeaponSystem::IsMeleeWeapon(WeaponTypes wpnType)
 
 	default:
 		return true;
+	}
+}
+
+// Checks if a weapon requires loading and is not loaded.
+bool WeaponSystem::IsUnloaded(objHndl weapon)
+{
+	if (!weapon) return false;
+
+	if (objects.GetType(weapon) != obj_t_weapon) return false;
+
+	bool unloaded = !(objects.getInt32(weapon, obj_f_weapon_flags) & OWF_WEAPON_LOADED);
+
+	switch (objects.GetWeaponType(weapon))
+	{
+	case wt_light_crossbow:
+	case wt_heavy_crossbow:
+		return unloaded;
+	case wt_sling:
+		return config.stricterRulesEnforcement && unloaded;
+	// TODO: repeating crossbows
+	default:
+		return false;
 	}
 }
 

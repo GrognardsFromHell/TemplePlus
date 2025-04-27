@@ -3841,11 +3841,13 @@ ActionErrorCode D20ActionCallbacks::AddToStandardAttack(D20Actn * d20a, ActnSeq 
 	if (inventory.IsRangedWeapon(weapon)){
 		ActionCostPacket acp;
 		d20aCopy.d20Caf |= D20CAF_RANGED;
-		if (inventory.IsNormalCrossbow(weapon))	{
+		if (inventory.IsLoadableWeapon(weapon))	{
 			actSeqSys.ActionCostReload(d20a, &tbStatCopy, &acp);
-			if (acp.hourglassCost){
-				d20a->d20ActType = D20A_STANDARD_RANGED_ATTACK;
-				return (ActionErrorCode)actSeqSys.CrossBowSthgReload_1008E8A0(&d20aCopy, actSeq);
+
+			// if reloading isn't free, we can do at most one attack
+			if (acp.hourglassCost) {
+				d20aCopy.d20ActType = D20A_STANDARD_RANGED_ATTACK;
+				return actSeqSys.AppendReloadAttack(actSeq, &d20aCopy, &tbStatCopy);
 			}
 		}
 

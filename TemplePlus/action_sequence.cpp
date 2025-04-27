@@ -1848,6 +1848,33 @@ void ActionSequenceSystem::ProcessSequenceForAoOs(ActnSeq* actSeq, D20Actn* d20a
 	{ __asm pop edi __asm pop ebx __asm pop esi __asm pop ecx}*/
 }
 
+// Used to append reload actions necessary before an attack
+ActionErrorCode ActionSequenceSystem::AppendReloadAttack(ActnSeq *actSeq, D20Actn *d20a, TurnBasedStatus *tbStat)
+{
+	// first stand up if prone
+	if (d20Sys.d20Query(d20a->d20APerformer, DK_QUE_Prone)) {
+		D20Actn standUp;
+		standUp = *d20a;
+		standUp.d20ActType = D20A_STAND_UP;
+		actSeq->d20ActArray[actSeq->d20ActArrayNum++] = standUp;
+	}
+
+	// reload if necessary
+	if (combatSys.NeedsToReload(d20a->d20APerformer)) {
+		D20Actn reload;
+		reload = *d20a;
+		reload.d20ActType = D20A_RELOAD;
+		actSeq->d20ActArray[actSeq->d20ActArrayNum++] = reload;
+	}
+
+	auto result = TurnBasedStatusUpdate(tbStat, d20a);
+	if (result) return static_cast<ActionErrorCode>(result);
+
+	AttackAppend(actSeq, d20a, tbStat, tbStat->attackModeCode);
+
+	return AEC_OK;
+}
+
 int ActionSequenceSystem::CrossBowSthgReload_1008E8A0(D20Actn* d20a, ActnSeq* actSeq)
 {
 	int result = 0;
@@ -3685,13 +3712,15 @@ int ActionSequenceSystem::UnspecifiedAttackAddToSeq(D20Actn* d20a, ActnSeq* actS
 	// ranged attack handling
 	if (inventory.IsRangedWeapon(weapon)){
 		d20aCopy.d20Caf |= D20CAF_RANGED;
-		if (inventory.IsNormalCrossbow(weapon))	{
+		if (inventory.IsLoadableWeapon(weapon))	{
 			
 			ActionCostReload(d20a, &tbStatCopy, &acp);
+
+			// if reloading isn't free, we can do at most one attack
 			if (acp.hourglassCost)
 			{
 				d20aCopy.d20ActType = D20A_STANDARD_RANGED_ATTACK;
-				return CrossBowSthgReload_1008E8A0(&d20aCopy, actSeq);
+				return AppendReloadAttack(actSeq, &d20aCopy, &tbStatCopy);
 			}
 		}
 		FullAttackCostCalculate(&d20aCopy, &tbStatCopy, &junk, &junk, &numAttacks, &junk );

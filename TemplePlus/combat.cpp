@@ -521,6 +521,14 @@ bool LegacyCombatSystem::AmmoMatchesItemAtSlot(objHndl obj, EquipSlot equipSlot)
 	return weapons.AmmoMatchesWeapon(weapon, ammoItem);
 }
 
+bool LegacyCombatSystem::NeedsToReload(objHndl critter)
+{
+	if (!critter || d20Sys.d20Query(critter, DK_QUE_Polymorphed)) return false;
+
+	auto weapon = critterSys.GetWornItem(critter, EquipSlot::WeaponPrimary);
+	return weapons.IsUnloaded(weapon);
+}
+
 objHndl * LegacyCombatSystem::GetHostileCombatantList(objHndl obj, int * count)
 {
 	int initListLen = GetInitiativeListLength();
