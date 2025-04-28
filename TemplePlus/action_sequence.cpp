@@ -232,8 +232,6 @@ ActionSequenceSystem::ActionSequenceSystem()
 	//rebase(GetRemainingMaxMoveLength, 0x1008B8A0);
 	//rebase(TrimPathToRemainingMoveLength, 0x1008B9A0);
 
-	rebase(_CrossBowSthgReload_1008E8A0, 0x1008E8A0);
-
 	rebase(_TurnBasedStatusUpdate, 0x10093950);
 	rebase(_combatTriggerSthg, 0x10093890);
 	rebase(_ProcessPathForReadiedActions,      0x100939D0); 
@@ -1873,24 +1871,6 @@ ActionErrorCode ActionSequenceSystem::AppendReloadAttack(ActnSeq *actSeq, D20Act
 	AttackAppend(actSeq, d20a, tbStat, tbStat->attackModeCode);
 
 	return AEC_OK;
-}
-
-int ActionSequenceSystem::CrossBowSthgReload_1008E8A0(D20Actn* d20a, ActnSeq* actSeq)
-{
-	int result = 0;
-	{ __asm push ecx __asm push esi __asm push ebx __asm push edi};;
-	__asm{
-		mov ecx, this;
-		mov esi, [ecx]._CrossBowSthgReload_1008E8A0;
-		mov eax, d20a;
-		push eax;
-		mov ebx, actSeq;
-		call esi;
-		add esp, 4;
-		mov result, eax;
-	}
-	{ __asm pop edi __asm pop ebx __asm pop esi __asm pop ecx} 
-	return result;
 }
 
 uint32_t ActionSequenceSystem::TurnBasedStatusUpdate(D20Actn* d20a, TurnBasedStatus* tbStatus)
