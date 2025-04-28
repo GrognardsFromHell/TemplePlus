@@ -199,6 +199,9 @@ struct LegacyCritterSystem : temple::AddressTable
 
 	void Attack(objHndl provoked, objHndl attacker, int rangeType, int flags);
 
+	// returns true if the weapon was actually reloaded
+	bool AutoReload(objHndl critter);
+
 	/*
 		does the gameplay logic for pickpocketing (this gets called at the end of the pickpocket animation)
 	*/

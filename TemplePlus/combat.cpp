@@ -1183,7 +1183,7 @@ bool LegacyCombatSystem::CombatEnd(){
 		auto N = party.GroupListGetLen();
 		for (auto i=0u; i < N; i++){
 			auto partyMember = party.GroupListGetMemberN(i);
-			temple::GetRef<void(__cdecl)(objHndl)>(0x100B70A0)(partyMember);
+			critterSys.AutoReload(partyMember);
 		}
 		auto combatGiveXp = temple::GetRef<void(__cdecl)()>(0x100B88C0);
 		combatGiveXp();
