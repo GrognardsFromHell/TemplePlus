@@ -106,6 +106,7 @@ public:
 	static ActionErrorCode ActionCostStandardAttack(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
 	static ActionErrorCode ActionCostMoveAction(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
 	static ActionErrorCode ActionCostNull(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
+	static ActionErrorCode ActionCostReload(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
 	static ActionErrorCode ActionCostSwift(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
 	static ActionErrorCode ActionCostStandardAction(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
 	static ActionErrorCode ActionCostWhirlwindAttack(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
@@ -128,6 +129,7 @@ public:
 	static ActionErrorCode PerformEmptyBody(D20Actn* d20a);
 	static ActionErrorCode PerformFullAttack(D20Actn* d20a);
 	static ActionErrorCode PerformPython(D20Actn* d20a);
+	static ActionErrorCode PerformReload(D20Actn* d20a);
 	static ActionErrorCode PerformQuiveringPalm(D20Actn* d20a);
 	static ActionErrorCode PerformSneak(D20Actn* d20a);
 	static ActionErrorCode PerformStandardAttack(D20Actn* d20a);
@@ -478,6 +480,10 @@ void LegacyD20System::NewD20ActionsInit()
 
 	d20Type = D20A_MOVE;
 	d20Defs[d20Type].flags = static_cast<D20ADF>(d20Defs[d20Type].flags & ~(D20ADF::D20ADF_Breaks_Concentration));
+
+	d20Type = D20A_RELOAD;
+	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostReload;
+	d20Defs[d20Type].performFunc = d20Callbacks.PerformReload;
 
 	d20Type = D20A_5FOOTSTEP;
 	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckFiveFootStep;
@@ -1963,6 +1969,22 @@ ActionErrorCode D20ActionCallbacks::PerformPython(D20Actn* d20a){
 	dispIo.DispatchPythonActionPerform(pyActionEnum);
 	
 	return (ActionErrorCode)dispIo.returnVal; 
+}
+
+// Note: rework this if dual wielding loaded weapons ever happens
+ActionErrorCode D20ActionCallbacks::PerformReload(D20Actn *d20a) {
+	DispIoD20ActionTurnBased dispIo(d20a);
+
+	auto critter = d20a->d20APerformer;
+	if (!combatSys.NeedsToReload(critter)) return AEC_OK;
+
+	objects.floats->FloatCombatLine(critter, 42);
+	histSys.CreateRollHistoryLineFromMesfile(2, critter, objHndl::null);
+
+	auto weapon = critterSys.GetWornItem(critter, EquipSlot::WeaponPrimary);
+	weapons.SetLoaded(weapon);
+
+	return AEC_OK;
 }
 
 ActionErrorCode D20ActionCallbacks::PerformQuiveringPalm(D20Actn* d20a){
@@ -4129,6 +4151,10 @@ ActionErrorCode D20ActionCallbacks::ActionCostNull(D20Actn* d20a, TurnBasedStatu
 	acp->chargeAfterPicker = 0;
 	acp->moveDistCost = 0;
 	return AEC_OK;
+}
+
+ActionErrorCode D20ActionCallbacks::ActionCostReload(D20Actn *d20a, TurnBasedStatus *tbStat, ActionCostPacket *acp) {
+	return actSeqSys.ActionCostReload(d20a, tbStat, acp);
 }
 
 ActionErrorCode D20ActionCallbacks::ActionCostSwift(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp)

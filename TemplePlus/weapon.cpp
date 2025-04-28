@@ -429,6 +429,14 @@ bool WeaponSystem::IsUnloaded(objHndl weapon)
 	}
 }
 
+void WeaponSystem::SetLoaded(objHndl weapon)
+{
+	if (!weapon || objects.GetType(weapon) != obj_t_weapon) return;
+
+	auto flags = objects.getInt32(weapon, obj_f_weapon_flags);
+	objects.setInt32(weapon, obj_f_weapon_flags, flags | OWF_WEAPON_LOADED);
+}
+
 bool WeaponSystem::IsRangedWeapon(WeaponTypes wpnType)
 {
 	switch (wpnType) {

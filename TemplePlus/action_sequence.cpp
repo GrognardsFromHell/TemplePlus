@@ -106,7 +106,7 @@ public:
 	static int SeqRenderAooMovement(D20Actn*, UiIntgameTurnbasedFlags);
 	static int SeqRenderFuncMove(D20Actn* d20a, UiIntgameTurnbasedFlags flags);
 	static int SeqRenderAttack(D20Actn* d20a, UiIntgameTurnbasedFlags flags);
-	static int ActionCostReload(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp); 
+	static ActionErrorCode ActionCostReload(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp); 
 
 	static int ChooseTargetCallback(void* a)
 	{
@@ -1730,7 +1730,7 @@ uint32_t ActionSequenceSystem::ActionCostNull(D20Actn* d20Actn, TurnBasedStatus*
 	return 0;
 }
 
-int ActionSequenceSystem::ActionCostReload(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp)
+ActionErrorCode ActionSequenceSystem::ActionCostReload(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp)
 {
 	return ActnSeqReplacements::ActionCostReload(d20, tbStat, acp);
 }
@@ -4068,16 +4068,16 @@ int ActnSeqReplacements::SeqRenderAttack(D20Actn* d20a, UiIntgameTurnbasedFlags 
 	return 0;
 }
 
-int ActnSeqReplacements::ActionCostReload(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp)
+ActionErrorCode ActnSeqReplacements::ActionCostReload(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp)
 {
 	// free action by default
 	acp->hourglassCost = 0;
 
-	if (d20->d20Caf & D20CAF_NEED_ANIM_COMPLETED) return 0;
-	if (!combatSys.isCombatActive()) return 0;
+	if (d20->d20Caf & D20CAF_NEED_ANIM_COMPLETED) return AEC_OK;
+	if (!combatSys.isCombatActive()) return AEC_OK;
 
 	auto weapon = inventory.ItemWornAt(d20->d20APerformer, EquipSlot::WeaponPrimary);
-	if (!weapon) return 0;
+	if (!weapon) return AEC_OK;
 
 	// TODO: rapid reload is actually a per-weapon feat per the SRD
 	bool rapid = feats.HasFeatCountByClass(d20->d20APerformer, FEAT_RAPID_RELOAD);
@@ -4104,7 +4104,7 @@ int ActnSeqReplacements::ActionCostReload(D20Actn *d20, TurnBasedStatus *tbStat,
 		// free action
 		break;
 	}
-	return 0;
+	return AEC_OK;
 }
 
 void ActnSeqReplacements::AooShaderPacketAppend(LocAndOffsets* loc, int aooShaderId)
