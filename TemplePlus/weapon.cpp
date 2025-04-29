@@ -3,8 +3,19 @@
 #include "config/config.h"
 #include "weapon.h"
 #include "obj.h"
+#include "util/fixes.h"
 
 WeaponSystem weapons;
+
+static class WeaponReplacements : public TempleFix {
+	void apply() override {
+		// replace unload function to allow for more loadable weapons
+		replaceFunction<int (__cdecl)(objHndl)>(0x100657D0, [](objHndl weapon) {
+			weapons.SetUnloaded(weapon);
+			return 0;
+		});
+	}
+} replacements;
 
 std::string WeaponSystem::GetName(WeaponTypes wpnType)
 {
@@ -429,12 +440,38 @@ bool WeaponSystem::IsUnloaded(objHndl weapon)
 	}
 }
 
+bool WeaponSystem::IsLoadable(objHndl weapon, bool strict)
+{
+	if (!weapon || objects.GetType(weapon) != obj_t_weapon) return false;
+
+	switch (objects.GetWeaponType(weapon))
+	{
+	case wt_light_crossbow:
+	case wt_heavy_crossbow:
+		return true;
+	case wt_sling:
+		return strict || config.stricterRulesEnforcement;
+		// TODO: repeating/hand crossbows
+	default:
+		return false;
+	}
+}
+
 void WeaponSystem::SetLoaded(objHndl weapon)
 {
-	if (!weapon || objects.GetType(weapon) != obj_t_weapon) return;
+	if (!IsLoadable(weapon)) return;
 
 	auto flags = objects.getInt32(weapon, obj_f_weapon_flags);
 	objects.setInt32(weapon, obj_f_weapon_flags, flags | OWF_WEAPON_LOADED);
+}
+
+void WeaponSystem::SetUnloaded(objHndl weapon)
+{
+	// set unloaded as a default state even without strict rules
+	if (!IsLoadable(weapon, true)) return;
+
+	auto flags = objects.getInt32(weapon, obj_f_weapon_flags);
+	objects.setInt32(weapon, obj_f_weapon_flags, flags & ~OWF_WEAPON_LOADED);
 }
 
 bool WeaponSystem::IsRangedWeapon(WeaponTypes wpnType)
