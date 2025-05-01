@@ -181,8 +181,6 @@ public:
 		{
 			return actSeqSys.ReadyVsApproachOrWithdrawalCount();
 		});
-
-		replaceFunction(0x100903B0, ActionCostReload);
 	}
 } actSeqReplacements;
 
