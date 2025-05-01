@@ -106,7 +106,6 @@ public:
 	static int SeqRenderAooMovement(D20Actn*, UiIntgameTurnbasedFlags);
 	static int SeqRenderFuncMove(D20Actn* d20a, UiIntgameTurnbasedFlags flags);
 	static int SeqRenderAttack(D20Actn* d20a, UiIntgameTurnbasedFlags flags);
-	static ActionErrorCode ActionCostReload(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp); 
 
 	static int ChooseTargetCallback(void* a)
 	{
@@ -1730,7 +1729,51 @@ uint32_t ActionSequenceSystem::ActionCostNull(D20Actn* d20Actn, TurnBasedStatus*
 
 ActionErrorCode ActionSequenceSystem::ActionCostReload(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp)
 {
-	return ActnSeqReplacements::ActionCostReload(d20, tbStat, acp);
+	// free action by default
+	acp->hourglassCost = static_cast<int>(ActionCostType::Null);
+
+	if (d20->d20Caf & D20CAF_NEED_ANIM_COMPLETED) return AEC_OK;
+	if (!combatSys.isCombatActive()) return AEC_OK;
+
+	auto weapon = inventory.ItemWornAt(d20->d20APerformer, EquipSlot::WeaponPrimary);
+	if (!weapon) return AEC_OK;
+
+	// TODO: rapid reload is actually a per-weapon feat per the SRD
+	bool rapid = feats.HasFeatCountByClass(d20->d20APerformer, FEAT_RAPID_RELOAD);
+
+	// costs for reloading heavy/repeating crossbows based on strict rules status
+	auto fastCost = ActionCostType::Null;
+	auto slowCost = ActionCostType::Move;
+
+	if (config.stricterRulesEnforcement) {
+		fastCost = ActionCostType::Move;
+		slowCost = ActionCostType::FullRound;
+	}
+
+	auto cost = ActionCostType::Null;
+
+	switch (objects.GetWeaponType(weapon))
+	{
+	case wt_light_crossbow:
+	case wt_hand_crossbow:
+		if (rapid) break; // free action
+	case wt_sling: // has no rapid reload
+		cost = ActionCostType::Move;
+		break;
+	case wt_heavy_crossbow:
+		cost = fastCost;
+		if (rapid) break;
+	case wt_repeating_crossbow: // has no rapid reload
+		cost = slowCost;
+		break;
+	default:
+		// free action
+		break;
+	}
+
+	acp->hourglassCost = static_cast<int>(cost);
+
+	return AEC_OK;
 }
 
 void ActionSequenceSystem::ProcessSequenceForAoOs(ActnSeq* actSeq, D20Actn* d20a)
@@ -4064,55 +4107,6 @@ int ActnSeqReplacements::SeqRenderAttack(D20Actn* d20a, UiIntgameTurnbasedFlags 
 	
 	showHitChanceTooltip(d20a, flags);
 	return 0;
-}
-
-ActionErrorCode ActnSeqReplacements::ActionCostReload(D20Actn *d20, TurnBasedStatus *tbStat, ActionCostPacket *acp)
-{
-	// free action by default
-	acp->hourglassCost = static_cast<int>(ActionCostType::Null);
-
-	if (d20->d20Caf & D20CAF_NEED_ANIM_COMPLETED) return AEC_OK;
-	if (!combatSys.isCombatActive()) return AEC_OK;
-
-	auto weapon = inventory.ItemWornAt(d20->d20APerformer, EquipSlot::WeaponPrimary);
-	if (!weapon) return AEC_OK;
-
-	// TODO: rapid reload is actually a per-weapon feat per the SRD
-	bool rapid = feats.HasFeatCountByClass(d20->d20APerformer, FEAT_RAPID_RELOAD);
-
-	// costs for reloading heavy/repeating crossbows based on strict rules status
-	auto fastCost = ActionCostType::Null;
-	auto slowCost = ActionCostType::Move;
-
-	if (config.stricterRulesEnforcement) {
-		fastCost = ActionCostType::Move;
-		slowCost = ActionCostType::FullRound;
-	}
-
-	auto cost = ActionCostType::Null;
-
-	switch (objects.GetWeaponType(weapon))
-	{
-	case wt_light_crossbow:
-	case wt_hand_crossbow:
-		if (rapid) break; // free action
-	case wt_sling: // has no rapid reload
-		cost = ActionCostType::Move;
-		break;
-	case wt_heavy_crossbow:
-		cost = fastCost;
-		if (rapid) break;
-	case wt_repeating_crossbow: // has no rapid reload
-		cost = slowCost;
-		break;
-	default:
-		// free action
-		break;
-	}
-
-	acp->hourglassCost = static_cast<int>(cost);
-
-	return AEC_OK;
 }
 
 void ActnSeqReplacements::AooShaderPacketAppend(LocAndOffsets* loc, int aooShaderId)
