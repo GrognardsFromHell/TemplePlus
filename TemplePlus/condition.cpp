@@ -210,6 +210,7 @@ public:
 	static int __cdecl PreferOneHandedWieldQuery(DispatcherCallbackArgs args);
 	static int __cdecl UpdateModelEquipment(DispatcherCallbackArgs args);
 
+	static int __cdecl EncumbranceCapAC(DispatcherCallbackArgs args);
 } genericCallbacks;
 
 
@@ -226,6 +227,7 @@ public:
 	static int __cdecl MaxDexBonus(objHndl armor);
 	static int __cdecl ArmorAcBonus(DispatcherCallbackArgs args);
 	static int __cdecl ArmorBonusAcBonusCapValue(DispatcherCallbackArgs args);
+	static int __cdecl ArmorCheckNonproficiencyPenalty(DispatcherCallbackArgs args);
 	static int __cdecl BucklerToHitPenalty(DispatcherCallbackArgs args);
 	static int __cdecl BucklerAcPenalty(DispatcherCallbackArgs args);
 	static int __cdecl BucklerAcBonus(DispatcherCallbackArgs args);
@@ -563,6 +565,9 @@ public:
 		// Armor Check Penalty
 		itemCallbacks.oldArmorCheckPenalty = replaceFunction<int(objHndl armor)>(0x1004F0D0, itemCallbacks.ArmorCheckPenalty);
 
+		// Masterwork armor check offset bonuses, no longer necessary
+		replaceFunction(0x10100470, genericCallbacks.NoOp);
+		replaceFunction(0x10100500, genericCallbacks.NoOp);
 
 		// Druid wild shape
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FBDB0, classAbilityCallbacks.DruidWildShapeReset);
@@ -1811,6 +1816,30 @@ int GenericCallbacks::PreferOneHandedWieldQuery(DispatcherCallbackArgs args)
 	auto isCurrentlyOn = args.GetCondArg(0);
 
 	dispIo->return_val = isCurrentlyOn;
+	return 0;
+}
+
+// Sets a cap to dex AC bonus for encumbrance. The cap value it taken from
+// data1, and a description from data2. If the cap is 0, it also caps dodge AC,
+// because being overburdened denies your dex AC bonus altogether.
+int GenericCallbacks::EncumbranceCapAC(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIOTypeAttackBonus, DispIoAttackBonus);
+
+	auto cap = args.GetData1();
+	auto descline = args.GetData2();
+
+	if (cap >= 100) { // indicates no cap; avoid clutter just in case
+		return 0;
+	}
+
+	// 3 is dexterity bonus
+	dispIo->bonlist.AddCap(3, cap, descline);
+	if (cap == 0) {
+		// 8 is dodge bonus
+		dispIo->bonlist.AddCap(8, cap, descline);
+	}
+
 	return 0;
 }
 
@@ -3433,6 +3462,8 @@ void ConditionSystem::RegisterNewConditions()
 		condShieldBonus.AddHook(dispTypeBucklerAcPenalty, DK_NONE, itemCallbacks.ShieldAcPenalty);
 		// reset shield bash penalty on begin round
 		condShieldBonus.AddHook(dispTypeBeginRound, DK_NONE, CondNodeSetArgFromSubDispDef, 1, 0);
+		// armor check nonproficiency; was survival for some reason
+		condShieldBonus.subDispDefs[13].dispKey = DK_SKILL_USE_ROPE;
 
 		// replace Q_Armor_Get_AC_Bonus callbacks to fix stacking behavior
 		condShieldBonus.subDispDefs[0].dispCallback = itemCallbacks.BaseAcQuery;
@@ -3446,6 +3477,11 @@ void ConditionSystem::RegisterNewConditions()
 		static CondStructNew condArmorBonus;
 		condArmorBonus.ExtendExisting("Armor Bonus");
 		condArmorBonus.subDispDefs[0].dispCallback = itemCallbacks.BaseAcQuery;
+		// armor check nonproficiency; was survival for some reason
+		condArmorBonus.subDispDefs[15].dispKey = DK_SKILL_USE_ROPE;
+		condArmorBonus.AddHook(dispTypeAbilityCheckModifier, DK_STAT_STRENGTH, itemCallbacks.ArmorCheckNonproficiencyPenalty);
+		condArmorBonus.AddHook(dispTypeAbilityCheckModifier, DK_STAT_DEXTERITY, itemCallbacks.ArmorCheckNonproficiencyPenalty);
+
 		static CondStructNew condArmorEnhBonus;
 		condArmorEnhBonus.ExtendExisting("Armor Enhancement Bonus");
 		condArmorEnhBonus.subDispDefs[0].dispCallback = itemCallbacks.EnhAcQuery;
@@ -3517,6 +3553,32 @@ void ConditionSystem::RegisterNewConditions()
 		static CondStructNew condSleeping;
 		condSleeping.ExtendExisting("Sleeping");
 		condSleeping.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HelplessCapStatBonus);
+	}
+
+	{
+		// Switch encumbrance conditions from responding to (armor) max dex dispatch
+		// to directly capping dex AC. Also, fix the actual cap numbers (they were
+		// all 3, which is the medium value).
+
+		static CondStructNew encumberedMed;
+		encumberedMed.ExtendExisting("Encumbered Medium");
+		encumberedMed.subDispDefs[3].dispType = dispTypeGetAC;
+		encumberedMed.subDispDefs[3].dispCallback = genericCallbacks.EncumbranceCapAC;
+
+		static CondStructNew encumberedHeavy;
+		encumberedHeavy.ExtendExisting("Encumbered Heavy");
+		encumberedHeavy.subDispDefs[3].dispType = dispTypeGetAC;
+		encumberedHeavy.subDispDefs[3].dispCallback = genericCallbacks.EncumbranceCapAC;
+		encumberedHeavy.subDispDefs[3].data1.usVal = 1;
+
+		static CondStructNew encumberedOver;
+		encumberedOver.ExtendExisting("Encumbered Overburdened");
+		encumberedOver.subDispDefs[3].dispType = dispTypeGetAC;
+		encumberedOver.subDispDefs[3].dispCallback = genericCallbacks.EncumbranceCapAC;
+		encumberedOver.subDispDefs[3].data1.usVal = 0;
+		// Also, overburdened counts as being denied your dex AC, so you can be
+		// sneak attacked.
+		encumberedOver.AddHook(dispTypeD20Query, DK_QUE_SneakAttack, genericCallbacks.QuerySetReturnVal1);
 	}
 
 #pragma region Spells
@@ -6101,23 +6163,36 @@ int ItemCallbacks::BucklerToHitPenalty(DispatcherCallbackArgs args)
 	return 0;
 }
 
+// This is a reworked version of the max dex bonus dispatch. The
+// original version would dispatch on the parent creature of the
+// armor, but this only makes sense if the item is worn, so that
+// the item conditions have been incorporated into the
+// creature's.
+//
+// The rewritten version uses a more complicated setup that
+// dispatches against a combination of the creature and the item.
+// If the item is worn, just the creature is sufficient, while
+// the item dispatch fixes the answer for non-worn items or items
+// without a parent creature.
+//
+// This allows for e.g. the creature's feats to adjust the bonus
+// if desired.
 int __cdecl ItemCallbacks::MaxDexBonus(objHndl armor)
 {
-	auto res = itemCallbacks.oldMaxDexBonus(armor);
-	
-	//Query for max dex bonus adjustment
-	if (armor) {
-		auto parent = inventory.GetParent(armor);
-		if (parent) {
-			auto obj = objSystem->GetObject(parent);
-			if ((obj != nullptr) && (obj->IsPC() || obj->IsNPC())) {
-				auto adjustment = d20Sys.D20QueryPython(parent, "Max Dex Bonus Adjustment", armor);
-				res += adjustment;
-			}
-		}
-	}
-    
-	return res;
+	if (!armor) return 0;
+
+	DispIoObjBonus dispIo;
+	dispIo.obj = armor;
+
+	// Initialize bonus list
+	auto base = objects.getInt32(armor, obj_f_armor_max_dex_bonus);
+
+	// mesline is "Initial Value"
+	dispIo.bonlist.AddBonus(base, 1, 102);
+
+	dispatch.DispatchForWearable(armor, dispTypeMaxDexAcBonus, DK_NONE, &dispIo);
+
+	return dispIo.bonlist.GetEffectiveBonusSum();
 }
 
 int __cdecl ItemCallbacks::ArmorBonusAcBonusCapValue(DispatcherCallbackArgs args)
@@ -6135,24 +6210,68 @@ int __cdecl ItemCallbacks::ArmorBonusAcBonusCapValue(DispatcherCallbackArgs args
 	return 0;
 }
 
-int __cdecl ItemCallbacks::ArmorCheckPenalty(objHndl armor)
+// Applies armor check penalty when the wearer is not proficient with the armor.
+//
+// Used for raw ability checks and any str/dex skills that do not already incur
+// armor check penalties.
+int __cdecl ItemCallbacks::ArmorCheckNonproficiencyPenalty(DispatcherCallbackArgs args)
 {
-	auto res = itemCallbacks.oldArmorCheckPenalty(armor);
-	
-	//Query for armor check penalty adjustment
-	if (armor) {
-		auto parent = inventory.GetParent(armor);
-		if (parent) {
-			auto obj = objSystem->GetObject(parent);
-			if ((obj != nullptr) && (obj->IsPC() || obj->IsNPC())) {
-				auto adjustment = d20Sys.D20QueryPython(parent, "Armor Check Penalty Adjustment", armor);
-				res += adjustment;  //The adjustment is a positive value, the penalty is a negative value
-				res = std::min(res, 0);
-			}
-		}
+	GET_DISPIO(dispIoTypeObjBonus, DispIoObjBonus);
+	auto invIdx = args.GetCondArg(2);
+	auto critter = args.objHndCaller;
+	auto armor = inventory.GetItemAtInvIdx(critter, invIdx);
+
+	if (armor && !inventory.IsProficientWithArmor(critter, armor)) {
+		auto name = description._getDisplayName(armor, critter);
+		auto penalty = ArmorCheckPenalty(armor);
+
+		dispIo->bonOut->AddBonusWithDesc(penalty, 0, 112, name);
 	}
 
-	return res;
+	return 0;
+
+}
+
+// This is a reworked version of the armor check penalty
+// dispatch. The original would find an object's parent and use
+// its dispatcher to run against the conditions. However, that
+// only makes sense if the armor is worn. If it is worn, then the
+// item conditions will have been added to the creature's, and
+// the dispatch will work. But, if it is not worn, none of the
+// item conditions will be regarded.
+//
+// This has been reworked to be more thorough using the new
+// DispatchForWearable. Since the dispatch type is an ObjBonus,
+// the armor will always be in the event object. If the armor is
+// worn, we can _just_ dispatch against the critter, because it
+// will have the item conditions. If not, we dispatch against the
+// parent object (if not null and a critter) _and_ do an item
+// dispatch, to ensure we incorporate all the relevant
+// conditions.
+//
+// I kept it this (complicated) way just in case someone wants to
+// add a feat, or similar, that modifies armor check penalties.
+// Since we still dispatch against the critter in relevant
+// scenarios, the critter's conditions can influence the penalty.
+int __cdecl ItemCallbacks::ArmorCheckPenalty(objHndl armor)
+{
+	if (!armor) return 0;
+
+	DispIoObjBonus dispIo;
+	dispIo.obj = armor;
+
+	// Initialize bonus list
+	auto base = objects.getInt32(armor, obj_f_armor_armor_check_penalty);
+
+	// mesline is "Initial Value"
+	dispIo.bonlist.AddBonus(base, 1, 102);
+
+	// cap at 0 on the high end
+	dispIo.bonlist.SetOverallCap(1, 0, 0, 102);
+
+	dispatch.DispatchForWearable(armor, dispTypeArmorCheckPenalty, DK_NONE, &dispIo);
+
+	return dispIo.bonlist.GetEffectiveBonusSum();
 }
 
 int __cdecl ItemCallbacks::BucklerAcPenalty(DispatcherCallbackArgs args)
