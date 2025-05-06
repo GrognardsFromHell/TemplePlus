@@ -199,6 +199,9 @@ struct LegacyCritterSystem : temple::AddressTable
 
 	void Attack(objHndl provoked, objHndl attacker, int rangeType, int flags);
 
+	// returns true if the weapon was actually reloaded
+	bool AutoReload(objHndl critter);
+
 	/*
 		does the gameplay logic for pickpocketing (this gets called at the end of the pickpocket animation)
 	*/
@@ -322,6 +325,10 @@ struct LegacyCritterSystem : temple::AddressTable
 	*/
 	bool CanSense(objHndl critter, objHndl tgt); 
 
+	// Checks if critter can sense target well enough to avoid sneak attacks.
+	// Uncanny dodge and blind-fight allow you to retain your dexterity bonus vs.
+	// opponents you can't see (in melee for the latter).
+	bool CanSenseForSneakAttack(objHndl critter, objHndl tgt);
 
 	int GetSize(objHndl handle);
 

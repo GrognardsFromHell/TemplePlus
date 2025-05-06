@@ -18,7 +18,9 @@
 #include "action_sequence.h"
 #include "critter.h"
 #include "combat.h"
+#include "weapon.h"
 #include <tig/tig_mouse.h>
+#include "config/config.h"
 #include "gamesystems/d20/d20stats.h"
 #include "gamesystems/legacymapsystems.h"
 
@@ -95,7 +97,11 @@ class RadialMenuReplacements : public TempleFix
 	static int RmbReleasedHandler(TigMsg* msg);
 	void ReplaceStandardRadialNodes();
 
+	// adds reload radials for weapons that won't have conditions for it
+	static void AddReload(objHndl critter);
+
 	static RadialMenuNode* HookedGetActiveMenuNode(int nodeId);
+
 	void apply() override {
 
 
@@ -185,6 +191,13 @@ class RadialMenuReplacements : public TempleFix
 		//// GetActiveRadMenuNodeRegardMorph
 		redirectCall(0x1013C2ED, HookedGetActiveMenuNode);
 
+		static int (__cdecl*orgRadialMenuGlobal)(DispatcherCallbackArgs) =
+			replaceFunction<int (__cdecl)(DispatcherCallbackArgs)>(0x100EEFC0,
+				[](DispatcherCallbackArgs args) {
+					auto result = orgRadialMenuGlobal(args);
+					AddReload(args.objHndCaller);
+					return result;
+				});
 	}
 };
 
@@ -250,6 +263,19 @@ void RadialMenuReplacements::ReplaceStandardRadialNodes()
 
 	writeval = reinterpret_cast<int>(&RadialMenus::standardNodeIndices[10]) ;
 	write(0x100F2B71 + 2, &writeval, sizeof(int*));
+}
+
+void RadialMenuReplacements::AddReload(objHndl critter)
+{
+	if (!config.stricterRulesEnforcement) return;
+
+	auto weap = inventory.ItemWornAt(critter, WeaponPrimary);
+	if (!weap || !weapons.IsUnloaded(weap)) return;
+
+	if (objects.GetWeaponType(weap) != wt_sling) return;
+
+	RadialMenuEntryAction radEntry(5009, D20A_RELOAD, 0, "TAG_WEAPONS_SLING");
+	radEntry.AddChildToStandard(critter, Offense);
 }
 
 RadialMenuNode * RadialMenuReplacements::HookedGetActiveMenuNode(int nodeId){

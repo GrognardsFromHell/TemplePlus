@@ -181,6 +181,10 @@ private:
 		replaceFunction<uint32_t(__cdecl)(objHndl,ResurrectType,int)>(0x100809C0, [](objHndl critter, ResurrectType type, int clvl) {
 			return critterSys.Resurrect(critter, type, clvl);
 		});
+
+		replaceFunction<int(__cdecl)(objHndl)>(0x100B70A0, [](objHndl critter) {
+			return critterSys.AutoReload(critter) ? 1 : 0;
+		});
 	}
 
 private:
@@ -325,6 +329,31 @@ void LegacyCritterSystem::Attack(objHndl provoked, objHndl agitator, int rangeTy
 	// 0x2 - 
 	// 0x4
 	aiSys.ProvokeHostility(provoked, agitator, rangeType, flags);
+}
+
+bool LegacyCritterSystem::AutoReload(objHndl critter)
+{
+	if (!critter || IsDeadOrUnconscious(critter)) return false;
+	// TODO: more conditions blocking?
+
+	if (!combatSys.NeedsToReload(critter)) return false;
+
+	if (!combatSys.AmmoMatchesItemAtSlot(critter, WeaponPrimary)) {
+		// out of ammo
+		histSys.CreateRollHistoryLineFromMesfile(0, critter, objHndl::null);
+		objects.floats->FloatCombatLine(critter, 44);
+		return false;
+	}
+
+	if (combatSys.isCombatActive()) return false;
+
+	auto weapon = inventory.ItemWornAt(critter, WeaponPrimary);
+	weapons.SetLoaded(weapon);
+
+	objects.floats->FloatCombatLine(critter, 42);
+	histSys.CreateRollHistoryLineFromMesfile(2, critter, objHndl::null);
+
+	return true;
 }
 
 void LegacyCritterSystem::Pickpocket(objHndl handle, objHndl tgt, int & gotCaught){
@@ -1125,6 +1154,20 @@ int LegacyCritterSystem::GetPortraitId(objHndl leader) {
 bool LegacyCritterSystem::CanSense(objHndl critter, objHndl tgt)
 {
 	return critterReplacements.CanSense(critter, tgt);
+}
+
+bool LegacyCritterSystem::CanSenseForSneakAttack(objHndl critter, objHndl tgt)
+{
+	auto uncanny = feats.HasFeatCountByClass(critter, FEAT_UNCANNY_DODGE);
+	auto blindfight = feats.HasFeatCountByClass(critter, FEAT_BLIND_FIGHT);
+
+	// for checking melee range
+	auto reach = critterSys.GetNaturalReach(critter);
+	auto dist = locSys.DistanceToObj(critter,tgt);
+
+	if (uncanny || (blindfight && dist <= reach)) return true;
+
+	return CanSense(critter, tgt);
 }
 
 int LegacyCritterSystem::GetSize(objHndl handle)
