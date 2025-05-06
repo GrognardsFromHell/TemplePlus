@@ -27,6 +27,8 @@ public:
 	static int WeaponKeenCritHitRange(DispatcherCallbackArgs args);
 	static int ImprovedCriticalGetCritThreatRange(DispatcherCallbackArgs args);
 	
+	static int ArmorCheckSkillPenalty(DispatcherCallbackArgs args);
+	static int EncumbranceSkillPenalty(DispatcherCallbackArgs args);
 	static int RacialAbilityAdjustment(DispatcherCallbackArgs args);
 
 	void apply() override {
@@ -72,6 +74,9 @@ public:
 		replaceFunction(0x100EB6A0, PermanentNegativeLevelOnAdd); // fixes NPCs with no class levels instantly dying due to temp negative level
 		replaceFunction(0x100FFD20, WeaponKeenCritHitRange); // fixes Weapon Keen stacking (Keen Edge spell / Keen enchantment)
 		replaceFunction(0x100F8320, ImprovedCriticalGetCritThreatRange); // fixes stacking with Keen Edge spell / Keen enchantment
+		replaceFunction(0x101005B0, ArmorCheckSkillPenalty);
+		replaceFunction(0x100EBA70, EncumbranceSkillPenalty);
+		
 
 
 		replaceFunction(0x100FD850, RacialAbilityAdjustment);
@@ -296,6 +301,35 @@ int GeneralConditionFixes::ImprovedCriticalGetCritThreatRange(DispatcherCallback
 		
 		dispIo->bonlist.AddBonusWithDesc(threatRangeSize, 12, 114, featName); // fix: was untyped bonus in vanilla, leading to stacking with Keen weapons
 	}
+	return 0;
+}
+
+// Replacement armor check skill penalty function to use an overlapping bonus
+// type with the below encumbrance penalty. Must test for shields because those
+// are supposed to stack.
+int GeneralConditionFixes::ArmorCheckSkillPenalty(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIoTypeObjBonus, DispIoObjBonus);
+
+	auto inv_idx = args.GetCondArg(2);
+	auto armor = inventory.GetItemAtInvIdx(args.objHndCaller, inv_idx);
+	auto penalty = GetArmorCheckPenalty(armor);
+	auto name = description.getDisplayName(armor, args.objHndCaller);
+	auto type = inventory.GetArmorType(armor) == ARMOR_TYPE_SHIELD ? 0 : 28;
+
+	if (penalty < 0) {
+		dispIo->bonOut->AddBonusWithDesc(penalty, type, 112, name);
+	}
+
+	return 0;
+}
+
+int GeneralConditionFixes::EncumbranceSkillPenalty(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIoTypeObjBonus, DispIoObjBonus);
+
+	dispIo->bonOut->AddBonus(- args.GetData1(), 28, args.GetData2());
+
 	return 0;
 }
 
