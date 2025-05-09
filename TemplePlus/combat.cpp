@@ -1917,7 +1917,9 @@ void LegacyCombatSystem::ToHitProcessingPython(D20Actn& d20a)
 
 bool LegacyCombatSystem::TripCheck(objHndl handle, objHndl target){
 	if (d20Sys.d20Query(target, DK_QUE_Untripable))	{
-		histSys.CreateFromFreeText( combatSys.GetCombatMesLine(171)); 
+		std::string historyLine(combatSys.GetCombatMesLine(171));
+		historyLine.push_back('\n');
+		histSys.CreateFromFreeText(historyLine.c_str());
 		return false;
 	}
 

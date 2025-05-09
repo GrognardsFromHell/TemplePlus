@@ -3222,14 +3222,14 @@ BOOL D20ActionCallbacks::ActionFrameTripAttack(D20Actn* d20a){
 	auto tgt = d20a->d20ATarget;
 	auto performer = d20a->d20APerformer;
 
+	histSys.CreateRollHistoryString(d20a->rollHistId1);
+	histSys.CreateRollHistoryString(d20a->rollHistId2);
+	histSys.CreateRollHistoryString(d20a->rollHistId0);
+
 	if (!(d20a->d20Caf & D20CAF_HIT))	{
 		combatSys.FloatCombatLine(d20a->d20APerformer, 29); //miss
 		return FALSE;
 	}
-
-	histSys.CreateRollHistoryString(d20a->rollHistId1);
-	histSys.CreateRollHistoryString(d20a->rollHistId2);
-	histSys.CreateRollHistoryString(d20a->rollHistId0);
 
 	// auto tripCheck = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x100B6230);
 	if (combatSys.TripCheck(d20a->d20APerformer, tgt))	{
