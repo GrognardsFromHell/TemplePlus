@@ -53,12 +53,12 @@ def san_start_combat( attachee, triggerer ):
 				if (nearby_pc == OBJ_HANDLE_NULL):
 					nearby_pc = pc
 				if (pc.item_find(2203)):
-					game.new_sid = 0
 					pc.begin_dialog(attachee,330)
+					game.new_sid = 0
 					return RUN_DEFAULT
 		if (nearby_pc != OBJ_HANDLE_NULL):
-			game.new_sid = 0
 			nearby_pc.begin_dialog(attachee,330)
+			game.new_sid = 0
 			return SKIP_DEFAULT
 	return RUN_DEFAULT
 
