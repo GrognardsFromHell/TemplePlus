@@ -1954,7 +1954,7 @@ int DefaultSetTWF(DispatcherCallbackArgs args)
 
 	if (uitem == left) { // off hand equipped, default two TWF on
 		args.SetCondArg(0, 1);
-	} else if (uitem == shield) { // shield equipped, default to TWF off
+	} else if (!left && uitem == shield) { // shield equipped, default to TWF off
 		args.SetCondArg(0, 0);
 		args.SetCondArg(1, 0);
 	} else if (uitem == right) { // right hand equipped

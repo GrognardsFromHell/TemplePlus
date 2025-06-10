@@ -1657,7 +1657,7 @@ bool InventorySystem::IsWieldedTwoHanded(objHndl weapon, objHndl wielder, bool s
 		hasInterferingOffhand = true;
 	}
 	if (shield != objHndl::null){
-		hasInterferingOffhand = !shieldAllowsTwoHandedWield;
+		hasInterferingOffhand |= !shieldAllowsTwoHandedWield;
 	}
 	auto wieldType = GetWieldType(wielder, weapon, true);
 	// the wield type if the weapon is not enlarged along with the critter
