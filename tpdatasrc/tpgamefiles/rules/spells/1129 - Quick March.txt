@@ -17,3 +17,4 @@ exc_flags_Target: Non-critter
 mode_Target: Personal
 radius_Target: 20
 ai_type: ai_action_defensive
+source: Spell Compendium

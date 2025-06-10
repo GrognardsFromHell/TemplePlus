@@ -19,3 +19,4 @@ mode_Target: Personal
 flags_Target: Radius
 radius_Target: 20
 ai_type: ai_action_offensive
+source: Spell Compendium
