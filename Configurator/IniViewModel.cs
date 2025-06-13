@@ -715,7 +715,12 @@ namespace TemplePlusConfig
             
             NonCore = TryReadBool("nonCoreMaterials");
 
-            NonCoreSources = ReadStringList("nonCoreSources");
+            if (tpData["nonCoreSources"] == null) {
+              string[] defaults = {"co8", "spellcompendium", "homebrew", "phb2"};
+              NonCoreSources = new List<string>(defaults);
+            } else {
+              NonCoreSources = ReadStringList("nonCoreSources");
+            }
             
             NewRaces = TryReadBool("newRaces");
             

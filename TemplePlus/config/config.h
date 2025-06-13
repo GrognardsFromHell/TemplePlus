@@ -165,7 +165,13 @@ struct TemplePlusConfig
 
 	std::string GetPath();
 	void SetPath(const std::string &path);
-	
+
+	TemplePlusConfig() {
+		nonCoreSources.insert(PnPSource::SpellCompendium);
+		nonCoreSources.insert(PnPSource::PHB2);
+		nonCoreSources.insert(PnPSource::Homebrew);
+		nonCoreSources.insert(PnPSource::Co8);
+	}
 };
 
 extern TemplePlusConfig config;
