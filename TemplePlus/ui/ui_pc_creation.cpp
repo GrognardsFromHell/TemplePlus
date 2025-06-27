@@ -2681,11 +2681,6 @@ BOOL UiPcCreation::StatsWndMsg(int widId, TigMsg * msg){
 	auto msgMouse = (TigMsgMouse*)msg;
 	auto mouseFlags = msgMouse->buttonStateFlags;
 
-	auto interceptMask =
-		MouseStateFlags::MSF_LMB_DOWN |
-		MouseStateFlags::MSF_LMB_CLICK |
-		MouseStateFlags::MSF_LMB_RELEASED;
-
 	if (mouseFlags & MouseStateFlags::MSF_RMB_RELEASED){
 		auto rolledStatIdx = GetRolledStatIdx(msgMouse->x, msgMouse->y);
 		if (rolledStatIdx == -1)
@@ -2700,22 +2695,6 @@ BOOL UiPcCreation::StatsWndMsg(int widId, TigMsg * msg){
 			if (selPkt.abilityStats[i] <= 0){
 				selPkt.abilityStats[i] = rolledStats[rolledStatIdx];
 				rolledStats[rolledStatIdx] = -1;
-				return TRUE;
-			}
-		}
-	} else if (mouseFlags & interceptMask) {
-		auto &selPkt = chargen.GetCharEditorSelPacket();
-		auto rolledStatIdx = GetRolledStatIdx(msgMouse->x, msgMouse->y);
-		
-		// if there's a mouse event in the rolled stats area during point buy
-		if (rolledStatIdx != -1 && selPkt.isPointbuy) {
-			if (mouseFlags & MouseStateFlags::MSF_LMB_RELEASED) {
-				// might need to terminate drag, but not cause stat swapping
-				// tweak the x value to be outside the rolled stats area
-				msgMouse->x = 0;
-				return FALSE;
-			} else {
-				// otherwise just avoid initiating a drag by dropping the message
 				return TRUE;
 			}
 		}
