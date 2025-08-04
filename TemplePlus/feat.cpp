@@ -167,9 +167,9 @@ LegacyFeatSystem::LegacyFeatSystem()
 	int _rangerArcheryFeats[4 * 2] = { FEAT_RANGER_RAPID_SHOT, 2, FEAT_RANGER_MANYSHOT, 6, FEAT_IMPROVED_PRECISE_SHOT_RANGER, 11, -1, -1 };
 	int _rangerTwoWeaponFeats[4 * 2] = { FEAT_TWO_WEAPON_FIGHTING_RANGER, 2, FEAT_IMPROVED_TWO_WEAPON_FIGHTING_RANGER, 6, FEAT_GREATER_TWO_WEAPON_FIGHTING_RANGER, 11, - 1, -1 };
 
-	memcpy(racialFeats, _racialFeatsTable, sizeof(racialFeats));
-	memcpy(rangerArcheryFeats, _rangerArcheryFeats, sizeof(rangerArcheryFeats));
-	memcpy(rangerTwoWeaponFeats, _rangerTwoWeaponFeats, sizeof(rangerTwoWeaponFeats));
+	memcpy(racialFeats, _racialFeatsTable, sizeof(_racialFeatsTable));
+	memcpy(rangerArcheryFeats, _rangerArcheryFeats, sizeof(_rangerArcheryFeats));
+	memcpy(rangerTwoWeaponFeats, _rangerTwoWeaponFeats, sizeof(_rangerTwoWeaponFeats));
 	featPropertiesTable[FEAT_GREATER_TWO_WEAPON_FIGHTING] = 0x10;
 	featPreReqTable[FEAT_GREATER_TWO_WEAPON_FIGHTING].featPrereqs[2].featPrereqCode = 266;
 	featPreReqTable[FEAT_GREATER_TWO_WEAPON_FIGHTING].featPrereqs[2].featPrereqCodeArg = 11;
