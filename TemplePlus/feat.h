@@ -128,7 +128,6 @@ struct LegacyFeatSystem : temple::AddressTable
 	char featPrereqDescrBuffer[5000];
 	std::unordered_set<feat_enums> metamagicFeats;
 
-	uint32_t racialFeats[ 10 * VANILLA_NUM_RACES ];
 	uint32_t HasFeatCount(objHndl objHnd, feat_enums featEnum);
 	uint32_t HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classEnum, uint32_t rangerSpecializationFeat, uint32_t newDomain1, uint32_t newDomain2, uint32_t alignmentChoiceNew);
 	uint32_t HasFeatCountByClass(objHndl objHnd, feat_enums featEnum, Stat classEnum, uint32_t rangerSpecializationFeat);
@@ -171,8 +170,18 @@ struct LegacyFeatSystem : temple::AddressTable
 	bool IsNonCore(feat_enums feat);
 	void DoForAllFeats(void (__cdecl*cb)(int featEnum));
 	
-	uint32_t rangerArcheryFeats[4 * 2 + 100];
-	uint32_t rangerTwoWeaponFeats[4 * 2 + 100];
+	uint32_t rangerArcheryFeats[4 * 2 + 100] =
+		{ FEAT_RANGER_RAPID_SHOT, 2,
+			FEAT_RANGER_MANYSHOT, 6,
+			FEAT_IMPROVED_PRECISE_SHOT_RANGER, 11,
+			static_cast<uint32_t>(-1), static_cast<uint32_t>(-1)
+		};
+	uint32_t rangerTwoWeaponFeats[4 * 2 + 100] =
+		{ FEAT_TWO_WEAPON_FIGHTING_RANGER, 2,
+			FEAT_IMPROVED_TWO_WEAPON_FIGHTING_RANGER, 6,
+			FEAT_GREATER_TWO_WEAPON_FIGHTING_RANGER, 11,
+			static_cast<uint32_t>(-1), static_cast<uint32_t>(-1)
+		};
 
 
 	void(__cdecl *ToEE_WeaponFeatCheck)();
