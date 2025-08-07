@@ -236,6 +236,7 @@ def SkirmishDamageBonus(attachee, args, evt_obj):
 scoutSkirmish = PythonModifier("Skirmish", 4) #Distance Moved, Spare, Spare, Spare
 scoutSkirmish.MapToFeat("Skirmish")
 scoutSkirmish.AddHook(ET_OnDealingDamage, EK_NONE, SkirmishDamageBonus, ())
+scoutSkirmish.AddHook(ET_OnDealingDamageWeaponlikeSpell, EK_NONE, SkirmishDamageBonus, ())
 scoutSkirmish.AddHook(ET_OnGetAC, EK_NONE, SkirmishAcBonus, ())
 scoutSkirmish.AddHook(ET_OnBeginRound, EK_NONE, SkirmishReset, ())
 scoutSkirmish.AddHook(ET_OnConditionAdd, EK_NONE, SkirmishAdd, ())

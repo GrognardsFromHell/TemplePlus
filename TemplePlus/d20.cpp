@@ -106,6 +106,7 @@ public:
 	static ActionErrorCode ActionCostStandardAttack(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
 	static ActionErrorCode ActionCostMoveAction(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
 	static ActionErrorCode ActionCostNull(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
+	static ActionErrorCode ActionCostReload(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
 	static ActionErrorCode ActionCostSwift(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
 	static ActionErrorCode ActionCostStandardAction(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
 	static ActionErrorCode ActionCostWhirlwindAttack(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp);
@@ -128,6 +129,7 @@ public:
 	static ActionErrorCode PerformEmptyBody(D20Actn* d20a);
 	static ActionErrorCode PerformFullAttack(D20Actn* d20a);
 	static ActionErrorCode PerformPython(D20Actn* d20a);
+	static ActionErrorCode PerformReload(D20Actn* d20a);
 	static ActionErrorCode PerformQuiveringPalm(D20Actn* d20a);
 	static ActionErrorCode PerformSneak(D20Actn* d20a);
 	static ActionErrorCode PerformStandardAttack(D20Actn* d20a);
@@ -154,6 +156,7 @@ public:
 
 
 	// Projectile Hit
+	static BOOL ProjectileHitStandard(D20Actn* d20a, objHndl projectile, objHndl obj2);
 	static BOOL ProjectileHitSpell(D20Actn* d20a, objHndl projectile, objHndl obj2);
 	static BOOL ProjectileHitPython(D20Actn* d20a, objHndl projectile, objHndl obj2);
 
@@ -243,6 +246,7 @@ static struct LegacyD20SystemAddresses : temple::AddressTable {
 	uint32_t(__cdecl*AddToSeqStdAttack)(D20Actn*, ActnSeq*, TurnBasedStatus*);
 	uint32_t(__cdecl*ActionCheckStdAttack)(D20Actn*, TurnBasedStatus*);
 	int(__cdecl*TargetWithinReachOfLoc)(objHndl obj, objHndl target, LocAndOffsets* loc);
+	int(__cdecl*ProjectileFunc_RangedAttack)(D20Actn*, objHndl, objHndl);
 	int * actSeqTargetsIdx;
 	objHndl * actSeqTargets; // size 32
 
@@ -258,6 +262,7 @@ static struct LegacyD20SystemAddresses : temple::AddressTable {
 		rebase(TargetWithinReachOfLoc, 0x100B86C0);
 		rebase(actSeqTargetsIdx, 0x118CD2A0);
 		rebase(actSeqTargets, 0x118CD2A8);
+		rebase(ProjectileFunc_RangedAttack, 0x100982E0);
 	}
 } addresses;
 
@@ -465,6 +470,8 @@ void LegacyD20System::NewD20ActionsInit()
 	d20Defs[d20Type].turnBasedStatusCheck = d20Callbacks.StdAttackTurnBasedStatusCheck;
 	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostStandardAttack;
 	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckStdRangedAttack;
+	d20Defs[d20Type].projectileHitFunc = d20Callbacks.ProjectileHitStandard;
+	d20Defs[d20Type].actionFrameFunc = d20Callbacks.ActionFrameRangedAttack;
 	//d20Defs[d20Type].actionCost = d20Callbacks.TargetCheckStandardAttack;
 
 	d20Type = D20A_FULL_ATTACK;
@@ -473,6 +480,10 @@ void LegacyD20System::NewD20ActionsInit()
 
 	d20Type = D20A_MOVE;
 	d20Defs[d20Type].flags = static_cast<D20ADF>(d20Defs[d20Type].flags & ~(D20ADF::D20ADF_Breaks_Concentration));
+
+	d20Type = D20A_RELOAD;
+	d20Defs[d20Type].actionCost = d20Callbacks.ActionCostReload;
+	d20Defs[d20Type].performFunc = d20Callbacks.PerformReload;
 
 	d20Type = D20A_5FOOTSTEP;
 	d20Defs[d20Type].actionCheckFunc = d20Callbacks.ActionCheckFiveFootStep;
@@ -1960,6 +1971,22 @@ ActionErrorCode D20ActionCallbacks::PerformPython(D20Actn* d20a){
 	return (ActionErrorCode)dispIo.returnVal; 
 }
 
+// Note: rework this if dual wielding loaded weapons ever happens
+ActionErrorCode D20ActionCallbacks::PerformReload(D20Actn *d20a) {
+	DispIoD20ActionTurnBased dispIo(d20a);
+
+	auto critter = d20a->d20APerformer;
+	if (!combatSys.NeedsToReload(critter)) return AEC_OK;
+
+	objects.floats->FloatCombatLine(critter, 42);
+	histSys.CreateRollHistoryLineFromMesfile(2, critter, objHndl::null);
+
+	auto weapon = critterSys.GetWornItem(critter, EquipSlot::WeaponPrimary);
+	weapons.SetLoaded(weapon);
+
+	return AEC_OK;
+}
+
 ActionErrorCode D20ActionCallbacks::PerformQuiveringPalm(D20Actn* d20a){
 	DispIoD20ActionTurnBased dispIo(d20a);
 	dispIo.DispatchPerform(DK_D20A_QUIVERING_PALM);
@@ -3195,14 +3222,14 @@ BOOL D20ActionCallbacks::ActionFrameTripAttack(D20Actn* d20a){
 	auto tgt = d20a->d20ATarget;
 	auto performer = d20a->d20APerformer;
 
+	histSys.CreateRollHistoryString(d20a->rollHistId1);
+	histSys.CreateRollHistoryString(d20a->rollHistId2);
+	histSys.CreateRollHistoryString(d20a->rollHistId0);
+
 	if (!(d20a->d20Caf & D20CAF_HIT))	{
 		combatSys.FloatCombatLine(d20a->d20APerformer, 29); //miss
 		return FALSE;
 	}
-
-	histSys.CreateRollHistoryString(d20a->rollHistId1);
-	histSys.CreateRollHistoryString(d20a->rollHistId2);
-	histSys.CreateRollHistoryString(d20a->rollHistId0);
 
 	// auto tripCheck = temple::GetRef<BOOL(__cdecl)(objHndl, objHndl)>(0x100B6230);
 	if (combatSys.TripCheck(d20a->d20APerformer, tgt))	{
@@ -3236,6 +3263,11 @@ BOOL D20ActionCallbacks::ActionFrameTripAttack(D20Actn* d20a){
 	}
 
 	return FALSE;
+}
+
+BOOL D20ActionCallbacks::ProjectileHitStandard(D20Actn *d20a, objHndl projectile, objHndl thrown)
+{
+	return addresses.ProjectileFunc_RangedAttack(d20a, projectile, thrown);
 }
 
 BOOL D20ActionCallbacks::ProjectileHitSpell(D20Actn * d20a, objHndl projectile, objHndl obj2){
@@ -3831,11 +3863,13 @@ ActionErrorCode D20ActionCallbacks::AddToStandardAttack(D20Actn * d20a, ActnSeq 
 	if (inventory.IsRangedWeapon(weapon)){
 		ActionCostPacket acp;
 		d20aCopy.d20Caf |= D20CAF_RANGED;
-		if (inventory.IsNormalCrossbow(weapon))	{
+		if (inventory.IsLoadableWeapon(weapon))	{
 			actSeqSys.ActionCostReload(d20a, &tbStatCopy, &acp);
-			if (acp.hourglassCost){
-				d20a->d20ActType = D20A_STANDARD_RANGED_ATTACK;
-				return (ActionErrorCode)actSeqSys.CrossBowSthgReload_1008E8A0(&d20aCopy, actSeq);
+
+			// if reloading isn't free, we can do at most one attack
+			if (acp.hourglassCost) {
+				d20aCopy.d20ActType = D20A_STANDARD_RANGED_ATTACK;
+				return actSeqSys.AppendReloadAttack(actSeq, &d20aCopy, &tbStatCopy);
 			}
 		}
 
@@ -4117,6 +4151,10 @@ ActionErrorCode D20ActionCallbacks::ActionCostNull(D20Actn* d20a, TurnBasedStatu
 	acp->chargeAfterPicker = 0;
 	acp->moveDistCost = 0;
 	return AEC_OK;
+}
+
+ActionErrorCode D20ActionCallbacks::ActionCostReload(D20Actn *d20a, TurnBasedStatus *tbStat, ActionCostPacket *acp) {
+	return actSeqSys.ActionCostReload(d20a, tbStat, acp);
 }
 
 ActionErrorCode D20ActionCallbacks::ActionCostSwift(D20Actn* d20a, TurnBasedStatus* tbStat, ActionCostPacket* acp)

@@ -1,9 +1,21 @@
 #include "stdafx.h"
 #include "common.h"
+#include "config/config.h"
 #include "weapon.h"
 #include "obj.h"
+#include "util/fixes.h"
 
 WeaponSystem weapons;
+
+static class WeaponReplacements : public TempleFix {
+	void apply() override {
+		// replace unload function to allow for more loadable weapons
+		replaceFunction<int (__cdecl)(objHndl)>(0x100657D0, [](objHndl weapon) {
+			weapons.SetUnloaded(weapon);
+			return 0;
+		});
+	}
+} replacements;
 
 std::string WeaponSystem::GetName(WeaponTypes wpnType)
 {
@@ -356,13 +368,17 @@ int WeaponSystem::GetBaseHardness(WeaponTypes weapon)
 	}
 }
 
+// Note: this does not completely match the original version.
+// It actually determines whether the weapon uses the ammo. The original
+// reports whether the weapon can be used to make a ranged attack while
+// the ammo is equipped. For the latter, thrown weapons always report
+// success. However, this is the wrong behavior for determining whether
+// the ammo's enhancement bonus should apply to attacks with the weapon.
 bool WeaponSystem::AmmoMatchesWeapon(objHndl weapon, objHndl ammoItem)
 {
 	if (objects.GetType(weapon) != obj_t_weapon)
 		return 0;
 	auto ammoType = objects.getInt32(weapon, obj_f_weapon_ammo_type);
-	if (ammoType >= 4 && ammoType < 18) // no ammo required??
-		return 1;
 	if (!ammoItem)
 		return 0;
 	return ammoType == objects.getInt32(ammoItem, obj_f_ammo_type);
@@ -404,6 +420,62 @@ bool WeaponSystem::IsMeleeWeapon(WeaponTypes wpnType)
 	default:
 		return true;
 	}
+}
+
+// Checks if a weapon requires loading and is not loaded.
+bool WeaponSystem::IsUnloaded(objHndl weapon)
+{
+	if (!weapon) return false;
+
+	if (objects.GetType(weapon) != obj_t_weapon) return false;
+
+	bool unloaded = !(objects.getInt32(weapon, obj_f_weapon_flags) & OWF_WEAPON_LOADED);
+
+	switch (objects.GetWeaponType(weapon))
+	{
+	case wt_light_crossbow:
+	case wt_heavy_crossbow:
+		return unloaded;
+	case wt_sling:
+		return config.stricterRulesEnforcement && unloaded;
+	// TODO: repeating crossbows
+	default:
+		return false;
+	}
+}
+
+bool WeaponSystem::IsLoadable(objHndl weapon, bool strict)
+{
+	if (!weapon || objects.GetType(weapon) != obj_t_weapon) return false;
+
+	switch (objects.GetWeaponType(weapon))
+	{
+	case wt_light_crossbow:
+	case wt_heavy_crossbow:
+		return true;
+	case wt_sling:
+		return strict || config.stricterRulesEnforcement;
+		// TODO: repeating/hand crossbows
+	default:
+		return false;
+	}
+}
+
+void WeaponSystem::SetLoaded(objHndl weapon)
+{
+	if (!IsLoadable(weapon)) return;
+
+	auto flags = objects.getInt32(weapon, obj_f_weapon_flags);
+	objects.setInt32(weapon, obj_f_weapon_flags, flags | OWF_WEAPON_LOADED);
+}
+
+void WeaponSystem::SetUnloaded(objHndl weapon)
+{
+	// set unloaded as a default state even without strict rules
+	if (!IsLoadable(weapon, true)) return;
+
+	auto flags = objects.getInt32(weapon, obj_f_weapon_flags);
+	objects.setInt32(weapon, obj_f_weapon_flags, flags & ~OWF_WEAPON_LOADED);
 }
 
 bool WeaponSystem::IsRangedWeapon(WeaponTypes wpnType)

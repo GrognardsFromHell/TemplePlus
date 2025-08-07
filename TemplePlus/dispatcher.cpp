@@ -204,6 +204,39 @@ void DispatcherSystem::DispatchForItem(objHndl item, enum_disp_type dispType, D2
 	}
 }
 
+// A complicated dispatcher for wearable items.
+//
+// If the item is worn, its item conditions will be among the conditions for its
+// parent creature, so we can dispatch against the creature. If not, the item
+// conditions can only be checked by doing an item dispatch.
+//
+// This is common code for attributes like armor check penalty that might want
+// to work this way. At the moment, only item conditions (like masterwork or
+// nimbleness) influence the penalty, so we could just use an item dispatch.
+// This more complicated logic tries to allow for e.g. feats that would
+// influence the penalty for specific characters.
+void DispatcherSystem::DispatchForWearable(objHndl item, enum_disp_type dispType, D20DispatcherKey key, DispIO *dispIo) {
+	auto parent = gameSystems->GetObj().GetObject(inventory.GetParent(item));
+	auto critterParent = parent != nullptr && parent->IsCritter();
+	auto loc = inventory.GetInventoryLocation(item);
+
+	if (critterParent) {
+		auto dispatcher = parent->GetDispatcher();
+		if (dispatcher->IsValid()) {
+			DispatcherProcessor(dispatcher, dispType, key, dispIo);
+		} else {
+			// fall back to item dispatch
+			critterParent = false;
+		}
+	}
+
+	// if there is no parent critter, or the item isn't worn, we
+	// need to do item dispatch to incorporate item conditions
+	if (!critterParent || !inventory.IsInvIdxWorn(loc)) {
+		dispatch.DispatchForItem(item, dispType, key, dispIo);
+	}
+}
+
 int DispatcherSystem::Dispatch10AbilityScoreLevelGet(objHndl handle, Stat stat, DispIoBonusList * dispIo){
 	return dispatch.DispatchForCritter(handle, dispIo, dispTypeAbilityScoreLevel, (D20DispatcherKey)(stat+1));
 }

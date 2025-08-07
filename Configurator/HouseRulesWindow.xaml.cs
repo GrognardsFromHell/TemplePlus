@@ -32,6 +32,13 @@ namespace TemplePlusConfig
             {
                 this.LaxRulesPanel.Visibility = Visibility.Collapsed;
             }
+
+            if (this.NonCoreCheckbox.IsChecked.Value) {
+                this.NonCorePanel.Visibility = Visibility.Visible;
+            }
+            else {
+                this.NonCorePanel.Visibility = Visibility.Collapsed;
+            }
         }
 
         private void button_Click(object sender, RoutedEventArgs e){
@@ -39,35 +46,89 @@ namespace TemplePlusConfig
             
         }
 
-        private void CheckBox_Checked(object sender, RoutedEventArgs e)
+        private void LaxRules_Checked(object sender, RoutedEventArgs e)
         {
             this.LaxRulesPanel.Visibility = Visibility.Visible;
         }
 
-        private void CheckBox_Unchecked(object sender, RoutedEventArgs e)
+        private void LaxRules_Unchecked(object sender, RoutedEventArgs e)
         {
             this.LaxRulesPanel.Visibility = Visibility.Collapsed;
         }
 
-        private void CheckBox_Initialized(object sender, EventArgs e)
+        private void LaxRules_Initialized(object sender, EventArgs e)
         {
 
             var chkbx = sender as CheckBox;
            if (chkbx != null && chkbx.IsChecked != null && this.LaxRulesPanel != null){
                 if (chkbx.IsChecked == true){
-                    CheckBox_Checked(sender, null);
+                    LaxRules_Checked(sender, null);
                 }
                 else
                 {
-                    CheckBox_Unchecked(sender, null);
+                    LaxRules_Unchecked(sender, null);
                 }
             }
             
         }
 
+        private void NonCore_Checked(object sender, RoutedEventArgs e)
+        {
+            this.NonCorePanel.Visibility = Visibility.Visible;
+        }
+
+        private void NonCore_Unchecked(object sender, RoutedEventArgs e)
+        {
+            this.NonCorePanel.Visibility = Visibility.Collapsed;
+        }
+
+        private void NonCore_Initialized(object sender, EventArgs e)
+        {
+            var box = sender as CheckBox;
+            if (box != null && box.IsChecked != null && this.NonCorePanel != null) {
+                if (box.IsChecked == true) {
+                    NonCore_Checked(sender, null);
+                } else {
+                    NonCore_Unchecked(sender, null);
+                }
+            }
+        }
+
         private void CheckBox_Checked_1(object sender, RoutedEventArgs e)
         {
 
+        }
+
+        private void NonCoreSource_Selected(object sender, RoutedEventArgs e)
+        {
+          var item = e.Source as ListBoxItem;
+
+          if (item != null) {
+            var name = item.Name;
+            var srcs = App._iniViewModel.NonCoreSources;
+            if (!srcs.Contains(name)) {
+              srcs.Add(name);
+            }
+          }
+        }
+
+        private void NonCoreSource_Deselected(object sender, RoutedEventArgs e)
+        {
+          ListBoxItem item = e.Source as ListBoxItem;
+
+          if (item != null) {
+            App._iniViewModel.NonCoreSources.RemoveAll(x => x == item.Name);
+          }
+        }
+
+        private void NonCoreSource_Initialized(object sender, EventArgs e)
+        {
+          var item = sender as ListBoxItem;
+
+          if (item != null && App._iniViewModel.NonCoreSources.Contains(item.Name)) {
+            item.IsSelected = true;
+            item.InvalidateVisual();
+          }
         }
     }
 }

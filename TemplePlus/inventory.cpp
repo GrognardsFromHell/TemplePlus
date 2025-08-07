@@ -605,16 +605,21 @@ int InventorySystem::SetItemParent(objHndl item, objHndl parent, int flags)  {
 	return SetItemParent(item, parent, (ItemInsertFlags)flags);
 }
 
-int InventorySystem::IsNormalCrossbow(objHndl weapon)
+bool InventorySystem::IsLoadableWeapon(objHndl weapon, bool strict)
 {
-	if (objects.GetType(weapon) == obj_t_weapon)
+	if (objects.GetType(weapon) != obj_t_weapon) return false;
+
+	switch (objects.GetWeaponType(weapon))
 	{
-		auto weapType = objects.GetWeaponType(weapon);
-		if (weapType == wt_heavy_crossbow || weapType == wt_light_crossbow)
-			return TRUE; // TODO: should this include repeating crossbow? I think the context is reloading action in some cases
-		// || weapType == wt_hand_crossbow
+	case wt_light_crossbow:
+	case wt_heavy_crossbow:
+		return true;
+	case wt_sling:
+		return strict || config.stricterRulesEnforcement;
+	// TODO: should this include repeating crossbow? hand crossbow?
+	default:
+		return false;
 	}
-	return FALSE;
 }
 
 int InventorySystem::IsThrowingWeapon(objHndl weapon)
@@ -697,6 +702,13 @@ ArmorType InventorySystem::GetArmorType(int armorFlags)
 	if (armorFlags & ARMOR_TYPE_NONE)
 		return ARMOR_TYPE_NONE;
 	return (ArmorType) (armorFlags & (ARMOR_TYPE_LIGHT | ARMOR_TYPE_MEDIUM | ARMOR_TYPE_HEAVY) );
+}
+
+ArmorType InventorySystem::GetArmorType(objHndl armor)
+{
+	if (!armor) return ARMOR_TYPE_NONE;
+
+	return GetArmorType(objects.getInt32(armor, obj_f_armor_flags));
 }
 
 BOOL InventorySystem::GetQuantityField(const objHndl item, obj_f* qtyField){
@@ -1645,7 +1657,7 @@ bool InventorySystem::IsWieldedTwoHanded(objHndl weapon, objHndl wielder, bool s
 		hasInterferingOffhand = true;
 	}
 	if (shield != objHndl::null){
-		hasInterferingOffhand = !shieldAllowsTwoHandedWield;
+		hasInterferingOffhand |= !shieldAllowsTwoHandedWield;
 	}
 	auto wieldType = GetWieldType(wielder, weapon, true);
 	// the wield type if the weapon is not enlarged along with the critter
@@ -1842,7 +1854,10 @@ void InventorySystem::ForceRemove(objHndl item, objHndl parent){
 	itemObj->SetInt32(obj_f_item_inv_location, -1);
 	
 	if (inventory.IsInvIdxWorn(invIdxOrg)){
-		if (inventory.IsNormalCrossbow(item)) { // unset OWF_WEAPON_LOADED
+		// unset OWF_WEAPON_LOADED
+		// `true` forces in case you've loaded a save with a loaded sling without
+		// strict rules enabled; clears anyway.
+		if (inventory.IsLoadableWeapon(item, true)) {
 			itemObj->SetInt32(obj_f_weapon_flags, itemObj->GetInt32(obj_f_weapon_flags) & ~OWF_WEAPON_LOADED);
 		}
 		static auto inheritLightFlags = temple::GetRef<void(__cdecl)(objHndl, objHndl)>(0x10066260);

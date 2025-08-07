@@ -114,12 +114,13 @@ struct InventorySystem : temple::AddressTable
 	objHndl FindItemByProtoId(objHndl container, int protoId, bool skipWorn = false);
 
 	
-	int IsNormalCrossbow(objHndl weapon);
+	bool IsLoadableWeapon(objHndl weapon, bool strict = false);
 	int IsThrowingWeapon(objHndl weapon);
 	bool IsGrenade(objHndl weapon);
 	bool UsesWandAnim(const objHndl item);
 	static bool IsTripWeapon(objHndl weapon);
 	ArmorType GetArmorType(int armorFlags);
+	ArmorType GetArmorType(objHndl armor);
 	
 	// handling for items with quantities
 	BOOL GetQuantityField(const objHndl item, obj_f * qtyField); // gets the relevant quantity field for the item ; returns 0 if irrelevant

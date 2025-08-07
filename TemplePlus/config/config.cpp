@@ -54,6 +54,68 @@ public:
 		return ConfigSetting(option, setterAdapter, getterAdapter, description);
 	}
 
+	static ConfigSetting StringSet(const char *option, char sep, Setter<const unordered_set<string>&> setter, Getter<unordered_set<string>> getter, const char *description = nullptr) {
+
+		auto getAdapter = [=] {
+			string result;
+			for (auto &str : getter()) {
+				if (!result.empty()) {
+					result += sep;
+				}
+				result += str;
+			}
+			return result;
+		};
+
+		auto setAdapter = [=](string x) {
+			unordered_set<string> result;
+			stringstream ss(x);
+			string token;
+			while (getline(ss, token, sep)) {
+				if (!token.empty()) {
+					result.insert(token);
+				}
+			}
+			setter(result);
+		};
+
+		return ConfigSetting(option, setAdapter, getAdapter, description);
+	}
+
+	template<typename T>
+	static ConfigSetting Set(const char *option, char sep, Setter<const unordered_set<T>&> setter, Getter<unordered_set<T>> getter, const map<T, string> & toS, const map<string, T> & fromS) {
+		auto getAdapter = [=] {
+			string result;
+			for (auto &item : getter()) {
+				auto mstr = toS.find(item);
+				if (mstr == toS.end()) continue;
+
+				if (!result.empty()) {
+					result += sep;
+				}
+				result += mstr->second;
+			}
+			return result;
+		};
+
+		auto setAdapter = [=](string x) {
+			unordered_set<T> result;
+			stringstream ss(x);
+			string token;
+			while (getline(ss, token, sep)) {
+				if (token.empty()) continue;
+
+				auto mitem = fromS.find(tolower(token));
+				if (mitem == fromS.end()) continue;
+
+				result.insert(mitem->second);
+			}
+			setter(result);
+		};
+
+		return ConfigSetting(option, setAdapter, getAdapter, nullptr);
+	}
+
 	static ConfigSetting Bool(const char *option, Setter<bool> setter, Getter<bool> getter, const char *description = nullptr) {
 		auto getterAdapter = [=] {
 			return getter() ? "true" : "false";
@@ -113,12 +175,32 @@ private:
 	Getter<string> mGetter;
 };
 
+static std::map<string, PnPSource> nameToSource = {
+	{ "phb", PnPSource::PHB },
+	{ "toee", PnPSource::ToEE },
+	{ "spellcompendium", PnPSource::SpellCompendium },
+	{ "phb2", PnPSource::PHB2 },
+	{ "homebrew", PnPSource::Homebrew },
+	{ "co8", PnPSource::Co8 }
+};
+
+static std::map<PnPSource, string> sourceToName = {
+	{ PnPSource::PHB, "phb" },
+	{ PnPSource::ToEE, "toee" },
+	{ PnPSource::SpellCompendium, "spellcompendium" },
+	{ PnPSource::PHB2, "phb2" },
+	{ PnPSource::Homebrew, "homebrew" },
+	{ PnPSource::Co8, "co8" }
+};
+
 #define CONF_STRING(FIELDNAME) ConfigSetting::String(#FIELDNAME, [] (string val) { config.FIELDNAME = val; }, [] { return config.FIELDNAME; })
 #define CONF_WSTRING(FIELDNAME) ConfigSetting::WString(#FIELDNAME, [] (wstring val) { config.FIELDNAME = val; }, [] { return config.FIELDNAME; })
 #define CONF_STRING_LIST(FIELDNAME, SEP) ConfigSetting::StringList(#FIELDNAME, SEP, [] (const vector<string> &val) { config.FIELDNAME = val; }, [] { return config.FIELDNAME; })
 #define CONF_INT(FIELDNAME) ConfigSetting::Int(#FIELDNAME, [] (int val) { config.FIELDNAME = val; }, [] { return config.FIELDNAME; })
 #define CONF_BOOL(FIELDNAME) ConfigSetting::Bool(#FIELDNAME, [] (bool val) { config.FIELDNAME = val; }, [] { return config.FIELDNAME; })
 #define CONF_DOUBLE(FIELDNAME) ConfigSetting::Double(#FIELDNAME, [] (double val) { config.FIELDNAME = val; }, [] { return config.FIELDNAME; })
+#define CONF_STRING_SET(FIELDNAME, SEP) ConfigSetting::StringSet(#FIELDNAME, SEP, [](const std::unordered_set<string> &val) { config.FIELDNAME = val; }, [] { return config.FIELDNAME; })
+#define CONF_SET(T, FIELDNAME, SEP, TOS, FROMS) ConfigSetting::Set<T>(#FIELDNAME, SEP, [](const std::unordered_set<T> &val) { config.FIELDNAME = val; }, [] { return config.FIELDNAME; }, TOS, FROMS)
 
 static ConfigSetting configSettings[] = {
 	CONF_BOOL(skipIntro),
@@ -180,6 +262,7 @@ static ConfigSetting configSettings[] = {
 	CONF_BOOL(forgottenRealmsRaces),
 	CONF_BOOL(laxRules),
 	CONF_BOOL(stricterRulesEnforcement),
+	CONF_BOOL(preferPoisonSpecFile),
 	CONF_BOOL(disableReachWeaponDonut),
 	CONF_BOOL(disableAlignmentRestrictions),
 	CONF_BOOL(disableCraftingSpellReqs),
@@ -189,6 +272,7 @@ static ConfigSetting configSettings[] = {
 
 	CONF_BOOL(showTargetingCirclesInFogOfWar),
 	CONF_BOOL(nonCoreMaterials),
+	CONF_SET(PnPSource, nonCoreSources, ';', sourceToName, nameToSource),
 	CONF_BOOL(tolerantNpcs),
 	CONF_STRING(fogOfWar),
 	CONF_DOUBLE(speedupFactor),
@@ -321,3 +405,15 @@ void TemplePlusConfig::SetVanillaInt(const std::string & name, int value)
 {
 	SetVanillaString(name, std::to_string(value));
 }
+
+// Calculates a source for a spell based on its numbering, as a default.
+PnPSource DefaultSpellSource(int spellEnum)
+{
+	if (spellEnum <= 568)
+		return PnPSource::PHB;
+	else if (spellEnum <= 802)
+		return PnPSource::ToEE;
+	else
+		return PnPSource::Homebrew;
+}
+

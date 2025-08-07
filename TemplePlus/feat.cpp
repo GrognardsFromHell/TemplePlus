@@ -156,20 +156,6 @@ LegacyFeatSystem::LegacyFeatSystem()
 	rebase(charEditorClassCode, 0x11E72FC0);	// TODO: move this to the appropriate system
 	rebase(ToEE_WeaponFeatCheck, 0x1007C4F0);
 
-	int _racialFeatsTable[VANILLA_NUM_RACES * 10] = { -1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		FEAT_SIMPLE_WEAPON_PROFICIENCY_ELF, -1, 0, 0, 0, 0, 0, 0, 0, 0,
-		-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-
-		-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		-1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		-1, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // table presupposes 10 items on each row, terminator character -1
-	int _rangerArcheryFeats[4 * 2] = { FEAT_RANGER_RAPID_SHOT, 2, FEAT_RANGER_MANYSHOT, 6, FEAT_IMPROVED_PRECISE_SHOT_RANGER, 11, -1, -1 };
-	int _rangerTwoWeaponFeats[4 * 2] = { FEAT_TWO_WEAPON_FIGHTING_RANGER, 2, FEAT_IMPROVED_TWO_WEAPON_FIGHTING_RANGER, 6, FEAT_GREATER_TWO_WEAPON_FIGHTING_RANGER, 11, - 1, -1 };
-
-	memcpy(racialFeats, _racialFeatsTable, sizeof(racialFeats));
-	memcpy(rangerArcheryFeats, _rangerArcheryFeats, sizeof(rangerArcheryFeats));
-	memcpy(rangerTwoWeaponFeats, _rangerTwoWeaponFeats, sizeof(rangerTwoWeaponFeats));
 	featPropertiesTable[FEAT_GREATER_TWO_WEAPON_FIGHTING] = 0x10;
 	featPreReqTable[FEAT_GREATER_TWO_WEAPON_FIGHTING].featPrereqs[2].featPrereqCode = 266;
 	featPreReqTable[FEAT_GREATER_TWO_WEAPON_FIGHTING].featPrereqs[2].featPrereqCodeArg = 11;

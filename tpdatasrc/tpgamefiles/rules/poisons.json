@@ -63,7 +63,7 @@
 "delayedEffect": 0,
 "id": 4,
 "immDieType": 6,
-"immNumDie": 1,
+"immNumDie": 2,
 "immediateEffect": 0
 },
 {
@@ -107,14 +107,16 @@
 },
 {
 "comment": "Black Adder",
-"dc": 12,
+"dc": 14,
 "delayedDice": {
 "count": 1,
 "sides": 6
 },
-"delayedEffect": 0,
+"delayedEffect": 2,
 "id": 8,
-"immediateEffect": -10
+"immDieType": 6,
+"immNumDie": 1,
+"immediateEffect": 2
 },
 {
 "comment": "Malyss Root Paste",
@@ -252,7 +254,7 @@
 "delayedEffect": 2,
 "id": 19,
 "immDieBonus": 1,
-"immediateEffect": 2
+"immediateEffect": -4
 },
 {
 "comment": "Quasit",

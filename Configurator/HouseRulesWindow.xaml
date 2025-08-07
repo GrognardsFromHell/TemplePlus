@@ -41,13 +41,25 @@
                 </Canvas>
             </TabItem>
             <TabItem Header="Extra Content">
-                <StackPanel HorizontalAlignment="Left" Height="157" VerticalAlignment="Top" Width="215" Margin="10,10,0,0">
-                    <CheckBox VerticalAlignment="Center" Content="Non-Core Materials" IsChecked="{Binding NonCore}" Margin="0,5,0,5" ToolTip="Enables content from outside the core DnD rules, such as from splatbooks and fan suggestions."/>
-                    <CheckBox VerticalAlignment="Center" Content="Prestige Classes" IsChecked="{Binding NewClasses}" Margin="0,5,0,5" ToolTip="Enables Prestige Classes."/>
-                    <CheckBox VerticalAlignment="Center" Content="Extra Races" IsChecked="{Binding NewRaces}" Margin="0,5,0,5" ToolTip="Enables new PC Races."/>
-                    <CheckBox VerticalAlignment="Center" Content="Monstrous PC Races" IsChecked="{Binding MonstrousRaces}" Margin="0,5,0,5" ToolTip="Enables Monstrous PC Races."/>
-                    <CheckBox VerticalAlignment="Center" Content="Forgotten Realms PC Races" IsChecked="{Binding ForgottenRealmsRaces}" Margin="0,5,0,5" ToolTip="Enables Forgotten Realms PC Races."/>
-                </StackPanel>
+                <Canvas>
+                    <StackPanel HorizontalAlignment="Left" Height="157" VerticalAlignment="Top" Width="215" Margin="10,10,0,0">
+                        <CheckBox x:Name="NonCoreCheckbox" VerticalAlignment="Center" Content="Non-Core Materials" IsChecked="{Binding NonCore}" Margin="0,5,0,5" ToolTip="Enables content from outside the core DnD rules, such as from splatbooks and fan suggestions." Initialized="NonCore_Initialized" Unchecked="NonCore_Unchecked" Checked="NonCore_Checked" />
+                        <CheckBox VerticalAlignment="Center" Content="Prestige Classes" IsChecked="{Binding NewClasses}" Margin="0,5,0,5" ToolTip="Enables Prestige Classes."/>
+                        <CheckBox VerticalAlignment="Center" Content="Extra Races" IsChecked="{Binding NewRaces}" Margin="0,5,0,5" ToolTip="Enables new PC Races."/>
+                        <CheckBox VerticalAlignment="Center" Content="Monstrous PC Races" IsChecked="{Binding MonstrousRaces}" Margin="0,5,0,5" ToolTip="Enables Monstrous PC Races."/>
+                        <CheckBox VerticalAlignment="Center" Content="Forgotten Realms PC Races" IsChecked="{Binding ForgottenRealmsRaces}" Margin="0,5,0,5" ToolTip="Enables Forgotten Realms PC Races."/>
+                    </StackPanel>
+                    <GridSplitter x:Name="gridSplitter_NonCore" HorizontalAlignment="Left" Height="360" Margin="241,10,0,0" VerticalAlignment="Top" Width="3"/>
+                    <StackPanel HorizontalAlignment="Left" Height="231" VerticalAlignment="Top" Width="206" Margin="255,10,0,0" x:Name="NonCorePanel">
+                        <Label VerticalAlignment="Center" Content="Non Core Sources" Margin="0,0,10,0" />
+                        <ListBox x:Name="NonCoreSources" SelectionMode="Multiple" >
+                            <ListBoxItem Selected="NonCoreSource_Selected" Unselected="NonCoreSource_Deselected" Initialized="NonCoreSource_Initialized" Name="spellcompendium">Spell Compendium</ListBoxItem>
+                            <ListBoxItem Selected="NonCoreSource_Selected" Unselected="NonCoreSource_Deselected" Initialized="NonCoreSource_Initialized" Name="phb2">Player's Handbook II</ListBoxItem>
+                            <ListBoxItem Selected="NonCoreSource_Selected" Unselected="NonCoreSource_Deselected" Initialized="NonCoreSource_Initialized" Name="homebrew">Homebrew</ListBoxItem>
+                            <ListBoxItem Selected="NonCoreSource_Selected" Unselected="NonCoreSource_Deselected" Initialized="NonCoreSource_Initialized" Name="co8">Circle of Eight</ListBoxItem>
+                        </ListBox>
+                    </StackPanel>
+                </Canvas>
             </TabItem>
             <TabItem Header="Ruleset">
                 <Canvas>
@@ -65,8 +77,9 @@
                         <CheckBox VerticalAlignment="Center" Content="Reach Weapons Hit Adjacents" IsChecked="{Binding DisableReachWeaponDonut}" Margin="0,5,10,5" ToolTip="Temple+ fixes reach weapons so that you cannot attack enemies within close range. This option restores the vanilla ToEE behavior, where all reach weapons behaved like Spiked Chains."/>
 
                         <CheckBox VerticalAlignment="Center" Content="Metamagic Stacking" IsChecked="{Binding MetamagicStacking}" Margin="0,5,35,5" ToolTip="Allows stacking of Meta Magic effects such as Widen, Enlarge and Extend Spell."/>
-                        <CheckBox x:Name="LaxRulesCheckbox" VerticalAlignment="Center" Content="Lax Rules" IsChecked="{Binding LaxRules}" Margin="0,5,35,5" ToolTip="Relax some restrictions such as craft MAA spell requirements, alignment restrictions for Prestige Classes." Initialized="CheckBox_Initialized" Unchecked="CheckBox_Unchecked" Checked="CheckBox_Checked"/>
+                        <CheckBox x:Name="LaxRulesCheckbox" VerticalAlignment="Center" Content="Lax Rules" IsChecked="{Binding LaxRules}" Margin="0,5,35,5" ToolTip="Relax some restrictions such as craft MAA spell requirements, alignment restrictions for Prestige Classes." Initialized="LaxRules_Initialized" Unchecked="LaxRules_Unchecked" Checked="LaxRules_Checked"/>
                         <CheckBox VerticalAlignment="Center" Content="Stricter Rules Enforcement" IsChecked="{Binding StricterRulesEnforcement}" Margin="0,5,25,5" ToolTip="Change grease size to 5 foot radius and enforce tower shield attack penalty."/>
+                        <CheckBox VerticalAlignment="Center" Content="Prefer Poison Spec File" Margin="0,5,25,5" IsChecked="{Binding PreferPoisonSpecFile}" ToolTip="Fixes some incorrect poison types from the base game (makes some fights harder)"/>
                     </StackPanel>
                     <GridSplitter x:Name="gridSplitter_Copy" HorizontalAlignment="Left" Height="360" Margin="241,10,0,0" VerticalAlignment="Top" Width="3"/>
                     <StackPanel HorizontalAlignment="Left" Height="231" VerticalAlignment="Top" Width="206" Margin="255,10,0,0" x:Name="LaxRulesPanel">

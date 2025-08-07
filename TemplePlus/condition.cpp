@@ -38,6 +38,8 @@
 #include "gamesystems/d20/d20stats.h"
 #include "d20_race.h"
 #include "ai.h"
+#include "poison.h"
+#include "config/config.h"
 
 #define CB int(__cdecl)(DispatcherCallbackArgs)
 using DispCB = int(__cdecl )(DispatcherCallbackArgs);
@@ -72,6 +74,7 @@ CondStructNew ConditionSystem::mCondHezrouStench;
 CondStructNew ConditionSystem::mCondHezrouStenchHit;
 
 int ConditionPreventWithArg(DispatcherCallbackArgs args);
+int ConditionPreventNonStrict(DispatcherCallbackArgs args);
 int ConditionOverrideBy(DispatcherCallbackArgs args);
 int QueryHasCondition(DispatcherCallbackArgs args);
 int SpellOverrideBy(DispatcherCallbackArgs args);
@@ -127,6 +130,10 @@ public:
 	static int __cdecl HezrouStenchToHit2(DispatcherCallbackArgs args);
 	static int __cdecl HezrouStenchEffectTooltip(DispatcherCallbackArgs args);
 	static int __cdecl HezrouStenchCureNausea(DispatcherCallbackArgs args);
+
+	static int __cdecl VrockSporesCountdown(DispatcherCallbackArgs args);
+	static int __cdecl VrockSporesEffectTip(DispatcherCallbackArgs args);
+
 	static int __cdecl RemoveSpell(DispatcherCallbackArgs args);
 	static int __cdecl HasCondition(DispatcherCallbackArgs args);
 	static int __cdecl HasSpellEffectActive(DispatcherCallbackArgs args);
@@ -206,6 +213,7 @@ public:
 	static int __cdecl PreferOneHandedWieldQuery(DispatcherCallbackArgs args);
 	static int __cdecl UpdateModelEquipment(DispatcherCallbackArgs args);
 
+	static int __cdecl EncumbranceCapAC(DispatcherCallbackArgs args);
 } genericCallbacks;
 
 
@@ -222,6 +230,7 @@ public:
 	static int __cdecl MaxDexBonus(objHndl armor);
 	static int __cdecl ArmorAcBonus(DispatcherCallbackArgs args);
 	static int __cdecl ArmorBonusAcBonusCapValue(DispatcherCallbackArgs args);
+	static int __cdecl ArmorCheckNonproficiencyPenalty(DispatcherCallbackArgs args);
 	static int __cdecl BucklerToHitPenalty(DispatcherCallbackArgs args);
 	static int __cdecl BucklerAcPenalty(DispatcherCallbackArgs args);
 	static int __cdecl BucklerAcBonus(DispatcherCallbackArgs args);
@@ -238,6 +247,7 @@ public:
 	static int __cdecl WeaponThundering(DispatcherCallbackArgs args);
 	static int __cdecl ArmorShadowSilentMovesSkillBonus(DispatcherCallbackArgs args);
 
+	static int __cdecl WeaponToHitBonus(DispatcherCallbackArgs args);
 	static int __cdecl WeaponDamageBonus(DispatcherCallbackArgs args);
 
 	int (*oldMaxDexBonus)(objHndl armor) = nullptr;
@@ -558,6 +568,9 @@ public:
 		// Armor Check Penalty
 		itemCallbacks.oldArmorCheckPenalty = replaceFunction<int(objHndl armor)>(0x1004F0D0, itemCallbacks.ArmorCheckPenalty);
 
+		// Masterwork armor check offset bonuses, no longer necessary
+		replaceFunction(0x10100470, genericCallbacks.NoOp);
+		replaceFunction(0x10100500, genericCallbacks.NoOp);
 
 		// Druid wild shape
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FBDB0, classAbilityCallbacks.DruidWildShapeReset);
@@ -565,7 +578,8 @@ public:
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FBC60, classAbilityCallbacks.DruidWildShapeCheck);
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FBCE0, classAbilityCallbacks.DruidWildShapePerform);
 
-		// Fixes Weapon Damage Bonus for ammo items
+		// Fixes Weapon To Hit/Damage Bonus for ammo items
+		replaceFunction(0x100FFDF0, itemCallbacks.WeaponToHitBonus);
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FFE90, itemCallbacks.WeaponDamageBonus);
 
 		// Allow silent moves and shadow armor to have multipe levels
@@ -890,6 +904,15 @@ int ConditionPreventWithArg(DispatcherCallbackArgs args)
 	return 0;
 }
 
+// for when one condition preventing another isn't strictly by the rules
+int ConditionPreventNonStrict(DispatcherCallbackArgs args)
+{
+	if (!config.stricterRulesEnforcement)
+		return ConditionPreventWithArg(args);
+
+	return 0;
+}
+
 bool ConditionMatchesData1(DispatcherCallbackArgs args) {
 	DispIoCondStruct *dispIo = dispatch.DispIoCheckIoType1((DispIoCondStruct *)args.dispIO);
 	if (!dispIo) return false;
@@ -1040,6 +1063,44 @@ int DivineMightEffectTooltipCallback(DispatcherCallbackArgs args)
 	callback( *((int*)dispIo + 1), args.subDispNode->subDispDef->data1, (int)shit);
 	return 0;
 };
+
+int DelayedPoisonBeginRound(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType6(args.dispIO);
+	auto delay = conds.GetByName("sp-Delay Poison");
+	auto dk = DK_QUE_Critter_Has_Condition;
+	auto target = args.objHndCaller;
+
+	if (d20Sys.d20QueryWithData(target, DK_QUE_Critter_Has_Condition, delay, 0)) {
+		return 0;
+	}
+
+	auto ptype = args.GetCondArg(0);
+
+	switch (args.GetCondArg(1))
+	{
+	// primary poison
+	case 0:
+		conds.AddTo(target, "Poisoned", { ptype, 0, args.GetCondArg(2) });
+		args.RemoveCondition();
+	case 1:
+		ApplyPoisonSecondary(args);
+	}
+
+	return 0;
+}
+
+int DelayedPoisonEffectTip(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType24(args.dispIO);
+	auto ptype = args.GetCondArg(0);
+	auto line = combatSys.GetCombatMesLine(300 + ptype);
+	auto text = fmt::format("(Delayed): {}", line);
+
+	// Poisoned {}
+	dispIo->Append(130, -1, text.c_str());
+	return 0;
+}
 
 /*
 gets a tooltip string from combat.mes
@@ -1761,6 +1822,30 @@ int GenericCallbacks::PreferOneHandedWieldQuery(DispatcherCallbackArgs args)
 	return 0;
 }
 
+// Sets a cap to dex AC bonus for encumbrance. The cap value it taken from
+// data1, and a description from data2. If the cap is 0, it also caps dodge AC,
+// because being overburdened denies your dex AC bonus altogether.
+int GenericCallbacks::EncumbranceCapAC(DispatcherCallbackArgs args)
+{
+	GET_DISPIO(dispIOTypeAttackBonus, DispIoAttackBonus);
+
+	auto cap = args.GetData1();
+	auto descline = args.GetData2();
+
+	if (cap >= 100) { // indicates no cap; avoid clutter just in case
+		return 0;
+	}
+
+	// 3 is dexterity bonus
+	dispIo->bonlist.AddCap(3, cap, descline);
+	if (cap == 0) {
+		// 8 is dodge bonus
+		dispIo->bonlist.AddCap(8, cap, descline);
+	}
+
+	return 0;
+}
+
 int GenericCallbacks::UpdateModelEquipment(DispatcherCallbackArgs args)
 {
 	critterSys.UpdateModelEquipment(args.objHndCaller);
@@ -1788,6 +1873,19 @@ int QuerySetReturnVal0(DispatcherCallbackArgs args)
 	dispIo->return_val = 0;
 	return 0;
 };
+
+// Sets return_val to 1 if caller lacks feat in data1
+int QuerySet1IfLacksFeat(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType7(args.dispIO);
+	auto featId = static_cast<feat_enums>(args.GetData1());
+
+	if (!feats.HasFeatCountByClass(args.objHndCaller, featId)) {
+		dispIo->return_val = 1;
+	}
+
+	return 0;
+}
 
 int QueryRetrun1GetArgs(DispatcherCallbackArgs args)
 {
@@ -1859,7 +1957,7 @@ int DefaultSetTWF(DispatcherCallbackArgs args)
 
 	if (uitem == left) { // off hand equipped, default two TWF on
 		args.SetCondArg(0, 1);
-	} else if (uitem == shield) { // shield equipped, default to TWF off
+	} else if (!left && uitem == shield) { // shield equipped, default to TWF off
 		args.SetCondArg(0, 0);
 		args.SetCondArg(1, 0);
 	} else if (uitem == right) { // right hand equipped
@@ -3219,6 +3317,20 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 4, dispTypeD20Query, DK_QUE_Can_Perform_Disarm, DisarmCanPerform, 0, 0);
 	//DispatcherHookInit(cond, 5, dispTypeD20Query, DK_QUE_ActionTriggersAOO, QuerySetReturnVal1, 0, 0);
 
+	// Uncanny Dodge
+	{
+		static CondStructNew uncannyDodge;
+		uncannyDodge.ExtendExisting("Uncanny Dodge");
+		// this condition has erroneous 3.0 bonus callbacks that have been turned
+		// into Trap Sense in 3.5
+		uncannyDodge.subDispDefs[1].dispCallback = genericCallbacks.NoOp;
+		uncannyDodge.subDispDefs[2].dispCallback = genericCallbacks.NoOp;
+
+		static CondStructNew flatfooted;
+		flatfooted.ExtendExisting("Flatfooted");
+		flatfooted.subDispDefs[5].dispCallback = QuerySet1IfLacksFeat;
+		flatfooted.subDispDefs[5].data1.usVal = FEAT_UNCANNY_DODGE;
+	}
 #pragma endregion
 	// Disarmed
 	cond = &mCondDisarmed; 	condName = (char*)mCondDisarmedName;
@@ -3316,6 +3428,16 @@ void ConditionSystem::RegisterNewConditions()
 	DispatcherHookInit(cond, 12, dispTypeD20Signal, DK_SIG_Combat_End, spCallbacks.HezrouStenchCureNausea,0,0 );
 	DispatcherHookInit(cond, 13, dispTypeD20Query, DK_QUE_Critter_Has_Condition, spCallbacks.HasCondition, (uint32_t)cond, 0);
 	DispatcherHookInit(cond, 14, dispTypeConditionAddPre, DK_NONE, ConditionOverrideBy, (uint32_t)conds.GetByName("sp-Neutralize Poison"), 0); // make neutralie poison remove existing stench effect
+	DispatcherHookInit(cond, 15, dispTypeConditionAddPre, DK_NONE, ConditionOverrideBy, (uint32_t)conds.GetByName("sp-Delay Poison"), 0); // also delay poison
+
+	{
+		static CondStructNew vrockSpores;
+		vrockSpores.ExtendExisting("sp-Vrock Spores");
+		vrockSpores.subDispDefs[5].dispCallback = spCallbacks.VrockSporesCountdown; // begin round
+		vrockSpores.subDispDefs[6].dispCallback = genericCallbacks.NoOp; // TBS init
+		vrockSpores.subDispDefs[10].dispCallback = spCallbacks.VrockSporesEffectTip;
+		vrockSpores.AddHook(dispTypeConditionRemove, DK_NONE, genericCallbacks.EndParticlesFromArg, 2, 0);
+	}
 #pragma endregion
 
 #pragma region Items
@@ -3343,6 +3465,8 @@ void ConditionSystem::RegisterNewConditions()
 		condShieldBonus.AddHook(dispTypeBucklerAcPenalty, DK_NONE, itemCallbacks.ShieldAcPenalty);
 		// reset shield bash penalty on begin round
 		condShieldBonus.AddHook(dispTypeBeginRound, DK_NONE, CondNodeSetArgFromSubDispDef, 1, 0);
+		// armor check nonproficiency; was survival for some reason
+		condShieldBonus.subDispDefs[13].dispKey = DK_SKILL_USE_ROPE;
 
 		// replace Q_Armor_Get_AC_Bonus callbacks to fix stacking behavior
 		condShieldBonus.subDispDefs[0].dispCallback = itemCallbacks.BaseAcQuery;
@@ -3356,6 +3480,11 @@ void ConditionSystem::RegisterNewConditions()
 		static CondStructNew condArmorBonus;
 		condArmorBonus.ExtendExisting("Armor Bonus");
 		condArmorBonus.subDispDefs[0].dispCallback = itemCallbacks.BaseAcQuery;
+		// armor check nonproficiency; was survival for some reason
+		condArmorBonus.subDispDefs[15].dispKey = DK_SKILL_USE_ROPE;
+		condArmorBonus.AddHook(dispTypeAbilityCheckModifier, DK_STAT_STRENGTH, itemCallbacks.ArmorCheckNonproficiencyPenalty);
+		condArmorBonus.AddHook(dispTypeAbilityCheckModifier, DK_STAT_DEXTERITY, itemCallbacks.ArmorCheckNonproficiencyPenalty);
+
 		static CondStructNew condArmorEnhBonus;
 		condArmorEnhBonus.ExtendExisting("Armor Enhancement Bonus");
 		condArmorEnhBonus.subDispDefs[0].dispCallback = itemCallbacks.EnhAcQuery;
@@ -3429,6 +3558,32 @@ void ConditionSystem::RegisterNewConditions()
 		condSleeping.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HelplessCapStatBonus);
 	}
 
+	{
+		// Switch encumbrance conditions from responding to (armor) max dex dispatch
+		// to directly capping dex AC. Also, fix the actual cap numbers (they were
+		// all 3, which is the medium value).
+
+		static CondStructNew encumberedMed;
+		encumberedMed.ExtendExisting("Encumbered Medium");
+		encumberedMed.subDispDefs[3].dispType = dispTypeGetAC;
+		encumberedMed.subDispDefs[3].dispCallback = genericCallbacks.EncumbranceCapAC;
+
+		static CondStructNew encumberedHeavy;
+		encumberedHeavy.ExtendExisting("Encumbered Heavy");
+		encumberedHeavy.subDispDefs[3].dispType = dispTypeGetAC;
+		encumberedHeavy.subDispDefs[3].dispCallback = genericCallbacks.EncumbranceCapAC;
+		encumberedHeavy.subDispDefs[3].data1.usVal = 1;
+
+		static CondStructNew encumberedOver;
+		encumberedOver.ExtendExisting("Encumbered Overburdened");
+		encumberedOver.subDispDefs[3].dispType = dispTypeGetAC;
+		encumberedOver.subDispDefs[3].dispCallback = genericCallbacks.EncumbranceCapAC;
+		encumberedOver.subDispDefs[3].data1.usVal = 0;
+		// Also, overburdened counts as being denied your dex AC, so you can be
+		// sneak attacked.
+		encumberedOver.AddHook(dispTypeD20Query, DK_QUE_SneakAttack, genericCallbacks.QuerySetReturnVal1);
+	}
+
 #pragma region Spells
 	{
 		// Enlarge/reduce effect dynamic model scale
@@ -3466,6 +3621,24 @@ void ConditionSystem::RegisterNewConditions()
 	
 	
 	*/
+
+	{
+		// 0 - poison id
+		// 1 - primary or secondary
+		// 2 - optional dc
+		//
+		// allow duplicates
+		static CondStructNew delayedPoison("Delayed Poison", 3, false);
+		auto neutral = conds.GetByName("sp-Neutralize Poison");
+		auto heal = conds.GetByName("sp-Heal");
+
+		delayedPoison.AddHook(dispTypeConditionAddPre, DK_NONE, ConditionOverrideBy, neutral, 0);
+		delayedPoison.AddHook(dispTypeConditionAddPre, DK_NONE, ConditionOverrideBy, heal, 0);
+		delayedPoison.AddHook(dispTypeBeginRound, DK_NONE, DelayedPoisonBeginRound);
+		delayedPoison.AddHook(dispTypeD20Query, DK_QUE_Critter_Is_Poisoned, genericCallbacks.QuerySetReturnVal1);
+		delayedPoison.AddHook(dispTypeTooltip, DK_NONE, genericCallbacks.TooltipUnrepeated, 55, 0);
+		delayedPoison.AddHook(dispTypeEffectTooltip, DK_NONE, DelayedPoisonEffectTip);
+	}
 
 	conditions.AddConditionsToTable();
 
@@ -5027,6 +5200,10 @@ int SpellCallbacks::HezrouStenchObjEvent(DispatcherCallbackArgs args){
 				if (critterSys.IsCategoryType(dispIo->tgt, MonsterCategory::mc_type_elemental))
 					return 0;
 
+				auto delay = conds.GetByName("sp-Delay Poison");
+				if (d20Sys.d20QueryWithData(dispIo->tgt, DK_QUE_Critter_Has_Condition, delay, 0))
+					return 0;
+
 
 				pySpellIntegration.SpellSoundPlay(&spellPkt, SpellEvent::SpellStruck);
 				pySpellIntegration.SpellTrigger(spellId, SpellEvent::AreaOfEffectHit);
@@ -5222,6 +5399,61 @@ int SpellCallbacks::HezrouStenchCureNausea(DispatcherCallbackArgs args)
 	else if (args.GetCondArg(4) == 0)
 		combatSys.FloatCombatLine(args.objHndCaller, 207, FloatLineColor::White);
 	args.SetCondArg(4, 2);
+	return 0;
+}
+
+int SpellCallbacks::VrockSporesCountdown(DispatcherCallbackArgs args)
+{
+	auto target = args.objHndCaller;
+	auto delay = conds.GetByName("sp-Delay Poison");
+	auto hasDelay = d20Sys.d20QueryWithData(target, DK_QUE_Critter_Has_Condition, delay, 0);
+	auto strict = config.stricterRulesEnforcement;
+
+	auto istr = fmt::format("VrockSporesCountdown hasDelay: {}", hasDelay);
+	logger->info(istr);
+
+	// delay poison is only postponing the countdown
+	if (strict && hasDelay) return 0;
+
+	auto dispIo = dispatch.DispIoCheckIoType6(args.dispIO);
+
+	// do countdown
+	int duration = args.GetCondArg(1);
+	int ticks = dispIo->data1;
+	int newDuration = duration - ticks;
+	args.SetCondArg(1, newDuration);
+
+	auto avoid = hasDelay;
+	if (!strict) {
+		// strict rules don't say anything about poison immunity preventing the
+		// damage.
+		avoid = avoid || d20Sys.d20Query(target, DK_QUE_Critter_Is_Immune_Poison);
+	}
+
+	if (!avoid) {
+		auto dice = Dice(std::min(duration, ticks), 4);
+		auto dmgTy = DamageType::Poison;
+		auto dmgDesc = 127;
+
+		floatSys.FloatSpellLine(target, 0x5015, FloatLineColor::Red);
+
+		damage.DealDamage(target, objHndl::null, dice, dmgTy, 1, 100, dmgDesc, D20A_CAST_SPELL);
+	} else {
+		spellSys.PlayFizzle(target);
+		floatSys.FloatSpellLine(target, 0x7d00, FloatLineColor::White);
+	}
+
+	if (newDuration < 0){
+		args.RemoveCondition();
+	}
+	return 0;
+}
+
+int SpellCallbacks::VrockSporesEffectTip(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType24(args.dispIO);
+
+	dispIo->Append(args.GetData1(), -1, "");
 	return 0;
 }
 
@@ -6002,23 +6234,36 @@ int ItemCallbacks::BucklerToHitPenalty(DispatcherCallbackArgs args)
 	return 0;
 }
 
+// This is a reworked version of the max dex bonus dispatch. The
+// original version would dispatch on the parent creature of the
+// armor, but this only makes sense if the item is worn, so that
+// the item conditions have been incorporated into the
+// creature's.
+//
+// The rewritten version uses a more complicated setup that
+// dispatches against a combination of the creature and the item.
+// If the item is worn, just the creature is sufficient, while
+// the item dispatch fixes the answer for non-worn items or items
+// without a parent creature.
+//
+// This allows for e.g. the creature's feats to adjust the bonus
+// if desired.
 int __cdecl ItemCallbacks::MaxDexBonus(objHndl armor)
 {
-	auto res = itemCallbacks.oldMaxDexBonus(armor);
-	
-	//Query for max dex bonus adjustment
-	if (armor) {
-		auto parent = inventory.GetParent(armor);
-		if (parent) {
-			auto obj = objSystem->GetObject(parent);
-			if ((obj != nullptr) && (obj->IsPC() || obj->IsNPC())) {
-				auto adjustment = d20Sys.D20QueryPython(parent, "Max Dex Bonus Adjustment", armor);
-				res += adjustment;
-			}
-		}
-	}
-    
-	return res;
+	if (!armor) return 0;
+
+	DispIoObjBonus dispIo;
+	dispIo.obj = armor;
+
+	// Initialize bonus list
+	auto base = objects.getInt32(armor, obj_f_armor_max_dex_bonus);
+
+	// mesline is "Initial Value"
+	dispIo.bonlist.AddBonus(base, 1, 102);
+
+	dispatch.DispatchForWearable(armor, dispTypeMaxDexAcBonus, DK_NONE, &dispIo);
+
+	return dispIo.bonlist.GetEffectiveBonusSum();
 }
 
 int __cdecl ItemCallbacks::ArmorBonusAcBonusCapValue(DispatcherCallbackArgs args)
@@ -6036,24 +6281,68 @@ int __cdecl ItemCallbacks::ArmorBonusAcBonusCapValue(DispatcherCallbackArgs args
 	return 0;
 }
 
-int __cdecl ItemCallbacks::ArmorCheckPenalty(objHndl armor)
+// Applies armor check penalty when the wearer is not proficient with the armor.
+//
+// Used for raw ability checks and any str/dex skills that do not already incur
+// armor check penalties.
+int __cdecl ItemCallbacks::ArmorCheckNonproficiencyPenalty(DispatcherCallbackArgs args)
 {
-	auto res = itemCallbacks.oldArmorCheckPenalty(armor);
-	
-	//Query for armor check penalty adjustment
-	if (armor) {
-		auto parent = inventory.GetParent(armor);
-		if (parent) {
-			auto obj = objSystem->GetObject(parent);
-			if ((obj != nullptr) && (obj->IsPC() || obj->IsNPC())) {
-				auto adjustment = d20Sys.D20QueryPython(parent, "Armor Check Penalty Adjustment", armor);
-				res += adjustment;  //The adjustment is a positive value, the penalty is a negative value
-				res = std::min(res, 0);
-			}
-		}
+	GET_DISPIO(dispIoTypeObjBonus, DispIoObjBonus);
+	auto invIdx = args.GetCondArg(2);
+	auto critter = args.objHndCaller;
+	auto armor = inventory.GetItemAtInvIdx(critter, invIdx);
+
+	if (armor && !inventory.IsProficientWithArmor(critter, armor)) {
+		auto name = description._getDisplayName(armor, critter);
+		auto penalty = ArmorCheckPenalty(armor);
+
+		dispIo->bonOut->AddBonusWithDesc(penalty, 0, 112, name);
 	}
 
-	return res;
+	return 0;
+
+}
+
+// This is a reworked version of the armor check penalty
+// dispatch. The original would find an object's parent and use
+// its dispatcher to run against the conditions. However, that
+// only makes sense if the armor is worn. If it is worn, then the
+// item conditions will have been added to the creature's, and
+// the dispatch will work. But, if it is not worn, none of the
+// item conditions will be regarded.
+//
+// This has been reworked to be more thorough using the new
+// DispatchForWearable. Since the dispatch type is an ObjBonus,
+// the armor will always be in the event object. If the armor is
+// worn, we can _just_ dispatch against the critter, because it
+// will have the item conditions. If not, we dispatch against the
+// parent object (if not null and a critter) _and_ do an item
+// dispatch, to ensure we incorporate all the relevant
+// conditions.
+//
+// I kept it this (complicated) way just in case someone wants to
+// add a feat, or similar, that modifies armor check penalties.
+// Since we still dispatch against the critter in relevant
+// scenarios, the critter's conditions can influence the penalty.
+int __cdecl ItemCallbacks::ArmorCheckPenalty(objHndl armor)
+{
+	if (!armor) return 0;
+
+	DispIoObjBonus dispIo;
+	dispIo.obj = armor;
+
+	// Initialize bonus list
+	auto base = objects.getInt32(armor, obj_f_armor_armor_check_penalty);
+
+	// mesline is "Initial Value"
+	dispIo.bonlist.AddBonus(base, 1, 102);
+
+	// cap at 0 on the high end
+	dispIo.bonlist.SetOverallCap(1, 0, 0, 102);
+
+	dispatch.DispatchForWearable(armor, dispTypeArmorCheckPenalty, DK_NONE, &dispIo);
+
+	return dispIo.bonlist.GetEffectiveBonusSum();
 }
 
 int __cdecl ItemCallbacks::BucklerAcPenalty(DispatcherCallbackArgs args)
@@ -6377,6 +6666,33 @@ int ItemCallbacks::WeaponThundering(DispatcherCallbackArgs args){
 		}
 
 	}
+	return 0;
+}
+
+int ItemCallbacks::WeaponToHitBonus(DispatcherCallbackArgs args) {
+	GET_DISPIO(dispIOTypeAttackBonus, DispIoAttackBonus);
+
+	auto attacker = dispIo->attackPacket.attacker;
+	if (!attacker) return 0;
+
+	auto invIdx = args.GetCondArg(2);
+
+	auto item = inventory.GetItemAtInvIdx(attacker, invIdx);
+	if (!item) return 0;
+
+	auto weapUsed = dispIo->attackPacket.GetWeaponUsed();
+	if (!weapUsed) return 0;
+
+	auto ammo = dispIo->attackPacket.ammoItem;
+
+	if ( item == weapUsed
+		|| item == ammo && weapons.AmmoMatchesWeapon(weapUsed, item))
+	{
+		auto amount = args.GetCondArg(0);
+		auto itemName = description.getDisplayName(item);
+		dispIo->bonlist.AddBonusWithDesc(amount, 12, 147, itemName);
+	}
+
 	return 0;
 }
 
@@ -7608,7 +7924,7 @@ int ClassAbilityCallbacks::SneakAttackDamage(DispatcherCallbackArgs args) {
 	bool sneakAttackCondition = atkPkt.flags & D20CAF_FLANKED
 		|| d20Sys.d20Query(tgt, DK_QUE_SneakAttack)
 		|| d20Sys.d20QueryWithData(atkPkt.attacker, DK_QUE_OpponentSneakAttack, (uint32_t)dispIo, 0)
-		|| !critterSys.CanSense(tgt, atkPkt.attacker);
+		|| !critterSys.CanSenseForSneakAttack(tgt, atkPkt.attacker);
 
 	// From the SRD:  The rogue must be able to see the target well enough to pick out a vital 
 	// spot and must be able to reach such a spot. A rogue cannot sneak attack while striking a 
@@ -7872,6 +8188,14 @@ void Conditions::AddConditionsToTable(){
 		silenceHit.ExtendExisting("sp-Silence Hit");
 		silenceHit.subDispDefs[6].dispCallback = spCallbacks.SilenceObjectEvent;
 		silenceHit.subDispDefs[6].dispKey = DK_OnLeaveAoE;
+	}
+
+	{
+		static CondStructNew delayPoison;
+		delayPoison.ExtendExisting("sp-Delay Poison");
+		// vrock spore prevention only on non-strict rules
+		delayPoison.subDispDefs[0].dispCallback = ConditionPreventNonStrict;
+		delayPoison.subDispDefs[2].dispCallback = genericCallbacks.HasCondition;
 	}
 
 	{
