@@ -34,7 +34,7 @@ jobs:
         # Make it available to the Github Workflow
         Add-Content -Path $env:GITHUB_OUTPUT -Value "version=$version"
         Add-Content -Path $env:GITHUB_OUTPUT -Value "release=$release"
-      shell: powershell
+      shell: pwsh
     - uses: actions/checkout@v4
     - uses: nuget/setup-nuget@v1
     - name: Set up Python 3.9
@@ -60,7 +60,7 @@ jobs:
         COMMIT_ID: ${GITHUB_SHA::8}
     - name: Pack Release
       run: .\PackRelease.ps1
-      shell: powershell
+      shell: pwsh
       env:
         TEMPLEPLUS_VERSION: ${{ steps.get_version.outputs.version }}
     - name: Pack Symbols
@@ -142,7 +142,7 @@ jobs:
       run: nuget install Squirrel.Windows -OutputDirectory Squirrel -Verbosity Detailed
     - name: Package Release
       run: .\BuildRelease.ps1
-      shell: powershell
+      shell: pwsh
       env:
         TEMPLEPLUS_VERSION: ${{ needs.build.outputs.version }}
     - name: Upload Update-Site
