@@ -18,3 +18,4 @@ mode_Target: Area
 mode_Target: Area or Obj
 radius_Target: 20
 ai_type: ai_action_offensive
+source: PHB
