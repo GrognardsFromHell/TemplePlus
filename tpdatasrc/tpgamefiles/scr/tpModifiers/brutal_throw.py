@@ -20,10 +20,10 @@ def BrutalThrowAttackBonus(attachee, args, evt_obj):
 		
 	#Add differece between strength and dex bonus
 	strScore = attachee.stat_level_get(stat_strength)
-	strMod = math.floor((strScore - 10)/2)
+	strMod = (strScore - 10)/2
 	
 	dexScore = attachee.stat_level_get(stat_dexterity)
-	dexMod = math.floor((dexScore - 10)/2)
+	dexMod = (dexScore - 10)/2
 	
 	bonus = int(strMod - dexMod) 
 	
