@@ -21,6 +21,10 @@ def	OnSpellEffect( spell ):
 
 	spell.duration = 10 * spell.caster_level
 
+	part_name = 'sp-Silence'
+	if spell.spell_radius > 20:
+		part_name = part_name + '-WIDE'
+
 	caster = spell.caster
 	packet = tpdp.SpellPacket(spell.id)
 
@@ -54,7 +58,7 @@ def	OnSpellEffect( spell ):
 		if avoid:
 			spell.spell_end(spell.id, 1) # force end
 		else:
-			spell_obj_partsys_id = game.particles('sp-Silence', target)
+			spell_obj_partsys_id = game.particles(part_name, target)
 			target.condition_add_with_args(
 					'sp-Silence', spell.id, spell.duration, 0, spell_obj_partsys_id)
 
@@ -73,7 +77,7 @@ def	OnSpellEffect( spell ):
 		spell_obj.set_initiative( caster_init_value )
 
 		# put sp-Silence condition on obj
-		spell_obj_partsys_id = game.particles( 'sp-Silence', spell_obj )
+		spell_obj_partsys_id = game.particles(part_name, spell_obj )
 		spell_obj.condition_add_with_args(
 				'sp-Silence', spell.id, spell.duration, 0, spell_obj_partsys_id )
 
