@@ -3538,17 +3538,27 @@ void ConditionSystem::RegisterNewConditions()
 	// 
 	
 	{
+		// 'Held' seems to always be a spell-related effect, applying the actual
+		// debuff for the various 'Hold' spells. Arguments are the first three
+		// arguments of the spell condition.
 		static CondStructNew condHeld;
 		condHeld.ExtendExisting("Held");
-		condHeld.subDispDefs[11].dispCallback = [](DispatcherCallbackArgs args) {
-			static auto orig = temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100EDF10);
-			// disable effect tooltip if freedom of movement
-			if (!d20Sys.d20Query(args.objHndCaller, DK_QUE_Critter_Has_Freedom_of_Movement))
-				return orig(args);
-			return 0;
-		};
+		condHeld.subDispDefs[11].dispCallback = ParalyzeEffectTooltip;
 		condHeld.AddHook(dispTypeAbilityScoreLevel, DK_STAT_STRENGTH, HeldCapStatBonus);
 		condHeld.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HeldCapStatBonus);
+
+		// 'Paralyzed' is a standalone effect inflicted by e.g.
+		// 'Monster Melee Paralysis'. Has 3 arguments but vanilla only the first
+		// seems to be used, for duration.
+		//
+		// Since it's not associated with a spell, it needs to do its own checks
+		// for removal.
+		static CondStructNew condPara;
+		condPara.ExtendExisting("Paralyzed");
+		condPara.subDispDefs[11].dispCallback = ParalyzeEffectTooltip;
+		condPara.AddHook(dispTypeAbilityScoreLevel, DK_STAT_STRENGTH, HeldCapStatBonus);
+		condPara.AddHook(dispTypeAbilityScoreLevel, DK_STAT_DEXTERITY, HeldCapStatBonus);
+		condPara.AddHook(dispTypeConditionAddPre, DK_NONE, ParalyzeCheckRemove);
 
 		static CondStructNew condSleeping;
 		condSleeping.ExtendExisting("Sleeping");
@@ -4043,6 +4053,48 @@ int HeldCapStatBonus(DispatcherCallbackArgs args)
 	return 0;
 }
 
+int ParalyzeCheckRemove(DispatcherCallbackArgs args)
+{
+	auto dispIo = dispatch.DispIoCheckIoType1(args.dispIO);
+	if (!dispIo) return 0;
+
+	auto removeParalysis = conds.GetByName("sp-Remove Paralysis");
+	if (dispIo->condStruct != removeParalysis) return 0;
+
+	auto bonus = dispIo->arg2;
+
+	// If the bonus is greater than 0, it's not the automatic remove, so
+	// do a saving throw.
+	if (bonus > 0) {
+		// Offset the DC by the bonus, since it's less complicated than actually
+		// arranging for a bonus.
+		auto dc = args.GetCondArg(1) - bonus;
+		auto critter = args.objHndCaller;
+		auto fort = SavingThrowType::Fortitude;
+
+		if (!damage.SavingThrow(critter, objHndl::null, dc, fort, D20STF_NONE))
+			return 0;
+	}
+
+	args.RemoveCondition();
+
+	return 0;
+}
+
+// Wrapper around effect tooltip for paralysis conditions. Hides the tooltip
+// while freedom of movement is active.
+int ParalyzeEffectTooltip(DispatcherCallbackArgs args)
+{
+	static auto orig =
+		temple::GetRef<int(__cdecl)(DispatcherCallbackArgs)>(0x100EDF10);
+
+	auto free = DK_QUE_Critter_Has_Freedom_of_Movement;
+
+	if (!d20Sys.d20Query(args.objHndCaller, free))
+		return orig(args);
+
+	return 0;
+}
 
 #pragma region Barbarian Stuff
 
