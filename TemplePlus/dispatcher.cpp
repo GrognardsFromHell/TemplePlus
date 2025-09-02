@@ -1548,6 +1548,11 @@ void DispatcherCallbackArgs::SetCondArgObjHndl(uint32_t argIdx, const objHndl& h
 	}
 }
 
+void DispatcherCallbackArgs::SetExpired()
+{
+	subDispNode->condNode->flags |= 1;
+}
+
 void DispatcherCallbackArgs::RemoveCondition(){
 	conds.ConditionRemove(this->objHndCaller, this->subDispNode->condNode);
 }

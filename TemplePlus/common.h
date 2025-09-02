@@ -99,7 +99,7 @@ struct BonusEntry
 	int32_t bonValue;
 	int32_t bonType; // types 0, 8 and 21 can stack ( 100E6490 ); use negative number for modifier
 	const char * bonusMesString; // parsable string for the help system e.g. "~Item~[TAG_ITEM]"
-	char * bonusDescr; // e.g. "Magic Full Plate +1"
+	const char * bonusDescr; // e.g. "Magic Full Plate +1"
 
 	BonusEntry() {
 		this->bonValue = 0;
@@ -184,7 +184,7 @@ struct BonusList
 	int AddCapWithDescr(int capType, int capValue, uint32_t bonMesLineNum, const char* capDescr);
 	int AddCapWithCustomDescr(int capType, int capValue, uint32_t bonMesLineNum, std::string &textArg);
 
-	BOOL SetOverallCap(int BonFlags, int newCap, int newCapType, int newCapMesLineNum, char *capDescr = nullptr);
+	BOOL SetOverallCap(int BonFlags, int newCap, int newCapType, int newCapMesLineNum, const char *capDescr = nullptr);
 	static const char* GetBonusMesLine(int lineNum);
 };
 

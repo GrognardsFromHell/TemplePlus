@@ -414,7 +414,7 @@ int BonusList::AddCapWithCustomDescr(int capType, int capValue, uint32_t bonMesL
 
 
 
-BOOL BonusList::SetOverallCap(int newBonFlags, int newCap, int newCapType, int newCapMesLineNum, char *capDescr) {
+BOOL BonusList::SetOverallCap(int newBonFlags, int newCap, int newCapType, int newCapMesLineNum, const char *capDescr) {
 	if (!newBonFlags)
 		return FALSE;
 

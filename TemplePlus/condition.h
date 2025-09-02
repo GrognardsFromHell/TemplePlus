@@ -324,6 +324,7 @@ int HeldCapStatBonus(DispatcherCallbackArgs args);
 int HelplessCapStatBonus(DispatcherCallbackArgs args);
 int ParalyzeCheckRemove(DispatcherCallbackArgs args);
 int ParalyzeEffectTooltip(DispatcherCallbackArgs args);
+int HelplessConditionRemoved(DispatcherCallbackArgs args);
 
 int CombatExpertiseRadialMenu(DispatcherCallbackArgs args);
 int CombatExpertiseSet(DispatcherCallbackArgs args);
