@@ -4036,7 +4036,7 @@ int HelplessCapStatBonus(DispatcherCallbackArgs args)
 {
 	DispIoBonusList *dispIo = dispatch.DispIoCheckIoType2(args.dispIO);
 
-	dispIo->bonlist.AddCap(0, 0, 109);
+	dispIo->bonlist.SetOverallCap(1, 0, 0, 109, "");
 
 	return 0;
 }
@@ -4048,7 +4048,7 @@ int HeldCapStatBonus(DispatcherCallbackArgs args)
 	DispIoBonusList *dispIo = dispatch.DispIoCheckIoType2(args.dispIO);
 
 	if (!d20Sys.d20Query(args.objHndCaller, DK_QUE_Critter_Has_Freedom_of_Movement))
-		dispIo->bonlist.AddCap(0, 0, 109);
+		dispIo->bonlist.SetOverallCap(1, 0, 0, 109, "");
 
 	return 0;
 }
