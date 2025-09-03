@@ -14,6 +14,7 @@
 #include "ui/ui_party.h"
 #include "python/python_dispatcher.h"
 #include <critter.h>
+#include <algorithm>
 
 // Dispatcher System Function Replacements
 class DispatcherReplacements : public TempleFix {
@@ -1584,6 +1585,19 @@ void DispIoTooltip::Append(string& cs)
 	{
 		strncpy(strings[numStrings++], &cs[0], 0x100);
 	}
+}
+
+void DispIoTooltip::AppendDistinct(string& cs)
+{
+	if (numStrings >= 10) return;
+
+	for (size_t i = 0; i < numStrings; i++) {
+		auto mx = std::min<size_t>(256, cs.size()); // clamp size
+		if (!strncmp(cs.c_str(), strings[i], mx)) // cs already in strings
+			return;
+	}
+
+	Append(cs);
 }
 
 DispIoObjBonus::DispIoObjBonus()

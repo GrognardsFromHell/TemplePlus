@@ -370,6 +370,7 @@ struct DispIoTooltip : DispIO // DispIoType 9 ; tooltip additional text when hov
 	char strings[10][256];
 	uint32_t numStrings;
 	void Append(std::string& cs);
+	void AppendDistinct(std::string& cs);
 };
 const auto TestSizeOfDispIoTooltip = sizeof(DispIoTooltip); // should be 2568  (0xA08)
 

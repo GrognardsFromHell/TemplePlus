@@ -1110,6 +1110,7 @@ PYBIND11_EMBEDDED_MODULE(tpdp, m) {
 
 	py::class_<DispIoTooltip, DispIO>(m, "EventObjTooltip", "Tooltip event for mouse-overed objects.")
 		.def("append", &DispIoTooltip::Append, "Appends a string")
+		.def("append_distinct", &DispIoTooltip::AppendDistinct, "Appends a string if not already in the list")
 		.def_readwrite("num_strings", &DispIoTooltip::numStrings);
 
 	py::class_<DispIoObjBonus, DispIO>(m, "EventObjObjectBonus", "Used for Item Bonuses, initiative modifiers and others.")
