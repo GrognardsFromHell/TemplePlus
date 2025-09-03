@@ -271,6 +271,33 @@ LegacyD20System d20Sys;
 D20ActionDef d20ActionDefsNew[1000];
 TabFileStatus _d20actionTabFile;
 
+// port of logic from 0x100C5D90 to avoid stacking 20% penalties
+bool DeafnessSpellInterrupted(objHndl critter, SpellStoreData *spellData)
+{
+	if (!d20Sys.d20Query(critter, DK_QUE_Critter_Is_Deafened))
+		return false;
+
+	if (!(spellData->GetSpellComponentFlags() & SpellComponent_Verbal))
+		return false;
+
+	auto roll = Dice(1, 100, 0).Roll();
+	auto interrupt = roll <= 20;
+	auto mesResult = 0;
+
+	if (interrupt) {
+		histSys.CreateRollHistoryLineFromMesfile(0x23, critter, objHndl::null);
+		floatSys.FloatCombatLine(critter, 78);
+		mesResult = 78;
+	} else {
+		mesResult = 62;
+	}
+	auto hid = histSys.RollHistoryAddType5PercentChanceRoll(
+			critter, objHndl::null, 20, 79, roll, mesResult, 192);
+	histSys.CreateRollHistoryString(hid);
+
+	return interrupt;
+}
+
 bool LegacyD20System::SpellIsInterruptedCheck(D20Actn* d20a, int invIdx, SpellStoreData* spellData){
 
 	if (spellSys.IsSpellLike(spellData->spellEnum)
@@ -300,6 +327,11 @@ bool LegacyD20System::SpellIsInterruptedCheck(D20Actn* d20a, int invIdx, SpellSt
 
 	if (d20a->d20Caf & D20CAF_COUNTERSPELLED)
 		return true;
+
+	// check deafness failure here to avoid stacking penalties
+	if (DeafnessSpellInterrupted(d20a->d20APerformer, spellData))
+		return true;
+
 	return d20Sys.d20QueryWithData(d20a->d20APerformer, 
 		DK_QUE_SpellInterrupted, (uint32_t)&d20a->d20SpellData, 0) != 0; // can be set to 1 by Casting Defensively and Armor Spell Failure
 }

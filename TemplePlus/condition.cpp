@@ -569,6 +569,9 @@ public:
 		replaceFunction(0x10100470, genericCallbacks.NoOp);
 		replaceFunction(0x10100500, genericCallbacks.NoOp);
 
+		// replace deafness spell failure with no-op because it was stacking
+		replaceFunction(0x100C5D90, genericCallbacks.NoOp);
+
 		// Druid wild shape
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FBDB0, classAbilityCallbacks.DruidWildShapeReset);
 		replaceFunction<int(DispatcherCallbackArgs)>(0x100FBB20, classAbilityCallbacks.DruidWildShapeRadialMenu);
